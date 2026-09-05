@@ -63,14 +63,20 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
 export function detectBuildFacets(cards: DeckCard[]): Map<string, Map<string, Set<string>>> {
   const m = new Map<string, Map<string, Set<string>>>();
   const set = loadRules();
+  // EVERY DECLARED FACET IS PRESENT, at zero when nothing matched: "0 engines · 1 unlabelled" is a
+  // reading, an absent key is a question. Seeded from the rule set, not from what matched.
+  const slot = (of: string, name: string): Set<string> => {
+    let byName = m.get(of);
+    if (!byName) { byName = new Map(); m.set(of, byName); }
+    let s = byName.get(name);
+    if (!s) { s = new Set(); byName.set(name, s); }
+    return s;
+  };
+  for (const rule of set.rules) if (rule.facet) slot(rule.facet.of, rule.facet.name);
   for (const dc of cards) {
     for (const rule of set.rules) {
       if (!rule.facet || !ruleMatches(rule, dc, set)) continue;
-      let byName = m.get(rule.facet.of);
-      if (!byName) { byName = new Map(); m.set(rule.facet.of, byName); }
-      let s = byName.get(rule.facet.name);
-      if (!s) { s = new Set(); byName.set(rule.facet.name, s); }
-      s.add(dc.card.name);
+      slot(rule.facet.of, rule.facet.name).add(dc.card.name);
     }
   }
   return m;

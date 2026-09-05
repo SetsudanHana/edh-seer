@@ -159,3 +159,11 @@ test("rule 8: the card's own sacrifice, graveyard arrival and cast happen once",
   expect(repeatsFor(triggered(["enters-graveyard"], { self: true, control: "any" }), "When this card is put into a graveyard from anywhere, ...")).toBe("once");
   expect(repeatsFor(triggered(["cast"], { self: true, control: "you" }), "When you cast this spell, ...")).toBe("once");
 });
+
+test("rule 1: a cost that discards or exiles the card itself fires once (channel)", () => {
+  // Otawara, Soaring City: "{3}{U}, Discard this card: Return target ... to its owner's hand."
+  expect(repeatsFor(activated(), "Return target artifact, creature, enchantment, or planeswalker to its owner's hand.", "{3}{U}, Discard this card")).toBe("once");
+  expect(repeatsFor(activated(), "Draw a card.", "{2}, Exile this card from your graveyard")).toBe("once");
+  // Discarding A card is not discarding this one.
+  expect(repeatsFor(activated(), "Draw a card.", "{1}, Discard a card")).toBe("repeatable");
+});

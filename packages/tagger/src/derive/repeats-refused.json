@@ -8199,6 +8199,28 @@
   }
  },
  {
+  "name": "Pouncing Shoreshark",
+  "clauseText": "Whenever this creature mutates, you may return target creature an opponent controls to its owner's hand.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Market Gnome",
   "clauseText": "When this creature is exiled from the battlefield while you're activating a craft ability, you gain 1 life and draw a card.",
   "cost": "",
@@ -10986,6 +11008,29 @@
   "ability": {
    "kind": "triggered",
    "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "saga",
+      "self": true
+     }
+    }
+   ],
+   "face": 1
+  }
+ },
+ {
+  "name": "Jin-Gitaxias // The Great Synthesis",
+  "clauseText": "You may cast any number of spells from your hand without paying their mana costs. Exile this Saga, then return it to the battlefield .",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
     "kind": "flicker",
     "subject": {
      "control": "any",
@@ -11680,6 +11725,28 @@
       "type": "creature",
       "scope": "target",
       "zone": "graveyard"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Olivia, Crimson Bride",
+  "clauseText": "When you don't control a legendary Vampire, exile this creature.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
      }
     }
    ]
@@ -12472,6 +12539,28 @@
      "subject": {
       "control": "you",
       "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Undercity Eliminator",
+  "clauseText": "When you do, exile target creature an opponent controls.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
      }
     }
    ]
@@ -13422,6 +13511,28 @@
   }
  },
  {
+  "name": "Astral Slide",
+  "clauseText": "Whenever a player cycles a card, you may exile target creature. If you do, return that card to the battlefield under its owner's control at the beginning of the next end step.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Ulrich of the Krallenhorde // Ulrich, Uncontested Alpha",
   "clauseText": "Whenever this creature enters or transforms into Ulrich of the Krallenhorde, target creature gets +4/+4 until end of turn.",
   "cost": "",
@@ -14078,6 +14189,27 @@
   }
  },
  {
+  "name": "Norin, Swift Survivalist",
+  "clauseText": "Whenever a creature you control becomes blocked, you may exile it. You may play that card from exile this turn.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": "creature"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Kaya, Spirits' Justice",
   "clauseText": "Whenever one or more creatures you control and/or creature cards in your graveyard are put into exile, you may choose a creature card from among them. Until end of turn, target token you control becomes a copy of it, except it has flying.",
   "cost": "",
@@ -14511,6 +14643,28 @@
      "subject": {
       "control": "any",
       "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Mazemind Tome",
+  "clauseText": "When there are four or more page counters on this artifact, exile it. If you do, you gain 4 life.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "artifact",
+      "self": true
      }
     }
    ]
@@ -15400,6 +15554,31 @@
      "subject": {
       "control": "any",
       "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Kalemne's Captain",
+  "clauseText": "When this creature becomes monstrous, exile all artifacts and enchantments.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": [
+       "artifact",
+       "enchantment"
+      ],
+      "scope": "all"
      }
     }
    ]
@@ -21002,6 +21181,28 @@
   }
  },
  {
+  "name": "Eternal Scourge",
+  "clauseText": "When this creature becomes the target of a spell or ability an opponent controls, exile this creature.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "self": true
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Icefeather Aven",
   "clauseText": "When this creature is turned face up, you may return another target creature to its owner's hand.",
   "cost": "",
@@ -22944,6 +23145,28 @@
   "ability": {
    "kind": "triggered",
    "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Charming Prince",
+  "clauseText": "Exile another target creature you own. Return it to the battlefield under your control at the beginning of the next end step.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
     "kind": "flicker",
     "subject": {
      "control": "any",
@@ -23031,6 +23254,38 @@
       "token": null,
       "type": "spell",
       "fromZone": "exile"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "King Macar, the Gold-Cursed",
+  "clauseText": "Whenever King Macar becomes untapped, you may exile target creature. If you do, create a Gold token.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "trigger": {
+    "verbs": [
+     "untaps"
+    ],
+    "subject": {
+     "control": "you",
+     "token": null,
+     "self": true
+    }
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
      }
     }
    ]
@@ -25034,6 +25289,27 @@
      "subject": {
       "control": "you",
       "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Forger's Foundry",
+  "clauseText": "When you spend this mana to cast an instant or sorcery spell with mana value 3 or less, you may exile that spell instead of putting it into its owner's graveyard as it resolves.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell"
      }
     }
    ]
@@ -27723,6 +27999,28 @@
   }
  },
  {
+  "name": "Exit Specialist",
+  "clauseText": "When this creature is turned face up, return another target creature to its owner's hand.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Regal Leosaur",
   "clauseText": "Whenever this creature mutates, other creatures you control get +2/+1 until end of turn.",
   "cost": "",
@@ -28039,6 +28337,27 @@
      "subject": {
       "control": "any",
       "token": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Isareth the Awakener",
+  "clauseText": "When you do, return target creature card with mana value X from your graveyard to the battlefield with a corpse counter on it. If that creature would leave the battlefield, exile it instead of putting it anywhere else.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
      }
     }
    ]
@@ -30039,6 +30358,29 @@
   "ability": {
    "kind": "triggered",
    "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "saga",
+      "self": true
+     }
+    }
+   ],
+   "face": 1
+  }
+ },
+ {
+  "name": "Elesh Norn // The Argent Etchings",
+  "clauseText": "Destroy all other permanents except for artifacts, lands, and Phyrexians. Exile this Saga, then return it to the battlefield .",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
     "kind": "flicker",
     "subject": {
      "control": "any",
@@ -30107,6 +30449,27 @@
       "scope": "target",
       "zone": "graveyard",
       "fromZone": "graveyard"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Wishing Well",
+  "clauseText": "When you do, you may cast target instant or sorcery card with mana value equal to the number of coin counters on this artifact from your graveyard without paying its mana cost. If that spell would be put into your graveyard, exile it instead. Activate only as a sorcery.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "spell"
      }
     }
    ]
@@ -31282,6 +31645,29 @@
   "ability": {
    "kind": "triggered",
    "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "subtype": "saga",
+      "self": true
+     }
+    }
+   ],
+   "face": 1
+  }
+ },
+ {
+  "name": "Sheoldred // The True Scriptures",
+  "clauseText": "Put all creature cards from all graveyards onto the battlefield under your control. Exile this Saga, then return it to the battlefield .",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
     "kind": "flicker",
     "subject": {
      "control": "any",
@@ -31907,6 +32293,37 @@
       "control": "any",
       "token": null,
       "counter": "+1/+1"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Unyielding Gatekeeper",
+  "clauseText": "When this creature is turned face up, exile another target nonland permanent. If you controlled it, return it to the battlefield tapped. Otherwise, its controller creates a 2/2 white and blue Detective creature token.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact",
+       "enchantment",
+       "planeswalker",
+       "battle"
+      ],
+      "notType": [
+       "land"
+      ],
+      "scope": "target"
      }
     }
    ]
@@ -32711,6 +33128,50 @@
   }
  },
  {
+  "name": "Godsend",
+  "clauseText": "Whenever equipped creature blocks or becomes blocked by one or more creatures, you may exile one of those creatures.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Godsend",
+  "clauseText": "",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature",
+      "scope": "all"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Felidar Retreat",
   "clauseText": "Create a 2/2 white Cat Beast creature token.",
   "cost": "",
@@ -33336,6 +33797,31 @@
   }
  },
  {
+  "name": "Damage Control Crew",
+  "clauseText": "Impound — Exile target artifact or enchantment.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": [
+       "artifact",
+       "enchantment"
+      ],
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Corrosive Ooze",
   "clauseText": "Whenever this creature blocks or becomes blocked by an equipped creature, destroy all Equipment attached to that creature at end of combat.",
   "cost": "",
@@ -33942,6 +34428,31 @@
         "value": 1
        }
       ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Escape Protocol",
+  "clauseText": "When you do, exile target artifact or creature you control, then return it to the battlefield under its owner's control.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "you",
+      "token": null,
+      "type": [
+       "creature",
+       "artifact"
+      ],
+      "scope": "target"
      }
     }
    ]
@@ -38357,6 +38868,28 @@
  },
  {
   "name": "The Balrog of Moria",
+  "clauseText": "When you do, for each opponent, exile up to one target creature that player controls.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "The Balrog of Moria",
   "clauseText": "When you cycle this card, create two Treasure tokens.",
   "cost": "",
   "ability": {
@@ -38962,7 +39495,18 @@
      "token": null,
      "self": true
     }
-   }
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": "creature",
+      "scope": "target"
+     }
+    }
+   ]
   }
  },
  {
@@ -41978,6 +42522,31 @@
   }
  },
  {
+  "name": "Protector of the Wastes",
+  "clauseText": "When this creature enters or becomes monstrous, exile up to two target artifacts and/or enchantments controlled by different players.",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "opp",
+      "token": null,
+      "type": [
+       "artifact",
+       "enchantment"
+      ],
+      "scope": "target"
+     }
+    }
+   ]
+  }
+ },
+ {
   "name": "Deekah, Fractal Theorist",
   "clauseText": "Target creature token can't be blocked this turn.",
   "cost": "{3}{U}",
@@ -42209,6 +42778,27 @@
       "token": null,
       "type": "creature",
       "scope": "each"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "name": "Coffin Queen",
+  "clauseText": "",
+  "cost": "",
+  "ability": {
+   "kind": "triggered",
+   "effect": {
+    "kind": ""
+   },
+   "emits": [
+    {
+     "verb": "leaves",
+     "subject": {
+      "control": "any",
+      "token": null,
+      "type": "creature"
      }
     }
    ]
