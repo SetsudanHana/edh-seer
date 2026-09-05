@@ -97,3 +97,59 @@ test("an unread card says so rather than rendering an empty page", async () => {
   expect(screen.getByRole("link", { name: /Search for/ }))
     .toHaveAttribute("href", "/commanders?q=black%20lotus");
 });
+
+/** A PAIR IS A LINK. Picking a partner or a colour lives in the URL, so the identity and the list
+ *  the page shows for that pair can be shared and undone with the back button. */
+const WILSON: CardPageData = {
+  ...KRENKO,
+  name: "Wilson, Refined Grizzly", typeLine: "Legendary Creature — Bear Warrior", identity: ["G"],
+  commanderPartners: [row("Green Payoff", "green-payoff")],
+  pairsWith: [{ slug: "haunted-one", name: "Haunted One", identity: ["B"], licence: "choose a background" }],
+  commanderPartnersBy: { BG: { partners: [row("Black Payoff", "black-payoff")], pool: {}, rarity: {} } },
+};
+const HAUNTED: CardPageData = {
+  ...KRENKO,
+  name: "Haunted One", typeLine: "Legendary Enchantment — Background", identity: ["B"],
+  pairingOnly: true, commanderPartners: [row("Rat Payoff", "rat-payoff")],
+  pairsWith: [{ slug: "wilson-refined-grizzly", name: "Wilson, Refined Grizzly", identity: ["G"], licence: "choose a background" }],
+  commanderPartnersBy: { BG: { partners: [row("Golgari Payoff", "golgari-payoff")], pool: {}, rarity: {} } },
+};
+const CLARA: CardPageData = {
+  ...KRENKO, name: "Clara Oswald", identity: [], choosesColour: true,
+  commanderPartnersBy: { U: { partners: [row("Blue Payoff", "blue-payoff")], pool: {}, rarity: {} } },
+};
+const BY_SLUG: Record<string, CardPageData> = {
+  "wilson-refined-grizzly": WILSON, "haunted-one": HAUNTED, "clara-oswald": CLARA,
+};
+const atUrl = (url: string) =>
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <Routes><Route path="/commanders/:slug" element={<CommanderPage load={async (s) => BY_SLUG[s] ?? null} />} /></Routes>
+    </MemoryRouter>,
+  );
+
+test("a commander that may pair lists who it may pair with", async () => {
+  atUrl("/commanders/wilson-refined-grizzly");
+  expect(await screen.findByRole("link", { name: /Haunted One/ })).toHaveAttribute("href", "/commanders/wilson-refined-grizzly?with=haunted-one");
+  expect(screen.getByText(/choose a background/i)).toBeInTheDocument();
+});
+
+test("picking a partner widens the identity and merges both halves' lists at that identity", async () => {
+  atUrl("/commanders/wilson-refined-grizzly?with=haunted-one");
+  expect(await screen.findByRole("link", { name: /Black Payoff/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Golgari Payoff/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Green Payoff/ })).not.toBeInTheDocument();
+  // The identity line itself, not the Golgari Payoff link, reads the pair's combined identity.
+  expect(screen.getByText("colour identity").parentElement).toHaveTextContent(/Golgari/);
+});
+
+test("a colour chooser offers five colours and ranks over the chosen one", async () => {
+  atUrl("/commanders/clara-oswald?color=U");
+  expect(await screen.findByRole("link", { name: /Blue Payoff/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /^white$/i })).toHaveAttribute("href", "/commanders/clara-oswald?color=W");
+});
+
+test("a Background says it never leads alone", async () => {
+  atUrl("/commanders/haunted-one");
+  expect(await screen.findByText(/second commander/i)).toBeInTheDocument();
+});
