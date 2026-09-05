@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/j3sjrhDFJyVZYZYR52mUCQ (source https://archidekt.com/decks/19447994)
+# tags Elves, Lands Matter, Wolves, Landfall, Goblins, Elementals, Werewolves; bracket 2; saved 2026-09-05; 656 tagged of 8822 indexed
+
+Commander
+1 Omnath, Locus of Rage
+
+Deck
+1 Arcum's Astrolabe
+1 Glowcap Lantern
+1 Heraldic Banner
+1 Hero's Blade
+1 Prophetic Prism
+1 Sol Ring
+1 The Earth Crystal
+1 Vivien's Arkbow
+1 Avenger of Zendikar
+1 Battle-Scarred Goblin
+1 Champion of the Path
+1 Champions of the Perfect
+1 Dire Wolf Prowler
+1 Duskwatch Recruiter
+1 Earth-Cult Elemental
+1 Elfsworn Giant
+1 Elturgard Ranger
+1 Enraged Flamecaster
+1 Evolution Witness
+1 Explosive Prodigy
+1 Famished Worldsire
+1 Forgotten Ancient
+1 Goblin Matron
+1 Greenwarden of Murasa
+1 Hungry Ridgewolf
+1 Icetill Explorer
+1 Ivy Elemental
+1 Jubilation
+1 Kessig Naturalist
+1 Laelia, the Blade Reforged
+1 Llanowar Elves
+1 Llanowar Tribe
+1 Magma Pummeler
+1 Mightform Harmonizer
+1 Radha, Coalition Warlord
+1 Reclamation Sage
+1 Remnant Elemental
+1 Renata, Called to the Hunt
+1 Selfless Safewright
+1 Siege-Gang Commander
+1 Soulbright Seeker
+1 Springbloom Druid
+1 Sunspine Lynx
+1 Tangled Florahedron
+1 Tannuk, Memorial Ensign
+1 Awaken the Sleeper
+1 Expand the Sphere
+1 Geomancer's Gambit
+1 Green Sun's Twilight
+1 Hazardous Blast
+1 Meltdown
+1 Price of Freedom
+1 Ruinous Rampage
+1 Blazing Crescendo
+1 Mercadia's Downfall
+1 Moonlight Hunt
+1 Thrill of Possibility
+1 Titanic Growth
+1 Volatile Claws
+1 Cinder Glade
+1 Command Tower
+1 Copperline Gorge
+1 Desert of the Indomitable
+1 Eclipsed Realms
+1 Evolving Wilds
+12 Forest
+1 Game Trail
+1 Gruul Guildgate
+1 Gruul Turf
+1 Llanowar Reborn
+1 Manor Gate
+1 Memorial to War
+1 Mossfire Valley
+5 Mountain
+1 Mountain Valley
+1 Opal Palace
+1 Raging Ravine
+1 Rugged Highlands
+1 Savage Mansion
+1 Stomping Ground
+1 Temple of Abandon
+1 The Autonomous Furnace
+1 The Hunter Maze
+1 Nissa, Who Shakes the World

@@ -1,0 +1,105 @@
+# edhrec deck https://edhrec.com/deckpreview/d1mXiIC-bKJSLHomaxzjoA (source https://archidekt.com/decks/22915568)
+# tags Artifacts, Combo; bracket 3; saved 2026-09-04; 984 tagged of 22259 indexed
+
+Commander
+1 Breya, Etherium Shaper
+
+Deck
+1 An Offer You Can't Refuse
+1 Deflecting Swat
+1 Ephemerate
+1 Fell the Profane
+1 Force of Negation
+1 Mana Drain
+1 Mental Misstep
+1 Path to Exile
+1 Saw in Half
+1 Sink into Stupor
+1 Swan Song
+1 Swords to Plowshares
+1 Vampiric Tutor
+1 Ancient Den
+1 Blood Crypt
+1 City of Brass
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Strand
+1 Godless Shrine
+1 Great Furnace
+1 Hallowed Fountain
+1 Haunted Ridge
+1 Inventors' Fair
+2 Island
+1 Mountain
+1 Otawara, Soaring City
+1 Plains
+1 Polluted Delta
+1 Sacred Foundry
+1 Scalding Tarn
+1 Sea of Clouds
+1 Seat of the Synod
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sundown Pass
+1 Swamp
+1 Urza's Saga
+1 Vault of Champions
+1 Vault of Whispers
+1 Watery Grave
+1 Arcane Signet
+1 Ashnod's Altar
+1 Chromatic Star
+1 Cryogen Relic
+1 Ichor Wellspring
+1 Idol of Oblivion
+1 Krark-Clan Ironworks
+1 Lightning Greaves
+1 Lotus Petal
+1 Mox Amber
+1 Mox Opal
+1 Mystic Forge
+1 Nim Deathmantle
+1 Sensei's Divining Top
+1 Skullclamp
+1 Sol Ring
+1 Sword of the Meek
+1 Talisman of Creativity
+1 Talisman of Hierarchy
+1 The One Ring
+1 Thopter Foundry
+1 Wishclaw Talisman
+1 Baleful Strix
+1 Blood Artist
+1 Eldrazi Displacer
+1 Emry, Lurker of the Loch
+1 Esper Sentinel
+1 Etherium Sculptor
+1 Jhoira, Weatherlight Captain
+1 Lotho, Corrupt Shirriff
+1 Marionette Apprentice
+1 Myr Retriever
+1 Ornithopter
+1 Pinnacle Emissary
+1 Ragavan, Nimble Pilferer
+1 Ravenous Robots
+1 Sai, Master Thopterist
+1 Shuri, Wakandan Inventor
+1 Thought Monitor
+1 Tribute Mage
+1 Urza, Lord High Artificer
+1 Vedalken Archmage
+1 Fabricate
+1 Scheming Symmetry
+1 Toxic Deluge
+1 Transmute Artifact
+1 Fateful Discovery
+1 Gleaming Splendor
+1 Mystic Remora
+1 Smothering Tithe
+1 Storm the Vault
+1 Weapons Manufacturing
+1 Tezzeret the Seeker

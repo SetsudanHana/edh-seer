@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/YDMriWxbakDHS2ju_vL9-Q (source https://moxfield.com/decks/YPVgqpBTpUu8ydAVJ7EOOw)
+# tags +1/+1 Counters, Midrange; bracket 2; saved 2026-09-05; 2298 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Abandoned Air Temple
+1 Bayou
+1 Bleachbone Verge
+1 Breeding Pool
+1 Command Tower
+1 Drowned Catacomb
+1 Floodfarm Verge
+2 Forest
+1 Gavony Township
+1 Glacial Fortress
+1 Gloomlake Verge
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hinterland Harbor
+1 Hushwood Verge
+1 Indatha Triome
+2 Island
+1 Isolated Chapel
+1 Overgrown Tomb
+2 Plains
+1 Raffine's Tower
+1 Savannah
+1 Scrubland
+1 Spara's Headquarters
+1 Sunpetal Grove
+2 Swamp
+1 Temple Garden
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Wastewood Verge
+1 Watery Grave
+1 Willowrush Verge
+1 Woodland Cemetery
+1 Zagoth Triome
+1 Agent Bishop, Man in Black
+1 Arwen, Weaver of Hope
+1 Benevolent Hydra
+1 Brigone, Soldier of Meletis
+1 Cloaked Cadet
+1 Conclave Mentor
+1 Dreamtide Whale
+1 Dusk Legion Duelist
+1 Exemplar of Light
+1 Falco Spara, Pactweaver
+1 Fathom Mage
+1 Fetid Gargantua
+1 Forgotten Ancient
+1 Generous Pup
+1 Good-Fortune Unicorn
+1 Grateful Apparition
+1 Jenova, Ancient Calamity
+1 Kami of Whispered Hopes
+1 Kutzil, Malamet Exemplar
+1 Lae'zel, Vlaakith's Champion
+1 Leinore, Autumn Sovereign
+1 Lion Sash
+1 Luminarch Aspirant
+1 Maester Seymour
+1 Massacre Girl, Known Killer
+1 Master Biomancer
+1 Ornery Tumblewagg
+1 Pensive Professor
+1 Pir, Imaginative Rascal
+1 Renata, Called to the Hunt
+1 Rocksteady, Mutant Marauder
+1 Rosa, Resolute White Mage
+1 Scavenging Ooze
+1 Scholar of New Horizons
+1 Siege Veteran
+1 Thrummingbird
+1 Tidus, Yuna's Guardian
+1 Tromell, Seymour's Butler
+1 Warden of the Grove
+1 Wildgrowth Archaic
+1 Winding Constrictor
+1 Zimone, Paradox Sculptor
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Beast Within
+1 Excise the Imperfect
+1 Generous Gift
+1 Stroke of Midnight
+1 Void Rend
+1 Barrensteppe Siege
+1 Brokers Ascendancy
+1 Hollowmurk Siege
+1 Terrasymbiosis
+1 Virtue of Loyalty
+1 Legions to Ashes
+1 Maelstrom Pulse
+1 Vindicate
+1 Ozolith, the Shattered Spire
+1 Sword of Truth and Justice
+1 Thunderous Velocipede

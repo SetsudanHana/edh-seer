@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/OMqN-ptXD_0n3TXush6ljw (source https://moxfield.com/decks/jkOy9doRZkqxjqEcDV3ajQ)
+# tags Aggro, Combo, Tokens; bracket 3; saved 2026-09-05; 4444 tagged of 29735 indexed
+
+Commander
+1 Baylen, the Haymaker
+
+Deck
+1 Academy Manufactor
+1 Adeline, Resplendent Cathar
+1 Agate Instigator
+1 Anim Pakal, Thousandth Moon
+1 Arasta of the Endless Web
+1 Avacyn's Pilgrim
+1 Birds of Paradise
+1 Cadira, Caller of the Small
+1 Craterhoof Behemoth
+1 Delighted Halfling
+1 Elvish Mystic
+1 Elvish Spirit Guide
+1 Enduring Vitality
+1 Esper Sentinel
+1 Finneas, Ace Archer
+1 Jaheira, Friend of the Forest
+1 Jinnie Fay, Jetmir's Second
+1 Krenko, Tin Street Kingpin
+1 Kutzil, Malamet Exemplar
+1 Llanowar Elves
+1 Mondrak, Glory Dominus
+1 Myrel, Shield of Argive
+1 Ocelot Pride
+1 Peregrin Took
+1 Professional Face-Breaker
+1 Purphoros, God of the Forge
+1 Queen Allenal of Ruadach
+1 Ragavan, Nimble Pilferer
+1 Rosie Cotton of South Lane
+1 Samwise Gamgee
+1 Scute Swarm
+1 Simian Spirit Guide
+1 Springheart Nantuko
+1 The Cabbage Merchant
+1 Tireless Provisioner
+1 Toski, Bearer of Secrets
+1 Voice of Victory
+1 Arachnogenesis
+1 Beast Within
+1 Chord of Calling
+1 Deflecting Swat
+1 Eladamri's Call
+1 Flawless Maneuver
+1 Heroic Intervention
+1 Second Harvest
+1 Secure the Wastes
+1 Silence
+1 Arcane Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Lotus Petal
+1 Skullclamp
+1 Sol Ring
+1 Arid Mesa
+1 Bloodstained Mire
+1 Boseiju, Who Endures
+1 Command Tower
+1 Commercial District
+1 Elegant Parlor
+1 Evendo, Waking Haven
+1 Flooded Strand
+4 Forest
+1 Gaea's Cradle
+1 Gemstone Caverns
+1 Lush Portico
+1 Marsh Flats
+1 Misty Rainforest
+3 Mountain
+3 Plains
+1 Plateau
+1 Sacred Foundry
+1 Savannah
+1 Scalding Tarn
+1 Stomping Ground
+1 Taiga
+1 Temple Garden
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Beastmaster Ascension
+1 Growing Rites of Itlimoc
+1 Impact Tremors
+1 Smothering Tithe
+1 Sylvan Library
+1 Warleader's Call
+1 Blasphemous Act
+1 Cultivate
+1 Green Sun's Zenith
+1 Hour of Reckoning
+1 Kodama's Reach
+1 Triumph of the Hordes

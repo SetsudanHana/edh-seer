@@ -1,0 +1,105 @@
+# edhrec deck https://edhrec.com/deckpreview/gPX8TrTkyI4SkTvSUDubrQ (source https://moxfield.com/decks/bAK7hnZ0UkqcNoJJz1J06Q)
+# tags Midrange, Reanimator; bracket 3; saved 2026-09-05; 2109 tagged of 19110 indexed
+
+Commander
+1 Terra, Herald of Hope
+
+Deck
+1 Agadeem's Awakening
+1 Demonic Tutor
+1 Living Death
+1 Nibelheim Aflame
+1 Reanimate
+1 Sundering Eruption
+1 Alesha, Who Laughs at Fate
+1 Aurelia, the Warleader
+1 Blade Historian
+1 Boromir, Warden of the Tower
+1 Carmen, Cruel Skymarcher
+1 Celes, Rune Knight
+1 Cloak and Dagger, Entwined
+1 Dauthi Voidwalker
+1 Doctor Doom
+1 Filth
+1 Fury
+1 Gaius van Baelsar
+1 General's Enforcer
+1 Grave Researcher
+1 Harmonic Prodigy
+1 Havoc Eater
+1 Jirina, Dauntless General
+1 Karmic Guide
+1 Lightning, Army of One
+1 Locke, Treasure Hunter
+1 Loran of the Third Path
+1 Luminous Broodmoth
+1 Mayhem Devil
+1 Meteor Golem
+1 Mog, Moogle Warrior
+1 Orcish Bowmasters
+1 Pinnacle Monk
+1 Primaris Eliminator
+1 Rankle, Master of Pranks
+1 Raphael, the Nightwatcher
+1 Ratadrabik of Urborg
+1 Rev, Tithe Extractor
+1 Sadistic Hypnotist
+1 Seasoned Dungeoneer
+1 Sephiroth, Fabled SOLDIER
+1 Serra Paragon
+1 Shanid, Sleepers' Scourge
+1 Sister Hospitaller
+1 Twilight Diviner
+1 Twinflame Tyrant
+1 Umbral Collar Zealot
+1 Vile Entomber
+1 Vincent Valentine
+1 White Plume Adventurer
+1 Witch Enchanter
+1 Yawgmoth, Thran Physician
+1 Zidane, Tantalus Thief
+1 Éowyn, Fearless Knight
+1 Arid Mesa
+1 Battlefield Forge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodstained Mire
+1 Boros Garrison
+1 Brightclimb Pathway
+1 Cavern of Souls
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Godless Shrine
+1 Lazotep Quarry
+1 Luxury Suite
+1 Mana Confluence
+1 Marsh Flats
+1 Needleverge Pathway
+1 Orzhov Basilica
+1 Path of Ancestry
+1 Plains
+1 Plaza of Heroes
+1 Prismatic Vista
+1 Rakdos Carnarium
+1 Sacred Foundry
+1 Savai Triome
+1 Spectator Seating
+1 Sulfurous Springs
+2 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Ashnod's Altar
+1 Brotherhood Regalia
+1 Key to the City
+1 Lightning Greaves
+1 Sol Ring
+1 Whispersilk Cloak
+1 Clever Concealment
+1 Deadly Rollick
+1 Entomb
+1 Flare of Fortitude
+1 Flawless Maneuver
+1 Swords to Plowshares
+1 Vampiric Tutor

@@ -1,0 +1,80 @@
+# edhrec deck https://edhrec.com/deckpreview/O0FMEKKokB7tRmLgL3T1hA (source https://moxfield.com/decks/Mw0aHCsZKEiNq-t-TETbng)
+# tags Spellslinger, Tokens, Storm; bracket 2; saved 2026-09-05; 2066 tagged of 12433 indexed
+
+Commander
+1 Stella Lee, Wild Card
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Big Score
+1 Chaos Warp
+1 Consider
+1 Counterflux
+1 Delayed Blast Fireball
+1 Expedite
+1 Galvanic Iteration
+1 Opt
+1 Pongify
+1 Radical Idea
+1 Slick Sequence
+1 Think Twice
+1 Arcane Bombardment
+1 Bitter Reunion
+1 Propaganda
+1 Shark Typhoon
+1 Arcane Signet
+1 Cursed Mirror
+1 Forger's Foundry
+1 Izzet Signet
+1 Midnight Clock
+1 Sol Ring
+1 Archmage Emeritus
+1 Ashling, Flame Dancer
+1 Dragon's Rage Channeler
+1 Electrostatic Field
+1 Eris, Roar of the Storm
+1 Goblin Electromancer
+1 Guttersnipe
+1 Haughty Djinn
+1 Jori En, Ruin Diver
+1 Murmuring Mystic
+1 Niv-Mizzet, Parun
+1 Storm-Kiln Artist
+1 Talrand, Sky Summoner
+1 The Scarlet Witch
+1 Third Path Iconoclast
+1 Thunderclap Drake
+1 Veyran, Voice of Duality
+1 Young Pyromancer
+1 Baral's Expertise
+1 Curse of the Swine
+1 Deep Analysis
+1 Elemental Eruption
+1 Expressive Iteration
+1 Faithless Looting
+1 Finale of Promise
+1 Gitaxian Probe
+1 Lock and Load
+1 Mana Geyser
+1 Mizzix's Mastery
+1 Ponder
+1 Preordain
+1 Pyretic Charge
+1 Rousing Refrain
+1 Serum Visions
+1 Vandalblast
+1 Volcanic Torrent
+1 Windfall
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Ferrous Lake
+1 Frostboil Snarl
+14 Island
+14 Mountain
+1 Reliquary Tower
+1 Shivan Reef
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany

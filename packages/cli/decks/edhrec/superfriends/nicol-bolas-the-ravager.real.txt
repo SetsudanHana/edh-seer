@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/0hcn1CR5YZ8bP7X_oUtRxQ (source https://moxfield.com/decks/KHQ_3jw-ZEGmKLV28FXM4g)
+# tags Planeswalkers, Group Slug; bracket 2; saved 2026-09-01; 832 tagged of 9684 indexed
+
+Commander
+1 Nicol Bolas, the Ravager
+
+Deck
+1 Abrade
+1 Darkness
+1 Experimental Augury
+1 Fuel for the Cause
+1 Infernal Grasp
+1 Perplex
+1 Reinterpret
+1 Reject Imperfection
+1 Ripples of Potential
+1 Aetheric Amplifier
+1 Arcane Signet
+1 Astral Cornucopia
+1 Everflowing Chalice
+1 Ichormoon Gauntlet
+1 Insight Engine
+1 Lux Cannon
+1 Replicating Ring
+1 Staff of Compleation
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 The Eternity Elevator
+1 Transmogrifying Wand
+1 All Will Be One
+1 As Foretold
+1 Inexorable Tide
+1 Liliana's Talent
+1 Mesmerizing Dose
+1 Shark Typhoon
+1 The Eldest Reborn
+1 Arcane Lighthouse
+1 Blood Crypt
+1 Canyon Slough
+1 Coastal Peak
+1 Command Tower
+1 Crumbling Necropolis
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Pools
+1 Haunted Ridge
+1 Horizon of Progress
+9 Island
+1 Karn's Bastion
+1 Luxury Suite
+1 Morphic Pool
+4 Mountain
+1 Myriad Landscape
+1 Seething Landscape
+1 Shipwreck Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+6 Swamp
+1 Training Center
+1 Watery Grave
+1 Witch's Clinic
+1 Xander's Lounge
+1 Black Sun's Zenith
+1 Blasphemous Act
+1 Damnation
+1 Day of Black Sun
+1 Drown in Ichor
+1 Tezzeret's Gambit
+1 Toxic Deluge
+1 Chandra, Legacy of Fire
+1 Liliana, Dreadhorde General
+1 Lolth, Spider Queen
+1 Mordenkainen
+1 Nicol Bolas, Dragon-God
+1 Nicol Bolas, God-Pharaoh
+1 Nicol Bolas, Planeswalker
+1 Nicol Bolas, the Deceiver
+1 Saheeli, Sublime Artificer
+1 Teferi, Temporal Pilgrim
+1 Tezzeret, Artifice Master
+1 Tezzeret, Master of the Bridge
+1 Vraska, Betrayal's Sting
+1 Chrome Host Seedshark
+1 Dreamtide Whale
+1 Flux Channeler
+1 Guildpact Informant
+1 Nightscape Familiar
+1 Thrummingbird

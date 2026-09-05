@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/N_u0qbcTzkfJT_RrDevsAA (source https://moxfield.com/decks/lMdZgGk52kyrGskCNpSQzw)
+# tags Hatebears, Control, Stax; bracket 2; saved 2026-09-05; 859 tagged of 12517 indexed
+
+Commander
+1 Hylda of the Icy Crown
+
+Deck
+1 Abandoned Air Temple
+1 Arid Archway
+1 Azorius Chancery
+1 Blinkmoth Well
+1 Command Tower
+1 Coral Atoll
+1 Deserted Beach
+1 Glacial Floodplain
+1 Glacial Fortress
+1 Guildless Commons
+1 Hallowed Fountain
+1 Idyllic Beachfront
+1 Irrigated Farmland
+10 Island
+1 Karoo
+1 Lotus Field
+1 Mystic Gate
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Soldevi Excavations
+1 Windswept Heath
+1 An Offer You Can't Refuse
+1 Blustersquall
+1 Clever Concealment
+1 Cloud's Limit Break
+1 Counterspell
+1 Disruption Protocol
+1 Dovin's Veto
+1 Flare of Denial
+1 Flare of Fortitude
+1 Flawless Maneuver
+1 Foil
+1 Generous Gift
+1 Long River's Pull
+1 Muddle the Mixture
+1 Parting Gust
+1 Stubborn Denial
+1 The Eagles Are Coming!
+1 Unwind
+1 Archaeomancer's Map
+1 Ashnod's Altar
+1 Hylda's Crown of Winter
+1 Scepter of Dominance
+1 Static Orb
+1 Surveyor's Scope
+1 Winter Orb
+1 Archon of Emeria
+1 Claim Jumper
+1 Court Street Denizen
+1 Eidolon of Rhetoric
+1 Elvish Mariner
+1 Gadwick, the Wizened
+1 Guardian Sunmare
+1 Hammers of Moradin
+1 Junk Winder
+1 Knight of the White Orchid
+1 Lossarnach Captain
+1 Loyal Warhound
+1 Mother of Runes
+1 Niblis of the Urn
+1 Phyrexian Censor
+1 PuPu UFO
+1 Sand Scout
+1 Scholar of New Horizons
+1 Sharae of Numbing Depths
+1 Spirit of the Labyrinth
+1 Sunstrike Legionnaire
+1 Tiller Engine
+1 Walking Atlas
+1 Willbreaker
+1 Borrowing 100,000 Arrows
+1 Cone of Cold
+1 Don't Move
+1 Hidden Strings
+1 Practiced Offense
+1 Requisition Raid
+1 Split Up
+1 Theft of Dreams
+1 Winternight Stories
+1 Lost in the Maze
+1 Mystic Remora
+1 Opposition
+1 Verity Circle

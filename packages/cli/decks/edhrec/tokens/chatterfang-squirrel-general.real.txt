@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/oYdjHZhIH3Cn2VgeeFWVyQ (source https://archidekt.com/decks/25171220)
+# tags Tokens, Food, Squirrels; bracket 2; saved 2026-09-05; 3360 tagged of 27609 indexed
+
+Commander
+1 Chatterfang, Squirrel General
+
+Deck
+1 Academy Manufactor
+1 Beledros Witherbloom
+1 Bloodline Pretender
+1 Camellia, the Seedmiser
+1 Corpseberry Cultivator
+1 Deep Forest Hermit
+1 Gilded Goose
+1 Haywire Mite
+1 Hazel of the Rootbloom
+1 Hazel's Brewmaster
+1 Honored Dreyleader
+1 Osteomancer Adept
+1 Poison-Tip Archer
+1 Ravenous Squirrel
+1 Rottenmouth Viper
+1 Scurry of Squirrels
+1 Skyfisher Spider
+1 Squirrel Mob
+1 Squirrel Sovereign
+1 The Odd Acorn Gang
+1 Thornvault Forager
+1 Tireless Provisioner
+1 Toski, Bearer of Secrets
+1 Valley Mightcaller
+1 Ygra, Eater of All
+1 Arcane Signet
+1 Chitterspitter
+1 Goldvein Pick
+1 Idol of Oblivion
+1 Maskwood Nexus
+1 Mirrormind Crown
+1 Patchwork Banner
+1 Skullclamp
+1 Sol Ring
+1 Sword of the Squeak
+1 Talisman of Resilience
+1 Arid Archway
+1 Bojuka Bog
+1 Command Tower
+1 Contested War Zone
+1 Exotic Orchard
+5 Forest
+1 Fountainport
+1 Golgari Rot Farm
+1 Grim Backwoods
+1 Hissing Quagmire
+1 Jungle Hollow
+1 Llanowar Wastes
+1 Mudflat Village
+1 Mystifying Maze
+1 Necroblossom Snarl
+1 Oakhollow Village
+1 Oran-Rief, the Vastwood
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Stardew Valley
+6 Swamp
+1 Swarmyard
+1 Three Tree City
+1 Twilight Mire
+1 Uncharted Haven
+1 Viridescent Bog
+1 Volatile Fault
+1 Woodland Cemetery
+1 Bake into a Pie
+1 Consumed by Greed
+1 Feed the Cycle
+1 Hazel's Nocturne
+1 Overprotect
+1 Putrefy
+1 Saw in Half
+1 Second Harvest
+1 Beastmaster Ascension
+1 Binding the Old Gods
+1 Gourmand's Talent
+1 Moldervine Reclamation
+1 Scavenger's Talent
+1 Song of Freyalise
+1 Squirrel Nest
+1 Casualties of War
+1 Chatterstorm
+1 Coiling Rebirth
+1 Culling Ritual
+1 Decree of Pain
+1 Fell
+1 Rootcast Apprenticeship
+1 Swarmyard Massacre
+1 Triumph of the Hordes
+1 Garruk, Cursed Huntsman
+1 Vraska, Golgari Queen

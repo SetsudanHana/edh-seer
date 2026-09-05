@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/w1y3hjeORk_jDu0CY-L5lQ (source https://moxfield.com/decks/w2HrWN3dyECPeHWkAaVA8g)
+# tags Enchantress; bracket 2; saved 2026-09-05; 3854 tagged of 15237 indexed
+
+Commander
+1 Marina Vendrell
+
+Deck
+1 Arcane Sanctum
+1 Bloodfell Caves
+1 Command Tower
+1 Dimir Aqueduct
+1 Dismal Backwater
+1 Escape Tunnel
+1 Exotic Orchard
+1 Foreboding Landscape
+4 Forest
+7 Island
+1 Jungle Hollow
+1 Jungle Shrine
+1 Kessig Wolf Run
+3 Mountain
+1 Nomad Outpost
+1 Opulent Palace
+1 Path of Ancestry
+2 Plains
+1 Radiant Fountain
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sinister Hideout
+1 Soured Springs
+1 Swamp
+1 Urban Retreat
+1 Arcane Signet
+1 Chromatic Lantern
+1 Crystal Chimes
+1 Decanter of Endless Water
+1 Jodah's Codex
+1 Keys to the House
+1 Patriar's Seal
+1 Skull of Orm
+1 Sol Ring
+1 Balemurk Leech
+1 Dashing Bloodsucker
+1 Dawnhart Geist
+1 Enduring Curiosity
+1 Entity Tracker
+1 Fear of Falling
+1 Fear of Immobility
+1 Fear of Sleep Paralysis
+1 Fear of the Dark
+1 Ghostly Keybearer
+1 Grasping Longneck
+1 Gremlin Tamer
+1 Inquisitive Glimmer
+1 Mesa Enchantress
+1 Overgrown Zealot
+1 Scrabbling Skullcrab
+1 Screaming Swarm
+1 Shroudstomper
+1 Slavering Branchsnapper
+1 Spectral Snatcher
+1 Twitching Doll
+1 Bottomless Pool // Locker Room
+1 Central Elevator // Promising Stairs
+1 Flood the Engine
+1 Funeral Room // Awakening Hall
+1 Glassworks // Shattered Yard
+1 Grand Entryway // Elegant Rotunda
+1 Greenhouse // Rickety Gazebo
+1 Leyline of the Void
+1 Lost in the Maze
+1 Meat Locker // Drowned Diner
+1 Mirror Room // Fractured Realm
+1 Moldering Gym // Weight Room
+1 Painter's Studio // Defaced Gallery
+1 Prismatic Omen
+1 Propaganda
+1 Restricted Office // Lecture Hall
+1 Secret Arcade // Dusty Parlor
+1 Sphere of Safety
+1 Surgical Suite // Hospital Room
+1 Ticket Booth // Tunnel of Hate
+1 Tolarian Contempt
+1 Unable to Scream
+1 Underwater Tunnel // Slimy Aquarium
+1 Walk-In Closet // Forgotten Cellar
+1 Distortion Strike
+1 Enter the Enigma
+1 Silent Departure
+1 Waltz of Rage
+1 Don't Make a Sound
+1 Give In to Violence
+1 Horrid Vigor
+1 Wicked Slumber

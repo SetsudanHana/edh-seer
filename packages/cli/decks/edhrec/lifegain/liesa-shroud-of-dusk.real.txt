@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/d9E4PgmgfW8GN1Gux_5n-g (source https://moxfield.com/decks/0fUUi-8LREiQf59dDDv4EA)
+# tags Lifegain, Flying, Midrange; bracket 3; saved 2026-09-05; 2366 tagged of 12897 indexed
+
+Commander
+1 Liesa, Shroud of Dusk
+
+Deck
+1 Abandoned Air Temple
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Fetid Heath
+1 Isolated Chapel
+1 Minas Tirith
+1 Mutavault
+1 Nykthos, Shrine to Nyx
+1 Opal Palace
+1 Orzhov Basilica
+8 Plains
+1 Seraph Sanctuary
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Silent Clearing
+6 Swamp
+1 Vault of the Archangel
+1 War Room
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Bolas's Citadel
+1 Cosmos Elixir
+1 Fellwar Stone
+1 Herald's Horn
+1 Lightning Greaves
+1 Orzhov Signet
+1 Pearl Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 The Book of Exalted Deeds
+1 Tome of Legends
+1 Urza's Incubator
+1 Akroma's Will
+1 Anguished Unmaking
+1 Dawn Charm
+1 Despark
+1 Fell the Profane
+1 Fracture
+1 Generous Gift
+1 Hatred
+1 Orzhov Charm
+1 Path to Exile
+1 Swords to Plowshares
+1 Angel of Vitality
+1 Angel of the Ruins
+1 Archangel of Thune
+1 Archangel of Tithes
+1 Astelli Reclaimer
+1 Bishop of Wings
+1 Bruna, the Fading Light
+1 Dazzling Angel
+1 Drana and Linvala
+1 Exemplar of Light
+1 Firemane Commando
+1 Giada, Font of Hope
+1 Gisela, the Broken Blade
+1 Lyra Dawnbringer
+1 Metropolis Reformer
+1 Resplendent Angel
+1 Righteous Valkyrie
+1 Selenia, the Cursed Heart
+1 Serra Ascendant
+1 Soul Warden
+1 Soul's Attendant
+1 Starnheim Aspirant
+1 Valkyrie Harbinger
+1 Witch Enchanter
+1 Wojek Investigator
+1 Authority of the Consuls
+1 Blind Obedience
+1 Bloodchief Ascension
+1 Land Tax
+1 Luminarch Ascension
+1 Lunar Convocation
+1 Necropotence
+1 Rampage of the Valkyries
+1 Debt to the Deathless
+1 Decorum Dissertation
+1 Emeria's Call
+1 Toxic Deluge
+1 Vanquish the Horde
+1 Winds of Abandon
+1 Zof Consumption

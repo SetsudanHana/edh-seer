@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/f4NrSTbaAHEZH4PE3llQGw (source https://archidekt.com/decks/25840481)
+# tags Tap / Untap, Weenies, +1/+1 Counters, Tokens, Commander Matters, Artifacts, Charge Counters, Myr; bracket 3; saved 2026-09-05; 2741 tagged of 18343 indexed
+
+Commander
+1 Urtet, Remnant of Memnarch
+
+Deck
+1 Adaptive Omnitool
+1 Argent Dais
+1 Blood Clock
+1 Bubble Matrix
+1 Clock of Omens
+1 Crystal Shard
+1 Dawnsire, Sunstar Dreadnought
+1 Empowered Autogenerator
+1 Energy Chamber
+1 Essence Reliquary
+1 Exploration Broodship
+1 Firdoch Core
+1 Gathering Stone
+1 Genesis Chamber
+1 Helm of Awakening
+1 Idol of Oblivion
+1 Insight Engine
+1 Inspirit, Flagship Vessel
+1 Karn's Sylex
+1 Lux Artillery
+1 Moxite Refinery
+1 Myr Reservoir
+1 Myr Turbine
+1 Power Conduit
+1 Ring of Three Wishes
+1 Sculpting Steel
+1 Skeleton Shard
+1 The Aetherspark
+1 Transmogrifying Wand
+1 Uthros Research Craft
+1 Alloy Myr
+1 Brass Squire
+1 Copper Myr
+1 Coretapper
+1 Darksteel Myr
+1 Frogmyr Enforcer
+1 Gold Myr
+1 Hovermyr
+1 Ichorclaw Myr
+1 Iron Myr
+1 Iron Spider, Stark Upgrade
+1 Kilo, Apogee Mind
+1 Leaden Myr
+1 Lodestone Myr
+1 Master Transmuter
+1 Myr Battlesphere
+1 Myr Convert
+1 Myr Enforcer
+1 Myr Galvanizer
+1 Myr Kinsmith
+1 Myr Retriever
+1 Myr Sire
+1 Myr Welder
+1 Palladium Myr
+1 Patrolling Peacemaker
+1 Plague Myr
+1 Reidane, God of the Worthy
+1 Shimmer Myr
+1 Silver Myr
+1 Steel Overseer
+1 Stridehangar Automaton
+1 The Reality Chip
+1 Walking Archive
+1 Ancient Den
+1 Cascading Cataracts
+1 Command Bridge
+1 Command Tower
+1 Crystal Quarry
+1 Darkmoss Bridge
+1 Darksteel Citadel
+1 Drossforge Bridge
+1 Exotic Orchard
+2 Forest
+1 Goldmire Bridge
+1 Great Furnace
+2 Island
+1 Mistvault Bridge
+2 Mountain
+1 Path of Ancestry
+2 Plains
+1 Power Depot
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Scene of the Crime
+1 Seat of the Synod
+1 Silverbluff Bridge
+1 Slagwoods Bridge
+2 Swamp
+1 Tanglepool Bridge
+1 The Mycosynth Gardens
+1 Thornglint Bridge
+1 Tomb of the Spirit Dragon
+1 Tree of Tales
+1 Vault of Whispers

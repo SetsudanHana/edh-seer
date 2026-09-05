@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/R6f113QzcHhu3oODpxQ-fA (source https://moxfield.com/decks/zHNe2hbVckKTxxrDDHDfjg)
+# tags Spellslinger, Burn; bracket 3; saved 2026-09-05; 2590 tagged of 39600 indexed
+
+Commander
+1 Vivi Ornitier
+
+Deck
+1 Arcane Denial
+1 Brainstorm
+1 Chaos Warp
+1 Counterspell
+1 Fire Magic
+1 Force of Will
+1 Invert Polarity
+1 Ionize
+1 Lightning Bolt
+1 Metamorphic Blast
+1 Needle Drop
+1 Opt
+1 Overwhelming Surge
+1 Pongify
+1 Repulse
+1 Return the Favor
+1 Shock
+1 Skullcrack
+1 Slick Sequence
+1 Thunder Magic
+1 Arcane Signet
+1 Astrologian's Planisphere
+1 Forger's Foundry
+1 Izzet Signet
+1 Resonating Lute
+1 Sol Ring
+1 The Magic Mirror
+1 Winged Boots
+1 Wizard's Staff
+1 Archmage Emeritus
+1 Balmor, Battlemage Captain
+1 Crackling Spellslinger
+1 Eris, Roar of the Storm
+1 Goblin Electromancer
+1 Guttersnipe
+1 Kraum, Violent Cacophony
+1 Longshot, Rebel Bowman
+1 Murmuring Mystic
+1 Niv-Mizzet, Parun
+1 Ral, Monsoon Mage
+1 Slickshot Show-Off
+1 Stella Lee, Wild Card
+1 Storm-Kiln Artist
+1 Talrand, Sky Summoner
+1 Tellah, Great Sage
+1 Third Path Iconoclast
+1 Torbran, Thane of Red Fell
+1 Veyran, Voice of Duality
+1 Young Pyromancer
+1 Capital City
+1 Cascade Bluffs
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Ferrous Lake
+1 Frostboil Snarl
+10 Island
+1 Izzet Boilerworks
+1 Lindblum, Industrial Regency
+10 Mountain
+1 Path of Ancestry
+1 Reliquary Tower
+1 Shivan Reef
+1 Spirebluff Canal
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Temple of the False God
+1 Case of the Ransacked Lab
+1 City on Fire
+1 Fiery Inscription
+1 Ophidian Eye
+1 Collective Defiance
+1 Curse of the Swine
+1 Finale of Promise
+1 Finale of Revelation
+1 Flash Photography
+1 Grapeshot
+1 Memories Returning
+1 Skewer the Critics
+1 Vandalblast
