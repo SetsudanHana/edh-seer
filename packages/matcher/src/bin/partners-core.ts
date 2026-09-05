@@ -683,6 +683,14 @@ export const isSubstantive = (d: DeckCard): boolean =>
 export const meldKeysOf = (d: DeckCard): string[] =>
   (d.card as { meldPartner?: string }).meldPartner ? ["meld|-|-|-"] : [];
 
+const WUBRG = ["W", "U", "B", "R", "G"] as const;
+/** WUBRG order, deduped; "C" for colourless. The client's `identityKey` sorts the same way; both
+ *  sides must agree because this string is the lookup key on the page. */
+export function identityKeyOf(colors: readonly string[]): string {
+  const set = new Set(colors);
+  return WUBRG.filter((c) => set.has(c)).join("") || "C";
+}
+
 /** WHAT A STATIC REACHES, as a demand key: `applies:<kind>|<types>|<subtypes>|-`.
  *
  *  A STATIC IS THE THIRD KIND OF RELATION THIS FILE KNOWS. The forward phase ranks on what a card
@@ -812,6 +820,13 @@ export interface CardPageRecord {
   pairsWith?: { slug: string; name: string; identity: string[]; licence: string }[];
   /** CR 903.4b: choose its colour before the game; the page offers five. */
   choosesColour?: true;
+  /** THE SAME LIST, RE-RANKED PER IDENTITY A PAIRING CAN REACH, keyed by `identityKeyOf`. A picked
+   *  partner widens the deck's identity, and the list is ranked over the legal pool, so it has to be
+   *  ranked again per identity the pair can reach. Keyed by colour set and not by partner card,
+   *  because the legal pool depends on identity alone: two mono-black Backgrounds give one list.
+   *  Absent for the own identity (that is `commanderPartners`). A colour chooser gets one per colour,
+   *  and one per colour-plus-partner when it pairs as well (Clara Oswald beside a Doctor). */
+  commanderPartnersBy?: Record<string, { partners: PartnerRow[]; pool: Record<string, number>; rarity: Record<string, number> }>;
   emits: string[];
   demands: string[];
   partners: PartnerRow[];
@@ -975,15 +990,35 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
             identity: o.card.colorIdentity ?? [], licence,
           }))
           .sort((a, b) => a.licence.localeCompare(b.licence) || a.name.localeCompare(b.name));
-        const identity = new Set(d.card.colorIdentity ?? []);
-        const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
-        const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
-        // The other half is in the same deck by construction, so it needs no identity check.
-        const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith);
+        const rankedFor = (identity: Set<string>) => {
+          const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
+          const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
+          // The other half is in the same deck by construction, so it needs no identity check.
+          const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith);
+          return { partners: rows, pool, rarity };
+        };
+        const own = d.card.colorIdentity ?? [];
+        const { partners, pool, rarity } = rankedFor(new Set(own));
+        // EVERY IDENTITY A PAIRING CAN REACH, minus the own one. Sizing measured 2026-09-05: bare
+        // Partner 495 variant lists over 55 cards, Backgrounds 129 over 32, Doctors 76 over 24,
+        // labels 56 over 18 -- about 900 extra rankings on a 66 s build.
+        const reach = new Set<string>();
+        for (const p of pairsWith) reach.add(identityKeyOf([...own, ...p.identity]));
+        if (choosesColour(d.card as Card)) {
+          for (const c of WUBRG) {
+            reach.add(identityKeyOf([...own, c]));
+            for (const p of pairsWith) reach.add(identityKeyOf([...own, c, ...p.identity]));
+          }
+        }
+        reach.delete(identityKeyOf(own));
+        const commanderPartnersBy = Object.fromEntries(
+          [...reach].map((key) => [key, rankedFor(new Set(key === "C" ? [] : key.split("")))]),
+        );
         return {
-          commanderPartners: rows, commanderPool: pool, commanderRarity: rarity,
+          commanderPartners: partners, commanderPool: pool, commanderRarity: rarity,
           ...(pairsWith.length > 0 ? { pairsWith } : {}),
           ...(choosesColour(d.card as Card) ? { choosesColour: true as const } : {}),
+          ...(reach.size > 0 ? { commanderPartnersBy } : {}),
         };
       })() : {}),
     };

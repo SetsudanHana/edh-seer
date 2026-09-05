@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -892,4 +892,43 @@ test("a commander record lists the cards it can legally pair with, by licence", 
   expect(rec("Grizzly Bears").pairsWith).toBeUndefined();
   expect(rec("Clara Oswald").choosesColour).toBe(true);
   expect(rec("Grizzly Bears").choosesColour).toBeUndefined();
+});
+
+/** A PICKED PARTNER CHANGES THE DECK'S IDENTITY, and the partner list is ranked over the legal pool,
+ *  so the list has to be re-ranked per identity the pair can reach. Keyed by colour set, not partner
+ *  card: two mono-black Backgrounds give one list. The own identity is never a key -- that list is
+ *  `commanderPartners`. */
+test("a commander carries a partner list per distinct combined identity it can reach", () => {
+  const lead = legendary("Wilson, Refined Grizzly", "Legendary Creature — Bear Warrior",
+    { oracleText: "Choose a Background (You can have a Background as a second commander.)", colorIdentity: ["G"] });
+  // A supply the ranking can propose a candidate from: `legendary()` gives a trigger and no emit.
+  (lead.tags!.abilities[0] as { emits?: unknown[] }).emits = [
+    { verb: "enters", subject: { control: "you", token: false, type: "creature" } },
+  ];
+  const black = legendary("Haunted One", "Legendary Enchantment — Background", { colorIdentity: ["B"] });
+  const black2 = legendary("Cultist of the Absolute", "Legendary Enchantment — Background", { colorIdentity: ["B"] });
+  const green = legendary("Druid Class Background", "Legendary Enchantment — Background", { colorIdentity: ["G"] });
+  // The Backgrounds watch something the lead never supplies, so the BG list is the payoff alone
+  // and not three Backgrounds filling `PER_EVENT_CAP` ahead of it.
+  for (const b of [black, black2, green]) (b.tags!.abilities[0] as { trigger: { verbs: string[] } }).trigger.verbs = ["upkeep"];
+  const payoffB = withIdentity(legendary("Black Payoff", "Creature — Rat"), ["B"]);
+  const { shards } = buildPartnerArtifact([lead, black, black2, green, payoffB], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Wilson, Refined Grizzly")!;
+  expect(Object.keys(rec.commanderPartnersBy ?? {})).toEqual(["BG"]);
+  expect(rec.commanderPartnersBy!.BG!.partners.map((r) => r.name)).toContain("Black Payoff");
+  expect(rec.commanderPartners!.map((r) => r.name)).not.toContain("Black Payoff");
+  // The Background's own record carries the same key, so the page can merge both halves.
+  const bg = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Haunted One")!;
+  expect(Object.keys(bg.commanderPartnersBy ?? {})).toEqual(["BG"]);
+});
+
+test("a colour chooser carries one list per colour", () => {
+  const clara = legendary("Clara Oswald", "Legendary Creature — Human Advisor", {
+    oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.",
+  });
+  const { shards } = buildPartnerArtifact([clara], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Clara Oswald")!;
+  expect(Object.keys(rec.commanderPartnersBy ?? {}).sort()).toEqual(["B", "G", "R", "U", "W"]);
+  expect(identityKeyOf([])).toBe("C");
+  expect(identityKeyOf(["U", "R"])).toBe("UR");
 });
