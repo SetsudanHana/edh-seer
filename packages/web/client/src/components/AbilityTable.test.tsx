@@ -1,0 +1,20 @@
+import { render, screen } from "@testing-library/react";
+import { expect, test } from "vitest";
+import { AbilityTable } from "./AbilityTable.js";
+
+/** A COUNT OVER SEVERAL TYPES READS AS A CHOICE OF PROPER NOUNS. Burakos counts his party --
+ *  "cleric, rogue, warrior, wizard" -- and the first cut printed "every Cleric, rogue, warrior,
+ *  wizard", three lowercase nouns in a list that read as AND (branch review, 2026-09-05). */
+test("a multi-type count capitalises every type and reads as a choice", () => {
+  render(<AbilityTable rows={[{
+    kind: "triggered", when: ["attacks|-|-|-"], self: true, effect: "token-generation",
+    scaling: "per-creature", counts: "cleric, rogue, warrior, wizard", emits: [],
+  }]} stacked />);
+  expect(screen.getByText(/every Cleric, Rogue, Warrior or Wizard you control/)).toBeInTheDocument();
+  expect(screen.getByText(/this card attacking/)).toBeInTheDocument();
+});
+
+test("a single-type count is unchanged", () => {
+  render(<AbilityTable rows={[{ kind: "activated", when: [], effect: "token-generation", counts: "goblin", emits: [] }]} stacked />);
+  expect(screen.getByText(/every Goblin you control/)).toBeInTheDocument();
+});

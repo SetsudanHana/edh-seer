@@ -65,7 +65,11 @@ const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
  *  after normalization, so both derived `x-cost` and no subject (owner, 2026-09-05). */
 const DEFINES_X = /\bwhere x is (?:the number of|equal to the number of)\s+([^.,;]{1,60})/i;
 const isBareX = (action: Action): boolean => /^x$/i.test((action.amount ?? "").trim());
-/** The text the count is read from: the action's own, or the clause's definition of its X. */
+/** The text the count is read from: the action's own, or the clause's definition of its X.
+ *  CEILING: ONE X PER CLAUSE. The first "where X is …" in the clause is handed to every bare-X
+ *  action; a clause defining X twice (none in the corpus on 2026-09-05, but the templating exists)
+ *  would give its second action the first definition, silently. The upgrade path is to take the
+ *  definition that FOLLOWS the action's own sentence rather than the clause's first. */
 const countedText = (action: Action, clauseText?: string): string => {
   const own = `${action.amount ?? ""} ${action.object ?? ""}`;
   if (COUNTED.test(own)) return own;

@@ -24,6 +24,13 @@ const KIND_LABEL: Record<string, string> = {
   "on-cast": "on cast",
 };
 
+/** "CLERIC, ROGUE, WARRIOR OR WIZARD": every type a count names is a proper noun, and the list is a
+ *  choice, not a conjunction -- a party is one of each, and a Rogue alone is counted. */
+const countedNoun = (counts: string): string => {
+  const words = counts.split(",").map((w) => w.trim()).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1));
+  return words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} or ${words.at(-1)}`;
+};
+
 export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: boolean }) {
   // AN EMPTY TABLE SAYS SO. Every legal commander has a page (2026-09-05), 509 of them with no
   // derived ability, and a heading over nothing read as a broken page rather than as the refusal
@@ -75,7 +82,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
                   * word with no object, and the count is the whole reason a Goblin deck runs this. */}
                 {a.counts && (
                   <span className="block text-(--muted) text-sm mt-1">
-                    once for every {a.counts.charAt(0).toUpperCase() + a.counts.slice(1)} you control
+                    once for every {countedNoun(a.counts)} you control
                   </span>
                 )}
               </td>
@@ -105,7 +112,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
               {effectPhrase(a.effect, a.amount, undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
               {a.counts && (
                 <span className="text-(--muted)">
-                  {" "}once for every {a.counts.charAt(0).toUpperCase() + a.counts.slice(1)} you control
+                  {" "}once for every {countedNoun(a.counts)} you control
                 </span>
               )}
             </p>
