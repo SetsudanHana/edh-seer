@@ -873,3 +873,23 @@ test("a meld card's page lists its other half, verified on the engine's meld tag
   expect(row.reason).toMatch(/meld/i);
   expect(rec.pool["meld|-|-|-"]).toBe(1);
 });
+
+/** WHO A COMMANDER MAY LEAD WITH, from the same `pairingLicense` the legality report uses. */
+test("a commander record lists the cards it can legally pair with, by licence", () => {
+  const lead = legendary("Wilson, Refined Grizzly", "Legendary Creature — Bear Warrior",
+    { oracleText: "Choose a Background (You can have a Background as a second commander.)", colorIdentity: ["G"] });
+  const bg = legendary("Haunted One", "Legendary Enchantment — Background", { colorIdentity: ["B"] });
+  const bear = legendary("Grizzly Bears", "Legendary Creature — Bear", { colorIdentity: ["G"] });
+  const clara = legendary("Clara Oswald", "Legendary Creature — Human Advisor", {
+    oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+  });
+  const { shards } = buildPartnerArtifact([lead, bg, bear, clara], H);
+  const rec = (n: string) => [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === n)!;
+  expect(rec("Wilson, Refined Grizzly").pairsWith).toEqual([
+    { slug: "haunted-one", name: "Haunted One", identity: ["B"], licence: "choose a background" },
+  ]);
+  expect(rec("Haunted One").pairsWith?.map((p) => p.name)).toEqual(["Wilson, Refined Grizzly"]);
+  expect(rec("Grizzly Bears").pairsWith).toBeUndefined();
+  expect(rec("Clara Oswald").choosesColour).toBe(true);
+  expect(rec("Grizzly Bears").choosesColour).toBeUndefined();
+});

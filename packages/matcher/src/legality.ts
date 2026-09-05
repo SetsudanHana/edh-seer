@@ -27,6 +27,12 @@ const ANY_NUMBER_NAMED = /a deck can have any number of cards named/i;
  *  PLANESWALKER and a legal commander because it says so in its own text. */
 const CAN_BE_COMMANDER = /can be your commander/i;
 
+/** CR 903.4b, as printed: "choose a color before the game begins". Three corpus cards on
+ *  2026-09-05 -- Clara Oswald, The Prismatic Piper, Faceless One -- and the chosen colour is in the
+ *  commander's identity, so a page about one of them has to offer the choice. */
+const CHOOSES_COLOUR = /choose a colou?r before the game begins/i;
+export const choosesColour = (card: Card): boolean => CHOOSES_COLOUR.test(card.oracleText ?? "");
+
 /** CR 702.124 — WHICH PAIRS MAY LEAD A DECK TOGETHER (roadmap J12's partner half). J4 shipped a
  *  commander check that accepts a Background without ever looking at its partner, and said so in its
  *  own comment; this is that deferred half.

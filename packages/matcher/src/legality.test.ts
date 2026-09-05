@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
-import { deckLegality } from "./legality.js";
+import { choosesColour, deckLegality } from "./legality.js";
 import { commanderDamage } from "./commander-damage.js";
 
 const card = (name: string, typeLine = "Creature — Bear", opts: Partial<Card> = {}): Card => ({
@@ -163,4 +163,15 @@ test("commander damage is per commander, so a partner pair gets two clocks", () 
 test("the same commander named twice is one commander, not an illegal pair", () => {
   expect(deckLegality({ cards: [cmd, cmd, ...filler(98)], commanders: [cmd, cmd] })
     .map((f) => f.rule)).not.toContain("pairing");
+});
+
+/** CR 903.4b: a commander whose static makes you choose its colour before the game has that colour
+ *  in its identity. Three corpus cards print the sentence (2026-09-05): Clara Oswald, The Prismatic
+ *  Piper, Faceless One. The regex is written against Clara's printed text. */
+test("903.4b — a card that chooses its colour before the game is recognised", () => {
+  const clara = card("Clara Oswald", "Legendary Creature — Human Advisor", {
+    oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+  });
+  expect(choosesColour(clara)).toBe(true);
+  expect(choosesColour(cmd)).toBe(false);
 });

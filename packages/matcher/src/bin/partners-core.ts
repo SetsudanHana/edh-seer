@@ -4,7 +4,7 @@ import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { ROLE_NOT_SYNERGY, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
-import { isLegalCommander, pairingLicense } from "../legality.js";
+import { choosesColour, isLegalCommander, pairingLicense } from "../legality.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
@@ -806,6 +806,12 @@ export interface CardPageRecord {
   commander: boolean;
   /** A Background: a commander that never leads alone (CR 702.124). The page says so. */
   pairingOnly?: true;
+  /** THE CARDS THIS COMMANDER MAY LEAD WITH (CR 702.124), from `pairingLicense` -- the same
+   *  function the legality report uses, so the page can never offer a pair the report would flag.
+   *  Only substantive cards, because a row must link to a page. Commander records only. */
+  pairsWith?: { slug: string; name: string; identity: string[]; licence: string }[];
+  /** CR 903.4b: choose its colour before the game; the page offers five. */
+  choosesColour?: true;
   emits: string[];
   demands: string[];
   partners: PartnerRow[];
@@ -918,6 +924,12 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const byName = new Map(substantive.map((d) => [d.card.name, d] as const));
   freq["meld|-|-|-"] = 1;
 
+  // EVERY COMMANDER, ONCE, for the pairing scan below. CEILING: `pairsWith` is O(commanders^2)
+  // regex pairs -- about 2,600^2 / 2 = 3.4 M cheap tests on the corpus, a few seconds. The upgrade
+  // path is to bucket by licence form first (bare Partner, label, Background, Doctor) so each card
+  // is compared only with its own form.
+  const commanders = substantive.filter(isCommander);
+
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
 
@@ -954,12 +966,25 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       // rule `legality.ts` reports a violation against. An empty identity is inside every one,
       // which is why a colourless card belongs in every deck and `every` over `[]` says so.
       ...(commander ? (() => {
+        const pairsWith = commanders
+          .filter((o) => o.card.name !== d.card.name)
+          .map((o) => ({ o, licence: pairingLicense(d.card as Card, o.card as Card) }))
+          .filter((x): x is { o: DeckCard; licence: string } => x.licence !== undefined)
+          .map(({ o, licence }) => ({
+            slug: slugs.get(o.card.name) ?? slugOf(o.card.name), name: o.card.name,
+            identity: o.card.colorIdentity ?? [], licence,
+          }))
+          .sort((a, b) => a.licence.localeCompare(b.licence) || a.name.localeCompare(b.name));
         const identity = new Set(d.card.colorIdentity ?? []);
         const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
         const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
         // The other half is in the same deck by construction, so it needs no identity check.
         const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith);
-        return { commanderPartners: rows, commanderPool: pool, commanderRarity: rarity };
+        return {
+          commanderPartners: rows, commanderPool: pool, commanderRarity: rarity,
+          ...(pairsWith.length > 0 ? { pairsWith } : {}),
+          ...(choosesColour(d.card as Card) ? { choosesColour: true as const } : {}),
+        };
       })() : {}),
     };
     shards.set(shardName, shard);
