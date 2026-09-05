@@ -40,6 +40,7 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   animate: [() => "turns something into a creature", "turns something into a creature"],
   "graveyard-hate": [() => "hits a graveyard", "hits a graveyard"],
   debuff: [(n) => `shrinks a creature by ${n}`, "shrinks a creature"],
+  "ability-loss": [() => "strips abilities", "strips abilities"],
   // AND THE MULTIPLIERS, which a sample of the still-bare rows put next in volume: 28 of 400 were
   // `token-doubling`, 18 `proliferate`, 14 `damage-multiplier`. Each one is a card whose whole
   // reason for being in a deck is what it multiplies, printed as "triggers".

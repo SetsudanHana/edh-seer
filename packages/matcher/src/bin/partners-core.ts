@@ -736,7 +736,7 @@ export function identityKeyOf(colors: readonly string[]): string {
  *  type is spelled out to its members here so the candidate index below is keyed on printed types
  *  only. CEILING: a subject with neither type nor subtype ("permanents you control") makes no key
  *  -- measured at 0 of 1,117 static subjects, so the branch is not worth its line yet. */
-const kindNotARelation = (kind: string): boolean => ROLE_NOT_SYNERGY.has(kind) || kind === "debuff";
+const kindNotARelation = (kind: string): boolean => ROLE_NOT_SYNERGY.has(kind) || kind === "debuff" || kind === "ability-loss";
 const asList = (v: string | string[] | undefined): string[] => v === undefined ? [] : Array.isArray(v) ? v : [v];
 const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((raw) => {
   const t = raw.toLowerCase();

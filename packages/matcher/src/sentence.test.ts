@@ -358,3 +358,7 @@ test("effectPhrase names the recipient of a draw or a life change", () => {
 test("gaining speed has a phrase", () => {
   expect(effectPhrase("speed", undefined)).toBe("gains speed");
 });
+
+test("losing abilities has a phrase", () => {
+  expect(effectPhrase("ability-loss", undefined)).toBe("strips abilities");
+});

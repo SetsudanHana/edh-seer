@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 103;
+export const DERIVE_VERSION = 104;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -398,6 +398,8 @@ function countTruncated(object: string): string {
  *  recipient to end on a non-space removes the overlap. The capture is unchanged — lazy already
  *  preferred the shortest recipient, which is the one ending on a non-space. */
 const GRANTED_TO = /^(.*?\S)\s+\b(?:have|has|gain|gains)\b/i;
+/** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
+const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
  *  "Target Shapeshifter becomes a copy of TARGET CREATURE" -- so the recipient, the half that names
  *  the subtype, is lost the way a grant's was. 122 corpus clauses carry a `copy` action. */
@@ -446,6 +448,15 @@ function effectSubject(
   // and the same typal guard apply: "target Shapeshifter becomes a copy of target creature" is a
   // synergy with the deck's Shapeshifters, while "each other creature you control becomes a copy"
   // reaches the whole board and is an ordinary card doing an ordinary thing.
+  // AN ABILITY LOSS NAMES WHO LOSES THEM IN THE CLAUSE, never in its object ("have abilities"). A
+  // type-only class is KEPT here, unlike a grant's: a grant with no subtype is refused because the
+  // whole-deck lord edge it would form is a false claim, and an ability loss forms no claim at all
+  // -- it is a silence the matcher applies to the class it names. "Enchanted creature" and other
+  // narrowings the filter cannot hold stay unnamed, so an Aura silences nothing class-wide.
+  if (kind === "ability-loss") {
+    const who = recipientBefore(clauseText, LOSES_ABILITIES);
+    return who && !UNEXPRESSIBLE_NARROWING.test(who) ? parseSubject(who) : parseSubject("");
+  }
   if (action.verb === "grant-ability" || action.verb === "copy") {
     const who = action.verb === "copy"
       ? recipientBefore(clauseText, COPIED_INTO)
@@ -970,8 +981,10 @@ export function deriveAbilities(
       // same discipline a static does: name WHO becomes the copy, or form no edge. "Each other
       // creature you control becomes a copy of that creature" is the whole board, and a subject that
       // names nothing is a wildcard that matches every card in the deck.
+      // AN ABILITY LOSS KEEPS ITS CLASS SUBJECT. It is a silence the matcher applies, never a
+      // claim, so the whole-deck-lord refusal in `namesItsTargets` does not apply to it.
       const keepSubject = subject
-        && (kind !== "static" || namesItsTargets(subject))
+        && (kind !== "static" || namesItsTargets(subject) || effectKind === "ability-loss")
         && (effectKind !== "clone" || subject.subtype !== undefined);
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.

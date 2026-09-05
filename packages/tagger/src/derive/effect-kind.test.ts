@@ -617,3 +617,13 @@ test("becoming also other creature types is a type-grant", () => {
     .toBe("type-grant");
   expect(actionEffectKind({ verb: "grant-ability", object: "is also a Vehicle" })).toBe("type-grant");
 });
+
+/** "CREATURES LOSE ALL ABILITIES" IS ITS OWN KIND. The clause records it as `cant | have
+ *  abilities`, which read as nothing (not a tax), so Dress Down derived its draw and its end-step
+ *  sacrifice and never the static that turns the board off -- and the engine claimed Grim Guardian
+ *  drains when Dress Down enters (owner, 2026-09-05). 73 corpus cards print the sentence. */
+test("losing abilities is ability-loss, and a payable can't is still a tax", () => {
+  expect(actionEffectKind({ verb: "cant", object: "have abilities" })).toBe("ability-loss");
+  expect(actionEffectKind({ verb: "cant", object: "target creature loses all abilities" })).toBe("ability-loss");
+  expect(actionEffectKind({ verb: "cant", object: "attack you unless its controller pays {2}" })).toBe("tax");
+});

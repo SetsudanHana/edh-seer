@@ -326,6 +326,11 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     const control = parseSubject(action.object ?? "").control;
     return control === "opp" ? "forced-sacrifice" : null;
   }
+  // "CREATURES LOSE ALL ABILITIES" is `cant | have abilities` after normalization, and it read as
+  // nothing, so Dress Down derived its draw and its end-step sacrifice and never the static that
+  // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
+  // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
+  if (verb === "cant" && /\babilit(?:y|ies)\b/i.test(action.object ?? "")) return "ability-loss";
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   for (const r of ZONE_RULES) {

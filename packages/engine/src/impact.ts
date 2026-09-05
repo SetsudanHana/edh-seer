@@ -72,6 +72,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     // so it is worth more than a ping, but it is OPPONENT-facing and earns fewer pairwise claims
     // than an anthem. A starting point, tunable like every other row here.
     debuff: 0.4,
+    "ability-loss": 0.4,
     "counter-placement": 0.5,
     "fast-mana": 0.5,
     "mana-generation": 0.4,

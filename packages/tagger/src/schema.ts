@@ -435,6 +435,8 @@ export const EFFECT_KINDS = [
    *  `pump` for four archetypes and `wincon.ts` for the go-wide finisher — and every one of them was
    *  wrong about these cards. */
   "debuff",
+  // CR 613.1f: an ability-removing effect ("creatures lose all abilities"). A silence, never a claim.
+  "ability-loss",
   "cost-reduction",
   "trigger-doubling",
   "graveyard-recursion",

@@ -128,10 +128,13 @@ function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?:
  *  changeling fix (2026-08-14) landed in `extractCharacteristics` and moved the population by
  *  exactly zero, because the corpus never called it. One implementation, one place to fix. */
 function charsFrom(doc: {
-  typeLine?: string; oracleText?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
+  name?: string; typeLine?: string; oracleText?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
   power?: string | null; toughness?: string | null; keywords?: string[]; layout?: string;
 }): DerivedTagsDoc["characteristics"] {
   return extractCharacteristics({
+    // THE NAME, because "Burakos is also a Cleric ..." is anchored on it (W14, CodeQL): without it
+    // every derive crashed on the first card, found on the first re-derive after that anchor.
+    name: doc.name ?? "",
     typeLine: doc.typeLine ?? "",
     // THE TEXT BOX IS PART OF THE TYPE LINE for "X is also a Cleric, Rogue, Warrior, and Wizard":
     // `extractCharacteristics` reads it, and this projection had never handed it over, so the
