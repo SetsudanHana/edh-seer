@@ -64,7 +64,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
           {rows.map((a, i) => (
             <tr key={i} className="border-b border-(--separator) align-top">
               <td className="py-3 pr-4">
-                <span className="eyebrow text-(--muted)">{KIND_LABEL[a.kind] ?? a.kind}</span>
+                <span className="eyebrow text-(--muted)">{KIND_LABEL[a.kind] ?? a.kind}{a.requires ? ` · at max ${a.requires.marker}` : ""}</span>
                 {/* THE COST IS PART OF "HOW IT FIRES", not a separate fact: an activated ability
                   * with no cost shown is an ability a reader cannot judge the speed of. */}
                 {a.cost && <span className="block font-mono text-sm mt-1">{a.cost}</span>}
@@ -102,7 +102,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
         {rows.map((a, i) => (
           <li key={i} className="flex flex-col gap-1 border-t border-(--separator) pt-3 first:border-t-0 first:pt-0">
             <p className="flex flex-wrap items-baseline gap-x-2">
-              <span className="eyebrow text-(--muted)">{KIND_LABEL[a.kind] ?? a.kind}</span>
+              <span className="eyebrow text-(--muted)">{KIND_LABEL[a.kind] ?? a.kind}{a.requires ? ` · at max ${a.requires.marker}` : ""}</span>
               {a.cost && <span className="font-mono text-sm">{a.cost}</span>}
             </p>
             {a.when.length > 0 && (

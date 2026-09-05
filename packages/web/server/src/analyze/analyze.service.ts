@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { DeckReport } from "@edh-seer/engine";
+import type { DeckReport, GameState } from "@edh-seer/engine";
 import type { AnalyzeResponse, WireGraph } from "./analyze.types.js";
 
 export const ANALYZE_DEPS = "ANALYZE_DEPS";
@@ -19,7 +19,7 @@ export interface AnalyzeDeps {
     commanderResolved: string[];
     commanderColorIdentity: string[];
   }>;
-  analyze(cards: unknown[], combos: unknown[], commanderNames: string[]): Promise<DeckReport>;
+  analyze(cards: unknown[], combos: unknown[], commanderNames: string[], state?: GameState): Promise<DeckReport>;
   graph(
     cardNames: string[],
     rolesByName: Map<string, string[]>,
@@ -32,7 +32,7 @@ export interface AnalyzeDeps {
 export class AnalyzeService {
   constructor(@Inject(ANALYZE_DEPS) private readonly deps: AnalyzeDeps) {}
 
-  async analyze(decklist: string, commanders?: string): Promise<AnalyzeResponse> {
+  async analyze(decklist: string, commanders?: string, state?: GameState): Promise<AnalyzeResponse> {
     const sections = this.deps.parseDecklistSections(decklist);
     const commanderNames =
       commanders && commanders.trim() !== "" ? this.deps.parseLines(commanders) : sections.commanders;
@@ -42,7 +42,7 @@ export class AnalyzeService {
       sections.deck,
       this.deps.makeLookup(),
     );
-    const report = await this.deps.analyze(cards, combos, commanderResolved);
+    const report = await this.deps.analyze(cards, combos, commanderResolved, state);
     // Keyed by raw report name, not a normalized one: the dep already normalizes both sides of
     // this join off its own `docs` array (the ESM `@edh-seer/data` it dynamically imports), so doing
     // it again here would just be a second, easy-to-drift copy of the same normalization.

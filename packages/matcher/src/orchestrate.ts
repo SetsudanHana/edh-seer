@@ -2,7 +2,7 @@ import { normalizeName } from "@edh-seer/data/names";
 import { resolveNames, type CardLookup } from "@edh-seer/data/resolve";
 import { detectCommanders } from "@edh-seer/data/commander";
 import { docToCard } from "@edh-seer/data/docs";
-import { ComboIndex, loadImpactWeights, type Card, type Combo, type DeckReport } from "@edh-seer/engine";
+import { ComboIndex, loadImpactWeights, type Card, type Combo, type DeckReport, type GameState } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { buildDeckCards, type CardTagsLookup } from "./deck-cards.js";
 import { analyzeDeckStructured, collectTokenNodes } from "./analyze.js";
@@ -59,6 +59,8 @@ export async function analyzeResolvedDeck(
   combos: Combo[],
   commanderNames: string[],
   sources: AnalysisSources,
+  /** A game state the owner set (roadmap W18); undefined is the report as it always was. */
+  state?: GameState,
 ): Promise<DeckReport> {
   const deckCards = await buildDeckCards(cards, sources.lookup, sources.tagsLookup);
   // Same token lookup `buildWireGraph` uses -- the two must agree, or the report's
@@ -72,6 +74,7 @@ export async function analyzeResolvedDeck(
     new ComboIndex(combos),
     undefined,
     sources.tokenTags,
+    state,
   );
 }
 

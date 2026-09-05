@@ -6,7 +6,7 @@
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
-import type { Ability, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
+import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
@@ -25,7 +25,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 104;
+export const DERIVE_VERSION = 105;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -705,6 +705,8 @@ export function deriveAbilities(
   /** The card is cast at instant speed -- an Instant, or a spell with flash -- so its on-cast emits
    *  are `instantSpeed`. Read off characteristics by `deriveCardTags`; absent means no. */
   castAtInstantSpeed?: boolean,
+  /** Clause id -> a game-state requirement, attached to every ability the clause produces. */
+  clauseRequires?: Record<number, Requirement>,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -1094,6 +1096,8 @@ export function deriveAbilities(
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };
       }
+      const requires = clauseRequires?.[clause.id];
+      if (requires) abilities[i] = { ...abilities[i], requires };
       const trig = abilities[i].trigger;
       if (trig && trig.verbs.includes("enters") && (arrivalNotCast || arrivalTapped)) {
         abilities[i] = { ...abilities[i], trigger: { ...trig, subject: {
@@ -1122,6 +1126,8 @@ export interface DeriveInput {
    *  same reason as `clauseTexts`: deterministic, so recomputed rather than stored. Absent leaves
    *  every ability faceless, which is what every single-face card wants anyway. */
   clauseFaces?: Record<number, number>;
+  /** Clause id -> the game-state requirement its printed ability word carries (`markers.ts`). */
+  clauseRequires?: Record<number, Requirement>;
   /** Clause id -> the clause's activation cost, straight from `segment()`. Same shape and same
    *  reason as `clauseTexts`: free to recompute, so nothing is stored. `repeatsFor` reads this, not
    *  `clauseTexts`, for the self-sacrifice and tap-cost rules -- the cost is split OUT of the body
@@ -1142,7 +1148,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
   const { abilities, unknownTriggers } = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
-    input.clauseFaces, castAtInstantSpeed);
+    input.clauseFaces, castAtInstantSpeed, input.clauseRequires);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

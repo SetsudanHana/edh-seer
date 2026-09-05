@@ -1564,3 +1564,52 @@ test("a meld pair counts as partners on both cards, not only as an edge", () => 
   expect(report.cards.find((c) => c.name === "Phyrexian Dragon Engine")?.topPartners.map((p) => p.name))
     .toEqual(["Mishra, Claimed by Gix"]);
 });
+
+/** GAME-STATE MARKERS (roadmap W18). Speed is the PLAYER's (CR 702.179), so it is a state the owner
+ *  sets, not a fact on a card: a "Max speed" ability is silent until the state reaches 4, a "+X/+0,
+ *  where X is your speed" anthem resolves against it, and a stat predicate on a payoff reads the
+ *  board as it would stand under that anthem -- layer 7c of CR 613, additive statics only. */
+describe("a game state turns conditional abilities on", () => {
+  const uprising = dc("Garruk's Uprising", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 4 }] } },
+    effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }], [], "Enchantment");
+  const samut = dc("Samut, the Driving Force", [{
+    kind: "static", amount: "+X/+0, where X is your speed",
+    effect: { kind: "pump", subject: { control: "you", token: null, type: "creature", scope: "all" } },
+  }], [], "Creature");
+  const surveyor = dc("Goblin Surveyor", [{
+    kind: "activated", cost: "{3}, Exile this card from your graveyard", requires: { marker: "speed", min: 4 },
+    effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }], [], "Creature");
+  const drawPayoff = dc("Kindred Discovery", [{
+    kind: "triggered", trigger: { verbs: ["draw"], subject: { control: "you", token: null } }, effect: { kind: "token-generation" },
+  }], [], "Enchantment");
+  const bear = dcWithPT("Grizzly Bears", 1, 1);
+  const edgeBetween = (r: ReturnType<typeof analyzeDeckStructured>, a: string, b: string) =>
+    r.edges.find((e) => (e.a === a && e.b === b) || (e.a === b && e.b === a));
+
+  test("a Max speed ability is silent without a state and on at speed 4", () => {
+    const off = analyzeDeckStructured([surveyor, drawPayoff], undefined, H);
+    expect(edgeBetween(off, "Goblin Surveyor", "Kindred Discovery")).toBeUndefined();
+    const on = analyzeDeckStructured([surveyor, drawPayoff], undefined, H, undefined, undefined, undefined, undefined, { speed: 4 });
+    expect(edgeBetween(on, "Goblin Surveyor", "Kindred Discovery")).toBeDefined();
+    const low = analyzeDeckStructured([surveyor, drawPayoff], undefined, H, undefined, undefined, undefined, undefined, { speed: 3 });
+    expect(edgeBetween(low, "Goblin Surveyor", "Kindred Discovery")).toBeUndefined();
+  });
+
+  test("a 1/1 enters as a 5/1 under Samut at speed 4, and a power-4 payoff sees it", () => {
+    const at = (speed?: 1 | 2 | 3 | 4) =>
+      analyzeDeckStructured([samut, bear, uprising], undefined, H, undefined, undefined, undefined, undefined, speed ? { speed } : undefined);
+    expect(edgeBetween(at(), "Grizzly Bears", "Garruk's Uprising")).toBeUndefined();
+    expect(edgeBetween(at(1), "Grizzly Bears", "Garruk's Uprising")).toBeUndefined();
+    const four = at(4);
+    const edge = edgeBetween(four, "Grizzly Bears", "Garruk's Uprising")!;
+    expect(edge).toBeDefined();
+    // The state made this edge, and the report says so; Samut's own anthem edge existed anyway.
+    expect(edge.enabledBy).toEqual(["speed"]);
+    expect(edgeBetween(four, "Samut, the Driving Force", "Grizzly Bears")?.enabledBy).toBeUndefined();
+    expect(four.state).toEqual({ speed: 4 });
+  });
+});

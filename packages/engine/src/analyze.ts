@@ -10,11 +10,19 @@ const TAG_STATS: TagStats = tagWeights as TagStats;
 
 export const COMMANDER_BOOST = 3;
 
+/** A GAME-STATE MARKER THE OWNER SETS (roadmap W18). Speed is the player's (CR 702.179): one number
+ *  for the deck, never a fact on a card. Grows one field per marker. */
+export type Marker = "speed";
+export interface GameState { speed?: 1 | 2 | 3 | 4 }
+
 export interface SynergyEdge {
   a: string;
   b: string;
   score: number;
   reasons: Reason[];
+  /** THE STATE MADE THIS EDGE: absent from the same analysis run without a state. The graph draws
+   *  it apart and the inspector says which marker. */
+  enabledBy?: Marker[];
 }
 
 export interface CardSynergy {
@@ -386,6 +394,11 @@ export interface DeckReport {
    *  no partner is a real signal — "this deck makes Clues and nothing cares" — which is why the data
    *  carries it even when the view hides it. */
   tokenNodes?: { name: string; hasPartner: boolean }[];
+  /** The state this report was computed under, echoed so a view can say "at speed 4". */
+  state?: GameState;
+  /** The markers this deck can reach at all -- `speed` when a card prints Start your engines! --
+   *  so the page offers a control only where it can change anything. */
+  markers?: Marker[];
   /** How much of the deck the SYNERGY engine could actually read.
    *
    *  A card that resolves against the corpus but has no derived tags forms NO edges, carries NO

@@ -14,14 +14,14 @@ import {
   type CardSynergy,
   type Reason,
   type TagStats,
-  type ImpactWeights,
-} from "@edh-seer/engine";
+  type ImpactWeights, type GameState, type Marker } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { faceDeckCards } from "./faces.js";
 import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
+import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
 import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
@@ -188,7 +188,13 @@ export function analyzeDeckStructured(
   // `cardTagsDerived.findOne({oracleId: tokenDoc._id})`, and return null (never a name lookup) when
   // either step misses.
   tokenTags?: (ref: TokenRef) => CardTags | null,
+  /** A GAME STATE THE OWNER SET (roadmap W18): abilities it does not meet are silent, "X is your
+   *  speed" resolves, creatures are read under the deck's anthems, and every edge the state alone
+   *  created carries `enabledBy`. Undefined is the report as it always was. */
+  state?: GameState,
 ): DeckReport {
+  const rawInputs = inputs;
+  inputs = applyState(inputs, state);
   const commanderSet = new Set(commanderNames ?? []);
   // A face node carries the FACE's name, and the decklist designated the CARD. Every commander test
   // over a `unique` entry goes through this; the ones over `resolved` keep using the name directly,
@@ -283,6 +289,10 @@ export function analyzeDeckStructured(
   // i < j a (real, token) cross-pair always has the real card at `i` -- exactly the shape
   // `createsReasons` demands.
   const pairPool: DeckCard[] = [...unique, ...tokenNodes];
+  // LAYER 7c, ONLY UNDER A STATE: the stateless report keeps reading printed stats, so nothing it
+  // says today changes until the owner sets a marker. Under one, a 1/1 under Samut at speed 4
+  // enters as a 5/1 and a power-4 payoff sees it.
+  if (state !== undefined) applyAnthems(pairPool, hierarchy);
   const edges: SynergyEdge[] = [];
   // FINDINGS 1/2 (owner review, 2026-08-16), FIXED PROPERLY on re-review (2026-08-16): the first cut
   // rebuilt this filter AFTER the fact by matching `edge.a`/`edge.b` against a set of token NAMES --
@@ -966,10 +976,27 @@ export function analyzeDeckStructured(
     selective: t.selective,
   }));
 
+  // THE EDGES THE STATE ALONE CREATED, told by the one honest method: the same analysis without the
+  // state, and set difference on the pair. Two runs is the price of "this edge exists because you
+  // set speed to 4", and it is paid only when a state is set.
+  if (state !== undefined) {
+    const base = analyzeDeckStructured(rawInputs, commanderNames, hierarchy, impactWeights, combos, themeStats, tokenTags);
+    const pairKey = (a: string, b: string) => (a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`);
+    const had = new Set(base.edges.map((e) => pairKey(e.a, e.b)));
+    const markers = (Object.keys(state) as Marker[]).filter((k) => state[k] !== undefined);
+    for (const e of edges) {
+      if (had.has(pairKey(e.a, e.b))) continue;
+      e.enabledBy = markers;
+      e.reasons = e.reasons.map((r) => ({ ...r, enabledBy: markers }));
+    }
+  }
+
   return {
     commanders: presentCommanders,
     cards: ratedCards,
     edges,
+    ...(state !== undefined ? { state } : {}),
+    ...(() => { const markers = reachableMarkers(rawInputs); return markers.length > 0 ? { markers } : {}; })(),
     /** How many copies each repeated card contributes, so one node can say "x6". Absent for
      *  singletons, which is every card in a legal EDH deck except basics and the any-number family
      *  (Dragon's Approach, Rat Colony, Shadowborn Apostle). */

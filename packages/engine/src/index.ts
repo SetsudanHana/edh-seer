@@ -11,7 +11,7 @@ export {
   type DeckReport,
   type DeckCoverage,
   type DeckMath,
-  type SynergyEdge,
+  type SynergyEdge, type GameState, type Marker,
   type CardSynergy,
   type ArchetypeGroup,
   type ArchetypeRanking,

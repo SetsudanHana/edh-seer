@@ -355,8 +355,10 @@ test("effectPhrase names the recipient of a draw or a life change", () => {
   expect(effectPhrase("damage", "3", undefined, "opp")).toBe("deals 3 damage");
 });
 
-test("gaining speed has a phrase", () => {
-  expect(effectPhrase("speed", undefined)).toBe("gains speed");
+/** SPEED IS THE PLAYER'S (CR 702.179), so the card RAISES it; "Samut gains speed" read as if the
+ *  card had one (owner, 2026-09-05). */
+test("raising speed is phrased on the player", () => {
+  expect(effectPhrase("speed", undefined)).toBe("raises your speed");
 });
 
 test("losing abilities has a phrase", () => {

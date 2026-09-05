@@ -300,7 +300,7 @@ export function cardCaresTags(tags: CardTags): Set<string> {
 }
 
 /** The card's characteristics expressed as a concrete subject, for static-edge matching. */
-function characteristicsSubject(tags: CardTags, name?: string): SubjectFilter {
+export function characteristicsSubject(tags: CardTags, name?: string): SubjectFilter {
   const c = tags.characteristics;
   const types = c.types.map((t) => t.toLowerCase());
   const subtypes = c.subtypes.map((t) => t.toLowerCase());

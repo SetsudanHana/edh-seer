@@ -316,7 +316,11 @@ export function keywordAbilities(chars: Characteristics): Ability[] {
     out.push({
       kind: "triggered",
       trigger: { verbs: spec.verbs, subject: parseSubject(spec.subject) },
-      effect: { kind: spec.kind as Ability["effect"]["kind"] },
+      // A PLAYER MARKER NAMES THE PLAYER. Speed is yours, not the card's (CR 702.179), the way a
+      // lifegain's subject is you; the sentence and the page read the recipient off this.
+      effect: spec.kind === "speed"
+        ? { kind: "speed", subject: { control: "you", token: null } }
+        : { kind: spec.kind as Ability["effect"]["kind"] },
     });
   }
   return out;

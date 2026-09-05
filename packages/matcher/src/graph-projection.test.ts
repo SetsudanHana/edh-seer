@@ -223,3 +223,18 @@ test("a reason carrying a face lands on that face's node", () => {
   expect(g.offDeckReasons).toBe(0);
   expect(g.edges[0].from).toBe("face:1:Fell the Profane // Fell Mire");
 });
+
+/** THE STATE MADE THIS EDGE, and the board has to draw it apart (roadmap W18): `enabledBy` rides on
+ *  the reasons the analysis stamped and reaches the projected edge as the union of its reasons'. */
+test("an edge whose reasons the state enabled carries the marker", () => {
+  const reason = (producer: string, consumer: string, extra: Partial<Reason> = {}): Reason =>
+    ({ tag: "enters:creature", text: `${producer} feeds ${consumer}`, producer, consumer, ...extra });
+  const g = projectDeckGraph([card("Samut"), card("Grizzly Bears"), card("Garruk's Uprising")], [
+    reason("Grizzly Bears", "Garruk's Uprising", { enabledBy: ["speed"] }),
+    reason("Samut", "Grizzly Bears"),
+  ], W);
+  const enabled = g.edges.find((e) => e.from === "Grizzly Bears" && e.to === "Garruk's Uprising")!;
+  const plain = g.edges.find((e) => e.from === "Samut" && e.to === "Grizzly Bears")!;
+  expect(enabled.enabledBy).toEqual(["speed"]);
+  expect(plain.enabledBy).toBeUndefined();
+});
