@@ -1905,6 +1905,35 @@ test("targeted removal by exile, and a targeted bounce, leave under the opponent
   expect(lionLeaves.subject.type).toBe("creature");
 });
 
+test("a targeted reanimation from a graveyard keeps `any`; a targeted exile from one reads `opp`", () => {
+  // The bounce rule above turns a targeted `leaves` to the opponent's. A GRAVEYARD leave must not
+  // join it: Reanimate is aimed at your own graveyard as readily as theirs, and "whenever one or more
+  // creature cards leave YOUR graveyard" (Desecrated Tomb) would refuse an `opp` producer.
+  const reanimate = deriveCardTags({
+    oracleId: "reanimate", name: "Reanimate",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [
+        { verb: "put", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "battlefield" },
+        { verb: "lose-life", object: "you", amount: "that card's mana value" },
+      ],
+    }],
+    clauseTexts: { 1: "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+  });
+  const leaves = reanimate.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  expect(leaves.map((e) => [e.subject.zone, e.subject.control])).toEqual([["graveyard", "any"]]);
+
+  const cremate = deriveCardTags({
+    oracleId: "cremate", name: "Cremate",
+    clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target card from a graveyard", fromZone: "graveyard", toZone: null }] }],
+    clauseTexts: { 1: "Exile target card from a graveyard." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const exiled = cremate.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  expect(exiled.map((e) => [e.subject.zone, e.subject.control])).toEqual([["graveyard", "opp"]]);
+});
+
 test("a card exiling ITSELF emits a self leaves", () => {
   const phoenix = deriveCardTags({
     oracleId: "phoenix", name: "Lamplight Phoenix",

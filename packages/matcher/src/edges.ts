@@ -234,10 +234,21 @@ export function cardThemeTags(tags: CardTags): Set<string> {
   // is not, so it rides at `PRODUCER_SHARE` like any other supply.
   if (refiresEntries(tags) || hasSelfEntryTrigger(tags)) out.add(ETB_REFIRE);
   for (const a of tags.abilities) {
-    if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
+    // KEYED THE WAY A REASON TAG IS (zones.ts), so the theme axis and the edge agree on the string.
+    // Byte-identical for every verb but one: `enters` was already `enters:`, `enters-graveyard` and
+    // `dies` key on their own names, and a battlefield `leaves` stays `leaves:`. The exception is a
+    // leave from a GRAVEYARD, which keys `leaves-graveyard:` -- and until 2026-09-05 (roadmap Y1b)
+    // nothing emitted one, so this read `leaves:any` for 1,786 corpus recursion cards the moment
+    // they did, and two of the 71 decks took "leaves the battlefield" as their headline theme on
+    // the strength of their reanimation.
+    if (a.trigger) for (const v of a.trigger.verbs) {
+      const t = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
+      out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
+    }
     for (const e of a.emits ?? []) {
       if (opponentsPermanent(e.subject)) continue;
-      out.add(`${e.verb}:${themeSubjectKey(e.subject)}`);
+      const t = normalizeZoneEvent(e);
+      out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
     }
     // No subject requirement here, unlike the static EDGE below. Membership asks "is this card a
     // <kind> card?", which does not depend on knowing WHICH permanents it applies to. Requiring a

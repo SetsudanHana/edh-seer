@@ -161,6 +161,11 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, 
   { verb: "return", to: "hand", verbs: ["leaves"], when: leftTheBattlefield },
 ];
 
+/** The verbs that move a card out of the zone `fromZone` names. See the `leftTheGraveyard` read in
+ *  `actionEmits`. `search` is not one; neither is `none`, `modify-pt` or `copy`, which name a card in
+ *  a graveyard without moving it (Animate Dead's enchant line, Body Double). */
+const GRAVEYARD_MOVE_VERBS: ReadonlySet<string> = new Set(["return", "put", "exile", "cast", "play", "shuffle"]);
+
 /** Did this action move something OFF THE BATTLEFIELD? A stated battlefield origin says so; an
  *  unstated one says so only for a permanent-shaped object. See the `exile` row above. */
 function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
@@ -231,11 +236,29 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // and `parseSubject` reads a type word out of either. A real typed draw says so -- "reveal cards
   // until you reveal a creature CARD, draw it" -- so the word `card` is the positive test rather
   // than a blocklist of the shapes seen so far.
-  const verbs = zoned?.verbs
+  const destination = zoned?.verbs
     ?? (action.verb === "play" ? landPlayVerbs(subject)
       : action.verb === "tap" ? tapVerbs(subject)
       : EMITS[action.verb ?? ""]);
-  if (!verbs) return [];
+  // The ORIGIN zone, for the consumers that demand one (River Kelpie's "enters from a graveyard",
+  // Rivaz's "casts a Dragon spell from your graveyard"). Taken from the action rather than the object
+  // text because the text usually does not repeat it -- "return it to the battlefield" states the
+  // origin only in `fromZone`. Harmless where nothing asks: an unset trigger `fromZone` matches any
+  // origin, so this adds a fact without narrowing a single existing edge.
+  const from = action.fromZone ?? subject.fromZone;
+  // A CARD LEAVING A GRAVEYARD IS AN EVENT OF ITS OWN (roadmap Y1b, 2026-09-05). "Whenever one or
+  // more creature cards leave your graveyard" (Desecrated Tomb, Fang, Chalk Outline -- 32 of the 71
+  // corpus leaves-payoffs) demands `leaves@graveyard`, and after Y1 gave that demand its zone, nothing
+  // supplied it: a reanimation emitted only its `enters`, an exile-from-graveyard nothing at all. The
+  // supply was already in the clause. Measured on the 21,317 clause docs, actions with a graveyard
+  // origin: return->battlefield 601, return->hand 566, exile 406, put->battlefield 129, cast 109,
+  // put->library 74, put->hand 45, shuffle->library 18, play 7. Every one of them moves the card OUT,
+  // so each emits a `leaves` alongside whatever its destination emits, and the emit carries
+  // `zone: graveyard` so that `subjectMatches` (zone strict both ways) keeps it off The Ozolith's
+  // battlefield leave. `search` is absent: searching a graveyard moves nothing until a later action does.
+  const leftTheGraveyard = from === "graveyard" && GRAVEYARD_MOVE_VERBS.has(action.verb ?? "");
+  const verbs: Verb[] = [...(destination ?? []), ...(leftTheGraveyard ? ["leaves" as const] : [])];
+  if (verbs.length === 0) return [];
   // KEYED ON THE EMITTED VERB, NOT THE ACTION'S. A keyword expands to the events the rules say it
   // IS -- `connive` is a draw and a discard (CR 701.50) -- so Ledger Shredder's action verb is
   // `connive` while the emit that carries the bad subject is `draw`. Checking the action verb missed
@@ -250,12 +273,6 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     delete subject.subtype;
     delete subject.self;
   }
-  // The ORIGIN zone, for the consumers that demand one (River Kelpie's "enters from a graveyard",
-  // Rivaz's "casts a Dragon spell from your graveyard"). Taken from the action rather than the object
-  // text because the text usually does not repeat it -- "return it to the battlefield" states the
-  // origin only in `fromZone`. Harmless where nothing asks: an unset trigger `fromZone` matches any
-  // origin, so this adds a fact without narrowing a single existing edge.
-  const from = action.fromZone ?? subject.fromZone;
   // An add-counter's object IS the counter kind, not a permanent, so the emit can say WHICH counter
   // it adds. Without it every counter placer emitted an untyped counter-added that wildcarded onto
   // any counter payoff -- a +1/+1 producer "feeding" a poison or time consumer.
@@ -347,6 +364,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
+      ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),

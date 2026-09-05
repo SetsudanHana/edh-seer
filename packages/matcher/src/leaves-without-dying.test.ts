@@ -65,6 +65,21 @@ const bloodchief = card("Bloodchief Ascension", ["enchantment"], [{
   actions: [{ verb: "lose-life", object: "that player", amount: "2" }, { verb: "gain-life", object: "you", amount: "2" }],
 }], { 1: "Whenever a card is put into an opponent's graveyard from anywhere, if Bloodchief Ascension has three or more quest counters on it, you may have that player lose 2 life. If you do, you gain 2 life." });
 
+// ROADMAP Y1b (2026-09-05): the graveyard-leave SUPPLY. Corpus canonical clauses, oracle text as printed.
+const reanimate = card("Reanimate", ["sorcery"], [{
+  id: 1, abilityType: "spell",
+  actions: [
+    { verb: "put", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "battlefield" },
+    { verb: "lose-life", object: "you", amount: "that card's mana value" },
+  ],
+}], { 1: "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value." });
+
+const eternalWitness = card("Eternal Witness", ["creature"], [{
+  id: 1, abilityType: "triggered",
+  trigger: { event: "enters", subject: "this creature", control: "you" },
+  actions: [{ verb: "return", object: "target card from your graveyard", fromZone: "graveyard", toZone: "hand", optional: true }],
+}], { 1: "When this creature enters, you may return target card from your graveyard to your hand." });
+
 const tags = (a: DeckCard, b: DeckCard): string[] => pairReasons(a, b, H).map((r) => r.tag).sort();
 
 test("a flicker feeds a leaves payoff on the leaves tag", () => {
@@ -91,4 +106,23 @@ test("a death feeds neither a without-dying payoff nor a graveyard-leave payoff"
 
 test("a flicker feeds no graveyard-leave payoff either", () => {
   expect(tags(ephemerate, tomb).filter((t) => t.startsWith("leaves"))).toEqual([]);
+});
+
+test("a reanimation feeds a graveyard-leave payoff", () => {
+  expect(tags(reanimate, tomb)).toContain("leaves-graveyard:creature");
+});
+
+test("CEILING: an UNTYPED recursion does not feed a TYPED graveyard-leave payoff", () => {
+  // Eternal Witness returns "target card" -- it can pick a creature card, and a player with a
+  // Desecrated Tomb out will. `subjectMatches` is strict on type in both directions, and the
+  // graveyard-fill wildcard (`graveyardFillMatches`) is deliberately not extended here: an under-claim
+  // on the recursion side is preferred to a wildcard that would feed every typed graveyard-leave
+  // payoff from every "return target card". A typed recursion (Reanimate's "creature card") forms.
+  expect(tags(eternalWitness, tomb).filter((t) => t.startsWith("leaves"))).toEqual([]);
+});
+
+test("a graveyard leave feeds no battlefield-leave payoff, no without-dying payoff and no death payoff", () => {
+  expect(tags(reanimate, ozolith).filter((t) => t.startsWith("leaves"))).toEqual([]);
+  expect(tags(reanimate, portMage).filter((t) => t.startsWith("leaves"))).toEqual([]);
+  expect(tags(reanimate, bloodArtist)).toEqual([]);
 });
