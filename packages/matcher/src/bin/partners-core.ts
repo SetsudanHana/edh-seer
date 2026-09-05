@@ -127,25 +127,20 @@ export function specificity(key: string, freq: EventFrequency): number {
 export function supplyForms(key: string): string[] {
   const out = new Set<string>();
   for (const [verb, type, subtype, token] of splitList(key)) {
-    // WHAT THIS SUPPLY CAN BE, and "not stated" is read as NOT A TOKEN.
-    //
-    // The alternative -- unspecified as a wildcard that satisfies a token demand too -- keeps every
-    // edge that exists today and buys nothing: a token demand would then be satisfiable by almost
-    // the whole corpus, score as broadly as an untyped one, and rank no higher than it does now,
-    // which is the defect this dimension exists to fix.
-    //
-    // MEASURED before choosing: of 27,653 authored emits, 6,810 say token and 84 say nontoken; on
-    // the `enters` verb specifically it is 3,309 token against 1,803 unstated. Token-making is
-    // derived EXPLICITLY, so an unstated `enters` is overwhelmingly a real card being put onto the
-    // battlefield -- a reanimation, a blink -- and reading it as "might be a token" would feed every
-    // token payoff from every reanimator. The cost of this reading is a missing edge wherever a
-    // token emit was derived without its flag, which is the direction this repo fails in.
     const suffixes = token === "t" ? ["t", "-"] : ["n", "-"];
-    for (const tk of suffixes) {
-      out.add(`${verb}|${type}|${subtype}|${tk}`);
-      out.add(`${verb}|${type}|-|${tk}`);
-      out.add(`${verb}|-|${subtype}|${tk}`);
-      out.add(`${verb}|-|-|${tk}`);
+    // THE VERBS THE ENGINE LETS THIS SUPPLY SATISFY, mirrored from `verbSatisfies` in edges.ts,
+    // because the page proposes a pair by key BEFORE the engine verifies it: a bridge that lives
+    // only in the engine is a pair the page never asks about. A death is one kind of leave
+    // (CR 700.4); damage aimed at a player -- no type, no subtype -- is life loss (CR 120.3).
+    // Lightning Bolt's page listed three damage payoffs and no life-loss one (2026-09-05).
+    const verbs = [verb,
+      ...(verb === "dies" ? ["leaves"] : []),
+      ...(verb === "non-combat-damage" && type === "-" && subtype === "-" ? ["lose-life"] : [])];
+    for (const v of verbs) for (const tk of suffixes) {
+      out.add(`${v}|${type}|${subtype}|${tk}`);
+      out.add(`${v}|${type}|-|${tk}`);
+      out.add(`${v}|-|${subtype}|${tk}`);
+      out.add(`${v}|-|-|${tk}`);
     }
   }
   return [...out];
