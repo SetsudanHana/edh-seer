@@ -973,6 +973,16 @@ test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged b
 // it here too put the same four numbers on one screen twice. `RecognitionPanel.test.tsx` covers
 // the parent counts now; what is left to prove here is the LEAF math, which never carried a ratio
 // of its own even before this task.
+test("BuildBenchmarks: a leaf's facets are said beside its count and never added to it", () => {
+  const cats = SAMPLE.report.buildCategories!.map((c) =>
+    c.category === "draw" ? { ...c, count: 14, facets: { engines: 5, unlabelled: 3 } } : c);
+  render(<BuildBenchmarks categories={cats} parents={SAMPLE.report.buildParents} />);
+  const draw = screen.getByText(/^Draw$/).closest("li")!;
+  expect(draw.textContent).toMatch(/5 engines · 3 unlabelled/);
+  expect(draw.textContent).toMatch(/^Draw14/);
+  expect(draw.getAttribute("aria-label")).toMatch(/5 engines · 3 unlabelled$/);
+});
+
 test("BuildBenchmarks: a leaf shows count and share, never a ratio", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
   // Tutors is a Consistency LEAF: it renders (owner's ruling: every leaf shows, including a zero),

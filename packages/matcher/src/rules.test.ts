@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
-import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION } from "./rules.js";
+import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
@@ -26,7 +26,7 @@ test("the rule set loads, is versioned, and every pattern a rule names exists", 
       expect(set.patterns[p], `rule ${rule.id} names pattern ${p}`).toBeDefined();
     }
     expect(
-      rule.category ?? rule.answerClass ?? rule.answerClassFrom ?? rule.winconClass,
+      rule.category ?? rule.facet ?? rule.answerClass ?? rule.answerClassFrom ?? rule.winconClass,
       `rule ${rule.id} does something`,
     ).toBeDefined();
   }
@@ -556,4 +556,25 @@ test("a board wipe is a mass effect on the battlefield, in any of its printed sh
   const found = m.get("boardWipe") ?? new Set<string>();
   expect(wipes.map(([n]) => n).filter((n) => !found.has(n))).toEqual([]);
   expect(notWipes.map(([n]) => n).filter((n) => found.has(n))).toEqual([]);
+});
+
+// A DRAW THAT COMES BACK (owner, 2026-09-05). `repeats` narrows `effectKind` on the SAME ability.
+test("effectKind with `repeats` is tested per ability, not per card", () => {
+  const card = (abilities: unknown[]): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Creature" } as Card,
+    tags: { abilities } as never,
+  });
+  const rule: Rule = { id: "t", match: [{ op: "effectKind", in: ["draw-card"], repeats: ["repeatable"] }] };
+  const set = loadRules();
+  // A repeatable draw is an engine.
+  expect(ruleMatches(rule, card([{ effect: { kind: "draw-card" }, repeats: "repeatable" }]), set)).toBe(true);
+  // A one-shot draw beside a repeatable SAC OUTLET is not: the labels are on different abilities.
+  expect(ruleMatches(rule, card([
+    { effect: { kind: "draw-card" }, repeats: "once" },
+    { effect: { kind: "sacrifice-outlet" }, repeats: "repeatable" },
+  ]), set)).toBe(false);
+  // `null` names an unlabelled ability.
+  const unlabelled: Rule = { id: "u", match: [{ op: "effectKind", in: ["draw-card"], repeats: [null] }] };
+  expect(ruleMatches(unlabelled, card([{ effect: { kind: "draw-card" } }]), set)).toBe(true);
+  expect(ruleMatches(unlabelled, card([{ effect: { kind: "draw-card" }, repeats: "once" }]), set)).toBe(false);
 });

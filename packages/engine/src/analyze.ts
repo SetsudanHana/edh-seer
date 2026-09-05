@@ -477,7 +477,9 @@ export interface DeckReport {
    *  are win-plan/tax signals and were never folded into a parent). Matcher-only. `category` is a
    *  plain string (not the matcher-only BuildCategory union) because this package must not depend
    *  on @edh-seer/matcher — same convention as ArchetypeGroup.category. */
-  buildCategories?: { category: string; count: number; target: number }[];
+  /** `facets`: sub-counts said beside a leaf's count and never folded into it (draw: `engines`,
+   *  `unlabelled`). See `BuildResult.buildCategories` in the matcher, which owns the semantics. */
+  buildCategories?: { category: string; count: number; target: number; facets?: Record<string, number> }[];
   /** The four Command-Zone template groups (Consistency, Ramp, Interaction, Board wipes), each
    *  carrying its OWN archetype-adjusted target and the UNION of its leaves' member counts (never
    *  the sum -- a card can carry two leaves). This is what actually scores and flags now; a leaf
