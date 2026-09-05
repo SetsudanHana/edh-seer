@@ -48,8 +48,13 @@ function alsoTypes(card: Card): string[] {
   const m = re.exec(card.oracleText ?? "");
   if (!m) return [];
   const known = new Set<string>(CREATURE_SUBTYPES);
-  // "Cleric, Rogue, Warrior, and Wizard": the Oxford comma leaves "and Wizard" as one token.
-  return m[1]!.split(/,\s*(?:and\s+)?|\s+and\s+/).map((w) => w.trim().toLowerCase()).filter((w) => known.has(w));
+  // "Cleric, Rogue, Warrior, and Wizard": commas first, then a plain " and " inside each piece, then
+  // a leading "and " left by the Oxford comma. String splits, not one alternating regex -- CodeQL
+  // flagged `,\s*(?:and\s+)?|\s+and\s+` as polynomial on a run of spaces (PR #191, twice).
+  return m[1]!.split(",")
+    .flatMap((piece) => piece.split(" and "))
+    .map((w) => w.trim().toLowerCase().replace(/^and /, ""))
+    .filter((w) => known.has(w));
 }
 
 export function extractCharacteristics(card: Card): Characteristics {
