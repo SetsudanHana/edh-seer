@@ -1,7 +1,8 @@
 import type { GameEvent } from "@edh-seer/tagger";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
-import { directedReasons, themeSubjectKey } from "../edges.js";
+import { ROLE_NOT_SYNERGY, directedReasons, themeSubjectKey } from "../edges.js";
+import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
@@ -480,6 +481,48 @@ export function partnersFor(
     pool[key] = usable.length;
   }
 
+  // THE ROWS A STATIC REACHES. Neither direction above can find them: a static emits nothing and
+  // counts nothing. Candidates are what the key names (`staticReaches`), ranked by HOW MANY of the
+  // subject's statics land on them so the card both statics reach is asked about first, and then
+  // verified exactly as every other row is -- the engine's static pass decides, on the tag it
+  // writes, and a candidate it refuses (a land under a discount, a `{U}` spell under a generic one)
+  // is counted in the pool and dropped from the rows.
+  const staticKeys = staticKeysOf(subject);
+  if (staticKeys.length > 0) {
+    const hits = candidates
+      .filter((c) => c.card.name !== subject.card.name)
+      .map((c) => ({ c, matched: staticKeys.filter((k) => staticReaches(k, c)) }))
+      .filter((x) => x.matched.length > 0)
+      // CEILING: among cards the same statics reach, the order is corpus order -- a discount on
+      // every noncreature spell reaches five thousand cards and the page shows three, and on
+      // 2026-09-05 that put Lattice Library ahead of Raise the Alarm. An EDHREC-rank tie-break was
+      // built, passed, and REVERTED the same hour against the rule recorded on `specificity`:
+      // popularity is not synergy and `edhrecRank` is consulted nowhere downstream of it. The
+      // upgrade path is a second synergy signal (how many of the CANDIDATE's own emits the subject
+      // answers), not a play-rate.
+      .sort((a, b) => b.matched.length - a.matched.length);
+    for (const key of staticKeys) pool[key] = hits.filter((x) => x.matched.includes(key)).length;
+    for (const { c, matched } of hits.slice(0, VERIFY_LIMIT)) {
+      if (rows.length >= KEEP) break;
+      const slug = slugs.get(c.card.name) ?? slugOf(c.card.name);
+      if (rows.some((r) => r.slug === slug)) continue;
+      const reasons = directedReasons(subject, c, h, { tokensMediate: false });
+      for (const key of matched) {
+        if ((shown[key] ?? 0) >= PER_EVENT_CAP) continue;
+        const on = reasons.filter((r) => r.tag === `static:${splitStaticKey(key).kind}`);
+        if (on.length === 0) continue;
+        shown[key] = (shown[key] ?? 0) + 1;
+        const chosen = pickReason(on);
+        rows.push({
+          name: c.card.name, slug, score: specificity(key, freq), event: key, reason: chosen.text,
+          ...payoffOf(chosen.text, c.card.name),
+          ...(chosen.effectKind ? {} : { unread: true as const }),
+        });
+        break;
+      }
+    }
+  }
+
   // A ROW CAN NOW BE PRICED BELOW THE SCORE THAT RANKED IT, so the order the loop produced is no
   // longer the order the page wants. Sorting here rather than re-ranking keeps the CEILING above
   // honest: `VERIFY_LIMIT` still cuts on the best-possible score, which is the only score known
@@ -608,7 +651,68 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
  *  trigger -- a static, a keyword-only body -- forms no edge, so its page makes no promise to a
  *  crawler even though it still renders. */
 export const isSubstantive = (d: DeckCard): boolean =>
-  emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0;
+  emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0 || staticKeysOf(d).length > 0;
+
+/** WHAT A STATIC REACHES, as a demand key: `applies:<kind>|<types>|<subtypes>|-`.
+ *
+ *  A STATIC IS THE THIRD KIND OF RELATION THIS FILE KNOWS. The forward phase ranks on what a card
+ *  EMITS, the feeder phase on what it COUNTS; a static emits nothing and counts nothing, it
+ *  APPLIES to a class of cards. Samut, the Driving Force prints an anthem and a discount and
+ *  nothing else, so on 2026-09-05 she had no page and no `/commanders` row while the deck report
+ *  drew eleven edges from her. MEASURED that day: 970 corpus cards carry a static this key can
+ *  name, 71 of them commanders the index was refusing.
+ *
+ *  THE SAME REFUSALS `edges.ts`'s static pass makes, so a key never proposes a pair the engine
+ *  will not verify: a role (`ROLE_NOT_SYNERGY`: tax and friends), a debuff (a negative modifier
+ *  improves nothing), a self-reference (the largest defect family this engine has had). A pseudo-
+ *  type is spelled out to its members here so the candidate index below is keyed on printed types
+ *  only. CEILING: a subject with neither type nor subtype ("permanents you control") makes no key
+ *  -- measured at 0 of 1,117 static subjects, so the branch is not worth its line yet. */
+const kindNotARelation = (kind: string): boolean => ROLE_NOT_SYNERGY.has(kind) || kind === "debuff";
+const asList = (v: string | string[] | undefined): string[] => v === undefined ? [] : Array.isArray(v) ? v : [v];
+const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((raw) => {
+  const t = raw.toLowerCase();
+  return (ALL_CARD_TYPES as readonly string[]).includes(t) ? [t] : PSEUDO_TYPE_SETS[t] ?? [];
+}))];
+export const staticKeysOf = (d: DeckCard): string[] => [...new Set(
+  (d.tags?.abilities ?? []).flatMap((a) => {
+    const s = a.effect?.subject;
+    if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
+    const types = concreteTypes(asList(s.type));
+    const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
+    if (types.length === 0 && subtypes.length === 0) return [];
+    return [`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`];
+  }),
+)];
+
+/** WHAT A CARD IS FOR A STATIC'S PURPOSES: its printed types and subtypes, AND those of the tokens
+ *  it makes. A noncreature spell that makes creature bodies is what a Samut deck is built from --
+ *  the discount and the anthem both land on it -- and the ranking has to see that before the
+ *  engine is asked, because the engine is asked about at most `VERIFY_LIMIT` candidates. The anthem
+ *  ROW is still never claimed on the maker: no token node exists on a page to carry it. */
+const reachOf = (c: DeckCard): { types: Set<string>; subtypes: Set<string> } => {
+  const types = new Set(c.tags?.characteristics.types.map((t) => t.toLowerCase()) ?? []);
+  const subtypes = new Set(c.tags?.characteristics.subtypes.map((t) => t.toLowerCase()) ?? []);
+  for (const a of c.tags?.abilities ?? []) {
+    for (const e of a.emits ?? []) {
+      if (e.subject.token !== true) continue;
+      for (const t of asList(e.subject.type)) types.add(t.toLowerCase());
+      for (const t of asList(e.subject.subtype)) subtypes.add(t.toLowerCase());
+    }
+  }
+  return { types, subtypes };
+};
+const splitStaticKey = (key: string): { kind: string; types: string[]; subtypes: string[] } => {
+  const [verb = "", type = "-", subtype = "-"] = key.split("|");
+  const dash = (v: string) => v === "-" ? [] : v.split(",");
+  return { kind: verb.slice("applies:".length), types: dash(type), subtypes: dash(subtype) };
+};
+export const staticReaches = (key: string, c: DeckCard): boolean => {
+  const { types, subtypes } = splitStaticKey(key);
+  const reach = reachOf(c);
+  return (types.length === 0 || types.some((t) => reach.types.has(t)))
+    && (subtypes.length === 0 || subtypes.some((t) => reach.subtypes.has(t)));
+};
 
 /** NO CARD RULES TEXT (spec D2, reversed 2026-09-04). Name, type line and mana cost are card
  *  METADATA and the page is unusable without them; the RULES text is absent entirely.
@@ -751,6 +855,29 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     }
   }
 
+  // THE INDEX A STATIC ASKS: cards by what they ARE, printed types and the types of their tokens.
+  // Only ever read through `staticKeysOf`, so a card with no static pays nothing for it. The
+  // frequency a static key is priced on is the size of the class it reaches -- a discount on every
+  // noncreature spell is as common a relation as there are noncreature spells, which is what puts
+  // it below a rare trigger on the page, exactly as the deck report's own mesh census treats it.
+  const byType = new Map<string, DeckCard[]>();
+  for (const d of substantive) {
+    for (const t of reachOf(d).types) {
+      const b = byType.get(t);
+      if (b) b.push(d); else byType.set(t, [d]);
+    }
+  }
+  const staticCandidates = (d: DeckCard): DeckCard[] => [...new Set(staticKeysOf(d).flatMap((k) => {
+    const { types, subtypes } = splitStaticKey(k);
+    const pool = types.length > 0
+      ? types.flatMap((t) => byType.get(t) ?? [])
+      : subtypes.flatMap((st) => bySubtype.get(`counts|-|${st}|-`) ?? []);
+    return pool.filter((c) => staticReaches(k, c));
+  }))];
+  for (const d of substantive) {
+    for (const k of staticKeysOf(d)) if (freq[k] === undefined) freq[k] = staticCandidates(d).filter((c) => staticReaches(k, c)).length;
+  }
+
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
 
@@ -760,7 +887,10 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     // CANDIDATES COME FROM WHAT THE CARD SUPPLIES, WHICH INCLUDES WHAT IT IS. `emits` is what the
     // record PRINTS; `supplyKeysOf` is what the ranking may ask about, and the difference is the
     // card's own subtypes -- a Goblin body is a candidate for every payoff that counts Goblins.
-    const candidates = [...new Set(supplyKeysOf(d).flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []))];
+    const candidates = [...new Set([
+      ...supplyKeysOf(d).flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []),
+      ...staticCandidates(d),
+    ])];
     const feeders = [...new Set(boardCountKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
     const commander = isCommander(d);
 
@@ -775,7 +905,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       identity: d.card.colorIdentity ?? [],
       commander,
       emits: [...new Set(emits)],
-      demands: [...new Set(demandKeysOf(d))],
+      demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d)])],
       ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h);
         return { partners: rows, pool, rarity }; })(),
       // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same

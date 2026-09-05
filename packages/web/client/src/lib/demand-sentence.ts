@@ -344,6 +344,19 @@ export function tagLabel(tag: string): string {
  *  see -- a payoff that wants a token and one that refuses tokens are different cards -- while `-`
  *  means the trigger never mentioned tokens and printing "token or not" would add a word that
  *  changes no meaning. */
+/** WHAT A STATIC DOES TO WHAT IT REACHES, as the tail of "a creature …". The kinds `edges.ts`'s
+ *  static pass claims; one it has never seen falls through to the kind's own name. */
+const STATIC_REACH: Record<string, string> = {
+  "pump": "it boosts",
+  "cost-reduction": "it makes cheaper to cast",
+  "keyword-grant": "it grants abilities to",
+  "type-grant": "it grants types to",
+  "trigger-doubling": "whose triggers it doubles",
+  "damage-multiplier": "whose damage it multiplies",
+  "token-doubling": "whose tokens it doubles",
+  "protection": "it protects",
+};
+
 export function eventKeySentence(key: string): string {
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
@@ -354,6 +367,17 @@ export function eventKeySentence(key: string): string {
     if (phase) return phase;
     const subjectless = DEMAND_SUBJECTLESS[verb];
     if (subjectless) return subjectless;
+  }
+
+  // A STATIC'S REACH IS NOT AN EVENT EITHER. "A creature it boosts" names the class the static
+  // applies to; nothing fires, so the sentence is the noun and what the subject does to it.
+  if (verb.startsWith("applies:")) {
+    const kind = verb.slice("applies:".length);
+    const does = STATIC_REACH[kind] ?? `it applies ${kind.replace(/-/g, " ")} to`;
+    const nouns = [...(subtype === "-" ? [] : subtype.split(",").map(capitalize)), ...(type === "-" ? [] : type.split(","))];
+    const head = nouns.length <= 1 ? nouns.join(" ") : `${nouns.slice(0, -1).join(", ")} or ${nouns.at(-1)}`;
+    const noun = subtype !== "-" && type !== "-" ? `${capitalize(subtype.split(",")[0]!)} ${type.split(",").join(" or ")}` : head;
+    return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun} ${does}`;
   }
 
   // A BOARD COUNT IS NOT AN EVENT AND HAS NO VERB PHRASE. "Goblins you control" is a standing fact

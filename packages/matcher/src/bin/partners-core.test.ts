@@ -4,7 +4,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -726,3 +726,90 @@ test("a scaling ability carries its basis and what it counts", () => {
   }] as unknown as CardTags["abilities"], ["goblin"]);
   expect(abilityRowsOf(counter)[0]).toMatchObject({ scaling: "per-permanent", counts: "goblin" });
 });
+
+/** A STATIC IS A THIRD KIND OF RELATION, and until this existed the page could not ask about it.
+ *  The forward phase ranks on what a card EMITS, the feeder phase on what it COUNTS; a static
+ *  emits nothing and counts nothing, it APPLIES to a class of cards. Samut, the Driving Force
+ *  prints two statics and nothing else, so on 2026-09-05 she had no page and no `/commanders` row
+ *  while the deck report drew eleven edges from her. */
+const samut = () => {
+  const d = base("Samut, the Driving Force", [
+    { kind: "static", effect: { kind: "pump", subject: { control: "you", token: null, type: "creature", scope: "all" } }, amount: "+X/+0" },
+    { kind: "static", effect: { kind: "cost-reduction", subject: {
+      control: "any", token: null, scope: "all",
+      type: ["artifact", "enchantment", "planeswalker", "instant", "sorcery", "battle"], notType: ["creature"],
+    } }, amount: "-X" },
+  ] as unknown as CardTags["abilities"], ["human"]);
+  d.card = { ...d.card, oracleText: "Noncreature spells you cast cost {X} less to cast, where X is your speed." } as DeckCard["card"];
+  return d;
+};
+const withTypes = (d: ReturnType<typeof base>, types: string[], manaCost = "{1}{R}") => ({
+  ...d,
+  card: { ...d.card, manaCost } as unknown as DeckCard["card"],
+  tags: { ...d.tags, characteristics: { ...d.tags.characteristics, types } } as CardTags,
+});
+const dragonFodder = () => withTypes(base("Dragon Fodder", [{
+  kind: "on-cast",
+  effect: { kind: "token-generation", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } },
+  emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } }],
+}] as unknown as CardTags["abilities"]), ["sorcery"]);
+const plainSorcery = (name: string) => withTypes(base(name, [{
+  kind: "on-cast", effect: { kind: "removal", subject: { control: "any", token: null, type: "permanent" } },
+  emits: [{ verb: "leaves", subject: { control: "any", token: null, type: "permanent" } }],
+}] as unknown as CardTags["abilities"]), ["sorcery"]);
+const forest = () => withTypes(base("Forest", []), ["land"], "");
+
+test("a static's reach is a demand key, and a role or a self-reference is not", () => {
+  expect(staticKeysOf(samut())).toEqual([
+    "applies:pump|creature|-|-",
+    "applies:cost-reduction|artifact,enchantment,planeswalker,instant,sorcery,battle|-|-",
+  ]);
+  const propaganda = base("Propaganda", [
+    { kind: "static", effect: { kind: "tax", subject: { control: "opp", token: null, type: "creature" } } },
+    { kind: "static", effect: { kind: "type-grant", subject: { control: "you", token: null, type: "land", self: true } } },
+  ] as unknown as CardTags["abilities"]);
+  expect(staticKeysOf(propaganda)).toEqual([]);
+  expect(isSubstantive(samut())).toBe(true);
+  expect(isSubstantive(propaganda)).toBe(false);
+});
+
+test("a static reaches the cards it applies to, each verified by the engine's own sentence", () => {
+  const slugs = resolveSlugs(["Samut, the Driving Force", "Dragon Fodder", "Goblin Assassin", "Forest"]);
+  const bauble = withTypes(base("Blue Bauble", []), ["artifact"], "{U}");
+  const { rows, pool } = partnersFor(samut(), [forest(), bauble, dragonFodder(), goblinBody()], [], {}, slugs, H);
+  expect(rows.map((r) => r.name).sort()).toEqual(["Dragon Fodder", "Goblin Assassin"]);
+  const fodder = rows.find((r) => r.name === "Dragon Fodder")!;
+  expect(fodder.event).toBe("applies:cost-reduction|artifact,enchantment,planeswalker,instant,sorcery,battle|-|-");
+  expect(fodder.reason).toBe("Samut, the Driving Force reduces what Dragon Fodder costs");
+  const body = rows.find((r) => r.name === "Goblin Assassin")!;
+  expect(body.event).toBe("applies:pump|creature|-|-");
+  expect(body.reason).toBe("Samut, the Driving Force gives Goblin Assassin bigger stats");
+  // A `{U}` spell cannot cost less (CR 118.7): the engine refuses it, and the pool counted it before
+  // the cut. The land was never a candidate -- the key names no land type.
+  expect(pool[fodder.event]).toBe(2);
+});
+
+/** THE CARD THAT HITS BOTH STATICS LEADS. A noncreature spell that makes creature bodies is what a
+ *  Samut deck is built from -- the discount and the anthem both land on it -- and with a cap of three
+ *  per group it has to outrank a plain sorcery that only the discount reaches, whatever order the
+ *  candidates arrive in. Ranked on the candidate's own types AND the types of the tokens it makes;
+ *  the anthem row itself is not claimed on the maker, because no token node exists on a page. */
+test("a noncreature spell that makes creatures leads the cost-reduction group", () => {
+  const plain = ["Beast Within", "Rampant Growth", "Cultivate", "Chaos Warp"].map(plainSorcery);
+  const slugs = resolveSlugs([...plain.map((p) => p.card.name), "Dragon Fodder", "Samut, the Driving Force"]);
+  const { rows } = partnersFor(samut(), [...plain, dragonFodder()], [], {}, slugs, H);
+  expect(rows).toHaveLength(PER_EVENT_CAP);
+  expect(rows[0]!.name).toBe("Dragon Fodder");
+});
+
+test("a commander with only statics gets a page, an index row and legal partners", () => {
+  const cmdr = asCommander(samut(), ["G", "R", "W"]);
+  const blue = withIdentity(plainSorcery("Counterspell"), ["U"]);
+  const { shards, index } = buildPartnerArtifact([cmdr, dragonFodder(), blue, forest()], H);
+  const entry = index.find((e) => e.name === "Samut, the Driving Force");
+  expect(entry?.commander).toBe(true);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Samut, the Driving Force")!;
+  expect(rec.partners.map((r) => r.name).sort()).toEqual(["Counterspell", "Dragon Fodder"]);
+  expect(rec.commanderPartners!.map((r) => r.name)).toEqual(["Dragon Fodder"]);
+});
+
