@@ -813,3 +813,37 @@ test("a commander with only statics gets a page, an index row and legal partners
   expect(rec.commanderPartners!.map((r) => r.name)).toEqual(["Dragon Fodder"]);
 });
 
+/** CR 903.3 IS ALREADY READ IN `legality.ts`, and this file had rewritten it narrower: a legendary
+ *  Vehicle with power, a Spacecraft with power, and a card that prints "can be your commander" all
+ *  lead decks and none had a `/commanders` row (measured 2026-09-05: 40 + 5 + 21 corpus cards). */
+const legendary = (name: string, typeLine: string, extra: Partial<DeckCard["card"]> = {}) => {
+  const d = base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  return { ...d, card: { ...d.card, typeLine, legalities: { commander: "legal" }, ...extra } as unknown as DeckCard["card"] };
+};
+
+test("a Vehicle or Spacecraft with power, and a card that says so, are commanders", () => {
+  const vehicle = legendary("Parhelion II", "Legendary Artifact — Vehicle", { power: "5", toughness: "5" });
+  const lift = legendary("The Eternity Elevator", "Legendary Artifact — Spacecraft");
+  const walker = legendary("Will Kenrith", "Legendary Planeswalker — Will",
+    { oracleText: "Partner with Rowan Kenrith\nWill Kenrith can be your commander." });
+  const { index } = buildPartnerArtifact([vehicle, lift, walker], H);
+  const commander = (n: string) => index.find((e) => e.name === n)?.commander;
+  expect(commander("Parhelion II")).toBe(true);
+  expect(commander("The Eternity Elevator")).toBe(false);
+  expect(commander("Will Kenrith")).toBe(true);
+});
+
+/** A BACKGROUND NEVER LEADS ALONE. It is a commander only opposite a card that chooses one, so it
+ *  gets a row and a page, marked, rather than being filtered out with the non-commanders. */
+test("a Background is a commander record marked pairing-only", () => {
+  const bg = legendary("Haunted One", "Legendary Enchantment — Background");
+  const { shards, index } = buildPartnerArtifact([bg], H);
+  expect(index.find((e) => e.name === "Haunted One")?.commander).toBe(true);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Haunted One")!;
+  expect(rec.pairingOnly).toBe(true);
+});
+

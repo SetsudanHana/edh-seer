@@ -64,7 +64,7 @@ function namesPartner(a: Card, b: Card): boolean {
  *  reading of 903.3 flagged five legal decks. A pair this cannot license is REPORTED, so every
  *  licensing shape the corpus actually prints has to be here — which is why the six forms were
  *  counted before the regexes were written rather than after. */
-function pairingLicense(a: Card, b: Card): string | undefined {
+export function pairingLicense(a: Card, b: Card): string | undefined {
   const ta = a.oracleText ?? "";
   const tb = b.oracleText ?? "";
   if (PARTNER_BARE.test(ta) && PARTNER_BARE.test(tb)) return "partner";
@@ -103,7 +103,7 @@ export interface LegalityFinding {
  *  A BACKGROUND IS ACCEPTED WITHOUT CHECKING ITS PARTNER prints "Choose a Background". The pairing
  *  is J12's question, and flagging a legal Background because this function cannot see its partner
  *  would be the same false positive one step later. */
-function isLegalCommander(card: Card): boolean {
+export function isLegalCommander(card: Card): boolean {
   const line = (card.typeLine ?? "").toLowerCase();
   const text = card.oracleText ?? "";
   if (CAN_BE_COMMANDER.test(text)) return true;

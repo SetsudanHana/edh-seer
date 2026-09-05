@@ -1,8 +1,10 @@
 import type { GameEvent } from "@edh-seer/tagger";
+import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { ROLE_NOT_SYNERGY, directedReasons, themeSubjectKey } from "../edges.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
+import { isLegalCommander, pairingLicense } from "../legality.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
@@ -774,6 +776,8 @@ export interface CardPageRecord {
   abilities: AbilityRow[];
   identity: string[];
   commander: boolean;
+  /** A Background: a commander that never leads alone (CR 702.124). The page says so. */
+  pairingOnly?: true;
   emits: string[];
   demands: string[];
   partners: PartnerRow[];
@@ -814,14 +818,17 @@ export interface PartnerArtifact {
   index: NameIndexEntry[];
 }
 
-/** A COMMANDER, for the purposes of the `/commanders` pages. Legendary creatures only: the
- *  "can be your commander" planeswalkers and backgrounds are a larger question than this artifact
- *  needs, and shipping a wrong commander list is worse than shipping a short one.
- *  CEILING: no planeswalker commanders, no backgrounds. Upgrade path: read the rules text for the
- *  "can be your commander" line, which the corpus has. */
+/** A COMMANDER, for `/commanders`: CR 903.3 exactly as `legality.ts` reads it -- legendary creature,
+ *  Vehicle or Spacecraft with printed power, a card that says it can be your commander, a
+ *  Background -- and commander-legal. This file used to say "Legendary Creature" and call the rest a
+ *  larger question; the answer was already three files away, and the gap was 40 Vehicles, 5
+ *  Spacecraft and 21 planeswalkers (measured 2026-09-05). */
 const isCommander = (d: DeckCard): boolean =>
-  /Legendary Creature/.test(d.card.typeLine ?? "")
+  isLegalCommander(d.card as Card)
   && (d.card as { legalities?: Record<string, string> }).legalities?.commander === "legal";
+
+/** A Background is a commander only opposite a card that prints "Choose a Background". */
+const isBackground = (d: DeckCard): boolean => /\bBackground\b/.test(d.card.typeLine ?? "");
 
 /** THE WHOLE ARTIFACT, PURELY. Mongo reads and fs writes stay in `build-static.ts`; everything
  *  decidable is here so it can be tested without either. */
@@ -904,6 +911,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       abilities: abilityRowsOf(d),
       identity: d.card.colorIdentity ?? [],
       commander,
+      ...(commander && isBackground(d) ? { pairingOnly: true as const } : {}),
       emits: [...new Set(emits)],
       demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d)])],
       ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h);
