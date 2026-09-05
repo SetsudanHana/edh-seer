@@ -1012,6 +1012,8 @@ test("a board count over a list of subtypes is one demand key per subtype, each 
     emits: [{ verb: "create-token", subject: { control: "you", token: true, subtype: "treasure", type: "artifact" } }],
   }] as unknown as CardTags["abilities"], ["orc"]);
   expect(boardCountKeysOf(burakos)).toEqual(["counts|-|cleric|-", "counts|-|rogue|-", "counts|-|warrior|-", "counts|-|wizard|-"]);
+  // The row names everything it counts, not the first of them.
+  expect(abilityRowsOf(burakos)[0]!.counts).toBe("cleric, rogue, warrior, wizard");
   // Substantive, so the build indexes it as a body: a page needs a page to link to.
   const rogue = base("Thieving Skydiver", [{
     kind: "triggered", trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } }, effect: { kind: "mill" },

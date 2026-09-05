@@ -606,7 +606,8 @@ export { PARTNER_SHARD_COUNT, partnerShardOf };
 export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
   (d.tags?.abilities ?? []).map((a) => {
     const counted = a.effect?.scalingSubject;
-    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype[0] : counted?.subtype;
+    // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
+    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
     return {
       kind: a.kind,
       ...(a.cost ? { cost: a.cost } : {}),
