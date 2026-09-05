@@ -134,6 +134,13 @@ export function BuildBenchmarks({
 
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
+  // A FACET IS SAID BESIDE THE COUNT, NEVER ADDED TO IT. "Draw 14 · 5 engines · 3 unlabelled":
+  // the owner's point (2026-09-05) was that ten draw engines and ten one-shot cantrips read as the
+  // same 10, and the target is a raw count, so the split is annotation rather than a second dial.
+  const facetTextByLeaf = new Map(categories.map((c) => [
+    c.category,
+    Object.entries(c.facets ?? {}).map(([name, n]) => `${n} ${name}`).join(" · "),
+  ]));
   const groupedLeaves = new Set((parents ?? []).flatMap((p) => p.leaves));
   // Anything no parent names (burn, stax) renders after them, exactly as before this task -- those
   // are win-plan and tax signals, never build roles, and each still carries its OWN target (today
@@ -240,8 +247,9 @@ export function BuildBenchmarks({
     const name = LABEL[category] ?? category;
     const count = countByLeaf.get(category) ?? 0;
     const share = sumOfLeaves > 0 ? Math.round((count / sumOfLeaves) * 100) : 0;
+    const facetText = facetTextByLeaf.get(category) || "";
     return (
-      <li key={category} className="flex items-center gap-3 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}`}>
+      <li key={category} className="flex items-center gap-3 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}${facetText ? `, ${facetText}` : ""}`}>
         {/* FIX F3 (controller review, 2026-08-21): `w-24` with a `pl-3` indent left only 84px for
           *  the label text, and three real leaf names need more -- "Stack interaction" measures
           *  121px, "Graveyard hate" 110px, "Card selection" 105px, all truncating (the graveyard one
@@ -265,6 +273,9 @@ export function BuildBenchmarks({
             <span className="block h-full rounded-full bg-(--fill)" style={{ width: `${share}%` }} />
           ) : null}
         </span>
+        {/* BEFORE the count, so the count column every row shares stays right-aligned; the bar
+          *  (flex-1) gives up the width, which is the one thing on the row that can. */}
+        {facetText ? <span className="shrink-0 text-xs stat-num">{facetText}</span> : null}
         <span className="w-20 shrink-0 text-right stat-num">{count} · {share}%</span>
       </li>
     );

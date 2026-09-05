@@ -8,7 +8,13 @@ import type { DeckCard } from "./types.js";
  *  a named signature, not as more operators. */
 export type RuleClause =
   | { op: "oracle"; pattern: string }
-  | { op: "effectKind"; in: string[] }
+  /** `repeats` NARROWS the same operator rather than adding one (the set stays closed): when
+   *  present, an ability counts only if its effect kind is in `in` AND its `Ability.repeats` label
+   *  is in `repeats`, tested on the SAME ability -- a card with a one-shot draw and a repeatable
+   *  sac outlet is not a draw engine. `null` names an ability `repeats.ts` refused to label. Owner,
+   *  2026-09-05: "we count the one-off instant that draws 1 card the same way as Rhystic Study".
+   *  `Ability.repeats` had sat on every derived ability since 2026-08-11 with no count reading it. */
+  | { op: "effectKind"; in: string[]; repeats?: (string | null)[] }
   | { op: "typeLine"; contains: string }
   /** Card subtypes, from the tagged characteristics -- "equipment", "aura", a creature type. */
   | { op: "subtype"; in: string[] }
@@ -45,6 +51,11 @@ export interface Rule {
   id: string;
   /** The build category this rule fills, if any. */
   category?: string;
+  /** A FACET of a build category rather than a category of its own: a sub-count reported beside
+   *  `of`'s count (draw engines beside draw), never a leaf, never a target. A facet rule fills no
+   *  category, so `detectBuildRules` skips it and no parent union or `buildScore` can move. Data
+   *  rather than code so the same op serves removal and lifegain when they ask. */
+  facet?: { of: string; name: string };
   /** The wincon class this rule marks: how the card moves the game toward winning (design §12.5).
    *  A separate axis again -- a Craterhoof is a wincon and not a build category. */
   winconClass?: string;
@@ -203,7 +214,9 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":
-      return (dc.tags?.abilities ?? []).some((a) => clause.in.includes(a.effect.kind));
+      return (dc.tags?.abilities ?? []).some((a) =>
+        clause.in.includes(a.effect.kind)
+        && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
     case "subtype":
       return (dc.tags?.characteristics?.subtypes ?? []).some((s) => clause.in.includes(s.toLowerCase()));
     case "powerOverMv": {

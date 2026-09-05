@@ -57,6 +57,25 @@ export function detectBuildCategories(cards: DeckCard[]): Map<BuildCategory, Set
  *
  *  `detectBuildCategories` is built on this rather than beside it, so there is one matching loop and
  *  a rules edit cannot move one readout without the other. */
+/** Facet membership: `of` category -> facet name -> card names. See `Rule.facet`. Reported only
+ *  against cards that are IN the category (`computeBuild` intersects), so a facet never exceeds the
+ *  count it sits beside. */
+export function detectBuildFacets(cards: DeckCard[]): Map<string, Map<string, Set<string>>> {
+  const m = new Map<string, Map<string, Set<string>>>();
+  const set = loadRules();
+  for (const dc of cards) {
+    for (const rule of set.rules) {
+      if (!rule.facet || !ruleMatches(rule, dc, set)) continue;
+      let byName = m.get(rule.facet.of);
+      if (!byName) { byName = new Map(); m.set(rule.facet.of, byName); }
+      let s = byName.get(rule.facet.name);
+      if (!s) { s = new Set(); byName.set(rule.facet.name, s); }
+      s.add(dc.card.name);
+    }
+  }
+  return m;
+}
+
 export function detectBuildRules(cards: DeckCard[]): Map<string, Set<string>> {
   const m = new Map<string, Set<string>>();
   const set = loadRules();
@@ -530,7 +549,10 @@ export interface BuildResult {
   buildScore: number;
   /** Per-leaf count, for the client's distribution rows. `target` is 0 on every grouped leaf now --
    *  see `BASE_TARGETS` -- and stays real only for `lands` (and the always-0 `burn`/`stax`). */
-  buildCategories: { category: string; count: number; target: number }[];
+  /** `facets`: sub-counts said BESIDE a leaf's count, never folded into it -- `draw` carries
+   *  `engines` (a draw that comes back) and `unlabelled` (a draw `repeats.ts` refused to label).
+   *  Present only on a category some facet rule names; each facet is a subset of the count. */
+  buildCategories: { category: string; count: number; target: number; facets?: Record<string, number> }[];
   /** One row per `BUILD_PARENTS` entry: archetype-adjusted target, and the UNION of its leaves'
    *  member sets (never the sum -- see `computeBuild`). The client renders the target, ratio and
    *  flag HERE and only count+share on the leaf rows beneath (owner's 2026-08-21 ruling).
@@ -587,7 +609,17 @@ export function computeBuild(
   const landCount = cards.reduce((n, dc) => n + (isLand(dc) ? 1 : 0), 0);
   const countOf = (c: BuildCategory): number => (c === "lands" ? landCount : members.get(c)?.size ?? 0);
 
-  const buildCategories = BUILD_CATEGORIES.map((c) => ({ category: c, count: countOf(c), target: targets[c] }));
+  const facets = detectBuildFacets(cards);
+  const facetsOf = (c: BuildCategory): Record<string, number> | undefined => {
+    const byName = facets.get(c);
+    if (!byName) return undefined;
+    const inCategory = members.get(c) ?? new Set<string>();
+    return Object.fromEntries([...byName].map(([name, s]) => [name, [...s].filter((n) => inCategory.has(n)).length]));
+  };
+  const buildCategories = BUILD_CATEGORIES.map((c) => {
+    const f = facetsOf(c);
+    return { category: c, count: countOf(c), target: targets[c], ...(f ? { facets: f } : {}) };
+  });
 
   // BREADTH, beside the count. `detectAnswerClasses` already lives in this file, so unlike the
   // Karsten land target this needs no threading from `computeDeckMath` and no call reordering.

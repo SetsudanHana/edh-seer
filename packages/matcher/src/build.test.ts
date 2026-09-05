@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { detectBuildCategories, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf } from "./build.js";
+import { detectBuildCategories, detectBuildFacets, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf } from "./build.js";
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@edh-seer/tagger";
 import { COVERAGE_CLASSES } from "./answer-coverage.js";
@@ -721,4 +721,28 @@ test("the answers impact is what covering the absent classes is worth", () => {
   const covered = answersImpactOf(parents, 36, 36, undefined, new Set(COVERAGE_CLASSES), 0);
   expect(withGap).toBeGreaterThan(0);
   expect(covered).toBe(0);
+});
+
+// A DRAW THAT COMES BACK (owner, 2026-09-05): the draw count said Rhystic Study and Divination were
+// the same card. The facets say beside the count how many come back and how many nobody labelled.
+test("draw facets: engines are any draw above `once`, unlabelled are refused labels with no engine beside them", () => {
+  const draw = (repeats?: string): CardTags["abilities"] =>
+    [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "opp", token: null } }, effect: { kind: "draw-card" }, ...(repeats ? { repeats } : {}) } as never];
+  const cards = [
+    mk("Rhystic Study", "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.", "Enchantment", draw("repeatable")),
+    mk("Arch of Orazca", "{5}, {T}: Draw a card.", "Artifact", draw("per-cycle")),
+    mk("Divination", "Draw two cards.", "Sorcery", draw("once")),
+    mk("Mystery", "Draw a card, maybe.", "Instant", draw()),
+    // An unlabelled draw beside a labelled ENGINE draw is an engine, not unlabelled.
+    mk("Both", "...", "Enchantment", [...draw("repeatable"), ...draw()]),
+    mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility),
+  ];
+  const facets = detectBuildFacets(cards).get("draw")!;
+  expect(facets.get("engines")).toEqual(new Set(["Rhystic Study", "Arch of Orazca", "Both"]));
+  expect(facets.get("unlabelled")).toEqual(new Set(["Mystery"]));
+  // On the report row: beside the count, never in it, and never exceeding it.
+  const row = computeBuild(cards, undefined).buildCategories.find((c) => c.category === "draw")!;
+  expect(row.count).toBe(5);
+  expect(row.facets).toEqual({ engines: 3, unlabelled: 1 });
+  expect(computeBuild(cards, undefined).buildCategories.find((c) => c.category === "ramp")!.facets).toBeUndefined();
 });

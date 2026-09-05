@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -104,6 +104,23 @@
       "category": "draw",
       "match": [{ "op": "effectKind", "in": ["draw-card"] }],
       "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "draw.engine",
+      "facet": { "of": "draw", "name": "engines" },
+      "match": [{ "op": "effectKind", "in": ["draw-card"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "A DRAW THAT COMES BACK (owner, 2026-09-05): ten Rhystic Studies are not ten Divinations, and the count said they were. Anything above `once` on the SAME ability; per-cycle ({T}: draw, once a round) counts as an engine by the owner's ruling. Measured on the 71 decks before this rule: 400 engine cards, 470 one-shots, 104 unlabelled."
+    },
+    {
+      "id": "draw.unlabelled",
+      "facet": { "of": "draw", "name": "unlabelled" },
+      "match": [{ "op": "effectKind", "in": ["draw-card"], "repeats": [null] }],
+      "not": [
+        { "op": "typeLine", "contains": "land" },
+        { "op": "effectKind", "in": ["draw-card"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }
+      ],
+      "why": "A draw `repeats.ts` REFUSED to label, on a card with no labelled engine draw beside it. Shown, not hidden: unlabelled beats mislabelled, and a reader who sees 3 unlabelled knows the engine count is a floor."
     },
     {
       "id": "burn.effect",
