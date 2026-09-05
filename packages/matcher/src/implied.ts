@@ -392,7 +392,7 @@ export function sagaEvents(chars: Characteristics): GameEvent[] {
 }
 
 /** Graveyard-fill events implied by a producer's (already-normalized) emits: mill/discard put an
- *  untyped card into a graveyard; a nontoken leaving the battlefield (a normalized `dies`) also
+ *  untyped card into a graveyard; a nontoken leaving the battlefield (a `dies`) also
  *  enters the graveyard carrying its type. Tokens cease to exist, so they add no graveyard card. */
 export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
   const out: GameEvent[] = [];
@@ -411,11 +411,36 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
         control: e.subject.control, token: null, zone: "graveyard",
         ...(e.subject.self === true ? { self: true } : {}),
       } });
-    } else if (e.verb === "leaves" && e.subject.zone === "battlefield" && e.subject.token !== true) {
+    } else if (e.verb === "dies" && e.subject.token !== true) {
+      // A DEATH fills the graveyard with a typed card; a `leaves` does not -- a flicker, a bounce
+      // or an exile moved the permanent anywhere but a graveyard (CR 700.4), and until 2026-09-05
+      // the two were one verb here only because `normalizeZoneEvent` spelled every death `leaves`.
       out.push({ verb: "enters", subject: { ...e.subject, zone: "graveyard" } });
     }
   }
   return out;
+}
+
+/** Stamp the card's OWN printed types onto a `leaves` emit that is the card itself.
+ *
+ *  "Exile this creature, then return it" (Lamplight Phoenix, Aetherling) records the object as a
+ *  bare self, so the emit arrives untyped -- and an untyped producer subject is a wildcard that
+ *  satisfies every consumer filter, which would let an enchantment's self-exile "supply" a
+ *  creature-leaves payoff. The card is the thing leaving, so its type line is a known fact about the
+ *  event. Union of faces, not `zoneTypes`: the permanent left the BATTLEFIELD, where a multi-face
+ *  card is whichever face was up. Only an untyped self emit is touched. */
+export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): GameEvent[] {
+  return events.map((e) => {
+    if (e.verb !== "leaves" || e.subject.self !== true) return e;
+    if (e.subject.type !== undefined || e.subject.subtype !== undefined) return e;
+    const types = chars.types.map((t) => t.toLowerCase());
+    const subtypes = chars.subtypes.map((t) => t.toLowerCase());
+    return { ...e, subject: {
+      ...e.subject,
+      ...(types.length ? { type: types } : {}),
+      ...(subtypes.length ? { subtype: subtypes } : {}),
+    } };
+  });
 }
 
 /** Stamp the card's OWN printed types onto a graveyard fill that is the card itself.

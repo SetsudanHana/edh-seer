@@ -6,7 +6,7 @@ import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
+import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
@@ -338,7 +338,7 @@ function baseEvents(tags: CardTags): GameEvent[] {
 /** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
  *  normalized and deduped, then unioned with the graveyard-fill events those emits imply. */
 export function producerEvents(tags: CardTags): GameEvent[] {
-  const base = baseEvents(tags);
+  const base = selfLeavesTypes(baseEvents(tags), tags.characteristics);
   const derived = [
     ...selfFillTypes(impliedGraveyardEvents(base), tags.characteristics),
     ...impliedCounterEvents(base),
@@ -693,6 +693,19 @@ export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-dam
  *
  *  The cost of the strictness is real and accepted: a genuine reanimation whose clause never recorded
  *  a `fromZone` loses its edge to these consumers. A missing answer beats a wrong one. */
+/** CR 700.4: dies means "is put into a graveyard from the battlefield", so a death IS a leave and a
+ *  `leaves` demand is met by a `dies` supply. Not the reverse -- a flicker, a bounce or an exile
+ *  leaves without dying, and Ephemerate feeding Blood Artist is the wrong claim this exists to
+ *  refuse. Two demands refuse the subsumption too: "leaves the battlefield WITHOUT DYING" (Dour
+ *  Port-Mage, Taeko's "if it didn't die") and a leave from a GRAVEYARD (Desecrated Tomb, Fang), which
+ *  shares no zone with a death. Measured 2026-09-05: 32 of the 71 corpus leaves-payoffs are the
+ *  graveyard kind, and every death in their decks fed them. */
+function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
+  if (producer.verb === consumer.verb) return true;
+  return consumer.verb === "leaves" && producer.verb === "dies"
+    && consumer.subject.zone !== "graveyard" && consumer.subject.withoutDying !== true;
+}
+
 function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
   if (consumer.fromZone === undefined) return true;
   return producer.fromZone === consumer.fromZone;
@@ -704,7 +717,7 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolea
  *  census so the two cannot drift: a census that counted supply differently from the matcher
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
-  if (producer.verb !== consumer.verb) return false;
+  if (!verbSatisfies(producer, consumer)) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can

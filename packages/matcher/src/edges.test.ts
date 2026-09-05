@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches } from "./edges.js";
+import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
@@ -1217,11 +1218,12 @@ test("a self-recursion is only enabled by a fill that could contain the card its
     tags: {
       oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
       characteristics: { types: [type.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
-      // A graveyard fill is expressed as a permanent LEAVING the battlefield; impliedGraveyardEvents
-      // turns that into the enters@graveyard event the reanimator edge reads.
+      // A graveyard fill is expressed as a permanent DYING; impliedGraveyardEvents turns that into
+      // the enters@graveyard event the reanimator edge reads. (A `leaves` no longer fills: since
+      // 2026-09-05 a flicker, a bounce or an exile is a leave that is not a death.)
       abilities: [{
         kind: "activated", effect: { kind: "" },
-        emits: [{ verb: "leaves", subject: { control: "you", token: null, zone: "battlefield", type: type.toLowerCase() } }],
+        emits: [{ verb: "dies", subject: { control: "you", token: null, zone: "battlefield", type: type.toLowerCase() } }],
       }],
     },
   });
@@ -3552,4 +3554,89 @@ test("a Room feeds a fully-unlock trigger", () => {
   const rs = pairReasons(room, leech, H);
   expect(rs.map((r) => r.tag)).toEqual(["unlock:room"]);
   expect(rs[0]?.text).toContain("is fully unlocked");
+});
+
+// CR 700.4: dies = battlefield -> graveyard, so a death IS a leave. A flicker, a bounce or an exile is
+// a leave that is not a death. The matcher subsumes one way only.
+describe("dies is a leave, a leave is not a death", () => {
+  const n = normalizeZoneEvent;
+  const you = { control: "you" as const, token: null, type: "creature" };
+
+  test("a leaves demand accepts a dies supply", () => {
+    expect(eventMatches(n({ verb: "dies", subject: you }), n({ verb: "leaves", subject: you }), H)).toBe(true);
+  });
+
+  test("a dies demand refuses a leaves supply (Ephemerate must not feed Blood Artist)", () => {
+    expect(eventMatches(n({ verb: "leaves", subject: you }), n({ verb: "dies", subject: you }), H)).toBe(false);
+  });
+
+  test("a leaves demand marked withoutDying refuses a dies supply and accepts a leaves supply", () => {
+    const port = n({ verb: "leaves", subject: { ...you, withoutDying: true as const } });
+    expect(eventMatches(n({ verb: "dies", subject: you }), port, H)).toBe(false);
+    expect(eventMatches(n({ verb: "leaves", subject: you }), port, H)).toBe(true);
+  });
+
+  test("a leaves-the-GRAVEYARD demand refuses both a death and a battlefield leave", () => {
+    const tomb = n({ verb: "leaves", subject: { ...you, zone: "graveyard" } });
+    expect(eventMatches(n({ verb: "dies", subject: you }), tomb, H)).toBe(false);
+    expect(eventMatches(n({ verb: "leaves", subject: you }), tomb, H)).toBe(false);
+    expect(eventMatches(n({ verb: "leaves", subject: { ...you, zone: "graveyard" } }), tomb, H)).toBe(true);
+  });
+
+  test("end to end: a flicker's leaves emit reaches The Ozolith as leaves:creature and never Blood Artist", () => {
+    const flicker = base("Ephemerate", [{
+      kind: "on-cast",
+      effect: { kind: "flicker" },
+      emits: [
+        { verb: "leaves", subject: { control: "you", token: null, type: "creature", scope: "target" } },
+        { verb: "enters", subject: { control: "you", token: null, type: "creature", scope: "target", fromZone: "exile" } },
+      ],
+    }]);
+    const ozolith = base("The Ozolith", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, type: "creature" } },
+      effect: { kind: "counter-placement" },
+    }]);
+    const artist = base("Blood Artist", [{
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature" } },
+      effect: { kind: "drain" },
+    }]);
+    expect(directedReasons(flicker, ozolith, H).map((r) => r.tag)).toEqual(["leaves:creature"]);
+    expect(directedReasons(flicker, artist, H)).toEqual([]);
+  });
+
+  test("end to end: a sac outlet still reaches The Ozolith, on the same tag it always had", () => {
+    const outlet = base("Viscera Seer", [{
+      kind: "activated",
+      effect: { kind: "top-manipulation" },
+      emits: [
+        { verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } },
+        { verb: "dies", subject: { control: "you", token: null, type: "creature" } },
+      ],
+    }]);
+    const ozolith = base("The Ozolith", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, type: "creature" } },
+      effect: { kind: "counter-placement" },
+    }]);
+    expect(directedReasons(outlet, ozolith, H).map((r) => r.tag)).toEqual(["leaves:creature"]);
+  });
+
+  test("a self leaves emit is stamped with the card's own types so it is not a wildcard", () => {
+    const phoenix = base("Lamplight Phoenix", [{
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } },
+      effect: { kind: "flicker" },
+      emits: [{ verb: "leaves", subject: { control: "you", token: null, self: true } }],
+    }]);
+    const enchantmentWatcher = base("Enchantment Leaves Payoff", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, type: "enchantment" } },
+      effect: { kind: "draw-card" },
+    }]);
+    // `base` gives every card `characteristics.types: ["creature"]`, so a stamped emit is a creature
+    // leaving, and an enchantment watcher must not see it.
+    expect(directedReasons(phoenix, enchantmentWatcher, H)).toEqual([]);
+  });
 });
