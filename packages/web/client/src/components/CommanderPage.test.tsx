@@ -189,3 +189,17 @@ test("a commander with no derived ability says the engine read nothing rather th
   expect(screen.queryByText(/answers every event it watches/)).not.toBeInTheDocument();
   expect(screen.queryByText(/refused each one on the merits/)).not.toBeInTheDocument();
 });
+
+/** THE PAIR IS TWO CARDS, SO THE RAIL SHOWS TWO CARDS. Owner, 2026-09-05: "when you choose the
+ *  option you should see the card image next to the main commander you chose." */
+test("picking a partner shows its card beside the commander's", async () => {
+  atUrl("/commanders/wilson-refined-grizzly?with=haunted-one");
+  expect(await screen.findByRole("img", { name: /^Haunted One/ })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /^Wilson, Refined Grizzly/ })).toBeInTheDocument();
+});
+
+test("without a pick, only the commander's card is shown", async () => {
+  atUrl("/commanders/wilson-refined-grizzly");
+  expect(await screen.findByRole("img", { name: /^Wilson, Refined Grizzly/ })).toBeInTheDocument();
+  expect(screen.queryByRole("img", { name: /^Haunted One/ })).not.toBeInTheDocument();
+});
