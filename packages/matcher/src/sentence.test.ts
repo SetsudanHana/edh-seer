@@ -343,3 +343,14 @@ test("an unknown target names the class rather than pointing", () => {
   // With no target threaded at all, the old wording stands -- callers that cannot know keep it.
   expect(effectPhrase("counter-placement", "1", undefined)).toBe("puts a counter on it");
 });
+
+// Arcane Denial (owner, 2026-09-05): "its controller may draw up to two cards" derived `opp` and
+// printed "draws you up to two cards". The recipient is now part of the phrase.
+test("effectPhrase names the recipient of a draw or a life change", () => {
+  expect(effectPhrase("draw-card", "up to two", undefined, "opp")).toBe("makes an opponent draw up to two cards");
+  expect(effectPhrase("draw-card", "1", undefined, "any")).toBe("makes a player draw 1 card");
+  expect(effectPhrase("draw-card", "1", undefined, "you")).toBe("draws you 1 card");
+  expect(effectPhrase("lifegain", undefined, undefined, "opp")).toBe("gains an opponent life");
+  // Kinds whose phrase names no recipient are untouched.
+  expect(effectPhrase("damage", "3", undefined, "opp")).toBe("deals 3 damage");
+});

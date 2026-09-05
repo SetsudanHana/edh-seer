@@ -106,10 +106,27 @@ export function effectTargetNoun(subject: {
   return noun ?? "something";
 }
 
+/** WHO THE PAYOUT GOES TO, for the two kinds whose phrase names a recipient. "draws you" and "gains
+ *  you" were hard-coded, so Arcane Denial's "its controller may draw up to two cards" -- derived
+ *  correctly as `opp` -- printed as *draws you up to two cards* on the card page (owner, 2026-09-05).
+ *  `opp` names an opponent, `any` a player; `you` and an unstated recipient read as before. */
+const RECIPIENT_PHRASES: Record<string, Record<string, [(n: string) => string, string]>> = {
+  "draw-card": {
+    opp: [(n) => `makes an opponent draw ${n} card${n === "1" ? "" : "s"}`, "makes an opponent draw cards"],
+    any: [(n) => `makes a player draw ${n} card${n === "1" ? "" : "s"}`, "makes a player draw cards"],
+  },
+  lifegain: {
+    opp: [(n) => `gains an opponent ${n} life`, "gains an opponent life"],
+    any: [(n) => `gains a player ${n} life`, "gains a player life"],
+  },
+};
+
 export function effectPhrase(
-  kind: string | undefined, amount: string | undefined, target?: string,
+  kind: string | undefined, amount: string | undefined, target?: string, recipient?: string,
 ): string | null {
   if (!kind) return null;
+  const aimed = recipient ? RECIPIENT_PHRASES[kind]?.[recipient] : undefined;
+  if (aimed) return amount ? aimed[0](amount) : aimed[1];
   // THE ONE KIND WHOSE PHRASE NAMES A TARGET, and the one that was naming the wrong one.
   if (kind === "counter-placement" && target) {
     const n = amount === undefined ? "counters" : amount === "1" ? "a counter" : `${amount} counters`;
@@ -205,6 +222,8 @@ export function reasonSentence(input: {
   effectKind?: string; amount?: string; self?: boolean;
   /** Where a counter-placing effect actually puts them -- see `effectTargetNoun`. */
   effectTarget?: string;
+  /** Who a draw or a life change goes to (`effect.subject.control`) -- see `RECIPIENT_PHRASES`. */
+  effectRecipient?: string;
   /** WHAT THE EVENT HAPPENS TO, when it does not happen to the producer.
    *
    *  **A SORCERY CANNOT DIE.** Austere Command emits four `dies` events whose subjects are CLASSES
@@ -224,7 +243,7 @@ export function reasonSentence(input: {
   subjectNoun?: string;
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
-  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget);
+  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient);
   if (input.self) {
     const effect = phrase ? `it ${phrase}` : "it triggers";
     return `When ${input.consumer} ${verb} thanks to ${input.producer}, ${effect}`;

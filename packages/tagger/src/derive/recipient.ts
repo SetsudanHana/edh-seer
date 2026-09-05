@@ -31,8 +31,12 @@ const CUES: [string, RegExp][] = [
   ["draw", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?draws?\\b`, "i")],
   ["search", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?searc(?:h|hes)\\b`, "i")],
   ["mill", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?mills?\\b`, "i")],
-  ["lose-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?loses?\\s+\\S+\\s+life\\b`, "i")],
-  ["gain-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?gains?\\s+\\S+\\s+life\\b`, "i")],
+  // The amount is OPTIONAL between the verb and "life": "its controller gains life equal to its
+  // power" (Swords to Plowshares) has no word there, and demanding one handed Swords' lifegain to
+  // YOU for the whole life of this table -- a lifegain payoff fed by your own removal spell
+  // (owner-reported off the Arcane Denial card page, 2026-09-05).
+  ["lose-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?loses?\\s+(?:\\S+\\s+)?life\\b`, "i")],
+  ["gain-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?gains?\\s+(?:\\S+\\s+)?life\\b`, "i")],
   ["add-counter", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?puts?\\b[^.]{0,40}?counters?\\s+on\\b`, "i")],
   // Dictate of Erebos, Szat's Will: "each opponent SACRIFICES a creature of their choice". The
   // object is the opponent's creature, but it parses to `any` -- "of their choice" names no

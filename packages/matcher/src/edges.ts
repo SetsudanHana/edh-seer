@@ -1155,6 +1155,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
             // the entering creature the sentence opens with, and the enchantment the counters
             // actually land on. The consumer's own effect subject knows which.
             effectTarget: effectTargetNoun(a.effect.subject),
+            effectRecipient: a.effect.subject?.control,
             // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and
             // naming the class unconditionally was the wrong answer to it.
             //
