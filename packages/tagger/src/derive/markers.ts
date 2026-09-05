@@ -40,8 +40,11 @@ const CONDITIONS: [RegExp, Marker][] = [
   [/\byou.?ve completed a dungeon\b/i, "dungeon"],
   [/\bit.?s night\b/i, "night"],
 ];
-const HEAD = /^\s*(?:(?:whenever|when|at the beginning of|at end of)[^,]*,\s*)?(?:if|as long as)\s+([^,.]+?)\s*,/i;
-const TAIL = /\b(?:if|as long as)\s+([^,.]+?)\.?\s*$/i;
+// NO OVERLAPPING WHITESPACE TOKENS: a lazy `[^,.]+?` beside `\s*` is polynomial on a run of
+// spaces (CodeQL js/polynomial-redos, PR #197). The capture may carry its edge spaces; it is
+// trimmed below.
+const HEAD = /^(?:(?:whenever|when|at the beginning of|at end of)[^,]*, )?(?:if|as long as) ([^,.]+),/i;
+const TAIL = /(?:^| )(?:if|as long as) ([^,.]+)\.?$/i;
 
 /** CEILING: ONE REQUIREMENT PER CLAUSE. A condition on a clause's SECOND sentence -- Radiant
  *  Destiny's "Creatures ... get +1/+1. As long as you have the city's blessing, they also have
@@ -50,7 +53,8 @@ const TAIL = /\b(?:if|as long as)\s+([^,.]+?)\.?\s*$/i;
  *  printed conditions, blessing 6 of 25, dungeon 5 of 15. The upgrade is a requirement per action. */
 export function requiresOf(text: string): Requirement | undefined {
   const sentences = text.split(/\.\s+/).filter(Boolean).length;
-  const cond = HEAD.exec(text)?.[1] ?? (sentences <= 1 ? TAIL.exec(text)?.[1] : undefined);
+  const trimmed = text.trim();
+  const cond = (HEAD.exec(trimmed)?.[1] ?? (sentences <= 1 ? TAIL.exec(trimmed)?.[1] : undefined))?.trim();
   if (!cond) return undefined;
   for (const [re, marker] of CONDITIONS) if (re.test(cond)) return { marker, min: 1 };
   return undefined;
