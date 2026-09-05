@@ -82,7 +82,9 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   const licensed = page?.pairsWith?.some((p) => p.slug === withSlug) === true;
   useEffect(() => {
     let live = true;
-    if (!licensed || !withSlug) { setPair(null); return; }
+    // Cleared first, so switching partners never shows the previous one's identity for a frame.
+    setPair(null);
+    if (!licensed || !withSlug) return;
     void loader(withSlug).then((p) => { if (live) setPair(p); });
     return () => { live = false; };
   }, [withSlug, licensed, load]);
@@ -135,9 +137,14 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   const themes = themesOf(page.emits, page.demands);
   const gaps = unmetDemands(page.emits, page.demands);
 
-  // THE IDENTITY THE DECK WOULD HAVE: the card's own, the chosen colour when it picks one, and the
-  // picked partner's. The key is what the build ranked under.
-  const colour = page.choosesColour && colorParam && COLOURS.some((c) => c.letter === colorParam) ? colorParam : undefined;
+  // THE ENGINE READ NOTHING ON THIS CARD. Every legal commander has a page; 509 of them carry no
+  // derived ability, and the three sentences below are only true of a card that was read.
+  const unread = page.abilities.length === 0;
+  // THE IDENTITY THE DECK WOULD HAVE: the card's own, the chosen colour when EITHER half picks one
+  // (Clara beside a Doctor is the Doctor's page too), and the picked partner's. The key is what the
+  // build ranked under.
+  const chooses = page.choosesColour === true || pair?.choosesColour === true;
+  const colour = chooses && colorParam && COLOURS.some((c) => c.letter === colorParam) ? colorParam : undefined;
   const identity = [...page.identity, ...(colour ? [colour] : []), ...(pair?.identity ?? [])];
   const key = identityKeyOf(identity);
   const halves = [page, ...(pair ? [pair] : [])].map((h) => ({ h, list: listAt(h, key) }));
@@ -171,6 +178,13 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
             Background". Pick one below to see the pair.
           </p>
         ) : null}
+        {unread ? (
+          <p className="text-(--muted) max-w-[65ch]">
+            The engine read nothing on this card: no ability it could derive, so no events, no
+            gaps and no partners to rank. Either the card prints only keywords, or its text is one
+            the engine cannot yet read — the card page shows which.
+          </p>
+        ) : (<>
         <p>
           <span className="eyebrow text-(--muted)">its events point at </span>
           {themes.length === 0
@@ -183,15 +197,18 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
             ? <span className="text-(--muted)">nothing — it answers every event it watches</span>
             : gaps.map(eventKeySentence).join(" · ")}
         </p>
+        </>)}
       </div>
 
-      {(licences.length > 0 || page.choosesColour) && (
+      {(licences.length > 0 || chooses) && (
         <section className="flex flex-col gap-4 max-w-[68ch]">
           <h3 className="text-2xl font-bold tracking-[-0.01em]">Pair with</h3>
-          {page.choosesColour && (
+          {chooses && (
             <div className="flex flex-col gap-2">
-              <p className="eyebrow text-(--muted)">its colour, chosen before the game</p>
-              <ul className="flex flex-wrap gap-2">
+              <p id="pair-colour" className="eyebrow text-(--muted)">
+                {page.choosesColour ? "its colour, chosen before the game" : `${pair!.name}'s colour, chosen before the game`}
+              </p>
+              <ul className="flex flex-wrap gap-2" aria-labelledby="pair-colour">
                 {COLOURS.map((c) => (
                   <li key={c.letter}>
                     <Link
@@ -206,10 +223,10 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
               </ul>
             </div>
           )}
-          {licences.map((licence) => (
+          {licences.map((licence, i) => (
             <div key={licence} className="flex flex-col gap-2">
-              <p className="eyebrow text-(--muted)">{licence}</p>
-              <ul className="flex flex-wrap gap-2">
+              <p id={`pair-licence-${i}`} className="eyebrow text-(--muted)">{licence}</p>
+              <ul className="flex flex-wrap gap-2" aria-labelledby={`pair-licence-${i}`}>
                 {(page.pairsWith ?? []).filter((p) => p.licence === licence).map((p) => (
                   <li key={p.slug}>
                     <Link
@@ -242,7 +259,9 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           rows={ranked.partners}
           pool={ranked.pool}
           rarity={ranked.rarity}
-          empty="No partners inside this identity. Every card it could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."
+          empty={unread
+            ? "No partners, because the engine read nothing on this card to rank them by."
+            : "No partners inside this identity. Every card it could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."}
         />
       </section>
 

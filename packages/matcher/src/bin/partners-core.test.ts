@@ -949,3 +949,28 @@ test("a legal commander with no derived ability still gets a record and an index
   expect(rec.abilities).toEqual([]);
   expect(rec.partners).toEqual([]);
 });
+
+/** THE ENGINE READ THE MELD. `meldReason` carries no effect kind by design (melding is not a payoff
+ *  kind), and the row reused the "no effect kind = unread" rule, so every meld row on 21 pages
+ *  printed a refusal under a perfect sentence (branch review, 2026-09-05). */
+test("a meld row is never marked unread", () => {
+  const mishra = meldHalf("Mishra, Claimed by Gix", "Phyrexian Dragon Engine");
+  const engine = meldHalf("Phyrexian Dragon Engine", "Mishra, Claimed by Gix");
+  const { shards } = buildPartnerArtifact([mishra, engine], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Mishra, Claimed by Gix")!;
+  expect(rec.partners.find((r) => r.event === "meld|-|-|-")?.unread).toBeUndefined();
+});
+
+/** THE PARTNER MAY BE THE ONE WHO CHOOSES. The Ninth Doctor does not pick a colour; Clara Oswald
+ *  beside him does, and the pair is three colours. The Doctor's record has to carry the keys the
+ *  pair can reach through HER choice, and say that she chooses. */
+test("a commander whose partner chooses a colour reaches the colour keys through that partner", () => {
+  const doctor = legendary("The Ninth Doctor", "Legendary Creature — Time Lord Doctor", { colorIdentity: ["U", "R"] });
+  const clara = legendary("Clara Oswald", "Legendary Creature — Human Advisor", {
+    oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.\nDoctor's companion (You can have two commanders if the other is the Doctor.)",
+  });
+  const { shards } = buildPartnerArtifact([doctor, clara], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "The Ninth Doctor")!;
+  expect(rec.pairsWith).toEqual([{ slug: "clara-oswald", name: "Clara Oswald", identity: [], licence: "doctor's companion", choosesColour: true }]);
+  expect(Object.keys(rec.commanderPartnersBy ?? {}).sort()).toEqual(["UBR", "URG", "WUR"]);
+});

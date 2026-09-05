@@ -155,13 +155,14 @@ writeFileSync(join(stagingDir, "token-art.json"), JSON.stringify(tokenArt));
 // NO CARD RULES TEXT IN THESE RECORDS (spec D2, reversed 2026-09-04): name, type line and mana cost
 // are metadata, and the evidence a reader checks a claim against is the engine's reason sentence,
 // not the card's printed text.
-// THE CARD THE ENGINE READS, NOT THE RAW DOCUMENT, for the one field that is derived on read:
-// `meldPartner` comes off `allParts` in `docToCard` (data/docs.ts) and the raw document has no such
-// field, so the meld channel built from these records found nothing on the first real run
-// (2026-09-05, 0 meld rows). The rest of the record still reads the document's own fields
-// (`legalities`, `artCrop`) that `docToCard` drops.
+// THE CARD THE ENGINE READS, OVER THE RAW DOCUMENT. Two fields are derived on read in `docToCard`
+// (data/docs.ts) and exist on no document: `meldPartner` off `allParts` -- without it the meld
+// channel found nothing on this branch's first real build (2026-09-05, 0 meld rows) -- and a
+// double-faced card's `manaCost` off its front face, which 359 records (129 commanders) were
+// shipping as null. The document's own fields the mapper drops (`legalities`, `artCrop`) survive
+// underneath the spread.
 const partnerDeckCards = cards.map((card) => ({
-  card: { ...card, meldPartner: docToCard(card).meldPartner },
+  card: { ...card, ...docToCard(card) },
   tags: tagsByOracle.get(card._id) ?? null,
 }));
 const partners = buildPartnerArtifact(partnerDeckCards as never, loadHierarchy());

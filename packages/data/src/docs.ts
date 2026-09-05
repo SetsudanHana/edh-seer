@@ -105,8 +105,12 @@ export function docToCard(d: CardDoc): Card {
     // the engine's meld edge -- Mishra, Claimed by Gix + Phyrexian Dragon Engine -- drew nothing.
     // `allParts` comes from Scryfall bulk data through the ordinary ingest, so it is always current.
     // Scryfall lists the card itself among its own meld parts, hence the name test.
+    // ONLY A PART HAS A PARTNER. A meld RESULT lists its two parts and never itself, so "the first
+    // part that is not me" named one of its own halves on all 7 result cards (Brisela -> Bruna;
+    // branch review 2026-09-05). The card must be among the parts for the other part to be its half.
     ...(() => {
-      const other = d.allParts?.find((p) => p.component === "meld_part" && p.name !== d.name);
+      const parts = d.allParts?.filter((p) => p.component === "meld_part") ?? [];
+      const other = parts.some((p) => p.name === d.name) ? parts.find((p) => p.name !== d.name) : undefined;
       return other ? { meldPartner: other.name } : {};
     })(),
     // Needed to tell a card castable from either face from one whose back face is only reached in

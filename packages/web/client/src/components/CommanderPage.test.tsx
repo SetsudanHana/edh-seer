@@ -153,3 +153,39 @@ test("a Background says it never leads alone", async () => {
   atUrl("/commanders/haunted-one");
   expect(await screen.findByText(/second commander/i)).toBeInTheDocument();
 });
+
+/** WHEN THE PARTNER CHOOSES, THE PICKER IS HERE TOO. The Ninth Doctor's page with Clara picked is
+ *  a three-colour deck, and the page has to let the reader say which colour she is. */
+const NINTH: CardPageData = {
+  ...KRENKO, name: "The Ninth Doctor", identity: ["U", "R"],
+  commanderPartners: [row("Izzet Payoff", "izzet-payoff")],
+  pairsWith: [{ slug: "clara-oswald", name: "Clara Oswald", identity: [], licence: "doctor's companion", choosesColour: true }],
+  commanderPartnersBy: { WUR: { partners: [row("Jeskai Payoff", "jeskai-payoff")], pool: {}, rarity: {} } },
+};
+const CLARA_COMPANION: CardPageData = {
+  ...CLARA,
+  pairsWith: [{ slug: "the-ninth-doctor", name: "The Ninth Doctor", identity: ["U", "R"], licence: "doctor's companion" }],
+  commanderPartnersBy: { ...CLARA.commanderPartnersBy, WUR: { partners: [row("Clara Jeskai", "clara-jeskai")], pool: {}, rarity: {} } },
+};
+BY_SLUG["the-ninth-doctor"] = NINTH;
+BY_SLUG["clara-oswald"] = CLARA_COMPANION;
+
+test("a partner who chooses a colour brings the colour picker to the lead's page", async () => {
+  atUrl("/commanders/the-ninth-doctor?with=clara-oswald&color=W");
+  expect(await screen.findByRole("link", { name: /Jeskai Payoff/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Clara Jeskai/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /^blue$/i })).toHaveAttribute("href", "/commanders/the-ninth-doctor?with=clara-oswald&color=U");
+  expect(screen.getByText("colour identity").parentElement).toHaveTextContent(/Jeskai/);
+});
+
+/** A CARD THE ENGINE READ NOTHING ON SAYS SO, in place of three sentences that are only true of a
+ *  card it read. 509 commanders shipped with an empty ability list and "it answers every event it
+ *  watches" (branch review, 2026-09-05). */
+test("a commander with no derived ability says the engine read nothing rather than claiming it answers everything", async () => {
+  BY_SLUG["faceless-one"] = { ...KRENKO, name: "Faceless One", abilities: [], emits: [], demands: [], commanderPartners: [] };
+  atUrl("/commanders/faceless-one");
+  // The gap paragraph and the empty partner list both say it; either is the point.
+  expect((await screen.findAllByText(/read nothing on this card/i)).length).toBeGreaterThan(0);
+  expect(screen.queryByText(/answers every event it watches/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/refused each one on the merits/)).not.toBeInTheDocument();
+});

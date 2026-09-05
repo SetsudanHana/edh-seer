@@ -183,3 +183,19 @@ test("docToCard derives the meld partner from allParts and never names the card 
   expect(docToCard(doc).meldPartner).toBe("Phyrexian Dragon Engine");
   expect(docToCard({ ...doc, name: "Grizzly Bears", allParts: [] }).meldPartner).toBeUndefined();
 });
+
+/** A MELD RESULT NAMES ITS TWO PARTS AND NEVER ITSELF, so "the first meld_part that is not me" is
+ *  one of its own halves -- Brisela claimed to meld with Bruna, on 7 result cards in the corpus
+ *  (branch review, 2026-09-05). Only a card that is itself a part has a partner. */
+test("a meld result card has no meld partner", () => {
+  const brisela = docToCard({
+    _id: "b", name: "Brisela, Voice of Nightmares", typeLine: "Legendary Creature — Eldrazi Angel",
+    oracleText: "", keywords: [], colors: [], manaValue: 0, colorIdentity: ["W"],
+    power: "9", toughness: "10", tags: { produces: [], cares: [] }, searchNames: [],
+    allParts: [
+      { component: "meld_part", name: "Bruna, the Fading Light", typeLine: "Legendary Creature — Angel Horror", printingId: "a" },
+      { component: "meld_part", name: "Gisela, the Broken Blade", typeLine: "Legendary Creature — Angel Horror", printingId: "b" },
+    ],
+  } as unknown as Parameters<typeof docToCard>[0]);
+  expect(brisela.meldPartner).toBeUndefined();
+});

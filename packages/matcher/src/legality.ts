@@ -32,6 +32,8 @@ const CAN_BE_COMMANDER = /can be your commander/i;
  *  commander's identity, so a page about one of them has to offer the choice. */
 const CHOOSES_COLOUR = /choose a colou?r before the game begins/i;
 export const choosesColour = (card: Card): boolean => CHOOSES_COLOUR.test(card.oracleText ?? "");
+/** A Background (CR 702.124): the second commander beside a card that prints "Choose a Background". */
+export const isBackground = (card: Card): boolean => (card.typeLine ?? "").toLowerCase().includes("background");
 
 /** CR 702.124 — WHICH PAIRS MAY LEAD A DECK TOGETHER (roadmap J12's partner half). J4 shipped a
  *  commander check that accepts a Background without ever looking at its partner, and said so in its
@@ -79,8 +81,7 @@ export function pairingLicense(a: Card, b: Card): string | undefined {
   if (la !== undefined && la === partnerLabel(tb)) return la;
   // A Background is the SECOND commander, so the licence is on the other card. Checked both ways
   // round because a decklist states no order.
-  const isBg = (c: Card): boolean => (c.typeLine ?? "").toLowerCase().includes("background");
-  if ((CHOOSE_BACKGROUND.test(ta) && isBg(b)) || (CHOOSE_BACKGROUND.test(tb) && isBg(a))) return "choose a background";
+  if ((CHOOSE_BACKGROUND.test(ta) && isBackground(b)) || (CHOOSE_BACKGROUND.test(tb) && isBackground(a))) return "choose a background";
   // 702.124's Doctor's companion wants the OTHER to be the Doctor — a legendary creature whose type
   // line says Doctor. 17 corpus cards qualify.
   const isDoctor = (c: Card): boolean => {

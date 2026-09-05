@@ -4,7 +4,7 @@ import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { ROLE_NOT_SYNERGY, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
-import { choosesColour, isLegalCommander, pairingLicense } from "../legality.js";
+import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
@@ -529,18 +529,20 @@ export function partnersFor(
 
   // THE OTHER HALF OF A MELD PAIR. One candidate, named on the card, verified exactly as every
   // other row is: the engine's `meldReason` decides, on the `meld` tag it writes.
-  if (meldWith && rows.length < KEEP) {
+  // NOT BEHIND `KEEP`: a rarity of one sorts it to the top below, so a card that already has 24
+  // rows would otherwise drop its one meld silently.
+  if (meldWith) {
     const key = "meld|-|-|-";
     pool[key] = 1;
     // `meldReason` lives beside `directedReasons` in `pairReasons`, not inside it: a meld is
-    // symmetric and stated once per pair, so it is asked for by name here.
+    // symmetric and stated once per pair, so it is asked for by name here. NEVER `unread`: the
+    // reason carries no effect kind BY DESIGN (melding is not a payoff kind), and the sentence is
+    // the whole of what the engine read.
     const on = meldReason(subject, meldWith);
     if (on.length > 0) {
-      const chosen = pickReason(on);
       rows.push({
-        name: meldWith.card.name, slug: slugs.get(meldWith.card.name) ?? slugOf(meldWith.card.name),
-        score: specificity(key, freq), event: key, reason: chosen.text,
-        ...(chosen.effectKind ? {} : { unread: true as const }),
+        name: meldWith.card.name, slug: slugs.get(meldWith.card.name)!,
+        score: specificity(key, freq), event: key, reason: pickReason(on).text,
       });
     }
   }
@@ -823,7 +825,7 @@ export interface CardPageRecord {
   /** THE CARDS THIS COMMANDER MAY LEAD WITH (CR 702.124), from `pairingLicense` -- the same
    *  function the legality report uses, so the page can never offer a pair the report would flag.
    *  Only substantive cards, because a row must link to a page. Commander records only. */
-  pairsWith?: { slug: string; name: string; identity: string[]; licence: string }[];
+  pairsWith?: { slug: string; name: string; identity: string[]; licence: string; choosesColour?: true }[];
   /** CR 903.4b: choose its colour before the game; the page offers five. */
   choosesColour?: true;
   /** THE SAME LIST, RE-RANKED PER IDENTITY A PAIRING CAN REACH, keyed by `identityKeyOf`. A picked
@@ -882,8 +884,9 @@ const isCommander = (d: DeckCard): boolean =>
   isLegalCommander(d.card as Card)
   && (d.card as { legalities?: Record<string, string> }).legalities?.commander === "legal";
 
-/** A Background is a commander only opposite a card that prints "Choose a Background". */
-const isBackground = (d: DeckCard): boolean => /\bBackground\b/.test(d.card.typeLine ?? "");
+/** A Background is a commander only opposite a card that prints "Choose a Background" -- the same
+ *  test `pairingLicense` makes, so the record and the licence can never disagree. */
+const isBackground = (d: DeckCard): boolean => isBackgroundCard(d.card as Card);
 
 /** THE WHOLE ARTIFACT, PURELY. Mongo reads and fs writes stay in `build-static.ts`; everything
  *  decidable is here so it can be tested without either. */
@@ -946,9 +949,9 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   freq["meld|-|-|-"] = 1;
 
   // EVERY COMMANDER, ONCE, for the pairing scan below. CEILING: `pairsWith` is O(commanders^2)
-  // regex pairs -- about 2,600^2 / 2 = 3.4 M cheap tests on the corpus, a few seconds. The upgrade
-  // path is to bucket by licence form first (bare Partner, label, Background, Doctor) so each card
-  // is compared only with its own form.
+  // regex pairs -- a full scan per commander, 3,444 x 3,443 = 11.9 M cheap tests on the 2026-09-05
+  // corpus, inside a build that went 66 s -> 80 s. The upgrade path is to bucket by licence form
+  // first (bare Partner, label, Background, Doctor) so each card is compared only with its own form.
   const commanders = substantive.filter(isCommander);
 
   const shards = new Map<string, Record<string, CardPageRecord>>();
@@ -992,8 +995,11 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
           .map((o) => ({ o, licence: pairingLicense(d.card as Card, o.card as Card) }))
           .filter((x): x is { o: DeckCard; licence: string } => x.licence !== undefined)
           .map(({ o, licence }) => ({
-            slug: slugs.get(o.card.name) ?? slugOf(o.card.name), name: o.card.name,
+            slug: slugs.get(o.card.name)!, name: o.card.name,
             identity: o.card.colorIdentity ?? [], licence,
+            // THE PARTNER MAY BE THE ONE WHO CHOOSES: Clara beside a Doctor makes the pair three
+            // colours, and the Doctor's page has to offer her colour.
+            ...(choosesColour(o.card as Card) ? { choosesColour: true as const } : {}),
           }))
           .sort((a, b) => a.licence.localeCompare(b.licence) || a.name.localeCompare(b.name));
         const rankedFor = (identity: Set<string>) => {
@@ -1009,12 +1015,12 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
         // Partner 495 variant lists over 55 cards, Backgrounds 129 over 32, Doctors 76 over 24,
         // labels 56 over 18 -- about 900 extra rankings on a 66 s build.
         const reach = new Set<string>();
-        for (const p of pairsWith) reach.add(identityKeyOf([...own, ...p.identity]));
-        if (choosesColour(d.card as Card)) {
-          for (const c of WUBRG) {
-            reach.add(identityKeyOf([...own, c]));
-            for (const p of pairsWith) reach.add(identityKeyOf([...own, c, ...p.identity]));
-          }
+        const self = choosesColour(d.card as Card);
+        if (self) for (const c of WUBRG) reach.add(identityKeyOf([...own, c]));
+        for (const p of pairsWith) {
+          // Either half may choose; the colour joins the pair's identity from whichever side.
+          if (self || p.choosesColour) for (const c of WUBRG) reach.add(identityKeyOf([...own, c, ...p.identity]));
+          else reach.add(identityKeyOf([...own, ...p.identity]));
         }
         reach.delete(identityKeyOf(own));
         const commanderPartnersBy = Object.fromEntries(

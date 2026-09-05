@@ -25,7 +25,10 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: boolean }) {
-  if (rows.length === 0) return null;
+  // AN EMPTY TABLE SAYS SO. Every legal commander has a page (2026-09-05), 509 of them with no
+  // derived ability, and a heading over nothing read as a broken page rather than as the refusal
+  // it is -- which is the one place the owner can catch a wrong "no ability".
+  if (rows.length === 0) return <p className="text-(--muted)">The engine read nothing on this card.</p>;
   // A TABLE NEEDS TABLE WIDTH. In the card page's 320px rail the four columns crush exactly as they
   // do on a phone -- "makes a token / once for every Goblin you control" over six lines -- so the
   // caller says which form it has room for rather than a breakpoint guessing.
