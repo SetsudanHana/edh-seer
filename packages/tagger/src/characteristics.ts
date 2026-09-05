@@ -38,9 +38,14 @@ export function playableFaces(typeLine: string, layout?: string): Characteristic
  *  Veteran Adventurer) and each derived only its printed subtypes, so no Rogue payoff saw Burakos
  *  and his own party count could not count him (owner, 2026-09-05). Only words the closed creature
  *  subtype list knows are admitted: the sentence is read, not trusted. */
-const IS_ALSO_A = /(?:^|\n)[^\n.]{1,60}? is also an? ([^.\n]{1,80})\./;
+const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 function alsoTypes(card: Card): string[] {
-  const m = IS_ALSO_A.exec(card.oracleText ?? "");
+  // ANCHORED ON THE CARD'S OWN NAME, never a wildcard prefix: a lazy `[^\n.]{1,60}?` before the
+  // verb is polynomial on a run of spaces (CodeQL js/polynomial-redos, PR #191). A legendary card
+  // names itself by the part before the comma -- "Burakos is also ..." on Burakos, Party Leader.
+  const names = [...new Set([card.name, card.name.split(",")[0]!.trim(), "This creature"])].filter(Boolean);
+  const re = new RegExp(`(?:^|\\n)(?:${names.map(escapeRe).join("|")}) is also an? ([^.\\n]{1,80})\\.`);
+  const m = re.exec(card.oracleText ?? "");
   if (!m) return [];
   const known = new Set<string>(CREATURE_SUBTYPES);
   // "Cleric, Rogue, Warrior, and Wizard": the Oxford comma leaves "and Wizard" as one token.
