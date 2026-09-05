@@ -979,7 +979,8 @@ test("BuildBenchmarks: a leaf's facets are said beside its count and never added
   render(<BuildBenchmarks categories={cats} parents={SAMPLE.report.buildParents} />);
   const draw = screen.getByText(/^Draw$/).closest("li")!;
   expect(draw.textContent).toMatch(/5 engines · 3 unlabelled/);
-  expect(draw.textContent).toMatch(/^Draw14/);
+  // The count keeps its column: facet text precedes it, never trails it.
+  expect(draw.textContent).toMatch(/5 engines · 3 unlabelled14 · \d+%$/);
   expect(draw.getAttribute("aria-label")).toMatch(/5 engines · 3 unlabelled$/);
 });
 

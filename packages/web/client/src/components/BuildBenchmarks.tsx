@@ -273,8 +273,10 @@ export function BuildBenchmarks({
             <span className="block h-full rounded-full bg-(--fill)" style={{ width: `${share}%` }} />
           ) : null}
         </span>
-        <span className="w-20 shrink-0 text-right stat-num">{count} · {share}%</span>
+        {/* BEFORE the count, so the count column every row shares stays right-aligned; the bar
+          *  (flex-1) gives up the width, which is the one thing on the row that can. */}
         {facetText ? <span className="shrink-0 text-xs stat-num">{facetText}</span> : null}
+        <span className="w-20 shrink-0 text-right stat-num">{count} · {share}%</span>
       </li>
     );
   };
