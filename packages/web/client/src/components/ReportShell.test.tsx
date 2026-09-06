@@ -1,6 +1,6 @@
 import { render, screen, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 import { REFERENCE_SURFACES, ReportShell, SEED_CAP } from "./ReportShell.js";
 import { ReportHeader } from "./ReportHeader.js";
@@ -97,7 +97,9 @@ test("a new report routes back to the chapters", async () => {
   await userEvent.click(screen.getAllByRole("link", { name: /^Combos/ })[0]!);
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();
 
-  const second = { ...SAMPLE, report: { ...SAMPLE.report } };
+  // An EDITED list -- the case the comment above describes. The same list re-run under a game
+  // state is not a new deck and stays where the reader is (the test further down).
+  const second = { ...SAMPLE, report: { ...SAMPLE.report, cards: SAMPLE.report.cards.slice(1) } };
   rerender(<MemoryRouter initialEntries={["/analysis/combos"]}><ReportShell data={second} /></MemoryRouter>);
   expect(screen.getByRole("navigation", { name: "Report chapters" })).toBeInTheDocument();
 });
@@ -493,4 +495,24 @@ test("a precise pointer still gets the board", async () => {
 test("the first report keeps the surface it arrived on", () => {
   render(<MemoryRouter initialEntries={["/analysis/combos"]}><ReportShell data={SAMPLE} /></MemoryRouter>);
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();
+});
+
+/** ...AND A NEW DECK GOES HOME WITH THE DECK AND THE STATE STILL IN THE URL, while the same deck
+ *  re-run (a game state change) stays where the reader is. Read through the router, so a
+ *  MemoryRouter can see it. */
+function LocationProbe() {
+  const loc = useLocation();
+  return <output data-testid="loc">{`${loc.pathname}${loc.search}${loc.hash}`}</output>;
+}
+test("a new deck goes home carrying search and hash; the same deck under a state stays put", () => {
+  const at = ["/analysis/combos?speed=4#deck=abc"];
+  const { rerender } = render(<MemoryRouter initialEntries={at}><ReportShell data={SAMPLE} /><LocationProbe /></MemoryRouter>);
+  expect(screen.getByTestId("loc").textContent).toBe("/analysis/combos?speed=4#deck=abc");
+  // Same cards, new object: a re-run, not a new deck.
+  rerender(<MemoryRouter initialEntries={at}><ReportShell data={{ ...SAMPLE, report: { ...SAMPLE.report } }} /><LocationProbe /></MemoryRouter>);
+  expect(screen.getByTestId("loc").textContent).toBe("/analysis/combos?speed=4#deck=abc");
+  // A different list: home, and nothing dropped on the way.
+  const other = { ...SAMPLE, report: { ...SAMPLE.report, cards: SAMPLE.report.cards.slice(1) } };
+  rerender(<MemoryRouter initialEntries={at}><ReportShell data={other} /><LocationProbe /></MemoryRouter>);
+  expect(screen.getByTestId("loc").textContent).toBe("/?speed=4#deck=abc");
 });

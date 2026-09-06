@@ -126,7 +126,8 @@ export function DeckGauges({ data, onOpen, diff }: {
   // line now prints the share to a decimal and the floor it fell under, so the three agree.
   const lead = report.strategies?.[0];
   const underFloor = lead && template?.leadFloor !== undefined
-    ? `${lead.label} reads ${(lead.confidence * 100).toFixed(1)}%, under the ${Math.round(template.leadFloor * 100)}% an archetype needs to set its own row`
+    // Floored to a decimal, not rounded: 0.2499 must not print as "25.0%, under the 25%".
+    ? `${lead.label} reads ${(Math.floor(lead.confidence * 1000) / 10).toFixed(1)}%, under the ${Math.round(template.leadFloor * 100)}% an archetype needs to set its own row`
     : "no archetype read strongly enough here to set its own row";
   const tickSource = !template
     ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"

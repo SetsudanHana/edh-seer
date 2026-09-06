@@ -124,23 +124,26 @@ export function ReportShell({ data, diff, state, onState }: {
   // their list and re-analysed came back to the graph — the one surface that answers none of the
   // six questions a fresh report is for.
   const navigate = useNavigate();
-  const { pathname } = useLocation();
-  // NOT ON THE FIRST REPORT (UX sweep 2026-09-06, D1). This effect also ran on mount, so a shared
+  const { pathname, search, hash } = useLocation();
+  // ONLY A NEW DECK GOES HOME (UX sweep 2026-09-06, D1). This effect also ran on mount, so a shared
   // link to a reference surface -- `/analysis/cards#deck=…` -- was redirected to `/` the moment it
   // loaded, and `navigate("/")` carried no hash: the address bar lost both the surface and the
   // deck, and a reload after that lost the analysis. Measured on the live site twice with a clean
-  // load. The first report keeps whatever path it arrived on; only a NEW report goes home, and it
-  // goes home with the state and the deck still in the URL.
-  const seenData = useRef<typeof data | null>(null);
+  // load. Keyed on the DECK'S IDENTITY (its card names), not on "is this the first data": a
+  // first-mount flag reads wrong under StrictMode's doubled effects (review), and a re-run of the
+  // same list under a game state is not a new deck either -- it keeps the surface the reader is
+  // on. The navigate carries the router's own search and hash, so the state and the deck stay in
+  // the URL, and a MemoryRouter test can see that they do.
+  const deckKey = data.report.cards.map((c) => c.name).join("\u0001");
+  const seenDeck = useRef<string | null>(null);
   useEffect(() => {
-    const first = seenData.current === null;
-    seenData.current = data;
-    if (first) return;
-    if (pathname !== "/") navigate({ pathname: "/", search: window.location.search, hash: window.location.hash }, { replace: true });
-    // Keyed on the REPORT, not on the path: re-running this when the path changes would make every
+    const changed = seenDeck.current !== null && seenDeck.current !== deckKey;
+    seenDeck.current = deckKey;
+    if (changed && pathname !== "/") navigate({ pathname: "/", search, hash }, { replace: true });
+    // Keyed on the deck, not on the path: re-running this when the path changes would make every
     // reference surface unreachable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [deckKey]);
 
   return (
     // Every card name under here can open the inspector; the graph keeps its own in-canvas one.

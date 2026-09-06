@@ -231,7 +231,10 @@ export function usePinned(): Pick<CardDrawerApi, "pinned" | "isPinned" | "toggle
 /** THE ENGINE'S ONE FALLBACK SENTENCE. `sentence.ts` prints "<card> triggers" / "it triggers" when
  *  it read the trigger and not the effect, and the card page marks that row "engine did not read
  *  what it does" while the report printed it as a claim (skeptic, UX sweep 2026-09-06: the deck's
- *  5.0 anchor was one). The mark travels with the sentence now, wherever it is printed. */
+ *  5.0 anchor was one). The mark travels with the sentence now, wherever it is printed.
+ *  CEILING: keyed on the rendered text because the client cannot value-import the matcher (its
+ *  module graph reaches node:fs). `sentence.test.ts` pins the fallback's last word, so a phrase
+ *  change in the engine fails there rather than silently unmarking rows here. */
 export const unreadEffect = (text: string): boolean => /\btriggers$/.test(text.trim());
 
 export function ReasonText({ text, className }: { text: string; className?: string }) {

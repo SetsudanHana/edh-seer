@@ -187,13 +187,15 @@ export function Findings({ report, diff }: {
           <h3 className="text-base font-bold tracking-[-0.01em]">What the build score cannot see</h3>
           <ul className="flex flex-col border-t border-(--separator)">
             {unseen.map((f, i) => (
-              <li key={f.id} className="flex flex-col gap-2 py-4 border-b border-(--separator)">
-                <h4 className="text-base font-semibold leading-tight flex gap-3">
-                  <span aria-hidden="true" className="stat-num text-sm text-(--muted) pt-0.5">{all.length + i + 1}</span>
-                  <span>{f.headline}</span>
-                </h4>
+              // THE SAME GRID AS THE SCORED ROWS, so the number continues in the same column and,
+              // like theirs, hides below `sm` (review: a phone showed "6" under no "1..5").
+              <li key={f.id} className="grid grid-cols-1 sm:grid-cols-[2.5rem_minmax(0,1fr)] gap-3 sm:gap-5 py-4 border-b border-(--separator)">
+                <span aria-hidden="true" className="hidden sm:block stat-num text-sm text-(--muted) pt-0.5">{all.length + i + 1}</span>
+                <div className="flex flex-col gap-2 min-w-0">
+                <h4 className="text-base font-semibold leading-tight">{f.headline}</h4>
                 <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
                 {f.action ? <p className="text-sm">{f.action}</p> : null}
+                </div>
               </li>
             ))}
           </ul>
