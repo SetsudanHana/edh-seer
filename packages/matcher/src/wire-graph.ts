@@ -217,9 +217,24 @@ export function attachRolesAndArt(
     // the wire, and not in the reason set: `effectKind` is load-bearing for archetype detection, so
     // the objects must survive even when their sentences do not. Same collapse `claimCount` applies
     // to the score.
-    reasonTexts: [...new Set(e.reasons.map((r) => r.text))],
+    reasonTexts: dedupeBareTriggers([...new Set(e.reasons.map((r) => r.text))]),
     drawn: e.drawn,
   }));
 
   return { nodes, edges, undirectedReasons: graph.undirectedReasons, offDeckReasons: graph.offDeckReasons };
+}
+
+/** THE BARE "X triggers" SENTENCE IS DROPPED WHEN A SIBLING SAYS WHAT X DOES. Two reasons on one
+ *  edge, one with an effect kind the sentence grammar can phrase and one without, print "When A is
+ *  cast, B triggers" and "When A is cast, B blinks a permanent" -- the same claim twice, and the
+ *  first one then wears the "engine did not read what it does" mark on a pair the engine DID read
+ *  (owner's phone, 2026-09-06, Displacer Kitten). The bare form is `sentence.ts`'s fallback, so a
+ *  fuller sentence with the same prefix supersedes it. */
+export function dedupeBareTriggers(texts: string[]): string[] {
+  const bare = " triggers";
+  return texts.filter((t) => {
+    if (!t.endsWith(bare)) return true;
+    const prefix = t.slice(0, -bare.length) + " ";
+    return !texts.some((o) => o !== t && o.startsWith(prefix));
+  });
 }

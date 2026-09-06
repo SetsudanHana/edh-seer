@@ -189,7 +189,7 @@ export function CardInspector({
   return (
     <div
       data-testid="card-inspector"
-      className="absolute inset-y-2 right-2 w-72 max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3"
+      className="absolute inset-y-2 right-2 left-2 sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3"
     >
       <button type="button" onClick={onClose} className="eyebrow self-end text-(--muted)">
         close
