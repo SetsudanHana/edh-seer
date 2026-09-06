@@ -18,9 +18,16 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin,
+  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin, phone = "sheet",
 }: {
   node: GraphNode;
+  /** HOW THE PANEL SITS BELOW `sm`. "sheet" fills its container, which is right for the Cards
+   *  drawer (nothing behind it the reader needs). "half" hugs the bottom at no more than half the
+   *  container, for the board: owner, 2026-09-06, "you click a node and the dock opens which
+   *  covers whole screen so you see nothing on the graph basically" -- the panel describes a
+   *  picture it must not hide, the same reason the ego view reads its edge in a strip. At `sm`
+   *  and up both are the right-hand panel they always were. */
+  phone?: "sheet" | "half";
   /** Whether the card this panel is showing is in the reader's pinned set (roadmap S8).
    *
    *  PASSED, NOT READ FROM THE CONTEXT, and that is an import cycle rather than a preference:
@@ -189,7 +196,9 @@ export function CardInspector({
   return (
     <div
       data-testid="card-inspector"
-      className="absolute inset-y-2 right-2 left-2 sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3"
+      className={`absolute right-2 left-2 ${
+        phone === "half" ? "bottom-2 top-auto max-h-[50%] sm:top-2 sm:max-h-none" : "inset-y-2"
+      } sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3`}
     >
       <button type="button" onClick={onClose} className="eyebrow self-end text-(--muted)">
         close
@@ -227,7 +236,11 @@ export function CardInspector({
         <img
           src={cardImageUrl((face?.artCrop ?? node.artCrop)!)}
           alt={face?.name ?? node.label}
-          className="w-full max-w-[32vh] mx-auto aspect-[488/680] object-contain shrink-0 rounded-(--radius) border border-(--separator)"
+          // NOT IN THE HALF SHEET BELOW `sm`. The sheet is ~35vh; measured at 390, a 14vh card still
+          // left the first pair 130px under the sheet's fold behind the close row, the name, the
+          // type line, the text disclosure and the pin. The board is already drawing this card's
+          // art on its disc, and the pairs are what the tap asked for.
+          className={`w-full ${phone === "half" ? "hidden sm:block" : ""} max-w-[32vh] mx-auto aspect-[488/680] object-contain shrink-0 rounded-(--radius) border border-(--separator)`}
         />
       ) : null}
 

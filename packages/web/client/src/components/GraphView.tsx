@@ -2477,6 +2477,7 @@ export function GraphView(
               node={inspectingNode}
               edges={inspectingEdges}
               flow={flow}
+              phone="half"
               textOf={textById}
               nameOf={nameById}
               // Closes the panel AND clears the board: with an additive selection there is no single card
