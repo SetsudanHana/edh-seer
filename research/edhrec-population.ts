@@ -10,35 +10,25 @@
  *  Terms: EDHREC states none for these endpoints. One request per second, a browser UA, raw bodies
  *  cached on disk so a re-run costs nothing, and NEVER at runtime -- this is a one-off pull.
  *
- *    npx tsx packages/matcher/src/bin/edhrec-population.ts [--out packages/cli/decks/edhrec] */
+ *    npx tsx research/edhrec-population.ts [--out packages/cli/decks/edhrec] [--themes a,b | --all] */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { ARCHETYPE_VOCABULARY } from "../packages/matcher/src/archetype-vocabulary.js";
 
 const OUT = process.argv.includes("--out") ? process.argv[process.argv.indexOf("--out") + 1]! : "packages/cli/decks/edhrec";
 const CACHE = process.env.EDHREC_CACHE ?? ".edhrec-cache";
 const PER_THEME = 5;
 
-/** Our archetype -> EDHREC theme url slug and the display value its deck rows are tagged with.
- *  `goodstuff` has no EDHREC theme; `midrange` is the nearest and is flagged as such. `control` and
- *  `stax` are not archetypes the detector names -- they are the strategy rows the template needs
- *  (roadmap W19: "control decks run more interaction" had no population to measure on). */
-const THEMES: { archetype: string; slug: string; tag: string }[] = [
-  { archetype: "tokens", slug: "tokens", tag: "Tokens" },
-  { archetype: "aristocrats", slug: "aristocrats", tag: "Aristocrats" },
-  { archetype: "lifegain", slug: "lifegain", tag: "Lifegain" },
-  { archetype: "landfall", slug: "landfall", tag: "Landfall" },
-  { archetype: "spellslinger", slug: "spellslinger", tag: "Spellslinger" },
-  { archetype: "reanimator", slug: "reanimator", tag: "Reanimator" },
-  { archetype: "counters", slug: "plus-1-plus-1-counters", tag: "+1/+1 Counters" },
-  { archetype: "voltron", slug: "voltron", tag: "Voltron" },
-  { archetype: "combo", slug: "combo", tag: "Combo" },
-  { archetype: "superfriends", slug: "planeswalkers", tag: "Planeswalkers" },
-  { archetype: "enchantress", slug: "enchantress", tag: "Enchantress" },
-  { archetype: "artifacts", slug: "artifacts", tag: "Artifacts" },
-  { archetype: "goodstuff", slug: "midrange", tag: "Midrange" },
-  { archetype: "control", slug: "control", tag: "Control" },
-  { archetype: "stax", slug: "stax", tag: "Stax" },
-];
+/** THE VOCABULARY IS THE THEME LIST (2026-09-06): every member with an EDHREC key, keyed by our
+ *  slug for the output directory and by EDHREC's for the request. `--themes a,b` limits the pull;
+ *  the default is the 15 the 2026-09-06 population already holds, so a re-run costs nothing, and
+ *  `--all` takes every keyed member (one request per second: budget an hour and a half). Tribes
+ *  (`KINDRED_TRIBES`) are not pulled: one kindred member does not need 135 populations. */
+const ONLY = process.argv.includes("--themes") ? new Set(process.argv[process.argv.indexOf("--themes") + 1]!.split(",")) : undefined;
+const DEFAULT_THEMES = new Set(["tokens", "aristocrats", "lifegain", "landfall", "spellslinger", "reanimator", "counters", "voltron", "combo", "superfriends", "enchantress", "artifacts", "midrange", "control", "stax"]);
+const THEMES: { archetype: string; slug: string; tag: string }[] = ARCHETYPE_VOCABULARY
+  .filter((r) => r.edhrec && (ONLY ? ONLY.has(r.slug) : process.argv.includes("--all") || DEFAULT_THEMES.has(r.slug)))
+  .map((r) => ({ archetype: r.slug, slug: r.edhrec!.slug, tag: r.edhrec!.tag }));
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let last = 0;

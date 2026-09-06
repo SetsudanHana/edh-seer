@@ -878,6 +878,22 @@ export function analyzeDeckStructured(
       // `superfriends` row. Read off the derived characteristics, which is where every other field
       // here comes from, so a card with no tags contributes nothing rather than a guess.
       cardTypes: (dc.tags!.characteristics?.types ?? []).map((t) => t.toLowerCase()),
+      // The vocabulary's newer rows (2026-09-06): printed keywords for the named mechanics, the
+      // type-line words for the object classes, and the two halves of kindred -- what creature
+      // types the card HAS and which ones its abilities NAME (a lord's subject, a trigger's).
+      keywords: (dc.tags!.characteristics?.keywords ?? []).map((k) => k.toLowerCase()),
+      lineWords: [...(dc.tags!.characteristics?.types ?? []), ...(dc.tags!.characteristics?.subtypes ?? [])].map((w) => w.toLowerCase()),
+      creatureTypes: (dc.tags!.characteristics?.types ?? []).some((t) => t.toLowerCase() === "creature")
+        ? ((dc.tags!.characteristics?.keywords ?? []).some((k) => k.toLowerCase() === "changeling")
+          ? ["*"]
+          : (dc.tags!.characteristics?.subtypes ?? []).map((s) => s.toLowerCase()))
+        : [],
+      namedTypes: dc.tags!.abilities.flatMap((a) =>
+        [a.trigger?.subject, a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)]
+          .filter((s): s is NonNullable<typeof s> => s !== undefined && s !== null && s.self !== true)
+          .flatMap((s) => (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []))
+          .map((s) => s.toLowerCase()),
+      ),
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);

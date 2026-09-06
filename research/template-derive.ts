@@ -12,9 +12,9 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@edh-seer/data";
 import { minCopies } from "@edh-seer/engine";
-import { minSources } from "../mulligan.js";
+import { minSources } from "../packages/matcher/src/mulligan.js";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../packages/matcher/src/index.js";
 
 const DIR = process.argv.includes("--dir") ? process.argv[process.argv.indexOf("--dir") + 1]! : "packages/cli/decks/calibration";
 const VERBOSE = process.argv.includes("--verbose");
