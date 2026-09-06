@@ -159,7 +159,7 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
       {hasSlack && (
         <>
           <p className="text-sm text-(--muted)">
-            You carry more of these than the Command Zone template asks for. The category, never a
+            You carry more of these than the template asks for. The category, never a
             card &mdash; nothing here ranks two ramp cards against each other.
           </p>
           <ul className="flex flex-wrap gap-2">

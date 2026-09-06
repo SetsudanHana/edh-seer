@@ -914,10 +914,10 @@ export function analyzeDeckStructured(
     ...strategies.filter((s) => s.name === "reanimator" || s.name === "aristocrats").map((s) => s.confidence),
   );
   const {
-    buildScore, buildCategories, buildParents, suggestions, answerCoverage: coverage, rampResilience,
+    buildScore, buildCategories, buildParents, template, suggestions, answerCoverage: coverage, rampResilience,
     landsImpact, answersImpact,
   } =
-    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability);
+    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
@@ -1070,6 +1070,7 @@ export function analyzeDeckStructured(
     buildScore,
     buildCategories,
     buildParents,
+    template,
     landsImpact,
     answersImpact,
     suggestions,

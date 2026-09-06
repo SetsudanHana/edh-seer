@@ -509,7 +509,18 @@ export interface DeckReport {
    *  flag instead of matching `name === "Interaction"` (whole-branch review IMPORTANT 4: a rename of
    *  that parent would otherwise silently unwire the panel's coverage note while the score kept
    *  docking it). */
-  buildParents?: { name: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  buildParents?: { name: string; key?: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  /** WHICH THEME ROW(S) THE PARENT TARGETS CAME FROM (owner ruling 2026-09-06, spec
+   *  `2026-09-06-theme-template-proposal.md`): the detected primary and, when strong enough, the
+   *  secondary, each with its EDHREC-population row keyed by `buildParents[].key`, plus the
+   *  population row every deck falls back to. Shown beside the ticks so "Voltron runs 19.5
+   *  interaction; you run 12" is a claim a player can check. Matcher-only. */
+  template?: {
+    primary?: { name: string; label: string; weight: number; row: Record<string, number> };
+    secondary?: { name: string; label: string; weight: number; row: Record<string, number> };
+    population: Record<string, number>;
+    targets: Record<string, number>;
+  };
   /** WHAT MOVING THE LAND COUNT TO ITS TARGET IS WORTH to `buildScore` (roadmap S10). 0 inside the
    *  land band, where there is nothing to gain. */
   landsImpact?: number;
