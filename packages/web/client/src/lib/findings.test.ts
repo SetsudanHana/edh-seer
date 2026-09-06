@@ -340,3 +340,16 @@ test("the action line names no cut when the deck has no slack", () => {
   }));
   expect(scored[0]!.action).not.toContain("cutting from");
 });
+
+/** A FETCH THE LIBRARY CANNOT FILL (owner, 2026-09-06): the engine's `fetchShortfalls` row becomes a
+ *  lands finding that names the card and says why Wastes does not help. */
+test("a fetch shortfall is a finding, ranked by the fraction of lands it cannot return", () => {
+  const [f] = findings(report({
+    deckMath: { fetchShortfalls: [{ card: "Myriad Landscape", wants: 2, found: 1, sharedType: true }] } as never,
+  }));
+  expect(f.kind).toBe("fetch");
+  expect(f.headline).toBe("Myriad Landscape looks for 2 lands and the deck can give it 1.");
+  expect(f.detail).toContain("Wastes has no land type");
+  expect(f.figure).toBe("1/2");
+  expect(f.shortfall).toBeCloseTo(0.5);
+});

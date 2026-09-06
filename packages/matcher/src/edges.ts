@@ -19,6 +19,7 @@ import {
   staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
+import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { parseTypeLineAllFaces } from "./typeline.js";
 import { faceDeckCards } from "./faces.js";
 
@@ -1735,6 +1736,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     if (landSubtypes || basicLand) {
       if (a.effect.subject.control === "opp") continue;
       if (!subjectMatches(found, a.effect.subject, h)) continue;
+      // WASTES HAS NO LAND TYPE TO SHARE. Myriad Landscape's "basic land cards that share a land
+      // type" derives as a plain basic-land subject, which Wastes answers -- and two Wastes do not
+      // (owner, 2026-09-06). Same predicate the mana model reads, see `fetch-land.ts`.
+      if (SHARES_A_LAND_TYPE.test(p.card.oracleText ?? "") && !hasBasicLandType(c.card.typeLine)) continue;
       reasons.push({
         tag: `ramp-target:${landSubtypes ? themeSubjectKey(a.effect.subject) : "basic"}`,
         text: fetchSentence(p.card.name, c.card.name),

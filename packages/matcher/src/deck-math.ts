@@ -4,6 +4,7 @@ import { loadAnswerPool, identityKey, POOL_CLASSES, commanderIdentity } from "./
 import { deckAvailability } from "./availability.js";
 import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.js";
 import { manaAudit } from "./mana-audit.js";
+import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
 import { winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
@@ -289,8 +290,19 @@ export function computeDeckMath(
     mdfc: rec.mdfcUntapped + rec.mdfcTapped,
   };
 
+  // THE LIBRARY, NOT THE DECK: a commander is never fetched (CR 903.6). One row per short fetch,
+  // physical copies counted, because `deck` here is the full list and a second Island is a second
+  // card the fetch can return.
+  const libraryCards = deck.filter((dc) => !commanders.has(dc.card.name)).map((dc) => dc.card);
+  const fetchShortfalls = deck.flatMap((dc) => {
+    // A commander can be the FETCHER (its ability is on the battlefield like any other), so it is
+    // only left out of the library it searches.
+    const d = fetchDemand(dc.card.oracleText ?? "", libraryCards);
+    return d && d.found < d.wants ? [{ card: dc.card.name, ...d }] : [];
+  }).filter((row, i, all) => all.findIndex((o) => o.card === row.card) === i);
+
   return {
     turn, turnSource, seen: seen(turn), library, answers, clock, wincons, lands, colors,
-    castability, demand, topdeck: topdeckPayoffs(deck, commanderNames),
+    castability, demand, topdeck: topdeckPayoffs(deck, commanderNames), fetchShortfalls,
   };
 }

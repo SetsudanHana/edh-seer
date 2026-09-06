@@ -155,6 +155,11 @@ export interface ArchetypeRanking {
  *  `available: null` means the question does not apply -- a combat trigger the game itself supplies
  *  has no card to draw, and reporting 0% there would invent a hole the deck does not have. */
 export interface DeckMath {
+  /** A LAND FETCH THE LIBRARY CANNOT FILL (owner, 2026-09-06: "not enough basics"). One row per
+   *  fetch whose single activation asks for more lands than the library can return: Myriad
+   *  Landscape wants two basics sharing a type, and a deck with one of each basic gives it one.
+   *  Shortfalls only, never the fetches that are fine. Optional because older reports have none. */
+  fetchShortfalls?: { card: string; wants: number; found: number; sharedType: boolean }[];
   /** The turn everything here is priced against: the deck's own measured clock when it has one.
    *
    *  It replaces a fixed turn 5 that applied to every deck alike, which design §10.8 calls out as
