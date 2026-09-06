@@ -129,15 +129,16 @@ test("an empty pile scores near 0 and suggests the big gaps", () => {
 
 // THE TARGET IS THE THEME'S OWN ROW NOW (owner rulings 2026-09-06, spec
 // `2026-09-06-theme-template-proposal.md`): the hand-written deltas (voltron +3 protection, −2
-// wipes) are gone and `template-targets.json` says what a Voltron deck RUNS on EDHREC -- 19.5
-// interaction against a population of 13, and wipes at the population's 2, so the old "fewer
+// wipes) are gone and `template-targets.json` says what a Voltron deck RUNS on EDHREC -- 19.5,
+// read as 20 whole cards, interaction against a population of 13, and wipes at the population's 2, so the old "fewer
 // wipes" claim was never in the data. A bare `primary` reads that row at full confidence.
 test("a primary archetype reads its own EDHREC row: Voltron runs more interaction, not fewer wipes", () => {
   const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
   const voltron = computeBuild(cards, "voltron").buildParents;
   const goodstuff = computeBuild(cards, "goodstuff").buildParents;
   const t = (ps: typeof voltron, name: string) => ps.find((p) => p.name === name)!.target;
-  expect(t(voltron, "Interaction")).toBe(TEMPLATE.themes.voltron.interaction);
+  // Read as a WHOLE card (owner, 2026-09-06): the file keeps the half, the target does not.
+  expect(t(voltron, "Interaction")).toBe(Math.round(TEMPLATE.themes.voltron.interaction));
   expect(t(voltron, "Interaction")).toBeGreaterThan(t(goodstuff, "Interaction"));
   expect(t(voltron, "Board wipes")).toBe(TEMPLATE.population.boardWipes);
   // goodstuff has NO row on purpose (its population is cEDH midrange, spec §5): population all round.
@@ -152,7 +153,7 @@ test("superfriends wants three times the wipes: its board is walkers, and a wipe
   const t = (a: Parameters<typeof computeBuild>[1]) =>
     computeBuild(cards, a).buildParents.find((p) => p.name === "Board wipes")!.target;
   expect(t("goodstuff")).toBe(TEMPLATE.population.boardWipes);
-  expect(t("superfriends")).toBe(TEMPLATE.themes.superfriends.boardWipes);
+  expect(t("superfriends")).toBe(Math.round(TEMPLATE.themes.superfriends.boardWipes));
   expect(t("superfriends")).toBeGreaterThanOrEqual(3 * t("goodstuff"));
 });
 
@@ -184,7 +185,7 @@ describe("templateBlend: primary, secondary and the fallback (spec §3.2)", () =
     expect(at.secondary?.name).toBe("aristocrats");
   });
 
-  test("the blend is the confidence-weighted mean of the two rows, rounded to the half", () => {
+  test("the blend is the confidence-weighted mean of the two rows, rounded to a whole card", () => {
     // Tokens 0.30 and Aristocrats 0.22 -> weights 0.30/0.52 and 0.22/0.52. (The spec's worked
     // example, 23%/17%, sits UNDER the 0.25 lead floor and falls to the population -- caught here.)
     const b = templateBlend([rank("tokens", 0.30), rank("aristocrats", 0.22)]);
@@ -192,9 +193,13 @@ describe("templateBlend: primary, secondary and the fallback (spec §3.2)", () =
     expect(b.primary?.weight).toBeCloseTo(w1, 6);
     expect(b.secondary?.weight).toBeCloseTo(w2, 6);
     for (const k of ["consistency", "ramp", "interaction"] as const) {
-      const exact = w1 * tok[k] + w2 * ari[k];
-      expect(b.targets[k]).toBe(Math.round(exact * 2) / 2);
-      expect(Math.abs(b.targets[k] - exact)).toBeLessThanOrEqual(0.25);
+      const exact = w1 * Math.round(tok[k]) + w2 * Math.round(ari[k]);
+      // A card is whole (owner, 2026-09-06: "you can not have 0.5 of a card"): the rows are read
+      // rounded and the mean is rounded again, so the target is never further than half a card
+      // from the mean of the rounded rows.
+      expect(b.targets[k]).toBe(Math.round(exact));
+      expect(Number.isInteger(b.targets[k])).toBe(true);
+      expect(Math.abs(b.targets[k] - exact)).toBeLessThanOrEqual(0.5);
     }
     // RANKED, not order-free: `strategies[0]` leads and is the one the lead floor gates, so the
     // same two themes with the weaker one first read that one as the primary -- and here it sits
