@@ -77,14 +77,15 @@ export const SAMPLE: AnalyzeResponse = {
       { name: "Board wipes", key: "boardWipes", count: 0, target: 3, leaves: ["boardWipe"] },
     ],
     // WHOSE ROWS THE TICKS ARE (2026-09-06): Tokens leading with Aristocrats at 0.6+ of its
-    // confidence, weights 0.6 / 0.4 (exact in binary, so the printed shares are 60% and 40%). The `targets` here are what those two rows blend to; the parent `target`s above predate
-    // the blend and are left as the renderer's inputs -- the dials read `buildParents[].target`,
-    // the note reads the rows, and this fixture exercises both paths.
+    // confidence, weights 0.6 / 0.4 (exact in binary, so the printed shares are 60% and 40%). The
+    // rows BLEND TO THE PARENTS' OWN TARGETS above (0.6·8 + 0.4·13 = 10, and so on), because a real
+    // `computeBuild` reads `buildParents[].target` straight off `template.targets` -- a fixture
+    // where the tick and the rows under it disagree is output this engine cannot produce.
     template: {
-      primary: { name: "tokens", label: "Tokens", weight: 0.6, row: { consistency: 10, ramp: 10.5, interaction: 12, boardWipes: 2 } },
-      secondary: { name: "aristocrats", label: "Aristocrats", weight: 0.4, row: { consistency: 14.5, ramp: 12.5, interaction: 9, boardWipes: 3.5 } },
+      primary: { name: "tokens", label: "Tokens", weight: 0.6, row: { consistency: 8, ramp: 9, interaction: 11, boardWipes: 2.5 } },
+      secondary: { name: "aristocrats", label: "Aristocrats", weight: 0.4, row: { consistency: 13, ramp: 11.5, interaction: 8.5, boardWipes: 4 } },
       population: { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 },
-      targets: { consistency: 12, ramp: 11.5, interaction: 11, boardWipes: 2.5 },
+      targets: { consistency: 10, ramp: 10, interaction: 10, boardWipes: 3 },
     },
     // Real `buildSuggestions` output: parent-level (the 2026-08-21 ruling -- a LEAF can no longer be
     // short of anything, so "Removal 7/10" is not a sentence this engine produces) and carrying the

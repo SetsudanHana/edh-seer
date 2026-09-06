@@ -247,8 +247,8 @@ export function DeckGauges({ data, onOpen, diff }: {
                 <BandScale />
                 <Explain label="what this measures">
                   How close the deck sits to the category targets in Roles — ramp, draw, removal and the
-                  rest. It says nothing about how the cards work together, and the targets are the
-                  template&rsquo;s, not measured.
+                  rest. It says nothing about how the cards work together, and a target is what decks
+                  of this theme run on EDHREC (or the population&rsquo;s median) &mdash; not what they need.
                 </Explain>
                 </>
               }

@@ -880,8 +880,8 @@ test("HighSynergyCards marks the top-authority anchor and double-duty cards", ()
  *  Aristocrats 14.5" next to EDHREC and check it, which is the whole point of showing them. */
 test("each role tick names the theme rows it was blended from, and the source line says the weights", () => {
   render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
-  expect(screen.getByText("Tokens 10 · Aristocrats 14.5")).toBeInTheDocument();     // Consistency
-  expect(screen.getByText("Tokens 12 · Aristocrats 9")).toBeInTheDocument();        // Interaction
+  expect(screen.getByText("Tokens 8 · Aristocrats 13")).toBeInTheDocument();        // Consistency, blends to the tick's 10
+  expect(screen.getByText("Tokens 11 · Aristocrats 8.5")).toBeInTheDocument();      // Interaction
   expect(screen.getByText(/Ticks blend what Tokens \(60%\) and Aristocrats \(40%\) decks run on EDHREC/)).toBeInTheDocument();
   expect(screen.queryByText(/Command Zone/)).toBeNull();
 });

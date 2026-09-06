@@ -220,10 +220,6 @@ export const BUILD_PARENTS: BuildParentSpec[] = [
   { name: "Board wipes", key: "boardWipes", leaves: ["boardWipe"], target: TEMPLATE.population.boardWipes, weight: 0.5, costBand: [3, 5] },
 ];
 
-/** Every leaf a parent owns. `lands`, `burn` and `stax` are deliberately absent -- see the note
- *  above `BASE_TARGETS` for why they stay outside every group. */
-const GROUPED_LEAVES = new Set<BuildCategory>(BUILD_PARENTS.flatMap((p) => p.leaves));
-
 /** Per-archetype target shifts on the categories OUTSIDE every parent. Only `lands` is left: the
  *  role-parent deltas this table carried (tokens −2 wipes, voltron +3 protection, combo +4 tutors,
  *  superfriends +3 wipes, …) were hand-written guesses at what a per-theme table now measures, and
@@ -274,9 +270,10 @@ const TEMPLATE_KEYS: TemplateKey[] = ["consistency", "ramp", "interaction", "boa
 const themeRows = TEMPLATE.themes as Record<string, Partial<TemplateRow> & { n: number }>;
 
 function templateTheme(r: ArchetypeRanking, weight: number): TemplateTheme | undefined {
-  const row = themeRows[r.name];
-  if (!row) return undefined;
-  return { name: r.name, label: ARCHETYPE_LABELS[r.name], weight, row: { ...TEMPLATE.population, ...row, n: undefined } as unknown as TemplateRow };
+  const stored = themeRows[r.name];
+  if (!stored) return undefined;
+  const { n: _n, ...row } = stored;
+  return { name: r.name, label: ARCHETYPE_LABELS[r.name], weight, row: { ...TEMPLATE.population, ...row } };
 }
 
 /** Which theme row(s) this deck is measured against (spec §3.2). `T = (c₁·T₁ + c₂·T₂) / (c₁ + c₂)`
@@ -476,9 +473,8 @@ export function answersImpactOf(
 
 /** Leaf-level targets: `lands` (and, always at 0, `burn`/`stax`) for their own scoring/reporting,
  *  and every grouped leaf for the `buildCategories` per-leaf `target` field a leaf shows nothing
- *  meaningful in any more. A grouped leaf IGNORES `ARCHETYPE_TARGET_DELTAS` here on purpose -- its
- *  delta already reached its parent in `adjustedParentTargets`, and applying it again here would
- *  double the shift (and resurrect a leaf target the whole point of this task retires).
+ *  meaningful in any more. No delta names a grouped leaf any more (the role deltas became
+ *  `template-targets.json` rows, 2026-09-06); `landfall`'s `lands` is the only one left.
  *
  *  `landsTarget` is the GATED number (`gatedLandsTarget`'s output, already decided by the caller) --
  *  never a raw Karsten figure, and never recomputed here, so this function has no opinion of its
@@ -507,7 +503,6 @@ export function adjustedTargets(
   if (deltas) {
     for (const [k, v] of Object.entries(deltas)) {
       const key = k as BuildCategory;
-      if (GROUPED_LEAVES.has(key)) continue; // reaches the parent instead -- see adjustedParentTargets
       t[key] = Math.max(0, t[key] + (v ?? 0));
     }
   }
@@ -660,7 +655,7 @@ export function computeBuild(
    *  the format baseline alone. */
   graveyardVulnerability = 0,
   /** `detectArchetypes`' ranked list, for the template blend. A caller that has only `primary`
-   *  (the tests, the CLI path) gets that one archetype at full confidence, which reads its row. */
+   *  (the tests) gets that one archetype at full confidence, which reads its row. */
   strategies?: readonly ArchetypeRanking[],
 ): BuildResult {
   const members = detectBuildCategories(cards);
