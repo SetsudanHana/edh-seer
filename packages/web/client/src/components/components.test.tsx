@@ -874,6 +874,30 @@ test("HighSynergyCards marks the top-authority anchor and double-duty cards", ()
 });
 
 
+/** WHOSE ROW EACH TICK IS (owner ruling 2026-09-06: the report shows the rows). SAMPLE carries the
+ *  spec's worked example -- Tokens 23% with Aristocrats 17% -- so every role dial names both rows
+ *  under its bar and the source line says the blend and its weights. A player can put "Tokens 10 ·
+ *  Aristocrats 14.5" next to EDHREC and check it, which is the whole point of showing them. */
+test("each role tick names the theme rows it was blended from, and the source line says the weights", () => {
+  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  expect(screen.getByText("Tokens 10 · Aristocrats 14.5")).toBeInTheDocument();     // Consistency
+  expect(screen.getByText("Tokens 12 · Aristocrats 9")).toBeInTheDocument();        // Interaction
+  expect(screen.getByText(/Ticks blend what Tokens \(60%\) and Aristocrats \(40%\) decks run on EDHREC/)).toBeInTheDocument();
+  expect(screen.queryByText(/Command Zone/)).toBeNull();
+});
+
+test("with no theme strong enough the ticks say they are the population's, and an old report keeps the old sentence", () => {
+  const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
+  const fallback = { ...SAMPLE, report: { ...SAMPLE.report, template: { population, targets: population } } };
+  const { unmount } = render(<DeckGauges data={fallback} onOpen={() => {}} />);
+  expect(screen.getAllByText("EDHREC median 13").length).toBe(2); // Consistency and Interaction share it
+  expect(screen.getByText(/no theme read strongly enough/)).toBeInTheDocument();
+  unmount();
+  const { template: _t, ...withoutTemplate } = SAMPLE.report;
+  render(<DeckGauges data={{ ...SAMPLE, report: withoutTemplate }} onOpen={() => {}} />);
+  expect(screen.getByText(/Command Zone template/)).toBeInTheDocument();
+});
+
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two
  *  figures directly beneath them — a third copy counting the sticky header — so the tiles retired
  *  and their `Explain` glosses, which were the only place either score said what it measures,
@@ -3010,8 +3034,10 @@ test("the convention disclaimer is stated once, and the provenance survives ever
   const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
   const text = (container.textContent ?? "").replace(/\s+/g, " ");
 
-  // The long form, once.
-  const long = text.match(/a convention, not measured from real decks/g) ?? [];
+  // The long form, once. Since 2026-09-06 the ticks are EDHREC theme rows and the long form says
+  // what THAT number is ("what the themes run, not what they need"); the Command Zone wording
+  // survives only for a report with no `template` at all. Either way: exactly one long form.
+  const long = text.match(/a convention, not measured from real decks|what the themes? runs?, not what (?:it|they) needs?/g) ?? [];
   expect(long).toHaveLength(1);
 
   // And the phrasing it replaced is gone entirely -- "someone typed" was the tell.

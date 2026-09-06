@@ -1,5 +1,6 @@
 import type { DeckCard } from "./types.js";
-import type { Archetype } from "./archetypes.js";
+import { ARCHETYPE_FLOOR, ARCHETYPE_LABELS, ARCHETYPE_LEAD_FLOOR, type Archetype, type ArchetypeRanking } from "./archetypes.js";
+import TEMPLATE from "./template-targets.json" with { type: "json" };
 import { answerClassesOf, loadRules, ruleMatches } from "./rules.js";
 import { answerCoverage, COVERAGE_CLASSES, type CoverageResult } from "./answer-coverage.js";
 
@@ -172,7 +173,11 @@ export const BASE_TARGETS: Record<BuildCategory, number> = {
  *  four) independent claims about one deck. */
 export interface BuildParentSpec {
   name: string;
+  /** This parent's key in `template-targets.json`, so a theme row and a parent meet by key and
+   *  never by matching the display name. */
+  key: TemplateKey;
   leaves: BuildCategory[];
+  /** The POPULATION median -- the fallback `templateBlend` returns when no theme row applies. */
   target: number;
   weight: number;
   /** This parent's attainment is multiplied by answer COVERAGE as well as its count (design §3).
@@ -202,51 +207,99 @@ export interface BuildParentSpec {
   costBand: [number, number];
 }
 
+/** THE TARGET IS THE POPULATION'S NOW, NOT THE COMMAND ZONE'S (owner rulings 2026-09-06, spec
+ *  `2026-09-06-theme-template-proposal.md`). `target` here is the fallback -- the median over every
+ *  deck in `template-targets.json` (2,126 EDHREC decks over 214 themes) -- and `templateBlend`
+ *  replaces it with the deck's own theme row(s) when the detector names one strongly enough. The
+ *  14/10/10/3 doctrine these carried before is gone: it measured nothing (67 of 71 owner decks hit
+ *  it outright) and the per-theme spread it hid is the whole finding (Interaction 9 to 21 by theme). */
 export const BUILD_PARENTS: BuildParentSpec[] = [
-  { name: "Consistency", leaves: ["draw", "cardSelection", "impulseDraw", "tutor"], target: 14, weight: 1, costBand: [2, 4] },
-  { name: "Ramp", leaves: ["ramp"], target: 10, weight: 1, costBand: [2, 3] },
-  { name: "Interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: 10, weight: 1, coverageWeighted: true, costBand: [2, 4] },
-  { name: "Board wipes", leaves: ["boardWipe"], target: 3, weight: 0.5, costBand: [3, 5] },
+  { name: "Consistency", key: "consistency", leaves: ["draw", "cardSelection", "impulseDraw", "tutor"], target: TEMPLATE.population.consistency, weight: 1, costBand: [2, 4] },
+  { name: "Ramp", key: "ramp", leaves: ["ramp"], target: TEMPLATE.population.ramp, weight: 1, costBand: [2, 3] },
+  { name: "Interaction", key: "interaction", leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], target: TEMPLATE.population.interaction, weight: 1, coverageWeighted: true, costBand: [2, 4] },
+  { name: "Board wipes", key: "boardWipes", leaves: ["boardWipe"], target: TEMPLATE.population.boardWipes, weight: 0.5, costBand: [3, 5] },
 ];
 
 /** Every leaf a parent owns. `lands`, `burn` and `stax` are deliberately absent -- see the note
  *  above `BASE_TARGETS` for why they stay outside every group. */
 const GROUPED_LEAVES = new Set<BuildCategory>(BUILD_PARENTS.flatMap((p) => p.leaves));
 
-/** Per-archetype target shifts, STILL KEYED BY THE LEAF THEY NAME -- "combo decks want tutors" is
- *  the readable fact; `adjustedParentTargets` is what decides where it lands.
+/** Per-archetype target shifts on the categories OUTSIDE every parent. Only `lands` is left: the
+ *  role-parent deltas this table carried (tokens −2 wipes, voltron +3 protection, combo +4 tutors,
+ *  superfriends +3 wipes, …) were hand-written guesses at what a per-theme table now measures, and
+ *  two of them had the wrong sign against the population (aristocrats −1 wipes: the median is 4;
+ *  tokens −2: the median is 2). `templateBlend` reads the theme's own row instead.
  *
- *  WHERE A DELTA REACHES NOW, AND WHY (owner's decision, 2026-08-21, the two honest options the
- *  brief posed): apply it to the PARENT that owns the named leaf, never drop it. A delta on a leaf
- *  that IS a whole single-leaf parent on its own (`boardWipe`) reaches exactly the card it always
- *  named, unchanged in meaning. A delta on a leaf living INSIDE a multi-leaf parent (`tutor` inside
- *  Consistency, `protection` inside Interaction) reaches the PARENT's floor instead, because the
- *  leaf has no floor of its own to raise any more: `combo: { tutor: 4 }` no longer means "run four
- *  tutors", it means "a combo deck's Consistency floor sits four higher than goodstuff's",
- *  satisfiable by tutors, draw, card selection, or any mix. Dropping the delta instead would erase
- *  the true fact that combo/reanimator/voltron decks want MORE of the group a tutor or protection
- *  spell sits in; folding it into the parent keeps that fact and drops only the narrower claim
- *  (spend it on THIS leaf) the 0%-median-share measurement above says was never grounded.
- *
- *  MEANING CHANGES FOR: `voltron` (protection +3 now widens Interaction as a whole, not a
- *  protection-spell count), `combo` (tutor +4 widens Consistency, protection +2 widens Interaction),
- *  `reanimator` (tutor +2 widens Consistency). UNCHANGED IN MEANING: `tokens`, `aristocrats`,
- *  `counters` (each names `boardWipe`, a single-leaf parent, so leaf and parent move as one) and
- *  `landfall` (`lands` sits outside every parent and keeps its own band, exactly as before -- and
- *  still applies on top of a DERIVED band now that one exists, see `adjustedTargets`'s doc comment
- *  for why that is not a double-count, task 9). */
+ *  `landfall: { lands: 4 }` stays because Karsten reads castability and has no term for how often a
+ *  landfall payoff wants a land DROP -- a trigger-density claim, not a curve claim; see
+ *  `adjustedTargets`'s doc comment for why that is not a double-count (task 9). A land theme's
+ *  extra lands live here, never in the template file (owner ruling 2026-09-06: lands come from the
+ *  deck's own curve, and a land strategy can raise the requirement). */
 export const ARCHETYPE_TARGET_DELTAS: Partial<Record<Archetype, Partial<Record<BuildCategory, number>>>> = {
-  tokens: { boardWipe: -2 },          // don't wipe your own board
-  aristocrats: { boardWipe: -1 },
-  voltron: { boardWipe: -2, protection: 3 }, // one threat → protect it
-  combo: { tutor: 4, protection: 2, boardWipe: -1 }, // assemble + defend the line
-  reanimator: { tutor: 2 },
   landfall: { lands: 4 },
-  counters: { boardWipe: -1 },
-  // Owner ruling 2026-09-06: six, not three -- the board is walkers, few creatures of its own, and
-  // the wipes are what keeps the walkers alive. The only delta that goes UP on wipes.
-  superfriends: { boardWipe: 3 },
 };
+
+/** The four role parents' keys in `template-targets.json`. */
+export type TemplateKey = "consistency" | "ramp" | "interaction" | "boardWipes";
+export type TemplateRow = Record<TemplateKey, number>;
+
+/** How strong the second-ranked archetype must be, as a share of the first's confidence, before it
+ *  is blended into the template (owner ruling 2026-09-06: 0.6). Below it the deck has one theme. */
+export const SECONDARY_SHARE = 0.6;
+
+export interface TemplateTheme {
+  name: Archetype;
+  label: string;
+  /** This theme's share of the blend: c / (c₁ + c₂). 1 for a lone primary. */
+  weight: number;
+  /** The theme's own row, population-filled where the file carries no key (`boardWipes` on a
+   *  theme that does not lean). */
+  row: TemplateRow;
+}
+
+export interface TemplateBlend {
+  /** `strategies[0]` when it clears `ARCHETYPE_LEAD_FLOOR` and has a row; absent otherwise, and
+   *  every target is then the population's. */
+  primary?: TemplateTheme;
+  /** `strategies[1]` when its confidence is at least `SECONDARY_SHARE` of the primary's and it has
+   *  a row. */
+  secondary?: TemplateTheme;
+  population: TemplateRow;
+  /** The blended target per parent: the confidence-weighted mean of the two rows, rounded to the
+   *  half; the primary's row alone; or the population's. This is what `computeBuild` scores. */
+  targets: TemplateRow;
+}
+
+const TEMPLATE_KEYS: TemplateKey[] = ["consistency", "ramp", "interaction", "boardWipes"];
+const themeRows = TEMPLATE.themes as Record<string, Partial<TemplateRow> & { n: number }>;
+
+function templateTheme(r: ArchetypeRanking, weight: number): TemplateTheme | undefined {
+  const row = themeRows[r.name];
+  if (!row) return undefined;
+  return { name: r.name, label: ARCHETYPE_LABELS[r.name], weight, row: { ...TEMPLATE.population, ...row, n: undefined } as unknown as TemplateRow };
+}
+
+/** Which theme row(s) this deck is measured against (spec §3.2). `T = (c₁·T₁ + c₂·T₂) / (c₁ + c₂)`
+ *  is smooth and order-free: a 90/10 deck stays its primary, a 55/45 deck sits between the two.
+ *  A theme with no row in the file -- kindred's 135 tribes, the 94 declared members, goodstuff (its
+ *  population is cEDH midrange, spec §5) -- contributes nothing and the deck falls to the population
+ *  row, which is what such a deck mostly is on these four parents. Nothing is invented for a theme
+ *  the data has not seen. */
+export function templateBlend(strategies: readonly ArchetypeRanking[] = []): TemplateBlend {
+  const population = { ...TEMPLATE.population };
+  const [first, second] = strategies;
+  if (!first || first.confidence < ARCHETYPE_LEAD_FLOOR || !themeRows[first.name]) return { population, targets: population };
+  const takeSecond = second && second.confidence >= SECONDARY_SHARE * first.confidence && second.confidence >= ARCHETYPE_FLOOR && themeRows[second.name];
+  const total = first.confidence + (takeSecond ? second.confidence : 0);
+  const primary = templateTheme(first, first.confidence / total)!;
+  const secondary = takeSecond ? templateTheme(second, second.confidence / total) : undefined;
+  const targets = {} as TemplateRow;
+  for (const k of TEMPLATE_KEYS) {
+    const t = primary.weight * primary.row[k] + (secondary ? secondary.weight * secondary.row[k] : 0);
+    targets[k] = Math.round(t * 2) / 2;
+  }
+  return { primary, ...(secondary ? { secondary } : {}), population, targets };
+}
 
 /** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands).
  *
@@ -461,15 +514,10 @@ export function adjustedTargets(
   return t;
 }
 
-/** Parent-level targets, archetype-adjusted: each parent's own floor plus the sum of any delta
- *  named on one of ITS leaves (see `ARCHETYPE_TARGET_DELTAS`'s doc comment for the full reasoning). */
-export function adjustedParentTargets(primary: Archetype | undefined): BuildParentSpec[] {
-  const deltas = primary ? ARCHETYPE_TARGET_DELTAS[primary] : undefined;
-  return BUILD_PARENTS.map((p) => {
-    let delta = 0;
-    if (deltas) for (const leaf of p.leaves) delta += deltas[leaf] ?? 0;
-    return { ...p, target: Math.max(0, p.target + delta) };
-  });
+/** Parent-level targets: each parent's blended template target (`templateBlend`), which is the
+ *  population median when no theme row applies. */
+export function adjustedParentTargets(blend: TemplateBlend = templateBlend()): BuildParentSpec[] {
+  return BUILD_PARENTS.map((p) => ({ ...p, target: blend.targets[p.key] }));
 }
 
 /** How a deck's ramp would survive being attacked, as three counts (design: owner's ruling,
@@ -571,7 +619,10 @@ export interface BuildResult {
   /** `impact` is WHAT CLOSING THIS PARENT'S GAP IS WORTH to `buildScore` (roadmap S10) -- the whole
    *  gap, not one card, and a LOWER BOUND, since a real card can carry two of a parent's leaves. 0
    *  for a parent at or over its target, which never surfaces as a finding anyway. */
-  buildParents: { name: string; count: number; target: number; leaves: string[]; impact: number; coverageWeighted?: true }[];
+  buildParents: { name: string; key: TemplateKey; count: number; target: number; leaves: string[]; impact: number; coverageWeighted?: true }[];
+  /** Which theme row(s) the parent targets came from, and the rows themselves, so the report can
+   *  show "Voltron runs 19.5 interaction; you run 12" beside the tick (owner ruling 2026-09-06). */
+  template: TemplateBlend;
   /** WHAT MOVING THE LAND COUNT TO ITS TARGET IS WORTH to `buildScore` (roadmap S10). 0 inside
    *  `LAND_BAND`, where there is nothing to gain. */
   landsImpact: number;
@@ -608,8 +659,14 @@ export function computeBuild(
    *  whose plan does not run through the graveyard, which is the neutral value: at v=0 demand is
    *  the format baseline alone. */
   graveyardVulnerability = 0,
+  /** `detectArchetypes`' ranked list, for the template blend. A caller that has only `primary`
+   *  (the tests, the CLI path) gets that one archetype at full confidence, which reads its row. */
+  strategies?: readonly ArchetypeRanking[],
 ): BuildResult {
   const members = detectBuildCategories(cards);
+  const template = templateBlend(
+    strategies ?? (primary ? [{ name: primary, label: ARCHETYPE_LABELS[primary], confidence: 1 }] : []),
+  );
   const landsGate = gatedLandsTarget(karstenLandsTarget);
   const targets = adjustedTargets(primary, landsGate.target);
   // Lands are the one multi-copy category: count land CARDS (copies), not distinct names, so a
@@ -644,7 +701,7 @@ export function computeBuild(
   );
   const coverage = answerCoverage(colorIdentity, answered, graveyardVulnerability);
 
-  const parentTargets = adjustedParentTargets(primary);
+  const parentTargets = adjustedParentTargets(template);
   // A PARENT'S COUNT IS A UNION, NEVER A SUM -- a card can carry two of a parent's leaves (Grave
   // Researcher is cardSelection AND draw-adjacent), and summing would double-count it. Measured
   // overlap across the 71 decks: 0.5 cards on Consistency, 1.3 on Interaction -- small, and still
@@ -674,13 +731,13 @@ export function computeBuild(
   // this parent can no longer silently unwire the panel's coverage note while the score keeps
   // docking it, the panel/score disagreement class this branch already closed twice.
   const buildParents = parentsWithCount.map((p, i) => ({
-    name: p.name, count: p.count, target: p.target, leaves: p.leaves as string[],
+    name: p.name, key: p.key, count: p.count, target: p.target, leaves: p.leaves as string[],
     impact: parentImpact(scoreInputs, i),
     ...(p.coverageWeighted ? { coverageWeighted: true } as const : {}),
   }));
 
   return {
-    buildScore, buildCategories, buildParents, landsImpact, answersImpact,
+    buildScore, buildCategories, buildParents, template, landsImpact, answersImpact,
     landsTargetSource: landsGate.source,
     suggestions: buildSuggestions(parentsWithCount, countOf, targets),
     answerCoverage: coverage,
@@ -718,7 +775,7 @@ function buildSuggestions(
     const text =
       p.count === 0 && p.name === "Board wipes"
         ? `No board wipe (target ${p.target})${band}`
-        : `${p.name} ${p.count}/${p.target} — add ~${p.target - p.count}${band}`;
+        : `${p.name} ${p.count}/${p.target} — add ~${Math.ceil(p.target - p.count)}${band}`;
     gaps.push({ gap: p.target - p.count, text });
   }
   const landsTarget = targets.lands;

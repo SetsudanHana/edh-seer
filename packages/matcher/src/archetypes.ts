@@ -31,7 +31,7 @@ export interface ArchetypeRanking {
  *  archetype — clearing it is not contingent on any other archetype's confidence.
  *  `combo` is exempt from this floor (see below): combos are binary, not
  *  density-based — a 2-card combo is a real plan regardless of deck size. Tunable. */
-const ARCHETYPE_FLOOR = 0.08;
+export const ARCHETYPE_FLOOR = 0.08;
 
 const GOODSTUFF: ArchetypeRanking = { name: "goodstuff", label: ARCHETYPE_LABELS.goodstuff, confidence: 0 };
 

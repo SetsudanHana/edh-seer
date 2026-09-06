@@ -103,6 +103,26 @@ export function DeckGauges({ data, onOpen, diff }: {
   const anchorCard = [...(report.cards ?? [])].sort((a, b) => (b.authority ?? 0) - (a.authority ?? 0))[0];
   const parents = report.buildParents ?? [];
   const lands = report.deckMath?.lands;
+  // WHOSE ROW EACH TICK IS (owner ruling 2026-09-06: the report shows the rows). `report.template`
+  // names the theme(s) the engine blended and carries their EDHREC rows keyed by the parent's `key`,
+  // so "Voltron 19.5 · Tokens 12" under a tick of 15.5 is a claim a player can check against
+  // EDHREC. An older report without `template` keeps the pre-ruling sentence rather than guessing.
+  const template = report.template;
+  const tickNote = (key?: string): string | undefined => {
+    if (!template || !key) return undefined;
+    const { primary: p, secondary: s } = template;
+    if (!p) return `EDHREC median ${template.population[key]}`;
+    if (!s) return `${p.label} runs ${p.row[key]}`;
+    return `${p.label} ${p.row[key]} · ${s.label} ${s.row[key]}`;
+  };
+  const share = (w: number) => `${Math.round(w * 100)}%`;
+  const tickSource = !template
+    ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"
+    : !template.primary
+      ? "Ticks are the EDHREC population\u2019s medians \u2014 no theme read strongly enough here to use its own row"
+      : !template.secondary
+        ? `Ticks are what ${template.primary.label} decks run on EDHREC (the median of ten) \u2014 what the theme runs, not what it needs`
+        : `Ticks blend what ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) decks run on EDHREC \u2014 what the themes run, not what they need`;
   const hasSynergy = report.synergyOverall !== undefined;
   const hasBuild = report.buildScore !== undefined;
   if (parents.length === 0 && !lands && !hasSynergy && !hasBuild) return null;
@@ -249,6 +269,7 @@ export function DeckGauges({ data, onOpen, diff }: {
                   reading={floorState(p.count, p.target)}
                   fill={countFill(p.count, p.target)}
                   mark={p.target > 0 ? TARGET_MARK : undefined}
+                  note={tickNote(p.key)}
                   // A SINGLE-LEAF PARENT HAS NO DETAIL TO OPEN. `BuildBenchmarks` renders a group
                   // only for a parent with more than one leaf -- Ramp's single leaf would restate
                   // the parent's own count as "100% of Ramp", the duplicate the folded shape
@@ -278,8 +299,7 @@ export function DeckGauges({ data, onOpen, diff }: {
               *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
               *  over real decks, which is also why it is the one two-sided reading here. */}
             <p className="text-xs text-(--muted) max-w-[52ch]">
-              Ticks are the Command Zone template&rsquo;s minimums — a convention, not measured
-              from real decks. Being over is fine
+              {tickSource}. Being over is fine
               {lands ? <> · the land tick is the exception, modelled from this deck&rsquo;s own curve</> : null}.
             </p>
           </div>
