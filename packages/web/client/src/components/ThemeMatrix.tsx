@@ -106,7 +106,7 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
         <table className="text-sm border-collapse w-auto">
           <thead>
             <tr>
-              <th className="text-left font-normal text-(--muted) pb-2 pr-3 sticky left-0 bg-(--background)">card</th>
+              <th className="text-left font-normal text-(--muted) pb-2 pr-3 sticky left-0 z-[1] bg-(--background)">card</th>
               {m.columns.map((c) => (
                 <th key={c.category} className="pb-2 px-1 align-bottom" title={c.label}>
                   {/* THE LABEL IS ALREADY PROSE (`ArchetypeGroup.label`: "Draw Engine", "Graveyard
@@ -134,7 +134,7 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
                   isPinned(r.name) ? "outline outline-1 outline-(--accent) outline-offset-[-1px]" : ""
                 }`}
               >
-                <th scope="row" className="text-left font-normal py-1 pr-3 sticky left-0 bg-(--background) whitespace-nowrap">
+                <th scope="row" className="text-left font-normal py-1 pr-3 sticky left-0 z-[1] bg-(--background) whitespace-nowrap">
                   <CardName name={r.name} />
                   {isPinned(r.name) ? <span className="sr-only">pinned</span> : null}
                 </th>

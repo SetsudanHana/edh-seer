@@ -101,6 +101,14 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
     }
     return m;
   }, [graph]);
+  /** ID -> LABEL FOR THE INSPECTOR'S PARTNER ROWS. Without it a back face printed its raw id,
+   *  `face:1:Mirror Room // Fractured Realm`, on the owner's phone (2026-09-06) -- the same map
+   *  `GraphView` hands its own in-canvas inspector. */
+  const nameOf = useMemo(() => {
+    const m = new Map<string, { label: string; isToken: boolean }>();
+    for (const n of graph?.nodes ?? []) m.set(n.id, { label: n.label, isToken: n.isToken === true });
+    return (id: string) => m.get(id);
+  }, [graph]);
   /** A PIN IS THE PHYSICAL CARD, NEVER A FACE (roadmap S8). `byName` already maps both spellings
    *  onto one node id and the front face's node carries `cardName`, so resolving through it REUSES
    *  the join instead of writing a thirteenth copy of it -- eleven were fixed on 2026-08-27 and S17
@@ -200,11 +208,12 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
         // avoid. Nothing in jsdom sees this; only the browser did.
         ? createPortal(
             // The inspector positions itself `absolute inset-y-2 right-2` against this element.
-            <div className="fixed inset-y-0 right-0 z-30 w-80 max-w-[90vw]">
+            <div className="fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]">
               <CardInspector
                 node={node}
                 edges={edges}
                 onClose={() => setOpenId(null)}
+                nameOf={nameOf}
                 pinned={pinned.has(node.cardName ?? node.label)}
                 onTogglePin={() => togglePin(node.cardName ?? node.label)}
               />

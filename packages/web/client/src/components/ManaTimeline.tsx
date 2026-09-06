@@ -124,7 +124,7 @@ export function ManaTimeline({ curve, manaAvailability }: {
                 x={x(c.turn) ?? 0}
                 y={SUPPLY_H + AXIS_H}
                 width={x.bandwidth()}
-                height={h}
+                height={Math.max(h, 1.5)}
                 rx={1}
                 /* --muted, NOT --fill: supply is drawn in --fill above the same line, and two
                  * series a reader is meant to tell apart cannot share a colour. Not an accent
@@ -144,7 +144,21 @@ export function ManaTimeline({ curve, manaAvailability }: {
                 >
                   {c.unlocked}
                 </text>
-              ) : null}
+              ) : (
+                // TOO THIN TO HOLD ITS DIGITS, so they sit under it (owner's phone, 2026-09-06:
+                // turns 5-7 drew as bare lines and said nothing).
+                <text
+                  x={mid(c.turn)}
+                  y={SUPPLY_H + AXIS_H + Math.max(h, 1.5) + 8}
+                  textAnchor="middle"
+                  className="stat-num"
+                  fontSize={7}
+                  fill="var(--muted)"
+                  aria-hidden
+                >
+                  {c.unlocked}
+                </text>
+              )}
             </g>
           );
         })}

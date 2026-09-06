@@ -226,7 +226,7 @@ export function BuildBenchmarks({
     const share = sumOfLeaves > 0 ? Math.round((count / sumOfLeaves) * 100) : 0;
     const facetText = facetTextByLeaf.get(category) || "";
     return (
-      <li key={category} className="flex items-center gap-3 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}${facetText ? `, ${facetText}` : ""}`}>
+      <li key={category} className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-0 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}${facetText ? `, ${facetText}` : ""}`}>
         {/* FIX F3 (controller review, 2026-08-21): `w-24` with a `pl-3` indent left only 84px for
           *  the label text, and three real leaf names need more -- "Stack interaction" measures
           *  121px, "Graveyard hate" 110px, "Card selection" 105px, all truncating (the graveyard one
@@ -245,14 +245,16 @@ export function BuildBenchmarks({
           *  denominator the number beside it already uses, so the bar and the percentage cannot
           *  disagree -- they are one value rendered twice, which is the only safe way to do both.
           *  A zero-count leaf draws NO bar rather than a sliver: a 4px stub reads as "some". */}
-        <span className="flex-1 h-1 bg-(--separator) rounded-full overflow-hidden" aria-hidden="true">
+        <span className="flex-1 min-w-8 h-1 bg-(--separator) rounded-full overflow-hidden" aria-hidden="true">
           {share > 0 ? (
             <span className="block h-full rounded-full bg-(--fill)" style={{ width: `${share}%` }} />
           ) : null}
         </span>
         {/* BEFORE the count, so the count column every row shares stays right-aligned; the bar
           *  (flex-1) gives up the width, which is the one thing on the row that can. */}
-        {facetText ? <span className="shrink-0 text-xs stat-num">{facetText}</span> : null}
+        {/* BELOW `sm` THE FACET TAKES ITS OWN LINE (D3, 2026-09-06): name + facet + count measured
+          *  465px on a 390px phone and the whole PAGE scrolled sideways. */}
+        {facetText ? <span className="shrink-0 text-xs stat-num basis-full sm:basis-auto order-last sm:order-none pl-0 sm:pl-0">{facetText}</span> : null}
         <span className="w-20 shrink-0 text-right stat-num">{count} · {share}%</span>
       </li>
     );
