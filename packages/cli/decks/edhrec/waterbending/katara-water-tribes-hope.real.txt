@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/nnysqRNg94YmLrH6tx6S-Q (source https://archidekt.com/decks/18977213)
+# tags Waterbending, Tokens; bracket 3; saved 2026-08-28; 37 tagged of 1289 indexed
+
+Commander
+1 Katara, Water Tribe's Hope
+
+Deck
+1 Aang, Swift Savior
+1 Appa, Steadfast Guardian
+1 Chasm Skulker
+1 Deadeye Navigator
+1 Displacer Kitten
+1 Emeritus of Truce
+1 Forecasting Fortune Teller
+1 Hermes, Overseer of Elpis
+1 Homunculus Horde
+1 Hullbreaker Horror
+1 Invasion Reinforcements
+1 Kykar, Zephyr Awakener
+1 Loran of the Third Path
+1 Mischievous Mystic
+1 Momo, Friendly Flier
+1 Pensive Professor
+1 Peregrine Drake
+1 Prince Imrahil the Fair
+1 Specimen Collector
+1 Starfield Vocalist
+1 Station Monitor
+1 Tetsuko Umezawa, Fugitive
+1 The Unagi of Kyoshi Island
+1 Toby, Beastie Befriender
+1 Tui and La, Moon and Ocean
+1 Tura Kennerüd, Skyknight
+1 Ty Lee, Chi Blocker
+1 Wan Shi Tong, All-Knowing
+1 Yue, the Moon Spirit
+1 Adarkar Wastes
+1 Glacial Fortress
+1 Idyllic Beachfront
+16 Island
+15 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Rumble Arena
+1 Akroma's Memorial
+1 Arcane Signet
+1 Astrologian's Planisphere
+1 Azorius Locket
+1 Azorius Signet
+1 Batterbone
+1 Bender's Waterskin
+1 Fellwar Stone
+1 Kyoshi Battle Fan
+1 Lightning Greaves
+1 Shorikai, Genesis Engine
+1 Sol Ring
+1 Talisman of Progress
+1 Akroma's Will
+1 Brainstorm
+1 Deduce
+1 Disdainful Stroke
+1 Dovin's Veto
+1 Dramatic Reversal
+1 Faebloom Trick
+1 Force of Negation
+1 Ghostly Flicker
+1 Mana Tithe
+1 No More Lies
+1 Officious Interrogation
+1 Stubborn Denial
+1 Teferi's Protection
+1 Turnabout
+1 Archangel Elspeth
+1 Venser, the Sojourner
+1 Crashing Wave
+1 Sleight of Hand
+1 Mechanized Production

@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/TVpGeswXEpOvzqxgB7RxzQ (source https://moxfield.com/decks/08UvghJK8UqD3aQ0RrIzrw)
+# tags Mill, Group Hug; bracket 2; saved 2026-09-05; 1573 tagged of 15208 indexed
+
+Commander
+1 Kynaios and Tiro of Meletis
+
+Deck
+1 Arcane Denial
+1 Counterspell
+1 Disallow
+1 Dovin's Veto
+1 Drown in Dreams
+1 Erode
+1 Fling
+1 Galvanic Iteration
+1 Gaze of Adamaro
+1 Invisible Force Field
+1 New Way Forward
+1 Reins of Power
+1 Sudden Impact
+1 Archivist of Oghma
+1 Bruce Banner
+1 Chasm Skulker
+1 Dreamborn Muse
+1 Dryad of the Ilysian Grove
+1 Dáin, Lord of the Iron Hills
+1 Emberwilde Captain
+1 Emrakul, the Promised End
+1 Flamehold Grappler
+1 Jolrael, Mwonvuli Recluse
+1 Kami of the Crescent Moon
+1 Masumaro, First to Live
+1 Niv-Mizzet, the Firemind
+1 Psychosis Crawler
+1 Realm Seekers
+1 Scrawling Crawler
+1 Siren Stormtamer
+1 The Locust God
+1 The Second Doctor
+1 Veteran Explorer
+1 Wan Shi Tong, Librarian
+1 Xyris, the Writhing Storm
+1 Chromatic Lantern
+1 Folio of Fancies
+1 Font of Mythos
+1 Horn of Greed
+1 Howling Mine
+1 Ivory Tower
+1 Sculpting Steel
+1 Temple Bell
+1 The Water Crystal
+1 Cinder Glade
+1 Clifftop Retreat
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+4 Forest
+1 Frontier Bivouac
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hinterland Harbor
+5 Island
+1 Jidoor, Aristocratic Capital
+1 Maze of Ith
+4 Mountain
+1 Mystic Monastery
+3 Plains
+1 Port Town
+1 Reliquary Tower
+1 Rith's Grove
+1 Rogue's Passage
+1 Rootbound Crag
+1 Temple of Epiphany
+1 Treva's Ruins
+1 Vineglimmer Snarl
+1 Collective Defiance
+1 Collective Voyage
+1 Goblin Negotiation
+1 Khorvath's Fury
+1 Mathemagics
+1 Minds Aglow
+1 Prosperity
+1 Tempt with Discovery
+1 Windfall
+1 Dictate of Kruphix
+1 Extravagant Replication
+1 Forced Fruition
+1 Ghostly Prison
+1 Karmic Justice
+1 Mirrormade
+1 Propaganda
+1 Rites of Flourishing
+1 Wilderness Reclamation
+1 Jace Beleren

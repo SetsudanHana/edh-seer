@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/nyuB0m6dcVt205U8FVgoBg (source https://archidekt.com/decks/2884222)
+# tags Party, Lifegain; bracket 3; saved 2026-09-03; 391 tagged of 2840 indexed
+
+Commander
+1 Nalia de'Arnise
+
+Deck
+1 Akroma's Will
+1 Anguished Unmaking
+1 Deadly Rollick
+1 Fell the Profane
+1 Flare of Fortitude
+1 Flawless Maneuver
+1 Path to Exile
+1 Swords to Plowshares
+1 Vampiric Tutor
+1 Archivist of Oghma
+1 Archpriest of Iona
+1 Burakos, Party Leader
+1 Celestine, the Living Saint
+1 Changeling Outcast
+1 Dark Confidant
+1 Deep Gnome Terramancer
+1 Distinguished Conjurer
+1 Drannith Magistrate
+1 Felisa, Fang of Silverquill
+1 Gandalf, White Rider
+1 Giver of Runes
+1 Grand Abolisher
+1 Grim Haruspex
+1 Guide of Souls
+1 Harper Recruiter
+1 Irregular Cohort
+1 Jacked Rabbit
+1 Joined Researchers
+1 Keen Duelist
+1 Lae'zel, Vlaakith's Champion
+1 Metastatic Evangel
+1 Mindblade Render
+1 Mirror Entity
+1 Mother of Runes
+1 Nivea, Beloved Battlemage
+1 Primaris Eliminator
+1 Rumor Gatherer
+1 Seasoned Dungeoneer
+1 Selfless Spirit
+1 Soul Warden
+1 Soul's Attendant
+1 Squad Commander
+1 Tymna the Weaver
+1 Universal Automaton
+1 Valiant Changeling
+1 Venat, Heart of Hydaelyn
+1 Vexilus Praetor
+1 Vito, Thorn of the Dusk Rose
+1 Vizkopa Guildmage
+1 Weathered Wayfarer
+1 Yathan Tombguard
+1 Arid Mesa
+1 Bleachbone Verge
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Fabled Passage
+1 Fetid Heath
+1 Flooded Strand
+1 Godless Shrine
+1 Isolated Chapel
+1 Marsh Flats
+1 Minas Tirith
+1 Mutavault
+1 Path of Ancestry
+6 Plains
+1 Polluted Delta
+1 Prismatic Vista
+1 Scrubland
+1 Shadowy Backstreet
+1 Shattered Sanctum
+2 Swamp
+1 Temple of Silence
+1 Vault of Champions
+1 Vault of the Archangel
+1 Verdant Catacombs
+1 War Room
+1 Windswept Heath
+1 Ascend from Avernus
+1 Austere Command
+1 Coveted Prize
+1 Damn
+1 Damning Verdict
+1 Demonic Tutor
+1 Stick Together
+1 Toxic Deluge
+1 Black Market Connections
+1 Blind Obedience
+1 Oketra's Monument
+1 Sensei's Divining Top
+1 Sorin, Vengeful Bloodlord

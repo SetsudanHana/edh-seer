@@ -1,0 +1,74 @@
+# edhrec deck https://edhrec.com/deckpreview/8CfZ2o_7whpbxdhAVGjXdA (source https://archidekt.com/decks/23657740)
+# tags Card Draw, Stun, Tokens; bracket 3; saved 2026-07-27; 14 tagged of 4020 indexed
+
+Commander
+1 The Watcher in the Water
+
+Deck
+1 Aetherize
+1 Blue Sun's Zenith
+1 Borne Upon a Wind
+1 Brainstorm
+1 Cryptic Command
+1 Disrupt
+1 Even the Score
+1 Flow of Knowledge
+1 Negate
+1 Opt
+1 Pongify
+1 Pull from Tomorrow
+1 Quick Study
+1 Redirect
+1 Tolarian Winds
+1 Transcendent Message
+1 Ashnod's Altar
+1 Dragon Throne of Tarkir
+1 Extraplanar Lens
+1 Idol of Oblivion
+1 Library of Leng
+1 Midnight Clock
+1 Sapphire Medallion
+1 Skullclamp
+1 Sol Ring
+1 Staff of the Mind Magus
+1 Swiftfoot Boots
+1 Thought Vessel
+1 Venser's Journal
+1 Baral, Chief of Compliance
+1 Chasm Skulker
+1 Chrome Host Seedshark
+1 Faerie Mastermind
+1 Jace's Archivist
+1 Junk Winder
+1 Laboratory Maniac
+1 Mister Fantastic, Reed Richards
+1 Nadir Kraken
+1 Paragon of Gathering Mists
+1 Poppet Stitcher
+1 Psychosis Crawler
+1 Scourge of Fleets
+1 Spark Double
+1 Talrand, Sky Summoner
+1 Unctus, Grand Metatect
+1 Whirlpool Drake
+1 Wonder
+1 Clear the Mind
+1 Exhaustion
+1 Fabricate
+1 Fantastic Elasticity
+1 Irenicus's Vile Duplication
+1 Dark Depths
+1 Nesting Grounds
+1 Reliquary Tower
+33 Snow-Covered Island
+1 Faces of the Past
+1 Imprisoned in the Moon
+1 Ominous Seas
+1 Opposition
+1 Propaganda
+1 Psychic Corrosion
+1 Teferi's Ageless Insight
+1 Thought Reflection
+1 Invasion of Segovia
+1 Jace, Wielder of Mysteries
+1 Teferi, Master of Time

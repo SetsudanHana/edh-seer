@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/kykar-winds-fury/arcane
+# theme Arcane (7 decks)
+
+Commander
+1 Kykar, Wind's Fury
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Izzet Signet
+1 Long-Forgotten Gohei
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Wayfarer's Bauble
+1 Azorius Chancery
+1 Battlefield Forge
+1 Boros Garrison
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Frostboil Snarl
+1 Glacial Fortress
+9 Island
+1 Izzet Boilerworks
+6 Mountain
+1 Mystic Monastery
+6 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Shivan Reef
+1 Sulfur Falls
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 Angel of Flight Alabaster
+1 Celestial Kirin
+1 Clarion Spirit
+1 Hofri Ghostforge
+1 Kairi, the Swirling Sky
+1 Myojin of Blooming Dawn
+1 Nikko-Onna
+1 Oyobi, Who Split the Heavens
+1 Quintorius, Loremaster
+1 Sire of the Storm
+1 Skyfire Kirin
+1 The Unspeakable
+1 Twilight Drover
+1 Velomachus Lorehold
+1 Yosei, the Morning Star
+1 Yuki-Onna
+1 Zurgo and Ojutai
+1 Dual Casting
+1 Field of Souls
+1 Impact Tremors
+1 Mirror Mockery
+1 Promise of Bunrei
+1 Whirlwind of Thought
+1 Blessed Breath
+1 Commit // Memory
+1 Consuming Vortex
+1 Desperate Ritual
+1 Ethereal Haze
+1 Evermind
+1 Glacial Ray
+1 Ire of Kaminari
+1 Murmurs from Beyond
+1 Otherworldly Journey
+1 Peer Through Depths
+1 Reach Through Mists
+1 Release to Memory
+1 Reweave
+1 Shining Shoal
+1 Sift Through Sands
+1 Spiritual Visit
+1 Stream of Consciousness
+1 Through the Breach
+1 Veil of Secrecy
+1 We Say Thee Nay!
+1 Crack the Earth
+1 Eerie Procession
+1 Eye of Nowhere
+1 Lava Spike
+1 Polymorph
+1 Reality Scramble
+1 Ribbons of the Reikai
+1 Terashi's Grasp
+1 Winged Words

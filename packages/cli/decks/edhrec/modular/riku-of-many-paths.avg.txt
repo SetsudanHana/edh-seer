@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/riku-of-many-paths/modular
+# theme Modular (64 decks)
+
+Commander
+1 Riku of Many Paths
+
+Deck
+1 Arcane Signet
+1 Mindsplice Apparatus
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Bountiful Landscape
+1 Breeding Pool
+1 Cinder Glade
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+5 Forest
+1 Frontier Bivouac
+1 Hinterland Harbor
+7 Island
+1 Ketria Triome
+6 Mountain
+1 Rejuvenating Springs
+1 Rockfall Vale
+1 Rootbound Crag
+1 Shivan Reef
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Yavimaya Coast
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Balmor, Battlemage Captain
+1 Exalted Flamer of Tzeentch
+1 Goblin Electromancer
+1 Guttersnipe
+1 Harmonic Prodigy
+1 Murmuring Mystic
+1 Ojer Pakpatiq, Deepest Epoch
+1 Seedborn Muse
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Talrand, Sky Summoner
+1 Third Path Iconoclast
+1 Veyran, Voice of Duality
+1 Young Pyromancer
+1 Arcane Bombardment
+1 Rite of the Dragoncaller
+1 Wilderness Reclamation
+1 Abrade
+1 Archmage's Charm
+1 Atarka's Command
+1 Collective Resistance
+1 Cryptic Command
+1 Decisive Denial
+1 Flame of Anor
+1 Great Train Heist
+1 Inscription of Abundance
+1 Izzet Charm
+1 Mystic Confluence
+1 Prismari Charm
+1 Prismari Command
+1 Quandrix Charm
+1 Quandrix Command
+1 Return the Favor
+1 Return to Nature
+1 See Double
+1 Simic Charm
+1 Sublime Epiphany
+1 Three Steps Ahead
+1 Trash the Town
+1 Twinferno
+1 Untimely Malfunction
+1 Verdant Command
+1 Bushwhack
+1 Dance of the Tumbleweeds
+1 Farseek
+1 Fiery Confluence
+1 Hull Breach
+1 Jeska's Will
+1 Pick Your Poison
+1 Return from the Wilds
+1 Season of Gathering
+1 Season of Weaving
+1 Season of the Bold
+1 Shifting Grift
+1 Titania's Command
+1 Verdant Confluence

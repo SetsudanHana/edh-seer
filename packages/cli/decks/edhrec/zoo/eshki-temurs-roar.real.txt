@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/vPvybX7561ono-EoATaY5Q (source https://moxfield.com/decks/p7lIHrJz3ES4gAGW0_Nb-w)
+# tags Ad Nauseam, Midrange, Toolbox, Zoo, Good Stuff, +1/+1 Counters, Aggro; bracket 3; saved 2026-09-04; 68 tagged of 14220 indexed
+
+Commander
+1 Eshki, Temur's Roar
+
+Deck
+1 Absorbing Man and Titania
+1 Agonasaur Rex
+1 Arixmethes, Slumbering Isle
+1 Balefire Dragon
+1 Beast Whisperer
+1 Birds of Paradise
+1 Bloom Tender
+1 Delighted Halfling
+1 Dragonhawk, Fate's Tempest
+1 Etali, Primal Storm
+1 Forgotten Ancient
+1 Ghalta, Primal Hunger
+1 Goldspan Dragon
+1 Goreclaw, Terror of Qal Sisma
+1 Hulking Raptor
+1 Hullbreaker Horror
+1 Ilharg, the Raze-Boar
+1 Kogla and Yidaro
+1 Kogla, the Titan Ape
+1 Maelstrom Wanderer
+1 Marang River Regent
+1 Old Gnawbone
+1 Overlord of the Hauntwoods
+1 Pugnacious Hammerskull
+1 Sakura-Tribe Elder
+1 Selvala, Heart of the Wilds
+1 Temur Battlecrier
+1 Topiary Stomper
+1 Trumpeting Carnosaur
+1 Twinflame Tyrant
+1 Vaultborn Tyrant
+1 Zopandrel, Hunger Dominus
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Chaos Warp
+1 Counterspell
+1 Heroic Intervention
+1 Rapid Hybridization
+1 Worldly Tutor
+1 Arcane Signet
+1 Cloudstone Curio
+1 Fellwar Stone
+1 Herd Heirloom
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Great Henge
+1 The Ozolith
+1 The Skullspore Nexus
+1 Arena of Glory
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Fabled Passage
+5 Forest
+4 Island
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Ketria Triome
+1 Mosswort Bridge
+4 Mountain
+1 Reflecting Pool
+1 Reliquary Tower
+1 Riverpyre Verge
+1 Rockfall Vale
+1 Shivan Reef
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Thornspire Verge
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Blasphemous Act
+1 Cultivate
+1 Finale of Devastation
+1 Jeska's Will
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Season of Gathering
+1 Frostcliff Siege
+1 Garruk's Uprising
+1 Guardian Project
+1 Hardened Scales
+1 Rhystic Study
+1 Rhythm of the Wild
+1 Sylvan Library
+1 Kiora, Behemoth Beckoner

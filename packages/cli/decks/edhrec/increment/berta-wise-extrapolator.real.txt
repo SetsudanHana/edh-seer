@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/p8K9FqVTG_e7lwkSCzHc0w (source https://archidekt.com/decks/24797853)
+# tags Hydras, Merfolk, +1/+1 Counters, Big Mana, Activated Abilities, Increment, Lands Matter, Landfall, Wizards, Tokens; bracket 3; saved 2026-08-18; 7 tagged of 2102 indexed
+
+Commander
+1 Berta, Wise Extrapolator
+
+Deck
+1 Arcanis the Omnipotent
+1 Archetype of Imagination
+1 Bellowing Tanglewurm
+1 Crowned Ceratok
+1 Elusive Krasis
+1 Forgotten Ancient
+1 Gnarlid Colony
+1 Gyre Sage
+1 Harbinger of the Tides
+1 Heroes' Bane
+1 Hydra Omnivore
+1 Hypnotic Siren
+1 Kami of Whispered Hopes
+1 Karametra's Acolyte
+1 Koma, World-Eater
+1 Llanowar Elves
+1 Loot, Exuberant Explorer
+1 Mossborn Hydra
+1 Nimbus Swimmer
+1 Pensive Professor
+1 Phyrexian Hydra
+1 Prime Speaker Zegana
+1 Realm Seekers
+1 Seedship Agrarian
+1 Springbloom Druid
+1 Tatyova, Benthic Druid
+1 Vorel of the Hull Clade
+1 Weaver of Currents
+1 Zameck Guildmage
+1 Branching Evolution
+1 Bred for the Hunt
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Levitation
+1 Ordeal of Nylea
+1 Ordeal of Thassa
+1 Primeval Bounty
+1 Rhystic Study
+1 Simic Ascendancy
+1 Cancel
+1 Cyclonic Rift
+1 Druid's Deliverance
+1 Negate
+1 Quandrix Charm
+1 Quandrix Command
+1 Repulse
+1 Snakeskin Veil
+1 Winds of Qal Sisma
+1 Worldly Tutor
+1 Circuitous Route
+1 Growth Curve
+1 Nissa's Pilgrimage
+1 Rampant Growth
+1 Rite of Replication
+1 River's Rebuke
+1 Shared Roots
+1 Wave Goodbye
+1 Dreamroot Cascade
+1 Evolving Wilds
+13 Forest
+1 Hashep Oasis
+1 Hinterland Harbor
+16 Island
+1 Lakeside Shack
+1 Paradox Gardens
+1 Simic Guildgate
+1 Sodden Verdure
+1 Temple of Mystery
+1 Terrain Generator
+1 Thornwood Falls
+1 Emerald Medallion
+1 Thought Vessel

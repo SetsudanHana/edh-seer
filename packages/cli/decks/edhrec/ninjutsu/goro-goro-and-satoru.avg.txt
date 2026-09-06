@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/goro-goro-and-satoru/ninjutsu
+# theme Ninjutsu (975 decks)
+
+Commander
+1 Goro-Goro and Satoru
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Dimir Signet
+1 Izzet Signet
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Urabrask's Forge
+1 Blood Crypt
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+5 Island
+1 Morphic Pool
+5 Mountain
+1 Path of Ancestry
+1 Rogue's Passage
+1 Seething Landscape
+1 Shivan Reef
+1 Smoldering Marsh
+1 Steam Vents
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Sunken Hollow
+4 Swamp
+1 Training Center
+1 Underground River
+1 Watery Grave
+1 Xander's Lounge
+1 Alora, Merry Thief
+1 Baleful Strix
+1 Changeling Outcast
+1 Dour Port-Mage
+1 Enduring Courage
+1 Enduring Curiosity
+1 Fallen Shinobi
+1 Gingerbrute
+1 Grazilaxx, Illithid Scholar
+1 Higure, the Still Wind
+1 Ingenious Infiltrator
+1 Loyal Apprentice
+1 Mistblade Shinobi
+1 Moon-Circuit Hacker
+1 Moonsnare Specialist
+1 Nashi, Moon Sage's Scion
+1 Ninja of the Deep Hours
+1 Orochi Soul-Reaver
+1 Phoenix Chick
+1 Professional Face-Breaker
+1 Prosperous Thief
+1 Raphael, the Nightwatcher
+1 Reinforced Ronin
+1 Sakashima's Student
+1 Satoru Umezawa
+1 Satoru, the Infiltrator
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Slither Blade
+1 Tetsuko Umezawa, Fugitive
+1 Thousand-Faced Shadow
+1 Throat Slitter
+1 Triton Shorestalker
+1 Yuriko, the Tiger's Shadow
+1 Cunning Evasion
+1 Daring Piracy
+1 Dragon Tempest
+1 Frostcliff Siege
+1 Reconnaissance Mission
+1 Rising of the Day
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Bedevil
+1 Chaos Warp
+1 Counterspell
+1 Cyclonic Rift
+1 Negate
+1 Terminate
+1 Kaito, Bane of Nightmares
+1 Kaito, Dancing Shadow
+1 Blasphemous Act
+1 Crux of Fate
+1 Enter the Enigma
+1 Feed the Swarm
+1 Vandalblast

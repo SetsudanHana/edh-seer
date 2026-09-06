@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/QmFgOcBpdwicAnJcIrZo8g (source https://archidekt.com/decks/21695277)
+# tags Proliferate, Infect, Stun, Counters Matter; bracket 3; saved 2026-08-26; 14 tagged of 1049 indexed
+
+Commander
+1 Lulu, Stern Guardian
+
+Deck
+1 Aetherize
+1 Aspirant's Ascent
+1 Bring the Ending
+1 Corrupted Resolve
+1 Experimental Augury
+1 Fierce Guardianship
+1 Fuel for the Cause
+1 High Tide
+1 Mana Drain
+1 Narset's Reversal
+1 Prologue to Phyresis
+1 Reject Imperfection
+1 Ripples of Potential
+1 Serum Snare
+1 Sink into Stupor
+1 Swan Song
+1 Annex
+1 As Foretold
+1 Corrupted Conscience
+1 Inexorable Tide
+1 Lost in the Maze
+1 Mesmerizing Dose
+1 Propaganda
+1 Rhystic Study
+1 Training Grounds
+1 Astral Cornucopia
+1 Bender's Waterskin
+1 Crawlspace
+1 Darksteel Reactor
+1 Everflowing Chalice
+1 Glistening Sphere
+1 Insight Engine
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Staff of Compleation
+1 The One Ring
+1 Blighted Agent
+1 Dreamtide Whale
+1 Faerie Mastermind
+1 Fear of Sleep Paralysis
+1 Floodpits Drowner
+1 Flux Channeler
+1 Glasspool Mimic
+1 Glen Elendra Guardian
+1 Hydroelectric Specimen
+1 Ichorclaw Myr
+1 Ingenious Prodigy
+1 Jin-Gitaxias
+1 Malcolm, Alluring Scoundrel
+1 Monstrosity of the Lake
+1 Myr Convert
+1 Plague Myr
+1 Summon: Shiva
+1 Summon: Valefor
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Ultros, Obnoxious Octopus
+1 Vexing Radgull
+1 Viral Drake
+1 Wan Shi Tong, Librarian
+1 Contentious Plan
+1 Crashing Wave
+1 Tezzeret's Gambit
+1 Inkmoth Nexus
+25 Island
+1 Karn's Bastion
+1 Mage-Ring Network
+1 Mirrex
+1 Mistrise Village
+1 Myriad Landscape
+1 Nesting Grounds
+1 Otawara, Soaring City
+1 Reliquary Tower
+1 Saprazzan Skerry

@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/VQrN0a6lg11Xoyfknc6eJA (source https://archidekt.com/decks/6697968)
+# tags Spiders, Food, Deathtouch, Reach; bracket 3; saved 2026-09-04; 297 tagged of 13656 indexed
+
+Commander
+1 Shelob, Child of Ungoliant
+
+Deck
+1 Arachnogenesis
+1 Assassin's Trophy
+1 Beast Within
+1 Bite Down
+1 Cosmic Hunger
+1 Golgari Charm
+1 Heroic Intervention
+1 Khalni Ambush
+1 Malakir Rebirth
+1 Prizefight
+1 Return of the Wildspeaker
+1 Revitalizing Repast
+1 Supper for Spiders
+1 Arasta of the Endless Web
+1 Attercop
+1 Brood Weaver
+1 Broodspinner
+1 Chainweb Aracnir
+1 Deadly Recluse
+1 Doom Weaver
+1 Drider
+1 Fynn, the Fangbearer
+1 Hatchery Spider
+1 Ishkanah, Grafwidow
+1 Llanowar Greenwidow
+1 Mirkwood Spider
+1 Nyx Weaver
+1 Old Fat Spider
+1 Penumbra Spider
+1 Rotwidow Pack
+1 Ruins Recluse
+1 Shelob, Dread Weaver
+1 Silklash Spider
+1 Skyfisher Spider
+1 Spinner of Souls
+1 Sporeweb Weaver
+1 Sweet-Gum Recluse
+1 Twin-Silk Spider
+1 Twitching Doll
+1 Watcher in the Web
+1 Arcane Signet
+1 Mithril Coat
+1 Sol Ring
+1 Swiftfoot Boots
+1 The One Ring
+1 Thornbite Staff
+1 Viridian Longbow
+1 Asceticism
+1 Curse of Clinging Webs
+1 Deathreap Ritual
+1 Phyrexian Arena
+1 Tribute to the World Tree
+1 Bojuka Bog
+1 Command Tower
+1 Deathcap Glade
+14 Forest
+1 Llanowar Wastes
+1 Mirkwood
+1 Nurturing Peatland
+1 Overgrown Tomb
+1 Path of Ancestry
+4 Swamp
+1 Swarmyard
+1 Tainted Wood
+1 Twilight Mire
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Vernal Fen
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Cultivate
+1 Farseek
+1 Harmonize
+1 Nature's Lore
+1 Night's Whisper
+1 Overwhelming Stampede
+1 Roar of Challenge
+1 Skyshroud Claim
+1 Spider Spawning
+1 Three Visits
+1 Triumph of the Hordes
+1 Lolth, Spider Queen

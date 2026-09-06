@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/XgLzsG1NIkmCeUme7-SLEg (source https://archidekt.com/decks/25878205)
+# tags Unblockable, Experience Counters, +1/+1 Counters, Power Matters, Commander Matters; bracket 2; saved 2026-09-04; 83 tagged of 7397 indexed
+
+Commander
+1 Ezuri, Claw of Progress
+
+Deck
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 Talisman of Curiosity
+1 The Ooze
+1 The Ozolith
+1 Azure Beastbinder
+1 Bilbo, Luckwearer
+1 Blighted Agent
+1 Champion of Lambholt
+1 Chasm Skulker
+1 Cold-Eyed Selkie
+1 Duskshell Crawler
+1 Elusive Otter
+1 Evolution Witness
+1 Forgotten Ancient
+1 Giggling Skitterspike
+1 Hangarback Walker
+1 Herald of Secret Streams
+1 Hydroelectric Specimen
+1 Kami of Whispered Hopes
+1 Katara, Waterbending Master
+1 Loch Mare
+1 Malanthrope
+1 Mausoleum Wanderer
+1 Michelangelo, Weirdness to 11
+1 Ornery Tumblewagg
+1 Ouroboroid
+1 Pensive Professor
+1 Pollywog Prodigy
+1 Ray Fillet, Wave Warrior
+1 Reclamation Sage
+1 Sakura-Tribe Elder
+1 Scavenging Ooze
+1 Spectral Adversary
+1 Spike Feeder
+1 Tervigon
+1 The Wondrous Wasp
+1 Trygon Predator
+1 Ulvenwald Tracker
+1 Walking Ballista
+1 Wild Beastmaster
+1 Boseiju, Who Endures
+1 Breeding Pool
+15 Forest
+1 Hidden Hideout
+1 Hinterland Harbor
+1 Inkmoth Nexus
+11 Island
+1 Mistrise Village
+1 Otawara, Soaring City
+1 Rejuvenating Springs
+1 Waterlogged Grove
+1 Willowrush Verge
+1 Bred for the Hunt
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Ranger Class
+1 Sphere Grid
+1 Terrasymbiosis
+1 Collective Resistance
+1 Counterspell
+1 Heroic Intervention
+1 Origin of Metalbending
+1 Quandrix Command
+1 Ripples of Potential
+1 Sink into Stupor
+1 Slip Out the Back
+1 Strix Serenade
+1 Farseek
+1 Nature's Lore
+1 Pest Infestation
+1 Rampant Growth
+1 Wave Goodbye

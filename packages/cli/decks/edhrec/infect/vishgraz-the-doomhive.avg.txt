@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/vishgraz-the-doomhive/infect
+# theme Infect (918 decks)
+
+Commander
+1 Vishgraz, the Doomhive
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Glistening Sphere
+1 Grafted Exoskeleton
+1 Phyrexian Atlas
+1 Skullclamp
+1 Sol Ring
+1 Staff of Compleation
+1 Bojuka Bog
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+7 Forest
+1 Fortified Village
+1 Godless Shrine
+1 Indatha Triome
+1 Karn's Bastion
+1 Mirrex
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Path of Ancestry
+5 Plains
+1 Rogue's Passage
+1 Sandsteppe Citadel
+1 Shineshadow Snarl
+5 Swamp
+1 Tainted Field
+1 Tainted Wood
+1 Temple Garden
+1 The Seedcore
+1 Bilious Skulldweller
+1 Blightbelly Rat
+1 Bloated Contaminator
+1 Cankerbloom
+1 Contaminant Grafter
+1 Crawling Chorus
+1 Evolution Sage
+1 Glissa's Retriever
+1 Ichor Rats
+1 Ixhel, Scion of Atraxa
+1 Metastatic Evangel
+1 Mondrak, Glory Dominus
+1 Myr Convert
+1 Necrogen Rotpriest
+1 Norn's Choirmaster
+1 Pestilent Syphoner
+1 Phyrexian Swarmlord
+1 Plague Myr
+1 Plague Stinger
+1 Skithiryx, the Blight Dragon
+1 Skrelv, Defector Mite
+1 Slaughter Singer
+1 Tyrranax Rex
+1 Venerated Rotpriest
+1 Venomous Brutalizer
+1 Viridian Corrupter
+1 Ghostly Prison
+1 Necrogen Communion
+1 Norn's Decree
+1 Phyrexian Arena
+1 Skrelv's Hive
+1 Teleportation Circle
+1 Beast Within
+1 Cloudshift
+1 Ephemerate
+1 Infectious Bite
+1 Mortify
+1 Noxious Revival
+1 Path to Exile
+1 Putrefy
+1 Swords to Plowshares
+1 Vraska's Fall
+1 Vraska, Betrayal's Sting
+1 Cultivate
+1 Drown in Ichor
+1 Expand the Sphere
+1 Farseek
+1 Geth's Summons
+1 Infectious Inquiry
+1 Noxious Assault
+1 Phyresis Outbreak
+1 Thirsting Roots
+1 Unnatural Restoration
+1 White Sun's Twilight

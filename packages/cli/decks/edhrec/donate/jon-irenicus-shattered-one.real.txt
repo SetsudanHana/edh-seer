@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/y4lUCgefAVZKTNbvPj5uIw (source https://archidekt.com/decks/18244994)
+# tags Donate, Forced Combat, Sacrifice, Card Draw; bracket 3; saved 2026-09-04; 618 tagged of 12732 indexed
+
+Commander
+1 Jon Irenicus, Shattered One
+
+Deck
+1 Abyssal Persecutor
+1 Archfiend of the Dross
+1 Baleful Strix
+1 Blighted Agent
+1 Demonic Taskmaster
+1 Ebon Drake
+1 Ebonblade Reaper
+1 Flesh Reaver
+1 Fog Bank
+1 Hydro-Channeler
+1 Master of the Feast
+1 Phyrexian Negator
+1 Phyrexian Soulgorger
+1 Phyrexian Vatmother
+1 Plague Reaver
+1 Rot-Curse Rakshasa
+1 Rotting Regisaur
+1 Rust Elemental
+1 Spark Double
+1 Steel Golem
+1 Sygg, River Cutthroat
+1 Taniwha
+1 Thieving Skydiver
+1 Thought Devourer
+1 Thought Eater
+1 Tragedy Feaster
+1 Vashta Nerada
+1 Access Tunnel
+1 Bojuka Bog
+1 Clearwater Pathway
+1 Command Tower
+1 Darkwater Catacombs
+1 Deserted Temple
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Homeward Path
+12 Island
+1 Maze of Ith
+1 Mystifying Maze
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Ruins
+5 Swamp
+1 Tainted Isle
+1 Thespian's Stage
+1 Underground River
+1 Urza's Cave
+1 Watery Grave
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Brainstorm
+1 Dispel
+1 Flusterstorm
+1 Get Out
+1 Intervene
+1 Mana Sculpt
+1 Rona's Vortex
+1 Slip Out the Back
+1 Snap
+1 Swan Song
+1 Turn Aside
+1 Arcane Signet
+1 Crawlspace
+1 Despotic Scepter
+1 Dimir Signet
+1 Expedition Map
+1 Jet Medallion
+1 Lightning Greaves
+1 Sapphire Medallion
+1 Sol Ring
+1 Strionic Resonator
+1 Talisman of Dominance
+1 Thought Vessel
+1 Wizard's Staff
+1 Blasphemous Edict
+1 Consuming Tide
+1 Gitaxian Probe
+1 Ponder
+1 Raise the Palisade
+1 Coercive Impetus
+1 Curse of Verbosity
+1 Diplomatic Immunity
+1 Heartless Summoning
+1 Propaganda

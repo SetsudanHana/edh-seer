@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/graha-tia-scion-reborn/job-select
+# theme Job Select (3 decks)
+
+Commander
+1 G'raha Tia, Scion Reborn
+
+Deck
+1 Arcane Signet
+1 Astrologian's Planisphere
+1 Black Mage's Rod
+1 Blue Mage's Cane
+1 Dancer's Chakrams
+1 Dark Knight's Greatsword
+1 Dragoon's Lance
+1 Idol of Oblivion
+1 Lightning Greaves
+1 Machinist's Arsenal
+1 Nettlecyst
+1 Ninja's Blades
+1 Paladin's Arms
+1 Reaper's Scythe
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Team Transmitter
+1 Thief's Knife
+1 White Mage's Staff
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Clearwater Pathway
+1 Command Tower
+1 Darkwater Catacombs
+1 Desolate Mire
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Heath
+1 Glacial Fortress
+1 Hengegate Pathway
+5 Island
+1 Isolated Chapel
+6 Plains
+1 Port Town
+5 Swamp
+1 Tainted Field
+1 Underground River
+1 Vault of the Archangel
+1 Abzan Falconer
+1 Ainok Bond-Kin
+1 Alela, Artful Provocateur
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Archmage Emeritus
+1 Ardenn, Intrepid Archaeologist
+1 Arna Kennerüd, Skycaptain
+1 Aven Wind Guide
+1 Basim Ibn Ishaq
+1 Danitha Capashen, Paragon
+1 Envoy of the Ancestors
+1 Kamiz, Obscura Oculus
+1 Leonin Shikari
+1 Lyse Hext
+1 Puresteel Paladin
+1 Raffine, Scheming Seer
+1 Sram, Senior Edificer
+1 Welcoming Vampire
+1 Y'shtola, Night's Blessed
+1 Authority of the Consuls
+1 Champions from Beyond
+1 Forge Anew
+1 Mystic Remora
+1 Observed Stasis
+1 Resourceful Defense
+1 Tocasia's Welcome
+1 Arcane Denial
+1 Counterspell
+1 Dovin's Veto
+1 Flawless Maneuver
+1 Frantic Search
+1 Lethal Scheme
+1 Negate
+1 Path to Exile
+1 Snuff Out
+1 Swan Song
+1 Swords to Plowshares
+1 Void Rend
+1 Open the Armory
+1 Requisition Raid
+1 Vindicate
+1 Windfall

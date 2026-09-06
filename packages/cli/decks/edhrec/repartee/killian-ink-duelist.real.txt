@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/qxC4C_opfc2NLZzhWQYBUg (source https://archidekt.com/decks/24259606)
+# tags Repartee, Auras; bracket unset; saved 2026-07-11; 2 tagged of 3361 indexed
+
+Commander
+1 Killian, Ink Duelist
+
+Deck
+1 Agent of the Fates
+1 Auramancer
+1 Danitha Capashen, Paragon
+1 Forum Necroscribe
+1 Grim Guardian
+1 Heliod's Pilgrim
+1 Informed Inkwright
+1 Lecturing Scornmage
+1 Mesa Enchantress
+1 Moon-Blessed Cleric
+1 Nomad Mythmaker
+1 Pearl-Ear, Imperial Advisor
+1 Scolding Administrator
+1 Snooping Page
+1 Sram, Senior Edificer
+1 Stirring Hopesinger
+1 Umbra Mystic
+1 All That Glitters
+1 Angelic Destiny
+1 Angelic Gift
+1 Asha's Favor
+1 Benevolent Blessing
+1 Blessing of Leeches
+1 Darksteel Mutation
+1 Edge of the Divinity
+1 Ethereal Armor
+1 Feather of Flight
+1 Fungal Fortitude
+1 Graduation Day
+1 Hyena Umbra
+1 Lord Skitter's Blessing
+1 Nowhere to Run
+1 Pentarch Ward
+1 Sage's Reverie
+1 Tempest Technique
+1 Timely Ward
+1 Twisted Embrace
+1 Unquestioned Authority
+1 Anguished Unmaking
+1 Apostle's Blessing
+1 Beaming Defiance
+1 Bleed Dry
+1 Crib Swap
+1 Dark Dabbling
+1 Feed the Serpent
+1 Karametra's Blessing
+1 Masterful Flourish
+1 Mortify
+1 Repel the Darkness
+1 Restoration Magic
+1 Shelter
+1 Stroke of Midnight
+1 Utter End
+1 Wretched Confluence
+1 Arcane Signet
+1 Charcoal Diamond
+1 Fellwar Stone
+1 Orzhov Signet
+1 Talisman of Hierarchy
+1 Caves of Koilos
+1 Command Tower
+1 Fabled Passage
+1 Isolated Chapel
+1 Orzhov Basilica
+15 Plains
+1 Shattered Sanctum
+12 Swamp
+1 Tainted Field
+1 Turbulent Moor
+1 Cost of Brilliance
+1 Open the Armory
+1 Read the Bones
+1 Sign in Blood
+1 Winds of Rath

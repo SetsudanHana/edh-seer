@@ -1,0 +1,72 @@
+# edhrec deck https://edhrec.com/deckpreview/AzW5wk0Ai3ypiWTe0p9qbw (source https://archidekt.com/decks/12711775)
+# tags Aristocrats, Land Animation, Lands Matter; bracket 2; saved 2026-08-30; 55 tagged of 3082 indexed
+
+Commander
+1 Yedora, Grave Gardener
+
+Deck
+1 Ainok Survivalist
+1 Ambush Commander
+1 Arbor Elf
+1 Ashaya, Soul of the Wild
+1 Azusa, Lost but Seeking
+1 Den Protector
+1 Elvish Reclaimer
+1 Embodiment of Insight
+1 Fyndhorn Elves
+1 Llanowar Elves
+1 Loot, Exuberant Explorer
+1 Multani, Yavimaya's Avatar
+1 Nantuko Vigilante
+1 Nervous Gardener
+1 Rampaging Baloths
+1 Sakura-Tribe Elder
+1 Scryb Ranger
+1 Spinner of Souls
+1 Sylvan Safekeeper
+1 Timber Protector
+1 Toski, Bearer of Secrets
+1 Troop of Ponies
+1 World Shaper
+1 Zenith Chronicler
+1 Altar of Dementia
+1 Blasting Station
+1 Horn of Greed
+1 Lightning Greaves
+1 Skullclamp
+1 Swiftfoot Boots
+1 Zuran Orb
+1 Archdruid's Charm
+1 Beast Within
+1 Defend the Rider
+1 Harrow
+1 Heroic Intervention
+1 Kamahl's Will
+1 Natural Affinity
+1 Nature's Claim
+1 Return of the Wildspeaker
+1 Vitalize
+1 Wrap in Vigor
+1 Beastmaster Ascension
+1 Case of the Locked Hothouse
+1 Druid Class
+1 Fecundity
+1 Guardian Project
+1 Life and Limb
+1 Living Lands
+1 Nature's Revolt
+1 Quest for Renewal
+1 Sapling Nursery
+1 Threats Around Every Corner
+1 Walk-In Closet // Forgotten Cellar
+1 Commune with Spirits
+1 Ezuri's Predation
+1 Harvest Season
+1 Nature's Lore
+1 Pick Your Poison
+1 Shamanic Revelation
+1 Splendid Reclamation
+1 Sylvan Awakening
+1 Three Visits
+35 Forest
+1 Yavimaya, Cradle of Growth

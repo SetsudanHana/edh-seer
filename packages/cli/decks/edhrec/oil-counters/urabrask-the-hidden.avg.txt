@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/urabrask-the-hidden/oil-counters
+# theme Oil Counters (4 decks)
+
+Commander
+1 Urabrask the Hidden
+
+Deck
+1 Arcane Signet
+1 Churning Reservoir
+1 Contagion Clasp
+1 Everflowing Chalice
+1 Furnace Skullbomb
+1 Gauntlet of Power
+1 Glistening Sphere
+1 Heraldic Banner
+1 Hexplate Wallbreaker
+1 Moxite Refinery
+1 Portal to Phyrexia
+1 Sol Ring
+1 Staff of Compleation
+1 Strixhaven Stadium
+1 Tablet of Compleation
+1 Tarrian's Soulcleaver
+1 Urabrask's Forge
+1 Wayfarer's Bauble
+1 Ancient Tomb
+1 Arena of Glory
+1 Buried Ruin
+1 Great Furnace
+1 Karn's Bastion
+1 Mines of Moria
+1 Mirrex
+20 Mountain
+1 Nykthos, Shrine to Nyx
+1 Sokenzan, Crucible of Defiance
+1 The Autonomous Furnace
+1 The Monumental Facade
+1 Treasure Vault
+1 Valakut, the Molten Pinnacle
+1 Archetype of Aggression
+1 Axiom Engraver
+1 Cacophony Scamp
+1 Chancellor of the Forge
+1 Combat Celebrant
+1 Defiler of Instinct
+1 Exuberant Fuseling
+1 Forgehammer Centurion
+1 Furnace Punisher
+1 Ichorplate Golem
+1 Legion Loyalist
+1 Magmatic Sprinter
+1 Priest of Urabrask
+1 Raccoon Rallier
+1 Razor Swine
+1 Sawblade Scamp
+1 Slobad, Iron Goblin
+1 Solphim, Mayhem Dominus
+1 Sunspine Lynx
+1 Surge Conductor
+1 Urabrask's Anointer
+1 Urabrask, Heretic Praetor
+1 Vindictive Flamestoker
+1 Berserkers' Onslaught
+1 Blood Moon
+1 City on Fire
+1 Collective Inferno
+1 Fated Firepower
+1 Mana Echoes
+1 Ambitious Assault
+1 Boil
+1 Desperate Ritual
+1 Free from Flesh
+1 Seething Song
+1 Stoke the Flames
+1 Thrill of Possibility
+1 Untimely Malfunction
+1 Volt Charge
+1 Wild Magic Surge
+1 Koth, Fire of Resistance
+1 Blasphemous Act
+1 Disrupt Decorum
+1 Gamble
+1 Insurrection
+1 Mana Geyser
+1 Red Sun's Twilight
+1 Red Sun's Zenith
+1 Worldfire

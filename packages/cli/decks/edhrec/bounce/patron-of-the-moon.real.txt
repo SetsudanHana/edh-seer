@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/kZAiooQH4Ut28AfHJ-wrWQ (source https://archidekt.com/decks/17355676)
+# tags Landfall, Tap / Untap, Bounce, Lands Matter; bracket 3; saved 2026-08-24; 178 tagged of 1577 indexed
+
+Commander
+1 Patron of the Moon
+
+Deck
+1 Adventurer's Inn
+1 Arid Archway
+1 Conduit Pylons
+1 Crumbling Vestige
+1 Guildless Commons
+1 Halimar Depths
+1 Hidden Grotto
+30 Island
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Pit of Offerings
+1 Radiant Fountain
+1 Aminatou's Augury
+1 Eternal Dominion
+1 Finale of Revelation
+1 Azami, Lady of Scrolls
+1 Elrond, Moon-Reader
+1 Elven Raft-Steerer
+1 Floodbringer
+1 Gadwick, the Wizened
+1 Galecaster Colossus
+1 Hydroelectric Specimen
+1 Meloku the Clouded Mirror
+1 Moonbow Illusionist
+1 Moonfolk Puzzlemaker
+1 Mu Yanling, Wind Rider
+1 Oboro Breezecaller
+1 Oboro Envoy
+1 Omen Hawker
+1 PuPu UFO
+1 Soratami Cloudskater
+1 Soratami Mindsweeper
+1 Soratami Mirror-Guard
+1 Soratami Mirror-Mage
+1 Soratami Rainshaper
+1 Soratami Savant
+1 Soratami Seer
+1 Stormtide Leviathan
+1 Uyo, Silent Prophet
+1 Walking Atlas
+1 Wonderscape Sage
+1 Bender's Waterskin
+1 Bitterthorn, Nissa's Animus
+1 Caged Sun
+1 Gauntlet of Power
+1 Heartstone
+1 Sol Ring
+1 Surveyor's Scope
+1 Sword of the Animist
+1 The Enigma Jewel
+1 Wayfarer's Bauble
+1 Consult the Star Charts
+1 Cryptic Command
+1 Daze
+1 Flow of Knowledge
+1 Frantic Search
+1 Gush
+1 High Tide
+1 Mystic Confluence
+1 Reset
+1 Rewind
+1 Snap
+1 Sublime Epiphany
+1 Thwart
+1 Time Stop
+1 Unwind
+1 Flooded Shoreline
+1 Omniscience
+1 Retreat to Coralhelm
+1 Mu Yanling, Celestial Wind

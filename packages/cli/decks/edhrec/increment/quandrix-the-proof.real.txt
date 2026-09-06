@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/--PbS7sFN9j4VsIZbUzpzg (source https://archidekt.com/decks/24804303)
+# tags Cascade, Landfall, Spellslinger, +1/+1 Counters, Increment, Lands Matter; bracket 3; saved 2026-07-29; 3 tagged of 5286 indexed
+
+Commander
+1 Quandrix, the Proof
+
+Deck
+1 Additive Evolution
+1 Earthbender Ascension
+1 Omniscience
+1 Ambitious Augmenter
+1 Apex Devastator
+1 Archmage of Runes
+1 Berta, Wise Extrapolator
+1 Bristly Bill, Spine Sower
+1 Cuboid Colony
+1 Deekah, Fractal Theorist
+1 Emeritus of Abundance
+1 Evolution Sage
+1 Imoti, Celebrant of Bounty
+1 Kami of Whispered Hopes
+1 Muse Seeker
+1 Ouroboroid
+1 Pensive Professor
+1 Rashmi, Eternities Crafter
+1 Seedborn Muse
+1 Studious First-Year
+1 Tam, Observant Sequencer
+1 Tatyova, Benthic Druid
+1 Topiary Lecturer
+1 Ancestral Vision
+1 Body of Research
+1 Echocasting Symposium
+1 Ezuri's Predation
+1 Flow State
+1 Growth Curve
+1 Harmonize
+1 Inevitable Betrayal
+1 Knockout Maneuver
+1 Part the Waterveil
+1 Pick Your Poison
+1 Planar Engineering
+1 Rampant Growth
+1 Restorative Technique
+1 Rishkar's Expertise
+1 Shared Roots
+1 Sleight of Hand
+1 Stock Up
+1 Urban Evolution
+1 Wisdom of Ages
+1 Zimone's Experiment
+1 Beast Within
+1 Deduce
+1 Dig Through Time
+1 Embrace the Paradox
+1 Gifts Ungiven
+1 Growth Spiral
+1 Inspiring Call
+1 Mystic Confluence
+1 Nexus of Fate
+1 Opt
+1 Pongify
+1 Proctor's Gaze
+1 Rapid Hybridization
+1 Sublime Epiphany
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+12 Forest
+1 Hinterland Harbor
+12 Island
+1 Overflowing Basin
+1 Paradox Gardens
+1 Pym Technologies
+1 Simic Growth Chamber
+1 Simic Guildgate
+1 Temple of Mystery
+1 Terramorphic Expanse
+1 Vineglimmer Snarl
+1 Woodland Stream
+1 Yavimaya Coast
+1 Cosmic Cube
+1 Sol Ring
+1 Sol Talisman

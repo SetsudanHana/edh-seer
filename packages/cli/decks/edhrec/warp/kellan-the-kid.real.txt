@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/YFF_xGGdw1x5lYwwQu3IvA (source https://archidekt.com/decks/24087424)
+# tags Plot, Warp, Exile; bracket 2; saved 2026-08-30; 12 tagged of 7946 indexed
+
+Commander
+1 Kellan, the Kid
+
+Deck
+1 Aang, Swift Savior
+1 Aloe Alchemist
+1 Augur of Autumn
+1 Bygone Colossus
+1 Doc Aurlock, Grizzled Genius
+1 Dust Animus
+1 Elusive Otter
+1 Emeritus of Abundance
+1 Emeritus of Truce
+1 Fblthp, Lost on the Range
+1 Freestrider Commando
+1 Jem Lightfoote, Sky Explorer
+1 Joined Researchers
+1 Knight Luminary
+1 Loan Shark
+1 Noxious Newt
+1 Outcaster Trailblazer
+1 Quandrix, the Proof
+1 Quantum Riddler
+1 Sheriff of Safe Passage
+1 Skaab Ruinator
+1 Slickshot Lockpicker
+1 Stagecoach Security
+1 Starfield Shepherd
+1 Storm, Queen of Wakanda
+1 Studious First-Year
+1 Tam, Observant Sequencer
+1 Zetalpa, Primal Dawn
+1 Abstract Performance
+1 Aminatou's Augury
+1 Echocasting Symposium
+1 Fell the Mighty
+1 Full Steam Ahead
+1 Glimpse of Nature
+1 Grow from the Ashes
+1 Make Your Own Luck
+1 Plan the Heist
+1 Practiced Offense
+1 Reason // Believe
+1 Requisition Raid
+1 Restorative Technique
+1 Shared Roots
+1 Stock Up
+1 Tumbleweed Rising
+1 Urban Evolution
+1 Airbending Lesson
+1 Behold the Multiverse
+1 Embrace the Paradox
+1 Essence Capture
+1 Family Reunion
+1 Hurl into History
+1 Natural Reclamation
+1 Origin of Metalbending
+1 Proctor's Gaze
+1 Quick Study
+1 Repel Calamity
+1 Repulse
+1 Rewind
+1 Ajani, the Greathearted
+1 Jace Reawakened
+1 All-Fates Scroll
+1 The Key to the Vault
+1 Avengers Hangar
+1 Canopy Vista
+1 Eden, Seat of the Sanctum
+1 Evolving Wilds
+6 Forest
+1 Fortified Village
+1 Hidden Cataract
+1 Hinterland Harbor
+5 Island
+1 Kyoshi Village
+1 Lonely Arroyo
+1 Lush Oasis
+1 Mirage Mesa
+1 Mosswort Bridge
+1 Paradox Gardens
+6 Plains
+1 Pym Technologies
+1 Suburban Sanctuary
+1 Temple of Enlightenment
+1 Thornwood Falls
+1 Vineglimmer Snarl
+1 Windbrisk Heights
+1 Kellan Joins Up

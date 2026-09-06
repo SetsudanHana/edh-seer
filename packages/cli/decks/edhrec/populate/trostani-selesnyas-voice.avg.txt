@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/trostani-selesnyas-voice/populate
+# theme Populate (404 decks)
+
+Commander
+1 Trostani, Selesnya's Voice
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Halo Fountain
+1 Idol of Oblivion
+1 Phyrexian Processor
+1 Selesnya Signet
+1 Skullclamp
+1 Sol Ring
+1 Blossoming Sands
+1 Bountiful Promenade
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+10 Forest
+1 Fortified Village
+1 Gavony Township
+1 Graypelt Refuge
+1 Grove of the Guardian
+1 Krosan Verge
+1 Overgrown Farmland
+10 Plains
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple Garden
+1 Temple of Plenty
+1 Arasta of the Endless Web
+1 Archangel of Thune
+1 Armada Wurm
+1 Avacyn's Pilgrim
+1 Blossoming Bogbeast
+1 Bramble Sovereign
+1 Conclave Evangelist
+1 Crested Sunmare
+1 Elvish Mystic
+1 Fanatic of Rhonas
+1 Ghalta and Mavren
+1 Giant Adephage
+1 Lathiel, the Bounteous Dawn
+1 Llanowar Elves
+1 Nesting Dovehawk
+1 Nykthos Paragon
+1 Rampaging Baloths
+1 Resplendent Angel
+1 Rhys the Redeemed
+1 Shalai, Voice of Plenty
+1 Soul Warden
+1 Soul of Eternity
+1 Speaker of the Heavens
+1 Voice of Resurgence
+1 Vorinclex, Voice of Hunger
+1 Wayfaring Temple
+1 Aura Shards
+1 Caretaker's Talent
+1 Doubling Season
+1 Garruk's Uprising
+1 Growing Ranks
+1 Intangible Virtue
+1 Mirari's Wake
+1 Parallel Lives
+1 Song of the Worldsoul
+1 Trudge Garden
+1 Beast Within
+1 Break Down
+1 Druid's Deliverance
+1 Grand Crescendo
+1 Path to Exile
+1 Rootborn Defenses
+1 Second Harvest
+1 Sundering Growth
+1 Swords to Plowshares
+1 Elspeth Tirel
+1 Camaraderie
+1 Cultivate
+1 Farseek
+1 Finale of Devastation
+1 Harmonize
+1 Hour of Reckoning
+1 Nature's Lore
+1 Rampant Growth
+1 Shamanic Revelation

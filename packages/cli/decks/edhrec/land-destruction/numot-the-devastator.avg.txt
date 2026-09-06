@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/numot-the-devastator/land-destruction
+# theme Land Destruction (277 decks)
+
+Commander
+1 Numot, the Devastator
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Crucible of Worlds
+1 Darksteel Ingot
+1 Dingus Egg
+1 Izzet Signet
+1 Lightning Greaves
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Thran Dynamo
+1 Arid Mesa
+1 Cascading Cataracts
+1 Command Tower
+1 Darksteel Citadel
+1 Evolving Wilds
+1 Field of Ruin
+1 Ghost Quarter
+1 Hallowed Fountain
+5 Island
+7 Mountain
+1 Mystic Monastery
+5 Plains
+1 Raugrin Triome
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Sacred Foundry
+1 Silverbluff Bridge
+1 Steam Vents
+1 Strip Mine
+1 Wasteland
+1 Avacyn, Angel of Hope
+1 Detritivore
+1 Dwarven Blastminer
+1 Dwarven Miner
+1 Gold Myr
+1 Grand Arbiter Augustin IV
+1 Iron Myr
+1 Lavinia, Azorius Renegade
+1 Mine Layer
+1 Obsidian Charmaw
+1 Orcish Settlers
+1 Palladium Myr
+1 Serra Paragon
+1 Silver Myr
+1 Stoneshaker Shaman
+1 Sun Titan
+1 Tomik, Distinguished Advokist
+1 Destructive Urge
+1 Fall of the Thran
+1 Ghostly Prison
+1 Impending Disaster
+1 Price of Glory
+1 Propaganda
+1 Rhystic Study
+1 Smothering Tithe
+1 Boros Charm
+1 Counterspell
+1 Cyclonic Rift
+1 Dawn's Truce
+1 Dovin's Veto
+1 Faith's Reward
+1 Mana Drain
+1 Negate
+1 Path to Exile
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Ajani Vengeant
+1 Armageddon
+1 Boom // Bust
+1 Catastrophe
+1 Molten Rain
+1 Obliterate
+1 Pillage
+1 Ravages of War
+1 Roiling Terrain
+1 Ruination
+1 Seismic Spike
+1 Stone Rain
+1 Vandalblast
+1 Wildfire

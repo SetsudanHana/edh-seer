@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/lulu-stern-guardian/stun
+# theme Stun (14 decks)
+
+Commander
+1 Lulu, Stern Guardian
+
+Deck
+1 Arcane Signet
+1 Astral Cornucopia
+1 Cryogen Relic
+1 Darksteel Reactor
+1 Everflowing Chalice
+1 Glistening Sphere
+1 Insight Engine
+1 Lux Cannon
+1 Midnight Clock
+1 Mind Stone
+1 Replicating Ring
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Thought Vessel
+27 Island
+1 Karn's Bastion
+1 Mage-Ring Network
+1 Mistrise Village
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Nesting Grounds
+1 Reliquary Tower
+1 Riptide Laboratory
+1 Saprazzan Skerry
+1 Blighted Agent
+1 Chasm Skulker
+1 Deepglow Skate
+1 Dreamtide Whale
+1 Fear of Sleep Paralysis
+1 Floodpits Drowner
+1 Flux Channeler
+1 Gogo, Master of Mimicry
+1 Grappling Kraken
+1 Guildpact Informant
+1 Ingenious Prodigy
+1 Loch Mare
+1 Monstrosity of the Lake
+1 Pensive Professor
+1 Summon: Shiva
+1 Summon: Valefor
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Ultimecia, Temporal Threat
+1 Viral Drake
+1 As Foretold
+1 Inexorable Tide
+1 Lost in the Maze
+1 Propaganda
+1 Scroll of Isildur
+1 Training Grounds
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Counterspell
+1 Experimental Augury
+1 Fierce Guardianship
+1 High Tide
+1 Negate
+1 Prologue to Phyresis
+1 Reject Imperfection
+1 Ripples of Potential
+1 Serum Snare
+1 Succumb to the Cold
+1 Trap the Trespassers
+1 Tamiyo, the Moon Sage
+1 Contentious Plan
+1 Crashing Wave
+1 Expansion Algorithm
+1 Freeze in Place
+1 Impede Momentum
+1 Procrastinate
+1 Tezzeret's Gambit

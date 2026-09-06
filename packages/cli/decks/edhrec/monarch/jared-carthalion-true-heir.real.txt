@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/tkPGbD4WkgEPlsznmN8E4Q (source https://archidekt.com/decks/26061824)
+# tags Monarch; bracket 3; saved 2026-09-05; 399 tagged of 3132 indexed
+
+Commander
+1 Jared Carthalion, True Heir
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Fiendlash
+1 Hammer of Nazahn
+1 Herd Heirloom
+1 King Solomon's Frogs
+1 Mithril Coat
+1 Pariah's Shield
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Vengeance
+1 Talisman of Impulse
+1 Trailblazer's Boots
+1 Archon of Coronation
+1 Brash Taunter
+1 Champions of Minas Tirith
+1 Dawnglade Regent
+1 Emberwilde Captain
+1 Marisi, Breaker of the Coil
+1 Palace Jailer
+1 Palace Sentinels
+1 Protector of the Crown
+1 Queen Mother Ramonda
+1 Regal Behemoth
+1 Shalai and Hallar
+1 Shalai, Voice of Plenty
+1 Skyline Despot
+1 Stuffy Doll
+1 Wayta, Trainer Prodigy
+1 Arid Mesa
+1 Axgard Armory
+1 Command Tower
+1 Cragcrown Pathway
+1 Exotic Orchard
+8 Forest
+6 Mountain
+1 Needleverge Pathway
+10 Plains
+1 Reflecting Pool
+1 Rogue's Passage
+1 Rugged Prairie
+1 Slayers' Stronghold
+1 Sunhome, Fortress of the Legion
+1 Throne of the High City
+1 Windswept Heath
+1 Wooded Foothills
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Chain Reaction
+1 Chandra's Ignition
+1 Farseek
+1 Rishkar's Expertise
+1 Solar Blaze
+1 Star of Extinction
+1 Brave the Sands
+1 Court of Ardenvale
+1 Court of Bounty
+1 Court of Garenbrig
+1 Court of Grace
+1 Court of Ire
+1 Land Tax
+1 Pariah
+1 Saving Grace
+1 Smothering Tithe
+1 With Great Power . . .
+1 Domri, Anarch of Bolas
+1 Enlightened Tutor
+1 Fight for the Throne
+1 Gideon's Sacrifice
+1 Heroic Sacrifice
+1 Khalni Ambush
+1 Self-Destruct
+1 Swords to Plowshares
+1 Tamiyo's Safekeeping
+1 Teferi's Protection

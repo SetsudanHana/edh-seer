@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/HDf38Fa5TPsx3P4iHgzhPQ (source https://archidekt.com/decks/25957487)
+# tags Tap / Untap, Ramp, Tokens, Anthems, Deathtouch, Card Draw; bracket 2; saved 2026-09-05; 108 tagged of 5720 indexed
+
+Commander
+1 Emmara, Soul of the Accord
+
+Deck
+1 Akroma's Will
+1 Aura Mutation
+1 Devouring Light
+1 March of the Multitudes
+1 Obscuring Haze
+1 Path to Exile
+1 Second Harvest
+1 Arcane Signet
+1 Bow of Nylea
+1 Esika's Chariot
+1 Halo Fountain
+1 Honor-Worn Shaku
+1 Idol of Oblivion
+1 Patriar's Seal
+1 Skullclamp
+1 Smuggler's Copter
+1 Sol Ring
+1 Springleaf Drum
+1 Thousand-Year Elixir
+1 Throne of the God-Pharaoh
+1 Authority of the Consuls
+1 Beastmaster Ascension
+1 Cathars' Crusade
+1 Conclave Tribunal
+1 Cryptolith Rite
+1 Curse of Bounty
+1 Divine Visitation
+1 Glare of Subdual
+1 Growing Rites of Itlimoc
+1 Instill Energy
+1 Nature's Chosen
+1 Quest for Renewal
+1 Reconnaissance
+1 Blossoming Sands
+1 Canopy Vista
+1 Command Tower
+14 Forest
+1 Fortified Village
+1 Graypelt Refuge
+1 Holdout Settlement
+12 Plains
+1 Scene of the Crime
+1 Survivors' Encampment
+1 Temple of Plenty
+1 Camaraderie
+1 Collective Unconscious
+1 Cultivate
+1 Harvest Season
+1 Hour of Reckoning
+1 Martial Coup
+1 Open the Armory
+1 Overrun
+1 Rampant Growth
+1 Shamanic Revelation
+1 Sunfall
+1 Triumph of the Hordes
+1 Champion of Lambholt
+1 Drumbellower
+1 Frenzied Baloth
+1 Hornet Nest
+1 Hornet Queen
+1 Jaspera Sentinel
+1 Loam Dryad
+1 Mentor of the Meek
+1 Ohran Frostfang
+1 Queen Allenal of Ruadach
+1 Reclamation Sage
+1 Rhys the Redeemed
+1 Saruli Caretaker
+1 Saryth, the Viper's Fang
+1 Seeker of Skybreak
+1 Thunderfoot Baloth
+1 Torens, Fist of the Angels
+1 Trostani, Three Whispers
+1 Welcoming Vampire

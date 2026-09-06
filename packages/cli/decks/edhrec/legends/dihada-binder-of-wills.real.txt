@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/a1vJtpxgIG7uY_TdrnUsyw (source https://moxfield.com/decks/jg3YkmTPwEqImlIm6yk-cA)
+# tags Legends; bracket 3; saved 2026-09-05; 1680 tagged of 11004 indexed
+
+Commander
+1 Dihada, Binder of Wills
+
+Deck
+1 Abstergo Entertainment
+1 Arid Mesa
+1 Badlands
+1 Barad-dûr
+1 Battlefield Forge
+1 Blood Crypt
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Elegant Parlor
+1 Godless Shrine
+1 Homeward Path
+1 Luxury Suite
+1 Mana Confluence
+1 Marsh Flats
+1 Plains
+1 Plateau
+1 Plaza of Heroes
+1 Reflecting Pool
+1 Sacred Foundry
+1 Savai Triome
+1 Scalding Tarn
+1 Scrubland
+1 Shizo, Death's Storehouse
+1 Snow-Covered Mountain
+1 Snow-Covered Plains
+1 Snow-Covered Swamp
+1 Sokenzan, Crucible of Defiance
+1 Spectator Seating
+1 Starting Town
+1 Swamp
+1 Takenuma, Abandoned Mire
+1 The Grey Havens
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Animate Dead
+1 Dance of the Dead
+1 Flowering of the White Tree
+1 Gleaming Splendor
+1 Necromancy
+1 Rakdos Joins Up
+1 Smothering Tithe
+1 The Meathook Massacre
+1 Underworld Breach
+1 Arcane Signet
+1 Bolas's Citadel
+1 Heart of Kiran
+1 Mox Amber
+1 Palantír of Orthanc
+1 Relic of Legends
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 The Mind Stone
+1 The Soul Stone
+1 Black Widow, Agile Avenger
+1 Boromir, Warden of the Tower
+1 Breena, the Demagogue
+1 Cadric, Soul Kindler
+1 Elas il-Kor, Sadistic Pilgrim
+1 Esper Sentinel
+1 Lotho, Corrupt Shirriff
+1 Magda, Brazen Outlaw
+1 Mayhem Devil
+1 Mila, Crafty Companion
+1 Piru, the Volatile
+1 Ratadrabik of Urborg
+1 Shanid, Sleepers' Scourge
+1 Sheoldred, Whispering One
+1 Sheoldred, the Apocalypse
+1 Smaug the Magnificent
+1 Smaug, Wicked Worm
+1 Teshar, Ancestor's Apostle
+1 The Queen of Dale
+1 Valgavoth, Terror Eater
+1 Varragoth, Bloodsky Sire
+1 Venat, Heart of Hydaelyn
+1 Vilis, Broker of Blood
+1 Vito, Thorn of the Dusk Rose
+1 Yoshimaru, Ever Faithful
+1 Éowyn, Fearless Knight
+1 Blasphemous Act
+1 Flicker
+1 Grim Tutor
+1 Improvisation Capstone
+1 Primevals' Glorious Rebirth
+1 Reanimate
+1 Ruinous Ultimatum
+1 Sevinne's Reclamation
+1 Unburial Rites
+1 Urza's Ruinous Blast
+1 Crackling Doom
+1 Dawn's Truce
+1 Deadly Rollick
+1 Deflecting Swat
+1 Swords to Plowshares
+1 Vanishing Verse
+1 Elspeth, Storm Slayer

@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/8VJoYs7Rwv0RbwLnUdOxvQ (source https://moxfield.com/decks/cC7HcNJHOkafU34_SgugeQ)
+# tags Aikido, Monarch; bracket 3; saved 2026-09-05; 859 tagged of 20070 indexed
+
+Commander
+1 Queen Marchesa
+
+Deck
+1 Alexios, Deimos of Kosmos
+1 Archon of Coronation
+1 Braids, Cabal Minion
+1 Breena, the Demagogue
+1 Champions of Minas Tirith
+1 Emberwilde Captain
+1 Generous Plunderer
+1 Gix, Yawgmoth Praetor
+1 Humble Defector
+1 Kain, Traitorous Dragoon
+1 Kambal, Consul of Allocation
+1 Life of the Party
+1 Loran of the Third Path
+1 Mangara, the Diplomat
+1 Nelly Borca, Impulsive Accuser
+1 Opposition Agent
+1 Starscream, Power Hungry
+1 Varchild, Betrayer of Kjeldor
+1 Weathered Wayfarer
+1 Windborn Muse
+1 Xantcha, Sleeper Agent
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Fellwar Stone
+1 Lightning Greaves
+1 Skullclamp
+1 Sol Ring
+1 Sunforger
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Wishclaw Talisman
+1 Backlash
+1 Batwing Brume
+1 Crackling Doom
+1 Dawn Charm
+1 Deflecting Palm
+1 Delirium
+1 Inkshield
+1 Path to Exile
+1 Return the Favor
+1 Swords to Plowshares
+1 Take the Bait
+1 Teferi's Protection
+1 Untimely Malfunction
+1 Blasphemous Act
+1 Blasphemous Edict
+1 Disrupt Decorum
+1 Insurrection
+1 Morningtide's Light
+1 Prisoner's Dilemma
+1 Ruinous Ultimatum
+1 Taunt from the Rampart
+1 Worst Fears
+1 Blazemire Verge
+1 Blood Crypt
+1 Caves of Koilos
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Furycalm Snarl
+1 Isolated Chapel
+10 Mountain
+1 Nomad Outpost
+7 Plains
+1 Reliquary Tower
+1 Sacred Foundry
+1 Shineshadow Snarl
+1 Smoldering Marsh
+7 Swamp
+1 Court of Ambition
+1 Curse of Opulence
+1 Ghostly Prison
+1 Repercussion
+1 Tenuous Truce
+1 Trouble in Pairs

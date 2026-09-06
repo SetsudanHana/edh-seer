@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/ozr2Vqk5vfOW8FZ07MgszA (source https://archidekt.com/decks/25979139)
+# tags Reanimator, Keywords, Self-Mill, Graveyard; bracket 2; saved 2026-09-03; 200 tagged of 4357 indexed
+
+Commander
+1 Kathril, Aspect Warper
+
+Deck
+1 Abigale, Eloquent First-Year
+1 Acidic Slime
+1 Aftermath Analyst
+1 Akroma, Angel of Wrath
+1 Avacyn's Pilgrim
+1 Barrowgoyf
+1 Birds of Paradise
+1 Blor the Impervious
+1 Cataclysmic Gearhulk
+1 Delighted Halfling
+1 Doom Whisperer
+1 Elder Gargaroth
+1 Elesh Norn, Mother of Machines
+1 Elves of Deep Shadow
+1 Elvish Mystic
+1 Fauna Shaman
+1 Fyndhorn Elves
+1 Glissa Sunslayer
+1 Hermit Druid
+1 Hit-Monkey
+1 Honest Rutstein
+1 Icetill Explorer
+1 Leyline Prowler
+1 Llanowar Elves
+1 Nullpriest of Oblivion
+1 Nyx Weaver
+1 Oketra the True
+1 Scavenged Brawler
+1 Shrike Force
+1 Sigarda, Host of Herons
+1 Sire of Seven Deaths
+1 Six
+1 Slippery Bogbonder
+1 Splinterfright
+1 Stitcher's Supplier
+1 Sylvan Caryatid
+1 The Master of Lake-town
+1 The Queen of Dale
+1 The Warring Triad
+1 Toski, Bearer of Secrets
+1 Vile Entomber
+1 Witch Enchanter
+1 Zetalpa, Primal Dawn
+1 Arcane Signet
+1 Matzalantli, the Great Door
+1 Mesmeric Orb
+1 Sol Ring
+1 The Ozolith
+1 Bala Ged Recovery
+1 Bone Shards
+1 Buried Alive
+1 Eerie Ultimatum
+1 Toxic Deluge
+1 Bayou
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Brushland
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+1 Forest
+1 Godless Shrine
+1 Indatha Triome
+1 Isolated Chapel
+1 Llanowar Wastes
+1 Lush Portico
+1 Marsh Flats
+1 Overgrown Tomb
+1 Plains
+1 Savannah
+1 Scrubland
+1 Shadowy Backstreet
+1 Shifting Woodland
+1 Sunpetal Grove
+1 Swamp
+1 Takenuma, Abandoned Mire
+1 Temple Garden
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Verdant Catacombs
+1 Windswept Heath
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Cemetery Tampering
+1 Deadbridge Chant
+1 Doubling Season
+1 Gleaming Splendor
+1 Out of the Tombs
+1 Resourceful Defense
+1 Ripples of Undeath
+1 Entomb
+1 Fell the Profane
+1 Grisly Salvage
+1 Hagra Mauling
+1 Naturalize
+1 Revitalizing Repast
+1 Grist, the Hunger Tide

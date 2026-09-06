@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/hinata-dawn-crowned/x-spells
+# theme X Spells (514 decks)
+
+Commander
+1 Hinata, Dawn-Crowned
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+7 Island
+5 Mountain
+1 Mystic Monastery
+4 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Reliquary Tower
+1 Sacred Foundry
+1 Sea of Clouds
+1 Shivan Reef
+1 Spectator Seating
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Training Center
+1 Archmage Emeritus
+1 Battlefield Thaumaturge
+1 Deekah, Fractal Theorist
+1 Dualcaster Mage
+1 Feather, the Redeemed
+1 Illithid Harvester
+1 Kykar, Wind's Fury
+1 Soulfire Grand Master
+1 Storm-Kiln Artist
+1 Talrand, Sky Summoner
+1 Third Path Iconoclast
+1 Voracious Bibliophile
+1 Willbreaker
+1 Young Pyromancer
+1 Zaffai, Thunder Conductor
+1 Metallurgic Summonings
+1 Rhystic Study
+1 Shark Typhoon
+1 Smothering Tithe
+1 Whirlwind of Thought
+1 Arcane Denial
+1 Aurelia's Fury
+1 Change of Plans
+1 Comet Storm
+1 Crush Contraband
+1 Disorder in the Court
+1 Gridlock
+1 Heliod's Intervention
+1 Icy Blast
+1 Magma Opus
+1 March of Swirling Mist
+1 Mystic Confluence
+1 Negate
+1 Prismatic Boon
+1 Reality Spasm
+1 Return the Favor
+1 Semester's End
+1 Sublime Epiphany
+1 Swords to Plowshares
+1 Unwind
+1 Volcanic Offering
+1 Aether Gale
+1 Baral's Expertise
+1 By Force
+1 Crackle with Power
+1 Curse of the Swine
+1 Distorting Wake
+1 Mass Manipulation
+1 Meteor Blast
+1 Open into Wonder
+1 Reconstruct History
+1 Red Sun's Twilight
+1 Requisition Raid
+1 Smoke Spirits' Aid
+1 Soulfire Eruption

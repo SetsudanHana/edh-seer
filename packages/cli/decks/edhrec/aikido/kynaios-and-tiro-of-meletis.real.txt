@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/JnsMN_bcjCptMtqrvJbgRA (source https://moxfield.com/decks/o97suQJlHEuIdOBcpKvqxw)
+# tags Control, Combo, Aikido; bracket 3; saved 2026-09-03; 60 tagged of 15208 indexed
+
+Commander
+1 Kynaios and Tiro of Meletis
+
+Deck
+1 Alexios, Deimos of Kosmos
+1 Aragorn, King of Gondor
+1 Brash Taunter
+1 Clever Impersonator
+1 Consecrated Sphinx
+1 Faerie Artisans
+1 Faerie Mastermind
+1 Gisela, Blade of Goldnight
+1 Gluntch, the Bestower
+1 Heartwood Storyteller
+1 Nelly Borca, Impulsive Accuser
+1 Nezahal, Primal Tide
+1 Portal Manipulator
+1 Selfless Squire
+1 Selvala, Explorer Returned
+1 Sergeant John Benton
+1 Stunt Double
+1 The Second Doctor
+1 Xyris, the Writhing Storm
+1 An Offer You Can't Refuse
+1 Boros Charm
+1 Comeuppance
+1 Counterspell
+1 Dawn Charm
+1 Deflecting Palm
+1 Fork
+1 Galadriel's Dismissal
+1 Generous Gift
+1 Illusionist's Gambit
+1 Invert Polarity
+1 Mystical Tutor
+1 Narset's Reversal
+1 Noxious Revival
+1 Olórin's Searing Light
+1 Reins of Power
+1 Return the Favor
+1 Reverse the Polarity
+1 See Double
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Take the Bait
+1 Tangle
+1 Teferi's Protection
+1 Untimely Malfunction
+1 Arcane Signet
+1 Mirage Mirror
+1 Sol Ring
+1 Battlefield Forge
+1 Breeding Pool
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Strand
+2 Forest
+1 Fortified Village
+1 Hallowed Fountain
+4 Island
+1 Ketria Triome
+1 Mana Confluence
+1 Misty Rainforest
+4 Mountain
+1 Overgrown Farmland
+1 Path of Ancestry
+3 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Rejuvenating Springs
+1 Rockfall Vale
+1 Sacred Foundry
+1 Steam Vents
+1 Stomping Ground
+1 Windswept Heath
+1 Wooded Foothills
+1 Blind Obedience
+1 Court of Grace
+1 Court of Vantress
+1 Hot Pursuit
+1 Disrupt Decorum
+1 Farseek
+1 Insurrection
+1 Mob Rule
+1 Nature's Lore
+1 Oversimplify
+1 Spectacular Showdown
+1 Taunt from the Rampart
+1 Three Visits
+1 Windfall

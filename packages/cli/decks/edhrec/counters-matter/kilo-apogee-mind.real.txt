@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/LOKxdlcdRD82g3gZCkCqfA (source https://archidekt.com/decks/21513488)
+# tags Counters Matter, Artifacts, Proliferate, Charge Counters; bracket 3; saved 2026-09-04; 121 tagged of 18506 indexed
+
+Commander
+1 Kilo, Apogee Mind
+
+Deck
+1 Adagia, Windswept Bastion
+1 Adarkar Wastes
+1 Ancient Den
+1 Battlefield Forge
+1 Command Tower
+1 Deserted Beach
+1 Diamond City
+1 Exotic Orchard
+1 Ferrous Lake
+1 Fiery Islet
+1 Floodfarm Verge
+1 Gemstone Mine
+1 Glacial Fortress
+1 Great Furnace
+3 Island
+1 Kavaron, Memorial World
+2 Mountain
+1 Mystic Monastery
+2 Plains
+1 Razortide Bridge
+1 Remote Farm
+1 Rustvale Bridge
+1 Sandstone Needle
+1 Saprazzan Skerry
+1 Seachrome Coast
+1 Seat of the Synod
+1 Shivan Reef
+1 Silverbluff Bridge
+1 Skycloud Expanse
+1 Spire of Industry
+1 Sulfur Falls
+1 Uthros, Titanic Godcore
+1 All Will Be One
+1 Dawn of a New Age
+1 Fated Firepower
+1 Resourceful Defense
+1 Anim Pakal, Thousandth Moon
+1 Assaultron Dominator
+1 Black Widow, Agile Avenger
+1 Crystalline Crawler
+1 Deepglow Skate
+1 Dreamtide Whale
+1 Etherium Sculptor
+1 Hangarback Walker
+1 Iron Man, Armored Avenger
+1 Kappa Cannoneer
+1 Patrolling Peacemaker
+1 Pensive Professor
+1 Pollywog Prodigy
+1 Shang-Chi and the Ten Rings
+1 Steel Overseer
+1 Surge Conductor
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Twenty-Toed Toad
+1 Unctus, Grand Metatect
+1 Urza, Lord High Artificer
+1 Virulent Silencer
+1 Walking Ballista
+1 Argent Dais
+1 Darksteel Reactor
+1 Gavel of the Righteous
+1 Golem Foundry
+1 Insight Engine
+1 Inspirit, Flagship Vessel
+1 Long-Range Sensor
+1 Lux Artillery
+1 Lux Cannon
+1 Paradise Mantle
+1 Royal Talon Fighter Jet
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Solar Array
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 The Millennium Calendar
+1 The One Ring
+1 Unwinding Clock
+1 Uthros Research Craft
+1 Boon of Safety
+1 Cyber Conversion
+1 Dispatch
+1 Enlightened Tutor
+1 Experimental Augury
+1 Prologue to Phyresis
+1 Protection Magic
+1 Ripples of Potential
+1 Swan Song
+1 Expansion Algorithm
+1 Organic Extinction
+1 Tezzeret's Gambit
+1 Tezzeret, Betrayer of Flesh
+1 Tezzeret, Cruel Captain

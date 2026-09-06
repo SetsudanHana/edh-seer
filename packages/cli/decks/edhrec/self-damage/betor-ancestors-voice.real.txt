@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/lDKmIoaR4VcttecwfhjjWw (source https://archidekt.com/decks/21757571)
+# tags Lifegain, Self-Damage, +1/+1 Counters, Lifedrain; bracket 3; saved 2026-09-05; 983 tagged of 18865 indexed
+
+Commander
+1 Betor, Ancestor's Voice
+
+Deck
+1 Abigale, Eloquent First-Year
+1 Beledros Witherbloom
+1 Canopy Gargantuan
+1 Danitha, New Benalia's Light
+1 Darkstar Augur
+1 Deep-Cavern Bat
+1 Defiling Daemogoth
+1 Enduring Tenacity
+1 Giver of Runes
+1 Grave Researcher
+1 Haywire Mite
+1 Hushbringer
+1 Ikra Shidiqi, the Usurper
+1 Indulging Patrician
+1 Kutzil, Malamet Exemplar
+1 Lathiel, the Bounteous Dawn
+1 Moseo, Vein's New Dean
+1 Mother of Runes
+1 Nykthos Paragon
+1 Priest of Fell Rites
+1 Qarsi Revenant
+1 Rhox Faithmender
+1 Sakura-Tribe Elder
+1 Sanguine Spy
+1 Scheming Silvertongue
+1 Selfless Spirit
+1 Shalai, Voice of Plenty
+1 Soul Warden
+1 Treebeard, Gracious Host
+1 Vault Skirge
+1 Vito, Thorn of the Dusk Rose
+1 Wall of Reverence
+1 Willowdusk, Essence Seer
+1 Anguished Unmaking
+1 Clever Concealment
+1 Dismember
+1 Flawless Maneuver
+1 Infernal Grasp
+1 Tamiyo's Safekeeping
+1 Arcane Signet
+1 Bolas's Citadel
+1 Commander's Sphere
+1 Herd Heirloom
+1 Lightning Greaves
+1 Orzhov Signet
+1 Sol Ring
+1 Staff of Compleation
+1 Black Market Connections
+1 Hollowmurk Siege
+1 Kaya's Ghostform
+1 Resourceful Defense
+1 Ripples of Undeath
+1 Sanguine Bond
+1 Spirit Link
+1 Bojuka Bog
+1 Brushland
+1 Canopy Vista
+1 Caves of Koilos
+1 Command Beacon
+1 Command Tower
+1 Eclipsed Steppe
+1 Exotic Orchard
+3 Forest
+1 Godless Shrine
+1 Isolated Chapel
+1 Llanowar Wastes
+1 Mosswort Bridge
+1 Overgrown Tomb
+1 Path of Ancestry
+5 Plains
+1 Sandsteppe Citadel
+1 Sunpetal Grove
+10 Swamp
+1 Temple of Silence
+1 Vernal Fen
+1 Woodland Cemetery
+1 Buried Alive
+1 Cultivate
+1 Damn
+1 Kodama's Reach
+1 Night's Whisper
+1 Rampant Growth
+1 Sign in Blood
+1 Professor Dellian Fel

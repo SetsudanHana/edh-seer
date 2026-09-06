@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/4TnCH-9i0-d2Tmshn7JsJA (source https://moxfield.com/decks/icg5RGb51USQojpiHTMjAw)
+# tags Dredge, Mutate, Reanimator; bracket 3; saved 2026-09-04; 475 tagged of 7557 indexed
+
+Commander
+1 Nethroi, Apex of Death
+
+Deck
+1 Aftermath Analyst
+1 Birds of Paradise
+1 Bloom Tender
+1 Boneyard Lurker
+1 Bramble Familiar
+1 Cavern Whisperer
+1 Chittering Harvester
+1 Colossal Grave-Reaver
+1 Craterhoof Behemoth
+1 Cubwarden
+1 Dirge Bat
+1 Disciple of Freyalise
+1 Eirdu, Carrier of Dawn
+1 Eternal Witness
+1 Faeburrow Elder
+1 Fauna Shaman
+1 Fiend Artisan
+1 Frenzied Baloth
+1 Gemrazer
+1 Glowstone Recluse
+1 Golgari Grave-Troll
+1 Gravebreaker Lamia
+1 Grist, Voracious Larva
+1 Hoarding Broodlord
+1 Huntmaster Liger
+1 Icetill Explorer
+1 Insatiable Hemophage
+1 Kutzil, Malamet Exemplar
+1 Llanowar Elves
+1 Luminous Broodmoth
+1 Majestic Auricorn
+1 Migratory Greathorn
+1 Necropanther
+1 Nyx Weaver
+1 Ravenous Chupacabra
+1 Sakura-Tribe Elder
+1 Sawtusk Demolisher
+1 Scourge of the Skyclaves
+1 Six
+1 Sylvan Caryatid
+1 The Necrobloom
+1 Vulpikeet
+1 World Shaper
+1 Altar of Dementia
+1 Conduit of Worlds
+1 Exploration Broodship
+1 Hedge Shredder
+1 Matzalantli, the Great Door
+1 Animate Dead
+1 Dazzling Theater // Prop Room
+1 Funeral Room // Awakening Hall
+1 Ripples of Undeath
+1 Walk-In Closet // Forgotten Cellar
+1 Bleachbone Verge
+1 Brushland
+1 Caves of Koilos
+1 Command Tower
+1 Dakmor Salvage
+1 Deathcap Glade
+1 Exotic Orchard
+1 Fabled Passage
+4 Forest
+1 Godless Shrine
+1 Indatha Triome
+1 Inkmoth Nexus
+1 Llanowar Wastes
+1 Lush Portico
+1 Marsh Flats
+1 Overgrown Tomb
+1 Phyrexian Tower
+4 Plains
+1 Shadowy Backstreet
+1 Shifting Woodland
+4 Swamp
+1 Temple Garden
+1 Underground Mortuary
+1 Verdant Catacombs
+1 Windswept Heath
+1 Yavimaya, Cradle of Growth
+1 Buried Alive
+1 Dread Return
+1 Eerie Ultimatum
+1 Life from the Loam
+1 Reanimate
+1 Entomb
+1 Fell the Profane
+1 Mythos of Nethroi
+1 Path to Exile
+1 Swords to Plowshares
+1 Grist, the Hunger Tide

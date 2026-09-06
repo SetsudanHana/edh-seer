@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/pramikon-sky-rampart/defenders
+# theme Defenders (203 decks)
+
+Commander
+1 Pramikon, Sky Rampart
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Crawlspace
+1 Izzet Signet
+1 Norn's Annex
+1 Rammas Echor, Ancient Shield
+1 Sol Ring
+1 Talisman of Progress
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+6 Island
+1 Maze of Ith
+4 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+7 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Reliquary Tower
+1 Sea of Clouds
+1 Sulfur Falls
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Triumph
+1 Aether Membrane
+1 Alexios, Deimos of Kosmos
+1 Amaranthine Wall
+1 Azor's Elocutors
+1 Crystal Barricade
+1 Fog Bank
+1 Hover Barrier
+1 Mnemonic Wall
+1 Perimeter Captain
+1 Psychic Membrane
+1 Shield-Wall Sentinel
+1 Stalwart Shield-Bearers
+1 Suppressor Skyguard
+1 The Walls of Ba Sing Se
+1 Walking Bulwark
+1 Wall of Denial
+1 Wall of Essence
+1 Wall of Frost
+1 Wall of Glare
+1 Wall of Hope
+1 Wall of Omens
+1 Wall of Stolen Identity
+1 Wall of Tears
+1 Weathered Sentinels
+1 Windborn Muse
+1 Brave the Sands
+1 Fortified Area
+1 Ghostly Prison
+1 High Alert
+1 Mystic Barrier
+1 Propaganda
+1 Rhystic Study
+1 Rolling Stones
+1 Smothering Tithe
+1 Sphere of Safety
+1 Whirlwind of Thought
+1 Aetherize
+1 Chaos Warp
+1 Counterspell
+1 Deflecting Palm
+1 Dovin's Veto
+1 Generous Gift
+1 Negate
+1 Path to Exile
+1 Swords to Plowshares
+1 Take the Bait
+1 Teferi's Protection
+1 Teyo, Geometric Tactician
+1 Teyo, the Shieldmage
+1 The Wanderer
+1 Approach of the Second Sun
+1 Disrupt Decorum
+1 Dusk // Dawn
+1 Fell the Mighty
+1 Solar Blaze
+1 Taunt from the Rampart

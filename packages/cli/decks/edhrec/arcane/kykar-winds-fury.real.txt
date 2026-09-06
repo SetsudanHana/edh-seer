@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/rXCv76whWe_yLsrbCRAdTA (source https://archidekt.com/decks/20127661)
+# tags Polymorph, Arcane; bracket 3; saved 2026-05-12; 7 tagged of 14129 indexed
+
+Commander
+1 Kykar, Wind's Fury
+
+Deck
+1 Absolute Virtue
+1 Ancient Gold Dragon
+1 Aurelia, the Warleader
+1 Avacyn, Angel of Hope
+1 Gisela, Blade of Goldnight
+1 Jin-Gitaxias, Progress Tyrant
+1 Ovika, Enigma Goliath
+1 Sephara, Sky's Blade
+1 Serra's Emissary
+1 Summon: Bahamut
+1 Terror of the Peaks
+1 The Locust God
+1 The Unspeakable
+1 Tidespout Tyrant
+1 Velomachus Lorehold
+1 Zurgo and Ojutai
+1 An Offer You Can't Refuse
+1 Blessed Breath
+1 Brainstorm
+1 Brainsurge
+1 Chaos Mutation
+1 Commit // Memory
+1 Deflecting Swat
+1 Desperate Ritual
+1 Divergent Transformations
+1 Dovin's Veto
+1 Mission Briefing
+1 Negate
+1 Otherworldly Journey
+1 Peer Through Depths
+1 Reach Through Mists
+1 Reweave
+1 Silundi Vision
+1 Spiritual Visit
+1 Stream of Consciousness
+1 Synthetic Destiny
+1 Valakut Awakening
+1 Veil of Secrecy
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Brainstone
+1 Izzet Signet
+1 Proteus Staff
+1 Scroll Rack
+1 Sensei's Divining Top
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Wayfarer's Bauble
+1 Arid Mesa
+1 Bloodstained Mire
+1 City of Brass
+1 Command Tower
+1 Flooded Strand
+1 Hallowed Fountain
+1 Hanweir Battlements
+4 Island
+1 Kher Keep
+1 Mana Confluence
+1 Marsh Flats
+1 Mirrex
+1 Misty Rainforest
+3 Mountain
+3 Plains
+1 Polluted Delta
+1 Prairie Stream
+1 Prismatic Vista
+1 Raugrin Triome
+1 Reflecting Pool
+1 Sacred Foundry
+1 Scalding Tarn
+1 Sea of Clouds
+1 Sokenzan, Crucible of Defiance
+1 Steam Vents
+1 Training Center
+1 Windswept Heath
+1 Wooded Foothills
+1 Dragon Tempest
+1 Frostcliff Siege
+1 Land Tax
+1 Scurry of Gremlins
+1 Eerie Procession
+1 Mass Polymorph
+1 Merchant Scroll
+1 Polymorph
+1 Reality Scramble
+1 Surge to Victory
+1 Transmogrify
+1 Lukka, Coppercoat Outcast

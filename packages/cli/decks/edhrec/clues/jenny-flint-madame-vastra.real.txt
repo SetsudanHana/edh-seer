@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/23vJizHhTigozIVvqo1Bug (source https://archidekt.com/decks/13776616)
+# tags Fight, Detectives, Clues, Food; bracket 3; saved 2026-08-28; 256 tagged of 2212 indexed
+
+Commander
+1 Jenny Flint
+1 Madame Vastra
+
+Deck
+1 Academy Manufactor
+1 Birds of Paradise
+1 Cyberdrive Awakener
+1 Dan Lewis
+1 Delighted Halfling
+1 Detective of the Month
+1 Donna Noble
+1 Forensic Gadgeteer
+1 Gilded Goose
+1 Guardian Augmenter
+1 Jaheira, Friend of the Forest
+1 Kodama of the West Tree
+1 Lonis, Genetics Expert
+1 Nyssa of Traken
+1 Piper Wright, Publick Reporter
+1 Roaming Throne
+1 Shao Jun
+1 Tangletrove Kelp
+1 Tireless Provisioner
+1 Tireless Tracker
+1 Vigor
+1 Animist's Might
+1 Bridgeworks Battle
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Rhino's Rampage
+1 Rise and Shine
+1 Stump Stomp
+1 Super Combo
+1 Arcane Signet
+1 Basilisk Collar
+1 Dire Flail
+1 Fellwar Stone
+1 Hammer of Nazahn
+1 Heaped Harvest
+1 Hunter's Bow
+1 Inspiring Statuary
+1 Mithril Coat
+1 Sol Ring
+1 The Masamune
+1 Thought Vessel
+1 Thran Turbine
+1 Archway of Innovation
+1 Bountiful Landscape
+1 Breeding Pool
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Fiery Islet
+1 Fomori Vault
+4 Forest
+1 Frontier Bivouac
+1 Game Trail
+3 Island
+1 Karplusan Forest
+1 Ketria Triome
+1 Mountain
+1 Path of Ancestry
+1 Reliquary Tower
+1 Rogue's Passage
+1 Rootbound Crag
+1 Scalding Tarn
+1 Shivan Reef
+1 Spire Garden
+1 Steam Vents
+1 Sulfur Falls
+1 Temple of Abandon
+1 Temple of Epiphany
+1 Temple of Mystery
+1 The Shire
+1 Unclaimed Territory
+1 Beast Within
+1 Chaos Warp
+1 Cosmic Hunger
+1 Double Jump // Flying Kick
+1 Friendly Rivalry
+1 Heroic Intervention
+1 Khalni Ambush
+1 Master's Rebuke
+1 Mutant's Prey
+1 Rabid Gnaw
+1 Ram Through
+1 Showstopping Surprise
+1 Strength of Will
+1 Tail Swipe
+1 Familiar Ground
+1 Family's Favor
+1 Feywild Visitor
+1 Food Fight
+1 Pain for All
+1 Rancor
+1 Tavern Brawler

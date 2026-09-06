@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/radagast-the-brown/zoo
+# theme Zoo (69 decks)
+
+Commander
+1 Radagast the Brown
+
+Deck
+1 Arcane Signet
+1 Emerald Medallion
+1 Rhonas's Monument
+1 Sol Ring
+1 The Great Henge
+1 Castle Garenbrig
+28 Forest
+1 Mosswort Bridge
+1 Myriad Landscape
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Rogue's Passage
+1 Yavimaya, Cradle of Growth
+1 Apex Devastator
+1 Badgermole Cub
+1 Beanstalk Giant
+1 Beast Whisperer
+1 Birds of Paradise
+1 Bramble Sovereign
+1 Cemetery Prowler
+1 Collector Ouphe
+1 Courser of Kruphix
+1 Crashing Drawbridge
+1 Craterhoof Behemoth
+1 Defiler of Vigor
+1 Delighted Halfling
+1 End-Raze Forerunners
+1 Eternal Witness
+1 Fanatic of Rhonas
+1 Frenzied Baloth
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 Goreclaw, Terror of Qal Sisma
+1 Ilysian Caryatid
+1 Insidious Fungus
+1 Kodama of the East Tree
+1 Kogla, the Titan Ape
+1 Noxious Newt
+1 Nylea, Keen-Eyed
+1 Ojer Kaslem, Deepest Growth
+1 Pathbreaker Ibex
+1 Poison Dart Frog
+1 Radagast of Rhosgobel
+1 Railway Brawler
+1 Renata, Called to the Hunt
+1 Scavenging Ooze
+1 Selvala, Heart of the Wilds
+1 Silverback Elder
+1 Surrak and Goreclaw
+1 Terastodon
+1 Toski, Bearer of Secrets
+1 Trailtracker Scout
+1 Asceticism
+1 Garruk's Uprising
+1 Growing Rites of Itlimoc
+1 Guardian Project
+1 Unnatural Growth
+1 Wild Growth
+1 Archdruid's Charm
+1 Beast Within
+1 Entish Restoration
+1 Fog
+1 Heroic Intervention
+1 Smuggler's Surprise
+1 Nissa, Who Shakes the World
+1 Bridgeworks Battle
+1 Cultivate
+1 Kodama's Reach
+1 Last March of the Ents
+1 Nature's Lore
+1 Rampant Growth
+1 Three Visits

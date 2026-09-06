@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/king-of-the-oathbreakers/phasing
+# theme Phasing (91 decks)
+
+Commander
+1 King of the Oathbreakers
+
+Deck
+1 Andúril, Flame of the West
+1 Arcane Signet
+1 Idol of Oblivion
+1 Orzhov Signet
+1 Patchwork Banner
+1 Skullclamp
+1 Sol Ring
+1 Staff of the Storyteller
+1 Séance Board
+1 Talisman of Hierarchy
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Minas Tirith
+1 Orzhov Basilica
+1 Path of Ancestry
+13 Plains
+1 Realm of Koh
+1 Shattered Sanctum
+1 Shineshadow Snarl
+8 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Vault of the Archangel
+1 Clarion Spirit
+1 Crypt Ghast
+1 Drogskol Cavalry
+1 Drogskol Reinforcements
+1 Drumbellower
+1 Grey Host Reinforcements
+1 Guardian of Faith
+1 Hanged Executioner
+1 Horobi, Death's Wail
+1 Kami of False Hope
+1 Katilda, Dawnhart Martyr
+1 Mirror Entity
+1 Moonshaker Cavalry
+1 Myojin of Blooming Dawn
+1 Nikko-Onna
+1 Oyobi, Who Split the Heavens
+1 Phantom General
+1 Selfless Spirit
+1 Skyclave Apparition
+1 Thalisse, Reverent Medium
+1 Twilight Drover
+1 Urborg Scavengers
+1 Vanguard of the Restless
+1 Windborn Muse
+1 Anointed Procession
+1 Caretaker's Talent
+1 Ghostly Prison
+1 Haunted Library
+1 Inspiring Leader
+1 Intangible Virtue
+1 Phyrexian Arena
+1 Anguished Unmaking
+1 Cauldron Haze
+1 Clever Concealment
+1 Eerie Interlude
+1 Galadriel's Dismissal
+1 Heaven's Gate
+1 Path to Exile
+1 Rabid Attack
+1 Release to Memory
+1 Scapegoat
+1 Semester's End
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Touch of Darkness
+1 Kaya, Geist Hunter
+1 Damn
+1 Devouring Greed
+1 Hour of Reckoning
+1 Lingering Souls
+1 Night's Whisper
+1 Shadow Summoning
+1 Spectral Procession

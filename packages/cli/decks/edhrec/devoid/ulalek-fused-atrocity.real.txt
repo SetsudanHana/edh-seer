@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/quBZiZ3NwHbsltZP5eugyA (source https://archidekt.com/decks/16437369)
+# tags Devoid, Eldrazi, Big Mana, Combo; bracket 3; saved 2026-09-04; 398 tagged of 27446 indexed
+
+Commander
+1 Ulalek, Fused Atrocity
+
+Deck
+1 Abstruse Appropriation
+1 Brutal Expulsion
+1 Eldrazi Confluence
+1 Eldritch Immunity
+1 Kozilek's Command
+1 Kozilek's Return
+1 Not of This World
+1 Null Elemental Blast
+1 Ugin's Binding
+1 Warping Wail
+1 Adarkar Wastes
+1 Arch of Orazca
+1 Battlefield Forge
+1 Brushland
+1 Caves of Koilos
+1 Corrupted Crossroads
+1 Dark Depths
+1 Eldrazi Temple
+1 Guildless Commons
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Mage-Ring Network
+1 Mirrorpool
+1 Reliquary Tower
+1 Scavenger Grounds
+1 Secluded Courtyard
+1 Shivan Reef
+1 Shrine of the Forsaken Gods
+1 Sulfurous Springs
+1 Temple of the False God
+1 Tendo Ice Bridge
+1 Tomb of the Spirit Dragon
+1 Unclaimed Territory
+1 Underground River
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Yavimaya Coast
+1 Zhalfirin Void
+1 All Is Dust
+1 Selective Obliteration
+1 Anticausal Vestige
+1 Artisan of Kozilek
+1 Benthic Anomaly
+1 Breaker of Creation
+1 Chittering Dispatcher
+1 Conduit of Ruin
+1 Deepfathom Skulker
+1 Depth Defiler
+1 Devourer of Destiny
+1 Elder Deep-Fiend
+1 Flayer of Loyalties
+1 Glaring Fleshraker
+1 Herald of Kozilek
+1 Hideous Taskmaster
+1 Hope-Ender Coatl
+1 It That Betrays
+1 It That Heralds the End
+1 Kozilek, the Great Distortion
+1 Liberator, Urza's Battlethopter
+1 Mutated Cultist
+1 Nulldrifter
+1 Oblivion Sower
+1 Roaming Throne
+1 Sire of Stagnation
+1 Skittering Cicada
+1 Snapping Voidcraw
+1 Sowing Mycospawn
+1 Spawnbed Protector
+1 Thief of Existence
+1 Twins of Discord
+1 Ulamog's Nullifier
+1 Ulamog, the Defiler
+1 Ultima, Origin of Oblivion
+1 World Breaker
+1 Zhulodok, Void Gorger
+1 Basalt Monolith
+1 Chimil, the Inner Sun
+1 Forsaken Monument
+1 Herald's Horn
+1 Mystic Forge
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Curiosity
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Impulse
+1 Talisman of Indulgence
+1 Talisman of Progress
+1 Talisman of Resilience
+1 Talisman of Unity
+1 Thought Vessel
+1 Urza's Incubator
+1 Echoes of Eternity
+1 Kozilek's Unsealing
+1 Path of Annihilation
+1 Ugin, Eye of the Storms
+1 Ugin, the Ineffable

@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/eyzZr3PJhfSvWgyNg2O-ow (source https://archidekt.com/decks/24582271)
+# tags Firebending, Impulse Draw, Burn; bracket 2; saved 2026-09-05; 156 tagged of 12965 indexed
+
+Commander
+1 Fire Lord Zuko
+
+Deck
+1 Aang, the Last Airbender
+1 Appa, Aang's Companion
+1 Appa, Loyal Sky Bison
+1 Araña, Heart of the Spider
+1 Balefire Liege
+1 Bhaal's Invoker
+1 Black Cat, Cunning Thief
+1 Bofur, Reliable Guardian
+1 Boiling Rock Rioter
+1 Combustion Man
+1 Commander Liara Portyr
+1 Daredevil, Man Without Fear
+1 Decadent Dragon
+1 Etali, Primal Storm
+1 Fire Nation Engineer
+1 Firebending Student
+1 Glóin the Mighty
+1 Inti, Seneschal of the Sun
+1 Iroh, Firebending Instructor
+1 Iroh, Tea Master
+1 June, Bounty Hunter
+1 Laelia, the Blade Reforged
+1 Mai, Scornful Striker
+1 Momo, Rambunctious Rascal
+1 Ondu Knotmaster
+1 Ozai, the Phoenix King
+1 Prosper, Tome-Bound
+1 Ran and Shaw
+1 Rough Rhino Cavalry
+1 Sun Warriors
+1 Zhao, the Moon Slayer
+1 Zuko, Conflicted
+1 Zuko, Exiled Prince
+1 Zuko, Seeking Honor
+1 Advanced Reconstruction
+1 Allied Teamwork
+1 Nahiri's Resolve
+1 Rabble Rousing
+1 Airbender's Reversal
+1 Airbending Lesson
+1 Electrodominance
+1 Firebending Lesson
+1 Flaming Gambit
+1 Lightning Strike
+1 Shock
+1 That's Rough Buddy
+1 The Last Agni Kai
+1 Thrill of Possibility
+1 Zuko's Conviction
+1 Zuko's Exile
+1 Ally Encampment
+1 Boiling Rock Prison
+1 Boros Garrison
+1 Castle Ardenvale
+1 Castle Embereth
+1 Clifftop Retreat
+1 Command Tower
+1 Dark Depths
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Fire Nation Palace
+1 Grand Coliseum
+1 Isolated Chapel
+1 Jasmine Dragon Tea Shop
+1 Misty Palms Oasis
+7 Mountain
+1 Nomad Outpost
+1 Orzhov Basilica
+2 Plains
+1 Rakdos Carnarium
+1 Shattered Landscape
+1 Sun-Blessed Peak
+1 Swamp
+1 Temple of Malice
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 Thriving Bluff
+1 Thriving Heath
+1 Thriving Moor
+1 Windbrisk Heights
+1 Angrath, Captain of Chaos
+1 Chandra, Fire Artisan
+1 Apex of Power
+1 Austere Command
+1 Iroh's Demonstration
+1 Ozai's Cruelty
+1 Tale of Momo
+1 Commander's Sphere
+1 Ent-Draught Basin
+1 Sword of Forge and Frontier
+1 The Fire Nation Drill
+1 War Balloon

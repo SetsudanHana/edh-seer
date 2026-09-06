@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/ONN9Urb3xVkQnppODtrzyg (source https://archidekt.com/decks/16182587)
+# tags Die Roll, Dragons, Enrage; bracket 2; saved 2026-08-27; 37 tagged of 2940 indexed
+
+Commander
+1 Vrondiss, Rage of Ancients
+
+Deck
+1 Ancient Bronze Dragon
+1 Ancient Copper Dragon
+1 Anger
+1 Atarka, World Render
+1 Brawn
+1 Cavern-Hoard Dragon
+1 Chaos Dragon
+1 Delina, Wild Mage
+1 Dragonborn Champion
+1 Druid of Purification
+1 Druid of the Emerald Grove
+1 Earth-Cult Elemental
+1 Ganax, Astral Hunter
+1 Goblin Anarchomancer
+1 Klauth, Unrivaled Ancient
+1 Lotus Cobra
+1 Old Gnawbone
+1 Sakura-Tribe Elder
+1 Scaled Nurturer
+1 Scourge of Valkas
+1 Stormshriek Feral
+1 Terror of the Peaks
+1 Thrakkus the Butcher
+1 Wyll, Blade of Frontiers
+1 Bala Ged Recovery
+1 Bridgeworks Battle
+1 Faithless Looting
+1 Farseek
+1 Harmonize
+1 Mizzium Mortars
+1 Nature's Lore
+1 Reckless Endeavor
+1 Rile
+1 Rishkar's Expertise
+1 Stump Stomp
+1 Sundering Eruption
+1 Tempt with Discovery
+1 Thunderwave
+1 Vandalblast
+1 Wild Endeavor
+1 Barbarian Class
+1 Descendants' Fury
+1 Elemental Bond
+1 Encroaching Dragonstorm
+1 Garruk's Uprising
+1 Maddening Hex
+1 The Dragon-Kami Reborn
+1 Beast Within
+1 Berserker's Frenzy
+1 Big Score
+1 Collective Resistance
+1 Deflecting Swat
+1 Dual Shot
+1 Kindred Summons
+1 Return of the Wildspeaker
+1 Thrill of Possibility
+1 Unexpected Windfall
+1 Valakut Awakening
+1 Wyll's Reversal
+1 Boseiju, Who Endures
+1 Cinder Glade
+1 Command Tower
+1 Commercial District
+1 Desert
+1 Evendo, Waking Haven
+4 Forest
+1 Haven of the Spirit Dragon
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Maelstrom of the Spirit Dragon
+11 Mountain
+1 Raging Ravine
+1 Restless Ridgeline
+1 Rockfall Vale
+1 Rootbound Crag
+1 Spire Garden
+1 Stomping Ground
+1 Thornspire Verge
+1 Wooded Foothills
+1 Component Pouch
+1 Dragon's Hoard
+1 Mithril Coat
+1 Sword of Hours
+1 The Deck of Many Things
+1 Vexing Puzzlebox
+1 Wand of Wonder

@@ -59,12 +59,16 @@ function decklist(commanders: string[], deck: Deck, header: string[]): string {
 const total = (r: Row) => r.creature + r.instant + r.sorcery + r.artifact + r.enchantment + r.battle + r.planeswalker + r.land;
 
 let written = 0;
+const failed: string[] = [];
 for (const t of THEMES) {
-  const page = (await get(`https://json.edhrec.com/pages/tags/${t.slug}.json`)) as { container: { json_dict: { cardlists: { header: string; cardviews: Cardview[] }[] } } };
+  // A THEME THAT 404s IS A GAP TO REPORT, NOT A RUN TO ABORT: over 214 themes some average deck or
+  // index is missing, and the pull is an hour of rate-limited requests.
+  let page: { container: { json_dict: { cardlists: { header: string; cardviews: Cardview[] }[] } } };
+  try { page = (await get(`https://json.edhrec.com/pages/tags/${t.slug}.json`)) as typeof page; } catch (e) { failed.push(`${t.archetype}: ${(e as Error).message}`); continue; }
   const top = page.container.json_dict.cardlists.find((c) => c.header === "Top Commanders")?.cardviews.slice(0, PER_THEME) ?? [];
   const dir = join(OUT, t.archetype);
   mkdirSync(dir, { recursive: true });
-  for (const c of top) {
+  for (const c of top) try {
     const cmd = c.url.split("/")[2]!; // /commanders/<slug>/<theme>
     // The themed average deck.
     const avg = (await get(`https://json.edhrec.com/pages/average-decks/${cmd}/${t.slug}.json`)) as { deck: Deck };
@@ -80,7 +84,8 @@ for (const t of THEMES) {
     const real = (await get(`https://edhrec.com/api/deckpreview/${pick.urlhash}`)) as { deck: Deck; commanders: string[]; url: string; tags: string[]; bracket?: number };
     writeFileSync(join(dir, `${cmd}.real.txt`), decklist(real.commanders, real.deck, [`edhrec deck https://edhrec.com/deckpreview/${pick.urlhash} (source ${real.url})`, `tags ${real.tags.join(", ")}; bracket ${pick.bracket ?? "unset"}; saved ${pick.savedate}; ${tagged.length} tagged of ${index.table.length} indexed`]));
     written += 2;
-  }
+  } catch (e) { failed.push(`${t.archetype}/${c.name}: ${(e as Error).message}`); }
   console.log(`${t.archetype}: ${top.map((c) => c.name).join(" · ")}`);
 }
 console.log(`\n${written} decklists under ${OUT}`);
+if (failed.length) console.log(`\n${failed.length} failed:\n  ${failed.join("\n  ")}`);

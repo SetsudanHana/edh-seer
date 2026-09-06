@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/06WickNseSGqR2RMjWT6XQ (source https://archidekt.com/decks/18766436)
+# tags Blood, Flying, Angels; bracket 3; saved 2026-09-05; 165 tagged of 9546 indexed
+
+Commander
+1 Shilgengar, Sire of Famine
+
+Deck
+1 Angel of Finality
+1 Angel of Indemnity
+1 Angel of Suffering
+1 Angel of the Ruins
+1 Angelic Field Marshal
+1 Archangel of Tithes
+1 Avacyn, Angel of Hope
+1 Battle Angels of Tyr
+1 Bishop of Wings
+1 Braids, Arisen Nightmare
+1 Bruna, the Fading Light
+1 Enduring Angel
+1 Eradicator Valkyrie
+1 Exemplar of Light
+1 Firemane Commando
+1 Giada, Font of Hope
+1 Gisela, the Broken Blade
+1 Herald of the Host
+1 Liesa, Forgotten Archangel
+1 Lyra Dawnbringer
+1 Metropolis Reformer
+1 Renegade Reaper
+1 Resplendent Angel
+1 Righteous Valkyrie
+1 Rodolf Duskbringer
+1 Sephara, Sky's Blade
+1 Serra's Emissary
+1 Starnheim Aspirant
+1 Sunblast Angel
+1 The Queen of Dale
+1 Thraben Watcher
+1 Valkyrie Harbinger
+1 Wojek Investigator
+1 Youthful Valkyrie
+1 Anguished Unmaking
+1 Continue?
+1 Darkness
+1 Generous Gift
+1 Malakir Rebirth
+1 Path to Exile
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Arcane Signet
+1 Fellwar Stone
+1 Inspiring Statuary
+1 Orzhov Signet
+1 Palantír of Orthanc
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Urza's Incubator
+1 Black Market Connections
+1 Gleaming Splendor
+1 Phyrexian Arena
+1 Rampage of the Valkyries
+1 Ripples of Undeath
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Eclipsed Steppe
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Marsh Flats
+13 Plains
+1 Secluded Starforge
+1 Seraph Sanctuary
+1 Shadowy Backstreet
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Spymaster's Vault
+6 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Turbulent Moor
+1 Vault of the Archangel
+1 Lich-Knights' Conquest
+1 Make an Example
+1 Reanimate
+1 Split Up
+1 Toxic Deluge
+1 Vindicate

@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-ninth-doctor-clara-oswald/extra-upkeeps
+# theme Extra Upkeeps (41 decks)
+
+Commander
+1 The Ninth Doctor
+1 Clara Oswald
+
+Deck
+1 Arcane Signet
+1 Lightning Greaves
+1 Midnight Clock
+1 Paradise Mantle
+1 Relic of Legends
+1 Replicating Ring
+1 Smuggler's Copter
+1 Sol Ring
+1 Sol Talisman
+1 Springleaf Drum
+1 Strionic Resonator
+1 TARDIS
+1 Tamiyo's Journal
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+4 Forest
+1 Frontier Bivouac
+1 Holdout Settlement
+5 Island
+5 Mountain
+1 Path of Ancestry
+1 Reliquary Tower
+1 Rogue's Passage
+1 Scalding Tarn
+1 Scene of the Crime
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Survivors' Encampment
+4 Swamp
+1 Trenzalore Clocktower
+1 Xander's Lounge
+1 Bonehoard Dracosaur
+1 Braids, Conjurer Adept
+1 Caves of Chaos Adventurer
+1 Creeping Bloodsucker
+1 Dominus of Fealty
+1 Dragonmaster Outcast
+1 Generous Plunderer
+1 Jhoira of the Ghitu
+1 Kang Prime
+1 Obeka, Splitter of Seconds
+1 Plargg and Nassari
+1 Scrawling Crawler
+1 Sinister Concierge
+1 Spark Double
+1 Sphinx of the Second Sun
+1 Star Whale
+1 Taigam, Master Opportunist
+1 The Tenth Doctor
+1 Twilight Prophet
+1 Wildfire Devils
+1 As Foretold
+1 Court of Ambition
+1 Court of Cunning
+1 Court of Embereth
+1 Court of Ire
+1 Court of Vantress
+1 Descent into Avernus
+1 Endless Evil
+1 Extravagant Replication
+1 Kumena's Awakening
+1 Mechanized Production
+1 Paradox Haze
+1 Shadow of the Second Sun
+1 Super Intelligence
+1 Thopter Spy Network
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Chaos Warp
+1 Confusticate and Bebother
+1 Counterspell
+1 Negate
+1 Suspended Sentence
+1 Ancestral Vision
+1 Blasphemous Act
+1 Inevitable Betrayal
+1 Inspiring Refrain
+1 Irenicus's Vile Duplication
+1 Quantum Misalignment
+1 Rousing Refrain

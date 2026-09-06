@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/yargle-and-multani/vanilla
+# theme Vanilla (27 decks)
+
+Commander
+1 Yargle and Multani
+
+Deck
+1 Arcane Signet
+1 Golgari Signet
+1 Mask of Griselbrand
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Resilience
+1 The Skullspore Nexus
+1 Thought Vessel
+1 Command Tower
+15 Forest
+1 Golgari Rot Farm
+1 Llanowar Wastes
+1 Mosswort Bridge
+1 Reliquary Tower
+1 Rogue's Passage
+11 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Twilight Mire
+1 Woodland Cemetery
+1 Alpine Grizzly
+1 Bugenhagen, Wise Elder
+1 Daemogoth Titan
+1 Disciple of Bolas
+1 Dune Beetle
+1 Elvish Mystic
+1 Eternal Witness
+1 Ghalta, Primal Hunger
+1 Gigantosaurus
+1 Gloom Pangolin
+1 Goreclaw, Terror of Qal Sisma
+1 Honest Rutstein
+1 Jarad, Golgari Lich Lord
+1 Kalakscion, Hunger Tyrant
+1 Kalonian Tusker
+1 Leatherback Baloth
+1 Llanowar Elves
+1 Ordinary Bear
+1 Quakestrider Ceratops
+1 Ruthless Technomancer
+1 Ruxa, Patient Professor
+1 Tanuki Transplanter
+1 Terrain Elemental
+1 Terrian, World Tyrant
+1 Vorstclaw
+1 Yargle, Glutton of Urborg
+1 Dying Wish
+1 Garruk's Uprising
+1 Greater Good
+1 Indomitable Might
+1 Kaya's Ghostform
+1 Muraganda Petroglyphs
+1 Wild Growth
+1 Assassin's Trophy
+1 Beast Within
+1 Dark Ritual
+1 Feign Death
+1 Not Dead After All
+1 Overprotect
+1 Putrefy
+1 Return of the Wildspeaker
+1 Tend the Pests
+1 Tyvar's Stand
+1 Undying Malice
+1 Cultivate
+1 Essence Harvest
+1 Explore
+1 Harmonize
+1 Kodama's Reach
+1 Life's Legacy
+1 Nature's Lore
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Rite of Consumption
+1 Traverse the Outlands

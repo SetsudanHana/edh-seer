@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/9csiCE1J5PqXSr6Sp0NdRg (source https://archidekt.com/decks/18165094)
+# tags Voltron, Phasing, Time Counters, Exile; bracket 2; saved 2026-01-05; 7 tagged of 441 indexed
+
+Commander
+1 The War Doctor
+1 K-9, Mark I
+
+Deck
+1 Access Tunnel
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Cascade Bluffs
+1 Command Tower
+1 Evolving Wilds
+1 Fabled Passage
+1 Glacial Fortress
+5 Island
+2 Mountain
+1 Multiversal Passage
+1 Mystic Monastery
+1 Ominous Cemetery
+1 Perilous Landscape
+4 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Rogue's Passage
+1 Rugged Prairie
+1 Scavenger Grounds
+1 Shivan Reef
+1 Skycloud Expanse
+1 Slayers' Stronghold
+1 Sulfur Falls
+1 Sunscorched Divide
+1 Terramorphic Expanse
+1 Trenzalore Clocktower
+1 Adric, Mathematical Genius
+1 Clara Oswald
+1 Dazzling Sphinx
+1 Vodalian Illusionist
+1 Windborn Muse
+1 Aetheric Amplifier
+1 Arcane Signet
+1 Blitzball Stadium
+1 Chaos Wand
+1 Hourglass of the Lost
+1 Lithoform Engine
+1 Mimic Vat
+1 Mind Stone
+1 Prowler's Helm
+1 Psychic Paper
+1 River Song's Diary
+1 Sol Ring
+1 Sonic Screwdriver
+1 Stonespeaker Crystal
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 Sword of the Animist
+1 TARDIS
+1 The Millennium Calendar
+1 The Moment
+1 The Pandorica
+1 Thought Vessel
+1 Tome of Legends
+1 Wand of Wonder
+1 Whispersilk Cloak
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Dovin's Veto
+1 Gallifrey Falls // No More
+1 March of Swirling Mist
+1 Parting Gust
+1 Scour for Scrap
+1 Swords to Plowshares
+1 Unexplained Absence
+1 Curse of the Swine
+1 Inspiring Refrain
+1 Into the Time Vortex
+1 Promise of Loyalty
+1 Ravenform
+1 Single Combat
+1 Slaughter the Strong
+1 Tasha's Hideous Laughter
+1 Grasp of Fate
+1 On Serra's Wings
+1 Possibility Storm
+1 Propaganda
+1 Protective Bubble
+1 Reconnaissance
+1 Resourceful Defense
+1 Rest in Peace
+1 Rune of Sustenance
+1 Spirit Link
+1 Staggering Insight
+1 Steel of the Godhead
+1 Teferi's Veil
+1 The Day of the Doctor
+1 The Flux
+1 Vanishing

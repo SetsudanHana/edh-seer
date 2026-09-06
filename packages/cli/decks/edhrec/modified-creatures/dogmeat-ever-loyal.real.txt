@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/3cCxy0Qud8fiZ7Dx2x_MUQ (source https://archidekt.com/decks/21573081)
+# tags Dogs, Aggro, Equipment, Modified Creatures; bracket 2; saved 2026-09-04; 139 tagged of 8892 indexed
+
+Commander
+1 Dogmeat, Ever Loyal
+
+Deck
+1 Akroan Mastiff
+1 Alpine Watchdog
+1 Arcbound Tracker
+1 Bayou Groff
+1 Changeling Wayfinder
+1 Chomping Changeling
+1 Chrome Companion
+1 Eel-Hounds
+1 Enduring Courage
+1 Gate Hound
+1 Generous Pup
+1 Halvar, God of Battle
+1 Komainu Battle Armor
+1 Mogis's Warhound
+1 Nyxborn Wolf
+1 Pack Leader
+1 Pako, Arcane Retriever
+1 Rambunctious Mutt
+1 Red XIII, Proud Warrior
+1 Rin and Seri, Inseparable
+1 Selfless Savior
+1 Summon: Fenrir
+1 Summon: G.F. Cerberus
+1 Supply Runners
+1 Tesak, Judith's Hellhound
+1 Trusty Retriever
+1 Wildsear, Scouring Maw
+1 Akroma's Will
+1 Heroic Intervention
+1 Path to Exile
+1 All That Glitters
+1 Almost Perfect
+1 Forge Anew
+1 Rhythm of the Wild
+1 Sigarda's Aid
+1 Sticky Fingers
+1 Arcane Signet
+1 Basilisk Collar
+1 Behemoth Sledge
+1 Blackblade Reforged
+1 Bloodforged Battle-Axe
+1 Buster Sword
+1 Colossus Hammer
+1 Excalibur, Sword of Eden
+1 Greatsword of Tyr
+1 Hammer of Nazahn
+1 Power Fist
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Body and Mind
+1 Sword of Fire and Ice
+1 Sword of Forge and Frontier
+1 Sword of Hours
+1 Sword of Sinew and Steel
+1 Sword of Vengeance
+1 Sword of the Animist
+1 The Reaver Cleaver
+1 Blasphemous Act
+1 Cultivate
+1 Steelshaper's Gift
+1 Titanic Ultimatum
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Canopy Vista
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+6 Forest
+1 Fortified Village
+1 Game Trail
+1 Jungle Shrine
+1 Kessig Wolf Run
+6 Mountain
+1 Path of Ancestry
+6 Plains
+1 Reliquary Tower
+1 Rogue's Passage
+1 Rootbound Crag
+1 Sacred Foundry
+1 Sunpetal Grove
+1 Temple Garden
+1 Temple of Plenty
+1 Temple of Triumph

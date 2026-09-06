@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/i_IV7H8f7ajXFmu3g3t-iA (source https://archidekt.com/decks/18488355)
+# tags +1/+1 Counters, Forced Combat, Aggro, Spiders, Reach, Tokens; bracket 2; saved 2026-09-03; 18 tagged of 7426 indexed
+
+Commander
+1 Thantis, the Warweaver
+
+Deck
+1 Alesha, Who Laughs at Fate
+1 Alexios, Deimos of Kosmos
+1 Arasta of the Endless Web
+1 Dragonlair Spider
+1 Glissa Sunslayer
+1 Grismold, the Dreadsower
+1 Gwenom, Remorseless
+1 Hornet Nest
+1 Ignoble Hierarch
+1 Ishkanah, Grafwidow
+1 Kardur, Doomscourge
+1 Kazuul, Tyrant of the Cliffs
+1 Mirkwood Spider
+1 Royal Assassin
+1 Ruric Thar, the Unbowed
+1 Saryth, the Viper's Fang
+1 Shelob, Child of Ungoliant
+1 Spider Manifestation
+1 Toski, Bearer of Secrets
+1 Twinflame Tyrant
+1 Twitching Doll
+1 Vigor
+1 Watcher in the Web
+1 Xantcha, Sleeper Agent
+1 Arachnogenesis
+1 Beast Within
+1 Bedevil
+1 Fog
+1 Golgari Charm
+1 Krosan Grip
+1 Putrefy
+1 Rakdos Charm
+1 Respite
+1 Revitalizing Repast
+1 Undergrowth
+1 Arcane Signet
+1 Bow of Nylea
+1 Farsight Mask
+1 Fellwar Stone
+1 Sol Ring
+1 Swiftfoot Boots
+1 Whispersilk Cloak
+1 Beastmaster Ascension
+1 Cryptolith Rite
+1 Curse of Clinging Webs
+1 Curse of Opulence
+1 Dense Foliage
+1 Hissing Miasma
+1 Marchesa's Decree
+1 Mass Hysteria
+1 Revenge of Ravens
+1 Rite of the Raging Storm
+1 Shiny Impetus
+1 Visions of Brutality
+1 Vraska Joins Up
+1 Blasphemous Act
+1 Cultivate
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Skyshroud Claim
+1 Spider Spawning
+1 Bojuka Bog
+1 Canyon Slough
+1 Cinder Glade
+1 Command Tower
+10 Forest
+1 Kessig Wolf Run
+1 Llanowar Wastes
+1 Maestros Theater
+1 Mossfire Valley
+4 Mountain
+1 Mountain Valley
+1 Path of Ancestry
+1 Rocky Tar Pit
+1 Rogue's Passage
+1 Rootbound Crag
+1 Smoldering Marsh
+1 Sulfurous Springs
+4 Swamp
+1 Swarmyard
+1 Twilight Mire
+1 Viridescent Bog
+1 Ziatora's Proving Ground

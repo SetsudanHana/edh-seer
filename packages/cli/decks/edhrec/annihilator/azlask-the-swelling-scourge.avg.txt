@@ -1,0 +1,103 @@
+# edhrec average deck: https://edhrec.com/average-decks/azlask-the-swelling-scourge/annihilator
+# theme Annihilator (129 decks)
+
+Commander
+1 Azlask, the Swelling Scourge
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Eldrazi Monument
+1 Forsaken Monument
+1 Herald's Horn
+1 Idol of False Gods
+1 Idol of Oblivion
+1 Mystic Forge
+1 Skullclamp
+1 Sol Ring
+1 Urza's Incubator
+1 Adarkar Wastes
+1 Ash Barrens
+1 Battlefield Forge
+1 Brushland
+1 Cascading Cataracts
+1 Cavern of Souls
+1 Caves of Koilos
+1 Command Tower
+1 Corrupted Crossroads
+1 Eldrazi Temple
+1 Exotic Orchard
+1 Eye of Ugin
+2 Forest
+2 Island
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Mountain
+1 Path of Ancestry
+1 Plains
+1 Reliquary Tower
+1 Secluded Courtyard
+1 Shivan Reef
+1 Shrine of the Forsaken Gods
+1 Spawning Bed
+1 Sulfurous Springs
+2 Swamp
+1 Temple of the False God
+1 Tomb of the Spirit Dragon
+1 Unclaimed Territory
+1 Underground River
+1 Wastes
+1 Yavimaya Coast
+1 Blisterpod
+1 Brood Monitor
+1 Catacomb Sifter
+1 Chittering Dispatcher
+1 Drowner of Hope
+1 Drowner of Truth
+1 Eldrazi Displacer
+1 Eldrazi Repurposer
+1 Eldrazi Skyspawner
+1 Emrakul's Hatcher
+1 Emrakul's Messenger
+1 Eyeless Watcher
+1 Ezuri, Claw of Progress
+1 Glaring Fleshraker
+1 Herald of Kozilek
+1 It That Heralds the End
+1 Kozilek's Predator
+1 Meren of Clan Nel Toth
+1 Minthara, Merciless Soul
+1 Propagator Drone
+1 Rapacious One
+1 Sifter of Skulls
+1 Sire of Stagnation
+1 Smothering Abomination
+1 Snapping Voidcraw
+1 Spawn-Gang Commander
+1 Spawnbed Protector
+1 Ulalek, Fused Atrocity
+1 Writhing Chrysalis
+1 Awakening Zone
+1 Echoes of Eternity
+1 From Beyond
+1 Kindred Discovery
+1 Kozilek's Unsealing
+1 Moldervine Reclamation
+1 Parallel Lives
+1 Path of Annihilation
+1 Eldrazi Confluence
+1 Eldritch Immunity
+1 Kozilek's Command
+1 Null Elemental Blast
+1 Swords to Plowshares
+1 Ugin's Binding
+1 Unfathomable Truths
+1 Warping Wail
+1 Ugin, the Ineffable
+1 All Is Dust
+1 Brood Birthing
+1 Call the Scions
+1 Farseek
+1 Glimpse the Impossible
+1 Growth Spasm
+1 Skittering Invasion

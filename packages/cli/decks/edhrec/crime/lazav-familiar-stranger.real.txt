@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/jsRtQ1wEeoZesax55FwL-Q (source https://archidekt.com/decks/22421718)
+# tags Outlaws, Crime; bracket 2; saved 2026-09-04; 31 tagged of 1116 indexed
+
+Commander
+1 Lazav, Familiar Stranger
+
+Deck
+1 Anchovy & Banana Pizza
+1 Cliffhaven Kitesail
+1 Dubious Delicacy
+1 Potioner's Trove
+1 Sol Ring
+1 Zephyr Boots
+1 Arid Archway
+1 Command Tower
+1 Conduit Pylons
+1 Cradle of the Accursed
+1 Dismal Backwater
+1 Hidden Grotto
+10 Island
+1 Jwar Isle Refuge
+1 Mirage Mesa
+1 Path of Ancestry
+1 Sandstorm Verge
+1 Serpent's Pass
+1 Sinister Hideout
+1 Soured Springs
+1 Sunscorched Desert
+11 Swamp
+1 Thriving Isle
+1 Thriving Moor
+1 Treno, Dark City
+1 Azula Always Lies
+1 Desert's Due
+1 Foolish Fate
+1 Glacial Grasp
+1 Negate
+1 Requiting Hex
+1 Savor
+1 Shoot the Sheriff
+1 Skulduggery
+1 Take the Fall
+1 Thought Scour
+1 Tyrant's Scorn
+1 Unsummon
+1 Winds of Rebuke
+1 Blood Hustler
+1 Consuming Aberration
+1 Cruel Somnophage
+1 Deepmuck Desperado
+1 Deluge Virtuoso
+1 Desperate Bloodseeker
+1 Emeritus of Woe
+1 Exhibition Tidecaller
+1 Expedition Skulker
+1 Forsaken Miner
+1 Grappling Kraken
+1 Krang & Shredder
+1 Marauding Sphinx
+1 Oasis Gardener
+1 Obsessive Stitcher
+1 Overzealous Muscle
+1 Rattleback Apothecary
+1 Raven of Fell Omens
+1 Rimekin Recluse
+1 Rooftop Assassin
+1 Rowdy Snowballers
+1 Servant of the Stinger
+1 Spring Splasher
+1 Summon: Shiva
+1 Thornplate Intimidator
+1 Utrom Scientists
+1 Vadmir, New Blood
+1 Vault Plunderer
+1 Zulaport Duelist
+1 Exsanguinate
+1 Extract from Darkness
+1 Oblivion Strike
+1 Procrastinate
+1 Rise of the Dark Realms
+1 Seize the Secrets
+1 Intimidation Campaign
+1 Jace's Erasure
+1 Rakish Crew
+1 Sporogenic Infection
+1 Swampsnare Trap
+1 Witness Protection

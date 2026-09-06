@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/doran-the-siege-tower/skulk
+# theme Skulk (7 decks)
+
+Commander
+1 Doran, the Siege Tower
+
+Deck
+1 Arcane Signet
+1 Belbe's Armor
+1 Lightning Greaves
+1 Skeleton Key
+1 Sol Ring
+1 Access Tunnel
+1 Bojuka Bog
+1 Canopy Vista
+1 Command Tower
+1 Deceptive Landscape
+1 Exotic Orchard
+1 Forbidding Watchtower
+7 Forest
+1 Godless Shrine
+1 Indatha Triome
+1 Jungle Hollow
+1 Murmuring Bosk
+1 Myriad Landscape
+4 Plains
+1 Sandsteppe Citadel
+1 Scattered Groves
+1 Selesnya Sanctuary
+1 Shizo, Death's Storehouse
+3 Swamp
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Wooded Bastion
+1 Abzan Beastmaster
+1 Arbor Adherent
+1 Beast Whisperer
+1 Bedrock Tortoise
+1 Bosk Banneret
+1 Catapult Fodder
+1 Colfenor, the Last Yew
+1 Crashing Drawbridge
+1 Crystal Barricade
+1 Doran, Besieged by Time
+1 Essence of Antiquity
+1 Faeburrow Elder
+1 Fecund Greenshell
+1 Felothar the Steadfast
+1 Great Forest Druid
+1 Ikra Shidiqi, the Usurper
+1 Indomitable Ancients
+1 Leaf-Crowned Elder
+1 Nemata, Primeval Warden
+1 Nethroi, Apex of Death
+1 Nyx-Fleece Ram
+1 Runic Armasaur
+1 Sapling of Colfenor
+1 Sidar Kondo of Jamuraa
+1 Skinshifter
+1 Sylvan Caryatid
+1 Tree of Perdition
+1 Treebeard, Gracious Host
+1 Treefolk Harbinger
+1 Unstoppable Ash
+1 Walking Bulwark
+1 Wall of Blossoms
+1 Wall of Omens
+1 Assault Formation
+1 Assemble the Players
+1 Behind the Scenes
+1 Brave the Sands
+1 Dormant Grove
+1 Eland Umbra
+1 Jaws of Defeat
+1 Stoneskin
+1 Assassin's Trophy
+1 Enlightened Tutor
+1 Heroic Intervention
+1 Mythos of Nethroi
+1 Path to Exile
+1 Ready // Willing
+1 Solidarity
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Tower Defense
+1 Huatli, the Sun's Heart
+1 Cultivate
+1 Dig Up
+1 Dusk // Dawn
+1 Eerie Ultimatum
+1 Fell the Mighty
+1 Kodama's Reach
+1 Last March of the Ents
+1 Painful Truths
+1 Slaughter the Strong

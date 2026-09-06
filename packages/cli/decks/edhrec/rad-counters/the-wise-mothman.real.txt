@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/SJHQ9aJKZ3Evd-5dKI10MQ (source https://archidekt.com/decks/13431692)
+# tags +1/+1 Counters, Mill, Rad Counters; bracket 2; saved 2026-09-04; 805 tagged of 33318 indexed
+
+Commander
+1 The Wise Mothman
+
+Deck
+1 Arcane Signet
+1 Hedge Shredder
+1 Mesmeric Orb
+1 Mindcrank
+1 Monster Manual
+1 Nuka-Nuke Launcher
+1 Power Fist
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 Assassin's Trophy
+1 Atomize
+1 Lofty Denial
+1 Mutational Advantage
+1 Negate
+1 Pongify
+1 Repulsive Mutation
+1 Revitalizing Repast
+1 Ripples of Potential
+1 Smuggler's Surprise
+1 Bloodchief Ascension
+1 Guardian Project
+1 Hardened Scales
+1 Hollowmurk Siege
+1 Struggle for Project Purity
+1 Terrasymbiosis
+1 Bojuka Bog
+1 Command Tower
+1 Darkwater Catacombs
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Foreboding Landscape
+10 Forest
+1 Hidden Hideout
+1 Hidden Lair
+1 Hinterland Harbor
+2 Island
+1 Opulent Palace
+1 Overflowing Basin
+1 Path of Ancestry
+1 Restless Reef
+1 Rivendell
+1 Rogue's Passage
+1 Sunken Hollow
+1 Swamp
+1 Tainted Wood
+1 Temple of Mystery
+1 Terramorphic Expanse
+1 Turbulent Wilderness
+1 Viridescent Bog
+1 Woodland Cemetery
+1 Colossal Grave-Reaver
+1 Consuming Aberration
+1 Danny Pink
+1 Duskshell Crawler
+1 Evolution Witness
+1 Fathom Mage
+1 Glowing One
+1 Gyre Sage
+1 Herald of Secret Streams
+1 Icetill Explorer
+1 Incubation Druid
+1 Irma, Part-Time Mutant
+1 Kami of Whispered Hopes
+1 Marcus, Mutant Mayor
+1 Mirelurk Queen
+1 Muldrotha, the Gravetide
+1 Pensive Professor
+1 Pollywog Prodigy
+1 Qarsi Revenant
+1 Raul, Trouble Shooter
+1 Ruin Crab
+1 Screeching Scorchbeast
+1 Strong, the Brutish Thespian
+1 Syr Konrad, the Grim
+1 Tato Farmer
+1 Undead Alchemist
+1 Vigor
+1 Winding Constrictor
+1 World Shaper
+1 Zellix, Sanity Flayer
+1 Creeping Renaissance
+1 Culling Ritual
+1 Cultivate
+1 Dryad's Revival
+1 Farseek
+1 Nuclear Fallout
+1 Rampant Growth

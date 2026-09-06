@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/wELphCuKecGOnf7RsfuTQw (source https://moxfield.com/decks/PDs1dAOvlEKS0bkLHa3JRQ)
+# tags Toolbox; bracket 3; saved 2026-09-05; 382 tagged of 18661 indexed
+
+Commander
+1 Henzie "Toolbox" Torre
+
+Deck
+1 Arcane Signet
+1 Cauldron of Essence
+1 Herd Heirloom
+1 Skullclamp
+1 Sol Ring
+1 The Soul Stone
+1 Assassin's Trophy
+1 Bitter Triumph
+1 Chaos Warp
+1 Dina's Guidance
+1 Fake Your Own Death
+1 Redirect Lightning
+1 Tibalt's Trickery
+1 Aurora Awakener
+1 Bane of Progress
+1 Beast Whisperer
+1 Bringer of the Last Gift
+1 Champion of Rhonas
+1 Damage Control Crew
+1 Deadpool, Trading Card
+1 Disciple of Bolas
+1 Disciple of Freyalise
+1 Druid of Purification
+1 Elves of Deep Shadow
+1 Etali, Primal Storm
+1 Fanatic of Rhonas
+1 Gravedigger
+1 Gray Merchant of Asphodel
+1 Greenwarden of Murasa
+1 Gwenom, Remorseless
+1 Ignoble Hierarch
+1 Ilharg, the Raze-Boar
+1 Jenova, Ancient Calamity
+1 Junji, the Midnight Sky
+1 Kardur, Doomscourge
+1 Lizard, Connors's Curse
+1 Llanowar Elves
+1 Mikaeus, the Unhallowed
+1 Noxious Gearhulk
+1 Primaris Eliminator
+1 Radagast of Rhosgobel
+1 Rakshasa Debaser
+1 Rampant Rejuvenator
+1 Ravenous Chupacabra
+1 Roxanne, Starfall Savant
+1 Seedguide Ash
+1 Solemn Simulacrum
+1 Spider Manifestation
+1 Summoner's Egg
+1 Terror of the Peaks
+1 The Notary Hobbits
+1 Tom, Bert, and William
+1 Treeshaker Chimera
+1 Twitching Doll
+1 Warren Soultrader
+1 Birthing Ritual
+1 Garruk's Uprising
+1 Industrial Advancement
+1 Riveteers Ascendancy
+1 Blasphemous Act
+1 Farseek
+1 Rise of the Dark Realms
+1 Shared Roots
+1 Victimize
+1 Boiling Rock Prison
+1 Bojuka Bog
+1 Bristling Backwoods
+1 Cinder Glade
+1 Command Tower
+1 Exotic Orchard
+10 Forest
+1 Kessig Wolf Run
+1 Llanowar Wastes
+5 Mountain
+1 Razortrap Gorge
+1 Reliquary Tower
+1 Restless Vents
+1 Sheltered Thicket
+5 Swamp
+1 Terramorphic Expanse
+1 Twilight Mire
+1 Wooded Foothills

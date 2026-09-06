@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/sisay-weatherlight-captain/shrines
+# theme Shrines (49 decks)
+
+Commander
+1 Sisay, Weatherlight Captain
+
+Deck
+1 Arcane Signet
+1 Blackblade Reforged
+1 Chromatic Lantern
+1 Mox Amber
+1 Relic of Legends
+1 Sol Ring
+1 Breeding Pool
+1 Cascading Cataracts
+1 Command Tower
+1 Crumbling Necropolis
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+4 Forest
+1 Frontier Bivouac
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Jungle Shrine
+1 Ketria Triome
+3 Mountain
+1 Opulent Palace
+1 Path of Ancestry
+2 Plains
+1 Raugrin Triome
+1 Sandsteppe Citadel
+1 Seaside Citadel
+3 Swamp
+1 Temple Garden
+1 The World Tree
+1 Windswept Heath
+1 Zagoth Triome
+1 Birds of Paradise
+1 Bloom Tender
+1 Destiny Spinner
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Faeburrow Elder
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Lost Wisdom
+1 Go-Shintai of Shared Purpose
+1 Hei Bai, Forest Guardian
+1 Jegantha, the Wellspring
+1 Mesa Enchantress
+1 Sanctum Weaver
+1 Satyr Enchanter
+1 Setessan Champion
+1 Starfield Mystic
+1 Sythis, Harvest's Hand
+1 Weaver of Harmony
+1 Zur the Enchanter
+1 Crescent Island Temple
+1 Enchantress's Presence
+1 Fertile Ground
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Life's Web
+1 Honden of Night's Reach
+1 Honden of Seeing Winds
+1 Kyoshi Island Plaza
+1 Northern Air Temple
+1 Paradox Haze
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Shattered Heights
+1 Sanctum of Stone Fangs
+1 Sanctum of Tranquil Light
+1 Southern Air Temple
+1 Sphere of Safety
+1 Sterling Grove
+1 The Spirit Oasis
+1 Beast Within
+1 Heroic Intervention
+1 Path to Exile
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Calix, Destiny's Hand
+1 Cultivate
+1 Farseek
+1 Idyllic Tutor
+1 Kodama's Reach
+1 Primevals' Glorious Rebirth
+1 Rampant Growth
+1 Urza's Ruinous Blast

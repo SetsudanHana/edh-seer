@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/berta-wise-extrapolator/increment
+# theme Increment (7 decks)
+
+Commander
+1 Berta, Wise Extrapolator
+
+Deck
+1 Arcane Signet
+1 Simic Signet
+1 Sol Ring
+1 Talisman of Curiosity
+1 Thought Vessel
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+14 Forest
+1 Hinterland Harbor
+12 Island
+1 Oakhollow Village
+1 Overflowing Basin
+1 Paradox Gardens
+1 Sodden Verdure
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Ambitious Augmenter
+1 Cuboid Colony
+1 Deepglow Skate
+1 Disciple of Freyalise
+1 Elvish Mystic
+1 Emil, Vastlands Roamer
+1 Flux Channeler
+1 Forgotten Ancient
+1 Fractal Mascot
+1 Fractal Tender
+1 Geometer's Arthropod
+1 Ivy Lane Denizen
+1 Jadzi, Steward of Fate
+1 Kiora's Follower
+1 Koma, World-Eater
+1 Llanowar Elves
+1 Paradox Surveyor
+1 Pensive Professor
+1 Prime Speaker Zegana
+1 Pterafractyl
+1 Studious First-Year
+1 Tanazir Quandrix
+1 Tester of the Tangential
+1 Topiary Lecturer
+1 Vorel of the Hull Clade
+1 Wildwood Scourge
+1 Zameck Guildmage
+1 Zimone, All-Questioning
+1 Additive Evolution
+1 Branching Evolution
+1 Garruk's Uprising
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Simic Ascendancy
+1 Counterspell
+1 Fractal Anomaly
+1 Fractalize
+1 Growth Spiral
+1 Inspiring Call
+1 Negate
+1 Nexus Mentality
+1 Quandrix Charm
+1 Quandrix Command
+1 Repulsive Mutation
+1 Royal Treatment
+1 Snakeskin Veil
+1 Applied Geometry
+1 Germination Practicum
+1 Growth Curve
+1 Knockout Maneuver
+1 Mind into Matter
+1 Nature's Lore
+1 Procrastinate
+1 Season of Gathering
+1 Shared Roots
+1 Stock Up
+1 Tezzeret's Gambit
+1 Wild Hypothesis

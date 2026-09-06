@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/mFvlrSMR6_S5R1V0McLAGw (source https://archidekt.com/decks/24799978)
+# tags Improvise, Historic, Artifacts; bracket 3; saved 2026-08-13; 9 tagged of 479 indexed
+
+Commander
+1 Ironheart, Clever Champion
+
+Deck
+1 Academy Ruins
+1 Demolition Field
+1 Gemstone Caverns
+1 Inventors' Fair
+28 Island
+1 The Mycosynth Gardens
+1 Urza's Saga
+1 Uthros, Titanic Godcore
+1 An Offer You Can't Refuse
+1 Banishing Betrayal
+1 Counterspell
+1 Cyclonic Rift
+1 Desculpting Blast
+1 Disallow
+1 Fierce Guardianship
+1 Narset's Reversal
+1 Three Steps Ahead
+1 Ugin's Binding
+1 Arc Reactor
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Commander's Plate
+1 Fellwar Stone
+1 Gilded Lotus
+1 Iron Man Armor
+1 Kaldra Compleat
+1 Lotus Petal
+1 Mithril Coat
+1 Mox Amber
+1 Mox Opal
+1 Mystic Forge
+1 Portal to Phyrexia
+1 Sceptre of Eternal Glory
+1 Sculpting Steel
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 The Endstone
+1 The One Ring
+1 The Ten Rings
+1 Uthros Research Craft
+1 Boomerang Basics
+1 Fabricate
+1 One with the Machine
+1 Sea Gate Restoration
+1 Spectral Deluge
+1 Stock Up
+1 Thoughtcast
+1 Chrome Host Seedshark
+1 Cryptothrall
+1 Cyberdrive Awakener
+1 Cyberman Patrol
+1 Emry, Lurker of the Loch
+1 Foundry Inspector
+1 Hydroelectric Specimen
+1 Iron Lad, Diverging Destiny
+1 Kappa Cannoneer
+1 Karn, Legacy Reforged
+1 Liberator, Urza's Battlethopter
+1 Panther Robot
+1 Sai, Master Thopterist
+1 Shimmer Myr
+1 Shuri, Wakandan Inventor
+1 Spellskite
+1 The Vision
+1 Thought Monitor
+1 Ultron, Artificial Malevolence
+1 Urza, Lord High Artificer
+1 Eldrazi Conscription
+1 Shark Typhoon
+1 Super State
+1 Tezzeret, Artifice Master
+1 Ugin, Eye of the Storms

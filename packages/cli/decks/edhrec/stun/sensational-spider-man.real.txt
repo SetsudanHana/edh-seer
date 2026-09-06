@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/2yXSseRU9tWf4oq_6-r-kg (source https://archidekt.com/decks/24320981)
+# tags Legends, Spellslinger, Stun, Spiders, +1/+1 Counters; bracket 3; saved 2026-08-24; 28 tagged of 2100 indexed
+
+Commander
+1 Sensational Spider-Man
+
+Deck
+1 Abandoned Air Temple
+1 Adagia, Windswept Bastion
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Glacial Fortress
+8 Island
+1 Karn's Bastion
+1 Mistveil Plains
+1 Mystic Sanctuary
+1 Nesting Grounds
+1 Nimbus Maze
+10 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Restless Anchorage
+1 Rogue's Passage
+1 Seachrome Coast
+1 Skyline Cascade
+1 Amazing Acrobatics
+1 Blustersquall
+1 Cloud's Limit Break
+1 Comeuppance
+1 Counterspell
+1 Ephemerate
+1 Mindbreak Trap
+1 Mystic Confluence
+1 Path to Exile
+1 Reprieve
+1 Spectacular Tactics
+1 Spider-Sense
+1 Stall for Time
+1 Swords to Plowshares
+1 Wicked Slumber
+1 Amazing Alliance
+1 Blind Obedience
+1 Cathars' Crusade
+1 Ghostly Prison
+1 Inexorable Tide
+1 Land Tax
+1 Propaganda
+1 Rhystic Study
+1 Smothering Tithe
+1 Solitary Sanctuary
+1 Unstoppable Plan
+1 Wizard Class
+1 Amazing Spider-Girl
+1 Anti-Venom, Horrifying Healer
+1 Arachne, Psionic Weaver
+1 Aunt May
+1 Burnished Hart
+1 Canoptek Wraith
+1 Grand Arbiter Augustin IV
+1 Grappling Kraken
+1 Hylda of the Icy Crown
+1 Loki, God of Mischief
+1 Lyla, Holographic Assistant
+1 SP//dr, Piloted by Peni
+1 Shackle Slinger
+1 Sharae of Numbing Depths
+1 Spectacular Spider-Man
+1 Spider-Man 2099, Miguel O'Hara
+1 Spider-Man, Peter Parker
+1 Spider-Woman, Secret Agent
+1 Spider-Woman, Stunning Savior
+1 War Machine, James Rhodes
+1 Archaeomancer's Map
+1 Sol Ring
+1 The Mind Stone
+1 Thought Vessel
+1 Web-Shooters
+1 Wedding Ring
+1 Cone of Cold
+1 Contentious Plan
+1 Don't Move
+1 Expansion Algorithm
+1 Freeze in Place
+1 Idyllic Tutor
+1 Impede Momentum
+1 Involuntary Cooldown
+1 Ponder
+1 Tranquilize

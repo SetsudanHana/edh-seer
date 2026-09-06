@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/raO1YWWadnJI-48tAgXp8g (source https://archidekt.com/decks/13941988)
+# tags Spellslinger, Burn, Wizards; bracket 3; saved 2026-09-05; 1513 tagged of 21535 indexed
+
+Commander
+1 Kuja, Genome Sorcerer
+
+Deck
+1 Abrade
+1 Big Score
+1 Dark Ritual
+1 Flare of Duplication
+1 Flashback
+1 Force of Despair
+1 Haste Magic
+1 Hellish Rebuke
+1 Infernal Grasp
+1 Invoke Calamity
+1 Lightning Bolt
+1 Not Dead After All
+1 Opera Love Song
+1 Professor's Warning
+1 Red Elemental Blast
+1 Redirect Lightning
+1 Seething Song
+1 Terminate
+1 Thrill of Possibility
+1 Transpose
+1 Valakut Awakening
+1 Adventurer's Inn
+1 Arid Mesa
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Capital City
+1 Command Tower
+1 Dark Fortress
+1 Dragonskull Summit
+1 Emergence Zone
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Lindblum, Industrial Regency
+1 Luxury Suite
+1 Mount Doom
+6 Mountain
+1 Polluted Delta
+1 Rakdos Carnarium
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+4 Swamp
+1 Verdant Catacombs
+1 Wooded Foothills
+1 Arcane Signet
+1 Black Mage's Rod
+1 Bolas's Citadel
+1 Fellwar Stone
+1 Jet Medallion
+1 Lightning Greaves
+1 Lotus Petal
+1 Mind Stone
+1 Rakdos Signet
+1 Ruby Medallion
+1 Sol Ring
+1 Talisman of Indulgence
+1 Artist's Talent
+1 Black Market Connections
+1 City on Fire
+1 Fiery Inscription
+1 Black Waltz No. 3
+1 Burning Prophet
+1 Coruscation Mage
+1 Dark Confidant
+1 Dreadhorde Arcanist
+1 Electrostatic Infantry
+1 Gandalf, Goblins' Bane
+1 Gogo, Mysterious Mime
+1 Harmonic Prodigy
+1 Mysidian Elder
+1 Queen Brahne
+1 Rionya, Fire Dancer
+1 Roaming Throne
+1 Simian Spirit Guide
+1 Tor Wauki the Younger
+1 Blasphemous Act
+1 Circle of Power
+1 Cornered by Black Mages
+1 Cost of Brilliance
+1 Decorum Dissertation
+1 Hex Magic
+1 Jeska's Will
+1 Mana Geyser
+1 Pact of the Serpent
+1 Sign in Blood
+1 Sorceress's Schemes
+1 Professor Onyx

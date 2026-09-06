@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/thelon-of-havenwood/spore-counters
+# theme Spore Counters (54 decks)
+
+Commander
+1 Thelon of Havenwood
+
+Deck
+1 Arcane Signet
+1 Contagion Clasp
+1 Contagion Engine
+1 Skullclamp
+1 Sol Ring
+1 The Skullspore Nexus
+1 Command Tower
+1 Deathcap Glade
+1 Evolving Wilds
+13 Forest
+1 Golgari Rot Farm
+1 Jungle Hollow
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+8 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Woodland Cemetery
+1 Brightcap Badger
+1 Cankerbloom
+1 Deathspore Thallid
+1 Elvish Farmer
+1 Evolution Sage
+1 Ferrafor, Young Yew
+1 Insidious Fungus
+1 Mycoloth
+1 Myconid Spore Tender
+1 Nemata, Primeval Warden
+1 Psychotrope Thallid
+1 Rot Shambler
+1 Savage Thallid
+1 Slimefoot, the Stowaway
+1 Spore Flower
+1 Sporecrown Thallid
+1 Sporemound
+1 Sporesower Thallid
+1 Sporoloth Ancient
+1 Tendershoot Dryad
+1 Thallid
+1 Thallid Devourer
+1 Thallid Germinator
+1 Thallid Shell-Dweller
+1 Thallid Soothsayer
+1 The Mycotyrant
+1 Thelonite Hermit
+1 Thorn Thallid
+1 Undercellar Myconid
+1 Utopia Mycon
+1 Vitaspore Thallid
+1 Winding Constrictor
+1 Deathreap Ritual
+1 Doubling Season
+1 Fungal Bloom
+1 Fungal Plots
+1 Insidious Roots
+1 Life and Limb
+1 Loading Zone
+1 Moldervine Reclamation
+1 Assassin's Trophy
+1 Atomize
+1 Deathsprout
+1 Fungal Rebirth
+1 Heroic Intervention
+1 Putrefy
+1 Village Rites
+1 Whisper of the Dross
+1 Carnivorous Canopy
+1 Cultivate
+1 Drown in Ichor
+1 Fungal Sprouting
+1 Nature's Lore
+1 Rampant Growth
+1 Saproling Symbiosis
+1 Shamanic Revelation
+1 Thirsting Roots
+1 Unnatural Restoration

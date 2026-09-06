@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/2mjR-_v9OAxtPpYRhKxrKA (source https://archidekt.com/decks/16371356)
+# tags Power, Dinosaurs; bracket 2; saved 2026-04-14; 171 tagged of 4033 indexed
+
+Commander
+1 Zilortha, Strength Incarnate
+
+Deck
+1 Agonasaur Rex
+1 Alexios, Deimos of Kosmos
+1 Avalanche of Sector 7
+1 Circle of Dreams Druid
+1 Diligent Zookeeper
+1 Earthshaker Dreadmaw
+1 Etali, Primal Storm
+1 Frenzied Baloth
+1 Frontier Warmonger
+1 Gadrak, the Crown-Scourge
+1 Gangly Stompling
+1 Gimli, Counter of Kills
+1 Gimli, Mournful Avenger
+1 Goldlust Triad
+1 Howlsquad Heavy
+1 Humble Defector
+1 Knight of the Stampede
+1 Leatherhead, Iron Gator
+1 Mightform Harmonizer
+1 Multani, Yavimaya's Avatar
+1 Ogre Battledriver
+1 Oliphaunt
+1 Oviya, Automech Artisan
+1 Rampaging Baloths
+1 Rampaging Ceratops
+1 Regal Imperiosaur
+1 Sarinth Greatwurm
+1 Summon: G.F. Ifrit
+1 Summon: Kujata
+1 Taurean Mauler
+1 Terrian, World Tyrant
+1 Tyrox, Saurid Tyrant
+1 Wildfire Devils
+1 Zurgo's Vanguard
+1 Amonkhet Raceway
+1 Castle Embereth
+1 Cinder Glade
+1 Command Tower
+1 Eden, Seat of the Sanctum
+1 Evolving Wilds
+1 Exotic Orchard
+7 Forest
+1 Game Trail
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+8 Mountain
+1 Mountain Valley
+1 Myriad Landscape
+1 Path of Ancestry
+1 Rockfall Vale
+1 Rootbound Crag
+1 Sheltered Thicket
+1 Stomping Ground
+1 Temple of Abandon
+1 Terramorphic Expanse
+1 Arcane Signet
+1 Fellwar Stone
+1 Gastal Thrillroller
+1 Heirloom Blade
+1 Sol Ring
+1 Spire Mechcycle
+1 Swiftfoot Boots
+1 Talisman of Impulse
+1 The Great Henge
+1 Trailblazer's Boots
+1 Big Score
+1 Harrow
+1 Lightning Strike
+1 Count on Luck
+1 Curse of Hospitality
+1 Fiery Emancipation
+1 Frontier Siege
+1 Furious Rise
+1 Pain for All
+1 Rhythm of the Wild
+1 Decimate
+1 Farseek
+1 Formless Genesis
+1 Harness by Force
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Spry and Mighty

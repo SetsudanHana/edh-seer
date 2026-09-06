@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/yYhL426gtf1UukjAbpvsEw (source https://archidekt.com/decks/19966125)
+# tags +1/+1 Counters, Unblockable, Saboteurs; bracket 2; saved 2026-08-21; 9 tagged of 4875 indexed
+
+Commander
+1 Cazur, Ruthless Stalker
+1 Ukkima, Stalking Shadow
+
+Deck
+1 Agadeem's Awakening
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Search for Tomorrow
+1 Stolen Identity
+1 Three Visits
+1 Turntimber Symbiosis
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Assassin's Trophy
+1 Biomass Mutation
+1 Counterspell
+1 Heroic Intervention
+1 Inspiring Call
+1 Keep Watch
+1 Negate
+1 Spider-Sense
+1 Tear Asunder
+1 Baleful Strix
+1 Changeling Outcast
+1 Dauthi Voidwalker
+1 Dimir Infiltrator
+1 Drana, Liberator of Malakir
+1 Edric, Spymaster of Trest
+1 Elegy Acolyte
+1 Forgotten Ancient
+1 Gingerbrute
+1 Gix, Yawgmoth Praetor
+1 Gonti, Night Minister
+1 Grazilaxx, Illithid Scholar
+1 Grim Hireling
+1 Hope of Ghirapur
+1 Ledger Shredder
+1 Looter il-Kor
+1 Lulu, Stern Guardian
+1 Mercurial Spelldancer
+1 Nether Traitor
+1 Ohran Frostfang
+1 Quilled Greatwurm
+1 Silent Hallcreeper
+1 Siren Stormtamer
+1 Skyserpent Seeker
+1 Slither Blade
+1 Tormented Soul
+1 Toski, Bearer of Secrets
+1 Triton Shorestalker
+1 Veteran Ice Climber
+1 Bident of Thassa
+1 Crown of Doom
+1 Strixhaven Stadium
+1 Blooming Marsh
+1 Exotic Orchard
+1 Fetid Pools
+9 Forest
+10 Island
+1 Llanowar Wastes
+1 Mana Confluence
+1 Necroblossom Snarl
+1 Nurturing Peatland
+1 Overgrown Tomb
+1 Path of Ancestry
+5 Swamp
+1 Temple of Deceit
+1 Watery Grave
+1 Woodland Cemetery
+1 Bottomless Pool // Locker Room
+1 Coastal Piracy
+1 Curse of Verbosity
+1 Druids' Repository
+1 Experimental Lab // Staff Room
+1 Feywild Visitor
+1 Hardened Scales
+1 One with Nature
+1 Propaganda
+1 Revenge of Ravens
+1 Sphere Grid

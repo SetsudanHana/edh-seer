@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/sidisi-brood-tyrant/craft
+# theme Craft (1 decks)
+
+Commander
+1 Sidisi, Brood Tyrant
+
+Deck
+1 Altar of Dementia
+1 Symmetry Matrix
+1 Blighted Woodland
+1 Command Tower
+1 Crypt of Agadeem
+1 Darkwater Catacombs
+1 Evolving Wilds
+1 Exotic Orchard
+5 Forest
+1 Haunted Mire
+3 Island
+1 Jungle Hollow
+1 Llanowar Wastes
+1 Mortuary Mire
+1 Nephalia Drownyard
+1 Opulent Palace
+1 Rejuvenating Springs
+1 Rogue's Passage
+1 Soaring Seacliff
+1 Sunken Hollow
+1 Sunken Ruins
+5 Swamp
+1 Tangled Islet
+1 Thornwood Falls
+1 Tocasia's Dig Site
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Acolyte of Affliction
+1 Aftermath Analyst
+1 Avatar of Woe
+1 Beast Whisperer
+1 Boggart Trawler
+1 Bringer of the Last Gift
+1 Champion of Stray Souls
+1 Cloud of Darkness
+1 Colossal Grave-Reaver
+1 Death Baron
+1 Deathrite Shaman
+1 Diligent Farmhand
+1 Dreadhound
+1 Egon, God of Death
+1 Erinis, Gloom Stalker
+1 Ezuri, Claw of Progress
+1 Gaea's Courser
+1 Generous Ent
+1 Glasspool Mimic
+1 Glen Elendra Archmage
+1 Golgari Findbroker
+1 Hedron Crab
+1 Honest Rutstein
+1 Inga and Esika
+1 Kagha, Shadow Archdruid
+1 Kheru Goldkeeper
+1 Kiora's Follower
+1 Kishla Skimmer
+1 Lost Monarch of Ifnir
+1 Muldrotha, the Gravetide
+1 Naga Fleshcrafter
+1 Perennial Behemoth
+1 Poison Dart Frog
+1 Qarsi Revenant
+1 Raul, Trouble Shooter
+1 Ravenous Chupacabra
+1 Rootcoil Creeper
+1 Sakura-Tribe Elder
+1 Sivriss, Nightmare Speaker
+1 Six
+1 Skull Prophet
+1 Stalactite Stalker
+1 Stinging Cave Crawler
+1 Stinkweed Imp
+1 Tato Farmer
+1 Teval, the Balanced Scale
+1 The Warring Triad
+1 Timeless Witness
+1 Troll of Khazad-dûm
+1 Turntimber Sower
+1 Umbral Collar Zealot
+1 Undead Augur
+1 Urborg Elf
+1 Uro, Titan of Nature's Wrath
+1 Uurg, Spawn of Turg
+1 Vilespawn Spider
+1 Wonder
+1 Yarok, the Desecrated
+1 Zimone and Dina
+1 Insidious Roots
+1 Agadeem's Awakening
+1 Spider Spawning

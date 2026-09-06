@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/LP8FEQZxKv9L3uS3wStHNg (source https://archidekt.com/decks/22454817)
+# tags Storm, Burn, Spellslinger, Spell Copy; bracket 3; saved 2026-09-04; 1187 tagged of 39600 indexed
+
+Commander
+1 Vivi Ornitier
+
+Deck
+1 Amphibian Downpour
+1 City on Fire
+1 Curiosity
+1 Fiery Emancipation
+1 Leyline of Anticipation
+1 Thousand-Year Storm
+1 Wizard Class
+1 Archaeomancer
+1 Archmage Emeritus
+1 Ashling, Flame Dancer
+1 Deekah, Fractal Theorist
+1 Dualcaster Mage
+1 Electro, Assaulting Battery
+1 Emeritus of Conflict
+1 Gandalf, Goblins' Bane
+1 Harmonic Prodigy
+1 Laboratory Maniac
+1 Leyline Tyrant
+1 Niv-Mizzet, Parun
+1 Prismari, the Inspiration
+1 Sanar, Unfinished Genius
+1 Storm-Kiln Artist
+1 Summon: G.F. Cerberus
+1 Veyran, Voice of Duality
+1 Wizards of Thay
+1 Arid Archway
+1 Baron, Airship Kingdom
+1 Cascade Bluffs
+1 Coastal Peak
+1 Command Tower
+1 Emergence Zone
+1 Fabled Passage
+1 Ferrous Lake
+1 Guildless Commons
+4 Island
+1 Izzet Boilerworks
+1 Karn's Bastion
+1 Library
+1 Lindblum, Industrial Regency
+5 Mountain
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Scorched Geyser
+1 Skycoach Waypoint
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Thundering Falls
+1 Training Center
+1 Treasure Vault
+1 Turbulent Springs
+1 Boltwave
+1 Bonus Round
+1 Choco-Comet
+1 Echocasting Symposium
+1 Grapeshot
+1 Mathemagics
+1 Red Sun's Zenith
+1 Relm's Sketching
+1 Secret of Bloodbending
+1 Sorceress's Schemes
+1 Spreading Insurrection
+1 Suplex
+1 Tectonic Hazard
+1 Time Warp
+1 Ultimate Magic: Meteor
+1 Wish
+1 Borne Upon a Wind
+1 Brainstorm
+1 Chain of Vapor
+1 Comet Storm
+1 Flame of Anor
+1 Flashback
+1 Galvanic Iteration
+1 Into the Flood Maw
+1 Lightning Bolt
+1 Prismari Charm
+1 Reiterate
+1 Return the Favor
+1 Seething Song
+1 Snap
+1 Vivi's Persistence
+1 Everflowing Chalice
+1 Glamdring, Foe-hammer
+1 Sol Ring
+1 Twinning Staff
+1 Vedalken Orrery
+1 Wizard's Staff
+1 World Map
+1 Invasion of Arcavios
+1 Ral, Crackling Wit
+1 Ral, Storm Conduit

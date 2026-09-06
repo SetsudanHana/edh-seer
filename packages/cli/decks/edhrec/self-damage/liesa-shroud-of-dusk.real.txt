@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/TPy8zV46qSU8DvLsh_FTSg (source https://moxfield.com/decks/1bnUZ55NmEqj3-5H8s79ww)
+# tags Lifegain, Self-Damage; bracket 3; saved 2026-09-04; 190 tagged of 12897 indexed
+
+Commander
+1 Liesa, Shroud of Dusk
+
+Deck
+1 Aetherflux Reservoir
+1 Alhammarret's Archive
+1 Arcane Signet
+1 Bolas's Citadel
+1 Cosmos Elixir
+1 Lightning Greaves
+1 Orzhov Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 The Darkness Crystal
+1 The One Ring
+1 The Wind Crystal
+1 Angel of Destiny
+1 Archivist of Oghma
+1 Battle Angels of Tyr
+1 Bloodletter of Aclazotz
+1 Bloodthirsty Conqueror
+1 Drana and Linvala
+1 Erebos, God of the Dead
+1 Esper Sentinel
+1 Exemplar of Light
+1 Firemane Commando
+1 Giada, Font of Hope
+1 Grand Abolisher
+1 Heliod, Sun-Crowned
+1 Indulging Patrician
+1 Kambal, Consul of Allocation
+1 Karlov of the Ghost Council
+1 Kunoros, Hound of Athreos
+1 Lotho, Corrupt Shirriff
+1 Metropolis Reformer
+1 Resplendent Angel
+1 Righteous Valkyrie
+1 Sheoldred, the Apocalypse
+1 Soul Warden
+1 Soul's Attendant
+1 Sunscorch Regent
+1 Suture Priest
+1 Thalia, Heretic Cathar
+1 Vilis, Broker of Blood
+1 Vito, Thorn of the Dusk Rose
+1 Vizkopa Guildmage
+1 Voice of the Blessed
+1 Anguished Unmaking
+1 Fell the Profane
+1 Hagra Mauling
+1 Path to Exile
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Vanishing Verse
+1 Authority of the Consuls
+1 Blind Obedience
+1 Exquisite Blood
+1 Ghostly Prison
+1 Karmic Justice
+1 Land Tax
+1 Phyrexian Arena
+1 Sanguine Bond
+1 Smothering Tithe
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Path of Ancestry
+13 Plains
+1 Rogue's Passage
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Sunlit Marsh
+8 Swamp
+1 Tainted Field
+1 Vault of the Archangel
+1 Damn
+1 Idyllic Tutor
+1 Legions to Ashes
+1 Revival // Revenge

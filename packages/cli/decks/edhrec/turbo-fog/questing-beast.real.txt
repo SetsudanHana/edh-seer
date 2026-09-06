@@ -1,0 +1,73 @@
+# edhrec deck https://edhrec.com/deckpreview/8rBR1s3P5IB7FCJZdx7Hyw (source https://archidekt.com/decks/23505504)
+# tags Turbo Fog, Aggro; bracket 2; saved 2026-09-04; 25 tagged of 1093 indexed
+
+Commander
+1 Questing Beast
+
+Deck
+1 Arcane Signet
+1 Bow of Nylea
+1 Bubble Matrix
+1 Dolmen Gate
+1 Emerald Medallion
+1 Herd Heirloom
+1 Lightning Greaves
+1 Rhonas's Monument
+1 Swiftfoot Boots
+1 Sword of the Animist
+1 Asceticism
+1 Bear Umbra
+1 Colossal Majesty
+1 Garruk's Uprising
+1 Lure
+1 Rancor
+1 Unnatural Growth
+1 Wild Growth
+1 Bala Ged Recovery
+1 Bridgeworks Battle
+1 Cultivate
+1 Explore
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Regrowth
+1 Rishkar's Expertise
+1 Roar of Challenge
+1 Skyshroud Claim
+1 Three Visits
+1 Beast Whisperer
+1 Defiler of Vigor
+1 Elder Gargaroth
+1 Elvish Mystic
+1 Eternal Witness
+1 Goreclaw, Terror of Qal Sisma
+1 Leery Fogbeast
+1 Llanowar Elves
+1 Nylea, God of the Hunt
+1 Ohran Frostfang
+1 Reclamation Sage
+1 Sakura-Tribe Elder
+1 Saryth, the Viper's Fang
+1 Spore Frog
+1 Thunderfoot Baloth
+1 Toski, Bearer of Secrets
+1 Vigor
+1 Beast Within
+1 Blessed Respite
+1 Blinding Fog
+1 Constant Mists
+1 Fog
+1 Haze of Pollen
+1 Heroic Intervention
+1 Khalni Ambush
+1 Lull
+1 Moment's Peace
+1 Obscuring Haze
+1 Pause for Reflection
+1 Respite
+1 Return of the Wildspeaker
+1 Root Snare
+1 Winds of Qal Sisma
+34 Forest
+1 Mosswort Bridge
+1 Rogue's Passage

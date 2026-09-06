@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/9l9fDrDzuoMee9xujt2pqg (source https://archidekt.com/decks/22092570)
+# tags Reanimator, Populate, Descend, Sacrifice, Tokens; bracket unset; saved 2026-07-22; 2 tagged of 7600 indexed
+
+Commander
+1 Extus, Oriq Overlord
+
+Deck
+1 Arcane Signet
+1 Idol of Oblivion
+1 Orzhov Signet
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Assemble the Legion
+1 Bastion of Remembrance
+1 Determined Iteration
+1 Impact Tremors
+1 Muster the Departed
+1 Skrelv's Hive
+1 Aziza, Mage Tower Captain
+1 Blood Artist
+1 Caesar, Legion's Emperor
+1 Cruel Celebrant
+1 Doomed Traveler
+1 Flamekin Herald
+1 Hunted Witness
+1 Krenko, Tin Street Kingpin
+1 Lagomos, Hand of Hatred
+1 Mahadi, Emporium Master
+1 Mayhem Devil
+1 Mirkwood Bats
+1 Monastery Mentor
+1 Morbid Opportunist
+1 Ophiomancer
+1 Pitiless Plunderer
+1 Prismari Pianist
+1 Silverquill, the Disputant
+1 Solemn Simulacrum
+1 Storm-Kiln Artist
+1 Teysa Karlov
+1 Thalisse, Reverent Medium
+1 Young Pyromancer
+1 Zulaport Cutthroat
+1 Blasphemous Act
+1 Blot Out the Sky
+1 Coveted Prize
+1 Diabolic Tutor
+1 Faithless Looting
+1 Lingering Souls
+1 Ruinous Ultimatum
+1 Song of Totentanz
+1 Splinter's Technique
+1 Sram's Expertise
+1 Storm Herd
+1 Body Count
+1 Corrupted Conviction
+1 Deadly Dispute
+1 Fury Storm
+1 Grand Crescendo
+1 Increasing Vengeance
+1 Raise the Alarm
+1 Rootborn Defenses
+1 Secure the Wastes
+1 Swords to Plowshares
+1 Village Rites
+1 Will of the Mardu
+1 Bojuka Bog
+1 Command Tower
+1 Exotic Orchard
+1 Kher Keep
+10 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+10 Plains
+10 Swamp
+1 Vault of the Archangel
+1 Elspeth, Sun's Champion

@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/finneas-ace-archer/offspring
+# theme Offspring (5 decks)
+
+Commander
+1 Finneas, Ace Archer
+
+Deck
+1 Banner of Kinship
+1 Carrot Cake
+1 Chronicle of Victory
+1 Gathering Stone
+1 Herald's Horn
+1 Patchwork Banner
+1 Sol Ring
+1 Abandoned Air Temple
+1 Bountiful Promenade
+1 Canopy Vista
+1 Command Tower
+1 Evolving Wilds
+9 Forest
+1 Fortified Village
+1 Fountainport
+1 Gavony Township
+1 Lupinflower Village
+1 Oakhollow Village
+1 Overgrown Farmland
+1 Path of Ancestry
+11 Plains
+1 Selesnya Sanctuary
+1 Sunpetal Grove
+1 Temple of Plenty
+1 Brave-Kin Duo
+1 Burrowguard Mentor
+1 Byrke, Long Ear of the Law
+1 Cadira, Caller of the Small
+1 Claim Jumper
+1 Druid of the Spade
+1 Harvestrite Host
+1 Hazardroot Herbalist
+1 Head of the Homestead
+1 Hinterland Sanctifier
+1 Intrepid Rabbit
+1 Jacked Rabbit
+1 Loporrit Scout
+1 Pawpatch Recruit
+1 Placid Rottentail
+1 Pollen-Shield Hare
+1 Regal Bunnicorn
+1 Seasoned Warrenguard
+1 Selvala, Explorer Returned
+1 Spider-Ham, Peter Porker
+1 Treeguard Duo
+1 Valley Questcaller
+1 Warren Elder
+1 Warren Warleader
+1 Airbender Ascension
+1 Caretaker's Talent
+1 Doubling Season
+1 Growing Ranks
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Intangible Virtue
+1 Primal Vigor
+1 Akroma's Will
+1 Crumb and Get It
+1 Dawn's Truce
+1 Divine Resilience
+1 Fleeting Flight
+1 Generous Gift
+1 Heroic Intervention
+1 Inspiring Call
+1 Path to Exile
+1 Pawpatch Formation
+1 Peerless Recycling
+1 Rabbit Response
+1 Repel Calamity
+1 Second Harvest
+1 Sundering Growth
+1 Swords to Plowshares
+1 Cultivate
+1 For the Common Good
+1 Hop to It
+1 Preposterous Proportions
+1 Raise the Past
+1 Rampant Growth
+1 Season of the Burrow
+1 Tempt with Bunnies
+1 Wear Down

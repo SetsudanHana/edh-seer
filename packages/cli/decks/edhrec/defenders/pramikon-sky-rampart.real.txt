@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/kVCgZYbk0bieh78UkFCgJg (source https://archidekt.com/decks/26066058)
+# tags Stax, Defenders, Control, Pillow Fort; bracket 3; saved 2026-09-04; 203 tagged of 7313 indexed
+
+Commander
+1 Pramikon, Sky Rampart
+
+Deck
+1 Aether Membrane
+1 Azor's Elocutors
+1 Crystal Barricade
+1 Esper Sentinel
+1 Faerie Mastermind
+1 Fog Bank
+1 Perimeter Captain
+1 Serra's Emissary
+1 Silent Arbiter
+1 Suppressor Skyguard
+1 The Walls of Ba Sing Se
+1 Wall of Denial
+1 Wall of Frost
+1 Wall of Omens
+1 Wall of Stolen Identity
+1 Windborn Muse
+1 Approach of the Second Sun
+1 Blasphemous Act
+1 Disrupt Decorum
+1 Fell the Mighty
+1 Idyllic Tutor
+1 Supreme Verdict
+1 Arcane Denial
+1 Boros Charm
+1 Clever Concealment
+1 Counterspell
+1 Deflecting Swat
+1 Dovin's Veto
+1 Path to Exile
+1 Render Silent
+1 Sink into Stupor
+1 Sphinx's Revelation
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Arcane Signet
+1 Crawlspace
+1 Expedition Map
+1 Fellwar Stone
+1 Norn's Annex
+1 Rammas Echor, Ancient Shield
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Arid Mesa
+1 Azorius Chancery
+1 Bloodstained Mire
+1 Command Tower
+1 Elegant Parlor
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Strand
+1 Floodfarm Verge
+1 Glacial Fortress
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Island
+1 Marsh Flats
+1 Maze of Ith
+1 Meticulous Archive
+1 Misty Rainforest
+1 Mountain
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+1 Plains
+1 Plateau
+1 Polluted Delta
+1 Prairie Stream
+1 Raugrin Triome
+1 Riverpyre Verge
+1 Rugged Prairie
+1 Sacred Foundry
+1 Scalding Tarn
+1 Sea of Clouds
+1 Spectator Seating
+1 Sunbillow Verge
+1 Tundra
+1 Urza's Saga
+1 Volcanic Island
+1 Windswept Heath
+1 Wooded Foothills
+1 Authority of the Consuls
+1 Court of Cunning
+1 Dissipation Field
+1 Ghostly Prison
+1 Gift of Immortality
+1 Leyline of Sanctity
+1 Mechanized Production
+1 Mystic Barrier
+1 Mystic Remora
+1 Propaganda
+1 Rhystic Study
+1 Smothering Tithe
+1 Solitary Confinement
+1 Sphere of Safety
+1 Trouble in Pairs
+1 Teyo, Geometric Tactician
+1 Teyo, the Shieldmage
+1 The Wanderer

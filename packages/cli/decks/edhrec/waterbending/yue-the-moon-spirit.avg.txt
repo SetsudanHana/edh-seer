@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/yue-the-moon-spirit/waterbending
+# theme Waterbending (28 decks)
+
+Commander
+1 Yue, the Moon Spirit
+
+Deck
+1 Arcane Signet
+1 Bender's Waterskin
+1 Fellwar Stone
+1 Heartstone
+1 Lightning Greaves
+1 Mind Stone
+1 Planetarium of Wan Shi Tong
+1 Portal to Phyrexia
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Swiftfoot Boots
+1 Tamiyo's Journal
+1 The Magic Mirror
+1 The Ten Rings
+1 Thought Vessel
+1 Waterbending Scroll
+1 Wayfarer's Bauble
+1 Agna Qel'a
+1 Archway of Innovation
+28 Island
+1 Minamo, School at Water's Edge
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Uthros, Titanic Godcore
+1 Chrome Host Seedshark
+1 Hermes, Overseer of Elpis
+1 Ioreth of the Healing House
+1 Katara, Bending Prodigy
+1 Laboratory Maniac
+1 Murmuring Mystic
+1 North Pole Patrol
+1 Omen Hawker
+1 Ornithopter
+1 Ornithopter of Paradise
+1 Sai, Master Thopterist
+1 The Mechanist, Aerial Artisan
+1 The Unagi of Kyoshi Island
+1 Tui and La, Moon and Ocean
+1 Imprisoned in the Moon
+1 Mind's Dilation
+1 Mystic Remora
+1 Omniscience
+1 One with the Multiverse
+1 Shark Typhoon
+1 The Legend of Kuruk
+1 Thought Reflection
+1 Training Grounds
+1 Unstoppable Plan
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Brainstorm
+1 Counterspell
+1 Dramatic Reversal
+1 Fierce Guardianship
+1 Frantic Search
+1 High Tide
+1 Narset's Reversal
+1 Nexus of Fate
+1 Sink into Stupor
+1 Swan Song
+1 The Theorist, Jace Beleren
+1 Aminatou's Augury
+1 Blatant Thievery
+1 Clone Legion
+1 Expropriate
+1 Mnemonic Deluge
+1 Ponder
+1 Sea Gate Restoration
+1 Spirit Water Revival
+1 Time Stretch

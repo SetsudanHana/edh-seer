@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/ghalta-primal-hunger/power-matters
+# theme Power Matters (35 decks)
+
+Commander
+1 Ghalta, Primal Hunger
+
+Deck
+1 Emerald Medallion
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Tangleweave Armor
+1 The Great Henge
+1 The Skullspore Nexus
+1 Bonders' Enclave
+1 Boseiju, Who Endures
+1 Cactus Preserve
+1 Castle Garenbrig
+25 Forest
+1 Mosswort Bridge
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Rogue's Passage
+1 Agonasaur Rex
+1 Arbor Elf
+1 Beast Whisperer
+1 Cankerbloom
+1 Defiler of Vigor
+1 Disciple of Freyalise
+1 Elder Gargaroth
+1 Elvish Mystic
+1 Fanatic of Rhonas
+1 Frenzied Baloth
+1 Fyndhorn Elves
+1 Gigantosaurus
+1 Goreclaw, Terror of Qal Sisma
+1 Gwenna, Eyes of Gaea
+1 Hulking Raptor
+1 Kogla, the Titan Ape
+1 Llanowar Elves
+1 Llanowar Tribe
+1 Managorger Hydra
+1 Outcaster Trailblazer
+1 Pugnacious Hammerskull
+1 Railway Brawler
+1 Rhonas the Indomitable
+1 Selvala, Heart of the Wilds
+1 Slumbering Trudge
+1 Steel Leaf Champion
+1 Surrak and Goreclaw
+1 Surrak, the Hunt Caller
+1 Topiary Stomper
+1 Ulvenwald Tracker
+1 Vaultborn Tyrant
+1 Wayward Swordtooth
+1 Yorvo, Lord of Garenbrig
+1 Zopandrel, Hunger Dominus
+1 Concordant Crossroads
+1 Elemental Bond
+1 Garruk's Uprising
+1 Greater Good
+1 Tribute to the World Tree
+1 Unnatural Growth
+1 Wild Growth
+1 Archdruid's Charm
+1 Beast Within
+1 Heroic Intervention
+1 Hunter's Insight
+1 Khalni Ambush
+1 Ram Through
+1 Return of the Wildspeaker
+1 Smuggler's Surprise
+1 Garruk, Primal Hunter
+1 Bridgeworks Battle
+1 Bushwhack
+1 Ezuri's Predation
+1 Last March of the Ents
+1 Life's Legacy
+1 Majestic Genesis
+1 Overwhelming Stampede
+1 Rishkar's Expertise
+1 Traverse the Outlands

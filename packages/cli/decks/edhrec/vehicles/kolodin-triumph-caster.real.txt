@@ -1,0 +1,72 @@
+# edhrec deck https://edhrec.com/deckpreview/g1K_pjloYr-16xpqFPgYNQ (source https://moxfield.com/decks/gYmdaPC2h0GCQAHtS-rjiA)
+# tags Artifacts, Vehicles; bracket 2; saved 2026-09-03; 496 tagged of 3991 indexed
+
+Commander
+1 Kolodin, Triumph Caster
+
+Deck
+1 Abrade
+1 Armed and Armored
+1 Chaos Warp
+1 Dispatch
+1 Generous Gift
+1 Legion Leadership
+1 Road Rage
+1 Stroke of Midnight
+1 Thrill of Possibility
+1 Aeronaut Admiral
+1 Alibou, Ancient Witness
+1 Astor, Bearer of Blades
+1 Canyon Vaulter
+1 Cid, Freeflier Pilot
+1 Cloudspire Coordinator
+1 Depala, Pilot Exemplar
+1 Depthshaker Titan
+1 Foundry Inspector
+1 Gilded Ghoda
+1 Guardian Sunmare
+1 Interface Ace
+1 Iron Spider, Stark Upgrade
+1 Losheel, Clockwork Scholar
+1 Rebbec, Architect of Ascension
+1 Sanwell, Avenger Ace
+1 Sram, Senior Edificer
+1 Unswerving Sloth
+1 Virulent Silencer
+1 Voyager Quickwelder
+1 Alacrian Armory
+1 Careening Mine Cart
+1 Consulate Dreadnought
+1 Cultivator's Caravan
+1 Guidelight Matrix
+1 Long-Range Sensor
+1 Luxurious Locomotive
+1 Midnight Crusader Shuttle
+1 N'Yami-Class Mother Ship
+1 Parhelion II
+1 Peacewalker Colossus
+1 Raiders' Karve
+1 Reckoner Bankbuster
+1 Royal Talon Fighter Jet
+1 Skysovereign, Consul Flagship
+1 Smuggler's Copter
+1 Surgehacker Mech
+1 Talisman of Conviction
+1 The Regalia
+1 The Thanos-Copter
+1 Unidentified Hovership
+1 Valor's Flagship
+1 Vibranium Mining Mech
+1 Weatherlight
+1 Austere Command
+1 Blasphemous Act
+1 Collision Course
+1 Faithless Looting
+1 From Father to Son
+1 One Last Job
+1 Organic Extinction
+1 Wake the Past
+16 Mountain
+20 Plains
+1 Roadside Assistance
+1 Siege Modification

@@ -1,0 +1,103 @@
+# edhrec deck https://edhrec.com/deckpreview/fnv-p_ynU_mqXnfGARzOsA (source https://archidekt.com/decks/8221085)
+# tags Lands Matter, Tron, Clones, Guildgates, Tokens, Big Mana, Deserts, Control; bracket 3; saved 2026-09-04; 9 tagged of 13340 indexed
+
+Commander
+1 Omo, Queen of Vesuva
+
+Deck
+1 Aesi, Tyrant of Gyre Strait
+1 Aven Courier
+1 Azami, Lady of Scrolls
+1 Azusa, Lost but Seeking
+1 Beorn the Fierce
+1 Dryad of the Ilysian Grove
+1 Elvish Archdruid
+1 Gogo, Master of Mimicry
+1 Goldberry, River-Daughter
+1 Grolnok, the Omnivore
+1 Hakbal of the Surging Soul
+1 Herald of Hoofbeats
+1 Hungry Lynx
+1 Lord of the Unreal
+1 Magus of the Candelabra
+1 Master of the Pearl Trident
+1 Poison Dart Frog
+1 Priest of Titania
+1 Sage of the Maze
+1 Summon: Leviathan
+1 Tatyova, Benthic Druid
+1 Titan of Littjara
+1 Ulvenwald Hydra
+1 Valley Floodcaller
+1 Xolatoyac, the Smiling Flood
+1 Arachnogenesis
+1 Arcane Denial
+1 Beast Within
+1 Dazzling Denial
+1 Drown in Dreams
+1 Embrace the Paradox
+1 Eureka Moment
+1 Growth Spiral
+1 Mana Sculpt
+1 Planar Genesis
+1 Pongify
+1 Arid Archway
+1 Baldur's Gate
+1 Botanical Sanctum
+1 Cloudpost
+1 Command Tower
+1 Dark Depths
+1 Desert of the Indomitable
+1 Desert of the Mindful
+1 Deserted Temple
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+2 Forest
+1 Gond Gate
+1 Hinterland Harbor
+1 Horizon of Progress
+3 Island
+1 Manor Gate
+1 Maze's End
+1 Nesting Grounds
+1 Overflowing Basin
+1 Planar Nexus
+1 Rain-Slicked Copse
+1 Riptide Laboratory
+1 Sea Gate
+1 Simic Growth Chamber
+1 Simic Guildgate
+1 Talon Gates of Madara
+1 Temple of Mystery
+1 Temple of the False God
+1 Thespian's Stage
+1 Urza's Cave
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Vesuva
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Desert Warfare
+1 Lost in the Maze
+1 Mana Reflection
+1 Spelunking
+1 Disorienting Choice
+1 Doppelgang
+1 Finale of Devastation
+1 Finale of Revelation
+1 Hour of Promise
+1 Mind into Matter
+1 Open the Way
+1 Replication Technique
+1 Rite of Replication
+1 Season of Weaving
+1 Sylvan Scrying
+1 Expedition Map
+1 Helm of the Host
+1 Multiclass Baldric
+1 Sol Ring
+1 The Endstone
+1 Thrumming Hivepool
+1 Kiora, Behemoth Beckoner

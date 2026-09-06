@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/6nli-cIQdtNVH9MSZiSn2g (source https://moxfield.com/decks/IGGizsahlECes2fFkNOZQw)
+# tags Enchantress, Toolbox, Pillow Fort, Stax; bracket 3; saved 2026-09-05; 460 tagged of 18770 indexed
+
+Commander
+1 Sisay, Weatherlight Captain
+
+Deck
+1 Agent of Erebos
+1 Bloom Tender
+1 Doomwake Giant
+1 Eidolon of Blossoms
+1 Ertai Resurrected
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Shared Purpose
+1 Kataki, War's Wage
+1 Lotho, Corrupt Shirriff
+1 Sanctum Weaver
+1 Setessan Champion
+1 Spider-Woman, Stunning Savior
+1 Sythis, Harvest's Hand
+1 Weaver of Harmony
+1 Arcane Laboratory
+1 Aura of Silence
+1 Blind Obedience
+1 Cindervines
+1 Darksteel Mutation
+1 Enchantress's Presence
+1 Fertile Ground
+1 Ghostly Prison
+1 Grasp of Fate
+1 Greater Auramancy
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Night's Reach
+1 Honden of Seeing Winds
+1 Kenrith's Transformation
+1 Kyoshi Island Plaza
+1 Mystic Remora
+1 Northern Air Temple
+1 Propaganda
+1 Rhystic Study
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Shattered Heights
+1 Sanctum of Stone Fangs
+1 Sanctum of Tranquil Light
+1 Seal of Primordium
+1 Shadow of the Second Sun
+1 Smothering Tithe
+1 Solitary Confinement
+1 Sphere of Safety
+1 Sterling Grove
+1 Stony Silence
+1 The Spirit Oasis
+1 Wilderness Reclamation
+1 Battlefield Forge
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Exotic Orchard
+3 Forest
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Island
+1 Jungle Shrine
+1 Llanowar Wastes
+1 Mountain
+1 Mystic Monastery
+1 Opulent Palace
+1 Otawara, Soaring City
+3 Plains
+1 Sacred Foundry
+1 Sandsteppe Citadel
+1 Seaside Citadel
+1 Shivan Reef
+1 Sokenzan, Crucible of Defiance
+1 Stomping Ground
+1 Swamp
+1 Takenuma, Abandoned Mire
+1 Temple Garden
+1 Underground River
+1 Urborg, Tomb of Yawgmoth
+1 Watery Grave
+1 Yavimaya, Cradle of Growth
+1 Boros Charm
+1 Clever Concealment
+1 Counterspell
+1 Dovin's Veto
+1 Teferi's Protection
+1 Chromatic Lantern
+1 Dance of the Manse
+1 Eerie Ultimatum
+1 Enduring Ideal
+1 Merciless Eviction

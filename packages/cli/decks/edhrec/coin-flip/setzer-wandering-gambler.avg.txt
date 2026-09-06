@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/setzer-wandering-gambler/coin-flip
+# theme Coin Flip (137 decks)
+
+Commander
+1 Setzer, Wandering Gambler
+
+Deck
+1 Arcane Signet
+1 Brotherhood Vertibird
+1 Damocles Base, Sword of Kang
+1 Demonic Junker
+1 Hoard Hauler
+1 Krark's Thumb
+1 Mighty Servant of Leuk-o
+1 Mukotai Soulripper
+1 Phantom Train
+1 Phoenix Fleet Airship
+1 RMS Titanic
+1 Reckoner Bankbuster
+1 Skysovereign, Consul Flagship
+1 Smuggler's Copter
+1 Sol Ring
+1 Talisman of Indulgence
+1 The Falcon, Airship Restored
+1 The Fire Nation Drill
+1 The Regalia
+1 The Thanos-Copter
+1 Weatherlight
+1 Blood Crypt
+1 Buried Ruin
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Foul Roads
+1 Graven Cairns
+1 Mech Hangar
+11 Mountain
+1 Rakdos Carnarium
+1 Rocky Roads
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+8 Swamp
+1 Tainted Peak
+1 The Gold Saucer
+1 Academy Manufactor
+1 Crime Novelist
+1 Deathless Pilot
+1 Dynamite Diver
+1 Goblin Traprunner
+1 Goldspan Dragon
+1 Grim Hireling
+1 Ingenious Artillerist
+1 Karplusan Minotaur
+1 Magda, Brazen Outlaw
+1 Marionette Apprentice
+1 Mayhem Devil
+1 Mirkwood Bats
+1 Okaun, Eye of Chaos
+1 Professional Face-Breaker
+1 Reckless Fireweaver
+1 Smaug, Wicked Worm
+1 Speedway Fanatic
+1 Swashbuckler Extraordinaire
+1 Tavern Scoundrel
+1 Tavern Swindler
+1 Xorn
+1 Alchemist's Talent
+1 Chance Encounter
+1 Impulsive Maneuvers
+1 Mirror March
+1 Rain of Riches
+1 Revel in Riches
+1 Big Score
+1 Chaos Warp
+1 Deadly Dispute
+1 Demand Answers
+1 Fighting Chance
+1 Rakdos Charm
+1 Terminate
+1 Chandra, Spark Hunter
+1 Blasphemous Act
+1 Feed the Swarm
+1 Fiery Gambit
+1 Game of Chaos
+1 Mana Clash
+1 Molten Birth
+1 Push the Limit

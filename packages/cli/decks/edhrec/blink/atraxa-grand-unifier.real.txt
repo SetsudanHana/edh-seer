@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/9FatoEybe3ofSHUh915YnA (source https://archidekt.com/decks/19254034)
+# tags Midrange, Blink, ETB, Control, Good Stuff; bracket 3; saved 2026-09-05; 1085 tagged of 17443 indexed
+
+Commander
+1 Atraxa, Grand Unifier
+
+Deck
+1 Adarkar Wastes
+1 Bountiful Promenade
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+1 Island
+1 Misty Rainforest
+1 Morphic Pool
+1 Overgrown Farmland
+1 Overgrown Tomb
+2 Plains
+1 Polluted Delta
+1 Prairie Stream
+1 Raffine's Tower
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Spara's Headquarters
+1 Swamp
+1 Temple Garden
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Zagoth Triome
+1 Aether Channeler
+1 Baleful Strix
+1 Bloom Tender
+1 Brago, King Eternal
+1 Charming Prince
+1 Coiling Oracle
+1 Craterhoof Behemoth
+1 Deadeye Navigator
+1 Delighted Halfling
+1 Displacer Kitten
+1 Dour Port-Mage
+1 Elesh Norn, Mother of Machines
+1 Eternal Witness
+1 Felidar Guardian
+1 Flickerwisp
+1 Formidable Speaker
+1 Loran of the Third Path
+1 Overlord of the Hauntwoods
+1 Preston, the Vanisher
+1 Recruiter of the Guard
+1 Sheoldred
+1 Siege Rhino
+1 Skyclave Apparition
+1 Soulherder
+1 Starfield Vocalist
+1 Thassa, Deep-Dwelling
+1 Timeless Witness
+1 Venser, Shaper Savant
+1 Yarok, the Desecrated
+1 Aminatou, the Fateshifter
+1 Venser, the Sojourner
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Clever Concealment
+1 Counterspell
+1 Demonic Consultation
+1 Dovin's Veto
+1 Eerie Interlude
+1 Ephemerate
+1 Heroic Intervention
+1 Mana Drain
+1 Pact of Negation
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Teferi's Time Twist
+1 Approach of the Second Sun
+1 Farseek
+1 Nature's Lore
+1 Three Visits
+1 Toxic Deluge
+1 Arcane Signet
+1 Panharmonicon
+1 Scroll of Fate
+1 Sol Ring
+1 The Great Henge
+1 Thought Vessel
+1 Aura Shards
+1 Guardian Project
+1 Mystic Remora
+1 Rhystic Study
+1 Teferi's Ageless Insight
+1 Teleportation Circle
+1 Invasion of Ikoria

@@ -1,0 +1,105 @@
+# edhrec average deck: https://edhrec.com/average-decks/esika-god-of-the-tree/horsemanship
+# theme Horsemanship (2 decks)
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Door of Destinies
+1 Lightning Greaves
+1 Sol Ring
+1 The Spear of Leonidas
+1 Veteran's Armaments
+1 Academy Ruins
+1 Arid Mesa
+1 Badlands
+1 Bayou
+1 Boseiju, Who Endures
+1 Cavern of Souls
+1 Command Beacon
+1 Command Tower
+2 Forest
+1 Godless Shrine
+1 Island
+1 Mana Confluence
+1 Marsh Flats
+1 Mountain
+1 Otawara, Soaring City
+1 Overgrown Tomb
+1 Plains
+1 Plateau
+1 Reflecting Pool
+1 Reliquary Tower
+1 Sacred Foundry
+1 Sanctum of Eternity
+1 Savannah
+1 Scalding Tarn
+1 Scrubland
+1 Snow-Covered Forest
+1 Snow-Covered Island
+1 Snow-Covered Mountain
+1 Snow-Covered Plains
+1 Strip Mine
+1 Swamp
+1 Taiga
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Verdant Catacombs
+1 Volcanic Island
+1 Wooded Foothills
+1 Breaching Hippocamp
+1 Brightfield Mustang
+1 Caustic Bronco
+1 Cobbled Lancer
+1 Commander Mustard
+1 Crested Sunmare
+1 Daru Warchief
+1 Esper Sentinel
+1 Gilded Ghoda
+1 Guardian Sunmare
+1 Keleth, Sunmane Familiar
+1 Lady Zhurong, Warrior Queen
+1 Lightning Mare
+1 Lu Xun, Scholar General
+1 Ma Chao, Western Warrior
+1 Motivated Pony
+1 Phantom Steed
+1 Plague Mare
+1 Shu General
+1 Stallion of Ashmouth
+1 Sun Ce, Young Conquerer
+1 Sun Quan, Lord of Wu
+1 Surge Mare
+1 Thurid, Mare of Destiny
+1 Underworld Charger
+1 Vine Mare
+1 Wei Elite Companions
+1 Wu Elite Cavalry
+1 Xiahou Dun, the One-Eyed
+1 Yellow Scarves Cavalry
+1 Yellow Scarves General
+1 Yuan Shao, the Indecisive
+1 Zhao Zilong, Tiger General
+1 Coastal Piracy
+1 Imprisoned in the Moon
+1 Molten Echoes
+1 Nerd Rage
+1 Reconnaissance Mission
+1 Rising of the Day
+1 Shared Animosity
+1 Smothering Tithe
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Deadly Rollick
+1 Mana Drain
+1 Radiate
+1 Teferi's Protection
+1 Farseek
+1 Rolling Earthquake
+1 Skyshroud Claim
+1 Three Visits

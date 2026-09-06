@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/alpharael-stonechosen/warp
+# theme Warp (13 decks)
+
+Commander
+1 Alpharael, Stonechosen
+
+Deck
+1 Arcane Signet
+1 Ashnod's Altar
+1 Dubious Delicacy
+1 Hylderblade
+1 Jet Medallion
+1 Lightning Greaves
+1 Quietus Spike
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 The Darkness Crystal
+1 Whispersilk Cloak
+1 Access Tunnel
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cabal Stronghold
+1 High Market
+1 Mortuary Mire
+1 Phyrexian Tower
+1 Rogue's Passage
+1 Susur Secundi, Void Altar
+28 Swamp
+1 Anticausal Vestige
+1 Archfiend of Despair
+1 Beamsaw Prospector
+1 Bloodghast
+1 Bloodletter of Aclazotz
+1 Bygone Colossus
+1 Comet Crawler
+1 Crypt Ghast
+1 Elegy Acolyte
+1 Faller's Faithful
+1 Gravpack Monoist
+1 Gray Merchant of Asphodel
+1 Hullcarver
+1 Morbid Opportunist
+1 Nine-Lives Familiar
+1 Ophiomancer
+1 Perigee Beckoner
+1 Plaguecrafter
+1 Reassembling Skeleton
+1 Susurian Voidborn
+1 Timeline Culler
+1 Umbral Collar Zealot
+1 Unstoppable Slasher
+1 Voidforged Titan
+1 Xu-Ifit, Osteoharmonist
+1 Black Market Connections
+1 Chorale of the Void
+1 Exquisite Blood
+1 Phyrexian Arena
+1 Sothera, the Supervoid
+1 Wound Reflection
+1 Archenemy's Charm
+1 Dark Endurance
+1 Dark Ritual
+1 Deadly Dispute
+1 Defile
+1 Gravkill
+1 Imp's Mischief
+1 Tragic Slip
+1 Village Rites
+1 Decode Transmissions
+1 Diabolic Intent
+1 Embrace Oblivion
+1 Exsanguinate
+1 Feed the Swarm
+1 Hymn of the Faller
+1 Scrounge for Eternity
+1 Tragic Trajectory
+1 Victimize
+1 Zero Point Ballad

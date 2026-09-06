@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/_rOsZ07B3LwIdIeA0tMcoA (source https://archidekt.com/decks/26040129)
+# tags Amass, Fling; bracket 2; saved 2026-09-04; 66 tagged of 11101 indexed
+
+Commander
+1 Saruman, the White Hand
+
+Deck
+1 Angrath, Captain of Chaos
+1 Arcane Signet
+1 Dimir Signet
+1 Fellwar Stone
+1 Goblin Plate Mail
+1 Izzet Signet
+1 Mind Stone
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Bitter Triumph
+1 Commence the Endgame
+1 Counterspell
+1 Essence Scatter
+1 Fact or Fiction
+1 Fell the Profane
+1 Fling
+1 Kazuul's Fury
+1 Lazotep Plating
+1 Memory Lapse
+1 Negate
+1 Orcish Medicine
+1 Remand
+1 Reverent Howl
+1 Snuff Out
+1 Soul's Fire
+1 Terminate
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Decree of Pain
+1 Deep Analysis
+1 Enter the God-Eternals
+1 Feed the Swarm
+1 Flow State
+1 Foray of Orcs
+1 Gravitic Punch
+1 Honor the God-Pharaoh
+1 Invade the City
+1 Languish
+1 Lórien Revealed
+1 Night's Whisper
+1 Rage into the Valley
+1 Relentless Advance
+1 Splatter Technique
+1 Stock Up
+1 Summons of Saruman
+1 Surrounded by Orcs
+1 Treason of Isengard
+1 Treasure Cruise
+1 Widespread Brutality
+1 Blood Crypt
+1 Choked Estuary
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Field of Ruin
+1 Foreboding Ruins
+1 Frostboil Snarl
+1 Hobbit Hole
+9 Island
+3 Mountain
+1 Rogue's Passage
+1 Shivan Reef
+1 Smoldering Marsh
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Sunken Hollow
+2 Swamp
+1 The Black Gate
+1 Training Center
+1 Underground River
+1 Watery Grave
+1 Corsairs of Umbar
+1 Dreadhorde Twins
+1 Eternal Skylord
+1 Gleaming Overseer
+1 Great Ugly-Looking Goblin
+1 Grishnákh, Brash Instigator
+1 Mauhúr, Uruk-hai Captain
+1 Orcish Siegemaster
+1 The Great Goblin
+1 The Mouth of Sauron
+1 Dreadhorde Invasion

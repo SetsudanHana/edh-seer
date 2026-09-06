@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/ghen-arcanum-weaver/curses
+# theme Curses (55 decks)
+
+Commander
+1 Ghen, Arcanum Weaver
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Orzhov Signet
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Blood Crypt
+1 Boros Garrison
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Isolated Chapel
+5 Mountain
+1 Nomad Outpost
+1 Orzhov Basilica
+7 Plains
+1 Sacred Foundry
+1 Savai Triome
+6 Swamp
+1 Temple of Malice
+1 Temple of Silence
+1 Terramorphic Expanse
+1 Accursed Witch
+1 Alseid of Life's Bounty
+1 Archon of Sun's Grace
+1 Ashiok's Reaper
+1 Bitterheart Witch
+1 Doomwake Giant
+1 Eriette of the Charmed Apple
+1 Gravebreaker Lamia
+1 Grim Guardian
+1 Heliod's Pilgrim
+1 Mesa Enchantress
+1 Ondu Spiritdancer
+1 Sram, Senior Edificer
+1 Starfield Mystic
+1 Troop of Ponies
+1 Age of Ultron
+1 Bitter Reunion
+1 Captive Audience
+1 Changing Loyalty
+1 Cruel Reality
+1 Curse of Bloodletting
+1 Curse of Death's Hold
+1 Curse of Disturbance
+1 Curse of Exhaustion
+1 Curse of Fool's Wisdom
+1 Curse of Hospitality
+1 Curse of Misfortunes
+1 Curse of Obsession
+1 Curse of Opulence
+1 Curse of Shaken Faith
+1 Curse of Thirst
+1 Curse of Vengeance
+1 Curse of Vitality
+1 Demonic Lore
+1 Ghostly Prison
+1 Grievous Wound
+1 Maddening Hex
+1 Overwhelming Splendor
+1 Seal of Cleansing
+1 Sigil of the Empty Throne
+1 Sphere of Safety
+1 Torment of Scarabs
+1 Treacherous Blessing
+1 Trespasser's Curse
+1 Anguished Unmaking
+1 Despark
+1 Path to Exile
+1 Swords to Plowshares
+1 Thrill of Possibility
+1 Blasphemous Act
+1 Cathartic Reunion
+1 Faithless Looting
+1 Open the Vaults
+1 Resurgent Belief
+1 Ruinous Ultimatum
+1 Witch's Mark

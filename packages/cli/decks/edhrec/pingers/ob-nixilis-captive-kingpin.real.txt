@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/o3EWX9lPtxs0LJhn42HaQg (source https://archidekt.com/decks/15928194)
+# tags Voltron, Group Slug, Pingers; bracket 3; saved 2026-09-05; 194 tagged of 10707 indexed
+
+Commander
+1 Ob Nixilis, Captive Kingpin
+
+Deck
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Barbed Wire
+1 Cryptolith Fragment
+1 Cursed Mirror
+1 Fellwar Stone
+1 Lightning Greaves
+1 Liquimetal Torque
+1 Mind Stone
+1 Rakdos Signet
+1 Sol Ring
+1 Surestrike Trident
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Unstable Amulet
+1 Avalanche of Sector 7
+1 Chandra's Incinerator
+1 Coruscation Mage
+1 Electrostatic Field
+1 Fate Unraveler
+1 Kederekt Parasite
+1 Kessig Flamebreather
+1 Nightshade Harvester
+1 Orcish Bowmasters
+1 Prosper, Tome-Bound
+1 Razorkin Needlehead
+1 Rug of Smothering
+1 Scrawling Crawler
+1 Soot Imp
+1 Spear Spewer
+1 Stormfist Crusader
+1 Thermo-Alchemist
+1 Unruly Catapult
+1 Valgavoth, Harrower of Souls
+1 Walking Ballista
+1 Bedevil
+1 Bolt Bend
+1 Chaos Warp
+1 Deflecting Swat
+1 Delayed Blast Fireball
+1 Fell the Profane
+1 Fling
+1 Imp's Mischief
+1 Kazuul's Fury
+1 Malakir Rebirth
+1 Rakdos Charm
+1 Return the Favor
+1 Terminate
+1 Untimely Malfunction
+1 Vampiric Tutor
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Graven Cairns
+1 Jagged Barrens
+1 Leechridden Swamp
+1 Lindblum, Industrial Regency
+1 Luxury Suite
+1 Mount Doom
+7 Mountain
+1 Rakdos Carnarium
+1 Raucous Theater
+1 Rogue's Passage
+1 Shivan Gorge
+1 Sulfurous Springs
+7 Swamp
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Cruel Tutor
+1 Grapeshot
+1 Jeska's Will
+1 Burning Earth
+1 Manabarbs
+1 Pain for All
+1 Pestilence
+1 Pyrohemia
+1 Rakdos Joins Up
+1 Roiling Vortex
+1 Shadow of the Goblin
+1 Spiteful Visions
+1 Underworld Dreams
+1 Ob Nixilis, the Hate-Twisted

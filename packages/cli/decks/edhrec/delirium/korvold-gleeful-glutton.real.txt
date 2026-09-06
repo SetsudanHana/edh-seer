@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/PYt6BPNLaOVIK3mNRJU7ng (source https://archidekt.com/decks/16658591)
+# tags Graveyard, Card Draw, Self-Mill, Sacrifice, Delirium; bracket 2; saved 2026-08-24; 26 tagged of 1338 indexed
+
+Commander
+1 Korvold, Gleeful Glutton
+
+Deck
+1 Auntie's Hovel
+1 Blazemire Verge
+1 Canyon Slough
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+4 Forest
+1 Gilt-Leaf Palace
+1 Hobbit Hole
+1 Mossfire Valley
+3 Mountain
+1 Prismatic Vista
+1 Shadowblood Ridge
+1 Sheltered Thicket
+1 Stomping Ground
+6 Swamp
+1 Temple of Abandon
+1 Temple of Malady
+1 Temple of Malice
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Thornspire Verge
+1 Viridescent Bog
+1 Wastewood Verge
+1 Ayara, Widow of the Realm
+1 Basal Thrull
+1 Biotech Specialist
+1 Boomer Scrapper
+1 Dockside Chef
+1 Duchess, Wayward Tavernkeep
+1 Hugs, Grisly Guardian
+1 Juri, Master of the Revue
+1 Kardur, Doomscourge
+1 Korvold, Fae-Cursed King
+1 Mishra, Claimed by Gix
+1 Moria Scavenger
+1 Orcish Lumberjack
+1 Phyrexian Dragon Engine
+1 Rose, Cutthroat Raider
+1 Sakura-Tribe Elder
+1 Scuzzback Scrounger
+1 Solemn Simulacrum
+1 Strefan, Maurer Progenitor
+1 Summon: Fenrir
+1 Summon: G.F. Ifrit
+1 The Dalek Emperor
+1 Treasure Nabber
+1 Troop of Ponies
+1 Zenos yae Galvus
+1 Beast Within
+1 Chaos Warp
+1 Fog
+1 Bitterblossom
+1 Breaching Dragonstorm
+1 Cindervines
+1 Descent into Avernus
+1 Encroaching Dragonstorm
+1 Khalni Heart Expedition
+1 One Ring to Rule Them All
+1 Quest for the Gemblades
+1 Quest for the Gravelord
+1 Recycle
+1 Soul Stair Expedition
+1 Tarmogoyf Nest
+1 Vessel of Nascency
+1 Vessel of Volatility
+1 Blasphemous Act
+1 Farseek
+1 Vandalblast
+1 Daretti, Ingenious Iconoclast
+1 Garruk, Cursed Huntsman
+1 Lukka, Bound to Ruin
+1 Ob Nixilis, the Adversary
+1 Samut, the Tested
+1 Vraska, Golgari Queen
+1 Fellwar Stone
+1 Mossfire Egg
+1 Shadowblood Egg
+1 Sol Ring
+1 Tarrian's Journal
+1 Wayfarer's Bauble
+1 Invasion of Azgol
+1 Invasion of Ergamon
+1 Invasion of Mercadia
+1 Invasion of Shandalar
+1 Invasion of Zendikar

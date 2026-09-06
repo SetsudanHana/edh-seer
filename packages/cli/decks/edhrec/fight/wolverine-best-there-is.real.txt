@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/kGApyRasQk90o-vztVTEEw (source https://archidekt.com/decks/14346889)
+# tags Voltron, Fight, Aggro, +1/+1 Counters; bracket 2; saved 2026-09-05; 722 tagged of 12586 indexed
+
+Commander
+1 Wolverine, Best There Is
+
+Deck
+1 Aggravated Assault
+1 Bear Umbra
+1 Branching Evolution
+1 Defense of the Heart
+1 Fight Rigging
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Keen Sense
+1 Lure
+1 Pain for All
+1 Rancor
+1 Rhythm of the Wild
+1 Rite of Passage
+1 Snake Umbra
+1 Sylvan Library
+1 Terrasymbiosis
+1 Unnatural Growth
+1 Arcane Signet
+1 Basilisk Collar
+1 Bone Sabres
+1 Bow of Nylea
+1 Grafted Exoskeleton
+1 Mage Slayer
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 Sting, the Glinting Dagger
+1 Swiftfoot Boots
+1 The Ozolith
+1 The Reaver Cleaver
+1 Berserk
+1 Bite Down
+1 Deflecting Swat
+1 Fall of the Hammer
+1 HULK SMASH!
+1 Heroic Intervention
+1 Infectious Bite
+1 Legolas's Quick Reflexes
+1 Ram Through
+1 Temur Battle Rage
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Farseek
+1 Nature's Lore
+1 Stump Stomp
+1 Vandalblast
+1 Bristling Backwoods
+1 Cinder Glade
+1 Command Tower
+1 Exotic Orchard
+10 Forest
+1 Game Trail
+1 Karn's Bastion
+1 Kessig Wolf Run
+1 Llanowar Reborn
+1 Mossfire Valley
+9 Mountain
+1 Rockfall Vale
+1 Rootbound Crag
+1 Skarrg, the Rage Pits
+1 Spire Garden
+1 Stomping Ground
+1 Sunken Citadel
+1 Thornspire Verge
+1 Tyrite Sanctum
+1 Witch's Clinic
+1 Domri, Anarch of Bolas
+1 Duskshell Crawler
+1 Forgotten Ancient
+1 Fyndhorn Elder
+1 General Marhault Elsdragon
+1 Goblin Anarchomancer
+1 Hexing Squelcher
+1 Jolene, Plundering Pugilist
+1 Kediss, Emberclaw Familiar
+1 Kodama of the West Tree
+1 Lizard Blades
+1 Neyith of the Dire Hunt
+1 Quilled Greatwurm
+1 Ruby, Daring Tracker
+1 Ulvenwald Tracker
+1 Vigor
+1 Xenagos, God of Revels

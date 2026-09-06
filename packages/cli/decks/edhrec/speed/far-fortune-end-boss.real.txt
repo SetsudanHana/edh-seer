@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/uJmHz3QsVKgdVGzsXixkqA (source https://archidekt.com/decks/25406050)
+# tags Burn, Speed, Group Slug; bracket 3; saved 2026-09-03; 22 tagged of 1426 indexed
+
+Commander
+1 Far Fortune, End Boss
+
+Deck
+1 Abrade
+1 Cast into the Fire
+1 Chaos Warp
+1 Dark Ritual
+1 Deadly Rollick
+1 Fell the Profane
+1 Lightning Strike
+1 Not Dead After All
+1 Rakdos Charm
+1 Return the Favor
+1 Sheoldred's Edict
+1 Shock
+1 Tibalt's Trickery
+1 Undying Evil
+1 Undying Malice
+1 Untimely Malfunction
+1 Amonkhet Raceway
+1 Avishkar Raceway
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Foreboding Ruins
+1 Midgar, City of Mako
+12 Mountain
+1 Muraganda Raceway
+1 Rakdos Carnarium
+1 Raucous Theater
+1 Smoldering Marsh
+14 Swamp
+1 Angrath's Marauders
+1 Burnout Bashtronaut
+1 Coruscation Mage
+1 Emeritus of Woe
+1 Endrider Catalyzer
+1 Fate Unraveler
+1 Fiendish Duo
+1 Firebrand Archer
+1 Gas Guzzler
+1 Gastal Thrillseeker
+1 Guttersnipe
+1 Kaervek the Merciless
+1 Kederekt Parasite
+1 Kuja, Genome Sorcerer
+1 Mogis, God of Slaughter
+1 Rankle and Torbran
+1 Scrawling Crawler
+1 Sheoldred
+1 Solphim, Mayhem Dominus
+1 Storm-Kiln Artist
+1 Stormfist Crusader
+1 The Speed Demon
+1 Vial Smasher the Fierce
+1 Arcane Signet
+1 Bolas's Citadel
+1 Jet Medallion
+1 My Precious
+1 Ruby Medallion
+1 Black Market Connections
+1 Fiery Emancipation
+1 Fiery Inscription
+1 Momentum Breaker
+1 Pain for All
+1 Phyrexian Arena
+1 Spiked Corridor // Torture Pit
+1 Underworld Dreams
+1 Blasphemous Edict
+1 Bloodsoaked Insight
+1 Brotherhood's End
+1 Feed the Swarm
+1 Glimpse the Impossible
+1 Mizzix's Mastery
+1 Sundering Eruption
+1 Vandalblast
+1 Zombify

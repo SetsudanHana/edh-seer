@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/ka_gTj7zN7jK7wKHqiD1sw (source https://archidekt.com/decks/7115866)
+# tags Cycling, Graveyard, Self-Mill, Discover, Dinosaurs, Caves; bracket 2; saved 2026-08-15; 2 tagged of 2854 indexed
+
+Commander
+1 Ellie and Alan, Paleontologists
+
+Deck
+1 Agonasaur Rex
+1 Annoyed Altisaur
+1 Cacophodon
+1 Chakram Retriever
+1 Clever Conjurer
+1 Colossal Dreadmaw
+1 Colossal Skyturtle
+1 Daggermaw Megalodon
+1 Faeburrow Elder
+1 Forensic Researcher
+1 Ghalta, Primal Hunger
+1 Greater Tanuki
+1 Imposing Vantasaur
+1 Keruga, the Macrosage
+1 Kiora's Follower
+1 Kishla Skimmer
+1 Laboratory Maniac
+1 Ledger Shredder
+1 Marauding Brinefang
+1 Migrating Ketradon
+1 Mirrorshell Crab
+1 Mulldrifter
+1 Nezahal, Primal Tide
+1 Nurturing Bristleback
+1 Ranging Raptors
+1 Rhet-Tomb Mystic
+1 Savage Land Dinosaur
+1 Soaring Sandwing
+1 Steamcore Scholar
+1 Thrashing Brontodon
+1 Timeless Witness
+1 Titanoth Rex
+1 Tocasia, Dig Site Mentor
+1 Topiary Panther
+1 Vizier of Tumbling Sands
+1 Wayward Swordtooth
+1 Willow Geist
+1 Ash Barrens
+1 Azorius Chancery
+1 Command Tower
+1 Desert of the Indomitable
+1 Desert of the Mindful
+1 Desert of the True
+1 Echoing Deeps
+3 Forest
+1 Hedge Maze
+1 Hidden Cataract
+1 Hidden Courtyard
+1 Hidden Nursery
+1 Irrigated Farmland
+2 Island
+1 Lonely Sandbar
+1 Lush Portico
+1 Meticulous Archive
+1 Minamo, School at Water's Edge
+2 Plains
+1 Rain-Slicked Copse
+1 Remote Isle
+1 Scattered Groves
+1 Secluded Steppe
+1 Selesnya Sanctuary
+1 Simic Growth Chamber
+1 Surveillance Room
+1 Tocasia's Dig Site
+1 Tranquil Landscape
+1 Tranquil Thicket
+1 Barrier Breach
+1 Dig Through Time
+1 Endless Detour
+1 Fact or Fiction
+1 Frantic Search
+1 Swords to Plowshares
+1 Unauthorized Exit
+1 Unexplained Disappearance
+1 Wilt
+1 Beneath the Sands
+1 Cleansing Nova
+1 Compulsive Research
+1 Dusk // Dawn
+1 Migration Path
+1 Overrun
+1 Windfall
+1 Chalk Outline
+1 Crystalline Resonance
+1 Dredger's Insight
+1 Enhanced Surveillance
+1 Retreat to Coralhelm
+1 Desecrated Tomb
+1 Dreamstone Hedron
+1 Hedron Archive
+1 Orazca Relic
+1 Patriar's Seal
+1 Sol Ring
+1 Swiftfoot Boots
+1 Kiora, Behemoth Beckoner

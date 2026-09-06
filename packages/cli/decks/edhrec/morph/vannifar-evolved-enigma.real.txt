@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/EAZG_Nz45sgfmhpm-TwMuw (source https://moxfield.com/decks/4Oq7sPw1HEWyOp_IPtLxlg)
+# tags Morph, Blink; bracket 3; saved 2026-09-04; 298 tagged of 2767 indexed
+
+Commander
+1 Vannifar, Evolved Enigma
+
+Deck
+1 Abhorrent Oculus
+1 Ancient Silver Dragon
+1 Blightsteel Colossus
+1 Consecrated Sphinx
+1 Craterhoof Behemoth
+1 Curator Beastie
+1 Deadeye Navigator
+1 Displacer Kitten
+1 Galactus, Devourer of Worlds
+1 Hauntwoods Shrieker
+1 It That Betrays
+1 Jin-Gitaxias, Core Augur
+1 Jin-Gitaxias, Progress Tyrant
+1 Kozilek, Butcher of Truth
+1 Marang River Regent
+1 Oblivious Bookworm
+1 Prime Speaker Zegana
+1 Sash and Waistcoat, Unmen
+1 Soul of the Harvest
+1 Summon: Bahamut
+1 Thassa, Deep-Dwelling
+1 Ulamog, the Infinite Gyre
+1 Ultimecia, Temporal Threat
+1 Uro, Titan of Nature's Wrath
+1 Woodfall Primus
+1 Y'shtola Rhul
+1 Arcane Signet
+1 Conjurer's Closet
+1 Herd Heirloom
+1 Portal to Phyrexia
+1 Sol Ring
+1 Thought Vessel
+1 Beast Within
+1 Blur
+1 Displace
+1 Essence Flux
+1 Ghostly Flicker
+1 Growth Spiral
+1 Krosan Grip
+1 Planar Incision
+1 Pongify
+1 Rapid Hybridization
+1 Release to the Wind
+1 Siren's Ruse
+1 Spaceshift
+1 Teferi's Time Twist
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+8 Forest
+1 Hedge Maze
+1 Hinterland Harbor
+10 Island
+1 Mosswort Bridge
+1 Overflowing Basin
+1 Rain-Slicked Copse
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sodden Verdure
+1 Temple of Mystery
+1 Turbulent Wilderness
+1 Vineglimmer Snarl
+1 Waterlogged Grove
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Defense of the Heart
+1 Garruk's Uprising
+1 Guardian Project
+1 Omniscience
+1 One with the Multiverse
+1 Sylvan Library
+1 They Came from the Pipes
+1 Threats Around Every Corner
+1 Explore
+1 Farseek
+1 Hide in Plain Sight
+1 Nature's Lore
+1 Rampant Growth
+1 Shared Roots
+1 Splash Portal
+1 Three Visits
+1 Valgavoth's Onslaught

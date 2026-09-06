@@ -1,0 +1,101 @@
+# edhrec average deck: https://edhrec.com/average-decks/urtet-remnant-of-memnarch/sunburst
+# theme Sunburst (5 decks)
+
+Commander
+1 Urtet, Remnant of Memnarch
+
+Deck
+1 Arcane Signet
+1 Baton of Courage
+1 Chromatic Lantern
+1 Coalition Relic
+1 Darksteel Reactor
+1 Engineered Explosives
+1 Everflowing Chalice
+1 Heliophial
+1 Infused Arrows
+1 Insight Engine
+1 Lux Artillery
+1 Myr Incubator
+1 Myr Matrix
+1 Opaline Bracers
+1 Patchwork Banner
+1 Pentad Prism
+1 Sol Ring
+1 Solar Array
+1 Brightclimb Pathway
+1 Cascading Cataracts
+1 Command Tower
+1 Darkmoss Bridge
+1 Drossforge Bridge
+2 Forest
+1 Goldmire Bridge
+2 Island
+1 Karn's Bastion
+1 Mistvault Bridge
+1 Mossfire Valley
+2 Mountain
+1 Path of Ancestry
+2 Plains
+1 Power Depot
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Seat of the Synod
+1 Secluded Glen
+1 Silverbluff Bridge
+1 Slagwoods Bridge
+2 Swamp
+1 Tanglepool Bridge
+1 The World Tree
+1 Thornglint Bridge
+1 Vivid Crag
+1 Vivid Creek
+1 Vivid Grove
+1 Vivid Marsh
+1 Vivid Meadow
+1 Alloy Myr
+1 Arcbound Wanderer
+1 Copper Myr
+1 Coretapper
+1 Darksteel Myr
+1 Etched Oracle
+1 Frogmyr Enforcer
+1 Gold Myr
+1 Hovermyr
+1 Iron Myr
+1 Leaden Myr
+1 Lunar Avenger
+1 Myr Battlesphere
+1 Myr Convert
+1 Myr Enforcer
+1 Myr Galvanizer
+1 Myr Moonvessel
+1 Myr Retriever
+1 Myr Superion
+1 Ornithopter of Paradise
+1 Palladium Myr
+1 Patrolling Peacemaker
+1 Phyrexian Walker
+1 Plague Myr
+1 Rancorous Archaic
+1 Sawtooth Thresher
+1 Silver Myr
+1 Skyreach Manta
+1 Solarion
+1 Suncrusher
+1 Suntouched Myr
+1 Surge Conductor
+1 Transcendent Archaic
+1 Wildgrowth Archaic
+1 Echoes of Eternity
+1 Mirrodin Besieged
+1 Tocasia's Welcome
+1 Dispatch
+1 Experimental Augury
+1 Mutational Advantage
+1 Whisper of the Dross
+1 Archaic's Agony
+1 Bring to Light
+1 Contentious Plan
+1 Prismatic Ending
+1 Together as One

@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/QwfVux2DUllxGnKSL1Qqgw (source https://moxfield.com/decks/EKzp52mk9E-JSTldCE26hQ)
+# tags Midrange, Donate; bracket 2; saved 2026-09-04; 289 tagged of 5906 indexed
+
+Commander
+1 Blim, Comedic Genius
+
+Deck
+1 Abyssal Persecutor
+1 Archfiend of Despair
+1 Archfiend of the Dross
+1 Bazaar Trader
+1 Bronze Bombshell
+1 Dauthi Voidwalker
+1 Doomsday Excruciator
+1 Goldnight Castigator
+1 Grid Monitor
+1 Kardur, Doomscourge
+1 Magus of the Wheel
+1 Plague Reaver
+1 Steel Golem
+1 Varragoth, Bloodsky Sire
+1 Xantcha, Sleeper Agent
+1 Aggressive Mining
+1 Animate Dead
+1 Black Market Connections
+1 Captive Audience
+1 Colfenor's Plans
+1 Confusion in the Ranks
+1 Demonic Lore
+1 Demonic Pact
+1 Endless Whispers
+1 Greed's Gambit
+1 Midnight Oil
+1 Necromancy
+1 Nefarious Lich
+1 Phyrexian Arena
+1 Price of Glory
+1 Waste Not
+1 Akoum Refuge
+1 Blast Zone
+1 Bloodfell Caves
+1 Dwarven Mine
+1 Geier Reach Sanitarium
+1 Homeward Path
+1 Jagged Barrens
+1 Lavaclaw Reaches
+1 Leechridden Swamp
+1 Lotus Field
+1 Molten Slagheap
+1 Mortuary Mire
+5 Mountain
+1 Rakdos Carnarium
+1 Restless Vents
+1 Rix Maadi, Dungeon Palace
+1 Rocky Tar Pit
+1 Scavenger Grounds
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Spinerock Knoll
+7 Swamp
+1 Tainted Peak
+1 Witch's Cottage
+1 Arcane Signet
+1 Coldsteel Heart
+1 Fellwar Stone
+1 Fireshrieker
+1 Immortal Coil
+1 Key to the City
+1 Lightning Greaves
+1 Mind Stone
+1 Rakdos Signet
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Whispersilk Cloak
+1 Wishclaw Talisman
+1 Beseech the Queen
+1 Blasphemous Act
+1 Dark Deal
+1 Dreadbore
+1 Fateful Handoff
+1 Feed the Swarm
+1 Profane Tutor
+1 Reforge the Soul
+1 Scheming Symmetry
+1 Scrambleverse
+1 Thieves' Auction
+1 Wheel of Misfortune
+1 Brand
+1 Chaos Warp
+1 Dark Ritual
+1 Imp's Mischief
+1 Red Elemental Blast
+1 Sudden Spoiling
+1 Terminate

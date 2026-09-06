@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/YMNZGCtLwqvRhZUNlynYvA (source https://archidekt.com/decks/19189411)
+# tags Triggered Abilities, Blink, Allies; bracket 2; saved 2026-09-04; 116 tagged of 9803 indexed
+
+Commander
+1 Katara, the Fearless
+
+Deck
+1 Aang, Swift Savior
+1 Aang, at the Crossroads
+1 Aang, the Last Airbender
+1 Appa, Loyal Sky Bison
+1 Avatar Enthusiasts
+1 Beastcaller Savant
+1 Compassionate Healer
+1 Earth King's Lieutenant
+1 Earth Kingdom Jailer
+1 Earth Kingdom Protectors
+1 Great Divide Guide
+1 Hada Freeblade
+1 Hakoda, Selfless Commander
+1 Haru, Hidden Talent
+1 Hermitic Herbalist
+1 Hero of Goma Fada
+1 Invasion Reinforcements
+1 Jeong Jeong's Deserters
+1 Jet, Rebel Leader
+1 Katara, Bending Prodigy
+1 Katara, Water Tribe's Hope
+1 Kazandu Blademaster
+1 Kor Entanglers
+1 Kyoshi Warriors
+1 Master Piandao
+1 Momo, Playful Pet
+1 Oran-Rief Survivalist
+1 Rowdy Snowballers
+1 Sokka, Lateral Strategist
+1 South Pole Voyager
+1 Suki, Kyoshi Warrior
+1 Talus Paladin
+1 The Blue Spirit
+1 The Earth King
+1 Toph, the Blind Bandit
+1 Turntimber Ranger
+1 Ty Lee, Chi Blocker
+1 Umara Raptor
+1 White Lotus Reinforcements
+1 Adarkar Wastes
+1 Ally Encampment
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+6 Forest
+1 Glacial Fortress
+1 Hinterland Harbor
+2 Island
+1 Jasmine Dragon Tea Shop
+1 Kyoshi Village
+1 Meditation Pools
+1 North Pole Gates
+1 Path of Ancestry
+6 Plains
+1 Prairie Stream
+1 Rogue's Passage
+1 Seaside Citadel
+1 Secluded Courtyard
+1 Secret Tunnel
+1 Sunpetal Grove
+1 The Grey Havens
+1 Unclaimed Territory
+1 Yavimaya Coast
+1 Airbender Ascension
+1 Allied Teamwork
+1 Descendants' Path
+1 Reflections of Littjara
+1 Arcane Signet
+1 Herald's Horn
+1 Sol Ring
+1 Austere Command
+1 Avatar's Wrath
+1 Destined Confrontation
+1 Explore
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Shared Roots
+1 Spirit Water Revival
+1 Tale of Momo
+1 United Front
+1 Cloudshift
+1 Disenchant
+1 Ephemerate
+1 Origin of Metalbending
+1 Path to Exile
+1 Swords to Plowshares

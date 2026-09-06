@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/biUH8lnTjGSGs__egvh4ew (source https://archidekt.com/decks/14689246)
+# tags Time Counters, Cascade, +1/+1 Counters, Historic, Legends, Paradox, Time Lords; bracket 2; saved 2026-08-16; 17 tagged of 1915 indexed
+
+Commander
+1 The Fourteenth Doctor
+1 Clara Oswald
+
+Deck
+1 Abandoned Air Temple
+1 Aether Hub
+1 Cavern of Souls
+1 City of Brass
+1 Clive's Hideaway
+1 Command Tower
+1 Exotic Orchard
+1 Forest
+1 Gallifrey Council Chamber
+1 Gavony Township
+1 Gemstone Mine
+1 Glimmervoid
+1 Great Hall of the Citadel
+1 Hall of Heliod's Generosity
+1 Hidden Cataract
+1 Hidden Courtyard
+1 Hidden Hideout
+1 Hidden Necropolis
+1 Hidden Nursery
+1 Hidden Volcano
+3 Island
+1 Kavaron, Memorial World
+1 Mana Confluence
+1 Mountain
+1 Path of Ancestry
+3 Plains
+1 Plaza of Heroes
+1 Reflecting Pool
+1 Spire of Industry
+1 Starting Town
+1 Swamp
+1 The World Tree
+1 Trenzalore Clocktower
+1 Ancestral Vision
+1 Avatar's Wrath
+1 Eerie Ultimatum
+1 Improvisation Capstone
+1 Into the Time Vortex
+1 Primevals' Glorious Rebirth
+1 Profane Tutor
+1 The Five Doctors
+1 The Wedding of River Song
+1 Throes of Chaos
+1 Wibbly-wobbly, Timey-wimey
+1 Arcane Signet
+1 Chromatic Lantern
+1 Doom's Time Platform
+1 Fellwar Stone
+1 Honored Heirloom
+1 Mox Tantalite
+1 Relic of Legends
+1 Sol Ring
+1 Sonic Screwdriver
+1 TARDIS
+1 The Great Henge
+1 Assassin's Trophy
+1 Beast Within
+1 Emergency Eject
+1 Erode
+1 Generous Gift
+1 Path to Exile
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Campsite Cuisine
+1 Four Knocks
+1 Kellan Joins Up
+1 Sphere Grid
+1 The Night of the Doctor
+1 The Parting of the Ways
+1 Ellie and Alan, Paleontologists
+1 Fire Lord Zuko
+1 Kang Prime
+1 Nico Minoru, Runaway
+1 Prosper, Tome-Bound
+1 Samwise Gamgee
+1 Sarah Jane Smith
+1 The Eighth Doctor
+1 The Eleventh Doctor
+1 The Fifteenth Doctor
+1 The Fifth Doctor
+1 The First Doctor
+1 The Fourth Doctor
+1 The Fugitive Doctor
+1 The Ninth Doctor
+1 The Second Doctor
+1 The Seventh Doctor
+1 The Sixth Doctor
+1 The Tenth Doctor
+1 The Third Doctor
+1 The Thirteenth Doctor
+1 The Twelfth Doctor
+1 The War Doctor
+1 Vega, the Watcher
+1 Quintorius Kand

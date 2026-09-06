@@ -1,0 +1,85 @@
+# edhrec average deck: https://edhrec.com/average-decks/svella-ice-shaper/snow
+# theme Snow (71 decks)
+
+Commander
+1 Svella, Ice Shaper
+
+Deck
+1 Arcane Signet
+1 Arcum's Astrolabe
+1 Battlemage's Bracers
+1 Coldsteel Heart
+1 Gruul Signet
+1 Illusionist's Bracers
+1 Lightning Greaves
+1 Replicating Ring
+1 Rings of Brighthearth
+1 Sol Ring
+1 Cinder Glade
+1 Command Tower
+1 Dark Depths
+1 Faceless Haven
+1 Frostwalk Bastion
+1 Highland Forest
+1 Highland Weald
+1 Mosswort Bridge
+1 Rootbound Crag
+1 Scrying Sheets
+1 Shimmerdrift Vale
+13 Snow-Covered Forest
+10 Snow-Covered Mountain
+1 Stomping Ground
+1 Agatha of the Vile Cauldron
+1 Apex Devastator
+1 Artisan of Kozilek
+1 Birds of Paradise
+1 Boreal Druid
+1 Boreal Outrider
+1 Conifer Wurm
+1 Elvish Mystic
+1 End-Raze Forerunners
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Fyndhorn Elves
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 Goblin Anarchomancer
+1 Llanowar Elves
+1 Ohran Frostfang
+1 Ohran Viper
+1 Rime Tender
+1 Rimescale Dragon
+1 Roxanne, Starfall Savant
+1 Sarinth Greatwurm
+1 Savage Ventmaw
+1 Sculptor of Winter
+1 Seedborn Muse
+1 Spirit of the Aldergard
+1 Terastodon
+1 Worldspine Wurm
+1 Garruk's Uprising
+1 Glittering Frost
+1 Mana Reflection
+1 Monstrous Vortex
+1 Rhythm of the Wild
+1 Up the Beanstalk
+1 Utopia Sprawl
+1 Wild Growth
+1 Beast Within
+1 Chaos Warp
+1 Frost Bite
+1 Heroic Intervention
+1 Krosan Grip
+1 Second Harvest
+1 Skred
+1 Blasphemous Act
+1 Blessing of Frost
+1 Blizzard Brawl
+1 Cultivate
+1 Decimate
+1 Farseek
+1 Into the North
+1 Nature's Lore
+1 Rampant Growth
+1 Thunderous Debut
+1 Tundra Fumarole

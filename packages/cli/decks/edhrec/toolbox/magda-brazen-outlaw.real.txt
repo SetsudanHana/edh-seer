@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/FGAkz4XGaWZIHwv99D2icg (source https://archidekt.com/decks/4097504)
+# tags Toolbox, Treasure, Dragons, Dwarves; bracket 3; saved 2026-09-03; 190 tagged of 17768 indexed
+
+Commander
+1 Magda, Brazen Outlaw
+
+Deck
+1 Ancient Copper Dragon
+1 Balefire Dragon
+1 Barkform Harvester
+1 Blast-Furnace Hellkite
+1 Bloodfire Dwarf
+1 Cavern-Hoard Dragon
+1 Dwarven Armorer
+1 Dwarven Bloodboiler
+1 Dwarven Grunt
+1 Dwarven Mauler
+1 Dwarven Scorcher
+1 Dwarven Trader
+1 Enslaved Dwarf
+1 Gimli of the Glittering Caves
+1 Glóin, Dwarf Emissary
+1 Hellkite Tyrant
+1 Liberated Dwarf
+1 Magda, the Hoardmaster
+1 Metallic Mimic
+1 Plundering Barbarian
+1 Roaming Throne
+1 Smaug the Magnificent
+1 Spark Mage
+1 Summon: Bahamut
+1 Terror of the Peaks
+1 Universal Automaton
+1 Utvara Hellkite
+1 Ancient Tomb
+1 Cavern of Souls
+1 Gemstone Caverns
+1 Great Furnace
+1 Hammerheim
+1 Holdout Settlement
+1 Homeward Path
+1 Mines of Moria
+21 Mountain
+1 Mutavault
+1 Shinka, the Bloodsoaked Keep
+1 Survivors' Encampment
+1 Treasure Vault
+1 Urza's Saga
+1 Volatile Fault
+1 Big Score
+1 Bottle-Cap Blast
+1 Deflecting Swat
+1 Flare of Duplication
+1 Stoke the Flames
+1 Tibalt's Trickery
+1 Unexpected Windfall
+1 Untimely Malfunction
+1 Zoyowa's Justice
+1 Clown Car
+1 Collector's Vault
+1 Cursed Mirror
+1 Darksteel Forge
+1 Firdoch Core
+1 Flywheel Racer
+1 High-Speed Hoverbike
+1 Idol of Oblivion
+1 Lifecraft Engine
+1 Lightning Greaves
+1 Liquimetal Torque
+1 Maskwood Nexus
+1 Mithril Coat
+1 Mox Amber
+1 Mox Opal
+1 Mycosynth Lattice
+1 Paradise Mantle
+1 Portal to Phyrexia
+1 Rings of Brighthearth
+1 Smuggler's Copter
+1 Sol Ring
+1 Springleaf Drum
+1 The One Ring
+1 Throne of Eldraine
+1 Pirate's Pillage
+1 Vandalblast
+1 Spiteful Banditry
+1 Sticky Fingers

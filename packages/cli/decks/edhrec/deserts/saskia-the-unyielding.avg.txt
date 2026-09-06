@@ -1,0 +1,106 @@
+# edhrec average deck: https://edhrec.com/average-decks/saskia-the-unyielding/deserts
+# theme Deserts (7 decks)
+
+Commander
+1 Saskia the Unyielding
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Exploration Broodship
+1 Hammer of Purphoros
+1 Sol Ring
+1 Zuran Orb
+1 Abraded Bluffs
+1 Arid Archway
+1 Bristling Backwoods
+1 Cactus Preserve
+1 Command Tower
+1 Conduit Pylons
+1 Creosote Heath
+1 Desert of the Fervent
+1 Desert of the Glorified
+1 Desert of the Indomitable
+1 Desert of the True
+1 Dunes of the Dead
+1 Echoing Deeps
+1 Endless Sands
+1 Exotic Orchard
+1 Festering Gulch
+1 Field of the Dead
+1 Forest
+1 Forlorn Flats
+1 Hashep Oasis
+1 Ifnir Deadlands
+1 Jagged Barrens
+1 Jungle Shrine
+1 Lazotep Quarry
+1 Lotus Field
+1 Mirage Mesa
+1 Mountain
+1 Painted Bluffs
+1 Plains
+1 Ramunap Ruins
+1 Sacred Foundry
+1 Scavenger Grounds
+1 Shefet Dunes
+1 Stomping Ground
+1 Survivors' Encampment
+1 Swamp
+1 Yavimaya, Cradle of Growth
+1 Aftermath Analyst
+1 Baloth Prime
+1 Braids, Arisen Nightmare
+1 Colossal Rattlewurm
+1 Dune Chanter
+1 Dune-Brood Nephilim
+1 Enlisted Wurm
+1 Erinis, Gloom Stalker
+1 Evendo Brushrazer
+1 Hazezon, Shaper of Sand
+1 Horizon Explorer
+1 Icetill Explorer
+1 Iridescent Vinelasher
+1 Korvold, Fae-Cursed King
+1 Lluwen, Imperfect Naturalist
+1 Lotus Cobra
+1 Novablast Wurm
+1 Oracle of Mul Daya
+1 Orcish Lumberjack
+1 Outcaster Greenblade
+1 Ramunap Excavator
+1 Rumbleweed
+1 Sand Scout
+1 Sprouting Goblin
+1 The Gitrog Monster
+1 The Necrobloom
+1 Titania, Protector of Argoth
+1 Turntimber Sower
+1 Yuma, Proud Protector
+1 Desert Warfare
+1 Exploration
+1 Felidar Retreat
+1 Mirari's Wake
+1 On Wings of Gold
+1 Overgrown Estate
+1 Spelunking
+1 Squandered Resources
+1 Crop Rotation
+1 Desert's Due
+1 Heaven // Earth
+1 Path to Exile
+1 Return of the Wildspeaker
+1 Tear Asunder
+1 Valorous Stance
+1 Nissa of Shadowed Boughs
+1 Cataclysmic Prospecting
+1 Edge of Autumn
+1 Eerie Ultimatum
+1 Hour of Promise
+1 Map the Frontier
+1 Nahiri's Lithoforming
+1 Planetary Annihilation
+1 Sevinne's Reclamation
+1 Worldsoul's Rage
+1 Worm Harvest
+1 Wreck and Rebuild

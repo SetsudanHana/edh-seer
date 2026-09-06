@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/SjCpk6dQXePgfvWGKThGkQ (source https://archidekt.com/decks/23625870)
+# tags Voltron, Politics, +1/+1 Counters, Pillow Fort; bracket 3; saved 2026-09-05; 226 tagged of 7688 indexed
+
+Commander
+1 Breena, the Demagogue
+
+Deck
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Bloodthirsty Blade
+1 Chimil, the Inner Sun
+1 Coveted Jewel
+1 Lightning Greaves
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Ardbert, Warrior of Darkness
+1 Ayara's Oathsworn
+1 Baird, Steward of Argive
+1 Basri's Lieutenant
+1 Combat Calligrapher
+1 Dauthi Voidwalker
+1 Drana, Liberator of Malakir
+1 Dusk Legion Duelist
+1 Estinien Varlineau
+1 Felisa, Fang of Silverquill
+1 Gix, Yawgmoth Praetor
+1 Hopeful Initiate
+1 Keeper of the Accord
+1 Knight of the White Orchid
+1 Mangara, the Diplomat
+1 Master of Ceremonies
+1 Nether Traitor
+1 Nils, Discipline Enforcer
+1 Ophiomancer
+1 Orzhov Advokist
+1 Puppeteer Clique
+1 Scheming Silvertongue
+1 Shadrix Silverquill
+1 Sun Titan
+1 Tataru Taru
+1 Windborn Muse
+1 Black Sun's Zenith
+1 Council's Judgment
+1 Cut a Deal
+1 Demonic Tutor
+1 Lingering Souls
+1 Prismatic Ending
+1 Promise of Loyalty
+1 Toxic Deluge
+1 Tragic Arrogance
+1 Vindicate
+1 Winds of Abandon
+1 Bojuka Bog
+1 Command Beacon
+1 Command Tower
+1 Demolition Field
+1 Exotic Orchard
+1 Fetid Heath
+1 Isolated Chapel
+13 Plains
+1 Scavenger Grounds
+1 Shineshadow Snarl
+13 Swamp
+1 Darksteel Mutation
+1 Duelist's Heritage
+1 Eye of Nidhogg
+1 Ghostly Prison
+1 Marchesa's Decree
+1 Martial Impetus
+1 Noble Heritage
+1 Norn's Decree
+1 Parasitic Impetus
+1 Retribution of the Ancients
+1 Warrior's Resolve
+1 Flawless Maneuver
+1 Fracture
+1 Inkshield
+1 Path to Exile
+1 Protection Magic
+1 Silence
+1 Swords to Plowshares
+1 Invasion of Gobakhan

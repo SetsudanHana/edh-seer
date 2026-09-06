@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/6HM0htdznvzWFvvEEvRH-Q (source https://archidekt.com/decks/20769970)
+# tags Self-Destruct; bracket 3; saved 2026-08-21; 8 tagged of 11033 indexed
+
+Commander
+1 Child of Alara
+
+Deck
+1 Akroma's Vengeance
+1 Barter in Blood
+1 Blood Divination
+1 Chandra's Ignition
+1 Coalition Victory
+1 Cultivate
+1 Diabolic Tutor
+1 Divination
+1 Embrace Oblivion
+1 Emergent Sequence
+1 Exsanguinate
+1 Field Research
+1 Flare of Cultivation
+1 Hour of Devastation
+1 Into the Fae Court
+1 Lessons from Life
+1 Primal Growth
+1 Rampant Growth
+1 Restock
+1 Roamer's Routine
+1 Tend the Sprigs
+1 Terramorph
+1 Verdant Confluence
+1 Archaeomancer
+1 Darigaaz Reincarnated
+1 Darksteel Colossus
+1 Ebondeath, Dracolich
+1 Rootweaver Druid
+1 Summon: Fenrir
+1 Azorius Guildgate
+1 Command Tower
+1 Dimir Guildgate
+1 Edgewall Inn
+1 Evolving Wilds
+8 Forest
+1 Golgari Guildgate
+1 Gruul Guildgate
+1 Hengegate Pathway
+7 Island
+1 Izzet Guildgate
+1 Kessig Wolf Run
+1 Lair of the Hydra
+3 Mountain
+1 Orzhov Guildgate
+3 Plains
+1 Rakdos Guildgate
+1 Seaside Citadel
+1 Shimmerdrift Vale
+1 Simic Guildgate
+5 Swamp
+1 Temple of Malice
+1 Thespian's Stage
+1 Behold the Multiverse
+1 Disperse
+1 Entish Restoration
+1 Eureka Moment
+1 Fling
+1 Jace's Ingenuity
+1 Murder
+1 Negate
+1 Plasm Capture
+1 Power Sink
+1 Render Silent
+1 Saw It Coming
+1 Snakeskin Veil
+1 Umbral Juke
+1 Unsummon
+1 Vapor Snag
+1 Village Rites
+1 Whirlwind Denial
+1 Darksteel Axe
+1 Darksteel Ingot
+1 Prophetic Prism
+1 Goblin Bombardment
+1 Greater Good
+1 Hatching Plans
+1 The Weatherseed Treaty
+1 Vampiric Rites

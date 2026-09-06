@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/8eqqDAQv5wdAMjfn9OWZxg (source https://archidekt.com/decks/10405380)
+# tags Midrange, Vehicles, Improvise, Control, Affinity, Artifacts, Land Destruction, Combo; bracket unset; saved 2026-08-23; 3 tagged of 2998 indexed
+
+Commander
+1 Sydri, Galvanic Genius
+
+Deck
+1 Adagia, Windswept Bastion
+1 Ancient Den
+1 Arcane Sanctum
+1 Archway of Innovation
+1 Buried Ruin
+1 Command Tower
+1 Darkwater Catacombs
+1 Demolition Field
+1 Desolate Mire
+1 Exotic Orchard
+1 Goldmire Bridge
+1 Inventors' Fair
+5 Island
+1 Mech Hangar
+1 Mistvault Bridge
+1 Obscura Storefront
+4 Plains
+1 Raffine's Tower
+1 Razortide Bridge
+1 Seat of the Synod
+1 Skycloud Expanse
+3 Swamp
+1 Temple of Deceit
+1 Temple of Enlightenment
+1 Temple of Silence
+1 Uthros, Titanic Godcore
+1 Vault of Whispers
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Azorius Signet
+1 Careening Mine Cart
+1 Chromatic Lantern
+1 Clown Car
+1 Cranial Plating
+1 Deluxe Dragster
+1 Demonic Junker
+1 Dimir Signet
+1 Foreboding Steamboat
+1 Gilded Lotus
+1 Liquimetal Torque
+1 Manifold Key
+1 Mechtitan Core
+1 Nautiloid Ship
+1 Orzhov Signet
+1 Parhelion II
+1 Possession Engine
+1 Prodigy's Prototype
+1 Repurposing Bay
+1 Salvation Engine
+1 Shorikai, Genesis Engine
+1 Skysovereign, Consul Flagship
+1 Smuggler's Copter
+1 Sol Ring
+1 Thunderhawk Gunship
+1 Wayfarer's Bauble
+1 Anrakyr the Traveller
+1 Diversion Unit
+1 Etherium Sculptor
+1 Ethersworn Canonist
+1 Greasefang, Okiba Boss
+1 King Macar, the Gold-Cursed
+1 Kotori, Pilot Prodigy
+1 Losheel, Clockwork Scholar
+1 Master Transmuter
+1 Metalwork Colossus
+1 Muzzio, Visionary Architect
+1 Night Market Lookout
+1 Oswald Fiddlebender
+1 Pain Seer
+1 Riptide Gearhulk
+1 Sharuum the Hegemon
+1 Thought Monitor
+1 Vedalken Engineer
+1 Artificer Class
+1 Phyrexian Scriptures
+1 Despark
+1 Dispatch
+1 Fracture
+1 Path to Exile
+1 Stroke of Midnight
+1 Thirst for Knowledge
+1 Unwanted Remake
+1 Void Rend
+1 One with the Machine
+1 Organic Extinction
+1 Painful Truths
+1 Risky Shortcut
+1 Split Up
+1 Thoughtcast
+1 Voyage Home

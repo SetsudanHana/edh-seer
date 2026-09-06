@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/OAt-uAtUAWENEfPNLJXlzw (source https://archidekt.com/decks/25993462)
+# tags Historic, Assassins, Mill, Legends, Humans, Freerunning, Self-Mill, Burn, Politics; bracket 2; saved 2026-09-03; 20 tagged of 5675 indexed
+
+Commander
+1 Altaïr Ibn-La'Ahad
+
+Deck
+1 Access Tunnel
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Brotherhood Headquarters
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Godless Shrine
+1 Isolated Chapel
+4 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+2 Plains
+1 Raucous Theater
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Secluded Courtyard
+1 Shattered Landscape
+9 Swamp
+1 Vault of the Archangel
+1 Altar of Dementia
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Hidden Blade
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 The Animus
+1 Whispersilk Cloak
+1 Anafenza, Kin-Tree Spirit
+1 Arno Dorian
+1 Assassin Initiate
+1 Aya of Alexandria
+1 Bayek of Siwa
+1 Black Widow, Deadly Hunter
+1 Combustion Man
+1 Desmond Miles
+1 Layla Hassan
+1 Mari, the Killing Quill
+1 Massacre Girl, Known Killer
+1 Mathas, Fiend Seeker
+1 Merciless Harlequin
+1 Miss Highwater
+1 Murderous Redcap
+1 Olivia, Opulent Outlaw
+1 Queen Marchesa
+1 Razorkin Needlehead
+1 Reno and Rude
+1 Shadow, Mysterious Assassin
+1 Shay Cormac
+1 The Lord of Pain
+1 The Master of Lake-town
+1 The Master, Multiplied
+1 Unstoppable Slasher
+1 Vein Ripper
+1 Vincent, Vengeful Atoner
+1 Virtus the Veiled
+1 Anguished Unmaking
+1 Big Score
+1 Chain Assassination
+1 Demand Answers
+1 Entomb
+1 Mortify
+1 Path to Exile
+1 Swords to Plowshares
+1 Thrill of Possibility
+1 Black Market Connections
+1 Cover of Darkness
+1 Descendants' Fury
+1 Gleaming Splendor
+1 Impact Tremors
+1 Reconnaissance
+1 Warleader's Call
+1 Windcrag Siege
+1 Buried Alive
+1 Cathartic Reunion
+1 Faithless Looting
+1 Nuclear Fallout
+1 Pursue the Past
+1 Restart Sequence

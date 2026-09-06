@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/general-marhault-elsdragon/lure
+# theme Lure (63 decks)
+
+Commander
+1 General Marhault Elsdragon
+
+Deck
+1 Arcane Signet
+1 Barrow-Blade
+1 Fiendlash
+1 Infiltration Lens
+1 Nemesis Mask
+1 Sol Ring
+1 Swiftfoot Boots
+1 Cinder Glade
+1 Command Tower
+13 Forest
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+9 Mountain
+1 Rockfall Vale
+1 Rootbound Crag
+1 Skarrg, the Rage Pits
+1 Spire Garden
+1 Stomping Ground
+1 Wooded Foothills
+1 Anzrag, the Quake-Mole
+1 Archetype of Aggression
+1 Assembled Alphas
+1 Atalan Jackal
+1 Beast Whisperer
+1 Brash Taunter
+1 Elven Warhounds
+1 Elvish Mystic
+1 Engulfing Slagwurm
+1 Fear of Being Hunted
+1 Goblin Anarchomancer
+1 Goblin Grappler
+1 Golgari Decoy
+1 Gorm the Great
+1 Jangling Automaton
+1 Khenra Charioteer
+1 Llanowar Elves
+1 Neyith of the Dire Hunt
+1 Noble Quarry
+1 Ohran Frostfang
+1 Primeval Herald
+1 Prized Unicorn
+1 Proud Wildbonder
+1 Ruby, Daring Tracker
+1 Saryth, the Viper's Fang
+1 Shinen of Life's Roar
+1 Taunting Elf
+1 Tempting Licid
+1 Toski, Bearer of Secrets
+1 Treeshaker Chimera
+1 Varchild's War-Riders
+1 Garruk's Uprising
+1 Guardian Project
+1 Invasion Plans
+1 Lure
+1 Primal Rage
+1 Rancor
+1 Rhythm of the Wild
+1 Beast Within
+1 Benefactor's Draught
+1 Chaos Warp
+1 Heroic Intervention
+1 Hunter's Insight
+1 Provoke
+1 Return of the Wildspeaker
+1 Temur Battle Rage
+1 You Look Upon the Tarrasque
+1 Alluring Scent
+1 Armed // Dangerous
+1 Cultivate
+1 Nature's Lore
+1 Rampant Growth
+1 Revenge of the Hunted
+1 Roar of Challenge
+1 Stump Stomp
+1 You've Been Caught Stealing

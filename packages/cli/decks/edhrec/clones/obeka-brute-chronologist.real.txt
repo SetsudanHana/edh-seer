@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/Hc_Yb1nDEUgRcwhbvudeVA (source https://moxfield.com/decks/K7C2ugs3_USS4Huodp-qSA)
+# tags Midrange, Good Stuff, Clones, Reanimator; bracket 3; saved 2026-09-04; 638 tagged of 8606 indexed
+
+Commander
+1 Obeka, Brute Chronologist
+
+Deck
+1 Agent of Treachery
+1 Boggart Trawler
+1 Calamity, Galloping Inferno
+1 Chainer, Nightmare Adept
+1 Deadpool, Trading Card
+1 Emet-Selch, Unsundered
+1 Etali, Primal Storm
+1 Feldon of the Third Path
+1 Goldlust Triad
+1 Goldspan Dragon
+1 Grim Hireling
+1 Hellkite Courser
+1 Ilharg, the Raze-Boar
+1 Imperial Recruiter
+1 Jaxis, the Troublemaker
+1 Kiki-Jiki, Mirror Breaker
+1 Metamorphosis Fanatic
+1 Mulldrifter
+1 Nightscape Familiar
+1 Orthion, Hero of Lavabrink
+1 Pinnacle Monk
+1 Professional Face-Breaker
+1 Quantum Riddler
+1 Saheeli, the Sun's Brilliance
+1 Smaug, Wicked Worm
+1 Sphinx of the Second Sun
+1 Starwinder
+1 Tannuk, Steadfast Second
+1 Terror of the Peaks
+1 The Master, Multiplied
+1 Trumpeting Carnosaur
+1 An Offer You Can't Refuse
+1 Chaos Warp
+1 Deflecting Swat
+1 Fell the Profane
+1 Fierce Guardianship
+1 Frantic Search
+1 Mana Drain
+1 Sink into Stupor
+1 Swan Song
+1 Three Steps Ahead
+1 Traumatic Critique
+1 Unexpected Windfall
+1 Arcane Signet
+1 Blade of Selves
+1 Fellwar Stone
+1 Lightning Greaves
+1 Sol Ring
+1 Sundial of the Infinite
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Arena of Glory
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 City of Brass
+1 Command Beacon
+1 Command Tower
+1 Haunted Ridge
+2 Island
+1 Lotus Field
+1 Luxury Suite
+1 Mana Confluence
+1 Mistrise Village
+1 Morphic Pool
+3 Mountain
+1 Otawara, Soaring City
+1 Plaza of Heroes
+1 Polluted Delta
+1 Prismatic Vista
+1 Raucous Theater
+1 Riverpyre Verge
+1 Scalding Tarn
+1 Steam Vents
+1 Stormcarved Coast
+2 Swamp
+1 Thundering Falls
+1 Training Center
+1 Undercity Sewers
+1 Watery Grave
+1 Xander's Lounge
+1 Blasphemous Act
+1 Come Back Wrong
+1 Jeska's Will
+1 Red Sun's Twilight
+1 Seize the Spoils
+1 Toxic Deluge
+1 Windfall
+1 Determined Iteration
+1 Flameshadow Conjuring
+1 Mystic Remora
+1 Rhystic Study
+1 Sneak Attack

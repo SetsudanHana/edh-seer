@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/indominus-rex-alpha/keywords
+# theme Keywords (313 decks)
+
+Commander
+1 Indominus Rex, Alpha
+
+Deck
+1 Arcane Signet
+1 Fireshrieker
+1 Luxior, Giada's Gift
+1 Sol Ring
+1 The Ozolith
+1 Thought Vessel
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Exotic Orchard
+6 Forest
+1 Hinterland Harbor
+4 Island
+1 Llanowar Wastes
+1 Misty Rainforest
+1 Opulent Palace
+1 Overgrown Tomb
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sunken Hollow
+5 Swamp
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Baleful Strix
+1 Banehound
+1 Bassara Tower Archer
+1 Birds of Paradise
+1 Bontu the Glorified
+1 Carnage Tyrant
+1 Cragplate Baloth
+1 Dragon Sniper
+1 Elder Gargaroth
+1 End-Raze Forerunners
+1 Glissa Sunslayer
+1 Goldvein Hydra
+1 Gurmag Swiftwing
+1 Hit-Monkey
+1 Kefnet the Mindful
+1 Leyline Prowler
+1 Mirri the Cursed
+1 Morbius the Living Vampire
+1 Nighthawk Scavenger
+1 Nightveil Predator
+1 Nullpriest of Oblivion
+1 Qarsi Revenant
+1 Questing Beast
+1 Rhonas the Indomitable
+1 Sab-Sunen, Luxa Embodied
+1 Scavenged Brawler
+1 Sire of Seven Deaths
+1 Stonehoof Chieftain
+1 Sylvan Caryatid
+1 The Warring Triad
+1 Triplicate Titan
+1 Vampire Nighthawk
+1 Vengeful Reaper
+1 Venomthrope
+1 Weathered Sentinels
+1 Weeping Angel
+1 Wilson, Refined Grizzly
+1 Animate Dead
+1 Garruk's Uprising
+1 Oversold Cemetery
+1 Phyrexian Reclamation
+1 An Offer You Can't Refuse
+1 Assassin's Trophy
+1 Beast Within
+1 Counterspell
+1 Heroic Intervention
+1 Negate
+1 Revitalizing Repast
+1 Shadow of the Grave
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Living Death
+1 Nature's Lore
+1 Rampant Growth
+1 Reanimate
+1 Rise of the Dark Realms
+1 Three Visits

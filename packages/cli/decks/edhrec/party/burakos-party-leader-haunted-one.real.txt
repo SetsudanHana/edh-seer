@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/EKkPGumTOyjSVW3fhI-hxw (source https://archidekt.com/decks/3004873)
+# tags Reanimator, Party; bracket 2; saved 2026-08-10; 97 tagged of 685 indexed
+
+Commander
+1 Burakos, Party Leader
+1 Haunted One
+
+Deck
+1 Arcane Signet
+1 Cauldron of Souls
+1 Cranial Plating
+1 Dolmen Gate
+1 Multiclass Baldric
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 Treasure Map
+1 Barren Moor
+1 Bojuka Bog
+1 Buried Ruin
+1 Castle Locthwain
+1 Crypt of Agadeem
+1 Hall of the Bandit Lord
+1 Mutavault
+1 Myriad Landscape
+1 Path of Ancestry
+1 Soulstone Sanctuary
+21 Swamp
+1 Treasure Vault
+1 War Room
+1 Black Market
+1 Black Market Connections
+1 Exquisite Blood
+1 Oversold Cemetery
+1 Phyrexian Arena
+1 Retribution of the Ancients
+1 Blackbloom Rogue
+1 Bloodsoaked Champion
+1 Bloodtracker
+1 Changeling Outcast
+1 Dark Confidant
+1 Disciple of the Vault
+1 Evin, Waterdeep Opportunist
+1 Graveshifter
+1 Grim Haruspex
+1 Grim Hireling
+1 Hammerhead, Maggia Boss
+1 Herald of Anguish
+1 Hexavus
+1 Keen Duelist
+1 Magus of the Coffers
+1 Malakir Blood-Priest
+1 Marionette Apprentice
+1 Marionette Master
+1 Mastermind Plum
+1 Mindblade Render
+1 Mirkwood Bats
+1 Mold Folk
+1 Morbid Opportunist
+1 Nadier's Nightblade
+1 Nullpriest of Oblivion
+1 Ruthless Technomancer
+1 Shadow Alley Denizen
+1 Shadowheart, Dark Justiciar
+1 Solemn Doomguide
+1 Tenacious Underdog
+1 Twilight Prophet
+1 Vadmir, New Blood
+1 Zulaport Cutthroat
+1 Coveted Prize
+1 Feed the Swarm
+1 Invoke Despair
+1 Lich-Knights' Conquest
+1 Mutilate
+1 Night's Whisper
+1 Sign in Blood
+1 Terror Tide
+1 Thwart the Grave
+1 Toxic Deluge
+1 Unearth
+1 Victimize
+1 Deadly Alliance
+1 Deadly Dispute
+1 Fell the Profane
+1 Hagra Mauling
+1 Village Rites

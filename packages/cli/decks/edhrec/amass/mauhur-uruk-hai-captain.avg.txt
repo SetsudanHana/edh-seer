@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/mauhur-uruk-hai-captain/amass
+# theme Amass (22 decks)
+
+Commander
+1 Mauhúr, Uruk-hai Captain
+
+Deck
+1 Arcane Signet
+1 Commander's Sphere
+1 Goblin Plate Mail
+1 Mind Stone
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 The Ozolith
+1 Barad-dûr
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Drannith Ruins
+1 Evolving Wilds
+1 Foreboding Ruins
+1 Karn's Bastion
+9 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+10 Swamp
+1 Temple of Malice
+1 Bothersome Noisemaker
+1 Dreadhorde Twins
+1 Dunland Crebain
+1 Easterling Vanguard
+1 Fearsome Goblin Pair
+1 Gorbag of Minas Morgul
+1 Gothmog, Morgul Lieutenant
+1 Great Ugly-Looking Goblin
+1 Grim Initiate
+1 Grishnákh, Brash Instigator
+1 Krenko, Tin Street Kingpin
+1 Lazotep Reaver
+1 Mer-Ek Nightblade
+1 Metallic Mimic
+1 Misty Mountains Raider
+1 Mordor Trebuchet
+1 Moria Marauder
+1 Moria Scavenger
+1 Orcish Siegemaster
+1 Shagrat, Loot Bearer
+1 Taurean Mauler
+1 The Great Goblin
+1 Uglúk of the White Hand
+1 Vizier of the Scorpion
+1 Warbeast of Gorgoroth
+1 Warg Rider
+1 Along the Crooked Way
+1 Book of Mazarbul
+1 Down, Down to Goblin-town
+1 Dreadhorde Invasion
+1 Fall of Cair Andros
+1 Feast on the Fallen
+1 March from the Black Gate
+1 Uncivil Unrest
+1 Chaos Warp
+1 Dark Ritual
+1 Fling
+1 Nasty End
+1 Orcish Medicine
+1 Rakdos Charm
+1 Terminate
+1 Thrill of Possibility
+1 Angrath, Captain of Chaos
+1 Assault on Osgiliath
+1 Blasphemous Act
+1 Bleeding Edge
+1 Feed the Swarm
+1 Foray of Orcs
+1 Honor the God-Pharaoh
+1 Mordor Muster
+1 Night's Whisper
+1 Rage into the Valley
+1 Swarming of Moria
+1 The Torment of Gollum
+1 Tidings of War
+1 Widespread Brutality

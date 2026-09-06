@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/aragorn-king-of-gondor/monarch
+# theme Monarch (865 decks)
+
+Commander
+1 Aragorn, King of Gondor
+
+Deck
+1 Arcane Signet
+1 Crown of Gondor
+1 Door of Destinies
+1 Herald's Horn
+1 Horn of Gondor
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Thought Vessel
+1 Vanquisher's Banner
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Furycalm Snarl
+1 Glacial Fortress
+1 Hallowed Fountain
+4 Island
+1 Minas Tirith
+4 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Raugrin Triome
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sacred Foundry
+1 Secluded Courtyard
+1 Steam Vents
+1 Sulfur Falls
+1 Throne of the High City
+1 Windbrisk Heights
+1 Adeline, Resplendent Cathar
+1 Archivist of Gondor
+1 Archon of Coronation
+1 Bastion Protector
+1 Beregond of the Guard
+1 Boromir, Gondor's Hope
+1 Boromir, Warden of the Tower
+1 Champions of Minas Tirith
+1 Combat Celebrant
+1 Coppercoat Vanguard
+1 Erkenbrand, Lord of Westfold
+1 Faramir, Prince of Ithilien
+1 Faramir, Steward of Gondor
+1 Frontline Medic
+1 Gilraen, Dúnedain Protector
+1 Lossarnach Captain
+1 Palace Jailer
+1 Prince Imrahil the Fair
+1 Riders of Rohan
+1 Riders of the Mark
+1 Selfless Squire
+1 The Council of Four
+1 Théoden, King of Rohan
+1 Verge Rangers
+1 Weathered Wayfarer
+1 Éomer, King of Rohan
+1 Éowyn, Fearless Knight
+1 Éowyn, Shieldmaiden
+1 Court of Ardenvale
+1 Court of Embereth
+1 Court of Grace
+1 Court of Ire
+1 Court of Vantress
+1 Fealty to the Realm
+1 Flowering of the White Tree
+1 Oath of Eorl
+1 Shared Animosity
+1 Arcane Denial
+1 Boros Charm
+1 Counterspell
+1 Dovin's Veto
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Unbreakable Formation
+1 Blasphemous Act
+1 Call for Aid
+1 Forth Eorlingas!
+1 Increasing Devotion
+1 Supreme Verdict
+1 Taunt from the Rampart

@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/CQkapTETNfMHcg0UQAZ5aQ (source https://archidekt.com/decks/6545124)
+# tags Reanimator, Graveyard, Topdeck, Voltron; bracket 3; saved 2026-05-16; 818 tagged of 9306 indexed
+
+Commander
+1 Mirko, Obsessive Theorist
+
+Deck
+1 Appendage Amalgam
+1 Clandestine Meddler
+1 Copy Catchers
+1 Cruel Witness
+1 Dimir Strandcatcher
+1 Doom Whisperer
+1 Dream Eater
+1 Eye of Duskmantle
+1 Fain, the Broker
+1 Gray Merchant of Asphodel
+1 Il Mheg Pixie
+1 Marvo, Deep Operative
+1 Massacre Girl
+1 Matoya, Archon Elder
+1 Mindwhisker
+1 Mulldrifter
+1 Nightveil Sprite
+1 Rune-Sealed Wall
+1 Sanguine Spy
+1 Scampering Surveyor
+1 Seer of Stolen Sight
+1 Sinister Starfish
+1 Snarling Gorehound
+1 Solemn Simulacrum
+1 Soul Diviner
+1 Specter of Mortality
+1 Sphinx of the Second Sun
+1 Syr Konrad, the Grim
+1 Twilight Prophet
+1 Unshakable Tail
+1 Watcher of Hours
+1 Whispering Snitch
+1 Banishing Betrayal
+1 Consider
+1 Curate
+1 Ephara's Dispersal
+1 Mission Briefing
+1 Otherworldly Gaze
+1 Pile On
+1 Price of Fame
+1 Unauthorized Exit
+1 Blackblade Reforged
+1 Candlestick
+1 Dowsing Dagger
+1 Essence Anchor
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Forge and Frontier
+1 Sword of Hearth and Home
+1 Sword of the Animist
+1 The Grim Captain's Locker
+1 Bojuka Bog
+1 Choked Estuary
+1 Clearwater Pathway
+1 Command Tower
+1 Conduit Pylons
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Drownyard Temple
+1 Exotic Orchard
+1 Geier Reach Sanitarium
+1 Hidden Grotto
+5 Island
+1 Minas Morgul, Dark Fortress
+1 Morphic Pool
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Nesting Grounds
+1 Port of Karfell
+1 Reliquary Tower
+1 Restless Reef
+1 River of Tears
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Shizo, Death's Storehouse
+1 Sunken Hollow
+3 Swamp
+1 The Black Gate
+1 Tocasia's Dig Site
+1 Tomb Fortress
+1 Undercity Sewers
+1 Underground River
+1 Case of the Shifting Visage
+1 Enhanced Surveillance
+1 Gossip's Talent
+1 Search for Azcanta
+1 Charnel Serenade
+1 Connive // Concoct
+1 Discovery // Dispersal
+1 Notion Rain
+1 Reanimate
+1 Toxic Deluge

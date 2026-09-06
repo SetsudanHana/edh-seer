@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/bu5CUMHyBQulqv7ahsSYHA (source https://archidekt.com/decks/17107521)
+# tags Vampires, Mayhem, Aggro, Madness; bracket 2; saved 2026-08-25; 3 tagged of 1058 indexed
+
+Commander
+1 Olivia, Mobilized for War
+
+Deck
+1 Access Tunnel
+1 Bloodfell Caves
+1 Crumbling Vestige
+1 Evolving Wilds
+16 Mountain
+16 Swamp
+1 Alluring Suitor
+1 Barony Vampire
+1 Belligerent Guest
+1 Bloodthirsty Aerialist
+1 Bullseye, Death Dealer
+1 Burning-Tree Vandal
+1 Child of Night
+1 Death-Priest of Myrkul
+1 Drana, the Last Bloodchief
+1 Epicure of Blood
+1 Falkenrath Noble
+1 Fathom Fleet Cutthroat
+1 Grasping Scoundrel
+1 Highborn Vampire
+1 Hired Poisoner
+1 Incorrigible Youths
+1 Marauding Blight-Priest
+1 Markov Patrician
+1 Night Revelers
+1 Olivia's Bloodsworn
+1 Rakish Heir
+1 Ruthless Cullblade
+1 Sanguinary Mage
+1 Scarlet Spider, Kaine
+1 Scion of the Swarm
+1 Sorcerer of the Fang
+1 Spider-Gwen, Free Spirit
+1 Stromkirk Mentor
+1 Swarm, Being of Bees
+1 Twins of Maurer Estate
+1 Vampire Socialite
+1 Venom, Evil Unleashed
+1 Vito, Thorn of the Dusk Rose
+1 Voldaren Duelist
+1 Voracious Vampire
+1 Westgate Regent
+1 Bladebrand
+1 Buccaneer's Bravado
+1 Disfigure
+1 Get the Point
+1 Infuriate
+1 Kindled Fury
+1 Murder
+1 Shock
+1 Sorin's Thirst
+1 Sure Strike
+1 Bump in the Night
+1 Duress
+1 Final Parting
+1 March of the Returned
+1 Morgue Burst
+1 Murderous Compulsion
+1 Mutiny
+1 Prison Break
+1 Recover
+1 Skewer the Critics
+1 Soul Salvage
+1 Wander in Death
+1 Cool but Rude
+1 Maniacal Rage
+1 Vessel of Volatility
+1 Honored Heirloom
+1 Wedding Invitation

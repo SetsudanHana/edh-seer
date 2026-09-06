@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/jWBlog4GGzAf36FeQIAZgA (source https://archidekt.com/decks/16920732)
+# tags Constructs, Robots, Vehicles, Villainous Choice; bracket 2; saved 2026-09-04; 204 tagged of 12721 indexed
+
+Commander
+1 Dr. Eggman
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Bedevil
+1 Chaos Warp
+1 Counterspell
+1 Desynchronization
+1 Negate
+1 Terminate
+1 This Is How It Ends
+1 Arcane Signet
+1 Damocles Base, Sword of Kang
+1 Demonic Junker
+1 Geth's Grimoire
+1 Imposter Mech
+1 Lightning Greaves
+1 Nautiloid Ship
+1 RMS Titanic
+1 Reaver Titan
+1 Sol Ring
+1 Swiftfoot Boots
+1 Unwinding Clock
+1 Weatherlight
+1 Blasphemous Act
+1 Fabricate
+1 Feed the Swarm
+1 Great Intelligence's Plan
+1 Thoughtcast
+1 Vandalblast
+1 Blood Crypt
+1 Buried Ruin
+1 Command Tower
+1 Crumbling Necropolis
+1 Evolving Wilds
+1 Great Furnace
+9 Island
+7 Mountain
+1 Reliquary Tower
+1 Rogue's Passage
+1 Seat of the Synod
+1 Steam Vents
+1 Sulfur Falls
+8 Swamp
+1 Terramorphic Expanse
+1 Vault of Whispers
+1 Watery Grave
+1 Xander's Lounge
+1 Chaos Defiler
+1 Chief of the Foundry
+1 Cityscape Leveler
+1 Coalstoke Gearhulk
+1 Combustible Gearhulk
+1 Cryptothrall
+1 Cyberdrive Awakener
+1 Davros, Dalek Creator
+1 Depthshaker Titan
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Golbez, Crystal Collector
+1 Krang, Utrom Warlord
+1 Metalwork Colossus
+1 Noxious Gearhulk
+1 Oildeep Gearhulk
+1 Padeem, Consul of Innovation
+1 Scrap Trawler
+1 Scrawling Crawler
+1 Steel Overseer
+1 The Valeyard
+1 Thought Monitor
+1 Torrential Gearhulk
+1 Ultron, Artificial Malevolence
+1 Ultron, Machine Overlord
+1 Vision, Spectral Synthezoid
+1 Y'shtola Rhul
+1 Liliana's Caress
+1 Thopter Spy Network
+1 Waste Not
+1 Tezzeret, Master of the Bridge

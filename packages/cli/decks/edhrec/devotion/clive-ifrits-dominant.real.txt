@@ -1,0 +1,72 @@
+# edhrec deck https://edhrec.com/deckpreview/4YXTnzOvF47BgoLKBaoMXA (source https://moxfield.com/decks/iweh8-WNR0i4K9GMxUiQxA)
+# tags Devotion; bracket 2; saved 2026-09-05; 432 tagged of 7188 indexed
+
+Commander
+1 Clive, Ifrit's Dominant
+
+Deck
+1 Anger
+1 Brazen Collector
+1 Defiler of Instinct
+1 Detective's Phoenix
+1 Diamond Lion
+1 Dualcaster Mage
+1 Flametongue Yearling
+1 Fury
+1 Goblin Chainwhirler
+1 Goldhound
+1 Impulsive Pilferer
+1 Kargan Dragonlord
+1 Magda, Brazen Outlaw
+1 Pinnacle Monk
+1 Sabin, Master Monk
+1 Seasoned Pyromancer
+1 Simian Spirit Guide
+1 Skirk Prospector
+1 Sunset Strikemaster
+1 Sunspine Lynx
+1 Torbran, Thane of Red Fell
+1 Wily Goblin
+1 Zookeeper Mechan
+1 Bitter Reunion
+1 Charred Foyer // Warped Space
+1 Count on Luck
+1 Enchanter's Bane
+1 Footfall Crater
+1 Gratuitous Violence
+1 Mechanized Warfare
+1 Seismic Assault
+1 Spiteful Banditry
+1 Vessel of Volatility
+1 Brass's Tunnel-Grinder
+1 Cursed Mirror
+1 Diamond Pick-Axe
+1 Melded Moxite
+1 Ruby Medallion
+1 Sol Ring
+1 The Fire Crystal
+1 Cast into the Fire
+1 Desperate Ritual
+1 Fling
+1 Lightning Axe
+1 Lightning Bolt
+1 Pyretic Ritual
+1 Pyroblast
+1 Pyrokinesis
+1 Red Elemental Blast
+1 Seething Song
+1 Siege Smash
+1 Chandra's Ignition
+1 Embrace the Unknown
+1 Geosurge
+1 Glimpse the Impossible
+1 Irencrag Feat
+1 Nibelheim Aflame
+1 Rite of Flame
+1 Snort
+1 Sorceress's Schemes
+1 Strike It Rich
+1 Sundering Eruption
+1 Visions of Ruin
+1 Invasion of Karsus
+35 Mountain

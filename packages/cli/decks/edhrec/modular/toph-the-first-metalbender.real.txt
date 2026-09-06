@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/REH0ciPfkU1R9Byxhz8ydQ (source https://archidekt.com/decks/19008360)
+# tags Modular, +1/+1 Counters, Earthbending; bracket 3; saved 2026-09-04; 86 tagged of 31931 indexed
+
+Commander
+1 Toph, the First Metalbender
+
+Deck
+1 Abandoned Air Temple
+1 Arid Mesa
+1 Ba Sing Se
+1 Battlefield Forge
+1 Brushland
+1 Clifftop Retreat
+1 Command Tower
+1 Fabled Passage
+1 Fire-Lit Thicket
+3 Forest
+1 Inkmoth Nexus
+1 Jungle Shrine
+1 Mosswort Bridge
+3 Mountain
+3 Plains
+1 Riftstone Portal
+1 Rogue's Passage
+1 Rootbound Crag
+1 Secret Tunnel
+1 Spire of Industry
+1 Stomping Ground
+1 Sunpetal Grove
+1 Temple Garden
+1 The Mycosynth Gardens
+1 Tinder Farm
+1 Vesuva
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Akroma's Will
+1 Crop Rotation
+1 Enlightened Tutor
+1 Harrow
+1 Inspiring Call
+1 Path to Exile
+1 All Will Be One
+1 Annie Joins Up
+1 Bear Umbra
+1 Branching Evolution
+1 Earthbender Ascension
+1 Felidar Retreat
+1 Garruk's Uprising
+1 Resourceful Defense
+1 Rhythm of the Wild
+1 Spelunking
+1 Terra Eternal
+1 Terrasymbiosis
+1 Arcbound Crusher
+1 Arcbound Mouser
+1 Arcbound Ravager
+1 Arcbound Reclaimer
+1 Arcbound Shikari
+1 Arcbound Slasher
+1 Arcbound Stinger
+1 Arcbound Tracker
+1 Avatar Kyoshi, Earthbender
+1 Black Panther, Wakandan King
+1 Brightglass Gearhulk
+1 Bumi, Unleashed
+1 Captain Marvel, Apex Avenger
+1 Captain Sisay
+1 Esper Sentinel
+1 Great Divide Guide
+1 Haywire Mite
+1 Kutzil, Malamet Exemplar
+1 Marketback Walker
+1 Oviya, Automech Artisan
+1 Paladin Danse, Steel Maverick
+1 Reluctant Role Model
+1 Sarinth Steelseeker
+1 Scrapyard Recombiner
+1 Shalai and Hallar
+1 Slobad, Goblin Tinkerer
+1 Sylvan Safekeeper
+1 Tifa Lockhart
+1 Tiller Engine
+1 Toph, Earthbending Master
+1 Toph, Greatest Earthbender
+1 Toph, Hardheaded Teacher
+1 Tri-Sentinel, Act of Vengeance
+1 Walking Ballista
+1 Ashnod's Transmogrant
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Ichor Wellspring
+1 Liquimetal Coating
+1 Liquimetal Torque
+1 Solar Array
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 The Great Henge
+1 Zuran Orb
+1 Planar Outburst

@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/verix-bladewing/kicker
+# theme Kicker (2 decks)
+
+Commander
+1 Verix Bladewing
+
+Deck
+1 Arcane Signet
+1 Carnelian Orb of Dragonkind
+1 Contagion Clasp
+1 Contagion Engine
+1 Dragonstorm Globe
+1 Empowered Autogenerator
+1 Erratic Portal
+1 Everflowing Chalice
+1 Moonsilver Key
+1 Planar Bridge
+1 Power Conduit
+1 Sol Ring
+1 Surge Node
+1 Wayfarer's Bauble
+1 Blast Zone
+1 Buried Ruin
+1 Dormant Volcano
+1 Maelstrom of the Spirit Dragon
+1 Mines of Moria
+1 Mirrex
+27 Mountain
+1 Myriad Landscape
+1 Scavenger Grounds
+1 Sunken Citadel
+1 Throne of Makindi
+1 Coretapper
+1 Deathforge Shaman
+1 Firespitter Whelp
+1 Flametongue Yearling
+1 Ghitu Chronicler
+1 Goblin Bushwhacker
+1 Goblin Ruinblaster
+1 Kavu Aggressor
+1 Molten Primordial
+1 Patron of the Arts
+1 Pouncing Kavu
+1 Prosperous Bandit
+1 Sarkhan, Dragon Ascendant
+1 Scorch Rider
+1 Shatterskull Charger
+1 Shivan Dragon
+1 Skitter of Lizards
+1 Spawn of Thraxes
+1 Torch Slinger
+1 Ulamog's Dreadsire
+1 Breaching Dragonstorm
+1 Crucible of Fire
+1 Outpost Siege
+1 Rumbling Aftershocks
+1 The Akroan War
+1 Vance's Blasting Cannons
+1 Vault 21: House Gambit
+1 Visions of Phyrexia
+1 Big Score
+1 Burst Lightning
+1 Cinderclasm
+1 Comet Storm
+1 Dragon's Fire
+1 Magma Burst
+1 Overload
+1 Sarkhan's Triumph
+1 Scorching Lava
+1 Shattering Pulse
+1 Shivan Fire
+1 Spit Flame
+1 Koth, Fire of Resistance
+1 Breath of Darigaaz
+1 Elemental Appeal
+1 Faithless Looting
+1 Molten Disaster
+1 Roil Eruption
+1 Seize the Spoils
+1 Tormenting Voice

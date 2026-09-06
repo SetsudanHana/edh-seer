@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/zYJGU74NP6AzafWKzsForg (source https://archidekt.com/decks/15482506)
+# tags Rooms, Reanimator, Graveyard, Enchantress, Self-Mill; bracket 3; saved 2026-09-03; 39 tagged of 8913 indexed
+
+Commander
+1 The Master of Keys
+
+Deck
+1 Adagia, Windswept Bastion
+1 Ash Barrens
+1 Azorius Chancery
+1 Clearwater Pathway
+1 Command Tower
+1 Exotic Orchard
+1 Floodfarm Verge
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+4 Island
+1 Lotus Field
+1 Myriad Landscape
+1 Path of Ancestry
+3 Plains
+1 Raffine's Tower
+1 Reliquary Tower
+1 Shadowy Backstreet
+1 Shattered Sanctum
+1 Shipwreck Marsh
+4 Swamp
+1 Temple of the False God
+1 Undercity Sewers
+1 Vault of Champions
+1 Watery Grave
+1 Amphibian Downpour
+1 Animate Dead
+1 Central Elevator // Promising Stairs
+1 Court of Cunning
+1 Dark Tutelage
+1 Death in Heaven
+1 Defiled Crypt // Cadaver Lab
+1 Demonic Covenant
+1 Duelist's Heritage
+1 Enchanted Evening
+1 Estrid's Invocation
+1 Ethereal Armor
+1 Fae Flight
+1 Hallowed Haunting
+1 Land Tax
+1 Meathook Massacre II
+1 One with the Multiverse
+1 Oppression
+1 Ripples of Undeath
+1 Secret Arcade // Dusty Parlor
+1 Sheltered by Ghosts
+1 Sigil of the Empty Throne
+1 Sothera, the Supervoid
+1 Soul Enervation
+1 Sphere of Safety
+1 Uncover the Moon-Letters
+1 Ancient Cellarspawn
+1 Aura Thief
+1 Callaphe, Beloved of the Sea
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Enduring Curiosity
+1 Entity Tracker
+1 Fear of Impostors
+1 Fear of Sleep Paralysis
+1 Inquisitive Glimmer
+1 Ketramose, the New Dawn
+1 Overlord of the Balemurk
+1 Overlord of the Floodpits
+1 Protean Thaumaturge
+1 Silent Hallcreeper
+1 Soaring Lightbringer
+1 Summon: Ixion
+1 Thoughtrender Lamia
+1 Valor
+1 Victor, Valgavoth's Seneschal
+1 Arcane Signet
+1 Azorius Signet
+1 Palantír of Orthanc
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Cyclonic Rift
+1 Fact or Fiction
+1 Flawless Maneuver
+1 Fracture
+1 Gifts Ungiven
+1 Path to Exile
+1 Extinguish All Hope
+1 Open the Vaults
+1 Reanimate
+1 Restoration Seminar
+1 Sevinne's Reclamation
+1 Stock Up
+1 Time Wipe
+1 Windfall

@@ -1,0 +1,75 @@
+# edhrec deck https://edhrec.com/deckpreview/iBWWxS7BcRv0fDrx4T8_RQ (source https://archidekt.com/decks/25781066)
+# tags Banding, Tempest Hawk, Flying, Anthems, Birds; bracket 2; saved 2026-08-27; 35 tagged of 1190 indexed
+
+Commander
+1 Soraya the Falconer
+
+Deck
+1 Abandoned Air Temple
+1 Adagia, Windswept Bastion
+1 Animal Sanctuary
+1 Arcane Lighthouse
+1 Cavern of Souls
+1 Demolition Field
+1 Deserted Temple
+1 Emeria, the Sky Ruin
+1 Hall of Heliod's Generosity
+1 Idyllic Grange
+1 Ishgard, the Holy See
+1 Kor Haven
+1 Lupinflower Village
+1 Minas Tirith
+1 Mistveil Plains
+1 Monumental Henge
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Secret Tunnel
+1 Sejiri Steppe
+13 Snow-Covered Plains
+1 Talon Gates of Madara
+1 Three Tree City
+1 War Room
+1 Windbrisk Heights
+1 And They Shall Know No Fear
+1 Dawn's Truce
+1 Path to Exile
+1 Swords to Plowshares
+1 Angel of Jubilation
+1 Aven Brigadier
+1 Aven Mindcensor
+1 Cartographer's Hawk
+1 Celestial Gatekeeper
+1 Commander Eesha
+1 Eagles of the North
+1 Enduring Innocence
+1 Mesa Enchantress
+1 Roaming Throne
+20 Tempest Hawk
+1 Troop of Ponies
+1 Valley Questcaller
+1 Witch Enchanter
+1 Assemble the Players
+1 Flowering of the White Tree
+1 Gleaming Splendor
+1 In the Trenches
+1 Land Tax
+1 Murmuration
+1 Radiant Destiny
+1 Rally the Ranks
+1 Smile at Death
+1 Soulcatchers' Aerie
+1 Tocasia's Welcome
+1 Baton of Morale
+1 Caged Sun
+1 Chronicle of Victory
+1 Conjurer's Mantle
+1 Gathering Stone
+1 Herald's Horn
+1 Mirror Box
+1 Sol Ring
+1 Spear of Heliod
+1 The Immortal Sun
+1 Vanquisher's Banner
+1 Dusk // Dawn
+1 Ondu Inversion
+1 Winnowing

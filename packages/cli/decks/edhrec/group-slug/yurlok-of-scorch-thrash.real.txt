@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/iFKYFwJGAGyNNCQOhnx-hw (source https://archidekt.com/decks/24056536)
+# tags Group Hug, Group Slug, Burn; bracket 2; saved 2026-09-04; 676 tagged of 12495 indexed
+
+Commander
+1 Yurlok of Scorch Thrash
+
+Deck
+1 Arachnogenesis
+1 Assassin's Trophy
+1 Beast Within
+1 Deflecting Swat
+1 Fog
+1 Heroic Intervention
+1 Rakdos Charm
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Cinder Glade
+1 City of Brass
+1 Command Tower
+1 Deathcap Glade
+1 Dragonskull Summit
+5 Forest
+1 Haunted Ridge
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Luxury Suite
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Overgrown Tomb
+1 Polluted Delta
+1 Rockfall Vale
+1 Rootbound Crag
+1 Scalding Tarn
+1 Smoldering Marsh
+1 Spire Garden
+1 Stomping Ground
+1 Sulfurous Springs
+1 Swamp
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Ziatora's Proving Ground
+1 Barbflare Gremlin
+1 Belbe, Corrupted Observer
+1 Birds of Paradise
+1 Harsh Mentor
+1 Ignoble Hierarch
+1 Kaervek the Merciless
+1 Lavaleaper
+1 Leyline Tyrant
+1 Magus of the Candelabra
+1 Magus of the Vineyard
+1 Nyxbloom Ancient
+1 Omnath, Locus of Mana
+1 Ruric Thar, the Unbowed
+1 Seedborn Muse
+1 Seeker of Skybreak
+1 Spore Frog
+1 Stoneshaker Shaman
+1 Zhur-Taa Ancient
+1 Zhur-Taa Druid
+1 Blasphemous Act
+1 Exsanguinate
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Three Visits
+1 Torment of Hailfire
+1 Candelabra of Tawnos
+1 Horizon Stone
+1 Howling Mine
+1 Lightning Greaves
+1 Staff of Domination
+1 Swiftfoot Boots
+1 Sword of the Paruns
+1 Thousand-Year Elixir
+1 Umbral Mantle
+1 Cindervines
+1 Citadel of Pain
+1 Descent into Avernus
+1 Dictate of Karametra
+1 Exquisite Blood
+1 Heartbeat of Spring
+1 Helix Pinnacle
+1 Leyline of Abundance
+1 Mana Flare
+1 Mana Reflection
+1 Manabarbs
+1 Overabundance
+1 Power Surge
+1 Rites of Flourishing
+1 Sylvan Library
+1 Utopia Sprawl
+1 War's Toll
+1 Wild Growth
+1 Wound Reflection

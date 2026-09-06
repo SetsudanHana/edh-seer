@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/szarel-genesis-shepherd/land-destruction
+# theme Land Destruction (195 decks)
+
+Commander
+1 Szarel, Genesis Shepherd
+
+Deck
+1 Arcane Signet
+1 Conduit of Worlds
+1 Exploration Broodship
+1 Hearthhull, the Worldseed
+1 Sol Ring
+1 Zuran Orb
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Cabaretti Courtyard
+1 Cinder Glade
+1 Command Tower
+1 Escape Tunnel
+1 Eumidian Hatchery
+1 Evolving Wilds
+1 Fabled Passage
+1 Festering Thicket
+8 Forest
+1 Lotus Field
+1 Maestros Theater
+4 Mountain
+1 Overgrown Tomb
+1 Riveteers Overlook
+1 Sheltered Thicket
+1 Smoldering Marsh
+1 Stomping Ground
+1 Strip Mine
+5 Swamp
+1 Terramorphic Expanse
+1 Verdant Catacombs
+1 Vernal Fen
+1 Wooded Foothills
+1 Aftermath Analyst
+1 Augur of Autumn
+1 Azusa, Lost but Seeking
+1 Baloth Prime
+1 Braids, Arisen Nightmare
+1 Dryad of the Ilysian Grove
+1 Evendo Brushrazer
+1 Horizon Explorer
+1 Icetill Explorer
+1 Juri, Master of the Revue
+1 Korvold, Fae-Cursed King
+1 Loot, Exuberant Explorer
+1 Lotus Cobra
+1 Mayhem Devil
+1 Mazirek, Kraul Death Priest
+1 Moraug, Fury of Akoum
+1 Mossborn Hydra
+1 Ob Nixilis, the Fallen
+1 Omnath, Locus of Rage
+1 Oracle of Mul Daya
+1 Rampaging Baloths
+1 Scouring Swarm
+1 Scute Swarm
+1 Soul of Windgrace
+1 Springbloom Druid
+1 Sylvan Safekeeper
+1 Tannuk, Memorial Ensign
+1 The Gitrog Monster
+1 Tireless Provisioner
+1 Titania, Protector of Argoth
+1 Exploration
+1 Loading Zone
+1 Spelunking
+1 Squandered Resources
+1 Terrasymbiosis
+1 Valakut Exploration
+1 Beast Within
+1 Crop Rotation
+1 Harrow
+1 Putrefy
+1 Rakdos Charm
+1 Roiling Regrowth
+1 Tear Asunder
+1 Blasphemous Act
+1 Cultivate
+1 Farseek
+1 Nahiri's Lithoforming
+1 Nature's Lore
+1 Planar Engineering
+1 Planetary Annihilation
+1 Scapeshift
+1 Splendid Reclamation
+1 Worldsoul's Rage

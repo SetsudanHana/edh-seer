@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/KZ4app5QeQvjCjKsjOU7DQ (source https://moxfield.com/decks/JQwW1SRnGEaBSqrDwqzi_g)
+# tags Legends, Equipment, Midrange; bracket 2; saved 2026-09-05; 1928 tagged of 9020 indexed
+
+Commander
+1 Syr Gwyn, Hero of Ashvale
+
+Deck
+1 Abstergo Entertainment
+1 Axgard Armory
+1 Battlefield Forge
+1 Blood Crypt
+1 Buried Ruin
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Clive's Hideaway
+1 Command Tower
+1 Desolate Mire
+1 Dragonskull Summit
+1 Ishgard, the Holy See
+1 Isolated Chapel
+1 Monumental Henge
+1 Mount Doom
+2 Mountain
+1 Myriad Landscape
+1 Nomad Outpost
+1 Path of Ancestry
+5 Plains
+1 Shattered Landscape
+1 Shattered Sanctum
+1 Smoldering Marsh
+1 Sulfurous Springs
+1 Sunbaked Canyon
+2 Swamp
+1 Tournament Grounds
+1 Unclaimed Territory
+1 Vault of Champions
+1 Vault of the Archangel
+1 Anguished Unmaking
+1 Boros Charm
+1 Crackling Doom
+1 Despark
+1 Inevitable Defeat
+1 Swords to Plowshares
+1 Arcane Signet
+1 Argentum Armor
+1 Bilbo's Ring
+1 Blackblade Reforged
+1 Caduceus, Staff of Hermes
+1 Drach'Nyen
+1 Eater of Virtue
+1 Embercleave
+1 Excalibur, Sword of Eden
+1 Hammer of Nazahn
+1 Lost Jitte
+1 Mask of Griselbrand
+1 Mjölnir, Storm Hammer
+1 Mox Amber
+1 My Precious
+1 Orcrist, Goblin-cleaver
+1 Relic of Legends
+1 Ring of the Lucii
+1 Sol Ring
+1 Sting, the Glinting Dagger
+1 Sword of the Animist
+1 Talisman of Hierarchy
+1 Tenza, Godo's Maul
+1 The Circle of Loyalty
+1 The Irencrag
+1 The Reaver Cleaver
+1 The Spear of Leonidas
+1 Umezawa's Jitte
+1 Aryel, Knight of Windgrace
+1 Balan, Wandering Knight
+1 Celes, Rune Knight
+1 Danitha Capashen, Paragon
+1 Danitha, Benalia's Hope
+1 Dion, Bahamut's Dominant
+1 Elenda, Saint of Dusk
+1 Freya Crescent
+1 Haakon, Stromgald Scourge
+1 Inti, Seneschal of the Sun
+1 Kassandra, Eagle Bearer
+1 Merry, Esquire of Rohan
+1 Paladin Danse, Steel Maverick
+1 Paladin Elizabeth Taggerdy
+1 Rem Karolus, Stalwart Slayer
+1 Sentinel Sarah Lyons
+1 Shanid, Sleepers' Scourge
+1 Syr Vondam, Sunstar Exemplar
+1 Tori D'Avenant, Fury Rider
+1 Vona, Butcher of Magan
+1 Éomer, Marshal of Rohan
+1 Éowyn, Fearless Knight
+1 Damn
+1 Mythos of Snapdax
+1 Primevals' Glorious Rebirth
+1 Single Combat
+1 Urza's Ruinous Blast
+1 Dihada, Binder of Wills
+1 Knights' Charge

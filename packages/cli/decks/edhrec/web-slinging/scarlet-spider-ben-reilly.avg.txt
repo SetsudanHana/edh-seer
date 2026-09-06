@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/scarlet-spider-ben-reilly/web-slinging
+# theme Web-slinging (4 decks)
+
+Commander
+1 Scarlet Spider, Ben Reilly
+
+Deck
+1 Arcane Signet
+1 Cloudstone Curio
+1 Sol Ring
+1 The Ozolith
+1 Avengers Tower
+1 Command Tower
+1 Exotic Orchard
+1 Flamekin Village
+14 Forest
+1 Forgotten Cave
+1 Game Trail
+1 Gruul Turf
+1 Mossfire Valley
+12 Mountain
+1 Savage Mansion
+1 Stomping Ground
+1 Surveillance Room
+1 Temple of Abandon
+1 Axgard Cavalry
+1 Beast Whisperer
+1 Birds of Paradise
+1 Cheering Crowd
+1 Crossroads Watcher
+1 Dark Apostle
+1 Elvish Mystic
+1 Elvish Piper
+1 Enduring Vitality
+1 Fanatic of Rhonas
+1 Ghalta, Primal Hunger
+1 Guy in the Chair
+1 Human Torch, Johnny Storm
+1 Ilharg, the Raze-Boar
+1 Impervious Greatwurm
+1 Jaxis, the Troublemaker
+1 Kraven, Proud Predator
+1 Lizard, Connors's Curse
+1 Llanowar Elves
+1 Michelangelo, Improviser
+1 Primordial Pachyderm
+1 Raphael, Tough Turtle
+1 Rhino, Barreling Brute
+1 Seeker of Skybreak
+1 Spider Manifestation
+1 Spider-Man, Brooklyn Visionary
+1 Spider-Punk
+1 Spider-Rex, Daring Dino
+1 Stickytongue Sentinel
+1 Studious First-Year
+1 Temur Sabertooth
+1 The Thing, Ben Grimm
+1 Webspinner Cuff
+1 Wingnut, Bat on the Belfry
+1 Yisan, the Wanderer Bard
+1 Alien Invasion
+1 Branching Evolution
+1 Garruk's Uprising
+1 Most Wanted
+1 Rhythm of the Wild
+1 Warstorm Surge
+1 Fog
+1 Giant Growth
+1 Krosan Grip
+1 Repopulate
+1 Strength of Will
+1 Temur Battle Rage
+1 Terrific Team-Up
+1 Vines of the Recluse
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Kapow!
+1 Michelangelo's Technique
+1 New Generation's Technique
+1 Restorative Technique
+1 Rhino's Rampage
+1 Vandalblast

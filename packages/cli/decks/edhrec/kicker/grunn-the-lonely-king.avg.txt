@@ -1,0 +1,81 @@
+# edhrec average deck: https://edhrec.com/average-decks/grunn-the-lonely-king/kicker
+# theme Kicker (3 decks)
+
+Commander
+1 Grunn, the Lonely King
+
+Deck
+1 Bitterthorn, Nissa's Animus
+1 Blight Sickle
+1 Brass Knuckles
+1 Everflowing Chalice
+1 Grappling Hook
+1 Haunted Cloak
+1 Herd Heirloom
+1 Prowler's Helm
+1 Psychic Paper
+1 Skyclave Relic
+1 Sol Ring
+1 The Earth Crystal
+1 The Ozolith
+1 Trailblazer's Boots
+1 Ba Sing Se
+1 Base Camp
+1 Castle Garenbrig
+1 Cathedral of War
+1 Command Tower
+1 Evendo, Waking Haven
+26 Forest
+1 Forge of Heroes
+1 Opal Palace
+1 Rogue's Passage
+1 Throne of Makindi
+1 Bellowing Tanglewurm
+1 Brass Squire
+1 Challenger Troll
+1 Corrosive Ooze
+1 Cragplate Baloth
+1 Crashing Drawbridge
+1 Drumhunter
+1 Elfhame Druid
+1 Elvish Mystic
+1 Gilanra, Caller of Wirewood
+1 Hardbristle Bandit
+1 Ilysian Caryatid
+1 Krosan Druid
+1 Llanowar Elves
+1 Pouncing Wurm
+1 Silent Arbiter
+1 Skyclave Sentinel
+1 Sowing Mycospawn
+1 Taunting Arbormage
+1 Vigor
+1 Wolfbriar Elemental
+1 Alpha Authority
+1 Bear Umbra
+1 Branching Evolution
+1 Familiar Ground
+1 Level Up
+1 Snake Umbra
+1 Terrasymbiosis
+1 Treetop Bracers
+1 Blossoming Defense
+1 Evolution Charm
+1 Falling Timber
+1 Gaea's Gift
+1 Primal Bellow
+1 Ram Through
+1 Ranger's Guile
+1 Silkguard
+1 Smuggler's Surprise
+1 Snakeskin Veil
+1 Strength of the Tajuru
+1 Tyvar's Stand
+1 Chocobo Kick
+1 Emergent Growth
+1 Enlarge
+1 Grow from the Ashes
+1 Hunting Wilds
+1 Primal Growth
+1 Revenge of the Hunted
+1 Three Visits

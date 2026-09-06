@@ -1,0 +1,83 @@
+# edhrec average deck: https://edhrec.com/average-decks/ovika-enigma-goliath/creatureless
+# theme Creatureless (11 decks)
+
+Commander
+1 Ovika, Enigma Goliath
+
+Deck
+1 Arcane Signet
+1 Bender's Waterskin
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Coveted Jewel
+1 Darksteel Ingot
+1 Dreamstone Hedron
+1 Fellwar Stone
+1 Fire Diamond
+1 Firemind Vessel
+1 Fractured Powerstone
+1 Gilded Lotus
+1 Glittering Stockpile
+1 Hedron Archive
+1 Heraldic Banner
+1 Ichor Elixir
+1 Izzet Signet
+1 Mind Stone
+1 Patchwork Banner
+1 Sisay's Ring
+1 Sky Diamond
+1 Sol Ring
+1 Stonespeaker Crystal
+1 Talisman of Creativity
+1 Thought Vessel
+1 Thran Dynamo
+1 Worn Powerstone
+1 Command Tower
+1 Exotic Orchard
+1 Frostboil Snarl
+13 Island
+1 Izzet Boilerworks
+12 Mountain
+1 Prismari Campus
+1 Reliquary Tower
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Coastal Piracy
+1 Impact Tremors
+1 Raid Bombardment
+1 Shared Animosity
+1 Sorcerer Class
+1 Sunbird's Invocation
+1 Uncover the Moon-Letters
+1 Arcane Denial
+1 Artistic Refusal
+1 Big Score
+1 Chaos Warp
+1 Counterspell
+1 Dig Through Time
+1 Dramatic Reversal
+1 Fact or Fiction
+1 Frantic Search
+1 Harmonized Crescendo
+1 Negate
+1 Overwhelming Victory
+1 Perplexing Test
+1 Reality Heist
+1 Rowdy Research
+1 Tears of Rage
+1 Transcendent Message
+1 Aminatou's Augury
+1 Blasphemous Act
+1 Distant Melody
+1 Finale of Revelation
+1 Pyretic Charge
+1 Raise the Palisade
+1 Solve the Equation
+1 Spirit Water Revival
+1 Surge to Victory
+1 Treasure Cruise
+1 Volcanic Vision
+1 Windfall

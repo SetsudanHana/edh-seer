@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/DpXXiRLD3rNKJi7dQUjb5Q (source https://archidekt.com/decks/21858526)
+# tags Legends, Ninjas, Humans, Sneak, Ninjutsu, Samurai, Voltron, Burn, Historic; bracket 3; saved 2026-08-27; 11 tagged of 16003 indexed
+
+Commander
+1 Jin Sakai, Ghost of Tsushima
+
+Deck
+1 Aerial Extortionist
+1 Archpriest of Shadows
+1 Armored Skyhunter
+1 Ayara's Oathsworn
+1 Basim Ibn Ishaq
+1 Bastion Protector
+1 Breena, the Demagogue
+1 Captain America, Living Legend
+1 Cloud, Midgar Mercenary
+1 Danitha, Benalia's Hope
+1 Guardian of the Gateless
+1 Irma, Part-Time Mutant
+1 Jecht, Reluctant Guardian
+1 Ledger Shredder
+1 Puresteel Paladin
+1 Rev, Tithe Extractor
+1 Sakashima of a Thousand Faces
+1 Sheoldred, the Apocalypse
+1 Spark Double
+1 Spider-Woman, Stunning Savior
+1 Squall, SeeD Mercenary
+1 Summon: Yojimbo
+1 Taskmaster, Mercenary Mimic
+1 The Mighty Thor, Jane Foster
+1 The Sentry, Golden Guardian
+1 Tymna the Weaver
+1 Unstoppable Slasher
+1 Ajani Steadfast
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Buster Sword
+1 Captain America's Shield
+1 Conqueror's Flail
+1 Excalibur, Sword of Eden
+1 Genji Glove
+1 Hammer of Nazahn
+1 Helm of the Host
+1 Key to the Side-Door
+1 Lightning Greaves
+1 Pip-Boy 3000
+1 Sol Ring
+1 Sword of Feast and Famine
+1 Sword of Hearth and Home
+1 Sword of Light and Shadow
+1 Sword of War and Peace
+1 The Key to the Vault
+1 Umezawa's Jitte
+1 Avatar's Wrath
+1 Steelshaper's Gift
+1 Command Tower
+1 Drowned Catacomb
+1 Eiganjo Castle
+1 Hidden Lair
+7 Island
+1 Isolated Chapel
+1 Maze of Ith
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Shattered Sanctum
+1 Shineshadow Snarl
+7 Swamp
+1 Counterspell
+1 Dovin's Veto
+1 Holy Day
+1 Orim's Chant
+1 Path to Exile
+1 Settle the Wreckage
+1 Vampiric Tutor
+1 Dazzling Theater // Prop Room
+1 Duelist's Heritage
+1 Forge Anew
+1 Gift of Immortality
+1 Land Tax
+1 Nahiri's Binding
+1 Nevermore
+1 Propaganda
+1 Rhystic Study
+1 Smothering Tithe
+1 Super-Soldier Serum

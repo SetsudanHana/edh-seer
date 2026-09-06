@@ -1,0 +1,74 @@
+# edhrec deck https://edhrec.com/deckpreview/-KarZq1qcd5DrvDxgjwbWw (source https://archidekt.com/decks/24254607)
+# tags Aggro, Heroes, Web-slinging; bracket 2; saved 2026-08-03; 4 tagged of 802 indexed
+
+Commander
+1 Scarlet Spider, Ben Reilly
+
+Deck
+1 Abrade
+1 Bull's Strength
+1 Burn Bright
+1 Fog
+1 Giant Growth
+1 Lightning Strike
+1 Mortal's Resolve
+1 Repopulate
+1 Thrill of Possibility
+1 Titanic Growth
+1 Vines of the Recluse
+1 Alien Invasion
+1 Fight Rigging
+1 Harmonious Emergence
+1 Most Wanted
+1 Senseless Rage
+1 Silken Strength
+1 War Squeak
+1 Almighty Brushwagg
+1 Axgard Cavalry
+1 Bark-Knuckle Boxer
+1 Canyon Minotaur
+1 Circle of the Moon Druid
+1 Crossroads Watcher
+1 Earth Rumble Wrestlers
+1 Garenbrig Carver
+1 Gigantoad
+1 Goblin Trailblazer
+1 Guardian Gladewalker
+1 Hulking Raptor
+1 Human Torch, Johnny Storm
+1 Jadecraft Artisan
+1 Jukai Trainee
+1 Leafkin Druid
+1 Lizard, Connors's Curse
+1 Lurking Lizards
+1 Masked Meower
+1 Most Valuable Slayer
+1 Plundering Barbarian
+1 Primordial Pachyderm
+1 Raphael, Tough Turtle
+1 Scab-Clan Giant
+1 Spider Manifestation
+1 Spider-Rex, Daring Dino
+1 Studious First-Year
+1 Taxi Driver
+1 The Thing, Ben Grimm
+1 Treeguard Duo
+1 Wary Thespian
+1 Webspinner Cuff
+1 Wickerbough Elder
+1 Wingnut, Bat on the Belfry
+1 Zhur-Taa Druid
+1 Avengers Tower
+17 Forest
+17 Mountain
+1 Stomping Ground
+1 Surveillance Room
+1 Uncharted Haven
+1 Edge of Autumn
+1 Fade into Antiquity
+1 Kapow!
+1 Monstrify
+1 Restorative Technique
+1 Seek the Wilds
+1 Shared Roots
+1 They Went This Way

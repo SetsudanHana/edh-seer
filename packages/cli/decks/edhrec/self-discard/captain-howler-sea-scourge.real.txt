@@ -1,0 +1,78 @@
+# edhrec deck https://edhrec.com/deckpreview/zw29KAT1rNiUWqb5dh2YjQ (source https://archidekt.com/decks/26039202)
+# tags Wheels, Self-Discard; bracket 2; saved 2026-09-03; 195 tagged of 11725 indexed
+
+Commander
+1 Captain Howler, Sea Scourge
+
+Deck
+1 An Offer You Can't Refuse
+1 Big Score
+1 Broadside Barrage
+1 Counterspell
+1 Decaying Time Loop
+1 Demand Answers
+1 Fiery Temper
+1 Frantic Search
+1 Izzet Charm
+1 Pongify
+1 Prismari Command
+1 Temur Battle Rage
+1 Thrill of Possibility
+1 Anger
+1 Ant-Man, Elusive Avenger
+1 Astonishing Spider-Man
+1 Conspiracy Theorist
+1 Containment Construct
+1 Cunning Survivor
+1 Fear of Missing Out
+1 Forgotten Creation
+1 Ghost of Ramirez DePietro
+1 Ghostly Pilferer
+1 Hobgoblin, Mantled Marauder
+1 Inti, Seneschal of the Sun
+1 Invisible Stalker
+1 Ivora, Insatiable Heir
+1 Kiora, the Rising Tide
+1 Magmakin Artillerist
+1 Magus of the Wheel
+1 Malcolm, Keen-Eyed Navigator
+1 Marauding Mako
+1 Mary Read and Anne Bonny
+1 Mist-Cloaked Herald
+1 Overlord of the Floodpits
+1 Rhet-Tomb Mystic
+1 Rielle, the Everwise
+1 Scrounging Skyray
+1 Shoreline Looter
+1 Silent Hallcreeper
+1 Spider-Man, New Champion
+1 Starwinder
+1 Triton Shorestalker
+1 Wonder
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Key to the City
+1 Midnight Clock
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Blasphemous Act
+1 Faithless Looting
+1 Grab the Prize
+1 Nibelheim Aflame
+1 Turbulent Dreams
+1 Will of the Jeskai
+1 Windfall
+1 Command Tower
+1 Forgotten Cave
+15 Island
+1 Lonely Sandbar
+15 Mountain
+1 Rogue's Passage
+1 Shivan Reef
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Cool but Rude
+1 Mysterio's Mirage
+1 Tectonic Reformation
+1 Teferi's Ageless Insight

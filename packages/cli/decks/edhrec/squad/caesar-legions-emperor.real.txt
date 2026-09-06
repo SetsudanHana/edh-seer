@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/iky05JmpEBVia8k5ueDTKw (source https://archidekt.com/decks/15043334)
+# tags Sacrifice, Commander Matters, Pingers, Aristocrats, Humans, Squad, Tokens; bracket 3; saved 2026-07-10; 5 tagged of 22544 indexed
+
+Commander
+1 Caesar, Legion's Emperor
+
+Deck
+1 Adagia, Windswept Bastion
+1 Bojuka Bog
+1 Canyon Slough
+1 Clifftop Retreat
+1 Command Tower
+1 Desolate Mire
+1 Diamond City
+1 Dragonskull Summit
+1 Inspiring Vantage
+1 Isolated Chapel
+1 Mountain
+1 Multiversal Passage
+1 Nomad Outpost
+1 Path of Ancestry
+1 Pit of Offerings
+4 Plains
+1 Promising Vein
+1 Rugged Prairie
+1 Shadowblood Ridge
+1 Shadowy Backstreet
+1 Smoldering Marsh
+3 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Temple of Silence
+1 Temple of Triumph
+1 Volatile Fault
+1 Windbrisk Heights
+1 Anguished Unmaking
+1 Body Count
+1 Boros Charm
+1 Deadly Dispute
+1 Demand Answers
+1 Entrapment Maneuver
+1 Fell the Profane
+1 Generous Gift
+1 Gideon's Sacrifice
+1 Restoration Magic
+1 Secure the Wastes
+1 Wear // Tear
+1 Anointed Procession
+1 Bastion of Remembrance
+1 Endless Foot Assault
+1 Fervent Charge
+1 Fungal Fortitude
+1 Kaya's Ghostform
+1 Sothera, the Supervoid
+1 The Cave of Two Lovers
+1 Vampiric Rites
+1 Vault 11: Voter's Dilemma
+1 We Ride at Dawn
+1 Arcane Signet
+1 Bolas's Citadel
+1 Chromatic Lantern
+1 Eye of Ojer Taq
+1 Phoenix Fleet Airship
+1 Relic of Legends
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Tarrian's Journal
+1 Aron, Benalia's Ruin
+1 Baron Bertram Graywater
+1 Boggart Trawler
+1 Captivating Crew
+1 Curious Farm Animals
+1 Elas il-Kor, Sadistic Pilgrim
+1 Elder Arthur Maxson
+1 Emptiness
+1 Fire Navy Trebuchet
+1 Garna, Bloodfist of Keld
+1 General's Enforcer
+1 Joo Dee, One of Many
+1 Kambal, Profiteering Mayor
+1 Keeper of the Accord
+1 Lagomos, Hand of Hatred
+1 MacCready, Lamplight Mayor
+1 Morbid Opportunist
+1 Pitiless Plunderer
+1 Powder Ganger
+1 Sandbender Scavengers
+1 Securitron Squadron
+1 Syr Konrad, the Grim
+1 Wasteland Raider
+1 Yes Man, Personal Securitron
+1 Zulaport Cutthroat
+1 Heroic Reinforcements
+1 Hour of Reckoning
+1 Martial Coup
+1 Risky Shortcut
+1 Ruinous Ultimatum
+1 Seize the Spotlight
+1 Worthy Cost

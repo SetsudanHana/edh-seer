@@ -1,0 +1,103 @@
+# edhrec deck https://edhrec.com/deckpreview/EvS5p7GzQLNFb6i_wc08Hw (source https://archidekt.com/decks/23063633)
+# tags Discover, Midrange, Stompy, Dinosaurs; bracket 3; saved 2026-09-05; 313 tagged of 36245 indexed
+
+Commander
+1 Pantlaza, Sun-Favored
+
+Deck
+1 Akroma's Will
+1 Deflecting Swat
+1 Flawless Maneuver
+1 Heroic Intervention
+1 Kindred Summons
+1 Smuggler's Surprise
+1 Teferi's Protection
+1 Apex Altisaur
+1 Birds of Paradise
+1 Bloom Tender
+1 Bonehoard Dracosaur
+1 Bronzebeak Foragers
+1 Carnage Tyrant
+1 Curious Altisaur
+1 Delighted Halfling
+1 Devil Dinosaur
+1 Earthshaker Dreadmaw
+1 Elvish Mystic
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Fanatic of Rhonas
+1 Flaming Tyrannosaurus
+1 Fyndhorn Elves
+1 Ghalta and Mavren
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 Gishath, Sun's Avatar
+1 Hulking Raptor
+1 Hunting Velociraptor
+1 Kogla and Yidaro
+1 Llanowar Elves
+1 Polyraptor
+1 Ravenous Tyrannosaurus
+1 Regal Behemoth
+1 Regisaur Alpha
+1 Runic Armasaur
+1 Scion of Calamity
+1 Sunfrill Imitator
+1 Temple Altisaur
+1 Topiary Stomper
+1 Trumpeting Carnosaur
+1 Vaultborn Tyrant
+1 Wakening Sun's Avatar
+1 Wrathful Raptors
+1 Zacama, Primal Calamity
+1 Arcane Signet
+1 Sol Ring
+1 The Great Henge
+1 Arid Mesa
+1 Bloodstained Mire
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Cavern of Souls
+1 Command Tower
+1 Flooded Strand
+4 Forest
+1 Gaea's Cradle
+1 Hushwood Verge
+1 Jetmir's Garden
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Path of Ancestry
+1 Plains
+1 Plateau
+1 Reflecting Pool
+1 Sacred Foundry
+1 Savannah
+1 Scalding Tarn
+1 Secluded Courtyard
+1 Spectator Seating
+1 Spire Garden
+1 Stomping Ground
+1 Sunbillow Verge
+1 Taiga
+1 Temple Garden
+1 Thornspire Verge
+1 Three Tree City
+1 Unclaimed Territory
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Blasphemous Act
+1 Farseek
+1 Finale of Devastation
+1 Last March of the Ents
+1 Nature's Lore
+1 Savage Order
+1 Selvala's Stampede
+1 Soul's Majesty
+1 Three Visits
+1 Food Chain
+1 Garruk's Uprising
+1 Guardian Project
+1 Monstrous Vortex
+1 Rhythm of the Wild

@@ -1,0 +1,71 @@
+# edhrec deck https://edhrec.com/deckpreview/inLHjPbvaxRMK8jxJ-OBWg (source https://archidekt.com/decks/18869504)
+# tags Lands Matter, +1/+1 Counters, Land Animation; bracket 2; saved 2026-08-23; 53 tagged of 4704 indexed
+
+Commander
+1 Toph, Earthbending Master
+
+Deck
+1 Animist's Awakening
+1 Bala Ged Recovery
+1 Cracked Earth Technique
+1 Earth Rumble
+1 Earthbending Lesson
+1 Explore
+1 Harmonize
+1 Pick Your Poison
+1 Rockalanche
+1 Scale the Heights
+1 Sylvan Awakening
+1 Thirsting Roots
+1 Triumph of the Hordes
+1 Argoth, Sanctum of Nature
+1 Ba Sing Se
+1 Evolving Wilds
+36 Forest
+1 Secret Tunnel
+1 Terramorphic Expanse
+1 The Hunter Maze
+1 Avatar Kyoshi, Earthbender
+1 Badgermole
+1 Cultivator Colossus
+1 Earth Kingdom General
+1 Earthbending Student
+1 Embodiment of Insight
+1 Evolution Sage
+1 Famished Worldsire
+1 Kamahl, Fist of Krosa
+1 Lotus Cobra
+1 Mightform Harmonizer
+1 Oracle of Mul Daya
+1 Pollenbright Druid
+1 Springbloom Druid
+1 Sylvan Advocate
+1 The Boulder, Ready to Rumble
+1 Tifa Lockhart
+1 Toph, the Blind Bandit
+1 Waker of the Wilds
+1 Zopandrel, Hunger Dominus
+1 Beast Within
+1 Cycle of Renewal
+1 Defend the Hearth
+1 Harrow
+1 Inspiring Call
+1 Origin of Metalbending
+1 Plummet
+1 Return of the Wildspeaker
+1 Return to Nature
+1 Rocky Rebuke
+1 Roiling Regrowth
+1 Case of the Locked Hothouse
+1 Court of Bounty
+1 Earthbender Ascension
+1 Hardened Scales
+1 Ride the Shoopuf
+1 Sphere Grid
+1 Sylvan Library
+1 Tale of Katara and Toph
+1 The Legend of Kyoshi
+1 Wilderness Reclamation
+1 Nissa, Who Shakes the World
+1 Wrenn and Seven
+1 The Earth Crystal

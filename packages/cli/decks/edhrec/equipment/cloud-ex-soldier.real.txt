@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/CxmBpOaBovSxPye-uNgqPg (source https://archidekt.com/decks/17534718)
+# tags Equipment; bracket 2; saved 2026-09-05; 2946 tagged of 30652 indexed
+
+Commander
+1 Cloud, Ex-SOLDIER
+
+Deck
+1 Aettir and Priwen
+1 Batterskull
+1 Blackblade Reforged
+1 Buster Sword
+1 Celestial Armor
+1 Chainsaw
+1 Embercleave
+1 Genji Glove
+1 Godsend
+1 Hero's Blade
+1 Hulkbuster Armor
+1 Hunter's Bow
+1 Long-Lost Lances
+1 Lothlórien Blade
+1 Mjölnir, Hammer of Thor
+1 Nettlecyst
+1 Plate Armor
+1 Resurrection Orb
+1 Sword of the Animist
+1 Swordsman's Steel
+1 Vibranium Strike Gauntlets
+1 Akiri, Fearless Voyager
+1 Birds of Paradise
+1 Bugenhagen, Wise Elder
+1 Captain America, Liberator
+1 Champion of Lambholt
+1 Cid, Freeflier Pilot
+1 Delighted Halfling
+1 Envoy of the Ancestors
+1 Karlach, Fury of Avernus
+1 Kellan, the Fae-Blooded
+1 Kodama of the West Tree
+1 Kutzil, Malamet Exemplar
+1 Kíli the Resourceful
+1 Ocelot Pride
+1 Professional Face-Breaker
+1 Professor Hojo
+1 Puresteel Paladin
+1 Ragavan, Nimble Pilferer
+1 Red XIII, Proud Warrior
+1 Ruby, Daring Tracker
+1 Sokka, Swordmaster
+1 Stoneforge Mystic
+1 Torgal, A Fine Hound
+1 Vincent, Vengeful Atoner
+1 Annie Joins Up
+1 Blacksmith's Talent
+1 Court of Ardenvale
+1 Fighter Class
+1 Forge Anew
+1 Hunter's Talent
+1 Reconnaissance
+1 Teleportation Circle
+1 Bala Ged Recovery
+1 Sundering Eruption
+1 Battlefield Improvisation
+1 Boros Charm
+1 Collective Resistance
+1 Heroic Intervention
+1 Judgment of Alexander
+1 Legion Leadership
+1 Origin of Metalbending
+1 The Eagles Are Coming!
+1 Untimely Malfunction
+1 Valakut Awakening
+1 Bonders' Enclave
+1 Bountiful Promenade
+1 Command Tower
+1 Commercial District
+1 Elegant Parlor
+1 Exotic Orchard
+3 Forest
+1 Jetmir's Garden
+1 Jungle Shrine
+1 Lush Portico
+1 Misty Rainforest
+3 Mountain
+1 Path of Ancestry
+3 Plains
+1 Rogue's Passage
+1 Sacred Foundry
+1 Secluded Starforge
+1 Spire Garden
+1 Spire of Industry
+1 Stomping Ground
+1 Temple Garden
+1 The Lonely Mountain
+1 Urza's Cave
+1 Verdant Catacombs
+1 Windswept Heath
+1 Witch's Clinic
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth

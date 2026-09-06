@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/captain-howler-sea-scourge/self-discard
+# theme Self-Discard (195 decks)
+
+Commander
+1 Captain Howler, Sea Scourge
+
+Deck
+1 Arcane Signet
+1 Boosted Sloop
+1 Brass's Tunnel-Grinder
+1 Fellwar Stone
+1 Izzet Signet
+1 Key to the City
+1 Monument to Endurance
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 Ash Barrens
+1 Cascade Bluffs
+1 Cephalid Coliseum
+1 Command Tower
+1 Desolate Lighthouse
+1 Forgotten Cave
+1 Frostboil Snarl
+1 Geier Reach Sanitarium
+9 Island
+1 Izzet Boilerworks
+1 Lonely Sandbar
+9 Mountain
+1 Reliquary Tower
+1 Riverpyre Verge
+1 Rogue's Passage
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Anger
+1 Brallin, Skyshark Rider
+1 Containment Construct
+1 Cunning Survivor
+1 Fear of Missing Out
+1 Ghost of Ramirez DePietro
+1 Ghostly Pilferer
+1 Glint-Horn Buccaneer
+1 Inti, Seneschal of the Sun
+1 Invisible Stalker
+1 Ivora, Insatiable Heir
+1 Kiora, the Rising Tide
+1 Kitsa, Otterball Elite
+1 Ledger Shredder
+1 Magmakin Artillerist
+1 Magus of the Wheel
+1 Malcolm, Alluring Scoundrel
+1 Malcolm, Keen-Eyed Navigator
+1 Marauding Mako
+1 Mary Read and Anne Bonny
+1 Rielle, the Everwise
+1 Scrounging Skyray
+1 Surly Badgersaur
+1 The Locust God
+1 Wonder
+1 Cool but Rude
+1 Ominous Seas
+1 Shark Typhoon
+1 Teferi's Ageless Insight
+1 An Offer You Can't Refuse
+1 Big Score
+1 Broadside Barrage
+1 Chaos Warp
+1 Counterspell
+1 Decaying Time Loop
+1 Demand Answers
+1 Frantic Search
+1 Izzet Charm
+1 Prismari Command
+1 Refute
+1 Temur Battle Rage
+1 Thrill of Possibility
+1 Tolarian Winds
+1 Unexpected Windfall
+1 Kaito, Cunning Infiltrator
+1 Blasphemous Act
+1 Careful Study
+1 Cathartic Reunion
+1 Chandra's Ignition
+1 Change of Fortune
+1 Faithless Looting
+1 Lórien Revealed
+1 Windfall

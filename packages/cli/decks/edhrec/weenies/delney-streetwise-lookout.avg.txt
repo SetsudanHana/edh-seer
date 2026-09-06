@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/delney-streetwise-lookout/weenies
+# theme Weenies (87 decks)
+
+Commander
+1 Delney, Streetwise Lookout
+
+Deck
+1 Arcane Signet
+1 Lightning Greaves
+1 Meekstone
+1 Oketra's Monument
+1 Panharmonicon
+1 Pearl Medallion
+1 Skullclamp
+1 Sol Ring
+1 Castle Ardenvale
+1 Eiganjo, Seat of the Empire
+1 Emeria, the Sky Ruin
+1 Minas Tirith
+1 Nykthos, Shrine to Nyx
+27 Plains
+1 Reliquary Tower
+1 War Room
+1 Archivist of Oghma
+1 Charismatic Conqueror
+1 Charming Prince
+1 Daxos, Blessed by the Sun
+1 Deep Gnome Terramancer
+1 Enduring Innocence
+1 Esper Sentinel
+1 Felidar Guardian
+1 Helpful Hunter
+1 Inspiring Overseer
+1 Karmic Guide
+1 Knight of the White Orchid
+1 Kor Cartographer
+1 Loran of the Third Path
+1 Mangara, the Diplomat
+1 Mentor of the Meek
+1 Michiko Konda, Truth Seeker
+1 Militia Bugler
+1 Moonshaker Cavalry
+1 Ocelot Pride
+1 Oltec Matterweaver
+1 Phelia, Exuberant Shepherd
+1 Recruiter of the Guard
+1 Reverent Hoplite
+1 Rumor Gatherer
+1 Saradoc, Master of Buckland
+1 Skyclave Apparition
+1 Solemn Simulacrum
+1 Soul Warden
+1 Soul's Attendant
+1 Spirited Companion
+1 Suture Priest
+1 Wall of Omens
+1 Welcoming Vampire
+1 Werefox Bodyguard
+1 Witch Enchanter
+1 Assemble the Players
+1 Land Tax
+1 Teleportation Circle
+1 Tocasia's Welcome
+1 Trouble in Pairs
+1 Akroma's Will
+1 Eerie Interlude
+1 Ephemerate
+1 Flare of Fortitude
+1 Flawless Maneuver
+1 Generous Gift
+1 Path to Exile
+1 Reprieve
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Elspeth, Sun's Champion
+1 Ascend from Avernus
+1 Austere Command
+1 Dusk // Dawn
+1 Sevinne's Reclamation
+1 The Battle of Bywater

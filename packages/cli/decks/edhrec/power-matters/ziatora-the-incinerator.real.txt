@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/vkCBSLVuhk-p8lnz4qY5Tg (source https://archidekt.com/decks/20031818)
+# tags Treasure, Sacrifice, Fling, Power Matters; bracket 3; saved 2026-09-03; 39 tagged of 10737 indexed
+
+Commander
+1 Ziatora, the Incinerator
+
+Deck
+1 Abrupt Decay
+1 Assassin's Trophy
+1 Beast Within
+1 Bulk Up
+1 Entomb
+1 Fake Your Own Death
+1 Fling
+1 Heroic Intervention
+1 Tamiyo's Safekeeping
+1 Terminate
+1 Atsushi, the Blazing Sky
+1 Birds of Paradise
+1 Daemogoth Titan
+1 Dina, Essence Brewer
+1 Elves of Deep Shadow
+1 Eternal Witness
+1 Feldon of the Third Path
+1 Formidable Speaker
+1 Ghalta, Primal Hunger
+1 Goblin Anarchomancer
+1 Goldspan Dragon
+1 Grave Researcher
+1 Gwenna, Eyes of Gaea
+1 Henzie "Toolbox" Torre
+1 Ignoble Hierarch
+1 Junji, the Midnight Sky
+1 Korvold, Fae-Cursed King
+1 Llanowar Elves
+1 Malignus
+1 Morbid Opportunist
+1 Mr. Orfeo, the Boulder
+1 Outcaster Trailblazer
+1 Ruby, Daring Tracker
+1 Sakura-Tribe Elder
+1 Selvala, Heart of the Wilds
+1 Smaug the Impenetrable
+1 Smaug, Wicked Worm
+1 Solphim, Mayhem Dominus
+1 Terror of the Peaks
+1 The Gitrog, Ravenous Ride
+1 Topiary Stomper
+1 Xenagos, God of Revels
+1 Xu-Ifit, Osteoharmonist
+1 Yargle and Multani
+1 Basilisk Collar
+1 Lightning Greaves
+1 Sol Ring
+1 The Skullspore Nexus
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Demonic Tutor
+1 Faithless Looting
+1 Kodama's Reach
+1 Nature's Lore
+1 Reanimate
+1 Sylvan Tutor
+1 Three Visits
+1 Victimize
+1 Bojuka Bog
+1 Cinder Glade
+1 Command Tower
+1 Dark Fortress
+1 Deathcap Glade
+1 Dragon-Cursed Halls
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Fabled Passage
+4 Forest
+1 Haunted Ridge
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Luxury Suite
+2 Mountain
+1 Rockfall Vale
+1 Rootbound Crag
+1 Smoldering Marsh
+1 Snow-Covered Forest
+1 Snow-Covered Mountain
+1 Snow-Covered Swamp
+1 Spire Garden
+1 Sulfurous Springs
+1 Swamp
+1 Takenuma, Abandoned Mire
+1 Training Compound
+1 Undergrowth Stadium
+1 Vernal Fen
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Ziatora's Proving Ground
+1 Defense of the Heart
+1 Garruk's Uprising
+1 Rhythm of the Wild
+1 Riveteers Ascendancy
+1 Sneak Attack
+1 Unnatural Growth

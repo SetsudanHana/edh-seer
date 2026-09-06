@@ -1,0 +1,102 @@
+# edhrec average deck: https://edhrec.com/average-decks/ramos-dragon-engine/battles
+# theme Battles (6 decks)
+
+Commander
+1 Ramos, Dragon Engine
+
+Deck
+1 Arcane Signet
+1 Bender's Waterskin
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Sol Ring
+1 Weather Maker
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Nomad Outpost
+1 Overgrown Tomb
+2 Plains
+1 Polluted Delta
+1 Reflecting Pool
+1 Reliquary Tower
+1 Sacred Foundry
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 Thespian's Stage
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Invasion of Alara
+1 Invasion of Arcavios
+1 Invasion of Azgol
+1 Invasion of Dominaria
+1 Invasion of Ergamon
+1 Invasion of Fiora
+1 Invasion of Gobakhan
+1 Invasion of Ikoria
+1 Invasion of Innistrad
+1 Invasion of Ixalan
+1 Invasion of Kaldheim
+1 Invasion of Kamigawa
+1 Invasion of Karsus
+1 Invasion of Moag
+1 Invasion of New Phyrexia
+1 Invasion of Pyrulea
+1 Invasion of Ravnica
+1 Invasion of Segovia
+1 Invasion of Shandalar
+1 Invasion of Tolvada
+1 Invasion of Vryn
+1 Invasion of Xerex
+1 Invasion of Zendikar
+1 Cemetery Desecrator
+1 Chief Warg's Company
+1 Chief of the Wilds
+1 Faeburrow Elder
+1 Glissa Sunslayer
+1 Head of the Hunt
+1 Nighthowl Pursuer
+1 Portent Tracker
+1 Rampaging Geoderm
+1 Thanos, the Mad Titan
+1 Thief of Blood
+1 Vampire Hexmage
+1 Wilderland Scrounger
+1 Binding the Old Gods
+1 Jeskai Ascendancy
+1 Spelunking
+1 Anguished Unmaking
+1 Brokers Charm
+1 Clever Concealment
+1 Growth Spiral
+1 Maestros Charm
+1 Obscura Charm
+1 Riveteers Charm
+1 Siphon Insight
+1 Void Rend
+1 Aether Snap
+1 Bala Ged Recovery
+1 Begin the Invasion
+1 Farseek
+1 Moment of Reckoning
+1 Nature's Lore
+1 Painful Truths
+1 Render Inert
+1 Secret Rendezvous
+1 Three Visits

@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/BsxWNWOw9aUjyTOeCWxqOw (source https://archidekt.com/decks/18702308)
+# tags Towns, Legends; bracket 2; saved 2026-08-15; 3 tagged of 32746 indexed
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Ancient Adamantoise
+1 Ardbert, Warrior of Darkness
+1 Ashling, Rekindled
+1 Avacyn, Angel of Hope
+1 Bloom Tender
+1 Bruce Banner
+1 Captain America, Living Legend
+1 Cecil, Dark Knight
+1 Chameleon, Master of Disguise
+1 Dion, Bahamut's Dominant
+1 Eirdu, Carrier of Dawn
+1 Faeburrow Elder
+1 Firebird, Blazing Ranger
+1 Gimli of the Glittering Caves
+1 Gold-Forged Thopteryx
+1 Jenova, Ancient Calamity
+1 Jumbo Cactuar
+1 Kenrith, the Returned King
+1 Mr. Foxglove
+1 Papalymo Totolymo
+1 Progenitus
+1 Radagast of Rhosgobel
+1 Ruby, Daring Tracker
+1 Rufus Shinra
+1 Sazh Katzroy
+1 Serah Farron
+1 Shalai, Voice of Plenty
+1 Sygg, Wanderwine Wisdom
+1 Taskmaster, Mercenary Mimic
+1 Teferi, Mage of Zhalfir
+1 Thalia, Heretic Cathar
+1 Thancred Waters
+1 The Walls of Ba Sing Se
+1 The Wandering Minstrel
+1 Tymna the Weaver
+1 Tyvar, the Pummeler
+1 Venat, Heart of Hydaelyn
+1 Vincent Valentine
+1 Arcane Signet
+1 Buster Sword
+1 Chromatic Lantern
+1 Genji Glove
+1 Herd Heirloom
+1 Mirror of Galadriel
+1 Relic of Legends
+1 Sol Ring
+1 Swiftfoot Boots
+1 World Map
+1 Baron, Airship Kingdom
+1 Breeding Pool
+1 Command Tower
+1 Crossroads Village
+1 Exotic Orchard
+3 Forest
+1 Frontier Bivouac
+1 Gohn, Town of Ruin
+1 Guadosalam, Farplane Gateway
+1 Insomnia, Crown City
+3 Island
+2 Mountain
+4 Plains
+1 Plaza of Heroes
+1 Rabanastre, Royal City
+1 Sandsteppe Citadel
+1 Scoured Barrens
+1 Seething Landscape
+1 Shattered Landscape
+1 Sheltering Landscape
+1 Steam Vents
+3 Swamp
+1 Temple of Plenty
+1 The Grey Havens
+1 The World Tree
+1 Thriving Heath
+1 Treno, Dark City
+1 Woodland Cemetery
+1 Battle Menu
+1 Cryptic Command
+1 Duty Beyond Death
+1 Nature's Claim
+1 Overkill
+1 Reprieve
+1 Restoration Magic
+1 The Eagles Are Coming!
+1 Brotherhood's End
+1 Nibelheim Aflame
+1 Reach the Horizon
+1 Vindicate
+1 Sheltered by Ghosts

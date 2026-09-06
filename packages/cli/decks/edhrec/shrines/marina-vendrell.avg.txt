@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/marina-vendrell/shrines
+# theme Shrines (11 decks)
+
+Commander
+1 Marina Vendrell
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Keys to the House
+1 Sol Ring
+1 Arcane Sanctum
+1 Azorius Guildgate
+1 Baldur's Gate
+1 Boros Guildgate
+1 Citadel Gate
+1 Cliffgate
+1 Command Tower
+1 Dimir Guildgate
+1 Exotic Orchard
+3 Forest
+1 Gateway Plaza
+1 Gond Gate
+1 Gruul Guildgate
+1 Heap Gate
+3 Island
+1 Izzet Guildgate
+1 Manor Gate
+1 Maze's End
+2 Mountain
+1 Orzhov Guildgate
+1 Path of Ancestry
+3 Plains
+1 Rakdos Guildgate
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Sea Gate
+1 Seaside Citadel
+1 Selesnya Guildgate
+2 Swamp
+1 Terramorphic Expanse
+1 Valgavoth's Lair
+1 Destiny Spinner
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Entity Tracker
+1 Ghostly Dancers
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Lost Wisdom
+1 Go-Shintai of Shared Purpose
+1 Gremlin Tamer
+1 Inquisitive Glimmer
+1 Jukai Naturalist
+1 Sanctum Weaver
+1 Setessan Champion
+1 Starfield Mystic
+1 Sythis, Harvest's Hand
+1 Weaver of Harmony
+1 Zur the Enchanter
+1 Zur, Eternal Schemer
+1 Bottomless Pool // Locker Room
+1 Central Elevator // Promising Stairs
+1 Crescent Island Temple
+1 Dazzling Theater // Prop Room
+1 Enchantress's Presence
+1 Funeral Room // Awakening Hall
+1 Greenhouse // Rickety Gazebo
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Life's Web
+1 Honden of Night's Reach
+1 Honden of Seeing Winds
+1 Meat Locker // Drowned Diner
+1 Mirror Room // Fractured Realm
+1 Northern Air Temple
+1 Restricted Office // Lecture Hall
+1 Roaring Furnace // Steaming Sauna
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Shattered Heights
+1 Sanctum of Stone Fangs
+1 Sanctum of Tranquil Light
+1 Secret Arcade // Dusty Parlor
+1 Southern Air Temple
+1 Spelunking
+1 Surgical Suite // Hospital Room
+1 The Spirit Oasis
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Negate
+1 Swords to Plowshares
+1 Aang's Journey
+1 Extinguish All Hope
+1 Ruinous Ultimatum

@@ -1,0 +1,103 @@
+# edhrec deck https://edhrec.com/deckpreview/Hx3ZhqGnXy74kLl_fAK_Zw (source https://archidekt.com/decks/16737115)
+# tags Charge Counters, Proliferate; bracket 2; saved 2026-09-04; 257 tagged of 18506 indexed
+
+Commander
+1 Kilo, Apogee Mind
+
+Deck
+1 Academy Ruins
+1 Adagia, Windswept Bastion
+1 Ancient Den
+1 Arid Mesa
+1 Buried Ruin
+1 Command Tower
+1 Diamond City
+1 Exotic Orchard
+1 Flooded Strand
+1 Great Furnace
+1 Hallowed Fountain
+4 Island
+1 Minamo, School at Water's Edge
+1 Mistrise Village
+1 Nesting Grounds
+1 Opal Palace
+1 Plains
+1 Raugrin Triome
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Saprazzan Skerry
+1 Scalding Tarn
+1 Seat of the Synod
+1 Silverbluff Bridge
+1 Strip Mine
+1 Sulfur Falls
+1 The Mycosynth Gardens
+1 Tolaria West
+1 Training Center
+1 Tundra
+1 Uthros, Titanic Godcore
+1 Volcanic Island
+1 Wasteland
+1 Aetherize
+1 Clever Concealment
+1 Consult the Star Charts
+1 Counterspell
+1 Delay
+1 Dispatch
+1 Ertai's Meddling
+1 Ripples of Potential
+1 Swan Song
+1 Swords to Plowshares
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Astral Cornucopia
+1 Darksteel Reactor
+1 Everflowing Chalice
+1 Insight Engine
+1 Inspirit, Flagship Vessel
+1 Long-Range Sensor
+1 Lux Artillery
+1 Lux Cannon
+1 Manifold Key
+1 Pentad Prism
+1 Relic of Legends
+1 Replicating Ring
+1 Shorikai, Genesis Engine
+1 Simulacrum Synthesizer
+1 Solar Array
+1 The Eternity Elevator
+1 The Mind Stone
+1 The Seriema
+1 Thought Vessel
+1 Unwinding Clock
+1 Uthros Research Craft
+1 All Will Be One
+1 As Foretold
+1 Mystic Remora
+1 Norn's Decree
+1 Pemmin's Aura
+1 Propaganda
+1 Resourceful Defense
+1 Together Forever
+1 Trouble in Pairs
+1 Anim Pakal, Thousandth Moon
+1 Danny Pink
+1 Goblin Engineer
+1 Goldberry, River-Daughter
+1 Iron Spider, Stark Upgrade
+1 Leech Bonder
+1 Mindless Automaton
+1 Myojin of Cryptic Dreams
+1 Myojin of Roaring Blades
+1 Patrolling Peacemaker
+1 Pensive Professor
+1 Rikku, Resourceful Guardian
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Urza, Lord High Artificer
+1 Austere Command
+1 Damning Verdict
+1 Stock Up
+1 Vandalblast
+1 Tezzeret the Seeker
+1 Tezzeret, Cruel Captain

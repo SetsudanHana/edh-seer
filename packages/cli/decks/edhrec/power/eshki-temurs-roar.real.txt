@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/tqCD6fz_5VEOmQiusggbtg (source https://archidekt.com/decks/24482664)
+# tags Stompy, Power; bracket 3; saved 2026-08-17; 90 tagged of 14220 indexed
+
+Commander
+1 Eshki, Temur's Roar
+
+Deck
+1 Abzan Beastmaster
+1 Apex Devastator
+1 Arixmethes, Slumbering Isle
+1 Avenger of Zendikar
+1 Baloth Prime
+1 Bighorner Rancher
+1 Bloodbraid Challenger
+1 Bloodbraid Elf
+1 Bonny Pall, Clearcutter
+1 Bramble Sovereign
+1 Bugenhagen, Wise Elder
+1 Disciple of Freyalise
+1 Elvish Mystic
+1 End-Raze Forerunners
+1 Etali, Primal Storm
+1 Evercoat Ursine
+1 Fang, Roku's Companion
+1 Fractal Mascot
+1 Garruk's Packleader
+1 Ghalta, Primal Hunger
+1 Goblin Anarchomancer
+1 Goreclaw, Terror of Qal Sisma
+1 Halana and Alena, Partners
+1 Kodama of the East Tree
+1 Kyoshi Warrior Exemplars
+1 Leatherhead, Iron Gator
+1 Llanowar Elves
+1 Maelstrom Wanderer
+1 Mulldrifter
+1 Ogre Battledriver
+1 Omnath, Locus of Rage
+1 Port Razer
+1 Primeval Protector
+1 Rampaging Baloths
+1 Ruby, Daring Tracker
+1 Sakura-Tribe Elder
+1 Scourge of the Throne
+1 Selvala, Heart of the Wilds
+1 Slumbering Trudge
+1 Spearbreaker Behemoth
+1 Surrak Dragonclaw
+1 Tangled Florahedron
+1 Temur Battlecrier
+1 Terastodon
+1 Topiary Stomper
+1 Uro, Titan of Nature's Wrath
+1 Vigor
+1 Wan Shi Tong, All-Knowing
+1 Wayward Swordtooth
+1 Aggressive Biomancy
+1 Bridgeworks Battle
+1 Bushwhack
+1 Shamanic Revelation
+1 Stump Stomp
+1 Arcane Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Cascade Bluffs
+1 Cinder Glade
+1 Command Tower
+1 Copperline Gorge
+1 Exotic Orchard
+1 Ferrous Lake
+1 Flooded Grove
+6 Forest
+1 Game Trail
+4 Island
+1 Izzet Boilerworks
+1 Karplusan Forest
+1 Mossfire Valley
+1 Mosswort Bridge
+4 Mountain
+1 Overflowing Basin
+1 Rogue's Passage
+1 Rootbound Crag
+1 Shivan Reef
+1 Simic Growth Chamber
+1 Temple of the False God
+1 Yavimaya Coast
+1 Garruk's Uprising
+1 Rhythm of the Wild
+1 Temur Ascendancy
+1 Khalni Ambush
+1 Origin of Metalbending
+1 Turnabout
+1 Tyvar's Stand

@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/gorm-the-great-virtus-the-veiled/lure
+# theme Lure (8 decks)
+
+Commander
+1 Gorm the Great
+1 Virtus the Veiled
+
+Deck
+1 Grappling Hook
+1 Infiltration Lens
+1 Key to the Side-Door
+1 Nemesis Mask
+1 Quietus Spike
+1 Scytheclaw
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thieves' Tools
+1 Vorpal Sword
+1 Whispersilk Cloak
+1 Access Tunnel
+1 Bojuka Bog
+1 Command Tower
+1 Exotic Orchard
+10 Forest
+1 Golgari Rot Farm
+1 Hissing Quagmire
+1 Jungle Hollow
+1 Llanowar Wastes
+1 Maze of Ith
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Rogue's Passage
+10 Swamp
+1 Temple of Malady
+1 Twilight Mire
+1 Tyrite Sanctum
+1 Undergrowth Stadium
+1 Woodland Cemetery
+1 Anara, Wolvid Familiar
+1 Bloodletter of Aclazotz
+1 Crashing Drawbridge
+1 Deathcap Cultivator
+1 Fyndhorn Elves
+1 Glissa Sunslayer
+1 Guardian Augmenter
+1 Jangling Automaton
+1 Noble Quarry
+1 Ochran Assassin
+1 Ohran Frostfang
+1 Prized Unicorn
+1 Sakura-Tribe Elder
+1 Saryth, the Viper's Fang
+1 Taunting Elf
+1 Tempting Licid
+1 Treeshaker Chimera
+1 Unstoppable Slasher
+1 Varragoth, Bloodsky Sire
+1 Vigor
+1 Agent of the Shadow Thieves
+1 Binding the Old Gods
+1 Call of the Ring
+1 Lure
+1 Warlock Class
+1 Wound Reflection
+1 Assassin's Trophy
+1 Dark Ritual
+1 Deathsprout
+1 Destined // Lead
+1 Golgari Charm
+1 Heroic Intervention
+1 Khalni Ambush
+1 Nature's Claim
+1 Putrefy
+1 Revitalizing Repast
+1 Tamiyo's Safekeeping
+1 You Look Upon the Tarrasque
+1 Vraska the Unseen
+1 Cultivate
+1 Exsanguinate
+1 Farseek
+1 Genesis Storm
+1 Harmonize
+1 Kodama's Reach
+1 Nature's Lore
+1 Night's Whisper
+1 Rampant Growth
+1 Roar of Challenge
+1 Skull Storm

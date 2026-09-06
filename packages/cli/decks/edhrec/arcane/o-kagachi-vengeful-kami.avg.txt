@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/o-kagachi-vengeful-kami/arcane
+# theme Arcane (12 decks)
+
+Commander
+1 O-Kagachi, Vengeful Kami
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Long-Forgotten Gohei
+1 Sol Ring
+1 That Which Was Taken
+1 Arcane Sanctum
+1 Breeding Pool
+1 Cascading Cataracts
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+3 Forest
+1 Hallowed Fountain
+1 Indatha Triome
+4 Island
+2 Mountain
+1 Myriad Landscape
+1 Overgrown Tomb
+1 Path of Ancestry
+3 Plains
+1 Sacred Foundry
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Secluded Courtyard
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 Terramorphic Expanse
+1 Unclaimed Territory
+1 Watery Grave
+1 Wooded Foothills
+1 Zagoth Triome
+1 Ao, the Dawn Sky
+1 Atsushi, the Blazing Sky
+1 Bounteous Kirin
+1 Celestial Kirin
+1 Drogskol Captain
+1 Elder Pine of Jukai
+1 Haru-Onna
+1 Iname, Life Aspect
+1 Infernal Kirin
+1 Jugan, the Rising Star
+1 Kairi, the Swirling Sky
+1 Kami of False Hope
+1 Keiga, the Tide Star
+1 Kodama of the Center Tree
+1 Kodama of the South Tree
+1 Kyodai, Soul of Kamigawa
+1 Kyoki, Sanity's Eclipse
+1 Lifespinner
+1 Loam Dweller
+1 Nikko-Onna
+1 Oyobi, Who Split the Heavens
+1 Petalmane Baku
+1 Rattlechains
+1 Ryusei, the Falling Star
+1 Sire of the Storm
+1 Skyfire Kirin
+1 Thief of Hope
+1 Yosei, the Morning Star
+1 Yuki-Onna
+1 Call the Spirit Dragons
+1 Encroaching Dragonstorm
+1 Field of Souls
+1 Roiling Dragonstorm
+1 The Kami War
+1 Aether Shockwave
+1 Blessed Breath
+1 Consuming Vortex
+1 Desperate Ritual
+1 Ethereal Haze
+1 Evermind
+1 Horobi's Whisper
+1 Peer Through Depths
+1 Reach Through Mists
+1 Rend Flesh
+1 Soulless Revival
+1 Spiritual Visit
+1 Veil of Secrecy
+1 Wear Away
+1 Cultivate
+1 Eerie Procession
+1 Farseek
+1 Hex Magic
+1 Kodama's Reach
+1 Ribbons of the Reikai
+1 Terashi's Grasp
+1 Wakanda Forever!

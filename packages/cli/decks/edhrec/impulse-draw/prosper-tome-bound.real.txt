@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/RjidhZ-9pRiKLjdMM43gnA (source https://archidekt.com/decks/14196227)
+# tags Exile, Treasure, Theft, Impulse Draw; bracket 3; saved 2026-09-04; 212 tagged of 14208 indexed
+
+Commander
+1 Prosper, Tome-Bound
+
+Deck
+1 Animate Dead
+1 Baneful Omen
+1 Heroes for Hire
+1 Rain of Riches
+1 Rakdos Joins Up
+1 Revel in Riches
+1 Spiteful Banditry
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Fellwar Stone
+1 Jet Medallion
+1 Rakdos Signet
+1 Ruby Medallion
+1 Sol Ring
+1 Talisman of Indulgence
+1 Wondrous Crucible
+1 Archfiend of Depravity
+1 Bonehoard Dracosaur
+1 Cruel Administrator
+1 Dragonhawk, Fate's Tempest
+1 Etali, Primal Storm
+1 Generous Plunderer
+1 Goldspan Dragon
+1 Grave Titan
+1 Kalain, Reclusive Painter
+1 Keeper of Secrets
+1 Knuckles the Echidna
+1 Kokusho, the Evening Star
+1 Marionette Master
+1 Nalfeshnee
+1 Ornithopter of Paradise
+1 Rakdos, Patron of Chaos
+1 Rionya, Fire Dancer
+1 Shadow the Hedgehog
+1 Shard of the Void Dragon
+1 Smaug the Magnificent
+1 Smaug, Wicked Worm
+1 Trumpeting Carnosaur
+1 Tyrant's Familiar
+1 Ultimate Green Goblin
+1 Witch-king of Angmar
+1 Xorn
+1 Bedevil
+1 Hurl Through Hell
+1 Lightning Bolt
+1 Rakdos Charm
+1 Terminate
+1 Tibalt's Trickery
+1 Untimely Malfunction
+1 Blasphemous Act
+1 Breach the Multiverse
+1 Creative Technique
+1 Damnation
+1 Dreadbore
+1 Feed the Swarm
+1 Fevered Suspicion
+1 Hit the Mother Lode
+1 Inspired Tinkering
+1 Reanimate
+1 Vandalblast
+1 Wrenn's Resolve
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Flamekin Village
+1 Foreboding Ruins
+1 Graven Cairns
+1 Hanweir Battlements
+1 Haunted Ridge
+1 Luxury Suite
+9 Mountain
+1 Raucous Theater
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Spinerock Knoll
+1 Sulfurous Springs
+9 Swamp
+1 Tainted Peak

@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/Rwb6bIQmeGMTy2Jqstm8Hg (source https://archidekt.com/decks/9617011)
+# tags Oil Counters; bracket unset; saved 2025-06-10; 4 tagged of 3080 indexed
+
+Commander
+1 The Swarmlord
+
+Deck
+1 Adaptive Sporesinger
+1 Armored Scrapgorger
+1 Atmosphere Surgeon
+1 Atraxa's Skitterfang
+1 Axiom Engraver
+1 Cacophony Scamp
+1 Cankerbloom
+1 Cinderslash Ravager
+1 Contagious Vorrac
+1 Evolved Spinoderm
+1 Evolving Adaptive
+1 Exuberant Fuseling
+1 Ezuri, Stalker of Spheres
+1 Forgehammer Centurion
+1 Furnace Strider
+1 Gitaxian Raptor
+1 Glistener Seer
+1 Kuldotha Cackler
+1 Lattice-Blade Mantis
+1 Magmatic Sprinter
+1 Marvin, Murderous Mimic
+1 Oil-Gorger Troll
+1 Predation Steward
+1 Rustvine Cultivator
+1 Sawblade Scamp
+1 Serum-Core Chimera
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Trawler Drake
+1 Urabrask's Anointer
+1 Vindictive Flamestoker
+1 Watchful Blisterzoa
+1 Arcane Signet
+1 Churning Reservoir
+1 Defense Grid
+1 Furnace Skullbomb
+1 Meldweb Strider
+1 Mindsplice Apparatus
+1 Moss Diamond
+1 Simic Signet
+1 Sol Ring
+1 Tablet of Compleation
+1 Tamiyo's Immobilizer
+1 The Filigree Sylex
+1 Urabrask's Forge
+1 Carnivorous Canopy
+1 Cultivate
+1 Explosive Vegetation
+1 Rampant Growth
+1 Scale the Heights
+1 Stump Stomp
+1 Tezzeret's Gambit
+1 Unnatural Restoration
+1 Counterspell
+1 Experimental Augury
+1 Fertilid's Favor
+1 Horrid Vigor
+1 Reject Imperfection
+1 See Double
+1 Serum Snare
+1 Volt Charge
+1 Evolving Wilds
+9 Forest
+1 Game Trail
+9 Island
+1 Lakeside Shack
+5 Mountain
+1 Restless Spire
+1 Rugged Highlands
+1 Silverbluff Bridge
+1 Simic Growth Chamber
+1 Tangled Islet
+1 Temple of the False God
+1 Terramorphic Expanse
+1 The Monumental Facade
+1 Thornwood Falls
+1 Thriving Isle
+1 Vineglimmer Snarl
+1 Extravagant Replication

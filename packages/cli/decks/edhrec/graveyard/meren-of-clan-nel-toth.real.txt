@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/AbqxrKltTBYmf3s6lSRvyg (source https://archidekt.com/decks/25288348)
+# tags Tokens, Reanimator, Self-Mill, Graveyard; bracket 2; saved 2026-09-05; 642 tagged of 22045 indexed
+
+Commander
+1 Meren of Clan Nel Toth
+
+Deck
+1 Abrupt Decay
+1 Assassin's Trophy
+1 Dina's Guidance
+1 Entomb
+1 Fell the Profane
+1 Putrefy
+1 Revitalizing Repast
+1 Animate Dead
+1 Awakening Zone
+1 Bitterblossom
+1 Black Market Connections
+1 Crawling Infestation
+1 Crawling Sensation
+1 From Beyond
+1 Journey to Eternity
+1 Ripples of Undeath
+1 Arcane Signet
+1 Cauldron of Essence
+1 Skullclamp
+1 Sol Ring
+1 Beast Whisperer
+1 Bitterbloom Bearer
+1 Braids, Arisen Nightmare
+1 Chatterfang, Squirrel General
+1 Chief Warg's Company
+1 Creakwood Liege
+1 Elves of Deep Shadow
+1 Elvish Mystic
+1 Fauna Shaman
+1 Glissa Sunslayer
+1 Grave Researcher
+1 Gray Merchant of Asphodel
+1 Grim Haruspex
+1 Hapatra, Vizier of Poisons
+1 Hermit Druid
+1 Honest Rutstein
+1 Izoni, Thousand-Eyed
+1 Junji, the Midnight Sky
+1 Llanowar Elves
+1 Mole Man, Moloid Master
+1 Mycoloth
+1 Old Rutstein
+1 Ophiomancer
+1 Pitiless Plunderer
+1 Priest of Forgotten Gods
+1 Sakura-Tribe Elder
+1 Satyr Wayfinder
+1 Scurry of Squirrels
+1 Sheoldred, Whispering One
+1 Skull Prophet
+1 Spore Frog
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 Twilight Diviner
+1 Ulamog, the Defiler
+1 Wight of the Reliquary
+1 Buried Alive
+1 Diabolic Intent
+1 Primal Growth
+1 Reanimate
+1 Rise of the Witch-king
+1 Victimize
+1 Command Tower
+10 Forest
+1 Llanowar Wastes
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Phyrexian Tower
+14 Swamp
+1 Tainted Wood
+1 Takenuma, Abandoned Mire
+1 Twilight Mire
+1 Underground Mortuary
+1 Vernal Fen
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Liliana, Dreadhorde General

@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/5StasiP1obloBAlfjeCp4w (source https://archidekt.com/decks/16706795)
+# tags Glass Cannon, Equipment, Voltron; bracket 3; saved 2026-08-20; 14 tagged of 14516 indexed
+
+Commander
+1 Lightning, Army of One
+
+Deck
+1 Adagia, Windswept Bastion
+1 Arena of Glory
+1 Arid Mesa
+1 Battlefield Forge
+1 Boros Garrison
+1 Buried Ruin
+1 Cavern of Souls
+1 Clifftop Retreat
+1 Command Tower
+1 Hall of the Bandit Lord
+2 Mountain
+1 Path of Ancestry
+8 Plains
+1 Plaza of Heroes
+1 Rogue's Passage
+1 Rugged Prairie
+1 Sacred Foundry
+1 Scorched Ruins
+1 Secluded Starforge
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 Temple of the False God
+1 Tyrite Sanctum
+1 Aettir and Priwen
+1 Arcane Signet
+1 Argentum Armor
+1 Buster Sword
+1 Champion's Helm
+1 Colossus Hammer
+1 Commander's Plate
+1 Excalibur, Sword of Eden
+1 Genji Glove
+1 Hammer of Nazahn
+1 Kaldra Compleat
+1 Masterwork of Ingenuity
+1 Mithril Coat
+1 Mjölnir, Hammer of Thor
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Feast and Famine
+1 Sword of Fire and Ice
+1 Sword of Hearth and Home
+1 Akki Battle Squad
+1 Ardenn, Intrepid Archaeologist
+1 Bastion Protector
+1 Bilbo, Unexpected Adventurer
+1 Bruenor Battlehammer
+1 Cloud, Midgar Mercenary
+1 Codsworth, Handy Helper
+1 Esper Sentinel
+1 Halvar, God of Battle
+1 Kediss, Emberclaw Familiar
+1 Kíli the Resourceful
+1 Lizard Blades
+1 Puresteel Paladin
+1 Reyav, Master Smith
+1 Sram, Senior Edificer
+1 Stoneforge Mystic
+1 The Queen of Dale
+1 Battlefield Improvisation
+1 Boros Charm
+1 Deflecting Palm
+1 Destroy Evil
+1 Get Lost
+1 Inventory Management
+1 Path to Exile
+1 Rebuff the Wicked
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Wear // Tear
+1 Chandra's Ignition
+1 Idyllic Tutor
+1 Jeska's Will
+1 One Last Job
+1 Open the Armory
+1 Promise of Loyalty
+1 Single Combat
+1 Steelshaper's Gift
+1 Unfinished Business
+1 Duelist's Heritage
+1 Fighter Class
+1 Forge Anew
+1 Land Tax
+1 Mantle of the Ancients
+1 Sigarda's Aid
+1 Smothering Tithe
+1 Smuggler's Share
+1 Super-Soldier Serum
+1 Trouble in Pairs

@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/8G0ekkUQWVhtqpCFV3d5LA (source https://moxfield.com/decks/CEQl3nqgm0aVo2mf5h8NMQ)
+# tags Flying; bracket 3; saved 2026-09-05; 2400 tagged of 39340 indexed
+
+Commander
+1 Kaalia of the Vast
+
+Deck
+1 Aegis Angel
+1 Akroma, Angel of Wrath
+1 Akroma, Vision of Ixidor
+1 Angel of Despair
+1 Angel of Serenity
+1 Angelic Arbiter
+1 Angelic Skirmisher
+1 Archfiend of Depravity
+1 Aurelia, the Warleader
+1 Basandra, Battle Seraph
+1 Breathkeeper Seraph
+1 Burning-Rune Demon
+1 Demonlord Belzenlok
+1 Doom Whisperer
+1 Giada, Font of Hope
+1 Gisela, Blade of Goldnight
+1 Indulgent Tormentor
+1 Karmic Guide
+1 Liesa, Forgotten Archangel
+1 Lyra Dawnbringer
+1 Master of Cruelties
+1 Ob Nixilis, Unshackled
+1 Rakdos, Lord of Riots
+1 Resolute Archangel
+1 Reya Dawnbringer
+1 Rune-Scarred Demon
+1 Serra's Emissary
+1 Tariel, Reckoner of Souls
+1 Windborn Muse
+1 Akroma's Will
+1 Anguished Unmaking
+1 Boros Charm
+1 Crush Contraband
+1 Dark Ritual
+1 Path to Exile
+1 Rakdos Charm
+1 Rebuff the Wicked
+1 Swords to Plowshares
+1 Terminate
+1 Thrill of Possibility
+1 Utter End
+1 All-Out Assault
+1 Darksteel Mutation
+1 Ghostly Prison
+1 Kaya's Ghostform
+1 Rampage of the Valkyries
+1 Underworld Connections
+1 Warstorm Surge
+1 Arcane Signet
+1 Coalition Relic
+1 Commander's Sphere
+1 Orzhov Signet
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Wayfarer's Bauble
+1 Whispersilk Cloak
+1 Blood Crypt
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Furycalm Snarl
+1 Godless Shrine
+1 Isolated Chapel
+6 Mountain
+1 Myriad Landscape
+1 Nomad Outpost
+7 Plains
+1 Rocky Tar Pit
+1 Rogue's Passage
+1 Slayers' Stronghold
+6 Swamp
+1 Temple of Triumph
+1 Temple of the False God
+1 Unclaimed Territory
+1 Diabolic Tutor
+1 Faithless Looting
+1 Merciless Eviction
+1 Night's Whisper
+1 Read the Bones
+1 Sign in Blood
+1 Unburial Rites
+1 Vindicate

@@ -1,0 +1,85 @@
+# edhrec average deck: https://edhrec.com/average-decks/silk-web-weaver/web-slinging
+# theme Web-slinging (6 decks)
+
+Commander
+1 Silk, Web Weaver
+
+Deck
+1 Arcane Signet
+1 Commander's Sphere
+1 Iron Man Armor
+1 Lightning Greaves
+1 Pictures of Spider-Man
+1 Sol Ring
+1 Avengers Tower
+1 Blossoming Sands
+1 Canopy Vista
+1 Command Tower
+1 Daily Bugle Building
+12 Forest
+1 Fortified Village
+1 Overgrown Farmland
+11 Plains
+1 Suburban Sanctuary
+1 Sunpetal Grove
+1 Temple Garden
+1 Temple of Plenty
+1 Vibrant Cityscape
+1 Adeline, Resplendent Cathar
+1 Amazing Spider-Girl
+1 Arachne, Psionic Weaver
+1 Arasta of the Endless Web
+1 Aunt May
+1 Avacyn's Pilgrim
+1 Beast Whisperer
+1 Bennie Bracks, Zoologist
+1 Bess, Soul Nourisher
+1 Craterhoof Behemoth
+1 Elvish Mystic
+1 Gallant Citizen
+1 Guy in the Chair
+1 Katilda, Dawnhart Prime
+1 Kyler, Sigardian Emissary
+1 Llanowar Elves
+1 Maja, Bretagard Protector
+1 Mary Jane Watson
+1 Okoye, Dora Milaje Leader
+1 Radioactive Spider
+1 Rosie Cotton of South Lane
+1 Spectacular Spider-Man
+1 Spider-Girl, Legacy Hero
+1 Spider-Ham, Peter Porker
+1 Spider-Man India
+1 Spider-Man, Brooklyn Visionary
+1 Spider-Man, Miles Morales
+1 Spider-Man, To the Rescue
+1 Spider-Man, Web-Slinger
+1 Spider-UK
+1 Spiders-Man, Heroic Horde
+1 Storm, Windrider
+1 Torens, Fist of the Angels
+1 Web-Warriors
+1 Cathars' Crusade
+1 Cryptolith Rite
+1 Friendly Neighborhood
+1 Guardian Project
+1 Hardened Scales
+1 Intangible Virtue
+1 Parallel Lives
+1 Wall Crawl
+1 Web Up
+1 Web of Life and Destiny
+1 Arachnogenesis
+1 Heroic Intervention
+1 Panther Pounce
+1 Path to Exile
+1 Rapid Rescue
+1 Strength of Will
+1 Swords to Plowshares
+1 Terrific Team-Up
+1 Ultimate Alliance
+1 Cultivate
+1 Harmonize
+1 Nature's Lore
+1 Rampant Growth
+1 Three Visits

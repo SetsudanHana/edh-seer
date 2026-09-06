@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/adNnyBvceP2k6c0EKs-KMw (source https://archidekt.com/decks/5916892)
+# tags Saboteurs, Graveyard, Attack Triggers, Infect, Card Draw, Connive; bracket 3; saved 2026-09-03; 19 tagged of 3840 indexed
+
+Commander
+1 Kamiz, Obscura Oculus
+
+Deck
+1 Adarkar Wastes
+1 Bojuka Bog
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Deserted Beach
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fabled Passage
+1 Fetid Pools
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+3 Island
+1 Isolated Chapel
+1 Marsh Flats
+1 Morphic Pool
+1 Path of Ancestry
+1 Plains
+1 Polluted Delta
+1 Raffine's Tower
+1 Scrubland
+1 Sea of Clouds
+1 Shipwreck Marsh
+4 Swamp
+1 Tundra
+1 Underground River
+1 Underground Sea
+1 Vault of Champions
+1 Watery Grave
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Counterspell
+1 Despark
+1 Dig Through Time
+1 Dovin's Veto
+1 Fell the Profane
+1 Negate
+1 Path to Exile
+1 Swan Song
+1 Swords to Plowshares
+1 Utter End
+1 Void Rend
+1 Animate Dead
+1 Duelist's Heritage
+1 Glasswing Grace
+1 Teferi's Ageless Insight
+1 Arcane Signet
+1 Currency Converter
+1 Lavaspur Boots
+1 Mask of Memory
+1 Mask of the Schemer
+1 Monument to Endurance
+1 Sol Ring
+1 Swiftfoot Boots
+1 Winged Boots
+1 Archfiend of Ifnir
+1 Archpriest of Shadows
+1 Containment Construct
+1 Daxos of Meletis
+1 Fallen Shinobi
+1 Giver of Runes
+1 Gregor, Shrewd Magistrate
+1 Grim Hireling
+1 Gríma, Saruman's Footman
+1 Hoard Robber
+1 Ink-Eyes, Servant of Oni
+1 Likeness Looter
+1 Looter il-Kor
+1 Malcolm, Alluring Scoundrel
+1 Malcolm, Keen-Eyed Navigator
+1 Medomai the Ageless
+1 Misfortune Teller
+1 Mother of Runes
+1 Nashi, Moon Sage's Scion
+1 Necropolis Regent
+1 Phage the Untouchable
+1 Prosperous Thief
+1 Shadowmage Infiltrator
+1 Shoreline Looter
+1 Silent-Blade Oni
+1 Thief of Sanity
+1 Wonder
+1 Zareth San, the Trickster
+1 Austere Command
+1 Day of Judgment
+1 Divine Reckoning
+1 Dusk // Dawn
+1 Legions to Ashes
+1 Night's Whisper
+1 Stock Up
+1 Treasure Cruise
+1 Wrath of God

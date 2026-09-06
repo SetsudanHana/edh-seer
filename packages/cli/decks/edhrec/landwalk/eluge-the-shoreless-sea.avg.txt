@@ -1,0 +1,78 @@
+# edhrec average deck: https://edhrec.com/average-decks/eluge-the-shoreless-sea/landwalk
+# theme Landwalk (36 decks)
+
+Commander
+1 Eluge, the Shoreless Sea
+
+Deck
+1 Arcane Signet
+1 Decanter of Endless Water
+1 Quicksilver Fountain
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thought Vessel
+1 Wayfarer's Bauble
+1 Castle Vantress
+29 Island
+1 Lonely Sandbar
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Rogue's Passage
+1 War Room
+1 Archaeomancer
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Charix, the Raging Isle
+1 Chasm Skulker
+1 Colossal Whale
+1 Displacer Kitten
+1 Harbinger of the Seas
+1 Harbor Serpent
+1 Hullbreaker Horror
+1 Inkwell Leviathan
+1 Lord of Atlantis
+1 Master of the Pearl Trident
+1 Ojer Pakpatiq, Deepest Epoch
+1 Scourge of Fleets
+1 Serpent of the Endless Sea
+1 Stormtide Leviathan
+1 Streambed Aquitects
+1 Talrand, Sky Summoner
+1 The Flood of Mars
+1 Wavebreak Hippocamp
+1 Wonder
+1 Aqueous Form
+1 Fishliver Oil
+1 Propaganda
+1 Sea's Claim
+1 Shark Typhoon
+1 Aetherize
+1 Arcane Denial
+1 Blue Sun's Zenith
+1 Blur
+1 Brainstorm
+1 Counterspell
+1 Engulf the Shore
+1 Essence Flux
+1 Flow of Knowledge
+1 Frantic Search
+1 Ghostly Flicker
+1 High Tide
+1 Negate
+1 Opt
+1 Pongify
+1 Pull from Tomorrow
+1 Rewind
+1 Snap
+1 Aquitect's Will
+1 Curse of the Swine
+1 Finale of Revelation
+1 Flow of Ideas
+1 Lórien Revealed
+1 Mind Spring
+1 Ponder
+1 Spectral Deluge
+1 Time Stretch

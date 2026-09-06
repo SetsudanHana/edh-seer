@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/Vwet2oFvyyomhXSzWSW5KQ (source https://archidekt.com/decks/23799678)
+# tags Tempo, Control, Tap / Untap, Flying; bracket 3; saved 2026-09-03; 178 tagged of 11872 indexed
+
+Commander
+1 Derevi, Empyrial Tactician
+
+Deck
+1 Aang, Swift Savior
+1 Aven Interrupter
+1 Azure Beastbinder
+1 Bilbo, Luckwearer
+1 Bloom Tender
+1 Cartographer's Hawk
+1 Craterhoof Behemoth
+1 Edric, Spymaster of Trest
+1 Enduring Curiosity
+1 Faeburrow Elder
+1 Faerie Mastermind
+1 Flitterwing Nuisance
+1 Gudul Lurker
+1 Judge's Familiar
+1 Looter il-Kor
+1 Malcolm, Alluring Scoundrel
+1 Mausoleum Wanderer
+1 Mirror Entity
+1 Mist-Cloaked Herald
+1 Mockingbird
+1 Ohran Frostfang
+1 Selfless Spirit
+1 Shoreline Looter
+1 Silent Hallcreeper
+1 Siren Stormtamer
+1 Skyserpent Seeker
+1 Slither Blade
+1 Soltari Foot Soldier
+1 Spell Queller
+1 Starwinder
+1 Suspicious Stowaway
+1 The Wondrous Wasp
+1 Toski, Bearer of Secrets
+1 Triton Shorestalker
+1 Willie Lumpkin, Postman
+1 Witch Enchanter
+1 Access Denied
+1 Counterspell
+1 Dazzling Denial
+1 Delay
+1 Flare of Denial
+1 Lofty Denial
+1 Perch Protection
+1 Resculpt
+1 Sink into Stupor
+1 Swords to Plowshares
+1 Thraben Charm
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Barkchannel Pathway
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Demolition Field
+1 Exotic Orchard
+1 Faerie Conclave
+1 Flooded Grove
+1 Flooded Strand
+1 Forest
+1 Hallowed Fountain
+1 Hedge Maze
+1 Hengegate Pathway
+1 Island
+1 Lush Portico
+1 Meticulous Archive
+1 Misty Rainforest
+1 Mystic Gate
+1 Otawara, Soaring City
+1 Plains
+1 Prismatic Vista
+1 Rejuvenating Springs
+1 Restless Anchorage
+1 Sea of Clouds
+1 Selesnya Sanctuary
+1 Simic Growth Chamber
+1 Spara's Headquarters
+1 Talon Gates of Madara
+1 Temple Garden
+1 Turbulent Wilderness
+1 Windswept Heath
+1 Yavimaya Coast
+1 Ascend from Avernus
+1 Dusk // Dawn
+1 Preposterous Proportions
+1 Raise the Past
+1 Sea Gate Restoration
+1 Split Up
+1 Beastmaster Ascension
+1 Coastal Piracy
+1 Dollmaker's Shop // Porcelain Gallery
+1 Druids' Repository
+1 Fertile Ground
+1 March of the World Ooze
+1 Reconnaissance Mission
+1 Waterbender Ascension
+1 Bident of Thassa
+1 Dowsing Dagger
+1 Ghost Vacuum
+1 The Indomitable

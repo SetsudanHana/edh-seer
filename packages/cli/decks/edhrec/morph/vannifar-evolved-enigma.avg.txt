@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/vannifar-evolved-enigma/morph
+# theme Morph (300 decks)
+
+Commander
+1 Vannifar, Evolved Enigma
+
+Deck
+1 Arcane Signet
+1 Conjurer's Closet
+1 Cryptic Coat
+1 Scroll of Fate
+1 Simic Signet
+1 Sol Ring
+1 Talisman of Curiosity
+1 Branch of Vitu-Ghazi
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+10 Forest
+1 Hedge Maze
+1 Hinterland Harbor
+11 Island
+1 Misty Rainforest
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Zoetic Cavern
+1 Abhorrent Oculus
+1 Ainok Survivalist
+1 Arixmethes, Slumbering Isle
+1 Curator Beastie
+1 Deathmist Raptor
+1 Den Protector
+1 Displacer Kitten
+1 Eternal Witness
+1 Experiment Twelve
+1 Glitch Interpreter
+1 Hauntwoods Shrieker
+1 Ixidor, Reality Sculptor
+1 Ixidron
+1 Kadena's Silencer
+1 Kheru Spellsnatcher
+1 Koma, Cosmos Serpent
+1 Koma, World-Eater
+1 Kozilek, the Broken Reality
+1 Oblivious Bookworm
+1 Omarthis, Ghostfire Initiate
+1 Overgrown Zealot
+1 Printlifter Ooze
+1 Stratus Dancer
+1 Thassa, Deep-Dwelling
+1 Tunnel Tipster
+1 Uro, Titan of Nature's Wrath
+1 Vesuvan Shapeshifter
+1 Whisperwood Elemental
+1 Willbender
+1 Yedora, Grave Gardener
+1 Zimone, Mystery Unraveler
+1 Growing Dread
+1 Guardian Project
+1 Primordial Mist
+1 Secret Plans
+1 They Came from the Pipes
+1 Threats Around Every Corner
+1 Trail of Mystery
+1 Ugin's Mastery
+1 Beast Within
+1 Become Anonymous
+1 Blur
+1 Counterspell
+1 Displace
+1 Essence Flux
+1 Ghostly Flicker
+1 Growth Spiral
+1 Planar Incision
+1 Reality Shift
+1 Teferi's Time Twist
+1 Cultivate
+1 Hide in Plain Sight
+1 Nature's Lore
+1 Rampant Growth
+1 Under the Skin
+1 Valgavoth's Onslaught

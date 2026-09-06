@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/plO51sjHOv7yZ84XKbpumQ (source https://archidekt.com/decks/6141543)
+# tags Theft, Saboteurs, Unblockable; bracket 2; saved 2026-09-04; 17 tagged of 11318 indexed
+
+Commander
+1 Gonti, Canny Acquisitor
+
+Deck
+1 Amphibian Downpour
+1 Asceticism
+1 Bitterblossom
+1 Collective Restraint
+1 Impostor Syndrome
+1 No Mercy
+1 Point the Way
+1 Propaganda
+1 Sphere Grid
+1 Tale of Katara and Toph
+1 Waterbender Ascension
+1 An Offer You Can't Refuse
+1 Assassin's Trophy
+1 Beast Within
+1 Counterspell
+1 Heroic Intervention
+1 Sink into Stupor
+1 Arcane Signet
+1 Decanter of Endless Water
+1 Fishing Gear
+1 Sol Ring
+1 Thought Vessel
+1 Bitterbloom Bearer
+1 Cazur, Ruthless Stalker
+1 Cephalid Facetaker
+1 Changeling Outcast
+1 Dauthi Voidwalker
+1 Defiling Daemogoth
+1 Dimir Infiltrator
+1 Doc Aurlock, Grizzled Genius
+1 Ghostly Pilferer
+1 Glasspool Mimic
+1 Gríma, Saruman's Footman
+1 Mist-Cloaked Herald
+1 Nether Traitor
+1 Ohran Frostfang
+1 Old Gnawbone
+1 Sakiko, Mother of Summer
+1 Shadowmage Infiltrator
+1 Slither Blade
+1 Spark Double
+1 Toski, Bearer of Secrets
+1 Triton Shorestalker
+1 Trygon Predator
+1 Ukkima, Stalking Shadow
+1 Breeding Pool
+1 Command Tower
+1 Dimir Aqueduct
+1 Drowned Catacomb
+4 Forest
+1 Golgari Rot Farm
+1 Hedge Maze
+1 Hinterland Harbor
+4 Island
+1 Minas Morgul, Dark Fortress
+1 Misty Rainforest
+1 Morphic Pool
+1 Myriad Landscape
+1 Overgrown Tomb
+1 Polluted Delta
+1 Realm of Koh
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+4 Swamp
+1 Undercity Sewers
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Watery Grave
+1 Woodland Cemetery
+1 Zagoth Triome
+1 Cultivate
+1 Curse of the Swine
+1 Echocasting Symposium
+1 Farseek
+1 Germination Practicum
+1 Grim Tutor
+1 Hands of Binding
+1 Harvest Season
+1 Hidden Strings
+1 Irenicus's Vile Duplication
+1 Kodama's Reach
+1 Nature's Lore
+1 Profane Tutor
+1 Quantum Misalignment
+1 Spirit Water Revival
+1 Three Visits
+1 Kaito Shizuki
+1 Kaito, Cunning Infiltrator

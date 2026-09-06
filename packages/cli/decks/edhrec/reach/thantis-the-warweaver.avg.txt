@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/thantis-the-warweaver/reach
+# theme Reach (18 decks)
+
+Commander
+1 Thantis, the Warweaver
+
+Deck
+1 Arcane Signet
+1 Bow of Nylea
+1 Crawlspace
+1 Dolmen Gate
+1 Golgari Signet
+1 Herald's Horn
+1 Sol Ring
+1 Swiftfoot Boots
+1 Blood Crypt
+1 Cinder Glade
+1 Command Tower
+1 Darkbore Pathway
+1 Dragonskull Summit
+7 Forest
+1 Golgari Rot Farm
+5 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Rogue's Passage
+1 Rootbound Crag
+1 Savage Lands
+1 Smoldering Marsh
+1 Stomping Ground
+5 Swamp
+1 Swarmyard
+1 Vernal Fen
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Arachnus Spinner
+1 Arasta of the Endless Web
+1 Broodspinner
+1 Chainweb Aracnir
+1 Deadly Recluse
+1 Doom Weaver
+1 Dragonlair Spider
+1 Drider
+1 Glint Weaver
+1 Hatchery Spider
+1 Ishkanah, Grafwidow
+1 Kardur, Doomscourge
+1 Mirkwood Spider
+1 Obelisk Spider
+1 Old Fat Spider
+1 Penumbra Spider
+1 Rotwidow Pack
+1 Ruins Recluse
+1 Shelob, Child of Ungoliant
+1 Shelob, Dread Weaver
+1 Silklash Spider
+1 Skyfisher Spider
+1 Spider Manifestation
+1 Spinner of Souls
+1 Sporeweb Weaver
+1 Sweet-Gum Recluse
+1 Treetop Snarespinner
+1 Twin-Silk Spider
+1 Twitching Doll
+1 Watcher in the Web
+1 Arachnus Web
+1 Curse of Clinging Webs
+1 Curse of Opulence
+1 Deathreap Ritual
+1 No Mercy
+1 Revenge of Ravens
+1 Rite of the Raging Storm
+1 Shiny Impetus
+1 Wall Crawl
+1 Arachnogenesis
+1 Beast Within
+1 Fog
+1 Obscuring Haze
+1 Putrefy
+1 Supper for Spiders
+1 Terminate
+1 Terrifying Presence
+1 Lolth, Spider Queen
+1 Cultivate
+1 Disrupt Decorum
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Spider Spawning
+1 Swarmyard Massacre
+1 Three Visits

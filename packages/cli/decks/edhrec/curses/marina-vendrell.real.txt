@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/NWMFnpiTsKorYp2WReRuag (source https://archidekt.com/decks/22204039)
+# tags Tokens, Curses, Auras, Mill, Enchantress, ETB; bracket 3; saved 2026-07-29; 57 tagged of 15237 indexed
+
+Commander
+1 Marina Vendrell
+
+Deck
+1 Adarkar Wastes
+1 Alchemist's Refuge
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Commercial District
+1 Elegant Parlor
+1 Exotic Orchard
+1 Flooded Strand
+1 Forest
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Island
+1 Lush Portico
+1 Mountain
+1 Overgrown Tomb
+1 Plains
+1 Polluted Delta
+1 Raucous Theater
+1 Sacred Foundry
+1 Shivan Reef
+1 Starting Town
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 The World Tree
+1 Undercity Sewers
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya Coast
+1 Aminatou, Veil Piercer
+1 Archon of Sun's Grace
+1 Birds of Paradise
+1 Bloom Tender
+1 Destiny Spinner
+1 Doomwake Giant
+1 Eidolon of Blossoms
+1 Enduring Vitality
+1 Entity Tracker
+1 Faeburrow Elder
+1 Ghostly Dancers
+1 Gremlin Tamer
+1 Grim Guardian
+1 Jukai Naturalist
+1 Ondu Spiritdancer
+1 Sanctum Weaver
+1 Setessan Champion
+1 Sythis, Harvest's Hand
+1 Valley Floodcaller
+1 Yenna, Redtooth Regent
+1 Zur the Enchanter
+1 Amphibian Downpour
+1 As Foretold
+1 Copy Enchantment
+1 Curse of Bloodletting
+1 Curse of Clinging Webs
+1 Curse of Death's Hold
+1 Curse of Echoes
+1 Curse of Exhaustion
+1 Curse of Misfortunes
+1 Curse of Obsession
+1 Curse of Opulence
+1 Curse of Shaken Faith
+1 Curse of Surveillance
+1 Curse of Unbinding
+1 Curse of the Restless Dead
+1 Descent into Avernus
+1 Doubling Season
+1 Enchanted Evening
+1 Enchantress's Presence
+1 Estrid's Invocation
+1 Extravagant Replication
+1 Impact Tremors
+1 Leyline of Anticipation
+1 Maddening Hex
+1 Mirrormade
+1 Overwhelming Splendor
+1 Paradox Haze
+1 Primal Vigor
+1 Screams from Within
+1 Secret Arcade // Dusty Parlor
+1 Shadow of the Second Sun
+1 Songbirds' Blessing
+1 Sphere of Safety
+1 Sterling Grove
+1 Wound Reflection
+1 Cosmic Intervention
+1 Counterspell
+1 Dina's Guidance
+1 Farseek
+1 Open the Armory
+1 Sol Ring

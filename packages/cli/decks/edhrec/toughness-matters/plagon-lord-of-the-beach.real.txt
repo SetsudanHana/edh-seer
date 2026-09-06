@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/TJgMRy-7NbNwfU-_aaOBQg (source https://archidekt.com/decks/14077753)
+# tags Blink, Toughness Matters, Card Draw; bracket 3; saved 2026-08-30; 732 tagged of 4903 indexed
+
+Commander
+1 Plagon, Lord of the Beach
+
+Deck
+1 Adarkar Wastes
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hengegate Pathway
+7 Island
+1 Mystic Gate
+1 Mystic Sanctuary
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Riptide Laboratory
+1 Skycloud Expanse
+1 Temple of Enlightenment
+1 Aegis Turtle
+1 Brago, King Eternal
+1 Caelorna, Coral Tyrant
+1 Consecrated Sphinx
+1 Dauntless Dismantler
+1 Delney, Streetwise Lookout
+1 Dour Port-Mage
+1 Elesh Norn, Mother of Machines
+1 Gandalf the White
+1 Glasspool Mimic
+1 Grand Arbiter Augustin IV
+1 Hydroelectric Specimen
+1 Laboratory Maniac
+1 Ornithopter
+1 Ornithopter of Paradise
+1 Peregrine Drake
+1 Phyrexian Walker
+1 Preston, the Vanisher
+1 Psychosis Crawler
+1 Riptide Gearhulk
+1 Shield Sphere
+1 Shorecomber Crab
+1 Sokrates, Athenian Teacher
+1 Spellskite
+1 Starfield Vocalist
+1 Sunscape Familiar
+1 Thassa's Oracle
+1 Triskaidekaphile
+1 Wall of Omens
+1 Welcoming Vampire
+1 Arcane Denial
+1 Cloudshift
+1 Dawn's Truce
+1 Ephemerate
+1 Essence Flux
+1 Flare of Denial
+1 Flare of Fortitude
+1 Flicker of Fate
+1 Getaway Glamer
+1 Ghostly Flicker
+1 Justiciar's Portal
+1 Lae'zel's Acrobatics
+1 Mana Sculpt
+1 Momentary Blink
+1 Negate
+1 Parting Gust
+1 Siren's Ruse
+1 Slip On the Ring
+1 Snap
+1 Snapback
+1 Swords to Plowshares
+1 Waterbender's Restoration
+1 Arcane Signet
+1 Azorius Signet
+1 Decanter of Endless Water
+1 Panharmonicon
+1 Pearl Medallion
+1 Sapphire Medallion
+1 Sol Ring
+1 Talisman of Progress
+1 Thought Vessel
+1 Cut Your Losses
+1 Dusk // Dawn
+1 Fell the Mighty
+1 Slaughter the Strong
+1 Splash Portal
+1 Traumatize
+1 Jace, Wielder of Mysteries
+1 Scuttletide
+1 Teferi's Ageless Insight
+1 Touch the Spirit Realm

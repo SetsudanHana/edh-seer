@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/fb3e4pZhepqon1c617mzGw (source https://archidekt.com/decks/11577680)
+# tags Card Draw, Bounce, Artifacts; bracket 2; saved 2026-08-04; 72 tagged of 3373 indexed
+
+Commander
+1 Tameshi, Reality Architect
+
+Deck
+1 Abandoned Campground
+1 Ancient Den
+1 Command Tower
+1 Darksteel Citadel
+1 Evolving Wilds
+1 Glacial Fortress
+1 Gleaming Bastion
+17 Island
+1 Path of Ancestry
+1 Plains
+1 Port Town
+1 Power Depot
+1 Razortide Bridge
+1 Scene of the Crime
+1 Seat of the Synod
+1 Sharlayan, Nation of Scholars
+1 Temple of Enlightenment
+1 Thriving Heath
+1 Thriving Isle
+1 Tranquil Cove
+1 Aether Spellbomb
+1 Arcane Signet
+1 Azorius Signet
+1 Basilica Skullbomb
+1 Bronze Cudgels
+1 Cargo Ship
+1 Commander's Sphere
+1 Dispeller's Capsule
+1 Flight Spellbomb
+1 Marble Diamond
+1 Moonsnare Prototype
+1 Sol Ring
+1 Sunbeam Spellbomb
+1 Surgical Skullbomb
+1 Tamiyo's Logbook
+1 Traveler's Amulet
+1 Unidentified Hovership
+1 Wedding Invitation
+1 World Map
+1 Automated Artificer
+1 Burnished Hart
+1 Daggermaw Megalodon
+1 Dauntless Scrapbot
+1 Diversion Unit
+1 Fear of Impostors
+1 Fear of Isolation
+1 Guardians of Oboro
+1 Mendicant Core, Guidelight
+1 Mirrorshell Crab
+1 Mm'menon, the Right Hand
+1 Moon-Circuit Hacker
+1 Moonfolk Puzzlemaker
+1 Prosperous Thief
+1 PuPu UFO
+1 Runed Servitor
+1 Shardless Outlander
+1 Spirited Companion
+1 Splitskin Doll
+1 Steelswarm Operator
+1 The Reality Chip
+1 Voyager Quickwelder
+1 Borrowed Time
+1 Ethereal Armor
+1 Inventive Iteration
+1 Locked in the Cemetery
+1 Path to Redemption
+1 Sheltered by Ghosts
+1 Starlight Snare
+1 Tractor Beam
+1 Trapped in the Screen
+1 Bounce Off
+1 Desculpting Blast
+1 Disruption Protocol
+1 Don't Make a Sound
+1 Dreams of Laguna
+1 Erode
+1 Reality Heist
+1 Reroute Systems
+1 Scour for Scrap
+1 Secrets of the Key
+1 Stern Dismissal
+1 Fumigate
+1 Stock Up

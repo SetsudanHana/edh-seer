@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/ramos-dragon-engine/sunburst
+# theme Sunburst (9 decks)
+
+Commander
+1 Ramos, Dragon Engine
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Door to Nothingness
+1 Empowered Autogenerator
+1 Engineered Explosives
+1 Everflowing Chalice
+1 Expedition Map
+1 Fellwar Stone
+1 Fist of Suns
+1 Infused Arrows
+1 Lux Artillery
+1 Pentad Prism
+1 Sol Ring
+1 Solar Array
+1 Timeless Lotus
+1 Ancient Den
+1 Blood Crypt
+1 City of Brass
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+3 Forest
+4 Island
+1 Mana Confluence
+2 Mountain
+1 Path of Ancestry
+2 Plains
+1 Prairie Stream
+1 Reflecting Pool
+1 Rugged Highlands
+1 Smoldering Marsh
+1 Steam Vents
+1 Stomping Ground
+1 Sunken Hollow
+2 Swamp
+1 Temple of Epiphany
+1 Temple of Malice
+1 Temple of Mystery
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 The World Tree
+1 Undergrowth Stadium
+1 Arcbound Wanderer
+1 Birds of Paradise
+1 Bloom Tender
+1 Chromanticore
+1 Corpsejack Menace
+1 Crystalline Crawler
+1 Cyclonus, the Saboteur
+1 Darksteel Colossus
+1 Dryad of the Ilysian Grove
+1 Enthusiastic Mechanaut
+1 Etched Oracle
+1 Faeburrow Elder
+1 General Ferrous Rokiric
+1 Jenson Carthalion, Druid Exile
+1 Jhoira, Weatherlight Captain
+1 Kami of Whispered Hopes
+1 Kilo, Apogee Mind
+1 Lunar Avenger
+1 Maelstrom Archangel
+1 Patrolling Peacemaker
+1 Skyreach Manta
+1 Solarion
+1 Soundwave, Sonic Spy
+1 Suncrusher
+1 Surge Conductor
+1 Thought Monitor
+1 Two-Headed Hellkite
+1 Leyline of the Guildpact
+1 Mirari's Wake
+1 Omniscience
+1 Resourceful Defense
+1 Simic Ascendancy
+1 Abzan Charm
+1 Bant Charm
+1 Boros Charm
+1 Heroic Intervention
+1 Naya Charm
+1 Sultai Charm
+1 Swan Song
+1 Swords to Plowshares
+1 Unite the Coalition
+1 Bring to Light
+1 Conflux
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 River's Rebuke
+1 Three Visits

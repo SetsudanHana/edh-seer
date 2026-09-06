@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/TttMs9P9V6dccseXsDTLzg (source https://archidekt.com/decks/20772013)
+# tags Discover, Sea Creatures, Cycling; bracket 3; saved 2026-09-03; 180 tagged of 2854 indexed
+
+Commander
+1 Ellie and Alan, Paleontologists
+
+Deck
+1 Angel of the Ruins
+1 Arixmethes, Slumbering Isle
+1 Avenger en-Dal
+1 Benthic Anomaly
+1 Birds of Paradise
+1 Brinelin, the Moon Kraken
+1 Chulane, Teller of Tales
+1 Dawnstrider
+1 Devout Witness
+1 Drownyard Lurker
+1 Dryad of the Ilysian Grove
+1 Gilanra, Caller of Wirewood
+1 Greater Tanuki
+1 Imoti, Celebrant of Bounty
+1 Inga and Esika
+1 Kenessos, Priest of Thassa
+1 Kiora's Follower
+1 Kiora, Sovereign of the Deep
+1 Lorthos, the Tidemaker
+1 Merfolk Looter
+1 Mirrorshell Crab
+1 Monstrosity of the Lake
+1 Noble Hierarch
+1 River Serpent
+1 Scourge of Fleets
+1 Serpent of Yawning Depths
+1 Shipbreaker Kraken
+1 Slinn Voda, the Rising Deep
+1 Snapping Voidcraw
+1 Spawning Kraken
+1 Striped Riverwinder
+1 Summon: Leviathan
+1 Tidal Terror
+1 Titanoth Rex
+1 Tromokratis
+1 Troyan, Gutsy Explorer
+1 Waker of Waves
+1 Warped Tusker
+1 Yorion, Sky Nomad
+1 Austere Command
+1 Crush of Tentacles
+1 Nature's Lore
+1 Promise of Loyalty
+1 Skyshroud Claim
+1 Tragic Arrogance
+1 Wargate
+1 Whelming Wave
+1 Winnowing
+1 Canopy Vista
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flood Plain
+5 Forest
+1 Geier Reach Sanitarium
+1 Glacial Fortress
+1 Hedge Maze
+1 Hinterland Harbor
+14 Island
+1 Lush Portico
+1 Meticulous Archive
+1 Plains
+1 Port Town
+1 Prairie Stream
+1 Spara's Headquarters
+1 Temple of Enlightenment
+1 Temple of Mystery
+1 Temple of Plenty
+1 Vineglimmer Snarl
+1 Change of Plans
+1 Frantic Search
+1 Spell Swindle
+1 Swallowed by Leviathan
+1 Tenacity
+1 Garruk's Uprising
+1 Kozilek's Unsealing
+1 Mirari's Wake
+1 Kiora, Behemoth Beckoner
+1 Kiora, Master of the Depths
+1 Mask of the Schemer
+1 Matzalantli, the Great Door
+1 The Everflowing Well

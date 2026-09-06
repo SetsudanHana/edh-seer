@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/maccready-lamplight-mayor/weenies
+# theme Weenies (35 decks)
+
+Commander
+1 MacCready, Lamplight Mayor
+
+Deck
+1 Arcane Signet
+1 Meekstone
+1 Orzhov Signet
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Marsh Flats
+1 Minas Tirith
+1 Orzhov Basilica
+11 Plains
+1 Shadowy Backstreet
+1 Shattered Sanctum
+1 Shineshadow Snarl
+9 Swamp
+1 Tainted Field
+1 Vault of Champions
+1 Vault of the Archangel
+1 Charismatic Conqueror
+1 Commissar Severina Raine
+1 Corpse Knight
+1 Delney, Streetwise Lookout
+1 Elas il-Kor, Sadistic Pilgrim
+1 Enduring Innocence
+1 General's Enforcer
+1 Grand Abolisher
+1 Hoard Robber
+1 Kambal, Consul of Allocation
+1 Kambal, Profiteering Mayor
+1 Kinscaer Sentry
+1 Knight of the White Orchid
+1 Lotho, Corrupt Shirriff
+1 Mangara, the Diplomat
+1 Mentor of the Meek
+1 Saradoc, Master of Buckland
+1 Selfless Spirit
+1 Skrelv, Defector Mite
+1 Snarling Gorehound
+1 Solemn Simulacrum
+1 Soul Warden
+1 Soul's Attendant
+1 Suture Priest
+1 The Queen of Dale
+1 Tomik, Wielder of Law
+1 Tymna the Weaver
+1 Unstoppable Slasher
+1 Virtus the Veiled
+1 Voice of Victory
+1 Welcoming Vampire
+1 Windborn Muse
+1 Wispdrinker Vampire
+1 Assemble the Players
+1 Authority of the Consuls
+1 Bitterblossom
+1 Ghostly Prison
+1 Skrelv's Hive
+1 Within Range
+1 Akroma's Will
+1 Anguished Unmaking
+1 Despark
+1 Fell the Profane
+1 Flawless Maneuver
+1 Generous Gift
+1 Inkshield
+1 Path to Exile
+1 Secure the Wastes
+1 Swords to Plowshares
+1 Dusk // Dawn
+1 Expel the Interlopers
+1 Fell the Mighty
+1 Night's Whisper
+1 Raise the Past
+1 Sevinne's Reclamation
+1 The Battle of Bywater

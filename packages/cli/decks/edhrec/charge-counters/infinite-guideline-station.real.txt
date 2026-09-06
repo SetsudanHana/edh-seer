@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/MhEuC3y0jTOH1oz7pAKCGA (source https://archidekt.com/decks/16403924)
+# tags Spacecraft, Blink, Warp, Charge Counters; bracket 3; saved 2026-08-23; 30 tagged of 10182 indexed
+
+Commander
+1 Infinite Guideline Station
+
+Deck
+1 Adagia, Windswept Bastion
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Evendo, Waking Haven
+1 Exotic Orchard
+1 Flooded Strand
+1 Forest
+1 Godless Shrine
+1 Grand Coliseum
+1 Hidden Hideout
+1 Island
+1 Ketria Triome
+1 Luxury Suite
+1 Mana Confluence
+1 Misty Rainforest
+1 Mountain
+1 Multiversal Passage
+1 Path of Ancestry
+1 Plains
+1 Power Depot
+1 Reflecting Pool
+1 Rogue's Passage
+1 Savai Triome
+1 Sea of Clouds
+1 Spara's Headquarters
+1 Starting Town
+1 Stomping Ground
+1 Swamp
+1 Training Center
+1 Urban Retreat
+1 Urza's Saga
+1 Uthros, Titanic Godcore
+1 Watery Grave
+1 Wooded Foothills
+1 All Will Be One
+1 Gimli's Reckless Might
+1 Gleaming Splendor
+1 Leyline of the Guildpact
+1 Loading Zone
+1 Pain for All
+1 Reconnaissance
+1 Sheltered by Ghosts
+1 Teleportation Circle
+1 Anticausal Vestige
+1 Bloom Tender
+1 Bugenhagen, Wise Elder
+1 Bygone Colossus
+1 Captain America, Living Legend
+1 Don & Leo, Problem Solvers
+1 Emeritus of Ideation
+1 Exalted Sunborn
+1 Haliya, Guided by Light
+1 Karolina Dean, Runaway
+1 Kona, Rescue Beastie
+1 Lightstall Inquisitor
+1 Masako the Humorless
+1 Mechanozoa
+1 Mightform Harmonizer
+1 Ouroboroid
+1 Quantum Riddler
+1 Scarlet Spider, Ben Reilly
+1 Smaug, Wicked Worm
+1 Soulherder
+1 Starfield Vocalist
+1 Starwinder
+1 Arcane Signet
+1 Dawnsire, Sunstar Dreadnought
+1 Hearthhull, the Worldseed
+1 Inspirit, Flagship Vessel
+1 Moxite Refinery
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Solar Array
+1 Susurian Dirgecraft
+1 The Endstone
+1 The Eternity Elevator
+1 The Ozolith
+1 Bala Ged Recovery
+1 Cultivate
+1 Earthquake
+1 Elemental Spectacle
+1 It's Clobberin' Time!
+1 Cyclonic Rift
+1 Deflecting Swat
+1 Eladamri's Call
+1 Enlightened Tutor
+1 Fierce Guardianship
+1 Galadriel's Dismissal
+1 Legion Leadership
+1 Mana Drain
+1 Nature's Claim
+1 Scour for Scrap
+1 Settle the Wreckage
+1 Silence
+1 Slip Out the Back
+1 Spider-Sense
+1 Swords to Plowshares
+1 Tifa's Limit Break

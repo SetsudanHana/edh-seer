@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/olivia-mobilized-for-war/madness
+# theme Madness (74 decks)
+
+Commander
+1 Olivia, Mobilized for War
+
+Deck
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Mind Stone
+1 Monument to Endurance
+1 Phial of Galadriel
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Indulgence
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Geier Reach Sanitarium
+1 Haunted Ridge
+10 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+12 Swamp
+1 Tainted Peak
+1 Voldaren Estate
+1 Alesha, Who Laughs at Fate
+1 Anje Falkenrath
+1 Anje's Ravager
+1 Archfiend of Ifnir
+1 Asylum Visitor
+1 Azra Oddsmaker
+1 Big Game Hunter
+1 Bloodhall Priest
+1 Bloodmad Vampire
+1 Bone Miser
+1 Chainer, Nightmare Adept
+1 Champion of Dusk
+1 Containment Construct
+1 Cordial Vampire
+1 Crossway Troublemakers
+1 Drana, Liberator of Malakir
+1 Drana, the Last Bloodchief
+1 Falkenrath Gorger
+1 Grave Scrabbler
+1 Ivora, Insatiable Heir
+1 Markov Baron
+1 Necrogoyf
+1 Olivia, Crimson Bride
+1 Rakish Heir
+1 Sanctum Seeker
+1 Shadowgrange Archfiend
+1 Squee, Goblin Nabob
+1 Stromkirk Captain
+1 Stromkirk Condemned
+1 Stromkirk Occultist
+1 Surly Badgersaur
+1 Call the Bloodline
+1 Faith of the Devoted
+1 Feast of Sanity
+1 Phyrexian Arena
+1 Stensia Masquerade
+1 Bedevil
+1 Dark Ritual
+1 Dark Withering
+1 Demand Answers
+1 Fiery Temper
+1 Rakdos Charm
+1 Terminate
+1 Thrill of Possibility
+1 Avacyn's Judgment
+1 Blasphemous Act
+1 Call to the Netherworld
+1 Edgar's Awakening
+1 Faithless Looting
+1 Feed the Swarm
+1 From Under the Floorboards
+1 Murderous Compulsion
+1 Olivia's Wrath
+1 Terminal Agony
+1 Tormenting Voice

@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/Ws8k5WZLmCph7pFMaikQIw (source https://archidekt.com/decks/17452346)
+# tags Voting, Politics; bracket 3; saved 2026-09-04; 56 tagged of 3270 indexed
+
+Commander
+1 Círdan the Shipwright
+
+Deck
+1 Akroma's Memorial
+1 Arcane Signet
+1 Blade of Selves
+1 Dolmen Gate
+1 Misleading Signpost
+1 Panharmonicon
+1 Portal to Phyrexia
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 Archmage of Runes
+1 Astral Dragon
+1 Auton Soldier
+1 Blightsteel Colossus
+1 Coiling Oracle
+1 Consecrated Sphinx
+1 Deadeye Navigator
+1 Druid of Purification
+1 Elrond of the White Council
+1 Hornet Queen
+1 Hullbreaker Horror
+1 Koma, Cosmos Serpent
+1 Koma, World-Eater
+1 Nezahal, Primal Tide
+1 Ojer Pakpatiq, Deepest Epoch
+1 Phantom Steed
+1 Progenitor Mimic
+1 Terastodon
+1 Thassa, Deep-Dwelling
+1 Asceticism
+1 Kiora Bests the Sea God
+1 Mind's Dilation
+1 Omniscience
+1 Propaganda
+1 Blur
+1 Counterspell
+1 Decoy Gambit
+1 Displace
+1 Essence Flux
+1 Fact or Fiction
+1 Ghostly Flicker
+1 Growth Spiral
+1 Illusion of Choice
+1 Illusionist's Stratagem
+1 Planar Incision
+1 Pongify
+1 Sail into the West
+1 Split Decision
+1 Teferi's Time Twist
+1 Trap the Trespassers
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+7 Forest
+1 Hinterland Harbor
+15 Island
+1 Karn's Bastion
+1 Lonely Sandbar
+1 Mosswort Bridge
+1 Mystic Sanctuary
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rogue's Passage
+1 Temple of Mystery
+1 Temple of the False God
+1 Tranquil Thicket
+1 Cultivate
+1 Expropriate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Pir's Whim
+1 Plea for Power
+1 Rampant Growth
+1 Selvala's Stampede
+1 Show and Tell
+1 Tempt with Reflections
+1 Three Visits
+1 Zndrsplt's Judgment

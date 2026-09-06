@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/g4alixM--AiazDyu0R1_NA (source https://archidekt.com/decks/14765648)
+# tags Graveyard, Aggro, Extra Combats, Self-Mill, Toolbox, Flashback, Self-Discard, Midrange, Attack Triggers, Reanimator, Mill; bracket 3; saved 2026-09-04; 74 tagged of 19110 indexed
+
+Commander
+1 Terra, Herald of Hope
+
+Deck
+1 Alesha, Who Laughs at Fate
+1 Angel of Invention
+1 Anger
+1 Aurelia, the Warleader
+1 Bloodletter of Aclazotz
+1 Boggart Trawler
+1 Boromir, Warden of the Tower
+1 Bronzebeak Foragers
+1 Carmen, Cruel Skymarcher
+1 Charming Scoundrel
+1 Commissar Severina Raine
+1 Enduring Courage
+1 Enterprising Scallywag
+1 Fear of Missing Out
+1 General Leo Cristophe
+1 Gisela, Blade of Goldnight
+1 Gogo, Mysterious Mime
+1 Golgari Thug
+1 Grand Abolisher
+1 Grave Researcher
+1 Grim Hireling
+1 Guardian Scalelord
+1 Havoc Eater
+1 Hero of the Dunes
+1 Inti, Seneschal of the Sun
+1 Isshin, Two Heavens as One
+1 Joshua, Phoenix's Dominant
+1 Karmic Guide
+1 Kellogg, Dangerous Mind
+1 Locke, Treasure Hunter
+1 Loran of the Third Path
+1 Meteor Golem
+1 Millikin
+1 Mishra, Claimed by Gix
+1 Ornithopter of Paradise
+1 Phyrexian Delver
+1 Phyrexian Dragon Engine
+1 Preston, the Vanisher
+1 Priest of Fell Rites
+1 Professional Face-Breaker
+1 Rapacious Dragon
+1 Selfless Spirit
+1 Serra Paragon
+1 Shepherd of the Cosmos
+1 Siegfried, Famed Swordsman
+1 Sister Hospitaller
+1 Skyhunter Strike Force
+1 Smellerbee, Rebel Fighter
+1 Stinkweed Imp
+1 Stitcher's Supplier
+1 Summon: Knights of Round
+1 Sun Titan
+1 Tersa Lightshatter
+1 The Jolly Balloon Man
+1 The Walls of Ba Sing Se
+1 Twilight Diviner
+1 Undead Butler
+1 Witch Enchanter
+1 Animate Dead
+1 Chthonian Nightmare
+1 Necromancy
+1 Battlefield Forge
+1 Blood Crypt
+1 Canyon Slough
+1 Caves of Koilos
+1 Command Tower
+1 Eclipsed Steppe
+1 Elegant Parlor
+1 Godless Shrine
+5 Mountain
+5 Plains
+1 Radiant Summit
+1 Raucous Theater
+1 Sacred Foundry
+1 Shadowy Backstreet
+1 Shattered Sanctum
+1 Sulfurous Springs
+1 Sundown Pass
+5 Swamp
+1 Dihada, Binder of Wills
+1 Dread Return
+1 Faithless Looting
+1 Seize the Day
+1 Sevinne's Reclamation
+1 Unburial Rites
+1 Phoenix Down
+1 Sol Ring

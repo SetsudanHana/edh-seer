@@ -1,0 +1,99 @@
+# edhrec average deck: https://edhrec.com/average-decks/kefka-court-mage/mayhem
+# theme Mayhem (4 decks)
+
+Commander
+1 Kefka, Court Mage
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Conjurer's Closet
+1 Crucible of Worlds
+1 Dimir Signet
+1 Entropic Battlecruiser
+1 Izzet Signet
+1 Jet Medallion
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Creativity
+1 Trailblazer's Boots
+1 Arid Mesa
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Flooded Strand
+3 Island
+1 Luxury Suite
+1 Marsh Flats
+3 Mountain
+1 Oscorp Industries
+1 Polluted Delta
+1 Raucous Theater
+1 Scalding Tarn
+1 Seething Landscape
+1 Smoldering Marsh
+1 Steam Vents
+4 Swamp
+1 Takenuma, Abandoned Mire
+1 Thundering Falls
+1 Undercity Sewers
+1 Watery Grave
+1 Xander's Lounge
+1 Aclazotz, Deepest Betrayal
+1 Alesha, Who Laughs at Fate
+1 Anje Falkenrath
+1 Archfiend of Ifnir
+1 Asylum Visitor
+1 Balor
+1 Big Game Hunter
+1 Bone Miser
+1 Burnished Hart
+1 Chainer, Nightmare Adept
+1 Chameleon, Master of Disguise
+1 Fate Unraveler
+1 Hypnotic Specter
+1 Krang & Shredder
+1 Mondo Gecko
+1 Moonshadow
+1 Necrogoyf
+1 Nekusar, the Mindrazer
+1 Nicol Bolas, the Ravager
+1 Nightscape Familiar
+1 Norman Osborn
+1 Psychosis Crawler
+1 Saheeli, the Sun's Brilliance
+1 Sheoldred, the Apocalypse
+1 Solemn Simulacrum
+1 Tergrid, God of Fright
+1 Thassa, Deep-Dwelling
+1 Tinybones, Bauble Burglar
+1 Twilight Diviner
+1 Ultimate Green Goblin
+1 Cool but Rude
+1 Curse of Fool's Wisdom
+1 Gibbering Descent
+1 Impostor Syndrome
+1 Liliana's Caress
+1 Megrim
+1 Necrogen Mists
+1 Shadow of the Goblin
+1 Waste Not
+1 Chaos Warp
+1 Fell the Profane
+1 Ghostly Flicker
+1 Illusionist's Stratagem
+1 Obsessive Search
+1 Vampiric Tutor
+1 Angrath, the Flame-Chained
+1 Davriel, Rogue Shadowmage
+1 Agadeem's Awakening
+1 Call to the Netherworld
+1 Feed the Swarm
+1 Reanimate
+1 Stock Up
+1 Victimize
+1 Voidwalk
+1 Windfall

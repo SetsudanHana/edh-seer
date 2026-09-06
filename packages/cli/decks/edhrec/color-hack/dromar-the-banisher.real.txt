@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/lwv_9D0v_3CF-GvJMTQPqA (source https://archidekt.com/decks/19477666)
+# tags Bounce, Stax, Color Hack; bracket 2; saved 2026-02-05; 11 tagged of 597 indexed
+
+Commander
+1 Dromar, the Banisher
+
+Deck
+1 Aether Channeler
+1 Archaeomancer
+1 Azorius Aethermage
+1 Baleful Strix
+1 Barrin, Tolarian Archmage
+1 Blind Seer
+1 Cloudchaser Kestrel
+1 Eastern Paladin
+1 Eight-and-a-Half-Tails
+1 Esper Sentinel
+1 Grand Abolisher
+1 Guardian of Faith
+1 Karmic Guide
+1 Knight of the White Orchid
+1 Lavinia of the Tenth
+1 Llawan, Cephalid Empress
+1 Mother of Runes
+1 Mulldrifter
+1 Order of the Sacred Torch
+1 Painter's Servant
+1 Reflector Mage
+1 Scuttlemutt
+1 Solemn Simulacrum
+1 Stormscape Familiar
+1 Tameshi, Reality Architect
+1 Tsabo's Assassin
+1 Venser, Shaper Savant
+1 Vodalian Mystic
+1 Alter Reality
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Change the Equation
+1 Counterspell
+1 Crystal Spray
+1 Dromar's Charm
+1 Hibernation
+1 Mind Bend
+1 Path to Exile
+1 Sleight of Mind
+1 Spectral Shift
+1 Swords to Plowshares
+1 Void Rend
+1 Arcane Signet
+1 Distorting Lens
+1 Lightning Greaves
+1 Panharmonicon
+1 Robe of Stars
+1 Sol Ring
+1 Swiftfoot Boots
+1 Azorius Chancery
+1 Command Tower
+1 Dimir Aqueduct
+1 Godless Shrine
+1 Hallowed Fountain
+11 Island
+1 Orzhov Basilica
+7 Plains
+1 Prairie Stream
+1 Raffine's Tower
+1 Reliquary Tower
+1 Sunken Hollow
+3 Swamp
+1 Watery Grave
+1 Circle of Protection: Green
+1 Darkest Hour
+1 Deathgrip
+1 Douse
+1 Insight
+1 Mana Maze
+1 Shifting Sky
+1 Swirl the Mists
+1 Warped Devotion
+1 Yawgmoth's Edict
+1 Farewell
+1 Govern the Guildless
+1 Night's Whisper
+1 Perish
+1 Ponder
+1 Preordain
+1 Wash Out

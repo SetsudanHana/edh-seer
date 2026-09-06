@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/vbsBXNbKqTSHUvP7vGqxgA (source https://archidekt.com/decks/25638115)
+# tags Landfall, Stompy, Lands Matter; bracket 3; saved 2026-09-05; 577 tagged of 7773 indexed
+
+Commander
+1 The Gitrog, Ravenous Ride
+
+Deck
+1 Amulet of Vigor
+1 Arcane Signet
+1 Library of Leng
+1 Portal to Phyrexia
+1 Sol Ring
+1 Talisman of Resilience
+1 The Great Henge
+1 The Skullspore Nexus
+1 Thought Vessel
+1 Whispersilk Cloak
+1 Anticausal Vestige
+1 Apex Altisaur
+1 Apex Devastator
+1 Bristly Bill, Spine Sower
+1 Bygone Colossus
+1 Craterhoof Behemoth
+1 Daemogoth Titan
+1 Daemogoth Woe-Eater
+1 Delighted Halfling
+1 Fanatic of Rhonas
+1 Gargos, Vicious Watcher
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 Goreclaw, Terror of Qal Sisma
+1 Harmonious Grovestrider
+1 Haywire Mite
+1 Jarad, Golgari Lich Lord
+1 Junji, the Midnight Sky
+1 Lord of Extinction
+1 Lumra, Bellow of the Woods
+1 Multani, Yavimaya's Avatar
+1 Ob Nixilis, the Fallen
+1 Psychosis Crawler
+1 Pugnacious Hammerskull
+1 Rampaging Baloths
+1 Sakura-Tribe Elder
+1 Scute Swarm
+1 Selvala, Heart of the Wilds
+1 Tiller Engine
+1 Tireless Provisioner
+1 Ulamog, the Ceaseless Hunger
+1 Ulamog, the Defiler
+1 Xu-Ifit, Osteoharmonist
+1 Yargle and Multani
+1 Yargle, Glutton of Urborg
+1 Assassin's Trophy
+1 Berserk
+1 Heroic Intervention
+1 Putrefy
+1 Return to Nature
+1 Strength of Will
+1 Bayou
+1 Bojuka Bog
+1 Boseiju, Who Endures
+1 Command Tower
+1 Deathcap Glade
+1 Exotic Orchard
+1 Fabled Passage
+1 Field of the Dead
+6 Forest
+1 Gaea's Cradle
+1 Lair of the Hydra
+1 Llanowar Wastes
+1 Mortuary Mire
+1 Overgrown Tomb
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shizo, Death's Storehouse
+3 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 The Black Gate
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Vernal Fen
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Burgeoning
+1 Dancing from Dark to Dawn
+1 Defense of the Heart
+1 Exploration
+1 Garruk's Uprising
+1 Lurking Predators
+1 Nature's Will
+1 Retreat to Hagra
+1 Finale of Devastation
+1 Last March of the Ents
+1 Natural Order
+1 Rise of the Dark Realms
+1 Savage Order
+1 Torment of Hailfire
+1 Triumph of the Hordes

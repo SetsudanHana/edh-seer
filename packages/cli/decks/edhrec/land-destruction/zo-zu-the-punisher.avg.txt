@@ -1,0 +1,81 @@
+# edhrec average deck: https://edhrec.com/average-decks/zo-zu-the-punisher/land-destruction
+# theme Land Destruction (319 decks)
+
+Commander
+1 Zo-Zu the Punisher
+
+Deck
+1 Ankh of Mishra
+1 Arcane Signet
+1 Commander's Sphere
+1 Crucible of Worlds
+1 Darksteel Ingot
+1 Dingus Egg
+1 Fellwar Stone
+1 Fire Diamond
+1 Glittering Stockpile
+1 Lightning Greaves
+1 Mind Stone
+1 Ruby Medallion
+1 Sol Ring
+1 Storm Cauldron
+1 Thran Dynamo
+1 Winter Moon
+1 Darksteel Citadel
+1 Field of Ruin
+1 Ghost Quarter
+26 Mountain
+1 Strip Mine
+1 Valakut, the Molten Pinnacle
+1 Wasteland
+1 Akki Blizzard-Herder
+1 Cemetery Gatekeeper
+1 Dwarven Blastminer
+1 Dwarven Driller
+1 Harsh Mentor
+1 Heartless Hidetsugu
+1 Invader Parasite
+1 Iron Myr
+1 Keldon Firebombers
+1 Krenko's Buzzcrusher
+1 Magus of the Moon
+1 Scytheclaw Raptor
+1 Solphim, Mayhem Dominus
+1 Stoneshaker Shaman
+1 Sunspine Lynx
+1 Torbran, Thane of Red Fell
+1 Treasure Nabber
+1 Tunnel Ignus
+1 Blood Moon
+1 Burning Earth
+1 Citadel of Pain
+1 Furnace of Rath
+1 Impending Disaster
+1 Manabarbs
+1 Price of Glory
+1 Spellshock
+1 Sulfuric Vortex
+1 Tectonic Instability
+1 War's Toll
+1 Abrade
+1 Chaos Warp
+1 Lightning Bolt
+1 Price of Progress
+1 Reverberate
+1 Seething Song
+1 Thrill of Possibility
+1 Koth, Fire of Resistance
+1 Blasphemous Act
+1 Cleansing Wildfire
+1 Epicenter
+1 From the Ashes
+1 Jeska's Will
+1 Molten Rain
+1 Pillage
+1 Roiling Terrain
+1 Ruination
+1 Tectonic Break
+1 Tremble
+1 Vandalblast
+1 Wake of Destruction
+1 Wildfire

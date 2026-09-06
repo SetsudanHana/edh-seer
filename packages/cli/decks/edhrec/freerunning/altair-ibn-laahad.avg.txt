@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/altair-ibn-laahad/freerunning
+# theme Freerunning (20 decks)
+
+Commander
+1 Altaïr Ibn-La'Ahad
+
+Deck
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Haystack
+1 Hidden Blade
+1 Lightning Greaves
+1 Patchwork Banner
+1 Smoke Bomb
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Feast and Famine
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 The Animus
+1 Whispersilk Cloak
+1 Battlefield Forge
+1 Bojuka Bog
+1 Brotherhood Headquarters
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+4 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+4 Plains
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Shattered Sanctum
+1 Smoldering Marsh
+6 Swamp
+1 Vault of the Archangel
+1 Arbaaz Mir
+1 Arno Dorian
+1 Assassin Initiate
+1 Aya of Alexandria
+1 Bayek of Siwa
+1 Big Game Hunter
+1 Black Widow, Deadly Hunter
+1 Brotherhood Ambushers
+1 Bureau Headmaster
+1 Combustion Man
+1 Desmond Miles
+1 Isshin, Two Heavens as One
+1 Layla Hassan
+1 Mari, the Killing Quill
+1 Massacre Girl
+1 Massacre Girl, Known Killer
+1 Merciless Harlequin
+1 Nekrataal
+1 Olivia, Opulent Outlaw
+1 Poison-Blade Mentor
+1 Queen Marchesa
+1 Roshan, Hidden Magister
+1 Royal Assassin
+1 Ruthless Lawbringer
+1 Shadow, Mysterious Assassin
+1 Shay Cormac
+1 The Master, Multiplied
+1 Unstoppable Slasher
+1 Bleeding Effect
+1 Conspiracy
+1 Cover of Darkness
+1 Impact Tremors
+1 Reconnaissance
+1 The Revelations of Ezio
+1 Warleader's Call
+1 Anguished Unmaking
+1 Big Score
+1 Chain Assassination
+1 Demand Answers
+1 Mortify
+1 Path to Exile
+1 Swords to Plowshares
+1 Terminate
+1 Thrill of Possibility
+1 Blasphemous Act
+1 Buried Alive
+1 Cathartic Reunion
+1 Faithless Looting
+1 Overpowering Attack
+1 Restart Sequence
+1 Ruinous Ultimatum

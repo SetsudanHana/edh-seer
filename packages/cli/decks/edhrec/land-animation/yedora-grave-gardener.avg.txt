@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/yedora-grave-gardener/land-animation
+# theme Land Animation (55 decks)
+
+Commander
+1 Yedora, Grave Gardener
+
+Deck
+1 Altar of Dementia
+1 Ashnod's Altar
+1 Blasting Station
+1 Lightning Greaves
+1 Sol Ring
+1 Zuran Orb
+1 Ba Sing Se
+1 Dryad Arbor
+1 Evolving Wilds
+27 Forest
+1 Guildless Commons
+1 High Market
+1 Jungle Basin
+1 Myriad Landscape
+1 Yavimaya, Cradle of Growth
+1 Ainok Survivalist
+1 Ambush Commander
+1 Arbor Elf
+1 Ashaya, Soul of the Wild
+1 Avenger of Zendikar
+1 Beast Whisperer
+1 Den Protector
+1 Elvish Mystic
+1 Embodiment of Insight
+1 Eternal Witness
+1 Flourishing Bloom-Kin
+1 Fyndhorn Elves
+1 Hauntwoods Shrieker
+1 Haywire Mite
+1 Llanowar Elves
+1 Lotus Cobra
+1 Magus of the Order
+1 Multani, Yavimaya's Avatar
+1 Nantuko Vigilante
+1 Nervous Gardener
+1 Proteus Machine
+1 Quirion Ranger
+1 Rampaging Baloths
+1 Sakura-Tribe Elder
+1 Scryb Ranger
+1 Scute Swarm
+1 Spore Frog
+1 Sylvan Safekeeper
+1 Temur Charger
+1 Tireless Provisioner
+1 Tireless Tracker
+1 Troop of Ponies
+1 Druid Class
+1 Earthbender Ascension
+1 Evolutionary Leap
+1 Fecundity
+1 Kenrith's Transformation
+1 Life and Limb
+1 Living Lands
+1 Nature's Revolt
+1 Sapling Nursery
+1 Threats Around Every Corner
+1 Beast Within
+1 Constant Mists
+1 Entish Restoration
+1 Harrow
+1 Heroic Intervention
+1 Kamahl's Will
+1 Natural Affinity
+1 Nissa, Who Shakes the World
+1 Bala Ged Recovery
+1 Cultivate
+1 Genesis Wave
+1 Harmonize
+1 Nature's Lore
+1 Rampant Growth
+1 Sylvan Awakening
+1 Three Visits

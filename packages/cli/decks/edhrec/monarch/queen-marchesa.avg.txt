@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/queen-marchesa/monarch
+# theme Monarch (2073 decks)
+
+Commander
+1 Queen Marchesa
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Rakdos Signet
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Battlefield Forge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Godless Shrine
+1 Isolated Chapel
+1 Luxury Suite
+5 Mountain
+1 Nomad Outpost
+6 Plains
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Spectator Seating
+5 Swamp
+1 Throne of the High City
+1 Vault of Champions
+1 Alexios, Deimos of Kosmos
+1 Archon of Coronation
+1 Brash Taunter
+1 Breena, the Demagogue
+1 Champions of Minas Tirith
+1 Custodi Lich
+1 Emberwilde Captain
+1 Gisela, Blade of Goldnight
+1 Kambal, Consul of Allocation
+1 Karazikar, the Eye Tyrant
+1 Kardur, Doomscourge
+1 Kazuul, Tyrant of the Cliffs
+1 Keeper of the Accord
+1 Knights of the Black Rose
+1 Loran of the Third Path
+1 Mangara, the Diplomat
+1 Protector of the Crown
+1 Royal Assassin
+1 Selfless Squire
+1 Skyline Despot
+1 Teysa, Envoy of Ghosts
+1 Windborn Muse
+1 Xantcha, Sleeper Agent
+1 Blind Obedience
+1 Court of Ambition
+1 Court of Ardenvale
+1 Court of Embereth
+1 Court of Grace
+1 Court of Ire
+1 Court of Locthwain
+1 Curse of Opulence
+1 Ghostly Prison
+1 Marchesa's Decree
+1 Smothering Tithe
+1 Anguished Unmaking
+1 Boros Charm
+1 Comeuppance
+1 Crackling Doom
+1 Deflecting Palm
+1 Despark
+1 Generous Gift
+1 Inkshield
+1 Path to Exile
+1 Rakdos Charm
+1 Swords to Plowshares
+1 Take the Bait
+1 Blasphemous Act
+1 Cut a Deal
+1 Damn
+1 Disrupt Decorum
+1 Promise of Loyalty
+1 Ruinous Ultimatum
+1 Taunt from the Rampart

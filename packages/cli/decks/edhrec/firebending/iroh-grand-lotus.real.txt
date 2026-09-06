@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/QLJrNzogNLCiee3J48pYMg (source https://archidekt.com/decks/17745090)
+# tags Firebending, Earthbending, Spellslinger, Flashback, Lessons; bracket 3; saved 2026-09-04; 34 tagged of 14624 indexed
+
+Commander
+1 Iroh, Grand Lotus
+
+Deck
+1 Aang's Journey
+1 Boomerang Basics
+1 Earthbending Lesson
+1 Gamble
+1 Insurrection
+1 Iroh's Demonstration
+1 Match the Odds
+1 Rockalanche
+1 Shared Roots
+1 Sozin's Comet
+1 Spirit Water Revival
+1 True Ancestry
+1 Waterbending Lesson
+1 Abandon Attachments
+1 Accumulate Wisdom
+1 Energybending
+1 Firebending Lesson
+1 How to Start a Riot
+1 It'll Quench Ya!
+1 Lost Days
+1 Octopus Form
+1 Origin of Metalbending
+1 Pillar Launch
+1 Rocky Rebuke
+1 Solstice Revelations
+1 Airship Engine Room
+10 Forest
+9 Island
+1 Meditation Pools
+1 Mistrise Village
+11 Mountain
+1 Omashu City
+1 Thriving Bluff
+1 Thriving Isle
+1 White Lotus Hideout
+1 Alania, Divergent Storm
+1 Bumi, Eclectic Earthbender
+1 Bumi, King of Three Trials
+1 Dragonfly Swarm
+1 Fire Nation Cadets
+1 Fire Sages
+1 First-Time Flyer
+1 Gran-Gran
+1 Guru Pathik
+1 Hermitic Herbalist
+1 Hexing Squelcher
+1 High Fae Trickster
+1 Jeong Jeong, the Deserter
+1 Longshot, Rebel Bowman
+1 Master Pakku
+1 Platypus-Bear
+1 Ran and Shaw
+1 Raucous Audience
+1 Sokka, Bold Boomeranger
+1 Tempest Angler
+1 The Boulder, Ready to Rumble
+1 The Lion-Turtle
+1 Toph, the Blind Bandit
+1 Ty Lee, Artful Acrobat
+1 Ty Lee, Chi Blocker
+1 Uncle Iroh
+1 Yue, the Moon Spirit
+1 Arcane Signet
+1 Bender's Waterskin
+1 Glamdring, Foe-hammer
+1 Sol Ring
+1 Swiftfoot Boots
+1 Bitter Work
+1 Chakra Meditation
+1 Leaves from the Vine
+1 Sylvan Library
+1 The Legend of Roku

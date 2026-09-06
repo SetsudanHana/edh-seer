@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/FrV-kwzQhdRuMPZGEIrAwg (source https://archidekt.com/decks/25597098)
+# tags Reanimator, +1/+1 Counters, Lifedrain, Blood, Tokens, Vampires, Lifegain; bracket 2; saved 2026-09-05; 309 tagged of 8188 indexed
+
+Commander
+1 Strefan, Maurer Progenitor
+
+Deck
+1 Anje, Maid of Dishonor
+1 Anowon, the Ruin Sage
+1 Bloodline Necromancer
+1 Bloodtithe Harvester
+1 Butcher of Malakir
+1 Captivating Vampire
+1 Champion of Dusk
+1 Crime Novelist
+1 Crossway Troublemakers
+1 Drana, the Last Bloodchief
+1 Gadrak, the Crown-Scourge
+1 God-Eternal Bontu
+1 Gray Merchant of Asphodel
+1 High-Society Hunter
+1 Ingenious Artillerist
+1 Kamber, the Plunderer
+1 Malakir Bloodwitch
+1 Marionette Master
+1 Markov Enforcer
+1 Master of Dark Rites
+1 Mayhem Devil
+1 Mephidross Vampire
+1 Midnight Arsonist
+1 Mirkwood Bats
+1 Necropolis Regent
+1 Nirkana Revenant
+1 Olivia's Attendants
+1 Patron of the Vein
+1 Sanctum Seeker
+1 Stensian Sanguinist
+1 Stormfist Crusader
+1 Stromkirk Captain
+1 Timothar, Baron of Bats
+1 Twilight Prophet
+1 Vein Ripper
+1 Voldaren Bloodcaster
+1 Voldaren Epicure
+1 Yahenni, Undying Partisan
+1 Arcane Signet
+1 Bontu's Monument
+1 Cauldron of Souls
+1 Dowsing Device
+1 Glass-Cast Heart
+1 Inspiring Statuary
+1 Orcrist, Goblin-cleaver
+1 Sol Ring
+1 Talisman of Indulgence
+1 Tarrian's Journal
+1 Trading Post
+1 Whispersilk Cloak
+1 Barbarian Ring
+1 Bojuka Bog
+1 Cabal Pit
+1 Command Tower
+1 Field of Ruin
+1 Foreboding Ruins
+1 Haunted Ridge
+1 Ifnir Deadlands
+6 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Ramunap Ruins
+1 Secluded Starforge
+1 Smoldering Marsh
+10 Swamp
+1 Tainted Peak
+1 Unclaimed Territory
+1 Voldaren Estate
+1 Bloodsoaked Insight
+1 Feed the Swarm
+1 Final Parting
+1 Lich-Knights' Conquest
+1 Olivia's Wrath
+1 Plague of Vermin
+1 Pointed Discussion
+1 Chaos Warp
+1 Deadly Dispute
+1 Rakdos Charm
+1 Vona's Hunger
+1 Conspiracy
+1 Haunted One
+1 Impact Tremors
+1 Molten Echoes
+1 Phyrexian Arena
+1 Sorin, Imperious Bloodlord

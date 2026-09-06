@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/YDEYMd090DfSaP0cG1qPfw (source https://archidekt.com/decks/12588676)
+# tags Topdeck, Enchantress; bracket 3; saved 2026-09-05; 2088 tagged of 17506 indexed
+
+Commander
+1 Aminatou, Veil Piercer
+
+Deck
+1 Aang's Iceberg
+1 Cacophony Unleashed
+1 Central Elevator // Promising Stairs
+1 Consulate Crackdown
+1 Copy Enchantment
+1 Counterbalance
+1 Cramped Vents // Access Maze
+1 Curse of Verbosity
+1 Extravagant Replication
+1 Ghostly Prison
+1 Glasswing Grace
+1 Greed
+1 Imprisoned in the Moon
+1 Meat Locker // Drowned Diner
+1 Mirror Room // Fractured Realm
+1 Monologue Tax
+1 One with the Multiverse
+1 Polluted Bonds
+1 Restricted Office // Lecture Hall
+1 Secret Arcade // Dusty Parlor
+1 Shadow of the Second Sun
+1 Sigil of the Empty Throne
+1 Sphere of Safety
+1 Starfield of Nyx
+1 Unholy Annex // Ritual Chamber
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Conduit Pylons
+1 Contaminated Landscape
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Pools
+1 Glacial Fortress
+1 Gloomlake Verge
+1 Halimar Depths
+1 Hall of Heliod's Generosity
+1 Irrigated Farmland
+4 Island
+1 Isolated Chapel
+1 Mage-Ring Network
+1 Path of Ancestry
+3 Plains
+1 Rivendell
+1 Scavenger Grounds
+1 Survivors' Encampment
+3 Swamp
+1 Temple of Deceit
+1 Temple of Enlightenment
+1 Temple of Silence
+1 Umbral Expanse
+1 Underground River
+1 Valgavoth's Lair
+1 Agent of Erebos
+1 Archon of Sun's Grace
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Entity Tracker
+1 Fear of Impostors
+1 Fear of Sleep Paralysis
+1 Ghostly Dancers
+1 Gremlin Tamer
+1 Grim Guardian
+1 Harmonized Trio
+1 Inquisitive Glimmer
+1 Mesa Enchantress
+1 Moon-Blessed Cleric
+1 Overlord of the Floodpits
+1 Overlord of the Mistmoors
+1 Sand Scout
+1 Spirited Companion
+1 Summon: Bahamut
+1 The Master of Keys
+1 Thoughtrender Lamia
+1 Zur, Eternal Schemer
+1 Aminatou, the Fateshifter
+1 Arcane Signet
+1 Azorius Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Brainstorm
+1 Brainsurge
+1 Mana Sculpt
+1 Path to Exile
+1 Vampiric Tutor
+1 Portent
+1 Spectacular Pileup

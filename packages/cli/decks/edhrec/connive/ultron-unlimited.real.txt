@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/dLpX-jxMfvxojcyvBFuRNw (source https://archidekt.com/decks/23994186)
+# tags Villains, Looting, Clones, Artifacts, Connive, Combo; bracket 3; saved 2026-09-05; 41 tagged of 1408 indexed
+
+Commander
+1 Ultron, Unlimited
+
+Deck
+1 Academy Ruins
+1 Archway of Innovation
+1 Choked Estuary
+1 Command Tower
+1 Darksteel Citadel
+1 Drowned Catacomb
+1 Gloomlake Verge
+5 Island
+1 Minamo, School at Water's Edge
+1 Mistvault Bridge
+1 Morphic Pool
+1 Polluted Delta
+1 Power Depot
+1 Reliquary Tower
+1 Rogue's Passage
+1 Seat of the Synod
+1 Shipwreck Marsh
+1 Spire of Industry
+1 Spymaster's Vault
+1 Sunken Hollow
+6 Swamp
+1 The Mycosynth Gardens
+1 Underground River
+1 Uthros, Titanic Godcore
+1 Vault of Whispers
+1 Watery Grave
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Counterspell
+1 Dark Ritual
+1 Deadly Dispute
+1 Deadly Rollick
+1 Lethal Scheme
+1 Pongify
+1 Arcane Signet
+1 Ashnod's Altar
+1 Dimir Signet
+1 Fellwar Stone
+1 Krark-Clan Ironworks
+1 Lightning Greaves
+1 Monument to Endurance
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 The One Ring
+1 Thought Vessel
+1 Unwinding Clock
+1 Archfiend of Ifnir
+1 Auton Soldier
+1 Containment Construct
+1 Cryptothrall
+1 Cyberdrive Awakener
+1 Cyberman Patrol
+1 Cybermen Squadron
+1 Emry, Lurker of the Loch
+1 Enduring Curiosity
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Golbez, Crystal Collector
+1 Iron Monger, Sadistic Tycoon
+1 Karn, Legacy Reforged
+1 Krang, Utrom Warlord
+1 Laboratory Maniac
+1 Ledger Shredder
+1 M.O.D.O.K.
+1 Mirkwood Bats
+1 Prowler, Clawed Thief
+1 Sakashima of a Thousand Faces
+1 Skorpekh Lord
+1 Ultron's Auxiliary
+1 Ultron, Artificial Malevolence
+1 Ultron, Machine Overlord
+1 Urza, Lord High Artificer
+1 Biotransference
+1 Black Market Connections
+1 Glorious Purpose
+1 Security Bypass
+1 Teferi's Ageless Insight
+1 Virtue of Persistence
+1 Demonic Counsel
+1 Dread Return
+1 Fabricate
+1 Grim Tutor
+1 Reanimate
+1 Their Name Is Death
+1 Too Evil to Stay Dead
+1 Toxic Deluge
+1 Victimize
+1 Zombify

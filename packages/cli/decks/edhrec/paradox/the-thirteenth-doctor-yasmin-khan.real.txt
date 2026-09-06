@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/80UR_XQ8Edq-rHtGn3Mulw (source https://archidekt.com/decks/14929078)
+# tags +1/+1 Counters, Paradox; bracket 2; saved 2026-09-04; 30 tagged of 1938 indexed
+
+Commander
+1 The Thirteenth Doctor
+1 Yasmin Khan
+
+Deck
+1 Arcane Signet
+1 Cursed Mirror
+1 Sol Ring
+1 Sonic Screwdriver
+1 TARDIS
+1 Beast Within
+1 Broken Wings
+1 Delayed Blast Fireball
+1 Inspiring Call
+1 Laughing Mad
+1 Origin of Metalbending
+1 Seize Opportunity
+1 Surge of Brilliance
+1 Think Twice
+1 Bigger on the Inside
+1 Carpet of Flowers
+1 Flood the Engine
+1 Passionate Archaeologist
+1 The Flux
+1 The Lost and the Damned
+1 Blasphemous Act
+1 Cone of Cold
+1 Cultivate
+1 Impending Flux
+1 Into the Time Vortex
+1 Last Night Together
+1 Quantum Misalignment
+1 Scour All Possibilities
+1 Search for Tomorrow
+1 Throes of Chaos
+1 Wreck and Rebuild
+1 Bloodcrusher of Khorne
+1 Chaos Terminator Lord
+1 Dark Apostle
+1 Doc Aurlock, Grizzled Genius
+1 Dream Pillager
+1 Drix Fatemaker
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Faldorn, Dread Wolf Herald
+1 Flaming Tyrannosaurus
+1 Incubation Druid
+1 Iraxxa, Empress of Mars
+1 Kami of Celebration
+1 Kami of Whispered Hopes
+1 Keeper of Secrets
+1 Loot, the Key to Everything
+1 Memory Worm
+1 Oracle of Mul Daya
+1 Questing Druid
+1 Sage of the Beyond
+1 Savvy Trader
+1 Sisterhood of Karn
+1 Spider-Man 2099
+1 The Foretold Soldier
+1 The Reality Chip
+1 The Twelfth Doctor
+1 Three Tree Rootweaver
+1 Tlincalli Hunter
+1 Wild-Magic Sorcerer
+1 Winged Hive Tyrant
+1 Chandra, Torch of Defiance
+1 Cinder Glade
+1 Command Tower
+1 Cori Mountain Monastery
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Fiery Islet
+7 Forest
+1 Frontier Bivouac
+1 Frostboil Snarl
+1 Gallifrey Council Chamber
+1 Game Trail
+4 Island
+9 Mountain
+1 Ominous Cemetery
+1 Rockfall Vale
+1 Rootbound Crag
+1 Stormcarved Coast
+1 Temple of Epiphany
+1 Vineglimmer Snarl

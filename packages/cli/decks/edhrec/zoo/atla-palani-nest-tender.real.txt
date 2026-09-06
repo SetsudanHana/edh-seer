@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/C3EBdR_a_WQS732FaNN0HQ (source https://moxfield.com/decks/-bSEGvMY-EyggeC8YXjk3g)
+# tags Zoo, Eggs; bracket 3; saved 2026-08-29; 63 tagged of 20865 indexed
+
+Commander
+1 Atla Palani, Nest Tender
+
+Deck
+1 Altar of Dementia
+1 Arcane Signet
+1 Ashnod's Altar
+1 Claws of Gix
+1 Lightning Greaves
+1 Maskwood Nexus
+1 Monster Manual
+1 Sensei's Divining Top
+1 Skullclamp
+1 Sol Ring
+1 The Golden Throne
+1 Thornbite Staff
+1 Apex Altisaur
+1 Etali, Primal Storm
+1 Ghalta and Mavren
+1 Godsire
+1 Harmonic Prodigy
+1 Impervious Greatwurm
+1 Jumbo Cactuar
+1 Marauding Raptor
+1 Nesting Dragon
+1 Palani's Hatcher
+1 Phlage, Titan of Fire's Fury
+1 Seedborn Muse
+1 Surrak and Goreclaw
+1 The Walls of Ba Sing Se
+1 Titan of Industry
+1 Tyrranax Rex
+1 Urabrask the Hidden
+1 Worldspine Wurm
+1 Zacama, Primal Calamity
+1 Zetalpa, Primal Dawn
+1 Zopandrel, Hunger Dominus
+1 Austere Command
+1 Blasphemous Act
+1 Cultivate
+1 Faithless Looting
+1 Farseek
+1 Harmonize
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Shamanic Revelation
+1 Shared Roots
+1 Skyshroud Claim
+1 Battlefield Forge
+1 Canopy Vista
+1 Cinder Glade
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Fire-Lit Thicket
+4 Forest
+1 Game Trail
+1 Gathering Place
+1 High Market
+1 Jungle Shrine
+1 Karplusan Forest
+1 Krosan Verge
+1 Mosswort Bridge
+4 Mountain
+1 Needleverge Pathway
+1 Path of Ancestry
+4 Plains
+1 Rockfall Vale
+1 Spire Garden
+1 Sunscorched Divide
+1 Temple Garden
+1 Temple of the False God
+1 Wooded Foothills
+1 Boros Charm
+1 Chaos Warp
+1 Demand Answers
+1 Druid's Deliverance
+1 Generous Gift
+1 Heroic Intervention
+1 Nature's Claim
+1 Sundering Growth
+1 Swords to Plowshares
+1 Colossal Majesty
+1 Defense of the Heart
+1 Elemental Bond
+1 Garruk's Uprising
+1 Goblin Bombardment
+1 Guardian Project
+1 Life Finds a Way
+1 Lurking Predators
+1 Martyr's Cause
+1 Mass Hysteria
+1 Warstorm Surge

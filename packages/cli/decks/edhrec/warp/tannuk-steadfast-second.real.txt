@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/LTs_nkMD-_gBjBkzL6Cg3Q (source https://archidekt.com/decks/16732309)
+# tags Warp; bracket 3; saved 2026-09-04; 190 tagged of 9996 indexed
+
+Commander
+1 Tannuk, Steadfast Second
+
+Deck
+1 Alena, Kessig Trapper
+1 Ancient Copper Dragon
+1 Arni Metalbrow
+1 Balefire Dragon
+1 Birgi, God of Storytelling
+1 Blightsteel Colossus
+1 Bloodthirster
+1 Cityscape Leveler
+1 Combat Celebrant
+1 Combustible Gearhulk
+1 Defiler of Instinct
+1 Drakuseth, Maw of Flames
+1 Etali, Primal Storm
+1 Hellkite Tyrant
+1 Hexing Squelcher
+1 Ilharg, the Raze-Boar
+1 Karlach, Fury of Avernus
+1 Kiki-Jiki, Mirror Breaker
+1 Molten Primordial
+1 Moraug, Fury of Akoum
+1 Myojin of Roaring Blades
+1 Ornithopter of Paradise
+1 Professional Face-Breaker
+1 Ragavan, Nimble Pilferer
+1 Scourge of the Throne
+1 Terror of Mount Velus
+1 Terror of the Peaks
+1 Trumpeting Carnosaur
+1 Twinflame Tyrant
+1 Utvara Hellkite
+1 Anzrag's Rampage
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Disrupt Decorum
+1 Jeska's Will
+1 Seize the Spotlight
+1 Sundering Eruption
+1 Vandalblast
+1 Arena of Glory
+1 Myriad Landscape
+1 Nykthos, Shrine to Nyx
+30 Snow-Covered Mountain
+1 Valakut, the Molten Pinnacle
+1 War Room
+1 Chimil, the Inner Sun
+1 Chrome Mox
+1 Cosmic Cube
+1 Coveted Jewel
+1 Extraplanar Lens
+1 Lightning Greaves
+1 Loki's Scepter
+1 Memory Jar
+1 Mithril Coat
+1 Portal to Phyrexia
+1 Ruby Medallion
+1 Scroll Rack
+1 Sol Ring
+1 Sundial of the Infinite
+1 Swiftfoot Boots
+1 The One Ring
+1 The Ten Rings
+1 Deflecting Swat
+1 Mages' Contest
+1 Redirect Lightning
+1 Return the Favor
+1 Tibalt's Trickery
+1 Untimely Malfunction
+1 Valakut Awakening
+1 Industrial Advancement
+1 Sneak Attack

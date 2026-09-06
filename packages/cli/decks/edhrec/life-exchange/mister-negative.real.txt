@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/Kdv3Aj43Q58qi9IMrVvmrA (source https://archidekt.com/decks/16827005)
+# tags Lifedrain, Life Exchange, Self-Damage; bracket 2; saved 2026-09-03; 181 tagged of 5851 indexed
+
+Commander
+1 Mister Negative
+
+Deck
+1 Anguished Unmaking
+1 Cloudshift
+1 Despark
+1 Ephemerate
+1 Flicker of Fate
+1 Generous Gift
+1 Getaway Glamer
+1 Imp's Mischief
+1 Parting Gust
+1 Path to Exile
+1 Personify
+1 Saw in Half
+1 Stinging Study
+1 Swords to Plowshares
+1 Vanishing Verse
+1 Arcane Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Staff of Compleation
+1 Tainted Sigil
+1 Talisman of Hierarchy
+1 Thought Vessel
+1 Worn Powerstone
+1 Arguel's Blood Fast
+1 Authority of the Consuls
+1 Black Market Connections
+1 Blind Obedience
+1 Greed
+1 Lunar Convocation
+1 Parker Luck
+1 Phyrexian Arena
+1 Unholy Annex // Ritual Chamber
+1 Austere Command
+1 Blasphemous Edict
+1 Command the Dreadhorde
+1 Daydream
+1 Toxic Deluge
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Cabal Coffers
+1 Caves of Koilos
+1 Command Tower
+1 Eclipsed Steppe
+1 Fabled Passage
+1 Godless Shrine
+1 High Market
+1 Isolated Chapel
+1 Lotus Field
+1 Marsh Flats
+1 Multiversal Passage
+7 Plains
+1 Shadowy Backstreet
+1 Shattered Sanctum
+11 Swamp
+1 Takenuma, Abandoned Mire
+1 Turbulent Moor
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Bloodletter of Aclazotz
+1 Boggart Trawler
+1 Children of Korlis
+1 Claim Jumper
+1 Crypt Ghast
+1 Dark Confidant
+1 Darkstar Augur
+1 Defiling Daemogoth
+1 Enduring Tenacity
+1 Gray Merchant of Asphodel
+1 K'rrik, Son of Yawgmoth
+1 Keen Duelist
+1 Knight of the White Orchid
+1 Lotho, Corrupt Shirriff
+1 Metamorphosis Fanatic
+1 Palladium Myr
+1 Savanti Romero, Time's Exile
+1 Sister Hospitaller
+1 Sorin of House Markov
+1 Starving Revenant
+1 The Speed Demon
+1 The Spot, Living Portal
+1 Twilight Prophet
+1 Weathered Wayfarer
+1 Witch Enchanter

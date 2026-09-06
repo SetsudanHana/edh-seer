@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/dNMahXWeggUB9Fvxvhklgg (source https://archidekt.com/decks/16695950)
+# tags Self-Mill, Hand Size, Graveyard, Discard; bracket 2; saved 2026-07-28; 46 tagged of 8816 indexed
+
+Commander
+1 Winter, Misanthropic Guide
+
+Deck
+1 Aclazotz, Deepest Betrayal
+1 Akawalli, the Seething Tower
+1 Child of the Volcano
+1 Coati Scavenger
+1 Enterprising Scallywag
+1 Fear of Burning Alive
+1 Fell Specter
+1 Honest Rutstein
+1 Kagha, Shadow Archdruid
+1 Mishra, Tamer of Mak Fawa
+1 Moldgraf Millipede
+1 Necrogoyf
+1 Nemata, Primeval Warden
+1 Nyx Weaver
+1 Obsessive Skinner
+1 Patient Naturalist
+1 Psychosis Crawler
+1 Shigeki, Jukai Visionary
+1 Skola Grovedancer
+1 Solemn Simulacrum
+1 Starving Revenant
+1 Ursine Monstrosity
+1 Volatile Wanderglyph
+1 Wildfire Wickerfolk
+1 Zoyowa Lava-Tongue
+1 Altar of the Goyf
+1 Brass's Tunnel-Grinder
+1 Entropic Battlecruiser
+1 Howling Mine
+1 Keening Stone
+1 Mask of Avacyn
+1 Sol Ring
+1 Visage of Dread
+1 Big Score
+1 Chaos Warp
+1 Kolaghan's Command
+1 Peer Past the Veil
+1 Terminate
+1 Unholy Heat
+1 Bygone Marvels
+1 Cathartic Reunion
+1 Decimate
+1 Extract the Truth
+1 Faithless Looting
+1 Glimpse the Core
+1 Romantic Rendezvous
+1 Squirming Emergence
+1 Traverse the Ulvenwald
+1 Cemetery Tampering
+1 Crawling Infestation
+1 Crop Sigil
+1 Megrim
+1 Rites of Flourishing
+1 Spiteful Visions
+1 The Rollercrusher Ride
+1 Command Tower
+9 Forest
+1 Golgari Rot Farm
+1 Gruul Turf
+1 Hidden Necropolis
+1 Hidden Nursery
+1 Hidden Volcano
+9 Mountain
+1 Pit of Offerings
+1 Promising Vein
+1 Rakdos Carnarium
+1 Riveteers Overlook
+1 Sunken Citadel
+9 Swamp
+1 Twisted Landscape
+1 Davriel, Rogue Shadowmage
+1 Wrenn and Realmbreaker
+1 Invasion of Ergamon
+1 Invasion of Karsus
+1 Invasion of Mercadia

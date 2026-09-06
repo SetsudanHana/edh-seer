@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/h47OyAJeTcCcXMM_qRUSoA (source https://archidekt.com/decks/3857991)
+# tags Attack Triggers, Reanimator, Graveyard, Discard, Weenies; bracket 3; saved 2026-08-23; 36 tagged of 5803 indexed
+
+Commander
+1 Alesha, Who Smiles at Death
+
+Deck
+1 Access Tunnel
+1 Axgard Armory
+1 Caves of Koilos
+1 Command Tower
+1 Dalkovan Encampment
+1 Desolate Mire
+1 Dragonskull Summit
+1 Eiganjo Castle
+1 Exotic Orchard
+1 Fogwell's Gym
+1 Geier Reach Sanitarium
+1 Godless Shrine
+1 Haunted Ridge
+3 Mountain
+1 Nomad Outpost
+1 Orzhov Basilica
+1 Path of Ancestry
+3 Plains
+1 Restless Fortress
+1 Restless Vents
+1 Rogue's Passage
+1 Rugged Prairie
+1 Shadowblood Ridge
+1 Shadowy Backstreet
+1 Slayers' Stronghold
+1 Smoldering Marsh
+1 Sundown Pass
+4 Swamp
+1 Alesha, Who Laughs at Fate
+1 Arabella, Abandoned Doll
+1 Avenger of the Fallen
+1 Bloodletter of Aclazotz
+1 Death-Greeter's Champion
+1 Delney, Streetwise Lookout
+1 Drana, Liberator of Malakir
+1 Elenda, the Dusk Rose
+1 Enduring Innocence
+1 Faerie Macabre
+1 Fear of Missing Out
+1 Gimli of the Glittering Caves
+1 Glint-Horn Buccaneer
+1 Guardian of New Benalia
+1 Inti, Seneschal of the Sun
+1 Irreverent Gremlin
+1 Jack of Hearts, Volatile Hero
+1 Jaxis, the Troublemaker
+1 Kambal, Consul of Allocation
+1 Karmic Guide
+1 Knight of Dusk's Shadow
+1 Loran of the Third Path
+1 Lotho, Corrupt Shirriff
+1 MacCready, Lamplight Mayor
+1 Master of Cruelties
+1 Phyrexian Dragon Engine
+1 Preacher of the Schism
+1 Saradoc, Master of Buckland
+1 Silent Arbiter
+1 Solemn Simulacrum
+1 Spirit of Resilience
+1 Stoneforge Mystic
+1 Tomik, Wielder of Law
+1 Troop of Ponies
+1 Unstoppable Slasher
+1 Voice of Victory
+1 Welcoming Vampire
+1 Zurgo, Thunder's Decree
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Collector's Vault
+1 Mardu Monument
+1 Matzalantli, the Great Door
+1 Monument to Endurance
+1 Orzhov Signet
+1 Pact Weapon
+1 Pip-Boy 3000
+1 Skeleton Key
+1 Sol Ring
+1 Sword of Feast and Famine
+1 Blasphemous Edict
+1 Damn
+1 Gamble
+1 Game Over
+1 Mythos of Snapdax
+1 Slaughter the Strong
+1 Split Up
+1 Vanquish the Horde
+1 Continue?
+1 Crackling Doom
+1 Gleaming Splendor
+1 Sheltered by Ghosts
+1 Smile at Death
+1 The Eternal Wanderer

@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/FLV1VhZB6t1K6KUKqI0YAg (source https://archidekt.com/decks/26009150)
+# tags Blood, Vampires, Madness; bracket 2; saved 2026-09-03; 38 tagged of 18105 indexed
+
+Commander
+1 Norman Osborn
+
+Deck
+1 Accursed Duneyard
+1 Blood Crypt
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Ferrous Lake
+1 Foreboding Ruins
+1 Frostboil Snarl
+1 Haunted Ridge
+3 Island
+1 Luxury Suite
+1 Morphic Pool
+5 Mountain
+1 Shadowblood Ridge
+1 Shipwreck Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+5 Swamp
+1 Training Center
+1 Voldaren Estate
+1 Watery Grave
+1 Anger
+1 Anje Falkenrath
+1 Anje's Ravager
+1 Anje, Maid of Dishonor
+1 Belligerent Guest
+1 Bloodline Keeper
+1 Bloodtithe Harvester
+1 Butcher of Malakir
+1 Captivating Vampire
+1 Champion of Dusk
+1 Cordial Vampire
+1 Crossway Troublemakers
+1 Dusk Legion Sergeant
+1 Exsanguinator Cavalry
+1 Falkenrath Celebrants
+1 Falkenrath Forebear
+1 Indulgent Aristocrat
+1 Ivora, Insatiable Heir
+1 Kamber, the Plunderer
+1 Laurine, the Diversion
+1 Lord Xander, the Collector
+1 Malakir Bloodwitch
+1 Markov Baron
+1 Markov Enforcer
+1 Master of Dark Rites
+1 Moonstone Eulogist
+1 Olivia's Attendants
+1 Olivia, Mobilized for War
+1 Patron of the Vein
+1 Preacher of the Schism
+1 Sanctum Seeker
+1 Scion of Opulence
+1 Strefan, Maurer Progenitor
+1 Stromkirk Captain
+1 Stromkirk Condemned
+1 Stromkirk Occultist
+1 Vampire Socialite
+1 Voldaren Bloodcaster
+1 Arcane Signet
+1 Blood Fountain
+1 Ceremonial Knife
+1 Dimir Signet
+1 Glass-Cast Heart
+1 Lightning Greaves
+1 Rakdos Signet
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Arterial Alchemy
+1 Big Score
+1 Fell the Profane
+1 Frantic Search
+1 Infernal Grasp
+1 Pongify
+1 Rapid Hybridization
+1 Reality Shift
+1 Sink into Stupor
+1 Unexpected Windfall
+1 Vampires' Vengeance
+1 Withering Torment
+1 Olivia's Wrath
+1 Pointed Discussion
+1 Windfall

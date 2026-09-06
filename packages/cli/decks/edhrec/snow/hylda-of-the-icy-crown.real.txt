@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/49ooLDbJfh_HsdoVXmKciA (source https://archidekt.com/decks/23795368)
+# tags Tap / Untap, Snow, Blink, Stun; bracket 3; saved 2026-09-04; 437 tagged of 12517 indexed
+
+Commander
+1 Hylda of the Icy Crown
+
+Deck
+1 Abandoned Air Temple
+1 Adarkar Wastes
+1 Castle Ardenvale
+1 Castle Vantress
+1 Command Tower
+1 Deserted Beach
+1 Eiganjo, Seat of the Empire
+1 Exotic Orchard
+1 Floodfarm Verge
+1 Glacial Fortress
+1 Gleaming Bastion
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Hengegate Pathway
+1 Irrigated Farmland
+1 Meticulous Archive
+1 Minamo, School at Water's Edge
+1 Mystic Gate
+1 Nimbus Maze
+1 Otawara, Soaring City
+1 Port Town
+1 Prairie Stream
+1 Reflecting Pool
+1 Restless Anchorage
+1 Sea of Clouds
+1 Seachrome Coast
+8 Snow-Covered Island
+5 Snow-Covered Plains
+1 Airbender Ascension
+1 Gleaming Splendor
+1 Opposition
+1 Solitary Sanctuary
+1 Verity Circle
+1 Amazing Acrobatics
+1 Blustersquall
+1 Cloud's Limit Break
+1 Cryptic Command
+1 Depose // Deploy
+1 Force of Will
+1 Mental Modulation
+1 Plunge into Winter
+1 Rapier Wit
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Honor-Worn Shaku
+1 Hylda's Crown of Winter
+1 Mind Stone
+1 Relic of Legends
+1 Sewer-veillance Cam
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Progress
+1 The Mind Stone
+1 Thousand-Year Elixir
+1 Throne of Eldraine
+1 Austere Command
+1 Bond of Discipline
+1 Fantastic Bounce
+1 Bard, King of Dale
+1 Belladonna Took
+1 Captain America, Living Legend
+1 Court Street Denizen
+1 Drumbellower
+1 Elvish Mariner
+1 Fatestitcher
+1 Fear of Sleep Paralysis
+1 Floodpits Drowner
+1 Githzerai Monk
+1 Hammers of Moradin
+1 Harrier Strix
+1 Icebreaker Kraken
+1 Junk Winder
+1 Mister Fantastic, Reed Richards
+1 Mulldrifter
+1 Niblis of Frost
+1 Quake, Agent of S.H.I.E.L.D.
+1 Rhoda, Geist Avenger
+1 Sharae of Numbing Depths
+1 Summon: Shiva
+1 Sunblast Angel
+1 Tataru Taru
+1 Tempest Caller
+1 Thassa, Deep-Dwelling
+1 Timin, Youthful Geist
+1 Teferi, Who Slows the Sunset

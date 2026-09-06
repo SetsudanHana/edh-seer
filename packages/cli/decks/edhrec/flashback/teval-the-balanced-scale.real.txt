@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/E_7dhslZ2_xx-wmS5sC7Qw (source https://archidekt.com/decks/15489362)
+# tags Graveyard, Reanimator, Self-Mill, Flashback; bracket 3; saved 2026-09-04; 165 tagged of 38059 indexed
+
+Commander
+1 Teval, the Balanced Scale
+
+Deck
+1 Aftermath Analyst
+1 Augur of Autumn
+1 Avenger of Zendikar
+1 Baleful Strix
+1 Colossal Grave-Reaver
+1 Disciple of Bolas
+1 Famished Worldsire
+1 Filth
+1 Grave Researcher
+1 Hedron Crab
+1 Horizon Explorer
+1 Icetill Explorer
+1 Jarad, Golgari Lich Lord
+1 Lier, Disciple of the Drowned
+1 Llanowar Elves
+1 Lumra, Bellow of the Woods
+1 Master of Death
+1 Metamorphosis Fanatic
+1 Mole Man, Moloid Master
+1 Muldrotha, the Gravetide
+1 Nyx Weaver
+1 Raul, Trouble Shooter
+1 Sidisi, Brood Tyrant
+1 Six
+1 Sylvan Safekeeper
+1 Syr Konrad, the Grim
+1 Tatyova, Benthic Druid
+1 The Gitrog Monster
+1 Timeless Witness
+1 Vilespawn Spider
+1 Wonder
+1 Xu-Ifit, Osteoharmonist
+1 Another Chance
+1 Archenemy's Charm
+1 Brainstorm
+1 Counterspell
+1 Cyclonic Rift
+1 Flotsam // Jetsam
+1 Grapple with the Past
+1 Grisly Salvage
+1 Harrow
+1 Midnight Tilling
+1 Narset's Reversal
+1 Putrefy
+1 Tear Asunder
+1 Argoth, Sanctum of Nature
+1 Bojuka Bog
+1 Command Beacon
+1 Command Tower
+1 Crypt of Agadeem
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Festering Thicket
+1 Fetid Pools
+1 Foreboding Landscape
+5 Forest
+1 Hinterland Harbor
+4 Island
+1 Lotus Field
+1 Memorial to Folly
+1 Myriad Landscape
+1 Opulent Palace
+1 Shifting Woodland
+1 Sunken Hollow
+4 Swamp
+1 Tangled Islet
+1 Urborg, Tomb of Yawgmoth
+1 Vernal Fen
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Cultivate
+1 Death Begets Life
+1 Farseek
+1 Lie in Wait
+1 Living Death
+1 Nature's Lore
+1 Reanimate
+1 Rise of the Dark Realms
+1 Victimize
+1 Will of the Sultai
+1 Deadbridge Chant
+1 Grave Venerations
+1 Insidious Roots
+1 Mystic Remora
+1 Spelunking
+1 Teval's Judgment
+1 Sol Ring
+1 Zuran Orb

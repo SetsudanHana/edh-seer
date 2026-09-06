@@ -1,0 +1,85 @@
+# edhrec average deck: https://edhrec.com/average-decks/mabel-heir-to-cragflame/offspring
+# theme Offspring (6 decks)
+
+Commander
+1 Mabel, Heir to Cragflame
+
+Deck
+1 Arcane Signet
+1 Blackblade Reforged
+1 Heirloom Epic
+1 Lightning Greaves
+1 Patchwork Banner
+1 Short Bow
+1 Sol Ring
+1 Sunforger
+1 Swiftfoot Boots
+1 Sword of the Animist
+1 Sword of the Squeak
+1 The Reaver Cleaver
+1 Arena of Glory
+1 Buried Ruin
+1 Clifftop Retreat
+1 Command Tower
+1 Fountainport
+1 Furycalm Snarl
+1 Lupinflower Village
+1 Minas Tirith
+10 Mountain
+1 Path of Ancestry
+13 Plains
+1 Rockface Village
+1 Rogue's Passage
+1 Rugged Prairie
+1 Three Tree City
+1 Armory Mice
+1 Barkform Harvester
+1 Brambleguard Captain
+1 Brave-Kin Duo
+1 Canyon Jerboa
+1 Cheeky House-Mouse
+1 Emberheart Challenger
+1 Enduring Innocence
+1 Flowerfoot Swordmaster
+1 Heartfire Hero
+1 Manifold Mouse
+1 Mouse Trapper
+1 Nettle Guard
+1 Pests of Honor
+1 Raging Battle Mouse
+1 Roughshod Duo
+1 Seedglaive Mentor
+1 Shrike Force
+1 Steelburr Champion
+1 Stormsplitter
+1 Thistledown Players
+1 Three Tree Mascot
+1 Valley Questcaller
+1 Veteran Guardmouse
+1 Warren Warleader
+1 Whiskerquill Scribe
+1 Whiskervale Forerunner
+1 Blacksmith's Talent
+1 Fighter Class
+1 Forge Anew
+1 Sigarda's Aid
+1 Three Blind Mice
+1 War Squeak
+1 Boros Charm
+1 Crumb and Get It
+1 Dawn's Truce
+1 Flawless Maneuver
+1 Mabel's Mettle
+1 Might of the Meek
+1 Parting Gust
+1 Rabid Gnaw
+1 Repel Calamity
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Valley Rally
+1 Wear // Tear
+1 Blasphemous Act
+1 Dewdrop Cure
+1 Honor
+1 Open the Armory
+1 Steelshaper's Gift

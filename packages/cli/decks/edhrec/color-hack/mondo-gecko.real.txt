@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/AQsg00S4jQllqCNF5yEqfg (source https://archidekt.com/decks/21799266)
+# tags Color Hack, Clones, Theft; bracket 2; saved 2026-07-12; 12 tagged of 241 indexed
+
+Commander
+1 Mondo Gecko
+
+Deck
+1 Access Tunnel
+1 Big Apple, 3 a.m.
+1 Cradle of the Accursed
+1 Drownyard Temple
+1 Exotic Orchard
+26 Island
+1 Lazotep Quarry
+1 Meteor Crater
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Rogue's Passage
+1 Springjack Pasture
+1 Urza's Cave
+1 War Room
+1 Aether Tunnel
+1 Aqueous Form
+1 Case of the Shattered Pact
+1 Ceta Sanctuary
+1 Control Magic
+1 Dream Coat
+1 Invisibility
+1 Kitnap
+1 Mind Harness
+1 Mirrormade
+1 Security Bypass
+1 Sword Coast Sailor
+1 Writ of Passage
+1 Arcane Heist
+1 Govern the Guildless
+1 Hidden Strings
+1 Invoke the Winds
+1 Relm's Sketching
+1 Rite of Replication
+1 Stolen Identity
+1 Trait Doctoring
+1 Arcane Signet
+1 Bag of Holding
+1 Chromatic Lantern
+1 Conqueror's Flail
+1 Distorting Lens
+1 Fellwar Stone
+1 Machine God's Effigy
+1 Mind Stone
+1 Puca's Eye
+1 Sapphire Medallion
+1 Sol Ring
+1 Staff of Eden, Vault's Key
+1 Swiftfoot Boots
+1 The Key to the Vault
+1 Thought Vessel
+1 Wizard's Rockets
+1 Clever Impersonator
+1 Copycrook
+1 Kitsune, Dragon's Daughter
+1 Laboratory Maniac
+1 Mirrorhall Mimic
+1 Mocking Doppelganger
+1 Phyrexian Metamorph
+1 Scuttlemutt
+1 Shadow Kin
+1 Sower of Temptation
+1 Sphinx of Forgotten Lore
+1 Tidal Visionary
+1 Vizier of Many Faces
+1 Wonder
+1 Elminster's Simulacrum
+1 High Tide
+1 Out of the Way
+1 Pongify
+1 Prismatic Lace
+1 Rapid Hybridization
+1 Resculpt
+1 See Double
+1 Jace, Wielder of Mysteries

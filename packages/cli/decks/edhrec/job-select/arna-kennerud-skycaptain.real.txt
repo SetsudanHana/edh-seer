@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/IwYde-LxQbLhq8QkZYXhog (source https://archidekt.com/decks/25456209)
+# tags Job Select, Artifacts, Equipment, Modified Creatures; bracket 2; saved 2026-09-03; 2 tagged of 8941 indexed
+
+Commander
+1 Arna Kennerüd, Skycaptain
+
+Deck
+1 Adarkar Wastes
+1 Aether Hub
+1 Ancient Den
+1 Archway of Innovation
+1 Caves of Koilos
+1 Command Tower
+1 Contaminated Landscape
+1 Drowned Catacomb
+1 Glacial Fortress
+1 Godless Shrine
+6 Island
+1 Isolated Chapel
+1 Mirrodin's Core
+1 Otawara, Soaring City
+1 Path of Ancestry
+8 Plains
+1 Polluted Delta
+1 Prairie Stream
+1 Seat of the Synod
+1 Secluded Starforge
+1 Spire of Industry
+1 Sunken Hollow
+1 Sunken Ruins
+2 Swamp
+1 Vault of Whispers
+1 Anchor to Reality
+1 Chart a Course
+1 Gitaxian Probe
+1 Necromantic Selection
+1 Night's Whisper
+1 Reverse Engineer
+1 Sunfall
+1 Thoughtcast
+1 Armored Skyhunter
+1 Basim Ibn Ishaq
+1 Beatrix, Loyal General
+1 Cid, Freeflier Pilot
+1 Cloud, Midgar Mercenary
+1 Cloudsteel Kirin
+1 Heavenly Blademaster
+1 Ironheart, Clever Champion
+1 Kappa Cannoneer
+1 Kíli the Resourceful
+1 Leaden Myr
+1 Lion Sash
+1 Master Transmuter
+1 Mm'menon, the Right Hand
+1 Puresteel Paladin
+1 Ratonhnhaké꞉ton
+1 Ronin, Shadow Stalker
+1 Rosa, Resolute White Mage
+1 Shimmer Dragon
+1 Silver Myr
+1 Sram, Senior Edificer
+1 Stoneforge Mystic
+1 Swordsman, Sharp Scoundrel
+1 The Mighty Thor, Jane Foster
+1 Assassin Gauntlet
+1 Astrologian's Planisphere
+1 Batterskull
+1 Biorganic Carapace
+1 Black Mage's Rod
+1 Celestial Armor
+1 Colossus Hammer
+1 Cranial Plating
+1 Cryptic Coat
+1 Dark Knight's Greatsword
+1 Glimmer Lens
+1 Greatsword of Tyr
+1 Hexgold Hoverwings
+1 Machinist's Arsenal
+1 Meteor Sword
+1 Moonsnare Prototype
+1 Ninja's Blades
+1 Phantom Blade
+1 Plate Armor
+1 Pre-War Formalwear
+1 Skateboard
+1 Sol Ring
+1 Sword of the Animist
+1 Wizard's Staff
+1 Dark Ritual
+1 Dispatch
+1 Mental Misstep
+1 Metallic Rebuke
+1 Path to Exile

@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/burakos-party-leader-folk-hero/party
+# theme Party (592 decks)
+
+Commander
+1 Burakos, Party Leader
+1 Folk Hero
+
+Deck
+1 Arcane Signet
+1 Lightning Greaves
+1 Maskwood Nexus
+1 Multiclass Baldric
+1 Orzhov Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 Vat of Rebirth
+1 Bojuka Bog
+1 Castle Locthwain
+1 Caves of Koilos
+1 Command Tower
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Mortuary Mire
+1 Mutavault
+1 Orzhov Basilica
+1 Path of Ancestry
+8 Plains
+1 Starlit Sanctum
+9 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Vault of Champions
+1 Vault of the Archangel
+1 War Room
+1 Windbrisk Heights
+1 Archivist of Oghma
+1 Archpriest of Iona
+1 Aven Interrupter
+1 Aven Mindcensor
+1 Bloodsoaked Champion
+1 Changeling Outcast
+1 Dauthi Voidwalker
+1 Deep Gnome Terramancer
+1 Elas il-Kor, Sadistic Pilgrim
+1 Frontline Medic
+1 Glorious Protector
+1 Grim Haruspex
+1 Grim Hireling
+1 Harper Recruiter
+1 Irregular Cohort
+1 Jazal Goldmane
+1 Lotho, Corrupt Shirriff
+1 Mage's Attendant
+1 Malakir Blood-Priest
+1 Mastermind Plum
+1 Mindblade Render
+1 Mirror Entity
+1 Morbid Opportunist
+1 Mother of Runes
+1 Nadier's Nightblade
+1 Nalia de'Arnise
+1 Nighthawk Scavenger
+1 Puppeteer Clique
+1 Rumor Gatherer
+1 Seasoned Dungeoneer
+1 Selfless Spirit
+1 Solemn Doomguide
+1 Squad Commander
+1 Varragoth, Bloodsky Sire
+1 Vexilus Praetor
+1 Zulaport Cutthroat
+1 Black Market Connections
+1 Haunted One
+1 Reconnaissance
+1 Revel in Riches
+1 Anguished Unmaking
+1 Crib Swap
+1 Deadly Alliance
+1 Despark
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Austere Command
+1 Coveted Prize
+1 Dusk // Dawn
+1 Sevinne's Reclamation
+1 Stick Together
+1 Thwart the Grave

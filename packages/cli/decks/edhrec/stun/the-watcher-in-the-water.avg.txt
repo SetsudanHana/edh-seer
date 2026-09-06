@@ -1,0 +1,77 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-watcher-in-the-water/stun
+# theme Stun (14 decks)
+
+Commander
+1 The Watcher in the Water
+
+Deck
+1 Arcane Signet
+1 Ashnod's Altar
+1 Bender's Waterskin
+1 Extraplanar Lens
+1 Idol of Oblivion
+1 Midnight Clock
+1 Phyrexian Altar
+1 Sapphire Medallion
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thought Vessel
+30 Island
+1 Lonely Sandbar
+1 Minamo, School at Water's Edge
+1 Mystic Sanctuary
+1 Nesting Grounds
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Archmage Emeritus
+1 Chasm Skulker
+1 Consecrated Sphinx
+1 Drowned Rusalka
+1 Faerie Mastermind
+1 Harmonized Trio
+1 Hullbreaker Horror
+1 Junk Winder
+1 Laboratory Maniac
+1 Ledger Shredder
+1 Monstrosity of the Lake
+1 Nadir Kraken
+1 Nezahal, Primal Tide
+1 Psychosis Crawler
+1 Scourge of Fleets
+1 The Unagi of Kyoshi Island
+1 Triskaidekaphile
+1 Wavebreak Hippocamp
+1 Lost in the Maze
+1 Mystic Remora
+1 Ominous Seas
+1 Opposition
+1 Rhystic Study
+1 Teferi's Ageless Insight
+1 Verity Circle
+1 Arcane Denial
+1 Brainstorm
+1 Brainsurge
+1 Consider
+1 Counterspell
+1 Flow of Knowledge
+1 Frantic Search
+1 Harmonized Crescendo
+1 High Tide
+1 Keep Watch
+1 Mana Drain
+1 Negate
+1 Nexus Mentality
+1 Opt
+1 Pongify
+1 Pull from Tomorrow
+1 Quick Study
+1 Sink into Stupor
+1 Thirst for Discovery
+1 Three Steps Ahead
+1 Tolarian Winds
+1 Transcendent Message
+1 Teferi, Master of Time
+1 Irenicus's Vile Duplication
+1 Whelming Wave
+1 Windfall

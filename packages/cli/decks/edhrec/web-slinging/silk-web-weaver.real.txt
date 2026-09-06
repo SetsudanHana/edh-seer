@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/-stq95uEnV0QBFT982D3cQ (source https://archidekt.com/decks/23566831)
+# tags Web-slinging, Humans, Tokens, +1/+1 Counters, Commander Matters; bracket 2; saved 2026-07-26; 6 tagged of 1252 indexed
+
+Commander
+1 Silk, Web Weaver
+
+Deck
+1 Adaptive Automaton
+1 Amazing Spider-Girl
+1 Angelic Aberration
+1 Arachne, Psionic Weaver
+1 Aunt May
+1 Bess, Soul Nourisher
+1 Black Panther, Vanguard
+1 Coppercoat Vanguard
+1 Damage Control Crew
+1 Elvish Mystic
+1 Gallant Citizen
+1 Guy in the Chair
+1 Iron Spider, Stark Upgrade
+1 Jaspera Sentinel
+1 Katilda, Dawnhart Prime
+1 Kyler, Sigardian Emissary
+1 Leinore, Autumn Sovereign
+1 Llanowar Elves
+1 Mary Jane Watson
+1 Pendelhaven Elder
+1 Radioactive Spider
+1 Rishkar, Peema Renegade
+1 Rosie Cotton of South Lane
+1 Rumor Gatherer
+1 Spider-Girl, Legacy Hero
+1 Spider-Ham, Peter Porker
+1 Spider-Man India
+1 Spider-Man, Brooklyn Visionary
+1 Spider-Man, To the Rescue
+1 Spider-Man, Web-Slinger
+1 Spider-UK
+1 Spiders-Man, Heroic Horde
+1 Tender Wildguide
+1 Thraben Doomsayer
+1 Torens, Fist of the Angels
+1 Tuskguard Captain
+1 Web-Warriors
+1 Avengers Tower
+1 Birnin Zana Plaza
+1 Command Tower
+14 Forest
+1 Holdout Settlement
+13 Plains
+1 Suburban Sanctuary
+1 Survivors' Encampment
+1 Thriving Heath
+1 Vibrant Cityscape
+1 Bagel and Schmear
+1 Commander's Sphere
+1 Costume Closet
+1 Peter Parker's Camera
+1 Pictures of Spider-Man
+1 Sol Ring
+1 Spider-Suit
+1 Cathar's Call
+1 Friendly Neighborhood
+1 Intangible Virtue
+1 Laid to Rest
+1 Wall Crawl
+1 Web Up
+1 Web of Life and Destiny
+1 With Great Power . . .
+1 Cultivate
+1 Kapow!
+1 Rampant Growth
+1 Sunset Revelry
+1 Grow Extra Arms
+1 Rapid Rescue
+1 Spectacular Tactics
+1 Strength of Will
+1 Sudden Strike
+1 Terrific Team-Up
+1 Thwip!
+1 Ultimate Alliance

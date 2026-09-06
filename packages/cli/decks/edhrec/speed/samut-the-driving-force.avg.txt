@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/samut-the-driving-force/speed
+# theme Speed (57 decks)
+
+Commander
+1 Samut, the Driving Force
+
+Deck
+1 Arcane Signet
+1 Lumbering Worldwagon
+1 Parhelion II
+1 Peacewalker Colossus
+1 Perilous Snare
+1 Racers' Scoreboard
+1 Rocketeer Boostbuggy
+1 Salvation Engine
+1 Sol Ring
+1 Spire Mechcycle
+1 Starting Column
+1 The Regalia
+1 Thunderous Velocipede
+1 Valor's Flagship
+1 Veloheart Bike
+1 Weatherlight
+1 Abraded Bluffs
+1 Amonkhet Raceway
+1 Avishkar Raceway
+1 Battlefield Forge
+1 Canopy Vista
+1 Cinder Glade
+1 Clifftop Retreat
+1 Command Tower
+1 Country Roads
+1 Exotic Orchard
+6 Forest
+1 Jetmir's Garden
+1 Jungle Shrine
+5 Mountain
+1 Muraganda Raceway
+5 Plains
+1 Rockfall Vale
+1 Rocky Roads
+1 Rootbound Crag
+1 Sacred Foundry
+1 Stomping Ground
+1 Sunpetal Grove
+1 Temple Garden
+1 Wild Roads
+1 Balthier and Fran
+1 Burnout Bashtronaut
+1 Caradora, Heart of Alacria
+1 Cloudspire Coordinator
+1 Endrider Catalyzer
+1 Endrider Spikespitter
+1 Hazoret, Godseeker
+1 Howlsquad Heavy
+1 Interface Ace
+1 Kolodin, Triumph Caster
+1 Kutzil, Malamet Exemplar
+1 Leonin Surveyor
+1 Miriam, Herd Whisperer
+1 Nesting Bot
+1 Oviya, Automech Artisan
+1 Pride of the Road
+1 Rip, Spawn Hunter
+1 Sram, Senior Edificer
+1 Veteran Beastrider
+1 Wylie Duke, Atiin Hero
+1 Garruk's Uprising
+1 Impact Tremors
+1 Kickoff Celebrations
+1 Lightwheel Enhancements
+1 Outpace Oblivion
+1 Point the Way
+1 Warleader's Call
+1 Beast Within
+1 Boros Charm
+1 Defend the Rider
+1 Grand Crescendo
+1 Heroic Intervention
+1 Path to Exile
+1 Secure the Wastes
+1 Swords to Plowshares
+1 Chandra, Spark Hunter
+1 Blasphemous Act
+1 Cultivate
+1 Farseek
+1 Finale of Glory
+1 Full Throttle
+1 Nature's Lore
+1 Push the Limit
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Song of Totentanz

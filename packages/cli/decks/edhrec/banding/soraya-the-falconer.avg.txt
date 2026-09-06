@@ -1,0 +1,56 @@
+# edhrec average deck: https://edhrec.com/average-decks/soraya-the-falconer/banding
+# theme Banding (35 decks)
+
+Commander
+1 Soraya the Falconer
+
+Deck
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Door of Destinies
+1 Gathering Stone
+1 Herald's Horn
+1 Heraldic Banner
+1 Oketra's Monument
+1 Patchwork Banner
+1 Pearl Medallion
+1 Sol Ring
+1 Vanquisher's Banner
+1 Animal Sanctuary
+1 Emeria, the Sky Ruin
+1 Lupinflower Village
+1 Minas Tirith
+1 Myriad Landscape
+29 Plains
+1 War Room
+1 Windbrisk Heights
+1 Aven Brigadier
+1 Aven Mindcensor
+1 Cartographer's Hawk
+1 Commander Eesha
+1 Duskrider Falcon
+1 Healer's Hawk
+1 Kangee's Lieutenant
+1 Scouting Hawk
+1 Shrike Force
+1 Steel-Plume Marshal
+23 Tempest Hawk
+1 Always Watching
+1 Honor of the Pure
+1 Land Tax
+1 Murmuration
+1 Radiant Destiny
+1 Rally the Ranks
+1 Soulcatchers' Aerie
+1 Tocasia's Welcome
+1 Brave the Elements
+1 Generous Gift
+1 Mana Tithe
+1 Path to Exile
+1 Perch Protection
+1 Rally of Wings
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Austere Command
+1 Battle Screech
+1 Mass Calcify

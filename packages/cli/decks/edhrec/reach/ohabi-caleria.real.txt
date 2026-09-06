@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/8mYr_J7DDbhM8V3T_1se4A (source https://archidekt.com/decks/23759867)
+# tags Elves, Reach, Archers; bracket 2; saved 2026-07-06; 16 tagged of 1998 indexed
+
+Commander
+1 Ohabi Caleria
+
+Deck
+1 Apprentice Sharpshooter
+1 Arcus Acolyte
+1 Bamboo Grove Archer
+1 Beast Whisperer
+1 Brigid, Hero of Kinsbaile
+1 Catti-brie of Mithral Hall
+1 Conclave Guildmage
+1 D'Avenant Archer
+1 D'Avenant Healer
+1 D'Avenant Trapper
+1 Dionus, Elvish Archdruid
+1 Dwynen, Gilt-Leaf Daen
+1 Elvish Mystic
+1 Ezuri's Archers
+1 Greatbow Doyen
+1 Halana, Kessig Ranger
+1 Imperious Perfect
+1 Jagged-Scar Archers
+1 Legolas Greenleaf
+1 Legolas, Master Archer
+1 Longshot Squad
+1 Lys Alana Bowmaster
+1 Nightshade Dryad
+1 Nylea's Disciple
+1 Palazzo Archers
+1 Reverent Hunter
+1 Sawblade Slinger
+1 Scattershot Archer
+1 Selesnya Sagittars
+1 Sharpshooter Elf
+1 Silhana Starfletcher
+1 Skyway Sniper
+1 The Tarrasque
+1 Thornweald Archer
+1 Titania's Chosen
+1 Wildborn Preserver
+1 Archery Training
+1 Garruk's Uprising
+1 Hunter's Talent
+1 Arrow Volley Trap
+1 Condemn
+1 Coordinated Maneuver
+1 Disenchant
+1 Divine Arrow
+1 Fog of War
+1 Hail of Arrows
+1 Hunter's Ambush
+1 Hunter's Mark
+1 Inspiring Call
+1 Sungold Barrage
+1 Basilisk Collar
+1 Commander's Sphere
+1 Elven Bow
+1 Galadhrim Bow
+1 Lifecrafter's Bestiary
+1 Selesnya Cluestone
+1 Selesnya Locket
+1 Short Bow
+1 Blossoming Sands
+1 Command Tower
+1 Desert of the True
+1 Drifting Meadow
+1 Elfhame Palace
+1 Evolving Wilds
+8 Forest
+1 Graypelt Refuge
+1 Hall of Oracles
+1 Llanowar Reborn
+1 Path of Ancestry
+8 Plains
+1 Rogue's Passage
+1 Secluded Courtyard
+1 Secluded Steppe
+1 Selesnya Guildgate
+1 Selesnya Sanctuary
+1 Temple of Plenty
+1 Thriving Grove
+1 Thriving Heath
+1 Unclaimed Territory
+1 Day of Judgment
+1 Knockout Maneuver
+1 Rampant Growth
+1 Vivien Reid
+1 Vivien, Arkbow Ranger
+1 Vivien, Champion of the Wilds

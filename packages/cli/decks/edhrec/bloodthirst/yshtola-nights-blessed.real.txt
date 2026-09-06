@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/C8hWmc2capX0ZNPHkwJciw (source https://archidekt.com/decks/16451368)
+# tags Bloodthirst, Counterspells, Control, Card Draw, Lifegain; bracket unset; saved 2026-07-24; 2 tagged of 52883 indexed
+
+Commander
+1 Y'shtola, Night's Blessed
+
+Deck
+1 Aetherspouts
+1 Amazing Acrobatics
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Dig Through Time
+1 Disallow
+1 Dovin's Veto
+1 Frantic Search
+1 Lethal Scheme
+1 Press the Enemy
+1 Unbreakable Formation
+1 Unwind
+1 Void Rend
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Aminatou, Veil Piercer
+1 Archmage Emeritus
+1 Chameleon, Master of Disguise
+1 Emet-Selch of the Third Seat
+1 Enduring Tenacity
+1 Estinien Varlineau
+1 G'raha Tia, Scion Reborn
+1 Haughty Djinn
+1 Hraesvelgr of the First Brood
+1 Kambal, Consul of Allocation
+1 Kamiz, Obscura Oculus
+1 Krile Baldesion
+1 Liesa, Shroud of Dusk
+1 Lyse Hext
+1 Mocking Sprite
+1 Papalymo Totolymo
+1 Raffine, Scheming Seer
+1 Thassa, God of the Sea
+1 Vito, Thorn of the Dusk Rose
+1 Y'shtola Rhul
+1 All That Glitters
+1 Aqueous Form
+1 Curiosity
+1 Imprisoned in the Moon
+1 Observed Stasis
+1 On Serra's Wings
+1 Phyrexian Arena
+1 Polluted Bonds
+1 Propaganda
+1 Sanguine Bond
+1 Sphere of Safety
+1 Arcane Sanctum
+1 Azorius Chancery
+1 Command Tower
+1 Darkwater Catacombs
+1 Desolate Mire
+1 Evolving Wilds
+1 Fetid Heath
+9 Island
+1 Orzhov Basilica
+1 Path of Ancestry
+5 Plains
+1 Prairie Stream
+1 Scavenger Grounds
+1 Skycloud Expanse
+1 Sunken Hollow
+6 Swamp
+1 Temple of Enlightenment
+1 Terramorphic Expanse
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Chromatic Lantern
+1 Dancer's Chakrams
+1 Dimir Signet
+1 Fellwar Stone
+1 Relic of Legends
+1 Sol Ring
+1 Beyond the Quiet
+1 Cleansing Nova
+1 Exsanguinate
+1 Night's Whisper
+1 Painful Truths
+1 Preordain
+1 Stock Up
+1 Syphon Mind
+1 Vindicate

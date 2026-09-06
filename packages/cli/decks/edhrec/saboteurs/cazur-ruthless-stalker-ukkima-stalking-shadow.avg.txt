@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/cazur-ruthless-stalker-ukkima-stalking-shadow/saboteurs
+# theme Saboteurs (9 decks)
+
+Commander
+1 Cazur, Ruthless Stalker
+1 Ukkima, Stalking Shadow
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 The Ozolith
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Command Tower
+1 Darkwater Catacombs
+1 Exotic Orchard
+1 Flooded Grove
+6 Forest
+5 Island
+1 Llanowar Wastes
+1 Morphic Pool
+1 Opulent Palace
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Rejuvenating Springs
+1 Shipwreck Marsh
+1 Sunken Hollow
+4 Swamp
+1 Temple of Deceit
+1 Twilight Mire
+1 Underground River
+1 Watery Grave
+1 Willowrush Verge
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Baleful Strix
+1 Bilbo, Luckwearer
+1 Birds of Paradise
+1 Changeling Outcast
+1 Cold-Eyed Selkie
+1 Corpsejack Menace
+1 Dauthi Voidwalker
+1 Dimir Infiltrator
+1 Drana, Liberator of Malakir
+1 Edric, Spymaster of Trest
+1 Elves of Deep Shadow
+1 Enduring Curiosity
+1 Felix Five-Boots
+1 Forgotten Ancient
+1 Gix, Yawgmoth Praetor
+1 Grazilaxx, Illithid Scholar
+1 Grim Hireling
+1 Invisible Stalker
+1 Kami of Whispered Hopes
+1 Malcolm, Alluring Scoundrel
+1 Mercurial Spelldancer
+1 Orochi Soul-Reaver
+1 Psychic Frog
+1 Quilled Greatwurm
+1 Silent Hallcreeper
+1 Siren Stormtamer
+1 Skyserpent Seeker
+1 Slither Blade
+1 Thrummingbird
+1 Toski, Bearer of Secrets
+1 Trygon Predator
+1 Branching Evolution
+1 Bred for the Hunt
+1 Combat Research
+1 Feywild Visitor
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Keen Sense
+1 One with Nature
+1 Sphere Grid
+1 Abrupt Decay
+1 An Offer You Can't Refuse
+1 Assassin's Trophy
+1 Beast Within
+1 Counterspell
+1 Heroic Intervention
+1 Inspiring Call
+1 Mutational Advantage
+1 Negate
+1 Ripples of Potential
+1 Tear Asunder
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Stolen Identity
+1 Three Visits
+1 Wave Goodbye

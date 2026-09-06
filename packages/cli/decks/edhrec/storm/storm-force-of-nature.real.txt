@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/Pz9IqbxvW5iTbRW8TQubRw (source https://archidekt.com/decks/16472907)
+# tags Extra Turns, Cantrips, Spellslinger, Storm; bracket 3; saved 2026-09-04; 1216 tagged of 16218 indexed
+
+Commander
+1 Storm, Force of Nature
+
+Deck
+1 Alchemist's Refuge
+1 Arena of Glory
+1 Bountiful Landscape
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+2 Forest
+1 Hinterland Harbor
+6 Island
+1 Ketria Triome
+1 Mistrise Village
+1 Misty Rainforest
+4 Mountain
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Rogue's Passage
+1 Rootbound Crag
+1 Scalding Tarn
+1 Steam Vents
+1 Stomping Ground
+1 Sulfur Falls
+1 Wooded Foothills
+1 Arcane Denial
+1 Auroral Procession
+1 Beast Within
+1 Big Score
+1 Borne Upon a Wind
+1 Brainstorm
+1 Consider
+1 Counterspell
+1 Crimson Wisps
+1 Expedite
+1 Frantic Search
+1 Great Train Heist
+1 Growth Spiral
+1 Heroic Intervention
+1 Manamorphose
+1 Narset's Reversal
+1 Negate
+1 Opt
+1 Planar Genesis
+1 Pongify
+1 Psychotic Fury
+1 Quicken
+1 Rapid Hybridization
+1 Shadow Rift
+1 Twinferno
+1 Unexpected Windfall
+1 Valakut Awakening
+1 Arcane Signet
+1 Lightning Greaves
+1 Lotus Petal
+1 Sol Ring
+1 Archmage Emeritus
+1 Goblin Electromancer
+1 Pinnacle Monk
+1 Ral, Monsoon Mage
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Thunderclap Drake
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Capture of Jingzhou
+1 Eagle Vision
+1 Enter the Enigma
+1 Explore
+1 Expressive Iteration
+1 Faithless Looting
+1 Farseek
+1 Gitaxian Probe
+1 Jeska's Will
+1 Mizzix's Mastery
+1 Nature's Lore
+1 Overmaster
+1 Overpowering Attack
+1 Ponder
+1 Portent
+1 Preordain
+1 Pym Particles
+1 Rampant Growth
+1 Regrowth
+1 Serum Visions
+1 Shared Roots
+1 Sleight of Hand
+1 Slip Through Space
+1 Tasha's Hideous Laughter
+1 Temporal Manipulation
+1 Three Visits
+1 Time Warp
+1 Windfall

@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-ur-dragon/retrace
+# theme Retrace (2 decks)
+
+Commander
+1 The Ur-Dragon
+
+Deck
+1 Arcane Signet
+1 Crucible of Worlds
+1 Perpetual Timepiece
+1 Sol Ring
+1 Bayou
+1 Blooming Marsh
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Cactus Preserve
+1 Command Tower
+1 Echoing Deeps
+1 Exotic Orchard
+2 Forest
+1 Gruul Turf
+3 Island
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Mossfire Valley
+4 Mountain
+1 Murmuring Bosk
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Savannah
+1 Shifting Woodland
+1 Stomping Ground
+3 Swamp
+1 Temple of Abandon
+1 Temple of Mystery
+1 Tropical Island
+1 Underground Sea
+1 Verdant Catacombs
+1 Viridescent Bog
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Archetype of Courage
+1 Archmage of Runes
+1 Crystal Barricade
+1 Elder Pine of Jukai
+1 Elvish Archdruid
+1 Elvish Harbinger
+1 Forerunner of the Empire
+1 Garruk's Packleader
+1 Giant Harbinger
+1 Goblin Matron
+1 Goblin Recruiter
+1 Greymond, Avacyn's Stalwart
+1 Horned Sliver
+1 Lullmage Mentor
+1 Magda, Brazen Outlaw
+1 Masked Vandal
+1 Patron Wizard
+1 Pheres-Band Warchief
+1 Priest of Titania
+1 Quandrix Apprentice
+1 Ramunap Excavator
+1 Risen Reef
+1 Scourge of Valkas
+1 Striking Sliver
+1 Talon Sliver
+1 Unsettled Mariner
+1 Vedalken Aethermage
+1 Vodalian Hexcatcher
+1 Wick, the Whorled Mind
+1 Windrider Wizard
+1 Dragon Tempest
+1 Full Moon's Rise
+1 Garruk's Uprising
+1 Leyline of Sanctity
+1 Renewed Solidarity
+1 Cache Grab
+1 Clever Concealment
+1 Drown in the Loch
+1 Entomb
+1 Frantic Search
+1 Invert Polarity
+1 Muddle the Mixture
+1 Tear Asunder
+1 Blasphemous Act
+1 Bring to Light
+1 Cateran Summons
+1 Creeping Renaissance
+1 Crux of Fate
+1 Formless Genesis
+1 Life from the Loam
+1 Lively Dirge
+1 Winding Way
+1 Winds of Abandon

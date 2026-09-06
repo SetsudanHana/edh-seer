@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/captain-nghathrod/menace
+# theme Menace (6 decks)
+
+Commander
+1 Captain N'ghathrod
+
+Deck
+1 Arcane Signet
+1 Dimir Keyrune
+1 Dimir Signet
+1 Everflowing Chalice
+1 Ghoulcaller's Bell
+1 Herald's Horn
+1 Mesmeric Orb
+1 Mind Stone
+1 Sol Ring
+1 The Water Crystal
+1 Cabal Coffers
+1 Choked Estuary
+1 Command Tower
+1 Darkslick Shores
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Dismal Backwater
+1 Drowned Catacomb
+1 Fetid Pools
+10 Island
+1 Mistvault Bridge
+1 Nephalia Drownyard
+1 Path of Ancestry
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Hollow
+10 Swamp
+1 Tainted Isle
+1 Temple of Deceit
+1 Ancient Cellarspawn
+1 Arvinox, the Mind Flail
+1 Bruvac the Grandiloquent
+1 Changeling Outcast
+1 Chasm Skulker
+1 Clammy Prowler
+1 Consuming Aberration
+1 Cruel Somnophage
+1 Dauthi Horror
+1 Forgotten Creation
+1 Grazilaxx, Illithid Scholar
+1 Grell Philosopher
+1 Guiltfeeder
+1 Hullbreaker Horror
+1 Mind Flayer
+1 Nemesis of Reason
+1 Nighthowler
+1 Ruin Crab
+1 Sewer Nemesis
+1 Silent Hallcreeper
+1 Sludge Monster
+1 Solemn Simulacrum
+1 Spellskite
+1 The Mindskinner
+1 Thing in the Ice
+1 Uchuulon
+1 Wharf Infiltrator
+1 Zellix, Sanity Flayer
+1 Arcane Adaptation
+1 Endless Evil
+1 Fraying Sanity
+1 Haunted One
+1 Psychic Corrosion
+1 Arcane Denial
+1 Counterspell
+1 Dark Ritual
+1 Drown in Dreams
+1 Drown in the Loch
+1 Hero's Downfall
+1 Memory Plunder
+1 Negate
+1 Psychic Strike
+1 Thought Collapse
+1 Jace, Memory Adept
+1 Cut Your Losses
+1 Extract from Darkness
+1 Fractured Sanity
+1 Glimpse the Unthinkable
+1 Maddening Cacophony
+1 Mind Grind
+1 Singularity Rupture
+1 Traumatize

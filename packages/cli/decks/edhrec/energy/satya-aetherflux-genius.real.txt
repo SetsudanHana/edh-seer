@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/5vGNCiDqKYKJ9Yu54O92Mw (source https://archidekt.com/decks/13757880)
+# tags Energy; bracket 2; saved 2026-09-05; 3100 tagged of 14886 indexed
+
+Commander
+1 Satya, Aetherflux Genius
+
+Deck
+1 Adarkar Wastes
+1 Aether Hub
+1 Battlefield Forge
+1 Command Tower
+1 Hallowed Fountain
+5 Island
+9 Mountain
+1 Mystic Gate
+1 Mystic Monastery
+6 Plains
+1 Restless Anchorage
+1 Restless Bivouac
+1 Restless Spire
+1 Sacred Foundry
+1 Sea of Clouds
+1 Shivan Reef
+1 Spectator Seating
+1 Steam Vents
+1 Training Center
+1 Aether Channeler
+1 Aethergeode Miner
+1 Aetherstorm Roc
+1 Amped Raptor
+1 Assaultron Dominator
+1 Aurora Shifter
+1 Blaster Hulk
+1 Brotherhood Scribe
+1 Combustible Gearhulk
+1 Dr. Madison Li
+1 Electrostatic Pummeler
+1 Exalted Sunborn
+1 Guide of Souls
+1 Lightning Runner
+1 Overclocked Electromancer
+1 Professional Face-Breaker
+1 Razorfield Ripper
+1 Roil Cartographer
+1 Salvation Colossus
+1 Skyclave Apparition
+1 Solemn Simulacrum
+1 Sphinx of the Revelation
+1 Tempest Harvester
+1 Volatile Stormdrake
+1 Whirler Virtuoso
+1 Witch Enchanter
+1 Aether Refinery
+1 Aetherflux Conduit
+1 Aetheric Amplifier
+1 Aetherworks Marvel
+1 Arcane Signet
+1 Automated Assembly Line
+1 Bespoke Battlewagon
+1 Conversion Apparatus
+1 Decoction Module
+1 Gonti's Aether Heart
+1 Hourglass of the Lost
+1 Izzet Generatorium
+1 Panharmonicon
+1 Plasma Caster
+1 Sol Ring
+1 Solar Transformer
+1 Stone Idol Generator
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Unstable Amulet
+1 Aether Revolt
+1 Era of Innovation
+1 Scurry of Gremlins
+1 Vault 112: Sadistic Simulation
+1 Akroma's Will
+1 Electrosiphon
+1 Galvanic Discharge
+1 Harnessed Lightning
+1 Rush of Inspiration
+1 Swords to Plowshares
+1 Tune the Narrative
+1 Full Throttle
+1 Jolted Awake
+1 Localized Destruction
+1 Wheel of Potential
+1 Wrath of the Skies

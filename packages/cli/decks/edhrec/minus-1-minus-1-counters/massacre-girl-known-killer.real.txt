@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/u0iKutleao54ko29Dh7U6g (source https://moxfield.com/decks/n4-Xp11OB02HwdFSeM71Xg)
+# tags Control, -1/-1 Counters; bracket 3; saved 2026-09-04; 922 tagged of 5990 indexed
+
+Commander
+1 Massacre Girl, Known Killer
+
+Deck
+1 Akroan Horse
+1 Bloodletter of Aclazotz
+1 Clackbridge Troll
+1 Demon of Dark Schemes
+1 Drivnod, Carnage Dominus
+1 Gray Merchant of Asphodel
+1 Grim Hireling
+1 Harvester of Souls
+1 Hunted Bonebrute
+1 Maha, Its Feathers Night
+1 Massacre Girl
+1 Massacre Wurm
+1 Midnight Banshee
+1 Morbid Opportunist
+1 Necroskitter
+1 Orcish Bowmasters
+1 Slaughter Specialist
+1 Spitting Dilophosaurus
+1 Vilis, Broker of Blood
+1 Arcane Signet
+1 Blade of the Bloodchief
+1 Expedition Map
+1 Genesis Chamber
+1 Jet Medallion
+1 Lightning Greaves
+1 Mithril Coat
+1 Sceptre of Eternal Glory
+1 Sol Ring
+1 Tarrian's Soulcleaver
+1 The Soul Stone
+1 Thought Vessel
+1 Throne of Eldraine
+1 Beseech the Mirror
+1 Black Sun's Zenith
+1 Demonic Tutor
+1 Drown in Ichor
+1 Feed the Swarm
+1 Golden Demise
+1 Grim Tutor
+1 Languish
+1 Massacre
+1 Mutilate
+1 Toxic Deluge
+1 Withering Curse
+1 Yahenni's Expertise
+1 Black Market
+1 Black Market Connections
+1 Illness in the Ranks
+1 Night of Souls' Betrayal
+1 Polluted Bonds
+1 Revel in Riches
+1 The Meathook Massacre
+1 Virtue of Persistence
+1 Black Sun's Twilight
+1 Dark Ritual
+1 Defile
+1 Dismember
+1 Overkill
+1 Slice from the Shadows
+1 Tragic Slip
+1 Vampiric Tutor
+1 Bojuka Bog
+1 Cabal Coffers
+1 Forbidden Orchard
+1 Nykthos, Shrine to Nyx
+1 Phyrexian Tower
+1 Reliquary Tower
+1 Spymaster's Vault
+26 Swamp
+1 Takenuma, Abandoned Mire
+1 Urborg, Tomb of Yawgmoth
+1 War Room
+1 Liliana of the Dark Realms
+1 Liliana, Dreadhorde General

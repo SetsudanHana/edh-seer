@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/mr-orfeo-the-boulder/power
+# theme Power (87 decks)
+
+Commander
+1 Mr. Orfeo, the Boulder
+
+Deck
+1 Arcane Signet
+1 Gruul Signet
+1 Mage Slayer
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Skullspore Nexus
+1 Two-Handed Axe
+1 Blood Crypt
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+7 Forest
+1 Kessig Wolf Run
+6 Mountain
+1 Overgrown Tomb
+1 Riveteers Overlook
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Savage Lands
+1 Smoldering Marsh
+1 Stomping Ground
+5 Swamp
+1 Terramorphic Expanse
+1 Twisted Landscape
+1 Ziatora's Proving Ground
+1 Anzrag, the Quake-Mole
+1 Arc Runner
+1 Ball Lightning
+1 Blistering Firecat
+1 Disciple of Bolas
+1 Feldon of the Third Path
+1 Ghalta, Primal Hunger
+1 Goblin Anarchomancer
+1 Goreclaw, Terror of Qal Sisma
+1 Groundbreaker
+1 Ignoble Hierarch
+1 Impetuous Devils
+1 Lightning Skelemental
+1 Malignus
+1 Quartzwood Crasher
+1 Sakura-Tribe Elder
+1 Shakedown Heavy
+1 Stalking Vengeance
+1 Tuya Bearclaw
+1 Wulfgar of Icewind Dale
+1 Xenagos, God of Revels
+1 Yargle and Multani
+1 Yargle, Glutton of Urborg
+1 Ziatora's Envoy
+1 Ziatora, the Incinerator
+1 Zilortha, Strength Incarnate
+1 Zopandrel, Hunger Dominus
+1 Garruk's Uprising
+1 Greater Good
+1 Rhythm of the Wild
+1 Rite of the Raging Storm
+1 Thickest in the Thicket
+1 Unnatural Growth
+1 Warstorm Surge
+1 Beast Within
+1 Bulk Up
+1 Fling
+1 Hunter's Insight
+1 Kazuul's Fury
+1 Ram Through
+1 Return of the Wildspeaker
+1 Soul's Fire
+1 Temur Battle Rage
+1 Terminate
+1 Unleash Fury
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Cultivate
+1 Essence Harvest
+1 Farseek
+1 Kodama's Reach
+1 Life's Legacy
+1 Nature's Lore
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Thud

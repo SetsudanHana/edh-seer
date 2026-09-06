@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/5Qcb-wgZ204i2hnfgvxA8A (source https://archidekt.com/decks/6398002)
+# tags Affinity, Modified Creatures, Equipment, Tokens, Aggro, Impulse Draw, Artifacts, Rebels; bracket 3; saved 2026-09-05; 1605 tagged of 6849 indexed
+
+Commander
+1 Nahiri, Forged in Fury
+
+Deck
+1 Ancestral Blade
+1 Arcane Signet
+1 Barbed Batterfist
+1 Barbed Spike
+1 Basilisk Collar
+1 Batterbone
+1 Batterskull
+1 Bitterthorn, Nissa's Animus
+1 Bladehold War-Whip
+1 Bloodforged Battle-Axe
+1 Caduceus, Staff of Hermes
+1 Chainsaw
+1 Citizen's Crowbar
+1 Cori-Steel Cutter
+1 Dragonwing Glider
+1 Dragoon's Lance
+1 Embercleave
+1 Flayer Husk
+1 Glimmer Lens
+1 Hammer of Nazahn
+1 Headsplitter
+1 Helm of the Host
+1 Hexgold Halberd
+1 Hexgold Hoverwings
+1 Hexplate Wallbreaker
+1 Kaldra Compleat
+1 Kemba's Banner
+1 Kyoshi Battle Fan
+1 Lavaspur Boots
+1 Lightning Greaves
+1 Long-Lost Lances
+1 Machinist's Arsenal
+1 Mandibular Kite
+1 Masterwork of Ingenuity
+1 Nettlecyst
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Body and Mind
+1 Sword of Feast and Famine
+1 Sword of Fire and Ice
+1 Sword of Light and Shadow
+1 Sword of War and Peace
+1 Sword of the Animist
+1 The Aetherspark
+1 The Reaver Cleaver
+1 Wayfarer's Bauble
+1 Boros Garrison
+1 Buried Ruin
+1 Cabaretti Courtyard
+1 Clifftop Retreat
+1 Command Tower
+1 Elegant Parlor
+1 Escape Tunnel
+1 Fabled Passage
+1 Furycalm Snarl
+1 Lorehold Campus
+9 Mountain
+9 Plains
+1 Rugged Prairie
+1 Sacred Foundry
+1 Secluded Starforge
+1 Temple of Triumph
+1 The Lonely Mountain
+1 Thriving Bluff
+1 Thriving Heath
+1 Dispatch
+1 Path to Exile
+1 Forge Anew
+1 Passionate Archaeologist
+1 Sigarda's Aid
+1 Windcrag Siege
+1 Frogmyr Enforcer
+1 Lion Sash
+1 Lizard Blades
+1 Myr Enforcer
+1 Panther Robot
+1 Pia Nalaar, Consul of Revival
+1 Puresteel Paladin
+1 Rabbit Battery
+1 Sojourner's Companion
+1 Sunshot Militia
+1 Goldwardens' Gambit

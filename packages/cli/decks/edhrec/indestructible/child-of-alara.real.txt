@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/JzW0J6RhBPh_z98eBq1jXg (source https://archidekt.com/decks/9161334)
+# tags Guildgates, Chaos, Indestructible; bracket 2; saved 2026-08-25; 27 tagged of 11033 indexed
+
+Commander
+1 Child of Alara
+
+Deck
+1 Amaranthine Wall
+1 Archway Angel
+1 Bontu the Glorified
+1 Colossus of Akros
+1 District Guide
+1 Dryad of the Ilysian Grove
+1 Faeburrow Elder
+1 Gate Colossus
+1 Gatebreaker Ram
+1 Gatecreeper Vine
+1 Gatekeeper Gargoyle
+1 Greenside Watcher
+1 Hazoret the Fervent
+1 Kefnet the Mindful
+1 Knight of New Alara
+1 Konda, Lord of Eiganjo
+1 Nine-Fingers Keene
+1 Oketra the True
+1 Ornithopter of Paradise
+1 Predator Ooze
+1 Rhonas the Indomitable
+1 Sage of the Maze
+1 Seraph of the Suns
+1 Smelt-Ward Gatekeepers
+1 Soul of New Phyrexia
+1 Spearbreaker Behemoth
+1 Tajic, Blade of the Legion
+1 Thassa, God of the Sea
+1 Tiller Engine
+1 Zetalpa, Primal Dawn
+1 Arcane Signet
+1 Chromatic Lantern
+1 Darksteel Axe
+1 Darksteel Brute
+1 Darksteel Ingot
+1 Diamond Pick-Axe
+1 Expedition Map
+1 Glaive of the Guildpact
+1 Lotus Ring
+1 Mirage Mirror
+1 Navigation Orb
+1 Skyclave Relic
+1 Azorius Guildgate
+1 Baldur's Gate
+1 Basilisk Gate
+1 Black Dragon Gate
+1 Boros Guildgate
+1 Citadel Gate
+1 Cliffgate
+1 Command Tower
+1 Dark Depths
+1 Dimir Guildgate
+1 Forest
+1 Gateway Plaza
+1 Golgari Guildgate
+1 Gond Gate
+1 Grim Backwoods
+1 Gruul Guildgate
+1 Heap Gate
+1 High Market
+1 Island
+1 Izzet Guildgate
+1 Lazotep Quarry
+1 Manor Gate
+1 Maze's End
+1 Mountain
+1 Orzhov Guildgate
+1 Plains
+1 Rakdos Guildgate
+1 Sea Gate
+1 Selesnya Guildgate
+1 Simic Guildgate
+1 Swamp
+1 Talon Gates of Madara
+1 The Black Gate
+1 Thespian's Stage
+1 Thran Portal
+1 Circuitous Route
+1 Explore
+1 Fear, Fire, Foes!
+1 Gates Ablaze
+1 Hour of Promise
+1 Open the Gates
+1 Sylvan Scrying
+1 Tempt with Discovery
+1 Crackling Perimeter
+1 Guild Summit
+1 Hold the Gates
+1 Prismatic Omen
+1 Serenity
+1 Vampiric Rites
+1 Way of the Thief
+1 Dawn's Truce
+1 Deadly Dispute
+1 Growth Spiral
+1 Kazuul's Fury
+1 Nasty End
+1 Tamiyo's Safekeeping
+1 Unsummon

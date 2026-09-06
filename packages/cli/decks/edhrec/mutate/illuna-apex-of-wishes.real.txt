@@ -1,0 +1,80 @@
+# edhrec deck https://edhrec.com/deckpreview/hJtbJhMrMUlEFVfRsVJsOw (source https://archidekt.com/decks/21469514)
+# tags Voltron, Stompy, Mutate; bracket 2; saved 2026-08-28; 524 tagged of 3997 indexed
+
+Commander
+1 Illuna, Apex of Wishes
+
+Deck
+1 Archipelagore
+1 Augmenter Pugilist
+1 Auspicious Starrix
+1 Cloudpiercer
+1 Cold-Eyed Selkie
+1 Dreamtail Heron
+1 Everquill Phoenix
+1 Gemrazer
+1 Glowstone Recluse
+1 Heroes' Bane
+1 Ivy, Gleeful Spellthief
+1 Lore Drakkis
+1 Migratory Greathorn
+1 Parcelbeast
+1 Phylath, World Sculptor
+1 Pollywog Symbiote
+1 Pouncing Shoreshark
+1 Sawtusk Demolisher
+1 Sea-Dasher Octopus
+1 Slippery Bogle
+1 Souvenir Snatcher
+1 Starwinder
+1 Trumpeting Gnarr
+1 Twinflame Travelers
+1 Voracious Bibliophile
+1 Waker of Waves
+1 Blasphemous Act
+1 Boon of the Wish-Giver
+1 Chain Reaction
+1 Compulsive Research
+1 Cultivate
+1 Curse of the Swine
+1 Decimate
+1 Farseek
+1 Genesis Ultimatum
+1 Harmonize
+1 Hull Breach
+1 Migration Path
+1 Ponder
+1 Search for Tomorrow
+1 Cauldron of Souls
+1 Cinder Glade
+1 Command Tower
+1 Evolving Wilds
+11 Forest
+1 Frontier Bivouac
+1 Halimar Depths
+11 Island
+1 Ketria Triome
+7 Mountain
+1 Rivendell
+1 Simic Growth Chamber
+1 Thornwood Falls
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Deliberate
+1 Geistwave
+1 Ghostly Flicker
+1 Keep Safe
+1 Magic Damper
+1 Negate
+1 Opt
+1 Otherworldly Gaze
+1 Ram Through
+1 Return to Nature
+1 Simic Charm
+1 Snakeskin Veil
+1 Spell Pierce
+1 Teferi's Time Twist
+1 Dragonback Assault
+1 Frontline Heroism
+1 Season of Growth
+1 Snake Umbra

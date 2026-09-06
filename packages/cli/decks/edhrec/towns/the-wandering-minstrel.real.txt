@@ -1,0 +1,105 @@
+# edhrec deck https://edhrec.com/deckpreview/-1R3Q3JSp3S-H16_1SctaQ (source https://archidekt.com/decks/25841033)
+# tags Lands Matter, Towns, Tokens, Multicolor Matters, Blink; bracket 2; saved 2026-09-04; 155 tagged of 19875 indexed
+
+Commander
+1 The Wandering Minstrel
+
+Deck
+1 Abigale, Eloquent First-Year
+1 Aurora Awakener
+1 Bloom Tender
+1 Calamity, Galloping Inferno
+1 Clifftop Lookout
+1 Curious Colossus
+1 Explosive Prodigy
+1 Faeburrow Elder
+1 Fallaji Wayfarer
+1 Glister Bairn
+1 Gogo, Master of Mimicry
+1 Kirol, Attentive First-Year
+1 Kithkeeper
+1 Kodama of the East Tree
+1 Luminollusk
+1 Mardu Siegebreaker
+1 Ojer Kaslem, Deepest Growth
+1 Ori, Plate Stacker
+1 Prismabasher
+1 PuPu UFO
+1 Risen Reef
+1 Sanar, Innovative First-Year
+1 Shimmercreep
+1 Shinestriker
+1 Silver Surfer, Cosmic Voyager
+1 Skyserpent Seeker
+1 Squawkroaster
+1 Tam, Mindful First-Year
+1 Wight of the Reliquary
+1 Wildvine Pummeler
+1 Adventurer's Inn
+1 Azorius Chancery
+1 Balamb Garden, SeeD Academy
+1 Baron, Airship Kingdom
+1 Capital City
+1 Clive's Hideaway
+1 Command Tower
+1 Crossroads Village
+1 Dimir Aqueduct
+1 Eden, Seat of the Sanctum
+1 Exotic Orchard
+2 Forest
+1 Gohn, Town of Ruin
+1 Golgari Rot Farm
+1 Gongaga, Reactor Town
+1 Gruul Turf
+1 Guadosalam, Farplane Gateway
+1 Insomnia, Crown City
+1 Ishgard, the Holy See
+1 Island
+1 Izzet Boilerworks
+1 Jidoor, Aristocratic Capital
+1 Lindblum, Industrial Regency
+1 Midgar, City of Mako
+1 Path of Ancestry
+1 Planar Nexus
+1 Rabanastre, Royal City
+1 Selesnya Sanctuary
+1 Sharlayan, Nation of Scholars
+1 Simic Growth Chamber
+1 Starting Town
+1 Sunken Palace
+1 The Gold Saucer
+1 The World Tree
+1 Treno, Dark City
+1 Vector, Imperial Capital
+1 Windurst, Federation Center
+1 Zanarkand, Ancient Metropolis
+1 Case of the Shattered Pact
+1 Frostcliff Siege
+1 Omenpath Journey
+1 Parallax Wave
+1 Prismatic Undercurrents
+1 Temur Ascendancy
+1 Chromatic Orrery
+1 Conqueror's Flail
+1 Infinite Guideline Station
+1 Peter Parker's Camera
+1 The Regalia
+1 Eerie Interlude
+1 Embrace the Paradox
+1 Eureka Moment
+1 First Family
+1 Hide on the Ceiling
+1 Prishe's Wanderings
+1 Return the Favor
+1 Rime Chill
+1 Semester's End
+1 Elemental Spectacle
+1 Emergent Ultimatum
+1 Genesis Wave
+1 Lessons from Life
+1 Open the Way
+1 Reach the Horizon
+1 Reshape the Earth
+1 The Ring Goes South
+1 Through the Forest Gate
+1 Travel the Overworld

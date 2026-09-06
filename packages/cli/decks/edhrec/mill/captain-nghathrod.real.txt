@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/IhqHiknPKJQL4s83k8ArOw (source https://moxfield.com/decks/HJPVXgE8pkiBdpxFXYSVow)
+# tags Mill; bracket 3; saved 2026-09-05; 2837 tagged of 18374 indexed
+
+Commander
+1 Captain N'ghathrod
+
+Deck
+1 Aboleth Spawn
+1 Ahriman
+1 Brainstealer Dragon
+1 Consuming Aberration
+1 Defiler of Flesh
+1 Forgotten Creation
+1 Gollum, Riddle Master
+1 Grazilaxx, Illithid Scholar
+1 Guiltfeeder
+1 Hullbreaker Horror
+1 Intellect Devourer
+1 Mind Flayer
+1 Nighthowler
+1 Phyrexian Obliterator
+1 Phyrexian Revoker
+1 Ravenous Chupacabra
+1 Renegade Silent
+1 Sewer Nemesis
+1 Silent Hallcreeper
+1 Sludge Monster
+1 Spellskite
+1 Uchuulon
+1 Wharf Infiltrator
+1 Zellix, Sanity Flayer
+1 Altar of the Brood
+1 Arcane Signet
+1 Bender's Waterskin
+1 Bolas's Citadel
+1 Cosmic Cube
+1 Dimir Keyrune
+1 Dimir Signet
+1 Herald's Horn
+1 Lightning Greaves
+1 Maskwood Nexus
+1 Mind Stone
+1 Mindcrank
+1 Riverchurn Monument
+1 Sol Ring
+1 Talisman of Dominance
+1 Whispersilk Cloak
+1 Arcane Adaptation
+1 Bloodchief Ascension
+1 Coastal Piracy
+1 Court of Cunning
+1 Haunted One
+1 Psychic Corrosion
+1 Sphinx's Tutelage
+1 Choked Estuary
+1 Clearwater Pathway
+1 Command Tower
+1 Creeping Tar Pit
+1 Darkslick Shores
+1 Darkwater Catacombs
+1 Exotic Orchard
+1 Fabled Passage
+1 Hidden Lair
+10 Island
+1 Myriad Landscape
+1 Nephalia Drownyard
+1 Path of Ancestry
+1 Rogue's Passage
+1 Sunken Hollow
+9 Swamp
+1 Tainted Isle
+1 Temple of Deceit
+1 Watery Grave
+1 Crippling Fear
+1 Extract from Darkness
+1 Feed the Swarm
+1 Fractured Sanity
+1 Maddening Cacophony
+1 Mind Grind
+1 Psionic Ritual
+1 Singularity Rupture
+1 Syphon Mind
+1 Drown in the Loch
+1 Kitsune's Technique
+1 Malakir Rebirth
+1 Shred Memory
+1 Slip Out the Back
+1 Swan Song
+1 Wash Away

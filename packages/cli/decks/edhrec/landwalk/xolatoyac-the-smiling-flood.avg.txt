@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/xolatoyac-the-smiling-flood/landwalk
+# theme Landwalk (48 decks)
+
+Commander
+1 Xolatoyac, the Smiling Flood
+
+Deck
+1 Arcane Signet
+1 Everflowing Chalice
+1 Lux Cannon
+1 Quicksilver Fountain
+1 Simic Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Millennium Calendar
+1 Alchemist's Refuge
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+9 Forest
+1 Hinterland Harbor
+11 Island
+1 Karn's Bastion
+1 Llanowar Reborn
+1 Nesting Grounds
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Vineglimmer Snarl
+1 Vivid Creek
+1 Vivid Grove
+1 Arixmethes, Slumbering Isle
+1 Chasm Skulker
+1 Cold-Eyed Selkie
+1 Colossal Whale
+1 Dreamtide Whale
+1 Eluge, the Shoreless Sea
+1 Enclave Elite
+1 Evolution Sage
+1 Forgotten Ancient
+1 Goldberry, River-Daughter
+1 Gyre Sage
+1 Harbinger of the Seas
+1 Herald of Secret Streams
+1 Incubation Druid
+1 Inkwell Leviathan
+1 Kami of Whispered Hopes
+1 Master Biomancer
+1 Master of the Pearl Trident
+1 Murkfiend Liege
+1 Omo, Queen of Vesuva
+1 Prime Speaker Zegana
+1 Rishkar, Peema Renegade
+1 Scourge of Fleets
+1 Stonybrook Banneret
+1 Stormtide Leviathan
+1 Thada Adel, Acquisitor
+1 The Flood of Mars
+1 Vorel of the Hull Clade
+1 Zimone, Paradox Sculptor
+1 Bounty of the Luxa
+1 Carpet of Flowers
+1 Choke
+1 Fishliver Oil
+1 Hardened Scales
+1 Leyline of Anticipation
+1 Simic Ascendancy
+1 Spreading Seas
+1 The Sea Devils
+1 Beast Within
+1 Counterspell
+1 Engulf the Shore
+1 Growth Spiral
+1 Heroic Intervention
+1 High Tide
+1 Inspiring Call
+1 Negate
+1 Piracy Charm
+1 Rapid Hybridization
+1 Ripples of Potential
+1 Aquitect's Will
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Rampant Growth
+1 Spectral Deluge
+1 Wave Goodbye

@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/ev0nHyAz-kj7pf97VZcXsg (source https://archidekt.com/decks/25909079)
+# tags Modified Creatures, Equipment, Myriad; bracket 3; saved 2026-09-03; 98 tagged of 8126 indexed
+
+Commander
+1 Neriv, Heart of the Storm
+
+Deck
+1 Akroma's Will
+1 Deflecting Swat
+1 Fell the Profane
+1 Swords to Plowshares
+1 All-Out Assault
+1 Hidetsugu Consumes All
+1 Impact Tremors
+1 Smothering Tithe
+1 Arcane Signet
+1 Basilisk Collar
+1 Blackblade Reforged
+1 Blade of Selves
+1 Brotherhood Regalia
+1 Buster Sword
+1 Commander's Plate
+1 Cursed Mirror
+1 Genji Glove
+1 Grafted Exoskeleton
+1 Helm of the Host
+1 Leyline Axe
+1 Lightning Greaves
+1 Masterwork of Ingenuity
+1 Moonsilver Spear
+1 Nazgûl Battle-Mace
+1 Pip-Boy 3000
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Body and Mind
+1 Sword of Feast and Famine
+1 Sword of Truth and Justice
+1 Sword of Wealth and Power
+1 Tarrian's Soulcleaver
+1 The Aetherspark
+1 The Fire Crystal
+1 The Reaver Cleaver
+1 Aurelia, the Warleader
+1 Blightsteel Colossus
+1 Cloud, Midgar Mercenary
+1 Cybermen Squadron
+1 Duke Ulder Ravengard
+1 Enduring Courage
+1 Esper Sentinel
+1 Gisela, Blade of Goldnight
+1 Goblin Chainwhirler
+1 Goldlust Triad
+1 Ill-Tempered Loner
+1 Ironwill Forger
+1 Isshin, Two Heavens as One
+1 Lizard Blades
+1 Mardu Siegebreaker
+1 Smaug the Impenetrable
+1 Spitemare
+1 Terror of the Peaks
+1 Twinflame Tyrant
+1 Voice of Victory
+1 Zurgo Stormrender
+1 Éomer, Marshal of Rohan
+1 Badlands
+1 Bleachbone Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bojuka Bog
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Lotus Field
+4 Mountain
+1 Needleverge Pathway
+1 Nomad Outpost
+1 Orzhov Basilica
+4 Plains
+1 Plateau
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Scrubland
+1 Shattered Sanctum
+4 Swamp
+1 Temple of Silence
+1 Temple of the False God
+1 Vesuva
+1 Chandra's Ignition
+1 Damn
+1 Demonic Tutor
+1 Gamble
+1 Reanimate

@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/tetzin-gnome-champion/transform
+# theme Transform (80 decks)
+
+Commander
+1 Tetzin, Gnome Champion
+
+Deck
+1 Arcane Signet
+1 Azor's Gateway
+1 Braided Net
+1 Brass's Tunnel-Grinder
+1 Chalice of Life
+1 Clay-Fired Bricks
+1 Conqueror's Galleon
+1 Cryptolith Fragment
+1 Dire Flail
+1 Dowsing Dagger
+1 Dowsing Device
+1 Eye of Ojer Taq
+1 Fabrication Foundry
+1 Inverted Iceberg
+1 Lodestone Needle
+1 Master's Guide-Mural
+1 Matzalantli, the Great Door
+1 Mystic Skull
+1 Oteclan Landmark
+1 Sol Ring
+1 Spring-Loaded Sawblades
+1 Sunbird Standard
+1 Thaumatic Compass
+1 The Enigma Jewel
+1 The Everflowing Well
+1 Thousand Moons Smithy
+1 Treasure Map
+1 Unstable Glyphbridge
+1 Waterlogged Hulk
+1 Academy Ruins
+1 Ancient Den
+1 Archway of Innovation
+1 Buried Ruin
+1 Clifftop Retreat
+1 Command Tower
+1 Darksteel Citadel
+1 Exotic Orchard
+1 Glacial Fortress
+1 Great Furnace
+1 Hallowed Fountain
+5 Island
+4 Mountain
+1 Mystic Monastery
+4 Plains
+1 Power Depot
+1 Raugrin Triome
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Seat of the Synod
+1 Shivan Reef
+1 Silverbluff Bridge
+1 Spire of Industry
+1 Steam Vents
+1 Sulfur Falls
+1 Akal Pakal, First Among Equals
+1 Alibou, Ancient Witness
+1 Anim Pakal, Thousandth Moon
+1 Chrome Host Seedshark
+1 Cyberdrive Awakener
+1 Emry, Lurker of the Loch
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Foreboding Statue
+1 Forensic Gadgeteer
+1 Foundry Inspector
+1 Golden Guardian
+1 Illustrious Wanderglyph
+1 Jhoira, Weatherlight Captain
+1 Losheel, Clockwork Scholar
+1 Market Gnome
+1 Padeem, Consul of Innovation
+1 Sai, Master Thopterist
+1 Thought Monitor
+1 Threefold Thunderhulk
+1 Urza, Prince of Kroog
+1 Storm the Vault
+1 Thopter Spy Network
+1 Weapons Manufacturing
+1 Counterspell
+1 Dispatch
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Daretti, Scrap Savant
+1 Dance of the Manse
+1 Organic Extinction
+1 Sevinne's Reclamation
+1 Thoughtcast
+1 Wake the Past

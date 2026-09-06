@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/codie-vociferous-codex/creatureless
+# theme Creatureless (38 decks)
+
+Commander
+1 Codie, Vociferous Codex
+
+Deck
+1 Chromatic Lantern
+1 Sol Ring
+1 Azorius Guildgate
+1 Baldur's Gate
+1 Boros Guildgate
+1 Cliffgate
+1 Command Tower
+1 Dimir Guildgate
+1 Evolving Wilds
+1 Exotic Orchard
+4 Forest
+1 Gateway Plaza
+1 Golgari Guildgate
+1 Gond Gate
+1 Gruul Guildgate
+5 Island
+1 Izzet Guildgate
+1 Manor Gate
+1 Maze's End
+3 Mountain
+1 Orzhov Guildgate
+3 Plains
+1 Rakdos Guildgate
+1 Reliquary Tower
+1 Selesnya Guildgate
+1 Simic Guildgate
+3 Swamp
+1 The World Tree
+1 Simian Spirit Guide
+1 Thousand-Year Storm
+1 Blessed Respite
+1 Brainstorm
+1 Cerulean Wisps
+1 Chaos Warp
+1 Counterspell
+1 Crop Rotation
+1 Dark Ritual
+1 Dig Through Time
+1 Embrace the Paradox
+1 Emerald Charm
+1 Eureka Moment
+1 Frantic Search
+1 Galvanic Iteration
+1 Growth Spiral
+1 Increasing Vengeance
+1 Narset's Reversal
+1 Negate
+1 Opt
+1 Path to Exile
+1 Planar Genesis
+1 Reclaim
+1 Swords to Plowshares
+1 Teach by Example
+1 Ancestral Vision
+1 Approach of the Second Sun
+1 Blasphemous Act
+1 Brass's Bounty
+1 Bring to Light
+1 Circuitous Route
+1 Conflux
+1 Cultivate
+1 Duneblast
+1 Emergent Ultimatum
+1 Explore
+1 Explore the Underdark
+1 Faithless Looting
+1 Farseek
+1 Hour of Promise
+1 Improvisation Capstone
+1 Inevitable Betrayal
+1 Kodama's Reach
+1 Mizzix's Mastery
+1 Mnemonic Deluge
+1 Open the Gates
+1 Ponder
+1 Preordain
+1 Profane Tutor
+1 Rampant Growth
+1 Reshape the Earth
+1 Rise from the Tides
+1 Solve the Equation
+1 Spelltwine
+1 Sylvan Scrying
+1 Tempt with Discovery
+1 Titania's Command
+1 Urban Evolution

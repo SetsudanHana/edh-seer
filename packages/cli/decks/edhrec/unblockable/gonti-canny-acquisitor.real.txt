@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/NFyrgwzobLBgdIsscn0A-g (source https://archidekt.com/decks/7163572)
+# tags Theft, Unblockable; bracket 2; saved 2026-09-04; 137 tagged of 11318 indexed
+
+Commander
+1 Gonti, Canny Acquisitor
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Swiftfoot Boots
+1 Assassin's Trophy
+1 Deadly Rollick
+1 Fell the Profane
+1 Heroic Intervention
+1 Nature's Claim
+1 Pongify
+1 Rapid Hybridization
+1 Tear Asunder
+1 Bala Ged Recovery
+1 Farseek
+1 Heartless Conscription
+1 Nature's Lore
+1 Rampant Growth
+1 Three Visits
+1 Toxic Deluge
+1 Baleful Strix
+1 Brainstealer Dragon
+1 Cephalid Facetaker
+1 Changeling Outcast
+1 Dauthi Voidwalker
+1 Dimir Infiltrator
+1 Doc Aurlock, Grizzled Genius
+1 Edric, Spymaster of Trest
+1 Enduring Curiosity
+1 Faerie Mastermind
+1 Felix Five-Boots
+1 Flitterwing Nuisance
+1 Ghostly Pilferer
+1 Gix, Yawgmoth Praetor
+1 Gonti, Night Minister
+1 Grazilaxx, Illithid Scholar
+1 Grim Hireling
+1 Gríma, Saruman's Footman
+1 Gudul Lurker
+1 Hoarding Broodlord
+1 Looter il-Kor
+1 Malcolm, Alluring Scoundrel
+1 Mercurial Spelldancer
+1 Mist-Cloaked Herald
+1 Mockingbird
+1 Orochi Soul-Reaver
+1 Rev, Tithe Extractor
+1 Sakura-Tribe Elder
+1 Savvy Trader
+1 Shoreline Looter
+1 Silent Hallcreeper
+1 Siren Stormtamer
+1 Slither Blade
+1 Spectral Sailor
+1 Thief of Sanity
+1 Thieving Skydiver
+1 Tormented Soul
+1 Triton Shorestalker
+1 Trygon Predator
+1 Bayou
+1 Breeding Pool
+1 Command Tower
+1 Deathcap Glade
+1 Dreamroot Cascade
+1 Exotic Orchard
+2 Forest
+1 Gloomlake Verge
+1 Hedge Maze
+4 Island
+1 Llanowar Wastes
+1 Misty Rainforest
+1 Morphic Pool
+1 Opulent Palace
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Polluted Delta
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Shipwreck Marsh
+1 Swamp
+1 Tropical Island
+1 Undercity Sewers
+1 Underground Mortuary
+1 Underground River
+1 Underground Sea
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Wastewood Verge
+1 Watery Grave
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Beastmaster Ascension
+1 Druids' Repository
+1 Exploration
+1 Nature's Will

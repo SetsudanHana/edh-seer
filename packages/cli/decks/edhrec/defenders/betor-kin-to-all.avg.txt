@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/betor-kin-to-all/defenders
+# theme Defenders (449 decks)
+
+Commander
+1 Betor, Kin to All
+
+Deck
+1 Arcane Signet
+1 Colfenor's Urn
+1 Rammas Echor, Ancient Shield
+1 Sol Ring
+1 Swiftfoot Boots
+1 Access Tunnel
+1 Bojuka Bog
+1 Canopy Vista
+1 Command Tower
+1 Deceptive Landscape
+1 Evolving Wilds
+1 Exotic Orchard
+7 Forest
+1 Fortified Village
+1 Godless Shrine
+1 Indatha Triome
+1 Isolated Chapel
+1 Overgrown Farmland
+1 Overgrown Tomb
+5 Plains
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Sunpetal Grove
+4 Swamp
+1 Temple Garden
+1 Temple of Plenty
+1 Twilight Mire
+1 Woodland Cemetery
+1 Ancient Adamantoise
+1 Ancient Lumberknot
+1 Arbor Adherent
+1 Arboreal Grazer
+1 Axebane Guardian
+1 Baldin, Century Herdmaster
+1 Bedrock Tortoise
+1 Bloodletter of Aclazotz
+1 Canopy Gargantuan
+1 Carven Caryatid
+1 Crashing Drawbridge
+1 Crystal Barricade
+1 Doran, Besieged by Time
+1 Doran, the Siege Tower
+1 Dragonlord Dromoka
+1 Faeburrow Elder
+1 Fecund Greenshell
+1 Felothar the Steadfast
+1 Ikra Shidiqi, the Usurper
+1 Indomitable Ancients
+1 Nyx-Fleece Ram
+1 Overgrown Battlement
+1 Rampart Architect
+1 Sylvan Caryatid
+1 The Walls of Ba Sing Se
+1 Towering Titan
+1 Tree of Perdition
+1 Tree of Redemption
+1 Unhallowed Phalanx
+1 Walking Bulwark
+1 Wall of Blossoms
+1 Wall of Omens
+1 Weathered Sentinels
+1 Welcoming Vampire
+1 Assault Formation
+1 Behind the Scenes
+1 Guardian Project
+1 Jaws of Defeat
+1 Stoneskin
+1 Unnatural Growth
+1 Wound Reflection
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Beast Within
+1 Despark
+1 Heroic Intervention
+1 Path to Exile
+1 Swords to Plowshares
+1 Tower Defense
+1 Huatli, the Sun's Heart
+1 Cultivate
+1 Expel the Interlopers
+1 Farseek
+1 Last March of the Ents
+1 Nature's Lore
+1 Reunion of the House
+1 Slaughter the Strong
+1 Will of the Abzan

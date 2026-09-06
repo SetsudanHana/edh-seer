@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/flqa1SeNqVzsmhUwq6cxLw (source https://archidekt.com/decks/23586141)
+# tags +1/+1 Counters, Angels, Tokens, Lifegain, Populate; bracket 2; saved 2026-09-05; 404 tagged of 9481 indexed
+
+Commander
+1 Trostani, Selesnya's Voice
+
+Deck
+1 Angel of Vitality
+1 Archangel of Thune
+1 Avacyn's Pilgrim
+1 Azusa, Lost but Seeking
+1 Battle Angels of Tyr
+1 Beloved Princess
+1 Bramble Sovereign
+1 Chittering Dispatcher
+1 Conclave Evangelist
+1 Dazzling Angel
+1 Elda, Conjurer of Spectacle
+1 Elvish Mystic
+1 Exalted Sunborn
+1 Exemplar of Light
+1 Fanatic of Rhonas
+1 Giada, Font of Hope
+1 Gruff Triplets
+1 Guardian of Faith
+1 Guide of Souls
+1 Haliya, Guided by Light
+1 Herald of the Host
+1 Llanowar Elves
+1 Resplendent Angel
+1 Righteous Valkyrie
+1 Shalai, Voice of Plenty
+1 Silverquill Lecturer
+1 Soul Warden
+1 Soul of Eternity
+1 Speaker of the Heavens
+1 Valkyrie Harbinger
+1 Voice of Resurgence
+1 Voice of the Blessed
+1 Vorinclex, Voice of Hunger
+1 Youthful Valkyrie
+1 Angelic Accord
+1 Angelic Chorus
+1 Caretaker's Talent
+1 Growing Ranks
+1 Luminarch Ascension
+1 Song of Freyalise
+1 Song of the Worldsoul
+1 Blossoming Sands
+1 Bountiful Promenade
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+10 Forest
+1 Graypelt Refuge
+1 Grove of the Guardian
+1 Hushwood Verge
+1 Overgrown Farmland
+12 Plains
+1 Restless Prairie
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple Garden
+1 Temple of Plenty
+1 Thespian's Stage
+1 Break Down
+1 Chord of Calling
+1 Grand Crescendo
+1 Invoke the Divine
+1 Light of Hope
+1 Nature's Claim
+1 Rootborn Defenses
+1 Shelter
+1 Sundering Growth
+1 Cultivate
+1 Finale of Devastation
+1 Harmonize
+1 Shamanic Revelation
+1 Solemn Offering
+1 Elspeth Tirel
+1 Freyalise, Llanowar's Fury
+1 Halo Fountain
+1 Idol of Oblivion
+1 Sol Ring
+1 Tigereye Cameo

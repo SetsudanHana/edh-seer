@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/34uwNIX5gw02eAWPIoYN0A (source https://moxfield.com/decks/00WGFglidEedtC1q5ISSNw)
+# tags X Spells, Spellslinger, Affinity; bracket 3; saved 2026-09-05; 523 tagged of 16428 indexed
+
+Commander
+1 Witherbloom, the Balancer
+
+Deck
+1 Animist's Awakening
+1 Army of the Damned
+1 Awaken the Woods
+1 Biorhythm
+1 Consume Spirit
+1 Cultivate
+1 Damnable Pact
+1 Decorum Dissertation
+1 Enshrined Memories
+1 Exponential Growth
+1 Exsanguinate
+1 Farseek
+1 Finale of Devastation
+1 For the Common Good
+1 Gelatinous Genesis
+1 Howl of the Night Pack
+1 In Garruk's Wake
+1 Life // Death
+1 Pest Infestation
+1 Shamanic Revelation
+1 Swallowing Plague
+1 Torment of Hailfire
+1 Wildest Dreams
+1 Arasta of the Endless Web
+1 Beast Whisperer
+1 Beledros Witherbloom
+1 Benevolent Hydra
+1 Bitterbloom Bearer
+1 Bogwater Lumaret
+1 Canopy Tactician
+1 Chatterfang, Squirrel General
+1 Devoted Druid
+1 Elderleaf Mentor
+1 Elvish Mystic
+1 Emeritus of Abundance
+1 Hogaak, Arisen Necropolis
+1 Lathril, Blade of the Elves
+1 Llanowar Elves
+1 Poison-Tip Archer
+1 Priest of Titania
+1 Scute Swarm
+1 Sedgemoor Witch
+1 Stensian Sanguinist
+1 Studious First-Year
+1 Tendershoot Dryad
+1 Virulent Emissary
+1 Wood Elves
+1 Yavimaya Bloomsage
+1 Arcane Signet
+1 Cauldron of Essence
+1 Idol of Oblivion
+1 Lightning Greaves
+1 Skullclamp
+1 Springleaf Drum
+1 Assassin's Trophy
+1 Chord of Calling
+1 Revitalizing Repast
+1 Second Harvest
+1 Silkguard
+1 Sprout Swarm
+1 Tyvar's Stand
+1 Vitalizing Wind
+1 Bitterblossom
+1 Cryptolith Rite
+1 Unbound Flourishing
+1 Blooming Marsh
+1 Bojuka Bog
+1 Command Tower
+1 Deathcap Glade
+1 Dryad Arbor
+1 Fabled Passage
+10 Forest
+1 Gaea's Cradle
+1 Khalni Garden
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+5 Swamp
+1 Tarnation Vista
+1 Turbulent Fen
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Vernal Fen
+1 Viridescent Bog
+1 Woodland Cemetery
+1 Tyvar Kell

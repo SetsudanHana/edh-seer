@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/sZA5VtFklszdKou7zrFp_w (source https://archidekt.com/decks/10825725)
+# tags Land Destruction, Burn; bracket 3; saved 2026-08-21; 319 tagged of 2795 indexed
+
+Commander
+1 Zo-Zu the Punisher
+
+Deck
+1 Akki Blizzard-Herder
+1 Alexios, Deimos of Kosmos
+1 Cemetery Gatekeeper
+1 Dwarven Blastminer
+1 Dwarven Miner
+1 Eidolon of the Great Revel
+1 Harsh Mentor
+1 Hexing Squelcher
+1 Invader Parasite
+1 Laelia, the Blade Reforged
+1 Magus of the Wheel
+1 Ojer Axonil, Deepest Might
+1 Rampaging Ferocidon
+1 Rug of Smothering
+1 Spectrum Sentinel
+1 Star Athlete
+1 Stoneshaker Shaman
+1 Sunspine Lynx
+1 Treasure Nabber
+1 Zenith Chronicler
+1 Zhao, the Moon Slayer
+1 Ankh of Mishra
+1 Brass's Tunnel-Grinder
+1 Dingus Egg
+1 Ensnaring Bridge
+1 Mox Tantalite
+1 Ruby Medallion
+1 Sol Ring
+1 Sol Talisman
+1 Talon of Pain
+1 Burning Earth
+1 Citadel of Pain
+1 Enchanter's Bane
+1 Furnace of Rath
+1 Manabarbs
+1 Price of Glory
+1 Pyrostatic Pillar
+1 Roiling Vortex
+1 Smoke
+1 Spellshock
+1 Spiteful Banditry
+1 Sulfuric Vortex
+1 War's Toll
+1 Cabaretti Courtyard
+1 Field of Ruin
+1 Maestros Theater
+30 Mountain
+1 Myriad Landscape
+1 Riveteers Overlook
+1 Tower of the Magistrate
+1 Chandra, Torch of Defiance
+1 Koth, Fire of Resistance
+1 Chaos Warp
+1 Guff Rewrites History
+1 Price of Progress
+1 Risk Factor
+1 Wild Magic Surge
+1 You Find Some Prisoners
+1 Cleansing Wildfire
+1 From the Ashes
+1 Gamble
+1 Geomancer's Gambit
+1 Reckless Handling
+1 Reforge the Soul
+1 Rousing Refrain
+1 Sundering Eruption
+1 Thieves' Auction
+1 Tremble
+1 Vandalblast
+1 Wheel of Misfortune

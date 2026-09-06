@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/riku-of-many-paths/caves
+# theme Caves (2 decks)
+
+Commander
+1 Riku of Many Paths
+
+Deck
+1 Adaptive Training Post
+1 Arcane Signet
+1 Commander's Sphere
+1 Fellwar Stone
+1 Ketria Crystal
+1 Sol Ring
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Forgotten Monument
+1 Frontier Bivouac
+1 Hidden Cataract
+1 Hidden Nursery
+1 Hidden Volcano
+1 Hinterland Harbor
+7 Island
+6 Mountain
+1 Mystic Sanctuary
+1 Path of Ancestry
+1 Pit of Offerings
+1 Planar Nexus
+1 Reliquary Tower
+1 Rootbound Crag
+1 Sulfur Falls
+1 Sunken Palace
+1 Archmage Emeritus
+1 Goblin Anarchomancer
+1 Goblin Electromancer
+1 Guttersnipe
+1 Harmonic Prodigy
+1 Kaza, Roil Chaser
+1 Lier, Disciple of the Drowned
+1 Quandrix Apprentice
+1 Rashmi, Eternities Crafter
+1 Riku of Two Reflections
+1 Songcrafter Mage
+1 Storm-Kiln Artist
+1 Talrand, Sky Summoner
+1 Thunderclap Drake
+1 Veyran, Voice of Duality
+1 Arcane Bombardment
+1 Shark Typhoon
+1 Sorcerer Class
+1 Archdruid's Charm
+1 Ashling's Command
+1 Atarka's Command
+1 Collective Resistance
+1 Cryptic Command
+1 Flame of Anor
+1 Great Train Heist
+1 Ice Magic
+1 Inscription of Abundance
+1 Izzet Charm
+1 Metamorphic Blast
+1 Mystic Confluence
+1 Piracy Charm
+1 Prismari Command
+1 Quandrix Command
+1 Return the Favor
+1 Simic Charm
+1 Sublime Epiphany
+1 Three Steps Ahead
+1 Trash the Town
+1 Untimely Malfunction
+1 Verdant Command
+1 Cosmium Confluence
+1 Cultivate
+1 Dance of the Tumbleweeds
+1 Ember Island Production
+1 Fantastic Elasticity
+1 Fiery Confluence
+1 Glimpse the Core
+1 Inscription of Insight
+1 Primal Command
+1 Return from the Wilds
+1 Rootcast Apprenticeship
+1 Steal the Show
+1 Titania's Command
+1 Verdant Confluence
+1 Will of the Jeskai
+1 Will of the Sultai
+1 Will of the Temur

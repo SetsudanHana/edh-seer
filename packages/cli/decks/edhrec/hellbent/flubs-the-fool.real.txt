@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/-Xb1ZxUDgdc8tYkAEK8POA (source https://archidekt.com/decks/16749372)
+# tags Hellbent, Improvise, Commander Matters, Card Draw, Topdeck, Spellslinger; bracket 3; saved 2026-08-31; 65 tagged of 22810 indexed
+
+Commander
+1 Flubs, the Fool
+
+Deck
+1 Accorder's Shield
+1 Blackblade Reforged
+1 Bone Saw
+1 Candelabra of Tawnos
+1 Cathar's Shield
+1 Darksteel Relic
+1 Delif's Cone
+1 Elixir
+1 Elixir of Immortality
+1 Everflowing Chalice
+1 Exploration Broodship
+1 Fountain of Youth
+1 Giant's Amulet
+1 Gustha's Scepter
+1 Herbal Poultice
+1 Kite Shield
+1 Mind Stone
+1 Scroll of Avacyn
+1 Spidersilk Net
+1 Terrarion
+1 Tormod's Crypt
+1 Wizard's Rockets
+1 Akki Scrapchomper
+1 Burning-Tree Emissary
+1 Caustic Caterpillar
+1 Combat Courier
+1 Diversion Unit
+1 Dryad of the Ilysian Grove
+1 Elvish Lyrist
+1 Goldhound
+1 Gran Pulse Ochu
+1 Hugs, Grisly Guardian
+1 Hydromorph Guardian
+1 Illvoi Galeblade
+1 Laboratory Maniac
+1 Lavaleaper
+1 Loot, Exuberant Explorer
+1 Mina and Denn, Wildborn
+1 Mirkwood Spider
+1 Orcish Lumberjack
+1 Ornithopter
+1 Satyr Hedonist
+1 Scavenger Folk
+1 Siren Stormtamer
+1 Skirk Prospector
+1 Spore Frog
+1 Sprouting Goblin
+1 Tinder Wall
+1 Wayward Swordtooth
+1 Wild Cantor
+1 Wizard Replica
+1 Azusa's Many Journeys
+1 Druid Class
+1 Gaea's Touch
+1 Heartbeat of Spring
+1 Mana Flare
+1 Mystic Veil
+1 Overabundance
+1 Prismatic Undercurrents
+1 Rites of Flourishing
+1 Robe of Mirrors
+1 Defy Gravity
+1 Secrets of the Key
+1 Deserted Temple
+10 Forest
+1 Frontier Bivouac
+1 Gruul Guildgate
+9 Island
+1 Izzet Guildgate
+1 Mistrise Village
+7 Mountain
+1 Rugged Highlands
+1 Simic Guildgate
+1 Swiftwater Cliffs
+1 Thornwood Falls
+1 Summer Bloom

@@ -1,0 +1,78 @@
+# edhrec average deck: https://edhrec.com/average-decks/rosnakht-heir-of-rohgahh/heroic
+# theme Heroic (9 decks)
+
+Commander
+1 Rosnakht, Heir of Rohgahh
+
+Deck
+1 Arcane Signet
+1 Heraldic Banner
+1 Idol of Oblivion
+1 Ruby Medallion
+1 Skullclamp
+1 Sol Ring
+1 Castle Embereth
+1 Dwarven Mine
+1 Fire Nation Palace
+1 Kher Keep
+29 Mountain
+1 Rogue's Passage
+1 Tyrite Sanctum
+1 War Room
+1 Bothersome Quasit
+1 Hellrider
+1 Kobold Drill Sergeant
+1 Kobold Taskmaster
+1 Kobolds of Kher Keep
+1 Molten Gatekeeper
+1 Rograkh, Son of Rohgahh
+1 Runaway Steam-Kin
+1 Storm-Kiln Artist
+1 Subira, Tulzidi Caravanner
+1 Taunting Kobold
+1 Witty Roastmaster
+1 Young Pyromancer
+1 Zada, Hedron Grinder
+1 Bravado
+1 Connecting the Dots
+1 Crown of Flames
+1 Dragon Mantle
+1 Emblem of the Warmind
+1 Frontline Heroism
+1 Impact Tremors
+1 Leyline of Resonance
+1 Mark of Fury
+1 Roar of Resistance
+1 Shared Animosity
+1 Sticky Fingers
+1 Balduvian Rage
+1 Barge In
+1 Battle Hymn
+1 Blazing Crescendo
+1 Brute Force
+1 Chaos Warp
+1 Crimson Wisps
+1 Dreadmaw's Ire
+1 Dynacharge
+1 Expedite
+1 Fists of Flame
+1 Great Train Heist
+1 Infuriate
+1 Might of the Meek
+1 Monstrous Rage
+1 Raze the Effigy
+1 Sazacap's Brew
+1 Siege Smash
+1 Thrill of Possibility
+1 Titan's Strength
+1 Weapon Surge
+1 Ancestral Anger
+1 Blasphemous Act
+1 Crash Through
+1 Faithless Looting
+1 Haze of Rage
+1 Infernal Plunge
+1 Renegade Tactics
+1 Seething Anger
+1 Witch's Mark
+1 Wrenn's Resolve

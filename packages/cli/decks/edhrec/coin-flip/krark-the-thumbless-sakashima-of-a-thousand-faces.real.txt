@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/JJVkg97RiOmVBYNDXN4I4w (source https://archidekt.com/decks/25736935)
+# tags Spellslinger, Storm, Spell Copy, Coin Flip, Chaos; bracket 3; saved 2026-09-05; 190 tagged of 5686 indexed
+
+Commander
+1 Krark, the Thumbless
+1 Sakashima of a Thousand Faces
+
+Deck
+1 Arcane Signet
+1 Boompile
+1 Krark's Thumb
+1 Panoptic Mirror
+1 Sol Ring
+1 Archaeomancer
+1 Archmage Emeritus
+1 Baral and Kari Zev
+1 Baral, Chief of Compliance
+1 Clone
+1 Frenetic Efreet
+1 Goblin Archaeologist
+1 Guttersnipe
+1 Harmonic Prodigy
+1 Karplusan Minotaur
+1 Kessig Flamebreather
+1 Mizzix of the Izmagnus
+1 Niv-Mizzet, Parun
+1 Okaun, Eye of Chaos
+1 Spark Double
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Tavern Scoundrel
+1 Veyran, Voice of Duality
+1 Yusri, Fortune's Flame
+1 Zndrsplt, Eye of Wisdom
+1 Big Score
+1 Cackling Counterpart
+1 Chaos Warp
+1 Counterspell
+1 Desperate Gambit
+1 Invert Polarity
+1 Lightning Bolt
+1 Opt
+1 Pongify
+1 Reality Shift
+1 Redirect
+1 Reiterate
+1 Resculpt
+1 Shock
+1 Blasphemous Act
+1 Faithless Looting
+1 Fiery Gambit
+1 Gamble
+1 Game of Chaos
+1 Goblin Rally
+1 Grapeshot
+1 Jeska's Will
+1 Mana Geyser
+1 Mystic Retrieval
+1 Ponder
+1 Quasiduplicate
+1 Squee's Revenge
+1 Stitch in Time
+1 Time Stretch
+1 Warp World
+1 Windfall
+1 Wisdom of Ages
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Ferrous Lake
+13 Island
+13 Mountain
+1 Reliquary Tower
+1 Scorched Geyser
+1 Stormcarved Coast
+1 Swiftwater Cliffs
+1 Temple of Epiphany
+1 Chance Encounter
+1 Goblin Bomb
+1 Impulsive Maneuvers
+1 Thousand-Year Storm
+1 Tide of War

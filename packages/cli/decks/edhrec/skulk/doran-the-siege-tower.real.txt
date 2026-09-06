@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/8QxJLklBuHhyTmZEfB45Cw (source https://archidekt.com/decks/8614193)
+# tags Skulk, Pillow Fort, Midrange, Guildgates, Toughness Matters; bracket 2; saved 2025-12-21; 7 tagged of 4816 indexed
+
+Commander
+1 Doran, the Siege Tower
+
+Deck
+1 Abzan Beastmaster
+1 Arasta of the Endless Web
+1 Arboreal Grazer
+1 Armored Armadillo
+1 Bedrock Tortoise
+1 Colfenor, the Last Yew
+1 Crashing Drawbridge
+1 Disowned Ancestor
+1 Essence of Antiquity
+1 Fecund Greenshell
+1 Gatecreeper Vine
+1 Giant Ox
+1 Gluntch, the Bestower
+1 Gorm the Great
+1 Insidious Fungus
+1 Inversion Behemoth
+1 MacCready, Lamplight Mayor
+1 Morbid Opportunist
+1 Nemata, Primeval Warden
+1 Oathsworn Giant
+1 Overgrown Zealot
+1 Runic Armasaur
+1 Sapling of Colfenor
+1 Sidar Kondo of Jamuraa
+1 Skinshifter
+1 Sun Titan
+1 The Necrobloom
+1 Towering Viewpoint
+1 Tree of Perdition
+1 Treefolk Harbinger
+1 Walking Bulwark
+1 Access Tunnel
+1 Ash Barrens
+1 Basilisk Gate
+1 Black Dragon Gate
+1 Canopy Vista
+1 Caves of Koilos
+1 Citadel Gate
+1 Command Tower
+1 Deceptive Landscape
+1 Escape Tunnel
+1 Forbidding Watchtower
+4 Forest
+1 Gateway Plaza
+1 Godless Shrine
+1 Golgari Guildgate
+1 Gond Gate
+1 Grasslands
+1 Krosan Verge
+1 Llanowar Wastes
+1 Manor Gate
+1 Murmuring Bosk
+1 Myriad Landscape
+1 Orzhov Guildgate
+2 Plains
+1 Sandsteppe Citadel
+1 Scattered Groves
+1 Selesnya Guildgate
+1 Selesnya Sanctuary
+2 Swamp
+1 Temple of the False God
+1 Wastes
+1 Assault Formation
+1 Assemble the Players
+1 Behind the Scenes
+1 Brave the Sands
+1 Charitable Levy
+1 Dazzling Theater // Prop Room
+1 Duelist's Heritage
+1 Hold the Gates
+1 Legion Loyalty
+1 Phyresis
+1 Unnatural Growth
+1 Bloodline Culling
+1 Cosmic Rebirth
+1 Drag to the Roots
+1 Golgari Charm
+1 Hunter's Insight
+1 Mythos of Nethroi
+1 Path to Exile
+1 Ready // Willing
+1 Swords to Plowshares
+1 Tear Asunder
+1 Tower Defense
+1 Circuitous Route
+1 Drag to the Bottom
+1 Driven // Despair
+1 Dusk // Dawn
+1 Green Sun's Twilight
+1 Painful Truths
+1 Patch Up
+1 Slaughter the Strong
+1 Navigation Orb
+1 Skeleton Key

@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/mendicant-core-guidelight/bobbleheads
+# theme Bobbleheads (10 decks)
+
+Commander
+1 Mendicant Core, Guidelight
+
+Deck
+1 Agility Bobblehead
+1 Arcane Signet
+1 Charisma Bobblehead
+1 Clock of Omens
+1 Cloud Key
+1 Coin of Mastery
+1 Darksteel Forge
+1 Endurance Bobblehead
+1 Intelligence Bobblehead
+1 Luck Bobblehead
+1 Mirage Mirror
+1 Moonsilver Key
+1 Mystic Forge
+1 Perception Bobblehead
+1 Sculpting Steel
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Strength Bobblehead
+1 Thought Vessel
+1 Unwinding Clock
+1 Worldwalker Helm
+1 Academy Ruins
+1 Adagia, Windswept Bastion
+1 Adarkar Wastes
+1 Ancient Den
+1 Archway of Innovation
+1 Command Tower
+1 Darksteel Citadel
+1 Deserted Beach
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Inventors' Fair
+11 Island
+1 Muraganda Raceway
+8 Plains
+1 Prairie Stream
+1 Razortide Bridge
+1 Reliquary Tower
+1 Seat of the Synod
+1 Temple of Enlightenment
+1 Cyberdrive Awakener
+1 Donatello, Gadget Master
+1 Emry, Lurker of the Loch
+1 Etherium Sculptor
+1 Forensic Gadgeteer
+1 Foundry Inspector
+1 Iron Man, Bleeding Edge
+1 Liberator, Urza's Battlethopter
+1 Losheel, Clockwork Scholar
+1 Oltec Matterweaver
+1 Padeem, Consul of Innovation
+1 Phyrexian Metamorph
+1 Sai, Master Thopterist
+1 Steel Overseer
+1 Thought Monitor
+1 Trophy Mage
+1 Ultron, Artificial Malevolence
+1 Urza, Prince of Kroog
+1 Vedalken Archmage
+1 Vnwxt, Verbose Host
+1 Voyager Quickwelder
+1 Artificer Class
+1 Fateful Discovery
+1 Mechanized Production
+1 Thopter Spy Network
+1 Unstoppable Plan
+1 Counterspell
+1 Dispatch
+1 Enlightened Tutor
+1 Mirrorform
+1 Path to Exile
+1 Scour for Scrap
+1 Swords to Plowshares
+1 Three Steps Ahead
+1 Whir of Invention
+1 Tezzeret, Cruel Captain
+1 Austere Command
+1 Fabricate
+1 Flash Photography
+1 Organic Extinction
+1 Stolen Identity
+1 Thoughtcast

@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-celestial-toymaker/villainous-choice
+# theme Villainous Choice (5 decks)
+
+Commander
+1 The Celestial Toymaker
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Liar's Pendulum
+1 Lightning Greaves
+1 Phyrexian Portal
+1 Psychic Paper
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Progress
+1 Whispersilk Cloak
+1 Arcane Sanctum
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Command Tower
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Glacial Fortress
+1 Godless Shrine
+11 Island
+1 Isolated Chapel
+7 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Sea of Clouds
+1 Shipwreck Marsh
+7 Swamp
+1 Atris, Oracle of Half-Truths
+1 Auton Soldier
+1 Baleful Strix
+1 Curator of Destinies
+1 Delney, Streetwise Lookout
+1 Fatespinner
+1 Gollum, Scheming Guide
+1 MacCready, Lamplight Mayor
+1 Master of Predicaments
+1 Sakashima of a Thousand Faces
+1 Spark Double
+1 Sphinx of Clear Skies
+1 Sphinx of Uthuun
+1 Superior Spider-Man
+1 The Seventh Doctor
+1 Triumph of Saint Katherine
+1 Unesh, Criosphinx Sovereign
+1 Y'shtola Rhul
+1 Fight or Flight
+1 Ghostly Prison
+1 Parallel Thoughts
+1 Propaganda
+1 Reconnaissance
+1 The Toymaker's Trap
+1 An Offer You Can't Refuse
+1 Anguished Unmaking
+1 Counterspell
+1 Epiphany at the Drownyard
+1 Fact or Fiction
+1 Fortune's Favor
+1 Hostile Negotiations
+1 Intrude on the Mind
+1 Path to Exile
+1 Riddles in the Dark
+1 Sauron's Ransom
+1 Swords to Plowshares
+1 Truth or Tale
+1 Void Rend
+1 Jace, Architect of Thought
+1 Abstract Performance
+1 Boneyard Parley
+1 Brilliant Ultimatum
+1 Death or Glory
+1 Do or Die
+1 Evangelize
+1 Make an Example
+1 Manifold Insights
+1 Memories Returning
+1 Quantum Misalignment
+1 Sadistic Shell Game

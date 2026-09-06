@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/xz3kQUNcO5fUPL5S2NcKqQ (source https://archidekt.com/decks/22138746)
+# tags Offspring, Tokens; bracket unset; saved 2026-04-29; 3 tagged of 29735 indexed
+
+Commander
+1 Baylen, the Haymaker
+
+Deck
+1 Agate Instigator
+1 Burrowguard Mentor
+1 Bushy Bodyguard
+1 Byrke, Long Ear of the Law
+1 Coruscation Mage
+1 Finneas, Ace Archer
+1 Flowerfoot Swordmaster
+1 Harvestrite Host
+1 Head of the Homestead
+1 Intrepid Rabbit
+1 Jacked Rabbit
+1 Kindlespark Duo
+1 Mabel, Heir to Cragflame
+1 Manifold Mouse
+1 Pawpatch Recruit
+1 Pollen-Shield Hare
+1 Prosperous Bandit
+1 Regal Bunnicorn
+1 Rust-Shield Rampager
+1 Solemn Simulacrum
+1 Spider-Ham, Peter Porker
+1 Steampath Charger
+1 Steelburr Champion
+1 Tender Wildguide
+1 Valley Flamecaller
+1 Valley Questcaller
+1 Warren Warleader
+1 Arcane Signet
+1 Boros Signet
+1 Carrot Cake
+1 Gruul Signet
+1 Panharmonicon
+1 Selesnya Signet
+1 Skullclamp
+1 Sol Ring
+1 Austere Command
+1 Cultivate
+1 Farseek
+1 For the Common Good
+1 Hop to It
+1 Kodama's Reach
+1 Primal Command
+1 Rampant Growth
+1 Season of Gathering
+1 Season of the Burrow
+1 Boros Charm
+1 Chaos Warp
+1 Gruul Charm
+1 Lightning Bolt
+1 Lightning Helix
+1 Path to Exile
+1 Second Harvest
+1 Selesnya Charm
+1 Sundering Growth
+1 Swords to Plowshares
+1 Boros Garrison
+1 Bountiful Promenade
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+11 Forest
+1 Gruul Turf
+1 Jetmir's Garden
+1 Jungle Shrine
+1 Mountain
+1 Overgrown Farmland
+13 Plains
+1 Radiant Summit
+1 Selesnya Sanctuary
+1 Sheltering Landscape
+1 Spectator Seating
+1 Spire Garden
+1 Sunpetal Grove
+1 Caretaker's Talent
+1 Doubling Season
+1 Song of the Worldsoul
+1 Three Blind Mice

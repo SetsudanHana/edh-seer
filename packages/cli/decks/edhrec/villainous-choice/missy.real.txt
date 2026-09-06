@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/GKdH5vUisiu0wn2nXY6VdA (source https://archidekt.com/decks/26001723)
+# tags Tokens, Artifacts, Voting, Villainous Choice; bracket 2; saved 2026-09-04; 7 tagged of 2515 indexed
+
+Commander
+1 Missy
+
+Deck
+1 Arcane Signet
+1 Ashnod's Altar
+1 Cybership
+1 Midnight Crusader Shuttle
+1 Panoptic Projektor
+1 Scroll of Fate
+1 Sol Ring
+1 Swiftfoot Boots
+1 TARDIS
+1 Ashad, the Lone Cyberman
+1 Ashcloud Phoenix
+1 Blood Artist
+1 Boltbender
+1 Brine Elemental
+1 Chromeshell Crab
+1 Coral Trickster
+1 Cult of Skaro
+1 Davros, Dalek Creator
+1 Exit Specialist
+1 Horde Ambusher
+1 Ire Shaman
+1 Ixidor, Reality Sculptor
+1 Jeering Instigator
+1 Kadena's Silencer
+1 Kheru Spellsnatcher
+1 Kozilek, the Broken Reality
+1 Mahadi, Emporium Master
+1 Mischievous Quanar
+1 Mistfire Weaver
+1 Pitiless Plunderer
+1 Pyrotechnic Performer
+1 Reckless Fireweaver
+1 Ruthless Ripper
+1 Silumgar Assassin
+1 Skirk Alarmist
+1 Sycorax Commander
+1 The Cyber-Controller
+1 The Dalek Emperor
+1 The Master, Multiplied
+1 The Valeyard
+1 Vesuvan Shapeshifter
+1 Viscera Seer
+1 Weeping Angel
+1 Zulaport Cutthroat
+1 Bedevil
+1 Chaos Warp
+1 Counterspell
+1 Dark Ritual
+1 Expose the Culprit
+1 Sheoldred's Edict
+1 This Is How It Ends
+1 Withering Torment
+1 Blink
+1 Death in Heaven
+1 Genesis of the Daleks
+1 Primordial Mist
+1 Ugin's Mastery
+1 Choked Estuary
+1 Command Tower
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Frostboil Snarl
+8 Island
+7 Mountain
+1 Reliquary Tower
+1 Smoldering Marsh
+1 Sulfur Falls
+1 Sunken Hollow
+9 Swamp
+1 Delete
+1 Doomsday Confluence
+1 Ensnared by the Mara
+1 Ghastly Conscription
+1 Great Intelligence's Plan
+1 Hunted by The Family
+1 Tezzeret, Master of the Bridge

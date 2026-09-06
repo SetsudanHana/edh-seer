@@ -1,0 +1,85 @@
+# edhrec average deck: https://edhrec.com/average-decks/wyll-blade-of-frontiers-sword-coast-sailor/die-roll
+# theme Die Roll (136 decks)
+
+Commander
+1 Wyll, Blade of Frontiers
+1 Sword Coast Sailor
+
+Deck
+1 Arcane Signet
+1 Bucknard's Everfull Purse
+1 Component Pouch
+1 Ebony Fly
+1 Goblin Morningstar
+1 Izzet Signet
+1 Robe of the Archmagi
+1 Sol Ring
+1 Strength-Testing Hammer
+1 Swiftfoot Boots
+1 Sword of Hours
+1 Talisman of Creativity
+1 The Deck of Many Things
+1 Treasure Chest
+1 Vexing Puzzlebox
+1 Wand of Wonder
+1 Wizard's Spellbook
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Frostboil Snarl
+11 Island
+1 Izzet Boilerworks
+12 Mountain
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Training Center
+1 Underdark Rift
+1 Aberrant Mind Sorcerer
+1 Ancient Copper Dragon
+1 Ancient Silver Dragon
+1 Arcane Investigator
+1 Brazen Dwarf
+1 Chaos Channeler
+1 Chaos Dragon
+1 Clay Golem
+1 Delina, Wild Mage
+1 Djinni Windseer
+1 Earth-Cult Elemental
+1 Farideh, Devil's Chosen
+1 Feywild Trickster
+1 Hoarding Ogre
+1 Iron Mastiff
+1 Mathise, Surge Channeler
+1 Pixie Guide
+1 Scion of Stygia
+1 Swarming Goblins
+1 Barbarian Class
+1 Guild Artisan
+1 Maddening Hex
+1 Netherese Puzzle-Ward
+1 Priority Boarding
+1 Wizard Class
+1 Berserker's Frenzy
+1 Boing!
+1 Chaos Warp
+1 Contact Other Plane
+1 Counterspell
+1 Critical Hit
+1 Diviner's Portent
+1 Farideh's Fireball
+1 Gale's Redirection
+1 Negate
+1 Slip Out the Back
+1 Wyll's Reversal
+1 Arcane Endeavor
+1 Blasphemous Act
+1 Cone of Cold
+1 Power of Persuasion
+1 Reckless Endeavor
+1 Slight Malfunction
+1 Thunderwave

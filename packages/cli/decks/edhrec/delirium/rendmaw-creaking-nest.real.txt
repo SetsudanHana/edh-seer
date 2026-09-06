@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/NZOrykUoW5O75oiwfe7BZg (source https://archidekt.com/decks/26075777)
+# tags Forced Combat, Reanimator, Delirium; bracket 2; saved 2026-09-05; 22 tagged of 13345 indexed
+
+Commander
+1 Rendmaw, Creaking Nest
+
+Deck
+1 Agent of Erebos
+1 Ancestral Statue
+1 Arasta of the Endless Web
+1 Ascendant Evincar
+1 Baba Lysaga, Night Witch
+1 Bamboo Grove Archer
+1 Courser of Kruphix
+1 Destiny Spinner
+1 Dockside Chef
+1 Dread Tiller
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Enduring Vitality
+1 Erebos, Bleak-Hearted
+1 Gloomshrieker
+1 Grim Flayer
+1 Haywire Mite
+1 Ice Cream Kitty
+1 M'Baku, Jabari Chieftain
+1 Millikin
+1 Monoist Circuit-Feeder
+1 Noxious Gearhulk
+1 Nyx Weaver
+1 Osseous Sticktwister
+1 Overlord of the Hauntwoods
+1 Oviya, Automech Artisan
+1 Perennial Behemoth
+1 Pharika, God of Affliction
+1 Project Deathlok Soldier
+1 Renata, Called to the Hunt
+1 Shigeki, Jukai Visionary
+1 Soulreaper of Mogis
+1 Summon: Anima
+1 Summon: Titan
+1 Triarch Stalker
+1 Undercity Scrounger
+1 Wall of Junk
+1 Wickerfolk Indomitable
+1 Wickerfolk Thresher
+1 Arid Archway
+1 Bojuka Bog
+1 Buried Ruin
+1 Command Tower
+1 Darkmoss Bridge
+1 Darksteel Citadel
+1 Deathcap Glade
+1 Dryad Arbor
+1 Elven Passage
+1 Fabled Passage
+4 Forest
+1 Golgari Rot Farm
+1 Guildless Commons
+1 Hostile Hostel
+1 Overgrown Tomb
+1 Phyrexian Tower
+1 Power Depot
+1 Shifting Woodland
+4 Swamp
+1 Tainted Wood
+1 Terramorphic Expanse
+1 Treasure Vault
+1 Tree of Tales
+1 Underground Mortuary
+1 Urza's Saga
+1 Valgavoth's Lair
+1 Vault of Whispers
+1 Verdant Catacombs
+1 Yavimaya, Cradle of Growth
+1 Bad Moon
+1 Bitterblossom
+1 Journey to Eternity
+1 Lignify
+1 Morcant's Eyes
+1 Primal Vigor
+1 Tarmogoyf Nest
+1 Bala Ged Recovery
+1 Convert to Slime
+1 Deluge of Doom
+1 Formless Genesis
+1 Pillage the Bog
+1 Trystan's Command
+1 Bow of Nylea
+1 Firdoch Core
+1 The Aetherspark
+1 Drag to the Roots
+1 Eldritch Immunity
+1 Eyeblight's Ending
+1 Malakir Rebirth
+1 Nameless Inversion
+1 Reach of Branches
+1 Violet Pall
+1 Grist, the Hunger Tide
+1 Invasion of Ravnica

@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/veyran-voice-of-duality/opus
+# theme Opus (1 decks)
+
+Commander
+1 Veyran, Voice of Duality
+
+Deck
+1 Folio of Fancies
+1 Resonating Lute
+1 Tablet of Discovery
+1 Cascade Bluffs
+1 Coastal Peak
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+1 Ferrous Lake
+1 Frostboil Snarl
+9 Island
+1 Molten Tributary
+9 Mountain
+1 Mystic Sanctuary
+1 Path of Ancestry
+1 Reliquary Tower
+1 Scorched Geyser
+1 Shivan Reef
+1 Spectacle Summit
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Turbulent Springs
+1 Archmage Emeritus
+1 Crackling Drake
+1 Electrostatic Infantry
+1 Goldspan Dragon
+1 Guttersnipe
+1 Harmonic Prodigy
+1 Muse Seeker
+1 Renegade Bull
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Tackle Artist
+1 Thunderclap Drake
+1 Thunderdrum Soloist
+1 Abrade
+1 Big Score
+1 Brain Freeze
+1 Brainstorm
+1 Bulk Up
+1 Burst Lightning
+1 Chaos Warp
+1 Consider
+1 Dig Through Time
+1 Disdainful Stroke
+1 Electrolyze
+1 Increasing Vengeance
+1 Invert Polarity
+1 Lightning Bolt
+1 Opt
+1 Pongify
+1 Practical Research
+1 Prismari Command
+1 Reinterpret
+1 Return the Favor
+1 Shock
+1 Spell Pierce
+1 Thrill of Possibility
+1 Whirlwind Denial
+1 Blasphemous Act
+1 Brass's Bounty
+1 Call to Mind
+1 Clear the Mind
+1 Crackle with Power
+1 Dance with Calamity
+1 Expressive Iteration
+1 Faithless Looting
+1 Grapeshot
+1 Mana Geyser
+1 Mind's Desire
+1 Muse Vortex
+1 Mystic Retrieval
+1 Ponder
+1 Preordain
+1 Rapturous Moment
+1 Rousing Refrain
+1 Sleight of Hand
+1 Step Through
+1 Stock Up
+1 Strategic Planning
+1 Surge to Victory
+1 Treasure Cruise
+1 Volcanic Torrent

@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/tOPZXZ4juv7uBeTjnEYibQ (source https://archidekt.com/decks/26023210)
+# tags Eldrazi, Annihilator, Cascade, Ramp, Triggered Abilities, Artifacts; bracket 3; saved 2026-09-03; 219 tagged of 21054 indexed
+
+Commander
+1 Zhulodok, Void Gorger
+
+Deck
+1 Akroma's Memorial
+1 Arc Reactor
+1 Basalt Monolith
+1 Blade of Selves
+1 Chimil, the Inner Sun
+1 Cloud Key
+1 Darksteel Monolith
+1 Everflowing Chalice
+1 Forsaken Monument
+1 Hedron Archive
+1 Helm of Awakening
+1 Herald's Horn
+1 Lightning Greaves
+1 Lithoform Engine
+1 Mind Stone
+1 Mirage Mirror
+1 Mystic Forge
+1 Portal to Phyrexia
+1 Semblance Anvil
+1 Sol Ring
+1 Strionic Resonator
+1 The Eternity Elevator
+1 The Immortal Sun
+1 Thought Vessel
+1 Thran Dynamo
+1 Urza's Incubator
+1 Wayfarer's Bauble
+1 Worn Powerstone
+1 All Is Dust
+1 Calamity of the Titans
+1 Rise of the Eldrazi
+1 Skittering Invasion
+1 Ancient Tomb
+1 Arcane Lighthouse
+1 Blasted Landscape
+1 Bonders' Enclave
+1 Buried Ruin
+1 Command Beacon
+1 Crystal Vein
+1 Deserted Temple
+1 Eldrazi Temple
+1 Emergence Zone
+1 Eye of Ugin
+1 Geier Reach Sanitarium
+1 Homeward Path
+1 Inventors' Fair
+1 Mage-Ring Network
+1 Mirrorpool
+1 Radiant Fountain
+1 Reliquary Tower
+1 Rogue's Passage
+1 Scavenger Grounds
+1 Sea Gate Wreckage
+1 Shrine of the Forsaken Gods
+1 Strip Mine
+1 Thespian's Stage
+1 Tomb of the Spirit Dragon
+1 Treasure Vault
+1 Tyrite Sanctum
+1 Ugin's Labyrinth
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Urza's Workshop
+1 Vesuva
+1 Wasteland
+1 Zhalfirin Void
+1 Artisan of Kozilek
+1 Bane of Bala Ged
+1 Breaker of Creation
+1 Conduit of Ruin
+1 Desolation Twin
+1 Flayer of Loyalties
+1 Foundry Inspector
+1 Glaring Fleshraker
+1 It That Betrays
+1 It That Heralds the End
+1 Kozilek, Butcher of Truth
+1 Kozilek, the Great Distortion
+1 Myr Enforcer
+1 Pathrazer of Ulamog
+1 Roaming Throne
+1 Sire of Seven Deaths
+1 Solemn Simulacrum
+1 Spawnbed Protector
+1 Troop of Ponies
+1 Ulamog, the Ceaseless Hunger
+1 Ulamog, the Defiler
+1 Ulamog, the Infinite Gyre
+1 Void Winnower
+1 Desecrate Reality
+1 Eldritch Immunity
+1 Kozilek's Command
+1 Not of This World
+1 Null Elemental Blast
+1 Titan's Presence
+1 Warping Wail
+1 Echoes of Eternity
+1 Ugin, the Ineffable

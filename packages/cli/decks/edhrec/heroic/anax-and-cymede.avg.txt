@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/anax-and-cymede/heroic
+# theme Heroic (21 decks)
+
+Commander
+1 Anax and Cymede
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Sol Ring
+1 Sunforger
+1 Talisman of Conviction
+1 Battlefield Forge
+1 Boros Garrison
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Furycalm Snarl
+10 Mountain
+1 Path of Ancestry
+11 Plains
+1 Rugged Prairie
+1 Sacred Foundry
+1 Slayers' Stronghold
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 Temple of Triumph
+1 Akroan Conscriptor
+1 Akroan Crusader
+1 Akroan Skyguard
+1 Anim Pakal, Thousandth Moon
+1 Arena Athlete
+1 Baird, Argivian Recruiter
+1 Brigone, Soldier of Meletis
+1 Cleon, Merry Champion
+1 Fabled Hero
+1 Favored Hoplite
+1 Feather, the Redeemed
+1 Hero of Iroas
+1 Hero of the Nyxborn
+1 Iroas, God of Victory
+1 Leonin Lightscribe
+1 Mavinda, Students' Advocate
+1 Monastery Mentor
+1 Phalanx Leader
+1 Satyr Hoplite
+1 Stirring Hopesinger
+1 Swiftblade Vindicator
+1 Tenth District Legionnaire
+1 Tethmos High Priest
+1 Vanguard of Brimaz
+1 Zada, Hedron Grinder
+1 Angelic Gift
+1 Crown of Flames
+1 Dragon Mantle
+1 Feather of Flight
+1 Frontline Heroism
+1 Gift of Immortality
+1 Graduation Day
+1 Leyline of Resonance
+1 Mark of Fury
+1 Sticky Fingers
+1 Blazing Crescendo
+1 Boros Charm
+1 Coordinated Assault
+1 Defiant Strike
+1 Expedite
+1 Fists of Flame
+1 Gods Willing
+1 Legion Leadership
+1 Path to Exile
+1 Phalanx Tactics
+1 Psychotic Fury
+1 Rebellious Strike
+1 Shelter
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 That's Rough Buddy
+1 Valorous Stance
+1 Angelfire Ignition
+1 Arm the Cathars
+1 Gird for Battle
+1 Honor
+1 Impolite Entrance
+1 Launch the Fleet
+1 Witch's Mark

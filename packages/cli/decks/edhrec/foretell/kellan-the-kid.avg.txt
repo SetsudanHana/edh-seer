@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/kellan-the-kid/foretell
+# theme Foretell (696 decks)
+
+Commander
+1 Kellan, the Kid
+
+Deck
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Lightning Greaves
+1 River Song's Diary
+1 Sol Ring
+1 Sol Talisman
+1 The Key to the Vault
+1 Bountiful Promenade
+1 Breeding Pool
+1 Canopy Vista
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+5 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hidden Nursery
+1 Hinterland Harbor
+6 Island
+1 Mosswort Bridge
+4 Plains
+1 Prairie Stream
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Temple Garden
+1 Tranquil Landscape
+1 Apex Devastator
+1 Augur of Autumn
+1 Battle Mammoth
+1 Beanstalk Giant
+1 Birds of Paradise
+1 Chulane, Teller of Tales
+1 Deep-Sea Kraken
+1 Doc Aurlock, Grizzled Genius
+1 Ethereal Valkyrie
+1 Fblthp, Lost on the Range
+1 Green Slime
+1 Imoti, Celebrant of Bounty
+1 Kellan, Inquisitive Prodigy
+1 Monk Gyatso
+1 Outcaster Trailblazer
+1 Railway Brawler
+1 Ranar the Ever-Watchful
+1 Rashmi, Eternities Crafter
+1 Sage of the Beyond
+1 Savvy Trader
+1 Slickshot Lockpicker
+1 Stormkeld Vanguard
+1 Tatyova, Benthic Druid
+1 The Foretold Soldier
+1 The Reality Chip
+1 The Thirteenth Doctor
+1 Tlincalli Hunter
+1 Vega, the Watcher
+1 Woodland Acolyte
+1 Case of the Locked Hothouse
+1 Elven Chorus
+1 Fortune Teller's Talent
+1 Kellan Joins Up
+1 One with the Multiverse
+1 Virtue of Strength
+1 Beast Within
+1 Behold the Multiverse
+1 Cosmic Intervention
+1 Counterspell
+1 Heroic Intervention
+1 Path to Exile
+1 Saw It Coming
+1 Surge of Brilliance
+1 Swords to Plowshares
+1 Ultimate Magic: Holy
+1 Jace Reawakened
+1 Alrund's Epiphany
+1 Aminatou's Augury
+1 Avatar's Wrath
+1 Cultivate
+1 Doomskar
+1 Farseek
+1 Inspiring Refrain
+1 Make Your Own Luck
+1 Nature's Lore
+1 Ravenform
+1 Search for Tomorrow

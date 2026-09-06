@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/claire-dloon-joy-sculptor/squad
+# theme Squad (1 decks)
+
+Commander
+1 Claire D'Loon, Joy Sculptor
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Crystal Shard
+1 Idol of Oblivion
+1 Midnight Clock
+1 Replicating Ring
+1 Skyclave Relic
+1 Sol Ring
+1 Talisman of Progress
+1 Adagia, Windswept Bastion
+1 Command Tower
+1 Dark Depths
+1 Eiganjo, Seat of the Empire
+1 Fountainport
+1 Hall of Heliod's Generosity
+1 Horizon of Progress
+9 Island
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+10 Plains
+1 Terrain Generator
+1 Thawing Glaciers
+1 Thespian's Stage
+1 Treasure Vault
+1 Invasion of Arcavios
+1 Bennie Bracks, Zoologist
+1 Curiosity Crafter
+1 Dream Strix
+1 Fae of Wishes
+1 Finch Formation
+1 Flowerfoot Swordmaster
+1 Gary Clone
+1 Intrepid Rabbit
+1 Junk Winder
+1 Mondrak, Glory Dominus
+1 Moon-Blessed Cleric
+1 Ojer Taq, Deepest Foundation
+1 Professor of Symbology
+1 Roadkill Rodney
+1 Securitron Squadron
+1 Sicarian Infiltrator
+1 Space Marine Devastator
+1 Spawnsire of Ulamog
+1 Splash Lasher
+1 Steelburr Champion
+1 Thundertrap Trainer
+1 Ultramarines Honour Guard
+1 Vanguard Suppressor
+1 Warren Warleader
+1 Witch Enchanter
+1 Yorion, Sky Nomad
+1 Zephyrim
+1 Amphibian Downpour
+1 Anointed Procession
+1 Battle of Wits
+1 Caretaker's Talent
+1 Endless Foot Assault
+1 Smothering Tithe
+1 Sparring Regimen
+1 Arcane Subtraction
+1 Commit // Memory
+1 Divide by Zero
+1 Enlightened Tutor
+1 Kabira Takedown
+1 Pop Quiz
+1 Razorgrass Ambush
+1 Sink into Stupor
+1 Study Break
+1 Karn, the Great Creator
+1 Clear the Mind
+1 Coax from the Blind Eternities
+1 Day's Undoing
+1 Devastation Tide
+1 Echo of Eons
+1 Guiding Voice
+1 Hallowed Burial
+1 Idyllic Tutor
+1 Ondu Inversion
+1 Step Between Worlds
+1 Terminus

@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/Dlp2cmlkKCT-qoUVEkL6UQ (source https://archidekt.com/decks/24307661)
+# tags Incubate, Tokens, Populate, +1/+1 Counters, Phyrexians, Transform, Self-Damage; bracket 3; saved 2026-07-18; 9 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 All That Glitters
+1 Branching Evolution
+1 Brokers Ascendancy
+1 Corruption of Towashi
+1 Doubling Season
+1 Gift of Compleation
+1 Guardian Project
+1 Inexorable Tide
+1 Phyrexian Awakening
+1 Sculpted Perfection
+1 Smothering Tithe
+1 Tangled Skyline
+1 Teleportation Circle
+1 Altar of Dementia
+1 Arcane Signet
+1 Conjurer's Closet
+1 Hammer of Nazahn
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 Staff of Compleation
+1 Swiftfoot Boots
+1 The Great Henge
+1 The Ozolith
+1 Archway of Innovation
+1 Bleachbone Verge
+1 Blooming Marsh
+1 Breeding Pool
+1 Command Tower
+1 Deathcap Glade
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Evendo, Waking Haven
+1 Flooded Strand
+1 Floodfarm Verge
+1 Gloomlake Verge
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hedge Maze
+1 Isolated Chapel
+1 Karn's Bastion
+1 Krosan Verge
+1 Lush Portico
+1 Meticulous Archive
+1 Minas Tirith
+1 Overgrown Farmland
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Polluted Delta
+1 Raffine's Tower
+1 Reliquary Tower
+1 Seachrome Coast
+1 Secret Tunnel
+1 Shattered Sanctum
+1 Temple Garden
+1 Undergrowth Stadium
+1 Wastewood Verge
+1 Watery Grave
+1 Willowrush Verge
+1 Assimilate Essence
+1 Counterspell
+1 Dark Ritual
+1 Dawn's Truce
+1 Ephemerate
+1 Experimental Augury
+1 Force of Vigor
+1 Heroic Intervention
+1 Merciless Repurposing
+1 Mutational Advantage
+1 Oblivion's Hunger
+1 Path to Exile
+1 Reject Imperfection
+1 Scrollshift
+1 Surge of Salvation
+1 Undermine
+1 Bloated Processor
+1 Brimaz, Blight of Oreskos
+1 Chrome Host Seedshark
+1 Converter Beast
+1 Elesh Norn
+1 Elesh Norn, Mother of Machines
+1 Elvish Vatkeeper
+1 Essence of Orthodoxy
+1 Ezuri, Stalker of Spheres
+1 Glissa, Herald of Predation
+1 Infected Defector
+1 Injector Crocodile
+1 Mondrak, Glory Dominus
+1 Norn's Inquisitor
+1 Progenitor Exarch
+1 Roaming Throne
+1 Tiller of Flesh
+1 Elspeth, Storm Slayer
+1 Eyes of Gitaxias
+1 Farseek
+1 Finale of Devastation
+1 Glistening Dawn
+1 Sunder the Gateway
+1 Sunfall
+1 Traumatic Revelation

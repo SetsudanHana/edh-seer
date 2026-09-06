@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/blind-seer/color-hack
+# theme Color Hack (27 decks)
+
+Commander
+1 Blind Seer
+
+Deck
+1 Arcane Signet
+1 Caged Sun
+1 Distorting Lens
+1 Heartstone
+1 Isochron Scepter
+1 Mind Stone
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Fire and Ice
+1 Sword of Forge and Frontier
+1 Sword of Light and Shadow
+1 Thought Vessel
+1 Arcane Lighthouse
+1 Detection Tower
+1 Halimar Depths
+28 Island
+1 Lonely Sandbar
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Riptide Laboratory
+1 Terrain Generator
+1 Arcanis the Omnipotent
+1 Archaeomancer
+1 Archmage Emeritus
+1 Cerulean Drake
+1 Chameleon Spirit
+1 Homarid Shaman
+1 King Crab
+1 Llawan, Cephalid Empress
+1 Loki, God of Mischief
+1 Omen Hawker
+1 Painter's Servant
+1 Scuttlemutt
+1 Tidal Visionary
+1 Trophy Mage
+1 Vodalian Mystic
+1 Willbreaker
+1 Chill
+1 Cowardice
+1 Dismiss into Dream
+1 Douse
+1 Insight
+1 Mind Harness
+1 Mystic Remora
+1 Shifting Sky
+1 Training Grounds
+1 Well-Laid Plans
+1 Wrath of Marit Lage
+1 Alter Reality
+1 Blue Elemental Blast
+1 Counterspell
+1 Fierce Guardianship
+1 Flash Flood
+1 Flashfreeze
+1 Glamerdye
+1 Hibernation
+1 High Tide
+1 Hydroblast
+1 Jaded Response
+1 Mind Bend
+1 Muddle the Mixture
+1 Sea Kings' Blessing
+1 Sleight of Mind
+1 Sway of Illusion
+1 Whim of Volrath
+1 Fabricate
+1 Govern the Guildless
+1 Serum Visions
+1 Wash Out

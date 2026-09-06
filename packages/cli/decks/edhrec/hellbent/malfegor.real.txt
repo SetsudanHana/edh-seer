@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/OOn-cpGQz0LEKctgAZBz2A (source https://archidekt.com/decks/25497592)
+# tags Hellbent, Self-Discard, Discard, Madness, Sacrifice, Forced Combat; bracket 3; saved 2026-09-04; 18 tagged of 951 indexed
+
+Commander
+1 Malfegor
+
+Deck
+1 Accursed Marauder
+1 Anje's Ravager
+1 Archfiend of Depravity
+1 Archfiend of Spite
+1 Asylum Visitor
+1 Banshee of the Dread Choir
+1 Blood Scrivener
+1 Bloodhall Priest
+1 Braids, Cabal Minion
+1 Burglar Rat
+1 Byway Barterer
+1 Caustic Bronco
+1 Dusk Mangler
+1 Elderfang Disciple
+1 Fleshbag Marauder
+1 Grave Scrabbler
+1 Hecteyes
+1 Herald of Anguish
+1 Jecht, Reluctant Guardian
+1 Kardur, Doomscourge
+1 Kroxa, Titan of Death's Hunger
+1 Laelia, the Blade Reforged
+1 Moonstone, Harsh Mistress
+1 Morbid Opportunist
+1 Necrogoyf
+1 Nezumi Informant
+1 Scythe Specter
+1 Skullslither Worm
+1 Stony-Voiced Goblins
+1 Stromkirk Occultist
+1 Vengeful Ancestor
+1 Vindictive Lich
+1 Virus Beetle
+1 Acquired Mutation
+1 Bandit's Talent
+1 Case of the Crimson Pulse
+1 Coercive Impetus
+1 Ghoulish Impetus
+1 Gibbering Descent
+1 Pain Magnification
+1 Parasitic Impetus
+1 Shiny Impetus
+1 The Sound of Drums
+1 Allure of the Unknown
+1 Arterial Flow
+1 Call to the Netherworld
+1 Coronation of Chaos
+1 Fatal Grudge
+1 From Under the Floorboards
+1 Let's Play a Game
+1 Malevolent Whispers
+1 Mizzium Mortars
+1 Pirate's Pillage
+1 Rakdos's Return
+1 Seize the Spoils
+1 Skull Rend
+1 Syphon Mind
+1 Tasigur's Cruelty
+1 Unnerve
+1 Big Score
+1 Kolaghan's Command
+1 Bloodfell Caves
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Graven Cairns
+1 Midgar, City of Mako
+8 Mountain
+1 Myriad Landscape
+1 Rakdos Carnarium
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Spinerock Knoll
+15 Swamp
+1 Tainted Peak
+1 Tramway Station
+1 Bloodthirsty Blade
+1 Sol Ring

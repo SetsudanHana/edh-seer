@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/hakbal-of-the-surging-soul/level-up
+# theme Level Up (1 decks)
+
+Commander
+1 Hakbal of the Surging Soul
+
+Deck
+1 Sol Ring
+1 The Ozolith
+1 Alchemist's Refuge
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Castle Garenbrig
+1 Cavern of Souls
+1 Command Tower
+1 Dreamroot Cascade
+4 Forest
+1 Gaea's Cradle
+1 Hedge Maze
+1 Hinterland Harbor
+6 Island
+1 Minamo, School at Water's Edge
+1 Mistrise Village
+1 Misty Rainforest
+1 Otawara, Soaring City
+1 Path of Ancestry
+1 Plaza of Heroes
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rogue's Passage
+1 Secluded Courtyard
+1 Shifting Woodland
+1 Simic Growth Chamber
+1 Three Tree City
+1 Tropical Island
+1 Yavimaya, Cradle of Growth
+1 Attuma, Atlantean Warlord
+1 Benthic Biomancer
+1 Chomping Changeling
+1 Cold-Eyed Selkie
+1 Daughter of the Deep
+1 Deeproot Elite
+1 Deeproot Historian
+1 Emperor Mihail II
+1 Harbinger of the Tides
+1 Herald of Secret Streams
+1 Kiora's Follower
+1 Kumena, Tyrant of Orazca
+1 Master of the Pearl Trident
+1 Merfolk Cave-Diver
+1 Merfolk Sovereign
+1 Merrow Reejerey
+1 Mindspring Merfolk
+1 Mist Dancer
+1 Namor the Sub-Mariner
+1 Namor, Scourge of the Seas
+1 Nicanzil, Current Conductor
+1 Roaming Throne
+1 Seafloor Oracle
+1 Singer of Swift Rivers
+1 Stonybrook Banneret
+1 Surgespanner
+1 Svyelun of Sea and Sky
+1 Tatyova, Benthic Druid
+1 Thieving Skydiver
+1 Tishana's Tidebinder
+1 Topography Tracker
+1 Vodalian Hexcatcher
+1 Zegana, Utopian Speaker
+1 Burgeoning
+1 Deeproot Pilgrimage
+1 Deeproot Waters
+1 Doubling Season
+1 Exploration
+1 Hardened Scales
+1 High Score
+1 Kindred Discovery
+1 Reflections of Littjara
+1 Rhystic Study
+1 Springleaf Parade
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Cyclonic Rift
+1 Growth Spiral
+1 Heroic Intervention
+1 Inspiring Call
+1 Mana Drain
+1 Mutational Advantage
+1 Rapid Hybridization
+1 Ripples of Potential
+1 Sink into Stupor
+1 Bala Ged Recovery
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Raise the Palisade
+1 Three Visits
+1 Wave Goodbye

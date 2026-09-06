@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/zoraline-cosmos-caller/caves
+# theme Caves (9 decks)
+
+Commander
+1 Zoraline, Cosmos Caller
+
+Deck
+1 Arcane Signet
+1 Desecrated Tomb
+1 Gathering Stone
+1 Orzhov Signet
+1 Power Conduit
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 Tarrian's Journal
+1 Bojuka Bog
+1 Captivating Cave
+1 Cavernous Maw
+1 Command Tower
+1 Desolate Mire
+1 Echoing Deeps
+1 Forgotten Monument
+1 Hidden Courtyard
+1 Hidden Necropolis
+1 Isolated Chapel
+1 Lupinflower Village
+1 Mudflat Village
+1 Nesting Grounds
+1 Path of Ancestry
+1 Pit of Offerings
+6 Plains
+1 Promising Vein
+1 Secret Tunnel
+1 Shadowy Backstreet
+1 Sunken Citadel
+7 Swamp
+1 Tainted Field
+1 Urza's Cave
+1 Volatile Fault
+1 Aclazotz, Deepest Betrayal
+1 Basilica Screecher
+1 Blind Hunter
+1 Bloodhunter Bat
+1 Courier Bat
+1 Darkstar Augur
+1 Deep-Cavern Bat
+1 Dirge Bat
+1 Essence Channeler
+1 Ghastly Gloomhunter
+1 Glidedive Duo
+1 Gurmag Swiftwing
+1 Hex Parasite
+1 Lifecreed Duo
+1 Malakir Familiar
+1 Mirkwood Bats
+1 Momo, Friendly Flier
+1 Momo, Rambunctious Rascal
+1 Moonrise Cleric
+1 Moonstone Eulogist
+1 Moonstone Harbinger
+1 Regal Bloodlord
+1 Ruin-Lurker Bat
+1 Sanguine Evangelist
+1 Star Charter
+1 Starlit Soothsayer
+1 Starscape Cleric
+1 Starseer Mentor
+1 Valley Questcaller
+1 Wax-Wane Witness
+1 Wolfbat
+1 Authority of the Consuls
+1 Banishing Light
+1 Bat Colony
+1 Campaign of Vengeance
+1 Dawn of Hope
+1 Life Insurance
+1 Lunar Convocation
+1 Sanguine Bond
+1 Smothering Tithe
+1 Anguished Unmaking
+1 Batwing Brume
+1 Crumb and Get It
+1 Despark
+1 Hazel's Nocturne
+1 Inkshield
+1 Path to Exile
+1 Sonar Strike
+1 Swords to Plowshares
+1 Diresight
+1 Exsanguinate
+1 Kindred Dominance
+1 Sign in Blood
+1 Starfall Invocation
+1 Victimize

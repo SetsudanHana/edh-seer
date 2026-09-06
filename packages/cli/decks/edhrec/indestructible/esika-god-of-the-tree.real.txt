@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/TrHmuCw_qZ01h7akkec3YA (source https://archidekt.com/decks/13426999)
+# tags Stompy, Gods, Indestructible; bracket 2; saved 2026-08-07; 26 tagged of 25701 indexed
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Aclazotz, Deepest Betrayal
+1 Athreos, Shroud-Veiled
+1 Birds of Paradise
+1 Bloom Tender
+1 Etali, Primal Conqueror
+1 Faeburrow Elder
+1 Ilharg, the Raze-Boar
+1 Iroas, God of Victory
+1 Karametra, God of Harvests
+1 Keranos, God of Storms
+1 Kruphix, God of Horizons
+1 Mogis, God of Slaughter
+1 Nezahal, Primal Tide
+1 Nylea, Keen-Eyed
+1 Ojer Kaslem, Deepest Growth
+1 Purphoros, Bronze-Blooded
+1 Reidane, God of the Worthy
+1 Rhonas the Indomitable
+1 Sanctum Weaver
+1 Xenagos, God of Revels
+1 Aggravated Assault
+1 Binding the Old Gods
+1 Cacophony Unleashed
+1 Garruk's Uprising
+1 Kindred Discovery
+1 Mystic Remora
+1 Planar Collapse
+1 Altar of the Pantheon
+1 Chromatic Lantern
+1 The Great Henge
+1 Archdruid's Charm
+1 Beast Within
+1 Counterspell
+1 Demonic Consultation
+1 Disallow
+1 Generous Gift
+1 Mana Drain
+1 Perplex
+1 Repulsive Mutation
+1 Return the Favor
+1 Swords to Plowshares
+1 Temur Charm
+1 Untimely Malfunction
+1 Whirlwind Denial
+1 Wild Unraveling
+1 Arid Mesa
+1 Badlands
+1 Bayou
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 Cavern of Souls
+1 City of Brass
+1 Exotic Orchard
+1 Flooded Strand
+1 Godless Shrine
+1 Hallowed Fountain
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Overgrown Tomb
+1 Plateau
+1 Plaza of Heroes
+1 Polluted Delta
+1 Reflecting Pool
+1 Sacred Foundry
+1 Savannah
+1 Scalding Tarn
+1 Scrubland
+1 Steam Vents
+1 Stomping Ground
+1 Strip Mine
+1 Taiga
+1 Temple Garden
+1 The World Tree
+1 Three Tree City
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Verdant Catacombs
+1 Volcanic Island
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Blasphemous Act
+1 Damn
+1 Damnation
+1 Distant Melody
+1 Doomskar
+1 Insatiable Avarice
+1 Last One Standing
+1 Nature's Lore
+1 Supreme Verdict
+1 Three Visits
+1 Vanquish the Horde
+1 Wargate
+1 Winnowing
+1 Wrath of God
+1 Invasion of Theros

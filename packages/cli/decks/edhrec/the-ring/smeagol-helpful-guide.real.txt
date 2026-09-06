@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/zPBKm-CGtSKdht246kYiuQ (source https://archidekt.com/decks/13897212)
+# tags Sacrifice, The Ring; bracket 3; saved 2026-09-03; 153 tagged of 7725 indexed
+
+Commander
+1 Sméagol, Helpful Guide
+
+Deck
+1 Ashnod's Altar
+1 Bilbo's Ring
+1 Blackblade Reforged
+1 Cauldron of Essence
+1 Chromatic Lantern
+1 Inherited Envelope
+1 My Precious
+1 Sol Ring
+1 The One Ring
+1 The Ozolith
+1 Barad-dûr
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cavern of Souls
+1 Command Tower
+9 Forest
+1 High Market
+1 Minas Morgul, Dark Fortress
+1 Phyrexian Tower
+12 Swamp
+1 Urborg
+1 Urborg, Tomb of Yawgmoth
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Blasphemous Edict
+1 Claim the Precious
+1 Eaten Alive
+1 Exsanguinate
+1 Final Vengeance
+1 Lash of the Balrog
+1 Rise of the Dark Realms
+1 Rise of the Witch-king
+1 Sam's Desperate Rescue
+1 Shadow of the Enemy
+1 Smallpox
+1 The Black Breath
+1 Torment of Hailfire
+1 Victimize
+1 Bloodghast
+1 Braids, Arisen Nightmare
+1 Cankerbloom
+1 Delighted Halfling
+1 Dina, Essence Brewer
+1 Gollum the Abandoned
+1 Gollum, Patient Plotter
+1 Gollum, Riddle Master
+1 Gríma Wormtongue
+1 Jadar, Ghoulcaller of Nephalia
+1 Joo Dee, One of Many
+1 Meren of Clan Nel Toth
+1 Morbid Opportunist
+9 Nazgûl
+1 Orcish Bowmasters
+1 Ringwraiths
+1 Sakura-Tribe Elder
+1 Syr Konrad, the Grim
+1 Tom, Bert, and William
+1 Troop of Ponies
+1 Uruk-hai Berserker
+1 Viscera Seer
+1 Wight of the Reliquary
+1 Witch-king of Angmar
+1 Bombadil's Song
+1 Entish Restoration
+1 Go for the Throat
+1 Gollum's Bite
+1 Nasty End
+1 Orcish Medicine
+1 Tragic Slip
+1 Call of the Ring
+1 Grave Pact
+1 One Ring to Rule Them All

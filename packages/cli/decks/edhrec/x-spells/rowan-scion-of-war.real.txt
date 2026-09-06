@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/JPuMImVc580oS6QrDYCn7g (source https://moxfield.com/decks/8J7OcuCkD0aabAh8Krem8A)
+# tags X Spells, Self-Damage; bracket 3; saved 2026-09-05; 601 tagged of 9218 indexed
+
+Commander
+1 Rowan, Scion of War
+
+Deck
+1 Abrade
+1 Big Score
+1 Bitter Triumph
+1 Comet Storm
+1 Dark Ritual
+1 Dismember
+1 Fire Covenant
+1 Flare of Duplication
+1 Flashback
+1 Plunge into Darkness
+1 Searing Touch
+1 Snuff Out
+1 Unexpected Windfall
+1 Vendetta
+1 Withering Torment
+1 Arcane Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Pact Weapon
+1 Sol Ring
+1 Talisman of Indulgence
+1 Banefire
+1 Brass's Bounty
+1 Crackle with Power
+1 Day of Black Sun
+1 Decorum Dissertation
+1 Disrupt Decorum
+1 Exsanguinate
+1 Feed the Swarm
+1 Hell to Pay
+1 Inside Information
+1 Jaya's Immolating Inferno
+1 Night's Whisper
+1 Phyrexian Purge
+1 Profane Transfusion
+1 Reanimate
+1 Song of Totentanz
+1 Strike It Rich
+1 Tempt with Vengeance
+1 Toxic Deluge
+1 Vandalblast
+1 Barbarian Ring
+1 Cabal Pit
+1 Command Tower
+1 Dragonskull Summit
+1 Eumidian Hatchery
+1 Exotic Orchard
+1 Grand Coliseum
+1 Great Hall of the Biblioplex
+1 Ifnir Deadlands
+1 Mount Doom
+11 Mountain
+1 Ramunap Ruins
+1 Sulfurous Springs
+11 Swamp
+1 Thran Portal
+1 Tomb of Urami
+1 Blood Celebrant
+1 Blood Pet
+1 Boggart Trawler
+1 Dark Confidant
+1 Darkstar Augur
+1 Immolating Souleater
+1 K'rrik, Son of Yawgmoth
+1 Keen Duelist
+1 Kefka, Dancing Mad
+1 M.O.D.O.K.
+1 Marvin, Murderous Mimic
+1 Morlun, Devourer of Spiders
+1 Myr Convert
+1 Pinnacle Monk
+1 Shivan Devastator
+1 Spider-Punk
+1 Stensian Sanguinist
+1 Storm-Kiln Artist
+1 Treasonous Ogre
+1 Wall of Blood
+1 Fated Firepower
+1 Phyrexian Arena

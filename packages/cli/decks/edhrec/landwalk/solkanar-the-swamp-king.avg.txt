@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/solkanar-the-swamp-king/landwalk
+# theme Landwalk (19 decks)
+
+Commander
+1 Sol'kanar the Swamp King
+
+Deck
+1 Arcane Signet
+1 Bontu's Monument
+1 Demon's Horn
+1 Dimir Signet
+1 Dragonfire Blade
+1 Jet Medallion
+1 Lashwrithe
+1 Mjölnir, Hammer of Thor
+1 Sol Ring
+1 Staff of the Death Magus
+1 Well of Lost Dreams
+1 Blood Crypt
+1 Bojuka Bog
+1 Cabal Coffers
+1 Command Tower
+1 Crumbling Necropolis
+6 Island
+1 Leechridden Swamp
+1 Maestros Theater
+5 Mountain
+1 Seething Landscape
+1 Smoldering Marsh
+1 Sunken Hollow
+11 Swamp
+1 Tainted Isle
+1 Urborg, Tomb of Yawgmoth
+1 Watery Grave
+1 Xander's Lounge
+1 Bloodthirsty Aerialist
+1 Creeping Bloodsucker
+1 Crypt Ghast
+1 Dread Presence
+1 Dream Thrush
+1 Enduring Tenacity
+1 Epicure of Blood
+1 Filth
+1 Gray Merchant of Asphodel
+1 Great Unclean One
+1 K'rrik, Son of Yawgmoth
+1 Marauding Blight-Priest
+1 Nightmare
+1 Nightscape Familiar
+1 Painter's Servant
+1 Reef Shaman
+1 Scion of the Swarm
+1 Starscape Cleric
+1 Tivash, Gloom Summoner
+1 Veinwitch Coven
+1 Vito, Thorn of the Dusk Rose
+1 Wall of Limbs
+1 Witch of the Moors
+1 Blanket of Night
+1 Contaminated Ground
+1 Curiosity
+1 Evil Presence
+1 Exquisite Blood
+1 Greed
+1 Phyrexian Arena
+1 Sanguine Bond
+1 Tainted Well
+1 Bedevil
+1 Consuming Corruption
+1 Counterspell
+1 Countersquall
+1 Crosis's Charm
+1 Dark Ritual
+1 Defile
+1 Howl from Beyond
+1 Infernal Grasp
+1 Shatter
+1 Terminate
+1 Geyadrone Dihada
+1 Bubbling Muck
+1 Exsanguinate
+1 Feed the Swarm
+1 Mutilate
+1 Night's Whisper
+1 Read the Bones
+1 Reanimate
+1 Sign in Blood
