@@ -280,14 +280,18 @@ function dropsCrossSlotOr(text: string): boolean {
  *  parser does the rest. Census (`bin/enchant-restriction-census.ts`): 50 cards whose subject is
  *  wider than their Enchant line, 29 derived. A card without an Enchant line, or without its text
  *  here, keeps "permanent" -- nothing is guessed. */
-const ENCHANT_LINE = /^Enchant ([^\n(]+?)\.?\s*(?:\([^)]*\))?\s*$/m;
+const ENCHANT_LINE = /^Enchant ([^\n]+)$/m;
 const ENCHANTED_PERMANENT = /\benchanted permanent\b/i;
 /** `enchantText` is the text the Enchant line is read from: the clause's OWN FACE when faces are
  *  known (a two-face card with two Auras must not bind face A's line to face B's clause), and the
- *  whole card otherwise. Reminder text after the line is dropped. */
+ *  whole card otherwise. Reminder text after the line is dropped -- by string ops, not by a
+ *  trailing `\s*(...)?\s*$` (CodeQL js/polynomial-redos on the first cut). */
 function boundedByEnchantLine(text: string, enchantText: string): string {
   if (!ENCHANTED_PERMANENT.test(text)) return text;
-  const line = enchantText.match(ENCHANT_LINE)?.[1]?.trim();
+  const raw = enchantText.match(ENCHANT_LINE)?.[1];
+  if (!raw) return text;
+  const paren = raw.indexOf("(");
+  const line = (paren >= 0 ? raw.slice(0, paren) : raw).trim().replace(/\.$/, "");
   return line ? text.replace(ENCHANTED_PERMANENT, `enchanted ${line}`) : text;
 }
 
