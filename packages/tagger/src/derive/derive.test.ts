@@ -2046,3 +2046,30 @@ test("\"enchanted permanent\" is bounded by the card's own Enchant line", () => 
   const blind = deriveAbilities(clauses, "Kaya's Ghostform", { 2: "When enchanted permanent dies or is put into exile, return that card to the battlefield under your control." });
   expect(blind.abilities[0]?.trigger?.subject.type).toBe("permanent");
 });
+
+test("the Enchant bound: a permanent line is a no-op, reminder text is dropped, and a two-face card reads its own face", () => {
+  const ghost = (text: string, extra?: Parameters<typeof deriveAbilities>) => deriveAbilities(
+    [{ id: 2, abilityType: "triggered" as const, trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
+      actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }] }],
+    "Aura", { 2: text }, undefined, text,
+  );
+  // "Enchant permanent" narrows nothing and stays permanent.
+  expect(ghost("Enchant permanent\nWhen enchanted permanent dies, return that card to the battlefield.").abilities[0]?.trigger?.subject.type).toBe("permanent");
+  // Reminder text after the line is not part of the type list.
+  expect(ghost("Enchant creature (Target a creature as you cast this. This card enters attached to that creature.)\nWhen enchanted permanent dies, return that card to the battlefield.").abilities[0]?.trigger?.subject.type).toBe("creature");
+  // Two faces, two Enchant lines: the clause on face 1 reads face 1's line, not face 0's.
+  const twoFaced = deriveAbilities(
+    [
+      { id: 1, abilityType: "none" as const, actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "none" as const, actions: [{ verb: "none", object: "Enchant land" }] },
+      { id: 3, abilityType: "triggered" as const, trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
+        actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }] },
+    ],
+    "Two Auras",
+    { 1: "Enchant creature", 2: "Enchant land", 3: "When enchanted permanent dies, return that card to the battlefield." },
+    undefined,
+    "Enchant creature\n// Enchant land\nWhen enchanted permanent dies, return that card to the battlefield.",
+    undefined, { 1: 0, 2: 1, 3: 1 },
+  );
+  expect(twoFaced.abilities[0]?.trigger?.subject.type).toBe("land");
+});
