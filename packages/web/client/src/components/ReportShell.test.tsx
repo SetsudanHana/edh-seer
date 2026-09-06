@@ -516,3 +516,16 @@ test("a new deck goes home carrying search and hash; the same deck under a state
   rerender(<MemoryRouter initialEntries={at}><ReportShell data={other} /><LocationProbe /></MemoryRouter>);
   expect(screen.getByTestId("loc").textContent).toBe("/?speed=4#deck=abc");
 });
+
+/** THE READER OVERRIDES THE GUESS (owner, 2026-09-06, "I would go route with both"). A phone that
+ *  the hook sends to the list can ask for the whole-deck board, and back. */
+test("the phone can switch between the one-card list and the whole-deck board", async () => {
+  stubPointer(true, false, 390);
+  const user = await openGraph(phoneSizedDeck());
+  expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
+  await user.click(screen.getByRole("button", { name: "Whole deck" }));
+  expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
+  expect(screen.getByRole("button", { name: "Whole deck" })).toHaveAttribute("aria-pressed", "true");
+  await user.click(screen.getByRole("button", { name: "One card" }));
+  expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
+});
