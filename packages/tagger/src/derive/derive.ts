@@ -26,7 +26,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 107;
+export const DERIVE_VERSION = 108;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -271,9 +271,33 @@ function dropsCrossSlotOr(text: string): boolean {
   return typeOnly && subtypeOnly;
 }
 
+/** AN AURA'S "ENCHANT X" LINE BOUNDS ITS "ENCHANTED PERMANENT" (UX sweep 2026-09-06, E1). Kaya's
+ *  Ghostform prints `Enchant creature or planeswalker you control` and then `When enchanted
+ *  permanent dies` -- and "enchanted permanent" parsed as ANY permanent, so a land dying (Fabled
+ *  Passage) and an enchantment leaving (Mystic Remora, Dress Down) each "enabled" it: six false rows
+ *  on the site's own example deck. The Enchant line is the only thing the permanent can be, so the
+ *  subject text takes it verbatim ("enchanted creature or planeswalker you control") and the
+ *  parser does the rest. Census (`bin/enchant-restriction-census.ts`): 50 cards whose subject is
+ *  wider than their Enchant line, 29 derived. A card without an Enchant line, or without its text
+ *  here, keeps "permanent" -- nothing is guessed. */
+const ENCHANT_LINE = /^Enchant ([^\n]+)$/m;
+const ENCHANTED_PERMANENT = /\benchanted permanent\b/i;
+/** `enchantText` is the text the Enchant line is read from: the clause's OWN FACE when faces are
+ *  known (a two-face card with two Auras must not bind face A's line to face B's clause), and the
+ *  whole card otherwise. Reminder text after the line is dropped -- by string ops, not by a
+ *  trailing `\s*(...)?\s*$` (CodeQL js/polynomial-redos on the first cut). */
+function boundedByEnchantLine(text: string, enchantText: string): string {
+  if (!ENCHANTED_PERMANENT.test(text)) return text;
+  const raw = enchantText.match(ENCHANT_LINE)?.[1];
+  if (!raw) return text;
+  const paren = raw.indexOf("(");
+  const line = (paren >= 0 ? raw.slice(0, paren) : raw).trim().replace(/\.$/, "");
+  return line ? text.replace(ENCHANTED_PERMANENT, `enchanted ${line}`) : text;
+}
+
 /** Both corrections above, at the one place a subject becomes structured. */
-function subjectFrom(text: string, cardName?: string): ReturnType<typeof parseSubject> {
-  const stripped = stripCardName(text.replace(SELF_DISJUNCT, ""), cardName);
+function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType<typeof parseSubject> {
+  const stripped = stripCardName(boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, ""), cardName);
   const subject = parseSubject(stripped);
   if (subject.type !== undefined && subject.subtype !== undefined && dropsCrossSlotOr(stripped)) {
     const branches = orBranches(stripped);
@@ -440,7 +464,7 @@ function grantRecipient(clauseText: string): string | undefined {
 const ATTACKS_YOU = /\battacks? you\b/i;
 
 function effectSubject(
-  action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string,
+  action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string, cardText = "",
 ): ReturnType<typeof parseSubject> {
   // A GRANT's object is the ability handed over, never the thing receiving it, so the subject has to
   // come from the clause text. Falls back to the object when the text states no recipient, which
@@ -503,7 +527,7 @@ function effectSubject(
   // aura/equipment host read as a class is a wider standing defect with its own item.
   if (MULTIPLIER_VERBS.has(action.verb ?? "") && UNEXPRESSIBLE_NARROWING.test(object)) return parseSubject("");
   const self = object.match(SELF_REFERENCE);
-  const subject = subjectFrom(self ? self[0] : countTruncated(object), cardName);
+  const subject = subjectFrom(self ? self[0] : countTruncated(object), cardName, cardText);
   // ...and RECORD that it was self-referential. The match was already being used to avoid parsing
   // the condition after it, then discarded, so all 160 graveyard-recursion effects in the corpus
   // looked like recursion of a generic card. edges.ts then let any graveyard fill enable any of
@@ -753,6 +777,11 @@ export function deriveAbilities(
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
+    // THE ENCHANT LINE IS READ OFF THIS CLAUSE'S OWN FACE when faces are known (review, 2026-09-06):
+    // `cardText` is the whole card, and a card with an Aura on each face has two Enchant lines.
+    const enchantText = face !== undefined && clauseTexts
+      ? Object.entries(clauseTexts).filter(([id]) => clauseFaces?.[Number(id)] === face).map(([, t]) => t).join("\n")
+      : cardText;
     const kind = abilityKind(clause);
     // THE RAW TRIGGER EVENT, FOR THE LABELLER ONLY (`repeatsFor`). An event outside the `Verb`
     // union reaches `unknownTriggers` below and the ability derives with no trigger, so this is the
@@ -787,11 +816,14 @@ export function deriveAbilities(
       for (let i = idx - 1; i >= 0; i--) {
         const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
         if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o)) continue;
-        return o.replace(PRONOUN_SOURCE, "");
+        return boundedByEnchantLine(o.replace(PRONOUN_SOURCE, ""), enchantText);
       }
       // Kaya's Ghostform: "When ENCHANTED PERMANENT dies, return THAT CARD to the battlefield." The
       // antecedent is the trigger's subject, not an earlier action -- there is no earlier action.
-      const t = (clause.trigger?.subject ?? "").trim();
+      // AND IT IS BOUNDED BY THE ENCHANT LINE like the trigger itself: the returned card is the
+      // creature or planeswalker that died, so the emit says so -- without this the emit stayed
+      // "any permanent enters" and Dress Down "entered thanks to Kaya's Ghostform".
+      const t = boundedByEnchantLine((clause.trigger?.subject ?? "").trim(), enchantText);
       return t === "" || PRONOUN_OBJECT.test(t) ? undefined : t;
     };
     /** ...and the case `antecedentFor` deliberately walks PAST: the nearest earlier action names the
@@ -872,7 +904,7 @@ export function deriveAbilities(
           if (!triggerHasCue(damageVerb, cardText)) {
             unknownTriggers.push(`phantom:${damageVerb}`);
           } else {
-            const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
+            const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
             const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
             if (control) subject.control = control;
             if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
@@ -888,7 +920,7 @@ export function deriveAbilities(
         // REFUSES leaves the older, wrong doc standing, so the clause layer alone cannot fix it.
         unknownTriggers.push(`phantom:${verb}`);
       } else if (verb) {
-        const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
+        const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
@@ -928,7 +960,7 @@ export function deriveAbilities(
     // become a source of what it multiplies. Only when the clause has no authored trigger: Rankle
     // and Torbran's mode inherits the parent's combat-damage trigger and must keep it.
     if (replacement && !replacement.restricted && !trigger) {
-      const subject = subjectFrom(replacement.subjectText, cardName);
+      const subject = subjectFrom(replacement.subjectText, cardName, enchantText);
       if (replacement.counter) subject.counter = replacement.counter;
       trigger = { verbs: replacement.verbs, subject };
     }
@@ -990,13 +1022,13 @@ export function deriveAbilities(
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
       const subject = effectKind
-        ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName)
+        ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
       // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
       const objectText = (action.object ?? "").trim();
       if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText)) {
         const ante = antecedentFor((clause.actions ?? []).indexOf(action));
-        const inherited = ante ? subjectFrom(ante, cardName).control : undefined;
+        const inherited = ante ? subjectFrom(ante, cardName, enchantText).control : undefined;
         if (inherited && inherited !== "any") {
           for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
           if (subject && subject.control === "any") subject.control = inherited;
