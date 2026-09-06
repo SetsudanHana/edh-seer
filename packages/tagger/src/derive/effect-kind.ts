@@ -276,6 +276,12 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // creature the deck plays, and `wincon.ts` counted it as a go-wide finisher. The AMOUNT already
   // carried the sign and nothing read it.
   if (verb === "modify-pt" && /^\s*-/.test(String(action.amount ?? ""))) return "debuff";
+  // A BASE POWER AND TOUGHNESS IS SET, NOT MODIFIED. "Non-Horror creatures with slime counters on
+  // them have base power and toughness 2/2" (Sludge Monster) is removal aimed at the other side of
+  // the table, and the clause layer records it as `modify-pt` with an unsigned "2/2", which mapped
+  // to `pump` and fed Laboratory Maniac's anthem payoffs (owner-judged FALSE, 2026-08-15: "it is
+  // removal, you always would target opponent creatures"). Neither a pump nor a debuff: no kind.
+  if (verb === "modify-pt" && !/^\s*[+-]/.test(String(action.amount ?? "")) && /\bbase power\b/i.test(clauseText)) return null;
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
   if (verb === "extra-turn" || verb === "extra-phase") {
     return extraUnitKind(String(action.object ?? ""), clauseText);

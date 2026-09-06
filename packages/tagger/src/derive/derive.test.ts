@@ -1992,3 +1992,35 @@ test("a clause whose text carries a marker condition derives the requirement", (
   expect(tags.abilities.every((a) => a.requires?.marker === "monarch")).toBe(true);
   expect(tags.abilities.length).toBeGreaterThan(0);
 });
+
+// ---- the panel's controller family (2026-09-06) ----
+
+test("an action with no player named is the controller's: 'draw a card' is you drawing", () => {
+  // Priest of Forgotten Gods. Derived `any`, the draw met Orcish Bowmasters' "whenever an opponent
+  // draws" (owner-judged FALSE). A player-shaped cue still wins: "target player draws" stays any.
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }] }], undefined, { 1: "You add {B}{B} and draw a card." });
+  expect(abilities[0].emits?.[0]?.subject.control).toBe("you");
+  const named = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }] }], undefined, { 1: "Target player draws a card." });
+  expect(named.abilities[0].emits?.[0]?.subject.control).toBe("any");
+});
+
+test("'that creature' inherits the controller of the creature the trigger named", () => {
+  // The Sibsig Ceremony: "Whenever a creature you control enters, destroy that creature" is YOUR
+  // creature dying, and derived `dies creature/any` it fed Massacre Wurm's opponents-only trigger.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a creature you control", control: "you" },
+    actions: [{ verb: "destroy", object: "that creature" }],
+  }]);
+  const dies = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
+  expect(dies?.subject).toMatchObject({ type: "creature", control: "you" });
+});
+
+test("a counter placed 'on this creature' is a self trigger", () => {
+  // Evolution Witness: the counter is the subject, the recipient is the card itself.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "counter-added", subject: "one or more +1/+1 counters on this creature", control: "you" },
+    actions: [{ verb: "return", object: "target permanent card", fromZone: "graveyard", toZone: "hand" }],
+  }]);
+  expect(abilities[0].trigger?.subject.self).toBe(true);
+});

@@ -627,3 +627,12 @@ test("losing abilities is ability-loss, and a payable can't is still a tax", () 
   expect(actionEffectKind({ verb: "cant", object: "target creature loses all abilities" })).toBe("ability-loss");
   expect(actionEffectKind({ verb: "cant", object: "attack you unless its controller pays {2}" })).toBe("tax");
 });
+
+test("setting a base power and toughness is neither a pump nor a debuff", () => {
+  // Sludge Monster: "have base power and toughness 2/2" is removal, and an unsigned "2/2" mapped to pump.
+  expect(actionEffectKind({ verb: "modify-pt", object: "Non-Horror creatures with slime counters on them", amount: "2/2" },
+    "Non-Horror creatures with slime counters on them lose all abilities and have base power and toughness 2/2.")).toBeNull();
+  // A signed modifier keeps its kind either way.
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures you control", amount: "+1/+1" }, "Creatures you control get +1/+1.")).toBe("pump");
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" }, "")).toBe("debuff");
+});
