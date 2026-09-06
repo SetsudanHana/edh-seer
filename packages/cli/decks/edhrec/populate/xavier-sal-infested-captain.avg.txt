@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/xavier-sal-infested-captain/populate
+# theme Populate (206 decks)
+
+Commander
+1 Xavier Sal, Infested Captain
+
+Deck
+1 Arcane Signet
+1 Astral Cornucopia
+1 Everflowing Chalice
+1 Idol of Oblivion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thousand-Year Elixir
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+1 Foreboding Landscape
+6 Forest
+1 Hinterland Harbor
+5 Island
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Nesting Grounds
+1 Opulent Palace
+1 Overgrown Tomb
+1 Rejuvenating Springs
+1 Sunken Hollow
+4 Swamp
+1 Undergrowth Stadium
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Adrix and Nev, Twincasters
+1 Basking Broodscale
+1 Birds of Paradise
+1 Cankerbloom
+1 Deathspore Thallid
+1 Devoted Druid
+1 Dreamtide Whale
+1 Evolution Sage
+1 Evolution Witness
+1 Ezuri, Stalker of Spheres
+1 Fathom Mage
+1 Gruff Triplets
+1 Kiora's Follower
+1 Marvin, Murderous Mimic
+1 Master Biomancer
+1 Mycoloth
+1 O'aka, Traveling Merchant
+1 Octomancer
+1 Pensive Professor
+1 Reef Worm
+1 Scurry Oak
+1 Slimefoot, the Stowaway
+1 Tekuthal, Inquiry Dominus
+1 Tender Wildguide
+1 Thrummingbird
+1 Twitching Doll
+1 Utopia Mycon
+1 Awaken the Honored Dead
+1 Binding the Old Gods
+1 City of Death
+1 Doubling Season
+1 Freed from the Real
+1 Inexorable Tide
+1 Intruder Alarm
+1 Jugan Defends the Temple
+1 Kiora Bests the Sea God
+1 Mystic Remora
+1 Assassin's Trophy
+1 Atomize
+1 Beast Within
+1 Cackling Counterpart
+1 Counterspell
+1 Heroic Intervention
+1 Revitalizing Repast
+1 Ripples of Potential
+1 Garruk, Cursed Huntsman
+1 Kiora, Master of the Depths
+1 Tyvar, Jubilant Brawler
+1 Vraska, Betrayal's Sting
+1 Cultivate
+1 Farseek
+1 Irenicus's Vile Duplication
+1 Nature's Lore
+1 Quasiduplicate
+1 Rampant Growth
+1 Rite of Replication
+1 Tezzeret's Gambit

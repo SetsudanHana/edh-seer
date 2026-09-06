@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/asvfpOirVtxT9znOBF8d6A (source https://archidekt.com/decks/25966379)
+# tags +1/+1 Counters, Activated Abilities; bracket 2; saved 2026-09-04; 53 tagged of 2553 indexed
+
+Commander
+1 Redshift, Rocketeer Chief
+
+Deck
+1 Afterburner Expert
+1 Agatha of the Vile Cauldron
+1 Beastrider Vanguard
+1 Bhaal's Invoker
+1 Boom Scholar
+1 Bristly Bill, Spine Sower
+1 Captivating Crew
+1 Disciple of Freyalise
+1 Draconautics Engineer
+1 Drillworks Mole
+1 Elvish Refueler
+1 Fanatic of Rhonas
+1 Flamewave Invoker
+1 Forgotten Ancient
+1 Formidable Speaker
+1 Goro-Goro, Disciple of Ryusei
+1 Guardian Augmenter
+1 Imperial Recruiter
+1 Incubation Druid
+1 Inferno of the Star Mounts
+1 Loot, Exuberant Explorer
+1 Maester Seymour
+1 Ohran Frostfang
+1 Orochi Leafcaller
+1 Ouroboroid
+1 Pinnacle Monk
+1 Soul of New Phyrexia
+1 Soulbright Flamekin
+1 Svella, Ice Shaper
+1 Tireless Tracker
+1 Tyvar, the Pummeler
+1 Xenagos, God of Revels
+1 Akroma's Memorial
+1 Boommobile
+1 Colossus Hammer
+1 Mithril Coat
+1 Ozolith, the Shattered Spire
+1 Rocketeer Boostbuggy
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 The Great Henge
+1 Archdruid's Charm
+1 Beast Within
+1 Biosynthic Burst
+1 Burst of Strength
+1 Collective Resistance
+1 Deflecting Swat
+1 Gift of the Viper
+1 Heroic Intervention
+1 Return of the Wildspeaker
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Fangs of Kalonia
+1 Harmonize
+1 Kodama's Reach
+1 Rishkar's Expertise
+1 Stump Stomp
+1 Vandalblast
+1 Wheel of Fortune
+1 Bloodstained Mire
+1 Boseiju, Who Endures
+1 Cascading Cataracts
+1 Castle Garenbrig
+1 Command Tower
+1 Commercial District
+1 Cragcrown Pathway
+1 Fire-Lit Thicket
+4 Forest
+1 Kessig Wolf Run
+1 Misty Rainforest
+1 Mosswort Bridge
+4 Mountain
+1 Myriad Landscape
+1 Opal Palace
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Scalding Tarn
+1 Spire Garden
+1 Stomping Ground
+1 Taiga
+1 Verdant Catacombs
+1 War Room
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Court of Garenbrig
+1 Fight Rigging
+1 Garruk's Uprising
+1 Helix Pinnacle
+1 Rhythm of the Wild
+1 Tribute to the World Tree
+1 Well Rested

@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/sidar-jabari-of-zhalfir/horsemanship
+# theme Horsemanship (4 decks)
+
+Commander
+1 Sidar Jabari of Zhalfir
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Coat of Arms
+1 Herald's Horn
+1 Icon of Ancestry
+1 Mithril Coat
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 The Circle of Loyalty
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Cavern of Souls
+1 Caves of Koilos
+1 Choked Estuary
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Godless Shrine
+1 Hallowed Fountain
+3 Island
+1 Marsh Flats
+1 Morphic Pool
+1 Path of Ancestry
+5 Plains
+1 Port Town
+1 Prairie Stream
+1 Raffine's Tower
+1 Scrubland
+1 Sea of Clouds
+1 Secluded Courtyard
+1 Shineshadow Snarl
+4 Swamp
+1 Temple of Silence
+1 Tundra
+1 Underground Sea
+1 Vault of Champions
+1 Acclaimed Contender
+1 Adeline, Resplendent Cathar
+1 Aryel, Knight of Windgrace
+1 Basri's Lieutenant
+1 Bloodthirsty Conqueror
+1 Cavalier of Dawn
+1 Cavalier of Night
+1 Eastern Paladin
+1 Elenda and Azor
+1 Enduring Curiosity
+1 Exsanguinator Cavalry
+1 Haakon, Stromgald Scourge
+1 Haytham Kenway
+1 Herald of Hoofbeats
+1 Hero of Bladehold
+1 Kinsbaile Cavalier
+1 Knight Exemplar
+1 Knight of the White Orchid
+1 Marshal of Zhalfir
+1 Moonshaker Cavalry
+1 Silverwing Squadron
+1 Skyhunter Strike Force
+1 Summon: Knights of Round
+1 Summon: Primal Odin
+1 Syr Konrad, the Grim
+1 Valiant Knight
+1 Vodalian Wave-Knight
+1 Vona, Butcher of Magan
+1 Wintermoor Commander
+1 Wonder
+1 Worthy Knight
+1 Cathars' Crusade
+1 Chivalric Alliance
+1 Cover of Darkness
+1 Kindred Discovery
+1 Knights' Charge
+1 Rhystic Study
+1 An Offer You Can't Refuse
+1 Anguished Unmaking
+1 Counterspell
+1 Dovin's Veto
+1 Entomb
+1 Gifts Ungiven
+1 Mana Drain
+1 Path to Exile
+1 Swan Song
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Buried Alive
+1 Kindred Dominance
+1 Read the Bones
+1 Time Wipe
+1 Victimize

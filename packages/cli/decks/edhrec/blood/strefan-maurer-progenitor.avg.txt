@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/strefan-maurer-progenitor/blood
+# theme Blood (309 decks)
+
+Commander
+1 Strefan, Maurer Progenitor
+
+Deck
+1 Arcane Signet
+1 Blood Fountain
+1 Commander's Sphere
+1 Cryptolith Fragment
+1 Glass-Cast Heart
+1 Inspiring Statuary
+1 Lightning Greaves
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Haunted Ridge
+8 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+11 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Unclaimed Territory
+1 Voldaren Estate
+1 Anje, Maid of Dishonor
+1 Anowon, the Ruin Sage
+1 Blood Artist
+1 Bloodletter of Aclazotz
+1 Bloodline Keeper
+1 Bloodline Necromancer
+1 Bloodlord of Vaasgoth
+1 Bloodtithe Harvester
+1 Butcher of Malakir
+1 Champion of Dusk
+1 Cordial Vampire
+1 Creeping Bloodsucker
+1 Crossway Troublemakers
+1 Falkenrath Forebear
+1 Florian, Voldaren Scion
+1 Gluttonous Guest
+1 Kamber, the Plunderer
+1 Malakir Bloodwitch
+1 Markov Enforcer
+1 Mirkwood Bats
+1 Necropolis Regent
+1 Nirkana Revenant
+1 Olivia's Attendants
+1 Olivia, Crimson Bride
+1 Patron of the Vein
+1 Rakish Heir
+1 Sanctum Seeker
+1 Scion of Opulence
+1 Stromkirk Captain
+1 Timothar, Baron of Bats
+1 Twilight Prophet
+1 Voldaren Bloodcaster
+1 Voldaren Epicure
+1 Arterial Alchemy
+1 Molten Echoes
+1 Phyrexian Arena
+1 Stensia Masquerade
+1 Bedevil
+1 Chaos Warp
+1 Deadly Dispute
+1 Rakdos Charm
+1 Terminate
+1 Vampires' Vengeance
+1 Sorin, Imperious Bloodlord
+1 Blasphemous Act
+1 Feed the Swarm
+1 Lich-Knights' Conquest
+1 Night's Whisper
+1 Olivia's Wrath
+1 Pointed Discussion
+1 Sinister Waltz
+1 Vampire's Kiss
+1 Vandalblast

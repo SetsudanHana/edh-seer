@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/vnwxt-verbose-host/speed
+# theme Speed (74 decks)
+
+Commander
+1 Vnwxt, Verbose Host
+
+Deck
+1 Aether Syphon
+1 Arcane Signet
+1 Bident of Thassa
+1 Ivory Tower
+1 Mind Stone
+1 Racers' Scoreboard
+1 Sapphire Medallion
+1 Sol Ring
+1 Thought Vessel
+1 Amonkhet Raceway
+1 Avishkar Raceway
+1 Cephalid Coliseum
+27 Island
+1 Lonely Sandbar
+1 Muraganda Raceway
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Rogue's Passage
+1 Alandra, Sky Dreamer
+1 Body of Knowledge
+1 Chasm Skulker
+1 Clinquant Skymage
+1 Emrakul's Messenger
+1 Enduring Curiosity
+1 Faerie Mastermind
+1 Faerie Seer
+1 Gudul Lurker
+1 Harrier Strix
+1 Homunculus Horde
+1 Hydroelectric Specimen
+1 Illvoi Galeblade
+1 Laboratory Maniac
+1 Mischievous Mystic
+1 Mist-Cloaked Herald
+1 Oneirophage
+1 Psychosis Crawler
+1 Shoreline Looter
+1 Silent Hallcreeper
+1 Siren Stormtamer
+1 Slither Blade
+1 Spectral Sailor
+1 Triton Shorestalker
+1 Twenty-Toed Toad
+1 Nerd Rage
+1 Ominous Seas
+1 Proft's Eidetic Memory
+1 Propaganda
+1 Rhystic Study
+1 Teferi's Ageless Insight
+1 Wizard Class
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Brainsurge
+1 Consider
+1 Counterspell
+1 Foil
+1 Frantic Search
+1 High Tide
+1 Negate
+1 Opt
+1 Pongify
+1 Rapid Hybridization
+1 Reality Shift
+1 Tolarian Winds
+1 Jace, Wielder of Mysteries
+1 Gitaxian Probe
+1 Mathemagics
+1 Ponder
+1 Preordain
+1 Treasure Cruise
+1 Windfall

@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/pk7O-hQOhaVTVGszuOQ8HA (source https://archidekt.com/decks/12539172)
+# tags Spell Copy, Spellslinger, Commander Matters, Aggro; bracket 2; saved 2026-09-01; 386 tagged of 11217 indexed
+
+Commander
+1 Veyran, Voice of Duality
+
+Deck
+1 An Offer You Can't Refuse
+1 Barge In
+1 Boomerang
+1 Brainstorm
+1 Brute Strength
+1 Bulk Up
+1 Consider
+1 Dreadmaw's Ire
+1 Fatal Frenzy
+1 Fists of Flame
+1 Flashback
+1 Frantic Search
+1 Galvanic Iteration
+1 Haste Magic
+1 Into the Flood Maw
+1 Izzet Charm
+1 Mana Sculpt
+1 Monstrous Rage
+1 Opt
+1 Run Amok
+1 Siege Smash
+1 Snap
+1 Swan Song
+1 Temur Battle Rage
+1 Three Steps Ahead
+1 Turn Inside Out
+1 Twinferno
+1 Unleash Fury
+1 Unsummon
+1 Vapor Snag
+1 Violent Urge
+1 Whirling Strike
+1 Arcane Bombardment
+1 Leyline of Resonance
+1 Teferi's Ageless Insight
+1 Arcane Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Primal Amulet
+1 Resonating Lute
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 Two-Handed Axe
+1 Winged Boots
+1 Wizard's Staff
+1 Archmage Emeritus
+1 Beamsplitter Mage
+1 Brazen Borrower
+1 Dualcaster Mage
+1 Goblin Electromancer
+1 Harmonic Prodigy
+1 Kitsa, Otterball Elite
+1 Lutri, the Spellchaser
+1 Stella Lee, Wild Card
+1 Zada, Hedron Grinder
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Ferrous Lake
+1 Frostboil Snarl
+12 Island
+1 Izzet Boilerworks
+12 Mountain
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Temple of the False God
+1 Crash Through
+1 Expressive Iteration
+1 Gitaxian Probe
+1 Lock and Load
+1 Ponder
+1 Preordain
+1 Windfall

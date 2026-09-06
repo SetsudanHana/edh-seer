@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/iJLfWzwk2HUpcbb17DXmbg (source https://archidekt.com/decks/19964379)
+# tags Bats, Caves, Flying, Lifedrain, Reanimator, Lifegain; bracket 2; saved 2026-02-22; 9 tagged of 7896 indexed
+
+Commander
+1 Zoraline, Cosmos Caller
+
+Deck
+1 Amalia Benavides Aguirre
+1 Astarion, the Decadent
+1 Blind Hunter
+1 Cliffhaven Vampire
+1 Courier Bat
+1 Darkstar Augur
+1 Deep-Cavern Bat
+1 Defiant Bloodlord
+1 Elenda, Saint of Dusk
+1 Enduring Innocence
+1 Enduring Tenacity
+1 Essence Channeler
+1 Great Unclean One
+1 Gurmag Swiftwing
+1 Lifecreed Duo
+1 Malakir Familiar
+1 Marauding Blight-Priest
+1 Mirkwood Bats
+1 Momo, Friendly Flier
+1 Momo, Rambunctious Rascal
+1 Moonstone Eulogist
+1 Moonstone Harbinger
+1 Morlun, Devourer of Spiders
+1 Regal Bloodlord
+1 Ruin-Lurker Bat
+1 Sanguine Evangelist
+1 Skeletal Vampire
+1 Star Charter
+1 Starlit Soothsayer
+1 Starscape Cleric
+1 Valley Questcaller
+1 Wax-Wane Witness
+1 Wolfbat
+1 Arcane Signet
+1 Bender's Waterskin
+1 Desecrated Tomb
+1 Excalibur II
+1 Herald's Horn
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Darkness Crystal
+1 The Wind Crystal
+1 Astarion's Thirst
+1 Dark Ritual
+1 Moogles' Valor
+1 Tenacity
+1 Authority of the Consuls
+1 Banishing Light
+1 Bat Colony
+1 Campaign of Vengeance
+1 Dawn of Hope
+1 Griffin Aerie
+1 Lunar Convocation
+1 Noble Purpose
+1 Painful Quandary
+1 Rune of Sustenance
+1 Sanguine Bond
+1 Sheltered by Ghosts
+1 Barren Moor
+1 Cavernous Maw
+1 Forgotten Monument
+1 Forlorn Flats
+1 Great Arashin City
+1 Hidden Courtyard
+1 Hidden Necropolis
+1 Lupinflower Village
+1 Mudflat Village
+1 Pit of Offerings
+12 Plains
+1 Restless Fortress
+1 Rogue's Passage
+1 Scoured Barrens
+12 Swamp
+1 Volatile Fault
+1 For the Emperor!
+1 Kaya's Wrath
+1 Zof Consumption

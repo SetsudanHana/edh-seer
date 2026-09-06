@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/l2NW3TgOD8On_cphwUVqzw (source https://archidekt.com/decks/20431305)
+# tags Clues, Hand Size, Arcane, Spirits; bracket 2; saved 2026-05-14; 9 tagged of 2626 indexed
+
+Commander
+1 Kyodai, Soul of Kamigawa
+
+Deck
+1 Ancient Den
+1 Azorius Chancery
+1 Command Tower
+1 Darksteel Citadel
+1 Dreamroot Cascade
+4 Forest
+1 Great Furnace
+1 Halimar Depths
+7 Island
+1 Mikokoro, Center of the Sea
+1 Oboro, Palace in the Clouds
+1 Opal Palace
+1 Path of Ancestry
+4 Plains
+1 Reliquary Tower
+1 Seat of the Synod
+1 Selesnya Sanctuary
+1 Tree of Tales
+1 Undiscovered Paradise
+1 Urza's Saga
+1 Uthros, Titanic Godcore
+1 Vault of Whispers
+1 Ao, the Dawn Sky
+1 Benevolent River Spirit
+1 Bygone Bishop
+1 Carven Caryatid
+1 Dreamcatcher
+1 Erdwal Illuminator
+1 Ethereal Investigator
+1 Floodhound
+1 Guardian of Solitude
+1 Indebted Spirit
+1 Kagemaro, First to Suffer
+1 Kairi, the Swirling Sky
+1 Kami of the Crescent Moon
+1 Kodama of the South Tree
+1 Kura, the Boundless Sky
+1 Loch Mare
+1 Mausoleum Wanderer
+1 Metallic Mimic
+1 Miirym, Sentinel Wyrm
+1 Morska, Undersea Sleuth
+1 Ornithopter of Paradise
+1 Petalmane Baku
+1 Phantom Nantuko
+1 Rattlechains
+1 Selfless Spirit
+1 Shape Stealer
+1 Sky Spirit
+1 Soramaro, First to Dream
+1 Tamiyo, Inquisitive Student
+1 Teardrop Kami
+1 Thraben Inspector
+1 Tireless Tracker
+1 Tui and La, Moon and Ocean
+1 Universal Automaton
+1 Ureni, the Song Unending
+1 Blessed Breath
+1 Confront the Unknown
+1 Deduce
+1 Harmonized Crescendo
+1 Murmurs from Beyond
+1 Officious Interrogation
+1 Otherworldly Journey
+1 Rend Flesh
+1 Rending Vines
+1 Spiritual Visit
+1 Wear Away
+1 Cranial Plating
+1 Dragonstorm Globe
+1 Elixir of Immortality
+1 Herald's Horn
+1 Horizon Spellbomb
+1 Liquimetal Torque
+1 Long-Forgotten Gohei
+1 Mox Jasper
+1 Mox Opal
+1 Skycloud Egg
+1 Sol Ring
+1 Spellbook
+1 Springleaf Drum
+1 Tamiyo's Journal
+1 Venser's Journal
+1 Distant Melody
+1 Night's Whisper
+1 Ribbons of the Reikai
+1 Oko, Lorwyn Liege

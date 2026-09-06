@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/fw9gVZZ77g3LAUGZmL7HIw (source https://archidekt.com/decks/11530327)
+# tags Self-Mill, Storm, Control, Flashback, Graveyard; bracket 3; saved 2026-09-01; 74 tagged of 3055 indexed
+
+Commander
+1 Neerdiv, Devious Diver
+
+Deck
+1 Abhorrent Oculus
+1 Curious Homunculus
+1 Emry, Lurker of the Loch
+1 Exhibition Tidecaller
+1 Glasspool Mimic
+1 Haughty Djinn
+1 Ledger Shredder
+1 Lier, Disciple of the Drowned
+1 Naga Fleshcrafter
+1 Phyrexian Metamorph
+1 Snapcaster Mage
+1 The Dawning Archaic
+1 Thunderclap Drake
+1 Wizards of Thay
+1 Wonder
+1 Academy Ruins
+1 Drownyard Temple
+31 Island
+1 Mystic Sanctuary
+1 Soldevi Excavations
+1 Aetherize
+1 Brain Freeze
+1 Brainstorm
+1 Cyclonic Rift
+1 Defy Gravity
+1 Dig Through Time
+1 Divergent Equation
+1 Dream Twist
+1 Drown in Dreams
+1 Force of Will
+1 Frantic Search
+1 Glimpse of Freedom
+1 High Tide
+1 March of Swirling Mist
+1 Mystical Tutor
+1 Oona's Grace
+1 Otherworldly Gaze
+1 Radical Idea
+1 Sink into Stupor
+1 Snap
+1 Swan Song
+1 Tale's End
+1 Three Steps Ahead
+1 Turnabout
+1 Unsubstantiate
+1 Visions of Beyond
+1 Arcane Signet
+1 Glamdring, Foe-hammer
+1 Runechanter's Pike
+1 Sapphire Medallion
+1 Sol Ring
+1 Subterranean Schooner
+1 Tormod's Crypt
+1 Artful Dodge
+1 Candlekeep Inspiration
+1 Curse of the Swine
+1 Deep Analysis
+1 Notorious Throng
+1 Personal Tutor
+1 Ponder
+1 Preordain
+1 Quasiduplicate
+1 Recall
+1 Season of Weaving
+1 Treasure Cruise
+1 Wash Out
+1 Windfall
+1 Winternight Stories
+1 Mystic Remora

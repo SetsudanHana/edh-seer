@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/vbg7hC4MBKglwoMmi5sTSw (source https://moxfield.com/decks/RItlZcgkIEq6hjetJquQCQ)
+# tags Extra Combats, Storm, Extra Turns, Voltron, Pillow Fort; bracket 3; saved 2026-09-02; 526 tagged of 6250 indexed
+
+Commander
+1 Narset, Enlightened Master
+
+Deck
+1 Academy Ruins
+1 Arena of Glory
+1 Cascade Bluffs
+1 Clifftop Retreat
+1 Command Tower
+1 Glacial Fortress
+1 Hall of Heliod's Generosity
+1 Hall of the Bandit Lord
+7 Island
+5 Mountain
+1 Mystic Gate
+1 Mystic Monastery
+8 Plains
+1 Prairie Stream
+1 Radiant Summit
+1 Rugged Prairie
+1 Scorched Geyser
+1 Sulfur Falls
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Triumph
+1 Aether Tunnel
+1 All That Glitters
+1 Amphibian Downpour
+1 Auramancer's Guise
+1 Celestial Mantle
+1 Collective Restraint
+1 Darksteel Mutation
+1 Eldrazi Conscription
+1 Ethereal Armor
+1 Ghostly Prison
+1 Holy Mantle
+1 Idolized
+1 Propaganda
+1 Shark Typhoon
+1 Sphere of Safety
+1 Spirit Mantle
+1 Steel of the Godhead
+1 Tempest Technique
+1 Timely Ward
+1 Twinblade Blessing
+1 Alpha Brawl
+1 Beacon of Tomorrows
+1 Dream Cache
+1 Mind's Desire
+1 Overpowering Attack
+1 Relentless Assault
+1 River's Rebuke
+1 Seize the Day
+1 Storm Herd
+1 Temporal Fissure
+1 Waves of Aggression
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Brainstone
+1 Commander's Sphere
+1 Darksteel Ingot
+1 Darksteel Plate
+1 Elixir of Immortality
+1 Fire Diamond
+1 Haystack
+1 Helm of the Host
+1 Izzet Signet
+1 Jeskai Banner
+1 Leyline Axe
+1 Lithoform Engine
+1 Marble Diamond
+1 Robe of Stars
+1 Sky Diamond
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Two-Handed Axe
+1 Boros Charm
+1 Brainstorm
+1 Brainsurge
+1 Chaos Warp
+1 Counterspell
+1 Dovin's Veto
+1 Nexus of Fate

@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/sM3PRkzH0PABqmIB2zTQrA (source https://archidekt.com/decks/12765175)
+# tags Amass, Battles; bracket 2; saved 2025-05-01; 5 tagged of 11101 indexed
+
+Commander
+1 Saruman, the White Hand
+
+Deck
+1 Angrath, Captain of Chaos
+1 Arcane Signet
+1 Dimir Signet
+1 Embercleave
+1 Fellwar Stone
+1 Izzet Signet
+1 Mask of Griselbrand
+1 Rakdos Signet
+1 Sonic Screwdriver
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Assault on Osgiliath
+1 Chandra's Ignition
+1 Enter the God-Eternals
+1 Fire of Orthanc
+1 Foray of Orcs
+1 Night's Whisper
+1 Rite of Consumption
+1 Sign in Blood
+1 Stock Up
+1 Treason of Isengard
+1 Widespread Brutality
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Haunted Ridge
+5 Island
+1 Luxury Suite
+1 Morphic Pool
+1 Mount Doom
+1 Mountain
+1 Path of Ancestry
+1 Plaza of Heroes
+1 Polluted Delta
+1 Reflecting Pool
+1 Riverglide Pathway
+1 Rogue's Passage
+1 Scalding Tarn
+1 Shipwreck Marsh
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sulfurous Springs
+4 Swamp
+1 The Black Gate
+1 Training Center
+1 Underground River
+1 Watery Grave
+1 Xander's Lounge
+1 Blue Sun's Zenith
+1 Commence the Endgame
+1 Flame of Anor
+1 Fling
+1 Kazuul's Fury
+1 Mystic Confluence
+1 Orcish Medicine
+1 Pull from Tomorrow
+1 Saruman's Trickery
+1 Soul's Fire
+1 Stroke of Genius
+1 Book of Mazarbul
+1 Dreadhorde Invasion
+1 March from the Black Gate
+1 Corsairs of Umbar
+1 Eternal Skylord
+1 Gleaming Overseer
+1 Gothmog, Morgul Lieutenant
+1 Mordor Trebuchet
+1 Nightscape Familiar
+1 Orcish Siegemaster
+1 Sauron, Lord of the Rings
+1 Sauron, the Dark Lord
+1 Warg Rider
+1 Invasion of Amonkhet
+1 Invasion of Arcavios
+1 Invasion of Fiora
+1 Invasion of Innistrad
+1 Invasion of Kaldheim
+1 Invasion of Kamigawa
+1 Invasion of Karsus
+1 Invasion of Ravnica
+1 Invasion of Regatha
+1 Invasion of Segovia
+1 Invasion of Ulgrotha
+1 Invasion of Vryn

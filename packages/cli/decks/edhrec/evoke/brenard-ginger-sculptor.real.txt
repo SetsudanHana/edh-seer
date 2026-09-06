@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/zAws4DLSs2aM4dDKOcV5sA (source https://archidekt.com/decks/17613661)
+# tags ETB, Evoke, Golems; bracket 2; saved 2025-12-20; 3 tagged of 9141 indexed
+
+Commander
+1 Brenard, Ginger Sculptor
+
+Deck
+1 Academy Manufactor
+1 Bloodspore Thrinax
+1 Clifftop Lookout
+1 Cold-Eyed Selkie
+1 Cradle Clearcutter
+1 Darksteel Splicer
+1 Endurance
+1 Ephara, God of the Polis
+1 Faeburrow Elder
+1 Filigree Attendant
+1 Finneas, Ace Archer
+1 Foundation Breaker
+1 Glen Elendra Archmage
+1 Grand Abolisher
+1 Hulking Metamorph
+1 Ich-Tekik, Salvage Splicer
+1 Karametra, God of Harvests
+1 Lavinia, Azorius Renegade
+1 Loran of the Third Path
+1 Losheel, Clockwork Scholar
+1 Malcator, Purity Overseer
+1 Master Splicer
+1 Mulldrifter
+1 Nevermaker
+1 Nulldrifter
+1 Ohran Frostfang
+1 Quilled Greatwurm
+1 Rootwire Amalgam
+1 Sakura-Tribe Elder
+1 Selfless Spirit
+1 Sensor Splicer
+1 Slick Imitator
+1 Solemn Simulacrum
+1 Solitude
+1 Soul of Migration
+1 Subtlety
+1 Summon: Shiva
+1 Suture Priest
+1 Vital Splicer
+1 Wavesifter
+1 Yenna, Redtooth Regent
+1 Azorius Signet
+1 Chromatic Lantern
+1 Machinist's Arsenal
+1 Master's Guide-Mural
+1 Nexus of Becoming
+1 Swiftfoot Boots
+1 Canopy Vista
+1 Evolving Wilds
+1 Exotic Orchard
+1 Flooded Grove
+3 Forest
+1 Hinterland Harbor
+1 Ishgard, the Holy See
+3 Island
+1 Mosswort Bridge
+1 Overflowing Basin
+1 Path of Ancestry
+4 Plains
+1 Port Town
+1 Prairie Stream
+1 Radiant Grove
+1 Scattered Groves
+1 Seaside Citadel
+1 Skycloud Expanse
+1 Sungrass Prairie
+1 Tangled Islet
+1 Temple of Enlightenment
+1 Temple of Mystery
+1 Temple of Plenty
+1 Terramorphic Expanse
+1 Thriving Grove
+1 Thriving Isle
+1 Vibrant Cityscape
+1 Windbrisk Heights
+1 Yavimaya Coast
+1 Dovin's Veto
+1 Flare of Fortitude
+1 Frantic Search
+1 Sundering Growth
+1 Wrong Turn
+1 Farseek
+1 Rampant Growth
+1 Tempt with Discovery
+1 Tempt with Reflections
+1 Glacierwood Siege
+1 Hive Mind
+1 Mana Reflection
+1 Mechanized Production
+1 Season of Growth
+1 Nissa, Voice of Zendikar
+1 Teferi, Who Slows the Sunset

@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/98mv-nCCI9IgsyJwjCM9sQ (source https://archidekt.com/decks/22852065)
+# tags Menace, Food, Tokens, Eggs, Squirrels; bracket 2; saved 2026-08-23; 4 tagged of 5994 indexed
+
+Commander
+1 Camellia, the Seedmiser
+
+Deck
+1 Academy Manufactor
+1 Bakersbane Duo
+1 Bonecache Overseer
+1 Chatterfang, Squirrel General
+1 Dimension X Pizzasaur
+1 Gilded Goose
+1 Honored Dreyleader
+1 Ice Cream Kitty
+1 Mirkwood Bats
+1 Peregrin Took
+1 Ravenous Squirrel
+1 Savvy Hunter
+1 Syr Ginger, the Meal Ender
+1 The Cabbage Merchant
+1 The Unbeatable Squirrel Girl
+1 Thornvault Forager
+1 Tippy-Toe, Terrific Partner
+1 Tireless Provisioner
+1 Toski, Bearer of Secrets
+1 Tough Cookie
+1 Unlucky Cabbage Merchant
+1 Valley Rotcaller
+1 Vinereap Mentor
+1 Anchovy & Banana Pizza
+1 Arcane Signet
+1 Banner of Kinship
+1 Dubious Delicacy
+1 Golden Egg
+1 Golgari Signet
+1 Guac & Marshmallow Pizza
+1 Heaped Harvest
+1 Instant Ramen
+1 Lembas
+1 Maskwood Nexus
+1 Nuka-Cola Vending Machine
+1 Omni-Cheese Pizza
+1 Patchwork Banner
+1 Sol Ring
+1 Talisman of Resilience
+1 Assassin's Trophy
+1 Bake into a Pie
+1 Deadly Dispute
+1 Dina's Guidance
+1 Fatal Push
+1 Feed the Cycle
+1 Heroic Intervention
+1 Inspiring Call
+1 Putrefy
+1 Second Harvest
+1 Stew the Coneys
+1 Tainted Treats
+1 Witherbloom Charm
+1 Beastmaster Ascension
+1 Black Market Connections
+1 Defense of the Heart
+1 Ninja Pizza
+1 Party Dude
+1 Trail of Crumbs
+1 Command Tower
+1 Darkbore Pathway
+1 Deathcap Glade
+1 Exotic Orchard
+1 Fabled Passage
+9 Forest
+1 Fountainport
+1 Llanowar Wastes
+1 Myriad Landscape
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Restless Cottage
+4 Swamp
+1 Swarmyard
+1 Tainted Wood
+1 The Shire
+1 Three Tree City
+1 Turbulent Fen
+1 Twilight Mire
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Vernal Fen
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Foreboding Fruit
+1 Hymn of the Faller
+1 Many Partings
+1 Nature's Lore
+1 Swarmyard Massacre
+1 Three Visits

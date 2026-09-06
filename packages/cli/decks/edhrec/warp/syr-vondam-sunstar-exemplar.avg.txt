@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/syr-vondam-sunstar-exemplar/warp
+# theme Warp (14 decks)
+
+Commander
+1 Syr Vondam, Sunstar Exemplar
+
+Deck
+1 Arcane Signet
+1 Ashnod's Altar
+1 Conjurer's Closet
+1 Hero's Blade
+1 Hylderblade
+1 Orzhov Signet
+1 Sol Ring
+1 Talisman of Hierarchy
+1 The Seriema
+1 Adagia, Windswept Bastion
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Dalkovan Encampment
+1 Exotic Orchard
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+13 Plains
+1 Susur Secundi, Void Altar
+11 Swamp
+1 Tainted Field
+1 Adeline, Resplendent Cathar
+1 Ainok Strike Leader
+1 All-Fates Stalker
+1 Alpharael, Stonechosen
+1 Anticausal Vestige
+1 Astelli Reclaimer
+1 Beamsaw Prospector
+1 Cosmogrand Zenith
+1 Dalkovan Packbeasts
+1 Elas il-Kor, Sadistic Pilgrim
+1 Elegy Acolyte
+1 Enduring Innocence
+1 Exalted Sunborn
+1 Exosuit Savior
+1 Haliya, Guided by Light
+1 Knight Luminary
+1 Lake-town Lookout
+1 Minthara, Merciless Soul
+1 Perigee Beckoner
+1 Rayblade Trooper
+1 Solemn Simulacrum
+1 Spirited Companion
+1 Starfield Shepherd
+1 Susurian Voidborn
+1 Syr Vondam, the Lucent
+1 Timeline Culler
+1 Umbral Collar Zealot
+1 Voidforged Titan
+1 Weftblade Enhancer
+1 Xu-Ifit, Osteoharmonist
+1 Airbender Ascension
+1 Chorale of the Void
+1 Cultist of the Absolute
+1 Noble Heritage
+1 Sothera, the Supervoid
+1 Vampiric Rites
+1 Archenemy's Charm
+1 Cloudshift
+1 Corrupted Conviction
+1 Ephemerate
+1 Flicker of Fate
+1 Focus Fire
+1 Gravkill
+1 Parting Gust
+1 Swords to Plowshares
+1 Village Rites
+1 Beyond the Quiet
+1 Decode Transmissions
+1 Embrace Oblivion
+1 Honor
+1 Hymn of the Faller
+1 Tragic Trajectory
+1 Zero Point Ballad

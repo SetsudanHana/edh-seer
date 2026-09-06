@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/kelsien-the-plague/experience-counters
+# theme Experience Counters (155 decks)
+
+Commander
+1 Kelsien, the Plague
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Gorgon Flail
+1 Gorgon's Head
+1 Hunter's Blowgun
+1 Illusionist's Bracers
+1 Magewright's Stone
+1 Orzhov Signet
+1 Patriar's Seal
+1 Quietus Spike
+1 Rakdos Signet
+1 Shadowspear
+1 Sol Ring
+1 Sting, the Glinting Dagger
+1 Swiftfoot Boots
+1 Thornbite Staff
+1 Vorpal Sword
+1 Arcane Lighthouse
+1 Battlefield Forge
+1 Blood Crypt
+1 Bojuka Bog
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Godless Shrine
+1 Isolated Chapel
+1 Luxury Suite
+4 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+5 Plains
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Shattered Sanctum
+1 Smoldering Marsh
+1 Spectator Seating
+5 Swamp
+1 Vault of Champions
+1 Vault of the Archangel
+1 Athreos, Shroud-Veiled
+1 Daxos the Returned
+1 Drumbellower
+1 Ertha Jo, Frontier Mentor
+1 Falthis, Shadowcat Familiar
+1 General's Enforcer
+1 Goblin Sharpshooter
+1 Harvester of Souls
+1 Humble Defector
+1 Kalemne, Disciple of Iroas
+1 Lae'zel, Vlaakith's Champion
+1 Magda, the Hoardmaster
+1 Maha, Its Feathers Night
+1 Mari, the Killing Quill
+1 Mathas, Fiend Seeker
+1 Minthara, Merciless Soul
+1 Morbid Opportunist
+1 Otharri, Suns' Glory
+1 Shay Cormac
+1 Slaughter Specialist
+1 Taii Wakeen, Perfect Shot
+1 Termination Facilitator
+1 White Plume Adventurer
+1 All-Out Assault
+1 Dazzling Theater // Prop Room
+1 Fighter Class
+1 Gift of Doom
+1 Phyrexian Arena
+1 Reconnaissance
+1 Rune of Mortality
+1 Sigarda's Aid
+1 Anguished Unmaking
+1 Boros Charm
+1 Crackling Doom
+1 Fracture
+1 Mirrodin Avenged
+1 Path to Exile
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 You Are Already Dead
+1 Open the Armory
+1 Painful Truths
+1 Read the Bones
+1 Ruinous Ultimatum
+1 Steelshaper's Gift
+1 Vandalblast

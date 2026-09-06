@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/Z29qqgv7Yok2reKUpA4o0g (source https://archidekt.com/decks/22458234)
+# tags Paradigm, Wraiths, Aggro, Spellslinger; bracket unset; saved 2026-08-30; 1 tagged of 14906 indexed
+
+Commander
+1 Lord of the Nazgûl
+
+Deck
+1 Accursed Duneyard
+1 Ancient Tomb
+1 Choked Estuary
+1 City of Traitors
+1 Clearwater Pathway
+1 Command Beacon
+1 Command Tower
+1 Crystal Vein
+1 Darkslick Shores
+1 Darkwater Catacombs
+1 Drowned Catacomb
+5 Island
+1 Minas Morgul, Dark Fortress
+1 Mistrise Village
+1 Morphic Pool
+1 Mystic Sanctuary
+1 Polluted Delta
+1 Reflecting Pool
+1 Shipwreck Marsh
+1 Sunken Hollow
+1 Sunken Ruins
+2 Swamp
+1 The Black Gate
+1 Three Tree City
+1 Underground River
+1 Underground Sea
+1 Watery Grave
+1 An Offer You Can't Refuse
+1 Brainstorm
+1 Cabal Ritual
+1 Consider
+1 Cremate
+1 Culling the Weak
+1 Dark Ritual
+1 Darkblast
+1 Deadly Rollick
+1 Fierce Guardianship
+1 Frantic Search
+1 Malakir Rebirth
+1 Mana Drain
+1 Mental Misstep
+1 Miscast
+1 Narset's Reversal
+1 Opt
+1 Quicken
+1 Shadow Rift
+1 Snap
+1 Snuff Out
+1 Spell Pierce
+1 Stifle
+1 Sudden Spoiling
+1 Tainted Strike
+1 Thought Scour
+1 Tragic Slip
+1 Waterlogged Teachings
+1 Arcane Heist
+1 Boomerang Basics
+1 Call to Mind
+1 Decorum Dissertation
+1 Distant Melody
+1 Distortion Strike
+1 Echocasting Symposium
+1 Fantastic Elasticity
+1 Gitaxian Probe
+1 Hands of Binding
+1 Hidden Strings
+1 Paranoid Delusions
+1 Polymorph
+1 Ponder
+1 Preordain
+1 Quantum Misalignment
+1 Raise the Palisade
+1 Serum Visions
+1 Thoughtseize
+1 Transmute Artifact
+1 Arcane Signet
+1 Dimir Signet
+1 Glamdring
+1 Glamdring, Foe-hammer
+1 Grim Monolith
+1 Isochron Scepter
+1 Lightning Greaves
+1 Lotus Petal
+1 My Precious
+1 Panoptic Mirror
+1 Sol Ring
+1 Talisman of Dominance
+1 Emeritus of Woe
+1 Gale, Waterdeep Prodigy
+1 Gandalf, Friend of the Shire
+1 Loki, Lord of Misrule
+1 Kindred Discovery
+1 Levitation
+1 Professor Onyx

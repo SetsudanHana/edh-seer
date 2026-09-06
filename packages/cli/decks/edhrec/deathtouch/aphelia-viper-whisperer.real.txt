@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/LDeJ93AZkKey-8oyMxVAkA (source https://archidekt.com/decks/25732857)
+# tags Snakes, Deathtouch; bracket 3; saved 2026-08-25; 492 tagged of 5532 indexed
+
+Commander
+1 Aphelia, Viper Whisperer
+
+Deck
+1 Abrupt Decay
+1 Assassin's Trophy
+1 Beast Within
+1 Gift of the Viper
+1 Golgari Charm
+1 Heroic Intervention
+1 Lifecrafter's Gift
+1 Putrefy
+1 Revitalizing Repast
+1 Snakeskin Veil
+1 Ambush Viper
+1 Ankle Biter
+1 Archetype of Finality
+1 Changeling Outcast
+1 Fang of Shigeki
+1 Hapatra, Vizier of Poisons
+1 Hexdrinker
+1 Hooded Blightfang
+1 Hythonia the Cruel
+1 Ikra Shidiqi, the Usurper
+1 Lotus Cobra
+1 Mire Boa
+1 Ohran Frostfang
+1 Ohran Viper
+1 Patron of the Orochi
+1 Pharika's Chosen
+1 Pharika, God of Affliction
+1 Prowling Serpopard
+1 Reaper of the Wilds
+1 Rottenmouth Viper
+1 Sachi, Daughter of Seshiro
+1 Sakiko, Mother of Summer
+1 Saryth, the Viper's Fang
+1 Sasaya, Orochi Ascendant
+1 Seshiro the Anointed
+1 Shisato, Whispering Hunter
+1 Sisters of Stone Death
+1 Skullwinder
+1 Sosuke, Son of Seshiro
+1 Stonecoil Serpent
+1 The Serpent Society
+1 Visara the Dreadful
+1 Vraska, the Silencer
+1 Xathrid Gorgon
+1 Arcane Signet
+1 Basilisk Collar
+1 Golgari Signet
+1 Lifecrafter's Bestiary
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Resilience
+1 Whispersilk Cloak
+1 Aspect of Gorgon
+1 Beastmaster Ascension
+1 Binding the Old Gods
+1 Cover of Darkness
+1 Deathreap Ritual
+1 Grievous Wound
+1 Snake Pit
+1 Tales of Master Seshiro
+1 Vraska Joins Up
+1 Wild Growth
+1 Wound Reflection
+1 Bojuka Bog
+1 Command Tower
+1 Deathcap Glade
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Golgari Rot Farm
+1 Jungle Hollow
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Reliquary Tower
+1 Rogue's Passage
+4 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Terramorphic Expanse
+1 Twilight Mire
+1 Viridescent Bog
+1 Woodland Cemetery
+1 Cultivate
+1 Kodama's Reach
+1 Nature's Lore
+1 Sosuke's Summons
+1 Vraska, Betrayal's Sting
+1 Vraska, Golgari Queen
+1 Vraska, Swarm's Eminence

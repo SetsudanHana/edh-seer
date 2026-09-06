@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/8ti5wsuJN-dL3_xjB6JhUA (source https://archidekt.com/decks/12591714)
+# tags Politics, Voting, Clash; bracket 1; saved 2026-06-27; 1 tagged of 2058 indexed
+
+Commander
+1 O-Kagachi, Vengeful Kami
+
+Deck
+1 Arcane Sanctum
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+1 Crumbling Necropolis
+1 Evolving Wilds
+1 Exotic Orchard
+3 Forest
+1 Frontier Bivouac
+3 Island
+1 Jungle Shrine
+3 Mountain
+1 Myriad Landscape
+1 Mystic Monastery
+1 Nomad Outpost
+1 Opulent Palace
+3 Plains
+1 Prairie Stream
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Seaside Citadel
+1 Smoldering Marsh
+1 Sunken Hollow
+3 Swamp
+1 Terramorphic Expanse
+1 Arcane Signet
+1 Chromatic Lantern
+1 Coercive Portal
+1 Model of Unity
+1 Sol Ring
+1 Ballot Broker
+1 Brago's Representative
+1 Council Guardian
+1 Custodi Squire
+1 Círdan the Shipwright
+1 Elrond of the White Council
+1 Emissary Green
+1 Erestor of the Council
+1 Fire Juggler
+1 Grudge Keeper
+1 Magister of Worth
+1 Marvo, Deep Operative
+1 Messenger Jays
+1 Orchard Elemental
+1 Ringskipper
+1 Sentry Oak
+1 Springjack Knight
+1 The Valeyard
+1 Tivit, Seller of Secrets
+1 Broken Ambitions
+1 Fistful of Force
+1 Gilt-Leaf Ambush
+1 Illusion of Choice
+1 Lash Out
+1 Pollen Lullaby
+1 Redeem the Lost
+1 Release the Ants
+1 Sail into the West
+1 Scattering Stroke
+1 Split Decision
+1 Spring Cleaning
+1 Trap the Trespassers
+1 Whirlpool Whelm
+1 Capital Punishment
+1 Council's Judgment
+1 Farseek
+1 Hoarder's Greed
+1 Minds Aglow
+1 Mob Verdict
+1 Open the Way
+1 Plea for Power
+1 Prisoner's Dilemma
+1 Pulling Teeth
+1 Recross the Paths
+1 Research the Deep
+1 Revive the Fallen
+1 Selvala's Stampede
+1 Titan's Revenge
+1 Travel Through Caradhras
+1 Truth or Consequences
+1 Tyrant's Choice
+1 Weed Strangle
+1 Woodland Guidance
+1 Captivating Glance
+1 Entangling Trap
+1 Rebellion of the Flamekin
+1 Sylvan Echoes
+1 Trial of a Time Lord
+1 Vault 11: Voter's Dilemma

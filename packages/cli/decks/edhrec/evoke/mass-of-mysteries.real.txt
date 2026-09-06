@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/LLeadoxHAolHBW5LSmOzXA (source https://archidekt.com/decks/19617707)
+# tags Evoke, ETB, Elementals; bracket 2; saved 2026-02-05; 4 tagged of 2240 indexed
+
+Commander
+1 Mass of Mysteries
+
+Deck
+1 Abundant Countryside
+1 Ancient Ziggurat
+1 Blood Crypt
+1 Breeding Pool
+1 Cavern of Souls
+1 Command Tower
+1 Eclipsed Realms
+1 Flamekin Village
+5 Forest
+1 Frontier Bivouac
+1 Horizon of Progress
+2 Island
+1 Jungle Shrine
+1 Lazotep Quarry
+2 Mountain
+1 Path of Ancestry
+2 Plains
+1 Primal Beyond
+1 Rain-Slicked Copse
+1 Sacred Foundry
+1 Savage Lands
+1 Secluded Courtyard
+1 Sodden Verdure
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 Three Tree City
+1 Thundering Falls
+1 Unclaimed Territory
+1 Windswept Heath
+1 Wooded Foothills
+1 Ashling's Command
+1 Cloudshift
+1 Crib Swap
+1 Essence Flux
+1 Harmonized Crescendo
+1 Kindred Summons
+1 Malakir Rebirth
+1 Reality Shift
+1 Ashling, Rekindled
+1 Ashling, the Limitless
+1 Bane of Progress
+1 Belonging
+1 Champion of the Path
+1 Eclipsed Flamekin
+1 Eirdu, Carrier of Dawn
+1 Emptiness
+1 Endurance
+1 Flamebraider
+1 Flaring Cinder
+1 Foundation Breaker
+1 Fury
+1 Greenwarden of Murasa
+1 Impulsivity
+1 Incandescent Soulstoke
+1 Ingot Chewer
+1 Jegantha, the Wellspring
+1 Jubilation
+1 Lamentation
+1 Maelstrom Wanderer
+1 Mulldrifter
+1 Omnath, Locus of Rage
+1 Omnath, Locus of the Roil
+1 Risen Reef
+1 Shimmercreep
+1 Shriekmaw
+1 Smokebraider
+1 Solitude
+1 Soulbright Seeker
+1 Subterfuge
+1 Sunderflock
+1 Tanufel Rimespeaker
+1 Titan of Industry
+1 Twinflame Travelers
+1 Vernal Sovereign
+1 Vibrance
+1 Wistfulness
+1 Yarok, the Desecrated
+1 Blasphemous Act
+1 Bloodline Bidding
+1 Haunting Voyage
+1 Kindle the Inner Flame
+1 Morningtide's Light
+1 Cream of the Crop
+1 Descendants' Fury
+1 Elemental Bond
+1 Garruk's Uprising
+1 Hoofprints of the Stag
+1 Up the Beanstalk
+1 Sol Ring

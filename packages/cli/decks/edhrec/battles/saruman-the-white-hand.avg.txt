@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/saruman-the-white-hand/battles
+# theme Battles (5 decks)
+
+Commander
+1 Saruman, the White Hand
+
+Deck
+1 Arcane Signet
+1 Izzet Signet
+1 Proteus Staff
+1 Rakdos Signet
+1 Resonating Lute
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Thought Vessel
+1 Wizard's Staff
+1 Blood Crypt
+1 Bloodstained Mire
+1 Boseiju, Who Shelters All
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+4 Island
+1 Luxury Suite
+1 Morphic Pool
+1 Mount Doom
+4 Mountain
+1 Path of Ancestry
+1 Polluted Delta
+1 Rogue's Passage
+1 Scalding Tarn
+1 Seething Landscape
+1 Smoldering Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+3 Swamp
+1 The Black Gate
+1 Training Center
+1 Undercity Sewers
+1 Watery Grave
+1 Xander's Lounge
+1 Invasion of Amonkhet
+1 Invasion of Arcavios
+1 Invasion of Azgol
+1 Invasion of Eldraine
+1 Invasion of Fiora
+1 Invasion of Innistrad
+1 Invasion of Kaladesh
+1 Invasion of Kaldheim
+1 Invasion of Kamigawa
+1 Invasion of Karsus
+1 Invasion of Mercadia
+1 Invasion of Regatha
+1 Invasion of Segovia
+1 Invasion of Ulgrotha
+1 Invasion of Vryn
+1 Corsairs of Umbar
+1 Grishnákh, Brash Instigator
+1 Lord Xander, the Collector
+1 Magmatic Force
+1 Ovika, Enigma Goliath
+1 Prince of Thralls
+1 Sauron, Lord of the Rings
+1 Sauron, the Dark Lord
+1 The Walls of Ba Sing Se
+1 Toxrill, the Corrosive
+1 Warg Rider
+1 Book of Mazarbul
+1 Dreadhorde Invasion
+1 In the Darkness Bind Them
+1 March from the Black Gate
+1 Shark Typhoon
+1 Brainstorm
+1 Chaos Mutation
+1 Counterspell
+1 Fierce Guardianship
+1 Frantic Search
+1 Guff Rewrites History
+1 Lazotep Plating
+1 Mana Sculpt
+1 Negate
+1 Reweave
+1 Saruman's Trickery
+1 Soul's Fire
+1 Lukka, Coppercoat Outcast
+1 Tevesh Szat, Doom of Fools
+1 Assault on Osgiliath
+1 Foray of Orcs
+1 Mass Polymorph
+1 Mizzix's Mastery
+1 Polymorph
+1 Solve the Equation
+1 Transmogrify
+1 Treason of Isengard
+1 Widespread Brutality

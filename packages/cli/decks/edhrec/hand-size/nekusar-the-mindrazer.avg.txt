@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/nekusar-the-mindrazer/hand-size
+# theme Hand Size (22 decks)
+
+Commander
+1 Nekusar, the Mindrazer
+
+Deck
+1 Arcane Signet
+1 Commander's Sphere
+1 Decanter of Endless Water
+1 Dimir Signet
+1 Folio of Fancies
+1 Font of Mythos
+1 Howling Mine
+1 Izzet Signet
+1 Lightning Greaves
+1 Sol Ring
+1 Teferi's Puzzle Box
+1 Thought Vessel
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Geier Reach Sanitarium
+6 Island
+1 Luxury Suite
+1 Maestros Theater
+1 Mikokoro, Center of the Sea
+4 Mountain
+1 Reliquary Tower
+1 Smoldering Marsh
+1 Steam Vents
+1 Sulfur Falls
+1 Sunken Hollow
+6 Swamp
+1 Temple of Deceit
+1 Temple of Epiphany
+1 Watery Grave
+1 Xander's Lounge
+1 Faerie Mastermind
+1 Fate Unraveler
+1 Ghyrson Starn, Kelermorph
+1 Gixian Puppeteer
+1 Jace's Archivist
+1 Kami of the Crescent Moon
+1 Kederekt Parasite
+1 Magus of the Wheel
+1 Master of the Feast
+1 Nightscape Familiar
+1 Niv-Mizzet, the Firemind
+1 Orcish Bowmasters
+1 Psychosis Crawler
+1 Razorkin Needlehead
+1 Scrawling Crawler
+1 Seizan, Perverter of Truth
+1 Sheoldred, the Apocalypse
+1 Solphim, Mayhem Dominus
+1 Stormfist Crusader
+1 The Locust God
+1 Dictate of Kruphix
+1 Fevered Visions
+1 Forced Fruition
+1 Liliana's Caress
+1 Megrim
+1 Phyrexian Tyranny
+1 Propaganda
+1 Spiteful Visions
+1 Underworld Dreams
+1 Arcane Denial
+1 Baleful Mastery
+1 Cerebral Vortex
+1 Counterspell
+1 Cyclonic Rift
+1 Dark Ritual
+1 Deadly Rollick
+1 Dream Fracture
+1 Terminate
+1 Vision Skeins
+1 Ob Nixilis, the Hate-Twisted
+1 Blasphemous Act
+1 Dark Deal
+1 Demonic Tutor
+1 Molten Psyche
+1 Peer into the Abyss
+1 Prosperity
+1 Vandalblast
+1 Wheel of Fortune
+1 Whispering Madness
+1 Windfall
+1 Winds of Change

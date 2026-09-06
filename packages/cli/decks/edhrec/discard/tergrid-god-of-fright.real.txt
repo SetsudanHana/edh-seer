@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/BBz5FkurhbbSbwej6ANpqQ (source https://moxfield.com/decks/1_ux_MLZs0eYmkyvR3pr-w)
+# tags Discard; bracket 3; saved 2026-09-05; 1332 tagged of 12698 indexed
+
+Commander
+1 Tergrid, God of Fright
+
+Deck
+1 Aclazotz, Deepest Betrayal
+1 Archon of Cruelty
+1 Asmodeus the Archfiend
+1 Braids, Arisen Nightmare
+1 Chainer, Dementia Master
+1 Dauthi Voidwalker
+1 Erebos, God of the Dead
+1 Gray Merchant of Asphodel
+1 K'rrik, Son of Yawgmoth
+1 Maha, Its Feathers Night
+1 Mindslicer
+1 Necrotic Ooze
+1 Phyrexian Obliterator
+1 Rottenmouth Viper
+1 Scrawling Crawler
+1 Sheoldred
+1 Sheoldred, Whispering One
+1 Sheoldred, the Apocalypse
+1 Skirge Familiar
+1 The Raven Man
+1 Tourach, Dread Cantor
+1 Ancient Tomb
+1 Barad-dûr
+1 Bojuka Bog
+1 Cabal Stronghold
+1 Castle Locthwain
+1 Deserted Temple
+1 Echoing Deeps
+1 Fabled Passage
+1 Geier Reach Sanitarium
+1 Maze of Ith
+1 Nykthos, Shrine to Nyx
+1 Prismatic Vista
+1 Scavenger Grounds
+20 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 War Room
+1 Animate Dead
+1 Black Market Connections
+1 Bloodchief Ascension
+1 Liliana's Caress
+1 Megrim
+1 Oppression
+1 Painful Quandary
+1 Polluted Bonds
+1 Waste Not
+1 Breach the Multiverse
+1 Buried Alive
+1 Cerebral Confiscation
+1 Dark Deal
+1 Delirium Skeins
+1 Duress
+1 Gix's Command
+1 Hymn to Tourach
+1 Mind Sludge
+1 No Way Out
+1 Pox Plague
+1 Reanimate
+1 Seeker's Folly
+1 Syphon Mind
+1 Torment of Hailfire
+1 Toxic Deluge
+1 Victimize
+1 Dark Ritual
+1 Deadly Rollick
+1 Defile
+1 Entomb
+1 Force of Despair
+1 Go for the Throat
+1 Infernal Grasp
+1 Liliana's Triumph
+1 Sheoldred's Edict
+1 Geth's Grimoire
+1 Jet Medallion
+1 Nyx Lotus
+1 Sol Ring
+1 The One Ring
+1 Liliana of the Dark Realms
+1 Liliana of the Veil
+1 Liliana, Dreadhorde General

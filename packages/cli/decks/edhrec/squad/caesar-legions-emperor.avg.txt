@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/caesar-legions-emperor/squad
+# theme Squad (5 decks)
+
+Commander
+1 Caesar, Legion's Emperor
+
+Deck
+1 Arcane Signet
+1 Eye of Ojer Taq
+1 Intelligence Bobblehead
+1 Meteor Sword
+1 Phoenix Fleet Airship
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Ash Barrens
+1 Canyon Slough
+1 Clifftop Retreat
+1 Command Tower
+1 Desolate Mire
+1 Diamond City
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Isolated Chapel
+1 Memorial to Glory
+4 Mountain
+1 Multiversal Passage
+1 Myriad Landscape
+1 Nomad Outpost
+1 Path of Ancestry
+5 Plains
+1 Shadowblood Ridge
+1 Smoldering Marsh
+4 Swamp
+1 Tainted Field
+1 Tainted Peak
+1 Temple of Malice
+1 Temple of Silence
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 Windbrisk Heights
+1 Baron Bertram Graywater
+1 Captain of the Watch
+1 Company Commander
+1 Craig Boone, Novac Guard
+1 Curious Farm Animals
+1 Elder Arthur Maxson
+1 Fire Navy Trebuchet
+1 Garna, Bloodfist of Keld
+1 Gary Clone
+1 General's Enforcer
+1 Impassioned Orator
+1 Joo Dee, One of Many
+1 Keeper of the Accord
+1 Kellogg, Dangerous Mind
+1 Legate Lanius, Caesar's Ace
+1 MacCready, Lamplight Mayor
+1 Morbid Opportunist
+1 Paladin Elizabeth Taggerdy
+1 Pitiless Plunderer
+1 Powder Ganger
+1 Rose, Cutthroat Raider
+1 Securitron Squadron
+1 Space Marine Devastator
+1 Thrill-Kill Disciple
+1 Ultramarines Honour Guard
+1 Wasteland Raider
+1 White Glove Gourmand
+1 Zephyrim
+1 Zulaport Cutthroat
+1 Assemble the Legion
+1 Bastion of Remembrance
+1 Battle of Hoover Dam
+1 Black Market
+1 Endless Foot Assault
+1 Fervent Charge
+1 Grim Reaper's Sprint
+1 Impact Tremors
+1 Intangible Virtue
+1 Marshal's Anthem
+1 Anguished Unmaking
+1 Call the Coppercoats
+1 Deadly Dispute
+1 Entrapment Maneuver
+1 Path to Exile
+1 Secure the Wastes
+1 V.A.T.S.
+1 Wear // Tear
+1 Heroic Reinforcements
+1 Hour of Reckoning
+1 Launch the Fleet
+1 Martial Coup
+1 Ruinous Ultimatum
+1 Seize the Spotlight

@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/jbrCpFVT7qtg_B9ovZWb2Q (source https://archidekt.com/decks/24410624)
+# tags Burn, Power, Reanimator, Fling; bracket 2; saved 2026-08-08; 108 tagged of 10737 indexed
+
+Commander
+1 Ziatora, the Incinerator
+
+Deck
+1 Alpha Deathclaw
+1 Birds of Paradise
+1 Butcher of Malakir
+1 Daemogoth Woe-Eater
+1 Delighted Halfling
+1 Feldon of the Third Path
+1 Fyndhorn Elves
+1 Garruk's Packleader
+1 Ghalta, Primal Hunger
+1 Goreclaw, Terror of Qal Sisma
+1 Gray Merchant of Asphodel
+1 Harvester of Souls
+1 Honest Rutstein
+1 Ignoble Hierarch
+1 Junji, the Midnight Sky
+1 Kardur, Doomscourge
+1 Korvold, Fae-Cursed King
+1 Kura, the Boundless Sky
+1 Llanowar Elves
+1 Malignus
+1 Marionette Master
+1 Mazirek, Kraul Death Priest
+1 Meren of Clan Nel Toth
+1 Mr. Orfeo, the Boulder
+1 Noxious Gearhulk
+1 Perigee Beckoner
+1 Phytotitan
+1 Prossh, Skyraider of Kher
+1 Rotting Regisaur
+1 Sire of Seven Deaths
+1 Stalking Vengeance
+1 Wasitora, Nekoru Queen
+1 Xenagos, God of Revels
+1 Yargle and Multani
+1 Zopandrel, Hunger Dominus
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Sol Ring
+1 The Skullspore Nexus
+1 Vat of Rebirth
+1 Assassin's Trophy
+1 Terminate
+1 Blasphemous Act
+1 Blood Money
+1 Cultivate
+1 Farseek
+1 Necromantic Selection
+1 Rampant Growth
+1 Skyshroud Claim
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+5 Forest
+1 Haunted Ridge
+1 Karplusan Forest
+1 Llanowar Wastes
+5 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Rockfall Vale
+1 Rootbound Crag
+1 Savage Lands
+1 Smoldering Marsh
+1 Stomping Ground
+1 Sulfurous Springs
+5 Swamp
+1 Tainted Wood
+1 Terramorphic Expanse
+1 Twisted Landscape
+1 Vernal Fen
+1 Woodland Cemetery
+1 Dictate of Erebos
+1 Elemental Bond
+1 Garruk's Uprising
+1 Grave Pact
+1 Journey to Eternity
+1 Moldervine Reclamation
+1 Rain of Riches
+1 Rakdos Joins Up
+1 Rhythm of the Wild
+1 Riveteers Ascendancy
+1 Sneak Attack
+1 Sunbird's Invocation
+1 Unnatural Growth
+1 Warstorm Surge

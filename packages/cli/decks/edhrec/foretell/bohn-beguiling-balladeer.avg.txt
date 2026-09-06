@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/bohn-beguiling-balladeer/foretell
+# theme Foretell (120 decks)
+
+Commander
+1 Bohn, Beguiling Balladeer
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Midnight Clock
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 Vedalken Orrery
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Frostboil Snarl
+11 Island
+1 Izzet Boilerworks
+11 Mountain
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Training Center
+1 Archmage Emeritus
+1 Bothersome Quasit
+1 Cosmos Charger
+1 Exalted Flamer of Tzeentch
+1 Firkraag, Cunning Instigator
+1 Flaming Tyrannosaurus
+1 Goblin Electromancer
+1 Guttersnipe
+1 High Fae Trickster
+1 Jori En, Ruin Diver
+1 Keeper of Secrets
+1 Mathise, Surge Channeler
+1 Mizzix, Replica Rider
+1 Nalfeshnee
+1 Sage of the Beyond
+1 Storm-Kiln Artist
+1 The Twelfth Doctor
+1 Vengeful Ancestor
+1 Wild-Magic Sorcerer
+1 Wizards of Thay
+1 Charred Foyer // Warped Space
+1 Fortune Teller's Talent
+1 Leyline of Anticipation
+1 Passionate Archaeologist
+1 Propaganda
+1 Storm of Saruman
+1 The Lost and the Damned
+1 Aetherize
+1 Behold the Multiverse
+1 Big Score
+1 Brainstorm
+1 Chaos Warp
+1 Counterspell
+1 Delayed Blast Fireball
+1 Frantic Search
+1 Reinterpret
+1 Rewind
+1 Saw It Coming
+1 Seething Song
+1 Spell Swindle
+1 Surge of Brilliance
+1 Unexpected Windfall
+1 Unwind
+1 Blasphemous Act
+1 Disrupt Decorum
+1 Impending Flux
+1 Improvisation Capstone
+1 Jeska's Will
+1 Mana Geyser
+1 Mizzix's Mastery
+1 Ravenform
+1 See the Truth
+1 Tales of the Ancestors
+1 Vandalblast
+1 Windfall

@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/fktVAtdNDxZNTu8nR7PIyg (source https://archidekt.com/decks/25962861)
+# tags Control, Chaos; bracket 3; saved 2026-09-03; 472 tagged of 12364 indexed
+
+Commander
+1 Zedruu the Greathearted
+
+Deck
+1 Aggressive Mining
+1 Diplomatic Immunity
+1 Ghostly Prison
+1 Illusions of Grandeur
+1 Nine Lives
+1 Paradox Haze
+1 Propaganda
+1 Puca's Mischief
+1 Pyromancer's Swath
+1 Risky Move
+1 Solitary Confinement
+1 Transcendence
+1 Akroan Horse
+1 Alabaster Leech
+1 Alexios, Deimos of Kosmos
+1 Bazaar Trader
+1 Chasm Skulker
+1 Chromeshell Crab
+1 Coveted Falcon
+1 Deep Gnome Terramancer
+1 Gilded Drake
+1 Goldnight Castigator
+1 Grid Monitor
+1 Humble Defector
+1 Iroh, Tea Master
+1 Khârn the Betrayer
+1 Perplexing Chimera
+1 Sapphire Leech
+1 Steel Golem
+1 Stiltzkin, Moogle Merchant
+1 The Locust God
+1 The Second Doctor
+1 Vedalken Plotter
+1 Volatile Stormdrake
+1 Yes Man, Personal Securitron
+1 Zidane, Tantalus Thief
+1 Arcane Denial
+1 Bilbo's Gambit
+1 Erode
+1 Ethereal Haze
+1 Invert Polarity
+1 Reins of Power
+1 Rewind
+1 Strix Serenade
+1 Sudden Substitution
+1 Unwind
+1 Wrong Turn
+1 Arcane Signet
+1 Bucknard's Everfull Purse
+1 Fellwar Stone
+1 Hithlain Rope
+1 Lich's Tomb
+1 Marina Vendrell's Grimoire
+1 Pendant of Prosperity
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Progress
+1 Command Tower
+1 Exotic Orchard
+1 Homeward Path
+17 Island
+7 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+8 Plains
+1 Scavenger Grounds
+1 Fractured Identity
+1 Role Reversal
+1 Scrambleverse
+1 Shifting Grift

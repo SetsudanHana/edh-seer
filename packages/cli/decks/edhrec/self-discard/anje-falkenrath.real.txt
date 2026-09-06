@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/M1HF1MawZ6Jiiy2K40l_ZA (source https://archidekt.com/decks/4978715)
+# tags Self-Discard, Madness; bracket 3; saved 2026-09-05; 131 tagged of 5720 indexed
+
+Commander
+1 Anje Falkenrath
+
+Deck
+1 Alchemist's Greeting
+1 Avacyn's Judgment
+1 Beacon of Unrest
+1 Biting Rain
+1 Call to the Netherworld
+1 From Under the Floorboards
+1 In Garruk's Wake
+1 Malevolent Whispers
+1 Murderous Compulsion
+1 Nightmare Unmaking
+1 Scheming Symmetry
+1 Terminal Agony
+1 Victimize
+1 Anje's Ravager
+1 Archfiend of Ifnir
+1 Archfiend of Spite
+1 Asylum Visitor
+1 Big Game Hunter
+1 Blazing Rootwalla
+1 Bloodhall Priest
+1 Bone Miser
+1 Chainer, Nightmare Adept
+1 Champion of Stray Souls
+1 Doomed Necromancer
+1 Geth, Lord of the Vault
+1 Gorgon Recluse
+1 Grave Scrabbler
+1 K'rrik, Son of Yawgmoth
+1 Kitchen Imp
+1 Magus of the Wheel
+1 Meteor Golem
+1 Muck Drubb
+1 Necrogoyf
+1 Neheb, Dreadhorde Champion
+1 Nightshade Assassin
+1 Revolutionist
+1 Shadowgrange Archfiend
+1 Solemn Simulacrum
+1 Soul of Innistrad
+1 Squee, Goblin Nabob
+1 Stromkirk Occultist
+1 Surly Badgersaur
+1 Voldaren Pariah
+1 Arcane Signet
+1 Crucible of Worlds
+1 Prismatic Lens
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Indulgence
+1 Ash Barrens
+1 Barren Moor
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+1 Forgotten Cave
+1 Geier Reach Sanitarium
+1 Memorial to Folly
+1 Mortuary Mire
+10 Mountain
+1 Myriad Landscape
+1 Rakdos Carnarium
+1 Reliquary Tower
+1 Rix Maadi, Dungeon Palace
+10 Swamp
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Witch's Cottage
+1 Bedevil
+1 Chaos Warp
+1 Dark Withering
+1 Doom Blade
+1 Fiery Temper
+1 Shadow of the Grave
+1 Terminate
+1 Violent Eruption
+1 Curse of Fool's Wisdom
+1 Faith of the Devoted
+1 Feast of Sanity
+1 The Eldest Reborn
+1 Ob Nixilis Reignited

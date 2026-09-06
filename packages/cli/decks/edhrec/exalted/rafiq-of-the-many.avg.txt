@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/rafiq-of-the-many/exalted
+# theme Exalted (368 decks)
+
+Commander
+1 Rafiq of the Many
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Behemoth Sledge
+1 Lightning Greaves
+1 Rammas Echor, Ancient Shield
+1 Sigil of Valor
+1 Simic Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Bountiful Promenade
+1 Breeding Pool
+1 Canopy Vista
+1 Cathedral of War
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hinterland Harbor
+5 Island
+8 Plains
+1 Prairie Stream
+1 Rejuvenating Springs
+1 Rogue's Passage
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Temple Garden
+1 Tranquil Landscape
+1 Akrasan Squire
+1 Aven Squire
+1 Battlegrace Angel
+1 Birds of Paradise
+1 Cold-Eyed Selkie
+1 Court Archers
+1 Danitha, New Benalia's Light
+1 Dawnray Archer
+1 Ethercaste Knight
+1 Frontline Sage
+1 Giltspire Avenger
+1 Guardians of Akrasa
+1 Knight of Glory
+1 Kutzil, Malamet Exemplar
+1 Noble Hierarch
+1 Pippin, Guard of the Citadel
+1 Qasali Pridemage
+1 Rashel, Fist of Torm
+1 Rhox Charger
+1 Sighted-Caste Sorcerer
+1 Sigiled Paladin
+1 Silent Arbiter
+1 Sovereigns of Lost Alara
+1 Stoic Angel
+1 Sublime Archangel
+1 Angelic Benediction
+1 Angelic Exaltation
+1 Aqueous Form
+1 Ardent Plea
+1 Armadillo Cloak
+1 Bear Umbra
+1 Dueling Grounds
+1 Favor of the Overbeing
+1 Finest Hour
+1 Idolized
+1 Rancor
+1 Shield of the Oversoul
+1 Spirit Mantle
+1 Staggering Insight
+1 Steel of the Godhead
+1 Bant Charm
+1 Beast Within
+1 Counterspell
+1 Dovin's Veto
+1 Heroic Intervention
+1 Hindering Light
+1 Path to Exile
+1 Swords to Plowshares
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Open the Armory
+1 Rampant Growth

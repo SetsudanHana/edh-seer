@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/MKDCR3ykoY1JXt78srFvqA (source https://archidekt.com/decks/17650849)
+# tags Fight, Attack Triggers, Lure, Forced Combat; bracket 3; saved 2026-09-03; 19 tagged of 7102 indexed
+
+Commander
+1 Maarika, Brutal Gladiator
+
+Deck
+1 Aether Vial
+1 Doors of Durin
+1 Fiendlash
+1 Hammer of Ruin
+1 Lightning Greaves
+1 Mage Slayer
+1 Sol Ring
+1 Swiftfoot Boots
+1 Agitator Ant
+1 Alexios, Deimos of Kosmos
+1 Ares, God of War
+1 Ashroot Animist
+1 Avatar of Slaughter
+1 Barbed Servitor
+1 Bhaal, Lord of Murder
+1 Brash Taunter
+1 Combustion Man
+1 Eternal Witness
+1 Froghemoth
+1 Giant Adephage
+1 Glissa Sunslayer
+1 Grand Warlord Radha
+1 Grenzo, Havoc Raiser
+1 Henzie "Toolbox" Torre
+1 Ilharg, the Raze-Boar
+1 Jecht, Reluctant Guardian
+1 Jolene, the Plunder Queen
+1 Kardur, Doomscourge
+1 Karlach, Fury of Avernus
+1 Kazuul, Tyrant of the Cliffs
+1 Kogla, the Titan Ape
+1 Kura, the Boundless Sky
+1 Massacre Wurm
+1 Port Razer
+1 Shakedown Heavy
+1 Spider Manifestation
+1 Stuffy Doll
+1 Taurean Mauler
+1 Wulfgar of Icewind Dale
+1 Animist's Might
+1 Bridgeworks Battle
+1 Bushwhack
+1 Disrupt Decorum
+1 Full Throttle
+1 Insurrection
+1 Rampant Growth
+1 Reach the Horizon
+1 Roar of Challenge
+1 Seize the Day
+1 Tormenting Voice
+1 Arena
+1 Blighted Woodland
+1 Cinder Glade
+1 Command Beacon
+1 Command Tower
+1 Darigaaz's Caldera
+1 Foreboding Ruins
+6 Forest
+1 Game Trail
+1 Kessig Wolf Run
+1 Mossfire Valley
+6 Mountain
+1 Necroblossom Snarl
+1 Opal Palace
+1 Overgrown Tomb
+1 Savage Lands
+1 Shadowblood Ridge
+1 Smoldering Marsh
+5 Swamp
+1 Temple of the False God
+1 Twilight Mire
+1 Ziatora's Proving Ground
+1 Assassin's Trophy
+1 Horrid Vigor
+1 Hunter's Insight
+1 Ram Through
+1 Temur Battle Rage
+1 Terrifying Presence
+1 Blood Mist
+1 Colossal Majesty
+1 Garruk's Uprising
+1 Gimli's Reckless Might
+1 Hunter's Talent
+1 Next of Kin
+1 Seton's Desire

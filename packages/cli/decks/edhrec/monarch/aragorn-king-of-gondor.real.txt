@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/uhUP_yG2vhcweT4G8kBkdQ (source https://moxfield.com/decks/1uXzMFY-70225ME2MrbWig)
+# tags Monarch, Tokens; bracket 3; saved 2026-09-04; 865 tagged of 6477 indexed
+
+Commander
+1 Aragorn, King of Gondor
+
+Deck
+1 Adeline, Resplendent Cathar
+1 Baird, Steward of Argive
+1 Bastion Protector
+1 Boromir, Gondor's Hope
+1 Cathar Commando
+1 Coppercoat Vanguard
+1 Cosmogrand Zenith
+1 Faramir, Steward of Gondor
+1 Frontline Medic
+1 Grand Arbiter Augustin IV
+1 Gwafa Hazid, Profiteer
+1 Keeper of Keys
+1 Loran of the Third Path
+1 Lossarnach Captain
+1 Malevolent Hermit
+1 Mirror Entity
+1 Mother of Runes
+1 Selfless Squire
+1 Skyline Despot
+1 Thalia's Lieutenant
+1 Trinket Mage
+1 Weathered Wayfarer
+1 Éowyn, Fearless Knight
+1 Éowyn, Shieldmaiden
+1 Akroma's Will
+1 Boros Charm
+1 Counterspell
+1 Cyclonic Rift
+1 Dovin's Veto
+1 Mana Leak
+1 Mirror Strike
+1 Path to Exile
+1 Pongify
+1 Return the Favor
+1 Strix Serenade
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Andúril, Flame of the West
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Champion's Helm
+1 Diamond Pick-Axe
+1 Door of Destinies
+1 Herald's Horn
+1 Sol Ring
+1 Sword of Hearth and Home
+1 Talisman of Conviction
+1 Talisman of Progress
+1 Thran Dynamo
+1 Wayfarer's Bauble
+1 Winged Boots
+1 Anointed Procession
+1 Darksteel Mutation
+1 Ghostly Prison
+1 Outlaws' Merriment
+1 Rhystic Study
+1 Teleportation Circle
+1 Battlefield Forge
+1 Castle Ardenvale
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Field of Ruin
+1 Furycalm Snarl
+1 Glacial Fortress
+7 Island
+7 Mountain
+1 Path of Ancestry
+5 Plains
+1 Plateau
+1 Port Town
+1 Prairie Stream
+1 Rogue's Passage
+1 Secluded Courtyard
+1 Throne of the High City
+1 Tundra
+1 Volcanic Island
+1 Farewell
+1 Jeska's Will
+1 Personal Tutor
+1 Requisition Raid
+1 Supreme Verdict

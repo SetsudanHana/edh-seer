@@ -1,0 +1,101 @@
+# edhrec average deck: https://edhrec.com/average-decks/atraxa-praetors-voice/charge-counters
+# theme Charge Counters (42 decks)
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Arcane Signet
+1 Astral Cornucopia
+1 Chromatic Lantern
+1 Coalition Relic
+1 Contagion Engine
+1 Darksteel Reactor
+1 Dawnsire, Sunstar Dreadnought
+1 Empowered Autogenerator
+1 Everflowing Chalice
+1 Insight Engine
+1 Lux Artillery
+1 Lux Cannon
+1 Magistrate's Scepter
+1 Moxite Refinery
+1 Pentad Prism
+1 Replicating Ring
+1 Sol Ring
+1 Sword of Truth and Justice
+1 Transmogrifying Wand
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+3 Forest
+1 Gemstone Mine
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hickory Woodlot
+2 Island
+1 Karn's Bastion
+1 Marsh Flats
+1 Mirrodin's Core
+1 Misty Rainforest
+1 Nesting Grounds
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Polluted Delta
+1 Saprazzan Skerry
+2 Swamp
+1 Temple Garden
+1 Tendo Ice Bridge
+1 Verdant Catacombs
+1 Vivid Creek
+1 Vivid Grove
+1 Vivid Marsh
+1 Vivid Meadow
+1 Watery Grave
+1 Windswept Heath
+1 Cankerbloom
+1 Coretapper
+1 Crystalline Crawler
+1 Deepglow Skate
+1 Dreamtide Whale
+1 Etched Oracle
+1 Evolution Sage
+1 Evolution Witness
+1 Ezuri, Stalker of Spheres
+1 Fathom Mage
+1 Filigree Vector
+1 Flux Channeler
+1 Grateful Apparition
+1 Metastatic Evangel
+1 Mikaeus, the Lunarch
+1 Patrolling Peacemaker
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Vorel of the Hull Clade
+1 Walking Ballista
+1 Winding Constrictor
+1 As Foretold
+1 Brokers Ascendancy
+1 Doubling Season
+1 Inexorable Tide
+1 Innkeeper's Talent
+1 Resourceful Defense
+1 Simic Ascendancy
+1 Brokers Confluence
+1 Contractual Safeguard
+1 Counterspell
+1 Experimental Augury
+1 Path to Exile
+1 Ripples of Potential
+1 Swords to Plowshares
+1 Tezzeret the Seeker
+1 Vraska, Betrayal's Sting
+1 Contentious Plan
+1 Cultivate
+1 Fabricate
+1 Farseek
+1 Tezzeret's Gambit
+1 Thirsting Roots
+1 Unnatural Restoration

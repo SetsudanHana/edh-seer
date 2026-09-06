@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/HroPdnR_Fj0QUG6rgWbdwQ (source https://archidekt.com/decks/15039448)
+# tags Tokens, Aggro, Banding, Soldiers; bracket 3; saved 2026-09-03; 11 tagged of 3950 indexed
+
+Commander
+1 Elesh Norn
+
+Deck
+1 Abu Ja'far
+1 Adeline, Resplendent Cathar
+1 Avacyn, Angel of Hope
+1 Benalish Hero
+1 Benalish Infantry
+1 Boromir, Warden of the Tower
+1 Brimaz, King of Oreskos
+1 Captain of the Watch
+1 Cathar Commando
+1 Cosmogrand Zenith
+1 Darien, King of Kjeldor
+1 Defiler of Faith
+1 Esper Sentinel
+1 Icatian Skirmishers
+1 Kinscaer Sentry
+1 Kjeldoran Escort
+1 Loxodon Gatekeeper
+1 Mirror Entity
+1 Mondrak, Glory Dominus
+1 Moonshaker Cavalry
+1 Myrel, Shield of Argive
+1 Nomads en-Kor
+1 Odric, Master Tactician
+1 Phyrexian Vindicator
+1 Pikemen
+1 Preeminent Captain
+1 Ranger-Captain of Eos
+1 Recruiter of the Guard
+1 Shield Bearer
+1 Thalia, Heretic Cathar
+1 Wyrm's Crossing Patrol
+1 Akroma's Will
+1 Dawn's Truce
+1 Enlightened Tutor
+1 Flare of Fortitude
+1 Flawless Maneuver
+1 Grand Crescendo
+1 Path to Exile
+1 Rebuff the Wicked
+1 Swords to Plowshares
+1 Archaeomancer's Map
+1 Chronicle of Victory
+1 Herald's Horn
+1 Lightning Greaves
+1 Mirrormind Crown
+1 Nemesis Mask
+1 Oketra's Monument
+1 Pearl Medallion
+1 Skullclamp
+1 Sol Ring
+1 Staff of Compleation
+1 Urza's Incubator
+1 Wedding Ring
+1 Brave the Sands
+1 Chivalric Alliance
+1 Defensive Formation
+1 Entangler
+1 Land Tax
+1 Reconnaissance
+1 Cathedral of Serra
+1 Emeria, the Sky Ruin
+1 Kjeldoran Outpost
+1 Minas Tirith
+1 Nykthos, Shrine to Nyx
+30 Plains
+1 Windbrisk Heights
+1 Elspeth, Storm Slayer
+1 Elspeth, Sun's Champion
+1 Vanquish the Horde
+1 Wrath of God

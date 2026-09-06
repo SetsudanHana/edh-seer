@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/v2rglSnU0qExK3FnET0TJg (source https://archidekt.com/decks/24699243)
+# tags Spellslinger, Cascade; bracket 3; saved 2026-09-05; 1199 tagged of 10153 indexed
+
+Commander
+1 Yidris, Maelstrom Wielder
+
+Deck
+1 Abaddon the Despoiler
+1 Bloom Tender
+1 Brash Taunter
+1 Chaos Terminator Lord
+1 Etali, Primal Conqueror
+1 Felix Five-Boots
+1 Glarb, Calamity's Augur
+1 Gonti, Lord of Luxury
+1 Greater Tanuki
+1 Kalitas, Traitor of Ghet
+1 Kellan, Inquisitive Prodigy
+1 Maelstrom Wanderer
+1 Nighthawk Scavenger
+1 Noise Marine
+1 Prosper, Tome-Bound
+1 Quandrix, the Proof
+1 Rayami, First of the Fallen
+1 Temur Battlecrier
+1 The Thirteenth Doctor
+1 Trumpeting Carnosaur
+1 Wild-Magic Sorcerer
+1 Arena of Glory
+1 Blood Crypt
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+1 Flamekin Village
+5 Forest
+1 Hanweir Battlements
+3 Island
+1 Ketria Triome
+1 Mosswort Bridge
+3 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Steam Vents
+1 Stomping Ground
+3 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Watery Grave
+1 Xander's Lounge
+1 Yavimaya Hollow
+1 Yavimaya, Cradle of Growth
+1 Zagoth Triome
+1 Ziatora's Proving Ground
+1 Assassin's Trophy
+1 Bituminous Blast
+1 Chaos Warp
+1 Curtains' Call
+1 Deadly Rollick
+1 Deflecting Swat
+1 Delayed Blast Fireball
+1 Dig Through Time
+1 Flame of Anor
+1 Hagra Mauling
+1 Natural Reclamation
+1 Obscuring Haze
+1 Waterlogged Teachings
+1 Bear Umbra
+1 Bigger on the Inside
+1 Binding the Old Gods
+1 Case of the Locked Hothouse
+1 Descent into Avernus
+1 Ghoulish Impetus
+1 Sword Coast Sailor
+1 Temur Ascendancy
+1 Blasphemous Act
+1 Call Forth the Tempest
+1 Cultivate
+1 Farseek
+1 Into the Time Vortex
+1 Lórien Revealed
+1 Mizzix's Mastery
+1 Restart Sequence
+1 Sea Gate Restoration
+1 Skyshroud Claim
+1 Tempt with Discovery
+1 Terramorph
+1 Treasure Cruise
+1 Turntimber Symbiosis
+1 Viewpoint Synchronization
+1 Invasion of Fiora
+1 My Precious
+1 Robe of the Archmagi
+1 Sol Ring
+1 Sword of Feast and Famine
+1 The Regalia

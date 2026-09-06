@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/sveQfcGPKos7Wqh3iu3_FQ (source https://archidekt.com/decks/4386045)
+# tags Convoke, Tokens, Aggro, Spellslinger; bracket 3; saved 2026-09-04; 676 tagged of 4179 indexed
+
+Commander
+1 Kasla, the Broken Halo
+
+Deck
+1 Adept Watershaper
+1 Ainok Strike Leader
+1 Bennie Bracks, Zoologist
+1 Disruptor of Currents
+1 Drumbellower
+1 Flockchaser Phantom
+1 Harmonized Trio
+1 Interdisciplinary Mascot
+1 Joyful Stormsculptor
+1 Kykar, Wind's Fury
+1 Loyal Apprentice
+1 Monastery Mentor
+1 Prismari Pianist
+1 Rumor Gatherer
+1 Saint Traft and Rem Karolus
+1 The Wandering Rescuer
+1 Welcoming Vampire
+1 Wildfire Awakener
+1 Aerial Boost
+1 Akroma's Will
+1 Appeal to Eirdu
+1 Artistic Refusal
+1 Burning Sun's Fury
+1 Clever Concealment
+1 Crowd's Favor
+1 Cut Short
+1 Devouring Light
+1 Ephemeral Shields
+1 Flawless Maneuver
+1 Generous Gift
+1 Grand Crescendo
+1 Meeting of Minds
+1 Path to Exile
+1 Protective Response
+1 Raise the Alarm
+1 Secure the Wastes
+1 Stoke the Flames
+1 Surge of Salvation
+1 Swords to Plowshares
+1 Transcendent Message
+1 Unexpected Assistance
+1 Wicked Slumber
+1 Arid Mesa
+1 Azorius Chancery
+1 Boros Garrison
+1 Castle Ardenvale
+1 Castle Embereth
+1 Castle Vantress
+1 Clifftop Retreat
+1 Command Tower
+1 Demolition Field
+1 Deserted Beach
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Strand
+1 Floodfarm Verge
+1 Fountainport
+1 Glacial Fortress
+1 Hallowed Fountain
+3 Island
+1 Kher Keep
+1 Mountain
+1 Perilous Landscape
+5 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Sacred Foundry
+1 Scavenger Grounds
+1 Sea of Clouds
+1 Spectator Seating
+1 Sulfur Falls
+1 Sundown Pass
+1 Astral Wingspan
+1 City on Fire
+1 Conclave Tribunal
+1 Dazzling Theater // Prop Room
+1 Impact Tremors
+1 Prosperous Partnership
+1 Tocasia's Welcome
+1 Unstoppable Plan
+1 Whirlwind of Thought
+1 Calamity of Cinders
+1 Hour of Reckoning
+1 Ral's Reinforcements
+1 Split Up
+1 Temporal Cleansing
+1 Elminster
+1 Elspeth, Sun's Champion
+1 Halo Fountain
+1 Skullclamp
+1 Sol Ring
+1 Wand of the Worldsoul
+1 Invasion of Segovia

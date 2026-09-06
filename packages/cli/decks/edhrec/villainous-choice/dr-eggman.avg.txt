@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/dr-eggman/villainous-choice
+# theme Villainous Choice (204 decks)
+
+Commander
+1 Dr. Eggman
+
+Deck
+1 Arcane Signet
+1 Damocles Base, Sword of Kang
+1 Demonic Junker
+1 Entropic Battlecruiser
+1 Geth's Grimoire
+1 Lightning Greaves
+1 Midnight Crusader Shuttle
+1 Nautiloid Ship
+1 Reaver Titan
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 The Regalia
+1 Thought Vessel
+1 Weatherlight
+1 Academy Ruins
+1 Blood Crypt
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Great Furnace
+1 Inventors' Fair
+5 Island
+1 Mistvault Bridge
+4 Mountain
+1 Reliquary Tower
+1 Seat of the Synod
+1 Silverbluff Bridge
+1 Smoldering Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sunken Hollow
+5 Swamp
+1 Vault of Whispers
+1 Watery Grave
+1 Xander's Lounge
+1 Chaos Defiler
+1 Chief of the Foundry
+1 Cityscape Leveler
+1 Coalstoke Gearhulk
+1 Combustible Gearhulk
+1 Cryptothrall
+1 Cyberdrive Awakener
+1 Davros, Dalek Creator
+1 Depthshaker Titan
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Golbez, Crystal Collector
+1 Krang, Utrom Warlord
+1 Metalwork Colossus
+1 Myr Battlesphere
+1 Noxious Gearhulk
+1 Oildeep Gearhulk
+1 Padeem, Consul of Innovation
+1 Scrap Trawler
+1 Scrawling Crawler
+1 Steel Overseer
+1 The Valeyard
+1 Thought Monitor
+1 Tinybones, Bauble Burglar
+1 Torrential Gearhulk
+1 Ultron, Artificial Malevolence
+1 Y'shtola Rhul
+1 Liliana's Caress
+1 Mechanized Production
+1 Megrim
+1 Thopter Spy Network
+1 Waste Not
+1 An Offer You Can't Refuse
+1 Chaos Warp
+1 Counterspell
+1 Deadly Dispute
+1 Desynchronization
+1 Terminate
+1 This Is How It Ends
+1 Tezzeret, Master of the Bridge
+1 Blasphemous Act
+1 Ensnared by the Mara
+1 Fabricate
+1 Great Intelligence's Plan
+1 One with the Machine
+1 Their Name Is Death

@@ -1,0 +1,85 @@
+# edhrec average deck: https://edhrec.com/average-decks/sensational-spider-man/stun
+# theme Stun (28 decks)
+
+Commander
+1 Sensational Spider-Man
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Fellwar Stone
+1 Hylda's Crown of Winter
+1 Lightning Greaves
+1 Mjölnir, Storm Hammer
+1 Peter Parker's Camera
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Progress
+1 Thought Vessel
+1 Web-Shooters
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Command Tower
+1 Deserted Beach
+1 Floodfarm Verge
+1 Glacial Fortress
+1 Hallowed Fountain
+13 Island
+1 Karn's Bastion
+10 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Sea of Clouds
+1 Skycloud Expanse
+1 Ambling Stormshell
+1 Dreamtide Whale
+1 Fear of Sleep Paralysis
+1 Floodpits Drowner
+1 Flux Channeler
+1 Grappling Kraken
+1 Grateful Apparition
+1 Hylda of the Icy Crown
+1 Lulu, Stern Guardian
+1 Metastatic Evangel
+1 Norn's Choirmaster
+1 Patrolling Peacemaker
+1 Sanctuary Wall
+1 Shackle Slinger
+1 Sharae of Numbing Depths
+1 Sleep-Cursed Faerie
+1 Spider-Woman, Stunning Savior
+1 Summon: Shiva
+1 Tekuthal, Inquiry Dominus
+1 The Watcher in the Water
+1 Thrummingbird
+1 Zygon Infiltrator
+1 Authority of the Consuls
+1 Ghostly Prison
+1 Inexorable Tide
+1 Kitnap
+1 Lost in the Maze
+1 Propaganda
+1 Scroll of Isildur
+1 Solitary Sanctuary
+1 Verity Circle
+1 Amazing Acrobatics
+1 Arcane Denial
+1 Blustersquall
+1 Counterspell
+1 Dovin's Veto
+1 Generous Gift
+1 Out Cold
+1 Path to Exile
+1 Spider-Sense
+1 Succumb to the Cold
+1 Swords to Plowshares
+1 Trap the Trespassers
+1 Borrowing 100,000 Arrows
+1 Contentious Plan
+1 Freeze in Place
+1 Impede Momentum
+1 Split Up
+1 Stall Out
+1 Tezzeret's Gambit
+1 Tranquilize

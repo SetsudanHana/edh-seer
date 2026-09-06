@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/7KDZUyWnGSCu73ajYBZXNQ (source https://archidekt.com/decks/11831075)
+# tags +1/+1 Counters, Treasure, Voltron, Commander Matters, Sacrifice, Self-Destruct; bracket 2; saved 2026-09-03; 8 tagged of 7316 indexed
+
+Commander
+1 Evereth, Viceroy of Plunder
+
+Deck
+1 Abrade
+1 Astarion's Thirst
+1 Bedevil
+1 Big Score
+1 Bulk Up
+1 Deadly Dispute
+1 Fake Your Own Death
+1 Terminate
+1 Unexpected Windfall
+1 Unleash Fury
+1 Untimely Malfunction
+1 Village Rites
+1 Withering Torment
+1 Alesha, Who Laughs at Fate
+1 Atsushi, the Blazing Sky
+1 Crime Novelist
+1 Ghoulcaller Gisa
+1 Gleaming Barrier
+1 Goblin Engineer
+1 Goblin Welder
+1 Greedy Freebooter
+1 Harried Dronesmith
+1 Impulsive Pilferer
+1 Juri, Master of the Revue
+1 Lagomos, Hand of Hatred
+1 Loyal Apprentice
+1 Mahadi, Emporium Master
+1 Marionette Apprentice
+1 Morbid Opportunist
+1 Ophiomancer
+1 Patron of the Arts
+1 Pitiless Plunderer
+1 Rev, Tithe Extractor
+1 Ruthless Technomancer
+1 Shambling Ghast
+1 Stridehangar Automaton
+1 Undercity Scrounger
+1 Wriggling Grub
+1 Animation Module
+1 Blade of the Bloodchief
+1 Ichor Wellspring
+1 Infantry Shield
+1 Mephitic Draught
+1 Mouser Foundry
+1 Nimblewright Schematic
+1 Noble's Purse
+1 Prized Statue
+1 Servo Schematic
+1 Tarrian's Soulcleaver
+1 The Masamune
+1 The Reaver Cleaver
+1 Blazemire Verge
+1 Blood Crypt
+1 Command Tower
+1 Darksteel Citadel
+1 Dragonskull Summit
+1 Drossforge Bridge
+1 Great Furnace
+1 Haunted Ridge
+1 Midgar, City of Mako
+10 Mountain
+1 Phyrexian Tower
+1 Smoldering Marsh
+1 Sulfurous Springs
+12 Swamp
+1 Tainted Peak
+1 Treasure Vault
+1 Vault of Whispers
+1 Blood Money
+1 Lich-Knights' Conquest
+1 Night's Whisper
+1 Pirate's Pillage
+1 Seize the Spoils
+1 Sign in Blood
+1 Case of the Stashed Skeleton
+1 Elemental Mastery
+1 Guild Artisan
+1 Necrosynthesis
+1 Sadistic Glee

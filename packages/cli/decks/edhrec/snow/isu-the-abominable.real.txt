@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/_Xt1BGuoNzMw00YRtHCGPg (source https://moxfield.com/decks/2afcjdq-JEKS7gKYtdMtOQ)
+# tags +1/+1 Counters, Snow; bracket 3; saved 2026-09-05; 556 tagged of 2721 indexed
+
+Commander
+1 Isu the Abominable
+
+Deck
+1 Abominable Treefolk
+1 Abzan Falconer
+1 Avalanche Caller
+1 Boreal Outrider
+1 Cathedral Acolyte
+1 Conclave Mentor
+1 Conifer Wurm
+1 Evolution Witness
+1 Fathom Mage
+1 Forgotten Ancient
+1 Giver of Runes
+1 Ice-Fang Coatl
+1 Kami of Whispered Hopes
+1 Kimahri, Valiant Guardian
+1 Leinore, Autumn Sovereign
+1 Marcus, Mutant Mayor
+1 Mikey & Leo, Chaos & Order
+1 Mother of Runes
+1 Ohran Frostfang
+1 Ray Fillet, Wave Warrior
+1 Sakura-Tribe Elder
+1 Spirit of the Aldergard
+1 Tidus, Yuna's Guardian
+1 Tromell, Seymour's Butler
+1 Walking Ballista
+1 Yavimaya Elder
+1 Yuna, Grand Summoner
+1 Zegana, Utopian Speaker
+1 Zimone, Paradox Sculptor
+1 Arctic Flats
+1 Arctic Treeline
+1 Azorius Chancery
+1 Boreal Shelf
+1 Dark Depths
+1 Faceless Haven
+1 Flooded Strand
+1 Gavony Township
+1 Glacial Floodplain
+1 Llanowar Reborn
+1 Misty Rainforest
+1 Mouth of Ronom
+1 Rimewood Falls
+1 Rogue's Passage
+1 Scrying Sheets
+1 Selesnya Sanctuary
+1 Simic Growth Chamber
+9 Snow-Covered Forest
+5 Snow-Covered Island
+3 Snow-Covered Plains
+1 Temple of the False God
+1 Thespian's Stage
+1 Tolaria West
+1 Windswept Heath
+1 Austere Command
+1 Blizzard Brawl
+1 Cultivate
+1 Farseek
+1 Into the North
+1 Kodama's Reach
+1 Nature's Lore
+1 Time Wipe
+1 Wave Goodbye
+1 Branching Evolution
+1 Bred for the Hunt
+1 Exploration
+1 Gelid Shackles
+1 Hadana's Climb
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Level Up
+1 Loading Zone
+1 Marit Lage's Slumber
+1 On Thin Ice
+1 Terrasymbiosis
+1 Winter's Rest
+1 Collective Resistance
+1 Crop Rotation
+1 Mutational Advantage
+1 Path to Exile
+1 Ripples of Potential
+1 Swords to Plowshares
+1 Lightning Greaves
+1 Ozolith, the Shattered Spire
+1 Power Fist
+1 Sol Ring

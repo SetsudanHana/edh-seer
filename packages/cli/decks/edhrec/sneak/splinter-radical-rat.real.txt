@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/5eHNZqNCRp3x-kqGYm5a0Q (source https://archidekt.com/decks/25470236)
+# tags Unblockable, Sneak, Ninjas, Triggered Abilities, Ninjutsu; bracket 2; saved 2026-09-04; 94 tagged of 5483 indexed
+
+Commander
+1 Splinter, Radical Rat
+
+Deck
+1 Absorb
+1 Counterspell
+1 Deadly Dispute
+1 Disruption Protocol
+1 Erode
+1 Negate
+1 Obscura Charm
+1 Sinister Sabotage
+1 Swords to Plowshares
+1 Think Twice
+1 Undermine
+1 Utter End
+1 April O'Neil, Kunoichi Trainee
+1 Baleful Strix
+1 Cephalid Facetaker
+1 Dark Leo & Shredder
+1 Elektra, Daughter of the Hand
+1 Fallen Shinobi
+1 Foot Elite
+1 Ghostly Pilferer
+1 Gray Harbor Merfolk
+1 Ingenious Infiltrator
+1 Kami of Restless Shadows
+1 Kamiz, Obscura Oculus
+1 Leonardo, Leader in Blue
+1 Moon-Circuit Hacker
+1 Moonsnare Specialist
+1 Oroku Saki, Shredder Rising
+1 Prosperous Thief
+1 Shredder, Shadow Master
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Splinter, Hamato Yoshi
+1 Thousand-Faced Shadow
+1 Turncoat Kunoichi
+1 Yuriko, the Tiger's Shadow
+1 Arcane Signet
+1 Azorius Signet
+1 Bident of Thassa
+1 Biorganic Carapace
+1 Decanter of Endless Water
+1 Dimir Signet
+1 Mind Stone
+1 Orzhov Signet
+1 Sol Ring
+1 Talisman of Dominance
+1 Archnemesis
+1 Endless Foot Assault
+1 Frozen in Ice
+1 In Too Deep
+1 Staggering Insight
+1 Stunning Strike
+1 Atrocious Experiment
+1 Donatello's Technique
+1 Dread Return
+1 Eaten Alive
+1 Karai's Technique
+1 Leonardo's Technique
+1 Shredder's Technique
+1 Splinter's Technique
+1 Summon Undead
+1 Time Wipe
+1 Avengers Hangar
+1 Bad River
+1 Bojuka Bog
+1 Choked Estuary
+1 Command Tower
+1 Drowned Catacomb
+1 Fabled Passage
+1 Fetid Pools
+1 Fisk Tower
+1 Floodfarm Verge
+1 Gleaming Bastion
+1 Godless Shrine
+1 Hallowed Fountain
+9 Island
+1 Jwar Isle Refuge
+2 Plains
+1 Prairie Stream
+1 Scoured Barrens
+1 Sunken Hollow
+8 Swamp
+1 Temple of Enlightenment

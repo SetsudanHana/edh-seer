@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/jjijJP9mFzDiFHgeYEgZmg (source https://archidekt.com/decks/18804100)
+# tags Humans, Historic, Legends; bracket 3; saved 2026-09-05; 990 tagged of 32746 indexed
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Annie Joins Up
+1 Day of Destiny
+1 Leyline Immersion
+1 Lurking Predators
+1 Maelstrom Nexus
+1 Rhythm of the Wild
+1 Smothering Tithe
+1 Arcane Signet
+1 Avacyn's Memorial
+1 Conqueror's Flail
+1 Fellwar Stone
+1 Helm of the Host
+1 Heroes' Podium
+1 Mirror Box
+1 Mithril Coat
+1 Mox Amber
+1 Sol Ring
+1 Arvad the Cursed
+1 Baird, Steward of Argive
+1 Captain Sisay
+1 Chulane, Teller of Tales
+1 Elesh Norn, Grand Cenobite
+1 Garth One-Eye
+1 General Kudro of Drannith
+1 General's Enforcer
+1 Imperial Recruiter
+1 Jhoira, Weatherlight Captain
+1 Kenrith, the Returned King
+1 Kethis, the Hidden Hand
+1 Knight of New Alara
+1 Kolvori, God of Kinship
+1 Kudo, King Among Bears
+1 Kyler, Sigardian Emissary
+1 Lavinia, Azorius Renegade
+1 Morophon, the Boundless
+1 Odric, Lunarch Marshal
+1 Raff Capashen, Ship's Mage
+1 Ravos, Soultender
+1 Reki, the History of Kamigawa
+1 Rienne, Angel of Rebirth
+1 Samut, Voice of Dissent
+1 Shalai, Voice of Plenty
+1 Shanid, Sleepers' Scourge
+1 Shanna, Sisay's Legacy
+1 Sisay, Weatherlight Captain
+1 Surrak Dragonclaw
+1 Urabrask the Hidden
+1 Beast Within
+1 Counterspell
+1 Deflecting Swat
+1 Growth Spiral
+1 Path to Exile
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Blasphemous Act
+1 Eerie Ultimatum
+1 Farseek
+1 Gift of Estates
+1 Kamahl's Druidic Vow
+1 Karn's Temporal Sundering
+1 Kodama's Reach
+1 Primevals' Glorious Rebirth
+1 Urza's Ruinous Blast
+1 Bloodstained Mire
+1 Breeding Pool
+1 Cascading Cataracts
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+2 Forest
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Jetmir's Garden
+1 Ketria Triome
+1 Luxury Suite
+2 Mountain
+1 Overgrown Tomb
+2 Plains
+1 Plateau
+1 Raffine's Tower
+1 Rejuvenating Springs
+1 Scalding Tarn
+1 Spire Garden
+1 Stomping Ground
+2 Swamp
+1 Taiga
+1 The Grey Havens
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Watery Grave
+1 Windswept Heath

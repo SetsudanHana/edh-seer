@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/4l9Z0ZXTINaVd_eRP-FbsA (source https://archidekt.com/decks/7582532)
+# tags Tap / Untap, Burn, Goblins, Tokens, Aggro, Anthems, Commander Matters, Haste; bracket 3; saved 2026-09-05; 88 tagged of 43731 indexed
+
+Commander
+1 Krenko, Mob Boss
+
+Deck
+1 Abrade
+1 Brightstone Ritual
+1 Chaos Warp
+1 Deflecting Swat
+1 Delayed Blast Fireball
+1 Massive Raid
+1 Pyroblast
+1 Untimely Malfunction
+1 Access Tunnel
+1 Arena of Glory
+1 Cavern of Souls
+1 Command Beacon
+1 Den of the Bugbear
+1 Fountainport
+1 Hall of the Bandit Lord
+18 Mountain
+1 Mutavault
+1 Myriad Landscape
+1 Nykthos, Shrine to Nyx
+1 Path of Ancestry
+1 Plaza of Heroes
+1 Rogue's Passage
+1 Secret Tunnel
+1 Terrain Generator
+1 Three Tree City
+1 War Room
+1 Arcane Signet
+1 Chronicle of Victory
+1 Commander's Plate
+1 Herald's Horn
+1 Mithril Coat
+1 Patchwork Banner
+1 Patriar's Seal
+1 Phyrexian Altar
+1 Ruby Medallion
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thousand-Year Elixir
+1 Throne of Eldraine
+1 Blasphemous Act
+1 Gamble
+1 Goblin War Strike
+1 Jeska's Will
+1 Tormenting Voice
+1 Brash Taunter
+1 Broadside Bombardiers
+1 Conspicuous Snoop
+1 General Kreat, the Boltbringer
+1 Goblin Bushwhacker
+1 Goblin Chieftain
+1 Goblin King
+1 Goblin Lackey
+1 Goblin Matron
+1 Goblin Piledriver
+1 Goblin Recruiter
+1 Goblin Sharpshooter
+1 Goblin Trashmaster
+1 Goblin Warchief
+1 Grenzo, Havoc Raiser
+1 Hexing Squelcher
+1 Hobgoblin Bandit Lord
+1 Howlsquad Heavy
+1 Kiki-Jiki, Mirror Breaker
+1 Metallic Mimic
+1 Moggcatcher
+1 Moria Marauder
+1 Muxus, Goblin Grandee
+1 Pashalik Mons
+1 Purphoros, God of the Forge
+1 Roaming Throne
+1 Rundvelt Hordemaster
+1 Searslicer Goblin
+1 Siege-Gang Lieutenant
+1 Skirk Prospector
+1 Treasure Nabber
+1 Warren Instigator
+1 Goblin Bombardment
+1 Impact Tremors
+1 Mana Echoes
+1 Repercussion
+1 Shared Animosity

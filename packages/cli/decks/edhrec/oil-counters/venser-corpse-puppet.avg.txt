@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/venser-corpse-puppet/oil-counters
+# theme Oil Counters (4 decks)
+
+Commander
+1 Venser, Corpse Puppet
+
+Deck
+1 Commander's Sphere
+1 Contagion Clasp
+1 Dimir Locket
+1 Insight Engine
+1 Lux Cannon
+1 Mind Stone
+1 Mindsplice Apparatus
+1 Phyrexian Atlas
+1 Sol Ring
+1 Staff of Compleation
+1 Surge Node
+1 Tablet of Compleation
+1 Tamiyo's Immobilizer
+1 The Filigree Sylex
+1 Throne of Geth
+1 Vat of Rebirth
+1 Blast Zone
+1 Buried Ruin
+1 Command Tower
+1 Dismal Backwater
+14 Island
+1 Karn's Bastion
+1 Nesting Grounds
+1 Sinister Hideout
+12 Swamp
+1 Temple of Deceit
+1 The Dross Pits
+1 The Monumental Facade
+1 The Surgical Bay
+1 Vivid Creek
+1 Archfiend of the Dross
+1 Atraxa's Skitterfang
+1 Blightbelly Rat
+1 Core Prowler
+1 Corpse Cur
+1 Dreamtide Whale
+1 Dune Mover
+1 Flux Channeler
+1 Gitaxian Anatomist
+1 Gulping Scraptrap
+1 Hand of the Praetors
+1 Ichor Rats
+1 Ichorplate Golem
+1 Necrosquito
+1 Plague Myr
+1 Scheming Aspirant
+1 Serum Sovereign
+1 Skithiryx, the Blight Dragon
+1 Surge Conductor
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Tomebound Lich
+1 Trawler Drake
+1 Vindictive Lich
+1 Virulent Silencer
+1 Voidwing Hybrid
+1 Inexorable Tide
+1 Mesmerizing Dose
+1 Anoint with Affliction
+1 Counterspell
+1 Experimental Augury
+1 Fuel for the Cause
+1 Grim Affliction
+1 Prologue to Phyresis
+1 Reject Imperfection
+1 Serum Snare
+1 Steady Progress
+1 Whisper of the Dross
+1 Contentious Plan
+1 Drown in Ichor
+1 Infectious Inquiry
+1 Phyresis Outbreak
+1 Spread the Sickness
+1 Tezzeret's Gambit
+1 Vat Emergence

@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/_wwOr9sU-xIKTbKzZGu6iA (source https://archidekt.com/decks/9630189)
+# tags +1/+1 Counters, Deathtouch; bracket 2; saved 2026-09-04; 254 tagged of 1733 indexed
+
+Commander
+1 Aveline de Grandpré
+
+Deck
+1 Arcane Signet
+1 Ozolith, the Shattered Spire
+1 Power Fist
+1 Shadowspear
+1 Sol Ring
+1 The Earth Crystal
+1 The Great Henge
+1 The Ozolith
+1 Assassin's Trophy
+1 Beast Within
+1 Deadly Rollick
+1 Heroic Intervention
+1 Obscuring Haze
+1 Revitalizing Repast
+1 Axebane Ferox
+1 Beast Whisperer
+1 Bebop, Skull & Crossbones
+1 Black Widow, Deadly Hunter
+1 Brawn
+1 Chevill, Bane of Monsters
+1 Duskshell Crawler
+1 Gifted Aetherborn
+1 Glissa Sunslayer
+1 God-Eternal Rhonas
+1 Hit-Monkey
+1 Hooded Blightfang
+1 Kodama of the West Tree
+1 Leyline Prowler
+1 Madame Null, Power Broker
+1 Narnam Renegade
+1 Nighthawk Scavenger
+1 Nightshade Dryad
+1 Nylea, God of the Hunt
+1 Ohran Frostfang
+1 Poison-Tip Archer
+1 Qarsi Revenant
+1 Questing Beast
+1 Rhonas the Indomitable
+1 South Wind Avatar
+1 The Master of Lake-town
+1 The Serpent Society
+1 Toski, Bearer of Secrets
+1 Tower Winder
+1 Unstoppable Slasher
+1 Vampire Nighthawk
+1 Virulent Emissary
+1 Vraska, the Silencer
+1 White Widow, Yelena Belova
+1 Bojuka Bog
+1 Command Tower
+1 Darkbore Pathway
+1 Deathcap Glade
+15 Forest
+1 Hissing Quagmire
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Overgrown Tomb
+4 Swamp
+1 Temple of Malady
+1 Twilight Mire
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Viridescent Bog
+1 Woodland Cemetery
+1 Branching Evolution
+1 Garruk's Uprising
+1 Hardened Scales
+1 Hollowmurk Siege
+1 Hunter's Talent
+1 Innkeeper's Talent
+1 Rancor
+1 Cultivate
+1 Damnation
+1 Farseek
+1 Flare of Cultivation
+1 Kodama's Reach
+1 Nature's Lore
+1 Rishkar's Expertise
+1 Season of Gathering
+1 Three Visits
+1 Toxic Deluge

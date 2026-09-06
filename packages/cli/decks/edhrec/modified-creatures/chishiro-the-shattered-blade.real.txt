@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/mEzb9pNDyKDgAXSpj1uZJQ (source https://archidekt.com/decks/16818341)
+# tags Tempo, Enchantress, Modified Creatures, Auras; bracket 2; saved 2026-09-05; 131 tagged of 7081 indexed
+
+Commander
+1 Chishiro, the Shattered Blade
+
+Deck
+1 Akki Battle Squad
+1 Devoted Druid
+1 Eidolon of Blossoms
+1 Elvish Archivist
+1 Enduring Courage
+1 Goblin Anarchomancer
+1 Grumgully, the Generous
+1 Herald of the Pantheon
+1 Kami of Transience
+1 Komainu Battle Armor
+1 Krenko, Tin Street Kingpin
+1 Lizard Blades
+1 Oakhame Adversary
+1 Ogre Battledriver
+1 Renata, Called to the Hunt
+1 Ruby, Daring Tracker
+1 Setessan Champion
+1 Tanglespan Lookout
+1 Trickster's Elk
+1 Twitching Doll
+1 Verduran Enchantress
+1 Alpha Authority
+1 Ancestral Mask
+1 Audacity
+1 Bear Umbra
+1 Berserkers' Onslaught
+1 Cartouche of Strength
+1 Cindervines
+1 Connecting the Dots
+1 Demonic Ruckus
+1 Draconic Destiny
+1 Enchantress's Presence
+1 Etali's Favor
+1 Familiar Ground
+1 Fertile Ground
+1 Giant Inheritance
+1 Hardened Scales
+1 Kenrith's Transformation
+1 Mark of Fury
+1 Meltstrider's Resolve
+1 Nature's Will
+1 One with Nature
+1 Pain for All
+1 Rancor
+1 Rune of Might
+1 Season of Growth
+1 Snake Umbra
+1 Spider Umbra
+1 Treetop Bracers
+1 Unquenchable Fury
+1 Utopia Sprawl
+1 Vow of Wildness
+1 Wild Growth
+1 Bridgeworks Battle
+1 Commune with Spirits
+1 Knockout Maneuver
+1 Overwhelming Stampede
+1 Rishkar's Expertise
+1 Smoke Spirits' Aid
+1 Stump Stomp
+1 Broken Wings
+1 Inspiring Call
+1 Khalni Ambush
+1 Monstrous Rage
+1 Return of the Wildspeaker
+1 Castle Embereth
+1 Cinder Glade
+1 Command Tower
+1 Exotic Orchard
+9 Forest
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Llanowar Reborn
+1 Mosswort Bridge
+9 Mountain
+1 Rogue's Passage
+1 Scavenger Grounds
+1 Spinerock Knoll
+1 Temple of Abandon
+1 Thornspire Verge
+1 Underdark Rift
+1 Sol Ring

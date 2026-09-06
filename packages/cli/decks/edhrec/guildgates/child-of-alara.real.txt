@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/FJpM30DMaukhGXbyzb1JJw (source https://archidekt.com/decks/21398864)
+# tags Guildgates, Angels; bracket 3; saved 2026-09-05; 134 tagged of 11033 indexed
+
+Commander
+1 Child of Alara
+
+Deck
+1 Archangel of Thune
+1 Archangel of Tithes
+1 Avacyn, Angel of Hope
+1 Azusa, Lost but Seeking
+1 Beloved Princess
+1 Brago, King Eternal
+1 Dryad of the Ilysian Grove
+1 Elvish Mystic
+1 Feather, the Redeemed
+1 Giada, Font of Hope
+1 Herald of War
+1 Nine-Fingers Keene
+1 Oracle of Mul Daya
+1 Resplendent Angel
+1 Shalai, Voice of Plenty
+1 Snapcaster Mage
+1 Soul Warden
+1 Starnheim Aspirant
+1 Tatyova, Benthic Druid
+1 Trostani, Selesnya's Voice
+1 Vorinclex, Voice of Hunger
+1 Youthful Valkyrie
+1 Azorius Guildgate
+1 Baldur's Gate
+1 Basilisk Gate
+1 Black Dragon Gate
+1 Boros Guildgate
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Cascading Cataracts
+1 Cliffgate
+1 Command Tower
+1 Dimir Guildgate
+1 Forest
+1 Gateway Plaza
+1 Golgari Guildgate
+1 Gond Gate
+1 Gruul Guildgate
+1 Inspiring Vantage
+1 Izzet Guildgate
+1 Manor Gate
+1 Maze's End
+1 Orzhov Guildgate
+1 Phyrexian Tower
+1 Plains
+1 Rakdos Guildgate
+1 Reliquary Tower
+1 Scrying Sheets
+1 Sea Gate
+1 Selesnya Guildgate
+1 Simic Guildgate
+1 Talon Gates of Madara
+1 Thespian's Stage
+1 Thran Portal
+1 Break Down
+1 Chord of Calling
+1 Counterspell
+1 Grand Crescendo
+1 Growth Spiral
+1 Heroic Intervention
+1 Mana Drain
+1 Nasty End
+1 Path to Exile
+1 Shelter
+1 Swan Song
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Chandra's Ignition
+1 Circuitous Route
+1 Cultivate
+1 Demonic Tutor
+1 Diabolic Tutor
+1 Explore
+1 Farewell
+1 Farseek
+1 Finale of Devastation
+1 Harmonize
+1 Open the Gates
+1 Summer Bloom
+1 Tempt with Discovery
+1 Chandra, Flamecaller
+1 Elspeth Tirel
+1 Freyalise, Llanowar's Fury
+1 Jace, Unraveler of Secrets
+1 Liliana of the Dark Realms
+1 The Royal Scions
+1 Chromatic Orrery
+1 Emerald Medallion
+1 Halo Fountain
+1 Jet Medallion
+1 Pearl Medallion
+1 Ruby Medallion
+1 Sapphire Medallion
+1 Sol Ring
+1 Tigereye Cameo
+1 Exploration
+1 Smothering Tithe
+1 Song of Creation
+1 Song of the Worldsoul

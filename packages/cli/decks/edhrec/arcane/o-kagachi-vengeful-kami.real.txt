@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/nfOIqisvtE94oGTSRKYXEA (source https://archidekt.com/decks/24616786)
+# tags Spirits, Arcane, Monarch; bracket 2; saved 2026-07-30; 12 tagged of 2058 indexed
+
+Commander
+1 O-Kagachi, Vengeful Kami
+
+Deck
+1 Arcane Signet
+1 Long-Forgotten Gohei
+1 Behold the Unspeakable
+1 Court of Ardenvale
+1 Court of Cunning
+1 Etchings of the Chosen
+1 Greenhouse // Rickety Gazebo
+1 Marchesa's Decree
+1 One with the Kami
+1 Revival of the Ancestors
+1 Summoner's Sending
+1 Teachings of the Kirin
+1 The Kami War
+1 The Tale of Tamiyo
+1 Whirlwind of Thought
+1 Black Dragon Gate
+1 Citadel Gate
+1 Cliffgate
+1 Command Tower
+1 Crystal Grotto
+1 Deathcap Glade
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Evolving Wilds
+1 Exotic Orchard
+1 Forest
+1 Gateway Plaza
+1 Gond Gate
+1 Haunted Ridge
+1 Island
+1 Manor Gate
+1 Mountain
+1 Overgrown Farmland
+1 Path of Ancestry
+1 Plains
+1 Rockfall Vale
+1 Sea Gate
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Stormcarved Coast
+1 Sundown Pass
+1 Swamp
+1 Temple of Abandon
+1 Temple of Deceit
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Malady
+1 Temple of Malice
+1 Temple of Mystery
+1 Temple of Plenty
+1 Temple of Silence
+1 Temple of Triumph
+1 Blessed Breath
+1 Death Denied
+1 Desperate Ritual
+1 Ethereal Haze
+1 Lorehold Command
+1 Murmurs from Beyond
+1 Peer Through Depths
+1 Reach Through Mists
+1 Rend Flesh
+1 Rending Vines
+1 Sift Through Sands
+1 Through the Breach
+1 Veil of Secrecy
+1 We Say Thee Nay!
+1 Ceaseless Conflict
+1 Circuitous Route
+1 Crack the Earth
+1 Devouring Greed
+1 Eerie Procession
+1 Eye of Nowhere
+1 Farseek
+1 Hex Magic
+1 Illuminate History
+1 Kodama's Reach
+1 Perennation
+1 Terashi's Grasp
+1 Wakanda Forever!
+1 Drogskol Captain
+1 Elder Pine of Jukai
+1 Frog Butler
+1 Kyodai, Soul of Kamigawa
+1 Loam Dweller
+1 Millicent, Restless Revenant
+1 Myojin of Blooming Dawn
+1 Myojin of Cryptic Dreams
+1 Myojin of Grim Betrayal
+1 Myojin of Roaring Blades
+1 Myojin of Towering Might
+1 Nebelgast Herald
+1 Oyobi, Who Split the Heavens
+1 Rattlechains
+1 Skyfire Kirin
+1 Spectral Arcanist
+1 The Ancient One
+1 The Unspeakable
+1 Thief of Hope
+1 Warden of the Grove

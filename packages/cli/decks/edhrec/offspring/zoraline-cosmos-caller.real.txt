@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/V-kQEgHCATtsdO2SCXHW_Q (source https://archidekt.com/decks/14228180)
+# tags Lifedrain, Bats, +1/+1 Counters, Reanimator, Lifegain, Offspring, Tokens; bracket 4; saved 2026-05-26; 2 tagged of 7896 indexed
+
+Commander
+1 Zoraline, Cosmos Caller
+
+Deck
+1 Aclazotz, Deepest Betrayal
+1 Amalia Benavides Aguirre
+1 Bat Whisperer
+1 Blood Artist
+1 Bloodthirsty Conqueror
+1 Courier Bat
+1 Darkstar Augur
+1 Deep-Cavern Bat
+1 Enduring Tenacity
+1 Essence Channeler
+1 Lifecreed Duo
+1 Maha, Its Feathers Night
+1 Marauding Blight-Priest
+1 Mirkwood Bats
+1 Momo, Friendly Flier
+1 Moonrise Cleric
+1 Moonstone Eulogist
+1 Moonstone Harbinger
+1 Qarsi Revenant
+1 Regal Bloodlord
+1 Roaming Throne
+1 Ruin-Lurker Bat
+1 Soul Warden
+1 Starlit Soothsayer
+1 Starscape Cleric
+1 Starseer Mentor
+1 Sun Titan
+1 Valley Rotcaller
+1 Vito, Thorn of the Dusk Rose
+1 Wax-Wane Witness
+1 Welcoming Vampire
+1 Arcane Signet
+1 Bolas's Citadel
+1 Desecrated Tomb
+1 Orzhov Signet
+1 Patchwork Banner
+1 Sinister Monolith
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Whispersilk Cloak
+1 Banishing Light
+1 Case of the Uneaten Feast
+1 Cleric Class
+1 Leyline of Hope
+1 Lunar Convocation
+1 Phyrexian Arena
+1 Bojuka Bog
+1 Caves of Koilos
+1 Evolving Wilds
+1 Godless Shrine
+1 Lupinflower Village
+1 Mudflat Village
+11 Plains
+1 Reliquary Tower
+1 Rogue's Passage
+1 Scoured Barrens
+1 Shattered Sanctum
+12 Swamp
+1 Three Tree City
+1 Coiling Rebirth
+1 Damn
+1 Diabolic Tutor
+1 Diresight
+1 Exsanguinate
+1 Insatiable Avarice
+1 Sign in Blood
+1 Starfall Invocation
+1 Stargaze
+1 Victimize
+1 Consumed by Greed
+1 Crumb and Get It
+1 Dark Ritual
+1 Dawn's Truce
+1 Hazel's Nocturne
+1 Mortify
+1 Path to Exile
+1 Sonar Strike
+1 Village Rites

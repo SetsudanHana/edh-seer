@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-space-family-goblinson/bobbleheads
+# theme Bobbleheads (4 decks)
+
+Commander
+1 The Space Family Goblinson
+
+Deck
+1 Agility Bobblehead
+1 Arcane Signet
+1 Bag of Tricks
+1 Charisma Bobblehead
+1 Clown Car
+1 Component Pouch
+1 Diamond Pick-Axe
+1 Ebony Fly
+1 Endurance Bobblehead
+1 Goblin Morningstar
+1 Intelligence Bobblehead
+1 Luck Bobblehead
+1 Perception Bobblehead
+1 Sol Ring
+1 Spiked Pit Trap
+1 Strength Bobblehead
+1 Strength-Testing Hammer
+1 Sword of Hours
+1 The Deck of Many Things
+1 Treasure Chest
+1 Vexing Puzzlebox
+1 Cinder Glade
+1 Command Tower
+1 Eclipsed Realms
+1 Evolving Wilds
+11 Forest
+1 Game Trail
+1 Mosswort Bridge
+11 Mountain
+1 Reliquary Tower
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Spire Garden
+1 Taiga
+1 Thornspire Verge
+1 Underdark Rift
+1 Ancient Bronze Dragon
+1 Ancient Copper Dragon
+1 Atomwheel Acrobats
+1 Brazen Dwarf
+1 Celebr-8000
+1 Centaur of Attention
+1 Chaos Dragon
+1 Delina, Wild Mage
+1 Druid of the Emerald Grove
+1 Earth-Cult Elemental
+1 Hoarding Ogre
+1 Loathsome Troll
+1 Swarming Goblins
+1 Sylvan Shepherd
+1 Vegetation Abomination
+1 Vrondiss, Rage of Ancients
+1 Wyll, Blade of Frontiers
+1 Barbarian Class
+1 Colossal Majesty
+1 Garruk's Uprising
+1 Hydra's Growth
+1 Journey to the Lost City
+1 Maddening Hex
+1 Priority Boarding
+1 Wild Growth
+1 Berserker's Frenzy
+1 Critical Hit
+1 Inspiring Call
+1 Invigorating Surge
+1 Pair o' Dice Lost
+1 Song of Inspiration
+1 Unforgiving Aim
+1 Wyll's Reversal
+1 Blasphemous Act
+1 Circuits Act
+1 Cultivate
+1 Devastating Onslaught
+1 Germination Practicum
+1 Overwhelming Encounter
+1 Reckless Endeavor
+1 Thunderwave
+1 Wild Endeavor

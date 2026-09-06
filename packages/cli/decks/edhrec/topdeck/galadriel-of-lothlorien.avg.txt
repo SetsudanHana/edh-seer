@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/galadriel-of-lothlorien/topdeck
+# theme Topdeck (557 decks)
+
+Commander
+1 Galadriel of Lothlórien
+
+Deck
+1 Arcane Signet
+1 Lifecrafter's Bestiary
+1 Mirror of Galadriel
+1 Planetarium of Wan Shi Tong
+1 Sol Ring
+1 The Temporal Anchor
+1 Castle Vantress
+1 Command Tower
+1 Crystal Grotto
+1 Exotic Orchard
+1 Flooded Grove
+11 Forest
+1 Hinterland Harbor
+10 Island
+1 Path of Ancestry
+1 Rejuvenating Springs
+1 Rivendell
+1 Rumble Arena
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 The Grey Havens
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Zhalfirin Void
+1 Arwen Undómiel
+1 Avenger of Zendikar
+1 Celeborn the Wise
+1 Cryptic Annelid
+1 Elfsworn Giant
+1 Elrond, Lord of Rivendell
+1 Elrond, Master of Healing
+1 Elvish Archdruid
+1 Elvish Mariner
+1 Elvish Mystic
+1 Kenessos, Priest of Thassa
+1 Legolas, Counter of Kills
+1 Llanowar Elves
+1 Lothlórien Lookout
+1 Lotus Cobra
+1 Matoya, Archon Elder
+1 Rampaging Baloths
+1 Reclamation Sage
+1 Scute Swarm
+1 Sigiled Starfish
+1 Springheart Nantuko
+1 Tatyova, Benthic Druid
+1 Thassa, God of the Sea
+1 Thranduil's Company
+1 Thranduil, Sindarin Liege
+1 Tireless Provisioner
+1 Dancing from Dark to Dawn
+1 In Search of Greatness
+1 Lost Isle Calling
+1 Retreat to Coralhelm
+1 Season of Growth
+1 Spelunking
+1 Sylvan Anthem
+1 Beast Within
+1 Bombadil's Song
+1 Counterspell
+1 Deliberate
+1 Dissolve
+1 Glorious Gale
+1 Growth Spiral
+1 Heroic Intervention
+1 Joint Exploration
+1 Opt
+1 Shower of Arrows
+1 Soothing of Sméagol
+1 Nissa, Steward of Elements
+1 Arwen's Gift
+1 Birthday Escape
+1 Cultivate
+1 Elven Farsight
+1 Horses of the Bruinen
+1 Mystic Speculation
+1 Overwhelming Stampede
+1 Preordain
+1 Rampant Growth
+1 Serum Visions

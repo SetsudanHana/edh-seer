@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/rcXRHrVDhWOag8Bq9fRbhQ (source https://archidekt.com/decks/6747844)
+# tags Cantrips, Control, Kicker, Tokens, Spellslinger; bracket 3; saved 2026-08-07; 23 tagged of 6716 indexed
+
+Commander
+1 Zethi, Arcane Blademaster
+
+Deck
+1 Aligned Heart
+1 Search for Azcanta
+1 Smothering Tithe
+1 Arcane Signet
+1 Azorius Signet
+1 Firemind Vessel
+1 Gilded Lotus
+1 Primal Amulet
+1 Sentinel Tower
+1 Sword of Feast and Famine
+1 Throne of Eldraine
+1 Archmage's Charm
+1 Brainstorm
+1 Call the Coppercoats
+1 Congregate
+1 Consider
+1 Crush Contraband
+1 Cyclonic Rift
+1 Desynchronization
+1 Disenchant
+1 Evacuation
+1 Fading Hope
+1 Final Showdown
+1 Flawless Maneuver
+1 Frantic Search
+1 Galadriel's Dismissal
+1 Gifts Ungiven
+1 Grip of Phyresis
+1 High Tide
+1 Into the Flood Maw
+1 Leadership Vacuum
+1 Learn from the Past
+1 Light of Hope
+1 Mind Bend
+1 Mystic Reflection
+1 Opt
+1 Path to Exile
+1 Peek
+1 Perplexing Test
+1 Protection Magic
+1 Rally the Monastery
+1 Run Away Together
+1 Scout's Warning
+1 Select for Inspection
+1 Shadow Rift
+1 Snap
+1 Suspend
+1 Swords to Plowshares
+1 Thought Scour
+1 Thraben Charm
+1 Twisted Image
+1 Unsummon
+1 Will of the Mardu
+1 Wrong Turn
+1 Command Tower
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Idyllic Beachfront
+1 Irrigated Farmland
+18 Island
+1 Meticulous Archive
+1 Mystic Gate
+1 Mystic Sanctuary
+1 Nimbus Maze
+1 Prairie Stream
+1 Reliquary Tower
+1 Sea of Clouds
+1 Docent of Perfection
+1 Gandalf, White Rider
+1 God-Eternal Kefnet
+1 Hullbreaker Horror
+1 Kykar, Zephyr Awakener
+1 Monastery Mentor
+1 Murmuring Mystic
+1 Ojer Pakpatiq, Deepest Epoch
+1 Poppet Stitcher
+1 Raff Capashen, Ship's Mage
+1 Spell Queller
+1 Talrand, Sky Summoner
+1 Thing in the Ice
+1 Supreme Verdict
+1 Time Wipe

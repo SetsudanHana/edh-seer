@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/tatsunari-toad-rider/mutate
+# theme Mutate (269 decks)
+
+Commander
+1 Tatsunari, Toad Rider
+
+Deck
+1 Arcane Signet
+1 Sol Ring
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Foreboding Landscape
+7 Forest
+1 Hinterland Harbor
+5 Island
+1 Llanowar Wastes
+1 Opulent Palace
+1 Overgrown Tomb
+1 Rejuvenating Springs
+1 Sunken Hollow
+5 Swamp
+1 Underground River
+1 Undergrowth Stadium
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Auspicious Starrix
+1 Boneyard Lurker
+1 Brokkos, Apex of Forever
+1 Cavern Whisperer
+1 Chittering Harvester
+1 Destiny Spinner
+1 Dirge Bat
+1 Doomwake Giant
+1 Dreamtail Heron
+1 Eidolon of Blossoms
+1 Gemrazer
+1 Gloomshrieker
+1 Glowstone Recluse
+1 Grim Guardian
+1 Herald of the Pantheon
+1 Insatiable Hemophage
+1 Ivy, Gleeful Spellthief
+1 Migratory Greathorn
+1 Mindleecher
+1 Otrimi, the Ever-Playful
+1 Parcelbeast
+1 Pouncing Shoreshark
+1 Sanctum Weaver
+1 Sawtusk Demolisher
+1 Sea-Dasher Octopus
+1 Setessan Champion
+1 Souvenir Snatcher
+1 Verduran Enchantress
+1 Abundant Growth
+1 Amphibian Downpour
+1 Ancestral Mask
+1 Bear Umbra
+1 Combat Research
+1 Curiosity
+1 Eaten by Piranhas
+1 Enchantress's Presence
+1 Endless Evil
+1 Fertile Ground
+1 Font of Fertility
+1 Frogify
+1 Imprisoned in the Moon
+1 Kaya's Ghostform
+1 Keen Sense
+1 Kenrith's Transformation
+1 Overgrowth
+1 Rancor
+1 Seal of Primordium
+1 Season of Growth
+1 Shimmering Wings
+1 Snake Umbra
+1 Utopia Sprawl
+1 Vesuvan Duplimancy
+1 Whip Silk
+1 Wild Growth
+1 Witness Protection
+1 Beast Within
+1 Counterspell
+1 Heroic Intervention
+1 Negate
+1 Cultivate
+1 Farseek
+1 Rampant Growth

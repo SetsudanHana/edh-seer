@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/FbYAs5uIpeq1sReUQBu_9Q (source https://archidekt.com/decks/6865310)
+# tags Equipment, Amass, Voltron; bracket 3; saved 2026-08-21; 30 tagged of 1020 indexed
+
+Commander
+1 Shagrat, Loot Bearer
+
+Deck
+1 Arcane Signet
+1 Argentum Armor
+1 Basilisk Collar
+1 Blackblade Reforged
+1 Bloodforged Battle-Axe
+1 Champion's Helm
+1 Colossus Hammer
+1 Cranial Plating
+1 Cranial Ram
+1 Crude Bent Blade
+1 Excalibur, Sword of Eden
+1 Hammer of Nazahn
+1 Leyline Axe
+1 Loxodon Warhammer
+1 Mask of Griselbrand
+1 Mithril Coat
+1 Nazgûl Battle-Mace
+1 Ragged Short Spear
+1 Rakdos Signet
+1 Resurrection Orb
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Vengeance
+1 Sword of the Animist
+1 Talisman of Indulgence
+1 The Black Arrow
+1 The One Ring
+1 The Reaver Cleaver
+1 Thran Power Suit
+1 Trailblazer's Boots
+1 Arena of Glory
+1 Barad-dûr
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Buried Ruin
+1 Command Tower
+1 Dragonskull Summit
+1 Goblin-town
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+1 Minas Morgul, Dark Fortress
+1 Mines of Moria
+1 Mount Doom
+12 Mountain
+1 Raucous Theater
+1 Rogue's Passage
+1 Shinka, the Bloodsoaked Keep
+1 Smoldering Marsh
+1 Sulfurous Springs
+2 Swamp
+1 Tainted Peak
+1 Azog, Moria's Ruin
+1 Bladegraft Aspirant
+1 Brass Squire
+1 Foundry Inspector
+1 Gothmog, Morgul Lieutenant
+1 Kediss, Emberclaw Familiar
+1 Lizard Blades
+1 Mauhúr, Uruk-hai Captain
+1 Moria Marauder
+1 Orcish Bowmasters
+1 Orcish Siegemaster
+1 Warg Rider
+1 Bedevil
+1 Chaos Warp
+1 Magnetic Theft
+1 Orcish Medicine
+1 Rakdos Charm
+1 Supernatural Stamina
+1 Terminate
+1 Thrill of Possibility
+1 Blasphemous Act
+1 Feed the Swarm
+1 Isengard Unleashed
+1 Mordor Muster
+1 Night's Whisper
+1 Rage into the Valley
+1 Read the Bones
+1 Sign in Blood
+1 Swarming of Moria
+1 Widespread Brutality
+1 Bludgeon Brawl
+1 Phyrexian Arena

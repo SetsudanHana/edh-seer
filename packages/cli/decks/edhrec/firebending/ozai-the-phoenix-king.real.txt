@@ -1,0 +1,80 @@
+# edhrec deck https://edhrec.com/deckpreview/js5n029YbaSkN5AQ0Dbgtw (source https://archidekt.com/decks/23009283)
+# tags Firebending, Ramp; bracket 2; saved 2026-09-05; 166 tagged of 7645 indexed
+
+Commander
+1 Ozai, the Phoenix King
+
+Deck
+1 Abrade
+1 Big Score
+1 Bitter Triumph
+1 Bulk Up
+1 Dark Ritual
+1 Electrodominance
+1 Lightning Bolt
+1 Pyretic Ritual
+1 Return the Favor
+1 Seething Song
+1 The Last Agni Kai
+1 Thrill of Possibility
+1 Untimely Malfunction
+1 Arcane Signet
+1 Bender's Waterskin
+1 Chimil, the Inner Sun
+1 Cursed Mirror
+1 Doubling Cube
+1 Fellwar Stone
+1 Fire Nation Turret
+1 Lightning Greaves
+1 Mind Stone
+1 Sol Ring
+1 Swiftfoot Boots
+1 Tablet of Discovery
+1 Talisman of Indulgence
+1 Ashling, Flame Dancer
+1 Avatar Roku, Firebender
+1 Deadpool, Trading Card
+1 Electro, Assaulting Battery
+1 Fang, Roku's Companion
+1 Fire Lord Ozai
+1 Firebending Student
+1 Gix, Yawgmoth Praetor
+1 Neheb, the Eternal
+1 Professional Face-Breaker
+1 Silent Arbiter
+1 Simian Spirit Guide
+1 Skithiryx, the Blight Dragon
+1 Solemn Simulacrum
+1 Stensian Sanguinist
+1 Zuko, Exiled Prince
+1 Blasphemous Act
+1 Crackle with Power
+1 Decorum Dissertation
+1 Exsanguinate
+1 Faithless Looting
+1 Improvisation Capstone
+1 Rite of Flame
+1 Winds of Change
+1 Braid of Fire
+1 City on Fire
+1 Dragon Breath
+1 Dragon Mantle
+1 Fated Firepower
+1 Fiery Emancipation
+1 Fiery Mantle
+1 Firebender Ascension
+1 Maddening Hex
+1 Pyrohemia
+1 The Legend of Roku
+1 The Rise of Sozin
+1 Command Tower
+1 Dark Fortress
+1 Evolving Wilds
+1 Fire Nation Palace
+19 Mountain
+1 Path of Ancestry
+1 Smoldering Marsh
+1 Surveillance Room
+9 Swamp
+1 Terramorphic Expanse
+1 Vibrant Cityscape

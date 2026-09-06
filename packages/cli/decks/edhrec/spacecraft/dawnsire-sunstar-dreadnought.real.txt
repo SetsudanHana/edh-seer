@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/KyUe5DjmtzqCyRKGYlhJ2w (source https://archidekt.com/decks/25889152)
+# tags Spacecraft, Vehicles; bracket 3; saved 2026-09-05; 32 tagged of 2810 indexed
+
+Commander
+1 Dawnsire, Sunstar Dreadnought
+
+Deck
+1 Abstruse Archaic
+1 Aetherjacket
+1 Anticausal Vestige
+1 Arcbound Slith
+1 Arcbound Stinger
+1 Arcbound Worker
+1 Atraxa's Skitterfang
+1 Canoptek Spyder
+1 Changeling Wayfinder
+1 Chief of the Foundry
+1 Chrome Dome
+1 Coretapper
+1 Cryptothrall
+1 Etched Champion
+1 Foundry Inspector
+1 Iron Spider, Stark Upgrade
+1 Krang, Utrom Warlord
+1 Liberator, Urza's Battlethopter
+1 Palladium Myr
+1 Relic Golem
+1 Stuffy Doll
+1 Surge Conductor
+1 Technodrome
+1 The Walls of Ba Sing Se
+1 Ultima, Origin of Oblivion
+1 Ultron, Artificial Malevolence
+1 Zenith Chronicler
+1 Adaptive Omnitool
+1 Aetheric Amplifier
+1 Brotherhood Vertibird
+1 Cloud Key
+1 Darksteel Forge
+1 Extinguisher Battleship
+1 Knight Paladin
+1 Mechtitan Core
+1 Mind's Eye
+1 Mystic Forge
+1 Pinnacle Kill-Ship
+1 Reaver Titan
+1 Skysovereign, Consul Flagship
+1 Sol Ring
+1 Strionic Resonator
+1 Tangle Wire
+1 The Eternity Elevator
+1 The One Ring
+1 The Ooze
+1 The Thanos-Copter
+1 Wurmwall Sweeper
+1 All Is Dust
+1 Rise of the Eldrazi
+1 Selective Obliteration
+1 Arcane Lighthouse
+1 Arch of Orazca
+1 Baxter Building
+1 Blast Zone
+1 Blinkmoth Nexus
+1 Bonders' Enclave
+1 Buried Ruin
+1 Castle Doom
+1 Command Beacon
+1 Eldrazi Temple
+1 Eye of Ugin
+1 Haven of the Spirit Dragon
+1 Inkmoth Nexus
+1 Inventors' Fair
+1 Karn's Bastion
+1 Maelstrom of the Spirit Dragon
+1 Mage-Ring Network
+1 Mech Hangar
+1 Mikokoro, Center of the Sea
+1 Mirrex
+1 Nephalia Academy
+1 Planar Nexus
+1 Reliquary Tower
+1 Rogue's Passage
+1 Urza's Factory
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Urza's Workshop
+1 Vesuva
+1 War Room
+9 Wastes
+1 Desecrate Reality
+1 Not of This World
+1 Null Elemental Blast
+1 Warping Wail
+1 Echoes of Eternity
+1 Eldrazi Conscription
+1 Ugin, Eye of the Storms
+1 Ugin, the Ineffable

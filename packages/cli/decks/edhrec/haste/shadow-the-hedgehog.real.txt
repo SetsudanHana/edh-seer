@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/9UPP9v136ZHI3qFwgC0FCg (source https://archidekt.com/decks/14774510)
+# tags Sacrifice, Haste; bracket 2; saved 2026-09-05; 164 tagged of 11627 indexed
+
+Commander
+1 Shadow the Hedgehog
+
+Deck
+1 Anger
+1 Ardyn, the Usurper
+1 Captain Lannery Storm
+1 Dirge Bat
+1 Dragonlord Kolaghan
+1 Goblin Rabblemaster
+1 Goldspan Dragon
+1 Headliner Scarlett
+1 Inferno of the Star Mounts
+1 Junji, the Midnight Sky
+1 Knuckles the Echidna
+1 Monastery Swiftspear
+1 Nine-Lives Familiar
+1 Pitiless Plunderer
+1 Professional Face-Breaker
+1 Ragavan, Nimble Pilferer
+1 Sephiroth, Fabled SOLDIER
+1 Smaug the Impenetrable
+1 Solemn Simulacrum
+1 Summon: Kujata
+1 Tannuk, Steadfast Second
+1 The Balrog, Durin's Bane
+1 Undead Sprinter
+1 Urabrask the Hidden
+1 Warren Soultrader
+1 Zealous Conscripts
+1 Animate Dead
+1 Bitterblossom
+1 Funeral Room // Awakening Hall
+1 Gimli's Reckless Might
+1 Goblin Bombardment
+1 Virtue of Persistence
+1 Arcane Signet
+1 Chromatic Lantern
+1 Cursed Mirror
+1 Fellwar Stone
+1 Hammer of Nazahn
+1 Lightning Greaves
+1 Mask of Memory
+1 Mimic Vat
+1 Phyrexian Altar
+1 Sol Ring
+1 Star Compass
+1 Swiftfoot Boots
+1 Sword of Light and Shadow
+1 The Fire Crystal
+1 Vexing Puzzlebox
+1 Arena of Glory
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Darksteel Citadel
+1 Dragonskull Summit
+1 Great Furnace
+1 Haunted Ridge
+1 Lindblum, Industrial Regency
+1 Midgar, City of Mako
+9 Mountain
+1 Myriad Landscape
+1 Rakdos Carnarium
+1 Raucous Theater
+1 Sokenzan, Crucible of Defiance
+9 Swamp
+1 Takenuma, Abandoned Mire
+1 Vault of Whispers
+1 Blasphemous Act
+1 Blasphemous Edict
+1 Blood Money
+1 Bone Splinters
+1 Devastating Onslaught
+1 Exhume
+1 Incarnation Technique
+1 Persist
+1 Victimize
+1 Deadly Dispute
+1 Deadly Rollick
+1 Deflecting Swat
+1 Saw in Half
+1 Unexpected Windfall
+1 Vivi's Persistence
+1 Liliana, Dreadhorde General

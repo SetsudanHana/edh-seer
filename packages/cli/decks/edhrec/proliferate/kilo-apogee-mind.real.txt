@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/WVFNOPYFqfdQyTTAEAk2iw (source https://archidekt.com/decks/24688284)
+# tags Proliferate, Artifacts; bracket 3; saved 2026-09-05; 683 tagged of 18506 indexed
+
+Commander
+1 Kilo, Apogee Mind
+
+Deck
+1 Adarkar Wastes
+1 Ancient Den
+1 Battlefield Forge
+1 Cascade Bluffs
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Glacial Fortress
+1 Glittering Massif
+1 Great Furnace
+1 Irrigated Farmland
+3 Island
+1 Karn's Bastion
+3 Mountain
+1 Mystic Monastery
+3 Plains
+1 Radiant Summit
+1 Razortide Bridge
+1 Reliquary Tower
+1 Rugged Prairie
+1 Rustvale Bridge
+1 Seat of the Synod
+1 Secluded Steppe
+1 Shivan Reef
+1 Silverbluff Bridge
+1 Skycloud Expanse
+1 Spire of Industry
+1 Sulfur Falls
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Triumph
+1 The Great Mound
+1 The Mycosynth Gardens
+1 Uthros, Titanic Godcore
+1 Arcane Signet
+1 Cloud Key
+1 Darksteel Forge
+1 Darksteel Reactor
+1 Empowered Autogenerator
+1 Everflowing Chalice
+1 Gavel of the Righteous
+1 Helm of the Host
+1 Insight Engine
+1 Inspirit, Flagship Vessel
+1 Lux Artillery
+1 Lux Cannon
+1 Mouser Foundry
+1 Moxite Refinery
+1 Mystic Forge
+1 Panharmonicon
+1 Retrofitter Foundry
+1 Royal Talon Fighter Jet
+1 Shuri's Fabricator
+1 Sol Ring
+1 Solar Array
+1 The Eternity Elevator
+1 The Mind Stone
+1 Whispersilk Cloak
+1 Chain Reaction
+1 Fumigate
+1 Organic Extinction
+1 Tezzeret's Gambit
+1 Wake the Past
+1 Chaos Warp
+1 Dispatch
+1 Experimental Augury
+1 Ripples of Potential
+1 Swan Song
+1 Swords to Plowshares
+1 Colossus of Akros
+1 Crystalline Crawler
+1 Cyberdrive Awakener
+1 Deepglow Skate
+1 Depthshaker Titan
+1 Emry, Lurker of the Loch
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Hangarback Walker
+1 Jhoira, Weatherlight Captain
+1 Kappa Cannoneer
+1 Loyal Apprentice
+1 Master Trinketeer
+1 Metalwork Colossus
+1 Ornithopter
+1 Panther Robot
+1 Patrolling Peacemaker
+1 Phyrexian Metamorph
+1 Steel Overseer
+1 Surge Conductor
+1 Tekuthal, Inquiry Dominus
+1 Thopter Engineer
+1 Thrummingbird
+1 Whirler Rogue

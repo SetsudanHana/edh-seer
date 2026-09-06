@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/zQJoWPXO2p9JQ4ZysD-HNA (source https://archidekt.com/decks/13193901)
+# tags Reanimator, Treasure, Haste, Attack Triggers, Aggro, Tokens, Sacrifice, Burn; bracket 3; saved 2026-09-03; 178 tagged of 22544 indexed
+
+Commander
+1 Caesar, Legion's Emperor
+
+Deck
+1 Adeline, Resplendent Cathar
+1 Agate Instigator
+1 Ainok Strike Leader
+1 Alesha, Who Laughs at Fate
+1 Anim Pakal, Thousandth Moon
+1 Arabella, Abandoned Doll
+1 Bloodsoaked Champion
+1 Captain Lannery Storm
+1 Carmen, Cruel Skymarcher
+1 Elas il-Kor, Sadistic Pilgrim
+1 Enduring Courage
+1 Garna, Bloodfist of Keld
+1 Iroas, God of Victory
+1 Isshin, Two Heavens as One
+1 Kingpin, Wilson Fisk
+1 MacCready, Lamplight Mayor
+1 Mahadi, Emporium Master
+1 Morbid Opportunist
+1 Myrel, Shield of Argive
+1 Nadier's Nightblade
+1 Neyali, Suns' Vanguard
+1 Ophiomancer
+1 Pitiless Plunderer
+1 Reassembling Skeleton
+1 Rose Room Treasurer
+1 Teysa Karlov
+1 Thalisse, Reverent Medium
+1 Thanos, Death's Consort
+1 The Queen of Dale
+1 Toby, Beastie Befriender
+1 Voice of Victory
+1 Welcoming Vampire
+1 Zurgo, Thunder's Decree
+1 Arcane Signet
+1 Horn of Gondor
+1 Idol of Oblivion
+1 Jet Medallion
+1 Lightning Greaves
+1 Pearl Medallion
+1 Phoenix Fleet Airship
+1 Sol Ring
+1 The Fire Crystal
+1 Bastion of Remembrance
+1 Feast of the Victorious Dead
+1 Reconnaissance
+1 Smothering Tithe
+1 Tocasia's Welcome
+1 Tolls of War
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Blood Crypt
+1 Command Tower
+1 Concealed Courtyard
+1 Elegant Parlor
+1 Evolving Wilds
+1 Fabled Passage
+1 Isolated Chapel
+1 Luxury Suite
+4 Mountain
+1 Nomad Outpost
+6 Plains
+1 Raucous Theater
+1 Reliquary Tower
+1 Sacred Foundry
+1 Scoured Barrens
+1 Shattered Landscape
+1 Shattered Sanctum
+1 Smoldering Marsh
+1 Sunbillow Verge
+4 Swamp
+1 Temple of Malice
+1 Temple of Silence
+1 Temple of Triumph
+1 Dawn's Truce
+1 Deadly Dispute
+1 Fracture
+1 Generous Gift
+1 Moogles' Valor
+1 Path to Exile
+1 Redirect Lightning
+1 Sheoldred's Edict
+1 Untimely Malfunction
+1 Diabolic Intent
+1 Reanimate
+1 Ruinous Ultimatum
+1 Victimize
+1 Zombify
+1 Elspeth, Storm Slayer

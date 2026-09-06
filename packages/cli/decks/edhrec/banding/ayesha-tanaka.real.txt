@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/esUE8EFW1Xgd9sCLSruetw (source https://archidekt.com/decks/26037017)
+# tags Forced Combat, Banding, Lure; bracket 2; saved 2026-09-05; 8 tagged of 223 indexed
+
+Commander
+1 Ayesha Tanaka
+
+Deck
+1 Adarkar Wastes
+1 Castle Ardenvale
+1 Command Tower
+1 Deserted Beach
+1 Flooded Strand
+1 Floodfarm Verge
+1 Fortified Beachhead
+1 Glacial Fortress
+1 Gleaming Bastion
+1 Hallowed Fountain
+1 Hengegate Pathway
+2 Island
+1 Mystic Gate
+1 Nimbus Maze
+1 Path of Ancestry
+14 Plains
+1 Prairie Stream
+1 Sea of Clouds
+1 Temple of Enlightenment
+1 Tolaria
+1 Tundra
+1 Anti-Venom, Horrifying Healer
+1 Benalish Hero
+1 Benalish Infantry
+1 Black Panther, Most Dangerous
+1 Body of Knowledge
+1 Breaker of Armies
+1 Chambered Nautilus
+1 Creepy Doll
+1 Drelnoch
+1 Enduring Innocence
+1 Ephara, God of the Polis
+1 Heliod, God of the Sun
+1 Hercules, Olympian Hero
+1 Icatian Infantry
+1 Kjeldoran Escort
+1 Knight of the Holy Nimbus
+1 Knights of Thorn
+1 Lena, Selfless Champion
+1 Loyal Unicorn
+1 Mesa Pegasus
+1 Mother of Runes
+1 Odric, Master Tactician
+1 Phyrexian Vindicator
+1 Pikemen
+1 Saprazzan Heir
+1 Shield Bearer
+1 Solemn Simulacrum
+1 Stoneforge Mystic
+1 Stormsurge Kraken
+1 Stuffy Doll
+1 Tolarian Entrancer
+1 Welcoming Vampire
+1 Witch Enchanter
+1 Wurmcoil Engine
+1 Arcane Denial
+1 Counterspell
+1 Dovin's Veto
+1 Errand of Duty
+1 Generous Gift
+1 Negate
+1 Stroke of Midnight
+1 Swan Song
+1 Swords to Plowshares
+1 Arcane Signet
+1 Azorius Signet
+1 Bident of Thassa
+1 Commander's Sphere
+1 Infiltration Lens
+1 Lightning Greaves
+1 Marble Diamond
+1 Nemesis Mask
+1 Sky Diamond
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Progress
+1 The Masamune
+1 Brave the Sands
+1 Coastal Piracy
+1 Cooperation
+1 Land Tax
+1 Smile at Death
+1 Dusk // Dawn
+1 Lórien Revealed
+1 Secret Rendezvous

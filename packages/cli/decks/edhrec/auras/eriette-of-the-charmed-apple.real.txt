@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/4H2vpAF2fXPeMdAb7iMeSA (source https://archidekt.com/decks/22332856)
+# tags Control, Auras; bracket 3; saved 2026-09-05; 3537 tagged of 18884 indexed
+
+Commander
+1 Eriette of the Charmed Apple
+
+Deck
+1 All That Glitters
+1 Angelic Destiny
+1 Changing Loyalty
+1 Coercive Impetus
+1 Darksteel Mutation
+1 Eye of Nidhogg
+1 Fungal Fortitude
+1 Ghostly Prison
+1 Ghoulish Impetus
+1 Gift of Immortality
+1 Glasswing Grace
+1 Greater Auramancy
+1 Karmic Justice
+1 Land Tax
+1 Mantle of the Ancients
+1 Martial Impetus
+1 Ossification
+1 Oubliette
+1 Parasitic Impetus
+1 Pariah
+1 Planar Disruption
+1 Prison Term
+1 Redemption Arc
+1 Sage's Reverie
+1 Sanguine Bond
+1 Sheltered by Ghosts
+1 Sigarda's Aid
+1 Sigil of the Empty Throne
+1 Smothering Tithe
+1 Songbirds' Blessing
+1 Sphere of Safety
+1 Spirit Mantle
+1 Timely Ward
+1 Arcane Lighthouse
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Castle Locthwain
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Fetid Heath
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Ishgard, the Holy See
+1 Isolated Chapel
+1 Marsh Flats
+8 Plains
+1 Restless Fortress
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Silent Clearing
+5 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Arcane Signet
+1 Fellwar Stone
+1 Jet Medallion
+1 Pearl Medallion
+1 Sol Ring
+1 Talisman of Hierarchy
+1 The Wind Crystal
+1 Damn
+1 Farewell
+1 Toxic Deluge
+1 Winds of Rath
+1 Eidolon of Countless Battles
+1 Eiganjo Dynastorian
+1 Esper Sentinel
+1 Grim Guardian
+1 Heliod's Pilgrim
+1 Killian, Decisive Mentor
+1 Killian, Ink Duelist
+1 Kor Spiritdancer
+1 Light-Paws, Emperor's Voice
+1 Lurrus of the Dream-Den
+1 Mesa Enchantress
+1 Ondu Spiritdancer
+1 Pearl-Ear, Imperial Advisor
+1 Sram, Senior Edificer
+1 Starfield Mystic
+1 Umbra Mystic
+1 Vito, Thorn of the Dusk Rose
+1 Enlightened Tutor
+1 Fell the Profane
+1 Malakir Rebirth
+1 Path to Exile
+1 Rebuff the Wicked
+1 Sejiri Shelter

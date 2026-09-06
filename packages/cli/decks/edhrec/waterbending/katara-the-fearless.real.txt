@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/5zPPAYpZfALjZaRJTQKveg (source https://archidekt.com/decks/18657062)
+# tags Humans, Tokens, Waterbending, Allies; bracket 3; saved 2026-09-03; 26 tagged of 9803 indexed
+
+Commander
+1 Katara, the Fearless
+
+Deck
+1 Aang and Katara
+1 Aang, Air Nomad
+1 Aang, Airbending Master
+1 Aang, Swift Savior
+1 Appa, Steadfast Guardian
+1 Appa, the Vigilant
+1 Earth King's Lieutenant
+1 Great Divide Guide
+1 Hada Freeblade
+1 Hakoda, Selfless Commander
+1 Halimar Excavator
+1 Invasion Reinforcements
+1 Katara, Heroic Healer
+1 Katara, Water Tribe's Hope
+1 Kazandu Blademaster
+1 Kor Bladewhirl
+1 Momo, Rambunctious Rascal
+1 Ondu Cleric
+1 Sokka, Lateral Strategist
+1 South Pole Voyager
+1 Suki, Courageous Rescuer
+1 Suki, Kyoshi Warrior
+1 Tajuru Warcaller
+1 Talus Paladin
+1 The Earth King
+1 Turntimber Ranger
+1 Ty Lee, Chi Blocker
+1 Adarkar Wastes
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+5 Forest
+1 Fortified Village
+1 Hinterland Harbor
+6 Island
+1 Jasmine Dragon Tea Shop
+9 Plains
+1 Port Town
+1 Prairie Stream
+1 Secluded Courtyard
+1 Skycloud Expanse
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Vineglimmer Snarl
+1 Waterlogged Grove
+1 Yavimaya Coast
+1 Airbender Ascension
+1 Kindred Discovery
+1 Reconnaissance Mission
+1 Sokka's Charge
+1 Tale of Katara and Toph
+1 Waterbender Ascension
+1 An Offer You Can't Refuse
+1 Beast Within
+1 Clever Concealment
+1 Dovin's Veto
+1 Flawless Maneuver
+1 Generous Gift
+1 Ghostly Flicker
+1 Heroic Intervention
+1 Hide on the Ceiling
+1 Octopus Form
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Conjurer's Closet
+1 Herald's Horn
+1 Panharmonicon
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Curiosity
+1 Talisman of Unity
+1 White Lotus Tile
+1 Cultivate
+1 Distant Melody
+1 Raise the Palisade
+1 Rampant Growth
+1 Spirit Water Revival
+1 United Front

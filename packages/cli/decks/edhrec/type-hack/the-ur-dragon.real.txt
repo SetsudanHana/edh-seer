@@ -1,0 +1,105 @@
+# edhrec deck https://edhrec.com/deckpreview/PwMIv3A3NhQY8XHiijxDog (source https://archidekt.com/decks/19208883)
+# tags Type Hack, Shapeshifters, Party; bracket 2; saved 2026-06-27; 10 tagged of 50478 indexed
+
+Commander
+1 The Ur-Dragon
+
+Deck
+1 Amoeboid Changeling
+1 Avian Changeling
+1 Changeling Outcast
+1 Changeling Wayfinder
+1 Chomping Changeling
+1 Cid, Timeless Artificer
+1 Elvish Archdruid
+1 Flock Impostor
+1 Gangly Stompling
+1 Giada, Font of Hope
+1 Graveshifter
+1 Hungry Lynx
+1 Impostor of the Sixth Pride
+1 Irregular Cohort
+1 Manaweft Sliver
+1 Mirror Entity
+1 Mischievous Sneakling
+1 Morophon, the Boundless
+1 Mothdust Changeling
+1 Nimble Trapfinder
+1 Omni-Changeling
+1 Prideful Feastling
+1 Risen Reef
+1 Selfless Safewright
+1 Taurean Mauler
+1 Tazri, Beacon of Unity
+1 Timber Protector
+1 Universal Automaton
+1 Unsettled Mariner
+1 Valiant Changeling
+1 Venomous Changeling
+1 Yuriko, the Tiger's Shadow
+1 Zagras, Thief of Heartbeats
+1 Ancient Amphitheater
+1 Ancient Ziggurat
+1 Base Camp
+1 Cascading Cataracts
+1 Citadel Gate
+1 Command Tower
+1 Eclipsed Realms
+1 Evolving Wilds
+1 Exotic Orchard
+1 Forest
+1 Fortified Beachhead
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Haven of the Spirit Dragon
+1 Hinterland Harbor
+1 Idyllic Beachfront
+1 Irrigated Farmland
+1 Island
+1 Jetmir's Garden
+1 Meteor Crater
+1 Mountain
+1 Murmuring Bosk
+1 Path of Ancestry
+2 Plains
+1 Prairie Stream
+1 Raffine's Tower
+1 Reflecting Pool
+1 Rustic Clachan
+1 Secret Tunnel
+1 Sliver Hive
+1 Soulstone Sanctuary
+1 Spara's Headquarters
+1 Swamp
+1 Temple of the Dragon Queen
+1 Tournament Grounds
+1 Turtle Lair
+1 Unclaimed Territory
+1 Arcane Denial
+1 Crib Swap
+1 Personify
+1 Restoration Magic
+1 Spoils of Adventure
+1 Swan Song
+1 Swords to Plowshares
+1 Unbury
+1 Wings of Velis Vel
+1 Banner of Kinship
+1 Commander's Sphere
+1 Firdoch Core
+1 Heirloom Blade
+1 Sol Ring
+1 Swiftfoot Boots
+1 Vanquisher's Banner
+1 Coveted Prize
+1 Disrupt Decorum
+1 Kindred Dominance
+1 Mass Appeal
+1 Overwhelming Stampede
+1 Winnowing
+1 Etchings of the Chosen
+1 Journey to Oblivion
+1 Kindred Discovery
+1 Leyline of Transformation
+1 Liliana's Contract
+1 Rooftop Storm

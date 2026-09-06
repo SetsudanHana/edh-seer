@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/bfEPPWaB9S50qnv2rO0z2w (source https://moxfield.com/decks/4Qi32ufg20Cl7rYQRfu6eQ)
+# tags Hatebears, Lands Matter, Ramp; bracket 3; saved 2026-09-05; 307 tagged of 11816 indexed
+
+Commander
+1 Thalia and The Gitrog Monster
+
+Deck
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Beast Within
+1 Crop Rotation
+1 Dark Ritual
+1 Heroic Intervention
+1 Path to Exile
+1 Silence
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Arcane Signet
+1 Conduit of Worlds
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Feast and Famine
+1 Sword of the Animist
+1 Talisman of Resilience
+1 Talisman of Unity
+1 Vedalken Orrery
+1 Aveline de Grandpré
+1 Aven Mindcensor
+1 Braids, Arisen Nightmare
+1 Brawn
+1 Craterhoof Behemoth
+1 Drana and Linvala
+1 Drumbellower
+1 Elesh Norn, Grand Cenobite
+1 Elesh Norn, Mother of Machines
+1 Emeria Angel
+1 Eternal Witness
+1 Kodama of the East Tree
+1 Kutzil, Malamet Exemplar
+1 Llanowar Elves
+1 Lotus Cobra
+1 Odric, Lunarch Marshal
+1 Opposition Agent
+1 Priest of Fell Rites
+1 Ramunap Excavator
+1 Satyr Wayfinder
+1 Scute Swarm
+1 Skirge Familiar
+1 Thalia, Heretic Cathar
+1 The Gitrog Monster
+1 The Necrobloom
+1 Tireless Provisioner
+1 Titania, Protector of Argoth
+1 Toski, Bearer of Secrets
+1 Varragoth, Bloodsky Sire
+1 Wight of the Reliquary
+1 Bojuka Bog
+1 Bountiful Promenade
+1 Brushland
+1 Canopy Vista
+1 Caves of Koilos
+1 Command Tower
+1 Dakmor Salvage
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+6 Forest
+1 Golgari Rot Farm
+1 Isolated Chapel
+1 Llanowar Wastes
+1 Orzhov Basilica
+5 Plains
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Sunpetal Grove
+5 Swamp
+1 Terramorphic Expanse
+1 Undergrowth Stadium
+1 Woodland Cemetery
+1 Cryptolith Rite
+1 Felidar Retreat
+1 Phyrexian Reclamation
+1 Retreat to Hagra
+1 Cultivate
+1 Damn
+1 Debt to the Deathless
+1 Kodama's Reach
+1 Rampant Growth
+1 Reanimate
+1 Rishkar's Expertise
+1 Unearth
+1 Invasion of Zendikar

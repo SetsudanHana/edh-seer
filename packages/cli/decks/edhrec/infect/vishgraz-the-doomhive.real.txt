@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/CYWcKb6qzcOKclILU_Px9w (source https://moxfield.com/decks/uAChocOjtEO--sICD6rpFA)
+# tags Infect, Tokens, Blink; bracket 3; saved 2026-09-05; 918 tagged of 4991 indexed
+
+Commander
+1 Vishgraz, the Doomhive
+
+Deck
+1 Abrupt Decay
+1 Assassin's Trophy
+1 Cloudshift
+1 Eladamri's Call
+1 Ephemerate
+1 Force of Vigor
+1 Heroic Intervention
+1 Infectious Bite
+1 Infernal Grasp
+1 Noxious Revival
+1 Path to Exile
+1 Swords to Plowshares
+1 Vraska's Fall
+1 Ajani, Sleeper Agent
+1 Vraska, Betrayal's Sting
+1 Arcane Signet
+1 Ashnod's Altar
+1 Bitterthorn, Nissa's Animus
+1 Chromatic Lantern
+1 Glistening Sphere
+1 Nim Deathmantle
+1 Norn's Wellspring
+1 Skullclamp
+1 Sol Ring
+1 Staff of Compleation
+1 Belbe, Corrupted Observer
+1 Bloated Contaminator
+1 Bloated Processor
+1 Brimaz, Blight of Oreskos
+1 Cankerbloom
+1 Contaminant Grafter
+1 Elas il-Kor, Sadistic Pilgrim
+1 Elesh Norn, Grand Cenobite
+1 Elesh Norn, Mother of Machines
+1 Essence of Orthodoxy
+1 Evolution Sage
+1 Gix, Yawgmoth Praetor
+1 Glissa Sunslayer
+1 Grafted Butcher
+1 Gurgling Anointer
+1 Ixhel, Scion of Atraxa
+1 Massacre Wurm
+1 Metastatic Evangel
+1 Mondrak, Glory Dominus
+1 Norn's Choirmaster
+1 Phyrexian Censor
+1 Phyrexian Swarmlord
+1 Rumor Gatherer
+1 Skithiryx, the Blight Dragon
+1 Suture Priest
+1 Venerated Rotpriest
+1 Bountiful Promenade
+1 Branchloft Pathway
+1 Brightclimb Pathway
+1 Brushland
+1 Caves of Koilos
+1 Command Tower
+1 Darkbore Pathway
+1 Deceptive Landscape
+1 Exotic Orchard
+4 Forest
+1 Godless Shrine
+1 Indatha Triome
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Marsh Flats
+1 Overgrown Tomb
+1 Phyrexian Tower
+4 Plains
+4 Swamp
+1 Temple Garden
+1 The Seedcore
+1 Undergrowth Stadium
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Vault of the Archangel
+1 Verdant Catacombs
+1 Windswept Heath
+1 Yavimaya, Cradle of Growth
+1 Diabolic Intent
+1 Eerie Ultimatum
+1 Geth's Summons
+1 Infectious Inquiry
+1 Phyresis Outbreak
+1 Unnatural Restoration
+1 White Sun's Twilight
+1 Norn's Decree
+1 Phyrexian Arena
+1 Phyrexian Reclamation
+1 Skrelv's Hive

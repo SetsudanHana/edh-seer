@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/E1ArOWCS4M4mNVBnJN02OA (source https://archidekt.com/decks/22201137)
+# tags Deathtouch; bracket 2; saved 2026-09-04; 271 tagged of 6114 indexed
+
+Commander
+1 Kelsien, the Plague
+
+Deck
+1 All-Out Assault
+1 Aspect of Gorgon
+1 Black Market
+1 Gift of Doom
+1 Phyrexian Arena
+1 Reconnaissance
+1 Repercussion
+1 Rune of Mortality
+1 Anguished Unmaking
+1 Bladebrand
+1 Boros Charm
+1 Chaos Warp
+1 Crackling Doom
+1 Despark
+1 Fracture
+1 Generous Gift
+1 Mirrodin Avenged
+1 Offer Immortality
+1 Stroke of Midnight
+1 Swift Demise
+1 Swords to Plowshares
+1 Terminate
+1 You Are Already Dead
+1 Ankle Shanker
+1 Archetype of Finality
+1 Assault Intercessor
+1 Blood Artist
+1 General's Enforcer
+1 Lae'zel, Vlaakith's Champion
+1 Magda, the Hoardmaster
+1 Massacre Wurm
+1 Mathas, Fiend Seeker
+1 Morbid Opportunist
+1 Nighthawk Scavenger
+1 Otharri, Suns' Glory
+1 Shay Cormac
+1 Slaughter Specialist
+1 Solemn Simulacrum
+1 Sun Titan
+1 Taii Wakeen, Perfect Shot
+1 Termination Facilitator
+1 Torbran, Thane of Red Fell
+1 Void Beckoner
+1 White Plume Adventurer
+1 Arcane Signet
+1 Basilisk Collar
+1 Gorgon Flail
+1 Gorgon's Head
+1 Hunter's Blowgun
+1 Orzhov Signet
+1 Patriar's Seal
+1 Sol Ring
+1 Sting, the Glinting Dagger
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Vorpal Sword
+1 Battlefield Forge
+1 Bojuka Bog
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Isolated Chapel
+7 Mountain
+1 Nomad Outpost
+1 Orzhov Basilica
+8 Plains
+1 Rugged Prairie
+1 Shattered Sanctum
+1 Smoldering Marsh
+1 Sulfurous Springs
+1 Sundown Pass
+8 Swamp
+1 Damn
+1 Night's Whisper
+1 Sign in Blood
+1 Vandalblast

@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/Itod4ScvIbwNEpjHBaGYXw (source https://archidekt.com/decks/18897930)
+# tags -1/-1 Counters; bracket 3; saved 2026-09-05; 2385 tagged of 18852 indexed
+
+Commander
+1 Auntie Ool, Cursewretch
+
+Deck
+1 Ammit Eternal
+1 Banewhip Punisher
+1 Bile-Vial Boggart
+1 Blighted Blackthorn
+1 Cankerbloom
+1 Carnifex Demon
+1 Channeler Initiate
+1 Dawnhand Dissident
+1 Devoted Druid
+1 Dread Tiller
+1 Dusk Urchins
+1 Evolution Sage
+1 Festering Mummy
+1 Fume Spitter
+1 Generous Patron
+1 Hapatra, Vizier of Poisons
+1 Harbinger of Night
+1 Kulrath Knight
+1 Maha, Its Feathers Night
+1 Massacre Girl, Known Killer
+1 Necroskitter
+1 Obelisk Spider
+1 Persistent Constrictor
+1 Scuzzback Scrounger
+1 Sinister Gnarlbark
+1 Skinrender
+1 Soul Snuffers
+1 Spitting Dilophosaurus
+1 The Reaper, King No More
+1 The Scorpion God
+1 Tree of Perdition
+1 Village Pillagers
+1 Wickerbough Elder
+1 Yawgmoth, Thran Physician
+1 Arcane Signet
+1 Contagion Clasp
+1 Skullclamp
+1 Sol Ring
+1 Assassin's Trophy
+1 Atomize
+1 Beast Within
+1 Blight Rot
+1 Grim Affliction
+1 Scar
+1 Black Sun's Zenith
+1 Bogslither's Embrace
+1 Cinder Strike
+1 Cultivate
+1 Darkness Descends
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Pick Your Poison
+1 Thirsting Roots
+1 Three Visits
+1 Blazemire Verge
+1 Blood Crypt
+1 Cinder Glade
+1 Command Tower
+1 Deathcap Glade
+1 Dragonskull Summit
+4 Forest
+1 Haunted Ridge
+1 Hidden Hideout
+1 Karn's Bastion
+1 Karplusan Forest
+1 Llanowar Wastes
+2 Mountain
+1 Nesting Grounds
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Rockfall Vale
+1 Rootbound Crag
+1 Smoldering Marsh
+1 Stomping Ground
+1 Sulfurous Springs
+8 Swamp
+1 Thornspire Verge
+1 Vernal Fen
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Blowfly Infestation
+1 Everlasting Torment
+1 Flourishing Defenses
+1 Glistening Oil
+1 Guardian Project
+1 Nest of Scarabs

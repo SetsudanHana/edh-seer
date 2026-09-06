@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/j8FL7kvVlNmzGwjnd0rCmA (source https://archidekt.com/decks/15098123)
+# tags Dragons, Treasure, Kicker; bracket unset; saved 2025-08-07; 2 tagged of 31 indexed
+
+Commander
+1 Verix Bladewing
+
+Deck
+1 Abrade
+1 Big Score
+1 Burst Lightning
+1 Cinderclasm
+1 Dragon's Fire
+1 Overload
+1 Sarkhan's Triumph
+1 Scorching Lava
+1 Shivan Fire
+1 Spit Flame
+1 Unleash Fury
+1 Unstable Footing
+1 Arcane Signet
+1 Carnelian Orb of Dragonkind
+1 Dragon's Hoard
+1 Dragonstorm Globe
+1 Everflowing Chalice
+1 Fire Diamond
+1 Glittering Stockpile
+1 Bloodstone Goblin
+1 Dragon Egg
+1 Dragon Mage
+1 Dragonlord's Servant
+1 Dragonmaster Outcast
+1 Emblazoned Golem
+1 Firespitter Whelp
+1 Flametongue Yearling
+1 Ganax, Astral Hunter
+1 Ghitu Chronicler
+1 Glorybringer
+1 Goblin Bushwhacker
+1 Goblin Ruinblaster
+1 Kavu Aggressor
+1 Keldon Overseer
+1 Lathliss, Dragon Queen
+1 Patron of the Arts
+1 Pouncing Kavu
+1 Rapacious Dragon
+1 Reckless Barbarian
+1 Sarkhan, Dragon Ascendant
+1 Scorch Rider
+1 Shatterskull Charger
+1 Shivan Dragon
+1 Skitter of Lizards
+1 Skizzik
+1 Spawn of Thraxes
+1 Torch Slinger
+1 Breaching Dragonstorm
+1 Crucible of Fire
+1 Outpost Siege
+1 Rumbling Aftershocks
+1 Breath of Darigaaz
+1 Earthquake
+1 Elemental Appeal
+1 Faithless Looting
+1 Fight with Fire
+1 Roil Eruption
+1 Seize the Spoils
+1 Tormenting Voice
+1 Dormant Volcano
+1 Evolving Wilds
+1 Ghost Quarter
+1 Haven of the Spirit Dragon
+1 Maelstrom of the Spirit Dragon
+1 Mines of Moria
+26 Mountain
+1 Myriad Landscape
+1 Opal Palace
+1 Path of Ancestry
+1 Temple of the Dragon Queen
+1 Terramorphic Expanse
+1 Throne of Makindi
+1 Koth, Fire of Resistance
+1 Sarkhan the Masterless

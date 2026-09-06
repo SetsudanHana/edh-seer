@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/juri-master-of-the-revue/fling
+# theme Fling (57 decks)
+
+Commander
+1 Juri, Master of the Revue
+
+Deck
+1 Animation Module
+1 Arcane Signet
+1 Ashnod's Altar
+1 Commander's Sphere
+1 Mind Stone
+1 Skullclamp
+1 Sol Ring
+1 Tarrian's Soulcleaver
+1 The Ozolith
+1 Urabrask's Forge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Fabled Passage
+1 Haunted Ridge
+1 High Market
+1 Maestros Theater
+8 Mountain
+1 Myriad Landscape
+1 Rakdos Carnarium
+1 Rogue's Passage
+1 Smoldering Marsh
+1 Sulfurous Springs
+10 Swamp
+1 Terramorphic Expanse
+1 Treasure Vault
+1 Academy Manufactor
+1 Braids, Arisen Nightmare
+1 Callous Sell-Sword
+1 Carrion Feeder
+1 Crime Novelist
+1 Fain, the Broker
+1 Harmonic Prodigy
+1 Impulsive Pilferer
+1 Lagomos, Hand of Hatred
+1 Mahadi, Emporium Master
+1 Marionette Apprentice
+1 Mayhem Devil
+1 Mirkwood Bats
+1 Morbid Opportunist
+1 Nadier's Nightblade
+1 Ophiomancer
+1 Pitiless Plunderer
+1 Professional Face-Breaker
+1 Reassembling Skeleton
+1 Ruthless Technomancer
+1 Smaug, Wicked Worm
+1 Stormclaw Rager
+1 Umbral Collar Zealot
+1 Viscera Seer
+1 Warren Soultrader
+1 Woe Strider
+1 Xorn
+1 Black Market Connections
+1 Curse of Opulence
+1 Descent into Avernus
+1 Goblin Bombardment
+1 Obsessive Pursuit
+1 Rakdos Joins Up
+1 Big Score
+1 Bulk Up
+1 Corrupted Conviction
+1 Deadly Dispute
+1 Fake Your Own Death
+1 Fling
+1 Kazuul's Fury
+1 Rakdos Charm
+1 Self-Destruct
+1 Soul's Fire
+1 Unleash Fury
+1 Village Rites
+1 Chandra, Acolyte of Flame
+1 Blasphemous Act
+1 Blood Money
+1 Brass's Bounty
+1 Chandra's Ignition
+1 Feed the Swarm
+1 Rite of Consumption
+1 Thud
+1 Victimize

@@ -1,0 +1,78 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-mindskinner/mill
+# theme Mill (2327 decks)
+
+Commander
+1 The Mindskinner
+
+Deck
+1 Arcane Signet
+1 Blackblade Reforged
+1 Bonehoard
+1 Fireshrieker
+1 Leyline Axe
+1 Lightning Greaves
+1 Mesmeric Orb
+1 Mindcrank
+1 Riverchurn Monument
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of the Animist
+1 The Water Crystal
+1 Thought Vessel
+29 Island
+1 Jidoor, Aristocratic Capital
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Scavenger Grounds
+1 Auton Soldier
+1 Bruvac the Grandiloquent
+1 Dreamborn Muse
+1 Eluge, the Shoreless Sea
+1 Esior, Wardwing Familiar
+1 Fleet Swallower
+1 Giggling Skitterspike
+1 Hedron Crab
+1 Jace's Phantasm
+1 Mirelurk Queen
+1 Riddlekeeper
+1 Ruin Crab
+1 Silent Hallcreeper
+1 Soulless Jailer
+1 Spark Double
+1 Terisian Mindbreaker
+1 Undead Alchemist
+1 Vantress Gargoyle
+1 Zellix, Sanity Flayer
+1 Court of Cunning
+1 Drowned Secrets
+1 Fraying Sanity
+1 Memory Erosion
+1 Propaganda
+1 Psychic Corrosion
+1 Rhystic Study
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Archive Trap
+1 Counterspell
+1 Cyclonic Rift
+1 Didn't Say Please
+1 Drown in Dreams
+1 High Tide
+1 Negate
+1 Pongify
+1 Rapid Hybridization
+1 Thought Collapse
+1 Visions of Beyond
+1 Jace, the Perfected Mind
+1 Cut Your Losses
+1 Fractured Sanity
+1 Irenicus's Vile Duplication
+1 Maddening Cacophony
+1 Tasha's Hideous Laughter
+1 Traumatize
+1 Windfall

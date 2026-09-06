@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/owxR9zWmXggDelADFmOHDA (source https://archidekt.com/decks/26007915)
+# tags Saboteurs, Unblockable; bracket 3; saved 2026-09-04; 39 tagged of 6089 indexed
+
+Commander
+1 Felix Five-Boots
+
+Deck
+1 Access Tunnel
+1 Bayou
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Escape Tunnel
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Grove
+1 Foreboding Landscape
+1 Forest
+7 Island
+1 Misty Rainforest
+1 Morphic Pool
+1 Opulent Palace
+1 Polluted Delta
+1 Prismatic Vista
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Shizo, Death's Storehouse
+1 Sunken Ruins
+1 Swamp
+1 Terramorphic Expanse
+1 Tropical Island
+1 Underground Sea
+1 Verdant Catacombs
+1 Watery Grave
+1 Zagoth Triome
+1 Aqueous Form
+1 Impostor Syndrome
+1 One with Nature
+1 Reconnaissance Mission
+1 Arcane Heist
+1 Call of the Nightwing
+1 Farseek
+1 Hands of Binding
+1 Hidden Strings
+1 Last Thoughts
+1 Mental Vapors
+1 Midnight Recovery
+1 Nature's Lore
+1 Paranoid Delusions
+1 Rampant Growth
+1 Shadow Slice
+1 Stolen Identity
+1 Three Visits
+1 Trait Doctoring
+1 Undercity Plague
+1 Voidwalk
+1 Whispering Madness
+1 Writ of Return
+1 Arcane Signet
+1 Bident of Thassa
+1 Fellwar Stone
+1 Goldvein Pick
+1 Lavaspur Boots
+1 Lightning Greaves
+1 Sol Ring
+1 Strixhaven Stadium
+1 Swiftfoot Boots
+1 The Indomitable
+1 The Key to the Vault
+1 Trailblazer's Boots
+1 Whispersilk Cloak
+1 Winged Boots
+1 Zephyr Boots
+1 Baleful Strix
+1 Cazur, Ruthless Stalker
+1 Cephalid Facetaker
+1 Changeling Outcast
+1 Cold-Eyed Selkie
+1 Drana, Liberator of Malakir
+1 Edric, Spymaster of Trest
+1 Enduring Curiosity
+1 Fallen Shinobi
+1 Glissa Sunslayer
+1 Grazilaxx, Illithid Scholar
+1 Grim Hireling
+1 Invisible Stalker
+1 Malcolm, Alluring Scoundrel
+1 Ohran Frostfang
+1 Orochi Soul-Reaver
+1 Shadowmage Infiltrator
+1 Shoreline Looter
+1 Silent Hallcreeper
+1 Slither Blade
+1 Toski, Bearer of Secrets
+1 Triton Shorestalker
+1 Ukkima, Stalking Shadow
+1 Kaito, Cunning Infiltrator

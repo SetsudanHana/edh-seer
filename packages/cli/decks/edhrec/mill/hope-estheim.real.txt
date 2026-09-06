@@ -1,0 +1,74 @@
+# edhrec deck https://edhrec.com/deckpreview/rY7Uqf7RwdPKjNwiwgNrlg (source https://archidekt.com/decks/25755001)
+# tags Flying, Mill, Lifegain; bracket 2; saved 2026-09-05; 1614 tagged of 17775 indexed
+
+Commander
+1 Hope Estheim
+
+Deck
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Angel's Mercy
+1 Blessed Light
+1 Demystify
+1 Generous Gift
+1 Invoke the Divine
+1 Negate
+1 Radiant Strike
+1 Refute
+1 Stroke of Midnight
+1 Take Up the Shield
+1 Unsummon
+1 War Report
+1 Ajani's Pridemate
+1 Angel of Finality
+1 Angel of Vitality
+1 Archaeomancer
+1 Beloved Princess
+1 Cat Collector
+1 Crusader of Odric
+1 Dazzling Angel
+1 Drogskol Reaver
+1 Empyrean Eagle
+1 Exemplar of Light
+1 Fog Bank
+1 Guarded Heir
+5 Hare Apparent
+1 Healer's Hawk
+1 Herald of Eternal Dawn
+1 Hinterland Sanctifier
+1 Inspiring Overseer
+1 Kykar, Zephyr Awakener
+1 Leonardo, Cutting Edge
+1 Lifecreed Duo
+1 Linden, the Steadfast Queen
+1 Lyra Dawnbringer
+1 Mesa Unicorn
+1 Outlaw Medic
+1 Rosa, Resolute White Mage
+1 Senu, Keen-Eyed Protector
+1 Seraph of Dawn
+1 Serra Angel
+1 Spellkeeper Weird
+1 Ultimecia, Temporal Threat
+1 Vanguard Seraph
+1 Warden of Evos Isle
+1 Youthful Valkyrie
+1 Atlantis Attacks
+1 Emerge from the Cocoon
+1 Fumigate
+1 Hop to It
+1 Raise the Past
+1 Remember the Fallen
+1 Solemn Offering
+1 Stock Up
+1 White Sun's Twilight
+1 Azorius Guildgate
+15 Island
+1 Lake-town
+1 Lonely Arroyo
+15 Plains
+1 Port Town
+1 Temple of Enlightenment
+1 Thriving Heath
+1 Thriving Isle
+1 Tranquil Cove

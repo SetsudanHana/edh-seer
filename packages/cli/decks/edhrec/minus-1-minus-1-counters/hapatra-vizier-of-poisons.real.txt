@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/Q8YFGvHrasKU1ot3fmU62A (source https://archidekt.com/decks/6476622)
+# tags Proliferate, Tokens, Snakes, -1/-1 Counters, Infect, Deathtouch, Combo, Phyrexians; bracket 2; saved 2026-09-05; 1191 tagged of 5980 indexed
+
+Commander
+1 Hapatra, Vizier of Poisons
+
+Deck
+1 Assassin's Trophy
+1 Atomize
+1 Beast Within
+1 Collective Resistance
+1 Fell the Profane
+1 Grim Affliction
+1 Infectious Bite
+1 Revitalizing Repast
+1 Tangle
+1 Tear Asunder
+1 Vraska's Fall
+1 Witherbloom Charm
+1 Astral Cornucopia
+1 Contagion Clasp
+1 Everflowing Chalice
+1 Glistening Sphere
+1 My Precious
+1 Requiem Monolith
+1 Skullclamp
+1 Staff of Compleation
+1 Bala Ged Recovery
+1 Black Sun's Zenith
+1 Carnivorous Canopy
+1 Cultivate
+1 Drown in Ichor
+1 Expand the Sphere
+1 Infectious Inquiry
+1 Kodama's Reach
+1 Night's Whisper
+1 Phyresis Outbreak
+1 Sign in Blood
+1 Smell Fear
+1 Thirsting Roots
+1 Triumph of the Hordes
+1 Unnatural Restoration
+1 Vat Emergence
+1 Barren Moor
+1 Blooming Marsh
+1 Bojuka Bog
+1 Boseiju, Who Endures
+1 Command Tower
+1 Darkbore Pathway
+1 Deathcap Glade
+1 Festering Thicket
+4 Forest
+1 Golgari Rot Farm
+1 Inkmoth Nexus
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Nurturing Peatland
+1 Overgrown Tomb
+1 Rogue's Passage
+5 Swamp
+1 Tranquil Thicket
+1 Turbulent Fen
+1 Twilight Mire
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Vernal Fen
+1 Viridescent Bog
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Bilious Skulldweller
+1 Bloated Contaminator
+1 Bloodroot Apothecary
+1 Cankerbloom
+1 Channeler Initiate
+1 Contaminant Grafter
+1 Devoted Druid
+1 Evolution Sage
+1 Flesh-Eater Imp
+1 Fynn, the Fangbearer
+1 Generous Patron
+1 Glissa Sunslayer
+1 Glissa's Retriever
+1 Ichor Rats
+1 Ichorspit Basilisk
+1 Oakhame Adversary
+1 Ohran Frostfang
+1 Persistent Constrictor
+1 Phyrexian Crusader
+1 Sinister Gnarlbark
+1 Skithiryx, the Blight Dragon
+1 Spitting Dilophosaurus
+1 The Serpent Society
+1 Tyrranax Atrocity
+1 Tyrranax Rex
+1 Venomous Brutalizer
+1 Yawgmoth, Thran Physician
+1 Vraska, Betrayal's Sting

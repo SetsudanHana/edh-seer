@@ -1,0 +1,75 @@
+# edhrec deck https://edhrec.com/deckpreview/IWsqtRWdMlD2vR5BE2rKTw (source https://archidekt.com/decks/15089616)
+# tags Stompy, ETB, Sneak Attack, Attack Triggers; bracket 2; saved 2026-09-04; 78 tagged of 9996 indexed
+
+Commander
+1 Tannuk, Steadfast Second
+
+Deck
+1 Abrade
+1 Chaos Warp
+1 Cut Propulsion
+1 Demand Answers
+1 Full Bore
+1 Rig for War
+1 Thrill of Possibility
+1 Unexpected Windfall
+1 Arcane Signet
+1 Conjurer's Closet
+1 Coveted Jewel
+1 Extinguisher Battleship
+1 Hazoret's Monument
+1 Lightning Greaves
+1 Melded Moxite
+1 Monument to Endurance
+1 Ruby Medallion
+1 Sol Ring
+1 The Endstone
+1 The Fire Crystal
+1 The Reaver Cleaver
+1 Avatar of Slaughter
+1 Balefire Dragon
+1 Blast-Furnace Hellkite
+1 Blightsteel Colossus
+1 Bloodfire Kavu
+1 Clive, Ifrit's Dominant
+1 Combat Celebrant
+1 Combustible Gearhulk
+1 Defiler of Instinct
+1 Etali, Primal Storm
+1 Flametongue Kavu
+1 Frontline War-Rager
+1 Hellkite Tyrant
+1 Ilharg, the Raze-Boar
+1 Kav Landseeker
+1 Kavaron Skywarden
+1 Knuckles the Echidna
+1 Maelstrom Colossus
+1 Memorial Team Leader
+1 Molecular Modifier
+1 Molten Monstrosity
+1 Molten Primordial
+1 Myojin of Roaring Blades
+1 Possibility Technician
+1 Professional Face-Breaker
+1 Sandstone Oracle
+1 Skitterbeam Battalion
+1 Solemn Simulacrum
+1 Terrapact Intimidator
+1 Trumpeting Carnosaur
+1 Vaultguard Trooper
+1 Chandra, Torch of Defiance
+1 Charred Foyer // Warped Space
+1 Pain for All
+1 Sneak Attack
+1 Weapons Manufacturing
+1 Devastating Onslaught
+1 Faithless Looting
+1 Jeska's Will
+1 Ruinous Rampage
+1 Terminal Velocity
+1 Vandalblast
+1 Kavaron, Memorial World
+32 Mountain
+1 Rogue's Passage
+1 Temple of the False God
+1 Treasure Vault

@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/bBZ5MJl9AXXK4e7u5CR6DQ (source https://archidekt.com/decks/5528472)
+# tags Spell Copy, Treasure, Storm, Spellslinger, Impulse Draw, Pingers, Burn; bracket 3; saved 2026-09-03; 139 tagged of 10437 indexed
+
+Commander
+1 Ojer Axonil, Deepest Might
+
+Deck
+1 Arcane Signet
+1 Champion's Helm
+1 Lightning Greaves
+1 Ruby Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Big Score
+1 Blazing Crescendo
+1 Bolt Bend
+1 Bulk Up
+1 Chaos Warp
+1 Deflecting Swat
+1 Desperate Ritual
+1 Downhill Charge
+1 Flare of Duplication
+1 Gut Shot
+1 Lava Dart
+1 Lightning Bolt
+1 Needle Drop
+1 Play with Fire
+1 Price of Progress
+1 Pyretic Ritual
+1 Redirect Lightning
+1 Return the Favor
+1 Seething Song
+1 Spikefield Hazard
+1 Unexpected Windfall
+1 Valakut Awakening
+1 Birgi, God of Storytelling
+1 Coruscation Mage
+1 Electrostatic Field
+1 Erebor Flamesmith
+1 Firebrand Archer
+1 Firespitter Whelp
+1 Guttersnipe
+1 Imperial Recruiter
+1 Kessig Flamebreather
+1 Magus of the Wheel
+1 Pinnacle Monk
+1 Runaway Steam-Kin
+1 Storm-Kiln Artist
+1 Thermo-Alchemist
+1 Thunderdrum Soloist
+1 Treasonous Ogre
+1 Urabrask
+1 Boltwave
+1 End the Festivities
+1 Fiery Confluence
+1 Gamble
+1 Grab the Prize
+1 Grapeshot
+1 Jeska's Will
+1 Light Up the Stage
+1 Mana Geyser
+1 Reckless Impulse
+1 Rite of Flame
+1 Tectonic Hazard
+1 Volcanic Spray
+1 Wheel of Misfortune
+1 Will of the Jeskai
+1 Witch's Mark
+1 Wrenn's Resolve
+1 Descent into Avernus
+1 Fiery Inscription
+1 Manabarbs
+1 Spellshock
+1 Underworld Breach
+1 Virtue of Courage
+30 Mountain
+1 War Room

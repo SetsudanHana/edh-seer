@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/v5D1tkOsmZil-uQQIgetqg (source https://moxfield.com/decks/eM1IKsHgjU-pSktsiwcb-w)
+# tags Hatebears; bracket 3; saved 2026-09-05; 272 tagged of 13813 indexed
+
+Commander
+1 Grand Arbiter Augustin IV
+
+Deck
+1 Academy Ruins
+1 Adarkar Wastes
+1 Cephalid Coliseum
+1 Command Tower
+1 Crystal Vein
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Irrigated Farmland
+8 Island
+1 Kor Haven
+1 Mystic Sanctuary
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Scavenger Grounds
+1 Seat of the Synod
+1 Skycloud Expanse
+1 Tolaria West
+1 Wasteland
+1 Approach of the Second Sun
+1 Fabricate
+1 Gift of Estates
+1 Idyllic Tutor
+1 Merchant Scroll
+1 Personal Tutor
+1 Solve the Equation
+1 Stock Up
+1 Supreme Verdict
+1 Time Wipe
+1 Winds of Abandon
+1 Arcane Signet
+1 Azorius Signet
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Jeweled Amulet
+1 Lotus Bloom
+1 Lotus Petal
+1 Sapphire Medallion
+1 Scroll Rack
+1 Sensei's Divining Top
+1 Sol Ring
+1 Talisman of Progress
+1 Thought Vessel
+1 Aura of Silence
+1 Counterbalance
+1 Ghostly Prison
+1 Land Tax
+1 Luminarch Ascension
+1 Mystic Remora
+1 Propaganda
+1 Rest in Peace
+1 Rhystic Study
+1 Smothering Tithe
+1 Aven Mindcensor
+1 Clever Impersonator
+1 Doorkeeper Thrull
+1 Esper Sentinel
+1 Faerie Mastermind
+1 Hushwing Gryff
+1 King T'Challa
+1 Magus of the Tabernacle
+1 Spelltithe Enforcer
+1 Stormscape Familiar
+1 Sunscape Familiar
+1 Thalia, Guardian of Thraben
+1 Brainstorm
+1 Chain of Vapor
+1 Counterspell
+1 Dovin's Veto
+1 Flusterstorm
+1 Force of Negation
+1 Impulse
+1 Long-Term Plans
+1 Mana Drain
+1 Memory Lapse
+1 Muddle the Mixture
+1 Negate
+1 Path to Exile
+1 Permission Denied
+1 Pongify
+1 Remand
+1 Reprieve
+1 Swords to Plowshares
+1 Dovin, Hand of Control

@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/dn93Qfu1QJ0b1Xq2zE87OQ (source https://archidekt.com/decks/25208655)
+# tags Glass Cannon, Wizards, X Spells, Increment, Commander Matters, Spellslinger, Combo, +1/+1 Counters, Card Draw; bracket 3; saved 2026-09-01; 1 tagged of 10280 indexed
+
+Commander
+1 Zimone, Infinite Analyst
+
+Deck
+1 Adrix and Nev, Twincasters
+1 Ambitious Augmenter
+1 Benevolent Hydra
+1 Berta, Wise Extrapolator
+1 Dirgur Focusmage
+1 Geometer's Arthropod
+1 High Fae Trickster
+1 Jadzi, Steward of Fate
+1 Nev, the Practical Dean
+1 Owlin Spiralmancer
+1 Pensive Professor
+1 Primo, the Unbounded
+1 Primordial Hydra
+1 Quandrix, the Proof
+1 Seedborn Muse
+1 Slippery Bogle
+1 Slumbering Trudge
+1 Tamiyo, Inquisitive Student
+1 Vigor
+1 Walking Ballista
+1 Wan Shi Tong, Librarian
+1 Yavimaya Bloomsage
+1 Alchemist's Refuge
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Evendo, Waking Haven
+1 Fabled Passage
+1 Flooded Grove
+10 Forest
+1 Hinterland Harbor
+14 Island
+1 Misty Rainforest
+1 Path of Ancestry
+1 Reliquary Tower
+1 Sodden Verdure
+1 Turbulent Wilderness
+1 Willowrush Verge
+1 Applied Geometry
+1 Awaken the Woods
+1 Expansion Algorithm
+1 Finale of Revelation
+1 Genesis Wave
+1 Germination Practicum
+1 Green Sun's Zenith
+1 Mathemagics
+1 Mind Spring
+1 Mind into Matter
+1 Nature's Rhythm
+1 Solve the Equation
+1 Wildest Dreams
+1 Arcane Signet
+1 Elementalist's Palette
+1 Emerald Medallion
+1 Fellwar Stone
+1 Gilded Lotus
+1 Sapphire Medallion
+1 Sol Ring
+1 The Earth Crystal
+1 The Ozolith
+1 Archdruid's Charm
+1 Blue Sun's Zenith
+1 Commander's Insight
+1 Counterspell
+1 Fierce Guardianship
+1 Flare of Denial
+1 Force of Negation
+1 Force of Will
+1 Mana Drain
+1 Mana Sculpt
+1 Nexus Mentality
+1 Stroke of Genius
+1 Burgeoning
+1 Doubling Season
+1 Lattice Library
+1 Terrasymbiosis
+1 Unbound Flourishing

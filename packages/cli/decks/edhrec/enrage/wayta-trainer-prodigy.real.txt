@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/8ToOvqiYNsd2NSugfokhew (source https://archidekt.com/decks/19702376)
+# tags Fight, Toolbox, Enrage; bracket 3; saved 2026-08-31; 411 tagged of 6673 indexed
+
+Commander
+1 Wayta, Trainer Prodigy
+
+Deck
+1 All-Fates Scroll
+1 Caltrops
+1 Manhole Cover
+1 Staff of Nin
+1 Battlefield Forge
+1 Boros Garrison
+1 Brushland
+1 Cinder Glade
+1 Command Tower
+1 Desert
+1 Evolving Wilds
+8 Forest
+1 Gruul Turf
+1 Jungle Shrine
+1 Karplusan Forest
+1 Krosan Verge
+5 Mountain
+5 Plains
+1 Rockfall Vale
+1 Rootbound Crag
+1 Scavenger Grounds
+1 Selesnya Sanctuary
+1 Stomping Ground
+1 Temple Garden
+1 Terramorphic Expanse
+1 Bellowing Aegisaur
+1 Blessed Hippogriff
+1 Boros Reckoner
+1 Brash Taunter
+1 Cacophodon
+1 Endbringer
+1 Feldon, Ronom Excavator
+1 Flumph
+1 Golden Guardian
+1 Grothama, All-Devouring
+1 Hercules, Olympian Hero
+1 Hungering Hydra
+1 Kutzil, Malamet Exemplar
+1 Marauding Raptor
+1 Mockingbird, Bobbi Morse
+1 Ranging Raptors
+1 Red Hulk
+1 Ripjaw Raptor
+1 Screaming Nemesis
+1 Seedborn Muse
+1 Siegehorn Ceratops
+1 Silverclad Ferocidons
+1 Strong, the Brutish Thespian
+1 Studious First-Year
+1 Toski, Bearer of Secrets
+1 Urban Daggertooth
+1 Walking Ballista
+1 Blacksmith's Skill
+1 Cast into the Fire
+1 Defend the Rider
+1 Fight as One
+1 Generous Gift
+1 Heritage Reclamation
+1 Origin of Metalbending
+1 Strength of Will
+1 Tyvar's Stand
+1 Valorous Stance
+1 Blasphemous Act
+1 Brotherhood's End
+1 Dance of the Tumbleweeds
+1 Farseek
+1 Map the Frontier
+1 Nature's Lore
+1 Nibelheim Aflame
+1 Restoration Seminar
+1 Rhino's Rampage
+1 Shared Roots
+1 Slaughter the Strong
+1 Tempt with Discovery
+1 Vandalblast
+1 Expedited Inheritance
+1 Lure
+1 Master's Guidance
+1 Pain for All
+1 Powerstone Minefield
+1 Prismatic Undercurrents
+1 Pyrohemia
+1 Rite of Passage
+1 Splintering Wind

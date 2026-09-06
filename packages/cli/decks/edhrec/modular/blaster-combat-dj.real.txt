@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/wy2XX9oB6b4mPkgjpvcsog (source https://moxfield.com/decks/761EmZj9VkuO_FdA2PtOug)
+# tags Modular, +1/+1 Counters; bracket 3; saved 2026-09-04; 73 tagged of 708 indexed
+
+Commander
+1 Blaster, Combat DJ
+
+Deck
+1 All Will Be One
+1 Branching Evolution
+1 Greater Good
+1 Hardened Scales
+1 High Score
+1 Level Up
+1 Loading Zone
+1 Ordeal of Nylea
+1 Rhythm of the Wild
+1 Stocking the Pantry
+1 Terrasymbiosis
+1 Uncivil Unrest
+1 Ancient Tomb
+1 Boseiju, Who Endures
+1 Command Tower
+1 Commercial District
+1 Fire-Lit Thicket
+5 Forest
+1 Great Furnace
+1 Grove of the Burnwillows
+1 Hidden Hideout
+1 High Market
+1 Inventors' Fair
+1 Karplusan Forest
+1 Lazotep Quarry
+4 Mountain
+1 Nesting Grounds
+1 Rockfall Vale
+1 Slagwoods Bridge
+1 Spire Garden
+1 Spire of Industry
+1 Stomping Ground
+1 Thornspire Verge
+1 Training Compound
+1 Tree of Tales
+1 Urza's Saga
+1 Wooded Foothills
+1 Arcane Signet
+1 Ashnod's Altar
+1 Krark-Clan Ironworks
+1 Ozolith, the Shattered Spire
+1 Skullclamp
+1 Sol Ring
+1 The Great Henge
+1 The Ooze
+1 Thunderous Velocipede
+1 Arcbound Crusher
+1 Arcbound Ravager
+1 Arcbound Reclaimer
+1 Arcbound Slith
+1 Arcbound Stinger
+1 Arcbound Tracker
+1 Arcbound Worker
+1 Big Mother Mouser
+1 Copper Myr
+1 Cradle Clearcutter
+1 Crystalline Crawler
+1 Disciple of Freyalise
+1 Foundry Inspector
+1 Giggling Skitterspike
+1 H.E.R.B.I.E., Lovable Robot
+1 Hangarback Walker
+1 Iron Apprentice
+1 Iron Myr
+1 Iron Spider, Stark Upgrade
+1 Marketback Walker
+1 Mindless Automaton
+1 Ornithopter of Paradise
+1 Patchwork Automaton
+1 Plague Myr
+1 Scrap Trawler
+1 Scrapyard Recombiner
+1 Solemn Simulacrum
+1 Steel Overseer
+1 Surge Conductor
+1 Tanuki Transplanter
+1 Technodrome
+1 The Vision
+1 Twitching Doll
+1 Verdurous Gearhulk
+1 Walking Ballista
+1 Bridgeworks Battle
+1 Chandra's Ignition
+1 Jeska's Will
+1 Life's Legacy
+1 Shatterskull Smashing
+1 Stump Stomp
+1 Fling
+1 Inspiring Call
+1 Kazuul's Fury
+1 Lifestream's Blessing
+1 Self-Destruct

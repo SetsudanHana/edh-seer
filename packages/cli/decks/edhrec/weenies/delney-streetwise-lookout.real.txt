@@ -1,0 +1,78 @@
+# edhrec deck https://edhrec.com/deckpreview/SxMUhxT4doNNtKoNktMCvg (source https://archidekt.com/decks/12602819)
+# tags Weenies, Triggered Abilities; bracket 2; saved 2026-09-03; 87 tagged of 6609 indexed
+
+Commander
+1 Delney, Streetwise Lookout
+
+Deck
+1 Ainok Strike Leader
+1 Archivist of Oghma
+1 Auriok Champion
+1 Baldin, Century Herdmaster
+1 Charismatic Conqueror
+1 Charming Prince
+1 Dalkovan Packbeasts
+1 Dawnbringer Cleric
+1 Deep Gnome Terramancer
+1 Distinguished Conjurer
+1 Enduring Innocence
+1 Evangel of Heliod
+1 Fortune, Loyal Steed
+1 Hatut Zeraze Strike Force
+1 Helpful Hunter
+1 Inspiring Overseer
+1 Kindly Customer
+1 Knight of the White Orchid
+1 Loran of the Third Path
+1 Mangara, the Diplomat
+1 Mentor of the Meek
+1 Militia Bugler
+1 Mirror Entity
+1 Moonshaker Cavalry
+1 Phelia, Exuberant Shepherd
+1 Reverent Hoplite
+1 Rumor Gatherer
+1 Saradoc, Master of Buckland
+1 Skyclave Apparition
+1 Soul Warden
+1 Soul's Attendant
+1 Spirited Companion
+1 Springjack Shepherd
+1 Starry-Eyed Skyrider
+1 Suture Priest
+1 Tax Collector
+1 Triceraton Commander
+1 Voice of Victory
+1 Wall of Omens
+1 Welcoming Vampire
+1 Werefox Bodyguard
+1 White Orchid Phantom
+1 Wilfred Mott
+1 Witch Enchanter
+1 Ascend from Avernus
+1 Dusk // Dawn
+1 Fell the Mighty
+1 Raise the Past
+1 Sevinne's Reclamation
+1 The Battle of Bywater
+1 Assemble the Players
+1 Dollmaker's Shop // Porcelain Gallery
+1 Trouble in Pairs
+1 Castle Ardenvale
+1 Eiganjo, Seat of the Empire
+1 Emeria, the Sky Ruin
+1 Minas Tirith
+1 Myriad Landscape
+29 Plains
+1 Reliquary Tower
+1 War Room
+1 Windbrisk Heights
+1 Eerie Interlude
+1 Lae'zel's Acrobatics
+1 Path to Exile
+1 Razorgrass Ambush
+1 Swords to Plowshares
+1 Will of the Mardu
+1 Oketra's Monument
+1 Pearl Medallion
+1 Sol Ring

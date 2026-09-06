@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/arna-kennerud-skycaptain/job-select
+# theme Job Select (2 decks)
+
+Commander
+1 Arna Kennerüd, Skycaptain
+
+Deck
+1 Assassin Gauntlet
+1 Astrologian's Planisphere
+1 Azorius Signet
+1 Batterskull
+1 Biorganic Carapace
+1 Black Mage's Rod
+1 Blitzball Stadium
+1 Bloodforged Battle-Axe
+1 Blue Mage's Cane
+1 Colossus Hammer
+1 Cranial Plating
+1 Dark Knight's Greatsword
+1 Glimmer Lens
+1 Greatsword of Tyr
+1 Kemba's Banner
+1 Machinist's Arsenal
+1 Magitek Scythe
+1 Meteor Sword
+1 Ninja's Blades
+1 Phantom Blade
+1 Pre-War Formalwear
+1 Sage's Nouliths
+1 Sol Ring
+1 Sword of the Animist
+1 Talisman of Hierarchy
+1 Thought Vessel
+1 Winged Boots
+1 Aether Hub
+1 Arcane Sanctum
+1 Archway of Innovation
+1 Command Tower
+1 Contaminated Landscape
+1 Diamond City
+1 Drowned Catacomb
+1 Glacial Fortress
+1 Godless Shrine
+4 Island
+1 Isolated Chapel
+1 Morphic Pool
+1 Path of Ancestry
+8 Plains
+1 Prairie Stream
+1 Raffine's Tower
+1 Reliquary Tower
+1 Sea of Clouds
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Spire of Industry
+1 Sunken Hollow
+4 Swamp
+1 Temple of the False God
+1 Tyrite Sanctum
+1 Armored Skyhunter
+1 Basim Ibn Ishaq
+1 Beatrix, Loyal General
+1 Cid, Freeflier Pilot
+1 Cloud, Midgar Mercenary
+1 Codsworth, Handy Helper
+1 Cosmogrand Zenith
+1 Kappa Cannoneer
+1 Leaden Myr
+1 Master Transmuter
+1 Mm'menon, the Right Hand
+1 Puresteel Paladin
+1 Ratonhnhaké꞉ton
+1 Rikku, Resourceful Guardian
+1 Ronin, Shadow Stalker
+1 Rosa, Resolute White Mage
+1 Shimmer Dragon
+1 Sram, Senior Edificer
+1 Stoneforge Mystic
+1 Chains of Custody
+1 Detention Sphere
+1 Mantle of the Ancients
+1 Nerd Rage
+1 Treachery
+1 Twisted Embrace
+1 Dark Ritual
+1 Dispatch
+1 Dovin's Veto
+1 Mental Misstep
+1 Anchor to Reality
+1 Chart a Course
+1 Gitaxian Probe
+1 Open the Armory
+1 Requisition Raid

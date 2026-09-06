@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/rLAX0UGPG1aa_Cu_2xeZRQ (source https://archidekt.com/decks/10939646)
+# tags Merfolk, Ramp, +1/+1 Counters, Card Draw, Explore, Tokens; bracket 2; saved 2026-02-07; 12 tagged of 5268 indexed
+
+Commander
+1 Kumena, Tyrant of Orazca
+
+Deck
+1 Aetherize
+1 Beast Within
+1 Commit // Memory
+1 Growth Spiral
+1 Inspiring Call
+1 Quandrix Command
+1 Rapid Hybridization
+1 Ripples of Potential
+1 Arcane Signet
+1 Pillar of Origins
+1 Sol Ring
+1 Swiftfoot Boots
+1 Benthic Biomancer
+1 Cold-Eyed Selkie
+1 Coralhelm Commander
+1 Deepfathom Echo
+1 Deeproot Elite
+1 Deeproot Historian
+1 Emperor Mihail II
+1 Evolution Sage
+1 Hakbal of the Surging Soul
+1 Harbinger of the Tides
+1 Herald of Secret Streams
+1 Kiora's Follower
+1 Kopala, Warden of Waves
+1 Master of the Pearl Trident
+1 Merfolk Mistbinder
+1 Merfolk Skydiver
+1 Merfolk Sovereign
+1 Merrow Harbinger
+1 Merrow Reejerey
+1 Metallic Mimic
+1 Mist Dancer
+1 Murkfiend Liege
+1 Nicanzil, Current Conductor
+1 Realmwalker
+1 Seafloor Oracle
+1 Singer of Swift Rivers
+1 Stonybrook Banneret
+1 Svyelun of Sea and Sky
+1 Tanazir Quandrix
+1 Tatyova, Benthic Druid
+1 Thassa, God of the Sea
+1 Tishana, Voice of Thunder
+1 Topography Tracker
+1 Tributary Instructor
+1 Vorel of the Hull Clade
+1 Zegana, Utopian Speaker
+1 Branching Evolution
+1 Deeproot Pilgrimage
+1 Deeproot Waters
+1 Hardened Scales
+1 Kindred Discovery
+1 Reflections of Littjara
+1 Simic Ascendancy
+1 Song of Freyalise
+1 Twists and Turns
+1 Bygone Marvels
+1 Explore
+1 Kodama's Reach
+1 Nature's Lore
+1 Ravenform
+1 Wave Goodbye
+1 Captivating Cave
+1 Command Tower
+6 Forest
+1 Hidden Nursery
+1 Hinterland Harbor
+9 Island
+1 Karn's Bastion
+1 Llanowar Reborn
+1 Mosswort Bridge
+1 Myriad Landscape
+1 Oran-Rief, the Vastwood
+1 Path of Ancestry
+1 Pit of Offerings
+1 Promising Vein
+1 Reliquary Tower
+1 Secluded Courtyard
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Temple of the False God
+1 Thornwood Falls
+1 Unclaimed Territory
+1 Vineglimmer Snarl
+1 Volatile Fault

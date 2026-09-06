@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/victor-valgavoths-seneschal/rooms
+# theme Rooms (7 decks)
+
+Commander
+1 Victor, Valgavoth's Seneschal
+
+Deck
+1 Arcane Signet
+1 Keys to the House
+1 Orzhov Signet
+1 Pearl Medallion
+1 Sol Ring
+1 Thought Vessel
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Eclipsed Steppe
+1 Fetid Heath
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Isolated Chapel
+10 Plains
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Sunlit Marsh
+11 Swamp
+1 Tainted Field
+1 Terramorphic Expanse
+1 Valgavoth's Lair
+1 Alseid of Life's Bounty
+1 Appendage Amalgam
+1 Archon of Sun's Grace
+1 Armaggon, Future Shark
+1 Balemurk Leech
+1 Cult Healer
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Fear of Lost Teeth
+1 Fear of Surveillance
+1 Ghostly Dancers
+1 Grim Guardian
+1 Mesa Enchantress
+1 Ondu Spiritdancer
+1 Optimistic Scavenger
+1 Overlord of the Balemurk
+1 Overlord of the Mistmoors
+1 Soaring Lightbringer
+1 Spirited Companion
+1 Starfield Mystic
+1 Underworld Coinsmith
+1 Valgavoth's Faithful
+1 Valgavoth, Terror Eater
+1 Animate Dead
+1 Black Market Connections
+1 Changing Loyalty
+1 Coercive Impetus
+1 Cramped Vents // Access Maze
+1 Dazzling Theater // Prop Room
+1 Defiled Crypt // Cadaver Lab
+1 Derelict Attic // Widow's Walk
+1 Dollmaker's Shop // Porcelain Gallery
+1 Ethereal Armor
+1 Flickering Ward
+1 Funeral Room // Awakening Hall
+1 Grand Entryway // Elegant Rotunda
+1 Hallowed Haunting
+1 Kaya's Ghostform
+1 Lord Skitter's Blessing
+1 Meathook Massacre II
+1 Nowhere to Run
+1 Polluted Cistern // Dim Oubliette
+1 Ripples of Undeath
+1 Secret Arcade // Dusty Parlor
+1 Sheltered by Ghosts
+1 Sporogenic Infection
+1 Surgical Suite // Hospital Room
+1 Trapped in the Screen
+1 Unholy Annex // Ritual Chamber
+1 Waste Not
+1 Dark Ritual
+1 Path to Exile
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Damn
+1 Resurgent Belief
+1 Rush of Dread

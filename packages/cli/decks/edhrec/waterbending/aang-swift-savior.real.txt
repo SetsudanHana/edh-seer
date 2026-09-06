@@ -1,0 +1,73 @@
+# edhrec deck https://edhrec.com/deckpreview/Xu_eOSGOSa7mXNpibBe91g (source https://archidekt.com/decks/25029932)
+# tags Waterbending, Blink, Airbending; bracket 2; saved 2026-08-06; 17 tagged of 1512 indexed
+
+Commander
+1 Aang, Swift Savior
+
+Deck
+1 Aang's Iceberg
+1 Airbender Ascension
+1 Candlekeep Sage
+1 Political Triumph
+1 Team Avatar
+1 Teleportation Circle
+1 The Legend of Yangchen
+1 Waterbender Ascension
+1 Aang's Journey
+1 Voidwalk
+1 Waterbending Lesson
+1 Aang, the Last Airbender
+1 Abuelo, Ancestral Echo
+1 Appa, Loyal Sky Bison
+1 Archaeomancer
+1 Avatar Enthusiasts
+1 Brago, King Eternal
+1 Cloudblazer
+1 Ephara, God of the Polis
+1 Flickerwisp
+1 Forbidding Spirit
+1 Frontline Medic
+1 Genku, Future Shaper
+1 Hero of Bretagard
+1 Impassioned Orator
+1 Karmic Guide
+1 Katara, Bending Prodigy
+1 Knight of the White Orchid
+1 Mentor of the Meek
+1 Mistmeadow Witch
+1 Momo, Friendly Flier
+1 Momo, Playful Pet
+1 Mulldrifter
+1 Oji, the Exquisite Blade
+1 Otter-Penguin
+1 Selfless Squire
+1 Sokka, Lateral Strategist
+1 Soulherder
+1 Subjugator Angel
+1 Sunblast Angel
+1 Threadbind Clique
+1 Twining Twins
+1 Airbender's Reversal
+1 Airbending Lesson
+1 Bovine Intervention
+1 Crib Swap
+1 Disorder in the Court
+1 Eerie Interlude
+1 Enter the Avatar State
+1 Generous Gift
+1 Ghostway
+1 It'll Quench Ya!
+1 Path to Exile
+1 Stroke of Midnight
+1 Yip Yip!
+1 Arcane Signet
+1 Azorius Locket
+1 Bender's Waterskin
+1 Glider Staff
+1 Sol Ring
+1 Waterbending Scroll
+1 Command Tower
+17 Island
+18 Plains
+1 Reliquary Tower
+1 Tundra

@@ -1,0 +1,76 @@
+# edhrec average deck: https://edhrec.com/average-decks/jasmine-boreal/vanilla
+# theme Vanilla (8 decks)
+
+Commander
+1 Jasmine Boreal
+
+Deck
+1 Arcane Signet
+1 Commander's Sphere
+1 Cursed Totem
+1 Damping Matrix
+1 Selesnya Signet
+1 Sol Ring
+1 Canopy Vista
+1 Command Tower
+17 Forest
+15 Plains
+1 Reflecting Pool
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Ancient Brontodon
+1 Armored Warhorse
+1 Armored Wolf-Rider
+1 Dromoka Warrior
+1 Elite Vanguard
+1 Elvish Warrior
+1 Expedition Envoy
+1 Garruk's Gorehorn
+1 Gigantosaurus
+1 Glory Seeker
+1 Grizzled Leotau
+1 Grizzly Bears
+1 Indomitable Ancients
+1 Isamaru, Hound of Konda
+1 Kalonian Tusker
+1 Knight Errant
+1 Knight of New Benalia
+1 Leatherback Baloth
+1 Memnite
+1 Nyxborn Colossus
+1 Ordinary Bear
+1 Oreskos Swiftclaw
+1 Panther Warriors
+1 Quakestrider Ceratops
+1 Ruxa, Patient Professor
+1 Savannah Lions
+1 Sir Shandlar of Eberyn
+1 Sundial, Dawn Tyrant
+1 Terrian, World Tyrant
+1 Torsten Von Ursus
+1 Vorstclaw
+1 Watchwolf
+1 Anthem of Champions
+1 Collective Blessing
+1 Elemental Bond
+1 Gaea's Anthem
+1 Gerrard's Battle Cry
+1 Glorious Anthem
+1 Kenrith's Transformation
+1 Mirari's Wake
+1 Muraganda Petroglyphs
+1 Beast Within
+1 Disenchant
+1 Dromoka's Command
+1 Heroic Intervention
+1 Khalni Ambush
+1 Snakeskin Veil
+1 Swords to Plowshares
+1 Call of the Conclave
+1 Cultivate
+1 Explosive Vegetation
+1 Harmonize
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Wrath of God

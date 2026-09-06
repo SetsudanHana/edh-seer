@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/aFfAxqA_5piJHvD_VY8UaQ (source https://archidekt.com/decks/17773113)
+# tags Land Animation, Snow, Mana Rocks, Lands Matter, Tokens, Land Destruction, Elephants, Aggro; bracket 2; saved 2026-08-11; 71 tagged of 2943 indexed
+
+Commander
+1 Svella, Ice Shaper
+
+Deck
+1 Aggressive Mammoth
+1 Alpine Guide
+1 Barbarian Guides
+1 Battle Mammoth
+1 Beast Whisperer
+1 Boreal Druid
+1 Boreal Outrider
+1 Centaur Omenreader
+1 Conifer Wurm
+1 Craterhoof Behemoth
+1 Frostwalla
+1 Frostweb Spider
+1 Fyndhorn Brownie
+1 Giant Trap Door Spider
+1 Goblin Anarchomancer
+1 Goblin Rimerunner
+1 Goblin Snowman
+1 Icehide Golem
+1 Icehide Troll
+1 Karplusan Giant
+1 Karplusan Wolverine
+1 Ohran Frostfang
+1 Ohran Viper
+1 Ohran Yeti
+1 Rime Dryad
+1 Rime Tender
+1 Rimehorn Aurochs
+1 Rimescale Dragon
+1 Saddled Rimestag
+1 Sculptor of Winter
+1 Snow Fortress
+1 Spirit of the Aldergard
+1 Stalking Yeti
+1 Thermopod
+1 Woolly Mammoths
+1 Arcum's Astrolabe
+1 Arcum's Sleigh
+1 Arcum's Weathervane
+1 Arcum's Whistle
+1 Gruul Signet
+1 Heartstone
+1 Illusionist's Bracers
+1 Replicating Ring
+1 Rings of Brighthearth
+1 Sunstone
+1 Arni Slays the Troll
+1 Blizzard
+1 Freyalise's Winds
+1 Glacial Crevasses
+1 Glittering Frost
+1 Mana Reflection
+1 Snowblind
+1 Waking the Trolls
+1 Avalanche
+1 Blessing of Frost
+1 Blizzard Brawl
+1 Glacial Revelation
+1 Into the North
+1 Thermokarst
+1 Tundra Fumarole
+1 Dark Depths
+1 Faceless Haven
+2 Forest
+1 Frostwalk Bastion
+1 Highland Forest
+1 Highland Weald
+2 Mountain
+1 Mouth of Ronom
+1 Scrying Sheets
+1 Shimmerdrift Vale
+12 Snow-Covered Forest
+8 Snow-Covered Mountain
+1 Thriving Bluff
+1 Thriving Grove
+1 Frost Bite
+1 Mammoth Growth
+1 Second Harvest
+1 Skred
+1 Whiteout

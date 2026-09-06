@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/lynde-cheerful-tormentor/curses
+# theme Curses (1073 decks)
+
+Commander
+1 Lynde, Cheerful Tormentor
+
+Deck
+1 Arcane Signet
+1 Claws of Gix
+1 Crystal Chimes
+1 Dimir Signet
+1 Izzet Signet
+1 Lightning Greaves
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+6 Island
+1 Luxury Suite
+1 Morphic Pool
+4 Mountain
+1 Reliquary Tower
+1 Smoldering Marsh
+1 Steam Vents
+1 Sulfur Falls
+1 Sunken Hollow
+7 Swamp
+1 Training Center
+1 Watery Grave
+1 Xander's Lounge
+1 Accursed Witch
+1 Ashiok's Reaper
+1 Bitterheart Witch
+1 Braids, Arisen Nightmare
+1 Clever Impersonator
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Entity Tracker
+1 Grim Guardian
+1 Nightscape Familiar
+1 Obeka, Splitter of Seconds
+1 Protean Thaumaturge
+1 Sphinx of the Second Sun
+1 Thoughtrender Lamia
+1 Wicked Visitor
+1 Copy Enchantment
+1 Cruel Reality
+1 Curse of Bloodletting
+1 Curse of Death's Hold
+1 Curse of Disturbance
+1 Curse of Echoes
+1 Curse of Fool's Wisdom
+1 Curse of Hospitality
+1 Curse of Misfortunes
+1 Curse of Obsession
+1 Curse of Opulence
+1 Curse of Shaken Faith
+1 Curse of Shallow Graves
+1 Curse of Surveillance
+1 Curse of Thirst
+1 Curse of Unbinding
+1 Curse of Vengeance
+1 Curse of Verbosity
+1 Curse of the Nightly Hunt
+1 Curse of the Pierced Heart
+1 Curse of the Restless Dead
+1 Maddening Hex
+1 Mirrormade
+1 Paradox Haze
+1 Propaganda
+1 Torment of Scarabs
+1 Trespasser's Curse
+1 Arcane Denial
+1 Bedevil
+1 Chaos Warp
+1 Counterspell
+1 Negate
+1 Perilous Research
+1 Terminate
+1 Asinine Antics
+1 Blasphemous Act
+1 Curse of the Swine
+1 Feed the Swarm
+1 Vandalblast

@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/5AHlf-IEiZaV4MHE9nkDDg (source https://archidekt.com/decks/12384713)
+# tags Self-Damage, Knights, Sacrifice, Lifedrain; bracket 3; saved 2026-09-05; 733 tagged of 20299 indexed
+
+Commander
+1 K'rrik, Son of Yawgmoth
+
+Deck
+1 Accursed Duneyard
+1 Arena
+1 Cabal Stronghold
+28 Swamp
+1 Untaidake, the Cloud Keeper
+1 Aetherflux Reservoir
+1 Dark Knight's Greatsword
+1 Excalibur, Sword of Eden
+1 Ghost Lantern
+1 Sol Ring
+1 Swiftfoot Boots
+1 Alchemist's Assistant
+1 Ayara's Oathsworn
+1 Black Knight
+1 Bloodcrazed Paladin
+1 Bloodsworn Squire
+1 Bloodthirsty Conqueror
+1 Cavalier of Night
+1 Chancellor of the Dross
+1 Exsanguinator Cavalry
+1 Fell Horseman
+1 Foulmire Knight
+1 Gifted Aetherborn
+1 Haakon, Stromgald Scourge
+1 Knight of the Ebon Legion
+1 Marauding Knight
+1 Murderous Rider
+1 Nighthawk Scavenger
+1 Noxious Gearhulk
+1 Order of Midnight
+1 Phyrexian Crusader
+1 Phyrexian Obliterator
+1 Qarsi Revenant
+1 Sanguine Spy
+1 Shard of the Nightbringer
+1 Smitten Swordmaster
+1 Stromgald Cabal
+1 Stromgald Crusader
+1 Toxic Nim
+1 Vampire Scrivener
+1 Zodiark, Umbral God
+1 Arguel's Blood Fast
+1 Eternal Thirst
+1 Font of Agonies
+1 Kaya's Ghostform
+1 Armor of Shadows
+1 Body Count
+1 Consuming Corruption
+1 Dark Dabbling
+1 Dark Ritual
+1 Deadly Dispute
+1 Fell the Profane
+1 Imp's Mischief
+1 Malakir Rebirth
+1 Maximum Overdrive
+1 Professor's Warning
+1 Reckoner's Bargain
+1 Word of Command
+1 Beseech the Queen
+1 Cruelclaw's Heist
+1 Entreat the Dead
+1 Exsanguinate
+1 Extract the Truth
+1 Geth's Summons
+1 Gix's Command
+1 Insatiable Avarice
+1 Invoke Despair
+1 Make an Example
+1 New Blood
+1 Night's Whisper
+1 Profane Transfusion
+1 Sign in Blood

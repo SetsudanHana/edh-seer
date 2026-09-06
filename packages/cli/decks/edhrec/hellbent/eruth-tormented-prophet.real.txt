@@ -1,0 +1,78 @@
+# edhrec deck https://edhrec.com/deckpreview/D9mEjSIp2GZzmPgz-dD5Xg (source https://archidekt.com/decks/16684110)
+# tags Storm, Tokens, Spellslinger, Hellbent; bracket 3; saved 2026-08-27; 13 tagged of 1966 indexed
+
+Commander
+1 Eruth, Tormented Prophet
+
+Deck
+1 An Offer You Can't Refuse
+1 Brain Freeze
+1 Brainstorm
+1 Depart the Realm
+1 Discover the Impossible
+1 Flashback
+1 Frantic Search
+1 Gifts Ungiven
+1 High Tide
+1 Increasing Vengeance
+1 Lat-Nam's Legacy
+1 Long-Term Plans
+1 Pyretic Ritual
+1 Reverberate
+1 Saw It Coming
+1 Seething Song
+1 Snap
+1 Teach by Example
+1 Thrill of Possibility
+1 Archmage Emeritus
+1 Ardent Elementalist
+1 Ashling, Flame Dancer
+1 Electrostatic Field
+1 Goblin Electromancer
+1 Guttersnipe
+1 Harmonic Prodigy
+1 Kessig Flamebreather
+1 Mizzix of the Izmagnus
+1 Mizzix, Replica Rider
+1 Mocking Sprite
+1 Poppet Stitcher
+1 Spellbinding Soprano
+1 Storm-Kiln Artist
+1 Talrand, Sky Summoner
+1 Vadrik, Astral Archmage
+1 Young Pyromancer
+1 Blasphemous Act
+1 Crackle with Power
+1 Empty the Warrens
+1 Energy Tap
+1 Finale of Promise
+1 Galvanic Relay
+1 Ideas Unbound
+1 Ingenious Mastery
+1 Inspired Idea
+1 Inspired Tinkering
+1 Mind's Desire
+1 Mizzix's Mastery
+1 Ponder
+1 Preordain
+1 Ravenform
+1 Rousing Refrain
+1 Spectral Deluge
+1 Temporal Fissure
+1 Treasure Cruise
+1 You've Been Caught Stealing
+1 Cephalid Coliseum
+1 Desolate Lighthouse
+19 Island
+11 Mountain
+1 Stormcarved Coast
+1 Temple of Epiphany
+1 Cryptic Pursuit
+1 Fiery Inscription
+1 Shark Typhoon
+1 Zur's Weirding
+1 Rod of Absorption
+1 Sapphire Medallion
+1 Sentinel Tower
+1 Talisman of Creativity
+1 Wizard's Staff

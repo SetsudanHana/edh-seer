@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/QAaaIaE0FofeYJcOH8zScg (source https://archidekt.com/decks/20464956)
+# tags Big Mana, Activated Abilities, Lifedrain, Bounce, Politics; bracket 3; saved 2026-09-03; 98 tagged of 31481 indexed
+
+Commander
+1 Kenrith, the Returned King
+
+Deck
+1 Adarkar Wastes
+1 Bountiful Landscape
+1 Caves of Koilos
+1 Command Tower
+1 Deceptive Landscape
+1 Exotic Orchard
+1 Foreboding Landscape
+7 Forest
+4 Island
+1 Krosan Verge
+1 Llanowar Wastes
+2 Mountain
+1 Perilous Landscape
+4 Plains
+1 Seething Landscape
+1 Shattered Landscape
+3 Swamp
+1 Tranquil Landscape
+1 Twisted Landscape
+1 Yavimaya Coast
+1 Awakening
+1 Cowardice
+1 Dictate of Karametra
+1 Dismiss into Dream
+1 Island Sanctuary
+1 Mana Flare
+1 Sanguine Bond
+1 Training Grounds
+1 Wilderness Reclamation
+1 Beast Within
+1 Fact or Fiction
+1 Generous Gift
+1 Harrow
+1 Out of Bounds
+1 Perplexing Test
+1 Reins of Power
+1 Rewind
+1 Shared Summons
+1 Unwind
+1 Vastwood Fortification
+1 Benthic Biomancer
+1 Biomancer's Familiar
+1 Caustic Caterpillar
+1 Children of Korlis
+1 Dauntless Escort
+1 Dawnbreak Reclaimer
+1 Defiant Bloodlord
+1 Enduring Tenacity
+1 Fleshbag Marauder
+1 Generous Patron
+1 Kami of False Hope
+1 Loran of the Third Path
+1 Molten Primordial
+1 Ms. Bumbleflower
+1 Plaguecrafter
+1 Reclamation Sage
+1 Resolute Archangel
+1 Sakura-Tribe Elder
+1 Seedborn Muse
+1 Sokrates, Athenian Teacher
+1 Spore Frog
+1 Springbloom Druid
+1 Tataru Taru
+1 Veteran Explorer
+1 Vizkopa Guildmage
+1 Willbreaker
+1 Zirda, the Dawnwaker
+1 Bident of Thassa
+1 Door to Nothingness
+1 Glaring Spotlight
+1 Lightning Greaves
+1 Pendant of Prosperity
+1 Sol Ring
+1 Buried Alive
+1 Collective Voyage
+1 Cultivate
+1 Edge of Autumn
+1 Farseek
+1 Healing Technique
+1 Mass Mutiny
+1 Mob Rule
+1 Rampant Growth
+1 Replication Technique
+1 Secret Rendezvous

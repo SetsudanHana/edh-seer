@@ -1,0 +1,73 @@
+# edhrec deck https://edhrec.com/deckpreview/eKbsVIeMH0_EKTeRz544eA (source https://archidekt.com/decks/17632658)
+# tags Anthems, Hare Apparent, Offspring, Tokens, +1/+1 Counters, Midrange, Rabbits; bracket 2; saved 2026-02-16; 5 tagged of 8944 indexed
+
+Commander
+1 Finneas, Ace Archer
+
+Deck
+1 Abandoned Air Temple
+1 Access Tunnel
+1 Bountiful Promenade
+1 Branchloft Pathway
+1 Canopy Vista
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+6 Forest
+1 Fountainport
+1 Gavony Township
+1 Kor Haven
+1 Lupinflower Village
+1 Maze of Ith
+1 Minas Tirith
+1 Oakhollow Village
+1 Overgrown Farmland
+1 Path of Ancestry
+10 Plains
+1 Restless Prairie
+1 Selesnya Sanctuary
+1 Sunpetal Grove
+1 Temple Garden
+1 Three Tree City
+1 Airbender Ascension
+1 Caretaker's Talent
+1 Dollmaker's Shop // Porcelain Gallery
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Reconnaissance
+1 Sphere Grid
+1 Terrasymbiosis
+1 Tocasia's Welcome
+1 Akroma's Will
+1 Beast Within
+1 Clever Concealment
+1 Flare of Fortitude
+1 Heroic Intervention
+1 Inspiring Call
+1 Path to Exile
+1 Swords to Plowshares
+1 Banner of Kinship
+1 Brotherhood Regalia
+1 Gathering Stone
+1 Idol of Oblivion
+1 Oketra's Monument
+1 Panharmonicon
+1 Pearl Medallion
+1 Skullclamp
+1 The Earth Crystal
+1 Thrumming Stone
+1 Claim Jumper
+1 Delney, Streetwise Lookout
+1 Enduring Innocence
+20 Hare Apparent
+1 Hinterland Sanctifier
+1 Jacked Rabbit
+1 Pawpatch Recruit
+1 Pollen-Shield Hare
+1 Valley Questcaller
+1 Warren Warleader
+1 Elspeth, Storm Slayer
+1 Preposterous Proportions
+1 Raise the Past
+1 Season of the Burrow
+1 Wear Down
+1 Winds of Abandon

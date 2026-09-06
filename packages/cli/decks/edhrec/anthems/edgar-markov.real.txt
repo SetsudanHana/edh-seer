@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/MrG3hX5fDB_t19w4GVvMlA (source https://archidekt.com/decks/24607718)
+# tags Lifedrain, Anthems, Lifegain, Vampires, Aggro, Card Draw, +1/+1 Counters, Triggered Abilities, Tokens; bracket 3; saved 2026-07-31; 109 tagged of 50337 indexed
+
+Commander
+1 Edgar Markov
+
+Deck
+1 Akroma's Will
+1 Anguished Unmaking
+1 Bedevil
+1 Chaos Warp
+1 Dark Ritual
+1 Generous Gift
+1 Mortify
+1 Path to Exile
+1 Rakdos Charm
+1 Swords to Plowshares
+1 Terminate
+1 Withering Torment
+1 Arcane Signet
+1 Blade of the Bloodchief
+1 Bolas's Citadel
+1 Patchwork Banner
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Vanquisher's Banner
+1 Bartolomé del Presidio
+1 Blood Artist
+1 Blood Seeker
+1 Bloodghast
+1 Bloodline Keeper
+1 Captivating Vampire
+1 Champion of Dusk
+1 Charismatic Conqueror
+1 Clavileño, First of the Blessed
+1 Cordial Vampire
+1 Drana, Liberator of Malakir
+1 Dusk Legion Zealot
+1 Edgar, Charmed Groom
+1 Elenda's Hierophant
+1 Elenda, the Dusk Rose
+1 Falkenrath Gorger
+1 Forerunner of the Legion
+1 Guul Draz Vampire
+1 Indulgent Aristocrat
+1 Knight of the Ebon Legion
+1 Legion Lieutenant
+1 Markov Baron
+1 Master of Dark Rites
+1 Nighthawk Scavenger
+1 Ruthless Lawbringer
+1 Sanctum Seeker
+1 Shadow Alley Denizen
+1 Stromkirk Captain
+1 Vampire Cutthroat
+1 Vampire Nighthawk
+1 Vampire of the Dire Moon
+1 Viscera Seer
+1 Voldaren Epicure
+1 Welcoming Vampire
+1 Yahenni, Undying Partisan
+1 Battlefield Forge
+1 Blood Crypt
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Godless Shrine
+1 Isolated Chapel
+1 Luxury Suite
+3 Mountain
+1 Nomad Outpost
+4 Plains
+1 Reliquary Tower
+1 Sacred Foundry
+1 Secluded Courtyard
+1 Smoldering Marsh
+9 Swamp
+1 Tainted Field
+1 Unclaimed Territory
+1 Vault of the Archangel
+1 Voldaren Estate
+1 Windbrisk Heights
+1 Blasphemous Act
+1 Feed the Swarm
+1 Sign in Blood
+1 Toxic Deluge
+1 Phyrexian Arena
+1 Shared Animosity
+1 Sorin, Imperious Bloodlord

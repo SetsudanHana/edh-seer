@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/rUyreZClDW7MslzjlkL_Jw (source https://archidekt.com/decks/24115686)
+# tags Reanimator, Paradigm; bracket 3; saved 2026-07-28; 1 tagged of 2872 indexed
+
+Commander
+1 Narset, Jeskai Waymaster
+
+Deck
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Cascade Bluffs
+1 City of Brass
+1 Clifftop Retreat
+1 Command Tower
+1 Deserted Beach
+1 Glacial Fortress
+1 Hallowed Fountain
+7 Island
+1 Mana Confluence
+5 Mountain
+1 Mystic Gate
+1 Otawara, Soaring City
+3 Plains
+1 Rugged Prairie
+1 Sacred Foundry
+1 Sea of Clouds
+1 Shivan Reef
+1 Spectator Seating
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sundown Pass
+1 Training Center
+1 Angel of Indemnity
+1 Angel of the Ruins
+1 Archaeomancer
+1 Avacyn, Angel of Hope
+1 Combustible Gearhulk
+1 Dualcaster Mage
+1 Hullbreaker Horror
+1 Lier, Disciple of the Drowned
+1 Marang River Regent
+1 Pinnacle Monk
+1 Reya Dawnbringer
+1 Rielle, the Everwise
+1 Riptide Gearhulk
+1 Sanar, Unfinished Genius
+1 Storm-Kiln Artist
+1 Summon: Bahamut
+1 Summon: Knights of Round
+1 Sun Titan
+1 Surly Badgersaur
+1 The Warring Triad
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Extinguisher Battleship
+1 Fellwar Stone
+1 Izzet Signet
+1 Library of Leng
+1 Lotus Petal
+1 Mishra's Bauble
+1 Monument to Endurance
+1 Paradise Mantle
+1 Sensei's Divining Top
+1 Sol Ring
+1 Springleaf Drum
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 The Eternity Elevator
+1 Thran Dynamo
+1 Wayfarer's Bauble
+1 Brainstorm
+1 Desperate Ravings
+1 Frantic Search
+1 Galvanic Iteration
+1 Increasing Vengeance
+1 Mystical Tutor
+1 Purify the Grave
+1 Sink into Stupor
+1 Snap
+1 Echocasting Symposium
+1 Faithless Looting
+1 Gamble
+1 Gitaxian Probe
+1 Improvisation Capstone
+1 Mystic Retrieval
+1 Personal Tutor
+1 Ponder
+1 Portent
+1 Preordain
+1 Restoration Seminar
+1 Sevinne's Reclamation
+1 Strike It Rich

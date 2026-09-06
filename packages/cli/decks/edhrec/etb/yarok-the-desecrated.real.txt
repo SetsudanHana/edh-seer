@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/tMYOreQ_CIe8-wAn5qTdBQ (source https://archidekt.com/decks/25030447)
+# tags Landfall, ETB, Lands Matter; bracket 3; saved 2026-09-05; 366 tagged of 13107 indexed
+
+Commander
+1 Yarok, the Desecrated
+
+Deck
+1 Aesi, Tyrant of Gyre Strait
+1 Ancient Greenwarden
+1 Ashaya, Soul of the Wild
+1 Baleful Strix
+1 Champion of Lambholt
+1 Clifftop Lookout
+1 Coiling Oracle
+1 Dryad of the Ilysian Grove
+1 Eternal Witness
+1 Farhaven Elf
+1 Foundation Breaker
+1 Gandalf, Shadow's Foe
+1 Greensleeves, Maro-Sorcerer
+1 Icetill Explorer
+1 Iridescent Vinelasher
+1 Kodama of the East Tree
+1 Lotus Cobra
+1 Lumra, Bellow of the Woods
+1 Mole Man, Moloid Master
+1 Mossborn Hydra
+1 Muldrotha, the Gravetide
+1 Mulldrifter
+1 Ob Nixilis, the Fallen
+1 Rampaging Baloths
+1 Ravenous Chupacabra
+1 Reclamation Sage
+1 Risen Reef
+1 Scute Swarm
+1 Sire of Stagnation
+1 Springbloom Druid
+1 Springheart Nantuko
+1 Starfield Vocalist
+1 Tatyova, Benthic Druid
+1 Timeless Witness
+1 Tireless Provisioner
+1 Topiary Stomper
+1 Wood Elves
+1 Arcane Signet
+1 Fellwar Stone
+1 Panharmonicon
+1 Sol Ring
+1 Assassin's Trophy
+1 Beast Within
+1 Crop Rotation
+1 Double Major
+1 Ghostly Flicker
+1 Growth Spiral
+1 Harrow
+1 Heroic Intervention
+1 Roiling Regrowth
+1 Teferi's Time Twist
+1 Breeding Pool
+1 Command Tower
+1 Deathcap Glade
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Field of the Dead
+4 Forest
+1 Golgari Rot Farm
+1 Hinterland Harbor
+4 Island
+1 Misty Rainforest
+1 Morphic Pool
+1 Opulent Palace
+1 Overgrown Tomb
+1 Polluted Delta
+1 Rejuvenating Springs
+1 Shipwreck Marsh
+1 Sunken Hollow
+4 Swamp
+1 Turbulent Fen
+1 Turbulent Wilderness
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Watery Grave
+1 Woodland Cemetery
+1 Zagoth Triome
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Scapeshift
+1 Three Visits
+1 Toxic Deluge
+1 Guardian Project
+1 Retreat to Hagra
+1 Virtue of Knowledge
+1 Zendikar's Roil

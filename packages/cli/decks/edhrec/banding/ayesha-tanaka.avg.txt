@@ -1,0 +1,81 @@
+# edhrec average deck: https://edhrec.com/average-decks/ayesha-tanaka/banding
+# theme Banding (8 decks)
+
+Commander
+1 Ayesha Tanaka
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Baton of Morale
+1 Bident of Thassa
+1 Commander's Sphere
+1 Helm of Chatzuk
+1 Marble Diamond
+1 Mind Stone
+1 Sky Diamond
+1 Sol Ring
+1 Talisman of Progress
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Command Tower
+1 Deserted Beach
+1 Glacial Fortress
+1 Gleaming Bastion
+1 Hallowed Fountain
+11 Island
+1 Mystic Gate
+16 Plains
+1 Prairie Stream
+1 Temple of Enlightenment
+1 Abu Ja'far
+1 Battering Ram
+1 Benalish Hero
+1 Benalish Infantry
+1 Black Panther, Most Dangerous
+1 Camel
+1 Cho-Manno, Revolutionary
+1 Creepy Doll
+1 Fog Bank
+1 Frontline Medic
+1 Hercules, Olympian Hero
+1 Icatian Infantry
+1 Icatian Phalanx
+1 Icatian Skirmishers
+1 Kjeldoran Escort
+1 Kjeldoran Knight
+1 Kjeldoran Phalanx
+1 Kjeldoran Skycaptain
+1 Kjeldoran Skyknight
+1 Kjeldoran Warrior
+1 Knights of Thorn
+1 Mesa Pegasus
+1 Noble Elephant
+1 Phyrexian Vindicator
+1 Pikemen
+1 Saprazzan Heir
+1 Shield Bearer
+1 Stuffy Doll
+1 Sun Titan
+1 Teremko Griffin
+1 Tolarian Entrancer
+1 Urza's Engine
+1 Wall of Tears
+1 War Elephant
+1 Always Watching
+1 Brave the Sands
+1 Cooperation
+1 Glorious Anthem
+1 Pariah
+1 Serra's Blessing
+1 Arcane Denial
+1 Brainstorm
+1 Counterspell
+1 Dovin's Veto
+1 Formation
+1 Negate
+1 Path to Exile
+1 Swords to Plowshares
+1 Elspeth, Sun's Champion
+1 Preordain
+1 Supreme Verdict

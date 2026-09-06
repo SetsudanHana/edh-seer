@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-infamous-cruelclaw/madness
+# theme Madness (64 decks)
+
+Commander
+1 The Infamous Cruelclaw
+
+Deck
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Key to the City
+1 Lightning Greaves
+1 Monument to Endurance
+1 Rakdos Signet
+1 Scroll Rack
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Trailblazer's Boots
+1 Whispersilk Cloak
+1 Access Tunnel
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Haunted Ridge
+1 Luxury Suite
+11 Mountain
+1 Rakdos Carnarium
+1 Rogue's Passage
+1 Smoldering Marsh
+1 Sulfurous Springs
+10 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Anger
+1 Anje Falkenrath
+1 Anje's Ravager
+1 Archfiend of Ifnir
+1 Archfiend of Spite
+1 Archon of Cruelty
+1 Artisan of Kozilek
+1 Big Game Hunter
+1 Blazing Rootwalla
+1 Bone Miser
+1 Chainer, Nightmare Adept
+1 Etali, Primal Storm
+1 Gorgon Recluse
+1 Grave Scrabbler
+1 Hell Mongrel
+1 Kaervek the Merciless
+1 Keeper of Secrets
+1 Kitchen Imp
+1 Lizard Blades
+1 Necrogoyf
+1 Rakdos, Patron of Chaos
+1 Revolutionist
+1 Shadowgrange Archfiend
+1 Squee, Goblin Nabob
+1 Stromkirk Occultist
+1 Wild-Magic Sorcerer
+1 Curse of Fool's Wisdom
+1 Dying to Serve
+1 Passionate Archaeologist
+1 Phyrexian Arena
+1 Blood for the Blood God!
+1 Chaos Warp
+1 Dark Withering
+1 Demand Answers
+1 Fiery Temper
+1 Terminate
+1 Thrill of Possibility
+1 Alchemist's Greeting
+1 Blasphemous Act
+1 Breach the Multiverse
+1 Call Forth the Tempest
+1 Call to the Netherworld
+1 Faithless Looting
+1 Fevered Suspicion
+1 From Under the Floorboards
+1 Hit the Mother Lode
+1 In Garruk's Wake
+1 Murderous Compulsion
+1 Overpowering Attack
+1 Reanimate
+1 Terminal Agony

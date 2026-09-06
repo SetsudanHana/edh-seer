@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/cWCS0FYQ2Qe6zEacTVnmMA (source https://archidekt.com/decks/24586488)
+# tags Planeswalkers, Proliferate, Historic; bracket 3; saved 2026-08-31; 957 tagged of 18770 indexed
+
+Commander
+1 Sisay, Weatherlight Captain
+
+Deck
+1 Ajani Steadfast
+1 Chandra, Legacy of Fire
+1 Chandra, Torch of Defiance
+1 Commodore Guff
+1 Dihada, Binder of Wills
+1 Elspeth, Sun's Champion
+1 Kaya the Inexorable
+1 Liliana, Dreadhorde General
+1 Narset, Parter of Veils
+1 Nicol Bolas, Dragon-God
+1 Nicol Bolas, God-Pharaoh
+1 Nicol Bolas, Planeswalker
+1 Oko, Thief of Crowns
+1 Tamiyo, Field Researcher
+1 Teferi, Hero of Dominaria
+1 Teferi, Master of Time
+1 Teferi, Temporal Archmage
+1 Teferi, Time Raveler
+1 Tevesh Szat, Doom of Fools
+1 Ugin, the Spirit Dragon
+1 Vraska, Betrayal's Sting
+1 Wrenn and Realmbreaker
+1 Arcane Signet
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Fellwar Stone
+1 Ichormoon Gauntlet
+1 Mox Amber
+1 Sol Ring
+1 The Chain Veil
+1 Atraxa, Praetors' Voice
+1 Birds of Paradise
+1 Bloom Tender
+1 Carth the Lion
+1 Deepglow Skate
+1 Delighted Halfling
+1 Dreamtide Whale
+1 Evolution Sage
+1 Ezuri, Stalker of Spheres
+1 Jegantha, the Wellspring
+1 Lae'zel, Vlaakith's Champion
+1 Nicol Bolas, the Ravager
+1 Patrolling Peacemaker
+1 Spark Double
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Vorinclex, Monstrous Raider
+1 Blood Crypt
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Jetmir's Garden
+1 Karn's Bastion
+1 Ketria Triome
+1 Misty Rainforest
+1 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Raugrin Triome
+1 Reliquary Tower
+1 Sacred Foundry
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Zagoth Triome
+1 Brokers Ascendancy
+1 Doubling Season
+1 Inexorable Tide
+1 Innkeeper's Talent
+1 Leyline of the Guildpact
+1 Oath of Ajani
+1 Oath of Nissa
+1 Oath of Teferi
+1 Smothering Tithe
+1 Counterspell
+1 Deflecting Swat
+1 Ripples of Potential
+1 Swan Song
+1 Demonic Tutor
+1 Tezzeret's Gambit

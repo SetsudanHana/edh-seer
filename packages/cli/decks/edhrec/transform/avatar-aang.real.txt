@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/NwTgs_tN1qyzyEBCCWtV1Q (source https://archidekt.com/decks/22473324)
+# tags Allies, Earthbending, Legends, Firebending, Commander Matters, Airbending, Waterbending, Transform, Spellslinger, Extra Combats; bracket 3; saved 2026-09-01; 32 tagged of 19625 indexed
+
+Commander
+1 Avatar Aang
+
+Deck
+1 Aang, Swift Savior
+1 Aang, at the Crossroads
+1 Appa, Steadfast Guardian
+1 Birds of Paradise
+1 Chomping Changeling
+1 Colossal Skyturtle
+1 Earth Kingdom Protectors
+1 Enduring Vitality
+1 Eternal Witness
+1 Great Divide Guide
+1 Hermitic Herbalist
+1 Katara, Water Tribe's Hope
+1 Katara, the Fearless
+1 Kutzil, Malamet Exemplar
+1 Magmablood Archaic
+1 Pinnacle Monk
+1 Quill-Blade Laureate
+1 Sokka, Lateral Strategist
+1 Sokka, Tenacious Tactician
+1 Temur Battlecrier
+1 Toph, Hardheaded Teacher
+1 Wartime Protestors
+1 Wildgrowth Archaic
+1 Witch Enchanter
+1 Airbender Ascension
+1 Bitter Work
+1 Duelist's Heritage
+1 Flowering of the White Tree
+1 Imprisoned in the Moon
+1 Knowledge Is Power
+1 The Cave of Two Lovers
+1 Waterbender Ascension
+1 Airbending Lesson
+1 Bulk Up
+1 Cyclonic Rift
+1 Deadly Rollick
+1 Endless Detour
+1 Flare of Fortitude
+1 Great Train Heist
+1 How to Start a Riot
+1 Legion Leadership
+1 Malakir Rebirth
+1 Moonmist
+1 Muddle the Mixture
+1 Mystical Tutor
+1 Otherworldly Journey
+1 Overwhelming Victory
+1 Redirect Lightning
+1 Return the Favor
+1 Revitalizing Repast
+1 Rustler Rampage
+1 Sink into Stupor
+1 Smuggler's Surprise
+1 Surge of Salvation
+1 Untimely Malfunction
+1 Vampiric Tutor
+1 Arcane Signet
+1 Fellwar Stone
+1 Glider Staff
+1 Sol Ring
+1 Swiftfoot Boots
+1 Arena of Glory
+1 Ba Sing Se
+1 Barkchannel Pathway
+1 Bountiful Promenade
+1 Branchloft Pathway
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Grove
+1 Forest
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+1 Island
+1 Mountain
+1 Mystic Gate
+1 Otawara, Soaring City
+1 Path of Ancestry
+1 Plains
+1 Rejuvenating Springs
+1 Rocky Tar Pit
+1 Secret Tunnel
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Temple Garden
+1 Wooded Foothills
+1 Yavimaya Coast
+1 Avatar's Wrath
+1 Dragonclaw Strike
+1 Farseek
+1 Lórien Revealed
+1 Overpowering Attack
+1 Ringsight
+1 Sundering Eruption
+1 Tale of Momo

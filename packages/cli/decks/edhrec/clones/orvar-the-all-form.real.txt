@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/KRWGxuScXP4ayZWPHHa4MA (source https://archidekt.com/decks/25549015)
+# tags Clones, ETB, Blink; bracket 3; saved 2026-09-05; 823 tagged of 11089 indexed
+
+Commander
+1 Orvar, the All-Form
+
+Deck
+1 Aether Channeler
+1 Anticausal Vestige
+1 Archaeomancer
+1 Archmage of Runes
+1 Barrin, Tolarian Archmage
+1 Cloudkin Seer
+1 Dour Port-Mage
+1 Emeritus of Ideation
+1 Gogo, Master of Mimicry
+1 Hullbreaker Horror
+1 Jill, Shiva's Dominant
+1 Man-o'-War
+1 Mulldrifter
+1 Overlord of the Floodpits
+1 Peregrine Drake
+1 Phantasmal Image
+1 Phyrexian Metamorph
+1 Scourge of Fleets
+1 Sea Gate Oracle
+1 Skycoach Conductor
+1 Snapcaster Mage
+1 Solemn Simulacrum
+1 Thassa, Deep-Dwelling
+1 Trophy Mage
+1 Venser, Shaper Savant
+1 Aether Gale
+1 Fabricate
+1 Solve the Equation
+1 Splash Portal
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Blur
+1 Borne Upon a Wind
+1 Brainstorm
+1 Counterspell
+1 Cryptic Command
+1 Cyclonic Rift
+1 Displace
+1 Essence Flux
+1 Flusterstorm
+1 Ghostly Flicker
+1 High Tide
+1 Mana Drain
+1 Mind Games
+1 Muddle the Mixture
+1 Mystical Tutor
+1 Rescue
+1 Run Away Together
+1 Sink into Stupor
+1 Snap
+1 Teferi's Time Twist
+1 Arcane Signet
+1 Commander's Sphere
+1 Fellwar Stone
+1 Gilded Lotus
+1 Ichor Wellspring
+1 Mind Stone
+1 Mirror Box
+1 Sapphire Medallion
+1 Sol Ring
+1 The One Ring
+1 Thought Vessel
+1 Archway of Innovation
+1 Cephalid Coliseum
+1 Flooded Strand
+1 Halimar Depths
+24 Island
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+1 Reliquary Tower
+1 Saprazzan Skerry
+1 Temple of the False God
+1 Trenchpost
+1 Mystic Remora
+1 Roll-Roll-Roll-Roll
+1 Vesuvan Duplimancy

@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/OOg30ODcnrQo40JBUvqZbQ (source https://archidekt.com/decks/12106540)
+# tags Graveyard, Self-Mill, Combo, Toolbox, ETB, Control, Ramp, Commander Matters, Dredge; bracket 3; saved 2026-09-04; 763 tagged of 25006 indexed
+
+Commander
+1 Muldrotha, the Gravetide
+
+Deck
+1 Accursed Marauder
+1 Aethersnipe
+1 Apprentice Necromancer
+1 Baleful Strix
+1 Blanchwood Prowler
+1 Boggart Trawler
+1 Colossal Grave-Reaver
+1 Dreadhound
+1 Endurance
+1 Eternal Witness
+1 Foundation Breaker
+1 Gravecrawler
+1 Hedron Crab
+1 Hullbreaker Horror
+1 Jarad, Golgari Lich Lord
+1 Mire Triton
+1 Mulldrifter
+1 Parcelbeast
+1 Risen Reef
+1 River Kelpie
+1 Rootcoil Creeper
+1 Sakura-Tribe Elder
+1 Shriekmaw
+1 Sin, Unending Cataclysm
+1 Siren Stormtamer
+1 Six
+1 Skull Prophet
+1 Spellskite
+1 Splinterfright
+1 Stinkweed Imp
+1 Subtlety
+1 Teval, the Balanced Scale
+1 The Ancient One
+1 The Gitrog Monster
+1 Tidal Barracuda
+1 Tormod, the Desecrator
+1 Vilespawn Spider
+1 Wistfulness
+1 Wonder
+1 World Shaper
+1 Aether Spellbomb
+1 Arcane Signet
+1 Commander's Sphere
+1 Lotus Petal
+1 Matzalantli, the Great Door
+1 Nihil Spellbomb
+1 Phyrexian Altar
+1 Sol Ring
+1 Animate Dead
+1 Awaken the Honored Dead
+1 Golgari Germination
+1 Leyline of Anticipation
+1 Mystic Remora
+1 Ripples of Undeath
+1 Seal of Primordium
+1 Seal of Removal
+1 Song of the Dryads
+1 Strands of Night
+1 Vernal Equinox
+1 Bayou
+1 Bojuka Bog
+1 Breeding Pool
+1 Command Tower
+1 Dakmor Salvage
+1 Dark Depths
+1 Darkmoss Bridge
+1 Evolving Wilds
+1 Fetid Pools
+4 Forest
+1 Golgari Rot Farm
+6 Island
+1 Morphic Pool
+1 Opulent Palace
+1 Overgrown Tomb
+1 Polluted Delta
+1 Prismatic Vista
+1 Rejuvenating Springs
+1 Shifting Woodland
+1 Sodden Verdure
+1 Sunken Hollow
+4 Swamp
+1 Tropical Island
+1 Underground Sea
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Vernal Fen
+1 Watery Grave
+1 Grist, the Hunger Tide

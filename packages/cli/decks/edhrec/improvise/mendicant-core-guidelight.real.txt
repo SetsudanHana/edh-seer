@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/kRIlEsVLInBzW9ehOANDMw (source https://archidekt.com/decks/12323784)
+# tags Thopters, Tokens, Improvise, Artifacts, Affinity, Clones; bracket 3; saved 2026-01-24; 5 tagged of 16596 indexed
+
+Commander
+1 Mendicant Core, Guidelight
+
+Deck
+1 Abstergo Entertainment
+1 Adarkar Wastes
+1 Ancient Den
+1 Archway of Innovation
+1 Buried Ruin
+1 Command Tower
+1 Darksteel Citadel
+1 Deserted Beach
+1 Exotic Orchard
+1 Floodfarm Verge
+1 Glacial Fortress
+1 Hall of Tagsin
+5 Island
+1 Muraganda Raceway
+4 Plains
+1 Port Town
+1 Razortide Bridge
+1 Rogue's Passage
+1 Sea of Clouds
+1 Seat of the Synod
+1 Skycloud Expanse
+1 Spire of Industry
+1 The Mycosynth Gardens
+1 War Room
+1 Akroma's Will
+1 Dispatch
+1 Dovin's Veto
+1 Duty Beyond Death
+1 Enlightened Tutor
+1 Excise the Imperfect
+1 Flare of Fortitude
+1 Masterful Replication
+1 Razorgrass Ambush
+1 Reality Heist
+1 Render Silent
+1 Sejiri Shelter
+1 Sink into Stupor
+1 Stern Lesson
+1 Stubborn Denial
+1 Swords to Plowshares
+1 Your Temple Is Under Attack
+1 Arcane Signet
+1 Azorius Signet
+1 Fabrication Foundry
+1 Ghost Vacuum
+1 Idol of Oblivion
+1 Liquimetal Torque
+1 Perilous Snare
+1 Salvation Engine
+1 Shorikai, Genesis Engine
+1 Skyclave Relic
+1 Sol Ring
+1 Sonic Screwdriver
+1 Talisman of Progress
+1 Thousand Moons Smithy
+1 Uthros Research Craft
+1 Artificer Class
+1 Efficient Construction
+1 Thopter Spy Network
+1 Broodstar
+1 Canoptek Scarab Swarm
+1 Cephalopod Sentry
+1 Cityscape Leveler
+1 Etherium Sculptor
+1 Ethersworn Canonist
+1 Guidelight Synergist
+1 Hydroelectric Specimen
+1 Leonardo da Vinci
+1 Oltec Matterweaver
+1 Rebbec, Architect of Ascension
+1 Riptide Gearhulk
+1 Sai, Master Thopterist
+1 Steel Seraph
+1 Stridehangar Automaton
+1 The Reality Chip
+1 Thought Monitor
+1 Transit Mage
+1 Treasure Mage
+1 Vedalken Engineer
+1 Vedalken Humiliator
+1 Voyager Quickwelder
+1 Whirler Rogue
+1 Witch Enchanter
+1 Wurmcoil Engine
+1 Crisis of Conscience
+1 March of Progress
+1 Organic Extinction
+1 Reverse Engineer
+1 Thoughtcast
+1 Universal Surveillance
+1 Voyage Home
+1 Tezzeret, Artifice Master

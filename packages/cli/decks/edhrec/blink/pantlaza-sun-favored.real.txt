@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/xcJJ0W22QWczgxgCg4TW_g (source https://archidekt.com/decks/24689923)
+# tags Beasts, Blink, Cycling; bracket 2; saved 2026-09-05; 750 tagged of 36245 indexed
+
+Commander
+1 Pantlaza, Sun-Favored
+
+Deck
+1 Aether Charge
+1 Astral Drift
+1 Astral Slide
+1 Footfall Crater
+1 Garruk's Uprising
+1 Invigorating Boon
+1 Lightning Rift
+1 Molten Echoes
+1 Sterling Grove
+1 Agonasaur Rex
+1 Angel of the Ruins
+1 Barkhide Mauler
+1 Belonging
+1 Clifftop Lookout
+1 Contagious Vorrac
+1 Delivery Moogle
+1 Disciple of Freyalise
+1 Drannith Healer
+1 Drannith Stinger
+1 Eagles of the North
+1 Eternal Witness
+1 Fierce Empath
+1 Flourishing Fox
+1 Fortune, Loyal Steed
+1 Garruk's Packleader
+1 Generous Ent
+1 Guardian Sunmare
+1 Herald of the Forgotten
+1 Highcliff Felidar
+1 Imposing Vantasaur
+1 Krosan Tusker
+1 Lumbering Battlement
+1 Manglehorn
+1 Moon-Blessed Cleric
+1 Oliphaunt
+1 Paleoloth
+1 Pinnacle Monk
+1 Protean Hulk
+1 Ridgescale Tusker
+1 Shefet Monitor
+1 Somberwald Beastmaster
+1 Summon: Fenrir
+1 Thragtusk
+1 Titanoth Rex
+1 Wirewood Savage
+1 Witch Enchanter
+1 Woodland Bellower
+1 Woodland Liege
+1 Angelsong
+1 Beast Within
+1 Gallant Strike
+1 Repopulate
+1 Arcane Signet
+1 Blade of Selves
+1 Fluctuator
+1 Pyre of Heroes
+1 Ash Barrens
+1 Blasted Landscape
+1 Capital City
+1 Command Tower
+1 Contested Cliffs
+1 Desert of the Fervent
+1 Desert of the Indomitable
+1 Desert of the True
+1 Drifting Meadow
+1 Exotic Orchard
+5 Forest
+1 Forgotten Cave
+1 Glittering Massif
+1 Hall of Heliod's Generosity
+1 Jetmir's Garden
+1 Lush Portico
+1 Mountain
+1 Night Market
+4 Plains
+1 Scattered Groves
+1 Scavenger Grounds
+1 Secluded Steppe
+1 Selesnya Sanctuary
+1 Sheltered Thicket
+1 Sheltering Landscape
+1 Slippery Karst
+1 Smoldering Crater
+1 Stomping Ground
+1 Tranquil Thicket
+1 Bala Ged Recovery
+1 Beneath the Sands
+1 Edge of Autumn
+1 Go for Blood
+1 Migration Path
+1 Spectacular Pileup
+1 Wild Endeavor

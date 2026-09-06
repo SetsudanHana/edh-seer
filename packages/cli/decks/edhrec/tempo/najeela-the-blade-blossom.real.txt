@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/NRSeP_5_TnyWqgMxv-c7VQ (source https://moxfield.com/decks/0OYIwRUAiUWDYd7vGw3kgw)
+# tags Tokens, Tempo, Extra Combats, Aggro, Combo; bracket 2; saved 2026-08-16; 86 tagged of 13926 indexed
+
+Commander
+1 Najeela, the Blade-Blossom
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Boros Charm
+1 Desperate Measures
+1 Duty Beyond Death
+1 Fierce Guardianship
+1 Generous Gift
+1 Heroic Intervention
+1 Kin-Tree Severance
+1 Make a Stand
+1 Naya Charm
+1 Rite of Harmony
+1 Secure the Wastes
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Arcane Sanctum
+1 Cabaretti Courtyard
+1 Canopy Vista
+1 Cavern of Souls
+1 Cinder Glade
+1 City of Brass
+1 Command Tower
+1 Crumbling Necropolis
+1 Exotic Orchard
+1 Fabled Passage
+3 Forest
+1 Frontier Bivouac
+1 Grasslands
+2 Island
+1 Jungle Shrine
+1 Maestros Theater
+1 Mana Confluence
+2 Mountain
+1 Mystic Monastery
+1 Nomad Outpost
+1 Opulent Palace
+1 Path of Ancestry
+1 Plains
+1 Prairie Stream
+1 Riveteers Overlook
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Seaside Citadel
+1 Smoldering Marsh
+2 Swamp
+1 Temple of Abandon
+1 Arcane Signet
+1 Chromatic Lantern
+1 Dolmen Gate
+1 Icon of Ancestry
+1 Lightning Greaves
+1 Patchwork Banner
+1 Vanquisher's Banner
+1 Wayfarer's Bauble
+1 Avacyn's Pilgrim
+1 Aven Wind Guide
+1 Bramblewood Paragon
+1 Brighthearth Banneret
+1 Brutal Hordechief
+1 Champion of Lambholt
+1 Chief of the Edge
+1 Grand Warlord Radha
+1 Hardened Tactician
+1 Kutzil, Malamet Exemplar
+1 Lovisa Coldeyes
+1 Mirri, Weatherlight Duelist
+1 Moraug, Fury of Akoum
+1 Nadier's Nightblade
+1 Pitiless Plunderer
+1 Professional Face-Breaker
+1 Realmwalker
+1 Rushblade Commander
+1 Samut, Vizier of Naktamun
+1 Three Tree Mascot
+1 Ultramarines Honour Guard
+1 Usher of the Fallen
+1 Vanguard Suppressor
+1 Whirlpool Warrior
+1 Birth of the Imperium
+1 Descendants' Fury
+1 Goblin Bombardment
+1 Military Intelligence
+1 Raiders' Spoils
+1 Reconnaissance
+1 Shared Animosity
+1 Windcrag Siege
+1 Crippling Fear
+1 Cultivate
+1 Expel the Interlopers
+1 Harvest Season
+1 Kodama's Reach
+1 Rampant Growth
+1 Read the Bones

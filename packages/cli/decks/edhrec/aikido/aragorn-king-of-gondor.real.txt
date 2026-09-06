@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/mxzGe9mYdlHEyW3XoJqROw (source https://archidekt.com/decks/25382107)
+# tags Monarch, Control, Aikido; bracket 3; saved 2026-09-03; 38 tagged of 6477 indexed
+
+Commander
+1 Aragorn, King of Gondor
+
+Deck
+1 Agitator Ant
+1 Alexios, Deimos of Kosmos
+1 Anya, Merciless Angel
+1 Archivist of Gondor
+1 Champions of Minas Tirith
+1 Fiendish Duo
+1 Gisela, Blade of Goldnight
+1 Haktos the Unscarred
+1 Joined Researchers
+1 Kazuul, Tyrant of the Cliffs
+1 Mangara, the Diplomat
+1 Ornithopter of Paradise
+1 Orzhov Advokist
+1 Pinnacle Monk
+1 Selfless Squire
+1 Stalking Leonin
+1 Thorin Oakenshield
+1 Théoden, King of Rohan
+1 Troop of Ponies
+1 Windborn Muse
+1 Arcane Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Lavaspur Boots
+1 Mind Stone
+1 Mirage Mirror
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Tome of Legends
+1 Two-Handed Axe
+1 Wayfarer's Bauble
+1 World Map
+1 Ash Barrens
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Furycalm Snarl
+1 Island
+1 Kher Keep
+10 Mountain
+1 Path of Ancestry
+12 Plains
+1 Rogue's Passage
+1 Rugged Prairie
+1 Scavenger Grounds
+1 Slayers' Stronghold
+1 Sunhome, Fortress of the Legion
+1 Big Score
+1 Blacksmith's Skill
+1 Boros Charm
+1 Chaos Warp
+1 Comeuppance
+1 Dawn Charm
+1 Deflecting Palm
+1 Generous Gift
+1 Legion Leadership
+1 Loran's Escape
+1 Path to Exile
+1 Red Elemental Blast
+1 Stroke of Midnight
+1 Surge of Salvation
+1 Swords to Plowshares
+1 Take the Bait
+1 Untimely Malfunction
+1 Bitter Reunion
+1 Curse of Opulence
+1 Duelist's Heritage
+1 Ghostly Prison
+1 Smuggler's Share
+1 Trouble in Pairs
+1 Blasphemous Act
+1 Cut a Deal
+1 Disrupt Decorum
+1 Promise of Loyalty
+1 Secret Rendezvous
+1 Spectacular Showdown
+1 Vandalblast
+1 Vanquish the Horde

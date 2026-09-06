@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/zur-eternal-schemer/rooms
+# theme Rooms (18 decks)
+
+Commander
+1 Zur, Eternal Schemer
+
+Deck
+1 Arcane Signet
+1 Dimir Signet
+1 Keys to the House
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+5 Island
+1 Marsh Flats
+1 Morphic Pool
+5 Plains
+1 Polluted Delta
+1 Raffine's Tower
+1 Reliquary Tower
+1 Sea of Clouds
+1 Shattered Sanctum
+4 Swamp
+1 Underground River
+1 Valgavoth's Lair
+1 Watery Grave
+1 Archetype of Courage
+1 Archetype of Imagination
+1 Athreos, Shroud-Veiled
+1 Creeping Peeper
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Enduring Curiosity
+1 Enduring Tenacity
+1 Entity Tracker
+1 Fear of Sleep Paralysis
+1 Ghostly Dancers
+1 Heliod, the Radiant Dawn
+1 Inquisitive Glimmer
+1 Mesa Enchantress
+1 Nightmare Shepherd
+1 Ondu Spiritdancer
+1 Overlord of the Floodpits
+1 Overlord of the Mistmoors
+1 Silent Hallcreeper
+1 Soaring Lightbringer
+1 Starfield Mystic
+1 Starnheim Courser
+1 Stenn, Paranoid Partisan
+1 Victor, Valgavoth's Seneschal
+1 Black Market Connections
+1 Boon of the Spirit Realm
+1 Bottomless Pool // Locker Room
+1 Central Elevator // Promising Stairs
+1 Cramped Vents // Access Maze
+1 Dazzling Theater // Prop Room
+1 Derelict Attic // Widow's Walk
+1 Dollmaker's Shop // Porcelain Gallery
+1 Estrid's Invocation
+1 Extravagant Replication
+1 Funeral Room // Awakening Hall
+1 Gleaming Splendor
+1 Grand Entryway // Elegant Rotunda
+1 Grasp of Fate
+1 Meat Locker // Drowned Diner
+1 Mirror Room // Fractured Realm
+1 Mirrormade
+1 Restricted Office // Lecture Hall
+1 Secret Arcade // Dusty Parlor
+1 Sphere of Safety
+1 Starfield of Nyx
+1 Surgical Suite // Hospital Room
+1 Unholy Annex // Ritual Chamber
+1 Counterspell
+1 Dovin's Veto
+1 Mana Drain
+1 Path to Exile
+1 Swords to Plowshares
+1 Void Rend
+1 Damn
+1 Dance of the Manse
+1 Extinguish All Hope

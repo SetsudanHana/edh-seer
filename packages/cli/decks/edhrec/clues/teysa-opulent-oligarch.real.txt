@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/50aUeADqOuYnyZ6Wi_8-LA (source https://archidekt.com/decks/25933804)
+# tags Tokens, Spirits, Clues, Lifedrain; bracket 2; saved 2026-09-04; 222 tagged of 2920 indexed
+
+Commander
+1 Teysa, Opulent Oligarch
+
+Deck
+1 Academy Manufactor
+1 Bartolomé del Presidio
+1 Basilica Guards
+1 Basilica Screecher
+1 Bygone Bishop
+1 Creeping Bloodsucker
+1 Deathbringer Liege
+1 Drogskol Reinforcements
+1 Kambal, Profiteering Mayor
+1 Kingpin's Pet
+1 Marionette Apprentice
+1 Merchant of Truth
+1 Mirkwood Bats
+1 Moonshaker Cavalry
+1 Nadier's Nightblade
+1 Raven Eagle
+1 Sandbender Scavengers
+1 Sorin of House Markov
+1 Syndic of Tithes
+1 Syndicate Heavy
+1 Syr Ginger, the Meal Ender
+1 Teysa Karlov
+1 Thalisse, Reverent Medium
+1 The Kingpin of Crime
+1 The Sackville-Bagginses
+1 Umbral Collar Zealot
+1 Vanguard of the Restless
+1 Anguished Unmaking
+1 Dispatch
+1 Fanatical Offering
+1 Not on My Watch
+1 On the Job
+1 Parting Gust
+1 Path to Exile
+1 Rowan's Grim Search
+1 Slice from the Shadows
+1 Swords to Plowshares
+1 Arcane Lighthouse
+1 Command Tower
+1 Concealed Courtyard
+1 Dalkovan Encampment
+1 Desolate Mire
+1 Fetid Heath
+1 Havengul Laboratory
+1 Isolated Chapel
+14 Plains
+1 Scene of the Crime
+1 Shattered Sanctum
+11 Swamp
+1 Temple of Silence
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Charcoal Diamond
+1 Fellwar Stone
+1 Ghost Vacuum
+1 Inspiring Statuary
+1 Marble Diamond
+1 Orzhov Signet
+1 Phantom Train
+1 Skullclamp
+1 Sol Ring
+1 Tamiyo's Journal
+1 Thran Dynamo
+1 Wayfarer's Bauble
+1 Blind Obedience
+1 Intangible Virtue
+1 Obsessive Pursuit
+1 Renewed Solidarity
+1 Tolls of War
+1 Call a Surprise Witness
+1 Devouring Greed
+1 No Witnesses
+1 Pitiless Carnage
+1 Toxic Deluge
+1 Kaya, Geist Hunter
+1 Kaya, Spirits' Justice

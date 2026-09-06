@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/wVy9jTow6A3bx2Z2CsQKrw (source https://moxfield.com/decks/4uKPDGtfYESp49KWb-1M4g)
+# tags Group Slug, Forced Combat, Group Hug, Chaos; bracket 3; saved 2026-09-04; 440 tagged of 7479 indexed
+
+Commander
+1 The Lord of Pain
+
+Deck
+1 Agitator Ant
+1 Boggart Trawler
+1 Bothersome Quasit
+1 Brash Taunter
+1 Fiendish Duo
+1 Generous Plunderer
+1 Gix, Yawgmoth Praetor
+1 Goldspan Dragon
+1 Kaervek the Merciless
+1 Karazikar, the Eye Tyrant
+1 Kardur, Doomscourge
+1 Magda, the Hoardmaster
+1 Mayhem Devil
+1 Morbid Opportunist
+1 Pain Distributor
+1 Professional Face-Breaker
+1 Prosper, Tome-Bound
+1 Scrawling Crawler
+1 Sheoldred, the Apocalypse
+1 Smaug the Magnificent
+1 Solphim, Mayhem Dominus
+1 Sower of Discord
+1 Stormfist Crusader
+1 Twinflame Tyrant
+1 Vengeful Ancestor
+1 Xorn
+1 Arcane Signet
+1 Bloodthirsty Blade
+1 Fellwar Stone
+1 Ruby Medallion
+1 Sol Ring
+1 Talisman of Indulgence
+1 Tempting Contract
+1 The One Ring
+1 Arid Mesa
+1 Badlands
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Castle Locthwain
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+1 Mount Doom
+8 Mountain
+1 Prismatic Vista
+1 Raucous Theater
+1 Reflecting Pool
+1 Shizo, Death's Storehouse
+1 Smoldering Marsh
+1 Sulfurous Springs
+2 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Backlash
+1 Big Score
+1 Deadly Rollick
+1 Deflecting Swat
+1 Delirium
+1 Fell the Profane
+1 Guff Rewrites History
+1 Malakir Rebirth
+1 Valakut Awakening
+1 Black Market Connections
+1 Coercive Impetus
+1 Curse of Opulence
+1 Descent into Avernus
+1 Fiery Emancipation
+1 Ghoulish Impetus
+1 Phyrexian Arena
+1 Repercussion
+1 Spiteful Visions
+1 War's Toll
+1 Wound Reflection
+1 Blasphemous Act
+1 Decorum Dissertation
+1 Demonic Tutor
+1 Disrupt Decorum
+1 Exsanguinate
+1 Insurrection
+1 Jeska's Will
+1 Seize the Spotlight
+1 Shatterskull Smashing
+1 Spectacular Showdown
+1 Sundering Eruption
+1 Torment of Hailfire
+1 Wheel of Misfortune

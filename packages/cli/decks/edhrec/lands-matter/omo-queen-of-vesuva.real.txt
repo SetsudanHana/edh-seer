@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/dPsunmomIoT5JBXJyWzN0g (source https://archidekt.com/decks/7924354)
+# tags Lands Matter, Shapeshifters; bracket 3; saved 2026-09-05; 1933 tagged of 13340 indexed
+
+Commander
+1 Omo, Queen of Vesuva
+
+Deck
+1 Aggressive Biomancy
+1 Finale of Revelation
+1 Hour of Promise
+1 March from Velis Vel
+1 Mind into Matter
+1 Open the Way
+1 Pick Your Poison
+1 Preposterous Proportions
+1 Raise the Palisade
+1 Stock Up
+1 Sylvan Scrying
+1 Whelming Wave
+1 Arcane Lighthouse
+1 Baldur's Gate
+1 Barkchannel Pathway
+1 Basilisk Gate
+1 Breeding Pool
+1 Cloudpost
+1 Command Tower
+1 Dark Depths
+1 Dreamroot Cascade
+1 Flooded Grove
+2 Forest
+1 Gond Gate
+1 Hinterland Harbor
+1 Homeward Path
+1 Horizon of Progress
+2 Island
+1 Manor Gate
+1 Maze's End
+1 Overflowing Basin
+1 Planar Nexus
+1 Rejuvenating Springs
+1 Scavenger Grounds
+1 Sea Gate
+1 Simic Guildgate
+1 Snow-Covered Forest
+1 Snow-Covered Island
+1 Sodden Verdure
+1 Swarmyard
+1 Thespian's Stage
+1 Turbulent Wilderness
+1 Urza's Cave
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Vesuva
+1 Waterlogged Grove
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Arcane Signet
+1 Expedition Map
+1 Maskwood Nexus
+1 Sol Ring
+1 World Map
+1 Archdruid's Charm
+1 Beast Within
+1 Counterspell
+1 Crop Rotation
+1 Dazzling Denial
+1 Evasive Action
+1 Mana Sculpt
+1 Negate
+1 Pongify
+1 Pull from Tomorrow
+1 Rapid Hybridization
+1 Wizard's Retort
+1 Attuma, Atlantean Warlord
+1 Baru, Wurmspeaker
+1 Beorn the Fierce
+1 Biovisionary
+1 Chomping Changeling
+1 Curious Altisaur
+1 Danny Pink
+1 Diffusion Sliver
+1 Elvish Archdruid
+1 Faerie Mastermind
+1 Feline Sovereign
+1 Galerider Sliver
+1 Hakbal of the Surging Soul
+1 Haldir, Lórien Lieutenant
+1 Harabaz Druid
+1 Herald of Hoofbeats
+1 Hydroid Krasis
+1 Lord of Atlantis
+1 Lord of the Unreal
+1 Magus of the Candelabra
+1 Master of the Pearl Trident
+1 Pheres-Band Warchief
+1 Sage of the Maze
+1 Sea Gate Loremaster
+1 Shifting Sliver
+1 Sowing Mycospawn
+1 Spawning Kraken
+1 Summon: Leviathan
+1 Titan of Littjara
+1 Venom Sliver

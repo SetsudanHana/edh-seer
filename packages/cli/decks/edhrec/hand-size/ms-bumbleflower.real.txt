@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/uGrbAMzzWClDyeum7Hp7CA (source https://archidekt.com/decks/13573791)
+# tags Hand Size, +1/+1 Counters, Group Hug, Voltron; bracket 3; saved 2026-09-04; 29 tagged of 36594 indexed
+
+Commander
+1 Ms. Bumbleflower
+
+Deck
+1 Adarkar Wastes
+1 Ancient Den
+1 Breeding Pool
+1 Brushland
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Strand
+1 Floodfarm Verge
+3 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hidden Hideout
+1 Hinterland Harbor
+1 Hushwood Verge
+2 Island
+1 Misty Rainforest
+2 Plains
+1 Razortide Bridge
+1 Reliquary Tower
+1 Savannah
+1 Seat of the Synod
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Tanglepool Bridge
+1 Temple Garden
+1 Thornglint Bridge
+1 Tree of Tales
+1 Tropical Island
+1 Tundra
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Coin of Mastery
+1 Fellwar Stone
+1 Folio of Fancies
+1 Sol Ring
+1 Talisman of Curiosity
+1 Talisman of Progress
+1 Talisman of Unity
+1 Thought Vessel
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Counterspell
+1 Dawn's Truce
+1 Enlightened Tutor
+1 Everybody Lives!
+1 Generous Gift
+1 Heroic Intervention
+1 Orim's Chant
+1 Path to Exile
+1 Strength of Will
+1 Swan Song
+1 Swords to Plowshares
+1 Approach of the Second Sun
+1 Damning Verdict
+1 Idyllic Tutor
+1 Wave Goodbye
+1 Windfall
+1 Bloom Tender
+1 Chocobo Knights
+1 Esper Sentinel
+1 Faeburrow Elder
+1 Faerie Mastermind
+1 Gilded Drake
+1 Gluntch, the Bestower
+1 Heartwood Storyteller
+1 King T'Challa
+1 Leonardo, Cutting Edge
+1 Managorger Hydra
+1 Michelangelo, Weirdness to 11
+1 Ouroboroid
+1 Psychosis Crawler
+1 Sazh Katzroy
+1 Scrawling Crawler
+1 Shrieking Drake
+1 Vorinclex, Monstrous Raider
+1 Walking Ballista
+1 Willbreaker
+1 Communal Brewing
+1 Copy Enchantment
+1 Forced Fruition
+1 Gleaming Splendor
+1 Hardened Scales
+1 High Score
+1 Mystic Remora
+1 Rhystic Study
+1 Simic Ascendancy
+1 Smothering Tithe
+1 Smuggler's Share
+1 Sphere Grid
+1 Trouble in Pairs
+1 Tamiyo, Field Researcher

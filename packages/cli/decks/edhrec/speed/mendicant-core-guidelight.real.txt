@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/BgypOYeV3tSQ2gU7dUSEYg (source https://archidekt.com/decks/25938735)
+# tags Speed, Bobbleheads, Artifacts, Tokens, Clues, Artificers, Card Draw, Spell Copy; bracket 2; saved 2026-09-01; 82 tagged of 16596 indexed
+
+Commander
+1 Mendicant Core, Guidelight
+
+Deck
+1 Abandoned Air Temple
+1 Academy Ruins
+1 Adagia, Windswept Bastion
+1 Ancient Den
+1 Archway of Innovation
+1 Calciform Pools
+1 Command Tower
+1 Deserted Beach
+1 Floodfarm Verge
+1 Glacial Fortress
+1 Hengegate Pathway
+6 Island
+1 Monumental Henge
+1 Muraganda Raceway
+1 Nimbus Maze
+6 Plains
+1 Prairie Stream
+1 Razortide Bridge
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sea of Clouds
+1 Seat of the Synod
+1 Uthros, Titanic Godcore
+1 Academy Manufactor
+1 Angel of the Ruins
+1 Cephalopod Sentry
+2 Cid, Timeless Artificer
+1 Cyberdrive Awakener
+1 Dour Port-Mage
+1 Ezrim, Agency Chief
+1 Forensic Gadgeteer
+1 Foundry Inspector
+1 Gold-Forged Thopteryx
+1 Guidelight Synergist
+1 Hulking Metamorph
+1 Lavinia, Foil to Conspiracy
+1 Malcator, Purity Overseer
+1 Master Transmuter
+1 Mechan Assembler
+1 Nanoform Sentinel
+1 North Pole Patrol
+1 Oswald Fiddlebender
+1 Piper Wright, Publick Reporter
+1 Riptide Gearhulk
+1 Sai, Master Thopterist
+1 Shimmer Myr
+1 Surge Engine
+1 Syr Ginger, the Meal Ender
+1 Thopter Assembly
+1 Tidus, Blitzball Star
+1 Voyager Quickwelder
+1 Agility Bobblehead
+1 Blood Clock
+1 Brotherhood Regalia
+1 Damping Sphere
+1 Dollhouse of Horrors
+1 Endurance Bobblehead
+1 Guidelight Pathmaker
+1 Insight Engine
+1 Investigator's Journal
+1 Isolation Cell
+1 Luck Bobblehead
+1 Mishra's Bauble
+1 Repurposing Bay
+1 Scourglass
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Strength Bobblehead
+1 Tamiyo's Journal
+1 Thought Vessel
+1 Thran Dynamo
+1 Welding Jar
+1 Whispersilk Cloak
+1 Artificer Class
+1 Does Machines
+1 Restricted Office // Lecture Hall
+1 Search the Premises
+1 Sidequest: Catch a Fish
+1 Thorough Investigation
+1 Unstoppable Plan
+1 Blacksmith's Skill
+1 Emergency Eject
+1 Machine Over Matter
+1 Path to Exile
+1 Scour for Scrap
+1 Stoic Rebuttal
+1 Echo Storm
+1 Supreme Verdict

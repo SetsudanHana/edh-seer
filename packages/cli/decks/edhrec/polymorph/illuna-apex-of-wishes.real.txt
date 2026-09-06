@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/oTJGaOpwDgszMQqE8LxlPQ (source https://archidekt.com/decks/1332739)
+# tags Polymorph, Tokens, Stompy, Control; bracket 2; saved 2026-09-05; 44 tagged of 3997 indexed
+
+Commander
+1 Illuna, Apex of Wishes
+
+Deck
+1 Apex Altisaur
+1 Blast-Furnace Hellkite
+1 Blightsteel Colossus
+1 Etali, Primal Conqueror
+1 Galactus, Devourer of Worlds
+1 Old Gnawbone
+1 Raph & Mikey, Troublemakers
+1 Stormtide Leviathan
+1 Terastodon
+1 Triplicate Titan
+1 Ulamog, the Infinite Gyre
+1 Void Winnower
+1 Vorinclex, Voice of Hunger
+1 Zopandrel, Hunger Dominus
+1 Arachnogenesis
+1 Artifact Mutation
+1 Brainstorm
+1 Chaos Mutation
+1 Chaos Warp
+1 Defend the Rider
+1 Divergent Transformations
+1 Fire Prophecy
+1 Growth Spiral
+1 Lat-Nam's Legacy
+1 Lazotep Plating
+1 Luxurious Libation
+1 Planar Genesis
+1 Sprout
+1 Summoning Trap
+1 Valakut Awakening
+1 Vitality Charm
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Callous Dismissal
+1 Chatter of the Squirrel
+1 Displacement Wave
+1 Dream Cache
+1 Earth's Mightiest Heroes
+1 Edge of Autumn
+1 Explore
+1 Farseek
+1 Genesis Storm
+1 Green Sun's Twilight
+1 Hard Evidence
+1 Into the Fire
+1 Into the North
+1 Nature's Lore
+1 Polymorph
+1 Ponder
+1 Preordain
+1 Rampant Growth
+1 Reality Scramble
+1 Regrowth
+1 Satyr's Cunning
+1 Search for Tomorrow
+1 See Beyond
+1 See the Unwritten
+1 Selvala's Stampede
+1 Shared Roots
+1 Three Visits
+1 Tidings of War
+1 Transmogrify
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Ketria Triome
+1 Khalni Garden
+1 Kher Keep
+1 Lindblum, Industrial Regency
+1 Mana Confluence
+1 Misty Rainforest
+1 Otawara, Soaring City
+1 Rejuvenating Springs
+1 Scalding Tarn
+1 Shivan Reef
+8 Snow-Covered Forest
+4 Snow-Covered Island
+2 Snow-Covered Mountain
+1 Sokenzan, Crucible of Defiance
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Training Center
+1 Wooded Foothills
+1 Yavimaya Coast

@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/extus-oriq-overlord/repartee
+# theme Repartee (3 decks)
+
+Commander
+1 Extus, Oriq Overlord
+
+Deck
+1 Arcane Signet
+1 Commander's Sphere
+1 Cursed Mirror
+1 Orzhov Cluestone
+1 Patchwork Banner
+1 Prophetic Prism
+1 Canyon Slough
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Desolate Mire
+1 Exotic Orchard
+1 Fabled Passage
+1 Fetid Heath
+1 Foreboding Ruins
+1 Grand Coliseum
+1 Isolated Chapel
+1 Lorehold Campus
+1 Mortuary Mire
+5 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+5 Plains
+1 Smoldering Marsh
+1 Sundown Pass
+7 Swamp
+1 Terramorphic Expanse
+1 Abigale, Poet Laureate
+1 Adventurous Eater
+1 Akroan Crusader
+1 Breena, the Demagogue
+1 Brigone, Soldier of Meletis
+1 Conciliator's Duelist
+1 Defacing Duskmage
+1 Fang, Fearless l'Cie
+1 Feather, the Redeemed
+1 Grave Researcher
+1 Guardian Scalelord
+1 Informed Inkwright
+1 Ironwill Forger
+1 Kirol, History Buff
+1 Lorehold, the Historian
+1 Mirrorwing Dragon
+1 Papalymo Totolymo
+1 Prismari Pianist
+1 Quill-Blade Laureate
+1 Rionya, Fire Dancer
+1 Scathing Shadelock
+1 Scheming Silvertongue
+1 Scolding Administrator
+1 Sedgemoor Witch
+1 Shattered Acolyte
+1 Silverquill, the Disputant
+1 Snooping Page
+1 Spinerock Tyrant
+1 Stirring Hopesinger
+1 Storm-Kiln Artist
+1 Venerable Warsinger
+1 Frontline Heroism
+1 Squire's Devotion
+1 Ancestors' Aid
+1 Big Score
+1 Bitter Triumph
+1 Burning Sun's Fury
+1 Cut Down
+1 Expedite
+1 Gods Willing
+1 Guided Strike
+1 Mana Tithe
+1 Masterful Flourish
+1 Monstrous Rage
+1 Oblivion's Hunger
+1 Silverquill Charm
+1 Swords to Plowshares
+1 Ob Nixilis, the Adversary
+1 Can't Stay Away
+1 Collective Effort
+1 Diabolic Tutor
+1 Dig Site Inventory
+1 Inquisition of Kozilek
+1 Killian's Confidence
+1 Purge the Profane
+1 Queen's Commission
+1 Seize the Spoils
+1 Twinflame

@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/OJi5obf1sGowgc1881Tl6Q (source https://archidekt.com/decks/4826337)
+# tags Polymorph, Combo, Sea Creatures; bracket 2; saved 2026-08-31; 62 tagged of 1815 indexed
+
+Commander
+1 Jalira, Master Polymorphist
+
+Deck
+1 Aether Channeler
+1 Archetype of Imagination
+1 Cavalier of Gales
+1 Deceiver of Form
+1 Docent of Perfection
+1 Feywild Caretaker
+1 Frost Titan
+1 Guile
+1 Harmonized Trio
+1 Inkwell Leviathan
+1 Marang River Regent
+1 Master of Waves
+1 Minn, Wily Illusionist
+1 Myr Battlesphere
+1 Scourge of Fleets
+1 Solemn Simulacrum
+1 Starwinder
+1 Stormsurge Kraken
+1 Stormtide Leviathan
+1 Talrand, Sky Summoner
+1 Tidal Force
+1 Tidespout Tyrant
+1 Wonder
+1 Anticipate
+1 Brainstorm
+1 Brainsurge
+1 Daze
+1 Dig Through Time
+1 Discover the Impossible
+1 Flash of Insight
+1 Glen Elendra's Answer
+1 Jwari Disruption
+1 Lat-Nam's Legacy
+1 Lazotep Plating
+1 Memory Deluge
+1 Mystic Reflection
+1 Negate
+1 Peer Through Depths
+1 Saruman's Trickery
+1 Silundi Vision
+1 Supreme Will
+1 Telling Time
+1 Thassa's Intervention
+1 Brainstone
+1 Druidic Satchel
+1 Genesis Chamber
+1 Midnight Clock
+1 Castle Vantress
+1 Halimar Depths
+31 Island
+1 Rivendell
+1 Drawn from Dreams
+1 Dream Cache
+1 Flow State
+1 Index
+1 Mitotic Manipulation
+1 Mystic Speculation
+1 Omen
+1 Ponder
+1 Portent
+1 Ransack
+1 See Beyond
+1 Sleight of Hand
+1 Spectral Deluge
+1 Stock Up
+1 Stolen by the Fae
+1 Witness the Future
+1 Metallurgic Summonings
+1 Mordenkainen

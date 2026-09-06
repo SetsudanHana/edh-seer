@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/infinite-guideline-station/charge-counters
+# theme Charge Counters (31 decks)
+
+Commander
+1 Infinite Guideline Station
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Dawnsire, Sunstar Dreadnought
+1 Entropic Battlecruiser
+1 Exploration Broodship
+1 Extinguisher Battleship
+1 Insight Engine
+1 Inspirit, Flagship Vessel
+1 Larval Scoutlander
+1 Lumen-Class Frigate
+1 Moxite Refinery
+1 Pinnacle Kill-Ship
+1 Rescue Skiff
+1 Sledge-Class Seedship
+1 Sol Ring
+1 Solar Array
+1 Specimen Freighter
+1 Susurian Dirgecraft
+1 Synthesizer Labship
+1 The Eternity Elevator
+1 The Seriema
+1 Uthros Research Craft
+1 Uthros Scanship
+1 Warmaker Gunship
+1 Adagia, Windswept Bastion
+1 Breeding Pool
+1 Buried Ruin
+1 Command Bridge
+1 Command Tower
+1 Evendo, Waking Haven
+1 Evolving Wilds
+1 Exotic Orchard
+4 Forest
+1 Frontier Bivouac
+1 Godless Shrine
+1 Inventors' Fair
+2 Island
+1 Karn's Bastion
+1 Kavaron, Memorial World
+3 Mountain
+1 Path of Ancestry
+2 Plains
+1 Power Depot
+1 Reflecting Pool
+1 Reliquary Tower
+1 Sacred Foundry
+1 Spire of Industry
+1 Stomping Ground
+1 Susur Secundi, Void Altar
+2 Swamp
+1 Terramorphic Expanse
+1 Uthros, Titanic Godcore
+1 Watery Grave
+1 Alibou, Ancient Witness
+1 Baleful Strix
+1 Biomechan Engineer
+1 Cayth, Famed Mechanist
+1 Coretapper
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Fallaji Wayfarer
+1 Jhoira, Weatherlight Captain
+1 Kilo, Apogee Mind
+1 Mendicant Core, Guidelight
+1 Mm'menon, Uthros Exile
+1 Patrolling Peacemaker
+1 Pinnacle Emissary
+1 Saheeli, the Sun's Brilliance
+1 Sami, Ship's Engineer
+1 Sami, Wildcat Captain
+1 Smaug, Wicked Worm
+1 Surge Conductor
+1 Tekuthal, Inquiry Dominus
+1 Thranduil the Strategist
+1 Thranduil, the Elvenking
+1 Eusocial Engineering
+1 Gleaming Splendor
+1 Leyline of the Guildpact
+1 Loading Zone
+1 Resourceful Defense
+1 Counterspell
+1 Drill Too Deep
+1 Focus Fire
+1 Ripples of Potential
+1 Scour for Scrap
+1 Swords to Plowshares
+1 Jared Carthalion
+1 Cultivate
+1 Farseek
+1 Organic Extinction
+1 Wake the Past

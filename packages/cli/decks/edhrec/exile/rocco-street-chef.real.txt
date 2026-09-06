@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/GEyHeIa5CBDd6XJjcX1X4Q (source https://archidekt.com/decks/21923521)
+# tags Exile, Tokens, Artifacts, Combo, Food; bracket 2; saved 2026-09-05; 773 tagged of 13283 indexed
+
+Commander
+1 Rocco, Street Chef
+
+Deck
+1 Abstergo Entertainment
+1 Adagia, Windswept Bastion
+1 Ash Barrens
+1 Brushland
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+1 Fire-Lit Thicket
+6 Forest
+1 Inventors' Fair
+1 Jetmir's Garden
+1 Karplusan Forest
+1 Mistveil Plains
+5 Mountain
+1 Needleverge Pathway
+5 Plains
+1 Rugged Prairie
+1 Sacred Foundry
+1 Sacred Peaks
+1 Spectator Seating
+1 Spire Garden
+1 Stomping Ground
+1 Sunpetal Grove
+1 Turbulent Steppe
+1 Windbrisk Heights
+1 Academy Manufactor
+1 Arbaaz Mir
+1 Archivist of Oghma
+1 Brigid, Clachan's Heart
+1 Crystal Barricade
+1 Feasting Hobbit
+1 Frog Butler
+1 Gala Greeters
+1 Guardian of Faith
+1 Iroas, God of Victory
+1 Jetmir, Nexus of Revels
+1 Ragost, Deft Gastronaut
+1 Remorseful Cleric
+1 Selfless Spirit
+1 Sentinel Sarah Lyons
+1 Serra Paragon
+1 Squee, Goblin Nabob
+1 Advanced Reconstruction
+1 Food Coma
+1 Monologue Tax
+1 Night of the Sweets' Revenge
+1 Of Herbs and Stewed Rabbit
+1 Spelunking
+1 Tocasia's Welcome
+1 Akroma's Will
+1 Bolt Bend
+1 Chef's Kiss
+1 Dispatch
+1 Mana Tithe
+1 Manamorphose
+1 Redirect Lightning
+1 Restoration Magic
+1 Silence
+1 Tibalt's Trickery
+1 You Find Some Prisoners
+1 Ancient Stirrings
+1 Faithless Looting
+1 Farseek
+1 Momo's Heist
+1 Nature's Lore
+1 Rampant Growth
+1 Seize the Spoils
+1 The Battle of Bywater
+1 Three Visits
+1 Archaeomancer's Map
+1 Bumbleflower's Sharepot
+1 Currency Converter
+1 Grinding Station
+1 Hot Soup
+1 Mind Stone
+1 Nautiloid Ship
+1 Nuka-Cola Vending Machine
+1 Pip-Boy 3000
+1 Skyship Weatherlight
+1 Sol Ring
+1 Survivor's Med Kit
+1 Sword of the Animist
+1 The Seriema
+1 The Wind Crystal
+1 Transmutation Font
+1 Quintorius Kand

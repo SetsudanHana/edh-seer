@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/jasmine-boreal-of-the-seven/power
+# theme Power (245 decks)
+
+Commander
+1 Jasmine Boreal of the Seven
+
+Deck
+1 Arcane Signet
+1 Lifecrafter's Bestiary
+1 Selesnya Signet
+1 Sol Ring
+1 Spear of Heliod
+1 Swiftfoot Boots
+1 Bountiful Promenade
+1 Canopy Vista
+1 Command Tower
+13 Forest
+1 Fortified Village
+1 Gavony Township
+1 Overgrown Farmland
+9 Plains
+1 Radiant Grove
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple Garden
+1 Temple of Plenty
+1 Alpine Grizzly
+1 Ancient Brontodon
+1 Beast Whisperer
+1 Blade of the Sixth Pride
+1 Cheeky House-Mouse
+1 Devilthorn Fox
+1 Elite Vanguard
+1 Expedition Envoy
+1 Garruk's Gorehorn
+1 Gigantosaurus
+1 Isamaru, Hound of Konda
+1 Kalonian Tusker
+1 Kutzil, Malamet Exemplar
+1 Leatherback Baloth
+1 Orazca Frillback
+1 Oreskos Swiftclaw
+1 Primordial Wurm
+1 Prowling Caracal
+1 Quakestrider Ceratops
+1 Quilled Slagwurm
+1 Raptor Companion
+1 Ruxa, Patient Professor
+1 Savai Sabertooth
+1 Savannah Lions
+1 Shepherd of the Flock
+1 Sundial, Dawn Tyrant
+1 Swordwise Centaur
+1 Terrain Elemental
+1 Terrian, World Tyrant
+1 Toski, Bearer of Secrets
+1 Vorstclaw
+1 Watchwolf
+1 Anthem of Champions
+1 Beastmaster Ascension
+1 Collective Blessing
+1 Gaea's Anthem
+1 Glorious Anthem
+1 Mirari's Wake
+1 Muraganda Petroglyphs
+1 Sandwurm Convergence
+1 Tribute to the World Tree
+1 Unnatural Growth
+1 Aura Mutation
+1 Beast Within
+1 Generous Gift
+1 Heroic Intervention
+1 Hunter's Insight
+1 Path to Exile
+1 Return of the Wildspeaker
+1 Swords to Plowshares
+1 Garruk, Primal Hunter
+1 Cultivate
+1 Ezuri's Predation
+1 Farseek
+1 Harmonize
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Shamanic Revelation

@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/Ij4o1VvMH_HEUzJzTd58Fg (source https://archidekt.com/decks/17374917)
+# tags Enchantress, Sagas; bracket 3; saved 2026-09-03; 939 tagged of 6648 indexed
+
+Commander
+1 Narci, Fable Singer
+
+Deck
+1 Ajani Fells the Godsire
+1 Ancestral Mask
+1 Azusa's Many Journeys
+1 Battle for Bretagard
+1 Binding the Old Gods
+1 Boseiju Reaches Skyward
+1 Enchantress's Presence
+1 Ethereal Armor
+1 Genesis of the Daleks
+1 Historian's Boon
+1 Jugan Defends the Temple
+1 Love Song of Night and Day
+1 Mirari's Wake
+1 Secret Arcade // Dusty Parlor
+1 Sheltered by Ghosts
+1 Sigil of the Empty Throne
+1 Sphere of Safety
+1 Starfield of Nyx
+1 Sterling Grove
+1 Strength of the Harvest
+1 The Cloning of Shredder
+1 The Coming of Galactus
+1 The Eldest Reborn
+1 The Legend of Kyoshi
+1 The War in Heaven
+1 The Weatherseed Treaty
+1 Wild Growth
+1 Anikthea, Hand of Erebos
+1 Archon of Sun's Grace
+1 Barbara Wright
+1 Calix, Guided by Fate
+1 Composer of Spring
+1 Demon of Fate's Design
+1 Dryad of the Ilysian Grove
+1 Eiganjo Dynastorian
+1 Faeburrow Elder
+1 Garnet, Princess of Alexandria
+1 Ghostly Dancers
+1 Grim Guardian
+1 Herald of the Pantheon
+1 Ian Chesterton
+1 Jukai Naturalist
+1 Nyxbloom Ancient
+1 Nyxborn Behemoth
+1 Optimistic Scavenger
+1 Sanctum Weaver
+1 Satsuki, the Living Lore
+1 Scholar of New Horizons
+1 Setessan Champion
+1 Summon: Bahamut
+1 Summon: Knights of Round
+1 Summon: Primal Garuda
+1 Summon: Primal Odin
+1 Summon: Titan
+1 Sythis, Harvest's Hand
+1 Victor, Valgavoth's Seneschal
+1 Yuna, Hope of Spira
+1 Calix, Destiny's Hand
+1 Clash of the Eikons
+1 Redress Fate
+1 Exotic Orchard
+10 Forest
+1 Nesting Grounds
+11 Plains
+1 Sandsteppe Citadel
+11 Swamp
+1 Valgavoth's Lair
+1 Power Conduit
+1 Summoner's Grimoire
+1 Storyweave

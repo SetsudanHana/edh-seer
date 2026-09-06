@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/QCa9KUdnbldZAbaqHHX_Jg (source https://archidekt.com/decks/18907564)
+# tags Tokens, Burn, Villainous Choice; bracket 3; saved 2026-09-04; 67 tagged of 5937 indexed
+
+Commander
+1 Davros, Dalek Creator
+
+Deck
+1 Arcane Signet
+1 Lightning Greaves
+1 Locket of Yesterdays
+1 Rakdos Signet
+1 Sol Ring
+1 Tablet of Discovery
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Thrumming Stone
+1 Archmage Emeritus
+1 Balefire Dragon
+1 Blast-Furnace Hellkite
+1 Chandra's Incinerator
+1 Dragon Mage
+1 Guttersnipe
+1 Heartless Hidetsugu
+1 Knollspine Dragon
+1 Nicol Bolas, the Ravager
+1 Nightscape Familiar
+1 Ral, Monsoon Mage
+1 Satyr Firedancer
+1 Sygg, River Cutthroat
+1 The Dalek Emperor
+1 Baron, Airship Kingdom
+1 Bloodfell Caves
+1 Bojuka Bog
+1 Canyon Slough
+1 Choked Estuary
+1 Command Tower
+1 Creeping Tar Pit
+1 Crumbling Necropolis
+1 Darkwater Catacombs
+1 Dimir Guildgate
+1 Dismal Backwater
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Pools
+1 Foreboding Ruins
+1 Haunted Ridge
+2 Island
+1 Lavaclaw Reaches
+2 Mountain
+1 Path of Ancestry
+1 Rakdos Guildgate
+1 Reflecting Pool
+1 River of Tears
+1 Shadowblood Ridge
+1 Shipwreck Marsh
+1 Smoldering Marsh
+1 Sulfurous Springs
+2 Swamp
+1 Temple of Deceit
+1 Temple of Epiphany
+1 Temple of Malice
+1 Thriving Moor
+1 Vector, Imperial Capital
+1 Counterspell
+1 Invert Polarity
+1 This Is How It Ends
+1 Thrill of Possibility
+1 Court of Ambition
+1 Pain Magnification
+1 Painful Quandary
+1 Phyrexian Arena
+1 Wound Reflection
+1 Crux of Fate
+1 Delete
+22 Dragon's Approach
+1 Exterminate!
+1 Feed the Swarm
+1 Jeska's Will
+1 Stock Up

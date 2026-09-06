@@ -1,0 +1,99 @@
+# edhrec average deck: https://edhrec.com/average-decks/esika-god-of-the-tree/extra-upkeeps
+# theme Extra Upkeeps (30 decks)
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Fellwar Stone
+1 Scroll Rack
+1 Sensei's Divining Top
+1 Sol Ring
+1 Strionic Resonator
+1 Timeless Lotus
+1 Blood Crypt
+1 Breeding Pool
+1 Cascading Cataracts
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+4 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Ketria Triome
+1 Mana Confluence
+1 Misty Rainforest
+2 Mountain
+1 Overgrown Tomb
+2 Plains
+1 Reflecting Pool
+1 Reliquary Tower
+1 Sacred Foundry
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Atraxa, Grand Unifier
+1 Avacyn, Angel of Hope
+1 Birds of Paradise
+1 Bloom Tender
+1 Bringer of the Black Dawn
+1 Bringer of the Blue Dawn
+1 Bringer of the Green Dawn
+1 Bringer of the Red Dawn
+1 Bringer of the White Dawn
+1 Dryad of the Ilysian Grove
+1 Elesh Norn, Grand Cenobite
+1 Etali, Primal Conqueror
+1 Faeburrow Elder
+1 Jodah, the Unifier
+1 Koma, Cosmos Serpent
+1 Obeka, Splitter of Seconds
+1 Sheoldred, Whispering One
+1 Sisay, Weatherlight Captain
+1 Sphinx of the Second Sun
+1 The Ninth Doctor
+1 Vorinclex, Monstrous Raider
+1 Xenagos, God of Revels
+1 As Foretold
+1 Court of Ambition
+1 Court of Garenbrig
+1 Court of Vantress
+1 Defense of the Heart
+1 Extravagant Replication
+1 Mystic Remora
+1 Paradox Haze
+1 Rhystic Study
+1 Shadow of the Second Sun
+1 Sterling Grove
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Beast Within
+1 Brainstorm
+1 Counterspell
+1 Heroic Intervention
+1 Path to Exile
+1 Swords to Plowshares
+1 Nicol Bolas, Dragon-God
+1 Nicol Bolas, God-Pharaoh
+1 Nicol Bolas, Planeswalker
+1 Tamiyo, Field Researcher
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Skyshroud Claim
+1 Supreme Verdict
+1 Three Visits
+1 Wrath of God

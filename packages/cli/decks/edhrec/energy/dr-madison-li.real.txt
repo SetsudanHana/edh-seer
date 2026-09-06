@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/h2INAsDIh6ksY1U-bvaRvw (source https://archidekt.com/decks/23063326)
+# tags Energy; bracket 2; saved 2026-09-03; 1249 tagged of 6611 indexed
+
+Commander
+1 Dr. Madison Li
+
+Deck
+1 Aether Hub
+1 Ash Barrens
+1 Buried Ruin
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Ferrous Lake
+1 Glacial Fortress
+1 HELIOS One
+1 Irrigated Farmland
+5 Island
+4 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+4 Plains
+1 Prairie Stream
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Silverbluff Bridge
+1 Skycloud Expanse
+1 Spire of Industry
+1 Sulfur Falls
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Terramorphic Expanse
+1 Treasure Vault
+1 Aethertide Whale
+1 Alibou, Ancient Witness
+1 Assaultron Dominator
+1 Behemoth of Vault 0
+1 Brotherhood Scribe
+1 Elder Owyn Lyons
+1 Electrostatic Pummeler
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Liberty Prime, Recharged
+1 Loyal Apprentice
+1 Paladin Danse, Steel Maverick
+1 Rancorous Archaic
+1 Reckless Fireweaver
+1 Rex, Cyber-Hound
+1 Riddle Gate Gargoyle
+1 Robobrain War Mind
+1 Sai, Master Thopterist
+1 Sentinel Sarah Lyons
+1 Sentry Bot
+1 Solemn Simulacrum
+1 Steel Overseer
+1 Synth Eradicator
+1 Synth Infiltrator
+1 The Motherlode, Excavator
+1 Whirler Rogue
+1 Aetherworks Marvel
+1 Arcane Signet
+1 Automated Assembly Line
+1 Bespoke Battlewagon
+1 Elixir of Immortality
+1 Everflowing Chalice
+1 Fabrication Module
+1 Izzet Generatorium
+1 Izzet Signet
+1 Lightning Greaves
+1 Mind Stone
+1 Nuka-Cola Vending Machine
+1 Panharmonicon
+1 Plasma Caster
+1 Sol Ring
+1 T-45 Power Armor
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 The Prydwen, Steel Flagship
+1 Thought Vessel
+1 Wayfarer's Bauble
+1 Austere Command
+1 One with the Machine
+1 Open the Vaults
+1 Wake the Past
+1 Bottle-Cap Blast
+1 Crush Contraband
+1 Dispatch
+1 Electrosiphon
+1 Galvanic Discharge
+1 Glimmer of Genius
+1 Swords to Plowshares
+1 Mechanized Production
+1 Thopter Spy Network
+1 Vault 112: Sadistic Simulation

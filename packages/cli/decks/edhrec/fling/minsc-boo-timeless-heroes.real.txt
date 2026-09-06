@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/WIM9Wd3NnMwtlBt6pkW4vw (source https://archidekt.com/decks/13996826)
+# tags Aggro, Fling, +1/+1 Counters; bracket 3; saved 2026-09-03; 155 tagged of 8927 indexed
+
+Commander
+1 Minsc & Boo, Timeless Heroes
+
+Deck
+1 Ashroot Animist
+1 Azusa, Lost but Seeking
+1 Birds of Paradise
+1 Delighted Halfling
+1 Devoted Druid
+1 Disciple of Freyalise
+1 Dragon Sniper
+1 Elvish Mystic
+1 Fanatic of Rhonas
+1 Forgotten Ancient
+1 Fyndhorn Elves
+1 Goblin Anarchomancer
+1 Llanowar Elves
+1 Managorger Hydra
+1 Pinnacle Monk
+1 Poison Dart Frog
+1 Psychosis Crawler
+1 Ruby, Daring Tracker
+1 Sakura-Tribe Elder
+1 Taurean Mauler
+1 Vigor
+1 Wayward Swordtooth
+1 Xenagos, God of Revels
+1 Berserk
+1 Bulk Up
+1 Chaos Warp
+1 Collective Resistance
+1 Flashback
+1 Hunter's Insight
+1 Invigorating Surge
+1 Obscuring Haze
+1 Ram Through
+1 Solidarity of Heroes
+1 Soul's Fire
+1 Tamiyo's Safekeeping
+1 The Last Agni Kai
+1 Tibalt's Trickery
+1 Untimely Malfunction
+1 Vines of Vastwood
+1 Boseiju, Who Endures
+1 Cinder Glade
+1 Command Beacon
+1 Command Tower
+1 Commercial District
+1 Cragcrown Pathway
+1 Fire-Lit Thicket
+8 Forest
+1 Game Trail
+1 Grove of the Burnwillows
+1 Karplusan Forest
+4 Mountain
+1 Reliquary Tower
+1 Rockfall Vale
+1 Rootbound Crag
+1 Sokenzan, Crucible of Defiance
+1 Soulstone Sanctuary
+1 Spire Garden
+1 Stomping Ground
+1 Thornspire Verge
+1 Training Compound
+1 Wooded Foothills
+1 Branching Evolution
+1 Fiery Emancipation
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Terrasymbiosis
+1 Bridgeworks Battle
+1 Chandra's Ignition
+1 Fangs of Kalonia
+1 Farseek
+1 Flare of Cultivation
+1 Gamble
+1 Nature's Lore
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Seize the Day
+1 Shared Roots
+1 Soul Immolation
+1 Study the Classics
+1 Stump Stomp
+1 Summer Bloom
+1 Sundering Eruption
+1 Three Visits
+1 Traverse the Outlands
+1 Visions of Dominance
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 The Ozolith
+1 Thought Vessel

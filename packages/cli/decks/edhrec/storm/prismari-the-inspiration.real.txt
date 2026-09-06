@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/I56K1UPFbjOltSFScHHNAw (source https://moxfield.com/decks/HDHfBvhMdUyBbFnyQ_TIHw)
+# tags Storm; bracket 3; saved 2026-09-04; 759 tagged of 10051 indexed
+
+Commander
+1 Prismari, the Inspiration
+
+Deck
+1 Abrade
+1 Arcane Denial
+1 Big Score
+1 Brain Freeze
+1 Brainstorm
+1 Chaos Warp
+1 Consider
+1 Counterspell
+1 Cyclonic Rift
+1 Delay
+1 Dig Through Time
+1 Electrodominance
+1 Fact or Fiction
+1 Flashback
+1 Frantic Search
+1 Gut Shot
+1 Increasing Vengeance
+1 Lightning Bolt
+1 Mental Misstep
+1 Mindbreak Trap
+1 Moment of Truth
+1 Muddle the Mixture
+1 Opt
+1 Peer Through Depths
+1 Pyretic Ritual
+1 Seething Song
+1 Spell Pierce
+1 Thrill of Possibility
+1 Arcane Signet
+1 Fellwar Stone
+1 Resonating Lute
+1 Sol Ring
+1 Talisman of Creativity
+1 Archmage Emeritus
+1 Ashling, Rekindled
+1 Baral, Chief of Compliance
+1 Electro, Assaulting Battery
+1 Exhibition Tidecaller
+1 Goblin Electromancer
+1 Guttersnipe
+1 Harmonized Trio
+1 Hexing Squelcher
+1 Hydroelectric Specimen
+1 Pinnacle Monk
+1 Sanar, Unfinished Genius
+1 Simian Spirit Guide
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Valley Floodcaller
+1 Young Pyromancer
+1 Bloodstained Mire
+1 Cascade Bluffs
+1 Command Tower
+10 Island
+7 Mountain
+1 Polluted Delta
+1 Reliquary Tower
+1 Riverpyre Verge
+1 Skycoach Waypoint
+1 Spirebluff Canal
+1 Steam Vents
+1 Stormcarved Coast
+1 Wooded Foothills
+1 Boomerang Basics
+1 Chandra's Ignition
+1 Curse of the Swine
+1 Expressive Iteration
+1 Faithless Looting
+1 Flow State
+1 Gitaxian Probe
+1 Grapeshot
+1 Impolite Entrance
+1 Mana Geyser
+1 Past in Flames
+1 Preordain
+1 Sleight of Hand
+1 Slip Through Space
+1 Solve the Equation
+1 Strike It Rich
+1 Will of the Jeskai
+1 Invasion of Mercadia
+1 Ral, Crackling Wit
+1 Thousand-Year Storm
+1 Underworld Breach

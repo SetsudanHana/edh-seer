@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/JsY31nSxf_raWdZ0SyLJEQ (source https://moxfield.com/decks/vFdD3eBpCkurZ5nszFE-5A)
+# tags Morph; bracket 3; saved 2026-09-05; 597 tagged of 3845 indexed
+
+Commander
+1 Yarus, Roar of the Old Gods
+
+Deck
+1 Ainok Survivalist
+1 Akroma, Angel of Fury
+1 Ashcloud Phoenix
+1 Biophagus
+1 Birds of Paradise
+1 Boltbender
+1 Broodhatch Nantuko
+1 Curator Beastie
+1 Defiant Survivor
+1 Den Protector
+1 Disciple of Freyalise
+1 Dundoolin Weaver
+1 Experiment Twelve
+1 Flourishing Bloom-Kin
+1 Greenbelt Radical
+1 Hauntwoods Shrieker
+1 Hooded Hydra
+1 Horde Ambusher
+1 Ire Shaman
+1 Jeering Instigator
+1 Joraga Treespeaker
+1 Kappa Tech-Wrecker
+1 Llanowar Elves
+1 Mistbreath Elder
+1 Nantuko Vigilante
+1 Nervous Gardener
+1 Ohran Frostfang
+1 Printlifter Ooze
+1 Professional Face-Breaker
+1 Pyrotechnic Performer
+1 Rotisserie Elemental
+1 Salt Road Ambushers
+1 Saryth, the Viper's Fang
+1 Skirk Marauder
+1 Tangled Florahedron
+1 Temur War Shaman
+1 Thelonite Hermit
+1 Vengeful Creeper
+1 Whisperwood Elemental
+1 Arcane Signet
+1 Ashnod's Altar
+1 Dream Chisel
+1 Grafted Wargear
+1 Panoptic Projektor
+1 Phyrexian Altar
+1 Scroll of Fate
+1 Sol Ring
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Turntimber Symbiosis
+1 Under the Skin
+1 Boseiju, Who Endures
+1 Branch of Vitu-Ghazi
+1 Castle Embereth
+1 Castle Garenbrig
+1 Command Beacon
+1 Command Tower
+1 Evendo, Waking Haven
+5 Forest
+1 Grove of the Burnwillows
+1 High Market
+1 Karplusan Forest
+1 Lazotep Quarry
+4 Mountain
+1 Plaza of Heroes
+1 Scavenger Grounds
+1 Scorched Ruins
+1 Spire Garden
+1 Stomping Ground
+1 Taiga
+1 Temple of the False God
+1 War Room
+1 Wooded Foothills
+1 Yavimaya Hollow
+1 Zoetic Cavern
+1 Break Down the Door
+1 Collective Resistance
+1 Deflecting Swat
+1 Kazuul's Fury
+1 Showstopping Surprise
+1 Smuggler's Surprise
+1 Evolutionary Leap
+1 Experimental Lab // Staff Room
+1 Goblin Bombardment
+1 Growing Rites of Itlimoc
+1 Impact Tremors
+1 Obscuring Aether
+1 Song of the Dryads
+1 Threats Around Every Corner
+1 Ugin's Mastery
+1 Wild Growth

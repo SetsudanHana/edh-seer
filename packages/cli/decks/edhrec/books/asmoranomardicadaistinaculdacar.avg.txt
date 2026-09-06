@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/asmoranomardicadaistinaculdacar/books
+# theme Books (1 decks)
+
+Commander
+1 Asmoranomardicadaistinaculdacar
+
+Deck
+1 Bag of Holding
+1 Barrin's Codex
+1 Book of Rass
+1 Clock of Omens
+1 Currency Converter
+1 Emmessi Tome
+1 Everflowing Chalice
+1 Eye of Vecna
+1 Fool's Tome
+1 Geth's Grimoire
+1 Grimoire of the Dead
+1 Hand of Vecna
+1 Investigator's Journal
+1 Jalum Tome
+1 Liquimetal Torque
+1 Manifold Key
+1 Mazemind Tome
+1 Otherworld Atlas
+1 Sarevok's Tome
+1 Sarpadian Empires, Vol. VII
+1 Tamiyo's Journal
+1 Tarrian's Journal
+1 The Book of Vile Darkness
+1 The Deck of Many Things
+1 The Underworld Cookbook
+1 Thran Tome
+1 Throne of Geth
+1 Tome of Legends
+1 Trading Post
+1 Treasure Chest
+1 Unwinding Clock
+1 Urza's Tome
+1 Voltaic Key
+1 Buried Ruin
+1 Canyon Slough
+1 Command Tower
+1 Dragonskull Summit
+1 Drossforge Bridge
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Geier Reach Sanitarium
+1 Great Furnace
+1 Inventors' Fair
+1 Karn's Bastion
+8 Mountain
+1 Path of Ancestry
+1 Rix Maadi, Dungeon Palace
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+8 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Treasure Vault
+1 Vault of Whispers
+1 Alesha, Who Laughs at Fate
+1 Archfiend of Ifnir
+1 Brash Taunter
+1 Containment Construct
+1 Experimental Confectioner
+1 Far Fortune, End Boss
+1 Glint-Horn Buccaneer
+1 Insolent Neonate
+1 Marauding Mako
+1 Myr Retriever
+1 Ovalchase Daredevil
+1 Perforating Artist
+1 Putrid Imp
+1 Reckless Fireweaver
+1 Scrap Trawler
+1 Surly Badgersaur
+1 Bitter Reunion
+1 Faith of the Devoted
+1 Food Fight
+1 Big Score
+1 Bitter Triumph
+1 Demand Answers
+1 Brotherhood's End
+1 Drown in Ichor
+1 Faithless Looting
+1 Feed the Swarm
+1 Scrap Mastery
+1 Seize the Spoils
+1 Syphon Mind
+1 Trash for Treasure

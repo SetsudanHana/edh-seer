@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/doc-aurlock-grizzled-genius/foretell
+# theme Foretell (106 decks)
+
+Commander
+1 Doc Aurlock, Grizzled Genius
+
+Deck
+1 Arcane Signet
+1 Conduit of Worlds
+1 Lucky Clover
+1 Simic Signet
+1 Sol Ring
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+10 Forest
+1 Hinterland Harbor
+11 Island
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Sodden Verdure
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Battle Mammoth
+1 Beanstalk Giant
+1 Beanstalk Wurm
+1 Cosmos Charger
+1 Drix Fatemaker
+1 Fblthp, Lost on the Range
+1 Horned Loch-Whale
+1 Illithid Harvester
+1 Kellan, Inquisitive Prodigy
+1 Lier, Disciple of the Drowned
+1 Loan Shark
+1 Malevolent Hermit
+1 Mirrorhall Mimic
+1 Outcaster Trailblazer
+1 Railway Brawler
+1 Rootcoil Creeper
+1 Rosethorn Acolyte
+1 Sage of the Beyond
+1 Sapphire Dragon
+1 Savvy Trader
+1 Sisterhood of Karn
+1 Slickshot Lockpicker
+1 Stormkeld Vanguard
+1 Studious First-Year
+1 Sword Coast Serpent
+1 Tempest Hart
+1 The Foretold Soldier
+1 The Thirteenth Doctor
+1 Tlincalli Hunter
+1 Visage Bandit
+1 Fortune Teller's Talent
+1 Secrets of the Dead
+1 Virtue of Knowledge
+1 Virtue of Strength
+1 Beast Within
+1 Behold the Multiverse
+1 Cackling Counterpart
+1 Chemister's Insight
+1 Counterspell
+1 Growth Spiral
+1 Lifestream's Blessing
+1 Moment's Peace
+1 Plunder the Trollshaws
+1 Saw It Coming
+1 Surge of Brilliance
+1 Think Twice
+1 Jace Reawakened
+1 Alrund's Epiphany
+1 Croaking Counterpart
+1 Cultivate
+1 Deep Analysis
+1 Dryad's Revival
+1 Increasing Savagery
+1 Kodama's Reach
+1 Lock and Load
+1 Make Your Own Luck
+1 Plan the Heist
+1 Ravenform
+1 Spectral Deluge
+1 Step Between Worlds
+1 Tumbleweed Rising

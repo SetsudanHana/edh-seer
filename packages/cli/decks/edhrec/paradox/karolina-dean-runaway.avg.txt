@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/karolina-dean-runaway/paradox
+# theme Paradox (8 decks)
+
+Commander
+1 Karolina Dean, Runaway
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Interdimensional Web Watch
+1 Lightning Greaves
+1 Sol Ring
+1 Unstable Amulet
+1 Arid Mesa
+1 Baxter Building
+1 Blood Crypt
+1 Bloodstained Mire
+1 Boseiju, Who Endures
+1 Command Tower
+1 Commercial District
+1 Conduit Pylons
+1 Cori Mountain Monastery
+1 Exotic Orchard
+1 Fabled Passage
+2 Forest
+3 Island
+6 Mountain
+1 Multiversal Passage
+1 Mystic Monastery
+1 Path of Ancestry
+2 Plains
+1 Plateau
+1 Radiant Summit
+1 Sacred Foundry
+1 Scorched Geyser
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Taiga
+1 Turbulent Steppe
+1 Volcanic Island
+1 Wooded Foothills
+1 Alex Wilder, Runaway
+1 Chase Stein, Runaway
+1 Daredevil, Man Without Fear
+1 Doc Aurlock, Grizzled Genius
+1 Dream Devourer
+1 Etali, Primal Conqueror
+1 Faldorn, Dread Wolf Herald
+1 Fire Lord Zuko
+1 Flaming Tyrannosaurus
+1 Gert and Old Lace, Runaways
+1 Gwen Stacy
+1 Hawkeye, Young Avenger
+1 Iraxxa, Empress of Mars
+1 Keeper of Secrets
+1 Kellan, the Kid
+1 Memory Worm
+1 Mizzix, Replica Rider
+1 Molly Hayes, Runaway
+1 Nico Minoru, Runaway
+1 Party Thrasher
+1 Prosper, Tome-Bound
+1 Rocco, Street Chef
+1 Savvy Trader
+1 Tlincalli Hunter
+1 Vega, the Watcher
+1 Victor Mancha, Runaway
+1 Wiccan, Young Avenger
+1 Wild-Magic Sorcerer
+1 Advanced Reconstruction
+1 Annie Joins Up
+1 Charred Foyer // Warped Space
+1 Fortune Teller's Talent
+1 Maelstrom Nexus
+1 Shadow of the Goblin
+1 Spider-Verse
+1 Wild Wasteland
+1 Abstruse Appropriation
+1 Blazing Crescendo
+1 Chaos Warp
+1 Crossover Collaboration
+1 Delayed Blast Fireball
+1 Hurl Through Hell
+1 Lightning Bolt
+1 Surge of Brilliance
+1 Swords to Plowshares
+1 Asgardian Inspiration
+1 Avatar's Wrath
+1 Embrace the Unknown
+1 Expressive Iteration
+1 Hex Magic
+1 Ignite the Future
+1 Impending Flux
+1 Improvisation Capstone
+1 Ultimate Magic: Meteor

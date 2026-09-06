@@ -1,0 +1,103 @@
+# edhrec average deck: https://edhrec.com/average-decks/esika-god-of-the-tree/indestructible
+# theme Indestructible (26 decks)
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Altar of the Pantheon
+1 Arcane Signet
+1 Bident of Thassa
+1 Bow of Nylea
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Heroes' Podium
+1 Sol Ring
+1 Blood Crypt
+1 Breeding Pool
+1 Cavern of Souls
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+1 Island
+1 Ketria Triome
+1 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Plaza of Heroes
+1 Polluted Delta
+1 Raugrin Triome
+1 Reflecting Pool
+1 Sacred Foundry
+1 Savai Triome
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Zagoth Triome
+1 Athreos, God of Passage
+1 Athreos, Shroud-Veiled
+1 Dryad of the Ilysian Grove
+1 Ephara, God of the Polis
+1 Erebos, Bleak-Hearted
+1 Erebos, God of the Dead
+1 God-Eternal Oketra
+1 God-Eternal Rhonas
+1 Heliod, God of the Sun
+1 Heliod, Sun-Crowned
+1 Inga and Esika
+1 Iroas, God of Victory
+1 Jodah, the Unifier
+1 Karametra, God of Harvests
+1 Keranos, God of Storms
+1 Klothys, God of Destiny
+1 Kolvori, God of Kinship
+1 Kruphix, God of Horizons
+1 Mogis, God of Slaughter
+1 Nylea, God of the Hunt
+1 Nylea, Keen-Eyed
+1 Ojer Kaslem, Deepest Growth
+1 Oketra the True
+1 Pharika, God of Affliction
+1 Phenax, God of Deception
+1 Purphoros, Bronze-Blooded
+1 Purphoros, God of the Forge
+1 Rhonas the Indomitable
+1 Sab-Sunen, Luxa Embodied
+1 Tergrid, God of Fright
+1 Thassa, Deep-Dwelling
+1 Thassa, God of the Sea
+1 The Locust God
+1 Xenagos, God of Revels
+1 Zodiark, Umbral God
+1 Leyline of the Guildpact
+1 Maelstrom Nexus
+1 Privileged Position
+1 Rhystic Study
+1 Smothering Tithe
+1 Sterling Grove
+1 Counterspell
+1 Cyclonic Rift
+1 Mana Drain
+1 Path to Exile
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Nicol Bolas, Dragon-God
+1 Cultivate
+1 Damnation
+1 Farseek
+1 Nature's Lore
+1 Primevals' Glorious Rebirth
+1 Supreme Verdict
+1 Three Visits
+1 Urza's Ruinous Blast
+1 Wrath of God

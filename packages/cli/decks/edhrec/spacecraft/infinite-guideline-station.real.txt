@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/G4jk2SV3VU4PI8TDMw9Sxg (source https://archidekt.com/decks/14946901)
+# tags Robots, Multicolor Matters, Spacecraft; bracket 3; saved 2026-09-03; 127 tagged of 10182 indexed
+
+Commander
+1 Infinite Guideline Station
+
+Deck
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Breeding Pool
+1 Brushland
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Forest
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hinterland Harbor
+1 Island
+1 Isolated Chapel
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Overgrown Farmland
+1 Prairie Stream
+1 Raffine's Tower
+1 Raugrin Triome
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rootbound Crag
+1 Sacred Foundry
+1 Shipwreck Marsh
+1 Shivan Reef
+1 Sunpetal Grove
+1 Temple Garden
+1 Tundra
+1 Underground River
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Adrix and Nev, Twincasters
+1 Archelos, Lagoon Mystic
+1 Baleful Strix
+1 Bard, King of Dale
+1 Bello, Bard of the Brambles
+1 Birds of Paradise
+1 Black Market Tycoon
+1 Brigid, Clachan's Heart
+1 Crystal, Inhuman Princess
+1 Esix, Fractal Bloom
+1 Faeburrow Elder
+1 Felisa, Fang of Silverquill
+1 Glissa Sunslayer
+1 Inga and Esika
+1 Jhoira, Weatherlight Captain
+1 Knight of New Alara
+1 Lotho, Corrupt Shirriff
+1 Maraleaf Pixie
+1 Mistmeadow Vanisher
+1 Muerra, Trash Tactician
+1 Reflector Mage
+1 Scientist Supreme of A.I.M.
+1 Silk, Web Weaver
+1 Spider Manifestation
+1 Thalisse, Reverent Medium
+1 The Locust God
+1 Thorin Oakenshield
+1 Wandertale Mentor
+1 Afterlife Insurance
+1 Anguished Unmaking
+1 Beast Within
+1 Despark
+1 Dispatch
+1 First Family
+1 Generous Gift
+1 Grand Crescendo
+1 Heroic Intervention
+1 Inkshield
+1 Mystic Reflection
+1 Parting Gust
+1 Rite of Harmony
+1 Swords to Plowshares
+1 Void Rend
+1 Windgrace's Judgment
+1 Aura Shards
+1 Binding the Old Gods
+1 Cosmic Crucible
+1 Etchings of the Chosen
+1 Friendly Neighborhood
+1 Knowledge Is Power
+1 Mirari's Wake
+1 Prosperous Partnership
+1 Rabble Rousing
+1 Warleader's Call
+1 Death Begets Life
+1 Lessons from Life
+1 Open the Way
+1 Rishkar's Expertise
+1 Decanter of Endless Water
+1 Sol Ring
+1 Thought Vessel

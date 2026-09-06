@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/hSFMmdBC1NmBzNLoIXsz4w (source https://archidekt.com/decks/25357033)
+# tags Villainous Choice; bracket 2; saved 2026-09-03; 57 tagged of 2025 indexed
+
+Commander
+1 The Valeyard
+
+Deck
+1 Ash Barrens
+1 Canyon Slough
+1 Choked Estuary
+1 Command Tower
+1 Creeping Tar Pit
+1 Crumbling Necropolis
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Exotic Orchard
+1 Fetid Pools
+1 Foreboding Ruins
+1 Frostboil Snarl
+2 Island
+1 Izzet Boilerworks
+1 Lavaclaw Reaches
+4 Mountain
+1 Myriad Landscape
+1 Ominous Cemetery
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 River of Tears
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sunken Hollow
+4 Swamp
+1 Temple of Deceit
+1 Temple of Epiphany
+1 Temple of Malice
+1 Blink
+1 Day of the Moon
+1 Death in Heaven
+1 Genesis of the Daleks
+1 The Toymaker's Trap
+1 Chain Reaction
+1 Collective Defiance
+1 Cruel Ultimatum
+1 Disrupt Decorum
+1 Doomsday Confluence
+1 Exterminate!
+1 Faithless Looting
+1 Feed the Swarm
+1 Great Intelligence's Plan
+1 Hunted by The Family
+1 Mob Verdict
+1 Path of the Enigma
+1 Path of the Schemer
+1 Plea for Power
+1 Ponder
+1 Rankle's Prank
+1 Ringsight
+1 Truth or Consequences
+1 Chaos Warp
+1 Crosis's Charm
+1 Evacuation
+1 Fact or Fiction
+1 Maestros Charm
+1 Negate
+1 Starstorm
+1 Swerve
+1 This Is How It Ends
+1 Trap the Trespassers
+1 Undermine
+1 Unlicensed Disintegration
+1 Wild Ricochet
+1 Zoyowa's Justice
+1 Commander's Sphere
+1 Dimir Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Midnight Crusader Shuttle
+1 Mind Stone
+1 Model of Unity
+1 Talisman of Dominance
+1 Wayfarer's Bauble
+1 Cult of Skaro
+1 Cyberman Patrol
+1 Dalek Squadron
+1 Goblin Electromancer
+1 Grudge Keeper
+1 Kardur, Doomscourge
+1 Messenger Jays
+1 Missy
+1 Mulldrifter
+1 Nightscape Familiar
+1 Shaun, Father of Synths
+1 Sycorax Commander
+1 The Beast, Deathless Prince
+1 The Cyber-Controller
+1 The Dalek Emperor
+1 The Flood of Mars
+1 The Master, Gallifrey's End
+1 Weeping Angel

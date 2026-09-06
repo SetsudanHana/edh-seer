@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/amalia-benavides-aguirre/explore
+# theme Explore (68 decks)
+
+Commander
+1 Amalia Benavides Aguirre
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Bolas's Citadel
+1 Orzhov Signet
+1 Pristine Talisman
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Orzhov Basilica
+11 Plains
+1 Radiant Fountain
+1 Rogue's Passage
+1 Scoured Barrens
+1 Shattered Sanctum
+1 Shineshadow Snarl
+8 Swamp
+1 Tainted Field
+1 Vault of Champions
+1 Vault of the Archangel
+1 Archivist of Oghma
+1 Auriok Champion
+1 Ayli, Eternal Pilgrim
+1 Blood Artist
+1 Cruel Celebrant
+1 Dark Confidant
+1 Daxos, Blessed by the Sun
+1 Distinguished Conjurer
+1 Elas il-Kor, Sadistic Pilgrim
+1 Elenda's Hierophant
+1 Essence Channeler
+1 Exemplar of Light
+1 Guide of Souls
+1 Haliya, Guided by Light
+1 Hinterland Sanctifier
+1 Karlov of the Ghost Council
+1 Leonin Elder
+1 Lifecreed Duo
+1 Lunarch Veteran
+1 Lurrus of the Dream-Den
+1 Marauding Blight-Priest
+1 Moseo, Vein's New Dean
+1 Scheming Silvertongue
+1 Selfless Spirit
+1 Soul Warden
+1 Soul's Attendant
+1 Spectrum Sentinel
+1 Starscape Cleric
+1 Suture Priest
+1 Vito, Thorn of the Dusk Rose
+1 Voice of the Blessed
+1 Zulaport Cutthroat
+1 Ajani's Welcome
+1 Authority of the Consuls
+1 Black Market Connections
+1 Blind Obedience
+1 Case of the Uneaten Feast
+1 Cleric Class
+1 Lunar Convocation
+1 Retribution of the Ancients
+1 Anguished Unmaking
+1 Despark
+1 Flare of Fortitude
+1 Fracture
+1 Mortify
+1 Path to Exile
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Ascend from Avernus
+1 Austere Command
+1 Damn
+1 Fix What's Broken
+1 Raise the Past
+1 Reanimate
+1 Sevinne's Reclamation
+1 Unearth

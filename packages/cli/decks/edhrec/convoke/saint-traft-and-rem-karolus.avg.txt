@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/saint-traft-and-rem-karolus/convoke
+# theme Convoke (237 decks)
+
+Commander
+1 Saint Traft and Rem Karolus
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Halo Fountain
+1 Idol of Oblivion
+1 Izzet Signet
+1 Relic of Legends
+1 Skullclamp
+1 Sol Ring
+1 Springleaf Drum
+1 Throne of the God-Pharaoh
+1 Wand of the Worldsoul
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Frostboil Snarl
+1 Furycalm Snarl
+1 Hallowed Fountain
+6 Island
+1 Kher Keep
+4 Mountain
+1 Mystic Monastery
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Raugrin Triome
+1 Sacred Foundry
+1 Sea of Clouds
+1 Spectator Seating
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Triumph
+1 Training Center
+1 Invasion of Segovia
+1 Adept Watershaper
+1 Bennie Bracks, Zoologist
+1 Drumbellower
+1 Fallowsage
+1 Flockchaser Phantom
+1 Joyful Stormsculptor
+1 Kasla, the Broken Halo
+1 Knight-Errant of Eos
+1 Kykar, Wind's Fury
+1 Mentor of the Meek
+1 Monastery Mentor
+1 Nesting Dovehawk
+1 Omni-Changeling
+1 Party Thrasher
+1 Seraph of the Masses
+1 Stonybrook Schoolmaster
+1 The Locust God
+1 The Wandering Rescuer
+1 Third Path Iconoclast
+1 Venerated Loxodon
+1 Village Bell-Ringer
+1 Wildfire Awakener
+1 Zephyr Singer
+1 City on Fire
+1 Conclave Tribunal
+1 Dazzling Theater // Prop Room
+1 Impact Tremors
+1 Intruder Alarm
+1 Jeskai Ascendancy
+1 Prosperous Partnership
+1 Warleader's Call
+1 Whirlwind of Thought
+1 Artistic Refusal
+1 Chant of Vitu-Ghazi
+1 Clever Concealment
+1 Cut Short
+1 Devouring Light
+1 Ephemeral Shields
+1 Meeting of Minds
+1 Secure the Wastes
+1 Shatter the Source
+1 Stoke the Flames
+1 Swords to Plowshares
+1 Transcendent Message
+1 Unexpected Assistance
+1 Elspeth, Sun's Champion
+1 Austere Command
+1 Calamity of Cinders
+1 Hour of Reckoning
+1 Split Up
+1 Temporal Cleansing
+1 Triplicate Spirits

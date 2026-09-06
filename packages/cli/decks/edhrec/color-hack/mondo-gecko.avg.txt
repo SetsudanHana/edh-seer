@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/mondo-gecko/color-hack
+# theme Color Hack (12 decks)
+
+Commander
+1 Mondo Gecko
+
+Deck
+1 Arcane Signet
+1 Conqueror's Flail
+1 Distorting Lens
+1 Fellwar Stone
+1 Goldvein Pick
+1 Machine God's Effigy
+1 Mind Stone
+1 Puca's Eye
+1 Sapphire Medallion
+1 Sol Ring
+1 Staff of Eden, Vault's Key
+1 The Key to the Vault
+1 Thought Vessel
+1 Access Tunnel
+1 Big Apple, 3 a.m.
+1 Cradle of the Accursed
+1 Exotic Orchard
+28 Island
+1 Lazotep Quarry
+1 Meteor Crater
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Rogue's Passage
+1 Springjack Pasture
+1 Chameleon, Master of Disguise
+1 Clever Impersonator
+1 Clone
+1 Copycrook
+1 Kitsune, Dragon's Daughter
+1 Mirrorhall Mimic
+1 Mocking Doppelganger
+1 Mockingbird
+1 Phyrexian Metamorph
+1 Prismwake Merrow
+1 Scrapbasket
+1 Scuttlemutt
+1 Sphinx of Forgotten Lore
+1 Stunt Double
+1 Tidal Visionary
+1 Twenty-Toed Toad
+1 Vizier of Many Faces
+1 Wonder
+1 Aether Tunnel
+1 Aqueous Form
+1 Case of the Shattered Pact
+1 Cloak of Mists
+1 Control Magic
+1 Dream Coat
+1 Invisibility
+1 Kitnap
+1 Mirrormade
+1 Security Bypass
+1 Sword Coast Sailor
+1 Writ of Passage
+1 Counterspell
+1 Elminster's Simulacrum
+1 Flash Flood
+1 High Tide
+1 Jaded Response
+1 Pongify
+1 Prismatic Lace
+1 Quickchange
+1 Rapid Hybridization
+1 Resculpt
+1 See Double
+1 Sway of Illusion
+1 Arcane Heist
+1 Govern the Guildless
+1 Relm's Sketching
+1 Rite of Replication
+1 Stolen Identity
+1 Tempted by the Oriq

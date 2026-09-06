@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/cuczQ2kRiGAvyna-cQwf4A (source https://archidekt.com/decks/10472884)
+# tags Exalted, Samurai, Attack Triggers, Historic, Warriors; bracket 2; saved 2026-07-08; 45 tagged of 30297 indexed
+
+Commander
+1 Isshin, Two Heavens as One
+
+Deck
+1 Alesha, Who Smiles at Death
+1 Amy Rose
+1 Arbaaz Mir
+1 Asari Captain
+1 Auron, Venerated Guardian
+1 Boromir, Warden of the Tower
+1 Brutal Hordechief
+1 Caustic Bronco
+1 Commander Liara Portyr
+1 Djeru and Hazoret
+1 Duke Ulder Ravengard
+1 Elder Brain
+1 Frontline Medic
+1 Gilgamesh, Master-at-Arms
+1 Goblin Diplomats
+1 Heiko Yamazaki, the General
+1 Karazikar, the Eye Tyrant
+1 Karlach, Fury of Avernus
+1 Kazuul, Tyrant of the Cliffs
+1 Laelia, the Blade Reforged
+1 Norika Yamazaki, the Poet
+1 Oreskos Explorer
+1 Raiyuu, Storm's Edge
+1 Raubahn, Bull of Ala Mhigo
+1 Skyknight Vanguard
+1 Teshar, Ancestor's Apostle
+1 The Master, Multiplied
+1 Tomik, Wielder of Law
+1 Winota, Joiner of Forces
+1 Ash Barrens
+1 Bloodfell Caves
+1 Boros Garrison
+1 Caves of Koilos
+1 Command Tower
+1 Haunted Fengraf
+1 Hidden Courtyard
+1 Hidden Necropolis
+1 Hidden Volcano
+1 Lavaclaw Reaches
+6 Mountain
+1 Orzhov Basilica
+7 Plains
+1 Sacred Peaks
+1 Scoured Barrens
+1 Secluded Steppe
+1 Shattered Landscape
+1 Sunlit Marsh
+3 Swamp
+1 Tainted Field
+1 The Grey Havens
+1 Wind-Scarred Crag
+1 Bilbo's Ring
+1 Captain's Claws
+1 Crown of Doom
+1 Diamond Pick-Axe
+1 Fire Diamond
+1 Firemind Vessel
+1 Hero's Blade
+1 Moonsilver Spear
+1 Rakdos Keyrune
+1 Reaper's Talisman
+1 Sigil of Valor
+1 Blood Reckoning
+1 Circle of Flame
+1 Legion Loyalty
+1 Mardu Ascendancy
+1 Painter's Studio // Defaced Gallery
+1 Rising of the Day
+1 Search the Premises
+1 Sparring Regimen
+1 Tempered in Solitude
+1 Thorough Investigation
+1 War of the Last Alliance
+1 Burnt Offering
+1 Despark
+1 Go for the Throat
+1 Mortify
+1 Reprieve
+1 Sejiri Shelter
+1 Utter End
+1 Full Throttle
+1 Irencrag Feat
+1 Legions to Ashes
+1 Open the Armory
+1 Rout
+1 Unburial Rites

@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/u6JYxfh20IjbLrV2IwqXqg (source https://archidekt.com/decks/23177574)
+# tags Toughness Matters; bracket 3; saved 2026-09-04; 699 tagged of 4816 indexed
+
+Commander
+1 Doran, the Siege Tower
+
+Deck
+1 Ancient Adamantoise
+1 Beza, the Bounding Spring
+1 Colfenor, the Last Yew
+1 Crystal Barricade
+1 Doran, Besieged by Time
+1 Fangorn, Tree Shepherd
+1 Generous Ent
+1 Grave Researcher
+1 Great Forest Druid
+1 Hakoda, Selfless Commander
+1 Hyalopterous Lemure
+1 Indomitable Ancients
+1 Maha, Its Feathers Night
+1 Plague Spitter
+1 Quickbeam, Upstart Ent
+1 Reaping Willow
+1 Sapling of Colfenor
+1 Sinister Gnarlbark
+1 The Walls of Ba Sing Se
+1 Tree of Perdition
+1 Treebeard, Gracious Host
+1 Treefolk Harbinger
+1 Vastlands Scavenger
+1 Welcoming Vampire
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Beast Within
+1 Grisly Salvage
+1 Hunter's Insight
+1 Overprotect
+1 Parting Gust
+1 Path to Exile
+1 Swords to Plowshares
+1 Tamiyo's Safekeeping
+1 Tyvar's Stand
+1 Animate Dead
+1 Assault Formation
+1 Behind the Scenes
+1 Deathreap Ritual
+1 Jaws of Defeat
+1 Journey to Eternity
+1 Phyrexian Arena
+1 Arcane Signet
+1 Captain America's Shield
+1 Golgari Signet
+1 Lifecrafter's Bestiary
+1 Lightning Greaves
+1 Selesnya Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Ash Barrens
+1 Brushland
+1 Canopy Vista
+1 Caves of Koilos
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+8 Forest
+1 Fortified Village
+1 Isolated Chapel
+1 Llanowar Wastes
+1 Murmuring Bosk
+1 Myriad Landscape
+1 Necroblossom Snarl
+1 Path of Ancestry
+3 Plains
+1 Rogue's Passage
+1 Scattered Groves
+1 Shineshadow Snarl
+1 Sunpetal Grove
+6 Swamp
+1 Terramorphic Expanse
+1 Vault of the Archangel
+1 Woodland Cemetery
+1 Buried Alive
+1 Cultivate
+1 Kodama's Reach
+1 Living Death
+1 Nature's Lore
+1 Night's Whisper
+1 Planar Engineering
+1 Reanimate
+1 Rishkar's Expertise
+1 Skyshroud Claim
+1 Victimize

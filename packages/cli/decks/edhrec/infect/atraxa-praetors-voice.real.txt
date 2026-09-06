@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/1F-3qSLOmWB3AYfvnMkNOw (source https://moxfield.com/decks/_oIToh5tE0a69rWrhPs0UA)
+# tags Infect; bracket 3; saved 2026-09-05; 4203 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Adarkar Wastes
+1 Barkchannel Pathway
+1 Bountiful Promenade
+1 Branchloft Pathway
+1 Breeding Pool
+1 Brightclimb Pathway
+1 Brushland
+1 Caves of Koilos
+1 Clearwater Pathway
+1 Command Tower
+1 Darkbore Pathway
+1 Deathcap Glade
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Flooded Strand
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hengegate Pathway
+1 Indatha Triome
+1 Inkmoth Nexus
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Marsh Flats
+1 Misty Rainforest
+1 Morphic Pool
+1 Overgrown Farmland
+1 Overgrown Tomb
+1 Polluted Delta
+1 Rejuvenating Springs
+1 Sea of Clouds
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Spara's Headquarters
+1 Temple Garden
+1 Underground River
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Yavimaya Coast
+1 Arcane Signet
+1 Lightning Greaves
+1 Swiftfoot Boots
+1 Bilious Skulldweller
+1 Birds of Paradise
+1 Blightbelly Rat
+1 Blighted Agent
+1 Cankerbloom
+1 Contaminant Grafter
+1 Crawling Chorus
+1 Dark Confidant
+1 Evolution Sage
+1 Flensing Raptor
+1 Flesh-Eater Imp
+1 Flux Channeler
+1 Glistener Elf
+1 Grateful Apparition
+1 Hand of the Praetors
+1 Ichor Rats
+1 Metastatic Evangel
+1 Morbid Opportunist
+1 Myr Convert
+1 Pestilent Syphoner
+1 Plague Myr
+1 Plague Stinger
+1 Skithiryx, the Blight Dragon
+1 Skrelv, Defector Mite
+1 Swamp Mosquito
+1 Tainted Observer
+1 Thrummingbird
+1 Venerated Rotpriest
+1 Viral Drake
+1 Voidwing Hybrid
+1 Whispering Specter
+1 Drown in Ichor
+1 Expand the Sphere
+1 Expansion Algorithm
+1 Farseek
+1 Infectious Inquiry
+1 Nature's Lore
+1 Phyresis Outbreak
+1 Sign in Blood
+1 Tezzeret's Gambit
+1 Thirsting Roots
+1 Three Visits
+1 White Sun's Twilight
+1 Experimental Augury
+1 Infectious Bite
+1 Prologue to Phyresis
+1 Reject Imperfection
+1 Ripples of Potential
+1 Serum Snare
+1 Tainted Strike
+1 Vraska's Fall
+1 Whisper of the Dross
+1 Ghostly Prison
+1 Necrogen Communion
+1 Norn's Decree
+1 Phyrexian Arena

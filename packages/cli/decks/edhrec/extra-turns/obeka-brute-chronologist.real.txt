@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/8q07jvnzaYTtCTZPm70TQQ (source https://archidekt.com/decks/25631196)
+# tags Combo, Clones, Extra Turns; bracket 3; saved 2026-09-03; 327 tagged of 8606 indexed
+
+Commander
+1 Obeka, Brute Chronologist
+
+Deck
+1 Alchemist's Gambit
+1 Blasphemous Act
+1 Come Back Wrong
+1 Demonic Tutor
+1 Devastating Onslaught
+1 Ideas Unbound
+1 Insatiable Avarice
+1 Last Chance
+1 Red Sun's Twilight
+1 Toxic Deluge
+1 Warrior's Oath
+1 Apprentice Necromancer
+1 Avaricious Dragon
+1 Consecrated Sphinx
+1 Emperor of Bones
+1 Feldon of the Third Path
+1 Glasspool Mimic
+1 Hellkite Courser
+1 Hunted Horror
+1 Hydroelectric Specimen
+1 Identity Thief
+1 Ilharg, the Raze-Boar
+1 Jaxis, the Troublemaker
+1 Mulldrifter
+1 Nightscape Familiar
+1 Orthion, Hero of Lavabrink
+1 Phyrexian Dreadnought
+1 Pinnacle Monk
+1 Purphoros, Bronze-Blooded
+1 Quantum Riddler
+1 Redoubled Stormsinger
+1 Saheeli, the Sun's Brilliance
+1 Sedris, the Traitor King
+1 Shriekmaw
+1 Starwinder
+1 Tannuk, Steadfast Second
+1 The Master, Multiplied
+1 Zara, Renegade Recruiter
+1 Arcane Signet
+1 Blade of Selves
+1 Dimir Signet
+1 Izzet Signet
+1 Lightning Greaves
+1 Mimic Vat
+1 Rakdos Signet
+1 Sol Ring
+1 Sundial of the Infinite
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Whip of Erebos
+1 Badlands
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+3 Island
+6 Mountain
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Raucous Theater
+1 Reliquary Tower
+1 Scalding Tarn
+1 Steam Vents
+3 Swamp
+1 Takenuma, Abandoned Mire
+1 Thundering Falls
+1 Undercity Sewers
+1 Underground Sea
+1 Urborg, Tomb of Yawgmoth
+1 Volcanic Island
+1 Watery Grave
+1 Xander's Lounge
+1 Black Market Connections
+1 Determined Iteration
+1 Fable of the Mirror-Breaker
+1 Flameshadow Conjuring
+1 Hive Mind
+1 Phyrexian Arena
+1 Psychic Vortex
+1 Sneak Attack
+1 Chaos Warp
+1 Deadly Rollick
+1 Fell the Profane
+1 Final Fortune
+1 Frantic Search
+1 Glorious End
+1 Malakir Rebirth
+1 Vampiric Tutor

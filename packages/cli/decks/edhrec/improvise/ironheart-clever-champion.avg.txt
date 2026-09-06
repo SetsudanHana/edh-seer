@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/ironheart-clever-champion/improvise
+# theme Improvise (9 decks)
+
+Commander
+1 Ironheart, Clever Champion
+
+Deck
+1 Adaptive Omnitool
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Commander's Sphere
+1 Darksteel Relic
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Gold Pan
+1 Howling Mine
+1 Lavaspur Boots
+1 Lightning Greaves
+1 Mana Vault
+1 Mystic Forge
+1 Nettlecyst
+1 Portal to Phyrexia
+1 Prized Statue
+1 Sculpting Steel
+1 Servo Schematic
+1 Sol Ring
+1 Spellbook
+1 Swiftfoot Boots
+1 Tarrian's Soulcleaver
+1 The Ten Rings
+1 Thran Dynamo
+1 Tormod's Crypt
+1 Unwinding Clock
+1 Uthros Research Craft
+1 Welding Jar
+1 Academy Ruins
+1 Inventors' Fair
+27 Island
+1 Reliquary Tower
+1 Seat of the Synod
+1 The Mycosynth Gardens
+1 Uthros, Titanic Godcore
+1 Chrome Host Seedshark
+1 Cyberdrive Awakener
+1 Emry, Lurker of the Loch
+1 Etherium Sculptor
+1 Forensic Gadgeteer
+1 Foundry Inspector
+1 Iron Lad, Diverging Destiny
+1 Iron Spider, Stark Upgrade
+1 Kappa Cannoneer
+1 Memnite
+1 Ornithopter
+1 Sai, Master Thopterist
+1 Shuri, Wakandan Inventor
+1 Solemn Simulacrum
+1 Surge Conductor
+1 The Mechanist, Aerial Artisan
+1 The Reality Chip
+1 Thought Monitor
+1 Fateful Discovery
+1 Super Intelligence
+1 Super State
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Counterspell
+1 Disallow
+1 Pull from Tomorrow
+1 Rapid Hybridization
+1 Reality Shift
+1 Resculpt
+1 Sink into Stupor
+1 Stroke of Genius
+1 Tezzeret the Seeker
+1 Curse of the Swine
+1 Finale of Revelation
+1 One with the Machine
+1 Rise and Shine
+1 Sea Gate Restoration
+1 Thoughtcast

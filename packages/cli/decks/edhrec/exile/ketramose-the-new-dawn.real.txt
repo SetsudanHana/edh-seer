@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/Qtg0uH2ofqJ0J1etvEr4YQ (source https://archidekt.com/decks/17760605)
+# tags Exile, Control; bracket 2; saved 2026-09-04; 710 tagged of 10309 indexed
+
+Commander
+1 Ketramose, the New Dawn
+
+Deck
+1 Aang's Iceberg
+1 Banishment
+1 Court of Locthwain
+1 Leyline of the Void
+1 Profane Procession
+1 Sheltered by Ghosts
+1 The Death of Gwen Stacy
+1 Abyssal Harvester
+1 Arvinox, the Mind Flail
+1 Athreos, Shroud-Veiled
+1 Blood Operative
+1 Dark Impostor
+1 Dauthi Voidwalker
+1 Egon, God of Death
+1 Elas il-Kor, Sadistic Pilgrim
+1 Emptiness
+1 Firemane Commando
+1 Fortune, Loyal Steed
+1 Gonti, Night Minister
+1 Killian, Ink Duelist
+1 Leech Collector
+1 Leonin Relic-Warder
+1 Liesa, Forgotten Archangel
+1 Nightmare Shepherd
+1 Noxious Gearhulk
+1 Patron of the Vein
+1 Phelia, Exuberant Shepherd
+1 Protector of the Wastes
+1 Psychosis Crawler
+1 Salvation Swan
+1 Sauron, the Necromancer
+1 Scolding Administrator
+1 Soul-Shackled Zombie
+1 Stirring Hopesinger
+1 Valgavoth, Terror Eater
+1 Wall of Reverence
+1 Aether Snap
+1 Austere Command
+1 Entreat the Angels
+1 Expel the Interlopers
+1 Requisition Raid
+1 Season of the Burrow
+1 Soul Transfer
+1 Strategic Betrayal
+1 Wrath of God
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Argent Dais
+1 Lantern of the Lost
+1 Orzhov Signet
+1 Perilous Vault
+1 Sol Ring
+1 Soul-Guide Lantern
+1 Stone of Erech
+1 Tormod's Crypt
+1 Anguished Unmaking
+1 Archenemy's Charm
+1 Despark
+1 Erebos's Intervention
+1 Isolate
+1 Parting Gust
+1 Path to Exile
+1 Silverquill Charm
+1 Swords to Plowshares
+1 Vraska's Contempt
+1 Black Dragon Gate
+1 Blast Zone
+1 Bojuka Bog
+1 Castle Ardenvale
+1 Command Tower
+1 Endless Sands
+1 Fetid Heath
+1 Fisk Tower
+1 Hostile Hostel
+1 Insomnia, Crown City
+1 Isolated Chapel
+1 Misty Palms Oasis
+1 Neglected Manor
+1 Path of Ancestry
+1 Pit of Offerings
+3 Plains
+1 Reliquary Tower
+1 Scavenger Grounds
+1 Scoured Barrens
+1 Shambling Vent
+1 Sunlit Marsh
+3 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Thriving Heath
+1 Thriving Moor
+1 Turbulent Moor
+1 Vault of the Archangel
+1 Vivid Meadow
+1 Volatile Fault

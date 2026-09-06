@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/0hcy5FvV5KmmzNieAh5Qmw (source https://archidekt.com/decks/11404169)
+# tags Combo, Activated Abilities, Ramp; bracket 3; saved 2026-08-12; 62 tagged of 2282 indexed
+
+Commander
+1 Tazri, Stalwart Survivor
+
+Deck
+1 Agadeem's Awakening
+1 Austere Command
+1 Bala Ged Recovery
+1 Demonic Tutor
+1 Sea Gate Restoration
+1 Agatha of the Vile Cauldron
+1 Biomancer's Familiar
+1 Birds of Paradise
+1 Bloom Tender
+1 Bruce Banner
+1 Captain Sisay
+1 Chainer, Nightmare Adept
+1 Deathrite Shaman
+1 Delighted Halfling
+1 Duergar Mine-Captain
+1 Dynaheir, Invoker Adept
+1 Elrond, Moon-Reader
+1 Faeburrow Elder
+1 Faerie Mastermind
+1 Fauna Shaman
+1 Formidable Speaker
+1 Gogo, Master of Mimicry
+1 Gretchen Titchwillow
+1 Hateflayer
+1 Ignoble Hierarch
+1 Kenrith, the Returned King
+1 Kinnan, Bonder Prodigy
+1 Knacksaw Clique
+1 Loran of the Third Path
+1 Mirror Entity
+1 Mother of Runes
+1 Noble Hierarch
+1 Order of Whiteclay
+1 Patrol Signaler
+1 Saryth, the Viper's Fang
+1 Selfless Spirit
+1 Selvala, Eager Trailblazer
+1 Shalai, Voice of Plenty
+1 Shang-Chi, Master of Kung Fu
+1 Silkbind Faerie
+1 Spectral Sailor
+1 Svella, Ice Shaper
+1 Tender Wildguide
+1 The Scarab God
+1 Thrasios, Triton Hero
+1 Triskaidekaphile
+1 Weathered Wayfarer
+1 Zimone, Quandrix Prodigy
+1 Zirda, the Dawnwaker
+1 Agatha's Soul Cauldron
+1 Hawkeye's Bow
+1 Lightning Greaves
+1 Thousand-Year Elixir
+1 Alchemist's Refuge
+1 Arid Mesa
+1 Bloodstained Mire
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Flooded Strand
+1 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+1 Island
+1 Jetmir's Garden
+1 Ketria Triome
+1 Marsh Flats
+1 Minamo, School at Water's Edge
+1 Misty Rainforest
+1 Otawara, Soaring City
+1 Overgrown Tomb
+1 Plains
+1 Polluted Delta
+1 Raugrin Triome
+1 Sacred Foundry
+1 Scalding Tarn
+1 Spara's Headquarters
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 The World Tree
+1 Vault of the Archangel
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Anguished Unmaking
+1 Arcane Denial
+1 Assassin's Trophy
+1 Cyclonic Rift
+1 Fell the Profane
+1 Fierce Guardianship
+1 Heroic Intervention
+1 Legolas's Quick Reflexes
+1 Path to Exile
+1 Sink into Stupor
+1 Swan Song
+1 Swords to Plowshares
+1 Leyline of Abundance

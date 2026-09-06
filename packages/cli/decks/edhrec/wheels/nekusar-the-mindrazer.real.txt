@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/bALC_AcwNwGGaNKfMmrRTg (source https://moxfield.com/decks/RpVBAXkmnkaBBnDUCknCmA)
+# tags Control, Wheels; bracket 2; saved 2026-09-05; 5169 tagged of 31945 indexed
+
+Commander
+1 Nekusar, the Mindrazer
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Commit // Memory
+1 Counterspell
+1 Dark Ritual
+1 Disallow
+1 Dream Fracture
+1 Drown in the Loch
+1 Evacuation
+1 Long River's Pull
+1 Mana Sculpt
+1 Memory Lapse
+1 Mindbreak Trap
+1 Misdirection
+1 Negate
+1 Pact of Negation
+1 Remand
+1 Sink into Stupor
+1 Wheel and Deal
+1 Baral, Chief of Compliance
+1 Jace's Archivist
+1 Jace, Vryn's Prodigy
+1 Magus of the Wheel
+1 Scrawling Crawler
+1 Simian Spirit Guide
+1 Snapcaster Mage
+1 Trinket Mage
+1 Black Sun's Zenith
+1 Blasphemous Act
+1 Blasphemous Edict
+1 Dark Deal
+1 Diabolic Intent
+1 Echo of Eons
+1 Incendiary Command
+1 Mizzix's Mastery
+1 Molten Psyche
+1 Recoup
+1 Reforge the Soul
+1 Time Reversal
+1 Toxic Deluge
+1 Vandalblast
+1 Wheel of Fortune
+1 Wheel of Misfortune
+1 Whispering Madness
+1 Windfall
+1 Winds of Change
+1 Yawgmoth's Will
+1 Blood Crypt
+1 Bloodstained Mire
+1 Cascade Bluffs
+1 Cavern of Souls
+1 City of Brass
+1 Crumbling Necropolis
+1 Darkslick Shores
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Flooded Strand
+1 Luxury Suite
+1 Mana Confluence
+1 Morphic Pool
+1 Reflecting Pool
+1 Scalding Tarn
+1 Shivan Reef
+1 Snow-Covered Island
+1 Snow-Covered Swamp
+1 Spirebluff Canal
+1 Steam Vents
+1 Strip Mine
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Training Center
+1 Underground River
+1 Urborg, Tomb of Yawgmoth
+1 Watery Grave
+1 Wooded Foothills
+1 Bloodchief Ascension
+1 Liliana's Caress
+1 Megrim
+1 Mystic Remora
+1 Raiders' Wake
+1 Underworld Dreams
+1 Waste Not
+1 Chromatic Lantern
+1 Dimir Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Library of Leng
+1 Lightning Greaves
+1 Lotus Petal
+1 Memory Jar
+1 Mox Amber
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Teferi's Puzzle Box
+1 Thought Vessel

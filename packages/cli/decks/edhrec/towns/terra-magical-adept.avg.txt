@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/terra-magical-adept/towns
+# theme Towns (6 decks)
+
+Commander
+1 Terra, Magical Adept
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Crystal Fragments
+1 Summoner's Grimoire
+1 The Regalia
+1 World Map
+1 Balamb Garden, SeeD Academy
+1 Baron, Airship Kingdom
+1 Breeding Pool
+1 Capital City
+1 Command Tower
+1 Crossroads Village
+1 Eden, Seat of the Sanctum
+1 Exotic Orchard
+4 Forest
+1 Gohn, Town of Ruin
+1 Gongaga, Reactor Town
+1 Guadosalam, Farplane Gateway
+1 Insomnia, Crown City
+1 Ishgard, the Holy See
+3 Island
+1 Misty Rainforest
+3 Mountain
+1 Nesting Grounds
+1 Path of Ancestry
+3 Plains
+1 Rabanastre, Royal City
+1 Sharlayan, Nation of Scholars
+1 Starting Town
+1 Stomping Ground
+2 Swamp
+1 Treno, Dark City
+1 Vector, Imperial Capital
+1 Windurst, Federation Center
+1 Wooded Foothills
+1 Clive, Ifrit's Dominant
+1 Dion, Bahamut's Dominant
+1 Fíli and Kíli, Joyous
+1 Garnet, Princess of Alexandria
+1 Jecht, Reluctant Guardian
+1 Jill, Shiva's Dominant
+1 Joshua, Phoenix's Dominant
+1 O'aka, Traveling Merchant
+1 Rikku, Resourceful Guardian
+1 Rydia, Summoner of Mist
+1 Summon: Anima
+1 Summon: Bahamut
+1 Summon: Brynhildr
+1 Summon: Choco/Mog
+1 Summon: Esper Ramuh
+1 Summon: Esper Valigarmanda
+1 Summon: Fat Chocobo
+1 Summon: Fenrir
+1 Summon: G.F. Cerberus
+1 Summon: G.F. Ifrit
+1 Summon: Good King Mog XII
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Kujata
+1 Summon: Leviathan
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Primal Odin
+1 Summon: Shiva
+1 Summon: Titan
+1 Summon: Valefor
+1 Summon: Yojimbo
+1 The Wandering Minstrel
+1 Torgal, A Fine Hound
+1 Yuna, Grand Summoner
+1 Yuna, Hope of Spira
+1 Spelunking
+1 Together Forever
+1 Fight On!
+1 Heartless Act
+1 Overkill
+1 Prishe's Wanderings
+1 Restoration Magic
+1 Syncopate
+1 Clash of the Eikons
+1 Disorienting Choice
+1 Esper Origins
+1 Extinguish All Hope
+1 Farseek
+1 Reach the Horizon
+1 Rydia's Return
+1 Suplex
+1 Travel the Overworld
+1 Yuna's Decision

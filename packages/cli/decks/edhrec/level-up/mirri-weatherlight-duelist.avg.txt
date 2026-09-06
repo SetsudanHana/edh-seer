@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/mirri-weatherlight-duelist/level-up
+# theme Level Up (1 decks)
+
+Commander
+1 Mirri, Weatherlight Duelist
+
+Deck
+1 Arcane Signet
+1 Consulate Dreadnought
+1 Dowsing Dagger
+1 Greatsword of Tyr
+1 Mask of Memory
+1 Sol Ring
+1 Sword of the Animist
+1 Whispersilk Cloak
+1 Abandoned Air Temple
+1 Bonders' Enclave
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+9 Forest
+1 Forge of Heroes
+1 Fortified Village
+1 Lush Portico
+1 Minas Tirith
+1 Mosswort Bridge
+1 Overgrown Farmland
+8 Plains
+1 Sunpetal Grove
+1 Temple Garden
+1 Temple of Plenty
+1 War Room
+1 Alms Collector
+1 Alseid of Life's Bounty
+1 Angelic Sell-Sword
+1 Aradesh, the Founder
+1 Bayou Groff
+1 Bristlebane Battler
+1 Caravan Escort
+1 End-Raze Forerunners
+1 Figure of Fable
+1 Guardian of Faith
+1 Hexdrinker
+1 Karametra, God of Harvests
+1 Kytheon, Hero of Akros
+1 Loran of the Third Path
+1 Ohran Frostfang
+1 Outcaster Trailblazer
+1 Pawpatch Recruit
+1 Pelt Collector
+1 Questing Beast
+1 Ravaging Riftwurm
+1 Rhonas the Indomitable
+1 Scute Mob
+1 Selvala, Eager Trailblazer
+1 Seraphic Steed
+1 Shelinda, Yevon Acolyte
+1 Slumbering Trudge
+1 Student of Warfare
+1 Tenth District Hero
+1 The Earth King
+1 Witch Enchanter
+1 Abiding Grace
+1 Always Watching
+1 Colossal Majesty
+1 Cream of the Crop
+1 Elemental Bond
+1 Garruk's Uprising
+1 Glorious Sunrise
+1 Thickest in the Thicket
+1 Tribute to the World Tree
+1 Warrior's Resolve
+1 Akroma's Will
+1 Entish Restoration
+1 Generous Gift
+1 Heritage Reclamation
+1 Once Upon a Time
+1 Path to Exile
+1 Reprieve
+1 Bala Ged Recovery
+1 Become the Avalanche
+1 Bridgeworks Battle
+1 Farseek
+1 Hard-Hitting Question
+1 Nature's Lore
+1 Proclamation of Rebirth
+1 Return to the Ranks
+1 Shamanic Revelation
+1 Shatter the Sky
+1 Three Visits
+1 Turntimber Symbiosis

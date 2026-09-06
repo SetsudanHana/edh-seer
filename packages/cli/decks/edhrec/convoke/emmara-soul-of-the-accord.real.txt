@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/0iVEqPGodzKuc-r4rGey5g (source https://archidekt.com/decks/9342881)
+# tags Convoke, Tokens; bracket 3; saved 2026-08-31; 40 tagged of 5720 indexed
+
+Commander
+1 Emmara, Soul of the Accord
+
+Deck
+1 Abandoned Air Temple
+1 Branchloft Pathway
+1 Canopy Vista
+1 Castle Ardenvale
+1 Command Tower
+8 Forest
+1 Fortified Village
+1 Fountainport
+1 Gavony Township
+1 Holdout Settlement
+1 Hushwood Verge
+1 Minas Tirith
+1 Opal Palace
+1 Overgrown Farmland
+10 Plains
+1 Razorverge Thicket
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple Garden
+1 Adeline, Resplendent Cathar
+1 Avacyn's Pilgrim
+1 Avenger of Zendikar
+1 Bennie Bracks, Zoologist
+1 Craterhoof Behemoth
+1 Drumbellower
+1 Enduring Vitality
+1 Gala Greeters
+1 Ghalta and Mavren
+1 Guide of Souls
+1 House Cartographer
+1 Jaspera Sentinel
+1 King Darien XLVIII
+1 Maja, Bretagard Protector
+1 Mentor of the Meek
+1 Nullmage Shepherd
+1 Queen Allenal of Ruadach
+1 Rhys the Redeemed
+1 Rumor Gatherer
+1 Saryth, the Viper's Fang
+1 Seedborn Muse
+1 Trostani Discordant
+1 Voice of Resurgence
+1 Witch Enchanter
+1 Wylie Duke, Atiin Hero
+1 Arcane Signet
+1 Halo Fountain
+1 Idol of Oblivion
+1 Relic of Legends
+1 Skullclamp
+1 Sol Ring
+1 Springleaf Drum
+1 Staff of the Storyteller
+1 Thousand Moons Smithy
+1 Wand of the Worldsoul
+1 Battle for Bretagard
+1 Caretaker's Talent
+1 Dawn of a New Age
+1 Dazzling Theater // Prop Room
+1 Dollmaker's Shop // Porcelain Gallery
+1 Felidar Retreat
+1 Glare of Subdual
+1 Legion's Landing
+1 Mirari's Wake
+1 Tale of Katara and Toph
+1 Well Rested
+1 Clever Concealment
+1 Devouring Light
+1 Heroic Intervention
+1 Legolas's Quick Reflexes
+1 March of the Multitudes
+1 Path to Exile
+1 Scout's Warning
+1 Swords to Plowshares
+1 To Arms!
+1 Collective Effort
+1 Ezuri's Predation
+1 Farseek
+1 Harvest Season
+1 Hour of Reckoning
+1 Shamanic Revelation
+1 Split Up
+1 Elspeth, Storm Slayer

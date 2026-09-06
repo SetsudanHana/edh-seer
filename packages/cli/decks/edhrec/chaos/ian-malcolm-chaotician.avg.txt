@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/ian-malcolm-chaotician/chaos
+# theme Chaos (577 decks)
+
+Commander
+1 Ian Malcolm, Chaotician
+
+Deck
+1 Arcane Signet
+1 Chaos Wand
+1 Decanter of Endless Water
+1 Fellwar Stone
+1 Folio of Fancies
+1 Howling Mine
+1 Izzet Signet
+1 Knowledge Pool
+1 Sol Ring
+1 Talisman of Creativity
+1 Teferi's Puzzle Box
+1 Temple Bell
+1 Thought Vessel
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Frostboil Snarl
+1 Geier Reach Sanitarium
+10 Island
+1 Izzet Boilerworks
+1 Mikokoro, Center of the Sea
+11 Mountain
+1 Reliquary Tower
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Training Center
+1 Etali, Primal Storm
+1 Faerie Mastermind
+1 Flaming Tyrannosaurus
+1 Homunculus Horde
+1 Humble Defector
+1 Kami of the Crescent Moon
+1 Lore Broker
+1 Memory Worm
+1 Mizzix, Replica Rider
+1 Nalfeshnee
+1 Neera, Wild Mage
+1 Noggle Ransacker
+1 Perplexing Chimera
+1 Plargg and Nassari
+1 Red Death, Shipwrecker
+1 Scrawling Crawler
+1 The Twelfth Doctor
+1 Wild-Magic Sorcerer
+1 Zurzoth, Chaos Rider
+1 Confusion in the Ranks
+1 Dictate of Kruphix
+1 Fevered Visions
+1 Forced Fruition
+1 Hive Mind
+1 Mana Flare
+1 Possibility Storm
+1 Powerbalance
+1 Propaganda
+1 Share the Spoils
+1 Arcane Denial
+1 Brand
+1 Chaos Mutation
+1 Chaos Warp
+1 Counterspell
+1 Guff Rewrites History
+1 Invert Polarity
+1 Tempt with Mayhem
+1 Tibalt's Trickery
+1 Vision Skeins
+1 Wild Magic Surge
+1 Wrong Turn
+1 Blasphemous Act
+1 Burning Inquiry
+1 Ensnared by the Mara
+1 Minds Aglow
+1 Role Reversal
+1 Scrambleverse
+1 Thieves' Auction
+1 Warp World
+1 Windfall
+1 Winds of Change

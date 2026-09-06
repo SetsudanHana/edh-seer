@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/ketramose-the-new-dawn/warp
+# theme Warp (7 decks)
+
+Commander
+1 Ketramose, the New Dawn
+
+Deck
+1 Arcane Signet
+1 Conjurer's Closet
+1 Ghost Vacuum
+1 Lightning Greaves
+1 Orzhov Signet
+1 Relic of Progenitus
+1 Scrabbling Claws
+1 Sol Ring
+1 Soul-Guide Lantern
+1 Talisman of Hierarchy
+1 Thought Vessel
+1 Unlicensed Hearse
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Pit of Offerings
+12 Plains
+1 Reliquary Tower
+1 Shattered Sanctum
+1 Shineshadow Snarl
+10 Swamp
+1 Tainted Field
+1 All-Fates Stalker
+1 Alpharael, Stonechosen
+1 Anticausal Vestige
+1 Beza, the Bounding Spring
+1 Boggart Trawler
+1 Charming Prince
+1 Corpse Knight
+1 Dauthi Voidwalker
+1 Emperor of Bones
+1 Flickerwisp
+1 Gilraen, Dúnedain Protector
+1 Gray Merchant of Asphodel
+1 Haliya, Guided by Light
+1 Lightstall Inquisitor
+1 Lion Sash
+1 Lotho, Corrupt Shirriff
+1 Monk Gyatso
+1 Phelia, Exuberant Shepherd
+1 Raven Eagle
+1 Restoration Angel
+1 Salvation Swan
+1 Senu, Keen-Eyed Protector
+1 Skyclave Apparition
+1 Soul Warden
+1 Soul's Attendant
+1 Starfield Shepherd
+1 Summon: Yojimbo
+1 Syr Vondam, Sunstar Exemplar
+1 Witch Enchanter
+1 Withered Wretch
+1 Airbender Ascension
+1 Far Traveler
+1 Grasp of Fate
+1 Rest in Peace
+1 Teleportation Circle
+1 The Legend of Yangchen
+1 Touch the Spirit Realm
+1 Anguished Unmaking
+1 Cloudshift
+1 Dark Ritual
+1 Deadly Rollick
+1 Despark
+1 Ephemerate
+1 Getaway Glamer
+1 Parting Gust
+1 Path to Exile
+1 Swords to Plowshares
+1 Kaya, Orzhov Usurper
+1 Avatar's Wrath
+1 Damn
+1 Daydream

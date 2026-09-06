@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/queen-marchesa/aikido
+# theme Aikido (859 decks)
+
+Commander
+1 Queen Marchesa
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Rakdos Signet
+1 Sol Ring
+1 Sunforger
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Arid Mesa
+1 Battlefield Forge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Godless Shrine
+1 Isolated Chapel
+1 Luxury Suite
+1 Marsh Flats
+1 Maze of Ith
+4 Mountain
+1 Nomad Outpost
+4 Plains
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Spectator Seating
+1 Sulfurous Springs
+4 Swamp
+1 Vault of Champions
+1 Brash Taunter
+1 Breena, the Demagogue
+1 Esper Sentinel
+1 Gisela, Blade of Goldnight
+1 Kambal, Consul of Allocation
+1 Karazikar, the Eye Tyrant
+1 Kardur, Doomscourge
+1 Loran of the Third Path
+1 Lotho, Corrupt Shirriff
+1 Mangara, the Diplomat
+1 Michiko Konda, Truth Seeker
+1 Nelly Borca, Impulsive Accuser
+1 Nighthawk Scavenger
+1 Nils, Discipline Enforcer
+1 Royal Assassin
+1 Selfless Squire
+1 Shadrix Silverquill
+1 Weathered Wayfarer
+1 Windborn Muse
+1 Xantcha, Sleeper Agent
+1 Black Market Connections
+1 Blind Obedience
+1 Court of Grace
+1 Curse of Opulence
+1 Duelist's Heritage
+1 Ghostly Prison
+1 No Mercy
+1 Smothering Tithe
+1 Trouble in Pairs
+1 Anguished Unmaking
+1 Arcbond
+1 Backlash
+1 Boros Charm
+1 Chaos Warp
+1 Comeuppance
+1 Deflecting Palm
+1 Delirium
+1 Generous Gift
+1 Inkshield
+1 Olórin's Searing Light
+1 Path to Exile
+1 Rakdos Charm
+1 Reverberate
+1 Swords to Plowshares
+1 Take the Bait
+1 Teferi's Protection
+1 Wear // Tear
+1 Blasphemous Act
+1 Disrupt Decorum
+1 Insurrection
+1 Promise of Loyalty
+1 Ruinous Ultimatum
+1 Scheming Symmetry
+1 Taunt from the Rampart

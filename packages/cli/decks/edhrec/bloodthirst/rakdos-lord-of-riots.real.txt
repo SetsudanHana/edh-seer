@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/8Ze6jOpmy1rpjMoEegSHhA (source https://archidekt.com/decks/19062236)
+# tags Eldrazi, Burn, Bloodthirst; bracket 3; saved 2026-01-28; 2 tagged of 10281 indexed
+
+Commander
+1 Rakdos, Lord of Riots
+
+Deck
+1 Abundant Countryside
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Horizon of Progress
+1 Luxury Suite
+1 Mana Confluence
+1 Mount Doom
+7 Mountain
+1 Path of Ancestry
+1 Plaza of Heroes
+1 Rakdos Carnarium
+1 Raucous Theater
+1 Razortrap Gorge
+1 Shadowblood Ridge
+1 Sulfurous Springs
+8 Swamp
+1 Temple of Malice
+1 Ancient Cellarspawn
+1 Bane of Bala Ged
+1 Blightsteel Colossus
+1 Blisterspit Gremlin
+1 Combustible Gearhulk
+1 Crashing Drawbridge
+1 Creeping Bloodsucker
+1 Desolation Twin
+1 Emrakul, the Promised End
+1 Florian, Voldaren Scion
+1 Gev, Scaled Scorch
+1 It That Betrays
+1 Keen Duelist
+1 Kozilek, Butcher of Truth
+1 Meteor Golem
+1 Neheb, the Eternal
+1 Nettle Drone
+1 Orcus, Prince of Undeath
+1 Plague Spitter
+1 Rakdos, Patron of Chaos
+1 Sabotender
+1 Scrawling Crawler
+1 Sire of Seven Deaths
+1 Spawn of Mayhem
+1 Spear Spewer
+1 Stormfist Crusader
+1 Thermo-Alchemist
+1 Tunneling Geopede
+1 Ulamog, the Defiler
+1 Void Winnower
+1 Black Market Connections
+1 Mass Hysteria
+1 Protection Racket
+1 Retreat to Hagra
+1 Rising of the Day
+1 Sanctum of Stone Fangs
+1 Theater of Horrors
+1 Blood for the Blood God!
+1 Bolt Bend
+1 Crushing Disappointment
+1 Fell the Profane
+1 Go for the Throat
+1 Imp's Mischief
+1 Infernal Grasp
+1 Malakir Rebirth
+1 Redirect Lightning
+1 Untimely Malfunction
+1 Bloodsoaked Insight
+1 Chandra's Ignition
+1 Feed the Swarm
+1 Grab the Prize
+1 Night's Whisper
+1 Reanimate
+1 Risky Shortcut
+1 Sign in Blood
+1 Temporal Extortion
+1 Victimize
+1 Cryptolith Fragment
+1 Lightning Greaves
+1 Swiftfoot Boots
+1 Whispersilk Cloak
+1 Ob Nixilis, the Adversary

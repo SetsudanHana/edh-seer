@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/marchesa-dealer-of-death/crime
+# theme Crime (233 decks)
+
+Commander
+1 Marchesa, Dealer of Death
+
+Deck
+1 Arcane Signet
+1 Bandit's Haul
+1 Dimir Signet
+1 Fellwar Stone
+1 Ghost Vacuum
+1 Glasses of Urza
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Eroded Canyon
+1 Exotic Orchard
+5 Island
+1 Jagged Barrens
+1 Luxury Suite
+4 Mountain
+1 Polluted Delta
+1 Shivan Reef
+1 Smoldering Marsh
+1 Soured Springs
+1 Steam Vents
+1 Sulfur Falls
+1 Sunken Hollow
+5 Swamp
+1 Watery Grave
+1 Xander's Lounge
+1 Archon of Cruelty
+1 Duelist of the Mind
+1 Generous Plunderer
+1 Gisa, the Hellraiser
+1 Hullbreaker Horror
+1 Iridescent Vinelasher
+1 Kaervek, the Punisher
+1 Kess, Dissident Mage
+1 Laughing Jasper Flint
+1 Lazav, Familiar Stranger
+1 Loki, God of Mischief
+1 Magda, the Hoardmaster
+1 Nightscape Familiar
+1 Nimble Brigand
+1 Niv-Mizzet, Parun
+1 Orcish Bowmasters
+1 Rattleback Apothecary
+1 Raven of Fell Omens
+1 Red Death, Shipwrecker
+1 Servant of the Stinger
+1 Storm-Kiln Artist
+1 Vadmir, New Blood
+1 Vial Smasher, Gleeful Grenadier
+1 Animate Dead
+1 At Knifepoint
+1 Intimidation Campaign
+1 Spatial Binding
+1 Tinybones Joins Up
+1 Abrade
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Bedevil
+1 Chaos Warp
+1 Counterspell
+1 Infernal Grasp
+1 Lightning Bolt
+1 Negate
+1 Pongify
+1 Rakdos Charm
+1 Return the Favor
+1 Shoot the Sheriff
+1 Snap
+1 Terminate
+1 Untimely Malfunction
+1 Geyadrone Dihada
+1 Blasphemous Act
+1 Faithless Looting
+1 Feed the Swarm
+1 Gitaxian Probe
+1 Reanimate
+1 Rush of Dread
+1 Seize the Secrets
+1 Toxic Deluge
+1 Vandalblast
+1 Victimize

@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/YAdGFfiwmlOnDuLGVgsznw (source https://archidekt.com/decks/26056345)
+# tags Triggered Abilities, Clones, Mutate; bracket 3; saved 2026-09-05; 673 tagged of 3688 indexed
+
+Commander
+1 Otrimi, the Ever-Playful
+
+Deck
+1 Arcane Signet
+1 Sol Ring
+1 Zagoth Crystal
+1 Archipelagore
+1 Auspicious Starrix
+1 Birds of Paradise
+1 Boneyard Lurker
+1 Brokkos, Apex of Forever
+1 Cavern Whisperer
+1 Cephalid Constable
+1 Chittering Harvester
+1 Cold-Eyed Selkie
+1 Dirge Bat
+1 Dreamtail Heron
+1 Elusive Tormentor
+1 Essence Symbiote
+1 Gemrazer
+1 Glowstone Recluse
+1 Insatiable Hemophage
+1 Loki, God of Mischief
+1 Migratory Greathorn
+1 Mindleecher
+1 Pouncing Shoreshark
+1 Progenitor Mimic
+1 Sawtusk Demolisher
+1 Scute Swarm
+1 Sea-Dasher Octopus
+1 Silhana Ledgewalker
+1 Souvenir Snatcher
+1 Starfield Vocalist
+1 Summon: Primal Odin
+1 Troll Ascetic
+1 Volo, Guide to Monsters
+1 Zagoth Mamba
+1 Baxter Building
+1 Command Tower
+1 Daily Bugle Building
+1 Darkwater Catacombs
+1 Evolving Wilds
+1 Exotic Orchard
+11 Forest
+1 Hidden Lair
+9 Island
+1 Mortuary Mire
+1 Multiversal Passage
+1 Opulent Palace
+1 Simic Growth Chamber
+1 Starting Town
+1 Sunken Hollow
+8 Swamp
+1 Terramorphic Expanse
+1 Thriving Grove
+1 Thriving Isle
+1 Undergrowth Stadium
+1 Beast Within
+1 Brainstorm
+1 Counterspell
+1 Double Major
+1 Heroic Intervention
+1 Spider-Sense
+1 Deadly Tempest
+1 Diabolic Tutor
+1 Emergent Ultimatum
+1 Farseek
+1 Feed the Swarm
+1 Gaze of Granite
+1 Jarad's Orders
+1 Migration Path
+1 Mythos of Brokkos
+1 Rampant Growth
+1 Reanimate
+1 Impostor Syndrome
+1 Propaganda
+1 Season of Growth

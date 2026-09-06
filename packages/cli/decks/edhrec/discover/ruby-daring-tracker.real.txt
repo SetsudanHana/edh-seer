@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/F-PLlwLhdm4jjwXWDOWpeg (source https://archidekt.com/decks/8966183)
+# tags Discover, Ramp, Cascade, Big Mana; bracket 2; saved 2026-09-04; 67 tagged of 4556 indexed
+
+Commander
+1 Ruby, Daring Tracker
+
+Deck
+1 Annoyed Altisaur
+1 Apex Devastator
+1 Aurora Phoenix
+1 Balefire Dragon
+1 Bloodbraid Challenger
+1 Boarding Party
+1 Disciple of Freyalise
+1 Dragonhawk, Fate's Tempest
+1 Drakuseth, Maw of Flames
+1 Emergent Woodwurm
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Glacier Godmaw
+1 Gruul Ragebeast
+1 Herald of Ilharg
+1 Kogla and Yidaro
+1 Kogla, the Titan Ape
+1 Ojer Kaslem, Deepest Growth
+1 Pinnacle Monk
+1 Primeval Herald
+1 Ruric Thar, the Unbowed
+1 Screamer-Killer
+1 Silverback Elder
+1 Soul of New Phyrexia
+1 Soul of the Harvest
+1 Summon: Bahamut
+1 Surrak and Goreclaw
+1 Sweet-Gum Recluse
+1 Terastodon
+1 Terror of the Peaks
+1 Trumpeting Carnosaur
+1 Tyrant's Familiar
+1 Vaultborn Tyrant
+1 Xenagos, God of Revels
+1 Arena of Glory
+1 Cinder Glade
+1 Command Tower
+1 Commercial District
+12 Forest
+1 Gruul Turf
+1 Hidden Nursery
+1 Hidden Volcano
+1 Highland Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+9 Mountain
+1 Pit of Offerings
+1 Rockfall Vale
+1 Rootbound Crag
+1 Sheltered Thicket
+1 Stomping Ground
+1 Sunken Citadel
+1 Bigger on the Inside
+1 Breaching Dragonstorm
+1 Case of the Locked Hothouse
+1 Encroaching Dragonstorm
+1 Monstrous Vortex
+1 Sarkhan's Unsealing
+1 Sunbird's Invocation
+1 Blasphemous Act
+1 Call Forth the Tempest
+1 Circuitous Route
+1 Creative Technique
+1 Explosive Vegetation
+1 Hunting Wilds
+1 Improvisation Capstone
+1 Map the Frontier
+1 Migration Path
+1 Path of the Animist
+1 Ranger's Path
+1 Reach the Horizon
+1 Skyshroud Claim
+1 Soulfire Eruption
+1 Vastwood Surge
+1 Viewpoint Synchronization
+1 Zimone's Experiment
+1 Invasion of Zendikar
+1 Natural Reclamation
+1 Wondrous Crucible

@@ -1,0 +1,81 @@
+# edhrec average deck: https://edhrec.com/average-decks/orvar-the-all-form/clones
+# theme Clones (823 decks)
+
+Commander
+1 Orvar, the All-Form
+
+Deck
+1 Arcane Signet
+1 Coveted Jewel
+1 Fellwar Stone
+1 Gilded Lotus
+1 Mind Stone
+1 Mirror Box
+1 Sapphire Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thought Vessel
+1 Cloudpost
+1 Glimmerpost
+26 Island
+1 Mystic Sanctuary
+1 Nykthos, Shrine to Nyx
+1 Otawara, Soaring City
+1 Reliquary Tower
+1 Riptide Laboratory
+1 Swarmyard
+1 Aether Channeler
+1 Agent of Treachery
+1 Archaeomancer
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Hullbreaker Horror
+1 Master of Waves
+1 Mulldrifter
+1 Peregrine Drake
+1 Phyrexian Metamorph
+1 Sakashima of a Thousand Faces
+1 Scourge of Fleets
+1 Shipwreck Dowser
+1 Solemn Simulacrum
+1 Spark Double
+1 Spellseeker
+1 Venser, Shaper Savant
+1 Voracious Bibliophile
+1 Wavebreak Hippocamp
+1 Mystic Remora
+1 Propaganda
+1 Rhystic Study
+1 Vesuvan Duplimancy
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Cerulean Wisps
+1 Clockspinning
+1 Counterspell
+1 Cyclonic Rift
+1 Dive Down
+1 Dream's Grip
+1 Enervate
+1 Essence Flux
+1 Ghostly Flicker
+1 Gigadrowse
+1 High Tide
+1 Leap
+1 Mind Games
+1 Pongify
+1 Shadow Rift
+1 Shimmering Mirage
+1 Snap
+1 Teferi's Time Twist
+1 Thermal Flux
+1 Twiddle
+1 Twisted Image
+1 Twitch
+1 Whim of Volrath
+1 Aquitect's Will
+1 Energy Tap
+1 Enter the Enigma
+1 Hidden Strings
+1 Irenicus's Vile Duplication
+1 Slip Through Space
+1 Trait Doctoring

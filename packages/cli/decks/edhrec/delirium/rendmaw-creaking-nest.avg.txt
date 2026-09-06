@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/rendmaw-creaking-nest/delirium
+# theme Delirium (22 decks)
+
+Commander
+1 Rendmaw, Creaking Nest
+
+Deck
+1 Arcane Signet
+1 Bow of Nylea
+1 Golgari Signet
+1 Idol of Oblivion
+1 Sol Ring
+1 Whip of Erebos
+1 Bojuka Bog
+1 Command Tower
+1 Darkmoss Bridge
+1 Darksteel Citadel
+1 Dryad Arbor
+1 Elven Passage
+8 Forest
+1 Golgari Rot Farm
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Power Depot
+1 Scene of the Crime
+7 Swamp
+1 Tainted Wood
+1 Treasure Vault
+1 Tree of Tales
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Valgavoth's Lair
+1 Vault of Whispers
+1 Viridescent Bog
+1 Woodland Cemetery
+1 Arasta of the Endless Web
+1 Blood Seeker
+1 Burnished Hart
+1 Copper Myr
+1 Demolisher Spawn
+1 Dockside Chef
+1 Dryad of the Ilysian Grove
+1 Enduring Vitality
+1 Erebos, Bleak-Hearted
+1 Essence Warden
+1 Gloomshrieker
+1 Haywire Mite
+1 Hedron Crawler
+1 Leaden Myr
+1 Manakin
+1 Massacre Wurm
+1 Morbid Opportunist
+1 Noxious Gearhulk
+1 Nyx Weaver
+1 Ohran Frostfang
+1 Ornithopter
+1 Ornithopter of Paradise
+1 Overlord of the Hauntwoods
+1 Palladium Myr
+1 Poison-Tip Archer
+1 Pygmy Kavu
+1 Sanctum Weaver
+1 Shigeki, Jukai Visionary
+1 Solemn Simulacrum
+1 Toski, Bearer of Secrets
+1 Twitching Doll
+1 Wickerfolk Thresher
+1 Beastmaster Ascension
+1 Compost
+1 Deathreap Ritual
+1 Demonic Covenant
+1 Into the Pit
+1 Lignify
+1 The Meathook Massacre
+1 Arachnogenesis
+1 Assassin's Trophy
+1 Drag to the Roots
+1 Eyeblight's Ending
+1 Heroic Intervention
+1 Nameless Inversion
+1 Putrefy
+1 Reap
+1 Revitalizing Repast
+1 Village Rites
+1 Grist, the Hunger Tide
+1 Culling Ritual
+1 Cultivate
+1 Ezuri's Predation
+1 Formless Genesis
+1 Night's Whisper
+1 Rampant Growth
+1 Reanimate

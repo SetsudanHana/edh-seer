@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/taeko-the-patient-avalanche/ninjutsu
+# theme Ninjutsu (223 decks)
+
+Commander
+1 Taeko, the Patient Avalanche
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Dimir Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Patchwork Banner
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Thought Vessel
+1 Bojuka Bog
+1 Clearwater Pathway
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Gloomlake Verge
+12 Island
+1 Morphic Pool
+1 Path of Ancestry
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Hollow
+8 Swamp
+1 Tainted Isle
+1 Underground River
+1 Watery Grave
+1 Baleful Strix
+1 Changeling Outcast
+1 Dokuchi Silencer
+1 Dour Port-Mage
+1 Enduring Curiosity
+1 Fallen Shinobi
+1 Grazilaxx, Illithid Scholar
+1 Higure, the Still Wind
+1 Ingenious Infiltrator
+1 Ink-Eyes, Servant of Oni
+1 Mist-Cloaked Herald
+1 Mist-Syndicate Naga
+1 Mistblade Shinobi
+1 Moon-Circuit Hacker
+1 Moonsnare Specialist
+1 Nashi, Moon Sage's Scion
+1 Ninja of the Deep Hours
+1 Ornithopter
+1 Orochi Soul-Reaver
+1 Prosperous Thief
+1 Sakashima's Student
+1 Satoru Umezawa
+1 Satoru, the Infiltrator
+1 Silent Hallcreeper
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Slither Blade
+1 Thousand-Faced Shadow
+1 Throat Slitter
+1 Throatseeker
+1 Triton Shorestalker
+1 Yuriko, the Tiger's Shadow
+1 Cover of Darkness
+1 Cunning Evasion
+1 Gossip's Talent
+1 Reconnaissance Mission
+1 Smoke Shroud
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Counterspell
+1 Familiar's Ruse
+1 Fell the Profane
+1 Ghostly Flicker
+1 Negate
+1 Snap
+1 Withering Torment
+1 Kaito, Bane of Nightmares
+1 Kaito, Cunning Infiltrator
+1 Enter the Enigma
+1 Feed the Swarm
+1 Kaito's Pursuit
+1 Toxic Deluge

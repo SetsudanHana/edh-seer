@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/xrORxUtJS0hqAxe_-6DaXQ (source https://moxfield.com/decks/gjk2o1PBoUqHwUHBBtO20g)
+# tags Mutate; bracket 2; saved 2026-09-04; 269 tagged of 5742 indexed
+
+Commander
+1 Tatsunari, Toad Rider
+
+Deck
+1 Abundant Growth
+1 Amphibian Downpour
+1 Ancestral Mask
+1 Aqueous Form
+1 Asceticism
+1 Bear Umbra
+1 Eel Umbra
+1 Elemental Bond
+1 Enchantress's Presence
+1 Endless Evil
+1 Exploration
+1 Fertile Ground
+1 Frogify
+1 Imprisoned in the Moon
+1 Kenrith's Transformation
+1 Omen of the Dead
+1 Phyrexian Arena
+1 Rancor
+1 Seal of Primordium
+1 Season of Growth
+1 Shielding Plax
+1 Shimmering Wings
+1 Snake Umbra
+1 Spider Umbra
+1 Utopia Sprawl
+1 Whip Silk
+1 Wild Growth
+1 Wilderness Reclamation
+1 Wingspan Stride
+1 Witness Protection
+1 Arasta of the Endless Web
+1 Archipelagore
+1 Auspicious Starrix
+1 Boneyard Lurker
+1 Brokkos, Apex of Forever
+1 Dirge Bat
+1 Doomwake Giant
+1 Dreamtail Heron
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Enduring Tenacity
+1 Gemrazer
+1 Gloomshrieker
+1 Glowstone Recluse
+1 Grim Guardian
+1 Migratory Greathorn
+1 Otrimi, the Ever-Playful
+1 Parcelbeast
+1 Pollywog Symbiote
+1 Pouncing Shoreshark
+1 Sanctum Weaver
+1 Sawtusk Demolisher
+1 Sea-Dasher Octopus
+1 Setessan Champion
+1 Souvenir Snatcher
+1 Trumpeting Gnarr
+1 Arcane Signet
+1 Sol Ring
+1 Botanical Sanctum
+1 Breeding Pool
+1 Choked Estuary
+1 Command Tower
+1 Dimir Aqueduct
+1 Dreamroot Cascade
+1 Evolving Wilds
+1 Exotic Orchard
+1 Foreboding Landscape
+4 Forest
+1 Hinterland Harbor
+4 Island
+1 Jungle Hollow
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Opulent Palace
+1 Rejuvenating Springs
+3 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Temple of Mystery
+1 Terramorphic Expanse
+1 Tropical Island
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Vineglimmer Snarl
+1 Witch's Cottage
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Negate
+1 Swan Song
+1 Rishkar's Expertise
+1 Skyshroud Claim

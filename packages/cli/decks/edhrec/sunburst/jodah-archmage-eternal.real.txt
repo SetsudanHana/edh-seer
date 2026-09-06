@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/MJYIBrRLyeONa7PgaxRc4Q (source https://archidekt.com/decks/21398932)
+# tags Sunburst, Guildgates; bracket 3; saved 2026-04-05; 5 tagged of 9375 indexed
+
+Commander
+1 Jodah, Archmage Eternal
+
+Deck
+1 Abstergo Entertainment
+1 Archway Commons
+1 Azorius Guildgate
+1 Baldur's Gate
+1 Basilisk Gate
+1 Black Dragon Gate
+1 Boros Guildgate
+1 Cascading Cataracts
+1 Citadel Gate
+1 City of Brass
+1 Cliffgate
+1 Command Bridge
+1 Command Tower
+1 Dimir Guildgate
+1 Exotic Orchard
+1 Forbidden Orchard
+1 Gateway Plaza
+1 Golgari Guildgate
+1 Gond Gate
+1 Grand Coliseum
+1 Gruul Guildgate
+1 Heap Gate
+1 Izzet Guildgate
+1 Manor Gate
+1 Maze's End
+1 Orzhov Guildgate
+1 Path of Ancestry
+1 Public Thoroughfare
+1 Rakdos Guildgate
+1 Rupture Spire
+1 Sea Gate
+1 Selesnya Guildgate
+1 Simic Guildgate
+1 Starting Town
+1 Talon Gates of Madara
+1 The Black Gate
+1 Thran Portal
+1 Arcane Omens
+1 Archaic's Agony
+1 Brilliant Spectrum
+1 Bring to Light
+1 Circuitous Route
+1 Coalition Victory
+1 Exert Influence
+1 Explore the Underdark
+1 Kaleidoscorch
+1 Painful Truths
+1 Prismatic Ending
+1 Radiant Flames
+1 Sweep the Skies
+1 Together as One
+1 Uncle's Musings
+1 Unified Front
+1 Arcbound Wanderer
+1 Bringer of the Black Dawn
+1 Bringer of the Blue Dawn
+1 Bringer of the Green Dawn
+1 Bringer of the Red Dawn
+1 Bringer of the White Dawn
+1 Crystalline Crawler
+1 Etched Oracle
+1 Glinting Creeper
+1 Jegantha, the Wellspring
+1 Lunar Avenger
+1 Radiant Epicure
+1 Rancorous Archaic
+1 Sage of the Maze
+1 Sawtooth Thresher
+1 Skyreach Manta
+1 Skyrider Elf
+1 Solarion
+1 Spinal Parasite
+1 Springmantle Cleric
+1 Suncrusher
+1 Suntouched Myr
+1 Tajuru Stalwart
+1 Woodland Wanderer
+1 Baton of Courage
+1 Clearwater Goblet
+1 Coin of Mastery
+1 Door to Nothingness
+1 Energy Chamber
+1 Engineered Explosives
+1 Fist of Suns
+1 Heliophial
+1 Infused Arrows
+1 Lux Artillery
+1 Navigation Orb
+1 Opaline Bracers
+1 Pentad Prism
+1 Puca's Eye
+1 Solar Array
+1 Hadana's Climb
+1 Leyline Immersion
+1 Leyline of Mutation
+1 Leyline of the Guildpact
+1 Prism Array
+1 Infuse with the Elements
+1 Roilmage's Trick

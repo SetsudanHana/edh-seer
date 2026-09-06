@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/TV12OhaWmLj7u-vDcwtDNw (source https://archidekt.com/decks/11973648)
+# tags Tokens, Vampires, Stax, Lifedrain, Blood, Card Draw, Ramp; bracket 3; saved 2026-08-30; 115 tagged of 50337 indexed
+
+Commander
+1 Edgar Markov
+
+Deck
+1 Abrade
+1 Adamant Will
+1 Anguished Unmaking
+1 Bleed Dry
+1 Boros Charm
+1 Dawn's Truce
+1 Path to Exile
+1 Vampires' Vengeance
+1 Village Rites
+1 Arcane Signet
+1 Blade of the Bloodchief
+1 Bolas's Citadel
+1 Herald's Horn
+1 Orzhov Signet
+1 Patchwork Banner
+1 Skullclamp
+1 Sol Ring
+1 Astarion, the Decadent
+1 Blood Artist
+1 Bloodletter of Aclazotz
+1 Bloodlord of Vaasgoth
+1 Bloodthirsty Conqueror
+1 Captivating Vampire
+1 Champion of Dusk
+1 Clavileño, First of the Blessed
+1 Cordial Vampire
+1 Crossway Troublemakers
+1 Crossway Vampire
+1 Cruel Celebrant
+1 Drana and Linvala
+1 Edgar, Charmed Groom
+1 Falkenrath Pit Fighter
+1 Indulgent Aristocrat
+1 Legion Lieutenant
+1 Markov Baron
+1 Markov Purifier
+1 Markov Waltzer
+1 Olivia, Crimson Bride
+1 Stromkirk Bloodthief
+1 Stromkirk Captain
+1 Vampire Gourmand
+1 Vampire Socialite
+1 Vampire of the Dire Moon
+1 Vengeful Bloodwitch
+1 Viscera Seer
+1 Vito, Thorn of the Dusk Rose
+1 Voice of Victory
+1 Blasphemous Edict
+1 Diabolic Tutor
+1 Exsanguinate
+1 Illicit Shipment
+1 Wake to Slaughter
+1 Bloodfell Caves
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Isolated Chapel
+7 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+7 Plains
+1 Scoured Barrens
+1 Secluded Courtyard
+1 Shattered Sanctum
+9 Swamp
+1 Temple of Silence
+1 Terramorphic Expanse
+1 Vault of the Archangel
+1 Voldaren Estate
+1 Cathars' Crusade
+1 Exquisite Blood
+1 Grievous Wound
+1 Phyrexian Arena
+1 Sanguine Bond
+1 Shared Animosity
+1 Stensia Masquerade
+1 Sorin, Imperious Bloodlord
+1 Sorin, Lord of Innistrad

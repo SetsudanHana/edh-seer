@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/storm-windrider/repartee
+# theme Repartee (2 decks)
+
+Commander
+1 Storm, Windrider
+
+Deck
+1 Arcane Signet
+1 Sol Ring
+1 Talisman of Unity
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+10 Forest
+1 Gavony Township
+1 Horizon Canopy
+1 Overgrown Farmland
+1 Path of Ancestry
+10 Plains
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple Garden
+1 Brigone, Soldier of Meletis
+1 Elite Interceptor
+1 Eternal Witness
+1 Falcon and Redwing
+1 Illuminator Virtuoso
+1 Informed Inkwright
+1 Inkshape Demonstrator
+1 Kutzil, Malamet Exemplar
+1 Llanowar Elves
+1 Mavinda, Students' Advocate
+1 Monastery Mentor
+1 Ohran Frostfang
+1 Phalanx Leader
+1 Rehearsed Debater
+1 Selfless Spirit
+1 Shalai, Voice of Plenty
+1 Sigarda, Font of Blessings
+1 Stirring Hopesinger
+1 Storm, Queen of Wakanda
+1 Studious First-Year
+1 Sun Titan
+1 Toski, Bearer of Secrets
+1 Wakka, Devoted Guardian
+1 Whiskervale Forerunner
+1 Windborn Muse
+1 Wood Elves
+1 Graduation Day
+1 Sixth Sense
+1 Strength of the Harvest
+1 Wild Defiance
+1 Beast Within
+1 Charge Through
+1 Dual-Sun Technique
+1 Fight for the Throne
+1 Guided Strike
+1 Heroic Intervention
+1 Heroic Teamwork
+1 Hunter's Insight
+1 Khalni Ambush
+1 Path to Exile
+1 Rebellious Strike
+1 Restoration Magic
+1 Sejiri Shelter
+1 Shelter
+1 Show of Confidence
+1 Snakeskin Veil
+1 Swords to Plowshares
+1 Take Up the Shield
+1 Trash the Town
+1 Yuna's Whistle
+1 Bridgeworks Battle
+1 Cleansing Nova
+1 Dig Site Inventory
+1 Farseek
+1 Homestead Courage
+1 Honor
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Practiced Offense
+1 Scale the Heights
+1 Split Up
+1 Three Visits
+1 Vanquish the Horde

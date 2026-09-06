@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/anje-falkenrath/madness
+# theme Madness (699 decks)
+
+Commander
+1 Anje Falkenrath
+
+Deck
+1 Arcane Signet
+1 Grimoire of the Dead
+1 Mind Stone
+1 Monument to Endurance
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Indulgence
+1 Ash Barrens
+1 Barren Moor
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Forgotten Cave
+1 Geier Reach Sanitarium
+1 Luxury Suite
+7 Mountain
+1 Rakdos Carnarium
+1 Rix Maadi, Dungeon Palace
+1 Smoldering Marsh
+1 Sulfurous Springs
+9 Swamp
+1 Tainted Peak
+1 Anje's Ravager
+1 Archfiend of Ifnir
+1 Archfiend of Spite
+1 Asylum Visitor
+1 Big Game Hunter
+1 Blazing Rootwalla
+1 Bloodhall Priest
+1 Bloodmad Vampire
+1 Bone Miser
+1 Chainer, Nightmare Adept
+1 Glint-Horn Buccaneer
+1 Gorgon Recluse
+1 Grave Scrabbler
+1 Hell Mongrel
+1 Incorrigible Youths
+1 Kitchen Imp
+1 Markov Baron
+1 Muck Drubb
+1 Necrogoyf
+1 Nightshade Assassin
+1 Reckless Wurm
+1 Revolutionist
+1 Shadowgrange Archfiend
+1 Skophos Reaver
+1 Squee, Goblin Nabob
+1 Stromkirk Occultist
+1 Twins of Maurer Estate
+1 Voldaren Pariah
+1 Worldgorger Dragon
+1 Animate Dead
+1 Curse of Fool's Wisdom
+1 Faith of the Devoted
+1 Gibbering Descent
+1 Stensia Masquerade
+1 Strength of Lunacy
+1 Abandon Reason
+1 Chaos Warp
+1 Dark Ritual
+1 Dark Withering
+1 Fiery Temper
+1 Psychotic Haze
+1 Shadow of the Grave
+1 Songs of the Damned
+1 Thrill of Possibility
+1 Violent Eruption
+1 Alchemist's Greeting
+1 Alms of the Vein
+1 Avacyn's Judgment
+1 Biting Rain
+1 Call to the Netherworld
+1 Change of Fortune
+1 Distemper of the Blood
+1 Faithless Looting
+1 From Under the Floorboards
+1 Gisa's Bidding
+1 Ichor Slick
+1 Malevolent Whispers
+1 Murderous Compulsion
+1 Psychotic Episode
+1 Terminal Agony

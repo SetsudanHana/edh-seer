@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/SdpGKbss77In0tzLPsMHdg (source https://archidekt.com/decks/26020495)
+# tags Reach; bracket 3; saved 2026-09-05; 156 tagged of 13656 indexed
+
+Commander
+1 Shelob, Child of Ungoliant
+
+Deck
+1 Acid Web Spider
+1 Arachnus Spinner
+1 Arasta of the Endless Web
+1 Attercop
+1 Brood Weaver
+1 Broodspinner
+1 Cactarantula
+1 Canyon Crawler
+1 Chainweb Aracnir
+1 Doom Weaver
+1 Drider
+1 Ettercap
+1 Funnel-Web Recluse
+1 Glint Weaver
+1 Graverobber Spider
+1 Hatchery Spider
+1 Ishkanah, Grafwidow
+1 Mirkwood Spider
+1 Obelisk Spider
+1 Old Fat Spider
+1 Penumbra Spider
+1 Rotwidow Pack
+1 Ruins Recluse
+1 Shelob, Dread Weaver
+1 Silklash Spider
+1 Skyfisher Spider
+1 Skysnare Spider
+1 Somberwald Spider
+1 Spinner of Souls
+1 Sporeweb Weaver
+1 Sweet-Gum Recluse
+1 Twin-Silk Spider
+1 Twitching Doll
+1 Watcher in the Web
+1 Arachnogenesis
+1 Arachnoid Adaptation
+1 Beast Within
+1 Heroic Intervention
+1 Ram Through
+1 Shelob's Ambush
+1 Tear Asunder
+1 Wrap in Vigor
+1 Arachnus Web
+1 Asceticism
+1 Wall Crawl
+1 Arcane Signet
+1 Commander's Sphere
+1 Door of Destinies
+1 Elixir of Immortality
+1 Herald's Horn
+1 Lifecrafter's Bestiary
+1 Sol Ring
+1 Swiftfoot Boots
+1 Castle Garenbrig
+1 Command Beacon
+1 Command Tower
+1 Deathcap Glade
+1 Desert
+1 Desert of the Indomitable
+1 Detection Tower
+1 Fertile Thicket
+10 Forest
+1 Gingerbread Cabin
+1 Grim Backwoods
+1 Hashep Oasis
+1 Leechridden Swamp
+1 Memorial to Unity
+1 Mirkwood
+1 Necroblossom Snarl
+1 Oran-Rief, the Vastwood
+1 Path of Ancestry
+1 Restless Cottage
+1 Rogue's Passage
+1 Sandstorm Verge
+1 Sapseep Forest
+4 Swamp
+1 Temple of the False God
+1 Turntimber Grove
+1 Woodland Cemetery
+1 Cultivate
+1 Harmonize
+1 Kodama's Reach
+1 Rampant Growth
+1 Spider Spawning
+1 Swarmyard Massacre
+1 Toxic Deluge
+1 Venom Blast

@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/wemHTOUKnPYpFlQX4JRhcg (source https://archidekt.com/decks/23891775)
+# tags Type Hack, Group Slug, Birds; bracket 2; saved 2026-07-22; 10 tagged of 13345 indexed
+
+Commander
+1 Rendmaw, Creaking Nest
+
+Deck
+1 Adaptive Automaton
+1 Archetype of Endurance
+1 Barbed Servitor
+1 Blood Artist
+1 Blood Seeker
+1 Bronze Walrus
+1 Canoptek Scarab Swarm
+1 Copper Myr
+1 Courser of Kruphix
+1 Cryptothrall
+1 Dalek Drone
+1 Demolisher Spawn
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Enduring Vitality
+1 Essence Warden
+1 Gloomshrieker
+1 H.E.R.B.I.E., Lovable Robot
+1 Haywire Mite
+1 Leaden Myr
+1 Massacre Wurm
+1 Noxious Gearhulk
+1 Oft-Nabbed Goat
+1 Ohran Frostfang
+1 Ornithopter of Paradise
+1 Palladium Myr
+1 Pygmy Kavu
+1 Sanctum Weaver
+1 Scrawling Crawler
+1 Shigeki, Jukai Visionary
+1 Summon: Fenrir
+1 Summon: Titan
+1 Toski, Bearer of Secrets
+1 Twitching Doll
+1 Wickerfolk Indomitable
+1 Assassin's Trophy
+1 Collective Resistance
+1 Eyeblight's Ending
+1 Fog of War
+1 Heroic Intervention
+1 Hunter's Insight
+1 Nameless Inversion
+1 Reap
+1 Return of the Wildspeaker
+1 Sudden Spoiling
+1 Bojuka Bog
+1 Bonders' Enclave
+1 Command Tower
+1 Darkbore Pathway
+1 Darkmoss Bridge
+1 Darksteel Citadel
+1 Deathcap Glade
+1 Dryad Arbor
+1 Fabled Passage
+10 Forest
+1 Golgari Rot Farm
+1 Llanowar Wastes
+1 Myriad Landscape
+1 Necroblossom Snarl
+5 Swamp
+1 Tainted Wood
+1 Treasure Vault
+1 Tree of Tales
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Valgavoth's Lair
+1 Vault of Whispers
+1 Vernal Fen
+1 Viridescent Bog
+1 Cultivate
+1 Ezuri's Predation
+1 Kodama's Reach
+1 Make an Example
+1 Pact of the Serpent
+1 Pillage the Bog
+1 Soul's Majesty
+1 Toxic Deluge
+1 Traverse the Ulvenwald
+1 Curse of Disturbance
+1 Exquisite Blood
+1 Lignify
+1 Party Dude
+1 Herd Heirloom
+1 Idol of Oblivion
+1 The Aetherspark
+1 Whip of Erebos

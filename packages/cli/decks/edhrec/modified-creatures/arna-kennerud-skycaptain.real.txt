@@ -1,0 +1,105 @@
+# edhrec deck https://edhrec.com/deckpreview/HGN_5YkRfDkQtMCcxGG_Vw (source https://archidekt.com/decks/13934577)
+# tags Aggro, Tokens, Equipment, Attack Triggers, Artifacts, Enchantress, Unnatural, Modified Creatures; bracket 3; saved 2026-09-04; 177 tagged of 8941 indexed
+
+Commander
+1 Arna Kennerüd, Skycaptain
+
+Deck
+1 Ad Nauseam
+1 An Offer You Can't Refuse
+1 Anguished Unmaking
+1 Arcane Denial
+1 Counterspell
+1 Dark Ritual
+1 Dawn's Truce
+1 Dovin's Veto
+1 Fell the Profane
+1 Galadriel's Dismissal
+1 Mental Misstep
+1 Sink into Stupor
+1 Swan Song
+1 Swords to Plowshares
+1 Agadeem's Awakening
+1 Grim Tutor
+1 Sea Gate Restoration
+1 Toxic Deluge
+1 Winds of Abandon
+1 Winds of Rath
+1 All That Glitters
+1 Anointed Procession
+1 Black Market Connections
+1 Celestial Mantle
+1 Combat Research
+1 Duelist's Heritage
+1 Ethereal Armor
+1 Gleaming Splendor
+1 Light of Promise
+1 Monologue Tax
+1 Sage's Reverie
+1 Sheltered by Ghosts
+1 Sigarda's Aid
+1 Spirit Link
+1 Super Intelligence
+1 Super-Soldier Serum
+1 Unspeakable Symbol
+1 Vampiric Link
+1 Ancient Den
+1 Ancient Tomb
+1 City of Brass
+1 Command Tower
+1 Flooded Strand
+1 Godless Shrine
+1 Hallowed Fountain
+1 Island
+1 Mana Confluence
+1 Marsh Flats
+1 Meticulous Archive
+2 Plains
+1 Polluted Delta
+1 Scrubland
+1 Seat of the Synod
+1 Serra's Sanctum
+1 Shadowy Backstreet
+1 Spire of Industry
+1 Swamp
+1 Tarnished Citadel
+1 The Black Gate
+1 Tundra
+1 Undercity Sewers
+1 Underground Sea
+1 Uthros, Titanic Godcore
+1 Vault of Whispers
+1 Watery Grave
+1 Arcane Signet
+1 Assassin Gauntlet
+1 Buster Sword
+1 Commander's Plate
+1 Dowsing Dagger
+1 Fellwar Stone
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Sword of Forge and Frontier
+1 Sword of Wealth and Power
+1 Swordsman's Steel
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The Mind Stone
+1 The Soul Stone
+1 Thought Vessel
+1 Thran Dynamo
+1 Thran Power Suit
+1 Wizard's Staff
+1 Ardenn, Intrepid Archaeologist
+1 Boggart Trawler
+1 Dark Confidant
+1 Gwenom, Remorseless
+1 Hydroelectric Specimen
+1 Kíli the Resourceful
+1 Lotho, Corrupt Shirriff
+1 M.O.D.O.K.
+1 Phyrexian Metamorph
+1 Puresteel Paladin
+1 The Mighty Thor, Jane Foster
+1 Vilis, Broker of Blood
+1 Witch Enchanter

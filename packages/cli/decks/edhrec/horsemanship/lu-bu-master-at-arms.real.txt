@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/y85bR5xgz9tRnmcDx4CEFQ (source https://archidekt.com/decks/8405554)
+# tags Voltron, Horsemanship, Equipment; bracket 3; saved 2026-09-04; 2 tagged of 178 indexed
+
+Commander
+1 Lu Bu, Master-at-Arms
+
+Deck
+1 Adaptive Omnitool
+1 Assault Suit
+1 Basilisk Collar
+1 Bender's Waterskin
+1 Bitterthorn, Nissa's Animus
+1 Buster Sword
+1 Campfire
+1 Commander's Plate
+1 Commander's Sphere
+1 Darksteel Plate
+1 Doc Ock's Tentacles
+1 Excalibur, Sword of Eden
+1 Genji Glove
+1 Hammer of Nazahn
+1 Hard-Won Jitte
+1 Hexplate Wallbreaker
+1 Inquisitor's Flail
+1 Inspiring Statuary
+1 Mask of Memory
+1 Mithril Coat
+1 Resurrection Orb
+1 Sceptre of Eternal Glory
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Feast and Famine
+1 Sword of Light and Shadow
+1 Tablet of Discovery
+1 Tarrian's Soulcleaver
+1 The Aetherspark
+1 Thran Dynamo
+1 Throne of Eldraine
+1 Bolt Bend
+1 Chaos Warp
+1 Deflecting Swat
+1 Final Fortune
+1 Savage Beating
+1 Seething Song
+1 The Last Agni Kai
+1 Untimely Malfunction
+1 Valakut Awakening
+1 Zoyowa's Justice
+1 Bonders' Enclave
+1 Buried Ruin
+1 Cathedral of War
+1 Demolition Field
+1 Desert of the Fervent
+1 Field of Ruin
+1 Forgotten Cave
+1 Ghost Quarter
+1 Smoldering Crater
+17 Snow-Covered Mountain
+1 War Room
+1 Witch's Clinic
+1 Casey Jones, Jury-Rig Justiciar
+1 Desert Were-Worm
+1 Emberwilde Captain
+1 Freya Crescent
+1 Gilgamesh, Master-at-Arms
+1 Glóin the Mighty
+1 Godo, Bandit Warlord
+1 Jhoira's Familiar
+1 Junk Diver
+1 Lizard Blades
+1 Neheb, the Eternal
+1 Pinnacle Monk
+1 Pit Automaton
+1 Silent Arbiter
+1 Solemn Simulacrum
+1 Soulbright Flamekin
+1 Court of Embereth
+1 Flowstone Blade
+1 Glacial Crevasses
+1 The Sound of Drums
+1 Fury of the Horde
+1 Geosurge
+1 Introduction to Annihilation
+1 Irencrag Feat
+1 Mana Geyser
+1 Overpowering Attack
+1 Rolling Earthquake
+1 Song-Mad Treachery
+1 Spectacular Showdown

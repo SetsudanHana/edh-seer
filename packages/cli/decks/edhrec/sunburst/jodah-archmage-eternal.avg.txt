@@ -1,0 +1,102 @@
+# edhrec average deck: https://edhrec.com/average-decks/jodah-archmage-eternal/sunburst
+# theme Sunburst (5 decks)
+
+Commander
+1 Jodah, Archmage Eternal
+
+Deck
+1 Arcane Signet
+1 Astral Cornucopia
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Clearwater Goblet
+1 Energy Chamber
+1 Engineered Explosives
+1 Fist of Suns
+1 Infused Arrows
+1 Insight Engine
+1 Inspirit, Flagship Vessel
+1 Lux Artillery
+1 Lux Cannon
+1 Magistrate's Scepter
+1 Moxite Refinery
+1 Opaline Bracers
+1 Pentad Prism
+1 Solar Array
+1 Sphere of the Suns
+1 Timeless Lotus
+1 Ancient Den
+1 Buried Ruin
+1 Cascading Cataracts
+1 City of Brass
+1 Command Bridge
+1 Command Tower
+1 Crystal Quarry
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+2 Forest
+1 Frontier Bivouac
+1 Grand Coliseum
+1 Great Furnace
+1 Indatha Triome
+2 Island
+1 Jungle Shrine
+1 Karn's Bastion
+1 Ketria Triome
+1 Mountain
+1 Mystic Monastery
+1 Opulent Palace
+2 Plains
+1 Raugrin Triome
+1 Sandsteppe Citadel
+1 Savai Triome
+1 Seaside Citadel
+1 Seat of the Synod
+1 Spire of Industry
+2 Swamp
+1 Terramorphic Expanse
+1 Tree of Tales
+1 Vault of Whispers
+1 Arcbound Crusher
+1 Arcbound Fiend
+1 Arcbound Reclaimer
+1 Arcbound Slith
+1 Arcbound Stinger
+1 Arcbound Wanderer
+1 Arcbound Worker
+1 Chamber Sentry
+1 Coretapper
+1 Crystalline Crawler
+1 Dyadrine, Synthesis Amalgam
+1 Etched Oracle
+1 Jegantha, the Wellspring
+1 Lunar Avenger
+1 Sawtooth Thresher
+1 Skyreach Manta
+1 Solarion
+1 Steel Overseer
+1 Stonecoil Serpent
+1 Suncrusher
+1 Suntouched Myr
+1 Tajuru Stalwart
+1 Towashi Guide-Bot
+1 Vorel of the Hull Clade
+1 Wildgrowth Archaic
+1 Woodland Wanderer
+1 Leyline Immersion
+1 Leyline of Mutation
+1 Leyline of the Guildpact
+1 Prismatic Omen
+1 Simic Ascendancy
+1 Counterspell
+1 Infuse with the Elements
+1 Roilmage's Trick
+1 Swords to Plowshares
+1 Ashaya's Enduring Bond
+1 Brilliant Spectrum
+1 Kaleidoscorch
+1 Radiant Flames
+1 Together as One
+1 Uncle's Musings
+1 Unified Front

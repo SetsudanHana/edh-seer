@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/avatar-aang/earthbending
+# theme Earthbending (373 decks)
+
+Commander
+1 Avatar Aang
+
+Deck
+1 Arcane Signet
+1 Bender's Waterskin
+1 Chromatic Lantern
+1 Glider Staff
+1 Sol Ring
+1 Swiftfoot Boots
+1 Abandoned Air Temple
+1 Agna Qel'a
+1 Airship Engine Room
+1 Ally Encampment
+1 Ba Sing Se
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+1 Fire Nation Palace
+4 Forest
+4 Island
+1 Jasmine Dragon Tea Shop
+1 Kyoshi Village
+1 Meditation Pools
+2 Mountain
+1 North Pole Gates
+1 Omashu City
+1 Path of Ancestry
+3 Plains
+1 Rumble Arena
+1 Secluded Courtyard
+1 Secret Tunnel
+1 Sun-Blessed Peak
+2 Swamp
+1 Temple Garden
+1 White Lotus Hideout
+1 Aang, Airbending Master
+1 Aang, Swift Savior
+1 Aang, at the Crossroads
+1 Aang, the Last Airbender
+1 Appa, Loyal Sky Bison
+1 Appa, Steadfast Guardian
+1 Badgermole Cub
+1 Bumi, Unleashed
+1 Earth King's Lieutenant
+1 Fire Lord Zuko
+1 Great Divide Guide
+1 Hakoda, Selfless Commander
+1 Haru, Hidden Talent
+1 Hermitic Herbalist
+1 Iroh, Grand Lotus
+1 Katara, Bending Prodigy
+1 Katara, Water Tribe's Hope
+1 Katara, the Fearless
+1 Mai and Zuko
+1 Monk Gyatso
+1 North Pole Patrol
+1 Sokka, Tenacious Tactician
+1 South Pole Voyager
+1 Sun Warriors
+1 Toph, Hardheaded Teacher
+1 Toph, the Blind Bandit
+1 Toph, the First Metalbender
+1 Yue, the Moon Spirit
+1 Aang's Iceberg
+1 Airbender Ascension
+1 Earthbender Ascension
+1 Firebender Ascension
+1 The Legend of Kuruk
+1 The Legend of Kyoshi
+1 The Legend of Roku
+1 The Legend of Yangchen
+1 Waterbender Ascension
+1 Airbender's Reversal
+1 Airbending Lesson
+1 Cycle of Renewal
+1 Earthshape
+1 Enter the Avatar State
+1 It'll Quench Ya!
+1 Moonmist
+1 Origin of Metalbending
+1 Redirect Lightning
+1 Swords to Plowshares
+1 Waterbender's Restoration
+1 Avatar's Wrath
+1 Crashing Wave
+1 Earthbending Lesson
+1 Farseek
+1 Shared Roots
+1 Spirit Water Revival
+1 Tale of Momo
+1 Waterbending Lesson

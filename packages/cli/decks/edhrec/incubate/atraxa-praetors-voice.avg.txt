@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/atraxa-praetors-voice/incubate
+# theme Incubate (21 decks)
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Arcane Signet
+1 Astral Cornucopia
+1 Chromatic Lantern
+1 Everflowing Chalice
+1 Ozolith, the Shattered Spire
+1 Realmbreaker, the Invasion Tree
+1 Sol Ring
+1 Staff of Compleation
+1 The Ozolith
+1 Arcane Sanctum
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+3 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+4 Island
+1 Karn's Bastion
+1 Marsh Flats
+1 Opulent Palace
+1 Overgrown Tomb
+1 Path of Ancestry
+3 Plains
+1 Raffine's Tower
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Seaside Citadel
+1 Spara's Headquarters
+4 Swamp
+1 Temple Garden
+1 Watery Grave
+1 Windswept Heath
+1 Zagoth Triome
+1 Atraxa, Grand Unifier
+1 Bloated Processor
+1 Brimaz, Blight of Oreskos
+1 Cankerbloom
+1 Chrome Host Seedshark
+1 Converter Beast
+1 Elesh Norn
+1 Elesh Norn, Mother of Machines
+1 Elvish Vatkeeper
+1 Essence of Orthodoxy
+1 Ezuri, Stalker of Spheres
+1 Filigree Vector
+1 Glissa, Herald of Predation
+1 Ichor Drinker
+1 Jin-Gitaxias
+1 Mondrak, Glory Dominus
+1 Norn's Choirmaster
+1 Norn's Inquisitor
+1 Phyrexian Censor
+1 Progenitor Exarch
+1 Sheoldred
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Tiller of Flesh
+1 Vorinclex, Monstrous Raider
+1 Blighted Burgeoning
+1 Brokers Ascendancy
+1 Corruption of Towashi
+1 Doubling Season
+1 Gift of Compleation
+1 Inexorable Tide
+1 Phyrexian Arena
+1 Phyrexian Awakening
+1 Sculpted Perfection
+1 Tangled Skyline
+1 Akroma's Will
+1 Assimilate Essence
+1 Atomize
+1 Counterspell
+1 Excise the Imperfect
+1 Experimental Augury
+1 Ripples of Potential
+1 Swords to Plowshares
+1 Nissa, Ascended Animist
+1 Vraska, Betrayal's Sting
+1 Cultivate
+1 Eyes of Gitaxias
+1 Farseek
+1 Glistening Dawn
+1 Nature's Lore
+1 Sunder the Gateway
+1 Sunfall
+1 Tezzeret's Gambit
+1 Three Visits

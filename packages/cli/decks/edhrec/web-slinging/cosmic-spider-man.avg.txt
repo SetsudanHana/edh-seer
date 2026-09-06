@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/cosmic-spider-man/web-slinging
+# theme Web-slinging (60 decks)
+
+Commander
+1 Cosmic Spider-Man
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Herald's Horn
+1 Lightning Greaves
+1 Pictures of Spider-Man
+1 Sol Ring
+1 Spider-Suit
+1 Web-Shooters
+1 Avengers Tower
+1 Breeding Pool
+1 Command Tower
+1 Daily Bugle Building
+1 Evolving Wilds
+1 Exotic Orchard
+5 Forest
+1 Frontier Bivouac
+4 Island
+2 Mountain
+1 Multiversal Passage
+1 Oscorp Industries
+1 Path of Ancestry
+3 Plains
+1 Savage Mansion
+1 Secluded Courtyard
+1 Sinister Hideout
+1 Stomping Ground
+1 Suburban Sanctuary
+2 Swamp
+1 Swarmyard
+1 Unclaimed Territory
+1 University Campus
+1 Urban Retreat
+1 Vibrant Cityscape
+1 Arasta of the Endless Web
+1 Araña, Heart of the Spider
+1 Aunt May
+1 Gwen Stacy
+1 Gwenom, Remorseless
+1 Mary Jane Watson
+1 Miles Morales
+1 Peter Parker
+1 Radioactive Spider
+1 SP//dr, Piloted by Peni
+1 Scarlet Spider, Ben Reilly
+1 Sensational Spider-Man
+1 Shelob, Child of Ungoliant
+1 Silk, Web Weaver
+1 Spectacular Spider-Man
+1 Spider Manifestation
+1 Spider-Byte, Web Warden
+1 Spider-Gwen, Free Spirit
+1 Spider-Ham, Peter Porker
+1 Spider-Man 2099
+1 Spider-Man India
+1 Spider-Man Noir
+1 Spider-Man, Brooklyn Visionary
+1 Spider-Man, Miles Morales
+1 Spider-Punk
+1 Spider-UK
+1 Spider-Woman, Stunning Savior
+1 Spiders-Man, Heroic Horde
+1 Spinneret and Spiderling
+1 Superior Spider-Man
+1 Symbiote Spider-Man
+1 Web-Warriors
+1 Impostor Syndrome
+1 Origin of Spider-Man
+1 Spider-Man No More
+1 Spider-Verse
+1 Wall Crawl
+1 Web Up
+1 Web of Life and Destiny
+1 Amazing Acrobatics
+1 Arachnogenesis
+1 Counterspell
+1 Grow Extra Arms
+1 Heroic Intervention
+1 Path to Exile
+1 Spectacular Tactics
+1 Spider-Sense
+1 Strength of Will
+1 Sudden Strike
+1 Cultivate
+1 Farseek
+1 Kapow!
+1 Romantic Rendezvous
+1 Three Visits
+1 Villainous Wrath

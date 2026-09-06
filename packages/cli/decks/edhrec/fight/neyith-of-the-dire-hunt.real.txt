@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/3jhsPH53AAaR_V9QFZebRA (source https://archidekt.com/decks/24409390)
+# tags Fight, Cantrips, Power Matters, Stompy; bracket 2; saved 2026-09-03; 276 tagged of 2103 indexed
+
+Commander
+1 Neyith of the Dire Hunt
+
+Deck
+1 Ancient Animus
+1 Beast Within
+1 Collective Resistance
+1 Fight for the Throne
+1 Inscription of Abundance
+1 Khalni Ambush
+1 Prizefight
+1 Setessan Tactics
+1 Tail Swipe
+1 The Last Agni Kai
+1 Anzrag, the Quake-Mole
+1 Apex Altisaur
+1 Beast Whisperer
+1 Brash Taunter
+1 Elvish Mystic
+1 Fanatic of Rhonas
+1 Gargos, Vicious Watcher
+1 Ghalta, Primal Hunger
+1 Goblin Anarchomancer
+1 Goreclaw, Terror of Qal Sisma
+1 Groundchuck & Dirtbag
+1 Halana and Alena, Partners
+1 Kogla, the Titan Ape
+1 Llanowar Elves
+1 Mightform Harmonizer
+1 Ojer Kaslem, Deepest Growth
+1 Oviya, Automech Artisan
+1 Pathrazer of Ulamog
+1 Radha, Heir to Keld
+1 Ranging Raptors
+1 Raph & Mikey, Troublemakers
+1 Ruby, Daring Tracker
+1 Sakura-Tribe Elder
+1 Savage Ventmaw
+1 Selvala, Heart of the Wilds
+1 Thorn Mammoth
+1 Toski, Bearer of Secrets
+1 Ulvenwald Tracker
+1 Vigor
+1 Wolverine, Fierce Fighter
+1 Zhur-Taa Druid
+1 Zopandrel, Hunger Dominus
+1 Arcane Signet
+1 Herd Heirloom
+1 Rhonas's Monument
+1 Sol Ring
+1 The Skullspore Nexus
+1 Arena
+1 Castle Garenbrig
+1 Cinder Glade
+1 Command Tower
+1 Fire-Lit Thicket
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+1 Myriad Landscape
+1 Rockfall Vale
+1 Rootbound Crag
+1 Skarrg, the Rage Pits
+11 Snow-Covered Forest
+4 Snow-Covered Mountain
+1 Spire Garden
+1 Temple of Abandon
+1 Training Compound
+1 Arni Slays the Troll
+1 Garruk's Uprising
+1 Gimli's Reckless Might
+1 Unnatural Growth
+1 Blasphemous Act
+1 Blizzard Brawl
+1 Bridgeworks Battle
+1 Bushwhack
+1 Cultivate
+1 Epic Fight
+1 Ezuri's Predation
+1 Farseek
+1 Go Nuts!
+1 Kodama's Reach
+1 Primal Might
+1 Rampant Growth
+1 Rhino's Rampage
+1 Roamer's Routine
+1 Domri, Anarch of Bolas

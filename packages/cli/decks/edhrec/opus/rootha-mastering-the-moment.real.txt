@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/l0_vIMVa3IC6TkrT7hfzjQ (source https://archidekt.com/decks/21339023)
+# tags Spellslinger, Populate, Tokens, Opus; bracket 2; saved 2026-09-03; 3 tagged of 6445 indexed
+
+Commander
+1 Rootha, Mastering the Moment
+
+Deck
+1 Abrade
+1 Arcane Denial
+1 Ashling's Command
+1 Big Score
+1 Commence the Endgame
+1 Dig Through Time
+1 Flick a Coin
+1 Magma Opus
+1 Perplexing Test
+1 Prismari Command
+1 Reality Shift
+1 Resculpt
+1 Traumatic Critique
+1 Abstract Performance
+1 Aether Gale
+1 Blasphemous Act
+1 Brass's Bounty
+1 Chain Reaction
+1 Creative Technique
+1 Ember Island Production
+1 Expressive Iteration
+1 Furygale Flocking
+1 Hit the Mother Lode
+1 Mana Geyser
+1 Rapturous Moment
+1 Replication Technique
+1 Rite of Replication
+1 Rousing Refrain
+1 Splatter Technique
+1 Surge to Victory
+1 Treasure Cruise
+1 Volcanic Salvo
+1 Wisdom of Ages
+1 Alchemist's Talent
+1 Determined Iteration
+1 Arcane Signet
+1 Diary of Dreams
+1 Fellwar Stone
+1 Fire Diamond
+1 Resonating Lute
+1 Sky Diamond
+1 Tablet of Discovery
+1 Talisman of Creativity
+1 Archmage Emeritus
+1 Blazing Firesinger
+1 Brudiclad, Telchor Engineer
+1 Colorstorm Stallion
+1 Curiosity Crafter
+1 Dirgur Focusmage
+1 Goblin Electromancer
+1 Leitmotif Composer
+1 Manaform Hellkite
+1 Molten-Core Maestro
+1 Muddle, the Ever-Changing
+1 Plargg and Nassari
+1 Prismari Pianist
+1 Redoubled Stormsinger
+1 Rionya, Fire Dancer
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Thunderclap Drake
+1 Zaffai and the Tempests
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Ferrous Lake
+1 Frostboil Snarl
+1 Hall of Oracles
+10 Island
+1 Izzet Guildgate
+1 Molten Tributary
+8 Mountain
+1 Path of Ancestry
+1 Prismari Campus
+1 Restless Spire
+1 Shivan Reef
+1 Spectacle Summit
+1 Study Hall
+1 Sulfur Falls
+1 Swiftwater Cliffs
+1 Temple of Epiphany
+1 Temple of the False God
+1 Terramorphic Expanse

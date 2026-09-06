@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/GYNTB2jwEIbSl1HLifO7Rg (source https://moxfield.com/decks/tEGW1hSyp0GuZ6DGy9PGyg)
+# tags +1/+1 Counters, Toolbox, Equipment, Good Stuff, Legends; bracket 3; saved 2026-09-03; 272 tagged of 31481 indexed
+
+Commander
+1 Kenrith, the Returned King
+
+Deck
+1 Abundant Countryside
+1 Ancient Ziggurat
+1 Baxter Building
+1 Capital City
+1 Cascading Cataracts
+1 City of Brass
+1 Clive's Hideaway
+1 Command Beacon
+1 Command Tower
+1 Exotic Orchard
+1 Forbidden Orchard
+3 Forest
+1 Glimmervoid
+1 Grand Coliseum
+1 Hidden Grotto
+3 Island
+1 Mana Confluence
+1 Mirrodin's Core
+3 Mountain
+1 Opal Palace
+1 Path of Ancestry
+3 Plains
+1 Plaza of Heroes
+1 Reliquary Tower
+1 Spire of Industry
+1 Starting Town
+3 Swamp
+1 An Offer You Can't Refuse
+1 Dark Ritual
+1 Heroic Intervention
+1 Mana Drain
+1 Nature's Claim
+1 Pact of Negation
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Aragorn, Hornburg Hero
+1 Auron, Venerated Guardian
+1 Basim Ibn Ishaq
+1 Birds of Paradise
+1 Bloom Tender
+1 Catti-brie of Mithral Hall
+1 Celestine, the Living Saint
+1 Delighted Halfling
+1 Drizzt Do'Urden
+1 Jaya Ballard, Task Mage
+1 Jenova, Ancient Calamity
+1 Jhoira, Weatherlight Captain
+1 Krydle of Baldur's Gate
+1 Leonardo, Cutting Edge
+1 Michelangelo, Weirdness to 11
+1 Ornithopter of Paradise
+1 Ray Fillet, Wave Warrior
+1 Red XIII, Proud Warrior
+1 Scarlet Spider, Ben Reilly
+1 Shalai, Voice of Plenty
+1 Spectacular Spider-Man
+1 Super Shredder
+1 Thanos, the Mad Titan
+1 Tidus, Yuna's Guardian
+1 Tifa, Martial Artist
+1 Vikya, Scorching Stalwart
+1 Vincent, Vengeful Atoner
+1 Vivi Ornitier
+1 Wolverine, Best There Is
+1 Arcane Signet
+1 Bone Sabres
+1 Conqueror's Flail
+1 Embercleave
+1 Excalibur, Sword of Eden
+1 Explorer's Scope
+1 Godsend
+1 Lightning Greaves
+1 Mithril Coat
+1 Mox Amber
+1 Pip-Boy 3000
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Key to the Vault
+1 Thought Vessel
+1 Trailblazer's Boots
+1 Vorpal Sword
+1 Aura Shards
+1 Rhystic Study
+1 Spirit of Resistance
+1 Wizard Class
+1 Blasphemous Act
+1 Legions to Ashes
+1 Vandalblast
+1 Wrath of God

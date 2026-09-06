@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/p0Y-je8_TfZmeJjr4yyOQQ (source https://archidekt.com/decks/21374329)
+# tags Voltron, Graveyard, Aggro, Triggered Abilities, Commander Matters, Ramp, Exalted, Discard; bracket 3; saved 2026-09-01; 33 tagged of 7778 indexed
+
+Commander
+1 Squall, SeeD Mercenary
+
+Deck
+1 Accursed Marauder
+1 Akrasan Squire
+1 Aven Squire
+1 Bastion Protector
+1 Boromir, Warden of the Tower
+1 Braids, Arisen Nightmare
+1 Breena, the Demagogue
+1 Cathar Commando
+1 Codsworth, Handy Helper
+1 Defacing Duskmage
+1 Duty-Bound Dead
+1 Exsanguinator Cavalry
+1 Jirina, Dauntless General
+1 Knight Exemplar
+1 Knight of Glory
+1 Knight of Infamy
+1 Lurrus of the Dream-Den
+1 Plaguecrafter
+1 Preston, the Vanisher
+1 Ronin, Shadow Stalker
+1 Sigiled Paladin
+1 Sorin of House Markov
+1 Sublime Archangel
+1 Super Shredder
+1 The Master of Lake-town
+1 The Queen of Dale
+1 Vincent Valentine
+1 Agent of the Shadow Thieves
+1 Animate Dead
+1 Aura of Silence
+1 Blind Obedience
+1 Brilliant Wings
+1 Gift of Immortality
+1 Gift of Orzhova
+1 Kaya's Ghostform
+1 Ripples of Undeath
+1 Seal of Cleansing
+1 Spirit Mantle
+1 Super-Soldier Serum
+1 Unquestioned Authority
+1 Arm-Mounted Anchor
+1 Basilisk Collar
+1 Brotherhood Regalia
+1 Captain America's Shield
+1 Celestial Armor
+1 Haunted Cloak
+1 Key to the City
+1 Mask of Memory
+1 Matzalantli, the Great Door
+1 Mithril Coat
+1 My Precious
+1 Ninja's Blades
+1 Palantír of Orthanc
+1 Pre-War Formalwear
+1 Psychic Paper
+1 Shadowspear
+1 Silver Shroud Costume
+1 Sword of Body and Mind
+1 Trailblazer's Boots
+1 Vorpal Sword
+1 Wedding Invitation
+1 Zephyr Boots
+1 Brokers Hideout
+1 Cabaretti Courtyard
+1 Cathedral of War
+1 Command Tower
+1 Daily Bugle Building
+1 Demolition Field
+1 Eclipsed Steppe
+1 Escape Tunnel
+1 Evolving Wilds
+1 Fabled Passage
+1 Geier Reach Sanitarium
+1 Godless Shrine
+1 Marsh Flats
+1 Obscura Storefront
+8 Plains
+1 Plaza of Heroes
+1 Prismatic Vista
+1 Rogue's Passage
+1 Shadowy Backstreet
+1 Shizo, Death's Storehouse
+5 Swamp
+1 The Black Gate
+1 Turbulent Moor
+1 Vault of the Archangel
+1 Vibrant Cityscape
+1 Sejiri Shelter

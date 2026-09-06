@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/j1iSX6yJqxkk_I4KYBNxEQ (source https://archidekt.com/decks/16416360)
+# tags Party, Tokens, Treasure; bracket 3; saved 2026-09-04; 592 tagged of 3695 indexed
+
+Commander
+1 Burakos, Party Leader
+1 Folk Hero
+
+Deck
+1 Abandoned Air Temple
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Minas Morgul, Dark Fortress
+1 Minas Tirith
+1 Mutavault
+1 Path of Ancestry
+5 Plains
+1 Realm of Koh
+1 Reliquary Tower
+1 Shadowy Backstreet
+1 Shattered Sanctum
+1 Shizo, Death's Storehouse
+5 Swamp
+1 Tainted Field
+1 The Black Gate
+1 Turbulent Moor
+1 Vault of Champions
+1 Vault of the Archangel
+1 Witch's Clinic
+1 Adept Watershaper
+1 Archpriest of Iona
+1 Astarion, the Decadent
+1 Athreos, God of Passage
+1 Battle Angels of Tyr
+1 Braids, Arisen Nightmare
+1 Celestine, the Living Saint
+1 Changeling Outcast
+1 Dark Confidant
+1 Dauthi Voidwalker
+1 Elas il-Kor, Sadistic Pilgrim
+1 Elegy Acolyte
+1 Evin, Waterdeep Opportunist
+1 Exalted Sunborn
+1 Grim Hireling
+1 Guide of Souls
+1 Hardened Tactician
+1 Harper Recruiter
+1 Joined Researchers
+1 Mother of Runes
+1 Nadier's Nightblade
+1 Nalia de'Arnise
+1 Preacher of the Schism
+1 Redemption Choir
+1 Rev, Tithe Extractor
+1 Roaming Throne
+1 Seasoned Dungeoneer
+1 Sheoldred, the Apocalypse
+1 Stensian Sanguinist
+1 The Destined Black Mage
+1 The Destined White Mage
+1 Twilight Prophet
+1 Vexilus Praetor
+1 Witch Enchanter
+1 Agent of the Shadow Thieves
+1 Black Market Connections
+1 Exquisite Blood
+1 Glasswing Grace
+1 Haunted One
+1 Land Tax
+1 Thorough Investigation
+1 Trouble in Pairs
+1 Akroma's Will
+1 Anguished Unmaking
+1 Batwing Brume
+1 Deadly Rollick
+1 Fell the Profane
+1 Flawless Maneuver
+1 Malakir Rebirth
+1 Mortify
+1 Sejiri Shelter
+1 Swords to Plowshares
+1 Arcane Signet
+1 Dolmen Gate
+1 Lightning Greaves
+1 Multiclass Baldric
+1 Oketra's Monument
+1 Orzhov Signet
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Decorum Dissertation
+1 Stick Together
+1 Toxic Deluge
+1 Will of the Abzan
+1 Winnowing
+1 Elspeth, Storm Slayer

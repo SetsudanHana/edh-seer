@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/lilah-undefeated-slickshot/plot
+# theme Plot (36 decks)
+
+Commander
+1 Lilah, Undefeated Slickshot
+
+Deck
+1 Arcane Signet
+1 Izzet Signet
+1 Resonating Lute
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 Cascade Bluffs
+1 Command Tower
+1 Ferrous Lake
+1 Frostboil Snarl
+12 Island
+1 Izzet Boilerworks
+10 Mountain
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Training Center
+1 Abstract Paintmage
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Balmor, Battlemage Captain
+1 Baral and Kari Zev
+1 Coruscation Mage
+1 Exalted Flamer of Tzeentch
+1 Goblin Electromancer
+1 Guttersnipe
+1 Pinnacle Monk
+1 Prismari, the Inspiration
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Talrand, Sky Summoner
+1 Third Path Iconoclast
+1 Thunderclap Drake
+1 Veyran, Voice of Duality
+1 Young Pyromancer
+1 Arcane Bombardment
+1 Fiery Inscription
+1 Sorcerer Class
+1 Thousand-Year Storm
+1 Abandon Attachments
+1 Arcane Infusion
+1 Ashling's Command
+1 Broadside Barrage
+1 Cerebral Vortex
+1 Creative Outburst
+1 Electrolyze
+1 Flame of Anor
+1 Galvanic Iteration
+1 Hypothesizzle
+1 Invert // Invent
+1 Izzet Charm
+1 Magma Opus
+1 Practical Research
+1 Prismari Charm
+1 Prismari Command
+1 Prophetic Bolt
+1 Ral's Outburst
+1 Slick Sequence
+1 Teach by Example
+1 Traumatic Critique
+1 Vibrant Outburst
+1 Ral, Crackling Wit
+1 Beacon Bolt
+1 Blasphemous Act
+1 Expressive Iteration
+1 Gandalf's Sanction
+1 Glacial Dragonhunt
+1 Ill-Timed Explosion
+1 Rapturous Moment
+1 Role Reversal
+1 Splatter Technique
+1 Stitch in Time
+1 Teleportal
+1 Truth or Consequences

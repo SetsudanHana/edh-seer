@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/atraxa-praetors-voice/oil-counters
+# theme Oil Counters (15 decks)
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Arcane Signet
+1 Argent Dais
+1 Astral Cornucopia
+1 Chromatic Lantern
+1 Everflowing Chalice
+1 Glistening Sphere
+1 Mindsplice Apparatus
+1 Norn's Wellspring
+1 Replicating Ring
+1 Sol Ring
+1 Staff of Compleation
+1 Tablet of Compleation
+1 Vat of Rebirth
+1 Bojuka Bog
+1 Calciform Pools
+1 Command Tower
+1 Exotic Orchard
+4 Forest
+4 Island
+1 Karn's Bastion
+1 Mirrex
+1 Nesting Grounds
+1 Opulent Palace
+1 Path of Ancestry
+4 Plains
+1 Saltcrusted Steppe
+1 Seachrome Coast
+1 Seaside Citadel
+4 Swamp
+1 Terramorphic Expanse
+1 The Monumental Facade
+1 The Mycosynth Gardens
+1 The Seedcore
+1 Vivid Creek
+1 Vivid Grove
+1 Archfiend of the Dross
+1 Armored Scrapgorger
+1 Atraxa's Skitterfang
+1 Bladed Ambassador
+1 Bloated Contaminator
+1 Doc Samson, Super Psychiatrist
+1 Dreamtide Whale
+1 Evolving Adaptive
+1 Ezuri, Stalker of Spheres
+1 Gitaxian Raptor
+1 Glissa, Herald of Predation
+1 Ichor Synthesizer
+1 Ichorplate Golem
+1 Jin-Gitaxias
+1 Lattice-Blade Mantis
+1 Mercurial Spelldancer
+1 Metastatic Evangel
+1 Necrosquito
+1 Norn's Choirmaster
+1 Pensive Professor
+1 Rustvine Cultivator
+1 Serum Sovereign
+1 Skrelv, Defector Mite
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Trawler Drake
+1 Venerated Rotpriest
+1 Vishgraz, the Doomhive
+1 Watchful Blisterzoa
+1 Dawn of a New Age
+1 Inexorable Tide
+1 Innkeeper's Talent
+1 Norn's Decree
+1 Phyrexian Arena
+1 Skrelv's Hive
+1 Atomize
+1 Experimental Augury
+1 Fuel for the Cause
+1 Infectious Bite
+1 Prologue to Phyresis
+1 Serum Snare
+1 Sheoldred's Edict
+1 Vraska's Fall
+1 Nissa, Ascended Animist
+1 Vraska, Betrayal's Sting
+1 Cultivate
+1 Drown in Ichor
+1 Expand the Sphere
+1 Green Sun's Twilight
+1 Infectious Inquiry
+1 Phyresis Outbreak
+1 Unnatural Restoration

@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/kadena-slinking-sorcerer/morph
+# theme Morph (1759 decks)
+
+Commander
+1 Kadena, Slinking Sorcerer
+
+Deck
+1 Arcane Signet
+1 Dream Chisel
+1 Panoptic Projektor
+1 Scroll of Fate
+1 Sol Ring
+1 Strionic Resonator
+1 Vedalken Orrery
+1 Alchemist's Refuge
+1 Bojuka Bog
+1 Branch of Vitu-Ghazi
+1 Breeding Pool
+1 Command Tower
+1 Darkwater Catacombs
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Hinterland Harbor
+5 Island
+1 Llanowar Wastes
+1 Opulent Palace
+1 Overgrown Tomb
+1 Reliquary Tower
+1 Shrine of the Forsaken Gods
+1 Simic Growth Chamber
+1 Sunken Hollow
+3 Swamp
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Zoetic Cavern
+1 Ainok Survivalist
+1 Bane of the Living
+1 Brine Elemental
+1 Chromeshell Crab
+1 Deathmist Raptor
+1 Den Protector
+1 Etrata, Deadly Fugitive
+1 Exit Specialist
+1 Experiment Twelve
+1 Grim Haruspex
+1 Hauntwoods Shrieker
+1 Hooded Hydra
+1 Icefeather Aven
+1 Ixidor, Reality Sculptor
+1 Ixidron
+1 Kadena's Silencer
+1 Kheru Spellsnatcher
+1 Mischievous Quanar
+1 Nantuko Vigilante
+1 Printlifter Ooze
+1 Roshan, Hidden Magister
+1 Seedborn Muse
+1 Silumgar Assassin
+1 Skinthinner
+1 Stratus Dancer
+1 Thieving Amalgam
+1 Thousand Winds
+1 Vannifar, Evolved Enigma
+1 Vesuvan Shapeshifter
+1 Voidmage Apprentice
+1 Whisperwood Elemental
+1 Willbender
+1 Yedora, Grave Gardener
+1 Zimone, Mystery Unraveler
+1 Gift of Doom
+1 Leyline of Anticipation
+1 Primordial Mist
+1 Secret Plans
+1 They Came from the Pipes
+1 Threats Around Every Corner
+1 Trail of Mystery
+1 Ugin's Mastery
+1 Assassin's Trophy
+1 Beast Within
+1 Become Anonymous
+1 Heroic Intervention
+1 Putrefy
+1 Reality Shift
+1 Sultai Charm
+1 Vivien, Champion of the Wilds
+1 Cultivate
+1 Farseek
+1 Ghastly Conscription
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Rampant Growth
+1 Valgavoth's Onslaught

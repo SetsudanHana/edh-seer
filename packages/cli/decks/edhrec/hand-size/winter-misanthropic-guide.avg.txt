@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/winter-misanthropic-guide/hand-size
+# theme Hand Size (46 decks)
+
+Commander
+1 Winter, Misanthropic Guide
+
+Deck
+1 Arcane Signet
+1 Entropic Battlecruiser
+1 Geth's Grimoire
+1 Howling Mine
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thought Vessel
+1 Blood Crypt
+1 Bojuka Bog
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+5 Forest
+1 Geier Reach Sanitarium
+5 Mountain
+1 Raucous Theater
+1 Reliquary Tower
+1 Riveteers Overlook
+1 Savage Lands
+7 Swamp
+1 Terramorphic Expanse
+1 Tree of Tales
+1 Twisted Landscape
+1 Underground Mortuary
+1 Valgavoth's Lair
+1 Vault of Whispers
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Invasion of Mercadia
+1 Aclazotz, Deepest Betrayal
+1 Eternal Witness
+1 Fate Unraveler
+1 Fell Specter
+1 Grave Researcher
+1 Haywire Mite
+1 Ignoble Hierarch
+1 Kederekt Parasite
+1 Magus of the Wheel
+1 Naktamun Lorespinner
+1 Orcish Bowmasters
+1 Psychosis Crawler
+1 Razorkin Needlehead
+1 Sakura-Tribe Elder
+1 Sangromancer
+1 Scrawling Crawler
+1 Sheoldred, the Apocalypse
+1 Stormfist Crusader
+1 Syr Konrad, the Grim
+1 Tergrid, God of Fright
+1 The Master of Lake-town
+1 Tinybones, Pocket Nuisance
+1 Twitching Doll
+1 Bloodchief Ascension
+1 Liliana's Caress
+1 Megrim
+1 Painful Quandary
+1 Spiteful Visions
+1 The Rollercrusher Ride
+1 Underworld Dreams
+1 Waste Not
+1 Assassin's Trophy
+1 Beast Within
+1 Drag to the Roots
+1 Grisly Salvage
+1 Harrow
+1 Heroic Intervention
+1 Peer Past the Veil
+1 Thrill of Possibility
+1 Untimely Malfunction
+1 Ob Nixilis, the Hate-Twisted
+1 Ral Zarek, Guest Lecturer
+1 Blasphemous Act
+1 Buried Alive
+1 Burning Inquiry
+1 Cultivate
+1 Dark Deal
+1 Faithless Looting
+1 Farseek
+1 Nature's Lore
+1 Reanimate
+1 Reforge the Soul
+1 Toxic Deluge

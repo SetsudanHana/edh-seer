@@ -1,0 +1,66 @@
+# edhrec deck https://edhrec.com/deckpreview/Q8lCHK4g9TZy22IcZ4nBpw (source https://archidekt.com/decks/23487434)
+# tags Battles, Group Hug; bracket 2; saved 2026-06-13; 8 tagged of 14194 indexed
+
+Commander
+1 Omnath, Locus of All
+
+Deck
+1 Begin the Invasion
+1 Bloodfell Caves
+1 Blossoming Sands
+1 Command Tower
+1 Dismal Backwater
+9 Forest
+9 Island
+1 Jungle Hollow
+9 Mountain
+9 Plains
+1 Rugged Highlands
+1 Scoured Barrens
+9 Swamp
+1 Swiftwater Cliffs
+1 Thornwood Falls
+1 Tranquil Cove
+1 Wind-Scarred Crag
+1 Coveted Jewel
+1 Elesh Norn
+1 Jin-Gitaxias
+1 Sheoldred
+1 Urabrask
+1 Vorinclex
+1 Invasion of Alara
+1 Invasion of Amonkhet
+1 Invasion of Arcavios
+1 Invasion of Azgol
+1 Invasion of Belenon
+1 Invasion of Dominaria
+1 Invasion of Eldraine
+1 Invasion of Ergamon
+1 Invasion of Fiora
+1 Invasion of Gobakhan
+1 Invasion of Ikoria
+1 Invasion of Innistrad
+1 Invasion of Ixalan
+1 Invasion of Kaladesh
+1 Invasion of Kaldheim
+1 Invasion of Kamigawa
+1 Invasion of Karsus
+1 Invasion of Kylem
+1 Invasion of Lorwyn
+1 Invasion of Mercadia
+1 Invasion of Moag
+1 Invasion of Muraganda
+1 Invasion of New Capenna
+1 Invasion of New Phyrexia
+1 Invasion of Pyrulea
+1 Invasion of Ravnica
+1 Invasion of Regatha
+1 Invasion of Segovia
+1 Invasion of Shandalar
+1 Invasion of Tarkir
+1 Invasion of Theros
+1 Invasion of Tolvada
+1 Invasion of Ulgrotha
+1 Invasion of Vryn
+1 Invasion of Xerex
+1 Invasion of Zendikar

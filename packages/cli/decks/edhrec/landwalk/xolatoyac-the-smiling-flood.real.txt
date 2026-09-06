@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/pC9xBm0m508luXAMnXvyxg (source https://archidekt.com/decks/9844674)
+# tags +1/+1 Counters, Landwalk, Merfolk, Card Draw; bracket 2; saved 2026-08-24; 48 tagged of 3020 indexed
+
+Commander
+1 Xolatoyac, the Smiling Flood
+
+Deck
+1 Aetherspouts
+1 Dig Through Time
+1 Engulf the Shore
+1 Evacuation
+1 Flow of Knowledge
+1 High Tide
+1 Hurl into History
+1 Inspiring Call
+1 Snakeskin Veil
+1 Aquitect's Will
+1 Calamitous Tide
+1 Combat Tutorial
+1 Contentious Plan
+1 Flood of Tears
+1 Growth Curve
+1 Nature's Rhythm
+1 Pull from the Deep
+1 Restorative Technique
+1 Synchronized Charge
+1 Wash Out
+1 Arixmethes, Slumbering Isle
+1 Atlantean Cavalry
+1 Attuma, Atlantean Warlord
+1 Brineborn Cutthroat
+1 Chasm Skulker
+1 Cold-Eyed Selkie
+1 Deeproot Elite
+1 Eluge, the Shoreless Sea
+1 Forgotten Ancient
+1 Frilled Cave-Wurm
+1 Gray Harbor Merfolk
+1 Hakbal of the Surging Soul
+1 Harbinger of the Seas
+1 Kiora, the Rising Tide
+1 Koma, Cosmos Serpent
+1 Koma, World-Eater
+1 Kumena, Tyrant of Orazca
+1 Master Biomancer
+1 Master of the Pearl Trident
+1 Merfolk Cave-Diver
+1 Merfolk Sovereign
+1 Merrow Reejerey
+1 Mist Dancer
+1 Nicanzil, Current Conductor
+1 Orysa, Tide Choreographer
+1 Seafloor Oracle
+1 Silvergill Peddler
+1 Stormtide Leviathan
+1 Tatyova, Benthic Druid
+1 Teferi, Mage of Zhalfir
+1 Vodalian Hexcatcher
+1 Vorel of the Hull Clade
+1 Bender's Waterskin
+1 Bident of Thassa
+1 Quicksilver Fountain
+1 Sol Ring
+1 Thought Vessel
+1 Waterbending Scroll
+1 Bounty of the Luxa
+1 Master Chef
+1 Simic Ascendancy
+1 Spreading Seas
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Grove
+7 Forest
+1 Hinterland Harbor
+13 Island
+1 Karn's Bastion
+1 Mystic Sanctuary
+1 Nesting Grounds
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Sodden Verdure
+1 Tangled Islet
+1 Thornwood Falls
+1 Thriving Isle
+1 Vineglimmer Snarl
+1 Vivid Creek
+1 Vivid Grove
+1 Kiora, Master of the Depths

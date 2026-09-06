@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/TSTaC-s6s9y8ju5STZzkxA (source https://archidekt.com/decks/24894851)
+# tags Repartee, Legends, Historic, +1/+1 Counters, Anthems; bracket 2; saved 2026-09-01; 12 tagged of 1480 indexed
+
+Commander
+1 Abigale, Poet Laureate
+
+Deck
+1 Abandoned Air Temple
+1 Abstergo Entertainment
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Desolate Mire
+1 Eclipsed Steppe
+1 Fabled Passage
+1 Fetid Heath
+1 Hall of Oracles
+1 Isolated Chapel
+12 Plains
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Swamp
+1 Turbulent Moor
+1 Umbral Expanse
+1 Vault of the Archangel
+1 War Room
+1 Agent of the Fates
+1 Ainok Bond-Kin
+1 Ardbert, Warrior of Darkness
+1 Bofur, Reliable Guardian
+1 Breena, the Demagogue
+1 Brigone, Soldier of Meletis
+1 Bulwark Ox
+1 Cartographer's Hawk
+1 Chocobo Knights
+1 Colleen Wing, Street Samurai
+1 Cosmogrand Zenith
+1 Deathbringer Liege
+1 Dusk Legion Duelist
+1 Enduring Innocence
+1 Envoy of the Ancestors
+1 Felisa, Fang of Silverquill
+1 Generous Pup
+1 God-Eternal Oketra
+1 Gold Myr
+1 Guide of Souls
+1 H.E.R.B.I.E., Lovable Robot
+1 Informed Inkwright
+1 Killian, Ink Duelist
+1 Lae'zel, Vlaakith's Champion
+1 Leaden Myr
+1 Loran of the Third Path
+1 Lord Jyscal Guado
+1 Lotho, Corrupt Shirriff
+1 Mikaeus, the Lunarch
+1 Monastery Mentor
+1 Ornithopter of Paradise
+1 Page, Loose Leaf
+1 Phalanx Leader
+1 Recruiter of the Guard
+1 Selfless Spirit
+1 Shadrix Silverquill
+1 Skyclave Cleric
+1 Snooping Page
+1 Stirring Hopesinger
+1 Urdnan, Dromoka Warrior
+1 Welcoming Vampire
+1 Whiskervale Forerunner
+1 Witch Enchanter
+1 Yathan Tombguard
+1 Zack Fair
+1 Anguished Unmaking
+1 Clever Concealment
+1 Flare of Fortitude
+1 Kabira Takedown
+1 Restoration Magic
+1 Saw in Half
+1 Sejiri Shelter
+1 Swords to Plowshares
+1 Arcane Signet
+1 Oketra's Monument
+1 Pearl Medallion
+1 Sol Ring
+1 The Arkenstone
+1 The Immortal Sun
+1 The Wind Crystal
+1 Austere Command
+1 Cost of Brilliance
+1 Damning Verdict
+1 Makindi Stampede
+1 Practiced Offense
+1 Glasswing Grace
+1 Graduation Day
+1 Invasion of Gobakhan

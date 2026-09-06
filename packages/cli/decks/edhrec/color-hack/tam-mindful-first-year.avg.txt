@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/tam-mindful-first-year/color-hack
+# theme Color Hack (31 decks)
+
+Commander
+1 Tam, Mindful First-Year
+
+Deck
+1 Arcane Signet
+1 Conqueror's Flail
+1 Distorting Lens
+1 Dragonfire Blade
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Curiosity
+1 Alchemist's Refuge
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+10 Forest
+1 Hinterland Harbor
+11 Island
+1 Overflowing Basin
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Sodden Verdure
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Aurora Awakener
+1 Birds of Paradise
+1 Blind Seer
+1 Bloom Tender
+1 Cold-Eyed Selkie
+1 Eternal Witness
+1 Fallaji Wayfarer
+1 Formidable Speaker
+1 Glister Bairn
+1 Ioreth of the Healing House
+1 Kiora's Follower
+1 Koma, World-Eater
+1 Llawan, Cephalid Empress
+1 Marvin, Murderous Mimic
+1 Mondo Gecko
+1 Murkfiend Liege
+1 Painter's Servant
+1 Prismabasher
+1 Scion of Draco
+1 Scuttlemutt
+1 Seedborn Muse
+1 Shinestriker
+1 Soul of Ravnica
+1 Spark Double
+1 Swirling Spriggan
+1 Tidal Visionary
+1 Vodalian Mystic
+1 Wildvine Pummeler
+1 Ana Sanctuary
+1 Case of the Shattered Pact
+1 Ceta Sanctuary
+1 Compost
+1 Freed from the Real
+1 Insight
+1 Prismatic Undercurrents
+1 Shifting Sky
+1 Well-Laid Plans
+1 Beast Within
+1 Counterspell
+1 Display of Dominance
+1 Double Major
+1 Growth Spiral
+1 Jaded Response
+1 Muddle the Mixture
+1 Quickchange
+1 Reap
+1 Rime Chill
+1 Seedtime
+1 Sway of Illusion
+1 Cultivate
+1 Elemental Spectacle
+1 Farseek
+1 Kodama's Reach
+1 Rampant Growth
+1 Together as One
+1 Wash Out

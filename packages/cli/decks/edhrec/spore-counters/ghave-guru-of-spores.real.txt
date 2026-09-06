@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/3nDo8bdq8pjs74K_uul5aw (source https://archidekt.com/decks/25843895)
+# tags Tokens, Fungi, Spore Counters, Populate; bracket 2; saved 2026-09-03; 57 tagged of 8102 indexed
+
+Commander
+1 Ghave, Guru of Spores
+
+Deck
+1 Abrupt Decay
+1 Afflict
+1 Aura Mutation
+1 Baleful Mastery
+1 Death Rattle
+1 Flash Foliage
+1 Fungal Infection
+1 Fungal Rebirth
+1 Glorious Decay
+1 Naturalize
+1 Overprotect
+1 Sacrifice
+1 Scatter the Seeds
+1 Seed Spark
+1 Spore Swarm
+1 Sprout
+1 Vanquish the Weak
+1 Altar of Bone
+1 Death Mutation
+1 Distress
+1 Dryad's Revival
+1 End of the Hunt
+1 For the Common Good
+1 Fungal Sprouting
+1 Mindstab
+1 Peer into the Abyss
+1 Pick Your Poison
+1 Planar Engineering
+1 Rampant Growth
+1 Regrowth
+1 Saproling Migration
+1 Scale the Heights
+1 Sylvan Scrying
+1 Vicious Rivalry
+1 Bojuka Bog
+1 Cabal Coffers
+1 Deathcap Glade
+13 Forest
+1 Forum of Amity
+5 Plains
+12 Swamp
+1 Terramorphic Expanse
+1 Vitu-Ghazi, the City-Tree
+1 Corpsejack Menace
+1 Deathbloom Thallid
+1 Deathbonnet Sprout
+1 Ferrafor, Young Yew
+1 Fungal Behemoth
+1 Fungal Colossus
+1 Huskburster Swarm
+1 Jarad, Golgari Lich Lord
+1 Molderhulk
+1 Mycologist
+1 Mycoloth
+1 Overgrown Arch
+1 Rhizome Lurcher
+1 Shroofus Sproutsire
+1 Skullcap Snail
+1 Slimefoot, the Stowaway
+1 Slimy Piper
+1 Sporecrown Thallid
+1 Thallid Omnivore
+1 Thallid Soothsayer
+1 The Mycotyrant
+1 Tragedy Feaster
+1 Fists of Ironwood
+1 Necrogenesis
+1 Stocking the Pantry
+1 The Weatherseed Treaty
+1 Underworld Dreams
+1 Verdant Embrace
+1 Sarpadian Empires, Vol. VII

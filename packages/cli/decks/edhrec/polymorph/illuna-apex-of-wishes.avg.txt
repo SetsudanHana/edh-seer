@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/illuna-apex-of-wishes/polymorph
+# theme Polymorph (44 decks)
+
+Commander
+1 Illuna, Apex of Wishes
+
+Deck
+1 Proteus Staff
+1 Sol Ring
+1 Breeding Pool
+1 Cinder Glade
+1 Command Tower
+1 Exotic Orchard
+6 Forest
+1 Frontier Bivouac
+1 Hinterland Harbor
+5 Island
+1 Ketria Triome
+1 Khalni Garden
+1 Kher Keep
+1 Misty Rainforest
+4 Mountain
+1 Rejuvenating Springs
+1 Scalding Tarn
+1 Shivan Reef
+1 Sokenzan, Crucible of Defiance
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Training Center
+1 Wooded Foothills
+1 Yavimaya Coast
+1 Blightsteel Colossus
+1 Consecrated Sphinx
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Galactus, Devourer of Worlds
+1 Gemrazer
+1 Hullbreaker Horror
+1 Jin-Gitaxias, Core Augur
+1 Koma, Cosmos Serpent
+1 Nezahal, Primal Tide
+1 Ovika, Enigma Goliath
+1 Terastodon
+1 Ureni, the Song Unending
+1 Worldspine Wurm
+1 Omniscience
+1 One with the Multiverse
+1 Temur Ascendancy
+1 Arachnogenesis
+1 Artifact Mutation
+1 Beast Within
+1 Brainstorm
+1 Brainsurge
+1 Chaos Mutation
+1 Chaos Warp
+1 Cyclonic Rift
+1 Defend the Rider
+1 Divergent Transformations
+1 Growth Spiral
+1 Lazotep Plating
+1 Negate
+1 Planar Genesis
+1 Pongify
+1 Rapid Hybridization
+1 Synthetic Destiny
+1 Verdant Command
+1 Lukka, Coppercoat Outcast
+1 Blasphemous Act
+1 Callous Dismissal
+1 Chaotic Transformation
+1 Chatter of the Squirrel
+1 Cultivate
+1 Dragon Fodder
+1 Farseek
+1 Growth Spasm
+1 Hard Evidence
+1 Indomitable Creativity
+1 Kodama's Reach
+1 Krenko's Command
+1 Mass Polymorph
+1 Mind into Matter
+1 Nature's Lore
+1 Pest Infestation
+1 Polymorph
+1 Ponder
+1 Rampant Growth
+1 Reality Scramble
+1 Skyshroud Claim
+1 Three Visits
+1 Tidings of War
+1 Transmogrify

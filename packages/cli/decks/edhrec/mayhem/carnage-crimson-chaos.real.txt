@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/tNKqAvJ1Gaxk1-LaT_z-zA (source https://archidekt.com/decks/20665460)
+# tags Reanimator, Mayhem, Burn; bracket 2; saved 2026-04-13; 4 tagged of 907 indexed
+
+Commander
+1 Carnage, Crimson Chaos
+
+Deck
+1 Accursed Marauder
+1 Agent Venom
+1 Alesha, Who Laughs at Fate
+1 Anger
+1 Anje Falkenrath
+1 Azra Oddsmaker
+1 Ball Lightning
+1 Big Game Hunter
+1 Blood Artist
+1 Braids, Arisen Nightmare
+1 Chainer, Nightmare Adept
+1 Fleshbag Marauder
+1 Hobgoblin, Mantled Marauder
+1 Jaxis, the Troublemaker
+1 Juri, Master of the Revue
+1 Kroxa, Titan of Death's Hunger
+1 Lightning Skelemental
+1 Mahadi, Emporium Master
+1 Mayhem Devil
+1 Morbid Opportunist
+1 Pitiless Plunderer
+1 Plaguecrafter
+1 Scarlet Spider, Kaine
+1 Shriek, Treblemaker
+1 Swarm, Being of Bees
+1 Symbiote Spawn
+1 Syr Konrad, the Grim
+1 The Infamous Cruelclaw
+1 Ultimate Green Goblin
+1 Zulaport Cutthroat
+1 Alien Symbiosis
+1 Grave Pact
+1 Impact Tremors
+1 Maximum Carnage
+1 Shadow of the Goblin
+1 Arcane Signet
+1 Blade of Selves
+1 Conjurer's Closet
+1 Cursed Mirror
+1 Monument to Endurance
+1 Sol Ring
+1 The Fire Crystal
+1 Bedevil
+1 Chaos Warp
+1 Dark Ritual
+1 Deadly Dispute
+1 Feign Death
+1 Not Dead After All
+1 Rakdos Charm
+1 Saw in Half
+1 Supernatural Stamina
+1 Terminate
+1 Thrill of Possibility
+1 Undying Malice
+1 Withering Torment
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Blood Crypt
+1 Bojuka Bog
+1 Canyon Slough
+1 Command Beacon
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+3 Mountain
+1 Ominous Asylum
+1 Phyrexian Tower
+1 Rakdos Carnarium
+1 Raucous Theater
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Spymaster's Vault
+1 Sulfurous Springs
+8 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Blasphemous Act
+1 Buried Alive
+1 Faithless Looting
+1 Feed the Swarm
+1 Reanimate
+1 Rise of the Dark Realms
+1 Unearth
+1 Vandalblast
+1 Victimize

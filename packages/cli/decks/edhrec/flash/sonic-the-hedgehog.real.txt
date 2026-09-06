@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/ucusHsNU2f8e0TvouNq_Ug (source https://archidekt.com/decks/15604534)
+# tags Burn, Treasure, +1/+1 Counters, Flash, Haste; bracket 3; saved 2026-09-05; 268 tagged of 11736 indexed
+
+Commander
+1 Sonic the Hedgehog
+
+Deck
+1 Aang, Swift Savior
+1 Abzan Falconer
+1 Alms Collector
+1 Archangel Avacyn
+1 Archivist of Oghma
+1 Aven Interrupter
+1 Captain Lannery Storm
+1 Cathar Commando
+1 Danny Pink
+1 Enduring Curiosity
+1 Gingerbrute
+1 Herald of Secret Streams
+1 Hydroelectric Specimen
+1 Irma, Part-Time Mutant
+1 Jaws, Relentless Predator
+1 Kilo, Apogee Mind
+1 King T'Challa
+1 Knuckles the Echidna
+1 Krark-Clan Shaman
+1 Malcolm, Alluring Scoundrel
+1 Merry, Esquire of Rohan
+1 Pinnacle Monk
+1 Screaming Nemesis
+1 Sicarian Infiltrator
+1 Spectacular Spider-Man
+1 Spectral Sailor
+1 Thundering Raiju
+1 Tishana's Tidebinder
+1 Witch Enchanter
+1 Xorn
+1 Abandoned Air Temple
+1 Adagia, Windswept Bastion
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Cori Mountain Monastery
+1 Deserted Beach
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Ishgard, the Holy See
+3 Island
+1 Karn's Bastion
+1 Mistrise Village
+4 Mountain
+1 Mystic Monastery
+1 Perilous Landscape
+2 Plains
+1 Reliquary Tower
+1 Sacred Foundry
+1 Shivan Reef
+1 Starting Town
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sundown Pass
+1 Witch's Clinic
+1 Alchemist's Talent
+1 All That Glitters
+1 Frostcliff Siege
+1 Gleaming Splendor
+1 Pyrohemia
+1 Reconnaissance
+1 Super State
+1 Windcrag Siege
+1 Amulet of Vigor
+1 Biorganic Carapace
+1 Caltrops
+1 Hammer of Nazahn
+1 Lightning Greaves
+1 Sol Ring
+1 The Fire Crystal
+1 The Reaver Cleaver
+1 Austere Command
+1 Blasphemous Act
+1 Fabricate
+1 Forth Eorlingas!
+1 Full Throttle
+1 Open the Armory
+1 Tempt with Vengeance
+1 Tremor
+1 Wave Goodbye
+1 Boros Charm
+1 Cinderclasm
+1 Dawn's Truce
+1 Fire Magic
+1 Generous Gift
+1 Sink into Stupor
+1 Swords to Plowshares
+1 Thraben Charm
+1 Unexpected Windfall
+1 Wear // Tear

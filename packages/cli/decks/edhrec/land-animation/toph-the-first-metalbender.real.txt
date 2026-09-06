@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/uVHP7esQ7qO4FmVZnNlUTw (source https://archidekt.com/decks/23316652)
+# tags Earthbending, Lands Matter, Landfall, +1/+1 Counters, Artifacts, Land Animation, Allies; bracket 3; saved 2026-09-05; 182 tagged of 31931 indexed
+
+Commander
+1 Toph, the First Metalbender
+
+Deck
+1 Abandoned Air Temple
+1 Arid Mesa
+1 Ba Sing Se
+1 Bloodstained Mire
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+1 Darksteel Citadel
+1 Fabled Passage
+1 Fire Nation Palace
+6 Forest
+1 Jetmir's Garden
+1 Jungle Shrine
+4 Mountain
+3 Plains
+1 Rumble Arena
+1 Sacred Foundry
+1 Secret Tunnel
+1 Slagwoods Bridge
+1 Stomping Ground
+1 Strip Mine
+1 Sunbaked Canyon
+1 Temple Garden
+1 Thornglint Bridge
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Annie Joins Up
+1 Bitter Work
+1 Branching Evolution
+1 Earthbender Ascension
+1 Felidar Retreat
+1 Resourceful Defense
+1 Solid Ground
+1 Terrasymbiosis
+1 The Legend of Kyoshi
+1 Arcane Signet
+1 Boompile
+1 Commander's Sphere
+1 Conduit of Worlds
+1 Ichor Wellspring
+1 Mind Stone
+1 Mindslaver
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 The Ozolith
+1 The Stasis Coffin
+1 Zuran Orb
+1 Avatar Kyoshi, Earthbender
+1 Badgermole Cub
+1 Bumi, Eclectic Earthbender
+1 Bumi, Unleashed
+1 Burnished Hart
+1 Earth Kingdom General
+1 Earthbending Student
+1 Esper Sentinel
+1 Evolution Sage
+1 Haywire Mite
+1 Iroh, Dragon of the West
+1 Mole Man, Moloid Master
+1 Old Gnawbone
+1 Sabotender
+1 Scute Swarm
+1 Seedborn Muse
+1 Solemn Simulacrum
+1 Survey Mechan
+1 Tannuk, Memorial Ensign
+1 The Boulder, Ready to Rumble
+1 The Earth King
+1 The Walls of Ba Sing Se
+1 Tireless Provisioner
+1 Toph, Earthbending Master
+1 Toph, Greatest Earthbender
+1 Toph, Hardheaded Teacher
+1 Toph, the Blind Bandit
+1 Deflecting Swat
+1 Earthshape
+1 Obscuring Haze
+1 Origin of Metalbending
+1 Path to Exile
+1 Redirect Lightning
+1 Swords to Plowshares
+1 Worldly Tutor
+1 Farseek
+1 Gamble
+1 Germination Practicum
+1 Ondu Inversion

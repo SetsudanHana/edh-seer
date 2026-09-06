@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/ikMzW12DIo8SIPzaiC_36w (source https://archidekt.com/decks/25948187)
+# tags Dragons, Cantrips, Adventures, Spellslinger; bracket 2; saved 2026-09-04; 113 tagged of 6599 indexed
+
+Commander
+1 Eshki Dragonclaw
+
+Deck
+1 Abrade
+1 Blossoming Defense
+1 Chaos Warp
+1 Consider
+1 Lightning Bolt
+1 Long River's Pull
+1 Negate
+1 Opt
+1 Run Away Together
+1 Snakeskin Veil
+1 Unsummon
+1 Amethyst Dragon
+1 Beanstalk Giant
+1 Beluna Grandsquall
+1 Bonecrusher Giant
+1 Bramble Familiar
+1 Cactuar
+1 Dirgur Island Dragon
+1 Doc Aurlock, Grizzled Genius
+1 Dread Linnorm
+1 Dream Stalker
+1 Edgewall Innkeeper
+1 Elusive Otter
+1 Embereth Shieldbreaker
+1 Emeritus of Conflict
+1 Fleeting Effigy
+1 Frolicking Familiar
+1 Goblin Glasswright
+1 Harmonized Trio
+1 Highspire Bell-Ringer
+1 Hypnotic Sprite
+1 Kellan, Inquisitive Prodigy
+1 Lozhan, Dragons' Legacy
+1 Marang River Regent
+1 Questing Druid
+1 Rosethorn Acolyte
+1 Runescale Stormbrood
+1 Sagu Wildling
+1 Scalding Viper
+1 Shrieking Drake
+1 Stormkeld Vanguard
+1 Stormshriek Feral
+1 Studious First-Year
+1 Sword Coast Serpent
+1 Temur Battlecrier
+1 Temur Devotee
+1 Whirlwing Stormbrood
+1 Young Blue Dragon
+1 Bountiful Landscape
+1 Command Tower
+1 Edgewall Inn
+1 Evolving Wilds
+1 Exotic Orchard
+4 Forest
+1 Frontier Bivouac
+1 Frostboil Snarl
+8 Island
+1 Mossfire Valley
+4 Mountain
+1 Overflowing Basin
+1 Rugged Highlands
+1 Sheltered Thicket
+1 Sulfur Falls
+1 Swiftwater Cliffs
+1 Temple of Abandon
+1 Temple of Epiphany
+1 Temple of Mystery
+1 Temple of the Dragon Queen
+1 Thornwood Falls
+1 Unclaimed Territory
+1 Vineglimmer Snarl
+1 Consuming Tide
+1 Dragonclaw Strike
+1 Explore
+1 Farseek
+1 Last Night Together
+1 Rampant Growth
+1 Dragonfire Blade
+1 Dragonstorm Globe
+1 Lucky Clover
+1 Sol Ring
+1 Two-Handed Axe
+1 Fae Offering
+1 Lasting Tarfire
+1 Roiling Dragonstorm
+1 Wingspan Stride

@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/9QmIm5AAP50GUvTmsin9BQ (source https://archidekt.com/decks/20649452)
+# tags Counters Matter, Kicker, +1/+1 Counters, Commander Matters; bracket 2; saved 2026-09-03; 78 tagged of 1744 indexed
+
+Commander
+1 Hallar, the Firefletcher
+
+Deck
+1 Arbor Elf
+1 Arboreal Grazer
+1 Armorcraft Judge
+1 Bane of Progress
+1 Cankerbloom
+1 Citanul Woodreaders
+1 Disciple of Freyalise
+1 Dragonlair Spider
+1 Elvish Mystic
+1 Flametongue Yearling
+1 Forgotten Ancient
+1 Ghitu Chronicler
+1 Halana and Alena, Partners
+1 Llanowar Elves
+1 Mold Shambler
+1 Murasa Sproutling
+1 Myriad Construct
+1 Neyith of the Dire Hunt
+1 Pollenbright Druid
+1 Selvala, Heart of the Wilds
+1 Slippery Bogbonder
+1 Territorial Allosaurus
+1 Verduran Emissary
+1 Vine Gecko
+1 Wolfbriar Elemental
+1 Blasphemous Act
+1 Breath of Darigaaz
+1 Bridgeworks Battle
+1 Grow from the Ashes
+1 Hunting Wilds
+1 Molten Disaster
+1 Primal Growth
+1 Reclaim the Wastes
+1 Rishkar's Expertise
+1 Smell Fear
+1 Stump Stomp
+1 The Crowd Goes Wild
+1 Vastwood Surge
+1 Carpet of Flowers
+1 Hardened Scales
+1 High Score
+1 Hydra's Growth
+1 Ordeal of Nylea
+1 Rhythm of the Wild
+1 Terrasymbiosis
+1 Thickest in the Thicket
+1 Utopia Sprawl
+1 Virtue of Courage
+1 Wild Growth
+1 Cinder Glade
+1 Command Tower
+13 Forest
+1 Game Trail
+1 Gruul Turf
+1 Karn's Bastion
+1 Mosswort Bridge
+6 Mountain
+1 Oran-Rief, the Vastwood
+1 Raging Ravine
+1 Rootbound Crag
+1 Spinerock Knoll
+1 Tyrite Sanctum
+1 Cinderclasm
+1 Comet Storm
+1 Hunter's Insight
+1 Inscription of Abundance
+1 Inspiring Call
+1 Kazuul's Fury
+1 Khalni Ambush
+1 Return of the Wildspeaker
+1 Return the Favor
+1 Saved by the Shell
+1 Silkguard
+1 Strength of the Tajuru
+1 Vastwood Fortification
+1 Vines of Vastwood
+1 Wild Onslaught
+1 Everflowing Chalice
+1 Skyclave Relic
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thunderous Velocipede

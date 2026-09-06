@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/hYrwOkPfTaYpDqtZw85qdg (source https://moxfield.com/decks/vmIVFQSS4EOZrpKI1erzgA)
+# tags X Spells, Ramp, +1/+1 Counters; bracket 3; saved 2026-09-05; 3097 tagged of 19902 indexed
+
+Commander
+1 Zaxara, the Exemplary
+
+Deck
+1 Arcane Signet
+1 Astral Cornucopia
+1 Bow of Nylea
+1 Brass Infiniscope
+1 Elementalist's Palette
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 The Great Henge
+1 The Ozolith
+1 Thought Vessel
+1 Assassin's Trophy
+1 Deadly Rollick
+1 Fierce Guardianship
+1 Heroic Intervention
+1 Inspiring Call
+1 Mana Drain
+1 Obscuring Haze
+1 Repulsive Mutation
+1 Tyvar's Stand
+1 Bayou
+1 Command Tower
+1 Deathcap Glade
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+5 Forest
+1 Golgari Rot Farm
+1 Hinterland Harbor
+3 Island
+1 Karn's Bastion
+1 Lair of the Hydra
+1 Llanowar Wastes
+1 Minamo, School at Water's Edge
+1 Morphic Pool
+1 Opulent Palace
+1 Path of Ancestry
+1 Polluted Delta
+1 Reliquary Tower
+1 Rogue's Passage
+1 Simic Growth Chamber
+4 Swamp
+1 Tropical Island
+1 Underground Sea
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Woodland Cemetery
+1 Zagoth Triome
+1 Birds of Paradise
+1 Corpsejack Menace
+1 Delighted Halfling
+1 Glava, Five-Advents Mage
+1 Goldvein Hydra
+1 Gyre Sage
+1 Herald of Secret Streams
+1 Hungering Hydra
+1 Hydroid Krasis
+1 Kalonian Hydra
+1 Kodama of the West Tree
+1 Kurbis, Harvest Celebrant
+1 Mutated Cultist
+1 Nexos
+1 Nyxbloom Ancient
+1 Owlin Spiralmancer
+1 Protean Hydra
+1 Selvala, Heart of the Wilds
+1 Steelbane Hydra
+1 Stensian Sanguinist
+1 Stonecoil Serpent
+1 Troyan, Gutsy Explorer
+1 Voracious Hydra
+1 Vorel of the Hull Clade
+1 Zimone, Infinite Analyst
+1 Black Market Connections
+1 Branching Evolution
+1 Concordant Crossroads
+1 Doubling Season
+1 Hardened Scales
+1 Mana Reflection
+1 Pemmin's Aura
+1 Rhystic Study
+1 Simic Ascendancy
+1 Unbound Flourishing
+1 Braingeyser
+1 Exsanguinate
+1 Mathemagics
+1 Profane Command
+1 Torment of Hailfire
+1 Villainous Wealth

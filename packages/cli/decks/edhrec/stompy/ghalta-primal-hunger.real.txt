@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/-FXg1jMH7JEZPBxFFoTDBA (source https://archidekt.com/decks/20395799)
+# tags Power Matters, Stompy; bracket 3; saved 2026-09-05; 237 tagged of 8777 indexed
+
+Commander
+1 Ghalta, Primal Hunger
+
+Deck
+1 Allosaurus Shepherd
+1 Arbor Elf
+1 Augur of Autumn
+1 Beast Whisperer
+1 Bugenhagen, Wise Elder
+1 Cankerbloom
+1 Defiler of Vigor
+1 Delighted Halfling
+1 Disciple of Freyalise
+1 Elder Gargaroth
+1 Elvish Mystic
+1 Fanatic of Rhonas
+1 Frenzied Baloth
+1 Fyndhorn Elves
+1 Ghalta, Stampede Tyrant
+1 Goreclaw, Terror of Qal Sisma
+1 Hulking Raptor
+1 Kogla, the Titan Ape
+1 Lizard, Connors's Curse
+1 Llanowar Elves
+1 Llanowar Tribe
+1 Managorger Hydra
+1 Mightform Harmonizer
+1 Ojer Kaslem, Deepest Growth
+1 Outcaster Trailblazer
+1 Questing Beast
+1 Railway Brawler
+1 Rhonas the Indomitable
+1 Selvala, Heart of the Wilds
+1 Slumbering Trudge
+1 Steel Leaf Champion
+1 Surrak and Goreclaw
+1 Surrak, the Hunt Caller
+1 The Earth King
+1 Topiary Stomper
+1 Ulvenwald Tracker
+1 Vaultborn Tyrant
+1 Wayward Swordtooth
+1 Zopandrel, Hunger Dominus
+1 Archdruid's Charm
+1 Berserk
+1 Heroic Intervention
+1 Hunter's Insight
+1 Khalni Ambush
+1 Legolas's Quick Reflexes
+1 Ram Through
+1 Smuggler's Surprise
+1 Veil of Summer
+1 Bonders' Enclave
+1 Boseiju, Who Endures
+1 Cactus Preserve
+1 Castle Garenbrig
+1 Dryad Arbor
+20 Forest
+1 Mosswort Bridge
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 War Room
+1 Witch's Clinic
+1 Yavimaya, Cradle of Growth
+1 Bridgeworks Battle
+1 Finale of Devastation
+1 Green Sun's Zenith
+1 Majestic Genesis
+1 Natural Order
+1 Overwhelming Stampede
+1 Rishkar's Expertise
+1 Spry and Mighty
+1 Turntimber Symbiosis
+1 Concordant Crossroads
+1 Garruk's Uprising
+1 Greater Good
+1 Sylvan Library
+1 Tribute to the World Tree
+1 Unnatural Growth
+1 Excalibur, Sword of Eden
+1 Lightning Greaves
+1 Tangleweave Armor
+1 The Great Henge
+1 The Skullspore Nexus

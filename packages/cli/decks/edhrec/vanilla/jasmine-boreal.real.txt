@@ -1,0 +1,69 @@
+# edhrec deck https://edhrec.com/deckpreview/WnsWmA0td1SquWW8BWnNPQ (source https://archidekt.com/decks/14056790)
+# tags Vanilla; bracket 2; saved 2026-08-08; 8 tagged of 95 indexed
+
+Commander
+1 Jasmine Boreal
+
+Deck
+1 Aether Vial
+1 Arcane Signet
+1 Erratic Portal
+1 Lotus Blossom
+1 Sol Ring
+1 Anthem of Champions
+1 Arboria
+1 Compost
+1 Deafening Silence
+1 Griffin Guide
+1 Gryff's Boon
+1 Hunting Grounds
+1 Muraganda Petroglyphs
+1 Pacifism
+1 Shield of the Oversoul
+1 Archon of Emeria
+1 Arwen, Mortal Queen
+1 Colossal Dreadmaw
+1 Colossapede
+1 Dutiful Servants
+1 Enlisted Wurm
+1 Fencing Ace
+1 Garruk's Gorehorn
+1 Ghalta, Primal Hunger
+1 Gigantosaurus
+1 Gluntch, the Bestower
+1 Golden Bear
+1 Gorilla Warrior
+1 Grizzled Leotau
+1 Infantry Veteran
+1 Kitchen Finks
+1 Kutzil, Malamet Exemplar
+1 Leatherback Baloth
+1 Lord Magnus
+1 Loyal Sentry
+1 Nyxborn Colossus
+1 Nyxborn Courser
+1 Ordinary Bear
+1 Phytohydra
+1 Quakestrider Ceratops
+1 Rampaging Hippo
+1 Savannah Lions
+1 Serra Angel
+1 Silvercoat Lion
+1 Sir Shandlar of Eberyn
+1 Tadeas, Juniper Ascendant
+1 Tasseled Dromedary
+1 Those Who Serve
+1 Tolsimir Wolfblood
+1 Uktabi Orangutan
+1 Wall of Blossoms
+1 Wilt-Leaf Liege
+1 Yoked Ox
+1 Dromoka's Command
+1 Khalni Ambush
+1 Moment's Peace
+1 Snakeskin Veil
+20 Forest
+19 Plains
+1 Overcome
+1 Prismatic Ending
+1 Travel Preparations

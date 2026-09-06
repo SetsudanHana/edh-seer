@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/kynaios-and-tiro-of-meletis/group-hug
+# theme Group Hug (1574 decks)
+
+Commander
+1 Kynaios and Tiro of Meletis
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Folio of Fancies
+1 Font of Mythos
+1 Ghirapur Orrery
+1 Howling Mine
+1 Sol Ring
+1 Temple Bell
+1 Thought Vessel
+1 Breeding Pool
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Forbidden Orchard
+4 Forest
+1 Frontier Bivouac
+1 Hallowed Fountain
+4 Island
+1 Jetmir's Garden
+1 Jungle Shrine
+1 Ketria Triome
+1 Mikokoro, Center of the Sea
+3 Mountain
+1 Mystic Monastery
+3 Plains
+1 Raugrin Triome
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sacred Foundry
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Stardew Valley
+1 Steam Vents
+1 Stomping Ground
+1 Temple Garden
+1 Braids, Conjurer Adept
+1 Edric, Spymaster of Trest
+1 Gluntch, the Bestower
+1 Heartwood Storyteller
+1 Humble Defector
+1 Kami of the Crescent Moon
+1 Kwain, Itinerant Meddler
+1 Laboratory Maniac
+1 Master of Ceremonies
+1 Ms. Bumbleflower
+1 Psychosis Crawler
+1 Rootweaver Druid
+1 Scrawling Crawler
+1 Selvala, Explorer Returned
+1 Sokrates, Athenian Teacher
+1 The Council of Four
+1 The Second Doctor
+1 Tidal Barracuda
+1 Triskaidekaphile
+1 Veteran Explorer
+1 Windborn Muse
+1 Xyris, the Writhing Storm
+1 Dictate of Karametra
+1 Dictate of Kruphix
+1 Forced Fruition
+1 Ghostly Prison
+1 Heartbeat of Spring
+1 Mana Flare
+1 Propaganda
+1 Rites of Flourishing
+1 Smothering Tithe
+1 Sphere of Safety
+1 Well of Ideas
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Chaos Warp
+1 Counterspell
+1 Dawn's Truce
+1 Everybody Lives!
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Jace Beleren
+1 Approach of the Second Sun
+1 Collective Voyage
+1 Cultivate
+1 Farseek
+1 Insurrection
+1 Kodama's Reach
+1 Minds Aglow
+1 Prosperity
+1 Tempt with Bunnies
+1 Tempt with Discovery

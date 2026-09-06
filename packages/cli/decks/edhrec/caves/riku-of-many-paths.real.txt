@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/TohjqRYy6JwTJ31QNeiMMQ (source https://archidekt.com/decks/19527924)
+# tags Caves, Spell Copy, Spellslinger, Midrange, Wizards; bracket 2; saved 2026-03-23; 2 tagged of 6448 indexed
+
+Commander
+1 Riku of Many Paths
+
+Deck
+1 Adaptive Training Post
+1 Arcane Signet
+1 Fellwar Stone
+1 Geistflame Reservoir
+1 Ketria Crystal
+1 Sol Ring
+1 Spell Satchel
+1 Arcane Bombardment
+1 Shark Typhoon
+1 Sorcerer Class
+1 Spelunking
+1 Wilderness Reclamation
+1 Archmage Emeritus
+1 Goblin Anarchomancer
+1 Goblin Electromancer
+1 Guttersnipe
+1 Harmonic Prodigy
+1 Lier, Disciple of the Drowned
+1 Quandrix Apprentice
+1 Rashmi and Ragavan
+1 Rashmi, Eternities Crafter
+1 Riku of Two Reflections
+1 Slickshot Show-Off
+1 Songcrafter Mage
+1 Storm-Kiln Artist
+1 Talrand, Sky Summoner
+1 Thunderclap Drake
+1 Veyran, Voice of Duality
+1 Ashling's Command
+1 Atarka's Command
+1 Collective Resistance
+1 Great Train Heist
+1 Inscription of Abundance
+1 Izzet Charm
+1 Metamorphic Blast
+1 Mystic Confluence
+1 Prismari Command
+1 Quandrix Command
+1 Return the Favor
+1 Simic Charm
+1 Smuggler's Surprise
+1 Sublime Epiphany
+1 Three Steps Ahead
+1 Trash the Town
+1 Twinferno
+1 Untimely Malfunction
+1 Captivating Cave
+1 Command Tower
+1 Echoing Deeps
+1 Exotic Orchard
+7 Forest
+1 Forgotten Monument
+1 Frontier Bivouac
+1 Hidden Cataract
+1 Hidden Nursery
+1 Hidden Volcano
+1 Hinterland Harbor
+9 Island
+8 Mountain
+1 Path of Ancestry
+1 Pit of Offerings
+1 Rootbound Crag
+1 Sulfur Falls
+1 Sunken Palace
+1 Volatile Fault
+1 Cosmium Confluence
+1 Cultivate
+1 Dance of the Tumbleweeds
+1 Fiery Confluence
+1 Inscription of Insight
+1 Primal Command
+1 Return from the Wilds
+1 Rootcast Apprenticeship
+1 Titania's Command
+1 Verdant Confluence
+1 Will of the Jeskai
+1 Will of the Sultai
+1 Will of the Temur

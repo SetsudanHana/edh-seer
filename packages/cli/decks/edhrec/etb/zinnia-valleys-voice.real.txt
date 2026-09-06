@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/8piHJt16NQzq01oAP-IYoQ (source https://archidekt.com/decks/11540504)
+# tags ETB, Offspring, Commander Matters; bracket 3; saved 2026-09-03; 180 tagged of 17884 indexed
+
+Commander
+1 Zinnia, Valley's Voice
+
+Deck
+1 Access Denied
+1 Aetherize
+1 Boros Charm
+1 Flare of Fortitude
+1 Legion Leadership
+1 Make Your Move
+1 Response // Resurgence
+1 Untimely Malfunction
+1 Will of the Mardu
+1 You Come to a River
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Cascade Bluffs
+1 Clifftop Retreat
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Flooded Strand
+1 Glacial Fortress
+1 Hengegate Pathway
+4 Island
+5 Mountain
+1 Mystic Gate
+1 Mystic Monastery
+1 Needleverge Pathway
+1 Path of Ancestry
+1 Perilous Landscape
+5 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Riverglide Pathway
+1 Rugged Prairie
+1 Seachrome Coast
+1 Shivan Reef
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sundown Pass
+1 Temple of Epiphany
+1 Aether Channeler
+1 Agate Instigator
+1 Cayth, Famed Mechanist
+1 Devilish Valet
+1 Dour Port-Mage
+1 Enduring Curiosity
+1 Esior, Wardwing Familiar
+1 Gold-Forged Thopteryx
+1 Hanged Executioner
+1 Jacked Rabbit
+1 Loyal Apprentice
+1 Loyal Drake
+1 Molten Gatekeeper
+1 Oltec Matterweaver
+1 Ornithopter of Paradise
+1 Rapid Augmenter
+1 Resolute Reinforcements
+1 Selfless Spirit
+1 Shield Broker
+1 Siege-Gang Commander
+1 Siege-Gang Lieutenant
+1 Skyclave Apparition
+1 Soul Warden
+1 Spirited Companion
+1 Starfield Vocalist
+1 Tetsuko Umezawa, Fugitive
+1 Volatile Stormdrake
+1 Weftstalker Ardent
+1 Welcoming Vampire
+1 Witty Roastmaster
+1 Aqueous Form
+1 Assemble the Legion
+1 Gift of Immortality
+1 Impact Tremors
+1 Invisibility
+1 Warleader's Call
+1 Arcane Signet
+1 Fellwar Stone
+1 Horn of Valhalla
+1 Idol of Oblivion
+1 Infantry Shield
+1 Panharmonicon
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Elspeth, Sun's Champion
+1 Martial Coup
+1 Split Up
+1 Stolen by the Fae

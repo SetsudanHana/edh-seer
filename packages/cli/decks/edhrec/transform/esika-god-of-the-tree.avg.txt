@@ -1,0 +1,105 @@
+# edhrec average deck: https://edhrec.com/average-decks/esika-god-of-the-tree/transform
+# theme Transform (19 decks)
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Cryptolith Fragment
+1 Dowsing Dagger
+1 Elbrus, the Binding Blade
+1 Heirloom Mirror
+1 Matzalantli, the Great Door
+1 Neglected Heirloom
+1 Sol Ring
+1 Tarrian's Journal
+1 Thaumatic Compass
+1 The Everflowing Well
+1 Thousand Moons Smithy
+1 Badlands
+1 Barkchannel Pathway
+1 Bayou
+1 Blightstep Pathway
+1 Brightclimb Pathway
+1 Clearwater Pathway
+1 Command Tower
+1 Cragcrown Pathway
+1 Darkbore Pathway
+1 Exotic Orchard
+2 Forest
+1 Hengegate Pathway
+1 Hostile Hostel
+1 Island
+1 Mountain
+1 Needleverge Pathway
+1 Path of Ancestry
+1 Plains
+1 Plateau
+1 Reliquary Tower
+1 Riverglide Pathway
+1 Savannah
+1 Swamp
+1 Taiga
+1 The World Tree
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Volcanic Island
+1 Westvale Abbey
+1 Yavimaya, Cradle of Growth
+1 Invasion of Ikoria
+1 Invasion of Pyrulea
+1 Accursed Witch
+1 Aclazotz, Deepest Betrayal
+1 Archangel Avacyn
+1 Birds of Paradise
+1 Bloodline Keeper
+1 Concealing Curtains
+1 Conduit of Storms
+1 Deathbonnet Sprout
+1 Ecstatic Awakener
+1 Elesh Norn
+1 Elusive Tormentor
+1 Etali, Primal Conqueror
+1 Filth
+1 Foreboding Statue
+1 Golden Guardian
+1 Hanweir Militia Captain
+1 Jace, Vryn's Prodigy
+1 Kolvori, God of Kinship
+1 Ludevic's Test Subject
+1 Ludevic, Necrogenius
+1 Nicol Bolas, the Ravager
+1 Nissa, Vastwood Seer
+1 Ojer Kaslem, Deepest Growth
+1 Ojer Pakpatiq, Deepest Epoch
+1 Ojer Taq, Deepest Foundation
+1 Sheoldred
+1 Shrill Howler
+1 Smoldering Werewolf
+1 Soul Seizer
+1 Tangleclaw Werewolf
+1 Ulvenwald Captive
+1 Ulvenwald Oddity
+1 Valki, God of Lies
+1 Dormant Grove
+1 Growing Rites of Itlimoc
+1 Hadana's Climb
+1 Journey to Eternity
+1 Leyline of the Guildpact
+1 Search for Azcanta
+1 Wedding Announcement
+1 Fell the Profane
+1 Hagra Mauling
+1 Malakir Rebirth
+1 Moonmist
+1 Swords to Plowshares
+1 Valakut Awakening
+1 Arlinn Kord
+1 Bala Ged Recovery
+1 Bloodsoaked Insight
+1 Ondu Inversion
+1 Sea Gate Restoration
+1 Stump Stomp

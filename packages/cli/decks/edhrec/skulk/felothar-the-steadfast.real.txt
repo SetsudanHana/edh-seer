@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/mX3HQouvSGATftLdAafxuw (source https://archidekt.com/decks/12243970)
+# tags Defenders, Skulk, Toughness Matters; bracket 2; saved 2026-09-04; 23 tagged of 20060 indexed
+
+Commander
+1 Felothar the Steadfast
+
+Deck
+1 Access Tunnel
+1 Bojuka Bog
+1 Branchloft Pathway
+1 Canopy Vista
+1 Command Tower
+1 Deceptive Landscape
+1 Escape Tunnel
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Isolated Chapel
+1 Murmuring Bosk
+1 Overgrown Farmland
+1 Path of Ancestry
+6 Plains
+1 Sandsteppe Citadel
+1 Sunpetal Grove
+5 Swamp
+1 Temple of Malady
+1 Temple of Plenty
+1 Temple of Silence
+1 Twilight Mire
+1 Woodland Cemetery
+1 Arbor Adherent
+1 Baldin, Century Herdmaster
+1 Bedrock Tortoise
+1 Betor, Kin to All
+1 Catapult Fodder
+1 Crashing Drawbridge
+1 Crystal Barricade
+1 Doran, Besieged by Time
+1 Doran, the Siege Tower
+1 Fecund Greenshell
+1 Flatman
+1 Formidable Speaker
+1 Frodo Baggins
+1 Great Forest Druid
+1 Indomitable Ancients
+1 Indulging Patrician
+1 MacCready, Lamplight Mayor
+1 Mangara, the Diplomat
+1 Ohran Frostfang
+1 Overgrown Battlement
+1 Perennial Behemoth
+1 Pit Automaton
+1 Rampart Architect
+1 Rhox Faithmender
+1 Sapling of Colfenor
+1 Shadrix Silverquill
+1 Shire Scarecrow
+1 Slumbering Walker
+1 Sylvan Caryatid
+1 The Walls of Ba Sing Se
+1 Tree of Perdition
+1 Tree of Redemption
+1 Unhallowed Phalanx
+1 Vine Trellis
+1 Wall of Blossoms
+1 Wall of Junk
+1 Wall of Omens
+1 Weathered Sentinels
+1 Welcoming Vampire
+1 Arcane Signet
+1 Captain America's Shield
+1 Golgari Signet
+1 Orzhov Signet
+1 Selesnya Signet
+1 Skeleton Key
+1 Sol Ring
+1 Assault Formation
+1 Behind the Scenes
+1 Jaws of Defeat
+1 Smile at Death
+1 Cultivate
+1 Dusk // Dawn
+1 Expel the Interlopers
+1 Fell the Mighty
+1 Graceful Restoration
+1 Shared Roots
+1 Slaughter the Strong
+1 Tip the Scales
+1 Wave of Reckoning
+1 Despark
+1 Stroke of Midnight
+1 Tower Defense

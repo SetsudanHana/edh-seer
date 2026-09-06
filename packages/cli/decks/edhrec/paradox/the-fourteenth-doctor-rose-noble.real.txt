@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/wxjk02RzPISQEwSvPbjbyA (source https://archidekt.com/decks/21867117)
+# tags Suspend, Historic, Paradox, Legends, Time Counters; bracket 2; saved 2026-04-20; 8 tagged of 1239 indexed
+
+Commander
+1 The Fourteenth Doctor
+1 Rose Noble
+
+Deck
+1 Amy Pond
+1 Auton Soldier
+1 Clara Oswald
+1 Danny Pink
+1 Dinosaurs on a Spaceship
+1 Idris, Soul of the TARDIS
+1 K-9, Mark I
+1 Osgood, Operation Double
+1 River Song
+1 Rory Williams
+1 Rose Tyler
+1 Solemn Simulacrum
+1 Star Whale
+1 The Eighth Doctor
+1 The Eleventh Doctor
+1 The Fifth Doctor
+1 The First Doctor
+1 The Fourth Doctor
+1 The Fugitive Doctor
+1 The Ninth Doctor
+1 The Second Doctor
+1 The Seventh Doctor
+1 The Sixth Doctor
+1 The Tenth Doctor
+1 The Third Doctor
+1 The Thirteenth Doctor
+1 The Twelfth Doctor
+1 The War Doctor
+1 Arcane Signet
+1 Five Hundred Year Diary
+1 Rotating Fireplace
+1 Sol Ring
+1 Sonic Screwdriver
+1 TARDIS
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Thought Vessel
+1 Wedding Ring
+1 As Foretold
+1 Bigger on the Inside
+1 Gallifrey Stands
+1 Heaven Sent
+1 Regenerations Restored
+1 The Eleventh Hour
+1 The Girl in the Fireplace
+1 Beast Within
+1 Cyber Conversion
+1 Everybody Lives!
+1 Gallifrey Falls // No More
+1 Heroic Intervention
+1 Path to Exile
+1 Reverse the Polarity
+1 Swords to Plowshares
+1 Time Lord Regeneration
+1 Blasphemous Act
+1 Crisis of Conscience
+1 Farseek
+1 Fractured Identity
+1 Inspiring Refrain
+1 Last Night Together
+1 The Five Doctors
+1 Time Wipe
+1 Twice Upon a Time
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+1 Dreamroot Cascade
+2 Forest
+1 Fortified Village
+1 Frontier Bivouac
+1 Furycalm Snarl
+1 Gallifrey Council Chamber
+1 Glacial Fortress
+1 Irrigated Farmland
+2 Island
+2 Mountain
+1 Myriad Landscape
+1 Mystic Monastery
+1 Path of Ancestry
+2 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Scattered Groves
+1 Seaside Citadel
+1 Sheltered Thicket
+1 Temple of Abandon
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Mystery
+1 Temple of Plenty
+1 Temple of Triumph
+1 Temple of the False God
+1 Trenzalore Clocktower

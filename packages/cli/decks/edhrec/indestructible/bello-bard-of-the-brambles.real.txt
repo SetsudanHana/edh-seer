@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/qBlPadt8rajTUY2b0HpCBg (source https://archidekt.com/decks/14536937)
+# tags Enchantress, Elementals, Indestructible, Commander Matters; bracket 3; saved 2026-09-03; 31 tagged of 26158 indexed
+
+Commander
+1 Bello, Bard of the Brambles
+
+Deck
+1 Abrade
+1 Arachnogenesis
+1 Beast Within
+1 Big Score
+1 Chaos Warp
+1 Fog
+1 Harrow
+1 Jaheira's Respite
+1 Obscuring Haze
+1 Abundance
+1 Asceticism
+1 Aspect of Mongoose
+1 Berserkers' Onslaught
+1 Case of the Locked Hothouse
+1 Collective Inferno
+1 Garruk's Uprising
+1 Glorious Sunrise
+1 Gratuitous Violence
+1 Mana Reflection
+1 Molten Echoes
+1 Primeval Bounty
+1 Sapling Nursery
+1 Sunbird's Invocation
+1 Unnatural Growth
+1 Warstorm Surge
+1 Wild Growth
+1 Aftermath Analyst
+1 Arasta of the Endless Web
+1 Bottle Golems
+1 Brightcap Badger
+1 Destiny Spinner
+1 Garruk's Packleader
+1 Grothama, All-Devouring
+1 Kodama of the East Tree
+1 Llanowar Loamspeaker
+1 Lotus Cobra
+1 Nylea, God of the Hunt
+1 Omnath, Locus of Rage
+1 Rampaging Monument
+1 Sakura-Tribe Elder
+1 Scavenging Ooze
+1 Skitterbeam Battalion
+1 Springbloom Druid
+1 Tendershoot Dryad
+1 Trailtracker Scout
+1 Wandertale Mentor
+1 Wildsear, Scouring Maw
+1 Aligned Hedron Network
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Conduit of Worlds
+1 Gilded Lotus
+1 Smuggler's Buggy
+1 Talisman of Impulse
+1 Thran Dynamo
+1 Blasphemous Act
+1 Chain Reaction
+1 Explore
+1 Farseek
+1 Nature's Lore
+1 Worldsoul's Rage
+1 Cabaretti Courtyard
+1 Cinder Glade
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+12 Forest
+1 Forgotten Cave
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Mosswort Bridge
+9 Mountain
+1 Raging Ravine
+1 Rockfall Vale
+1 Rootbound Crag
+1 Sheltered Thicket
+1 Temple of Abandon
+1 Terramorphic Expanse
+1 Tranquil Thicket

@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/7rwGOyMmvz9JQFrJgCL1Bg (source https://archidekt.com/decks/13018781)
+# tags Land Animation, Elementals, Landfall, Lands Matter, Stompy; bracket 2; saved 2026-09-03; 76 tagged of 2585 indexed
+
+Commander
+1 Jyoti, Moag Ancient
+
+Deck
+1 Adrix and Nev, Twincasters
+1 Ashaya, Soul of the Wild
+1 Astral Dragon
+1 Autumn Willow, Harmony
+1 Badgermole Cub
+1 Cosima, God of the Voyage
+1 Genemorph Imago
+1 Jolrael, Voice of Zhalfir
+1 Kamahl, Heart of Krosa
+1 Llanowar Loamspeaker
+1 Lotus Cobra
+1 Mockingbird
+1 Overlord of the Hauntwoods
+1 Roil Cartographer
+1 Scute Swarm
+1 Selesnya Eulogist
+1 Springheart Nantuko
+1 Sylvan Safekeeper
+1 Tangled Florahedron
+1 Tatyova, Benthic Druid
+1 Tatyova, Steward of Tides
+1 Tireless Provisioner
+1 Arcane Signet
+1 Blackblade Reforged
+1 Staff of Titania
+1 Talisman of Curiosity
+1 Awaken the Woods
+1 Consuming Tide
+1 Curse of the Swine
+1 Doppelgang
+1 Emergent Sequence
+1 Explore
+1 Finale of Revelation
+1 Flood of Tears
+1 Green Sun's Zenith
+1 Mind into Matter
+1 Pest Infestation
+1 Season of Weaving
+1 Ba Sing Se
+1 Breeding Pool
+1 Command Tower
+1 Dryad Arbor
+1 Fabled Passage
+10 Forest
+1 Hinterland Harbor
+10 Island
+1 Myriad Landscape
+1 Opal Palace
+1 Rain-Slicked Copse
+1 Restless Vinestalk
+1 Secret Tunnel
+1 Sodden Verdure
+1 Soulstone Sanctuary
+1 Tanglepool Bridge
+1 Temple of the False God
+1 Vesuva
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Collective Resistance
+1 Consult the Star Charts
+1 Growth Spiral
+1 Joint Exploration
+1 Kamahl's Will
+1 Origin of Metalbending
+1 Planar Genesis
+1 Reality Shift
+1 Scatter to the Winds
+1 Earthbender Ascension
+1 Imprisoned in the Moon
+1 Khalni Heart Expedition
+1 Mirror Room // Fractured Realm
+1 Nature's Will
+1 Primeval Bounty
+1 Roaring Earth
+1 Sapling Nursery
+1 Song of the Dryads
+1 Sphere Grid
+1 The Legend of Kyoshi
+1 Tribute to the World Tree
+1 Invasion of Zendikar

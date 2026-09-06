@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/bVGKHkZ_IH2QaHATAD99cg (source https://moxfield.com/decks/Kc4qH53VAE6Ia8Vxmx4EBw)
+# tags Aikido, Forced Combat; bracket 3; saved 2026-09-04; 111 tagged of 6400 indexed
+
+Commander
+1 Nelly Borca, Impulsive Accuser
+
+Deck
+1 Agitator Ant
+1 Agrus Kos, Spirit of Justice
+1 Alexios, Deimos of Kosmos
+1 Brash Taunter
+1 Cathar Commando
+1 Delney, Streetwise Lookout
+1 Esper Sentinel
+1 Havoc Eater
+1 Imperial Recruiter
+1 Loran of the Third Path
+1 Puppet Master, String Puller
+1 Recruiter of the Guard
+1 Roaming Throne
+1 Selfless Squire
+1 Slicer, Hired Muscle
+1 Stoneforge Mystic
+1 Sun Titan
+1 Arcane Lighthouse
+1 Arid Mesa
+1 Command Tower
+1 Flagstones of Trokair
+1 Lotus Vale
+1 Maze of Ith
+11 Mountain
+1 Myriad Landscape
+14 Plains
+1 Plateau
+1 Rogue's Passage
+1 Sacred Foundry
+1 Spectator Seating
+1 Strip Mine
+1 Urza's Saga
+1 Wasteland
+1 Arcane Signet
+1 Conjurer's Bauble
+1 Lightning Greaves
+1 Lotus Petal
+1 Shadowspear
+1 Sol Ring
+1 Sunforger
+1 Blasphemous Act
+1 Disrupt Decorum
+1 Idyllic Tutor
+1 Insurrection
+1 Promise of Loyalty
+1 Sevinne's Reclamation
+1 Shenanigans
+1 Spectacular Showdown
+1 Taunt from the Rampart
+1 Boros Charm
+1 Comeuppance
+1 Deflecting Palm
+1 Enlightened Tutor
+1 Generous Gift
+1 Gideon's Sacrifice
+1 Immortal Obligation
+1 Path to Exile
+1 Reprieve
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Take the Bait
+1 Teferi's Protection
+1 Tempt with Mayhem
+1 Court of Ardenvale
+1 Court of Grace
+1 Curse of Opulence
+1 Duelist's Heritage
+1 Hot Pursuit
+1 Lightmine Field
+1 Redemption Arc
+1 Shiny Impetus
+1 Smothering Tithe
+1 Smuggler's Share
+1 Trouble in Pairs
+1 Vow of Duty
+1 Windcrag Siege

@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/38OGd1RUqIgSxExFR9uK3A (source https://moxfield.com/decks/04W1QqI_z0Cf84oov-I6zA)
+# tags Toolbox, Control, Good Stuff, Modular, Midrange; bracket 3; saved 2026-08-30; 64 tagged of 6448 indexed
+
+Commander
+1 Riku of Many Paths
+
+Deck
+1 Abrade
+1 Amazing Acrobatics
+1 An Offer You Can't Refuse
+1 Applied Biomancy
+1 Ashling's Command
+1 Atarka's Command
+1 Beast Within
+1 Collective Resistance
+1 Confusticate and Bebother
+1 Cryptic Command
+1 Cyclonic Rift
+1 Defend the Rider
+1 Fierce Guardianship
+1 Flame of Anor
+1 Heritage Reclamation
+1 Inscription of Abundance
+1 Mystic Confluence
+1 Origin of Metalbending
+1 Pawpatch Formation
+1 Pongify
+1 Prismari Charm
+1 Prismari Command
+1 Quandrix Charm
+1 Quandrix Command
+1 Rapid Hybridization
+1 Simic Charm
+1 Sublime Epiphany
+1 Swan Song
+1 Three Steps Ahead
+1 Trash the Town
+1 Untimely Malfunction
+1 Verdant Command
+1 Warg Tactics
+1 You Come to a River
+1 You Find the Villains' Lair
+1 Arcane Signet
+1 Sol Ring
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Caldera Pyremaw
+1 Emeritus of Ideation
+1 Gandalf, Goblins' Bane
+1 Guttersnipe
+1 Hullbreaker Horror
+1 Longshot, Rebel Bowman
+1 The Vision
+1 Vivi Ornitier
+1 Breeding Pool
+1 Command Tower
+1 Commercial District
+1 Flooded Strand
+3 Forest
+1 Hedge Maze
+1 Hinterland Harbor
+3 Island
+1 Ketria Triome
+1 Misty Rainforest
+2 Mountain
+1 Polluted Delta
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Riverpyre Verge
+1 Rootbound Crag
+1 Scalding Tarn
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Sulfur Falls
+1 Taiga
+1 Thornspire Verge
+1 Thundering Falls
+1 Training Center
+1 Tropical Island
+1 Verdant Catacombs
+1 Volcanic Island
+1 Willowrush Verge
+1 Windswept Heath
+1 Wooded Foothills
+1 Bushwhack
+1 Fantastic Elasticity
+1 Farseek
+1 Fiery Confluence
+1 Iroh's Demonstration
+1 It's Clobberin' Time!
+1 Jeska's Will
+1 Nature's Lore
+1 Rampant Growth
+1 Return from the Wilds
+1 Season of Gathering
+1 Shared Roots
+1 Three Visits
+1 Will of the Sultai
+1 Fiery Inscription
+1 Rite of the Dragoncaller

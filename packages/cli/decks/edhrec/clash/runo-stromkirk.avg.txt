@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/runo-stromkirk/clash
+# theme Clash (1 decks)
+
+Commander
+1 Runo Stromkirk
+
+Deck
+1 Charmed Pendant
+1 Codex Shredder
+1 Dreamstone Hedron
+1 Hedron Archive
+1 Helm of Awakening
+1 Sapphire Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Thran Dynamo
+1 Agna Qel'a
+1 Arid Archway
+1 Cephalid Coliseum
+1 Dimir Aqueduct
+1 Duskmantle, House of Shadow
+1 Frost Marsh
+1 Guildless Commons
+1 Ice Tunnel
+1 Shimmerdrift Vale
+17 Snow-Covered Island
+11 Snow-Covered Swamp
+1 Temple of the False God
+1 Benthic Anomaly
+1 Brinelin, the Moon Kraken
+1 Cephalid Inkmage
+1 Cephalid Looter
+1 Cephalid Sage
+1 Deep-Sea Kraken
+1 Denizen of the Deep
+1 Drift of Phantasms
+1 Elder Deep-Fiend
+1 Emry, Lurker of the Loch
+1 Gearseeker Serpent
+1 Grappling Kraken
+1 Grozoth
+1 Gyruda, Doom of Depths
+1 Hullbreaker Horror
+1 Icebreaker Kraken
+1 Kraken of the Straits
+1 Lochmere Serpent
+1 Marvo, Deep Operative
+1 Monstrosity of the Lake
+1 Nadir Kraken
+1 Nemesis of Reason
+1 Nightscape Familiar
+1 Purple Pentapus
+1 Reservoir Kraken
+1 Revel Ruiner
+1 Rhet-Tomb Mystic
+1 Rot-Tide Gargantua
+1 Scourge of Fleets
+1 Serpent of Yawning Depths
+1 Slinn Voda, the Rising Deep
+1 Spawning Kraken
+1 Starwinder
+1 Stormtide Leviathan
+1 Summon: Leviathan
+1 The Watcher in the Water
+1 Tidal Terror
+1 Tolarian Terror
+1 Tromokratis
+1 Vohar, Vodalian Desecrator
+1 Wrexial, the Risen Deep
+1 Heartless Summoning
+1 Corpse Churn
+1 Counterspell
+1 High Tide
+1 Swallowed by Leviathan
+1 Ashiok, Sculptor of Fears
+1 Extract from Darkness
+1 Funeral Rites
+1 Rise of the Dark Realms
+1 Victimize

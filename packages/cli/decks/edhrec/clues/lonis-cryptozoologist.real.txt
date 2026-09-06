@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/ij_bHXud-DNAIAw3pxc09g (source https://archidekt.com/decks/4723581)
+# tags Artifacts, ETB, Clues, Blink; bracket 3; saved 2026-09-03; 520 tagged of 5037 indexed
+
+Commander
+1 Lonis, Cryptozoologist
+
+Deck
+1 Academy Manufactor
+1 Adrix and Nev, Twincasters
+1 Chomping Changeling
+1 Clifftop Lookout
+1 Coiling Oracle
+1 Cyberdrive Awakener
+1 Dour Port-Mage
+1 Edgar, King of Figaro
+1 Eternal Witness
+1 Ethereal Investigator
+1 Farhaven Elf
+1 Fear of Impostors
+1 Forensic Gadgeteer
+1 Grazilaxx, Illithid Scholar
+1 Ignis Scientia
+1 Jaheira, Friend of the Forest
+1 Junk Winder
+1 Kappa Cannoneer
+1 Kellan, Inquisitive Prodigy
+1 Mistbreath Elder
+1 Mulldrifter
+1 Mystic Snake
+1 Omen Hawker
+1 Peregrin Took
+1 Sarinth Steelseeker
+1 Shimmer Dragon
+1 Shrieking Drake
+1 Springbloom Druid
+1 Starfield Vocalist
+1 Stridehangar Automaton
+1 Tamiyo, Inquisitive Student
+1 Tangletrove Kelp
+1 Teething Wurmlet
+1 Thassa, Deep-Dwelling
+1 Thought Monitor
+1 Tireless Provisioner
+1 Tireless Tracker
+1 Topiary Stomper
+1 Tranquil Frillback
+1 Wavesifter
+1 Wood Elves
+1 Alchemist's Refuge
+1 Archway of Innovation
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Command Tower
+1 Demolition Field
+1 Dreamroot Cascade
+1 Dryad Arbor
+1 Exotic Orchard
+1 Flooded Grove
+7 Forest
+1 Hedge Maze
+1 Hinterland Harbor
+7 Island
+1 Mistrise Village
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Scavenger Grounds
+1 Seat of the Synod
+1 Sodden Verdure
+1 The Shire
+1 Tree of Tales
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Bala Ged Recovery
+1 Rise and Shine
+1 Spirit Water Revival
+1 Beast Within
+1 Confront the Unknown
+1 Cyclonic Rift
+1 Desynchronization
+1 Displace
+1 Expel from Orazca
+1 Ghostly Flicker
+1 Memory Lapse
+1 Rampage of the Clans
+1 Waterbender's Restoration
+1 Conjurer's Closet
+1 Five Hundred Year Diary
+1 Idol of Oblivion
+1 Sol Ring
+1 Tamiyo's Journal
+1 Fateful Discovery
+1 Mechanized Production
+1 Virtue of Knowledge
+1 Oko, Thief of Crowns

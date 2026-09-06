@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/rakdos-lord-of-riots/bloodthirst
+# theme Bloodthirst (2 decks)
+
+Commander
+1 Rakdos, Lord of Riots
+
+Deck
+1 Arcane Signet
+1 Charcoal Diamond
+1 Cryptolith Fragment
+1 Rakdos Riteknife
+1 Rakdos Signet
+1 Talisman of Indulgence
+1 Whip of Erebos
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Blood Crypt
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Graven Cairns
+1 Horizon of Progress
+1 Luxury Suite
+13 Mountain
+1 Razortrap Gorge
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+15 Swamp
+1 Temple of Malice
+1 Abyssal Harvester
+1 Abyssal Persecutor
+1 Bane of Bala Ged
+1 Bloodletter of Aclazotz
+1 Combustible Gearhulk
+1 Crashing Drawbridge
+1 Creeping Bloodsucker
+1 Emrakul, the Promised End
+1 Exava, Rakdos Blood Witch
+1 Gev, Scaled Scorch
+1 Ob Nixilis, Captive Kingpin
+1 Ob Nixilis, Unshackled
+1 Ob Nixilis, the Fallen
+1 Plague Spitter
+1 Rakdos Cackler
+1 Rakdos the Defiler
+1 Rakdos, Patron of Chaos
+1 Rune-Scarred Demon
+1 Scrawling Crawler
+1 Spawn of Mayhem
+1 Spear Spewer
+1 Stormfist Crusader
+1 Thermo-Alchemist
+1 Tunneling Geopede
+1 Valgavoth, Harrower of Souls
+1 Void Winnower
+1 Mass Hysteria
+1 Protection Racket
+1 Rage Reflection
+1 Rising of the Day
+1 Blood for the Blood God!
+1 Crushing Disappointment
+1 Fatal Push
+1 Go for the Throat
+1 Imp's Mischief
+1 Infernal Grasp
+1 Lightning Bolt
+1 Murder
+1 Rakdos Charm
+1 Snuff Out
+1 Untimely Malfunction
+1 Ob Nixilis, the Adversary
+1 Ob Nixilis, the Hate-Twisted
+1 Anger of the Gods
+1 Blasphemous Act
+1 Feed the Swarm
+1 Fiery Confluence
+1 Night's Whisper
+1 Temporal Extortion
+1 Vandalblast
+1 Victimize

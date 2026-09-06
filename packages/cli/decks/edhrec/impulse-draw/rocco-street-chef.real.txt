@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/UPY6T7gVx-jppl99os6s7w (source https://archidekt.com/decks/19004306)
+# tags Impulse Draw, Exile, +1/+1 Counters, Legends; bracket 3; saved 2026-09-05; 165 tagged of 13283 indexed
+
+Commander
+1 Rocco, Street Chef
+
+Deck
+1 Academy Manufactor
+1 Aerial Extortionist
+1 Avacyn's Pilgrim
+1 Bilbo, Fellow Conspirator
+1 Birds of Paradise
+1 Black Widow, Agile Avenger
+1 Bugenhagen, Wise Elder
+1 Cactusfolk Sureshot
+1 Delighted Halfling
+1 Displaced Dinosaurs
+1 Dragonhawk, Fate's Tempest
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Evolution Witness
+1 Feasting Hobbit
+1 Gilded Goose
+1 Gwenna, Eyes of Gaea
+1 Halana and Alena, Partners
+1 Hamza, Guardian of Arashin
+1 Incubation Druid
+1 Iroas, God of Victory
+1 Jaheira, Friend of the Forest
+1 Leatherhead, Swamp Stalker
+1 Mikey & Leo, Chaos & Order
+1 Monk Gyatso
+1 Radagast of Rhosgobel
+1 Raphael, the Muscle
+1 Red XIII, Proud Warrior
+1 Sami, Wildcat Captain
+1 Samwise Gamgee
+1 Scavenging Ooze
+1 Shalai and Hallar
+1 Skyboon Evangelist
+1 Spectacular Spider-Man
+1 Stormkeld Vanguard
+1 Thornscape Familiar
+1 Tranquil Frillback
+1 Urabrask the Hidden
+1 Urabrask, Heretic Praetor
+1 Wakka, Devoted Guardian
+1 Xenagos, God of Revels
+1 Annie Joins Up
+1 Bard Class
+1 Innkeeper's Talent
+1 Ninja Pizza
+1 Arena of Glory
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Command Tower
+1 Demolition Field
+1 Fire-Lit Thicket
+6 Forest
+1 Great Hall of the Citadel
+1 Hushwood Verge
+1 Jetmir's Garden
+1 Lush Portico
+1 Mosswort Bridge
+3 Mountain
+3 Plains
+1 Plaza of Heroes
+1 Rugged Prairie
+1 Sacred Foundry
+1 Spectator Seating
+1 Spire Garden
+1 Stomping Ground
+1 Sunbillow Verge
+1 Temple Garden
+1 Thornspire Verge
+1 Turbulent Steppe
+1 Windswept Heath
+1 Wooded Bastion
+1 Wooded Foothills
+1 Avatar's Wrath
+1 Damning Verdict
+1 Ensnared by the Mara
+1 Escape to the Wilds
+1 Germination Practicum
+1 Improvisation Capstone
+1 Requisition Raid
+1 Sundering Eruption
+1 Taunt from the Rampart
+1 Urza's Ruinous Blast
+1 Flawless Maneuver
+1 Guff Rewrites History
+1 Kazuul's Fury
+1 Obscuring Haze
+1 Swords to Plowshares
+1 Interdimensional Web Watch
+1 Ozolith, the Shattered Spire
+1 Relic of Legends

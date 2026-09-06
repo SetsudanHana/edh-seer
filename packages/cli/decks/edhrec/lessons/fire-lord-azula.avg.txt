@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/fire-lord-azula/lessons
+# theme Lessons (27 decks)
+
+Commander
+1 Fire Lord Azula
+
+Deck
+1 Arcane Signet
+1 Barrels of Blasting Jelly
+1 Bender's Waterskin
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Fire Nation Drill
+1 Twin Blades
+1 Agna Qel'a
+1 Airship Engine Room
+1 Boiling Rock Prison
+1 Command Tower
+1 Fire Nation Palace
+8 Island
+9 Mountain
+1 Realm of Koh
+1 Rumble Arena
+1 Serpent's Pass
+6 Swamp
+1 Thriving Bluff
+1 Thriving Isle
+1 Thriving Moor
+1 White Lotus Hideout
+1 Azula, Cunning Usurper
+1 Azula, On the Hunt
+1 Combustion Man
+1 Cruel Administrator
+1 Dragonfly Swarm
+1 Fire Nation Cadets
+1 Fire Sages
+1 Firebending Student
+1 Gran-Gran
+1 Jeong Jeong, the Deserter
+1 Lo and Li, Twin Tutors
+1 Mai, Jaded Edge
+1 Ozai, the Phoenix King
+1 Professor Zei, Anthropologist
+1 Ran and Shaw
+1 Ty Lee, Artful Acrobat
+1 Ty Lee, Chi Blocker
+1 Vindictive Warden
+1 Zhao, Ruthless Admiral
+1 Zuko, Exiled Prince
+1 Zuko, Firebending Master
+1 Zuko, Seeking Honor
+1 Chakra Meditation
+1 Fated Firepower
+1 Fire Nation Occupation
+1 Firebender Ascension
+1 The Rise of Sozin
+1 Abandon Attachments
+1 Accumulate Wisdom
+1 Azula Always Lies
+1 Bolt Bend
+1 Combustion Technique
+1 Cunning Maneuver
+1 Energybending
+1 Fire Nation Attacks
+1 Firebending Lesson
+1 Fists of Flame
+1 Heartless Act
+1 How to Start a Riot
+1 It'll Quench Ya!
+1 Lightning Strike
+1 Octopus Form
+1 Overwhelming Victory
+1 Redirect Lightning
+1 Solstice Revelations
+1 The Last Agni Kai
+1 Zuko's Conviction
+1 Zuko's Exile
+1 Boomerang Basics
+1 Day of Black Sun
+1 Epic Downfall
+1 Iroh's Demonstration
+1 Ozai's Cruelty
+1 Price of Freedom
+1 Scarring Memories
+1 Sozin's Comet
+1 Waterbending Lesson

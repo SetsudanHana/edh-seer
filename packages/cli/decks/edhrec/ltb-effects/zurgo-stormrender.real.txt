@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/OA71743NCVLf3wjJzoJlGw (source https://archidekt.com/decks/12325891)
+# tags Attack Triggers, Myriad, LTB Effects, Tokens, Aggro, Extra Combats; bracket 3; saved 2026-08-19; 9 tagged of 20516 indexed
+
+Commander
+1 Zurgo Stormrender
+
+Deck
+1 Abstruse Appropriation
+1 Anguished Unmaking
+1 Blacksmith's Skill
+1 Boros Charm
+1 Despark
+1 Flashback
+1 Great Train Heist
+1 Inevitable Defeat
+1 Kabira Takedown
+1 Loran's Escape
+1 Razorgrass Ambush
+1 Restoration Magic
+1 Swords to Plowshares
+1 Unexplained Absence
+1 Adeline, Resplendent Cathar
+1 Agate Instigator
+1 Ainok Strike Leader
+1 Aurelia, the Warleader
+1 Bone-Cairn Butcher
+1 Caesar, Legion's Emperor
+1 Dalek Squadron
+1 Dalkovan Packbeasts
+1 Elturel Survivors
+1 Genasi Enforcers
+1 Gnoll War Band
+1 Goldlust Triad
+1 Hammers of Moradin
+1 Iroas, God of Victory
+1 Isshin, Two Heavens as One
+1 Kardur, Doomscourge
+1 Neriv, Heart of the Storm
+1 Raphael, the Nightwatcher
+1 Redoubled Stormsinger
+1 Shredder, Shadow Master
+1 Starry-Eyed Skyrider
+1 Syr Vondam, Sunstar Exemplar
+1 Voice of Victory
+1 Wyrm's Crossing Patrol
+1 All-Out Assault
+1 Authority of the Consuls
+1 Chorale of the Void
+1 Endless Foot Assault
+1 Goblin Bombardment
+1 Grasp of Fate
+1 Grim Reaper's Sprint
+1 Ninja Teen
+1 Reconnaissance
+1 Windcrag Siege
+1 Arcane Signet
+1 Lightning Greaves
+1 My Precious
+1 Sol Ring
+1 Sundial of the Infinite
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Ash Barrens
+1 Battlefield Forge
+1 Bleachbone Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dalkovan Encampment
+1 Evolving Wilds
+1 Fabled Passage
+1 Godless Shrine
+1 Hanweir Battlements
+1 Haunted Ridge
+1 Luxury Suite
+1 Maze of Ith
+1 Mountain
+1 Nomad Outpost
+5 Plains
+1 Rogue's Passage
+1 Savai Triome
+1 Shattered Landscape
+1 Shattered Sanctum
+1 Smoldering Marsh
+1 Spectator Seating
+1 Sunbillow Verge
+1 Sundown Pass
+1 Swamp
+1 Terramorphic Expanse
+1 Turbulent Moor
+1 Turbulent Steppe
+1 Underdark Rift
+1 Vault of Champions
+1 Damn
+1 Full Throttle
+1 Ruinous Ultimatum
+1 Sundering Eruption
+1 Elspeth, Storm Slayer
+1 Sorin, Vengeful Bloodlord

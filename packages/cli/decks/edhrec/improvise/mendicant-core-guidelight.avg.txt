@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/mendicant-core-guidelight/improvise
+# theme Improvise (5 decks)
+
+Commander
+1 Mendicant Core, Guidelight
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Darksteel Forge
+1 Fabrication Foundry
+1 Idol of Oblivion
+1 Inspiring Statuary
+1 Lightning Greaves
+1 Liquimetal Torque
+1 Mystic Forge
+1 Perilous Snare
+1 Repurposing Bay
+1 Salvation Engine
+1 Sculpting Steel
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Talisman of Progress
+1 Thousand Moons Smithy
+1 Unwinding Clock
+1 Uthros Research Craft
+1 Academy Ruins
+1 Adarkar Wastes
+1 Ancient Den
+1 Archway of Innovation
+1 Buried Ruin
+1 Command Tower
+1 Darksteel Citadel
+1 Deserted Beach
+1 Floodfarm Verge
+1 Fomori Vault
+1 Glacial Fortress
+1 Inventors' Fair
+8 Island
+1 Muraganda Raceway
+6 Plains
+1 Prairie Stream
+1 Razortide Bridge
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sea of Clouds
+1 Seat of the Synod
+1 The Mycosynth Gardens
+1 Cyberdrive Awakener
+1 Esper Sentinel
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Gingerbrute
+1 Guidelight Synergist
+1 Illustrious Wanderglyph
+1 Kappa Cannoneer
+1 Master of Etherium
+1 Nesting Bot
+1 Padeem, Consul of Innovation
+1 Phyrexian Metamorph
+1 Research Thief
+1 Riptide Gearhulk
+1 Sai, Master Thopterist
+1 Scrawling Crawler
+1 Solemn Simulacrum
+1 Stridehangar Automaton
+1 Thought Monitor
+1 Urza, Lord High Artificer
+1 Vedalken Archmage
+1 Vnwxt, Verbose Host
+1 Voyager Quickwelder
+1 Whirler Rogue
+1 Witch Enchanter
+1 Efficient Construction
+1 Mechanized Production
+1 Thopter Spy Network
+1 Desynchronization
+1 Dispatch
+1 Dovin's Veto
+1 Enlightened Tutor
+1 Generous Gift
+1 Masterful Replication
+1 Path to Exile
+1 Reality Heist
+1 Sink into Stupor
+1 Swords to Plowshares
+1 Whir of Invention
+1 Tezzeret, Artifice Master
+1 Fabricate
+1 March of Progress
+1 Organic Extinction
+1 Reverse Engineer
+1 Thoughtcast
+1 Voyage Home

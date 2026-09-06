@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/5A_AooTVtwGKpaboRnF0Rw (source https://archidekt.com/decks/25517519)
+# tags Humans, Group Hug, Voting, Commander Matters, Tokens, Villainous Choice; bracket 3; saved 2026-08-27; 46 tagged of 2025 indexed
+
+Commander
+1 The Valeyard
+
+Deck
+1 Academy Manufactor
+1 Akroan Horse
+1 Docent of Perfection
+1 Fickle Efreet
+1 Garland, Royal Kidnapper
+1 Garrulous Sycophant
+1 Generous Plunderer
+1 Grudge Keeper
+1 Gríma Wormtongue
+1 Hanweir Garrison
+1 Humble Defector
+1 Ian Malcolm, Chaotician
+1 Joo Dee, One of Many
+1 Keeper of Keys
+1 Life of the Party
+1 Messenger Jays
+1 Opposition Agent
+1 Professor Zei, Anthropologist
+1 Roaming Throne
+1 Slaughter Specialist
+1 Sleeper Agent
+1 Starscream, Power Hungry
+1 Varchild, Betrayer of Kjeldor
+1 Arcane Adaptation
+1 Changing Loyalty
+1 Court of Ambition
+1 Court of Embereth
+1 Cultist of the Absolute
+1 Custody Battle
+1 Endless Evil
+1 Maestros Ascendancy
+1 No Mercy
+1 Revel in Riches
+1 Risky Move
+1 Stensia Uprising
+1 Tribute to Horobi
+1 Armillary Sphere
+1 Avacyn's Collar
+1 Avarice Amulet
+1 Bounty Board
+1 Coercive Portal
+1 Great Gilded Boat
+1 Hithlain Rope
+1 Horn of Gondor
+1 Howling Mine
+1 Laser Screwdriver
+1 Midnight Crusader Shuttle
+1 Mirror Shield
+1 Navigation Orb
+1 Nuka-Cola Vending Machine
+1 Tempting Contract
+1 The Belligerent
+1 Bite of the Black Rose
+1 Bontu's Last Reckoning
+1 Capital Punishment
+1 Cruel Entertainment
+1 Ensnared by the Mara
+1 Fateful Handoff
+1 Game of Chaos
+1 Hunted by The Family
+1 Infernal Offering
+1 Mass Appeal
+1 Mob Verdict
+1 Peer Pressure
+1 Plea for Power
+1 Price of Betrayal
+1 Scheming Symmetry
+1 Truth or Consequences
+1 Tyrant's Choice
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Command Beacon
+1 Command Tower
+1 Crumbling Necropolis
+1 Detection Tower
+1 Forbidden Orchard
+1 Hidden Hideout
+3 Island
+1 Minas Morgul, Dark Fortress
+3 Mountain
+1 Oscorp Industries
+1 Path of Ancestry
+6 Swamp
+1 Trenzalore Clocktower
+1 Xander's Lounge
+1 Illusion of Choice
+1 Sound the Trumpets
+1 Split Decision
+1 This Is How It Ends
+1 Volcanic Fallout

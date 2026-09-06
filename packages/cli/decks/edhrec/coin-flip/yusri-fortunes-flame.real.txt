@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/kO5Zf1Y-6RosKfX12Hdu6A (source https://archidekt.com/decks/26067620)
+# tags Coin Flip; bracket 3; saved 2026-09-04; 304 tagged of 6355 indexed
+
+Commander
+1 Yusri, Fortune's Flame
+
+Deck
+1 Aggravated Assault
+1 Chance Encounter
+1 Mana Flare
+1 Mirror March
+1 Teferi's Ageless Insight
+1 Arcane Denial
+1 Big Score
+1 Brain Freeze
+1 Brainstorm
+1 Chaos Warp
+1 Counterspell
+1 Frantic Search
+1 Invert Polarity
+1 Muddle the Mixture
+1 Narset's Reversal
+1 Opt
+1 Rapid Hybridization
+1 Unexpected Windfall
+1 Valakut Awakening
+1 Arcane Signet
+1 Basilisk Collar
+1 Boompile
+1 Izzet Signet
+1 Krark's Thumb
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 Arena of Glory
+1 Command Tower
+13 Island
+12 Mountain
+1 Reliquary Tower
+1 Riverpyre Verge
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Thundering Falls
+1 Training Center
+1 Witch's Clinic
+1 Auntie Blyte, Bad Influence
+1 Chasm Skulker
+1 Chira, All In
+1 Creepy Doll
+1 Goblin Kaboomist
+1 Goblin Traprunner
+1 Karplusan Minotaur
+1 Krark, the Thumbless
+1 Mutalith Vortex Beast
+1 Niv-Mizzet, Parun
+1 Niv-Mizzet, the Firemind
+1 Okaun, Eye of Chaos
+1 Prismari, the Inspiration
+1 Psychosis Crawler
+1 Storm-Kiln Artist
+1 Tavern Scoundrel
+1 The Locust God
+1 Toothy, Imaginary Friend
+1 Tribute Mage
+1 Zndrsplt, Eye of Wisdom
+1 Blasphemous Act
+1 Expressive Iteration
+1 Fabricate
+1 Fiery Gambit
+1 Gamble
+1 Game of Chaos
+1 Grapeshot
+1 Mana Clash
+1 Ponder
+1 Preordain
+1 Squee's Revenge
+1 Stitch in Time
+1 Windfall
+1 Ral Zarek

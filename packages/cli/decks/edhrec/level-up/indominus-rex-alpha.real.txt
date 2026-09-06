@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/QtIQnEOe9dGyXscBBwjLBA (source https://archidekt.com/decks/10168435)
+# tags Level Up; bracket unset; saved 2026-07-11; 1 tagged of 9099 indexed
+
+Commander
+1 Indominus Rex, Alpha
+
+Deck
+1 Agadeem's Awakening
+1 Bala Ged Recovery
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Living Death
+1 Nature's Lore
+1 Open the Way
+1 Reanimate
+1 Ringsight
+1 Rise of the Dark Realms
+1 Rise of the Witch-king
+1 Rishkar's Expertise
+1 Three Visits
+1 Toxic Deluge
+1 Victimize
+1 Alchemist's Refuge
+1 Bayou
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Fabled Passage
+5 Forest
+1 Forge of Heroes
+1 Halimar Depths
+1 Hinterland Harbor
+4 Island
+1 Opal Palace
+1 Oran-Rief, the Vastwood
+1 Otawara, Soaring City
+1 Overgrown Tomb
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sunken Hollow
+4 Swamp
+1 Underground Sea
+1 Undergrowth Stadium
+1 Zagoth Triome
+1 Alpha Deathclaw
+1 Archfiend of Ifnir
+1 Biophagus
+1 Birds of Paradise
+1 Bontu the Glorified
+1 End-Raze Forerunners
+1 Glissa Sunslayer
+1 Gurmag Swiftwing
+1 Hit-Monkey
+1 Kefnet the Mindful
+1 Kellan, Inquisitive Prodigy
+1 Kodama of the West Tree
+1 Leyline Prowler
+1 Massacre Girl, Known Killer
+1 Nighthawk Scavenger
+1 Nightveil Predator
+1 Questing Beast
+1 Rhonas the Indomitable
+1 Sagu Mauler
+1 Scavenged Brawler
+1 Selvala, Heart of the Wilds
+1 Sire of Seven Deaths
+1 Thassa, Deep-Dwelling
+1 The Mimeoplasm
+1 Toski, Bearer of Secrets
+1 Vorinclex, Monstrous Raider
+1 Zopandrel, Hunger Dominus
+1 Ancient Animus
+1 Arcane Denial
+1 Assassin's Trophy
+1 Counterspell
+1 Cyclonic Rift
+1 Malakir Rebirth
+1 Mana Drain
+1 Obscuring Haze
+1 Return of the Wildspeaker
+1 Undying Malice
+1 Arcane Signet
+1 Sol Ring
+1 The One Ring
+1 The Ozolith
+1 Black Market Connections
+1 Doubling Season
+1 Garruk's Uprising
+1 Journey to Eternity
+1 Rhystic Study
+1 Virtue of Persistence
+1 Wrenn and Realmbreaker

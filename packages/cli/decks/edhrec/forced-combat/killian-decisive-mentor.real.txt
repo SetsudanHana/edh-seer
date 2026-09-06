@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/caF40K_l1hCmQHRHnDQOvg (source https://archidekt.com/decks/21680767)
+# tags Forced Combat, Control, Auras; bracket 2; saved 2026-09-05; 760 tagged of 10397 indexed
+
+Commander
+1 Killian, Decisive Mentor
+
+Deck
+1 All That Glitters
+1 Angelic Destiny
+1 Animate Dead
+1 Chains of Custody
+1 Changing Loyalty
+1 Coercive Impetus
+1 Darksteel Mutation
+1 Eldrazi Conscription
+1 Ethereal Armor
+1 Eye of Nidhogg
+1 Flickering Ward
+1 Ghoulish Impetus
+1 Gift of Immortality
+1 Idolized
+1 Kaya's Ghostform
+1 Land Tax
+1 Mantle of the Ancients
+1 Martial Impetus
+1 Parasitic Impetus
+1 Redemption Arc
+1 Reprobation
+1 Sage's Reverie
+1 Sheltered by Ghosts
+1 Shielded by Faith
+1 Sigarda's Aid
+1 Songbirds' Blessing
+1 Spirit Mantle
+1 Static Prison
+1 Super State
+1 Tempest Technique
+1 The Legend of Yangchen
+1 Anguished Unmaking
+1 Dark Ritual
+1 Path to Exile
+1 Rebuff the Wicked
+1 Reprieve
+1 Swords to Plowshares
+1 Arcane Lighthouse
+1 Bleachbone Verge
+1 Caves of Koilos
+1 Command Tower
+1 Desolate Mire
+1 Eclipsed Steppe
+1 Fabled Passage
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Orzhov Basilica
+15 Plains
+1 Shineshadow Snarl
+8 Swamp
+1 Turbulent Moor
+1 Arcane Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Armored Skyhunter
+1 Aven Interrupter
+1 Breena, the Demagogue
+1 Doomwake Giant
+1 Eidolon of Countless Battles
+1 Eiganjo Dynastorian
+1 Eriette of the Charmed Apple
+1 Grim Guardian
+1 Hateful Eidolon
+1 Herald of Amity
+1 Killian, Ink Duelist
+1 Kor Spiritdancer
+1 Mesa Enchantress
+1 Moon-Blessed Cleric
+1 Ondu Spiritdancer
+1 Pearl-Ear, Imperial Advisor
+1 Sram, Senior Edificer
+1 Starfield Mystic
+1 Transcendent Envoy
+1 Promise of Loyalty
+1 Winds of Rath

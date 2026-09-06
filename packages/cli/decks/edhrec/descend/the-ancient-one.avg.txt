@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-ancient-one/descend
+# theme Descend (8 decks)
+
+Commander
+1 The Ancient One
+
+Deck
+1 Altar of Dementia
+1 Arcane Signet
+1 Bonehoard
+1 Dimir Signet
+1 Matzalantli, the Great Door
+1 Panharmonicon
+1 Riverchurn Monument
+1 Sol Ring
+1 Specimen Freighter
+1 The Everflowing Well
+1 The Water Crystal
+1 Wayfarer's Bauble
+1 Wurmwall Sweeper
+1 Bojuka Bog
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Drownyard Temple
+1 Evolving Wilds
+1 Fetid Pools
+1 Hidden Lair
+7 Island
+1 Nephalia Drownyard
+1 Port of Karfell
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sunken Hollow
+1 Susur Secundi, Void Altar
+8 Swamp
+1 Tainted Isle
+1 Temple of Deceit
+1 Temple of the False God
+1 Underground River
+1 Baleful Strix
+1 Bringer of the Last Gift
+1 Chupacabra Echo
+1 Consuming Aberration
+1 Cruel Somnophage
+1 Deranged Assistant
+1 Dreadhound
+1 Gyruda, Doom of Depths
+1 Laboratory Maniac
+1 Likeness Looter
+1 Massacre Wurm
+1 Millikin
+1 Mirrorhall Mimic
+1 Naga Fleshcrafter
+1 Nighthowler
+1 Screeching Scorchbeast
+1 Sepulchral Primordial
+1 Shadow of Mortality
+1 Sire of Stagnation
+1 Solemn Simulacrum
+1 Souls of the Lost
+1 Starfield Vocalist
+1 Starving Revenant
+1 Symbiote Spider-Man
+1 Syr Konrad, the Grim
+1 Uchbenbak, the Great Mistake
+1 Vizier of Many Faces
+1 Vohar, Vodalian Desecrator
+1 Wonder
+1 Y'shtola Rhul
+1 Case of the Shifting Visage
+1 Mirror Mockery
+1 Oversold Cemetery
+1 Search for Azcanta
+1 Another Chance
+1 Don't Make a Sound
+1 Drown in the Loch
+1 Fell the Profane
+1 Forbidden Alchemy
+1 See Double
+1 Waterbender's Restoration
+1 Jace, the Perfected Mind
+1 Cut Your Losses
+1 Dread Return
+1 Feed the Swarm
+1 Glimpse the Unthinkable
+1 Singularity Rupture
+1 Stitch Together
+1 Terror Tide
+1 Wail of the Forgotten
+1 Will of the Abzan

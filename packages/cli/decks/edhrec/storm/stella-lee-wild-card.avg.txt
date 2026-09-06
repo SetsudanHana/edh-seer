@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/stella-lee-wild-card/storm
+# theme Storm (523 decks)
+
+Commander
+1 Stella Lee, Wild Card
+
+Deck
+1 Arcane Signet
+1 Chrome Mox
+1 Fellwar Stone
+1 Izzet Signet
+1 Lotus Petal
+1 Mana Vault
+1 Mox Amber
+1 Mox Opal
+1 Sol Ring
+1 Talisman of Creativity
+1 Ancient Tomb
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Fiery Islet
+1 Flooded Strand
+1 Gemstone Caverns
+8 Island
+1 Minamo, School at Water's Edge
+1 Misty Rainforest
+7 Mountain
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Scalding Tarn
+1 Shivan Reef
+1 Steam Vents
+1 Sulfur Falls
+1 Training Center
+1 Volcanic Island
+1 Archmage Emeritus
+1 Birgi, God of Storytelling
+1 Goblin Electromancer
+1 Guttersnipe
+1 Hexing Squelcher
+1 Ragavan, Nimble Pilferer
+1 Simian Spirit Guide
+1 Spellseeker
+1 Storm-Kiln Artist
+1 Thunderclap Drake
+1 Veyran, Voice of Duality
+1 Mystic Remora
+1 Rhystic Study
+1 Underworld Breach
+1 An Offer You Can't Refuse
+1 Borne Upon a Wind
+1 Brain Freeze
+1 Brainstorm
+1 Cerulean Wisps
+1 Consider
+1 Crimson Wisps
+1 Deflecting Swat
+1 Dramatic Reversal
+1 Expedite
+1 Fierce Guardianship
+1 Flusterstorm
+1 Force of Negation
+1 Force of Will
+1 Frantic Search
+1 Lightning Bolt
+1 Mental Misstep
+1 Mindbreak Trap
+1 Mystical Tutor
+1 Opt
+1 Pact of Negation
+1 Pongify
+1 Pyroblast
+1 Refocus
+1 Shore Up
+1 Snap
+1 Swan Song
+1 Twitch
+1 Expressive Iteration
+1 Faithless Looting
+1 Gamble
+1 Gitaxian Probe
+1 Jeska's Will
+1 Merchant Scroll
+1 Personal Tutor
+1 Ponder
+1 Preordain
+1 Rite of Flame
+1 Serum Visions
+1 Solve the Equation
+1 Strike It Rich
+1 Twisted Fealty
+1 Windfall
