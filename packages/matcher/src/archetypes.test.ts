@@ -305,3 +305,75 @@ test("a type count with no payoff still names superfriends", () => {
     sig(`Planeswalker ${i}`, { cardTypes: ["planeswalker"], caresTags: [] }));
   expect(detectArchetypes(walkers, [], 60)[0]!.name).toBe("superfriends");
 });
+
+// ---- the vocabulary's signal grammar (2026-09-06) ----
+
+const sig2 = (name: string, opts: Partial<CardSignal>): CardSignal => ({
+  name, themeTags: [], effectKinds: [], subtypes: [], ...opts,
+});
+
+test("a printed keyword is a signal: five cascade cards in fifty nonlands read as Cascade", () => {
+  const signals = Array.from({ length: 5 }, (_, i) => sig2(`C${i}`, { keywords: ["cascade"] }));
+  const out = detectArchetypes(signals, [], 50);
+  expect(out.map((r) => r.name)).toContain("cascade");
+  expect(out.find((r) => r.name === "cascade")!.confidence).toBeCloseTo(0.1, 5);
+});
+
+test("a type-line word is a signal, gated on a payoff: vehicles without a crew payoff are a deck with vehicles in it", () => {
+  const bodies = Array.from({ length: 10 }, (_, i) => sig2(`V${i}`, { lineWords: ["artifact", "vehicle"], keywords: ["crew"], caresTags: [] }));
+  expect(detectArchetypes(bodies, [], 30).map((r) => r.name)).not.toContain("vehicles");
+  const payoff = sig2("Kotori", { themeTags: ["enters:vehicle"], caresTags: ["enters:vehicle"] });
+  const out = detectArchetypes([...bodies, payoff], [], 30);
+  expect(out.map((r) => r.name)).toContain("vehicles");
+  // one payoff full + ten bodies at PRODUCER_SHARE
+  expect(out.find((r) => r.name === "vehicles")!.confidence).toBeCloseTo((1 + 10 * 0.35) / 30, 5);
+});
+
+test("allTags is a conjunction and demandTags the gate: loots alone are not Wheels, loots plus a draw payoff are", () => {
+  const cantrips = Array.from({ length: 6 }, (_, i) => sig2(`D${i}`, { themeTags: ["draw:any"], caresTags: [] }));
+  const loots = Array.from({ length: 3 }, (_, i) => sig2(`W${i}`, { themeTags: ["discard:any", "draw:any"], caresTags: [] }));
+  expect(detectArchetypes([...cantrips, ...loots], [], 20).map((r) => r.name)).not.toContain("wheels");
+  const payoff = sig2("Niv-Mizzet", { themeTags: ["draw:any"], caresTags: ["draw:any"] });
+  const out = detectArchetypes([...cantrips, ...loots, payoff], [], 20);
+  expect(out.map((r) => r.name)).toContain("wheels");
+  // the payoff full, three loots at PRODUCER_SHARE, six cantrips nothing
+  expect(out.find((r) => r.name === "wheels")!.confidence).toBeCloseTo((1 + 3 * 0.35) / 20, 5);
+});
+
+test("a declared member never appears: twenty interaction spells do not make Control", () => {
+  const spells = Array.from({ length: 20 }, (_, i) => sig2(`S${i}`, { themeTags: ["dies:creature"], effectKinds: ["damage"] }));
+  expect(detectArchetypes(spells, [], 40).map((r) => r.name)).not.toContain("control");
+});
+
+test("kindred is the type the PAYOFFS name, not the type the bodies share", () => {
+  // Twenty incidental Humans, twelve Elves, three Elf lords: an Elves deck.
+  const humans = Array.from({ length: 20 }, (_, i) => sig2(`H${i}`, { creatureTypes: ["human", "soldier"] }));
+  const elves = Array.from({ length: 12 }, (_, i) => sig2(`E${i}`, { creatureTypes: ["elf", "druid"] }));
+  const lords = Array.from({ length: 3 }, (_, i) => sig2(`L${i}`, { creatureTypes: ["elf"], namedTypes: ["elf"] }));
+  const out = detectArchetypes([...humans, ...elves, ...lords], [], 60);
+  const k = out.find((r) => r.name === "kindred")!;
+  expect(k.label).toBe("Kindred: Elf");
+  expect(k.confidence).toBeCloseTo((3 + 12 * 0.35) / 60, 5);
+});
+
+test("kindred needs a payoff: thirty Zombies with nothing caring is a deck with Zombies in it", () => {
+  const zombies = Array.from({ length: 30 }, (_, i) => sig2(`Z${i}`, { creatureTypes: ["zombie"], caresTags: [] }));
+  expect(detectArchetypes(zombies, [], 60).map((r) => r.name)).not.toContain("kindred");
+  const payoff = sig2("Gravecrawler", { creatureTypes: ["zombie"], caresTags: ["enters:zombie"] });
+  const out = detectArchetypes([...zombies, payoff], [], 60);
+  expect(out.find((r) => r.name === "kindred")?.label).toBe("Kindred: Zombie");
+});
+
+test("a changeling is a body of every type, and a cares subject that is a class is not a tribe", () => {
+  const bodies = [
+    ...Array.from({ length: 6 }, (_, i) => sig2(`S${i}`, { creatureTypes: ["sliver"] })),
+    sig2("Mirror Entity", { creatureTypes: ["*"] }),
+    // `enters:creature` names a class; without a Sliver payoff there is no kindred row at all.
+    sig2("Panharmonicon", { caresTags: ["enters:creature"] }),
+  ];
+  expect(detectArchetypes(bodies, [], 20).map((r) => r.name)).not.toContain("kindred");
+  const out = detectArchetypes([...bodies, sig2("Sliver Overlord", { creatureTypes: ["sliver"], namedTypes: ["sliver"] })], [], 20);
+  const k = out.find((r) => r.name === "kindred")!;
+  expect(k.label).toBe("Kindred: Sliver");
+  expect(k.confidence).toBeCloseTo((1 + 7 * 0.35) / 20, 5); // six Slivers + the changeling
+});

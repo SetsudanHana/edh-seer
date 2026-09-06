@@ -1,44 +1,23 @@
 /** Layer-1 archetype taxonomy (the strategy layer) for Stage A1 of the deck-quality
  *  spec. Detects a deck's ranked strategy from each nonland card's OWN tight,
- *  mostly-disjoint defining-mechanism signal (see ARCHETYPE_SIGNATURE below) — NOT from
- *  mechanism-category edge groups. Edge groups (groupEdgesByArchetype/CATEGORY_MATCH)
+ *  mostly-disjoint defining-mechanism signal (ARCHETYPE_SIGNATURE, in `archetype-vocabulary.ts`)
+ *  — NOT from mechanism-category edge groups. Edge groups (groupEdgesByArchetype/CATEGORY_MATCH)
  *  intentionally spread a card into every category any of its synergy edges touch and
  *  include broad shared effect-kinds (damage, draw-card, pump), so on real decks nearly
  *  every card lands in nearly every group and confidences inflate toward 1.0 without
- *  discriminating. This is deliberately the subset of the canonical 15 archetypes that
- *  existing tag/effect signals cover; the heuristic ones (tribal, enchantress, artifacts,
- *  group slug/hug) and Control (needs BUILD signals) land in follow-on plans. */
+ *  discriminating.
+ *
+ *  THE MEMBER LIST IS THE VOCABULARY (2026-09-06): EDHREC's theme list, classed and keyed there,
+ *  with a signature for every member the derived corpus can carry and a declared-only entry for
+ *  the rest. Control still has no signal (A17 refused the count); kindred is one parametrised
+ *  member, `detectKindred` below. */
 
-export type Archetype =
-  | "tokens"
-  | "aristocrats"
-  | "lifegain"
-  | "landfall"
-  | "spellslinger"
-  | "reanimator"
-  | "counters"
-  | "voltron"
-  | "combo"
-  | "superfriends"
-  | "enchantress"
-  | "artifacts"
-  | "goodstuff";
-
-export const ARCHETYPE_LABELS: Record<Archetype, string> = {
-  tokens: "Tokens",
-  aristocrats: "Aristocrats",
-  lifegain: "Lifegain",
-  landfall: "Landfall",
-  spellslinger: "Spellslinger",
-  reanimator: "Reanimator",
-  counters: "+1/+1 Counters",
-  voltron: "Voltron",
-  combo: "Combo",
-  superfriends: "Superfriends",
-  enchantress: "Enchantress",
-  artifacts: "Artifacts",
-  goodstuff: "Goodstuff / Midrange",
-};
+import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
+import { ARCHETYPE_LABELS, ARCHETYPE_SIGNATURE, type Archetype, type ArchetypeSignature } from "./archetype-vocabulary.js";
+export {
+  ARCHETYPE_LABELS, ARCHETYPE_SIGNATURE, ARCHETYPE_VOCABULARY, DETECTABLE, EXCLUDED_THEMES, KINDRED_TRIBES,
+  type Archetype, type ArchetypeClass, type ArchetypeEntry, type ArchetypeSignature, type KindredTribe,
+} from "./archetype-vocabulary.js";
 
 export interface ArchetypeRanking {
   name: Archetype;
@@ -105,62 +84,20 @@ export interface CardSignal {
    *  effect kinds and subtypes, and "this deck runs 21 planeswalkers" is none of those. Optional so
    *  a caller that does not compute it simply matches no type-defined row. */
   cardTypes?: string[];
+  /** PRINTED KEYWORDS, lowercased (`characteristics.keywords`, Scryfall's list). Keyword abilities
+   *  and keyword actions alike; the named-mechanic rows of the vocabulary key on nothing else. */
+  keywords?: string[];
+  /** Every word of the type line, lowercased: types, supertypes, subtypes. The object-class rows
+   *  (vehicle, saga, curse ...) read it; `cardTypes` stays the type count. */
+  lineWords?: string[];
+  /** The card's creature types when it is a creature; `["*"]` for a changeling. Kindred's supply. */
+  creatureTypes?: string[];
+  /** Creature types this card's abilities NAME in a subject that is not itself -- a lord's "Elves
+   *  you control get +1/+1", a trigger's "whenever a Zombie enters". Kindred's demand: the cares
+   *  tags carry a trigger's subject (`enters:elf`) but never an effect's, and the lord is the
+   *  payoff every kindred deck is built around. */
+  namedTypes?: string[];
 }
-
-/** Each archetype's DEFINING own-card mechanism. Deliberately tight and mostly disjoint:
- *  it EXCLUDES broad shared kinds (damage, draw-card, pump) that would make every card
- *  match every archetype (the bug this replaces). Tag strings mirror the validated ones
- *  already used in mechanisms.ts CATEGORY_MATCH. Voltron keys on subtypes (equipment,
- *  creature-enchanting auras) rather than tags/effect-kinds. Tunable. */
-export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>> = {
-  tokens: { tags: ["create-token:any"], effectKinds: ["token-generation", "token-doubling"] },
-  // death/sacrifice events define aristocrats; forced-sacrifice dropped — edict engines land
-  // via their dies:/sacrifice: emits, and dropping it sheds the destroy→forced-sacrifice mislabel.
-  // DEMAND-DEFINED (2026-08-21). An aristocrats deck is its PAYOFFS -- Zulaport Cutthroat, Blood
-  // Artist, Mayhem Devil -- not the removal spell that happens to emit `sacrifice:creature`.
-  // Counting supply and demand alike made a control deck's removal package into its aristocrats
-  // confidence: MEASURED over the 71 decks, 815 of the 974 matches are supply-only against 159
-  // cares-backed, and Aristocrats topped 4 of the 6 decks the owner named "Control" -- decks with
-  // no Zulaport and no Blood Artist in them. The Sorin defect (`analyze.ts:590`) one layer up.
-  aristocrats: { tags: ["dies:", "sacrifice:"], effectKinds: ["drain"], demandDefined: true },
-  lifegain: { tags: ["gain-life:any"], effectKinds: ["lifegain"] },
-  landfall: { tags: ["enters:land"] },
-  spellslinger: { tags: ["cast:instant", "cast:sorcery"], effectKinds: ["copy-spell"] },
-  reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
-  counters: { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters", "proliferate"] },
-  voltron: { subtypes: ["equipment", "aura"] },
-  // SUPERFRIENDS IS A CARD TYPE COUNT AND NOTHING ELSE (roadmap M1, owner-reported 2026-08-23). A
-  // 21-planeswalker deck read as "wins by damage or drain" with no planeswalker label in existence,
-  // because every other row here keys on a MECHANISM and this archetype has none: what makes a deck
-  // superfriends is that a third of it is planeswalkers.
-  //
-  // NO NEW THRESHOLD, and that is the measurement rather than a convenience. Planeswalkers per deck
-  // across the 71 are 0 on FIFTY decks, 1 on fourteen, 2 on five — and then 18 and 21. The most any
-  // non-superfriends deck runs is 2 (3.4% of its nonlands) against 28.1% and 32.8% for the two real
-  // ones, so every threshold between them gives the identical answer and `ARCHETYPE_FLOOR` (0.08)
-  // already separates them by a factor of eight. The A11 tripwire — cap how many of the 71 it may
-  // top, then measure — is satisfied with the widest margin any archetype here has.
-  superfriends: { cardTypes: ["planeswalker"] },
-  // ENCHANTRESS AND ARTIFACTS ARE TYPE COUNTS WITH A PAYOFF ROW (roadmap T2c, owner-reported
-  // 2026-09-03). This file's header has deferred both since it was written -- "the heuristic ones
-  // (tribal, enchantress, artifacts, group slug/hug) ... land in follow-on plans" -- and the cost of
-  // that gap is that on an Enchantress deck the panel ranks the six things the deck ALSO does while
-  // the one thing it IS cannot appear at any percentage. The owner hit exactly that.
-  //
-  // DEMAND-DEFINED, which is what keeps them from being type counts alone. The payoff -- a card that
-  // CARES about an enchantment entering, i.e. Enchantress's Presence, Setessan Champion, Sythis --
-  // counts full; a card that is merely an enchantment counts at `PRODUCER_SHARE`. Without that a
-  // deck holding a dozen incidental enchantments would read as an Enchantress deck, which is the
-  // universal-bucket failure this file has refused four times on the theme line.
-  enchantress: {
-    cardTypes: ["enchantment"], tags: ["enters:enchantment"],
-    demandDefined: true, requiresDemand: true,
-  },
-  artifacts: {
-    cardTypes: ["artifact"], tags: ["enters:artifact"],
-    demandDefined: true, requiresDemand: true,
-  },
-};
 
 /** A token that is MANA OR A CARD, not a board presence. Making a Treasure is ramp: the go-wide
  *  wincon already excludes these for the same reason (`wincon.ts`), and counting them made every
@@ -201,37 +138,6 @@ function makesOnlyResourceTokens(signal: CardSignal): boolean {
   return made.length > 0 && made.every((m) => RESOURCE_TOKENS.has(m));
 }
 
-export interface ArchetypeSignature {
-  tags?: string[];
-  effectKinds?: string[];
-  subtypes?: string[];
-  /** Card types the archetype is DEFINED BY, matched against `CardSignal.cardTypes`. The only row
-   *  using it is superfriends, and it exists because that archetype is a type COUNT and nothing
-   *  else — see the row for the measurement. */
-  cardTypes?: string[];
-  /** The archetype is its PAYOFFS, so a card matching only on the supply side counts at
-   *  `PRODUCER_SHARE` rather than full. Set per row, with the measurement in the comment beside it
-   *  -- most archetypes are supply-defined (a token maker MAKES tokens, a reanimation spell DOES
-   *  the recursion) and `create-token` is not even a trigger event anywhere in the corpus, so
-   *  `tokens` is 0 cares-backed by construction and could never be gated this way. */
-  demandDefined?: boolean;
-  /** THE ARCHETYPE DOES NOT EXIST WITHOUT A PAYOFF IN THE DECK (roadmap T2c, owner's correction
-   *  2026-09-03): *"if you have 30 enchantments and no cards that actually care about enchantments
-   *  you are not Enchantress deck"*.
-   *
-   *  `demandDefined` alone cannot say that. It only WEIGHTS the supply side down to
-   *  `PRODUCER_SHARE`, and a type count is large enough to clear `ARCHETYPE_FLOOR` on weight
-   *  0.35 by itself: thirty enchantments in a sixty-card nonland deck is 0.17, twice the floor,
-   *  with not one card caring. This gate drops the row outright unless at least one card in the
-   *  deck matches on the DEMAND side, so the type count can only ever amplify a payoff that is
-   *  really there.
-   *
-   *  NOT SET ON `superfriends`, and the difference is the point: a deck running 21 planeswalkers IS
-   *  a superfriends deck whether or not anything pays them off. Thirty enchantments is not an
-   *  Enchantress deck; it is a deck with enchantments in it. */
-  requiresDemand?: boolean;
-}
-
 function matchesSignature(signal: CardSignal, sig: ArchetypeSignature): boolean {
   const tagHit =
     sig.tags?.some((t) =>
@@ -240,16 +146,19 @@ function matchesSignature(signal: CardSignal, sig: ArchetypeSignature): boolean 
   const kindHit = sig.effectKinds?.some((k) => signal.effectKinds.includes(k)) ?? false;
   const subtypeHit = sig.subtypes?.some((s) => signal.subtypes.includes(s)) ?? false;
   const typeHit = sig.cardTypes?.some((t) => (signal.cardTypes ?? []).includes(t)) ?? false;
-  return tagHit || kindHit || subtypeHit || typeHit;
+  const keywordHit = sig.keywords?.some((k) => (signal.keywords ?? []).includes(k)) ?? false;
+  const lineHit = sig.lineWords?.some((w) => (signal.lineWords ?? []).includes(w)) ?? false;
+  const tokenHit = sig.tokenKinds?.some((k) => (signal.tokenKinds ?? []).includes(k)) ?? false;
+  const allHit = sig.allTags !== undefined && sig.allTags.every((t) => signal.themeTags.includes(t));
+  const demandHit = sig.demandTags?.some((t) => (signal.caresTags ?? []).includes(t)) ?? false;
+  return tagHit || kindHit || subtypeHit || typeHit || keywordHit || lineHit || tokenHit || allHit || demandHit;
 }
 
 /** Whether the signature is satisfied by what the card WANTS, as opposed to what it supplies. */
 function matchesDemand(signal: CardSignal, sig: ArchetypeSignature): boolean {
   if (signal.caresTags === undefined) return true; // caller computed no demand side: old behaviour
-  return (
-    sig.tags?.some((t) =>
-      t.endsWith(":") ? signal.caresTags!.some((tt) => tt.startsWith(t)) : signal.caresTags!.includes(t),
-    ) ?? false
+  return [...(sig.tags ?? []), ...(sig.demandTags ?? [])].some((t) =>
+    t.endsWith(":") ? signal.caresTags!.some((tt) => tt.startsWith(t)) : signal.caresTags!.includes(t),
   );
 }
 
@@ -291,6 +200,9 @@ export function detectArchetypes(
     }))
     .filter((r) => r.confidence >= ARCHETYPE_FLOOR);
 
+  const kindred = detectKindred(cardSignals, nonlandCount);
+  if (kindred) ranked.push(kindred);
+
   // combo is floor-exempt: a 2+ card combo is real regardless of deck size.
   if (comboCards.length >= 2) {
     ranked.push({
@@ -302,4 +214,55 @@ export function detectArchetypes(
 
   ranked.sort((a, b) => b.confidence - a.confidence || a.name.localeCompare(b.name));
   return ranked.length > 0 ? ranked : [GOODSTUFF];
+}
+
+/** Title case for a creature type as a label prints it: "time lord" -> "Time Lord". */
+const titleCase = (s: string): string =>
+  s.split(" ").map((w) => (w.length === 0 ? w : w[0]!.toUpperCase() + w.slice(1))).join(" ");
+
+/** THE ONE KINDRED MEMBER, parametrised by the deck's creature type (vocabulary 2026-09-06).
+ *
+ *  THE TYPE IS THE ONE THE PAYOFFS NAME, not the one the bodies happen to share. Humans are on
+ *  2,761 corpus cards and a deck can hold twenty of them incidentally; three Elf lords over twelve
+ *  Elves is an Elves deck. So the type is the most-named in `namedTypes` and the cares tags, and
+ *  the body count only breaks a tie (then alphabetical, so the answer is stable). No payoff, no row
+ *  -- the same `requiresDemand` rule as Enchantress: thirty Zombies with nothing caring is a deck
+ *  with Zombies in it.
+ *
+ *  Weight follows every demand-defined row: a payoff counts full, a body at `PRODUCER_SHARE`, a
+ *  changeling is a body of every type. CEILING: a family theme (EDHREC's Sea Creatures, Outlaws)
+ *  splits across its member types and each is scored alone; `KINDRED_TRIBES` lists the members so a
+ *  later pass can pool them. */
+export function detectKindred(cardSignals: CardSignal[], nonlandCount: number): ArchetypeRanking | undefined {
+  const named = new Map<string, number>();
+  const bodies = new Map<string, number>();
+  const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
+  for (const s of cardSignals) {
+    for (const t of new Set(s.namedTypes ?? [])) bump(named, t);
+    for (const c of s.caresTags ?? []) {
+      const i = c.indexOf(":");
+      if (i > 0 && !c.slice(i + 1).startsWith("-")) bump(named, c.slice(i + 1));
+    }
+    for (const t of new Set(s.creatureTypes ?? [])) if (t !== "*") bump(bodies, t);
+  }
+  // Only a CREATURE type some creature in the deck actually has can be the tribe: a cares subject
+  // like `creature`, `land` or `permanent` is a class, not a kindred -- and a reconfigure creature
+  // is an Equipment, a Gingerbrute is a Food, a Go-Shintai is a Shrine, and none of those is a
+  // tribe either (measured: "Kindred: Equipment" led four Voltron decks before this filter).
+  const candidates = [...bodies.keys()].filter(
+    (t) => (named.get(t) ?? 0) > 0 && (SUBTYPE_TYPES[t] ?? []).includes("creature"),
+  );
+  if (candidates.length === 0) return undefined;
+  candidates.sort((a, b) => (named.get(b)! - named.get(a)!) || (bodies.get(b)! - bodies.get(a)!) || a.localeCompare(b));
+  const type = candidates[0]!;
+  let weight = 0;
+  for (const s of cardSignals) {
+    const payoff = (s.namedTypes ?? []).includes(type) || (s.caresTags ?? []).some((c) => c.endsWith(`:${type}`));
+    const body = (s.creatureTypes ?? []).some((t) => t === type || t === "*");
+    if (payoff) weight += 1;
+    else if (body) weight += PRODUCER_SHARE;
+  }
+  const confidence = nonlandCount > 0 ? weight / nonlandCount : 0;
+  if (confidence < ARCHETYPE_FLOOR) return undefined;
+  return { name: "kindred", label: `${ARCHETYPE_LABELS.kindred}: ${titleCase(type)}`, confidence };
 }
