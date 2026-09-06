@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useIsNarrow } from "../lib/use-narrow.js";
 import { drawnEdges, litUndrawn } from "./board-edges.js";
 import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
@@ -245,6 +246,14 @@ export function GraphView(
     { label: string; copies: number; deg: number; detail: string; unread: boolean; x: number; y: number } | null
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  /** THE BOARD OWNS THE PHONE. Measured on the owner's phone (2026-09-06, whole-deck board in
+   *  fullscreen): state chips, four paint tabs, eight facet pills, the toggles, the find box and
+   *  the legend took ~55% of the viewport and the board was a small square under them. Below `sm`
+   *  every one of those folds behind one "filters" button; the board takes 70svh in flow and the
+   *  whole shell in fullscreen. At `sm` and up nothing changes. */
+  const [chromeOpen, setChromeOpen] = useState(false);
+  const narrow = useIsNarrow();
+  const chromeId = useId();
   /** THE BOARD'S ANSWER TO "SHOW ME THE ONES YOU COULD NOT READ". The hatch says WHICH card is
    *  unread once your eye is on it; it cannot be surveyed. A blind judge given a 90-of-100 deck
    *  and told the mark exists found FOUR of the ten, and only after a tooltip named the first one
@@ -2046,8 +2055,32 @@ export function GraphView(
         data-testid="graph-fullscreen-shell"
         className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
       >
-        {isFullscreen && stateControls ? <div className="px-2 pt-2">{stateControls}</div> : null}
+        {bare || !narrow ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            aria-expanded={chromeOpen}
+            aria-controls={chromeId}
+            onClick={() => setChromeOpen((v) => !v)}
+            className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-2"
+          >
+            {chromeOpen ? "hide filters" : "filters"}
+          </button>
+          {canFullscreen ? (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              aria-pressed={isFullscreen}
+              className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-2 ml-auto"
+            >
+              {isFullscreen ? "exit fullscreen" : "fullscreen"}
+            </button>
+          ) : null}
+        </div>
+        )}
         {bare ? null : (
+        <div id={chromeId} className={`${narrow && !chromeOpen ? "hidden" : "flex"} flex-col gap-6`}>
+        {isFullscreen && stateControls ? <div className="px-2 pt-2">{stateControls}</div> : null}
         <div className="flex flex-wrap gap-2">
           {/* Which facet paints the board. Chips, not a <select>: this is the primary control on
            *  this view and the one thing a reader changes on purpose. */}
@@ -2243,7 +2276,7 @@ export function GraphView(
             </button>
           ) : null}
 
-          {canFullscreen ? (
+          {canFullscreen && !narrow ? (
             <button
               type="button"
               onClick={toggleFullscreen}
@@ -2254,7 +2287,6 @@ export function GraphView(
             </button>
           ) : null}
         </div>
-        )}
 
         {bare ? null : (
         <div className="flex items-center gap-3">
@@ -2397,10 +2429,12 @@ export function GraphView(
         </div>
         </>
         )}
+        </div>
+        )}
 
         <div
           className={`relative rounded-(--radius) border border-(--separator) overflow-hidden ${
-            isFullscreen || bare ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
+            isFullscreen || bare ? "flex-1 min-h-0" : "h-[70svh] sm:h-[520px]"
           }`}
         >
           <canvas

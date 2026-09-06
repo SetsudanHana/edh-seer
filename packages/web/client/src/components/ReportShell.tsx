@@ -79,12 +79,42 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   // the pointer term is load-bearing and why 639px was a lucky guess. On a coarse pointer the
   // Graph surface is the LIST, and the board is one tap from a row -- one card's local graph
   // owning the viewport, rather than the whole-deck cloud at 14.7px a disc.
-  const boardMode = useBoardMode(data.graph?.nodes.length ?? 0);
+  const autoBoardMode = useBoardMode(data.graph?.nodes.length ?? 0);
+  /** THE READER OVERRIDES THE GUESS (owner, 2026-09-06: option 3, "both"). The hook predicts which
+   *  surface a device can use; a phone that got the whole-deck board could not reach the one-card
+   *  view, and the reverse. The switch sits above either surface below `sm`, and wherever the
+   *  guess was the ego view. Above the board, not inside its fullscreen shell: fullscreen is one
+   *  tap out, and a switch that changes the surface under a fullscreen element is a worse trade
+   *  than that tap. Component state, same ceiling as `focusId`; NOT reset per deck on purpose -- it is
+   *  a choice about this device, not about the deck. */
+  const [boardModeOverride, setBoardModeOverride] = useState<"board" | "ego" | null>(null);
+  const boardMode = boardModeOverride ?? autoBoardMode;
   /** The card whose local graph is open, or null for the list.
    *  CEILING: component state, so it does not survive a reload and the browser back button leaves
    *  the report rather than leaving this view -- the same cost S7 paid to make Graph a route.
    *  Upgrade path is `/graph/:cardName`, which is also what a breadcrumb would need. */
   const [focusId, setFocusId] = useState<string | null>(null);
+  const modeSwitch = (
+    <div
+      role="group"
+      aria-label="Graph surface"
+      className={`flex gap-1 ${autoBoardMode === "ego" ? "" : "sm:hidden"}`}
+    >
+      {([["board", "Whole deck"], ["ego", "One card"]] as const).map(([mode, label]) => (
+        <button
+          key={mode}
+          type="button"
+          aria-pressed={boardMode === mode}
+          onClick={() => { setBoardModeOverride(mode); if (mode === "board") setFocusId(null); }}
+          className={`eyebrow whitespace-nowrap rounded-(--radius) border px-2.5 py-2 ${
+            boardMode === mode ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
   // Which cards the synergy engine could not read. Computed once here because BOTH graph surfaces
   // want it and only one of them (`GraphView`) is handed the report — see `lib/unread.ts` for why
   // the rule lives in one place.
@@ -206,6 +236,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                       loading the board
                     </div>
                   }>
+                    {modeSwitch}
                     {boardMode === "ego"
                       ? (focusId
                         ? (

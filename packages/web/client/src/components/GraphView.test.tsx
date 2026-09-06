@@ -2719,3 +2719,27 @@ describe("bare chrome", () => {
     expect(screen.queryByText(/Synergy edges|Feeds/)).toBeNull();
   });
 });
+
+/** BELOW `sm` THE CHROME FOLDS BEHIND ONE BUTTON (owner's phone, 2026-09-06: the board was a small
+ *  square under ~55% of chrome, fullscreen included). Narrow is `useIsNarrow`, so `matchMedia` is
+ *  stubbed to answer the width query; at desktop width nothing here renders and the facet row keeps
+ *  its own fullscreen button, which every test above relies on. */
+test("the filters button folds the board's chrome on a phone", async () => {
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: q.includes("max-width"), media: q, onchange: null,
+    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    dispatchEvent: () => false,
+  }));
+  try {
+    const { getByRole, container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    const chrome = container.querySelector(`#${CSS.escape(getByRole("button", { name: /^filters$/i }).getAttribute("aria-controls")!)}`)!;
+    expect(chrome.className).toContain("hidden");
+    const toggle = getByRole("button", { name: /^filters$/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(chrome.className).not.toContain("hidden");
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
