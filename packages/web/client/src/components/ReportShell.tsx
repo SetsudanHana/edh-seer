@@ -51,11 +51,19 @@ import { unreadCardNames } from "../lib/unread.js";
  *  marks nothing. Over the cap nothing is seeded and the header line still says "+14". */
 export const SEED_CAP = 8;
 
-export function ReportShell({ data, diff, state, onState }: {
+export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   data: AnalyzeResponse; diff?: RunDiff | null;
   /** The game state the report was run under, and the way to change it (roadmap W18). */
   state?: GameState; onState?: (state: GameState) => void;
+  /** A re-run under a new state is in flight (W18c): said on the controls, not by the deck bar. */
+  stateBusy?: boolean;
 }) {
+  // ONE ELEMENT, TWO HOMES: the header row here, and the fullscreen graph's shell (W18c owner
+  // finding 2: "the fullscreen graph has no way to change the state, and the graph is where the
+  // dashed edges are").
+  const stateControls = onState && data.report.markers && data.report.markers.length > 0
+    ? <StateControls markers={data.report.markers} state={state} onState={onState} edges={data.report.edges} busy={stateBusy} />
+    : null;
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
   const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
   // WHICH GRAPH SURFACE THIS DEVICE GETS (roadmap R1). Not a width: see `use-board-mode.ts` for why
@@ -156,7 +164,7 @@ export function ReportShell({ data, diff, state, onState }: {
         {/* A GAME STATE THE OWNER SETS, only where the deck can reach it (roadmap W18). */}
         {onState && data.report.markers && data.report.markers.length > 0 && (
           <div className="px-4 py-3 border-b border-(--separator)">
-            <StateControls markers={data.report.markers} state={state} onState={onState} />
+            {stateControls}
           </div>
         )}
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not
@@ -202,7 +210,7 @@ export function ReportShell({ data, diff, state, onState }: {
                           />
                         )
                         : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
-                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
+                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} stateControls={stateControls} />}
                   </Suspense>
                 </Reference>
               }

@@ -38,6 +38,10 @@ export default function App() {
   stateRef.current = state;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** A re-run under a new game state is in flight (W18c). Separate from `loading` on purpose:
+   *  `loading` collapses the deck bar into "Analyzing…" and drives the paste-box states, which is
+   *  right for a new list and reads as a page reload for a state flip. */
+  const [stateBusy, setStateBusy] = useState(false);
   /** A DECK IS ALREADY ON ITS WAY, AND THE FIRST PAINT HAS TO KNOW IT. Read from the URL during the
    *  initial render rather than in the effect below, because that effect runs AFTER a paint and
    *  `decodeShare` is async on top of it: for those frames a shared link renders the empty state,
@@ -158,14 +162,32 @@ export default function App() {
   }
 
   const onAnalyze = () => void analyse(decklist, commanders);
-  // CHANGING THE STATE IS A RE-RUN: the engine reads the deck again under it, and the query says
-  // which state the page shows so the link carries it. The hash (the deck) is untouched.
+  // CHANGING THE STATE IS A RE-RUN IN PLACE (W18c, owner: "re-runs and re-renders the whole
+  // report, which reads as a page reload"). The engine reads the same deck again under the new
+  // state and only `data` changes: the deck bar stays open as it was, no run diff is written (a
+  // state is not an edit), no history entry, no share-link rewrite -- the query already carries the
+  // state, and the hash (the deck) is untouched. `ReportShell` keys its "go home" on the deck's
+  // cards, so the reader also stays on whatever surface they were on.
   const onState = (next: GameState) => {
     setState(next);
     stateRef.current = next;
     window.history.replaceState(null, "", `${window.location.pathname}${searchWithState(window.location.search, next)}${window.location.hash}`);
-    void analyse(decklist, commanders);
+    void reanalyseUnderState(next);
   };
+  async function reanalyseUnderState(next: GameState) {
+    setStateBusy(true);
+    setError(null);
+    try {
+      const res = Object.keys(next).length > 0
+        ? await analyzeDeck(decklist, commanders, undefined, next)
+        : await analyzeDeck(decklist, commanders);
+      setData(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setStateBusy(false);
+    }
+  }
 
   /** NOTHING PASTED, NOTHING ANALYSED, NOTHING IN FLIGHT — the only state in which the page has to
    *  introduce itself. Named once because the lead above the form and the example-deck button below
@@ -405,7 +427,7 @@ export default function App() {
       )}
       {data && (
         <div className="reveal">
-          <ReportView data={data} diff={diff} state={state} onState={onState} />
+          <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
         </div>
       )}
       {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after

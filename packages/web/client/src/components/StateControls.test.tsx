@@ -34,3 +34,22 @@ test("a boolean marker is a pressable switch that reports its flip", async () =>
   await userEvent.click(screen.getByRole("button", { name: /monarch/i }));
   expect(onState).toHaveBeenCalledWith({});
 });
+
+/** THE LINE SAYS WHAT THE STATE DID (roadmap W18c, owner 2026-09-06: "say what changed"), read off
+ *  the report's own `enabledBy` edges rather than a remembered previous run. */
+test("with edges, the line counts the edges the state made and names the cards that gained most", () => {
+  const edges = [
+    { a: "Garruk's Uprising", b: "Raise the Alarm", enabledBy: ["speed"] },
+    { a: "Garruk's Uprising", b: "Goblin Surveyor", enabledBy: ["speed"] },
+    { a: "Samut, the Driving Force", b: "Raise the Alarm" },
+  ];
+  render(<StateControls markers={["speed"]} state={{ speed: 4 }} onState={() => {}} edges={edges} />);
+  expect(screen.getByText("speed 4: 2 edges exist because of it · Garruk's Uprising +2 · Goblin Surveyor +1 · Raise the Alarm +1")).toBeInTheDocument();
+});
+
+test("a state no edge depends on says so, and a run in flight says it is re-reading", () => {
+  const { rerender } = render(<StateControls markers={["monarch"]} state={{ monarch: true }} onState={() => {}} edges={[{ a: "A", b: "B" }]} />);
+  expect(screen.getByText("the monarch: no edge in this deck depends on it")).toBeInTheDocument();
+  rerender(<StateControls markers={["monarch"]} state={{ monarch: true }} onState={() => {}} edges={[]} busy />);
+  expect(screen.getByText("re-reading the deck under the monarch…")).toBeInTheDocument();
+});

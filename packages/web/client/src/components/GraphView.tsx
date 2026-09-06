@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { drawnEdges, litUndrawn } from "./board-edges.js";
 import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
@@ -185,11 +185,15 @@ export function edgeAlpha(weight: number, maxWeight: number): number {
 }
 
 export function GraphView(
-  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap, emphasisId = null }:
+  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap, emphasisId = null, stateControls }:
   {
     graph: CardGraph;
     report: DeckReport;
     artLoader?: ArtLoader;
+    /** The game-state controls (W18c). Rendered INSIDE the fullscreen shell while fullscreen is
+     *  on, because the shell's backdrop hides every sibling -- the report header included -- and
+     *  the graph is where the dashed edges the state draws are. */
+    stateControls?: ReactNode;
     /** "bare" draws the canvas and nothing else -- no paint chips, no facet chips, no search, no
      *  legend, no caption, no fullscreen. The phone surface (roadmap R1) needs the viewport, and
      *  measured at 390 the chrome above the board was 902px of an 844px one, so the first screenful
@@ -2042,6 +2046,7 @@ export function GraphView(
         data-testid="graph-fullscreen-shell"
         className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
       >
+        {isFullscreen && stateControls ? <div className="px-2 pt-2">{stateControls}</div> : null}
         {bare ? null : (
         <div className="flex flex-wrap gap-2">
           {/* Which facet paints the board. Chips, not a <select>: this is the primary control on
