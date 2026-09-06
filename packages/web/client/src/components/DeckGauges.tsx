@@ -109,7 +109,8 @@ export function DeckGauges({ data, diff }: {
   const lands = report.deckMath?.lands;
   // WHOSE ROW EACH TICK IS (owner ruling 2026-09-06: the report shows the rows). `report.template`
   // names the archetype(s) the engine blended and carries their median rows keyed by the parent's
-  // `key`, so "Voltron 19.5 · Tokens 12" under a tick of 15.5 is a claim a player can check.
+  // `key`, so "Voltron 20 · Tokens 12" under a tick of 16 is a claim a player can check. Whole
+  // cards since the owner's 2026-09-06 ruling; the file's 19.5 median is rounded where it is read.
   //
   // THE CLAIM IS THE ARCHETYPE'S, NOT EDHREC'S (owner, same day: "edhrec is just a source for
   // checking our thesis"). The thesis is that an archetype has its own template; the decks the

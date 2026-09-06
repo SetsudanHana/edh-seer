@@ -264,8 +264,8 @@ export interface TemplateBlend {
   /** `ARCHETYPE_LEAD_FLOOR`, shipped so the report can print the number a theme fell under instead
    *  of hard-coding it (UX sweep 2026-09-06, D4). */
   leadFloor: number;
-  /** The blended target per parent: the confidence-weighted mean of the two rows, rounded to the
-   *  half; the primary's row alone; or the population's. This is what `computeBuild` scores. */
+  /** The blended target per parent: the confidence-weighted mean of the two rows, rounded to a
+   *  WHOLE card; the primary's row alone; or the population's. This is what `computeBuild` scores. */
   targets: TemplateRow;
 }
 
@@ -275,8 +275,14 @@ const themeRows = TEMPLATE.themes as Record<string, Partial<TemplateRow> & { n: 
 function templateTheme(r: ArchetypeRanking, weight: number): TemplateTheme | undefined {
   const stored = themeRows[r.name];
   if (!stored) return undefined;
-  const { n: _n, ...row } = stored;
-  return { name: r.name, label: ARCHETYPE_LABELS[r.name], weight, row: { ...TEMPLATE.population, ...row } };
+  const { n: _n, ...stored_row } = stored;
+  // WHOLE CARDS (owner, 2026-09-06: "you can not have 0.5 of a card"). The file keeps the medians
+  // as measured, and an even sample's median is a half -- 297 of its 671 values. A target is a
+  // count of cards, so it is rounded HERE, once, and every reader downstream (the score, the ticks,
+  // the findings, the provenance line) sees the same whole number. `Math.round` takes 19.5 to 20.
+  const row = { ...TEMPLATE.population } as TemplateRow;
+  for (const k of TEMPLATE_KEYS) row[k] = Math.round(stored_row[k] ?? TEMPLATE.population[k]);
+  return { name: r.name, label: ARCHETYPE_LABELS[r.name], weight, row };
 }
 
 /** Which theme row(s) this deck is measured against (spec §3.2). `T = (c₁·T₁ + c₂·T₂) / (c₁ + c₂)`
@@ -296,7 +302,7 @@ export function templateBlend(strategies: readonly ArchetypeRanking[] = []): Tem
   const targets = {} as TemplateRow;
   for (const k of TEMPLATE_KEYS) {
     const t = primary.weight * primary.row[k] + (secondary ? secondary.weight * secondary.row[k] : 0);
-    targets[k] = Math.round(t * 2) / 2;
+    targets[k] = Math.round(t);
   }
   return { primary, ...(secondary ? { secondary } : {}), population, leadFloor: ARCHETYPE_LEAD_FLOOR, targets };
 }
