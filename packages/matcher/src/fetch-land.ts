@@ -66,12 +66,29 @@ export const fetchedLandEntersTapped = (oracleText: string, otherLands: number):
 /** The lands in THIS deck a fetch can actually find. Hand it the LIBRARY: a commander is not in it
  *  (CR 903.6) and cannot be fetched. */
 const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
+
+/** "SEARCH FOR UP TO TWO BASIC LAND CARDS THAT SHARE A LAND TYPE" -- Myriad Landscape and Hiveheart
+ *  Shaman, the two corpus cards that print it. A land with no land type shares none, and WASTES IS
+ *  A BASIC LAND WITH NO LAND TYPE (`Basic Land`, no dash), so two Wastes do not answer it (owner,
+ *  2026-09-06: "wastes do not have basic land type which they can share, so you can not fetch 2
+ *  wastes with myriad landscape"). Read by the edge builder and by `fetchableLands` alike, so the
+ *  board and the mana model cannot disagree about it. */
+export const SHARES_A_LAND_TYPE = /share a land type/i;
+/** A BASIC that carries a basic land type: `Basic Land — Island` yes, `Basic Land` (Wastes) no, and a
+ *  dual (`Land — Island Mountain`) no because it is not basic. Both halves are checked here, so the
+ *  name promises exactly what it tests. */
+export const hasBasicLandType = (typeLine: string): boolean => {
+  const line = typeLine.toLowerCase();
+  return line.includes("basic") && BASIC_TYPES.some((t) => line.includes(t));
+};
+
 export function fetchableLands<T extends { typeLine: string }>(
   oracleText: string,
   deck: readonly T[],
 ): T[] {
   const text = oracleText.toLowerCase();
   const named = BASIC_TYPES.filter((t) => text.includes(t));
+  const sharesType = SHARES_A_LAND_TYPE.test(text);
   // NAMING A TYPE IS NOT DEMANDING A BASIC, and the two are independent (owner, 2026-08-25).
   // Scalding Tarn searches for "an Island or Mountain CARD", so it finds Steam Vents -- a
   // `Land - Island Mountain` -- and every other dual carrying one of those types, 20 lands in
@@ -86,6 +103,32 @@ export function fetchableLands<T extends { typeLine: string }>(
     if (!line.includes("land")) return false;
     if (named.length > 0 && !named.some((t) => line.includes(t))) return false;
     if (wantsBasic && !line.includes("basic")) return false;
+    if (sharesType && !hasBasicLandType(line)) return false;
     return true;
   });
+}
+
+/** HOW MANY LANDS ONE ACTIVATION ASKS FOR, AND HOW MANY THE LIBRARY CAN GIVE IT. "Not enough
+ *  basics" is a deckbuilding fault no colour count sees (owner, 2026-09-06): Myriad Landscape in a
+ *  deck with one basic of each type finds one land for its {2}, not two. `found` is the most lands
+ *  a single activation can return -- for a shared-type fetch, the largest basic type the library
+ *  holds; otherwise every land the fetch can reach. Not gated on the activation's mana cost, unlike
+ *  `isLandFetch`: this is about what the card returns when you DO pay, not whether a model does. */
+const UP_TO = /search your library for up to (two|three|four)\b/i;
+const COUNT: Record<string, number> = { two: 2, three: 3, four: 4 };
+export function fetchDemand<T extends { typeLine: string }>(
+  oracleText: string,
+  library: readonly T[],
+): { wants: number; found: number; sharedType: boolean } | null {
+  if (!LAND_FETCH.test(oracleText) || !ONTO_BATTLEFIELD.test(oracleText)) return null;
+  // THE FETCH'S OWN LINE, not the whole text: a card with a second "search your library" line (an
+  // opponent's, or a nonland "up to N") must not lend this one its count.
+  const line = oracleText.split("\n").find((l) => LAND_FETCH.test(l)) ?? oracleText;
+  const wants = COUNT[UP_TO.exec(line)?.[1]?.toLowerCase() ?? ""] ?? 1;
+  const targets = fetchableLands(oracleText, library);
+  const sharedType = SHARES_A_LAND_TYPE.test(line);
+  const found = sharedType
+    ? Math.max(0, ...BASIC_TYPES.map((t) => targets.filter((c) => c.typeLine.toLowerCase().includes(t)).length))
+    : targets.length;
+  return { wants, found, sharedType };
 }

@@ -34,7 +34,7 @@ import { demandSentence } from "./demand-sentence.js";
  *  constant in this file. */
 export const FINDING_CAP = 3;
 
-export type FindingKind = "build" | "answers" | "colour" | "lands" | "synergy";
+export type FindingKind = "build" | "answers" | "colour" | "lands" | "synergy" | "fetch";
 
 export interface Finding {
   kind: FindingKind;
@@ -338,6 +338,32 @@ function landFinding(report: DeckReport): Finding | null {
   };
 }
 
+/** A FETCH THE LIBRARY CANNOT FILL (owner, 2026-09-06: "you can have 'not enough basics' like
+ *  playing Myriad Landscape when you only play one of each"). The engine counted it in
+ *  `deckMath.fetchShortfalls`; this only says it. A fetch that finds nothing scores shortfall 1.0 and
+ *  ranks first, on purpose: a dead land is the worst single slot a deck can carry. */
+function fetchFindings(report: DeckReport): Finding[] {
+  return (report.deckMath?.fetchShortfalls ?? []).map((f) => ({
+    // ITS OWN KIND, and NOT in `SCORED_KINDS`: `buildScore` never reads `fetchShortfalls`, so these
+    // rows belong under "what the build score cannot see" -- a `lands` kind would claim a price.
+    kind: "fetch" as const,
+    id: `fetch:${f.card}`,
+    headline: `${f.card} looks for ${f.wants} ${f.wants === 1 ? "land" : "lands"} and the deck can give it ${f.found}.`,
+    detail: f.sharedType
+      ? `It searches for basic lands that share a land type, so it needs ${f.wants} ${f.wants === 1 ? "basic" : "basics"} of ONE type`
+        + " — a Wastes has no land type and never qualifies. The most of one type here is "
+        + `${f.found}, so the activation returns ${f.found === 1 ? "one land" : `${f.found} lands`} for its full cost.`
+      : `It searches for up to ${f.wants} basic lands and the deck holds ${f.found} it can find.`,
+    action: f.sharedType
+      ? "Run a second basic of one type, or swap it for a fetch that finds any basic."
+      : "Add basics, or swap it for a fetch that finds a nonbasic type you run.",
+    figure: `${f.found}/${f.wants}`,
+    figureLabel: `lands ${f.card} can find`,
+    filled: f.found / f.wants,
+    shortfall: (f.wants - f.found) / f.wants,
+  }));
+}
+
 /** The ranked diagnosis. Highest shortfall first; ties by kind name so the order is stable across
  *  runs rather than stable to the engine's iteration order — the same rule the cut list keeps. */
 export function findings(report: DeckReport): Finding[] {
@@ -347,6 +373,7 @@ export function findings(report: DeckReport): Finding[] {
     ...(answerFinding(report) ? [answerFinding(report)!] : []),
     ...(synergyFinding(report) ? [synergyFinding(report)!] : []),
     ...(landFinding(report) ? [landFinding(report)!] : []),
+    ...fetchFindings(report),
   ];
   all.sort((a, b) => b.shortfall - a.shortfall || a.id.localeCompare(b.id));
   return all;

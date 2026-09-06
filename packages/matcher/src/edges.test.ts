@@ -2017,6 +2017,39 @@ test("a land finder edges to the lands it can fetch, and to no others", () => {
   expect(reasons(pathToExile, land(["basic", "land"], ["forest"]))).toHaveLength(0);
 });
 
+// WASTES HAS NO LAND TYPE TO SHARE (owner, 2026-09-06). Myriad Landscape's "up to two basic land
+// cards that share a land type" derives as a plain basic-land subject, which Wastes answers as a
+// subject -- and cannot answer on the board, because two Wastes share nothing. None of the 71
+// calibration decks runs both, so this test is the only instrument that sees the gate.
+test("a shared-type land finder does not edge to Wastes; an any-basic finder still does", () => {
+  const finder = (name: string, oracleText: string): DeckCard => ({
+    card: { name, oracleText } as DeckCard["card"],
+    tags: {
+      oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: ["land"], subtypes: [], colors: [], identity: [], cmc: 0,
+        power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{ kind: "activated", effect: { kind: "top-manipulation", subject: { control: "you", token: null, basic: true, type: "land" } as never } }],
+    },
+  });
+  const basic = (name: string, typeLine: string, subtypes: string[]): DeckCard => ({
+    card: { name, typeLine } as DeckCard["card"],
+    tags: {
+      oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: ["basic", "land"], subtypes, colors: [], identity: [], cmc: 0,
+        power: null, toughness: null, token: false, keywords: [] },
+      abilities: [],
+    },
+  });
+  const edges = (p: DeckCard, c: DeckCard) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("ramp-target:"));
+  const myriad = finder("Myriad Landscape", "{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.");
+  const wilds = finder("Evolving Wilds", "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
+  const wastes = basic("Wastes", "Basic Land", []);
+  const island = basic("Island", "Basic Land — Island", ["island"]);
+  expect(edges(myriad, island)).toHaveLength(1);
+  expect(edges(myriad, wastes)).toHaveLength(0);
+  expect(edges(wilds, wastes)).toHaveLength(1);
+});
+
 // THE ARCHETYPE NO CALIBRATION DECK CONTAINS. 13 corpus cards say "a deck can have any number of
 // cards named ..." and all 13 count their own name — Dragon's Approach runs 30 copies, Rat Colony
 // and Shadowborn Apostle likewise. None is in the 71 decks, so population and panel are blind to
