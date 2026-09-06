@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { ManaTimeline } from "./ManaTimeline.js";
 
@@ -53,4 +53,17 @@ test("the chart reads out its own turns and what it strands", () => {
 test("no simulation means no chart, never an empty one", () => {
   const { container } = render(<ManaTimeline curve={CURVE} manaAvailability={undefined} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+/** EVERY CHART HAS ITS AXIS AND A READOUT (owner, 2026-09-06: "some charts have Y axis and some
+ *  dont, even if I hover over a dot on the diagram I can not see the Y value"). */
+test("it draws a mana axis, and hovering, tapping or focusing a turn puts its values in the readout", () => {
+  const { container } = render(<ManaTimeline curve={CURVE} manaAvailability={MA} />);
+  expect(container.querySelectorAll("[data-testid='y-tick']").length).toBeGreaterThan(1);
+  // The busiest turn is the default, so the line is never blank.
+  expect(screen.getByTestId("timeline-readout")).toHaveTextContent(/^Turn \d+ · /);
+  fireEvent.pointerEnter(screen.getByTestId("timeline-col-4"));
+  expect(screen.getByTestId("timeline-readout")).toHaveTextContent("Turn 4 · 4 mana in the median game (3–5)");
+  fireEvent.focus(screen.getByTestId("timeline-col-2"));
+  expect(screen.getByTestId("timeline-readout")).toHaveTextContent("Turn 2 · 2 mana");
 });

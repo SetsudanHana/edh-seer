@@ -87,9 +87,13 @@ function BandScale() {
 }
 
 
-export function DeckGauges({ data, onOpen, diff }: {
+/** NOTHING HERE IS A CONTROL (owner, 2026-09-06: "all the gauges and bars should not be clickable
+ *  there cause those are duplicate of our left menu"). The dials and bullets used to open the
+ *  chapter they summarise; the rail one column over already does exactly that, so every one of
+ *  these is a figure and only a figure. `Dial` and `Bullet` keep their optional button shape for
+ *  any other caller; this panel passes no `onOpen`. */
+export function DeckGauges({ data, diff }: {
   data: AnalyzeResponse;
-  onOpen: (tab: GaugeTab, focus?: string) => void;
   /** WHERE THESE TWO NUMBERS WERE LAST RUN (roadmap S9). Only the two LEAD dials take a tick: the
    *  run snapshot carries `synergyOverall` and `buildScore` and nothing else, and giving the input
    *  dials one would mean new snapshot fields for a comparison nobody asked for. */
@@ -177,8 +181,6 @@ export function DeckGauges({ data, onOpen, diff }: {
                 : undefined}
               zones="score"
               size="lead"
-              onOpen={() => onOpen("engine", undefined)}
-              openLabel="Engine"
               /* THE ONLY PLACE EITHER SCORE SAYS WHAT IT MEASURES, moved here verbatim when S15
                * retired the second copy of the number it used to sit in. Four of four personas
                * (2026-08-26) could not read `SYNERGY 0.8/5`; the words are what fixed that, not the
@@ -250,8 +252,6 @@ export function DeckGauges({ data, onOpen, diff }: {
                 : undefined}
               zones="score"
               size="lead"
-              onOpen={() => onOpen("build", undefined)}
-              openLabel="Build"
               /* Same move, and the wording follows the panel it points at: the category targets are
                * the Roles chapter's, not "the benchmarks below" — that phrase was true of a
                * single-scroll Overview two layouts ago. */
@@ -286,12 +286,6 @@ export function DeckGauges({ data, onOpen, diff }: {
                   fill={countFill(p.count, p.target)}
                   mark={p.target > 0 ? TARGET_MARK : undefined}
                   note={tickNote(p.key)}
-                  // A SINGLE-LEAF PARENT HAS NO DETAIL TO OPEN. `BuildBenchmarks` renders a group
-                  // only for a parent with more than one leaf -- Ramp's single leaf would restate
-                  // the parent's own count as "100% of Ramp", the duplicate the folded shape
-                  // exists to avoid. So those are content, not controls.
-                  onOpen={p.leaves.length > 1 ? () => onOpen("build", p.name) : undefined}
-                  openLabel="Build"
                 />
               ))}
               {lands ? (
@@ -301,8 +295,6 @@ export function DeckGauges({ data, onOpen, diff }: {
                   reading={bandState(lands.actual, lands.target)}
                   fill={countFill(lands.actual, lands.target)}
                   mark={lands.target > 0 ? TARGET_MARK : undefined}
-                  onOpen={() => onOpen("mana", undefined)}
-                  openLabel="Mana"
                 />
               ) : null}
             </div>

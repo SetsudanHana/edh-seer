@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode, useEffect, useRef } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
@@ -74,7 +74,7 @@ export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 export type DeckMathSectionId = "cast" | "answers" | "win" | "waiting";
 
 export function BuildBenchmarks({
-  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true, focus,
+  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true,
 }: {
   categories: DeckReport["buildCategories"];
   /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
@@ -108,30 +108,7 @@ export function BuildBenchmarks({
    *  found and fixed elsewhere in this file, so this suppresses the heading along with the rows —
    *  see the `hasBenchmarkContent` guard below for the render-nothing-not-an-empty-shell case. */
   showBenchmarks?: boolean;
-  /** The parent the reader clicked a dial for, if they arrived from `DeckGauges`. Marks that group
-   *  so the drill-down lands on a row rather than on a tab. Never a filter: the other groups stay,
-   *  because the comparison between them is half of what this block is for. */
-  focus?: string;
 }) {
-  // FOCUS FOLLOWS THE DIAL, NOT JUST THE OUTLINE (IMPORTANT D, whole-branch review, 2026-09-01).
-  // Clicking a `DeckGauges` dial unmounts Summary and switches to this sub-tab, so the button that
-  // had focus is gone and focus silently falls to `document.body` -- a keyboard or screen-reader
-  // user gets no announcement of where they landed and has to tab from the top of the page. The
-  // design's own §5 promised the focused group is "scrolled to and marked"; only the mark (the
-  // outline/`aria-current` below) ever shipped. One ref per rendered group, keyed by parent name,
-  // so the effect can find the one `focus` names without a DOM query -- and it has to sit above
-  // every early return below: hooks cannot follow a conditional `return`.
-  const groupRefs = useRef(new Map<string, HTMLLIElement>());
-  useEffect(() => {
-    if (focus === undefined) return;
-    const el = groupRefs.current.get(focus);
-    // NO `behavior: "smooth"`, PER `prefers-reduced-motion` (fix round, whole-branch review,
-    // 2026-09-01). Omitting `behavior` entirely takes the browser's default, which is instant --
-    // simpler than gating a media query, and it is what a reduced-motion reader needs anyway.
-    el?.scrollIntoView({ block: "center" });
-    el?.focus();
-  }, [focus]);
-
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
   // A FACET IS SAID BESIDE THE COUNT, NEVER ADDED TO IT. "Draw 14 · 5 engines · 3 unlabelled":
@@ -350,26 +327,9 @@ export function BuildBenchmarks({
                     *  `listitem`s should still see only leaf rows. The `h4` inside keeps its own
                     *  heading semantics regardless. */}
                   <li
-                    ref={(el) => {
-                      if (el) groupRefs.current.set(p.name, el);
-                      else groupRefs.current.delete(p.name);
-                    }}
                     role="presentation"
-                    // Focusable PROGRAMMATICALLY ONLY -- -1 keeps it out of the page's Tab order
-                    // (it is not a control) while letting the effect above call `.focus()` on it
-                    // the way a heading landed on from an in-page jump link would be.
-                    tabIndex={-1}
                     data-testid={`role-group-${p.name}`}
-                    data-focused={focus === p.name ? "true" : undefined}
-                    // The outline below is visual only -- a screen-reader user gets nothing from it.
-                    // `aria-current` is the announced half of the same mark: present (never "false",
-                    // a different and confusing announcement) only on the group the reader navigated
-                    // to. `role="presentation"` does not hide it -- an element removed from the
-                    // accessibility tree's structural roles still exposes its other ARIA attributes.
-                    aria-current={focus === p.name ? "true" : undefined}
-                    className={`flex items-baseline gap-3 flex-wrap pt-1 ${
-                      focus === p.name ? "outline-2 outline-(--accent) rounded-(--radius)" : ""
-                    }`}
+                    className="flex items-baseline gap-3 flex-wrap pt-1"
                   >
                     <h4 className="eyebrow text-(--muted)">{p.name}</h4>
                     {/* THE WHOLE, IN A PLAYER'S WORDS AND NOT AS A FORMULA. "sum of leaves = 9" is
