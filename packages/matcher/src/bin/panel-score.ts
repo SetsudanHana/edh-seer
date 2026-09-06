@@ -148,6 +148,14 @@ if (falsesOut) {
   console.log(`  wrote ${s.falses.length} false claims -> ${falsesOut}`);
 }
 
+// `--live` dumps EVERY distinct live claim (judged or not) as triples, so two runs of the engine can
+// be diffed claim by claim -- which is the only way to name the REAL claims a fix deleted, rather
+// than read them off a shrinking count.
+const live = arg("--live");
+if (live) {
+  writeFileSync(live, distinct.map((c) => JSON.stringify({ producer: c.producer, consumer: c.consumer, tag: c.tag, implied: c.implied === true })).join("\n") + "\n");
+  console.log(`  wrote ${distinct.length} live claims -> ${live}`);
+}
 const out = arg("--worksheet");
 if (out && s.unjudged.length) {
   writeFileSync(out, `${s.unjudged.map((c, id) => JSON.stringify({

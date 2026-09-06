@@ -3758,3 +3758,15 @@ describe("an ability-loss static silences the creatures it reaches", () => {
     expect(pairReasons(dressDown, bear, H)).toEqual([]);
   });
 });
+
+// ---- the panel's self and controller families (2026-09-06) ----
+
+test("a card adapting ITSELF does not feed another card's own-counter trigger", () => {
+  // Incubation Druid -> Evolution Witness, owner-judged FALSE: the Druid's counters land on the Druid.
+  const producer = { verb: "counter-added", subject: { control: "any", token: null, type: "creature", counter: "+1/+1", self: true } } as const;
+  const consumer = { verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter: "+1/+1", self: true } } as const;
+  expect(eventMatches(producer as never, consumer as never, H)).toBe(false);
+  // A placer aimed at ANY creature still does.
+  const targeted = { verb: "counter-added", subject: { control: "any", token: null, type: "creature", counter: "+1/+1", scope: "target" } } as const;
+  expect(eventMatches(targeted as never, consumer as never, H)).toBe(true);
+});

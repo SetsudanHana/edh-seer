@@ -770,6 +770,10 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
     return graveyardFillMatches(producer.subject, consumer.subject, h);
   }
+  // SELF ON BOTH SIDES: a card adapting ITSELF cannot put the counter on another card's "this
+  // creature" (Incubation Druid -> Evolution Witness, owner-judged FALSE 2026-08-22). The same
+  // shape `selfEtbSelfSupplied` refuses for entries.
+  if (producer.verb === "counter-added" && producer.subject.self === true && consumer.subject.self === true) return false;
   if (producer.verb === "counter-added") return counterAddMatches(producer.subject, consumer.subject, h);
   // A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
   //
@@ -1242,6 +1246,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
     for (const a of c.tags.abilities) {
       if (a.effect.kind !== "graveyard-recursion" || a.effect.subject?.zone !== "graveyard") continue;
+      // A DEATH YOU INFLICT ON THE OTHER SIDE FILLS THEIR GRAVEYARD, NOT YOURS. Liliana's Triumph
+      // (each opponent sacrifices) "enabled" Death Tyrant returning ITSELF from YOUR graveyard
+      // (owner-judged FALSE 2026-08-07). The recursion's own subject says which graveyard it reads:
+      // `you` is yours and an opponent-controlled fill never reaches it; `any` is any graveyard, and
+      // Feed the Swarm -> Animate Dead / Reanimate and Withering Torment -> Necromancy are three
+      // owner-judged REAL claims of exactly that shape (kill theirs, take it), which a blanket skip
+      // deleted on the first measurement. Noxious Gearhulk -> Junji (any graveyard, judged FALSE) is
+      // the one verdict this rule keeps claiming against; it is flagged for re-judging, not encoded.
+      if (e.subject.control === "opp" && a.effect.subject.control === "you") continue;
       // Skip if the event-edge loop already credited this fill via a graveyard-entry trigger on the same ability.
       if (a.trigger && a.trigger.verbs.some((v) => {
         const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });

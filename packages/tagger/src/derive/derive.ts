@@ -12,7 +12,7 @@ import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-ki
 import { actionEmits } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
-import { actionRecipients } from "./recipient.js";
+import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { repeatsFor, type RawTrigger } from "./repeats.js";
@@ -26,7 +26,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 106;
+export const DERIVE_VERSION = 107;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -590,6 +590,29 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
 
+/** AN ACTION WITH NO PLAYER NAMED IS THE CONTROLLER'S (CR 111.2; `subject.ts` already says this is
+ *  where "you draw" comes from, and never applied it). "Draw a card", "you may cast that card",
+ *  "sacrifice two other creatures", "create a token": the actor is you, and the object text carries
+ *  no controller because the sentence had no need to say one. Derived `any`, every one of them met
+ *  the OPPONENT-watching payoffs -- the panel's Priest of Forgotten Gods -> Orcish Bowmasters
+ *  ("whenever an opponent draws") and Impulsivity -> Nezahal ("whenever an opponent casts"), both
+ *  owner-judged FALSE. `actionRecipients` now answers `any` when a player IS named, so silence from
+ *  it means no player was named at all. Only these verbs: the subject of a counter placement or a
+ *  removal is the RECIPIENT, not the actor, and the rule must not touch them. */
+const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill", "create", "search", "sacrifice", "gain-life", "lose-life"]);
+
+/** "That creature", "those cards": a back-reference that NAMES A TYPE and so is not a pronoun
+ *  (`PRONOUN_OBJECT` keeps it parsing as itself, deliberately) -- but the controller it refers back
+ *  to is on the antecedent, not on it. The Sibsig Ceremony: "whenever a creature YOU control enters,
+ *  destroy THAT CREATURE" derived `dies creature/any` and fed Massacre Wurm's "whenever a creature
+ *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
+ *  unstated controller is inherited. */
+const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
+
+/** The recipient of a counter, when it is the card itself. Anchored at the END of the trigger
+ *  subject so "on this creature" is the recipient and not a stray mention. */
+const COUNTER_ON_SELF = /\bon this (?:creature|permanent|artifact|enchantment|land|planeswalker)$/i;
+
 /** "Whenever one or more creature cards leave YOUR GRAVEYARD" (Desecrated Tomb, Fang, Chalk Outline
  *  -- 32 of the 71 corpus leaves-payoffs). The model's trigger subject dropped the zone on every one
  *  of them, so they derived identically to The Ozolith's battlefield leave and every death in the
@@ -869,6 +892,12 @@ export function deriveAbilities(
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+        // "Whenever one or more +1/+1 counters are put ON THIS CREATURE" (Evolution Witness): the
+        // subject is the counter, the recipient is the card itself, and `isSelfSubject` reads only
+        // the head of the phrase. Without the flag, Incubation Druid adapting ITSELF fed the
+        // Witness's own-counter trigger (owner-judged FALSE, 2026-08-22); with it, edges.ts's
+        // self-on-both-sides gate refuses the pair.
+        if (verb === "counter-added" && COUNTER_ON_SELF.test(clause.trigger.subject ?? "")) subject.self = true;
         // ON AN `attacks` TRIGGER THE STATE IS THE EVENT: "a creature you control attacking" (Arni
         // Metalbrow, Seifer) is every attacker, and the implied `attacks` producer never states
         // the state, so keeping it here would delete every real edge these have. Kept on every
@@ -963,10 +992,30 @@ export function deriveAbilities(
       const subject = effectKind
         ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName)
         : undefined;
+      // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
+      const objectText = (action.object ?? "").trim();
+      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText)) {
+        const ante = antecedentFor((clause.actions ?? []).indexOf(action));
+        const inherited = ante ? subjectFrom(ante, cardName).control : undefined;
+        if (inherited && inherited !== "any") {
+          for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
+          if (subject && subject.control === "any") subject.control = inherited;
+        }
+      }
       const actor = actorFor(action.verb);
       if (actor) {
         for (const e of emits) e.subject.control = actor;
         if (subject) subject.control = actor;
+      } else if (ACTOR_DEFAULTS_TO_YOU.has(action.verb ?? "") && clauseText !== ""
+        && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1
+        && !sentenceNamesAPlayer(clauseText, action.verb ?? "")) {
+        // See ACTOR_DEFAULTS_TO_YOU. The clause TEXT was read and named no player for this verb --
+        // without the text nothing is known and `any` stands, and a clause with two actions of the
+        // verb ("target opponent draws a card. You draw two") is the ambiguity `actorFor` already
+        // refuses. Only an UNSTATED controller is filled in: "sacrifice a creature you control"
+        // already says you, and "an opponent's creature" (parsed `opp`) is kept.
+        for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
+        if (subject && subject.control === "any") subject.control = "you";
       } else if (REMOVAL_VERBS.has(action.verb ?? "") || emits.some((e) => e.verb === "leaves" && e.subject.zone !== "graveyard")) {
         // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller. A targeted BOUNCE
         // ("return target creature to its owner's hand") joins the rule for its `leaves` emit: it is

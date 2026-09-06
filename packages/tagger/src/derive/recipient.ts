@@ -25,24 +25,28 @@ const WHO = "its controller|their controller|target opponent|each opponent|each 
 /** The actor must sit immediately against its OWN verb. "each opponent loses 1 life and you gain 1
  *  life" is the commonest drain wording in the corpus, and reading its recipient onto the gain would
  *  hand your own lifegain payoffs to the opponent — the exact false-edge shape this exists to remove.
- *  Only `may` is allowed to intervene, because only `may` never changes who acts. */
+ *  Only words that never change who acts may intervene -- see ADVERB. */
+/** Words that may sit between the player and the verb: "each opponent ALSO discards a card"
+ *  (Liliana's Triumph), "that player THEN draws". The cue missed "also" and the discard fell through
+ *  to the controller default -- an opponent's discard read as yours. */
+const ADVERB = "(?:(?:may|also|then|instead)\\s+)*";
 const CUES: [string, RegExp][] = [
-  ["create", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?creates?\\b`, "i")],
-  ["draw", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?draws?\\b`, "i")],
-  ["search", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?searc(?:h|hes)\\b`, "i")],
-  ["mill", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?mills?\\b`, "i")],
+  ["create", new RegExp(`\\b(${WHO})\\s+${ADVERB}creates?\\b`, "i")],
+  ["draw", new RegExp(`\\b(${WHO})\\s+${ADVERB}draws?\\b`, "i")],
+  ["search", new RegExp(`\\b(${WHO})\\s+${ADVERB}searc(?:h|hes)\\b`, "i")],
+  ["mill", new RegExp(`\\b(${WHO})\\s+${ADVERB}mills?\\b`, "i")],
   // The amount is OPTIONAL between the verb and "life": "its controller gains life equal to its
   // power" (Swords to Plowshares) has no word there, and demanding one handed Swords' lifegain to
   // YOU for the whole life of this table -- a lifegain payoff fed by your own removal spell
   // (owner-reported off the Arcane Denial card page, 2026-09-05).
-  ["lose-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?loses?\\s+(?:\\S+\\s+)?life\\b`, "i")],
-  ["gain-life", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?gains?\\s+(?:\\S+\\s+)?life\\b`, "i")],
-  ["add-counter", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?puts?\\b[^.]{0,40}?counters?\\s+on\\b`, "i")],
+  ["lose-life", new RegExp(`\\b(${WHO})\\s+${ADVERB}loses?\\s+(?:\\S+\\s+)?life\\b`, "i")],
+  ["gain-life", new RegExp(`\\b(${WHO})\\s+${ADVERB}gains?\\s+(?:\\S+\\s+)?life\\b`, "i")],
+  ["add-counter", new RegExp(`\\b(${WHO})\\s+${ADVERB}puts?\\b[^.]{0,40}?counters?\\s+on\\b`, "i")],
   // Dictate of Erebos, Szat's Will: "each opponent SACRIFICES a creature of their choice". The
   // object is the opponent's creature, but it parses to `any` -- "of their choice" names no
   // controller the vocabulary knows -- and `any` matched every payoff for YOUR creatures dying.
-  ["sacrifice", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?sacrifices?\\b`, "i")],
-  ["discard", new RegExp(`\\b(${WHO})\\s+(?:may\\s+)?discards?\\b`, "i")],
+  ["sacrifice", new RegExp(`\\b(${WHO})\\s+${ADVERB}sacrifices?\\b`, "i")],
+  ["discard", new RegExp(`\\b(${WHO})\\s+${ADVERB}discards?\\b`, "i")],
 ];
 
 /** An actor phrase to the control it states, or undefined when it states nothing sharper than "any".
@@ -57,12 +61,38 @@ function controlOf(phrase: string, text: string, at: number): Control | undefine
   // "that player" points back at whoever the clause already named. The antecedent is in the same
   // clause, so this one needs no judgment: Massacre Wurm's "a creature an opponent controls dies,
   // that player..." is an opponent, while "choose target player. That player..." is not.
-  if (p === "that player") return /\bopponents?\b/i.test(text.slice(0, at)) ? "opp" : undefined;
-  return undefined; // target player, each player, those players — "any" is already the right answer
+  if (p === "that player") return /\bopponents?\b/i.test(text.slice(0, at)) ? "opp" : "any";
+  // target player, each player, those players: "any" is the right answer -- and it is RETURNED,
+  // not left silent, because silence now means "no player was named at all", which derive.ts reads
+  // as the card's controller (CR 111.2 / the panel's Priest of Forgotten Gods -> Orcish Bowmasters:
+  // "draw a card" is YOU drawing, and an ownerless draw met "whenever an opponent draws").
+  return "any";
 }
 
 /** Verb -> the control its actor states, for the verbs whose actor the clause names. Absent verbs are
  *  left exactly as the object text parsed them. */
+/** Verb stems, for `sentenceNamesAPlayer`: the sentence that holds the verb is the one whose
+ *  player words matter. */
+const STEMS: Record<string, string> = {
+  draw: "draw", cast: "cast", play: "play", discard: "discard", mill: "mill", create: "creat",
+  search: "search", sacrifice: "sacrific", "gain-life": "gain", "lose-life": "los",
+};
+const PLAYER_WORD = /\b(?:opponents?|players?|controllers?|owners?)\b/i;
+
+/** Does the sentence containing this verb name any player at all? The controller default in
+ *  derive.ts fills in `you` only when the answer is no: a sentence that names a player the cue
+ *  regexes could not attach ("each opponent, if able, discards") is UNCERTAIN, and `any` stands.
+ *  Sentence-local, not clause-local, because a clause is often several sentences and "target
+ *  player loses 2 life. You draw a card" names a player in the sentence that is not the draw's. */
+export function sentenceNamesAPlayer(clauseText: string, verb: string): boolean {
+  const stem = STEMS[verb];
+  if (!stem) return PLAYER_WORD.test(clauseText);
+  const stemRe = new RegExp(`\\b${stem}`, "i");
+  const sentences = clauseText.split(/(?<=[.!?])\s+/);
+  const holding = sentences.filter((s) => stemRe.test(s));
+  return (holding.length ? holding : sentences).some((s) => PLAYER_WORD.test(s));
+}
+
 export function actionRecipients(clauseText: string): Record<string, Control> {
   const out: Record<string, Control> = {};
   for (const [verb, re] of CUES) {
