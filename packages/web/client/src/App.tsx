@@ -38,6 +38,16 @@ export default function App() {
   stateRef.current = state;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** A re-run under a new game state is in flight (W18c). Separate from `loading` on purpose:
+   *  `loading` collapses the deck bar into "Analyzing…" and drives the paste-box states, which is
+   *  right for a new list and reads as a page reload for a state flip. */
+  const [stateBusy, setStateBusy] = useState(false);
+  /** The deck text the report on screen was RUN FROM (review, 2026-09-06). A state re-run reads
+   *  this, never the paste boxes: "Edit" reopens them without re-analysing, and a state click in
+   *  that window must not silently analyse text the reader has not submitted. */
+  const analysedRef = useRef<{ decklist: string; commanders: string } | null>(null);
+  /** The newest state request. A slower older response must not land on top of a newer one. */
+  const stateRunRef = useRef(0);
   /** A DECK IS ALREADY ON ITS WAY, AND THE FIRST PAINT HAS TO KNOW IT. Read from the URL during the
    *  initial render rather than in the effect below, because that effect runs AFTER a paint and
    *  `decodeShare` is async on top of it: for those frames a shared link renders the empty state,
@@ -118,6 +128,7 @@ export default function App() {
       // while verifying the URL guard below, when a run of pasted notes came back on the next load.
       if (looksLikeDeck) saveLastDeck({ commanders: commanderText, decklist: deckText });
       setData(next);
+      analysedRef.current = { decklist: deckText, commanders: commanderText };
       setEditing(false);
       // THE ADDRESS BAR BECOMES THE SHARE LINK, which is what makes this get used: a reader who
       // analyses a deck can copy the URL without knowing the feature exists. A deck too long to
@@ -158,14 +169,46 @@ export default function App() {
   }
 
   const onAnalyze = () => void analyse(decklist, commanders);
-  // CHANGING THE STATE IS A RE-RUN: the engine reads the deck again under it, and the query says
-  // which state the page shows so the link carries it. The hash (the deck) is untouched.
+  // CHANGING THE STATE IS A RE-RUN IN PLACE (W18c, owner: "re-runs and re-renders the whole
+  // report, which reads as a page reload"). The engine reads the same deck again under the new
+  // state and only `data` changes: the deck bar stays open as it was, no run diff is written (a
+  // state is not an edit), no history entry, no share-link rewrite -- the query already carries the
+  // state, and the hash (the deck) is untouched. `ReportShell` keys its "go home" on the deck's
+  // cards, so the reader also stays on whatever surface they were on.
+  const writeStateUrl = (s: GameState) =>
+    window.history.replaceState(null, "", `${window.location.pathname}${searchWithState(window.location.search, s)}${window.location.hash}`);
   const onState = (next: GameState) => {
+    const previous = stateRef.current;
     setState(next);
     stateRef.current = next;
-    window.history.replaceState(null, "", `${window.location.pathname}${searchWithState(window.location.search, next)}${window.location.hash}`);
-    void analyse(decklist, commanders);
+    writeStateUrl(next);
+    void reanalyseUnderState(next, previous);
   };
+  async function reanalyseUnderState(next: GameState, previous: GameState) {
+    const run = ++stateRunRef.current;
+    const from = analysedRef.current ?? { decklist, commanders };
+    setStateBusy(true);
+    setError(null);
+    try {
+      const res = Object.keys(next).length > 0
+        ? await analyzeDeck(from.decklist, from.commanders, undefined, next)
+        : await analyzeDeck(from.decklist, from.commanders);
+      // LAST CLICK WINS. Two markers pressed in quick succession are two requests in flight, and
+      // the slower one may answer last; only the newest request may set the report.
+      if (run !== stateRunRef.current) return;
+      setData(res);
+    } catch (e) {
+      if (run !== stateRunRef.current) return;
+      // THE CONTROLS SAY WHAT THE REPORT WAS RUN UNDER. A failed re-run leaves the old report on
+      // screen, so the state -- and the URL -- go back to the one it was run under.
+      setState(previous);
+      stateRef.current = previous;
+      writeStateUrl(previous);
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      if (run === stateRunRef.current) setStateBusy(false);
+    }
+  }
 
   /** NOTHING PASTED, NOTHING ANALYSED, NOTHING IN FLIGHT — the only state in which the page has to
    *  introduce itself. Named once because the lead above the form and the example-deck button below
@@ -405,7 +448,7 @@ export default function App() {
       )}
       {data && (
         <div className="reveal">
-          <ReportView data={data} diff={diff} state={state} onState={onState} />
+          <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
         </div>
       )}
       {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after

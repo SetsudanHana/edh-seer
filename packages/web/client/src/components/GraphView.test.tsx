@@ -307,6 +307,19 @@ describe("fullscreen toggle", () => {
     expect(requestFullscreen.mock.instances[0]).toBe(getByTestId("graph-fullscreen-shell"));
   });
 
+  /** THE STATE CONTROLS RIDE INSIDE THE FULLSCREEN SHELL (W18c, owner finding 2): the backdrop
+   *  hides the report header, and the graph is where the dashed edges are. */
+  test("the state controls render inside the shell while fullscreen is on, and not otherwise", () => {
+    Element.prototype.requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    const { getByTestId, queryByText } = render(
+      <GraphView graph={SAMPLE.graph} report={SAMPLE.report} stateControls={<div>state controls here</div>} />,
+    );
+    expect(queryByText("state controls here")).toBeNull();
+    Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => getByTestId("graph-fullscreen-shell") });
+    act(() => { document.dispatchEvent(new Event("fullscreenchange")); });
+    expect(queryByText("state controls here")).not.toBeNull();
+  });
+
   test("the fullscreen button is absent when the platform does not support it", () => {
     // @ts-expect-error -- deliberately removing the API to test the capability check
     delete Element.prototype.requestFullscreen;
