@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { CardDrawerProvider, CardName, usePinned } from "./card-drawer.js";
+import { CardDrawerProvider, CardName, ReasonText, usePinned } from "./card-drawer.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
@@ -901,6 +901,37 @@ test("with no theme strong enough the ticks say they are the population's, and a
   const { template: _t, ...withoutTemplate } = SAMPLE.report;
   render(<DeckGauges data={{ ...SAMPLE, report: withoutTemplate }} onOpen={() => {}} />);
   expect(screen.getByText(/Command Zone template/)).toBeInTheDocument();
+});
+
+/** THE SHARE AND THE FLOOR, NOT A VERDICT (UX sweep 2026-09-06, D4). "Enchantress" as the headline,
+ *  "Enchantress 25%" on the bar, and "no archetype read strongly enough" under the ticks were three
+ *  readings of 0.249 against a 0.25 floor. The line now prints both numbers. */
+test("under the floor, the tick line prints the theme's share and the floor it fell under", () => {
+  const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
+  const data = { ...SAMPLE, report: { ...SAMPLE.report,
+    strategies: [{ name: "enchantress" as const, label: "Enchantress", confidence: 0.249 }],
+    template: { population, targets: population, leadFloor: 0.25 } } };
+  render(<DeckGauges data={data} onOpen={() => {}} />);
+  expect(screen.getByText(/Enchantress reads 24\.9%, under the 25% an archetype needs to set its own row/)).toBeInTheDocument();
+  expect(screen.queryByText(/Being over is fine/)).toBeNull();
+  expect(screen.getByText(/Over a tick is not a fault; Fixes says where that room is/)).toBeInTheDocument();
+});
+
+/** AND THE BAR NEVER ROUNDS UP OVER IT: 0.249 printed "25%" beside that note. */
+test("an archetype bar floors its percentage", () => {
+  render(<ArchetypeBoard strategies={[{ name: "enchantress", label: "Enchantress", confidence: 0.249 }]} archetypes={SAMPLE.report.archetypes} />);
+  expect(screen.getByText("24%")).toBeInTheDocument();
+});
+
+/** THE ENGINE'S FALLBACK IS MARKED WHEREVER IT IS PRINTED (skeptic, UX sweep 2026-09-06). The card
+ *  page said "engine did not read what it does" under a "<card> triggers" row; the report printed
+ *  the same sentence as a claim -- and the deck's 5.0 anchor was one of them. */
+test("a reason that ends in \"triggers\" carries the unread mark; a real claim does not", () => {
+  const { unmount } = render(<ReasonText text="When Arcane Signet is cast, Displacer Kitten triggers" />);
+  expect(screen.getByText(/engine did not read what it does/)).toBeInTheDocument();
+  unmount();
+  render(<ReasonText text="When Arcane Signet is cast, Shark Typhoon makes a token" />);
+  expect(screen.queryByText(/engine did not read what it does/)).toBeNull();
 });
 
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two

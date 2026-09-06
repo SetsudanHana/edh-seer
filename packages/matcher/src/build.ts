@@ -261,6 +261,9 @@ export interface TemplateBlend {
    *  a row. */
   secondary?: TemplateTheme;
   population: TemplateRow;
+  /** `ARCHETYPE_LEAD_FLOOR`, shipped so the report can print the number a theme fell under instead
+   *  of hard-coding it (UX sweep 2026-09-06, D4). */
+  leadFloor: number;
   /** The blended target per parent: the confidence-weighted mean of the two rows, rounded to the
    *  half; the primary's row alone; or the population's. This is what `computeBuild` scores. */
   targets: TemplateRow;
@@ -285,7 +288,7 @@ function templateTheme(r: ArchetypeRanking, weight: number): TemplateTheme | und
 export function templateBlend(strategies: readonly ArchetypeRanking[] = []): TemplateBlend {
   const population = { ...TEMPLATE.population };
   const [first, second] = strategies;
-  if (!first || first.confidence < ARCHETYPE_LEAD_FLOOR || !themeRows[first.name]) return { population, targets: population };
+  if (!first || first.confidence < ARCHETYPE_LEAD_FLOOR || !themeRows[first.name]) return { population, leadFloor: ARCHETYPE_LEAD_FLOOR, targets: population };
   const takeSecond = second && second.confidence >= SECONDARY_SHARE * first.confidence && second.confidence >= ARCHETYPE_FLOOR && themeRows[second.name];
   const total = first.confidence + (takeSecond ? second.confidence : 0);
   const primary = templateTheme(first, first.confidence / total)!;
@@ -295,7 +298,7 @@ export function templateBlend(strategies: readonly ArchetypeRanking[] = []): Tem
     const t = primary.weight * primary.row[k] + (secondary ? secondary.weight * secondary.row[k] : 0);
     targets[k] = Math.round(t * 2) / 2;
   }
-  return { primary, ...(secondary ? { secondary } : {}), population, targets };
+  return { primary, ...(secondary ? { secondary } : {}), population, leadFloor: ARCHETYPE_LEAD_FLOOR, targets };
 }
 
 /** Full credit within ±3 of the land target, linear falloff to 0 at ±12 (24 or 48 lands).

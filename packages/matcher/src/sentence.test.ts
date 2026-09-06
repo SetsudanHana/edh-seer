@@ -355,6 +355,17 @@ test("effectPhrase names the recipient of a draw or a life change", () => {
   expect(effectPhrase("damage", "3", undefined, "opp")).toBe("deals 3 damage");
 });
 
+/** THE CLIENT'S UNREAD MARK KEYS ON THIS WORD (`card-drawer.tsx` `unreadEffect`): the report's
+ *  "engine did not read what it does" appears exactly when a sentence ends in "triggers", and no
+ *  other phrase in `PHRASES` may end in it. */
+test("the fallback sentence ends in the word \"triggers\", and no real phrase does", () => {
+  expect(reasonSentence({ producer: "Arcane Signet", consumer: "Displacer Kitten", eventKey: "cast:any", effectKind: undefined })).toMatch(/\btriggers$/);
+  expect(reasonSentence({ producer: "Kaya's Ghostform", consumer: "Dress Down", eventKey: "enters:any", effectKind: undefined, self: true })).toMatch(/\btriggers$/);
+  for (const kind of ["draw-card", "token-generation", "trigger-doubling", "clone", "copy-spell", "damage"]) {
+    expect(effectPhrase(kind, undefined)).not.toMatch(/\btriggers$/);
+  }
+});
+
 /** SPEED IS THE PLAYER'S (CR 702.179), so the card RAISES it; "Samut gains speed" read as if the
  *  card had one (owner, 2026-09-05). */
 test("raising speed is phrased on the player", () => {

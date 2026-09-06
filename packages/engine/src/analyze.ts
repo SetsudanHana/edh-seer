@@ -519,6 +519,8 @@ export interface DeckReport {
     primary?: { name: string; label: string; weight: number; row: Record<string, number> };
     secondary?: { name: string; label: string; weight: number; row: Record<string, number> };
     population: Record<string, number>;
+    /** The confidence a theme needs to set its own row, for the report to print beside the share. */
+    leadFloor?: number;
     targets: Record<string, number>;
   };
   /** WHAT MOVING THE LAND COUNT TO ITS TARGET IS WORTH to `buildScore` (roadmap S10). 0 inside the
