@@ -882,16 +882,21 @@ test("each role tick names the theme rows it was blended from, and the source li
   render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
   expect(screen.getByText("Tokens 8 · Aristocrats 13")).toBeInTheDocument();        // Consistency, blends to the tick's 10
   expect(screen.getByText("Tokens 11 · Aristocrats 8.5")).toBeInTheDocument();      // Interaction
-  expect(screen.getByText(/Ticks blend what Tokens \(60%\) and Aristocrats \(40%\) decks run on EDHREC/)).toBeInTheDocument();
+  expect(screen.getByText(/Ticks blend the Tokens \(60%\) and Aristocrats \(40%\) archetype medians/)).toBeInTheDocument();
   expect(screen.queryByText(/Command Zone/)).toBeNull();
+  // EDHREC is the sample the thesis was checked on, not the claim (owner, 2026-09-06): named once,
+  // in the gloss only, never on a tick or the source line.
+  const edhrec = screen.getAllByText(/EDHREC/);
+  expect(edhrec).toHaveLength(1);
+  expect(edhrec[0]!.closest("details")).not.toBeNull();
 });
 
 test("with no theme strong enough the ticks say they are the population's, and an old report keeps the old sentence", () => {
   const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
   const fallback = { ...SAMPLE, report: { ...SAMPLE.report, template: { population, targets: population } } };
   const { unmount } = render(<DeckGauges data={fallback} onOpen={() => {}} />);
-  expect(screen.getAllByText("EDHREC median 13").length).toBe(2); // Consistency and Interaction share it
-  expect(screen.getByText(/no theme read strongly enough/)).toBeInTheDocument();
+  expect(screen.getAllByText("Archetype median 13").length).toBe(2); // Consistency and Interaction share it
+  expect(screen.getByText(/no archetype read strongly enough/)).toBeInTheDocument();
   unmount();
   const { template: _t, ...withoutTemplate } = SAMPLE.report;
   render(<DeckGauges data={{ ...SAMPLE, report: withoutTemplate }} onOpen={() => {}} />);
@@ -3034,10 +3039,10 @@ test("the convention disclaimer is stated once, and the provenance survives ever
   const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
   const text = (container.textContent ?? "").replace(/\s+/g, " ");
 
-  // The long form, once. Since 2026-09-06 the ticks are EDHREC theme rows and the long form says
+  // The long form, once. Since 2026-09-06 the ticks are archetype medians and the long form says
   // what THAT number is ("what the themes run, not what they need"); the Command Zone wording
   // survives only for a report with no `template` at all. Either way: exactly one long form.
-  const long = text.match(/a convention, not measured from real decks|what the themes? runs?, not what (?:it|they) needs?/g) ?? [];
+  const long = text.match(/a convention, not measured from real decks|what the archetypes? runs?, not what (?:it|they) needs?/g) ?? [];
   expect(long).toHaveLength(1);
 
   // And the phrasing it replaced is gone entirely -- "someone typed" was the tell.

@@ -104,25 +104,29 @@ export function DeckGauges({ data, onOpen, diff }: {
   const parents = report.buildParents ?? [];
   const lands = report.deckMath?.lands;
   // WHOSE ROW EACH TICK IS (owner ruling 2026-09-06: the report shows the rows). `report.template`
-  // names the theme(s) the engine blended and carries their EDHREC rows keyed by the parent's `key`,
-  // so "Voltron 19.5 · Tokens 12" under a tick of 15.5 is a claim a player can check against
-  // EDHREC. An older report without `template` keeps the pre-ruling sentence rather than guessing.
+  // names the archetype(s) the engine blended and carries their median rows keyed by the parent's
+  // `key`, so "Voltron 19.5 · Tokens 12" under a tick of 15.5 is a claim a player can check.
+  //
+  // THE CLAIM IS THE ARCHETYPE'S, NOT EDHREC'S (owner, same day: "edhrec is just a source for
+  // checking our thesis"). The thesis is that an archetype has its own template; the decks the
+  // medians were measured on are the sample, and they are named ONCE, in the gloss, never on the
+  // tick. An older report without `template` keeps the pre-ruling sentence rather than guessing.
   const template = report.template;
   const tickNote = (key?: string): string | undefined => {
     if (!template || !key) return undefined;
     const { primary: p, secondary: s } = template;
-    if (!p) return `EDHREC median ${template.population[key]}`;
-    if (!s) return `${p.label} runs ${p.row[key]}`;
+    if (!p) return `Archetype median ${template.population[key]}`;
+    if (!s) return `${p.label} median ${p.row[key]}`;
     return `${p.label} ${p.row[key]} · ${s.label} ${s.row[key]}`;
   };
   const share = (w: number) => `${Math.round(w * 100)}%`;
   const tickSource = !template
     ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"
     : !template.primary
-      ? "Ticks are the EDHREC population\u2019s medians \u2014 no theme read strongly enough here to use its own row"
+      ? "Ticks are the archetype median over every deck \u2014 no archetype read strongly enough here to use its own row"
       : !template.secondary
-        ? `Ticks are what ${template.primary.label} decks run on EDHREC (the median of ten) \u2014 what the theme runs, not what it needs`
-        : `Ticks blend what ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) decks run on EDHREC \u2014 what the themes run, not what they need`;
+        ? `Ticks are the ${template.primary.label} archetype\u2019s median \u2014 what the archetype runs, not what it needs`
+        : `Ticks blend the ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) archetype medians \u2014 what the archetypes run, not what they need`;
   const hasSynergy = report.synergyOverall !== undefined;
   const hasBuild = report.buildScore !== undefined;
   if (parents.length === 0 && !lands && !hasSynergy && !hasBuild) return null;
@@ -247,8 +251,9 @@ export function DeckGauges({ data, onOpen, diff }: {
                 <BandScale />
                 <Explain label="what this measures">
                   How close the deck sits to the category targets in Roles — ramp, draw, removal and the
-                  rest. It says nothing about how the cards work together, and a target is what decks
-                  of this theme run on EDHREC (or the population&rsquo;s median) &mdash; not what they need.
+                  rest. It says nothing about how the cards work together, and a target is the
+                  archetype&rsquo;s median &mdash; measured over the decks we checked it on, ten per
+                  archetype from EDHREC &mdash; what it runs, not what it needs.
                 </Explain>
                 </>
               }
