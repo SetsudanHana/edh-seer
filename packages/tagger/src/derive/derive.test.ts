@@ -2024,3 +2024,25 @@ test("a counter placed 'on this creature' is a self trigger", () => {
   }]);
   expect(abilities[0].trigger?.subject.self).toBe(true);
 });
+
+// AN AURA'S ENCHANT LINE BOUNDS ITS "ENCHANTED PERMANENT" (UX sweep 2026-09-06, E1). Kaya's
+// Ghostform read as "any permanent you control dies", and the site's own example deck printed "When
+// Fabled Passage dies, Kaya's Ghostform brings a card back" -- six false rows from one subject.
+test("\"enchanted permanent\" is bounded by the card's own Enchant line", () => {
+  const text = "Enchant creature or planeswalker you control\nWhen enchanted permanent dies or is put into exile, return that card to the battlefield under your control.";
+  const clauses = [{
+    id: 2, abilityType: "triggered" as const,
+    trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
+    actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }],
+  }];
+  const { abilities } = deriveAbilities(clauses, "Kaya's Ghostform", { 2: text }, undefined, text);
+  expect(abilities[0]?.trigger?.subject.type).toEqual(["creature", "planeswalker"]);
+  expect(abilities[0]?.trigger?.subject.control).toBe("you");
+  // And the RETURN -- "that card" -- is the same creature or planeswalker, so the entry it emits is
+  // typed too; an untyped "permanent enters" here is how Dress Down "entered thanks to" it.
+  const enters = abilities[0]?.emits?.find((e) => e.verb === "enters");
+  expect(enters?.subject.type).toEqual(["creature", "planeswalker"]);
+  // Without the card's text there is no Enchant line to read, and nothing is guessed.
+  const blind = deriveAbilities(clauses, "Kaya's Ghostform", { 2: "When enchanted permanent dies or is put into exile, return that card to the battlefield under your control." });
+  expect(blind.abilities[0]?.trigger?.subject.type).toBe("permanent");
+});

@@ -52,6 +52,12 @@ describe("effectPhrase — the fallback ladder", () => {
 
   test("an amount of X reads as X, not as a number", () => {
     expect(effectPhrase("draw-card", "X")).toBe("draws you X cards");
+    // PROSE IS NOT AN AMOUNT (UX sweep 2026-09-06, E3): Hateful Eidolon printed "draws you for each
+    // Aura you controlled that was attached to it cards".
+    expect(effectPhrase("draw-card", "for each Aura you controlled that was attached to it")).toBe("draws you cards");
+    expect(effectPhrase("damage", "X where X is the number of Goblins you control")).toBe("deals damage");
+    // The two kinds that place their own prose keep it.
+    expect(effectPhrase("pump", "+1/+1 for each creature you control")).toBe("gives +1/+1 for each creature you control");
   });
 
   // "makes 1 tokens" and "puts 1 counters on it" both shipped from the amount branch before this

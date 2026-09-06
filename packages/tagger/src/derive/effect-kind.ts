@@ -320,8 +320,14 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // derivation never produced, and `mechanisms.ts:47` requires it to see a spellslinger deck at all;
   // the FLAT population produces it and derived never did. The verb cannot tell them apart and the
   // object can, which is the `double` lesson one row up.
+  // THE OBJECT DECIDES WHEN IT NAMES A THING; the clause text only stands in for a bare pronoun
+  // ("copy it"). Reading the whole clause made Protean Thaumaturge -- "become a copy of another
+  // target creature, except it has THIS ABILITY" -- a spell copier, and a nine-instant deck a
+  // Spellslinger deck on the site's own example (UX sweep 2026-09-06, E2).
   if (verb === "copy") {
-    const o = `${action.object ?? ""} ${clauseText}`;
+    const object = action.object ?? "";
+    const named = /\b(creature|permanent|artifact|enchantment|land|planeswalker|token|spells?|instant|sorcery|ability)\b/i.test(object);
+    const o = named ? object : `${object} ${clauseText}`;
     return /\bspells?\b|\binstant\b|\bsorcery\b|\bability\b/i.test(o) ? "copy-spell" : "clone";
   }
   // A SACRIFICE SOMEONE ELSE IS MADE TO PERFORM is `forced-sacrifice` — an edict. Required by

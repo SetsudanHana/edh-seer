@@ -505,6 +505,14 @@ test("copying a SPELL is not cloning a permanent", () => {
   expect(actionEffectKind({ verb: "copy", object: "that spell" })).toBe("copy-spell");
   // The fallback stays: a permanent copy is a clone.
   expect(actionEffectKind({ verb: "copy", object: "target creature you control" })).toBe("clone");
+  // THE OBJECT DECIDES (UX sweep 2026-09-06, E2): Protean Thaumaturge's clause ends "except it has
+  // this ability", and reading the whole clause made a creature clone a spell copier.
+  expect(actionEffectKind(
+    { verb: "copy", object: "another target creature" },
+    "Constellation — Whenever an enchantment you control enters, you may have this creature become a copy of another target creature, except it has this ability.",
+  )).toBe("clone");
+  // A bare pronoun still reads the clause, which is what names the spell.
+  expect(actionEffectKind({ verb: "copy", object: "it" }, "When you cast an instant, copy it.")).toBe("copy-spell");
 });
 
 test("a sacrifice is forced only when an OPPONENT performs it", () => {

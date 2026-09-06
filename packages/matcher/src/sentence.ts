@@ -124,10 +124,18 @@ const RECIPIENT_PHRASES: Record<string, Record<string, [(n: string) => string, s
   },
 };
 
+const PROSE_AMOUNT = /\bfor each\b|\bequal to\b|\bwhere\b|\bthe number of\b/i;
+
 export function effectPhrase(
   kind: string | undefined, amount: string | undefined, target?: string, recipient?: string,
 ): string | null {
   if (!kind) return null;
+  // PROSE IS NOT AN AMOUNT. Hateful Eidolon's draw carries `amount: "for each Aura you controlled
+  // that was attached to it"`, and the template printed "draws you for each Aura ... cards" (UX
+  // sweep 2026-09-06, E3). A number, an X, "up to two", a P/T pair or a mana symbol reads inside the
+  // sentence; a CLAUSE -- "for each …", "equal to …", "X where X is …", "the number of …" -- takes
+  // the amountless phrase. `pump` and `cost-reduction` place their own prose and keep it.
+  if (amount !== undefined && PROSE_AMOUNT.test(amount) && kind !== "pump" && kind !== "cost-reduction") amount = undefined;
   const aimed = recipient ? RECIPIENT_PHRASES[kind]?.[recipient] : undefined;
   if (aimed) return amount ? aimed[0](amount) : aimed[1];
   // THE ONE KIND WHOSE PHRASE NAMES A TARGET, and the one that was naming the wrong one.
