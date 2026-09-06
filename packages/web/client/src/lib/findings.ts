@@ -171,7 +171,9 @@ function answerFinding(report: DeckReport): Finding | null {
       + " Graveyard hate is counted separately: it is hate rather than removal, and a Naturalize does not answer it.",
     action: "Two or three pieces that hit a permanent of any type.",
     figure: `${permanent.length - short.length}/${permanent.length}`,
-    figureLabel: "permanent answer types covered",
+    // "COVERED" MEANS FIVE COPIES, AND THE LABEL SAYS SO (UX sweep 2026-09-06, D5): "0/5 permanent
+    // answer types covered" beside "4 for creatures, 3 for artifacts …" read as zero types answered.
+    figureLabel: `answer types at ${worst.required}+ copies`,
     filled: (permanent.length - short.length) / permanent.length,
     shortfall,
     impact: report.answersImpact,

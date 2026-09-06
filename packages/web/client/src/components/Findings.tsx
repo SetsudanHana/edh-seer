@@ -74,9 +74,13 @@ export function Findings({ report, diff }: {
           *  twice (T1). The count beside it is what this line is actually for. */}
         {/* A SENTENCE, SO IT KEEPS INTER. `index.css`'s own comment reserves `.stat-num` for a
           *  figure and says prose keeps Inter; only the count is tabular. */}
+        {/* THE SAME COUNT THE HEADER PRINTS (UX sweep 2026-09-06, D2). This said `all.length` -- the
+          *  scored rows only -- while the header chip counted scored plus the "cannot see" group,
+          *  so the chip read "2 findings" over a chapter that said "1 finding". One number now, and
+          *  the unseen rows below carry the numbers that follow on. */}
         <span className="text-xs text-(--muted)">
-          <span className="tabular-nums">{all.length}</span>{" "}
-          {all.length === 1 ? "finding" : "findings"}, by what fixing it is worth
+          <span className="tabular-nums">{all.length + unseen.length}</span>{" "}
+          {all.length + unseen.length === 1 ? "finding" : "findings"}, by what fixing it is worth
         </span>
       </div>
       <ul className="flex flex-col border-t border-(--separator)">
@@ -182,9 +186,12 @@ export function Findings({ report, diff }: {
         <section className="flex flex-col gap-3 pt-2">
           <h3 className="text-base font-bold tracking-[-0.01em]">What the build score cannot see</h3>
           <ul className="flex flex-col border-t border-(--separator)">
-            {unseen.map((f) => (
+            {unseen.map((f, i) => (
               <li key={f.id} className="flex flex-col gap-2 py-4 border-b border-(--separator)">
-                <h4 className="text-base font-semibold leading-tight">{f.headline}</h4>
+                <h4 className="text-base font-semibold leading-tight flex gap-3">
+                  <span aria-hidden="true" className="stat-num text-sm text-(--muted) pt-0.5">{all.length + i + 1}</span>
+                  <span>{f.headline}</span>
+                </h4>
                 <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
                 {f.action ? <p className="text-sm">{f.action}</p> : null}
               </li>

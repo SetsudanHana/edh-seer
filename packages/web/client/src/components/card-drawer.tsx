@@ -228,11 +228,20 @@ export function usePinned(): Pick<CardDrawerApi, "pinned" | "isPinned" | "toggle
  *  card's text in the drawer, and every TOKEN it names says it is one and whose it is — which is
  *  the half the reader could not look up at all, since a token is not in the decklist and the
  *  drawer indexes cards only. See `reason-text.ts` for why both halves were needed. */
+/** THE ENGINE'S ONE FALLBACK SENTENCE. `sentence.ts` prints "<card> triggers" / "it triggers" when
+ *  it read the trigger and not the effect, and the card page marks that row "engine did not read
+ *  what it does" while the report printed it as a claim (skeptic, UX sweep 2026-09-06: the deck's
+ *  5.0 anchor was one). The mark travels with the sentence now, wherever it is printed. */
+export const unreadEffect = (text: string): boolean => /\btriggers$/.test(text.trim());
+
 export function ReasonText({ text, className }: { text: string; className?: string }) {
   const { known, tokens } = useCardDrawer();
   const segments = reasonSegments(text, known, tokens);
   return (
     <span className={className}>
+      {unreadEffect(text) ? (
+        <span className="eyebrow text-(--muted) mr-2">engine did not read what it does ·</span>
+      ) : null}
       {segments.map((seg, i) =>
         seg.kind === "card" ? <CardName key={i} name={seg.text} />
           : seg.kind === "token" ? (

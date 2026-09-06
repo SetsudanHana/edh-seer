@@ -485,3 +485,12 @@ test("a precise pointer still gets the board", async () => {
   expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
   expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
 });
+
+/** A SHARED LINK TO A REFERENCE SURFACE STAYS ON IT (UX sweep 2026-09-06, D1). The "new report
+ *  routes back to the chapters" effect also fired on the FIRST report, so `/analysis/combos#deck=…`
+ *  opened, redirected to `/`, and dropped the hash on the way: a reload after that had no deck.
+ *  Only a NEW report goes home, and the test above still proves that it does. */
+test("the first report keeps the surface it arrived on", () => {
+  render(<MemoryRouter initialEntries={["/analysis/combos"]}><ReportShell data={SAMPLE} /></MemoryRouter>);
+  expect(screen.getByText(/Infinite loop/)).toBeInTheDocument();
+});

@@ -125,8 +125,18 @@ export function ReportShell({ data, diff, state, onState }: {
   // six questions a fresh report is for.
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  // NOT ON THE FIRST REPORT (UX sweep 2026-09-06, D1). This effect also ran on mount, so a shared
+  // link to a reference surface -- `/analysis/cards#deck=…` -- was redirected to `/` the moment it
+  // loaded, and `navigate("/")` carried no hash: the address bar lost both the surface and the
+  // deck, and a reload after that lost the analysis. Measured on the live site twice with a clean
+  // load. The first report keeps whatever path it arrived on; only a NEW report goes home, and it
+  // goes home with the state and the deck still in the URL.
+  const seenData = useRef<typeof data | null>(null);
   useEffect(() => {
-    if (pathname !== "/") navigate("/", { replace: true });
+    const first = seenData.current === null;
+    seenData.current = data;
+    if (first) return;
+    if (pathname !== "/") navigate({ pathname: "/", search: window.location.search, hash: window.location.hash }, { replace: true });
     // Keyed on the REPORT, not on the path: re-running this when the path changes would make every
     // reference surface unreachable.
     // eslint-disable-next-line react-hooks/exhaustive-deps

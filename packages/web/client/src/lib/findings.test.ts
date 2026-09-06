@@ -107,7 +107,8 @@ test("thin answer classes collapse into a single finding", () => {
   // AND THE FIGURE SAYS WHAT IT COUNTS (S16). `0/5 answer types covered` sat beside a Roles table
   // of SIX rows including graveyard, so a judge read the pair as an off-by-one and could not tell
   // whether graveyard is an answer type. The exclusion is right; it just was not stated.
-  expect(rows[0].figureLabel).toBe("permanent answer types covered");
+  // "covered" means the required copies, and the label says the number (UX sweep 2026-09-06, D5).
+  expect(rows[0].figureLabel).toMatch(/^answer types at \d+\+ copies$/);
   // Graveyard is still out of the COUNTS -- it is hate, not removal -- and the detail now says so
   // rather than leaving its absence to be discovered.
   expect(rows[0].detail).not.toContain("1 for graveyards");

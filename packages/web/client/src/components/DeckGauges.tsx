@@ -120,10 +120,18 @@ export function DeckGauges({ data, onOpen, diff }: {
     return `${p.label} ${p.row[key]} · ${s.label} ${s.row[key]}`;
   };
   const share = (w: number) => `${Math.round(w * 100)}%`;
+  // THE NUMBER AND THE FLOOR, NOT A VERDICT (UX sweep 2026-09-06, D4). The headline said
+  // "Enchantress", the bar said "Enchantress 25%", and this line said "no archetype read strongly
+  // enough" -- because 0.249 rounds to 25 and the floor is 0.25 strict. Four reviewers hit it. The
+  // line now prints the share to a decimal and the floor it fell under, so the three agree.
+  const lead = report.strategies?.[0];
+  const underFloor = lead && template?.leadFloor !== undefined
+    ? `${lead.label} reads ${(lead.confidence * 100).toFixed(1)}%, under the ${Math.round(template.leadFloor * 100)}% an archetype needs to set its own row`
+    : "no archetype read strongly enough here to set its own row";
   const tickSource = !template
     ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"
     : !template.primary
-      ? "Ticks are the archetype median over every deck \u2014 no archetype read strongly enough here to use its own row"
+      ? `Ticks are the archetype median over every deck \u2014 ${underFloor}`
       : !template.secondary
         ? `Ticks are the ${template.primary.label} archetype\u2019s median \u2014 what the archetype runs, not what it needs`
         : `Ticks blend the ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) archetype medians \u2014 what the archetypes run, not what they need`;
@@ -253,7 +261,9 @@ export function DeckGauges({ data, onOpen, diff }: {
                   How close the deck sits to the category targets in Roles — ramp, draw, removal and the
                   rest. It says nothing about how the cards work together, and a target is the
                   archetype&rsquo;s median &mdash; measured over the decks we checked it on, ten per
-                  archetype from EDHREC &mdash; what it runs, not what it needs.
+                  archetype from EDHREC &mdash; what it runs, not what it needs. It counts cards per
+                  role; which KINDS of permanent those cards can answer is a Fixes question, so a 5.0
+                  here can sit beside a thin-answers finding without contradiction.
                 </Explain>
                 </>
               }
@@ -304,7 +314,7 @@ export function DeckGauges({ data, onOpen, diff }: {
               *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
               *  over real decks, which is also why it is the one two-sided reading here. */}
             <p className="text-xs text-(--muted) max-w-[52ch]">
-              {tickSource}. Being over is fine
+              {tickSource}. Over a tick is not a fault; Fixes says where that room is
               {lands ? <> · the land tick is the exception, modelled from this deck&rsquo;s own curve</> : null}.
             </p>
           </div>
