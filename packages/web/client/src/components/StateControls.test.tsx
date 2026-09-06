@@ -44,7 +44,7 @@ test("with edges, the line counts the edges the state made and names the cards t
     { a: "Samut, the Driving Force", b: "Raise the Alarm" },
   ];
   render(<StateControls markers={["speed"]} state={{ speed: 4 }} onState={() => {}} edges={edges} />);
-  expect(screen.getByText("speed 4: 2 edges exist because of it · Garruk's Uprising +2 · Goblin Surveyor +1 · Raise the Alarm +1")).toBeInTheDocument();
+  expect(screen.getByText("speed 4: 2 edges exist because of it · Garruk's Uprising +2 partners · Goblin Surveyor +1 partner · Raise the Alarm +1 partner")).toBeInTheDocument();
 });
 
 test("a state no edge depends on says so, and a run in flight says it is re-reading", () => {

@@ -64,6 +64,15 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   const stateControls = onState && data.report.markers && data.report.markers.length > 0
     ? <StateControls markers={data.report.markers} state={state} onState={onState} edges={data.report.edges} busy={stateBusy} />
     : null;
+  // ONLY ONE COPY IS LIVE AT A TIME (review): while the graph is fullscreen its shell renders the
+  // controls, and the header copy -- painted behind the backdrop but still in the DOM and the
+  // accessibility tree -- is not rendered at all.
+  const [fullscreen, setFullscreen] = useState(false);
+  useEffect(() => {
+    const onChange = () => setFullscreen(document.fullscreenElement !== null);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
   const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
   // WHICH GRAPH SURFACE THIS DEVICE GETS (roadmap R1). Not a width: see `use-board-mode.ts` for why
@@ -164,7 +173,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
         {/* A GAME STATE THE OWNER SETS, only where the deck can reach it (roadmap W18). */}
         {onState && data.report.markers && data.report.markers.length > 0 && (
           <div className="px-4 py-3 border-b border-(--separator)">
-            {stateControls}
+            {fullscreen ? null : stateControls}
           </div>
         )}
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not

@@ -33,7 +33,9 @@ export function stateSummary(edges: readonly StateEdge[], state: GameState): str
   const gained = new Map<string, number>();
   for (const e of enabled) for (const n of [e.a, e.b]) gained.set(n, (gained.get(n) ?? 0) + 1);
   const movers = [...gained.entries()].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0])).slice(0, 3)
-    .map(([n, k]) => `${n} +${k}`).join(" · ");
+    // "+N PARTNERS": an edge is counted once in the total and once per endpoint here, so the movers
+    // can add up to more than the total, and the word says why.
+    .map(([n, k]) => `${n} +${k} ${k === 1 ? "partner" : "partners"}`).join(" · ");
   return `${label}: ${enabled.length} ${enabled.length === 1 ? "edge exists" : "edges exist"} because of it · ${movers}`;
 }
 
