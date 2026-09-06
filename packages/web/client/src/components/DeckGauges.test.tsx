@@ -20,7 +20,7 @@ const DATA = {
 };
 
 test("draws two groups, each with its lead dial and its inputs", () => {
-  render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  render(<DeckGauges data={DATA as never} />);
   for (const name of [
     "Synergy", "Breadth", "Anchor",
     "Build", "Consistency", "Ramp", "Interaction", "Board wipes", "Lands",
@@ -37,7 +37,7 @@ test("draws two groups, each with its lead dial and its inputs", () => {
  *  unit; the label names both halves rather than repeating the lead dial's own printed name, which
  *  the component must not do a second time as a visible heading (task 9 brief). */
 test("each group carries an aria-label naming the score and its inputs", () => {
-  render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  render(<DeckGauges data={DATA as never} />);
   expect(screen.getByRole("group", { name: "Synergy, and the two measures behind it" })).toBeInTheDocument();
   expect(screen.getByRole("group", { name: "Build, and the five measures behind it" })).toBeInTheDocument();
 });
@@ -46,7 +46,7 @@ test("a report with only synergyOverall renders only the Synergy group", () => {
   const onlySynergy = {
     report: { synergyOverall: 4.2, positiveCoherence: 4.0, anchoring: 4.5 },
   };
-  render(<DeckGauges data={onlySynergy as never} onOpen={() => {}} />);
+  render(<DeckGauges data={onlySynergy as never} />);
   expect(screen.getByRole("group", { name: "Synergy, and the two measures behind it" })).toBeInTheDocument();
   expect(screen.queryByRole("group", { name: "Build, and the five measures behind it" })).toBeNull();
   expect(screen.queryByText("Consistency")).toBeNull();
@@ -54,7 +54,7 @@ test("a report with only synergyOverall renders only the Synergy group", () => {
 
 test("a report with only buildScore renders only the Build group", () => {
   const onlyBuild = { report: { ...DATA.report, synergyOverall: undefined, positiveCoherence: undefined, anchoring: undefined } };
-  render(<DeckGauges data={onlyBuild as never} onOpen={() => {}} />);
+  render(<DeckGauges data={onlyBuild as never} />);
   expect(screen.queryByRole("group", { name: "Synergy, and the two measures behind it" })).toBeNull();
   expect(screen.getByRole("group", { name: "Build, and the five measures behind it" })).toBeInTheDocument();
   // The Synergy group is absent, so its gloss is too -- nothing names Breadth or Anchor anywhere.
@@ -75,7 +75,7 @@ test("a report with only buildScore renders only the Build group", () => {
  *  (task 9) moved the same dials under the Build group, but the tone each one carries, and the
  *  claim that nothing anywhere ever reds out for being over, is unchanged. */
 test("no over-target role ever renders as a fault", () => {
-  const { container } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const { container } = render(<DeckGauges data={DATA as never} />);
   const tones = [...container.querySelectorAll("[data-tone]")].map((el) => ({
     label: el.textContent,
     tone: el.getAttribute("data-tone"),
@@ -95,31 +95,14 @@ test("floorState is what makes the over side neutral", () => {
   expect(floorState(7, 10).tone).toBe("danger");
 });
 
-test("a multi-leaf role opens its group on Build", () => {
-  const onOpen = vi.fn();
-  render(<DeckGauges data={DATA as never} onOpen={onOpen} />);
-  fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
-  expect(onOpen).toHaveBeenCalledWith("build", "Interaction");
+/** NOTHING IN THE SCORES SECTION IS A CONTROL (owner, 2026-09-06): the rail beside it opens every
+ *  chapter these figures summarise, so a clickable dial was a second copy of the menu. */
+test("no dial or bullet in the scores section is a button", () => {
+  render(<DeckGauges data={DATA as never} />);
+  expect(screen.queryByRole("button", { name: /open (Engine|Build|Mana)/ })).toBeNull();
+  expect(screen.queryByRole("button", { name: /^(Interaction|Ramp|Board wipes|Synergy|Build),/ })).toBeNull();
 });
 
-/** Ramp and Board wipes are single-leaf parents: `BuildBenchmarks` renders no group for them, so
- *  there is nothing on Build to open. They are dials, not buttons. */
-test("a single-leaf role is not a button", () => {
-  render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
-  expect(screen.queryByRole("button", { name: /^Ramp,/ })).toBeNull();
-  expect(screen.queryByRole("button", { name: /^Board wipes,/ })).toBeNull();
-});
-
-test("lands opens Mana, synergy opens Engine, build opens Build", () => {
-  const onOpen = vi.fn();
-  render(<DeckGauges data={DATA as never} onOpen={onOpen} />);
-  fireEvent.click(screen.getByRole("button", { name: /^Lands,/ }));
-  expect(onOpen).toHaveBeenCalledWith("mana", undefined);
-  fireEvent.click(screen.getByRole("button", { name: /^Synergy,/ }));
-  expect(onOpen).toHaveBeenCalledWith("engine", undefined);
-  fireEvent.click(screen.getByRole("button", { name: /^Build,/ }));
-  expect(onOpen).toHaveBeenCalledWith("build", undefined);
-});
 
 /** Breadth and anchor are edge-derived exactly like synergy itself, so they take the same
  *  partly-read flag for the same reason `HeadlineScores` gives its own sub-line: a red verdict
@@ -130,7 +113,7 @@ test("synergy, breadth and anchor drop their verdict on a partly-read deck; the 
   const partly = {
     report: { ...DATA.report, coverage: { resolved: 100, derived: 52, underivedNames: [], more: 0, caveat: "" } },
   };
-  render(<DeckGauges data={partly as never} onOpen={() => {}} />);
+  render(<DeckGauges data={partly as never} />);
   const unreadVerdicts = screen.getAllByText("too little of the deck read to call this");
   expect(unreadVerdicts).toHaveLength(3); // Synergy, Breadth and Anchor -- the same fixed message each
   // The numbers are not withheld -- refusing them would be a second wrong answer.
@@ -142,7 +125,7 @@ test("synergy, breadth and anchor drop their verdict on a partly-read deck; the 
 });
 
 test("renders nothing rather than an empty shell when the engine computed no build", () => {
-  const { container } = render(<DeckGauges data={{ report: {} } as never} onOpen={() => {}} />);
+  const { container } = render(<DeckGauges data={{ report: {} } as never} />);
   expect(container).toBeEmptyDOMElement();
 });
 
@@ -176,7 +159,7 @@ test("renders nothing rather than an empty shell when the engine computed no bui
  *  `repeat(N, minmax(0, 1fr))` -- the `0` minimum is what lets a track shrink below its content's
  *  natural size at all, which a `flex-wrap` row never had. */
 test("the input grids carry the classes the measured layout table above depends on", () => {
-  const { container } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const { container } = render(<DeckGauges data={DATA as never} />);
   const synergyGrid = container.querySelector(".synergy-inputs-grid")!;
   const buildGrid = container.querySelector(".build-inputs-grid")!;
   expect(synergyGrid.className).toMatch(/\bgrid\b/);
@@ -195,13 +178,13 @@ test("the input grids carry the classes the measured layout table above depends 
  *  tier's rule spans it; four (drop lands) leave it at position 4 -- even, no span needed, because
  *  4 items in 2 columns is a clean 2+2. */
 test("build-inputs-grid's last-dial-alone selector matches only when the count is odd", () => {
-  const { container: five } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const { container: five } = render(<DeckGauges data={DATA as never} />);
   const fiveGrid = five.querySelector(".build-inputs-grid")!;
   expect(fiveGrid.children).toHaveLength(5);
   expect(fiveGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(true);
 
   const fourReport = { report: { ...DATA.report, deckMath: undefined } };
-  const { container: four } = render(<DeckGauges data={fourReport as never} onOpen={() => {}} />);
+  const { container: four } = render(<DeckGauges data={fourReport as never} />);
   const fourGrid = four.querySelector(".build-inputs-grid")!;
   expect(fourGrid.children).toHaveLength(4);
   expect(fourGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(false);
@@ -211,13 +194,13 @@ test("build-inputs-grid's last-dial-alone selector matches only when the count i
  *  span rule is kept for the near-impossible case of only one of Breadth/Anchor existing, so a
  *  lone dial doesn't sit alone in the LEFT cell beside a blank right one. */
 test("synergy-inputs-grid's span rule protects the near-impossible one-measure case too", () => {
-  const { container: two } = render(<DeckGauges data={DATA as never} onOpen={() => {}} />);
+  const { container: two } = render(<DeckGauges data={DATA as never} />);
   const twoGrid = two.querySelector(".synergy-inputs-grid")!;
   expect(twoGrid.children).toHaveLength(2);
   expect(twoGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(false);
 
   const onlyBreadth = { report: { ...DATA.report, anchoring: undefined } };
-  const { container: one } = render(<DeckGauges data={onlyBreadth as never} onOpen={() => {}} />);
+  const { container: one } = render(<DeckGauges data={onlyBreadth as never} />);
   const oneGrid = one.querySelector(".synergy-inputs-grid")!;
   expect(oneGrid.children).toHaveLength(1);
   expect(oneGrid.lastElementChild!.matches(":last-child:nth-child(2n+1)")).toBe(true);
@@ -226,7 +209,7 @@ test("synergy-inputs-grid's span rule protects the near-impossible one-measure c
 /** THE SECOND RUN IS THE REAL PRODUCT (roadmap S9). Chapter 2 is where the full dials live, so it is
  *  where "where was this last time" is answerable at a glance. */
 test("the two score dials tick at their previous values", () => {
-  const { container } = render(<DeckGauges data={DATA as never} onOpen={vi.fn()} diff={{
+  const { container } = render(<DeckGauges data={DATA as never} diff={{
     added: [], removed: [], categories: [], findings: [],
     synergy: { from: 0.5, to: 0.8 }, build: { from: 3.6, to: 3.4 },
   }} />);
@@ -238,13 +221,13 @@ test("the two score dials tick at their previous values", () => {
 /** A score that did not move past its PRINTED precision carries no `from`/`to` at all -- `diffRuns`
  *  rounds to one decimal before comparing -- so its dial gets no tick. */
 test("a score that did not move draws no tick", () => {
-  const { container } = render(<DeckGauges data={DATA as never} onOpen={vi.fn()} diff={{
+  const { container } = render(<DeckGauges data={DATA as never} diff={{
     added: [], removed: [], categories: [], findings: [], synergy: { from: 0.5, to: 0.8 },
   }} />);
   expect(container.querySelectorAll('[data-testid="ghost-tick"]')).toHaveLength(1);
 });
 
 test("run one draws no ticks", () => {
-  const { container } = render(<DeckGauges data={DATA as never} onOpen={vi.fn()} />);
+  const { container } = render(<DeckGauges data={DATA as never} />);
   expect(container.querySelectorAll('[data-testid="ghost-tick"]')).toHaveLength(0);
 });

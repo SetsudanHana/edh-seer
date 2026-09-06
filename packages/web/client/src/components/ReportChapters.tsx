@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { AnalyzeResponse } from "../types.js";
-import { CHAPTERS, CHAPTER_FOR_GAUGE, type ChapterId } from "../lib/chapters.js";
+import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
@@ -103,22 +103,6 @@ function Chapter({ id, title, children }: {
 export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
   const { report } = data;
   const current = useCurrentChapter();
-  /** WHICH ROW THE READER ASKED ABOUT, when they arrived by pressing a dial rather than scrolling.
-   *  Component-local and deliberately NOT in the URL, same reason the sub-tab state was: a shared
-   *  analysis link carries the deck, and a second axis of state in that hash is scope this does not
-   *  need. */
-  const [focus, setFocus] = useState<string | undefined>(undefined);
-  // A DIAL NOW SCROLLS RATHER THAN SWITCHING A TAB. Same three destinations, same `focus` hand-off
-  // to `BuildBenchmarks`; `CHAPTER_FOR_GAUGE` is where the dissolved Engine tab's redirect lives.
-  const openChapter = (tab: "build" | "mana" | "engine", f?: string): void => {
-    setFocus(f);
-    // A DIAL WITH A ROW BEHIND IT SCROLLS TO THE ROW, NOT THE CHAPTER. `BuildBenchmarks` already
-    // scrolls its focused group into view and gives it DOM focus (which is what a keyboard reader
-    // needs), so scrolling the chapter here too would be two scrolls racing to different offsets.
-    if (f !== undefined) return;
-    document.getElementById(CHAPTER_FOR_GAUGE[tab])?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD — the single fact all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight. A two-faced commander rates one row per face and both carry the same `derived` flag, so
@@ -192,7 +176,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             *  counting the sticky header — S7 made that visible and this is the call it was made
             *  for. The tiles were the only place either score said what it MEASURES, so those two
             *  `Explain` blocks moved onto the dials themselves and the component retired. */}
-          <DeckGauges data={data} onOpen={openChapter} diff={diff} />
+          <DeckGauges data={data} diff={diff} />
           <BracketPanel bracket={report.bracket} />
         </Chapter>
 
@@ -275,7 +259,6 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               // `waiting` came off the dissolved Engine tab: it is a count of roles the deck plays,
               // which is this chapter's question and no other chapter's.
               sections={["answers", "win", "waiting"]}
-              focus={focus}
             />
           </Movement>
         </Chapter>
