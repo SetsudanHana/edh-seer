@@ -3803,3 +3803,40 @@ test("a card adapting ITSELF does not feed another card's own-counter trigger", 
   const targeted = { verb: "counter-added", subject: { control: "any", token: null, type: "creature", counter: "+1/+1", scope: "target" } } as const;
   expect(eventMatches(targeted as never, consumer as never, H)).toBe(true);
 });
+
+/** THE WHOLE POINT OF THE CHANGE, PINNED. Preordain scries; Matoya draws whenever you scry. There is
+ *  NO new matcher code for this -- the generic event-edge pass (producer emit <-> consumer trigger)
+ *  forms it, which is exactly what `mill` has always done one word over. If this test ever needs a
+ *  special-case loop to pass, the change went wrong and the loop is the wrong answer. */
+test("a scry producer feeds a scry consumer through the ordinary event channel", () => {
+  const preordain = base("Preordain", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation" },
+    emits: [{ verb: "scry", subject: { control: "you", token: null } }],
+  }]);
+  const matoya = base("Matoya, Archon Elder", [{
+    kind: "triggered",
+    trigger: { verbs: ["scry"], subject: { control: "you", token: null } },
+    effect: { kind: "draw-card" },
+    emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }]);
+  expect(directedReasons(preordain, matoya, H).some((r) => r.tag.startsWith("scry"))).toBe(true);
+});
+
+/** AN OPPONENT'S SEARCH IS NOT YOUR TUTOR. Archivist of Oghma triggers on an OPPONENT searching --
+ *  3 of the 4 corpus search consumers are this punisher shape -- so your own Demonic Tutor must form
+ *  nothing. The existing control matching is what refuses it; pinned here so a later widening of the
+ *  search event goes red rather than quiet. */
+test("your own tutor does not feed a consumer that watches an OPPONENT search", () => {
+  const tutor = base("Demonic Tutor", [{
+    kind: "on-cast",
+    effect: { kind: "top-manipulation" },
+    emits: [{ verb: "search", subject: { control: "you", token: null } }],
+  }]);
+  const archivist = base("Archivist of Oghma", [{
+    kind: "triggered",
+    trigger: { verbs: ["search"], subject: { control: "opp", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(directedReasons(tutor, archivist, H).some((r) => r.tag.startsWith("search"))).toBe(false);
+});

@@ -83,6 +83,15 @@ export const DEMAND_SUBJECTLESS: Record<string, string> = {
   "lose-life": "life being lost",
   "dice-rolled": "a die being rolled",
   proliferate: "proliferating",
+  // CR 701.22 / 701.25 / 701.23, added 2026-09-07 with the verbs. SUBJECTLESS is the right table of
+  // the three: "whenever you scry" names no permanent, so gluing a subject to it would invent an
+  // actor exactly as the header describes for proliferate. All 27 consumers phrase it about the
+  // PLAYER -- 15 scry, 10 surveil, 4 search, and every one reads "whenever you/an opponent ...".
+  scry: "scrying",
+  surveil: "surveilling",
+  // The engine emits this only for a LIBRARY search (emits.ts), which is what all four consumers
+  // watch, so the phrase says the zone rather than leaving the reader to guess it.
+  search: "a library being searched",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
