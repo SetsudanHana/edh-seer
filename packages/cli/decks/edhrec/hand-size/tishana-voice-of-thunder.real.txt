@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/BbHoNpiZq6ASueK4WYSitw (source https://archidekt.com/decks/10939794)
+# tags Card Draw, Commander Matters, Hand Size; bracket 2; saved 2026-08-26; 18 tagged of 682 indexed
+
+Commander
+1 Tishana, Voice of Thunder
+
+Deck
+1 Alrund, God of the Cosmos
+1 Arcanis the Omnipotent
+1 Armored Scrapgorger
+1 Body of Knowledge
+1 Chasm Skulker
+1 Cold-Eyed Selkie
+1 Faerie Mastermind
+1 Fathom Mage
+1 Gadwick, the Wizened
+1 Ilysian Caryatid
+1 Incubation Druid
+1 Jadzi, Oracle of Arcavios
+1 Jolrael, Mwonvuli Recluse
+1 Kydele, Chosen of Kruphix
+1 Laboratory Maniac
+1 Manifestation Sage
+1 Minn, Wily Illusionist
+1 Nezahal, Primal Tide
+1 Ormos, Archive Keeper
+1 Prime Speaker Zegana
+1 Psychosis Crawler
+1 Sage of Ancient Lore
+1 Solemn Simulacrum
+1 Stonybrook Banneret
+1 Svyelun of Sea and Sky
+1 Syr Elenora, the Discerning
+1 Tatyova, Benthic Druid
+1 The Unagi of Kyoshi Island
+1 Triskaidekaphile
+1 Arcane Denial
+1 Blur
+1 Bone to Ash
+1 Dream Fracture
+1 Eureka Moment
+1 Exclude
+1 Growth Spiral
+1 Return of the Wildspeaker
+1 Barkchannel Pathway
+1 Evolving Wilds
+13 Forest
+12 Island
+1 Memorial to Genius
+1 Mystic Sanctuary
+1 Quandrix Campus
+1 Reliquary Tower
+1 Simic Guildgate
+1 Thornwood Falls
+1 Thriving Grove
+1 Thriving Isle
+1 Woodland Stream
+1 Commander's Sphere
+1 Cranial Archive
+1 Hand of Vecna
+1 Hedron Archive
+1 Ivory Tower
+1 Mind Stone
+1 Scroll of Origins
+1 Sol Ring
+1 Venser's Journal
+1 Dictate of Kruphix
+1 Dissipation Field
+1 Greater Good
+1 Rune of Might
+1 Security Bypass
+1 Teferi's Ageless Insight
+1 Traveler's Cloak
+1 Wizard Class
+1 Explore
+1 Inspiring Refrain
+1 Kodama's Reach
+1 Lessons from Life
+1 River's Rebuke
+1 Seek the Horizon
+1 Stream of Thought
+1 Mordenkainen
+1 Mu Yanling, Sky Dancer

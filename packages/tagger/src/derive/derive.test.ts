@@ -1708,3 +1708,368 @@ test("an ability carries the face its clause is printed on, and the front face c
   expect(tags.abilities[0].face).toBeUndefined();
   expect(tags.abilities[1].face).toBe(1);
 });
+
+// ON AN `attacks` TRIGGER THE STATE IS THE EVENT. "Whenever a creature you control attacking causes
+// a triggered ability to trigger" (Firebender Ascension), "whenever a creature attacking one of your
+// opponents ..." (Seifer): the attacker IS attacking, and demanding the state from the implied
+// `attacks` producer -- which never states it -- would delete every real edge these have. Kept on
+// every other verb: "whenever an attacking creature DIES" is a narrowing the death alone lacks.
+test("a combat state on an attacks trigger is dropped; on a dies trigger it is kept", () => {
+  const seifer = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "attacks", subject: "a creature attacking one of your opponents" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }]).abilities;
+  expect(seifer[0].trigger?.subject.combat).toBeUndefined();
+  const kardur = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "an attacking creature" },
+    actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }],
+  }]).abilities;
+  expect(kardur[0].trigger?.subject.combat).toBe("attacking");
+});
+
+// TIMING, THE SMALLEST MODEL THAT HOLDS A RULING. Owner (2026-08-22, upheld): Ayara -> Death Tyrant
+// is REAL because "a sac outlet can eat an attacking creature" -- an activated ability is used at
+// instant speed, in combat, and a sorcery is not. So an emit from an activated ability (loyalty and
+// "activate only as a sorcery" excepted), an instant, or a flash spell is stamped `instantSpeed`,
+// and a combat-state demand accepts such a producer. Blasphemous Edict stays refused.
+test("an emit from an activated ability, an instant or a flash spell is instant-speed; a sorcery is not", () => {
+  const outlet = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "another creature" }, { verb: "draw", object: "a card" }] }],
+    "Ayara", { 1: "{T}, Sacrifice another black creature: Draw a card." }, { 1: "{T}, Sacrifice another black creature" },
+  ).abilities;
+  expect(outlet.find((a) => a.emits?.some((e) => e.verb === "dies"))?.emits?.every((e) => e.instantSpeed === true)).toBe(true);
+  const sorcerySpeed = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "sacrifice", object: "a creature" }] }],
+    "Altar", { 1: "{2}, Sacrifice a creature: Draw a card. Activate only as a sorcery." }, { 1: "{2}, Sacrifice a creature" },
+  ).abilities;
+  expect(sorcerySpeed[0].emits?.[0].instantSpeed).toBeUndefined();
+  const loyalty = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "destroy", object: "target creature" }] }],
+    "Walker", { 1: "−3: Destroy target creature." }, { 1: "−3" },
+  ).abilities;
+  expect(loyalty[0].emits?.[0].instantSpeed).toBeUndefined();
+  const edict = deriveCardTags({
+    oracleId: "edict", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "sacrifice", object: "thirteen creatures" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+  });
+  expect(edict.abilities[0].emits?.[0].instantSpeed).toBeUndefined();
+  const instant = deriveCardTags({
+    oracleId: "rollick", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  expect(instant.abilities[0].emits?.[0].instantSpeed).toBe(true);
+  const flash = deriveCardTags({
+    oracleId: "flash", clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"], keywords: ["Flash"] },
+  });
+  expect(flash.abilities[0].emits?.[0].instantSpeed).toBe(true);
+});
+
+// THE EERIE HALF, AND THE CHANNEL THAT WAS SUPPOSED TO CATCH ITS ABSENCE. "Whenever you fully unlock
+// a Room" was recorded by the clause layer as `unlocked` and derived to nothing, and
+// `unknownTriggers` -- the field that exists so a dropped trigger is visible -- was computed and then
+// discarded by `deriveCardTags`, so every persisted doc read as if nothing had ever been unknown.
+test("an unlocked trigger derives to the unlock verb, and an unknown event is persisted as unknown", () => {
+  const eerie = deriveCardTags({
+    oracleId: "leech",
+    clauses: [
+      { id: 1, abilityType: "triggered", trigger: { event: "unlocked", subject: "a Room", control: "you" }, actions: [{ verb: "lose-life", object: "each opponent", amount: "1" }] },
+      { id: 2, abilityType: "triggered", trigger: { event: "no-such-event", subject: "a Room", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] },
+    ],
+    characteristics: MINIMAL_CHARACTERISTICS,
+  });
+  expect(eerie.abilities.some((a) => a.trigger?.verbs.includes("unlock"))).toBe(true);
+  expect(eerie.unknownTriggers).toEqual(["no-such-event"]);
+  const clean = deriveCardTags({ oracleId: "clean", clauses: [], characteristics: MINIMAL_CHARACTERISTICS });
+  expect("unknownTriggers" in clean).toBe(false);
+});
+
+// THE MODEL DROPPED THE ZONE (money layer, 2026-09-05): Desecrated Tomb's raw answer is subject
+// "one or more creature cards" with no zone, identical to The Ozolith's battlefield leave, and every
+// death in the deck fed it. The clause TEXT still says "leave your graveyard", and derive has it.
+test("a leaves trigger whose text names the graveyard derives zone graveyard; a battlefield one does not", () => {
+  const tomb = deriveCardTags({
+    oracleId: "tomb",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "leaves", subject: "one or more creature cards", control: "you" },
+      actions: [{ verb: "create", object: "a 1/1 black Bat creature token with flying" }],
+    }],
+    clauseTexts: { 1: "Whenever one or more creature cards leave your graveyard, create a 1/1 black Bat creature token with flying." },
+    characteristics: MINIMAL_CHARACTERISTICS,
+  });
+  const tombTrigger = tomb.abilities.find((a) => a.trigger?.verbs.includes("leaves"))!.trigger!;
+  expect(tombTrigger.subject.zone).toBe("graveyard");
+  expect(tombTrigger.subject.withoutDying).toBeUndefined();
+
+  const ozolith = deriveCardTags({
+    oracleId: "ozolith",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "leaves", subject: "a creature you control", control: "you" },
+      actions: [{ verb: "add-counter", object: "those counters" }],
+    }],
+    clauseTexts: { 1: "Whenever a creature you control leaves the battlefield, if it had counters on it, put those counters on The Ozolith." },
+    characteristics: MINIMAL_CHARACTERISTICS,
+  });
+  const ozTrigger = ozolith.abilities.find((a) => a.trigger?.verbs.includes("leaves"))!.trigger!;
+  expect(ozTrigger.subject.zone).toBeUndefined();
+  expect(ozTrigger.subject.withoutDying).toBeUndefined();
+});
+
+test("a leaves trigger that says without dying, or if it didn't die, derives withoutDying", () => {
+  const port = deriveCardTags({
+    oracleId: "port-mage",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "leaves", subject: "one or more other creatures you control", control: "you" },
+      actions: [{ verb: "draw", object: "a card", amount: "1" }],
+    }],
+    clauseTexts: { 1: "Whenever one or more other creatures you control leave the battlefield without dying, draw a card." },
+    characteristics: MINIMAL_CHARACTERISTICS,
+  });
+  expect(port.abilities[0].trigger?.subject.withoutDying).toBe(true);
+
+  const taeko = deriveCardTags({
+    oracleId: "taeko",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "leaves", subject: "another creature you control", control: "you" },
+      actions: [{ verb: "scry", object: "1", amount: "1" }, { verb: "add-counter", object: "+1/+1" }],
+    }],
+    clauseTexts: { 1: "Whenever another creature you control leaves the battlefield, if it didn't die, scry 1 and put a +1/+1 counter on Taeko." },
+    characteristics: MINIMAL_CHARACTERISTICS,
+  });
+  expect(taeko.abilities.every((a) => a.trigger?.subject.withoutDying === true)).toBe(true);
+});
+
+test("a flicker derives leaves from its exile half and enters from its return half, both about the target", () => {
+  const ephemerate = deriveCardTags({
+    oracleId: "ephemerate",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [
+        { verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" },
+        { verb: "return", object: "it", fromZone: "exile", toZone: "battlefield" },
+      ],
+    }],
+    clauseTexts: { 1: "Exile target creature you control, then return it to the battlefield under its owner's control." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const verbs = ephemerate.abilities.flatMap((a) => (a.emits ?? []).map((e) => e.verb)).sort();
+  expect(verbs).toEqual(["enters", "leaves"]);
+  const leaves = ephemerate.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(leaves.subject.control).toBe("you");
+  expect(leaves.subject.type).toBe("creature");
+  expect(ephemerate.abilities.some((a) => a.effect.kind === "flicker")).toBe(true);
+});
+
+test("targeted removal by exile, and a targeted bounce, leave under the opponent's control; a self bounce is yours", () => {
+  const swords = deriveCardTags({
+    oracleId: "swords",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [{ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" }, { verb: "gain-life", object: "its controller" }],
+    }],
+    clauseTexts: { 1: "Exile target creature. Its controller gains life equal to its power." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const swordsLeaves = swords.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(swordsLeaves.subject.control).toBe("opp");
+
+  const unsummon = deriveCardTags({
+    oracleId: "unsummon",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [{ verb: "return", object: "target creature", fromZone: "battlefield", toZone: "hand" }],
+    }],
+    clauseTexts: { 1: "Return target creature to its owner's hand." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  expect(unsummon.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!.subject.control).toBe("opp");
+
+  const lion = deriveCardTags({
+    oracleId: "lion",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "enters", subject: "this creature", control: "you" },
+      actions: [{ verb: "return", object: "a creature you control", fromZone: "battlefield", toZone: "hand" }],
+    }],
+    clauseTexts: { 1: "When this creature enters, return a creature you control to its owner's hand." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature"] },
+  });
+  const lionLeaves = lion.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(lionLeaves.subject.control).toBe("you");
+  expect(lionLeaves.subject.type).toBe("creature");
+});
+
+test("a targeted reanimation from a graveyard keeps `any`; a targeted exile from one reads `opp`", () => {
+  // The bounce rule above turns a targeted `leaves` to the opponent's. A GRAVEYARD leave must not
+  // join it: Reanimate is aimed at your own graveyard as readily as theirs, and "whenever one or more
+  // creature cards leave YOUR graveyard" (Desecrated Tomb) would refuse an `opp` producer.
+  const reanimate = deriveCardTags({
+    oracleId: "reanimate", name: "Reanimate",
+    clauses: [{
+      id: 1, abilityType: "spell",
+      actions: [
+        { verb: "put", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "battlefield" },
+        { verb: "lose-life", object: "you", amount: "that card's mana value" },
+      ],
+    }],
+    clauseTexts: { 1: "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to that card's mana value." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["sorcery"] },
+  });
+  const leaves = reanimate.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  expect(leaves.map((e) => [e.subject.zone, e.subject.control])).toEqual([["graveyard", "any"]]);
+
+  const cremate = deriveCardTags({
+    oracleId: "cremate", name: "Cremate",
+    clauses: [{ id: 1, abilityType: "spell", actions: [{ verb: "exile", object: "target card from a graveyard", fromZone: "graveyard", toZone: null }] }],
+    clauseTexts: { 1: "Exile target card from a graveyard." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
+  });
+  const exiled = cremate.abilities.flatMap((a) => a.emits ?? []).filter((e) => e.verb === "leaves");
+  expect(exiled.map((e) => [e.subject.zone, e.subject.control])).toEqual([["graveyard", "opp"]]);
+});
+
+test("a card exiling ITSELF emits a self leaves", () => {
+  const phoenix = deriveCardTags({
+    oracleId: "phoenix", name: "Lamplight Phoenix",
+    clauses: [{
+      id: 1, abilityType: "triggered",
+      trigger: { event: "dies", subject: "this creature", control: "you" },
+      actions: [{ verb: "exile", object: "this creature", fromZone: null, toZone: "exile" }],
+    }],
+    clauseTexts: { 1: "When this creature dies, exile it." },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature"] },
+  });
+  const leaves = phoenix.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(leaves.subject.self).toBe(true);
+});
+
+// 2026-09-05, owner: Black Market Connections must count as a draw ENGINE. Its canonical clauses are
+// the corpus's own: the trigger is `main-phase` (no `Verb`), and the three modes state no trigger.
+test("a modal phase trigger's modes inherit its event for the repeats label", () => {
+  const bmc = deriveCardTags({
+    oracleId: "bmc", name: "Black Market Connections",
+    clauses: [
+      { id: 1, abilityType: "triggered", trigger: { event: "main-phase", subject: "you", control: "you" }, actions: [{ verb: "none" }] },
+      { id: 2, abilityType: "triggered", actions: [{ verb: "lose-life", object: "you", amount: "1" }, { verb: "create", object: "a Treasure token", amount: "1" }] },
+      { id: 3, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "lose-life", object: "you", amount: "2" }] },
+    ],
+    clauseTexts: {
+      1: "At the beginning of your first main phase, choose one or more --",
+      2: "Sell Contraband -- Create a Treasure token. You lose 1 life.",
+      3: "Buy Information -- Draw a card. You lose 2 life.",
+    },
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["enchantment"] },
+  });
+  const draw = bmc.abilities.find((a) => a.effect.kind === "draw-card")!;
+  expect(draw.repeats).toBe("per-cycle");
+  expect(bmc.abilities.every((a) => a.repeats === "per-cycle")).toBe(true);
+});
+
+/** THE REQUIREMENT RIDES ON THE ABILITY. `clauseRequires` is the fourth per-clause channel beside
+ *  texts, costs and faces, and it reaches every ability the clause produces. */
+test("deriveCardTags carries a clause's requirement onto its abilities", () => {
+  const tags = deriveCardTags({
+    name: "Goblin Surveyor", characteristics: MINIMAL_CHARACTERISTICS,
+    clauses: [{ id: 3, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }] }],
+    clauseTexts: { 3: "Draw a card." }, clauseCosts: { 3: "{3}, Exile this card from your graveyard" },
+    clauseRequires: { 3: { marker: "speed", min: 4 } },
+  } as never);
+  expect(tags.abilities.map((a) => a.requires)).toEqual([{ marker: "speed", min: 4 }]);
+});
+
+test("a clause whose text carries a marker condition derives the requirement", () => {
+  const tags = deriveCardTags({
+    name: "Grave Venerations", characteristics: MINIMAL_CHARACTERISTICS,
+    clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "end-step", control: "you" }, actions: [{ verb: "return", object: "up to one target creature card", fromZone: "graveyard", toZone: "hand" }] }],
+    clauseTexts: { 1: "At the beginning of your end step, if you're the monarch, return up to one target creature card from your graveyard to your hand." },
+  } as never);
+  expect(tags.abilities.every((a) => a.requires?.marker === "monarch")).toBe(true);
+  expect(tags.abilities.length).toBeGreaterThan(0);
+});
+
+// ---- the panel's controller family (2026-09-06) ----
+
+test("an action with no player named is the controller's: 'draw a card' is you drawing", () => {
+  // Priest of Forgotten Gods. Derived `any`, the draw met Orcish Bowmasters' "whenever an opponent
+  // draws" (owner-judged FALSE). A player-shaped cue still wins: "target player draws" stays any.
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }] }], undefined, { 1: "You add {B}{B} and draw a card." });
+  expect(abilities[0].emits?.[0]?.subject.control).toBe("you");
+  const named = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }] }], undefined, { 1: "Target player draws a card." });
+  expect(named.abilities[0].emits?.[0]?.subject.control).toBe("any");
+});
+
+test("'that creature' inherits the controller of the creature the trigger named", () => {
+  // The Sibsig Ceremony: "Whenever a creature you control enters, destroy that creature" is YOUR
+  // creature dying, and derived `dies creature/any` it fed Massacre Wurm's opponents-only trigger.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a creature you control", control: "you" },
+    actions: [{ verb: "destroy", object: "that creature" }],
+  }]);
+  const dies = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
+  expect(dies?.subject).toMatchObject({ type: "creature", control: "you" });
+});
+
+test("a counter placed 'on this creature' is a self trigger", () => {
+  // Evolution Witness: the counter is the subject, the recipient is the card itself.
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "counter-added", subject: "one or more +1/+1 counters on this creature", control: "you" },
+    actions: [{ verb: "return", object: "target permanent card", fromZone: "graveyard", toZone: "hand" }],
+  }]);
+  expect(abilities[0].trigger?.subject.self).toBe(true);
+});
+
+// AN AURA'S ENCHANT LINE BOUNDS ITS "ENCHANTED PERMANENT" (UX sweep 2026-09-06, E1). Kaya's
+// Ghostform read as "any permanent you control dies", and the site's own example deck printed "When
+// Fabled Passage dies, Kaya's Ghostform brings a card back" -- six false rows from one subject.
+test("\"enchanted permanent\" is bounded by the card's own Enchant line", () => {
+  const text = "Enchant creature or planeswalker you control\nWhen enchanted permanent dies or is put into exile, return that card to the battlefield under your control.";
+  const clauses = [{
+    id: 2, abilityType: "triggered" as const,
+    trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
+    actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }],
+  }];
+  const { abilities } = deriveAbilities(clauses, "Kaya's Ghostform", { 2: text }, undefined, text);
+  expect(abilities[0]?.trigger?.subject.type).toEqual(["creature", "planeswalker"]);
+  expect(abilities[0]?.trigger?.subject.control).toBe("you");
+  // And the RETURN -- "that card" -- is the same creature or planeswalker, so the entry it emits is
+  // typed too; an untyped "permanent enters" here is how Dress Down "entered thanks to" it.
+  const enters = abilities[0]?.emits?.find((e) => e.verb === "enters");
+  expect(enters?.subject.type).toEqual(["creature", "planeswalker"]);
+  // Without the card's text there is no Enchant line to read, and nothing is guessed.
+  const blind = deriveAbilities(clauses, "Kaya's Ghostform", { 2: "When enchanted permanent dies or is put into exile, return that card to the battlefield under your control." });
+  expect(blind.abilities[0]?.trigger?.subject.type).toBe("permanent");
+});
+
+test("the Enchant bound: a permanent line is a no-op, reminder text is dropped, and a two-face card reads its own face", () => {
+  const ghost = (text: string, extra?: Parameters<typeof deriveAbilities>) => deriveAbilities(
+    [{ id: 2, abilityType: "triggered" as const, trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
+      actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }] }],
+    "Aura", { 2: text }, undefined, text,
+  );
+  // "Enchant permanent" narrows nothing and stays permanent.
+  expect(ghost("Enchant permanent\nWhen enchanted permanent dies, return that card to the battlefield.").abilities[0]?.trigger?.subject.type).toBe("permanent");
+  // Reminder text after the line is not part of the type list.
+  expect(ghost("Enchant creature (Target a creature as you cast this. This card enters attached to that creature.)\nWhen enchanted permanent dies, return that card to the battlefield.").abilities[0]?.trigger?.subject.type).toBe("creature");
+  // Two faces, two Enchant lines: the clause on face 1 reads face 1's line, not face 0's.
+  const twoFaced = deriveAbilities(
+    [
+      { id: 1, abilityType: "none" as const, actions: [{ verb: "none", object: "Enchant creature" }] },
+      { id: 2, abilityType: "none" as const, actions: [{ verb: "none", object: "Enchant land" }] },
+      { id: 3, abilityType: "triggered" as const, trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
+        actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }] },
+    ],
+    "Two Auras",
+    { 1: "Enchant creature", 2: "Enchant land", 3: "When enchanted permanent dies, return that card to the battlefield." },
+    undefined,
+    "Enchant creature\n// Enchant land\nWhen enchanted permanent dies, return that card to the battlefield.",
+    undefined, { 1: 0, 2: 1, 3: 1 },
+  );
+  expect(twoFaced.abilities[0]?.trigger?.subject.type).toBe("land");
+});

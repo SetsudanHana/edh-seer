@@ -29,6 +29,16 @@
      and hid the first row of the table behind the strip it was guessing at. 0 until measured. */
   --report-header-h: 0px;
 
+  /* THE SITE HEADER'S MEASURED HEIGHT, written by `main.tsx` at boot and on every resize. It is a
+     SEPARATE variable from `--report-header-h` and not folded into it, because the two are consumed
+     differently: a sticky `top` is a viewport-absolute offset and needs the WHOLE stack above it,
+     while a scroll target gets the site header's share from `scroll-padding-top` on `html` and only
+     its own share from `scroll-mt`. Fold them together and every anchored chapter over-scrolls by
+     the height of this header.
+     0 on `how-it-works`, which loads no bundle -- and correctly so: that page has no in-page anchor
+     and nothing sticky under the header, so nothing there reads this. */
+  --site-header-h: 0px;
+
   /* The chapter rail's own height, written by `ChapterRail` on the same terms: below `lg` it is a
      SECOND pinned bar under the header, and 0 above it, where the rail sits beside the column.
      Anything scrolled to has to clear both -- an offset that counted only the header left each
@@ -106,6 +116,13 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --text-2xs: 0.625rem; /* 10px — chart axis labels only; documented micro step */
 }
+
+/* EVERY SCROLL TARGET CLEARS THE STICKY HEADER (WCAG 2.4.11, Focus Not Obscured). An anchor jump
+   and the browser's own scroll-into-view on focus both honour this, so a keyboard reader tabbing
+   into something just off the top edge does not land underneath the bar. Chapters add their own
+   `scroll-mt` for the report header and rail ON TOP of this, which is exactly why the site header is
+   not in that calc. */
+html { scroll-padding-top: var(--site-header-h, 0px); }
 
 /* THE PAGE'S OWN GROUND, and it was `main`'s until the static intro moved content outside it: below
    `main` the body showed the browser default, so the explainer sat on white. A background painted by
@@ -275,6 +292,51 @@ summary {
 
   .btn-primary[aria-busy="true"] {
     cursor: progress;
+  }
+
+  /** THE NEUTRAL HALF OF A BUTTON PAIR. One affirmative action per screen takes the accent fill;
+   *  everything beside it is this -- transparent, bordered, foreground text, never a second colour
+   *  (tokens-and-color.md: "secondary = neutral, never a colored fill"). It is not the destructive
+   *  variant either: clearing a form the reader filled is neutral, and painting it red would put the
+   *  loudest thing on the landing page on the action nobody came to take.
+   *
+   *  `--field-border` AND NOT `--separator`. This is a control boundary, so WCAG 1.4.11 wants 3:1 --
+   *  the separator is the decorative hairline at 1.15:1 and `validate_contrast.py` enforces the
+   *  difference. The same token the paste fields' own boundary would use.
+   *
+   *  IT SHARES `.btn-primary`'S BOX -- same min height, radius, type -- because the two sit on one
+   *  line and a pair of buttons at different heights is the first thing an eye finds wrong. */
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 2.25rem;
+    padding-inline: 1rem;
+    border-radius: 9999px;
+    background: transparent;
+    color: var(--foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    border: 1px solid var(--field-border);
+    cursor: pointer;
+    transition: background-color 120ms ease-out, border-color 120ms ease-out;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--surface-secondary);
+    border-color: var(--foreground);
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    background: var(--surface);
+  }
+
+  /* Nothing to clear IS "you cannot do this", which is the one case that earns the dimming -- the
+     same rule `.btn-primary` states for an empty decklist. */
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   /** A PASTE FIELD: recessed below its container, which is what says "type here" without a border
@@ -658,10 +720,23 @@ summary {
 
 /* THE HEADER (index.html and how-it-works/index.html). Static on both pages, so plain CSS, and one
    rule set for the two so the site cannot have two headers that disagree. */
+/* STICKY, so the site's own name and the six links stay reachable from 9,000px down a report
+   (owner, 2026-09-04). Three things it needs that a bare `position: sticky` does not give:
+   AN OPAQUE BACKGROUND. Without one the report scrolls THROUGH the header -- the block had no
+   background of its own, because until now nothing ever passed behind it.
+   A PLACE IN THE STACK. The app's layers were already ordered: fullscreen graph 40, card drawer 30,
+   report header 20, chapter rail 10, table head 5. 25 is the gap that puts this above the report's
+   own sticky summary and below the two things meant to cover the whole page.
+   LESS HEIGHT ONCE IT NEVER LEAVES. The 2rem above the wordmark was the top of the page breathing;
+   in a bar that is now permanent it is dead space on every screen. */
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  background: var(--background);
   max-width: 64rem;
   margin: 0 auto;
-  padding: 2rem 2rem 0;
+  padding: 0.75rem 2rem 0;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -724,6 +799,16 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    and where a wrong claim goes. */
 .site-nav {
   display: flex;
+  /* The containing block for `.site-more-panel`, which hangs under the summary. */
+  position: relative;
+  /* Centred rather than stretched, so the menu's summary sits on the links' own line instead of
+     stretching to whatever the tallest item makes the flex line. */
+  align-items: center;
+  /* FIVE ITEMS PLUS THE INSTALL BUTTON DO NOT FIT ON A PHONE. The nav measured ~430px of content
+     against 326px of room at 390px wide once Cards and Commanders joined it, and `flex` does not
+     wrap by default -- so the row ran off the right edge instead of becoming two. The header itself
+     already wraps; the nav now agrees with it. */
+  flex-wrap: wrap;
   gap: 1.25rem;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
@@ -732,12 +817,99 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   text-transform: uppercase;
 }
 
-/* THE INSTALL BUTTON IS THE FOURTH NAV ITEM AND LOOKS LIKE THE OTHER THREE. It is a `button` and
-   not a link because it opens the browser's install dialog rather than going anywhere, so it needs
-   the element's semantics and the links' appearance -- hence one selector list and a reset for the
-   three properties a UA stylesheet gives a button that an anchor does not. It is absent from the
-   markup until the browser offers the prompt; see `InstallButton.tsx`. */
+/* THE MENU IS A `<details>`, AND IT IS ONE AT EVERY WIDTH.
+   The first attempt made it a phone-only menu and flattened it back to six inline links above 48rem
+   with `display: contents` on the details and its panel. IT DOES NOT WORK, measured rather than
+   assumed: `<details>` renders its content through a slot in a UA shadow tree, so removing the
+   details box leaves the slot's, and the three links inside landed 11.8px below the other three
+   instead of joining their flex line. Forcing it would take an `open` attribute toggled by
+   JavaScript per breakpoint, in a header that is static HTML precisely so it needs none.
+   IT DOES NOT NEED TO BE FLATTENED. The NN/g study measures combo on the desktop too, where it took
+   50% against visible navigation's 48% -- a tie inside the noise, and both far above hidden's 27%.
+   The condition that loses on desktop is hiding EVERYTHING, which is not what this is. So one
+   behaviour at every width, no breakpoint, and no second copy of the link list for `seo.test.ts`'s
+   byte-for-byte comparison to catch drifting apart. */
+.site-more { position: relative; }
+
+.site-more > summary {
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  /* THE 44px TARGET STAYS, THE 44px BOX DOES NOT. The global `summary` rule above gives every
+     disclosure on the site a 2.75rem minimum block size, deliberately, because these are standalone
+     controls and WCAG 2.5.8 wants a real target under a thumb. Inside a nav row that is a layout
+     rule as well as a target rule, and it grew the desktop header from 57px to 69px -- one control
+     setting the height of the bar every other item sits in.
+     So the BOX joins the links' line and the TARGET is extended past it by a transparent
+     pseudo-element, which is the one thing that can be bigger than the box it belongs to. Measured
+     hit area 44px tall, visual height 17px, and the summary is still the only item in this nav that
+     meets 2.5.8 at all -- the six links are ~19px, which is a real finding and an older one. */
+  min-block-size: 0;
+  padding-block: 2px;
+}
+
+.site-more > summary::before {
+  content: "";
+  position: absolute;
+  inset-block: -0.8rem;
+  inset-inline: -0.5rem;
+}
+.site-more > summary::-webkit-details-marker { display: none; }
+
+/* THE CARET IS THE TAPPABILITY SIGNIFIER. A bare word in a row of words reads as a seventh link,
+   and the one thing the research is unambiguous about is that a menu has to look like one: an
+   unlabelled, unsignified control measured 44% usage against 89% for a menu a reader could tell
+   was a menu. It rotates on open, so the control also reports its own state to a sighted reader --
+   `aria-expanded` is the screen reader's copy of the same fact, and `<details>` supplies it. */
+.site-more > summary::after {
+  content: "";
+  display: inline-block;
+  width: 0.3rem;
+  height: 0.3rem;
+  margin-left: 0.4rem;
+  vertical-align: 0.1em;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg) translate(-0.06em, -0.06em);
+  transition: transform 150ms ease-out;
+}
+.site-more[open] > summary::after { transform: rotate(-135deg) translate(-0.02em, -0.02em); }
+@media (prefers-reduced-motion: reduce) {
+  .site-more > summary::after { transition: none; }
+}
+
+/* IT HANGS, RATHER THAN PUSHING. An in-flow panel would grow the header, and the header's measured
+   height is what every sticky below it offsets by -- so opening a menu would shove the whole report
+   down and closing it would pull it back. Absolute keeps `--site-header-h` still.
+   `z-index` is local to the header's own stacking order and does not need to join the app-wide
+   ladder: the header is 25, and this rides inside it. */
+.site-more-panel {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  white-space: nowrap;
+}
+
+/* IT CLOSES ON ESCAPE AND ON A PRESS OUTSIDE IT, from ~15 lines inline in both shells rather than
+   from the bundle -- see the comment on that script. The nav still works with the script deleted,
+   which is the property being protected: `<details>` supplies the disclosure, the keyboard model and
+   the accessibility semantics on its own, and this only adds the two dismissals the element does not
+   have. `site-header.test.ts` runs the shipped script text against the shipped markup. */
+
+/* THE INSTALL BUTTON LOOKS LIKE A NAV ITEM AND SITS BESIDE THE NAV. It is a `button` and not a
+   link because it opens the browser's install dialog rather than going anywhere, so it needs the
+   element's semantics and the links' appearance -- hence one selector list and a reset for the
+   properties a UA stylesheet gives a button that an anchor does not. It is absent from the markup
+   until the browser offers the prompt; see `InstallButton.tsx`. */
 .site-nav a,
+.site-more > summary,
 .site-nav-install {
   color: var(--muted);
   text-decoration: none;
@@ -751,17 +923,35 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   background: none;
   border-width: 0 0 1px 0;
   border-style: solid;
-  /* `font: inherit` is not enough -- the nav's family, size, weight, letter-spacing and casing all
-     live on `.site-nav` itself, and a button does not inherit them from a UA default. */
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
+  /* IT IS A HEADER CHILD, NOT A NAV CHILD, so it inherits nothing from `.site-nav` and states the
+     nav's type itself. `order: 1` puts it between the brand (0) and the nav (2) in a row whose
+     source order is brand, nav, button -- the nav has to stay pinned to the right edge, because a
+     menu that slides sideways when this button appears is the same defect as one that slides when
+     you change page. See `InstallButton.tsx`.
+     AND `margin-left: auto` PUTS IT BESIDE THE NAV RATHER THAN MID-BAR (owner, 2026-09-04). Order
+     alone left it floating in the middle of a `space-between` row -- the third item in a three-item
+     distribution lands in the centre by definition, attached to neither the brand nor the links, and
+     the owner read it as an accident. The auto margin eats the free space BEFORE the button instead,
+     so the pair sits at the right edge together. It changes nothing on a phone: below 47.99rem the
+     nav takes its own row (`flex: 1 0 100%`), leaving brand and button alone on the first, where
+     `space-between` had already pushed the button right. */
+  order: 1;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1;
   padding-left: 0;
   padding-right: 0;
   cursor: pointer;
 }
 
+.site-nav { order: 2; }
+
 .site-nav a:hover,
+.site-more > summary:hover,
 .site-nav-install:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 @media (min-width: 80rem) { .site-header { max-width: none; } }
@@ -771,6 +961,44 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 @media (max-width: 30rem) {
   .brand-tagline { display: none; }
   .site-nav { gap: 0.9rem; }
+}
+
+/* WRAP IS THE COST, AND ON A PINNED BAR IT IS THE WHOLE COST. Measured at 390px with the header
+   sticky: six links plus the install button wrapped to three rows and the bar stood at 123px -- 18%
+   of a 664px viewport, permanently, above a report header (73px) and a chapter rail (53px) already
+   pinned under it. The nav takes its own row and stays on ONE line inside it.
+   THE ROW USED TO SCROLL SIDEWAYS, and that is what the `<details>` above replaced (research
+   2026-09-04). Six items in a 326px row meant three on screen and three behind a horizontal gesture;
+   Baymard's testing is that a sideways row reads as finished at its right edge, because the instinct
+   is to scroll vertically. Three items and a menu fit with room to spare, so the gesture is gone and
+   with it the mask that had to advertise it.
+   `overflow` HAD TO GO ANYWAY: a scroll container clips its absolutely positioned descendants, so
+   the menu panel would have been cut off at the nav's own right edge. */
+@media (max-width: 47.99rem) {
+  .site-header {
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.5rem;
+  }
+  .site-nav {
+    /* ITS OWN ROW, AND ALL OF IT. Sharing the brand's line leaves ~121px of a 390px screen, which
+       is not enough for three labels and a menu. A second row costs 20px and fits all four.
+       IT WRAPS RATHER THAN CLIPS, and that is not the old three-row wrap coming back. Measured at
+       390px the four items come to 326px in 326px of room -- they fit, with nothing to spare, and
+       this project has a standing rule that a layout proven at one width on one machine is not
+       proven: font metrics differ per platform, and the same row is a few pixels wider somewhere
+       else. `wrap` makes that case a second line instead of a clipped one, and the header's measured
+       height is what every sticky below it offsets by, so the stack simply re-reads it. The
+       alternative, an `overflow-x` scroller, is ruled out for a second reason now: a scroll container
+       clips its absolutely positioned descendants, which is the menu panel. */
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    min-inline-size: 0;
+  }
+  /* A label may not break mid-word to save the row; the row wraps instead. */
+  .site-nav a,
+  .site-more > summary { white-space: nowrap; }
 }
 
 /* ── figures, pipeline, edge-demo: shared by both pages ──────────────────────────────────────────
@@ -984,3 +1212,15 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 @media (min-width: 40rem) {
   .build-inputs-grid > :last-child:nth-child(2n+1) { grid-column: auto; }
 }
+
+/* THE STATIC BLOCKS ARE FOR READERS WITHOUT THE BUNDLE, AND ONLY FOR THEM.
+   `index.html`'s `.intro` and the `.prerendered` section a Pages Function injects after `#root`
+   both live outside React on purpose: that is what lets a crawler -- and a browser with JavaScript
+   off -- read real content without a prerender step. The cost is that they stay on screen once the
+   app boots, which put the whole landing pitch and a second copy of the partner list under every
+   card page. `main.tsx` sets `data-app-booted` after the first render; from that moment the app IS
+   the content.
+   `.intro` is kept on the landing route, where it is the page's own argument rather than a
+   duplicate -- `data-route` says which. */
+html[data-app-booted] .prerendered { display: none; }
+html[data-app-booted][data-route="page"] .intro { display: none; }

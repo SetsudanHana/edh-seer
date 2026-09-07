@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/QJiGrSTClRLPU272e1RSKg (source https://archidekt.com/decks/25461083)
+# tags Discard, Control; bracket 3; saved 2026-09-05; 1870 tagged of 26359 indexed
+
+Commander
+1 Hashaton, Scarab's Fist
+
+Deck
+1 All-Seeing Arbiter
+1 Ancient Brass Dragon
+1 Ashen Rider
+1 Bloodletter of Aclazotz
+1 Bloodthirsty Conqueror
+1 Bone Miser
+1 Chancellor of the Annex
+1 Consecrated Sphinx
+1 Copycrook
+1 Curious Colossus
+1 Elesh Norn, Grand Cenobite
+1 Ghostly Pilferer
+1 Glen Elendra Archmage
+1 Gothmog, Morgul Lieutenant
+1 Gríma, Saruman's Footman
+1 Kira, Great Glass-Spinner
+1 Kitsa, Otterball Elite
+1 Krovikan Sorcerer
+1 Looter il-Kor
+1 Maha, Its Feathers Night
+1 Malcolm, Alluring Scoundrel
+1 Marneus Calgar
+1 Merfolk Looter
+1 Metamorphosis Fanatic
+1 Mirkwood Bats
+1 Moonshaker Cavalry
+1 Nesting Dovehawk
+1 Obsessive Stitcher
+1 Psychic Frog
+1 Reya Dawnbringer
+1 Rona, Herald of Invasion
+1 Sheoldred, Whispering One
+1 Sister Hospitaller
+1 Taigam, Sidisi's Hand
+1 Temmet, Naktamun's Will
+1 The Scarab God
+1 Toby, Beastie Befriender
+1 Unstoppable Slasher
+1 Varina, Lich Queen
+1 Vashta Nerada
+1 Vela the Night-Clad
+1 Vohar, Vodalian Desecrator
+1 Wharf Infiltrator
+1 Anguished Unmaking
+1 Arcane Signet
+1 Crucible of Worlds
+1 Cryptcaller Chariot
+1 Monument to Endurance
+1 Shorikai, Genesis Engine
+1 Talisman of Dominance
+1 Bleeding Effect
+1 Dying to Serve
+1 Feast of Sanity
+1 Illicit Masquerade
+1 Security Bypass
+1 Shadow of the Second Sun
+1 Tortured Existence
+1 Training Grounds
+1 Zephid's Embrace
+1 Caves of Koilos
+1 Choked Estuary
+1 Drowned Catacomb
+1 Fetid Heath
+1 Glacial Fortress
+10 Island
+1 Isolated Chapel
+7 Plains
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Spymaster's Vault
+1 Sunken Hollow
+7 Swamp
+1 Watery Grave
+1 Everything Comes to Dust
+1 In Garruk's Wake
+1 Kindred Dominance
+1 Living Death
+1 Reanimate

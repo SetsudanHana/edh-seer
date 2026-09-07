@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/KCMzirxUcJsPQB1pGFM_eA (source https://archidekt.com/decks/23525153)
+# tags Unblockable, Exalted; bracket 3; saved 2026-08-08; 20 tagged of 5881 indexed
+
+Commander
+1 Progenitus
+
+Deck
+1 Academy Rector
+1 Deathrite Shaman
+1 Elesh Norn, Grand Cenobite
+1 Esper Sentinel
+1 Everett K. Ross, Hapless Attaché
+1 Geode Golem
+1 Ghostly Pilferer
+1 Haywire Mite
+1 Hexing Squelcher
+1 Ignoble Hierarch
+1 Imperial Recruiter
+1 Keranos, God of Storms
+1 Ledger Shredder
+1 Noble Hierarch
+1 Permeating Mass
+1 Rafiq of the Many
+1 Recruiter of the Guard
+1 Silent Arbiter
+1 Spectrum Sentinel
+1 Summon: Knights of Round
+1 Tajuru Preserver
+1 Talion, the Kindly Lord
+1 The Queen of Dale
+1 Arcane Signet
+1 Expedition Map
+1 Fellwar Stone
+1 Palantír of Orthanc
+1 Shadowspear
+1 The One Ring
+1 Arid Mesa
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Cathedral of War
+1 Command Tower
+1 Commercial District
+1 Exotic Orchard
+1 Flooded Strand
+1 Forbidden Orchard
+1 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hedge Maze
+1 Island
+1 Llanowar Reborn
+1 Lush Portico
+1 Marsh Flats
+1 Meticulous Archive
+1 Misty Rainforest
+1 Mountain
+1 Overgrown Tomb
+1 Phyrexian Tower
+1 Plains
+1 Polluted Delta
+1 Sacred Foundry
+1 Scalding Tarn
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 Underground Mortuary
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Berserk
+1 Chain of Vapor
+1 Disallow
+1 Flusterstorm
+1 Force of Negation
+1 Golgari Charm
+1 Mindbreak Trap
+1 Noxious Revival
+1 Path to Exile
+1 Stifle
+1 Swan Song
+1 Swords to Plowshares
+1 Tainted Pact
+1 Veil of Summer
+1 Blasphemous Act
+1 Diabolic Intent
+1 Imposing Grandeur
+1 Majestic Genesis
+1 Nature's Lore
+1 Three Visits
+1 Visions of Duplicity
+1 Visions of Ruin
+1 Wargate
+1 Carpet of Flowers
+1 Curse of Opulence
+1 Earnest Fellowship
+1 Finest Hour
+1 Leyline of Mutation
+1 Mirari's Wake
+1 Smothering Tithe
+1 Spirit of Resistance
+1 Utopia Sprawl
+1 World War Hulk
+1 Invasion of Gobakhan

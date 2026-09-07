@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/gtvkDxfPuvpDcms6x9XJXQ (source https://archidekt.com/decks/22920124)
+# tags Humans, Multicolor Matters, Historic; bracket 3; saved 2026-09-05; 397 tagged of 22898 indexed
+
+Commander
+1 Aragorn, the Uniter
+
+Deck
+1 Absorb
+1 Brokers Charm
+1 Cabaretti Charm
+1 Counterspell
+1 Cryptic Command
+1 Deflecting Palm
+1 Growth Spiral
+1 Lightning Bolt
+1 Path to Exile
+1 Redirect Lightning
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Akroma's Memorial
+1 Arcane Signet
+1 Bender's Waterskin
+1 Champion's Helm
+1 Chromatic Lantern
+1 Door of Destinies
+1 Dragonfire Blade
+1 Fellwar Stone
+1 Herald's Horn
+1 Horn of Gondor
+1 Pillar of Origins
+1 Sol Ring
+1 Vanquisher's Banner
+1 White Lotus Tile
+1 Annie Joins Up
+1 Collective Inferno
+1 Prismatic Undercurrents
+1 Shared Animosity
+1 Aragorn, Hornburg Hero
+1 Aragorn, King of Gondor
+1 Avacyn's Pilgrim
+1 Bard, King of Dale
+1 Bruse Tarl, Boorish Herder
+1 Captain America, Living Legend
+1 Coppercoat Vanguard
+1 Dragon Sniper
+1 Eshki Dragonclaw
+1 Faramir, Prince of Ithilien
+1 Frontline Medic
+1 Hajar, Loyal Bodyguard
+1 Hero of Precinct One
+1 Heronblade Elite
+1 Ioreth of the Healing House
+1 Jared Carthalion, True Heir
+1 Jhoira, Weatherlight Captain
+1 King T'Challa
+1 Lossarnach Captain
+1 Mister Fantastic, Reed Richards
+1 Odric, Lunarch Marshal
+1 Power Pack
+1 Surrak Dragonclaw
+1 Tajic, Blade of the Legion
+1 The Queen of Dale
+1 Théoden, King of Rohan
+1 Éowyn, Fearless Knight
+1 Éowyn, Shieldmaiden
+1 Baxter Building
+1 Breeding Pool
+1 Castle Ardenvale
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Flooded Strand
+1 Floodfarm Verge
+3 Forest
+1 Gathering Place
+1 Gleaming Bastion
+1 Hallowed Fountain
+3 Island
+1 Minas Tirith
+1 Mistrise Village
+1 Misty Rainforest
+3 Mountain
+1 Mystic Monastery
+1 Nimbus Maze
+1 Path of Ancestry
+3 Plains
+1 Reliquary Tower
+1 Rogue's Passage
+1 Secluded Courtyard
+1 Sundown Pass
+1 Temple Garden
+1 Farseek
+1 Forth Eorlingas!
+1 Mass Appeal
+1 Rampant Growth
+1 Taunt from the Rampart
+1 Uncle's Musings
+1 Winnowing

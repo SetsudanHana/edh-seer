@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/kkrkkLDHzEvZ1Cgwysb3bQ (source https://archidekt.com/decks/24614823)
+# tags Incubate, Tokens, Proliferate; bracket 2; saved 2026-08-31; 21 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Arcane Sanctum
+1 Bleachbone Verge
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+6 Forest
+6 Island
+1 Karn's Bastion
+5 Plains
+1 Prairie Stream
+1 Sunken Hollow
+6 Swamp
+1 Temple of the False God
+1 Vineglimmer Snarl
+1 Wastewood Verge
+1 Willowrush Verge
+1 Woodland Cemetery
+1 Arcane Signet
+1 Azorius Signet
+1 Commander's Sphere
+1 Dimir Signet
+1 Glistening Sphere
+1 Mind Stone
+1 Orzhov Signet
+1 Simic Signet
+1 Sol Ring
+1 Assimilate Essence
+1 Atomize
+1 Disenchant
+1 Essence Scatter
+1 Generous Gift
+1 Go for the Throat
+1 Heroic Intervention
+1 Negate
+1 Swords to Plowshares
+1 Attentive Skywarden
+1 Blight Titan
+1 Bloated Processor
+1 Brimaz, Blight of Oreskos
+1 Cankerbloom
+1 Chrome Host Seedshark
+1 Converter Beast
+1 Copper Longlegs
+1 Craterhoof Behemoth
+1 Elesh Norn
+1 Elvish Vatkeeper
+1 Essence of Orthodoxy
+1 Evolution Sage
+1 Filigree Vector
+1 Glissa, Herald of Predation
+1 Grateful Apparition
+1 Llanowar Elves
+1 Norn's Choirmaster
+1 Norn's Inquisitor
+1 Progenitor Exarch
+1 Thrummingbird
+1 Tiller of Flesh
+1 Blighted Burgeoning
+1 Corruption of Towashi
+1 Doubling Season
+1 Garruk's Uprising
+1 Gift of Compleation
+1 Innkeeper's Talent
+1 Phyrexian Arena
+1 Phyrexian Awakening
+1 Sculpted Perfection
+1 Tangled Skyline
+1 Cultivate
+1 Eyes of Gitaxias
+1 Farseek
+1 Glistening Dawn
+1 Overrun
+1 Phyrexian Rebirth
+1 Rampant Growth
+1 Requisition Raid
+1 Sunder the Gateway
+1 Sunfall
+1 Traumatic Revelation
+1 Ob Nixilis Reignited
+1 Vraska, Betrayal's Sting

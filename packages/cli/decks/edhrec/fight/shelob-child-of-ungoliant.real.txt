@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/_iJ8k10BEtzs-xElG61jtA (source https://archidekt.com/decks/25738790)
+# tags Fight, Forced Combat, Deathtouch, Triggered Abilities, Aggro, Spiders, Tokens, Lifegain; bracket 3; saved 2026-09-03; 163 tagged of 13656 indexed
+
+Commander
+1 Shelob, Child of Ungoliant
+
+Deck
+1 Arachnogenesis
+1 Bite Down
+1 Cosmic Hunger
+1 Fake Your Own Death
+1 Horrid Vigor
+1 Masterful Flourish
+1 Might of the Masses
+1 Quarrel
+1 Ranger's Guile
+1 Snakeskin Veil
+1 Stew the Coneys
+1 Supper for Spiders
+1 Unbury
+1 Arasta of the Endless Web
+1 Attercop
+1 Brood Weaver
+1 Broodspinner
+1 Chainweb Aracnir
+1 Changeling Wayfinder
+1 Deadly Recluse
+1 Drider
+1 Fynn, the Fangbearer
+1 Graveshifter
+1 Llanowar Greenwidow
+1 Mineshaft Spider
+1 Mirkwood Spider
+1 Netcaster Spider
+1 Noxious Newt
+1 Penumbra Spider
+1 Rotwidow Pack
+1 Shelob, Dread Weaver
+1 Skyfisher Spider
+1 Snarespinner
+1 Sporecap Spider
+1 Treetop Snarespinner
+1 Twitching Doll
+1 Ulvenwald Tracker
+1 Bushwhack
+1 Cultivate
+1 Grapple with Death
+1 Hard-Hitting Question
+1 Hunter's Edge
+1 Knockout Maneuver
+1 Kodama's Reach
+1 Many Partings
+1 Prey Upon
+1 Rabid Bite
+1 Roar of Challenge
+1 Shared Roots
+1 Spider Food
+1 Swarmyard Massacre
+1 Chronicle of Victory
+1 Herald's Horn
+1 Nemesis Mask
+1 Pathway Arrows
+1 Sol Ring
+1 The Masamune
+1 Thornbite Staff
+1 Viridian Longbow
+1 Command Tower
+1 Evolving Wilds
+18 Forest
+1 Gingerbread Cabin
+1 Mirkwood
+14 Swamp
+1 Terramorphic Expanse
+1 Curse of Clinging Webs
+1 Night of the Sweets' Revenge
+1 Lolth, Spider Queen

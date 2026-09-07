@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/Zs-FX-eAM78qC32gZA6SIg (source https://archidekt.com/decks/20271297)
+# tags Triggered Abilities, Attack Triggers, Historic, Ninjutsu, Ninjas, +1/+1 Counters, Legends, Sneak; bracket 2; saved 2026-06-14; 11 tagged of 4032 indexed
+
+Commander
+1 Heroes in a Half Shell
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Quintessential Katana
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Ooze
+1 Big Apple, 3 a.m.
+1 City of Brass
+1 Command Tower
+1 Escape Tunnel
+1 Exotic Orchard
+1 Fabled Passage
+4 Forest
+1 Grand Coliseum
+1 Hidden Hideout
+4 Island
+1 Mosswort Bridge
+4 Mountain
+1 Myriad Landscape
+1 Nephalia Academy
+1 Northampton Farm
+1 Otawara, Soaring City
+1 Path of Ancestry
+4 Plains
+1 Reliquary Tower
+1 Rogue's Passage
+4 Swamp
+1 Turtle Lair
+1 Vibrant Cityscape
+1 Counterspell
+1 Disallow
+1 Saved by the Shell
+1 Turtles Forever
+1 Dark Leo & Shredder
+1 Donatello, the Brains
+1 Fallen Shinobi
+1 Felix Five-Boots
+1 Gonti, Canny Acquisitor
+1 Higure, the Still Wind
+1 Ink-Eyes, Servant of Oni
+1 Kappa Tech-Wrecker
+1 Karai, Future of the Foot
+1 Leatherhead, Iron Gator
+1 Leonardo, Cutting Edge
+1 Leonardo, the Balance
+1 Michelangelo, Improviser
+1 Michelangelo, the Heart
+1 Mikey & Don, Party Planners
+1 Mikey & Leo, Chaos & Order
+1 Nashi, Moon Sage's Scion
+1 Orochi Soul-Reaver
+1 Prehistoric Pet
+1 Prosperous Thief
+1 Raph & Leo, Sibling Rivals
+1 Raph & Mikey, Troublemakers
+1 Raphael, Tag Team Tough
+1 Raphael, the Muscle
+1 Raphael, the Nightwatcher
+1 Sakashima's Student
+1 Satoru Umezawa
+1 Satoru, the Infiltrator
+1 Shark Shredder, Killer Clone
+1 Shredder, Shadow Master
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Splinter, Radical Rat
+1 Splinter, the Mentor
+1 Spring-Leaf Avenger
+1 Super Shredder
+1 Tokka & Rahzar, Unsupervised
+1 Turncoat Kunoichi
+1 Vigor
+1 Walker of Secret Ways
+1 Yuriko, the Tiger's Shadow
+1 Doubling Season
+1 Endless Foot Assault
+1 High Score
+1 Level Up
+1 Ninja Pizza
+1 Ninja Teen
+1 In Garruk's Wake
+1 Splinter's Technique
+1 Kaito Shizuki
+1 Kaito, Bane of Nightmares

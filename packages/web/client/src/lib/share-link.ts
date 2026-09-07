@@ -20,7 +20,7 @@ const PLAIN = "0";
 
 /** The fragment key. `#calibrate` is an existing route on this same hash, so the payload is a
  *  key=value pair rather than a bare string and the two cannot be confused for one another. */
-export const SHARE_KEY = "deck";
+const SHARE_KEY = "deck";
 
 /** Refuses anything a platform would truncate rather than handing out a link that loses its tail
  *  silently. 2,000 is the practical floor across the places people paste links; the measured worst

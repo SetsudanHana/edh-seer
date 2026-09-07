@@ -1,4 +1,4 @@
-import { impactEdgeWeight, type ImpactWeights, type Reason } from "@edh-seer/engine";
+import { impactEdgeWeight, type ImpactWeights, type Reason, type Marker } from "@edh-seer/engine";
 import { parseTypeLineAllFaces } from "./typeline.js";
 import type { DeckCard } from "./types.js";
 
@@ -64,6 +64,14 @@ export interface ProjectedEdge {
   /** Distinct reason tags contributing, for the inspector and for edge channel filters. */
   tags: string[];
   reasons: Reason[];
+  /** Whether the BOARD draws this edge: inside the top-k union and over the floor. Every edge is
+   *  returned whatever this says -- the budget is for the picture, not for the truth. The drawer,
+   *  the pair list and the score read them all; only the force layout filters on this. Measured on
+   *  the Rani deck (2026-09-05): top-4 kept 237 of 462 edges, and Grim Guardian's 34 producers
+   *  read "Fed by 0" in the drawer because a per-node budget over equal-weight edges keeps none. */
+  drawn: boolean;
+  /** The state made this edge (roadmap W18); the board draws it dashed in the accent. */
+  enabledBy?: Marker[];
 }
 
 export interface ProjectedGraph {
@@ -79,9 +87,10 @@ export interface ProjectedGraph {
 }
 
 export interface ProjectOptions {
-  /** Edges kept per node, by weight. Unioned across nodes so a mutual pick survives. */
+  /** Edges DRAWN per node, by weight. Unioned across nodes so a mutual pick survives. Never a
+   *  filter on what is returned -- see `ProjectedEdge.drawn`. */
   topK?: number;
-  /** Absolute weight floor, applied after top-k. */
+  /** Absolute weight floor, applied after top-k, to what is drawn. */
   floor?: number;
 }
 
@@ -152,7 +161,7 @@ export function projectDeckGraph(
 
   let undirectedReasons = 0;
   let offDeckReasons = 0;
-  const grouped = new Map<string, { from: string; to: string; reasons: Reason[] }>();
+  const grouped = new Map<string, { from: string; to: string; reasons: Reason[]; enabledBy?: Marker[] }>();
   for (const r of reasons) {
     if (!r.producer || !r.consumer) { undirectedReasons++; continue; }
     // `producerIsToken`/`consumerIsToken` are what make a token and a same-named card two nodes
@@ -166,6 +175,8 @@ export function projectDeckGraph(
     const key = `${from}->${to}`;
     const g = grouped.get(key) ?? { from, to, reasons: [] };
     g.reasons.push(r);
+    // THE UNION OF WHAT THE STATE ENABLED across the pair's reasons (roadmap W18).
+    if (r.enabledBy) g.enabledBy = [...new Set([...(g.enabledBy ?? []), ...r.enabledBy])];
     grouped.set(key, g);
   }
 
@@ -177,12 +188,17 @@ export function projectDeckGraph(
       weight: impactEdgeWeight(g.reasons, weights),
       tags: [...new Set(g.reasons.map((r) => r.tag))],
       reasons: g.reasons,
+      ...(g.enabledBy ? { enabledBy: g.enabledBy } : {}),
+      drawn: false,
     });
   }
 
   // Top-k per node, UNIONED. Taking each node's own k independently and unioning is what lets a
   // weak edge survive when it is the only one its other endpoint has -- an intersection would cut
   // exactly the peripheral cards whose single connection is the interesting fact about them.
+  // What the union does NOT keep is still returned, marked undrawn: a consumer whose every edge is
+  // the same low weight loses all of them to this budget, and a drawer reading only the survivors
+  // printed "Fed by 0" for a card with 34 producers (Grim Guardian, Rani deck, 2026-09-05).
   const incident = new Map<string, ProjectedEdge[]>();
   for (const e of all) {
     for (const id of [e.from, e.to]) {
@@ -191,11 +207,12 @@ export function projectDeckGraph(
       incident.set(id, list);
     }
   }
-  const kept = new Set<ProjectedEdge>();
   for (const list of incident.values()) {
-    for (const e of [...list].sort((x, y) => y.weight - x.weight).slice(0, topK)) kept.add(e);
+    for (const e of [...list].sort((x, y) => y.weight - x.weight).slice(0, topK)) {
+      if (e.weight >= floor) e.drawn = true;
+    }
   }
 
-  const edges = [...kept].filter((e) => e.weight >= floor).sort((a, b) => b.weight - a.weight);
+  const edges = all.sort((a, b) => b.weight - a.weight);
   return { nodes, edges, undirectedReasons, offDeckReasons };
 }

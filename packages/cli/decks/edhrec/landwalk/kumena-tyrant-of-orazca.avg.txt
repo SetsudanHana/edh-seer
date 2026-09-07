@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/kumena-tyrant-of-orazca/landwalk
+# theme Landwalk (16 decks)
+
+Commander
+1 Kumena, Tyrant of Orazca
+
+Deck
+1 Arcane Signet
+1 Lightning Greaves
+1 Simic Signet
+1 Sol Ring
+1 Throne of the God-Pharaoh
+1 Alchemist's Refuge
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+7 Forest
+1 Hinterland Harbor
+11 Island
+1 Path of Ancestry
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Secluded Courtyard
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Unclaimed Territory
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Cold-Eyed Selkie
+1 Cursecatcher
+1 Deepchannel Mentor
+1 Deeproot Elite
+1 Deeproot Historian
+1 Emperor Mihail II
+1 Fallowsage
+1 Forerunner of the Heralds
+1 Hakbal of the Surging Soul
+1 Harbinger of the Seas
+1 Harbinger of the Tides
+1 Herald of Secret Streams
+1 Kiora's Follower
+1 Kopala, Warden of Waves
+1 Lord of Atlantis
+1 Lullmage Mentor
+1 Master of the Pearl Trident
+1 Merfolk Mistbinder
+1 Merfolk Sovereign
+1 Merrow Harbinger
+1 Merrow Reejerey
+1 Mindspring Merfolk
+1 Mist Dancer
+1 Murkfiend Liege
+1 Realmwalker
+1 Seafloor Oracle
+1 Seedborn Muse
+1 Singer of Swift Rivers
+1 Stonybrook Banneret
+1 Surgespanner
+1 Svyelun of Sea and Sky
+1 Thieving Skydiver
+1 Tide Shaper
+1 Tishana's Tidebinder
+1 Tishana, Voice of Thunder
+1 Vodalian Hexcatcher
+1 Cryptolith Rite
+1 Deeproot Pilgrimage
+1 Deeproot Waters
+1 Hardened Scales
+1 Intruder Alarm
+1 Kindred Discovery
+1 Merrow Commerce
+1 Quest for Renewal
+1 Reflections of Littjara
+1 Teferi's Ageless Insight
+1 Beast Within
+1 Counterspell
+1 Cyclonic Rift
+1 Heroic Intervention
+1 Inspiring Call
+1 Nature's Claim
+1 Rapid Hybridization
+1 Ripples of Potential
+1 Swan Song
+1 Aquitect's Will
+1 Harvest Season
+1 Kodama's Reach
+1 Raise the Palisade
+1 Wave Goodbye

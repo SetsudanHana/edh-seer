@@ -1,0 +1,85 @@
+# edhrec average deck: https://edhrec.com/average-decks/dark-leo-shredder/sneak
+# theme Sneak (39 decks)
+
+Commander
+1 Dark Leo & Shredder
+
+Deck
+1 Arcane Signet
+1 Foot Chopper
+1 Ninja's Blades
+1 Orzhov Signet
+1 Quintessential Katana
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 Trailblazer's Boots
+1 Whispersilk Cloak
+1 Access Tunnel
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Escape Tunnel
+1 Fetid Heath
+1 Foot Headquarters
+1 Godless Shrine
+1 Isolated Chapel
+1 Path of Ancestry
+11 Plains
+1 Rogue's Passage
+1 Shattered Sanctum
+1 Shineshadow Snarl
+12 Swamp
+1 Turtle Lair
+1 April O'Neil, Kunoichi Trainee
+1 Biting-Palm Ninja
+1 Changeling Outcast
+1 Foot Elite
+1 Foot Mystic
+1 Foot Ninjas
+1 Ink-Eyes, Servant of Oni
+1 Karai, Future of the Foot
+1 Leonardo, Big Brother
+1 Leonardo, Cutting Edge
+1 Leonardo, Leader in Blue
+1 Leonardo, Sewer Samurai
+1 Leonardo, Worldly Warrior
+1 Lita, Little Orphan Amphibian
+1 Nashi, Moon Sage's Scion
+1 Nezumi Prowler
+1 Oroku Saki, Shredder Rising
+1 Prehistoric Pet
+1 Shark Shredder, Killer Clone
+1 Shredder, Shadow Master
+1 Shredder, Unrelenting
+1 Splinter, Hamato Yoshi
+1 Splinter, the Mentor
+1 Super Shredder
+1 Throat Slitter
+1 Throatseeker
+1 Turncoat Kunoichi
+1 Black Market Connections
+1 Cover of Darkness
+1 Endless Foot Assault
+1 Leader's Talent
+1 Ninja Teen
+1 Uneasy Alliance
+1 Wound Reflection
+1 Anguished Unmaking
+1 Continue?
+1 Dark Ritual
+1 Despark
+1 Hamato Guardian Stance
+1 Make Your Move
+1 Pain 101
+1 Path to Exile
+1 Swords to Plowshares
+1 The Last Ronin's Technique
+1 Damn
+1 Game Over
+1 Karai's Technique
+1 Leonardo's Technique
+1 Shredder's Revenge
+1 Shredder's Technique
+1 Splinter's Technique

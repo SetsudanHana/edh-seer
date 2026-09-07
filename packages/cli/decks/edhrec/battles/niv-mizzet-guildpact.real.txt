@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/o9DmpXvH2yPF1IWL1a8q3w (source https://archidekt.com/decks/20410164)
+# tags Battles, Multicolor Matters; bracket 2; saved 2026-03-04; 5 tagged of 3952 indexed
+
+Commander
+1 Niv-Mizzet, Guildpact
+
+Deck
+1 Aether Snap
+1 Atraxa's Fall
+1 Begin the Invasion
+1 Eventide's Shadow
+1 Farseek
+1 Furnace Reins
+1 Nahiri's Warcrafting
+1 Pull Through the Weft
+1 Render Inert
+1 Aetherblade Agent
+1 Bloodfeather Phoenix
+1 Chisei, Heart of Oceans
+1 Deeproot Wayfinder
+1 Doomskar Warrior
+1 Etched Host Doombringer
+1 Faeburrow Elder
+1 Ferropede
+1 Flitting Guerrilla
+1 Glissa Sunslayer
+1 Portent Tracker
+1 Ramos, Dragon Engine
+1 Rampaging Geoderm
+1 Rampaging Raptor
+1 Scholar of New Horizons
+1 Spider Manifestation
+1 Tam, Mindful First-Year
+1 The Wandering Minstrel
+1 Vampire Hexmage
+1 War Historian
+1 War-Trained Slasher
+1 Wildwood Escort
+1 Beamtown Beatstick
+1 Brotherhood Regalia
+1 Chromatic Lantern
+1 Infinite Guideline Station
+1 Bloodfell Caves
+11 Forest
+6 Island
+1 Jungle Hollow
+6 Mountain
+4 Plains
+7 Swamp
+1 Case of the Shattered Pact
+1 Leyline of the Guildpact
+1 Mana Cannons
+1 Path to the World Tree
+1 Prismatic Undercurrents
+1 Widespread Thieving
+1 Cosmic Hunger
+1 Harrow
+1 Mirrorform
+1 Tandem Takedown
+1 Void Rend
+1 Invasion of Alara
+1 Invasion of Amonkhet
+1 Invasion of Azgol
+1 Invasion of Ergamon
+1 Invasion of Fiora
+1 Invasion of Gobakhan
+1 Invasion of Innistrad
+1 Invasion of Ixalan
+1 Invasion of Karsus
+1 Invasion of Lorwyn
+1 Invasion of Pyrulea
+1 Invasion of Segovia
+1 Invasion of Shandalar
+1 Invasion of Tolvada
+1 Invasion of Ulgrotha
+1 Invasion of Vryn
+1 Invasion of Zendikar

@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/laughing-jasper-flint/crime
+# theme Crime (60 decks)
+
+Commander
+1 Laughing Jasper Flint
+
+Deck
+1 Arcane Signet
+1 Bandit's Haul
+1 Fellwar Stone
+1 Lightning Greaves
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Bloodfell Caves
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Jagged Barrens
+10 Mountain
+1 Myriad Landscape
+1 Rakdos Carnarium
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+12 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Blood Hustler
+1 Captain Lannery Storm
+1 Charred Graverobber
+1 Dire Fleet Daredevil
+1 Forsaken Miner
+1 Generous Plunderer
+1 Gisa, the Hellraiser
+1 Gonti, Lord of Luxury
+1 Gonti, Night Minister
+1 Graywater's Fixer
+1 Grenzo, Havoc Raiser
+1 Grim Hireling
+1 Hellspur Posse Boss
+1 Kaervek, the Punisher
+1 Kellogg, Dangerous Mind
+1 Magda, the Hoardmaster
+1 Mari, the Killing Quill
+1 Morbid Opportunist
+1 Nezumi Linkbreaker
+1 Prosper, Tome-Bound
+1 Rakdos, the Muscle
+1 Rattleback Apothecary
+1 Reckless Lackey
+1 Rodeo Pyromancers
+1 Servant of the Stinger
+1 The Infamous Cruelclaw
+1 Tinybones, the Pickpocket
+1 Treasure Nabber
+1 Vadmir, New Blood
+1 Vial Smasher, Gleeful Grenadier
+1 At Knifepoint
+1 Black Market Connections
+1 Brimstone Roundup
+1 Cunning Rhetoric
+1 Discreet Retreat
+1 Rakish Crew
+1 Bedevil
+1 Chaos Warp
+1 Corrupted Conviction
+1 Dead Before Sunrise
+1 Deadly Dispute
+1 Great Train Heist
+1 Murder
+1 Rakdos Charm
+1 Return the Favor
+1 Shoot the Sheriff
+1 Terminate
+1 Back in Town
+1 Blasphemous Act
+1 Bloodsoaked Insight
+1 Faithless Looting
+1 Feed the Swarm
+1 Mourner's Surprise
+1 Reanimate
+1 Take for a Ride

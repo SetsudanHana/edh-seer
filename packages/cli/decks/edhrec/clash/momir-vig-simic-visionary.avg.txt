@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/momir-vig-simic-visionary/clash
+# theme Clash (1 decks)
+
+Commander
+1 Momir Vig, Simic Visionary
+
+Deck
+1 Glaring Spotlight
+1 Library of Leng
+1 Marina Vendrell's Grimoire
+1 Planetarium of Wan Shi Tong
+1 Robe of the Archmagi
+1 Spellbook
+1 Alchemist's Refuge
+1 Command Tower
+1 Dreamroot Cascade
+1 Evolving Wilds
+1 Exotic Orchard
+1 Flooded Grove
+7 Forest
+1 Hinterland Harbor
+6 Island
+1 Mosswort Bridge
+1 Myriad Landscape
+1 Overflowing Basin
+1 Path of Ancestry
+1 Quandrix Campus
+1 Reliquary Tower
+1 Rimewood Falls
+1 Riptide Laboratory
+1 Rogue's Passage
+1 Simic Growth Chamber
+1 Simic Guildgate
+1 Sodden Verdure
+1 Tangled Islet
+1 Temple of Mystery
+1 Temple of the False God
+1 Thornwood Falls
+1 Vineglimmer Snarl
+1 Waterlogged Grove
+1 Yavimaya Coast
+1 Aetherplasm
+1 Alaundo the Seer
+1 Apex Devastator
+1 Arixmethes, Slumbering Isle
+1 Augur of Autumn
+1 Bane of Progress
+1 Body of Knowledge
+1 Bounding Krasis
+1 Coiling Oracle
+1 Cold-Eyed Selkie
+1 Cyclone Summoner
+1 Edric, Spymaster of Trest
+1 Frilled Mystic
+1 Gyre Engineer
+1 Hydroid Krasis
+1 Inkwell Leviathan
+1 Kruphix, God of Horizons
+1 Lifeblood Hydra
+1 Malanthrope
+1 Murkfiend Liege
+1 Paperfin Rascal
+1 Prime Speaker Zegana
+1 Rashmi, Eternities Crafter
+1 Reclamation Sage
+1 Stormtide Leviathan
+1 Summon: Leviathan
+1 Tatyova, Benthic Druid
+1 Trygon Predator
+1 Zegana, Utopian Speaker
+1 Alexi's Cloak
+1 Alpha Authority
+1 Aspect of Mongoose
+1 Captivating Glance
+1 Cream of the Crop
+1 One with the Multiverse
+1 Sylvan Echoes
+1 Broken Ambitions
+1 Fistful of Force
+1 Mana Sculpt
+1 Sage's Dousing
+1 Scattering Stroke
+1 Spring Cleaning
+1 Swallowed by Leviathan
+1 Whirlpool Whelm
+1 Wizard's Retort
+1 Kasmina, Enigmatic Mentor
+1 Animist's Awakening
+1 Cultivate
+1 Mentor's Guidance
+1 Recross the Paths
+1 Research the Deep
+1 Unexpected Results
+1 Urban Evolution
+1 Woodland Guidance

@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/-AujLJ3Q2T_a9JwdL8fsPw (source https://archidekt.com/decks/24446960)
+# tags Blood, Aristocrats, Vampires; bracket 2; saved 2026-09-05; 85 tagged of 1654 indexed
+
+Commander
+1 Anje, Maid of Dishonor
+
+Deck
+1 Agent of the Iron Throne
+1 Black Market Connections
+1 Stensia Masquerade
+1 Arcane Signet
+1 Ceremonial Knife
+1 Charcoal Diamond
+1 Commander's Sphere
+1 Glass-Cast Heart
+1 Inspiring Statuary
+1 Krark-Clan Ironworks
+1 Mind Stone
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Indulgence
+1 Vanquisher's Banner
+1 Bedevil
+1 Demand Answers
+1 Rakdos Charm
+1 Terminate
+1 Vampires' Vengeance
+1 Withering Torment
+1 Belligerent Guest
+1 Blood Petal Celebrant
+1 Bloodcrazed Socialite
+1 Bloodletter of Aclazotz
+1 Bloodtithe Harvester
+1 Disciple of the Vault
+1 Evereth, Viceroy of Plunder
+1 Falkenrath Forebear
+1 Gluttonous Guest
+1 Kamber, the Plunderer
+1 Malakir Bloodwitch
+1 Marionette Apprentice
+1 Marionette Master
+1 Markov Baron
+1 Markov Enforcer
+1 Mayhem Devil
+1 Mirkwood Bats
+1 Nadier's Nightblade
+1 Olivia's Attendants
+1 Olivia, Crimson Bride
+1 Pactdoll Terror
+1 Patron of the Vein
+1 Reckless Fireweaver
+1 Sanctum Seeker
+1 Strefan, Maurer Progenitor
+1 Stromkirk Captain
+1 Twilight Prophet
+1 Vampire Nighthawk
+1 Vampire Socialite
+1 Wedding Security
+1 Blasphemous Act
+1 Feed the Swarm
+1 Lich-Knights' Conquest
+1 Night's Whisper
+1 Olivia's Wrath
+1 Pointed Discussion
+1 Toxic Deluge
+1 Vandalblast
+1 Blood Crypt
+1 Bojuka Bog
+1 Cavern of Souls
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Haunted Ridge
+1 Luxury Suite
+5 Mountain
+1 Path of Ancestry
+1 Reliquary Tower
+1 Shadowblood Ridge
+1 Smoldering Marsh
+19 Swamp
+1 Temple of Malice
+1 Voldaren Estate
+1 Chandra, Spark Hunter
+1 Sorin the Mirthless

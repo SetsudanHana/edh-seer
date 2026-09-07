@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/monk-gyatso/airbending
+# theme Airbending (48 decks)
+
+Commander
+1 Monk Gyatso
+
+Deck
+1 Altar of the Brood
+1 Arcane Signet
+1 Cloud Key
+1 Grafted Wargear
+1 Helm of Awakening
+1 Lightning Greaves
+1 Mind Stone
+1 Oketra's Monument
+1 Pearl Medallion
+1 Semblance Anvil
+1 Shuko
+1 Sol Ring
+1 The Wind Crystal
+1 Thought Vessel
+1 Urza's Incubator
+1 Abandoned Air Temple
+1 Eiganjo, Seat of the Empire
+1 Emeria, the Sky Ruin
+1 Endless Sands
+1 Idyllic Grange
+1 Monumental Henge
+1 Myriad Landscape
+23 Plains
+1 Reliquary Tower
+1 Tower of the Magistrate
+1 Urza's Saga
+1 War Room
+1 Aang, Airbending Master
+1 Anticausal Vestige
+1 Appa, Steadfast Guardian
+1 Aven Interrupter
+1 Circuit Mender
+1 Delivery Moogle
+1 Grand Abolisher
+1 Helpful Hunter
+1 Inspiring Overseer
+1 Kindly Customer
+1 Knight of the White Orchid
+1 Kor Cartographer
+1 Loran of the Third Path
+1 Mother of Runes
+1 Nomads en-Kor
+1 Oblivion Sower
+1 Outrider en-Kor
+1 Priest of Ancient Lore
+1 Recruiter of the Guard
+1 Salt Road Packbeast
+1 Search Party Captain
+1 Shaman en-Kor
+1 Skyclave Apparition
+1 Solemn Simulacrum
+1 Spirited Companion
+1 Splitskin Doll
+1 Starfield Shepherd
+1 Ticket Tortoise
+1 Triskelion
+1 Wall of Omens
+1 Warrior en-Kor
+1 Welcoming Vampire
+1 Witch Enchanter
+1 Airbender Ascension
+1 Darksteel Mutation
+1 Dazzling Theater // Prop Room
+1 Tocasia's Welcome
+1 Airbending Lesson
+1 Cloudshift
+1 Ephemerate
+1 Generous Gift
+1 Path to Exile
+1 Reprieve
+1 Restoration Magic
+1 Sejiri Shelter
+1 Swords to Plowshares
+1 Ugin, the Ineffable
+1 Avatar's Wrath
+1 Sevinne's Reclamation
+1 Steelshaper's Gift

@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/QNXRSdnXCqtZLumj1zwBqQ (source https://archidekt.com/decks/9079292)
+# tags Lifedrain, Lifegain, Skulk, Stax; bracket 2; saved 2026-07-04; 38 tagged of 2100 indexed
+
+Commander
+1 MacCready, Lamplight Mayor
+
+Deck
+1 Archivist of Oghma
+1 Audacious Thief
+1 Baird, Steward of Argive
+1 Blinding Angel
+1 Blood Seeker
+1 Charismatic Conqueror
+1 Company Commander
+1 Corpse Knight
+1 Cruel Celebrant
+1 Daxos, Blessed by the Sun
+1 Delney, Streetwise Lookout
+1 Drana's Emissary
+1 Elas il-Kor, Sadistic Pilgrim
+1 General's Enforcer
+1 Graveblade Marauder
+1 Hoard Robber
+1 Kambal, Consul of Allocation
+1 Kambal, Profiteering Mayor
+1 Knight of the White Orchid
+1 Mai, Scornful Striker
+1 Mangara, the Diplomat
+1 Mentor of the Meek
+1 Michiko Konda, Truth Seeker
+1 Morbid Opportunist
+1 Raving Dead
+1 Recruiter of the Guard
+1 Rhox Faithmender
+1 Solemn Simulacrum
+1 Soul Warden
+1 Soul's Attendant
+1 Suture Priest
+1 The Kingpin of Crime
+1 Tomik, Wielder of Law
+1 Vampire Nighthawk
+1 Vito, Thorn of the Dusk Rose
+1 Welcoming Vampire
+1 Windborn Muse
+1 Wispdrinker Vampire
+1 Zulaport Cutthroat
+1 Ash Barrens
+1 Command Tower
+1 Forsaken Sanctuary
+1 Goldmire Bridge
+1 Orzhov Guildgate
+14 Plains
+1 Scoured Barrens
+1 Secluded Steppe
+1 Silverquill Campus
+12 Swamp
+1 Temple of Silence
+1 Thriving Heath
+1 Vault of the Archangel
+1 Assemble the Players
+1 Authority of the Consuls
+1 Ghostly Prison
+1 Meathook Massacre II
+1 Reconnaissance
+1 Revenge of Ravens
+1 Reverence
+1 Commander's Sphere
+1 Meekstone
+1 Norn's Annex
+1 Orzhov Signet
+1 Sol Ring
+1 Talisman of Hierarchy
+1 World Map
+1 Despark
+1 Hazel's Nocturne
+1 Mortify
+1 Utter End
+1 Dusk // Dawn
+1 Exsanguinate
+1 Raise the Past
+1 Sevinne's Reclamation
+1 The Battle of Bywater

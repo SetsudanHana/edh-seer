@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/LPBdyHaQYqOg1Iz549Ty7A (source https://archidekt.com/decks/19094477)
+# tags Ninjas, Dragons, Ninjutsu; bracket 3; saved 2026-09-05; 975 tagged of 8847 indexed
+
+Commander
+1 Goro-Goro and Satoru
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Deadly Rollick
+1 Deflecting Swat
+1 Fierce Guardianship
+1 Malakir Rebirth
+1 Arcane Signet
+1 Cursed Mirror
+1 Lightning Greaves
+1 Sensei's Divining Top
+1 Urabrask's Forge
+1 Arena of Glory
+1 Badlands
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Creeping Tar Pit
+6 Island
+1 Luxury Suite
+1 Morphic Pool
+6 Mountain
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Scalding Tarn
+1 Shizo, Death's Storehouse
+1 Sokenzan, Crucible of Defiance
+1 Steam Vents
+3 Swamp
+1 Takenuma, Abandoned Mire
+1 Training Center
+1 Underground Sea
+1 Volcanic Island
+1 Watery Grave
+1 Baleful Strix
+1 Changeling Outcast
+1 Dokuchi Silencer
+1 Dour Port-Mage
+1 Enduring Courage
+1 Faerie Mastermind
+1 Fallen Shinobi
+1 Firkraag, Cunning Instigator
+1 Gingerbrute
+1 Glasspool Mimic
+1 Goldspan Dragon
+1 Grazilaxx, Illithid Scholar
+1 Ingenious Infiltrator
+1 Karlach, Fury of Avernus
+1 Kolaghan, the Storm's Fury
+1 Loyal Apprentice
+1 Mistblade Shinobi
+1 Mockingbird
+1 Moon-Circuit Hacker
+1 Nether Traitor
+1 Ninja of the Deep Hours
+1 Orochi Soul-Reaver
+1 Parapet Thrasher
+1 Phoenix Chick
+1 Prosperous Thief
+1 Ragavan, Nimble Pilferer
+1 Raphael, the Nightwatcher
+1 Reinforced Ronin
+1 Rev, Tithe Extractor
+1 Sakashima's Student
+1 Satoru, the Infiltrator
+1 Shivan Devastator
+1 Silent Hallcreeper
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Smaug the Magnificent
+1 Terror of the Peaks
+1 Tetsuko Umezawa, Fugitive
+1 Thousand-Faced Shadow
+1 Throat Slitter
+1 Wan Shi Tong, Librarian
+1 Yuffie, Materia Hunter
+1 Yuriko, the Tiger's Shadow
+1 Corporeal Projection
+1 Crux of Fate
+1 Devastating Onslaught
+1 Full Throttle
+1 Vandalblast
+1 Determined Iteration
+1 Dragon Tempest
+1 Frostcliff Siege
+1 Kaito Shizuki
+1 Kaito, Bane of Nightmares
+1 Kaito, Dancing Shadow

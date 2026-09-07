@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/tZcWQBY5xU8S4MKXr6l5aQ (source https://archidekt.com/decks/18296079)
+# tags ETB, Commander Matters, Allies, Airbending, Blink; bracket 3; saved 2026-08-27; 34 tagged of 9803 indexed
+
+Commander
+1 Katara, the Fearless
+
+Deck
+1 Aang and Katara
+1 Aang, Airbending Master
+1 Aang, at the Crossroads
+1 Appa, Steadfast Guardian
+1 Appa, the Vigilant
+1 Earth King's Lieutenant
+1 Great Divide Guide
+1 Hada Freeblade
+1 Hakoda, Selfless Commander
+1 Harabaz Druid
+1 Hermitic Herbalist
+1 Jwari Shapeshifter
+1 Kabira Evangel
+1 Katara, Heroic Healer
+1 Kazandu Blademaster
+1 Momo, Playful Pet
+1 Ondu Cleric
+1 Rowdy Snowballers
+1 Sea Gate Loremaster
+1 Sokka, Lateral Strategist
+1 South Pole Voyager
+1 Suki, Kyoshi Warrior
+1 Turntimber Ranger
+1 Ty Lee, Chi Blocker
+1 Umara Raptor
+1 Veteran Warleader
+1 White Lotus Reinforcements
+1 Abandoned Air Temple
+1 Adarkar Wastes
+1 Agna Qel'a
+1 Ally Encampment
+1 Canopy Vista
+1 Command Tower
+1 Dark Depths
+1 Dreamroot Cascade
+1 Exotic Orchard
+3 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hinterland Harbor
+3 Island
+1 Jasmine Dragon Tea Shop
+1 Overgrown Farmland
+1 Path of Ancestry
+9 Plains
+1 Prairie Stream
+1 Rumble Arena
+1 Seaside Citadel
+1 Secret Tunnel
+1 Temple Garden
+1 Thespian's Stage
+1 Urban Retreat
+1 Airbender's Reversal
+1 Airbending Lesson
+1 Cloudshift
+1 Eerie Interlude
+1 Ephemerate
+1 Erode
+1 Flawless Maneuver
+1 Ghostly Flicker
+1 Heroic Intervention
+1 Hide on the Ceiling
+1 It'll Quench Ya!
+1 Obscuring Haze
+1 Octopus Form
+1 Origin of Metalbending
+1 Teferi's Protection
+1 Arcane Signet
+1 Bender's Waterskin
+1 Captain's Claws
+1 Coat of Arms
+1 Conjurer's Closet
+1 Herald's Horn
+1 Patchwork Banner
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Mind Stone
+1 Authority of the Consuls
+1 Descendants' Path
+1 Sokka's Charge
+1 Avatar's Wrath
+1 Boomerang Basics
+1 Echocasting Symposium
+1 Shared Roots
+1 Tale of Momo
+1 True Ancestry
+1 United Front

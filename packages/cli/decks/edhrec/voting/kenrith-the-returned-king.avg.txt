@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/kenrith-the-returned-king/voting
+# theme Voting (31 decks)
+
+Commander
+1 Kenrith, the Returned King
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Coercive Portal
+1 Fellwar Stone
+1 Model of Unity
+1 Sol Ring
+1 Tempting Contract
+1 Wedding Ring
+1 Arcane Sanctum
+1 Breeding Pool
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+4 Forest
+1 Frontier Bivouac
+1 Hallowed Fountain
+3 Island
+1 Jungle Shrine
+3 Mountain
+1 Mystic Monastery
+1 Opulent Palace
+1 Path of Ancestry
+4 Plains
+1 Reflecting Pool
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Seaside Citadel
+1 Spara's Headquarters
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Watery Grave
+1 Windswept Heath
+1 Agatha of the Vile Cauldron
+1 Ballot Broker
+1 Biomancer's Familiar
+1 Brago's Representative
+1 Custodi Squire
+1 Círdan the Shipwright
+1 Druid of Purification
+1 Elrond of the White Council
+1 Emissary Green
+1 Erestor of the Council
+1 Faeburrow Elder
+1 Gluntch, the Bestower
+1 Grudge Keeper
+1 Gwafa Hazid, Profiteer
+1 Lieutenants of the Guard
+1 Magister of Worth
+1 Master of Ceremonies
+1 Orzhov Advokist
+1 Selvala, Explorer Returned
+1 Shadrix Silverquill
+1 The Valeyard
+1 Tivit, Seller of Secrets
+1 Zirda, the Dawnwaker
+1 Curse of Opulence
+1 Curse of Verbosity
+1 Ghostly Prison
+1 Monologue Tax
+1 Propaganda
+1 Training Grounds
+1 Trial of a Time Lord
+1 Vault 11: Voter's Dilemma
+1 Wilderness Reclamation
+1 Illusion of Choice
+1 Intellectual Offering
+1 Sail into the West
+1 Split Decision
+1 Swords to Plowshares
+1 Tempt with Mayhem
+1 Trap the Trespassers
+1 Wrong Turn
+1 Bite of the Black Rose
+1 Capital Punishment
+1 Council's Judgment
+1 Expropriate
+1 Farseek
+1 Mob Verdict
+1 Plea for Power
+1 Prisoner's Dilemma
+1 Promise of Loyalty
+1 Selvala's Stampede
+1 Tempt with Discovery
+1 Tempt with Immortality
+1 Travel Through Caradhras
+1 Truth or Consequences
+1 Tyrant's Choice

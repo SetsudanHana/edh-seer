@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/5BAlh_B5YbvnvE_hNiUUMA (source https://archidekt.com/decks/25906951)
+# tags Modular, Artifacts, +1/+1 Counters; bracket 3; saved 2026-09-05; 282 tagged of 3444 indexed
+
+Commander
+1 Zabaz, the Glimmerwasp
+
+Deck
+1 All Will Be One
+1 Cathars' Crusade
+1 Goblin Bombardment
+1 Resourceful Defense
+1 Uncivil Unrest
+1 Ancient Den
+1 Arid Mesa
+1 Battlefield Forge
+1 Blinkmoth Nexus
+1 Castle Embereth
+1 Clifftop Retreat
+1 Command Tower
+1 Darksteel Citadel
+1 Exotic Orchard
+1 Great Furnace
+1 Inkmoth Nexus
+1 Inventors' Fair
+5 Mountain
+1 Needleverge Pathway
+8 Plains
+1 Power Depot
+1 Prismatic Vista
+1 Rogue's Passage
+1 Rustvale Bridge
+1 Sacred Foundry
+1 Spectator Seating
+1 Spire of Industry
+1 Sunbaked Canyon
+1 Sundown Pass
+1 Temple of Triumph
+1 Urza's Cave
+1 Urza's Saga
+1 Animation Module
+1 Arcane Signet
+1 Ashnod's Altar
+1 Boros Signet
+1 Costume Closet
+1 Mirage Mirror
+1 Mox Amber
+1 Mox Opal
+1 Phyrexian Altar
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Conviction
+1 Tarrian's Soulcleaver
+1 The Ozolith
+1 Arcbound Bruiser
+1 Arcbound Crusher
+1 Arcbound Fiend
+1 Arcbound Hybrid
+1 Arcbound Javelineer
+1 Arcbound Lancer
+1 Arcbound Mouser
+1 Arcbound Overseer
+1 Arcbound Prototype
+1 Arcbound Ravager
+1 Arcbound Reclaimer
+1 Arcbound Shikari
+1 Arcbound Slasher
+1 Arcbound Slith
+1 Arcbound Stinger
+1 Arcbound Tracker
+1 Arcbound Wanderer
+1 Arcbound Whelp
+1 Arcbound Worker
+1 Cryptothrall
+1 Esper Sentinel
+1 Foundry Inspector
+1 Goblin Engineer
+1 Goblin Welder
+1 Hangarback Walker
+1 Lae'zel, Vlaakith's Champion
+1 Metalworker
+1 Myr Retriever
+1 Scrap Trawler
+1 Scrapyard Recombiner
+1 Steel Overseer
+1 Sun Titan
+1 Teshar, Ancestor's Apostle
+1 Walking Ballista
+1 Brought Back
+1 Demand Answers
+1 Dispatch
+1 Enlightened Tutor
+1 Flawless Maneuver
+1 Swords to Plowshares
+1 Daretti, Scrap Savant
+1 Tezzeret, Cruel Captain

@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/r-12dj7_JWgcgLAT3v4Lvg (source https://archidekt.com/decks/10385071)
+# tags Aristocrats, Lifedrain, Tokens, Sacrifice, Vampires, Lifegain; bracket 3; saved 2026-09-04; 469 tagged of 50337 indexed
+
+Commander
+1 Edgar Markov
+
+Deck
+1 Abrade
+1 Corrupted Conviction
+1 Crackling Doom
+1 Deadly Dispute
+1 Kaya's Guile
+1 Mercadia's Downfall
+1 Path to Exile
+1 Stinging Study
+1 Swords to Plowshares
+1 Village Rites
+1 Arcane Signet
+1 Bolas's Citadel
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Battlefield Forge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 City of Brass
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Godless Shrine
+1 Haunted Ridge
+1 Isolated Chapel
+1 Luxury Suite
+1 Midgar, City of Mako
+3 Mountain
+1 Nomad Outpost
+1 Orzhov Basilica
+1 Path of Ancestry
+1 Reliquary Tower
+1 Secluded Courtyard
+1 Shattered Sanctum
+1 Sulfurous Springs
+1 Sundown Pass
+8 Swamp
+1 Tainted Field
+1 Unclaimed Territory
+1 Vault of Champions
+1 Blood Artist
+1 Blood Seeker
+1 Bloodthrone Vampire
+1 Butcher of Malakir
+1 Captivating Vampire
+1 Cemetery Gatekeeper
+1 Charismatic Conqueror
+1 Clavileño, First of the Blessed
+1 Cordial Vampire
+1 Creeping Bloodsucker
+1 Drana, Liberator of Malakir
+1 Dusk Legion Sergeant
+1 Edgar, Charmed Groom
+1 Elenda, the Dusk Rose
+1 Evereth, Viceroy of Plunder
+1 Falkenrath Pit Fighter
+1 Florian, Voldaren Scion
+1 Indulgent Aristocrat
+1 Malakir Bloodwitch
+1 Master of Dark Rites
+1 Nighthawk Scavenger
+1 Preacher of the Schism
+1 Rakish Heir
+1 Ruthless Lawbringer
+1 Sanctum Seeker
+1 Scheming Silvertongue
+1 Vampire Gourmand
+1 Vampire Socialite
+1 Vampire of the Dire Moon
+1 Vengeful Bloodwitch
+1 Vito, Thorn of the Dusk Rose
+1 Vraan, Executioner Thane
+1 Welcoming Vampire
+1 Dawn of a New Age
+1 Dictate of Erebos
+1 Goblin Bombardment
+1 Legion's Landing
+1 Shared Animosity
+1 Tocasia's Welcome
+1 Warleader's Call
+1 Hymn of the Faller
+1 Olivia's Wrath
+1 Pact of the Serpent
+1 Ruinous Ultimatum
+1 Vandalblast

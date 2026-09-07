@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/alaundo-the-seer/time-counters
+# theme Time Counters (77 decks)
+
+Commander
+1 Alaundo the Seer
+
+Deck
+1 Arcane Signet
+1 Illusionist's Bracers
+1 Patriar's Seal
+1 Sol Ring
+1 Sol Talisman
+1 Sting, the Glinting Dagger
+1 Swiftfoot Boots
+1 Thousand-Year Elixir
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+10 Forest
+1 Hinterland Harbor
+12 Island
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Aeon Chronicler
+1 Aphetto Alchemist
+1 Arcanis the Omnipotent
+1 Chakram Retriever
+1 Clever Conjurer
+1 Deep-Sea Kraken
+1 Elvish Mystic
+1 Hullbreaker Horror
+1 Ioreth of the Healing House
+1 Jhoira's Timebug
+1 Kelpie Guide
+1 Kiora's Follower
+1 Llanowar Elves
+1 Marvin, Murderous Mimic
+1 Murkfiend Liege
+1 Psychosis Crawler
+1 Saryth, the Viper's Fang
+1 Seedborn Muse
+1 Seeker of Skybreak
+1 Sphinx of the Second Sun
+1 Star Whale
+1 Taigam, Master Opportunist
+1 The Thirteenth Doctor
+1 Time Beetle
+1 Tolarian Kraken
+1 Vizier of Tumbling Sands
+1 Freed from the Real
+1 Instill Energy
+1 Intruder Alarm
+1 Pemmin's Aura
+1 Quest for Renewal
+1 Retreat to Coralhelm
+1 Teferi's Ageless Insight
+1 Beast Within
+1 Cerulean Wisps
+1 Counterspell
+1 Dramatic Reversal
+1 Growth Spiral
+1 Heroic Intervention
+1 Negate
+1 Pongify
+1 Refocus
+1 Shore Up
+1 Suspend
+1 Vitalize
+1 Kiora, Behemoth Beckoner
+1 All of History, All at Once
+1 Ancestral Vision
+1 Cultivate
+1 Inevitable Betrayal
+1 Inspiring Refrain
+1 Rampant Growth
+1 Reality Strobe
+1 Search for Tomorrow
+1 Venture Forth
+1 Wibbly-wobbly, Timey-wimey

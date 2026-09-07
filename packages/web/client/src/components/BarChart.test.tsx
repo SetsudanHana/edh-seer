@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { BarChart } from "./BarChart.js";
 
@@ -83,4 +83,17 @@ test("describes its own shape for a reader who cannot see it", () => {
   );
   const desc = container.querySelector("svg > desc")!;
   expect(desc.textContent).toBe("3 bars, 0 to 2. Highest: 5 cards at mana value 2.");
+});
+
+/** A READOUT THAT NEEDS NO POINTER (owner, 2026-09-06): the `<title>` tooltip wants a mouse and a
+ *  pause; hovering, tapping or focusing a column names its value in a line under the chart, and
+ *  the peak is named there before anything is touched. */
+test("the readout shows the peak by default and the hovered or focused bar after", () => {
+  render(<BarChart heading="Mana curve" bars={bars} formatTick={String} peakLabel={(b) => String(b.value)} />);
+  expect(screen.getByTestId("bar-readout")).toHaveTextContent("5 cards at mana value 2");
+  const hits = screen.getAllByTestId("bar-hit");
+  fireEvent.pointerEnter(hits[0]!);
+  expect(screen.getByTestId("bar-readout")).toHaveTextContent("1 card at mana value 0");
+  fireEvent.focus(hits[1]!);
+  expect(screen.getByTestId("bar-readout")).toHaveTextContent("0 cards at mana value 1");
 });

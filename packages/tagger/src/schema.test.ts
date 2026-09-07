@@ -8,7 +8,10 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // word — 162 corpus cards instruct a roll and 7 trigger on one, and without a verb the supply
   // could not reach them. Coin flips (CR 705) were REFUSED the same day: 81 cards flip and zero
   // trigger on another card's flip.
-  expect(VERB_VOCAB).toHaveLength(24);
+  // 24 -> 25 on 2026-09-05 for `unlock` (CR 717): 35 clause docs trigger on a Room being fully
+  // unlocked and 28 corpus Rooms supply it, and the eerie half of 16 cards derived to NOTHING --
+  // silently, because `unknownTriggers` was never persisted. Both fixed together.
+  expect(VERB_VOCAB).toHaveLength(25);
   expect(VERB_VOCAB).toContain("enters");
   expect(VERB_VOCAB).toContain("create-token");
   expect(VERB_VOCAB).toContain("land-play");

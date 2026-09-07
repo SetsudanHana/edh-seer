@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/NMO6e1Crr-4wktY2Sd2KfQ (source https://archidekt.com/decks/23484271)
+# tags Slivers, Cascade; bracket 3; saved 2026-09-04; 920 tagged of 19595 indexed
+
+Commander
+1 The First Sliver
+
+Deck
+1 Altanak, the Thrice-Called
+1 Battle Sliver
+1 Beanstalk Giant
+1 Bloomvine Regent
+1 Bonescythe Sliver
+1 Bonesplitter Sliver
+1 Brood Sliver
+1 Cleaving Sliver
+1 Cloudshredder Sliver
+1 Cradle Clearcutter
+1 Crystalline Sliver
+1 Dormant Sliver
+1 Essence Sliver
+1 Fury
+1 Fury Sliver
+1 Galerider Sliver
+1 Gemhide Sliver
+1 Greater Tanuki
+1 Harmonic Sliver
+1 Harvester of Misery
+1 Hollowhead Sliver
+1 Horned Sliver
+1 Lancer Sliver
+1 Lazotep Sliver
+1 Manaweft Sliver
+1 Megantic Sliver
+1 Mesmeric Sliver
+1 Might Sliver
+1 Mindlash Sliver
+1 Reflex Sliver
+1 Regal Sliver
+1 Shifting Sliver
+1 Sliver Gravemother
+1 Sliver Hivelord
+1 Sliver Legion
+1 Sliver Overlord
+1 Stormkeld Vanguard
+1 Syphon Sliver
+1 Taunting Sliver
+1 Trumpeting Carnosaur
+1 Twinmaw Stormbrood
+1 Watcher Sliver
+1 Ancestral Vision
+1 Baral's Expertise
+1 Blasphemous Act
+1 Bring to Light
+1 Elemental Masterpiece
+1 Rishkar's Expertise
+1 Spring // Mind
+1 Vanquish the Horde
+1 Volcanic Salvo
+1 Arid Mesa
+1 Badlands
+1 Bayou
+1 Bloodstained Mire
+1 Cavern of Souls
+1 City of Brass
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Exotic Orchard
+1 Flooded Strand
+3 Forest
+1 Island
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Path of Ancestry
+1 Plains
+1 Plateau
+1 Plaza of Heroes
+1 Polluted Delta
+1 Reflecting Pool
+1 Savannah
+1 Scalding Tarn
+1 Scrubland
+1 Secluded Courtyard
+1 Swamp
+1 Taiga
+1 Tropical Island
+1 Tundra
+1 Unclaimed Territory
+1 Underground Sea
+1 Verdant Catacombs
+1 Volcanic Island
+1 Windswept Heath
+1 Wooded Foothills
+1 Creative Outburst
+1 Force of Will
+1 Magma Opus
+1 Pyrokinesis
+1 Release to the Wind
+1 Road // Ruin
+1 Submerge
+1 Whiplash Trap
+1 Moldering Gym // Weight Room
+1 Virtue of Persistence

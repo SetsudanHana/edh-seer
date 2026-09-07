@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/AIZpp2bSW_Os8xQ5cVwTYg (source https://archidekt.com/decks/17816621)
+# tags Firebending, Flash, Spell Copy, Card Draw; bracket 3; saved 2026-09-04; 630 tagged of 36827 indexed
+
+Commander
+1 Fire Lord Azula
+
+Deck
+1 Aboleth Spawn
+1 Archmage Emeritus
+1 Brazen Borrower
+1 Dragon Turtle
+1 Etali, Primal Storm
+1 Faerie Mastermind
+1 Faerie Vandal
+1 Firebending Student
+1 Guttersnipe
+1 High Fae Trickster
+1 Hullbreaker Horror
+1 Nightscape Familiar
+1 Notion Thief
+1 Sedgemoor Witch
+1 Sphinx of Forgotten Lore
+1 Stella Lee, Wild Card
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Teferi, Mage of Zhalfir
+1 The Blue Spirit
+1 Tidal Barracuda
+1 Ty Lee, Chi Blocker
+1 Wizards of Thay
+1 Abrade
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Azula Always Lies
+1 Big Score
+1 Brainstorm
+1 Dark Ritual
+1 Deadly Rollick
+1 Dismember
+1 Electrodominance
+1 Fists of Flame
+1 Flame-Blessed Bolt
+1 Flare of Duplication
+1 Frantic Search
+1 Impulse
+1 Lightning Bolt
+1 Lightning Strike
+1 Narset's Reversal
+1 Opt
+1 Pyretic Ritual
+1 Rapid Hybridization
+1 Snap
+1 Three Steps Ahead
+1 Twincast
+1 Valakut Awakening
+1 Witchstalker Frenzy
+1 Arcane Signet
+1 Astrologian's Planisphere
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Wealth and Power
+1 Talisman of Dominance
+1 Thought Vessel
+1 Capture of Jingzhou
+1 Crackle with Power
+1 Finale of Revelation
+1 Insatiable Avarice
+1 Irenicus's Vile Duplication
+1 Temporal Mastery
+1 Clearwater Pathway
+1 Command Tower
+1 Evolving Wilds
+1 Haunted Ridge
+10 Island
+8 Mountain
+1 Reliquary Tower
+1 Restless Vents
+1 Seething Landscape
+1 Shipwreck Marsh
+8 Swamp
+1 Dictate of Kruphix
+1 Firebender Ascension
+1 Leyline of Anticipation

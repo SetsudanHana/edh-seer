@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-destined-warrior/party
+# theme Party (314 decks)
+
+Commander
+1 The Destined Warrior
+
+Deck
+1 Arcane Signet
+1 Chaos Shrine's Black Crystal
+1 Fellwar Stone
+1 Maskwood Nexus
+1 Multiclass Baldric
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Base Camp
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+5 Island
+1 Isolated Chapel
+1 Mutavault
+1 Path of Ancestry
+6 Plains
+1 Prairie Stream
+1 Raffine's Tower
+1 Shattered Sanctum
+1 Sunken Hollow
+5 Swamp
+1 Underground River
+1 Vault of the Archangel
+1 Watery Grave
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Archpriest of Iona
+1 Ardbert, Warrior of Darkness
+1 Burakos, Party Leader
+1 Changeling Outcast
+1 Dark Confidant
+1 Deep Gnome Terramancer
+1 Frontline Medic
+1 Ghostly Pilferer
+1 Grim Hireling
+1 Harper Recruiter
+1 Kamiz, Obscura Oculus
+1 Linvala, Shield of Sea Gate
+1 Locke Cole
+1 Lotho, Corrupt Shirriff
+1 Mangara, the Diplomat
+1 Midnight Pathlighter
+1 Mirror Entity
+1 Mother of Runes
+1 Nalia de'Arnise
+1 Nimble Trapfinder
+1 Rosa, Resolute White Mage
+1 Seasoned Dungeoneer
+1 Selfless Spirit
+1 Shadowmage Infiltrator
+1 Solemn Doomguide
+1 Squad Commander
+1 Sygg, Wanderwine Wisdom
+1 The Destined Black Mage
+1 The Destined Thief
+1 The Destined White Mage
+1 Tymna the Weaver
+1 Unsettled Mariner
+1 White Plume Adventurer
+1 Black Market Connections
+1 Champions from Beyond
+1 Journey to Oblivion
+1 Akroma's Will
+1 Anguished Unmaking
+1 Concerted Defense
+1 Counterspell
+1 Deadly Alliance
+1 Path to Exile
+1 Spoils of Adventure
+1 Swords to Plowshares
+1 Void Rend
+1 Coveted Prize
+1 Damn
+1 Skyclave Plunder
+1 Stick Together
+1 Thwart the Grave

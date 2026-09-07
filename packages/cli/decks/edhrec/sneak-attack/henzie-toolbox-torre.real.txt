@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/CNDsIscA3PYHEre-F3X-1A (source https://archidekt.com/decks/20311769)
+# tags Reanimator, ETB, Attack Triggers, Sacrifice, Midrange, Sneak Attack; bracket 3; saved 2026-08-27; 47 tagged of 18661 indexed
+
+Commander
+1 Henzie "Toolbox" Torre
+
+Deck
+1 Abrupt Decay
+1 Assassin's Trophy
+1 Beast Within
+1 Malakir Rebirth
+1 Noxious Revival
+1 Saw in Half
+1 Untimely Malfunction
+1 Abundant Countryside
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+5 Forest
+1 Graven Cairns
+1 Llanowar Wastes
+3 Mountain
+1 Overgrown Tomb
+1 Rootbound Crag
+1 Smoldering Marsh
+1 Stomping Ground
+1 Sulfurous Springs
+1 Susur Secundi, Void Altar
+4 Swamp
+1 Twilight Mire
+1 Underground Mortuary
+1 Verdant Catacombs
+1 Vernal Fen
+1 Wooded Foothills
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Archon of Cruelty
+1 Archpriest of Shadows
+1 Aspiring Champion
+1 Aurora Awakener
+1 Balefire Dragon
+1 Bane of Progress
+1 Birds of Paradise
+1 Bloom Tender
+1 Blossoming Tortoise
+1 Bringer of the Last Gift
+1 Chainer, Nightmare Adept
+1 Chaos Defiler
+1 Colossal Grave-Reaver
+1 Deadpool, Trading Card
+1 Delighted Halfling
+1 Disciple of Freyalise
+1 Elves of Deep Shadow
+1 Elvish Mystic
+1 Etali, Primal Conqueror
+1 Evercoat Ursine
+1 Fyndhorn Elves
+1 Gaius van Baelsar
+1 Gray Merchant of Asphodel
+1 Gwenom, Remorseless
+1 Hideous Taskmaster
+1 Ignoble Hierarch
+1 Jecht, Reluctant Guardian
+1 Junji, the Midnight Sky
+1 Kardur, Doomscourge
+1 Kokusho, the Evening Star
+1 Llanowar Elves
+1 Massacre Wurm
+1 Michelangelo, Improviser
+1 Mikaeus, the Unhallowed
+1 Ojer Kaslem, Deepest Growth
+1 Overlord of the Hauntwoods
+1 Phyrexian Delver
+1 Pinnacle Monk
+1 Primaris Eliminator
+1 Primeval Herald
+1 Protean Hulk
+1 Radagast of Rhosgobel
+1 Rampant Rejuvenator
+1 Roxanne, Starfall Savant
+1 Seedguide Ash
+1 Solemn Simulacrum
+1 The Ruinous Wrecking Crew
+1 Tom, Bert, and William
+1 Viscera Seer
+1 Birthing Pod
+1 Skullclamp
+1 Birthing Ritual
+1 Survival of the Fittest
+1 Utopia Sprawl
+1 Wild Growth
+1 Eldritch Evolution
+1 Living Death
+1 Reanimate

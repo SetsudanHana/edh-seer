@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { stickyPx } from "../lib/sticky-px.js";
 import { useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
 import { scoreState } from "../lib/deck-gauge.js";
@@ -40,7 +41,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
     const el = ref.current;
     if (!el) return;
     const write = (): void =>
-      document.documentElement.style.setProperty("--report-header-h", `${Math.round(el.getBoundingClientRect().height)}px`);
+      document.documentElement.style.setProperty("--report-header-h", stickyPx(el));
     write();
     const ro = new ResizeObserver(write);
     ro.observe(el);
@@ -80,7 +81,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
       // figure that qualify the whole report. `region` plus a name gives it one.
       role="region"
       aria-label="Deck summary"
-      className="sticky top-0 z-20 -mx-1 px-1 bg-(--background) border-b border-(--separator) py-2"
+      className="sticky top-[var(--site-header-h,0px)] z-20 -mx-1 px-1 bg-(--background) border-b border-(--separator) py-2"
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 min-w-0">
         {commanders.length > 0 ? (

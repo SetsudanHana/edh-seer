@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/0sLUGpfS3i-f63TY6-fuyQ (source https://archidekt.com/decks/20698958)
+# tags Sneak, Ninjas, Tokens; bracket 3; saved 2026-08-27; 39 tagged of 2470 indexed
+
+Commander
+1 Dark Leo & Shredder
+
+Deck
+1 Access Tunnel
+1 Cavern of Souls
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Godless Shrine
+1 Isolated Chapel
+1 Marsh Flats
+1 Phyrexian Tower
+8 Plains
+1 Reflecting Pool
+1 Rogue's Passage
+1 Scrubland
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Shizo, Death's Storehouse
+1 Silent Clearing
+11 Swamp
+1 Turtle Lair
+1 Vault of Champions
+1 Anguished Unmaking
+1 Corrupted Conviction
+1 Costly Plunder
+1 Deadly Dispute
+1 Deadly Rollick
+1 Flawless Maneuver
+1 Path to Exile
+1 Swords to Plowshares
+1 The Last Ronin's Technique
+1 Vampiric Tutor
+1 Village Rites
+1 Anointed Procession
+1 Black Market Connections
+1 Cover of Darkness
+1 Endless Foot Assault
+1 Gift of Orzhova
+1 Ninja Teen
+1 Phyrexian Arena
+1 Renewed Solidarity
+1 Wound Reflection
+1 April O'Neil, Kunoichi Trainee
+1 Astarion, the Decadent
+1 Bloodletter of Aclazotz
+1 Changeling Outcast
+1 Darkstar Augur
+1 Enduring Innocence
+1 Foot Elite
+1 Inkrise Infiltrator
+1 Karai, Future of the Foot
+1 Mondrak, Glory Dominus
+1 Mother of Runes
+1 Ojer Taq, Deepest Foundation
+1 Ornithopter
+1 Oroku Saki, Shredder Rising
+1 Prehistoric Pet
+1 Roaming Throne
+1 Skullsnatcher
+1 Splinter, Hamato Yoshi
+1 Splinter, the Mentor
+1 Super Shredder
+1 Throatseeker
+1 Tormented Soul
+1 Brotherhood Regalia
+1 Helm of the Host
+1 Idol of Oblivion
+1 Key to the City
+1 Lightning Greaves
+1 Orzhov Signet
+1 Silver Shroud Costume
+1 Sol Ring
+1 Sword of Feast and Famine
+1 Sword of Vengeance
+1 The Soul Stone
+1 Whispersilk Cloak
+1 Damn
+1 Demonic Tutor
+1 Grim Tutor
+1 Insatiable Avarice
+1 Sign in Blood
+1 Splinter's Technique
+1 Steelshaper's Gift
+1 Elspeth, Storm Slayer

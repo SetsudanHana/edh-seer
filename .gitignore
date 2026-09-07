@@ -44,3 +44,4 @@ static-out/
 
 # Wrangler local dev state (miniflare caches, local DO/KV/D1 sqlite).
 .wrangler/
+.edhrec-cache/

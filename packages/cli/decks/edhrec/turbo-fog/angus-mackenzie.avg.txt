@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/angus-mackenzie/turbo-fog
+# theme Turbo Fog (28 decks)
+
+Commander
+1 Angus Mackenzie
+
+Deck
+1 Arcane Signet
+1 Commander's Sphere
+1 Folio of Fancies
+1 Font of Mythos
+1 Howling Mine
+1 Isochron Scepter
+1 Lightning Greaves
+1 Sol Ring
+1 Thought Vessel
+1 Bountiful Promenade
+1 Breeding Pool
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Flooded Strand
+5 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hinterland Harbor
+4 Island
+1 Kor Haven
+1 Maze of Ith
+1 Misty Rainforest
+5 Plains
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Temple Garden
+1 Avacyn's Pilgrim
+1 Azor's Elocutors
+1 Birds of Paradise
+1 Crystal Barricade
+1 Dawnstrider
+1 Eternal Witness
+1 Fog Bank
+1 Kami of False Hope
+1 Kami of the Crescent Moon
+1 Kiora's Follower
+1 Noble Hierarch
+1 Peacekeeper
+1 Seedborn Muse
+1 Selfless Squire
+1 Selvala, Explorer Returned
+1 Sokrates, Athenian Teacher
+1 Spore Frog
+1 Suppressor Skyguard
+1 Windborn Muse
+1 Dictate of Kruphix
+1 Ghostly Prison
+1 Helix Pinnacle
+1 Privileged Position
+1 Propaganda
+1 Rhystic Study
+1 Rites of Flourishing
+1 Sphere of Safety
+1 Sylvan Library
+1 Wilderness Reclamation
+1 Arachnogenesis
+1 Arcane Denial
+1 Blessed Respite
+1 Constant Mists
+1 Counterspell
+1 Dawn Charm
+1 Ethereal Haze
+1 Fog
+1 Heroic Intervention
+1 Holy Day
+1 Jaheira's Respite
+1 Moment's Peace
+1 Obscuring Haze
+1 Path to Exile
+1 Respite
+1 Riot Control
+1 Swords to Plowshares
+1 Tangle
+1 Teferi's Protection
+1 Jace Beleren
+1 Tamiyo, Field Researcher
+1 Approach of the Second Sun
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Supreme Verdict

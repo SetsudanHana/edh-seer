@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/gSrD9PpRbaNI1PLgOVs19A (source https://archidekt.com/decks/25716891)
+# tags Enchantress, Summons, Sagas; bracket 3; saved 2026-08-25; 7 tagged of 5239 indexed
+
+Commander
+1 Yuna, Hope of Spira
+
+Deck
+1 Akroma's Will
+1 Enlightened Tutor
+1 Generous Gift
+1 Heroic Intervention
+1 Path to Exile
+1 Swords to Plowshares
+1 All That Glitters
+1 Authority of the Consuls
+1 Darksteel Mutation
+1 Dawn of a New Age
+1 Enchantress's Presence
+1 Ethereal Armor
+1 Ghostly Prison
+1 Grasp of Fate
+1 Michiko's Reign of Truth
+1 Mirari's Wake
+1 Sigil of the Empty Throne
+1 Sphere of Safety
+1 Starfield of Nyx
+1 The Restoration of Eiganjo
+1 Utopia Sprawl
+1 Wild Growth
+1 Arcane Signet
+1 Crystal Fragments
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Botanical Plaza
+1 Canopy Vista
+1 Command Tower
+1 Evolving Wilds
+7 Forest
+1 Fortified Village
+1 Hidden Grotto
+1 Krosan Verge
+1 Nesting Grounds
+11 Plains
+1 Razorverge Thicket
+1 Reliquary Tower
+1 Rogue's Passage
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Temple of Plenty
+1 Terramorphic Expanse
+1 Thriving Heath
+1 Windswept Heath
+1 Calix, Guided by Fate
+1 Composer of Spring
+1 Destiny Spinner
+1 Eidolon of Blossoms
+1 Heliod, God of the Sun
+1 Herald of the Pantheon
+1 Jukai Naturalist
+1 Mesa Enchantress
+1 Nykthos Paragon
+1 Nylea's Colossus
+1 Nyxborn Behemoth
+1 Ondu Spiritdancer
+1 Sanctum Weaver
+1 Satyr Enchanter
+1 Soaring Lightbringer
+1 Spirited Companion
+1 Starfield Mystic
+1 Summon: Bahamut
+1 Summon: Fenrir
+1 Summon: Good King Mog XII
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Titan
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Verduran Enchantress
+1 Esper Origins
+1 Farewell
+1 Idyllic Tutor
+1 Malevolent Rumble
+1 Rampant Growth
+1 Replenish
+1 Search for Glory
+1 Three Visits
+1 Yuna's Decision

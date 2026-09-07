@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/hylda-of-the-icy-crown/snow
+# theme Snow (437 decks)
+
+Commander
+1 Hylda of the Icy Crown
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Coldsteel Heart
+1 Hylda's Crown of Winter
+1 Icebind Pillar
+1 Icy Manipulator
+1 Mjölnir, Storm Hammer
+1 Replicating Ring
+1 Scepter of Dominance
+1 Sol Ring
+1 Talisman of Progress
+1 Azorius Chancery
+1 Boreal Shelf
+1 Command Tower
+1 Faceless Haven
+1 Frostwalk Bastion
+1 Glacial Floodplain
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Scrying Sheets
+1 Sea of Clouds
+1 Shimmerdrift Vale
+12 Snow-Covered Island
+9 Snow-Covered Plains
+1 Court Street Denizen
+1 Dreamshackle Geist
+1 Elvish Mariner
+1 Frost Titan
+1 Gadwick, the Wizened
+1 Giant Killer
+1 Gideon's Lawkeeper
+1 Githzerai Monk
+1 Icebreaker Kraken
+1 Icewrought Sentry
+1 Icingdeath, Frost Tyrant
+1 Junk Winder
+1 Minister of Impediments
+1 Niblis of Frost
+1 Queen of Ice
+1 Rhoda, Geist Avenger
+1 Sharae of Numbing Depths
+1 Squall Drifter
+1 Sunblast Angel
+1 Timin, Youthful Geist
+1 Topplegeist
+1 Bitter Chill
+1 Citadel Siege
+1 Marit Lage's Slumber
+1 On Thin Ice
+1 Opposition
+1 Retreat to Coralhelm
+1 Solitary Sanctuary
+1 Time of Ice
+1 Verity Circle
+1 Winter's Rest
+1 Blustersquall
+1 Counterspell
+1 Cryptic Command
+1 Dovin's Veto
+1 Downpour
+1 Feeling of Dread
+1 Frost Breath
+1 Graven Lore
+1 Ice Out
+1 Icy Blast
+1 Path to Exile
+1 Plunge into Winter
+1 Succumb to the Cold
+1 Swords to Plowshares
+1 Tamiyo, the Moon Sage
+1 Bond of Discipline
+1 Borrowing 100,000 Arrows
+1 Cone of Cold
+1 Freeze in Place
+1 Sleep
+1 Split Up

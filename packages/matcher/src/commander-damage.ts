@@ -26,7 +26,7 @@ import type { DeckCard } from "./types.js";
  *  (11 -> 1) · `voltron-mill` 11, on a 10-power commander (3 -> 1) · `obeka-upkeep-shenanigans` 5
  *  (11 -> 3). **Those are exactly the four decks J3's fix leaves in the `voltron-auras` edge group**,
  *  reached by a different table, which is the only cross-check available here. */
-export const COMMANDER_DAMAGE = 21;
+const COMMANDER_DAMAGE = 21;
 
 /** What the deck can bolt onto one creature: Equipment, and Auras that enchant a creature. The same
  *  pair `ARCHETYPE_SIGNATURE`'s voltron row keys on, and the same "aura only when it enchants a

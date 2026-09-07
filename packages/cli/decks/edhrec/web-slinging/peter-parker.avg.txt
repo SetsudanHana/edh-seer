@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/peter-parker/web-slinging
+# theme Web-slinging (109 decks)
+
+Commander
+1 Peter Parker
+
+Deck
+1 Arcane Signet
+1 Avacyn's Memorial
+1 Lightning Greaves
+1 Relic of Legends
+1 Sol Ring
+1 Springleaf Drum
+1 Swiftfoot Boots
+1 The Seriema
+1 Breeding Pool
+1 Canopy Vista
+1 Command Tower
+1 Daily Bugle Building
+1 Dreamroot Cascade
+1 Exotic Orchard
+6 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hinterland Harbor
+5 Island
+1 Multiversal Passage
+1 Overgrown Farmland
+6 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Suburban Sanctuary
+1 Sunpetal Grove
+1 Temple Garden
+1 Urban Retreat
+1 Vibrant Cityscape
+1 Absolute Virtue
+1 Anti-Venom, Horrifying Healer
+1 Aunt May
+1 Avacyn's Pilgrim
+1 Avacyn, Angel of Hope
+1 Birds of Paradise
+1 Bloom Tender
+1 Chulane, Teller of Tales
+1 Delighted Halfling
+1 Dragonlord Dromoka
+1 Elvish Mystic
+1 Enduring Vitality
+1 Faeburrow Elder
+1 Gandalf the White
+1 Ghalta and Mavren
+1 Helga, Skittish Seer
+1 Inga and Esika
+1 Koma, Cosmos Serpent
+1 Koma, World-Eater
+1 Llanowar Elves
+1 Loran of the Third Path
+1 Noble Hierarch
+1 Prime Speaker Zegana
+1 Radioactive Spider
+1 Reki, the History of Kamigawa
+1 Silk, Web Weaver
+1 Spectacular Spider-Man
+1 Spider-Girl, Legacy Hero
+1 Spider-Man India
+1 Spider-Man, Brooklyn Visionary
+1 Spider-Man, Miles Morales
+1 Spiders-Man, Heroic Horde
+1 Supportive Parents
+1 The Sixth Doctor
+1 The Tarrasque
+1 Cryptolith Rite
+1 Flowering of the White Tree
+1 Garruk's Uprising
+1 Impostor Syndrome
+1 Spider-Man No More
+1 Web of Life and Destiny
+1 Amazing Acrobatics
+1 Beast Within
+1 Counterspell
+1 Heroic Intervention
+1 Hide on the Ceiling
+1 Path to Exile
+1 Spider-Sense
+1 Strength of Will
+1 Swords to Plowshares
+1 Farseek
+1 Karn's Temporal Sundering
+1 Three Visits
+1 Urza's Ruinous Blast

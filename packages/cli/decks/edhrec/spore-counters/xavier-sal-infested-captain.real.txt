@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/gpl0ZKRab7oUoRvjV4UE0Q (source https://archidekt.com/decks/16908775)
+# tags Proliferate, Fungi, +1/+1 Counters, Commander Matters, Populate, Tokens, Spore Counters; bracket 2; saved 2026-08-18; 34 tagged of 7987 indexed
+
+Commander
+1 Xavier Sal, Infested Captain
+
+Deck
+1 Astral Cornucopia
+1 Clearwater Goblet
+1 Commander's Sphere
+1 Everflowing Chalice
+1 Helm of the Host
+1 Mask of the Jadecrafter
+1 Mirror Box
+1 Mirror Gallery
+1 Symmetry Matrix
+1 Tamiyo's Immobilizer
+1 The Skullspore Nexus
+1 Thorn of Amethyst
+1 Blue Sun's Twilight
+1 Coiling Rebirth
+1 Quantum Misalignment
+1 Saproling Symbiosis
+1 Broodrage Mycoid
+1 Chronozoa
+1 Corpsejack Menace
+1 Deathspore Thallid
+1 Ezuri, Stalker of Spheres
+1 Ferrafor, Young Yew
+1 Fungal Behemoth
+1 Mycoloth
+1 Nemata, Primeval Warden
+1 Psychotrope Thallid
+1 Renata, Called to the Hunt
+1 Savage Thallid
+1 Shroofus Sproutsire
+1 Slimefoot, the Stowaway
+1 Spore Flower
+1 Sporesower Thallid
+1 Sporoloth Ancient
+1 Swarm Shambler
+1 Synapse Necromage
+1 Thallid Shell-Dweller
+1 The Mycotyrant
+1 The Sixth Doctor
+1 Thelon of Havenwood
+1 Undergrowth Scavenger
+1 Unwilling Vessel
+1 Utopia Mycon
+1 Vitaspore Thallid
+1 Vorel of the Hull Clade
+1 Winding Constrictor
+1 Death's Presence
+1 Forced Adaptation
+1 Fungal Plots
+1 Grave Pact
+1 Growing Rites of Itlimoc
+1 Inexorable Tide
+1 Intruder Alarm
+1 Moldervine Reclamation
+1 Necrogenesis
+1 Primal Vigor
+1 Propaganda
+1 Terrasymbiosis
+1 The Clone Saga
+1 The Weatherseed Treaty
+1 Dimir Guildgate
+1 Foreboding Landscape
+10 Forest
+1 Haunted Mire
+6 Island
+1 Lakeside Shack
+1 Murky Sewer
+1 Opulent Palace
+1 Path of Ancestry
+1 Simic Guildgate
+1 Susur Secundi, Void Altar
+6 Swamp
+1 Yavimaya, Cradle of Growth
+1 Double Major
+1 Noxious Revival
+1 Solidarity of Heroes
+1 Vraska's Fall
+1 Tamiyo, Collector of Tales
+1 Tyvar, Jubilant Brawler
+1 Vraska, Betrayal's Sting
+1 Wrenn and Realmbreaker

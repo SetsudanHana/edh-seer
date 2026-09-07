@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/a3Y_XD_teWK5S_kLwscyQg (source https://archidekt.com/decks/6297660)
+# tags Attack Triggers, Artifacts, Gnomes, Craft, Tokens, ETB; bracket 3; saved 2026-08-23; 42 tagged of 4523 indexed
+
+Commander
+1 Tetzin, Gnome Champion
+
+Deck
+1 Akal Pakal, First Among Equals
+1 Alibou, Ancient Witness
+1 Bronze Guardian
+1 Chief Engineer
+1 Foreboding Statue
+1 Golden Guardian
+1 Illustrious Wanderglyph
+1 Market Gnome
+1 Reckless Fireweaver
+1 Riddlesmith
+1 Threefold Thunderhulk
+1 Urza, Lord Protector
+1 Urza, Prince of Kroog
+1 Vedalken Archmage
+1 Ancient Den
+1 Archway of Innovation
+1 Arid Mesa
+1 Azorius Chancery
+1 Boros Garrison
+1 Clifftop Retreat
+1 Command Tower
+1 Deserted Beach
+1 Elegant Parlor
+1 Flooded Strand
+1 Glacial Fortress
+1 Great Furnace
+1 Hallowed Fountain
+3 Island
+1 Izzet Boilerworks
+1 Meticulous Archive
+2 Mountain
+1 Mystic Monastery
+1 Perilous Landscape
+4 Plains
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Sacred Foundry
+1 Scalding Tarn
+1 Seat of the Synod
+1 Silverbluff Bridge
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sundown Pass
+1 Thundering Falls
+1 Arcane Signet
+1 Ark of Hunger
+1 Brass's Tunnel-Grinder
+1 Chalice of Life
+1 Clay-Fired Bricks
+1 Cryptolith Fragment
+1 Diamond Pick-Axe
+1 Dire Flail
+1 Dowsing Device
+1 Inverted Iceberg
+1 Lodestone Needle
+1 Manifold Key
+1 Master's Guide-Mural
+1 Matzalantli, the Great Door
+1 Mind Stone
+1 Mystic Skull
+1 Orazca Puzzle-Door
+1 Oteclan Landmark
+1 Repurposing Bay
+1 Scourglass
+1 Sol Ring
+1 Sonic Screwdriver
+1 Spring-Loaded Sawblades
+1 Talisman of Conviction
+1 Talisman of Progress
+1 The Mightstone and Weakstone
+1 The Millennium Calendar
+1 Thousand Moons Smithy
+1 Tinker's Tote
+1 Two-Handed Axe
+1 Unstable Glyphbridge
+1 Artificer's Epiphany
+1 Dispatch
+1 Path to Exile
+1 Swords to Plowshares
+1 Borrowed Knowledge
+1 Fabricate
+1 Faithless Looting
+1 Organic Extinction
+1 Steelshaper's Gift
+1 Sunfall
+1 Thoughtcast
+1 Wake the Past
+1 Darksteel Mutation
+1 Impact Tremors
+1 Mechanized Production
+1 Mirrodin Besieged
+1 Steel of the Godhead

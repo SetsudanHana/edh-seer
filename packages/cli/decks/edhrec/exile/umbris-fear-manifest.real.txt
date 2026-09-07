@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/851FlT1QrxNDRoqUd922sQ (source https://archidekt.com/decks/19594608)
+# tags Horrors, Exile, Zombies; bracket 2; saved 2026-09-04; 939 tagged of 11318 indexed
+
+Commander
+1 Umbris, Fear Manifest
+
+Deck
+1 Ancient Cellarspawn
+1 Defiler of Dreams
+1 Digsite Conservator
+1 Doomsday Excruciator
+1 Faceless Butcher
+1 Fear of Lost Teeth
+1 Geralf, the Fleshwright
+1 Hullbreaker Horror
+1 Lazav, Familiar Stranger
+1 Mind Flayer
+1 Mockingbird
+1 Perigee Beckoner
+1 Spellskite
+1 Starving Revenant
+1 The Ancient One
+1 The Mindskinner
+1 Uchbenbak, the Great Mistake
+1 Umbral Collar Zealot
+1 Uthros Psionicist
+1 Visage Bandit
+1 Void Beckoner
+1 Anticipate
+1 Arcane Denial
+1 Cling to Dust
+1 Counterspell
+1 Dark Ritual
+1 Dramatic Reversal
+1 Eviscerator's Insight
+1 Fading Hope
+1 Flashfreeze
+1 Mental Modulation
+1 Minor Misstep
+1 Mystical Teachings
+1 Reverent Howl
+1 Sold Out
+1 Unsummon
+1 Waste Management
+1 Arcane Signet
+1 Commander's Sphere
+1 Ghost Vacuum
+1 Gilded Lotus
+1 Honored Heirloom
+1 Sol Ring
+1 Soul-Guide Lantern
+1 Stone of Erech
+1 Talisman of Dominance
+1 Thought Vessel
+1 Ashiok, Nightmare Muse
+1 Bojuka Bog
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Hidden Cataract
+1 Hidden Necropolis
+11 Island
+1 Myriad Landscape
+1 Obscura Storefront
+1 Rogue's Passage
+1 Sunken Hollow
+10 Swamp
+1 Temple of Deceit
+1 Watery Grave
+1 Dread Summons
+1 Ever After
+1 Finale of Revelation
+1 Maddening Cacophony
+1 Malicious Eclipse
+1 Ray of Ruin
+1 Read the Bones
+1 Ringsight
+1 Self-Reflection
+1 Serum Visions
+1 Shadow of the Enemy
+1 Singularity Rupture
+1 Tasha's Hideous Laughter
+1 Wail of the Forgotten
+1 Fungal Fortitude
+1 Public Enemy
+1 Utter Insignificance

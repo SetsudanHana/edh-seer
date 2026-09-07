@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/Xb2VV5pjF6Rk75wSir9q2g (source https://archidekt.com/decks/25290070)
+# tags Reanimator, Self-Discard, Madness; bracket 2; saved 2026-08-13; 143 tagged of 5309 indexed
+
+Commander
+1 Asmoranomardicadaistinaculdacar
+
+Deck
+1 Abomination, World Ravager
+1 Archfiend of Ifnir
+1 Archfiend of Spite
+1 Big Game Hunter
+1 Blazing Rootwalla
+1 Chainer, Nightmare Adept
+1 Conspiracy Theorist
+1 Containment Construct
+1 Grave Scrabbler
+1 Kitchen Imp
+1 Magmakin Artillerist
+1 Moria Scavenger
+1 Necrogoyf
+1 Neheb, Dreadhorde Champion
+1 Nightshade Assassin
+1 Old Flitterfang
+1 Oliphaunt
+1 Ovalchase Daredevil
+1 Squee, Goblin Nabob
+1 Street Wraith
+1 Stromkirk Occultist
+1 Voracious Fell Beast
+1 Agent of the Iron Throne
+1 Call the Bloodline
+1 Dying to Serve
+1 Faith of the Devoted
+1 Feast of Sanity
+1 Arcane Signet
+1 Charcoal Diamond
+1 Collector's Vault
+1 Cryptcaller Chariot
+1 Fire Diamond
+1 Giant's Skewer
+1 Hot Dog Cart
+1 Mind Stone
+1 Network Terminal
+1 Nutrient Block
+1 Rakdos Keyrune
+1 Rakdos Locket
+1 Sol Ring
+1 The Underworld Cookbook
+1 Wayfarer's Bauble
+1 Bake into a Pie
+1 Cathartic Pyre
+1 Dark Withering
+1 Fiery Temper
+1 Lightning Axe
+1 Sazacap's Brew
+1 Vision of Love
+1 Barren Moor
+1 Buried Ruin
+1 Canyon Slough
+1 Command Tower
+1 Desert of the Fervent
+1 Desert of the Glorified
+1 Forgotten Cave
+1 Lavaclaw Reaches
+14 Mountain
+1 Rakdos Carnarium
+1 Rakdos Guildgate
+13 Swamp
+1 Temple of Malice
+1 Call to the Netherworld
+1 Cathartic Reunion
+1 Chain Reaction
+1 Emergency Weld
+1 Faithless Looting
+1 Foreboding Fruit
+1 From Under the Floorboards
+1 Grab the Prize
+1 Planetary Annihilation
+1 Seize the Spoils
+1 Taste of Death
+1 Terminal Agony

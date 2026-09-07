@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/clement-the-worrywort/bounce
+# theme Bounce (288 decks)
+
+Commander
+1 Clement, the Worrywort
+
+Deck
+1 Arcane Signet
+1 Door of Destinies
+1 Herald's Horn
+1 Panharmonicon
+1 Patchwork Banner
+1 Sol Ring
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+10 Forest
+1 Hinterland Harbor
+11 Island
+1 Lilypad Village
+1 Oakhollow Village
+1 Path of Ancestry
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Barrin, Tolarian Archmage
+1 Beast Whisperer
+1 Bellowing Crier
+1 Berta, Wise Extrapolator
+1 Chomping Changeling
+1 Clifftop Lookout
+1 Coiling Oracle
+1 Dour Port-Mage
+1 Dreamdew Entrancer
+1 Eternal Witness
+1 Frog Butler
+1 Froghemoth
+1 Galloping Lizrog
+1 Grolnok, the Omnivore
+1 Haze Frog
+1 Lilysplash Mentor
+1 Long River Lurker
+1 Mistbreath Elder
+1 Murkfiend Liege
+1 Octomancer
+1 Plaxcaster Frogling
+1 Poison Dart Frog
+1 Pollywog Prodigy
+1 Pond Prophet
+1 Rampant Frogantua
+1 Shrieking Drake
+1 Skyskipper Duo
+1 Species Gorger
+1 Splash Lasher
+1 Spore Frog
+1 Stickytongue Sentinel
+1 Sunshower Druid
+1 Three Tree Scribe
+1 Treeguard Duo
+1 Twenty-Toed Toad
+1 Valley Mightcaller
+1 Amphibian Downpour
+1 Frogify
+1 Gossip's Talent
+1 Guardian Project
+1 Intruder Alarm
+1 Leyline of Abundance
+1 Reflections of Littjara
+1 Counterspell
+1 Growth Spiral
+1 Into the Flood Maw
+1 Long River's Pull
+1 Overprotect
+1 Polliwallop
+1 Polymorphist's Jest
+1 Rapid Hybridization
+1 Run Away Together
+1 Turn to Frog
+1 Croaking Counterpart
+1 Cultivate
+1 Rampant Growth
+1 Splash Portal
+1 Wear Down

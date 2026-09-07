@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/Do4ZOpqq0Fg1WjLmj6t2Sg (source https://archidekt.com/decks/10520467)
+# tags Werewolves, Wolves, Aggro, Tokens, Stompy, Anthems, Day / Night; bracket 2; saved 2026-08-28; 239 tagged of 15632 indexed
+
+Commander
+1 Tovolar, Dire Overlord
+
+Deck
+1 Access Tunnel
+1 Cinder Glade
+10 Forest
+1 Game Trail
+1 Gruul Guildgate
+1 Gruul Turf
+1 Highland Forest
+1 Kazandu Refuge
+1 Mossfire Valley
+8 Mountain
+1 Path of Ancestry
+1 Rugged Highlands
+1 Secluded Courtyard
+1 Shimmerdrift Vale
+1 Study Hall
+1 Temple of Abandon
+1 Thriving Bluff
+1 Thriving Grove
+1 Uncharted Haven
+1 Arcane Signet
+1 Commander's Sphere
+1 Glittering Stockpile
+1 Heartstone
+1 Lumbering Worldwagon
+1 Neglected Heirloom
+1 Swiftfoot Boots
+1 Arlinn, Voice of the Pack
+1 Arlinn, the Pack's Hope
+1 Armed // Dangerous
+1 Brotherhood's End
+1 Crash Through
+1 Lay of the Land
+1 Meltdown
+1 Pack's Betrayal
+1 Rampant Growth
+1 Unnatural Moonrise
+1 Arni Slays the Troll
+1 Asceticism
+1 Bitter Work
+1 Gratuitous Violence
+1 Gruul War Chant
+1 Howl of the Hunt
+1 Howling Moon
+1 Mass Hysteria
+1 Quest for Renewal
+1 Rhythm of the Wild
+1 Sight of the Scalelords
+1 Utopia Sprawl
+1 Ascendant Packleader
+1 Bloodline Pretender
+1 Bounding Wolf
+1 Burly Breaker
+1 Cemetery Prowler
+1 Child of the Pack
+1 Daybreak Ranger
+1 Fearless Pup
+1 Geier Reach Bandit
+1 Goblin Anarchomancer
+1 Hound Tamer
+1 Howlpack Piper
+1 Immerwolf
+1 Instigator Gang
+1 Kessig Naturalist
+1 Kruin Outlaw
+1 Nightpack Ambusher
+1 Outland Liberator
+1 Packsong Pup
+1 Professor Hojo
+1 Reckless Stormseeker
+1 Runebound Wolf
+1 Torgal, A Fine Hound
+1 Tovolar's Huntmaster
+1 Ulrich's Kindred
+1 Village Watch
+1 Wargling
+1 Weaver of Blossoms
+1 Werewolf Pack Leader
+1 Wolfir Silverheart
+1 Zhur-Taa Druid
+1 Beast Within
+1 Fog
+1 Road // Ruin
+1 You Happen On a Glade

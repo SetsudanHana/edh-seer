@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/XVfvrHs6eozPytHdH7MpbQ (source https://archidekt.com/decks/25458278)
+# tags Elementals, ETB, Evoke; bracket 3; saved 2026-09-05; 500 tagged of 25538 indexed
+
+Commander
+1 Ashling, the Limitless
+
+Deck
+1 Abundant Countryside
+1 Ancient Ziggurat
+1 Breeding Pool
+1 Cascading Cataracts
+1 Command Tower
+1 Eclipsed Realms
+1 Exotic Orchard
+1 Flooded Strand
+1 Forest
+1 Gaea's Cradle
+1 Godless Shrine
+1 Island
+1 Minamo, School at Water's Edge
+1 Miren, the Moaning Well
+1 Morphic Pool
+1 Mountain
+1 Opal Palace
+1 Path of Ancestry
+1 Primal Beyond
+1 Reliquary Tower
+1 Sacred Foundry
+1 Scalding Tarn
+1 Scrubland
+1 Sea of Clouds
+1 Secluded Courtyard
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Temple Garden
+1 Training Center
+1 Unclaimed Territory
+1 Underground Sea
+1 Vault of Champions
+1 Volcanic Island
+1 Watery Grave
+1 Windswept Heath
+1 Aethersnipe
+1 Animar, Soul of Elements
+1 Ashling, Rekindled
+1 Avenger of Zendikar
+1 Belonging
+1 Brighthearth Banneret
+1 Cavalier of Thorns
+1 Champion of the Path
+1 Eclipsed Flamekin
+1 Endurance
+1 Flamebraider
+1 Flamekin Harbinger
+1 Foundation Breaker
+1 Fury
+1 Graveshifter
+1 Greenwarden of Murasa
+1 Gwenna, Eyes of Gaea
+1 Impulsivity
+1 Incandescent Soulstoke
+1 Ingot Chewer
+1 Jubilation
+1 Lamentation
+1 Maelstrom Wanderer
+1 Mass of Mysteries
+1 Mulldrifter
+1 Omnath, Locus of the Roil
+1 Omni-Changeling
+1 Risen Reef
+1 Roaming Throne
+1 Rottenmouth Viper
+1 Rumbleweed
+1 Shriekmaw
+1 Shroudstomper
+1 Subterfuge
+1 Sunderflock
+1 Temur Battlecrier
+1 Titan of Industry
+1 Twinflame Travelers
+1 Tyrant of Discord
+1 Vernal Sovereign
+1 Yarok, the Desecrated
+1 Arcane Signet
+1 Ashnod's Altar
+1 Chromatic Lantern
+1 Herald's Horn
+1 Panharmonicon
+1 Semblance Anvil
+1 Sol Ring
+1 Urza's Incubator
+1 Blasphemous Act
+1 Cultivate
+1 Demonic Tutor
+1 Raise the Palisade
+1 Counterspell
+1 Enlightened Tutor
+1 Kindred Summons
+1 Swords to Plowshares
+1 Elemental Bond
+1 Garruk's Uprising
+1 Greater Good
+1 Molten Echoes
+1 Renewed Solidarity
+1 Steely Resolve

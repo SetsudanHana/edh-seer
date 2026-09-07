@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/INILH_t6ubHoDo79pK5yGQ (source https://moxfield.com/decks/qH9uvNjr3Uid46uMthGYPw)
+# tags Artifacts; bracket 2; saved 2026-09-05; 3512 tagged of 16958 indexed
+
+Commander
+1 Urza, Chief Artificer
+
+Deck
+1 Adarkar Wastes
+1 Archway of Innovation
+1 Baxter Building
+1 Castle Doom
+1 Caves of Koilos
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Desolate Mire
+1 Drowned Catacomb
+1 Glacial Fortress
+10 Island
+6 Plains
+1 Prairie Stream
+1 Shipwreck Marsh
+1 Skycloud Expanse
+1 Spire of Industry
+6 Swamp
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Dark Ritual
+1 Disdainful Stroke
+1 Divine Resilience
+1 Duty Beyond Death
+1 Essence Scatter
+1 Long River's Pull
+1 Masterful Flourish
+1 Path to Exile
+1 Swords to Plowshares
+1 Thraben Charm
+1 Turn Aside
+1 Arc Reactor
+1 Azorius Signet
+1 Glass Casket
+1 Lux Artillery
+1 Moonsnare Prototype
+1 Sol Ring
+1 Solar Array
+1 Stolen Stark Tech
+1 Urza's Incubator
+1 Weather Maker
+1 Augmenting Automaton
+1 Automated Artificer
+1 Barbed Servitor
+1 Big Mother Mouser
+1 Chief of the Foundry
+1 Chrome Dome
+1 Crystal Barricade
+1 Doctor Doom
+1 Etherium Sculptor
+1 Fire Navy Trebuchet
+1 Foundry Inspector
+1 Fugitive Droid
+1 Hedron Crawler
+1 Hydraulic Helper
+1 Iron Lad, Diverging Destiny
+1 Iron Spider, Stark Upgrade
+1 Ironheart, Clever Champion
+1 Kappa Cannoneer
+1 Lady Octopus, Inspired Inventor
+1 Leaden Myr
+1 Mage Tower Referee
+1 Malcator, Purity Overseer
+1 Metallic Mimic
+1 Oaken Siren
+1 Ornithopter of Paradise
+1 Page, Loose Leaf
+1 PuPu UFO
+1 Salvaged Manaworker
+1 Scientist Supreme of A.I.M.
+1 Scrap Trawler
+1 Scrawling Crawler
+1 Shuri, Wakandan Inventor
+1 Silver Myr
+1 Steel Overseer
+1 Surge Engine
+1 Syr Ginger, the Meal Ender
+1 Ultron, Artificial Malevolence
+1 Voyager Quickwelder
+1 Relic Ward

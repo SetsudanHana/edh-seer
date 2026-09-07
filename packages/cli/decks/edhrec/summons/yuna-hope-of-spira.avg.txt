@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/yuna-hope-of-spira/summons
+# theme Summons (7 decks)
+
+Commander
+1 Yuna, Hope of Spira
+
+Deck
+1 Arcane Signet
+1 Power Conduit
+1 Sol Ring
+1 The Great Henge
+1 Adagia, Windswept Bastion
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Fabled Passage
+8 Forest
+1 Hall of Heliod's Generosity
+1 Hushwood Verge
+1 Lush Portico
+1 Nesting Grounds
+1 Overgrown Farmland
+7 Plains
+1 Reliquary Tower
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple Garden
+1 Valgavoth's Lair
+1 Windswept Heath
+1 Argothian Enchantress
+1 Calix, Guided by Fate
+1 Composer of Spring
+1 Destiny Spinner
+1 Eidolon of Blossoms
+1 Grand Abolisher
+1 Herald of the Pantheon
+1 Jukai Naturalist
+1 Mesa Enchantress
+1 Nykthos Paragon
+1 Nylea's Colossus
+1 Nyxbloom Ancient
+1 Ondu Spiritdancer
+1 Overlord of the Hauntwoods
+1 Sanctum Weaver
+1 Satyr Enchanter
+1 Setessan Champion
+1 Soaring Lightbringer
+1 Spirited Companion
+1 Springheart Nantuko
+1 Starfield Mystic
+1 Summon: Bahamut
+1 Summon: Fenrir
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Titan
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Verduran Enchantress
+1 Weaver of Harmony
+1 All That Glitters
+1 Authority of the Consuls
+1 Darksteel Mutation
+1 Enchantress's Presence
+1 Ethereal Armor
+1 Ghostly Prison
+1 Grasp of Fate
+1 Greater Auramancy
+1 Mirari's Wake
+1 Sigil of the Empty Throne
+1 Smothering Tithe
+1 Sphere of Safety
+1 Starfield of Nyx
+1 Sterling Grove
+1 Strength of the Harvest
+1 Utopia Sprawl
+1 Valkyrie's Call
+1 Wild Growth
+1 Enlightened Tutor
+1 Generous Gift
+1 Heroic Intervention
+1 Path to Exile
+1 Swords to Plowshares
+1 Austere Command
+1 Esper Origins
+1 Farewell
+1 Idyllic Tutor
+1 Three Visits

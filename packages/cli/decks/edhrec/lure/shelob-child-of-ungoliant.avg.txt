@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/shelob-child-of-ungoliant/lure
+# theme Lure (10 decks)
+
+Commander
+1 Shelob, Child of Ungoliant
+
+Deck
+1 Chariot of Victory
+1 Hunter's Bow
+1 Maskwood Nexus
+1 Mithril Coat
+1 Nemesis Mask
+1 Sol Ring
+1 Swiftfoot Boots
+1 Viridian Longbow
+1 Bojuka Bog
+1 Command Tower
+1 Exotic Orchard
+12 Forest
+1 Gingerbread Cabin
+1 Golgari Rot Farm
+1 Mirkwood
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Rogue's Passage
+8 Swamp
+1 Swarmyard
+1 The Shire
+1 Twilight Mire
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Arasta of the Endless Web
+1 Attercop
+1 Broodspinner
+1 Devoted Druid
+1 Doom Weaver
+1 Drider
+1 Fynn, the Fangbearer
+1 Halsin, Emerald Archdruid
+1 Ishkanah, Grafwidow
+1 Jaheira, Friend of the Forest
+1 Mirkwood Spider
+1 Old Fat Spider
+1 Peregrin Took
+1 Radioactive Spider
+1 Shelob, Dread Weaver
+1 Silklash Spider
+1 Skyfisher Spider
+1 Spinner of Souls
+1 Twin-Silk Spider
+1 Twitching Doll
+1 Ulvenwald Tracker
+1 Vraska, the Silencer
+1 Black Market Connections
+1 Curse of Clinging Webs
+1 Deathreap Ritual
+1 Hunter's Talent
+1 Lure
+1 Night of the Sweets' Revenge
+1 Part in Friendship
+1 Rancor
+1 Arachnogenesis
+1 Destined // Lead
+1 Gaea's Gift
+1 Golgari Charm
+1 Heroic Intervention
+1 Khalni Ambush
+1 Return of the Wildspeaker
+1 Revitalizing Repast
+1 Setessan Tactics
+1 Supper for Spiders
+1 Tyvar's Stand
+1 You Look Upon the Tarrasque
+1 Lolth, Spider Queen
+1 Bala Ged Recovery
+1 Bridgeworks Battle
+1 Bushwhack
+1 Culling Ritual
+1 Cultivate
+1 Nature's Lore
+1 Predatory Rampage
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Roar of Challenge
+1 Season of Gathering
+1 Swarmyard Massacre

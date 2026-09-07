@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/rowan-scion-of-war/glass-cannon
+# theme Glass Cannon (13 decks)
+
+Commander
+1 Rowan, Scion of War
+
+Deck
+1 Arcane Signet
+1 Bolas's Citadel
+1 Sol Ring
+1 Staff of Compleation
+1 Tablet of Discovery
+1 Talisman of Indulgence
+1 Thousand-Year Elixir
+1 Wishclaw Talisman
+1 Barbarian Ring
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodfell Caves
+1 Bloodstained Mire
+1 City of Brass
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Fogwell's Gym
+1 Graven Cairns
+1 Haunted Ridge
+1 Ifnir Deadlands
+1 Luxury Suite
+1 Mount Doom
+5 Mountain
+1 Ramunap Ruins
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+7 Swamp
+1 Tarnished Citadel
+1 Birgi, God of Storytelling
+1 Blood Celebrant
+1 Boggart Trawler
+1 Dark Confidant
+1 Darkstar Augur
+1 Dualcaster Mage
+1 Electro, Assaulting Battery
+1 Gray Merchant of Asphodel
+1 Heartless Hidetsugu
+1 K'rrik, Son of Yawgmoth
+1 Pinnacle Monk
+1 Simian Spirit Guide
+1 Street Wraith
+1 Thor, Guardian of Midgard
+1 Treasonous Ogre
+1 Vilis, Broker of Blood
+1 Wall of Blood
+1 Black Market Connections
+1 Dark Tutelage
+1 Dictate of the Twin Gods
+1 Necropotence
+1 Origin of Thor
+1 Bitter Triumph
+1 Breath of Malfegor
+1 Chaos Warp
+1 Comet Storm
+1 Dark Ritual
+1 Erebos's Intervention
+1 Fire Covenant
+1 Gut Shot
+1 Imp's Mischief
+1 Pyroblast
+1 Seething Song
+1 Snuff Out
+1 Tibalt's Trickery
+1 Transpose
+1 Vampiric Tutor
+1 Chandra, Flameshaper
+1 Behold the Beyond
+1 Brass's Bounty
+1 Cornered by Black Mages
+1 Crackle with Power
+1 Dark Petition
+1 Demonic Tutor
+1 Exsanguinate
+1 Fateful Tempest
+1 Feed the Swarm
+1 Final Parting
+1 Grim Tutor
+1 Hex Magic
+1 Insatiable Avarice
+1 Inspired Tinkering
+1 Isengard Unleashed
+1 Mana Geyser
+1 Peer into the Abyss
+1 Profane Transfusion
+1 Sundering Eruption
+1 Torment of Hailfire
+1 Toxic Deluge

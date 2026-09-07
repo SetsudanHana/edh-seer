@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/GcRkFrjkWSO53zbaEpP-3g (source https://archidekt.com/decks/23265209)
+# tags Phyrexians, Incubate, Populate; bracket 2; saved 2026-08-21; 11 tagged of 3950 indexed
+
+Commander
+1 Elesh Norn
+
+Deck
+1 Alabaster Host Intercessor
+1 Annex Sentry
+1 Attentive Skywarden
+1 Basilica Shepherd
+1 Cartographer's Hawk
+1 Chancellor of the Annex
+1 Crawling Chorus
+1 Defiler of Faith
+1 Elesh Norn, Grand Cenobite
+1 Elesh Norn, Mother of Machines
+1 Essence of Orthodoxy
+1 Indoctrination Attendant
+1 Infected Defector
+1 Joined Researchers
+1 Knight of the White Orchid
+1 Loran of the Third Path
+1 Mite Overseer
+1 Norn's Inquisitor
+1 Phyrexian Censor
+1 Phyrexian Pegasus
+1 Phyrexian Vindicator
+1 Progenitor Exarch
+1 Seedpod Caretaker
+1 Shattered Angel
+1 Solemn Simulacrum
+1 Soul of New Phyrexia
+1 Suture Priest
+1 Tataru Taru
+1 Tiller of Flesh
+1 Vulpine Harvester
+1 Archaeomancer's Map
+1 Argent Dais
+1 Caged Sun
+1 Fellwar Stone
+1 Hourglass of the Lost
+1 Idol of Oblivion
+1 Infested Fleshcutter
+1 Marble Diamond
+1 Mind Stone
+1 Norn's Annex
+1 Norn's Wellspring
+1 Oketra's Monument
+1 Pearl Medallion
+1 Sol Ring
+1 Solar Transformer
+1 Staff of the Storyteller
+1 Star Compass
+1 Tablet of Compleation
+1 Wayfarer's Bauble
+1 Dispatch
+1 Mana Tithe
+1 Path to Exile
+1 Rootborn Defenses
+1 Swords to Plowshares
+1 Karoo
+1 Mirrex
+1 Nesting Grounds
+30 Plains
+1 Temple of the False God
+1 The Monumental Facade
+1 Monologue Tax
+1 Phyrexian Awakening
+1 Phyrexian Unlife
+1 Phyrexian Rebirth
+1 Rout
+1 Secret Rendezvous
+1 Sevinne's Reclamation
+1 Sunder the Gateway
+1 Sunfall
+1 White Sun's Twilight

@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/narset-enlightened-master/creatureless
+# theme Creatureless (18 decks)
+
+Commander
+1 Narset, Enlightened Master
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Darksteel Plate
+1 Fellwar Stone
+1 Izzet Signet
+1 Mithril Coat
+1 Scroll Rack
+1 Sol Ring
+1 Strionic Resonator
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Thran Dynamo
+1 Azorius Chancery
+1 Boros Garrison
+1 Command Tower
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+6 Island
+1 Izzet Boilerworks
+1 Karn's Bastion
+1 Maze of Ith
+5 Mountain
+1 Mystic Monastery
+5 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Rogue's Passage
+1 Rugged Prairie
+1 Shivan Reef
+1 Skycloud Expanse
+1 Steam Vents
+1 Sundown Pass
+1 Temple of Enlightenment
+1 Deepglow Skate
+1 Aqueous Form
+1 Eldrazi Conscription
+1 Ghostly Prison
+1 Gift of Immortality
+1 Inexorable Tide
+1 Oath of Teferi
+1 Omniscience
+1 One with the Multiverse
+1 Passionate Archaeologist
+1 Propaganda
+1 Reconnaissance
+1 Shark Typhoon
+1 Sphere of Safety
+1 Steel of the Godhead
+1 Whirlwind of Thought
+1 Arcane Denial
+1 Brainstorm
+1 Choreographed Sparks
+1 Counterspell
+1 Generous Gift
+1 Long-Term Plans
+1 Narset's Reversal
+1 Nexus of Fate
+1 Path to Exile
+1 Swords to Plowshares
+1 Chandra, Legacy of Fire
+1 Elspeth, Sun's Champion
+1 Narset of the Ancient Way
+1 Quintorius Kand
+1 Saheeli, Sublime Artificer
+1 Sarkhan the Masterless
+1 Teferi, Temporal Archmage
+1 The Wanderer
+1 Venser, the Sojourner
+1 Approach of the Second Sun
+1 Beacon of Tomorrows
+1 Divine Reckoning
+1 Dream Cache
+1 Expropriate
+1 Karn's Temporal Sundering
+1 Mnemonic Deluge
+1 Ponder
+1 Relentless Assault
+1 Seize the Day
+1 Storm Herd
+1 Tezzeret's Gambit
+1 Time Stretch

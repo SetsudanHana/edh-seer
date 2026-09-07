@@ -1,0 +1,99 @@
+# edhrec average deck: https://edhrec.com/average-decks/brenard-ginger-sculptor/evoke
+# theme Evoke (3 decks)
+
+Commander
+1 Brenard, Ginger Sculptor
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Master's Guide-Mural
+1 Selesnya Signet
+1 Tamiyo's Journal
+1 Unwinding Clock
+1 Azorius Chancery
+1 Bant Panorama
+1 Breeding Pool
+1 Canopy Vista
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Flooded Strand
+4 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+3 Island
+1 Misty Rainforest
+1 Mystic Sanctuary
+3 Plains
+1 Port Town
+1 Prairie Stream
+1 Rivendell
+1 Scattered Groves
+1 Seaside Citadel
+1 Seat of the Synod
+1 Sodden Verdure
+1 Sunpetal Grove
+1 Tangled Islet
+1 Temple Garden
+1 Terramorphic Expanse
+1 Windbrisk Heights
+1 Windswept Heath
+1 Yavimaya Coast
+1 Aethersnipe
+1 Aurora Awakener
+1 Blade Splicer
+1 Bronze Guardian
+1 Changeling Wayfinder
+1 Copper Myr
+1 Court Hussar
+1 Daring Apprentice
+1 Darksteel Splicer
+1 Dawnfluke
+1 Endurance
+1 Faeburrow Elder
+1 Foundation Breaker
+1 Giant Killer
+1 Glen Elendra Archmage
+1 Ich-Tekik, Salvage Splicer
+1 Karametra, God of Harvests
+1 Lavinia, Azorius Renegade
+1 Losheel, Clockwork Scholar
+1 Malcator, Purity Overseer
+1 Master Splicer
+1 Meadowboon
+1 Mulldrifter
+1 Nesting Dovehawk
+1 Nevermaker
+1 Nulldrifter
+1 Rootwire Amalgam
+1 Selfless Spirit
+1 Sensor Splicer
+1 Slithermuse
+1 Solemn Simulacrum
+1 Solitude
+1 Soul of Migration
+1 Subtlety
+1 Syr Ginger, the Meal Ender
+1 Tough Cookie
+1 Vital Splicer
+1 Wavesifter
+1 Wing Splicer
+1 Wistfulness
+1 Yavimaya Elder
+1 Doubling Season
+1 Glacierwood Siege
+1 Mechanized Production
+1 Night of the Sweets' Revenge
+1 Season of Growth
+1 An Offer You Can't Refuse
+1 Dawn's Truce
+1 Flare of Denial
+1 Flare of Fortitude
+1 Frantic Search
+1 Rootborn Defenses
+1 Sundering Growth
+1 Teferi, Who Slows the Sunset
+1 Farseek
+1 Flare of Cultivation
+1 Season of Weaving

@@ -138,13 +138,46 @@ function tapVerbs(subject: SubjectFilter): Verb[] | undefined {
 
 /** Zone-conditioned emits, checked before EMITS. A move's events depend on where it lands, not on
  *  the verb: `return` is a flicker to the battlefield and a bounce to hand, `put` is reanimation to
- *  the battlefield and self-mill to a graveyard. Only the destination is read, because a card
- *  arriving somewhere is what other cards trigger on. */
-const ZONE_EMITS: { verb: string; to: string; verbs: Verb[] }[] = [
+ *  the battlefield and self-mill to a graveyard. The destination is read because a card arriving
+ *  somewhere is what other cards trigger on -- and, since 2026-09-05, the ORIGIN is read for the two
+ *  rows that state a departure, because a permanent leaving the battlefield is what a leaves payoff
+ *  triggers on (CR 603.6c) and the flicker's exile half stated nothing at all. */
+const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, s: SubjectFilter, self: boolean) => boolean }[] = [
   { verb: "put", to: "graveyard", verbs: ["enters-graveyard"] },
   { verb: "return", to: "battlefield", verbs: ["enters"] },
   { verb: "put", to: "battlefield", verbs: ["enters"] },
+  // THE EXILE HALF OF A FLICKER, AND EXILE REMOVAL. "Exile target creature you control, then return
+  // it" (Ephemerate, 202 corpus clause pairs) left the battlefield and said nothing; Swords to
+  // Plowshares the same. Measured on the 1,381 exiles with an UNSTATED origin: 429 name a "card"
+  // (top of library, hand -- not on the battlefield), 342 are bare pronouns or the card's own name,
+  // 265 "target creature", 53 the permanent list, 34 "permanent". So an unstated origin counts only
+  // when the object is permanent-shaped: no "card", no origin zone of its own, and either a type or
+  // the card itself. A bare "it" that derive could not resolve emits nothing -- silence over a
+  // wildcard that would satisfy every leaves payoff in the deck.
+  { verb: "exile", to: "exile", verbs: ["leaves"], when: leftTheBattlefield },
+  // A BOUNCE. "Return target creature to its owner's hand" is a leave for exactly the same reason;
+  // "return target creature card from your graveyard to your hand" is recursion and stays silent
+  // here (its origin is stated and it is not the battlefield).
+  { verb: "return", to: "hand", verbs: ["leaves"], when: leftTheBattlefield },
 ];
+
+/** The verbs that move a card out of the zone `fromZone` names. See the `leftTheGraveyard` read in
+ *  `actionEmits`. `search` is not one; neither is `none`, `modify-pt` or `copy`, which name a card in
+ *  a graveyard without moving it (Animate Dead's enchant line, Body Double). */
+const GRAVEYARD_MOVE_VERBS: ReadonlySet<string> = new Set(["return", "put", "exile", "cast", "play", "shuffle"]);
+
+/** "Return target creature to its owner's hand" with the destination left out of the action. */
+const RETURNS_TO_HAND = /\bto (?:its|their|that card's|the) owners?'s? hands?\b|\bto your hand\b/i;
+
+/** Did this action move something OFF THE BATTLEFIELD? A stated battlefield origin says so; an
+ *  unstated one says so only for a permanent-shaped object. See the `exile` row above. */
+function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
+  if (a.fromZone === "battlefield") return true;
+  if (a.fromZone != null) return false;
+  if (/\bcards?\b/i.test(a.object ?? "")) return false;
+  if (s.fromZone !== undefined) return false;
+  return s.type !== undefined || s.subtype !== undefined || self;
+}
 
 /** Verbs whose object is NECESSARILY the ability's controller's when the text names no player.
  *
@@ -190,8 +223,7 @@ const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
  *  opponent" -- none of them describes a card, so none should become a typed subject. */
 const PLAYER_OBJECT = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*you\s*$/i;
 
-export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
-  const zoned = ZONE_EMITS.find((r) => r.verb === action.verb && r.to === (action.toZone ?? null));
+export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
   // A RECIPIENT IS NOT A SUBJECT (2026-08-22). `parseSubject` reads type words out of whatever text
   // it is given, so Arcane Denial's draw -- whose object the model records as "TARGET SPELL'S
   // CONTROLLER", correctly naming who draws -- yielded `type: spell` and the theme tag `draw:spell`.
@@ -200,16 +232,51 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
   // `draw:any` and outranked it: `birb-control` read "draw" at cohesion 0.02, one card of 78.
   // Same shape on Ledger Shredder ("this creature connives") -> `draw:creature`.
   const subject = parseSubject(action.object ?? "");
+  // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
+  // model writes it out less often than not -- Swords to Plowshares, Path to Exile and Deadly
+  // Rollick all record `exile target creature` with `toZone: null`, while Ephemerate happened to
+  // say "exile". Keyed on the stated destination alone, Y1's exile row caught the flicker and
+  // missed the removal: 2026-09-05, every one of those spells derived its exile as UNCLAIMED and
+  // emitted nothing, so no leaves payoff saw a Swords and the removal facet could not find the
+  // removal. Measured on the 21,317 clause docs: 884 exile actions state no zone at all, 347 of
+  // them permanent-shaped. A `return` with no destination is genuinely ambiguous (battlefield or
+  // hand), so it takes the hand ONLY when the clause text says so -- 87 such actions corpus-wide,
+  // 80 of them "to its owner's hand" (Otawara, Aether Spellbomb, Aethersnipe). A `put` with no
+  // destination stays unknown.
+  const toZone = action.toZone
+    ?? (action.verb === "exile" ? "exile"
+      : action.verb === "return" && RETURNS_TO_HAND.test(clauseText ?? "") ? "hand"
+      : null);
+  const zoned = ZONE_EMITS.find((r) =>
+    r.verb === action.verb && r.to === toZone && (r.when === undefined || r.when(action, subject, opts.self === true)));
   // A DRAW'S OBJECT IS ALMOST NEVER THE CARD DRAWN. It is the player ("target spell's controller",
   // Arcane Denial) or the permanent whose ability it is ("this creature connives", Ledger Shredder),
   // and `parseSubject` reads a type word out of either. A real typed draw says so -- "reveal cards
   // until you reveal a creature CARD, draw it" -- so the word `card` is the positive test rather
   // than a blocklist of the shapes seen so far.
-  const verbs = zoned?.verbs
+  const destination = zoned?.verbs
     ?? (action.verb === "play" ? landPlayVerbs(subject)
       : action.verb === "tap" ? tapVerbs(subject)
       : EMITS[action.verb ?? ""]);
-  if (!verbs) return [];
+  // The ORIGIN zone, for the consumers that demand one (River Kelpie's "enters from a graveyard",
+  // Rivaz's "casts a Dragon spell from your graveyard"). Taken from the action rather than the object
+  // text because the text usually does not repeat it -- "return it to the battlefield" states the
+  // origin only in `fromZone`. Harmless where nothing asks: an unset trigger `fromZone` matches any
+  // origin, so this adds a fact without narrowing a single existing edge.
+  const from = action.fromZone ?? subject.fromZone;
+  // A CARD LEAVING A GRAVEYARD IS AN EVENT OF ITS OWN (roadmap Y1b, 2026-09-05). "Whenever one or
+  // more creature cards leave your graveyard" (Desecrated Tomb, Fang, Chalk Outline -- 32 of the 71
+  // corpus leaves-payoffs) demands `leaves@graveyard`, and after Y1 gave that demand its zone, nothing
+  // supplied it: a reanimation emitted only its `enters`, an exile-from-graveyard nothing at all. The
+  // supply was already in the clause. Measured on the 21,317 clause docs, actions with a graveyard
+  // origin: return->battlefield 601, return->hand 566, exile 406, put->battlefield 129, cast 109,
+  // put->library 74, put->hand 45, shuffle->library 18, play 7. Every one of them moves the card OUT,
+  // so each emits a `leaves` alongside whatever its destination emits, and the emit carries
+  // `zone: graveyard` so that `subjectMatches` (zone strict both ways) keeps it off The Ozolith's
+  // battlefield leave. `search` is absent: searching a graveyard moves nothing until a later action does.
+  const leftTheGraveyard = from === "graveyard" && GRAVEYARD_MOVE_VERBS.has(action.verb ?? "");
+  const verbs: Verb[] = [...(destination ?? []), ...(leftTheGraveyard ? ["leaves" as const] : [])];
+  if (verbs.length === 0) return [];
   // KEYED ON THE EMITTED VERB, NOT THE ACTION'S. A keyword expands to the events the rules say it
   // IS -- `connive` is a draw and a discard (CR 701.50) -- so Ledger Shredder's action verb is
   // `connive` while the emit that carries the bad subject is `draw`. Checking the action verb missed
@@ -224,12 +291,6 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
     delete subject.subtype;
     delete subject.self;
   }
-  // The ORIGIN zone, for the consumers that demand one (River Kelpie's "enters from a graveyard",
-  // Rivaz's "casts a Dragon spell from your graveyard"). Taken from the action rather than the object
-  // text because the text usually does not repeat it -- "return it to the battlefield" states the
-  // origin only in `fromZone`. Harmless where nothing asks: an unset trigger `fromZone` matches any
-  // origin, so this adds a fact without narrowing a single existing edge.
-  const from = action.fromZone ?? subject.fromZone;
   // An add-counter's object IS the counter kind, not a permanent, so the emit can say WHICH counter
   // it adds. Without it every counter placer emitted an untyped counter-added that wildcarded onto
   // any counter payoff -- a +1/+1 producer "feeding" a poison or time consumer.
@@ -321,6 +382,7 @@ export function actionEmits(action: Action, clauseText?: string): GameEvent[] {
       control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
+      ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),
       ...(from ? { fromZone: from } : {}),
       ...(counter ? { counter } : {}),
       ...(tokenType ? { type: tokenType } : {}),

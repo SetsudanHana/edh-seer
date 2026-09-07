@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/progenitus/turbo-fog
+# theme Turbo Fog (15 decks)
+
+Commander
+1 Progenitus
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fist of Suns
+1 Heraldic Banner
+1 Wayfarer's Bauble
+1 Blighted Woodland
+1 Cascading Cataracts
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Guildmages' Forum
+4 Island
+1 Krosan Verge
+1 Llanowar Reborn
+3 Mountain
+1 Myriad Landscape
+1 Opal Palace
+1 Oran-Rief, the Vastwood
+4 Plains
+1 Raugrin Triome
+1 Reflecting Pool
+1 Scalding Tarn
+2 Swamp
+1 Terramorphic Expanse
+1 The World Tree
+1 Verdant Catacombs
+1 Windswept Heath
+1 Birds of Paradise
+1 Esper Sentinel
+1 Ignoble Hierarch
+1 Jegantha, the Wellspring
+1 Jodah, Archmage Eternal
+1 Kami of False Hope
+1 Rafiq of the Many
+1 Sakura-Tribe Elder
+1 Spore Frog
+1 Springbloom Druid
+1 Dictate of Karametra
+1 Dictate of Kruphix
+1 Finest Hour
+1 Font of Fertility
+1 Ghostly Prison
+1 Kumena's Awakening
+1 Leyline of Mutation
+1 Leyline of the Guildpact
+1 Mirari's Wake
+1 Propaganda
+1 Rhythm of the Wild
+1 Rites of Flourishing
+1 Aetherize
+1 Angelsong
+1 Batwing Brume
+1 Blessed Respite
+1 Comeuppance
+1 Dawn Charm
+1 Ethereal Haze
+1 Fact or Fiction
+1 Fog
+1 Growth Spiral
+1 Harrow
+1 Holy Day
+1 Lull
+1 Moment's Peace
+1 Plasm Capture
+1 Reins of Power
+1 Riot Control
+1 Savage Summoning
+1 Spell Swindle
+1 Tangle
+1 Undergrowth
+1 Brass's Bounty
+1 Chronomantic Escape
+1 Circuitous Route
+1 Cultivate
+1 Explosive Vegetation
+1 Farseek
+1 Gaze of Granite
+1 Grow from the Ashes
+1 Kodama's Reach
+1 Rampant Growth
+1 Search for Tomorrow
+1 Through the Forest Gate
+1 Urban Evolution
+1 Wildest Dreams

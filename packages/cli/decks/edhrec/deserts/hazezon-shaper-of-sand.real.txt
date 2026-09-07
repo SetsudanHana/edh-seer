@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/R-vzTccmekO4LMtUfjjYGg (source https://archidekt.com/decks/9134978)
+# tags Deserts, Tokens, Burn; bracket 3; saved 2026-09-04; 445 tagged of 9205 indexed
+
+Commander
+1 Hazezon, Shaper of Sand
+
+Deck
+1 Abrade
+1 Boros Charm
+1 Bovine Intervention
+1 Crop Rotation
+1 Duty Beyond Death
+1 Elemental Teachings
+1 Enlightened Tutor
+1 Path to Exile
+1 Realms Uncharted
+1 Snakeskin Veil
+1 Swords to Plowshares
+1 Abraded Bluffs
+1 Arid Archway
+1 Battlefield Forge
+1 Bristling Backwoods
+1 Brushland
+1 Cactus Preserve
+1 Command Tower
+1 Conduit Pylons
+1 Creosote Heath
+1 Desert of the Fervent
+1 Desert of the Indomitable
+1 Desert of the True
+1 Dunes of the Dead
+1 Exotic Orchard
+6 Forest
+1 Grasping Dunes
+1 Hashep Oasis
+1 Karplusan Forest
+1 Lazotep Quarry
+1 Mirage Mesa
+3 Mountain
+1 Painted Bluffs
+2 Plains
+1 Ramunap Ruins
+1 Scavenger Grounds
+1 Shefet Dunes
+1 Sheltering Landscape
+1 Sunpetal Grove
+1 Survivors' Encampment
+1 Vesuva
+1 Agate Instigator
+1 Beastcaller Savant
+1 Belladonna Took
+1 Dune Chanter
+1 Elvish Reclaimer
+1 Esper Sentinel
+1 Great Divide Guide
+1 Jetmir, Nexus of Revels
+1 Knight of New Alara
+1 Lotus Cobra
+1 Lovisa Coldeyes
+1 Mentor of the Meek
+1 Mina and Denn, Wildborn
+1 Oracle of Mul Daya
+1 Purphoros, God of the Forge
+1 Ramunap Excavator
+1 Rose Room Treasurer
+1 Sand Scout
+1 Shefet Monitor
+1 Sprouting Goblin
+1 Sylvan Safekeeper
+1 Tannuk, Memorial Ensign
+1 Titania, Protector of Argoth
+1 Wayward Swordtooth
+1 Yuma, Proud Protector
+1 Annie Joins Up
+1 Desert Warfare
+1 Felidar Retreat
+1 Impact Tremors
+1 Inspiring Leader
+1 Sandwurm Convergence
+1 Shared Animosity
+1 Valakut Exploration
+1 Warleader's Call
+1 Arcane Signet
+1 Chromatic Lantern
+1 Idol of Oblivion
+1 Skullclamp
+1 Zuran Orb
+1 Blasphemous Act
+1 Dance of the Tumbleweeds
+1 Decimate
+1 Dire-Strain Rampage
+1 Highway Robbery
+1 Hour of Promise
+1 Map the Frontier
+1 Martial Coup
+1 Nahiri's Lithoforming
+1 Shamanic Revelation
+1 Titania's Command

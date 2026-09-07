@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/GSRYjL1kgjfPsFEEuuLenQ (source https://archidekt.com/decks/15026358)
+# tags Aggro, Extra Combats, Glass Cannon, Big Mana, Stompy, Commander Matters; bracket 3; saved 2026-09-04; 572 tagged of 8477 indexed
+
+Commander
+1 Xenagos, God of Revels
+
+Deck
+1 Absorbing Man and Titania
+1 Agonasaur Rex
+1 Amarant Coral
+1 Balefire Dragon
+1 Birds of Paradise
+1 Blightsteel Colossus
+1 Bloodthirster
+1 Bloom Tender
+1 Dryad of the Ilysian Grove
+1 Elder Gargaroth
+1 Elvish Mystic
+1 Etali, Primal Conqueror
+1 Fanatic of Rhonas
+1 Ghalta, Primal Hunger
+1 Giggling Skitterspike
+1 Godo, Bandit Warlord
+1 Groundchuck & Dirtbag
+1 Hulk, Always Angry
+1 Ilharg, the Raze-Boar
+1 Karlach, Fury of Avernus
+1 Magus of the Wheel
+1 Mossborn Hydra
+1 Old Gnawbone
+1 Quartzwood Crasher
+1 Quilled Greatwurm
+1 Railway Brawler
+1 Ruric Thar, the Unbowed
+1 Scarlet Spider, Ben Reilly
+1 Shivan Dragon
+1 Sire of Seven Deaths
+1 Spider Manifestation
+1 Twinflame Tyrant
+1 Tyrranax Rex
+1 Aggravated Assault
+1 Colossal Majesty
+1 Elemental Bond
+1 Guardian Project
+1 Rhythm of the Wild
+1 Tribute to the World Tree
+1 Ancient Tomb
+1 Boseiju, Who Endures
+1 Command Tower
+1 Cragcrown Pathway
+12 Forest
+1 Grove of the Burnwillows
+1 Karplusan Forest
+1 Kessig Wolf Run
+9 Mountain
+1 Reliquary Tower
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Spire Garden
+1 Stomping Ground
+1 Thornspire Verge
+1 Training Compound
+1 Yavimaya, Cradle of Growth
+1 Arcane Signet
+1 Grafted Exoskeleton
+1 Helm of the Host
+1 Peter Parker's Camera
+1 Sol Ring
+1 Strionic Resonator
+1 The Great Henge
+1 Beast Within
+1 Deflecting Swat
+1 Great Train Heist
+1 Heroic Intervention
+1 Return of the Wildspeaker
+1 Smuggler's Surprise
+1 Chandra's Ignition
+1 Farseek
+1 Jeska's Will
+1 Relentless Assault
+1 Seize the Day
+1 Skyshroud Claim
+1 Three Visits
+1 Triumph of the Hordes
+1 Vandalblast
+1 Wheel of Fortune

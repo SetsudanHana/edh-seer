@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/2UwkIvmPRNO6XeYFBaXPPQ (source https://archidekt.com/decks/19703829)
+# tags Lure, Combo, Burn, Battles, Deathtouch, Attack Triggers, Banding, Mana Dorks, Forced Combat; bracket 2; saved 2026-08-12; 7 tagged of 2188 indexed
+
+Commander
+1 General Marhault Elsdragon
+
+Deck
+1 Ambush Viper
+1 Anzrag, the Quake-Mole
+1 Archetype of Aggression
+1 Assembled Alphas
+1 Battering Ram
+1 Blooming Stinger
+1 Brash Taunter
+1 Combat Celebrant
+1 Deadly Recluse
+1 Dragon Sniper
+1 Electryte
+1 Elven Warhounds
+1 Engulfing Slagwurm
+1 Flesh Burrower
+1 Fynn, the Fangbearer
+1 Gran Pulse Ochu
+1 Halana and Alena, Partners
+1 Horizon Explorer
+1 Kird Ape
+1 Kogla and Yidaro
+1 Nacatl War-Pride
+1 Noble Quarry
+1 Noxious Newt
+1 Primeval Herald
+1 Proud Wildbonder
+1 Pygmy Troll
+1 Shinen of Life's Roar
+1 Spring-Leaf Avenger
+1 Tempting Licid
+1 Timber Wolves
+1 Toski, Bearer of Secrets
+1 Werebear
+1 Arcane Signet
+1 Barrow-Blade
+1 Basilisk Collar
+1 Baton of Morale
+1 Bow of Nylea
+1 Helm of Chatzuk
+1 Infiltration Lens
+1 Nemesis Mask
+1 Armed // Dangerous
+1 Ezuri's Predation
+1 Hull Breach
+1 Irresistible Prey
+1 Knockout Maneuver
+1 Nylea's Intervention
+1 Predatory Rampage
+1 Restock
+1 Stump Stomp
+1 Unexpected Request
+1 Blighted Woodland
+1 Captivating Cave
+1 Cinder Glade
+1 Command Tower
+1 Crystal Grotto
+17 Forest
+1 Hidden Nursery
+1 Mosswort Bridge
+12 Mountain
+1 Oran-Rief, the Vastwood
+1 Rogue's Passage
+1 Rootbound Crag
+1 Skarrg, the Rage Pits
+1 Temple of Abandon
+1 Treetop Village
+1 Gaea's Embrace
+1 Sandwurm Convergence
+1 Lightning Bolt
+1 Outmaneuver
+1 Overprotect
+1 Return the Favor
+1 Vivien Reid

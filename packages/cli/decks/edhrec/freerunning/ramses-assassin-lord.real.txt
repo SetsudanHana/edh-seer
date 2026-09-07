@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/__BNYEDsphh84B6kF1XMlA (source https://archidekt.com/decks/25648098)
+# tags Assassins, Freerunning; bracket 2; saved 2026-08-23; 13 tagged of 2088 indexed
+
+Commander
+1 Ramses, Assassin Lord
+
+Deck
+1 Achilles Davenport
+1 Assassin Initiate
+1 Aven Heartstabber
+1 Basim Ibn Ishaq
+1 Big Game Hunter
+1 Brotherhood Spy
+1 Callidus Assassin
+1 Changeling Outcast
+1 Desmond Miles
+1 Etrata, the Silencer
+1 Evie Frye
+1 Ezio, Blade of Vengeance
+1 Hired Poisoner
+1 Hookblade Veteran
+1 Jacob Frye
+1 Lydia Frye
+1 Mari, the Killing Quill
+1 Midnight Assassin
+1 Royal Assassin
+1 Scarblade Elite
+1 Termination Facilitator
+1 Unstoppable Slasher
+1 Vein Ripper
+1 Virtus the Veiled
+1 An Offer You Can't Refuse
+1 Brainstorm
+1 Counterspell
+1 Dark Ritual
+1 Go for the Throat
+1 Infernal Grasp
+1 Negate
+1 Aqueous Form
+1 Cover of Darkness
+1 Double Down
+1 Grievous Wound
+1 Kindred Discovery
+1 Phyrexian Arena
+1 Propaganda
+1 Reconnaissance Mission
+1 Rooftop Bypass
+1 The Revelations of Ezio
+1 Arcane Signet
+1 Assassin Gauntlet
+1 Brotherhood Regalia
+1 Dimir Signet
+1 Herald's Horn
+1 Hidden Blade
+1 Lightning Greaves
+1 Quietus Spike
+1 Smoke Bomb
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Thought Vessel
+1 Vorpal Sword
+1 Whispersilk Cloak
+1 Back in Town
+1 Crippling Fear
+1 Eagle Vision
+1 Feed the Swarm
+1 Restart Sequence
+1 Sleep
+1 Slip Through Space
+1 Bojuka Bog
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Drowned Catacomb
+12 Island
+1 Morphic Pool
+1 Path of Ancestry
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Hollow
+12 Swamp
+1 Tainted Isle
+1 Temple of Deceit

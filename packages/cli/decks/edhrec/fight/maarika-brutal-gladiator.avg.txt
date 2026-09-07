@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/maarika-brutal-gladiator/fight
+# theme Fight (575 decks)
+
+Commander
+1 Maarika, Brutal Gladiator
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Boxing Ring
+1 Fiendlash
+1 Hunter's Bow
+1 Infiltration Lens
+1 Mage Slayer
+1 Power Fist
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Arena
+1 Blood Crypt
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+7 Forest
+1 Kessig Wolf Run
+1 Luxury Suite
+5 Mountain
+1 Overgrown Tomb
+1 Rockfall Vale
+1 Rootbound Crag
+1 Savage Lands
+1 Smoldering Marsh
+1 Spire Garden
+1 Stomping Ground
+4 Swamp
+1 Undergrowth Stadium
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Anzrag, the Quake-Mole
+1 Birds of Paradise
+1 Brash Taunter
+1 Bugenhagen, Wise Elder
+1 Chevill, Bane of Monsters
+1 General Marhault Elsdragon
+1 Goblin Anarchomancer
+1 Goreclaw, Terror of Qal Sisma
+1 Guardian Augmenter
+1 Halana and Alena, Partners
+1 Ignoble Hierarch
+1 Karlach, Fury of Avernus
+1 Kediss, Emberclaw Familiar
+1 Mr. Orfeo, the Boulder
+1 Neyith of the Dire Hunt
+1 Saryth, the Viper's Fang
+1 Tergrid, God of Fright
+1 Toralf, God of Fury
+1 Ulvenwald Tracker
+1 Xenagos, God of Revels
+1 Fight Rigging
+1 Garruk's Uprising
+1 Gimli's Reckless Might
+1 Hunter's Talent
+1 Pain for All
+1 Rancor
+1 Rhythm of the Wild
+1 Thickest in the Thicket
+1 Ancient Animus
+1 Beast Within
+1 Heroic Intervention
+1 Inscription of Abundance
+1 Khalni Ambush
+1 Pit Fight
+1 Prizefight
+1 Ram Through
+1 Tail Swipe
+1 Tamiyo's Safekeeping
+1 The Last Agni Kai
+1 Tyvar's Stand
+1 Domri, Anarch of Bolas
+1 Animist's Might
+1 Blasphemous Act
+1 Bushwhack
+1 Chandra's Ignition
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Prey Upon
+1 Primal Might
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Stump Stomp

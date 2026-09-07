@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/rRAkivbt5e0xTqEkprVnKw (source https://archidekt.com/decks/22403283)
+# tags Burn, Spellslinger; bracket 3; saved 2026-09-04; 1546 tagged of 12091 indexed
+
+Commander
+1 Judith, Carnage Connoisseur
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Lightning Greaves
+1 Mishra's Bauble
+1 Phyrexian Altar
+1 Rakdos Signet
+1 Ruby Medallion
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Arcane Lighthouse
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+1 Mount Doom
+11 Mountain
+1 Phyrexian Tower
+1 Reflecting Pool
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+4 Swamp
+1 Armor of Shadows
+1 Cabal Ritual
+1 Corrupted Conviction
+1 Culling the Weak
+1 Dark Ritual
+1 Deadly Dispute
+1 Deflecting Swat
+1 Desperate Ritual
+1 Electrickery
+1 Flashback
+1 Gut Shot
+1 Lava Dart
+1 Lightning Bolt
+1 Pyretic Ritual
+1 Pyroblast
+1 Red Elemental Blast
+1 Redirect Lightning
+1 Seething Song
+1 Shock
+1 Spikefield Hazard
+1 Tibalt's Trickery
+1 Untimely Malfunction
+1 Vampiric Tutor
+1 Village Rites
+1 Vivi's Persistence
+1 Ashling, Flame Dancer
+1 Birgi, God of Storytelling
+1 Coruscation Mage
+1 Harmonic Prodigy
+1 Hexing Squelcher
+1 Kessig Flamebreather
+1 Longshot, Rebel Bowman
+1 Orcish Bowmasters
+1 Solphim, Mayhem Dominus
+1 Storm-Kiln Artist
+1 Yawgmoth, Thran Physician
+1 Young Pyromancer
+1 Black Market Connections
+1 Goblin Bombardment
+1 Kaya's Ghostform
+1 Blasphemous Act
+1 Blazing Volley
+1 Demonic Tutor
+1 Diabolic Intent
+1 End the Festivities
+1 Faithless Looting
+1 Grab the Prize
+1 Infernal Plunge
+1 Overmaster
+1 Past in Flames
+1 Reanimate
+1 Rite of Flame
+1 Smash to Dust
+1 Strike It Rich
+1 Tectonic Hazard
+1 Vandalblast
+1 Wheel of Misfortune

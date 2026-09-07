@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/YwKSPJgIA5Z8VWwwW_Htgw (source https://archidekt.com/decks/19996079)
+# tags Dungeon, Unblockable; bracket 2; saved 2026-09-05; 153 tagged of 1228 indexed
+
+Commander
+1 Rilsa Rael, Kingpin
+
+Deck
+1 Aarakocra Sneak
+1 Azure Fleet Admiral
+1 Brazen Borrower
+1 Canoptek Wraith
+1 Eccentric Apprentice
+1 Faerie Mastermind
+1 Feywild Caretaker
+1 Ghostly Pilferer
+1 Glasspool Mimic
+1 Imoen, Mystic Trickster
+1 Jill, Shiva's Dominant
+1 Kitesail Larcenist
+1 Lockjaw, Slobbering Teleporter
+1 Ornithopter of Paradise
+1 Passageway Seer
+1 Ravenloft Adventurer
+1 Safana, Calimport Cutthroat
+1 Shoreline Looter
+1 Silent Hallcreeper
+1 Skycoach Conductor
+1 Tomb of Horrors Adventurer
+1 Troll of Khazad-dûm
+1 Ultimecia, Temporal Threat
+1 Vicious Battlerager
+1 Wan Shi Tong, Librarian
+1 Yuan-Ti Malison
+1 Access Tunnel
+1 Blinkmoth Nexus
+1 Command Tower
+1 Creeping Tar Pit
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Faerie Conclave
+1 Gloomlake Verge
+1 Guildless Commons
+1 Horizon of Progress
+6 Island
+1 Minas Morgul, Dark Fortress
+1 Morphic Pool
+1 Myriad Landscape
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Ruins
+4 Swamp
+1 Talon Gates of Madara
+1 Undercity Sewers
+1 Underground River
+1 Watery Grave
+1 An Offer You Can't Refuse
+1 Boomerang
+1 Cryptic Command
+1 Dark Ritual
+1 Fell the Profane
+1 Flare of Denial
+1 Hide on the Ceiling
+1 Malakir Rebirth
+1 Misdirection
+1 Planar Incision
+1 Sink into Stupor
+1 Swan Song
+1 Swift Demise
+1 Arcane Signet
+1 Coveted Jewel
+1 Dimir Signet
+1 Dowsing Dagger
+1 Dungeon Map
+1 Foot Chopper
+1 Genji Glove
+1 Grafted Exoskeleton
+1 Mind Stone
+1 My Precious
+1 Sarevok's Tome
+1 Sonic Screwdriver
+1 Sword of Hearth and Home
+1 Sword of the Animist
+1 Trailblazer's Torch
+1 Bottomless Pool // Locker Room
+1 Corrupted Conscience
+1 Dress Down
+1 Dungeon Delver
+1 Fall from Favor
+1 Fly
+1 Kang Dynasty
+1 Lost in the Maze
+1 Fates' Reversal
+1 From the Catacombs
+1 Lórien Revealed
+1 Toxic Deluge
+1 Sorin Markov

@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/rMdeuGzPUupXEx_1yafDFA (source https://archidekt.com/decks/8996001)
+# tags Theft, Pirates, Treasure; bracket 2; saved 2026-09-05; 714 tagged of 6759 indexed
+
+Commander
+1 Don Andres, the Renegade
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Counterspell
+1 Fell the Profane
+1 Pongify
+1 Rakdos Charm
+1 Sink into Stupor
+1 Siphon Insight
+1 Swan Song
+1 You Find Some Prisoners
+1 Arcane Signet
+1 Dimir Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Loki's Scepter
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Bilbo, Thief in the Night
+1 Black Widow, Super Spy
+1 Captain Storm, Cosmium Raider
+1 Coercive Recruiter
+1 Dauthi Voidwalker
+1 Dazzling Sphinx
+1 Faerie Mastermind
+1 Grenzo, Havoc Raiser
+1 Gríma, Saruman's Footman
+1 Hostage Taker
+1 Jabs, Mistress of Mockery
+1 Laughing Jasper Flint
+1 Locke, Treasure Hunter
+1 Malcolm, Keen-Eyed Navigator
+1 Nathan Drake, Treasure Hunter
+1 Nightscape Familiar
+1 Nightveil Specter
+1 Plargg and Nassari
+1 Professional Face-Breaker
+1 Prosper, Tome-Bound
+1 Ramirez DePietro, Pillager
+1 The Beast, Deathless Prince
+1 Thief of Sanity
+1 Thieving Varmint
+1 Tinybones, the Pickpocket
+1 Vaan, Street Thief
+1 Black Market Connections
+1 Court of Locthwain
+1 Kindred Discovery
+1 Rogue Class
+1 Share the Spoils
+1 Shared Animosity
+1 Blasphemous Act
+1 Breach the Multiverse
+1 Bribery
+1 Dream Harvest
+1 Ensnared by the Mara
+1 Feed the Swarm
+1 Mob Rule
+1 Mutinous Massacre
+1 Raise the Palisade
+1 Seize the Spotlight
+1 Toxic Deluge
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Desolate Lighthouse
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Gloomlake Verge
+1 Haunted Ridge
+3 Island
+1 Luxury Suite
+1 Morphic Pool
+3 Mountain
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Rogue's Passage
+1 Scalding Tarn
+1 Shipwreck Marsh
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sulfurous Springs
+3 Swamp
+1 Takenuma, Abandoned Mire
+1 Training Center
+1 Underground River
+1 Watery Grave

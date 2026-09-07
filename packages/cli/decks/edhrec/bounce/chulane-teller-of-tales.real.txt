@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/jITu2UAZWMTjUqZKUGZwFA (source https://archidekt.com/decks/26006432)
+# tags Moonfolk, Landfall, Activated Abilities, Lands Matter, Bounce; bracket 3; saved 2026-09-03; 82 tagged of 9601 indexed
+
+Commander
+1 Chulane, Teller of Tales
+
+Deck
+1 Aesi, Tyrant of Gyre Strait
+1 Ancient Greenwarden
+1 Azusa, Lost but Seeking
+1 Biomancer's Familiar
+1 Dryad of the Ilysian Grove
+1 Emeria Shepherd
+1 Floodbringer
+1 Genku, Future Shaper
+1 Greensleeves, Maro-Sorcerer
+1 Horizon Explorer
+1 Icetill Explorer
+1 Loot, Exuberant Explorer
+1 Meloku the Clouded Mirror
+1 Moonbow Illusionist
+1 Mossborn Hydra
+1 Network Disruptor
+1 Oboro Breezecaller
+1 Oboro Envoy
+1 Oracle of Mul Daya
+1 Rampaging Baloths
+1 Scute Swarm
+1 Soratami Cloudskater
+1 Soratami Mindsweeper
+1 Soratami Mirror-Guard
+1 Soratami Mirror-Mage
+1 Soratami Rainshaper
+1 Soratami Savant
+1 Springheart Nantuko
+1 Tameshi, Reality Architect
+1 Tamiyo, Inquisitive Student
+1 Tatyova, Benthic Druid
+1 Tiller Engine
+1 Traveling Chocobo
+1 Uyo, Silent Prophet
+1 Wonderscape Sage
+1 Arcane Denial
+1 Beast Within
+1 Counterspell
+1 Flawless Maneuver
+1 Heroic Intervention
+1 Mana Drain
+1 Path to Exile
+1 Swords to Plowshares
+1 Archaeomancer's Map
+1 Chocobo Racetrack
+1 Expedition Map
+1 Exploration Broodship
+1 Sol Ring
+1 Arid Archway
+1 Azorius Chancery
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Breeding Pool
+1 Command Tower
+1 Field of the Dead
+6 Forest
+1 Guildless Commons
+1 Hedge Maze
+4 Island
+1 Lush Portico
+1 Meticulous Archive
+1 Minamo, School at Water's Edge
+1 Oboro, Palace in the Clouds
+1 Otawara, Soaring City
+1 Path of Ancestry
+4 Plains
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Seaside Citadel
+1 Selesnya Sanctuary
+1 Simic Growth Chamber
+1 Spara's Headquarters
+1 Strip Mine
+1 Treva's Ruins
+1 Austere Command
+1 Avatar's Wrath
+1 Burgeoning
+1 Case of the Locked Hothouse
+1 Dancing from Dark to Dawn
+1 Down in the Valley
+1 Exploration
+1 Inventive Iteration
+1 Land Tax
+1 Spelunking
+1 Training Grounds
+1 Oko, Thief of Crowns
+1 Tamiyo, Field Researcher

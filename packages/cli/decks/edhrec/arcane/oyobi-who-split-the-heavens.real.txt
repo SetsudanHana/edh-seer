@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/UQgPnJwiNnTDCkj2ro-iBA (source https://archidekt.com/decks/22528347)
+# tags Tokens, Spirits, Arcane; bracket 2; saved 2026-06-05; 9 tagged of 190 indexed
+
+Commander
+1 Oyobi, Who Split the Heavens
+
+Deck
+1 Aether Shockwave
+1 Blessed Breath
+1 Candles' Glow
+1 Charge Across the Araba
+1 Ethereal Haze
+1 Hundred-Talon Strike
+1 Lapse of Certainty
+1 Otherworldly Journey
+1 Pure Intentions
+1 Quiet Purity
+1 Rootborn Defenses
+1 Spiritual Visit
+1 Swords to Plowshares
+1 Terashi's Verdict
+1 Ajani's Welcome
+1 Celestial Dawn
+1 Honor of the Pure
+1 Light of Promise
+1 Rally the Ranks
+1 Ao, the Dawn Sky
+1 Apothecary Geist
+1 Blinking Spirit
+1 Celestial Crusader
+1 Celestial Kirin
+1 Clarion Spirit
+1 Drogskol Reinforcements
+1 Ghost-Lit Redeemer
+1 Harsh Deceiver
+1 Hikari, Twilight Guardian
+1 Horizon Seed
+1 Hundred-Talon Kami
+1 Innocence Kami
+1 Kabuto Moth
+1 Kami of Ancient Law
+1 Kami of False Hope
+1 Kami of Old Stone
+1 Kami of Tattered Shoji
+1 Kami of the Honored Dead
+1 Kami of the Painted Road
+1 Kami of the Palace Fields
+1 Kiyomaro, First to Stand
+1 Lantern Kami
+1 Moonlit Strider
+1 Myojin of Cleansing Fire
+1 Nikko-Onna
+1 Patron of the Kitsune
+1 Phantom General
+1 Shinen of Stars' Light
+1 Spurnmage Advocate
+1 Tallowisp
+1 Torii Watchward
+1 Vanguard of the Restless
+1 Waxmane Baku
+1 Approach of the Second Sun
+1 Bond of Discipline
+1 Cleanfall
+1 Secret Rendezvous
+1 Terashi's Cry
+1 Terashi's Grasp
+1 Command Tower
+1 Eiganjo Castle
+1 Emeria, the Sky Ruin
+1 Idyllic Grange
+1 Karoo
+1 Memorial to Glory
+1 Myriad Landscape
+1 Path of Ancestry
+26 Plains
+1 Secluded Steppe
+1 Untaidake, the Cloud Keeper
+1 Windbrisk Heights
+1 Elspeth Tirel
+1 Pearl Medallion
+1 Sol Ring

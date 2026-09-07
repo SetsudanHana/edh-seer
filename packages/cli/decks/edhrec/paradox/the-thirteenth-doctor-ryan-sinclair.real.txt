@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/wGupS6Z745TzsS87u4j6WQ (source https://archidekt.com/decks/13740130)
+# tags Exile, Midrange, Foretell, +1/+1 Counters, Paradox, Cascade; bracket 3; saved 2025-12-23; 8 tagged of 609 indexed
+
+Commander
+1 The Thirteenth Doctor
+1 Ryan Sinclair
+
+Deck
+1 Apex Devastator
+1 Arwen, Weaver of Hope
+1 Aurora Phoenix
+1 Averna, the Chaos Bloom
+1 Birds of Paradise
+1 Clara Oswald
+1 Delighted Halfling
+1 Doc Aurlock, Grizzled Genius
+1 Dragonhawk, Fate's Tempest
+1 Durnan of the Yawning Portal
+1 Etherium-Horn Sorcerer
+1 Faldorn, Dread Wolf Herald
+1 Flaming Tyrannosaurus
+1 Herald of Secret Streams
+1 Imoti, Celebrant of Bounty
+1 Incubation Druid
+1 Iraxxa, Empress of Mars
+1 Kami of Celebration
+1 Kami of Whispered Hopes
+1 Karvanista, Loyal Lupari
+1 Keeper of Secrets
+1 Laelia, the Blade Reforged
+1 Loot, the Key to Everything
+1 Maelstrom Wanderer
+1 Memory Worm
+1 Nalfeshnee
+1 Rashmi, Eternities Crafter
+1 Savvy Trader
+1 Sisterhood of Karn
+1 Sweet-Gum Recluse
+1 The Foretold Soldier
+1 The Twelfth Doctor
+1 Wild-Magic Sorcerer
+1 Arcane Signet
+1 Cursed Mirror
+1 Fellwar Stone
+1 Sol Ring
+1 Sonic Screwdriver
+1 Swiftfoot Boots
+1 Sword of Forge and Frontier
+1 TARDIS
+1 Bite Down
+1 Chaos Warp
+1 Delayed Blast Fireball
+1 Growth Spiral
+1 Heroic Intervention
+1 Krosan Grip
+1 Natural Reclamation
+1 Reality Shift
+1 Call Forth the Tempest
+1 Chandra's Ignition
+1 Cultivate
+1 Farseek
+1 Ignite the Future
+1 Into the Time Vortex
+1 Quantum Misalignment
+1 Ravenform
+1 Throes of Chaos
+1 Case of the Locked Hothouse
+1 Passionate Archaeologist
+1 Cinder Glade
+1 Command Tower
+1 Commercial District
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Fiery Islet
+4 Forest
+1 Frontier Bivouac
+1 Frostboil Snarl
+1 Game Trail
+1 Island
+1 Karn's Bastion
+1 Ketria Triome
+7 Mountain
+1 Myriad Landscape
+1 Ominous Cemetery
+1 Otawara, Soaring City
+1 Path of Ancestry
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Sheltered Thicket
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Temple of Mystery
+1 Training Center
+1 Vineglimmer Snarl
+1 Waterlogged Grove

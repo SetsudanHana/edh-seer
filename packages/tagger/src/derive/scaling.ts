@@ -22,6 +22,14 @@ import { parseSubject } from "./subject.js";
 /** A count OF A GRAVEYARD'S CONTENTS: "in your graveyard", "in all graveyards", "in each graveyard". */
 const GRAVEYARD_COUNT = /\bin (?:your|a|an|each|their|all|its owner's) [^.,;]{0,30}graveyards?\b/i;
 
+/** A COUNT OF WHAT IS ON A BATTLEFIELD: "Goblins you control", "Zombies on the battlefield".
+ *
+ *  MEASURED 2026-09-04, and it is why this exists: 662 corpus cards state a count phrase and this
+ *  file read only the 156 that count a graveyard. Krenko, Mob Boss -- "X 1/1 red Goblin creature
+ *  tokens, where X is the number of Goblins you control" -- derived NO scaling and NO subject, so
+ *  the one thing his deck is built around was invisible to every layer that reads either. */
+const BATTLEFIELD_COUNT = /\b(?:you control|on the battlefield)\b/i;
+
 /** Order matters. A graveyard count is per-graveyard even when the thing counted is a creature --
  *  SCALING_ALIASES maps "per-graveyard-creature" to per-graveyard, so that is the canonical reading
  *  and it must be tested before per-creature can claim Diregraf Colossus. */
@@ -37,6 +45,11 @@ const BASES: [RegExp, ScalingBasis][] = [
   [/\bcreatures?\b/i, "per-creature"],
   [/\b(?:permanents?|artifacts?|enchantments?|lands?|devotion)\b/i, "per-permanent"],
   [/\bspells?\s+you'?ve\s+cast\b|\bstorm\b|\bspells?\s+cast\b/i, "per-cast-or-spell"],
+  // LAST, AND ONLY WHEN A BOARD IS NAMED. Every row above tests a noun this one cannot name -- a
+  // creature type, an artifact subtype, a Shrine -- so it claims what the closed vocabulary has no
+  // better word for: a Goblin on the battlefield is a permanent. It must stay last, or "creatures
+  // you control" would stop being `per-creature`.
+  [BATTLEFIELD_COUNT, "per-permanent"],
 ];
 
 /** The noun a count actually counts. Matching the whole string reads the LOCATION as the basis:
@@ -44,6 +57,32 @@ const BASES: [RegExp, ScalingBasis][] = [
  *  artifacts, and the table would have called it per-permanent off the word "artifact". Everything
  *  from " on " is dropped for that reason; " in " is kept, because "in your graveyard" IS the basis. */
 const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
+
+/** "WHERE X IS THE NUMBER OF ..." DEFINES X FOR THE WHOLE CLAUSE, and the own-text rule still holds:
+ *  the count reaches only an action whose amount IS that bare X, never a sibling with a fixed
+ *  amount. Burakos, Party Leader -- "defending player loses X life and you create X Treasure
+ *  tokens, where X is the number of creatures in your party" -- keeps the tail on neither action
+ *  after normalization, so both derived `x-cost` and no subject (owner, 2026-09-05). */
+const DEFINES_X = /\bwhere x is (?:the number of|equal to the number of)\s+([^.,;]{1,60})/i;
+const isBareX = (action: Action): boolean => /^x$/i.test((action.amount ?? "").trim());
+/** The text the count is read from: the action's own, or the clause's definition of its X.
+ *  CEILING: ONE X PER CLAUSE. The first "where X is …" in the clause is handed to every bare-X
+ *  action; a clause defining X twice (none in the corpus on 2026-09-05, but the templating exists)
+ *  would give its second action the first definition, silently. The upgrade path is to take the
+ *  definition that FOLLOWS the action's own sentence rather than the clause's first. */
+const countedText = (action: Action, clauseText?: string): string => {
+  const own = `${action.amount ?? ""} ${action.object ?? ""}`;
+  if (COUNTED.test(own)) return own;
+  const defined = clauseText && isBareX(action) ? DEFINES_X.exec(clauseText)?.[1] : undefined;
+  return defined ? `number of ${defined}` : own;
+};
+
+/** A PARTY IS A BOARD COUNT OF FOUR TYPES (CR 700.7): up to one each of Cleric, Rogue, Warrior and
+ *  Wizard among creatures you control. CEILING: the cap of four is a magnitude the engine does not
+ *  model; the count is read as "creatures you control that are one of these", which is the same
+ *  set of cards, over-counted past four. 43 corpus cards say party. */
+const PARTY = /\bin your party\b/i;
+const PARTY_TYPES = ["cleric", "rogue", "warrior", "wizard"];
 
 /** WHAT a graveyard count counts, as a subject the matcher can compare a fill against.
  *
@@ -56,25 +95,41 @@ const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
  *  The OWNER matters and is read from the same phrase: "your graveyard" is yours, "all graveyards" is
  *  anyone's, and "their graveyard" is the OPPONENT's — Riverchurn Monument mills each target player
  *  for the size of THEIR yard, which your own fillers do not feed. */
-export function scalingSubject(action: Action): SubjectFilter | undefined {
-  const text = `${action.amount ?? ""} ${action.object ?? ""}`;
-  if (!GRAVEYARD_COUNT.test(text)) return undefined;
+export function scalingSubject(action: Action, clauseText?: string): SubjectFilter | undefined {
+  const text = countedText(action, clauseText);
   const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1];
-  const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
-  subject.zone = "graveyard";
-  subject.control = /\btheir\b/i.test(noun) ? "opp"
-    : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
-    : "you";
+
+  if (GRAVEYARD_COUNT.test(text)) {
+    const subject = parseSubject(noun.split(/\s{1,4}in\s{1,4}/i)[0]);
+    subject.zone = "graveyard";
+    subject.control = /\btheir\b/i.test(noun) ? "opp"
+      : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
+      : "you";
+    return subject;
+  }
+
+  if (PARTY.test(noun)) return { type: "creature", subtype: PARTY_TYPES, zone: "battlefield", control: "you", token: null };
+
+  // A BOARD COUNT, AND THE GRAVEYARD BRANCH GETS FIRST REFUSAL. "Creature cards in your graveyard"
+  // names neither a controller nor the battlefield, so the order is what keeps a graveyard count
+  // from claiming a board -- the same precedence `BASES` states above.
+  if (!BATTLEFIELD_COUNT.test(noun)) return undefined;
+  const subject = parseSubject(noun.split(/\s{1,4}(?:you control|on the battlefield)\b/i)[0]);
+  subject.zone = "battlefield";
+  // "ON THE BATTLEFIELD" IS EVERYONE'S BOARD and "you control" is yours -- the same distinction the
+  // graveyard branch draws between "your graveyard" and "all graveyards", and it decides whether an
+  // opponent's Goblins count toward the number.
+  subject.control = /\byou control\b/i.test(noun) ? "you" : "any";
   return subject;
 }
 
-export function actionScaling(action: Action): ScalingBasis | undefined {
-  const amount = action.amount ?? "";
-  // A bare X is the cost the player chose, whatever noun follows it.
-  if (/^x$/i.test(amount.trim())) return "x-cost";
-  const counted = COUNTED.exec(`${amount} ${action.object ?? ""}`);
+export function actionScaling(action: Action, clauseText?: string): ScalingBasis | undefined {
+  const text = countedText(action, clauseText);
+  // A bare X the clause never defines is the cost the player chose, whatever noun follows it.
+  if (isBareX(action) && !COUNTED.test(text)) return "x-cost";
+  const counted = COUNTED.exec(text);
   if (!counted) return undefined;
   const noun = counted[1].split(/\s{1,4}on\s{1,4}/i)[0];
   for (const [re, basis] of BASES) if (re.test(noun)) return basis;

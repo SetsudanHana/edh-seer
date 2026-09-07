@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/el3Umy78gaR0-JLxnO1bwQ (source https://moxfield.com/decks/5EmQEYkDd0mhVNVA0_AnFQ)
+# tags Zoo, Tokens, Clones; bracket 3; saved 2026-09-04; 197 tagged of 10333 indexed
+
+Commander
+1 Volo, Guide to Monsters
+
+Deck
+1 Aboleth Spawn
+1 Body Double
+1 Circle of Dreams Druid
+1 Cloudfin Raptor
+1 Consecrated Sphinx
+1 Dryad of the Ilysian Grove
+1 Dutiful Replicator
+1 Enduring Curiosity
+1 Garruk's Packleader
+1 Insidious Fungus
+1 Lotus Cobra
+1 Loyal Guardian
+1 Man-o'-War
+1 Mirrorhall Mimic
+1 Mister Fantastic, Reed Richards
+1 Mocking Sprite
+1 Mulldrifter
+1 Noble Benefactor
+1 Noxious Newt
+1 Ornithopter
+1 Palinchron
+1 Peregrine Drake
+1 Propagator Drone
+1 PuPu UFO
+1 Quilled Greatwurm
+1 Regal Behemoth
+1 Roaming Throne
+1 Silverback Elder
+1 Starwinder
+1 Stonehoof Chieftain
+1 Twitching Doll
+1 Aetherize
+1 Blue Sun's Zenith
+1 Cackling Counterpart
+1 Collective Resistance
+1 Counterspell
+1 Defabricate
+1 Disperse
+1 Double Major
+1 Druid's Deliverance
+1 Gaea's Gift
+1 Growth Spiral
+1 Heroic Intervention
+1 Magic Damper
+1 Obscuring Haze
+1 Second Harvest
+1 Unauthorized Exit
+1 Wash Away
+1 Audience with Trostani
+1 Explore
+1 Explosive Vegetation
+1 Rampant Growth
+1 Regrowth
+1 Survivors' Bond
+1 Uncage the Menagerie
+1 Combine Chrysalis
+1 Decanter of Endless Water
+1 Helm of the Host
+1 Idol of Oblivion
+1 Mithril Coat
+1 Diplomatic Immunity
+1 Garruk's Uprising
+1 Imprisoned in the Moon
+1 In Search of Greatness
+1 Wilderness Reclamation
+1 Dreamroot Cascade
+16 Forest
+15 Island
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower

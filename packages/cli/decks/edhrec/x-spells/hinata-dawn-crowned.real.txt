@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/lSSxqccIJVOrdfybtGzaOw (source https://archidekt.com/decks/23140627)
+# tags X Spells, Spellslinger, Big Mana; bracket 2; saved 2026-09-04; 514 tagged of 6930 indexed
+
+Commander
+1 Hinata, Dawn-Crowned
+
+Deck
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Battlefield Forge
+1 Command Tower
+1 Desolate Lighthouse
+1 Exotic Orchard
+1 Ferrous Lake
+4 Island
+1 Izzet Boilerworks
+4 Mountain
+1 Myriad Landscape
+1 Mystic Monastery
+1 Path of Ancestry
+1 Perilous Landscape
+4 Plains
+1 Reliquary Tower
+1 Skycloud Expanse
+1 Steam Vents
+1 Sulfur Falls
+1 Sundown Pass
+1 Sunken Palace
+1 Temple of the False God
+1 Angelfire Ignition
+1 Baral's Expertise
+1 Combat Tutorial
+1 Curse of the Swine
+1 Flow State
+1 Here Comes a New Hero!
+1 Karn's Temporal Sundering
+1 Mass Manipulation
+1 Reconstruct History
+1 Song-Mad Treachery
+1 Together as One
+1 Will of the Temur
+1 Winds of Abandon
+1 Wisdom of Ages
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Azorius Signet
+1 Bender's Waterskin
+1 Commander's Sphere
+1 Decanter of Endless Water
+1 Fellwar Stone
+1 Glaring Spotlight
+1 Izzet Signet
+1 Ore-Rich Stalactite
+1 Sol Ring
+1 Tablet of Discovery
+1 Archmage of Runes
+1 Deekah, Fractal Theorist
+1 Dirgur Focusmage
+1 Elemental Mascot
+1 Elsha of the Infinite
+1 Jin-Gitaxias
+1 Kykar, Wind's Fury
+1 Monastery Mentor
+1 Muse Seeker
+1 Pinnacle Monk
+1 Prismari, the Inspiration
+1 Shantotto, Tactician Magician
+1 Shiko, Paragon of the Way
+1 Storm-Kiln Artist
+1 Summon: Esper Valigarmanda
+1 The Emperor of Palamecia
+1 Tzaangor Shaman
+1 Ashling's Command
+1 Comet Storm
+1 Divergent Equation
+1 Expansion // Explosion
+1 Fury Storm
+1 Heliod's Intervention
+1 Increasing Vengeance
+1 Kabira Takedown
+1 Legion Leadership
+1 Magma Opus
+1 Negate
+1 Rapier Wit
+1 Reiterate
+1 Reprieve
+1 Return the Favor
+1 Rewind
+1 Rush of Inspiration
+1 Silundi Vision
+1 Sokka's Haiku
+1 Sublime Epiphany
+1 Invasion of Arcavios
+1 Jeskai Ascendancy
+1 Shark Typhoon
+1 Whirlwind of Thought
+1 Wizard Class

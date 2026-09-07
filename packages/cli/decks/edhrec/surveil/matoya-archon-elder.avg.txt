@@ -1,0 +1,81 @@
+# edhrec average deck: https://edhrec.com/average-decks/matoya-archon-elder/surveil
+# theme Surveil (40 decks)
+
+Commander
+1 Matoya, Archon Elder
+
+Deck
+1 Arcane Signet
+1 Decanter of Endless Water
+1 Glamdring, Foe-hammer
+1 Lunatic Pandora
+1 Mazemind Tome
+1 Planetarium of Wan Shi Tong
+1 Sapphire Medallion
+1 Sol Ring
+1 Thought Vessel
+1 Wizard's Staff
+1 Castle Vantress
+1 Conduit Pylons
+1 Crystal Grotto
+1 Hidden Grotto
+26 Island
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Rivendell
+1 Rumble Arena
+1 The Grey Havens
+1 Zhalfirin Void
+1 Alandra, Sky Dreamer
+1 Chasm Skulker
+1 Cruel Witness
+1 Cryptic Annelid
+1 Elrond, Lord of Rivendell
+1 Elvish Mariner
+1 Hermes, Overseer of Elpis
+1 Homunculus Horde
+1 Il Mheg Pixie
+1 Laboratory Maniac
+1 Mindwhisker
+1 Minn, Wily Illusionist
+1 Nightveil Sprite
+1 Psychosis Crawler
+1 PuPu UFO
+1 Sigiled Starfish
+1 Thassa, God of the Sea
+1 Triskaidekaphile
+1 Unwelcome Sprite
+1 Case of the Shifting Visage
+1 Eyes Everywhere
+1 Gossip's Talent
+1 Jace's Sanctum
+1 Lost Isle Calling
+1 Proft's Eidetic Memory
+1 Propaganda
+1 Search for Azcanta
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Banishing Betrayal
+1 Consider
+1 Counterspell
+1 Curate
+1 Deliberate
+1 Dissolve
+1 Don't Make a Sound
+1 Dreams of Laguna
+1 Fading Hope
+1 Mission Briefing
+1 Negate
+1 Opt
+1 Otherworldly Gaze
+1 Sinister Sabotage
+1 Swallowed by Leviathan
+1 Unauthorized Exit
+1 Voyage's End
+1 Jace, Mirror Mage
+1 Mentor's Guidance
+1 Mystic Speculation
+1 Preordain
+1 Scour All Possibilities
+1 Serum Visions
+1 Start the TARDIS

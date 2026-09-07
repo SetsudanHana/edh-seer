@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/jodah-the-unifier/day-night
+# theme Day / Night (2 decks)
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Andúril, Narsil Reforged
+1 Arcane Signet
+1 Knowledge Pool
+1 Sol Ring
+1 Teferi's Puzzle Box
+1 The Celestus
+1 The Deck of Many Things
+1 Vexing Puzzlebox
+1 Command Tower
+1 Crystal Quarry
+1 Exotic Orchard
+6 Forest
+1 Frontier Bivouac
+1 Gemstone Mine
+1 Great Hall of the Citadel
+4 Island
+1 Jungle Shrine
+4 Mountain
+1 Muraganda Raceway
+1 Mystic Monastery
+1 Nomad Outpost
+1 Opulent Palace
+4 Plains
+1 Reflecting Pool
+1 Sandsteppe Citadel
+1 Seaside Citadel
+4 Swamp
+1 The World Tree
+1 "Lifetime" Pass Holder
+1 Aarakocra Sneak
+1 Aragorn, King of Gondor
+1 Avabruck Caretaker
+1 Azure Fleet Admiral
+1 Círdan the Shipwright
+1 Dee Kay, Finder of the Lost
+1 Emissary Green
+1 Galadriel, Elven-Queen
+1 Howlpack Piper
+1 Jegantha, the Wellspring
+1 Midnight Pathlighter
+1 Morophon, the Boundless
+1 Mr. House, President and CEO
+1 Myra the Magnificent
+1 Outland Liberator
+1 Reki, the History of Kamigawa
+1 Rilsa Rael, Kingpin
+1 Sefris of the Hidden Ways
+1 Spinnerette, Arachnobat
+1 Stiltzkin, Moogle Merchant
+1 The Most Dangerous Gamer
+1 Tivit, Seller of Secrets
+1 Tovolar, Dire Overlord
+1 Wayward Swordtooth
+1 White Plume Adventurer
+1 Yuan-Ti Malison
+1 Yurlok of Scorch Thrash
+1 Court of Bounty
+1 Court of Locthwain
+1 Court of Vantress
+1 Exchange of Words
+1 Leyline of the Guildpact
+1 Loot Dispute
+1 Maelstrom Nexus
+1 Mirari's Wake
+1 Raging River
+1 Scroll of Isildur
+1 Bar the Gate
+1 Invert Polarity
+1 Split Decision
+1 Comet, Stellar Pup
+1 Jace, Wielder of Mysteries
+1 Space Beleren
+1 Approach of the Second Sun
+1 Coming Attraction
+1 Game of Chaos
+1 Illicit Auction
+1 Kodama's Reach
+1 Play of the Game
+1 Profane Tutor
+1 Scrambleverse
+1 Thieves' Auction
+1 Time of Need

@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/gavi-nest-warden/cycling
+# theme Cycling (809 decks)
+
+Commander
+1 Gavi, Nest Warden
+
+Deck
+1 Abandoned Sarcophagus
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Fluctuator
+1 Izzet Signet
+1 Monument to Endurance
+1 Raugrin Crystal
+1 Sol Ring
+1 Talisman of Creativity
+1 Ash Barrens
+1 Azorius Chancery
+1 Blasted Landscape
+1 Coastal Peak
+1 Command Tower
+1 Desert of the Fervent
+1 Desert of the Mindful
+1 Desert of the True
+1 Drifting Meadow
+1 Exotic Orchard
+1 Forgotten Cave
+1 Glittering Massif
+1 Hallowed Fountain
+1 Irrigated Farmland
+5 Island
+1 Lonely Sandbar
+3 Mountain
+1 Mystic Monastery
+1 Perilous Landscape
+3 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Reliquary Tower
+1 Remote Isle
+1 Secluded Steppe
+1 Shivan Reef
+1 Smoldering Crater
+1 Brallin, Skyshark Rider
+1 Cloud of Faeries
+1 Containment Construct
+1 Curator of Mysteries
+1 Drannith Healer
+1 Drannith Stinger
+1 Ephara, God of the Polis
+1 Flourishing Fox
+1 Herald of the Forgotten
+1 Homunculus Horde
+1 Irencrag Pyromancer
+1 Magmakin Artillerist
+1 Nimble Obstructionist
+1 Psychosis Crawler
+1 Rielle, the Everwise
+1 Rooting Moloch
+1 Shabraz, the Skyshark
+1 Surly Badgersaur
+1 The Locust God
+1 Valiant Rescuer
+1 Vizier of Tumbling Sands
+1 Yidaro, Wandering Monster
+1 Astral Drift
+1 Astral Slide
+1 Cast Out
+1 Crystalline Resonance
+1 Decree of Silence
+1 Drake Haven
+1 New Perspectives
+1 Ominous Seas
+1 Reconnaissance Mission
+1 Shark Typhoon
+1 Tectonic Reformation
+1 Teferi's Ageless Insight
+1 Akroma's Blessing
+1 Angelsong
+1 Complicate
+1 Countervailing Winds
+1 Forsake the Worldly
+1 Hieroglyphic Illumination
+1 Miscalculation
+1 Neutralize
+1 Radiant's Judgment
+1 Starstorm
+1 Swords to Plowshares
+1 Zenith Flare
+1 Teferi, Master of Time
+1 Akroma's Vengeance
+1 Boon of the Wish-Giver
+1 Decree of Justice
+1 Dismantling Wave
+1 Slice and Dice
+1 Spectacular Pileup
+1 Sweltering Suns

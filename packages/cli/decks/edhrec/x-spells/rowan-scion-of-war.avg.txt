@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/rowan-scion-of-war/x-spells
+# theme X Spells (602 decks)
+
+Commander
+1 Rowan, Scion of War
+
+Deck
+1 Arcane Signet
+1 Bolas's Citadel
+1 Fellwar Stone
+1 Lightning Greaves
+1 Rakdos Signet
+1 Sol Ring
+1 Staff of Compleation
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Barbarian Ring
+1 Blood Crypt
+1 Bloodstained Mire
+1 Cabal Pit
+1 City of Brass
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Ifnir Deadlands
+1 Luxury Suite
+1 Mount Doom
+7 Mountain
+1 Rakdos Carnarium
+1 Ramunap Ruins
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+10 Swamp
+1 Arco-Flagellant
+1 Blood Celebrant
+1 Dark Confidant
+1 Darkstar Augur
+1 Doom Whisperer
+1 Gray Merchant of Asphodel
+1 Heartless Hidetsugu
+1 Immolating Souleater
+1 Judith, Carnage Connoisseur
+1 K'rrik, Son of Yawgmoth
+1 Myr Convert
+1 Pinnacle Monk
+1 Souldrinker
+1 Storm-Kiln Artist
+1 Treasonous Ogre
+1 Vilis, Broker of Blood
+1 Wall of Blood
+1 Black Market Connections
+1 Dark Tutelage
+1 Greed
+1 Necropotence
+1 Phyrexian Arena
+1 Bitter Triumph
+1 Comet Storm
+1 Commune with Lava
+1 Dark Ritual
+1 Deflecting Swat
+1 Dismember
+1 Electrodominance
+1 Erebos's Intervention
+1 Fall of the Titans
+1 Fire Covenant
+1 Imp's Mischief
+1 March of Wretched Sorrow
+1 Seething Song
+1 Storm King's Thunder
+1 Apex of Power
+1 Banefire
+1 Battle at the Bridge
+1 Crackle with Power
+1 Cut // Ribbons
+1 Damnable Pact
+1 Devil's Play
+1 Exsanguinate
+1 Feed the Swarm
+1 Hell to Pay
+1 Jaya's Immolating Inferno
+1 Jeska's Will
+1 Night's Whisper
+1 Peer into the Abyss
+1 Profane Command
+1 Read the Bones
+1 Sign in Blood
+1 Swallowing Plague
+1 Torment of Hailfire
+1 Toxic Deluge

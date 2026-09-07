@@ -97,4 +97,4 @@ export function identityGradient(colors: readonly string[], direction: "90deg" |
   return `linear-gradient(${direction}, ${stops.join(", ")})`;
 }
 
-export { WUBRG_ORDER, NEUTRAL_IDENTITY };
+export { NEUTRAL_IDENTITY };

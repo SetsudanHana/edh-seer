@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/lotMxBy6UlitdboRIN0GNQ (source https://archidekt.com/decks/25320474)
+# tags Commander Matters, Spellslinger, Card Draw, Lifedrain; bracket 3; saved 2026-09-05; 120 tagged of 52883 indexed
+
+Commander
+1 Y'shtola, Night's Blessed
+
+Deck
+1 Absorb
+1 Anguished Unmaking
+1 Counterpoint
+1 Dismember
+1 Fake Your Own Death
+1 Fell the Profane
+1 Frantic Search
+1 Generous Gift
+1 Loran's Escape
+1 Memory Deluge
+1 Mortify
+1 Mystic Confluence
+1 Shore Up
+1 Snuff Out
+1 Stroke of Midnight
+1 Transpose
+1 Void Rend
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Baral, Chief of Compliance
+1 Emet-Selch of the Third Seat
+1 Fandaniel, Telophoroi Ascian
+1 Hermes, Overseer of Elpis
+1 Lyse Hext
+1 Papalymo Totolymo
+1 Thancred Waters
+1 Torrential Gearhulk
+1 Approach of the Second Sun
+1 Circle of Power
+1 Cleansing Nova
+1 Debt to the Deathless
+1 Decorum Dissertation
+1 Exsanguinate
+1 Final Judgment
+1 Fractured Identity
+1 Insatiable Avarice
+1 Lingering Souls
+1 Multiversal Recruitment
+1 Risky Shortcut
+1 Supreme Verdict
+1 Time Wipe
+1 Arcane Sanctum
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+1 Glacial Fortress
+6 Island
+8 Plains
+1 Prairie Stream
+1 Skycloud Expanse
+1 Sunken Hollow
+1 Sunken Ruins
+5 Swamp
+1 Terramorphic Expanse
+1 Underground River
+1 Arcane Signet
+1 Bolas's Citadel
+1 Chromatic Lantern
+1 Dancer's Chakrams
+1 Lightning Greaves
+1 Relic of Legends
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Progress
+1 Authority of the Consuls
+1 Bloodchief Ascension
+1 Cleric Class
+1 Curator's Ward
+1 Curiosity
+1 Ghostly Prison
+1 Helm of the Ghastlord
+1 No Mercy
+1 Observed Stasis
+1 Propaganda
+1 Search for Azcanta
+1 Shark Typhoon
+1 Steel of the Godhead
+1 Wizard Class

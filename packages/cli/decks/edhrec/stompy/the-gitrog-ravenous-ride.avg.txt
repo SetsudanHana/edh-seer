@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-gitrog-ravenous-ride/stompy
+# theme Stompy (577 decks)
+
+Commander
+1 The Gitrog, Ravenous Ride
+
+Deck
+1 Amulet of Vigor
+1 Arcane Signet
+1 Blackblade Reforged
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Skullspore Nexus
+1 Thought Vessel
+1 Bojuka Bog
+1 Command Tower
+1 Deathcap Glade
+12 Forest
+1 Golgari Rot Farm
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Reliquary Tower
+1 Rogue's Passage
+10 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Avenger of Zendikar
+1 Birds of Paradise
+1 Bygone Colossus
+1 Daemogoth Titan
+1 Daemogoth Woe-Eater
+1 Elvish Mystic
+1 Fanatic of Rhonas
+1 Ghalta, Primal Hunger
+1 Honest Rutstein
+1 Hunted Bonebrute
+1 Hunted Horror
+1 Jarad, Golgari Lich Lord
+1 Kalakscion, Hunger Tyrant
+1 Llanowar Elves
+1 Lotus Cobra
+1 Lupine Prototype
+1 Ob Nixilis, the Fallen
+1 Phyrexian Soulgorger
+1 Psychosis Crawler
+1 Pugnacious Hammerskull
+1 Rampaging Baloths
+1 Relic Golem
+1 Rotting Regisaur
+1 Scute Swarm
+1 Shakedown Heavy
+1 Tireless Provisioner
+1 Topiary Stomper
+1 Wayward Swordtooth
+1 Xu-Ifit, Osteoharmonist
+1 Yargle and Multani
+1 Yargle, Glutton of Urborg
+1 Zopandrel, Hunger Dominus
+1 Garruk's Uprising
+1 Retreat to Hagra
+1 Retreat to Kazandu
+1 Spelunking
+1 Unnatural Growth
+1 Assassin's Trophy
+1 Beast Within
+1 Heroic Intervention
+1 Not Dead After All
+1 Putrefy
+1 Return of the Wildspeaker
+1 Revitalizing Repast
+1 Tamiyo's Safekeeping
+1 Tear Asunder
+1 Culling Ritual
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Three Visits
+1 Toxic Deluge

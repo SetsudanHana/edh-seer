@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/iXiURSD4YNmCIzn1hgtDtQ (source https://archidekt.com/decks/17779976)
+# tags Counters Matter, Big Mana, Bounce; bracket 3; saved 2026-07-27; 56 tagged of 23257 indexed
+
+Commander
+1 Animar, Soul of Elements
+
+Deck
+1 Aesi, Tyrant of Gyre Strait
+1 Agent of Treachery
+1 Ancient Silver Dragon
+1 Apex Altisaur
+1 Artisan of Kozilek
+1 Balefire Dragon
+1 Beast Whisperer
+1 Beastcaller Savant
+1 Benthic Anomaly
+1 Birds of Paradise
+1 Bloom Tender
+1 Bogardan Hellkite
+1 Bugenhagen, Wise Elder
+1 Consecrated Sphinx
+1 Delighted Halfling
+1 Desolation Twin
+1 Dour Port-Mage
+1 Elvish Mystic
+1 Emrakul, the Promised End
+1 Etali, Primal Conqueror
+1 Eternal Witness
+1 Faerie Mastermind
+1 First Responder
+1 Fyndhorn Elves
+1 Grazilaxx, Illithid Scholar
+1 Gwenna, Eyes of Gaea
+1 Hideous Taskmaster
+1 Hullbreaker Horror
+1 Incubation Druid
+1 Inspired Sphinx
+1 Jaspera Sentinel
+1 Jhoira, Weatherlight Captain
+1 Jori En, Ruin Diver
+1 Kozilek, Butcher of Truth
+1 Llanowar Elves
+1 Loyal Drake
+1 Maelstrom Wanderer
+1 Magmatic Force
+1 Mistbreath Elder
+1 Ornithopter of Paradise
+1 Prime Speaker Zegana
+1 Quicksilver Gargantuan
+1 Radagast the Brown
+1 Riku of Two Reflections
+1 Sandstone Oracle
+1 Selvala, Heart of the Wilds
+1 Sphinx of Enlightenment
+1 Summon: Bahamut
+1 Temur Sabertooth
+1 Terror of the Peaks
+1 Tidespout Tyrant
+1 Tishana, Voice of Thunder
+1 Tri-Sentinel, Act of Vengeance
+1 Ulamog, the Ceaseless Hunger
+1 Ulamog, the Defiler
+1 Ulamog, the Infinite Gyre
+1 Ultimecia, Temporal Threat
+1 Ureni, the Song Unending
+1 Vedalken Mastermind
+1 Barkchannel Pathway
+1 Bountiful Landscape
+1 Cascade Bluffs
+1 Cragcrown Pathway
+1 Dreamroot Cascade
+1 Fabled Passage
+1 Ferrous Lake
+1 Fire-Lit Thicket
+1 Flooded Grove
+4 Forest
+1 Frontier Bivouac
+1 Hinterland Harbor
+3 Island
+1 Ketria Triome
+1 Misty Rainforest
+1 Mossfire Valley
+3 Mountain
+1 Naya Panorama
+1 Overflowing Basin
+1 Prismatic Vista
+1 Rejuvenating Springs
+1 Riverglide Pathway
+1 Rockfall Vale
+1 Rootbound Crag
+1 Scalding Tarn
+1 Spire Garden
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Training Center
+1 Wooded Foothills
+1 Cloudstone Curio
+1 Cunning Evasion
+1 Rhystic Study

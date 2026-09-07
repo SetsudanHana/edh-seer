@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/zJXozh4DrmVKrofHUjuO5g (source https://archidekt.com/decks/25530706)
+# tags Pingers, Burn, Group Slug, Bloodthirst; bracket 4; saved 2026-08-19; 2 tagged of 30673 indexed
+
+Commander
+1 Valgavoth, Harrower of Souls
+
+Deck
+1 Angel's Trumpet
+1 Basilisk Collar
+1 Crawlspace
+1 Jet Medallion
+1 Sol Ring
+1 Teferi's Puzzle Box
+1 Thought Vessel
+1 Arena of Glory
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Bloodstained Mire
+1 Canyon Slough
+1 Command Tower
+1 Dragonskull Summit
+1 Emergence Zone
+1 Flamekin Village
+1 Haunted Ridge
+1 Mikokoro, Center of the Sea
+8 Mountain
+1 Myriad Landscape
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Rogue's Passage
+1 Smoldering Marsh
+1 Spinerock Knoll
+8 Swamp
+1 Tainted Peak
+1 Temple of the False God
+1 Witch's Clinic
+1 Blasphemous Act
+1 Demonic Tutor
+1 Peer into the Abyss
+1 Reanimate
+1 Temporal Extortion
+1 Vandalblast
+1 Wheel of Fortune
+1 Blood Seeker
+1 Bloodletter of Aclazotz
+1 Cemetery Gatekeeper
+1 Crypt Ghast
+1 Eidolon of the Great Revel
+1 Enduring Tenacity
+1 Fate Unraveler
+1 Giggling Skitterspike
+1 Gleeful Arsonist
+1 Heartless Hidetsugu
+1 Hexing Squelcher
+1 Kederekt Parasite
+1 Nightshade Harvester
+1 Ojer Axonil, Deepest Might
+1 Orcish Bowmasters
+1 Plague Drone
+1 Psychosis Crawler
+1 Razorkin Needlehead
+1 Scrawling Crawler
+1 Sheoldred, the Apocalypse
+1 Silent Arbiter
+1 Solphim, Mayhem Dominus
+1 Twinflame Tyrant
+1 Blood for the Blood God!
+1 Bolt Bend
+1 Dark Ritual
+1 Darkness
+1 Deadly Rollick
+1 Deflecting Swat
+1 False Cure
+1 Redirect Lightning
+1 Vampiric Tutor
+1 Withering Torment
+1 Chandra, Awakened Inferno
+1 Ob Nixilis, the Hate-Twisted
+1 Exquisite Blood
+1 Havoc Festival
+1 Lasting Tarfire
+1 No Mercy
+1 Repercussion
+1 Rite of the Raging Storm
+1 Roiling Vortex
+1 Spellshock
+1 Spiked Corridor // Torture Pit
+1 Spiteful Visions
+1 Sulfuric Vortex
+1 Tainted Remedy
+1 Unholy Annex // Ritual Chamber
+1 Wound Reflection

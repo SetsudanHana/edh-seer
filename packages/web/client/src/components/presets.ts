@@ -241,7 +241,7 @@ const IDENTITY_LABEL: Record<string, string> = {
 /** Mana value is ORDERED, so it gets a sequential ramp and not a categorical palette -- the eye
  *  should read "more" going one way. Monotone in lightness so it survives greyscale and colour
  *  blindness alike. Index is the bucket, 0..7. */
-export const CMC_RAMP = [
+const CMC_RAMP = [
   "#cfe8f5", "#a5d3ec", "#7bbde2", "#5b9fd4", "#4b7fc4", "#4a5db3", "#48409e", "#3f2c7d",
 ];
 

@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/astarion-the-decadent/bloodthirst
+# theme Bloodthirst (3 decks)
+
+Commander
+1 Astarion, the Decadent
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Pearl Medallion
+1 Pristine Talisman
+1 Sol Ring
+1 The Darkness Crystal
+1 The Wind Crystal
+1 Well of Lost Dreams
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Exotic Orchard
+1 Fetid Heath
+1 Isolated Chapel
+1 Orzhov Basilica
+1 Orzhov Guildgate
+11 Plains
+1 Scoured Barrens
+1 Sunscorched Desert
+13 Swamp
+1 Tainted Field
+1 Vault of Whispers
+1 Amalia Benavides Aguirre
+1 Blood Artist
+1 Celestine, the Living Saint
+1 Crypt Ghast
+1 Daxos, Blessed by the Sun
+1 Emeritus of Truce
+1 Enduring Tenacity
+1 Felidar Sovereign
+1 Indulging Patrician
+1 Kambal, Consul of Allocation
+1 Lone Rider
+1 Marauding Blight-Priest
+1 Rune-Tail, Kitsune Ascendant
+1 Sangromancer
+1 Scheming Silvertongue
+1 Sorin of House Markov
+1 Soul Warden
+1 Soul's Attendant
+1 Stensian Sanguinist
+1 Tergrid, God of Fright
+1 Twilight Prophet
+1 Vito, Thorn of the Dusk Rose
+1 Vizkopa Guildmage
+1 Welcoming Vampire
+1 Witch of the Moors
+1 Authority of the Consuls
+1 Black Market
+1 Blind Obedience
+1 Boon Reflection
+1 Cleric Class
+1 Court of Ambition
+1 Ghostly Prison
+1 Life Insurance
+1 Sanguine Bond
+1 Anguished Unmaking
+1 Astarion's Thirst
+1 Bathe in Light
+1 Blessed Reversal
+1 Deadly Dispute
+1 Invoke the Divine
+1 Silverquill Charm
+1 Soul Shatter
+1 Swords to Plowshares
+1 Treacherous Greed
+1 Sorin, Grim Nemesis
+1 Blood Tribute
+1 Debt to the Deathless
+1 Exsanguinate
+1 Farewell
+1 Night's Whisper
+1 Read the Bones
+1 Sign in Blood
+1 Withering Curse

@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/sokka-tenacious-tactician/prowess
+# theme Prowess (240 decks)
+
+Commander
+1 Sokka, Tenacious Tactician
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Fellwar Stone
+1 Izzet Signet
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Abandoned Air Temple
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Cascade Bluffs
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+6 Island
+1 Jasmine Dragon Tea Shop
+5 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+1 Perilous Landscape
+5 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Sacred Foundry
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Appa, the Vigilant
+1 Archmage Emeritus
+1 Hakoda, Selfless Commander
+1 Hero of Goma Fada
+1 Kabira Evangel
+1 Katara, Water Tribe's Hope
+1 Longshot, Rebel Bowman
+1 Ondu Cleric
+1 Resolute Blademaster
+1 Smellerbee, Rebel Fighter
+1 Sokka, Lateral Strategist
+1 South Pole Voyager
+1 Storm-Kiln Artist
+1 Suki, Courageous Rescuer
+1 Veyran, Voice of Duality
+1 Wartime Protestors
+1 Frostcliff Siege
+1 Impact Tremors
+1 Jeskai Ascendancy
+1 Kindred Discovery
+1 Sokka's Charge
+1 Warleader's Call
+1 Waterbender Ascension
+1 Whirlwind of Thought
+1 Abandon Attachments
+1 Akroma's Will
+1 An Offer You Can't Refuse
+1 Boros Charm
+1 Brainstorm
+1 Consider
+1 Counterspell
+1 Enter the Avatar State
+1 Flawless Maneuver
+1 Frantic Search
+1 It'll Quench Ya!
+1 Lightning Bolt
+1 Negate
+1 Octopus Form
+1 Opt
+1 Path to Exile
+1 Redirect Lightning
+1 Swords to Plowshares
+1 Yip Yip!
+1 Boomerang Basics
+1 Crash Through
+1 Expressive Iteration
+1 Faithless Looting
+1 Ponder
+1 Preordain
+1 Raise the Palisade
+1 Spirit Water Revival
+1 United Front

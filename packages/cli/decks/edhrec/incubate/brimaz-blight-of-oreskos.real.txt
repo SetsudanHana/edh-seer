@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/XtQS8VsL5JmPsioljRECGA (source https://archidekt.com/decks/23160215)
+# tags +1/+1 Counters, Incubate, Tokens, Artifacts, Phyrexians; bracket 2; saved 2026-09-05; 26 tagged of 8659 indexed
+
+Commander
+1 Brimaz, Blight of Oreskos
+
+Deck
+1 Access Tunnel
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Fetid Heath
+1 Goldmire Bridge
+1 Haunted Fengraf
+1 Karn's Bastion
+1 Opal Palace
+1 Path of Ancestry
+12 Plains
+1 Shineshadow Snarl
+1 Silverquill Campus
+1 Spire of Industry
+12 Swamp
+1 Tainted Field
+1 Vault of the Archangel
+1 All That Glitters
+1 Phyrexian Scriptures
+1 Retreat to Emeria
+1 Sigarda's Summons
+1 Sparring Regimen
+1 Together Forever
+1 Ambition's Cost
+1 Crippling Fear
+1 Hour of Revelation
+1 Humiliate
+1 Night's Whisper
+1 Phyrexian Rebirth
+1 Sign in Blood
+1 Wanderer's Strike
+1 Ancient Stone Idol
+1 Basilica Shepherd
+1 Blade Splicer
+1 Blight Titan
+1 Cataclysmic Gearhulk
+1 Cogwork Archivist
+1 Darksteel Splicer
+1 Duplicant
+1 First-Sphere Gargantua
+1 Graveshifter
+1 Meteor Golem
+1 Moira and Teshar
+1 Myr Battlesphere
+1 Noxious Gearhulk
+1 Phyrexian Delver
+1 Phyrexian Gargantua
+1 Phyrexian Rager
+1 Phyrexian Triniform
+1 Refurbished Familiar
+1 Sandstone Oracle
+1 Scrap Trawler
+1 Shattered Angel
+1 Shimmer Myr
+1 Skyclave Sentinel
+1 Soul of New Phyrexia
+1 Starnheim Courser
+1 Stonecoil Serpent
+1 Sun Titan
+1 Towashi Guide-Bot
+1 Vulpine Harvester
+1 Walking Skyscraper
+1 Arcane Signet
+1 Fractured Powerstone
+1 Nettlecyst
+1 Orzhov Locket
+1 Orzhov Signet
+1 Poet's Quill
+1 Raiders' Karve
+1 Replicating Ring
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Crushing Disappointment
+1 Despark
+1 Mortify
+1 Raise the Draugr
+1 Utter End

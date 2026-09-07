@@ -9,7 +9,11 @@ import { expect, test } from "vitest";
 const CLIENT = join(process.cwd(), "client");
 const html = readFileSync(join(CLIENT, "index.html"), "utf8");
 const robots = readFileSync(join(CLIENT, "public", "robots.txt"), "utf8");
-const sitemap = readFileSync(join(CLIENT, "public", "sitemap.xml"), "utf8");
+/** THE SITEMAP IS BUILT, NOT CHECKED IN (Task 10). `assemble-deploy.mjs` writes it from
+ *  `name-index.json`, so the tests that read it only run where a build exists -- the same
+ *  `existsSync` guard the other dist-dependent tests here use. */
+const DIST = join(CLIENT, "dist");
+const builtSitemap = join(DIST, "sitemap.xml");
 const llms = readFileSync(join(CLIENT, "public", "llms.txt"), "utf8");
 
 /** The one absolute origin in the app, written down once. Every assertion below reads it from the
@@ -76,15 +80,51 @@ test("robots keeps crawlers out of the card artifacts and points at the sitemap"
   expect(robots).toContain(`Sitemap: ${canonical}sitemap.xml`);
 });
 
-test("the sitemap lists the pages that exist and nothing that does not", () => {
-  const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-  expect(locs).toEqual([canonical, `${canonical}how-it-works`]);
-  // Every listed URL has a file behind it. A sitemap entry for a page that 404s is worse than no
-  // sitemap: it is a promise the site does not keep.
-  for (const loc of locs) {
-    const path = loc.slice(canonical.length);
-    const file = path === "" ? join(CLIENT, "index.html") : join(CLIENT, path, "index.html");
-    expect(existsSync(file), `${loc} has a file`).toBe(true);
+/** A HAND-WRITTEN SITEMAP CANNOT STAY CORRECT AT THIS SIZE. Two URLs were maintainable; 17,775 are
+ *  not, and a checked-in copy would drift from the artifact the first time the corpus grew --
+ *  into promising pages that 404, which is worse than having no sitemap. */
+test("no hand-written sitemap survives in public/", () => {
+  expect(existsSync(join(CLIENT, "public", "sitemap.xml"))).toBe(false);
+});
+
+/** THE GENERATED ONE LISTS EXACTLY WHAT THE ARTIFACT HOLDS: the two static pages, one card URL per
+ *  substantive card, and a second URL for every card that can lead a deck. A card the engine has
+ *  never read is not in the index and so is never promised a page.
+ *
+ *  Skipped without a build, because `dist/` is produced by `npm run build` plus `assemble-deploy`
+ *  and a fresh checkout has neither. */
+test.skipIf(!existsSync(builtSitemap))("the sitemap lists every substantive card and commander, and nothing else", () => {
+  const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
+  const index = JSON.parse(
+    readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
+  ) as { slug: string; commander: boolean }[];
+  const locs = [...readFileSync(builtSitemap, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
+
+  expect(locs).toHaveLength(2 + index.length + index.filter((e) => e.commander).length);
+  expect(locs.slice(0, 2)).toEqual([canonical, `${canonical}how-it-works`]);
+  // Every URL is on the canonical origin -- a sitemap that names another host is a sitemap for
+  // another site.
+  for (const loc of locs) expect(loc.startsWith(canonical.slice(0, -1))).toBe(true);
+  // THE PROMISE THIS FILE MAKES: a card the engine has not read has no page and is not listed.
+  const slugs = new Set(index.map((e) => e.slug));
+  for (const loc of locs.slice(2)) {
+    const slug = loc.slice(loc.lastIndexOf("/") + 1);
+    expect(slugs.has(slug), `${loc} is a card the index holds`).toBe(true);
+  }
+});
+
+/** THE PRERENDER ROUTES EXIST, AND ARE NAMED WHAT CLOUDFLARE EXPECTS.
+ *
+ *  A Pages Function is wired by its PATH: `functions/cards/[slug].ts` answers `/cards/:slug` and
+ *  nothing announces it. Rename the file, move the directory, or deploy from a working directory
+ *  where `functions/` is not beside the output, and every card URL quietly goes back to serving the
+ *  empty shell -- with a green suite, a correct sitemap, and 17,775 URLs a crawler reads as blank.
+ *  The logic is tested in `inject.test.ts`; this asserts the wiring that carries it. */
+test("the card and commander prerender functions are where Pages looks for them", () => {
+  const functions = join(CLIENT, "..", "functions");
+  for (const route of ["cards/[slug].ts", "commanders/[slug].ts"]) {
+    expect(existsSync(join(functions, route)), `${route} exists`).toBe(true);
+    expect(readFileSync(join(functions, route), "utf8")).toContain("renderCardPage");
   }
 });
 
@@ -188,10 +228,20 @@ test("the page ships real text without running JavaScript", () => {
 
 test("the how-it-works page is a page, not an app route", () => {
   const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
-  // No script at all: the prose is the whole page, so JS-off readers and crawlers get all of it.
+  // NO BUNDLE, which is what "not an app route" means and what this test has always been about: the
+  // prose is the whole page, so JS-off readers and crawlers get all of it.
+  //
+  // IT USED TO ASSERT ZERO SCRIPTS, which was the right proxy while there were zero and the wrong
+  // property to name. The page gained one on 2026-09-04 -- the ~15 lines that close the header menu
+  // on Escape and on a press outside it -- and that script adds nothing to this page and removes
+  // nothing from it: every word here is still in the HTML with JavaScript off, and the menu still
+  // opens and closes without it, because `<details>` supplies that itself. So the assertion is now
+  // the property rather than the proxy: nothing with a `src`, and no inline script but that one.
   // Asked of the parsed document rather than the source text, for the reason above.
   const parsed = new DOMParser().parseFromString(page, "text/html");
-  expect(parsed.querySelectorAll("script")).toHaveLength(0);
+  expect(parsed.querySelectorAll("script[src]")).toHaveLength(0);
+  const inline = [...parsed.querySelectorAll("script")].map((el) => el.textContent ?? "");
+  expect(inline.filter((body) => !body.includes(".site-more[open]"))).toEqual([]);
   expect(page).toContain('<link rel="canonical" href="' + canonical + 'how-it-works"');
   expect(page).toMatch(/<h1>How it works<\/h1>/);
   // It explains the thing it promises to explain, in its own words rather than by linking away.
@@ -225,12 +275,59 @@ test.each(Object.entries(PAGES))("%s carries the site header and the same nav", 
   const page = readFileSync(join(CLIENT, file), "utf8");
   expect(page).toContain('class="site-header"');
   expect(page).toContain('class="site-nav"');
+  // THE TWO BROWSE SURFACES ARE IN THE NAV ON BOTH PAGES (owner, 2026-09-04). They were reachable
+  // only from the foot of a card page before this — which is to say, only from a page you had
+  // already found some other way.
   for (const href of [
+    "/",
+    "/cards",
+    "/commanders",
+    "/how-it-works",
     "https://github.com/SetsudanHana/edh-seer",
     "https://github.com/SetsudanHana/edh-seer/issues/new",
   ]) {
     expect(page, `${file} links ${href}`).toContain(`href="${href}"`);
   }
+});
+
+/** THE NAV MAY NOT MOVE WHEN YOU CROSS BETWEEN THE PAGES (owner, 2026-09-04). The two used to differ
+ *  by one item — the app page offered "How it works" and the prose page offered "Analyse a deck" —
+ *  so every crossing shifted every other item sideways by the width difference of those two labels.
+ *  Byte-for-byte is the only assertion that catches it: same items, same order, same labels. A test
+ *  that merely counted links, or checked a set of hrefs, passes on a nav that jumps. */
+test("both pages carry the byte-identical nav", () => {
+  const navOf = (file: string) =>
+    /<nav class="site-nav"[\s\S]*?<\/nav>/.exec(readFileSync(join(CLIENT, file), "utf8"))?.[0];
+  const [app, prose] = Object.values(PAGES).map(navOf);
+  expect(app).toBeDefined();
+  expect(prose).toBe(app);
+});
+
+/** COMBO, AND THE SPLIT IS THE POINT (research 2026-09-04). NN/g's 179-participant study measured
+ *  three conditions: on phones, navigation behind an icon was USED in 57% of tasks against 86% for
+ *  some-visible-plus-a-menu, 15% slower, with a >20% drop in content discoverability. Their rule
+ *  splits on our exact count -- four or fewer, show them all; more than four, hide SOME.
+ *
+ *  SO THE TEST IS THE SPLIT, not the presence of six links. `both pages carry the byte-identical
+ *  nav` above passes just as happily on a nav with all six behind the menu, which is the condition
+ *  that lost every measure in that study, and it would pass on a nav with the wrong three hidden.
+ *  The two browse surfaces are named explicitly because they are the reason this nav exists: they
+ *  were reachable only from the foot of a card page until 2026-09-04, and hiding them again is the
+ *  specific regression worth a test. */
+test.each(Object.entries(PAGES))("%s keeps the three product destinations out of the menu", (_url, file) => {
+  const page = readFileSync(join(CLIENT, file), "utf8");
+  const nav = /<nav class="site-nav"[\s\S]*?<\/nav>/.exec(page)![0];
+  const menu = /<details class="site-more">[\s\S]*?<\/details>/.exec(nav)?.[0];
+  expect(menu, `${file} has a More menu`).toBeDefined();
+  const visible = nav.replace(menu!, "");
+
+  for (const href of ["/", "/cards", "/commanders"]) {
+    expect(visible, `${file} shows ${href} without opening the menu`).toContain(`href="${href}"`);
+  }
+  // And the menu is labelled with a WORD. The same study's companion measured BBC's labelled bar at
+  // 89% usage against Bloomberg's unlabelled icon at 44%, which readers took for part of the logo it
+  // sat beside -- and ours would sit beside a wordmark too.
+  expect(/<summary>[A-Za-z][^<]*<\/summary>/.test(menu!), `${file} labels the menu`).toBe(true);
 });
 
 /** ONE `h1` PER PAGE, and it has to be the one that says what the page is about. The app page's is

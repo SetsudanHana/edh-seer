@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/e-8aPh8Gr6Fsa4RFqZzCsQ (source https://archidekt.com/decks/9385884)
+# tags Combo, Big Mana, Infect, Planeswalkers, Charge Counters, Storm, Counters Matter, Proliferate; bracket 3; saved 2026-08-21; 42 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Adagia, Windswept Bastion
+1 Bayou
+1 Command Tower
+1 Flooded Strand
+1 Gemstone Mine
+1 Hickory Woodlot
+1 Interplanar Beacon
+1 Karn's Bastion
+1 Mage-Ring Network
+1 Magosi, the Waterveil
+1 Marsh Flats
+1 Mirrodin's Core
+1 Misty Rainforest
+1 Nesting Grounds
+1 Peat Bog
+1 Polluted Delta
+1 Remote Farm
+1 Saprazzan Skerry
+1 Savannah
+1 Scrubland
+1 Sunken Citadel
+1 Takenuma, Abandoned Mire
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Urza's Cave
+1 Verdant Catacombs
+1 Vivid Marsh
+1 Windswept Heath
+1 Aetherize
+1 Dark Ritual
+1 Endless Detour
+1 Ignite the Beacon
+1 Reject Imperfection
+1 Scour for Scrap
+1 Steady Progress
+1 Stubborn Denial
+1 Ajani Unyielding
+1 Ashiok, Dream Render
+1 Dakkon, Shadow Slayer
+1 Dovin, Hand of Control
+1 Garruk, Apex Predator
+1 Kasmina, Enigma Sage
+1 Kasmina, Enigmatic Mentor
+1 Kaya, Bane of the Dead
+1 Kaya, Ghost Assassin
+1 Kaya, Intangible Slayer
+1 Kiora, Behemoth Beckoner
+1 Ob Nixilis Reignited
+1 Ral Zarek, Guest Lecturer
+1 Tamiyo, Compleated Sage
+1 The Wanderer
+1 Vraska the Unseen
+1 Vraska, Betrayal's Sting
+1 Arcane Signet
+1 Astral Cornucopia
+1 Coalition Relic
+1 Everflowing Chalice
+1 Gatewatch Beacon
+1 Ichormoon Gauntlet
+1 Insight Engine
+1 Lotus Blossom
+1 Moonsilver Key
+1 Norn's Annex
+1 Pentad Prism
+1 Replicating Ring
+1 Sol Ring
+1 Staff of Domination
+1 The Chain Veil
+1 As Foretold
+1 Brokers Ascendancy
+1 Inexorable Tide
+1 Innkeeper's Talent
+1 Oath of Nissa
+1 Phyrexian Unlife
+1 Call the Gatewatch
+1 Consuming Tide
+1 Damn
+1 Depopulate
+1 Fabricate
+1 Maelstrom Pulse
+1 Part the Waterveil
+1 Reap and Sow
+1 Reshape
+1 Supreme Verdict
+1 Unnatural Restoration
+1 Whelming Wave
+1 White Sun's Twilight
+1 Withering Curse
+1 Carth the Lion
+1 Crystalline Crawler
+1 Ezuri, Stalker of Spheres
+1 Flux Channeler
+1 Kami of Whispered Hopes
+1 Noble Hierarch
+1 Patrolling Peacemaker
+1 Phyrexian Censor
+1 Scheming Aspirant
+1 Silent Arbiter

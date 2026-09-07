@@ -1,0 +1,105 @@
+# edhrec average deck: https://edhrec.com/average-decks/tom-bombadil/summons
+# theme Summons (6 decks)
+
+Commander
+1 Tom Bombadil
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Power Conduit
+1 Sol Ring
+1 Blood Crypt
+1 Breeding Pool
+1 Canopy Vista
+1 City of Brass
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+2 Forest
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Indatha Triome
+1 Island
+1 Ketria Triome
+1 Mountain
+1 Nesting Grounds
+1 Overgrown Tomb
+1 Plains
+1 Polluted Delta
+1 Rejuvenating Springs
+1 Rivendell
+1 Sacred Foundry
+1 Snow-Covered Forest
+1 Snow-Covered Mountain
+1 Snow-Covered Plains
+1 Snow-Covered Swamp
+1 Spara's Headquarters
+1 Spire Garden
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 The World Tree
+1 Undergrowth Stadium
+1 Urza's Saga
+1 Barbara Wright
+1 Bloom Tender
+1 Dryad of the Ilysian Grove
+1 Garnet, Princess of Alexandria
+1 Goldberry, River-Daughter
+1 Hex Parasite
+1 Jukai Naturalist
+1 Narci, Fable Singer
+1 O'aka, Traveling Merchant
+1 Sanctum Weaver
+1 Satsuki, the Living Lore
+1 Scholar of New Horizons
+1 Setessan Champion
+1 Sigurd, Jarl of Ravensthorpe
+1 Starfield Mystic
+1 Summon: Bahamut
+1 Summon: Fenrir
+1 Summon: Knights of Round
+1 Summon: Primal Odin
+1 Summon: Shiva
+1 Summon: Titan
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Terra, Magical Adept
+1 Weaver of Harmony
+1 Azusa's Many Journeys
+1 Binding the Old Gods
+1 Birth of the Imperium
+1 Elspeth Conquers Death
+1 Enchantress's Presence
+1 Estrid's Invocation
+1 Historian's Boon
+1 In the Darkness Bind Them
+1 Kiora Bests the Sea God
+1 Phyrexian Scriptures
+1 Scroll of Isildur
+1 Song of Eärendil
+1 Starfield of Nyx
+1 Sterling Grove
+1 The Akroan War
+1 The Bath Song
+1 The Creation of Avacyn
+1 The Cruelty of Gix
+1 The Eldest Reborn
+1 The Kami War
+1 There and Back Again
+1 War of the Last Alliance
+1 Clockspinning
+1 Enlightened Tutor
+1 Heroic Intervention
+1 Path to Exile
+1 Teferi's Protection
+1 Clash of the Eikons
+1 Cultivate
+1 Farseek
+1 Nature's Lore
+1 Resurgent Belief
+1 Three Visits

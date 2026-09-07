@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/5EAGEOOAY6_h5iJrdjuaOw (source https://archidekt.com/decks/23505676)
+# tags Power, Fling; bracket 2; saved 2026-08-28; 87 tagged of 2444 indexed
+
+Commander
+1 Mr. Orfeo, the Boulder
+
+Deck
+1 Arcane Signet
+1 Embercleave
+1 Mage Slayer
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Whispersilk Cloak
+1 Archetype of Aggression
+1 Bloodshot Cyclops
+1 Bloodthirster
+1 Disciple of Bolas
+1 Disciple of Freyalise
+1 Ghalta, Primal Hunger
+1 Halana and Alena, Partners
+1 Ignoble Hierarch
+1 Jumbo Cactuar
+1 Kediss, Emberclaw Familiar
+1 Neyith of the Dire Hunt
+1 Nightshade Dryad
+1 Ornithopter of Paradise
+1 Quilled Greatwurm
+1 Shakedown Heavy
+1 Stonecoil Serpent
+1 Suspicious Bookcase
+1 Twinflame Tyrant
+1 Wave of Rats
+1 Wolverine, Best There Is
+1 Wulfgar of Icewind Dale
+1 Xenagos, God of Revels
+1 Xu-Ifit, Osteoharmonist
+1 Yargle and Multani
+1 Yargle, Glutton of Urborg
+1 Ziatora, the Incinerator
+1 Zilortha, Strength Incarnate
+1 Zopandrel, Hunger Dominus
+1 Burning Anger
+1 Garruk's Uprising
+1 Gratuitous Violence
+1 Hunter's Talent
+1 Pain for All
+1 Phyresis
+1 Rhythm of the Wild
+1 Underworld Connections
+1 Unnatural Growth
+1 Chandra's Ignition
+1 Cultivate
+1 Flesh // Blood
+1 Harmonize
+1 Kodama's Reach
+1 Night's Whisper
+1 Rampant Growth
+1 Rite of Consumption
+1 Season of Gathering
+1 Soul's Majesty
+1 Thud
+1 Command Tower
+1 Exotic Orchard
+11 Forest
+10 Mountain
+1 Rogue's Passage
+1 Savage Lands
+1 Skarrg, the Rage Pits
+9 Swamp
+1 Fling
+1 Hunter's Insight
+1 Return of the Wildspeaker
+1 Royal Treatment
+1 Self-Destruct
+1 Snakeskin Veil
+1 Tainted Strike
+1 Tyvar's Stand
+1 Vines of Vastwood

@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/dNhcz8WbGTAhER324TdbsQ (source https://archidekt.com/decks/24863069)
+# tags Burn, Horsemanship, Spellslinger, Voltron; bracket unset; saved 2026-08-04; 1 tagged of 34 indexed
+
+Commander
+1 Ma Chao, Western Warrior
+
+Deck
+1 Abrade
+1 Big Score
+1 Desperate Ritual
+1 Great Train Heist
+1 Lightning Bolt
+1 Pyretic Ritual
+1 Savage Beating
+1 Seething Song
+1 Shock
+1 Spikefield Hazard
+1 Arena of Glory
+1 Blighted Gorge
+1 Castle Embereth
+1 Cathedral of War
+1 Desert of the Fervent
+1 Dormant Volcano
+1 Evolving Wilds
+1 Fire Nation Palace
+1 Great Furnace
+1 Mines of Moria
+1 Mishra's Workshop
+25 Mountain
+1 Atsushi, the Blazing Sky
+1 Barbarian General
+1 Blazing Firesinger
+1 Brass Squire
+1 Emeritus of Conflict
+1 Goblin Champion
+1 Hellkite Tyrant
+1 Karlach, Fury of Avernus
+1 Kediss, Emberclaw Familiar
+1 Knuckles the Echidna
+1 Lu Bu, Master-at-Arms
+1 Runaway Steam-Kin
+1 Solemn Simulacrum
+1 Xorn
+1 Blasphemous Act
+1 Blaze
+1 Brass's Bounty
+1 Browbeat
+1 Crackle with Power
+1 Desert Sandstorm
+1 Faithless Looting
+1 Full Throttle
+1 Jeska's Will
+1 Mana Geyser
+1 Relentless Assault
+1 Rolling Earthquake
+1 Soul Immolation
+1 Vandalblast
+1 Blinkmoth Urn
+1 Brass's Tunnel-Grinder
+1 Buster Sword
+1 Darksteel Forge
+1 Diamond Pick-Axe
+1 Dueling Rapier
+1 Extinguisher Battleship
+1 Genji Glove
+1 Goldvein Pick
+1 Hammer of Nazahn
+1 Long-Range Sensor
+1 Magebane Armor
+1 Manriki-Gusari
+1 Meteoric Mace
+1 Mind Stone
+1 Mox Jasper
+1 Ruby Medallion
+1 Sigil of Valor
+1 Sol Ring
+1 Swiftfoot Boots
+1 Wayfarer's Bauble
+1 Grim Reaper's Sprint
+1 Rain of Riches
+1 Super State
+1 Tempered in Solitude

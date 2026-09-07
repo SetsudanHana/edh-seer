@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/ishkanah-grafwidow/reach
+# theme Reach (9 decks)
+
+Commander
+1 Ishkanah, Grafwidow
+
+Deck
+1 Arcane Signet
+1 Ashnod's Altar
+1 Golgari Signet
+1 Sol Ring
+1 Talisman of Resilience
+1 Vanquisher's Banner
+1 Wayfarer's Bauble
+1 Bojuka Bog
+1 Command Tower
+1 Evolving Wilds
+15 Forest
+1 Golgari Rot Farm
+1 Jungle Hollow
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Path of Ancestry
+9 Swamp
+1 Swarmyard
+1 Temple of Malady
+1 Terramorphic Expanse
+1 Woodland Cemetery
+1 Arasta of the Endless Web
+1 Birds of Paradise
+1 Brood Weaver
+1 Chainweb Aracnir
+1 Deadly Recluse
+1 Doom Weaver
+1 Drider
+1 Graveshifter
+1 Hatchery Spider
+1 Juvenile Gloomwidow
+1 Netcaster Spider
+1 Nyx Weaver
+1 Obelisk Spider
+1 Penumbra Spider
+1 Rotwidow Pack
+1 Sakura-Tribe Elder
+1 Shelob, Child of Ungoliant
+1 Silklash Spider
+1 Skull Prophet
+1 Skyfisher Spider
+1 Snarespinner
+1 Spinner of Souls
+1 Sporeweb Weaver
+1 Stingerfling Spider
+1 Sweet-Gum Recluse
+1 Twin-Silk Spider
+1 Twitching Doll
+1 Watcher in the Web
+1 Arachnus Web
+1 Beastmaster Ascension
+1 Curse of Clinging Webs
+1 Doubling Season
+1 Moldervine Reclamation
+1 Phyrexian Reclamation
+1 Ripples of Undeath
+1 Arachnogenesis
+1 Beast Within
+1 Grisly Salvage
+1 Harrow
+1 Heroic Intervention
+1 Putrefy
+1 Return of the Wildspeaker
+1 Return to Nature
+1 Second Harvest
+1 Lolth, Spider Queen
+1 Bala Ged Recovery
+1 Cultivate
+1 Damnation
+1 Harmonize
+1 Kodama's Reach
+1 Mulch
+1 Overwhelming Stampede
+1 Rampant Growth
+1 Regrowth
+1 Spider Spawning
+1 Swarmyard Massacre

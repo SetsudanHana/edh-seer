@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/zUJTGujNB6IpDwuHjwbIMg (source https://archidekt.com/decks/20097013)
+# tags Ninjas, Ninjutsu; bracket 2; saved 2026-08-25; 253 tagged of 2185 indexed
+
+Commander
+1 Satoru, the Infiltrator
+
+Deck
+1 Aetherize
+1 Bitter Triumph
+1 Blur
+1 Counterspell
+1 Essence Flux
+1 Ghostly Flicker
+1 Negate
+1 Teferi's Time Twist
+1 Waterlogged Teachings
+1 Arcane Signet
+1 Dimir Signet
+1 Key to the City
+1 Mind Stone
+1 Scroll of Fate
+1 Sol Ring
+1 The Darkness Crystal
+1 Whip of Erebos
+1 Archaeomancer
+1 Armaggon, Future Shark
+1 Baleful Strix
+1 Changeling Outcast
+1 Dream Beavers
+1 Faerie Seer
+1 Fallen Shinobi
+1 Gingerbrute
+1 Gollum, Riddle Master
+1 Grazilaxx, Illithid Scholar
+1 Higure, the Still Wind
+1 Ingenious Infiltrator
+1 Ingenious Prodigy
+1 Ink-Eyes, Servant of Oni
+1 Jill, Shiva's Dominant
+1 Memnite
+1 Mist-Syndicate Naga
+1 Mistblade Shinobi
+1 Moonsnare Specialist
+1 Nashi, Moon Sage's Scion
+1 Nezumi Prowler
+1 Ninja of the Deep Hours
+1 Noxious Gearhulk
+1 Ornithopter
+1 Prosperous Thief
+1 Satoru Umezawa
+1 Sepulchral Primordial
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Snapcaster Mage
+1 Spectral Sailor
+1 Tetsuko Umezawa, Fugitive
+1 Thousand-Faced Shadow
+1 Throatseeker
+1 Tormented Soul
+1 Triton Shorestalker
+1 Walker of Secret Ways
+1 Wingcrafter
+1 Yuriko, the Tiger's Shadow
+1 Bojuka Bog
+1 Command Tower
+1 Creeping Tar Pit
+1 Darkslick Shores
+1 Drowned Catacomb
+1 Fabled Passage
+1 Gloomlake Verge
+1 Hidden Lair
+12 Island
+1 Jwar Isle Refuge
+1 Reliquary Tower
+1 Rogue's Passage
+8 Swamp
+1 Turtle Lair
+1 Watery Grave
+1 Cunning Evasion
+1 Gossip's Talent
+1 Smoke Shroud
+1 Exsanguinate
+1 Inside Information
+1 Shredder's Technique
+1 Splinter's Technique
+1 Toxic Deluge
+1 Unearth
+1 Kaito, Bane of Nightmares

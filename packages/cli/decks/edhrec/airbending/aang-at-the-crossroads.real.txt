@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/VO7LVHmf27xu9X7Rd81oAw (source https://archidekt.com/decks/17661784)
+# tags Combo, Earthbending, Airbending; bracket 3; saved 2026-09-01; 36 tagged of 6427 indexed
+
+Commander
+1 Aang, at the Crossroads
+
+Deck
+1 Aang, Airbending Master
+1 Aang, Swift Savior
+1 Aang, the Last Airbender
+1 Appa, Loyal Sky Bison
+1 Appa, Steadfast Guardian
+1 Badgermole
+1 Badgermole Cub
+1 Captain Sisay
+1 Curious Farm Animals
+1 Doc Aurlock, Grizzled Genius
+1 Earth King's Lieutenant
+1 Earth Kingdom General
+1 Evolution Sage
+1 Formidable Speaker
+1 Glasspool Mimic
+1 Hamza, Guardian of Arashin
+1 Haru, Hidden Talent
+1 Hermitic Herbalist
+1 Incubation Druid
+1 Invasion Reinforcements
+1 Katara, the Fearless
+1 Kutzil, Malamet Exemplar
+1 Momo, Friendly Flier
+1 Momo, Playful Pet
+1 Novice Inspector
+1 Phelia, Exuberant Shepherd
+1 Reclamation Sage
+1 Rishkar, Peema Renegade
+1 Six
+1 Slippery Bogbonder
+1 Sokka, Lateral Strategist
+1 Teo, Spirited Glider
+1 The Boulder, Ready to Rumble
+1 The Earth King
+1 The Lion-Turtle
+1 Tiger-Seal
+1 Toph, Earthbending Master
+1 Turtle-Duck
+1 Vega, the Watcher
+1 Witch Enchanter
+1 Abandoned Air Temple
+1 Ba Sing Se
+1 Bant Panorama
+1 Canopy Vista
+1 Command Tower
+1 Fabled Passage
+1 Flooded Grove
+3 Forest
+1 Fortified Village
+1 Gavony Township
+2 Island
+1 Karn's Bastion
+1 Kyoshi Village
+1 Littjara Mirrorlake
+1 Meditation Pools
+1 Myriad Landscape
+1 North Pole Gates
+1 Path of Ancestry
+3 Plains
+1 Port Town
+1 Prairie Stream
+1 Rumble Arena
+1 Seaside Citadel
+1 Secret Tunnel
+1 Skycloud Expanse
+1 Sungrass Prairie
+1 Tranquil Landscape
+1 Vivid Creek
+1 Vivid Grove
+1 Vivid Meadow
+1 Airbender Ascension
+1 Earthbender Ascension
+1 Path to Redemption
+1 Resourceful Defense
+1 Retreat to Emeria
+1 The Legend of Kyoshi
+1 Airbending Lesson
+1 Archdruid's Charm
+1 Cloudshift
+1 Cycle of Renewal
+1 Dream Fracture
+1 Hindering Light
+1 Inspiring Call
+1 Origin of Metalbending
+1 Repulsive Mutation
+1 Teferi's Protection
+1 Thraben Charm
+1 Avatar's Wrath
+1 Damning Verdict
+1 Planar Outburst
+1 Tale of Momo
+1 Semblance Anvil
+1 Urza's Incubator
+1 Zuran Orb

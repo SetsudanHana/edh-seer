@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/Jtnpu07WjHxga-5O-UGgqw (source https://archidekt.com/decks/25543833)
+# tags Job Select, Tokens, Ramp, Modified Creatures, Heroes, Card Draw, Equipment; bracket 2; saved 2026-08-20; 2 tagged of 4884 indexed
+
+Commander
+1 Nick Fury, Agent of S.H.I.E.L.D.
+
+Deck
+1 Aerith Rescue Mission
+1 Bloodsoaked Insight
+1 Makindi Stampede
+1 Ondu Inversion
+1 Stump Stomp
+1 Sundering Eruption
+1 Suppression Ray
+1 The Crystal's Chosen
+1 Araña, Heart of the Spider
+1 Armored Skyhunter
+1 Boggart Trawler
+1 Bucky Barnes, Eager Ally
+1 Cid, Freeflier Pilot
+1 Dragoon's Wyvern
+1 Drowner of Truth
+1 Dwarven Castle Guard
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Freya Crescent
+1 G'raha Tia, Scion Reborn
+1 Hydroelectric Specimen
+1 Iron Lad, Young Avenger
+1 Jhoira's Familiar
+1 Lyse Hext
+1 Puresteel Paladin
+1 Ronin, Shadow Stalker
+1 Sram, Senior Edificer
+1 Tellah, Great Sage
+1 The Mighty Thor, Jane Foster
+1 Tiana, Ship's Caretaker
+1 Voyager Quickwelder
+1 Arcane Signet
+1 Assassin Gauntlet
+1 Astrologian's Planisphere
+1 Bard's Bow
+1 Biorganic Carapace
+1 Black Mage's Rod
+1 Blue Mage's Cane
+1 Cloud Key
+1 Dancer's Chakrams
+1 Dark Knight's Greatsword
+1 Dragoon's Lance
+1 Explorer's Scope
+1 Fellwar Stone
+1 Machinist's Arsenal
+1 Magitek Armor
+1 Monk's Fist
+1 Ninja's Blades
+1 Paladin's Arms
+1 Phantom Blade
+1 Reaper's Scythe
+1 Red Mage's Rapier
+1 Sage's Nouliths
+1 Samurai's Katana
+1 Summoner's Grimoire
+1 Team Transmitter
+1 The Everflowing Well
+1 Thief's Knife
+1 Warrior's Sword
+1 White Mage's Staff
+1 Baxter Building
+1 Bojuka Bog
+1 Command Tower
+1 Exotic Orchard
+3 Forest
+1 Ishgard, the Holy See
+3 Island
+3 Mountain
+1 Path of Ancestry
+5 Plains
+3 Swamp
+1 Zanarkand, Ancient Metropolis
+1 Champions from Beyond
+1 Forum Filibuster
+1 Glasswing Grace
+1 Strength of the Harvest
+1 Hagra Mauling
+1 Hyperion's Atomic Vision
+1 Kabira Takedown
+1 Legion Leadership
+1 Razorgrass Ambush
+1 Revitalizing Repast
+1 Rush of Inspiration
+1 Swords to Plowshares
+1 Thraben Charm
+1 Waterlogged Teachings

@@ -1,0 +1,78 @@
+# edhrec average deck: https://edhrec.com/average-decks/delina-wild-mage/die-roll
+# theme Die Roll (75 decks)
+
+Commander
+1 Delina, Wild Mage
+
+Deck
+1 Arcane Signet
+1 Cursed Mirror
+1 Fire Diamond
+1 Hazoret's Monument
+1 Idol of Oblivion
+1 Lightning Greaves
+1 Panharmonicon
+1 Ruby Medallion
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 The Fire Crystal
+1 Vexing Puzzlebox
+1 Wand of Wonder
+1 Whispersilk Cloak
+1 Access Tunnel
+1 Arena of Glory
+1 Maze of Ith
+29 Mountain
+1 Myriad Landscape
+1 Rogue's Passage
+1 War Room
+1 Ancient Copper Dragon
+1 Aspiring Champion
+1 Brazen Dwarf
+1 Charming Scoundrel
+1 Circuit Mender
+1 Combustible Gearhulk
+1 Earth-Cult Elemental
+1 Fanatic of Mogis
+1 Goblin Chainwhirler
+1 Harmonic Prodigy
+1 Karlach, Fury of Avernus
+1 Mindclaw Shaman
+1 Patron of the Arts
+1 Plundering Barbarian
+1 Port Razer
+1 Professional Face-Breaker
+1 Rapacious Dragon
+1 Red Dragon
+1 Skyscanner
+1 Solemn Simulacrum
+1 Sunspine Lynx
+1 Swarming Goblins
+1 Terror of the Peaks
+1 Torbran, Thane of Red Fell
+1 Trumpeting Carnosaur
+1 Witty Roastmaster
+1 Wyll, Blade of Frontiers
+1 Zealous Conscripts
+1 Barbarian Class
+1 Firebender Ascension
+1 Goblin Bombardment
+1 Impact Tremors
+1 Outpost Siege
+1 Warstorm Surge
+1 Abrade
+1 Chaos Warp
+1 Critical Hit
+1 Lightning Bolt
+1 Return the Favor
+1 Thrill of Possibility
+1 Wild Magic Surge
+1 Wyll's Reversal
+1 Blasphemous Act
+1 Chain Reaction
+1 Faithless Looting
+1 Gamble
+1 Mana Geyser
+1 Reckless Endeavor
+1 Vandalblast

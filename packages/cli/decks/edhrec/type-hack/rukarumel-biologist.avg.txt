@@ -1,0 +1,99 @@
+# edhrec average deck: https://edhrec.com/average-decks/rukarumel-biologist/type-hack
+# theme Type Hack (19 decks)
+
+Commander
+1 Rukarumel, Biologist
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Gathering Stone
+1 Herald's Horn
+1 Maskwood Nexus
+1 Patchwork Banner
+1 Sol Ring
+1 Thrumming Hivepool
+1 Arid Mesa
+1 Bloodstained Mire
+1 Breeding Pool
+1 Cascading Cataracts
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Flooded Strand
+4 Forest
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Ketria Triome
+1 Misty Rainforest
+2 Mountain
+1 Path of Ancestry
+2 Plains
+1 Polluted Delta
+1 Raugrin Triome
+1 Savai Triome
+1 Scalding Tarn
+1 Secluded Courtyard
+1 Sliver Hive
+1 Stomping Ground
+2 Swamp
+1 The World Tree
+1 Windswept Heath
+1 Wooded Foothills
+1 Zagoth Triome
+1 Amoeboid Changeling
+1 Bloom Tender
+1 Brood Sliver
+1 Chomping Changeling
+1 Cloudshredder Sliver
+1 Crypt Sliver
+1 Diffusion Sliver
+1 Faeburrow Elder
+1 Gemhide Sliver
+1 Harmonic Sliver
+1 Hibernation Sliver
+1 Homing Sliver
+1 Horned Sliver
+1 Lathliss, Dragon Queen
+1 Manaweft Sliver
+1 Might Sliver
+1 Miirym, Sentinel Wyrm
+1 Mirror Entity
+1 Morophon, the Boundless
+1 Opaline Sliver
+1 Realmwalker
+1 Roaming Throne
+1 Sentinel Sliver
+1 Sinew Sliver
+1 Sliver Hivelord
+1 Sliver Legion
+1 Sliver Overlord
+1 Sliver Queen
+1 Spiteful Sliver
+1 Striking Sliver
+1 Syphon Sliver
+1 The First Sliver
+1 Venom Sliver
+1 Winged Sliver
+1 Arcane Adaptation
+1 Call the Spirit Dragons
+1 Collective Inferno
+1 Kindred Discovery
+1 Leyline of the Guildpact
+1 Reflections of Littjara
+1 Shared Animosity
+1 Unnatural Selection
+1 Collective Resistance
+1 Crib Swap
+1 Path to Exile
+1 Shields of Velis Vel
+1 Swords to Plowshares
+1 Bloodline Bidding
+1 Cultivate
+1 Distant Melody
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Three Visits

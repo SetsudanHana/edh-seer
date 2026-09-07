@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/lonis-cryptozoologist/clues
+# theme Clues (520 decks)
+
+Commander
+1 Lonis, Cryptozoologist
+
+Deck
+1 Arcane Signet
+1 Five Hundred Year Diary
+1 Idol of Oblivion
+1 Inspiring Statuary
+1 Panharmonicon
+1 Simic Signet
+1 Sol Ring
+1 Tamiyo's Journal
+1 Archway of Innovation
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+9 Forest
+1 Hinterland Harbor
+9 Island
+1 Misty Rainforest
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Academy Manufactor
+1 Adrix and Nev, Twincasters
+1 Beast Whisperer
+1 Birds of Paradise
+1 Briarbridge Patrol
+1 Coiling Oracle
+1 Cyberdrive Awakener
+1 Elvish Mystic
+1 Erdwal Illuminator
+1 Eternal Witness
+1 Ethereal Investigator
+1 Forensic Gadgeteer
+1 Fyndhorn Elves
+1 Graf Mole
+1 Jaheira, Friend of the Forest
+1 Junk Winder
+1 Kappa Cannoneer
+1 Kellan, Inquisitive Prodigy
+1 Llanowar Elves
+1 Mulldrifter
+1 Peregrin Took
+1 Piper Wright, Publick Reporter
+1 Reclamation Sage
+1 Sakura-Tribe Elder
+1 Sarinth Steelseeker
+1 Shimmer Dragon
+1 Shrieking Drake
+1 Starfield Vocalist
+1 Tangletrove Kelp
+1 Thought Monitor
+1 Tireless Provisioner
+1 Tireless Tracker
+1 Urza, Lord High Artificer
+1 Wavesifter
+1 Wood Elves
+1 Fleeting Memories
+1 Mechanized Production
+1 Ongoing Investigation
+1 Parallel Lives
+1 Ulvenwald Mysteries
+1 Virtue of Knowledge
+1 Beast Within
+1 Confirm Suspicions
+1 Confront the Unknown
+1 Counterspell
+1 Deduce
+1 Ghostly Flicker
+1 Heroic Intervention
+1 Pongify
+1 Rampage of the Clans
+1 Second Harvest
+1 Oko, Thief of Crowns
+1 Cultivate
+1 Rampant Growth
+1 Rise and Shine
+1 Root Out
+1 Thoughtcast
+1 Universal Surveillance

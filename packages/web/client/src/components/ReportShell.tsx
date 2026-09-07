@@ -1,3 +1,4 @@
+import type { GameState } from "@edh-seer/engine";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
@@ -6,6 +7,7 @@ import { cachedImageLoad } from "./art-cache.js";
 import { cardImageUrl } from "./card-node.js";
 import { ReportChapters } from "./ReportChapters.js";
 import { ReportHeader } from "./ReportHeader.js";
+import { StateControls } from "./StateControls.js";
 import { CardList } from "./CardList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ComboList } from "./ComboList.js";
@@ -14,9 +16,12 @@ import { ComboList } from "./ComboList.js";
  *  behind it, about 250kB of the 2.4MB the build's sourcemap maps -- and it mounts ONLY on `/graph`.
  *  Every reader who never opened the board was still paying for it in the first byte of the report.
  *
- *  `GraphList` stays eager: it is the narrow-width fallback that renders INSTEAD of the board on a
- *  phone, so lazy-loading it would trade a bundle saving for a spinner on the surface that exists
- *  because the board cannot be used there at all. */
+ *  `GraphList` stays eager, and NOT because the board is unreachable on a phone -- it is, since the
+ *  surface switch below (#214) lets the reader override `useBoardMode`'s guess in either direction.
+ *  It stays eager because it is where the ego branch LANDS: on a coarse pointer with no fine one,
+ *  `GraphList` is the first thing `/graph` paints, and lazy-loading the surface a reader arrives on
+ *  trades a bundle saving for a spinner in the one place it is guaranteed to be seen. `EgoView` and
+ *  `GraphView`, both one tap further in, are the ones worth splitting. */
 const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.GraphView })));
 /** `EgoView` IMPORTS `GraphView` STATICALLY, so it has to load the same way or the split above is a
  *  no-op: a static importer anywhere in the eager graph pulls the module back into the entry chunk,
@@ -49,19 +54,70 @@ import { unreadCardNames } from "../lib/unread.js";
  *  marks nothing. Over the cap nothing is seeded and the header line still says "+14". */
 export const SEED_CAP = 8;
 
-export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
+export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
+  data: AnalyzeResponse; diff?: RunDiff | null;
+  /** The game state the report was run under, and the way to change it (roadmap W18). */
+  state?: GameState; onState?: (state: GameState) => void;
+  /** A re-run under a new state is in flight (W18c): said on the controls, not by the deck bar. */
+  stateBusy?: boolean;
+}) {
+  // ONE ELEMENT, TWO HOMES: the header row here, and the fullscreen graph's shell (W18c owner
+  // finding 2: "the fullscreen graph has no way to change the state, and the graph is where the
+  // dashed edges are").
+  const stateControls = onState && data.report.markers && data.report.markers.length > 0
+    ? <StateControls markers={data.report.markers} state={state} onState={onState} edges={data.report.edges} busy={stateBusy} />
+    : null;
+  // ONLY ONE COPY IS LIVE AT A TIME (review): while the graph is fullscreen its shell renders the
+  // controls, and the header copy -- painted behind the backdrop but still in the DOM and the
+  // accessibility tree -- is not rendered at all.
+  const [fullscreen, setFullscreen] = useState(false);
+  useEffect(() => {
+    const onChange = () => setFullscreen(document.fullscreenElement !== null);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
   const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
   // WHICH GRAPH SURFACE THIS DEVICE GETS (roadmap R1). Not a width: see `use-board-mode.ts` for why
   // the pointer term is load-bearing and why 639px was a lucky guess. On a coarse pointer the
   // Graph surface is the LIST, and the board is one tap from a row -- one card's local graph
   // owning the viewport, rather than the whole-deck cloud at 14.7px a disc.
-  const boardMode = useBoardMode(data.graph?.nodes.length ?? 0);
+  const autoBoardMode = useBoardMode(data.graph?.nodes.length ?? 0);
+  /** THE READER OVERRIDES THE GUESS (owner, 2026-09-06: option 3, "both"). The hook predicts which
+   *  surface a device can use; a phone that got the whole-deck board could not reach the one-card
+   *  view, and the reverse. The switch sits above either surface below `sm`, and wherever the
+   *  guess was the ego view. Above the board, not inside its fullscreen shell: fullscreen is one
+   *  tap out, and a switch that changes the surface under a fullscreen element is a worse trade
+   *  than that tap. Component state, same ceiling as `focusId`; NOT reset per deck on purpose -- it is
+   *  a choice about this device, not about the deck. */
+  const [boardModeOverride, setBoardModeOverride] = useState<"board" | "ego" | null>(null);
+  const boardMode = boardModeOverride ?? autoBoardMode;
   /** The card whose local graph is open, or null for the list.
    *  CEILING: component state, so it does not survive a reload and the browser back button leaves
    *  the report rather than leaving this view -- the same cost S7 paid to make Graph a route.
    *  Upgrade path is `/graph/:cardName`, which is also what a breadcrumb would need. */
   const [focusId, setFocusId] = useState<string | null>(null);
+  const modeSwitch = (
+    <div
+      role="group"
+      aria-label="Graph surface"
+      className={`flex gap-1 ${autoBoardMode === "ego" ? "" : "sm:hidden"}`}
+    >
+      {([["board", "Whole deck"], ["ego", "One card"]] as const).map(([mode, label]) => (
+        <button
+          key={mode}
+          type="button"
+          aria-pressed={boardMode === mode}
+          onClick={() => { setBoardModeOverride(mode); if (mode === "board") setFocusId(null); }}
+          className={`eyebrow whitespace-nowrap rounded-(--radius) border px-2.5 py-2 ${
+            boardMode === mode ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
   // Which cards the synergy engine could not read. Computed once here because BOTH graph surfaces
   // want it and only one of them (`GraphView`) is handed the report — see `lib/unread.ts` for why
   // the rule lives in one place.
@@ -118,13 +174,26 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
   // their list and re-analysed came back to the graph — the one surface that answers none of the
   // six questions a fresh report is for.
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
+  // ONLY A NEW DECK GOES HOME (UX sweep 2026-09-06, D1). This effect also ran on mount, so a shared
+  // link to a reference surface -- `/analysis/cards#deck=…` -- was redirected to `/` the moment it
+  // loaded, and `navigate("/")` carried no hash: the address bar lost both the surface and the
+  // deck, and a reload after that lost the analysis. Measured on the live site twice with a clean
+  // load. Keyed on the DECK'S IDENTITY (its card names), not on "is this the first data": a
+  // first-mount flag reads wrong under StrictMode's doubled effects (review), and a re-run of the
+  // same list under a game state is not a new deck either -- it keeps the surface the reader is
+  // on. The navigate carries the router's own search and hash, so the state and the deck stay in
+  // the URL, and a MemoryRouter test can see that they do.
+  const deckKey = data.report.cards.map((c) => c.name).join("\u0001");
+  const seenDeck = useRef<string | null>(null);
   useEffect(() => {
-    if (pathname !== "/") navigate("/", { replace: true });
-    // Keyed on the REPORT, not on the path: re-running this when the path changes would make every
+    const changed = seenDeck.current !== null && seenDeck.current !== deckKey;
+    seenDeck.current = deckKey;
+    if (changed && pathname !== "/") navigate({ pathname: "/", search, hash }, { replace: true });
+    // Keyed on the deck, not on the path: re-running this when the path changes would make every
     // reference surface unreachable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [deckKey]);
 
   return (
     // Every card name under here can open the inspector; the graph keeps its own in-canvas one.
@@ -134,6 +203,12 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
           *  `HeadlineScores` lived inside one tab and the coverage gate above the strip is what
           *  this resolves. */}
         <ReportHeader data={data} diff={diff} />
+        {/* A GAME STATE THE OWNER SETS, only where the deck can reach it (roadmap W18). */}
+        {onState && data.report.markers && data.report.markers.length > 0 && (
+          <div className="px-4 py-3 border-b border-(--separator)">
+            {fullscreen ? null : stateControls}
+          </div>
+        )}
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not
           *  a property of any one chapter — the report simply does not contain those cards — and it
           *  is the one failure the reader can fix by editing their paste. It stayed visible across
@@ -164,6 +239,7 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
                       loading the board
                     </div>
                   }>
+                    {modeSwitch}
                     {boardMode === "ego"
                       ? (focusId
                         ? (
@@ -177,7 +253,7 @@ export function ReportShell({ data, diff }: { data: AnalyzeResponse; diff?: RunD
                           />
                         )
                         : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
-                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} />}
+                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} stateControls={stateControls} />}
                   </Suspense>
                 </Reference>
               }
@@ -247,14 +323,15 @@ export function SurfaceLink({ to, className, children }: {
   const navigate = useNavigate();
   return (
     <a
-      href={`${to}${typeof window === "undefined" ? "" : window.location.hash}`}
+      // THE STATE RIDES IN THE QUERY and the deck in the hash; a surface link keeps both (W18).
+      href={`${to}${typeof window === "undefined" ? "" : window.location.search + window.location.hash}`}
       className={className}
       onClick={(e) => {
         // Let the browser handle every gesture that means "somewhere else": a new tab, a new
         // window, a download. Only a plain left click is ours to intercept.
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
         e.preventDefault();
-        navigate({ pathname: to, hash: window.location.hash });
+        navigate({ pathname: to, search: window.location.search, hash: window.location.hash });
       }}
     >
       {children}

@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/vrondiss-rage-of-ancients/die-roll
+# theme Die Roll (100 decks)
+
+Commander
+1 Vrondiss, Rage of Ancients
+
+Deck
+1 Arcane Signet
+1 Bag of Tricks
+1 Component Pouch
+1 Darksteel Plate
+1 Dragon's Hoard
+1 Fiendlash
+1 Gruul Signet
+1 Sol Ring
+1 Sword of Hours
+1 The Deck of Many Things
+1 Vexing Puzzlebox
+1 Wand of Wonder
+1 Cinder Glade
+1 Command Tower
+1 Desert
+1 Exotic Orchard
+10 Forest
+1 Game Trail
+1 Gruul Turf
+1 Haven of the Spirit Dragon
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+11 Mountain
+1 Path of Ancestry
+1 Rockfall Vale
+1 Rootbound Crag
+1 Stomping Ground
+1 Underdark Rift
+1 Ancient Bronze Dragon
+1 Ancient Copper Dragon
+1 Anger
+1 Atarka, World Render
+1 Chaos Dragon
+1 Delina, Wild Mage
+1 Dragonborn Champion
+1 Dragonlord's Servant
+1 Dragonmaster Outcast
+1 Dragonspeaker Shaman
+1 Druid of Purification
+1 Druid of the Emerald Grove
+1 Ganax, Astral Hunter
+1 Goblin Anarchomancer
+1 Hoarding Ogre
+1 Klauth, Unrivaled Ancient
+1 Neverwinter Hydra
+1 Savage Ventmaw
+1 Scourge of Valkas
+1 Skyline Despot
+1 Thrakkus the Butcher
+1 Wrathful Red Dragon
+1 Wyll, Blade of Frontiers
+1 Barbarian Class
+1 Colossal Majesty
+1 Dragon Tempest
+1 Elemental Bond
+1 Encroaching Dragonstorm
+1 Garruk's Uprising
+1 Journey to the Lost City
+1 Maddening Hex
+1 Outpost Siege
+1 Warstorm Surge
+1 Beast Within
+1 Berserker's Frenzy
+1 Heroic Intervention
+1 Klauth's Will
+1 Return of the Wildspeaker
+1 Return to Nature
+1 Song of Inspiration
+1 Spit Flame
+1 Wyll's Reversal
+1 Chain Reaction
+1 Cultivate
+1 Overwhelming Encounter
+1 Rampant Growth
+1 Rile
+1 Rishkar's Expertise
+1 Shamanic Revelation
+1 Thunderwave
+1 Wild Endeavor

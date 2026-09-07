@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/3KNNC86st5BB96MpBakeUA (source https://archidekt.com/decks/24748428)
+# tags Attack Triggers, Commander Matters, Demons, Flying, Aggro, Dragons, Angels; bracket 2; saved 2026-08-23; 116 tagged of 39340 indexed
+
+Commander
+1 Kaalia of the Vast
+
+Deck
+1 Access Tunnel
+1 Bojuka Bog
+1 Bonders' Enclave
+1 Clifftop Retreat
+1 Command Bridge
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Forge of Heroes
+1 Furycalm Snarl
+1 Isolated Chapel
+1 Minas Tirith
+6 Mountain
+6 Plains
+1 Radiant Summit
+1 Rupture Spire
+1 Shineshadow Snarl
+1 Smoldering Marsh
+1 Sundown Pass
+3 Swamp
+1 Temple of the False God
+1 The Black Gate
+1 Vault of the Archangel
+1 All-Out Assault
+1 Ghostly Prison
+1 Land Tax
+1 Windcrag Siege
+1 Angelfire Ignition
+1 Decorum Dissertation
+1 Improvisation Capstone
+1 Legions to Ashes
+1 Mutinous Massacre
+1 Overwhelming Forces
+1 Restoration Seminar
+1 Ritual of Soot
+1 Ruinous Ultimatum
+1 Shattering Spree
+1 Taunt from the Rampart
+1 Vindicate
+1 Angelic Arbiter
+1 Anya, Merciless Angel
+1 Archfiend of Depravity
+1 Aurelia, the Law Above
+1 Aurelia, the Warleader
+1 Backdraft Hellkite
+1 Baneslayer Angel
+1 Basandra, Battle Seraph
+1 Bloodgift Demon
+1 Demonlord Belzenlok
+1 Dragonmaster Outcast
+1 Firemane Angel
+1 Gisela, Blade of Goldnight
+1 Glory
+1 Goremand
+1 Inspiring Overseer
+1 Iroas, God of Victory
+1 Iron Giant
+1 Moonveil Dragon
+1 Morbid Opportunist
+1 Rakdos, Patron of Chaos
+1 Reya Dawnbringer
+1 Rune-Scarred Demon
+1 Sephara, Sky's Blade
+1 Subjugator Angel
+1 Tariel, Reckoner of Souls
+1 Thraben Watcher
+1 Twilight Shepherd
+1 Tyrant's Familiar
+1 Wardscale Dragon
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Chromatic Lantern
+1 Colfenor's Urn
+1 Firemind Vessel
+1 Honored Heirloom
+1 Lightning Greaves
+1 Manifold Key
+1 Quicksilver Amulet
+1 Sol Ring
+1 Sonic Screwdriver
+1 The Arkenstone
+1 Whispersilk Cloak
+1 Boros Charm
+1 Duty Beyond Death
+1 Inevitable Defeat
+1 Swords to Plowshares

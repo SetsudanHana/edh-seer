@@ -7,6 +7,8 @@
  *  Usage: tsx src/bin/derive-corpus.ts [--force] */
 import { connect, loadConfig } from "@edh-seer/data";
 import { extractCharacteristics } from "../characteristics.js";
+import { clauseRequiresOf } from "../derive/markers.js";
+import type { Requirement } from "../schema.js";
 import { grantedToOwnToken, segment } from "../segment.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
@@ -51,6 +53,7 @@ for (const doc of clauseDocs) {
     clauses: doc.canonical,
     characteristics: isToken ? tokenCharsFrom(source as never) : charsFrom(source as never),
     clauseTexts: clauseTexts(source as never),
+    clauseRequires: clauseRequires(source as never),
     clauseCosts: clauseCosts(source as never),
     clauseFaces: clauseFaces(source as never),
     oracleText: (source as { oracleText?: string }).oracleText,
@@ -109,6 +112,12 @@ function grantedTokenClauses(doc: { oracleText?: string; keywords?: string[]; ty
   return grantedToOwnToken(segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? ""));
 }
 
+/** Clause id -> the game-state requirement its ability word carries ("Max speed —"), from the same
+ *  `segment()` call, matched by line tail because the segmenter strips the word (roadmap W18). */
+function clauseRequires(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): Record<number, Requirement> {
+  return clauseRequiresOf(doc.oracleText ?? "", segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? ""));
+}
+
 /** Clause id -> the clause's activation cost, from the SAME `segment()` call `clauseTexts` uses --
  *  `segment.ts`'s `classify()` splits an activated ability's cost out of the body text, so it never
  *  rides along in `clauseTexts`. `repeatsFor` needs both: the cost for the self-sacrifice/tap rules,
@@ -128,11 +137,18 @@ function clauseCosts(doc: { oracleText?: string; keywords?: string[]; typeLine?:
  *  changeling fix (2026-08-14) landed in `extractCharacteristics` and moved the population by
  *  exactly zero, because the corpus never called it. One implementation, one place to fix. */
 function charsFrom(doc: {
-  typeLine?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
+  name?: string; typeLine?: string; oracleText?: string; colors?: string[]; colorIdentity?: string[]; manaValue?: number;
   power?: string | null; toughness?: string | null; keywords?: string[]; layout?: string;
 }): DerivedTagsDoc["characteristics"] {
   return extractCharacteristics({
+    // THE NAME, because "Burakos is also a Cleric ..." is anchored on it (W14, CodeQL): without it
+    // every derive crashed on the first card, found on the first re-derive after that anchor.
+    name: doc.name ?? "",
     typeLine: doc.typeLine ?? "",
+    // THE TEXT BOX IS PART OF THE TYPE LINE for "X is also a Cleric, Rogue, Warrior, and Wizard":
+    // `extractCharacteristics` reads it, and this projection had never handed it over, so the
+    // corpus re-derived at 103 with Burakos still an Orc alone (2026-09-05).
+    oracleText: doc.oracleText ?? "",
     layout: doc.layout,
     colors: doc.colors ?? [],
     colorIdentity: doc.colorIdentity ?? [],

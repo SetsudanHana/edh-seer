@@ -637,3 +637,68 @@ test("the phrase after 'attached to' describes the target, not the subject", () 
   expect(equipment.subtype).toBe("equipment");
   expect(equipment.type).toBeUndefined();
 });
+
+/** A LITERAL PRINTED SIZE IS A CONDITION, and dropping it over-claims. `STAT_RE` reads only the
+ *  comparative form ("power 2 or less"), so "whenever a 1/1 creature you control enters" derived as
+ *  a bare `creature` and the engine believed ANY creature triggers Sword of the Meek -- right for a
+ *  Krenko token by luck, wrong for every deck making bigger ones. Caught by a deck tuner reading the
+ *  row against the card, 2026-09-04. Four triggers in the corpus name a literal size. */
+test("a literal 1/1 becomes both halves of the condition, not neither", () => {
+  const s = parseSubject("a 1/1 creature you control");
+  expect(s.type).toBe("creature");
+  expect(s.stats).toEqual([
+    { metric: "power", op: "eq", value: 1 },
+    { metric: "toughness", op: "eq", value: 1 },
+  ]);
+});
+
+/** BOTH HALVES OR NEITHER: "2/2" is two conditions and dropping either widens the claim. */
+test("an unequal size keeps its two different numbers", () => {
+  expect(parseSubject("a 3/1 creature")?.stats)
+    .toEqual([{ metric: "power", op: "eq", value: 3 }, { metric: "toughness", op: "eq", value: 1 }]);
+});
+
+/** AN ORDINARY SUBJECT GAINS NOTHING. The 2,000-odd triggers that name no size must not start
+ *  carrying an empty predicate list, and a comparative form still parses as it did. */
+test("a subject with no printed size carries no stat predicate", () => {
+  expect(parseSubject("a creature you control").stats).toBeUndefined();
+  expect(parseSubject("creatures you control with power 2 or less").stats)
+    .toEqual([{ metric: "power", op: "lte", value: 2 }]);
+});
+
+// SPELL SUBTYPES, gated on a spell head noun. `SUBTYPES` deliberately excludes them (several are
+// English words), so Lucky Clover's "an Adventure instant or sorcery spell" derived a bare
+// `cast:instant` and claimed every instant in the deck — The Dawning Archaic's graveyard cast among
+// them, in a colorless deck with no Adventure face at all (owner, 2026-09-05). Corpus demand:
+// Arcane 86 cards, Lesson 49, Adventure 9, Omen 2, Trap 2.
+test("a spell subtype is recovered when the text names a spell, instant, sorcery or card", () => {
+  const clover = parseSubject("an Adventure instant or sorcery spell");
+  expect(clover.subtype).toBe("adventure");
+  expect(clover.type).toEqual(["instant", "sorcery"]);
+  expect(parseSubject("an Adventure spell").subtype).toBe("adventure");
+  expect(parseSubject("a Spirit or Arcane spell").subtype).toEqual(["spirit", "arcane"]);
+  expect(parseSubject("a Lesson card").subtype).toBe("lesson");
+});
+
+test("a spell subtype word without a spell head noun is not a subtype", () => {
+  // "lesson", "trap" and "omen" are ordinary English words; only next to a spell noun are they typal.
+  expect(parseSubject("a trap you control").subtype).toBeUndefined();
+  expect(parseSubject("target creature").subtype).toBeUndefined();
+});
+
+// A COMBAT STATE IS A DEMAND THE VERB CANNOT CARRY. "Whenever an attacking creature dies" (Kardur,
+// Doomscourge) derived a bare dies:creature, so Blasphemous Edict at sorcery speed fed it three
+// reasons (owner, 2026-09-05). Same family as Death Tyrant. Corpus trigger subjects: attacking 12,
+// blocking 1; action objects naming an attacking creature 272, a blocking one 34.
+test("an attacking or blocking qualifier is recorded as a combat state", () => {
+  expect(parseSubject("an attacking creature").combat).toBe("attacking");
+  expect(parseSubject("an attacking creature you control").combat).toBe("attacking");
+  expect(parseSubject("a blocking creature an opponent controls").combat).toBe("blocking");
+  expect(parseSubject("all attacking creatures").combat).toBe("attacking");
+});
+
+test("blocked, unblocked and a bare creature carry no combat state", () => {
+  // "aren't blocked" (Coveted Jewel) is evasion, not a blocking creature.
+  expect(parseSubject("one or more creatures an opponent controls that aren't blocked").combat).toBeUndefined();
+  expect(parseSubject("target creature").combat).toBeUndefined();
+});

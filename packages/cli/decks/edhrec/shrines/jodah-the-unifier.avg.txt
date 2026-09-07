@@ -1,0 +1,102 @@
+# edhrec average deck: https://edhrec.com/average-decks/jodah-the-unifier/shrines
+# theme Shrines (12 decks)
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Commander's Sphere
+1 Heroes' Podium
+1 Lightning Greaves
+1 Relic of Legends
+1 Sol Ring
+1 Arcane Sanctum
+1 Baldur's Gate
+1 Blood Crypt
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+2 Forest
+1 Frontier Bivouac
+1 Godless Shrine
+1 Gond Gate
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+2 Island
+1 Jungle Shrine
+2 Mountain
+1 Mystic Monastery
+1 Opulent Palace
+1 Overgrown Tomb
+1 Plains
+1 Plaza of Heroes
+1 Sacred Foundry
+1 Sandsteppe Citadel
+1 Savannah
+1 Scrubland
+1 Seaside Citadel
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Taiga
+1 The World Tree
+1 Tropical Island
+1 Tundra
+1 Volcanic Island
+1 Absorbing Man
+1 Destiny Spinner
+1 Eidolon of Blossoms
+1 Esika, God of the Tree
+1 Faeburrow Elder
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Lost Wisdom
+1 Go-Shintai of Shared Purpose
+1 Inquisitive Glimmer
+1 Katilda, Dawnhart Martyr
+1 Reki, the History of Kamigawa
+1 Sanctum Weaver
+1 Setessan Champion
+1 Sigarda, Font of Blessings
+1 Sisay, Weatherlight Captain
+1 Sythis, Harvest's Hand
+1 Vega, the Watcher
+1 Wildsear, Scouring Maw
+1 Yenna, Redtooth Regent
+1 Zur, Eternal Schemer
+1 Annie Joins Up
+1 Crescent Island Temple
+1 Flowering of the White Tree
+1 Hallowed Haunting
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Life's Web
+1 Honden of Night's Reach
+1 Honden of Seeing Winds
+1 Kyoshi Island Plaza
+1 Northern Air Temple
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Shattered Heights
+1 Sanctum of Stone Fangs
+1 Sanctum of Tranquil Light
+1 Southern Air Temple
+1 Starfield of Nyx
+1 Sterling Grove
+1 The Spirit Oasis
+1 Auroral Procession
+1 Desynchronization
+1 Enlightened Tutor
+1 Heroic Intervention
+1 Restoration Magic
+1 Teferi's Protection
+1 Eerie Ultimatum
+1 Farseek
+1 Primevals' Glorious Rebirth
+1 Urza's Ruinous Blast

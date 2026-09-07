@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/O4kC3-tei4dSh34IdHc6lQ (source https://moxfield.com/decks/3NaRyGbJt06OJ2pr9AbQEg)
+# tags Zoo, +1/+1 Counters; bracket 2; saved 2026-08-29; 59 tagged of 23257 indexed
+
+Commander
+1 Animar, Soul of Elements
+
+Deck
+1 Ancestral Statue
+1 Anger
+1 Apex Devastator
+1 Archetype of Endurance
+1 Artisan of Kozilek
+1 Ashaya, Soul of the Wild
+1 Augur of Autumn
+1 Biophagus
+1 Blightsteel Colossus
+1 Brawn
+1 Conduit of Ruin
+1 Defiler of Dreams
+1 Defiler of Instinct
+1 Defiler of Vigor
+1 End-Raze Forerunners
+1 Etali, Primal Storm
+1 Forgotten Ancient
+1 Genesis Hydra
+1 Ghalta, Primal Hunger
+1 Glen Elendra Archmage
+1 Great Whale
+1 Gwenna, Eyes of Gaea
+1 Hydroid Krasis
+1 Imoti, Celebrant of Bounty
+1 Kodama of the East Tree
+1 Kozilek, the Great Distortion
+1 Man-o'-War
+1 Mina and Denn, Wildborn
+1 Mulldrifter
+1 Myr Scrapling
+1 Nezahal, Primal Tide
+1 Nikya of the Old Ways
+1 Nullstone Gargoyle
+1 Ogre Battledriver
+1 Ornithopter of Paradise
+1 Pathrazer of Ulamog
+1 Peregrine Drake
+1 Phyrexian Metamorph
+1 Platinum Angel
+1 Reclamation Sage
+1 Ruric Thar, the Unbowed
+1 Screamer-Killer
+1 Solemn Simulacrum
+1 Soul of the Harvest
+1 Springbloom Druid
+1 Stonecoil Serpent
+1 Stratus Dancer
+1 Surrak Dragonclaw
+1 Thryx, the Sudden Storm
+1 Tishana, Voice of Thunder
+1 Toski, Bearer of Secrets
+1 Ulamog, the Ceaseless Hunger
+1 Ulamog, the Infinite Gyre
+1 Urabrask the Hidden
+1 Vizier of the Menagerie
+1 Wandering Archaic
+1 Wonder
+1 Wood Elves
+1 Zopandrel, Hunger Dominus
+1 Ancient Ziggurat
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Cascade Bluffs
+1 Cinder Glade
+1 Command Tower
+1 Fire-Lit Thicket
+1 Flooded Grove
+5 Forest
+1 Game Trail
+1 Gruul Turf
+1 Hinterland Harbor
+4 Island
+1 Izzet Boilerworks
+1 Karplusan Forest
+1 Misty Rainforest
+1 Mosswort Bridge
+4 Mountain
+1 Otawara, Soaring City
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Shivan Reef
+1 Simic Growth Chamber
+1 Steam Vents
+1 Stomping Ground
+1 Thran Quarry
+1 Tropical Island
+1 Volcanic Island
+1 Yavimaya Coast

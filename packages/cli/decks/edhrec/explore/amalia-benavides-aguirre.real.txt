@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/Rr_m3IdJ7pL2d-v_40iwIg (source https://archidekt.com/decks/5809595)
+# tags Lifegain, Reanimator, Control, Explore; bracket 3; saved 2026-09-04; 57 tagged of 5869 indexed
+
+Commander
+1 Amalia Benavides Aguirre
+
+Deck
+1 Accursed Marauder
+1 Aerial Extortionist
+1 Aerith Gainsborough
+1 Archon of Emeria
+1 Archpriest of Shadows
+1 Aven Interrupter
+1 Blightbeetle
+1 Boggart Trawler
+1 Cataclysmic Gearhulk
+1 Grim Servant
+1 Guide of Souls
+1 Hinterland Sanctifier
+1 Imposing Sovereign
+1 Kinjalli's Sunwing
+1 Leonin Elder
+1 Lion Sash
+1 Lunarch Veteran
+1 Lurrus of the Dream-Den
+1 Marauding Blight-Priest
+1 Moseo, Vein's New Dean
+1 Phyrexian Censor
+1 Priest of Fell Rites
+1 PuPu UFO
+1 Royal Assassin
+1 Ruin-Lurker Bat
+1 Soul Warden
+1 Soul's Attendant
+1 Spectrum Sentinel
+1 Starfield Shepherd
+1 Starscape Cleric
+1 Sun Titan
+1 Sunscorch Regent
+1 Suture Priest
+1 Thalia, Heretic Cathar
+1 Valgavoth's Faithful
+1 Vizkopa Guildmage
+1 Vona, Butcher of Magan
+1 Zenos yae Galvus
+1 Adventurer's Inn
+1 Amonkhet Raceway
+1 Ash Barrens
+1 Barren Moor
+1 Capital City
+1 Caves of Koilos
+1 Command Tower
+1 Desert of the True
+1 Desolate Mire
+1 Drifting Meadow
+1 Fetid Heath
+1 Ghost Quarter
+1 Hidden Grotto
+1 Isolated Chapel
+1 Muraganda Raceway
+1 Orzhov Basilica
+7 Plains
+1 Polluted Mire
+1 Radiant Fountain
+1 Rogue's Passage
+1 Secluded Steppe
+1 Shineshadow Snarl
+6 Swamp
+1 Austere Command
+1 Can't Stay Away
+1 Divine Reckoning
+1 Dusk // Dawn
+1 Lively Dirge
+1 Living Death
+1 Rite of Oblivion
+1 Sevinne's Reclamation
+1 Tragic Arrogance
+1 Unburial Rites
+1 Authority of the Consuls
+1 Blind Obedience
+1 Case of the Uneaten Feast
+1 Duelist's Heritage
+1 Grasp of Fate
+1 Legion's Landing
+1 Sheltered by Ghosts
+1 Generous Gift
+1 Lapse of Certainty
+1 Razorgrass Ambush
+1 Reprieve
+1 Shred Memory
+1 Tainted Strike
+1 Sol Ring
+1 Springleaf Drum
+1 Sun Droplet
+1 The Falcon, Airship Restored

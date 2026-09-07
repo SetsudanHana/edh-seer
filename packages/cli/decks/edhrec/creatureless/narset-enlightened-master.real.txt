@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/fLG6e5WRx3fUc2B3Ic6cMQ (source https://archidekt.com/decks/9096539)
+# tags Voltron, Creatureless, Sunforger, Extra Combats, Spellslinger; bracket 3; saved 2026-08-23; 18 tagged of 6250 indexed
+
+Commander
+1 Narset, Enlightened Master
+
+Deck
+1 Abrade
+1 Boros Charm
+1 Brainstorm
+1 Cinderclasm
+1 Frantic Search
+1 Geistblast
+1 Generous Gift
+1 Izzet Charm
+1 Lightning Bolt
+1 Lightning Helix
+1 Long-Term Plans
+1 Return the Favor
+1 Return to Dust
+1 Savage Beating
+1 Supreme Will
+1 Swerve
+1 Swords to Plowshares
+1 Wild Ricochet
+1 Aqueous Form
+1 Bitter Reunion
+1 Eldrazi Conscription
+1 Gift of Immortality
+1 One with the Multiverse
+1 Sigarda's Aid
+1 Spirit Mantle
+1 Vessel of Volatility
+1 Arcane Signet
+1 Azorius Signet
+1 Basilisk Collar
+1 Blackblade Reforged
+1 Boots of Speed
+1 Boros Signet
+1 Buried Treasure
+1 Commander's Sphere
+1 Embercleave
+1 Hexplate Wallbreaker
+1 Implements of Sacrifice
+1 Izzet Signet
+1 Mind Stone
+1 Pentad Prism
+1 Prismatic Lens
+1 Quietus Spike
+1 Sol Ring
+1 Sunforger
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 The Irencrag
+1 The Key to the Vault
+1 Thought Vessel
+1 Battlefield Forge
+1 Command Tower
+1 Demolition Field
+1 Dwarven Ruins
+1 Exotic Orchard
+1 Glacial Fortress
+1 Inventors' Fair
+4 Island
+5 Mountain
+5 Plains
+1 Prairie Stream
+1 Promising Vein
+1 Raugrin Triome
+1 Ruins of Trokair
+1 Shivan Reef
+1 Skycloud Expanse
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Steam Vents
+1 Stormcarved Coast
+1 Sundown Pass
+1 Svyelunite Temple
+1 Turbulent Steppe
+1 Impolite Entrance
+1 Mystic Retrieval
+1 Not Forgotten
+1 Open the Armory
+1 Overpowering Attack
+1 Personal Tutor
+1 Relentless Assault
+1 Seize the Day
+1 Single Combat
+1 Slash the Ranks
+1 Tragic Arrogance
+1 Ugin's Insight
+1 Waves of Aggression
+1 Winds of Rath
+1 World at War
+1 Quintorius Kand

@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/NK55ziW7U2e6RljeDPbxOQ (source https://moxfield.com/decks/xL9IodsRkEuPrzcCS8Mzqw)
+# tags Dungeon, Combo, Blink; bracket 3; saved 2026-09-02; 159 tagged of 2404 indexed
+
+Commander
+1 Acererak the Archlich
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Ashnod's Altar
+1 Bolas's Citadel
+1 Bontu's Monument
+1 Charcoal Diamond
+1 Cloud Key
+1 Demon's Horn
+1 Helm of Awakening
+1 Jet Medallion
+1 Mind Stone
+1 Panharmonicon
+1 Phyrexian Altar
+1 Prism Ring
+1 Relic of Legends
+1 Semblance Anvil
+1 Sensei's Divining Top
+1 Sol Ring
+1 Staff of the Death Magus
+1 The Darkness Crystal
+1 Thought Vessel
+1 Urza's Incubator
+1 Ancient Tomb
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Nykthos, Shrine to Nyx
+1 Phyrexian Tower
+1 Reliquary Tower
+25 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 War Room
+1 Witch's Cottage
+1 Ayara, First of Locthwain
+1 Blood Pet
+1 Champion of the Perished
+1 Crypt Ghast
+1 Defiler of Flesh
+1 Diregraf Colossus
+1 Endrek Sahr, Master Breeder
+1 Gravecrawler
+1 Gray Merchant of Asphodel
+1 Jhoira's Familiar
+1 K'rrik, Son of Yawgmoth
+1 Undead Warchief
+1 Black Market Connections
+1 Carnival of Souls
+1 Heartless Summoning
+1 Phyrexian Arena
+1 The Sibsig Ceremony
+1 Tinybones Joins Up
+1 Blasphemous Edict
+1 Bubbling Muck
+1 Damnation
+1 Feed the Swarm
+1 Mutilate
+1 Night's Whisper
+1 Read the Bones
+1 Sign in Blood
+1 Tendrils of Agony
+1 Toxic Deluge
+1 Victimize
+1 Cabal Ritual
+1 Culling the Weak
+1 Dark Ritual
+1 Darkness
+1 Deadly Dispute
+1 Defile
+1 Force of Despair
+1 Go for the Throat
+1 Imp's Mischief
+1 Infernal Grasp
+1 Snuff Out
+1 Sudden Spoiling
+1 Withering Torment

@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/massacre-girl-known-killer/minus-1-minus-1-counters
+# theme -1/-1 Counters (922 decks)
+
+Commander
+1 Massacre Girl, Known Killer
+
+Deck
+1 Arcane Signet
+1 Contagion Clasp
+1 Contagion Engine
+1 Genesis Chamber
+1 Jet Medallion
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Tarrian's Soulcleaver
+1 Thought Vessel
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Forbidden Orchard
+1 Karn's Bastion
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+28 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Ascendant Evincar
+1 Blood Artist
+1 Clackbridge Troll
+1 Crypt Ghast
+1 Dread Presence
+1 Drivnod, Carnage Dominus
+1 Gray Merchant of Asphodel
+1 Hunted Bonebrute
+1 Kaervek, the Spiteful
+1 Maha, Its Feathers Night
+1 Massacre Girl
+1 Massacre Wurm
+1 Midnight Banshee
+1 Morbid Opportunist
+1 Necroskitter
+1 Persistent Constrictor
+1 Skinrender
+1 Slaughter Specialist
+1 Soul Snuffers
+1 Spitting Dilophosaurus
+1 Syr Konrad, the Grim
+1 Vein Ripper
+1 Vilis, Broker of Blood
+1 Yahenni, Undying Partisan
+1 Yawgmoth, Thran Physician
+1 Black Market
+1 Blowfly Infestation
+1 Crumbling Ashes
+1 Nest of Scarabs
+1 Nowhere to Run
+1 Phyrexian Arena
+1 The Meathook Massacre
+1 Black Sun's Twilight
+1 Bloodline Culling
+1 Dark Ritual
+1 Defile
+1 Dismember
+1 Grim Affliction
+1 Overkill
+1 Slice from the Shadows
+1 Sudden Spoiling
+1 Tragic Slip
+1 Whisper of the Dross
+1 Vraska, Betrayal's Sting
+1 Black Sun's Zenith
+1 Drown in Ichor
+1 Feed the Swarm
+1 Incremental Blight
+1 Mutilate
+1 Reanimate
+1 Sign in Blood
+1 Toxic Deluge
+1 Yahenni's Expertise

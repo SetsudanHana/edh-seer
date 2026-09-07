@@ -1,0 +1,103 @@
+# edhrec deck https://edhrec.com/deckpreview/fBCyyhPT-YRdw4Z7Mr1hHw (source https://archidekt.com/decks/13202615)
+# tags Spell Copy, Spellslinger, Storm; bracket 3; saved 2026-09-04; 639 tagged of 8766 indexed
+
+Commander
+1 Kalamax, the Stormsire
+
+Deck
+1 Alania, Divergent Storm
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Badgermole Cub
+1 Birds of Paradise
+1 Bloom Tender
+1 Caldera Pyremaw
+1 Delighted Halfling
+1 Exalted Flamer of Tzeentch
+1 Fanatic of Rhonas
+1 Goblin Anarchomancer
+1 Jadzi, Oracle of Arcavios
+1 Marang River Regent
+1 Pinnacle Monk
+1 Prismari, the Inspiration
+1 Spider Manifestation
+1 Storm-Kiln Artist
+1 Temur Battlecrier
+1 Veyran, Voice of Duality
+1 Alchemist's Refuge
+1 Arena of Glory
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Emergence Zone
+1 Evendo, Waking Haven
+1 Exotic Orchard
+1 Forest
+1 Holdout Settlement
+3 Island
+1 Karplusan Forest
+1 Kavaron, Memorial World
+1 Ketria Triome
+1 Lindblum, Industrial Regency
+1 Misty Rainforest
+2 Mountain
+1 Otawara, Soaring City
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rockfall Vale
+1 Scalding Tarn
+1 Scene of the Crime
+1 Shivan Reef
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Survivors' Encampment
+1 Training Center
+1 Wooded Foothills
+1 Yavimaya Coast
+1 An Offer You Can't Refuse
+1 Ashling's Command
+1 Auroral Procession
+1 Big Score
+1 Deflecting Swat
+1 Delayed Blast Fireball
+1 Electrodominance
+1 Eureka Moment
+1 Fierce Guardianship
+1 Flame of Anor
+1 Harrow
+1 Heritage Reclamation
+1 Invoke Calamity
+1 Manamorphose
+1 Narset's Reversal
+1 Prismari Charm
+1 Return of the Wildspeaker
+1 Sink into Stupor
+1 Smuggler's Surprise
+1 Snap
+1 Soul's Fire
+1 Supreme Will
+1 Three Steps Ahead
+1 Turnabout
+1 Unexpected Windfall
+1 Yuna's Whistle
+1 Arcane Signet
+1 Primal Amulet
+1 Resonating Lute
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Curiosity
+1 Talisman of Impulse
+1 Twinning Staff
+1 Wizard's Staff
+1 Chandra's Ignition
+1 Doppelgang
+1 Gravitic Punch
+1 Nature's Lore
+1 Season of Gathering
+1 Soul Immolation
+1 Three Visits
+1 Ral, Crackling Wit
+1 Swarm Intelligence
+1 Thousand-Year Storm

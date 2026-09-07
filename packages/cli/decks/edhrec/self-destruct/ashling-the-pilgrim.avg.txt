@@ -1,0 +1,72 @@
+# edhrec average deck: https://edhrec.com/average-decks/ashling-the-pilgrim/self-destruct
+# theme Self-Destruct (8 decks)
+
+Commander
+1 Ashling the Pilgrim
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Darksteel Plate
+1 Extraplanar Lens
+1 Fire Diamond
+1 Glittering Stockpile
+1 Hammer of Nazahn
+1 Heartstone
+1 Lightning Greaves
+1 Magebane Armor
+1 Mithril Coat
+1 Resurrection Orb
+1 Ring of Valkas
+1 Scythe of the Wretched
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Hours
+1 The Ozolith
+1 Throne of Eldraine
+1 Wayfarer's Bauble
+1 Dormant Volcano
+1 Glacial Chasm
+1 Hall of Oracles
+35 Mountain
+1 Myriad Landscape
+1 Opal Palace
+1 Spinerock Knoll
+1 Tyrite Sanctum
+1 Valakut, the Molten Pinnacle
+1 War Room
+1 Witch's Clinic
+1 Agitator Ant
+1 Brash Taunter
+1 Flamebraider
+1 Heartless Hidetsugu
+1 Impulsive Pilferer
+1 Leyline Tyrant
+1 Mogg Maniac
+1 Neheb, the Eternal
+1 Smokebraider
+1 Solemn Simulacrum
+1 Solphim, Mayhem Dominus
+1 Soulbright Flamekin
+1 Stuffy Doll
+1 Torbran, Thane of Red Fell
+1 Braid of Fire
+1 Dictate of the Twin Gods
+1 Fiery Emancipation
+1 Gratuitous Violence
+1 Tectonic Reformation
+1 Abrade
+1 Arcbond
+1 Big Score
+1 Chaos Warp
+1 Deflecting Swat
+1 Thrill of Possibility
+1 Unexpected Windfall
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Explosive Entry
+1 Faithless Looting
+1 Mana Geyser
+1 Reckless Handling
+1 Vandalblast

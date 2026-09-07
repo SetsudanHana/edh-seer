@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/ykeX8DzMU138rSx8Sj2S0Q (source https://archidekt.com/decks/25857480)
+# tags Group Hug, Tap / Untap, Card Draw, Lifegain; bracket 3; saved 2026-09-05; 630 tagged of 7005 indexed
+
+Commander
+1 Kwain, Itinerant Meddler
+
+Deck
+1 Adept Watershaper
+1 Alandra, Sky Dreamer
+1 Aphetto Alchemist
+1 Captain America, Living Legend
+1 Clever Conjurer
+1 Corridor Monitor
+1 Daughter of the Deep
+1 Deceiver Exarch
+1 Detective of the Month
+1 Drumbellower
+1 Elenda's Hierophant
+1 Elven Raft-Steerer
+1 Emrakul's Messenger
+1 Ethereal Investigator
+1 Felidar Sovereign
+1 Flash Thompson, Spider-Fan
+1 Forensic Researcher
+1 Glamermite
+1 Glasspool Mimic
+1 Homunculus Horde
+1 Hydroelectric Specimen
+1 Ioreth of the Healing House
+1 Kelpie Guide
+1 Loran of the Third Path
+1 Marvin, Murderous Mimic
+1 Minn, Wily Illusionist
+1 Mischievous Mystic
+1 Nadir Kraken
+1 North Pole Patrol
+1 Pestermite
+1 Prince Imrahil the Fair
+1 PuPu UFO
+1 Triskaidekaphile
+1 Twenty-Toed Toad
+1 Village Bell-Ringer
+1 Vizier of Tumbling Sands
+1 Walking Atlas
+1 Witch Enchanter
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Dramatic Reversal
+1 Erode
+1 Magic Damper
+1 Negate
+1 Octopus Form
+1 Path to Exile
+1 Razorgrass Ambush
+1 Shore Up
+1 Sink into Stupor
+1 Swords to Plowshares
+1 Approach of the Second Sun
+1 Citywide Bust
+1 Dusk // Dawn
+1 Arcane Signet
+1 Azorius Signet
+1 Halo Fountain
+1 Illusionist's Bracers
+1 Pearl Medallion
+1 Sapphire Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Millennium Calendar
+1 Thopter Fabricator
+1 Wayfarer's Bauble
+1 Avengers Hangar
+1 Coastal Tower
+1 Command Tower
+1 Deserted Beach
+1 Glacial Floodplain
+1 Glacial Fortress
+1 Idyllic Beachfront
+1 Irrigated Farmland
+7 Island
+1 Meandering River
+1 Mystic Gate
+5 Plains
+1 Port Town
+1 Prairie Stream
+1 Razortide Bridge
+1 Reliquary Tower
+1 Seachrome Coast
+1 Sejiri Refuge
+1 Skybridge Towers
+1 Temple of Enlightenment
+1 Ghostly Prison
+1 Propaganda
+1 Retreat to Coralhelm
+1 Test of Endurance
+1 Unstoppable Plan

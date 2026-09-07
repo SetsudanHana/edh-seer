@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/ellie-and-alan-paleontologists/discover
+# theme Discover (202 decks)
+
+Commander
+1 Ellie and Alan, Paleontologists
+
+Deck
+1 Arcane Signet
+1 Fluctuator
+1 Patriar's Seal
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thousand-Year Elixir
+1 Breeding Pool
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+6 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hedge Maze
+1 Hinterland Harbor
+1 Irrigated Farmland
+5 Island
+1 Lush Portico
+1 Meticulous Archive
+4 Plains
+1 Prairie Stream
+1 Scattered Groves
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Temple Garden
+1 Tranquil Landscape
+1 Yavimaya Coast
+1 Agonasaur Rex
+1 Angel of the Ruins
+1 Apex Devastator
+1 Balamb T-Rexaur
+1 Colossal Skyturtle
+1 Daggermaw Megalodon
+1 Drownyard Lurker
+1 Eagles of the North
+1 Elvish Aberration
+1 Eternal Dragon
+1 Generous Ent
+1 Ghalta and Mavren
+1 Ghalta, Primal Hunger
+1 Greater Sandwurm
+1 Greater Tanuki
+1 Helga, Skittish Seer
+1 Imoti, Celebrant of Bounty
+1 Imposing Vantasaur
+1 Ioreth of the Healing House
+1 Kellan, the Kid
+1 Kiora's Follower
+1 Krosan Tusker
+1 Lunar Hatchling
+1 Marauding Brinefang
+1 Mirrorshell Crab
+1 Mulldrifter
+1 Nezahal, Primal Tide
+1 Nulldrifter
+1 Nurturing Bristleback
+1 Savage Land Dinosaur
+1 Slavering Branchsnapper
+1 Soaring Sandwing
+1 Striped Riverwinder
+1 Titanoth Rex
+1 Topiary Panther
+1 Vizier of Tumbling Sands
+1 Waker of Waves
+1 Warped Tusker
+1 Zetalpa, Primal Dawn
+1 Garruk's Uprising
+1 Greater Good
+1 Intruder Alarm
+1 Kozilek's Unsealing
+1 Monstrous Vortex
+1 Up the Beanstalk
+1 Beast Within
+1 Fact or Fiction
+1 Faithful Mending
+1 Frantic Search
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Kiora, Behemoth Beckoner
+1 Austere Command
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth

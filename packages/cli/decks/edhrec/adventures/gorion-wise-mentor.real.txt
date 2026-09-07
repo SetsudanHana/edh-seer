@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/Ph8B4-vQf8r43SOnAOkgYQ (source https://archidekt.com/decks/6141202)
+# tags Spell Copy, Adventures; bracket 2; saved 2026-09-03; 128 tagged of 2476 indexed
+
+Commander
+1 Gorion, Wise Mentor
+
+Deck
+1 Arcane Signet
+1 Crystal Shard
+1 Decanter of Endless Water
+1 Erratic Portal
+1 Horn of Valhalla
+1 Lucky Clover
+1 Mindsplice Apparatus
+1 Primal Amulet
+1 Scroll of the Masters
+1 Slate of Ancestry
+1 Sol Ring
+1 Talisman of Curiosity
+1 Thought Vessel
+1 Twinning Staff
+1 Archmage Emeritus
+1 Beanstalk Giant
+1 Birds of Paradise
+1 Brazen Borrower
+1 Brightcap Badger
+1 Chancellor of Tales
+1 Deekah, Fractal Theorist
+1 Docent of Perfection
+1 Dragonsguard Elite
+1 Edgewall Innkeeper
+1 Elusive Otter
+1 Ferocious Werefox
+1 Giant Killer
+1 Grazilaxx, Illithid Scholar
+1 Illithid Harvester
+1 James, Wandering Dad
+1 Kellan, Daring Traveler
+1 Leonin Lightscribe
+1 Lovestruck Beast
+1 Monastery Mentor
+1 Murmuring Mystic
+1 Mysterious Pathlighter
+1 Oakhame Ranger
+1 Pathbreaker Ibex
+1 Storyteller Pixie
+1 Talrand, Sky Summoner
+1 Temur Sabertooth
+1 Threadbind Clique
+1 Urianger Augurelt
+1 Vantress Transmuter
+1 Vega, the Watcher
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Breeding Pool
+1 Command Tower
+1 Flooded Strand
+6 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hedge Maze
+1 Hinterland Harbor
+4 Island
+1 Jidoor, Aristocratic Capital
+1 Lush Portico
+1 Meticulous Archive
+1 Misty Rainforest
+1 Otawara, Soaring City
+4 Plains
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Temple Garden
+1 Windswept Heath
+1 Zanarkand, Ancient Metropolis
+1 Cultivate
+1 Explore
+1 Fabricate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Shamanic Revelation
+1 Three Visits
+1 Venture Forth
+1 Cunning Evasion
+1 Mirari's Wake
+1 Virtue of Knowledge
+1 Virtue of Loyalty
+1 Eladamri's Call
+1 Generous Gift
+1 Transcendent Message
+1 Invasion of Arcavios
+1 Will Kenrith

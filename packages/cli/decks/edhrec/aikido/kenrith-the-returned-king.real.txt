@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/gNEfayDm5h9csnXbv-JFsg (source https://moxfield.com/decks/xG03UyPI90SkzOD1K_ttPQ)
+# tags Control, Tempo, +1/+1 Counters, Aikido; bracket 3; saved 2026-09-03; 44 tagged of 31481 indexed
+
+Commander
+1 Kenrith, the Returned King
+
+Deck
+1 Aether Hub
+1 Ash Barrens
+1 Blood Crypt
+1 Bojuka Bog
+1 City of Brass
+1 Command Tower
+1 Deserted Temple
+1 Escape Tunnel
+1 Exotic Orchard
+1 Forbidden Orchard
+4 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Mana Confluence
+1 Maze of Ith
+1 Mountain
+1 Path of Ancestry
+5 Plains
+1 Reflecting Pool
+1 Riverglide Pathway
+1 Rogue's Passage
+1 Shivan Reef
+1 Snow-Covered Island
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 Thespian's Stage
+1 Vault of the Archangel
+1 Arcane Denial
+1 Baleful Mastery
+1 Benefactor's Draught
+1 Boros Charm
+1 Comeuppance
+1 Deflecting Palm
+1 Deflecting Swat
+1 Gideon's Sacrifice
+1 Inkshield
+1 Path to Exile
+1 Rakdos Charm
+1 Ready // Willing
+1 Reins of Power
+1 Stroke of Midnight
+1 Sudden Spoiling
+1 Swords to Plowshares
+1 Untimely Malfunction
+1 Arcane Signet
+1 Chromatic Lantern
+1 Sol Ring
+1 Wishclaw Talisman
+1 Baleful Strix
+1 Birds of Paradise
+1 Boros Reckoner
+1 Breena, the Demagogue
+1 Dualcaster Mage
+1 Evolution Witness
+1 Flumph
+1 Forgotten Ancient
+1 Gluntch, the Bestower
+1 Guard Gomazoa
+1 High Priest of Penance
+1 Kambal, Consul of Allocation
+1 Master of Ceremonies
+1 Nils, Discipline Enforcer
+1 Orzhov Advokist
+1 Qarsi Revenant
+1 Queen Marchesa
+1 Scrawling Crawler
+1 Screaming Nemesis
+1 Selvala, Explorer Returned
+1 Shadrix Silverquill
+1 Skullwinder
+1 Willbender
+1 Xyris, the Writhing Storm
+1 Blind Obedience
+1 Curse of Opulence
+1 Curse of Verbosity
+1 Duelist's Heritage
+1 Evolutionary Escalation
+1 Ghostly Prison
+1 Monologue Tax
+1 Mystic Remora
+1 Rhystic Study
+1 Smothering Tithe
+1 The Akroan War
+1 Demonic Tutor
+1 Farseek
+1 Mutinous Massacre
+1 Mythos of Snapdax
+1 Rampant Growth
+1 Scheming Symmetry

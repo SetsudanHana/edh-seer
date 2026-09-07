@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/DvNp-g48bPcR9M7vvil7zA (source https://archidekt.com/decks/21093540)
+# tags Proliferate, Energy, Activated Abilities; bracket 2; saved 2026-09-04; 64 tagged of 3167 indexed
+
+Commander
+1 Gogo, Master of Mimicry
+
+Deck
+1 Aether Hub
+1 Brokers Hideout
+1 Evolving Wilds
+1 Fabled Passage
+1 HELIOS One
+21 Island
+1 Karn's Bastion
+1 Maestros Theater
+1 Myriad Landscape
+1 Nesting Grounds
+1 Obscura Storefront
+1 Prismatic Vista
+1 Promising Vein
+1 Reliquary Tower
+1 Shire Terrace
+1 Terminal Moraine
+1 Terramorphic Expanse
+1 Vibrant Cityscape
+1 Aether Meltdown
+1 Era of Innovation
+1 Extravagant Replication
+1 Mesmerizing Dose
+1 Retreat to Coralhelm
+1 Aether Spike
+1 Aetherize
+1 Experimental Augury
+1 Fuel for the Cause
+1 Glimmer of Genius
+1 High Tide
+1 Mana Leak
+1 Negate
+1 Rapid Hybridization
+1 Reject Imperfection
+1 Resculpt
+1 Serum Snare
+1 Steady Progress
+1 Tune the Narrative
+1 Aether Swooper
+1 Aether Theorist
+1 Aethersquall Ancient
+1 Aurora Shifter
+1 Dreamtide Whale
+1 Electrostatic Pummeler
+1 Ioreth of the Healing House
+1 James, Wandering Dad
+1 Janjeet Sentry
+1 Kelpie Guide
+1 Multiform Wonder
+1 Omen Hawker
+1 Pit Automaton
+1 Roil Cartographer
+1 Shielded Aether Thief
+1 Tempest Harvester
+1 Thriving Turtle
+1 Thrummingbird
+1 Volatile Stormdrake
+1 Aetherflux Conduit
+1 Animation Module
+1 Arcane Signet
+1 Bespoke Battlewagon
+1 Consulate Turret
+1 Conversion Apparatus
+1 Crucible of Worlds
+1 Deadlock Trap
+1 Decoction Module
+1 Dynavolt Tower
+1 Fabrication Module
+1 Glassblower's Puzzleknot
+1 Hedron Archive
+1 Mind Stone
+1 Solar Transformer
+1 Stone Idol Generator
+1 T-45 Power Armor
+1 The Enigma Jewel
+1 The Millennium Calendar
+1 Thought Vessel
+1 Thousand-Year Elixir
+1 Confiscation Coup
+1 Contentious Plan

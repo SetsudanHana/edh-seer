@@ -24,16 +24,25 @@ interface InstallPromptEvent extends Event {
  *  `display-mode: standalone` check beside it: Chrome does not fire this once the app is installed,
  *  so the check would be a second condition testing the same fact.
  *
- *  IT PORTALS INTO THE STATIC HEADER. The nav is markup `index.html` ships and React never owns
- *  (the header moved out of React so a crawler gets the `h1` without running a 700 KB bundle), so
- *  reaching it means a portal rather than a prop. A missing nav renders nothing instead of
- *  throwing, because any page that mounts the app without the header is still a page. */
+ *  IT PORTALS INTO THE STATIC HEADER. The header is markup `index.html` ships and React never owns
+ *  (it moved out of React so a crawler gets the `h1` without running a 700 KB bundle), so reaching
+ *  it means a portal rather than a prop. A missing header renders nothing instead of throwing,
+ *  because any page that mounts the app without the header is still a page.
+ *
+ *  IT IS A SIBLING OF THE NAV AND NOT INSIDE IT (owner, 2026-09-04). It used to be the nav's last
+ *  child, which made the six links start 74px further left on the one page that has this button --
+ *  `how-it-works` loads no JavaScript at all, so it can never have it. Every crossing between the
+ *  two pages therefore slid the whole menu sideways, and so did this button's own arrival, since
+ *  `beforeinstallprompt` fires some time after the page paints. As a third header child it takes
+ *  the middle of a `space-between` row and the nav stays pinned to the right edge on both pages;
+ *  `.site-nav-install` carries `order: 1` so it lands between the brand and the nav rather than
+ *  after it. See `index.css`. */
 export function InstallButton() {
   const [event, setEvent] = useState<InstallPromptEvent | null>(null);
   const [host, setHost] = useState<Element | null>(null);
 
   useEffect(() => {
-    setHost(document.querySelector(".site-nav"));
+    setHost(document.querySelector(".site-header"));
     const onPrompt = (e: Event) => {
       // Or the browser keeps its own affordance and the reader is offered the same install twice.
       e.preventDefault();

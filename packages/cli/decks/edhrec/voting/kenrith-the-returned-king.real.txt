@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/VvlzeRgyxL_YFMCan6Qxsg (source https://archidekt.com/decks/23080889)
+# tags Activated Abilities, Voting, Politics; bracket 3; saved 2026-08-14; 31 tagged of 31481 indexed
+
+Commander
+1 Kenrith, the Returned King
+
+Deck
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Brushland
+1 Caves of Koilos
+1 Cinder Glade
+1 Command Tower
+1 Exotic Orchard
+4 Forest
+9 Island
+1 Llanowar Wastes
+4 Mountain
+5 Plains
+1 Shivan Reef
+3 Swamp
+1 Tainted Isle
+1 Tainted Peak
+1 Temple of the False God
+1 Yavimaya Coast
+1 Agatha of the Vile Cauldron
+1 Ballot Broker
+1 Biomancer's Familiar
+1 Brago's Representative
+1 Chasm Skulker
+1 Custodi Squire
+1 Círdan the Shipwright
+1 Druid of Purification
+1 Elrond of the White Council
+1 Emissary Green
+1 Faeburrow Elder
+1 Grudge Keeper
+1 Humble Defector
+1 Kami of the Crescent Moon
+1 Laboratory Maniac
+1 Lieutenants of the Guard
+1 Magister of Worth
+1 Nadir Kraken
+1 Nekusar, the Mindrazer
+1 Selvala, Explorer Returned
+1 The Second Doctor
+1 The Watcher in the Water
+1 Tivit, Seller of Secrets
+1 Triskaidekaphile
+1 Twenty-Toed Toad
+1 Zirda, the Dawnwaker
+1 Approach of the Second Sun
+1 Bite of the Black Rose
+1 Council's Judgment
+1 Disrupt Decorum
+1 Mob Verdict
+1 Plea for Power
+1 Prisoner's Dilemma
+1 Rampant Growth
+1 Travel Through Caradhras
+1 Truth or Consequences
+1 Chromatic Lantern
+1 Ghirapur Orrery
+1 Horn of Greed
+1 Howling Mine
+1 Spectral Searchlight
+1 Thought Vessel
+1 Curse of Opulence
+1 Curse of Verbosity
+1 Forced Fruition
+1 Ghostly Prison
+1 Propaganda
+1 Rites of Flourishing
+1 Sanguine Bond
+1 Smothering Tithe
+1 Teferi's Ageless Insight
+1 Tenuous Truce
+1 Thought Reflection
+1 Well of Ideas
+1 Wilderness Reclamation
+1 Wizard Class
+1 Illusion of Choice
+1 Sail into the West
+1 Split Decision
+1 Jace Beleren
+1 Jace, Wielder of Mysteries

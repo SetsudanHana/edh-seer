@@ -1,0 +1,76 @@
+# edhrec average deck: https://edhrec.com/average-decks/zimone-and-dina/books
+# theme Books (1 decks)
+
+Commander
+1 Zimone and Dina
+
+Deck
+1 Arcane Encyclopedia
+1 Folio of Fancies
+1 Geth's Grimoire
+1 Grimoire of the Dead
+1 Jalum Tome
+1 Mazemind Tome
+1 Mind Stone
+1 Monster Manual
+1 Sarpadian Empires, Vol. VII
+1 Sky Diamond
+1 Staff of the Mind Magus
+1 Talisman of Curiosity
+1 Tamiyo's Journal
+1 Tarrian's Journal
+1 Venser's Journal
+14 Forest
+9 Island
+1 Quandrix Campus
+1 Study Hall
+10 Swamp
+1 The Biblioplex
+1 Witherbloom Campus
+1 Academy Loremaster
+1 Aether Channeler
+1 Archive Dragon
+1 Artificer's Assistant
+1 Automatic Librarian
+1 Biblioplex Kraken
+1 Body of Knowledge
+1 Bookwurm
+1 Concealing Curtains
+1 Dutiful Knowledge Seeker
+1 Elvish Archivist
+1 Erudite Wizard
+1 Eternal Student
+1 Eternal Taskmaster
+1 Geist of the Archives
+1 Lat-Nam Adept
+1 Mild-Mannered Librarian
+1 Ormos, Archive Keeper
+1 Overwhelmed Apprentice
+1 Page, Loose Leaf
+1 Reckless Scholar
+1 Skilled Animator
+1 Spellbook Seeker
+1 Suspicious Bookcase
+1 Tamiyo, Inquisitive Student
+1 Teferi's Protege
+1 Tome Anima
+1 Tomebound Lich
+1 Zimone, Quandrix Prodigy
+1 Combat Research
+1 Curse of Fool's Wisdom
+1 Dark Tutelage
+1 Hard Cover
+1 Price of Knowledge
+1 Rousing Read
+1 Bury in Books
+1 Curate
+1 Eureka Moment
+1 Frantic Search
+1 Impulse
+1 Into the Story
+1 Pull from Tomorrow
+1 Stroke of Genius
+1 Waterlogged Teachings
+1 Wrong Turn
+1 Compulsive Research
+1 Field Research

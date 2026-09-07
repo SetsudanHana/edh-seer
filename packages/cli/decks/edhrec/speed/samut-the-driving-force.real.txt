@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/zdpAUOYLYsPjVpfGCn1aZw (source https://archidekt.com/decks/25701833)
+# tags Tokens, Speed; bracket 2; saved 2026-09-03; 57 tagged of 4918 indexed
+
+Commander
+1 Samut, the Driving Force
+
+Deck
+1 Adeline, Resplendent Cathar
+1 Agate Instigator
+1 Anim Pakal, Thousandth Moon
+1 Birds of Paradise
+1 Burnout Bashtronaut
+1 Caustic Caterpillar
+1 Druid of the Anima
+1 Endrider Catalyzer
+1 Endrider Spikespitter
+1 Enduring Courage
+1 Gingerbrute
+1 Hazoret, Godseeker
+1 Howlsquad Heavy
+1 Jetmir, Nexus of Revels
+1 Kutzil, Malamet Exemplar
+1 Moonshaker Cavalry
+1 Sakura-Tribe Elder
+1 Samut, Voice of Dissent
+1 Sovereign Okinec Ahau
+1 Whiptongue Hydra
+1 Akroma's Memorial
+1 Arcane Signet
+1 Eldrazi Monument
+1 Perilous Snare
+1 Racers' Scoreboard
+1 Sol Ring
+1 Starting Column
+1 Amonkhet Raceway
+1 Avishkar Raceway
+1 Bountiful Promenade
+1 Cabaretti Courtyard
+1 Command Tower
+13 Forest
+1 Jetmir's Garden
+4 Mountain
+1 Muraganda Raceway
+1 Overgrown Farmland
+1 Path of Ancestry
+8 Plains
+1 Rockfall Vale
+1 Stomping Ground
+1 Temple Garden
+1 Artifact Mutation
+1 Aura Mutation
+1 Beast Within
+1 Chaos Warp
+1 Defend the Rider
+1 Heroic Intervention
+1 March of the Multitudes
+1 Path to Exile
+1 Swords to Plowshares
+1 White Sun's Zenith
+1 Awaken the Woods
+1 Blasphemous Act
+1 Camaraderie
+1 Cultivate
+1 Farseek
+1 Finale of Devastation
+1 Harmonize
+1 Overwhelming Stampede
+1 Pest Infestation
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Shamanic Revelation
+1 Song of Totentanz
+1 Storm Herd
+1 Beastmaster Ascension
+1 Felidar Retreat
+1 Garruk's Uprising
+1 Impact Tremors
+1 Kickoff Celebrations
+1 Outpace Oblivion
+1 Point the Way
+1 Rabble Rousing
+1 Rising of the Day
+1 Warleader's Call
+1 Warstorm Surge

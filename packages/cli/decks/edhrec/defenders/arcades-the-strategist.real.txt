@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/aXq-3rlBBfZFcPZG_eNcMQ (source https://archidekt.com/decks/17655288)
+# tags Blink, Toughness Matters, Defenders; bracket 2; saved 2026-09-05; 2371 tagged of 22905 indexed
+
+Commander
+1 Arcades, the Strategist
+
+Deck
+1 Academy Ruins
+1 Bountiful Promenade
+1 Brokers Hideout
+1 Canopy Vista
+1 Command Tower
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Fabled Passage
+5 Forest
+1 Ghost Quarter
+1 Hall of Heliod's Generosity
+1 Hushwood Verge
+5 Island
+1 Krosan Verge
+1 Overgrown Farmland
+5 Plains
+1 Port Town
+1 Prairie Stream
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Seaside Citadel
+1 Sodden Verdure
+1 Spara's Headquarters
+1 Tranquil Landscape
+1 Arbor Adherent
+1 Axebane Guardian
+1 Baldin, Century Herdmaster
+1 Bedrock Tortoise
+1 Brago, King Eternal
+1 Corrupted Shapeshifter
+1 Crashing Drawbridge
+1 Crystal Barricade
+1 Deadeye Navigator
+1 Fortified Rampart
+1 Hover Barrier
+1 Jeskai Barricade
+1 Mnemonic Wall
+1 Nylea, God of the Hunt
+1 Oathsworn Giant
+1 Plagon, Lord of the Beach
+1 Preston, the Vanisher
+1 Rampart Architect
+1 Reclamation Sage
+1 Shield Sphere
+1 Soulherder
+1 Starfield Vocalist
+1 Sunscape Familiar
+1 Tetsuko Umezawa, Fugitive
+1 Thassa, Deep-Dwelling
+1 The Pride of Hull Clade
+1 The Walls of Ba Sing Se
+1 Tree of Redemption
+1 Wall of Denial
+1 Wall of Junk
+1 Wall of Omens
+1 Wall of Stolen Identity
+1 Wall of Tanglecord
+1 Weathered Sentinels
+1 Wingmantle Chaplain
+1 Arcane Signet
+1 Chromatic Lantern
+1 Colfenor's Urn
+1 Meekstone
+1 Rammas Echor, Ancient Shield
+1 Simic Signet
+1 Sol Ring
+1 Assault Formation
+1 Brave the Sands
+1 High Alert
+1 Primal Rage
+1 Teleportation Circle
+1 Cloudshift
+1 Eerie Interlude
+1 Ephemerate
+1 Ghostway
+1 Heritage Reclamation
+1 Path to Exile
+1 Return to Nature
+1 Stroke of Midnight
+1 Dusk // Dawn
+1 Farseek
+1 Last March of the Ents
+1 Nature's Lore
+1 Rampant Growth
+1 Reunion of the House
+1 Slaughter the Strong

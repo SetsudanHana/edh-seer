@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/cB7R0yZm7wkeF9XuiS316A (source https://archidekt.com/decks/25819201)
+# tags Speed, Combo, Unblockable, Card Draw; bracket 2; saved 2026-09-04; 74 tagged of 7898 indexed
+
+Commander
+1 Vnwxt, Verbose Host
+
+Deck
+1 Aerial Doombot
+1 Artificer's Assistant
+1 Enduring Curiosity
+1 Faerie Mastermind
+1 Faerie Seer
+1 Federation Probe
+1 Flitterwing Nuisance
+1 Gudul Lurker
+1 Harrier Strix
+1 Homunculus Horde
+1 Hydroelectric Specimen
+1 Hypnotic Siren
+1 Illvoi Galeblade
+1 Laboratory Maniac
+1 Lyla, Holographic Assistant
+1 Merfolk Windrobber
+1 Psychosis Crawler
+1 Scrawling Crawler
+1 Silver Raven
+1 Siren Stormtamer
+1 Slither Blade
+1 Triton Shorestalker
+1 Twenty-Toed Toad
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Archmage's Charm
+1 Brainstorm
+1 Brainsurge
+1 Commandeer
+1 Consider
+1 Counterspell
+1 Flare of Denial
+1 Flow of Knowledge
+1 Foil
+1 Frantic Search
+1 Mana Drain
+1 Negate
+1 Opt
+1 Pongify
+1 Rapid Hybridization
+1 Silundi Vision
+1 Sink into Stupor
+1 Snap
+1 Swan Song
+1 Three Steps Ahead
+1 Tolarian Winds
+1 Bident of Thassa
+1 Sapphire Medallion
+1 Sol Ring
+1 Chart a Course
+1 Enter the Enigma
+1 Gitaxian Probe
+1 Mathemagics
+1 Ponder
+1 Windfall
+1 Ever-Watching Threshold
+1 Nerd Rage
+1 Ominous Seas
+1 Proft's Eidetic Memory
+1 Propaganda
+1 Teferi's Ageless Insight
+1 Wizard Class
+1 Halimar Depths
+30 Island
+1 Mistrise Village
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+1 Reliquary Tower
+1 Jace, Wielder of Mysteries
+1 Teferi, Temporal Pilgrim

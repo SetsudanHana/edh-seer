@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/6GeETcypBO4SbQhHS0nhjQ (source https://archidekt.com/decks/13413458)
+# tags Dragons, Multicolor Matters, Color Hack, Type Hack; bracket 3; saved 2026-09-05; 167 tagged of 12881 indexed
+
+Commander
+1 Ramos, Dragon Engine
+
+Deck
+1 Amulet of Vigor
+1 Chromatic Lantern
+1 Conqueror's Flail
+1 Dragon's Hoard
+1 Infinite Guideline Station
+1 Insight Engine
+1 Lightning Greaves
+1 Maskwood Nexus
+1 Prismatic Geoscope
+1 Arcane Adaptation
+1 Buried in the Garden
+1 Call the Spirit Dragons
+1 Collective Restraint
+1 Leyline of Transformation
+1 Leyline of the Guildpact
+1 Maelstrom Nexus
+1 Mana Cannons
+1 Prismatic Undercurrents
+1 Rhystic Study
+1 Spirit of Resistance
+1 Sterling Grove
+1 The Kami War
+1 Trace of Abundance
+1 Widespread Thieving
+1 Arid Mesa
+1 Bloodstained Mire
+1 Boseiju, Who Endures
+1 Cascading Cataracts
+1 Cavern of Souls
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Forest
+1 Indatha Triome
+1 Island
+1 Jetmir's Garden
+1 Ketria Triome
+1 Maelstrom of the Spirit Dragon
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Path of Ancestry
+1 Plains
+1 Polluted Delta
+1 Prismatic Vista
+1 Raffine's Tower
+1 Raugrin Triome
+1 Savai Triome
+1 Scalding Tarn
+1 Spara's Headquarters
+1 Swamp
+1 Temple Garden
+1 Temple of the Dragon Queen
+1 The World Tree
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Xander's Lounge
+1 Zagoth Triome
+1 Ziatora's Proving Ground
+1 Bloom Tender
+1 Chromanticore
+1 Deathrite Shaman
+1 Dragonborn Champion
+1 Dragonspeaker Shaman
+1 Esika, God of the Tree
+1 Faeburrow Elder
+1 Heroes in a Half Shell
+1 Jenson Carthalion, Druid Exile
+1 Maelstrom Archangel
+1 Miirym, Sentinel Wyrm
+1 Mondo Gecko
+1 Nicol Bolas, the Ravager
+1 O-Kagachi, Vengeful Kami
+1 Omnath, Locus of All
+1 Primeval Spawn
+1 Progenitus
+1 Rivaz of the Claw
+1 Rukarumel, Biologist
+1 Sarkhan, Soul Aflame
+1 Scion of Draco
+1 Scion of the Ur-Dragon
+1 Sigarda, Font of Blessings
+1 Sisay, Weatherlight Captain
+1 Tam, Mindful First-Year
+1 The Ur-Dragon
+1 Tiamat
+1 Two-Headed Hellkite
+1 Crux of Fate
+1 Glittering Wish
+1 Iridian Maelstrom
+1 Supply // Demand
+1 Evasive Action
+1 Heroic Intervention
+1 Teferi's Protection
+1 Unite the Coalition
+1 Kiora, Behemoth Beckoner
+1 Sarkhan Unbroken

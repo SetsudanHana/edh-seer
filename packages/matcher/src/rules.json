@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 11,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -16,7 +16,7 @@
   ],
 
   "patterns": {
-    "boardWipe": "destroy all|exile all|each player sacrifices|all creatures? get [+-]|return all",
+    "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker)|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
     "targetedRemoval": "destroy[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
     "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
@@ -104,6 +104,75 @@
       "category": "draw",
       "match": [{ "op": "effectKind", "in": ["draw-card"] }],
       "not": [{ "op": "typeLine", "contains": "land" }]
+    },
+    {
+      "id": "draw.engine",
+      "facet": { "of": "draw", "name": "engines" },
+      "match": [{ "op": "effectKind", "in": ["draw-card"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "A DRAW THAT COMES BACK (owner, 2026-09-05): ten Rhystic Studies are not ten Divinations, and the count said they were. Anything above `once` on the SAME ability; per-cycle ({T}: draw, once a round) counts as an engine by the owner's ruling. Measured on the 71 decks before this rule: 400 engine cards, 470 one-shots, 104 unlabelled."
+    },
+    {
+      "id": "draw.unlabelled",
+      "facet": { "of": "draw", "name": "unlabelled" },
+      "match": [{ "op": "effectKind", "in": ["draw-card"], "repeats": [null] }],
+      "not": [
+        { "op": "typeLine", "contains": "land" },
+        { "op": "effectKind", "in": ["draw-card"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"] }
+      ],
+      "why": "A draw `repeats.ts` REFUSED to label, on a card with no labelled engine draw beside it. Shown, not hidden: unlabelled beats mislabelled, and a reader who sees 3 unlabelled knows the engine count is a floor."
+    },
+    {
+      "id": "ramp.engine.source",
+      "facet": { "of": "ramp", "name": "engines" },
+      "match": [{ "op": "anyOf", "clauses": [
+        {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        { "op": "typeLine", "contains": "land" }
+      ] }],
+      "why": "A MANA SOURCE THAT COMES BACK (owner, 2026-09-05: 'do the same for ramp'). A rock or a dork taps every round, a Treasure ENGINE makes one every turn, and a ramp land is itself the source; a ritual or a one-off pair of Treasures is spent once and is neither facet. The land-fetch half of this facet is the rule below, because a facet rule cannot AND two clauses inside anyOf."
+    },
+    {
+      "id": "ramp.engine.land",
+      "facet": { "of": "ramp", "name": "engines" },
+      "match": [{ "op": "oracle", "pattern": "landFetch" }, { "op": "oracle", "pattern": "ontoBattlefield" }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "A fetched land taps every turn from then on: the spell resolves once, the acceleration repeats. Same two patterns as `ramp.landFetchSpell`, by name, so the two cannot drift."
+    },
+    {
+      "id": "ramp.unlabelled",
+      "facet": { "of": "ramp", "name": "unlabelled" },
+      "match": [{ "op": "effectKind", "in": ["mana-generation", "fast-mana", "ritual", "token-generation"], "repeats": [null] }],
+      "not": [
+        {"op": "effectKind", "in": ["mana-generation", "fast-mana"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        {"op": "effectKind", "in": ["token-generation"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]},
+        { "op": "typeLine", "contains": "land" },
+        { "op": "oracle", "pattern": "landFetch" }
+      ],
+      "why": "A mana ability `repeats.ts` refused to label, on a card with no labelled engine beside it and no land to fall back on. Shown, not hidden."
+    },
+    {
+      "id": "removal.engine",
+      "facet": { "of": "targetedRemoval", "name": "engines" },
+      "match": [{ "op": "anyOf", "clauses": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}] }],
+      "why": "REMOVAL THAT COMES BACK (owner, 2026-09-05: 'do the same for removal'). Removal has no effect kind by design, so the ability is found by what it EMITS -- a destroy is a `dies`, an exile or a bounce a `leaves`, burn a `non-combat-damage`, -1/-1 counters a `counter-added`, a shrink a `debuff` kind -- and counted as an engine when that ability repeats: an activated kill on a permanent, a 'whenever ... destroy' trigger. Swords is `on-cast` and once; Chupacabra's ETB is once."
+    },
+    {
+      "id": "removal.unlabelled.refused",
+      "facet": { "of": "targetedRemoval", "name": "unlabelled" },
+      "match": [{ "op": "anyOf", "clauses": [
+        {"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": [null]},
+        {"op": "effectKind", "in": ["debuff"], "repeats": [null]}
+      ] }],
+      "not": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}, {"op": "effectKind", "in": ["debuff"], "repeats": ["per-cycle", "per-turn", "repeatable", "continuous"]}],
+      "why": "A removal ability `repeats.ts` refused to label, with no labelled engine beside it."
+    },
+    {
+      "id": "removal.unlabelled.unread",
+      "facet": { "of": "targetedRemoval", "name": "unlabelled" },
+      "match": [],
+      "not": [{"op": "emits", "verbs": ["dies", "leaves", "non-combat-damage", "counter-added"], "control": ["opp", "any"], "zone": [null]}, { "op": "effectKind", "in": ["debuff"] }],
+      "why": "The oracle regex called it removal and derivation found no removal-shaped ability at all (Chaos Warp: a shuffle-into-library is neither a death nor a leave). Nothing to label, so it is said as unlabelled rather than silently read as a one-shot."
     },
     {
       "id": "burn.effect",

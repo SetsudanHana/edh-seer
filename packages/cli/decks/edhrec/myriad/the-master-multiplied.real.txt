@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/6GfQxvQuVlVztMF1NCyWbA (source https://archidekt.com/decks/15326330)
+# tags Myriad, Tokens, Combo; bracket 3; saved 2026-08-27; 95 tagged of 4657 indexed
+
+Commander
+1 The Master, Multiplied
+
+Deck
+1 Abrade
+1 Bedevil
+1 Chaos Warp
+1 Corrupted Conviction
+1 Deadly Dispute
+1 Fell the Profane
+1 Go for the Throat
+1 Infernal Grasp
+1 Nasty End
+1 Rakdos Charm
+1 Return the Favor
+1 Terminate
+1 Village Rites
+1 Withering Torment
+1 Amulet of Vigor
+1 Arcane Signet
+1 Charcoal Diamond
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Fire Diamond
+1 Idol of Oblivion
+1 Liquimetal Torque
+1 Mimic Vat
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Indulgence
+1 The Fire Crystal
+1 Thought Vessel
+1 Wayfarer's Bauble
+1 Arena of Glory
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Bonders' Enclave
+1 Castle Locthwain
+1 Command Tower
+1 Dark Fortress
+1 Demolition Field
+1 Dragonskull Summit
+1 Fabled Passage
+1 Foreboding Ruins
+1 Geothermal Bog
+1 Graven Cairns
+1 Haunted Ridge
+1 High Market
+1 Luxury Suite
+7 Mountain
+1 Plaza of Heroes
+1 Rakdos Carnarium
+1 Raucous Theater
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Shizo, Death's Storehouse
+1 Smoldering Marsh
+1 Susur Secundi, Void Altar
+2 Swamp
+1 War Room
+1 Banshee of the Dread Choir
+1 Combat Celebrant
+1 Dalek Squadron
+1 Elturel Survivors
+1 Enduring Courage
+1 Feldon of the Third Path
+1 Firbolg Flutist
+1 Gnoll War Band
+1 Goldlust Triad
+1 Grim Hireling
+1 Kiki-Jiki, Mirror Breaker
+1 Mirage Phalanx
+1 Morbid Opportunist
+1 Orthion, Hero of Lavabrink
+1 Professional Face-Breaker
+1 Redoubled Stormsinger
+1 Rionya, Fire Dancer
+1 Shredder, Shadow Master
+1 Tiamat's Fanatics
+1 Warchief Giant
+1 Blasphemous Act
+1 Feed the Swarm
+1 Insatiable Avarice
+1 Pact of the Serpent
+1 Read the Bones
+1 Sign in Blood
+1 Sundering Eruption
+1 Vandalblast
+1 Determined Iteration
+1 Firebender Ascension
+1 Phyrexian Arena
+1 Rising of the Day
+1 Visions of Phyrexia

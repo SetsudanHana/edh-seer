@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/elesh-norn/banding
+# theme Banding (11 decks)
+
+Commander
+1 Elesh Norn
+
+Deck
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Baton of Morale
+1 Caged Sun
+1 Helm of Chatzuk
+1 Marble Diamond
+1 Oketra's Monument
+1 Pariah's Shield
+1 Pearl Medallion
+1 Sol Ring
+1 Arid Archway
+1 Cathedral of Serra
+1 Emeria, the Sky Ruin
+1 Minas Tirith
+1 Myriad Landscape
+1 Nykthos, Shrine to Nyx
+27 Plains
+1 War Room
+1 Windbrisk Heights
+1 Adeline, Resplendent Cathar
+1 Anti-Venom, Horrifying Healer
+1 Benalish Hero
+1 Benalish Infantry
+1 Drumbellower
+1 Elesh Norn, Grand Cenobite
+1 Esper Sentinel
+1 Icatian Skirmishers
+1 Kjeldoran Escort
+1 Kjeldoran Knight
+1 Kjeldoran Skyknight
+1 Kjeldoran Warrior
+1 Knight of the White Orchid
+1 Loran of the Third Path
+1 Mesa Pegasus
+1 Myrel, Shield of Argive
+1 Noble Elephant
+1 Nomads en-Kor
+1 Odric, Master Tactician
+1 Outrider en-Kor
+1 Palace Jailer
+1 Phyrexian Vindicator
+1 Pikemen
+1 Shaman en-Kor
+1 Shield Bearer
+1 Spirit en-Kor
+1 Stuffy Doll
+1 Teremko Griffin
+1 Trapjaw Tyrant
+1 War Elephant
+1 Warrior en-Kor
+1 Welcoming Vampire
+1 Always Watching
+1 Assemble the Players
+1 Brave the Sands
+1 Chivalric Alliance
+1 Cooperation
+1 Defensive Formation
+1 Felidar Retreat
+1 Flowering of the White Tree
+1 Reconnaissance
+1 Smile at Death
+1 Enlightened Tutor
+1 Errand of Duty
+1 Formation
+1 Gideon's Sacrifice
+1 Martyrdom
+1 Path to Exile
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Elspeth, Sun's Champion
+1 Cut a Deal
+1 Ondu Inversion
+1 Secret Rendezvous

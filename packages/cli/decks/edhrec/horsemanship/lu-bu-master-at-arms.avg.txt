@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/lu-bu-master-at-arms/horsemanship
+# theme Horsemanship (2 decks)
+
+Commander
+1 Lu Bu, Master-at-Arms
+
+Deck
+1 Assault Suit
+1 Bitterthorn, Nissa's Animus
+1 Brass's Tunnel-Grinder
+1 Buster Sword
+1 Champion's Helm
+1 Colossus Hammer
+1 Commander's Plate
+1 Darksteel Plate
+1 Dragon's Hoard
+1 Excalibur, Sword of Eden
+1 Fireshrieker
+1 Genji Glove
+1 Hammer of Nazahn
+1 Inquisitor's Flail
+1 Inspiring Statuary
+1 Leyline Axe
+1 Loxodon Warhammer
+1 Mask of Avacyn
+1 Mask of Memory
+1 Mithril Coat
+1 Mystic Forge
+1 Resurrection Orb
+1 Sceptre of Eternal Glory
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Feast and Famine
+1 Sword of Forge and Frontier
+1 Sword of Hearth and Home
+1 Sword of Truth and Justice
+1 Sword of Wealth and Power
+1 Sword of the Animist
+1 The Immortal Sun
+1 Thran Dynamo
+1 Throne of Eldraine
+1 Bonders' Enclave
+1 Buried Ruin
+1 Cathedral of War
+1 Command Beacon
+1 Desert of the Fervent
+1 Forgotten Cave
+1 Ghost Quarter
+12 Mountain
+1 Scavenger Grounds
+1 Shinka, the Bloodsoaked Keep
+9 Snow-Covered Mountain
+1 Urza's Saga
+1 Valakut, the Molten Pinnacle
+1 War Room
+1 Brass Squire
+1 Desert Were-Worm
+1 Emberwilde Captain
+1 Glóin the Mighty
+1 Goblin Welder
+1 Komainu Battle Armor
+1 Lizard Blades
+1 Moraug, Fury of Akoum
+1 Pinnacle Monk
+1 Pit Automaton
+1 Silent Arbiter
+1 Solemn Simulacrum
+1 Soulbright Flamekin
+1 Fiery Emancipation
+1 Flowstone Blade
+1 Granite Grip
+1 The Sound of Drums
+1 Bolt Bend
+1 Deflecting Swat
+1 Final Fortune
+1 Pyroblast
+1 Red Elemental Blast
+1 Savage Beating
+1 Seething Song
+1 Valakut Awakening
+1 Disrupt Decorum
+1 Geosurge
+1 Introduction to Annihilation
+1 Rolling Earthquake
+1 Song-Mad Treachery
+1 Vandalblast

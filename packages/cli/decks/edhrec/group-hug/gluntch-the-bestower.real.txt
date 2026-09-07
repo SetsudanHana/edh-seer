@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/6zv3lN2SGKZtG8EuzFaOvQ (source https://moxfield.com/decks/VDBtXaEy4UmEdr9lQXzQZw)
+# tags +1/+1 Counters, Aggro, Toolbox, Midrange, Control, Group Slug, Pillow Fort, Combo, Ramp, Tokens, Group Hug; bracket 3; saved 2026-09-05; 808 tagged of 7730 indexed
+
+Commander
+1 Gluntch, the Bestower
+
+Deck
+1 Approach of the Second Sun
+1 Cut a Deal
+1 Pir's Whim
+1 Promise of Loyalty
+1 Requisition Raid
+1 Secret Rendezvous
+1 Slaughter the Strong
+1 Starfall Invocation
+1 Tempt with Bunnies
+1 Tempt with Discovery
+1 Avacyn's Pilgrim
+1 Basking Broodscale
+1 Brigone, Soldier of Meletis
+1 Champion of Lambholt
+1 Combat Calligrapher
+1 Dusk Legion Duelist
+1 Elvish Mystic
+1 Eternal Witness
+1 Evolution Witness
+1 Flumph
+1 Forgotten Ancient
+1 Fyndhorn Elves
+1 Generous Patron
+1 Joined Researchers
+1 Kami of Whispered Hopes
+1 Kutzil, Malamet Exemplar
+1 Llanowar Elves
+1 Loran of the Third Path
+1 Maester Seymour
+1 Mangara, the Diplomat
+1 Michelangelo, Weirdness to 11
+1 Mikey & Leo, Chaos & Order
+1 Nils, Discipline Enforcer
+1 Rosie Cotton of South Lane
+1 Scrawling Crawler
+1 Shalai, Voice of Plenty
+1 Skullwinder
+1 Trostani, Three Whispers
+1 Veteran Explorer
+1 Yes Man, Personal Securitron
+1 Beast Within
+1 Benevolent Offering
+1 Bovine Intervention
+1 Generous Gift
+1 Inspiring Call
+1 Nature's Claim
+1 Parting Gust
+1 Path to Exile
+1 Perch Protection
+1 Razorgrass Ambush
+1 Reprieve
+1 Swords to Plowshares
+1 Unwanted Remake
+1 Your Temple Is Under Attack
+1 Bretagard Stronghold
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+8 Forest
+1 Forge of Heroes
+1 Fortified Village
+1 Geier Reach Sanitarium
+1 Ghost Quarter
+1 Hall of Oracles
+1 Horizon Canopy
+1 Oran-Rief, the Vastwood
+1 Overgrown Farmland
+8 Plains
+1 Razorverge Thicket
+1 Rogue's Passage
+1 Selesnya Sanctuary
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 The Gold Saucer
+1 Coin of Mastery
+1 Howling Mine
+1 Sol Ring
+1 Communal Brewing
+1 Duelist's Heritage
+1 Elephant Grass
+1 Felidar Retreat
+1 Ghostly Prison
+1 Party Dude
+1 The Legend of Yangchen
+1 Utopia Sprawl

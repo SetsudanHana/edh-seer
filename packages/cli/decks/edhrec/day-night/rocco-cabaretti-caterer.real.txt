@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/LVhNZ0tiIIxd83D-wOxIvA (source https://archidekt.com/decks/23028219)
+# tags Humans, Day / Night, Aggro, Werewolves; bracket 2; saved 2026-09-03; 2 tagged of 9610 indexed
+
+Commander
+1 Rocco, Cabaretti Caterer
+
+Deck
+1 Annie Joins Up
+1 Fable of the Mirror-Breaker
+1 Full Moon's Rise
+1 Garruk's Uprising
+1 Guardian Project
+1 Reconnaissance
+1 Archon of Emeria
+1 Avabruck Caretaker
+1 Bird Admirer
+1 Birds of Paradise
+1 Blazing Firesinger
+1 Brigid, Clachan's Heart
+1 Brutal Cathar
+1 Burly Breaker
+1 Child of the Pack
+1 Esper Sentinel
+1 Fangblade Brigand
+1 Giver of Runes
+1 Grand Abolisher
+1 Hookhand Mariner
+1 Hound Tamer
+1 Howlpack Piper
+1 Ill-Tempered Loner
+1 Immerwolf
+1 Infestation Expert
+1 Kessig Naturalist
+1 Oakshade Stalker
+1 Outland Liberator
+1 Ragavan, Nimble Pilferer
+1 Studious First-Year
+1 Summon: Fenrir
+1 Sutina, Speaker of the Tajuru
+1 Tovolar's Huntmaster
+1 Tovolar, Dire Overlord
+1 Volatile Arsonist
+1 Weaver of Blossoms
+1 Werewolf Pack Leader
+1 Winota, Joiner of Forces
+1 Witch Enchanter
+1 Wolfkin Outcast
+1 Arlinn, the Pack's Hope
+1 Battlefield Forge
+1 Blinkmoth Nexus
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Brushland
+1 Command Tower
+1 Dryad Arbor
+1 Eiganjo, Seat of the Empire
+3 Forest
+1 Inkmoth Nexus
+1 Jetmir's Garden
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Khalni Garden
+2 Mountain
+1 Overgrown Farmland
+2 Plains
+1 Rockfall Vale
+1 Rootbound Crag
+1 Sacred Foundry
+1 Secret Tunnel
+1 Sokenzan, Crucible of Defiance
+1 Spectator Seating
+1 Spire Garden
+1 Stomping Ground
+1 Sunpetal Grove
+1 Temple Garden
+1 Three Tree City
+1 Windswept Heath
+1 Wooded Foothills
+1 Beast Within
+1 Boros Charm
+1 Deflecting Swat
+1 Flawless Maneuver
+1 Heroic Intervention
+1 Moonlight Hunt
+1 Nature's Claim
+1 Naya Charm
+1 Razorgrass Ambush
+1 Redirect Lightning
+1 Silence
+1 Swords to Plowshares
+1 Untimely Malfunction
+1 Cut a Deal
+1 Dire-Strain Rampage
+1 Emeria's Call
+1 Into the Night
+1 Secret Rendezvous
+1 Sundering Eruption
+1 Unnatural Moonrise
+1 Lightning Greaves
+1 Swiftfoot Boots
+1 The Celestus
+1 The Great Henge

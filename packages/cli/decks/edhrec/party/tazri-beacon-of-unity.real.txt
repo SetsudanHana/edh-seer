@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/A6XjSNGkF3-5x-Ol5VPP6Q (source https://archidekt.com/decks/15619918)
+# tags Blink, Dungeon, Attack Triggers, Party, ETB; bracket 2; saved 2026-09-03; 308 tagged of 2936 indexed
+
+Commander
+1 Tazri, Beacon of Unity
+
+Deck
+1 Acererak the Archlich
+1 Barrowin of Clan Undurr
+1 Burakos, Party Leader
+1 Caves of Chaos Adventurer
+1 Cloister Gargoyle
+1 Displacer Beast
+1 Feywild Caretaker
+1 Hama Pashar, Ruin Seeker
+1 Harper Recruiter
+1 Imoen, Mystic Trickster
+1 Nadaar, Selfless Paladin
+1 Nalia de'Arnise
+1 Obeka, Splitter of Seconds
+1 Ravenloft Adventurer
+1 Rilsa Rael, Kingpin
+1 Safana, Calimport Cutthroat
+1 Seasoned Dungeoneer
+1 Shortcut Seeker
+1 Solemn Doomguide
+1 Starfield Vocalist
+1 Tomb of Horrors Adventurer
+1 Triumphant Adventurer
+1 Undermountain Adventurer
+1 Varis, Silverymoon Ranger
+1 Veteran Dungeoneer
+1 Wandering Troubadour
+1 White Plume Adventurer
+1 Yuan-Ti Fang-Blade
+1 Yuan-Ti Malison
+1 Zalto, Fire Giant Duke
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Breeding Pool
+1 Cinder Glade
+1 Command Tower
+1 Deathcap Glade
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Evolving Wilds
+1 Exotic Orchard
+5 Forest
+1 Godless Shrine
+1 Haunted Ridge
+4 Island
+4 Mountain
+1 Overgrown Farmland
+4 Plains
+1 Sacred Foundry
+4 Swamp
+1 Terramorphic Expanse
+1 Underground River
+1 Ziatora's Proving Ground
+1 Arcane Signet
+1 Chromatic Lantern
+1 Conjurer's Closet
+1 Dungeon Map
+1 Fifty Feet of Rope
+1 Maskwood Nexus
+1 Multiclass Baldric
+1 Panharmonicon
+1 Sarevok's Tome
+1 Bar the Gate
+1 Lae'zel's Acrobatics
+1 Coveted Prize
+1 Cultivate
+1 Farseek
+1 Fates' Reversal
+1 Kick in the Door
+1 Migration Path
+1 Nature's Lore
+1 Stick Together
+1 They Went This Way
+1 You Find a Cursed Idol
+1 Dungeon Delver
+1 Find the Path
+1 Fly
+1 Loot Dispute
+1 Paradox Haze
+1 Precipitous Drop
+1 Teleportation Circle
+1 Thorough Investigation
+1 Virtue of Knowledge
+1 Ellywick Tumblestrum

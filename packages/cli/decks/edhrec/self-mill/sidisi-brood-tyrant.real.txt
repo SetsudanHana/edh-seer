@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/1FbA8TQIYFPutCyON79F_Q (source https://archidekt.com/decks/5264267)
+# tags Self-Mill, Zombies, Lhurgoyfs; bracket 2; saved 2026-09-04; 440 tagged of 7843 indexed
+
+Commander
+1 Sidisi, Brood Tyrant
+
+Deck
+1 Aftermath Analyst
+1 Archghoul of Thraben
+1 Brawn
+1 Champion of the Perished
+1 Colossal Grave-Reaver
+1 Cruel Somnophage
+1 Cryptbreaker
+1 Deranged Assistant
+1 Diregraf Captain
+1 Doomed Necromancer
+1 Eternal Witness
+1 Fiend Artisan
+1 Gisa and Geralf
+1 Golgari Thug
+1 Grave Researcher
+1 Gray Merchant of Asphodel
+1 Hermit Druid
+1 Jarad, Golgari Lich Lord
+1 Laboratory Maniac
+1 Lhurgoyf
+1 Lord of Extinction
+1 Malevolent Hermit
+1 Midnight Reaper
+1 Mikaeus, the Unhallowed
+1 Millikin
+1 Mirkwood Bats
+1 Mortivore
+1 Murderous Rider
+1 Nighthowler
+1 Old Stickfingers
+1 Phyrexian Delver
+1 Repository Skaab
+1 Sewer Nemesis
+1 Sidisi, Undead Vizier
+1 Siren Stormtamer
+1 Skull Prophet
+1 Snarling Gorehound
+1 Splinterfright
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 The Scarab God
+1 Umbral Collar Zealot
+1 Undead Butler
+1 Urborg Lhurgoyf
+1 Warren Soultrader
+1 Wight of the Reliquary
+1 Wonder
+1 Zul Ashur, Lich Lord
+1 Altar of Dementia
+1 Embalmer's Tools
+1 Hedge Shredder
+1 Assassin's Trophy
+1 Drown in the Loch
+1 Gnaw to the Bone
+1 Bala Ged Recovery
+1 Dread Return
+1 Dread Summons
+1 Feed the Swarm
+1 Life from the Loam
+1 Living Death
+1 Persist
+1 Reanimate
+1 Victimize
+1 Buried Ruin
+1 Castle Locthwain
+1 Choked Estuary
+1 Command Tower
+1 Crypt of Agadeem
+1 Dakmor Salvage
+1 Evolving Wilds
+1 Exotic Orchard
+4 Forest
+1 Hidden Grotto
+2 Island
+1 Nephalia Drownyard
+1 Opulent Palace
+1 Path of Ancestry
+1 Secluded Courtyard
+1 Spymaster's Vault
+1 Sunken Hollow
+6 Swamp
+1 Tainted Isle
+1 Tainted Wood
+1 Temple of Deceit
+1 Temple of Malady
+1 Unclaimed Territory
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Grist, the Hunger Tide
+1 Oversold Cemetery

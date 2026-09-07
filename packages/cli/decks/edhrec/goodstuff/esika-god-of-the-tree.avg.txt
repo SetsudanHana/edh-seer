@@ -1,0 +1,105 @@
+# edhrec average deck: https://edhrec.com/average-decks/esika-god-of-the-tree/good-stuff
+# theme Good Stuff (227 decks)
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Chrome Mox
+1 Commander's Sphere
+1 Fellwar Stone
+1 Lotus Petal
+1 Mox Amber
+1 Relic of Legends
+1 Sol Ring
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Island
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Overgrown Tomb
+1 Plains
+1 Polluted Delta
+1 Sacred Foundry
+1 Scalding Tarn
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 The World Tree
+1 Tropical Island
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Zagoth Triome
+1 Atraxa, Grand Unifier
+1 Aurora Awakener
+1 Avacyn, Angel of Hope
+1 Birds of Paradise
+1 Blightsteel Colossus
+1 Bloom Tender
+1 Delighted Halfling
+1 Elesh Norn, Grand Cenobite
+1 Esper Sentinel
+1 Etali, Primal Conqueror
+1 Faeburrow Elder
+1 Gisela, Blade of Goldnight
+1 Jin-Gitaxias, Core Augur
+1 Jin-Gitaxias, Progress Tyrant
+1 Jodah, the Unifier
+1 Kenrith, the Returned King
+1 Kinnan, Bonder Prodigy
+1 Koma, Cosmos Serpent
+1 Lotho, Corrupt Shirriff
+1 Ragavan, Nimble Pilferer
+1 Sheoldred, Whispering One
+1 Sisay, Weatherlight Captain
+1 Sphinx of the Second Sun
+1 Vorinclex, Monstrous Raider
+1 Vorinclex, Voice of Hunger
+1 Defense of the Heart
+1 Mystic Remora
+1 Paradox Haze
+1 Rhystic Study
+1 Smothering Tithe
+1 Sterling Grove
+1 Sylvan Library
+1 An Offer You Can't Refuse
+1 Assassin's Trophy
+1 Cyclonic Rift
+1 Deflecting Swat
+1 Fierce Guardianship
+1 Heroic Intervention
+1 Path to Exile
+1 Swan Song
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Vampiric Tutor
+1 Nicol Bolas, Dragon-God
+1 Nicol Bolas, God-Pharaoh
+1 Nicol Bolas, Planeswalker
+1 Ugin, the Spirit Dragon
+1 Cultivate
+1 Demonic Tutor
+1 Farewell
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Ruinous Ultimatum
+1 Skyshroud Claim
+1 Three Visits

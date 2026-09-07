@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/aragorn-the-uniter/legends
+# theme Legends (1854 decks)
+
+Commander
+1 Aragorn, the Uniter
+
+Deck
+1 Andúril, Narsil Reforged
+1 Arcane Signet
+1 Chromatic Lantern
+1 Doors of Durin
+1 Fellwar Stone
+1 Horn of Gondor
+1 Mithril Coat
+1 Sol Ring
+1 The One Ring
+1 Breeding Pool
+1 Canopy Vista
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+3 Forest
+1 Great Hall of the Citadel
+1 Hallowed Fountain
+3 Island
+1 Jetmir's Garden
+1 Jungle Shrine
+1 Ketria Triome
+1 Minas Tirith
+1 Mines of Moria
+3 Mountain
+1 Path of Ancestry
+4 Plains
+1 Prairie Stream
+1 Rejuvenating Springs
+1 Rivendell
+1 Sacred Foundry
+1 Spara's Headquarters
+1 Stomping Ground
+1 Temple Garden
+1 The Grey Havens
+1 The Shire
+1 Aragorn and Arwen, Wed
+1 Aragorn, Hornburg Hero
+1 Aragorn, King of Gondor
+1 Birds of Paradise
+1 Boromir, Gondor's Hope
+1 Boromir, Warden of the Tower
+1 Chulane, Teller of Tales
+1 Delighted Halfling
+1 Elrond, Master of Healing
+1 Faeburrow Elder
+1 Fallaji Wayfarer
+1 Faramir, Prince of Ithilien
+1 Faramir, Steward of Gondor
+1 Frodo Baggins
+1 Galadriel of Lothlórien
+1 Galadriel, Light of Valinor
+1 Gandalf the White
+1 General Ferrous Rokiric
+1 Hero of Precinct One
+1 Inga and Esika
+1 Merry, Esquire of Rohan
+1 Pippin, Guard of the Citadel
+1 Prince Imrahil the Fair
+1 Rienne, Angel of Rebirth
+1 Samwise Gamgee
+1 Surrak Dragonclaw
+1 Théoden, King of Rohan
+1 Éomer, King of Rohan
+1 Éowyn, Fearless Knight
+1 Éowyn, Shieldmaiden
+1 Annie Joins Up
+1 Brokers Ascendancy
+1 Elven Chorus
+1 Flowering of the White Tree
+1 Kellan Joins Up
+1 Rising of the Day
+1 War of the Last Alliance
+1 Bant Charm
+1 Boros Charm
+1 Brokers Charm
+1 Dovin's Veto
+1 Friendly Rivalry
+1 Growth Spiral
+1 Heroic Intervention
+1 Naya Charm
+1 Path to Exile
+1 Swords to Plowshares
+1 Cultivate
+1 Farseek
+1 Forth Eorlingas!
+1 Nature's Lore
+1 Rampant Growth
+1 Supreme Verdict
+1 The Ring Goes South

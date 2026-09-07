@@ -36,12 +36,49 @@ test("findings rank by fraction of target missing, across different kinds", () =
   expect(rows[0].shortfall).toBeGreaterThan(rows[1].shortfall);
 });
 
+/** A COLOUR THAT MEETS EVERY DEMAND CARRIES NO `worst` AT ALL -- `manaAudit` sets it only from the
+ *  UNMET demands, so its absence is the met test and the finding needs no second one. The fixture
+ *  used to hand-build a `worst` whose `available` already cleared `required`, which is a row the
+ *  engine cannot emit, and the gate written against it read `supplied` -- the deck's whole source
+ *  count -- while the colour panel printed `available` and called the same row short. */
 test("a colour that meets its own worst requirement is not a finding", () => {
   expect(findings(report({
-    deckMath: {
-      colors: [{ color: "B", supplied: 40, worst: { pips: 2, turn: 4, required: 22, requiredRaw: 24, cards: 3, available: 34 } }],
-    } as DeckReport["deckMath"],
+    deckMath: { colors: [{ color: "B", supplied: 40 }] } as DeckReport["deckMath"],
   }))).toEqual([]);
+});
+
+/** THE SUBJECT IS THE CARD. A mono-blue deck running 39 blue sources was told "Blue is short at the
+ *  top of your curve" about an MV3 spell, which is false twice and unacceptable once. */
+test("a colour finding names the card and reads the deadline count", () => {
+  const [row] = findings(report({
+    deckMath: {
+      colors: [{
+        color: "U", supplied: 39,
+        worst: { pips: 3, turn: 3, required: 37, requiredRaw: 44, cards: 2, available: 35, names: ["Archmage's Charm", "Mana Sculpt"] },
+      }],
+    } as DeckReport["deckMath"],
+  }));
+  expect(row.headline).toBe("Archmage's Charm and Mana Sculpt want three blue on turn 3.");
+  expect(row.figure).toBe("35/37");
+  // The deck HOLDS enough; they are not online that early, and the sentence has to say which.
+  expect(row.detail).toContain("35 of the deck's 39 blue sources");
+  expect(row.detail).toContain("timing problem rather than a colour one");
+  expect(row.shortfall).toBeCloseTo(2 / 37);
+});
+
+/** Too many to list is a count, not a wall of names. */
+test("a colour finding past two cards names one and counts the rest", () => {
+  const [row] = findings(report({
+    deckMath: {
+      colors: [{
+        color: "B", supplied: 20,
+        worst: { pips: 2, turn: 2, required: 30, requiredRaw: 36, cards: 5, available: 18, names: ["Bitterblossom", "Dark Confidant"] },
+      }],
+    } as DeckReport["deckMath"],
+  }));
+  expect(row.headline).toBe("Bitterblossom and 3 other cards want two black on turn 2.");
+  // Not a timing problem: the deck does not hold the sources at all.
+  expect(row.detail).not.toContain("timing problem");
 });
 
 /** Five thin classes are ONE finding, not five rows: the fix is one card that hits any permanent,
@@ -70,7 +107,8 @@ test("thin answer classes collapse into a single finding", () => {
   // AND THE FIGURE SAYS WHAT IT COUNTS (S16). `0/5 answer types covered` sat beside a Roles table
   // of SIX rows including graveyard, so a judge read the pair as an off-by-one and could not tell
   // whether graveyard is an answer type. The exclusion is right; it just was not stated.
-  expect(rows[0].figureLabel).toBe("permanent answer types covered");
+  // "covered" means the required copies, and the label says the number (UX sweep 2026-09-06, D5).
+  expect(rows[0].figureLabel).toMatch(/^answer types at \d+\+ copies$/);
   // Graveyard is still out of the COUNTS -- it is hate, not removal -- and the detail now says so
   // rather than leaving its absence to be discovered.
   expect(rows[0].detail).not.toContain("1 for graveyards");
@@ -301,4 +339,17 @@ test("the action line names no cut when the deck has no slack", () => {
     slack: [],
   }));
   expect(scored[0]!.action).not.toContain("cutting from");
+});
+
+/** A FETCH THE LIBRARY CANNOT FILL (owner, 2026-09-06): the engine's `fetchShortfalls` row becomes a
+ *  lands finding that names the card and says why Wastes does not help. */
+test("a fetch shortfall is a finding, ranked by the fraction of lands it cannot return", () => {
+  const [f] = findings(report({
+    deckMath: { fetchShortfalls: [{ card: "Myriad Landscape", wants: 2, found: 1, sharedType: true }] } as never,
+  }));
+  expect(f.kind).toBe("fetch");
+  expect(f.headline).toBe("Myriad Landscape looks for 2 lands and the deck can give it 1.");
+  expect(f.detail).toContain("Wastes has no land type");
+  expect(f.figure).toBe("1/2");
+  expect(f.shortfall).toBeCloseTo(0.5);
 });

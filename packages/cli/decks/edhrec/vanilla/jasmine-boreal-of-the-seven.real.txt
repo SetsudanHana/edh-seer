@@ -1,0 +1,80 @@
+# edhrec deck https://edhrec.com/deckpreview/1-vIu9ejQxIy3kZDBdkpmw (source https://archidekt.com/decks/21043965)
+# tags Vanilla, Morph; bracket 2; saved 2026-09-04; 284 tagged of 7048 indexed
+
+Commander
+1 Jasmine Boreal of the Seven
+
+Deck
+1 Ainok Survivalist
+1 Augur of Autumn
+1 Broodhatch Nantuko
+1 Curator Beastie
+1 Deathmist Raptor
+1 Den Protector
+1 Enduring Innocence
+1 Experiment Twelve
+1 Frontline Strategist
+1 Gigantosaurus
+1 Hauntwoods Shrieker
+1 Hooded Hydra
+1 Kappa Tech-Wrecker
+1 Kozilek, the Broken Reality
+1 Llanowar Elves
+1 Masako the Humorless
+1 Mentor of the Meek
+1 Michelangelo, Improviser
+1 Omarthis, Ghostfire Initiate
+1 Overgrown Zealot
+1 Primal Whisperer
+1 Quakestrider Ceratops
+1 Ruxa, Patient Professor
+1 Shepherd of the Flock
+1 Sun Titan
+1 Terrian, World Tyrant
+1 Toski, Bearer of Secrets
+1 Unyielding Gatekeeper
+1 Whisperwood Elemental
+1 Yedora, Grave Gardener
+1 Ascend from Avernus
+1 Austere Command
+1 Leonardo's Technique
+1 Manifest Dread
+1 Michelangelo's Technique
+1 Nature's Lore
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Sevinne's Reclamation
+1 Shared Roots
+1 Under the Skin
+1 Valgavoth's Onslaught
+1 Vanquish the Horde
+1 Beast Within
+1 Collective Resistance
+1 Duty Beyond Death
+1 Generous Gift
+1 Heritage Reclamation
+1 Path to Exile
+1 Swords to Plowshares
+1 Bountiful Promenade
+18 Forest
+1 Gavony Township
+1 Mosswort Bridge
+10 Plains
+1 Razorverge Thicket
+1 Windbrisk Heights
+1 Cloud Key
+1 Lifecrafter's Bestiary
+1 Mask of Memory
+1 Panoptic Projektor
+1 Semblance Anvil
+1 Sol Ring
+1 Communal Brewing
+1 Experimental Lab // Staff Room
+1 Mirari's Wake
+1 Muraganda Petroglyphs
+1 Strength of the Harvest
+1 Trail of Mystery
+1 True Identity
+1 Ugin's Mastery
+1 Ugin, Eye of the Storms
+1 Ugin, the Ineffable

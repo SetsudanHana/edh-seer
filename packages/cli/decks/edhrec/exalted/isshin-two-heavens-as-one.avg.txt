@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/isshin-two-heavens-as-one/exalted
+# theme Exalted (45 decks)
+
+Commander
+1 Isshin, Two Heavens as One
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Diamond Pick-Axe
+1 Greatsword of Tyr
+1 Rakdos Signet
+1 Rammas Echor, Ancient Shield
+1 Reaper's Talisman
+1 Sigil of Valor
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of the Animist
+1 Talisman of Conviction
+1 Two-Handed Axe
+1 Battlefield Forge
+1 Blood Crypt
+1 Cathedral of War
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Godless Shrine
+1 Isolated Chapel
+6 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+6 Plains
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Slayers' Stronghold
+1 Smoldering Marsh
+5 Swamp
+1 Akki Ronin
+1 Akrasan Squire
+1 Alesha, Who Laughs at Fate
+1 Asari Captain
+1 Aurelia, the Warleader
+1 Auron, Venerated Guardian
+1 Aven Squire
+1 Battlegrace Angel
+1 Duskmantle Prowler
+1 Duty-Bound Dead
+1 Eiganjo Exemplar
+1 Goblin Champion
+1 Guardians of Akrasa
+1 Heiko Yamazaki, the General
+1 Imperial Subduer
+1 Ironsoul Enforcer
+1 Knight of Glory
+1 Knight of Infamy
+1 Nefarox, Overlord of Grixis
+1 Norika Yamazaki, the Poet
+1 Peerless Samurai
+1 Raiyuu, Storm's Edge
+1 Selfless Samurai
+1 Servant of Nefarox
+1 Sigiled Paladin
+1 Silent Arbiter
+1 Squall, SeeD Mercenary
+1 Sublime Archangel
+1 Angelic Benediction
+1 Angelic Exaltation
+1 Duelist's Heritage
+1 Firebender Ascension
+1 Idolized
+1 Phyrexian Arena
+1 Team Avatar
+1 Tempered in Solitude
+1 Windcrag Siege
+1 Anguished Unmaking
+1 Boros Charm
+1 Chaos Warp
+1 Despark
+1 Path to Exile
+1 Swords to Plowshares
+1 Terminate
+1 The Eternal Wanderer
+1 Banishing Slash
+1 Blasphemous Act
+1 Night's Whisper
+1 Read the Bones
+1 Ruinous Ultimatum
+1 Sign in Blood

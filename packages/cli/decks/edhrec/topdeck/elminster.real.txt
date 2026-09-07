@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/3sYj4x2eZEZwmzYe8ItJWw (source https://moxfield.com/decks/fPXA_ul6gESA5-mlcHJFpw)
+# tags Topdeck, Planeswalkers; bracket 2; saved 2026-09-03; 615 tagged of 5926 indexed
+
+Commander
+1 Elminster
+
+Deck
+1 Adarkar Wastes
+1 Command Tower
+1 Deserted Beach
+1 Fabled Passage
+1 Floodfarm Verge
+1 Gleaming Bastion
+1 Halimar Depths
+1 Hallowed Fountain
+1 Hengegate Pathway
+9 Island
+1 Meticulous Archive
+1 Mystic Gate
+1 Nimbus Maze
+9 Plains
+1 Prairie Stream
+1 Seachrome Coast
+1 Skycloud Expanse
+1 Temple of Enlightenment
+1 Aminatou's Augury
+1 Blatant Thievery
+1 Bribery
+1 Candlekeep Inspiration
+1 Clone Legion
+1 Emeria's Call
+1 Lórien Revealed
+1 Mystic Speculation
+1 Ondu Inversion
+1 Ponder
+1 Portent
+1 Preordain
+1 Restoration Seminar
+1 Sea Gate Restoration
+1 Serum Visions
+1 Sorcerous Squall
+1 Spelltwine
+1 Stock Up
+1 Storm Herd
+1 Terminus
+1 Treasure Cruise
+1 Vanquish the Horde
+1 Wrath of God
+1 Arcane Denial
+1 Brainstorm
+1 Brainsurge
+1 Commit // Memory
+1 Counterspell
+1 Dig Through Time
+1 Erode
+1 Heliod's Intervention
+1 Into the Flood Maw
+1 Swords to Plowshares
+1 Thought Scour
+1 Arcane Signet
+1 Azorius Signet
+1 Candy Trail
+1 Dragonstorm Globe
+1 Fellwar Stone
+1 Gatewatch Beacon
+1 Giant's Boulder
+1 Mind Stone
+1 Planetarium of Wan Shi Tong
+1 Sol Ring
+1 Talisman of Progress
+1 Augury Owl
+1 Esper Sentinel
+1 Faerie Seer
+1 Gandalf, White Rider
+1 Keeper of the Accord
+1 Knight of the White Orchid
+1 Loran of the Third Path
+1 Loyal Warhound
+1 Matoya, Archon Elder
+1 Onakke Oathkeeper
+1 Overwhelmed Apprentice
+1 Scholar of New Horizons
+1 Scholarship Sponsor
+1 Shadow Puppeteers
+1 Jace, the Mind Sculptor
+1 Teyo, Geometric Tactician
+1 Worzel, the Protector
+1 Opposition
+1 Soul Snare
+1 The Legend of Kuruk

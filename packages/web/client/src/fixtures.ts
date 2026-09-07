@@ -71,11 +71,22 @@ export const SAMPLE: AnalyzeResponse = {
     buildParents: [
       // Consistency is OVER its own target (union of draw 12 + cardSelection 2 + tutor 0, no
       // overlap in this fixture) -- Ramp is UNDER, same numbers the old leaf-scored fixture used.
-      { name: "Consistency", count: 14, target: 10, leaves: ["draw", "cardSelection", "tutor"] },
-      { name: "Ramp", count: 6, target: 10, leaves: ["ramp"] },
-      { name: "Interaction", count: 8, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
-      { name: "Board wipes", count: 0, target: 3, leaves: ["boardWipe"] },
+      { name: "Consistency", key: "consistency", count: 14, target: 10, leaves: ["draw", "cardSelection", "tutor"] },
+      { name: "Ramp", key: "ramp", count: 6, target: 10, leaves: ["ramp"] },
+      { name: "Interaction", key: "interaction", count: 8, target: 10, leaves: ["targetedRemoval", "stackInteraction", "graveyardHate", "protection"], coverageWeighted: true },
+      { name: "Board wipes", key: "boardWipes", count: 0, target: 3, leaves: ["boardWipe"] },
     ],
+    // WHOSE ROWS THE TICKS ARE (2026-09-06): Tokens leading with Aristocrats at 0.6+ of its
+    // confidence, weights 0.6 / 0.4 (exact in binary, so the printed shares are 60% and 40%). The
+    // rows BLEND TO THE PARENTS' OWN TARGETS above (0.6·8 + 0.4·13 = 10, and so on), because a real
+    // `computeBuild` reads `buildParents[].target` straight off `template.targets` -- a fixture
+    // where the tick and the rows under it disagree is output this engine cannot produce.
+    template: {
+      primary: { name: "tokens", label: "Tokens", weight: 0.6, row: { consistency: 8, ramp: 9, interaction: 11, boardWipes: 2.5 } },
+      secondary: { name: "aristocrats", label: "Aristocrats", weight: 0.4, row: { consistency: 13, ramp: 11.5, interaction: 8.5, boardWipes: 4 } },
+      population: { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 },
+      targets: { consistency: 10, ramp: 10, interaction: 10, boardWipes: 3 },
+    },
     // Real `buildSuggestions` output: parent-level (the 2026-08-21 ruling -- a LEAF can no longer be
     // short of anything, so "Removal 7/10" is not a sentence this engine produces) and carrying the
     // cost band (F14). A fixture that no longer resembles real output stops exercising the renderer

@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/jU1POGdTJkUDGPlHvDEzUA (source https://archidekt.com/decks/21376489)
+# tags Enchantress, +1/+1 Counters, Sagas; bracket 2; saved 2026-09-04; 450 tagged of 3039 indexed
+
+Commander
+1 Sigurd, Jarl of Ravensthorpe
+
+Deck
+1 Arcane Signet
+1 Sol Ring
+1 Sword of Hearth and Home
+1 Arid Mesa
+1 Battlefield Forge
+1 Bountiful Promenade
+1 Brushland
+1 Canopy Vista
+1 Cinder Glade
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+5 Forest
+1 Forge of Heroes
+1 Furycalm Snarl
+1 Game Trail
+1 Jetmir's Garden
+1 Mountain
+1 Nesting Grounds
+5 Plains
+1 Plateau
+1 Rootbound Crag
+1 Sacred Foundry
+1 Savannah
+1 Spectator Seating
+1 Spire Garden
+1 Sunscorched Divide
+1 Taiga
+1 Temple Garden
+1 Urza's Saga
+1 Windswept Heath
+1 Wooded Foothills
+1 Arni Slays the Troll
+1 Azusa's Many Journeys
+1 Fall of the Impostor
+1 Fertile Ground
+1 Hardened Scales
+1 Jugan Defends the Temple
+1 Mirari's Wake
+1 Oath of Eorl
+1 Path of Discovery
+1 Rhythm of the Wild
+1 Sphere Grid
+1 Tale of Tinúviel
+1 The Aesir Escape Valhalla
+1 The Cave of Two Lovers
+1 The First Iroan Games
+1 The Legend of Yangchen
+1 There and Back Again
+1 Together Forever
+1 War of the Last Alliance
+1 Warrior's Resolve
+1 Barbara Wright
+1 Calix, Guided by Fate
+1 Chocobo Knights
+1 Chong and Lily, Nomads
+1 Composer of Spring
+1 Destiny Spinner
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Eivor, Wolf-Kissed
+1 Garnet, Princess of Alexandria
+1 Jukai Naturalist
+1 Ondu Spiritdancer
+1 Rydia, Summoner of Mist
+1 Sanctum Weaver
+1 Satsuki, the Living Lore
+1 Scholar of New Horizons
+1 Setessan Champion
+1 Summon: Bahamut
+1 Summon: Fenrir
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Titan
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Verduran Enchantress
+1 Weaver of Harmony
+1 Wildsear, Scouring Maw
+1 Yuna, Hope of Spira
+1 Boros Charm
+1 Inspiring Call
+1 Path to Exile
+1 Storyweave
+1 Stroke of Midnight
+1 Damning Verdict
+1 Resurgent Belief
+1 Search for Glory
+1 Vandalblast

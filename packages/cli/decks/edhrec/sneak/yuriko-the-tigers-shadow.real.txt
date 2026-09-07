@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/j_zCoV3yyIFAWR6RFUS5Kw (source https://archidekt.com/decks/21901566)
+# tags Ninjutsu, Ninjas, Burn, Sneak; bracket 3; saved 2026-09-03; 10 tagged of 31850 indexed
+
+Commander
+1 Yuriko, the Tiger's Shadow
+
+Deck
+1 Arcane Signet
+1 Dimir Signet
+1 Sol Ring
+1 Augury Owl
+1 Azra Smokeshaper
+1 Changeling Outcast
+1 Cloud of Faeries
+1 Deep-Sea Kraken
+1 Dokuchi Silencer
+1 Draco
+1 Dream Beavers
+1 Elektra, Daughter of the Hand
+1 Faerie Dreamthief
+1 Faerie Seer
+1 Hydroelectric Specimen
+1 Ingenious Prodigy
+1 Inkrise Infiltrator
+1 Lantern Bearer
+1 Mausoleum Wanderer
+1 Memnite
+1 Mistblade Shinobi
+1 Moon-Circuit Hacker
+1 Moonblade Shinobi
+1 Moonsnare Specialist
+1 Mothdust Changeling
+1 Nashi, Searcher in the Dark
+1 Network Disruptor
+1 Nezumi Prowler
+1 Ornithopter
+1 Phyrexian Walker
+1 Prosperous Thief
+1 Sage Owl
+1 Sage of Epityr
+1 Saiba Cryptomancer
+1 Satoru Umezawa
+1 Satoru, the Infiltrator
+1 Shadow of Mortality
+1 Silver Raven
+1 Silver-Fur Master
+1 Siren Stormtamer
+1 Skullsnatcher
+1 Slither Blade
+1 Snarling Gorehound
+1 Splinter, Hamato Yoshi
+1 Splinter, the Mentor
+1 Street Wraith
+1 Striped Riverwinder
+1 Tetsuko Umezawa, Fugitive
+1 Thousand-Faced Shadow
+1 Troll of Khazad-dûm
+1 Undead Hand Ninja
+1 Universal Automaton
+1 Windcaller Aven
+1 Brainstorm
+1 Brainsurge
+1 Commandeer
+1 Commit // Memory
+1 Consign // Oblivion
+1 Curtains' Call
+1 Dig Through Time
+1 Hagra Mauling
+1 Price of Fame
+1 Trickery Charm
+1 Waterlogged Teachings
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Fetid Pools
+1 Halimar Depths
+12 Island
+1 Mortuary Mire
+7 Swamp
+1 Temple of Deceit
+1 Underground River
+1 Connive // Concoct
+1 Dead Drop
+1 Portent
+1 Zof Consumption
+1 Leyline of Transformation
+1 Mirror Room // Fractured Realm

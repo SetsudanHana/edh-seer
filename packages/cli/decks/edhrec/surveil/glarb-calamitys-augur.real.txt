@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/K_Phiuee_KJGGRO9RckNJw (source https://archidekt.com/decks/24009510)
+# tags Landfall, Lands Matter, Surveil; bracket 2; saved 2026-09-05; 176 tagged of 24054 indexed
+
+Commander
+1 Glarb, Calamity's Augur
+
+Deck
+1 Aesi, Tyrant of Gyre Strait
+1 Avenger of Zendikar
+1 Baleful Strix
+1 Beast Whisperer
+1 Bonny Pall, Clearcutter
+1 Brawn
+1 Colossal Grave-Reaver
+1 Disciple of Freyalise
+1 Eternal Witness
+1 Gigantic Big Bear
+1 Grappling Kraken
+1 Guardian of Tazeem
+1 High Fae Trickster
+1 Icetill Explorer
+1 Loot, Exuberant Explorer
+1 Mole Man, Moloid Master
+1 Muldrotha, the Gravetide
+1 Mystic Snake
+1 Quirion Ranger
+1 Rampaging Baloths
+1 Ramunap Excavator
+1 Reclamation Sage
+1 Roil Elemental
+1 Silverback Elder
+1 Skarrg Goliath
+1 Springheart Nantuko
+1 Tatyova, Benthic Druid
+1 Tireless Provisioner
+1 Walking Atlas
+1 Aetherize
+1 Beast Within
+1 Deadly Rollick
+1 Joint Exploration
+1 Krosan Grip
+1 Plasm Capture
+1 Putrefy
+1 Quandrix Charm
+1 Reclaim
+1 Spring Cleaning
+1 Alchemist's Refuge
+1 Blighted Woodland
+1 Blooming Marsh
+1 Command Tower
+1 Dimir Aqueduct
+1 Dreamroot Cascade
+1 Drowned Catacomb
+1 Drownyard Temple
+8 Forest
+1 Golgari Rot Farm
+5 Island
+1 Llanowar Wastes
+1 Lotus Field
+1 Simic Growth Chamber
+1 Sunken Hollow
+5 Swamp
+1 Temple of Malady
+1 Terramorphic Expanse
+1 Woodland Cemetery
+1 Awakening
+1 Enhanced Surveillance
+1 Family's Favor
+1 Garruk's Uprising
+1 Hunter's Talent
+1 Leyline of Anticipation
+1 Prismatic Undercurrents
+1 Retreat to Coralhelm
+1 Retreat to Hagra
+1 Unnatural Growth
+1 Well Rested
+1 Basilisk Collar
+1 Lifecrafter's Bestiary
+1 Vedalken Orrery
+1 Veilstone Amulet
+1 Weather Maker
+1 Coiling Rebirth
+1 Cultivate
+1 Far Wanderings
+1 Kodama's Reach
+1 Maelstrom Pulse
+1 Planar Engineering
+1 Rishkar's Expertise
+1 Shattered Wings
+1 Through the Forest Gate
+1 Nissa, Steward of Elements

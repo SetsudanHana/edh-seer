@@ -1,0 +1,56 @@
+# edhrec deck https://edhrec.com/deckpreview/LxZ23WTnVzjR77GfZeeAIg (source https://moxfield.com/decks/AA0luMqg_U2371f4YtTZNw)
+# tags Spellslinger, Group Slug, Storm, Burn, Cascade; bracket 2; saved 2026-09-03; 645 tagged of 6804 indexed
+
+Commander
+1 Ral, Monsoon Mage
+
+Deck
+1 Artist's Talent
+1 Case of the Ransacked Lab
+1 Big Score
+1 Unexpected Windfall
+1 Birgi, God of Storytelling
+1 Caldera Pyremaw
+1 Electro, Assaulting Battery
+1 Goblin Electromancer
+1 Iron Lad, Young Avenger
+1 Knollspine Dragon
+1 Longshot, Rebel Bowman
+1 Manaform Hellkite
+1 Niv-Mizzet, Parun
+1 Niv-Mizzet, Visionary
+1 Prismari, the Inspiration
+1 Smoldering Egg
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Tavern Scoundrel
+1 Twinflame Tyrant
+1 Call Forth the Tempest
+1 Collected Conjuring
+28 Dragon's Approach
+1 Glimpse the Impossible
+1 Improvisation Capstone
+1 Inspired Tinkering
+1 Into the Time Vortex
+1 Pirate's Pillage
+1 Seize the Spoils
+1 Throes of Chaos
+1 Command Tower
+1 Frostboil Snarl
+1 Lindblum, Industrial Regency
+24 Mountain
+1 Riverglide Pathway
+1 Scalding Tarn
+1 Scorched Geyser
+1 Spirebluff Canal
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Thundering Falls
+1 Training Center
+1 Turbulent Springs
+1 Helm of Awakening
+1 Ruby Medallion
+1 Spellweaver Helix
+1 Thrumming Stone
+1 Rowan, Scholar of Sparks

@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/oZXdPKqDzFX6D0XkKgnLJQ (source https://archidekt.com/decks/19220060)
+# tags Donate, Group Hug, Tokens, Pillow Fort, Populate; bracket 3; saved 2026-09-05; 172 tagged of 3738 indexed
+
+Commander
+1 Iroh, Tea Master
+
+Deck
+1 Abandoned Air Temple
+1 Adagia, Windswept Bastion
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Elegant Parlor
+1 Fire Nation Palace
+1 Furycalm Snarl
+1 Homeward Path
+1 Inventors' Fair
+1 Jasmine Dragon Tea Shop
+1 Mikokoro, Center of the Sea
+3 Mountain
+1 Path of Ancestry
+9 Plains
+1 Radiant Summit
+1 Reliquary Tower
+1 Rugged Prairie
+1 Sacred Foundry
+1 Stardew Valley
+1 Sundown Pass
+1 Temple of Triumph
+1 Temple of the False God
+1 Thespian's Stage
+1 Treasure Vault
+1 Turbulent Steppe
+1 Vesuva
+1 Abzan Falconer
+1 Academy Manufactor
+1 Apothecary White
+1 Belladonna Took
+1 Bre of Clan Stoutarm
+1 Delney, Streetwise Lookout
+1 Discerning Financier
+1 Dáin, Lord of the Iron Hills
+1 Envoy of the Ancestors
+1 Hellkite Tyrant
+1 Humble Defector
+1 Iroh, Dragon of the West
+1 Kirol, Attentive First-Year
+1 Lantern Scout
+1 Lita, Little Orphan Amphibian
+1 Loran of the Third Path
+1 Loyal Apprentice
+1 Master of Ceremonies
+1 Ragost, Deft Gastronaut
+1 Rosie Cotton of South Lane
+1 Smaug the Magnificent
+1 Stiltzkin, Moogle Merchant
+1 Tataru Taru
+1 Welcoming Vampire
+1 Windborn Muse
+1 Wojek Investigator
+1 Yes Man, Personal Securitron
+1 Zidane, Tantalus Thief
+1 Arcane Signet
+1 Bucknard's Everfull Purse
+1 Hithlain Rope
+1 Lithoform Engine
+1 Loki's Scepter
+1 Nuka-Cola Vending Machine
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 The Wind Crystal
+1 Wedding Ring
+1 Witch's Oven
+1 Authority of the Consuls
+1 Caretaker's Talent
+1 Curse of Opulence
+1 Endless Foot Assault
+1 Ghostly Prison
+1 Gleaming Splendor
+1 Land Tax
+1 Shiny Impetus
+1 Smothering Tithe
+1 Tenuous Truce
+1 Cloudshift
+1 Dawn's Truce
+1 Path to Exile
+1 Swords to Plowshares
+1 Take the Bait
+1 Untimely Malfunction
+1 Disrupt Decorum
+1 Iroh's Demonstration
+1 Seize the Spotlight
+1 The Battle of Bywater
+1 Karn, Living Legacy
+1 Teyo, Geometric Tactician

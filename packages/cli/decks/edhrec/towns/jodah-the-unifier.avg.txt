@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/jodah-the-unifier/towns
+# theme Towns (3 decks)
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Arcane Signet
+1 Buster Sword
+1 Chromatic Lantern
+1 Genji Glove
+1 Herd Heirloom
+1 Lightning Greaves
+1 Mirror of Galadriel
+1 Relic of Legends
+1 Ring of the Lucii
+1 Sol Ring
+1 Swiftfoot Boots
+1 World Map
+1 Adventurer's Inn
+1 Baron, Airship Kingdom
+1 Capital City
+1 City of Brass
+1 Command Tower
+1 Crossroads Village
+1 Eden, Seat of the Sanctum
+1 Exotic Orchard
+4 Forest
+1 Frontier Bivouac
+1 Gohn, Town of Ruin
+1 Gongaga, Reactor Town
+1 Guadosalam, Farplane Gateway
+1 Hidden Hideout
+1 Insomnia, Crown City
+2 Island
+3 Mountain
+2 Plains
+1 Rabanastre, Royal City
+1 Scoured Barrens
+1 Sharlayan, Nation of Scholars
+1 Starting Town
+3 Swamp
+1 Temple of Plenty
+1 Treno, Dark City
+1 Vector, Imperial Capital
+1 Windurst, Federation Center
+1 Zanarkand, Ancient Metropolis
+1 Ancient Adamantoise
+1 Ardbert, Warrior of Darkness
+1 Captain America, Living Legend
+1 Cecil, Dark Knight
+3 Cid, Timeless Artificer
+1 Delighted Halfling
+1 Faeburrow Elder
+1 Fang, Fearless l'Cie
+1 Firebird, Blazing Ranger
+1 Gimli of the Glittering Caves
+1 Gladiolus Amicitia
+1 Ignis Scientia
+1 Jenova, Ancient Calamity
+1 Jumbo Cactuar
+1 Kenrith, the Returned King
+1 Muldrotha, the Gravetide
+1 Nashi, Moon's Legacy
+1 Noctis, Prince of Lucis
+1 Radagast of Rhosgobel
+1 Serah Farron
+1 Shalai, Voice of Plenty
+1 Summon: Fenrir
+1 Summon: Primal Odin
+1 Taskmaster, Mercenary Mimic
+1 The Wandering Minstrel
+1 Tifa Lockhart
+1 Vanille, Cheerful l'Cie
+1 Venat, Heart of Hydaelyn
+1 Zenos yae Galvus
+1 Font of Fertility
+1 Vance's Blasting Cannons
+1 Battle Menu
+1 Cryptic Command
+1 Duty Beyond Death
+1 Ice Magic
+1 Overkill
+1 Prishe's Wanderings
+1 Restoration Magic
+1 Swords to Plowshares
+1 The Eagles Are Coming!
+1 Damn
+1 Farseek
+1 Light Up the Stage
+1 Primevals' Glorious Rebirth
+1 Rampant Growth
+1 Reach the Horizon
+1 Suplex
+1 Urza's Ruinous Blast

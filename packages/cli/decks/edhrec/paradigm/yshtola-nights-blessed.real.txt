@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/ITxo95V3q1yedFS7_UPQjA (source https://archidekt.com/decks/22497288)
+# tags Historic, Triggered Abilities, Paradigm, Legends, Spellslinger; bracket unset; saved 2026-08-14; 1 tagged of 52883 indexed
+
+Commander
+1 Y'shtola, Night's Blessed
+
+Deck
+1 Abandoned Air Temple
+1 Arcane Sanctum
+1 Command Bridge
+1 Command Tower
+1 Detection Tower
+1 Drowned Catacomb
+1 Fetid Heath
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+3 Island
+1 Isolated Chapel
+1 Marsh Flats
+1 Mistrise Village
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+1 Path of Ancestry
+4 Plains
+1 Polluted Delta
+1 Raffine's Tower
+1 Reliquary Tower
+1 Sunken Ruins
+3 Swamp
+1 Underground River
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Saga
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Archmage Emeritus
+1 Baleful Strix
+1 Delney, Streetwise Lookout
+1 Emet-Selch of the Third Seat
+1 Fandaniel, Telophoroi Ascian
+1 G'raha Tia, Scion Reborn
+1 Grand Arbiter Augustin IV
+1 Hermes, Overseer of Elpis
+1 Kambal, Consul of Allocation
+1 Lotho, Corrupt Shirriff
+1 Lyse Hext
+1 Papalymo Totolymo
+1 Roaming Throne
+1 Sheoldred, the Apocalypse
+1 Stormscape Familiar
+1 Tataru Taru
+1 Vito, Thorn of the Dusk Rose
+1 Voice of Victory
+1 Anguished Unmaking
+1 Deadly Rollick
+1 Dismember
+1 Fierce Guardianship
+1 Frantic Search
+1 Sink into Stupor
+1 Snuff Out
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Transpose
+1 Unwind
+1 Void Rend
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Bolas's Citadel
+1 Norn's Annex
+1 Sol Ring
+1 Wishclaw Talisman
+1 Authority of the Consuls
+1 Black Market Connections
+1 Bloodchief Ascension
+1 Curiosity
+1 Ghostly Prison
+1 Helm of the Ghastlord
+1 Leyline of Anticipation
+1 Necropotence
+1 Observed Stasis
+1 Ophidian Eye
+1 Propaganda
+1 Rhystic Study
+1 Smothering Tithe
+1 Cleansing
+1 Cleansing Nova
+1 Cornered by Black Mages
+1 Decorum Dissertation
+1 Demonic Tutor
+1 Exsanguinate
+1 Idyllic Tutor
+1 Quantum Misalignment
+1 Rite of Replication
+1 Treasure Cruise
+1 Vindicate
+1 Windfall
+1 Narset Transcendent
+1 Narset, Parter of Veils

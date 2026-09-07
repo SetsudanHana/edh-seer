@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/M1Vse-PHn9a-i5HGBfAMFw (source https://archidekt.com/decks/22883993)
+# tags Spellslinger, Heroic, +1/+1 Counters; bracket 2; saved 2026-09-03; 37 tagged of 1480 indexed
+
+Commander
+1 Abigale, Poet Laureate
+
+Deck
+1 Abzan Falconer
+1 Blood Hustler
+1 Breena, the Demagogue
+1 Brigone, Soldier of Meletis
+1 Conciliator's Duelist
+1 Dusk Legion Duelist
+1 Elite Interceptor
+1 Emeritus of Truce
+1 Felisa, Fang of Silverquill
+1 Feral Deathgorger
+1 Illuminator Virtuoso
+1 Informed Inkwright
+1 Inkling Mascot
+1 Kaervek, the Punisher
+1 Killian, Ink Duelist
+1 Knight of the White Orchid
+1 Leonin Lightscribe
+1 Luminarch Aspirant
+1 Mavinda, Students' Advocate
+1 Metastatic Evangel
+1 Monastery Mentor
+1 Ondu Knotmaster
+1 Ornithopter of Paradise
+1 Phalanx Leader
+1 Quill-Blade Laureate
+1 Rescuer Chwinga
+1 Scathing Shadelock
+1 Scheming Silvertongue
+1 Scholar of New Horizons
+1 Scolding Administrator
+1 Shadrix Silverquill
+1 Silverquill, the Disputant
+1 Snooping Page
+1 Stirring Hopesinger
+1 Vadmir, New Blood
+1 Whitemane Lion
+1 Yathan Tombguard
+1 Acrobatic Maneuver
+1 Anguished Unmaking
+1 Duty Beyond Death
+1 Eerie Interlude
+1 Holy Day
+1 Otherworldly Journey
+1 Parting Gust
+1 Path to Exile
+1 Rapier Wit
+1 Reprieve
+1 Silverquill Charm
+1 Spiritualize
+1 Swords to Plowshares
+1 Vanishing Verse
+1 Arcane Lighthouse
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Demolition Field
+1 Desolate Mire
+1 Eclipsed Steppe
+1 Isolated Chapel
+1 Orzhov Basilica
+17 Plains
+10 Swamp
+1 Turbulent Moor
+1 Umbral Expanse
+1 Collective Effort
+1 Daydream
+1 Honor
+1 Killian's Confidence
+1 Morningtide's Light
+1 Practiced Offense
+1 Requisition Raid
+1 Graduation Day
+1 Oketra's Monument
+1 Talisman of Hierarchy

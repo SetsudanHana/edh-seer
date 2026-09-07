@@ -68,3 +68,62 @@ test("the counted subject carries the type and whose graveyard", () => {
   // No count, no subject.
   expect(scalingSubject({ verb: "draw", amount: "2" })).toBeUndefined();
 });
+
+/** A COUNT OF WHAT IS ON THE BATTLEFIELD, which the corpus states 662 cards' worth of and this
+ *  file read none of. Krenko, Mob Boss makes "X 1/1 red Goblin creature tokens, where X is the
+ *  number of Goblins you control" and derived NO scaling at all: the bases below him test for
+ *  creatures, permanents, artifacts and lands, and "Goblins" is none of those words. */
+test("a battlefield count of a subtype is per-permanent, and names what it counts", () => {
+  const action = {
+    verb: "create",
+    object: "X 1/1 red Goblin creature tokens, where X is the number of Goblins you control",
+  } as never;
+  expect(actionScaling(action)).toBe("per-permanent");
+  expect(scalingSubject(action)).toMatchObject({ subtype: "goblin", zone: "battlefield", control: "you" });
+});
+
+/** "ON THE BATTLEFIELD" IS EVERYONE'S BOARD, "you control" is yours -- the same owner distinction
+ *  the graveyard branch already draws between "your graveyard" and "all graveyards", and it decides
+ *  whether an opponent's Goblins count. */
+test("the counted owner is read from the phrase", () => {
+  const yours = { verb: "draw", object: "a card for each Elf you control" } as never;
+  const anyone = { verb: "deal", object: "damage for each Zombie on the battlefield" } as never;
+  expect(scalingSubject(yours)?.control).toBe("you");
+  expect(scalingSubject(anyone)?.control).toBe("any");
+});
+
+/** A GRAVEYARD COUNT STAYS A GRAVEYARD COUNT. The battlefield branch is tested AFTER it, because
+ *  "creature cards in your graveyard" mentions neither "you control" nor "the battlefield" and must
+ *  not start claiming a board. */
+test("a graveyard count is unchanged by the battlefield branch", () => {
+  const action = { verb: "deal", object: "damage equal to the number of creature cards in your graveyard" } as never;
+  expect(actionScaling(action)).toBe("per-graveyard");
+  expect(scalingSubject(action)?.zone).toBe("graveyard");
+});
+
+/** A BARE CARD TYPE KEEPS ITS OWN BASIS. "Creatures you control" is `per-creature` and was already
+ *  right; the new branch must not overwrite it with per-permanent. */
+test("a creature count keeps per-creature", () => {
+  expect(actionScaling({ verb: "draw", object: "a card for each creature you control" } as never))
+    .toBe("per-creature");
+});
+
+/** "WHERE X IS THE NUMBER OF ..." DEFINES X FOR THE CLAUSE, and the own-text rule above still holds:
+ *  the count reaches only an action whose amount IS that bare X, never a sibling with a fixed
+ *  amount. Burakos, Party Leader: "defending player loses X life and you create X Treasure tokens,
+ *  where X is the number of creatures in your party" -- the normalizer keeps the tail on neither
+ *  action, so both derived `x-cost` and no subject (owner, 2026-09-05). And "in your party" is a
+ *  board count of the four party types (CR 700.7). 43 corpus cards say party. */
+test("a clause that defines X hands the count to every action whose amount is X", () => {
+  const clause = "Whenever Burakos attacks, defending player loses X life and you create X Treasure tokens, where X is the number of creatures in your party.";
+  const life = { verb: "lose-life", object: "defending player", amount: "X" } as never;
+  const tokens = { verb: "create", object: "X Treasure tokens", amount: "X" } as never;
+  const fixed = { verb: "draw", amount: "1" } as never;
+  expect(actionScaling(life, clause)).toBe("per-creature");
+  expect(scalingSubject(tokens, clause)).toEqual({
+    type: "creature", subtype: ["cleric", "rogue", "warrior", "wizard"], zone: "battlefield", control: "you", token: null,
+  });
+  expect(actionScaling(fixed, clause)).toBeUndefined();
+  // A bare X with no definition in the clause is still the X the player paid.
+  expect(actionScaling(tokens, "Create X Treasure tokens.")).toBe("x-cost");
+});

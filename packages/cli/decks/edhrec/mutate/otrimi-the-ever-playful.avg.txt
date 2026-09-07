@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/otrimi-the-ever-playful/mutate
+# theme Mutate (673 decks)
+
+Commander
+1 Otrimi, the Ever-Playful
+
+Deck
+1 Arcane Signet
+1 Lifecrafter's Bestiary
+1 Sol Ring
+1 Swiftfoot Boots
+1 Zagoth Crystal
+1 Breeding Pool
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Exotic Orchard
+8 Forest
+1 Golgari Rot Farm
+1 Hinterland Harbor
+4 Island
+1 Llanowar Wastes
+1 Mortuary Mire
+1 Myriad Landscape
+1 Opulent Palace
+1 Overgrown Tomb
+1 Rogue's Passage
+1 Simic Growth Chamber
+1 Sunken Hollow
+4 Swamp
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Archipelagore
+1 Auspicious Starrix
+1 Beast Whisperer
+1 Boneyard Lurker
+1 Brokkos, Apex of Forever
+1 Cavern Whisperer
+1 Chittering Harvester
+1 Cold-Eyed Selkie
+1 Dirge Bat
+1 Dreamtail Heron
+1 Essence Symbiote
+1 Gemrazer
+1 Glowstone Recluse
+1 Insatiable Hemophage
+1 Ivy, Gleeful Spellthief
+1 Kotis, the Fangkeeper
+1 Migratory Greathorn
+1 Mindleecher
+1 Mysterious Egg
+1 Parcelbeast
+1 Pollywog Symbiote
+1 Pouncing Shoreshark
+1 Predator Ooze
+1 Sawtusk Demolisher
+1 Sea-Dasher Octopus
+1 Silent Arbiter
+1 Silhana Ledgewalker
+1 Slippery Bogle
+1 Souvenir Snatcher
+1 Stormchaser Drake
+1 Toski, Bearer of Secrets
+1 Troll Ascetic
+1 Trumpeting Gnarr
+1 Trygon Predator
+1 Ukkima, Stalking Shadow
+1 Venomthrope
+1 Zagoth Mamba
+1 Primal Empathy
+1 Propaganda
+1 Season of Growth
+1 Vesuvan Duplimancy
+1 Assassin's Trophy
+1 Beast Within
+1 Counterspell
+1 Deadly Rollick
+1 Heroic Intervention
+1 Krosan Grip
+1 Putrefy
+1 Slip Out the Back
+1 Tamiyo's Safekeeping
+1 Vivien, Champion of the Wilds
+1 Cultivate
+1 Deadly Tempest
+1 Farseek
+1 Find // Finality
+1 Kodama's Reach
+1 Mythos of Brokkos
+1 Nature's Lore
+1 Rampant Growth

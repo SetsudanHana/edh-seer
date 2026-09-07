@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/ivy-gleeful-spellthief/mutate
+# theme Mutate (398 decks)
+
+Commander
+1 Ivy, Gleeful Spellthief
+
+Deck
+1 Arcane Signet
+1 Simic Signet
+1 Sol Ring
+1 Twinning Staff
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+10 Forest
+1 Hinterland Harbor
+10 Island
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rogue's Passage
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Archipelagore
+1 Auspicious Starrix
+1 Birds of Paradise
+1 Cold-Eyed Selkie
+1 Dreamtail Heron
+1 Elvish Mystic
+1 Gemrazer
+1 Glowstone Recluse
+1 Llanowar Elves
+1 Maraleaf Pixie
+1 Migratory Greathorn
+1 Parcelbeast
+1 Pollywog Symbiote
+1 Pouncing Shoreshark
+1 Sanctum Weaver
+1 Sawtusk Demolisher
+1 Sea-Dasher Octopus
+1 Setessan Champion
+1 Slippery Bogle
+1 Souvenir Snatcher
+1 Spark Double
+1 Spellwild Ouphe
+1 Stormchaser Drake
+1 Triton Fortune Hunter
+1 Trumpeting Gnarr
+1 Venerated Rotpriest
+1 Alpha Authority
+1 Ancestral Mask
+1 Aqueous Form
+1 Auramancer's Guise
+1 Bear Umbra
+1 Combat Research
+1 Curiosity
+1 Eel Umbra
+1 Keen Sense
+1 One with Nature
+1 Rancor
+1 Season of Growth
+1 Shielding Plax
+1 Snake Umbra
+1 Vesuvan Duplimancy
+1 Beast Within
+1 Cackling Counterpart
+1 Charge Through
+1 Counterspell
+1 Double Major
+1 Gaea's Gift
+1 Heroic Intervention
+1 Negate
+1 Shadow Rift
+1 Slip Out the Back
+1 Snakeskin Veil
+1 Tamiyo's Safekeeping
+1 Tyvar's Stand
+1 Cultivate
+1 Irenicus's Vile Duplication
+1 Nature's Lore
+1 Quasiduplicate
+1 Rampant Growth
+1 Rite of Replication
+1 Slip Through Space

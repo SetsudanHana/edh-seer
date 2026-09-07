@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/RkVsWKyCLJvDQvJ8g-EWBg (source https://archidekt.com/decks/19305068)
+# tags Lifegain, +1/+1 Counters, Indestructible, Self-Damage, Attack Triggers, Life Exchange; bracket 2; saved 2026-08-31; 23 tagged of 2825 indexed
+
+Commander
+1 Cecil, Dark Knight
+
+Deck
+1 Abyssal Harvester
+1 Adept Watershaper
+1 Aerith Gainsborough
+1 Armaggon, Future Shark
+1 Bitterbloom Bearer
+1 Bloodthirsty Conqueror
+1 Crypt Ghast
+1 Defiler of Flesh
+1 General's Enforcer
+1 K'rrik, Son of Yawgmoth
+1 Kinscaer Sentry
+1 Koh, the Face Stealer
+1 Mai, Scornful Striker
+1 Odric, Lunarch Marshal
+1 Odric, Master Tactician
+1 Reluctant Role Model
+1 Rosa, Resolute White Mage
+1 Rot-Curse Rakshasa
+1 Savior of the Small
+1 Seymour Flux
+1 Shay Cormac
+1 Stalwart Pathlighter
+1 Super Shredder
+1 Troll of Khazad-dûm
+1 Vampire Nighthawk
+1 Yathan Tombguard
+1 Aettir and Priwen
+1 Arcane Signet
+1 Blitzball
+1 Excalibur II
+1 Eye of Vecna
+1 Goldvein Pick
+1 Lightning Greaves
+1 Stormbeacon Blade
+1 Ajani, Caller of the Pride
+1 Barrensteppe Siege
+1 Greed
+1 Leyline of Hope
+1 Lunar Convocation
+1 Phyrexian Arena
+1 Unholy Annex // Ritual Chamber
+1 Benevolent Offering
+1 Blood Pact
+1 Crumb and Get It
+1 Deadly Dispute
+1 Dismember
+1 Divine Resilience
+1 Duty Beyond Death
+1 Mortify
+1 Offer Immortality
+1 Spectacular Tactics
+1 Village Rites
+1 Wail of War
+1 Command Tower
+1 Desolate Mire
+1 Exotic Orchard
+1 Misty Palms Oasis
+1 Neglected Manor
+9 Plains
+1 Realm of Koh
+1 Scoured Barrens
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Snowfield Sinkhole
+1 Sunlit Marsh
+16 Swamp
+1 Temple of Silence
+1 Westvale Abbey
+1 Day of Judgment
+1 Eaten Alive
+1 Killing Wave
+1 Night's Whisper
+1 Risky Research
+1 Shredder's Revenge
+1 Sign in Blood
+1 Splinter's Technique

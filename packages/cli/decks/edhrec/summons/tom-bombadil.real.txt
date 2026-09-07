@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/WCJYJor4TdSrBqYUKyBnag (source https://archidekt.com/decks/4667120)
+# tags Summons, Enchantress, Sagas, Topdeck; bracket 3; saved 2026-06-03; 6 tagged of 21080 indexed
+
+Commander
+1 Tom Bombadil
+
+Deck
+1 Anguished Unmaking
+1 Clockspinning
+1 Enlightened Tutor
+1 Heroic Intervention
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Strionic Resonator
+1 Barbara Wright
+1 Bloom Tender
+1 Doomwake Giant
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Faeburrow Elder
+1 Gogo, Master of Mimicry
+1 Goldberry, River-Daughter
+1 Herald of the Pantheon
+1 Hex Parasite
+1 Jukai Naturalist
+1 Narci, Fable Singer
+1 Ondu Spiritdancer
+1 Raff Capashen, Ship's Mage
+1 Sanctum Weaver
+1 Scholar of New Horizons
+1 Setessan Champion
+1 Starfield Mystic
+1 Summon: Bahamut
+1 Summon: Esper Valigarmanda
+1 Summon: Fenrir
+1 Summon: Knights of Round
+1 Summon: Primal Odin
+1 Summon: Titan
+1 Summon: Valefor
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Terra, Magical Adept
+1 Weaver of Harmony
+1 Zur, Eternal Schemer
+1 Binding the Old Gods
+1 Elspeth Conquers Death
+1 Estrid's Invocation
+1 Fall of Gil-galad
+1 Historian's Boon
+1 Kiora Bests the Sea God
+1 Phyrexian Scriptures
+1 Scroll of Isildur
+1 Starfield of Nyx
+1 Sterling Grove
+1 The Akroan War
+1 The Bath Song
+1 The Cruelty of Gix
+1 The Eldest Reborn
+1 The Kami War
+1 The Legend of Kuruk
+1 There and Back Again
+1 War of the Last Alliance
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Forest
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Indatha Triome
+1 Island
+1 Jetmir's Garden
+1 Karn's Bastion
+1 Ketria Triome
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Nesting Grounds
+1 Overgrown Tomb
+1 Plains
+1 Raffine's Tower
+1 Raugrin Triome
+1 Rivendell
+1 Sacred Foundry
+1 Snow-Covered Forest
+1 Snow-Covered Mountain
+1 Snow-Covered Plains
+1 Snow-Covered Swamp
+1 Spara's Headquarters
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 The World Tree
+1 Urza's Saga
+1 Verdant Catacombs
+1 Windswept Heath
+1 Zagoth Triome
+1 Ziatora's Proving Ground
+1 Cultivate
+1 Eerie Ultimatum
+1 Farseek
+1 Nature's Lore
+1 Replenish
+1 Search for Glory
+1 Three Visits

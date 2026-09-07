@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/rigo-streetwise-mentor/weenies
+# theme Weenies (34 decks)
+
+Commander
+1 Rigo, Streetwise Mentor
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Meekstone
+1 Sol Ring
+1 Adarkar Wastes
+1 Bountiful Promenade
+1 Breeding Pool
+1 Brokers Hideout
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+4 Forest
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hinterland Harbor
+4 Island
+6 Plains
+1 Port Town
+1 Prairie Stream
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sea of Clouds
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Temple Garden
+1 Yavimaya Coast
+1 Avacyn's Pilgrim
+1 Azure Beastbinder
+1 Birds of Paradise
+1 Cephalid Facetaker
+1 Delney, Streetwise Lookout
+1 Elvish Mystic
+1 Esper Sentinel
+1 Gingerbrute
+1 Gold-Forged Thopteryx
+1 Haywire Mite
+1 Hope of Ghirapur
+1 Invisible Stalker
+1 Jolrael, Mwonvuli Recluse
+1 Judge's Familiar
+1 Llanowar Elves
+1 Mentor of the Meek
+1 Mirror Entity
+1 Mischievous Mystic
+1 Mist-Cloaked Herald
+1 Noble Hierarch
+1 Ornithopter
+1 Ornithopter of Paradise
+1 Prince Imrahil the Fair
+1 Sakura-Tribe Elder
+1 Shoreline Looter
+1 Sidar Kondo of Jamuraa
+1 Siren Stormtamer
+1 Skrelv, Defector Mite
+1 Slither Blade
+1 Spectral Sailor
+1 Tetsuko Umezawa, Fugitive
+1 Toski, Bearer of Secrets
+1 Triton Shorestalker
+1 Welcoming Vampire
+1 Abiding Grace
+1 Assemble the Players
+1 Feywild Visitor
+1 Rabble Rousing
+1 Reconnaissance Mission
+1 Tocasia's Welcome
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Aura Mutation
+1 Beast Within
+1 Biomass Mutation
+1 Dovin's Veto
+1 Generous Gift
+1 Kabira Takedown
+1 Negate
+1 Path to Exile
+1 Protect the Negotiators
+1 Swords to Plowshares
+1 Elspeth, Sun's Champion
+1 Cultivate
+1 Dusk // Dawn
+1 Farseek
+1 Fell the Mighty
+1 Nature's Lore
+1 Raise the Past
+1 Rampant Growth
+1 The Battle of Bywater

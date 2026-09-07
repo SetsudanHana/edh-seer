@@ -1,0 +1,71 @@
+# edhrec deck https://edhrec.com/deckpreview/C67VQXk_e4TENRZy5c0c_Q (source https://archidekt.com/decks/26051895)
+# tags Vanilla; bracket 2; saved 2026-09-04; 120 tagged of 3248 indexed
+
+Commander
+1 Ruxa, Patient Professor
+
+Deck
+1 Adventure Awaits
+1 Bushwhack
+1 Cultivate
+1 Ezuri's Predation
+1 Glimpse the Core
+1 Kodama's Reach
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Primal Might
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Shared Roots
+1 Three Visits
+1 Alpine Grizzly
+1 Ancient Brontodon
+1 Centaur Courser
+1 Colossapede
+1 Elvish Ranger
+1 Garruk's Gorehorn
+1 Ghalta, Primal Hunger
+1 Gigantosaurus
+1 Gnarled Mass
+1 Grizzled Outrider
+1 Harrier Naga
+1 Hollowhenge Beast
+1 Jibbirik Omnivore
+1 Kalonian Tusker
+1 Leatherback Baloth
+1 Murasa Brute
+1 Nessian Courser
+1 Nyxborn Colossus
+1 Orazca Frillback
+1 Ordinary Bear
+1 Quakestrider Ceratops
+1 Rumbling Baloth
+1 Swordwise Centaur
+1 Terrain Elemental
+1 Terrian, World Tyrant
+1 Trained Armodon
+1 Vorstclaw
+1 Arcane Signet
+1 Dolmen Gate
+1 Sol Ring
+1 The Skullspore Nexus
+1 Wayfarer's Bauble
+1 Beast Within
+1 Bite Down
+1 Fog
+1 Heroic Intervention
+1 Master's Rebuke
+1 Obscuring Haze
+1 Plummet
+1 Pounce
+1 Quarrel
+1 Return of the Wildspeaker
+1 Tenderize
+1 Bonders' Enclave
+36 Forest
+1 Mosswort Bridge
+1 Elemental Bond
+1 Garruk's Uprising
+1 Guardian Project
+1 Muraganda Petroglyphs
+1 Unnatural Growth

@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/toph-hardheaded-teacher/lessons
+# theme Lessons (31 decks)
+
+Commander
+1 Toph, Hardheaded Teacher
+
+Deck
+1 Arcane Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Zuran Orb
+1 Ba Sing Se
+1 Cinder Glade
+1 Command Tower
+1 Darksteel Citadel
+1 Evolving Wilds
+1 Fabled Passage
+12 Forest
+1 Kessig Wolf Run
+9 Mountain
+1 Myriad Landscape
+1 Omashu City
+1 Raging Ravine
+1 Rootbound Crag
+1 Rumble Arena
+1 Secret Tunnel
+1 Stomping Ground
+1 Terramorphic Expanse
+1 Vibrant Cityscape
+1 Avatar Kyoshi, Earthbender
+1 Badgermole
+1 Badgermole Cub
+1 Bumi, Eclectic Earthbender
+1 Bumi, King of Three Trials
+1 Bumi, Unleashed
+1 Earth Kingdom General
+1 Embodiment of Fury
+1 Evolution Sage
+1 Great Divide Guide
+1 Haru, Hidden Talent
+1 Meltstrider Eulogist
+1 Omnath, Locus of Rage
+1 Raggadragga, Goreguts Boss
+1 Sabotender
+1 Tannuk, Memorial Ensign
+1 The Boulder, Ready to Rumble
+1 The Earth King
+1 Toph, Greatest Earthbender
+1 Toph, the Blind Bandit
+1 Uncle Iroh
+1 Bitter Work
+1 Earthbender Ascension
+1 Hardened Scales
+1 Solid Ground
+1 Tale of Katara and Toph
+1 The Cave of Two Lovers
+1 The Legend of Kyoshi
+1 Combustion Technique
+1 Cycle of Renewal
+1 Elemental Teachings
+1 Energybending
+1 Firebending Lesson
+1 Harrow
+1 How to Start a Riot
+1 Inspiring Call
+1 Origin of Metalbending
+1 Redirect Lightning
+1 Rocky Rebuke
+1 Solstice Revelations
+1 Zuko's Exile
+1 Aang's Journey
+1 Blasphemous Act
+1 Bumi Bash
+1 Cracked Earth Technique
+1 Earth Rumble
+1 Earthbending Lesson
+1 Environmental Sciences
+1 Explore
+1 Introduction to Prophecy
+1 Iroh's Demonstration
+1 Price of Freedom
+1 Rampant Growth
+1 Reckless Blaze
+1 Rockalanche
+1 Seismic Sense
+1 Shared Roots
+1 True Ancestry

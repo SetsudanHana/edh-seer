@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/TaRp8_NNX8ngjrrpeKrgVg (source https://archidekt.com/decks/24295620)
+# tags Incubate, Tokens, Proliferate, Sacrifice; bracket 2; saved 2026-08-10; 13 tagged of 1800 indexed
+
+Commander
+1 Glissa, Herald of Predation
+
+Deck
+1 Ancient Imperiosaur
+1 Armored Scrapgorger
+1 Bloated Processor
+1 Braids, Arisen Nightmare
+1 Cankerbloom
+1 Chronomancer
+1 Compleated Huntmaster
+1 Converter Beast
+1 Elvish Vatkeeper
+1 Evolution Sage
+1 Fiend Artisan
+1 Glissa Sunslayer
+1 God-Eternal Bontu
+1 Grafted Butcher
+1 Ichor Drinker
+1 Jaheira, Friend of the Forest
+1 Marionette Apprentice
+1 Marionette Master
+1 Massacre Wurm
+1 Mazirek, Kraul Death Priest
+1 Mirkwood Bats
+1 Sheoldred, Whispering One
+1 Skull Prophet
+1 Annihilating Glare
+1 Breach the Multiverse
+1 Cultivate
+1 Drown in Ichor
+1 Farseek
+1 Glistening Dawn
+1 Immoral Bargain
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Reprocess
+1 Shared Roots
+1 Toxic Deluge
+1 Traumatic Revelation
+1 Unnatural Restoration
+1 Assassin's Trophy
+1 Beast Within
+1 Fell the Profane
+1 Heroic Intervention
+1 Imp's Mischief
+1 Lethal Scheme
+1 Overwhelming Remorse
+1 Revitalizing Repast
+1 Black Market Connections
+1 Blighted Burgeoning
+1 Gift of Compleation
+1 Hardened Scales
+1 Moldervine Reclamation
+1 Parallel Lives
+1 Phyrexian Arena
+1 Command Tower
+1 Darkbore Pathway
+1 Deathcap Glade
+1 Evendo, Waking Haven
+1 Evolving Wilds
+1 Exotic Orchard
+1 Festering Thicket
+5 Forest
+1 Golgari Rot Farm
+1 Haunted Mire
+1 Jungle Hollow
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Path of Ancestry
+9 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Turbulent Fen
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Vernal Fen
+1 Viridescent Bog
+1 Woodland Cemetery
+1 Contagion Clasp
+1 Idol of Oblivion
+1 Inspiring Statuary
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 Staff of Compleation
+1 Tarrian's Journal
+1 Throne of Geth
+1 Nissa, Ascended Animist
+1 Vraska, Betrayal's Sting

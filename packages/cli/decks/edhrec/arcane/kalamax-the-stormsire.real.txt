@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/IWstvZ5lirnbF0UsCS5H4w (source https://archidekt.com/decks/25491341)
+# tags Spell Copy, Clones, Arcane; bracket 2; saved 2026-08-18; 23 tagged of 8766 indexed
+
+Commander
+1 Kalamax, the Stormsire
+
+Deck
+1 Abundant Growth
+1 Arcane Bombardment
+1 Colossal Majesty
+1 Dual Casting
+1 Multani's Harmony
+1 Wilderness Reclamation
+1 Alania, Divergent Storm
+1 Arboreal Grazer
+1 Archmage Emeritus
+1 Birds of Paradise
+1 Chameleon, Master of Disguise
+1 Delina, Wild Mage
+1 Elder Pine of Jukai
+1 Jaspera Sentinel
+1 Loam Dryad
+1 Loam Dweller
+1 Ragavan, Nimble Pilferer
+1 Shaun, Father of Synths
+1 Sire of the Storm
+1 Spark Double
+1 Storm-Kiln Artist
+1 Studious First-Year
+1 Tilonalli's Skinshifter
+1 Arcane Signet
+1 Helm of the Host
+1 Sol Ring
+1 Springleaf Drum
+1 Twinning Staff
+1 Big Score
+1 Blazing Shoal
+1 Brainstorm
+1 Brainsurge
+1 Consider
+1 Consuming Vortex
+1 Curate
+1 Dampen Thought
+1 Deduce
+1 Deliberate
+1 Desperate Ritual
+1 Everdream
+1 Evermind
+1 First Volley
+1 Frantic Search
+1 Glacial Ray
+1 Growth Spiral
+1 Kodama's Might
+1 Lifted by Clouds
+1 Overblaze
+1 Peer Through Depths
+1 Psychic Puppetry
+1 Reach Through Mists
+1 Rending Vines
+1 Sift Through Sands
+1 Strength of Cedars
+1 Toils of Night and Day
+1 Unchecked Growth
+1 Unexpected Windfall
+1 Veil of Secrecy
+1 Visions of Beyond
+1 Wear Away
+1 Breeding Pool
+1 Cinder Glade
+1 Coastal Peak
+1 Command Tower
+1 Commercial District
+1 Evolving Wilds
+1 Fabled Passage
+1 Forest
+1 Forgotten Cave
+1 Frontier Bivouac
+1 Hedge Maze
+1 Hinterland Harbor
+3 Island
+1 Ketria Triome
+1 Lonely Sandbar
+1 Misty Rainforest
+1 Mountain
+1 Myriad Landscape
+1 Rain-Slicked Copse
+1 Reliquary Tower
+1 Rootbound Crag
+1 Scalding Tarn
+1 Scorched Geyser
+1 Sheltered Thicket
+1 Sodden Verdure
+1 Steam Vents
+1 Stomping Ground
+1 Sulfur Falls
+1 Thundering Falls
+1 Tranquil Thicket
+1 Wooded Foothills
+1 Ember Island Production
+1 Farseek
+1 Irenicus's Vile Duplication
+1 Kodama's Reach
+1 Multiversal Recruitment
+1 Quantum Misalignment

@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/marisi-breaker-of-the-coil/forced-combat
+# theme Forced Combat (684 decks)
+
+Commander
+1 Marisi, Breaker of the Coil
+
+Deck
+1 Arcane Signet
+1 Bloodthirsty Blade
+1 Boros Signet
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Whispersilk Cloak
+1 Arid Mesa
+1 Bountiful Promenade
+1 Canopy Vista
+1 Cinder Glade
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+5 Forest
+1 Jetmir's Garden
+1 Jungle Shrine
+5 Mountain
+5 Plains
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Sacred Foundry
+1 Spectator Seating
+1 Spire Garden
+1 Stomping Ground
+1 Sunpetal Grove
+1 Temple Garden
+1 Windswept Heath
+1 Wooded Foothills
+1 Agitator Ant
+1 Alexios, Deimos of Kosmos
+1 Aurelia, the Law Above
+1 Avacyn's Pilgrim
+1 Baeloth Barrityl, Entertainer
+1 Beast Whisperer
+1 Birds of Paradise
+1 Bothersome Quasit
+1 Champion of Lambholt
+1 Death Kiss
+1 Frontier Warmonger
+1 Gahiji, Honored One
+1 Geode Rager
+1 Gingerbrute
+1 Gisela, Blade of Goldnight
+1 Grenzo, Havoc Raiser
+1 Iroas, God of Victory
+1 Komainu Battle Armor
+1 Kutzil, Malamet Exemplar
+1 Mirri, Weatherlight Duelist
+1 Nelly Borca, Impulsive Accuser
+1 Ohran Frostfang
+1 Professional Face-Breaker
+1 Puppet Master, String Puller
+1 Sakura-Tribe Elder
+1 Selfless Spirit
+1 Soltari Foot Soldier
+1 Soltari Visionary
+1 Toski, Bearer of Secrets
+1 Vengeful Ancestor
+1 Beastmaster Ascension
+1 Bedlam
+1 Curse of Opulence
+1 Duelist's Heritage
+1 Ghostly Prison
+1 Hot Pursuit
+1 Rhythm of the Wild
+1 Shiny Impetus
+1 Beast Within
+1 Boros Charm
+1 Deflecting Palm
+1 Generous Gift
+1 Heroic Intervention
+1 Master Warcraft
+1 Naya Charm
+1 Path to Exile
+1 Swords to Plowshares
+1 Take the Bait
+1 Ajani, the Greathearted
+1 Cultivate
+1 Disrupt Decorum
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Spectacular Showdown
+1 Taunt from the Rampart

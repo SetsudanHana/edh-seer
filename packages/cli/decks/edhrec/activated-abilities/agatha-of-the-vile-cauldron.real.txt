@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/-mUtK1PQD4tH4y-RyER2eA (source https://archidekt.com/decks/22793401)
+# tags +1/+1 Counters, Activated Abilities, Pingers, Big Mana; bracket 3; saved 2026-09-05; 193 tagged of 4683 indexed
+
+Commander
+1 Agatha of the Vile Cauldron
+
+Deck
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Mithril Coat
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Great Henge
+1 Augur of Autumn
+1 Bhaal's Invoker
+1 Birds of Paradise
+1 Bristly Bill, Spine Sower
+1 Clive, Ifrit's Dominant
+1 Drillworks Mole
+1 Elvish Mystic
+1 Etali, Primal Conqueror
+1 Feldon of the Third Path
+1 Fertilid
+1 Fire Nation Archers
+1 Forgotten Ancient
+1 Goblin Anarchomancer
+1 Halana and Alena, Partners
+1 Hydra Broodmaster
+1 Kami of Whispered Hopes
+1 Karvanista, Loyal Lupari
+1 Komainu Battle Armor
+1 Leafkin Avenger
+1 Loot, Exuberant Explorer
+1 Magus of the Candelabra
+1 Radha, Heart of Keld
+1 Redshift, Rocketeer Chief
+1 Ruby, Daring Tracker
+1 Silvanus's Invoker
+1 Soul of New Phyrexia
+1 Steelbane Hydra
+1 Svella, Ice Shaper
+1 Topiary Lecturer
+1 Treetop Snarespinner
+1 Vigor
+1 Vorinclex
+1 Bard Class
+1 Beorn's Hospitality
+1 Branching Evolution
+1 Doubling Season
+1 Guardian Project
+1 Hardened Scales
+1 High Score
+1 Hydra's Growth
+1 Innkeeper's Talent
+1 Level Up
+1 Raised by Giants
+1 Rhythm of the Wild
+1 Ride the Shoopuf
+1 Tribute to the World Tree
+1 Blasphemous Act
+1 Decimate
+1 Farseek
+1 Hull Breach
+1 Nature's Lore
+1 Season of Gathering
+1 Cinder Glade
+1 Command Tower
+1 Fabled Passage
+14 Forest
+1 Game Trail
+1 Gruul Turf
+11 Mountain
+1 Reliquary Tower
+1 Rockfall Vale
+1 Rootbound Crag
+1 Spire Garden
+1 Stomping Ground
+1 Thornspire Verge
+1 Heroic Intervention
+1 Origin of Metalbending
+1 Royal Treatment
+1 Saved by the Shell
+1 Snakeskin Veil

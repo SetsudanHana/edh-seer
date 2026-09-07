@@ -87,9 +87,13 @@ function BandScale() {
 }
 
 
-export function DeckGauges({ data, onOpen, diff }: {
+/** NOTHING HERE IS A CONTROL (owner, 2026-09-06: "all the gauges and bars should not be clickable
+ *  there cause those are duplicate of our left menu"). The dials and bullets used to open the
+ *  chapter they summarise; the rail one column over already does exactly that, so every one of
+ *  these is a figure and only a figure. `Dial` and `Bullet` keep their optional button shape for
+ *  any other caller; this panel passes no `onOpen`. */
+export function DeckGauges({ data, diff }: {
   data: AnalyzeResponse;
-  onOpen: (tab: GaugeTab, focus?: string) => void;
   /** WHERE THESE TWO NUMBERS WERE LAST RUN (roadmap S9). Only the two LEAD dials take a tick: the
    *  run snapshot carries `synergyOverall` and `buildScore` and nothing else, and giving the input
    *  dials one would mean new snapshot fields for a comparison nobody asked for. */
@@ -103,6 +107,40 @@ export function DeckGauges({ data, onOpen, diff }: {
   const anchorCard = [...(report.cards ?? [])].sort((a, b) => (b.authority ?? 0) - (a.authority ?? 0))[0];
   const parents = report.buildParents ?? [];
   const lands = report.deckMath?.lands;
+  // WHOSE ROW EACH TICK IS (owner ruling 2026-09-06: the report shows the rows). `report.template`
+  // names the archetype(s) the engine blended and carries their median rows keyed by the parent's
+  // `key`, so "Voltron 20 · Tokens 12" under a tick of 16 is a claim a player can check. Whole
+  // cards since the owner's 2026-09-06 ruling; the file's 19.5 median is rounded where it is read.
+  //
+  // THE CLAIM IS THE ARCHETYPE'S, NOT EDHREC'S (owner, same day: "edhrec is just a source for
+  // checking our thesis"). The thesis is that an archetype has its own template; the decks the
+  // medians were measured on are the sample, and they are named ONCE, in the gloss, never on the
+  // tick. An older report without `template` keeps the pre-ruling sentence rather than guessing.
+  const template = report.template;
+  const tickNote = (key?: string): string | undefined => {
+    if (!template || !key) return undefined;
+    const { primary: p, secondary: s } = template;
+    if (!p) return `Archetype median ${template.population[key]}`;
+    if (!s) return `${p.label} median ${p.row[key]}`;
+    return `${p.label} ${p.row[key]} · ${s.label} ${s.row[key]}`;
+  };
+  const share = (w: number) => `${Math.round(w * 100)}%`;
+  // THE NUMBER AND THE FLOOR, NOT A VERDICT (UX sweep 2026-09-06, D4). The headline said
+  // "Enchantress", the bar said "Enchantress 25%", and this line said "no archetype read strongly
+  // enough" -- because 0.249 rounds to 25 and the floor is 0.25 strict. Four reviewers hit it. The
+  // line now prints the share to a decimal and the floor it fell under, so the three agree.
+  const lead = report.strategies?.[0];
+  const underFloor = lead && template?.leadFloor !== undefined
+    // Floored to a decimal, not rounded: 0.2499 must not print as "25.0%, under the 25%".
+    ? `${lead.label} reads ${(Math.floor(lead.confidence * 1000) / 10).toFixed(1)}%, under the ${Math.round(template.leadFloor * 100)}% an archetype needs to set its own row`
+    : "no archetype read strongly enough here to set its own row";
+  const tickSource = !template
+    ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"
+    : !template.primary
+      ? `Ticks are the archetype median over every deck \u2014 ${underFloor}`
+      : !template.secondary
+        ? `Ticks are the ${template.primary.label} archetype\u2019s median \u2014 what the archetype runs, not what it needs`
+        : `Ticks blend the ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) archetype medians \u2014 what the archetypes run, not what they need`;
   const hasSynergy = report.synergyOverall !== undefined;
   const hasBuild = report.buildScore !== undefined;
   if (parents.length === 0 && !lands && !hasSynergy && !hasBuild) return null;
@@ -144,8 +182,6 @@ export function DeckGauges({ data, onOpen, diff }: {
                 : undefined}
               zones="score"
               size="lead"
-              onOpen={() => onOpen("engine", undefined)}
-              openLabel="Engine"
               /* THE ONLY PLACE EITHER SCORE SAYS WHAT IT MEASURES, moved here verbatim when S15
                * retired the second copy of the number it used to sit in. Four of four personas
                * (2026-08-26) could not read `SYNERGY 0.8/5`; the words are what fixed that, not the
@@ -217,8 +253,6 @@ export function DeckGauges({ data, onOpen, diff }: {
                 : undefined}
               zones="score"
               size="lead"
-              onOpen={() => onOpen("build", undefined)}
-              openLabel="Build"
               /* Same move, and the wording follows the panel it points at: the category targets are
                * the Roles chapter's, not "the benchmarks below" — that phrase was true of a
                * single-scroll Overview two layouts ago. */
@@ -227,8 +261,11 @@ export function DeckGauges({ data, onOpen, diff }: {
                 <BandScale />
                 <Explain label="what this measures">
                   How close the deck sits to the category targets in Roles — ramp, draw, removal and the
-                  rest. It says nothing about how the cards work together, and the targets are the
-                  template&rsquo;s, not measured.
+                  rest. It says nothing about how the cards work together, and a target is the
+                  archetype&rsquo;s median &mdash; measured over the decks we checked it on, ten per
+                  archetype from EDHREC &mdash; what it runs, not what it needs. It counts cards per
+                  role; which KINDS of permanent those cards can answer is a Fixes question, so a 5.0
+                  here can sit beside a thin-answers finding without contradiction.
                 </Explain>
                 </>
               }
@@ -249,12 +286,7 @@ export function DeckGauges({ data, onOpen, diff }: {
                   reading={floorState(p.count, p.target)}
                   fill={countFill(p.count, p.target)}
                   mark={p.target > 0 ? TARGET_MARK : undefined}
-                  // A SINGLE-LEAF PARENT HAS NO DETAIL TO OPEN. `BuildBenchmarks` renders a group
-                  // only for a parent with more than one leaf -- Ramp's single leaf would restate
-                  // the parent's own count as "100% of Ramp", the duplicate the folded shape
-                  // exists to avoid. So those are content, not controls.
-                  onOpen={p.leaves.length > 1 ? () => onOpen("build", p.name) : undefined}
-                  openLabel="Build"
+                  note={tickNote(p.key)}
                 />
               ))}
               {lands ? (
@@ -264,8 +296,6 @@ export function DeckGauges({ data, onOpen, diff }: {
                   reading={bandState(lands.actual, lands.target)}
                   fill={countFill(lands.actual, lands.target)}
                   mark={lands.target > 0 ? TARGET_MARK : undefined}
-                  onOpen={() => onOpen("mana", undefined)}
-                  openLabel="Mana"
                 />
               ) : null}
             </div>
@@ -278,8 +308,7 @@ export function DeckGauges({ data, onOpen, diff }: {
               *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
               *  over real decks, which is also why it is the one two-sided reading here. */}
             <p className="text-xs text-(--muted) max-w-[52ch]">
-              Ticks are the Command Zone template&rsquo;s minimums — a convention, not measured
-              from real decks. Being over is fine
+              {tickSource}. Over a tick is not a fault; Fixes says where that room is
               {lands ? <> · the land tick is the exception, modelled from this deck&rsquo;s own curve</> : null}.
             </p>
           </div>

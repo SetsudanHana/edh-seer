@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#0d0912" />
+    <meta name="robots" content="noindex" />
+    <title>Not found — EDH Seer</title>
+    <!-- THIS FILE IS WHY A MISSING ASSET CAN 404. Without it Cloudflare Pages answers every
+         unmatched path with `index.html` at status 200 -- including `/assets/main-<hash>.js` during
+         the seconds of a deploy, which is how a browser came to cache an HTML response under a
+         JavaScript URL behind `immutable, max-age=31536000` and could not start the app for a year.
+         The client-side routes that legitimately have no file are handed the shell by
+         `functions/[[path]].ts`; everything else lands here.
+         Plain CSS on the same tokens as `index.html`'s static sections, for the same reason: this
+         page must render with no bundle, and Tailwind does not scan it. -->
+    <style>
+      :root { color-scheme: dark; --background: #0d0912; --foreground: #e9e4ef; --muted: #948ba6; --accent: #c64bc6; }
+      body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: 2rem;
+             background: var(--background); color: var(--foreground);
+             font: 16px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { max-width: 34rem; }
+      h1 { font-size: 2.5rem; line-height: 1.15; margin: 0 0 1rem; }
+      p { color: var(--muted); margin: 0 0 1rem; }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Nothing here</h1>
+      <p>
+        This page does not exist. If you followed a link to a card, the engine may never have read
+        that card — it only publishes a page for a card whose oracle text it can turn into events.
+      </p>
+      <p>
+        <a href="/">Analyse a deck</a> · <a href="/cards">Search the cards</a> ·
+        <a href="/how-it-works">How the engine decides</a>
+      </p>
+    </main>
+  </body>
+</html>

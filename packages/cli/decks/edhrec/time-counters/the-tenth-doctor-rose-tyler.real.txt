@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/u_c-8CCT88QPSaTrMwrkKw (source https://archidekt.com/decks/14416538)
+# tags Control, Time Counters, Time Lords, Exile, Pillow Fort, Combo, Suspend; bracket 3; saved 2026-09-04; 279 tagged of 5625 indexed
+
+Commander
+1 The Tenth Doctor
+1 Rose Tyler
+
+Deck
+1 Amphibian Downpour
+1 As Foretold
+1 Dress Down
+1 Ghostly Prison
+1 Gleaming Splendor
+1 Grasp of Fate
+1 Mystic Remora
+1 Paradox Haze
+1 Propaganda
+1 Rhystic Study
+1 Smothering Tithe
+1 Soothsaying
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Counterspell
+1 Cyber Conversion
+1 Delay
+1 Disallow
+1 Dovin's Veto
+1 Everybody Lives!
+1 Fierce Guardianship
+1 Flusterstorm
+1 Mental Misstep
+1 Mindbreak Trap
+1 Path to Exile
+1 Reverse the Polarity
+1 Strix Serenade
+1 Suspend
+1 Swan Song
+1 Swords to Plowshares
+1 Ancestral Vision
+1 Blasphemous Act
+1 Chronomantic Escape
+1 Inevitable Betrayal
+1 Inspiring Refrain
+1 Reality Strobe
+1 Rousing Refrain
+1 Supreme Verdict
+1 Vandalblast
+1 Vanquish the Horde
+1 Arcane Signet
+1 Azorius Signet
+1 Isochron Scepter
+1 Izzet Signet
+1 Sensei's Divining Top
+1 Sol Ring
+1 Sol Talisman
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Thought Vessel
+1 Arid Mesa
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Fabled Passage
+1 Flooded Strand
+1 Floodfarm Verge
+1 Glacial Fortress
+1 Hallowed Fountain
+6 Island
+3 Mountain
+5 Plains
+1 Polluted Delta
+1 Raugrin Triome
+1 Reliquary Tower
+1 Riverpyre Verge
+1 Sacred Foundry
+1 Scalding Tarn
+1 Steam Vents
+1 Stormcarved Coast
+1 Sunbillow Verge
+1 Sundown Pass
+1 Trenzalore Clocktower
+1 Windswept Heath
+1 Esper Sentinel
+1 Flaming Tyrannosaurus
+1 Nalfeshnee
+1 Niv-Mizzet, Parun
+1 Ovika, Enigma Goliath
+1 Plargg and Nassari
+1 Rift Elemental
+1 Sphinx of the Second Sun
+1 Vega, the Watcher
+1 Quintorius Kand
+1 Teferi, Time Raveler

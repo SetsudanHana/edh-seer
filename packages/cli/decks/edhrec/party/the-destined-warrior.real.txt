@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/KntFg-EFbmVNHa0TGMgbNA (source https://archidekt.com/decks/23731155)
+# tags Party, Humans, Tokens, Aggro, Legends; bracket 3; saved 2026-09-05; 314 tagged of 5363 indexed
+
+Commander
+1 The Destined Warrior
+
+Deck
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+3 Island
+1 Isolated Chapel
+1 Mana Confluence
+1 Morphic Pool
+5 Plains
+1 Polluted Delta
+1 Prairie Stream
+1 Raffine's Tower
+1 Sea of Clouds
+1 Sunken Hollow
+3 Swamp
+1 Underground River
+1 Vault of Champions
+1 Vault of the Archangel
+1 Watery Grave
+1 Adeline, Resplendent Cathar
+1 Adept Watershaper
+1 Aerith Gainsborough
+1 Archetype of Imagination
+1 Bilbo, Luckwearer
+1 Bitterbloom Bearer
+1 Burakos, Party Leader
+1 Charismatic Conqueror
+1 Exalted Sunborn
+1 Felisa, Fang of Silverquill
+1 Golbez, Crystal Collector
+1 Grim Hireling
+1 Hero of Bladehold
+1 Jadar, Ghoulcaller of Nephalia
+1 Kamiz, Obscura Oculus
+1 Linvala, Shield of Sea Gate
+1 Midnight Pathlighter
+1 Minthara, Merciless Soul
+1 Mirror Entity
+1 Mondrak, Glory Dominus
+1 Moonshaker Cavalry
+1 Morbid Opportunist
+1 Nalia de'Arnise
+1 Nullpriest of Oblivion
+1 Redemption Choir
+1 Rev, Tithe Extractor
+1 Rosa, Resolute White Mage
+1 Seasoned Dungeoneer
+1 Selfless Spirit
+1 Sygg, River Cutthroat
+1 Thalisse, Reverent Medium
+1 The Destined Black Mage
+1 The Destined Thief
+1 The Destined White Mage
+1 Timestream Navigator
+1 Tymna the Weaver
+1 Vexilus Praetor
+1 Akroma's Will
+1 Dovin's Veto
+1 Flawless Maneuver
+1 Grand Crescendo
+1 Inkshield
+1 Malakir Rebirth
+1 Swan Song
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Void Rend
+1 Andúril, Flame of the West
+1 Arcane Signet
+1 Maskwood Nexus
+1 Multiclass Baldric
+1 Orcrist, Goblin-cleaver
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The Arkenstone
+1 Wand of Orcus
+1 Wizard's Staff
+1 Anointed Procession
+1 Black Market Connections
+1 Smothering Tithe
+1 Austere Command
+1 Diabolic Intent
+1 Notorious Throng
+1 Kaya, Geist Hunter

@@ -433,3 +433,30 @@ describe("CardInspector pin", () => {
     expect(screen.queryByRole("button", { name: /pin across the report/i })).toBeNull();
   });
 });
+
+/** THE CARD IMAGE ALREADY PRINTS THE ORACLE TEXT. Showing it again filled the panel with a second
+ *  copy of what the reader was looking at (owner-reported 2026-09-04) -- but it must not simply go:
+ *  the skeptic's finding that produced it is still true wherever the image is absent, and image
+ *  text is invisible to a screen reader and cannot be selected. Folded when the picture carries it,
+ *  open when nothing else does. */
+describe("the oracle text and the picture that already prints it", () => {
+  const withText = {
+    id: "Arcane Signet", label: "Arcane Signet", copies: 1,
+    types: ["artifact"], subtypes: [], supertypes: [], typeLine: "Artifact",
+    colors: [], cmc: 2,
+    oracleText: "{T}: Add one mana of any color in your commander's color identity.",
+  };
+
+  it("folds behind a summary when the card image is showing", () => {
+    render(<CardInspector node={{ ...withText, artCrop: "https://cards.scryfall.io/art_crop/front/8/2/x.jpg" } as never}
+      edges={[]} onClose={() => {}} />);
+    expect(screen.getByText(/card text/i)).toBeInTheDocument();
+    expect(screen.getByText(/Add one mana of any color/)).toBeInTheDocument();
+  });
+
+  it("stands open with no image, because nothing else is carrying it", () => {
+    render(<CardInspector node={withText as never} edges={[]} onClose={() => {}} />);
+    expect(screen.queryByText(/^card text$/i)).toBeNull();
+    expect(screen.getByText(/Add one mana of any color/)).toBeInTheDocument();
+  });
+});

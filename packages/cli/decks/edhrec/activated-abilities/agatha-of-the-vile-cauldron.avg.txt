@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/agatha-of-the-vile-cauldron/activated-abilities
+# theme Activated Abilities (193 decks)
+
+Commander
+1 Agatha of the Vile Cauldron
+
+Deck
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Blackblade Reforged
+1 Hero's Blade
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 Swiftfoot Boots
+1 Castle Garenbrig
+1 Cinder Glade
+1 Command Tower
+11 Forest
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Llanowar Reborn
+1 Mossfire Valley
+1 Mosswort Bridge
+8 Mountain
+1 Oran-Rief, the Vastwood
+1 Rockfall Vale
+1 Rootbound Crag
+1 Spire Garden
+1 Stomping Ground
+1 Temple of Abandon
+1 Beast Whisperer
+1 Beastrider Vanguard
+1 Bhaal's Invoker
+1 Bristly Bill, Spine Sower
+1 Captivating Crew
+1 Drillworks Mole
+1 Duskwatch Recruiter
+1 Elder of Laurels
+1 Etali, Primal Conqueror
+1 Flamewave Invoker
+1 Forgotten Ancient
+1 Frontier Guide
+1 Goblin Anarchomancer
+1 Guardian Augmenter
+1 Halana and Alena, Partners
+1 Hound Tamer
+1 Hydra Broodmaster
+1 Incubation Druid
+1 Kami of Whispered Hopes
+1 Leafkin Avenger
+1 Loot, Exuberant Explorer
+1 Magus of the Candelabra
+1 Radha, Heart of Keld
+1 Redshift, Rocketeer Chief
+1 Rishkar, Peema Renegade
+1 Shaman of Forgotten Ways
+1 Silvanus's Invoker
+1 Soul of New Phyrexia
+1 Soulbright Flamekin
+1 Steel Hellkite
+1 Svella, Ice Shaper
+1 Towashi Guide-Bot
+1 Valakut Invoker
+1 Vorinclex
+1 Walking Ballista
+1 Wildheart Invoker
+1 Court of Garenbrig
+1 Fight Rigging
+1 Guardian Project
+1 Hardened Scales
+1 Invigorating Hot Spring
+1 Raised by Giants
+1 Rhythm of the Wild
+1 Tribute to the World Tree
+1 Beast Within
+1 Chaos Warp
+1 Gaea's Gift
+1 Heroic Intervention
+1 Inspiring Call
+1 Snakeskin Veil
+1 Vastwood Fortification
+1 Blasphemous Act
+1 Cultivate
+1 Kodama's Reach
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Shamanic Revelation

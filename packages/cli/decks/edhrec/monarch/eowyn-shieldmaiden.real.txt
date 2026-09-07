@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/smfxbn6caY617WYOYLGgdQ (source https://moxfield.com/decks/VIIL0Q7U0U-9hRh4sd5aFQ)
+# tags Monarch; bracket 2; saved 2026-09-05; 401 tagged of 14911 indexed
+
+Commander
+1 Éowyn, Shieldmaiden
+
+Deck
+1 Aragorn, King of Gondor
+1 Archivist of Gondor
+1 Bastion Protector
+1 Beregond of the Guard
+1 Boromir, Gondor's Hope
+1 Captain of Umbar
+1 Champions of Minas Tirith
+1 Combat Celebrant
+1 Coppercoat Vanguard
+1 Dearly Departed
+1 Denethor, Stone Seer
+1 Erkenbrand, Lord of Westfold
+1 Faramir, Prince of Ithilien
+1 Faramir, Steward of Gondor
+1 Fiend Hunter
+1 Flamerush Rider
+1 Frontier Warmonger
+1 Frontline Medic
+1 Gilraen, Dúnedain Protector
+1 Harsh Mentor
+1 Lossarnach Captain
+1 Odric, Master Tactician
+1 Palace Jailer
+1 Prince Imrahil the Fair
+1 Riders of Rohan
+1 Selfless Squire
+1 Théoden, King of Rohan
+1 Verge Rangers
+1 Village Bell-Ringer
+1 Weathered Wayfarer
+1 Zealous Conscripts
+1 Éomer, King of Rohan
+1 Éowyn, Fearless Knight
+1 Éowyn, Lady of Rohan
+1 Arcane Signet
+1 Commander's Sphere
+1 Crown of Gondor
+1 Door of Destinies
+1 Heirloom Blade
+1 Herald's Horn
+1 Horn of Gondor
+1 Talisman of Conviction
+1 Talisman of Progress
+1 Vanquisher's Banner
+1 Wayfarer's Bauble
+1 Banishing Light
+1 Fealty to the Realm
+1 Marshal's Anthem
+1 Oath of Eorl
+1 Shared Animosity
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Field of Ruin
+1 Furycalm Snarl
+1 Glacial Fortress
+4 Island
+5 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+8 Plains
+1 Port Town
+1 Prairie Stream
+1 Rogue's Passage
+1 Secluded Courtyard
+1 Sulfur Falls
+1 Terramorphic Expanse
+1 Throne of the High City
+1 Tranquil Cove
+1 Wind-Scarred Crag
+1 Windbrisk Heights
+1 Call for Aid
+1 Forth Eorlingas!
+1 Increasing Devotion
+1 Sunset Revelry
+1 Supreme Verdict
+1 Taunt from the Rampart
+1 Visions of Glory
+1 Winnowing
+1 Path to Exile
+1 Reprieve
+1 Swords to Plowshares
+1 Unbreakable Formation

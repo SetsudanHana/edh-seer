@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/6Eug888XUxSQeWp-ObORhg (source https://archidekt.com/decks/23511743)
+# tags Spellslinger, +1/+1 Counters, Repartee, Heroic, Cantrips, Tokens; bracket 2; saved 2026-08-06; 3 tagged of 7600 indexed
+
+Commander
+1 Extus, Oriq Overlord
+
+Deck
+1 Agent of the Fates
+1 Akroan Conscriptor
+1 Akroan Crusader
+1 Brigone, Soldier of Meletis
+1 Caldera Pyremaw
+1 Conciliator's Duelist
+1 Defacing Duskmage
+1 Dreadhorde Arcanist
+1 Fang, Fearless l'Cie
+1 Feather, the Redeemed
+1 Hawkeye, Bowslinger
+1 Informed Inkwright
+1 Ironwill Forger
+1 Kirol, History Buff
+1 Loki, God of Lies
+1 Mavinda, Students' Advocate
+1 Mirrorwing Dragon
+1 Monica Rambeau
+1 Phalanx Leader
+1 Prismari Pianist
+1 Rosnakht, Heir of Rohgahh
+1 Scathing Shadelock
+1 Scolding Administrator
+1 Sedgemoor Witch
+1 Silverquill, the Disputant
+1 Snooping Page
+1 Spinerock Tyrant
+1 Spiritcall Enthusiast
+1 Stirring Hopesinger
+1 Storm-Kiln Artist
+1 Vanguard of Brimaz
+1 Young Pyromancer
+1 Zada, Hedron Grinder
+1 Ancestors' Aid
+1 Boon of Safety
+1 Burning Sun's Fury
+1 Coordinated Assault
+1 Crimson Wisps
+1 Defiant Strike
+1 Expedite
+1 Fists of Flame
+1 Gods Willing
+1 Guided Strike
+1 Invigorated Rampage
+1 Invisible Force Field
+1 Leo's Guidance
+1 Mana Tithe
+1 Masterful Flourish
+1 Might of the Meek
+1 Monstrous Rage
+1 Niveous Wisps
+1 Oblivion's Hunger
+1 Path to Exile
+1 Reckless Ransacking
+1 Shelter
+1 Silverquill Charm
+1 Sudden Breakthrough
+1 Swords to Plowshares
+1 Canyon Slough
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Fabled Passage
+1 Glittering Massif
+1 Hidden Hideout
+1 Isolated Chapel
+8 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+9 Plains
+1 Shattered Landscape
+6 Swamp
+1 Terramorphic Expanse
+1 Umbral Expanse
+1 Frontline Heroism
+1 Grim Reaper's Scythe
+1 Impolite Entrance
+1 Killian's Confidence

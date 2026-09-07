@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/wDH9A3LKeg_V5VZsF2oIJQ (source https://archidekt.com/decks/21564372)
+# tags Voltron, Theft; bracket 2; saved 2026-09-05; 1164 tagged of 19411 indexed
+
+Commander
+1 Kotis, the Fangkeeper
+
+Deck
+1 Aettir and Priwen
+1 Buster Sword
+1 Dragonfire Blade
+1 Genji Glove
+1 Golgari Signet
+1 Key to the City
+1 Leyline Axe
+1 Novel Nunchaku
+1 Swiftfoot Boots
+1 Talisman of Curiosity
+1 Talisman of Dominance
+1 Talisman of Resilience
+1 The Key to the Vault
+1 Amazing Acrobatics
+1 Blossoming Defense
+1 Chase Inspiration
+1 Collective Resistance
+1 Counterspell
+1 Cycle of Renewal
+1 Essence Scatter
+1 Flotsam // Jetsam
+1 Gift of the Viper
+1 Magic Damper
+1 Negate
+1 Octopus Form
+1 Overprotect
+1 Repulsive Mutation
+1 Royal Treatment
+1 Shore Up
+1 Snakeskin Veil
+1 Aquitect's Defenses
+1 Blanchwood Armor
+1 Case of the Trampled Garden
+1 Curiosity
+1 Drake Umbra
+1 Fae Flight
+1 Frantic Strength
+1 Garruk's Uprising
+1 Hunter's Talent
+1 Octopus Umbra
+1 Ride the Shoopuf
+1 The Last Ronin
+1 Bedrock Tortoise
+1 Keiga, the Tide Star
+1 Rev, Tithe Extractor
+1 Runic Armasaur
+1 Summon: Primal Odin
+1 Tam, Mindful First-Year
+1 Taskmaster, Mercenary Mimic
+1 Tatyova, Benthic Druid
+1 Tender Wildguide
+1 Zimone, Paradox Sculptor
+1 Convert to Slime
+1 Deadly Tempest
+1 Ember Island Production
+1 Enter the Enigma
+1 Exsanguinate
+1 Final Act
+1 Migration Path
+1 Pick Your Poison
+1 Shared Roots
+1 Villainous Wrath
+1 Wear Down
+1 Crossroads Village
+1 Daily Bugle Building
+10 Forest
+1 Hidden Lair
+10 Island
+1 Multiversal Passage
+1 Opulent Palace
+1 Rogue's Passage
+8 Swamp
+1 Viridescent Bog
+1 Yavimaya Coast

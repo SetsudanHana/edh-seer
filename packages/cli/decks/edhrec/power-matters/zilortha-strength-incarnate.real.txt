@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/alUSKjfRS5KGGK4i1B5fBQ (source https://archidekt.com/decks/25510495)
+# tags Stompy, Ramp, Power Matters, Aggro, Anthems, Extra Combats, Haste; bracket 2; saved 2026-09-05; 46 tagged of 4033 indexed
+
+Commander
+1 Zilortha, Strength Incarnate
+
+Deck
+1 Anzrag, the Quake-Mole
+1 Cactusfolk Sureshot
+1 Challenger Troll
+1 Combat Celebrant
+1 Dragonborn Champion
+1 Elvish Mystic
+1 Etali, Primal Storm
+1 Fierce Empath
+1 Garruk's Gorehorn
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 Goblin Anarchomancer
+1 God-Eternal Rhonas
+1 Goreclaw, Terror of Qal Sisma
+1 Groundbreaker
+1 Gwenna, Eyes of Gaea
+1 Hulking Raptor
+1 Ilysian Caryatid
+1 Kogla, the Titan Ape
+1 Llanowar Elves
+1 Nessian Boar
+1 Ogre Battledriver
+1 Outcaster Trailblazer
+1 Phytotitan
+1 Proud Wildbonder
+1 Quakestrider Ceratops
+1 Quartzwood Crasher
+1 Rubblebelt Rioters
+1 Selvala, Heart of the Wilds
+1 Spellbreaker Behemoth
+1 Thunderblust
+1 Titanoth Rex
+1 Whiptongue Hydra
+1 Xenagos, God of Revels
+1 Zopandrel, Hunger Dominus
+1 Arcane Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Great Henge
+1 The Skullspore Nexus
+1 Beast Within
+1 Chaos Warp
+1 Entish Restoration
+1 HULK SMASH!
+1 Heroic Intervention
+1 Return of the Wildspeaker
+1 Unleash Fury
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Cultivate
+1 Decimate
+1 Farseek
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Cinder Glade
+1 Command Tower
+15 Forest
+1 Game Trail
+1 Gruul Turf
+1 Kessig Wolf Run
+1 Mosswort Bridge
+9 Mountain
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Spire Garden
+1 Stomping Ground
+1 Elemental Bond
+1 Garruk's Uprising
+1 Greater Good
+1 Monstrous Vortex
+1 Rhythm of the Wild
+1 Sarkhan's Unsealing
+1 Unnatural Growth
+1 Warstorm Surge

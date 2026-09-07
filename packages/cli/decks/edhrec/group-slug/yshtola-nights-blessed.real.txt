@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/PIT9vu7SEIRgM9RZmdPg2w (source https://archidekt.com/decks/13764919)
+# tags Spellslinger, Burn, Lifedrain, Group Slug, Control; bracket 3; saved 2026-09-05; 426 tagged of 52883 indexed
+
+Commander
+1 Y'shtola, Night's Blessed
+
+Deck
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Archmage Emeritus
+1 Duskmantle Seer
+1 Enduring Tenacity
+1 Fandaniel, Telophoroi Ascian
+1 High Fae Trickster
+1 Kambal, Consul of Allocation
+1 Leech Collector
+1 Lyse Hext
+1 Mai, Scornful Striker
+1 Papalymo Totolymo
+1 Stormscape Familiar
+1 Twilight Prophet
+1 Valeria Richards, Precocious
+1 Arcane Sanctum
+1 Ash Barrens
+1 Choked Estuary
+1 Command Tower
+1 Contaminated Aquifer
+1 Darkwater Catacombs
+1 Desolate Mire
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fetid Heath
+1 Glacial Fortress
+1 Idyllic Beachfront
+4 Island
+1 Isolated Chapel
+1 Path of Ancestry
+3 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Shineshadow Snarl
+1 Skycloud Expanse
+1 Sunken Hollow
+1 Sunken Ruins
+1 Sunlit Marsh
+4 Swamp
+1 Temple of the False God
+1 Treno, Dark City
+1 Underground River
+1 As Foretold
+1 Authority of the Consuls
+1 Black Market Connections
+1 Bloodchief Ascension
+1 Cunning Rhetoric
+1 Dissipation Field
+1 Eye of Nidhogg
+1 Gleaming Splendor
+1 One with the Multiverse
+1 Painful Quandary
+1 Propaganda
+1 Timely Ward
+1 Wound Reflection
+1 Avatar's Wrath
+1 Circle of Power
+1 Cornered by Black Mages
+1 Debt to the Deathless
+1 Dream Harvest
+1 Exsanguinate
+1 Read the Bones
+1 Risky Shortcut
+1 Stargaze
+1 Syphon Mind
+1 Syphon Soul
+1 Vindicate
+1 Bolas's Citadel
+1 Caduceus, Staff of Hermes
+1 Chromatic Lantern
+1 Midnight Clock
+1 Relic of Legends
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Thought Vessel
+1 Counterspell
+1 Crushing Disappointment
+1 Dovin's Veto
+1 Inkshield
+1 Rewind
+1 Snuff Out
+1 Sublime Epiphany
+1 Suspended Sentence
+1 Transpose
+1 Unwind
+1 Void Rend

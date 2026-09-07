@@ -1,0 +1,81 @@
+# edhrec average deck: https://edhrec.com/average-decks/zoraline-cosmos-caller/offspring
+# theme Offspring (2 decks)
+
+Commander
+1 Zoraline, Cosmos Caller
+
+Deck
+1 Arcane Signet
+1 Desecrated Tomb
+1 Maskwood Nexus
+1 Patchwork Banner
+1 Power Conduit
+1 Prowler's Helm
+1 Sinister Monolith
+1 Sol Ring
+1 Trailblazer's Boots
+1 Whispersilk Cloak
+1 Caves of Koilos
+1 Evolving Wilds
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Lupinflower Village
+1 Mudflat Village
+1 Path of Ancestry
+13 Plains
+1 Rogue's Passage
+1 Secluded Courtyard
+14 Swamp
+1 Tainted Field
+1 Vault of the Archangel
+1 Amalia Benavides Aguirre
+1 Basilica Screecher
+1 Courier Bat
+1 Darkstar Augur
+1 Deep-Cavern Bat
+1 Enduring Tenacity
+1 Essence Channeler
+1 Ferropede
+1 Lifecreed Duo
+1 Marauding Blight-Priest
+1 Moonrise Cleric
+1 Moonstone Eulogist
+1 Moonstone Harbinger
+1 Qarsi Revenant
+1 Regal Bloodlord
+1 Sanctuary Warden
+1 Sanguine Evangelist
+1 Snarling Gorehound
+1 Starlit Soothsayer
+1 Starscape Cleric
+1 Starseer Mentor
+1 Stinkweed Imp
+1 Stitcher's Supplier
+1 Sun Titan
+1 Twilight Prophet
+1 Valley Questcaller
+1 Valley Rotcaller
+1 Veinwitch Coven
+1 Vito, Thorn of the Dusk Rose
+1 Welcoming Vampire
+1 Banishing Light
+1 Case of the Uneaten Feast
+1 Cleric Class
+1 Etchings of the Chosen
+1 Lunar Convocation
+1 Phyrexian Arena
+1 Crumb and Get It
+1 Dark Ritual
+1 Dawn's Truce
+1 Mortify
+1 Path to Exile
+1 Swords to Plowshares
+1 Buried Alive
+1 Diresight
+1 Exsanguinate
+1 Insatiable Avarice
+1 Night's Whisper
+1 Sign in Blood
+1 Starfall Invocation
+1 Victimize

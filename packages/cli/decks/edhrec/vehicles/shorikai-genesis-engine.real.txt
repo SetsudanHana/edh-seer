@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/Z4J271I06cKmKXy73NHLbw (source https://archidekt.com/decks/6718181)
+# tags Card Draw, Midrange, Artifacts, Vehicles; bracket 3; saved 2026-09-05; 2962 tagged of 20833 indexed
+
+Commander
+1 Shorikai, Genesis Engine
+
+Deck
+1 Aerial Surveyor
+1 Arcane Signet
+1 Azorius Signet
+1 Colossal Plow
+1 Consulate Dreadnought
+1 Cultivator's Caravan
+1 Fellwar Stone
+1 Heart of Kiran
+1 Imposter Mech
+1 Knight Paladin
+1 Manifold Key
+1 Mighty Servant of Leuk-o
+1 Mirage Mirror
+1 Mobile Garrison
+1 Mobilizer Mech
+1 Parhelion II
+1 Peacewalker Colossus
+1 Prodigy's Prototype
+1 Raiders' Karve
+1 Reaver Titan
+1 Skullclamp
+1 Skysovereign, Consul Flagship
+1 Sol Ring
+1 Surgehacker Mech
+1 The Prydwen, Steel Flagship
+1 Thunderhawk Gunship
+1 Unwinding Clock
+1 Vedalken Orrery
+1 Voltaic Key
+1 Weatherlight
+1 Aeronaut Admiral
+1 Consecrated Sphinx
+1 Emry, Lurker of the Loch
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Gold Myr
+1 Kotori, Pilot Prodigy
+1 Master of Etherium
+1 Padeem, Consul of Innovation
+1 Psychosis Crawler
+1 Research Thief
+1 Silver Myr
+1 Solemn Simulacrum
+1 Stenn, Paranoid Partisan
+1 Sun Titan
+1 An Offer You Can't Refuse
+1 Armed and Armored
+1 Circular Logic
+1 Counterspell
+1 Dispatch
+1 Dovin's Veto
+1 Path to Exile
+1 Swords to Plowshares
+1 Anchor to Reality
+1 Brilliant Restoration
+1 Dance of the Manse
+1 Fractured Identity
+1 Supreme Verdict
+1 Thoughtcast
+1 Time Wipe
+1 Wrath of God
+1 Ancient Den
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+1 Glacial Fortress
+1 Inventors' Fair
+11 Island
+1 Mech Hangar
+10 Plains
+1 Prairie Stream
+1 Razortide Bridge
+1 Reliquary Tower
+1 Seat of the Synod
+1 Skycloud Expanse
+1 Spire of Industry
+1 Temple of Enlightenment
+1 Detention Sphere
+1 Mystic Remora
+1 Tezzeret, Betrayer of Flesh

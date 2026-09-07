@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/0B6Em6gBxlq26N4mTkI8AA (source https://archidekt.com/decks/25896257)
+# tags Aggro, Dash; bracket unset; saved 2026-09-03; 2 tagged of 6906 indexed
+
+Commander
+1 Ognis, the Dragon's Lash
+
+Deck
+1 Ambuscade Shaman
+1 Archwing Dragon
+1 Boltwing Marauder
+1 Death-Greeter's Champion
+1 Elegant Entourage
+1 Flamerush Rider
+1 Flamewake Phoenix
+1 Fleeting Effigy
+1 Garruk's Packleader
+1 Glitterfang
+1 Kolaghan Forerunners
+1 Kolaghan, the Storm's Fury
+1 Lightning Berserker
+1 Mardu Scout
+1 Ogre Battledriver
+1 Pitiless Horde
+1 Primal Forcemage
+1 Rabbit Battery
+1 Reinforced Ronin
+1 Rose Room Treasurer
+1 Screamreach Brawler
+1 Shatterskull Charger
+1 Springbloom Druid
+1 Sprinting Warbrute
+1 Swift Warkite
+1 Warbringer
+1 Wild Cantor
+1 Zurgo Bellstriker
+1 Berserkers' Onslaught
+1 Elemental Mastery
+1 Ferocification
+1 Garruk's Uprising
+1 Gruul War Chant
+1 Pick Up the Pace
+1 Raiders' Spoils
+1 Warstorm Surge
+1 Canyon Slough
+1 Command Tower
+10 Forest
+16 Mountain
+6 Swamp
+1 Temple of Abandon
+1 Temple of Malady
+1 Temple of Malice
+1 Cleansing Wildfire
+1 Cultivate
+1 Destructive Tampering
+1 Explore
+1 Gravitic Punch
+1 Harmonize
+1 Light Up the Stage
+1 Magmatic Chasm
+1 Reckless Impulse
+1 Seismic Stomp
+1 Commune with Lava
+1 Fling
+1 Gold Rush
+1 Harrow
+1 Heritage Reclamation
+1 Riveteers Charm
+1 Volcanic Spite
+1 Warriors' Lesson
+1 You Are Already Dead
+1 Golgari Signet
+1 Moss Diamond
+1 Noble's Purse
+1 Obelisk of Jund
+1 Ronin Warclub
+1 Sai of the Shinobi
+1 Stormrider Rig

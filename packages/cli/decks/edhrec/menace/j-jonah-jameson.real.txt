@@ -1,0 +1,45 @@
+# edhrec deck https://edhrec.com/deckpreview/ZInTyakb2foXJOmsFRdfSQ (source https://archidekt.com/decks/25790514)
+# tags Menace; bracket 2; saved 2026-08-27; 11 tagged of 1304 indexed
+
+Commander
+1 J. Jonah Jameson
+
+Deck
+1 Akoum Hellhound
+1 Burnout Bashtronaut
+1 Fire Shrine Keeper
+1 Flameblade Adept
+1 Frantic Scapegoat
+1 Goblin Glory Chaser
+1 Goldhound
+1 Gut, True Soul Zealot
+1 Insolent Neonate
+1 Kessig Wolfrider
+1 Knuckles the Echidna
+1 Minion of the Mighty
+1 Professional Face-Breaker
+1 Rograkh, Son of Rohgahh
+1 Rohirrim Lancer
+1 Rotisserie Elemental
+1 Rust Harvester
+1 Village Messenger
+1 Xorn
+1 Alchemist's Talent
+1 Barbarian Class
+1 Connecting the Dots
+1 Daring Piracy
+1 Goblin War Drums
+1 Rain of Riches
+1 Sticky Fingers
+1 War Cadence
+1 Beamtown Beatstick
+1 Strixhaven Stadium
+1 Cosmotronic Wave
+1 Crackle with Power
+1 Disrupt Decorum
+1 Full Throttle
+1 Repulsor Rays
+1 Tentative Connection
+1 Zuko's Offense
+1 Lightning Bolt
+62 Mountain

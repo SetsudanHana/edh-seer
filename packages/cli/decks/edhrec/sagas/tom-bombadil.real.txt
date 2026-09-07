@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/Yr2aBVRL6zw5EkuLICDMww (source https://archidekt.com/decks/17977964)
+# tags Counters Matter, Sagas, Enchantress; bracket 2; saved 2026-09-04; 2703 tagged of 21080 indexed
+
+Commander
+1 Tom Bombadil
+
+Deck
+1 An Offer You Can't Refuse
+1 Clockspinning
+1 Nature's Claim
+1 Path to Exile
+1 Swords to Plowshares
+1 Arcane Signet
+1 Fellwar Stone
+1 Power Conduit
+1 Skullclamp
+1 Sol Ring
+1 Wayfarer's Bauble
+1 Argothian Enchantress
+1 Barbara Wright
+1 Falco Spara, Pactweaver
+1 Garnet, Princess of Alexandria
+1 Glissa Sunslayer
+1 Goldberry, River-Daughter
+1 Herald of the Pantheon
+1 Hex Parasite
+1 O'aka, Traveling Merchant
+1 Sanctum Weaver
+1 Scholar of New Horizons
+1 Sin, Unending Cataclysm
+1 Soul Diviner
+1 Summon: Anima
+1 Summon: Bahamut
+1 Summon: Brynhildr
+1 Summon: Choco/Mog
+1 Summon: Esper Valigarmanda
+1 Summon: Fenrir
+1 Summon: Good King Mog XII
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Primal Odin
+1 Summon: Shiva
+1 Summon: Titan
+1 Summon: Valefor
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Terra, Magical Adept
+1 Thrull Parasite
+1 Tidus, Yuna's Guardian
+1 Xavier Sal, Infested Captain
+1 Blasphemous Act
+1 Damning Verdict
+1 Esper Origins
+1 Farseek
+1 Nature's Lore
+1 Replenish
+1 Three Visits
+1 Bountiful Promenade
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Hidden Hideout
+2 Island
+1 Luxury Suite
+1 Morphic Pool
+2 Mountain
+1 Nesting Grounds
+1 Otawara, Soaring City
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Plaza of Heroes
+1 Rejuvenating Springs
+1 Sea of Clouds
+1 Spectator Seating
+1 Spire Garden
+1 Starting Town
+2 Swamp
+1 Temple Garden
+1 Training Center
+1 Undergrowth Stadium
+1 Urza's Saga
+1 Vault of Champions
+1 Enchantress's Presence
+1 Fall of Gil-galad
+1 Genesis of the Daleks
+1 Maximum Carnage
+1 Old Fat Spider Can't See Me
+1 Scroll of Isildur
+1 The Cloning of Shredder
+1 The Coming of Galactus
+1 The Flux
+1 The Legend of Yangchen
+1 Together Forever

@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/oxiqEbXERgoMiVE7wDh3LQ (source https://archidekt.com/decks/23886121)
+# tags Landwalk, Old School, Lifegain; bracket 2; saved 2026-09-05; 19 tagged of 831 indexed
+
+Commander
+1 Sol'kanar the Swamp King
+
+Deck
+1 Anger
+1 Avatar of Woe
+1 Blazing Specter
+1 Blizzard Specter
+1 Blood Celebrant
+1 Blood Tyrant
+1 Cyclopean Giant
+1 Dream Thrush
+1 Dreamscape Artist
+1 Filth
+1 Magus of the Coffers
+1 Mortivore
+1 Nightmare
+1 Nightscape Battlemage
+1 Nightscape Familiar
+1 Orcish Farmer
+1 Phyrexian Scuta
+1 Pyre Zombie
+1 Reiver Demon
+1 Scion of Darkness
+1 Silent Specter
+1 Skeletal Vampire
+1 Solemn Simulacrum
+1 Twisted Abomination
+1 Vampiric Dragon
+1 Vengeful Pharaoh
+1 Void Maw
+1 Zombie Trailblazer
+1 Backlash
+1 Cabal Ritual
+1 Counterspell
+1 Crosis's Charm
+1 Expunge
+1 Fire Covenant
+1 Howl from Beyond
+1 Spinal Embrace
+1 Tendrils of Corruption
+1 Terminate
+1 Beacon of Unrest
+1 Bond of Agony
+1 Buried Alive
+1 Chainer's Edict
+1 Corrupt
+1 Diabolic Tutor
+1 Disintegrate
+1 Hex
+1 Phyrexian Purge
+1 Plague Wind
+1 Stitch Together
+1 Zombify
+1 Blanket of Night
+1 Coastal Piracy
+1 Evil Presence
+1 Reckless Assault
+1 Sanguine Bond
+1 Shade's Form
+1 Soul Barrier
+1 Crosis's Catacombs
+1 Darkwater Catacombs
+1 Grixis Panorama
+5 Island
+5 Mountain
+1 Salt Marsh
+1 Shadowblood Ridge
+1 Snow-Covered Swamp
+16 Swamp
+1 Tainted Isle
+1 Tainted Peak
+1 Urborg Volcano
+1 Urborg, Tomb of Yawgmoth
+1 Demon's Horn
+1 Expedition Map
+1 Fire Diamond
+1 Loxodon Warhammer
+1 Nightmare Lash
+1 Sky Diamond

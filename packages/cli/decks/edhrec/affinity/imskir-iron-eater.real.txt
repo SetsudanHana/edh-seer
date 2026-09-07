@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/NS2OLje9cv3lqmtR26Bh2A (source https://moxfield.com/decks/BZM1Ym9n0ESuU20ZnRDIvw)
+# tags Artifacts, Affinity; bracket 3; saved 2026-09-04; 303 tagged of 4916 indexed
+
+Commander
+1 Imskir Iron-Eater
+
+Deck
+1 Abrade
+1 Burnt Offering
+1 Chaos Warp
+1 Deadly Dispute
+1 Dismember
+1 Fell the Profane
+1 Flare of Duplication
+1 Flare of Malice
+1 Kazuul's Fury
+1 Null Elemental Blast
+1 Self-Destruct
+1 Sudden Spoiling
+1 Wild Magic Surge
+1 Adaptive Omnitool
+1 Arcane Signet
+1 Basilisk Collar
+1 Charcoal Diamond
+1 Cloak of the Bat
+1 Cosmic Cube
+1 Cranial Plating
+1 Cranial Ram
+1 Demonic Junker
+1 Dowsing Device
+1 Ebony Fly
+1 Everflowing Chalice
+1 Executioner's Capsule
+1 Fellwar Stone
+1 Fire Diamond
+1 Guardian Idol
+1 Hero's Heirloom
+1 Lavaspur Boots
+1 Lightning Spear
+1 Liquimetal Torque
+1 Loxodon Warhammer
+1 Mind Stone
+1 Nettlecyst
+1 Nihil Spellbomb
+1 Prismatic Lens
+1 Rakdos Signet
+1 Shadowspear
+1 Sol Ring
+1 Solar Transformer
+1 Swiftfoot Boots
+1 Synod Sanctum
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Tithing Blade
+1 Voyager Staff
+1 Blast-Furnace Hellkite
+1 Boggart Trawler
+1 Frogmite
+1 Frogmyr Enforcer
+1 Furnace Hellkite
+1 Giggling Skitterspike
+1 Iron Myr
+1 Leaden Myr
+1 Metalwork Colossus
+1 Monoist Circuit-Feeder
+1 Myr Enforcer
+1 Ornithopter of Paradise
+1 Panther Robot
+1 Plague Myr
+1 Refurbished Familiar
+1 Sojourner's Companion
+1 Zookeeper Mechan
+1 Blinkmoth Nexus
+1 Bojuka Bog
+1 Buried Ruin
+1 Command Tower
+1 Darksteel Citadel
+1 Dragonskull Summit
+1 Drossforge Bridge
+1 Fomori Vault
+1 Foreboding Ruins
+1 Glimmervoid
+1 Graven Cairns
+1 Great Furnace
+1 Inkmoth Nexus
+5 Mountain
+1 Path of Ancestry
+1 Power Depot
+1 Rakdos Carnarium
+1 Scene of the Crime
+1 Spire of Industry
+1 Sulfurous Springs
+5 Swamp
+1 Treasure Vault
+1 Vault of Whispers
+1 Volatile Fault
+1 Chandra's Ignition
+1 Sundering Eruption

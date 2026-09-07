@@ -62,6 +62,9 @@ export function BarChart({
 }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(FALLBACK_W);
+  /** The bar under the pointer, tap or focus; `null` shows the peak. The `<title>` tooltip on each
+   *  bar needs a pointer and a pause; this readout needs neither (owner, 2026-09-06). */
+  const [pick, setPick] = useState<string | null>(null);
   useEffect(() => {
     const el = wrap.current;
     if (!el) return;
@@ -86,6 +89,7 @@ export function BarChart({
   const peak = bars.length > 0
     ? bars.reduce((best, b) => (b.value > best.value ? b : best), bars[0])
     : undefined;
+  const shown = (pick !== null ? bars.find((b) => b.label === pick) : undefined) ?? peak;
 
   return (
     <div className="flex flex-col gap-2" style={{ maxWidth: MAX_W }} ref={wrap}>
@@ -135,10 +139,24 @@ export function BarChart({
                   "data-testid": "bar",
                   d: columnPath(mid - barW / 2, y(b.value), barW, h),
                   fill: "var(--fill)", title: b.title,
+                  // THE HOVERED MARK LIFTS: a hairline in the foreground ink, never a colour change.
+                  ...(shown === b ? { stroke: "var(--foreground)", strokeWidth: 1 } : {}),
                 }}
               >
                 <title>{b.title}</title>
               </path>
+              {/* THE HIT TARGET IS THE WHOLE COLUMN, wider and taller than the bar, and reachable
+                *  by keyboard; the readout below carries the value. */}
+              <rect
+                data-testid="bar-hit"
+                x={x(b.label) ?? 0} y={TOP_PAD} width={x.bandwidth()} height={plotH - TOP_PAD}
+                fill="transparent" tabIndex={0} aria-label={b.title}
+                className="outline-none cursor-crosshair"
+                onPointerEnter={() => setPick(b.label)} onFocus={() => setPick(b.label)} onClick={() => setPick(b.label)}
+              >
+                {/* The rect is on top, so the hover tooltip lives here or nowhere. */}
+                <title>{b.title}</title>
+              </rect>
               <text
                 data-testid="bar-label"
                 x={mid} y={HEIGHT - 5} textAnchor="middle"
@@ -159,6 +177,9 @@ export function BarChart({
           );
         })}
       </svg>
+      {shown ? (
+        <p className="text-xs stat-num" data-testid="bar-readout">{shown.title}</p>
+      ) : null}
     </div>
   );
 }

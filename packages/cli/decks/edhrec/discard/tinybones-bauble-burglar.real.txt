@@ -1,0 +1,70 @@
+# edhrec deck https://edhrec.com/deckpreview/vAqJp8tJo6x_jc_Cp6-IuA (source https://moxfield.com/decks/y5TE-QbyQU-euEX0w0UTpg)
+# tags Theft, Discard; bracket 2; saved 2026-09-05; 1967 tagged of 10830 indexed
+
+Commander
+1 Tinybones, Bauble Burglar
+
+Deck
+1 Aclazotz, Deepest Betrayal
+1 Burglar Rat
+1 Elderfang Disciple
+1 Fell Specter
+1 Grief
+1 Hecteyes
+1 Leaden Myr
+1 Massacre Girl
+1 Mindslicer
+1 Nezumi Informant
+1 Osseous Sticktwister
+1 Plaguecrafter
+1 Scythe Specter
+1 Solemn Simulacrum
+1 The Raven Man
+1 Tinybones, Trinket Thief
+1 Tourach, Dread Cantor
+1 Virus Beetle
+1 Arcane Signet
+1 Charcoal Diamond
+1 Commander's Sphere
+1 Entropic Battlecruiser
+1 Heraldic Banner
+1 Mind Stone
+1 Prismatic Lens
+1 Sol Ring
+1 The Rack
+1 Worn Powerstone
+1 Bandit's Talent
+1 Megrim
+1 Oppression
+1 Painful Quandary
+1 Quest for the Nihil Stone
+1 Raiders' Wake
+1 Shrieking Affliction
+1 The Eldest Reborn
+1 Waste Not
+1 Black Sun's Zenith
+1 Delirium Skeins
+1 Duress
+1 Feed the Swarm
+1 Mutilate
+1 Pilfer
+1 Rankle's Prank
+1 Read the Bones
+1 Rush of Dread
+1 Shredder's Technique
+1 Sign in Blood
+1 Syphon Mind
+1 Tasigur's Cruelty
+1 Unnerve
+1 Vicious Rumors
+1 Villainous Wrath
+1 Bojuka Bog
+37 Swamp
+1 Consuming Corruption
+1 Deadly Dispute
+1 Hero's Downfall
+1 Infernal Grasp
+1 Murder
+1 Village Rites
+1 Davriel, Rogue Shadowmage
+1 Invasion of Eldraine

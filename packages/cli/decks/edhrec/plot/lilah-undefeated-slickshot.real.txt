@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/koJXBiCkNdPrlFkz7jlSfQ (source https://archidekt.com/decks/18627266)
+# tags Control, Spellslinger, Plot; bracket 2; saved 2026-08-24; 36 tagged of 2800 indexed
+
+Commander
+1 Lilah, Undefeated Slickshot
+
+Deck
+1 Abandon Attachments
+1 Arcane Infusion
+1 Ashling's Command
+1 Broadside Barrage
+1 Channeled Force
+1 Electrolyze
+1 Firemind's Foresight
+1 Galvanic Iteration
+1 Hypothesizzle
+1 Invert // Invent
+1 Perplexing Test
+1 Practical Research
+1 Prismari Charm
+1 Prismari Command
+1 Prophetic Bolt
+1 Ral's Outburst
+1 Rewind
+1 Rush of Inspiration
+1 Slick Sequence
+1 Steam Augury
+1 Stress Dream
+1 Teach by Example
+1 Thoughtflare
+1 Traumatic Critique
+1 Unwind
+1 Urza's Rebuff
+1 Void Shatter
+1 Arcane Bombardment
+1 Propaganda
+1 Thousand-Year Storm
+1 Arcane Signet
+1 Glamdring, Foe-hammer
+1 Mind Stone
+1 Resonating Lute
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 Wayfarer's Bauble
+1 Archmage Emeritus
+1 Goblin Electromancer
+1 Hullbreaker Horror
+1 Jin-Gitaxias, Progress Tyrant
+1 Nalfeshnee
+1 Niv-Mizzet, Parun
+1 Prismari, the Inspiration
+1 Runaway Steam-Kin
+1 Sphinx Ambassador
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Third Path Iconoclast
+1 Tidespout Tyrant
+1 Young Pyromancer
+1 Blast of Genius
+1 Expressive Iteration
+1 Flood of Tears
+1 Gandalf's Sanction
+1 Glacial Dragonhunt
+1 Ill-Timed Explosion
+1 Master the Way
+1 Mizzix's Mastery
+1 Rapturous Moment
+1 Splatter Technique
+1 Stitch in Time
+1 Truth or Consequences
+1 Command Tower
+1 Cori Mountain Monastery
+1 Fiery Islet
+1 Fire Nation Palace
+1 Frostboil Snarl
+12 Island
+1 Molten Tributary
+9 Mountain
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Skyline Cascade
+1 Stormcarved Coast
+1 Swiftwater Cliffs
+1 Temple of Epiphany
+1 Temple of the False God

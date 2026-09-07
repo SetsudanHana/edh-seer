@@ -6,15 +6,16 @@
  *  silence is indistinguishable from a card that does nothing, which is exactly how Bitterblossom
  *  sat in the corpus as a vanilla bear. */
 import type { Action, ClauseRecord } from "../canonicalize.js";
-import type { Ability, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
+import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
-import { actionRecipients } from "./recipient.js";
+import { requiresOf } from "./markers.js";
+import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
-import { repeatsFor } from "./repeats.js";
+import { repeatsFor, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { doubledVerbs } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
@@ -25,7 +26,7 @@ import { triggerHasCue } from "../clause-store.js";
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
-export const DERIVE_VERSION = 89;
+export const DERIVE_VERSION = 108;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -115,6 +116,9 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   sacrificed: "sacrifice",
   discarded: "discard",
   milled: "mill",
+  // The eerie half: "whenever you fully unlock a Room". 35 clause docs carry it; every Room supplies
+  // it by being one (`impliedEvents`).
+  unlocked: "unlock",
   // ORIGIN-BLIND BY DESIGN (CR 703/116 sweep, 2026-08-20). `dies`, `milled` and `discarded` split
   // one event by where the card came FROM; "put into a graveyard from anywhere" is the union, which
   // is precisely what `enters-graveyard` already means to the matcher — `normalizeZoneEvent` derives
@@ -267,9 +271,33 @@ function dropsCrossSlotOr(text: string): boolean {
   return typeOnly && subtypeOnly;
 }
 
+/** AN AURA'S "ENCHANT X" LINE BOUNDS ITS "ENCHANTED PERMANENT" (UX sweep 2026-09-06, E1). Kaya's
+ *  Ghostform prints `Enchant creature or planeswalker you control` and then `When enchanted
+ *  permanent dies` -- and "enchanted permanent" parsed as ANY permanent, so a land dying (Fabled
+ *  Passage) and an enchantment leaving (Mystic Remora, Dress Down) each "enabled" it: six false rows
+ *  on the site's own example deck. The Enchant line is the only thing the permanent can be, so the
+ *  subject text takes it verbatim ("enchanted creature or planeswalker you control") and the
+ *  parser does the rest. Census (`bin/enchant-restriction-census.ts`): 50 cards whose subject is
+ *  wider than their Enchant line, 29 derived. A card without an Enchant line, or without its text
+ *  here, keeps "permanent" -- nothing is guessed. */
+const ENCHANT_LINE = /^Enchant ([^\n]+)$/m;
+const ENCHANTED_PERMANENT = /\benchanted permanent\b/i;
+/** `enchantText` is the text the Enchant line is read from: the clause's OWN FACE when faces are
+ *  known (a two-face card with two Auras must not bind face A's line to face B's clause), and the
+ *  whole card otherwise. Reminder text after the line is dropped -- by string ops, not by a
+ *  trailing `\s*(...)?\s*$` (CodeQL js/polynomial-redos on the first cut). */
+function boundedByEnchantLine(text: string, enchantText: string): string {
+  if (!ENCHANTED_PERMANENT.test(text)) return text;
+  const raw = enchantText.match(ENCHANT_LINE)?.[1];
+  if (!raw) return text;
+  const paren = raw.indexOf("(");
+  const line = (paren >= 0 ? raw.slice(0, paren) : raw).trim().replace(/\.$/, "");
+  return line ? text.replace(ENCHANTED_PERMANENT, `enchanted ${line}`) : text;
+}
+
 /** Both corrections above, at the one place a subject becomes structured. */
-function subjectFrom(text: string, cardName?: string): ReturnType<typeof parseSubject> {
-  const stripped = stripCardName(text.replace(SELF_DISJUNCT, ""), cardName);
+function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType<typeof parseSubject> {
+  const stripped = stripCardName(boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, ""), cardName);
   const subject = parseSubject(stripped);
   if (subject.type !== undefined && subject.subtype !== undefined && dropsCrossSlotOr(stripped)) {
     const branches = orBranches(stripped);
@@ -395,6 +423,8 @@ function countTruncated(object: string): string {
  *  recipient to end on a non-space removes the overlap. The capture is unchanged — lazy already
  *  preferred the shortest recipient, which is the one ending on a non-space. */
 const GRANTED_TO = /^(.*?\S)\s+\b(?:have|has|gain|gains)\b/i;
+/** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
+const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
  *  "Target Shapeshifter becomes a copy of TARGET CREATURE" -- so the recipient, the half that names
  *  the subtype, is lost the way a grant's was. 122 corpus clauses carry a `copy` action. */
@@ -434,7 +464,7 @@ function grantRecipient(clauseText: string): string | undefined {
 const ATTACKS_YOU = /\battacks? you\b/i;
 
 function effectSubject(
-  action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string,
+  action: Action, kind: string, triggerIsSelf = false, clauseText = "", cardName?: string, cardText = "",
 ): ReturnType<typeof parseSubject> {
   // A GRANT's object is the ability handed over, never the thing receiving it, so the subject has to
   // come from the clause text. Falls back to the object when the text states no recipient, which
@@ -443,6 +473,15 @@ function effectSubject(
   // and the same typal guard apply: "target Shapeshifter becomes a copy of target creature" is a
   // synergy with the deck's Shapeshifters, while "each other creature you control becomes a copy"
   // reaches the whole board and is an ordinary card doing an ordinary thing.
+  // AN ABILITY LOSS NAMES WHO LOSES THEM IN THE CLAUSE, never in its object ("have abilities"). A
+  // type-only class is KEPT here, unlike a grant's: a grant with no subtype is refused because the
+  // whole-deck lord edge it would form is a false claim, and an ability loss forms no claim at all
+  // -- it is a silence the matcher applies to the class it names. "Enchanted creature" and other
+  // narrowings the filter cannot hold stay unnamed, so an Aura silences nothing class-wide.
+  if (kind === "ability-loss") {
+    const who = recipientBefore(clauseText, LOSES_ABILITIES);
+    return who && !UNEXPRESSIBLE_NARROWING.test(who) ? parseSubject(who) : parseSubject("");
+  }
   if (action.verb === "grant-ability" || action.verb === "copy") {
     const who = action.verb === "copy"
       ? recipientBefore(clauseText, COPIED_INTO)
@@ -488,7 +527,7 @@ function effectSubject(
   // aura/equipment host read as a class is a wider standing defect with its own item.
   if (MULTIPLIER_VERBS.has(action.verb ?? "") && UNEXPRESSIBLE_NARROWING.test(object)) return parseSubject("");
   const self = object.match(SELF_REFERENCE);
-  const subject = subjectFrom(self ? self[0] : countTruncated(object), cardName);
+  const subject = subjectFrom(self ? self[0] : countTruncated(object), cardName, cardText);
   // ...and RECORD that it was self-referential. The match was already being used to avoid parsing
   // the condition after it, then discarded, so all 160 graveyard-recursion effects in the corpus
   // looked like recursion of a generic card. edges.ts then let any graveyard fill enable any of
@@ -574,6 +613,46 @@ const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", a
  *  overridden. `sacrifice` is absent on purpose: a sacrifice outlet eats YOUR creatures, and that is
  *  the aristocrats edge this engine most wants to find. */
 const REMOVAL_VERBS = new Set(["destroy", "exile"]);
+
+/** AN ACTION WITH NO PLAYER NAMED IS THE CONTROLLER'S (CR 111.2; `subject.ts` already says this is
+ *  where "you draw" comes from, and never applied it). "Draw a card", "you may cast that card",
+ *  "sacrifice two other creatures", "create a token": the actor is you, and the object text carries
+ *  no controller because the sentence had no need to say one. Derived `any`, every one of them met
+ *  the OPPONENT-watching payoffs -- the panel's Priest of Forgotten Gods -> Orcish Bowmasters
+ *  ("whenever an opponent draws") and Impulsivity -> Nezahal ("whenever an opponent casts"), both
+ *  owner-judged FALSE. `actionRecipients` now answers `any` when a player IS named, so silence from
+ *  it means no player was named at all. Only these verbs: the subject of a counter placement or a
+ *  removal is the RECIPIENT, not the actor, and the rule must not touch them. */
+const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill", "create", "search", "sacrifice", "gain-life", "lose-life"]);
+
+/** "That creature", "those cards": a back-reference that NAMES A TYPE and so is not a pronoun
+ *  (`PRONOUN_OBJECT` keeps it parsing as itself, deliberately) -- but the controller it refers back
+ *  to is on the antecedent, not on it. The Sibsig Ceremony: "whenever a creature YOU control enters,
+ *  destroy THAT CREATURE" derived `dies creature/any` and fed Massacre Wurm's "whenever a creature
+ *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
+ *  unstated controller is inherited. */
+const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
+
+/** The recipient of a counter, when it is the card itself. Anchored at the END of the trigger
+ *  subject so "on this creature" is the recipient and not a stray mention. */
+const COUNTER_ON_SELF = /\bon this (?:creature|permanent|artifact|enchantment|land|planeswalker)$/i;
+
+/** "Whenever one or more creature cards leave YOUR GRAVEYARD" (Desecrated Tomb, Fang, Chalk Outline
+ *  -- 32 of the 71 corpus leaves-payoffs). The model's trigger subject dropped the zone on every one
+ *  of them, so they derived identically to The Ozolith's battlefield leave and every death in the
+ *  deck fed them (panel: Fang x3, Soul Enervation, Defiled Crypt, all FALSE). Read from the clause
+ *  text, which is exactly the channel the subject string lost. */
+const LEAVES_GRAVEYARD = /\bleaves? (?:your|a|an opponent'?s|their|each player'?s|its owner'?s|the|that player'?s)? ?graveyard\b/i;
+/** "leave the battlefield WITHOUT DYING" (Dour Port-Mage), "if it didn't die" (Taeko): a `leaves`
+ *  demand that refuses a death. 5 corpus cards. */
+const WITHOUT_DYING = /\bwithout dying\b|\bdidn'?t die\b|\bdoesn'?t die\b/i;
+
+/** "Activate only as a sorcery" (CR 307.5 timing on an activated ability) and its "only during
+ *  your turn" cousin: an activation that cannot happen in combat. */
+const SORCERY_SPEED = /\bactivate (?:this ability )?only as a sorcery\b|\bonly during your turn\b/i;
+/** A loyalty symbol as a cost — "+1", "−3", "0" — the shape `segment.ts` hands over for a
+ *  planeswalker ability, which CR 606.3 makes sorcery-speed. */
+const LOYALTY_COST = /^[+\u2212-]?(?:\d+|X)$/;
 
 /** "if none of them were cast", "if it wasn't cast", "no mana was spent to cast", "without being
  *  played" — the entry happened by some route other than casting. Card-scoped like every other
@@ -671,6 +750,11 @@ export function deriveAbilities(
   /** Clause id -> which face prints it, from `segment()`. Stamped onto every ability the clause
    *  derives, so a back-face ability stops being indistinguishable from a front-face one. */
   clauseFaces?: Record<number, number>,
+  /** The card is cast at instant speed -- an Instant, or a spell with flash -- so its on-cast emits
+   *  are `instantSpeed`. Read off characteristics by `deriveCardTags`; absent means no. */
+  castAtInstantSpeed?: boolean,
+  /** Clause id -> a game-state requirement, attached to every ability the clause produces. */
+  clauseRequires?: Record<number, Requirement>,
 ): { abilities: Ability[]; unclaimed: Action[]; unknownTriggers: string[] } {
   const abilities: Ability[] = [];
   const unclaimed: Action[] = [];
@@ -680,6 +764,9 @@ export function deriveAbilities(
   // real modal triggers to catch 1 phantom. Absent `clauseTexts` disables the guard rather than
   // guessing, the same contract `recipient.ts` has.
   const cardText = oracleText ?? "";
+  /** The nearest earlier clause's own trigger event, for a trigger-less continuation to inherit.
+   *  See `rawTrigger` below. */
+  let inheritedRaw: RawTrigger | undefined;
 
   for (const clause of clauses) {
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
@@ -690,7 +777,24 @@ export function deriveAbilities(
     // WHICH FACE PRINTS THIS CLAUSE. Stamped onto every ability the clause derives below, so the
     // matcher can stop reading a back-face ability against the card's UNION of types.
     const face = clauseFaces?.[clause.id];
+    // THE ENCHANT LINE IS READ OFF THIS CLAUSE'S OWN FACE when faces are known (review, 2026-09-06):
+    // `cardText` is the whole card, and a card with an Aura on each face has two Enchant lines.
+    const enchantText = face !== undefined && clauseTexts
+      ? Object.entries(clauseTexts).filter(([id]) => clauseFaces?.[Number(id)] === face).map(([, t]) => t).join("\n")
+      : cardText;
     const kind = abilityKind(clause);
+    // THE RAW TRIGGER EVENT, FOR THE LABELLER ONLY (`repeatsFor`). An event outside the `Verb`
+    // union reaches `unknownTriggers` below and the ability derives with no trigger, so this is the
+    // one channel through which "at the beginning of your first main phase" can still say it is a
+    // phase. A TRIGGERED clause that states no trigger of its own is a mode or a continuation of
+    // the nearest earlier trigger on the card -- "choose one or more --" segments into clauses that
+    // repeat no trigger (Black Market Connections, 306 such clauses corpus-wide) -- so it inherits
+    // that event. CEILING: adjacency, not a parsed modal tree; a static or activated clause in
+    // between ends the inheritance, so a later stray continuation cannot claim an unrelated trigger.
+    const rawTrigger: RawTrigger | undefined = clause.trigger?.event
+      ? { event: clause.trigger.event, ...(clause.trigger.control ? { control: clause.trigger.control } : {}) }
+      : kind === "triggered" ? inheritedRaw : undefined;
+    inheritedRaw = clause.trigger?.event ? rawTrigger : kind === "triggered" ? inheritedRaw : undefined;
     // Who performs each action, when the clause names someone the object text does not carry. The
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
@@ -712,11 +816,14 @@ export function deriveAbilities(
       for (let i = idx - 1; i >= 0; i--) {
         const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
         if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o)) continue;
-        return o.replace(PRONOUN_SOURCE, "");
+        return boundedByEnchantLine(o.replace(PRONOUN_SOURCE, ""), enchantText);
       }
       // Kaya's Ghostform: "When ENCHANTED PERMANENT dies, return THAT CARD to the battlefield." The
       // antecedent is the trigger's subject, not an earlier action -- there is no earlier action.
-      const t = (clause.trigger?.subject ?? "").trim();
+      // AND IT IS BOUNDED BY THE ENCHANT LINE like the trigger itself: the returned card is the
+      // creature or planeswalker that died, so the emit says so -- without this the emit stayed
+      // "any permanent enters" and Dress Down "entered thanks to Kaya's Ghostform".
+      const t = boundedByEnchantLine((clause.trigger?.subject ?? "").trim(), enchantText);
       return t === "" || PRONOUN_OBJECT.test(t) ? undefined : t;
     };
     /** ...and the case `antecedentFor` deliberately walks PAST: the nearest earlier action names the
@@ -797,7 +904,7 @@ export function deriveAbilities(
           if (!triggerHasCue(damageVerb, cardText)) {
             unknownTriggers.push(`phantom:${damageVerb}`);
           } else {
-            const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
+            const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
             const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
             if (control) subject.control = control;
             if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
@@ -813,10 +920,26 @@ export function deriveAbilities(
         // REFUSES leaves the older, wrong doc standing, so the clause layer alone cannot fix it.
         unknownTriggers.push(`phantom:${verb}`);
       } else if (verb) {
-        const subject = subjectFrom(clause.trigger.subject ?? "", cardName);
+        const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+        // "Whenever one or more +1/+1 counters are put ON THIS CREATURE" (Evolution Witness): the
+        // subject is the counter, the recipient is the card itself, and `isSelfSubject` reads only
+        // the head of the phrase. Without the flag, Incubation Druid adapting ITSELF fed the
+        // Witness's own-counter trigger (owner-judged FALSE, 2026-08-22); with it, edges.ts's
+        // self-on-both-sides gate refuses the pair.
+        if (verb === "counter-added" && COUNTER_ON_SELF.test(clause.trigger.subject ?? "")) subject.self = true;
+        // ON AN `attacks` TRIGGER THE STATE IS THE EVENT: "a creature you control attacking" (Arni
+        // Metalbrow, Seifer) is every attacker, and the implied `attacks` producer never states
+        // the state, so keeping it here would delete every real edge these have. Kept on every
+        // other verb -- "an attacking creature DIES" narrows a death the way the verb cannot.
+        if (verb === "attacks" && subject.combat === "attacking") delete subject.combat;
+        // A LEAVE HAS A ZONE. CR 603.6c is about the battlefield; "leave your graveyard" is a
+        // different event that shares nothing with a death, and "without dying" is a battlefield
+        // leave minus `dies`. Both are read off the TEXT because the trigger subject dropped them.
+        if (verb === "leaves" && LEAVES_GRAVEYARD.test(text)) subject.zone = "graveyard";
+        if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
         selfLeavesTrigger = subject.self === true && verb === "leaves";
         // Read from the clause TEXT, not the trigger subject string: the count sits in the trigger
         // clause's prose ("when there are 1,000 or more time counters on ..."), which is the same
@@ -837,7 +960,7 @@ export function deriveAbilities(
     // become a source of what it multiplies. Only when the clause has no authored trigger: Rankle
     // and Torbran's mode inherits the parent's combat-damage trigger and must keep it.
     if (replacement && !replacement.restricted && !trigger) {
-      const subject = subjectFrom(replacement.subjectText, cardName);
+      const subject = subjectFrom(replacement.subjectText, cardName, enchantText);
       if (replacement.counter) subject.counter = replacement.counter;
       trigger = { verbs: replacement.verbs, subject };
     }
@@ -868,7 +991,7 @@ export function deriveAbilities(
       // below, which is the shape `prompt.ts` already documents for Tekuthal.
       const effectKind = replacement?.kind ?? actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
-      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text)
+      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text, { self: emitsSelf })
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,
@@ -899,14 +1022,41 @@ export function deriveAbilities(
       // form an edge that is not real. A STATIC ability additionally has to name its targets --
       // see namesItsTargets -- or the very same edge forms against the whole deck.
       const subject = effectKind
-        ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName)
+        ? effectSubject(action, effectKind, trigger?.subject.self === true, text, cardName, enchantText)
         : undefined;
+      // See THAT_TYPED. Read BEFORE the actor, which is a stronger statement and overrides it.
+      const objectText = (action.object ?? "").trim();
+      if (THAT_TYPED.test(objectText) && !PRONOUN_OBJECT.test(objectText)) {
+        const ante = antecedentFor((clause.actions ?? []).indexOf(action));
+        const inherited = ante ? subjectFrom(ante, cardName, enchantText).control : undefined;
+        if (inherited && inherited !== "any") {
+          for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
+          if (subject && subject.control === "any") subject.control = inherited;
+        }
+      }
       const actor = actorFor(action.verb);
       if (actor) {
         for (const e of emits) e.subject.control = actor;
         if (subject) subject.control = actor;
-      } else if (REMOVAL_VERBS.has(action.verb ?? "")) {
-        // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller.
+      } else if (ACTOR_DEFAULTS_TO_YOU.has(action.verb ?? "") && clauseText !== ""
+        && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1
+        && !sentenceNamesAPlayer(clauseText, action.verb ?? "")) {
+        // See ACTOR_DEFAULTS_TO_YOU. The clause TEXT was read and named no player for this verb --
+        // without the text nothing is known and `any` stands, and a clause with two actions of the
+        // verb ("target opponent draws a card. You draw two") is the ambiguity `actorFor` already
+        // refuses. Only an UNSTATED controller is filled in: "sacrifice a creature you control"
+        // already says you, and "an opponent's creature" (parsed `opp`) is kept.
+        for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
+        if (subject && subject.control === "any") subject.control = "you";
+      } else if (REMOVAL_VERBS.has(action.verb ?? "") || emits.some((e) => e.verb === "leaves" && e.subject.zone !== "graveyard")) {
+        // See REMOVAL_VERBS. Only a TARGETED removal with no stated controller. A targeted BOUNCE
+        // ("return target creature to its owner's hand") joins the rule for its `leaves` emit: it is
+        // aimed at an opponent's creature exactly as a targeted destroy is, and without this it read
+        // `any` and fed "whenever a creature YOU control leaves". A leave from a GRAVEYARD does not
+        // join it: "put target creature card from a graveyard onto the battlefield" (Reanimate) is
+        // aimed at your own graveyard as readily as theirs, so recursion keeps `any`. An `exile` from
+        // a graveyard is still a REMOVAL_VERB and reads `opp` -- Bojuka Bog -> Desecrated Tomb is the
+        // accepted cost, the same one Saw in Half -> Bloodchief pays.
         for (const e of emits) {
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
         }
@@ -915,15 +1065,18 @@ export function deriveAbilities(
       // same discipline a static does: name WHO becomes the copy, or form no edge. "Each other
       // creature you control becomes a copy of that creature" is the whole board, and a subject that
       // names nothing is a wildcard that matches every card in the deck.
+      // AN ABILITY LOSS KEEPS ITS CLASS SUBJECT. It is a silence the matcher applies, never a
+      // claim, so the whole-deck-lord refusal in `namesItsTargets` does not apply to it.
       const keepSubject = subject
-        && (kind !== "static" || namesItsTargets(subject))
+        && (kind !== "static" || namesItsTargets(subject) || effectKind === "ability-loss")
         && (effectKind !== "clone" || subject.subtype !== undefined);
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.
-      const scaling = actionScaling(action);
-      // WHAT the count counts, beside the basis — see `scalingSubject`. Only graveyard counts carry
-      // one today, because that is the slice `edges.ts` can judge with an existing gate.
-      const countedSubject = scalingSubject(action);
+      const scaling = actionScaling(action, text);
+      // WHAT the count counts, beside the basis — see `scalingSubject`. Graveyard and battlefield
+      // counts both carry one: those are the two `edges.ts` can judge against something it already
+      // has, a fill it can match and a card's own printed characteristics.
+      const countedSubject = scalingSubject(action, text);
       const effect = effectKind
         ? keepSubject ? { kind: effectKind, subject } : { kind: effectKind }
         : { kind: "" as const };
@@ -953,6 +1106,14 @@ export function deriveAbilities(
         const doubles = doubledVerbs(text);
         if (doubles.length) ability.doubles = doubles;
       }
+      // TIMING, the smallest model that holds a ruling: an activated ability is used in combat, a
+      // sorcery is not, so "a sac outlet can eat an attacking creature" (owner, Ayara -> Death
+      // Tyrant, upheld 2026-08-22) and Blasphemous Edict -> Kardur is refused. Loyalty abilities
+      // (CR 606.3) and "activate only as a sorcery" are sorcery-speed activations.
+      const instantSpeed = kind === "activated"
+        ? !SORCERY_SPEED.test(clauseText ?? "") && !LOYALTY_COST.test(cost)
+        : kind === "on-cast" && castAtInstantSpeed === true;
+      if (instantSpeed) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
       if (face) ability.face = face;
       abilities.push(ability);
@@ -1012,11 +1173,15 @@ export function deriveAbilities(
     const arrivalNotCast = ARRIVED_WITHOUT_CASTING.test(text);
     const arrivalTapped = /\benters tapped\b/i.test(text);
     for (let i = before; i < abilities.length; i++) {
-      const repeats = repeatsFor(abilities[i], text, cost);
+      const repeats = repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };
       }
+      // A GAME-STATE REQUIREMENT: from the ability word the segmenter stripped ("Max speed —"),
+      // else from a condition that governs the whole clause text (roadmap W18).
+      const requires = clauseRequires?.[clause.id] ?? requiresOf(text);
+      if (requires) abilities[i] = { ...abilities[i], requires };
       const trig = abilities[i].trigger;
       if (trig && trig.verbs.includes("enters") && (arrivalNotCast || arrivalTapped)) {
         abilities[i] = { ...abilities[i], trigger: { ...trig, subject: {
@@ -1045,6 +1210,8 @@ export interface DeriveInput {
    *  same reason as `clauseTexts`: deterministic, so recomputed rather than stored. Absent leaves
    *  every ability faceless, which is what every single-face card wants anyway. */
   clauseFaces?: Record<number, number>;
+  /** Clause id -> the game-state requirement its printed ability word carries (`markers.ts`). */
+  clauseRequires?: Record<number, Requirement>;
   /** Clause id -> the clause's activation cost, straight from `segment()`. Same shape and same
    *  reason as `clauseTexts`: free to recompute, so nothing is stored. `repeatsFor` reads this, not
    *  `clauseTexts`, for the self-sacrifice and tap-cost rules -- the cost is split OUT of the body
@@ -1060,9 +1227,12 @@ export interface DeriveInput {
 /** Assemble the full CardTags document the matcher consumes. `characteristics` is printed data read
  *  from the card document -- derivation never asks a model for what the database already knows. */
 export function deriveCardTags(input: DeriveInput): CardTags {
-  const { abilities } = deriveAbilities(
+  const chars = input.characteristics;
+  const castAtInstantSpeed = chars.types.some((t) => t.toLowerCase() === "instant")
+    || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
+  const { abilities, unknownTriggers } = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
-    input.clauseFaces);
+    input.clauseFaces, castAtInstantSpeed, input.clauseRequires);
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,
@@ -1074,5 +1244,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     model: "derived",
     characteristics: input.characteristics,
     abilities,
+    // Written only when there is something to surface, so a clean card stays byte-identical.
+    ...(unknownTriggers.length ? { unknownTriggers } : {}),
   };
 }

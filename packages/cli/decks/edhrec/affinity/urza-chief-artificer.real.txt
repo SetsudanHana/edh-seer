@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/WOD_cKh1rKLulD0g4RQHjA (source https://moxfield.com/decks/bGWM-RF3DUyTq-QjyrLoOQ)
+# tags Artifacts, Affinity; bracket 3; saved 2026-09-05; 453 tagged of 16958 indexed
+
+Commander
+1 Urza, Chief Artificer
+
+Deck
+1 Academy Ruins
+1 Adarkar Wastes
+1 Ancient Den
+1 Command Tower
+1 Concealed Courtyard
+1 Darkslick Shores
+1 Darksteel Citadel
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Glacial Fortress
+1 Glimmervoid
+1 Godless Shrine
+1 Goldmire Bridge
+1 Hallowed Fountain
+1 Inkmoth Nexus
+1 Ishgard, the Holy See
+5 Island
+1 Isolated Chapel
+1 Midgar, City of Mako
+1 Mistvault Bridge
+4 Plains
+1 Razortide Bridge
+1 Seachrome Coast
+1 Seat of the Synod
+3 Swamp
+1 Urza's Saga
+1 Vault of Whispers
+1 Watery Grave
+1 All That Glitters
+1 Fateful Discovery
+1 Mirrodin Besieged
+1 An Offer You Can't Refuse
+1 Clever Concealment
+1 Counterspell
+1 Disallow
+1 Dispatch
+1 Dovin's Veto
+1 Fracture
+1 Loran's Escape
+1 Swan Song
+1 Angel of Invention
+1 Arcbound Ravager
+1 Baleful Strix
+1 Bronze Guardian
+1 Cyberdrive Awakener
+1 Emry, Lurker of the Loch
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Indomitable Archangel
+1 Junk Diver
+1 Kappa Cannoneer
+1 Lady Octopus, Inspired Inventor
+1 Leonin Abunas
+1 Master of Etherium
+1 Memnite
+1 Myr Enforcer
+1 Myr Retriever
+1 Ornithopter
+1 Ornithopter of Paradise
+1 Padeem, Consul of Innovation
+1 Sai, Master Thopterist
+1 Steel Overseer
+1 Thought Monitor
+1 Urza, Lord High Artificer
+1 Vedalken Archmage
+1 Arc Reactor
+1 Arcane Signet
+1 Azorius Signet
+1 Cranial Plating
+1 Dimir Signet
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Lightning Greaves
+1 Mystic Forge
+1 Nettlecyst
+1 Orzhov Signet
+1 Sculpting Steel
+1 Simulacrum Synthesizer
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Welding Jar
+1 Dance of the Manse
+1 Open the Vaults
+1 Organic Extinction
+1 Thoughtcast
+1 Tezzeret, Master of the Bridge

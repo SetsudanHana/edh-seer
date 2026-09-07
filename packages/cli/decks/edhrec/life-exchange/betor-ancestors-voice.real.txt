@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/o82K2Ir2njVMpQGuK0yktQ (source https://archidekt.com/decks/12142896)
+# tags +1/+1 Counters, Life Exchange, Self-Damage, Reanimator; bracket 3; saved 2026-09-04; 31 tagged of 18865 indexed
+
+Commander
+1 Betor, Ancestor's Voice
+
+Deck
+1 Abzan Charm
+1 Anguished Unmaking
+1 Bitter Triumph
+1 Entomb
+1 Fell the Profane
+1 Razorgrass Ambush
+1 Restoration Magic
+1 Revitalizing Repast
+1 Silverquill Charm
+1 Tamiyo's Safekeeping
+1 Witherbloom Charm
+1 Arcane Signet
+1 Dragonfire Blade
+1 Hedge Shredder
+1 Sol Ring
+1 Staff of Compleation
+1 Tainted Sigil
+1 Talisman of Hierarchy
+1 Talisman of Resilience
+1 Talisman of Unity
+1 Beledros Witherbloom
+1 Blex, Vexing Pest
+1 Boggart Trawler
+1 Children of Korlis
+1 Conclave Mentor
+1 Daemogoth Woe-Eater
+1 Devoted Druid
+1 Disciple of Freyalise
+1 Doom Whisperer
+1 Dross Harvester
+1 Haywire Mite
+1 K'rrik, Son of Yawgmoth
+1 Mire Triton
+1 Moseo, Vein's New Dean
+1 Old Rutstein
+1 Priest of Fell Rites
+1 Qarsi Revenant
+1 Rodolf Duskbringer
+1 Sakura-Tribe Elder
+1 Scheming Silvertongue
+1 Selfless Spirit
+1 Sister Hospitaller
+1 Soul Warden
+1 The Kingpin of Crime
+1 Tivash, Gloom Summoner
+1 Tree of Redemption
+1 Twilight Diviner
+1 Underrealm Lich
+1 Wall of Reverence
+1 Bojuka Bog
+1 Brushland
+1 Caves of Koilos
+1 Command Tower
+1 Deathcap Glade
+1 Deceptive Landscape
+1 Eclipsed Steppe
+1 Exotic Orchard
+1 Fabled Passage
+3 Forest
+1 Godless Shrine
+1 Isolated Chapel
+1 Llanowar Wastes
+1 Lush Portico
+1 Overgrown Farmland
+1 Overgrown Tomb
+1 Path of Ancestry
+3 Plains
+1 Sandsteppe Citadel
+1 Susur Secundi, Void Altar
+5 Swamp
+1 Temple Garden
+1 Wastewood Verge
+1 Bridgeworks Battle
+1 Diresight
+1 Eerie Ultimatum
+1 Emeria's Call
+1 Night's Whisper
+1 Reanimate
+1 Rishkar's Expertise
+1 Sevinne's Reclamation
+1 Toxic Deluge
+1 Will of the Abzan
+1 Will of the Sultai
+1 Zero Point Ballad
+1 Corroding Dragonstorm
+1 Delaying Shield
+1 Encroaching Dragonstorm
+1 Greater Good
+1 Grim Feast
+1 Ripples of Undeath
+1 Stronghold Arena

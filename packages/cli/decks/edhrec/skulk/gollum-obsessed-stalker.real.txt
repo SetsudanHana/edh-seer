@@ -1,0 +1,73 @@
+# edhrec deck https://edhrec.com/deckpreview/qyyHV6JThgltTCCBSHuLPA (source https://archidekt.com/decks/16591300)
+# tags Skulk, Lifedrain, Lifegain; bracket 2; saved 2026-08-12; 11 tagged of 2009 indexed
+
+Commander
+1 Gollum, Obsessed Stalker
+
+Deck
+1 Access Tunnel
+1 Rogue's Passage
+34 Swamp
+1 The Black Gate
+1 Alms of the Vein
+1 Blood Tithe
+1 Consume Spirit
+1 Corrupt
+1 Covenant of Blood
+1 Damnable Pact
+1 Decree of Pain
+1 Diresight
+1 Drain Life
+1 Exsanguinate
+1 Feed the Swarm
+1 Foreboding Fruit
+1 Risky Research
+1 Sovereign's Bite
+1 Syphon Life
+1 Syphon Soul
+1 Zof Consumption
+1 Basilica Screecher
+1 Creeping Bloodsucker
+1 Crypt Ghast
+1 Diamond Mare
+1 Disciple of Bolas
+1 Dread Presence
+1 Elegy Acolyte
+1 Enduring Tenacity
+1 Fell Beast of Mordor
+1 Gifted Aetherborn
+1 Gollum, Riddle Master
+1 Gollum, Scheming Guide
+1 Gray Merchant of Asphodel
+1 Grimdancer
+1 Gumdrop Poisoner
+1 Pontiff of Blight
+1 Qarsi Revenant
+1 Starscape Cleric
+1 Vampire Nighthawk
+1 Veinwitch Coven
+1 Venomcrawler
+1 Vito, Thorn of the Dusk Rose
+1 Consuming Corruption
+1 Cower in Fear
+1 Crypt Incursion
+1 Fake Your Own Death
+1 Feign Death
+1 Grave Endeavor
+1 March of Wretched Sorrow
+1 Not Dead After All
+1 Supernatural Stamina
+1 Undying Malice
+1 Gonti's Machinations
+1 Greed
+1 Revenge of Ravens
+1 Sanguine Bond
+1 Jet Medallion
+1 Pristine Talisman
+1 Prowler's Helm
+1 Psychic Paper
+1 Staff of the Death Magus
+1 Thieves' Tools
+1 Trailblazer's Boots
+1 Wedding Invitation
+1 Well of Lost Dreams

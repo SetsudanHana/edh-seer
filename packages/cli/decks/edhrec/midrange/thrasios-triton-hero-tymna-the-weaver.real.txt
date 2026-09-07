@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/-_eqYdVtoC4twMLJJixi5Q (source https://moxfield.com/decks/qWeAM5i2BUyxuZPUtzHjgw)
+# tags Lifegain, Self-Damage, +1/+1 Counters, Midrange, Reanimator, Mill, Lands Matter; bracket 3; saved 2026-09-04; 501 tagged of 11583 indexed
+
+Commander
+1 Thrasios, Triton Hero
+1 Tymna the Weaver
+
+Deck
+1 An Offer You Can't Refuse
+1 Cosmic Rebirth
+1 Deadly Rollick
+1 Entomb
+1 Malakir Rebirth
+1 Path to Exile
+1 Saw in Half
+1 Swan Song
+1 Swords to Plowshares
+1 Angel of Indemnity
+1 Archon of Cruelty
+1 Ashen Rider
+1 Atraxa, Grand Unifier
+1 Baleful Strix
+1 Betor, Ancestor's Voice
+1 Birds of Paradise
+1 Bloom Tender
+1 Changeling Outcast
+1 Dauthi Voidwalker
+1 Displacer Kitten
+1 Endurance
+1 Esper Sentinel
+1 Hermit Druid
+1 Karmic Guide
+1 Lotus Cobra
+1 Lurrus of the Dream-Den
+1 Mother of Runes
+1 Nether Traitor
+1 Ranger-Captain of Eos
+1 Recruiter of the Guard
+1 Satyr Wayfinder
+1 Serra Ascendant
+1 Siren Stormtamer
+1 Stitcher's Supplier
+1 Sun Titan
+1 Teval, the Balanced Scale
+1 Yawgmoth, Thran Physician
+1 Animate Dead
+1 Dance of the Dead
+1 Necromancy
+1 Pattern of Rebirth
+1 Sylvan Library
+1 Arid Mesa
+1 Bayou
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Flooded Strand
+1 Godless Shrine
+1 Hallowed Fountain
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Overgrown Tomb
+1 Plains
+1 Polluted Delta
+1 Reflecting Pool
+1 Savannah
+1 Scalding Tarn
+1 Scrubland
+1 Strip Mine
+5 Swamp
+1 Takenuma, Abandoned Mire
+1 Temple Garden
+1 Tropical Island
+1 Underground Sea
+1 Urza's Saga
+1 Verdant Catacombs
+1 Wasteland
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Buried Alive
+1 Damn
+1 Diabolic Intent
+1 Dread Return
+1 Eldritch Evolution
+1 Feed the Swarm
+1 Final Parting
+1 Finale of Devastation
+1 Life from the Loam
+1 Reanimate
+1 Sevinne's Reclamation
+1 Toxic Deluge
+1 Unearth
+1 Victimize
+1 Haystack
+1 Lotus Petal
+1 Mesmeric Orb
+1 Skullclamp
+1 Sol Ring

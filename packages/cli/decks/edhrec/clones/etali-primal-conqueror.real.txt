@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/XBpCHYLXUBBoy8GTClpQ-A (source https://moxfield.com/decks/Ch35NkMMmUuGgg4yTbNHwQ)
+# tags Ramp, Clones, Chaos; bracket 3; saved 2026-09-05; 608 tagged of 16970 indexed
+
+Commander
+1 Etali, Primal Conqueror
+
+Deck
+1 Ancient Tomb
+1 Castle Garenbrig
+1 Cavern of Souls
+1 Cinder Glade
+1 Command Beacon
+1 Command Tower
+1 Commercial District
+1 Evendo, Waking Haven
+1 Exotic Orchard
+11 Forest
+1 Game Trail
+1 Karplusan Forest
+8 Mountain
+1 Rockfall Vale
+1 Rootbound Crag
+1 Sanctum of Eternity
+1 Stomping Ground
+1 Wooded Foothills
+1 Arcane Signet
+1 Conjurer's Closet
+1 Cursed Mirror
+1 Fellwar Stone
+1 Sol Ring
+1 The Reaver Cleaver
+1 Ashaya, Soul of the Wild
+1 Azusa, Lost but Seeking
+1 Badgermole Cub
+1 Birds of Paradise
+1 Craterhoof Behemoth
+1 Elvish Mystic
+1 Eternal Witness
+1 Faldorn, Dread Wolf Herald
+1 Fanatic of Rhonas
+1 Flaming Tyrannosaurus
+1 Fury
+1 Goblin Anarchomancer
+1 Gwenna, Eyes of Gaea
+1 Hellkite Courser
+1 Llanowar Elves
+1 Plargg and Nassari
+1 Rionya, Fire Dancer
+1 Selvala, Heart of the Wilds
+1 Somberwald Sage
+1 Springheart Nantuko
+1 Terror of the Peaks
+1 Tireless Provisioner
+1 Wandering Archaic
+1 Wild-Magic Sorcerer
+1 Beast Within
+1 Chaos Warp
+1 Delayed Blast Fireball
+1 Nature's Claim
+1 You Find Some Prisoners
+1 Blasphemous Act
+1 Cultivate
+1 Decimate
+1 Eldritch Evolution
+1 Electroduplicate
+1 Farseek
+1 Glimpse the Impossible
+1 Green Sun's Zenith
+1 Heat Shimmer
+1 Jeska's Will
+1 Kindle the Inner Flame
+1 Kodama's Reach
+1 Molten Duplication
+1 Nature's Lore
+1 Skyshroud Claim
+1 Stump Stomp
+1 Three Visits
+1 Twinflame
+1 Chandra, Awakened Inferno
+1 Chandra, Flameshaper
+1 Nissa, Who Shakes the World
+1 Cindervines
+1 Greater Good
+1 Growing Rites of Itlimoc
+1 Rhythm of the Wild
+1 Song of the Dryads
+1 Spider-Verse
+1 Splinter Twin
+1 Wild Growth

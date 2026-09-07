@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/czIPvFcTW4ls2zvw1yQqQQ (source https://archidekt.com/decks/7328458)
+# tags Spellslinger, Creatureless, Big Mana; bracket 3; saved 2026-09-04; 38 tagged of 8734 indexed
+
+Commander
+1 Codie, Vociferous Codex
+
+Deck
+1 Alrund's Epiphany
+1 Approach of the Second Sun
+1 Arcane Endeavor
+1 Army of the Damned
+1 Beacon of Tomorrows
+1 Blasphemous Act
+1 Blatant Thievery
+1 Bonus Round
+1 Breach the Multiverse
+1 Bring to Light
+1 Cultivate
+1 Echo of Eons
+1 Emergent Ultimatum
+1 Faithless Looting
+1 Farseek
+1 Improvisation Capstone
+1 Inevitable Betrayal
+1 Inspired Ultimatum
+1 Insurrection
+1 Kodama's Reach
+1 Mizzix's Mastery
+1 Mnemonic Deluge
+1 Personal Tutor
+1 Praetor's Counsel
+1 Profane Tutor
+1 Rampant Growth
+1 Reshape the Earth
+1 Ruinous Ultimatum
+1 See the Truth
+1 Solve the Equation
+1 Spelltwine
+1 Stock Up
+1 Storm Herd
+1 Urban Evolution
+1 Wild Endeavor
+1 Will of the Jeskai
+1 Blessed Respite
+1 Brainstorm
+1 Cerulean Wisps
+1 Counterspell
+1 Dark Ritual
+1 Dig Through Time
+1 Eureka Moment
+1 Galvanic Iteration
+1 Growth Spiral
+1 Increasing Vengeance
+1 Inkshield
+1 Misdirection
+1 Mystical Tutor
+1 Narset's Reversal
+1 Nature's Claim
+1 Reverberate
+1 Swords to Plowshares
+1 Boseiju, Who Shelters All
+1 Cascading Cataracts
+1 Command Tower
+1 Dragonskull Summit
+1 Dreamroot Cascade
+1 Exotic Orchard
+3 Forest
+1 Great Hall of the Biblioplex
+1 Hinterland Harbor
+8 Island
+1 Mistrise Village
+3 Mountain
+1 Mystic Sanctuary
+1 Plains
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rootbound Crag
+1 Shattered Sanctum
+1 Spectator Seating
+1 Spire Garden
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sundown Pass
+1 Swamp
+1 The World Tree
+1 Elvish Spirit Guide
+1 Jodah, Archmage Eternal
+1 Prismari, the Inspiration
+1 Quandrix, the Proof
+1 Simian Spirit Guide
+1 Fist of Suns
+1 Resonating Lute
+1 Sol Ring
+1 Leyline of Mutation

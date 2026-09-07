@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/jyoti-moag-ancient/land-animation
+# theme Land Animation (76 decks)
+
+Commander
+1 Jyoti, Moag Ancient
+
+Deck
+1 Arcane Signet
+1 Blackblade Reforged
+1 Conduit of Worlds
+1 Sol Ring
+1 Staff of Titania
+1 Ba Sing Se
+1 Blinkmoth Nexus
+1 Breeding Pool
+1 Command Tower
+1 Crawling Barrens
+1 Darksteel Citadel
+1 Dreamroot Cascade
+1 Dryad Arbor
+1 Faerie Conclave
+1 Flooded Grove
+10 Forest
+1 Hall of Storm Giants
+1 Hinterland Harbor
+7 Island
+1 Lair of the Hydra
+1 Lumbering Falls
+1 Rejuvenating Springs
+1 Restless Vinestalk
+1 Simic Growth Chamber
+1 Tanglepool Bridge
+1 Treetop Village
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Aesi, Tyrant of Gyre Strait
+1 Ancient Greenwarden
+1 Ashaya, Soul of the Wild
+1 Avenger of Zendikar
+1 Badgermole Cub
+1 Blossoming Tortoise
+1 Bonny Pall, Clearcutter
+1 Embodiment of Insight
+1 Halimar Tidecaller
+1 Jolrael, Voice of Zhalfir
+1 Kamahl, Heart of Krosa
+1 Liege of the Tangle
+1 Llanowar Loamspeaker
+1 Lotus Cobra
+1 Ramunap Excavator
+1 Sakura-Tribe Elder
+1 Springheart Nantuko
+1 Sylvan Advocate
+1 Tatyova, Benthic Druid
+1 Tatyova, Steward of Tides
+1 Tireless Provisioner
+1 Waker of the Wilds
+1 Yedora, Grave Gardener
+1 Druid Class
+1 Earth Surge
+1 Earthbender Ascension
+1 Exploration
+1 Retreat to Kazandu
+1 Roaring Earth
+1 The Legend of Kyoshi
+1 Wilderness Reclamation
+1 Arcane Denial
+1 Awakening of Vitu-Ghazi
+1 Beast Within
+1 Counterspell
+1 Eureka Moment
+1 Growth Spiral
+1 Heroic Intervention
+1 Kamahl's Will
+1 Natural Affinity
+1 Planar Genesis
+1 Pongify
+1 Nissa, Vital Force
+1 Nissa, Who Shakes the World
+1 Awaken the Woods
+1 Consuming Tide
+1 Cultivate
+1 Devastation Tide
+1 Emergent Sequence
+1 Explore
+1 Flood of Tears
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Rude Awakening
+1 Sylvan Awakening

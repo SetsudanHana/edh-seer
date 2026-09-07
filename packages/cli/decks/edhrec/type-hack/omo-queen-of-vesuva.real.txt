@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/QtVZMe41U7JzkrjlmXEyRw (source https://archidekt.com/decks/23275611)
+# tags Type Hack, Shapeshifters; bracket 3; saved 2026-09-03; 53 tagged of 13340 indexed
+
+Commander
+1 Omo, Queen of Vesuva
+
+Deck
+1 Absorb Identity
+1 Allies at Last
+1 An Offer You Can't Refuse
+1 Beast Within
+1 Crop Rotation
+1 Dazzling Denial
+1 Eureka Moment
+1 Evasive Action
+1 Peerless Recycling
+1 Pongify
+1 Rapid Hybridization
+1 Alpha Status
+1 Full Moon's Rise
+1 Aven Courier
+1 Azami, Lady of Scrolls
+1 Baru, Wurmspeaker
+1 Chomping Changeling
+1 Curious Altisaur
+1 Cyclone Summoner
+1 Elvish Archdruid
+1 Elvish Mystic
+1 Feline Sovereign
+1 Fyndhorn Elves
+1 Galerider Sliver
+1 Geralf, Visionary Stitcher
+1 Great Divide Guide
+1 Grolnok, the Omnivore
+1 Hakbal of the Surging Soul
+1 Kopala, Warden of Waves
+1 Llanowar Elves
+1 Lord of the Unreal
+1 Manaweft Sliver
+1 Master of the Pearl Trident
+1 Mutable Explorer
+1 Priest of Titania
+1 Prophet of Distortion
+1 Sage of the Maze
+1 Scion of Draco
+1 Scion of Oona
+1 Sea Gate Loremaster
+1 Shapesharer
+1 Spawning Kraken
+1 Summon: Leviathan
+1 Sunderflock
+1 The Unagi of Kyoshi Island
+1 Titan of Littjara
+1 Wing Splicer
+1 Winged Sliver
+1 Balamb Garden, SeeD Academy
+1 Baldur's Gate
+1 Basilisk Gate
+1 Botanical Sanctum
+1 Cloudpost
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+5 Forest
+1 Hinterland Harbor
+10 Island
+1 Overflowing Basin
+1 Path of Ancestry
+1 Planar Nexus
+1 Simic Growth Chamber
+1 Simic Guildgate
+1 Sodden Verdure
+1 Swarmyard
+1 Urza's Cave
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Vesuva
+1 Yavimaya Coast
+1 Celestial Reunion
+1 Distant Melody
+1 Genesis Wave
+1 Mass Appeal
+1 Mind into Matter
+1 Stock Up
+1 Sylvan Scrying
+1 Whelming Wave
+1 Expedition Map
+1 Maskwood Nexus
+1 Multiclass Baldric
+1 Robe of the Archmagi
+1 Sol Ring

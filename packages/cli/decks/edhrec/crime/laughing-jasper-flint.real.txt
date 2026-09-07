@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/qcp7hKIsKKIC-S2EY_lnYw (source https://archidekt.com/decks/25633975)
+# tags Crime, Outlaws, Theft; bracket 2; saved 2026-08-30; 60 tagged of 7190 indexed
+
+Commander
+1 Laughing Jasper Flint
+
+Deck
+1 Akul the Unrepentant
+1 Blood Hustler
+1 Boneyard Desecrator
+1 Caustic Bronco
+1 Charred Graverobber
+1 Deadeye Duelist
+1 Etali, Primal Storm
+1 Forsaken Miner
+1 Gisa, the Hellraiser
+1 Graywater's Fixer
+1 Hellspur Brute
+1 Hellspur Posse Boss
+1 Iridescent Vinelasher
+1 Mari, the Killing Quill
+1 Nezumi Linkbreaker
+1 Powder Ganger
+1 Prickly Pair
+1 Rakdos, the Muscle
+1 Rattleback Apothecary
+1 Reckless Lackey
+1 Servant of the Stinger
+1 Solemn Simulacrum
+1 Thieving Varmint
+1 Treasure Nabber
+1 Vadmir, New Blood
+1 Vault Plunderer
+1 Vial Smasher, Gleeful Grenadier
+1 Arid Archway
+1 Canyon Slough
+1 Command Tower
+1 Conduit Pylons
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Geothermal Bog
+1 Jagged Barrens
+10 Mountain
+1 Myriad Landscape
+1 Rogue's Passage
+1 Sandstorm Verge
+1 Sulfurous Springs
+1 Sunscorched Desert
+11 Swamp
+1 Temple of Malice
+1 At Knifepoint
+1 Black Market Connections
+1 Brimstone Roundup
+1 Discreet Retreat
+1 Rakdos Joins Up
+1 Rakish Crew
+1 Sticky Fingers
+1 Stolen Strategy
+1 Back in Town
+1 Bloodsoaked Insight
+1 Heartless Conscription
+1 Heartless Pillage
+1 Hell to Pay
+1 Mourner's Surprise
+1 Overwhelming Forces
+1 Seize the Spotlight
+1 Skewer the Critics
+1 Victimize
+1 Bandit's Haul
+1 Bounty Board
+1 Dream-Thief's Bandana
+1 Lavaspur Boots
+1 Sol Ring
+1 Staff of Eden, Vault's Key
+1 Bedevil
+1 Corrupted Conviction
+1 Dead Before Sunrise
+1 Deadly Dispute
+1 Explosive Derailment
+1 Fake Your Own Death
+1 Lightning Strike
+1 Murder
+1 Return the Favor
+1 Shoot the Sheriff
+1 Skullcrack
+1 Unexpected Windfall
+1 Unfortunate Accident

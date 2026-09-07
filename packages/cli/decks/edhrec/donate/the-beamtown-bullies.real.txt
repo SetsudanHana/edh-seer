@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/qVOAJz67zCJQI_5WioMSFQ (source https://archidekt.com/decks/20339865)
+# tags Reanimator, Self-Mill, Donate, Graveyard; bracket 3; saved 2026-09-03; 171 tagged of 7294 indexed
+
+Commander
+1 The Beamtown Bullies
+
+Deck
+1 Aftermath Analyst
+1 Alexios, Deimos of Kosmos
+1 Ardyn, the Usurper
+1 Boldwyr Heavyweights
+1 Bronze Bombshell
+1 Disciple of Freyalise
+1 Eater of Days
+1 Ebonblade Reaper
+1 Enslaved Horror
+1 Eternal Witness
+1 Fauna Shaman
+1 Formidable Speaker
+1 Goblin Engineer
+1 Gravebreaker Lamia
+1 Hellcarver Demon
+1 Hunted Wumpus
+1 Inverter of Truth
+1 Karrthus, Tyrant of Jund
+1 Leveler
+1 Ob Nixilis, the Fallen
+1 Phyrexian Negator
+1 Rakdos, Patron of Chaos
+1 Riftsweeper
+1 Royal Assassin
+1 Shigeki, Jukai Visionary
+1 Soulgorger Orgg
+1 Summon: Titan
+1 Tempting Wurm
+1 Vile Entomber
+1 Vilis, Broker of Blood
+1 Vorinclex, Voice of Hunger
+1 World Shaper
+1 Worldgorger Dragon
+1 Worldspine Wurm
+1 Arcane Signet
+1 Despotic Scepter
+1 Patriar's Seal
+1 Sol Ring
+1 Sting, the Glinting Dagger
+1 Assassin's Trophy
+1 Beast Within
+1 Bitter Triumph
+1 Grisly Salvage
+1 Midnight Tilling
+1 Saw in Half
+1 Thrill of Possibility
+1 Blasphemous Act
+1 Buried Alive
+1 Cathartic Reunion
+1 Disrupt Decorum
+1 Faithless Looting
+1 Final Parting
+1 Insurrection
+1 Life from the Loam
+1 Persist
+1 Reanimate
+1 Regrowth
+1 Seize the Spoils
+1 Shared Roots
+1 Skewer the Critics
+1 Splendid Reclamation
+1 Unmarked Grave
+1 Victimize
+1 Will of the Sultai
+1 Bloodstained Mire
+1 Cinder Glade
+1 Command Tower
+1 Copperline Gorge
+1 Dark Depths
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Festering Thicket
+2 Forest
+1 Golgari Rot Farm
+1 Gruul Turf
+1 Lotus Field
+1 Mossfire Valley
+4 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Riveteers Overlook
+1 Rootbound Crag
+1 Savage Lands
+1 Sheltered Thicket
+1 Smoldering Marsh
+1 Stomping Ground
+4 Swamp
+1 Thespian's Stage
+1 Vernal Fen
+1 Woodland Cemetery
+1 Ripples of Undeath
+1 Stranglehold

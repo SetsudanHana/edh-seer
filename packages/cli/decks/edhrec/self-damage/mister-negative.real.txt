@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/jnA2hWfmqJij1o5AQpMYWg (source https://moxfield.com/decks/Xpa0AqYemEeiJ2ZR-nP8fg)
+# tags Self-Damage; bracket 2; saved 2026-09-04; 246 tagged of 5851 indexed
+
+Commander
+1 Mister Negative
+
+Deck
+1 Alseid of Life's Bounty
+1 Blood Celebrant
+1 Bloodletter of Aclazotz
+1 Dark Confidant
+1 Enduring Tenacity
+1 Gwenom, Remorseless
+1 K'rrik, Son of Yawgmoth
+1 Leaden Myr
+1 M.O.D.O.K.
+1 Myr Convert
+1 Ornithopter of Paradise
+1 Phelia, Exuberant Shepherd
+1 Platinum Angel
+1 Recruiter of the Guard
+1 Vito, Thorn of the Dusk Rose
+1 Wall of Blood
+1 Anguished Unmaking
+1 Cloudshift
+1 Dark Ritual
+1 Dismember
+1 Ephemerate
+1 Imp's Mischief
+1 Parting Gust
+1 Path to Exile
+1 Rebuff the Wicked
+1 Reprieve
+1 Swords to Plowshares
+1 Arcane Signet
+1 Charcoal Diamond
+1 Commander's Sphere
+1 Fellwar Stone
+1 Lich's Mirror
+1 Orzhov Signet
+1 Pact Weapon
+1 Sol Ring
+1 Staff of Compleation
+1 Talisman of Hierarchy
+1 The Arkenstone
+1 Thought Vessel
+1 Thran Dynamo
+1 Wand of the Worldsoul
+1 Black Market Connections
+1 Call of the Ring
+1 Dark Tutelage
+1 Greed
+1 Necrodominance
+1 Phyrexian Arena
+1 Phyrexian Unlife
+1 Sanguine Bond
+1 Tainted Remedy
+1 The Creation of Avacyn
+1 Unspeakable Symbol
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Desolate Mire
+1 Exotic Orchard
+1 Fetid Heath
+1 Grand Coliseum
+1 Isolated Chapel
+1 Myriad Landscape
+1 Orzhov Basilica
+8 Plains
+1 Rogue's Passage
+1 Shineshadow Snarl
+1 Silent Clearing
+14 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Damn
+1 Daydream
+1 Feed the Swarm
+1 Infernal Contract
+1 Insatiable Avarice
+1 Night's Whisper
+1 Pain's Reward
+1 Sign in Blood
+1 Toxic Deluge

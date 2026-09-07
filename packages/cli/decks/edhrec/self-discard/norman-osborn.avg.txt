@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/norman-osborn/self-discard
+# theme Self-Discard (178 decks)
+
+Commander
+1 Norman Osborn
+
+Deck
+1 Arcane Signet
+1 Cryptcaller Chariot
+1 Dimir Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Lightning Greaves
+1 Monument to Endurance
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+5 Island
+1 Morphic Pool
+5 Mountain
+1 Oscorp Industries
+1 Polluted Delta
+1 Scalding Tarn
+1 Shipwreck Marsh
+1 Shivan Reef
+1 Smoldering Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sulfurous Springs
+4 Swamp
+1 Training Center
+1 Underground River
+1 Watery Grave
+1 Xander's Lounge
+1 Anger
+1 Archfiend of Ifnir
+1 Bone Miser
+1 Captain Howler, Sea Scourge
+1 Chainer, Nightmare Adept
+1 Chameleon, Master of Disguise
+1 Emet-Selch of the Third Seat
+1 Ghostly Pilferer
+1 Glint-Horn Buccaneer
+1 Green Goblin, Nemesis
+1 Green Goblin, Revenant
+1 Hobgoblin, Mantled Marauder
+1 Kefka, Court Mage
+1 Ledger Shredder
+1 Likeness Looter
+1 Magmakin Artillerist
+1 Psychic Frog
+1 River Kelpie
+1 Rona, Herald of Invasion
+1 Skirge Familiar
+1 Surly Badgersaur
+1 Ultimate Green Goblin
+1 Vohar, Vodalian Desecrator
+1 Wonder
+1 Cool but Rude
+1 Secrets of the Dead
+1 Shadow of the Goblin
+1 Teval's Judgment
+1 Underworld Breach
+1 An Offer You Can't Refuse
+1 Big Score
+1 Bitter Triumph
+1 Chaos Warp
+1 Counterspell
+1 Dark Ritual
+1 Frantic Search
+1 Laughing Mad
+1 Lethal Scheme
+1 Thrill of Possibility
+1 Tolarian Winds
+1 Unexpected Windfall
+1 Unstable Experiment
+1 Behold the Sinister Six!
+1 Blasphemous Act
+1 Careful Study
+1 Change of Fortune
+1 Faithless Looting
+1 Gamble
+1 Reanimate
+1 Toxic Deluge
+1 Will of the Jeskai
+1 Windfall

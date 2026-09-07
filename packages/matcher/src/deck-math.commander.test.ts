@@ -26,7 +26,7 @@ describe("the commander's own castability row (K5)", () => {
     const cmd = card("Samut, the Driving Force");
     const deck = deckOf(cmd);
     // A COMMANDER IS NOT IN THE LIBRARY (CR 903.6) and is priced anyway, through `alsoPrice`.
-    const curves = manaModel(deck.filter((d) => d.card.name !== cmd.card.name), { trials: 600, seed: 5, alsoPrice: [cmd] }).curves;
+    const curves = manaModel(deck.filter((d) => d.card.name !== cmd.card.name), { trials: 1_000, seed: 5, alsoPrice: [cmd] }).curves;
     const m = computeDeckMath(deck, {}, ["Samut, the Driving Force"], undefined, { castCurves: curves });
     const row = m.castability.commanders?.[0];
     expect(row?.name).toBe("Samut, the Driving Force");
@@ -46,7 +46,7 @@ describe("the commander's own castability row (K5)", () => {
     const forests = Array.from({ length: 38 }, (_, i) =>
       card(`Forest ${i}`, { typeLine: "Basic Land — Forest", manaValue: 0, manaCost: undefined, producedMana: ["G"] }));
     const deck = [cmd, ...forests, ...Array.from({ length: 61 }, (_, i) => card(`Spell ${i}`, { manaValue: 3, manaCost: "{2}{G}" }))];
-    const curves = manaModel(deck.filter((d) => d.card.name !== cmd.card.name), { trials: 600, seed: 5, alsoPrice: [cmd] }).curves;
+    const curves = manaModel(deck.filter((d) => d.card.name !== cmd.card.name), { trials: 1_000, seed: 5, alsoPrice: [cmd] }).curves;
     const row = computeDeckMath(deck, {}, [cmd.card.name], undefined, { castCurves: curves }).castability.commanders?.[0];
     expect(row!.castable!.high).toBe(0);
     expect(row!.mana!.high).toBeGreaterThan(0.3);

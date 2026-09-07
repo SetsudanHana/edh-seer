@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/Z3CbDtwEe1fOY4NxzyqCgA (source https://archidekt.com/decks/23649186)
+# tags Foretell, Plot, Adventures; bracket 2; saved 2026-08-31; 103 tagged of 7946 indexed
+
+Commander
+1 Kellan, the Kid
+
+Deck
+1 Adarkar Wastes
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Evolving Wilds
+6 Forest
+1 Glacial Fortress
+1 Hinterland Harbor
+9 Island
+1 Overgrown Farmland
+4 Plains
+1 Prairie Stream
+1 Rejuvenating Springs
+1 Seaside Citadel
+1 Sunpetal Grove
+1 Terramorphic Expanse
+1 Yavimaya Coast
+1 Apex Devastator
+1 Augur of Autumn
+1 Bilbo, Thief in the Night
+1 Birds of Paradise
+1 Chulane, Teller of Tales
+1 Codecracker Hound
+1 Deep-Sea Kraken
+1 Doc Aurlock, Grizzled Genius
+1 Eladamri, Korvecdal
+1 Elite Interceptor
+1 Ethereal Valkyrie
+1 Fblthp, Lost on the Range
+1 Green Slime
+1 Imoti, Celebrant of Bounty
+1 Kellan, Inquisitive Prodigy
+1 Magus of the Future
+1 Monk Gyatso
+1 Noble Hierarch
+1 Railway Brawler
+1 Rashmi, Eternities Crafter
+1 Sage of the Beyond
+1 Savvy Trader
+1 Stormkeld Vanguard
+1 Studious First-Year
+1 Tam, Observant Sequencer
+1 Tatyova, Benthic Druid
+1 The Foretold Soldier
+1 The Reality Chip
+1 The Thirteenth Doctor
+1 Vega, the Watcher
+1 Woodland Acolyte
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Lightning Greaves
+1 Mox Tantalite
+1 River Song's Diary
+1 Sol Ring
+1 Sol Talisman
+1 The Key to the Vault
+1 Beast Within
+1 Behold the Multiverse
+1 Cosmic Intervention
+1 Counterspell
+1 Depart the Realm
+1 Faithful Mending
+1 Mystic Reflection
+1 Saw It Coming
+1 Stroke of Midnight
+1 Ultimate Magic: Holy
+1 Case of the Locked Hothouse
+1 Elven Chorus
+1 Fortune Teller's Talent
+1 Future Sight
+1 Kellan Joins Up
+1 Mind's Dilation
+1 One with the Multiverse
+1 Utopia Sprawl
+1 Virtue of Loyalty
+1 Virtue of Strength
+1 Germination Practicum
+1 Make Your Own Luck
+1 Ravenform
+1 Search for Tomorrow
+1 Jace Reawakened

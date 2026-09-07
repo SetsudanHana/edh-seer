@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/general-marhault-elsdragon/banding
+# theme Banding (7 decks)
+
+Commander
+1 General Marhault Elsdragon
+
+Deck
+1 Arcane Signet
+1 Baton of Morale
+1 Bow of Nylea
+1 Genesis Chamber
+1 Helm of Chatzuk
+1 Infiltration Lens
+1 Nemesis Mask
+1 Sol Ring
+1 Swiftfoot Boots
+1 Adventurers' Guildhouse
+1 Blighted Woodland
+1 Cinder Glade
+1 Command Tower
+11 Forest
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+8 Mountain
+1 Mountain Stronghold
+1 Rockfall Vale
+1 Rootbound Crag
+1 Skarrg, the Rage Pits
+1 Temple of Abandon
+1 Urza's Cave
+1 Yavimaya, Cradle of Growth
+1 Anzrag, the Quake-Mole
+1 Archetype of Aggression
+1 Assembled Alphas
+1 Atalan Jackal
+1 Battering Ram
+1 Brash Taunter
+1 Crimson Caravaneer
+1 Elven Warhounds
+1 Engulfing Slagwurm
+1 Goblin Anarchomancer
+1 Hunted Troll
+1 Jangling Automaton
+1 Khenra Charioteer
+1 Neyith of the Dire Hunt
+1 Noble Quarry
+1 Noxious Newt
+1 Ohran Frostfang
+1 Primeval Herald
+1 Prized Unicorn
+1 Proud Wildbonder
+1 Radha, Heir to Keld
+1 Reki, the History of Kamigawa
+1 Rhonas the Indomitable
+1 Ruby, Daring Tracker
+1 Saryth, the Viper's Fang
+1 Shinen of Life's Roar
+1 Spawnwrithe
+1 Taunting Elf
+1 Tempting Licid
+1 Thunderfoot Baloth
+1 Timber Wolves
+1 Toski, Bearer of Secrets
+1 Urza's Avenger
+1 Urza's Engine
+1 Varchild's War-Riders
+1 Wilson, Refined Grizzly
+1 Garruk's Uprising
+1 Lure
+1 Primal Rage
+1 Sandwurm Convergence
+1 Beast Within
+1 Chaos Warp
+1 Heroic Intervention
+1 Hunter's Insight
+1 Overprotect
+1 Ram Through
+1 Untimely Malfunction
+1 Armed // Dangerous
+1 Blasphemous Act
+1 Predatory Rampage
+1 Roar of Challenge
+1 Stump Stomp
+1 Sylvan Scrying
+1 You've Been Caught Stealing

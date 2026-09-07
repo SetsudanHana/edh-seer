@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/mK6_ALgE8MP04zG3dv1xCQ (source https://archidekt.com/decks/21348414)
+# tags Kicker, +1/+1 Counters; bracket unset; saved 2026-04-04; 3 tagged of 767 indexed
+
+Commander
+1 Grunn, the Lonely King
+
+Deck
+1 Ba Sing Se
+1 Boseiju, Who Endures
+1 Castle Garenbrig
+1 Evendo, Waking Haven
+26 Forest
+1 Llanowar Reborn
+1 Mosswort Bridge
+1 Nesting Grounds
+1 Nykthos, Shrine to Nyx
+1 Rogue's Passage
+1 Bala Ged Recovery
+1 Bridgeworks Battle
+1 Canopy Surge
+1 Chocobo Kick
+1 Dance of the Tumbleweeds
+1 Fangs of Kalonia
+1 Grow from the Ashes
+1 Hunting Wilds
+1 Primal Growth
+1 Reclaim the Wastes
+1 Saproling Migration
+1 Vastwood Surge
+1 Baloth Gorger
+1 Citanul Woodreaders
+1 Cragplate Baloth
+1 Emblazoned Golem
+1 Evolution Witness
+1 Gnarlid Colony
+1 Gnarlid Pack
+1 Joraga Warcaller
+1 Kavu Primarch
+1 Kavu Titan
+1 Krosan Druid
+1 Llanowar Elite
+1 Mold Shambler
+1 Murasa Sproutling
+1 Myriad Construct
+1 Oran-Rief Recluse
+1 Pincer Spider
+1 Pouncing Wurm
+1 Ravaging Riftwurm
+1 Skyclave Sentinel
+1 Sowing Mycospawn
+1 Tajuru Paragon
+1 Taunting Arbormage
+1 Territorial Allosaurus
+1 Thicket Elemental
+1 Untamed Kavu
+1 Verdeloth the Ancient
+1 Wolfbriar Elemental
+1 Branching Evolution
+1 Garruk's Uprising
+1 Gigantiform
+1 Level Up
+1 Terrasymbiosis
+1 Commander's Sphere
+1 Emerald Medallion
+1 Everflowing Chalice
+1 Herd Heirloom
+1 Mind Stone
+1 Skyclave Relic
+1 Sol Ring
+1 The Earth Crystal
+1 The Ozolith
+1 Explosive Growth
+1 Falling Timber
+1 Gift of Growth
+1 Inscription of Abundance
+1 Might of Murasa
+1 Smuggler's Surprise
+1 Strength of the Tajuru
+1 Trash the Town
+1 Vines of Vastwood
+1 Wild Onslaught

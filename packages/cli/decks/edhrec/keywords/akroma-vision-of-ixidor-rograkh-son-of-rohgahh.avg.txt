@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/akroma-vision-of-ixidor-rograkh-son-of-rohgahh/keywords
+# theme Keywords (100 decks)
+
+Commander
+1 Akroma, Vision of Ixidor
+1 Rograkh, Son of Rohgahh
+
+Deck
+1 Akroma's Memorial
+1 Arcane Signet
+1 Basilisk Collar
+1 Boros Signet
+1 Commander's Sphere
+1 Eater of Virtue
+1 Haunted Cloak
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Vengeance
+1 Sword of the Animist
+1 Talisman of Conviction
+1 Tome of Legends
+1 Battlefield Forge
+1 Boros Garrison
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Furycalm Snarl
+8 Mountain
+1 Myriad Landscape
+11 Plains
+1 Rogue's Passage
+1 Rugged Prairie
+1 Sacred Foundry
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 Temple of Triumph
+1 Adult Gold Dragon
+1 Aerial Responder
+1 Akroma, Angel of Wrath
+1 Angel of Invention
+1 Angelic Field Marshal
+1 Archetype of Aggression
+1 Archetype of Courage
+1 Aurelia, the Law Above
+1 Aurelia, the Warleader
+1 Avacyn, Angel of Hope
+1 Baneslayer Angel
+1 Bastion Protector
+1 Boon-Bringer Valkyrie
+1 Crystalline Giant
+1 Danitha Capashen, Paragon
+1 Gisela, Blade of Goldnight
+1 Iroas, God of Victory
+1 Knight of the White Orchid
+1 Lyra Dawnbringer
+1 Odric, Lunarch Marshal
+1 Scavenged Brawler
+1 Segovian Angel
+1 Shrike Force
+1 Sire of Seven Deaths
+1 Sun Titan
+1 Swiftblade Vindicator
+1 Venerable Warsinger
+1 Weathered Sentinels
+1 Zetalpa, Primal Dawn
+1 Commander's Insignia
+1 Concerted Effort
+1 On Serra's Wings
+1 Outlaws' Merriment
+1 Rising of the Day
+1 True Conviction
+1 Akroma's Will
+1 Boros Charm
+1 Chaos Warp
+1 Deflecting Palm
+1 Flawless Maneuver
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Wear // Tear
+1 Elspeth Resplendent
+1 Angelfire Ignition
+1 Austere Command
+1 Blasphemous Act
+1 Jeska's Will
+1 Vandalblast

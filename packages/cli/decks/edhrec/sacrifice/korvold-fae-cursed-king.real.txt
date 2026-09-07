@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/Ij1JvbDqMugX0Fu9qpsdWQ (source https://archidekt.com/decks/7284452)
+# tags Lands Matter, Treasure, Triggered Abilities, Tokens, Sacrifice, Attack Triggers, Card Draw; bracket 3; saved 2026-09-05; 1411 tagged of 20804 indexed
+
+Commander
+1 Korvold, Fae-Cursed King
+
+Deck
+1 Alchemist's Talent
+1 Black Market Connections
+1 Descent into Avernus
+1 Rain of Riches
+1 Revel in Riches
+1 Rhythm of the Wild
+1 Ancient Copper Dragon
+1 Birds of Paradise
+1 Bloom Tender
+1 Braids, Arisen Nightmare
+1 Cavern-Hoard Dragon
+1 Fanatic of Rhonas
+1 Generous Plunderer
+1 Goldlust Triad
+1 Goldspan Dragon
+1 Grim Hireling
+1 Hellkite Tyrant
+1 Ignoble Hierarch
+1 Knuckles the Echidna
+1 Mastermind Plum
+1 Mayhem Devil
+1 Old Gnawbone
+1 Orcish Bowmasters
+1 Orochi Soul-Reaver
+1 Pitiless Plunderer
+1 Professional Face-Breaker
+1 Ragavan, Nimble Pilferer
+1 Rev, Tithe Extractor
+1 Sakura-Tribe Elder
+1 Selvala, Heart of the Wilds
+1 Smaug the Magnificent
+1 Smaug, Wicked Worm
+1 The Sackville-Bagginses
+1 Tireless Provisioner
+1 Warren Soultrader
+1 Xorn
+1 Ancient Tomb
+1 Arena of Glory
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Beacon
+1 Command Tower
+1 Dragon-Cursed Halls
+3 Forest
+1 Fountainport
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Luxury Suite
+1 Mines of Moria
+4 Mountain
+1 Overgrown Tomb
+1 Plaza of Heroes
+1 Reflecting Pool
+1 Reliquary Tower
+1 Rogue's Passage
+1 Spire Garden
+1 Stomping Ground
+1 Sulfurous Springs
+3 Swamp
+1 Treasure Vault
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Wooded Foothills
+1 Ziatora's Proving Ground
+1 Arcane Signet
+1 Bootleggers' Stash
+1 Fellwar Stone
+1 Lightning Greaves
+1 Mithril Coat
+1 Sol Ring
+1 Tarrian's Soulcleaver
+1 The Great Henge
+1 The Reaver Cleaver
+1 Thought Vessel
+1 Assassin's Trophy
+1 Beast Within
+1 Bottle-Cap Blast
+1 Chaos Warp
+1 Constant Mists
+1 Deadly Dispute
+1 Deflecting Swat
+1 Entish Restoration
+1 Harrow
+1 Heroic Intervention
+1 Untimely Malfunction
+1 Withering Torment
+1 Blood Money
+1 Jeska's Will
+1 Planar Engineering
+1 Reckless Endeavor
+1 Three Visits
+1 Toxic Deluge

@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/heroes-in-a-half-shell/sneak
+# theme Sneak (11 decks)
+
+Commander
+1 Heroes in a Half Shell
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Coin of Mastery
+1 Conqueror's Flail
+1 Exploding Barrel
+1 Foot Chopper
+1 Quintessential Katana
+1 Silver Shroud Costume
+1 Sol Ring
+1 Whispersilk Cloak
+1 Arcane Sanctum
+1 Big Apple, 3 a.m.
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Dragonskull Summit
+1 Escape Tunnel
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+4 Forest
+1 Grand Coliseum
+1 Hidden Hideout
+1 Hinterland Harbor
+2 Island
+2 Mountain
+1 Path of Ancestry
+2 Plains
+1 Rain-Slicked Copse
+1 Reliquary Tower
+1 Rogue's Passage
+1 Rootbound Crag
+1 Secluded Courtyard
+1 Smoldering Marsh
+1 Spire Garden
+3 Swamp
+1 Temple Garden
+1 Turtle Lair
+1 Undergrowth Stadium
+1 Vibrant Cityscape
+1 Changeling Outcast
+1 Dark Leo & Shredder
+1 Donatello, Gadget Master
+1 Irma, Part-Time Mutant
+1 Kappa Tech-Wrecker
+1 Karai, Future of the Foot
+1 Leonardo, Cutting Edge
+1 Leonardo, Sewer Samurai
+1 Leonardo, the Balance
+1 Michelangelo, Improviser
+1 Michelangelo, Weirdness to 11
+1 Michelangelo, the Heart
+1 Mikey & Don, Party Planners
+1 Mikey & Leo, Chaos & Order
+1 Prehistoric Pet
+1 Prosperous Thief
+1 Raph & Leo, Sibling Rivals
+1 Raph & Mikey, Troublemakers
+1 Raphael, Tag Team Tough
+1 Raphael, the Muscle
+1 Raphael, the Nightwatcher
+1 Shark Shredder, Killer Clone
+1 Shredder, Shadow Master
+1 Splinter, Hamato Yoshi
+1 Splinter, Radical Rat
+1 Splinter, the Mentor
+1 Super Shredder
+1 Turncoat Kunoichi
+1 Vigor
+1 Yuriko, the Tiger's Shadow
+1 Endless Foot Assault
+1 High Score
+1 Level Up
+1 Ninja Pizza
+1 Ninja Teen
+1 Trouble in Pairs
+1 Assassin's Trophy
+1 Continue?
+1 Counterspell
+1 Double Jump // Flying Kick
+1 Path to Exile
+1 Raphael's Technique
+1 Turtles Forever
+1 Blasphemous Act
+1 Cowabunga!
+1 Cultivate
+1 Donatello's Technique
+1 Fast Forward
+1 Shredder's Technique
+1 Splinter's Technique
+1 Vanquish the Horde

@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/p5OWYpZf8FZCCgi4wymKdA (source https://archidekt.com/decks/23178268)
+# tags Sacrifice, Self-Mill, Rad Counters, Mutants, Graveyard, Flashback, Reanimator, Tokens, Zombies, Dredge; bracket 2; saved 2026-09-04; 51 tagged of 2386 indexed
+
+Commander
+1 The Ghoul, Gunslinger
+
+Deck
+1 Accursed Duneyard
+1 Mariposa Military Base
+1 Myriad Landscape
+1 Nesting Grounds
+1 Rogue's Passage
+30 Swamp
+1 Treasure Vault
+1 Unholy Grotto
+1 Witch's Cottage
+1 Accursed Marauder
+1 Archghoul of Thraben
+1 Butcher Ghoul
+1 Champion of the Perished
+1 Crow of Dark Tidings
+1 Cryptbreaker
+1 Darkstar Augur
+1 Death Baron
+1 Diregraf Colossus
+1 Fleshbag Marauder
+1 Grave Researcher
+1 Graveshifter
+1 Gray Merchant of Asphodel
+1 Hancock, Ghoulish Mayor
+1 Headless Rider
+1 Lord of the Undead
+1 Lost Monarch of Ifnir
+1 Massacre Wurm
+1 Midnight Reaper
+1 Mire Triton
+1 Mirkwood Bats
+1 Nested Shambler
+1 Putrid Goblin
+1 Sifter of Skulls
+1 Stronghold Assassin
+1 Syr Konrad, the Grim
+1 Undead Augur
+1 Unstoppable Slasher
+1 Vile Entomber
+1 Woe Strider
+1 Zombie Master
+1 Zul Ashur, Lich Lord
+1 Zulaport Cutthroat
+1 Arcane Signet
+1 Charcoal Diamond
+1 Maskwood Nexus
+1 Mind Stone
+1 Sol Ring
+1 Spawning Pit
+1 Wishclaw Talisman
+1 Witch's Oven
+1 Black Market
+1 Dreadhorde Invasion
+1 Ninja Teen
+1 Oversold Cemetery
+1 Sadistic Glee
+1 Vampiric Rites
+1 Vault 12: The Necropolis
+1 Come Back Wrong
+1 Diresight
+1 Feed the Swarm
+1 Nuclear Fallout
+1 Rise of the Dark Realms
+1 Unearth
+1 Deadly Dispute
+1 Flare of Malice
+1 Hero's Downfall
+1 Nasty End
+1 Nocturnal Hunger
+1 Rise of the Dread Marn
+1 Vraska, Betrayal's Sting

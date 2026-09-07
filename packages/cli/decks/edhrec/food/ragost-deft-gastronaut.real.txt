@@ -1,0 +1,80 @@
+# edhrec deck https://edhrec.com/deckpreview/l2tHmy54b2DWubCgwCNe5A (source https://archidekt.com/decks/25181392)
+# tags Food, Burn, Artifacts; bracket 2; saved 2026-09-04; 478 tagged of 18393 indexed
+
+Commander
+1 Ragost, Deft Gastronaut
+
+Deck
+1 Academy Manufactor
+1 Apothecary White
+1 Arbaaz Mir
+1 Crime Novelist
+1 Foundry Inspector
+1 Haliya, Guided by Light
+1 Ingenious Artillerist
+1 Leonin Elder
+1 Loyal Apprentice
+1 Marvin, Murderous Mimic
+1 Myr Retriever
+1 Ravenous Robots
+1 Reckless Fireweaver
+1 Sami, Wildcat Captain
+1 Scrap Trawler
+1 Solemn Simulacrum
+1 Solphim, Mayhem Dominus
+1 The Gaffer
+1 Treasure Nabber
+1 Voyager Quickwelder
+1 Weftstalker Ardent
+1 Workshop Assistant
+1 Adventurer's Inn
+1 Ancient Den
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Darksteel Citadel
+1 Great Furnace
+18 Mountain
+10 Plains
+1 Rustvale Bridge
+1 Sacred Foundry
+1 Arcane Signet
+1 Bag End Banquet
+1 Basilisk Collar
+1 Boros Signet
+1 Caduceus, Staff of Hermes
+1 Crawlspace
+1 Getaway Barrel
+1 Hot Dog Cart
+1 Ichor Wellspring
+1 Illusionist's Bracers
+1 Instant Ramen
+1 Lembas
+1 Lightning Greaves
+1 Liquimetal Torque
+1 Mouser Foundry
+1 Mycosynth Wellspring
+1 Nuka-Cola Vending Machine
+1 Nutrient Block
+1 Prized Statue
+1 Sol Ring
+1 Talisman of Conviction
+1 Transmutation Font
+1 Authority of the Consuls
+1 Descent into Avernus
+1 Gratuitous Violence
+1 Sheltered by Ghosts
+1 Weapons Manufacturing
+1 Big Score
+1 Dispatch
+1 Gods Willing
+1 Path to Exile
+1 Pyretic Ritual
+1 Surge of Salvation
+1 Swords to Plowshares
+1 Unexpected Windfall
+1 Blasphemous Act
+1 Sevinne's Reclamation
+1 The Battle of Bywater
+1 Vandalblast
+1 Wake the Past

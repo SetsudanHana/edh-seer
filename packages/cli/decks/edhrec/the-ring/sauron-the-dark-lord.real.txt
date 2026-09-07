@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/PNf3dRrtLFEDZS6_MNzn4Q (source https://archidekt.com/decks/6195656)
+# tags The Ring, Wraiths, Reanimator, Amass; bracket 3; saved 2026-09-05; 426 tagged of 39036 indexed
+
+Commander
+1 Sauron, the Dark Lord
+
+Deck
+1 Academy Ruins
+1 Ancient Tomb
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Beacon
+1 Command Tower
+1 Fabled Passage
+6 Island
+1 Luxury Suite
+1 Minas Morgul, Dark Fortress
+1 Morphic Pool
+6 Mountain
+1 Phyrexian Tower
+1 Polluted Delta
+1 Prismatic Vista
+1 Scalding Tarn
+1 Steam Vents
+6 Swamp
+1 Training Center
+1 Urborg, Tomb of Yawgmoth
+1 Watery Grave
+1 Xander's Lounge
+1 All Will Be One
+1 Animate Dead
+1 Arcane Adaptation
+1 Black Market Connections
+1 Call of the Ring
+1 In the Darkness Bind Them
+1 Kindred Discovery
+1 Spiteful Banditry
+1 Anger
+1 Auton Soldier
+1 Brallin, Skyshark Rider
+1 Dauthi Voidwalker
+1 Fate Unraveler
+1 Glint-Horn Buccaneer
+1 Herald of Secret Streams
+1 Ledger Shredder
+1 Lord of the Nazgûl
+9 Nazgûl
+1 Niv-Mizzet, Parun
+1 Orcish Bowmasters
+1 Quantum Riddler
+1 Rielle, the Everwise
+1 Sakashima of a Thousand Faces
+1 Sheoldred, the Apocalypse
+1 Spark Double
+1 Surly Badgersaur
+1 Witch-king, Bringer of Ruin
+1 Wonder
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Cursed Mirror
+1 Maskwood Nexus
+1 Monument to Endurance
+1 Rakdos Signet
+1 Relic of Sauron
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 The One Ring
+1 Wayfarer's Bauble
+1 Bolt Bend
+1 Deflecting Swat
+1 Tolarian Winds
+1 Diabolic Intent
+1 Finale of Eternity
+1 Irenicus's Vile Duplication
+1 Khorvath's Fury
+1 Reanimate
+1 Reforge the Soul
+1 Toxic Deluge
+1 Wheel of Fortune
+1 Wheel of Misfortune
+1 Windfall

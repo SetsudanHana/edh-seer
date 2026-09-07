@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/aWNIERetKlPg52AnLqYakg (source https://archidekt.com/decks/10420055)
+# tags Wheels, Lifedrain, Card Draw, Hand Size; bracket 3; saved 2026-08-31; 1226 tagged of 12024 indexed
+
+Commander
+1 Sheoldred, the Apocalypse
+
+Deck
+1 Alhammarret's Archive
+1 Bolas's Citadel
+1 Erratic Portal
+1 Font of Mythos
+1 Horn of Greed
+1 Howling Mine
+1 Jet Medallion
+1 Mithril Coat
+1 My Precious
+1 Nyx Lotus
+1 Sceptre of Eternal Glory
+1 Sol Ring
+1 Teferi's Puzzle Box
+1 The One Ring
+1 Throne of Eldraine
+1 Baleful Mastery
+1 Consuming Corruption
+1 Dark Ritual
+1 Malakir Rebirth
+1 Sudden Spoiling
+1 Undying Malice
+1 Black Market Connections
+1 Grievous Wound
+1 Kaya's Ghostform
+1 Meathook Massacre II
+1 No Mercy
+1 Phyrexian Arena
+1 Underworld Dreams
+1 Wound Reflection
+1 Bloodletter of Aclazotz
+1 Bloodthirsty Conqueror
+1 Clockwork Fox
+1 Crypt Ghast
+1 Defiler of Flesh
+1 Doctor Doom, Unrivaled
+1 Elder Brain
+1 Erebos, God of the Dead
+1 Faller's Faithful
+1 Gix, Yawgmoth Praetor
+1 Gray Merchant of Asphodel
+1 K'rrik, Son of Yawgmoth
+1 Master of the Feast
+1 Nirkana Revenant
+1 Orcish Bowmasters
+1 Phyrexian Obliterator
+1 Psychosis Crawler
+1 Roaming Throne
+1 Scheming Silvertongue
+1 Scrawling Crawler
+1 Seizan, Perverter of Truth
+1 Sheoldred
+1 Sheoldred, Whispering One
+1 The Master of Lake-town
+1 Vilis, Broker of Blood
+1 Vito, Thorn of the Dusk Rose
+1 Witch of the Moors
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Command Beacon
+1 Command Tower
+1 Geier Reach Sanitarium
+1 Midgar, City of Mako
+1 Mikokoro, Center of the Sea
+1 Mortuary Mire
+1 Nykthos, Shrine to Nyx
+1 Plaza of Heroes
+1 Reliquary Tower
+1 Susur Secundi, Void Altar
+15 Swamp
+1 The Dross Pits
+1 Thespian's Stage
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Saga
+1 Witch's Cottage
+1 Dark Deal
+1 Decorum Dissertation
+1 Peer into the Abyss
+1 Pox Plague
+1 Rush of Dread
+1 Temporal Extortion
+1 Torment of Hailfire
+1 Toxic Deluge
+1 Will of the Abzan
+1 Liliana of the Dark Realms
+1 Ob Nixilis, the Hate-Twisted

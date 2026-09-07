@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/_h7_0eKUSvs_513qpyxhvQ (source https://archidekt.com/decks/25543519)
+# tags Graveyard, Spellslinger, Self-Mill, Storm, Retrace, Dredge; bracket unset; saved 2026-08-23; 1 tagged of 6296 indexed
+
+Commander
+1 Teval, Arbiter of Virtue
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Black Mage's Rod
+1 Elixir of Immortality
+1 Glamdring, Foe-hammer
+1 Sol Ring
+1 Swiftfoot Boots
+1 Tablet of the Guilds
+1 Agna Qel'a
+1 Bojuka Bog
+1 Command Tower
+1 Dakmor Salvage
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fabled Passage
+6 Forest
+1 Golgari Rot Farm
+1 Hinterland Harbor
+4 Island
+1 Memorial to Folly
+1 Opulent Palace
+1 Path of Ancestry
+1 Shifting Woodland
+1 Simic Growth Chamber
+1 Sodden Verdure
+1 Sunken Hollow
+1 Sunken Palace
+1 Swamp
+1 Urza's Cave
+1 Vernal Fen
+1 Woodland Cemetery
+1 Analyze the Pollen
+1 Bala Ged Recovery
+1 Dread Return
+1 Exsanguinate
+1 Farseek
+1 Lessons from Life
+1 Life from the Loam
+1 Lórien Revealed
+1 Malevolent Rumble
+1 Mind into Matter
+1 Nature's Lore
+1 Pieces of the Puzzle
+1 Portent of Calamity
+1 Rampant Growth
+1 Rise of the Witch-king
+1 Shared Roots
+1 Solve the Equation
+1 Spitting Image
+1 Tendrils of Agony
+1 Traverse the Ulvenwald
+1 Will of the Abzan
+1 Will of the Sultai
+1 Archmage Emeritus
+1 Emeritus of Abundance
+1 Essence Warden
+1 Exhibition Tidecaller
+1 Hydroelectric Specimen
+1 Kheru Goldkeeper
+1 Lier, Disciple of the Drowned
+1 Mole Man, Moloid Master
+1 Most Decrepit Old Bird
+1 Muldrotha, the Gravetide
+1 Muse Seeker
+1 Picklock Prankster
+1 Quandrix Apprentice
+1 Six
+1 Witherbloom Apprentice
+1 Assassin's Trophy
+1 Auroral Procession
+1 Cache Grab
+1 Collective Resistance
+1 Confounding Riddle
+1 Embrace the Paradox
+1 Eureka Moment
+1 Harrow
+1 Oona's Grace
+1 Rakshasa's Bargain
+1 Revitalizing Repast
+1 Silundi Vision
+1 Spider-Sense
+1 Vona's Hunger
+1 Awaken the Honored Dead
+1 Case of the Ransacked Lab
+1 Chakra Meditation
+1 Cosmic Crucible
+1 Glacierwood Siege
+1 Nightmares and Daydreams
+1 Polluted Cistern // Dim Oubliette
+1 Professor Onyx

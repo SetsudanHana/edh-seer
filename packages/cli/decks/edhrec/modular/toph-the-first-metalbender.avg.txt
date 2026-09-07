@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/toph-the-first-metalbender/modular
+# theme Modular (86 decks)
+
+Commander
+1 Toph, the First Metalbender
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Ichor Wellspring
+1 Liquimetal Coating
+1 Liquimetal Torque
+1 Lux Artillery
+1 Ozolith, the Shattered Spire
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 The Ozolith
+1 The Stasis Coffin
+1 Zuran Orb
+1 Abandoned Air Temple
+1 Ba Sing Se
+1 Battlefield Forge
+1 Cinder Glade
+1 Clifftop Retreat
+1 Command Tower
+1 Darksteel Citadel
+1 Exotic Orchard
+1 Fabled Passage
+7 Forest
+4 Mountain
+4 Plains
+1 Power Depot
+1 Rockfall Vale
+1 Rootbound Crag
+1 Rustvale Bridge
+1 Sacred Foundry
+1 Secret Tunnel
+1 Slagwoods Bridge
+1 Spire Garden
+1 Stomping Ground
+1 Sunpetal Grove
+1 Temple Garden
+1 Windswept Heath
+1 Yavimaya, Cradle of Growth
+1 Arcbound Crusher
+1 Arcbound Javelineer
+1 Arcbound Mouser
+1 Arcbound Prototype
+1 Arcbound Ravager
+1 Arcbound Reclaimer
+1 Arcbound Shikari
+1 Arcbound Slasher
+1 Arcbound Slith
+1 Arcbound Stinger
+1 Arcbound Tracker
+1 Arcbound Whelp
+1 Arcbound Worker
+1 Blaster, Combat DJ
+1 Brightglass Gearhulk
+1 Bumi, Unleashed
+1 Esper Sentinel
+1 Evolution Sage
+1 Great Divide Guide
+1 Iron Apprentice
+1 Iron Spider, Stark Upgrade
+1 Kutzil, Malamet Exemplar
+1 Scrapyard Recombiner
+1 Solemn Simulacrum
+1 Steel Overseer
+1 Surge Conductor
+1 Toph, Earthbending Master
+1 Toph, Greatest Earthbender
+1 Toph, Hardheaded Teacher
+1 Zabaz, the Glimmerwasp
+1 Annie Joins Up
+1 Branching Evolution
+1 Earthbender Ascension
+1 Felidar Retreat
+1 Hardened Scales
+1 Resourceful Defense
+1 Terrasymbiosis
+1 Dispatch
+1 Earthshape
+1 Inspiring Call
+1 Origin of Metalbending
+1 Path to Exile
+1 Swords to Plowshares
+1 Earth Rumble
+1 Farseek
+1 Hour of Revelation
+1 Planar Outburst
+1 Wake the Past

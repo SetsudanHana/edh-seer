@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/SoyhtPamTORiK-46-mrlOA (source https://archidekt.com/decks/12327759)
+# tags Control, Turbo Fog, Forced Combat; bracket 3; saved 2026-08-14; 16 tagged of 7426 indexed
+
+Commander
+1 Thantis, the Warweaver
+
+Deck
+1 Agitator Ant
+1 Anzrag, the Quake-Mole
+1 Death Kiss
+1 Drana, Liberator of Malakir
+1 Druid of Purification
+1 Elder Gargaroth
+1 Fanatic of Rhonas
+1 Frenzied Saddlebrute
+1 Frontier Warmonger
+1 Geode Rager
+1 Glissa Sunslayer
+1 Greensleeves, Maro-Sorcerer
+1 Karazikar, the Eye Tyrant
+1 Kazuul, Tyrant of the Cliffs
+1 Ohran Frostfang
+1 Omnath, Locus of Rage
+1 Oviya, Automech Artisan
+1 Panglacial Wurm
+1 Questing Beast
+1 Rampaging Baloths
+1 Tireless Provisioner
+1 Vigor
+1 Arachnogenesis
+1 Assassin's Trophy
+1 Beast Within
+1 Blessed Respite
+1 Chaos Warp
+1 Constant Mists
+1 Darkness
+1 Fog
+1 Lifestream's Blessing
+1 Moment's Peace
+1 Obscuring Haze
+1 Putrefy
+1 Return of the Wildspeaker
+1 Stinging Study
+1 Terminate
+1 Terrifying Presence
+1 Winds of Qal Sisma
+1 Casualties of War
+1 Cultivate
+1 Farseek
+1 Harmonize
+1 Migration Path
+1 Nature's Lore
+1 Open the Way
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Search for Tomorrow
+1 Season of Gathering
+1 Skyshroud Claim
+1 Soul's Majesty
+1 Tempt with Discovery
+1 Threats Undetected
+1 Vastwood Surge
+1 Violent Ultimatum
+1 Command Tower
+1 Deathcap Glade
+1 Exotic Orchard
+17 Forest
+1 Haunted Ridge
+1 Luxury Suite
+1 Mountain
+1 Myriad Landscape
+1 Reflecting Pool
+1 Reliquary Tower
+1 Rockfall Vale
+1 Rogue's Passage
+1 Savage Lands
+1 Spire Garden
+1 Stomping Ground
+3 Swamp
+1 Swarmyard
+1 Undergrowth Stadium
+1 Wooded Foothills
+1 Ziatora's Proving Ground
+1 Dormant Grove
+1 Eye of Nidhogg
+1 Omenpath Journey
+1 Rite of the Raging Storm
+1 Garruk, Primal Hunter

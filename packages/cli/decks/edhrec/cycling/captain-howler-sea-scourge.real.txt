@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/n3sgD2guh4ZGm4dBu0G88A (source https://moxfield.com/decks/KcJAHLvGY0-jQra7GCEl4g)
+# tags Cycling; bracket 3; saved 2026-09-03; 309 tagged of 11725 indexed
+
+Commander
+1 Captain Howler, Sea Scourge
+
+Deck
+1 Anger
+1 Blighted Agent
+1 Daggermaw Megalodon
+1 Evie Frye
+1 Fearless Swashbuckler
+1 Ghost of Ramirez DePietro
+1 Ghostly Pilferer
+1 Invisible Stalker
+1 Jace's Archivist
+1 Magmakin Artillerist
+1 Marauding Mako
+1 Mary Read and Anne Bonny
+1 Ruin Grinder
+1 Scrounging Skyray
+1 Storm Fleet Sprinter
+1 The Locust God
+1 Wonder
+1 Arcane Signet
+1 Collector's Vault
+1 Cursed Mirror
+1 Fluctuator
+1 Key to the City
+1 Midnight Clock
+1 Monument to Endurance
+1 Pip-Boy 3000
+1 Possession Engine
+1 Sol Ring
+1 Talisman of Creativity
+1 Thought Vessel
+1 Bitter Reunion
+1 Frostcliff Siege
+1 Lightning Rift
+1 Reconnaissance Mission
+1 Shark Typhoon
+1 Teferi's Ageless Insight
+1 Teferi's Tutelage
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Grab the Prize
+1 Pyretic Charge
+1 Rapturous Moment
+1 Reforge the Soul
+1 Sacred Excavation
+1 Windfall
+1 Broadside Barrage
+1 Buccaneer's Bravado
+1 Bulk Up
+1 Chaos Warp
+1 Commit // Memory
+1 Counterspell
+1 Countervailing Winds
+1 Cyclonic Rift
+1 Frantic Search
+1 Into the Flood Maw
+1 Invert Polarity
+1 Izzet Charm
+1 Magic Damper
+1 Prismari Command
+1 Pull from Tomorrow
+1 Rabid Gnaw
+1 Refute
+1 Sazacap's Brew
+1 Skycrash
+1 Temur Battle Rage
+1 You Find the Villains' Lair
+1 Capital City
+1 Coastal Peak
+1 Command Tower
+1 Desolate Lighthouse
+1 Eroded Canyon
+1 Fabled Passage
+1 Frostboil Snarl
+9 Island
+8 Mountain
+1 Remote Isle
+1 Restless Spire
+1 Shivan Reef
+1 Smoldering Crater
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Swiftwater Cliffs
+1 Temple of Epiphany
+1 Thundering Falls

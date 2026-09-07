@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/ZA3LCSZ1vMdN7Q-hVVluHg (source https://archidekt.com/decks/25822499)
+# tags Historic, Tokens, Equipment, Artifacts, Improvise, Modified Creatures, Constructs, Affinity; bracket 3; saved 2026-09-04; 5 tagged of 6905 indexed
+
+Commander
+1 Tony Stark
+
+Deck
+1 Academy Ruins
+1 Archway of Innovation
+1 Castle Doom
+1 Command Tower
+1 Fomori Vault
+1 Frostboil Snarl
+1 Inventors' Fair
+12 Island
+1 Kavaron, Memorial World
+9 Mountain
+1 Path of Ancestry
+1 Rogue's Passage
+1 Scorched Geyser
+1 Secluded Starforge
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Turbulent Springs
+1 Uthros, Titanic Godcore
+1 Adaptive Omnitool
+1 Arcane Signet
+1 Argentum Armor
+1 Blackblade Reforged
+1 Colossus Hammer
+1 Crystal Skull, Isu Spyglass
+1 Dowsing Device
+1 Genji Glove
+1 Hulkbuster Armor
+1 Improvised Arsenal
+1 Iron Man Armor
+1 Leyline Axe
+1 Meteor Sword
+1 Nettlecyst
+1 Repurposing Bay
+1 Robe of the Archmagi
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Sword of the Animist
+1 Talisman of Creativity
+1 The Fire Crystal
+1 The Ten Rings
+1 Ultima Weapon
+1 Unstable Molecule Suit
+1 Armor Wars
+1 Fateful Discovery
+1 Mechanized Production
+1 Stark's Ingenuity
+1 Thopter Spy Network
+1 Weapons Manufacturing
+1 Cyberdrive Awakener
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Iron Lad, Diverging Destiny
+1 Iron Lad, Young Avenger
+1 Iron Man, Bleeding Edge
+1 Iron Man, Futurist Paragon
+1 Iron Man, Master of Machines
+1 Iron Man, Modern Marvel
+1 Iron Man, Titan of Innovation
+1 Iron Spider, Stark Upgrade
+1 Ironheart, Clever Champion
+1 Krang, Master Mind
+1 Lady Octopus, Inspired Inventor
+1 Loyal Inventor
+1 Padeem, Consul of Innovation
+1 Pinnacle Emissary
+1 Ravenous Robots
+1 Rescue, Pepper Potts
+1 Shuri, Wakandan Inventor
+1 Thought Monitor
+1 Ultron, Artificial Malevolence
+1 Vision, Spectral Synthezoid
+1 War Machine, Avenging Arsenal
+1 Desynchronization
+1 Prismari Charm
+1 Return the Favor
+1 Scour for Scrap
+1 One with the Machine
+1 Raise the Palisade
+1 Thoughtcast
+1 Vision Quest

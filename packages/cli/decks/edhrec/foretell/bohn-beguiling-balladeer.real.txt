@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/4AKurXkVNlWOYyUtMZaw9Q (source https://archidekt.com/decks/21383883)
+# tags Bards, Spellslinger, Foretell, Forced Combat; bracket 2; saved 2026-09-03; 120 tagged of 2035 indexed
+
+Commander
+1 Bohn, Beguiling Balladeer
+
+Deck
+1 Aetherize
+1 Big Score
+1 Chaos Warp
+1 Magma Opus
+1 Prismari Charm
+1 Sound the Trumpets
+1 Spell Swindle
+1 Strix Serenade
+1 Alrund's Epiphany
+1 Blasphemous Act
+1 Dance with Calamity
+1 Disrupt Decorum
+1 Expressive Iteration
+1 Flow State
+1 Furygale Flocking
+1 Improvisation Capstone
+1 Inspiring Refrain
+1 Insurrection
+1 Mana Geyser
+1 Rapturous Moment
+1 Ravenform
+1 Rousing Refrain
+1 Stock Up
+1 Tales of the Ancestors
+1 Tempt with Vengeance
+1 Arcane Signet
+1 Bloodthirsty Blade
+1 Lightning Greaves
+1 Misleading Signpost
+1 Resonating Lute
+1 Rod of Absorption
+1 Sol Ring
+1 Talisman of Creativity
+1 Wand of Wonder
+1 Blazing Firesinger
+1 Bothersome Noisemaker
+1 Bothersome Quasit
+1 Campus Composer
+1 Cosmos Charger
+1 Faerie Mastermind
+1 Firbolg Flutist
+1 Harmonized Trio
+1 Insufferable Balladeer
+1 Leitmotif Composer
+1 Maeve, Insidious Singer
+1 Molten-Core Maestro
+1 Nalfeshnee
+1 Prismari Pianist
+1 Sizzling Soloist
+1 Spellbinding Soprano
+1 Taunting Kobold
+1 Thunderdrum Soloist
+1 Transit Mage
+1 Coastal Peak
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+1 Frostboil Snarl
+1 Hall of Oracles
+4 Island
+11 Mountain
+1 Mystic Sanctuary
+1 Path of Ancestry
+1 Prismari Campus
+1 Reliquary Tower
+1 Restless Spire
+1 Scorched Geyser
+1 Shivan Reef
+1 Skycoach Waypoint
+1 Spectacle Summit
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Thespian's Stage
+1 Turbulent Springs
+1 Curse of Opulence
+1 Curse of Verbosity
+1 Hot Pursuit
+1 Popular Entertainer
+1 Psychic Impetus
+1 Repercussion
+1 Rite of the Raging Storm
+1 Shiny Impetus
+1 The Sound of Drums

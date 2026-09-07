@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/PmLgK-F3rXkMBuRJIRTefQ (source https://archidekt.com/decks/8750970)
+# tags Stompy, Power Matters, Aggro; bracket 3; saved 2026-08-30; 39 tagged of 8477 indexed
+
+Commander
+1 Xenagos, God of Revels
+
+Deck
+1 Agonasaur Rex
+1 Ancient Copper Dragon
+1 Anzrag, the Quake-Mole
+1 Atarka, World Render
+1 Balefire Dragon
+1 Beastcaller Savant
+1 Birds of Paradise
+1 Blightsteel Colossus
+1 Bloodthirster
+1 Bramble Familiar
+1 Combat Celebrant
+1 Defiler of Vigor
+1 Elder Gargaroth
+1 Fanatic of Rhonas
+1 Giant Adephage
+1 Goblin Anarchomancer
+1 Hulking Raptor
+1 Ilharg, the Raze-Boar
+1 Karlach, Fury of Avernus
+1 Llanowar Elves
+1 Moraug, Fury of Akoum
+1 Neheb, Dreadhorde Champion
+1 Ojer Kaslem, Deepest Growth
+1 Pathbreaker Ibex
+1 Quartzwood Crasher
+1 Railway Brawler
+1 Raph & Mikey, Troublemakers
+1 Ravenous Tyrannosaurus
+1 Scourge of the Throne
+1 Selvala, Heart of the Wilds
+1 Shriekwood Devourer
+1 Siege Behemoth
+1 Soul of the Harvest
+1 Terror of the Peaks
+1 Vorinclex
+1 Zopandrel, Hunger Dominus
+1 Arcane Signet
+1 Sol Ring
+1 Talisman of Impulse
+1 The Great Henge
+1 The Skullspore Nexus
+1 Beast Within
+1 Entish Restoration
+1 Fling
+1 Kazuul's Fury
+1 Moment's Peace
+1 Obscuring Haze
+1 Tibalt's Trickery
+1 Chandra's Ignition
+1 Cultivate
+1 Eldritch Evolution
+1 Natural Order
+1 Nature's Lore
+1 Nature's Rhythm
+1 Rampant Growth
+1 Skyshroud Claim
+1 Turntimber Symbiosis
+1 Cinder Glade
+1 Command Tower
+1 Copperline Gorge
+1 Cragcrown Pathway
+1 Evolving Wilds
+12 Forest
+1 Karplusan Forest
+1 Mosswort Bridge
+11 Mountain
+1 Rockfall Vale
+1 Spire Garden
+1 Stomping Ground
+1 Terramorphic Expanse
+1 Wooded Foothills
+1 Descent into Avernus
+1 Elemental Bond
+1 Greater Good
+1 Lurking Predators
+1 Monstrous Vortex
+1 Up the Beanstalk
+1 Minsc & Boo, Timeless Heroes

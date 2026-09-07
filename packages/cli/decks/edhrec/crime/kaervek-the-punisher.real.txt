@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/BeuEjsYt-iZR7c7Ak_obJg (source https://archidekt.com/decks/15628977)
+# tags Spellslinger, Crime, Storm; bracket 3; saved 2026-09-03; 30 tagged of 1139 indexed
+
+Commander
+1 Kaervek, the Punisher
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Ghost Vacuum
+1 Glasses of Urza
+1 Jet Medallion
+1 Liquimetal Torque
+1 Primal Amulet
+1 Sol Ring
+1 The Endstone
+1 Throne of Eldraine
+1 Animate Dead
+1 Bitterblossom
+1 Black Market
+1 Black Market Connections
+1 Bloodchief Ascension
+1 The Meathook Massacre
+1 Ayara, First of Locthwain
+1 Bitterbloom Bearer
+1 Crypt Ghast
+1 Gisa, the Hellraiser
+1 Grave Researcher
+1 Gray Merchant of Asphodel
+1 Hex Parasite
+1 Jadar, Ghoulcaller of Nephalia
+1 K'rrik, Son of Yawgmoth
+1 Merrow Bonegnawer
+1 Oft-Nabbed Goat
+1 Opposition Agent
+1 Orcish Bowmasters
+1 Sedgemoor Witch
+1 Unstoppable Slasher
+1 Vilis, Broker of Blood
+1 Bubbling Muck
+1 Circle of Power
+1 Decorum Dissertation
+1 Decree of Pain
+1 Exsanguinate
+1 Feed the Swarm
+1 Reanimate
+1 Stargaze
+1 Syphon Mind
+1 Tendrils of Agony
+1 Toxic Deluge
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Castle Locthwain
+1 Deserted Temple
+1 Nykthos, Shrine to Nyx
+1 Phyrexian Tower
+1 Reliquary Tower
+20 Swamp
+1 Takenuma, Abandoned Mire
+1 Thespian's Stage
+1 Urborg
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Cave
+1 Vesuva
+1 War Room
+1 Witch's Cottage
+1 Cling to Dust
+1 Crypt Incursion
+1 Culling the Weak
+1 Dark Ritual
+1 Darkness
+1 Deadly Dispute
+1 Espers to Magicite
+1 Fell the Profane
+1 Flare of Malice
+1 Hagra Mauling
+1 Imp's Mischief
+1 Malakir Rebirth
+1 Saw in Half
+1 Snuff Out
+1 Soul Shatter
+1 Sudden Spoiling
+1 Transpose
+1 Village Rites
+1 Withering Boon
+1 Withering Torment
+1 Professor Onyx

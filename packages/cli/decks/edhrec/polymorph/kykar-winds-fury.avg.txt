@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/kykar-winds-fury/polymorph
+# theme Polymorph (243 decks)
+
+Commander
+1 Kykar, Wind's Fury
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Lightning Greaves
+1 Proteus Staff
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Adarkar Wastes
+1 Arid Mesa
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Glacial Fortress
+1 Hallowed Fountain
+7 Island
+4 Mountain
+1 Mystic Monastery
+4 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Sacred Foundry
+1 Scalding Tarn
+1 Sea of Clouds
+1 Shivan Reef
+1 Spectator Seating
+1 Steam Vents
+1 Sulfur Falls
+1 Training Center
+1 Aurelia, the Warleader
+1 Avacyn, Angel of Hope
+1 Blazing Archon
+1 Elesh Norn, Grand Cenobite
+1 Gisela, Blade of Goldnight
+1 Hullbreaker Horror
+1 Jin-Gitaxias, Progress Tyrant
+1 Medomai the Ageless
+1 Ovika, Enigma Goliath
+1 Sephara, Sky's Blade
+1 Serra's Emissary
+1 Stormtide Leviathan
+1 Jeskai Ascendancy
+1 Mystic Remora
+1 Rhystic Study
+1 Smothering Tithe
+1 Whirlwind of Thought
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Chaos Mutation
+1 Chaos Warp
+1 Counterspell
+1 Cyclonic Rift
+1 Divergent Transformations
+1 Dovin's Veto
+1 Frantic Search
+1 Generous Gift
+1 Mystical Tutor
+1 Negate
+1 Opt
+1 Path to Exile
+1 Reweave
+1 Stroke of Midnight
+1 Swan Song
+1 Swords to Plowshares
+1 Synthetic Destiny
+1 Valakut Awakening
+1 Lukka, Coppercoat Outcast
+1 Blasphemous Act
+1 Chaotic Transformation
+1 Dream Cache
+1 Gitaxian Probe
+1 Indomitable Creativity
+1 Mass Polymorph
+1 Polymorph
+1 Ponder
+1 Preordain
+1 Reality Scramble
+1 See Beyond
+1 Solve the Equation
+1 Transmogrify

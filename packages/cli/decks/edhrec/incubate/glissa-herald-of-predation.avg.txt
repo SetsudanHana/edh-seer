@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/glissa-herald-of-predation/incubate
+# theme Incubate (13 decks)
+
+Commander
+1 Glissa, Herald of Predation
+
+Deck
+1 Arcane Signet
+1 Commander's Sphere
+1 Contagion Clasp
+1 Golgari Signet
+1 Idol of Oblivion
+1 Ozolith, the Shattered Spire
+1 Phyrexian Atlas
+1 Sol Ring
+1 Throne of Geth
+1 Vat of Rebirth
+1 Command Tower
+1 Darkbore Pathway
+1 Deathcap Glade
+1 Festering Gulch
+10 Forest
+1 Golgari Rot Farm
+1 Haunted Mire
+1 Jungle Hollow
+1 Karn's Bastion
+1 Llanowar Wastes
+9 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 The Seedcore
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Viridescent Bog
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Adaptive Sporesinger
+1 Agent Frank Horrigan
+1 Armored Scrapgorger
+1 Blight Titan
+1 Blightbelly Rat
+1 Bloated Contaminator
+1 Bloated Processor
+1 Cankerbloom
+1 Compleated Huntmaster
+1 Contaminant Grafter
+1 Converter Beast
+1 Corpsejack Menace
+1 Defiler of Vigor
+1 Elvish Vatkeeper
+1 Evolution Sage
+1 Fynn, the Fangbearer
+1 Glissa Sunslayer
+1 Grafted Butcher
+1 Gulping Scraptrap
+1 Necrogen Rotpriest
+1 Scheming Aspirant
+1 Venerated Rotpriest
+1 Venomous Brutalizer
+1 Vorinclex, Monstrous Raider
+1 Zopandrel, Hunger Dominus
+1 Binding the Old Gods
+1 Blighted Burgeoning
+1 Doubling Season
+1 Gift of Compleation
+1 Parallel Lives
+1 Phyrexian Arena
+1 Primal Vigor
+1 Tangled Skyline
+1 Atomize
+1 Beast Within
+1 Dark Ritual
+1 Infectious Bite
+1 Revitalizing Repast
+1 Tear Asunder
+1 Vraska's Fall
+1 Whisper of the Dross
+1 Nissa, Ascended Animist
+1 Cultivate
+1 Drown in Ichor
+1 Expand the Sphere
+1 Glistening Dawn
+1 Infectious Inquiry
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Thirsting Roots
+1 Traumatic Revelation
+1 Unnatural Restoration

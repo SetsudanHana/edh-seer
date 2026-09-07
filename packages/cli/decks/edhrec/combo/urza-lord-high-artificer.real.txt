@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/-CbjdgvWcyU567DYTOx-6w (source https://moxfield.com/decks/ZjpuxleT7UmZpsK0sCL8Cw)
+# tags Vehicles, Aggro, Midrange, Historic, Combo, Artifacts, Tokens, Affinity, Birthing Pod; bracket 3; saved 2026-09-04; 873 tagged of 20393 indexed
+
+Commander
+1 Urza, Lord High Artificer
+
+Deck
+1 Academy Ruins
+1 Ancient Tomb
+1 Archway of Innovation
+1 Buried Ruin
+1 Cephalid Coliseum
+1 Darksteel Citadel
+1 Flooded Strand
+16 Island
+1 Mistrise Village
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+1 Scalding Tarn
+1 Seat of the Synod
+1 The Mycosynth Gardens
+1 Tolaria West
+1 Urza's Saga
+1 Uthros, Titanic Godcore
+1 Altar of the Brood
+1 Arcane Signet
+1 Cloud Key
+1 Conqueror's Flail
+1 Encroaching Mycosynth
+1 Ensnaring Bridge
+1 Everflowing Chalice
+1 Expedition Map
+1 Fellwar Stone
+1 Howling Mine
+1 Jeweled Amulet
+1 Krark-Clan Ironworks
+1 Lotus Petal
+1 Mind Stone
+1 Mox Amber
+1 Mox Opal
+1 Mystic Forge
+1 Repurposing Bay
+1 Sapphire Medallion
+1 Semblance Anvil
+1 Sensei's Divining Top
+1 Sol Ring
+1 Unwinding Clock
+1 Uthros Research Craft
+1 Assert Authority
+1 Brain Freeze
+1 Commandeer
+1 Counterspell
+1 Cyclonic Rift
+1 Desculpting Blast
+1 Force of Negation
+1 Gifts Ungiven
+1 Mana Drain
+1 Misdirection
+1 Scour for Scrap
+1 Sink into Stupor
+1 Whir of Invention
+1 Battered Golem
+1 Darksteel Angel
+1 Emry, Lurker of the Loch
+1 Etherium Sculptor
+1 Forensic Gadgeteer
+1 Foundry Inspector
+1 Hullbreaker Horror
+1 Liberator, Urza's Battlethopter
+1 Metalworker
+1 Mirran Spy
+1 Mm'menon, the Right Hand
+1 Phyrexian Metamorph
+1 Sai, Master Thopterist
+1 Shuri, Wakandan Inventor
+1 Solemn Simulacrum
+1 The Reality Chip
+1 Thought Monitor
+1 Trinket Mage
+1 Trophy Mage
+1 Vedalken Archmage
+1 Walking Ballista
+1 Wurmcoil Engine
+1 Fabricate
+1 Thoughtcast
+1 Transmute Artifact
+1 Fateful Discovery
+1 Mirrodin Besieged
+1 Karn, the Great Creator
+1 Tezzeret the Seeker
+1 Tezzeret, Cruel Captain

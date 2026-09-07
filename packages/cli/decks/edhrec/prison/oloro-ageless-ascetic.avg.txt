@@ -1,0 +1,99 @@
+# edhrec average deck: https://edhrec.com/average-decks/oloro-ageless-ascetic/prison
+# theme Prison (37 decks)
+
+Commander
+1 Oloro, Ageless Ascetic
+
+Deck
+1 Aetherflux Reservoir
+1 Alhammarret's Archive
+1 Arcane Signet
+1 Bolas's Citadel
+1 Dimir Signet
+1 Sensei's Divining Top
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The One Ring
+1 Well of Lost Dreams
+1 Arcane Sanctum
+1 Caves of Koilos
+1 Command Tower
+1 Drowned Catacomb
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+3 Island
+1 Isolated Chapel
+1 Mana Confluence
+1 Marsh Flats
+1 Morphic Pool
+4 Plains
+1 Polluted Delta
+1 Raffine's Tower
+1 Reflecting Pool
+1 Reliquary Tower
+1 Scrubland
+1 Sea of Clouds
+1 Shattered Sanctum
+3 Swamp
+1 Tundra
+1 Underground River
+1 Underground Sea
+1 Vault of Champions
+1 Watery Grave
+1 Bloodthirsty Conqueror
+1 Enduring Tenacity
+1 Esper Sentinel
+1 Felidar Sovereign
+1 Grand Abolisher
+1 Grand Arbiter Augustin IV
+1 Heliod, Sun-Crowned
+1 Kambal, Consul of Allocation
+1 Karlov of the Ghost Council
+1 Opposition Agent
+1 Scheming Silvertongue
+1 Serra Ascendant
+1 Sheoldred, the Apocalypse
+1 Soul Warden
+1 Soul's Attendant
+1 Vito, Thorn of the Dusk Rose
+1 Witch of the Moors
+1 Aura of Silence
+1 Authority of the Consuls
+1 Black Market Connections
+1 Blind Obedience
+1 Exquisite Blood
+1 Ghostly Prison
+1 Mystic Remora
+1 Necropotence
+1 No Mercy
+1 Phyrexian Arena
+1 Propaganda
+1 Rhystic Study
+1 Sanguine Bond
+1 Smothering Tithe
+1 Test of Endurance
+1 An Offer You Can't Refuse
+1 Anguished Unmaking
+1 Counterspell
+1 Cyclonic Rift
+1 Dovin's Veto
+1 Enlightened Tutor
+1 Force of Will
+1 Mana Drain
+1 Path to Exile
+1 Swan Song
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Vampiric Tutor
+1 Teferi, Time Raveler
+1 Approach of the Second Sun
+1 Demonic Tutor
+1 Exsanguinate
+1 Farewell
+1 Fumigate
+1 Supreme Verdict
+1 Toxic Deluge

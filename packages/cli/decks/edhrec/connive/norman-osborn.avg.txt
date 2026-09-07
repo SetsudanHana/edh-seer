@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/norman-osborn/connive
+# theme Connive (181 decks)
+
+Commander
+1 Norman Osborn
+
+Deck
+1 Arcane Signet
+1 Cryptcaller Chariot
+1 Lightning Greaves
+1 Monument to Endurance
+1 Pumpkin Bombs
+1 Rocket-Powered Goblin Glider
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Blood Crypt
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+5 Island
+1 Luxury Suite
+5 Mountain
+1 Oscorp Industries
+1 Path of Ancestry
+1 Shivan Reef
+1 Smoldering Marsh
+1 Spymaster's Vault
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Sunken Hollow
+6 Swamp
+1 Villainous Hideout
+1 Watery Grave
+1 Xander's Lounge
+1 Anger
+1 Archfiend of Ifnir
+1 Baron Strucker, HYDRA Overlord
+1 Captain Howler, Sea Scourge
+1 Carnage, Crimson Chaos
+1 Chainer, Nightmare Adept
+1 Chameleon, Master of Disguise
+1 Doctor Doom, King of Latveria
+1 Doctor Octopus, Master Planner
+1 Emet-Selch of the Third Seat
+1 Ghostly Pilferer
+1 Green Goblin, Back for More
+1 Green Goblin, Nemesis
+1 Green Goblin, Revenant
+1 Hobgoblin, Mantled Marauder
+1 Iron Monger, Sadistic Tycoon
+1 Kang, Temporal Tyrant
+1 Leader, Super-Genius
+1 M.O.D.O.K.
+1 Magmakin Artillerist
+1 Prowler, Clawed Thief
+1 Psychic Frog
+1 Shriek, Treblemaker
+1 The Squadron Sinister
+1 Tombstone, Career Criminal
+1 Ultimate Green Goblin
+1 Ultron, Unlimited
+1 Construct a Cosmic Cube
+1 Cool but Rude
+1 Glorious Purpose
+1 Secrets of the Dead
+1 Shadow of the Goblin
+1 The Death of Gwen Stacy
+1 Big Score
+1 Bitter Triumph
+1 Chaos Warp
+1 Counterspell
+1 Frantic Search
+1 Lethal Scheme
+1 Terminate
+1 Thrill of Possibility
+1 Unexpected Windfall
+1 Unstable Experiment
+1 Withering Torment
+1 Behold the Sinister Six!
+1 Blasphemous Act
+1 Faithless Looting
+1 Prison Break
+1 Pumpkin Bombardment
+1 Reanimate
+1 Romantic Rendezvous
+1 Villainous Wrath
+1 Windfall

@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/ilJLgYmppBq01iXDYRnnVA (source https://archidekt.com/decks/19029432)
+# tags LTB Effects, ETB, Elementals; bracket 3; saved 2026-09-03; 18 tagged of 25538 indexed
+
+Commander
+1 Ashling, the Limitless
+
+Deck
+1 Abundant Countryside
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Forbidden Orchard
+2 Forest
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Ketria Triome
+2 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Polluted Delta
+1 Reflecting Pool
+1 Sacred Foundry
+1 Scalding Tarn
+1 Secluded Courtyard
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Willowrush Verge
+1 Wooded Foothills
+1 Zagoth Triome
+1 Akroma's Will
+1 Continue?
+1 Dawn's Truce
+1 Animar, Soul of Elements
+1 Beza, the Bounding Spring
+1 Bloom Tender
+1 Cavalier of Dawn
+1 Champion of the Path
+1 Deceit
+1 Eirdu, Carrier of Dawn
+1 Endurance
+1 Faeburrow Elder
+1 Flamebraider
+1 Flamekin Harbinger
+1 Foundation Breaker
+1 Fury
+1 Greenwarden of Murasa
+1 Grief
+1 Jubilation
+1 Lamentation
+1 Luminous Broodmoth
+1 Maelstrom Wanderer
+1 Mass of Mysteries
+1 Muldrotha, the Gravetide
+1 Omnath, Locus of Rage
+1 Pitiless Plunderer
+1 Risen Reef
+1 Roaming Throne
+1 Rottenmouth Viper
+1 Rumbleweed
+1 Shinestriker
+1 Smokebraider
+1 Solitude
+1 Spinner of Souls
+1 Subterfuge
+1 Sunderflock
+1 The Master, Multiplied
+1 Titan of Industry
+1 Twinflame Travelers
+1 Wistfulness
+1 Yarok, the Desecrated
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Chromatic Lantern
+1 Chronicle of Victory
+1 Lightning Greaves
+1 Panharmonicon
+1 Sol Ring
+1 Sundial of the Infinite
+1 Urza's Incubator
+1 Black Market Connections
+1 Descendants' Fury
+1 Elemental Bond
+1 Garruk's Uprising
+1 Guardian Project
+1 Kindred Discovery
+1 Renewed Solidarity
+1 Trouble in Pairs
+1 Blasphemous Edict
+1 Bloodline Bidding
+1 Celestial Reunion
+1 Cultivate
+1 Skyshroud Claim

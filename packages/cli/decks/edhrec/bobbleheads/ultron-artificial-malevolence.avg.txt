@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/ultron-artificial-malevolence/bobbleheads
+# theme Bobbleheads (5 decks)
+
+Commander
+1 Ultron, Artificial Malevolence
+
+Deck
+1 Agility Bobblehead
+1 Arc Reactor
+1 Ashnod's Altar
+1 Charisma Bobblehead
+1 Chimil, the Inner Sun
+1 Cloud Key
+1 Commander's Plate
+1 Conjurer's Closet
+1 Coveted Jewel
+1 Darksteel Forge
+1 Endurance Bobblehead
+1 Everflowing Chalice
+1 Forsaken Monument
+1 Fractured Powerstone
+1 Gilded Lotus
+1 Hedron Archive
+1 Idol of Oblivion
+1 Intelligence Bobblehead
+1 Krark-Clan Ironworks
+1 Luck Bobblehead
+1 Mind Stone
+1 Mystic Forge
+1 Perception Bobblehead
+1 Portal to Phyrexia
+1 Radiant Lotus
+1 Sculpting Steel
+1 Semblance Anvil
+1 Skullclamp
+1 Sol Ring
+1 Strength Bobblehead
+1 The One Ring
+1 Thought Vessel
+1 Thousand-Year Elixir
+1 Thran Dynamo
+1 Trading Post
+1 Unwinding Clock
+1 Worn Powerstone
+1 Arcane Lighthouse
+1 Blast Zone
+1 Buried Ruin
+1 Darksteel Citadel
+1 Fountainport
+1 Inventors' Fair
+1 Karn's Bastion
+1 Muraganda Raceway
+1 Planar Nexus
+1 Power Depot
+1 Shrine of the Forsaken Gods
+5 Snow-Covered Wastes
+1 Surveillance Room
+1 The Mycosynth Gardens
+1 Tomb of the Spirit Dragon
+1 Treasure Vault
+1 Urza's Cave
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Vesuva
+1 War Room
+9 Wastes
+1 Big Mother Mouser
+1 Chief of the Foundry
+1 Chrome Dome
+1 Cryptothrall
+1 Cyberman Patrol
+1 Cybermen Squadron
+1 Foundry Inspector
+1 Glaring Fleshraker
+1 Hangarback Walker
+1 Iron Spider, Stark Upgrade
+1 Jhoira's Familiar
+1 Krang, Utrom Warlord
+1 Liberator, Urza's Battlethopter
+1 Myr Retriever
+1 Palladium Myr
+1 Scrap Trawler
+1 Solemn Simulacrum
+1 Steel Overseer
+1 Stridehangar Automaton
+1 The Vision
+1 Ultima, Origin of Oblivion
+1 Echoes of Eternity
+1 Eldrazi Confluence
+1 Warping Wail
+1 Ugin, Eye of the Storms
+1 Ugin, the Ineffable
+1 All Is Dust

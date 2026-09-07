@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/gSSxA9elI_sjknJcrZRIrg (source https://archidekt.com/decks/16058403)
+# tags Polymorph, Aggro; bracket 3; saved 2026-05-22; 91 tagged of 8939 indexed
+
+Commander
+1 Rograkh, Son of Rohgahh
+1 Thrasios, Triton Hero
+
+Deck
+1 Ancient Silver Dragon
+1 Apex Altisaur
+1 Avenger of Zendikar
+1 Bane of Bala Ged
+1 Blightsteel Colossus
+1 Cityscape Leveler
+1 Consecrated Sphinx
+1 Craterhoof Behemoth
+1 Elvish Piper
+1 Etali, Primal Conqueror
+1 Fireflux Squad
+1 Ghalta, Stampede Tyrant
+1 Howlpack Piper
+1 Hullbreaker Horror
+1 Inkwell Leviathan
+1 Jin-Gitaxias, Core Augur
+1 Jin-Gitaxias, Progress Tyrant
+1 Kogla, the Titan Ape
+1 Koma, Cosmos Serpent
+1 Koma, World-Eater
+1 Maelstrom Wanderer
+1 Nezahal, Primal Tide
+1 Nyxbloom Ancient
+1 Old Gnawbone
+1 Pathrazer of Ulamog
+1 Tidespout Tyrant
+1 Tishana, Voice of Thunder
+1 Ulamog's Crusher
+1 Ulamog, the Ceaseless Hunger
+1 Ulamog, the Infinite Gyre
+1 Vaultborn Tyrant
+1 Void Winnower
+1 Worldspine Wurm
+1 Arcane Signet
+1 Monster Manual
+1 Proteus Staff
+1 Quicksilver Amulet
+1 Sol Ring
+1 The One Ring
+1 Barkchannel Pathway
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Cragcrown Pathway
+1 Exotic Orchard
+1 Gaea's Cradle
+1 Gemstone Caverns
+1 Grove of the Burnwillows
+1 Ketria Triome
+1 Mana Confluence
+1 Misty Rainforest
+1 Rejuvenating Springs
+1 Riverglide Pathway
+1 Scalding Tarn
+1 Snow-Covered Forest
+2 Snow-Covered Island
+2 Snow-Covered Mountain
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Taiga
+1 Training Center
+1 Tropical Island
+1 Urza's Saga
+1 Volcanic Island
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Bribery
+1 Creative Technique
+1 Cultivate
+1 Eureka
+1 Farseek
+1 Flood of Tears
+1 Genesis Storm
+1 Improvisation Capstone
+1 Indomitable Creativity
+1 Kodama's Reach
+1 Last March of the Ents
+1 Mass Polymorph
+1 Nature's Lore
+1 Polymorph
+1 Rampant Growth
+1 Reality Scramble
+1 Selvala's Stampede
+1 Show and Tell
+1 Three Visits
+1 Tooth and Nail
+1 Transmogrify
+1 Chaos Mutation
+1 Divergent Transformations
+1 Synthetic Destiny
+1 Defense of the Heart
+1 Lurking Predators
+1 Oath of Druids
+1 Omniscience
+1 Sneak Attack

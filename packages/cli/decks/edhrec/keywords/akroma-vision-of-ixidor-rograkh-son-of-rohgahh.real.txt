@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/pzo2xzLzg2SxKPXGYAsM5Q (source https://archidekt.com/decks/11513749)
+# tags Keywords; bracket 2; saved 2026-08-21; 100 tagged of 788 indexed
+
+Commander
+1 Akroma, Vision of Ixidor
+1 Rograkh, Son of Rohgahh
+
+Deck
+1 Aerial Responder
+1 Archetype of Aggression
+1 Archetype of Courage
+1 Aurelia, the Law Above
+1 Aurelia, the Warleader
+1 Baneslayer Angel
+1 Battle Angels of Tyr
+1 Battlefield Raptor
+1 Bloodthirster
+1 Bonehoard Dracosaur
+1 Chaos Dragon
+1 Claim Jumper
+1 Danitha Capashen, Paragon
+1 Elite Inquisitor
+1 Esper Sentinel
+1 Firemane Commando
+1 Gisela, the Broken Blade
+1 Healer's Hawk
+1 Iroas, God of Victory
+1 Kinscaer Sentry
+1 Knuckles the Echidna
+1 Laelia, the Blade Reforged
+1 Life of the Party
+1 Lightning, Army of One
+1 Lyra Dawnbringer
+1 Momo, Playful Pet
+1 Odric, Lunarch Marshal
+1 Shrike Force
+1 Space Marine Scout
+1 Stonecoil Serpent
+1 Super-Adaptoid
+1 Swiftblade Vindicator
+1 Swooping Lookout
+1 Tori D'Avenant, Fury Rider
+1 Vexilus Praetor
+1 Weathered Sentinels
+1 Wojek Investigator
+1 Akroma's Will
+1 Dawn's Truce
+1 Deflecting Swat
+1 Flare of Duplication
+1 Flare of Fortitude
+1 Flawless Maneuver
+1 Redirect Lightning
+1 Swords to Plowshares
+1 Untimely Malfunction
+1 Valakut Awakening
+1 Wear // Tear
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Buster Sword
+1 Mox Amber
+1 Sol Ring
+1 Talisman of Conviction
+1 Wayfarer's Bauble
+1 Arid Mesa
+1 Ash Barrens
+1 Battlefield Forge
+1 Castle Ardenvale
+1 Castle Embereth
+1 Clifftop Retreat
+1 Command Tower
+1 Demolition Field
+1 Evolving Wilds
+1 Fabled Passage
+1 Forgotten Cave
+3 Mountain
+1 Needleverge Pathway
+10 Plains
+1 Plateau
+1 Plaza of Heroes
+1 Sacred Foundry
+1 Secluded Steppe
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 Terramorphic Expanse
+1 Turbulent Steppe
+1 Vibrant Cityscape
+1 Concerted Effort
+1 Flaming Fist
+1 Land Tax
+1 Smuggler's Share
+1 Tavern Brawler
+1 Trouble in Pairs
+1 Sundering Eruption

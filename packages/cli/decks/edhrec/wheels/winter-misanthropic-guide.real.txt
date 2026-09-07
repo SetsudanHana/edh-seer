@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/Wk2GyGe4zJUEw0R5_1iIWQ (source https://moxfield.com/decks/92oVuy9K6kSR_mXBvTYj6Q)
+# tags Group Slug, Wheels; bracket 3; saved 2026-09-05; 1343 tagged of 8816 indexed
+
+Commander
+1 Winter, Misanthropic Guide
+
+Deck
+1 Arcane Signet
+1 Crystal Chimes
+1 Geth's Grimoire
+1 Sol Ring
+1 Betrayer's Bargain
+1 Comet Storm
+1 Drag to the Roots
+1 Fog
+1 Grisly Salvage
+1 Harrow
+1 Molten Influence
+1 Mortal's Resolve
+1 Null Elemental Blast
+1 Putrefy
+1 Thrill of Possibility
+1 Birds of Paradise
+1 Doomed Necromancer
+1 Dragon Mage
+1 Fate Unraveler
+1 Fell Specter
+1 Gnat Miser
+1 Icetill Explorer
+1 Ignoble Hierarch
+1 Magus of the Wheel
+1 Razorkin Needlehead
+1 Ruby, Daring Tracker
+1 Sakura-Tribe Elder
+1 Scrawling Crawler
+1 Seizan, Perverter of Truth
+1 Stormfist Crusader
+1 Syr Konrad, the Grim
+1 Tinybones, Bauble Burglar
+1 Valgavoth, Terror Eater
+1 Zurzoth, Chaos Rider
+1 Burning Inquiry
+1 Collective Defiance
+1 Creeping Renaissance
+1 Dark Deal
+1 Demonic Counsel
+1 Demonic Tutor
+1 Faithless Looting
+1 Farseek
+1 Hull Breach
+1 Jaya's Immolating Inferno
+1 Pillage the Bog
+1 Primal Growth
+1 Reforge the Soul
+1 Strategic Betrayal
+1 Traverse the Ulvenwald
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+6 Forest
+1 Geier Reach Sanitarium
+1 Graven Cairns
+1 Llanowar Wastes
+1 Memorial to Folly
+1 Memorial to Unity
+1 Memorial to War
+6 Mountain
+1 Reliquary Tower
+1 Riveteers Overlook
+1 Smoldering Marsh
+1 Sulfurous Springs
+9 Swamp
+1 Tainted Peak
+1 Tainted Wood
+1 Twilight Mire
+1 Valgavoth's Lair
+1 Vernal Fen
+1 Woodland Cemetery
+1 Megrim
+1 Oppression
+1 Raiders' Wake
+1 Rites of Flourishing
+1 Spiteful Visions
+1 The Rollercrusher Ride
+1 Underworld Dreams
+1 Waste Not
+1 Ob Nixilis, the Hate-Twisted

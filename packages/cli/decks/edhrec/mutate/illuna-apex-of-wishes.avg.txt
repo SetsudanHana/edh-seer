@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/illuna-apex-of-wishes/mutate
+# theme Mutate (527 decks)
+
+Commander
+1 Illuna, Apex of Wishes
+
+Deck
+1 Arcane Signet
+1 Ketria Crystal
+1 Lifecrafter's Bestiary
+1 Simic Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Bountiful Landscape
+1 Breeding Pool
+1 Cinder Glade
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Frontier Bivouac
+1 Hinterland Harbor
+6 Island
+1 Ketria Triome
+4 Mountain
+1 Path of Ancestry
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rootbound Crag
+1 Steam Vents
+1 Stomping Ground
+1 Sulfur Falls
+1 Temple of Mystery
+1 Yavimaya Coast
+1 Animar, Soul of Elements
+1 Archipelagore
+1 Auspicious Starrix
+1 Beast Whisperer
+1 Birds of Paradise
+1 Cloudpiercer
+1 Cold-Eyed Selkie
+1 Dreamtail Heron
+1 Essence Symbiote
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Everquill Phoenix
+1 Gemrazer
+1 Gladecover Scout
+1 Glowstone Recluse
+1 Goblin Anarchomancer
+1 Ivy, Gleeful Spellthief
+1 Lore Drakkis
+1 Migratory Greathorn
+1 Mysterious Egg
+1 Parcelbeast
+1 Pollywog Symbiote
+1 Porcuparrot
+1 Pouncing Shoreshark
+1 Sawtusk Demolisher
+1 Sea-Dasher Octopus
+1 Slippery Bogle
+1 Souvenir Snatcher
+1 Temur Battlecrier
+1 Toski, Bearer of Secrets
+1 Trumpeting Gnarr
+1 Venomthrope
+1 Garruk's Uprising
+1 Omniscience
+1 Rhythm of the Wild
+1 Season of Growth
+1 Temur Ascendancy
+1 Vesuvan Duplimancy
+1 Beast Within
+1 Brainstorm
+1 Chaos Warp
+1 Counterspell
+1 Cyclonic Rift
+1 Double Major
+1 Growth Spiral
+1 Heroic Intervention
+1 Negate
+1 Tamiyo's Safekeeping
+1 Vivien, Monsters' Advocate
+1 Blasphemous Act
+1 Cultivate
+1 Farseek
+1 Genesis Ultimatum
+1 Kodama's Reach
+1 Mythos of Illuna
+1 Nature's Lore
+1 Ponder
+1 Rampant Growth
+1 Three Visits

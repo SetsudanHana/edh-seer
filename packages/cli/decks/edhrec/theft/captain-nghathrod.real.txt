@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/gRrUyVYybkwPeIqfNhu_zg (source https://moxfield.com/decks/TLEuXnzVrEy6y7mFRUTq-w)
+# tags Mill, Theft; bracket 3; saved 2026-09-04; 542 tagged of 18374 indexed
+
+Commander
+1 Captain N'ghathrod
+
+Deck
+1 Ancient Cellarspawn
+1 Brainstealer Dragon
+1 Bruvac the Grandiloquent
+1 Changeling Outcast
+1 Changeling Wayfinder
+1 Consuming Aberration
+1 Cruel Somnophage
+1 Grazilaxx, Illithid Scholar
+1 Guiltfeeder
+1 Hunted Horror
+1 Nemesis of Reason
+1 Nighthowler
+1 Nihilith
+1 Overcharged Amalgam
+1 Overlord of the Floodpits
+1 Ravenous Chupacabra
+1 Ruin Crab
+1 Sewer Nemesis
+1 Silent Hallcreeper
+1 Sludge Monster
+1 Spellskite
+1 Syr Konrad, the Grim
+1 The Flood of Mars
+1 The Mindskinner
+1 Thing in the Ice
+1 Tonberry
+1 Toxrill, the Corrosive
+1 Uchuulon
+1 Vashta Nerada
+1 Wharf Infiltrator
+1 Y'shtola Rhul
+1 Zellix, Sanity Flayer
+1 Arcane Signet
+1 Dimir Keyrune
+1 Dimir Signet
+1 Herald's Horn
+1 Lightning Greaves
+1 Mindcrank
+1 Realmbreaker, the Invasion Tree
+1 Sol Ring
+1 The Water Crystal
+1 Black Market Connections
+1 Court of Cunning
+1 Cover of Darkness
+1 Endless Evil
+1 Kindred Discovery
+1 Psychic Corrosion
+1 Reflections of Littjara
+1 Breach the Multiverse
+1 Fractured Sanity
+1 Glimpse the Unthinkable
+1 In Garruk's Wake
+1 Maddening Cacophony
+1 Mind Grind
+1 Psionic Ritual
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+11 Island
+1 Jidoor, Aristocratic Capital
+1 Nephalia Drownyard
+1 Path of Ancestry
+1 Reliquary Tower
+1 River of Tears
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Hollow
+11 Swamp
+1 Tainted Isle
+1 Temple of Deceit
+1 Temple of the False God
+1 Counterspell
+1 Curtains' Call
+1 Didn't Say Please
+1 Drown in the Loch
+1 Memory Plunder
+1 Swan Song

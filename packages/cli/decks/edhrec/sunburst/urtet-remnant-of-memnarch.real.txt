@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/1taxz0OZuzOvSEsSvH8-_A (source https://archidekt.com/decks/20796161)
+# tags Myr, +1/+1 Counters, Mana Dorks, Sunburst; bracket 2; saved 2026-06-13; 5 tagged of 18343 indexed
+
+Commander
+1 Urtet, Remnant of Memnarch
+
+Deck
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Barkchannel Pathway
+1 Battlefield Forge
+1 Blightstep Pathway
+1 Branchloft Pathway
+1 Brightclimb Pathway
+1 Brushland
+1 Caves of Koilos
+1 Clearwater Pathway
+1 Command Tower
+1 Cragcrown Pathway
+1 Darkbore Pathway
+1 Forest
+1 Frontier Bivouac
+1 Hengegate Pathway
+1 Island
+1 Jungle Shrine
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Mountain
+1 Mystic Monastery
+1 Needleverge Pathway
+1 Path of Ancestry
+1 Plains
+1 Riverglide Pathway
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Seaside Citadel
+1 Shivan Reef
+1 Sulfurous Springs
+1 Swamp
+1 Underground River
+1 Vault of the Archangel
+1 Yavimaya Coast
+1 Alloy Myr
+1 Animal Attendant
+1 Badgermole Cub
+1 Beast Whisperer
+1 Biophagus
+1 Bugenhagen, Wise Elder
+1 Changeling Wayfinder
+1 Chomping Changeling
+1 Copper Myr
+1 Darksteel Myr
+1 Enduring Vitality
+1 Forgotten Ancient
+1 Frogmyr Enforcer
+1 Gold Myr
+1 Hovermyr
+1 Inga and Esika
+1 Irma, Part-Time Mutant
+1 Iron Myr
+1 Iron Spider, Stark Upgrade
+1 Kutzil, Malamet Exemplar
+1 Lae'zel, Vlaakith's Champion
+1 Leaden Myr
+1 Myr Battlesphere
+1 Myr Convert
+1 Myr Enforcer
+1 Myr Galvanizer
+1 Myr Kinsmith
+1 Myr Superion
+1 Omni-Changeling
+1 Ornithopter of Paradise
+1 Palladium Myr
+1 Plague Myr
+1 Realmwalker
+1 Roaming Throne
+1 Shalai and Hallar
+1 Silver Myr
+1 Spark Double
+1 Taurean Mauler
+1 And They Shall Know No Fear
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Dispatch
+1 Inspiring Call
+1 Mutational Advantage
+1 Ripples of Potential
+1 Tear Asunder
+1 Bring to Light
+1 Organic Extinction
+1 Wave Goodbye
+1 Chronicle of Victory
+1 Coin of Mastery
+1 Inspirit, Flagship Vessel
+1 Lux Artillery
+1 Collective Inferno
+1 Echoes of Eternity
+1 Folk Hero
+1 Hardened Scales
+1 High Score
+1 Level Up
+1 Leyline of Transformation
+1 Mirrodin Besieged
+1 Quest for Renewal
+1 Sphere Grid
+1 Tocasia's Welcome

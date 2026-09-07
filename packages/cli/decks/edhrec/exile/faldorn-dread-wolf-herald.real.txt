@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/d9v0vBaZMT-WREJCXo-e2Q (source https://archidekt.com/decks/4635556)
+# tags Wolves, Exile, Tokens, Cascade, Foretell, Ramp; bracket 3; saved 2026-09-03; 662 tagged of 5501 indexed
+
+Commander
+1 Faldorn, Dread Wolf Herald
+
+Deck
+1 Anger
+1 Arasta of the Endless Web
+1 Bloodbraid Elf
+1 Bonecrusher Giant
+1 Bonehoard Dracosaur
+1 Containment Construct
+1 Dire Fleet Daredevil
+1 Disciple of Freyalise
+1 Embereth Shieldbreaker
+1 Etali, Primal Storm
+1 Goblin Anarchomancer
+1 Green Slime
+1 Grumgully, the Generous
+1 Inti, Seneschal of the Sun
+1 Laelia, the Blade Reforged
+1 Managorger Hydra
+1 Nalfeshnee
+1 Party Thrasher
+1 Pinnacle Monk
+1 Plargg and Nassari
+1 Professional Face-Breaker
+1 Questing Druid
+1 Sakura-Tribe Elder
+1 Tlincalli Hunter
+1 Trumpeting Carnosaur
+1 Urabrask the Hidden
+1 Urabrask, Heretic Praetor
+1 Wild-Magic Sorcerer
+1 Ash Barrens
+1 Boseiju, Who Endures
+1 Castle Embereth
+1 Cinder Glade
+1 Command Tower
+1 Commercial District
+1 Evendo, Waking Haven
+4 Forest
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+4 Mountain
+1 Oran-Rief, the Vastwood
+1 Plaza of Heroes
+1 Rockfall Vale
+1 Sokenzan, Crucible of Defiance
+1 Spinerock Knoll
+1 Stomping Ground
+1 Thornspire Verge
+1 Three Tree City
+1 Training Compound
+1 Beast Within
+1 Delayed Blast Fireball
+1 Return of the Wildspeaker
+1 Untimely Malfunction
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Escape to the Wilds
+1 Explore
+1 Ezuri's Predation
+1 Glimpse the Impossible
+1 Hex Magic
+1 Jeska's Will
+1 Light Up the Stage
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Pick Your Poison
+1 Rampant Growth
+1 Reckless Impulse
+1 Search for Tomorrow
+1 Shatterskull Smashing
+1 Sundering Eruption
+1 Three Visits
+1 Turntimber Symbiosis
+1 Wrenn's Resolve
+1 Chandra, Torch of Defiance
+1 Xenagos, the Reveler
+1 Chimil, the Inner Sun
+1 Ruby Medallion
+1 Sword of Forge and Frontier
+1 Cryptolith Rite
+1 Fiery Emancipation
+1 Goblin Bombardment
+1 Growing Rites of Itlimoc
+1 Impact Tremors
+1 Painter's Studio // Defaced Gallery
+1 Passionate Archaeologist
+1 Shared Animosity
+1 Tribute to the World Tree
+1 Valakut Exploration
+1 Warstorm Surge
+1 Invasion of Zendikar

@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/jared-carthalion-true-heir/monarch
+# theme Monarch (399 decks)
+
+Commander
+1 Jared Carthalion, True Heir
+
+Deck
+1 Arcane Signet
+1 Fiendlash
+1 Haunted Cloak
+1 Lightning Greaves
+1 Mithril Coat
+1 Pariah's Shield
+1 Shadowspear
+1 Sol Ring
+1 Swiftfoot Boots
+1 Bountiful Promenade
+1 Canopy Vista
+1 Cinder Glade
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Jetmir's Garden
+1 Jungle Shrine
+1 Kessig Wolf Run
+5 Mountain
+6 Plains
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Sacred Foundry
+1 Spectator Seating
+1 Stomping Ground
+1 Sunpetal Grove
+1 Temple Garden
+1 Throne of the High City
+1 Archon of Coronation
+1 Birds of Paradise
+1 Boros Reckoner
+1 Brash Taunter
+1 Champions of Minas Tirith
+1 Crimson Fleet Commodore
+1 Dawnglade Regent
+1 Emberwilde Captain
+1 Kediss, Emberclaw Familiar
+1 Kutzil, Malamet Exemplar
+1 Marisi, Breaker of the Coil
+1 Palace Jailer
+1 Palace Sentinels
+1 Phyrexian Vindicator
+1 Protector of the Crown
+1 Regal Behemoth
+1 Shalai and Hallar
+1 Skyline Despot
+1 Stuffy Doll
+1 Ulvenwald Tracker
+1 Wayta, Trainer Prodigy
+1 Brave the Sands
+1 Court of Ardenvale
+1 Court of Bounty
+1 Court of Embereth
+1 Court of Garenbrig
+1 Court of Grace
+1 Court of Ire
+1 Guilty Conscience
+1 Pain for All
+1 Pariah
+1 Saving Grace
+1 With Great Power . . .
+1 Beast Within
+1 Boros Charm
+1 Fight for the Throne
+1 Generous Gift
+1 Gideon's Sacrifice
+1 Heroic Intervention
+1 Path to Exile
+1 Self-Destruct
+1 Swords to Plowshares
+1 Tail Swipe
+1 Take the Bait
+1 Blasphemous Act
+1 Chain Reaction
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Solar Blaze
+1 Star of Extinction
+1 Three Visits

@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/lnQqk66vJmhilJ-cGA7x0g (source https://archidekt.com/decks/20148228)
+# tags Tokens, Exile, Burn, Treasure; bracket 2; saved 2026-09-05; 1798 tagged of 14208 indexed
+
+Commander
+1 Prosper, Tome-Bound
+
+Deck
+1 Academy Manufactor
+1 Birgi, God of Storytelling
+1 Bonehoard Dracosaur
+1 Crime Novelist
+1 Decadent Dragon
+1 Disciple of the Vault
+1 Etali, Primal Storm
+1 Flaming Tyrannosaurus
+1 Goldspan Dragon
+1 Grim Hireling
+1 Keeper of Secrets
+1 Laelia, the Blade Reforged
+1 Marionette Apprentice
+1 Marionette Master
+1 Mayhem Devil
+1 Mirkwood Bats
+1 Nadier's Nightblade
+1 Nalfeshnee
+1 Plargg and Nassari
+1 Professional Face-Breaker
+1 Reckless Fireweaver
+1 Smaug, Wicked Worm
+1 Weftstalker Ardent
+1 Wild-Magic Sorcerer
+1 Xorn
+1 Arcane Signet
+1 Inspiring Statuary
+1 Lightning Greaves
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Bedevil
+1 Big Score
+1 Deadly Dispute
+1 Delayed Blast Fireball
+1 Hurl Through Hell
+1 Rakdos Charm
+1 Terminate
+1 Unexpected Windfall
+1 Withering Torment
+1 You Find Some Prisoners
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+15 Mountain
+1 Raucous Theater
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Spinerock Knoll
+1 Sulfurous Springs
+6 Swamp
+1 Tainted Peak
+1 Chandra, Torch of Defiance
+1 Curse of Opulence
+1 Passionate Archaeologist
+1 Rain of Riches
+1 Theater of Horrors
+1 Disrupt Decorum
+1 Faithless Looting
+1 Feed the Swarm
+1 Fevered Suspicion
+1 Glimpse the Impossible
+1 Hex Magic
+1 Ignite the Future
+1 Improvisation Capstone
+1 Inspired Tinkering
+1 Light Up the Stage
+1 Reckless Endeavor
+1 Reckless Impulse
+1 Vandalblast
+1 Wrenn's Resolve

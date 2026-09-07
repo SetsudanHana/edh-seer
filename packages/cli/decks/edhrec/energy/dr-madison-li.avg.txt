@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/dr-madison-li/energy
+# theme Energy (1249 decks)
+
+Commander
+1 Dr. Madison Li
+
+Deck
+1 Aether Refinery
+1 Aetherflux Conduit
+1 Aetherworks Marvel
+1 Arcane Signet
+1 Automated Assembly Line
+1 Bespoke Battlewagon
+1 Conversion Apparatus
+1 Decoction Module
+1 Gonti's Aether Heart
+1 Izzet Generatorium
+1 Lightning Greaves
+1 Mystic Forge
+1 Panharmonicon
+1 Plasma Caster
+1 Sol Ring
+1 Solar Transformer
+1 Stone Idol Generator
+1 T-45 Power Armor
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Thought Vessel
+1 Aether Hub
+1 Ancient Den
+1 Buried Ruin
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Ferrous Lake
+1 Glacial Fortress
+1 Great Furnace
+1 HELIOS One
+4 Island
+4 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+4 Plains
+1 Prairie Stream
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Seat of the Synod
+1 Silverbluff Bridge
+1 Skycloud Expanse
+1 Spire of Industry
+1 Sulfur Falls
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Treasure Vault
+1 Assaultron Dominator
+1 Behemoth of Vault 0
+1 Blaster Hulk
+1 Brotherhood Scribe
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Guide of Souls
+1 Jhoira, Weatherlight Captain
+1 Liberty Prime, Recharged
+1 Lightning Runner
+1 Paladin Danse, Steel Maverick
+1 Razorfield Ripper
+1 Rex, Cyber-Hound
+1 Robobrain War Mind
+1 Roil Cartographer
+1 Salvation Colossus
+1 Satya, Aetherflux Genius
+1 Sentry Bot
+1 Solemn Simulacrum
+1 Sphinx of the Revelation
+1 Steel Overseer
+1 Synth Eradicator
+1 The Motherlode, Excavator
+1 Whirler Virtuoso
+1 Aether Revolt
+1 Era of Innovation
+1 Mechanized Production
+1 Vault 112: Sadistic Simulation
+1 Aether Spike
+1 Dispatch
+1 Electrosiphon
+1 Galvanic Discharge
+1 Glimmer of Genius
+1 Swords to Plowshares
+1 Thirst for Knowledge
+1 Tune the Narrative
+1 Austere Command
+1 Jolted Awake
+1 Localized Destruction
+1 One with the Machine
+1 Wake the Past

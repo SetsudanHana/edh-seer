@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/5jtwudNXaWfQ5SNy3EMqBg (source https://moxfield.com/decks/k-ge9x5VXkK8gOoVoHmFTw)
+# tags Mill, Lands Matter, Reanimator; bracket 3; saved 2026-09-05; 2764 tagged of 38059 indexed
+
+Commander
+1 Teval, the Balanced Scale
+
+Deck
+1 Abrupt Decay
+1 Assassin's Trophy
+1 Counterspell
+1 Crop Rotation
+1 Entomb
+1 Mana Drain
+1 Noxious Revival
+1 Riddles in the Dark
+1 Sink into Stupor
+1 Stubborn Denial
+1 Tear Asunder
+1 Aesi, Tyrant of Gyre Strait
+1 Aftermath Analyst
+1 Baleful Strix
+1 Birds of Paradise
+1 Braids, Arisen Nightmare
+1 Colossal Grave-Reaver
+1 Craterhoof Behemoth
+1 Deathrite Shaman
+1 Doom Whisperer
+1 Elves of Deep Shadow
+1 Endurance
+1 Eternal Witness
+1 Hedron Crab
+1 Icetill Explorer
+1 Kheru Goldkeeper
+1 Lotuslight Dancers
+1 Lumra, Bellow of the Woods
+1 Muldrotha, the Gravetide
+1 Psychic Frog
+1 Sidisi, Brood Tyrant
+1 Six
+1 Syr Konrad, the Grim
+1 The Gitrog Monster
+1 The Scarab God
+1 Underrealm Lich
+1 Uro, Titan of Nature's Wrath
+1 Wight of the Reliquary
+1 Altar of Dementia
+1 Amulet of Vigor
+1 Arcane Signet
+1 Conduit of Worlds
+1 Sol Ring
+1 Zuran Orb
+1 Bala Ged Recovery
+1 Damnation
+1 Dread Return
+1 Finale of Devastation
+1 Life from the Loam
+1 Living Death
+1 Nature's Lore
+1 Nature's Rhythm
+1 Reanimate
+1 Three Visits
+1 Toxic Deluge
+1 Victimize
+1 Will of the Sultai
+1 Bojuka Bog
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Cabal Coffers
+1 Cephalid Coliseum
+1 Command Tower
+1 Exotic Orchard
+1 Field of the Dead
+2 Forest
+1 Glacial Chasm
+1 Hinterland Harbor
+1 Llanowar Wastes
+1 Minamo, School at Water's Edge
+1 Misty Rainforest
+1 Nurturing Peatland
+1 Overgrown Tomb
+1 Phyrexian Tower
+1 Polluted Delta
+1 Rejuvenating Springs
+1 Shifting Woodland
+1 Strip Mine
+2 Swamp
+1 Takenuma, Abandoned Mire
+1 Undercity Sewers
+1 Underground Mortuary
+1 Underground River
+1 Undergrowth Stadium
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Saga
+1 Verdant Catacombs
+1 Waterlogged Grove
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Insidious Roots
+1 Polluted Cistern // Dim Oubliette
+1 Ripples of Undeath
+1 Teval's Judgment
+1 Tortured Existence

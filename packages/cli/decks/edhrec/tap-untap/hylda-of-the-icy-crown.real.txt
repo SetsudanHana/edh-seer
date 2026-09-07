@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/am970TY3w016Uw7Ix74rKA (source https://archidekt.com/decks/25954056)
+# tags Tap / Untap, Humans, Spirits; bracket 2; saved 2026-09-04; 574 tagged of 12517 indexed
+
+Commander
+1 Hylda of the Icy Crown
+
+Deck
+1 Adarkar Wastes
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Floodfarm Verge
+1 Frostwalk Bastion
+1 Gemstone Caverns
+1 Glacial Fortress
+1 Gleaming Bastion
+1 Hallowed Fountain
+1 Hengegate Pathway
+14 Island
+1 Mana Confluence
+1 Meticulous Archive
+1 Mystic Gate
+1 Nimbus Maze
+5 Plains
+1 Sea of Clouds
+1 Starting Town
+1 Tundra
+1 Aether Shockwave
+1 Amazing Acrobatics
+1 Blustersquall
+1 Break the Spell
+1 Flusterstorm
+1 Generous Gift
+1 Ice Out
+1 Icy Blast
+1 Long-Term Plans
+1 Negate
+1 Plunge into Winter
+1 Pongify
+1 Reality Shift
+1 Stroke of Midnight
+1 Apprentice Wizard
+1 Bennie Bracks, Zoologist
+1 Court Street Denizen
+1 Dreamshackle Geist
+1 Floodpits Drowner
+1 Githzerai Monk
+1 Gold Myr
+1 Hammers of Moradin
+1 Junk Winder
+1 Lossarnach Captain
+1 Millicent, Restless Revenant
+1 Minister of Impediments
+1 Moonshaker Cavalry
+1 Ornithopter of Paradise
+1 Rhoda, Geist Avenger
+1 Sensational Spider-Man
+1 Sharae of Numbing Depths
+1 Silver Myr
+1 The Wasp, Winsome Avenger
+1 The Wondrous Wasp
+1 Timin, Youthful Geist
+1 Ultimecia, Temporal Threat
+1 Wall of Reverence
+1 Wall of Stolen Identity
+1 Approach of the Second Sun
+1 Borrowing 100,000 Arrows
+1 Cone of Cold
+1 Don't Move
+1 Hidden Strings
+1 Sleep
+1 Split Up
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Fellwar Stone
+1 Hylda's Crown of Winter
+1 Mind Stone
+1 Sapphire Medallion
+1 Sol Ring
+1 Talisman of Progress
+1 Thought Vessel
+1 Copy Enchantment
+1 Opposition
+1 Solitary Sanctuary
+1 Time of Ice
+1 Tractor Beam
+1 Verity Circle

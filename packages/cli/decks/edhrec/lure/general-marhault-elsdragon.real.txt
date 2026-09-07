@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/h40-8WBXiutc4iYbU2jr8A (source https://archidekt.com/decks/5901537)
+# tags Lure, Aggro; bracket 3; saved 2026-08-27; 63 tagged of 2188 indexed
+
+Commander
+1 General Marhault Elsdragon
+
+Deck
+1 Alluring Scent
+1 Armed // Dangerous
+1 Jeska's Will
+1 Nature's Lore
+1 Rishkar's Expertise
+1 Roar of Challenge
+1 Taunting Challenge
+1 You've Been Caught Stealing
+1 Ancient Tomb
+1 Arena of Glory
+1 Cinder Glade
+1 Command Tower
+1 Commercial District
+1 Cragcrown Pathway
+1 Fire-Lit Thicket
+9 Forest
+1 Grove of the Burnwillows
+1 Karplusan Forest
+1 Mossfire Valley
+1 Mosswort Bridge
+8 Mountain
+1 Nykthos, Shrine to Nyx
+1 Rockfall Vale
+1 Rootbound Crag
+1 Spire Garden
+1 Stomping Ground
+1 Thornspire Verge
+1 Wooded Foothills
+1 Anzrag, the Quake-Mole
+1 Atalan Jackal
+1 Bejeweled Warg
+1 Birds of Paradise
+1 Cactusfolk Sureshot
+1 Delighted Halfling
+1 Deus of Calamity
+1 Disciple of Freyalise
+1 Emeritus of Abundance
+1 Enduring Courage
+1 Etali, Primal Storm
+1 Evercoat Ursine
+1 Fanatic of Rhonas
+1 Fyndhorn Elves
+1 Goblin Anarchomancer
+1 Hajar, Loyal Bodyguard
+1 Karlach, Fury of Avernus
+1 Kogla, the Titan Ape
+1 Llanowar Elves
+1 Nylea, God of the Hunt
+1 Ohran Frostfang
+1 Ojer Kaslem, Deepest Growth
+1 Outcaster Trailblazer
+1 Primeval Herald
+1 Professional Face-Breaker
+1 Questing Beast
+1 Screaming Nemesis
+1 Shinen of Life's Roar
+1 Somberwald Sage
+1 Surrak and Goreclaw
+1 Taunting Elf
+1 Toski, Bearer of Secrets
+1 Trumpeting Carnosaur
+1 Twinflame Tyrant
+1 Varchild's War-Riders
+1 Vibrance
+1 Xenagos, God of Revels
+1 Benefactor's Draught
+1 Berserker's Frenzy
+1 Deflecting Swat
+1 Heroic Intervention
+1 Kazuul's Fury
+1 Outmaneuver
+1 Return of the Wildspeaker
+1 Savage Beating
+1 Temur Battle Rage
+1 Doors of Durin
+1 Lumbering Worldwagon
+1 Sol Ring
+1 The Great Henge
+1 Elemental Bond
+1 Garruk's Uprising
+1 Invasion Plans
+1 Lure
+1 Rhythm of the Wild
+1 Rising of the Day

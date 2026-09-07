@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/kyodai-soul-of-kamigawa/arcane
+# theme Arcane (9 decks)
+
+Commander
+1 Kyodai, Soul of Kamigawa
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Dragonstorm Globe
+1 Fellwar Stone
+1 Herald's Horn
+1 Long-Forgotten Gohei
+1 Patchwork Banner
+1 Sol Ring
+1 Urza's Incubator
+1 Arcane Sanctum
+1 Boseiju, Who Endures
+1 Cascading Cataracts
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Exotic Orchard
+3 Forest
+1 Frontier Bivouac
+3 Island
+1 Jungle Shrine
+1 Ketria Triome
+2 Mountain
+1 Mystic Monastery
+1 Nomad Outpost
+1 Opulent Palace
+1 Otawara, Soaring City
+1 Path of Ancestry
+3 Plains
+1 Raugrin Triome
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Savai Triome
+1 Seaside Citadel
+1 Secluded Courtyard
+1 Sokenzan, Crucible of Defiance
+2 Swamp
+1 Takenuma, Abandoned Mire
+1 The World Tree
+1 Unclaimed Territory
+1 Ao, the Dawn Sky
+1 Atsushi, the Blazing Sky
+1 Haru-Onna
+1 Jugan, the Rising Star
+1 Junji, the Midnight Sky
+1 Kairi, the Swirling Sky
+1 Keiga, the Tide Star
+1 King of the Oathbreakers
+1 Kiri-Onna
+1 Kodama of the South Tree
+1 Kokusho, the Evening Star
+1 Kura, the Boundless Sky
+1 Loam Dweller
+1 Miirym, Sentinel Wyrm
+1 Myojin of Blooming Dawn
+1 Myojin of Grim Betrayal
+1 Myojin of Life's Web
+1 Myojin of Seeing Winds
+1 Nikko-Onna
+1 O-Kagachi, Vengeful Kami
+1 Oyobi, Who Split the Heavens
+1 Petalmane Baku
+1 Ryusei, the Falling Star
+1 Sire of the Storm
+1 The Unspeakable
+1 Yosei, the Morning Star
+1 Yuki-Onna
+1 Call the Spirit Dragons
+1 Kindred Discovery
+1 Leyline of the Guildpact
+1 Mirari's Wake
+1 The Dragon-Kami Reborn
+1 The Kami War
+1 Blessed Breath
+1 Death Denied
+1 Ethereal Haze
+1 Evermind
+1 Goryo's Vengeance
+1 Growth Spiral
+1 Peer Through Depths
+1 Reach Through Mists
+1 Rend Flesh
+1 Sift Through Sands
+1 Soulless Revival
+1 Spiritual Visit
+1 Wear Away
+1 Eerie Procession
+1 Eerie Ultimatum
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Ribbons of the Reikai

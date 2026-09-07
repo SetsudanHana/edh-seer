@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/sun-quan-lord-of-wu/horsemanship
+# theme Horsemanship (16 decks)
+
+Commander
+1 Sun Quan, Lord of Wu
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Caged Sun
+1 Contagion Clasp
+1 Gauntlet of Power
+1 Grafted Exoskeleton
+1 Kefnet's Monument
+1 Lightning Greaves
+1 Quietus Spike
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Key to the Vault
+1 Thought Vessel
+1 Castle Vantress
+28 Island
+1 Karn's Bastion
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Rogue's Passage
+1 Blighted Agent
+1 Broodbirth Viper
+1 Cephalid Constable
+1 Chasm Skulker
+1 Core Prowler
+1 Corpse Cur
+1 Dune Mover
+1 Enduring Curiosity
+1 Ichorclaw Myr
+1 Laboratory Maniac
+1 Lu Xun, Scholar General
+1 Marchesa's Infiltrator
+1 Mist-Syndicate Naga
+1 Myr Convert
+1 Necropede
+1 Neurok Commando
+1 Plague Myr
+1 Psychosis Crawler
+1 Silent Hallcreeper
+1 Soulknife Spy
+1 Sturmgeist
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Viral Drake
+1 Wu Scout
+1 Coastal Piracy
+1 Imprisoned in the Moon
+1 Inexorable Tide
+1 Propaganda
+1 Reconnaissance Mission
+1 Rhystic Study
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Cyclonic Rift
+1 Fierce Guardianship
+1 High Tide
+1 Negate
+1 Pongify
+1 Rapid Hybridization
+1 Reality Shift
+1 Resculpt
+1 Swan Song
+1 Jace, Wielder of Mysteries
+1 Capture of Jingzhou
+1 Contentious Plan
+1 Curse of the Swine
+1 Distorted Curiosity
+1 Tezzeret's Gambit

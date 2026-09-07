@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/IgL3nUGTcRm0Y85ZLfS0aw (source https://moxfield.com/decks/dvXQTo25gkmh-q781d8Gtw)
+# tags Pillow Fort, Defenders; bracket 2; saved 2026-09-04; 449 tagged of 9800 indexed
+
+Commander
+1 Betor, Kin to All
+
+Deck
+1 Abzan Beastmaster
+1 Arasta of the Endless Web
+1 Arbor Adherent
+1 Arboreal Grazer
+1 Archfiend of Despair
+1 Axebane Guardian
+1 Baird, Steward of Argive
+1 Beast Whisperer
+1 Blight Pile
+1 Bloodletter of Aclazotz
+1 Canopy Gargantuan
+1 Carven Caryatid
+1 Crystal Barricade
+1 Dazzling Ramparts
+1 Doran, Besieged by Time
+1 Dragonlord Dromoka
+1 Faeburrow Elder
+1 Felothar the Steadfast
+1 Great Forest Druid
+1 Indomitable Ancients
+1 Overgrown Battlement
+1 Rampart Architect
+1 Regal Force
+1 Shalai, Voice of Plenty
+1 Stalwart Shield-Bearers
+1 Sylvan Caryatid
+1 The Walls of Ba Sing Se
+1 Towering Titan
+1 Tree of Perdition
+1 Tree of Redemption
+1 Unhallowed Phalanx
+1 Walking Bulwark
+1 Wall of Blossoms
+1 Wall of Omens
+1 Welcoming Vampire
+1 Windborn Muse
+1 Abzan Charm
+1 Anguished Unmaking
+1 Bar the Door
+1 Despark
+1 Inkshield
+1 Swords to Plowshares
+1 Tower Defense
+1 Access Tunnel
+1 Bojuka Bog
+1 Canopy Vista
+1 Command Tower
+1 Deceptive Landscape
+1 Evolving Wilds
+1 Exotic Orchard
+7 Forest
+1 Fortified Village
+1 Isolated Chapel
+1 Overgrown Farmland
+1 Path of Ancestry
+6 Plains
+1 Radiant Grove
+1 Sandsteppe Citadel
+1 Sungrass Prairie
+1 Sunpetal Grove
+5 Swamp
+1 Temple of Malady
+1 Temple of Plenty
+1 Temple of Silence
+1 Twilight Mire
+1 Woodland Cemetery
+1 Angelic Chorus
+1 Assault Formation
+1 Ghostly Prison
+1 Jaws of Defeat
+1 Smile at Death
+1 Sphere of Safety
+1 Wound Reflection
+1 Camaraderie
+1 Collective Unconscious
+1 Eerie Ultimatum
+1 Expel the Interlopers
+1 Fell the Mighty
+1 Reunion of the House
+1 Shamanic Revelation
+1 Slaughter the Strong
+1 Tip the Scales
+1 Huatli, the Sun's Heart
+1 Swiftfoot Boots

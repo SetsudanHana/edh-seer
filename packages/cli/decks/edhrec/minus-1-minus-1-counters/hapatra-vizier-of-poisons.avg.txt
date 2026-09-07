@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/hapatra-vizier-of-poisons/minus-1-minus-1-counters
+# theme -1/-1 Counters (1191 decks)
+
+Commander
+1 Hapatra, Vizier of Poisons
+
+Deck
+1 Arcane Signet
+1 Contagion Clasp
+1 Contagion Engine
+1 Golgari Signet
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Resilience
+1 Whispersilk Cloak
+1 Bojuka Bog
+1 Command Tower
+1 Deathcap Glade
+9 Forest
+1 Golgari Rot Farm
+1 Grasping Dunes
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Rogue's Passage
+10 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Woodland Cemetery
+1 Ammit Eternal
+1 Banewhip Punisher
+1 Blood Artist
+1 Cankerbloom
+1 Carnifex Demon
+1 Channeler Initiate
+1 Devoted Druid
+1 Dread Tiller
+1 Dusk Urchins
+1 Evolution Sage
+1 Fynn, the Fangbearer
+1 Generous Patron
+1 Hooded Blightfang
+1 Maha, Its Feathers Night
+1 Massacre Girl, Known Killer
+1 Midnight Banshee
+1 Necroskitter
+1 Obelisk Spider
+1 Persistent Constrictor
+1 Poison-Tip Archer
+1 Seshiro the Anointed
+1 Sinister Gnarlbark
+1 Skinrender
+1 Soul Snuffers
+1 Spitting Dilophosaurus
+1 Wickerbough Elder
+1 Yawgmoth, Thran Physician
+1 Zulaport Cutthroat
+1 Beastmaster Ascension
+1 Blowfly Infestation
+1 Crumbling Ashes
+1 Cryptolith Rite
+1 Flourishing Defenses
+1 Moldervine Reclamation
+1 Nest of Scarabs
+1 Parallel Lives
+1 Assassin's Trophy
+1 Atomize
+1 Beast Within
+1 Golgari Charm
+1 Grim Affliction
+1 Heroic Intervention
+1 Putrefy
+1 Splendid Agony
+1 Village Rites
+1 Liliana, Death Wielder
+1 Black Sun's Zenith
+1 Cultivate
+1 Incremental Blight
+1 Kodama's Reach
+1 Lethal Sting
+1 Liliana's Influence
+1 Persist
+1 Rampant Growth
+1 Triumph of the Hordes
+1 Unnatural Restoration

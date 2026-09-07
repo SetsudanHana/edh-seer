@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 import type { ProjectedGraph } from "./graph-projection.js";
-import { attachRolesAndArt } from "./wire-graph.js";
+import { attachRolesAndArt, dedupeBareTriggers } from "./wire-graph.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -176,12 +176,13 @@ test("edges are serialized to the wire shape: reasons collapse to their text", (
     edges: [{
       from: "A", to: "B", weight: 1.5, tags: ["ramp"],
       reasons: [{ tag: "ramp", text: "A ramps into B" } as never],
+      drawn: true,
     }],
     undirectedReasons: 0,
     offDeckReasons: 0,
   };
   const out = attachRolesAndArt(graph, [], new Map(), normalize);
-  expect(out.edges).toEqual([{ from: "A", to: "B", weight: 1.5, tags: ["ramp"], reasonTexts: ["A ramps into B"] }]);
+  expect(out.edges).toEqual([{ from: "A", to: "B", weight: 1.5, tags: ["ramp"], reasonTexts: ["A ramps into B"], drawn: true }]);
 });
 
 test("undirectedReasons and offDeckReasons pass straight through", () => {
@@ -348,4 +349,16 @@ test("a face index with no matching doc.faces entry falls back to the card-level
 
   expect(out.nodes[0]?.artCrop).toBe("card.jpg");
   expect(out.nodes[0]?.typeLine).toBe("Artifact // Land");
+});
+
+test("a bare 'triggers' sentence yields to a sibling that says what the card does", () => {
+  expect(dedupeBareTriggers([
+    "When Sugar Coat is cast, Displacer Kitten triggers",
+    "When Sugar Coat is cast, Displacer Kitten blinks a permanent",
+  ])).toEqual(["When Sugar Coat is cast, Displacer Kitten blinks a permanent"]);
+  // Alone, the bare sentence stays: it is the honest form when nothing fuller exists.
+  expect(dedupeBareTriggers(["When A is cast, B triggers"])).toEqual(["When A is cast, B triggers"]);
+  // A different cause is a different claim, not a duplicate.
+  expect(dedupeBareTriggers(["When A is cast, B triggers", "When C enters, B blinks a permanent"]))
+    .toHaveLength(2);
 });

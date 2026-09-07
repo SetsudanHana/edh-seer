@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/WojbYVf0SOZxa8dDAUshgA (source https://archidekt.com/decks/12601934)
+# tags Squad, Populate; bracket 2; saved 2025-04-18; 2 tagged of 5028 indexed
+
+Commander
+1 Jared Carthalion
+
+Deck
+1 Abyssal Harvester
+1 Adrix and Nev, Twincasters
+1 Archetype of Finality
+1 Arco-Flagellant
+1 Bloodcrusher of Khorne
+1 Bone-Cairn Butcher
+1 Cayth, Famed Mechanist
+1 Galadhrim Brigade
+1 Garna, the Bloodflame
+1 Gary Clone
+1 Ghired, Conclave Exile
+1 Khenra Charioteer
+1 Maelstrom Archangel
+1 O-Kagachi, Vengeful Kami
+1 Ohran Frostfang
+1 Powder Ganger
+1 Ramos, Dragon Engine
+1 Ruthless Radrat
+1 Securitron Squadron
+1 Sicarian Infiltrator
+1 Solemn Simulacrum
+1 Space Marine Devastator
+1 Thrill-Kill Disciple
+1 Trostani, Selesnya's Voice
+1 Ultramarines Honour Guard
+1 Urabrask the Hidden
+1 Vanguard Suppressor
+1 Wasteland Raider
+1 Wayfaring Temple
+1 Xavier Sal, Infested Captain
+1 Zephyrim
+1 Abzan Charm
+1 Druid's Deliverance
+1 Growth Spiral
+1 Naya Charm
+1 Rootborn Defenses
+1 Sultai Charm
+1 Sylvan Reclamation
+1 Terminate
+1 Unite the Coalition
+1 Aggressive Biomancy
+1 Conflux
+1 Cultivate
+1 Explosive Vegetation
+1 Farseek
+1 Full Flowering
+1 Iridian Maelstrom
+1 Kodama's Reach
+1 Rampant Growth
+1 Search for Tomorrow
+1 Arboreal Alliance
+1 Emblem of the Warmind
+1 Growing Ranks
+1 Maelstrom Nexus
+1 Arcane Sanctum
+1 Command Tower
+1 Crumbling Necropolis
+1 Exotic Orchard
+5 Forest
+1 Frontier Bivouac
+5 Island
+1 Jungle Shrine
+5 Mountain
+1 Mystic Monastery
+1 Nomad Outpost
+1 Opulent Palace
+5 Plains
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Seaside Citadel
+5 Swamp
+1 Arcane Signet
+1 Chromatic Lantern
+1 Coalition Relic
+1 Commander's Sphere
+1 Fellwar Stone
+1 Sol Ring
+1 Sol Talisman

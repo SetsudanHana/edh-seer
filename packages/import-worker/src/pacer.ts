@@ -37,12 +37,20 @@ export class Pacer {
       return Response.json(outcome);
     } catch (err) {
       if (err instanceof TooBusy) {
+        // WARN, NOT ERROR: a full queue is the pacer working, not the pacer broken. Worth a line
+        // because a sustained run of these is the only signal that the queue cap is set too low for
+        // real traffic, which no response code can distinguish from one reader in a loop.
+        console.warn({ event: "import.queue_full", source, id });
         return Response.json({ kind: "rejected", status: 429, message: "importer busy" });
       }
       if (err instanceof Paused) {
+        console.warn({ event: "import.breaker_open", source, id });
         return Response.json({ kind: "rejected", status: 503, message: "importer paused" });
       }
-      // Anything else already tripped the breaker inside the gate.
+      // Anything else already tripped the breaker inside the gate. THE ERROR TEXT IS THE POINT: from
+      // outside, this 502 and the two above are one status, and the difference between "Moxfield is
+      // down", "we timed out at 10s" and "our own code threw" is only readable here.
+      console.error({ event: "import.upstream_failed", source, id, error: String(err) });
       return Response.json({ kind: "rejected", status: 502, message: "deck site unreachable" });
     }
   }
@@ -65,7 +73,9 @@ export class Pacer {
       }
       if (err instanceof Error && err.message.includes("shape changed")) {
         // The site changed its JSON under us. Refusing beats importing a half-read deck, and this is
-        // the message worth seeing in the logs.
+        // the message worth seeing in the logs -- which it now is, at ERROR, because it is the one
+        // failure here that needs a code change and will otherwise sit silent behind a 502.
+        console.error({ event: "import.shape_changed", source, id, error: err.message });
         return { kind: "rejected", status: 502, message: "importer out of date for this deck site" };
       }
       throw err;

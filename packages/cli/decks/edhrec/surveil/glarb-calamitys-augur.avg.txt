@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/glarb-calamitys-augur/surveil
+# theme Surveil (180 decks)
+
+Commander
+1 Glarb, Calamity's Augur
+
+Deck
+1 Arcane Signet
+1 Conduit of Worlds
+1 Hedge Shredder
+1 Planetarium of Wan Shi Tong
+1 Sensei's Divining Top
+1 Sol Ring
+1 Bojuka Bog
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Hedge Maze
+1 Hinterland Harbor
+5 Island
+1 Llanowar Wastes
+1 Misty Rainforest
+1 Opulent Palace
+1 Overgrown Tomb
+1 Polluted Delta
+1 Rejuvenating Springs
+5 Swamp
+1 Undercity Sewers
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Verdant Catacombs
+1 Watery Grave
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Aesi, Tyrant of Gyre Strait
+1 Azusa, Lost but Seeking
+1 Birds of Paradise
+1 Colossal Grave-Reaver
+1 Doom Whisperer
+1 Dryad of the Ilysian Grove
+1 Eternal Witness
+1 Eye of Duskmantle
+1 Grave Researcher
+1 Grolnok, the Omnivore
+1 High Fae Trickster
+1 Icetill Explorer
+1 Loot, Exuberant Explorer
+1 Lotus Cobra
+1 Lumra, Bellow of the Woods
+1 Matoya, Archon Elder
+1 Mirko, Obsessive Theorist
+1 Muldrotha, the Gravetide
+1 Mulldrifter
+1 Poison Dart Frog
+1 Ramunap Excavator
+1 Seedborn Muse
+1 Six
+1 Spore Frog
+1 Tatyova, Benthic Druid
+1 The Gitrog Monster
+1 Valley Floodcaller
+1 Wonder
+1 Animate Dead
+1 Enhanced Surveillance
+1 Exploration
+1 Frogify
+1 Rhystic Study
+1 Ripples of Undeath
+1 An Offer You Can't Refuse
+1 Assassin's Trophy
+1 Beast Within
+1 Brainstorm
+1 Counterspell
+1 Dark Ritual
+1 Deadly Rollick
+1 Fell the Profane
+1 Growth Spiral
+1 Noxious Revival
+1 Price of Fame
+1 Culling Ritual
+1 Cultivate
+1 Dread Return
+1 Farseek
+1 Kodama's Reach
+1 Living Death
+1 Nature's Lore
+1 Reanimate
+1 Toxic Deluge
+1 Victimize

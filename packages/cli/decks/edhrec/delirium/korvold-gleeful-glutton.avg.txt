@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/korvold-gleeful-glutton/delirium
+# theme Delirium (26 decks)
+
+Commander
+1 Korvold, Gleeful Glutton
+
+Deck
+1 Altar of the Goyf
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Commander's Sphere
+1 Matzalantli, the Great Door
+1 Sol Ring
+1 Swiftfoot Boots
+1 Wayfarer's Bauble
+1 Bojuka Bog
+1 Cinder Glade
+1 Command Tower
+1 Darkmoss Bridge
+1 Dragonskull Summit
+1 Dryad Arbor
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+6 Forest
+1 Great Furnace
+1 Karplusan Forest
+4 Mountain
+1 Overgrown Tomb
+1 Riveteers Overlook
+1 Savage Lands
+1 Slagwoods Bridge
+1 Smoldering Marsh
+1 Stomping Ground
+4 Swamp
+1 Terramorphic Expanse
+1 Tree of Tales
+1 Twisted Landscape
+1 Vault of Whispers
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Invasion of Ergamon
+1 Invasion of Zendikar
+1 Baba Lysaga, Night Witch
+1 Blood Pet
+1 Cankerbloom
+1 Demolisher Spawn
+1 Diamond Lion
+1 Dockside Chef
+1 Evendo Brushrazer
+1 Fear of Missing Out
+1 Gilded Goose
+1 Goldhound
+1 Haywire Mite
+1 Ignoble Hierarch
+1 Lizard Blades
+1 Mayhem Devil
+1 Omnivorous Flytrap
+1 Orcish Lumberjack
+1 Polygoyf
+1 Reckless Barbarian
+1 Sakura-Tribe Elder
+1 Solemn Simulacrum
+1 Springbloom Druid
+1 Tinder Wall
+1 Tireless Provisioner
+1 Twitching Doll
+1 Wild Cantor
+1 Awakening Zone
+1 Cindervines
+1 Khalni Heart Expedition
+1 Seal of Doom
+1 Seal of Primordium
+1 Tarmogoyf Nest
+1 Unbridled Growth
+1 Vessel of Volatility
+1 Assassin's Trophy
+1 Beast Within
+1 Crop Rotation
+1 Deadly Dispute
+1 Drag to the Roots
+1 Entish Restoration
+1 Harrow
+1 Peer Past the Veil
+1 Supper for Spiders
+1 Grist, the Hunger Tide
+1 Vraska, Golgari Queen
+1 Blasphemous Act
+1 Convert to Slime
+1 Deluge of Doom
+1 Faithless Looting
+1 Farseek
+1 Imposing Grandeur
+1 Rise of the Witch-king
+1 Victimize

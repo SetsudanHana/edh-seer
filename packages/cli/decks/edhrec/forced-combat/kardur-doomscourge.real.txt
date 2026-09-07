@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/rguuHQQXewGH3uKSQ98RWg (source https://archidekt.com/decks/17014993)
+# tags Forced Combat, Sacrifice, Treasure; bracket 3; saved 2026-09-05; 734 tagged of 7565 indexed
+
+Commander
+1 Kardur, Doomscourge
+
+Deck
+1 Ad Nauseam
+1 Big Score
+1 Burnt Offering
+1 Corrupted Conviction
+1 Culling the Weak
+1 Dark Ritual
+1 Deadly Dispute
+1 Deadly Rollick
+1 Demand Answers
+1 Eviscerator's Insight
+1 Fire Covenant
+1 Fling
+1 Hellish Rebuke
+1 Imp's Mischief
+1 Malakir Rebirth
+1 Not Dead After All
+1 Rakdos Charm
+1 Sacrifice
+1 Soul Shatter
+1 Supernatural Stamina
+1 Tibalt's Trickery
+1 Undying Evil
+1 Undying Malice
+1 Untimely Malfunction
+1 Village Rites
+1 Arcane Signet
+1 Ashnod's Altar
+1 Bolas's Citadel
+1 Cursed Mirror
+1 Expedition Map
+1 Jet Medallion
+1 Liquimetal Torque
+1 Silent Gravestone
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Indulgence
+1 The One Ring
+1 Arid Mesa
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Beacon
+1 Command Tower
+1 Dark Fortress
+1 Dragonskull Summit
+1 Haunted Ridge
+1 Luxury Suite
+1 Marsh Flats
+1 Mines of Moria
+1 Mortuary Mire
+1 Mount Doom
+5 Mountain
+1 Phyrexian Tower
+1 Polluted Delta
+1 Prismatic Vista
+1 Raucous Theater
+1 Sanctum of Eternity
+1 Sulfurous Springs
+5 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Black Market Connections
+1 Dictate of Erebos
+1 Grave Pact
+1 Phyrexian Arena
+1 Revel in Riches
+1 The Meathook Massacre
+1 Blasphemous Edict
+1 Disrupt Decorum
+1 Inquisition of Kozilek
+1 Thoughtseize
+1 Toxic Deluge
+1 Vandalblast
+1 Deadpool, Trading Card
+1 Fulminator Mage
+1 Gleeful Arsonist
+1 Magus of the Wheel
+1 Mahadi, Emporium Master
+1 Massacre Wurm
+1 Master of Cruelties
+1 Mayhem Devil
+1 Morbid Opportunist
+1 Sheoldred, the Apocalypse
+1 Smaug the Magnificent
+1 Soulless Jailer
+1 Vial Smasher the Fierce
+1 Zulaport Cutthroat

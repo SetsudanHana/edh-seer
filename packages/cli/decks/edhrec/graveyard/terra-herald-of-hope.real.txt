@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/gtrTP7JI6RUQXqwndHuwOw (source https://archidekt.com/decks/19196837)
+# tags Self-Mill, Reanimator, Graveyard; bracket 2; saved 2026-09-05; 631 tagged of 19110 indexed
+
+Commander
+1 Terra, Herald of Hope
+
+Deck
+1 Alesha, Who Laughs at Fate
+1 Ardbert, Warrior of Darkness
+1 Aurelia, the Warleader
+1 Bastion Protector
+1 Bruse Tarl, Boorish Herder
+1 Celes, Rune Knight
+1 Enterprising Scallywag
+1 Flayer of the Hatebound
+1 Gaius van Baelsar
+1 Gau, Feral Youth
+1 General Leo Cristophe
+1 Grave Researcher
+1 Impulsivity
+1 Joshua, Phoenix's Dominant
+1 Karmic Guide
+1 Luminous Broodmoth
+1 Meteor Golem
+1 Perforating Artist
+1 Practiced Scrollsmith
+1 Priest of Fell Rites
+1 Rapacious Dragon
+1 Shimmercreep
+1 Siegfried, Famed Swordsman
+1 Solemn Simulacrum
+1 Spectacular Spider-Man
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 The Queen of Dale
+1 The Warring Triad
+1 Twilight Diviner
+1 Umbral Collar Zealot
+1 Undercity Eliminator
+1 Vile Entomber
+1 Arcane Signet
+1 Key to the City
+1 Phoenix Down
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Talisman of Indulgence
+1 The Falcon, Airship Restored
+1 Wayfarer's Bauble
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Desolate Mire
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fetid Heath
+1 Foreboding Ruins
+1 Furycalm Snarl
+1 Geothermal Bog
+1 Graven Cairns
+1 High Market
+1 Isolated Chapel
+1 Midgar, City of Mako
+3 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+4 Plains
+1 Rugged Prairie
+1 Sacred Peaks
+1 Shadowblood Ridge
+1 Shineshadow Snarl
+1 Smoldering Marsh
+1 Sulfurous Springs
+1 Sunlit Marsh
+1 Sunscorched Divide
+5 Swamp
+1 Big Score
+1 Boros Charm
+1 Deadly Dispute
+1 Duty Beyond Death
+1 Flashback
+1 Laughing Mad
+1 Lorehold Charm
+1 Mortify
+1 Response // Resurgence
+1 Swords to Plowshares
+1 Borrowed Knowledge
+1 Defossilize
+1 Diabolic Intent
+1 Fix What's Broken
+1 Reanimate
+1 Rise of the Dark Realms
+1 Ruinous Ultimatum
+1 Stitch Together
+1 Primary Research
+1 Ral Zarek, Guest Lecturer

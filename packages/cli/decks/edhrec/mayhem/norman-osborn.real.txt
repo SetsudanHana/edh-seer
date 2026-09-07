@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/G4o37K_lBM7AKC4ADoJfdg (source https://archidekt.com/decks/23900289)
+# tags Mayhem, Discard, Villains, Connive; bracket 2; saved 2026-09-05; 183 tagged of 18105 indexed
+
+Commander
+1 Norman Osborn
+
+Deck
+1 An Offer You Can't Refuse
+1 Bedevil
+1 Change of Plans
+1 Chaos Warp
+1 Frantic Search
+1 Lethal Scheme
+1 Spider-Sense
+1 Terminate
+1 Withering Torment
+1 Arcane Signet
+1 Dimir Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Matzalantli, the Great Door
+1 Monument to Endurance
+1 Pumpkin Bombs
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Archnemesis
+1 Avengers: Under Siege
+1 Black Market Connections
+1 Burning Vengeance
+1 Construct a Cosmic Cube
+1 Cool but Rude
+1 Doom Reigns Supreme
+1 Glorious Purpose
+1 Rewrite History
+1 Shadow of the Goblin
+1 Baron Strucker, HYDRA Overlord
+1 Carnage, Crimson Chaos
+1 Crossbones, Malicious Mercenary
+1 Doctor Doom
+1 Doctor Doom, King of Latveria
+1 Green Goblin, Nemesis
+1 HYDRA Assault Robot
+1 Iron Monger, Sadistic Tycoon
+1 Kang, Temporal Tyrant
+1 Kid Loki
+1 Leader, Super-Genius
+1 Loki, God of Mischief
+1 Loki, the Deceiver
+1 Madame Hydra
+1 Moonstone, Harsh Mistress
+1 Mysterio, Master of Illusion
+1 Prowler, Clawed Thief
+1 Red Ghost, Intangible Genius
+1 Shriek, Treblemaker
+1 Stilt-Man, Towering Terror
+1 Taskmaster, Mercenary Mimic
+1 The Masters of Evil
+1 The Squadron Sinister
+1 Tombstone, Career Criminal
+1 Ultimate Green Goblin
+1 Ultron, Unlimited
+1 Blasphemous Act
+1 Endless Ranks of HYDRA
+1 Kindred Dominance
+1 Toxic Deluge
+1 Vandalblast
+1 Canyon Slough
+1 Choked Estuary
+1 Coastal Peak
+1 Command Tower
+1 Crumbling Necropolis
+1 Daily Bugle Building
+1 Dark Fortress
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Pools
+1 Foreboding Ruins
+1 Hidden Lair
+3 Island
+1 Luxury Suite
+3 Mountain
+1 Oscorp Industries
+1 Path of Ancestry
+1 Reliquary Tower
+1 Scavenger Grounds
+1 Scorched Geyser
+1 Secluded Courtyard
+1 Seething Landscape
+1 Smoldering Marsh
+1 Spymaster's Vault
+1 Sulfur Falls
+1 Sunken Hollow
+4 Swamp
+1 Unclaimed Territory
+1 Villainous Hideout

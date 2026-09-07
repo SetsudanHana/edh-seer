@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/dsDmXYtzaiW0AttEGJKVNA (source https://moxfield.com/decks/KmLwInKvo0Kq1sS6RlKzwA)
+# tags Control, Cycling, Reanimator; bracket 2; saved 2026-09-04; 224 tagged of 26359 indexed
+
+Commander
+1 Hashaton, Scarab's Fist
+
+Deck
+1 Accursed Duneyard
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Heath
+1 Geier Reach Sanitarium
+1 Glacial Fortress
+6 Island
+1 Isolated Chapel
+1 Path of Ancestry
+3 Plains
+1 Prairie Stream
+1 Sunken Hollow
+7 Swamp
+1 Tainted Field
+1 Tainted Isle
+1 Temple of the False God
+1 Amazing Acrobatics
+1 Arcane Denial
+1 Bitter Triumph
+1 Counterspell
+1 Despark
+1 Dovin's Veto
+1 Faithful Mending
+1 Frantic Search
+1 Rites of Refusal
+1 Swords to Plowshares
+1 Angel of the Ruins
+1 Archfiend of Ifnir
+1 Archon of Cruelty
+1 Ashen Rider
+1 Bog Witch
+1 Cryptbreaker
+1 Dusk Mangler
+1 Ghostly Pilferer
+1 Gleaming Overseer
+1 Jace's Archivist
+1 Jin-Gitaxias, Core Augur
+1 Karmic Guide
+1 Ledger Shredder
+1 Likeness Looter
+1 Malcolm, Alluring Scoundrel
+1 Massacre Wurm
+1 Notion Thief
+1 Overseer of the Damned
+1 Peregrine Drake
+1 Putrid Imp
+1 Raffine, Scheming Seer
+1 Resolute Archangel
+1 Rhet-Tomb Mystic
+1 Rona, Herald of Invasion
+1 Rune-Scarred Demon
+1 Skirge Familiar
+1 Sphinx of the Second Sun
+1 Sun Titan
+1 Undertaker
+1 Valgavoth, Terror Eater
+1 Vohar, Vodalian Desecrator
+1 Arcane Signet
+1 Dimir Signet
+1 Lightning Greaves
+1 Neurok Stealthsuit
+1 Sol Ring
+1 Springleaf Drum
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The Underworld Cookbook
+1 Diabolic Tutor
+1 Living Death
+1 Persist
+1 Reanimate
+1 Rise of the Dark Realms
+1 Stitch Together
+1 Supreme Verdict
+1 Victimize
+1 Ever-Watching Threshold
+1 Monologue Tax
+1 Oversold Cemetery
+1 Propaganda
+1 Tortured Existence

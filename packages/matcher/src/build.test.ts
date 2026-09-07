@@ -1,5 +1,7 @@
 import { describe, expect, it, test } from "vitest";
-import { detectBuildCategories, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf } from "./build.js";
+import { detectBuildCategories, detectBuildFacets, computeBuild, rampResilience, rolesByCard, doubleDutyRating, DOUBLE_DUTY_MULT, scoreBuild, parentImpact, landsImpactOf, answersImpactOf, templateBlend, SECONDARY_SHARE, BUILD_PARENTS } from "./build.js";
+import { ARCHETYPE_LEAD_FLOOR } from "./archetypes.js";
+import TEMPLATE from "./template-targets.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
 import type { CardTags } from "@edh-seer/tagger";
 import { COVERAGE_CLASSES } from "./answer-coverage.js";
@@ -90,29 +92,30 @@ test("protection is detected; a land-fetch is ramp not a tutor", () => {
   expect(m.get("tutor")?.has("Rampant Growth")).toBeFalsy();
 });
 
-// 10 ramp + 10 draw + 10 removal + 3 wipes + 36 lands = a "complete" goodstuff shell.
+// Built to the POPULATION row (2026-09-06): 11 ramp + 13 draw/scry + 13 removal + 2 wipes + 36
+// lands = a "complete" goodstuff shell. Read from the file so a re-pull moves this fixture with it.
 const completeShell = (): DeckCard[] => {
   const cards: DeckCard[] = [];
-  for (let i = 0; i < 10; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility));
-  for (let i = 0; i < 10; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
+  const pop = TEMPLATE.population;
+  for (let i = 0; i < pop.ramp; i++) cards.push(mk(`Rock ${i}`, "Add {C}.", "Artifact", rampAbility));
+  for (let i = 0; i < pop.consistency - 4; i++) cards.push(mk(`Draw ${i}`, "Draw a card.", "Sorcery", drawAbility));
   for (let i = 0; i < 4; i++) cards.push(mk(`Scry ${i}`, "Scry 2.", "Sorcery"));
   // TASK 3: spread across all five answer classes so this shell also hits full COVERAGE, not just
   // full count -- ten creature-only kill spells would now cap Interaction below its target.
-  for (let i = 0; i < 6; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
+  for (let i = 0; i < pop.interaction - 4; i++) cards.push(mk(`Kill ${i}`, "Destroy target creature.", "Instant"));
   cards.push(mk("Wipe Art", "Destroy target artifact.", "Instant"));
   cards.push(mk("Wipe Ench", "Destroy target enchantment.", "Instant"));
   cards.push(mk("Wipe Walker", "Destroy target planeswalker.", "Instant"));
   cards.push(mk("Wipe Land", "Destroy target land.", "Instant"));
-  for (let i = 0; i < 3; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
+  for (let i = 0; i < pop.boardWipes; i++) cards.push(mk(`Wipe ${i}`, "Destroy all creatures.", "Sorcery"));
   for (let i = 0; i < 36; i++) cards.push(mk(`Land ${i}`, "", "Basic Land — Forest"));
   return cards;
 };
 
 test("a complete goodstuff shell scores exactly 5 (every parent, and lands, exactly at target)", () => {
-  // 10 ramp = Ramp 10/10, 10 draw + 4 scry = Consistency 14/14, 10 kill spread across all five
-  // answer classes = Interaction 10/10 count AND coverage 1.0 (task 3), 3 wipes = Board wipes
-  // 3/3, 36 lands on the nose -- every scored parent attains 1.0, so the weighted mean is 5
-  // exactly rather than merely "near" it.
+  // Every parent exactly at the population row (11/13/13/2), Interaction spread across all five
+  // answer classes so coverage is 1.0 too (task 3), 36 lands on the nose -- every scored parent
+  // attains 1.0, so the weighted mean is 5 exactly rather than merely "near" it.
   const { buildScore } = computeBuild(completeShell(), "goodstuff");
   expect(buildScore).toBeCloseTo(5, 5);
 });
@@ -121,21 +124,102 @@ test("an empty pile scores near 0 and suggests the big gaps", () => {
   const { buildScore, suggestions } = computeBuild([mk("Lonely", "Vanilla.", "Creature")], "goodstuff");
   expect(buildScore).toBeLessThan(1);
   expect(suggestions.length).toBeGreaterThan(0);
-  expect(suggestions.some((s) => /Ramp 0\/10/.test(s))).toBe(true);
+  expect(suggestions.some((s) => new RegExp(`Ramp 0/${TEMPLATE.population.ramp}`).test(s))).toBe(true);
 });
 
-// RETARGETED for Task 7: `boardWipe` and `protection` no longer carry a target of their own --
-// the archetype delta named on each now reaches the PARENT that owns it (`Board wipes` is
-// boardWipe's own single-leaf parent and moves unchanged in meaning; `protection` lives inside the
-// multi-leaf `Interaction` parent, so its delta widens the whole group). See build.ts's
-// ARCHETYPE_TARGET_DELTAS doc comment for the full reasoning and which archetypes this affects.
-test("archetype deltas shift PARENT targets: Voltron wants fewer wipes, more interaction", () => {
+// THE TARGET IS THE THEME'S OWN ROW NOW (owner rulings 2026-09-06, spec
+// `2026-09-06-theme-template-proposal.md`): the hand-written deltas (voltron +3 protection, −2
+// wipes) are gone and `template-targets.json` says what a Voltron deck RUNS on EDHREC -- 19.5,
+// read as 20 whole cards, interaction against a population of 13, and wipes at the population's 2, so the old "fewer
+// wipes" claim was never in the data. A bare `primary` reads that row at full confidence.
+test("a primary archetype reads its own EDHREC row: Voltron runs more interaction, not fewer wipes", () => {
   const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
   const voltron = computeBuild(cards, "voltron").buildParents;
   const goodstuff = computeBuild(cards, "goodstuff").buildParents;
   const t = (ps: typeof voltron, name: string) => ps.find((p) => p.name === name)!.target;
-  expect(t(voltron, "Board wipes")).toBeLessThan(t(goodstuff, "Board wipes"));
+  // Read as a WHOLE card (owner, 2026-09-06): the file keeps the half, the target does not.
+  expect(t(voltron, "Interaction")).toBe(Math.round(TEMPLATE.themes.voltron.interaction));
   expect(t(voltron, "Interaction")).toBeGreaterThan(t(goodstuff, "Interaction"));
+  expect(t(voltron, "Board wipes")).toBe(TEMPLATE.population.boardWipes);
+  // goodstuff has NO row on purpose (its population is cEDH midrange, spec §5): population all round.
+  for (const p of goodstuff) expect(p.target).toBe(TEMPLATE.population[p.key]);
+});
+
+// Owner ruling 2026-09-06 (roadmap W19): a wipe is not a by-turn requirement, so no hypergeometric
+// derives it -- wipes stay the population's 2 EXCEPT where a theme leans by more than one, and
+// superfriends does (the board is walkers, and a wipe protects them). The file carries the row.
+test("superfriends wants three times the wipes: its board is walkers, and a wipe protects them", () => {
+  const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
+  const t = (a: Parameters<typeof computeBuild>[1]) =>
+    computeBuild(cards, a).buildParents.find((p) => p.name === "Board wipes")!.target;
+  expect(t("goodstuff")).toBe(TEMPLATE.population.boardWipes);
+  expect(t("superfriends")).toBe(Math.round(TEMPLATE.themes.superfriends.boardWipes));
+  expect(t("superfriends")).toBeGreaterThanOrEqual(3 * t("goodstuff"));
+});
+
+describe("templateBlend: primary, secondary and the fallback (spec §3.2)", () => {
+  const rank = (name: "tokens" | "aristocrats" | "voltron" | "kindred" | "goodstuff", confidence: number) => ({ name, label: name, confidence });
+  const tok = TEMPLATE.themes.tokens;
+  const ari = TEMPLATE.themes.aristocrats;
+
+  test("a primary under ARCHETYPE_LEAD_FLOOR falls to the population row", () => {
+    const b = templateBlend([rank("tokens", ARCHETYPE_LEAD_FLOOR - 0.01)]);
+    expect(b.primary).toBeUndefined();
+    expect(b.targets).toEqual(TEMPLATE.population);
+  });
+
+  test("a theme with no row (kindred, goodstuff) contributes nothing", () => {
+    expect(templateBlend([rank("kindred", 0.5)]).primary).toBeUndefined();
+    expect(templateBlend([rank("goodstuff", 0.5)]).primary).toBeUndefined();
+    // ...and a rowless SECOND theme leaves the primary alone.
+    const b = templateBlend([rank("tokens", 0.3), rank("kindred", 0.3)]);
+    expect(b.secondary).toBeUndefined();
+    expect(b.targets.consistency).toBe(tok.consistency);
+  });
+
+  test("the secondary must reach SECONDARY_SHARE of the primary's confidence", () => {
+    const below = templateBlend([rank("tokens", 0.3), rank("aristocrats", 0.3 * SECONDARY_SHARE - 0.001)]);
+    expect(below.secondary).toBeUndefined();
+    expect(below.primary?.weight).toBe(1);
+    const at = templateBlend([rank("tokens", 0.3), rank("aristocrats", 0.3 * SECONDARY_SHARE)]);
+    expect(at.secondary?.name).toBe("aristocrats");
+  });
+
+  test("the blend is the confidence-weighted mean of the two rows, rounded to a whole card", () => {
+    // Tokens 0.30 and Aristocrats 0.22 -> weights 0.30/0.52 and 0.22/0.52. (The spec's worked
+    // example, 23%/17%, sits UNDER the 0.25 lead floor and falls to the population -- caught here.)
+    const b = templateBlend([rank("tokens", 0.30), rank("aristocrats", 0.22)]);
+    const w1 = 0.30 / 0.52, w2 = 0.22 / 0.52;
+    expect(b.primary?.weight).toBeCloseTo(w1, 6);
+    expect(b.secondary?.weight).toBeCloseTo(w2, 6);
+    for (const k of ["consistency", "ramp", "interaction"] as const) {
+      const exact = w1 * Math.round(tok[k]) + w2 * Math.round(ari[k]);
+      // A card is whole (owner, 2026-09-06: "you can not have 0.5 of a card"): the rows are read
+      // rounded and the mean is rounded again, so the target is never further than half a card
+      // from the mean of the rounded rows.
+      expect(b.targets[k]).toBe(Math.round(exact));
+      expect(Number.isInteger(b.targets[k])).toBe(true);
+      expect(Math.abs(b.targets[k] - exact)).toBeLessThanOrEqual(0.5);
+    }
+    // RANKED, not order-free: `strategies[0]` leads and is the one the lead floor gates, so the
+    // same two themes with the weaker one first read that one as the primary -- and here it sits
+    // under the floor, so the whole deck falls to the population.
+    expect(templateBlend([rank("aristocrats", 0.22), rank("tokens", 0.30)]).primary).toBeUndefined();
+  });
+
+  test("a wipes key the theme does not carry is population-filled, never zero", () => {
+    const b = templateBlend([rank("voltron", 0.4)]);
+    expect(b.primary?.row.boardWipes).toBe(TEMPLATE.population.boardWipes);
+  });
+
+  test("computeBuild scores the blended targets and reports the blend", () => {
+    const cards = [mk("Shield", "Permanents you control gain indestructible.", "Instant")];
+    const r = computeBuild(cards, "tokens", undefined, undefined, 0, [rank("tokens", 0.30), rank("aristocrats", 0.22)]);
+    expect(r.template.primary?.name).toBe("tokens");
+    expect(r.template.secondary?.name).toBe("aristocrats");
+    for (const p of r.buildParents) expect(p.target).toBe(r.template.targets[p.key]);
+    expect(BUILD_PARENTS.map((p) => p.key)).toEqual(["consistency", "ramp", "interaction", "boardWipes"]);
+  });
 });
 
 test("a grouped leaf never carries a target of its own, whatever the archetype", () => {
@@ -190,7 +274,8 @@ test("buildScore is computed from PARENT attainment: any leaf inside a parent ca
   const { buildParents, buildScore } = computeBuild(tutors, undefined);
   const consistency = buildParents.find((p) => p.name === "Consistency")!;
   expect(consistency.count).toBe(14);
-  expect(consistency.target).toBe(14);
+  // The population median (13) now, not the doctrine's 14 -- 14 still clears it outright.
+  expect(consistency.target).toBe(TEMPLATE.population.consistency);
   expect(buildScore).toBeCloseTo(10 / 9, 5);
 });
 
@@ -721,4 +806,74 @@ test("the answers impact is what covering the absent classes is worth", () => {
   const covered = answersImpactOf(parents, 36, 36, undefined, new Set(COVERAGE_CLASSES), 0);
   expect(withGap).toBeGreaterThan(0);
   expect(covered).toBe(0);
+});
+
+// A DRAW THAT COMES BACK (owner, 2026-09-05): the draw count said Rhystic Study and Divination were
+// the same card. The facets say beside the count how many come back and how many nobody labelled.
+test("draw facets: engines are any draw above `once`, unlabelled are refused labels with no engine beside them", () => {
+  const draw = (repeats?: string): CardTags["abilities"] =>
+    [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "opp", token: null } }, effect: { kind: "draw-card" }, ...(repeats ? { repeats } : {}) } as never];
+  const cards = [
+    mk("Rhystic Study", "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.", "Enchantment", draw("repeatable")),
+    mk("Arch of Orazca", "{5}, {T}: Draw a card.", "Artifact", draw("per-cycle")),
+    mk("Divination", "Draw two cards.", "Sorcery", draw("once")),
+    mk("Mystery", "Draw a card, maybe.", "Instant", draw()),
+    // An unlabelled draw beside a labelled ENGINE draw is an engine, not unlabelled.
+    mk("Both", "...", "Enchantment", [...draw("repeatable"), ...draw()]),
+    mk("Sol Ring", "Add {C}{C}.", "Artifact", rampAbility),
+  ];
+  const facets = detectBuildFacets(cards).get("draw")!;
+  expect(facets.get("engines")).toEqual(new Set(["Rhystic Study", "Arch of Orazca", "Both"]));
+  expect(facets.get("unlabelled")).toEqual(new Set(["Mystery"]));
+  // On the report row: beside the count, never in it, and never exceeding it.
+  const row = computeBuild(cards, undefined).buildCategories.find((c) => c.category === "draw")!;
+  expect(row.count).toBe(5);
+  expect(row.facets).toEqual({ engines: 3, unlabelled: 1 });
+  // Ramp carries facets of its own since the same day: the fixture's static rock has no label.
+  expect(computeBuild(cards, undefined).buildCategories.find((c) => c.category === "ramp")!.facets).toEqual({ engines: 0, unlabelled: 1 });
+  expect(computeBuild(cards, undefined).buildCategories.find((c) => c.category === "tutor")!.facets).toBeUndefined();
+});
+
+// "Do the same for ramp and removal" (owner, 2026-09-05).
+test("ramp facets: a source that comes back is an engine, a ritual is neither, a fetched land is an engine", () => {
+  const mana = (repeats?: string, kind = "mana-generation"): CardTags["abilities"] =>
+    [{ kind: "activated", effect: { kind }, ...(repeats ? { repeats } : {}) } as never];
+  const cards = [
+    mk("Sol Ring", "{T}: Add {C}{C}.", "Artifact", mana("per-cycle")),
+    mk("Dark Ritual", "Add {B}{B}{B}.", "Instant", [{ kind: "on-cast", effect: { kind: "ritual" }, repeats: "once" } as never]),
+    mk("Cultivate", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle.", "Sorcery"),
+    mk("Myriad Landscape", "{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.", "Land", mana("once")),
+    mk("Crypt Ghast", "Whenever you tap a Swamp for mana, add an additional {B}.", "Creature", mana(undefined)),
+    mk("Smothering Tithe", "Whenever an opponent draws a card, that player may pay {2}. If they don't, you create a Treasure token.", "Enchantment",
+      [{ kind: "triggered", effect: { kind: "token-generation" }, repeats: "repeatable" } as never]),
+  ];
+  const members = detectBuildCategories(cards).get("ramp")!;
+  const facets = detectBuildFacets(cards).get("ramp")!;
+  const inRamp = (s: Set<string> | undefined) => [...(s ?? [])].filter((n) => members.has(n)).sort();
+  expect(inRamp(facets.get("engines"))).toEqual(["Cultivate", "Myriad Landscape", "Smothering Tithe", "Sol Ring"]);
+  expect(inRamp(facets.get("unlabelled"))).toEqual(["Crypt Ghast"]);
+  expect(members.has("Dark Ritual")).toBe(true);
+});
+
+test("removal facets: an ability that emits dies/leaves and repeats is an engine; nothing removal-shaped at all is unlabelled", () => {
+  const kill = (repeats?: string, kind = "activated"): CardTags["abilities"] =>
+    [{ kind, effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "target" } }], ...(repeats ? { repeats } : {}) } as never];
+  const cards = [
+    mk("Swords to Plowshares", "Exile target creature. Its controller gains life equal to its power.", "Instant",
+      [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "leaves", subject: { control: "opp", token: null, type: "creature", scope: "target" } }], repeats: "once" } as never]),
+    mk("Royal Assassin", "{T}: Destroy target tapped creature.", "Creature", kill("per-cycle")),
+    mk("Ravenous Chupacabra", "When this creature enters, destroy target creature an opponent controls.", "Creature", kill("once", "triggered")),
+    mk("Chaos Warp", "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.", "Instant"),
+    mk("Mystery Kill", "Destroy target creature.", "Enchantment", kill(undefined, "triggered")),
+    // The regex calls this removal (recursion reads as a bounce); its only dies emit is its OWN
+    // sacrifice, under `you`, so it is neither an engine nor refused -- it is unread.
+    mk("Trading Post", "{1}, {T}, Sacrifice a creature: Return target artifact card from your graveyard to your hand.", "Artifact",
+      [{ kind: "activated", effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature" } }], repeats: "per-cycle" } as never]),
+  ];
+  const members = detectBuildCategories(cards).get("targetedRemoval")!;
+  const facets = detectBuildFacets(cards).get("targetedRemoval")!;
+  const inCat = (s: Set<string> | undefined) => [...(s ?? [])].filter((n) => members.has(n)).sort();
+  expect([...members].sort()).toEqual(["Chaos Warp", "Mystery Kill", "Ravenous Chupacabra", "Royal Assassin", "Swords to Plowshares", "Trading Post"]);
+  expect(inCat(facets.get("engines"))).toEqual(["Royal Assassin"]);
+  expect(inCat(facets.get("unlabelled"))).toEqual(["Chaos Warp", "Mystery Kill", "Trading Post"]);
 });

@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/orvar-the-all-form/bobbleheads
+# theme Bobbleheads (14 decks)
+
+Commander
+1 Orvar, the All-Form
+
+Deck
+1 Agility Bobblehead
+1 Arcane Signet
+1 Charisma Bobblehead
+1 Endurance Bobblehead
+1 Intelligence Bobblehead
+1 Isochron Scepter
+1 Luck Bobblehead
+1 Mirage Mirror
+1 Perception Bobblehead
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Strength Bobblehead
+1 Thought Vessel
+1 Academy Ruins
+1 Buried Ruin
+1 Cloudpost
+1 Inventors' Fair
+23 Island
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Riptide Laboratory
+1 Swarmyard
+1 Tyrite Sanctum
+1 War Room
+1 Archaeomancer
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Laboratory Maniac
+1 Loyal Inventor
+1 Mulldrifter
+1 Peregrine Drake
+1 Phyrexian Metamorph
+1 Shimmer Dragon
+1 Solemn Simulacrum
+1 Thought Monitor
+1 Trophy Mage
+1 Urza, Lord High Artificer
+1 Case of the Ransacked Lab
+1 Mechanized Production
+1 Mystic Remora
+1 Propaganda
+1 Rhystic Study
+1 Vesuvan Duplimancy
+1 Clockspinning
+1 Counterspell
+1 Dream's Grip
+1 Enervate
+1 Ghostly Flicker
+1 Gigadrowse
+1 Glamerdye
+1 High Tide
+1 Infuse
+1 Jinx
+1 Jolt
+1 Mental Modulation
+1 Mind Games
+1 Mirrorform
+1 Moonlace
+1 Planar Incision
+1 Pongify
+1 Scour for Scrap
+1 Shimmering Mirage
+1 Teferi's Time Twist
+1 Thermal Flux
+1 Three Steps Ahead
+1 Twiddle
+1 Twitch
+1 Whim of Volrath
+1 Whir of Invention
+1 Aquitect's Will
+1 Energy Tap
+1 Fabricate
+1 Hidden Strings
+1 Saheeli's Artistry
+1 Solve the Equation
+1 Trait Doctoring

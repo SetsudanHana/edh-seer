@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/_HRlRUHxXlSw-Wx1EVEaUA (source https://archidekt.com/decks/15419470)
+# tags Delirium, Self-Mill, Descend, Commander Matters; bracket 2; saved 2025-09-24; 7 tagged of 616 indexed
+
+Commander
+1 Akawalli, the Seething Tower
+
+Deck
+1 Aftermath Analyst
+1 Ainok Wayfarer
+1 Baba Lysaga, Night Witch
+1 Cankerbloom
+1 Chupacabra Echo
+1 Circle of the Land Druid
+1 Coati Scavenger
+1 Deathcap Marionette
+1 Deep Goblin Skulltaker
+1 Dune Chanter
+1 Exdeath, Void Warlock
+1 Eye Collector
+1 Glowspore Shaman
+1 Golgari Grave-Troll
+1 Golgari Thug
+1 Gray Slaad
+1 Icetill Explorer
+1 Insidious Fungus
+1 Lasyd Prowler
+1 Millikin
+1 Patchwork Beastie
+1 Sakura-Tribe Elder
+1 Seedship Broodtender
+1 Skull Prophet
+1 Splinterfright
+1 Springbloom Druid
+1 Stinging Cave Crawler
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 The Mycotyrant
+1 The Warring Triad
+1 Titania, Voice of Gaea
+1 Town Greeter
+1 Undead Butler
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Golgari Signet
+1 Mithril Coat
+1 Sol Ring
+1 Talisman of Resilience
+1 Wayfarer's Bauble
+1 Argoth, Sanctum of Nature
+1 Bojuka Bog
+1 Command Tower
+1 Dakmor Salvage
+1 Evolving Wilds
+16 Forest
+1 Myriad Landscape
+11 Swamp
+1 Takenuma, Abandoned Mire
+1 Terramorphic Expanse
+1 The Dross Pits
+1 Atrocious Experiment
+1 Farseek
+1 Grave Strength
+1 Life from the Loam
+1 Rampant Growth
+1 Rise of the Dark Realms
+1 Zero Point Ballad
+1 Biosynthic Burst
+1 Grisly Salvage
+1 Join the Dead
+1 Not Dead After All
+1 Smuggler's Surprise
+1 Snakeskin Veil
+1 Crawling Infestation
+1 Criminal Past
+1 Crop Sigil
+1 Dredger's Insight
+1 Fungal Fortitude
+1 Lion Umbra
+1 Ripples of Undeath
+1 Sigil of Myrkul
+1 Teachings of the Kirin

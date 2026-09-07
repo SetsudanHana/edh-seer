@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
-import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION } from "./rules.js";
+import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
@@ -26,7 +26,7 @@ test("the rule set loads, is versioned, and every pattern a rule names exists", 
       expect(set.patterns[p], `rule ${rule.id} names pattern ${p}`).toBeDefined();
     }
     expect(
-      rule.category ?? rule.answerClass ?? rule.answerClassFrom ?? rule.winconClass,
+      rule.category ?? rule.facet ?? rule.answerClass ?? rule.answerClassFrom ?? rule.winconClass,
       `rule ${rule.id} does something`,
     ).toBeDefined();
   }
@@ -516,4 +516,87 @@ test("the strip takes the SENTENCE, because one clause can name two words", () =
   const c = asCard("Two Words",
     "{1}: Permanents your opponents control lose hexproof and indestructible until end of turn.");
   expect(ruleMatches(protectionRule(), c)).toBe(false);
+});
+
+// THE WIPE PATTERN, MEASURED AGAINST COMMANDER SALT'S boardWipes ON THE SIX CACHED DECKS (2026-09-05):
+// the old five-shape regex found 7 of 16 with 0 false; this one finds 16 of 16 with 2 (Fiery
+// Confluence's each-creature mode and Chandra, Bold Pyromancer's ultimate, both defensible). The
+// old one also called every "each player sacrifices a creature" EDICT a wipe (Fleshbag Marauder,
+// Plaguecrafter, Szat's Will -- 15 cards in the 71 decks) and every "return all ... cards from your
+// graveyard" recursion one. Every quoted line is oracle text fetched from the corpus, not memory.
+test("a board wipe is a mass effect on the battlefield, in any of its printed shapes", () => {
+  const wipes: [string, string][] = [
+    ["Wrath of God", "Destroy all creatures. They can't be regenerated."],
+    ["Farewell", "Choose one or more —\n• Exile all artifacts.\n• Exile all creatures.\n• Exile all enchantments.\n• Exile all graveyards."],
+    ["Blasphemous Act", "This spell costs {1} less to cast for each creature on the battlefield.\nBlasphemous Act deals 13 damage to each creature."],
+    ["Toxic Deluge", "As an additional cost to cast this spell, pay X life.\nAll creatures get -X/-X until end of turn."],
+    ["The Meathook Massacre", "When The Meathook Massacre enters, each creature gets -X/-X until end of turn."],
+    ["Massacre Girl", "Menace\nWhen Massacre Girl enters, each other creature gets -1/-1 until end of turn."],
+    ["Living Death", "Each player exiles all creature cards from their graveyard, then sacrifices all creatures they control, then puts all cards they exiled this way onto the battlefield."],
+    ["Blasphemous Edict", "Each player sacrifices thirteen creatures of their choice."],
+    ["Cyclonic Rift", "Return target nonland permanent you don't control to its owner's hand.\nOverload {6}{U} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Vandalblast", "Destroy target artifact you don't control.\nOverload {4}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Black Sun's Zenith", "Put X -1/-1 counters on each creature. Shuffle Black Sun's Zenith into its owner's library."],
+    ["Delayed Blast Fireball", "Delayed Blast Fireball deals 2 damage to each opponent and each creature they control."],
+    ["Chandra Nalaar", "−8: Chandra Nalaar deals 10 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls."],
+    ["Desynchronization", "Return each nonland permanent that's not historic to its owner's hand."],
+    ["Calamity of the Titans", "Exile each creature and planeswalker with mana value less than the revealed card's mana value."],
+  ];
+  const notWipes: [string, string][] = [
+    ["Fleshbag Marauder", "When this creature enters, each player sacrifices a creature of their choice."],
+    ["Rest in Peace", "When this enchantment enters, exile all graveyards.\nIf a card or token would be put into a graveyard from anywhere, exile it instead."],
+    ["Gallifrey Stands", "When Gallifrey Stands enters, return all Doctor cards from your graveyard to your hand."],
+    ["Emrakul, the World Anew", "When Emrakul leaves the battlefield, sacrifice all creatures you control."],
+    ["Eldritch Immunity", "Target creature you control gains protection from each color until end of turn.\nOverload {4}{C} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Mizzix's Mastery", "Exile target card that's an instant or sorcery from your graveyard. For each card exiled this way, copy it, and you may cast the copy without paying its mana cost. Exile Mizzix's Mastery.\nOverload {5}{R}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
+    ["Coat of Arms", "Each creature gets +1/+1 for each other creature on the battlefield that shares at least one creature type with it."],
+    ["Wisdom of Ages", "Return all instant and sorcery cards from your graveyard to your hand. You have no maximum hand size for the rest of the game."],
+  ];
+  const m = detectBuildCategories([...wipes, ...notWipes].map(([n, t]) => mk(n, t, "Sorcery")));
+  const found = m.get("boardWipe") ?? new Set<string>();
+  expect(wipes.map(([n]) => n).filter((n) => !found.has(n))).toEqual([]);
+  expect(notWipes.map(([n]) => n).filter((n) => found.has(n))).toEqual([]);
+});
+
+// A DRAW THAT COMES BACK (owner, 2026-09-05). `repeats` narrows `effectKind` on the SAME ability.
+test("effectKind with `repeats` is tested per ability, not per card", () => {
+  const card = (abilities: unknown[]): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Creature" } as Card,
+    tags: { abilities } as never,
+  });
+  const rule: Rule = { id: "t", match: [{ op: "effectKind", in: ["draw-card"], repeats: ["repeatable"] }] };
+  const set = loadRules();
+  // A repeatable draw is an engine.
+  expect(ruleMatches(rule, card([{ effect: { kind: "draw-card" }, repeats: "repeatable" }]), set)).toBe(true);
+  // A one-shot draw beside a repeatable SAC OUTLET is not: the labels are on different abilities.
+  expect(ruleMatches(rule, card([
+    { effect: { kind: "draw-card" }, repeats: "once" },
+    { effect: { kind: "sacrifice-outlet" }, repeats: "repeatable" },
+  ]), set)).toBe(false);
+  // `null` names an unlabelled ability.
+  const unlabelled: Rule = { id: "u", match: [{ op: "effectKind", in: ["draw-card"], repeats: [null] }] };
+  expect(ruleMatches(unlabelled, card([{ effect: { kind: "draw-card" } }]), set)).toBe(true);
+  expect(ruleMatches(unlabelled, card([{ effect: { kind: "draw-card" }, repeats: "once" }]), set)).toBe(false);
+});
+
+test("emits is tested per ability like effectKind: a removal ability is what emits dies/leaves", () => {
+  const card = (abilities: unknown[]): DeckCard => ({
+    card: { name: "x", oracleText: "", typeLine: "Creature" } as Card,
+    tags: { abilities } as never,
+  });
+  const set = loadRules();
+  const engine: Rule = { id: "t", match: [{ op: "emits", verbs: ["dies", "leaves"], repeats: ["per-cycle"] }] };
+  const kill = { effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "opp", token: null, scope: "target" } }] };
+  expect(ruleMatches(engine, card([{ ...kill, repeats: "per-cycle" }]), set)).toBe(true);
+  expect(ruleMatches(engine, card([{ ...kill, repeats: "once" }]), set)).toBe(false);
+  // The label must sit on the SAME ability as the emit.
+  expect(ruleMatches(engine, card([{ ...kill, repeats: "once" }, { effect: { kind: "draw-card" }, repeats: "per-cycle" }]), set)).toBe(false);
+  // A card's OWN sacrifice is not removal, and a graveyard leave is not a battlefield one.
+  const removal: Rule = { id: "r", match: [{ op: "emits", verbs: ["dies", "leaves"], control: ["opp", "any"], zone: [null] }] };
+  expect(ruleMatches(removal, card([{ effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "you", token: null } }] }]), set)).toBe(false);
+  expect(ruleMatches(removal, card([{ effect: { kind: "" }, emits: [{ verb: "leaves", subject: { control: "any", token: null, zone: "graveyard" } }] }]), set)).toBe(false);
+  expect(ruleMatches(removal, card([{ effect: { kind: "" }, emits: [{ verb: "leaves", subject: { control: "any", token: null } }] }]), set)).toBe(true);
+  const any: Rule = { id: "u", match: [{ op: "emits", verbs: ["dies"] }] };
+  expect(ruleMatches(any, card([{ ...kill }]), set)).toBe(true);
+  expect(ruleMatches(any, card([{ effect: { kind: "draw-card" } }]), set)).toBe(false);
 });

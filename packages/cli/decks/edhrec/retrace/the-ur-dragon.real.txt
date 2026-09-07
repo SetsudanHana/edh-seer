@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/Q4VTfhz1WVDWDUf58tLgLQ (source https://archidekt.com/decks/24321281)
+# tags Lands Matter, Retrace, Spellslinger, Shapeshifters; bracket unset; saved 2026-07-19; 2 tagged of 50478 indexed
+
+Commander
+1 The Ur-Dragon
+
+Deck
+1 Aegis of the Gods
+1 Archetype of Courage
+1 Archmage of Runes
+1 Baral, Chief of Compliance
+1 Brawn
+1 Crystal Barricade
+1 Exalted Sunborn
+1 Greymond, Avacyn's Stalwart
+1 Horned Sliver
+1 Icetill Explorer
+1 Keen-Eared Sentry
+1 Kirri, Talented Sprout
+1 Lullmage Mentor
+1 Muse Seeker
+1 Patron Wizard
+1 Pheres-Band Warchief
+1 Quandrix Apprentice
+1 Ramunap Excavator
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Striking Sliver
+1 Talon Sliver
+1 Thing in the Ice
+1 Unsettled Mariner
+1 Valor
+1 Vedalken Aethermage
+1 Vodalian Hexcatcher
+1 Windrider Wizard
+1 Wonderscape Sage
+1 Arid Mesa
+1 Bayou
+1 Bloodstained Mire
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Echoing Deeps
+1 Flooded Strand
+5 Forest
+1 Hallowed Fountain
+2 Island
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Otawara, Soaring City
+1 Overgrown Tomb
+2 Plains
+1 Plateau
+1 Polluted Delta
+1 Savannah
+1 Scalding Tarn
+1 Scrubland
+1 Shifting Woodland
+1 Stomping Ground
+1 Swamp
+1 Taiga
+1 Temple Garden
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Verdant Catacombs
+1 Volcanic Island
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Blessed Respite
+1 Clever Concealment
+1 Drown in the Loch
+1 Endless Detour
+1 Entomb
+1 Frantic Search
+1 Invert Polarity
+1 Muddle the Mixture
+1 Perplex
+1 Realms Uncharted
+1 Swan Song
+1 Tear Asunder
+1 Crucible of Worlds
+1 Primal Amulet
+1 Dimir Machinations
+1 Formless Genesis
+1 Life from the Loam
+1 Lively Dirge
+1 Step Through
+1 Traverse the Ulvenwald
+1 Unmarked Grave
+1 Winds of Abandon
+1 Winnowing
+1 Worm Harvest
+1 Frostcliff Siege
+1 Full Moon's Rise
+1 Garruk's Uprising
+1 Leyline of Sanctity
+1 Renewed Solidarity

@@ -1,0 +1,74 @@
+# edhrec deck https://edhrec.com/deckpreview/UMzjVpx-uIfq9TISQngdtw (source https://moxfield.com/decks/SXERT154PUuxzrU3bpZJYA)
+# tags Zoo; bracket 3; saved 2026-09-04; 69 tagged of 1348 indexed
+
+Commander
+1 Radagast the Brown
+
+Deck
+1 Arasta of the Endless Web
+1 Avenger of Zendikar
+1 Bellowing Tanglewurm
+1 Bramble Sovereign
+1 Challenger Troll
+1 Clifftop Lookout
+1 Copper Myr
+1 Crashing Drawbridge
+1 End-Raze Forerunners
+1 Ghalta, Primal Hunger
+1 Golden Hind
+1 Goreclaw, Terror of Qal Sisma
+1 Halana, Kessig Ranger
+1 Hierophant Bio-Titan
+1 Hornet Queen
+1 Insidious Fungus
+1 Keeper of Fables
+1 Kodama of the East Tree
+1 Kogla, the Titan Ape
+1 Kona, Rescue Beastie
+1 Loyal Guardian
+1 Managorger Hydra
+1 Ornery Tumblewagg
+1 Ornithopter of Paradise
+1 Polygoyf
+1 Prosperous Innkeeper
+1 Renata, Called to the Hunt
+1 Scavenging Ooze
+1 Steel Hellkite
+1 Terastodon
+1 Tyvar, the Pummeler
+1 Woodfall Primus
+1 Yorvo, Lord of Garenbrig
+1 Cloud Key
+1 Emerald Medallion
+1 Lifecrafter's Bestiary
+1 Rhonas's Monument
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thought Vessel
+1 Colossal Majesty
+1 Court of Bounty
+1 Family's Favor
+1 Fight Rigging
+1 Gaea's Touch
+1 Garruk's Uprising
+1 Kenrith's Transformation
+1 Monstrous Vortex
+1 Song of the Dryads
+1 Sylvan Anthem
+1 Thickest in the Thicket
+1 Unnatural Growth
+1 Up the Beanstalk
+1 Virtue of Strength
+1 Warbriar Blessing
+1 Web of Life and Destiny
+1 Wild Growth
+1 Zendikar Resurgent
+33 Forest
+1 Memorial to Unity
+1 Reliquary Tower
+1 Garruk, Caller of Beasts
+1 Garruk, Primal Hunter
+1 Vivien, Champion of the Wilds
+1 Vivien, Monsters' Advocate
+1 Genesis Wave
+1 Primal Surge

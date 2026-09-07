@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/RCLvTQiTVxzBMGS8j-sEIw (source https://archidekt.com/decks/19755769)
+# tags Affinity, +1/+1 Counters, Sunburst, Aggro, Artifacts; bracket 2; saved 2026-02-08; 9 tagged of 12881 indexed
+
+Commander
+1 Ramos, Dragon Engine
+
+Deck
+1 Ancient Den
+1 Badlands
+1 Bayou
+1 Darkmoss Bridge
+1 Darksteel Citadel
+1 Drossforge Bridge
+1 Forest
+1 Goldmire Bridge
+1 Great Furnace
+1 Island
+1 Mistvault Bridge
+1 Mountain
+1 Plains
+1 Plateau
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Savannah
+1 Scrubland
+1 Seat of the Synod
+1 Silverbluff Bridge
+1 Slagwoods Bridge
+1 Snow-Covered Forest
+1 Snow-Covered Island
+1 Snow-Covered Mountain
+1 Snow-Covered Plains
+1 Snow-Covered Swamp
+1 Swamp
+1 Taiga
+1 Tanglepool Bridge
+1 Thornglint Bridge
+1 Tree of Tales
+1 Tropical Island
+1 Tundra
+1 Underground Sea
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Saga
+1 Vault of Whispers
+1 Volcanic Island
+1 Yavimaya, Cradle of Growth
+1 Arcbound Wanderer
+1 Arsenal Thresher
+1 Breya, Etherium Shaper
+1 Broodstar
+1 Chamber Sentry
+1 Chiss-Goria, Forge Tyrant
+1 Crystalline Crawler
+1 Digsite Engineer
+1 Etched Oracle
+1 Ethersworn Sphinx
+1 Frogmite
+1 Frogmyr Enforcer
+1 Imskir Iron-Eater
+1 Jodah, Archmage Eternal
+1 Lunar Avenger
+1 Mishra, Eminent One
+1 Mishra, Tamer of Mak Fawa
+1 Mm'menon, the Right Hand
+1 Myr Enforcer
+1 Phyrexian Walker
+1 Pinnacle Emissary
+1 Riddlesmith
+1 Sami, Wildcat Captain
+1 Sawtooth Thresher
+1 Shield Sphere
+1 Skyreach Manta
+1 Slag Strider
+1 Solarion
+1 Spinal Parasite
+1 Suncrusher
+1 Suntouched Myr
+1 Thought Monitor
+1 Urza, Chief Artificer
+1 Urza, Lord High Artificer
+1 Vedalken Archmage
+1 Vibrance
+1 Wistfulness
+1 Baton of Courage
+1 Clearwater Goblet
+1 Engineered Explosives
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Fist of Suns
+1 Heliophial
+1 Infused Arrows
+1 Jeweled Amulet
+1 Lotus Petal
+1 Mishra's Bauble
+1 Mycosynth Lattice
+1 Opaline Bracers
+1 Paradise Mantle
+1 Pentad Prism
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Solar Array
+1 Urza's Bauble
+1 Uthros Research Craft
+1 Kaleidoscorch
+1 Karn, Scion of Urza
+1 Lens Flare

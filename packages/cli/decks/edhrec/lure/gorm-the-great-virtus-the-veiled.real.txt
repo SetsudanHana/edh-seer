@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/VZ3_qx-BjCPRL6gQv7RGYQ (source https://archidekt.com/decks/21389656)
+# tags Banding, Legends, Historic, Lure, Graveyard; bracket 3; saved 2026-05-03; 8 tagged of 841 indexed
+
+Commander
+1 Gorm the Great
+1 Virtus the Veiled
+
+Deck
+1 Abrupt Decay
+1 Archdruid's Charm
+1 Assassin's Trophy
+1 Berserk
+1 Crop Rotation
+1 Grapple with the Past
+1 Grisly Salvage
+1 Realms Uncharted
+1 Abstergo Entertainment
+1 Adventurers' Guildhouse
+1 Cabal Coffers
+1 Command Tower
+1 Dark Depths
+1 Deathcap Glade
+1 Evendo, Waking Haven
+1 Fabled Passage
+1 Field of the Dead
+7 Forest
+1 Golgari Rot Farm
+1 Maze of Ith
+1 Mosswort Bridge
+1 Overgrown Tomb
+1 Plaza of Heroes
+1 Shifting Woodland
+1 Shizo, Death's Storehouse
+1 Spymaster's Vault
+3 Swamp
+1 Takenuma, Abandoned Mire
+1 Temple of the False God
+1 Thespian's Stage
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Unholy Citadel
+1 Untaidake, the Cloud Keeper
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Cave
+1 Urza's Saga
+1 Yavimaya, Cradle of Growth
+1 Analyze the Pollen
+1 Green Sun's Zenith
+1 Scapeshift
+1 The Ring Goes South
+1 Traverse the Ulvenwald
+1 Belbe, Corrupted Observer
+1 Casal, Lurkwood Pathfinder
+1 Dryad of the Ilysian Grove
+1 Egon, God of Death
+1 Elvish Reclaimer
+1 Emrakul, the Promised End
+1 Formidable Speaker
+1 Glissa Sunslayer
+1 Grist, Voracious Larva
+1 Haywire Mite
+1 Honest Rutstein
+1 Hope of Ghirapur
+1 Lotus Cobra
+1 Noble Quarry
+1 Nylea, God of the Hunt
+1 Nylea, Keen-Eyed
+1 Oviya, Automech Artisan
+1 Pharika, God of Affliction
+1 Reki, the History of Kamigawa
+1 Rhonas the Indomitable
+1 Saryth, the Viper's Fang
+1 Shigeki, Jukai Visionary
+1 Six
+1 Surrak and Goreclaw
+1 Tempting Licid
+1 The Speed Demon
+1 Tinybones, the Pickpocket
+1 Varragoth, Bloodsky Sire
+1 Vraska, the Silencer
+1 Wight of the Reliquary
+1 Winter, Cynical Opportunist
+1 Zask, Skittering Swarmlord
+1 Call of the Ring
+1 Necropotence
+1 Vraska Joins Up
+1 Confession Dial
+1 Excalibur, Sword of Eden
+1 Expedition Map
+1 Exploration Broodship
+1 Infiltration Lens
+1 Lavaspur Boots
+1 Lost Jitte
+1 Mox Amber
+1 Sol Ring
+1 Invasion of Fiora
+1 Invasion of Ikoria
+1 Ral Zarek, Guest Lecturer

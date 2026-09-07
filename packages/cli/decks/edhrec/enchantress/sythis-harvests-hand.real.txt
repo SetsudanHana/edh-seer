@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/mnSbmfudn3UR5njCNzM5aQ (source https://moxfield.com/decks/nRZQg-KtkE-F2D53e745Dg)
+# tags Enchantress, Lifegain, Pillow Fort; bracket 2; saved 2026-09-05; 2576 tagged of 14052 indexed
+
+Commander
+1 Sythis, Harvest's Hand
+
+Deck
+1 Archdruid's Charm
+1 Clever Concealment
+1 Dawn's Truce
+1 Flare of Fortitude
+1 Flawless Maneuver
+1 Heroic Intervention
+1 Path to Exile
+1 Restoration Magic
+1 Swords to Plowshares
+1 Tamiyo's Safekeeping
+1 Archetype of Endurance
+1 Birds of Paradise
+1 Brightglass Gearhulk
+1 Courser of Kruphix
+1 Destiny Spinner
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Elesh Norn, Grand Cenobite
+1 Enduring Innocence
+1 Enduring Vitality
+1 Esper Sentinel
+1 Heliod, God of the Sun
+1 Jukai Naturalist
+1 Karametra, God of Harvests
+1 Mesa Enchantress
+1 Nylea's Colossus
+1 Nylea, God of the Hunt
+1 Nylea, Keen-Eyed
+1 Sanctum Weaver
+1 Satyr Enchanter
+1 Serra Ascendant
+1 Setessan Champion
+1 Springheart Nantuko
+1 Verduran Enchantress
+1 Weaver of Harmony
+1 Arid Mesa
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Branchloft Pathway
+1 Brushland
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Flooded Strand
+1 Hall of Heliod's Generosity
+1 Marsh Flats
+1 Plaza of Heroes
+1 Reliquary Tower
+16 Snow-Covered Forest
+7 Snow-Covered Plains
+1 Sunpetal Grove
+1 Temple Garden
+1 Windswept Heath
+1 Authority of the Consuls
+1 Bear Umbra
+1 Blind Obedience
+1 Carpet of Flowers
+1 Case of the Locked Hothouse
+1 Cryptolith Rite
+1 Enchantress's Presence
+1 Flickering Ward
+1 Greater Auramancy
+1 Growing Rites of Itlimoc
+1 Hallowed Haunting
+1 Kenrith's Transformation
+1 Privileged Position
+1 Rancor
+1 Seal of Cleansing
+1 Seal of Primordium
+1 Sigil of the Empty Throne
+1 Snake Umbra
+1 Sphere of Safety
+1 Sterling Grove
+1 Strength of the Harvest
+1 Timely Ward
+1 Utopia Sprawl
+1 Wild Growth
+1 With Great Power . . .
+1 Sol Ring

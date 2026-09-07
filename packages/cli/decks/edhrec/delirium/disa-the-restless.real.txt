@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/mo-tu7-o10wtSEyKZCzBLg (source https://archidekt.com/decks/20544860)
+# tags Delirium, Self-Mill, Lhurgoyfs; bracket 3; saved 2026-08-23; 24 tagged of 12576 indexed
+
+Commander
+1 Disa the Restless
+
+Deck
+1 Altar of the Goyf
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Firdoch Core
+1 Lightning Greaves
+1 Matzalantli, the Great Door
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Resilience
+1 Whip of Erebos
+1 Birds of Paradise
+1 Chomping Changeling
+1 Edge Rover
+1 Enduring Courage
+1 Fear of Missing Out
+1 Filth
+1 Greater Tanuki
+1 Haywire Mite
+1 Ignoble Hierarch
+1 Nyx Weaver
+1 Overlord of the Balemurk
+1 Overlord of the Boilerbilges
+1 Polygoyf
+1 Pyrogoyf
+1 Sakura-Tribe Elder
+1 Shigeki, Jukai Visionary
+1 Summon: Fenrir
+1 Summon: G.F. Ifrit
+1 Trickster's Elk
+1 Twitching Doll
+1 Ursine Monstrosity
+1 Blasphemous Act
+1 Buried Alive
+1 Cathartic Reunion
+1 Convert to Slime
+1 Deluge of Doom
+1 Demonic Counsel
+1 Faithless Looting
+1 Feed the Swarm
+1 Formless Genesis
+1 Lively Dirge
+1 Molten Collapse
+1 Squirming Emergence
+1 Sundering Eruption
+1 Unmarked Grave
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Command Tower
+1 Commercial District
+1 Darkmoss Bridge
+1 Demolition Field
+1 Drossforge Bridge
+1 Dryad Arbor
+3 Forest
+1 Geier Reach Sanitarium
+1 Great Furnace
+2 Mountain
+1 Overgrown Tomb
+1 Raucous Theater
+1 Shifting Woodland
+1 Slagwoods Bridge
+1 Stomping Ground
+3 Swamp
+1 Thornspire Verge
+1 Tree of Tales
+1 Underground Mortuary
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Saga
+1 Valgavoth's Lair
+1 Verdant Catacombs
+1 Wastewood Verge
+1 Wooded Foothills
+1 Ziatora's Proving Ground
+1 Drag to the Roots
+1 Entish Restoration
+1 Eyeblight's Ending
+1 Fell the Profane
+1 Grisly Salvage
+1 Harrow
+1 Peer Past the Veil
+1 Return the Favor
+1 Revitalizing Repast
+1 Tamiyo's Safekeeping
+1 Thrill of Possibility
+1 Untimely Malfunction
+1 Grist, the Hunger Tide
+1 Professor Dellian Fel
+1 Wrenn and Realmbreaker
+1 Invasion of Azgol
+1 Invasion of Ergamon
+1 Springleaf Parade
+1 Tarmogoyf Nest
+1 Tortured Existence

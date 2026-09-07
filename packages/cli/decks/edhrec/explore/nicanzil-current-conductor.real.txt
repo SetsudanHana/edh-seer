@@ -1,0 +1,74 @@
+# edhrec deck https://edhrec.com/deckpreview/Q-xGD_5HYA0yCCP5rM1NjQ (source https://archidekt.com/decks/21400879)
+# tags Aggro, Explore, Merfolk, +1/+1 Counters; bracket 2; saved 2026-08-23; 56 tagged of 1246 indexed
+
+Commander
+1 Nicanzil, Current Conductor
+
+Deck
+1 Arcane Denial
+1 Beast Within
+1 Counterspell
+1 Growth Spiral
+1 Jwari Disruption
+1 Krosan Grip
+1 Rapid Hybridization
+1 Scour for Scrap
+1 Arixmethes, Slumbering Isle
+1 Brawn
+1 Deepfathom Echo
+1 Jadelight Spelunker
+1 Kami of Whispered Hopes
+1 Kodama of the West Tree
+1 Koma, Cosmos Serpent
+1 Lord of Atlantis
+1 Master of the Pearl Trident
+1 Merfolk Branchwalker
+1 River Herald Guide
+1 River Herald Scout
+1 Seeker of Sunlight
+1 Sentinel of the Nameless City
+1 Singer of Swift Rivers
+1 Starwinder
+1 Sun Quan, Lord of Wu
+1 Thieving Skydiver
+1 Trinket Mage
+1 Uro, Titan of Nature's Wrath
+1 Waterwind Scout
+1 Wildgrowth Walker
+1 Wonder
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Dryad Arbor
+1 Fabled Passage
+18 Forest
+16 Island
+1 Misty Rainforest
+1 Urza's Saga
+1 Willowrush Verge
+1 Carpet of Flowers
+1 Hardened Scales
+1 In Too Deep
+1 Innkeeper's Talent
+1 Kenrith's Transformation
+1 Path of Discovery
+1 Spelunking
+1 Terrasymbiosis
+1 Twists and Turns
+1 Enter the Unknown
+1 Healing Technique
+1 Kamahl's Druidic Vow
+1 Over the Edge
+1 Overrun
+1 Pull Through the Weft
+1 Ravenform
+1 Regrowth
+1 Treasure Cruise
+1 Windfall
+1 Fountainport Bell
+1 Glowcap Lantern
+1 Infiltration Lens
+1 Ozolith, the Shattered Spire
+1 Sensei's Divining Top
+1 Shadowed Caravel
+1 Subterranean Schooner
+1 The Ozolith

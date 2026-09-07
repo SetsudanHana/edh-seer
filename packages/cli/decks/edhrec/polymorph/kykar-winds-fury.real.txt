@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/JNWTLYSlcwEoYnN3jQ7Ieg (source https://archidekt.com/decks/20374158)
+# tags Spellslinger, Cantrips, Tokens, Polymorph; bracket 3; saved 2026-09-03; 243 tagged of 14129 indexed
+
+Commander
+1 Kykar, Wind's Fury
+
+Deck
+1 Absolute Virtue
+1 Aurelia, the Warleader
+1 Gisela, Blade of Goldnight
+1 Niv-Mizzet, Parun
+1 Ojer Taq, Deepest Foundation
+1 Ovika, Enigma Goliath
+1 Purphoros, God of the Forge
+1 Sephara, Sky's Blade
+1 Sphinx of the Second Sun
+1 Tidespout Tyrant
+1 Velomachus Lorehold
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Battlefield Forge
+1 Boros Garrison
+1 Cascade Bluffs
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+1 Ferrous Lake
+7 Island
+1 Izzet Boilerworks
+2 Mountain
+1 Mystic Gate
+1 Mystic Monastery
+1 Mystic Sanctuary
+1 Perilous Landscape
+2 Plains
+1 Reliquary Tower
+1 Rugged Prairie
+1 Shivan Reef
+1 Skycloud Expanse
+1 Sunscorched Divide
+1 Terramorphic Expanse
+1 Arcane Signet
+1 Azorius Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Proteus Staff
+1 Resonating Lute
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Austere Command
+1 Ceaseless Conflict
+1 Chaotic Transformation
+1 Dream Cache
+1 Flow State
+1 Indomitable Creativity
+1 Mana Geyser
+1 Mass Polymorph
+1 Past in Flames
+1 Polymorph
+1 Ponder
+1 Preordain
+1 Reality Scramble
+1 See Beyond
+1 Sleight of Hand
+1 Solve the Equation
+1 Stock Up
+1 Transmogrify
+1 Boros Charm
+1 Brainstorm
+1 Chaos Mutation
+1 Counterspell
+1 Deflecting Palm
+1 Divergent Transformations
+1 Frantic Search
+1 Impulse
+1 Mystical Tutor
+1 Narset's Reversal
+1 Opt
+1 Path to Exile
+1 Peer Through Depths
+1 Perch Protection
+1 Refute
+1 Reweave
+1 Settle the Wreckage
+1 Silundi Vision
+1 Sudden Substitution
+1 Synthetic Destiny
+1 Take the Bait
+1 Valakut Awakening
+1 Curiosity
+1 Jeskai Ascendancy
+1 Monologue Tax
+1 Mystic Remora
+1 Whirlwind of Thought
+1 Lukka, Coppercoat Outcast

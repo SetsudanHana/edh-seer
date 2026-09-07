@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/baral-and-kari-zev/polymorph
+# theme Polymorph (38 decks)
+
+Commander
+1 Baral and Kari Zev
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Glamdring, Foe-hammer
+1 Izzet Signet
+1 Proteus Staff
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Creativity
+1 Thought Vessel
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+1 Ferrous Lake
+1 Frostboil Snarl
+11 Island
+1 Izzet Boilerworks
+1 Kher Keep
+10 Mountain
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Archmage Emeritus
+1 Eris, Roar of the Storm
+1 Hullbreaker Horror
+1 Jin-Gitaxias, Progress Tyrant
+1 Nezahal, Primal Tide
+1 Niv-Mizzet, Parun
+1 Ovika, Enigma Goliath
+1 Prismari, the Inspiration
+1 Talrand, Sky Summoner
+1 The Locust God
+1 Fiery Inscription
+1 Mystic Remora
+1 Sorcerer Class
+1 Abrade
+1 Big Score
+1 Brainstorm
+1 Brainsurge
+1 Chaos Mutation
+1 Chaos Warp
+1 Consider
+1 Counterspell
+1 Dig Through Time
+1 Divergent Transformations
+1 Frantic Search
+1 Negate
+1 Opt
+1 Pongify
+1 Prismari Charm
+1 Prismari Command
+1 Reality Shift
+1 Resculpt
+1 Silundi Vision
+1 Snap
+1 Traumatic Critique
+1 Valakut Awakening
+1 Lukka, Coppercoat Outcast
+1 Ancestral Vision
+1 Blasphemous Act
+1 Chain Reaction
+1 Chaotic Transformation
+1 Expressive Iteration
+1 Faithless Looting
+1 Inevitable Betrayal
+1 Mass Polymorph
+1 Mizzix's Mastery
+1 Of One Mind
+1 Polymorph
+1 Ponder
+1 Preordain
+1 Reality Scramble
+1 Serum Visions
+1 Transmogrify
+1 Treasure Cruise
+1 Wheel of Fate
+1 Windfall

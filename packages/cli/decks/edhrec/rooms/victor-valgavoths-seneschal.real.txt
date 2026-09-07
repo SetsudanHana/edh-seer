@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/98jBHI6ychE_ry5ynarpbQ (source https://archidekt.com/decks/25423106)
+# tags Rooms, Reanimator, Enchantress; bracket 2; saved 2026-08-21; 7 tagged of 2760 indexed
+
+Commander
+1 Victor, Valgavoth's Seneschal
+
+Deck
+1 Alseid of Life's Bounty
+1 Angel of the Ruins
+1 Anti-Venom, Horrifying Healer
+1 Archon of Cruelty
+1 Ardyn, the Usurper
+1 Armaggon, Future Shark
+1 Demon of Fate's Design
+1 Grave Titan
+1 Hateful Eidolon
+1 Heliod, Sun-Crowned
+1 Ondu Spiritdancer
+1 Overlord of the Mistmoors
+1 Rune-Scarred Demon
+1 Salvation Colossus
+1 Sepulchral Primordial
+1 Soaring Lightbringer
+1 Spellbook Vendor
+1 Starfield Mystic
+1 Summon: Knights of Round
+1 Summon: Yojimbo
+1 Valgavoth's Faithful
+1 Valgavoth, Terror Eater
+1 Vile Mutilator
+1 Zetalpa, Primal Dawn
+1 Authority of the Consuls
+1 Bandit's Talent
+1 Black Market Connections
+1 Call of the Ring
+1 Cemetery Tampering
+1 Changing Loyalty
+1 Cleric Class
+1 Coercive Impetus
+1 Derelict Attic // Widow's Walk
+1 Elspeth Conquers Death
+1 Grand Entryway // Elegant Rotunda
+1 Kaya's Ghostform
+1 Lord Skitter's Blessing
+1 Momentum Breaker
+1 Monologue Tax
+1 Obsessive Pursuit
+1 Origin of Spider-Man
+1 Parker Luck
+1 Phyrexian Arena
+1 Polluted Cistern // Dim Oubliette
+1 Quest for the Necropolis
+1 Ripples of Undeath
+1 Seal of Cleansing
+1 Seam Rip
+1 Sheltered by Ghosts
+1 Smuggler's Share
+1 Soul Snare
+1 Tenuous Truce
+1 The Death of Gwen Stacy
+1 The Eldest Reborn
+1 The Night of the Doctor
+1 The Rise of Sozin
+1 The Witch's Vanity
+1 Tinybones Joins Up
+1 Unholy Annex // Ritual Chamber
+1 Virtue of Persistence
+1 Waste Not
+1 Eclipsed Steppe
+1 Escape Tunnel
+1 Everglades
+1 Evolving Wilds
+1 Fabled Passage
+1 Godless Shrine
+1 Isolated Chapel
+1 Karoo
+1 Neglected Manor
+1 Obscura Storefront
+1 Orzhov Basilica
+8 Plains
+1 Shambling Vent
+1 Shineshadow Snarl
+9 Swamp
+1 Terramorphic Expanse
+1 Valgavoth's Lair
+1 Vibrant Cityscape
+1 Fell the Profane
+1 Hagra Mauling
+1 Sejiri Shelter
+1 Resurgent Belief
+1 Sol Ring

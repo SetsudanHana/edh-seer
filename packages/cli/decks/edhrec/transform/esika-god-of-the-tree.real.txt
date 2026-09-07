@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/2aRRcAAee7VTasNu-N_abA (source https://archidekt.com/decks/21267431)
+# tags Day / Night, Transform; bracket 2; saved 2026-07-21; 19 tagged of 25701 indexed
+
+Commander
+1 Esika, God of the Tree
+
+Deck
+1 Aang, Swift Savior
+1 Aang, at the Crossroads
+1 Ajani, Nacatl Pariah
+1 Archangel Avacyn
+1 Ashling, Rekindled
+1 Avatar Aang
+1 Binding Geist
+1 Boggart Trawler
+1 Brigid, Clachan's Heart
+1 Captive Weird
+1 Cecil, Dark Knight
+1 Dorothea, Vengeful Victim
+1 Eddie Brock
+1 Emet-Selch, Unsundered
+1 Exdeath, Void Warlock
+1 Glasspool Mimic
+1 Golden Guardian
+1 Grist, Voracious Larva
+1 Grub, Storied Matriarch
+1 Halvar, God of Battle
+1 Hanweir Militia Captain
+1 Hydroelectric Specimen
+1 Jecht, Reluctant Guardian
+1 Joshua, Phoenix's Dominant
+1 Kazandu Mammoth
+1 Lantern Bearer
+1 Lunarch Veteran
+1 Miles Morales
+1 Norman Osborn
+1 Ojer Pakpatiq, Deepest Epoch
+1 Optimus Prime, Hero
+1 Peter Parker
+1 Pinnacle Monk
+1 Ral, Monsoon Mage
+1 Serah Farron
+1 Shaile, Dean of Radiance
+1 Sheoldred
+1 Skyclave Cleric
+1 Tangled Florahedron
+1 Tarkir Duneshaper
+1 Trystan, Callous Cultivator
+1 Ultimecia, Time Sorceress
+1 Urabrask
+1 Valki, God of Lies
+1 Villagers of Estwald
+1 Vincent Valentine
+1 Wandering Archaic
+1 Azor's Gateway
+1 Brass's Tunnel-Grinder
+1 Dowsing Dagger
+1 Elbrus, the Binding Blade
+1 Matzalantli, the Great Door
+1 Neglected Heirloom
+1 The Enigma Jewel
+1 The Everflowing Well
+1 Bala Ged Recovery
+1 Bloodsoaked Insight
+1 Bridgeworks Battle
+1 Pelakka Predation
+1 Sea Gate Restoration
+1 Shatterskull Smashing
+1 Stump Stomp
+1 Sundering Eruption
+1 Balamb Garden, SeeD Academy
+1 Barkchannel Pathway
+1 Blightstep Pathway
+1 Branchloft Pathway
+1 Brightclimb Pathway
+1 Clearwater Pathway
+1 Cragcrown Pathway
+1 Darkbore Pathway
+1 Hengegate Pathway
+1 Needleverge Pathway
+1 Riverglide Pathway
+1 Westvale Abbey
+1 Beyeen Veil
+1 Fell the Profane
+1 Hagra Mauling
+1 Legion Leadership
+1 Malakir Rebirth
+1 Revitalizing Repast
+1 Rush of Inspiration
+1 Sejiri Shelter
+1 Silundi Vision
+1 Spikefield Hazard
+1 Valakut Awakening
+1 Vastwood Fortification
+1 Hadana's Climb
+1 Sidequest: Catch a Fish
+1 Sidequest: Hunt the Mark
+1 Strength of the Harvest
+1 The Legend of Kuruk
+1 The Legend of Kyoshi
+1 The Legend of Roku
+1 The Legend of Yangchen
+1 Wedding Announcement
+1 Invasion of Ikoria
+1 Invasion of Segovia
+1 Oko, Lorwyn Liege

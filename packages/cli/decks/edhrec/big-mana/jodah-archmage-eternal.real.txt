@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/f8JV7ftC-l0N8gZLHsDa-w (source https://archidekt.com/decks/21352379)
+# tags Ramp, Big Mana, Cascade; bracket 3; saved 2026-09-03; 583 tagged of 9375 indexed
+
+Commander
+1 Jodah, Archmage Eternal
+
+Deck
+1 Aminatou's Augury
+1 Call Forth the Tempest
+1 Conflux
+1 Cultivate
+1 Eerie Ultimatum
+1 Emergent Ultimatum
+1 Farseek
+1 Flow State
+1 Genesis Ultimatum
+1 In Garruk's Wake
+1 Inspired Ultimatum
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Ruinous Ultimatum
+1 Stock Up
+1 Three Visits
+1 Unexpected Results
+1 Apex Devastator
+1 Atraxa, Grand Unifier
+1 Avacyn, Angel of Hope
+1 Birds of Paradise
+1 Bloodbraid Elf
+1 Bloom Tender
+1 Coiling Oracle
+1 Deathrite Shaman
+1 Dryad of the Ilysian Grove
+1 Elves of Deep Shadow
+1 Esper Sentinel
+1 Etali, Primal Conqueror
+1 Faeburrow Elder
+1 Ignoble Hierarch
+1 Imoti, Celebrant of Bounty
+1 Jegantha, the Wellspring
+1 Kozilek, Butcher of Truth
+1 Maelstrom Wanderer
+1 Nicol Bolas, the Ravager
+1 Noble Hierarch
+1 Yusri, Fortune's Flame
+1 Zacama, Primal Calamity
+1 Arcane Signet
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Fellwar Stone
+1 Fist of Suns
+1 Sensei's Divining Top
+1 Sol Ring
+1 Timeless Lotus
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+2 Island
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+2 Mountain
+1 Overgrown Tomb
+2 Plains
+1 Polluted Delta
+1 Reflecting Pool
+1 Sacred Foundry
+1 Scalding Tarn
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Dig Through Time
+1 Once Upon a Time
+1 Planar Genesis
+1 Riddles in the Dark
+1 Leyline Immersion
+1 Leyline of Mutation
+1 Leyline of the Guildpact
+1 Mystic Remora
+1 Omniscience
+1 One with the Multiverse
+1 Rhystic Study
+1 Smothering Tithe
+1 Sunbird's Invocation
+1 Sylvan Library
+1 Nicol Bolas, God-Pharaoh

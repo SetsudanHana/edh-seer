@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/NWhBCsIn9J9ctogszrb8_A (source https://archidekt.com/decks/24121807)
+# tags Eldrazi, Devoid, Annihilator, Tokens, Populate; bracket 3; saved 2026-09-03; 143 tagged of 13787 indexed
+
+Commander
+1 Azlask, the Swelling Scourge
+
+Deck
+1 Aetheric Amplifier
+1 Akroma's Memorial
+1 Arcane Signet
+1 Basalt Monolith
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Forsaken Monument
+1 Lightning Greaves
+1 Mystic Forge
+1 Patchwork Banner
+1 Skullclamp
+1 Sol Ring
+1 Urza's Incubator
+1 Aetherize
+1 Crop Rotation
+1 Eldrazi Confluence
+1 Eldritch Immunity
+1 Kozilek's Command
+1 Null Elemental Blast
+1 Path to Exile
+1 Teferi's Protection
+1 Ugin's Binding
+1 Warping Wail
+1 All Is Dust
+1 Ancient Stirrings
+1 Distant Melody
+1 Glimpse the Impossible
+1 Rise of the Eldrazi
+1 Selective Obliteration
+1 Tempt with Discovery
+1 Awakening Zone
+1 Caretaker's Talent
+1 Echoes of Eternity
+1 From Beyond
+1 Impact Tremors
+1 Kozilek's Unsealing
+1 Mana Maze
+1 Path of Annihilation
+1 Prismatic Omen
+1 Bountiful Landscape
+1 Breeding Pool
+1 Brushland
+1 Caves of Koilos
+1 Eldrazi Temple
+1 Exotic Orchard
+1 Eye of Ugin
+1 Foreboding Landscape
+2 Forest
+1 Hallowed Fountain
+2 Island
+1 Karplusan Forest
+1 Llanowar Wastes
+3 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Plains
+1 Scavenger Grounds
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 The World Tree
+1 Tomb of the Spirit Dragon
+1 Tranquil Landscape
+1 Twisted Landscape
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Chittering Dispatcher
+1 Deepfathom Skulker
+1 Drowner of Hope
+1 Eldrazi Displacer
+1 Eldrazi Linebreaker
+1 Emrakul's Messenger
+1 Glaring Fleshraker
+1 Herald of Kozilek
+1 Hideous Taskmaster
+1 It That Betrays
+1 It That Heralds the End
+1 Kinnan, Bonder Prodigy
+1 Kozilek, the Broken Reality
+1 Propagator Drone
+1 Rapacious One
+1 Spawn-Gang Commander
+1 Spawnbed Protector
+1 Thief of Existence
+1 Titans' Vanguard
+1 Ulalek, Fused Atrocity
+1 Wastescape Battlemage
+1 World Breaker
+1 Writhing Chrysalis

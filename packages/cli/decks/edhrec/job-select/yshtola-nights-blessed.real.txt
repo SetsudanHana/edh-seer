@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/cVwNRnq9ECBZmFVfml7-Yw (source https://archidekt.com/decks/25455686)
+# tags Equipment, Spellslinger, Commander Matters, Job Select, Modified Creatures; bracket 3; saved 2026-08-19; 2 tagged of 52883 indexed
+
+Commander
+1 Y'shtola, Night's Blessed
+
+Deck
+1 Adelbert Steiner
+1 Ashe, Princess of Dalmasca
+1 Beatrix, Loyal General
+1 Dark Confidant
+1 Elgaud Shieldmate
+1 Golbez, Crystal Collector
+1 Noctis, Prince of Lucis
+1 Phyrexian Metamorph
+1 Solemn Simulacrum
+1 Thought Monitor
+1 Aerith Rescue Mission
+1 Circle of Power
+1 Combat Tutorial
+1 Cornered by Black Mages
+1 Farewell
+1 Kindred Dominance
+1 Resentful Revelation
+1 The Crystal's Chosen
+1 Time Wipe
+1 Aettir and Priwen
+1 Arcane Signet
+1 Astrologian's Planisphere
+1 Black Mage's Rod
+1 Dark Knight's Greatsword
+1 Dragoon's Lance
+1 Machinist's Arsenal
+1 Magitek Scythe
+1 Ninja's Blades
+1 Paladin's Arms
+1 Sage's Nouliths
+1 Sculpting Steel
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The Darkness Crystal
+1 The Water Crystal
+1 The Wind Crystal
+1 Thief's Knife
+1 White Auracite
+1 White Mage's Staff
+1 Anguished Unmaking
+1 Brainstorm
+1 Cancel
+1 Consecrate // Consume
+1 Convolute
+1 Counterpoint
+1 Dark Ritual
+1 Dawn Charm
+1 Deny the Witch
+1 Dovin's Veto
+1 Hindering Light
+1 No More Lies
+1 Path to Exile
+1 Perplex
+1 Return to Dust
+1 Arcane Sanctum
+1 Azorius Guildgate
+1 Bleachbone Verge
+1 Caves of Koilos
+1 Celestial Colonnade
+1 Choked Estuary
+1 Command Tower
+1 Contaminated Aquifer
+1 Dromar's Cavern
+1 Eclipsed Steppe
+1 Foot Headquarters
+1 Forsaken Sanctuary
+1 Forum of Amity
+1 Frost Marsh
+1 Glimmervoid
+1 Goldmire Bridge
+10 Island
+1 Isolated Chapel
+1 Midgar, City of Mako
+10 Plains
+3 Swamp
+1 Black Market Connections
+1 Brilliant Wings
+1 Mirrormade

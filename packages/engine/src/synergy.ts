@@ -1,3 +1,4 @@
+import type { Marker } from "./analyze.js";
 import type { Card } from "./card.js";
 import { extractTags, describeTag, type Tag } from "./tags.js";
 import type { ComboIndex } from "./combos.js";
@@ -9,6 +10,9 @@ export interface Reason {
   text: string;
   /** Payoff synergy type (tagger EFFECT_KIND). Set by the structured matcher; unset by the flat engine. */
   effectKind?: string;
+  /** THE STATE MADE THIS REASON (roadmap W18): stamped by the analysis on every reason of an edge
+   *  the same run without a state did not draw, so the board can draw it apart. */
+  enabledBy?: Marker[];
   /** Repeatability class: "triggered" | "activated" | "static" | "oneshot". Set by the structured matcher. */
   repeatability?: string;
   /** Payoff scaling basis (tagger SCALING_BASES). Set by the structured matcher; unset → "fixed". */

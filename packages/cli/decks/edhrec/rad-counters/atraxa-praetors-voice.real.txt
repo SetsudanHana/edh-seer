@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/GiNNOoUW7HWcyexKv2WxVA (source https://archidekt.com/decks/21597672)
+# tags Reanimator, Rad Counters, Lifegain, Self-Mill, Keywords, +1/+1 Counters, Counters Matter; bracket 3; saved 2026-04-13; 30 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Aether Vial
+1 Andúril, Narsil Reforged
+1 Arcane Signet
+1 Insight Engine
+1 Lightning Greaves
+1 Palantír of Orthanc
+1 Sol Ring
+1 The Magic Mirror
+1 The One Ring
+1 The Soul Stone
+1 Aftermath Analyst
+1 Akroma, Vision of Ixidor
+1 Archangel of Thune
+1 Archetype of Courage
+1 Avacyn, Angel of Hope
+1 Barrowgoyf
+1 Basking Broodscale
+1 Birds of Paradise
+1 Crystalline Giant
+1 Danny Pink
+1 Delighted Halfling
+1 Drana, Liberator of Malakir
+1 Drogskol Reaver
+1 Esper Sentinel
+1 Evolution Witness
+1 Glissa Sunslayer
+1 Gyre Sage
+1 Hermit Druid
+1 Heronblade Elite
+1 Incubation Druid
+1 Kami of Whispered Hopes
+1 Karlov of the Ghost Council
+1 Kathril, Aspect Warper
+1 Keen Duelist
+1 Kwende, Pride of Femeref
+1 Lathiel, the Bounteous Dawn
+1 Malcolm, Alluring Scoundrel
+1 Moseo, Vein's New Dean
+1 Noble Hierarch
+1 Odric, Lunarch Marshal
+1 Ouroboroid
+1 Shalai, Voice of Plenty
+1 Sigarda, Font of Blessings
+1 Sire of Seven Deaths
+1 Tangled Florahedron
+1 Tato Farmer
+1 The Wise Mothman
+1 Trygon Predator
+1 Will, Scion of Peace
+1 Witch Enchanter
+1 Witch of the Moors
+1 Zetalpa, Primal Dawn
+1 Agadeem's Awakening
+1 Fix What's Broken
+1 Germination Practicum
+1 Immortal Servitude
+1 Sea Gate Restoration
+1 Selective Adaptation
+1 Singularity Rupture
+1 Vicious Rivalry
+1 Whispering Madness
+1 Bleeding Effect
+1 Cemetery Tampering
+1 Court of Bounty
+1 Court of Cunning
+1 Out of the Tombs
+1 Sylvan Library
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 City of Shadows
+1 Command Tower
+1 Diamond City
+1 Exotic Orchard
+1 Flooded Strand
+1 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Island
+1 Llanowar Reborn
+1 Marsh Flats
+1 Misty Rainforest
+1 Overgrown Tomb
+1 Plains
+1 Polluted Delta
+1 Swamp
+1 Temple Garden
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Vivid Creek
+1 Vivid Grove
+1 Vivid Marsh
+1 Vivid Meadow
+1 Watery Grave
+1 Windswept Heath
+1 Yavimaya, Cradle of Growth
+1 Fell the Profane
+1 Hagra Mauling
+1 Malakir Rebirth
+1 Sink into Stupor

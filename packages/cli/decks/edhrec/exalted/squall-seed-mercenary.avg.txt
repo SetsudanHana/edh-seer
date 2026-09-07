@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/squall-seed-mercenary/exalted
+# theme Exalted (33 decks)
+
+Commander
+1 Squall, SeeD Mercenary
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Blitzball
+1 Brotherhood Regalia
+1 Commander's Sphere
+1 Key to the City
+1 Lightning Greaves
+1 Mask of Memory
+1 Mind Stone
+1 Orzhov Signet
+1 Shadowspear
+1 Sigil of Valor
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 Trailblazer's Boots
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Cathedral of War
+1 Caves of Koilos
+1 Command Tower
+1 Evolving Wilds
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Marsh Flats
+1 Orzhov Basilica
+9 Plains
+1 Rogue's Passage
+1 Shadowy Backstreet
+1 Shattered Sanctum
+1 Shineshadow Snarl
+10 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Accursed Marauder
+1 Agent 13, Sharon Carter
+1 Akrasan Squire
+1 Aven Squire
+1 Bastion Protector
+1 Battlegrace Angel
+1 Black Widow, Double Agent
+1 Boromir, Warden of the Tower
+1 Cathar Commando
+1 Danitha Capashen, Paragon
+1 Duty-Bound Dead
+1 Esper Sentinel
+1 Fleshbag Marauder
+1 Guardians of Akrasa
+1 Jirina, Dauntless General
+1 Knight of Glory
+1 Knight of Infamy
+1 Peggy Carter, Secret Agent
+1 Plaguecrafter
+1 Puresteel Paladin
+1 Selfless Spirit
+1 Servant of Nefarox
+1 Sigiled Paladin
+1 Silent Arbiter
+1 Sublime Archangel
+1 All That Glitters
+1 Angelic Benediction
+1 Angelic Exaltation
+1 Grasping Shadows
+1 Idolized
+1 Kaya's Ghostform
+1 Ripples of Undeath
+1 Sheltered by Ghosts
+1 Sigarda's Aid
+1 Team Avatar
+1 Teval's Judgment
+1 Anguished Unmaking
+1 Entomb
+1 Fracture
+1 Path to Exile
+1 Restoration Magic
+1 Swords to Plowshares
+1 Buried Alive
+1 Damn
+1 Night's Whisper
+1 Open the Armory
+1 Single Combat

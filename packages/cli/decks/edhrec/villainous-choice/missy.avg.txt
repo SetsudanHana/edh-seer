@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/missy/villainous-choice
+# theme Villainous Choice (7 decks)
+
+Commander
+1 Missy
+
+Deck
+1 Arcane Signet
+1 Cybership
+1 Midnight Crusader Shuttle
+1 Sol Ring
+1 Swiftfoot Boots
+1 TARDIS
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Canyon Slough
+1 Choked Estuary
+1 Command Tower
+1 Crumbling Necropolis
+1 Darkwater Catacombs
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Frostboil Snarl
+1 Gallifrey Council Chamber
+1 Haunted Ridge
+4 Island
+4 Mountain
+1 Reliquary Tower
+1 Rogue's Passage
+1 Seat of the Synod
+1 Shipwreck Marsh
+1 Smoldering Marsh
+1 Stormcarved Coast
+1 Sunken Hollow
+5 Swamp
+1 Temple of Malice
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Training Center
+1 Vault of Whispers
+1 Ashad, the Lone Cyberman
+1 Boltbender
+1 Coral Trickster
+1 Cult of Skaro
+1 Cyberman Patrol
+1 Cybermat
+1 Cybermen Squadron
+1 Dalek Drone
+1 Dalek Squadron
+1 Davros, Dalek Creator
+1 Emry, Lurker of the Loch
+1 Foundry Inspector
+1 Kadena's Silencer
+1 Mahadi, Emporium Master
+1 Ornithopter of Paradise
+1 Palladium Myr
+1 Skirk Alarmist
+1 Solemn Simulacrum
+1 Sycorax Commander
+1 The Beast, Deathless Prince
+1 The Cyber-Controller
+1 The Dalek Emperor
+1 The Master, Gallifrey's End
+1 The Master, Multiplied
+1 The Valeyard
+1 Ultron the Annihilator
+1 Ultron, Artificial Malevolence
+1 Virulent Silencer
+1 Weeping Angel
+1 Black Market Connections
+1 Blink
+1 Death in Heaven
+1 Fateful Discovery
+1 Genesis of the Daleks
+1 Propaganda
+1 Wound Reflection
+1 Chaos Warp
+1 Counterspell
+1 Cyber Conversion
+1 Dark Ritual
+1 Deadly Dispute
+1 Sheoldred's Edict
+1 Snuff Out
+1 This Is How It Ends
+1 Tezzeret, Master of the Bridge
+1 Blasphemous Act
+1 Delete
+1 Doomsday Confluence
+1 Ensnared by the Mara
+1 Feed the Swarm
+1 Great Intelligence's Plan
+1 Truth or Consequences

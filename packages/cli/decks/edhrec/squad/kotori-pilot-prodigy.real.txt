@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/VivakvWVfP4Ey_49qHIdDQ (source https://archidekt.com/decks/7667773)
+# tags Squad, Vehicles, Tokens, Artifacts; bracket 3; saved 2025-04-12; 1 tagged of 2642 indexed
+
+Commander
+1 Kotori, Pilot Prodigy
+
+Deck
+1 Academy Ruins
+1 Ancient Den
+1 Ash Barrens
+1 Buried Ruin
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hidden Grotto
+1 Irrigated Farmland
+8 Island
+1 Myriad Landscape
+1 Path of Ancestry
+5 Plains
+1 Port Town
+1 Prairie Stream
+1 Razortide Bridge
+1 Seachrome Coast
+1 Skycloud Expanse
+1 Spire of Industry
+1 Temple of Enlightenment
+1 Tranquil Cove
+1 Aeronaut Admiral
+1 Aethershield Artificer
+1 Brotherhood Scribe
+1 Cyberdrive Awakener
+1 Emry, Lurker of the Loch
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Indomitable Archangel
+1 Katsumasa, the Animator
+1 Kitsune Ace
+1 Lita, Mechanical Engineer
+1 Master of Etherium
+1 Mishra's Self-Replicator
+1 Myriad Construct
+1 Replication Specialist
+1 Sentry Bot
+1 Seven-Tail Mentor
+1 Sram, Senior Edificer
+1 Steel Overseer
+1 Steel Seraph
+1 Stone Retrieval Unit
+1 Stuffy Doll
+1 Urza, Lord High Artificer
+1 Anvil of Bogardan
+1 Arcane Signet
+1 Automated Assembly Line
+1 Azorius Signet
+1 Brotherhood Vertibird
+1 Colossal Plow
+1 Cybership
+1 Elixir of Immortality
+1 Esoteric Duplicator
+1 Fellwar Stone
+1 Futurist Sentinel
+1 Imperial Recovery Unit
+1 Knight Paladin
+1 Lux Artillery
+1 Mechtitan Core
+1 Mirrorworks
+1 Mobilizer Mech
+1 Mox Opal
+1 Mystic Forge
+1 Panharmonicon
+1 Parhelion II
+1 Peacewalker Colossus
+1 Pearl Medallion
+1 Prodigy's Prototype
+1 Reaver Titan
+1 Sapphire Medallion
+1 Sculpting Steel
+1 Shorikai, Genesis Engine
+1 Simulacrum Synthesizer
+1 Skysovereign, Consul Flagship
+1 Sol Ring
+1 Surgehacker Mech
+1 The Prydwen, Steel Flagship
+1 Thunderhawk Gunship
+1 Veil of Assimilation
+1 Armed and Armored
+1 Rootborn Defenses
+1 Union of the Third Path
+1 Born to Drive
+1 Song of the Worldsoul
+1 Swift Reconfiguration
+1 Dance of the Manse
+1 Organic Extinction

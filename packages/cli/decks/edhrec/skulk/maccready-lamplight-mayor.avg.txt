@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/maccready-lamplight-mayor/skulk
+# theme Skulk (39 decks)
+
+Commander
+1 MacCready, Lamplight Mayor
+
+Deck
+1 Arcane Signet
+1 Lightning Greaves
+1 Meekstone
+1 Orzhov Signet
+1 Quietus Spike
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Desolate Mire
+1 Godless Shrine
+1 Isolated Chapel
+1 Marsh Flats
+1 Minas Tirith
+12 Plains
+1 Shattered Sanctum
+1 Shineshadow Snarl
+9 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Vault of Champions
+1 Vault of the Archangel
+1 Bilious Skulldweller
+1 Commissar Severina Raine
+1 Corpse Knight
+1 Crawling Chorus
+1 Delney, Streetwise Lookout
+1 Elas il-Kor, Sadistic Pilgrim
+1 Enduring Innocence
+1 General's Enforcer
+1 Hoard Robber
+1 Jawbone Duelist
+1 Kambal, Consul of Allocation
+1 Kambal, Profiteering Mayor
+1 Knight of the White Orchid
+1 Lotho, Corrupt Shirriff
+1 Mangara, the Diplomat
+1 Mentor of the Meek
+1 Pestilent Syphoner
+1 Plague Stinger
+1 Saradoc, Master of Buckland
+1 Selfless Spirit
+1 Skrelv, Defector Mite
+1 Snarling Gorehound
+1 Solemn Simulacrum
+1 Soul Warden
+1 Soul's Attendant
+1 Suture Priest
+1 Tomik, Wielder of Law
+1 Unstoppable Slasher
+1 Virtus the Veiled
+1 Welcoming Vampire
+1 Windborn Muse
+1 Wispdrinker Vampire
+1 Assemble the Players
+1 Duelist's Heritage
+1 Ghostly Prison
+1 Necrogen Communion
+1 Phyrexian Arena
+1 Skrelv's Hive
+1 True Conviction
+1 Anguished Unmaking
+1 Despark
+1 Flawless Maneuver
+1 Generous Gift
+1 Inkshield
+1 Mortify
+1 Path to Exile
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Damn
+1 Dusk // Dawn
+1 Expel the Interlopers
+1 Fell the Mighty
+1 Night's Whisper
+1 Raise the Past
+1 Sevinne's Reclamation
+1 The Battle of Bywater

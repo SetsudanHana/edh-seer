@@ -32,7 +32,7 @@ type Edge = CardGraph["edges"][number];
 /** Middles listed before the rest become a count, and sources named within one. Both are the same
  *  reason the legality report caps its lists at eight: a list long enough to scroll is not read. */
 export const ROUTE_MIDDLE_CAP = 4;
-export const ROUTE_SOURCE_CAP = 6;
+const ROUTE_SOURCE_CAP = 6;
 
 export interface Route {
   /** The card in the middle — the one that makes the route exist. */

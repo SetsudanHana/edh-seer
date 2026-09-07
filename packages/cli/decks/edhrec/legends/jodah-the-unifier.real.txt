@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/iEbPd-FAEoHmSvOg6Q3Icg (source https://archidekt.com/decks/25252977)
+# tags Sunburst, Cascade, Legends; bracket 2; saved 2026-09-05; 4061 tagged of 32746 indexed
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Abrupt Decay
+1 An Offer You Can't Refuse
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Flusterstorm
+1 Mental Misstep
+1 Negate
+1 Path to Exile
+1 Swan Song
+1 Vanishing Verse
+1 Animar, Soul of Elements
+1 Atraxa, Grand Unifier
+1 Avacyn, Angel of Hope
+1 Birds of Paradise
+1 Bloom Tender
+1 Delighted Halfling
+1 Demonlord Belzenlok
+1 Dragonlord Dromoka
+1 Etali, Primal Storm
+1 Faeburrow Elder
+1 Gisela, Blade of Goldnight
+1 Gold-Forged Thopteryx
+1 Gwenna, Eyes of Gaea
+1 Hajar, Loyal Bodyguard
+1 Ignoble Hierarch
+1 Ilharg, the Raze-Boar
+1 Imoti, Celebrant of Bounty
+1 Inga and Esika
+1 Jirina, Dauntless General
+1 Jodah, Archmage Eternal
+1 Kaalia of the Vast
+1 Kenrith, the Returned King
+1 Kethis, the Hidden Hand
+1 Kinnan, Bonder Prodigy
+1 Lotho, Corrupt Shirriff
+1 Lotus Cobra
+1 Maelstrom Archangel
+1 Maelstrom Wanderer
+1 Niv-Mizzet Reborn
+1 Noble Hierarch
+1 Omnath, Locus of Creation
+1 Rafiq of the Many
+1 Ragavan, Nimble Pilferer
+1 Satoru Umezawa
+1 Shanid, Sleepers' Scourge
+1 Sisay, Weatherlight Captain
+1 Thalia and The Gitrog Monster
+1 Tymna the Weaver
+1 Valgavoth, Terror Eater
+1 Yidris, Maelstrom Wielder
+1 Yoshimaru, Ever Faithful
+1 Arcane Signet
+1 Chromatic Lantern
+1 Sol Ring
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Flooded Strand
+1 Forest
+1 Hallowed Fountain
+1 Indatha Triome
+1 Island
+1 Jetmir's Garden
+1 Ketria Triome
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Overgrown Tomb
+1 Plains
+1 Plaza of Heroes
+1 Polluted Delta
+1 Reflecting Pool
+1 Sacred Foundry
+1 Scalding Tarn
+1 Spara's Headquarters
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Zagoth Triome
+1 Ziatora's Proving Ground
+1 Maelstrom Nexus
+1 Sunbird's Invocation
+1 Maelstrom Pulse
+1 Nature's Lore
+1 Primevals' Glorious Rebirth
+1 Urza's Ruinous Blast
+1 Oko, Thief of Crowns
+1 Teferi, Time Raveler
+1 Wrenn and Six

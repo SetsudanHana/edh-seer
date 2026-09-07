@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/ihORNurtVcLrrZQiOdptuw (source https://archidekt.com/decks/17997799)
+# tags Summons, Enchantress; bracket 3; saved 2026-08-30; 9 tagged of 11130 indexed
+
+Commander
+1 Yuna, Grand Summoner
+
+Deck
+1 Amphibian Downpour
+1 Carpet of Flowers
+1 Enchantress's Presence
+1 Estrid's Invocation
+1 Fight Rigging
+1 Freed from the Real
+1 Kenrith's Transformation
+1 Mystic Remora
+1 Rhystic Study
+1 Song of the Dryads
+1 Sphere Grid
+1 Sphere of Safety
+1 Summoner's Sending
+1 Terrasymbiosis
+1 Together Forever
+1 An Offer You Can't Refuse
+1 Cyclonic Rift
+1 Heroic Intervention
+1 Path to Exile
+1 Protection Magic
+1 Swords to Plowshares
+1 Arcane Signet
+1 Lightning Greaves
+1 Sol Ring
+1 Sword of Truth and Justice
+1 Bountiful Promenade
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Flooded Grove
+8 Forest
+1 Glacial Fortress
+1 Hall of Heliod's Generosity
+1 Island
+1 Nesting Grounds
+1 Overgrown Farmland
+8 Plains
+1 Prairie Stream
+1 Reflecting Pool
+1 Scavenger Grounds
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Windswept Heath
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 Calix, Guided by Fate
+1 Composer of Spring
+1 Destiny Spinner
+1 Dryad of the Ilysian Grove
+1 Eidolon of Blossoms
+1 Garnet, Princess of Alexandria
+1 Jukai Naturalist
+1 Mesa Enchantress
+1 Noble Hierarch
+1 Nylea's Colossus
+1 O'aka, Traveling Merchant
+1 Rikku, Resourceful Guardian
+1 Sanctum Weaver
+1 Setessan Champion
+1 Springheart Nantuko
+1 Summon: Bahamut
+1 Summon: Fenrir
+1 Summon: Good King Mog XII
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Shiva
+1 Summon: Titan
+1 Summon: Valefor
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Tidus, Yuna's Guardian
+1 Tuvasa the Sunlit
+1 Verduran Enchantress
+1 Wakka, Devoted Guardian
+1 Weaver of Harmony
+1 Yuna, Hope of Spira
+1 Damning Verdict
+1 Esper Origins
+1 Farseek
+1 Idyllic Tutor
+1 Three Visits

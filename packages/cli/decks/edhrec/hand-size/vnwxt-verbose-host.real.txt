@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/k4So-ybHSVSNI6x-tYnSUA (source https://archidekt.com/decks/22101521)
+# tags Unblockable, Control, Hand Size, Counterspells, Mill, Looting, Card Draw; bracket 2; saved 2026-08-25; 32 tagged of 7898 indexed
+
+Commander
+1 Vnwxt, Verbose Host
+
+Deck
+1 Academy Loremaster
+1 Baral, Chief of Compliance
+1 Bilbo, Luckwearer
+1 Chameleon, Master of Disguise
+1 Defiler of Dreams
+1 Emrakul's Messenger
+1 Flitterwing Nuisance
+1 Forgotten Creation
+1 Gingerbrute
+1 Harmonized Trio
+1 Harrier Strix
+1 Hypnotic Siren
+1 Illvoi Galeblade
+1 Laboratory Maniac
+1 Lantern Bearer
+1 Looter il-Kor
+1 Mausoleum Wanderer
+1 Merfolk Windrobber
+1 Oneirophage
+1 Psychosis Crawler
+1 PuPu UFO
+1 Scaretiller
+1 Shoreline Looter
+1 Siren Stormtamer
+1 Slither Blade
+1 Spectral Sailor
+1 Tishana's Tidebinder
+1 Windrider Wizard
+1 Aether Syphon
+1 Bender's Waterskin
+1 Racers' Scoreboard
+1 Sol Ring
+1 The Water Crystal
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Annul
+1 Arcane Denial
+1 Brainstorm
+1 Brainsurge
+1 Commander's Insight
+1 Counterspell
+1 Ertai's Scorn
+1 Essence Scatter
+1 Exclude
+1 Flare of Denial
+1 Foil
+1 Frantic Search
+1 Get Out
+1 Long River's Pull
+1 Negate
+1 Obsessive Search
+1 Reality Shift
+1 Refute
+1 Tale's End
+1 Thirst for Identity
+1 Transcendent Message
+1 Agna Qel'a
+1 Amonkhet Raceway
+1 Avishkar Raceway
+1 Cephalid Coliseum
+28 Island
+1 Muraganda Raceway
+1 Reliquary Tower
+1 Terrain Generator
+1 The Surgical Bay
+1 Imprisoned in the Moon
+1 Noggle the Mind
+1 Psychic Corrosion
+1 Sphinx's Tutelage
+1 Teferi's Ageless Insight
+1 Mathemagics
+1 Treasure Cruise

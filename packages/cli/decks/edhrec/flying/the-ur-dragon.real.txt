@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/2fkfemu7YQ_fD1WVhi5fCg (source https://moxfield.com/decks/bhaAQ7RX2UusHtIoTHCeXw)
+# tags Combo, Extra Combats, Flying, Midrange; bracket 3; saved 2026-09-05; 1488 tagged of 50478 indexed
+
+Commander
+1 The Ur-Dragon
+
+Deck
+1 Ancient Copper Dragon
+1 Ancient Gold Dragon
+1 Ancient Silver Dragon
+1 Atsushi, the Blazing Sky
+1 Betor, Kin to All
+1 Birds of Paradise
+1 Bloom Tender
+1 Bonehoard Dracosaur
+1 Dragon Broodmother
+1 Dragonborn Champion
+1 Dragonhawk, Fate's Tempest
+1 Dragonlord Dromoka
+1 Dragonlord Kolaghan
+1 Dragonlord Ojutai
+1 Dragonspeaker Shaman
+1 Goldspan Dragon
+1 Hellkite Courser
+1 Iymrith, Desert Doom
+1 Klauth, Unrivaled Ancient
+1 Miirym, Sentinel Wyrm
+1 Nicol Bolas, the Ravager
+1 Old Gnawbone
+1 Sarkhan, Soul Aflame
+1 Scaled Nurturer
+1 Scion of Draco
+1 Scourge of Valkas
+1 Scourge of the Throne
+1 Shivan Devastator
+1 Smaug the Magnificent
+1 Smaug, Wicked Worm
+1 Terror of the Peaks
+1 Tiamat
+1 Twinflame Tyrant
+1 Ureni of the Unwritten
+1 Utvara Hellkite
+1 Zurgo and Ojutai
+1 Anguished Unmaking
+1 Arcane Denial
+1 Assassin's Trophy
+1 Counterspell
+1 Cyclonic Rift
+1 Heroic Intervention
+1 Mana Drain
+1 Path to Exile
+1 Swan Song
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Arcane Signet
+1 Mox Jasper
+1 Sol Ring
+1 The Great Henge
+1 Arid Mesa
+1 Badlands
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Cavern of Souls
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Island
+1 Ketria Triome
+1 Maelstrom of the Spirit Dragon
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Otawara, Soaring City
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Plains
+1 Polluted Delta
+1 Sacred Foundry
+1 Scalding Tarn
+1 Shadowy Backstreet
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Call the Spirit Dragons
+1 Dracogenesis
+1 Dragon Tempest
+1 Frostcliff Siege
+1 Rhythm of the Wild
+1 Sylvan Library
+1 Temur Ascendancy
+1 Crux of Fate
+1 Farseek
+1 Three Visits
+1 Sarkhan Unbroken

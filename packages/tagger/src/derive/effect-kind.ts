@@ -53,6 +53,16 @@ export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recurs
  *  caught: that one really does place counters later and is ordinary `counter-placement`. */
 const ENTERS_WITH = /\benters? with\b[^.]{0,40}\bcounters?\b/i;
 
+/** The energy object as the clause layer writes it: a bare `E`, `{E}`, or the word itself. No mana
+ *  symbol is ever `E` -- mana is WUBRGC, a number, or X -- so this cannot catch a real mana object.
+ *
+ *  IT WAS A REGEX AND CODEQL WAS RIGHT ABOUT IT. `/^\s*\{?\s*e\s*\}?\s*$/i` puts four `\s*` runs
+ *  around two optional braces, so a long run of spaces that does not match backtracks quadratically
+ *  (`js/polynomial-redos`, high). Stripping the braces and trimming asks the same question in one
+ *  linear pass, and reads as what it means. */
+const isEnergyObject = (object: string): boolean =>
+  object.replaceAll("{", "").replaceAll("}", "").trim().toLowerCase() === "e";
+
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",
   "deal-damage": "damage",
@@ -110,7 +120,7 @@ const SPEED_KEYWORDS = /\b(haste|double strike)\b/i;
  *  templating for a one-off (Mockingbird, Tyrite Sanctum); "is every creature type" / "every land
  *  type" is the changeling-wide form (Maskwood Nexus, Omo, Planar Nexus). */
 const TYPE_GRANT =
-  /\bin addition to its other types\b|\bis every\b|\bevery (?:creature|land|artifact|nonbasic land) type\b/i;
+  /\bin addition to its other types\b|\bis every\b|\bevery (?:creature|land|artifact|nonbasic land) type\b|\b(?:is|becomes) also an? [A-Z]/;
 
 /** `cost-modify` is one verb because the clause states one action; the direction is in the object,
  *  and the two directions are OPPOSITE kinds the engine already consumes heavily (cost-reduction on
@@ -266,6 +276,12 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // creature the deck plays, and `wincon.ts` counted it as a go-wide finisher. The AMOUNT already
   // carried the sign and nothing read it.
   if (verb === "modify-pt" && /^\s*-/.test(String(action.amount ?? ""))) return "debuff";
+  // A BASE POWER AND TOUGHNESS IS SET, NOT MODIFIED. "Non-Horror creatures with slime counters on
+  // them have base power and toughness 2/2" (Sludge Monster) is removal aimed at the other side of
+  // the table, and the clause layer records it as `modify-pt` with an unsigned "2/2", which mapped
+  // to `pump` and fed Laboratory Maniac's anthem payoffs (owner-judged FALSE, 2026-08-15: "it is
+  // removal, you always would target opponent creatures"). Neither a pump nor a debuff: no kind.
+  if (verb === "modify-pt" && !/^\s*[+-]/.test(String(action.amount ?? "")) && /\bbase power\b/i.test(clauseText)) return null;
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
   if (verb === "extra-turn" || verb === "extra-phase") {
     return extraUnitKind(String(action.object ?? ""), clauseText);
@@ -304,8 +320,14 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // derivation never produced, and `mechanisms.ts:47` requires it to see a spellslinger deck at all;
   // the FLAT population produces it and derived never did. The verb cannot tell them apart and the
   // object can, which is the `double` lesson one row up.
+  // THE OBJECT DECIDES WHEN IT NAMES A THING; the clause text only stands in for a bare pronoun
+  // ("copy it"). Reading the whole clause made Protean Thaumaturge -- "become a copy of another
+  // target creature, except it has THIS ABILITY" -- a spell copier, and a nine-instant deck a
+  // Spellslinger deck on the site's own example (UX sweep 2026-09-06, E2).
   if (verb === "copy") {
-    const o = `${action.object ?? ""} ${clauseText}`;
+    const object = action.object ?? "";
+    const named = /\b(creature|permanent|artifact|enchantment|land|planeswalker|token|spells?|instant|sorcery|ability)\b/i.test(object);
+    const o = named ? object : `${object} ${clauseText}`;
     return /\bspells?\b|\binstant\b|\bsorcery\b|\bability\b/i.test(o) ? "copy-spell" : "clone";
   }
   // A SACRIFICE SOMEONE ELSE IS MADE TO PERFORM is `forced-sacrifice` — an edict. Required by
@@ -316,6 +338,11 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     const control = parseSubject(action.object ?? "").control;
     return control === "opp" ? "forced-sacrifice" : null;
   }
+  // "CREATURES LOSE ALL ABILITIES" is `cant | have abilities` after normalization, and it read as
+  // nothing, so Dress Down derived its draw and its end-step sacrifice and never the static that
+  // turns the board off -- and the engine claimed Grim Guardian drains when Dress Down enters
+  // (owner, 2026-09-05). Layer 6 of CR 613: an ability-removing effect. 73 corpus cards print it.
+  if (verb === "cant" && /\babilit(?:y|ies)\b/i.test(action.object ?? "")) return "ability-loss";
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
   for (const r of ZONE_RULES) {
@@ -333,5 +360,21 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   if (verb === "lose-life" || verb === "set-life") {
     return parseSubject(action.object ?? "").control === "you" ? null : "player-life-loss";
   }
+  // ENERGY IS NOT MANA, AND THE NORMALIZER CALLS IT MANA. "Whenever a creature you control enters,
+  // you get {E} (an energy counter)" arrives from the clause layer as `{verb: "add-mana", object:
+  // "E"}`, and `SIMPLE` below turned that into `mana-generation` -- so Decoction Module's page read
+  // "adds 1 mana", a claim big enough to change a build and false. Both a deck tuner and a skeptic
+  // refused to act on that row, independently, on 2026-09-04.
+  //
+  // MEASURED over the clause corpus: 35 of 2,263 `add-mana` actions carry the energy object, across
+  // 32 cards -- Decoction Module, Aetherstorm Roc, Empyreal Voyager, Dr. Madison Li. The other 2,228
+  // are real mana and are untouched.
+  //
+  // REFUSED RATHER THAN RELABELLED. Energy is a player resource with no member in `EFFECT_KINDS`,
+  // and inventing one would be consumed downstream as if it were true by `impact.ts`, `buckets.ts`
+  // and the castability model, none of which can spend it. A missing kind reads as "fixed", which is
+  // the honest answer: the engine has no vocabulary for energy yet. Fixing it in the CLAUSE layer
+  // would cost a re-normalisation; this is free.
+  if (verb === "add-mana" && isEnergyObject(action.object ?? "")) return null;
   return SIMPLE[verb] ?? null;
 }

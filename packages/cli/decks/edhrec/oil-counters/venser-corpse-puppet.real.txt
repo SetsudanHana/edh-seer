@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/UcIIrZ0U8z4n07XUg0jxVg (source https://archidekt.com/decks/16308614)
+# tags Proliferate, Infect, Oil Counters; bracket 3; saved 2026-07-24; 4 tagged of 1802 indexed
+
+Commander
+1 Venser, Corpse Puppet
+
+Deck
+1 Anoint with Affliction
+1 Aspirant's Ascent
+1 Counterspell
+1 Grim Affliction
+1 Prologue to Phyresis
+1 Radstorm
+1 Reject Imperfection
+1 Tainted Strike
+1 Virulent Wound
+1 Vraska's Fall
+1 Waterlogged Teachings
+1 Whisper of the Dross
+1 Atraxa's Skitterfang
+1 Bilious Skulldweller
+1 Blightbelly Rat
+1 Blighted Agent
+1 Core Prowler
+1 Corpse Cur
+1 Deepglow Skate
+1 Dreamtide Whale
+1 Dune Mover
+1 Flesh-Eater Imp
+1 Flux Channeler
+1 Gulping Scraptrap
+1 Hand of the Praetors
+1 Ichor Rats
+1 Myojin of Cryptic Dreams
+1 Phyrexian Juggernaut
+1 Phyrexian Vatmother
+1 Plague Myr
+1 Reaper of Sheoldred
+1 Septic Rats
+1 Sheoldred's Headcleaver
+1 Skithiryx, the Blight Dragon
+1 Suq'Ata Assassin
+1 Surge Conductor
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Toxic Nim
+1 Viral Drake
+1 Virulent Silencer
+1 Voidwing Hybrid
+1 Caress of Phyrexia
+1 Contentious Plan
+1 Drown in Ichor
+1 Phyresis Outbreak
+1 Spread the Sickness
+1 Tezzeret's Gambit
+1 Vat Emergence
+1 Command Tower
+1 Dimir Aqueduct
+1 Dismal Backwater
+10 Island
+1 Karn's Bastion
+1 Mirrex
+1 Murky Sewer
+1 Rogue's Passage
+1 Sinister Hideout
+1 Soured Springs
+15 Swamp
+1 Tainted Isle
+1 Commander's Sphere
+1 Contagion Clasp
+1 Dimir Keyrune
+1 Dimir Locket
+1 Dimir Signet
+1 Glistening Sphere
+1 Phyrexian Atlas
+1 Sol Ring
+1 Staff of Compleation
+1 Throne of Geth
+1 Corrupted Conscience
+1 Inexorable Tide
+1 Mesmerizing Dose
+1 Necrogen Communion
+1 Vraska, Betrayal's Sting

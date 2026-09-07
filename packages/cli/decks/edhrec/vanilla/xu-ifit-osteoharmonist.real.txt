@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/fEctwH3mKoLHIDyRbBfivQ (source https://archidekt.com/decks/14845525)
+# tags Skeletons, Vanilla, Reanimator; bracket 2; saved 2026-08-17; 12 tagged of 4702 indexed
+
+Commander
+1 Xu-Ifit, Osteoharmonist
+
+Deck
+1 Accursed Duneyard
+1 Bojuka Bog
+1 Crypt of Agadeem
+1 Dakmor Salvage
+1 Geier Reach Sanitarium
+1 Myriad Landscape
+1 Rogue's Passage
+1 Spymaster's Vault
+1 Susur Secundi, Void Altar
+23 Swamp
+1 Terrain Generator
+1 Tomb Fortress
+1 War Room
+1 Altar of Dementia
+1 Altar of the Wretched
+1 Illusionist's Bracers
+1 Jet Medallion
+1 Key to the City
+1 Lightning Greaves
+1 Magewright's Stone
+1 Mask of Griselbrand
+1 Requiem Monolith
+1 Sol Ring
+1 The Eternity Elevator
+1 Thousand-Year Elixir
+1 Whip of Erebos
+1 Ancient Stone Idol
+1 Bygone Colossus
+1 Death's Shadow
+1 Disciple of Bolas
+1 Draco
+1 Ghoulcaller Gisa
+1 Gisa, the Hellraiser
+1 Illuminor Szeras
+1 It That Betrays
+1 Keen Duelist
+1 Kozilek, the Great Distortion
+1 Marvin, Murderous Mimic
+1 Metalwork Colossus
+1 Mikaeus, the Unhallowed
+1 Phyrexian Triniform
+1 Qarsi Revenant
+1 Rot-Curse Rakshasa
+1 Shadow of Mortality
+1 Shadowheart, Dark Justiciar
+1 Skeleton Crew
+1 Soldevi Adnate
+1 Stinkweed Imp
+1 Stitcher's Supplier
+1 Triplicate Titan
+1 Twilight Diviner
+1 Ulamog's Dreadsire
+1 Undead Butler
+1 Valgavoth, Terror Eater
+1 Void Beckoner
+1 Archenemy's Charm
+1 Bitter Triumph
+1 Fell the Profane
+1 Malakir Rebirth
+1 Saw in Half
+1 Withering Torment
+1 Breach the Multiverse
+1 Buried Alive
+1 Dread Return
+1 Feed the Swarm
+1 Mandate of Abaddon
+1 Morbid Curiosity
+1 Toxic Deluge
+1 Victimize
+1 Will of the Abzan
+1 Zero Point Ballad
+1 Cemetery Tampering
+1 Corpses of the Lost
+1 Cover of Darkness
+1 Out of the Tombs
+1 Ripples of Undeath
+1 Tortured Existence

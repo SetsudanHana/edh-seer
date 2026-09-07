@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/VynRocSV4FfJMW3RRyE1YA (source https://archidekt.com/decks/23599001)
+# tags Level Up; bracket 2; saved 2026-07-09; 3 tagged of 20658 indexed
+
+Commander
+1 Tidus, Yuna's Guardian
+
+Deck
+1 Adarkar Wastes
+1 Breeding Pool
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Floodfarm Verge
+5 Forest
+1 Fortified Village
+1 Hallowed Fountain
+1 Hedge Maze
+1 Hushwood Verge
+5 Island
+1 Lush Portico
+1 Meticulous Archive
+1 Misty Rainforest
+5 Plains
+1 Port Town
+1 Prairie Stream
+1 Sodden Verdure
+1 Temple Garden
+1 Vineglimmer Snarl
+1 Willowrush Verge
+1 Windswept Heath
+1 Yavimaya Coast
+1 Arcane Signet
+1 Fellwar Stone
+1 Ghost Vacuum
+1 Sol Ring
+1 Soul-Guide Lantern
+1 Talisman of Curiosity
+1 Talisman of Progress
+1 Talisman of Unity
+1 Austere Command
+1 Farseek
+1 Nature's Lore
+1 Ponder
+1 Rampant Growth
+1 Thirsting Roots
+1 Three Visits
+1 Beastbreaker of Bala Ged
+1 Biomancer's Familiar
+1 Birds of Paradise
+1 Caravan Escort
+1 Cathedral Acolyte
+1 Chocobo Knights
+1 Coralhelm Commander
+1 Deep Gnome Terramancer
+1 Delighted Halfling
+1 Dreamtide Whale
+1 Enclave Cryptologist
+1 Ezuri, Stalker of Spheres
+1 Ferrafor, Young Yew
+1 Hada Spy Patrol
+1 Halimar Wavewatch
+1 Hedron-Field Purists
+1 Hexdrinker
+1 Joraga Treespeaker
+1 Ledger Shredder
+1 Lighthouse Chronologist
+1 Mangara, the Diplomat
+1 Patrolling Peacemaker
+1 Runic Armasaur
+1 Skywatcher Adept
+1 Student of Warfare
+1 Toski, Bearer of Secrets
+1 Transcendent Master
+1 Vorel of the Hull Clade
+1 Zimone, Paradox Sculptor
+1 Darksteel Mutation
+1 Imprisoned in the Moon
+1 Innkeeper's Talent
+1 Monologue Tax
+1 Mystic Remora
+1 Smuggler's Share
+1 Training Grounds
+1 Verity Circle
+1 Kaito, Cunning Infiltrator
+1 Mutational Advantage
+1 Nature's Claim
+1 Path to Exile
+1 Pongify
+1 Rapid Hybridization
+1 Return to Nature
+1 Ripples of Potential
+1 Swords to Plowshares

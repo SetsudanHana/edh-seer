@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { CardDrawerProvider, CardName, usePinned } from "./card-drawer.js";
+import { CardDrawerProvider, CardName, ReasonText, usePinned } from "./card-drawer.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
@@ -526,7 +526,12 @@ test("the column header is sticky at every width, with the offset applied once",
   const { container } = render(<CardList cards={SAMPLE.report.cards} />);
   const thead = container.querySelector("thead")!;
   expect(thead.className).toContain("sticky");
-  expect(thead.className).toContain("top-[var(--report-header-h,0px)]");
+  // THE WHOLE STACK ABOVE IT, and it grew on 2026-09-04 when the site header went sticky. A sticky
+  // `top` is a viewport-absolute offset, so every bar pinned above this one has to be in the sum --
+  // count only the report header and the column labels pin BEHIND the site header instead of under
+  // it, which is the same class of defect as the hardcoded `top-[33px]` this test was written for.
+  expect(thead.className)
+    .toContain("top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px))]");
   // The stopgap's own shape must not come back: a breakpoint on the sticky means a width where the
   // labels scroll away again.
   expect(thead.className).not.toContain("static");
@@ -869,12 +874,72 @@ test("HighSynergyCards marks the top-authority anchor and double-duty cards", ()
 });
 
 
+/** WHOSE ROW EACH TICK IS (owner ruling 2026-09-06: the report shows the rows). SAMPLE carries the
+ *  spec's worked example -- Tokens 23% with Aristocrats 17% -- so every role dial names both rows
+ *  under its bar and the source line says the blend and its weights. A player can put "Tokens 10 ·
+ *  Aristocrats 14.5" next to EDHREC and check it, which is the whole point of showing them. */
+test("each role tick names the theme rows it was blended from, and the source line says the weights", () => {
+  render(<DeckGauges data={SAMPLE} />);
+  expect(screen.getByText("Tokens 8 · Aristocrats 13")).toBeInTheDocument();        // Consistency, blends to the tick's 10
+  expect(screen.getByText("Tokens 11 · Aristocrats 8.5")).toBeInTheDocument();      // Interaction
+  expect(screen.getByText(/Ticks blend the Tokens \(60%\) and Aristocrats \(40%\) archetype medians/)).toBeInTheDocument();
+  expect(screen.queryByText(/Command Zone/)).toBeNull();
+  // EDHREC is the sample the thesis was checked on, not the claim (owner, 2026-09-06): named once,
+  // in the gloss only, never on a tick or the source line.
+  const edhrec = screen.getAllByText(/EDHREC/);
+  expect(edhrec).toHaveLength(1);
+  expect(edhrec[0]!.closest("details")).not.toBeNull();
+});
+
+test("with no theme strong enough the ticks say they are the population's, and an old report keeps the old sentence", () => {
+  const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
+  const fallback = { ...SAMPLE, report: { ...SAMPLE.report, template: { population, targets: population } } };
+  const { unmount } = render(<DeckGauges data={fallback} />);
+  expect(screen.getAllByText("Archetype median 13").length).toBe(2); // Consistency and Interaction share it
+  expect(screen.getByText(/no archetype read strongly enough/)).toBeInTheDocument();
+  unmount();
+  const { template: _t, ...withoutTemplate } = SAMPLE.report;
+  render(<DeckGauges data={{ ...SAMPLE, report: withoutTemplate }} />);
+  expect(screen.getByText(/Command Zone template/)).toBeInTheDocument();
+});
+
+/** THE SHARE AND THE FLOOR, NOT A VERDICT (UX sweep 2026-09-06, D4). "Enchantress" as the headline,
+ *  "Enchantress 25%" on the bar, and "no archetype read strongly enough" under the ticks were three
+ *  readings of 0.249 against a 0.25 floor. The line now prints both numbers. */
+test("under the floor, the tick line prints the theme's share and the floor it fell under", () => {
+  const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
+  const data = { ...SAMPLE, report: { ...SAMPLE.report,
+    strategies: [{ name: "enchantress" as const, label: "Enchantress", confidence: 0.249 }],
+    template: { population, targets: population, leadFloor: 0.25 } } };
+  render(<DeckGauges data={data} />);
+  expect(screen.getByText(/Enchantress reads 24\.9%, under the 25% an archetype needs to set its own row/)).toBeInTheDocument();
+  expect(screen.queryByText(/Being over is fine/)).toBeNull();
+  expect(screen.getByText(/Over a tick is not a fault; Fixes says where that room is/)).toBeInTheDocument();
+});
+
+/** AND THE BAR NEVER ROUNDS UP OVER IT: 0.249 printed "25%" beside that note. */
+test("an archetype bar floors its percentage", () => {
+  render(<ArchetypeBoard strategies={[{ name: "enchantress", label: "Enchantress", confidence: 0.249 }]} archetypes={SAMPLE.report.archetypes} />);
+  expect(screen.getByText("24%")).toBeInTheDocument();
+});
+
+/** THE ENGINE'S FALLBACK IS MARKED WHEREVER IT IS PRINTED (skeptic, UX sweep 2026-09-06). The card
+ *  page said "engine did not read what it does" under a "<card> triggers" row; the report printed
+ *  the same sentence as a claim -- and the deck's 5.0 anchor was one of them. */
+test("a reason that ends in \"triggers\" carries the unread mark; a real claim does not", () => {
+  const { unmount } = render(<ReasonText text="When Arcane Signet is cast, Displacer Kitten triggers" />);
+  expect(screen.getByText(/engine did not read what it does/)).toBeInTheDocument();
+  unmount();
+  render(<ReasonText text="When Arcane Signet is cast, Shark Typhoon makes a token" />);
+  expect(screen.queryByText(/engine did not read what it does/)).toBeNull();
+});
+
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two
  *  figures directly beneath them — a third copy counting the sticky header — so the tiles retired
  *  and their `Explain` glosses, which were the only place either score said what it measures,
  *  moved onto the dials. These are the tile's assertions, re-aimed at where the words live. */
 test("the score dials name each score, its value and its band", () => {
-  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  render(<DeckGauges data={SAMPLE} />);
   expect(screen.getByText("Synergy")).toBeInTheDocument();
   expect(screen.getByText("Build")).toBeInTheDocument();
   // `getAllBy` on the figures: SAMPLE's Lands bullet also reads 4.0, and this test is about the
@@ -897,7 +962,7 @@ test("the score dials name each score, its value and its band", () => {
 // says what the two halves of SYNERGY actually measure and which card the anchor is.
 test("each dial explains its scale, and Synergy names the anchor card", async () => {
   const user = userEvent.setup();
-  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  render(<DeckGauges data={SAMPLE} />);
   const gloss = screen.getAllByText("what this measures");
   expect(gloss).toHaveLength(2); // Synergy and Build each say what they mean
   await user.click(gloss[0]!);
@@ -909,7 +974,7 @@ test("each dial explains its scale, and Synergy names the anchor card", async ()
  *  a button whenever it has somewhere to open. The gloss is a SIBLING of the dial, never a child,
  *  and this is what stops a later refactor folding it back inside. */
 test("the dial's explanation is not nested inside the dial's own button", () => {
-  render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  render(<DeckGauges data={SAMPLE} />);
   for (const summary of screen.getAllByText("what this measures")) {
     expect(summary.closest("button")).toBeNull();
   }
@@ -934,7 +999,7 @@ test("the dial's explanation is not nested inside the dial's own button", () => 
  *  inside the disclosure: an always-visible line reading word-for-word the same as a disclosure's
  *  opening is a defect this report has already filed against itself. */
 test("the band scale is visible under each dial and is not repeated inside the disclosure", () => {
-  const { container } = render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  const { container } = render(<DeckGauges data={SAMPLE} />);
   // BY CONTAINER, NOT `getByText`. Each band is its own `whitespace-nowrap` span now, so no single
   // element holds the whole sentence -- the DOM-text-concatenation trap this suite has hit before.
   const strips = [...container.querySelectorAll("p")].filter((el) => /unfocused/.test(el.textContent ?? ""));
@@ -949,7 +1014,7 @@ test("the band scale is visible under each dial and is not repeated inside the d
 });
 
 test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged by the derivation", () => {
-  const { container } = render(<DeckGauges data={SAMPLE} onOpen={() => {}} />);
+  const { container } = render(<DeckGauges data={SAMPLE} />);
   // STILL BYTE FOR BYTE, read off the element instead of through a text matcher: the strip is one
   // span per band now (so a band cannot wrap in half), which means no single element's text is the
   // whole sentence. Whitespace is normalised the way `getByText` would have; the words, the
@@ -968,6 +1033,17 @@ test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged b
 // it here too put the same four numbers on one screen twice. `RecognitionPanel.test.tsx` covers
 // the parent counts now; what is left to prove here is the LEAF math, which never carried a ratio
 // of its own even before this task.
+test("BuildBenchmarks: a leaf's facets are said beside its count and never added to it", () => {
+  const cats = SAMPLE.report.buildCategories!.map((c) =>
+    c.category === "draw" ? { ...c, count: 14, facets: { engines: 5, unlabelled: 3 } } : c);
+  render(<BuildBenchmarks categories={cats} parents={SAMPLE.report.buildParents} />);
+  const draw = screen.getByText(/^Draw$/).closest("li")!;
+  expect(draw.textContent).toMatch(/5 engines · 3 unlabelled/);
+  // The count keeps its column: facet text precedes it, never trails it.
+  expect(draw.textContent).toMatch(/5 engines · 3 unlabelled14 · \d+%$/);
+  expect(draw.getAttribute("aria-label")).toMatch(/5 engines · 3 unlabelled$/);
+});
+
 test("BuildBenchmarks: a leaf shows count and share, never a ratio", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} parents={SAMPLE.report.buildParents} />);
   // Tutors is a Consistency LEAF: it renders (owner's ruling: every leaf shows, including a zero),
@@ -2176,7 +2252,7 @@ test("every chapter is mounted in one render, in rail order", () => {
 // dials: the tone of a score is a semantic token, never a raw palette class.
 test("the score dials use semantic tokens, not raw Tailwind palette classes", () => {
   const { container } = render(
-    <DeckGauges data={{ report: { synergyOverall: 1.2, buildScore: 1.0 } } as never} onOpen={() => {}} />,
+    <DeckGauges data={{ report: { synergyOverall: 1.2, buildScore: 1.0 } } as never} />,
   );
   expect(container.innerHTML).not.toMatch(/text-(red|amber|emerald)-\d{3}/);
 });
@@ -2907,39 +2983,6 @@ test("the trim buttons announce which count is open", async () => {
   expect(three).toHaveAttribute("aria-pressed", "false");
 });
 
-/** A DIAL THAT OPENS A TAB AND LEAVES THE READER TO FIND THE ROW IS HALF A DRILL-DOWN. The gauge
- *  names one parent; Build has four groups; landing on the tab without marking which one was asked
- *  about makes the reader repeat the search they just clicked to avoid. */
-
-test("opening a role from its dial marks that group in the Roles chapter", () => {
-  render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
-  fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
-  expect(screen.getByTestId("role-group-Interaction")).toHaveAttribute("data-focused", "true");
-  // AND ONLY THAT GROUP. Without this line the test passes for an implementation that marks every
-  // group whenever any focus is set (`focus !== undefined` rather than `focus === p.name`) -- which
-  // is precisely the bug the mark exists to avoid, since marking everything marks nothing.
-  expect(screen.getByTestId("role-group-Consistency")).not.toHaveAttribute("data-focused");
-});
-
-
-test("arriving in the Roles chapter without a dial marks nothing", () => {
-  render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
-  expect(screen.getByTestId("role-group-Interaction")).not.toHaveAttribute("data-focused");
-});
-
-/** CLICKING A DIAL UNMOUNTS SUMMARY, so the button that had keyboard focus disappears with it and
- *  focus silently falls to `document.body` -- a keyboard or screen-reader user gets no
- *  announcement of where they landed and has to Tab from the top of the page (IMPORTANT D,
- *  whole-branch review, 2026-09-01). `scrollIntoView` is not implemented in jsdom, so it is stubbed
- *  rather than skipped -- the point is proving the group receives DOM focus, which jsdom can check
- *  even though it cannot lay anything out. */
-test("opening a role from its dial moves keyboard focus to the marked group", () => {
-  Element.prototype.scrollIntoView = vi.fn();
-  render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
-  fireEvent.click(screen.getByRole("button", { name: /^Interaction,/ }));
-  expect(screen.getByTestId("role-group-Interaction")).toHaveFocus();
-});
-
 /** T19 (owner call 2026-09-02): *"LANDS IN YOUR OPENING 7 is right now hidden and to be honest this
  *  is important from the data point of view"*. The distribution was behind a `<details>`, so the
  *  eight bars existed and a reader had to know to look for them. The SENTENCE still leads -- one
@@ -2994,8 +3037,10 @@ test("the convention disclaimer is stated once, and the provenance survives ever
   const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
   const text = (container.textContent ?? "").replace(/\s+/g, " ");
 
-  // The long form, once.
-  const long = text.match(/a convention, not measured from real decks/g) ?? [];
+  // The long form, once. Since 2026-09-06 the ticks are archetype medians and the long form says
+  // what THAT number is ("what the themes run, not what they need"); the Command Zone wording
+  // survives only for a report with no `template` at all. Either way: exactly one long form.
+  const long = text.match(/a convention, not measured from real decks|what the archetypes? runs?, not what (?:it|they) needs?/g) ?? [];
   expect(long).toHaveLength(1);
 
   // And the phrasing it replaced is gone entirely -- "someone typed" was the tell.
@@ -3022,9 +3067,9 @@ test("the mana panel charts the payable share and stops repeating the mana curve
   // The figures stay reachable where there is no pointer: this IS the table view.
   const chart = screen.getByRole("img", { name: /Share of the deck payable, by turn/ });
   expect(chart.getAttribute("aria-label")).toMatch(/turn 4, 40% \(20% to 50%\)/);
-  // One plotted point per row, and a turn label under each.
+  // One plotted point per row, and a turn label under each; the three axis ticks are not turns.
   expect(chart.querySelectorAll("circle")).toHaveLength(4);
-  expect(chart.querySelectorAll("text")).toHaveLength(4);
+  expect(chart.querySelectorAll("text:not([data-testid='y-tick'] text)")).toHaveLength(4);
 });
 
 /** T20 (owner): *"section like Does it play enough of each role? is ugly numbers and text and

@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/ob6XXh-RoR2_QqSBUU7xJA (source https://archidekt.com/decks/19690630)
+# tags Spiders, Legends, Heroes, +1/+1 Counters, Web-slinging; bracket 2; saved 2026-08-25; 9 tagged of 5232 indexed
+
+Commander
+1 Miles Morales
+
+Deck
+1 Arasta of the Endless Web
+1 Araña, Heart of the Spider
+1 Aunt May
+1 Guy in the Chair
+1 Halana and Alena, Partners
+1 Mary Jane Watson
+1 Prowler, Misguided Mentor
+1 Radioactive Spider
+1 Scarlet Spider, Ben Reilly
+1 Silk, Web Weaver
+1 Spider Manifestation
+1 Spider-Girl, Legacy Hero
+1 Spider-Gwen, Free Spirit
+1 Spider-Man India
+1 Spider-Man, Brooklyn Visionary
+1 Spider-Man, Miles Morales
+1 Spider-Man, To the Rescue
+1 Spider-Man, Web-Slinger
+1 Spider-Punk
+1 Spider-UK
+1 Spiders-Man, Heroic Horde
+1 Treetop Snarespinner
+1 Twitching Doll
+1 Web-Warriors
+1 Arcane Signet
+1 Bagel and Schmear
+1 Costume Closet
+1 Gilded Lotus
+1 Herald's Horn
+1 Hot Dog Cart
+1 Peter Parker's Camera
+1 Pictures of Spider-Man
+1 Sol Ring
+1 Spider-Suit
+1 Web-Shooters
+1 Avengers Tower
+1 Bleeding Woods
+1 Blossoming Sands
+1 Command Tower
+1 Daily Bugle Building
+1 Etched Cornfield
+1 Exotic Orchard
+10 Forest
+1 Mountain
+7 Plains
+1 Raucous Carnival
+1 Rugged Highlands
+1 Suburban Sanctuary
+1 Temple of Abandon
+1 Temple of Plenty
+1 Temple of Triumph
+1 Thornspire Verge
+1 Wind-Scarred Crag
+1 Beastie Beatdown
+1 Electro's Bolt
+1 Germination Practicum
+1 Kapow!
+1 Knockout Maneuver
+1 Scout the City
+1 Winds of Change
+1 Boros Charm
+1 Duty Beyond Death
+1 Grow Extra Arms
+1 Origin of Metalbending
+1 Shock
+1 Snakeskin Veil
+1 Spectacular Tactics
+1 Strength of Will
+1 Tangle
+1 Unwanted Remake
+1 Friendly Neighborhood
+1 Garruk's Uprising
+1 Grand Entryway // Elegant Rotunda
+1 Kraven's Last Hunt
+1 Maximum Carnage
+1 Ordeal of Nylea
+1 Origin of Spider-Man
+1 Primeval Bounty
+1 Sheltered by Ghosts
+1 Surgical Suite // Hospital Room
+1 Wall Crawl
+1 Web Up
+1 Web of Life and Destiny
+1 With Great Power . . .

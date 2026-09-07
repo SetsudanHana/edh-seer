@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/obeka-splitter-of-seconds/suspend
+# theme Suspend (101 decks)
+
+Commander
+1 Obeka, Splitter of Seconds
+
+Deck
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Darksteel Reactor
+1 Doom's Time Platform
+1 Midnight Clock
+1 Mox Tantalite
+1 Replicating Ring
+1 Ring of Evos Isle
+1 Ring of Valkas
+1 Ring of Xathrid
+1 Sol Ring
+1 Sol Talisman
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Whispersilk Cloak
+1 Winged Boots
+1 Blood Crypt
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+6 Island
+1 Luxury Suite
+1 Morphic Pool
+5 Mountain
+1 Reliquary Tower
+1 Rogue's Passage
+1 Seething Landscape
+1 Shipwreck Marsh
+1 Shivan Reef
+1 Smoldering Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sunken Hollow
+4 Swamp
+1 Training Center
+1 Watery Grave
+1 Xander's Lounge
+1 Bonehoard Dracosaur
+1 Braids, Conjurer Adept
+1 Creeping Bloodsucker
+1 Dragonmaster Outcast
+1 Indulgent Tormentor
+1 Jhoira of the Ghitu
+1 Laughing Jasper Flint
+1 Nightscape Familiar
+1 Plargg and Nassari
+1 Rilsa Rael, Kingpin
+1 Silent Arbiter
+1 Skyline Despot
+1 Star Whale
+1 Taigam, Master Opportunist
+1 Thassa, God of the Sea
+1 The Ninth Doctor
+1 The Tenth Doctor
+1 Twilight Prophet
+1 Aqueous Form
+1 As Foretold
+1 Court of Ambition
+1 Court of Embereth
+1 Court of Ire
+1 Court of Locthwain
+1 Court of Vantress
+1 Extravagant Replication
+1 Mechanized Production
+1 Palace Siege
+1 Paradox Haze
+1 Phyrexian Arena
+1 An Offer You Can't Refuse
+1 Bedevil
+1 Chaos Warp
+1 Counterspell
+1 Negate
+1 Slip Out the Back
+1 Suspended Sentence
+1 Terminate
+1 Ancestral Vision
+1 Arc Blade
+1 Blasphemous Act
+1 Curse of the Cabal
+1 Inevitable Betrayal
+1 Inspiring Refrain
+1 Profane Tutor
+1 Reality Strobe
+1 Rousing Refrain
