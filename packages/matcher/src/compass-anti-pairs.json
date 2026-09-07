@@ -29,28 +29,10 @@
       "tag": "cast:any"
     },
     {
-      "a": "Abstruse Appropriation",
-      "b": "Nulldrifter",
-      "class": "consumer-qualifier",
-      "why": "STILL CLAIMED as of 2026-09-07. Same pair as the false-care row above, under a different tag: the consumer's qualifier is not being read, so a broader cast tag still joins them.",
-      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
-      "tag": "cast:spell"
-    },
-    {
-      "a": "Misty Rainforest",
-      "b": "Yuna, Grand Summoner",
-      "class": "intervening-if",
-      "why": "STILL CLAIMED as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied.",
-      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
-      "tag": "dies:permanent"
-    }
-  ],
-  "knownDefects": [
-    {
       "a": "Uthros Research Craft",
       "b": "Talisman of Dominance",
       "class": "false-emit",
-      "why": "STILL JOINED IN PAIR ISOLATION as of 2026-09-07. Uthros puts charge counters on ITSELF. It pumps nothing, so the producer never supplies the event.",
+      "why": "Uthros pumps ITSELF: the corpus text reads 'This Spacecraft gets +1/+0 for each artifact you control'. Talisman is one of the artifacts COUNTED, but the buff lands on Uthros, so the consumer never receives the effect it was credited with. NOTE: the panel verdict this row came from says 'it pumps nothing', which the oracle text does not support -- the class label is the panel's, the reason here is read off the card.",
       "source": "panel verdict (2026-08-07)",
       "verified": true,
       "tag": "static:pump"
@@ -59,11 +41,29 @@
       "a": "Incubation Druid",
       "b": "Evolution Witness",
       "class": "self-reference",
-      "why": "STILL JOINED IN PAIR ISOLATION as of 2026-09-07. SELF-REFERENCE ON BOTH SIDES. Incubation Druid's Adapt puts counters on ITSELF; Evolution Witness triggers on counters put on ITSELF. This is the family that was 74% of all false edges.",
+      "why": "SELF-REFERENCE ON BOTH SIDES. Incubation Druid's Adapt puts counters on ITSELF; Evolution Witness triggers on counters put on ITSELF. This is the family that was 74% of all false edges.",
       "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
       "verified": true,
       "tag": "counter-added:creature"
     }
   ],
-  "context": "MEASURED IN PAIR ISOLATION, the same context the positive compass uses: `pairReasons(a, b, hierarchy)` with no deck around it. That is NOT what the product runs -- `analyzeDeckStructured` adds deck-level passes, chosenType resolution above all -- and the two disagree. Of these seven rows, FOUR flip between the two contexts: the two listed as known defects here are CLEAN in a deck, and two of the five guards here are JOINED in a deck. Both halves of the compass inherit this caveat, so 55/55 in isolation is not a claim about a deck. Recorded rather than papered over; see roadmap Z3."
+  "knownDefects": [
+    {
+      "a": "Abstruse Appropriation",
+      "b": "Nulldrifter",
+      "class": "consumer-qualifier",
+      "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Same pair as the false-care row above, under a different tag: the consumer's qualifier is not being read, so a broader cast tag still joins them.",
+      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
+      "tag": "cast:spell"
+    },
+    {
+      "a": "Misty Rainforest",
+      "b": "Yuna, Grand Summoner",
+      "class": "intervening-if",
+      "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied.",
+      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
+      "tag": "dies:permanent"
+    }
+  ],
+  "context": "MEASURED ON THE SHIPPED ENGINE (derived tags) IN PAIR ISOLATION. `eval-pairs` read the retired FLAT collection until 2026-09-07, which is why the compass reported 55/55 while its own CI gate reported 41/55 for the same set. Isolation remains: `pairReasons(a,b,hierarchy)` has no deck around it, and the product's `analyzeDeckStructured` adds deck-level passes. See roadmap Z4."
 }
