@@ -2073,3 +2073,72 @@ test("the Enchant bound: a permanent line is a no-op, reminder text is dropped, 
   );
   expect(twoFaced.abilities[0]?.trigger?.subject.type).toBe("land");
 });
+
+/** MATOYA TRIGGERED ON NOTHING. "Whenever you scry, draw a card. Whenever you surveil, draw a card."
+ *  is the whole card, and both abilities derived with NO trigger at all — `normalizeTriggerVerb`
+ *  checks the clause event against the closed `VERB_VOCAB`, and `scry`/`surveil` were legal CLAUSE
+ *  events (normalize-prompt.ts, since 2026-08-15, with Matoya named in its own comment) that were
+ *  never ENGINE events. The two vocabularies are different lists and this was the gap between them.
+ *
+ *  MEASURED 2026-09-07 over the 21,317 clause docs: 15 corpus cards trigger on scry, 10 on surveil,
+ *  4 on search — and not one of them could form an edge, in either direction, ever. */
+test("a scry or surveil trigger survives derivation instead of being dropped", () => {
+  const out = deriveAbilities([
+    { id: 1, abilityType: "triggered" as const,
+      trigger: { event: "scry", subject: "you", control: "you" },
+      actions: [{ verb: "draw", object: "a card" }] },
+    { id: 2, abilityType: "triggered" as const,
+      trigger: { event: "surveil", subject: "you", control: "you" },
+      actions: [{ verb: "draw", object: "a card" }] },
+  ], "Matoya, Archon Elder");
+  expect(out.abilities.map((a) => a.trigger?.verbs)).toEqual([["scry"], ["surveil"]]);
+  expect(out.unknownTriggers).toEqual([]);
+});
+
+/** CR 701.23b: searching a hidden zone "isn't required to find some or all of those cards even if
+ *  they're present". The three corpus consumers that watch a search — Archivist of Oghma, Ob Nixilis
+ *  Unshackled, Wan Shi Tong Librarian — all watch an OPPONENT search, and the trigger must be
+ *  RECORDED with that control so the matcher can refuse it, rather than dropped so nothing can. */
+test("an opponent-scoped search trigger is recorded, not discarded", () => {
+  const out = deriveAbilities([
+    { id: 1, abilityType: "triggered" as const,
+      trigger: { event: "search", subject: "their library", control: "opponent" },
+      actions: [{ verb: "draw", object: "a card" }] },
+  ], "Archivist of Oghma");
+  expect(out.abilities[0]?.trigger?.verbs).toEqual(["search"]);
+  expect(out.unknownTriggers).toEqual([]);
+});
+
+/** MAKING A WORD AN ENGINE VERB MAKES A HALLUCINATION OF IT LIVE. While `scry` returned null from
+ *  `normalizeTriggerVerb` an invented scry trigger was inert — the verb was dropped whatever the
+ *  card said. Now it derives, so the phantom guard has to be able to see it, and `triggerHasCue`
+ *  answers TRUE for any event with no `TRIGGER_CUES` row. The row was added with the verb.
+ *
+ *  NOT HYPOTHETICAL: `clause-store.ts` records "while scrying" as one of the three real witnesses
+ *  for `proliferate` being used as a dumping ground for events the vocabulary could not spell. */
+test("an invented scry trigger is refused as phantom when the card never says scry", () => {
+  const text = "When this creature enters, draw a card.";
+  const out = deriveAbilities(
+    [{ id: 1, abilityType: "triggered" as const,
+       trigger: { event: "scry", subject: "you", control: "you" },
+       actions: [{ verb: "draw", object: "a card" }] }],
+    "Invented Scryer", { 1: text }, undefined, text,
+  );
+  expect(out.abilities[0]?.trigger).toBeUndefined();
+  expect(out.unknownTriggers).toContain("phantom:scry");
+});
+
+/** The mirror, so the guard cannot be tightened into deleting the real ones: Matoya prints the word
+ *  and must keep its triggers. All 27 corpus consumers print theirs — measured 2026-09-07, zero
+ *  exceptions — which is what made the cue rows free. */
+test("a real scry trigger survives the phantom guard because the card prints the word", () => {
+  const text = "Whenever you scry, draw a card.";
+  const out = deriveAbilities(
+    [{ id: 1, abilityType: "triggered" as const,
+       trigger: { event: "scry", subject: "you", control: "you" },
+       actions: [{ verb: "draw", object: "a card" }] }],
+    "Matoya, Archon Elder", { 1: text }, undefined, text,
+  );
+  expect(out.abilities[0]?.trigger?.verbs).toEqual(["scry"]);
+  expect(out.unknownTriggers).toEqual([]);
+});

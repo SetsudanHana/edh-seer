@@ -273,6 +273,22 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   // recovers all 9 orphans with none ambiguous, and marks ZERO additional cards phantom.
   "damage-dealt": /\bdamage\b/i,
   "non-combat-damage": /\bdamage/i,
+  // ADDED 2026-09-07 WITH THE VERBS THEMSELVES, and this table is the reason the addition is safe.
+  // Before `scry`/`surveil`/`search` were engine verbs, `normalizeTriggerVerb` returned null for
+  // them and the trigger was dropped whatever the card said -- so a hallucinated one was inert.
+  // Making them verbs makes a hallucinated one LIVE, and without a row here `triggerHasCue` answers
+  // TRUE for any text (absent means uncheckable) and the phantom guard would wave it through.
+  //
+  // The risk is documented in this file's own header: `proliferate` was a dumping ground for events
+  // the vocabulary could not spell, and one of the three witnesses recorded there is literally
+  // "WHILE SCRYING". That is this exact shape.
+  //
+  // MEASURED before adding, because this table gates a SPEND: of the 27 corpus cards that trigger on
+  // one of the three (15 scry, 10 surveil, 4 search; Matoya and Planetarium of Wan Shi Tong each
+  // trigger on two), **ZERO** lack the printed word. The rows cost nothing and close the hole.
+  scry: /\bscry/i,
+  surveil: /\bsurveil/i,
+  search: /\bsearch/i,
 };
 
 /** Did the model INVENT a trigger the card does not have?

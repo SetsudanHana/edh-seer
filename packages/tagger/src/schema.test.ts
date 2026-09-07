@@ -11,11 +11,22 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // 24 -> 25 on 2026-09-05 for `unlock` (CR 717): 35 clause docs trigger on a Room being fully
   // unlocked and 28 corpus Rooms supply it, and the eerie half of 16 cards derived to NOTHING --
   // silently, because `unknownTriggers` was never persisted. Both fixed together.
-  expect(VERB_VOCAB).toHaveLength(25);
+  // 25 -> 28 on 2026-09-07 for `scry`, `surveil` and `search` (CR 701.22 / 701.25 / 701.23). All
+  // three were legal CLAUSE events since 2026-08-15 and never ENGINE events, so `normalizeTriggerVerb`
+  // returned null for them and all 27 consumers derived a triggered ability with NO trigger --
+  // Matoya, Archon Elder is the whole card "whenever you scry, draw a card; whenever you surveil,
+  // draw a card" and it triggered on nothing. Measured over the 21,317 clause docs: producers
+  // 328 scry / 169 surveil / 799 search; 29 trigger instances over 27 distinct cards (Matoya and
+  // Planetarium of Wan Shi Tong each trigger on two), edges reachable ZERO. `mill` is the
+  // proof this was a gap and not a design -- the same mechanic one word over already worked.
+  expect(VERB_VOCAB).toHaveLength(28);
   expect(VERB_VOCAB).toContain("enters");
   expect(VERB_VOCAB).toContain("create-token");
   expect(VERB_VOCAB).toContain("land-play");
   expect(VERB_VOCAB).toContain("dice-rolled");
+  expect(VERB_VOCAB).toContain("scry");
+  expect(VERB_VOCAB).toContain("surveil");
+  expect(VERB_VOCAB).toContain("search");
   expect(new Set(VERB_VOCAB).size).toBe(VERB_VOCAB.length);
 });
 
