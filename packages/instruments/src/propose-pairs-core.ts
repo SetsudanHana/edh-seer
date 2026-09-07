@@ -1,6 +1,6 @@
 import { normalizeName } from "@edh-seer/data";
-import type { MechanismCategory } from "../mechanisms.js";
-import type { GoldPair } from "./eval-pairs-core.js";
+import type { MechanismCategory } from "@edh-seer/matcher/mechanisms";
+import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
 /** A raw LLM-proposed pair before name resolution / dedup. */
 export interface RawPair {

@@ -17,8 +17,8 @@ import {
 } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
-import { meshReport, type MeshGroup } from "../mesh.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
+import { meshReport, type MeshGroup } from "@edh-seer/matcher/mesh";
 
 const DIR = process.argv[2]?.startsWith("--") ? "packages/cli/decks/calibration" : (process.argv[2] ?? "packages/cli/decks/calibration");
 const VERBOSE = process.argv.includes("--verbose");

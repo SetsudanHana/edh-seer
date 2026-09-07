@@ -1,10 +1,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { connect, loadConfig, mongoLookup, normalizeName } from "@edh-seer/data";
-import { MECHANISM_CATEGORIES, type MechanismCategory } from "../mechanisms.js";
+import { MECHANISM_CATEGORIES, type MechanismCategory } from "@edh-seer/matcher/mechanisms";
 import { CATEGORY_EDHREC_TAG, parseHighSynergy, pairsFromCards, tagUrl } from "./edhrec-core.js";
 import { dedupeAndBuild } from "./propose-pairs-core.js";
-import type { GoldPair } from "./eval-pairs-core.js";
+import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
 const GOLD_URL = new URL("../goldpairs.json", import.meta.url);
 

@@ -1,4 +1,4 @@
-import type { GoldPair, Outcome } from "./eval-pairs-core.js";
+import type { GoldPair, Outcome } from "@edh-seer/matcher/eval-pairs-core";
 
 export interface PairResult {
   pair: GoldPair;

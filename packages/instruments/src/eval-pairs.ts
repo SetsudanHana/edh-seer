@@ -2,9 +2,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { connect, loadConfig, mongoLookup, normalizeName, docToCard } from "@edh-seer/data";
 import type { CardTags } from "@edh-seer/tagger";
-import { loadHierarchy, pairReasons } from "../index.js";
-import type { DeckCard } from "../types.js";
-import { classifyPair, type GoldPair } from "./eval-pairs-core.js";
+import { loadHierarchy, pairReasons } from "@edh-seer/matcher";
+import type { DeckCard } from "@edh-seer/matcher/types";
+import { classifyPair, type GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 import { buildReport, formatReport, type PairResult } from "./compass-report.js";
 
 const GOLD = JSON.parse(

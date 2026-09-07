@@ -18,7 +18,7 @@ import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@edh-seer/matcher";
 import { blind, claimFor, sample, seededRng, type SampledReason, type Source } from "./precision-core.js";
 
 const DIR = "packages/cli/decks/calibration";

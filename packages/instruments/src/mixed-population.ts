@@ -27,9 +27,9 @@ import { readFileSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, docToCard } from "@edh-seer/data";
 import { deriveCardTags } from "@edh-seer/tagger";
 import type { CardTags, Characteristics, ClauseRecord } from "@edh-seer/tagger";
-import { loadHierarchy, pairReasons } from "../index.js";
-import type { DeckCard } from "../types.js";
-import { classifyPair, type GoldPair } from "./eval-pairs-core.js";
+import { loadHierarchy, pairReasons } from "@edh-seer/matcher";
+import type { DeckCard } from "@edh-seer/matcher/types";
+import { classifyPair, type GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
 interface Fixture {
   name: string;

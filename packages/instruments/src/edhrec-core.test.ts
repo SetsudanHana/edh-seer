@@ -5,7 +5,7 @@ import {
   pairsFromCards,
   tagUrl,
 } from "./edhrec-core.js";
-import { MECHANISM_CATEGORIES } from "../mechanisms.js";
+import { MECHANISM_CATEGORIES } from "@edh-seer/matcher/mechanisms";
 
 /** Minimal shape of an EDHREC tag payload (only what parseHighSynergy reads). */
 const payload = {

@@ -1,7 +1,7 @@
 import type { Reason } from "@edh-seer/engine";
-import type { DeckCard } from "../types.js";
-import { cardThemeTags } from "../edges.js";
-import { categoryMatches, type MechanismCategory } from "../mechanisms.js";
+import type { DeckCard } from "./types.js";
+import { cardThemeTags } from "./edges.js";
+import { categoryMatches, type MechanismCategory } from "./mechanisms.js";
 
 /** One curated gold synergy pair. `verified` gates whether eval counts it. */
 export interface GoldPair {

@@ -26,7 +26,7 @@ import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
 import { renderSheet } from "./rejudge-sheet-html.js";
 import { claimFor } from "./precision-core.js";
 

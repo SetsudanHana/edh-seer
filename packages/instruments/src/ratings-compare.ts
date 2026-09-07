@@ -35,8 +35,8 @@ import {
 } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
-import { diffRatings, formatRatingsDiff, type DeckRatings, type Snapshot } from "../ratings-diff.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
+import { diffRatings, formatRatingsDiff, type DeckRatings, type Snapshot } from "@edh-seer/matcher/ratings-diff";
 
 const args = process.argv.slice(2);
 const flag = (name: string): string | undefined => {

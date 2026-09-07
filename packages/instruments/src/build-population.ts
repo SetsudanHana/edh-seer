@@ -6,12 +6,12 @@ import {
 } from "@edh-seer/data";
 import type { CardTags } from "@edh-seer/tagger";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, BUILD_PARENTS } from "../build.js";
-import { recommendedLands } from "../land-count.js";
-import { winconReport } from "../wincon.js";
-import { measuredClock, pressureCurve } from "../pressure.js";
-import { manaModel } from "../goldfish.js";
-import type { DeckCard } from "../types.js";
+import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, BUILD_PARENTS } from "@edh-seer/matcher/build";
+import { recommendedLands } from "@edh-seer/matcher/land-count";
+import { winconReport } from "@edh-seer/matcher/wincon";
+import { measuredClock, pressureCurve } from "@edh-seer/matcher/pressure";
+import { manaModel } from "@edh-seer/matcher/goldfish";
+import type { DeckCard } from "@edh-seer/matcher/types";
 
 /** Build-category membership across the calibration decks, as one number per category plus the
  *  full membership sets.
