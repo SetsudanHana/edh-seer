@@ -55,6 +55,12 @@ for (const p of pairs) {
 }
 
 const current: PanelClaim[] = [];
+/** Claims the engine still makes, but through a TOKEN the producer creates rather than as a direct
+ *  card-to-card pair. Reproduced on `Oath of Liliana -> Ayara, First of Locthwain`: Ayara triggers
+ *  on a black creature entering, Oath is a Legendary ENCHANTMENT so it never enters as one, and the
+ *  relation belongs to the 2/2 Zombie it makes. Same claim, said more precisely -- and counting it
+ *  as a lost edge sends someone to fix an engine that is right. */
+const reattributedKeys = new Set<string>();
 const oracle = new Map<string, string>();
 /** WHICH CARDS EACH DECK ACTUALLY RESOLVES TO TODAY, so a lost pair can be told apart from a verdict
  *  about a card that is not in the deck any more. Both are "the engine no longer claims this" and
@@ -78,11 +84,28 @@ for (const [deck, want] of wantedByDeck) {
     deckCards, cards.filter((c) => cmd.has(normalizeName(c.name))).map((c) => c.name),
     undefined, undefined, new ComboIndex(combos), undefined, tokenTags,
   );
+  // EVERY reason, not just the panel's pairs: a claim the panel keys on two CARDS can now be
+  // carried by a TOKEN one of them makes, and that hop is invisible if only wanted pairs are kept.
+  const madeBy = new Map<string, Set<string>>();       // card -> tokens it creates
+  const tokenClaims = new Set<string>();               // `${token}|${consumer}|${tag}`
   for (const e of report.edges) {
     for (const r of e.reasons) {
       if (!r.producer || !r.consumer) continue;
+      if (r.tag.startsWith("creates:")) {
+        if (!madeBy.has(r.producer)) madeBy.set(r.producer, new Set());
+        madeBy.get(r.producer)!.add(r.consumer);
+      }
+      if (r.producerIsToken) tokenClaims.add(`${r.producer}|${r.consumer}|${r.tag}`);
       if (!want.has(`${r.producer}|${r.consumer}`)) continue;
       current.push({ producer: r.producer, consumer: r.consumer, tag: r.tag, implied: r.impliedProducer === true });
+    }
+  }
+  for (const [card, toks] of madeBy) {
+    for (const t of toks) {
+      for (const key of tokenClaims) {
+        const [tk, consumer, tag] = key.split("|");
+        if (tk === t) reattributedKeys.add(`${card}|${consumer}|${tag}`);
+      }
     }
   }
 }
@@ -117,7 +140,10 @@ const pairInDeck = (producer: string, consumer: string): boolean => {
   return present.has(normalizeName(producer)) && present.has(normalizeName(consumer));
 };
 
-const s = scorePanel(distinct, cache, pairInDeck);
+const reattributed = (producer: string, consumer: string, tag: string): boolean =>
+  reattributedKeys.has(`${producer}|${consumer}|${tag}`);
+
+const s = scorePanel(distinct, cache, pairInDeck, reattributed);
 const [lo, hi] = wilsonPanel(s.real, s.real + s.false);
 console.log(`frozen panel — ${pairs.length} pairs, ${cache.length} cached verdicts`);
 if (missingDecks) console.log(`  decks not found: ${missingDecks}`);
@@ -142,6 +168,7 @@ console.log(`    ${s.droppedFalse} were judged FALSE — the engine stopped maki
 console.log(`    of the ones judged REAL:`);
 console.log(`      ${s.droppedRetag} retag (the pair still joins under another tag — not a loss)`);
 console.log(`      ${s.droppedRot} rot (a card named by the verdict is not in that deck any more)`);
+console.log(`      ${s.droppedReattributed} re-attributed (still claimed, through a token the producer makes)`);
 console.log(`      ${s.droppedRegression} REGRESSION (both cards still there, the pair no longer joins)`);
 
 // `--rejudge` dumps EVERY live claim, judged or not, in the same worksheet shape. The cached
