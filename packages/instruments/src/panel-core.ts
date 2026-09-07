@@ -87,11 +87,13 @@ export interface PanelScore {
    *  every one of these was the RESOLVER being fixed, not the engine losing an edge. Always 0 unless
    *  the caller supplies `pairInDeck`, because nothing in this file can see a decklist. */
   droppedRot: number;
-  /** A lost pair the engine STILL CLAIMS, through an intermediate node the producer creates.
+  /** A lost pair the engine STILL CLAIMS, through a token node one SIDE of the pair creates.
    *  `Oath of Liliana -> Ayara` became `Oath -> Zombie [token] -> Ayara`: Ayara triggers on a black
    *  creature entering, Oath is an ENCHANTMENT and never enters as one, and the relation belongs to
-   *  the token. Same claim, said more precisely. Counted as HELD by recall, because the engine has
-   *  not stopped saying these two cards work together. */
+   *  the token. The mirror case is the CONSUMER's demand moving: `Vivi's Persistence` is not the
+   *  payoff, the 0/1 Wizard it creates is, and the Wizard carries "whenever you cast a noncreature
+   *  spell". Same claim either way, said more precisely. Counted as HELD by recall, because the
+   *  engine has not stopped saying these two cards work together. */
   droppedReattributed: number;
   /** A lost pair whose two cards are both still in the deck and which nothing re-attributes.
    *  The only bucket that is a defect. */
