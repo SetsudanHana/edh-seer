@@ -78,6 +78,10 @@ export interface PanelScore {
    *  2026-09-07 reading it was 528 of the 704, and counting it beside the losses is what made the
    *  headline number unreadable. Every field below counts only claims judged REAL. */
   droppedFalse: number;
+  /** A dropped claim the panel judged UNCERTAIN. Counted apart from `droppedFalse`, because
+   *  uncertain is not wrong: folding the two together overstated the win by 29 on the real panel
+   *  and the runner printed all 557 as "judged FALSE". */
+  droppedUncertain: number;
   /** Dropped because the TAG was renamed while the pair still joins (`cast:artifact` ->
    *  `cast:spell`, `enters:any` -> `enters:permanent`). Not a loss, and it must not cost recall. */
   droppedRetag: number;
@@ -195,7 +199,7 @@ export function scorePanel(
   const out: PanelScore = {
     real: 0, false: 0, uncertain: 0, unjudged: [], falses: [], dropped: 0, droppedFalse: 0,
     droppedRetag: 0, droppedLost: 0, droppedRot: 0, droppedReattributed: 0, droppedRegression: 0,
-    recallHeld: 0, recallLost: 0, lostPairs: [], recall: null, precision: null,
+    droppedUncertain: 0, recallHeld: 0, recallLost: 0, lostPairs: [], recall: null, precision: null,
   };
   for (const c of current) {
     const k = claimKey(c.producer, c.consumer, c.tag);
@@ -216,6 +220,23 @@ export function scorePanel(
   // and a loss, and the panel could not tell them apart before because it only ever compared triples.
   const pairKey = (producer: string, consumer: string): string => `${producer}|${consumer}`;
   const joined = new Set(current.map((c) => pairKey(c.producer, c.consumer)));
+  const family = (t: string): string => t.split(":")[0];
+  /** Which tag FAMILIES the engine still joins each pair on. */
+  const joinedFamilies = new Map<string, Set<string>>();
+  for (const c of current) {
+    const k = pairKey(c.producer, c.consumer);
+    if (!joinedFamilies.has(k)) joinedFamilies.set(k, new Set());
+    joinedFamilies.get(k)!.add(family(c.tag));
+  }
+  /** A pair is only HELD by a live claim the panel BELIEVES: judged real, or not yet judged (which
+   *  is debt, already reported on its own line). A live claim judged uncertain or false is not the
+   *  edge coming back -- measured: 5 pairs were held by an uncertain claim alone. */
+  const believable = new Set<string>();
+  for (const c of current) {
+    const k = claimKey(c.producer, c.consumer, c.tag);
+    const v = exact.get(`${k}|${c.implied === true}`) ?? wildcard.get(k);
+    if (!v || v.verdict === "real") believable.add(pairKey(c.producer, c.consumer));
+  }
   const rotted = (producer: string, consumer: string): boolean =>
     pairInDeck !== undefined && !pairInDeck(producer, consumer);
 
@@ -224,9 +245,15 @@ export function scorePanel(
   // and folding it in with the losses is how 704 came to read as attrition when 528 of it was a win.
   for (const k of dropped) {
     const v = exact.get(`${k}|true`) ?? exact.get(`${k}|false`) ?? wildcard.get(k);
-    if (v && v.verdict !== "real") { out.droppedFalse++; continue; }
-    const [producer, consumer] = k.split("|");
-    if (joined.has(pairKey(producer, consumer))) { out.droppedRetag++; continue; }
+    if (v && v.verdict === "false") { out.droppedFalse++; continue; }
+    if (v && v.verdict === "uncertain") { out.droppedUncertain++; continue; }
+    const [producer, consumer, tag] = k.split("|");
+    // SAME FAMILY ONLY. `cast:artifact` -> `cast:spell` is a rename of one relation;
+    // `static:pump` -> `enters:creature` is a DIFFERENT relation wearing the same pair, and 15 of
+    // the 89 "retags" crossed families on the real panel.
+    if ((joinedFamilies.get(pairKey(producer, consumer)) ?? new Set()).has(family(tag))) {
+      out.droppedRetag++; continue;
+    }
     out.droppedLost++;
     if (rotted(producer, consumer)) out.droppedRot++;
     else if (reattributed?.(producer, consumer, k.slice(k.lastIndexOf("|") + 1))) out.droppedReattributed++;
@@ -249,7 +276,7 @@ export function scorePanel(
   for (const v of cache) {
     if (v.verdict !== "real") continue;
     const k = pairKey(v.producer, v.consumer);
-    if (joined.has(k)) { stillClaimed.set(k, true); continue; }
+    if (believable.has(k)) { stillClaimed.set(k, true); continue; }
     if (reattributed?.(v.producer, v.consumer, v.tag)) stillClaimed.set(k, true);
     else if (!stillClaimed.has(k)) stillClaimed.set(k, false);
   }

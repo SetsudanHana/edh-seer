@@ -245,3 +245,51 @@ test("the ratchet names what arrived and what recovered, in both directions", ()
   // Sorted, so a re-run diffs cleanly rather than by hash order.
   expect(ratchetLostPairs(["Z|Y", "A|B"], []).added).toEqual(["A|B", "Z|Y"]);
 });
+
+// A PAIR IS NOT "HELD" BY A CLAIM THE PANEL DOES NOT BELIEVE. The first cut counted a pair as held
+// if the engine made ANY live claim on it, whatever that claim was judged. Measured on the real
+// panel: 5 pairs were held only by an UNCERTAIN claim — the REAL edge was gone and an unsure one
+// was standing in for it (Kinbinding|Purphoros, Braids|Chainer, Vat of Rebirth|Accursed Marauder,
+// Prismari Command|Vivi's Persistence, Tablet of Discovery|Vivi's Persistence).
+test("a pair held only by an uncertain or false claim is lost, not held", () => {
+  const cache = [
+    v("A", "B", "t1", "real"),        // the real edge...
+    v("A", "B", "t2", "uncertain"),   // ...replaced by an unsure one
+    v("C", "D", "t1", "real"),
+    v("C", "D", "t2", "false"),
+  ];
+  const s = scorePanel([
+    { producer: "A", consumer: "B", tag: "t2" },
+    { producer: "C", consumer: "D", tag: "t2" },
+  ], cache);
+  expect(s.recallHeld).toBe(0);
+  expect(s.lostPairs).toEqual(["A|B", "C|D"]);
+});
+
+// An UNJUDGED live claim still holds the pair: that is judging debt, which the headline already
+// reports separately, and calling it a loss would double-count the same gap.
+test("a pair held by an unjudged claim is held, because debt is reported on its own line", () => {
+  const s = scorePanel([{ producer: "A", consumer: "B", tag: "new" }], [v("A", "B", "old", "real")]);
+  expect(s.recallHeld).toBe(1);
+});
+
+// RETAG MUST STAY IN THE SAME FAMILY. `cast:artifact` -> `cast:spell` is a rename; `static:pump` ->
+// `enters:creature` is a DIFFERENT RELATION wearing the same pair. 15 of the 89 "retags" crossed
+// families on the real panel.
+test("a tag change across families is not a retag", () => {
+  const cache = [v("A", "B", "cast:artifact", "real"), v("C", "D", "static:pump", "real")];
+  const s = scorePanel([
+    { producer: "A", consumer: "B", tag: "cast:spell" },       // same family: a retag
+    { producer: "C", consumer: "D", tag: "enters:creature" },  // different family: not a retag
+  ], cache);
+  expect(s.droppedRetag).toBe(1);
+  expect(s.droppedRegression).toBe(1);
+});
+
+// The bucket counts claims the engine stopped making because they were WRONG. Uncertain is not
+// wrong, and folding it in overstated the win by 29 on the real panel.
+test("uncertain is counted apart from false", () => {
+  const s = scorePanel([], [v("A", "B", "t", "false"), v("C", "D", "t", "uncertain")]);
+  expect(s.droppedFalse).toBe(1);
+  expect(s.droppedUncertain).toBe(1);
+});
