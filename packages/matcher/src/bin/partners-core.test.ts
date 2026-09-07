@@ -276,6 +276,39 @@ test("substantive means at least one emit or one trigger, nothing else", () => {
   expect(isSubstantive(staticOnly)).toBe(false);
 });
 
+/** A GENUINELY TWO-FACED CARD HAS NO CARD-LEVEL ART, so the record has to reach into the front
+ *  face. Scryfall puts `image_uris` on each FACE for transform and modal_dfc and omits the top-level
+ *  one: 491 corpus cards carry no `artCrop` and EVERY one of them has `faces[0].artCrop` (measured
+ *  2026-09-08), of which 359 are substantive and had a page showing no card.
+ *
+ *  IT COSTS MORE HERE THAN A BLANK DISC COSTS THE GRAPH. The image is the only place a card page
+ *  prints rules text -- spec D2a puts the artist credit and the oracle text on the card itself
+ *  rather than reprinting either -- so a DFC page was a name, a type line and nothing to read. */
+test("a two-faced card's page takes the front face's art when the card has none", () => {
+  const dfc = base("Valki, God of Lies // Tibalt, Cosmic Impostor", krenko.tags.abilities);
+  (dfc.card as unknown as { faces: { artCrop: string }[] }).faces = [
+    { artCrop: "https://cards.scryfall.io/art_crop/front/e/a/ea7e.jpg" },
+    { artCrop: "https://cards.scryfall.io/art_crop/back/e/a/ea7e.jpg" },
+  ];
+  const { shards } = buildPartnerArtifact([dfc, impactTremors], H);
+  const rec = [...shards.values()].flatMap((sh) => Object.values(sh))
+    .find((r) => r.name.startsWith("Valki"))!;
+  // The FRONT face: it is the side the card is played from and the side a reader recognises.
+  expect(rec.artCrop).toBe("https://cards.scryfall.io/art_crop/front/e/a/ea7e.jpg");
+});
+
+/** Card-level art still wins, so adventure/split/flip -- one physical face, one `image_uris` -- are
+ *  untouched by the fallback above. */
+test("a single-faced card keeps its own art", () => {
+  const { shards } = buildPartnerArtifact([
+    { ...krenko, card: { ...krenko.card, artCrop: "https://cards.scryfall.io/art_crop/front/a/b/c.jpg" } },
+    impactTremors,
+  ] as never, H);
+  const rec = [...shards.values()].flatMap((sh) => Object.values(sh))
+    .find((r) => r.name === "Krenko, Mob Boss")!;
+  expect(rec.artCrop).toBe("https://cards.scryfall.io/art_crop/front/a/b/c.jpg");
+});
+
 test("the artifact shards every substantive card and skips the rest", () => {
   const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
   const { shards, index } = buildPartnerArtifact([krenko, impactTremors, vanilla], H);
@@ -811,6 +844,31 @@ test("a commander with only statics gets a page, an index row and legal partners
   const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Samut, the Driving Force")!;
   expect(rec.partners.map((r) => r.name).sort()).toEqual(["Counterspell", "Dragon Fodder"]);
   expect(rec.commanderPartners!.map((r) => r.name)).toEqual(["Dragon Fodder"]);
+});
+
+/** THE INDEX CARRIES THE INDEXABILITY, because the SITEMAP is built from the index and the
+ *  `noindex` decision is made at the edge from the SHARD. Nothing reconciled the two until
+ *  2026-09-08, and 2,823 of the sitemap's 20,161 URLs were submitted to Google and then served
+ *  `<meta name="robots" content="noindex">` -- a Search Console error apiece.
+ *
+ *  A card with no partners is a real page and stays reachable; it is only not PROMISED. */
+test("the index flags a page with nothing to index, per surface", () => {
+  // Samut ranks partners on both surfaces, so she carries neither flag.
+  const cmdr = asCommander(samut(), ["G", "R", "W"]);
+  const offColour = asCommander(withIdentity(plainSorcery("Counterspell"), ["U"]), ["U"]);
+  const { index } = buildPartnerArtifact([cmdr, offColour, dragonFodder(), forest()], H);
+  const at = (name: string) => index.find((e) => e.name === name)!;
+  expect(at("Samut, the Driving Force").noPartners).toBeUndefined();
+  expect(at("Samut, the Driving Force").noCommanderPartners).toBeUndefined();
+  // Nothing to rank on either surface: both URLs are withheld from the sitemap and both are still
+  // served, because a page with nothing to say is reachable and merely not promised.
+  expect(at("Counterspell").commander).toBe(true);
+  expect(at("Counterspell").noPartners).toBe(true);
+  expect(at("Counterspell").noCommanderPartners).toBe(true);
+  // A card that cannot lead a deck never carries the commander flag -- there is no such URL to
+  // withhold, and the sitemap already filters it on `commander`.
+  expect(at("Dragon Fodder").commander).toBe(false);
+  expect(at("Dragon Fodder").noCommanderPartners).toBeUndefined();
 });
 
 /** CR 903.3 IS ALREADY READ IN `legality.ts`, and this file had rewritten it narrower: a legendary

@@ -896,6 +896,21 @@ export interface NameIndexEntry {
   name: string;
   identity: string[];
   commander: boolean;
+  /** NO PARTNERS TO SHOW, WHICH IS THE EXACT CONDITION THE EDGE SERVES `noindex` ON (spec D5).
+   *
+   *  It rides in the index because the SITEMAP is built from the index and the noindex decision is
+   *  made from the SHARD, and nothing reconciled the two: measured 2026-09-08 on the deployed
+   *  artifact, 1,779 card URLs and 1,044 commander URLs -- 2,823 of 20,161, 14% of the sitemap --
+   *  were submitted to Google and then answered with `<meta name="robots" content="noindex">`.
+   *  That is a Search Console error per URL ("Submitted URL marked 'noindex'"), and it is the
+   *  sitemap's own promise-keeping rule one step further: a sitemap may not name a page the site
+   *  refuses to have indexed, any more than one that 404s.
+   *
+   *  SPARSE AND OPTIONAL because the client downloads this file to search by name: the flags are
+   *  absent on the 14,936 cards that have partners, so the browse index barely moves. */
+  noPartners?: true;
+  /** The same fact for `/commanders/<slug>`, which ranks a different list. Commander records only. */
+  noCommanderPartners?: true;
 }
 
 export interface PartnerArtifact {
@@ -1006,7 +1021,15 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       name: d.card.name,
       typeLine: d.card.typeLine ?? "",
       manaCost: (d.card as { manaCost?: string }).manaCost ?? null,
-      artCrop: (d.card as { artCrop?: string }).artCrop ?? null,
+      // THE FRONT FACE IS THE FALLBACK, because a genuinely two-faced card has no card-level art:
+      // Scryfall puts `image_uris` on each FACE for transform and modal_dfc and omits the top-level
+      // one. 491 corpus cards carry no `artCrop` and every one of them has `faces[0].artCrop`, so
+      // this line is the difference between 359 card pages showing the card and showing nothing --
+      // and the image is the ONLY place these pages print rules text (spec D2a), so a DFC page was
+      // the name, the type line and no card at all. Same chain `graph.ts` and `wire-graph.ts`
+      // already use; this was the last reader that did not.
+      artCrop: (d.card as { artCrop?: string }).artCrop
+        ?? (d.card as { faces?: { artCrop?: string }[] }).faces?.[0]?.artCrop ?? null,
       abilities: abilityRowsOf(d),
       identity: d.card.colorIdentity ?? [],
       commander,
@@ -1064,7 +1087,15 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       })() : {}),
     };
     shards.set(shardName, shard);
-    index.push({ slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander });
+    // READ BACK OFF THE RECORD JUST WRITTEN, so the index can never disagree with the shard the
+    // edge reads its `indexable` decision from -- the two lists are the same two lists.
+    const written = shard[slug] as CardPageRecord & { commanderPartners?: PartnerRow[] };
+    index.push({
+      slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
+      ...(written.partners.length === 0 ? { noPartners: true as const } : {}),
+      ...(commander && (written.commanderPartners ?? []).length === 0
+        ? { noCommanderPartners: true as const } : {}),
+    });
   }
 
   return { shards, freq, index };
