@@ -37,9 +37,15 @@ const THEMES: { archetype: string; slug: string; tag: string }[] = ARCHETYPE_VOC
   .map((r) => ({ archetype: r.slug, slug: r.edhrec.slug, tag: r.edhrec.tag }));
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** EVERY FILENAME BUILT OUT OF A REMOTE RESPONSE GOES THROUGH THIS. The cache key already sanitised
+ *  the URL; `cmd` below is read out of EDHREC's own `url` field and was being joined onto a path
+ *  raw, so a response carrying "../" could have written outside `dir` (CodeQL js/http-to-file-access).
+ *  One shared helper rather than two rules, so the next filename cannot be the one that forgets. */
+const safeName = (s: string): string => s.replace(/[^a-z0-9._-]+/gi, "_").replace(/^\.+/, "_");
+
 let last = 0;
 async function get(url: string): Promise<unknown> {
-  const key = join(CACHE, url.replace(/^https?:\/\//, "").replace(/[^a-z0-9._-]+/gi, "_") + ".json");
+  const key = join(CACHE, safeName(url.replace(/^https?:\/\//, "")) + ".json");
   if (existsSync(key)) return JSON.parse(readFileSync(key, "utf8"));
   const wait = 1000 - (Date.now() - last);
   if (wait > 0) await sleep(wait);
@@ -75,7 +81,7 @@ for (const t of THEMES) {
   const dir = join(OUT, t.archetype);
   mkdirSync(dir, { recursive: true });
   for (const c of top) try {
-    const cmd = c.url.split("/")[2]!; // /commanders/<slug>/<theme>
+    const cmd = safeName(c.url.split("/")[2]!); // /commanders/<slug>/<theme>, and it names a file
     // The themed average deck.
     const avg = (await get(`https://json.edhrec.com/pages/average-decks/${cmd}/${t.slug}.json`)) as { deck: Deck };
     const avgCommanders = avg.deck.commander ?? avg.deck.commanders ?? [c.name];
