@@ -206,7 +206,7 @@ describe("detectLines", () => {
     tags: {
       characteristics: { types: ["legendary", "creature"], subtypes: ["human", "wizard"] },
       abilities: [
-        { kind: "triggered", effect: { kind: "top-manipulation", subject: { control: "any", token: null } },
+        { kind: "triggered", effect: { kind: "surveil", subject: { control: "any", token: null } },
           trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "artifact" } },
           repeats: "repeatable" },
         { kind: "triggered",
@@ -296,7 +296,7 @@ describe("detectLines", () => {
         { kind: "activated", effect: { kind: "" }, cost: "{T}, Sacrifice this land",
           emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "land", self: true } }, { verb: "dies", subject: { control: "any", token: null, type: "land", self: true } }],
           repeats: "once" },
-        { kind: "activated", effect: { kind: "top-manipulation", subject: { control: "any", token: null, basic: true, type: "land" } },
+        { kind: "activated", effect: { kind: "search", subject: { control: "any", token: null, basic: true, type: "land" } },
           cost: "{T}, Sacrifice this land", repeats: "once" },
         { kind: "activated", effect: { kind: "" }, cost: "{T}, Sacrifice this land",
           emits: [{ verb: "enters", subject: { control: "any", token: null, basic: true, type: "land" } }], repeats: "once" },

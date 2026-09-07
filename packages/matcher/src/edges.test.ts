@@ -1811,7 +1811,8 @@ test("a land tutor forms no edge — that is the mana base, not a synergy", () =
   expect(pairReasons(fetch, dual, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
 
-// scry and surveil derive `top-manipulation` too, with no subject to narrow them. They must not be
+// scry and surveil derive their OWN kinds since 2026-09-07, and the gate reads `search`, so neither
+// can reach this loop at all. The test stays because it is the family's floor: they must not be
 // mistaken for tutors.
 test("a surveil is not a tutor", () => {
   const bones = base("Barrier of Bones", [{
