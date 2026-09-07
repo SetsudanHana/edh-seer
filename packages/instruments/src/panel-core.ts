@@ -104,6 +104,9 @@ export interface PanelScore {
    *  that keeps one is held, not two thirds lost. */
   recallHeld: number;
   recallLost: number;
+  /** The lost pairs BY NAME (`producer|consumer`), sorted. The count alone lets one loss hide
+   *  behind one gain, which is what `compare by NAME, not by count` exists to prevent. */
+  lostPairs: string[];
   /** `recallHeld / (recallHeld + recallLost)`, or null when the panel offers no REAL pair to hold.
    *
    *  THE PANEL REPORTED PRECISION AND NOTHING ELSE UNTIL 2026-09-07, and precision alone cannot be
@@ -192,7 +195,7 @@ export function scorePanel(
   const out: PanelScore = {
     real: 0, false: 0, uncertain: 0, unjudged: [], falses: [], dropped: 0, droppedFalse: 0,
     droppedRetag: 0, droppedLost: 0, droppedRot: 0, droppedReattributed: 0, droppedRegression: 0,
-    recallHeld: 0, recallLost: 0, recall: null, precision: null,
+    recallHeld: 0, recallLost: 0, lostPairs: [], recall: null, precision: null,
   };
   for (const c of current) {
     const k = claimKey(c.producer, c.consumer, c.tag);
@@ -252,8 +255,9 @@ export function scorePanel(
   }
   for (const k of realPairs) {
     if (stillClaimed.get(k)) out.recallHeld++;
-    else out.recallLost++;
+    else { out.recallLost++; out.lostPairs.push(k); }
   }
+  out.lostPairs.sort();
   const opportunities = out.recallHeld + out.recallLost;
   if (opportunities > 0) out.recall = out.recallHeld / opportunities;
 
@@ -272,4 +276,26 @@ export function wilsonPanel(successes: number, total: number): [number, number] 
   const centre = p + (z * z) / (2 * total);
   const spread = z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
   return [Math.max(0, ((centre - spread) / denom) * 100), Math.min(100, ((centre + spread) / denom) * 100)];
+}
+
+/** THE PANEL'S GUARD IS A NAMED SET, not a percentage.
+
+ *  `derive-compass.test.ts` asserts `expect(regressions).toEqual([])` and `pair-calibration.test.ts`
+ *  caps quarantined defects AND fails when a quarantined pair starts agreeing. This is the same
+ *  shape for the 895-pair panel: a percentage floor would let one lost edge hide behind one
+ *  recovered edge, and the number would sit still while the contents rotted.
+ *
+ *  BOTH DIRECTIONS ARE FAILURES. `added` is a pair nobody has accepted losing. `recovered` is an
+ *  improvement the list has not been updated for -- unbanked, so the next regression could spend it
+ *  invisibly. */
+export function ratchetLostPairs(
+  lostNow: readonly string[],
+  known: readonly string[],
+): { added: string[]; recovered: string[] } {
+  const now = new Set(lostNow);
+  const before = new Set(known);
+  return {
+    added: [...now].filter((p) => !before.has(p)).sort(),
+    recovered: [...before].filter((p) => !now.has(p)).sort(),
+  };
 }
