@@ -19,6 +19,25 @@ const EMITS: Record<string, Verb[]> = {
   draw: ["draw"],
   discard: ["discard"],
   mill: ["mill"],
+  // CR 701.22a: "look at the top N cards of your library, then put any number of them on the BOTTOM
+  // of your library in any order and the rest on top". A scry moves cards between the top and the
+  // bottom and never touches a graveyard, so there is no fill half to consider here.
+  scry: ["scry"],
+  // CR 701.25a: "put ANY NUMBER of them into your graveyard". The graveyard half is CONDITIONAL --
+  // any number includes zero -- and this file's own rule, three blocks up, is that a conditional
+  // outcome is omitted rather than guessed. Same call as connive's +1/+1 counter and recruit's
+  // token. `manifest-dread` emits `mill` because ITS fill is unconditional; surveil's is not.
+  //
+  // THE COST, MEASURED AND STATED: 169 surveil cards stay invisible to the reanimator and
+  // per-graveyard-scaling channels. They already are -- zero of the 169 record a graveyard fill of
+  // any kind today -- so this neither opens nor closes that gap. If a measurement later shows the
+  // family is worth it, that is a ruling with evidence, not a precedent argument.
+  surveil: ["surveil"],
+  // CR 701.23a/b. Searching is LOOKING; finding is optional ("isn't required to find some or all of
+  // those cards even if they're present"). The event means a search HAPPENED, which is precisely
+  // what the three opponent-watching consumers trigger on -- Archivist of Oghma, Ob Nixilis
+  // Unshackled, Wan Shi Tong Librarian. Claiming a card was found is the fiction PR #240 reverted.
+  search: ["search"],
   "gain-life": ["gain-life"],
   "lose-life": ["lose-life"],
   "deal-damage": ["non-combat-damage"],
@@ -224,6 +243,35 @@ const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
 const PLAYER_OBJECT = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*you\s*$/i;
 
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
+  // CR 701.22b AND 701.25c, both stated outright in the rules: "If a player is instructed to scry 0,
+  // no scry event occurs. Abilities that trigger whenever a player scries won't trigger." A card
+  // printing a literal 0 emits nothing rather than a phantom event.
+  //
+  // CEILING: only a LITERAL zero is caught. "Scry X" stores the symbol and not the resolved value,
+  // so an X that resolves to zero still emits -- the same limit every {X} case in this repo waits on.
+  if ((action.verb === "scry" || action.verb === "surveil")
+    && (action.amount === "0" || action.object === "0")) return [];
+  // A SEARCH EMITS ONLY WHERE THE CONSUMERS ARE LOOKING. CR 701.23a searches any zone, but all four
+  // corpus consumers watch a LIBRARY search -- Archivist of Oghma, Ob Nixilis Unshackled and Wan Shi
+  // Tong Librarian on an opponent's, Prishe's Wanderings on your own -- and a graveyard or hand
+  // search satisfying a library demand would be a claim the card does not make.
+  //
+  // Measured 2026-09-07 over the 21,317 clause docs, search actions by origin: library 800,
+  // unstated 29 (27 of which name a library in the object text), graveyard 21, hand 7, exile 1.
+  // So this refuses 30 actions and keeps 828. It also keeps the existing "searching a graveyard,
+  // or naming a card in one, moves nothing" test true rather than weakening it to accommodate a
+  // new emit -- a graveyard search still moves nothing and now says nothing either.
+  //
+  // THE OBJECT TEXT IS READ WHATEVER THE STATED ORIGIN, not only when the origin is unstated. A
+  // COMPOUND search names three zones and `fromZone` can hold only one of them: Deadly Cover-Up
+  // searches "its owner's graveyard, hand, and library" and the origin was recorded `graveyard`,
+  // so an unstated-only fallback would have dropped a real library search. Checked rather than
+  // assumed -- of the 22 cards with a stated non-library search origin, that is the ONLY one whose
+  // object names a library, so reading the text always costs one action and buys the case it exists
+  // for. (Boonweaver Giant, the compound-search card `canonicalize.ts` cites, is not in the corpus.)
+  if (action.verb === "search"
+    && action.fromZone !== "library"
+    && !/\blibrar/i.test(action.object ?? "")) return [];
   // A RECIPIENT IS NOT A SUBJECT (2026-08-22). `parseSubject` reads type words out of whatever text
   // it is given, so Arcane Denial's draw -- whose object the model records as "TARGET SPELL'S
   // CONTROLLER", correctly naming who draws -- yielded `type: spell` and the theme tag `draw:spell`.

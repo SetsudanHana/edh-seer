@@ -425,3 +425,68 @@ test("an exile with no stated destination still left the battlefield", () => {
   expect(otawara.map((x) => x.verb)).toEqual(["leaves"]);
   expect(actionEmits({ verb: "return", object: "target creature", fromZone: null, toZone: null }, "Return target creature.")).toEqual([]);
 });
+
+/** THE PRODUCER END WAS SILENT TOO. Brainstorm derived `[{on-cast, draw-card, emits:["draw"]},
+ *  {on-cast, top-manipulation}]` -- the top-manipulation half emitted nothing, because `EMITS` had
+ *  no row for the verb. 328 scry producers and 169 surveil producers against 27 consumers, and not
+ *  one edge reachable in either direction. */
+test("a scry emits a scry event", () => {
+  const e = actionEmits({ verb: "scry", object: "2", amount: "2" });
+  expect(e.map((x) => x.verb)).toEqual(["scry"]);
+});
+
+/** SURVEIL DOES NOT EMIT A MILL. CR 701.25a puts "any number" of the looked-at cards into your
+ *  graveyard -- including zero -- so the fill is CONDITIONAL, which is the exact shape this file
+ *  refuses to guess at at the top of the keyword block: connive drops its +1/+1 counter and recruit
+ *  drops its token for the same reason. `manifest-dread` is not a precedent the other way, because
+ *  ITS fill is unconditional ("the cards you looked at that were not manifested this way").
+ *
+ *  THE COST IS STATED RATHER THAN HIDDEN: 169 surveil cards stay invisible to the reanimator and
+ *  per-graveyard-scaling channels. They already are -- measured 2026-09-07, zero of the 169 record
+ *  a graveyard fill of any kind -- so this neither opens nor closes that gap. */
+test("a surveil emits a surveil event and NOT a mill", () => {
+  const e = actionEmits({ verb: "surveil", object: "1", amount: "1" });
+  expect(e.map((x) => x.verb)).toEqual(["surveil"]);
+  expect(e.map((x) => x.verb)).not.toContain("mill");
+});
+
+/** A SEARCH IS NOT A FIND. CR 701.23b: a player searching a hidden zone "isn't required to find some
+ *  or all of those cards even if they're present in that zone". The emit says a search HAPPENED,
+ *  which is exactly what the three opponent-watching consumers trigger on. Anything stronger is the
+ *  fiction PR #240 reverted when it stopped calling digging a tutor. */
+test("a search emits a search event and claims nothing was found", () => {
+  const e = actionEmits({ verb: "search", object: "your library for a basic land card" });
+  expect(e.map((x) => x.verb)).toEqual(["search"]);
+});
+
+/** CR 701.22b AND 701.25c, both stated outright: "If a player is instructed to scry 0, no scry event
+ *  occurs. Abilities that trigger whenever a player scries won't trigger." The rules make the zero
+ *  case explicit, so the engine does too. */
+test("scry 0 and surveil 0 emit nothing at all", () => {
+  expect(actionEmits({ verb: "scry", object: "0", amount: "0" })).toEqual([]);
+  expect(actionEmits({ verb: "surveil", object: "0", amount: "0" })).toEqual([]);
+});
+
+/** A SEARCH EMITS ONLY WHERE THE CONSUMERS ARE LOOKING. CR 701.23a searches any zone, but all four
+ *  corpus consumers watch a LIBRARY search -- three on an opponent's, Prishe's Wanderings on your
+ *  own -- so a graveyard or hand search satisfying a library demand would be a claim the card does
+ *  not make. Measured 2026-09-07: of 858 search actions, 800 state a library origin, 29 state none
+ *  (27 of those name a library in the object), 21 a graveyard, 7 a hand, 1 exile.
+ *
+ *  This also keeps the graveyard-leave test above honest: a graveyard search still moves nothing,
+ *  and now says nothing either. */
+test("a search outside the library emits nothing", () => {
+  expect(actionEmits({ verb: "search", object: "a creature card", fromZone: "graveyard", toZone: null })).toEqual([]);
+  expect(actionEmits({ verb: "search", object: "a card", fromZone: "hand", toZone: null })).toEqual([]);
+  // Origin unstated but named in the object text -- 27 of the 29 unstated actions look like this.
+  expect(actionEmits({ verb: "search", object: "your library for a Forest card" }).map((x) => x.verb)).toEqual(["search"]);
+  // Origin unstated and unnamed: refuse rather than assume a library.
+  expect(actionEmits({ verb: "search", object: "for a card" })).toEqual([]);
+  // A COMPOUND SEARCH NAMES THREE ZONES AND `fromZone` HOLDS ONE. Deadly Cover-Up searches "its
+  // owner's graveyard, hand, and library" and the stored origin is `graveyard`, so the object text
+  // is read whatever the origin says. Checked corpus-wide: of the 22 cards with a stated
+  // non-library search origin, this is the only one whose object names a library.
+  expect(actionEmits({ verb: "search", fromZone: "graveyard", toZone: null,
+    object: "its owner's graveyard, hand, and library for any number of cards with that name" })
+    .map((x) => x.verb)).toEqual(["search"]);
+});

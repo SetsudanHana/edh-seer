@@ -195,6 +195,14 @@ export const VERB_PHRASES: Record<string, string> = {
   draw: "draws a card",
   discard: "discards a card",
   mill: "mills a card",
+  // CR 701.22 / 701.25 / 701.23, added 2026-09-07 with the verbs. The naive fallback below would
+  // have shipped "scrys" and "searchs" -- which is the exact silent defect the VERB_PHRASES
+  // coverage test exists to catch, and it caught these.
+  scry: "scries",
+  surveil: "surveils",
+  // Not "searches" alone: the sentence reads "When X searches a library, Y ...", and every consumer
+  // of this event names a library (three watch an opponent's, one your own).
+  search: "searches a library",
   "land-play": "plays a land",
   "dice-rolled": "rolls a die",
   // Phase triggers. Nothing in the corpus ever EMITS these (no card supplies your upkeep — see

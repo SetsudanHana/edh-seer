@@ -306,7 +306,20 @@ export type Verb =
   | "upkeep"
   | "begin-combat"
   | "end-step"
-  | "dice-rolled";
+  | "dice-rolled"
+  /** CR 701.22a: "look at the top N cards of your library, then put any number of them on the
+   *  BOTTOM of your library in any order and the rest on top". A scry never touches a graveyard,
+   *  so there is no fill half to consider. 328 corpus cards scry, 15 trigger on one. */
+  | "scry"
+  /** CR 701.25a: "look at the top N cards of your library, then put any number of them into your
+   *  GRAVEYARD and the rest on top". The graveyard half is ANY NUMBER, including zero — see the
+   *  `EMITS` row for why that half is deliberately not emitted. 169 cards surveil, 10 trigger. */
+  | "surveil"
+  /** CR 701.23a: "look at all cards in that zone ... and find a card that matches the given
+   *  description". 701.23b makes the FINDING optional, so this event means a search HAPPENED and
+   *  never that anything was found — the distinction PR #240 settled when it un-tutored digging.
+   *  799 cards search, 4 trigger on one, and three of those four watch an OPPONENT. */
+  | "search";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -344,6 +357,16 @@ export const VERB_VOCAB: readonly Verb[] = [
   // cards flip and ZERO trigger on someone else flipping, because a flip is self-contained
   // ("flip a coin. If you win the flip, ..."), and Okaun/Zndrsplt flip and pay off on one card.
   "dice-rolled",
+  // CR 701.22 / 701.25 / 701.23. These have been legal CLAUSE events since 2026-08-15 —
+  // `normalize-prompt.ts` names Matoya and Archivist of Oghma in its own comment — and were never
+  // ENGINE events, so `normalizeTriggerVerb` returned null and every one of the 27 consumers
+  // derived a triggered ability with NO TRIGGER AT ALL. Matoya, Archon Elder is the whole card
+  // "whenever you scry, draw a card; whenever you surveil, draw a card" and it triggered on
+  // nothing. The corpus already stores the words, so this costs a DERIVE_VERSION bump and no
+  // model call.
+  "scry",
+  "surveil",
+  "search",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */
