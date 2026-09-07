@@ -16,9 +16,12 @@ import { ComboList } from "./ComboList.js";
  *  behind it, about 250kB of the 2.4MB the build's sourcemap maps -- and it mounts ONLY on `/graph`.
  *  Every reader who never opened the board was still paying for it in the first byte of the report.
  *
- *  `GraphList` stays eager: it is the narrow-width fallback that renders INSTEAD of the board on a
- *  phone, so lazy-loading it would trade a bundle saving for a spinner on the surface that exists
- *  because the board cannot be used there at all. */
+ *  `GraphList` stays eager, and NOT because the board is unreachable on a phone -- it is, since the
+ *  surface switch below (#214) lets the reader override `useBoardMode`'s guess in either direction.
+ *  It stays eager because it is where the ego branch LANDS: on a coarse pointer with no fine one,
+ *  `GraphList` is the first thing `/graph` paints, and lazy-loading the surface a reader arrives on
+ *  trades a bundle saving for a spinner in the one place it is guaranteed to be seen. `EgoView` and
+ *  `GraphView`, both one tap further in, are the ones worth splitting. */
 const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.GraphView })));
 /** `EgoView` IMPORTS `GraphView` STATICALLY, so it has to load the same way or the split above is a
  *  no-op: a static importer anywhere in the eager graph pulls the module back into the entry chunk,
