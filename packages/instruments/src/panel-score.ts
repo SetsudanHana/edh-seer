@@ -61,6 +61,11 @@ const current: PanelClaim[] = [];
  *  relation belongs to the 2/2 Zombie it makes. Same claim, said more precisely -- and counting it
  *  as a lost edge sends someone to fix an engine that is right. */
 const reattributedKeys = new Set<string>();
+/** The same, matched on the tag FAMILY only — see where it is filled for why that looseness is
+ *  earned on the consumer side and is NOT applied on the producer side. */
+const reattributedFamilies = new Set<string>();
+/** `${producer}|${tokenConsumer}|${tag}` for every claim whose CONSUMER is a token node. */
+const tokenDemands = new Set<string>();
 const oracle = new Map<string, string>();
 /** WHICH CARDS EACH DECK ACTUALLY RESOLVES TO TODAY, so a lost pair can be told apart from a verdict
  *  about a card that is not in the deck any more. Both are "the engine no longer claims this" and
@@ -96,15 +101,31 @@ for (const [deck, want] of wantedByDeck) {
         madeBy.get(r.producer)!.add(r.consumer);
       }
       if (r.producerIsToken) tokenClaims.add(`${r.producer}|${r.consumer}|${r.tag}`);
+      if (r.consumerIsToken) tokenDemands.add(`${r.producer}|${r.consumer}|${r.tag}`);
       if (!want.has(`${r.producer}|${r.consumer}`)) continue;
       current.push({ producer: r.producer, consumer: r.consumer, tag: r.tag, implied: r.impliedProducer === true });
     }
   }
   for (const [card, toks] of madeBy) {
     for (const t of toks) {
+      // SUPPLY moved onto the token the producer makes: `Oath -> Zombie [token] -> Ayara`.
       for (const key of tokenClaims) {
         const [tk, consumer, tag] = key.split("|");
         if (tk === t) reattributedKeys.add(`${card}|${consumer}|${tag}`);
+      }
+      // DEMAND moved onto the token the CONSUMER makes, which is the same change on the other side
+      // of the edge: Vivi's Persistence is not the payoff, the 0/1 Wizard it creates is, and the
+      // Wizard is what carries "whenever you cast a noncreature spell".
+      for (const key of tokenDemands) {
+        const [producer, tk, tag] = key.split("|");
+        if (tk !== t) continue;
+        reattributedKeys.add(`${producer}|${card}|${tag}`);
+        // FAMILY, not the exact tag, and only on this side. Seven of the nine consumer-side rows
+        // ALSO changed tag -- panel `cast:artifact` -> live `cast:-creature` -- and the panel's tag
+        // was simply WRONG: Chandra's Ignition is a Sorcery and never supplied `cast:artifact`. The
+        // engine both re-attributed the claim and named it correctly, so requiring an exact match
+        // would score a strict improvement as a loss. Exact-tag alone catches 2 of the 9.
+        reattributedFamilies.add(`${producer}|${card}|${tag.split(":")[0]}`);
       }
     }
   }
@@ -141,7 +162,8 @@ const pairInDeck = (producer: string, consumer: string): boolean => {
 };
 
 const reattributed = (producer: string, consumer: string, tag: string): boolean =>
-  reattributedKeys.has(`${producer}|${consumer}|${tag}`);
+  reattributedKeys.has(`${producer}|${consumer}|${tag}`)
+  || reattributedFamilies.has(`${producer}|${consumer}|${tag.split(":")[0]}`);
 
 const s = scorePanel(distinct, cache, pairInDeck, reattributed);
 const [lo, hi] = wilsonPanel(s.real, s.real + s.false);
@@ -168,7 +190,7 @@ console.log(`    ${s.droppedFalse} were judged FALSE — the engine stopped maki
 console.log(`    of the ones judged REAL:`);
 console.log(`      ${s.droppedRetag} retag (the pair still joins under another tag — not a loss)`);
 console.log(`      ${s.droppedRot} rot (a card named by the verdict is not in that deck any more)`);
-console.log(`      ${s.droppedReattributed} re-attributed (still claimed, through a token the producer makes)`);
+console.log(`      ${s.droppedReattributed} re-attributed (still claimed, via a token one side of the pair makes)`);
 console.log(`      ${s.droppedRegression} REGRESSION (both cards still there, the pair no longer joins)`);
 
 // `--rejudge` dumps EVERY live claim, judged or not, in the same worksheet shape. The cached
