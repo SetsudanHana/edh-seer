@@ -196,13 +196,20 @@ console.log(`  RECALL on pairs judged real: ${s.recall === null ? "n/a" : `${(s.
 // decision as publishing the panel. It also cannot run in CI for the same reason panel-score
 // cannot -- this needs Mongo -- so it guards where the change is made rather than where it merges.
 const KNOWN_LOST = `${PANEL}/known-lost-pairs.json`;
-const known = existsSync(KNOWN_LOST)
-  ? (JSON.parse(readFileSync(KNOWN_LOST, "utf8")) as { pairs: string[] }).pairs
-  : [];
+// READ IT, DO NOT ASK WHETHER IT EXISTS FIRST. `existsSync` then `readFileSync` is a check-then-use
+// race (CodeQL js/file-system-race, raised on this very line), and the try/catch is smaller code:
+// one read, and "absent" is just the failure case. `null` means the list has never been banked.
+const known: string[] | null = (() => {
+  try {
+    return (JSON.parse(readFileSync(KNOWN_LOST, "utf8")) as { pairs: string[] }).pairs;
+  } catch {
+    return null;
+  }
+})();
 if (process.argv.includes("--bank")) {
   writeFileSync(KNOWN_LOST, `${JSON.stringify({ pairs: s.lostPairs }, null, 1)}\n`);
   console.log(`\n  banked ${s.lostPairs.length} lost pairs -> ${KNOWN_LOST}`);
-} else if (!existsSync(KNOWN_LOST)) {
+} else if (known === null) {
   console.log(`\n  no ${KNOWN_LOST} yet — run with --bank to record the ${s.lostPairs.length} current losses`);
 } else {
   const { added, recovered } = ratchetLostPairs(s.lostPairs, known);
