@@ -10,9 +10,10 @@ import type { EffectKind } from "../schema.js";
 import { parseSubject } from "./subject.js";
 
 /** Zone-sensitive rules, checked before the plain lookup. Order matters within this list.
- *  `from`/`to` omitted means "don't care"; `from: null` means the origin must be the verb's DEFAULT
- *  (canonicalAction nulls an unstated or `library` origin), which is how a self-mill is told apart
- *  from a card moved into a graveyard out of some other zone. */
+ *  `from`/`to` omitted means "don't care"; `from: null` means the clause STATED NO ORIGIN.
+ *  CHANGED 2026-09-07: `null` used to also mean `library`, because canonicalAction collapsed the
+ *  two. It no longer does (CR 400.1 — library is a zone; CR 400.7 — the move is the event), so a
+ *  library origin is now written as `from: "library"` and says so. */
 const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: EffectKind }[] = [
   { verb: "exile", from: "graveyard", kind: "graveyard-hate" },
   { verb: "put", from: "graveyard", to: "battlefield", kind: "graveyard-recursion" },
@@ -36,11 +37,22 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // payoff of its own. Matched on the RETURN so one Ability carries the kind, as the live tags do.
   { verb: "return", from: "exile", to: "battlefield", kind: "flicker" },
   { verb: "put", from: "exile", to: "battlefield", kind: "flicker" },
-  // Cards put into a graveyard from the LIBRARY are self-mill, the same payoff `mill` names.
-  // `from: null` is load-bearing: "put target creature into its owner's graveyard" moves it off the
+  // Cards put into a graveyard FROM THE LIBRARY are self-mill, the same payoff `mill` names. The
+  // origin is load-bearing: "put target creature into its owner's graveyard" moves it off the
   // battlefield, which is removal, and calling that a top-manipulation payoff would mesh removal
-  // with every mill deck. Listed last so the from:"graveyard" rules above win when both apply.
-  { verb: "put", from: null, to: "graveyard", kind: "top-manipulation" },
+  // with every mill deck. It says `library` outright since 2026-09-07; it used to say `null` and
+  // rely on canonicalAction having folded library into it, which also swept up 11 actions that
+  // stated no origin at all. Corpus: put->graveyard is library 148, exile 18, unstated 11 — the 11
+  // are now unclassified, which is the honest answer for a clause that never said where from.
+  { verb: "put", from: "library", to: "graveyard", kind: "top-manipulation" },
+  // A CARD MOVED FROM THE LIBRARY INTO YOUR HAND IS A TUTOR (owner's ruling, 2026-09-07: a search
+  // restricted to a type is "another copy of your combo", the same shape as a fetchland finding a
+  // land). The `search` verb already mapped here; this is the half that states the destination
+  // instead of the search -- "look at the top four cards, reveal an Elemental, put it into your
+  // hand" (Eclipsed Flamekin) derived NOTHING and so formed no edge, which recall draw v3 #141
+  // caught. It could not be written before this commit: `put -> hand` with a nulled origin was
+  // indistinguishable from a bounce, and now it is not.
+  { verb: "put", from: "library", to: "hand", kind: "top-manipulation" },
 ];
 
 /** Kinds whose whole meaning is the zone the subject sits in: `edges.ts` will not draw a
