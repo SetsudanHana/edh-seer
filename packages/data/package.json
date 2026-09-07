@@ -25,13 +25,13 @@
   },
   "dependencies": {
     "@edh-seer/engine": "*",
-    "mongodb": "^6.8.0",
+    "mongodb": "^7.6.0",
     "stream-json": "^3.6.0"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
     "tsx": "^4.23.13",
-    "typescript": "^5.4.0",
+    "typescript": "^7.0.2",
     "vitest": "^4.0.0"
   }
 }

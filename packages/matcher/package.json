@@ -40,13 +40,13 @@
     "@edh-seer/data": "*",
     "@edh-seer/engine": "*",
     "@edh-seer/tagger": "*",
-    "mongodb": "^6.8.0"
+    "mongodb": "^7.6.0"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.13",
-    "typescript": "^5.4.0",
+    "typescript": "^7.0.2",
     "vitest": "^4.0.0"
   }
 }
