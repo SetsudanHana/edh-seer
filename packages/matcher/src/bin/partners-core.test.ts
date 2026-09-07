@@ -295,6 +295,25 @@ test("a two-faced card's page takes the front face's art when the card has none"
     .find((r) => r.name.startsWith("Valki"))!;
   // The FRONT face: it is the side the card is played from and the side a reader recognises.
   expect(rec.artCrop).toBe("https://cards.scryfall.io/art_crop/front/e/a/ea7e.jpg");
+  // AND THE BACK, so the page can turn the card over. The image is the only copy of the rules text
+  // a card page carries (spec D2a), so a front-only record hides half of a transforming card.
+  expect(rec.backArtCrop).toBe("https://cards.scryfall.io/art_crop/back/e/a/ea7e.jpg");
+});
+
+/** `backArtCrop` IS A FIELD AND NOT A GUESS FROM THE NAME. Split, adventure and flip cards print
+ *  two names on ONE physical face and have no back image; `name.includes(" // ")` would have
+ *  offered every one of them a control that turns to nothing. Measured 2026-09-08: exactly 491
+ *  corpus cards carry `faces[1].artCrop` and they are exactly the 491 with no card-level art. */
+test("a card with two names on one face has no back to turn to", () => {
+  const split = base("Fire // Ice", krenko.tags.abilities);
+  (split.card as unknown as { artCrop: string; faces: { artCrop?: string }[] }).artCrop =
+    "https://cards.scryfall.io/art_crop/front/a/b/c.jpg";
+  (split.card as unknown as { faces: { artCrop?: string }[] }).faces = [{}, {}];
+  const { shards } = buildPartnerArtifact([split, impactTremors], H);
+  const rec = [...shards.values()].flatMap((sh) => Object.values(sh))
+    .find((r) => r.name === "Fire // Ice")!;
+  expect(rec.artCrop).toBe("https://cards.scryfall.io/art_crop/front/a/b/c.jpg");
+  expect(rec.backArtCrop).toBeNull();
 });
 
 /** Card-level art still wins, so adventure/split/flip -- one physical face, one `image_uris` -- are
@@ -325,8 +344,8 @@ test("a page record carries metadata and derivation, never card rules text", () 
   const rec = [...shards.values()].flatMap((s) => Object.entries(s))
     .find(([slug]) => slug === "krenko-mob-boss")![1];
   expect(Object.keys(rec).sort()).toEqual(
-    ["abilities", "artCrop", "commander", "demands", "emits", "identity", "manaCost", "name",
-      "partners", "pool", "rarity", "typeLine"],
+    ["abilities", "artCrop", "backArtCrop", "commander", "demands", "emits", "identity", "manaCost",
+      "name", "partners", "pool", "rarity", "typeLine"],
   );
   expect(JSON.stringify(rec)).not.toContain("Create X 1/1 red Goblin");
 });

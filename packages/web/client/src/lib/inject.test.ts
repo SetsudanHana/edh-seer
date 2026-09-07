@@ -99,3 +99,64 @@ test("a card with no partners says so rather than printing an empty list", () =>
   expect(html).toContain("No partners specific enough to list");
   expect(html).not.toContain("<ol>");
 });
+
+/** THE INLINE RECORD, AND WHY IT EXISTS. Without it the app fetches its data from `/static/`, which
+ *  `robots.txt` disallows, so Googlebot's renderer got nothing and every card page rendered as
+ *  `<NotFound />` in the DOM Google keeps. Confirmed in Search Console 2026-09-08 against
+ *  `/cards/accursed-witch-infectious-curse`, a page the edge serves with 24 partner links. */
+test("the page hands the app its own record, keyed by the slug it was served for", () => {
+  const html = page({ data: { slug: "krenko-mob-boss", record: KRENKO } });
+  const tag = /<script type="application\/json" id="edh-card-page" data-slug="([^"]+)">([\s\S]*?)<\/script>/
+    .exec(html);
+  expect(tag, "the data block is in the document").not.toBeNull();
+  expect(tag![1]).toBe("krenko-mob-boss");
+  expect(JSON.parse(tag![2]!)).toEqual(KRENKO);
+});
+
+/** A PAGE WITH NO RECORD WRITES NO TAG, rather than an empty one the reader would have to
+ *  distinguish from a corrupt one. `notFound()` and `degraded()` both take this branch. */
+test("a page with no record carries no data block", () => {
+  expect(page()).not.toContain("edh-card-page");
+});
+
+/** THE ESCAPE IS THE SECURITY BOUNDARY, AND `esc` IS THE WRONG TOOL FOR IT.
+ *
+ *  Inside a `<script>` the HTML parser does not decode entities -- it scans raw text for `</script`
+ *  and ends the element there. So a `</script>` anywhere in this data closes the block early and
+ *  everything after it is parsed as MARKUP. The JSON itself cannot execute (`application/json` is
+ *  not run), but breaking out of the element lets what follows become real HTML including a real
+ *  script. The data is Scryfall's and ours today; the corpus is 34,433 third-party rows and grows
+ *  every set, so the escape is mechanical rather than reasoned. */
+test("a card whose text could close the script element cannot", () => {
+  const hostile = {
+    ...KRENKO,
+    name: "</script><script>alert(1)</script>",
+    // `&` and the two JS line terminators go too: they are legal in JSON and cannot be trusted to
+    // stay harmless everywhere this string might later be embedded.
+    typeLine: "Creature \u2014 <img src=x onerror=alert(2)> & \u2028 \u2029 friends",
+  };
+  const html = page({ data: { slug: "hostile", record: hostile } });
+  const body = /id="edh-card-page" data-slug="hostile">([\s\S]*?)<\/script>/.exec(html)![1]!;
+  // THE PARSER'S ACTUAL TRIGGER IS `</script`, and nothing weaker. With every `<` escaped it cannot
+  // occur however the data nests it -- so this asserts the absence of `<` itself, which is the
+  // property that makes the claim true rather than a spot check on one spelling of the attack.
+  expect(body).not.toContain("<");
+  expect(body).not.toContain(">");
+  expect(body.toLowerCase()).not.toContain("</script");
+  expect(body).not.toContain("\u2028");
+  // And it is still the data, not a mangled copy of it: an escape that corrupts the payload would
+  // be the same bug wearing a safer hat. `esc` would have done exactly that -- inside a script the
+  // parser decodes no entities, so `&lt;` reaches `JSON.parse` as four literal characters.
+  expect(JSON.parse(body)).toEqual(hostile);
+});
+
+/** THE PROSE BLOCK AND THE DATA BLOCK ESCAPE DIFFERENTLY BECAUSE THEY SIT IN DIFFERENT PARSERS.
+ *  HTML text wants entities; script text wants `<`. Using either escaper in the other's place
+ *  is a defect -- one lets the element close, the other hands `JSON.parse` a corrupted string. */
+test("the prose block still uses HTML entities, not the JSON escape", () => {
+  const html = page({
+    data: { slug: "s", record: KRENKO },
+    bodyHtml: cardPageHtml({ ...KRENKO, name: "A & B <c>" }, "s", "card"),
+  });
+  expect(html).toContain("A &amp; B &lt;c&gt;");
+});

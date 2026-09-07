@@ -844,6 +844,17 @@ export interface CardPageRecord {
    *  Present on 33,942 of 34,433 corpus cards; `null` where Scryfall has no image, and the pages
    *  render without one rather than reserving a hole for it. */
   artCrop: string | null;
+  /** THE OTHER SIDE, and only for a card that physically has one.
+   *
+   *  IT IS A FIELD RATHER THAN AN INFERENCE, and the corpus is why. `name.includes(" // ")` would
+   *  have been the cheap test and it is WRONG: a split, adventure or flip card prints two names on
+   *  ONE physical face and has no back image at all. Measured 2026-09-08: exactly 491 cards carry
+   *  `faces[1].artCrop`, and they are exactly the 491 with no card-level `artCrop` -- the
+   *  transform and modal_dfc layouts, disjoint from every one-faced card, with no third face
+   *  anywhere in the corpus. So this is non-null precisely when there is a side to flip to.
+   *
+   *  359 of the 491 are substantive and have a page. */
+  backArtCrop: string | null;
   /** How the engine read the card, one row per derived ability -- the page's real argument, and the
    *  half of it that was missing while the record carried only the UNION of a card's events. */
   abilities: AbilityRow[];
@@ -1030,6 +1041,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       // already use; this was the last reader that did not.
       artCrop: (d.card as { artCrop?: string }).artCrop
         ?? (d.card as { faces?: { artCrop?: string }[] }).faces?.[0]?.artCrop ?? null,
+      backArtCrop: (d.card as { faces?: { artCrop?: string }[] }).faces?.[1]?.artCrop ?? null,
       abilities: abilityRowsOf(d),
       identity: d.card.colorIdentity ?? [],
       commander,

@@ -105,7 +105,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
       * card-shaped metadata and belongs with the card; moving it here also demotes a diagnostic
       * table out of the reader's first scroll and promotes the partners, which are the product. */}
     <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] flex flex-col gap-6">
-      <CardArt artCrop={page.artCrop} name={page.name} />
+      <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
       <div className="hidden lg:flex lg:flex-col gap-3">
         <h3 className="eyebrow text-(--muted)">how the engine reads this card</h3>
         <AbilityTable rows={page.abilities} stacked />

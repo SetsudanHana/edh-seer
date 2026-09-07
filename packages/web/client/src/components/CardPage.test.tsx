@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { expect, test } from "vitest";
 import { CardPage } from "./CardPage.js";
@@ -9,6 +9,7 @@ const KRENKO: CardPageData = {
   typeLine: "Legendary Creature — Goblin Warrior",
   manaCost: "{2}{R}{R}",
   artCrop: "https://cards.scryfall.io/art_crop/front/8/2/824b2d73.jpg",
+  backArtCrop: null,
   abilities: [{
     kind: "activated", cost: "{T}", when: [], effect: "token-generation",
     scaling: "per-permanent", counts: "goblin",
@@ -118,7 +119,12 @@ test("the page shows the whole card, at the /normal/ size and never the crop", a
   expect(img).toHaveAttribute("loading", "lazy");
 });
 
-/** 491 CORPUS CARDS HAVE NO IMAGE. The page renders without one rather than reserving a hole. */
+/** A CARD SCRYFALL HAS NO IMAGE FOR renders without one rather than reserving a hole.
+ *
+ *  This comment used to say "491 corpus cards have no image", counting the cards with no CARD-level
+ *  `artCrop`. Every one of those 491 is a transform or modal_dfc card whose art lives on its FACES,
+ *  and they have all had a picture since 2026-09-08 -- the count was measuring the defect, not the
+ *  population. */
 test("a card with no image renders without one", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
   await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
@@ -177,4 +183,50 @@ test("a row the engine did read carries no such marker", async () => {
 test("an empty ability table says the engine read nothing on this card", async () => {
   at("faceless-one", async () => ({ ...KRENKO, name: "Faceless One", abilities: [], emits: [], demands: [], partners: [] }));
   expect((await screen.findAllByText(/read nothing on this card/i)).length).toBeGreaterThan(0);
+});
+
+/** BOTH SIDES OF A TWO-FACED CARD, BECAUSE THE IMAGE IS THE ONLY COPY OF THE RULES TEXT.
+ *
+ *  Spec D2a puts the oracle text and the artist credit on the card picture rather than reprinting
+ *  either, so a transforming card showing only its front had no way to read half of itself
+ *  (owner, 2026-09-08). `backArtCrop` is non-null on exactly the 491 corpus cards that physically
+ *  have a back -- a field and not a `name.includes(" // ")` guess, because split, adventure and
+ *  flip cards print two names on ONE face and have no back image at all. */
+const VALKI: CardPageData = {
+  ...KRENKO,
+  name: "Valki, God of Lies // Tibalt, Cosmic Impostor",
+  artCrop: "https://cards.scryfall.io/art_crop/front/e/a/ea7e.jpg",
+  backArtCrop: "https://cards.scryfall.io/art_crop/back/e/a/ea7e.jpg",
+};
+
+test("a two-faced card can be turned over, and the control names the side it turns to", async () => {
+  at("valki-god-of-lies-tibalt-cosmic-impostor", async () => VALKI);
+  const flip = await screen.findByRole("button", { name: /Flip to Tibalt, Cosmic Impostor/ });
+  expect(screen.getByRole("img", { name: /Valki, God of Lies — the card/ }).getAttribute("src"))
+    .toContain("/normal/front/");
+  expect(flip).toHaveAttribute("aria-pressed", "false");
+
+  fireEvent.click(flip);
+  expect(screen.getByRole("img", { name: /Tibalt, Cosmic Impostor — the card/ }).getAttribute("src"))
+    .toContain("/normal/back/");
+  // And back again: the label names the destination both ways, so the control is never a one-shot.
+  const unflip = screen.getByRole("button", { name: /Flip to Valki, God of Lies/ });
+  expect(unflip).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(unflip);
+  expect(screen.getByRole("img", { name: /Valki, God of Lies — the card/ })).toBeInTheDocument();
+});
+
+/** ONE PHYSICAL FACE, NO CONTROL. A card with nothing to turn to must not offer a button that does
+ *  nothing -- which is what a `" // "` test on the NAME would have given every split and adventure
+ *  card in the corpus. */
+test("a card with one face offers no flip", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  expect(screen.queryByRole("button", { name: /flip/i })).toBeNull();
+});
+
+test("a split card is not offered a flip either, despite the // in its name", async () => {
+  at("fire-ice", async () => ({ ...KRENKO, name: "Fire // Ice", backArtCrop: null }));
+  await screen.findByRole("img", { name: /Fire — the card/ });
+  expect(screen.queryByRole("button", { name: /flip/i })).toBeNull();
 });
