@@ -1872,7 +1872,10 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   const land = base("Shadowy Backstreet", [{
     kind: "triggered",
     trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
-    effect: { kind: "top-manipulation" },
+    // Shadowy Backstreet's own text: "When this land enters, SURVEIL 1." Its kind was
+    // `top-manipulation` until the split on 2026-09-07, which is why the sentence below used to say
+    // the generic "sets up the top of a library" about a card that surveils.
+    effect: { kind: "surveil" },
   }], ["plains", "swamp"]);
   const fetch = base("Marsh Flats", [{
     kind: "activated",
@@ -1881,9 +1884,9 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   }]);
   const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
   expect(etb.tag).toBe("enters:any");
-  expect(etb.text).toBe(// The land's effect kind is `top-manipulation`, and the sentence now says so rather than
-    // stopping at "triggers" -- see the nine kinds added to PHRASES.
-    "When Shadowy Backstreet enters thanks to Marsh Flats, it sets up the top of a library");
+  expect(etb.text).toBe(// The land's effect kind is `surveil`, and the sentence now names THAT rather than stopping at
+    // "triggers" -- see the nine kinds added to PHRASES, and the five that replaced one of them.
+    "When Shadowy Backstreet enters thanks to Marsh Flats, it surveils");
   expect(etb.text).toContain("Marsh Flats");
 });
 

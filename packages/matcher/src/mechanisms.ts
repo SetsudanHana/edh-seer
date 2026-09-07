@@ -135,6 +135,13 @@ export const CATEGORY_MATCH: Record<MechanismCategory, CategoryMatchEntry> = {
   // row the mana base ("Arid Mesa can fetch Cinder Glade"). Mill is the one member with a real
   // graveyard claim and the KIND cannot separate it from a fetchland, so it cannot carry the
   // category; a self-mill deck reaches `mill-self` on `enters-graveyard:*` instead.
+  //
+  // THAT PRECONDITION IS NOW SATISFIED, AND THE RULING IS STILL NOT MADE HERE. The kind split on
+  // 2026-09-07 gave `mill` its own name, so it IS separable from a fetchland (which is `search`) and
+  // this category COULD take it. Deliberately not in that change: G3 moved 3,206 pairs when it
+  // landed, and folding a category ruling into a behaviour-preserving rename would leave any
+  // regression with two candidate causes. It is its own measured item now, which is the point of
+  // having split the kind.
   "graveyard-matters": { effectKinds: ["graveyard-recursion"] },
   "attack-matters": { tags: ["attacks:creature"] },
   "blink-etb": { effectKinds: ["flicker", "clone"] },
