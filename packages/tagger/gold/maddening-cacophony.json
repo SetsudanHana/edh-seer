@@ -47,7 +47,7 @@
       {
         "kind": "on-cast",
         "effect": {
-          "kind": "top-manipulation",
+          "kind": "mill",
           "subject": {
             "control": "opp",
             "token": null

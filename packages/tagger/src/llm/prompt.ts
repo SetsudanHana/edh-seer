@@ -45,7 +45,7 @@ Use "fixed" for a constant amount (draw a card, deal 1, make a token). Use per-c
 per-permanent / per-graveyard / per-cast-or-spell / per-opponent when the amount is "equal to
 the number of ..." those. Use x-cost when the amount is a variable X paid on cast/activation.
 Use unbounded for combo/loop payoffs with no fixed ceiling. Default to "fixed" when unsure.
-"top-manipulation" = looking at / reordering / putting cards on top of a library, or scry/surveil that stack the top (Brainstorm, Sensei's Divining Top). An ability with several effects becomes one ability per effect, sharing the trigger.
+"scry" / "surveil" / "mill" / "search" are the printed keyword actions (CR 701.22 / 701.25 / 701.17 / 701.23) and each is its own kind. "top-set" = reordering or setting what you draw next (Brainstorm, Sensei's Divining Top). An ability with several effects becomes one ability per effect, sharing the trigger.
 "pump" gives +X/+X or +X/+0 to creatures (static or triggered); the subject says who — a subtype for a tribe ("wizard"), type:"creature" for your whole team. Use it for anthems/lords too.
 "damage" = dealing damage; subject.control says who ("opp" for "each opponent"/a player, "any" for "any target"). Do not split into player- vs noncombat- variants.
 "drain" = one ability that BOTH drains life from a player AND you gain life (Blood Artist, Zulaport) — do not split it into two abilities.
@@ -274,7 +274,7 @@ const FEW_SHOT_TURNS: ChatMessage[] = [
     role: "assistant",
     content: `{ "abilities": [
   { "kind": "on-cast",
-    "effect": { "kind": "top-manipulation", "subject": { "control": "opp", "token": null }, "scaling": "fixed" },
+    "effect": { "kind": "mill", "subject": { "control": "opp", "token": null }, "scaling": "fixed" },
     "emits": [ { "verb": "mill", "subject": { "control": "opp", "token": null } } ] }
 ] }`,
   },

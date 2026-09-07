@@ -77,7 +77,7 @@ test("drops an emit with an unrecognized verb, keeps the ability and valid emits
       {
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: { control: "you", token: null } },
-        effect: { kind: "top-manipulation" },
+        effect: { kind: "top-set" },
         emits: [
           { verb: "put-on-top", subject: { control: "you", token: null } },
           { verb: "draw", subject: { control: "you", token: null } },
@@ -260,7 +260,7 @@ test("parses an on-cast ability (producer-only, effect + emits, no trigger)", ()
   const [a] = parseAbilities(JSON.stringify({
     abilities: [{
       kind: "on-cast",
-      effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+      effect: { kind: "mill", subject: { control: "opp", token: null } },
       emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
     }],
   }));

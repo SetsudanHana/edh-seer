@@ -1273,7 +1273,7 @@
   },
   "scry": {
     "events": [],
-    "effectKind": "top-manipulation",
+    "effectKind": "scry",
     "uses": []
   },
   "mana-dork": {

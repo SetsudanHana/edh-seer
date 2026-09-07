@@ -39,12 +39,12 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   { verb: "put", from: "exile", to: "battlefield", kind: "flicker" },
   // Cards put into a graveyard FROM THE LIBRARY are self-mill, the same payoff `mill` names. The
   // origin is load-bearing: "put target creature into its owner's graveyard" moves it off the
-  // battlefield, which is removal, and calling that a top-manipulation payoff would mesh removal
+  // battlefield, which is removal, and calling that a self-mill payoff would mesh removal
   // with every mill deck. It says `library` outright since 2026-09-07; it used to say `null` and
   // rely on canonicalAction having folded library into it, which also swept up 11 actions that
   // stated no origin at all. Corpus: put->graveyard is library 148, exile 18, unstated 11 — the 11
   // are now unclassified, which is the honest answer for a clause that never said where from.
-  { verb: "put", from: "library", to: "graveyard", kind: "top-manipulation" },
+  { verb: "put", from: "library", to: "graveyard", kind: "mill" },
   // SETTING THE TOP OF YOUR LIBRARY. Sensei's Divining Top reorders the top three; Brainstorm and
   // Hidetsugu and Kairi put cards from hand on top. Both are the player choosing what they draw
   // next, and neither had a kind before 2026-09-07 -- which is why an entire top-of-library deck
@@ -54,11 +54,11 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // Aetherspouts, Spin into Myth, Jeskai Charm) and from the STACK is Approach of the Second Sun
   // (12). Only library and hand origins are the player stacking their own deck. Checked: of the 31
   // corpus cards that put something "Nth from the top", NONE has a library or hand origin.
-  { verb: "put", from: "library", to: "library", kind: "top-manipulation" },
-  { verb: "put", from: "hand", to: "library", kind: "top-manipulation" },
+  { verb: "put", from: "library", to: "library", kind: "top-set" },
+  { verb: "put", from: "hand", to: "library", kind: "top-set" },
   // NO ROW FOR `put library -> hand`, AND THE REASON IS WORTH KEEPING (added and reverted the same
   // day, 2026-09-07). It looked like the missing half of a tutor. It is not: a REAL tutor states the
-  // `search` verb, which VERB_KIND already maps to top-manipulation, so the row bought nothing for
+  // `search` verb, which VERB_KIND already maps to `search`, so the row bought nothing for
   // Demonic Tutor, Worldly Tutor or Entomb. What it DID catch was the other bucket -- 343 corpus
   // actions that put a card from library to hand with NO search in the clause, which is DIGGING
   // (Eclipsed Flamekin looks at the top four; Dig Through Time at the top seven), not searching.
@@ -122,17 +122,17 @@ const SIMPLE: Record<string, EffectKind> = {
   // (The old note here said `copy-spell` could never fire because VERBS has only `copy`. True of the
   // VERB and false of the CLAUSE: the OBJECT says which is copied — "target spell" versus "target
   // creature" — exactly as it does for `double`. Resolved in `actionEffectKind`.)
-  mill: "top-manipulation",
+  mill: "mill",
   emblem: "token-generation",
   // A tutor rearranges what you draw, which is the same payoff `mill` names. Demonic Tutor's live
   // flat tag is exactly this, so the kind is one the engine already consumes.
-  search: "top-manipulation",
+  search: "search",
   // Same payoff again, from the other end of the library. Barrier of Bones' live flat tag for its
   // surveil is exactly this. Neither verb gets an EMIT: surveil does fill a graveyard, but flat
   // gives Barrier of Bones no emit either, and an invented emit is the change reverted from the
   // bounce/`leaves` work — a starving consumer count is not evidence.
-  scry: "top-manipulation",
-  surveil: "top-manipulation",
+  scry: "scry",
+  surveil: "surveil",
 };
 
 /** A restriction is a TAX only when it can be paid through. Propaganda and Ghostly Prison both
@@ -391,7 +391,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // model should set `fromZone: "hand"` -- and this is the free half of it.
   if (verb === "put" && action.toZone === "library" && !action.fromZone
       && /\bfrom your hand\b/i.test(action.object ?? "") && !ON_THE_BOTTOM.test(clauseText)) {
-    return "top-manipulation";
+    return "top-set";
   }
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
@@ -407,7 +407,10 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // Descendants' Fury put the REST on the bottom, which is the discard half of card selection,
     // the opposite of a supply. Only 48 are real top manipulation. Negative rather than positive
     // because Sensei's Divining Top never says "on top": it says "put them BACK".
-    if (r.kind === "top-manipulation" && r.to === "library" && ON_THE_BOTTOM.test(clauseText)) return null;
+    // `r.to === "library"` is gone with the split. NOT because top-set owns that destination -- the
+    // two graveyard-recursion rows above have it too -- but because the condition was only ever
+    // standing in for "is this the top-of-library family?", which the kind now says outright.
+    if (r.kind === "top-set" && ON_THE_BOTTOM.test(clauseText)) return null;
     return r.kind;
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.

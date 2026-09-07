@@ -75,7 +75,7 @@ test("exile-and-return-to-the-battlefield is a flicker; the return carries the k
 test("putting cards into a graveyard is the payoff mill already names", () => {
   // The ORIGIN is stated since 2026-09-07: an unstated one is no longer read as `library`.
   expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: "library", toZone: "graveyard" }))
-    .toBe("top-manipulation");
+    .toBe("mill");
   // ...but a graveyard ORIGIN still wins: that is recursion, not a fill.
   expect(actionEffectKind({ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }))
     .toBe("graveyard-recursion");
@@ -84,13 +84,13 @@ test("putting cards into a graveyard is the payoff mill already names", () => {
 test("self-mill is a graveyard entry from the LIBRARY, not any move into a graveyard", () => {
   // The library origin is now STATED rather than inferred from a null (CR 400.1, CR 400.7).
   expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: "library", toZone: "graveyard" }))
-    .toBe("top-manipulation");
+    .toBe("mill");
   // ...and a clause that states NO origin is no longer read as a self-mill. 11 corpus actions sit
   // here; unclassified is the honest answer for a clause that never said where the cards came from.
   expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: null, toZone: "graveyard" }))
     .toBeNull();
   // Moving a permanent off the battlefield into a graveyard is removal; calling it a
-  // top-manipulation payoff would mesh removal with every mill deck.
+  // self-mill payoff would mesh removal with every mill deck.
   expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "graveyard" }))
     .toBeNull();
 });
@@ -126,10 +126,10 @@ test("granting haste or double strike is a speed increase; other grants stay sil
   expect(actionEffectKind({ verb: "grant-ability", object: "" })).toBe("keyword-grant");
 });
 
-test("a tutor is top-manipulation, matching what the flat tagger already assigns", () => {
-  // Demonic Tutor's live flat tag is exactly { kind: "top-manipulation" }. `search` had no row, so
-  // Demonic Tutor, Fabricate and Spellseeker all derived nothing.
-  expect(actionEffectKind({ verb: "search", object: "your library" })).toBe("top-manipulation");
+test("a tutor derives `search`, the verb it is printed with", () => {
+  // Demonic Tutor's live flat tag was `top-manipulation` until the kind split on 2026-09-07; before
+  // `search` had a row at all, Demonic Tutor, Fabricate and Spellseeker derived nothing.
+  expect(actionEffectKind({ verb: "search", object: "your library" })).toBe("search");
 });
 
 test("`cant` is a tax only when it can be paid through", () => {
@@ -140,11 +140,24 @@ test("`cant` is a tax only when it can be paid through", () => {
   expect(actionEffectKind({ verb: "cant", object: "" })).toBeNull();
 });
 
-test("scry and surveil are top-manipulation, the payoff mill and search already name", () => {
-  // Barrier of Bones' live flat tag for its surveil is exactly { kind: "top-manipulation" }, and
-  // both verbs rearrange what you draw next, which is what the kind means.
-  expect(actionEffectKind({ verb: "scry", object: "2" })).toBe("top-manipulation");
-  expect(actionEffectKind({ verb: "surveil", object: "1" })).toBe("top-manipulation");
+/** ONE KIND MEANT FIVE THINGS. `effect-kind.ts` mapped scry, surveil, mill AND search onto
+ *  `top-manipulation`, and PR #241 added the two library-reordering rows on top -- 2,097 derived
+ *  abilities on one name. A tutor, a self-mill engine and Sensei's Divining Top are not the same
+ *  effect, and five readers consult this field to decide bucket membership, archetype detection,
+ *  impact weight, phrasing and (in edges.ts) whether an edge exists at all.
+ *
+ *  The codebase said so twice in its own comments before it was fixed: `edges.ts` kept scry and mill
+ *  out of the tutor family with a subject test "without needing to know the verb", and
+ *  `mechanisms.ts` refused milling the Graveyard Matters category because "the KIND cannot separate
+ *  it from a fetchland".
+ *
+ *  Corpus by origin, measured 2026-09-07: search 799 cards, mill 454, put library->library 387,
+ *  scry 328, surveil 169, put hand->library 32. */
+test("each library verb derives its own kind, and top-manipulation is gone", () => {
+  expect(actionEffectKind({ verb: "scry", object: "2" })).toBe("scry");
+  expect(actionEffectKind({ verb: "surveil", object: "1" })).toBe("surveil");
+  expect(actionEffectKind({ verb: "mill", object: "three cards" })).toBe("mill");
+  expect(actionEffectKind({ verb: "search", object: "your library for a Forest card" })).toBe("search");
 });
 
 test("cost-modify splits on direction: cheaper is cost-reduction, dearer is tax", () => {
@@ -546,9 +559,9 @@ test("returning a card from a graveyard to the library is still recursion", () =
     object: "target instant or sorcery card" })).toBe("graveyard-recursion");
   expect(actionEffectKind({ verb: "return", fromZone: "graveyard", toZone: "library",
     object: "target card" })).toBe("graveyard-recursion");
-  // The other direction is untouched: library -> graveyard is a self-mill, which is top-manipulation.
+  // The other direction is untouched: library -> graveyard is a self-mill, which is `mill`.
   expect(actionEffectKind({ verb: "put", fromZone: "library", toZone: "graveyard",
-    object: "the top three cards of your library" })).toBe("top-manipulation");
+    object: "the top three cards of your library" })).toBe("mill");
 });
 
 // A NEGATIVE MODIFIER IS NOT AN ANTHEM (panel family E, 2026-08-20). `modify-pt` maps to `pump`,
@@ -657,19 +670,19 @@ test("setting a base power and toughness is neither a pump nor a debuff", () => 
 // that dig -- Eclipsed Flamekin reads the top FOUR cards and cannot find a piece deeper than that.
 test("putting a card from the library into hand is NOT a tutor on its own", () => {
   expect(actionEffectKind({ verb: "put", object: "an Elemental, Island, or Mountain card",
-    fromZone: "library", toZone: "hand" })).not.toBe("top-manipulation");
+    fromZone: "library", toZone: "hand" })).not.toBe("search");
   // A real tutor is carried by its own verb and is unaffected.
   expect(actionEffectKind({ verb: "search", object: "your library for a creature card" }))
-    .toBe("top-manipulation");
+    .toBe("search");
 });
 
 // THE ROW COULD NOT BE WRITTEN BEFORE THE ORIGIN WAS KEPT. A bounce states no library origin, and
 // under the old encoding it was indistinguishable from a tutor once the zone was nulled away.
 test("a card returned to hand from anywhere else is not a tutor", () => {
   expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "hand" }))
-    .not.toBe("top-manipulation");
+    .not.toBe("search");
   expect(actionEffectKind({ verb: "put", object: "that card", fromZone: null, toZone: "hand" }))
-    .not.toBe("top-manipulation");
+    .not.toBe("search");
 });
 
 // SETTING THE TOP OF YOUR LIBRARY IS A SUPPLY, and it had no kind at all until 2026-09-07 -- the
@@ -681,14 +694,14 @@ test("a card returned to hand from anywhere else is not a tutor", () => {
 // Dig Through Time), from hand 31 (Brainstorm, Brainstone) -- both are the player choosing what
 // they draw next. But from BATTLEFIELD is 52 and it is TUCK REMOVAL (Aetherspouts, Spin into Myth,
 // Jeskai Charm put a creature onto a library), and from stack is 12 (Approach of the Second Sun).
-// Calling those top-manipulation would put a "sets up your draws" claim on a removal spell.
-test("reordering or stacking the top of your library is top-manipulation", () => {
+// Calling those `top-set` would put a "sets up your draws" claim on a removal spell.
+test("reordering or stacking the top of your library is top-set", () => {
   // Sensei's Divining Top: "look at the top three cards, then put them back in any order".
   expect(actionEffectKind({ verb: "put", object: "them", fromZone: "library", toZone: "library" },
-    "Look at the top three cards of your library, then put them back in any order.")).toBe("top-manipulation");
+    "Look at the top three cards of your library, then put them back in any order.")).toBe("top-set");
   // Brainstorm, and the same shape as Hidetsugu and Kairi's entry trigger.
   expect(actionEffectKind({ verb: "put", object: "two cards from your hand", fromZone: "hand", toZone: "library" },
-    "Draw three cards, then put two cards from your hand on top of your library in any order.")).toBe("top-manipulation");
+    "Draw three cards, then put two cards from your hand on top of your library in any order.")).toBe("top-set");
 });
 
 // THE BOTTOM IS NOT THE TOP, and the canonical action cannot tell them apart: `toZone` is `library`
@@ -699,19 +712,19 @@ test("reordering or stacking the top of your library is top-manipulation", () =>
 //
 // The test is negative, not positive, because Sensei's never says "on top" -- it says "put them
 // BACK", and you already looked at the top three.
-test("putting the rest on the bottom of your library is not top-manipulation", () => {
+test("putting the rest on the bottom of your library is not top-set", () => {
   const dig = "Look at the top seven cards of your library. Put two of them into your hand and the rest on the bottom of your library in any order.";
   expect(actionEffectKind({ verb: "put", object: "the rest of the top seven cards of your library",
-    fromZone: "library", toZone: "library" }, dig)).not.toBe("top-manipulation");
+    fromZone: "library", toZone: "library" }, dig)).not.toBe("top-set");
 });
 
-test("putting something onto a library from the battlefield or the stack is NOT top-manipulation", () => {
+test("putting something onto a library from the battlefield or the stack is NOT top-set", () => {
   // Aetherspouts / Spin into Myth / Jeskai Charm: tuck removal.
   expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "library" }))
-    .not.toBe("top-manipulation");
+    .not.toBe("top-set");
   // Approach of the Second Sun puts ITSELF back from the stack.
   expect(actionEffectKind({ verb: "put", object: "Approach of the Second Sun", fromZone: "stack", toZone: "library" }))
-    .not.toBe("top-manipulation");
+    .not.toBe("top-set");
   // ...and a graveyard origin stays recursion, which is the row above these.
   expect(actionEffectKind({ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "library" }))
     .toBe("graveyard-recursion");
@@ -723,12 +736,12 @@ test("putting something onto a library from the battlefield or the stack is NOT 
 test("an unstated origin is read from the object when the object says it", () => {
   expect(actionEffectKind({ verb: "put", object: "two cards from your hand", toZone: "library" },
     "When this creature enters, draw three cards, then put two cards from your hand on top of your library in any order."))
-    .toBe("top-manipulation");
+    .toBe("top-set");
 });
 
 // ...and it stays narrow: the other unstated cases are tuck removal and must not be swept in.
-test("an unstated origin without that phrase is still not top-manipulation", () => {
+test("an unstated origin without that phrase is still not top-set", () => {
   for (const obj of ["target spell or nonland permanent", "target creature", "a card you own from outside the game"]) {
-    expect(actionEffectKind({ verb: "put", object: obj, toZone: "library" }, "")).not.toBe("top-manipulation");
+    expect(actionEffectKind({ verb: "put", object: obj, toZone: "library" }, "")).not.toBe("top-set");
   }
 });
