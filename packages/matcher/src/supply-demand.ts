@@ -45,7 +45,7 @@ const KNOWN_VERBS: ReadonlySet<string> = new Set(VERB_VOCAB);
  *  cost is that a 60-round game and a 3-round game read the same.
  *  CEILING: flat per-round reading, replace with a game-length integral if the census says the
  *  once/per-cycle collision is actually deciding rows. */
-export const EVENTS_PER_ROUND: Record<string, number> = {
+const EVENTS_PER_ROUND: Record<string, number> = {
   once: 1,
   "per-cycle": 1,
   // One firing per player per round — the pod size, not a magic 4 (roadmap J1).
@@ -57,11 +57,11 @@ export const EVENTS_PER_ROUND: Record<string, number> = {
 /** An ability whose `repeats` the rules could not read. Weighted neutral rather than zero — an
  *  unlabelled ability still supplies the event — and counted, because a side that is mostly
  *  refusals is a row nobody should draw a curve through. */
-export const UNSET_RATE = 1;
+const UNSET_RATE = 1;
 
 /** A card supplying a shape only by existing (every nonland is cast, every permanent enters) has
  *  no ability to read a rate off. That is a real once: the body enters the battlefield one time. */
-export const IMPLIED_RATE = 1;
+const IMPLIED_RATE = 1;
 
 /** Ceiling on a parsed `amount`. "Create X tokens" is unbounded and "create twenty" is a real
  *  card; without a cap one outlier decides its deck's whole ratio.
@@ -117,7 +117,7 @@ const empty = (): SideTotals => ({ cards: 0, rate: 0, avail: 0, commander: false
 /** Leading integer of an ability's `amount`, capped. "X" and any wording the parse cannot read
  *  count as one — an unknown count is not a zero, and guessing high is how a magnitude channel
  *  starts inventing engines. */
-export function amountOf(a: Ability): number {
+function amountOf(a: Ability): number {
   const m = /^\s*(\d+)/.exec(a.amount ?? "");
   return m ? Math.min(Number(m[1]), AMOUNT_CAP) : 1;
 }

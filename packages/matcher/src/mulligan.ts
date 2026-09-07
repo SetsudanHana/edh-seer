@@ -62,7 +62,7 @@ const bottomed = (j: number): number => (j >= 5 ? j - 1 : Math.min(j, HAND - 1))
  *  five-colour deck this reads optimistic. Its counterpart bound is the RAW figure (`minCopies`,
  *  no mulligan at all), which under-states by the same mismatch, so the pair is reported and neither
  *  is deleted. */
-export function pByTurn(
+function pByTurn(
   size: number, need: number, turn: number, keep: ReadonlySet<number> = STANDARD_KEEP,
 ): number {
   const draws = seen(turn) - HAND;

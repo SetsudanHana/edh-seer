@@ -41,7 +41,7 @@ export const CARD_H = CARD_W * CARD_ASPECT;
  *
  *  Derived, never typed twice: the card's size decides the gap, so the two cannot drift apart --
  *  the exact failure `nodeRadius`'s comment above records. */
-export const CARD_CLEARANCE = Math.hypot(CARD_W, CARD_H) - 2 * ART_RADIUS;
+const CARD_CLEARANCE = Math.hypot(CARD_W, CARD_H) - 2 * ART_RADIUS;
 
 /** HOW MUCH AIR ON TOP OF THE CLEARANCE, and it is the only knob on this board that moves the gap
  *  between two adjacent cards at all.

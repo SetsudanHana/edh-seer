@@ -13,7 +13,7 @@ const SWITCHES: { marker: Exclude<Marker, "speed">; label: string }[] = [
 ];
 
 /** The state in words: "speed 4", "the monarch + speed 2". */
-export function stateLabel(state: GameState): string {
+function stateLabel(state: GameState): string {
   const parts: string[] = [];
   if (state.speed) parts.push(`speed ${state.speed}`);
   for (const s of SWITCHES) if (state[s.marker]) parts.push(s.label);
@@ -25,7 +25,7 @@ export function stateLabel(state: GameState): string {
  *  `enabledBy`, so the count and the cards that gained the most partners come straight from the
  *  run on screen -- no snapshot of a previous run, nothing to get out of sync. Cards are named
  *  because "+2 edges" is a number and "Garruk's Uprising +2" is a claim a reader can go and check. */
-export function stateSummary(edges: readonly StateEdge[], state: GameState): string | null {
+function stateSummary(edges: readonly StateEdge[], state: GameState): string | null {
   const label = stateLabel(state);
   if (!label) return null;
   const enabled = edges.filter((e) => e.enabledBy && e.enabledBy.length > 0);

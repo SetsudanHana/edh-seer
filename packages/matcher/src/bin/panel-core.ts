@@ -114,7 +114,7 @@ export function claimKey(producer: string, consumer: string, tag: string): strin
 /** Does this verdict come from the OWNER? The panel's authority order, stated once: the user judges,
  *  Claude proposes. `panel-score.ts --rejudge` already excludes these rows for the same reason —
  *  re-judging them would overwrite the answer with the thing being tested. */
-export const isUserVerdict = (v: PanelVerdict): boolean => v.note.startsWith("USER VERDICT");
+const isUserVerdict = (v: PanelVerdict): boolean => v.note.startsWith("USER VERDICT");
 
 /** Fold new verdicts over old. Later wins, so a corrected judgment supersedes without the caller
  *  having to find and delete the original — 17 of the first 600 rows needed exactly that.
