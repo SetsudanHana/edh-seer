@@ -48,13 +48,30 @@ export const isBackground = (card: Card): boolean => (card.typeLine ?? "").toLow
 const PARTNER_BARE = /(?:^|\n)Partner \(/;
 /** 702.124c names the specific other card, so the pair is licensed only with THAT card. */
 const PARTNER_WITH = /(?:^|\n)Partner with ([^(\n]+)/i;
-/** 702.124's named groups. The captured label is the thing that must match on both cards. */
-const PARTNER_LABEL = /(?:^|\n)Partner—([^(\n]+?)\s*\(/i;
+/** 702.124's named groups. The captured label is the thing that must match on both cards.
+ *
+ *  READ WITH STRING OPS, NOT A REGEX (CodeQL js/polynomial-redos, alert #74). The obvious pattern
+ *  `/(?:^|\n)Partner—([^(\n]+?)\s*\(/i` lets the lazy group AND the `\s*` after it both match a
+ *  space, so a line of "Partner—" with many spaces and no "(" backtracks quadratically: measured
+ *  2,000 spaces 2.5ms, 8,000 28.5ms, 16,000 167ms, 32,000 389ms -- four times the work for twice
+ *  the input. Oracle text is corpus data rather than the pasted decklist, so this was never the
+ *  cheapest way to hurt this service, but the fix is smaller than the argument for keeping it. */
+const PARTNER_PREFIX = "partner—";
 const CHOOSE_BACKGROUND = /Choose a Background/i;
 const DOCTORS_COMPANION = /Doctor's companion/i;
 
 function partnerLabel(text: string): string | undefined {
-  return PARTNER_LABEL.exec(text)?.[1]?.trim().toLowerCase();
+  for (const line of text.split("\n")) {
+    // Anchored to the line start and case-insensitive, exactly as the regex was.
+    if (!line.toLowerCase().startsWith(PARTNER_PREFIX)) continue;
+    // The reminder text in brackets closes the label. No "(" means no label -- the regex required
+    // one too, so a bare "Partner—Friends forever" has never named a group.
+    const open = line.indexOf("(", PARTNER_PREFIX.length);
+    if (open < 0) continue;
+    const label = line.slice(PARTNER_PREFIX.length, open).trim().toLowerCase();
+    if (label) return label;
+  }
+  return undefined;
 }
 
 /** Does `a` name `b`? "Partner with Kydele, Chosen of Kruphix" carries the whole printed name, so a
