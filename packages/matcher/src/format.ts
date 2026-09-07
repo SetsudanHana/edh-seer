@@ -23,7 +23,7 @@ export const DEFAULT_POD_SIZE = 4;
 /** The fewest players a game can have. Below this there is no opponent and every "each opponent"
  *  effect reads as a no-op, so it is clamped rather than trusted — this value will one day arrive
  *  from a UI field, and a pod of 0 must not silently become a deck that answers nothing. */
-export const MIN_POD_SIZE = 2;
+const MIN_POD_SIZE = 2;
 
 /** Opponents faced, from the pod size. The number every "each opponent" question actually wants. */
 export function opponents(podSize: number = DEFAULT_POD_SIZE): number {

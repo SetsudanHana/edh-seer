@@ -22,7 +22,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   stackInteraction: "Counterspells", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
-export const CATEGORY_ORDER: Category[] = [
+const CATEGORY_ORDER: Category[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction",
   "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
@@ -164,7 +164,7 @@ function Cost({ card, cell, className }: { card: DeckReport["cards"][number]; ce
   );
 }
 
-export const castRange = (c: { castable: { low: number; high: number } }): string =>
+const castRange = (c: { castable: { low: number; high: number } }): string =>
   policyBand(c.castable.low, c.castable.high);
 
 type SortKey = "synergy" | "name" | "cost";

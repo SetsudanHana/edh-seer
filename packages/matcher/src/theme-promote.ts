@@ -8,7 +8,7 @@ import type { ThemeMembership } from "./themes.js";
  *  Seeded at 0.30 from the DOMINATED-HEADLINE curve measured before this existed (9 of 71 decks at
  *  30%, 5 at 50%, 3 at 70%, 1 at 100%) and swept over {0.3, 0.5, 0.7} against the criteria in
  *  `specs/2026-08-19-theme-family-ranking-design.md` §10.4. */
-export const PROMOTE_SHARE = 0.3;
+const PROMOTE_SHARE = 0.3;
 
 /** A subject that names no particular class: a bare card type, or `any`. Only a headline with one of
  *  these can be generalising over something more specific the deck also carries. */
@@ -93,7 +93,7 @@ export function promoteSpecificHeadline(
  *  A DEMOTION, NOT A DELETION: the tag keeps its place in the ranked list and only loses the HEAD,
  *  the same shape as the promotion rule above. The deck still reports the tag among its themes; it
  *  just cannot be what the report NAMES the deck. */
-export function isUnrankableHeadline(tag: string, suppliedPhases: ReadonlySet<string> = new Set()): boolean {
+function isUnrankableHeadline(tag: string, suppliedPhases: ReadonlySet<string> = new Set()): boolean {
   const parts = split(tag);
   if (!parts) return false;
   const [verb, value] = parts;

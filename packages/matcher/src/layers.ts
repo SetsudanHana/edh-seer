@@ -42,7 +42,7 @@ export function applyState(inputs: DeckCard[], state: GameState | undefined): De
 
 /** "+2/+2", "+X/+0", "-1/-1": the two halves of an anthem's amount, or nothing when it is not that
  *  shape (a count, a set, prose). An unresolved X reads as 0, the same rule the stat evaluator uses. */
-export function parsePump(amount: string | undefined): { power: number; toughness: number } | undefined {
+function parsePump(amount: string | undefined): { power: number; toughness: number } | undefined {
   const m = /^\s*([+-]?)(\d+|x)\s*\/\s*([+-]?)(\d+|x)/i.exec(amount ?? "");
   if (!m) return undefined;
   const n = (sign: string, v: string): number => (v.toLowerCase() === "x" ? 0 : Number(v)) * (sign === "-" ? -1 : 1);
