@@ -1,5 +1,5 @@
 import { partnerShardOf } from "@edh-seer/matcher/partner-shard";
-import { cardPageHtml, injectPage, type InjectableCard } from "../../client/src/lib/inject.js";
+import { cardPageHtml, htmlHeaders, injectPage, type InjectableCard } from "../../client/src/lib/inject.js";
 
 /** WHAT A CRAWLER GETS FOR A CARD URL, AND WHAT A BROWSER GETS TOO.
  *
@@ -26,9 +26,7 @@ export async function renderCardPage(
   // those are evidence about the CARD. They serve the shell at 200 and let the app try again from
   // the browser -- answering "gone" while the artifact is briefly unreadable would be the same
   // class of lie as the 200-with-HTML that cost two pull requests this week.
-  const degraded = () => new Response(shell, {
-    headers: { "content-type": "text/html; charset=utf-8" },
-  });
+  const degraded = () => new Response(shell, { headers: htmlHeaders() });
 
   // A SLUG THE ARTIFACT DOES NOT HOLD IS A 404, and the shard loading is what makes that a fact
   // rather than a guess. `/cards/<any string>` used to answer 200 with the site's generic title:
@@ -46,7 +44,7 @@ export async function renderCardPage(
     canonical: `${origin}/${kind === "commander" ? "commanders" : "cards"}/${slug}`,
     indexable: false,
     bodyHtml: "",
-  }), { status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
+  }), { status: 404, headers: htmlHeaders(false) });
 
   try {
     const manifest = await assets.fetch(`${origin}/static/manifest.json`);
@@ -85,21 +83,27 @@ export async function renderCardPage(
       ? `${partners.length} cards ${record.name} interacts with, each with the reason the engine drew the edge.`
       : `What the engine reads on ${record.name}: the events it produces and the ones it cares about.`;
 
+    // NOTHING TO SAY, NOTHING TO INDEX. A page with no partners is real and reachable and has no
+    // content a search result could honestly summarise, so it stays out of the index rather than
+    // adding one of ~1,900 near-identical thin pages.
+    //
+    // ONE BINDING, READ TWICE: the `<meta name="robots">` tag and the `X-Robots-Tag` header say the
+    // same thing about the same page, and writing the expression out at both call sites is how they
+    // would come to disagree.
+    const indexable = usable && partners.length > 0;
+
     return new Response(injectPage(shell, {
       title,
       description,
       canonical: `${origin}/${isCommanderPage ? "commanders" : "cards"}/${slug}`,
-      // NOTHING TO SAY, NOTHING TO INDEX. A page with no partners is real and reachable and has no
-      // content a search result could honestly summarise, so it stays out of the index rather than
-      // adding one of ~1,900 near-identical thin pages.
-      indexable: usable && partners.length > 0,
+      indexable,
       bodyHtml: cardPageHtml({ ...record, partners }, slug, kind),
       // THE RAW SHARD RECORD, NOT THE MERGED ONE THE PROSE BLOCK GETS. `{...record, partners}`
       // above swaps in whichever list this ROUTE prints; the app wants what `loadCardPage` would
       // have returned, so that both pages read the same shape they already read and neither needs
       // to know it came from the document instead of the network.
       data: { slug, record },
-    }), { headers: { "content-type": "text/html; charset=utf-8" } });
+    }), { headers: htmlHeaders(indexable) });
   } catch {
     return degraded();
   }

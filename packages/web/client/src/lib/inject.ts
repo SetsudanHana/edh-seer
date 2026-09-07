@@ -45,6 +45,34 @@ export const jsonForScript = (value: unknown): string =>
     .replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")
     .replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 
+/** WHAT EVERY HTML RESPONSE THIS EDGE WRITES CARRIES.
+ *
+ *  A PAGES FUNCTION GETS NONE OF THE SITE'S HEADERS FOR FREE, and that is the whole reason this
+ *  exists. `_headers` applies to ASSET responses, and the two security headers the rest of the site
+ *  has -- `nosniff` and `strict-origin-when-cross-origin` -- are Pages' own defaults on assets, not
+ *  something this repo sets. A Function response bypasses both. Measured on the deployed site
+ *  2026-09-08: `/how-it-works/` carries both, `/cards/krenko-mob-boss` carries neither, and the
+ *  Function routes are the majority of this site's HTML.
+ *
+ *  IT LIVES IN THE REPO AND NOT IN A TRANSFORM RULE. Cloudflare could add these from the dashboard,
+ *  and `_headers` already carries the argument against it: a policy that lives in zone settings is
+ *  not in this repo, is not reviewed, and silently outranks what is.
+ *
+ *  `X-Robots-Tag` IS THE HEADER TWIN OF THE `noindex` META TAG, on the same condition, because a
+ *  header needs no HTML parse to be understood. The meta tag alone is read by anything that renders
+ *  the page; the header is read by everything, including Cloudflare's Crawler Hints, whose
+ *  documented opt-out is this header or the tag and which does not say which of the two it actually
+ *  inspects. 2,823 of these pages are `noindex` and Crawler Hints is on as of 2026-09-08, so
+ *  "probably parses the body" was not a good enough answer. */
+export function htmlHeaders(indexable = true): Record<string, string> {
+  return {
+    "content-type": "text/html; charset=utf-8",
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    ...(indexable ? {} : { "x-robots-tag": "noindex" }),
+  };
+}
+
 export interface InjectedPage {
   title: string;
   description: string;

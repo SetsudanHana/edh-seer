@@ -1,4 +1,5 @@
 import { isAppRoute } from "../client/src/lib/app-routes.js";
+import { htmlHeaders } from "../client/src/lib/inject.js";
 
 /** THE SPA FALLBACK, MADE EXPLICIT, so that a missing FILE can 404 like a missing file.
  *
@@ -20,9 +21,7 @@ export const onRequestGet: PagesFunction = async (context) => {
   if (!isAppRoute(new URL(context.request.url).pathname)) return response;
 
   const shell = await context.env.ASSETS.fetch(new URL("/index.html", context.request.url).toString());
-  return new Response(await shell.text(), {
-    headers: { "content-type": "text/html; charset=utf-8" },
-  });
+  return new Response(await shell.text(), { headers: htmlHeaders() });
 };
 
 /** AND THE SAME FOR HEAD. Pages routes a HEAD to `onRequestHead` alone, so without this line the
