@@ -73,16 +73,22 @@ test("exile-and-return-to-the-battlefield is a flicker; the return carries the k
 });
 
 test("putting cards into a graveyard is the payoff mill already names", () => {
-  expect(actionEffectKind({ verb: "put", object: "those cards", toZone: "graveyard" })).toBe("top-manipulation");
+  // The ORIGIN is stated since 2026-09-07: an unstated one is no longer read as `library`.
+  expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: "library", toZone: "graveyard" }))
+    .toBe("top-manipulation");
   // ...but a graveyard ORIGIN still wins: that is recursion, not a fill.
   expect(actionEffectKind({ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "battlefield" }))
     .toBe("graveyard-recursion");
 });
 
 test("self-mill is a graveyard entry from the LIBRARY, not any move into a graveyard", () => {
-  // canonicalAction nulls an unstated/library origin, so from:null IS the self-mill case.
-  expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: null, toZone: "graveyard" }))
+  // The library origin is now STATED rather than inferred from a null (CR 400.1, CR 400.7).
+  expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: "library", toZone: "graveyard" }))
     .toBe("top-manipulation");
+  // ...and a clause that states NO origin is no longer read as a self-mill. 11 corpus actions sit
+  // here; unclassified is the honest answer for a clause that never said where the cards came from.
+  expect(actionEffectKind({ verb: "put", object: "those cards", fromZone: null, toZone: "graveyard" }))
+    .toBeNull();
   // Moving a permanent off the battlefield into a graveyard is removal; calling it a
   // top-manipulation payoff would mesh removal with every mill deck.
   expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "graveyard" }))
@@ -541,7 +547,7 @@ test("returning a card from a graveyard to the library is still recursion", () =
   expect(actionEffectKind({ verb: "return", fromZone: "graveyard", toZone: "library",
     object: "target card" })).toBe("graveyard-recursion");
   // The other direction is untouched: library -> graveyard is a self-mill, which is top-manipulation.
-  expect(actionEffectKind({ verb: "put", fromZone: null, toZone: "graveyard",
+  expect(actionEffectKind({ verb: "put", fromZone: "library", toZone: "graveyard",
     object: "the top three cards of your library" })).toBe("top-manipulation");
 });
 
@@ -643,4 +649,22 @@ test("setting a base power and toughness is neither a pump nor a debuff", () => 
   // A signed modifier keeps its kind either way.
   expect(actionEffectKind({ verb: "modify-pt", object: "creatures you control", amount: "+1/+1" }, "Creatures you control get +1/+1.")).toBe("pump");
   expect(actionEffectKind({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" }, "")).toBe("debuff");
+});
+
+// A CARD MOVED FROM THE LIBRARY INTO YOUR HAND IS A TUTOR (owner's ruling, 2026-09-07). The `search`
+// verb already mapped to top-manipulation; this is the half that states the DESTINATION instead --
+// "look at the top four cards, reveal an Elemental, put it into your hand" (Eclipsed Flamekin),
+// which derived nothing and so formed no edge. Caught by recall draw v3 #141.
+test("a card put from the library into hand is a tutor", () => {
+  expect(actionEffectKind({ verb: "put", object: "an Elemental, Island, or Mountain card",
+    fromZone: "library", toZone: "hand" })).toBe("top-manipulation");
+});
+
+// THE ROW COULD NOT BE WRITTEN BEFORE THE ORIGIN WAS KEPT. A bounce states no library origin, and
+// under the old encoding it was indistinguishable from a tutor once the zone was nulled away.
+test("a card returned to hand from anywhere else is not a tutor", () => {
+  expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "hand" }))
+    .not.toBe("top-manipulation");
+  expect(actionEffectKind({ verb: "put", object: "that card", fromZone: null, toZone: "hand" }))
+    .not.toBe("top-manipulation");
 });

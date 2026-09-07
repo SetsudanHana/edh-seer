@@ -6,8 +6,19 @@
  *
  *    - a clause with no actions and one recorded as [none] are the same clause;
  *    - a cast always goes to the stack, so stating it adds nothing;
- *    - the DEFAULT origin of a move is implied by the verb, so recording it is optional
- *      bookkeeping: an unstated fromZone and an explicit `library` are the same fact;
+ *    - (WITHDRAWN 2026-09-07) this used to add: "the DEFAULT origin of a move is implied by the
+ *      verb, so recording it is optional bookkeeping: an unstated fromZone and an explicit
+ *      `library` are the same fact". That is not true and the CR says why. **CR 400.1** lists
+ *      library as one of the seven zones, level with graveyard and exile; **CR 400.7** makes the
+ *      move itself the event — "an object that moves from one zone to another becomes a NEW object
+ *      with no memory of its previous existence". The origin IS the mechanic, which is why casting
+ *      from a graveyard (601.2a, via the stack) and putting from a graveyard are not the same
+ *      action under a "can't enter from a graveyard" effect.
+ *      The corpus showed the assumption failing hardest on `exile`, where UNSTATED is the MODE:
+ *      1,023 of 2,118 actions state no origin against 358 that say `library`, and exile usually
+ *      happens from the battlefield or a graveyard. Encoding those 1,023 as library-equivalent
+ *      invented a zone. **A stated zone is now always kept; `null` means only "the model did not
+ *      say".**
  *    - "reveal" is dropped, but not because it is never a game action — Duress and Thoughtseize
  *      reveal a hand with no search anywhere. It is dropped because exactly one card in the game
  *      (Priority Boarding) triggers off revealing, so no payoff consumes it as its own event, while
@@ -40,8 +51,6 @@ export interface ClauseRecord {
   actions?: Action[];
 }
 
-/** Verbs whose origin zone has an obvious default, so leaving it unstated means that default. */
-const IMPLIED_ORIGIN = new Set(["put", "exile", "search", "return"]);
 
 /** Bookkeeping that no payoff keys off as its own event. */
 const DROPPED_VERBS = new Set(["reveal"]);
@@ -54,11 +63,11 @@ export function canonicalTrigger(t: ClauseRecord["trigger"]): ClauseRecord["trig
 }
 
 export function canonicalAction(a: Action): Action {
-  const zone = a.fromZone ?? "";
-  const impliedOrigin = IMPLIED_ORIGIN.has(a.verb ?? "") && (zone === "" || zone === "library");
+  // A STATED ZONE IS KEPT, WHATEVER IT IS. Only an UNSTATED origin becomes null, and null now means
+  // exactly "the model did not say" rather than "the verb's default". See the header.
   return {
     ...a,
-    fromZone: impliedOrigin ? null : a.fromZone ?? null,
+    fromZone: a.fromZone === "" ? null : a.fromZone ?? null,
     toZone: a.verb === "cast" ? null : a.toZone ?? null,
   };
 }
