@@ -1,4 +1,4 @@
-import type { MechanismCategory } from "../mechanisms.js";
+import type { MechanismCategory } from "@edh-seer/matcher/mechanisms";
 import type { RawPair } from "./propose-pairs-core.js";
 
 /** Category → EDHREC theme tag slug. Confirmed live (all 200) on 2026-07-21. The EDHREC `synergy`

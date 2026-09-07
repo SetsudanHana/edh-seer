@@ -34,7 +34,7 @@ import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@edh-seer/matcher";
 import { claimFor } from "./precision-core.js";
 import { sample, seededRng } from "./precision-core.js";
 import { renderAgreementSheet, type AgreementRow } from "./agreement-sheet-html.js";

@@ -20,7 +20,7 @@ import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@edh-seer/matcher";
 import { sample, seededRng } from "./precision-core.js";
 import { blindRecall, stratumOf, type SilentPair, type Stratum } from "./recall-core.js";
 

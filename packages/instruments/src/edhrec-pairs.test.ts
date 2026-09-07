@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { normalizeName } from "@edh-seer/data";
 import { edhrecPairSet, seededRandom } from "./edhrec-pairs.js";
-import { pairKey } from "../otag-edges.js";
+import { pairKey } from "@edh-seer/matcher/otag-edges";
 
 test("returns null when every theme fetch fails", async () => {
   const failing: typeof fetch = async () => { throw new Error("network down"); };

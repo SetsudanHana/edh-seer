@@ -18,7 +18,7 @@ import {
 } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
 import { claimFor } from "./precision-core.js";
 import { scorePanel, wilsonPanel, type PanelClaim, type PanelVerdict } from "./panel-core.js";
 

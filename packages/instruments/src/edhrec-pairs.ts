@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { normalizeName } from "@edh-seer/data";
-import { pairKey } from "../otag-edges.js";
+import { pairKey } from "@edh-seer/matcher/otag-edges";
 import { CATEGORY_EDHREC_TAG, tagUrl, parseHighSynergy } from "./edhrec-core.js";
 
 const CACHE_DIR = new URL("../../.edhrec-cache/", import.meta.url).pathname;

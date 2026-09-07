@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { applyDecision, pendingIndices, type Decision } from "./review-core.js";
-import type { GoldPair } from "./eval-pairs-core.js";
+import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
 const GOLD_URL = new URL("../goldpairs.json", import.meta.url);
 

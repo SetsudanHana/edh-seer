@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { buildReport, formatReport, type PairResult } from "./compass-report.js";
-import type { GoldPair, Outcome } from "./eval-pairs-core.js";
+import type { GoldPair, Outcome } from "@edh-seer/matcher/eval-pairs-core";
 
 const gp = (category: GoldPair["category"]): GoldPair => ({
   a: "A", b: "B", category, note: "", source: "t", verified: true,

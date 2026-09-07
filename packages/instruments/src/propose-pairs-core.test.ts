@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { parseProposals, pairKey, dedupeAndBuild } from "./propose-pairs-core.js";
-import type { GoldPair } from "./eval-pairs-core.js";
+import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
 test("parseProposals reads a JSON array of {a,b,note}, ignoring extra keys", () => {
   const raw = '[{"a":"Blood Artist","b":"Viscera Seer","note":"sac drain","x":1}]';

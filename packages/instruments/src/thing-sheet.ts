@@ -31,7 +31,7 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
 import { renderThingSheet } from "./thing-sheet-html.js";
 
 const arg = (f: string): string | undefined => {

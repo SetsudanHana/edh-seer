@@ -6,7 +6,7 @@ import {
 } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
+import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@edh-seer/matcher";
 import type { PanelVerdict } from "./panel-core.js";
 
 // Filter by CAUSE, or by TAG family with "tag:<verb>" -- the false set is now concentrated by tag

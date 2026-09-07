@@ -4,12 +4,12 @@ import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDeckli
 import { loadOtagSemantics } from "@edh-seer/tagger";
 import type { CardTags, Verb } from "@edh-seer/tagger";
 import type { Reason } from "@edh-seer/engine";
-import { loadHierarchy, pairReasons } from "../index.js";
-import { producerEvents } from "../edges.js";
-import { normalizeZoneEvent } from "../zones.js";
-import type { DeckCard } from "../types.js";
-import { buildOtagEdges, pairKey, undirectedPairs } from "../otag-edges.js";
-import type { GoldPair } from "./eval-pairs-core.js";
+import { loadHierarchy, pairReasons } from "@edh-seer/matcher";
+import { producerEvents } from "@edh-seer/matcher/edges";
+import { normalizeZoneEvent } from "@edh-seer/matcher/zones";
+import type { DeckCard } from "@edh-seer/matcher/types";
+import { buildOtagEdges, pairKey, undirectedPairs } from "@edh-seer/matcher/otag-edges";
+import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 import { edhrecPairSet, seededRandom } from "./edhrec-pairs.js";
 
 const DECK_DIR = new URL("../../../cli/decks/", import.meta.url).pathname;

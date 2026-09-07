@@ -1,4 +1,4 @@
-import type { GoldPair } from "./eval-pairs-core.js";
+import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
 export type Decision = "accept" | "reject";
 
