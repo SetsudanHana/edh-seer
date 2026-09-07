@@ -161,6 +161,25 @@ test("mill and discard imply an untyped enters@graveyard", () => {
   expect(out[0].subject.type).toBeUndefined();
 });
 
+/** A SURVEIL PUTS CARDS INTO YOUR GRAVEYARD, AND IT IS NOT A MILL. CR 701.17 and CR 701.25 are
+ *  separate keyword actions: 701.25a says surveil "put[s] any number of them into your graveyard"
+ *  and never uses the word mill, so an effect that replaces MILLING (a mill-doubler) does not see a
+ *  surveil. But the zone change is the same one, and it is the zone change every graveyard payoff
+ *  reads -- a reanimator, a per-graveyard scaler, Tasigur.
+ *
+ *  OWNER'S RULING 2026-09-07 on the conditionality: 701.25a is "any number", including zero, and PR
+ *  #242 refused to emit anything graveyard-shaped for exactly that reason. Overruled here, and the
+ *  reason is that this is a DECK-LEVEL supply claim rather than a promise about one resolution --
+ *  "if you play a graveyard reanimator deck you will put creatures in your graveyard". The refusal
+ *  stands where it belongs: surveil still emits no `mill`.
+ *
+ *  MEASURED: 169 corpus cards surveil, and before this Consider appeared in NO edge at all -- not
+ *  with Animate Dead, not with Tasigur, not with a per-graveyard payoff. */
+test("a surveil implies a graveyard fill, exactly as a mill does", () => {
+  const out = impliedGraveyardEvents([{ verb: "surveil", subject: { control: "you", token: null } }]);
+  expect(out).toEqual([{ verb: "enters", subject: { control: "you", token: null, zone: "graveyard" } }]);
+});
+
 test("a nontoken dies implies a typed enters@graveyard; a token does not; a LEAVES fills nothing", () => {
   const emits: GameEvent[] = [
     { verb: "dies", subject: { control: "you", token: false, zone: "battlefield", type: "creature" } },

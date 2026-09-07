@@ -405,13 +405,30 @@ export function sagaEvents(chars: Characteristics): GameEvent[] {
     .map((spec) => syntheticEvent(chars, spec));
 }
 
-/** Graveyard-fill events implied by a producer's (already-normalized) emits: mill/discard put an
- *  untyped card into a graveyard; a nontoken leaving the battlefield (a `dies`) also
- *  enters the graveyard carrying its type. Tokens cease to exist, so they add no graveyard card. */
+/** Graveyard-fill events implied by a producer's (already-normalized) emits: mill/discard/surveil put
+ *  an untyped card into a graveyard; a nontoken leaving the battlefield (a `dies`) also
+ *  enters the graveyard carrying its type. Tokens cease to exist, so they add no graveyard card.
+ *
+ *  SURVEIL IS HERE AND IS NOT A MILL, which is the whole point of it being a separate arm of this
+ *  condition rather than a `surveil -> mill` emit. CR 701.17 and CR 701.25 are separate keyword
+ *  actions: 701.25a says a surveil "put[s] any number of them into your graveyard" and never uses
+ *  the word mill, so an effect that replaces MILLING does not see a surveil -- a mill-doubler leaves
+ *  it alone. What the two share is the ZONE CHANGE, and the zone change is what every graveyard
+ *  payoff actually reads.
+ *
+ *  OWNER'S RULING 2026-09-07 on the conditionality. 701.25a is "any number", including zero, and PR
+ *  #242 declined to emit anything graveyard-shaped from a surveil for exactly that reason -- the
+ *  same rule this file's sibling `emits.ts` applies to connive's counter. Overruled HERE and only
+ *  here, because this is a deck-level supply claim rather than a promise about one resolution: "if
+ *  you play a graveyard reanimator deck you will put creatures in your graveyard". The emit-side
+ *  refusal stands.
+ *
+ *  MEASURED before the change: 169 corpus cards surveil, and Consider appeared in NO edge at all --
+ *  not with Animate Dead, not with Tasigur, not with a per-graveyard payoff. */
 export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
   const out: GameEvent[] = [];
   for (const e of emits) {
-    if (e.verb === "mill" || e.verb === "discard") {
+    if (e.verb === "mill" || e.verb === "discard" || e.verb === "surveil") {
       // Note: this (and authored token-generation emit subjects) carry no power/toughness/manaValue — a stats-conditioned consumer can't distinguish token/creature sizes here (Slice-1 limitation, not a bug).
       //
       // `self` is the one thing carried through, because it changes what the fill IS. A discard
