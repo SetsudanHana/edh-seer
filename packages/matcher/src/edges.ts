@@ -1695,10 +1695,14 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // cost-reduction and tax rulings already settled that a deck property is not a pairwise synergy.
   // 60 of the 115 search actions are land fetches, and every one would edge to every dual.
   //
-  // `top-manipulation` is shared with scry, surveil and mill — none of which carry a narrowing
-  // subject, so the same gate keeps them out without needing to know the verb.
+  // THE GATE READS `search` DIRECTLY SINCE 2026-09-07. It used to read `top-manipulation` — which
+  // also meant scry, surveil, mill and the top-set rows — and lean on the subject-narrowing test
+  // below to keep those out "without needing to know the verb". That was an APPROXIMATION: a scry or
+  // a mill carrying a narrowing subject was reported as a tutor, and nothing in those four kinds
+  // finds a card. CR 701.23a is the whole justification — only a search looks through a zone for a
+  // card that matches a description.
   for (const a of p.tags.abilities) {
-    if (a.effect.kind !== "top-manipulation" || !a.effect.subject) continue;
+    if (a.effect.kind !== "search" || !a.effect.subject) continue;
     // A SUBTYPE or a STAT PREDICATE narrows; a bare type does not. `combatNarrowsOffType` has said
     // the same about stats all along — Imperial Recruiter's "power 2 or less" and Spellseeker's
     // "mana value 2 or less" pick out particular cards, not a whole type.
@@ -1710,7 +1714,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       ...(a.effect.subject.anyOf ?? []).flatMap((b) => list(b.subtype)),
     ];
     // A NAME narrows harder than any subtype: it picks out one card. The First Doctor searches for
-    // "a card named TARDIS" and derived a bare `top-manipulation` the gate refused as unnarrowed, so
+    // "a card named TARDIS" and derived a bare `search` the gate refused as unnarrowed, so
     // the most specific tutor in the corpus was the one that formed nothing.
     const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0
       || a.effect.subject.named !== undefined;

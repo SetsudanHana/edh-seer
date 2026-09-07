@@ -88,7 +88,16 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     // interaction, same band as player-life-loss/lifegain. NOT graveyard-recursion (0.8) despite
     // the similar name: these two kinds are opposites (deny vs. reuse a graveyard).
     "graveyard-hate": 0.3,
-    "top-manipulation": 0.3,
+    // ALL FIVE AT 0.3, the weight their shared ancestor `top-manipulation` carried until the kind
+    // split on 2026-09-07. Identical on purpose: the split is behaviour-preserving, so no card's
+    // impact moves and the panel can be compared byte for byte. Whether a `search` and a `surveil`
+    // really deserve the same weight is a real question and a SEPARATE measured item -- it is now
+    // ASKABLE, which is the point of having split them.
+    "scry": 0.3,
+    "surveil": 0.3,
+    "mill": 0.3,
+    "search": 0.3,
+    "top-set": 0.3,
     "speed-increase": 0.3,
     "speed": 0.3,
     // A keyword handed to a class of permanents you already control. Only ever typal (a grant to

@@ -82,7 +82,7 @@ const TEMPLATES: {
   // emit's subject is the CARDS milled, which the sentence names only as a count, so no subject.
   {
     re: /\bif\s+([^.]{0,40}?)\s+would mill\b/i,
-    verbs: ["mill"], kind: "top-manipulation", subject: 0, actor: 1,
+    verbs: ["mill"], kind: "mill", subject: 0, actor: 1,
   },
   // Tekuthal, the worked example in the normalize prompt itself.
   {

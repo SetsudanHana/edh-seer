@@ -30,7 +30,13 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   // graveyard" rather than "exiles their graveyard", because `graveyard-hate` covers exile, mill and
   // shuffle-back alike and the kind cannot tell them apart. Over-specifying here would be the
   // Decoction Module defect one register up.
-  "top-manipulation": [() => "sets up the top of a library", "sets up the top of a library"],
+  // Five phrases where there was one, since the kind split on 2026-09-07. Each says what its own
+  // CR verb does rather than the generic "sets up the top", which was true of only one of the five.
+  scry: [() => "scries", "scries"],
+  surveil: [() => "surveils", "surveils"],
+  mill: [() => "mills a card", "mills a card"],
+  search: [() => "searches a library", "searches a library"],
+  "top-set": [() => "sets the top of a library", "sets the top of a library"],
   "keyword-grant": [() => "grants a keyword", "grants a keyword"],
   untap: [() => "untaps a permanent", "untaps a permanent"],
   "speed-increase": [() => "grants haste", "grants haste"],
@@ -378,7 +384,7 @@ export function boardCountFeedsScaling(
  *  `enters-with-counters` ("... its enters with counters") and `untap` ("... its untap"). The
  *  remaining 26 unmapped kinds are already noun phrases and pass through the fallback fine — damage,
  *  lifegain, drain, draw-card, forced-sacrifice, trigger-doubling, graveyard-recursion,
- *  token-doubling, damage-multiplier, top-manipulation, counter-placement, mana-generation,
+ *  token-doubling, damage-multiplier, counter-placement, mana-generation,
  *  fast-mana, ritual, copy-spell, flicker, graveyard-hate (the existing covering test), extra-combat,
  *  plus `debuff`, `cost-reduction`, `tax`, `win-game`, `extra-turn` and `extra-phase`, which can
  *  never reach this function at all: `cost-reduction` takes the ternary's other branch at the one

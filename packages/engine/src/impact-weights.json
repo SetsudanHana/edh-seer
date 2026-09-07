@@ -33,10 +33,14 @@
     "lifegain": 0.3,
     "graveyard-hate": 0.3,
     "keyword-grant": 0.3,
-    "top-manipulation": 0.3,
     "speed-increase": 0.3,
     "speed": 0.3,
-    "damage": 0.2
+    "damage": 0.2,
+    "scry": 0.3,
+    "surveil": 0.3,
+    "mill": 0.3,
+    "search": 0.3,
+    "top-set": 0.3
   },
   "repeatability": {
     "triggered": 1.0,

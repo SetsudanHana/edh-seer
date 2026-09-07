@@ -28,7 +28,9 @@ import { triggerHasCue } from "../clause-store.js";
  *  clauses and calls no model. That asymmetry is the whole point of storing clauses separately. */
 // 113: scry, surveil and search become engine events (CR 701.22 / 701.25 / 701.23) -- new triggers
 // on the consumer side, new emits on the producer side.
-export const DERIVE_VERSION = 113;
+// 114: top-manipulation retired; scry, surveil, mill, search and top-set replace it (CR 701.22 /
+// 701.25 / 701.17 / 701.23), and the tutor gate in edges.ts now reads `search` directly.
+export const DERIVE_VERSION = 114;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off

@@ -138,13 +138,20 @@ test("every MechanismCategory has a MECHANISM_LABELS entry", () => {
   }
 });
 
-test("a fetchland's top-manipulation reason is not a Graveyard Matters claim", () => {
-  // ROADMAP G3, and the guard is against a RE-ADD: `top-manipulation` covers search, scry, surveil
+test("a fetchland's search reason is not a Graveyard Matters claim", () => {
+  // ROADMAP G3, and the guard is against a RE-ADD. `top-manipulation` used to cover search, scry, surveil
   // and mill together, so with it in the table every tutor and every fetchland was a graveyard
   // card -- 7,301 pairs over 70 of the 71 calibration decks, against 4,095 over 63 without it, and
   // a Walls deck led its report with "Graveyard Matters". Mill is the one member with a real
   // graveyard claim and the kind cannot separate it from a fetchland.
-  expect(categoryMatches(reason({ effectKind: "top-manipulation" }), "graveyard-matters")).toBe(false);
+  //
+  // THE KIND CAN SEPARATE THEM SINCE 2026-09-07, so this now guards `mill` and `search` by name.
+  // Asserting on `top-manipulation` would be asserting about a kind nothing can derive any more --
+  // trivially true forever, which is a test that has stopped testing. The ruling is unchanged and
+  // deliberately so: admitting `mill` to this category is its own measured item, because G3 moved
+  // 3,206 pairs when it landed.
+  expect(categoryMatches(reason({ effectKind: "mill" }), "graveyard-matters")).toBe(false);
+  expect(categoryMatches(reason({ effectKind: "search" }), "graveyard-matters")).toBe(false);
   expect(categoryMatches(reason({ effectKind: "graveyard-recursion" }), "graveyard-matters")).toBe(true);
 });
 

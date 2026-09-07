@@ -3,6 +3,7 @@ import { SEED_IMPACT_WEIGHTS, UNKNOWN_KIND_WEIGHT, impactWeightOf } from "./impa
 import { loadImpactWeights, impactEdgeWeight, dampByAlpha } from "./impact.js";
 import type { Reason } from "./synergy.js";
 import { EFFECT_KINDS } from "@edh-seer/tagger";
+import impactWeights from "./impact-weights.json" with { type: "json" };
 
 const r = (over: Partial<Reason>): Reason => ({ tag: "t", text: "", ...over });
 
@@ -128,4 +129,14 @@ test("the committed weights file carries the roleBlend, and it ships at 1", () =
   // Same guard as `magnitude`: `calibrate.ts` writes `clone()`'s output over this file wholesale,
   // so a field `clone()` forgets is silently deleted by any calibrator run.
   expect(loadImpactWeights().roleBlend).toBe(1);
+});
+
+/** THE SAME HAZARD AS THE MATCHER'S KIND SETS, ONE PACKAGE OVER. `impact-weights.json` is a
+ *  committed artifact keyed on EffectKind and read through `impactWeightOf`, and `EFFECT_KINDS` is a
+ *  const array -- so `tsc` cannot see a weight for a kind that no longer exists. Dead config scores
+ *  nothing and says nothing; the split of `top-manipulation` into five kinds on 2026-09-07 is
+ *  exactly the change that would have left one behind. */
+test("every impact weight names a real EFFECT_KINDS member", () => {
+  const kinds = new Set<string>(EFFECT_KINDS as readonly string[]);
+  expect(Object.keys(impactWeights.kinds).filter((k) => !kinds.has(k))).toEqual([]);
 });

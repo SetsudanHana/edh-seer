@@ -5,9 +5,14 @@ import type { CardTags, Ability } from "@edh-seer/tagger";
 const CARD_BUCKETS = ["consistency", "efficiency", "win-condition"] as const;
 export type CardBucket = (typeof CARD_BUCKETS)[number];
 
-const CONSISTENCY_KINDS = new Set(["draw-card", "top-manipulation", "graveyard-recursion"]);
-const EFFICIENCY_KINDS = new Set(["mana-generation", "fast-mana", "ritual", "cost-reduction", "untap"]);
-const WIN_CONDITION_KINDS = new Set(["damage", "drain", "player-life-loss", "forced-sacrifice"]);
+// ALL FIVE successors of `top-manipulation`, so no card's bucket moves when the kind splits
+// (2026-09-07). Whether `mill` and `surveil` belong in CONSISTENCY at all -- they fill a graveyard,
+// they do not fix your draws -- is a real question and its own measured item.
+// Exported for the EFFECT_KINDS ratchet in `effect-class.test.ts`; nothing else reads them.
+export const CONSISTENCY_KINDS = new Set(["draw-card", "graveyard-recursion",
+  "scry", "surveil", "mill", "search", "top-set"]);
+export const EFFICIENCY_KINDS = new Set(["mana-generation", "fast-mana", "ritual", "cost-reduction", "untap"]);
+export const WIN_CONDITION_KINDS = new Set(["damage", "drain", "player-life-loss", "forced-sacrifice"]);
 
 function abilityRepeatability(kind: Ability["kind"]): "static" | "activated" | "oneshot" | "triggered" {
   return kind === "static" ? "static" : kind === "activated" ? "activated" : kind === "on-cast" ? "oneshot" : "triggered";

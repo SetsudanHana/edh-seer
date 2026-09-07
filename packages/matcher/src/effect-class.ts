@@ -22,12 +22,12 @@
  *  a guess — see docs/superpowers/specs/2026-08-04-surplus-vs-baseline-design.md. */
 export type EffectClass = "continuous" | "replacement" | "unclassified";
 
-const CONTINUOUS = new Set([
+export const CONTINUOUS = new Set([
   "pump", "cost-reduction", "tax", "speed-increase", "mana-generation",
-  "top-manipulation", "animate", "damage", "token-generation",
+  "scry", "surveil", "mill", "search", "top-set", "animate", "damage", "token-generation",
 ]);
 
-const REPLACEMENT = new Set([
+export const REPLACEMENT = new Set([
   "trigger-doubling", "clone", "enters-with-counters", "token-doubling", "counter-placement",
 ]);
 

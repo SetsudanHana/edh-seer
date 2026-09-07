@@ -467,7 +467,22 @@ export const EFFECT_KINDS = [
   "token-doubling",
   "damage-multiplier",
   "tax",
-  "top-manipulation",
+  // ONE KIND MEANT FIVE THINGS UNTIL 2026-09-07. `top-manipulation` collected scry, surveil, mill,
+  // search and (from PR #241) the two library-reordering rows -- 2,097 derived abilities on one
+  // name, so a tutor, a self-mill engine and Sensei's Divining Top were indistinguishable to the
+  // five readers that consult this field. The codebase said so twice in its own comments:
+  // `edges.ts` kept scry and mill out of the tutor family with a subject test "without needing to
+  // know the verb", and `mechanisms.ts` refused milling the Graveyard Matters category because
+  // "the KIND cannot separate it from a fetchland".
+  //
+  // The name is RETIRED rather than kept for one of the five, so no reader can carry an old
+  // assumption by accident. `search` and not `tutor`: PR #240 reverted a change that took the
+  // community term's looseness seriously, and this vocabulary must not reintroduce it.
+  "scry",        // CR 701.22 -- top N, any number to the BOTTOM. Never touches a graveyard.
+  "surveil",     // CR 701.25 -- top N, any number to the GRAVEYARD. That half is conditional.
+  "mill",        // CR 701.17 -- from the TOP of a library into a graveyard.
+  "search",      // CR 701.23 -- look at a zone and find. 701.23b: the finding is optional.
+  "top-set",     // No CR verb names it. Setting or reordering what you draw next.
   "counter-placement",
   "enters-with-counters",
   "mana-generation",
@@ -518,8 +533,9 @@ export const EFFECT_ALIASES: Readonly<Record<string, EffectKind>> = {
   "life-loss": "player-life-loss",
   lord: "pump",
   anthem: "pump",
-  scry: "top-manipulation",
-  surveil: "top-manipulation",
+  // `scry` and `surveil` were aliased onto `top-manipulation` here because they were not kinds.
+  // They are kinds as of 2026-09-07, so an alias from each to itself would say nothing -- deleted
+  // rather than left as a self-reference for a reader to puzzle over.
   blink: "flicker",
   flickering: "flicker",
   "exile-and-return": "flicker",

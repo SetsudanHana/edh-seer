@@ -87,7 +87,7 @@
           }
         },
         "effect": {
-          "kind": "top-manipulation"
+          "kind": "top-set"
         }
       },
       {

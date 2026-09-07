@@ -376,7 +376,7 @@ test("static-edge reason carries the static effect's scaling", () => {
 test("on-cast producer: an on-cast mill emit feeds a mill-payoff trigger", () => {
   const speller = base("Maddening Cacophony", [{
     kind: "on-cast",
-    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    effect: { kind: "mill", subject: { control: "opp", token: null } },
     emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
   }]);
   const payoff = base("Mill Payoff", [{
@@ -396,7 +396,7 @@ test("on-cast is producer-only: two on-cast cards produce no cast:any consumer e
   }]);
   const b = base("Maddening Cacophony", [{
     kind: "on-cast",
-    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    effect: { kind: "mill", subject: { control: "opp", token: null } },
     emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
   }]);
   const reasons = pairReasons(a, b, H);
@@ -422,7 +422,7 @@ test("mill -> Syr Konrad: a mill fills the graveyard, feeding an enters-graveyar
   const miller = base("Ruin Crab", [{
     kind: "triggered",
     trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } },
-    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    effect: { kind: "mill", subject: { control: "opp", token: null } },
     emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
   }]);
   const konrad = base("Syr Konrad", [{
@@ -438,7 +438,7 @@ test("mill does NOT feed a Blood-Artist-style dies trigger", () => {
   const miller = base("Ruin Crab", [{
     kind: "triggered",
     trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } },
-    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    effect: { kind: "mill", subject: { control: "opp", token: null } },
     emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
   }]);
   const bloodArtist = base("Blood Artist", [{
@@ -464,7 +464,7 @@ test("ETB regression: a battlefield enters still feeds a wizard-ETB trigger; a g
   }], ["wizard"]);
   const grave = base("Miller", [{
     kind: "on-cast",
-    effect: { kind: "top-manipulation", subject: { control: "opp", token: null } },
+    effect: { kind: "mill", subject: { control: "opp", token: null } },
     emits: [{ verb: "mill", subject: { control: "opp", token: null } }],
   }]);
   expect(pairReasons(maker, etbPayoff, H).some((r) => r.tag === "enters:wizard")).toBe(true);
@@ -1297,7 +1297,7 @@ test("a self-ETB is only supplied by an event that could be that card entering",
       abilities: [{
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
-        effect: { kind: "top-manipulation" },
+        effect: { kind: "surveil" },
       }],
     },
   });
@@ -1776,7 +1776,7 @@ test("a meld card forms no edge with a card that is not its partner", () => {
 test("a typal tutor forms an edge with what it can find", () => {
   const harbinger = base("Flamekin Harbinger", [{
     kind: "triggered",
-    effect: { kind: "top-manipulation", subject: { control: "you", token: null, subtype: "elemental" } },
+    effect: { kind: "search", subject: { control: "you", token: null, subtype: "elemental" } },
   }]);
   const elemental = base("Omnath", [], ["elemental"]);
   const reasons = pairReasons(harbinger, elemental, H);
@@ -1786,7 +1786,7 @@ test("a typal tutor forms an edge with what it can find", () => {
 test("a bare-type tutor forms no edge, because it reaches the whole deck", () => {
   const worldly = base("Worldly Tutor", [{
     kind: "on-cast",
-    effect: { kind: "top-manipulation", subject: { control: "you", token: null, type: "creature" } },
+    effect: { kind: "search", subject: { control: "you", token: null, type: "creature" } },
   }]);
   expect(pairReasons(worldly, base("Any Creature", []), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
@@ -1794,7 +1794,7 @@ test("a bare-type tutor forms no edge, because it reaches the whole deck", () =>
 test("an untyped tutor forms no edge at all", () => {
   const demonic = base("Demonic Tutor", [{
     kind: "on-cast",
-    effect: { kind: "top-manipulation", subject: { control: "any", token: null } },
+    effect: { kind: "search", subject: { control: "any", token: null } },
   }]);
   expect(pairReasons(demonic, base("Anything", []), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
@@ -1805,18 +1805,19 @@ test("an untyped tutor forms no edge at all", () => {
 test("a land tutor forms no edge — that is the mana base, not a synergy", () => {
   const fetch = base("Bloodstained Mire", [{
     kind: "activated",
-    effect: { kind: "top-manipulation", subject: { control: "you", token: null, subtype: ["swamp", "mountain"] } },
+    effect: { kind: "search", subject: { control: "you", token: null, subtype: ["swamp", "mountain"] } },
   }]);
   const dual = base("Blood Crypt", [], ["swamp", "mountain"]);
   expect(pairReasons(fetch, dual, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
 
-// scry and surveil derive `top-manipulation` too, with no subject to narrow them. They must not be
+// scry and surveil derive their OWN kinds since 2026-09-07, and the gate reads `search`, so neither
+// can reach this loop at all. The test stays because it is the family's floor: they must not be
 // mistaken for tutors.
 test("a surveil is not a tutor", () => {
   const bones = base("Barrier of Bones", [{
     kind: "triggered",
-    effect: { kind: "top-manipulation", subject: { control: "any", token: null } },
+    effect: { kind: "surveil", subject: { control: "any", token: null } },
   }]);
   expect(pairReasons(bones, base("Whatever", []), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
@@ -1828,7 +1829,7 @@ test("a stat-gated tutor forms an edge", () => {
   const recruiter = base("Imperial Recruiter", [{
     kind: "triggered",
     effect: {
-      kind: "top-manipulation",
+      kind: "search",
       subject: {
         control: "you", token: null, type: "creature",
         stats: [{ metric: "power", op: "lte", value: 2 }],
@@ -1848,7 +1849,7 @@ test("a disjunctive tutor keys on the branch that matched", () => {
   const magda = base("Magda, Brazen Outlaw", [{
     kind: "activated",
     effect: {
-      kind: "top-manipulation",
+      kind: "search",
       subject: { control: "you", token: null, anyOf: [{ type: "artifact" }, { subtype: "dragon" }] },
     },
   }]);
@@ -1872,7 +1873,10 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   const land = base("Shadowy Backstreet", [{
     kind: "triggered",
     trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
-    effect: { kind: "top-manipulation" },
+    // Shadowy Backstreet's own text: "When this land enters, SURVEIL 1." Its kind was
+    // `top-manipulation` until the split on 2026-09-07, which is why the sentence below used to say
+    // the generic "sets up the top of a library" about a card that surveils.
+    effect: { kind: "surveil" },
   }], ["plains", "swamp"]);
   const fetch = base("Marsh Flats", [{
     kind: "activated",
@@ -1881,9 +1885,9 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   }]);
   const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
   expect(etb.tag).toBe("enters:any");
-  expect(etb.text).toBe(// The land's effect kind is `top-manipulation`, and the sentence now says so rather than
-    // stopping at "triggers" -- see the nine kinds added to PHRASES.
-    "When Shadowy Backstreet enters thanks to Marsh Flats, it sets up the top of a library");
+  expect(etb.text).toBe(// The land's effect kind is `surveil`, and the sentence now names THAT rather than stopping at
+    // "triggers" -- see the nine kinds added to PHRASES, and the five that replaced one of them.
+    "When Shadowy Backstreet enters thanks to Marsh Flats, it surveils");
   expect(etb.text).toContain("Marsh Flats");
 });
 
@@ -1916,7 +1920,7 @@ test("a graveyard fill grows a per-graveyard payoff, gated on WHAT is counted", 
     characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 2,
       power: null, toughness: null, token: false, keywords: [] },
     abilities: [{
-      kind: "on-cast", effect: { kind: "top-manipulation" },
+      kind: "on-cast", effect: { kind: "mill" },
       emits: [{ verb: "enters-graveyard", subject: { control: "you", token: null, type } }],
     }],
   });
@@ -1985,7 +1989,7 @@ test("a land finder edges to the lands it can fetch, and to no others", () => {
     oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
     characteristics: { types: ["sorcery"], subtypes: [], colors: [], identity: [], cmc: 2,
       power: null, toughness: null, token: false, keywords: [] },
-    abilities: [{ kind: "on-cast", effect: { kind: "top-manipulation", subject: subject as never } }],
+    abilities: [{ kind: "on-cast", effect: { kind: "search", subject: subject as never } }],
   });
   const land = (types: string[], subtypes: string[]): CardTags => ({
     oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
@@ -2028,7 +2032,7 @@ test("a shared-type land finder does not edge to Wastes; an any-basic finder sti
       oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
       characteristics: { types: ["land"], subtypes: [], colors: [], identity: [], cmc: 0,
         power: null, toughness: null, token: false, keywords: [] },
-      abilities: [{ kind: "activated", effect: { kind: "top-manipulation", subject: { control: "you", token: null, basic: true, type: "land" } as never } }],
+      abilities: [{ kind: "activated", effect: { kind: "search", subject: { control: "you", token: null, basic: true, type: "land" } as never } }],
     },
   });
   const basic = (name: string, typeLine: string, subtypes: string[]): DeckCard => ({
@@ -3549,7 +3553,7 @@ test("a graveyard fill that is not the card itself is worded about the cards it 
     effect: { kind: "player-life-loss", subject: { control: "opp", token: null } },
   }]);
   const konrad = base("Konrad", [{
-    kind: "activated", effect: { kind: "top-manipulation" },
+    kind: "activated", effect: { kind: "mill" },
     emits: [{ verb: "mill", subject: { control: "any", token: null, scope: "each" } }],
   }]);
   expect(pairReasons(konrad, ascension, H).map((r) => r.text)).toEqual([
@@ -3642,7 +3646,7 @@ describe("dies is a leave, a leave is not a death", () => {
   test("end to end: a sac outlet still reaches The Ozolith, on the same tag it always had", () => {
     const outlet = base("Viscera Seer", [{
       kind: "activated",
-      effect: { kind: "top-manipulation" },
+      effect: { kind: "scry" },
       emits: [
         { verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } },
         { verb: "dies", subject: { control: "you", token: null, type: "creature" } },
@@ -3811,7 +3815,7 @@ test("a card adapting ITSELF does not feed another card's own-counter trigger", 
 test("a scry producer feeds a scry consumer through the ordinary event channel", () => {
   const preordain = base("Preordain", [{
     kind: "on-cast",
-    effect: { kind: "top-manipulation" },
+    effect: { kind: "scry" },
     emits: [{ verb: "scry", subject: { control: "you", token: null } }],
   }]);
   const matoya = base("Matoya, Archon Elder", [{
@@ -3830,7 +3834,7 @@ test("a scry producer feeds a scry consumer through the ordinary event channel",
 test("your own tutor does not feed a consumer that watches an OPPONENT search", () => {
   const tutor = base("Demonic Tutor", [{
     kind: "on-cast",
-    effect: { kind: "top-manipulation" },
+    effect: { kind: "search" },
     emits: [{ verb: "search", subject: { control: "you", token: null } }],
   }]);
   const archivist = base("Archivist of Oghma", [{
@@ -3839,4 +3843,52 @@ test("your own tutor does not feed a consumer that watches an OPPONENT search", 
     effect: { kind: "draw-card" },
   }]);
   expect(directedReasons(tutor, archivist, H).some((r) => r.tag.startsWith("search"))).toBe(false);
+});
+
+/** THE GATE NOW KEYS ON WHAT IT ALWAYS WANTED. Before the kind split it read `top-manipulation` and
+ *  leaned on the subject-narrowing test to keep scry, surveil and mill out -- its own comment said
+ *  so: "none of which carry a narrowing subject, so the same gate keeps them out without needing to
+ *  know the verb". That is an APPROXIMATION, and a scry or a mill that DID carry a narrowing subject
+ *  was reported as a tutor. Now the loop cannot see one.
+ *
+ *  This can only REMOVE claims, never add one: nothing in the other four kinds finds a card. */
+test("a narrowing scry is not a tutor, however narrow its subject", () => {
+  const scryer = base("Narrow Scryer", [{
+    kind: "activated",
+    effect: { kind: "scry", subject: { control: "you", token: null, subtype: "dragon" } },
+  }]);
+  const dragon = base("Some Dragon", [], ["dragon"]);
+  expect(pairReasons(scryer, dragon, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+});
+
+/** The mirror, so the gate cannot be tightened into deleting the family it exists for. */
+test("a narrowing search still forms a tutor edge", () => {
+  const tutor = base("Typal Tutor", [{
+    kind: "on-cast",
+    effect: { kind: "search", subject: { control: "you", token: null, subtype: "dragon" } },
+  }]);
+  const dragon = base("Some Dragon", [], ["dragon"]);
+  expect(pairReasons(tutor, dragon, H).some((r) => r.tag.startsWith("tutor"))).toBe(true);
+});
+
+/** And the ramp-target half, which shares the loop: a basic-land search is the mana-base relation
+ *  the ramp diagnostic is built on (owner's ruling 2026-08-15), and it must survive the re-key. */
+test("a basic-land search still forms ramp-target", () => {
+  const finder = base("Basic Finder", [{
+    kind: "on-cast",
+    effect: { kind: "search", subject: { control: "you", token: null, basic: true, type: "land" } },
+  }]);
+  // `base` hardcodes `types: ["creature"]`, and the ramp branch matches the consumer against
+  // `{ basic: true, type: "land" }` -- so the consumer has to really be a basic land, the same shape
+  // the Wastes test below builds.
+  const swamp: DeckCard = {
+    card: { name: "Swamp", typeLine: "Basic Land — Swamp" } as DeckCard["card"],
+    tags: {
+      oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: ["basic", "land"], subtypes: ["swamp"], colors: [], identity: [],
+        cmc: 0, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [],
+    } as CardTags,
+  };
+  expect(pairReasons(finder, swamp, H).some((r) => r.tag.startsWith("ramp-target"))).toBe(true);
 });

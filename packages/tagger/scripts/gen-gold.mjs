@@ -320,7 +320,7 @@ const CARDS = [
     typeLine: "Creature — Vampire Wizard",
     colors: ["B"], colorIdentity: ["B"], power: "1", toughness: "1", manaValue: 1, keywords: [],
     oracleText: "Sacrifice a creature: Scry 1. (Look at the top card of your library. You may put that card on the bottom.)",
-    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "top-manipulation" }, emits: sacEmits() }],
+    abilities: [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "scry" }, emits: sacEmits() }],
   },
   {
     oracleId: "a1cc5e37-b09a-4b7f-afd5-77c1c35aa425",
@@ -390,10 +390,10 @@ const CARDS = [
       },
       {
         // ETB also stacks the top of the library ("put two cards on top in any order"),
-        // setting up the dies reveal — top-manipulation theme (scry/surveil/Top).
+        // setting up the dies reveal — the top-set theme (Brainstorm, Sensei's Top).
         kind: "triggered",
         trigger: { verbs: ["enters"], subject: subj({ token: false }) },
-        effect: { kind: "top-manipulation" },
+        effect: { kind: "top-set" },
       },
       {
         // dies: opponent loses life; if the exiled card is instant/sorcery, free-cast it.
@@ -617,7 +617,7 @@ const CARDS = [
     abilities: [
       {
         kind: "on-cast",
-        effect: { kind: "top-manipulation", subject: { control: "opp", token: null }, scaling: "fixed" },
+        effect: { kind: "mill", subject: { control: "opp", token: null }, scaling: "fixed" },
         emits: [ev("mill", { control: "opp", token: null })],
       },
     ],
