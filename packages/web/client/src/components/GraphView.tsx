@@ -1190,7 +1190,10 @@ export function GraphView(
         // and the card actually being drawn in card mode below jumps ahead of it.
         if (mode !== "card" && n.artCrop && shouldPrefetchCard(cam.z)
           && isOnScreen(n, cam, dim, ART_RADIUS * cam.z)) {
-          artLoader.request(cardImageUrl(n.artCrop));
+          // A URL off our own host is not warmed, for the same reason it is not drawn: the guard in
+          // `cardImageUrl` is what keeps every image request in this app pointed at Scryfall.
+          const warm = cardImageUrl(n.artCrop);
+          if (warm !== null) artLoader.request(warm);
         }
         const img = src ? artLoader.get(src) : undefined;
         // A node stands for every copy of its card. Draw the stack behind the art so nine
@@ -1880,7 +1883,8 @@ export function GraphView(
       // ordinary request for this card's full image lands behind all of them and arrives long after
       // the user has finished zooming.
       if (n?.artCrop && shouldPrefetchCard(camRef.current.z)) {
-        artLoaderRef.current!.request(cardImageUrl(n.artCrop), true);
+        const warm = cardImageUrl(n.artCrop);
+        if (warm !== null) artLoaderRef.current!.request(warm, true);
       }
       setHover(n
         ? {

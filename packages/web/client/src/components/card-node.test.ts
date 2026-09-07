@@ -19,7 +19,29 @@ describe("cardImageUrl", () => {
   });
 
   it("leaves a URL that is not an art_crop alone", () => {
-    expect(cardImageUrl("https://example.com/x.jpg")).toBe("https://example.com/x.jpg");
+    expect(cardImageUrl("https://cards.scryfall.io/large/front/6/2/abc.jpg"))
+      .toBe("https://cards.scryfall.io/large/front/6/2/abc.jpg");
+  });
+
+  /** EVERY IMAGE THIS APP REQUESTS IS SCRYFALL'S, and `null` is how that is enforced rather than
+   *  hoped for. CodeQL raised it on 2026-09-08 (`js/xss-through-dom`, high) when a card page began
+   *  reading its record out of the document rather than fetching it -- DOM text -> `JSON.parse` ->
+   *  `<img src>` -- but the check was missing on the fetch path too and simply had no source the
+   *  scanner could see. The guard sits in this function because all six image call sites in the app
+   *  already route through it. */
+  it("refuses a URL that is not on Scryfall's host", () => {
+    expect(cardImageUrl("https://example.com/x.jpg")).toBeNull();
+    expect(cardImageUrl("javascript:alert(1)")).toBeNull();
+    expect(cardImageUrl("data:image/svg+xml,<svg onload=alert(1)>")).toBeNull();
+  });
+
+  /** A PREFIX TEST IS EXACT ONLY BECAUSE THE CONSTANT ENDS IN `/`, and these are the two spellings
+   *  that would slip past one that did not: a lookalike host with the name as a subdomain prefix,
+   *  and a userinfo segment that puts the real host after an `@`. */
+  it("is not fooled by a host that merely starts with Scryfall's", () => {
+    expect(cardImageUrl("https://cards.scryfall.io.evil.test/art_crop/a/b/c.jpg")).toBeNull();
+    expect(cardImageUrl("https://cards.scryfall.io@evil.test/art_crop/a/b/c.jpg")).toBeNull();
+    expect(cardImageUrl("http://cards.scryfall.io/art_crop/a/b/c.jpg")).toBeNull();
   });
 
   it("only replaces the size segment, not a card id that happens to contain it", () => {

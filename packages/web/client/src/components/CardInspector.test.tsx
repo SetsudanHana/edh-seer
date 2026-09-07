@@ -256,7 +256,7 @@ describe("CardInspector card image", () => {
       id: "Grim Haruspex", label: "Grim Haruspex", copies: 1,
       types: ["creature"], subtypes: ["human"], supertypes: [],
       typeLine: "Creature — Human Wizard", colors: ["B"], cmc: 3,
-      artCrop: "https://example.com/a.jpg",
+      artCrop: "https://cards.scryfall.io/art_crop/front/a/b/a.jpg",
     };
     render(<CardInspector node={node as never} edges={[]} onClose={() => {}} />);
     const img = screen.getByAltText("Grim Haruspex");

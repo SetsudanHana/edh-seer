@@ -36,11 +36,16 @@ export function CardArt(
   const [front, other] = name.split(" // ");
   const showing = back && backArtCrop !== null;
   const facing = showing ? other ?? name : front ?? name;
+  // A URL `cardImageUrl` refuses is not an image this app will request -- the same answer it gives
+  // for a card Scryfall has no picture of, because a broken frame and a missing one read alike and
+  // only one of them is worth reserving space for.
+  const src = cardImageUrl(showing ? backArtCrop! : artCrop);
+  if (src === null) return null;
 
   return (
     <div className="flex flex-col gap-2 items-start">
       <img
-        src={cardImageUrl(showing ? backArtCrop! : artCrop)}
+        src={src}
         alt={`${facing} — the card, including its rules text and artist credit`}
         loading="lazy"
         decoding="async"

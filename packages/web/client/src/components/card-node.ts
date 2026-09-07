@@ -20,10 +20,34 @@ export function renderModeFor(z: number): RenderMode {
   return z >= CARD_MODE_Z ? "card" : "miniature";
 }
 
+/** THE ONLY HOST THIS PRODUCT EVER REQUESTS A CARD IMAGE FROM. Every art URL in the corpus and in
+ *  the token maps is Scryfall's; anything else reaching a `src` is a data defect or an injection,
+ *  and there is no third case to keep a door open for. */
+const CARD_IMAGE_ORIGIN = "https://cards.scryfall.io/";
+
 /** Scryfall serves every size off one path shape: .../<size>/<face>/<a>/<b>/<id>.jpg. The corpus
  *  stores art_crop, so the full card is a segment rewrite rather than a new field and a re-ingest.
- *  Anchored to a path segment so a URL whose id happens to contain "art_crop" is left alone. */
-export function cardImageUrl(artCrop: string): string {
+ *  Anchored to a path segment so a URL whose id happens to contain "art_crop" is left alone.
+ *
+ *  IT REFUSES A URL THAT IS NOT SCRYFALL'S, and `null` is the refusal so a caller cannot render one
+ *  by forgetting to check. CodeQL found this on 2026-09-08 (`js/xss-through-dom`, high) the moment
+ *  a card page started reading its record out of the document instead of fetching it: DOM text ->
+ *  `JSON.parse` -> `<img src>` is a taint path, and the check was missing on the FETCH path too --
+ *  it simply had no source the scanner could see. So the guard goes here, in the one function every
+ *  image request in this app already routes through, rather than at the line that was flagged.
+ *
+ *  A PREFIX TEST IS EXACT HERE, and that is worth stating because usually it is not. The constant
+ *  ends in `/`, so `https://cards.scryfall.io.evil.test/x` fails it -- the character after the host
+ *  is `.`, not `/` -- and a userinfo trick like `https://cards.scryfall.io@evil.test/` fails for the
+ *  same reason. Preferred over `new URL()` because this runs per node per frame in the graph's draw
+ *  loop, where a parse allocates and a `startsWith` does not.
+ *
+ *  WHAT IT IS AND IS NOT WORTH. `javascript:` in an `<img src>` executes in no current browser, so
+ *  this is not the classic reflected-XSS stop; what it actually prevents is this app being talked
+ *  into making a request to somebody else's host, carrying the reader's IP and referrer. That is a
+ *  real thing to prevent and it costs one comparison. */
+export function cardImageUrl(artCrop: string): string | null {
+  if (!artCrop.startsWith(CARD_IMAGE_ORIGIN)) return null;
   return artCrop.replace(/\/art_crop\//, "/normal/");
 }
 
