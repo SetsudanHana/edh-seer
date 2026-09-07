@@ -117,6 +117,35 @@ test("a Partner group pairs by its LABEL, and never across two different labels"
     .map((f) => f.rule)).toContain("pairing");
 });
 
+// THE LABEL PARSE IS NOT A REGEX ANY MORE (CodeQL js/polynomial-redos, alert #74, 2026-09-05).
+// `/(?:^|\n)Partner—([^(\n]+?)\s*\(/i` let the lazy group and the `\s*` after it both match a
+// space, so a line of "Partner—" followed by many spaces and NO "(" backtracked quadratically --
+// and oracle text reaches this straight from a pasted decklist, so the input is not ours.
+// The bound below is deliberately loose: it is there to fail if the quadratic behaviour ever comes
+// back, not to measure anything.
+test("a partner label with no reminder text is parsed in linear time, not quadratic", () => {
+  // TWO commanders, because `partnerLabel` only runs on the PAIRING path. Measured on the old
+  // regex: 2,000 spaces 2.5ms, 8,000 28.5ms, 16,000 167ms, 32,000 389ms -- four times the work for
+  // twice the input, which is the quadratic signature. At 60,000 the old regex needs seconds.
+  const evil = (name: string) => partner(name, `Partner—${" ".repeat(60_000)}`);
+  const a = evil("Adversary"), b = evil("Accomplice");
+  const t0 = performance.now();
+  deckLegality({ cards: [a, b, ...filler(98)], commanders: [a, b] });
+  expect(performance.now() - t0).toBeLessThan(1_000);
+});
+
+// The label still has to survive the ordinary shapes, including the ones the regex handled by
+// accident: leading whitespace inside the label, and a second ability line above it.
+test("a partner label is read off its own line, trimmed, and only up to the reminder text", () => {
+  const a = partner("A", "Flying\nPartner—Friends forever  (You can have two commanders if both have this ability.)");
+  const b = partner("B", "Partner—friends FOREVER (You can have two commanders if both have this ability.)");
+  expect(deckLegality({ cards: [a, b, ...filler(98)], commanders: [a, b] })).toEqual([]);
+  // A "Partner—" with no reminder text names no group, so it licenses no pairing.
+  const bare = partner("C", "Partner—Friends forever");
+  expect(deckLegality({ cards: [a, bare, ...filler(98)], commanders: [a, bare] })
+    .map((f) => f.rule)).toContain("pairing");
+});
+
 // The four Backgrounds in the calibration corpus, whose partner J4 could not see. All four decks
 // pair legally, so this fires on nothing there — it is built for the arbitrary pasted list.
 test("a Background is legal only opposite a card that chooses one", () => {
