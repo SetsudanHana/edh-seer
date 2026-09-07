@@ -651,13 +651,16 @@ test("setting a base power and toughness is neither a pump nor a debuff", () => 
   expect(actionEffectKind({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" }, "")).toBe("debuff");
 });
 
-// A CARD MOVED FROM THE LIBRARY INTO YOUR HAND IS A TUTOR (owner's ruling, 2026-09-07). The `search`
-// verb already mapped to top-manipulation; this is the half that states the DESTINATION instead --
-// "look at the top four cards, reveal an Elemental, put it into your hand" (Eclipsed Flamekin),
-// which derived nothing and so formed no edge. Caught by recall draw v3 #141.
-test("a card put from the library into hand is a tutor", () => {
+// A TUTOR SEARCHES; DIGGING DOES NOT (owner, 2026-09-07: "Sensei is not a tutor, it is basically
+// brainstorm"). A real tutor states the `search` verb, which VERB_KIND already maps, so a
+// `put library -> hand` row bought nothing for Demonic Tutor and only caught the 343 corpus actions
+// that dig -- Eclipsed Flamekin reads the top FOUR cards and cannot find a piece deeper than that.
+test("putting a card from the library into hand is NOT a tutor on its own", () => {
   expect(actionEffectKind({ verb: "put", object: "an Elemental, Island, or Mountain card",
-    fromZone: "library", toZone: "hand" })).toBe("top-manipulation");
+    fromZone: "library", toZone: "hand" })).not.toBe("top-manipulation");
+  // A real tutor is carried by its own verb and is unaffected.
+  expect(actionEffectKind({ verb: "search", object: "your library for a creature card" }))
+    .toBe("top-manipulation");
 });
 
 // THE ROW COULD NOT BE WRITTEN BEFORE THE ORIGIN WAS KEPT. A bounce states no library origin, and

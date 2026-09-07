@@ -45,14 +45,22 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // stated no origin at all. Corpus: put->graveyard is library 148, exile 18, unstated 11 — the 11
   // are now unclassified, which is the honest answer for a clause that never said where from.
   { verb: "put", from: "library", to: "graveyard", kind: "top-manipulation" },
-  // A CARD MOVED FROM THE LIBRARY INTO YOUR HAND IS A TUTOR (owner's ruling, 2026-09-07: a search
-  // restricted to a type is "another copy of your combo", the same shape as a fetchland finding a
-  // land). The `search` verb already mapped here; this is the half that states the destination
-  // instead of the search -- "look at the top four cards, reveal an Elemental, put it into your
-  // hand" (Eclipsed Flamekin) derived NOTHING and so formed no edge, which recall draw v3 #141
-  // caught. It could not be written before this commit: `put -> hand` with a nulled origin was
-  // indistinguishable from a bounce, and now it is not.
-  { verb: "put", from: "library", to: "hand", kind: "top-manipulation" },
+  // NO ROW FOR `put library -> hand`, AND THE REASON IS WORTH KEEPING (added and reverted the same
+  // day, 2026-09-07). It looked like the missing half of a tutor. It is not: a REAL tutor states the
+  // `search` verb, which VERB_KIND already maps to top-manipulation, so the row bought nothing for
+  // Demonic Tutor, Worldly Tutor or Entomb. What it DID catch was the other bucket -- 343 corpus
+  // actions that put a card from library to hand with NO search in the clause, which is DIGGING
+  // (Eclipsed Flamekin looks at the top four; Dig Through Time at the top seven), not searching.
+  //
+  // The owner's ruling is specifically about a search: "Mystical Tutor can find you that piece, so
+  // it is another copy of your combo". A dig four cards deep cannot find the piece, so it is not a
+  // copy of it, and `edges.ts` was minting the sentence "Eclipsed Flamekin can search up Titan of
+  // Industry" for a card that searches nothing.
+  //
+  // The corpus splits cleanly on the `search` verb and that is the discriminator to use if this is
+  // ever revisited: WITH search -- put->battlefield 311 (Farseek), put->hand 258 (Demonic Tutor),
+  // put->library 58 (Worldly Tutor), put->graveyard 25 (Entomb). WITHOUT -- put->library 348
+  // (Sensei's Divining Top, which is Brainstorm-shaped and not a tutor at all), put->hand 343.
 ];
 
 /** Kinds whose whole meaning is the zone the subject sits in: `edges.ts` will not draw a
