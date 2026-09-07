@@ -3,7 +3,7 @@ import { normalizeName } from "@edh-seer/data";
 import { pairKey } from "@edh-seer/matcher/otag-edges";
 import { CATEGORY_EDHREC_TAG, tagUrl, parseHighSynergy } from "./edhrec-core.js";
 
-const CACHE_DIR = new URL("../../.edhrec-cache/", import.meta.url).pathname;
+const CACHE_DIR = new URL("../../matcher/.edhrec-cache/", import.meta.url).pathname;
 // EDHREC's "High Synergy Cards" list actually returns ~9-10 cards per theme (measured across
 // all 16 cached payloads, 2026-08-02), so this is a ceiling that never binds. Raising it will
 // not enlarge the oracle -- EDHREC's page size, not this slice, is the limiter.

@@ -8,7 +8,7 @@ import { classifyPair, type GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 import { buildReport, formatReport, type PairResult } from "./compass-report.js";
 
 const GOLD = JSON.parse(
-  readFileSync(new URL("../goldpairs.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../matcher/src/goldpairs.json", import.meta.url), "utf8"),
 ) as GoldPair[];
 
 /** Resolve a card name to a DeckCard (card + tags), or null when the name is unknown. */
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
 
   const report = buildReport(results);
   if (jsonOut) {
-    const path = fileURLToPath(new URL("../../compass-report.json", import.meta.url));
+    const path = fileURLToPath(new URL("../../matcher/compass-report.json", import.meta.url));
     writeFileSync(path, JSON.stringify(report, null, 2) + "\n");
     console.log(`wrote ${path}`);
   }

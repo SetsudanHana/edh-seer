@@ -11,7 +11,7 @@ import { connect, loadConfig, normalizeName, parseDecklistText } from "@edh-seer
 import { CLAUSES_COLLECTION, type CardClausesDoc } from "../../packages/tagger/src/clause-store.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../../packages/tagger/src/normalize-prompt.js";
 
-const CAL = new URL("../../../cli/decks/calibration/", import.meta.url).pathname;
+const CAL = new URL("../../packages/cli/decks/calibration/", import.meta.url).pathname;
 const watchIdx = process.argv.indexOf("--watch");
 const WATCH = watchIdx > 0;
 const EVERY = Number(process.argv[watchIdx + 1]) || 15;

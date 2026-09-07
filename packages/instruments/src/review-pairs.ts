@@ -4,7 +4,7 @@ import { createInterface } from "node:readline/promises";
 import { applyDecision, pendingIndices, type Decision } from "./review-core.js";
 import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
-const GOLD_URL = new URL("../goldpairs.json", import.meta.url);
+const GOLD_URL = new URL("../../matcher/src/goldpairs.json", import.meta.url);
 
 async function main(): Promise<void> {
   let pairs = JSON.parse(readFileSync(GOLD_URL, "utf8")) as GoldPair[];

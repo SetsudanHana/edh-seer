@@ -39,10 +39,10 @@ interface Fixture {
 }
 
 const GOLD = JSON.parse(
-  readFileSync(new URL("../goldpairs.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../matcher/src/goldpairs.json", import.meta.url), "utf8"),
 ) as GoldPair[];
 const FIXTURE = JSON.parse(
-  readFileSync(new URL("../fixtures/gold-clauses.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../matcher/src/fixtures/gold-clauses.json", import.meta.url), "utf8"),
 ) as Fixture[];
 const byName = new Map(FIXTURE.map((f) => [f.name, f]));
 

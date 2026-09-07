@@ -6,7 +6,7 @@ import { CATEGORY_EDHREC_TAG, parseHighSynergy, pairsFromCards, tagUrl } from ".
 import { dedupeAndBuild } from "./propose-pairs-core.js";
 import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 
-const GOLD_URL = new URL("../goldpairs.json", import.meta.url);
+const GOLD_URL = new URL("../../matcher/src/goldpairs.json", import.meta.url);
 
 async function main(): Promise<void> {
   const arg = process.argv.find((a) => a.startsWith("--category="))?.slice("--category=".length);

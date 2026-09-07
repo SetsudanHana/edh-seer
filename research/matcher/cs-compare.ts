@@ -17,11 +17,11 @@ import {
  *  here from docToCard. */
 const isLand = (typeLine: string): boolean => typeLine.toLowerCase().includes("land");
 
-const DECK_DIR = new URL("../../../cli/decks/", import.meta.url).pathname;
-const CACHE_DIR = new URL("../../.cs-cache/", import.meta.url).pathname;
+const DECK_DIR = new URL("../../packages/cli/decks/", import.meta.url).pathname;
+const CACHE_DIR = new URL("../../packages/matcher/.cs-cache/", import.meta.url).pathname;
 
 const DECKS = JSON.parse(
-  readFileSync(new URL("../calibration-decks.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../packages/matcher/src/calibration-decks.json", import.meta.url), "utf8"),
 ) as Array<{ name: string; path: string; saltId: string }>;
 
 /** CS is the reference here, so a fetch failure is fatal -- there is no partial result worth

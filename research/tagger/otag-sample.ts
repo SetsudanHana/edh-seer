@@ -23,7 +23,7 @@ async function main(): Promise<void> {
   }
 
   const groups = JSON.parse(
-    readFileSync(new URL("../otags/functional-otags.json", import.meta.url), "utf8"),
+    readFileSync(new URL("../../packages/tagger/src/otags/functional-otags.json", import.meta.url), "utf8"),
   ) as Record<string, string[]>;
 
   let slugs: string[];
