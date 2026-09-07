@@ -93,6 +93,13 @@ console.log(`service worker: precaches ${shell.length} shell files (${shell.filt
 // LISTS ONLY WHAT THE ARTIFACT HOLDS. `name-index.json` is every SUBSTANTIVE card -- one with at
 // least one emit or one trigger -- so a card the engine has never read is not promised a page here.
 // The index lives under the version directory, which `manifest.json` names.
+//
+// AND ONLY WHAT THE SITE WILL LET BE INDEXED. A card page with no partners is served
+// `<meta name="robots" content="noindex">` at the edge (spec D5, `render.ts`), and a sitemap that
+// submits a page the site then refuses to have indexed is a Search Console error per URL. Measured
+// on the deployed artifact 2026-09-08: 1,779 card and 1,044 commander URLs -- 2,823 of 20,161, 14%
+// of this file -- were exactly that. `noPartners` / `noCommanderPartners` come off the same shard
+// record the edge reads, so the two cannot drift.
 const canonical = /<link rel="canonical" href="([^"]+)"/.exec(readFileSync(join(dist, "index.html"), "utf8"))?.[1];
 if (!canonical) {
   console.error("no canonical link in index.html — refusing to write a sitemap with a guessed origin.");
@@ -101,13 +108,15 @@ if (!canonical) {
 const origin = canonical.replace(/\/$/, "");
 const version = JSON.parse(readFileSync(join(target, "manifest.json"), "utf8")).version;
 const nameIndex = JSON.parse(readFileSync(join(target, version, "name-index.json"), "utf8"));
+const indexableCards = nameIndex.filter((e) => !e.noPartners);
+const indexableCommanders = nameIndex.filter((e) => e.commander && !e.noCommanderPartners);
 const sitemapUrls = [
   `${origin}/`,
   `${origin}/how-it-works`,
-  ...nameIndex.map((e) => `${origin}/cards/${e.slug}`),
-  ...nameIndex.filter((e) => e.commander).map((e) => `${origin}/commanders/${e.slug}`),
+  ...indexableCards.map((e) => `${origin}/cards/${e.slug}`),
+  ...indexableCommanders.map((e) => `${origin}/commanders/${e.slug}`),
 ];
-const expectedUrls = 2 + nameIndex.length + nameIndex.filter((e) => e.commander).length;
+const expectedUrls = 2 + indexableCards.length + indexableCommanders.length;
 // ASSERTED HERE RATHER THAN TRUSTED: a half-built artifact should fail the deploy, not publish a
 // sitemap full of URLs with nothing behind them.
 if (sitemapUrls.length !== expectedUrls) {
@@ -120,8 +129,10 @@ writeFileSync(
   + sitemapUrls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")
   + `\n</urlset>\n`,
 );
-console.log(`sitemap: ${sitemapUrls.length} URLs (${nameIndex.length} cards, `
-  + `${nameIndex.filter((e) => e.commander).length} commanders)`);
+console.log(`sitemap: ${sitemapUrls.length} URLs (${indexableCards.length} cards, `
+  + `${indexableCommanders.length} commanders; `
+  + `${nameIndex.length - indexableCards.length} + `
+  + `${nameIndex.filter((e) => e.commander).length - indexableCommanders.length} withheld as noindex)`);
 
 const countFiles = (dir) =>
   readdirSync(dir).reduce(

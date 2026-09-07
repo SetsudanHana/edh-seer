@@ -87,29 +87,42 @@ test("no hand-written sitemap survives in public/", () => {
   expect(existsSync(join(CLIENT, "public", "sitemap.xml"))).toBe(false);
 });
 
-/** THE GENERATED ONE LISTS EXACTLY WHAT THE ARTIFACT HOLDS: the two static pages, one card URL per
- *  substantive card, and a second URL for every card that can lead a deck. A card the engine has
- *  never read is not in the index and so is never promised a page.
+/** THE GENERATED ONE LISTS EXACTLY WHAT THE ARTIFACT HOLDS AND THE SITE WILL INDEX: the two static
+ *  pages, one card URL per substantive card that has partners, and a second URL for every card that
+ *  can lead a deck and has partners AS one. A card the engine has never read is not in the index
+ *  and so is never promised a page.
+ *
+ *  THE SECOND HALF OF THAT SENTENCE IS THE 2026-09-08 FIX. The sitemap was built from the index and
+ *  the `noindex` decision from the shard, and nothing reconciled them: 1,779 card and 1,044
+ *  commander URLs -- 2,823 of 20,161 -- were submitted to Google and then served
+ *  `<meta name="robots" content="noindex">`, which Search Console reports as an error per URL. The
+ *  rule is the same promise-keeping one this file has always been held to, one step further: a
+ *  sitemap may not name a page the site refuses to have indexed, any more than one that 404s.
  *
  *  Skipped without a build, because `dist/` is produced by `npm run build` plus `assemble-deploy`
  *  and a fresh checkout has neither. */
-test.skipIf(!existsSync(builtSitemap))("the sitemap lists every substantive card and commander, and nothing else", () => {
+test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card and commander, and nothing else", () => {
   const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
   const index = JSON.parse(
     readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
-  ) as { slug: string; commander: boolean }[];
+  ) as { slug: string; commander: boolean; noPartners?: true; noCommanderPartners?: true }[];
   const locs = [...readFileSync(builtSitemap, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
 
-  expect(locs).toHaveLength(2 + index.length + index.filter((e) => e.commander).length);
+  const cards = index.filter((e) => !e.noPartners);
+  const commanders = index.filter((e) => e.commander && !e.noCommanderPartners);
+  expect(locs).toHaveLength(2 + cards.length + commanders.length);
   expect(locs.slice(0, 2)).toEqual([canonical, `${canonical}how-it-works`]);
   // Every URL is on the canonical origin -- a sitemap that names another host is a sitemap for
   // another site.
   for (const loc of locs) expect(loc.startsWith(canonical.slice(0, -1))).toBe(true);
-  // THE PROMISE THIS FILE MAKES: a card the engine has not read has no page and is not listed.
-  const slugs = new Set(index.map((e) => e.slug));
+  // THE PROMISE THIS FILE MAKES: a card the engine has not read has no page and is not listed, and
+  // neither is one the edge will answer `noindex` on.
+  const indexableCards = new Set(cards.map((e) => e.slug));
+  const indexableCommanders = new Set(commanders.map((e) => e.slug));
   for (const loc of locs.slice(2)) {
     const slug = loc.slice(loc.lastIndexOf("/") + 1);
-    expect(slugs.has(slug), `${loc} is a card the index holds`).toBe(true);
+    const set = loc.includes("/commanders/") ? indexableCommanders : indexableCards;
+    expect(set.has(slug), `${loc} is a page the site will let be indexed`).toBe(true);
   }
 });
 
@@ -125,6 +138,22 @@ test("the card and commander prerender functions are where Pages looks for them"
   for (const route of ["cards/[slug].ts", "commanders/[slug].ts"]) {
     expect(existsSync(join(functions, route)), `${route} exists`).toBe(true);
     expect(readFileSync(join(functions, route), "utf8")).toContain("renderCardPage");
+  }
+});
+
+/** AND THEY ANSWER HEAD, WHICH PAGES DOES NOT DERIVE FROM GET.
+ *
+ *  A Function exporting only `onRequestGet` never runs for a HEAD: the request falls through to the
+ *  asset store, and these routes are Functions rather than files, so it 404s. Measured on the
+ *  deployed site 2026-09-08 -- `GET /cards/nissa-worldsoul-speaker` 200, `HEAD` on the same URL 404
+ *  -- for all 20,159 card and commander URLs plus every client-side route the SPA fallback serves.
+ *  Same failure shape as the missing-Function one above and just as invisible: nothing on screen
+ *  changes, because a reader's browser never sends HEAD. */
+test("every prerender route answers HEAD as well as GET", () => {
+  const functions = join(CLIENT, "..", "functions");
+  for (const route of ["cards/[slug].ts", "commanders/[slug].ts", "[[path]].ts"]) {
+    expect(readFileSync(join(functions, route), "utf8"), `${route} exports onRequestHead`)
+      .toContain("export const onRequestHead");
   }
 });
 

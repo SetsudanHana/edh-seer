@@ -24,3 +24,8 @@ export const onRequestGet: PagesFunction = async (context) => {
     headers: { "content-type": "text/html; charset=utf-8" },
   });
 };
+
+/** AND THE SAME FOR HEAD. Pages routes a HEAD to `onRequestHead` alone, so without this line the
+ *  app routes this Function exists to serve -- `/cards`, `/commanders`, `/graph` -- answer 404 to a
+ *  crawler or a link checker that asks with HEAD. The runtime drops the body. */
+export const onRequestHead = onRequestGet;
