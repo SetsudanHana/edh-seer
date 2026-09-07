@@ -671,3 +671,64 @@ test("a card returned to hand from anywhere else is not a tutor", () => {
   expect(actionEffectKind({ verb: "put", object: "that card", fromZone: null, toZone: "hand" }))
     .not.toBe("top-manipulation");
 });
+
+// SETTING THE TOP OF YOUR LIBRARY IS A SUPPLY, and it had no kind at all until 2026-09-07 -- the
+// owner's Hidetsugu and Kairi deck is built on it ("we are casting spells for free from the top of
+// the library") and its commander derived ["draw-card", "player-life-loss", ""].
+//
+// THE ORIGIN IS WHAT SEPARATES IT FROM REMOVAL, which is why two narrow rows and not one broad one.
+// Corpus, put -> library with no search in the clause: from library 348 (Sensei's Divining Top,
+// Dig Through Time), from hand 31 (Brainstorm, Brainstone) -- both are the player choosing what
+// they draw next. But from BATTLEFIELD is 52 and it is TUCK REMOVAL (Aetherspouts, Spin into Myth,
+// Jeskai Charm put a creature onto a library), and from stack is 12 (Approach of the Second Sun).
+// Calling those top-manipulation would put a "sets up your draws" claim on a removal spell.
+test("reordering or stacking the top of your library is top-manipulation", () => {
+  // Sensei's Divining Top: "look at the top three cards, then put them back in any order".
+  expect(actionEffectKind({ verb: "put", object: "them", fromZone: "library", toZone: "library" },
+    "Look at the top three cards of your library, then put them back in any order.")).toBe("top-manipulation");
+  // Brainstorm, and the same shape as Hidetsugu and Kairi's entry trigger.
+  expect(actionEffectKind({ verb: "put", object: "two cards from your hand", fromZone: "hand", toZone: "library" },
+    "Draw three cards, then put two cards from your hand on top of your library in any order.")).toBe("top-manipulation");
+});
+
+// THE BOTTOM IS NOT THE TOP, and the canonical action cannot tell them apart: `toZone` is `library`
+// either way and there is no position field. Measured on the corpus -- of the 359 cards with a
+// put library|hand -> library action and no search, **311 say "on the bottom"** and only 48 are real
+// top manipulation (Sensei's Divining Top, Brainstorm, Portent, Ponder, Brainstone). Without this
+// guard the rule would have been ~87% wrong, calling the DISCARD half of card selection a supply.
+//
+// The test is negative, not positive, because Sensei's never says "on top" -- it says "put them
+// BACK", and you already looked at the top three.
+test("putting the rest on the bottom of your library is not top-manipulation", () => {
+  const dig = "Look at the top seven cards of your library. Put two of them into your hand and the rest on the bottom of your library in any order.";
+  expect(actionEffectKind({ verb: "put", object: "the rest of the top seven cards of your library",
+    fromZone: "library", toZone: "library" }, dig)).not.toBe("top-manipulation");
+});
+
+test("putting something onto a library from the battlefield or the stack is NOT top-manipulation", () => {
+  // Aetherspouts / Spin into Myth / Jeskai Charm: tuck removal.
+  expect(actionEffectKind({ verb: "put", object: "target creature", fromZone: "battlefield", toZone: "library" }))
+    .not.toBe("top-manipulation");
+  // Approach of the Second Sun puts ITSELF back from the stack.
+  expect(actionEffectKind({ verb: "put", object: "Approach of the Second Sun", fromZone: "stack", toZone: "library" }))
+    .not.toBe("top-manipulation");
+  // ...and a graveyard origin stays recursion, which is the row above these.
+  expect(actionEffectKind({ verb: "put", object: "target creature card", fromZone: "graveyard", toZone: "library" }))
+    .toBe("graveyard-recursion");
+});
+
+// THE OBJECT STATES THE ORIGIN THE FIELD OMITTED. Hidetsugu and Kairi -- the commander of a deck
+// built entirely on setting the top -- derived ["draw-card", "player-life-loss", ""] because its
+// "put two cards FROM YOUR HAND on top of your library" left `fromZone` unset.
+test("an unstated origin is read from the object when the object says it", () => {
+  expect(actionEffectKind({ verb: "put", object: "two cards from your hand", toZone: "library" },
+    "When this creature enters, draw three cards, then put two cards from your hand on top of your library in any order."))
+    .toBe("top-manipulation");
+});
+
+// ...and it stays narrow: the other unstated cases are tuck removal and must not be swept in.
+test("an unstated origin without that phrase is still not top-manipulation", () => {
+  for (const obj of ["target spell or nonland permanent", "target creature", "a card you own from outside the game"]) {
+    expect(actionEffectKind({ verb: "put", object: obj, toZone: "library" }, "")).not.toBe("top-manipulation");
+  }
+});
