@@ -12,7 +12,7 @@
 /** The event half of a census key (`enters`, `dies`, `cast`, `end-step`…) as the words a player
  *  would use, for every verb `@edh-seer/tagger`'s `VERB_VOCAB` can put in a consumer's trigger EXCEPT
  *  the three `availability.ts` calls `PHASE_VERBS` (those live in `DEMAND_PHASE` below, because a
- *  phase carries no subject to glue this onto) AND the five `DEMAND_SUBJECTLESS` below (a player
+ *  phase carries no subject to glue this onto) AND the eight `DEMAND_SUBJECTLESS` below (a player
  *  action has no permanent subject either). The completeness test below this component walks all
  *  three maps against `VERB_VOCAB`/`PHASE_VERBS` directly, so a verb the engine grows can no longer
  *  ship silently unmapped, unmapped twice, or glued to a subject that cannot perform it — see
@@ -66,11 +66,11 @@ export const DEMAND_PHASE: Record<string, string> = {
   "begin-combat": "the beginning of combat",
 };
 
-/** Player actions, not permanent events — the CR pins each of these five to the CONTROLLER
+/** Player actions, not permanent events — the CR pins each of these eight to the CONTROLLER
  *  (CLAUDE.md's own list of controller-only verbs: draw · mill · discard · sacrifice · search ·
  *  scry · surveil · add-mana · create · gain-life · lose-life; the other six in that list stay in
  *  `DEMAND_VERB` because their PASSIVE reading — "a card being milled/discarded", "a permanent
- *  being created/sacrificed" — is true of the object no matter who acts on it). None of these five
+ *  being created/sacrificed" — is true of the object no matter who acts on it). None of these eight
  *  has a true passive reading once glued to a subject: "anything drawing a card" told the reader a
  *  PERMANENT draws, which nothing does — review finding F1, task 8 fix round 1. Same structural move
  *  `DEMAND_PHASE` already makes for a phase: the phrase IS the whole demand, no subject glued on.
@@ -122,7 +122,7 @@ export function demandSentence(key: string): string {
   if (phase && subjectKey === "any") return phase;
 
   // A player action has no permanent subject to glue this onto either -- same shape as the phase
-  // check above, one rung down (the subject slot always resolves to "any" for these five, since
+  // check above, one rung down (the subject slot always resolves to "any" for these eight, since
   // nothing narrows WHO draws or gains life to a card type).
   const subjectless = DEMAND_SUBJECTLESS[verb];
   if (subjectless && subjectKey === "any") {

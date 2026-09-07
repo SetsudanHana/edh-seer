@@ -359,7 +359,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "dice-rolled",
   // CR 701.22 / 701.25 / 701.23. These have been legal CLAUSE events since 2026-08-15 —
   // `normalize-prompt.ts` names Matoya and Archivist of Oghma in its own comment — and were never
-  // ENGINE events, so `normalizeTriggerVerb` returned null and every one of the 25 consumers
+  // ENGINE events, so `normalizeTriggerVerb` returned null and every one of the 27 consumers
   // derived a triggered ability with NO TRIGGER AT ALL. Matoya, Archon Elder is the whole card
   // "whenever you scry, draw a card; whenever you surveil, draw a card" and it triggered on
   // nothing. The corpus already stores the words, so this costs a DERIVE_VERSION bump and no
