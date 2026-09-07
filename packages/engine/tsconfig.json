@@ -1,5 +1,19 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "rootDir": "src", "outDir": "dist" },
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    // TypeScript 7 stopped picking @types/node up here on its own, and this is the ONLY project in
+    // the repo that needed telling. Under 7.0.2 every `import { readFileSync } from "node:fs"` in
+    // this project -- including the tagger sources it pulls in through imports -- failed with
+    // TS2591 "Cannot find name 'node:fs'", while matcher, tagger, data, cli and instruments
+    // typechecked clean on the same compiler with the same base config and the same @types/node
+    // dependency. The difference was not chased to a root cause; what is certain is that engine
+    // declares `@types/node` and uses node builtins, so saying which types it wants is true rather
+    // than a workaround.
+    // COST OF BEING EXPLICIT: a future @types package added to this workspace will NOT be picked up
+    // automatically -- add it to this list too.
+    "types": ["node"]
+  },
   "include": ["src"]
 }
