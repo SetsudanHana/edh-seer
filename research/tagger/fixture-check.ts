@@ -24,7 +24,7 @@ import { createProvider } from "../../packages/tagger/src/llm/factory.js";
 import { normalizeCard } from "../../packages/tagger/src/normalize-card.js";
 
 const FIXTURE = JSON.parse(readFileSync(
-  new URL("../../../matcher/src/fixtures/gold-clauses.json", import.meta.url), "utf8",
+  new URL("../../packages/matcher/src/fixtures/gold-clauses.json", import.meta.url), "utf8",
 )) as { name: string; clauses: ClauseRecord[] }[];
 
 const cfg = loadTaggerConfig();

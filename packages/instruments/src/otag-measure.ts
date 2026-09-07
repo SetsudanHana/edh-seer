@@ -12,14 +12,14 @@ import { buildOtagEdges, pairKey, undirectedPairs } from "@edh-seer/matcher/otag
 import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
 import { edhrecPairSet, seededRandom } from "./edhrec-pairs.js";
 
-const DECK_DIR = new URL("../../../cli/decks/", import.meta.url).pathname;
+const DECK_DIR = new URL("../../cli/decks/", import.meta.url).pathname;
 
 const DECKS = JSON.parse(
-  readFileSync(new URL("../calibration-decks.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../matcher/src/calibration-decks.json", import.meta.url), "utf8"),
 ) as Array<{ name: string; path: string; saltId: string }>;
 
 const GOLD = JSON.parse(
-  readFileSync(new URL("../goldpairs.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../matcher/src/goldpairs.json", import.meta.url), "utf8"),
 ) as GoldPair[];
 
 interface Loaded {

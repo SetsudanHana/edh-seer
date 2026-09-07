@@ -93,6 +93,38 @@ def misplaced_bins() -> list[str]:
     return bad
 
 
+RUNTIME_PATH = re.compile(r'new URL\(\s*"(\.\.?/[^"]+)"')
+
+
+def broken_runtime_paths() -> list[str]:
+    """Relative `new URL(...)` targets that do not exist.
+
+    MOVING A FILE SILENTLY BREAKS THESE AND NOTHING ELSE NOTICES. The 2026-09-07 reorg rewrote
+    every `import` specifier and left 16 runtime paths across 10 files pointing at directories
+    that had never existed -- `packages/instruments/fixtures/gold-clauses.json`,
+    `packages/instruments/goldpairs.json`, `cli/decks/`. TypeScript cannot see inside a string,
+    these scripts have no tests by design, and the failure only shows when someone runs the tool
+    months later. Found by accident while pricing something unrelated.
+
+    A directory target is accepted when its PARENT exists: `.cs-cache/` and `.edhrec-cache/` are
+    gitignored and created on demand, so requiring them would fail a clean checkout.
+    """
+    bad: list[str] = []
+    for base in ("packages", "research"):
+        root = ROOT / base
+        if not root.is_dir():
+            continue
+        for f in sorted(root.rglob("*.ts")):
+            if "node_modules" in f.parts or "dist" in f.parts:
+                continue
+            for m in RUNTIME_PATH.finditer(f.read_text(encoding="utf-8", errors="ignore")):
+                target = (f.parent / m.group(1)).resolve()
+                if target.exists() or target.parent.is_dir():
+                    continue
+                bad.append(f"{f.relative_to(ROOT)}: new URL(\"{m.group(1)}\") -> {target} does not exist")
+    return bad
+
+
 def orphaned_research_tests() -> list[str]:
     """Test files under `research/`, which no vitest project collects."""
     research = ROOT / "research"
@@ -109,6 +141,8 @@ def self_test() -> None:
     assert not WRITES.search('console.log("just a census")'), "a printer must NOT read as pipeline"
     # The trap this rule exists to avoid: the decision is the write call, never the name.
     assert not WRITES.search("const outDir = argv[i + 1];"), "naming an out dir is not writing"
+    assert RUNTIME_PATH.search('readFileSync(new URL("../x.json", import.meta.url))'), "must see a runtime path"
+    assert not RUNTIME_PATH.search('from "../x.js"'), "an import specifier is not a runtime path"
     print("self-test: both directions fire")
 
 
@@ -116,7 +150,7 @@ def main() -> int:
     if "--self-test" in sys.argv:
         self_test()
         return 0
-    bad, orphans = misplaced_bins(), orphaned_research_tests()
+    bad, orphans, paths = misplaced_bins(), orphaned_research_tests(), broken_runtime_paths()
     for f in bad:
         pkg = f.split("/")[1]
         print(
@@ -131,8 +165,11 @@ def main() -> int:
             f"its coverage is silently absent from `npm test`. Move the module and its test into "
             f"a package -- packages/instruments/ for a scoring or verification instrument.",
         )
-    if bad or orphans:
-        print(f"\n{len(bad) + len(orphans)} misplaced file(s).")
+    for f in paths:
+        print(f"{f} -- a relative runtime path that no longer resolves. Moving a file rewrites its "
+              f"imports but NOT the strings inside `new URL(...)`, and nothing else can see them.")
+    if bad or orphans or paths:
+        print(f"\n{len(bad) + len(orphans) + len(paths)} problem(s).")
         return 1
     print("bin placement: ok")
     return 0
