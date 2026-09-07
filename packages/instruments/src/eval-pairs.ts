@@ -36,7 +36,11 @@ async function main(): Promise<void> {
   const jsonOut = process.argv.includes("--json");
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
-  const cardTags = store.db.collection("cardTags");
+  // THE SHIPPED ENGINE, NOT THE RETIRED ONE. This read `store.db.collection("cardTags")` -- the
+  // FLAT collection -- until 2026-09-07, while the product has defaulted to `derived` since
+  // TAGS_SOURCE flipped on 2026-08-06 (`tags-lookup.ts:43`). All 58 compass cards carry BOTH, so
+  // nothing failed; the compass simply scored an engine that no longer ships.
+  const cardTags = { findOne: (q: object) => store.db.collection("cardTagsDerived").findOne(q) };
   const hierarchy = loadHierarchy();
 
   const results: PairResult[] = [];
