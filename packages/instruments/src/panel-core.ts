@@ -87,7 +87,14 @@ export interface PanelScore {
    *  every one of these was the RESOLVER being fixed, not the engine losing an edge. Always 0 unless
    *  the caller supplies `pairInDeck`, because nothing in this file can see a decklist. */
   droppedRot: number;
-  /** A lost pair whose two cards are both still in the deck. The only bucket that is a defect. */
+  /** A lost pair the engine STILL CLAIMS, through an intermediate node the producer creates.
+   *  `Oath of Liliana -> Ayara` became `Oath -> Zombie [token] -> Ayara`: Ayara triggers on a black
+   *  creature entering, Oath is an ENCHANTMENT and never enters as one, and the relation belongs to
+   *  the token. Same claim, said more precisely. Counted as HELD by recall, because the engine has
+   *  not stopped saying these two cards work together. */
+  droppedReattributed: number;
+  /** A lost pair whose two cards are both still in the deck and which nothing re-attributes.
+   *  The only bucket that is a defect. */
   droppedRegression: number;
   /** Pairs carrying at least one REAL verdict that the engine still joins, and those it does not.
    *  Rotted pairs are in neither: a verdict about a card that is not in the deck is not a recall
@@ -163,6 +170,9 @@ export function scorePanel(
    *  `panel-core` never reads a decklist. Absent, every lost pair counts as a regression -- the
    *  conservative direction, since it can only over-report loss. */
   pairInDeck?: (producer: string, consumer: string) => boolean,
+  /** Does the engine still make this claim through an intermediate it creates? Injected for the
+   *  same reason as `pairInDeck`: answering it needs a scored deck, which this file never sees. */
+  reattributed?: (producer: string, consumer: string, tag: string) => boolean,
 ): PanelScore {
   // LOOKUP AS PRECISE AS STORAGE. A verdict is stored per MECHANISM (`implied`), so consulting the
   // cache by triple alone made the score depend on which row happened to sit LAST in the file — the
@@ -179,7 +189,7 @@ export function scorePanel(
   const seen = new Set<string>();
   const out: PanelScore = {
     real: 0, false: 0, uncertain: 0, unjudged: [], falses: [], dropped: 0, droppedFalse: 0,
-    droppedRetag: 0, droppedLost: 0, droppedRot: 0, droppedRegression: 0,
+    droppedRetag: 0, droppedLost: 0, droppedRot: 0, droppedReattributed: 0, droppedRegression: 0,
     recallHeld: 0, recallLost: 0, recall: null, precision: null,
   };
   for (const c of current) {
@@ -214,6 +224,7 @@ export function scorePanel(
     if (joined.has(pairKey(producer, consumer))) { out.droppedRetag++; continue; }
     out.droppedLost++;
     if (rotted(producer, consumer)) out.droppedRot++;
+    else if (reattributed?.(producer, consumer, k.slice(k.lastIndexOf("|") + 1))) out.droppedReattributed++;
     else out.droppedRegression++;
   }
 
@@ -226,8 +237,19 @@ export function scorePanel(
     if (rotted(v.producer, v.consumer)) continue;
     realPairs.add(pairKey(v.producer, v.consumer));
   }
+  // A re-attributed claim is HELD. The engine still says the two cards work together; it just
+  // names the token that carries the relation. Scoring that as a loss would push the measure toward
+  // a cruder model, which is the opposite of what it is for.
+  const stillClaimed = new Map<string, boolean>();
+  for (const v of cache) {
+    if (v.verdict !== "real") continue;
+    const k = pairKey(v.producer, v.consumer);
+    if (joined.has(k)) { stillClaimed.set(k, true); continue; }
+    if (reattributed?.(v.producer, v.consumer, v.tag)) stillClaimed.set(k, true);
+    else if (!stillClaimed.has(k)) stillClaimed.set(k, false);
+  }
   for (const k of realPairs) {
-    if (joined.has(k)) out.recallHeld++;
+    if (stillClaimed.get(k)) out.recallHeld++;
     else out.recallLost++;
   }
   const opportunities = out.recallHeld + out.recallLost;

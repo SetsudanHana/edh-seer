@@ -191,3 +191,29 @@ test("a dropped claim that was judged false counts as a gate working, not a loss
   // ...and a false claim is not a recall opportunity either.
   expect(s.recallHeld + s.recallLost).toBe(1);
 });
+
+// A PAIR CAN STOP JOINING DIRECTLY AND STILL BE CLAIMED (2026-09-07, roadmap Z1). Reproduced from
+// `Oath of Liliana -> Ayara, First of Locthwain`, one of the six owner-judged "regressions":
+// Ayara triggers on a black creature entering, Oath is a Legendary ENCHANTMENT so it never enters
+// as one, and the relation belongs to the 2/2 Zombie it makes. The engine models that as
+// `Oath -> Zombie [token] -> Ayara` -- two hops, same claim. Aphemia in the same deck keeps a
+// DIRECT edge only because it is itself a creature, so casting it triggers Ayara by entering.
+// Counting that as a lost edge sends someone to fix an engine that is right.
+test("a claim re-attributed to a token the producer makes is not a loss", () => {
+  const cache = [v("Oath of Liliana", "Ayara", "enters:creature", "real")];
+  const reattributed = (p: string, c: string, t: string) =>
+    p === "Oath of Liliana" && c === "Ayara" && t === "enters:creature";
+
+  const blind = scorePanel([], cache);
+  expect(blind.droppedRegression).toBe(1);
+  expect(blind.recall).toBe(0);
+
+  const seeing = scorePanel([], cache, undefined, reattributed);
+  expect(seeing.droppedReattributed).toBe(1);
+  expect(seeing.droppedRegression).toBe(0);
+  // RECALL COUNTS IT AS HELD: the engine still says these two cards work together, so a measure of
+  // "did we keep the true edges" must not punish the model for saying it more precisely.
+  expect(seeing.recallHeld).toBe(1);
+  expect(seeing.recallLost).toBe(0);
+  expect(seeing.recall).toBe(1);
+});
