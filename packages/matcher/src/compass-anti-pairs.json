@@ -1,0 +1,69 @@
+{
+  "why": "THE COMPASS ONLY EVER ASKED 'DID WE FIND THE EDGE'. compass-pairs.json is 55 positive representatives and reads 55/55, which an engine that joined EVERY pair would also score. These are the negative half: one representative per CLASS of false edge, keyed on the TAG the panel judged (not on a mechanism category, which is what the positive compass uses), chosen from the panel's 579 FALSE verdicts so each carries a judged argument rather than an invented one. The class names are the panel's own `cause` values.",
+  "pairs": [
+    {
+      "a": "Abstruse Appropriation",
+      "b": "Nulldrifter",
+      "class": "false-care",
+      "why": "Nulldrifter triggers on casting ITSELF, not on you casting a spell. The consumer does not care about the event it was credited with.",
+      "source": "panel verdict, owner-judged (blind agreement draw 2026-08-07)",
+      "verified": true,
+      "tag": "cast:any"
+    },
+    {
+      "a": "Amarant Coral",
+      "b": "Leyline of Resonance",
+      "class": "subject-mismatch",
+      "why": "Leyline of Resonance triggers on casting an INSTANT OR SORCERY that targets a single creature you control. A creature spell never satisfies it.",
+      "source": "panel verdict, owner-judged (blind agreement draw round 2, 2026-08-07)",
+      "verified": true,
+      "tag": "cast:creature"
+    },
+    {
+      "a": "Hedron Archive",
+      "b": "Arjun, the Shifting Flame",
+      "class": "generic",
+      "why": "Arjun triggers on ANY spell you cast, so pairing him with each of 60 spells is a mesh, not a synergy. The 2026-08-16 ruling: a deck role is not a pairwise edge.",
+      "source": "panel verdict (2026-08-07)",
+      "verified": true,
+      "tag": "cast:any"
+    },
+    {
+      "a": "Abstruse Appropriation",
+      "b": "Nulldrifter",
+      "class": "consumer-qualifier",
+      "why": "STILL CLAIMED as of 2026-09-07. Same pair as the false-care row above, under a different tag: the consumer's qualifier is not being read, so a broader cast tag still joins them.",
+      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
+      "tag": "cast:spell"
+    },
+    {
+      "a": "Misty Rainforest",
+      "b": "Yuna, Grand Summoner",
+      "class": "intervening-if",
+      "why": "STILL CLAIMED as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied.",
+      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
+      "tag": "dies:permanent"
+    }
+  ],
+  "knownDefects": [
+    {
+      "a": "Uthros Research Craft",
+      "b": "Talisman of Dominance",
+      "class": "false-emit",
+      "why": "STILL JOINED IN PAIR ISOLATION as of 2026-09-07. Uthros puts charge counters on ITSELF. It pumps nothing, so the producer never supplies the event.",
+      "source": "panel verdict (2026-08-07)",
+      "verified": true,
+      "tag": "static:pump"
+    },
+    {
+      "a": "Incubation Druid",
+      "b": "Evolution Witness",
+      "class": "self-reference",
+      "why": "STILL JOINED IN PAIR ISOLATION as of 2026-09-07. SELF-REFERENCE ON BOTH SIDES. Incubation Druid's Adapt puts counters on ITSELF; Evolution Witness triggers on counters put on ITSELF. This is the family that was 74% of all false edges.",
+      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
+      "verified": true,
+      "tag": "counter-added:creature"
+    }
+  ],
+  "context": "MEASURED IN PAIR ISOLATION, the same context the positive compass uses: `pairReasons(a, b, hierarchy)` with no deck around it. That is NOT what the product runs -- `analyzeDeckStructured` adds deck-level passes, chosenType resolution above all -- and the two disagree. Of these seven rows, FOUR flip between the two contexts: the two listed as known defects here are CLEAN in a deck, and two of the five guards here are JOINED in a deck. Both halves of the compass inherit this caveat, so 55/55 in isolation is not a claim about a deck. Recorded rather than papered over; see roadmap Z3."
+}

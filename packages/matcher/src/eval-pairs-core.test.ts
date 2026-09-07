@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Reason, Card } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
-import { classifyPair, type CompassPair } from "./eval-pairs-core.js";
+import { classifyAntiPair, classifyPair, type AntiPair, type CompassPair } from "./eval-pairs-core.js";
 
 const pair: CompassPair = {
   a: "Blood Artist", b: "Viscera Seer", category: "aristocrats",
@@ -47,4 +47,24 @@ test("NO-EDGE + MISSING-TAG-A when card A has no theme tags", () => {
 test("NO-EDGE + MISSING-TAG-B when only card B lacks theme tags", () => {
   const out = classifyPair(pair, [], dc("a", true), dc("b", false));
   expect(out.noEdgeCause).toBe("MISSING-TAG-B");
+});
+
+// THE NEGATIVE HALF OF THE COMPASS. `compass-pairs.json` reads 55/55 and an engine that joined
+// every pair in the deck would score exactly the same, because nothing ever asked "and what must
+// NOT join". These rows are one representative per class of false edge, taken from the panel's
+// judged FALSE verdicts.
+const anti = (tag: string, cls = "false-care"): AntiPair => ({ a: "A", b: "B", tag, class: cls, why: "" });
+
+test("an anti-pair is clean only when the engine makes no claim in that category", () => {
+  const r = (tag: string): Reason => ({ tag, text: "" });
+  expect(classifyAntiPair(anti("cast:any"), [])).toBe("clean");
+  expect(classifyAntiPair(anti("cast:any"), [r("cast:any")])).toBe("false-edge");
+});
+
+// NARROWER THAN "ANY REASON AT ALL", ON PURPOSE. Two cards can legitimately relate through some
+// other mechanism, and failing on that would make the guard un-satisfiable: Abstruse Appropriation
+// and Nulldrifter DO join under another tag today, and only the `cast:any` claim is the false one.
+test("an anti-pair tolerates a relation through a different mechanism", () => {
+  const other: Reason = { tag: "enters:creature", text: "" };
+  expect(classifyAntiPair(anti("cast:any"), [other])).toBe("clean");
 });
