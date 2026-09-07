@@ -1,6 +1,6 @@
 import { normalizeName } from "@edh-seer/data";
 import type { MechanismCategory } from "@edh-seer/matcher/mechanisms";
-import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 
 /** A raw LLM-proposed pair before name resolution / dedup. */
 export interface RawPair {
@@ -30,7 +30,7 @@ export function pairKey(a: string, b: string): string {
 }
 
 export interface BuildResult {
-  accepted: GoldPair[];
+  accepted: CompassPair[];
   unresolved: RawPair[];
   duplicates: RawPair[];
 }
@@ -40,11 +40,11 @@ export interface BuildResult {
 export function dedupeAndBuild(
   raw: RawPair[],
   category: MechanismCategory,
-  existing: GoldPair[],
+  existing: CompassPair[],
   resolve: (name: string) => string | null,
 ): BuildResult {
   const seen = new Set(existing.map((e) => pairKey(e.a, e.b)));
-  const accepted: GoldPair[] = [];
+  const accepted: CompassPair[] = [];
   const unresolved: RawPair[] = [];
   const duplicates: RawPair[] = [];
   for (const p of raw) {

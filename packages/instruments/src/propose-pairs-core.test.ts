@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { parseProposals, pairKey, dedupeAndBuild } from "./propose-pairs-core.js";
-import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 
 test("parseProposals reads a JSON array of {a,b,note}, ignoring extra keys", () => {
   const raw = '[{"a":"Blood Artist","b":"Viscera Seer","note":"sac drain","x":1}]';
@@ -24,7 +24,7 @@ test("pairKey is order-insensitive and normalized", () => {
 test("dedupeAndBuild resolves names, drops unresolved, drops existing duplicates", () => {
   const resolve = (n: string): string | null =>
     n === "Bad Card" ? null : n.replace(/\s+the\s+/i, " The ");
-  const existing: GoldPair[] = [
+  const existing: CompassPair[] = [
     { a: "Blood Artist", b: "Viscera Seer", category: "aristocrats", note: "", source: "seed", verified: true },
   ];
   const out = dedupeAndBuild(

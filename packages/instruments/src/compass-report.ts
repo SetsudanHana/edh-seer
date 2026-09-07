@@ -1,7 +1,7 @@
-import type { GoldPair, Outcome } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair, Outcome } from "@edh-seer/matcher/eval-pairs-core";
 
 export interface PairResult {
-  pair: GoldPair;
+  pair: CompassPair;
   outcome: Outcome;
 }
 

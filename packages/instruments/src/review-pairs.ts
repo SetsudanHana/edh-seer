@@ -2,12 +2,12 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { applyDecision, pendingIndices, type Decision } from "./review-core.js";
-import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 
-const GOLD_URL = new URL("../../matcher/src/goldpairs.json", import.meta.url);
+const GOLD_URL = new URL("../../matcher/src/compass-pairs.json", import.meta.url);
 
 async function main(): Promise<void> {
-  let pairs = JSON.parse(readFileSync(GOLD_URL, "utf8")) as GoldPair[];
+  let pairs = JSON.parse(readFileSync(GOLD_URL, "utf8")) as CompassPair[];
   const rl = createInterface({ input: process.stdin, output: process.stdout });
 
   // Re-read pending indices after every mutation, since reject shifts positions.

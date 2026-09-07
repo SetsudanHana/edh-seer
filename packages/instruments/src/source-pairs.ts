@@ -4,9 +4,9 @@ import { connect, loadConfig, mongoLookup, normalizeName } from "@edh-seer/data"
 import { MECHANISM_CATEGORIES, type MechanismCategory } from "@edh-seer/matcher/mechanisms";
 import { CATEGORY_EDHREC_TAG, parseHighSynergy, pairsFromCards, tagUrl } from "./edhrec-core.js";
 import { dedupeAndBuild } from "./propose-pairs-core.js";
-import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 
-const GOLD_URL = new URL("../../matcher/src/goldpairs.json", import.meta.url);
+const GOLD_URL = new URL("../../matcher/src/compass-pairs.json", import.meta.url);
 
 async function main(): Promise<void> {
   const arg = process.argv.find((a) => a.startsWith("--category="))?.slice("--category=".length);
@@ -21,7 +21,7 @@ async function main(): Promise<void> {
 
   const store = await connect(loadConfig());
   const lookup = mongoLookup(store);
-  let gold = JSON.parse(readFileSync(GOLD_URL, "utf8")) as GoldPair[];
+  let gold = JSON.parse(readFileSync(GOLD_URL, "utf8")) as CompassPair[];
 
   for (const category of categories) {
     const slug = CATEGORY_EDHREC_TAG[category];
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 
   await store.close();
   writeFileSync(fileURLToPath(GOLD_URL), JSON.stringify(gold, null, 2) + "\n");
-  console.log(`goldpairs.json now ${gold.length} entries (${gold.filter((p) => p.verified).length} verified).`);
+  console.log(`compass-pairs.json now ${gold.length} entries (${gold.filter((p) => p.verified).length} verified).`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -4,12 +4,12 @@ import { connect, loadConfig, mongoLookup, normalizeName, docToCard } from "@edh
 import type { CardTags } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "@edh-seer/matcher";
 import type { DeckCard } from "@edh-seer/matcher/types";
-import { classifyPair, type GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import { classifyPair, type CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 import { buildReport, formatReport, type PairResult } from "./compass-report.js";
 
 const GOLD = JSON.parse(
-  readFileSync(new URL("../../matcher/src/goldpairs.json", import.meta.url), "utf8"),
-) as GoldPair[];
+  readFileSync(new URL("../../matcher/src/compass-pairs.json", import.meta.url), "utf8"),
+) as CompassPair[];
 
 /** Resolve a card name to a DeckCard (card + tags), or null when the name is unknown. */
 async function resolveCard(

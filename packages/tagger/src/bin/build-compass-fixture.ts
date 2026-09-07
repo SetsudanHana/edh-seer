@@ -1,7 +1,7 @@
 /** One-off: normalize the cards the compass gold pairs reference and commit the result as a test
  *  fixture, so the derivation gate runs forever with no API credits and no database.
  *
- *  Usage: TAGGER_PROVIDER=anthropic tsx src/bin/build-gold-fixture.ts */
+ *  Usage: TAGGER_PROVIDER=anthropic tsx src/bin/build-compass-fixture.ts */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import { splitTypeLine } from "../characteristics.js";
@@ -13,10 +13,10 @@ import { NORMALIZE_VERSION } from "../normalize-prompt.js";
 import type { Characteristics } from "../schema.js";
 
 const GOLD = JSON.parse(readFileSync(
-  new URL("../../../matcher/src/goldpairs.json", import.meta.url), "utf8",
+  new URL("../../../matcher/src/compass-pairs.json", import.meta.url), "utf8",
 )) as { a: string; b: string; verified: boolean }[];
 
-const OUT = new URL("../../../matcher/src/fixtures/gold-clauses.json", import.meta.url);
+const OUT = new URL("../../../matcher/src/fixtures/compass-clauses.json", import.meta.url);
 
 const names = [...new Set(GOLD.filter((p) => p.verified).flatMap((p) => [p.a, p.b]))].sort();
 const store = await connect(loadConfig());

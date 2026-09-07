@@ -29,7 +29,7 @@ import { deriveCardTags } from "@edh-seer/tagger";
 import type { CardTags, Characteristics, ClauseRecord } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "@edh-seer/matcher";
 import type { DeckCard } from "@edh-seer/matcher/types";
-import { classifyPair, type GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import { classifyPair, type CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 
 interface Fixture {
   name: string;
@@ -39,10 +39,10 @@ interface Fixture {
 }
 
 const GOLD = JSON.parse(
-  readFileSync(new URL("../../matcher/src/goldpairs.json", import.meta.url), "utf8"),
-) as GoldPair[];
+  readFileSync(new URL("../../matcher/src/compass-pairs.json", import.meta.url), "utf8"),
+) as CompassPair[];
 const FIXTURE = JSON.parse(
-  readFileSync(new URL("../../matcher/src/fixtures/gold-clauses.json", import.meta.url), "utf8"),
+  readFileSync(new URL("../../matcher/src/fixtures/compass-clauses.json", import.meta.url), "utf8"),
 ) as Fixture[];
 const byName = new Map(FIXTURE.map((f) => [f.name, f]));
 

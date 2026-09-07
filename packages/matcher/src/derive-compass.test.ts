@@ -4,7 +4,7 @@ import { deriveCardTags } from "@edh-seer/tagger";
 import type { Characteristics } from "@edh-seer/tagger";
 import type { ClauseRecord } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "./index.js";
-import { classifyPair, type GoldPair } from "./eval-pairs-core.js";
+import { classifyPair, type CompassPair } from "./eval-pairs-core.js";
 import type { DeckCard } from "./types.js";
 
 interface Fixture {
@@ -17,17 +17,17 @@ interface Fixture {
 }
 
 const FIXTURE = JSON.parse(
-  readFileSync(new URL("./fixtures/gold-clauses.json", import.meta.url), "utf8"),
+  readFileSync(new URL("./fixtures/compass-clauses.json", import.meta.url), "utf8"),
 ) as Fixture[];
 const GOLD = JSON.parse(
-  readFileSync(new URL("./goldpairs.json", import.meta.url), "utf8"),
-) as GoldPair[];
+  readFileSync(new URL("./compass-pairs.json", import.meta.url), "utf8"),
+) as CompassPair[];
 
 const byName = new Map(FIXTURE.map((f) => [f.name, f]));
 
 function deckCard(name: string): DeckCard {
   const f = byName.get(name);
-  if (!f) throw new Error(`fixture missing card: ${name} — regenerate with build-gold-fixture.ts`);
+  if (!f) throw new Error(`fixture missing card: ${name} — regenerate with build-compass-fixture.ts`);
   return {
     card: {
       name: f.name,

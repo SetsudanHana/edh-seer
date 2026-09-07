@@ -4,7 +4,7 @@ import { cardThemeTags } from "./edges.js";
 import { categoryMatches, type MechanismCategory } from "./mechanisms.js";
 
 /** One curated gold synergy pair. `verified` gates whether eval counts it. */
-export interface GoldPair {
+export interface CompassPair {
   a: string;
   b: string;
   category: MechanismCategory;
@@ -32,7 +32,7 @@ function themeTagCount(dc: DeckCard): number {
 }
 
 /** Classify a gold pair from its emitted reasons and the two cards' tag state. */
-export function classifyPair(pair: GoldPair, reasons: Reason[], a: DeckCard, b: DeckCard): Outcome {
+export function classifyPair(pair: CompassPair, reasons: Reason[], a: DeckCard, b: DeckCard): Outcome {
   const matched = reasons.find((r) => categoryMatches(r, pair.category));
   if (matched) return { status: "PASS", matchedReason: matched, reasons };
   if (reasons.length > 0) return { status: "WRONG-REASON", reasons };

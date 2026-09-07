@@ -1,12 +1,12 @@
 import { expect, test } from "vitest";
 import { buildReport, formatReport, type PairResult } from "./compass-report.js";
-import type { GoldPair, Outcome } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair, Outcome } from "@edh-seer/matcher/eval-pairs-core";
 
-const gp = (category: GoldPair["category"]): GoldPair => ({
+const gp = (category: CompassPair["category"]): CompassPair => ({
   a: "A", b: "B", category, note: "", source: "t", verified: true,
 });
 
-const result = (category: GoldPair["category"], outcome: Outcome): PairResult => ({
+const result = (category: CompassPair["category"], outcome: Outcome): PairResult => ({
   pair: gp(category), outcome,
 });
 
