@@ -68,8 +68,40 @@ export interface PanelScore {
    *  re-implementing it is how a reader ends up measuring something adjacent to the panel. Roadmap
    *  C7 was a HAND-TRANSCRIBED version of this list and went stale by 41 claims in two days. */
   falses: { claim: PanelClaim; note: string }[];
-  /** Cached verdicts the engine no longer claims. Kept, not deleted: the change may be reverted. */
+  /** Cached verdicts the engine no longer claims. Kept, not deleted: the change may be reverted.
+   *
+   *  ON ITS OWN THIS NUMBER READS AS ATTRITION AND MOSTLY IS NOT. Measured 2026-09-07: 704 dropped,
+   *  147 of them judged REAL, and splitting those by hand gave 89 retags, 8 rotted verdicts and 50
+   *  genuine regressions. The three fields below are that split. */
   dropped: number;
+  /** A dropped claim the panel had judged FALSE. THIS IS THE GATES WORKING, not attrition: on the
+   *  2026-09-07 reading it was 528 of the 704, and counting it beside the losses is what made the
+   *  headline number unreadable. Every field below counts only claims judged REAL. */
+  droppedFalse: number;
+  /** Dropped because the TAG was renamed while the pair still joins (`cast:artifact` ->
+   *  `cast:spell`, `enters:any` -> `enters:permanent`). Not a loss, and it must not cost recall. */
+  droppedRetag: number;
+  /** Dropped because the pair no longer joins at all: `droppedRot + droppedRegression`. */
+  droppedLost: number;
+  /** A lost pair naming a card that is no longer in its deck. NOT a regression -- on the live panel
+   *  every one of these was the RESOLVER being fixed, not the engine losing an edge. Always 0 unless
+   *  the caller supplies `pairInDeck`, because nothing in this file can see a decklist. */
+  droppedRot: number;
+  /** A lost pair whose two cards are both still in the deck. The only bucket that is a defect. */
+  droppedRegression: number;
+  /** Pairs carrying at least one REAL verdict that the engine still joins, and those it does not.
+   *  Rotted pairs are in neither: a verdict about a card that is not in the deck is not a recall
+   *  opportunity. PAIR-LEVEL because the panel's unit is the pair -- a pair with three REAL claims
+   *  that keeps one is held, not two thirds lost. */
+  recallHeld: number;
+  recallLost: number;
+  /** `recallHeld / (recallHeld + recallLost)`, or null when the panel offers no REAL pair to hold.
+   *
+   *  THE PANEL REPORTED PRECISION AND NOTHING ELSE UNTIL 2026-09-07, and precision alone cannot be
+   *  compared across a change that shrinks the claim set: the engine claimed 420 of 1,121 judged
+   *  claims that day and read 99.0%, against 92.9% recorded a fortnight earlier on a set nearly
+   *  three times larger. A gate that deletes every claim it is unsure of scores 100%. */
+  recall: number | null;
   precision: number | null;
 }
 
@@ -127,6 +159,10 @@ export function mergeVerdicts(
 export function scorePanel(
   current: readonly PanelClaim[],
   cache: readonly PanelVerdict[],
+  /** Are both of this pair's cards still in the deck the panel drew it from? Injected because
+   *  `panel-core` never reads a decklist. Absent, every lost pair counts as a regression -- the
+   *  conservative direction, since it can only over-report loss. */
+  pairInDeck?: (producer: string, consumer: string) => boolean,
 ): PanelScore {
   // LOOKUP AS PRECISE AS STORAGE. A verdict is stored per MECHANISM (`implied`), so consulting the
   // cache by triple alone made the score depend on which row happened to sit LAST in the file — the
@@ -141,7 +177,11 @@ export function scorePanel(
     else exact.set(`${k}|${v.implied}`, v);
   }
   const seen = new Set<string>();
-  const out: PanelScore = { real: 0, false: 0, uncertain: 0, unjudged: [], falses: [], dropped: 0, precision: null };
+  const out: PanelScore = {
+    real: 0, false: 0, uncertain: 0, unjudged: [], falses: [], dropped: 0, droppedFalse: 0,
+    droppedRetag: 0, droppedLost: 0, droppedRot: 0, droppedRegression: 0,
+    recallHeld: 0, recallLost: 0, recall: null, precision: null,
+  };
   for (const c of current) {
     const k = claimKey(c.producer, c.consumer, c.tag);
     seen.add(k);
@@ -154,7 +194,45 @@ export function scorePanel(
   // "Cached verdicts the engine no longer claims" counts CLAIMS, so it counts distinct triples
   // across both maps — a claim with a verdict for each mechanism is one dropped claim, not two.
   const cachedClaims = new Set([...wildcard.keys(), ...[...exact.keys()].map((k) => k.slice(0, k.lastIndexOf("|")))]);
-  out.dropped = [...cachedClaims].filter((k) => !seen.has(k)).length;
+  const dropped = [...cachedClaims].filter((k) => !seen.has(k));
+  out.dropped = dropped.length;
+
+  // WHICH PAIRS THE ENGINE STILL JOINS, under any tag. This is the whole difference between a retag
+  // and a loss, and the panel could not tell them apart before because it only ever compared triples.
+  const pairKey = (producer: string, consumer: string): string => `${producer}|${consumer}`;
+  const joined = new Set(current.map((c) => pairKey(c.producer, c.consumer)));
+  const rotted = (producer: string, consumer: string): boolean =>
+    pairInDeck !== undefined && !pairInDeck(producer, consumer);
+
+  // SPLIT BY WHAT THE VERDICT SAID FIRST. A dropped claim the panel judged FALSE is a claim the
+  // engine stopped making wrongly -- the entire point of every gate shipped since the panel froze --
+  // and folding it in with the losses is how 704 came to read as attrition when 528 of it was a win.
+  for (const k of dropped) {
+    const v = exact.get(`${k}|true`) ?? exact.get(`${k}|false`) ?? wildcard.get(k);
+    if (v && v.verdict !== "real") { out.droppedFalse++; continue; }
+    const [producer, consumer] = k.split("|");
+    if (joined.has(pairKey(producer, consumer))) { out.droppedRetag++; continue; }
+    out.droppedLost++;
+    if (rotted(producer, consumer)) out.droppedRot++;
+    else out.droppedRegression++;
+  }
+
+  // Recall over pairs the panel judged REAL at least once. Read off the CACHE rather than off
+  // `dropped`, because a pair can be held by a claim that is itself unjudged -- which is exactly
+  // what a retag produces, and counting it as lost would re-create the number this replaces.
+  const realPairs = new Set<string>();
+  for (const v of cache) {
+    if (v.verdict !== "real") continue;
+    if (rotted(v.producer, v.consumer)) continue;
+    realPairs.add(pairKey(v.producer, v.consumer));
+  }
+  for (const k of realPairs) {
+    if (joined.has(k)) out.recallHeld++;
+    else out.recallLost++;
+  }
+  const opportunities = out.recallHeld + out.recallLost;
+  if (opportunities > 0) out.recall = out.recallHeld / opportunities;
+
   const decided = out.real + out.false;
   if (decided > 0) out.precision = out.real / decided;
   return out;
