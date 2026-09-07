@@ -39,6 +39,15 @@ jobs:
       # in a bin rather than a test, and the one test backed by a gitignored cache skips itself with
       # a reason instead of failing a clean checkout.
       - run: npm test
+      # A script's HOME is part of the design, and without a gate it drifts back: `src/bin` went
+      # 110 files to 53 when the one-shot measurements moved to research/, and a new census dropped
+      # into packages/matcher/src/bin would merge green. Two directions, and the second is the one
+      # that has actually bitten -- a test under research/ is collected by NO vitest project, so it
+      # reads as covered while its coverage is simply absent from the run above. Runs its own
+      # self-test first, because a gate nobody has watched fail is decoration.
+      # Inside this job for the same reason as the token gates below: `test (node 20|22)` are the
+      # only two checks branch protection knows about.
+      - run: npm run lint:bins
       # The design system in tokens/ is EXTRACTED from the shipped packages/web/client/src/index.css,
       # so it can drift from what actually renders. Three gates, all python3 stdlib (no pip step):
       #   validate_tokens   - every tokens/*.json parses as DTCG and every alias resolves
