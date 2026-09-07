@@ -185,7 +185,13 @@ if (s.unjudged.length) {
 // every de-meshing ruling does. A gate that deletes every claim it is unsure of scores 100%, so the
 // pairs the panel judged REAL and the engine no longer joins are printed beside the headline rather
 // than left for someone to work out from `dropped`.
-console.log(`  RECALL on pairs judged real: ${s.recall === null ? "n/a" : `${(s.recall * 100).toFixed(1)}%`} (${s.recallHeld} held, ${s.recallLost} lost)`);
+// RETENTION, NOT RECALL, and the distinction is not pedantry. The denominator is pairs the panel
+// judged REAL, and the panel was BUILT from claims this engine already made (`panel-build.ts`), so
+// every opportunity here is an edge the engine once found. It cannot see a true edge the engine has
+// NEVER claimed. The instrument that can is `recall-sample.ts` / `recall-core.ts`, whose one draw
+// (2026-08-06, 201 silent pairs) found 28 misses and has not been re-run since.
+console.log(`  RETENTION of pairs judged real: ${s.recall === null ? "n/a" : `${(s.recall * 100).toFixed(1)}%`} (${s.recallHeld} held, ${s.recallLost} lost)`);
+console.log(`    NOT recall — every pair here is one the engine once claimed; a never-claimed edge is invisible to it`);
 // THE GUARD IS A NAMED SET, not a percentage. A floor at "recall >= 91%" would let one lost edge
 // hide behind one recovered edge and read green while the contents rotted -- the failure this repo
 // already writes down as "compare by NAME, not by count". Same shape as `derive-compass.test.ts`'s
@@ -228,6 +234,7 @@ if (process.argv.includes("--bank")) {
 
 console.log(`  cached verdicts the engine no longer claims: ${s.dropped}`);
 console.log(`    ${s.droppedFalse} were judged FALSE — the engine stopped making a wrong claim, which is a win`);
+console.log(`    ${s.droppedUncertain} were judged UNCERTAIN — neither a win nor a loss`);
 console.log(`    of the ones judged REAL:`);
 console.log(`      ${s.droppedRetag} retag (the pair still joins under another tag — not a loss)`);
 console.log(`      ${s.droppedRot} rot (a card named by the verdict is not in that deck any more)`);
