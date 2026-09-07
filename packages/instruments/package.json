@@ -11,8 +11,7 @@
     "@edh-seer/data": "*",
     "@edh-seer/engine": "*",
     "@edh-seer/matcher": "*",
-    "@edh-seer/tagger": "*",
-    "mongodb": "^7.6.0"
+    "@edh-seer/tagger": "*"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
