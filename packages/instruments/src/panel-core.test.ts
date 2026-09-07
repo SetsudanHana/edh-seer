@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { claimKey, mergeVerdicts, scorePanel, type PanelVerdict } from "./panel-core.js";
+import { claimKey, mergeVerdicts, ratchetLostPairs, scorePanel, type PanelVerdict } from "./panel-core.js";
 
 const v = (p: string, c: string, t: string, verdict: PanelVerdict["verdict"]): PanelVerdict =>
   ({ producer: p, consumer: c, tag: t, verdict, cause: "", note: "" });
@@ -216,4 +216,32 @@ test("a claim re-attributed to a token the producer makes is not a loss", () => 
   expect(seeing.recallHeld).toBe(1);
   expect(seeing.recallLost).toBe(0);
   expect(seeing.recall).toBe(1);
+});
+
+// A PERCENTAGE FLOOR LETS ONE LOSS HIDE BEHIND ONE GAIN. The panel's guard is a NAMED set, the
+// same shape `derive-compass.test.ts` uses (`expect(regressions).toEqual([])`) and for the same
+// reason this repo already writes down as "compare by NAME, not by count".
+test("the lost set is reported by name, and it is the pairs recall counted as lost", () => {
+  const cache = [
+    v("A", "B", "t", "real"),        // still joined -> held
+    v("C", "D", "t", "real"),        // gone         -> lost, by name
+    v("E", "F", "t", "false"),       // never real   -> not a recall opportunity
+  ];
+  const s = scorePanel([{ producer: "A", consumer: "B", tag: "t" }], cache);
+  expect(s.lostPairs).toEqual(["C|D"]);
+  expect(s.lostPairs).toHaveLength(s.recallLost);
+});
+
+// BOTH DIRECTIONS, because a ratchet nobody has watched fail is decoration. A pair that starts
+// joining again must FAIL too, so the gain is banked rather than quietly spent later.
+test("the ratchet names what arrived and what recovered, in both directions", () => {
+  expect(ratchetLostPairs(["A|B", "C|D"], ["A|B", "C|D"])).toEqual({ added: [], recovered: [] });
+  // A loss nothing has accepted yet.
+  expect(ratchetLostPairs(["A|B", "C|D", "E|F"], ["A|B", "C|D"]))
+    .toEqual({ added: ["E|F"], recovered: [] });
+  // An improvement the list has not been updated for.
+  expect(ratchetLostPairs(["A|B"], ["A|B", "C|D"]))
+    .toEqual({ added: [], recovered: ["C|D"] });
+  // Sorted, so a re-run diffs cleanly rather than by hash order.
+  expect(ratchetLostPairs(["Z|Y", "A|B"], []).added).toEqual(["A|B", "Z|Y"]);
 });

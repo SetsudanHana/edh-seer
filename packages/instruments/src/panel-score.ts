@@ -20,7 +20,7 @@ import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
 import { claimFor } from "./precision-core.js";
-import { scorePanel, wilsonPanel, type PanelClaim, type PanelVerdict } from "./panel-core.js";
+import { ratchetLostPairs, scorePanel, wilsonPanel, type PanelClaim, type PanelVerdict } from "./panel-core.js";
 
 const PANEL = "docs/measurements/panel";
 const DECKS = "packages/cli/decks/calibration";
@@ -165,6 +165,7 @@ const reattributed = (producer: string, consumer: string, tag: string): boolean 
   reattributedKeys.has(`${producer}|${consumer}|${tag}`)
   || reattributedFamilies.has(`${producer}|${consumer}|${tag.split(":")[0]}`);
 
+let exitCode = 0;
 const s = scorePanel(distinct, cache, pairInDeck, reattributed);
 const [lo, hi] = wilsonPanel(s.real, s.real + s.false);
 console.log(`frozen panel — ${pairs.length} pairs, ${cache.length} cached verdicts`);
@@ -185,6 +186,46 @@ if (s.unjudged.length) {
 // pairs the panel judged REAL and the engine no longer joins are printed beside the headline rather
 // than left for someone to work out from `dropped`.
 console.log(`  RECALL on pairs judged real: ${s.recall === null ? "n/a" : `${(s.recall * 100).toFixed(1)}%`} (${s.recallHeld} held, ${s.recallLost} lost)`);
+// THE GUARD IS A NAMED SET, not a percentage. A floor at "recall >= 91%" would let one lost edge
+// hide behind one recovered edge and read green while the contents rotted -- the failure this repo
+// already writes down as "compare by NAME, not by count". Same shape as `derive-compass.test.ts`'s
+// `expect(regressions).toEqual([])`, and it fails in BOTH directions so a gain has to be banked.
+//
+// The list sits beside the panel it describes, under `docs/measurements/`, which is LOCAL ONLY.
+// That is deliberate: it is derived from the verdicts, and publishing it is the same disclosure
+// decision as publishing the panel. It also cannot run in CI for the same reason panel-score
+// cannot -- this needs Mongo -- so it guards where the change is made rather than where it merges.
+const KNOWN_LOST = `${PANEL}/known-lost-pairs.json`;
+// READ IT, DO NOT ASK WHETHER IT EXISTS FIRST. `existsSync` then `readFileSync` is a check-then-use
+// race (CodeQL js/file-system-race, raised on this very line), and the try/catch is smaller code:
+// one read, and "absent" is just the failure case. `null` means the list has never been banked.
+const known: string[] | null = (() => {
+  try {
+    return (JSON.parse(readFileSync(KNOWN_LOST, "utf8")) as { pairs: string[] }).pairs;
+  } catch {
+    return null;
+  }
+})();
+if (process.argv.includes("--bank")) {
+  writeFileSync(KNOWN_LOST, `${JSON.stringify({ pairs: s.lostPairs }, null, 1)}\n`);
+  console.log(`\n  banked ${s.lostPairs.length} lost pairs -> ${KNOWN_LOST}`);
+} else if (known === null) {
+  console.log(`\n  no ${KNOWN_LOST} yet — run with --bank to record the ${s.lostPairs.length} current losses`);
+} else {
+  const { added, recovered } = ratchetLostPairs(s.lostPairs, known);
+  if (added.length) {
+    console.log(`\n  RATCHET FAILED — ${added.length} pair(s) the panel judged REAL are newly unjoined:`);
+    for (const p of added) console.log(`    + ${p}`);
+  }
+  if (recovered.length) {
+    console.log(`\n  RATCHET FAILED — ${recovered.length} pair(s) recovered and were never banked:`);
+    for (const p of recovered) console.log(`    - ${p}`);
+    console.log(`    (this is GOOD news; re-run with --bank so the gain cannot be spent silently)`);
+  }
+  if (!added.length && !recovered.length) console.log(`\n  ratchet: ok — the ${known.length} known losses are exactly the ones still lost`);
+  exitCode = added.length || recovered.length ? 1 : 0;
+}
+
 console.log(`  cached verdicts the engine no longer claims: ${s.dropped}`);
 console.log(`    ${s.droppedFalse} were judged FALSE — the engine stopped making a wrong claim, which is a win`);
 console.log(`    of the ones judged REAL:`);
@@ -243,3 +284,5 @@ if (out && s.unjudged.length) {
   console.log(`\n  wrote the debt as a worksheet -> ${out}`);
 }
 await store.close();
+// Non-zero when the named ratchet moved in either direction, so a script or a shell `&&` sees it.
+process.exitCode = exitCode;
