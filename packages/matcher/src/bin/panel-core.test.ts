@@ -125,3 +125,69 @@ test("scoring reads the verdict for the mechanism the engine asserts, not whiche
   expect(scorePanel(claim(true), both).real).toBe(1);
   expect(scorePanel(claim(true), [...both].reverse()).real).toBe(1);
 });
+
+// `dropped` WAS ONE NUMBER FOR FOUR DIFFERENT EVENTS, and it read as attrition (2026-09-07).
+// Measured on the live panel: 704 cached verdicts the engine no longer claimed, 147 of them judged
+// REAL. Splitting them by hand found 89 RETAGS (the pair still joins, the tag was renamed --
+// `cast:artifact` -> `cast:spell`, `enters:any` -> `enters:permanent`), 8 ROT (the named card no
+// longer resolves into that deck, because the RESOLVER was fixed: a decklist line "Rampant Growth"
+// used to resolve to the split card `Studious First-Year // Rampant Growth`) and 50 genuine
+// regressions. One number that mixes "we renamed a tag" with "we lost a true edge" cannot be acted
+// on in either direction.
+test("dropped separates a retag from a lost pair", () => {
+  const cache = [v("A", "B", "cast:artifact", "real"), v("C", "D", "t", "real")];
+  // A -> B still joins, under a new tag; C -> D is gone entirely.
+  const s = scorePanel([{ producer: "A", consumer: "B", tag: "cast:spell" }], cache);
+  expect(s.dropped).toBe(2);
+  expect(s.droppedRetag).toBe(1);
+  expect(s.droppedLost).toBe(1);
+  // The retag is not a loss, so it must not cost recall.
+  expect(s.recallHeld).toBe(1);
+  expect(s.recallLost).toBe(1);
+  expect(s.recall).toBeCloseTo(0.5);
+});
+
+// RECALL IS PAIR-LEVEL, because the panel's unit is the pair: "a change that alters which claims a
+// pair produces does not invalidate the panel". A pair with three REAL claims that keeps one is a
+// held pair, not two thirds of a loss.
+test("recall counts pairs with a REAL verdict, not claims", () => {
+  const cache = [
+    v("A", "B", "t1", "real"), v("A", "B", "t2", "real"), v("A", "B", "t3", "real"),
+    v("C", "D", "t1", "false"), // never real, so it is not a recall opportunity either way
+  ];
+  const s = scorePanel([{ producer: "A", consumer: "B", tag: "t1" }], cache);
+  expect(s.recallHeld).toBe(1);
+  expect(s.recallLost).toBe(0);
+  expect(s.recall).toBe(1);
+});
+
+// ROT IS NOT A REGRESSION, AND ONLY THE CALLER CAN TELL. `panel-core` never sees a decklist, so the
+// pair-in-deck test is injected. Absent, every lost pair counts as a regression -- the conservative
+// direction, since it can only over-report loss.
+test("a pair whose card left the deck is rot, and is excluded from recall", () => {
+  const cache = [v("Studious First-Year // Rampant Growth", "Guardian Project", "enters:creature", "real")];
+  const blind = scorePanel([], cache);
+  expect(blind.droppedRot).toBe(0);
+  expect(blind.droppedRegression).toBe(1);
+  expect(blind.recall).toBe(0);
+
+  const seeing = scorePanel([], cache, () => false);
+  expect(seeing.droppedRot).toBe(1);
+  expect(seeing.droppedRegression).toBe(0);
+  // Nothing real is left to hold OR lose, so recall is undefined rather than 0 -- a rotted verdict
+  // must not be able to drag the figure down.
+  expect(seeing.recallLost).toBe(0);
+  expect(seeing.recall).toBeNull();
+});
+
+// A DROPPED **FALSE** CLAIM IS A WIN AND MUST NOT SIT IN THE LOSS BUCKETS. First cut of this split
+// put all 704 through the retag/rot/regression funnel and reported "548 regression", of which 528
+// were claims the engine had correctly STOPPED making. The bucket names have to mean what they say.
+test("a dropped claim that was judged false counts as a gate working, not a loss", () => {
+  const s = scorePanel([], [v("A", "B", "t", "false"), v("C", "D", "t", "real")]);
+  expect(s.dropped).toBe(2);
+  expect(s.droppedFalse).toBe(1);
+  expect(s.droppedRegression).toBe(1);
+  // ...and a false claim is not a recall opportunity either.
+  expect(s.recallHeld + s.recallLost).toBe(1);
+});

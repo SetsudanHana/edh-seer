@@ -56,6 +56,14 @@ for (const p of pairs) {
 
 const current: PanelClaim[] = [];
 const oracle = new Map<string, string>();
+/** WHICH CARDS EACH DECK ACTUALLY RESOLVES TO TODAY, so a lost pair can be told apart from a verdict
+ *  about a card that is not in the deck any more. Both are "the engine no longer claims this" and
+ *  only one is a defect: on the 2026-09-07 reading, all 8 rotted pairs were the RESOLVER being FIXED
+ *  — a decklist line "Rampant Growth" used to resolve to the split card `Studious First-Year //
+ *  Rampant Growth`, whose corpus `searchNames` no longer carries the bare back-face name. */
+const resolvedByDeck = new Map<string, Set<string>>();
+const deckOfPair = new Map<string, string>();
+for (const p of pairs) deckOfPair.set(`${p.producer}|${p.consumer}`, p.deck);
 let missingDecks = 0;
 for (const [deck, want] of wantedByDeck) {
   const file = `${DECKS}/${deck}.txt`;
@@ -64,6 +72,7 @@ for (const [deck, want] of wantedByDeck) {
   const { cards, combos } = await resolveNames([...sections.commanders, ...sections.deck], lookup);
   for (const c of cards) oracle.set(c.name, (c as { oracleText?: string }).oracleText ?? "");
   const cmd = new Set(sections.commanders.map(normalizeName));
+  resolvedByDeck.set(deck, new Set(cards.map((c) => normalizeName(c.name))));
   const deckCards = await buildDeckCards(cards, lookup, tags);
   const report = analyzeDeckStructured(
     deckCards, cards.filter((c) => cmd.has(normalizeName(c.name))).map((c) => c.name),
@@ -100,7 +109,15 @@ if (claimsOut) {
   writeFileSync(claimsOut, `${distinct.map((c) => `${c.producer}|${c.consumer}|${c.tag}`).sort().join("\n")}\n`);
 }
 
-const s = scorePanel(distinct, cache);
+// A deck we could not read says nothing, so its pairs are treated as still present: rot is only
+// ever claimed on evidence, and the fallback direction over-reports regression rather than under.
+const pairInDeck = (producer: string, consumer: string): boolean => {
+  const present = resolvedByDeck.get(deckOfPair.get(`${producer}|${consumer}`) ?? "");
+  if (!present) return true;
+  return present.has(normalizeName(producer)) && present.has(normalizeName(consumer));
+};
+
+const s = scorePanel(distinct, cache, pairInDeck);
 const [lo, hi] = wilsonPanel(s.real, s.real + s.false);
 console.log(`frozen panel — ${pairs.length} pairs, ${cache.length} cached verdicts`);
 if (missingDecks) console.log(`  decks not found: ${missingDecks}`);
@@ -115,11 +132,22 @@ if (s.unjudged.length) {
   const best = (s.real + s.unjudged.length) / (s.real + s.false + s.unjudged.length);
   console.log(`    -> until it is judged, true panel precision is bounded [${(worst * 100).toFixed(1)}, ${(best * 100).toFixed(1)}]`);
 }
+// PRECISION ALONE CANNOT BE COMPARED ACROSS A CHANGE THAT SHRINKS THE CLAIM SET, which is what
+// every de-meshing ruling does. A gate that deletes every claim it is unsure of scores 100%, so the
+// pairs the panel judged REAL and the engine no longer joins are printed beside the headline rather
+// than left for someone to work out from `dropped`.
+console.log(`  RECALL on pairs judged real: ${s.recall === null ? "n/a" : `${(s.recall * 100).toFixed(1)}%`} (${s.recallHeld} held, ${s.recallLost} lost)`);
 console.log(`  cached verdicts the engine no longer claims: ${s.dropped}`);
+console.log(`    ${s.droppedFalse} were judged FALSE — the engine stopped making a wrong claim, which is a win`);
+console.log(`    of the ones judged REAL:`);
+console.log(`      ${s.droppedRetag} retag (the pair still joins under another tag — not a loss)`);
+console.log(`      ${s.droppedRot} rot (a card named by the verdict is not in that deck any more)`);
+console.log(`      ${s.droppedRegression} REGRESSION (both cards still there, the pair no longer joins)`);
 
-// `--rejudge` dumps EVERY live claim, judged or not, in the same worksheet shape. The 608 cached
+// `--rejudge` dumps EVERY live claim, judged or not, in the same worksheet shape. The cached
 // verdicts the engine no longer claims are excluded on purpose: re-judging a claim nothing makes
-// changes no reported number. Rows already carrying a USER verdict are excluded too -- the user is
+// changes no reported number. (This comment said "the 608" until 2026-09-07, when the real figure
+// was 704 — a count written into prose is a count that goes stale, so it is printed, not narrated.) Rows already carrying a USER verdict are excluded too -- the user is
 // the authority, so re-judging them would be overwriting the answer with the thing being tested.
 const rejudge = arg("--rejudge");
 if (rejudge) {
