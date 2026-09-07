@@ -1,6 +1,6 @@
 import { connect, loadConfig } from "@edh-seer/data";
-import type { CardTags } from "../schema.js";
-import { OTAG_EVENT_TO_VERB, loadOtagSemantics } from "../otags/semantics.js";
+import type { CardTags } from "../../packages/tagger/src/schema.js";
+import { OTAG_EVENT_TO_VERB, loadOtagSemantics } from "../../packages/tagger/src/otags/semantics.js";
 
 /**
  * Cross-check otag semantics against the LLM-tagged corpus, and list slugs whose meaning
