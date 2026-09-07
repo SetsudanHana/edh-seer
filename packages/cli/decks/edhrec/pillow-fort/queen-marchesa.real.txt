@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/r3u2ZtSd4rfSf9xo4DYTvA (source https://moxfield.com/decks/h0WgAToEVXGSn3HRC2GFGA)
+# tags Monarch, Forced Combat, Pillow Fort, Tokens, Group Hug; bracket 2; saved 2026-09-05; 643 tagged of 20070 indexed
+
+Commander
+1 Queen Marchesa
+
+Deck
+1 Arcane Signet
+1 Coin of Mastery
+1 Commander's Sphere
+1 Crown of Doom
+1 Crown of Gondor
+1 Orzhov Signet
+1 Patchwork Banner
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Wishclaw Talisman
+1 Arno Dorian
+1 Aya of Alexandria
+1 Breena, the Demagogue
+1 Champions of Minas Tirith
+1 Desmond Miles
+1 Fain, the Broker
+1 Forsworn Paladin
+1 Gadrak, the Crown-Scourge
+1 Guul Draz Assassin
+1 Humble Defector
+1 Jan Jansen, Chaos Crafter
+1 Kalain, Reclusive Painter
+1 Knights of the Black Rose
+1 Laurine, the Diversion
+1 Layla Hassan
+1 Magda, the Hoardmaster
+1 Mangara, the Diplomat
+1 Mari, the Killing Quill
+1 Massacre Girl
+1 Mayhem Devil
+1 Nadier's Nightblade
+1 Nelly Borca, Impulsive Accuser
+1 Odric, Lunarch Marshal
+1 Olivia, Opulent Outlaw
+1 Orzhov Advokist
+1 Pitiless Plunderer
+1 Royal Assassin
+1 Shadow, Mysterious Assassin
+1 Termination Facilitator
+1 Thorn of the Black Rose
+1 Vihaan, Goldwaker
+1 White Widow, Yelena Belova
+1 Windborn Muse
+1 Xantcha, Sleeper Agent
+1 Ash Barrens
+1 Battlefield Forge
+1 Black Dragon Gate
+1 Cliffgate
+1 Command Tower
+1 Concealed Courtyard
+1 Evolving Wilds
+1 Exotic Orchard
+1 Heap Gate
+5 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+6 Plains
+1 Shattered Landscape
+1 Shineshadow Snarl
+7 Swamp
+1 Throne of the High City
+1 Authority of the Consuls
+1 Court of Grace
+1 Court of Ire
+1 Dazzling Theater // Prop Room
+1 Marchesa's Decree
+1 Monologue Tax
+1 Origin of the Hidden Ones
+1 Shiny Impetus
+1 Sidequest: Catch a Fish
+1 Tenuous Truce
+1 Disrupt Decorum
+1 Excavation Technique
+1 Promise of Loyalty
+1 Secret Rendezvous
+1 Seize the Spoils
+1 Taunt from the Rampart
+1 Invasion of Fiora
+1 Invasion of New Capenna
+1 Mandate of Peace
+1 Master Warcraft
+1 Perch Protection
+1 Tragic Slip

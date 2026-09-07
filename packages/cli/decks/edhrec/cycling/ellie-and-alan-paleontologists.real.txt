@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/iP7e9nJ87AeFgucD4FU1zg (source https://archidekt.com/decks/14473482)
+# tags Multicolor Matters, Cycling; bracket 3; saved 2026-09-03; 167 tagged of 2854 indexed
+
+Commander
+1 Ellie and Alan, Paleontologists
+
+Deck
+1 Adagia, Windswept Bastion
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Drifting Meadow
+1 Dust Bowl
+1 Eiganjo, Seat of the Empire
+3 Forest
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Irrigated Farmland
+3 Island
+1 Lonely Sandbar
+1 Minamo, School at Water's Edge
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+3 Plains
+1 Rain-Slicked Copse
+1 Reliquary Tower
+1 Scattered Groves
+1 Secluded Steppe
+1 Slippery Karst
+1 Spara's Headquarters
+1 Temple Garden
+1 Tranquil Landscape
+1 Tranquil Thicket
+1 Yavimaya, Cradle of Growth
+1 Angel of the Ruins
+1 Angelic Sell-Sword
+1 Archaeomancer
+1 Aurora Awakener
+1 Bloom Tender
+1 Delighted Halfling
+1 Eagles of the North
+1 Elrond, Moon-Reader
+1 Emeritus of Ideation
+1 Eternal Witness
+1 Faeburrow Elder
+1 Feywild Caretaker
+1 Formidable Speaker
+1 Generous Ent
+1 Ioreth of the Healing House
+1 Jennika, Bad Apple Big Sister
+1 Marvin, Murderous Mimic
+1 Monstrosity of the Lake
+1 Nimble Obstructionist
+1 Plagon, Lord of the Beach
+1 Quirion Ranger
+1 Riptide Gearhulk
+1 Scryb Ranger
+1 Seedborn Muse
+1 Selvala, Eager Trailblazer
+1 Slogurk, the Overslime
+1 Spellseeker
+1 Tam, Mindful First-Year
+1 Tamiyo, Inquisitive Student
+1 Timeless Dragon
+1 Tomb of Horrors Adventurer
+1 Undermountain Adventurer
+1 Vedalken Aethermage
+1 Vizier of Tumbling Sands
+1 Waxen Shapethief
+1 Webstrike Elite
+1 White Plume Adventurer
+1 Witch Enchanter
+1 Astral Drift
+1 Astral Slide
+1 Crystalline Resonance
+1 Escape Protocol
+1 Prismatic Undercurrents
+1 Shimmerwilds Growth
+1 Crop Rotation
+1 Cyclonic Rift
+1 Erode
+1 Final Showdown
+1 Heroic Intervention
+1 March of Otherworldly Light
+1 Miscalculation
+1 Muddle the Mixture
+1 Swords to Plowshares
+1 Three Steps Ahead
+1 Currency Converter
+1 Fluctuator
+1 Monument to Endurance
+1 Puca's Eye
+1 Sarevok's Tome
+1 Sol Ring
+1 Thousand-Year Elixir
+1 Edge of Autumn
+1 Life from the Loam
+1 Lórien Revealed
+1 Spectacular Pileup
+1 Step Through

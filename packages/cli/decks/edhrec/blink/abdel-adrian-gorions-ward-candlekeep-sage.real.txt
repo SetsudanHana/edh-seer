@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/56ha1l2QHwxnZyZ5H8f9IQ (source https://archidekt.com/decks/11652242)
+# tags Blink; bracket 3; saved 2026-09-04; 795 tagged of 4369 indexed
+
+Commander
+1 Abdel Adrian, Gorion's Ward
+1 Candlekeep Sage
+
+Deck
+1 Aang's Iceberg
+1 Airbender Ascension
+1 Blessed Sanctuary
+1 Journey to Nowhere
+1 Quantum Entanglement
+1 Reality Acid
+1 Touch the Spirit Realm
+1 Valkyrie's Call
+1 Virtue of Knowledge
+1 Aang, Swift Savior
+1 Aether Channeler
+1 All-Fates Stalker
+1 Archaeomancer
+1 Charming Prince
+1 Cloud of Faeries
+1 Felidar Guardian
+1 Fiend Hunter
+1 Jeering Homunculus
+1 Malevolent Hermit
+1 Micromancer
+1 Niko, Light of Hope
+1 Peregrine Drake
+1 Phantom Steed
+1 Restoration Angel
+1 Skyclave Apparition
+1 Solemn Simulacrum
+1 Starfield Vocalist
+1 Sun Titan
+1 Twining Twins
+1 Venser, Shaper Savant
+1 Wall of Omens
+1 Watcher for Tomorrow
+1 Werefox Bodyguard
+1 White Plume Adventurer
+1 Yorion, Sky Nomad
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Command Tower
+1 Deserted Beach
+1 Fabled Passage
+1 Glacial Fortress
+1 Gleaming Bastion
+1 Hallowed Fountain
+1 Hengegate Pathway
+10 Island
+1 Mystic Gate
+12 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Skycloud Expanse
+1 Temple of Enlightenment
+1 Altar of the Brood
+1 Arcane Signet
+1 Azorius Signet
+1 Conjurer's Closet
+1 Panharmonicon
+1 Sol Ring
+1 Talisman of Progress
+1 Thought Vessel
+1 Avatar's Wrath
+1 Morningtide's Light
+1 Promise of Loyalty
+1 Starfall Invocation
+1 Cloudshift
+1 Eerie Interlude
+1 Ephemerate
+1 Essence Flux
+1 Getaway Glamer
+1 Ghostly Flicker
+1 Hide on the Ceiling
+1 Lae'zel's Acrobatics
+1 Momentary Blink
+1 Parting Gust
+1 Path to Exile
+1 Personify
+1 Planar Incision
+1 Swords to Plowshares
+1 Teferi's Time Twist

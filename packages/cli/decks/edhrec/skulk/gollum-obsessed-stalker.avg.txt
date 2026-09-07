@@ -1,0 +1,79 @@
+# edhrec average deck: https://edhrec.com/average-decks/gollum-obsessed-stalker/skulk
+# theme Skulk (11 decks)
+
+Commander
+1 Gollum, Obsessed Stalker
+
+Deck
+1 Arcane Signet
+1 Bilbo's Ring
+1 Bontu's Monument
+1 Demon's Horn
+1 Jet Medallion
+1 Lightning Greaves
+1 Mind Stone
+1 My Precious
+1 Pristine Talisman
+1 Sol Ring
+1 Staff of the Death Magus
+1 Swiftfoot Boots
+1 The Darkness Crystal
+1 Wayfarer's Bauble
+1 Well of Lost Dreams
+1 Access Tunnel
+1 Bojuka Bog
+1 Cabal Coffers
+1 Myriad Landscape
+1 Radiant Fountain
+1 Rogue's Passage
+28 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 War Room
+1 Basilica Screecher
+1 Blood Artist
+1 Creeping Bloodsucker
+1 Crypt Ghast
+1 Diamond Mare
+1 Dread Presence
+1 Elegy Acolyte
+1 Gollum, Riddle Master
+1 Gray Merchant of Asphodel
+1 K'rrik, Son of Yawgmoth
+1 Marauding Blight-Priest
+1 Moseo, Vein's New Dean
+1 Nighthawk Scavenger
+1 Noxious Gearhulk
+1 Pontiff of Blight
+1 Qarsi Revenant
+1 Sangromancer
+1 Shard of the Nightbringer
+1 Thrull Parasite
+1 Twilight Prophet
+1 Vampire Nighthawk
+1 Vito, Thorn of the Dusk Rose
+1 Witch of the Moors
+1 Call of the Ring
+1 Exquisite Blood
+1 Greed
+1 Sanguine Bond
+1 Consuming Corruption
+1 Crypt Incursion
+1 Dark Ritual
+1 Erebos's Intervention
+1 Go for the Throat
+1 March of Wretched Sorrow
+1 Not Dead After All
+1 Reckoner's Bargain
+1 Supernatural Stamina
+1 Tendrils of Corruption
+1 Blood Tithe
+1 Consume Spirit
+1 Consuming Vapors
+1 Corrupt
+1 Exsanguinate
+1 Feed the Swarm
+1 Night's Whisper
+1 Read the Bones
+1 Syphon Soul
+1 Withering Curse
+1 Zof Consumption

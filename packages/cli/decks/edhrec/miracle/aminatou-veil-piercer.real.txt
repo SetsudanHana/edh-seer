@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/7H5gvDCwkrzJwTIwXC39wA (source https://archidekt.com/decks/24892635)
+# tags Enchantress, Topdeck, Miracles; bracket 3; saved 2026-09-05; 26 tagged of 17506 indexed
+
+Commander
+1 Aminatou, Veil Piercer
+
+Deck
+1 Adarkar Wastes
+1 Bleachbone Verge
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Floodfarm Verge
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+5 Island
+1 Meticulous Archive
+1 Multiversal Passage
+2 Plains
+1 Polluted Delta
+1 Raffine's Tower
+1 Sea of Clouds
+1 Shadowy Backstreet
+2 Swamp
+1 Undercity Sewers
+1 Underground River
+1 Urborg, Tomb of Yawgmoth
+1 Urza's Saga
+1 Vault of Champions
+1 Watery Grave
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Counterspell
+1 Dark Ritual
+1 Enlightened Tutor
+1 Force of Negation
+1 Frantic Search
+1 Mana Drain
+1 Permission Denied
+1 Unwind
+1 Approach of the Second Sun
+1 Portent
+1 Redress Fate
+1 Temporal Mastery
+1 Terminus
+1 Arcane Signet
+1 Bender's Waterskin
+1 Commander's Sphere
+1 Fellwar Stone
+1 Lotus Petal
+1 Mox Amber
+1 Planetarium of Wan Shi Tong
+1 Scroll Rack
+1 Sensei's Divining Top
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Progress
+1 Archivist of Oghma
+1 Deep Gnome Terramancer
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Eiganjo Dynastorian
+1 Esper Sentinel
+1 Faerie Mastermind
+1 Fear of Sleep Paralysis
+1 High Fae Trickster
+1 Ledger Shredder
+1 Loran of the Third Path
+1 Lotho, Corrupt Shirriff
+1 Summon: Primal Odin
+1 Tataru Taru
+1 The Master of Keys
+1 The Queen of Dale
+1 Copy Enchantment
+1 Cramped Vents // Access Maze
+1 Curse of Unbinding
+1 Estrid's Invocation
+1 Exquisite Blood
+1 Extravagant Replication
+1 Gleaming Splendor
+1 Land Tax
+1 Leyline of Anticipation
+1 Mind's Dilation
+1 Mystic Remora
+1 One with the Multiverse
+1 Painful Quandary
+1 Price of Knowledge
+1 Restricted Office // Lecture Hall
+1 Rhystic Study
+1 Sanguine Bond
+1 Shadow of the Second Sun
+1 Shark Typhoon
+1 Smothering Tithe
+1 Sphere of Safety
+1 Spreading Plague
+1 Storm of Saruman
+1 The Eldest Reborn
+1 Treachery

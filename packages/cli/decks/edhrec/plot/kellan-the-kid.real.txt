@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/i9oa2gHJwmbEF6M3pD3BfQ (source https://archidekt.com/decks/21033442)
+# tags Flashback, Plot, Airbending, Foretell; bracket 2; saved 2026-09-03; 94 tagged of 7946 indexed
+
+Commander
+1 Kellan, the Kid
+
+Deck
+1 Aang, Swift Savior
+1 Aloe Alchemist
+1 Appa, Steadfast Guardian
+1 April O'Neil, Hacktivist
+1 Deep-Sea Kraken
+1 Doc Aurlock, Grizzled Genius
+1 Fblthp, Lost on the Range
+1 Green Slime
+1 Keeper of the Mind
+1 Monk Gyatso
+1 Princess Yue
+1 Rashmi, Eternities Crafter
+1 Razzle-Dazzler
+1 Savvy Trader
+1 Serra Paragon
+1 Sisterhood of Karn
+1 Splinter, Aging Champion
+1 Sunstar Lightsmith
+1 The Reality Chip
+1 The Thirteenth Doctor
+1 Urianger Augurelt
+1 Vega, the Watcher
+1 Adarkar Wastes
+1 Alchemist's Refuge
+1 Ancient Ziggurat
+1 Botanical Sanctum
+1 Brushland
+1 Dreamroot Cascade
+1 Flooded Grove
+1 Forest
+1 Fortified Village
+1 Glacial Fortress
+1 Hinterland Harbor
+6 Island
+1 Kishla Village
+1 Path of Ancestry
+1 Pillar of the Paruns
+5 Plains
+1 Prairie Stream
+1 Razorverge Thicket
+1 Restless Anchorage
+1 Seachrome Coast
+1 Seaside Citadel
+1 Sodden Verdure
+1 Sunpetal Grove
+1 Temple of Enlightenment
+1 Temple of Mystery
+1 Urban Retreat
+1 Yavimaya Coast
+1 Airbender's Reversal
+1 Airbending Lesson
+1 Arcane Denial
+1 Consult the Star Charts
+1 Ertai's Meddling
+1 Final Showdown
+1 Mystic Reflection
+1 Pongify
+1 Prismatic Strands
+1 Razorgrass Ambush
+1 Saving Grasp
+1 Sundering Growth
+1 Aligned Heart
+1 Extraordinary Journey
+1 In Too Deep
+1 Kellan Joins Up
+1 Propaganda
+1 Redemption Arc
+1 Seal of Cleansing
+1 Storm of Saruman
+1 The Legend of Yangchen
+1 Tocasia's Welcome
+1 Virtue of Loyalty
+1 Arcane Signet
+1 Brass Knuckles
+1 Explorer's Scope
+1 Gavel of the Righteous
+1 Howling Mine
+1 Inquisitorial Rosette
+1 Lightning Greaves
+1 Planetarium of Wan Shi Tong
+1 Relic of Legends
+1 River Song's Diary
+1 Sol Ring
+1 Artful Dodge
+1 Avatar's Wrath
+1 Doomskar
+1 Preordain
+1 See the Truth
+1 Starnheim Unleashed
+1 Tales of the Ancestors

@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/N-QzGMJGrbuJ39J_7UmJhg (source https://archidekt.com/decks/26008238)
+# tags Proliferate, Tap / Untap, +1/+1 Counters, Tokens, Artifacts, Sunburst, Charge Counters, Spacecraft; bracket 2; saved 2026-09-04; 5 tagged of 13172 indexed
+
+Commander
+1 Inspirit, Flagship Vessel
+
+Deck
+1 Adagia, Windswept Bastion
+1 Adarkar Wastes
+1 Ancient Den
+1 Archway of Innovation
+1 Buried Ruin
+1 Coastal Peak
+1 Command Bridge
+1 Command Tower
+1 Evolving Wilds
+1 Glacial Fortress
+1 Great Furnace
+1 Irrigated Farmland
+4 Island
+1 Karn's Bastion
+1 Kavaron, Memorial World
+3 Mountain
+1 Mystic Monastery
+1 Nesting Grounds
+1 Perilous Landscape
+3 Plains
+1 Razortide Bridge
+1 Seat of the Synod
+1 Shivan Reef
+1 Silverbluff Bridge
+1 Spire of Industry
+1 Sulfur Falls
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Uthros, Titanic Godcore
+1 Aetheric Amplifier
+1 Arcane Signet
+1 Darksteel Reactor
+1 Dawnsire, Sunstar Dreadnought
+1 Debris Field Crusher
+1 Extinguisher Battleship
+1 Insight Engine
+1 Lumen-Class Frigate
+1 Lux Artillery
+1 Lux Cannon
+1 Repurposing Bay
+1 Salvation Engine
+1 Sol Ring
+1 Solar Array
+1 Synthesizer Labship
+1 The Seriema
+1 Uthros Research Craft
+1 Warmaker Gunship
+1 Wedgelight Rammer
+1 Alibou, Ancient Witness
+1 Cayth, Famed Mechanist
+1 Coretapper
+1 Depthshaker Titan
+1 Enthusiastic Mechanaut
+1 Glassdust Hulk
+1 Hangar Scrounger
+1 Hangarback Walker
+1 Jhoira, Weatherlight Captain
+1 Kilo, Apogee Mind
+1 Mechan Navigator
+1 Mendicant Core, Guidelight
+1 Mm'menon, the Right Hand
+1 Nanoform Sentinel
+1 Patrolling Peacemaker
+1 Phyrexian Metamorph
+1 Ravenous Robots
+1 Rust Harvester
+1 Sami, Ship's Engineer
+1 Starfighter Pilot
+1 Steel Overseer
+1 Surge Conductor
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Austere Command
+1 Contentious Plan
+1 One with the Machine
+1 Organic Extinction
+1 Tezzeret's Gambit
+1 Thoughtcast
+1 Voyage Home
+1 Consult the Star Charts
+1 Dispatch
+1 Drill Too Deep
+1 Dual-Sun Technique
+1 Focus Fire
+1 Lithobraking
+1 Negate
+1 Ripples of Potential
+1 Thirst for Knowledge
+1 Inexorable Tide
+1 Resourceful Defense
+1 Thopter Spy Network
+1 Tezzeret, Betrayer of Flesh

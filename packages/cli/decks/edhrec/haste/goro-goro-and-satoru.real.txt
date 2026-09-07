@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/R7MzgtZm6Qcw3Os0nyPkBA (source https://archidekt.com/decks/18099735)
+# tags Dragons, Haste, Unblockable; bracket 3; saved 2026-09-04; 168 tagged of 8847 indexed
+
+Commander
+1 Goro-Goro and Satoru
+
+Deck
+1 Access Tunnel
+1 Bojuka Bog
+1 Command Tower
+1 Crumbling Necropolis
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fetid Pools
+1 Frostboil Snarl
+10 Island
+4 Mountain
+1 Path of Ancestry
+1 Reliquary Tower
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfur Falls
+1 Sunken Hollow
+4 Swamp
+1 Temple of Epiphany
+1 Aetherize
+1 Archmage's Charm
+1 Flip the Switch
+1 Murder
+1 Negate
+1 Pull from Tomorrow
+1 Alora, Merry Thief
+1 Azure Beastbinder
+1 Baleful Strix
+1 Cephalid Facetaker
+1 Changeling Outcast
+1 Deathcult Rogue
+1 Dimir Spybug
+1 Elturel Survivors
+1 Faerie Vandal
+1 Fallen Shinobi
+1 Gingerbrute
+1 Grazilaxx, Illithid Scholar
+1 Illvoi Galeblade
+1 Illvoi Infiltrator
+1 Inkfathom Witch
+1 Kolaghan, the Storm's Fury
+1 Loyal Apprentice
+1 Moon-Circuit Hacker
+1 Nezumi Prowler
+1 Nighthawk Scavenger
+1 Nightveil Sprite
+1 Prosperous Thief
+1 Pteramander
+1 Raven of Fell Omens
+1 Saheeli, the Sun's Brilliance
+1 Shadowmage Infiltrator
+1 Slither Blade
+1 Swift Warkite
+1 Tetsuko Umezawa, Fugitive
+1 Triton Shorestalker
+1 Ukkima, Stalking Shadow
+1 Urabrask the Hidden
+1 Arcane Signet
+1 Bident of Thassa
+1 Blade of Selves
+1 Champion's Helm
+1 Commander's Sphere
+1 Crystal Shard
+1 Darksteel Ingot
+1 Dimir Signet
+1 Hammer of Purphoros
+1 Mask of Memory
+1 Mind Stone
+1 Patchwork Banner
+1 Sol Ring
+1 Swiftfoot Boots
+1 Urabrask's Forge
+1 Whispersilk Cloak
+1 Blasphemous Act
+1 Curse of the Swine
+1 Feed the Swarm
+1 Of One Mind
+1 Break Through the Line
+1 Coastal Piracy
+1 Crucible of Fire
+1 Cunning Evasion
+1 Reconnaissance Mission
+1 Rising of the Day

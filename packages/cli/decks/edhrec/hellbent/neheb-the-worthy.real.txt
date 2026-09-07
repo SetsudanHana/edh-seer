@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/HaJKe38cBVpNUM1ZsHKURg (source https://archidekt.com/decks/13908780)
+# tags Hellbent, Minotaurs, Self-Discard, Madness; bracket 2; saved 2026-08-24; 9 tagged of 942 indexed
+
+Commander
+1 Neheb, the Worthy
+
+Deck
+1 Abandon Reason
+1 Cackling Flames
+1 Dark Withering
+1 Fiery Temper
+1 One with Nothing
+1 Tragic Fall
+1 Twinstrike
+1 Ahn-Crop Crasher
+1 Anaba Ancestor
+1 Anaba Spirit Crafter
+1 Bloodrage Brawler
+1 Bull-Rush Bruiser
+1 Burning-Fist Minotaur
+1 Coalition Warbrute
+1 Cursed Minotaur
+1 Emberhorn Minotaur
+1 Fanatic of Mogis
+1 Felhide Brawler
+1 Felhide Petrifier
+1 Felhide Spiritbinder
+1 Frontline Devastator
+1 Glint-Horn Buccaneer
+1 Grisly Survivor
+1 Kragma Butcher
+1 Kragma Warcaller
+1 Labyrinth Adversary
+1 Merciless Javelineer
+1 Minotaur Explorer
+1 Minotaur Sureshot
+1 Moraug, Fury of Akoum
+1 Neheb, Dreadhorde Champion
+1 Neheb, the Eternal
+1 Pitiless Vizier
+1 Rageblood Shaman
+1 Ragemonger
+1 Sandstorm Crasher
+1 Sethron, Hurloon General
+1 Skophos Reaver
+1 Smelt-Ward Minotaur
+1 Warchanter of Mogis
+1 Alchemist's Greeting
+1 Alms of the Vein
+1 Biting Rain
+1 Call to the Netherworld
+1 Deathbellow War Cry
+1 Demonfire
+1 Distemper of the Blood
+1 Infernal Tutor
+1 Murderous Compulsion
+1 Terminal Agony
+1 Anthem of Rakdos
+1 Feast of Sanity
+1 Nihilistic Glee
+1 Oblivion Crown
+1 Senseless Rage
+1 Taste for Mayhem
+1 Blazemire Verge
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Haunted Ridge
+1 Keldon Megaliths
+1 Luxury Suite
+11 Mountain
+1 Rix Maadi, Dungeon Palace
+1 Sea Gate Wreckage
+1 Smoldering Marsh
+11 Swamp
+1 Tainted Peak
+1 Didgeridoo
+1 Fodder Tosser
+1 Getaway Barrel
+1 Key to the City
+1 Medicine Bag
+1 Monument to Endurance
+1 Skullmead Cauldron
+1 Tarrian's Journal
+1 The Underworld Cookbook
+1 Trading Post

@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/h6KWqHIYFl4L6msYnFJxfg (source https://moxfield.com/decks/rdWvj5CB906jXnXmXgsQUg)
+# tags Legends, Vehicles, Midrange, Good Stuff, Artifacts; bracket 3; saved 2026-09-04; 242 tagged of 18770 indexed
+
+Commander
+1 Sisay, Weatherlight Captain
+
+Deck
+1 Arcane Signet
+1 Basalt Monolith
+1 Bolas's Citadel
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Darksteel Forge
+1 Doubling Cube
+1 Gilded Lotus
+1 Lightning Greaves
+1 Mana Vault
+1 Monster Manual
+1 Mystic Forge
+1 Sol Ring
+1 Swiftfoot Boots
+1 Unwinding Clock
+1 Arcee, Sharpshooter
+1 Blaster, Combat DJ
+1 Blightsteel Colossus
+1 Blitzwing, Cruel Tormentor
+1 Cyberdrive Awakener
+1 Cyclonus, the Saboteur
+1 Darksteel Colossus
+1 Flamewar, Brash Veteran
+1 Goldbug, Humanity's Ally
+1 Jetfire, Ingenious Scientist
+1 Jhoira, Weatherlight Captain
+1 Jodah, the Unifier
+1 Kenrith, the Returned King
+1 Megatron, Tyrant
+1 Nick Fury, Agent of S.H.I.E.L.D.
+1 Omnath, Locus of All
+1 Optimus Prime, Hero
+1 Padeem, Consul of Innovation
+1 Prowl, Stoic Strategist
+1 Ratchet, Field Medic
+1 Shuri, Wakandan Inventor
+1 Slicer, Hired Muscle
+1 Soundwave, Sonic Spy
+1 Starscream, Power Hungry
+1 Super-Adaptoid
+1 The Vision
+1 Ultra Magnus, Tactician
+1 Ultron, Machine Overlord
+1 Zirda, the Dawnwaker
+1 Ash Barrens
+1 Cinder Glade
+1 City of Brass
+1 Command Tower
+1 Dragonskull Summit
+1 Fabled Passage
+4 Forest
+1 Grand Coliseum
+1 Hidden Hideout
+1 Hinterland Harbor
+3 Island
+2 Mountain
+3 Plains
+1 Reliquary Tower
+1 Rootbound Crag
+1 Secluded Courtyard
+1 Smoldering Marsh
+1 Sodden Verdure
+1 Spire Garden
+1 Spire of Industry
+1 Steam Vents
+1 Sunken Hollow
+3 Swamp
+1 Temple of the False God
+1 The World Tree
+1 Thriving Moor
+1 Undergrowth Stadium
+1 Vernal Fen
+1 Vibrant Cityscape
+1 Assassin's Trophy
+1 Dark Ritual
+1 Dramatic Reversal
+1 Path to Exile
+1 Swords to Plowshares
+1 Vampiric Tutor
+1 Biotransference
+1 Greater Good
+1 True Conviction
+1 By Force
+1 Collective Brutality
+1 Damnation
+1 Demonic Tutor
+1 Fabricate
+1 Insatiable Avarice
+1 Organic Extinction

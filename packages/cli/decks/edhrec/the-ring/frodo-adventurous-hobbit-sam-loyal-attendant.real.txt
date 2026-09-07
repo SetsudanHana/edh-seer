@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/73hzfEVtMI8M2eDHHHU3sw (source https://archidekt.com/decks/8994242)
+# tags Food, The Ring; bracket 3; saved 2026-09-04; 213 tagged of 26408 indexed
+
+Commander
+1 Frodo, Adventurous Hobbit
+1 Sam, Loyal Attendant
+
+Deck
+1 Academy Manufactor
+1 Aragorn, Company Leader
+1 Astrid Peth
+1 Belladonna Took
+1 Birds of Paradise
+1 Delighted Halfling
+1 Elanor Gardner
+1 Farmer Cotton
+1 Feasting Hobbit
+1 Frodo Baggins
+1 Frodo, Sauron's Bane
+1 Gilded Goose
+1 Gollum, Obsessed Stalker
+1 Greta, Sweettooth Scourge
+1 Gwaihir, Greatest of the Eagles
+1 Lobelia, Defender of Bag End
+1 Lotho, Corrupt Shirriff
+1 Meriadoc Brandybuck
+1 Merry, Warden of Isengard
+1 Mirkwood Bats
+1 Motivated Pony
+1 Peregrin Took
+1 Pippin, Warden of Isengard
+1 Prize Pig
+1 Prosperous Innkeeper
+1 Rapacious Guest
+1 Rosie Cotton of South Lane
+1 Samwise Gamgee
+1 Savvy Hunter
+1 Sorin of House Markov
+1 The Gaffer
+1 The Sackville-Bagginses
+1 Tireless Provisioner
+1 Treebeard, Gracious Host
+1 Ygra, Eater of All
+1 Anguished Unmaking
+1 Dawn's Truce
+1 Deadly Rollick
+1 Galadriel's Dismissal
+1 Mortify
+1 Path to Exile
+1 Swords to Plowshares
+1 Bilbo's Ring
+1 Inherited Envelope
+1 Nuka-Cola Vending Machine
+1 Sol Ring
+1 The Great Henge
+1 The One Ring
+1 Bojuka Bog
+1 Bountiful Promenade
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Concealed Courtyard
+1 Exotic Orchard
+6 Forest
+1 Fortified Village
+1 Godless Shrine
+1 Hobbit Hole
+1 Horizon Canopy
+1 Nurturing Peatland
+1 Overgrown Tomb
+1 Path of Ancestry
+3 Plains
+1 Razorverge Thicket
+1 Reliquary Tower
+1 Sandsteppe Citadel
+1 Sunpetal Grove
+4 Swamp
+1 Temple Garden
+1 The Shire
+1 Turbulent Moor
+1 Undergrowth Stadium
+1 Vault of Champions
+1 Call of the Ring
+1 Doubling Season
+1 Heroic Feast
+1 Of Herbs and Stewed Rabbit
+1 Sanguine Bond
+1 Cultivate
+1 Demonic Tutor
+1 Diabolic Tutor
+1 Farseek
+1 Fell the Mighty
+1 Many Partings
+1 Nature's Lore
+1 Revive the Shire
+1 The Battle of Bywater

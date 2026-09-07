@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/OIW_RQ02QAWBG-16FqdgTQ (source https://archidekt.com/decks/18198680)
+# tags Indestructible, Ramp, Flying, Angels; bracket 3; saved 2026-09-04; 31 tagged of 4268 indexed
+
+Commander
+1 Avacyn, Angel of Hope
+
+Deck
+1 Abandoned Air Temple
+1 Ancient Tomb
+1 Cavern of Souls
+1 Command Beacon
+1 Deserted Temple
+1 Emeria, the Sky Ruin
+1 Hall of Heliod's Generosity
+1 Nykthos, Shrine to Nyx
+1 Scavenger Grounds
+1 Seraph Sanctuary
+24 Snow-Covered Plains
+1 War Room
+1 Akroma's Vengeance
+1 Austere Command
+1 Cleansing Nova
+1 Day of Judgment
+1 Fumigate
+1 Hour of Revelation
+1 Ondu Inversion
+1 Restoration Seminar
+1 Vanquish the Horde
+1 Akroma, Angel of Wrath
+1 Akroma, Vision of Ixidor
+1 Angel of the Dire Hour
+1 Angel of the Ruins
+1 Archangel of Thune
+1 Archangel of Tithes
+1 Archivist of Oghma
+1 Bishop of Wings
+1 Bruna, the Fading Light
+1 Emeria Shepherd
+1 Enduring Angel
+1 Esper Sentinel
+1 Giada, Font of Hope
+1 Gisela, the Broken Blade
+1 Grand Abolisher
+1 Herald of War
+1 Lyra Dawnbringer
+1 Mangara, the Diplomat
+1 Metropolis Reformer
+1 Mother of Runes
+1 Odric, Lunarch Marshal
+1 Platinum Angel
+1 Righteous Valkyrie
+1 Sigarda's Vanguard
+1 Starnheim Aspirant
+1 Alhammarret's Archive
+1 Commander's Plate
+1 Endless Atlas
+1 Extraplanar Lens
+1 Gilded Lotus
+1 Mana Vault
+1 Nyx Lotus
+1 Pearl Medallion
+1 Sol Ring
+1 The Book of Exalted Deeds
+1 Thran Dynamo
+1 Throne of Eldraine
+1 Urza's Incubator
+1 Vanquisher's Banner
+1 Authority of the Consuls
+1 Court of Grace
+1 Ghostly Prison
+1 Gleaming Splendor
+1 Land Tax
+1 Pariah
+1 Smuggler's Share
+1 Dawn's Truce
+1 Erode
+1 Galadriel's Dismissal
+1 Rebuff the Wicked
+1 Reprieve
+1 Restoration Magic
+1 Sejiri Shelter
+1 Swords to Plowshares
+1 Teferi's Protection

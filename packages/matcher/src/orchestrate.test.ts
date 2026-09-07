@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { resolveDeck } from "./orchestrate.js";
+import { buildWireGraph, resolveDeck } from "./orchestrate.js";
 import type { CardLookup } from "@edh-seer/data/resolve";
 
 const doc = (name: string, colorIdentity: string[] = [], typeLine = "Creature — Human") => ({
@@ -39,4 +39,38 @@ test("colour identity comes from the commander alone", async () => {
   const lookup = lookupOf([doc("Krenko", ["R"]), doc("Brainstorm", ["U"], "Instant")]);
   const r = await resolveDeck(["Krenko"], ["Brainstorm"], lookup);
   expect(r.commanderColorIdentity).toEqual(["R"]);
+});
+
+/** THE GRAPH IS A PROJECTION OF THE READER'S REPORT, not a second analysis of the same deck. It
+ *  used to re-run `analyzeDeckStructured` over a deduped deck with no commanders and no combos, and
+ *  on nine of the 71 calibration decks that dropped a commander-carrying reason the report had --
+ *  the board and the page disagreed about the deck on screen. The pin is direct: hand it a report
+ *  whose edges no re-analysis of these two vanilla cards could ever produce, and the edge must
+ *  still be on the board. */
+test("the board's edges are the report's edges", async () => {
+  const docs = [doc("Krenko", ["R"], "Legendary Creature — Goblin"), doc("Goblin Recruiter", ["R"])];
+  const lookup = lookupOf(docs);
+  const sources = {
+    lookup,
+    tagsLookup: { async findOne() { return null; } },
+    tokenTags: () => null,
+    async tokenArt() { return new Map<string, string>(); },
+  } as unknown as Parameters<typeof buildWireGraph>[3];
+  const names = ["Krenko", "Goblin Recruiter"];
+  const copies = new Map(names.map((n) => [n, 1] as const));
+
+  const reason = {
+    tag: "cast:goblin", text: "Krenko does something for Goblin Recruiter",
+    effectKind: "draw-card", repeatability: "triggered",
+    producer: "Krenko", consumer: "Goblin Recruiter",
+  };
+  const withEdge = await buildWireGraph(names, new Map(), copies, sources, {
+    edges: [{ a: "Krenko", b: "Goblin Recruiter", score: 1, reasons: [reason] }],
+  } as never);
+  expect(withEdge.edges).toHaveLength(1);
+
+  // And nothing invents one: the same deck with an empty report draws no edges at all.
+  const empty = await buildWireGraph(names, new Map(), copies, sources, { edges: [] } as never);
+  expect(empty.edges).toHaveLength(0);
+  expect(empty.nodes).toHaveLength(2);
 });

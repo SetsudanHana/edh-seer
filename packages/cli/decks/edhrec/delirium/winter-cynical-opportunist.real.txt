@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/4jkf874u0kjhbVIc2lO6BQ (source https://archidekt.com/decks/21606471)
+# tags Reanimator, Delirium, Self-Mill; bracket 2; saved 2026-09-04; 112 tagged of 7179 indexed
+
+Commander
+1 Winter, Cynical Opportunist
+
+Deck
+1 Amzu, Swarm's Hunger
+1 Angel of Suffering
+1 Archon of Cruelty
+1 Armaggon, Future Shark
+1 Azusa, Lost but Seeking
+1 Barrowgoyf
+1 Boggart Trawler
+1 Colossal Grave-Reaver
+1 Demolisher Spawn
+1 Endurance
+1 Giant Adephage
+1 Hermit Druid
+1 Hornet Queen
+1 Icetill Explorer
+1 Kodama of the East Tree
+1 Lumra, Bellow of the Woods
+1 Manakin
+1 Millikin
+1 Nyx Weaver
+1 Overlord of the Balemurk
+1 Sakura-Tribe Elder
+1 Sheoldred, Whispering One
+1 Six
+1 Summon: Bahamut
+1 The Gitrog Monster
+1 Underrealm Lich
+1 Valgavoth, Terror Eater
+1 Assassin's Trophy
+1 Cache Grab
+1 Corpse Churn
+1 Dark Ritual
+1 Drag to the Roots
+1 Entomb
+1 Grapple with the Past
+1 Grisly Salvage
+1 Midnight Tilling
+1 Snuff Out
+1 Tear Asunder
+1 Bala Ged Recovery
+1 Dryad's Revival
+1 Incarnation Technique
+1 Life from the Loam
+1 Maelstrom Pulse
+1 Malevolent Rumble
+1 Mulch
+1 Raven's Crime
+1 Squirming Emergence
+1 Bear Umbra
+1 Defense of the Heart
+1 Demonic Covenant
+1 Kaya's Ghostform
+1 Out of the Tombs
+1 Polluted Cistern // Dim Oubliette
+1 Ripples of Undeath
+1 Sylvan Library
+1 The Cloning of Shredder
+1 Unnatural Growth
+1 Virtue of Persistence
+1 Command Beacon
+1 Command Tower
+1 Darkbore Pathway
+1 Darksteel Citadel
+1 Deathcap Glade
+1 Dryad Arbor
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fabled Passage
+3 Forest
+1 Golgari Rot Farm
+1 Hickory Woodlot
+1 Llanowar Wastes
+1 Overgrown Tomb
+1 Peat Bog
+1 Shifting Woodland
+1 Surveillance Room
+3 Swamp
+1 Terramorphic Expanse
+1 Tree of Tales
+1 Turbulent Fen
+1 Twilight Mire
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Whispers
+1 Viridescent Bog
+1 Wastewood Verge
+1 Yavimaya Hollow
+1 Yavimaya, Cradle of Growth
+1 Hedge Shredder
+1 Lightning Greaves
+1 Mesmeric Orb
+1 Perpetual Timepiece
+1 Power Matrix
+1 Sol Ring
+1 Whip of Erebos

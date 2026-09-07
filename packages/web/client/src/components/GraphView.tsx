@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useIsNarrow } from "../lib/use-narrow.js";
+import { drawnEdges, litUndrawn } from "./board-edges.js";
 import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport } from "../types.js";
@@ -184,11 +186,15 @@ export function edgeAlpha(weight: number, maxWeight: number): number {
 }
 
 export function GraphView(
-  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap, emphasisId = null }:
+  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap, emphasisId = null, stateControls }:
   {
     graph: CardGraph;
     report: DeckReport;
     artLoader?: ArtLoader;
+    /** The game-state controls (W18c). Rendered INSIDE the fullscreen shell while fullscreen is
+     *  on, because the shell's backdrop hides every sibling -- the report header included -- and
+     *  the graph is where the dashed edges the state draws are. */
+    stateControls?: ReactNode;
     /** "bare" draws the canvas and nothing else -- no paint chips, no facet chips, no search, no
      *  legend, no caption, no fullscreen. The phone surface (roadmap R1) needs the viewport, and
      *  measured at 390 the chrome above the board was 902px of an 844px one, so the first screenful
@@ -240,6 +246,14 @@ export function GraphView(
     { label: string; copies: number; deg: number; detail: string; unread: boolean; x: number; y: number } | null
   >(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  /** THE BOARD OWNS THE PHONE. Measured on the owner's phone (2026-09-06, whole-deck board in
+   *  fullscreen): state chips, four paint tabs, eight facet pills, the toggles, the find box and
+   *  the legend took ~55% of the viewport and the board was a small square under them. Below `sm`
+   *  every one of those folds behind one "filters" button; the board takes 70svh in flow and the
+   *  whole shell in fullscreen. At `sm` and up nothing changes. */
+  const [chromeOpen, setChromeOpen] = useState(false);
+  const narrow = useIsNarrow();
+  const chromeId = useId();
   /** THE BOARD'S ANSWER TO "SHOW ME THE ONES YOU COULD NOT READ". The hatch says WHICH card is
    *  unread once your eye is on it; it cannot be surveyed. A blind judge given a 90-of-100 deck
    *  and told the mark exists found FOUR of the ten, and only after a tooltip named the first one
@@ -710,9 +724,13 @@ export function GraphView(
     // `{ source, target }` is what forceLink requires, so it is what the whole effect uses; the
     // wire says `from`/`to`. An edge naming a card the graph does not hold is dropped rather than
     // crashing the layout -- the fixtures assert offDeckReasons is 0, this is the runtime half.
-    const links: SimLink[] = graph.edges
-      .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
-      .filter((l): l is SimLink => Boolean(l.source && l.target));
+    const toLink = (e: { from: string; to: string; weight: number; enabledBy?: readonly string[] }) =>
+      ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight, ...(e.enabledBy ? { enabledBy: e.enabledBy } : {}) });
+    const isLink = (l: ReturnType<typeof toLink>): l is SimLink => Boolean(l.source && l.target);
+    const links: SimLink[] = drawnEdges(graph.edges).map(toLink).filter(isLink);
+    // What the budget did NOT draw, kept aside for the paint loop only: a hovered or selected card
+    // paints these too (see `litUndrawn`). Never a simulation link -- the layout is the budget's.
+    const undrawnLinks: SimLink[] = graph.edges.filter((e) => e.drawn === false).map(toLink).filter(isLink);
     // WHICH TAGS EACH DRAWN EDGE CARRIES, keyed the way `flowEdgeByPair` already keys. `SimLink`
     // deliberately does not carry them: it is the SIMULATION's type and the force layout has no
     // business knowing what a mechanism is. Graph-scoped, so it is rebuilt when the board's edges
@@ -917,7 +935,13 @@ export function GraphView(
       const stillMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
       const dashCycle = FLOW_DASH.on + FLOW_DASH.off;
       const crawl = stillMotion ? 0 : (performance.now() / 1000 * FLOW_DASH.speed) % dashCycle;
-      for (const l of links) {
+      // A FOCUSED CARD PAINTS EVERY EDGE IT HAS, drawn or not. The flow and the hover set are both
+      // computed over the whole graph, so without this a partner lit with no line to it -- the
+      // dock said 38 synergies and the board showed 4 of them. Resting board: `links` only.
+      const paintLinks = activeFlow || hoverActive
+        ? [...links, ...litUndrawn(undrawnLinks, hoverActive ? hoveredId : null, flowEdgeByPair)]
+        : links;
+      for (const l of paintLinks) {
         const fe = flowEdgeByPair.get(`${l.source.id}>${l.target.id}`);
         // An edge in the flow takes its direction's hue at full opacity; everything else keeps the
         // neutral stroke and drops to the dim alpha, so the flow reads against the rest of the deck.
@@ -982,6 +1006,12 @@ export function GraphView(
           // deck 2026-08-27. What is lost is the "radiating outward" reading, which the arrowhead's
           // orientation relative to the clicked card already states.
           ctx.lineDashOffset = -crawl / cam.z;
+        } else if (l.enabledBy && !offEvent && !offFocus) {
+          // THE STATE MADE THIS EDGE (roadmap W18): dashed in the accent, no crawl -- it is a
+          // fact about the setting, not an event flowing.
+          ctx.setLineDash([6 / cam.z, 4 / cam.z]);
+          ctx.lineDashOffset = 0;
+          ctx.strokeStyle = paintColors.accent ?? ctx.strokeStyle;
         } else {
           ctx.setLineDash([]);
         }
@@ -1295,10 +1325,16 @@ export function GraphView(
         if (mode === "card") {
           // Equal-width bars along the card's bottom edge. Card mode paints a rectangle, so there
           // is no rim to stroke arcs onto.
+          //
+          // OUTSIDE THE CARD, NOT OVER IT (owner-reported 2026-09-04). Drawn INSIDE the bottom edge
+          // these bars sat exactly on the credit line -- the artist's name is printed bottom-left on
+          // every Magic card, and that credit is the reason this product may show the art at all.
+          // Covering it is both a licence problem and the rudest possible place to put a UI element.
+          // Below the card the bars still read as belonging to it and obscure nothing.
           const barW = cardW / Math.max(paintHuesForNode.length, 1);
           paintHuesForNode.forEach((hue, i) => {
             ctx.fillStyle = hue;
-            ctx.fillRect(n.x - cardW / 2 + i * barW, n.y + cardH / 2 - BAR_H, barW, BAR_H);
+            ctx.fillRect(n.x - cardW / 2 + i * barW, n.y + cardH / 2 + 1 / cam.z, barW, BAR_H);
           });
           if (paintHuesForNode.length === 0) {
             ctx.lineWidth = 1 / cam.z;
@@ -2019,7 +2055,32 @@ export function GraphView(
         data-testid="graph-fullscreen-shell"
         className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
       >
+        {bare || !narrow ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            aria-expanded={chromeOpen}
+            aria-controls={chromeId}
+            onClick={() => setChromeOpen((v) => !v)}
+            className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-2"
+          >
+            {chromeOpen ? "hide filters" : "filters"}
+          </button>
+          {canFullscreen ? (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              aria-pressed={isFullscreen}
+              className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-2 ml-auto"
+            >
+              {isFullscreen ? "exit fullscreen" : "fullscreen"}
+            </button>
+          ) : null}
+        </div>
+        )}
         {bare ? null : (
+        <div id={chromeId} className={`${narrow && !chromeOpen ? "hidden" : "flex"} flex-col gap-6`}>
+        {isFullscreen && stateControls ? <div className="px-2 pt-2">{stateControls}</div> : null}
         <div className="flex flex-wrap gap-2">
           {/* Which facet paints the board. Chips, not a <select>: this is the primary control on
            *  this view and the one thing a reader changes on purpose. */}
@@ -2215,7 +2276,7 @@ export function GraphView(
             </button>
           ) : null}
 
-          {canFullscreen ? (
+          {canFullscreen && !narrow ? (
             <button
               type="button"
               onClick={toggleFullscreen}
@@ -2226,7 +2287,6 @@ export function GraphView(
             </button>
           ) : null}
         </div>
-        )}
 
         {bare ? null : (
         <div className="flex items-center gap-3">
@@ -2369,10 +2429,12 @@ export function GraphView(
         </div>
         </>
         )}
+        </div>
+        )}
 
         <div
           className={`relative rounded-(--radius) border border-(--separator) overflow-hidden ${
-            isFullscreen || bare ? "flex-1 min-h-0" : "h-[380px] sm:h-[520px]"
+            isFullscreen || bare ? "flex-1 min-h-0" : "h-[70svh] sm:h-[520px]"
           }`}
         >
           <canvas
@@ -2415,6 +2477,7 @@ export function GraphView(
               node={inspectingNode}
               edges={inspectingEdges}
               flow={flow}
+              phone="half"
               textOf={textById}
               nameOf={nameById}
               // Closes the panel AND clears the board: with an additive selection there is no single card

@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/YhgU1mrNJF3MuiNgvIdIZA (source https://archidekt.com/decks/25090840)
+# tags Sneak Attack, Sacrifice, Aggro; bracket 2; saved 2026-08-21; 56 tagged of 1372 indexed
+
+Commander
+1 Purphoros, Bronze-Blooded
+
+Deck
+1 Ancient Stone Idol
+1 Avatar of Slaughter
+1 Blast-Furnace Hellkite
+1 Bloodfire Colossus
+1 Combat Celebrant
+1 Combustible Gearhulk
+1 Crater Hellion
+1 Dragon Mage
+1 Etali, Primal Storm
+1 Feldon of the Third Path
+1 Goldlust Triad
+1 Homura, Human Ascendant
+1 Ilharg, the Raze-Boar
+1 Iron Myr
+1 Magus of the Wheel
+1 Metalwork Colossus
+1 Molten Primordial
+1 Moraug, Fury of Akoum
+1 Phyrexian Triniform
+1 Ruin Grinder
+1 Ryusei, the Falling Star
+1 Sandstone Oracle
+1 Scarecrone
+1 Scourge of the Throne
+1 Sunset Strikemaster
+1 Terror of Mount Velus
+1 Triplicate Titan
+1 Trumpeting Carnosaur
+1 Tyrant's Familiar
+1 Zookeeper Mechan
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Colfenor's Urn
+1 Cursed Mirror
+1 Endless Atlas
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Fire Diamond
+1 Heraldic Banner
+1 Mimic Vat
+1 Mind Stone
+1 Mirage Mirror
+1 Nim Deathmantle
+1 Ravenous Amulet
+1 Skullclamp
+1 Sol Ring
+1 Sundial of the Infinite
+1 Voyager Staff
+1 Wayfarer's Bauble
+1 Blasphemous Act
+1 Nahiri's Sacrifice
+1 Snort
+1 Thud
+1 Trash for Treasure
+1 Bonders' Enclave
+1 Buried Ruin
+1 Haunted Fengraf
+31 Mountain
+1 Spinerock Knoll
+1 War Room
+1 Chandra, Dressed to Kill
+1 Chaos Warp
+1 Demand Answers
+1 Fling
+1 Kazuul's Fury
+1 Zoyowa's Justice
+1 Ferocity of the Wilds
+1 Flameshadow Conjuring
+1 Industrial Advancement

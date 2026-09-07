@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/hCGLQW3Vv35GCUflPxRzkQ (source https://moxfield.com/decks/TBrbkLwv8ESMXCuy6tTEOw)
+# tags Hatebears, Lifegain; bracket 3; saved 2026-09-04; 327 tagged of 12897 indexed
+
+Commander
+1 Liesa, Shroud of Dusk
+
+Deck
+1 Accursed Marauder
+1 Archivist of Oghma
+1 Aven Mindcensor
+1 Containment Priest
+1 Drannith Magistrate
+1 Elas il-Kor, Sadistic Pilgrim
+1 Erebos, God of the Dead
+1 Kambal, Consul of Allocation
+1 Keeper of the Accord
+1 Knight of the White Orchid
+1 Kunoros, Hound of Athreos
+1 Linvala, Keeper of Silence
+1 Lurrus of the Dream-Den
+1 Mangara, the Diplomat
+1 Mother of Runes
+1 Oreskos Explorer
+1 Plaguecrafter
+1 Serra Ascendant
+1 Skyclave Apparition
+1 Soul Warden
+1 Soul's Attendant
+1 Sun Titan
+1 Sunscorch Regent
+1 Suture Priest
+1 Thalia, Heretic Cathar
+1 Windborn Muse
+1 Alhammarret's Archive
+1 Ankh of Mishra
+1 Arcane Signet
+1 Cursed Totem
+1 Sensei's Divining Top
+1 Sol Ring
+1 Tainted Sigil
+1 Anguished Unmaking
+1 Despark
+1 Enlightened Tutor
+1 Fracture
+1 Generous Gift
+1 Heliod's Intervention
+1 Inkshield
+1 Path to Exile
+1 Swords to Plowshares
+1 Vanishing Verse
+1 Aura of Silence
+1 Authority of the Consuls
+1 Blind Obedience
+1 Bloodchief Ascension
+1 Darksteel Mutation
+1 Ghostly Prison
+1 Land Tax
+1 Luminarch Ascension
+1 Painful Quandary
+1 Rest in Peace
+1 Stony Silence
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 Command Tower
+1 Desolate Mire
+1 Eclipsed Steppe
+1 Exotic Orchard
+1 Fabled Passage
+1 Fetid Heath
+1 Isolated Chapel
+8 Plains
+1 Shineshadow Snarl
+1 Silent Clearing
+1 Snowfield Sinkhole
+1 Strip Mine
+1 Sunlit Marsh
+7 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Turbulent Moor
+1 Umbral Expanse
+1 War Room
+1 Demonic Tutor
+1 Dismantling Wave
+1 Exsanguinate
+1 Fumigate
+1 Grim Tutor
+1 Night's Whisper
+1 Promise of Loyalty
+1 Sign in Blood
+1 Single Combat
+1 Wrath of God

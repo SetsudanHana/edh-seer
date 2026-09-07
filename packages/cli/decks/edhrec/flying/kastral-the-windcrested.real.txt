@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/fSJ2lKPZ0YSUXyXb9N8Y1g (source https://archidekt.com/decks/17109949)
+# tags Flying, Birds, ETB, Blink; bracket 3; saved 2026-09-05; 866 tagged of 10232 indexed
+
+Commander
+1 Kastral, the Windcrested
+
+Deck
+1 Adarkar Wastes
+1 Ancient Tomb
+1 Arid Mesa
+1 Azorius Chancery
+1 Cavern of Souls
+1 Coral Atoll
+1 Flooded Strand
+1 Hallowed Fountain
+8 Island
+1 Karoo
+1 Lonely Sandbar
+1 Marsh Flats
+1 Meticulous Archive
+1 Misty Rainforest
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+8 Plains
+1 Polluted Delta
+1 Prairie Stream
+1 Reliquary Tower
+1 Restless Anchorage
+1 Scalding Tarn
+1 Three Tree City
+1 Tolaria West
+1 Tundra
+1 Windswept Heath
+1 Aerial Extortionist
+1 Aven Gagglemaster
+1 Aven Interrupter
+1 Aven Skirmisher
+1 Aven Sunstriker
+1 Aven Surveyor
+1 Battlefield Raptor
+1 Cloudfin Raptor
+1 Eagle of Deliverance
+1 Eagles of the North
+1 Harrier Strix
+1 Healer's Hawk
+1 Judge's Familiar
+1 Kykar, Zephyr Awakener
+1 Lifecreed Duo
+1 Meneldor, Swift Savior
+1 Mist Raven
+1 Mockingbird
+1 Ranger's Hawk
+1 Rustwing Falcon
+1 Scouting Hawk
+1 Shoreline Ranger
+1 Shrike Force
+1 Silver Raven
+1 Skycoach Conductor
+1 Skyskipper Duo
+1 Speakeasy Server
+1 Spellseeker
+1 Wan Shi Tong, All-Knowing
+1 Warden of Evos Isle
+1 Watcher of the Spheres
+1 Yorion, Sky Nomad
+1 Azorius Keyrune
+1 Bident of Thassa
+1 Commander's Sphere
+1 Kefnet's Monument
+1 Letter of Acceptance
+1 Sunbird Standard
+1 Battle Mastery
+1 Copy Land
+1 Dovescape
+1 Kindred Discovery
+1 Psychic Impetus
+1 Reconnaissance Mission
+1 Enlightened Tutor
+1 Ephemerate
+1 Frantic Search
+1 Momentary Blink
+1 Siren's Ruse
+1 Spare from Evil
+1 Strix Serenade
+1 Swan Song
+1 Swords to Plowshares
+1 Thraben Charm
+1 Idyllic Tutor
+1 Personal Tutor
+1 Starfall Invocation
+1 Step Through
+1 Narset, Parter of Veils

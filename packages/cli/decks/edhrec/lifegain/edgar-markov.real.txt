@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/gcsx64rPns_0aP4_3DgaSQ (source https://moxfield.com/decks/RW4qk6nmWUGaFSLCVhyvIA)
+# tags Lifegain, Tokens, +1/+1 Counters; bracket 3; saved 2026-09-04; 3400 tagged of 50337 indexed
+
+Commander
+1 Edgar Markov
+
+Deck
+1 Arcane Signet
+1 Banner of Kinship
+1 Blade of the Bloodchief
+1 Herald's Horn
+1 Lightning Greaves
+1 Mind Stone
+1 Patchwork Banner
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Vanquisher's Banner
+1 Austere Command
+1 Demonic Tutor
+1 Night's Whisper
+1 Olivia's Wrath
+1 Pact of the Serpent
+1 Sign in Blood
+1 Black Market Connections
+1 Exquisite Blood
+1 Phyrexian Reclamation
+1 Sanguine Bond
+1 Shared Animosity
+1 Smothering Tithe
+1 The Meathook Massacre
+1 Blood Artist
+1 Blood Seeker
+1 Bloodletter of Aclazotz
+1 Bloodline Keeper
+1 Bloodthirsty Conqueror
+1 Captivating Vampire
+1 Charismatic Conqueror
+1 Clavileño, First of the Blessed
+1 Cordial Vampire
+1 Crossway Troublemakers
+1 Cruel Celebrant
+1 Elenda, the Dusk Rose
+1 Falkenrath Pit Fighter
+1 Forerunner of the Legion
+1 Indulgent Aristocrat
+1 Knight of the Ebon Legion
+1 Legion Lieutenant
+1 Marauding Blight-Priest
+1 Markov Baron
+1 Master of Dark Rites
+1 Mavren Fein, Dusk Apostle
+1 Nullpriest of Oblivion
+1 Ruthless Lawbringer
+1 Sanctum Seeker
+1 Scheming Silvertongue
+1 Shadow Alley Denizen
+1 Stromkirk Captain
+1 Vampire Cutthroat
+1 Vampire of the Dire Moon
+1 Veinwitch Coven
+1 Vengeful Bloodwitch
+1 Vito, Thorn of the Dusk Rose
+1 Welcoming Vampire
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Isolated Chapel
+2 Mountain
+1 Myriad Landscape
+1 Nomad Outpost
+1 Path of Ancestry
+1 Phyrexian Tower
+2 Plains
+1 Rogue's Passage
+1 Rugged Prairie
+1 Secluded Courtyard
+1 Shadowblood Ridge
+1 Shineshadow Snarl
+1 Shizo, Death's Storehouse
+11 Swamp
+1 Tainted Field
+1 Three Tree City
+1 Unclaimed Territory
+1 Urborg, Tomb of Yawgmoth
+1 Vault of the Archangel
+1 Voldaren Estate
+1 Boros Charm
+1 Go for the Throat
+1 Path to Exile
+1 Swords to Plowshares
+1 Vampiric Tutor
+1 Sorin the Mirthless

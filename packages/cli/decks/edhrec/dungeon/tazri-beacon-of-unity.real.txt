@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/BHL_7_HgrZc2p711stouuA (source https://moxfield.com/decks/mmcimn_r9UixHGsq5SzI_Q)
+# tags Blink, Chaos, Dungeon; bracket 2; saved 2026-09-04; 174 tagged of 2936 indexed
+
+Commander
+1 Tazri, Beacon of Unity
+
+Deck
+1 Acererak the Archlich
+1 Barrowin of Clan Undurr
+1 Birds of Paradise
+1 Bloom Tender
+1 Burakos, Party Leader
+1 Caves of Chaos Adventurer
+1 Eccentric Apprentice
+1 Guide of Souls
+1 Hama Pashar, Ruin Seeker
+1 Imoen, Mystic Trickster
+1 Jori En, Ruin Diver
+1 Locke, Treasure Hunter
+1 Midnight Pathlighter
+1 Nadaar, Selfless Paladin
+1 Nalia de'Arnise
+1 Ornithopter of Paradise
+1 Radiant Solar
+1 Ravenloft Adventurer
+1 Rilsa Rael, Kingpin
+1 Safana, Calimport Cutthroat
+1 Seasoned Dungeoneer
+1 Sefris of the Hidden Ways
+1 Stirring Bard
+1 The Destined Black Mage
+1 The Destined Thief
+1 The Destined Warrior
+1 The Destined White Mage
+1 Tomb of Horrors Adventurer
+1 Triumphant Adventurer
+1 Undermountain Adventurer
+1 Varis, Silverymoon Ranger
+1 Wandering Troubadour
+1 White Plume Adventurer
+1 Yuan-Ti Malison
+1 Adarkar Wastes
+1 Blood Crypt
+1 Branchloft Pathway
+1 Breeding Pool
+1 Brightclimb Pathway
+1 Brushland
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dark Fortress
+1 Dreamroot Cascade
+1 Exotic Orchard
+2 Forest
+1 Gathering Place
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hidden Lair
+2 Island
+1 Isolated Chapel
+2 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Sacred Foundry
+1 Shattered Sanctum
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sundown Pass
+2 Swamp
+1 Temple Garden
+1 Turbulent Steppe
+1 Watery Grave
+1 Anguished Unmaking
+1 Chaos Warp
+1 Generous Gift
+1 Path to Exile
+1 Pongify
+1 Withering Torment
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Immovable Rod
+1 Sarevok's Tome
+1 Sol Ring
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Hierarchy
+1 Talisman of Resilience
+1 The Deck of Many Things
+1 Blasphemous Act
+1 Damn
+1 Farseek
+1 From the Catacombs
+1 Nature's Lore
+1 Court of Grace
+1 Dungeon Delver
+1 Phyrexian Arena
+1 Thorough Investigation
+1 Ellywick Tumblestrum

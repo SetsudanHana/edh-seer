@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/zoyowa-lava-tongue/descend
+# theme Descend (50 decks)
+
+Commander
+1 Zoyowa Lava-Tongue
+
+Deck
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Commander's Sphere
+1 Matzalantli, the Great Door
+1 Mind Stone
+1 Monument to Endurance
+1 Rakdos Signet
+1 Sol Ring
+1 Wayfarer's Bauble
+1 Ash Barrens
+1 Barren Moor
+1 Blood Crypt
+1 Bloodfell Caves
+1 Bloodstained Mire
+1 Canyon Slough
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Foreboding Ruins
+1 Forgotten Cave
+1 Hidden Volcano
+9 Mountain
+1 Myriad Landscape
+1 Rakdos Carnarium
+1 Smoldering Marsh
+10 Swamp
+1 Tainted Peak
+1 Terramorphic Expanse
+1 Accursed Marauder
+1 Archfiend of Ifnir
+1 Azog, Moria's Ruin
+1 Blood Artist
+1 Bloodghast
+1 Braids, Arisen Nightmare
+1 Burnished Hart
+1 Chainer, Nightmare Adept
+1 Deep Goblin Skulltaker
+1 Enterprising Scallywag
+1 Fleshbag Marauder
+1 Greedy Freebooter
+1 Ingot Chewer
+1 Juri, Master of the Revue
+1 Kroxa, Titan of Death's Hunger
+1 Mahadi, Emporium Master
+1 Mayhem Devil
+1 Mogis, God of Slaughter
+1 Osseous Sticktwister
+1 Perforating Artist
+1 Plaguecrafter
+1 Rankle, Master of Pranks
+1 Reassembling Skeleton
+1 Rottenmouth Viper
+1 Sangromancer
+1 Shriekmaw
+1 Squee, Goblin Nabob
+1 Squee, the Immortal
+1 Stalactite Stalker
+1 Starving Revenant
+1 Syr Konrad, the Grim
+1 Along the Crooked Way
+1 Canonized in Blood
+1 Oppression
+1 Oversold Cemetery
+1 Pain Magnification
+1 Painful Quandary
+1 Waste Not
+1 Deadly Dispute
+1 Demand Answers
+1 Join the Dead
+1 Rakdos Charm
+1 Terminate
+1 Thrill of Possibility
+1 Village Rites
+1 Ral Zarek, Guest Lecturer
+1 Blasphemous Act
+1 Faithless Looting
+1 Feed the Swarm
+1 Grab the Prize
+1 Highway Robbery
+1 Molten Collapse
+1 Terror Tide
+1 Victimize

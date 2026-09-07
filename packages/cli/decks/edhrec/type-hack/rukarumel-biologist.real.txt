@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/hqPxsp5aWxR-pJKA-aqTAQ (source https://archidekt.com/decks/22779816)
+# tags Legends, Historic, Type Hack, Anthems; bracket 3; saved 2026-05-22; 18 tagged of 4540 indexed
+
+Commander
+1 Rukarumel, Biologist
+
+Deck
+1 Amoeboid Changeling
+1 Animal Attendant
+1 Apex Devastator
+1 Ashnod, Flesh Mechanist
+1 Bloomvine Regent
+1 Diplomatic Escort
+1 Dragonborn Looter
+1 Etrata, Deadly Fugitive
+1 Faeburrow Elder
+1 Fallaji Wayfarer
+1 Koma, Cosmos Serpent
+1 Kutzil, Malamet Exemplar
+1 Maelstrom Archangel
+1 Miirym, Sentinel Wyrm
+1 Morophon, the Boundless
+1 Najeela, the Blade-Blossom
+1 Realmwalker
+1 Sagu Wildling
+1 Scholarship Sponsor
+1 Selvala, Heart of the Wilds
+1 Shardless Agent
+1 Species Specialist
+1 Stenn, Paranoid Partisan
+1 Trade Caravan
+1 Veteran Explorer
+1 Volatile Stormdrake
+1 Whirlwing Stormbrood
+1 Yarus, Roar of the Old Gods
+1 Yenna, Redtooth Regent
+1 Yidris, Maelstrom Wielder
+1 Yorion, Sky Nomad
+1 Arcane Adaptation
+1 Call the Spirit Dragons
+1 Conspiracy
+1 Font of Fertility
+1 Kenrith's Transformation
+1 Leyline of the Guildpact
+1 Maelstrom Nexus
+1 Reflections of Littjara
+1 Shared Animosity
+1 Up the Beanstalk
+1 Assassin's Trophy
+1 Counterspell
+1 Ephemerate
+1 Path to Exile
+1 Swords to Plowshares
+1 Wrap in Vigor
+1 Blasphemous Act
+1 Bloodline Bidding
+1 Boomerang Basics
+1 Burning Inquiry
+1 Cultivate
+1 Distant Melody
+1 Farewell
+1 Farseek
+1 Gamble
+1 Kodama's Reach
+1 Nature's Lore
+1 Three Visits
+1 Whelming Wave
+1 Cascading Cataracts
+1 Crystal Quarry
+1 Evolving Wilds
+11 Forest
+7 Island
+1 Path of Ancestry
+3 Plains
+1 Reliquary Tower
+3 Swamp
+1 The World Tree
+1 Chromatic Lantern
+1 Chronicle of Victory
+1 Dragonstorm Globe
+1 Herald's Horn
+1 Lightning Greaves
+1 Maskwood Nexus
+1 Robe of Stars
+1 Sol Ring
+1 Vanquisher's Banner

@@ -6,17 +6,20 @@ import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes } from "./implied.js";
+import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, fetchSentence, proliferateSentence,
+  boardCountFeedsScaling,
+  effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
+import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { parseTypeLineAllFaces } from "./typeline.js";
 import { faceDeckCards } from "./faces.js";
 
@@ -232,10 +235,21 @@ export function cardThemeTags(tags: CardTags): Set<string> {
   // is not, so it rides at `PRODUCER_SHARE` like any other supply.
   if (refiresEntries(tags) || hasSelfEntryTrigger(tags)) out.add(ETB_REFIRE);
   for (const a of tags.abilities) {
-    if (a.trigger) for (const v of a.trigger.verbs) out.add(`${v}:${themeSubjectKey(a.trigger.subject)}`);
+    // KEYED THE WAY A REASON TAG IS (zones.ts), so the theme axis and the edge agree on the string.
+    // Byte-identical for every verb but one: `enters` was already `enters:`, `enters-graveyard` and
+    // `dies` key on their own names, and a battlefield `leaves` stays `leaves:`. The exception is a
+    // leave from a GRAVEYARD, which keys `leaves-graveyard:` -- and until 2026-09-05 (roadmap Y1b)
+    // nothing emitted one, so this read `leaves:any` for 1,786 corpus recursion cards the moment
+    // they did, and two of the 71 decks took "leaves the battlefield" as their headline theme on
+    // the strength of their reanimation.
+    if (a.trigger) for (const v of a.trigger.verbs) {
+      const t = normalizeZoneEvent({ verb: v, subject: a.trigger.subject });
+      out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
+    }
     for (const e of a.emits ?? []) {
       if (opponentsPermanent(e.subject)) continue;
-      out.add(`${e.verb}:${themeSubjectKey(e.subject)}`);
+      const t = normalizeZoneEvent(e);
+      out.add(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)));
     }
     // No subject requirement here, unlike the static EDGE below. Membership asks "is this card a
     // <kind> card?", which does not depend on knowing WHICH permanents it applies to. Requiring a
@@ -287,7 +301,7 @@ export function cardCaresTags(tags: CardTags): Set<string> {
 }
 
 /** The card's characteristics expressed as a concrete subject, for static-edge matching. */
-function characteristicsSubject(tags: CardTags, name?: string): SubjectFilter {
+export function characteristicsSubject(tags: CardTags, name?: string): SubjectFilter {
   const c = tags.characteristics;
   const types = c.types.map((t) => t.toLowerCase());
   const subtypes = c.subtypes.map((t) => t.toLowerCase());
@@ -336,7 +350,7 @@ function baseEvents(tags: CardTags): GameEvent[] {
 /** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
  *  normalized and deduped, then unioned with the graveyard-fill events those emits imply. */
 export function producerEvents(tags: CardTags): GameEvent[] {
-  const base = baseEvents(tags);
+  const base = selfLeavesTypes(baseEvents(tags), tags.characteristics);
   const derived = [
     ...selfFillTypes(impliedGraveyardEvents(base), tags.characteristics),
     ...impliedCounterEvents(base),
@@ -691,6 +705,28 @@ export const COMBAT_VERBS: ReadonlySet<string> = new Set(["attacks", "combat-dam
  *
  *  The cost of the strictness is real and accepted: a genuine reanimation whose clause never recorded
  *  a `fromZone` loses its edge to these consumers. A missing answer beats a wrong one. */
+/** CR 700.4: dies means "is put into a graveyard from the battlefield", so a death IS a leave and a
+ *  `leaves` demand is met by a `dies` supply. Not the reverse -- a flicker, a bounce or an exile
+ *  leaves without dying, and Ephemerate feeding Blood Artist is the wrong claim this exists to
+ *  refuse. Two demands refuse the subsumption too: "leaves the battlefield WITHOUT DYING" (Dour
+ *  Port-Mage, Taeko's "if it didn't die") and a leave from a GRAVEYARD (Desecrated Tomb, Fang), which
+ *  shares no zone with a death. Measured 2026-09-05: 32 of the 71 corpus leaves-payoffs are the
+ *  graveyard kind, and every death in their decks fed them. */
+function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
+  if (producer.verb === consumer.verb) return true;
+  if (consumer.verb === "leaves" && producer.verb === "dies"
+    && consumer.subject.zone !== "graveyard" && consumer.subject.withoutDying !== true) return true;
+  // DAMAGE TO A PLAYER IS LIFE LOSS (CR 120.3). A damage emit naming NO type is aimed at a player --
+  // "each opponent" (220 corpus emits), "target opponent" (55), "any target" (451) -- and it feeds
+  // a life-loss trigger the way a drain does; one aimed at a creature or planeswalker does not.
+  // Found by Start your engines! (W9): every "whenever an opponent loses life" payoff saw drain
+  // and nothing else. CEILING: COMBAT DAMAGE STAYS OUT. Every creature attacks, so a payoff that
+  // accepted it would claim the whole deck -- a mesh, not a synergy. The upgrade path is a gate on
+  // evasion, so an unblockable body feeds a life-loss payoff and a vanilla bear does not (W15).
+  return consumer.verb === "lose-life" && producer.verb === "non-combat-damage"
+    && list(producer.subject.type).length === 0 && list(producer.subject.subtype).length === 0;
+}
+
 function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
   if (consumer.fromZone === undefined) return true;
   return producer.fromZone === consumer.fromZone;
@@ -702,7 +738,7 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolea
  *  census so the two cannot drift: a census that counted supply differently from the matcher
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
-  if (producer.verb !== consumer.verb) return false;
+  if (!verbSatisfies(producer, consumer)) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
@@ -716,6 +752,18 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // verdicts on these cards are FALSE against one REAL, and the REAL one is knowingly lost — see
   // `SubjectFilter.restricted`.
   if (consumer.subject.restricted === true) return false;
+  // AN INSTANT-SPEED PRODUCER MEETS A COMBAT-STATE DEMAND WITHOUT NAMING IT -- when ITS CONTROLLER
+  // PICKS THE VICTIM. Ayara's sac outlet eats your attacking creature in combat (owner ruling,
+  // upheld 2026-08-22); a targeted kill at instant speed aims at the attacker. An edict at instant
+  // speed does neither: "each opponent sacrifices a creature of their choice" lets the opponent
+  // spare their attacker, and the owner judged Liliana's Triumph and Szat's Will -> Death Tyrant
+  // FALSE on exactly that. So: your own permanent, or a target. The demand is dropped for this
+  // comparison only; `subjectMatches` itself stays strict.
+  const producerChooses = producer.subject.control === "you" || producer.subject.scope === "target";
+  if (producer.instantSpeed === true && producerChooses && consumer.subject.combat !== undefined) {
+    const { combat: _c, ...rest } = consumer.subject;
+    consumer = { ...consumer, subject: rest };
+  }
   if (!originMatches(producer.subject, consumer.subject)) return false;
   if (combatSelfSupplied(producer, consumer)) return false;
   if (castSelfSupplied(producer, consumer)) return false;
@@ -723,6 +771,10 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   if (producer.verb === "enters" && producer.subject.zone === "graveyard") {
     return graveyardFillMatches(producer.subject, consumer.subject, h);
   }
+  // SELF ON BOTH SIDES: a card adapting ITSELF cannot put the counter on another card's "this
+  // creature" (Incubation Druid -> Evolution Witness, owner-judged FALSE 2026-08-22). The same
+  // shape `selfEtbSelfSupplied` refuses for entries.
+  if (producer.verb === "counter-added" && producer.subject.self === true && consumer.subject.self === true) return false;
   if (producer.verb === "counter-added") return counterAddMatches(producer.subject, consumer.subject, h);
   // A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
   //
@@ -739,8 +791,15 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   //
   // `dealer ?? subject` is what makes this additive: only an authored damage emit sets `dealer`, so
   // the implied combat case falls back to exactly the comparison it makes today.
+  // A DAMAGE TRIGGER WATCHES THE DEALER; A LIFE-LOSS TRIGGER WATCHES THE VICTIM. "Whenever a
+  // source you control deals damage" is about who dealt it, so a damage producer is compared on
+  // its `dealer`. The CR 120.3 bridge above lets a life-loss trigger accept a damage emit, and that
+  // trigger names the player who LOSES the life -- the emit's subject -- never the dealer. Without
+  // this line Impact Tremors (dealer: you) met Samut's "an opponent loses life" on the dealer and
+  // was refused on the real corpus while the fixture passed (2026-09-05).
   if (producer.verb === "non-combat-damage" || producer.verb === "combat-damage") {
-    return subjectMatches(producer.dealer ?? producer.subject, consumer.subject, h);
+    const side = consumer.verb === "lose-life" ? producer.subject : producer.dealer ?? producer.subject;
+    return subjectMatches(side, consumer.subject, h);
   }
   return subjectMatches(producer.subject, consumer.subject, h);
 }
@@ -923,6 +982,14 @@ function copySubject(
  *  describe the EVENT, not the card, and comparing them against a type line is the mistake this file
  *  has now recorded four times. An UNTYPED subject matches anything and therefore keeps the old
  *  wording, which is the conservative direction: no noun is invented for an emit naming no class. */
+/** The noun for a graveyard-fill event that is not the card itself: its emitted type, or "a card"
+ *  for an untyped mill/discard -- never "a permanent", which a milled card need not be. Undefined
+ *  for anything that is not a non-self fill, so every other sentence is untouched. */
+function fillNoun(e: GameEvent): string | undefined {
+  if (!(e.verb === "enters" && e.subject.zone === "graveyard") || e.subject.self === true) return undefined;
+  return emitSubjectNoun(e.subject) === "a permanent" && list(e.subject.type).length === 0 ? "a card" : emitSubjectNoun(e.subject);
+}
+
 function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy): boolean {
   // No derived tags means no characteristics to compare, so nothing can be ruled out — keep the
   // old wording rather than invent a noun on a card the engine has not read.
@@ -931,8 +998,50 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
   return subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h);
 }
 
-export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
+/** WHO IS ASKING. The default is the deck report, and every field here has to leave it unchanged.
+ *
+ *  `tokensMediate` is the token suppression below: a maker's own "a Treasure enters" event and the
+ *  Treasure NODE's implied "it enters" state the same fact twice, so the direct edge is dropped in
+ *  favour of the two-hop path through the token. THAT PATH ONLY EXISTS WHERE TOKEN NODES DO. A card
+ *  page has one card on it, so suppression there deletes the relation and receives nothing back --
+ *  which is the trade `hasMediatingToken` already refuses to make when a card has no token to
+ *  mediate with. Same argument, one step further out. */
+export interface ReasonOptions {
+  /** False where no token node will exist to carry the second hop. Default true (the deck report,
+   *  the graph, the compass -- everything that builds token nodes). */
+  tokensMediate?: boolean;
+}
+
+/** The five basic land types, which a board count may name and which never form an edge -- see the
+ *  board-count channel for why. */
+const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
+
+/** A CARD THAT TURNS THE BOARD OFF FEEDS NOTHING ON IT. Dress Down's "creatures lose all abilities"
+ *  is a layer-6 effect (CR 613.1f) that applies the moment it is on the battlefield, so when the
+ *  game checks Grim Guardian's constellation the Guardian has no abilities and nothing triggers;
+ *  every claim from P to a creature runs through an ability the creature no longer has. A
+ *  noncreature payoff is untouched, and P's own triggers are its own.
+ *
+ *  CEILINGS, per CR 613. Layer 4 runs first, so an animated land is a creature here at the table
+ *  and a printed noncreature to this test (characteristics are printed). Within layer 6 a later
+ *  grant survives by timestamp; the engine has no timestamps and refuses the pair anyway.
+ *  Dependency loops (613.8, Humility + Opalescence) are not modelled. And a silence is a THREE-card
+ *  fact -- Humility on the board mutes Grim Guardian against every other enchantment -- which a
+ *  pairwise edge cannot see; that is a deck-level report, not an edge. Owner, 2026-09-05. */
+function silencedBy(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
+  if (!p.tags || !c.tags) return false;
+  return p.tags.abilities.some((a) => a.kind === "static" && a.effect.kind === "ability-loss"
+    && a.effect.subject !== undefined && a.effect.subject.self !== true && a.effect.subject.scope !== "target"
+    // A CLASS, OR NOTHING. An Aura's "enchanted creature loses all abilities" keeps no class through
+    // the narrowing gate and arrives typeless -- and a typeless subject matches every card. Darksteel
+    // Mutation silences its host, not the deck.
+    && (list(a.effect.subject.type).length > 0 || list(a.effect.subject.subtype).length > 0)
+    && subjectMatches(characteristicsSubject(c.tags!, c.card.name), a.effect.subject, h));
+}
+
+export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
   if (!p.tags || !c.tags) return [];
+  if (silencedBy(p, c, h)) return [];
   const reasons: Reason[] = [];
   const pEvents = producerEvents(p.tags);
 
@@ -1010,9 +1119,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
         //    "for each token you control, create a copy" claimed NOTHING -- 0.3 rating, one
         //    partner, invisible to a Caretaker's Talent in the same deck. See
         //    `hasMediatingToken` in tokens.ts.
+        //  - and the CALLER must be somewhere the second hop can exist. MEASURED 2026-09-04 on the
+        //    partner artifact, which has no token nodes: the gate deleted 7,266 of 117,946 sampled
+        //    token-only candidate pairs outright, and left 6,407 more rows describing the maker's
+        //    own BODY entering, because the body was the only supply left to write a sentence from
+        //    ("When Krenko, Mob Boss enters, Quest for the Goblin Lord puts counters on it" -- the
+        //    one-shot reading of a repeatable engine). See `ReasonOptions.tokensMediate`.
         if (
           e.subject.token === true && t.verb !== "create-token" && !p.isToken && !c.isToken
-          && hasMediatingToken(p.card)
+          && (opts.tokensMediate ?? true) && hasMediatingToken(p.card)
         ) continue;
         // A SELF trigger watches ONE permanent — its own. `selfEtbSelfSupplied` excludes implied and
         // token producers, but an AUTHORED emit that puts some OTHER object onto the battlefield
@@ -1081,6 +1196,11 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
             : reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+            // WHERE THE COUNTERS GO. "puts counters on it" had two live antecedents in every row --
+            // the entering creature the sentence opens with, and the enchantment the counters
+            // actually land on. The consumer's own effect subject knows which.
+            effectTarget: effectTargetNoun(a.effect.subject),
+            effectRecipient: a.effect.subject?.control,
             // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and
             // naming the class unconditionally was the wrong answer to it.
             //
@@ -1101,7 +1221,14 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
             // might be the creature entering, and keeps the old wording; a Sorcery whose emit is
             // `{type: creature}` cannot, and gets the class named instead. Same predicate the
             // self-trigger gate above uses, so the two cannot disagree about what a card can be.
-            subjectNoun: producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject),
+            //
+            // A GRAVEYARD FILL IS NEVER THE PRODUCER ITSELF unless the emit says `self`. "Each
+            // player mills a card" (Syr Konrad) is an UNTYPED fill, so `producerCanBeSubject` was
+            // satisfied by anything and the drawer read "When Syr Konrad, the Grim hits the
+            // graveyard" -- a sentence about the wrong card, seen live on Bloodchief Ascension's
+            // whole producer list (owner, 2026-09-05). The producer is the SOURCE of a fill; the
+            // thing filled is a card of the emitted type, or just "a card" when the type is unknown.
+            subjectNoun: fillNoun(e) ?? (producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
           }),
           effectKind: a.effect.kind,
           repeatability: triggerRepeatability(t.subject),
@@ -1120,6 +1247,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
     for (const a of c.tags.abilities) {
       if (a.effect.kind !== "graveyard-recursion" || a.effect.subject?.zone !== "graveyard") continue;
+      // A DEATH YOU INFLICT ON THE OTHER SIDE FILLS THEIR GRAVEYARD, NOT YOURS. Liliana's Triumph
+      // (each opponent sacrifices) "enabled" Death Tyrant returning ITSELF from YOUR graveyard
+      // (owner-judged FALSE 2026-08-07). The recursion's own subject says which graveyard it reads:
+      // `you` is yours and an opponent-controlled fill never reaches it; `any` is any graveyard, and
+      // Feed the Swarm -> Animate Dead / Reanimate and Withering Torment -> Necromancy are three
+      // owner-judged REAL claims of exactly that shape (kill theirs, take it), which a blanket skip
+      // deleted on the first measurement. Noxious Gearhulk -> Junji (any graveyard, judged FALSE) is
+      // the one verdict this rule keeps claiming against; it is flagged for re-judging, not encoded.
+      if (e.subject.control === "opp" && a.effect.subject.control === "you") continue;
       // Skip if the event-edge loop already credited this fill via a graveyard-entry trigger on the same ability.
       if (a.trigger && a.trigger.verbs.some((v) => {
         const t = normalizeZoneEvent({ verb: v, subject: a.trigger!.subject });
@@ -1254,6 +1390,52 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     }
   }
 
+  // BOARD-COUNT EDGE: the producer IS one of the things the consumer counts. Krenko, Mob Boss makes
+  // a Goblin token per Goblin you control, so every other Goblin in the deck makes him bigger --
+  // and no event says so. Nothing fires, nothing enters, nothing dies; the relation is that the
+  // producer's PRINTED CHARACTERISTICS are inside the consumer's count. Owner-reported 2026-09-04
+  // as the fourth case a Krenko page should answer, after goblin-entering, token-entering and
+  // creature-entering, and the only one with no channel at all.
+  //
+  // THE SAME SHAPE AS THE GRAVEYARD SCALING EDGE ABOVE, one zone over: same `effect.scaling`, same
+  // `scalingSubject`, same `ROLE_NOT_SYNERGY` gate. What differs is what it compares the count
+  // against -- a fill there, a type line here.
+  for (const a of c.tags.abilities) {
+    const counted = a.effect.scalingSubject;
+    if (!counted || counted.zone !== "battlefield") continue;
+    if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
+    // A BARE CARD TYPE IS A MESH, NOT A SYNERGY, and this is the gate that keeps the channel honest.
+    // "Creatures you control" is satisfied by every creature in the deck: forty edges saying the
+    // same nothing, which is the engine's own "playing Magic is not a synergy" rule. MEASURED
+    // 2026-09-04: 685 battlefield counts are derived and 248 name a subtype -- those are the ones
+    // that say something about a DECK rather than about Magic.
+    const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
+    if (subtype === undefined) continue;
+    // A BASIC LAND TYPE IS THE MANA BASE. 20 corpus cards count Swamps and 13 count Mountains; a
+    // mono-black deck runs thirty Swamps, and thirty edges into one payoff is the same mesh wearing
+    // a different costume. The partial reversal for fetchlands and Urza's Saga is about a land that
+    // FINDS something, not about a basic being counted.
+    if (BASIC_LAND_TYPES.has(subtype)) continue;
+    // AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD.
+    if (counted.control === "opp") continue;
+    // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what
+    // the first cut did. A type line sits in no zone -- the fifth time this file records that
+    // lesson -- but an ABSENT `control` on the consumer side is not a wildcard: `subjectMatches`
+    // fails it against a producer that states one, so stripping it made every board count match
+    // nothing at all and the channel silently produced zero edges.
+    const { zone: _z, ...printed } = counted;
+    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
+    reasons.push({
+      tag: `scales:${themeSubjectKey(counted)}`,
+      text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind),
+      effectKind: a.effect.kind,
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+      scaling: a.effect.scaling,
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
+
   // A WIN CONDITION THAT NAMES WHAT IT COUNTS IS A RELATION, NOT A ROLE. `win-game` sits in
   // ROLE_NOT_SYNERGY because "this card wins the game" says the identical thing next to every card —
   // true of Laboratory Maniac, false of Revel in Riches, which wins on ten TREASURES and is
@@ -1350,6 +1532,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     // has to go, not get renamed. What these cards really relate to is the OPPONENT'S board, which
     // is not in the deck and has no node.
     if (a.effect.kind === "debuff") return undefined;
+    // AN ABILITY LOSS IS A SILENCE, NOT A CLAIM: "Dress Down's ability loss applies to Grim
+    // Guardian" is the opposite of a synergy. `silencedBy` already emptied this pair.
+    if (a.effect.kind === "ability-loss") return undefined;
     // A STATIC THAT DESCRIBES THE CARD ITSELF CLAIMS NO OTHER CARD. Planar Nexus prints "This land
     // is every nonbasic land type", derives `{type: land, scope: each, self: true}` -- the
     // self-reference recorded CORRECTLY -- and this pass rendered "Planar Nexus's type grant applies
@@ -1551,6 +1736,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
     if (landSubtypes || basicLand) {
       if (a.effect.subject.control === "opp") continue;
       if (!subjectMatches(found, a.effect.subject, h)) continue;
+      // WASTES HAS NO LAND TYPE TO SHARE. Myriad Landscape's "basic land cards that share a land
+      // type" derives as a plain basic-land subject, which Wastes answers -- and two Wastes do not
+      // (owner, 2026-09-06). Same predicate the mana model reads, see `fetch-land.ts`.
+      if (SHARES_A_LAND_TYPE.test(p.card.oracleText ?? "") && !hasBasicLandType(c.card.typeLine)) continue;
       reasons.push({
         tag: `ramp-target:${landSubtypes ? themeSubjectKey(a.effect.subject) : "basic"}`,
         text: fetchSentence(p.card.name, c.card.name),
@@ -1724,8 +1913,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
  *  Mishra, Claimed by Gix names "a creature named Phyrexian Dragon Engine" outright. Everything else
  *  in this file matches a producer EVENT to a consumer TRIGGER, so that shape had nowhere to land —
  *  the recall measurement filed the pair `miss-inexpressible`, which was wrong: Commander Salt
- *  models it as a `named` qualifier, MTGJSON as `cardParts`, and `ingest-meld.ts` now puts
- *  `meldPartner` on the card as a printed characteristic.
+ *  models it as a `named` qualifier, MTGJSON as `cardParts`, and `docToCard` (data/docs.ts) derives
+ *  `meldPartner` from Scryfall's `allParts` on every read -- a stored field was erased by the first
+ *  full re-ingest after it was written, and this edge drew nothing for a month.
  *
  *  Emitted from `pairReasons` rather than `directedReasons` because the relation is SYMMETRIC and the
  *  pair is one fact: both halves must be on the battlefield, so neither is the producer. Emitting it
@@ -1733,7 +1923,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[
  *
  *  There is no `effectKind`: the closed 30 are payoff kinds, and melding is not one of them. The
  *  field is optional for exactly this sort of case. */
-function meldReason(a: DeckCard, b: DeckCard): Reason[] {
+export function meldReason(a: DeckCard, b: DeckCard): Reason[] {
   const partnered = a.card.meldPartner === b.card.name || b.card.meldPartner === a.card.name;
   if (!partnered) return [];
   return [stampSides({

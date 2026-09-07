@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/hX81Eg2jFoJlhAGX3LxoRw (source https://archidekt.com/decks/18824546)
+# tags Ninjutsu, Voltron; bracket 2; saved 2026-06-12; 223 tagged of 914 indexed
+
+Commander
+1 Taeko, the Patient Avalanche
+
+Deck
+1 Alora, Merry Thief
+1 Baleful Strix
+1 Changeling Outcast
+1 Dimir Infiltrator
+1 Dour Port-Mage
+1 Fallen Shinobi
+1 Gingerbrute
+1 Grazilaxx, Illithid Scholar
+1 Higure, the Still Wind
+1 Ingenious Infiltrator
+1 Ink-Eyes, Servant of Oni
+1 Mist-Cloaked Herald
+1 Mist-Syndicate Naga
+1 Mistblade Shinobi
+1 Moon-Circuit Hacker
+1 Moonsnare Specialist
+1 Nashi, Moon Sage's Scion
+1 Nezumi Prowler
+1 Ninja of the Deep Hours
+1 Orochi Soul-Reaver
+1 Prosperous Thief
+1 Sakashima's Student
+1 Satoru Umezawa
+1 Satoru, the Infiltrator
+1 Silent Hallcreeper
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Siren Stormtamer
+1 Skullsnatcher
+1 Slither Blade
+1 Thousand-Faced Shadow
+1 Throat Slitter
+1 Throatseeker
+1 Tormented Soul
+1 Triton Shorestalker
+1 Walker of Secret Ways
+1 Yuriko, the Tiger's Shadow
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Chain of Vapor
+1 Counterspell
+1 Dark Ritual
+1 Familiar's Ruse
+1 Fell the Profane
+1 Misdirection
+1 Negate
+1 Sink into Stupor
+1 Stubborn Denial
+1 Arcane Signet
+1 Bident of Thassa
+1 Dimir Signet
+1 Genji Glove
+1 Sol Ring
+1 Talisman of Dominance
+1 The Indomitable
+1 Vorpal Sword
+1 Choked Estuary
+1 Clearwater Pathway
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Halimar Depths
+10 Island
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Hollow
+8 Swamp
+1 Temple of Deceit
+1 Underground River
+1 Watery Grave
+1 Coastal Piracy
+1 Cover of Darkness
+1 Cunning Evasion
+1 Reconnaissance Mission
+1 Smoke Shroud
+1 Kaito Shizuki
+1 Kaito, Cunning Infiltrator
+1 Karn's Temporal Sundering
+1 Toxic Deluge

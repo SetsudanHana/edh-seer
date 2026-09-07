@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/jared-carthalion/squad
+# theme Squad (2 decks)
+
+Commander
+1 Jared Carthalion
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Coalition Relic
+1 Commander's Sphere
+1 Sol Ring
+1 Arcane Sanctum
+1 Battlefield Forge
+1 Brushland
+1 Caves of Koilos
+1 Command Tower
+1 Crumbling Necropolis
+1 Exotic Orchard
+4 Forest
+1 Furycalm Snarl
+3 Island
+1 Isolated Chapel
+1 Jungle Shrine
+1 Llanowar Wastes
+3 Mountain
+1 Nomad Outpost
+1 Orzhov Guildgate
+1 Pit of Offerings
+2 Plains
+1 Raucous Theater
+1 Restless Vents
+1 Rockfall Vale
+1 Sandsteppe Citadel
+1 Seaside Citadel
+1 Shipwreck Marsh
+1 Shivan Reef
+3 Swamp
+1 Yavimaya Coast
+1 Abyssal Harvester
+1 Adrix and Nev, Twincasters
+1 Arco-Flagellant
+1 Bone-Cairn Butcher
+1 Garna, the Bloodflame
+1 Hope of Ghirapur
+1 O-Kagachi, Vengeful Kami
+1 Ramos, Dragon Engine
+1 Ruthless Radrat
+1 Securitron Squadron
+1 Sicarian Infiltrator
+1 Solemn Simulacrum
+1 Thrill-Kill Disciple
+1 Ultramarines Honour Guard
+1 Urabrask the Hidden
+1 Vanguard Suppressor
+1 Wasteland Raider
+1 Xavier Sal, Infested Captain
+1 Arboreal Alliance
+1 Imprisoned in the Moon
+1 Oath of Ajani
+1 Oath of Liliana
+1 Planar Collapse
+1 Spark Rupture
+1 Abzan Charm
+1 Growth Spiral
+1 Naya Charm
+1 Rootborn Defenses
+1 Sultai Charm
+1 Unite the Coalition
+1 Ajani, Caller of the Pride
+1 Ajani, Valiant Protector
+1 Archangel Elspeth
+1 Chandra, Dressed to Kill
+1 Chandra, Fire Artisan
+1 Chandra, Spark Hunter
+1 Chandra, Torch of Defiance
+1 Dakkon, Shadow Slayer
+1 Domri Rade
+1 Jace, Architect of Thought
+1 Jace, the Perfected Mind
+1 Jiang Yanggu, Wildcrafter
+1 Kaito, Dancing Shadow
+1 Koth, Fire of Resistance
+1 Nicol Bolas, Dragon-God
+1 Oko, the Ringleader
+1 Sarkhan, Fireblood
+1 Sorin, Solemn Visitor
+1 The Eternal Wanderer
+1 Vraska the Unseen
+1 Conflux
+1 Cultivate
+1 Dark Intimations
+1 Farseek
+1 Kodama's Reach
+1 Nahiri's Warcrafting
+1 Rampant Growth

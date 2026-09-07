@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/0_puwsOVv1HCKr-gOd8VlA (source https://archidekt.com/decks/24953087)
+# tags Reanimator, Enchantress, Card Draw, Surveil; bracket 3; saved 2026-09-03; 78 tagged of 17506 indexed
+
+Commander
+1 Aminatou, Veil Piercer
+
+Deck
+1 Adagia, Windswept Bastion
+1 Adarkar Wastes
+1 Bleachbone Verge
+1 Cavern of Souls
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Flooded Strand
+1 Forbidden Orchard
+1 Glacial Fortress
+1 Gleaming Bastion
+1 Gloomlake Verge
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+3 Island
+1 Mana Confluence
+1 Mystic Gate
+3 Plains
+1 Polluted Delta
+1 Reflecting Pool
+1 Sea of Clouds
+1 Spire of Industry
+1 Swamp
+1 Underground River
+1 Urza's Saga
+1 Watery Grave
+1 Aminatou, the Fateshifter
+1 Ancient Cellarspawn
+1 Archon of Sun's Grace
+1 Bard, King of Dale
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Entity Tracker
+1 Esper Sentinel
+1 Faerie Mastermind
+1 Grim Guardian
+1 Heliod, the Radiant Dawn
+1 King T'Challa
+1 Lotho, Corrupt Shirriff
+1 Perplexing Chimera
+1 Soaring Lightbringer
+1 Summon: Bahamut
+1 Summon: Knights of Round
+1 The Queen of Dale
+1 Victor, Valgavoth's Seneschal
+1 Animate Dead
+1 Black Market Connections
+1 Copy Enchantment
+1 Copy Land
+1 Counterbalance
+1 Court of Ardenvale
+1 Court of Vantress
+1 Cramped Vents // Access Maze
+1 Enhanced Surveillance
+1 Estrid's Invocation
+1 Funeral Room // Awakening Hall
+1 Hallowed Haunting
+1 Land Tax
+1 Leyline of Anticipation
+1 Mirror Room // Fractured Realm
+1 Mirrormade
+1 Monologue Tax
+1 Moonlit Meditation
+1 Mystic Remora
+1 Omniscience
+1 One with the Multiverse
+1 Restricted Office // Lecture Hall
+1 Revel in Riches
+1 Rhystic Study
+1 Search for Azcanta
+1 Shadow of the Second Sun
+1 Shark Typhoon
+1 Sheltered by Ghosts
+1 Sigil of the Empty Throne
+1 Smothering Tithe
+1 Starfield of Nyx
+1 The Cruelty of Gix
+1 Trouble in Pairs
+1 Unstoppable Plan
+1 Arcane Denial
+1 Swan Song
+1 Vampiric Tutor
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Azorius Signet
+1 Bender's Waterskin
+1 Fellwar Stone
+1 Orzhov Signet
+1 Sensei's Divining Top
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress

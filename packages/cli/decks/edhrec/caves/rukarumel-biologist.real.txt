@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/YDtNXKOmDOKpwCthYLtKiw (source https://archidekt.com/decks/9200067)
+# tags Caves, Dinosaurs, Discover, Stompy; bracket unset; saved 2026-08-30; 2 tagged of 4540 indexed
+
+Commander
+1 Rukarumel, Biologist
+
+Deck
+1 Abundant Countryside
+1 Captivating Cave
+1 Cavernous Maw
+1 Command Tower
+1 Evolving Wilds
+2 Forest
+1 Forgotten Monument
+1 Frontier Bivouac
+1 Hidden Courtyard
+1 Hidden Necropolis
+1 Hidden Nursery
+1 Hidden Volcano
+2 Island
+1 Jungle Shrine
+2 Mountain
+1 Nomad Outpost
+1 Opulent Palace
+1 Path of Ancestry
+1 Pit of Offerings
+2 Plains
+1 Promising Vein
+1 Sandsteppe Citadel
+1 Secluded Courtyard
+2 Swamp
+1 Terramorphic Expanse
+1 Unclaimed Territory
+1 Volatile Fault
+1 Arcane Signet
+1 Fellwar Stone
+1 Herd Heirloom
+1 Patchwork Banner
+1 Armored Kincaller
+1 Atla Palani, Nest Tender
+1 Belligerent Yearling
+1 Birds of Paradise
+1 Blue, Loyal Raptor
+1 Burning Sun's Avatar
+1 Carnage Tyrant
+1 Cresting Mosasaurus
+1 Drover of the Mighty
+1 Earthshaker Dreadmaw
+1 Ellie and Alan, Paleontologists
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Ghalta and Mavren
+1 Ghalta, Primal Hunger
+1 Hunting Velociraptor
+1 Indoraptor, the Perfect Hybrid
+1 Itzquinth, Firstborn of Gishath
+1 Ixalli's Lorekeeper
+1 Kinjalli's Caller
+1 Kinjalli's Sunwing
+1 Marauding Raptor
+1 Moon Girl and Devil Dinosaur
+1 Nezahal, Primal Tide
+1 Outcaster Trailblazer
+1 Owen Grady, Raptor Trainer
+1 Pathfinding Axejaw
+1 Priest of the Wakening Sun
+1 Ravenous Sailback
+1 Regisaur Alpha
+1 Saurian Symbiote
+1 Scalestorm Summoner
+1 Scytheclaw Raptor
+1 Sinuous Benthisaur
+1 Swooping Pteranodon
+1 Thrashing Brontodon
+1 Thundering Spineback
+1 Topiary Stomper
+1 Trumpeting Carnosaur
+1 Wakening Sun's Avatar
+1 Zetalpa, Primal Dawn
+1 Bite Down
+1 Erode
+1 Putrefy
+1 Tail Swipe
+1 Terminate
+1 Collective Inferno
+1 Form of the Dinosaur
+1 Garruk's Uprising
+1 Leyline of Mutation
+1 Life Finds a Way
+1 Poetic Ingenuity
+1 Spelunking
+1 Welcome to . . .
+1 Commune with Dinosaurs
+1 Cosmium Confluence
+1 Defossilize
+1 Glimpse the Core
+1 Savage Stomp
+1 Star of Extinction
+1 Triumphant Chomp
+1 Walk with the Ancestors
+1 Invasion of Ikoria

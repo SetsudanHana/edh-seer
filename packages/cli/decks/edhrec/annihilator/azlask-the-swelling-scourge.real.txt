@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/rAk6hv0_4Nn77s2c18_LBw (source https://archidekt.com/decks/26042635)
+# tags Eldrazi, Annihilator, Tokens; bracket 3; saved 2026-09-04; 129 tagged of 13787 indexed
+
+Commander
+1 Azlask, the Swelling Scourge
+
+Deck
+1 Abstruse Appropriation
+1 Counterspell
+1 Eldritch Immunity
+1 Kozilek's Command
+1 Path to Exile
+1 Second Harvest
+1 Swords to Plowshares
+1 Angelic Aberration
+1 Benthic Anomaly
+1 Bismuth Mindrender
+1 Chittering Dispatcher
+1 Conduit of Ruin
+1 Dread Drone
+1 Eldrazi Displacer
+1 Emrakul's Hatcher
+1 Emrakul's Messenger
+1 Ezuri, Claw of Progress
+1 Glaring Fleshraker
+1 Hand of Emrakul
+1 Herald of Kozilek
+1 It That Betrays
+1 It That Heralds the End
+1 Kalemne, Disciple of Iroas
+1 Kozilek's Predator
+1 Meren of Clan Nel Toth
+1 Minthara, Merciless Soul
+1 Mondrak, Glory Dominus
+1 Ojer Taq, Deepest Foundation
+1 Pitiless Plunderer
+1 Propagator Drone
+1 Rapacious One
+1 Smothering Abomination
+1 Spawn-Gang Commander
+1 Spawnbed Protector
+1 Writhing Chrysalis
+1 Awakening Zone
+1 Cryptolith Rite
+1 Echoes of Eternity
+1 From Beyond
+1 Garruk's Uprising
+1 Impact Tremors
+1 Kindred Discovery
+1 Kozilek's Unsealing
+1 Land Tax
+1 Path of Annihilation
+1 Warleader's Call
+1 Blasphemous Act
+1 Brood Birthing
+1 Cultivate
+1 Distant Melody
+1 Glimpse the Impossible
+1 Kodama's Reach
+1 Rise of the Eldrazi
+1 Boros Garrison
+1 Cascading Cataracts
+1 Command Tower
+1 Eldrazi Temple
+1 Exotic Orchard
+1 Eye of Ugin
+3 Forest
+1 Golgari Rot Farm
+3 Island
+1 Izzet Boilerworks
+3 Mountain
+1 Orzhov Basilica
+1 Path of Ancestry
+3 Plains
+1 Reliquary Tower
+1 Shrine of the Forsaken Gods
+1 Simic Growth Chamber
+3 Swamp
+1 Temple of the False God
+1 Three Tree City
+1 Tomb of the Spirit Dragon
+1 Ugin's Labyrinth
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Yavimaya, Cradle of Growth
+1 Chromatic Lantern
+1 Darksteel Monolith
+1 Forsaken Monument
+1 Idol of False Gods
+1 Maskwood Nexus
+1 Mystic Forge
+1 Sol Ring
+1 Urza's Incubator
+1 Vanquisher's Banner
+1 Ugin, Eye of the Storms

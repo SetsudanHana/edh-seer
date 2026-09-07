@@ -505,6 +505,14 @@ test("copying a SPELL is not cloning a permanent", () => {
   expect(actionEffectKind({ verb: "copy", object: "that spell" })).toBe("copy-spell");
   // The fallback stays: a permanent copy is a clone.
   expect(actionEffectKind({ verb: "copy", object: "target creature you control" })).toBe("clone");
+  // THE OBJECT DECIDES (UX sweep 2026-09-06, E2): Protean Thaumaturge's clause ends "except it has
+  // this ability", and reading the whole clause made a creature clone a spell copier.
+  expect(actionEffectKind(
+    { verb: "copy", object: "another target creature" },
+    "Constellation — Whenever an enchantment you control enters, you may have this creature become a copy of another target creature, except it has this ability.",
+  )).toBe("clone");
+  // A bare pronoun still reads the clause, which is what names the spell.
+  expect(actionEffectKind({ verb: "copy", object: "it" }, "When you cast an instant, copy it.")).toBe("copy-spell");
 });
 
 test("a sacrifice is forced only when an OPPONENT performs it", () => {
@@ -590,4 +598,49 @@ test("a sentence about this spell's own cost is never a tax", () => {
   // A REAL tax is untouched.
   expect(actionEffectKind({ verb: "cost-modify", object: "Noncreature spells your opponents cast cost {1} more" }))
     .toBe("tax");
+});
+
+/** ENERGY IS NOT MANA. The clause layer writes "you get {E} (an energy counter)" as
+ *  `{verb: "add-mana", object: "E"}`, and reading that as mana put "Decoction Module adds 1 mana" on
+ *  a card page -- a claim big enough to change a build, and false. A deck tuner and a skeptic each
+ *  refused to act on it, independently.
+ *
+ *  MEASURED: 35 of 2,263 `add-mana` actions carry the energy object, across 32 cards. Refused rather
+ *  than relabelled -- energy has no member in `EFFECT_KINDS`, and an invented one is consumed
+ *  downstream as if it were true. */
+test("an energy action is not a mana action, and claims nothing instead", () => {
+  expect(actionEffectKind({ verb: "add-mana", object: "E", amount: "1" } as never, "")).toBeNull();
+  expect(actionEffectKind({ verb: "add-mana", object: "{E}" } as never, "")).toBeNull();
+  // The other 2,228 add-mana actions are real mana and must be untouched.
+  expect(actionEffectKind({ verb: "add-mana", object: "{G}{G}" } as never, "")).toBe("mana-generation");
+  expect(actionEffectKind({ verb: "add-mana", object: "one mana of any color" } as never, ""))
+    .toBe("mana-generation");
+});
+
+/** "IS ALSO A CLERIC, ROGUE, WARRIOR, AND WIZARD" GRANTS TYPES, to the card itself. The clause
+ *  records it as `grant-ability` with the object "becomes also a Cleric, Rogue, Warrior, and
+ *  Wizard", and it read as a keyword grant on all four corpus cards (owner, 2026-09-05). */
+test("becoming also other creature types is a type-grant", () => {
+  expect(actionEffectKind({ verb: "grant-ability", object: "becomes also a Cleric, Rogue, Warrior, and Wizard" }))
+    .toBe("type-grant");
+  expect(actionEffectKind({ verb: "grant-ability", object: "is also a Vehicle" })).toBe("type-grant");
+});
+
+/** "CREATURES LOSE ALL ABILITIES" IS ITS OWN KIND. The clause records it as `cant | have
+ *  abilities`, which read as nothing (not a tax), so Dress Down derived its draw and its end-step
+ *  sacrifice and never the static that turns the board off -- and the engine claimed Grim Guardian
+ *  drains when Dress Down enters (owner, 2026-09-05). 73 corpus cards print the sentence. */
+test("losing abilities is ability-loss, and a payable can't is still a tax", () => {
+  expect(actionEffectKind({ verb: "cant", object: "have abilities" })).toBe("ability-loss");
+  expect(actionEffectKind({ verb: "cant", object: "target creature loses all abilities" })).toBe("ability-loss");
+  expect(actionEffectKind({ verb: "cant", object: "attack you unless its controller pays {2}" })).toBe("tax");
+});
+
+test("setting a base power and toughness is neither a pump nor a debuff", () => {
+  // Sludge Monster: "have base power and toughness 2/2" is removal, and an unsigned "2/2" mapped to pump.
+  expect(actionEffectKind({ verb: "modify-pt", object: "Non-Horror creatures with slime counters on them", amount: "2/2" },
+    "Non-Horror creatures with slime counters on them lose all abilities and have base power and toughness 2/2.")).toBeNull();
+  // A signed modifier keeps its kind either way.
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures you control", amount: "+1/+1" }, "Creatures you control get +1/+1.")).toBe("pump");
+  expect(actionEffectKind({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" }, "")).toBe("debuff");
 });

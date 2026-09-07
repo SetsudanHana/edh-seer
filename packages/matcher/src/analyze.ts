@@ -14,15 +14,15 @@ import {
   type CardSynergy,
   type Reason,
   type TagStats,
-  type ImpactWeights,
-} from "@edh-seer/engine";
+  type ImpactWeights, type GameState, type Marker } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { faceDeckCards } from "./faces.js";
 import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY } from "./edges.js";
+import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
@@ -188,7 +188,13 @@ export function analyzeDeckStructured(
   // `cardTagsDerived.findOne({oracleId: tokenDoc._id})`, and return null (never a name lookup) when
   // either step misses.
   tokenTags?: (ref: TokenRef) => CardTags | null,
+  /** A GAME STATE THE OWNER SET (roadmap W18): abilities it does not meet are silent, "X is your
+   *  speed" resolves, creatures are read under the deck's anthems, and every edge the state alone
+   *  created carries `enabledBy`. Undefined is the report as it always was. */
+  state?: GameState,
 ): DeckReport {
+  const rawInputs = inputs;
+  inputs = applyState(inputs, state);
   const commanderSet = new Set(commanderNames ?? []);
   // A face node carries the FACE's name, and the decklist designated the CARD. Every commander test
   // over a `unique` entry goes through this; the ones over `resolved` keep using the name directly,
@@ -283,6 +289,10 @@ export function analyzeDeckStructured(
   // i < j a (real, token) cross-pair always has the real card at `i` -- exactly the shape
   // `createsReasons` demands.
   const pairPool: DeckCard[] = [...unique, ...tokenNodes];
+  // LAYER 7c, ONLY UNDER A STATE: the stateless report keeps reading printed stats, so nothing it
+  // says today changes until the owner sets a marker. Under one, a 1/1 under Samut at speed 4
+  // enters as a 5/1 and a power-4 payoff sees it.
+  if (state !== undefined) applyAnthems(pairPool, hierarchy);
   const edges: SynergyEdge[] = [];
   // FINDINGS 1/2 (owner review, 2026-08-16), FIXED PROPERLY on re-review (2026-08-16): the first cut
   // rebuilt this filter AFTER the fact by matching `edge.a`/`edge.b` against a set of token NAMES --
@@ -532,7 +542,13 @@ export function analyzeDeckStructured(
       const p = unique[i], c = unique[j];
       if (sameCard(p, c)) continue; // a face never feeds its own other face
       const hop = twoHopReasons.get(hopKey(p.card.name, c.card.name));
-      const direct = directedReasons(p, c, hierarchy); // p feeds c
+      // MELD IS THE ONE RELATION `directedReasons` CANNOT SEE, and this loop is what the card line
+      // and its partner list are built from. `edges` above goes through `pairReasons`, which carries
+      // `meldReason`; this loop did not, so a meld pair had an edge in the report and "synergizes
+      // with 0 cards" on both card lines. Symmetric, so each direction adds it once and
+      // `distinctPartners` below dedupes the pair. Found 2026-09-05, the day `meldPartner` came back
+      // onto the corpus (docs.ts) -- the month it was absent hid this.
+      const direct = [...directedReasons(p, c, hierarchy), ...meldReason(p, c)]; // p feeds c
       const reasons = hop ? [...direct, ...hop] : direct;
       if (reasons.length === 0) continue;
       const maxW = maxAxisWeight(reasons, axis);
@@ -862,6 +878,22 @@ export function analyzeDeckStructured(
       // `superfriends` row. Read off the derived characteristics, which is where every other field
       // here comes from, so a card with no tags contributes nothing rather than a guess.
       cardTypes: (dc.tags!.characteristics?.types ?? []).map((t) => t.toLowerCase()),
+      // The vocabulary's newer rows (2026-09-06): printed keywords for the named mechanics, the
+      // type-line words for the object classes, and the two halves of kindred -- what creature
+      // types the card HAS and which ones its abilities NAME (a lord's subject, a trigger's).
+      keywords: (dc.tags!.characteristics?.keywords ?? []).map((k) => k.toLowerCase()),
+      lineWords: [...(dc.tags!.characteristics?.types ?? []), ...(dc.tags!.characteristics?.subtypes ?? [])].map((w) => w.toLowerCase()),
+      creatureTypes: (dc.tags!.characteristics?.types ?? []).some((t) => t.toLowerCase() === "creature")
+        ? ((dc.tags!.characteristics?.keywords ?? []).some((k) => k.toLowerCase() === "changeling")
+          ? ["*"]
+          : (dc.tags!.characteristics?.subtypes ?? []).map((s) => s.toLowerCase()))
+        : [],
+      namedTypes: dc.tags!.abilities.flatMap((a) =>
+        [a.trigger?.subject, a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)]
+          .filter((s): s is NonNullable<typeof s> => s !== undefined && s !== null && s.self !== true)
+          .flatMap((s) => (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []))
+          .map((s) => s.toLowerCase()),
+      ),
     }));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
@@ -882,10 +914,10 @@ export function analyzeDeckStructured(
     ...strategies.filter((s) => s.name === "reanimator" || s.name === "aristocrats").map((s) => s.confidence),
   );
   const {
-    buildScore, buildCategories, buildParents, suggestions, answerCoverage: coverage, rampResilience,
+    buildScore, buildCategories, buildParents, template, suggestions, answerCoverage: coverage, rampResilience,
     landsImpact, answersImpact,
   } =
-    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability);
+    computeBuild(resolved, strategies[0]?.name, landRec.target, identity, graveyardVulnerability, strategies);
 
   // THE CUT LIST -- a join over what is already computed, never new analysis. It reads the rated
   // cards, the axis weights, the BUILD roles and the per-category surplus, and names CANDIDATES
@@ -960,10 +992,27 @@ export function analyzeDeckStructured(
     selective: t.selective,
   }));
 
+  // THE EDGES THE STATE ALONE CREATED, told by the one honest method: the same analysis without the
+  // state, and set difference on the pair. Two runs is the price of "this edge exists because you
+  // set speed to 4", and it is paid only when a state is set.
+  if (state !== undefined) {
+    const base = analyzeDeckStructured(rawInputs, commanderNames, hierarchy, impactWeights, combos, themeStats, tokenTags);
+    const pairKey = (a: string, b: string) => (a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`);
+    const had = new Set(base.edges.map((e) => pairKey(e.a, e.b)));
+    const markers = (Object.keys(state) as Marker[]).filter((k) => state[k] !== undefined);
+    for (const e of edges) {
+      if (had.has(pairKey(e.a, e.b))) continue;
+      e.enabledBy = markers;
+      e.reasons = e.reasons.map((r) => ({ ...r, enabledBy: markers }));
+    }
+  }
+
   return {
     commanders: presentCommanders,
     cards: ratedCards,
     edges,
+    ...(state !== undefined ? { state } : {}),
+    ...(() => { const markers = reachableMarkers(rawInputs); return markers.length > 0 ? { markers } : {}; })(),
     /** How many copies each repeated card contributes, so one node can say "x6". Absent for
      *  singletons, which is every card in a legal EDH deck except basics and the any-number family
      *  (Dragon's Approach, Rat Colony, Shadowborn Apostle). */
@@ -1021,6 +1070,7 @@ export function analyzeDeckStructured(
     buildScore,
     buildCategories,
     buildParents,
+    template,
     landsImpact,
     answersImpact,
     suggestions,

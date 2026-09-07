@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/W8YA5RFG54FQUlsiHRHzlQ (source https://archidekt.com/decks/25692015)
+# tags Clones, Cascade, Indestructible, Enchantress, Anthems, Paradigm, Control; bracket unset; saved 2026-08-30; 1 tagged of 32746 indexed
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Adagia, Windswept Bastion
+1 Blood Crypt
+1 Breeding Pool
+1 Command Tower
+1 Drossforge Bridge
+1 Evendo, Waking Haven
+1 Evolving Wilds
+1 Exotic Orchard
+1 Field of the Dead
+1 Forbidden Orchard
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+2 Island
+1 Mana Confluence
+1 Mistvault Bridge
+2 Mountain
+1 Overgrown Tomb
+2 Plains
+1 Razortide Bridge
+1 Reflecting Pool
+1 Reliquary Tower
+1 Sacred Foundry
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Tanglepool Bridge
+1 Temple Garden
+1 Terramorphic Expanse
+1 Thornglint Bridge
+1 Watery Grave
+1 Arcane Signet
+1 Chromatic Orrery
+1 Helm of the Host
+1 Infinite Guideline Station
+1 Isochron Scepter
+1 Mirror Box
+1 Sol Ring
+1 The Eternity Elevator
+1 Vanquisher's Banner
+1 Atraxa, Grand Unifier
+1 Avacyn, Angel of Hope
+1 Bello, Bard of the Brambles
+1 Esika, God of the Tree
+1 Jhoira, Weatherlight Captain
+1 Leyline Tyrant
+1 Maelstrom Wanderer
+1 Muldrotha, the Gravetide
+1 Ocelot Pride
+1 Ratadrabik of Urborg
+1 Riftsweeper
+1 Sigarda, Host of Herons
+1 Sisay, Weatherlight Captain
+1 Counterspell
+1 Cyclonic Rift
+1 Path to Exile
+1 Pull from Eternity
+1 See Double
+1 Swan Song
+1 Swords to Plowshares
+1 Three Steps Ahead
+1 Vampiric Tutor
+1 Damnation
+1 Decorum Dissertation
+1 Demonic Tutor
+1 Echocasting Symposium
+1 Farewell
+1 Germination Practicum
+1 Improvisation Capstone
+1 Multiversal Incursion
+1 Reap and Sow
+1 Restoration Seminar
+1 Supreme Verdict
+1 Doubling Season
+1 Leyline of Abundance
+1 Leyline of Anticipation
+1 Leyline of Combustion
+1 Leyline of Hope
+1 Leyline of Lifeforce
+1 Leyline of Lightning
+1 Leyline of Mutation
+1 Leyline of Punishment
+1 Leyline of Resonance
+1 Leyline of Sanctity
+1 Leyline of Singularity
+1 Leyline of Transformation
+1 Leyline of Vitality
+1 Leyline of the Guildpact
+1 Leyline of the Meek
+1 Leyline of the Void
+1 Maelstrom Nexus
+1 Privileged Position
+1 Rhystic Study
+1 Smothering Tithe

@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/FExAlxCS-vZlv_47HPZA2g (source https://archidekt.com/decks/15570659)
+# tags Lhurgoyfs, Graveyard, Delirium; bracket 3; saved 2026-09-05; 116 tagged of 8816 indexed
+
+Commander
+1 Winter, Misanthropic Guide
+
+Deck
+1 Altar of the Goyf
+1 Arcane Signet
+1 Commander's Sphere
+1 Diviner's Wand
+1 Sol Ring
+1 Aphemia, the Cacophony
+1 Archfiend of Depravity
+1 Barrowgoyf
+1 Blade of the Oni
+1 Bloodline Pretender
+1 Brawn
+1 Cosmogoyf
+1 Cynical Loner
+1 Disa the Restless
+1 Fate Unraveler
+1 Gravebreaker Lamia
+1 Lhurgoyf
+1 Mortivore
+1 Necrogoyf
+1 Nethergoyf
+1 Oriq Loremage
+1 Osseous Sticktwister
+1 Patchwork Beastie
+1 Polygoyf
+1 Pyrogoyf
+1 Seizan, Perverter of Truth
+1 Spiteful Returned
+1 Tarmogoyf
+1 Taurean Mauler
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Golgari Rot Farm
+1 Gruul Turf
+1 Highland Forest
+3 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Riveteers Overlook
+1 Rootbound Crag
+1 Sheltered Thicket
+1 Smoldering Marsh
+1 Sulfurous Mire
+7 Swamp
+1 Tainted Peak
+1 Tainted Wood
+1 Terramorphic Expanse
+1 Twilight Mire
+1 Twisted Landscape
+1 Woodland Chasm
+1 Ziatora's Proving Ground
+1 Cultivate
+1 Demonic Counsel
+1 Diresight
+1 Farseek
+1 Feed the Swarm
+1 Final Act
+1 Kodama's Reach
+1 Lively Dirge
+1 Nature's Lore
+1 Pillage the Bog
+1 Sign in Blood
+1 Skyshroud Claim
+1 Warren Weirding
+1 Deadly Dispute
+1 Drag to the Roots
+1 Harrow
+1 Heritage Reclamation
+1 Hero's Downfall
+1 Murder
+1 Natural End
+1 Naturalize
+1 Village Rites
+1 Garruk's Uprising
+1 Megrim
+1 Phyrexian Arena
+1 Tarmogoyf Nest
+1 Invasion of Ergamon
+1 Invasion of Karsus
+1 Invasion of Zendikar
+1 Lord Windgrace
+1 Ob Nixilis Reignited
+1 Ob Nixilis, the Hate-Twisted

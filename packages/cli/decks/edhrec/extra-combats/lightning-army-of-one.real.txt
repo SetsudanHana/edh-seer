@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/0KU8gP4t4SI3SC8ge3jIRA (source https://archidekt.com/decks/16998460)
+# tags Extra Combats, Forced Combat; bracket 3; saved 2026-09-04; 634 tagged of 14516 indexed
+
+Commander
+1 Lightning, Army of One
+
+Deck
+1 Access Tunnel
+1 Arena of Glory
+1 Arid Mesa
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Furycalm Snarl
+9 Mountain
+1 Needleverge Pathway
+9 Plains
+1 Plaza of Heroes
+1 Rogue's Passage
+1 Rugged Prairie
+1 Sacred Foundry
+1 Shivan Gorge
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Sunbillow Verge
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 War Room
+1 Aggravated Assault
+1 Bitter Feud
+1 Curse of Bloodletting
+1 Day of the Moon
+1 Duelist's Heritage
+1 Ghostly Prison
+1 Popular Entertainer
+1 The Sound of Drums
+1 Agitator Ant
+1 Alexios, Deimos of Kosmos
+1 Auntie Blyte, Bad Influence
+1 Aurelia, the Law Above
+1 Aurelia, the Warleader
+1 Balefire Liege
+1 Bastion Protector
+1 Blade Historian
+1 Bloodthirster
+1 Boros Reckoner
+1 Brash Taunter
+1 Combustible Gearhulk
+1 Firemane Commando
+1 Gisela, Blade of Goldnight
+1 Heartless Hidetsugu
+1 Karlach, Fury of Avernus
+1 Kediss, Emberclaw Familiar
+1 Lizard Blades
+1 Mother of Runes
+1 Nelly Borca, Impulsive Accuser
+1 Phyrexian Vindicator
+1 Professional Face-Breaker
+1 Sawhorn Nemesis
+1 Solphim, Mayhem Dominus
+1 Stuffy Doll
+1 Vexilus Praetor
+1 Arcane Signet
+1 Basilisk Collar
+1 Boros Signet
+1 Brotherhood Regalia
+1 Genji Glove
+1 Inquisitor's Flail
+1 Laser Screwdriver
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Trailblazer's Boots
+1 Blasphemous Act
+1 Browbeat
+1 Disrupt Decorum
+1 Taunt from the Rampart
+1 Boros Charm
+1 Dawn's Truce
+1 Deflecting Palm
+1 Flawless Maneuver
+1 Legion Leadership
+1 Olórin's Searing Light
+1 Price of Progress
+1 Rebuff the Wicked
+1 Restoration Magic
+1 Swords to Plowshares
+1 Take the Bait
+1 Untimely Malfunction

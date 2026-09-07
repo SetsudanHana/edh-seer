@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/t50P0M7C82HN_2AJ8geBew (source https://archidekt.com/decks/24091431)
+# tags Ninjutsu, Ninjas, Unblockable, Attack Triggers, Burn; bracket 3; saved 2026-09-03; 189 tagged of 31850 indexed
+
+Commander
+1 Yuriko, the Tiger's Shadow
+
+Deck
+1 Ancient Stone Idol
+1 Azra Smokeshaper
+1 Azure Beastbinder
+1 Changeling Outcast
+1 Covert Technician
+1 Dirgur Island Dragon
+1 Dokuchi Silencer
+1 Faerie Dreamthief
+1 Faerie Seer
+1 Grazilaxx, Illithid Scholar
+1 Harrier Strix
+1 Icebreaker Kraken
+1 Ingenious Infiltrator
+1 Inkrise Infiltrator
+1 Keen Duelist
+1 Mausoleum Wanderer
+1 Mist-Syndicate Naga
+1 Mistblade Shinobi
+1 Moon-Circuit Hacker
+1 Nascent Metamorph
+1 Nashi, Searcher in the Dark
+1 Network Disruptor
+1 Nezumi Prowler
+1 Ninja of the Deep Hours
+1 Octavia, Living Thesis
+1 Ornithopter
+1 Prosperous Thief
+1 Sailors' Bane
+1 Satoru, the Infiltrator
+1 Shadow of Mortality
+1 Silver Raven
+1 Silver-Fur Master
+1 Skullsnatcher
+1 Snaremaster Sprite
+1 Snarling Gorehound
+1 Stalactite Stalker
+1 Street Wraith
+1 Sword Coast Serpent
+1 Tetsuko Umezawa, Fugitive
+1 The Dawning Archaic
+1 The Wondrous Wasp
+1 Thousand-Faced Shadow
+1 Vesuvan Drifter
+1 Wingcrafter
+1 Wonder
+1 Aqueous Form
+1 Leyline of Transformation
+1 Propaganda
+1 Smoke Shroud
+1 Soothsaying
+1 Arcane Signet
+1 Explorer's Scope
+1 Sol Ring
+1 Brainstorm
+1 Commit // Memory
+1 Consign // Oblivion
+1 Otherworldly Gaze
+1 Price of Fame
+1 Wash Away
+1 Call of the Death-Dweller
+1 Connive // Concoct
+1 Crippling Fear
+1 Discovery // Dispersal
+1 Hidden Strings
+1 Lively Dirge
+1 Postmortem Lunge
+1 Temporal Trespass
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Exotic Orchard
+13 Island
+1 Path of Ancestry
+1 Secluded Courtyard
+1 Sunken Hollow
+10 Swamp
+1 Underground River

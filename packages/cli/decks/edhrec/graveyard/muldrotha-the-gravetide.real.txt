@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/1X8ozVksBo-EkjkpT-IuLQ (source https://archidekt.com/decks/2958914)
+# tags Reanimator, Graveyard, Mill; bracket 3; saved 2026-09-05; 1025 tagged of 25006 indexed
+
+Commander
+1 Muldrotha, the Gravetide
+
+Deck
+1 Accursed Marauder
+1 Aftermath Analyst
+1 Angel of Suffering
+1 Baleful Strix
+1 Birds of Paradise
+1 Boneyard Wurm
+1 Braids, Arisen Nightmare
+1 Brawn
+1 Cankerbloom
+1 Caustic Caterpillar
+1 Deranged Assistant
+1 Elves of Deep Shadow
+1 Emet-Selch, Unsundered
+1 Exdeath, Void Warlock
+1 Glen Elendra Archmage
+1 Haywire Mite
+1 Hermit Druid
+1 Icetill Explorer
+1 Kiora, the Rising Tide
+1 Ledger Shredder
+1 Lord of Extinction
+1 Massacre Girl
+1 Massacre Wurm
+1 Mulldrifter
+1 Neerdiv, Devious Diver
+1 Old Stickfingers
+1 Rootcoil Creeper
+1 Sakura-Tribe Elder
+1 Sidisi, Brood Tyrant
+1 Siren Stormtamer
+1 Six
+1 Skull Prophet
+1 Splinterfright
+1 Spore Frog
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 Teval, the Balanced Scale
+1 Uro, Titan of Nature's Wrath
+1 Vilespawn Spider
+1 Wonder
+1 Ancient Tomb
+1 Bayou
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Beacon
+1 Command Tower
+1 Fabled Passage
+1 Field of the Dead
+4 Forest
+2 Island
+1 Otawara, Soaring City
+1 Overgrown Tomb
+1 Prismatic Vista
+3 Snow-Covered Forest
+1 Snow-Covered Island
+2 Snow-Covered Swamp
+1 Strip Mine
+4 Swamp
+1 Takenuma, Abandoned Mire
+1 Tropical Island
+1 Underground Sea
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Watery Grave
+1 Yavimaya, Cradle of Growth
+1 Zagoth Triome
+1 Arcane Signet
+1 Lotus Petal
+1 Matzalantli, the Great Door
+1 Mesmeric Orb
+1 Mind Stone
+1 Nevinyrral's Disk
+1 Perpetual Timepiece
+1 Sol Ring
+1 Awaken the Honored Dead
+1 Black Market Connections
+1 Diplomatic Immunity
+1 Eaten by Piranhas
+1 Elephant Grass
+1 Exploration
+1 Imprisoned in the Moon
+1 Mystic Remora
+1 Out of the Tombs
+1 Pernicious Deed
+1 Ripples of Undeath
+1 Teval's Judgment
+1 The Meathook Massacre
+1 Witness Protection
+1 Grist, the Hunger Tide

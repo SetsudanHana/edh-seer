@@ -1,0 +1,100 @@
+# edhrec average deck: https://edhrec.com/average-decks/omnath-locus-of-all/incubate
+# theme Incubate (3 decks)
+
+Commander
+1 Omnath, Locus of All
+
+Deck
+1 Arcane Signet
+1 Astral Cornucopia
+1 Contagion Clasp
+1 Contagion Engine
+1 Everflowing Chalice
+1 Glistening Sphere
+1 Realmbreaker, the Invasion Tree
+1 Sol Ring
+1 Ancient Tomb
+1 Blood Crypt
+1 Breeding Pool
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+3 Forest
+2 Island
+1 Jungle Shrine
+1 Llanowar Wastes
+1 Mirrex
+2 Mountain
+1 Murmuring Bosk
+1 Nomad Outpost
+1 Opulent Palace
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Rockfall Vale
+1 Sacred Foundry
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Stormcarved Coast
+1 Sundown Pass
+2 Swamp
+1 The Seedcore
+1 Unclaimed Territory
+1 Windswept Heath
+1 Atraxa, Grand Unifier
+1 Atraxa, Praetors' Voice
+1 Blight Titan
+1 Bloated Contaminator
+1 Brimaz, Blight of Oreskos
+1 Cankerbloom
+1 Chrome Host Seedshark
+1 Compleated Huntmaster
+1 Contaminant Grafter
+1 Defiler of Vigor
+1 Elesh Norn
+1 Elesh Norn, Grand Cenobite
+1 Elesh Norn, Mother of Machines
+1 Elvish Vatkeeper
+1 Essence of Orthodoxy
+1 Ezuri, Stalker of Spheres
+1 Gix, Yawgmoth Praetor
+1 Glissa, Herald of Predation
+1 Ichor Drinker
+1 Jin-Gitaxias
+1 Jin-Gitaxias, Core Augur
+1 Metastatic Evangel
+1 Mondrak, Glory Dominus
+1 Norn's Inquisitor
+1 Phyrexian Censor
+1 Phyrexian Metamorph
+1 Progenitor Exarch
+1 Sheoldred
+1 Thrummingbird
+1 Urabrask the Hidden
+1 Valko Indorian
+1 Vorinclex, Monstrous Raider
+1 Blighted Burgeoning
+1 Garruk's Uprising
+1 Gift of Compleation
+1 Inexorable Tide
+1 Lurking Predators
+1 Phyrexian Awakening
+1 Sculpted Perfection
+1 Tangled Skyline
+1 Eladamri's Call
+1 Experimental Augury
+1 Vraska, Betrayal's Sting
+1 Cultivate
+1 Eyes of Gitaxias
+1 Farseek
+1 Feed the Infection
+1 Glistening Dawn
+1 Merciless Eviction
+1 Mirage Mockery
+1 Nature's Lore
+1 Skyshroud Claim
+1 Three Visits
+1 Unnatural Restoration
+1 Victimize

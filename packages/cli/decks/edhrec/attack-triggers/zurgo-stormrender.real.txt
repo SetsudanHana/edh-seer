@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/T8qHj5Ky0bNQQz0Ez-l8wg (source https://archidekt.com/decks/25538322)
+# tags Attack Triggers, Tokens, Warriors; bracket 2; saved 2026-09-04; 231 tagged of 20516 indexed
+
+Commander
+1 Zurgo Stormrender
+
+Deck
+1 Abrade
+1 Bedevil
+1 Coordinated Maneuver
+1 Deadly Dispute
+1 Desperate Measures
+1 Duty Beyond Death
+1 Inevitable Defeat
+1 Path to Exile
+1 Swords to Plowshares
+1 Terminate
+1 Adeline, Resplendent Cathar
+1 Ainok Strike Leader
+1 Avenger of the Fallen
+1 Ball Lightning
+1 Beetleback Chief
+1 Bone-Cairn Butcher
+1 Dalkovan Packbeasts
+1 Dragonback Lancer
+1 Enduring Courage
+1 Feldon of the Third Path
+1 Fleeting Effigy
+1 Goldlust Triad
+1 Hardened Tactician
+1 Ironwill Forger
+1 Legion Warboss
+1 Loyal Apprentice
+1 Mardu Devotee
+1 Mardu Siegebreaker
+1 Morbid Opportunist
+1 Neriv, Crackling Vanguard
+1 Neriv, Heart of the Storm
+1 Nightblade Brigade
+1 Ogre Battledriver
+1 Priest of Forgotten Gods
+1 Reigning Victor
+1 Shock Brigade
+1 Shocking Sharpshooter
+1 Solemn Simulacrum
+1 Stadium Headliner
+1 Venerated Stormsinger
+1 Viscera Seer
+1 Zurgo's Vanguard
+1 Arcane Signet
+1 Blade of Selves
+1 Chromatic Lantern
+1 Idol of Oblivion
+1 Infantry Shield
+1 Orzhov Signet
+1 Skullclamp
+1 Sol Ring
+1 Stormbeacon Blade
+1 Talisman of Conviction
+1 Talisman of Indulgence
+1 Barrensteppe Siege
+1 Bastion of Remembrance
+1 Impact Tremors
+1 Rising of the Day
+1 Tocasia's Welcome
+1 Battlefield Forge
+1 Bloodfell Caves
+1 Bojuka Bog
+1 Canyon Slough
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Fetid Heath
+1 Isolated Chapel
+8 Mountain
+1 Nomad Outpost
+1 Path of Ancestry
+3 Plains
+1 Scoured Barrens
+1 Shattered Landscape
+1 Shattered Sanctum
+1 Smoldering Marsh
+3 Swamp
+1 Temple of Silence
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 Wind-Scarred Crag
+1 Blasphemous Act
+1 Faithless Looting
+1 Ruinous Ultimatum
+1 Wild Ride
+1 Worthy Cost

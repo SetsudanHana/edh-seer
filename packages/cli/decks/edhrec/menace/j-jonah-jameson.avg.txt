@@ -1,0 +1,73 @@
+# edhrec average deck: https://edhrec.com/average-decks/j-jonah-jameson/menace
+# theme Menace (11 decks)
+
+Commander
+1 J. Jonah Jameson
+
+Deck
+1 Arcane Signet
+1 Beamtown Beatstick
+1 Cursed Mirror
+1 Dragonspark Reactor
+1 Ruby Medallion
+1 Sol Ring
+1 Strixhaven Stadium
+1 Castle Embereth
+1 Daily Bugle Building
+34 Mountain
+1 Myriad Landscape
+1 Secluded Starforge
+1 Avalanche of Sector 7
+1 Burnout Bashtronaut
+1 Byway Barterer
+1 Crime Novelist
+1 Deputized Protester
+1 Fire Shrine Keeper
+1 Flameblade Adept
+1 Frantic Scapegoat
+1 Frillscare Mentor
+1 Gnoll War Band
+1 Goldhound
+1 Grenzo, Havoc Raiser
+1 Gut, True Soul Zealot
+1 Hellkite Tyrant
+1 Ingenious Artillerist
+1 Insolent Neonate
+1 Irreverent Gremlin
+1 Kari Zev, Skyship Raider
+1 Kessig Wolfrider
+1 Lightning, Security Sergeant
+1 Magda, the Hoardmaster
+1 Professional Face-Breaker
+1 Reckless Fireweaver
+1 Rograkh, Son of Rohgahh
+1 Rohirrim Lancer
+1 Rotisserie Elemental
+1 Rust Harvester
+1 Shock Brigade
+1 Star Athlete
+1 Veronica, Dissident Scribe
+1 Vincent, Vengeful Atoner
+1 Weftstalker Ardent
+1 Xorn
+1 Zhao, the Moon Slayer
+1 Alchemist's Talent
+1 Connecting the Dots
+1 Convenient Target
+1 Goblin War Drums
+1 Rain of Riches
+1 Sticky Fingers
+1 War Cadence
+1 Abrade
+1 Big Score
+1 Chaos Warp
+1 Demand Answers
+1 Great Train Heist
+1 Blasphemous Act
+1 Cosmotronic Wave
+1 Disrupt Decorum
+1 Full Throttle
+1 Jaya's Immolating Inferno
+1 Light Up the Stage
+1 Overpowering Attack
+1 Tentative Connection

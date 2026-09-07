@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/tuPUAAQWhn7ARN3uBPI6dQ (source https://archidekt.com/decks/18151696)
+# tags Wheels, Burn, Card Draw, Hand Size, Spellslinger; bracket 2; saved 2026-09-01; 22 tagged of 31945 indexed
+
+Commander
+1 Nekusar, the Mindrazer
+
+Deck
+1 Arcane Denial
+1 Cerebral Vortex
+1 Commit // Memory
+1 Counterspell
+1 Crosis's Charm
+1 Dark Ritual
+1 Grip of Amnesia
+1 Sudden Spoiling
+1 Terminate
+1 Vision Skeins
+1 Arcane Signet
+1 Chromatic Lantern
+1 Howling Mine
+1 Izzet Signet
+1 Library of Leng
+1 Obelisk of Grixis
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Teferi's Puzzle Box
+1 Thought Vessel
+1 Blasphemous Act
+1 Burning Inquiry
+1 Dark Deal
+1 Diabolic Tutor
+1 Feed the Swarm
+1 Incendiary Command
+1 Molten Psyche
+1 Peer into the Abyss
+1 Prosperity
+1 Time Reversal
+1 Wheel of Fate
+1 Wheel of Fortune
+1 Whispering Madness
+1 Windfall
+1 Winds of Change
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Crumbling Necropolis
+1 Dimir Aqueduct
+1 Evolving Wilds
+1 Exotic Orchard
+1 Geier Reach Sanitarium
+1 Grixis Panorama
+9 Island
+1 Mikokoro, Center of the Sea
+7 Mountain
+1 Reliquary Tower
+1 Steam Vents
+6 Swamp
+1 Terramorphic Expanse
+1 Curse of Fool's Wisdom
+1 Dictate of Kruphix
+1 Fevered Visions
+1 Imprisoned in the Moon
+1 Megrim
+1 Phyresis
+1 Phyrexian Tyranny
+1 Price of Knowledge
+1 Propaganda
+1 Smoke
+1 Spiteful Visions
+1 Underworld Dreams
+1 Waste Not
+1 Faerie Mastermind
+1 Fate Unraveler
+1 Ghyrson Starn, Kelermorph
+1 Hexing Squelcher
+1 Jace's Archivist
+1 Kami of the Crescent Moon
+1 Magus of the Wheel
+1 Nightscape Familiar
+1 Psychosis Crawler
+1 Razorkin Needlehead
+1 Scrawling Crawler
+1 Stormfist Crusader
+1 The Locust God
+1 Whirlpool Warrior

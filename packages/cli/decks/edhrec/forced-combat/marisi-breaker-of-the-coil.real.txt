@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/JhiKtizTTUs-DGhg7bVIAQ (source https://archidekt.com/decks/19121635)
+# tags Forced Combat, Saboteurs; bracket 2; saved 2026-09-05; 671 tagged of 6850 indexed
+
+Commander
+1 Marisi, Breaker of the Coil
+
+Deck
+1 Aerial Extortionist
+1 Agonasaur Rex
+1 Ancient Bronze Dragon
+1 Araña, Heart of the Spider
+1 Aurelia, the Law Above
+1 Aven Interrupter
+1 Bladegriff Prototype
+1 Cartographer's Hawk
+1 Chaos Dragon
+1 Conclave Evangelist
+1 Ellivere of the Wild Court
+1 Enduring Courage
+1 Firemane Commando
+1 Frontier Warmonger
+1 Giant Adephage
+1 Goldlust Triad
+1 Grenzo, Havoc Raiser
+1 Lion Sash
+1 Loyal Apprentice
+1 Mirri, Weatherlight Duelist
+1 Niblis of the Urn
+1 Ohran Frostfang
+1 Professional Face-Breaker
+1 Puppet Master, String Puller
+1 Remorseful Cleric
+1 Ruby, Daring Tracker
+1 Sakura-Tribe Elder
+1 Seasoned Dungeoneer
+1 Selfless Spirit
+1 Senu, Keen-Eyed Protector
+1 Toski, Bearer of Secrets
+1 Trostani, Three Whispers
+1 Urabrask the Hidden
+1 Vengeful Ancestor
+1 Arcane Signet
+1 Fellwar Stone
+1 Herd Heirloom
+1 Mandibular Kite
+1 Urabrask's Forge
+1 Battlefield Forge
+1 Branchloft Pathway
+1 Brushland
+1 Command Tower
+1 Commercial District
+1 Copperline Gorge
+1 Cragcrown Pathway
+1 Elegant Parlor
+1 Exotic Orchard
+2 Forest
+1 Hushwood Verge
+1 Inspiring Vantage
+1 Karplusan Forest
+1 Lush Portico
+3 Mountain
+1 Overgrown Farmland
+3 Plains
+1 Razorverge Thicket
+1 Rockfall Vale
+1 Rugged Prairie
+1 Sacred Foundry
+1 Sheltering Landscape
+1 Spectator Seating
+1 Stomping Ground
+1 Sunbillow Verge
+1 Sundown Pass
+1 Temple Garden
+1 Thornspire Verge
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Bedlam
+1 Court of Embereth
+1 Court of Grace
+1 Keen Sense
+1 Nature's Will
+1 Rhythm of the Wild
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Farseek
+1 Nature's Lore
+1 Shared Roots
+1 Sundering Eruption
+1 Taunt from the Rampart
+1 Boros Charm
+1 Collective Resistance
+1 Gaea's Gift
+1 Heroic Intervention
+1 Hunter's Insight
+1 Legion Leadership
+1 Overprotect
+1 Sejiri Shelter
+1 Trash the Town
+1 Untimely Malfunction
+1 Your Temple Is Under Attack

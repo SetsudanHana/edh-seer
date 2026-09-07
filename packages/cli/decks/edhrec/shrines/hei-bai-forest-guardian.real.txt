@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/Stn2WeZny_l2727tFpQtXQ (source https://archidekt.com/decks/20566261)
+# tags Shrines, Historic, Legends, Enchantress; bracket 2; saved 2026-09-04; 258 tagged of 6865 indexed
+
+Commander
+1 Hei Bai, Forest Guardian
+
+Deck
+1 Aang's Journey
+1 Cultivate
+1 Daydream
+1 Explosive Vegetation
+1 Morningtide's Light
+1 Open the Vaults
+1 Primevals' Glorious Rebirth
+1 Restoration Seminar
+1 Rite of Replication
+1 Shared Roots
+1 True Ancestry
+1 Arcane Signet
+1 Chromatic Lantern
+1 Helm of the Host
+1 Panharmonicon
+1 Sol Ring
+1 Canopy Vista
+1 Clifftop Retreat
+1 Command Bridge
+1 Command Tower
+1 Dark Fortress
+1 Deathcap Glade
+1 Dreamroot Cascade
+1 Exotic Orchard
+3 Forest
+1 Glacial Fortress
+1 Great Hall of the Citadel
+1 Hinterland Harbor
+1 Hushwood Verge
+2 Island
+1 Mountain
+4 Plains
+1 Plaza of Heroes
+1 Prairie Stream
+1 Radiant Summit
+1 Shire Terrace
+1 Shivan Reef
+1 Sulfur Falls
+1 Sunbillow Verge
+1 Swamp
+1 Temple Garden
+1 Training Compound
+1 Vernal Fen
+1 White Lotus Hideout
+1 Woodland Cemetery
+1 Yavimaya Coast
+1 Crescent Island Temple
+1 Ghostly Prison
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Life's Web
+1 Honden of Seeing Winds
+1 Kyoshi Island Plaza
+1 Northern Air Temple
+1 Propaganda
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Stone Fangs
+1 Sanctum of Tranquil Light
+1 Solitary Confinement
+1 Southern Air Temple
+1 Sphere of Safety
+1 Sterling Grove
+1 Teferi's Ageless Insight
+1 Teleportation Circle
+1 The Spirit Oasis
+1 Whirlwind of Thought
+1 Cycle of Renewal
+1 Double Major
+1 Ephemerate
+1 Get Out
+1 Personify
+1 Pull from Tomorrow
+1 Destiny Spinner
+1 Dáin, Lord of the Iron Hills
+1 Eidolon of Blossoms
+1 Faeburrow Elder
+1 Ghen, Arcanum Weaver
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Lost Wisdom
+1 Go-Shintai of Shared Purpose
+1 Herald of the Pantheon
+1 Jhoira, Weatherlight Captain
+1 Jukai Naturalist
+1 Sanctum Weaver
+1 Setessan Champion
+1 Sisay, Weatherlight Captain
+1 Sythis, Harvest's Hand
+1 The Eternal Wanderer

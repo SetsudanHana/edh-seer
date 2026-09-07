@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/QFKwDI728T4VlEpCl5jGbA (source https://archidekt.com/decks/25758692)
+# tags Skulk, Card Draw, Forced Combat, Control; bracket 3; saved 2026-08-27; 20 tagged of 455 indexed
+
+Commander
+1 The Master, Mesmerist
+
+Deck
+1 Access Tunnel
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Fetid Pools
+1 Gallifrey Council Chamber
+11 Island
+1 Minamo, School at Water's Edge
+1 Minas Morgul, Dark Fortress
+1 Myriad Landscape
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Shizo, Death's Storehouse
+1 Sunken Hollow
+9 Swamp
+1 Temple of Deceit
+1 The Black Gate
+1 Trenzalore Clocktower
+1 Aphetto Alchemist
+1 Cybermat
+1 Enduring Curiosity
+1 Farbog Revenant
+1 Fogwalker
+1 Forgotten Creation
+1 Furtive Homunculus
+1 Gollum, Obsessed Stalker
+1 Grazilaxx, Illithid Scholar
+1 Ingenious Prodigy
+1 Likeness Looter
+1 Mischievous Catgeist
+1 Necropolis Regent
+1 Pale Rider of Trostad
+1 Phage the Untouchable
+1 Rancid Rats
+1 Raving Dead
+1 Summon: Primal Odin
+1 Tideforce Elemental
+1 Time Beetle
+1 Uninvited Geist
+1 Vampire Cutthroat
+1 Vizier of Tumbling Sands
+1 Wharf Infiltrator
+1 Arcane Heist
+1 Hands of Binding
+1 Hidden Strings
+1 Predators' Hour
+1 Startled Awake
+1 Stolen Identity
+1 Undercity Plague
+1 Writ of Return
+1 Combat Research
+1 Corrupted Conscience
+1 Larceny
+1 Reconnaissance Mission
+1 Rogue Class
+1 Snake Cult Initiation
+1 Dimir Signet
+1 Dowsing Dagger
+1 Elbrus, the Binding Blade
+1 Fishing Gear
+1 Goggles of Night
+1 Goldvein Pick
+1 Lightning Greaves
+1 Prying Blade
+1 Quietus Spike
+1 Scytheclaw
+1 Skeleton Key
+1 Sol Ring
+1 Strixhaven Stadium
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 The Key to the Vault
+1 The Ozolith
+1 Vorpal Sword
+1 Kaito Shizuki
+1 Vraska, Scheming Gorgon
+1 Planar Incision
+1 Refocus
+1 Shore Up
+1 Teferi's Time Twist

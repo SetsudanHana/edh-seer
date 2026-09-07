@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-mycotyrant/retrace
+# theme Retrace (1 decks)
+
+Commander
+1 The Mycotyrant
+
+Deck
+1 Altar of Dementia
+1 Batterbone
+1 Cauldron of Essence
+1 Conduit of Worlds
+1 Hedge Shredder
+1 Maskwood Nexus
+1 Perpetual Timepiece
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Great Henge
+1 The Ozolith
+1 The Skullspore Nexus
+1 Bayou
+1 Command Tower
+1 Dakmor Salvage
+1 Darkbore Pathway
+1 Deathcap Glade
+1 Evendo, Waking Haven
+1 Fabled Passage
+6 Forest
+1 Golgari Rot Farm
+1 Karn's Bastion
+1 Overgrown Tomb
+1 Phyrexian Tower
+1 Rogue's Passage
+1 Shifting Woodland
+6 Swamp
+1 Tainted Wood
+1 Temple of the False God
+1 Three Tree City
+1 Twilight Mire
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Urborg, Tomb of Yawgmoth
+1 Verdant Catacombs
+1 Viridescent Bog
+1 Wastewood Verge
+1 Woodland Cemetery
+1 Yavimaya, Cradle of Growth
+1 Aftermath Analyst
+1 Azusa, Lost but Seeking
+1 Badgermole Cub
+1 Brightcap Badger
+1 Broodrage Mycoid
+1 Cankerbloom
+1 Colossal Grave-Reaver
+1 Craterhoof Behemoth
+1 Disciple of Freyalise
+1 Golgari Brownscale
+1 Golgari Grave-Troll
+1 Golgari Thug
+1 Icetill Explorer
+1 Insidious Fungus
+1 Jaheira, Friend of the Forest
+1 Millikin
+1 Mirkwood Bats
+1 Mycoloth
+1 Psychotrope Thallid
+1 Shroofus Sproutsire
+1 Six
+1 Skull Prophet
+1 Slimefoot, the Stowaway
+1 Spore Crawler
+1 Spore Flower
+1 Sporesower Thallid
+1 Stinkweed Imp
+1 Tendershoot Dryad
+1 Thallid Soothsayer
+1 Vorinclex, Monstrous Raider
+1 Beastmaster Ascension
+1 Conspiracy
+1 Deadbridge Chant
+1 Doubling Season
+1 Insidious Roots
+1 Moldervine Reclamation
+1 Parallel Lives
+1 Ripples of Undeath
+1 Sporogenesis
+1 Heroic Intervention
+1 Lethal Scheme
+1 Revitalizing Repast
+1 Bala Ged Recovery
+1 Bygone Marvels
+1 Call Damage Control
+1 Fungal Sprouting
+1 Life from the Loam
+1 Reanimate
+1 Squirming Emergence

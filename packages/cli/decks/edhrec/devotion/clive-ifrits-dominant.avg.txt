@@ -1,0 +1,78 @@
+# edhrec average deck: https://edhrec.com/average-decks/clive-ifrits-dominant/devotion
+# theme Devotion (432 decks)
+
+Commander
+1 Clive, Ifrit's Dominant
+
+Deck
+1 Arcane Signet
+1 Brass's Tunnel-Grinder
+1 Cursed Mirror
+1 Glittering Stockpile
+1 Hazoret's Monument
+1 Monument to Endurance
+1 Nyx Lotus
+1 Ruby Medallion
+1 Sol Ring
+1 The Fire Crystal
+1 Thought Vessel
+1 Throne of Eldraine
+1 Arena of Glory
+29 Mountain
+1 Myriad Landscape
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Rogue's Passage
+1 Valakut, the Molten Pinnacle
+1 War Room
+1 Anger
+1 Archetype of Aggression
+1 Brallin, Skyshark Rider
+1 Cavalier of Flame
+1 Defiler of Instinct
+1 Enduring Courage
+1 Etali, Primal Storm
+1 Fanatic of Mogis
+1 Fear of Missing Out
+1 Feldon of the Third Path
+1 Glint-Horn Buccaneer
+1 Goblin Chainwhirler
+1 Inti, Seneschal of the Sun
+1 Magmakin Artillerist
+1 Neheb, Dreadhorde Champion
+1 Neheb, the Eternal
+1 Pinnacle Monk
+1 Professional Face-Breaker
+1 Razorkin Needlehead
+1 Runaway Steam-Kin
+1 Solphim, Mayhem Dominus
+1 Sunset Strikemaster
+1 Sunspine Lynx
+1 Surly Badgersaur
+1 Torbran, Thane of Red Fell
+1 Twinflame Tyrant
+1 City on Fire
+1 Count on Luck
+1 Fiery Emancipation
+1 Gratuitous Violence
+1 Powerbalance
+1 Spiteful Banditry
+1 Triple Triad
+1 Abrade
+1 Big Score
+1 Bolt Bend
+1 Chaos Warp
+1 Lightning Bolt
+1 Seething Song
+1 Unexpected Windfall
+1 Untimely Malfunction
+1 Chandra, Torch of Defiance
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Electroduplicate
+1 Faithless Looting
+1 Jeska's Will
+1 Mana Geyser
+1 Nibelheim Aflame
+1 Twinflame
+1 Vandalblast

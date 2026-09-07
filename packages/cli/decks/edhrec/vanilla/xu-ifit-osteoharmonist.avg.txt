@@ -1,0 +1,83 @@
+# edhrec average deck: https://edhrec.com/average-decks/xu-ifit-osteoharmonist/vanilla
+# theme Vanilla (12 decks)
+
+Commander
+1 Xu-Ifit, Osteoharmonist
+
+Deck
+1 Altar of Dementia
+1 Altar of the Wretched
+1 Arcane Signet
+1 Illusionist's Bracers
+1 Jet Medallion
+1 Key to the City
+1 Lightning Greaves
+1 Magewright's Stone
+1 Mask of Griselbrand
+1 Matzalantli, the Great Door
+1 Patriar's Seal
+1 Requiem Monolith
+1 Sol Ring
+1 Thousand-Year Elixir
+1 Zephyr Boots
+1 Accursed Duneyard
+1 Bojuka Bog
+1 Cabal Coffers
+1 Crypt of Agadeem
+1 Dakmor Salvage
+1 Geier Reach Sanitarium
+1 Spymaster's Vault
+1 Susur Secundi, Void Altar
+24 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Witch's Cottage
+1 Ancient Stone Idol
+1 Bog Witch
+1 Boggart Trawler
+1 Death's Shadow
+1 Disciple of Bolas
+1 Egon, God of Death
+1 Ghoulcaller Gisa
+1 Golgari Thug
+1 Hunted Horror
+1 Illuminor Szeras
+1 Marvin, Murderous Mimic
+1 Nyxathid
+1 Phyrexian Soulgorger
+1 Phyrexian Triniform
+1 Qarsi Revenant
+1 Rot-Curse Rakshasa
+1 Rotting Regisaur
+1 Ruthless Technomancer
+1 Shadowheart, Dark Justiciar
+1 Skeleton Crew
+1 Stinkweed Imp
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 Troll of Khazad-dûm
+1 Twilight Diviner
+1 Ulamog's Dreadsire
+1 Umbral Collar Zealot
+1 Vile Entomber
+1 Void Beckoner
+1 Cemetery Tampering
+1 Corpses of the Lost
+1 Ripples of Undeath
+1 Teval's Judgment
+1 Tortured Existence
+1 Bitter Triumph
+1 Dark Ritual
+1 Defile
+1 Fell the Profane
+1 Infernal Grasp
+1 Malakir Rebirth
+1 Saw in Half
+1 Withering Torment
+1 Bone Shards
+1 Buried Alive
+1 Essence Harvest
+1 Exsanguinate
+1 Feed the Swarm
+1 Morbid Curiosity
+1 Toxic Deluge
+1 Victimize

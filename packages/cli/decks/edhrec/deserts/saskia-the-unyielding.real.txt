@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/uUA82iRNc3EMzvv1XmNenA (source https://archidekt.com/decks/7274481)
+# tags Lands Matter, Land Destruction, Tokens, Deserts; bracket 3; saved 2026-07-15; 7 tagged of 8065 indexed
+
+Commander
+1 Saskia the Unyielding
+
+Deck
+1 Ancient Greenwarden
+1 Army Ants
+1 Ashaya, Soul of the Wild
+1 Cultivator Colossus
+1 Dune Chanter
+1 Hazezon, Shaper of Sand
+1 Oracle of Mul Daya
+1 Orcish Lumberjack
+1 Ramunap Excavator
+1 Rumbleweed
+1 Sand Scout
+1 Sandstorm Salvager
+1 Soul of Windgrace
+1 Sprouting Goblin
+1 Tectonic Hellion
+1 The Gitrog Monster
+1 The Necrobloom
+1 Tiller Engine
+1 Titania, Protector of Argoth
+1 Turntimber Sower
+1 Yuma, Proud Protector
+1 Archaeological Dig
+1 Cactus Preserve
+1 Canyon Slough
+1 Command Tower
+1 Conduit Pylons
+1 Desert of the Fervent
+1 Desert of the Indomitable
+1 Desert of the True
+1 Dunes of the Dead
+1 Dust Bowl
+1 Encroaching Wastes
+1 Field of the Dead
+1 Flagstones of Trokair
+3 Forest
+1 Gemstone Mine
+1 Hashep Oasis
+1 Lazotep Quarry
+1 Lotus Field
+3 Mountain
+1 Mountain Valley
+1 Petrified Field
+3 Plains
+1 Ramunap Ruins
+1 Rocky Tar Pit
+1 Scattered Groves
+1 Shefet Dunes
+1 Sheltered Thicket
+3 Swamp
+1 Tomb of Urami
+1 Wasteland
+1 Yavimaya, Cradle of Growth
+1 Burning Sands
+1 Desert Warfare
+1 Desolation
+1 Destructive Flow
+1 Felidar Retreat
+1 Greater Good
+1 Mirari's Wake
+1 On Wings of Gold
+1 Overgrown Estate
+1 Overlaid Terrain
+1 Sandwurm Convergence
+1 Spelunking
+1 Squandered Resources
+1 Valakut Exploration
+1 Chromatic Lantern
+1 Cursecloth Wrappings
+1 Hammer of Purphoros
+1 Sandstone Deadfall
+1 Unstable Glyphbridge
+1 Constant Mists
+1 Crop Rotation
+1 Deathsprout
+1 Faith's Reward
+1 Rally the Ancestors
+1 Return of the Wildspeaker
+1 Return the Favor
+1 Dig Up
+1 Eerie Ultimatum
+1 Firespout
+1 Hour of Promise
+1 Map the Frontier
+1 Nahiri's Lithoforming
+1 Reprocess
+1 Sevinne's Reclamation
+1 Splendid Reclamation
+1 Vengeful Regrowth
+1 Worldsoul's Rage
+1 Worm Harvest
+1 Nissa of Shadowed Boughs

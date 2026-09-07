@@ -4,12 +4,19 @@ import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
+import { CardPage } from "./components/CardPage.js";
+import { RouteMarker } from "./components/RouteMarker.js";
+import { CardSearch } from "./components/CardSearch.js";
+import { CommanderPage } from "./components/CommanderPage.js";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { clearLastRun, diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
 import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share-link.js";
+import { searchWithState, stateFromSearch } from "./lib/game-state.js";
+import type { GameState } from "@edh-seer/engine";
 import { deckSourceOf, importDeck } from "./lib/deck-import.js";
+
 
 export default function App() {
   /** WHAT WAS IN THE BOX LAST TIME (roadmap S9). Read once, before anything else, because it feeds
@@ -24,8 +31,23 @@ export default function App() {
   const [commanders, setCommanders] = useState(remembered?.commanders ?? "");
   const [decklist, setDecklist] = useState(remembered?.decklist ?? "");
   const [data, setData] = useState<AnalyzeResponse | null>(null);
+  // A GAME STATE THE OWNER SETS (roadmap W18), carried in the query so a shared link keeps it.
+  // Speed is the player's (CR 702.179): one number for the deck, 1 to 4, or none.
+  const [state, setState] = useState<GameState>(() => stateFromSearch(window.location.search));
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** A re-run under a new game state is in flight (W18c). Separate from `loading` on purpose:
+   *  `loading` collapses the deck bar into "Analyzing…" and drives the paste-box states, which is
+   *  right for a new list and reads as a page reload for a state flip. */
+  const [stateBusy, setStateBusy] = useState(false);
+  /** The deck text the report on screen was RUN FROM (review, 2026-09-06). A state re-run reads
+   *  this, never the paste boxes: "Edit" reopens them without re-analysing, and a state click in
+   *  that window must not silently analyse text the reader has not submitted. */
+  const analysedRef = useRef<{ decklist: string; commanders: string } | null>(null);
+  /** The newest state request. A slower older response must not land on top of a newer one. */
+  const stateRunRef = useRef(0);
   /** A DECK IS ALREADY ON ITS WAY, AND THE FIRST PAINT HAS TO KNOW IT. Read from the URL during the
    *  initial render rather than in the effect below, because that effect runs AFTER a paint and
    *  `decodeShare` is async on top of it: for those frames a shared link renders the empty state,
@@ -89,7 +111,11 @@ export default function App() {
     // catch below reopens it, because an error is the one case where the boxes are wanted back.
     setEditing(false);
     try {
-      const next = await analyzeDeck(deckText, commanderText);
+      // THE CALL KEEPS ITS OLD SHAPE WITHOUT A STATE, so nothing that observed it changes; a state
+      // adds the arguments only when the owner set one (roadmap W18).
+      const next = Object.keys(stateRef.current).length > 0
+        ? await analyzeDeck(deckText, commanderText, undefined, stateRef.current)
+        : await analyzeDeck(deckText, commanderText);
       // WAS THAT A DECKLIST? `resolvedCount` counts cards the engine actually found, and a real list
       // finds at least one. Everything that outlives the page view is gated on it.
       const looksLikeDeck = next.resolvedCount > 0;
@@ -102,6 +128,7 @@ export default function App() {
       // while verifying the URL guard below, when a run of pasted notes came back on the next load.
       if (looksLikeDeck) saveLastDeck({ commanders: commanderText, decklist: deckText });
       setData(next);
+      analysedRef.current = { decklist: deckText, commanders: commanderText };
       setEditing(false);
       // THE ADDRESS BAR BECOMES THE SHARE LINK, which is what makes this get used: a reader who
       // analyses a deck can copy the URL without knowing the feature exists. A deck too long to
@@ -142,6 +169,46 @@ export default function App() {
   }
 
   const onAnalyze = () => void analyse(decklist, commanders);
+  // CHANGING THE STATE IS A RE-RUN IN PLACE (W18c, owner: "re-runs and re-renders the whole
+  // report, which reads as a page reload"). The engine reads the same deck again under the new
+  // state and only `data` changes: the deck bar stays open as it was, no run diff is written (a
+  // state is not an edit), no history entry, no share-link rewrite -- the query already carries the
+  // state, and the hash (the deck) is untouched. `ReportShell` keys its "go home" on the deck's
+  // cards, so the reader also stays on whatever surface they were on.
+  const writeStateUrl = (s: GameState) =>
+    window.history.replaceState(null, "", `${window.location.pathname}${searchWithState(window.location.search, s)}${window.location.hash}`);
+  const onState = (next: GameState) => {
+    const previous = stateRef.current;
+    setState(next);
+    stateRef.current = next;
+    writeStateUrl(next);
+    void reanalyseUnderState(next, previous);
+  };
+  async function reanalyseUnderState(next: GameState, previous: GameState) {
+    const run = ++stateRunRef.current;
+    const from = analysedRef.current ?? { decklist, commanders };
+    setStateBusy(true);
+    setError(null);
+    try {
+      const res = Object.keys(next).length > 0
+        ? await analyzeDeck(from.decklist, from.commanders, undefined, next)
+        : await analyzeDeck(from.decklist, from.commanders);
+      // LAST CLICK WINS. Two markers pressed in quick succession are two requests in flight, and
+      // the slower one may answer last; only the newest request may set the report.
+      if (run !== stateRunRef.current) return;
+      setData(res);
+    } catch (e) {
+      if (run !== stateRunRef.current) return;
+      // THE CONTROLS SAY WHAT THE REPORT WAS RUN UNDER. A failed re-run leaves the old report on
+      // screen, so the state -- and the URL -- go back to the one it was run under.
+      setState(previous);
+      stateRef.current = previous;
+      writeStateUrl(previous);
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      if (run === stateRunRef.current) setStateBusy(false);
+    }
+  }
 
   /** NOTHING PASTED, NOTHING ANALYSED, NOTHING IN FLIGHT — the only state in which the page has to
    *  introduce itself. Named once because the lead above the form and the example-deck button below
@@ -246,13 +313,37 @@ export default function App() {
     {/* SHARE LINKS COPIED BEFORE THE SURFACES MOVED. `/graph`, `/cards` and `/combos` used to BE the
       * report; they carry `#deck=<payload>` and the hash never reaches the server, so this cannot be
       * a Cloudflare redirect -- see `LegacyDeckRedirect`. Renders nothing when there is no deck in
-      * the hash, which is why it can sit above the app rather than replacing it. */}
+      * the hash, which is why it can sit above the app rather than replacing it.
+      * `/cards` IS NOT HERE ANY MORE: it is the card search now, and that page renders the same
+      * redirect itself. A path that is a real page cannot also be a bare redirect above the app --
+      * the redirect has to be part of what the page does on arrival. */}
     <Routes>
       <Route path="/graph" element={<LegacyDeckRedirect to="/analysis/graph" />} />
-      <Route path="/cards" element={<LegacyDeckRedirect to="/analysis/cards" />} />
       <Route path="/combos" element={<LegacyDeckRedirect to="/analysis/combos" />} />
+      {/* THIS BLOCK MATCHES TWO PATHS AND THE APP HAS MANY, so without a catch-all React Router
+        * warns `No routes matched location` on every OTHER page -- console noise on every card
+        * page, every commander page and the landing itself, which is how a real warning goes
+        * unread. It renders nothing, which is what it already did. */}
+      <Route path="*" element={null} />
     </Routes>
+    {/* THE CARD PAGES REPLACE THE DECK TOOL RATHER THAN SITTING UNDER IT, which is why `main` is a
+      * route element now instead of the component's whole body. `*` keeps every other path on the
+      * deck tool, including a bare `/#deck=...`: a share link's path is a hint about which surface
+      * to open, and the deck itself is in the hash.
+      * THE BLOCK BELOW IS UNCHANGED AND UNINDENTED ON PURPOSE -- re-indenting 100 lines to add two
+      * would bury the actual change in the diff. */}
+    {/* ONE CONTAINER FOR EVERY ROUTE. `main` used to be the `*` element, so the card and commander
+      * pages rendered OUTSIDE it -- no padding, no max width, text starting hard against the left
+      * edge of the viewport. Caught on a screenshot, which is the only way that class of defect is
+      * ever caught: every test passed, because a test asks what is on the page and not where. */}
+    <RouteMarker />
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
+    <Routes>
+      <Route path="/cards" element={<CardSearch />} />
+      <Route path="/cards/:slug" element={<CardPage />} />
+      <Route path="/commanders" element={<CardSearch mode="commanders" />} />
+      <Route path="/commanders/:slug" element={<CommanderPage />} />
+      <Route path="*" element={<>
       {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
         *  has said the app can be installed -- see `InstallButton` for why the event is the whole
         *  gate. Mounted from the app rather than from `index.html` because the decision is stateful
@@ -332,6 +423,13 @@ export default function App() {
         // AND IT IS RECOVERABLE: `assign` leaves a history entry, so Back returns to the report's
         // own address and the hash rebuilds it. That is why there is no confirmation.
         onStartOver={() => { clearLastRun(); window.location.assign("/"); }}
+        // CLEAR IS A STATE RESET, WHICH IS THE OPPOSITE CALL FROM `Start over` ABOVE AND FOR THE
+        // OPPOSITE REASON. Start over is reached from a REPORT, where the deck is in the hash and
+        // the route is `/cards` or `/graph`, so navigating to `/` is the cheap way to unwind all of
+        // it. Clear is reached from the form itself, at `/` with no hash and nothing to unwind --
+        // reloading the page to empty two fields would be a flash and a lost scroll position for no
+        // gain. `clearLastRun` still runs, or the next visit refills what was just cleared.
+        onClear={() => { clearLastRun(); setCommanders(""); setDecklist(""); }}
         shareLink={link}
       />
       {firstVisit && (
@@ -350,13 +448,15 @@ export default function App() {
       )}
       {data && (
         <div className="reveal">
-          <ReportView data={data} diff={diff} />
+          <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
         </div>
       )}
       {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after
           the intro section: a footer inside `main` stopped being at the foot the moment any content
           lived outside it, and a notice that is a CONDITION of showing Wizards' property should not
           depend on the bundle loading at all. */}
+      </>} />
+    </Routes>
     </main>
     </BrowserRouter>
   );

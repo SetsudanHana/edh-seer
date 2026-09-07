@@ -1,4 +1,4 @@
-import { MAX_PRICED_TURN, type CastCurve } from "./goldfish.js";
+import { MAX_PRICED_TURN, MIN_HELD_TRIALS, REPORT_TRIALS, type CastCurve } from "./goldfish.js";
 import type { DeckCard } from "./types.js";
 
 /** Costs this model cannot represent, and the reason each is refused.
@@ -61,6 +61,11 @@ const REFUSALS: { test: (dc: DeckCard) => boolean; reason: string }[] = [
   },
 ];
 
+/** RE-EXPORTED from `goldfish.ts`, which owns it because it also has to SATISFY it -- the forced
+ *  top-up there tops every thin cell up to this number so this gate never fires on the sampler's own
+ *  arithmetic. Here it does the refusing. See the derivation beside the definition. */
+export { MIN_HELD_TRIALS };
+
 export interface CardCastability {
   name: string;
   /** THE PRINTED COST, so a renderer can draw pips without joining back on the NAME (roadmap T18a).
@@ -103,6 +108,7 @@ export function costRefusal(card: DeckCard): string | undefined {
 export function cardCastability(
   card: DeckCard,
   curves: ReadonlyMap<string, CastCurve>,
+  minHeld: number = MIN_HELD_TRIALS,
 ): CardCastability {
   const manaValue = card.card.manaValue;
   const turn = Math.max(1, Math.round(manaValue));
@@ -119,6 +125,17 @@ export function cardCastability(
   const curve = curves.get(card.card.name);
   if (!curve || !curve.castable[turn - 1]) {
     return { ...blank, refused: "not priced — the card is not in the simulated library" };
+  }
+  // THE DENOMINATOR IS THE FIGURE'S RIGHT TO EXIST. Every percentage here is CONDITIONAL on holding
+  // the card, so a singleton's cell is drawn from the (6 + turn)/99 of trials that held it. Below
+  // `MIN_HELD_TRIALS` that is noise wearing a percent sign, and the house rule is the one the cost
+  // refusals above follow: refuse the card rather than guess it.
+  const held = curve.held[turn - 1] ?? 0;
+  if (held < minHeld) {
+    return {
+      ...blank,
+      refused: `held in only ${held} of the simulated shuffles — too thin to price`,
+    };
   }
   return { ...blank, castable: curve.castable[turn - 1], mana: curve.mana[turn - 1] };
 }
@@ -183,10 +200,11 @@ export interface DeckCastability {
 export function deckCastability(
   deck: readonly DeckCard[],
   curves: ReadonlyMap<string, CastCurve>,
+  minHeld: number = MIN_HELD_TRIALS,
 ): DeckCastability {
   const rows = deck
     .filter((dc) => !dc.card.typeLine.toLowerCase().includes("land"))
-    .map((dc) => cardCastability(dc, curves));
+    .map((dc) => cardCastability(dc, curves, minHeld));
 
   // Deduped by name: a decklist that names its commander in both the commander section and the
   // deck body arrives here with two identical entries, and the same card twice in a "hardest casts"
@@ -208,7 +226,8 @@ export function deckCastability(
     biases:
       "A range, not a number, and the range is the PLAY POLICY: the low end holds up two mana before "
       + "casting an accelerant, the high end spends everything on acceleration and is a ceiling no "
-      + "real deck plays to. Simulated over 2,000 shuffles with no opponent — nothing is countered, "
+      + `real deck plays to. Simulated over ${REPORT_TRIALS.toLocaleString("en-US")} shuffles with `
+      + "no opponent — nothing is countered, "
       + "killed or taxed — and with no cantrips cast, so a draw-heavy deck reads low. Colours are "
       + "modelled; mulligans are not.",
   };

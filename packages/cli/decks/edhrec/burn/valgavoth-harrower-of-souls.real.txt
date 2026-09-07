@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/ew5SveDFteHVTT87dXtz9A (source https://moxfield.com/decks/EbeN4zUSjkmmvmclfa9gNA)
+# tags Voltron, Group Slug, Burn, Pillow Fort; bracket 3; saved 2026-09-05; 1664 tagged of 30673 indexed
+
+Commander
+1 Valgavoth, Harrower of Souls
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Basilisk Collar
+1 Chimil, the Inner Sun
+1 Crawlspace
+1 Fellwar Stone
+1 Jet Medallion
+1 Lightning Greaves
+1 Rakdos Signet
+1 Ruby Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Whip of Erebos
+1 Artist's Talent
+1 Bloodchief Ascension
+1 Burning Earth
+1 Exquisite Blood
+1 Fated Firepower
+1 Manabarbs
+1 No Mercy
+1 Powerbalance
+1 Scion of Halaster
+1 Spiked Corridor // Torture Pit
+1 Tainted Remedy
+1 Underworld Dreams
+1 War's Toll
+1 Wound Reflection
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Command Tower
+1 Dragonskull Summit
+1 Glacial Chasm
+1 Graven Cairns
+1 Hidden Necropolis
+1 Hidden Volcano
+1 Immersturm Skullcairn
+1 Leechridden Swamp
+1 Lindblum, Industrial Regency
+1 Mount Doom
+10 Mountain
+1 Nykthos, Shrine to Nyx
+1 Ramunap Ruins
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Shivan Gorge
+1 Smoldering Marsh
+1 Sulfurous Springs
+3 Swamp
+1 Blasphemous Act
+1 Gamble
+1 Jeska's Will
+1 Lively Dirge
+1 Mana Geyser
+1 Soul Immolation
+1 Blood Seeker
+1 Bloodthirsty Conqueror
+1 Fate Unraveler
+1 Gleeful Arsonist
+1 Kederekt Parasite
+1 Kratos, God of War
+1 Longshot, Rebel Bowman
+1 Nightscape Familiar
+1 Ojer Axonil, Deepest Might
+1 Pinnacle Monk
+1 Razorkin Needlehead
+1 Rowan, Scion of War
+1 Scrawling Crawler
+1 Solphim, Mayhem Dominus
+1 The Lord of Pain
+1 Thor, God of Thunder
+1 Treasonous Ogre
+1 Twinflame Tyrant
+1 Chaos Warp
+1 Dark Ritual
+1 Deadly Rollick
+1 Deflecting Swat
+1 Desperate Ritual
+1 Fire Covenant
+1 Pyretic Ritual
+1 Pyroblast
+1 Red Elemental Blast
+1 Redirect Lightning
+1 Seething Song
+1 The Last Agni Kai
+1 Tibalt's Trickery
+1 Jeska, Thrice Reborn
+1 Ob Nixilis, the Hate-Twisted

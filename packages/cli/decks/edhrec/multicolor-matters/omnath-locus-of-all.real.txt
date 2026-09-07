@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/aBVFhNQnLzVRQ5d-PYlxig (source https://archidekt.com/decks/6874952)
+# tags Multicolor Matters, Big Mana, Good Stuff, Ramp; bracket 3; saved 2026-09-03; 135 tagged of 14194 indexed
+
+Commander
+1 Omnath, Locus of All
+
+Deck
+1 Arcane Signet
+1 Chromatic Orrery
+1 Fellwar Stone
+1 Herd Heirloom
+1 Lightning Greaves
+1 Scroll Rack
+1 Sensei's Divining Top
+1 Sol Ring
+1 Talisman of Curiosity
+1 Talisman of Impulse
+1 Talisman of Unity
+1 The Great Henge
+1 Wondrous Crucible
+1 Assassin's Trophy
+1 Brainstorm
+1 Collective Resistance
+1 Deflecting Swat
+1 Endless Detour
+1 Heroic Intervention
+1 Invert Polarity
+1 Malakir Rebirth
+1 Mana Drain
+1 Noxious Revival
+1 Smuggler's Surprise
+1 Sultai Charm
+1 Untimely Malfunction
+1 Atraxa, Grand Unifier
+1 Avacyn, Angel of Hope
+1 Birds of Paradise
+1 Bloom Tender
+1 Chulane, Teller of Tales
+1 Consecrated Sphinx
+1 Delighted Halfling
+1 Esika, God of the Tree
+1 Etali, Primal Conqueror
+1 Faeburrow Elder
+1 Hidetsugu and Kairi
+1 Ignoble Hierarch
+1 Kenrith, the Returned King
+1 Loot, the Pathfinder
+1 Nezahal, Primal Tide
+1 Noble Hierarch
+1 Nyxbloom Ancient
+1 Ragavan, Nimble Pilferer
+1 Seedborn Muse
+1 Sen Triplets
+1 Tam, Mindful First-Year
+1 Ureni, the Song Unending
+1 Valgavoth, Terror Eater
+1 Vorinclex, Voice of Hunger
+1 Zacama, Primal Calamity
+1 Bala Ged Recovery
+1 Breach the Multiverse
+1 Dream Harvest
+1 Farseek
+1 In Garruk's Wake
+1 Insurrection
+1 Nature's Lore
+1 Praetor's Grasp
+1 Ruinous Ultimatum
+1 Sea Gate Restoration
+1 Three Visits
+1 Turntimber Symbiosis
+1 Villainous Wealth
+1 Blood Crypt
+1 Breeding Pool
+1 City of Brass
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Forbidden Orchard
+1 Forest
+1 Hallowed Fountain
+1 Horizon of Progress
+1 Jetmir's Garden
+1 Karplusan Forest
+1 Ketria Triome
+1 Mana Confluence
+1 Overgrown Tomb
+1 Plaza of Heroes
+1 Raugrin Triome
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Rootbound Crag
+1 Sacred Foundry
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Sunpetal Grove
+1 Temple Garden
+1 Watery Grave
+1 Wooded Foothills
+1 Yavimaya Coast
+1 Zagoth Triome
+1 Necropotence
+1 Sylvan Library
+1 Wilderness Reclamation

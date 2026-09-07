@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/KiSeu-tTuOWh19eSDHPTMA (source https://archidekt.com/decks/21210497)
+# tags +1/+1 Counters, Orcs, Amass; bracket 2; saved 2026-03-29; 22 tagged of 614 indexed
+
+Commander
+1 Mauhúr, Uruk-hai Captain
+
+Deck
+1 Abrade
+1 Bedevil
+1 Cast into the Fire
+1 Chaos Warp
+1 Dark Ritual
+1 Fling
+1 Nasty End
+1 Orcish Medicine
+1 Rakdos Charm
+1 Rush the Room
+1 Smite the Deathless
+1 Terminate
+1 Thrill of Possibility
+1 Arcane Signet
+1 Commander's Sphere
+1 Grond, the Gatebreaker
+1 Lightning Greaves
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Indulgence
+1 Assault on Osgiliath
+1 Blasphemous Act
+1 Claim the Precious
+1 Faithless Looting
+1 Feed the Swarm
+1 Foray of Orcs
+1 Lash of the Balrog
+1 Mordor Muster
+1 Night's Whisper
+1 Sam's Desperate Rescue
+1 Sign in Blood
+1 Swarming of Moria
+1 The Torment of Gollum
+1 Vandalblast
+1 Widespread Brutality
+1 Barad-dûr
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodfell Caves
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Drannith Ruins
+1 Evolving Wilds
+1 Foreboding Ruins
+1 Haunted Ridge
+1 Luxury Suite
+1 Mines of Moria
+1 Mount Doom
+6 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+7 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 The Black Gate
+1 Battle-Scarred Goblin
+1 Cirith Ungol Patrol
+1 Dunland Crebain
+1 Easterling Vanguard
+1 Goblin Fireleaper
+1 Gorbag of Minas Morgul
+1 Gothmog, Morgul Lieutenant
+1 Grishnákh, Brash Instigator
+1 Gríma Wormtongue
+1 Mer-Ek Nightblade
+1 Merciless Executioner
+1 Mirkwood Bats
+1 Mordor Trebuchet
+1 Moria Marauder
+1 Moria Scavenger
+1 Olog-hai Crusher
+1 Orcish Siegemaster
+1 Shagrat, Loot Bearer
+1 Snarling Warg
+1 Troll of Khazad-dûm
+1 Uglúk of the White Hand
+1 Uruk-hai Berserker
+1 Warbeast of Gorgoroth
+1 Warg Rider
+1 Book of Mazarbul
+1 Call of the Ring
+1 Fall of Cair Andros
+1 Feast on the Fallen
+1 March from the Black Gate

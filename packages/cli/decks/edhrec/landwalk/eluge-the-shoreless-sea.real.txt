@@ -1,0 +1,72 @@
+# edhrec deck https://edhrec.com/deckpreview/OOWm67VhTqxq57X8mIm6nA (source https://archidekt.com/decks/12833890)
+# tags Activated Abilities, Keywords, Spellslinger, Sea Creatures, Triggered Abilities, Lands Matter, Unblockable, Counters Matter, Landwalk; bracket 2; saved 2026-08-30; 36 tagged of 14199 indexed
+
+Commander
+1 Eluge, the Shoreless Sea
+
+Deck
+1 Aether Tradewinds
+1 Counterspell
+1 Hydrosurge
+1 Negate
+1 Peel from Reality
+1 Power Sink
+1 Refute
+1 Run Away Together
+1 Shore Up
+1 Spell Pierce
+1 Suspend
+1 Think Twice
+1 Wheel and Deal
+1 Annex
+1 Extravagant Replication
+1 Imprisoned in the Moon
+1 Parallel Thoughts
+1 Precognition Field
+1 Robe of Mirrors
+1 Roll-Roll-Roll-Roll
+1 Teferi's Tutelage
+1 Traveler's Cloak
+1 Vow of Flight
+1 Waterbender Ascension
+1 Arcane Heist
+1 Calamitous Tide
+1 Mind Sculpt
+1 Nagging Thoughts
+1 Pieces of the Puzzle
+1 Sleight of Hand
+1 Arcane Signet
+1 Collector's Vault
+1 Quietus Spike
+1 Scroll of the Masters
+1 Scytheclaw
+1 Short Bow
+1 Sky Diamond
+1 Sol Ring
+1 Sol Talisman
+1 Chasm Skulker
+1 Enclave Elite
+1 Enduring Curiosity
+1 Forensic Researcher
+1 Frost Trickster
+1 Harbor Serpent
+1 Hraesvelgr of the First Brood
+1 Inkfathom Divers
+1 Inkwell Leviathan
+1 Manta Ray
+1 Meldweb Curator
+1 Mercurial Spelldancer
+1 Mistford River Turtle
+1 Mnemonic Wall
+1 Ojer Pakpatiq, Deepest Epoch
+1 Petrifying Meddler
+1 Phase Dolphin
+1 Silent Hallcreeper
+1 Slither Blade
+1 Stormtide Leviathan
+1 Talrand, Sky Summoner
+1 Tempest Djinn
+1 Tui and La, Moon and Ocean
+1 Uninvited Geist
+1 Hidden Grotto
+35 Island

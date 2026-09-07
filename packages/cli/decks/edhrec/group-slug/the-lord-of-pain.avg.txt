@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-lord-of-pain/group-slug
+# theme Group Slug (447 decks)
+
+Commander
+1 The Lord of Pain
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Fellwar Stone
+1 Lightning Greaves
+1 Mask of Griselbrand
+1 Mind Stone
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Whip of Erebos
+1 Blackcleave Cliffs
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+9 Mountain
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+10 Swamp
+1 Tainted Peak
+1 Witch's Clinic
+1 Blood Seeker
+1 Brash Taunter
+1 Fate Unraveler
+1 Gleeful Arsonist
+1 Gray Merchant of Asphodel
+1 Harsh Mentor
+1 Heartless Hidetsugu
+1 Kaervek the Merciless
+1 Kardur, Doomscourge
+1 Kederekt Parasite
+1 Massacre Wurm
+1 Mogis, God of Slaughter
+1 Rakdos, Lord of Riots
+1 Rampaging Ferocidon
+1 Razorkin Needlehead
+1 Scrawling Crawler
+1 Sheoldred, the Apocalypse
+1 Solphim, Mayhem Dominus
+1 Stormfist Crusader
+1 Twinflame Tyrant
+1 Valgavoth, Harrower of Souls
+1 Vial Smasher the Fierce
+1 Descent into Avernus
+1 Exquisite Blood
+1 Fiery Emancipation
+1 Manabarbs
+1 Painful Quandary
+1 Phyrexian Arena
+1 Spiked Corridor // Torture Pit
+1 Spiteful Visions
+1 Underworld Dreams
+1 Wound Reflection
+1 Bedevil
+1 Blood for the Blood God!
+1 Bolt Bend
+1 Chaos Warp
+1 Dark Ritual
+1 Infernal Grasp
+1 Rakdos Charm
+1 Terminate
+1 Untimely Malfunction
+1 Withering Torment
+1 Blasphemous Act
+1 Bloodsoaked Insight
+1 Feed the Swarm
+1 Grab the Prize
+1 Jeska's Will
+1 Prisoner's Dilemma
+1 Sadistic Shell Game
+1 Sign in Blood
+1 Toxic Deluge

@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/1wI3jhUOKKyRIH_C8fWzsA (source https://archidekt.com/decks/18587934)
+# tags Lessons, Earthbending; bracket 3; saved 2026-09-04; 31 tagged of 5370 indexed
+
+Commander
+1 Toph, Hardheaded Teacher
+
+Deck
+1 Adventurer's Inn
+1 Ba Sing Se
+1 Cascading Cataracts
+1 Cinder Glade
+1 Command Tower
+1 Darksteel Citadel
+1 Evolving Wilds
+1 Fabled Passage
+9 Forest
+1 Karplusan Forest
+1 Kavaron, Memorial World
+1 Kessig Wolf Run
+5 Mountain
+1 Nesting Grounds
+1 Rockfall Vale
+1 Rootbound Crag
+1 Rumble Arena
+1 Secret Tunnel
+1 Slagwoods Bridge
+1 Stomping Ground
+1 Tectonic Edge
+1 Thornspire Verge
+1 Valgavoth's Lair
+1 Ashaya, Soul of the Wild
+1 Augur of Autumn
+1 Avatar Kyoshi, Earthbender
+1 Badgermole Cub
+1 Bumi, Eclectic Earthbender
+1 Bumi, Unleashed
+1 Disciple of Freyalise
+1 Duskshell Crawler
+1 Earth Kingdom General
+1 Earthbending Student
+1 Emeritus of Abundance
+1 Evolution Sage
+1 Gnarlid Colony
+1 Goblin Anarchomancer
+1 Horizon Explorer
+1 Insidious Fungus
+1 Meltstrider Eulogist
+1 Mightform Harmonizer
+1 Mossborn Hydra
+1 Omnath, Locus of Rage
+1 Sazh's Chocobo
+1 Tannuk, Memorial Ensign
+1 The Boulder, Ready to Rumble
+1 The Earth King
+1 Toph, Earthbending Master
+1 Toph, Greatest Earthbender
+1 Vibrance
+1 Wildwood Scourge
+1 Awaken the Woods
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Cracked Earth Technique
+1 Earthbending Lesson
+1 Explore
+1 Improvisation Capstone
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Rockalanche
+1 Shared Roots
+1 Stump Stomp
+1 True Ancestry
+1 Beast Within
+1 Chaos Warp
+1 Combustion Technique
+1 Crop Rotation
+1 Cycle of Renewal
+1 Origin of Metalbending
+1 Redirect Lightning
+1 Strength of Will
+1 Untimely Malfunction
+1 Bitter Work
+1 Earthbender Ascension
+1 Hardened Scales
+1 Solid Ground
+1 Tale of Katara and Toph
+1 Terrasymbiosis
+1 The Cave of Two Lovers
+1 The Legend of Kyoshi
+1 Wilderness Reclamation
+1 Herd Heirloom
+1 Necklace of Girion
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots

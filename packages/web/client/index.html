@@ -96,12 +96,123 @@
         <span class="brand-tagline">Oracle-level deck reading</span>
       </h1>
       <nav class="site-nav" aria-label="Site">
-        <a href="/how-it-works">How it works</a>
-        <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report an edge</a>
+        <!-- THE SAME SIX ITEMS IN THE SAME ORDER ON BOTH PAGES, and `seo.test.ts` compares the two
+             blocks byte for byte. The two navs used to differ by one item -- the app page offered
+             "How it works" and the prose page offered "Analyse a deck" -- so every crossing between
+             them shifted every other item sideways by the width difference of those two labels. A
+             nav is a map, and a map that changes shape as you walk it is the complaint (owner,
+             2026-09-04).
+             THAT MEANS EACH PAGE LINKS TO ITSELF, which is the ordinary web bargain and the opposite
+             of `PageFoot`'s rule: the FOOT is a way out and may not point at where you already are,
+             while the header is the map and has to show the whole territory to stay still.
+             THE TWO BROWSE SURFACES WERE REACHABLE ONLY FROM THE FOOT OF A CARD PAGE (owner,
+             2026-09-04) -- which is to say, only from a page you had already found another way. -->
+        <!-- COMBO, NOT ALL-VISIBLE AND NOT A HAMBURGER (research 2026-09-04). NN/g's 179-participant
+             study measured three conditions on phones: navigation behind an icon was USED in 57% of
+             tasks, some-visible-plus-a-menu in 86%, and hidden was 15% slower with a >20% drop in
+             content discoverability. Their rule splits on our exact number -- four links or fewer,
+             show them all; more than four, hide SOME. We have six.
+             THE THREE THAT STAY ARE THE THREE THAT GO SOMEWHERE IN THE PRODUCT. `/how-it-works` is
+             prose, and the other two leave the site entirely; those are the ones a reader goes
+             looking for, which is what a menu is for. Cards and Commanders stay because they were
+             put in this nav yesterday for being unreachable, and burying them again the next day
+             would spend a measured usability penalty to undo that.
+             `<details>` AND NOT A BUTTON: the disclosure, its keyboard model and its screen-reader
+             semantics are the platform's, so this header still needs no JavaScript -- which is the
+             whole reason it is static HTML sitting above `#root`.
+             THE LABEL IS A WORD. The same study's companion found BBC's labelled bar reached 89%
+             usage while Bloomberg's small unlabelled icon reached 44%, because readers took it for
+             part of the logo it sat next to. Ours would sit next to a wordmark too, so it is a word,
+             and it is at the far end of the nav rather than beside the mark. -->
+        <a href="/">Analyse a deck</a>
+        <a href="/cards">Cards</a>
+        <a href="/commanders">Commanders</a>
+        <details class="site-more">
+          <summary>More</summary>
+          <div class="site-more-panel">
+            <a href="/how-it-works">How it works</a>
+            <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report an edge</a>
+          </div>
+        </details>
       </nav>
     </header>
+    <!-- DISMISSING THE HEADER MENU, and the only script the header has.
+         `<details>` closes on its own summary and on nothing else, which is the platform's answer
+         and not a reader's: a menu left hanging over the page after a click somewhere else reads as
+         broken, and Escape is the gesture every reader already has for "put that away".
+         IT IS AN ENHANCEMENT, NOT A DEPENDENCY. The nav works with this script removed -- the
+         disclosure, its keyboard model and its accessibility semantics are all the element's own.
+         That is why it stays inline here rather than moving into the bundle: the bundle is 700 KB
+         and does not run on `how-it-works` at all, and this file is the only place the header can
+         be enhanced without waiting for either.
+         FOCUS COMES BACK ONLY IF IT LEFT WITH THE PANEL. Escape pressed while the reader is typing
+         in the decklist should close the menu and leave the cursor where it is; Escape pressed on a
+         link INSIDE the panel has nowhere to put focus once that panel is gone, so it returns to
+         the control that opened it.
+         `pointerdown` RATHER THAN `click`, so the menu is out of the way before the press it was
+         covering resolves. The guard is containment, so pressing the summary still reaches the
+         element's own toggle rather than being closed out from under it. -->
+    <script>
+      (function () {
+        var open = function () { return document.querySelector(".site-more[open]"); };
+        document.addEventListener("keydown", function (e) {
+          if (e.key !== "Escape") return;
+          var d = open();
+          if (!d) return;
+          var inside = d.contains(document.activeElement);
+          d.open = false;
+          if (inside) d.querySelector("summary").focus();
+        });
+        document.addEventListener("pointerdown", function (e) {
+          var d = open();
+          if (d && !d.contains(e.target)) d.open = false;
+        });
+      })();
+    </script>
     <div id="root"></div>
+    <!-- SELF-HEALING FROM A POISONED ASSET CACHE, and it lives here because `index.html` is the one
+         file a browser always refetches. It cannot live in the bundle: the failure this recovers
+         from is the bundle never executing.
+
+         WHAT HAPPENED, 2026-09-04. Cloudflare Pages answers a missing path with this shell -- status
+         200, `text/html` -- and `_headers` stamps `/assets/*` with `immutable, max-age=31536000`.
+         A browser that asked for a hashed asset during the seconds before a deploy's files
+         propagated therefore cached HTML under a JavaScript URL FOR A YEAR, and `immutable` means a
+         normal reload never revalidates it. The module is refused on its MIME type, React never
+         mounts, and the page renders as this static shell with no app in it. Every visitor who
+         loaded the site in that window is stuck until their cache is cleared by hand.
+
+         THE FIX IS ONE FORCED REVALIDATION. `cache: "reload"` bypasses the HTTP cache AND replaces
+         the stored entry, so refetching each module script repairs the cache the reload then reads.
+         Service workers and Cache Storage are cleared too -- they were not the cause here (measured:
+         a fresh profile with neither reproduced it), but they can hold the same poisoned bytes.
+
+         ONCE PER SESSION, VIA `sessionStorage`. A reload loop is a worse failure than a broken page:
+         it burns the visitor's battery and hides the real error. If the second attempt also fails,
+         the page stays broken and visibly so. -->
+    <script>
+      window.addEventListener("load", function () {
+        if (window.__appBooted) return;
+        try {
+          if (sessionStorage.getItem("edh-boot-retry")) return;
+          sessionStorage.setItem("edh-boot-retry", "1");
+        } catch (e) { return; }
+        var scripts = [].slice.call(document.querySelectorAll('script[type="module"][src]'))
+          .map(function (s) { return s.src; });
+        Promise.all(
+          scripts.map(function (src) { return fetch(src, { cache: "reload" }).catch(function () {}); })
+            .concat(
+              typeof caches !== "undefined"
+                ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).catch(function () {})
+                : [],
+              navigator.serviceWorker
+                ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }).catch(function () {})
+                : [],
+            ),
+        ).then(function () { location.reload(); });
+      });
+    </script>
     <!-- REAL TEXT, IN THE STATIC HTML, AND OUTSIDE `#root` ON PURPOSE.
          Until this existed the entire body was `<div id="root"></div>`: a crawler that does not run
          JavaScript -- most social scrapers, most LLM crawlers, Bing more often than Google -- saw an

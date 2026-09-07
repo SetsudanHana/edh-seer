@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/J2dCKcyWpY_6EYMXUbkWdg (source https://moxfield.com/decks/Ia6rRVcJ1kq5VnMad-sQvQ)
+# tags Auras, Toolbox, Enchantress, Prison, Voltron, Ramp; bracket 3; saved 2026-09-05; 180 tagged of 16887 indexed
+
+Commander
+1 Zur the Enchanter
+
+Deck
+1 All That Glitters
+1 Aqueous Form
+1 Combat Research
+1 Curator's Ward
+1 Curiosity
+1 Darksteel Mutation
+1 Grasp of Fate
+1 Greater Auramancy
+1 Imprisoned in the Moon
+1 Mantle of the Ancients
+1 Mirrormade
+1 Pariah
+1 Phyrexian Arena
+1 Planar Disruption
+1 Propaganda
+1 Redemption Arc
+1 Ripples of Undeath
+1 Shielded by Faith
+1 Solemnity
+1 Staggering Insight
+1 Steel of the Godhead
+1 Timely Ward
+1 Twinblade Blessing
+1 Underworld Connections
+1 Vigilance
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Daze
+1 Dovin's Veto
+1 Muddle the Mixture
+1 Negate
+1 Spell Pierce
+1 Thirst for Meaning
+1 Void Rend
+1 Wizard's Retort
+1 Ancient Den
+1 Arcane Sanctum
+1 Ash Barrens
+1 Caves of Koilos
+1 Command Tower
+1 Contaminated Landscape
+1 Dark Depths
+1 Darkslick Shores
+1 Desolate Mire
+1 Evolving Wilds
+1 Exotic Orchard
+1 Hall of the Bandit Lord
+7 Island
+1 Path of Ancestry
+5 Plains
+1 Razortide Bridge
+1 Seat of the Synod
+5 Swamp
+1 Temple of Deceit
+1 Temple of Enlightenment
+1 Valgavoth's Lair
+1 Vault of Whispers
+1 Watery Grave
+1 Arcane Signet
+1 Azorius Signet
+1 Charcoal Diamond
+1 Dimir Signet
+1 Expedition Map
+1 Fellwar Stone
+1 Marble Diamond
+1 Orzhov Signet
+1 Sky Diamond
+1 Sol Ring
+1 Strionic Resonator
+1 Wizard's Staff
+1 Bruna, Light of Alabaster
+1 Gold Myr
+1 Heliod's Pilgrim
+1 Leaden Myr
+1 Mesa Enchantress
+1 Ornithopter of Paradise
+1 Silver Myr
+1 Sovereigns of Lost Alara
+1 Sun Titan
+1 Divine Reckoning
+1 Open the Armory
+1 Retether
+1 Sevinne's Reclamation
+1 Single Combat
+1 Winds of Rath

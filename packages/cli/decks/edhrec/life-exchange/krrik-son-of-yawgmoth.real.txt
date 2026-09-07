@@ -1,0 +1,80 @@
+# edhrec deck https://edhrec.com/deckpreview/_Em3zb8KqqI2BYx-aA0vHA (source https://archidekt.com/decks/23643741)
+# tags Lifedrain, Self-Damage, Lifegain, Life Exchange; bracket 3; saved 2026-07-09; 24 tagged of 20299 indexed
+
+Commander
+1 K'rrik, Son of Yawgmoth
+
+Deck
+1 Animate Dead
+1 Bastion of Remembrance
+1 Exquisite Blood
+1 Faith of the Devoted
+1 Font of Agonies
+1 Gate to Phyrexia
+1 Necropotence
+1 Phyrexian Reclamation
+1 Arcane Signet
+1 Jet Medallion
+1 Sol Ring
+1 Staff of the Death Magus
+1 Sword of Sinew and Steel
+1 Thought Vessel
+1 Venser's Journal
+1 Asmodeus the Archfiend
+1 Blood Artist
+1 Blood Celebrant
+1 Blood Pet
+1 Bloodthirsty Conqueror
+1 Bloodthrone Vampire
+1 Chainer, Dementia Master
+1 Creeping Bloodsucker
+1 Crypt Ghast
+1 Dread Presence
+1 Erebos, God of the Dead
+1 Gifted Aetherborn
+1 Gray Merchant of Asphodel
+1 Magus of the Mirror
+1 Necrotic Ooze
+1 Nighthawk Scavenger
+1 Nirkana Revenant
+1 Pontiff of Blight
+1 Psychosis Crawler
+1 Skirge Familiar
+1 Thrull Parasite
+1 Twilight Prophet
+1 Vilis, Broker of Blood
+1 Barren Moor
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Castle Locthwain
+1 Deserted Temple
+1 Nykthos, Shrine to Nyx
+1 Radiant Fountain
+1 Reliquary Tower
+1 Shizo, Death's Storehouse
+27 Swamp
+1 Blood Pact
+1 Cabal Ritual
+1 Dark Ritual
+1 Deadly Rollick
+1 Debt to the Kami
+1 Fell the Profane
+1 Imp's Mischief
+1 Infernal Grasp
+1 Saw in Half
+1 Stinging Study
+1 Vampiric Tutor
+1 Withering Torment
+1 Bond of Agony
+1 Buried Alive
+1 Dark Petition
+1 Diabolic Tutor
+1 Exsanguinate
+1 Feed the Swarm
+1 Persist
+1 Profane Transfusion
+1 Reanimate
+1 Repay in Kind
+1 Temporal Extortion
+1 Liliana of the Dark Realms

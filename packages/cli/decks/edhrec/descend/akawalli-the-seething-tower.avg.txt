@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/akawalli-the-seething-tower/descend
+# theme Descend (7 decks)
+
+Commander
+1 Akawalli, the Seething Tower
+
+Deck
+1 Arcane Signet
+1 Broodheart Engine
+1 Eerie Gravestone
+1 Golgari Signet
+1 Sol Ring
+1 Bojuka Bog
+1 Command Tower
+1 Darkmoss Bridge
+1 Evolving Wilds
+15 Forest
+1 Jungle Hollow
+1 Myriad Landscape
+1 Strangled Cemetery
+13 Swamp
+1 Terramorphic Expanse
+1 Vernal Fen
+1 Aftermath Analyst
+1 Ainok Wayfarer
+1 Ambush Viper
+1 Cankerbloom
+1 Coati Scavenger
+1 Deathcap Marionette
+1 Deep Goblin Skulltaker
+1 Dreadhound
+1 Echo of Dusk
+1 Eternal Witness
+1 Exdeath, Void Warlock
+1 Glowspore Shaman
+1 Golgari Grave-Troll
+1 Golgari Thug
+1 Gray Slaad
+1 Gutless Plunderer
+1 Jarad, Golgari Lich Lord
+1 Kagha, Shadow Archdruid
+1 Millikin
+1 Mire Triton
+1 Molderhulk
+1 Old Rutstein
+1 Old Stickfingers
+1 Ooze Patrol
+1 Sakura-Tribe Elder
+1 Skull Prophet
+1 Splinterfright
+1 Stinging Cave Crawler
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 The Mycotyrant
+1 Undead Butler
+1 Alien Symbiosis
+1 Canonized in Blood
+1 Colossification
+1 Crawling Infestation
+1 Crawling Sensation
+1 Criminal Past
+1 Deadbridge Chant
+1 Deathreap Ritual
+1 Fungal Fortitude
+1 Another Chance
+1 Biosynthic Burst
+1 Giant Growth
+1 Golgari Charm
+1 Grapple with the Past
+1 Grisly Salvage
+1 Join the Dead
+1 Not Dead After All
+1 Wilt
+1 Cultivate
+1 Farseek
+1 Malevolent Rumble
+1 Rampant Growth
+1 Rise of the Dark Realms
+1 Shattered Wings
+1 Terror Tide

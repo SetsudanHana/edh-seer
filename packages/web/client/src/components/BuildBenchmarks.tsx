@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode, useEffect, useRef } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { Explain } from "./Explain.js";
@@ -74,7 +74,7 @@ export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 export type DeckMathSectionId = "cast" | "answers" | "win" | "waiting";
 
 export function BuildBenchmarks({
-  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true, focus,
+  categories, parents, deckMath, answerCoverage, sections, showBenchmarks = true,
 }: {
   categories: DeckReport["buildCategories"];
   /** The four Command-Zone template groups (`computeBuild`'s `buildParents`). The parent's OWN
@@ -108,32 +108,16 @@ export function BuildBenchmarks({
    *  found and fixed elsewhere in this file, so this suppresses the heading along with the rows —
    *  see the `hasBenchmarkContent` guard below for the render-nothing-not-an-empty-shell case. */
   showBenchmarks?: boolean;
-  /** The parent the reader clicked a dial for, if they arrived from `DeckGauges`. Marks that group
-   *  so the drill-down lands on a row rather than on a tab. Never a filter: the other groups stay,
-   *  because the comparison between them is half of what this block is for. */
-  focus?: string;
 }) {
-  // FOCUS FOLLOWS THE DIAL, NOT JUST THE OUTLINE (IMPORTANT D, whole-branch review, 2026-09-01).
-  // Clicking a `DeckGauges` dial unmounts Summary and switches to this sub-tab, so the button that
-  // had focus is gone and focus silently falls to `document.body` -- a keyboard or screen-reader
-  // user gets no announcement of where they landed and has to tab from the top of the page. The
-  // design's own §5 promised the focused group is "scrolled to and marked"; only the mark (the
-  // outline/`aria-current` below) ever shipped. One ref per rendered group, keyed by parent name,
-  // so the effect can find the one `focus` names without a DOM query -- and it has to sit above
-  // every early return below: hooks cannot follow a conditional `return`.
-  const groupRefs = useRef(new Map<string, HTMLLIElement>());
-  useEffect(() => {
-    if (focus === undefined) return;
-    const el = groupRefs.current.get(focus);
-    // NO `behavior: "smooth"`, PER `prefers-reduced-motion` (fix round, whole-branch review,
-    // 2026-09-01). Omitting `behavior` entirely takes the browser's default, which is instant --
-    // simpler than gating a media query, and it is what a reduced-motion reader needs anyway.
-    el?.scrollIntoView({ block: "center" });
-    el?.focus();
-  }, [focus]);
-
   if (!categories || categories.length === 0) return null;
   const countByLeaf = new Map(categories.map((c) => [c.category, c.count]));
+  // A FACET IS SAID BESIDE THE COUNT, NEVER ADDED TO IT. "Draw 14 · 5 engines · 3 unlabelled":
+  // the owner's point (2026-09-05) was that ten draw engines and ten one-shot cantrips read as the
+  // same 10, and the target is a raw count, so the split is annotation rather than a second dial.
+  const facetTextByLeaf = new Map(categories.map((c) => [
+    c.category,
+    Object.entries(c.facets ?? {}).map(([name, n]) => `${n} ${name}`).join(" · "),
+  ]));
   const groupedLeaves = new Set((parents ?? []).flatMap((p) => p.leaves));
   // Anything no parent names (burn, stax) renders after them, exactly as before this task -- those
   // are win-plan and tax signals, never build roles, and each still carries its OWN target (today
@@ -240,8 +224,9 @@ export function BuildBenchmarks({
     const name = LABEL[category] ?? category;
     const count = countByLeaf.get(category) ?? 0;
     const share = sumOfLeaves > 0 ? Math.round((count / sumOfLeaves) * 100) : 0;
+    const facetText = facetTextByLeaf.get(category) || "";
     return (
-      <li key={category} className="flex items-center gap-3 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}`}>
+      <li key={category} className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-0 text-sm text-(--muted)" aria-label={`${name} ${count}, ${share}% of ${parentName}${facetText ? `, ${facetText}` : ""}`}>
         {/* FIX F3 (controller review, 2026-08-21): `w-24` with a `pl-3` indent left only 84px for
           *  the label text, and three real leaf names need more -- "Stack interaction" measures
           *  121px, "Graveyard hate" 110px, "Card selection" 105px, all truncating (the graveyard one
@@ -260,11 +245,16 @@ export function BuildBenchmarks({
           *  denominator the number beside it already uses, so the bar and the percentage cannot
           *  disagree -- they are one value rendered twice, which is the only safe way to do both.
           *  A zero-count leaf draws NO bar rather than a sliver: a 4px stub reads as "some". */}
-        <span className="flex-1 h-1 bg-(--separator) rounded-full overflow-hidden" aria-hidden="true">
+        <span className="flex-1 min-w-8 h-1 bg-(--separator) rounded-full overflow-hidden" aria-hidden="true">
           {share > 0 ? (
             <span className="block h-full rounded-full bg-(--fill)" style={{ width: `${share}%` }} />
           ) : null}
         </span>
+        {/* BEFORE the count, so the count column every row shares stays right-aligned; the bar
+          *  (flex-1) gives up the width, which is the one thing on the row that can. */}
+        {/* BELOW `sm` THE FACET TAKES ITS OWN LINE (D3, 2026-09-06): name + facet + count measured
+          *  465px on a 390px phone and the whole PAGE scrolled sideways. */}
+        {facetText ? <span className="shrink-0 text-xs stat-num basis-full sm:basis-auto order-last sm:order-none pl-0 sm:pl-0">{facetText}</span> : null}
         <span className="w-20 shrink-0 text-right stat-num">{count} · {share}%</span>
       </li>
     );
@@ -339,26 +329,9 @@ export function BuildBenchmarks({
                     *  `listitem`s should still see only leaf rows. The `h4` inside keeps its own
                     *  heading semantics regardless. */}
                   <li
-                    ref={(el) => {
-                      if (el) groupRefs.current.set(p.name, el);
-                      else groupRefs.current.delete(p.name);
-                    }}
                     role="presentation"
-                    // Focusable PROGRAMMATICALLY ONLY -- -1 keeps it out of the page's Tab order
-                    // (it is not a control) while letting the effect above call `.focus()` on it
-                    // the way a heading landed on from an in-page jump link would be.
-                    tabIndex={-1}
                     data-testid={`role-group-${p.name}`}
-                    data-focused={focus === p.name ? "true" : undefined}
-                    // The outline below is visual only -- a screen-reader user gets nothing from it.
-                    // `aria-current` is the announced half of the same mark: present (never "false",
-                    // a different and confusing announcement) only on the group the reader navigated
-                    // to. `role="presentation"` does not hide it -- an element removed from the
-                    // accessibility tree's structural roles still exposes its other ARIA attributes.
-                    aria-current={focus === p.name ? "true" : undefined}
-                    className={`flex items-baseline gap-3 flex-wrap pt-1 ${
-                      focus === p.name ? "outline-2 outline-(--accent) rounded-(--radius)" : ""
-                    }`}
+                    className="flex items-baseline gap-3 flex-wrap pt-1"
                   >
                     <h4 className="eyebrow text-(--muted)">{p.name}</h4>
                     {/* THE WHOLE, IN A PLAYER'S WORDS AND NOT AS A FORMULA. "sum of leaves = 9" is
@@ -470,8 +443,12 @@ function DeckMathRows({
   const answers = [...deckMath.answers].sort(
     (a, b) => (b.required - b.count) - (a.required - a.count) || a.available - b.available,
   );
+  // WORST FIRST, AGAINST THE NUMBER THE ROW ITSELF PRINTS. This sorted on `supplied` while the row
+  // below it printed `available`, so a colour could sort above another and then show the smaller
+  // gap -- the third reader of this row, and the one nobody saw disagreeing (2026-09-04).
   const colors = [...(deckMath.colors ?? [])].sort(
-    (a, b) => ((b.worst?.required ?? 0) - b.supplied) - ((a.worst?.required ?? 0) - a.supplied),
+    (a, b) => ((b.worst?.required ?? 0) - (b.worst?.available ?? 0))
+      - ((a.worst?.required ?? 0) - (a.worst?.available ?? 0)),
   );
   const lands = deckMath.lands;
   const wincons = deckMath.wincons;
@@ -996,7 +973,7 @@ function DeckMathRows({
               // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
               // pips on turn 3. That is why this row can name a turn without guessing one.
               const label = c.worst
-                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${c.worst.cards} card${c.worst.cards === 1 ? " wants" : "s want"} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
+                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${(c.worst.names ?? []).join(" and ") || `${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"}`} want${c.worst.cards === 1 ? "s" : ""} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
                 : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
                 <li key={c.color} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" aria-label={label}>
@@ -1083,8 +1060,9 @@ function DeckMathRows({
           ) : null}
           {colors.some((c) => c.worst) ? (
             <Caveat label="what each row is measured against">
-              Each row is the earliest double-pip card in that colour, at 90% confidence — not the
-              deck's land count, which is judged above. Cutting or delaying one early double pip
+              Each row is the demand that misses by the most in that colour, at 90% confidence — the
+              card whose pips the deck is least likely to have on time, which is not always a double
+              pip and is never the deck's land count, judged above. Cutting or delaying that card
               answers a gap as well as adding lands does
               {overcommitted ? ", and here it is the only thing that can" : ""}.{" "}
               {/* BOTH MODELS, IN ONE SENTENCE. The figure prices the free mulligan; the keep band it

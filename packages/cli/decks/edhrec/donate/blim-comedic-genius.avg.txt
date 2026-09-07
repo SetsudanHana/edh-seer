@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/blim-comedic-genius/donate
+# theme Donate (289 decks)
+
+Commander
+1 Blim, Comedic Genius
+
+Deck
+1 Arcane Signet
+1 Bucknard's Everfull Purse
+1 Coveted Jewel
+1 Fellwar Stone
+1 Geth's Grimoire
+1 Hithlain Rope
+1 Immortal Coil
+1 Lightning Greaves
+1 Pendant of Prosperity
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Whispersilk Cloak
+1 Wishclaw Talisman
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+9 Mountain
+1 Rakdos Carnarium
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Shizo, Death's Storehouse
+1 Smoldering Marsh
+1 Sulfurous Springs
+11 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Abyssal Persecutor
+1 Akroan Horse
+1 Alexios, Deimos of Kosmos
+1 Archfiend of the Dross
+1 Bazaar Trader
+1 Demonic Taskmaster
+1 Ebon Drake
+1 Goldnight Castigator
+1 Grid Monitor
+1 Humble Defector
+1 Khârn the Betrayer
+1 Plague Reaver
+1 Priest of the Blood Rite
+1 Rust Elemental
+1 Silent Arbiter
+1 Sleeper Agent
+1 Steel Golem
+1 Wretched Anurid
+1 Xantcha, Sleeper Agent
+1 Aggressive Mining
+1 Captive Audience
+1 Colfenor's Plans
+1 Curse of Opulence
+1 Demonic Lore
+1 Demonic Pact
+1 Forbidden Crypt
+1 Greed's Gambit
+1 Lich's Mastery
+1 Midnight Oil
+1 Nefarious Lich
+1 Treacherous Blessing
+1 Waste Not
+1 Bedevil
+1 Bolt Bend
+1 Chaos Warp
+1 Chef's Kiss
+1 Dark Ritual
+1 Rakdos Charm
+1 Terminate
+1 Untimely Malfunction
+1 Blasphemous Act
+1 Demonic Tutor
+1 Disrupt Decorum
+1 Fateful Handoff
+1 Feed the Swarm
+1 Harmless Offering
+1 Sign in Blood
+1 Vandalblast

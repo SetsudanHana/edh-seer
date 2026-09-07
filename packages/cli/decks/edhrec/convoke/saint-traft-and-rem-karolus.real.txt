@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/blWdOIqxYb1FPYbX528b5Q (source https://archidekt.com/decks/12069311)
+# tags Commander Matters, Counterspells, Tokens, Convoke, Tap / Untap, Card Draw, Burn; bracket 2; saved 2026-08-30; 237 tagged of 1920 indexed
+
+Commander
+1 Saint Traft and Rem Karolus
+
+Deck
+1 An Offer You Can't Refuse
+1 Complete the Circuit
+1 Consider
+1 Cut Short
+1 Devouring Light
+1 Ephemeral Shields
+1 Into the Flood Maw
+1 Meeting of Minds
+1 Opt
+1 Soul Partition
+1 Spell Pierce
+1 Swords to Plowshares
+1 Transcendent Message
+1 Arcane Signet
+1 Azorius Signet
+1 Cultivator's Caravan
+1 Deluxe Dragster
+1 Flywheel Racer
+1 Halo Fountain
+1 Izzet Signet
+1 Jeskai Banner
+1 Ramosian Greatsword
+1 Skullclamp
+1 Sol Ring
+1 Thopter Fabricator
+1 Wand of the Worldsoul
+1 Austere Command
+1 Calamity of Cinders
+1 Expressive Iteration
+1 Hidden Strings
+1 Hour of Reckoning
+1 Plea for Guidance
+1 Ponder
+1 Practiced Offense
+1 Sleight of Hand
+1 Stock Up
+1 Vandalblast
+1 Chasm Skulker
+1 Cosmogrand Zenith
+1 Elite Interceptor
+1 Enduring Innocence
+1 Flockchaser Phantom
+1 Grand Abolisher
+1 Granite Witness
+1 Harmonized Trio
+1 Ioreth of the Healing House
+1 Kasla, the Broken Halo
+1 Kykar, Wind's Fury
+1 Nesting Dovehawk
+1 The Locust God
+1 The Wandering Rescuer
+1 Vizier of Tumbling Sands
+1 Wildfire Awakener
+1 City on Fire
+1 Dazzling Theater // Prop Room
+1 Felidar Retreat
+1 Impact Tremors
+1 Imprisoned in the Moon
+1 Intangible Virtue
+1 Jeskai Ascendancy
+1 Retreat to Coralhelm
+1 Whirlwind of Thought
+1 Command Bridge
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Frostboil Snarl
+1 Furycalm Snarl
+6 Island
+4 Mountain
+1 Mystic Monastery
+10 Plains
+1 Port Town
+1 Prairie Stream
+1 Rogue's Passage
+1 Shivan Reef
+1 Skycloud Expanse
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 Invasion of Segovia

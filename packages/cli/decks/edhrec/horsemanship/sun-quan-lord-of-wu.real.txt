@@ -1,0 +1,74 @@
+# edhrec deck https://edhrec.com/deckpreview/Fx46ZgaoyIAoWGWSdtj2FA (source https://archidekt.com/decks/21411241)
+# tags Commander Matters, Horsemanship, Card Draw; bracket 2; saved 2026-09-04; 16 tagged of 1671 indexed
+
+Commander
+1 Sun Quan, Lord of Wu
+
+Deck
+1 Aetherize
+1 Aetherspouts
+1 An Offer You Can't Refuse
+1 Dissipate
+1 Fractal Anomaly
+1 High Tide
+1 Magic Damper
+1 Miscast
+1 Negate
+1 Octopus Form
+1 Polymorphist's Jest
+1 Pongify
+1 Thirst for Discovery
+1 Whirlwind Denial
+1 Agna Qel'a
+33 Island
+1 Lilypad Village
+1 Lonely Sandbar
+1 Seat of the Synod
+1 Anticausal Vestige
+1 Broodbirth Viper
+1 Chasm Skulker
+1 Curiosity Crafter
+1 Enduring Curiosity
+1 Esior, Wardwing Familiar
+1 Ghostly Pilferer
+1 High Fae Trickster
+1 Homunculus Horde
+1 Illvoi Infiltrator
+1 Jhessian Thief
+1 Laboratory Maniac
+1 Lulu, Stern Guardian
+1 Malcolm, Alluring Scoundrel
+1 Mischievous Catgeist
+1 Mistblade Shinobi
+1 Moonblade Shinobi
+1 Neurok Commando
+1 Nimble Brigand
+1 Prosperous Thief
+1 Psychosis Crawler
+1 Silent Hallcreeper
+1 Sphinx of the Second Sun
+1 Starwinder
+1 Talrand, Sky Summoner
+1 Thieving Magpie
+1 Thieving Otter
+1 Triskaidekaphile
+1 Tui and La, Moon and Ocean
+1 Twenty-Toed Toad
+1 Wavebreak Hippocamp
+1 Arcane Signet
+1 Bident of Thassa
+1 Caged Sun
+1 Hall of Triumph
+1 Midnight Clock
+1 Sapphire Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Indomitable
+1 The Key to the Vault
+1 Thought Vessel
+1 Boomerang Basics
+1 Coastal Piracy
+1 Octopus Umbra
+1 Propaganda
+1 Public Enemy
+1 Kaito, Cunning Infiltrator

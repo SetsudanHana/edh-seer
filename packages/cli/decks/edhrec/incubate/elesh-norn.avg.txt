@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/elesh-norn/incubate
+# theme Incubate (11 decks)
+
+Commander
+1 Elesh Norn
+
+Deck
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Argent Dais
+1 Idol of Oblivion
+1 Infested Fleshcutter
+1 Marble Diamond
+1 Mind Stone
+1 Norn's Annex
+1 Norn's Wellspring
+1 Oketra's Monument
+1 Pearl Medallion
+1 Sol Ring
+1 Staff of the Storyteller
+1 Tablet of Compleation
+1 Throne of Geth
+1 Emeria, the Sky Ruin
+1 Karn's Bastion
+1 Minas Tirith
+1 Mirrex
+1 Myriad Landscape
+1 Path of Ancestry
+27 Plains
+1 The Fair Basilica
+1 The Monumental Facade
+1 War Room
+1 Annex Sentry
+1 Attentive Skywarden
+1 Basilica Shepherd
+1 Blade Splicer
+1 Crawling Chorus
+1 Darksteel Splicer
+1 Defiler of Faith
+1 Elesh Norn, Grand Cenobite
+1 Elesh Norn, Mother of Machines
+1 Essence of Orthodoxy
+1 Filigree Vector
+1 Infected Defector
+1 Master Splicer
+1 Metastatic Evangel
+1 Mite Overseer
+1 Mondrak, Glory Dominus
+1 Norn's Choirmaster
+1 Norn's Inquisitor
+1 Phyrexian Censor
+1 Phyrexian Vindicator
+1 Progenitor Exarch
+1 Seedpod Caretaker
+1 Skrelv, Defector Mite
+1 Solemn Simulacrum
+1 Soul of New Phyrexia
+1 Suture Priest
+1 Tiller of Flesh
+1 Vulpine Harvester
+1 Darksteel Mutation
+1 Norn's Decree
+1 Phyrexian Awakening
+1 Phyrexian Unlife
+1 Skrelv's Hive
+1 Charge of the Mites
+1 Dispatch
+1 Due Respect
+1 Excise the Imperfect
+1 Mana Tithe
+1 Path to Exile
+1 Rootborn Defenses
+1 Swords to Plowshares
+1 Phyrexian Rebirth
+1 Rout
+1 Secret Rendezvous
+1 Sevinne's Reclamation
+1 Sunder the Gateway
+1 Sunfall
+1 White Sun's Twilight

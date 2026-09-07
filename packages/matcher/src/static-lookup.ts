@@ -4,6 +4,7 @@ import type { CardLookup } from "@edh-seer/data/resolve";
 import type { CardTagsLookup } from "./deck-cards.js";
 import type { AnalysisSources } from "./orchestrate.js";
 import { shardOf } from "./bin/build-static-core.js";
+import { partnerShardOf, type CardPageRecord, type NameIndexEntry } from "./bin/partners-core.js";
 
 /** Re-exported so a consumer of this module can address a shard the way it does -- the client's
  *  own tests build their fixture files from it, which is what keeps them honest when the layout
@@ -65,6 +66,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private manifestPromise: Promise<string> | null = null;
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
   private tokenArtPromise: Promise<Record<string, string>> | null = null;
+  private nameIndexPromise: Promise<NameIndexEntry[]> | null = null;
 
   private readonly fetchImpl: typeof fetch;
 
@@ -241,6 +243,37 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     return (this.tokenTagsPromise ??= (async () => {
       const res = await this.fetchCached("/token-tags.json");
       return res.ok ? (await res.json() as Record<string, CardTags>) : {};
+    })());
+  }
+
+  /** ONE CARD'S PAGE RECORD, or null when there is no such card.
+   *
+   *  THE CARD PAGES RIDE THIS CLASS RATHER THAN READING THE ARTIFACTS THEMSELVES, and the reason is
+   *  everything above: the manifest read that resolves the version directory, the Cache API
+   *  read-through and its version-scoped eviction, the flat-layout fallback for a deploy caught
+   *  mid-upload, and the `fetchImpl.bind` in the constructor that no unit test can catch the
+   *  absence of. A second module fetching `/partners/*.json` on its own would have to be right
+   *  about all five, and would be a second place to fix when one of them is wrong.
+   *
+   *  A MISSING SHARD AND A SHARD WITHOUT THE SLUG ARE THE SAME ANSWER. Slugs share shards whenever
+   *  they hash together, so a 200 on the file proves nothing about the card. */
+  async cardPage(slug: string): Promise<CardPageRecord | null> {
+    const res = await this.fetchCached(`/partners/${partnerShardOf(slug)}.json`);
+    if (!res.ok) return null;
+    const shard = await res.json() as Record<string, CardPageRecord>;
+    return shard[slug] ?? null;
+  }
+
+  /** Every substantive card's slug, name, colour identity and commander flag: what the search and
+   *  commander listing pages filter over. One file, fetched once, memoized like the token maps --
+   *  it is the same shape of artifact and gets the same treatment.
+   *
+   *  AN ABSENT INDEX IS EMPTY, NOT FATAL, for the reason the token files are: a search page that
+   *  renders "no cards" is recoverable and a page that throws is not. */
+  async nameIndex(): Promise<NameIndexEntry[]> {
+    return (this.nameIndexPromise ??= (async () => {
+      const res = await this.fetchCached("/name-index.json");
+      return res.ok ? (await res.json() as NameIndexEntry[]) : [];
     })());
   }
 }

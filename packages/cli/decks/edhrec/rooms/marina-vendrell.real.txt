@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/uKx5MREs7edbiiIkOFKr0A (source https://archidekt.com/decks/26039847)
+# tags Rooms, Artifacts, Primal Surge; bracket 2; saved 2026-09-04; 455 tagged of 15237 indexed
+
+Commander
+1 Marina Vendrell
+
+Deck
+1 Arcane Sanctum
+1 Arid Mesa
+1 Bloodstained Mire
+1 City of Brass
+1 Command Tower
+1 Crumbling Necropolis
+1 Exotic Orchard
+1 Flooded Strand
+1 Forbidden Orchard
+1 Frontier Bivouac
+1 Hidden Hideout
+1 Indatha Triome
+1 Jetmir's Garden
+1 Jungle Shrine
+1 Ketria Triome
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mystic Monastery
+1 Nomad Outpost
+1 Opulent Palace
+1 Plaza of Heroes
+1 Polluted Delta
+1 Raffine's Tower
+1 Raugrin Triome
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Savai Triome
+1 Scalding Tarn
+1 Seaside Citadel
+1 Spara's Headquarters
+1 The World Tree
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Xander's Lounge
+1 Zagoth Triome
+1 Ziatora's Proving Ground
+1 Arcane Signet
+1 Chromatic Lantern
+1 Chromatic Orrery
+1 Cloud Key
+1 Helm of the Gods
+1 Keys to the House
+1 Mycosynth Lattice
+1 Sol Ring
+1 Thousand-Year Elixir
+1 Architect of the Untamed
+1 Architects of Will
+1 Argothian Enchantress
+1 Creeping Peeper
+1 Entity Tracker
+1 Fear of Sleep Paralysis
+1 Ghostly Dancers
+1 Ghostly Keybearer
+1 Grand Architect
+1 Hanna, Ship's Navigator
+1 Inquisitive Glimmer
+1 Laboratory Maniac
+1 Muzzio, Visionary Architect
+1 Rampart Architect
+1 Rebbec, Architect of Ascension
+1 Starnheim Courser
+1 Sythis, Harvest's Hand
+1 Tameshi, Reality Architect
+1 Thopter Architect
+1 Bottomless Pool // Locker Room
+1 Central Elevator // Promising Stairs
+1 Charred Foyer // Warped Space
+1 Cramped Vents // Access Maze
+1 Dazzling Theater // Prop Room
+1 Defiled Crypt // Cadaver Lab
+1 Derelict Attic // Widow's Walk
+1 Dollmaker's Shop // Porcelain Gallery
+1 Experimental Lab // Staff Room
+1 Funeral Room // Awakening Hall
+1 Glassworks // Shattered Yard
+1 Grand Entryway // Elegant Rotunda
+1 Greenhouse // Rickety Gazebo
+1 Leyline of the Guildpact
+1 Meat Locker // Drowned Diner
+1 Mirror Room // Fractured Realm
+1 Moldering Gym // Weight Room
+1 Painter's Studio // Defaced Gallery
+1 Polluted Cistern // Dim Oubliette
+1 Restricted Office // Lecture Hall
+1 Roaring Furnace // Steaming Sauna
+1 Secret Arcade // Dusty Parlor
+1 Smoky Lounge // Misty Salon
+1 Spiked Corridor // Torture Pit
+1 Surgical Suite // Hospital Room
+1 The Restoration of Eiganjo
+1 Ticket Booth // Tunnel of Hate
+1 Underwater Tunnel // Slimy Aquarium
+1 Unholy Annex // Ritual Chamber
+1 Walk-In Closet // Forgotten Cellar
+1 Dovin, Architect of Law
+1 Jace, Architect of Thought
+1 Primal Surge

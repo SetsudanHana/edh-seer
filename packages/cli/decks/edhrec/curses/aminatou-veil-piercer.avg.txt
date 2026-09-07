@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/aminatou-veil-piercer/curses
+# theme Curses (71 decks)
+
+Commander
+1 Aminatou, Veil Piercer
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Dimir Signet
+1 Orzhov Signet
+1 Scroll Rack
+1 Sensei's Divining Top
+1 Sol Ring
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Halimar Depths
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+5 Island
+1 Isolated Chapel
+1 Marsh Flats
+5 Plains
+1 Raffine's Tower
+4 Swamp
+1 Temple of Deceit
+1 Temple of Enlightenment
+1 Temple of Silence
+1 Underground River
+1 Watery Grave
+1 Archon of Sun's Grace
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Entity Tracker
+1 Eriette of the Charmed Apple
+1 Fear of Sleep Paralysis
+1 Grim Guardian
+1 Inquisitive Glimmer
+1 Mesa Enchantress
+1 Moon-Blessed Cleric
+1 Ondu Spiritdancer
+1 Starfield Mystic
+1 The Master of Keys
+1 Copy Enchantment
+1 Cruel Reality
+1 Curse of Death's Hold
+1 Curse of Disturbance
+1 Curse of Echoes
+1 Curse of Exhaustion
+1 Curse of Fool's Wisdom
+1 Curse of Misfortunes
+1 Curse of Silence
+1 Curse of Surveillance
+1 Curse of Thirst
+1 Curse of Unbinding
+1 Curse of Verbosity
+1 Curse of Vitality
+1 Curse of the Restless Dead
+1 Extravagant Replication
+1 Ghostly Prison
+1 Greater Auramancy
+1 Grievous Wound
+1 Mirrormade
+1 One with the Multiverse
+1 Overwhelming Splendor
+1 Propaganda
+1 Rhystic Study
+1 Shark Typhoon
+1 Sigil of the Empty Throne
+1 Smothering Tithe
+1 Sphere of Safety
+1 Torment of Scarabs
+1 Trespasser's Curse
+1 Arcane Denial
+1 Brainstorm
+1 Brainsurge
+1 Counterspell
+1 Enlightened Tutor
+1 Inkshield
+1 Path to Exile
+1 Swords to Plowshares
+1 Aminatou, the Fateshifter
+1 Blasphemous Edict
+1 Ponder
+1 Portent
+1 Redress Fate
+1 Terminus

@@ -42,7 +42,7 @@ const TOKEN_CARD_TYPES = /\b(Creature|Artifact|Enchantment|Land|Planeswalker|Bat
 /** Can a node built from this ref carry a claim at all? A typeless placeholder cannot: it satisfies
  *  no typed subject, and `impliedEvents` gives it no `enters` either, because its type line names no
  *  permanent type. */
-export function isMediatingTokenRef(ref: TokenRef): boolean {
+function isMediatingTokenRef(ref: TokenRef): boolean {
   return TOKEN_CARD_TYPES.test(ref.typeLine);
 }
 

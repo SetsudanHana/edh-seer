@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/mc5X2FQ3OCKbLlb_4B2zcw (source https://archidekt.com/decks/21647844)
+# tags Group Hug, Counters Matter, Self-Mill; bracket 2; saved 2026-09-03; 78 tagged of 9090 indexed
+
+Commander
+1 Tayam, Luminous Enigma
+
+Deck
+1 Abigale, Eloquent First-Year
+1 Avacyn's Pilgrim
+1 Bane of Progress
+1 Bone Shredder
+1 Breena, the Demagogue
+1 Dark Confidant
+1 Devoted Druid
+1 Faeburrow Elder
+1 Faller's Faithful
+1 Forgotten Ancient
+1 Generous Patron
+1 Guardian of Faith
+1 Incubation Druid
+1 Joined Researchers
+1 Kalonian Hydra
+1 Kutzil, Malamet Exemplar
+1 Llanowar Elves
+1 Loran of the Third Path
+1 Luminous Broodmoth
+1 Managorger Hydra
+1 Mangara, the Diplomat
+1 Metastatic Evangel
+1 Nils, Discipline Enforcer
+1 Oft-Nabbed Goat
+1 Reluctant Role Model
+1 Rishkar, Peema Renegade
+1 Sakura-Tribe Elder
+1 Scrapshooter
+1 Selvala, Explorer Returned
+1 Sergeant John Benton
+1 Shigeki, Jukai Visionary
+1 Six
+1 Skullwinder
+1 Spore Frog
+1 Steelburr Champion
+1 Sunscorch Regent
+1 Wall of Roots
+1 Yathan Tombguard
+1 Abrupt Decay
+1 Cauldron Haze
+1 Consumed by Greed
+1 Generous Gift
+1 Golgari Charm
+1 Swords to Plowshares
+1 Arcane Signet
+1 Birthing Ritual
+1 Communal Brewing
+1 Death's Oasis
+1 Hollowmurk Siege
+1 Kaya's Ghostform
+1 Rites of Flourishing
+1 Blighted Woodland
+1 Brushland
+1 Canopy Vista
+1 Caves of Koilos
+1 Command Tower
+1 Dryad Arbor
+1 Festering Thicket
+1 Fetid Heath
+5 Forest
+1 Gavony Township
+1 Isolated Chapel
+1 Llanowar Reborn
+1 Llanowar Wastes
+1 Nesting Grounds
+6 Plains
+1 Radiant Grove
+1 Sandsteppe Citadel
+1 Scattered Groves
+1 Sunlit Marsh
+1 Sunpetal Grove
+2 Swamp
+1 Temple of Malady
+1 Temple of Plenty
+1 Temple of Silence
+1 Twilight Mire
+1 Umbral Expanse
+1 Vernal Fen
+1 Woodland Cemetery
+1 Cruelclaw's Heist
+1 Cut a Deal
+1 Damn
+1 Infernal Offering
+1 Promise of Loyalty
+1 Tempt with Bunnies
+1 Tempt with Discovery
+1 Toxic Deluge
+1 Wear Down
+1 Vivien on the Hunt

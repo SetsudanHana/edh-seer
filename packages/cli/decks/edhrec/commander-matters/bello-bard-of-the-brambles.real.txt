@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/r4ttYl9ABnhCpFr1xfEbkw (source https://archidekt.com/decks/10295467)
+# tags Ramp, Enchantress, Tokens, Aggro, Commander Matters, Artifacts, Unnatural; bracket 3; saved 2026-09-05; 88 tagged of 26158 indexed
+
+Commander
+1 Bello, Bard of the Brambles
+
+Deck
+1 Aligned Hedron Network
+1 Chimil, the Inner Sun
+1 Cosmic Cube
+1 Cybership
+1 Esika's Chariot
+1 Gruul War Plow
+1 Hoard Hauler
+1 Kimoyo Beads
+1 Lightning Greaves
+1 Midnight Crusader Shuttle
+1 Mole Module
+1 Nautiloid Ship
+1 Rolling Hamsphere
+1 Skysovereign, Consul Flagship
+1 Swiftfoot Boots
+1 The Great Henge
+1 The One Ring
+1 The Regalia
+1 Thunderhawk Gunship
+1 Ancient Tomb
+1 Boseiju, Who Endures
+1 Cavern of Souls
+1 Command Beacon
+1 Command Tower
+1 Commercial District
+1 Copperline Gorge
+1 Cragcrown Pathway
+1 Fabled Passage
+1 Fire-Lit Thicket
+4 Forest
+1 Grove of the Burnwillows
+1 Karplusan Forest
+1 Mana Confluence
+1 Mossfire Valley
+1 Mosswort Bridge
+3 Mountain
+1 Prismatic Vista
+1 Reflecting Pool
+1 Reliquary Tower
+1 Rockfall Vale
+1 Rootbound Crag
+1 Spinerock Knoll
+1 Spire Garden
+1 Starting Town
+1 Stomping Ground
+1 Tarnished Citadel
+1 Thornspire Verge
+1 Training Compound
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Arasta of the Endless Web
+1 Big Mother Mouser
+1 Birds of Paradise
+1 Bladegriff Prototype
+1 Boreal Druid
+1 Canoptek Scarab Swarm
+1 Core Prowler
+1 Corpse Cur
+1 Delighted Halfling
+1 Elvish Mystic
+1 Fyndhorn Elves
+1 Giggling Skitterspike
+1 Llanowar Elves
+1 Overlord of the Boilerbilges
+1 Overlord of the Hauntwoods
+1 Ragavan, Nimble Pilferer
+1 Roaming Throne
+1 The Vision
+1 Threefold Thunderhulk
+1 Asceticism
+1 Berserkers' Onslaught
+1 Carpet of Flowers
+1 Collective Inferno
+1 Defense of the Heart
+1 Gimli's Reckless Might
+1 Gratuitous Violence
+1 Nature's Will
+1 Omenpath Journey
+1 Snake Pit
+1 Training Regimen
+1 Warstorm Surge
+1 Wild Growth
+1 Wolfcaller's Howl
+1 Bridgeworks Battle
+1 Jeska's Will
+1 Sundering Eruption
+1 Defend the Rider
+1 Deflecting Swat
+1 Legolas's Quick Reflexes
+1 Pyroblast
+1 Red Elemental Blast
+1 Redirect Lightning
+1 Tamiyo's Safekeeping
+1 Tyvar's Stand

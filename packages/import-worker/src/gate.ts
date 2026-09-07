@@ -13,7 +13,7 @@ export interface Clock {
   sleep(ms: number): Promise<void>;
 }
 
-export const realClock: Clock = {
+const realClock: Clock = {
   now: () => Date.now(),
   sleep: (ms) => (ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve()),
 };

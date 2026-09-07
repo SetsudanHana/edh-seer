@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/ZomAGNkQyffztGQ7yVkoiw (source https://archidekt.com/decks/13874874)
+# tags Enchantress, Sagas; bracket 3; saved 2026-09-05; 648 tagged of 19121 indexed
+
+Commander
+1 Terra, Magical Adept
+
+Deck
+1 An Offer You Can't Refuse
+1 Assassin's Trophy
+1 Chaos Warp
+1 Counterspell
+1 Dovin's Veto
+1 Fate Transfer
+1 Heroic Intervention
+1 Nature's Claim
+1 Restoration Magic
+1 Swan Song
+1 Swords to Plowshares
+1 Arcane Signet
+1 Lightning Greaves
+1 Wizard's Staff
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bountiful Promenade
+1 Breeding Pool
+1 Command Tower
+1 Flooded Strand
+4 Forest
+1 Godless Shrine
+1 Ishgard, the Holy See
+3 Island
+1 Jetmir's Garden
+1 Meticulous Archive
+1 Misty Rainforest
+4 Mountain
+1 Multiversal Passage
+1 Nesting Grounds
+3 Plains
+1 Reliquary Tower
+1 Sacred Foundry
+1 Scalding Tarn
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Barbara Wright
+1 Dion, Bahamut's Dominant
+1 Dreamtide Whale
+1 Eidolon of Blossoms
+1 Garnet, Princess of Alexandria
+1 Goldberry, River-Daughter
+1 Herald of the Pantheon
+1 Jukai Naturalist
+1 Mesa Enchantress
+1 O'aka, Traveling Merchant
+1 Ondu Spiritdancer
+1 Rydia, Summoner of Mist
+1 Sanctum Weaver
+1 Satyr Enchanter
+1 Starfield Mystic
+1 Summon: Bahamut
+1 Summon: Brynhildr
+1 Summon: Esper Valigarmanda
+1 Summon: Fat Chocobo
+1 Summon: Fenrir
+1 Summon: G.F. Ifrit
+1 Summon: Good King Mog XII
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Magus Sisters
+1 Summon: Primal Odin
+1 Summon: Titan
+1 Summon: Valefor
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Tom Bombadil
+1 Yuna, Hope of Spira
+1 Binding the Old Gods
+1 Enchantress's Presence
+1 Fertile Ground
+1 Garruk's Uprising
+1 Leyline of Anticipation
+1 Nahiri's Resolve
+1 Prismatic Omen
+1 Temur Ascendancy
+1 The Coming of Galactus
+1 The Cruelty of Gix
+1 Wild Growth
+1 Eerie Ultimatum
+1 Esper Origins
+1 Farseek
+1 Ruinous Ultimatum

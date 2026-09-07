@@ -145,6 +145,20 @@ export interface SubjectFilter {
    *  Kodama of the West Tree says "whenever a MODIFIED creature you control deals combat damage" and
    *  derives a subject of every creature you control. */
   modified?: true;
+  /** The subject demands a COMBAT STATE — an attacking or a blocking creature. A board state like
+   *  `modified`, so it is set on a CONSUMER by `parseSubject` ("whenever an attacking creature
+   *  dies", Kardur, Doomscourge) and on a PRODUCER only where the printed text names it ("exile
+   *  all attacking creatures", Settle the Wreckage). Without it Kardur derived a bare
+   *  `dies:creature` and Blasphemous Edict at sorcery speed fed it (owner, 2026-09-05).
+   *
+   *  Dropped on an `attacks` trigger, where the state IS the event. Corpus: 12 trigger subjects
+   *  name an attacking creature, 1 a blocking one; 272 action objects attacking, 34 blocking. */
+  combat?: "attacking" | "blocking";
+  /** A `leaves` demand that REFUSES a death. "Whenever one or more other creatures you control leave
+   *  the battlefield without dying" (Dour Port-Mage) and Taeko's "if it didn't die" are `leaves`
+   *  minus `dies` (CR 700.4). Demand only -- read by `eventMatches`, never stamped on a producer, so
+   *  a consumer that does not ask is unaffected. 5 corpus cards. */
+  withoutDying?: true;
   /** The subject demands the LEGENDARY supertype. "Legendary creatures you control get +2/+2"
    *  (Serah Farron) and Jodah's +X/+X derived a subject of EVERY creature without it, which were the
    *  two widest meshes in the derived population at x53 and x51. Shaped exactly like `historic`:
@@ -286,6 +300,9 @@ export type Verb =
   | "land-play"
   | "untaps"
   | "proliferate"
+  /** A Room is fully unlocked (CR 717). Consumer: "whenever you fully unlock a Room" (the eerie
+   *  half). Producer: every Room, implied from its type line -- see `impliedEvents`. */
+  | "unlock"
   | "upkeep"
   | "begin-combat"
   | "end-step"
@@ -312,6 +329,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "land-play",
   "untaps",
   "proliferate",
+  "unlock",
   // Phase/step triggers. Without these the vocabulary had nowhere to put "at the beginning of your
   // upkeep", so those abilities were tagged with the nearest available verb — a 46-card audit found
   // Nut Collector, Sen Triplets and Crystalline Giant all recorded as `enters`, which does not just
@@ -362,6 +380,13 @@ export interface GameEvent {
    *  written solely by `packages/matcher/src/implied.ts`. Used to scope `combatSelfSupplied` to
    *  implied combat only, so authored combat emits (goad, Mage Slayer, Saskia) still form edges. */
   implied?: true;
+  /** The producer acts at INSTANT SPEED: an activated ability (loyalty and "activate only as a
+   *  sorcery" excepted), an instant, or a spell with flash. The smallest timing model that holds
+   *  the owner's ruling (2026-08-22, upheld): Ayara -> Death Tyrant is REAL because a sac outlet
+   *  can eat an ATTACKING creature in combat, while Blasphemous Edict at sorcery speed cannot. Read
+   *  by the matcher only where a consumer demands a combat state (`SubjectFilter.combat`). Set on
+   *  authored emits alone -- an implied event carries no ability to be fast. */
+  instantSpeed?: true;
   /** WHO DEALT THE DAMAGE — damage verbs only, and only on an AUTHORED emit.
    *
    *  A damage event has two participants and `subject` can only hold one of them. The engine had
@@ -410,6 +435,8 @@ export const EFFECT_KINDS = [
    *  `pump` for four archetypes and `wincon.ts` for the go-wide finisher — and every one of them was
    *  wrong about these cards. */
   "debuff",
+  // CR 613.1f: an ability-removing effect ("creatures lose all abilities"). A silence, never a claim.
+  "ability-loss",
   "cost-reduction",
   "trigger-doubling",
   "graveyard-recursion",
@@ -425,6 +452,9 @@ export const EFFECT_KINDS = [
   "ritual",
   "copy-spell",
   "speed-increase",
+  // SPEED, the Start your engines! resource (CR 702.179) -- not `speed-increase`, which is the flat
+  // tagger's old name for a haste grant and stays what it is.
+  "speed",
   "flicker",
   "animate",
   "untap",
@@ -523,6 +553,11 @@ export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";
  *  player's turn and so up to pod-size times a round; `per-cycle` fires only on yours. */
 export type Repeats = "once" | "per-cycle" | "per-turn" | "repeatable" | "continuous";
 
+/** A game-state marker (CR 702.179 speed today; monarch, initiative, city's blessing, day/night and
+ *  a completed dungeon are the next members) and the value the ability needs it at. */
+export type Marker = "speed" | "monarch" | "initiative" | "blessing" | "dungeon" | "night";
+export interface Requirement { marker: Marker; min: number }
+
 export interface Ability {
   kind: AbilityKind;
   /** WHICH FACE PRINTS THIS ABILITY — absent for the front face and for every single-face card,
@@ -620,6 +655,11 @@ export interface Ability {
    *  Not an evaluable condition and deliberately not one: see `conditionCares`. It records only the
    *  DEMAND, so `cardCaresTags` can put the card on the right axis. Forms no edge, ever. */
   conditionCares?: string[];
+  /** A GAME-STATE MARKER THE ABILITY NEEDS, evaluable against a state the owner supplies (roadmap
+   *  W18). "Max speed —" abilities need the player's speed at 4 (CR 702.179). Unlike
+   *  `conditionCares` this IS evaluated: with no state, or one that falls short, the ability is
+   *  silent; with one that meets it, the ability is on. The marker is the player's, never a card's. */
+  requires?: Requirement;
   /** How often this ability can fire — see
    *  `docs/superpowers/specs/2026-08-11-repeatability-taxonomy-design.md`.
    *
@@ -677,6 +717,12 @@ export interface CardTags {
   model: string;
   characteristics: Characteristics;
   abilities: Ability[];
+  /** Trigger events the clause layer named and derivation could not turn into a verb -- the
+   *  "surface, never swallow" channel. Computed by `deriveAbilities` since 2026-08 and DROPPED by
+   *  `deriveCardTags` until 2026-09-05, so every reader of it (`isolated-cards.ts`, the census)
+   *  saw an empty list and the eerie "fully unlock a Room" half vanished without a trace. Absent
+   *  when empty. */
+  unknownTriggers?: string[];
   /** True for a hand-verified tag that must survive automated re-tagging (e.g. a prompt-version
    *  bump). needsRetag short-circuits to false for a pinned tag regardless of version drift —
    *  set this only for cards where the LLM has demonstrably gotten the shape wrong and a human

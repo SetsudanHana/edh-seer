@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/v-Am90rUsrXby_9c8vd9vA (source https://archidekt.com/decks/16237884)
+# tags Villainous Choice, Lifedrain; bracket 3; saved 2026-08-11; 5 tagged of 3294 indexed
+
+Commander
+1 The Celestial Toymaker
+
+Deck
+1 Access Tunnel
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Command Tower
+1 Deserted Beach
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Floodfarm Verge
+1 Glacial Fortress
+1 Gloomlake Verge
+5 Island
+1 Isolated Chapel
+1 Morphic Pool
+1 Mystic Sanctuary
+5 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sea of Clouds
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Sunken Hollow
+5 Swamp
+1 Vault of Champions
+1 Anguished Unmaking
+1 Counterspell
+1 Epiphany at the Drownyard
+1 Fact or Fiction
+1 Fortune's Favor
+1 Fracture
+1 Hostile Negotiations
+1 Path to Exile
+1 Riddles in the Dark
+1 Sauron's Ransom
+1 Swords to Plowshares
+1 Truth or Tale
+1 Arcane Signet
+1 Decanter of Endless Water
+1 Elixir of Immortality
+1 Fellwar Stone
+1 Liar's Pendulum
+1 Lightning Greaves
+1 Pre-War Formalwear
+1 Psychic Paper
+1 Silver Shroud Costume
+1 Sol Ring
+1 Sonic Screwdriver
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 Thought Vessel
+1 Whispersilk Cloak
+1 Atris, Oracle of Half-Truths
+1 Auton Soldier
+1 Curator of Destinies
+1 Delney, Streetwise Lookout
+1 Gogo, Master of Mimicry
+1 Gollum, Scheming Guide
+1 MacCready, Lamplight Mayor
+1 Master of Predicaments
+1 Sakashima of a Thousand Faces
+1 Sakashima the Impostor
+1 Spark Double
+1 Sphinx of Clear Skies
+1 Witch Enchanter
+1 Y'shtola Rhul
+1 Y'shtola, Night's Blessed
+1 Yennett, Cryptic Sovereign
+1 Behind the Scenes
+1 Exquisite Blood
+1 Fight or Flight
+1 Ghostly Prison
+1 Hive Mind
+1 Monologue Tax
+1 Parallel Thoughts
+1 Propaganda
+1 Reconnaissance
+1 Trouble in Pairs
+1 Blasphemous Edict
+1 Death or Glory
+1 Do or Die
+1 Make an Example
+1 Quantum Misalignment
+1 Ringsight
+1 Time Wipe
+1 Jace, Architect of Thought

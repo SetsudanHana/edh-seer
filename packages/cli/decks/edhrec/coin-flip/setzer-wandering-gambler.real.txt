@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/yTsOai8S3q-dd8YrAppBMQ (source https://moxfield.com/decks/_pJ3m6lLoEe-aGU37GQdyA)
+# tags Coin Flip, Vehicles; bracket 3; saved 2026-09-04; 137 tagged of 1874 indexed
+
+Commander
+1 Setzer, Wandering Gambler
+
+Deck
+1 Academy Manufactor
+1 Chira, All In
+1 Disciple of the Vault
+1 Flamewar, Brash Veteran
+1 Goblin Traprunner
+1 Goldspan Dragon
+1 Ingenious Artillerist
+1 Karplusan Minotaur
+1 Marionette Master
+1 Mayhem Devil
+1 Mirkwood Bats
+1 Nadier's Nightblade
+1 Okaun, Eye of Chaos
+1 Professional Face-Breaker
+1 Reckless Fireweaver
+1 Rev, Tithe Extractor
+1 Shadow the Hedgehog
+1 Smaug the Magnificent
+1 Stridehangar Automaton
+1 Swashbuckler Extraordinaire
+1 Tavern Scoundrel
+1 Xorn
+1 Agent of the Iron Throne
+1 Alchemist's Talent
+1 Chance Encounter
+1 Goblin Bomb
+1 Impulsive Maneuvers
+1 Mirror March
+1 Phyrexian Arena
+1 Planar Chaos
+1 Rain of Riches
+1 Revel in Riches
+1 Arcane Signet
+1 Brotherhood Vertibird
+1 Damocles Base, Sword of Kang
+1 Demonic Junker
+1 Ghost Ark
+1 Krark's Thumb
+1 Nautiloid Ship
+1 Phantom Train
+1 Phoenix Fleet Airship
+1 RMS Titanic
+1 Smuggler's Copter
+1 Sol Ring
+1 Sorcerer's Strongbox
+1 Swiftfoot Boots
+1 The Thanos-Copter
+1 War Balloon
+1 Weatherlight
+1 Big Score
+1 Chaos Warp
+1 Deadly Rollick
+1 Demand Answers
+1 Fanatical Offering
+1 Fighting Chance
+1 Force of Despair
+1 Rakdos Charm
+1 Red Elemental Blast
+1 Redirect Lightning
+1 Return the Favor
+1 Billiard Room
+1 Blazemire Verge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Dark Fortress
+1 Dragonskull Summit
+1 Drossforge Bridge
+1 Foul Roads
+1 Haunted Ridge
+1 Luxury Suite
+1 Mech Hangar
+1 Mines of Moria
+1 Mount Doom
+11 Mountain
+1 Rocky Roads
+7 Swamp
+1 The Gold Saucer
+1 Blood Money
+1 Feed the Swarm
+1 Fiery Gambit
+1 Game of Chaos
+1 Seize the Spotlight
+1 Chandra, Spark Hunter

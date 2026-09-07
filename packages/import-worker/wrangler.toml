@@ -6,6 +6,27 @@ compatibility_date = "2026-09-03"
 # and nothing to allowlist.
 routes = [{ pattern = "edhseer.cards/api/import/*", zone_name = "edhseer.cards" }]
 
+# THIS TABLE STAYS BELOW EVERY TOP-LEVEL KEY. A TOML table header swallows every key that follows it,
+# so writing this block above `routes` put the route INSIDE `[observability]` -- wrangler said
+# "Unexpected fields found in observability field: routes" and parsed the route away. Any new
+# top-level key goes above here, not below.
+#
+# WORKERS LOGS, AT 100%. The dashboard already draws requests, errors and CPU without asking; what it
+# cannot tell you is WHY an import failed, and this worker's failure modes are all indistinguishable
+# from the outside -- a 502 is "the deck site is down", "the deck site changed its JSON under us" or
+# "our breaker is open", and the pacer's own comment on the shape-changed branch says the message is
+# "worth seeing in the logs" while nothing emitted one.
+#
+# 100% SAMPLING BECAUSE THE VOLUME IS TINY. This worker is one request per deck import, throttled to
+# 20 a minute per IP and one a second upstream, so there is no rate at which sampling saves anything
+# a reader would miss. Lower `head_sampling_rate` only if the daily log quota ever binds.
+#
+# Query strings are not redacted because there are none: the deck id travels in the PATH
+# (`/api/import/<source>/<id>`), which is a public identifier on both sites.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 [[durable_objects.bindings]]
 name = "PACER"
 class_name = "Pacer"

@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/doc-ock-evil-inventor/books
+# theme Books (1 decks)
+
+Commander
+1 Doc Ock, Evil Inventor
+
+Deck
+1 Arcane Encyclopedia
+1 Barrin's Codex
+1 Book of Rass
+1 Dimir Cluestone
+1 Dimir Keyrune
+1 Dimir Locket
+1 Emmessi Tome
+1 Etherium Astrolabe
+1 Five Hundred Year Diary
+1 Folio of Fancies
+1 Fool's Tome
+1 Grimoire of the Dead
+1 Heirloom Epic
+1 Illuminated Folio
+1 Investigator's Journal
+1 Jalum Tome
+1 Jayemdae Tome
+1 Jodah's Codex
+1 Kyren Archive
+1 Mangara's Tome
+1 Mazemind Tome
+1 Mercadian Atlas
+1 Mistvein Borderpost
+1 Mysterious Tome
+1 Otherworld Atlas
+1 Phyrexian Grimoire
+1 River Song's Diary
+1 Sarpadian Empires, Vol. VII
+1 Spellbook
+1 Talisman of Dominance
+1 Tamiyo's Journal
+1 Tamiyo's Logbook
+1 Tarrian's Journal
+1 The Book of Vile Darkness
+1 The Underworld Cookbook
+1 Thran Tome
+1 Time Sieve
+1 Tome of Legends
+1 Tome of the Guildpact
+1 Urza's Tome
+1 Venser's Journal
+1 Wizard's Spellbook
+1 Academy Ruins
+1 Archway of Innovation
+1 Bojuka Bog
+1 Buried Ruin
+1 Command Tower
+1 Darksteel Citadel
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Exotic Orchard
+11 Island
+1 Mistvault Bridge
+1 Power Depot
+1 Reliquary Tower
+1 Rogue's Passage
+1 Seat of the Synod
+9 Swamp
+1 Temple of Deceit
+1 Treasure Vault
+1 Vault of Whispers
+1 Alpharael, Dreaming Acolyte
+1 Anrakyr the Traveller
+1 Basim Ibn Ishaq
+1 Contraband Kingpin
+1 Deadeye Plunderers
+1 Necron Overlord
+1 Silas Renn, Seeker Adept
+1 Sphinx Summoner
+1 The Cyber-Controller
+1 Trazyn the Infinite
+1 Winter, Cursed Rider
+1 Biotransference
+1 Efficient Construction
+1 Mechanized Production
+1 Tezzeret's Touch
+1 Tezzeret, Agent of Bolas
+1 Haunt the Network
+1 Rise and Shine
+1 Their Name Is Death

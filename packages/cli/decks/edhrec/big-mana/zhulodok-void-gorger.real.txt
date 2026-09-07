@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/JEnCgGB4ZGxxY1JnEYzHhg (source https://archidekt.com/decks/5523434)
+# tags Big Mana, Artifacts, Affinity; bracket 2; saved 2026-09-04; 1503 tagged of 21054 indexed
+
+Commander
+1 Zhulodok, Void Gorger
+
+Deck
+1 Abstergo Entertainment
+1 Arch of Orazca
+1 Arid Archway
+1 Blasted Landscape
+1 Bonders' Enclave
+1 Buried Ruin
+1 Command Beacon
+1 Crystal Vein
+1 Darksteel Citadel
+1 Eldrazi Temple
+1 Fountainport
+1 Guildless Commons
+1 Inventors' Fair
+1 Mage-Ring Network
+1 Mirrex
+1 Planar Nexus
+1 Sanctum of Ugin
+1 Scavenger Grounds
+1 Shrine of the Forsaken Gods
+1 Temple of the False God
+1 Terrain Generator
+1 The Great Mound
+1 Thespian's Stage
+1 Tomb of the Spirit Dragon
+1 Treasure Vault
+1 Urza's Cave
+1 Urza's Mine
+1 Urza's Power Plant
+1 Urza's Tower
+1 Vesuva
+1 War Room
+8 Wastes
+1 Zhalfirin Void
+1 Adaptive Omnitool
+1 Arc Reactor
+1 Cloud Key
+1 Coveted Jewel
+1 Darksteel Forge
+1 Darksteel Monolith
+1 Excalibur, Sword of Eden
+1 Forsaken Monument
+1 Liquimetal Torque
+1 Manhole Cover
+1 Mazemind Tome
+1 Mind Stone
+1 Mind's Eye
+1 Mystic Forge
+1 Nevinyrral's Disk
+1 Shuri's Fabricator
+1 Sol Ring
+1 The Eternity Elevator
+1 The Irencrag
+1 Thought Vessel
+1 Thran Dynamo
+1 Treasure Map
+1 Unwinding Clock
+1 Wondrous Crucible
+1 Worn Powerstone
+1 All Is Dust
+1 Calamity of the Titans
+1 Rise of the Eldrazi
+1 Ancient Stone Idol
+1 Burnished Hart
+1 Bygone Colossus
+1 Canoptek Spyder
+1 Conduit of Ruin
+1 Devourer of Destiny
+1 Flayer of Loyalties
+1 Foundry Inspector
+1 Glaring Fleshraker
+1 H.E.R.B.I.E. Scout Unit
+1 It That Heralds the End
+1 Jhoira's Familiar
+1 Kozilek, the Broken Reality
+1 Kozilek, the Great Distortion
+1 Liberator, Urza's Battlethopter
+1 Metalwork Colossus
+1 Meteor Golem
+1 Mycosynth Golem
+1 Myr Battlesphere
+1 Myr Enforcer
+1 Palladium Myr
+1 Phyrexian Triniform
+1 PuPu UFO
+1 Skittering Cicada
+1 Sojourner's Companion
+1 Solemn Simulacrum
+1 Thran Spider
+1 Triplicate Titan
+1 Troop of Ponies
+1 Ultima, Origin of Oblivion
+1 Echoes of Eternity

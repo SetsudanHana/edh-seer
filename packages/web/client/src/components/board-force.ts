@@ -41,7 +41,7 @@ export const CARD_H = CARD_W * CARD_ASPECT;
  *
  *  Derived, never typed twice: the card's size decides the gap, so the two cannot drift apart --
  *  the exact failure `nodeRadius`'s comment above records. */
-export const CARD_CLEARANCE = Math.hypot(CARD_W, CARD_H) - 2 * ART_RADIUS;
+const CARD_CLEARANCE = Math.hypot(CARD_W, CARD_H) - 2 * ART_RADIUS;
 
 /** HOW MUCH AIR ON TOP OF THE CLEARANCE, and it is the only knob on this board that moves the gap
  *  between two adjacent cards at all.
@@ -93,7 +93,7 @@ export interface Sim extends GraphNode {
 
 /** An edge as forceLink needs it: d3 hardcodes `source`/`target`, so the wire's `from`/`to` are
  *  mapped once at the call site. `weight` is what the link distance and strength read. */
-export interface SimLink { source: Sim; target: Sim; weight: number }
+export interface SimLink { source: Sim; target: Sim; weight: number; enabledBy?: readonly string[] }
 
 /** The radius a node is DRAWN at, in world units. Every consumer -- the repulsion sweep, the edge
  *  springs, hit-testing, the overlap metric -- reads this one function, so the simulated size and

@@ -1,0 +1,100 @@
+# edhrec average deck: https://edhrec.com/average-decks/infinite-guideline-station/multicolor-matters
+# theme Multicolor Matters (203 decks)
+
+Commander
+1 Infinite Guideline Station
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Dawnsire, Sunstar Dreadnought
+1 Fellwar Stone
+1 Inspirit, Flagship Vessel
+1 Sol Ring
+1 Solar Array
+1 The Seriema
+1 Tome of the Guildpact
+1 Uthros Research Craft
+1 Blood Crypt
+1 Breeding Pool
+1 Cascading Cataracts
+1 Command Tower
+1 Evendo, Waking Haven
+1 Evolving Wilds
+1 Exotic Orchard
+3 Forest
+1 Frontier Bivouac
+1 Godless Shrine
+1 Hallowed Fountain
+2 Island
+1 Jungle Shrine
+2 Mountain
+1 Mystic Monastery
+1 Opulent Palace
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Pillar of the Paruns
+2 Plains
+1 Reflecting Pool
+1 Reliquary Tower
+1 Sacred Foundry
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 Terramorphic Expanse
+1 The World Tree
+1 Uthros, Titanic Godcore
+1 Watery Grave
+1 Abuelo, Ancestral Echo
+1 Adrix and Nev, Twincasters
+1 Alibou, Ancient Witness
+1 Aragorn, the Uniter
+1 Baleful Strix
+1 Bloom Tender
+1 Coiling Oracle
+1 Corpse Knight
+1 Enthusiastic Mechanaut
+1 Faeburrow Elder
+1 Fallaji Wayfarer
+1 General Ferrous Rokiric
+1 Gold-Forged Thopteryx
+1 Inga and Esika
+1 Jenson Carthalion, Druid Exile
+1 Jetmir, Nexus of Revels
+1 Jhoira, Weatherlight Captain
+1 Jodah, the Unifier
+1 Kilo, Apogee Mind
+1 Kiora's Follower
+1 Knight of New Alara
+1 Lotho, Corrupt Shirriff
+1 Mendicant Core, Guidelight
+1 Mm'menon, Uthros Exile
+1 Niv-Mizzet Reborn
+1 Pinnacle Emissary
+1 Ramos, Dragon Engine
+1 Rienne, Angel of Rebirth
+1 Ruby, Daring Tracker
+1 Saheeli, the Sun's Brilliance
+1 Sami, Wildcat Captain
+1 Tam, Mindful First-Year
+1 Annie Joins Up
+1 Leyline of the Guildpact
+1 Maelstrom Nexus
+1 Mana Cannons
+1 Trace of Abundance
+1 Warleader's Call
+1 Widespread Thieving
+1 Anguished Unmaking
+1 Assassin's Trophy
+1 Boros Charm
+1 Dovin's Veto
+1 Growth Spiral
+1 Path to Exile
+1 Swords to Plowshares
+1 Jared Carthalion
+1 Blasphemous Act
+1 Cultivate
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth

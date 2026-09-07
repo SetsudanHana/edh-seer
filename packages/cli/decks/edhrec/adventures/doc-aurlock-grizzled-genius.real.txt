@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/TfVL_rPPHcQOj_NoWfDnSQ (source https://archidekt.com/decks/20686735)
+# tags Spellslinger, Adventures; bracket 2; saved 2026-07-24; 28 tagged of 1580 indexed
+
+Commander
+1 Doc Aurlock, Grizzled Genius
+
+Deck
+1 Alrund's Epiphany
+1 Croaking Counterpart
+1 Cultivate
+1 Deep Analysis
+1 Kodama's Reach
+1 Lock and Load
+1 Make Your Own Luck
+1 Plan the Heist
+1 Rise of the Varmints
+1 Step Between Worlds
+1 Tumbleweed Rising
+1 Amphibian Downpour
+1 Cunning Evasion
+1 Fortune Teller's Talent
+1 Virtue of Knowledge
+1 Virtue of Strength
+1 Arcane Signet
+1 Dream-Thief's Bandana
+1 Interdimensional Web Watch
+1 Lucky Clover
+1 Monster Manual
+1 Sol Ring
+1 The Key to the Vault
+1 Barkchannel Pathway
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+8 Forest
+1 Hedge Maze
+1 Hinterland Harbor
+7 Island
+1 Misty Rainforest
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+1 Overflowing Basin
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sodden Verdure
+1 Tropical Island
+1 Turbulent Wilderness
+1 Waterlogged Grove
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Battle Mammoth
+1 Beanstalk Giant
+1 Beanstalk Wurm
+1 Bramble Familiar
+1 Brazen Borrower
+1 Brightcap Badger
+1 Chancellor of Tales
+1 Cosmos Charger
+1 Dread Linnorm
+1 Edgewall Innkeeper
+1 Elusive Otter
+1 Emerald Dragon
+1 Kellan, Inquisitive Prodigy
+1 Loan Shark
+1 Lovestruck Beast
+1 Outcaster Trailblazer
+1 Outlaw Stitcher
+1 Railway Brawler
+1 Rosethorn Acolyte
+1 Sage of the Beyond
+1 Sapphire Dragon
+1 Savvy Trader
+1 Slickshot Lockpicker
+1 Stormkeld Vanguard
+1 Storyteller Pixie
+1 Sword Coast Serpent
+1 Tempest Hart
+1 The Foretold Soldier
+1 The Thirteenth Doctor
+1 Tlincalli Hunter
+1 Vantress Transmuter
+1 Visage Bandit
+1 Beast Within
+1 Behold the Multiverse
+1 Growth Spiral
+1 Moment's Peace
+1 Return to Nature
+1 Saw It Coming
+1 Surge of Brilliance
+1 Jace Reawakened

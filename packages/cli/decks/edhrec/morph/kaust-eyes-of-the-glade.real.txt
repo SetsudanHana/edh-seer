@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/A0PeATr3crBKPAjlRrwLmg (source https://moxfield.com/decks/hZueASO0LHeBa_feidT-8A)
+# tags Morph; bracket 3; saved 2026-09-05; 476 tagged of 2956 indexed
+
+Commander
+1 Kaust, Eyes of the Glade
+
+Deck
+1 Ainok Survivalist
+1 Akroma, Angel of Fury
+1 Ashcloud Phoenix
+1 Aurelia's Vindicator
+1 Beast Whisperer
+1 Birds of Paradise
+1 Boltbender
+1 Curator Beastie
+1 Deathmist Raptor
+1 Den Protector
+1 Duskana, the Rage Mother
+1 Essence of Antiquity
+1 Exalted Angel
+1 Experiment Twelve
+1 Flourishing Bloom-Kin
+1 Hauntwoods Shrieker
+1 Hidden Dragonslayer
+1 Hooded Hydra
+1 Krosan Colossus
+1 Master of Pearls
+1 Mentor of the Meek
+1 Ohran Frostfang
+1 Printlifter Ooze
+1 Pyrotechnic Performer
+1 Salt Road Ambushers
+1 Saryth, the Viper's Fang
+1 Seedborn Muse
+1 Sidar Kondo of Jamuraa
+1 Skirk Alarmist
+1 Temur War Shaman
+1 Toski, Bearer of Secrets
+1 Unyielding Gatekeeper
+1 Welcoming Vampire
+1 Whisperwood Elemental
+1 Yarus, Roar of the Old Gods
+1 Yedora, Grave Gardener
+1 Arcane Signet
+1 Dream Chisel
+1 Lifecrafter's Bestiary
+1 Panoptic Projektor
+1 Scroll of Fate
+1 Sol Ring
+1 Austere Command
+1 Dusk // Dawn
+1 Jeska's Will
+1 Nature's Lore
+1 Sundering Eruption
+1 Three Visits
+1 Titanic Ultimatum
+1 Boros Charm
+1 Legion Leadership
+1 Path to Exile
+1 Return of the Wildspeaker
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Unexplained Absence
+1 Boros Garrison
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+1 Escape Tunnel
+1 Exotic Orchard
+5 Forest
+1 Fortified Village
+1 Furycalm Snarl
+1 Game Trail
+1 Gruul Turf
+1 Jungle Shrine
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+2 Mountain
+4 Plains
+1 Scattered Groves
+1 Selesnya Sanctuary
+1 Sheltered Thicket
+1 Shrine of the Forsaken Gods
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Temple of Abandon
+1 Temple of Plenty
+1 Temple of Triumph
+1 Temple of the False God
+1 Elven Chorus
+1 Land Tax
+1 Obscuring Aether
+1 Rhythm of the Wild
+1 Trail of Mystery
+1 True Identity
+1 Ugin's Mastery
+1 Veiled Ascension

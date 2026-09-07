@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/1sdt-OgzDJpUimNaF1hcyw (source https://archidekt.com/decks/23230515)
+# tags Spellslinger, Storm, Transform, Reanimator, Tokens, Self-Mill, Artifacts, Graveyard; bracket 3; saved 2026-09-05; 80 tagged of 4523 indexed
+
+Commander
+1 Tetzin, Gnome Champion
+
+Deck
+1 Adarkar Wastes
+1 Ancient Den
+1 Arid Mesa
+1 Castle Doom
+1 Command Tower
+1 Elegant Parlor
+1 Exotic Orchard
+1 Flooded Strand
+1 Fomori Vault
+1 Great Furnace
+1 Hallowed Fountain
+1 Island
+1 Meticulous Archive
+1 Monumental Henge
+1 Mountain
+1 Mystic Monastery
+1 Otawara, Soaring City
+1 Path of Ancestry
+1 Plains
+1 Power Depot
+1 Razortide Bridge
+1 Rustvale Bridge
+1 Sacred Foundry
+1 Scalding Tarn
+1 Seat of the Synod
+1 Shivan Reef
+1 Silverbluff Bridge
+1 Skycloud Expanse
+1 Spectator Seating
+1 Spire of Industry
+1 Steam Vents
+1 Sulfur Falls
+1 Thundering Falls
+1 Treasure Vault
+1 Urza's Saga
+1 Uthros, Titanic Godcore
+1 An Offer You Can't Refuse
+1 Path to Exile
+1 Sink into Stupor
+1 Anger
+1 Chrome Host Seedshark
+1 Cyberdrive Awakener
+1 Depthshaker Titan
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 Foreboding Statue
+1 Forensic Gadgeteer
+1 Mirrorshell Crab
+1 Pinnacle Emissary
+1 Ravenous Robots
+1 Riptide Gearhulk
+1 Sai, Master Thopterist
+1 Stridehangar Automaton
+1 Third Path Iconoclast
+1 Thraben Gargoyle
+1 Vedalken Archmage
+1 Wonder
+1 Azor's Gateway
+1 Braided Net
+1 Brass's Tunnel-Grinder
+1 Cloud Key
+1 Cryptolith Fragment
+1 Dire Flail
+1 Dowsing Dagger
+1 Dowsing Device
+1 Dusk Rose Reliquary
+1 Eye of Ojer Taq
+1 Idol of the Deep King
+1 Inverted Iceberg
+1 Lodestone Needle
+1 Matzalantli, the Great Door
+1 Neglected Heirloom
+1 Oteclan Landmark
+1 Paleontologist's Pick-Axe
+1 Saheeli's Lattice
+1 Semblance Anvil
+1 Simulacrum Synthesizer
+1 Spring-Loaded Sawblades
+1 Sunbird Standard
+1 Thaumatic Compass
+1 The Enigma Jewel
+1 The Everflowing Well
+1 Thousand Moons Smithy
+1 Treasure Map
+1 Unstable Glyphbridge
+1 Uthros Research Craft
+1 Waterlogged Hulk
+1 Worldwalker Helm
+1 Brilliant Restoration
+1 Mystic Retrieval
+1 Open the Vaults
+1 Organic Extinction
+1 Sevinne's Reclamation
+1 Sunder the Gateway
+1 Wake the Past
+1 Mirrodin Besieged
+1 Underworld Breach
+1 Weapons Manufacturing
+1 Saheeli, Sublime Artificer

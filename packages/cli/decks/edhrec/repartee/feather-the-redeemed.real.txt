@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/zL04G3Iq7Vp6Wr01owQ04g (source https://archidekt.com/decks/24615206)
+# tags Heroic, Repartee, Spellslinger, Spell Copy; bracket 3; saved 2026-09-03; 2 tagged of 13426 indexed
+
+Commander
+1 Feather, the Redeemed
+
+Deck
+1 Ancestors' Aid
+1 Blazing Crescendo
+1 Boros Charm
+1 Brute Force
+1 Crimson Wisps
+1 Divine Resilience
+1 Eldritch Immunity
+1 Enter the Avatar State
+1 Ephemerate
+1 Erode
+1 Expedite
+1 Fists of Flame
+1 Flare of Duplication
+1 Fleeting Flight
+1 Frontline Rush
+1 Galadriel's Dismissal
+1 Invisible Force Field
+1 Legion Leadership
+1 Monstrous Rage
+1 Path to Exile
+1 Protection Magic
+1 Rabid Gnaw
+1 Refuse to Yield
+1 Restoration Magic
+1 Sejiri Shelter
+1 Shelter
+1 Show of Confidence
+1 Soul's Fire
+1 Take Up the Shield
+1 The Last Agni Kai
+1 Untimely Malfunction
+1 Ancient Tomb
+1 Arid Mesa
+1 Boseiju, Who Shelters All
+1 Clifftop Retreat
+1 Command Tower
+1 Emeria, the Sky Ruin
+1 Fabled Passage
+1 Mana Confluence
+9 Mountain
+1 Myriad Landscape
+9 Plains
+1 Prismatic Vista
+1 Radiant Summit
+1 Reflecting Pool
+1 Reliquary Tower
+1 Rugged Prairie
+1 Sacred Foundry
+1 Sundown Pass
+1 Temple of the False God
+1 Angelfire Ignition
+1 Blasphemous Act
+1 Coronation of Chaos
+1 Fated Clash
+1 Honor
+1 Impolite Entrance
+1 Seize the Day
+1 Twisted Fealty
+1 Witch's Mark
+1 Arcane Signet
+1 Decanter of Endless Water
+1 Primal Amulet
+1 River Song's Diary
+1 Sol Ring
+1 Thought Vessel
+1 Bill Potts
+1 Birgi, God of Storytelling
+1 Clever Lumimancer
+1 Colleen Wing, Street Samurai
+1 Esper Sentinel
+1 Hawkeye, Bowslinger
+1 Informed Inkwright
+1 Iron Fist, Living Weapon
+1 Leonin Lightscribe
+1 Mockingbird, Ace Agent
+1 Phalanx Leader
+1 Stirring Hopesinger
+1 Storm-Kiln Artist
+1 Tethmos High Priest
+1 Zada, Hedron Grinder
+1 Fiery Inscription
+1 Frontline Heroism
+1 Leyline of Resonance

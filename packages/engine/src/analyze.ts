@@ -10,11 +10,26 @@ const TAG_STATS: TagStats = tagWeights as TagStats;
 
 export const COMMANDER_BOOST = 3;
 
+/** A GAME-STATE MARKER THE OWNER SETS (roadmap W18). Speed is the player's (CR 702.179): one number
+ *  for the deck, never a fact on a card. Grows one field per marker. */
+export type Marker = "speed" | "monarch" | "initiative" | "blessing" | "dungeon" | "night";
+export interface GameState {
+  speed?: 1 | 2 | 3 | 4;
+  monarch?: boolean;
+  initiative?: boolean;
+  blessing?: boolean;
+  dungeon?: boolean;
+  night?: boolean;
+}
+
 export interface SynergyEdge {
   a: string;
   b: string;
   score: number;
   reasons: Reason[];
+  /** THE STATE MADE THIS EDGE: absent from the same analysis run without a state. The graph draws
+   *  it apart and the inspector says which marker. */
+  enabledBy?: Marker[];
 }
 
 export interface CardSynergy {
@@ -140,6 +155,11 @@ export interface ArchetypeRanking {
  *  `available: null` means the question does not apply -- a combat trigger the game itself supplies
  *  has no card to draw, and reporting 0% there would invent a hole the deck does not have. */
 export interface DeckMath {
+  /** A LAND FETCH THE LIBRARY CANNOT FILL (owner, 2026-09-06: "not enough basics"). One row per
+   *  fetch whose single activation asks for more lands than the library can return: Myriad
+   *  Landscape wants two basics sharing a type, and a deck with one of each basic gives it one.
+   *  Shortfalls only, never the fetches that are fine. Optional because older reports have none. */
+  fetchShortfalls?: { card: string; wants: number; found: number; sharedType: boolean }[];
   /** The turn everything here is priced against: the deck's own measured clock when it has one.
    *
    *  It replaces a fixed turn 5 that applied to every deck alike, which design §10.8 calls out as
@@ -336,6 +356,10 @@ export interface DeckMath {
      *  model silently (roadmap L5). */
     worst?: {
       pips: number; turn: number; required: number; requiredRaw: number; cards: number;
+      /** The cards carrying the demand, first two only -- enough to name a subject, and `cards`
+       *  carries the rest. A finding about "the colour" is a claim no mono-colour deck can accept;
+       *  a finding about Archmage's Charm on turn 3 is one anybody can check. */
+      names?: string[];
       /** Of `supplied`, the ones that could be producing by `turn`. This is the number `required`
        *  is missed by; `supplied` is the deck total and is not comparable to it. */
       available: number;
@@ -382,6 +406,11 @@ export interface DeckReport {
    *  no partner is a real signal — "this deck makes Clues and nothing cares" — which is why the data
    *  carries it even when the view hides it. */
   tokenNodes?: { name: string; hasPartner: boolean }[];
+  /** The state this report was computed under, echoed so a view can say "at speed 4". */
+  state?: GameState;
+  /** The markers this deck can reach at all -- `speed` when a card prints Start your engines! --
+   *  so the page offers a control only where it can change anything. */
+  markers?: Marker[];
   /** How much of the deck the SYNERGY engine could actually read.
    *
    *  A card that resolves against the corpus but has no derived tags forms NO edges, carries NO
@@ -473,7 +502,9 @@ export interface DeckReport {
    *  are win-plan/tax signals and were never folded into a parent). Matcher-only. `category` is a
    *  plain string (not the matcher-only BuildCategory union) because this package must not depend
    *  on @edh-seer/matcher — same convention as ArchetypeGroup.category. */
-  buildCategories?: { category: string; count: number; target: number }[];
+  /** `facets`: sub-counts said beside a leaf's count and never folded into it (draw: `engines`,
+   *  `unlabelled`). See `BuildResult.buildCategories` in the matcher, which owns the semantics. */
+  buildCategories?: { category: string; count: number; target: number; facets?: Record<string, number> }[];
   /** The four Command-Zone template groups (Consistency, Ramp, Interaction, Board wipes), each
    *  carrying its OWN archetype-adjusted target and the UNION of its leaves' member counts (never
    *  the sum -- a card can carry two leaves). This is what actually scores and flags now; a leaf
@@ -483,7 +514,20 @@ export interface DeckReport {
    *  flag instead of matching `name === "Interaction"` (whole-branch review IMPORTANT 4: a rename of
    *  that parent would otherwise silently unwire the panel's coverage note while the score kept
    *  docking it). */
-  buildParents?: { name: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  buildParents?: { name: string; key?: string; count: number; target: number; leaves: string[]; impact?: number; coverageWeighted?: true }[];
+  /** WHICH THEME ROW(S) THE PARENT TARGETS CAME FROM (owner ruling 2026-09-06, spec
+   *  `2026-09-06-theme-template-proposal.md`): the detected primary and, when strong enough, the
+   *  secondary, each with its EDHREC-population row keyed by `buildParents[].key`, plus the
+   *  population row every deck falls back to. Shown beside the ticks so "Voltron runs 19.5
+   *  interaction; you run 12" is a claim a player can check. Matcher-only. */
+  template?: {
+    primary?: { name: string; label: string; weight: number; row: Record<string, number> };
+    secondary?: { name: string; label: string; weight: number; row: Record<string, number> };
+    population: Record<string, number>;
+    /** The confidence a theme needs to set its own row, for the report to print beside the share. */
+    leadFloor?: number;
+    targets: Record<string, number>;
+  };
   /** WHAT MOVING THE LAND COUNT TO ITS TARGET IS WORTH to `buildScore` (roadmap S10). 0 inside the
    *  land band, where there is nothing to gain. */
   landsImpact?: number;

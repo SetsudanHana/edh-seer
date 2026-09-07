@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/RB02mcQRCYQ6US0rOXWmJA (source https://archidekt.com/decks/25965442)
+# tags Big Mana, Flying, Attack Triggers; bracket 3; saved 2026-09-03; 197 tagged of 39340 indexed
+
+Commander
+1 Kaalia of the Vast
+
+Deck
+1 Abstruse Appropriation
+1 Chaos Warp
+1 Crackling Doom
+1 Demand Answers
+1 Gods Willing
+1 Heartwarming Redemption
+1 Loran's Escape
+1 Magmaquake
+1 Mortify
+1 Rakdos Charm
+1 Swords to Plowshares
+1 Akroma, Vision of Ixidor
+1 Angel of Serenity
+1 Angelic Arbiter
+1 Arni Metalbrow
+1 Atsushi, the Blazing Sky
+1 Aurelia, the Law Above
+1 Bladewing the Risen
+1 Bladewing, Deathless Tyrant
+1 Bloodgift Demon
+1 Breathkeeper Seraph
+1 Burning-Rune Demon
+1 Cleaving Reaper
+1 Decadent Dragon
+1 Drakuseth, Maw of Flames
+1 Drana and Linvala
+1 Exquisite Archangel
+1 Harvester of Souls
+1 Isshin, Two Heavens as One
+1 Karmic Guide
+1 Liesa, Forgotten Archangel
+1 Mother of Runes
+1 Overseer of the Damned
+1 Rakdos, Lord of Riots
+1 Rune-Scarred Demon
+1 Sephara, Sky's Blade
+1 Shadowgrange Archfiend
+1 The Balrog of Moria
+1 Tyrant's Familiar
+1 Vilis, Broker of Blood
+1 Ancient Craving
+1 By Invitation Only
+1 Diabolic Tutor
+1 Faithless Looting
+1 Idyllic Tutor
+1 Merciless Eviction
+1 Open the Armory
+1 Painful Truths
+1 Vindicate
+1 Ash Barrens
+1 Brightclimb Pathway
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Hanweir Battlements
+7 Mountain
+6 Plains
+1 Reliquary Tower
+1 Savai Triome
+1 Scoured Barrens
+1 Shattered Landscape
+1 Slayers' Stronghold
+6 Swamp
+1 Takenuma, Abandoned Mire
+1 Temple of Malice
+1 Temple of Silence
+1 Temple of Triumph
+1 Terramorphic Expanse
+1 Thriving Heath
+1 Vault of the Archangel
+1 Curse of Opulence
+1 Footfall Crater
+1 Liliana's Contract
+1 Decanter of Endless Water
+1 Dollhouse of Horrors
+1 Fellwar Stone
+1 Hidden Footblade
+1 Lavaspur Boots
+1 Lightning Greaves
+1 Mind Stone
+1 Sunforger
+1 Swiftfoot Boots
+1 Whispersilk Cloak

@@ -66,6 +66,15 @@ export const SUBTYPES: ReadonlySet<string> = new Set([
   "zombie", "zubera",
 ]);
 
+/** The SPELL subtypes (CR 205.3k), kept OUT of the free-text set above and admitted by
+ *  `parseSubtypes` only beside a spell head noun — "an Adventure spell", "a Lesson card". Several
+ *  are ordinary English ("lesson", "trap", "omen"), which is the planeswalker trap again; but a
+ *  spell subtype next to "spell" is a typal demand, and dropping it made Lucky Clover watch EVERY
+ *  instant (2026-09-05). Corpus demand: Arcane 86 cards, Lesson 49, Adventure 9, Omen 2, Trap 2. */
+export const SPELL_SUBTYPES: ReadonlySet<string> = new Set([
+"adventure", "arcane", "chorus", "lesson", "omen", "trap",
+]);
+
 /** The LAND subtypes among them. A land subtype means MANA BASE, not typal: a fetchland naming Swamp
  *  is ramp, and a tutor that finds one is a land-fixing card rather than a Swamp-tribal payoff. */
 export const LAND_SUBTYPES: ReadonlySet<string> = new Set([

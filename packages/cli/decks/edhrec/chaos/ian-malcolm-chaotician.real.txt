@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/TTpEfQ49sICBGaNTzZchXw (source https://archidekt.com/decks/12584333)
+# tags Chaos, Burn, Card Draw; bracket 2; saved 2026-09-05; 576 tagged of 5288 indexed
+
+Commander
+1 Ian Malcolm, Chaotician
+
+Deck
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Chaos Warp
+1 Chef's Kiss
+1 Counterspell
+1 Long River's Pull
+1 Miscast
+1 Negate
+1 Resculpt
+1 Sudden Shock
+1 Tibalt's Trickery
+1 Wash Away
+1 Wild Magic Surge
+1 Wild Ricochet
+1 Wrong Turn
+1 Zoyowa's Justice
+1 Alexios, Deimos of Kosmos
+1 Arjun, the Shifting Flame
+1 Delina, Wild Mage
+1 Etali, Primal Storm
+1 Faerie Mastermind
+1 Ghostly Pilferer
+1 Goblin Electromancer
+1 Homunculus Horde
+1 Humble Defector
+1 Mischievous Mystic
+1 Nalfeshnee
+1 Neera, Wild Mage
+1 Niv-Mizzet, Parun
+1 Noggle Ransacker
+1 Psychosis Crawler
+1 Razorkin Needlehead
+1 Scrawling Crawler
+1 Scytheclaw Raptor
+1 Treasure Nabber
+1 Volatile Rig
+1 Zurzoth, Chaos Rider
+1 Arcane Signet
+1 Chaos Wand
+1 Commander's Sphere
+1 Fellwar Stone
+1 Folio of Fancies
+1 Helm of Awakening
+1 Howling Mine
+1 Izzet Signet
+1 Knowledge Pool
+1 Midnight Clock
+1 Sol Ring
+1 Tempting Contract
+1 Thought Vessel
+1 Wand of Wonder
+1 Blasphemous Act
+1 Chaotic Transformation
+1 Coronation of Chaos
+1 Role Reversal
+1 Wheel of Misfortune
+1 Windfall
+1 Command Tower
+1 Eroded Canyon
+1 Evolving Wilds
+1 Exotic Orchard
+1 Frostboil Snarl
+9 Island
+1 Izzet Boilerworks
+9 Mountain
+1 Myriad Landscape
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Restless Spire
+1 Riverpyre Verge
+1 Shivan Reef
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Swiftwater Cliffs
+1 Temple of Epiphany
+1 Dictate of Kruphix
+1 Fevered Visions
+1 Forced Fruition
+1 Mana Flare
+1 Ominous Seas
+1 Powerbalance
+1 Propaganda

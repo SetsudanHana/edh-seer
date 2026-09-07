@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/eEO_K8-IlgcK24db7Yxf6Q (source https://archidekt.com/decks/25833926)
+# tags Treasure, Tokens, Fling; bracket 2; saved 2026-09-03; 57 tagged of 6873 indexed
+
+Commander
+1 Juri, Master of the Revue
+
+Deck
+1 Academy Manufactor
+1 Atog
+1 Defiant Salvager
+1 Dockside Chef
+1 Evereth, Viceroy of Plunder
+1 Ghoulcaller Gisa
+1 Grim Hireling
+1 Hoarding Ogre
+1 Impulsive Pilferer
+1 Joo Dee, One of Many
+1 Kingpin, Wilson Fisk
+1 Lightless Evangel
+1 Magda, Brazen Outlaw
+1 Mahadi, Emporium Master
+1 Megatog
+1 Nadier's Nightblade
+1 Ophiomancer
+1 Pia Nalaar
+1 Professional Face-Breaker
+1 Ragavan, Nimble Pilferer
+1 Ravenous Intruder
+1 Reckless Barbarian
+1 Smaug the Magnificent
+1 Stormclaw Rager
+1 Umbral Collar Zealot
+1 Viscera Seer
+1 Warren Soultrader
+1 Woe Strider
+1 Xorn
+1 Annihilating Glare
+1 Blood Money
+1 Bone Shards
+1 Bone Splinters
+1 Chandra's Ignition
+1 Deadly Precision
+1 Lich-Knights' Conquest
+1 Pitiless Carnage
+1 Rite of Consumption
+1 Seize the Spotlight
+1 Thud
+1 Arcane Signet
+1 Diamond Pick-Axe
+1 Krark-Clan Ironworks
+1 Phyrexian Altar
+1 Sol Ring
+1 Tempting Contract
+1 Arena of Glory
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Cabaretti Courtyard
+1 Command Tower
+1 Dragonskull Summit
+1 Escape Tunnel
+1 Evolving Wilds
+1 Fabled Passage
+1 Fountainport
+1 High Market
+1 Lotus Field
+1 Luxury Suite
+1 Maestros Theater
+6 Mountain
+1 Phyrexian Tower
+1 Raucous Theater
+1 Riveteers Overlook
+9 Swamp
+1 Black Market Connections
+1 Bloodfire Infusion
+1 Descent into Avernus
+1 Dying Wish
+1 Sticky Fingers
+1 Bulk Up
+1 Chaos Warp
+1 Costly Plunder
+1 Deadly Dispute
+1 Demand Answers
+1 Eviscerator's Insight
+1 Fake Your Own Death
+1 Fanatical Offering
+1 Fling
+1 Kazuul's Fury
+1 Pyrrhic Blast
+1 Self-Destruct
+1 Soul's Fire
+1 Special Move
+1 Unleash Fury

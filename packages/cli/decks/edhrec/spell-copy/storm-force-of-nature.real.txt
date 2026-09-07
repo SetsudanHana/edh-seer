@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/LCa7VKFnpJg3FiSB-2Ggng (source https://archidekt.com/decks/22004868)
+# tags Storm, Slime Against Humanity, Spell Copy; bracket 2; saved 2026-08-23; 551 tagged of 16218 indexed
+
+Commander
+1 Storm, Force of Nature
+
+Deck
+1 Aeve, Progenitor Ooze
+1 Archmage Emeritus
+1 Disciple of Freyalise
+1 Kitsa, Otterball Elite
+1 Lier, Disciple of the Drowned
+1 Mercurial Spelldancer
+1 Pinnacle Monk
+1 Stella Lee, Wild Card
+1 Wort, the Raidmother
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Explore
+1 Farseek
+1 Galvanic Relay
+1 Mind's Desire
+1 Mizzix's Mastery
+1 Nature's Lore
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Shared Roots
+25 Slime Against Humanity
+1 Three Visits
+1 Thud
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Commercial District
+1 Dreamroot Cascade
+4 Forest
+1 Hedge Maze
+3 Island
+1 Ketria Triome
+2 Mountain
+1 Mystic Sanctuary
+1 Otawara, Soaring City
+1 Rejuvenating Springs
+1 Riverpyre Verge
+1 Rockfall Vale
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Taiga
+1 Thornspire Verge
+1 Thundering Falls
+1 Training Center
+1 Tropical Island
+1 Volcanic Island
+1 Willowrush Verge
+1 Yavimaya, Cradle of Growth
+1 Fling
+1 Frantic Search
+1 Growth Spiral
+1 Kazuul's Fury
+1 Lightning Bolt
+1 Mission Briefing
+1 Planar Genesis
+1 Ram Through
+1 Sink into Stupor
+1 Snap
+1 Valakut Awakening
+1 Locket of Yesterdays
+1 Resonating Lute
+1 Sol Ring
+1 Spellweaver Helix
+1 The Earth Crystal
+1 Pyromancer Ascension
+1 Underworld Breach

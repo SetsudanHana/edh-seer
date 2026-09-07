@@ -1,0 +1,97 @@
+# edhrec deck https://edhrec.com/deckpreview/kATwBmrJR5YB-ZrSW7GjYA (source https://moxfield.com/decks/4W0mUHfZ9EazREN-R0lQjQ)
+# tags Spellslinger, Land Destruction; bracket 2; saved 2026-08-28; 277 tagged of 1691 indexed
+
+Commander
+1 Numot, the Devastator
+
+Deck
+1 Academy Rector
+1 Archaeomancer
+1 Aurelia, the Warleader
+1 Avacyn, Angel of Hope
+1 Brago, King Eternal
+1 Burnished Hart
+1 Clever Impersonator
+1 Gisela, Blade of Goldnight
+1 Lavinia, Azorius Renegade
+1 Palladium Myr
+1 Phantasmal Image
+1 Phyrexian Metamorph
+1 Solemn Simulacrum
+1 Sun Titan
+1 Windborn Muse
+1 Zealous Conscripts
+1 Zo-Zu the Punisher
+1 Arid Mesa
+1 Azorius Chancery
+1 Cascade Bluffs
+1 Cascading Cataracts
+1 Darksteel Citadel
+1 Dust Bowl
+1 Evolving Wilds
+1 Glacial Fortress
+1 Hallowed Fountain
+5 Island
+1 Maze of Ith
+1 Memorial to War
+3 Mountain
+1 Mystic Gate
+4 Plains
+1 Prairie Stream
+1 Rugged Prairie
+1 Sacred Foundry
+1 Steam Vents
+1 Strip Mine
+1 Tectonic Edge
+1 Temple of Epiphany
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Tranquil Cove
+1 Volatile Fault
+1 Wasteland
+1 Avengers Disassembled
+1 Bribery
+1 Chandra's Ignition
+1 Cleansing Wildfire
+1 Improvisation Capstone
+1 Insurrection
+1 Price of Freedom
+1 Seismic Spike
+1 Supreme Verdict
+1 Terminus
+1 Vandalblast
+1 Yawning Fissure
+1 Azorius Signet
+1 Basalt Monolith
+1 Boros Signet
+1 Chromatic Lantern
+1 Coalition Relic
+1 Commander's Sphere
+1 Crucible of Worlds
+1 Darksteel Plate
+1 Dingus Egg
+1 Everflowing Chalice
+1 Gilded Lotus
+1 Izzet Signet
+1 Lightning Greaves
+1 Oblivion Stone
+1 Palantír of Orthanc
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thought Vessel
+1 Vedalken Orrery
+1 Boros Charm
+1 Counterspell
+1 Deflecting Palm
+1 Faith's Reward
+1 Return to Dust
+1 Swords to Plowshares
+1 Volcanic Offering
+1 Burning Sands
+1 Ghostly Prison
+1 Gleaming Splendor
+1 Land Tax
+1 Price of Glory
+1 Propaganda
+1 Vicious Shadows
+1 Dack Fayden

@@ -153,7 +153,7 @@ test("opening the drawer tells the page to make room, and closing gives it back"
   expect(document.body.classList.contains("drawer-docked")).toBe(false);
 });
 
-/** AND THE RESERVE IS THE DRAWER'S OWN WIDTH. `w-80` on the fixed container is 20rem; a reserve
+/** AND THE RESERVE IS THE DRAWER'S OWN WIDTH. `sm:w-80` on the fixed container is 20rem (below `sm` it is a full-width sheet); a reserve
  *  that disagrees either leaves a strip of page under the panel or a gap beside it, and neither is
  *  visible in jsdom. Read off the source so the two cannot drift apart silently. */
 test("the reserve matches the drawer's width, at the breakpoint where there is room", () => {
@@ -161,7 +161,7 @@ test("the reserve matches the drawer's width, at the breakpoint where there is r
   const rule = /@media \(min-width: 80rem\) \{\s*body\.drawer-docked \{ padding-inline-end: (\d+)rem; \}/.exec(css);
   expect(rule, "body.drawer-docked rule at min-width: 80rem").not.toBeNull();
   const source = readFileSync(join(process.cwd(), "client", "src", "components", "card-drawer.tsx"), "utf8");
-  const width = /className="fixed inset-y-0 right-0 z-30 w-(\d+)/.exec(source);
+  const width = /className="fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
   expect(width, "the fixed drawer container's width").not.toBeNull();
   // Tailwind's spacing scale is 0.25rem per step, so `w-80` is 20rem.
   expect(Number(rule![1]) * 4).toBe(Number(width![1]));

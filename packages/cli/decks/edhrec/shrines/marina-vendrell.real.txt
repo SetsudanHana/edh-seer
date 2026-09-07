@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/1RJRuEtaKxsHtoV3EFrovQ (source https://archidekt.com/decks/20817517)
+# tags Shrines; bracket 3; saved 2026-03-25; 11 tagged of 15237 indexed
+
+Commander
+1 Marina Vendrell
+
+Deck
+1 Aang's Journey
+1 Coalition Victory
+1 Aettir and Priwen
+1 Arcane Signet
+1 Basilisk Collar
+1 Chromatic Lantern
+1 Shadowspear
+1 Sol Ring
+1 The Darkness Crystal
+1 The Earth Crystal
+1 The Fire Crystal
+1 The Water Crystal
+1 The Wind Crystal
+1 All-Out Assault
+1 Authority of the Consuls
+1 Crescent Island Temple
+1 Dazzling Theater // Prop Room
+1 Greater Auramancy
+1 Greenhouse // Rickety Gazebo
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Life's Web
+1 Honden of Night's Reach
+1 Honden of Seeing Winds
+1 Kinbinding
+1 Kyoshi Island Plaza
+1 Leyline of Hope
+1 Leyline of Mutation
+1 Leyline of Sanctity
+1 Leyline of Transformation
+1 Leyline of the Guildpact
+1 Northern Air Temple
+1 Restricted Office // Lecture Hall
+1 Roaring Earth
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Shattered Heights
+1 Sanctum of Stone Fangs
+1 Sanctum of Tranquil Light
+1 Southern Air Temple
+1 The Spirit Oasis
+1 Blightsteel Colossus
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Lost Wisdom
+1 Go-Shintai of Shared Purpose
+1 Guru Pathik
+1 Hei Bai, Forest Guardian
+1 Hexing Squelcher
+1 Krang, Master Mind
+1 Krang, Utrom Warlord
+1 Kyodai, Soul of Kamigawa
+1 Llanowar Elves
+1 Marvin, Murderous Mimic
+1 Myrel, Shield of Argive
+1 Omnath, Locus of Creation
+1 Roaming Throne
+1 Shrine Steward
+1 Steel Overseer
+1 Blood Crypt
+1 Blooming Marsh
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Fire Nation Palace
+1 Floodfarm Verge
+5 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+5 Island
+4 Mountain
+1 Overgrown Tomb
+5 Plains
+1 Reliquary Tower
+1 Steam Vents
+4 Swamp
+1 Temple Garden
+1 Wastewood Verge
+1 White Lotus Hideout

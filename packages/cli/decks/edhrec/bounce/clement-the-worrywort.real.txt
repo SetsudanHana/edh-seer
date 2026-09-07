@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/QNpw8noILmrIo3mB2fj1yw (source https://archidekt.com/decks/26037056)
+# tags +1/+1 Counters, Frogs, Bounce; bracket 2; saved 2026-09-04; 288 tagged of 8329 indexed
+
+Commander
+1 Clement, the Worrywort
+
+Deck
+1 Amphibian Downpour
+1 Frogify
+1 Gossip's Talent
+1 Kindred Discovery
+1 Leyline of Abundance
+1 Reflections of Littjara
+1 Barrin, Tolarian Archmage
+1 Beast Whisperer
+1 Bellowing Crier
+1 Birds of Paradise
+1 Champion of Lambholt
+1 Coiling Oracle
+1 Dour Port-Mage
+1 Dreamdew Entrancer
+1 Final-Word Phantom
+1 Froghemoth
+1 Grolnok, the Omnivore
+1 Haze Frog
+1 Hydroelectric Specimen
+1 Lilysplash Mentor
+1 Long River Lurker
+1 Masked Vandal
+1 Mistbreath Elder
+1 Murkfiend Liege
+1 Octomancer
+1 Plaxcaster Frogling
+1 Pollywog Prodigy
+1 Pond Prophet
+1 Rampant Frogantua
+1 Realmwalker
+1 Shrieking Drake
+1 Silverback Elder
+1 Spore Frog
+1 Stickytongue Sentinel
+1 Sunshower Druid
+1 Three Tree Scribe
+1 Twenty-Toed Toad
+1 Valley Floodcaller
+1 Valley Mightcaller
+1 Beast Within
+1 Boomerang
+1 Counterspell
+1 Cryptic Command
+1 Evacuation
+1 Growth Spiral
+1 Mystic Reflection
+1 Overprotect
+1 Perplexing Test
+1 Polliwallop
+1 Pongify
+1 Rapid Hybridization
+1 Run Away Together
+1 Simic Charm
+1 Snap
+1 This Town Ain't Big Enough
+1 Bridgeworks Battle
+1 Cultivate
+1 Distant Melody
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Splash Portal
+1 Command Tower
+1 Fabled Passage
+1 Flooded Grove
+12 Forest
+1 Hinterland Harbor
+11 Island
+1 Oakhollow Village
+1 Overflowing Basin
+1 Path of Ancestry
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Terramorphic Expanse
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Emerald Medallion
+1 Sapphire Medallion

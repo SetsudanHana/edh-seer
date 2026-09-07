@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/hOJHqmHsZbp2ZTwYMolHuw (source https://archidekt.com/decks/21458102)
+# tags Giants, Fling, Theft; bracket 3; saved 2026-08-30; 130 tagged of 3886 indexed
+
+Commander
+1 Brion Stoutarm
+
+Deck
+1 Act of Aggression
+1 Big Score
+1 Boros Charm
+1 Chaos Warp
+1 Fling
+1 Grab the Reins
+1 Kazuul's Fury
+1 Legion Leadership
+1 Path to Exile
+1 Return the Favor
+1 Soul's Fire
+1 Thrill of Possibility
+1 Word of Seizing
+1 Arcane Signet
+1 Archaeomancer's Map
+1 Boros Signet
+1 Cursed Mirror
+1 Fellwar Stone
+1 Grafted Exoskeleton
+1 Grafted Wargear
+1 Mind Stone
+1 Patriar's Seal
+1 Phyrexian Processor
+1 Skullclamp
+1 Sol Ring
+1 Sunforger
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Urabrask's Forge
+1 Axgard Armory
+1 Battlefield Forge
+1 Boros Garrison
+1 Clifftop Retreat
+1 Command Tower
+1 Cori Mountain Monastery
+1 Dalkovan Encampment
+1 Furycalm Snarl
+1 Ghost Quarter
+1 High Market
+9 Mountain
+1 Needle Spires
+7 Plains
+1 Rugged Prairie
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 Sunscorched Divide
+1 Temple of Triumph
+1 Temple of the False God
+1 Bonecrusher Giant
+1 Bre of Clan Stoutarm
+1 Calamity Bearer
+1 Captivating Crew
+1 Chandra's Incinerator
+1 Claim Jumper
+1 Conquering Manticore
+1 Ertha Jo, Frontier Mentor
+1 Feldon of the Third Path
+1 Gisela, Blade of Goldnight
+1 Headliner Scarlett
+1 Hofri Ghostforge
+1 Jaxis, the Troublemaker
+1 Knight of the White Orchid
+1 Laelia, the Blade Reforged
+1 Loran of the Third Path
+1 Luminous Broodmoth
+1 Malignus
+1 Oliphaunt
+1 Phyrexian Dreadnought
+1 Quakebringer
+1 Realm-Cloaked Giant
+1 Scourge of Geier Reach
+1 Solemn Simulacrum
+1 Soul of Eternity
+1 Zealous Conscripts
+1 Chandra's Ignition
+1 Day of Judgment
+1 Furnace Reins
+1 Glimpse the Impossible
+1 Kari Zev's Expertise
+1 Seize the Spotlight
+1 Song-Mad Treachery
+1 Wheel of Misfortune
+1 Fiery Emancipation

@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/tidus-yunas-guardian/level-up
+# theme Level Up (3 decks)
+
+Commander
+1 Tidus, Yuna's Guardian
+
+Deck
+1 Arcane Signet
+1 Decanter of Endless Water
+1 Elixir of Immortality
+1 Honored Heirloom
+1 Illusionist's Bracers
+1 Moonsilver Key
+1 Obelisk of Bant
+1 Sol Ring
+1 Soul-Guide Lantern
+1 Wayfarer's Bauble
+1 Breeding Pool
+1 Brushland
+1 Command Tower
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Flooded Strand
+7 Forest
+1 Fortified Village
+1 Hallowed Fountain
+6 Island
+1 Misty Rainforest
+1 Overgrown Farmland
+6 Plains
+1 Port Town
+1 Prairie Stream
+1 Sea of Clouds
+1 Seaside Citadel
+1 Sodden Verdure
+1 Spara's Headquarters
+1 Temple Garden
+1 Urza's Cave
+1 Windswept Heath
+1 Beastbreaker of Bala Ged
+1 Caravan Escort
+1 Champion's Drake
+1 Chocobo Knights
+1 Coralhelm Commander
+1 Delighted Halfling
+1 Dreamtide Whale
+1 Echo Mage
+1 Enclave Cryptologist
+1 Evolution Sage
+1 Ezuri, Stalker of Spheres
+1 Ferrafor, Young Yew
+1 Hada Spy Patrol
+1 Halimar Wavewatch
+1 Hedron-Field Purists
+1 Hexdrinker
+1 Ikiral Outrider
+1 Joraga Treespeaker
+1 Kabira Vindicator
+1 Kazandu Tuskcaller
+1 Knight of Cliffhaven
+1 Lighthouse Chronologist
+1 Llanowar Scout
+1 Patrolling Peacemaker
+1 Skywatcher Adept
+1 Student of Warfare
+1 Toski, Bearer of Secrets
+1 Transcendent Master
+1 Venerated Teacher
+1 Imprisoned in the Moon
+1 Innkeeper's Talent
+1 Mesmerizing Dose
+1 Time of Heroes
+1 Together Forever
+1 Training Grounds
+1 Archdruid's Charm
+1 Bant Charm
+1 Experimental Augury
+1 Heroic Intervention
+1 Mutational Advantage
+1 Ripples of Potential
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Beneath the Sands
+1 Contentious Plan
+1 Damning Verdict
+1 Fade into Antiquity
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Unnatural Restoration

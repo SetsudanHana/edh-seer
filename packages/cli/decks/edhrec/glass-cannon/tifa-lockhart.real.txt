@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/hvRTrLgAHVnODpoNfYsS1A (source https://archidekt.com/decks/13123621)
+# tags Fight, Voltron, Glass Cannon; bracket 2; saved 2026-08-27; 27 tagged of 15076 indexed
+
+Commander
+1 Tifa Lockhart
+
+Deck
+1 Animist's Might
+1 Chocobo Kick
+1 Circuitous Route
+1 Felling Blow
+1 Finishing Move
+1 Hard-Hitting Question
+1 Hunter's Prowess
+1 It's Clobberin' Time!
+1 Knockout Maneuver
+1 Migration Path
+1 Planar Engineering
+1 Skyshroud Claim
+1 Super Combo
+1 Will of the Sultai
+1 Bant Panorama
+1 Blighted Woodland
+1 Brokers Hideout
+1 Cabaretti Courtyard
+1 Demolition Field
+1 Eden, Seat of the Sanctum
+1 Escape Tunnel
+1 Evolving Wilds
+1 Fabled Passage
+16 Forest
+1 Ghost Quarter
+1 Hobbit Hole
+1 Jund Panorama
+1 Myriad Landscape
+1 Naya Panorama
+1 Petrified Field
+1 Promising Vein
+1 Shire Terrace
+1 Terramorphic Expanse
+1 Vibrant Cityscape
+1 Belt of Giant Strength
+1 Brass Knuckles
+1 Brotherhood Regalia
+1 Conduit of Worlds
+1 Genji Glove
+1 Golem-Skin Gauntlets
+1 Mithril Coat
+1 Necklace of Girion
+1 Power Fist
+1 Rogue's Gloves
+1 Shuko
+1 Swiftfoot Boots
+1 Torch Gauntlet
+1 Vectis Gloves
+1 Zephyr Boots
+1 Biosynthic Burst
+1 Blessed Respite
+1 Collective Resistance
+1 Cycle of Renewal
+1 Entish Restoration
+1 Fog
+1 Gaea's Gift
+1 Harrow
+1 Lull
+1 Moment's Peace
+1 Obscuring Haze
+1 Origin of Metalbending
+1 Overprotect
+1 Prishe's Wanderings
+1 Ram Through
+1 Respite
+1 Roiling Regrowth
+1 Signature Slam
+1 Snakeskin Veil
+1 Strength of Will
+1 Tamiyo's Safekeeping
+1 Elephant Grass
+1 Family's Favor
+1 Fortitude
+1 High Score
+1 Keen Sense
+1 Khalni Heart Expedition
+1 Level Up
+1 Sixth Sense
+1 Snake Umbra
+1 Strong Back
+1 Super State
+1 Thickest in the Thicket
+1 Undergrowth Recon
+1 Walk-In Closet // Forgotten Cellar

@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/PWecUT4xfMCdcyXKjQ1GhQ (source https://archidekt.com/decks/19152266)
+# tags -1/-1 Counters, Midrange, Infect; bracket 2; saved 2026-09-04; 577 tagged of 5846 indexed
+
+Commander
+1 The Reaper, King No More
+
+Deck
+1 Arcane Signet
+1 Scythe of the Wretched
+1 Archfiend of Ifnir
+1 Ardyn, the Usurper
+1 Banewhip Punisher
+1 Blast-Furnace Hellkite
+1 Bloom Tender
+1 Defiler of Flesh
+1 Dread Tiller
+1 Eddie Brock
+1 Etali, Primal Conqueror
+1 Fauna Shaman
+1 Freestrider Lookout
+1 Fume Spitter
+1 Glissa Sunslayer
+1 Hapatra, Vizier of Poisons
+1 Hardbristle Bandit
+1 Ignoble Hierarch
+1 Kaervek the Merciless
+1 Karazikar, the Eye Tyrant
+1 Kardur, Doomscourge
+1 Massacre Girl, Known Killer
+1 Morbid Opportunist
+1 Oft-Nabbed Goat
+1 Phyrexian Juggernaut
+1 Phyrexian Vatmother
+1 Seifer Almasy
+1 Skithiryx, the Blight Dragon
+1 Spider Manifestation
+1 Spinerock Tyrant
+1 Stirring Bard
+1 The Scorpion God
+1 Village Pillagers
+1 Xantcha, Sleeper Agent
+1 Ash Barrens
+1 Blood Crypt
+1 Canyon Slough
+1 Command Tower
+1 Deathcap Glade
+1 Exotic Orchard
+1 Fabled Passage
+1 Festering Thicket
+2 Forest
+1 Graven Cairns
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Llanowar Wastes
+1 Mountain
+1 Overgrown Tomb
+1 Raucous Theater
+1 Savage Lands
+1 Smoldering Marsh
+1 Spymaster's Vault
+4 Swamp
+1 Tainted Peak
+1 Tainted Wood
+1 Twisted Landscape
+1 Underground Mortuary
+1 Undergrowth Stadium
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Assassin's Trophy
+1 Beast Within
+1 Blight Rot
+1 Fell the Profane
+1 Lethal Scheme
+1 Malakir Rebirth
+1 Reverent Howl
+1 Revitalizing Repast
+1 Scar
+1 Sheoldred's Edict
+1 Bala Ged Recovery
+1 Black Sun's Zenith
+1 Blood for Bones
+1 Bridgeworks Battle
+1 Bushwhack
+1 Dire-Strain Rampage
+1 Eldritch Evolution
+1 Farseek
+1 Gix's Command
+1 Grave Upheaval
+1 Infernal Offering
+1 Night's Whisper
+1 Reanimate
+1 Seize the Spoils
+1 Stump Stomp
+1 Sundering Eruption
+1 Blowfly Infestation
+1 Cartouche of Ambition
+1 Court of Bounty
+1 Crumbling Ashes
+1 Fires of Yavimaya
+1 Fists of the Demigod
+1 Pain for All
+1 Phyresis

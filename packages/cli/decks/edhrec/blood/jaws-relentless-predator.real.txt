@@ -1,0 +1,79 @@
+# edhrec deck https://edhrec.com/deckpreview/MMbNTMjXgQbgjWDzbfEAaA (source https://archidekt.com/decks/20381429)
+# tags Artifacts, Treasure, Tokens, Group Slug, Blood; bracket 3; saved 2026-08-31; 93 tagged of 6451 indexed
+
+Commander
+1 Jaws, Relentless Predator
+
+Deck
+1 Abrade
+1 Big Score
+1 Bolt Bend
+1 Chaos Warp
+1 Deflecting Swat
+1 Demand Answers
+1 Final Fortune
+1 Lightning Bolt
+1 Pyroblast
+1 Return the Favor
+1 Academy Manufactor
+1 Charming Scoundrel
+1 Containment Construct
+1 Crime Novelist
+1 Generous Plunderer
+1 Glint-Horn Buccaneer
+1 Goldspan Dragon
+1 Ivora, Insatiable Heir
+1 Ojer Axonil, Deepest Might
+1 Professional Face-Breaker
+1 Ragavan, Nimble Pilferer
+1 Reckless Fireweaver
+1 Torbran, Thane of Red Fell
+1 Twinflame Tyrant
+1 Veronica, Dissident Scribe
+1 Voldaren Epicure
+1 Weftstalker Ardent
+1 Arcane Signet
+1 Basilisk Collar
+1 Bucknard's Everfull Purse
+1 Commander's Sphere
+1 Crawlspace
+1 Hot Dog Cart
+1 Idol of Oblivion
+1 Inspiring Statuary
+1 Junk Jet
+1 Krark-Clan Ironworks
+1 Legion Extruder
+1 Lotus Petal
+1 Melded Moxite
+1 Mishra's Bauble
+1 Prized Statue
+1 Radiant Lotus
+1 Silver Shroud Costume
+1 Sol Ring
+1 Soul-Guide Lantern
+1 The Reaver Cleaver
+1 Torpor Orb
+1 Urza's Bauble
+1 Wayfarer's Bauble
+1 Whispersilk Cloak
+1 Blasphemous Act
+1 Grab the Prize
+1 Jeska's Will
+1 Last Chance
+1 Meltdown
+1 Spectacular Showdown
+1 Vandalblast
+1 Curse of Opulence
+1 Descent into Avernus
+1 Fiery Emancipation
+1 Rain of Riches
+1 Spiked Corridor // Torture Pit
+1 Spiteful Banditry
+1 Weapons Manufacturing
+1 Daily Bugle Building
+1 Darksteel Citadel
+1 Fire Nation Palace
+28 Mountain
+1 Rogue's Passage
+1 The Gold Saucer
+1 Treasure Vault

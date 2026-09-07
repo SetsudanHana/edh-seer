@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/mister-negative/life-exchange
+# theme Life Exchange (181 decks)
+
+Commander
+1 Mister Negative
+
+Deck
+1 Arcane Signet
+1 Bolas's Citadel
+1 Conjurer's Closet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Pact Weapon
+1 Panharmonicon
+1 Sol Ring
+1 Tainted Sigil
+1 Talisman of Hierarchy
+1 The Wind Crystal
+1 Thought Vessel
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Marsh Flats
+1 Orzhov Basilica
+9 Plains
+1 Reliquary Tower
+1 Shattered Sanctum
+1 Shineshadow Snarl
+10 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Vault of Champions
+1 Astarion, the Decadent
+1 Blood Celebrant
+1 Bloodletter of Aclazotz
+1 Charming Prince
+1 Children of Korlis
+1 Dark Confidant
+1 Darkstar Augur
+1 Enduring Tenacity
+1 Flickerwisp
+1 Gray Merchant of Asphodel
+1 Gwenom, Remorseless
+1 K'rrik, Son of Yawgmoth
+1 Lotho, Corrupt Shirriff
+1 Phelia, Exuberant Shepherd
+1 Platinum Angel
+1 Solemn Simulacrum
+1 Soul Warden
+1 Tree of Perdition
+1 Vito, Thorn of the Dusk Rose
+1 Vizkopa Guildmage
+1 Wall of Blood
+1 Witch Enchanter
+1 Authority of the Consuls
+1 Black Market Connections
+1 Parker Luck
+1 Phyrexian Arena
+1 Phyrexian Unlife
+1 Sanguine Bond
+1 Tainted Remedy
+1 Teleportation Circle
+1 Wound Reflection
+1 Angel's Grace
+1 Anguished Unmaking
+1 Cloudshift
+1 Dark Ritual
+1 Despark
+1 Eerie Interlude
+1 Ephemerate
+1 Flicker of Fate
+1 Inkshield
+1 Malakir Rebirth
+1 Parting Gust
+1 Path to Exile
+1 Swords to Plowshares
+1 Damn
+1 Debt to the Deathless
+1 Exsanguinate
+1 Feed the Swarm
+1 Night's Whisper
+1 Reanimate
+1 Sign in Blood
+1 Toxic Deluge

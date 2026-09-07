@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/fblthp-lost-on-the-range/plot
+# theme Plot (36 decks)
+
+Commander
+1 Fblthp, Lost on the Range
+
+Deck
+1 Accorder's Shield
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Bone Saw
+1 Cathar's Shield
+1 Chimeric Mass
+1 Claws of Gix
+1 Codex Shredder
+1 Dark Sphere
+1 Darksteel Relic
+1 Delif's Cone
+1 Everflowing Chalice
+1 Fountain of Youth
+1 Herbal Poultice
+1 Kite Shield
+1 Lodestone Bauble
+1 Lotus Petal
+1 Mishra's Bauble
+1 Paradise Mantle
+1 Sapphire Medallion
+1 Sensei's Divining Top
+1 Sol Ring
+1 Spellbook
+1 Spidersilk Net
+1 Thought Vessel
+1 Tormod's Crypt
+1 Urza's Bauble
+1 Welding Jar
+1 Zuran Orb
+1 Academy Ruins
+1 Flooded Strand
+23 Island
+1 Mystic Sanctuary
+1 Polluted Delta
+1 Reliquary Tower
+1 Rivendell
+1 Seat of the Synod
+1 Artificer's Assistant
+1 Cyberdrive Awakener
+1 Etherium Sculptor
+1 Geralf, the Fleshwright
+1 Hangarback Walker
+1 Hullbreaker Horror
+1 Kappa Cannoneer
+1 Laboratory Maniac
+1 Marketback Walker
+1 Memnite
+1 Ornithopter
+1 Phyrexian Walker
+1 Riddlesmith
+1 Sai, Master Thopterist
+1 Shield Sphere
+1 Stonecoil Serpent
+1 The Reality Chip
+1 Urza, Lord High Artificer
+1 Amphibian Downpour
+1 Efficient Construction
+1 Mirrodin Besieged
+1 Propaganda
+1 Brain Freeze
+1 Brainstorm
+1 Consider
+1 Counterspell
+1 High Tide
+1 Opt
+1 Paradoxical Outcome
+1 Pongify
+1 Rapid Hybridization
+1 Retract
+1 Surge of Brilliance
+1 Jace, Wielder of Mysteries
+1 Gitaxian Probe
+1 Mana Severance
+1 Mind's Desire
+1 Ponder
+1 Preordain
+1 Serum Visions

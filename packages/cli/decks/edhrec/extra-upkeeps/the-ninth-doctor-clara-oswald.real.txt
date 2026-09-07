@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/98HWWF2XjQkD-hGQekjZyw (source https://archidekt.com/decks/10951597)
+# tags Extra Upkeeps, Monarch, Clones, Spellslinger, Tokens, Control; bracket 3; saved 2026-09-04; 41 tagged of 906 indexed
+
+Commander
+1 The Ninth Doctor
+1 Clara Oswald
+
+Deck
+1 An Offer You Can't Refuse
+1 Brainstorm
+1 Brainsurge
+1 Confusticate and Bebother
+1 Everybody Lives!
+1 Flashback
+1 Gallifrey Falls // No More
+1 Legion Leadership
+1 Loran's Escape
+1 Negate
+1 Perch Protection
+1 Prismari Command
+1 Restoration Magic
+1 Sejiri Shelter
+1 Sink into Stupor
+1 Slip Out the Back
+1 Swords to Plowshares
+1 Thraben Charm
+1 Timeline Inquiry
+1 Ancestral Vision
+1 Blasphemous Act
+1 Chronomantic Escape
+1 Inspiring Refrain
+1 Irenicus's Vile Duplication
+1 Multiversal Recruitment
+1 Promise of Loyalty
+1 Quantum Misalignment
+1 Rousing Refrain
+1 Spirit Water Revival
+1 Sundering Eruption
+1 As Foretold
+1 Assemble the Legion
+1 Court of Embereth
+1 Court of Grace
+1 Court of Ire
+1 Court of Vantress
+1 Extravagant Replication
+1 Paradox Haze
+1 Shadow of the Second Sun
+1 Super Intelligence
+1 Teferi's Ageless Insight
+1 Thopter Spy Network
+1 Bard, King of Dale
+1 Bonehoard Dracosaur
+1 Dinosaurs on a Spaceship
+1 Dragonmaster Outcast
+1 Hydroelectric Specimen
+1 Mirror-Sigil Sergeant
+1 Skyline Despot
+1 Sphinx of the Second Sun
+1 Wilfred Mott
+1 Witch Enchanter
+1 Battlefield Forge
+1 Cascade Bluffs
+1 Command Tower
+1 Deserted Beach
+1 Exotic Orchard
+1 Fiery Islet
+1 Flooded Strand
+1 Furycalm Snarl
+1 Glacial Fortress
+4 Island
+2 Mountain
+1 Mystic Monastery
+1 Otawara, Soaring City
+1 Path of Ancestry
+2 Plains
+1 Port Town
+1 Prairie Stream
+1 Raugrin Triome
+1 Rivendell
+1 Rugged Prairie
+1 Scalding Tarn
+1 Shivan Reef
+1 Stormcarved Coast
+1 Sunbaked Canyon
+1 Sundown Pass
+1 Temple of Enlightenment
+1 Temple of Epiphany
+1 Temple of Triumph
+1 Urza's Saga
+1 Elspeth, Storm Slayer
+1 Honor-Worn Shaku
+1 Hourglass of the Lost
+1 Lotus Bloom
+1 Midnight Clock
+1 Mox Tantalite
+1 Paradise Mantle
+1 Relic of Legends
+1 Replicating Ring
+1 Sol Talisman
+1 Springleaf Drum
+1 Unlicensed Hearse

@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/betor-ancestors-voice/life-exchange
+# theme Life Exchange (31 decks)
+
+Commander
+1 Betor, Ancestor's Voice
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Bolas's Citadel
+1 Sol Ring
+1 Staff of Compleation
+1 Talisman of Hierarchy
+1 Whip of Erebos
+1 Blossoming Sands
+1 Brushland
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+4 Forest
+1 Godless Shrine
+1 Horizon Canopy
+1 Isolated Chapel
+1 Llanowar Wastes
+1 Marsh Flats
+1 Murmuring Bosk
+1 Nurturing Peatland
+1 Overgrown Farmland
+1 Overgrown Tomb
+4 Plains
+1 Sandsteppe Citadel
+1 Shadowy Backstreet
+5 Swamp
+1 Temple Garden
+1 Vault of the Archangel
+1 Verdant Catacombs
+1 Windswept Heath
+1 Woodland Cemetery
+1 Aerith, Last Ancient
+1 Beledros Witherbloom
+1 Bloodthirsty Conqueror
+1 Celestine, the Living Saint
+1 Children of Korlis
+1 Dark Confidant
+1 Darkstar Augur
+1 Disciple of Freyalise
+1 Doom Whisperer
+1 Elves of Deep Shadow
+1 Enduring Tenacity
+1 Envoy of the Ancestors
+1 Essence Warden
+1 Exemplar of Light
+1 Gwenom, Remorseless
+1 Haywire Mite
+1 K'rrik, Son of Yawgmoth
+1 Kami of Whispered Hopes
+1 Kutzil, Malamet Exemplar
+1 Lathiel, the Bounteous Dawn
+1 Madame Null, Power Broker
+1 Mister Negative
+1 Moseo, Vein's New Dean
+1 Priest of Fell Rites
+1 Rhox Faithmender
+1 Rodolf Duskbringer
+1 Sakura-Tribe Elder
+1 Scheming Silvertongue
+1 Soul Warden
+1 Underrealm Lich
+1 Vilis, Broker of Blood
+1 Vito, Thorn of the Dusk Rose
+1 Willowdusk, Essence Seer
+1 Witch Enchanter
+1 Axis of Mortality
+1 Black Market Connections
+1 Exquisite Blood
+1 Lunar Convocation
+1 Phyrexian Arena
+1 Ripples of Undeath
+1 Sanguine Bond
+1 Sylvan Library
+1 Abzan Charm
+1 Anguished Unmaking
+1 Bitter Triumph
+1 Entomb
+1 Fell the Profane
+1 Heroic Intervention
+1 Path to Exile
+1 Swords to Plowshares
+1 Buried Alive
+1 Cultivate
+1 Eerie Ultimatum
+1 Feed the Swarm
+1 Nature's Lore
+1 Reanimate
+1 Three Visits
+1 Toxic Deluge

@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/progenitus/exalted
+# theme Exalted (20 decks)
+
+Commander
+1 Progenitus
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Fist of Suns
+1 Rammas Echor, Ancient Shield
+1 Sol Ring
+1 Timeless Lotus
+1 Breeding Pool
+1 Cathedral of War
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+5 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+3 Island
+1 Jungle Shrine
+1 Misty Rainforest
+3 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+3 Plains
+1 Sacred Foundry
+1 Sandsteppe Citadel
+1 Savage Lands
+1 Seaside Citadel
+1 Stomping Ground
+2 Swamp
+1 Terramorphic Expanse
+1 The World Tree
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Akrasan Squire
+1 Aven Squire
+1 Battlegrace Angel
+1 Birds of Paradise
+1 Court Archers
+1 Duty-Bound Dead
+1 Ethercaste Knight
+1 Faeburrow Elder
+1 Frontline Sage
+1 Geode Golem
+1 Giltspire Avenger
+1 Goblin Champion
+1 Guardians of Akrasa
+1 Ignoble Hierarch
+1 Isshin, Two Heavens as One
+1 Jodah, Archmage Eternal
+1 Knight of Glory
+1 Knight of Infamy
+1 Noble Hierarch
+1 Qasali Pridemage
+1 Rafiq of the Many
+1 Servant of Nefarox
+1 Sigiled Paladin
+1 Sublime Archangel
+1 The Queen of Dale
+1 Angelic Benediction
+1 Angelic Exaltation
+1 Ardent Plea
+1 Finest Hour
+1 Flaming Fist
+1 Leyline of Mutation
+1 Leyline of the Guildpact
+1 Maelstrom Nexus
+1 Mirari's Wake
+1 Rhythm of the Wild
+1 Rising of the Day
+1 Anguished Unmaking
+1 Counterspell
+1 Fog
+1 Growth Spiral
+1 Negate
+1 Path to Exile
+1 Return of the Wildspeaker
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Cultivate
+1 Demonic Tutor
+1 Explore
+1 Explosive Vegetation
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Search for Tomorrow
+1 Three Visits

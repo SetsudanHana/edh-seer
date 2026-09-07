@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/faldorn-dread-wolf-herald/exile
+# theme Exile (662 decks)
+
+Commander
+1 Faldorn, Dread Wolf Herald
+
+Deck
+1 Arcane Signet
+1 Chaos Wand
+1 Lightning Greaves
+1 Sol Ring
+1 Wand of Wonder
+1 Castle Embereth
+1 Cinder Glade
+1 Command Tower
+10 Forest
+1 Game Trail
+1 Gruul Turf
+1 Highland Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+10 Mountain
+1 Myriad Landscape
+1 Raging Ravine
+1 Rockfall Vale
+1 Rootbound Crag
+1 Spinerock Knoll
+1 Temple of Abandon
+1 Apex Devastator
+1 Battle Mammoth
+1 Beanstalk Giant
+1 Bloodbraid Elf
+1 Bonecrusher Giant
+1 Conspiracy Theorist
+1 Containment Construct
+1 Dire Fleet Daredevil
+1 Durnan of the Yawning Portal
+1 Embereth Shieldbreaker
+1 End-Raze Forerunners
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Goblin Anarchomancer
+1 Green Slime
+1 Laelia, the Blade Reforged
+1 Nalfeshnee
+1 Party Thrasher
+1 Professional Face-Breaker
+1 Questing Druid
+1 Sakura-Tribe Elder
+1 Savvy Trader
+1 Tectonic Giant
+1 Tlincalli Hunter
+1 Urabrask the Hidden
+1 Urabrask, Heretic Praetor
+1 Wild-Magic Sorcerer
+1 Beastmaster Ascension
+1 Charred Foyer // Warped Space
+1 Outpost Siege
+1 Passionate Archaeologist
+1 Stolen Strategy
+1 Valakut Exploration
+1 Warstorm Surge
+1 Wild Wasteland
+1 Beast Within
+1 Chaos Warp
+1 Delayed Blast Fireball
+1 Demon Bolt
+1 Natural Reclamation
+1 Return of the Wildspeaker
+1 You Find Some Prisoners
+1 Vivien, Champion of the Wilds
+1 Xenagos, the Reveler
+1 Cultivate
+1 Escape to the Wilds
+1 Explore
+1 Ignite the Future
+1 Jeska's Will
+1 Kodama's Reach
+1 Light Up the Stage
+1 Nature's Lore
+1 Reckless Impulse
+1 Search for Tomorrow
+1 Terramorph
+1 Three Visits
+1 Venture Forth
+1 Volcanic Torrent
+1 Wrenn's Resolve

@@ -1,0 +1,78 @@
+# edhrec deck https://edhrec.com/deckpreview/cZkYAUUtKFGsgkgyfrpvtw (source https://moxfield.com/decks/pFuoR4Kl7UC_P5HBppx3NQ)
+# tags Mill; bracket 3; saved 2026-09-05; 2327 tagged of 12810 indexed
+
+Commander
+1 The Mindskinner
+
+Deck
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Archive Trap
+1 Brainstorm
+1 Counterspell
+1 Cyclonic Rift
+1 Didn't Say Please
+1 Fierce Guardianship
+1 Force of Negation
+1 Mana Drain
+1 Negate
+1 Pongify
+1 Rapid Hybridization
+1 Sink into Stupor
+1 Swan Song
+1 Visions of Beyond
+1 Arcane Signet
+1 Blackblade Reforged
+1 Bonehoard
+1 Commander's Plate
+1 Fireshrieker
+1 Grafdigger's Cage
+1 Lightning Greaves
+1 Mesmeric Orb
+1 Mindcrank
+1 Riverchurn Monument
+1 Sapphire Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of the Animist
+1 The Water Crystal
+1 Auton Soldier
+1 Bruvac the Grandiloquent
+1 Consecrated Sphinx
+1 Faerie Mastermind
+1 Fleet Swallower
+1 Giggling Skitterspike
+1 Hedron Crab
+1 Hydroelectric Specimen
+1 Jace's Phantasm
+1 Riddlekeeper
+1 Ruin Crab
+1 Sakashima of a Thousand Faces
+1 Soulless Jailer
+1 Spark Double
+1 Terisian Mindbreaker
+1 Undead Alchemist
+1 Zellix, Sanity Flayer
+1 Court of Cunning
+1 Fraying Sanity
+1 Memory Erosion
+1 Mystic Remora
+1 Propaganda
+1 Psychic Corrosion
+1 Cut Your Losses
+1 Fractured Sanity
+1 Irenicus's Vile Duplication
+1 Maddening Cacophony
+1 Nanogene Conversion
+1 Quantum Misalignment
+1 Sea Gate Restoration
+1 Tasha's Hideous Laughter
+1 Traumatize
+1 Windfall
+29 Island
+1 Mystic Sanctuary
+1 Nykthos, Shrine to Nyx
+1 Otawara, Soaring City
+1 Reliquary Tower
+1 Urza's Saga
+1 The Theorist, Jace Beleren

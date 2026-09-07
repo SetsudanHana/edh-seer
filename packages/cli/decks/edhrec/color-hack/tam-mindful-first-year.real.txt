@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/bECZRUb8Q7WbZLnk6n3iPA (source https://archidekt.com/decks/25062276)
+# tags Color Hack; bracket 2; saved 2026-08-20; 31 tagged of 718 indexed
+
+Commander
+1 Tam, Mindful First-Year
+
+Deck
+1 Alchemist's Refuge
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Grove
+1 Flooded Strand
+7 Forest
+7 Island
+1 Meteor Crater
+1 Minamo, School at Water's Edge
+1 Mistrise Village
+1 Misty Rainforest
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Scalding Tarn
+1 Tolaria West
+1 Tropical Island
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya Coast
+1 Alter Reality
+1 Blue Elemental Blast
+1 Brainstorm
+1 Crystal Spray
+1 Double Major
+1 Eldritch Immunity
+1 First Family
+1 Glamerdye
+1 Hunter's Mark
+1 Hydroblast
+1 Jaded Response
+1 Might of the Nephilim
+1 Moonlace
+1 Muddle the Mixture
+1 Prismatic Lace
+1 Quickchange
+1 Rime Chill
+1 Seedtime
+1 Sleight of Mind
+1 Spectral Shift
+1 Veil of Summer
+1 Ana Sanctuary
+1 Case of the Shattered Pact
+1 Chill
+1 Dream Coat
+1 Imprisoned in the Moon
+1 Prismatic Undercurrents
+1 Well-Laid Plans
+1 Aurora Awakener
+1 Birds of Paradise
+1 Bloom Tender
+1 Cerulean Drake
+1 Chameleon Colossus
+1 Drowner of Truth
+1 Ersatz Gnomes
+1 Escaped Shapeshifter
+1 Fallaji Wayfarer
+1 Glister Bairn
+1 Mondo Gecko
+1 Murkfiend Liege
+1 Nantuko Blightcutter
+1 Painter's Servant
+1 Phantom Centaur
+1 Prismabasher
+1 Prismwake Merrow
+1 Scion of Draco
+1 Scuttlemutt
+1 Snapping Voidcraw
+1 Stonecoil Serpent
+1 Wildvine Pummeler
+1 Civic Saber
+1 Conqueror's Flail
+1 Dragonfire Blade
+1 Emerald Medallion
+1 Puca's Eye
+1 Sanctuary Blade
+1 Sapphire Medallion
+1 Sol Ring
+1 Sword of Light and Shadow
+1 Sword of Sinew and Steel
+1 Sword of War and Peace
+1 Talisman of Curiosity
+1 Elemental Spectacle
+1 Govern the Guildless
+1 Green Sun's Zenith

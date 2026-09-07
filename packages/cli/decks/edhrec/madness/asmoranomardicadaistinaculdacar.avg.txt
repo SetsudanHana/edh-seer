@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/asmoranomardicadaistinaculdacar/madness
+# theme Madness (143 decks)
+
+Commander
+1 Asmoranomardicadaistinaculdacar
+
+Deck
+1 Arcane Signet
+1 Clock of Omens
+1 Grimoire of the Dead
+1 Monument to Endurance
+1 Nuka-Cola Vending Machine
+1 Rakdos Signet
+1 Sol Ring
+1 Talisman of Indulgence
+1 The Underworld Cookbook
+1 Trading Post
+1 Witch's Oven
+1 Ash Barrens
+1 Barren Moor
+1 Blood Crypt
+1 Bojuka Bog
+1 Buried Ruin
+1 Canyon Slough
+1 Command Tower
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Forgotten Cave
+1 Geier Reach Sanitarium
+9 Mountain
+1 Polluted Mire
+1 Rakdos Carnarium
+1 Smoldering Crater
+1 Smoldering Marsh
+11 Swamp
+1 Academy Manufactor
+1 Anje Falkenrath
+1 Anje's Ravager
+1 Archfiend of Ifnir
+1 Archfiend of Spite
+1 Big Game Hunter
+1 Bone Miser
+1 Brash Taunter
+1 Cauldron Familiar
+1 Chainer, Nightmare Adept
+1 Conspiracy Theorist
+1 Containment Construct
+1 Experimental Confectioner
+1 Glint-Horn Buccaneer
+1 Grave Scrabbler
+1 Hazel's Brewmaster
+1 Kitchen Imp
+1 Magus of the Wheel
+1 Mirkwood Bats
+1 Necrogoyf
+1 Old Flitterfang
+1 Ovalchase Daredevil
+1 Rapacious Guest
+1 Shadowgrange Archfiend
+1 Squee, Goblin Nabob
+1 Surly Badgersaur
+1 Tempting Witch
+1 Voracious Fell Beast
+1 Dying to Serve
+1 Faith of the Devoted
+1 Feast of Sanity
+1 Tortured Existence
+1 Bake into a Pie
+1 Big Score
+1 Chef's Kiss
+1 Dark Withering
+1 Demand Answers
+1 Fiery Temper
+1 Lightning Axe
+1 Savor
+1 Thrill of Possibility
+1 Daretti, Scrap Savant
+1 Avacyn's Judgment
+1 Blasphemous Act
+1 Bone Shards
+1 Call to the Netherworld
+1 Cathartic Reunion
+1 Faithless Looting
+1 Feed the Swarm
+1 Foreboding Fruit
+1 From Under the Floorboards
+1 Taste of Death
+1 Terminal Agony

@@ -1,0 +1,103 @@
+# edhrec average deck: https://edhrec.com/average-decks/kenrith-the-returned-king/aikido
+# theme Aikido (44 decks)
+
+Commander
+1 Kenrith, the Returned King
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Sol Ring
+1 Thought Vessel
+1 Wedding Ring
+1 Wishclaw Talisman
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Forbidden Orchard
+2 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Island
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+2 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Polluted Delta
+1 Reflecting Pool
+1 Sacred Foundry
+1 Scalding Tarn
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Agatha of the Vile Cauldron
+1 Biomancer's Familiar
+1 Birds of Paradise
+1 Bloom Tender
+1 Brash Taunter
+1 Breena, the Demagogue
+1 Edric, Spymaster of Trest
+1 Generous Patron
+1 Gluntch, the Bestower
+1 Humble Defector
+1 Kardur, Doomscourge
+1 Loran of the Third Path
+1 Mangara, the Diplomat
+1 Master of Ceremonies
+1 Nelly Borca, Impulsive Accuser
+1 Nils, Discipline Enforcer
+1 Noble Hierarch
+1 Queen Marchesa
+1 Seedborn Muse
+1 Selfless Squire
+1 Selvala, Explorer Returned
+1 Shadrix Silverquill
+1 Skullwinder
+1 Zirda, the Dawnwaker
+1 Curse of Opulence
+1 Duelist's Heritage
+1 Ghostly Prison
+1 Gleaming Splendor
+1 Propaganda
+1 Rhystic Study
+1 Smothering Tithe
+1 Training Grounds
+1 Wilderness Reclamation
+1 Anguished Unmaking
+1 Arachnogenesis
+1 Arcane Denial
+1 Assassin's Trophy
+1 Beast Within
+1 Boros Charm
+1 Comeuppance
+1 Deflecting Palm
+1 Generous Gift
+1 Inkshield
+1 Path to Exile
+1 Reins of Power
+1 Swords to Plowshares
+1 Take the Bait
+1 Teferi's Protection
+1 Cultivate
+1 Disrupt Decorum
+1 Farseek
+1 Nature's Lore
+1 Rampant Growth
+1 Scheming Symmetry
+1 Taunt from the Rampart
+1 Tempt with Discovery
+1 Three Visits

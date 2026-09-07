@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/nymris-oonas-trickster/flash
+# theme Flash (180 decks)
+
+Commander
+1 Nymris, Oona's Trickster
+
+Deck
+1 Arcane Signet
+1 Bender's Waterskin
+1 Dimir Signet
+1 Fellwar Stone
+1 Misleading Signpost
+1 Sol Ring
+1 Talisman of Dominance
+1 Thought Vessel
+1 Bojuka Bog
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Exotic Orchard
+11 Island
+1 Morphic Pool
+1 Mystic Sanctuary
+1 Polluted Delta
+1 Reliquary Tower
+1 Shipwreck Marsh
+1 Sunken Hollow
+7 Swamp
+1 Temple of Deceit
+1 Underground River
+1 Watery Grave
+1 Aboleth Spawn
+1 Alela, Cunning Conqueror
+1 Brazen Borrower
+1 Brineborn Cutthroat
+1 Cunning Nightbonder
+1 Ertai Resurrected
+1 Faerie Mastermind
+1 Geyser Drake
+1 Hullbreaker Horror
+1 Hydroelectric Specimen
+1 Malleable Impostor
+1 Mocking Doppelganger
+1 Naiad of Hidden Coves
+1 Notion Thief
+1 Opposition Agent
+1 Slitherwisp
+1 Spectral Sailor
+1 Stunt Double
+1 Torrential Gearhulk
+1 Venser, Shaper Savant
+1 Voracious Tome-Skimmer
+1 Wavebreak Hippocamp
+1 Amphibian Downpour
+1 Dress Down
+1 Eaten by Piranhas
+1 Faerie Tauntings
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Consider
+1 Counterspell
+1 Cyclonic Rift
+1 Dark Ritual
+1 Dig Through Time
+1 Drown in the Loch
+1 Fact or Fiction
+1 Fell the Profane
+1 Frantic Search
+1 Go for the Throat
+1 Infernal Grasp
+1 Mystical Teachings
+1 Negate
+1 Opt
+1 Pongify
+1 Rapid Hybridization
+1 Reality Shift
+1 Resculpt
+1 Rewind
+1 Sink into Stupor
+1 Snap
+1 Swan Song
+1 Unwind
+1 Waterlogged Teachings
+1 Feed the Swarm
+1 Toxic Deluge
+1 Treasure Cruise

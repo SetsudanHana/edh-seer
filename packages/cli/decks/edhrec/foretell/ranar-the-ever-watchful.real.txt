@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/KC8N20tgqEK0fhe7a6hABw (source https://archidekt.com/decks/25494540)
+# tags Blink, Foretell, Spirits; bracket 3; saved 2026-09-04; 520 tagged of 3523 indexed
+
+Commander
+1 Ranar the Ever-Watchful
+
+Deck
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Command Tower
+12 Island
+1 Myriad Landscape
+1 Path of Ancestry
+13 Plains
+1 Port Town
+1 Prairie Stream
+1 Skycloud Expanse
+1 Temple of Enlightenment
+1 Aether Channeler
+1 Archaeomancer
+1 Brago, King Eternal
+1 Cemetery Illuminator
+1 Charming Prince
+1 Cosmos Charger
+1 Custodi Squire
+1 Displacer Kitten
+1 Dour Port-Mage
+1 Drogskol Captain
+1 Empyrean Eagle
+1 Ethereal Valkyrie
+1 Faerie Mastermind
+1 Felidar Guardian
+1 Glorious Protector
+1 Guardian of Faith
+1 Hero of Bretagard
+1 Loran of the Third Path
+1 Mulldrifter
+1 Peregrine Drake
+1 Reflector Mage
+1 Restoration Angel
+1 Sage of the Beyond
+1 Selfless Spirit
+1 Skyclave Apparition
+1 Solemn Simulacrum
+1 Soulherder
+1 Spectral Adversary
+1 Starfield Vocalist
+1 Stoic Farmer
+1 Wall of Omens
+1 Arcane Denial
+1 Behold the Multiverse
+1 Brainstorm
+1 Cosmic Intervention
+1 Counterspell
+1 Depart the Realm
+1 Disorder in the Court
+1 Dovin's Veto
+1 Eerie Interlude
+1 Ephemerate
+1 Ghostly Flicker
+1 Path to Exile
+1 Saw It Coming
+1 Swords to Plowshares
+1 Ultimate Magic: Holy
+1 Arcane Signet
+1 Azorius Signet
+1 Panharmonicon
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 The One Ring
+1 Thought Vessel
+1 Cathars' Crusade
+1 Ghostly Prison
+1 Land Tax
+1 Reconnaissance Mission
+1 Renewed Solidarity
+1 Daydream
+1 Farewell
+1 Ravenform
+1 Spectral Deluge
+1 Tales of the Ancestors
+1 Winds of Abandon

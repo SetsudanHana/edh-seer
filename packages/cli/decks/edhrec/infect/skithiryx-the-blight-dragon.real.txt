@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/ezIZBRFT-7z90QvDQEOK7A (source https://moxfield.com/decks/Ms5hFvNTtUqC5ZL2TWFODw)
+# tags Infect; bracket 3; saved 2026-09-04; 499 tagged of 3213 indexed
+
+Commander
+1 Skithiryx, the Blight Dragon
+
+Deck
+1 Altar's Reap
+1 Blood Pact
+1 Cabal Ritual
+1 Corrupted Conviction
+1 Culling the Weak
+1 Dark Ritual
+1 Dash Hopes
+1 Deadly Rollick
+1 Desperate Measures
+1 Disfigure
+1 Grim Affliction
+1 Infernal Grasp
+1 Tainted Strike
+1 Ultimate Price
+1 Village Rites
+1 Virulent Wound
+1 Vraska's Fall
+1 Whisper of the Dross
+1 Beseech the Mirror
+1 Caress of Phyrexia
+1 Damnation
+1 Diabolic Intent
+1 Grim Tutor
+1 Imperial Seal
+1 Infernal Tutor
+1 Night's Whisper
+1 Rain of Daggers
+1 Read the Bones
+1 Reanimate
+1 Sign in Blood
+1 Thoughtseize
+1 Unearth
+1 Will of the Abzan
+1 Zombify
+1 Black Market
+1 Exquisite Blood
+1 Phyresis
+1 Snake Cult Initiation
+1 Unspeakable Symbol
+1 Bloodghast
+1 Bloodletter of Aclazotz
+1 Chainer, Dementia Master
+1 Crypt Ghast
+1 Erebos, Bleak-Hearted
+1 Evolved Sleeper
+1 Fume Spitter
+1 Grim Servant
+1 K'rrik, Son of Yawgmoth
+1 Madame Null, Power Broker
+1 Maggot Carrier
+1 Magus of the Coffers
+1 Marauding Blight-Priest
+1 Memnite
+1 Nested Shambler
+1 Nine-Lives Familiar
+1 Ornithopter
+1 Priest of Gix
+1 Shirei, Shizo's Caretaker
+1 Skirge Familiar
+1 Starscape Cleric
+1 Vindictive Vampire
+1 Will-o'-the-Wisp
+1 Cabal Coffers
+1 Cabal Stronghold
+22 Swamp
+1 Chrome Mox
+1 Contagion Clasp
+1 Contagion Engine
+1 Jet Medallion
+1 Lashwrithe
+1 Lightning Greaves
+1 Lotus Petal
+1 Mox Amber
+1 Nightmare Lash
+1 Runechanter's Pike
+1 Sol Ring
+1 Transmogrant Altar
+1 Vraska, Betrayal's Sting

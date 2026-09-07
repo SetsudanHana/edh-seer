@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/mwAmESyMuSkqdeIvhAT_6w (source https://moxfield.com/decks/hC0W-Tr6jUqlA5h1ilr-fg)
+# tags Control, Tempo; bracket 3; saved 2026-09-05; 1020 tagged of 17663 indexed
+
+Commander
+1 Alela, Cunning Conqueror
+
+Deck
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Commandeer
+1 Counterspell
+1 Dark Ritual
+1 Deadly Rollick
+1 Drown in the Loch
+1 Go for the Throat
+1 Misdirection
+1 Mystical Tutor
+1 Opt
+1 Pongify
+1 Reality Shift
+1 Rewind
+1 Run Away Together
+1 Snap
+1 Spell Stutter
+1 Swan Song
+1 Unwind
+1 Withering Torment
+1 Arcane Signet
+1 Banner of Kinship
+1 Dimir Signet
+1 Fellwar Stone
+1 Orcrist, Goblin-cleaver
+1 Skullclamp
+1 Sol Ring
+1 Sword of the Animist
+1 Talisman of Dominance
+1 Bitterbloom Bearer
+1 Blightwing Bandit
+1 Brazen Borrower
+1 Enduring Curiosity
+1 Faerie Harbinger
+1 Faerie Mastermind
+1 Glen Elendra Liege
+1 High Fae Trickster
+1 Hypnotic Sprite
+1 Malleable Impostor
+1 Mocking Sprite
+1 Notion Thief
+1 Nymris, Oona's Trickster
+1 Obyra, Dreaming Duelist
+1 Oona's Blackguard
+1 Scion of Oona
+1 Spellstutter Sprite
+1 Talion, the Kindly Lord
+1 Tegwyll, Duke of Splendor
+1 Vendilion Clique
+1 Choked Estuary
+1 Command Tower
+1 Darkslick Shores
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Gloomlake Verge
+10 Island
+1 Morphic Pool
+1 Multiversal Passage
+1 Polluted Delta
+1 Reliquary Tower
+1 Secluded Glen
+1 Shipwreck Marsh
+1 Sunken Hollow
+1 Sunken Ruins
+8 Swamp
+1 Three Tree City
+1 Underground River
+1 Watery Grave
+1 Distant Melody
+1 Faerie Slumber Party
+1 Feed the Swarm
+1 Kindred Dominance
+1 Tegwyll's Scouring
+1 Faerie Tauntings
+1 Kindred Discovery
+1 Leyline of Anticipation
+1 Propaganda
+1 Reconnaissance Mission
+1 Reflections of Littjara
+1 Narset, Parter of Veils

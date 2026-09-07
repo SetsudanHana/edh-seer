@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/jin-sakai-ghost-of-tsushima/saboteurs
+# theme Saboteurs (30 decks)
+
+Commander
+1 Jin Sakai, Ghost of Tsushima
+
+Deck
+1 Arcane Signet
+1 Bident of Thassa
+1 Buster Sword
+1 Dimir Signet
+1 Fellwar Stone
+1 Genji Glove
+1 Lightning Greaves
+1 Quietus Spike
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Feast and Famine
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The Key to the Vault
+1 Umezawa's Jitte
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Drowned Catacomb
+1 Eiganjo Castle
+1 Exotic Orchard
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+6 Island
+1 Isolated Chapel
+1 Morphic Pool
+4 Plains
+1 Prairie Stream
+1 Raffine's Tower
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sea of Clouds
+1 Sunken Hollow
+4 Swamp
+1 Underground River
+1 Watery Grave
+1 Archpriest of Shadows
+1 Baleful Strix
+1 Basim Ibn Ishaq
+1 Drana, Liberator of Malakir
+1 Enduring Curiosity
+1 Fallen Shinobi
+1 Grazilaxx, Illithid Scholar
+1 Grim Hireling
+1 Ink-Eyes, Servant of Oni
+1 Kamiz, Obscura Oculus
+1 Malcolm, Alluring Scoundrel
+1 Medomai the Ageless
+1 Mistblade Shinobi
+1 Nashi, Moon Sage's Scion
+1 Ninja of the Deep Hours
+1 Orochi Soul-Reaver
+1 Prosperous Thief
+1 Psychic Frog
+1 Rev, Tithe Extractor
+1 Satoru Umezawa
+1 Shredder, Shadow Master
+1 Silent Hallcreeper
+1 Silent-Blade Oni
+1 Squall, SeeD Mercenary
+1 Summon: Primal Odin
+1 Unstoppable Slasher
+1 Virtus the Veiled
+1 Coastal Piracy
+1 Duelist's Heritage
+1 Propaganda
+1 Reconnaissance Mission
+1 Sigarda's Aid
+1 Smothering Tithe
+1 An Offer You Can't Refuse
+1 Anguished Unmaking
+1 Counterspell
+1 Cyclonic Rift
+1 Dovin's Veto
+1 Fierce Guardianship
+1 Flawless Maneuver
+1 Path to Exile
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Void Rend
+1 Avatar's Wrath
+1 Damn
+1 Toxic Deluge

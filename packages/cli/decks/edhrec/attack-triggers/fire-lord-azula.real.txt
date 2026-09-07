@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/gcw-ysSjth-wHb-dDSMy4w (source https://archidekt.com/decks/17290085)
+# tags Spell Copy, Firebending, Burn, Attack Triggers, Spellslinger; bracket 3; saved 2026-09-01; 141 tagged of 36827 indexed
+
+Commander
+1 Fire Lord Azula
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Wizard's Staff
+1 Arena of Glory
+1 Blazemire Verge
+1 Cascade Bluffs
+1 Command Beacon
+1 Command Tower
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fire Nation Palace
+1 Flooded Strand
+5 Island
+1 Luxury Suite
+7 Mountain
+1 Polluted Delta
+1 Scorched Geyser
+1 Shivan Reef
+1 Smoldering Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Sunken Hollow
+2 Swamp
+1 Underground River
+1 Watery Grave
+1 Big Score
+1 Bulk Up
+1 Comet Storm
+1 Consult the Star Charts
+1 Dark Ritual
+1 Deadly Rollick
+1 Deflecting Swat
+1 Demand Answers
+1 Desperate Ritual
+1 Electrodominance
+1 Entomb
+1 Expedite
+1 Fact or Fiction
+1 Fierce Guardianship
+1 Fists of Flame
+1 Flashback
+1 Forbidden Alchemy
+1 Force of Will
+1 Frantic Search
+1 Ghostfire Slice
+1 Increasing Vengeance
+1 Invoke Calamity
+1 Lightning Bolt
+1 Narset's Reversal
+1 Prismari Command
+1 Redirect Lightning
+1 Return the Favor
+1 Riddles in the Dark
+1 Seething Song
+1 Shadow Rift
+1 Slip Out the Back
+1 Snap
+1 Stubborn Denial
+1 Swan Song
+1 The Last Agni Kai
+1 Three Steps Ahead
+1 Thrill of Possibility
+1 Traumatic Critique
+1 Unexpected Windfall
+1 Waterlogged Teachings
+1 Bilbo, Thief in the Night
+1 Faerie Mastermind
+1 Hullbreaker Horror
+1 Irma, Part-Time Mutant
+1 Nightscape Familiar
+1 Spellskite
+1 Storm-Kiln Artist
+1 Thunderclap Drake
+1 Torrential Gearhulk
+1 Veyran, Voice of Duality
+1 Vivi Ornitier
+1 Blasphemous Act
+1 Stock Up
+1 Toxic Deluge
+1 Changing Loyalty
+1 Fated Firepower

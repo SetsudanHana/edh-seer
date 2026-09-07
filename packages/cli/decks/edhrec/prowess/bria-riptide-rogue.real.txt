@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/5bLvmpUV0tCDTI-EsphlCA (source https://archidekt.com/decks/7241854)
+# tags Prowess, Tokens, Commander Matters, Spellslinger; bracket 3; saved 2026-09-04; 817 tagged of 10038 indexed
+
+Commander
+1 Bria, Riptide Rogue
+
+Deck
+1 An Offer You Can't Refuse
+1 Battle Hymn
+1 Brainstorm
+1 Consider
+1 Cyclonic Rift
+1 Deflecting Swat
+1 Dig Through Time
+1 Expedite
+1 Fierce Guardianship
+1 Frantic Search
+1 Great Train Heist
+1 Mana Sculpt
+1 Octopus Form
+1 Opt
+1 Perfected Theory
+1 Pongify
+1 Rapid Hybridization
+1 Shore Up
+1 Sink into Stupor
+1 Slip Out the Back
+1 Snap
+1 Valakut Awakening
+1 Anger
+1 Archmage Emeritus
+1 Balmor, Battlemage Captain
+1 Hermes, Overseer of Elpis
+1 Kitsa, Otterball Elite
+1 Rapid Augmenter
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Stormsplitter
+1 Talrand, Sky Summoner
+1 Third Path Iconoclast
+1 Tolabow, Loch Rascal
+1 Valley Floodcaller
+1 Veyran, Voice of Duality
+1 Vivi Ornitier
+1 Young Pyromancer
+1 Arcane Signet
+1 Izzet Signet
+1 Resonating Lute
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Wizard's Staff
+1 Blasphemous Act
+1 Crash Through
+1 Expressive Iteration
+1 Faithless Looting
+1 Haze of Rage
+1 Impolite Entrance
+1 Jeska's Will
+1 Mana Geyser
+1 Mizzix's Mastery
+1 Overpowering Attack
+1 Pearl of Wisdom
+1 Ponder
+1 Preordain
+1 Song of Totentanz
+1 Treasure Cruise
+1 Vandalblast
+1 Cascade Bluffs
+1 Command Tower
+1 Exotic Orchard
+14 Island
+1 Izzet Boilerworks
+6 Mountain
+1 Mystic Sanctuary
+1 Path of Ancestry
+1 Riverpyre Verge
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Thundering Falls
+1 Training Center
+1 Turbulent Springs
+1 Curiosity
+1 Mystic Remora
+1 Stormchaser's Talent
+1 Ral, Crackling Wit

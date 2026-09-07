@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/2ycgN-zZGOHmqRGk6JVWkQ (source https://archidekt.com/decks/25660432)
+# tags Proliferate, Praetors, Phyrexians, Counters Matter, Incubate; bracket unset; saved 2026-09-03; 3 tagged of 14194 indexed
+
+Commander
+1 Omnath, Locus of All
+
+Deck
+1 Adarkar Wastes
+1 Brushland
+1 Caves of Koilos
+1 City of Brass
+1 Command Tower
+1 Deathcap Glade
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Forest
+1 Haunted Ridge
+1 Island
+1 Llanowar Wastes
+1 Mountain
+1 Murmuring Bosk
+1 Nomad Outpost
+1 Opulent Palace
+1 Overgrown Farmland
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Rockfall Vale
+1 Savage Lands
+1 Seaside Citadel
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Stormcarved Coast
+1 Sulfurous Springs
+1 Sundown Pass
+2 Swamp
+1 The Seedcore
+1 Unclaimed Territory
+1 Underground River
+1 Yavimaya Coast
+1 All Will Be One
+1 Blighted Burgeoning
+1 Corruption of Towashi
+1 Gift of Compleation
+1 Inexorable Tide
+1 Phyrexian Arena
+1 Phyrexian Awakening
+1 Sculpted Perfection
+1 Tangled Skyline
+1 Arcane Signet
+1 Astral Cornucopia
+1 Contagion Engine
+1 Everflowing Chalice
+1 Realmbreaker, the Invasion Tree
+1 Sol Ring
+1 Staff of Compleation
+1 Atraxa, Praetors' Voice
+1 Blight Titan
+1 Bloated Contaminator
+1 Bloated Processor
+1 Brimaz, Blight of Oreskos
+1 Cankerbloom
+1 Chrome Host Seedshark
+1 Compleated Huntmaster
+1 Contaminant Grafter
+1 Elesh Norn
+1 Elvish Vatkeeper
+1 Essence of Orthodoxy
+1 Ezuri, Stalker of Spheres
+1 Gix, Yawgmoth Praetor
+1 Glissa Sunslayer
+1 Glissa, Herald of Predation
+1 Gurgling Anointer
+1 Ichor Drinker
+1 Jin-Gitaxias
+1 Massacre Wurm
+1 Metastatic Evangel
+1 Mondrak, Glory Dominus
+1 Norn's Inquisitor
+1 Phyrexian Censor
+1 Phyrexian Metamorph
+1 Progenitor Exarch
+1 Sheoldred
+1 Tekuthal, Inquiry Dominus
+1 Urabrask the Hidden
+1 Valko Indorian
+1 Venser, Corpse Puppet
+1 Vorinclex, Monstrous Raider
+1 Wurmcoil Engine
+1 Yawgmoth, Thran Physician
+1 Breach the Multiverse
+1 Diabolic Intent
+1 Drown in Ichor
+1 Eyes of Gitaxias
+1 Glistening Dawn
+1 Nature's Lore
+1 Sunder the Gateway
+1 Sunfall
+1 Tezzeret's Gambit
+1 Unnatural Restoration
+1 Yawgmoth's Vile Offering
+1 Experimental Augury
+1 Vraska, Betrayal's Sting

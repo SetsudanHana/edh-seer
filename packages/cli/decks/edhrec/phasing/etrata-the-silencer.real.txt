@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/O-p0gyeFAuKcisxtr7AQyQ (source https://archidekt.com/decks/11717095)
+# tags Clones, Activated Abilities, Counterspells, Assassins, Card Draw, Phasing, Blink; bracket 3; saved 2026-05-26; 5 tagged of 2057 indexed
+
+Commander
+1 Etrata, the Silencer
+
+Deck
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Blur
+1 Brainstorm
+1 Change of Plans
+1 Counterspell
+1 Dark Ritual
+1 Displace
+1 Essence Flux
+1 Flusterstorm
+1 Ghostly Flicker
+1 Hurkyl's Recall
+1 Illusionist's Stratagem
+1 March of Swirling Mist
+1 Planar Incision
+1 Reality Ripple
+1 Reality Shift
+1 Shred Memory
+1 Siren's Ruse
+1 Slip Out the Back
+1 Swan Song
+1 Teferi's Time Twist
+1 Tyrant's Scorn
+1 Withering Torment
+1 Arcane Signet
+1 Bender's Waterskin
+1 Dimir Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Mana Geode
+1 Sapphire Medallion
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Thought Vessel
+1 Baleful Strix
+1 Deadeye Navigator
+1 Dimir House Guard
+1 Dimir Infiltrator
+1 Dour Port-Mage
+1 Gogo, Master of Mimicry
+1 Mari, the Killing Quill
+1 Peregrine Drake
+1 Ramses, Assassin Lord
+1 Ravenloft Adventurer
+1 Spark Double
+1 Spectral Adversary
+1 Vodalian Illusionist
+1 Beseech the Queen
+1 Drawn from Dreams
+1 Eagle Vision
+1 Feed the Swarm
+1 Ravenform
+1 Read the Bones
+1 Savor the Moment
+1 Scheming Symmetry
+1 Sign in Blood
+1 Bojuka Bog
+1 Castle Vantress
+1 Command Tower
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Dismal Backwater
+1 Drowned Catacomb
+14 Island
+1 Reliquary Tower
+1 Shipwreck Marsh
+1 Sunken Hollow
+10 Swamp
+1 Underground River
+1 Watery Grave
+1 Candlekeep Sage
+1 Frogify
+1 Phyrexian Arena
+1 Vanishing

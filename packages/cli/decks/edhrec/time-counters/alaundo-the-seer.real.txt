@@ -1,0 +1,86 @@
+# edhrec deck https://edhrec.com/deckpreview/MzatSz1e9WRM0TGW2TVStg (source https://archidekt.com/decks/25280990)
+# tags Exile, Ramp, Midrange, Suspend, Time Counters, Tempo; bracket 2; saved 2026-08-13; 77 tagged of 3104 indexed
+
+Commander
+1 Alaundo the Seer
+
+Deck
+1 Aeon Chronicler
+1 Anticausal Vestige
+1 Arixmethes, Slumbering Isle
+1 Beanstalk Giant
+1 Benthic Anomaly
+1 Brazen Borrower
+1 Deep-Sea Kraken
+1 Fungal Behemoth
+1 Ghalta, Primal Hunger
+1 Ioreth of the Healing House
+1 Jhoira's Timebug
+1 Kiora's Follower
+1 Marvin, Murderous Mimic
+1 Oviya, Automech Artisan
+1 Primordial Sage
+1 Rift Sower
+1 Riftwing Cloudskate
+1 Sinister Concierge
+1 Star Whale
+1 Sword Coast Serpent
+1 Taigam, Master Opportunist
+1 The Foretold Soldier
+1 The Thirteenth Doctor
+1 Time Beetle
+1 Timebender
+1 Watcher of Hours
+1 All of History, All at Once
+1 Ancestral Vision
+1 Crashing Footfalls
+1 Echocasting Symposium
+1 Gaea's Will
+1 Hypergenesis
+1 Inevitable Betrayal
+1 Inspiring Refrain
+1 Mobilize
+1 Reality Strobe
+1 Search for Tomorrow
+1 Venture Forth
+1 Wibbly-wobbly, Timey-wimey
+1 Arcane Signet
+1 Commander's Sphere
+1 Doom's Time Platform
+1 Lotus Bloom
+1 Mox Tantalite
+1 Rotating Fireplace
+1 Simic Signet
+1 Sol Ring
+1 Sol Talisman
+1 Archway Commons
+1 Command Bridge
+1 Command Tower
+9 Forest
+1 Gateway Plaza
+13 Island
+1 Path of Ancestry
+1 Rain-Slicked Copse
+1 Rimewood Falls
+1 Rupture Spire
+1 Sodden Verdure
+1 Tangled Islet
+1 Transguild Promenade
+1 Awakening
+1 Garruk's Uprising
+1 Behold the Multiverse
+1 Burst of Strength
+1 Cerulean Wisps
+1 Clockspinning
+1 Delay
+1 Emerald Charm
+1 Gift of the Viper
+1 I'm a Doctor, Not a . . .
+1 Lifestream's Blessing
+1 Magic Damper
+1 Mystic Reflection
+1 Stony Strength
+1 Surge of Brilliance
+1 Suspend
+1 Venser's Diffusion
+1 Kiora, Behemoth Beckoner

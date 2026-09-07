@@ -1,0 +1,82 @@
+# edhrec deck https://edhrec.com/deckpreview/-npB2kzgqv0kxd0A4n_liw (source https://archidekt.com/decks/23965627)
+# tags Big Mana, Aristocrats, Lifedrain, Lifegain, Combo; bracket 3; saved 2026-09-04; 1180 tagged of 20299 indexed
+
+Commander
+1 K'rrik, Son of Yawgmoth
+
+Deck
+1 Aetherflux Reservoir
+1 Bolas's Citadel
+1 Bontu's Monument
+1 Jet Medallion
+1 Lightning Greaves
+1 Mithril Coat
+1 Sol Ring
+1 Staff of the Death Magus
+1 The Darkness Crystal
+1 Venser's Journal
+1 Whip of Erebos
+1 Baleful Mastery
+1 Blood Pact
+1 Cabal Ritual
+1 Consuming Corruption
+1 Dark Ritual
+1 Malakir Rebirth
+1 Murder
+1 Necrologia
+1 Tendrils of Corruption
+1 Blood Seeker
+1 Bloodletter of Aclazotz
+1 Bloodthirsty Conqueror
+1 Burnished Hart
+1 Crypt Ghast
+1 Dread Presence
+1 Enduring Tenacity
+1 Erebos, God of the Dead
+1 Gray Merchant of Asphodel
+1 Grim Servant
+1 Kokusho, the Evening Star
+1 Massacre Wurm
+1 Ravenous Chupacabra
+1 Sangromancer
+1 Sheoldred, the Apocalypse
+1 Twilight Prophet
+1 Vilis, Broker of Blood
+1 Vito, Thorn of the Dusk Rose
+1 Witch of the Moors
+1 Zulaport Cutthroat
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Command Beacon
+1 Leechridden Swamp
+1 Myriad Landscape
+1 Phyrexian Tower
+1 Radiant Fountain
+1 Reliquary Tower
+25 Swamp
+1 War Room
+1 Witch's Cottage
+1 Damnation
+1 Diabolic Tutor
+1 Exsanguinate
+1 Feed the Swarm
+1 Night's Whisper
+1 Peer into the Abyss
+1 Profane Transfusion
+1 Read the Bones
+1 Repay in Kind
+1 Sign in Blood
+1 Toxic Deluge
+1 Victimize
+1 Exquisite Blood
+1 Font of Agonies
+1 Greed
+1 Grievous Wound
+1 No Mercy
+1 Painful Quandary
+1 Polluted Bonds
+1 Retreat to Hagra
+1 Revenge of Ravens
+1 Virtue of Persistence
+1 Wound Reflection

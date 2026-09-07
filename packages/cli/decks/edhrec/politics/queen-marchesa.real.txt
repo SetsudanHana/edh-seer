@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/Ugwoo7GM8oTN51zeG2L7Cw (source https://archidekt.com/decks/5642429)
+# tags Monarch, Forced Combat, Aikido, Politics; bracket 2; saved 2026-09-04; 316 tagged of 20070 indexed
+
+Commander
+1 Queen Marchesa
+
+Deck
+1 Access Tunnel
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Castle Locthwain
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Godless Shrine
+1 Haunted Ridge
+1 Isolated Chapel
+1 Marsh Flats
+1 Maze of Ith
+4 Mountain
+6 Plains
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sacred Foundry
+1 Savai Triome
+1 Shattered Landscape
+1 Shattered Sanctum
+1 Sundown Pass
+3 Swamp
+1 Throne of the High City
+1 Acidic Soil
+1 Blasphemous Act
+1 Cut a Deal
+1 Disrupt Decorum
+1 Farewell
+1 Fast Forward
+1 Ruinous Ultimatum
+1 Secret Rendezvous
+1 Taunt from the Rampart
+1 Anguished Unmaking
+1 Backlash
+1 Batwing Brume
+1 Boros Charm
+1 Comeuppance
+1 Deflecting Palm
+1 Delirium
+1 Despark
+1 Dire Tactics
+1 Generous Gift
+1 Inkshield
+1 Judgment of Alexander
+1 Olórin's Searing Light
+1 Path to Exile
+1 Rakdos Charm
+1 Stroke of Midnight
+1 Swords to Plowshares
+1 Take the Bait
+1 Teferi's Protection
+1 Terminate
+1 Arcane Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Orzhov Signet
+1 Rakdos Signet
+1 Sol Ring
+1 Sunforger
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Black Market Connections
+1 Court of Ambition
+1 Court of Ire
+1 Curse of Opulence
+1 Duelist's Heritage
+1 Ghostly Prison
+1 Gleaming Splendor
+1 No Mercy
+1 Trouble in Pairs
+1 Breena, the Demagogue
+1 Champions of Minas Tirith
+1 Emberwilde Captain
+1 Firemane Commando
+1 Generous Plunderer
+1 Gix, Yawgmoth Praetor
+1 Goblin Diplomats
+1 Karazikar, the Eye Tyrant
+1 Kardur, Doomscourge
+1 Lotho, Corrupt Shirriff
+1 Mangara, the Diplomat
+1 Master of Ceremonies
+1 Tomik, Wielder of Law
+1 Windborn Muse

@@ -1,0 +1,85 @@
+# edhrec average deck: https://edhrec.com/average-decks/zilortha-strength-incarnate/power
+# theme Power (171 decks)
+
+Commander
+1 Zilortha, Strength Incarnate
+
+Deck
+1 Arcane Signet
+1 Gruul Signet
+1 Loxodon Warhammer
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Skullspore Nexus
+1 Cinder Glade
+1 Command Tower
+1 Evolving Wilds
+13 Forest
+1 Game Trail
+1 Gruul Turf
+1 Kessig Wolf Run
+1 Mosswort Bridge
+10 Mountain
+1 Myriad Landscape
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Stomping Ground
+1 Temple of Abandon
+1 Anzrag, the Quake-Mole
+1 Archetype of Aggression
+1 Challenger Troll
+1 Conifer Strider
+1 Dragonborn Champion
+1 Etali, Primal Storm
+1 Fanatic of Rhonas
+1 Garruk's Packleader
+1 Ghalta, Primal Hunger
+1 Ghalta, Stampede Tyrant
+1 Giant Solifuge
+1 Goblin Anarchomancer
+1 Goreclaw, Terror of Qal Sisma
+1 Hulking Raptor
+1 Ilysian Caryatid
+1 Kogla and Yidaro
+1 Kogla, the Titan Ape
+1 Llanowar Elves
+1 Ogre Battledriver
+1 Outcaster Trailblazer
+1 Phytotitan
+1 Proud Wildbonder
+1 Quartzwood Crasher
+1 Rubblebelt Rioters
+1 Selvala, Heart of the Wilds
+1 Siege Behemoth
+1 Spellbreaker Behemoth
+1 Thunderblust
+1 Titanoth Rex
+1 Xenagos, God of Revels
+1 Zendikar Incarnate
+1 Colossal Majesty
+1 Garruk's Uprising
+1 Gruul War Chant
+1 Monstrous Vortex
+1 Rhythm of the Wild
+1 Sarkhan's Unsealing
+1 Unnatural Growth
+1 Warstorm Surge
+1 Beast Within
+1 Chaos Warp
+1 Entish Restoration
+1 Heroic Intervention
+1 Hunter's Insight
+1 Ram Through
+1 Return of the Wildspeaker
+1 Unleash Fury
+1 Domri, Anarch of Bolas
+1 Blasphemous Act
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Overwhelming Stampede
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Troll Negotiations

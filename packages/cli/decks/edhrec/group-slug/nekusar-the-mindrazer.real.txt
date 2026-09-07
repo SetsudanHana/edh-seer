@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/1dSwIWY-oCttRZsW_1KBEw (source https://moxfield.com/decks/enCgASKW4HWcv4tADNyqCg)
+# tags Group Slug, Group Hug; bracket 3; saved 2026-09-05; 1111 tagged of 31945 indexed
+
+Commander
+1 Nekusar, the Mindrazer
+
+Deck
+1 Aetherize
+1 Aetherspouts
+1 Arcane Denial
+1 Blue Elemental Blast
+1 Dark Ritual
+1 Evacuation
+1 Hurkyl's Recall
+1 Rebuild
+1 Seething Song
+1 Wheel and Deal
+1 Whirlwind Denial
+1 Ankh of Mishra
+1 Arcane Signet
+1 Charcoal Diamond
+1 Dimir Signet
+1 Fire Diamond
+1 Howling Mine
+1 Iron Maiden
+1 Isolation Cell
+1 Izzet Signet
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Teferi's Puzzle Box
+1 Thran Dynamo
+1 Archway of Innovation
+1 Badlands
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Graven Cairns
+1 Haunted Ridge
+2 Island
+2 Mountain
+1 Polluted Delta
+1 Reflecting Pool
+1 Scalding Tarn
+1 Shipwreck Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Swamp
+1 Tainted Isle
+1 Tainted Peak
+1 The Tabernacle at Pendrell Vale
+1 Training Center
+1 Underground Sea
+1 Volcanic Island
+1 Watery Grave
+1 Artist's Talent
+1 Bloodchief Ascension
+1 Burning Earth
+1 Cool but Rude
+1 Dissipation Field
+1 Maddening Hex
+1 Manabarbs
+1 Ominous Seas
+1 Propaganda
+1 Rhystic Study
+1 Roiling Vortex
+1 Smoke
+1 Spiteful Visions
+1 Underworld Dreams
+1 Waste Not
+1 Blasphemous Act
+1 Burning Inquiry
+1 Dark Deal
+1 Day's Undoing
+1 Insult // Injury
+1 Jeska's Will
+1 Last One Standing
+1 Molten Psyche
+1 Profane Tutor
+1 Singularity Rupture
+1 Solve the Equation
+1 Timetwister
+1 Wheel of Fortune
+1 Windfall
+1 Winds of Change
+1 Fate Unraveler
+1 Ghyrson Starn, Kelermorph
+1 Hawkeye, Young Avenger
+1 Kederekt Parasite
+1 Nightscape Familiar
+1 Ojer Axonil, Deepest Might
+1 Psychosis Crawler
+1 Rampaging Ferocidon
+1 Razorkin Needlehead
+1 Scalding Viper
+1 Scrawling Crawler
+1 Sheoldred, the Apocalypse
+1 Vivi Ornitier
+1 Whirlpool Warrior
+1 Ob Nixilis, the Hate-Twisted

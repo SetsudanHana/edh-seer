@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/giny2uRv3vAiBg-rO0pO2Q (source https://moxfield.com/decks/uHs_zFycSEqze8GEnTUFxQ)
+# tags Hatebears, Prison, Control, Combo, Pillow Fort; bracket 3; saved 2026-05-04; 44 tagged of 3423 indexed
+
+Commander
+1 Lavinia, Azorius Renegade
+
+Deck
+1 Academy Rector
+1 Aerial Extortionist
+1 Archangel of Tithes
+1 Aven Mindcensor
+1 Boromir, Warden of the Tower
+1 Dream Trawler
+1 Esper Sentinel
+1 Fatespinner
+1 Gilded Drake
+1 Glittering Lynx
+1 Gold-Forged Thopteryx
+1 Grand Arbiter Augustin IV
+1 Isperia, Supreme Judge
+1 Patron of the Moon
+1 Phyrexian Metamorph
+1 Spell Queller
+1 Spelltithe Enforcer
+1 Suppressor Skyguard
+1 Thalia, Heretic Cathar
+1 Tradewind Rider
+1 Unsettled Mariner
+1 Viseling
+1 Wandering Archaic
+1 Windborn Muse
+1 Witch Enchanter
+1 Academy Ruins
+1 Adarkar Wastes
+1 Command Tower
+1 Evolving Wilds
+1 Flooded Strand
+1 Glacial Floodplain
+1 Glacial Fortress
+1 Halimar Depths
+1 Hall of Heliod's Generosity
+1 Horizon of Progress
+1 Idyllic Beachfront
+1 Irrigated Farmland
+8 Island
+1 Lonely Sandbar
+1 Mystic Sanctuary
+1 Nimbus Maze
+6 Plains
+1 Reliquary Tower
+1 Sea of Clouds
+1 Secluded Steppe
+1 Serra's Sanctum
+1 Talon Gates of Madara
+1 Temple of Enlightenment
+1 Terramorphic Expanse
+1 Arcane Denial
+1 Capsize
+1 Delay
+1 Enlightened Tutor
+1 Mana Tithe
+1 No More Lies
+1 Path to Exile
+1 Swan Song
+1 Whirlwind Denial
+1 Arcane Signet
+1 Crystal Shard
+1 Ebony Owl Netsuke
+1 Iron Maiden
+1 Knowledge Pool
+1 Mana Web
+1 Sol Ring
+1 Talisman of Progress
+1 As Foretold
+1 Aura of Silence
+1 Blind Obedience
+1 Confounding Conundrum
+1 Frozen Aether
+1 Land Equilibrium
+1 Leyline of Anticipation
+1 Mana Breach
+1 Propaganda
+1 Rhystic Circle
+1 Slow Motion
+1 Smuggler's Share
+1 Soul Barrier
+1 Sphere of Safety
+1 Swindler's Scheme
+1 Utter Insignificance
+1 Austere Command
+1 Bribery
+1 Consuming Tide
+1 Winds of Abandon
+1 Teferi, Time Raveler

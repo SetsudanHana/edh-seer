@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/zada-hedron-grinder/glass-cannon
+# theme Glass Cannon (21 decks)
+
+Commander
+1 Zada, Hedron Grinder
+
+Deck
+1 Arcane Signet
+1 Ruby Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thought Vessel
+1 Arena of Glory
+1 Den of the Bugbear
+1 Dwarven Mine
+1 Kher Keep
+27 Mountain
+1 Reliquary Tower
+1 Sokenzan, Crucible of Defiance
+1 Birgi, God of Storytelling
+1 Electro, Assaulting Battery
+1 Firebending Student
+1 Goblin Instigator
+1 Goblin-town Flunkies
+1 Hexing Squelcher
+1 Iron Myr
+1 Krenko, Mob Boss
+1 Krenko, Tin Street Kingpin
+1 Mogg War Marshal
+1 Ornithopter of Paradise
+1 Pinnacle Monk
+1 Quinjet Technician
+1 Runaway Steam-Kin
+1 Skirk Prospector
+1 Storm-Kiln Artist
+1 Sunset Strikemaster
+1 Treasonous Ogre
+1 Young Pyromancer
+1 Zookeeper Mechan
+1 Frontline Heroism
+1 Accelerate
+1 Ancestors' Aid
+1 Balduvian Rage
+1 Battle Hymn
+1 Blazing Crescendo
+1 Brute Force
+1 Crimson Wisps
+1 Dreadmaw's Ire
+1 Expedite
+1 Felonious Rage
+1 Fists of Flame
+1 Flashback
+1 Flick a Coin
+1 Haste Magic
+1 Might of the Meek
+1 Monstrous Rage
+1 Reckless Ransacking
+1 Samut's Sprint
+1 Seething Song
+1 Stun
+1 Sudden Breakthrough
+1 Titan's Strength
+1 Untimely Malfunction
+1 Ancestral Anger
+1 Daring Discovery
+1 Devastating Onslaught
+1 Dragon Fodder
+1 Electroduplicate
+1 Empty the Warrens
+1 Hordeling Outburst
+1 Impolite Entrance
+1 Kari Zev's Expertise
+1 Kick in the Door
+1 Krenko's Command
+1 Molten Duplication
+1 Past in Flames
+1 Reckless Charge
+1 Renegade Tactics
+1 Twinflame
+1 Witch's Mark

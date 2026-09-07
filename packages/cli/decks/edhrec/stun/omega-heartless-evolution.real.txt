@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/IG2WjwrTagV0icsyWxU3EQ (source https://archidekt.com/decks/18736278)
+# tags Blink, Stun; bracket 3; saved 2026-08-30; 18 tagged of 967 indexed
+
+Commander
+1 Omega, Heartless Evolution
+
+Deck
+1 Alchemist's Refuge
+1 Balamb Garden, SeeD Academy
+1 Bonders' Enclave
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+1 Forest
+1 Ghost Quarter
+1 Hedge Maze
+1 Hinterland Harbor
+1 Island
+1 Karn's Bastion
+1 Lonely Sandbar
+1 Mistrise Village
+1 Mosswort Bridge
+1 Northampton Farm
+1 Rain-Slicked Copse
+1 Reliquary Tower
+1 Rimewood Falls
+1 Rogue's Passage
+1 Scavenger Grounds
+1 Seat of the Synod
+1 Simic Growth Chamber
+1 Sodden Verdure
+1 Starting Town
+1 Tangled Islet
+1 Temple of Mystery
+1 Temple of the False God
+1 Thespian's Stage
+1 Tree of Tales
+1 Vineglimmer Snarl
+1 Waterlogged Grove
+1 Yavimaya Coast
+1 Zanarkand, Ancient Metropolis
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Blur
+1 Counterspell
+1 Displace
+1 Essence Flux
+1 Fierce Guardianship
+1 Ghostly Flicker
+1 Growth Spiral
+1 Heroic Intervention
+1 Lifestream's Blessing
+1 Planar Genesis
+1 Planar Incision
+1 Siren's Ruse
+1 Swan Song
+1 Teferi's Time Twist
+1 Arixmethes, Slumbering Isle
+1 Auton Soldier
+1 Avenger of Zendikar
+1 Bramble Sovereign
+1 Clifftop Lookout
+1 Craterhoof Behemoth
+1 Cultivator Colossus
+1 Deadeye Navigator
+1 Displacer Kitten
+1 Dour Port-Mage
+1 End-Raze Forerunners
+1 Eternal Witness
+1 Fanatic of Rhonas
+1 Generous Patron
+1 Goreclaw, Terror of Qal Sisma
+1 Hornet Queen
+1 Hydroelectric Specimen
+1 Mulldrifter
+1 Mutable Explorer
+1 Myr Battlesphere
+1 Oviya, Automech Artisan
+1 Prime Speaker Zegana
+1 Reclamation Sage
+1 Renet, Temporal Apprentice
+1 Selvala, Heart of the Wilds
+1 Skyserpent Seeker
+1 Starfield Vocalist
+1 Tatyova, Benthic Druid
+1 Titan of Industry
+1 Y'shtola Rhul
+1 Bridgeworks Battle
+1 Echocasting Symposium
+1 Explore
+1 Farseek
+1 Lessons from Life
+1 Nature's Lore
+1 Open the Way
+1 Rishkar's Expertise
+1 Conjurer's Closet
+1 Herd Heirloom
+1 Panharmonicon
+1 Sol Ring
+1 Garruk's Uprising
+1 Omenpath Journey
+1 Spelunking
+1 Verity Circle
+1 Virtue of Knowledge

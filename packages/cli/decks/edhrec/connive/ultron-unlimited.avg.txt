@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/ultron-unlimited/connive
+# theme Connive (41 decks)
+
+Commander
+1 Ultron, Unlimited
+
+Deck
+1 Arcane Signet
+1 Ashnod's Altar
+1 Currency Converter
+1 Dimir Signet
+1 Mask of the Schemer
+1 Monument to Endurance
+1 Patchwork Banner
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 The Soul Stone
+1 Thought Vessel
+1 Academy Ruins
+1 Castle Doom
+1 Choked Estuary
+1 Command Tower
+1 Drowned Catacomb
+1 Hidden Lair
+9 Island
+1 Morphic Pool
+1 Reliquary Tower
+1 Seat of the Synod
+1 Shipwreck Marsh
+1 Spymaster's Vault
+1 Sunken Hollow
+10 Swamp
+1 Tainted Isle
+1 Uthros, Titanic Godcore
+1 Vault of Whispers
+1 Villainous Hideout
+1 Watery Grave
+1 Archfiend of Ifnir
+1 Baron Strucker, HYDRA Overlord
+1 Chameleon, Master of Disguise
+1 Containment Construct
+1 Cryptothrall
+1 Cyberdrive Awakener
+1 Cyberman Patrol
+1 Cybermen Squadron
+1 Cyclonus, the Saboteur
+1 Doctor Octopus, Master Planner
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Golbez, Crystal Collector
+1 Iron Monger, Sadistic Tycoon
+1 Kang, Temporal Tyrant
+1 Krang, Utrom Warlord
+1 Leader, Super-Genius
+1 Ledger Shredder
+1 M.O.D.O.K.
+1 Prowler, Clawed Thief
+1 Scientist Supreme of A.I.M.
+1 Skorpekh Lord
+1 Steel Overseer
+1 Tombstone, Career Criminal
+1 Ultron Drone
+1 Ultron the Annihilator
+1 Ultron's Auxiliary
+1 Ultron, Artificial Malevolence
+1 Ultron, Machine Overlord
+1 Age of Ultron
+1 Black Market Connections
+1 Doom Reigns Supreme
+1 Glorious Purpose
+1 Mechanized Production
+1 Robot Domination
+1 Security Bypass
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Change of Plans
+1 Counterspell
+1 Dark Ritual
+1 Deadly Rollick
+1 Go for the Throat
+1 Lethal Scheme
+1 Unstable Experiment
+1 Dread Return
+1 Reanimate
+1 Their Name Is Death
+1 Too Evil to Stay Dead
+1 Toxic Deluge
+1 Victimize

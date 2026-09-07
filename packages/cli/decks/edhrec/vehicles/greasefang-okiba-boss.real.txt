@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/mbcF6OyVmQkFbDj4bwUr9A (source https://moxfield.com/decks/2fk3HzSaYk-yuM-md0GlBg)
+# tags Blink, Vehicles, Artifacts, Reanimator; bracket 3; saved 2026-09-05; 1601 tagged of 6580 indexed
+
+Commander
+1 Greasefang, Okiba Boss
+
+Deck
+1 Altar of the Wretched
+1 Arcane Signet
+1 Damocles Base, Sword of Kang
+1 Demonic Junker
+1 Detention Chariot
+1 Key to the City
+1 Matzalantli, the Great Door
+1 Mole Module
+1 Monument to Endurance
+1 N'Yami-Class Mother Ship
+1 Orzhov Signet
+1 Parhelion II
+1 Reaver Titan
+1 Rolling Hamsphere
+1 Skysovereign, Consul Flagship
+1 Smuggler's Copter
+1 Sol Ring
+1 Talisman of Hierarchy
+1 The Fire Nation Drill
+1 The Regalia
+1 The Thanos-Copter
+1 The Underworld Cookbook
+1 Valor's Flagship
+1 Bleachbone Verge
+1 Brightclimb Pathway
+1 Castle Locthwain
+1 Caves of Koilos
+1 Command Tower
+1 Desolate Mire
+1 Eiganjo, Seat of the Empire
+1 Exotic Orchard
+1 Fetid Heath
+1 Geier Reach Sanitarium
+1 Godless Shrine
+1 Isolated Chapel
+1 Lazotep Quarry
+1 Marsh Flats
+1 Mech Hangar
+4 Plains
+1 Shadowy Backstreet
+1 Shattered Sanctum
+1 Shineshadow Snarl
+6 Swamp
+1 Swarmyard
+1 Tainted Field
+1 Takenuma, Abandoned Mire
+1 Urza's Saga
+1 Vault of Champions
+1 Vault of the Archangel
+1 Bone Shards
+1 From Father to Son
+1 Lively Dirge
+1 Reanimate
+1 Split Up
+1 Tune Up
+1 Unmarked Grave
+1 Braids, Arisen Nightmare
+1 Canoptek Spyder
+1 Cynical Loner
+1 Elegy Acolyte
+1 Fleeting Spirit
+1 Imotekh the Stormlord
+1 Iron-Shield Elf
+1 Olivia's Dragoon
+1 Opposition Agent
+1 Orcish Bowmasters
+1 Oswald Fiddlebender
+1 Putrid Imp
+1 Seasoned Hallowblade
+1 Songbird, Sonic Screamer
+1 Technodrome
+1 The Queen of Dale
+1 Tireless Tribe
+1 Vile Entomber
+1 Weathered Wayfarer
+1 Cloudshift
+1 Corrupted Conviction
+1 Dark Ritual
+1 Disenchant
+1 Entomb
+1 Ephemerate
+1 Erode
+1 Fell the Profane
+1 Path to Exile
+1 Swords to Plowshares
+1 Village Rites
+1 Darksteel Mutation
+1 Land Tax
+1 Ripples of Undeath
+1 Smothering Tithe
+1 Teval's Judgment

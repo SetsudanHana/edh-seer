@@ -1,0 +1,104 @@
+# edhrec average deck: https://edhrec.com/average-decks/jared-carthalion/towns
+# theme Towns (3 decks)
+
+Commander
+1 Jared Carthalion
+
+Deck
+1 Chromatic Lantern
+1 Coalition Relic
+1 Elixir of Immortality
+1 Luxior, Giada's Gift
+1 Staff of Compleation
+1 The Millennium Calendar
+1 Balamb Garden, SeeD Academy
+1 Baron, Airship Kingdom
+1 Bloodstained Mire
+1 Breeding Pool
+1 Capital City
+1 Cascading Cataracts
+1 Command Tower
+1 Crossroads Village
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Gohn, Town of Ruin
+1 Gongaga, Reactor Town
+1 Guadosalam, Farplane Gateway
+1 Indatha Triome
+1 Insomnia, Crown City
+1 Island
+1 Jetmir's Garden
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Plains
+1 Polluted Delta
+1 Rabanastre, Royal City
+1 Savai Triome
+1 Scalding Tarn
+1 Sharlayan, Nation of Scholars
+1 Spire Garden
+1 Starting Town
+2 Swamp
+1 Temple Garden
+1 Training Center
+1 Treno, Dark City
+1 Vault of Champions
+1 Vector, Imperial Capital
+1 Verdant Catacombs
+1 Windurst, Federation Center
+1 Wooded Foothills
+1 Ziatora's Proving Ground
+1 Aragorn, the Uniter
+1 Baleful Strix
+1 Bloom Tender
+1 Crystal, Inhuman Princess
+1 Empyrial Archangel
+1 Ertai Resurrected
+1 Faeburrow Elder
+1 Fallaji Wayfarer
+1 Forgotten Ancient
+1 General Ferrous Rokiric
+1 Godsire
+1 Kiora's Follower
+1 Kutzil, Malamet Exemplar
+1 Omnath, Locus of All
+1 Pensive Professor
+1 Ravenous Slime
+1 Rienne, Angel of Rebirth
+1 Sphinx Sovereign
+1 Sphinx of the Guildpact
+1 Sphinx's Herald
+1 Thanos, the Mad Titan
+1 The Wandering Minstrel
+1 Thrasios, Triton Hero
+1 Tiller Engine
+1 Transguild Courier
+1 Urabrask the Hidden
+1 Vorinclex, Monstrous Raider
+1 All Will Be One
+1 Annie Joins Up
+1 Leyline of the Guildpact
+1 Mana Cannons
+1 Spelunking
+1 Sterling Grove
+1 Tocasia's Welcome
+1 Widespread Thieving
+1 Abzan Charm
+1 Atomize
+1 Aura Mutation
+1 Brainstorm
+1 Cabaretti Charm
+1 Crop Rotation
+1 Dovin's Veto
+1 Kolaghan's Command
+1 Quandrix Command
+1 Ripples of Potential
+1 Vraska, Betrayal's Sting
+1 Wrenn and Realmbreaker
+1 Bring to Light
+1 Damning Verdict
+1 Hull Breach
+1 Idyllic Tutor
+1 Rishkar's Expertise

@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/nissa-worldsoul-speaker/energy
+# theme Energy (248 decks)
+
+Commander
+1 Nissa, Worldsoul Speaker
+
+Deck
+1 Aetherflux Conduit
+1 Aetheric Amplifier
+1 Aetherworks Marvel
+1 Arcane Signet
+1 Conversion Apparatus
+1 Decoction Module
+1 Fabrication Module
+1 Gonti's Aether Heart
+1 Sol Ring
+1 Solar Transformer
+1 Stone Idol Generator
+1 Aether Hub
+1 Boseiju, Who Endures
+1 Brokers Hideout
+1 Cabaretti Courtyard
+1 Evolving Wilds
+1 Fabled Passage
+25 Forest
+1 HELIOS One
+1 Myriad Landscape
+1 Reliquary Tower
+1 Riveteers Overlook
+1 Terramorphic Expanse
+1 Yavimaya, Cradle of Growth
+1 Aetherwind Basker
+1 Ancient Greenwarden
+1 Apex Devastator
+1 Architect of the Untamed
+1 Ashaya, Soul of the Wild
+1 Avenger of Zendikar
+1 Azusa, Lost but Seeking
+1 Beast Whisperer
+1 Bristling Hydra
+1 Craterhoof Behemoth
+1 Cultivator Colossus
+1 Evolution Sage
+1 Greenbelt Rampager
+1 Icetill Explorer
+1 Longtusk Cub
+1 Loot, Exuberant Explorer
+1 Lotus Cobra
+1 Mossborn Hydra
+1 Oracle of Mul Daya
+1 Peema Aether-Seer
+1 Peema Trailblazer
+1 Rampaging Aetherhood
+1 Rampaging Baloths
+1 Ramunap Excavator
+1 Sakura-Tribe Elder
+1 Scute Swarm
+1 Servant of the Conduit
+1 Tireless Provisioner
+1 Tireless Tracker
+1 Case of the Locked Hothouse
+1 Exploration
+1 Garruk's Uprising
+1 Guardian Project
+1 Primal Prayers
+1 Sapling Nursery
+1 Beast Within
+1 Crop Rotation
+1 Entish Restoration
+1 Harrow
+1 Heroic Intervention
+1 Return of the Wildspeaker
+1 Nissa, Who Shakes the World
+1 Attune with Aether
+1 Cultivate
+1 Explore
+1 Kodama's Reach
+1 Nature's Lore
+1 Planar Engineering
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Three Visits

@@ -1,0 +1,63 @@
+# edhrec deck https://edhrec.com/deckpreview/yy48MBegusQftY8OHGLjzg (source https://archidekt.com/decks/25900606)
+# tags Rabbits, Aristocrats, Lifedrain, Tokens, Sacrifice, Convoke; bracket 3; saved 2026-09-04; 67 tagged of 5407 indexed
+
+Commander
+1 Eirdu, Carrier of Dawn
+
+Deck
+1 Blasphemous Edict
+1 Dusk // Dawn
+1 Echoing Return
+1 Tempt with Bunnies
+1 Bojuka Bog
+1 Cabal Coffers
+1 Caves of Koilos
+1 Command Tower
+1 Evolving Wilds
+1 Fetid Heath
+1 Godless Shrine
+1 Isolated Chapel
+1 Orzhov Basilica
+12 Plains
+1 Reliquary Tower
+1 Shattered Sanctum
+10 Swamp
+1 Tainted Field
+1 Terramorphic Expanse
+1 Three Tree City
+1 Witch's Cottage
+1 Cruel Celebrant
+1 Elas il-Kor, Sadistic Pilgrim
+1 Elenda, the Dusk Rose
+1 Elesh Norn, Mother of Machines
+1 Emrakul, the World Anew
+1 Geralf's Messenger
+1 God-Eternal Bontu
+1 Grim Haruspex
+24 Hare Apparent
+1 Jacked Rabbit
+1 Krav, the Unredeemed
+1 Midnight Reaper
+1 Mirkwood Bats
+1 Mondrak, Glory Dominus
+1 Ojer Taq, Deepest Foundation
+1 Pitiless Plunderer
+1 Soul Warden
+1 Species Specialist
+1 Umbral Collar Zealot
+1 Warren Soultrader
+1 Yawgmoth, Thran Physician
+1 Zulaport Cutthroat
+1 Decanter of Endless Water
+1 Eldrazi Monument
+1 Phyrexian Altar
+1 Sol Ring
+1 Thrumming Stone
+1 Exquisite Blood
+1 Ghostly Prison
+1 Grave Pact
+1 Sanguine Bond
+1 The Meathook Massacre
+1 We Ride at Dawn
+1 Path to Exile
+1 Swords to Plowshares

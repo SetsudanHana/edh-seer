@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/mjoKWyEiEOclRAHfDA8jEw (source https://archidekt.com/decks/18878415)
+# tags Impulse Draw, Self-Discard, Madness, Combo, Discard, Aggro, Theft; bracket 2; saved 2026-08-24; 64 tagged of 9221 indexed
+
+Commander
+1 The Infamous Cruelclaw
+
+Deck
+1 Abrade
+1 Consumed by Greed
+1 Dark Withering
+1 Fiery Temper
+1 Kolaghan's Command
+1 Aclazotz, Deepest Betrayal
+1 Anje's Ravager
+1 Archon of Cruelty
+1 Arvinox, the Mind Flail
+1 Big Game Hunter
+1 Brainstealer Dragon
+1 Burglar Rat
+1 Containment Construct
+1 Dire Fleet Daredevil
+1 Jecht, Reluctant Guardian
+1 Kaervek, the Punisher
+1 Kefka, Dancing Mad
+1 Laughing Jasper Flint
+1 Mindslicer
+1 Nezumi Informant
+1 Pinnacle Monk
+1 Revolutionist
+1 Stronghold Rats
+1 Tinybones, Bauble Burglar
+1 Alchemist's Greeting
+1 Auntie's Sentence
+1 Bad Deal
+1 Biting Rain
+1 Bloodsoaked Insight
+1 Decree of Pain
+1 Diabolic Tutor
+1 Distress
+1 Extract the Truth
+1 Faithless Looting
+1 Grave Upheaval
+1 Increasing Ambition
+1 Murderous Compulsion
+1 Psychotic Episode
+1 Razaketh's Rite
+1 Resentful Revelation
+1 Sandman's Quicksand
+1 Stargaze
+1 Syphon Mind
+1 Terminal Agony
+1 Angrath, the Flame-Chained
+1 Bandit's Talent
+1 Blood Spatter Analysis
+1 Case of the Crimson Pulse
+1 Connecting the Dots
+1 Draconic Destiny
+1 Painful Quandary
+1 Sothera, the Supervoid
+1 The Eldest Reborn
+1 Triple Triad
+1 Bloodfell Caves
+1 Boiling Rock Prison
+1 Capital City
+1 Command Tower
+1 Demolition Field
+1 Dragonskull Summit
+1 Foreboding Ruins
+1 Hidden Grotto
+1 Immersturm Skullcairn
+1 Jagged Barrens
+1 Memorial to Folly
+8 Mountain
+1 Path of Ancestry
+1 Rakdos Guildgate
+1 Rix Maadi, Dungeon Palace
+1 Rogue's Passage
+1 Smoldering Marsh
+10 Swamp
+1 Temple of Malice
+1 Buster Sword
+1 Cliffhaven Kitesail
+1 Cobbled Wings
+1 Cryptcaller Chariot
+1 Dream-Thief's Bandana
+1 Gilded Pinions
+1 Lightning Greaves
+1 Monument to Endurance
+1 Swiftfoot Boots
+1 Whispersilk Cloak

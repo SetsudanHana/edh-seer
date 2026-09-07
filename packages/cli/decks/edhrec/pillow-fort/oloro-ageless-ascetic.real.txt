@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/5RG5c-aQXxBA7Hk0B1IRwA (source https://moxfield.com/decks/o0oqcvWn4km576Sa2oOZxg)
+# tags Lifegain, Good Stuff, Control, Pillow Fort, Reanimator; bracket 2; saved 2026-09-04; 374 tagged of 22109 indexed
+
+Commander
+1 Oloro, Ageless Ascetic
+
+Deck
+1 Aetherflux Reservoir
+1 Alhammarret's Archive
+1 Arcane Signet
+1 Chromatic Lantern
+1 Conjurer's Closet
+1 Cosmos Elixir
+1 Elixir of Immortality
+1 Norn's Annex
+1 Pearl Medallion
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Progress
+1 Thaumatic Compass
+1 The Wind Crystal
+1 Thought Vessel
+1 Venser's Journal
+1 Angel of Destiny
+1 Beza, the Bounding Spring
+1 Crested Sunmare
+1 Crypt Ghast
+1 Exemplar of Light
+1 Felidar Sovereign
+1 Moon-Blessed Cleric
+1 Ranger of Eos
+1 Rhox Faithmender
+1 Sorin of House Markov
+1 Soul Warden
+1 Soul's Attendant
+1 Sphinx of the Second Sun
+1 Suture Priest
+1 Tivit, Seller of Secrets
+1 Voice of the Blessed
+1 Y'shtola Rhul
+1 Anguished Unmaking
+1 Brainstorm
+1 Cabal Ritual
+1 Counterspell
+1 Dark Ritual
+1 Generous Gift
+1 Inkshield
+1 Swords to Plowshares
+1 Animate Dead
+1 Authority of the Consuls
+1 Cleric Class
+1 Exquisite Blood
+1 Ghostly Prison
+1 Necromancy
+1 Phyrexian Arena
+1 Propaganda
+1 Teferi's Ageless Insight
+1 Teleportation Circle
+1 The Meathook Massacre
+1 Vile Consumption
+1 Arid Mesa
+1 Bojuka Bog
+1 Brightclimb Pathway
+1 Command Tower
+1 Deserted Beach
+1 Eclipsed Steppe
+1 Fetid Heath
+1 Godless Shrine
+1 Hengegate Pathway
+3 Island
+1 Marsh Flats
+1 Morphic Pool
+1 Mystic Gate
+1 Orzhov Basilica
+10 Plains
+1 Shattered Sanctum
+1 Shipwreck Marsh
+1 Snow-Covered Swamp
+7 Swamp
+1 Tarnished Citadel
+1 Watery Grave
+1 Damn
+1 Diabolic Tutor
+1 Mastermind's Acquisition
+1 Profane Tutor
+1 Reanimate
+1 Rise of the Dark Realms
+1 Solve the Equation
+1 Toxic Deluge

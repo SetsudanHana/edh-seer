@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/tekuthal-inquiry-dominus/charge-counters
+# theme Charge Counters (19 decks)
+
+Commander
+1 Tekuthal, Inquiry Dominus
+
+Deck
+1 Aetheric Amplifier
+1 Astral Cornucopia
+1 Contagion Clasp
+1 Contagion Engine
+1 Darksteel Reactor
+1 Everflowing Chalice
+1 Ichormoon Gauntlet
+1 Insight Engine
+1 Lux Cannon
+1 Magistrate's Scepter
+1 Manifold Key
+1 Moxite Refinery
+1 Peter Parker's Camera
+1 Replicating Ring
+1 Sapphire Medallion
+1 Sol Ring
+1 Staff of Compleation
+1 The Millennium Calendar
+1 Titan Forge
+1 Transmogrifying Wand
+1 Academy Ruins
+1 Archway of Innovation
+1 Buried Ruin
+25 Island
+1 Karn's Bastion
+1 Mystic Sanctuary
+1 Nesting Grounds
+1 Reliquary Tower
+1 Seat of the Synod
+1 The Mycosynth Gardens
+1 Uthros, Titanic Godcore
+1 Blighted Agent
+1 Chasm Skulker
+1 Chrome Host Seedshark
+1 Coretapper
+1 Deepglow Skate
+1 Dreamtide Whale
+1 Flux Channeler
+1 Gitaxian Anatomist
+1 Goldberry, River-Daughter
+1 Hydroelectric Specimen
+1 Ingenious Prodigy
+1 Lulu, Stern Guardian
+1 Mindless Automaton
+1 Myojin of Cryptic Dreams
+1 Surge Conductor
+1 Thrummingbird
+1 Trinket Mage
+1 Trophy Mage
+1 Vexing Radgull
+1 Viral Drake
+1 As Foretold
+1 Inexorable Tide
+1 Ominous Seas
+1 Propaganda
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Experimental Augury
+1 Fuel for the Cause
+1 Negate
+1 Prologue to Phyresis
+1 Radstorm
+1 Reject Imperfection
+1 Ripples of Potential
+1 Serum Snare
+1 Sink into Stupor
+1 Steady Progress
+1 Teferi, Master of Time
+1 Tezzeret, Artifice Master
+1 Contentious Plan
+1 Expansion Algorithm
+1 Fabricate
+1 Spectral Deluge
+1 Tezzeret's Gambit
+1 Vivisurgeon's Insight

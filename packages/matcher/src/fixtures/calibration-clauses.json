@@ -1292,5 +1292,586 @@
   "clauseTexts": {
    "1": "Whenever a creature you control enters, it deals damage equal to its power to any target."
   }
+ },
+ {
+  "name": "Priest of Forgotten Gods",
+  "oracleId": "2ad8ff62-d090-4835-9274-3b755ba0f8e6",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "two other creatures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "target player",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     },
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "{B}{B}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "cleric"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 2,
+   "power": "1",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Any number of target players each lose 2 life and sacrifice a creature of their choice. You add {B}{B} and draw a card."
+  }
+ },
+ {
+  "name": "Orcish Bowmasters",
+  "oracleId": "ea5103f5-27e0-4eb1-902c-7f34652d6bf3",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "amass",
+      "object": "Orcs",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "draw",
+     "subject": "a card except the first one an opponent draws in each of their draw steps",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "amass",
+      "object": "Orcs",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "orc",
+    "archer"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 2,
+   "power": "1",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "amass",
+    "flash"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Flash",
+   "2": "When this creature enters and whenever an opponent draws a card except the first one they draw in each of their draw steps, this creature deals 1 damage to any target. Then amass Orcs 1."
+  }
+ },
+ {
+  "name": "Liliana's Triumph",
+  "oracleId": "c2e68ac5-cfff-4b76-8062-25a82fdf9a5c",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "a creature of their choice",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "discard",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Each opponent sacrifices a creature of their choice. If you control a Liliana planeswalker, each opponent also discards a card."
+  }
+ },
+ {
+  "name": "Death Tyrant",
+  "oracleId": "fa944633-e078-41bb-9c7d-4f6b669c27a5",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "an attacking creature you control or a blocking creature an opponent controls",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 2/2 black Zombie creature token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "this card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "this",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "beholder",
+    "skeleton"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 5,
+   "power": "4",
+   "toughness": "6",
+   "token": false,
+   "keywords": [
+    "menace"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Menace",
+   "2": "Whenever an attacking creature you control or a blocking creature an opponent controls dies, create a 2/2 black Zombie creature token.",
+   "3": "Return this card from your graveyard to the battlefield tapped."
+  }
+ },
+ {
+  "name": "Laboratory Maniac",
+  "oracleId": "aa286dd5-aa19-446d-9003-684d81eb57ca",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "other",
+      "object": "you win the game instead of drawing a card while your library has no cards in it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "wizard"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 3,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "If you would draw a card while your library has no cards in it, you win the game instead."
+  }
+ },
+ {
+  "name": "Sludge Monster",
+  "oracleId": "2802fc92-49a0-43c8-bc10-24882eeee3f1",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "slime counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cant",
+      "object": "have abilities; Non-Horror creatures with slime counters on them lose all abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "Non-Horror creatures with slime counters on them",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2/2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "slime counter",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "horror"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 5,
+   "power": "5",
+   "toughness": "5",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever this creature enters or attacks, put a slime counter on up to one other target creature.",
+   "2": "Non-Horror creatures with slime counters on them lose all abilities and have base power and toughness 2/2."
+  }
+ },
+ {
+  "name": "Incubation Druid",
+  "oracleId": "34428f42-03ac-4795-8286-6cbea796df2b",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any type that a land you control could produce",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "three mana of that type",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "adapt",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "elf",
+    "druid"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 2,
+   "power": "0",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "adapt"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Add one mana of any type that a land you control could produce. If this creature has a +1/+1 counter on it, add three mana of that type instead.",
+   "2": "Adapt 3."
+  }
+ },
+ {
+  "name": "Evolution Witness",
+  "oracleId": "0e07f1af-5ff6-4da5-8683-aea4cc390975",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "adapt",
+      "object": "this",
+      "amount": "2",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "one or more +1/+1 counters on this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target permanent card",
+      "fromZone": "graveyard",
+      "toZone": "hand",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "elf",
+    "shaman",
+    "mutant"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 3,
+   "power": "2",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "adapt"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Adapt 2.",
+   "2": "Whenever one or more +1/+1 counters are put on this creature, return target permanent card from your graveyard to your hand."
+  }
  }
 ]

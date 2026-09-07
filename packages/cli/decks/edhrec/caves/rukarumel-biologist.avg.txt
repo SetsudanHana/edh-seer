@@ -1,0 +1,100 @@
+# edhrec average deck: https://edhrec.com/average-decks/rukarumel-biologist/caves
+# theme Caves (2 decks)
+
+Commander
+1 Rukarumel, Biologist
+
+Deck
+1 Arcane Signet
+1 Banner of Kinship
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Herd Heirloom
+1 Patchwork Banner
+1 Vanquisher's Banner
+1 Abundant Countryside
+1 Captivating Cave
+1 Cavernous Maw
+1 Command Tower
+1 Evolving Wilds
+3 Forest
+1 Forgotten Monument
+1 Frontier Bivouac
+1 Gemstone Caverns
+1 Hidden Cataract
+1 Hidden Courtyard
+1 Hidden Necropolis
+1 Hidden Nursery
+1 Hidden Volcano
+2 Island
+2 Mountain
+1 Opulent Palace
+1 Path of Ancestry
+1 Pit of Offerings
+2 Plains
+1 Promising Vein
+1 Secret Tunnel
+1 Sliver Hive
+1 Sunken Palace
+2 Swamp
+1 Three Tree City
+1 Volatile Fault
+1 Armored Kincaller
+1 Basilica Screecher
+1 Belligerent Yearling
+1 Blue, Loyal Raptor
+1 Burning Sun's Avatar
+1 Diffusion Sliver
+1 Drover of the Mighty
+1 Earthshaker Dreadmaw
+1 Ellie and Alan, Paleontologists
+1 Essence Channeler
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Gargantuan Leech
+1 Grimclaw Bats
+1 Hermitic Nautilus
+1 Indoraptor, the Perfect Hybrid
+1 Lifecreed Duo
+1 Malakir Familiar
+1 Outcaster Trailblazer
+1 Owen Grady, Raptor Trainer
+1 Pathfinding Axejaw
+1 Ravenous Sailback
+1 Regisaur Alpha
+1 Roaming Throne
+1 Saurian Symbiote
+1 Scalestorm Summoner
+1 Scampering Surveyor
+1 Sinuous Benthisaur
+1 Star Charter
+1 Starlit Soothsayer
+1 Starseer Mentor
+1 Swooping Pteranodon
+1 Thrashing Brontodon
+1 Voidwing Hybrid
+1 Wakening Sun's Avatar
+1 Zoraline, Cosmos Caller
+1 Etchings of the Chosen
+1 Fiery Emancipation
+1 Form of the Dinosaur
+1 Garruk's Uprising
+1 Grave Pact
+1 Impact Tremors
+1 Mana Echoes
+1 Spelunking
+1 Bite Down
+1 Mine Collapse
+1 Putrefy
+1 Tail Swipe
+1 Terminate
+1 Calamitous Cave-In
+1 Cave-In
+1 Cosmium Confluence
+1 Defossilize
+1 Demonic Tutor
+1 Glimpse the Core
+1 Kindred Dominance
+1 Mine Excavation
+1 Star of Extinction
+1 Walk with the Ancestors

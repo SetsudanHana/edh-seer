@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/r99uIiy3CWj_ZkGFGQoiZg (source https://archidekt.com/decks/18721342)
+# tags Crime; bracket 2; saved 2026-09-04; 233 tagged of 6626 indexed
+
+Commander
+1 Marchesa, Dealer of Death
+
+Deck
+1 Abrade
+1 Bitter Triumph
+1 Chef's Kiss
+1 Consumed by Greed
+1 Deadly Dispute
+1 Disdainful Stroke
+1 Fake Your Own Death
+1 Force Away
+1 Invert Polarity
+1 Lightning Bolt
+1 Long River's Pull
+1 Peek
+1 Rapid Hybridization
+1 Reality Shift
+1 Slick Sequence
+1 Spell Pierce
+1 Terminate
+1 Aetherblade Agent
+1 Bilbo, Luckwearer
+1 Blood Hustler
+1 Boggart Trawler
+1 Caustic Bronco
+1 Cephalid Facetaker
+1 Chandra's Magmutt
+1 Cormela, Glamour Thief
+1 Cruel Somnophage
+1 Deepmuck Desperado
+1 Gale, Waterdeep Prodigy
+1 Geyser Drake
+1 Gisa, the Hellraiser
+1 Hawkeye, Master Marksman
+1 Inferno Titan
+1 Kaervek, the Punisher
+1 Laughing Jasper Flint
+1 Lazav, Familiar Stranger
+1 Locke Cole
+1 Lulu, Stern Guardian
+1 Magda, the Hoardmaster
+1 Rattleback Apothecary
+1 Raven of Fell Omens
+1 Servant of the Stinger
+1 Stinging Lionfish
+1 Taskmaster, Mercenary Mimic
+1 The Balrog of Moria
+1 Thunderclap Drake
+1 Vadmir, New Blood
+1 Armillary Sphere
+1 Bandit's Haul
+1 Bender's Waterskin
+1 Dream-Thief's Bandana
+1 Lavaspur Boots
+1 Mirage Mirror
+1 Obelisk of Grixis
+1 Sol Ring
+1 Bloodfell Caves
+1 Capital City
+1 Command Tower
+1 Crumbling Necropolis
+1 Dimir Aqueduct
+1 Evolving Wilds
+1 Exotic Orchard
+1 Field of Ruin
+6 Island
+4 Mountain
+1 Oscorp Industries
+1 Path of Ancestry
+1 Sandstorm Verge
+1 Seething Landscape
+1 Sunken Hollow
+7 Swamp
+1 Swiftwater Cliffs
+1 Terramorphic Expanse
+1 Thriving Bluff
+1 Thriving Isle
+1 Thriving Moor
+1 Waterfront District
+1 Brotherhood's End
+1 Collective Defiance
+1 Fanged Flames
+1 Rush of Dread
+1 Take for a Ride
+1 Death to Our Enemies
+1 Intimidation Campaign
+1 Shameless Charlatan
+1 Invasion of Innistrad

@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/c-9DyPQJwGGDwzk6rYUt6g (source https://archidekt.com/decks/12293204)
+# tags Curses; bracket 2; saved 2026-08-28; 55 tagged of 3227 indexed
+
+Commander
+1 Ghen, Arcanum Weaver
+
+Deck
+1 Alseid of Life's Bounty
+1 Archon of Sun's Grace
+1 Athreos, Shroud-Veiled
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Eiganjo Dynastorian
+1 Enduring Tenacity
+1 Faith Healer
+1 Faithbound Judge
+1 Fate Unraveler
+1 Grim Guardian
+1 Joshua, Phoenix's Dominant
+1 Mesa Enchantress
+1 Ondu Spiritdancer
+1 Overlord of the Balemurk
+1 Starfield Mystic
+1 Summon: Bahamut
+1 Summon: G.F. Ifrit
+1 Summon: Primal Odin
+1 Summon: Yojimbo
+1 Underworld Coinsmith
+1 Arcane Signet
+1 Ark of Hunger
+1 Fellwar Stone
+1 Lightning Greaves
+1 Patriar's Seal
+1 Vedalken Orrery
+1 Arid Mesa
+1 Axgard Armory
+1 Battlefield Forge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Castle Locthwain
+1 Caves of Koilos
+1 Clifftop Retreat
+1 Command Beacon
+1 Command Tower
+1 Dragonskull Summit
+1 Emergence Zone
+1 Exotic Orchard
+1 Fetid Heath
+1 Godless Shrine
+1 Graven Cairns
+1 Hall of Heliod's Generosity
+1 Isolated Chapel
+1 Marsh Flats
+2 Mountain
+1 Nykthos, Shrine to Nyx
+3 Plains
+1 Rugged Prairie
+1 Sacred Foundry
+1 Savai Triome
+1 Sulfurous Springs
+5 Swamp
+1 Valgavoth's Lair
+1 Bitter Reunion
+1 Blind Obedience
+1 Cacophony Unleashed
+1 Captive Audience
+1 Changing Loyalty
+1 Cruel Reality
+1 Curse of Bloodletting
+1 Curse of Death's Hold
+1 Curse of Opulence
+1 Curse of Vengeance
+1 Disturbing Mirth
+1 Doom Foretold
+1 Gift of Immortality
+1 Glasswing Grace
+1 Grievous Wound
+1 Hallowed Haunting
+1 Land Tax
+1 Maddening Hex
+1 Oubliette
+1 Primary Research
+1 Prophetic Ravings
+1 Ripples of Undeath
+1 Scion of Halaster
+1 Seal of Cleansing
+1 Secret Arcade // Dusty Parlor
+1 Smuggler's Share
+1 Sphere of Safety
+1 Super State
+1 Teval's Judgment
+1 The Eldest Reborn
+1 The Princess Takes Flight
+1 Timely Ward
+1 Cleansing Meditation
+1 Damn
+1 Extinguish All Hope
+1 Restoration Seminar
+1 Resurgent Belief

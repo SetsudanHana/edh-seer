@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/lHP97abuynJvSuOOfMT7fw (source https://archidekt.com/decks/17191155)
+# tags Voting, Elves, +1/+1 Counters, Spellslinger; bracket 2; saved 2026-09-04; 38 tagged of 2442 indexed
+
+Commander
+1 Galadriel, Elven-Queen
+
+Deck
+1 Arcane Signet
+1 Lothlórien Blade
+1 Mirror of Galadriel
+1 Model of Unity
+1 Sol Ring
+1 Urza's Incubator
+1 Whispersilk Cloak
+1 Arwen Undómiel
+1 Arwen, Weaver of Hope
+1 Celeborn the Wise
+1 Círdan the Shipwright
+1 Dwynen, Gilt-Leaf Daen
+1 Elfsworn Giant
+1 Elrond of the White Council
+1 Elrond, Master of Healing
+1 Elvish Archdruid
+1 Elvish Mystic
+1 Elvish Piper
+1 Elvish Warmaster
+1 Erestor of the Council
+1 Gala Greeters
+1 Galadriel of Lothlórien
+1 Haldir, Lórien Lieutenant
+1 Imperious Perfect
+1 Marwyn, the Nurturer
+1 Mirkwood Channeler
+1 Mirkwood Trapper
+1 Nimrodel Watcher
+1 Paradise Druid
+1 Realm Seekers
+1 Thranduil's Company
+1 Wolverine Riders
+1 Wose Pathfinder
+1 Arwen's Gift
+1 Cultivate
+1 Devastation Tide
+1 Distant Melody
+1 Elven Farsight
+1 Lórien Revealed
+1 Overwhelming Stampede
+1 Plea for Power
+1 Preordain
+1 Raise the Palisade
+1 Rampant Growth
+1 Serum Visions
+1 Asceticism
+1 Lost Isle Calling
+1 Song of Eärendil
+1 Ash Barrens
+1 Blighted Woodland
+1 Command Tower
+1 Field of Ruin
+1 Flooded Grove
+12 Forest
+1 Hinterland Harbor
+8 Island
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rivendell
+1 Simic Guildgate
+1 Thornwood Falls
+1 Vineglimmer Snarl
+1 Woodland Stream
+1 Beast Within
+1 Charge Through
+1 Counterspell
+1 Elven Ambush
+1 Galadhrim Ambush
+1 Growth Spiral
+1 Heroic Intervention
+1 Inscription of Abundance
+1 Mystic Confluence
+1 Negate
+1 Opt
+1 Shower of Arrows
+1 Snakeskin Veil
+1 Split Decision
+1 Swan Song
+1 Trap the Trespassers
+1 Windswift Slice
+1 Freyalise, Llanowar's Fury

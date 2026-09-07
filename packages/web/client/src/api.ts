@@ -1,9 +1,12 @@
+import type { GameState } from "@edh-seer/engine";
 import type { AnalyzeResponse } from "./types.js";
 
 export async function analyzeDeck(
   decklist: string,
   commanders?: string,
   fetchImpl: typeof fetch = fetch,
+  /** A game state the owner set (roadmap W18): `?speed=4` on the report. */
+  state?: GameState,
 ): Promise<AnalyzeResponse> {
   // A FLAG, NOT A REPLACEMENT: both paths stay reachable so the static one can be A/B'd against
   // the known-good server path in a live browser, the same reason the Nest server survives.
@@ -18,12 +21,12 @@ export async function analyzeDeck(
     // A DYNAMIC IMPORT COSTS NOTHING HERE because this function is already async and the engine is
     // only reachable after a paste: the work it does cannot start before the user asks for it.
     const { analyzeDeckStatic } = await import("./api.static.js");
-    return analyzeDeckStatic(decklist, commanders, "/static", fetchImpl);
+    return analyzeDeckStatic(decklist, commanders, "/static", fetchImpl, state);
   }
   const res = await fetchImpl("/api/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ decklist, commanders }),
+    body: JSON.stringify({ decklist, commanders, ...(state ? { state } : {}) }),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => ({}))) as { message?: string };

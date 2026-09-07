@@ -6,6 +6,7 @@
  *  The tick loop here is GraphView's loop, and that is the reason to have this file at all.
  *  Anything that changes it must change here, once. */
 import { countCardOverlaps, countOverlaps, createBoardSimulation, linkDistanceFor, type BoardParams, type Sim, type SimLink } from "./board-force.js";
+import { drawnEdges } from "./board-edges.js";
 import { edgeCrossings, linkDistError, hubFreedom, type QualityMetrics } from "./board-quality.js";
 import type { CardGraph } from "../types.js";
 
@@ -54,7 +55,7 @@ export function boardTrial(fx: TrialFixture, opts: TrialOptions = {}) {
       vx: 0, vy: 0, deg: 0,
     }));
     const byId = new Map(nodes.map((n) => [n.id, n]));
-    const links: SimLink[] = graph.edges
+    const links: SimLink[] = drawnEdges(graph.edges)
       .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
       .filter((l): l is SimLink => Boolean(l.source && l.target));
     for (const l of links) { l.source.deg++; l.target.deg++; }

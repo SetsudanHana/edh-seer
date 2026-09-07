@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/_ycQ1f-zFkS_apA9Lu4P0A (source https://archidekt.com/decks/11266957)
+# tags Forced Combat, Group Slug, Wheels; bracket 3; saved 2026-09-05; 2322 tagged of 30673 indexed
+
+Commander
+1 Valgavoth, Harrower of Souls
+
+Deck
+1 Agitator Ant
+1 Fate Unraveler
+1 Fiendish Duo
+1 Geode Rager
+1 Gleeful Arsonist
+1 Grenzo, Havoc Raiser
+1 Havoc Eater
+1 Kardur, Doomscourge
+1 Kederekt Parasite
+1 Kediss, Emberclaw Familiar
+1 Komainu Battle Armor
+1 Magebane Lizard
+1 Magus of the Wheel
+1 Mogis, God of Slaughter
+1 Ojer Axonil, Deepest Might
+1 Orcish Bowmasters
+1 Psychosis Crawler
+1 Rakdos, Lord of Riots
+1 Rankle, Master of Pranks
+1 Razorkin Needlehead
+1 Rug of Smothering
+1 Scrawling Crawler
+1 Seizan, Perverter of Truth
+1 Sheoldred, the Apocalypse
+1 Stormfist Crusader
+1 Vengeful Ancestor
+1 Ankh of Mishra
+1 Arcane Signet
+1 Basilisk Collar
+1 Bloodthirsty Blade
+1 Fellwar Stone
+1 Howling Mine
+1 Rakdos Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Whip of Erebos
+1 Arena of Glory
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Canyon Slough
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Geier Reach Sanitarium
+1 Haunted Ridge
+1 Mikokoro, Center of the Sea
+5 Mountain
+1 Muraganda Raceway
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Raucous Theater
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sokenzan, Crucible of Defiance
+1 Sulfurous Springs
+5 Swamp
+1 Tainted Peak
+1 Bedevil
+1 Bolt Bend
+1 Dark Ritual
+1 Deadly Rollick
+1 Kazuul's Fury
+1 Terminate
+1 Untimely Malfunction
+1 Withering Torment
+1 Blasphemous Act
+1 Blasphemous Edict
+1 Bloodsoaked Insight
+1 Dark Deal
+1 Disrupt Decorum
+1 Reforge the Soul
+1 Soul Immolation
+1 Spectacular Showdown
+1 Wheel of Fate
+1 Winds of Change
+1 Ghoulish Impetus
+1 Hot Pursuit
+1 Kaya's Ghostform
+1 Polluted Bonds
+1 Roiling Vortex
+1 Shiny Impetus
+1 Spiteful Visions
+1 Underworld Dreams
+1 Ob Nixilis, the Hate-Twisted

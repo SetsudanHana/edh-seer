@@ -51,7 +51,7 @@ export function buildTokenTypes(lines: string[]): Record<string, string[]> {
 let cached: Record<string, string[]> | undefined;
 
 /** The bundled map. Read once; the file is generated and checked in. */
-export function loadTokenTypes(): Record<string, string[]> {
+function loadTokenTypes(): Record<string, string[]> {
   cached ??= JSON.parse(readFileSync(new URL("token-types.json", import.meta.url), "utf8")) as
     Record<string, string[]>;
   return cached;

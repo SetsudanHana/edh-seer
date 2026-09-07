@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { scaleBand, scaleLinear } from "d3-scale";
 import type { DeckReport } from "../types.js";
 import { policyBand } from "@edh-seer/engine/percent";
 
 const W = 320;
 const H = 88;
+/** Room for the share axis (0 / 50 / 100%). Every chart has its axis and a readout -- owner,
+ *  2026-09-06; the sibling `ManaTimeline` carries the same shape. */
+const ML = 28;
 
 /** MANA AVAILABILITY — a seeded goldfish simulation, not a formula (roadmap I11's report wiring).
  *
@@ -20,10 +24,11 @@ const H = 88;
  *  is that castability's interval does not contain this answer on a green land-ramp deck — which is
  *  why `DeckIdentity` names this number rather than leaving a reader to pick. */
 export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckReport["manaAvailability"] }) {
+  const [pick, setPick] = useState<number | null>(null);
   if (!manaAvailability || manaAvailability.rows.length === 0) return null;
   const m = manaAvailability;
   const pct = (v: number): string => `${Math.round(v * 100)}%`;
-  const x = scaleBand<number>().domain(m.rows.map((r) => r.turn)).range([0, W]).paddingInner(0.25);
+  const x = scaleBand<number>().domain(m.rows.map((r) => r.turn)).range([ML, W]).paddingInner(0.25);
   const mid = (turn: number): number => (x(turn) ?? 0) + x.bandwidth() / 2;
   // A SHARE IS ALWAYS 0-1, so the axis is the whole range and not the data's own maximum: a deck
   // that peaks at 40% must LOOK like it peaks at 40%, which a fitted axis would hide.
@@ -36,6 +41,11 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
   const medianLine = m.rows
     .map((r, i) => `${i === 0 ? "M" : "L"}${mid(r.turn)},${y(r.payableShare.median)}`)
     .join(" ");
+  // The headline's turn is the default readout: the number the panel leads with, on the chart.
+  const shownTurn = pick ?? (m.rows.some((r) => r.turn === m.headline.turn) ? m.headline.turn : m.rows[m.rows.length - 1]?.turn);
+  const shown = m.rows.find((r) => r.turn === shownTurn);
+  const describe = (r: (typeof m.rows)[number]) =>
+    `turn ${r.turn}: ${pct(r.payableShare.median)} of the deck payable (${pct(r.payableShare.p25)}–${pct(r.payableShare.p75)})`;
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Mana availability</h3>
@@ -82,14 +92,17 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
           + m.rows.map((r) => `turn ${r.turn}, ${pct(r.payableShare.median)} (${pct(r.payableShare.p25)} to ${pct(r.payableShare.p75)})`).join("; ")
         }
       >
+        {[0, 0.5, 1].map((tick) => (
+          <g key={tick} data-testid="y-tick">
+            <line x1={ML} x2={W} y1={y(tick)} y2={y(tick)} stroke="var(--separator)" strokeWidth={0.5} />
+            <text x={ML - 3} y={y(tick)} textAnchor="end" dominantBaseline="middle" className="stat-num fill-(--muted)" fontSize={8}>{pct(tick)}</text>
+          </g>
+        ))}
         <path d={bandArea} fill="var(--fill)" opacity={0.18} />
         <path d={medianLine} fill="none" stroke="var(--fill)" strokeWidth={2} strokeLinejoin="round" />
+        {shown ? <line x1={mid(shown.turn)} x2={mid(shown.turn)} y1={0} y2={H - 12} stroke="var(--muted)" strokeWidth={0.75} strokeDasharray="2 2" /> : null}
         {m.rows.map((r) => (
-          <circle key={r.turn} cx={mid(r.turn)} cy={y(r.payableShare.median)} r={2.5} fill="var(--fill)">
-            {/* A per-mark tooltip, which an SVG title gives for free on pointer devices. The
-              *  `aria-label` above is what carries the same figures where there is no pointer. */}
-            <title>{`turn ${r.turn}: ${pct(r.payableShare.median)} payable (${pct(r.payableShare.p25)}–${pct(r.payableShare.p75)})`}</title>
-          </circle>
+          <circle key={r.turn} cx={mid(r.turn)} cy={y(r.payableShare.median)} r={r.turn === shownTurn ? 4 : 2.5} fill="var(--fill)" />
         ))}
         {/* TURN NUMBERS ONLY, and the ends of the value range -- never a label on every point. */}
         {m.rows.map((r) => (
@@ -104,7 +117,24 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
             {r.turn}
           </text>
         ))}
+        {m.rows.map((r) => (
+          <rect
+            key={r.turn}
+            data-testid={`availability-col-${r.turn}`}
+            x={x(r.turn) ?? 0} y={0} width={x.bandwidth()} height={H}
+            fill="transparent" tabIndex={0} aria-label={describe(r)}
+            className="outline-none cursor-crosshair"
+            onPointerEnter={() => setPick(r.turn)} onFocus={() => setPick(r.turn)} onClick={() => setPick(r.turn)}
+          >
+            <title>{describe(r)}</title>
+          </rect>
+        ))}
       </svg>
+      {shown ? (
+        <p className="text-xs stat-num" data-testid="availability-readout">
+          Turn {shown.turn} · {pct(shown.payableShare.median)} of the deck payable ({pct(shown.payableShare.p25)}–{pct(shown.payableShare.p75)})
+        </p>
+      ) : null}
 
       <p className="text-xs text-(--muted)">
         The line is the median share of your nonlands this turn's mana can pay for, under the

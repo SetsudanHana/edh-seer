@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-beamtown-bullies/donate
+# theme Donate (171 decks)
+
+Commander
+1 The Beamtown Bullies
+
+Deck
+1 Arcane Signet
+1 Despotic Scepter
+1 Lightning Greaves
+1 Magewright's Stone
+1 Patriar's Seal
+1 Sol Ring
+1 Sting, the Glinting Dagger
+1 Swiftfoot Boots
+1 Thousand-Year Elixir
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Cinder Glade
+1 Command Tower
+1 Dragonskull Summit
+1 Exotic Orchard
+4 Forest
+1 Llanowar Wastes
+1 Luxury Suite
+4 Mountain
+1 Overgrown Tomb
+1 Rogue's Passage
+1 Rootbound Crag
+1 Savage Lands
+1 Smoldering Marsh
+1 Spire Garden
+1 Stomping Ground
+1 Sulfurous Springs
+5 Swamp
+1 Undergrowth Stadium
+1 Wooded Foothills
+1 Woodland Cemetery
+1 Ziatora's Proving Ground
+1 Avaricious Dragon
+1 Avatar of Woe
+1 Bane of Bala Ged
+1 Birds of Paradise
+1 Boldwyr Heavyweights
+1 Breaker of Armies
+1 Bronze Bombshell
+1 Corpse Connoisseur
+1 Dragon Mage
+1 Eater of Days
+1 Ebonblade Reaper
+1 Fauna Shaman
+1 Hellcarver Demon
+1 Ignoble Hierarch
+1 Inverter of Truth
+1 Leveler
+1 Master of Cruelties
+1 Oriq Loremage
+1 Pathrazer of Ulamog
+1 Phyrexian Negator
+1 Plague Reaver
+1 Royal Assassin
+1 Saryth, the Viper's Fang
+1 Seedborn Muse
+1 Seeker of Skybreak
+1 Skull Prophet
+1 Soulgorger Orgg
+1 Vile Entomber
+1 Worldgorger Dragon
+1 Cemetery Tampering
+1 Quest for Renewal
+1 Ripples of Undeath
+1 Tortured Existence
+1 Assassin's Trophy
+1 Beast Within
+1 Big Score
+1 Bitter Triumph
+1 Chaos Warp
+1 Demand Answers
+1 Entomb
+1 Grisly Salvage
+1 Infernal Grasp
+1 Terminate
+1 Thrill of Possibility
+1 Blasphemous Act
+1 Buried Alive
+1 Cathartic Reunion
+1 Cultivate
+1 Faithless Looting
+1 Farseek
+1 Final Parting
+1 Jarad's Orders
+1 Nature's Lore
+1 Rampant Growth
+1 Tormenting Voice
+1 Unmarked Grave

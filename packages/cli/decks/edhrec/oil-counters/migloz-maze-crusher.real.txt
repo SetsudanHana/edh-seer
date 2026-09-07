@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/5-k4n2eusWwgTUltTLsmUg (source https://archidekt.com/decks/4385332)
+# tags Infect, Oil Counters, Proliferate; bracket 3; saved 2026-07-26; 44 tagged of 876 indexed
+
+Commander
+1 Migloz, Maze Crusher
+
+Deck
+1 Adaptive Sporesinger
+1 Axiom Engraver
+1 Bloated Contaminator
+1 Branchblight Stalker
+1 Cacophony Scamp
+1 Cankerbloom
+1 Contagious Vorrac
+1 Contaminant Grafter
+1 Evolution Sage
+1 Evolving Adaptive
+1 Forgehammer Centurion
+1 Glissa's Retriever
+1 Kodama of the West Tree
+1 Myr Convert
+1 Oil-Gorger Troll
+1 Plague Nurse
+1 Pollenbright Druid
+1 Rustvine Cultivator
+1 Sawblade Scamp
+1 Tyrranax Rex
+1 Urabrask's Anointer
+1 Venomous Brutalizer
+1 Vindictive Flamestoker
+1 Vorinclex, Monstrous Raider
+1 Zenith Chronicler
+1 All Will Be One
+1 Garruk's Uprising
+1 Blasphemous Act
+1 Chain Reaction
+1 Decimate
+1 Expand the Sphere
+1 Green Sun's Twilight
+1 Nature's Lore
+1 Planewide Celebration
+1 Rampant Growth
+1 Thirsting Roots
+1 Titania's Command
+1 Unnatural Restoration
+1 Viral Spawning
+1 Wurmquake
+1 Blazing Crescendo
+1 Chaos Warp
+1 Free from Flesh
+1 Return of the Wildspeaker
+1 Tribute to the Wild
+1 Tyvar's Stand
+1 Cabaretti Courtyard
+1 Command Tower
+1 Evolving Wilds
+12 Forest
+1 Karn's Bastion
+1 Mirrex
+11 Mountain
+1 Racers' Ring
+1 Riveteers Overlook
+1 Slippery Karst
+1 Smoldering Crater
+1 Terramorphic Expanse
+1 The Hunter Maze
+1 The Monumental Facade
+1 Tranquil Thicket
+1 War Room
+1 Churning Reservoir
+1 Contagion Clasp
+1 Darksteel Ingot
+1 Fire Diamond
+1 Furnace Skullbomb
+1 Glistening Sphere
+1 Herd Heirloom
+1 Moss Diamond
+1 Phial of Galadriel
+1 Phyrexian Atlas
+1 Prophetic Prism
+1 Staff of Compleation
+1 Tablet of Compleation
+1 Urabrask's Forge
+1 Lukka, Bound to Ruin
+1 Vivien, Arkbow Ranger

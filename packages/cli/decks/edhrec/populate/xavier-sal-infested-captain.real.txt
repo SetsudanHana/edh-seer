@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/Bt4mD9OvdmbVuLsYv6ncyg (source https://archidekt.com/decks/25525726)
+# tags Saprolings, Tokens, Populate; bracket 2; saved 2026-09-05; 205 tagged of 7987 indexed
+
+Commander
+1 Xavier Sal, Infested Captain
+
+Deck
+1 Adrix and Nev, Twincasters
+1 Biovisionary
+1 Corpsejack Menace
+1 Council of Reeds
+1 Craterhoof Behemoth
+1 Deepglow Skate
+1 Dreamtide Whale
+1 Evolution Sage
+1 Ezuri, Stalker of Spheres
+1 Ferrafor, Young Yew
+1 Golden Guardian
+1 Insidious Fungus
+1 Kami of Whispered Hopes
+1 Kiora's Follower
+1 Master Biomancer
+1 Mutated Cultist
+1 Mycoloth
+1 Myojin of Cryptic Dreams
+1 Rishkar, Peema Renegade
+1 Shroofus Sproutsire
+1 Slimefoot, the Stowaway
+1 Tekuthal, Inquiry Dominus
+1 The Mycotyrant
+1 Undercellar Myconid
+1 Utopia Mycon
+1 Vaultborn Tyrant
+1 Venerated Rotpriest
+1 Warden of the Grove
+1 Asceticism
+1 Fungal Plots
+1 Growing Rites of Itlimoc
+1 Innkeeper's Talent
+1 Insidious Roots
+1 Intruder Alarm
+1 Jugan Defends the Temple
+1 Primal Vigor
+1 Saproling Burst
+1 Simic Ascendancy
+1 Song of Freyalise
+1 The Cloning of Shredder
+1 The Weatherseed Treaty
+1 Awaken the Woods
+1 Bojuka Bog
+1 Command Tower
+1 Dark Depths
+1 Dreadship Reef
+1 Exotic Orchard
+1 Forbidden Orchard
+1 Foreboding Landscape
+7 Forest
+1 Fountainport
+1 Golgari Rot Farm
+1 Hickory Woodlot
+1 Hinterland Harbor
+3 Island
+1 Karn's Bastion
+1 Khalni Garden
+1 Llanowar Reborn
+1 Magosi, the Waterveil
+1 Mirrex
+1 Nesting Grounds
+1 Opulent Palace
+1 Oran-Rief, the Vastwood
+1 Rushwood Grove
+1 Saprazzan Skerry
+1 Simic Growth Chamber
+1 Swamp
+1 Tyrite Sanctum
+1 Vivid Grove
+1 Vivid Marsh
+1 Combine Chrysalis
+1 Everflowing Chalice
+1 Ichormoon Gauntlet
+1 Lithoform Engine
+1 Mimic Vat
+1 Patriar's Seal
+1 Double Major
+1 Fungal Infection
+1 Growth Spiral
+1 Heroic Intervention
+1 Infectious Bite
+1 Ripples of Potential
+1 Second Harvest
+1 Sprout Swarm
+1 Three Steps Ahead
+1 Garruk, Cursed Huntsman
+1 Kiora, Master of the Depths
+1 Nissa, Voice of Zendikar
+1 Oko, the Ringleader
+1 Tyvar, Jubilant Brawler
+1 Vraska, Betrayal's Sting

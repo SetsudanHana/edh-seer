@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/BE7RJAWYrygkHODCNJ5Kzw (source https://archidekt.com/decks/13596674)
+# tags Fight, Equipment, Voltron, Commander Matters, Deathtouch, Extra Combats; bracket 2; saved 2026-09-05; 574 tagged of 7102 indexed
+
+Commander
+1 Maarika, Brutal Gladiator
+
+Deck
+1 Arcbond
+1 Chaos Warp
+1 Fell the Profane
+1 Heroic Intervention
+1 Malakir Rebirth
+1 Rakdos Charm
+1 Revitalizing Repast
+1 Tamiyo's Safekeeping
+1 Untimely Malfunction
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Bushwhack
+1 Chain Reaction
+1 Chandra's Ignition
+1 Cultivate
+1 Dig Up
+1 Epic Fight
+1 Rishkar's Expertise
+1 Stump Stomp
+1 Traverse the Ulvenwald
+1 Bard Class
+1 Gimli's Reckless Might
+1 Glorious Sunrise
+1 Hunter's Talent
+1 Kaya's Ghostform
+1 Pain for All
+1 Rancor
+1 Rhythm of the Wild
+1 World War Hulk
+1 Basilisk Collar
+1 Dawnsire, Sunstar Dreadnought
+1 Embercleave
+1 Hammer of Nazahn
+1 Herd Heirloom
+1 Infiltration Lens
+1 Inquisitor's Flail
+1 Lightning Greaves
+1 Mage Slayer
+1 Netherborn Altar
+1 Rakdos Signet
+1 Sol Ring
+1 Trailblazer's Boots
+1 Whispersilk Cloak
+1 Birds of Paradise
+1 Bloom Tender
+1 Brash Taunter
+1 Fanatic of Rhonas
+1 Goblin Anarchomancer
+1 Goreclaw, Terror of Qal Sisma
+1 Guardian Augmenter
+1 Ignoble Hierarch
+1 Karlach, Fury of Avernus
+1 Kediss, Emberclaw Familiar
+1 Lizard Blades
+1 Morbid Opportunist
+1 Mr. Orfeo, the Boulder
+1 Neyith of the Dire Hunt
+1 Pathbreaker Ibex
+1 Radagast of Rhosgobel
+1 Saryth, the Viper's Fang
+1 Selvala, Heart of the Wilds
+1 Smaug, Wicked Worm
+1 Toralf, God of Fury
+1 Ulvenwald Tracker
+1 Xenagos, God of Revels
+1 Zopandrel, Hunger Dominus
+1 Blackcleave Cliffs
+1 Blood Crypt
+1 Blooming Marsh
+1 Bojuka Bog
+1 Cinder Glade
+1 Command Beacon
+1 Command Tower
+1 Copperline Gorge
+1 Exotic Orchard
+1 Game Trail
+1 Llanowar Wastes
+1 Mossfire Valley
+1 Overgrown Tomb
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Savage Lands
+1 Skarrg, the Rage Pits
+5 Snow-Covered Forest
+2 Snow-Covered Mountain
+1 Stomping Ground
+1 Sulfurous Springs
+1 Temple of Abandon
+1 Training Compound
+1 Twisted Landscape
+1 Viridescent Bog
+1 Jeska, Thrice Reborn

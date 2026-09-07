@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/s0DEnDi18f7Jil0N0GoFDg (source https://archidekt.com/decks/24486789)
+# tags Power Matters; bracket 3; saved 2026-09-05; 100 tagged of 14220 indexed
+
+Commander
+1 Eshki, Temur's Roar
+
+Deck
+1 Animar, Soul of Elements
+1 Anzrag, the Quake-Mole
+1 Apex Devastator
+1 Arixmethes, Slumbering Isle
+1 Birds of Paradise
+1 Bloom Tender
+1 Bristlebane Battler
+1 Defiler of Vigor
+1 Dreamtide Whale
+1 Etali, Primal Storm
+1 Fanatic of Rhonas
+1 Ghalta, Primal Hunger
+1 Goreclaw, Terror of Qal Sisma
+1 Gwenna, Eyes of Gaea
+1 Ilysian Caryatid
+1 Maelstrom Wanderer
+1 Outcaster Trailblazer
+1 Overlord of the Hauntwoods
+1 Sakura-Tribe Elder
+1 Selvala, Heart of the Wilds
+1 Slumbering Trudge
+1 Surrak Dragonclaw
+1 Temur Battlecrier
+1 Terror of the Peaks
+1 The Foretold Soldier
+1 Topiary Stomper
+1 Trumpeting Carnosaur
+1 Uro, Titan of Nature's Wrath
+1 Vaultborn Tyrant
+1 Wayward Swordtooth
+1 Wistfulness
+1 Xenagos, God of Revels
+1 Beast Within
+1 Chaos Warp
+1 Entish Restoration
+1 Growth Spiral
+1 Heroic Intervention
+1 Pongify
+1 Rapid Hybridization
+1 Blasphemous Act
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rishkar's Expertise
+1 Three Visits
+1 Breeding Pool
+1 Cascade Bluffs
+1 Cinder Glade
+1 Command Tower
+1 Commercial District
+1 Dreamroot Cascade
+1 Fire-Lit Thicket
+1 Flooded Grove
+8 Forest
+1 Frontier Bivouac
+1 Hedge Maze
+1 Hinterland Harbor
+1 Island
+1 Kessig Wolf Run
+1 Ketria Triome
+1 Mistrise Village
+1 Misty Rainforest
+1 Mountain
+1 Path of Ancestry
+1 Rejuvenating Springs
+1 Rockfall Vale
+1 Rootbound Crag
+1 Scalding Tarn
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Thornspire Verge
+1 Training Center
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Elemental Bond
+1 Fight Rigging
+1 Frostcliff Siege
+1 Garruk's Uprising
+1 Hardened Scales
+1 Monstrous Vortex
+1 Rhythm of the Wild
+1 Temur Ascendancy
+1 Up the Beanstalk
+1 Herd Heirloom
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Kiora, Behemoth Beckoner

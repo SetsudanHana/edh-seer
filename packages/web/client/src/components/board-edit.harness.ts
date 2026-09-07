@@ -19,6 +19,7 @@
  *  for a graph change. The centroid seeding is three lines here rather than an import because
  *  `seedPosition` lives in a .tsx that pulls React and a canvas in with it. */
 import { readFileSync, readdirSync } from "node:fs";
+import { drawnEdges } from "./board-edges.js";
 import { createBoardSimulation, SETTLED_SPACING, type Sim, type SimLink } from "./board-force.js";
 import type { CardGraph } from "../types.js";
 
@@ -62,7 +63,7 @@ function settle(
       : { ...n, x: Math.cos(i) * 260 + opts.random() * 30, y: Math.sin(i) * 260 + opts.random() * 30, vx: 0, vy: 0, deg: 0 };
   });
   const byId = new Map(nodes.map((n) => [n.id, n]));
-  const links: SimLink[] = graph.edges
+  const links: SimLink[] = drawnEdges(graph.edges)
     .map((e) => ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight }))
     .filter((l): l is SimLink => Boolean(l.source && l.target));
   for (const l of links) { l.source.deg++; l.target.deg++; }

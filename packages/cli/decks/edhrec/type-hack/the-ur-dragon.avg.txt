@@ -1,0 +1,102 @@
+# edhrec average deck: https://edhrec.com/average-decks/the-ur-dragon/type-hack
+# theme Type Hack (10 decks)
+
+Commander
+1 The Ur-Dragon
+
+Deck
+1 Arcane Signet
+1 Dragon's Hoard
+1 Firdoch Core
+1 Maskwood Nexus
+1 Sol Ring
+1 Thrumming Hivepool
+1 Vanquisher's Banner
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Hallowed Fountain
+1 Haven of the Spirit Dragon
+1 Horizon of Progress
+2 Island
+1 Ketria Triome
+1 Maelstrom of the Spirit Dragon
+1 Misty Rainforest
+2 Mountain
+1 Murmuring Bosk
+1 Mutavault
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Plains
+1 Polluted Delta
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Unclaimed Territory
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Zagoth Triome
+1 Amoeboid Changeling
+1 Changeling Outcast
+1 Changeling Wayfinder
+1 Chomping Changeling
+1 Cloudshredder Sliver
+1 Cosmic Spider-Man
+1 Flock Impostor
+1 Gangly Stompling
+1 Giada, Font of Hope
+1 Graveshifter
+1 Great Divide Guide
+1 Irregular Cohort
+1 Knight Exemplar
+1 Magda, Brazen Outlaw
+1 Masked Vandal
+1 Mirror Entity
+1 Mischievous Sneakling
+1 Moritte of the Frost
+1 Morophon, the Boundless
+1 Mutable Explorer
+1 Omni-Changeling
+1 Prideful Feastling
+1 Realmwalker
+1 Reaper King
+1 Risen Reef
+1 Rivaz of the Claw
+1 Shapesharer
+1 Skeletal Changeling
+1 Taurean Mauler
+1 Three Tree Mascot
+1 Universal Automaton
+1 Unsettled Mariner
+1 Valiant Changeling
+1 Venomous Changeling
+1 Voja, Jaws of the Conclave
+1 Yuriko, the Tiger's Shadow
+1 Black Market Connections
+1 Dragon Tempest
+1 Kindred Discovery
+1 Liliana's Contract
+1 Rhystic Study
+1 Springleaf Parade
+1 Absorb Identity
+1 Crib Swap
+1 Heroic Intervention
+1 Path to Exile
+1 Personify
+1 Scour for Scrap
+1 Swords to Plowshares
+1 Coveted Prize
+1 Crux of Fate
+1 Farseek
+1 Mass Appeal
+1 Nature's Lore
+1 Three Visits

@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/LKJUlk3k3NK1IXKDfUDc0Q (source https://archidekt.com/decks/18653421)
+# tags Bears, Tokens, Anthems; bracket 2; saved 2026-09-04; 128 tagged of 9387 indexed
+
+Commander
+1 Kudo, King Among Bears
+
+Deck
+1 Abandoned Air Temple
+1 Brushland
+1 Canopy Vista
+1 Castle Ardenvale
+1 Command Tower
+1 Diamond City
+10 Forest
+1 Fortified Village
+1 Gavony Township
+1 Horizon Canopy
+1 Minas Tirith
+1 Overgrown Farmland
+7 Plains
+1 Razorverge Thicket
+1 Restless Prairie
+1 Sungrass Prairie
+1 Sunpetal Grove
+1 Three Tree City
+1 Ainok Strike Leader
+1 Avacyn's Pilgrim
+1 Ayula, Queen Among Bears
+1 Beast Whisperer
+1 Beorn the Fierce
+1 Champion of Lambholt
+1 Charismatic Conqueror
+1 Cosmogrand Zenith
+1 Craterhoof Behemoth
+1 Diligent Zookeeper
+1 Elesh Norn, Grand Cenobite
+1 Elvish Mystic
+1 Emmara, Soul of the Accord
+1 Enduring Vitality
+1 Esper Sentinel
+1 Jacked Rabbit
+1 King Darien XLVIII
+1 Kutzil, Malamet Exemplar
+1 Legolas Greenleaf
+1 Llanowar Elves
+1 Metallic Mimic
+1 Ocelot Pride
+1 Ouroboroid
+1 Roaming Throne
+1 Rumor Gatherer
+1 Sandstorm Salvager
+1 Silk, Web Weaver
+1 Skyhunter Strike Force
+1 Spider-Ham, Peter Porker
+1 Torens, Fist of the Angels
+1 Toski, Bearer of Secrets
+1 Voice of Victory
+1 Warden of the Grove
+1 Anthem of Champions
+1 Beastmaster Ascension
+1 Champions from Beyond
+1 Cryptolith Rite
+1 Felidar Retreat
+1 Flowering of the White Tree
+1 Glorious Sunrise
+1 Rally the Ranks
+1 Reverence
+1 Song of Freyalise
+1 Tribute to the World Tree
+1 Wedding Announcement
+1 Aura Mutation
+1 Chord of Calling
+1 Clever Concealment
+1 Dromoka's Command
+1 Flawless Maneuver
+1 Grand Crescendo
+1 Rite of Harmony
+1 Swords to Plowshares
+1 Will of the Mardu
+1 Banner of Kinship
+1 Idol of Oblivion
+1 Lightning Greaves
+1 Lumen-Class Frigate
+1 Patchwork Banner
+1 Sol Ring
+1 Staff of the Storyteller
+1 Bridgeworks Battle
+1 Requisition Raid
+1 Solar Tide
+1 Elspeth, Storm Slayer
+1 Nissa, Voice of Zendikar

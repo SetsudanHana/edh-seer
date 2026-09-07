@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/Pyu-zgcAzz6uGoO-kGJZIQ (source https://archidekt.com/decks/21670100)
+# tags Discard, Cascade, Big Mana, Reanimator; bracket 3; saved 2026-09-01; 383 tagged of 9221 indexed
+
+Commander
+1 The Infamous Cruelclaw
+
+Deck
+1 Access Tunnel
+1 Blazemire Verge
+1 Bloodfell Caves
+1 Command Beacon
+1 Command Tower
+1 Evolving Wilds
+1 Hall of the Bandit Lord
+1 Maestros Theater
+1 Minas Morgul, Dark Fortress
+1 Molten Slagheap
+7 Mountain
+1 Riveteers Overlook
+1 Rogue's Passage
+1 Shizo, Death's Storehouse
+1 Susur Secundi, Void Altar
+8 Swamp
+1 Terramorphic Expanse
+1 War Room
+1 Ancient Brass Dragon
+1 Ancient Cellarspawn
+1 Ancient Copper Dragon
+1 Archfiend of Despair
+1 Archon of Cruelty
+1 Blast-Furnace Hellkite
+1 Bringer of the Last Gift
+1 Cavern-Hoard Dragon
+1 Combustible Gearhulk
+1 Drana, the Last Bloodchief
+1 Etali, Primal Storm
+1 Grave Researcher
+1 Karlach, Fury of Avernus
+1 Keen Duelist
+1 Keeper of Secrets
+1 Nalfeshnee
+1 Rakdos, Patron of Chaos
+1 Shadowgrange Archfiend
+1 Shard of the Nightbringer
+1 Skyline Despot
+1 Sower of Discord
+1 Summon: Bahamut
+1 Terror of the Peaks
+1 Utvara Hellkite
+1 Valgavoth, Terror Eater
+1 Wild-Magic Sorcerer
+1 Baneful Omen
+1 Berserkers' Onslaught
+1 Dauthi Embrace
+1 Grave Venerations
+1 Passionate Archaeologist
+1 Phyrexian Reclamation
+1 Big Score
+1 Blood for the Blood God!
+1 Delayed Blast Fireball
+1 Demand Answers
+1 Footbottom Feast
+1 Kazuul's Fury
+1 Thrill of Possibility
+1 Unexpected Windfall
+1 Vampiric Tutor
+1 Bloodsoaked Insight
+1 Breach the Multiverse
+1 Call Forth the Tempest
+1 Creative Technique
+1 Faithless Looting
+1 Imperial Seal
+1 In Garruk's Wake
+1 Living Death
+1 Overwhelming Forces
+1 Peer into the Abyss
+1 Reanimate
+1 Rise of the Dark Realms
+1 Scheming Symmetry
+1 Seize the Spoils
+1 Wheel of Fortune
+1 Brotherhood Regalia
+1 Chimil, the Inner Sun
+1 Cloak of the Bat
+1 Mimic Vat
+1 Planetarium of Wan Shi Tong
+1 Portal to Phyrexia
+1 Prowler's Helm
+1 Sensei's Divining Top
+1 Sol Ring
+1 Wand of Wonder
+1 Whispersilk Cloak
+1 Zephyr Boots

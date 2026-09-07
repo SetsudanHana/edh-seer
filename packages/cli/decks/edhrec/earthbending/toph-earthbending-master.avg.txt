@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/toph-earthbending-master/earthbending
+# theme Earthbending (148 decks)
+
+Commander
+1 Toph, Earthbending Master
+
+Deck
+1 Arcane Signet
+1 Emerald Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 The Ozolith
+1 Ba Sing Se
+1 Boseiju, Who Endures
+1 Darksteel Citadel
+1 Evolving Wilds
+1 Fabled Passage
+23 Forest
+1 Karn's Bastion
+1 Myriad Landscape
+1 Reliquary Tower
+1 Rogue's Passage
+1 Rumble Arena
+1 Secret Tunnel
+1 Terramorphic Expanse
+1 Vibrant Cityscape
+1 Yavimaya, Cradle of Growth
+1 Ancient Greenwarden
+1 Ashaya, Soul of the Wild
+1 Avatar Kyoshi, Earthbender
+1 Azusa, Lost but Seeking
+1 Badgermole
+1 Badgermole Cub
+1 Bristly Bill, Spine Sower
+1 Bumi, Eclectic Earthbender
+1 Earth Kingdom General
+1 Earthbending Student
+1 Evolution Sage
+1 Icetill Explorer
+1 Kodama of the West Tree
+1 Lotus Cobra
+1 Mossborn Hydra
+1 Oracle of Mul Daya
+1 Scute Swarm
+1 Sylvan Safekeeper
+1 The Boulder, Ready to Rumble
+1 The Earth King
+1 Tireless Provisioner
+1 Toph, the Blind Bandit
+1 Traveling Chocobo
+1 Branching Evolution
+1 Earthbender Ascension
+1 Exploration
+1 Greater Good
+1 Hardened Scales
+1 Solid Ground
+1 Sphere Grid
+1 Tale of Katara and Toph
+1 Terrasymbiosis
+1 The Legend of Kyoshi
+1 Beast Within
+1 Crop Rotation
+1 Cycle of Renewal
+1 Entish Restoration
+1 Harrow
+1 Heroic Intervention
+1 Inspiring Call
+1 Origin of Metalbending
+1 Return of the Wildspeaker
+1 Rocky Rebuke
+1 Nissa, Who Shakes the World
+1 Cracked Earth Technique
+1 Cultivate
+1 Earth Rumble
+1 Earthbending Lesson
+1 Explore
+1 Kodama's Reach
+1 Nature's Lore
+1 Planar Engineering
+1 Rampant Growth
+1 Rockalanche
+1 Seismic Sense
+1 Shared Roots

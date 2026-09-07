@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/rootha-mastering-the-moment/opus
+# theme Opus (3 decks)
+
+Commander
+1 Rootha, Mastering the Moment
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Resonating Lute
+1 Sol Ring
+1 Tablet of Discovery
+1 Talisman of Creativity
+1 Wand of Wonder
+1 Cascade Bluffs
+1 Coastal Peak
+1 Command Tower
+1 Desolate Lighthouse
+1 Exotic Orchard
+1 Ferrous Lake
+1 Frostboil Snarl
+1 Hall of Oracles
+10 Island
+1 Izzet Boilerworks
+1 Molten Tributary
+11 Mountain
+1 Path of Ancestry
+1 Shivan Reef
+1 Spectacle Summit
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Turbulent Springs
+1 Archmage Emeritus
+1 Brudiclad, Telchor Engineer
+1 Curiosity Crafter
+1 Dirgur Focusmage
+1 Inspired Skypainter
+1 Leitmotif Composer
+1 Manaform Hellkite
+1 Molten-Core Maestro
+1 Muddle, the Ever-Changing
+1 Muse Seeker
+1 Plargg and Nassari
+1 Prismari Pianist
+1 Redoubled Stormsinger
+1 Spectacular Skywhale
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Thunderclap Drake
+1 Thunderdrum Soloist
+1 Zaffai and the Tempests
+1 Alchemist's Talent
+1 Determined Iteration
+1 Abrade
+1 Arcane Denial
+1 Ashling's Command
+1 Big Score
+1 Dig Through Time
+1 Flick a Coin
+1 Hieroglyphic Illumination
+1 Izzet Charm
+1 Magma Opus
+1 Prismari Charm
+1 Prismari Command
+1 Reality Shift
+1 Traumatic Critique
+1 Abstract Performance
+1 Aether Gale
+1 Blasphemous Act
+1 Call the Skybreaker
+1 Creative Technique
+1 Disrupt Decorum
+1 Elemental Masterpiece
+1 Expressive Iteration
+1 Fervent Mastery
+1 Furygale Flocking
+1 Hit the Mother Lode
+1 Mana Geyser
+1 Mizzix's Mastery
+1 Rapturous Moment
+1 Recurring Insight
+1 Replication Technique
+1 Rite of Replication
+1 Rousing Refrain
+1 Surge to Victory
+1 Volcanic Salvo

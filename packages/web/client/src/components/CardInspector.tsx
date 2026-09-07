@@ -18,9 +18,16 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin,
+  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin, phone = "sheet",
 }: {
   node: GraphNode;
+  /** HOW THE PANEL SITS BELOW `sm`. "sheet" fills its container, which is right for the Cards
+   *  drawer (nothing behind it the reader needs). "half" hugs the bottom at no more than half the
+   *  container, for the board: owner, 2026-09-06, "you click a node and the dock opens which
+   *  covers whole screen so you see nothing on the graph basically" -- the panel describes a
+   *  picture it must not hide, the same reason the ego view reads its edge in a strip. At `sm`
+   *  and up both are the right-hand panel they always were. */
+  phone?: "sheet" | "half";
   /** Whether the card this panel is showing is in the reader's pinned set (roadmap S8).
    *
    *  PASSED, NOT READ FROM THE CONTEXT, and that is an import cycle rather than a preference:
@@ -106,6 +113,9 @@ export function CardInspector({
   useEffect(() => { setFaceIdx(node.face ?? 0); }, [node.id, node.face]);
   const faces = node.faces ?? [];
   const face = faces.length > 1 ? faces[Math.min(faceIdx, faces.length - 1)] : undefined;
+  // ONE ANSWER FOR "IS THE CARD ITSELF ON SCREEN", read by the image and by the text below it: the
+  // panel prints the oracle text only when the picture is not already printing it.
+  const hasImage = Boolean(face?.artCrop ?? node.artCrop);
 
   const routes = routesThrough(edges, node.id);
   const cutDown = flow?.truncated.get(node.id)?.down;
@@ -186,7 +196,9 @@ export function CardInspector({
   return (
     <div
       data-testid="card-inspector"
-      className="absolute inset-y-2 right-2 w-72 max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3"
+      className={`absolute right-2 left-2 ${
+        phone === "half" ? "bottom-2 top-auto max-h-[50%] sm:top-2 sm:max-h-none" : "inset-y-2"
+      } sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3`}
     >
       <button type="button" onClick={onClose} className="eyebrow self-end text-(--muted)">
         close
@@ -220,11 +232,15 @@ export function CardInspector({
         *  through the aspect, at 0.718 x 32vh = about 45vh, and keeps the box aspect-correct while
         *  doing it. On a short viewport the card shrinks and stays centred; on a tall one it fills
         *  the panel. `object-contain` stays as the guarantee that a card face is never stretched. */}
-      {face?.artCrop ?? node.artCrop ? (
+      {hasImage ? (
         <img
           src={cardImageUrl((face?.artCrop ?? node.artCrop)!)}
           alt={face?.name ?? node.label}
-          className="w-full max-w-[32vh] mx-auto aspect-[488/680] object-contain shrink-0 rounded-(--radius) border border-(--separator)"
+          // NOT IN THE HALF SHEET BELOW `sm`. The sheet is ~35vh; measured at 390, a 14vh card still
+          // left the first pair 130px under the sheet's fold behind the close row, the name, the
+          // type line, the text disclosure and the pin. The board is already drawing this card's
+          // art on its disc, and the pairs are what the tap asked for.
+          className={`w-full ${phone === "half" ? "hidden sm:block" : ""} max-w-[32vh] mx-auto aspect-[488/680] object-contain shrink-0 rounded-(--radius) border border-(--separator)`}
         />
       ) : null}
 
@@ -277,10 +293,26 @@ export function CardInspector({
           *  prints either card's text, so a right answer and a wrong one look identical on my
           *  screen" -- and the roadmap line recorded this panel as already showing the partner's
           *  text one click away. It did not, for any card with one face. */}
+        {/* THE CARD IMAGE ALREADY PRINTS THIS TEXT, so showing it twice fills the panel with a
+          *  second copy of what the reader is looking at (owner-reported 2026-09-04). It does NOT
+          *  simply go: the skeptic's finding above is still true wherever the image is absent -- a
+          *  token, a card whose art never resolved, a reader on a slow link -- and image text is
+          *  invisible to a screen reader and cannot be selected or searched.
+          *  So it stays, folded, whenever the picture is carrying it, and stands open when nothing
+          *  else is. `<details>` is the whole mechanism: assistive technology reads it either way. */}
         {(face?.oracleText ?? node.oracleText) ? (
-          <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">
-            {face?.oracleText ?? node.oracleText}
-          </p>
+          hasImage ? (
+            <details className="mt-1">
+              <summary className="eyebrow text-(--muted) cursor-pointer">card text</summary>
+              <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">
+                {face?.oracleText ?? node.oracleText}
+              </p>
+            </details>
+          ) : (
+            <p className="mt-1 whitespace-pre-line text-(--muted) text-xs">
+              {face?.oracleText ?? node.oracleText}
+            </p>
+          )
         ) : null}
         {/* THE PIN LIVES HERE, NOT ON THE NAME (roadmap S8). Click already opens this drawer and
           *  S18 made that gesture load-bearing -- it is how a reader checks a claim against the

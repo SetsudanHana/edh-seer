@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/NsIKVFcq4uwljdRSKgxZ6w (source https://moxfield.com/decks/o-E1eh8eL0yHE5bpvwKXWA)
+# tags X Spells, Ramp, Tokens, +1/+1 Counters; bracket 2; saved 2026-09-05; 2329 tagged of 15076 indexed
+
+Commander
+1 Magus Lucea Kane
+
+Deck
+1 Altered Ego
+1 Animar, Soul of Elements
+1 Birds of Paradise
+1 Bruce Banner
+1 Geometer's Arthropod
+1 Hydroid Krasis
+1 Incubation Druid
+1 Kinetic Ooze
+1 Kodama of the West Tree
+1 Lifeblood Hydra
+1 Nexos
+1 Owlin Spiralmancer
+1 Primordial Hydra
+1 Rampaging Yao Guai
+1 Sporocyst
+1 Tyrant Guard
+1 Wan Shi Tong, Librarian
+1 Zimone, Infinite Analyst
+1 Zoanthrope
+1 Animist's Awakening
+1 Awaken the Woods
+1 Banefire
+1 Blasphemous Act
+1 Blue Sun's Twilight
+1 Crackle with Power
+1 Curse of the Swine
+1 Doppelgang
+1 Farseek
+1 Finale of Revelation
+1 Hell to Pay
+1 Jaya's Immolating Inferno
+1 Mathemagics
+1 Mind into Matter
+1 Nature's Lore
+1 Open the Way
+1 Pest Infestation
+1 Rampant Growth
+1 Three Visits
+1 Arcane Signet
+1 Lightning Greaves
+1 Patriar's Seal
+1 Sol Ring
+1 Twinning Staff
+1 Beast Within
+1 Clash of Wills
+1 Comet Storm
+1 Condescend
+1 Deflecting Swat
+1 Inspiring Call
+1 Mindswipe
+1 Pull from Tomorrow
+1 Repulsive Mutation
+1 Syncopate
+1 Tyvar's Stand
+1 Boseiju, Who Endures
+1 Breeding Pool
+1 Cinder Glade
+1 Command Tower
+1 Exotic Orchard
+12 Forest
+8 Island
+1 Kessig Wolf Run
+1 Ketria Triome
+1 Minamo, School at Water's Edge
+4 Mountain
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Rockfall Vale
+1 Spire Garden
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Training Center
+1 Helix Pinnacle
+1 Lattice Library
+1 Simic Ascendancy
+1 Temur Ascendancy
+1 Unbound Flourishing

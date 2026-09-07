@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/1qpZ1ewWIYaWKytFFiuSOA (source https://archidekt.com/decks/22224738)
+# tags Aggro, Battles, Equipment; bracket 3; saved 2026-08-23; 6 tagged of 14516 indexed
+
+Commander
+1 Lightning, Army of One
+
+Deck
+1 Aggravated Assault
+1 Duelist's Heritage
+1 Forge Anew
+1 Land Tax
+1 Sigarda's Aid
+1 Akiri, Fearless Voyager
+1 Aurelia, the Warleader
+1 Bastion Protector
+1 Blade Historian
+1 Bruenor Battlehammer
+1 Cloud, Midgar Mercenary
+1 Combat Celebrant
+1 Firion, Wild Rose Warrior
+1 Freya Crescent
+1 Gisela, Blade of Goldnight
+1 Grand Abolisher
+1 Iroas, God of Victory
+1 Karlach, Fury of Avernus
+1 Kediss, Emberclaw Familiar
+1 Lizard Blades
+1 Mother of Runes
+1 Professional Face-Breaker
+1 Puresteel Paladin
+1 Reyav, Master Smith
+1 Sram, Senior Edificer
+1 Stoneforge Mystic
+1 Arcane Signet
+1 Basilisk Collar
+1 Blackblade Reforged
+1 Boros Signet
+1 Brotherhood Regalia
+1 Buster Sword
+1 Colossus Hammer
+1 Conqueror's Flail
+1 Embercleave
+1 Fellwar Stone
+1 Genji Glove
+1 Hammer of Nazahn
+1 Helm of the Host
+1 Lightning Greaves
+1 Mask of Memory
+1 Sol Ring
+1 Sunforger
+1 Swiftfoot Boots
+1 Sword of Feast and Famine
+1 Sword of Fire and Ice
+1 Sword of the Animist
+1 Talisman of Conviction
+1 The Reaver Cleaver
+1 Trailblazer's Boots
+1 Arena of Glory
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Furycalm Snarl
+6 Mountain
+14 Plains
+1 Rogue's Passage
+1 Rugged Prairie
+1 Sacred Foundry
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Sunbaked Canyon
+1 Sunbillow Verge
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 Sunscorched Divide
+1 Blasphemous Act
+1 Farewell
+1 Full Throttle
+1 Steelshaper's Gift
+1 Boros Charm
+1 Deflecting Palm
+1 Erode
+1 Lightning Bolt
+1 Lightning Helix
+1 Path to Exile
+1 Restoration Magic
+1 Silence
+1 Swords to Plowshares

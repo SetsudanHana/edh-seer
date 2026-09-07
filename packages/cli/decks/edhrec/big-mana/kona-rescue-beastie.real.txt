@@ -1,0 +1,74 @@
+# edhrec deck https://edhrec.com/deckpreview/cPZvvDnYEpQW2BKvrEK4Ig (source https://archidekt.com/decks/25481935)
+# tags Stompy, Tap / Untap, Big Mana; bracket 3; saved 2026-09-03; 567 tagged of 11807 indexed
+
+Commander
+1 Kona, Rescue Beastie
+
+Deck
+1 Apex Altisaur
+1 Arbor Elf
+1 Archetype of Endurance
+1 Citanul Stalwart
+1 Dawnglade Regent
+1 Elvish Mystic
+1 Elvish Piper
+1 Fierce Empath
+1 Fyndhorn Elves
+1 Gene Pollinator
+1 Ghalta, Primal Hunger
+1 Giant Adephage
+1 Giant Ankheg
+1 Impervious Greatwurm
+1 Jaspera Sentinel
+1 Kodama of the East Tree
+1 Kogla, the Titan Ape
+1 Llanowar Elves
+1 Ojer Kaslem, Deepest Growth
+1 Oviya, Automech Artisan
+1 Pathrazer of Ulamog
+1 Quilled Greatwurm
+1 Regal Force
+1 Sakura-Tribe Elder
+1 Saruli Caretaker
+1 Selvala, Heart of the Wilds
+1 Soul of the Harvest
+1 Stonehoof Chieftain
+1 Terastodon
+1 Titanoth Rex
+1 Vigor
+1 Woodfall Primus
+1 Worldspine Wurm
+1 Zopandrel, Hunger Dominus
+1 Arcane Signet
+1 Dodgy Jalopy
+1 Emerald Medallion
+1 Fellwar Stone
+1 Lumbering Worldwagon
+1 Sledge-Class Seedship
+1 Sol Ring
+1 Springleaf Drum
+1 Beast Within
+1 Defend the Rider
+1 Fog
+1 Lifestream's Blessing
+1 Return of the Wildspeaker
+1 Royal Treatment
+1 Snakeskin Veil
+1 Tyvar's Stand
+1 Colossal Majesty
+1 Garruk's Uprising
+1 Mana Reflection
+1 Unnatural Growth
+1 Cultivate
+1 Harmonize
+1 Kodama's Reach
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Skyshroud Claim
+1 Soul's Majesty
+33 Forest
+1 Holdout Settlement
+1 Mosswort Bridge
+1 Scene of the Crime
+1 Survivors' Encampment
+1 Nissa, Ascended Animist

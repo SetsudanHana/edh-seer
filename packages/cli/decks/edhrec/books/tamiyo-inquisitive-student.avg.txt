@@ -1,0 +1,82 @@
+# edhrec average deck: https://edhrec.com/average-decks/tamiyo-inquisitive-student/books
+# theme Books (1 decks)
+
+Commander
+1 Tamiyo, Inquisitive Student
+
+Deck
+1 Alhammarret's Archive
+1 Arcane Encyclopedia
+1 Autograph Book
+1 Barrin's Codex
+1 Cloud Key
+1 Diary of Dreams
+1 Five Hundred Year Diary
+1 Folio of Fancies
+1 Geth's Grimoire
+1 Grimoire of the Dead
+1 Ichormoon Gauntlet
+1 Inspiring Statuary
+1 Investigator's Journal
+1 Jalum Tome
+1 Marina Vendrell's Grimoire
+1 Matzalantli, the Great Door
+1 Mazemind Tome
+1 Mind Stone
+1 Mysterious Tome
+1 River Song's Diary
+1 Sol Ring
+1 Tamiyo's Journal
+1 Tamiyo's Logbook
+1 Thought Vessel
+1 Tome of Legends
+1 Urza's Tome
+1 Venser's Journal
+1 Wizard's Spellbook
+1 Archway of Innovation
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+10 Forest
+1 Hinterland Harbor
+16 Island
+1 Karn's Bastion
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Azusa, Lost but Seeking
+1 Dryad of the Ilysian Grove
+1 Etherium Sculptor
+1 Evolution Sage
+1 Flux Channeler
+1 Forensic Gadgeteer
+1 Foundry Inspector
+1 Laboratory Maniac
+1 Lonis, Genetics Expert
+1 Surge Conductor
+1 Toothy, Imaginary Friend
+1 Walking Atlas
+1 Inexorable Tide
+1 Ominous Seas
+1 On the Trail
+1 Power Artifact
+1 Teferi's Ageless Insight
+1 Arcane Denial
+1 Blue Sun's Zenith
+1 Counterspell
+1 Drown in Dreams
+1 Negate
+1 Pongify
+1 Ripples of Potential
+1 Swan Song
+1 Tamiyo's Safekeeping
+1 Jace, Wielder of Mysteries
+1 Tamiyo, Compleated Sage
+1 Teferi, Temporal Pilgrim
+1 Tezzeret, Betrayer of Flesh
+1 Expansion Algorithm
+1 Mathemagics
+1 Rise and Shine
+1 Sea Gate Restoration
+1 Universal Surveillance

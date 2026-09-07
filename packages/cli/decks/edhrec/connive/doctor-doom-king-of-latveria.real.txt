@@ -1,0 +1,94 @@
+# edhrec deck https://edhrec.com/deckpreview/VAKBUoVWNNuv0MyMEqfK0Q (source https://archidekt.com/decks/23836668)
+# tags Discard, Burn, Villains, +1/+1 Counters, Connive; bracket 2; saved 2026-09-05; 302 tagged of 9178 indexed
+
+Commander
+1 Doctor Doom, King of Latveria
+
+Deck
+1 Abomination, World Ravager
+1 Anger
+1 Baron Strucker, HYDRA Overlord
+1 Captain Howler, Sea Scourge
+1 Carnage, Crimson Chaos
+1 Chameleon, Master of Disguise
+1 Containment Construct
+1 Emet-Selch of the Third Seat
+1 Green Goblin, Nemesis
+1 Hobgoblin, Mantled Marauder
+1 Iron Monger, Sadistic Tycoon
+1 Kang, Temporal Tyrant
+1 Killmonger, Ruthless Usurper
+1 Klaw, Master of Sound
+1 Leader, Super-Genius
+1 Living Laser
+1 Loki, God of Mischief
+1 Loki, the Deceiver
+1 Magmakin Artillerist
+1 Molecule Man
+1 Moonstone, Harsh Mistress
+1 Nightscape Familiar
+1 Norman Osborn
+1 Prowler, Clawed Thief
+1 Puppet Master, String Puller
+1 Red Ghost, Intangible Genius
+1 Spark Double
+1 The Frightful Four
+1 The Squadron Sinister
+1 Titan of Littjara
+1 Tombstone, Career Criminal
+1 Typhoid Mary, Fractured
+1 All-Fates Scroll
+1 Arcane Signet
+1 Currency Converter
+1 Doom's Time Platform
+1 Loki's Scepter
+1 Patchwork Banner
+1 Progenitor's Icon
+1 Rakdos Signet
+1 Rocket-Powered Goblin Glider
+1 Sol Ring
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Archnemesis
+1 Construct a Cosmic Cube
+1 Glorious Purpose
+1 Kang Dynasty
+1 Propaganda
+1 Shadow of the Goblin
+1 Bedevil
+1 Chaos Warp
+1 Lethal Scheme
+1 Negate
+1 Terminate
+1 Unstable Experiment
+1 Withering Torment
+1 Blasphemous Act
+1 Night's Whisper
+1 Toxic Deluge
+1 Vandalblast
+1 Canyon Slough
+1 Choked Estuary
+1 Coastal Peak
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Pools
+1 Foreboding Ruins
+1 Frostboil Snarl
+4 Island
+1 Luxury Suite
+5 Mountain
+1 Path of Ancestry
+1 Scavenger Grounds
+1 Scorched Geyser
+1 Secluded Courtyard
+1 Smoldering Marsh
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sunken Hollow
+6 Swamp
+1 Terramorphic Expanse
+1 Unclaimed Territory
+1 Villainous Hideout

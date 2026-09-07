@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/FwgUfIFD6qhCyzgcLzZGqQ (source https://archidekt.com/decks/10487239)
+# tags Forced Combat, Lure; bracket 2; saved 2026-09-04; 30 tagged of 6066 indexed
+
+Commander
+1 Anzrag, the Quake-Mole
+
+Deck
+1 Anara, Wolvid Familiar
+1 Archetype of Aggression
+1 Elvish Mystic
+1 General Marhault Elsdragon
+1 Ghor-Clan Rampager
+1 Gruul Ragebeast
+1 Llanowar Elves
+1 Mina and Denn, Wildborn
+1 Noble Quarry
+1 Rubblehulk
+1 Sakura-Tribe Elder
+1 Savage Ventmaw
+1 Sunder Shaman
+1 Thunderfoot Baloth
+1 Wood Elves
+1 Zhur-Taa Druid
+1 Arlinn Kord
+1 Armed // Dangerous
+1 Bridgeworks Battle
+1 Clan Defiance
+1 Decimate
+1 Earthquake
+1 Enlarge
+1 Faithless Looting
+1 Farseek
+1 Kodama's Reach
+1 Light Up the Stage
+1 Magmatic Insight
+1 Overwhelming Stampede
+1 Ranger's Path
+1 Revenge of the Hunted
+1 Roar of Challenge
+1 Seize the Spoils
+1 Skyshroud Claim
+1 Stump Stomp
+1 Tormenting Voice
+1 Artifact Mutation
+1 Commune with Lava
+1 Destructive Revelry
+1 Gaea's Gift
+1 Horrid Vigor
+1 Momentous Fall
+1 Overprotect
+1 Ram Through
+1 Temur Battle Rage
+1 Thrash // Threat
+1 Vines of Vastwood
+1 Winds of Qal Sisma
+1 You Look Upon the Tarrasque
+1 Cinder Glade
+10 Forest
+1 Fungal Reaches
+1 Game Trail
+1 Gnottvold Slumbermound
+1 Gruul Turf
+1 Jund Panorama
+1 Karplusan Forest
+1 Mossfire Valley
+9 Mountain
+1 Mountain Valley
+1 Myriad Landscape
+1 Restless Ridgeline
+1 Rugged Highlands
+1 Sheltered Thicket
+1 Stomping Ground
+1 Temple of Abandon
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Fires of Yavimaya
+1 Garruk's Uprising
+1 Gratuitous Violence
+1 Hardy Outlander
+1 Lure
+1 Rhythm of the Wild
+1 Tavern Brawler
+1 Fireshrieker
+1 Gruul Signet
+1 Infiltration Lens
+1 Mask of Avacyn
+1 Rhonas's Monument
+1 Swiftfoot Boots
+1 Vorrac Battlehorns

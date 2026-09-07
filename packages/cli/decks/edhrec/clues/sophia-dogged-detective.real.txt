@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/bkmgliTCyQwylXbbOEzKJQ (source https://archidekt.com/decks/6630559)
+# tags Dogs, +1/+1 Counters, Food, Artifacts, Clues; bracket 3; saved 2026-09-03; 451 tagged of 5488 indexed
+
+Commander
+1 Sophia, Dogged Detective
+
+Deck
+1 Adrix and Nev, Twincasters
+1 Ainok Bond-Kin
+1 Arbor Adherent
+1 Astrid Peth
+1 Blink Dog
+1 Danny Pink
+1 District Mascot
+1 Faithful Watchdog
+1 Floodhound
+1 Generous Pup
+1 Irma, Part-Time Mutant
+1 Isamaru, Hound of Konda
+1 Jaheira, Friend of the Forest
+1 K-9, Mark I
+1 Loyal Warhound
+1 Martha Jones
+1 Mirror Entity
+1 Mowu, Loyal Companion
+1 Mushroom Watchdogs
+1 Mutagen Man, Living Ooze
+1 Pack Leader
+1 Peregrin Took
+1 Phelia, Exuberant Shepherd
+1 Rex, Cyber-Hound
+1 Rosie Cotton of South Lane
+1 Selfless Savior
+1 Spirited Companion
+1 Tanuki Transplanter
+1 Tireless Tracker
+1 Torgal, A Fine Hound
+1 Yoshimaru, Ever Faithful
+1 Animal Sanctuary
+1 Azorius Chancery
+1 Boseiju, Who Endures
+1 Branchloft Pathway
+1 Breeding Pool
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+1 Fabled Passage
+2 Forest
+1 Hallowed Fountain
+1 Hengegate Pathway
+1 Hinterland Harbor
+1 Irrigated Farmland
+2 Island
+1 Path of Ancestry
+4 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Scattered Groves
+1 Seaside Citadel
+1 Selesnya Sanctuary
+1 Simic Growth Chamber
+1 Skycloud Expanse
+1 Spara's Headquarters
+1 Sungrass Prairie
+1 Temple of Enlightenment
+1 Temple of Mystery
+1 Temple of Plenty
+1 Tranquil Landscape
+1 Arcane Signet
+1 Maskwood Nexus
+1 Nuka-Cola Vending Machine
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Unity
+1 Tamiyo's Journal
+1 The Ooze
+1 Beast Within
+1 Counterspell
+1 Generous Gift
+1 Heroic Intervention
+1 Inspiring Call
+1 Officious Interrogation
+1 Path to Exile
+1 Swords to Plowshares
+1 Bred for the Hunt
+1 Campsite Cuisine
+1 Hardened Scales
+1 High Score
+1 Kindred Discovery
+1 Ninja Pizza
+1 Search the Premises
+1 Smothering Tithe
+1 Damning Verdict
+1 Farseek
+1 Many Partings
+1 Nature's Lore
+1 Release the Dogs
+1 Rise and Shine
+1 They Went This Way
+1 Wave Goodbye

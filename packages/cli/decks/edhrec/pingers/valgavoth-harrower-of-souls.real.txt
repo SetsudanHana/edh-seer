@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/miBXU_voi90AZ0XFPiq_Tg (source https://archidekt.com/decks/25718252)
+# tags Group Slug, Pingers; bracket 2; saved 2026-09-05; 198 tagged of 30673 indexed
+
+Commander
+1 Valgavoth, Harrower of Souls
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Fellwar Stone
+1 Heirloom Blade
+1 Lightning Greaves
+1 Mask of Griselbrand
+1 Mind Stone
+1 Rakdos Signet
+1 Sol Ring
+1 Séance Board
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Ash Barrens
+1 Blackcleave Cliffs
+1 Bloodfell Caves
+1 Canyon Slough
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Exotic Orchard
+1 Foreboding Ruins
+1 Geothermal Bog
+1 Graven Cairns
+1 Leechridden Swamp
+8 Mountain
+1 Shadowblood Ridge
+1 Shivan Gorge
+1 Smoldering Marsh
+1 Spinerock Knoll
+1 Sulfurous Springs
+8 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Temple of the False God
+1 Terramorphic Expanse
+1 Witch's Clinic
+1 Barbflare Gremlin
+1 Blood Artist
+1 Blood Seeker
+1 Bloodthirsty Conqueror
+1 Brash Taunter
+1 Combustible Gearhulk
+1 Falkenrath Noble
+1 Fate Unraveler
+1 Florian, Voldaren Scion
+1 Gleeful Arsonist
+1 Gray Merchant of Asphodel
+1 Harsh Mentor
+1 Kaervek the Merciless
+1 Kardur, Doomscourge
+1 Kederekt Parasite
+1 Massacre Girl
+1 Massacre Wurm
+1 Mayhem Devil
+1 Morbid Opportunist
+1 Nightshade Harvester
+1 Obosh, the Preypiercer
+1 Rakdos, Lord of Riots
+1 Rampaging Ferocidon
+1 Solemn Simulacrum
+1 Star Athlete
+1 Stormfist Crusader
+1 Syr Konrad, the Grim
+1 Tectonic Giant
+1 The Lord of Pain
+1 Bastion of Remembrance
+1 Enchanter's Bane
+1 Grievous Wound
+1 Spiked Corridor // Torture Pit
+1 Spiteful Visions
+1 Theater of Horrors
+1 Bedevil
+1 Blessing of Belzenlok
+1 Blood Pact
+1 Chaos Warp
+1 Infernal Grasp
+1 Rakdos Charm
+1 Suspended Sentence
+1 Blasphemous Act
+1 Decree of Pain
+1 Feed the Swarm
+1 Grab the Prize
+1 Light Up the Stage
+1 Sadistic Shell Game
+1 Sign in Blood

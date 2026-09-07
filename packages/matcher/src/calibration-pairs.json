@@ -95,5 +95,37 @@
   "stratum": "linked",
   "note": "Defect B: Big Score is an Instant creating two Treasure tokens and no creature. The treasure emit carries no type, so the hierarchy fallback (treasure -> artifact+creature, because Goldhound exists) satisfies Warstorm Surge enters:creature. Banked before the fix as its witness; the token type map (DERIVE_VERSION 33) closed it and the engine no longer links them.",
   "judgedAt": "2026-08-13T22:49:31.990Z"
+ },
+ {
+  "a": "Priest of Forgotten Gods",
+  "b": "Orcish Bowmasters",
+  "verdict": "neutral",
+  "stratum": "linked",
+  "judgedAt": "2026-09-06T12:00:16.843Z",
+  "note": "Banked from the panel 2026-09-06 (W22 families 1-3): the engine claimed [draw:any] and the owner judged it FALSE -- USER VERDICT (blind agreement draw, 2026-08-07). Orcish bowmasters triggers on etb and on opponent drawing cards"
+ },
+ {
+  "a": "Liliana's Triumph",
+  "b": "Death Tyrant",
+  "verdict": "neutral",
+  "stratum": "linked",
+  "judgedAt": "2026-09-06T12:00:17.087Z",
+  "note": "Banked from the panel 2026-09-06 (W22 families 1-3): the engine claimed [graveyard-recursion:any] and the owner judged it FALSE -- USER VERDICT (blind agreement draw, ROUND 3, 2026-08-15). Liliana's triumph puts opponent creatures in the graveyard and Death tyrant can bring back only YOUR creatures"
+ },
+ {
+  "a": "Sludge Monster",
+  "b": "Laboratory Maniac",
+  "verdict": "neutral",
+  "stratum": "linked",
+  "judgedAt": "2026-09-06T12:00:17.324Z",
+  "note": "Banked from the panel 2026-09-06 (W22 families 1-3): the engine claimed [static:pump] and the owner judged it FALSE -- USER VERDICT (blind agreement draw, ROUND 3, 2026-08-15). Sludge Monster is no pump effect it is removal, you always would target opponent creatures to disable them"
+ },
+ {
+  "a": "Incubation Druid",
+  "b": "Evolution Witness",
+  "verdict": "neutral",
+  "stratum": "linked",
+  "judgedAt": "2026-09-06T12:00:17.794Z",
+  "note": "Banked from the panel 2026-09-06 (W22 families 1-3): the engine claimed [counter-added:creature] and the owner judged it FALSE -- USER VERDICT (debt judged 2026-08-22). SELF-REFERENCE ON BOTH SIDES. Incubation Druid's Adapt 3 puts counters on ITSELF; Evolution Witness triggers on counters put on \"this creature\", i.e. itself. The"
  }
 ]

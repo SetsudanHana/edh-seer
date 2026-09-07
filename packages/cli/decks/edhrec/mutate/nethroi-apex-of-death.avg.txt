@@ -1,0 +1,91 @@
+# edhrec average deck: https://edhrec.com/average-decks/nethroi-apex-of-death/mutate
+# theme Mutate (495 decks)
+
+Commander
+1 Nethroi, Apex of Death
+
+Deck
+1 Arcane Signet
+1 Conduit of Worlds
+1 Indatha Crystal
+1 Sol Ring
+1 Swiftfoot Boots
+1 Bojuka Bog
+1 Canopy Vista
+1 Caves of Koilos
+1 Command Tower
+1 Deceptive Landscape
+1 Evolving Wilds
+1 Exotic Orchard
+7 Forest
+1 Godless Shrine
+1 Golgari Rot Farm
+1 Indatha Triome
+1 Isolated Chapel
+1 Llanowar Wastes
+1 Lush Portico
+1 Overgrown Tomb
+5 Plains
+1 Sandsteppe Citadel
+1 Sunpetal Grove
+6 Swamp
+1 Temple Garden
+1 Undergrowth Stadium
+1 Woodland Cemetery
+1 Aftermath Analyst
+1 Auspicious Starrix
+1 Birds of Paradise
+1 Boneyard Lurker
+1 Cavern Whisperer
+1 Chittering Harvester
+1 Cubwarden
+1 Dirge Bat
+1 Essence Symbiote
+1 Eternal Witness
+1 Faeburrow Elder
+1 Fiend Artisan
+1 Gemrazer
+1 Glowstone Recluse
+1 Golgari Grave-Troll
+1 Huntmaster Liger
+1 Insatiable Hemophage
+1 Luminous Broodmoth
+1 Majestic Auricorn
+1 Migratory Greathorn
+1 Mindleecher
+1 Necropanther
+1 Nyx Weaver
+1 Old Stickfingers
+1 Phantom Nishoba
+1 Polukranos, Unchained
+1 Ravenous Chupacabra
+1 Reclamation Sage
+1 Sakura-Tribe Elder
+1 Satyr Wayfinder
+1 Sawtusk Demolisher
+1 Scourge of the Skyclaves
+1 Skull Prophet
+1 Stitcher's Supplier
+1 Syr Konrad, the Grim
+1 Underrealm Lich
+1 Vulpikeet
+1 World Shaper
+1 Cemetery Tampering
+1 Deadbridge Chant
+1 Death's Oasis
+1 Ripples of Undeath
+1 Assassin's Trophy
+1 Beast Within
+1 Entomb
+1 Grisly Salvage
+1 Mythos of Nethroi
+1 Path to Exile
+1 Swords to Plowshares
+1 Buried Alive
+1 Cultivate
+1 Damn
+1 Duneblast
+1 Eerie Ultimatum
+1 Farseek
+1 Kodama's Reach
+1 Rampant Growth

@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/raiyuu-storms-edge/exalted
+# theme Exalted (20 decks)
+
+Commander
+1 Raiyuu, Storm's Edge
+
+Deck
+1 Ancestral Katana
+1 Arcane Signet
+1 Basilisk Collar
+1 Blackblade Reforged
+1 Boros Signet
+1 Genji Glove
+1 Greatsword of Tyr
+1 Helm of the Host
+1 Mask of Memory
+1 Oathkeeper, Takeno's Daisho
+1 Samurai's Katana
+1 Sigil of Valor
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of the Animist
+1 Talisman of Conviction
+1 The Reaver Cleaver
+1 Two-Handed Axe
+1 Axgard Armory
+1 Battlefield Forge
+1 Boros Garrison
+1 Cathedral of War
+1 Clifftop Retreat
+1 Command Tower
+1 Eiganjo, Seat of the Empire
+1 Evolving Wilds
+1 Furycalm Snarl
+9 Mountain
+1 Path of Ancestry
+9 Plains
+1 Rogue's Passage
+1 Rugged Prairie
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Sundown Pass
+1 Sunhome, Fortress of the Legion
+1 Temple of Triumph
+1 Akiri, Fearless Voyager
+1 Akki Battle Squad
+1 Akki Ronin
+1 Asari Captain
+1 Battlegrace Angel
+1 Bruenor Battlehammer
+1 Eiganjo Exemplar
+1 Gilgamesh, Master-at-Arms
+1 Godo, Bandit Warlord
+1 Goro-Goro, Disciple of Ryusei
+1 Heiko Yamazaki, the General
+1 Imperial Subduer
+1 Ironsoul Enforcer
+1 Knight of Glory
+1 Lion Sash
+1 Lizard Blades
+1 Norika Yamazaki, the Poet
+1 Peerless Samurai
+1 Puresteel Paladin
+1 Selfless Samurai
+1 Silent Arbiter
+1 Sram, Senior Edificer
+1 Sublime Archangel
+1 Angelic Benediction
+1 Angelic Exaltation
+1 Fighter Class
+1 Forge Anew
+1 Idolized
+1 Sigarda's Aid
+1 Tempered in Solitude
+1 Windcrag Siege
+1 Boros Charm
+1 Deflecting Palm
+1 Generous Gift
+1 Legion Leadership
+1 Path to Exile
+1 Response // Resurgence
+1 Swords to Plowshares
+1 Wear // Tear
+1 The Wandering Emperor
+1 Banishing Slash
+1 Open the Armory
+1 Overpowering Attack
+1 Relentless Assault
+1 Single Combat
+1 Steelshaper's Gift

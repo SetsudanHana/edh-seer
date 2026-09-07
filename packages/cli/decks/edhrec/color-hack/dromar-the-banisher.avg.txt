@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/dromar-the-banisher/color-hack
+# theme Color Hack (11 decks)
+
+Commander
+1 Dromar, the Banisher
+
+Deck
+1 Arcane Signet
+1 Dimir Signet
+1 Distorting Lens
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Progress
+1 Arcane Sanctum
+1 Azorius Chancery
+1 Bojuka Bog
+1 Command Tower
+1 Contaminated Landscape
+1 Dromar's Cavern
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Exotic Orchard
+1 Glacial Fortress
+1 Godless Shrine
+1 Hallowed Fountain
+6 Island
+1 Isolated Chapel
+5 Plains
+1 Prairie Stream
+1 Raffine's Tower
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sunken Hollow
+5 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Watery Grave
+1 Baleful Strix
+1 Barrin, Tolarian Archmage
+1 Blind Seer
+1 Eastern Paladin
+1 Eight-and-a-Half-Tails
+1 Ersatz Gnomes
+1 Llawan, Cephalid Empress
+1 Mother of Runes
+1 Northern Paladin
+1 Order of the Sacred Torch
+1 Painter's Servant
+1 Pentarch Paladin
+1 Scuttlemutt
+1 Solemn Simulacrum
+1 Southern Paladin
+1 Stormscape Familiar
+1 Stromgald Cabal
+1 Tidal Visionary
+1 Vodalian Mystic
+1 Western Paladin
+1 Circle of Protection: Green
+1 Darkest Hour
+1 Deathgrip
+1 Dissipation Field
+1 Douse
+1 Flooded Woodlands
+1 Insight
+1 Light of Day
+1 Shifting Sky
+1 Sisay's Ingenuity
+1 Swirl the Mists
+1 Teferi's Moat
+1 Warped Devotion
+1 Alter Reality
+1 Arcane Denial
+1 Blue Elemental Blast
+1 Celestial Purge
+1 Counterspell
+1 Dromar's Charm
+1 Glamerdye
+1 Hibernation
+1 Mind Bend
+1 Path to Exile
+1 Sleight of Mind
+1 Spectral Shift
+1 Sway of Illusion
+1 Void Rend
+1 Whim of Volrath
+1 Kaya, Bane of the Dead
+1 Govern the Guildless
+1 Nature's Ruin
+1 Perish
+1 Syphon Mind
+1 Trait Doctoring
+1 Wash Out

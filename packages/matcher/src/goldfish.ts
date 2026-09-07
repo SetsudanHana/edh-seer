@@ -1,7 +1,9 @@
+import { POLICY_COLLAPSE } from "@edh-seer/engine/percent";
 import type { DeckCard } from "./types.js";
 import { castableManaCost } from "./split-cost.js";
 import { COLORS, isManaSource, type Color } from "./mana-audit.js";
 import { classifyLand, entersTapped, type LandCondition } from "./land-conditions.js";
+import { FETCHES_TAPPED, FETCH_UNTAPS, FETCH_UNTAP_LANDS, fetchableLands, isLandFetch } from "./fetch-land.js";
 import { DEFAULT_POD_SIZE, opponents } from "./format.js";
 
 /** THE MANA AVAILABILITY MODEL — a seeded goldfish simulation with a WRITTEN PLAY POLICY, because
@@ -95,11 +97,6 @@ export interface Accelerant {
   fetchTapped?: boolean;
 }
 
-/** A spell that puts a land onto the battlefield — the same two cues `rules.json`'s
- *  `ramp.landFetchSpell` already pairs, kept here rather than routed through the rule engine because
- *  this module needs the TAPPED half too and a rule row carries no payload. */
-const LAND_FETCH = /search your library for (?:a |an |up to \w+ )?(?:basic )?(?:land|forest|island|swamp|mountain|plains)/i;
-const ONTO_BATTLEFIELD = /onto the battlefield/i;
 const SUSPEND = /\bsuspend \d/i;
 /** A TAP-REPLACEMENT: mana that arrives when some OTHER permanent is tapped (roadmap O2). Two shapes,
  *  and they are not the same size -- a land AURA is bounded at what its one enchanted land adds,
@@ -110,25 +107,6 @@ const TAP_REPLACEMENT = /is tapped for mana|tap a (?:permanent|creature|land)\b[
  *  mask bit (N11); before that a colourless source and a colourless COST were the same empty mask. */
 const BONUS_COLORLESS = /tap a permanent for \{c\}|tap a land for \{c\}/i;
 const BONUS_CREATURE = /tap a creature for mana/i;
-/** A FETCH IS NOT FREE JUST BECAUSE THIS MODEL PERFORMS IT (roadmap N12). Myriad Landscape's two
- *  basics cost `{2}`, Urza's Cave `{3}`, and **Wayfarer's Bauble is cast for {1} and then cracked for
- *  {2} a turn later** — none of which the model pays, so each was a free land the moment it appeared.
- *  The activation cost is what sits before the colon on the fetch's own line; `{T}` and a sacrifice
- *  and a life payment are all costs this model CAN pay, and a mana symbol is not.
- *
- *  A LAND THAT FAILS THIS IS STILL A LAND — Myriad Landscape taps for `{C}` and enters tapped — it
- *  simply neither fixes colours nor thins until someone pays. That is the under-claiming direction,
- *  and it is 63 land slots plus 25 spell slots across the 71 decks. */
-const MANA_IN_COST = /\{(?!t\}|q\})[^{}]+\}/i;
-function fetchCostsMana(text: string): boolean {
-  const line = text.split("\n").find((l) => LAND_FETCH.test(l)) ?? "";
-  return line.includes(":") && MANA_IN_COST.test(line.slice(0, line.indexOf(":")));
-}
-/** The fetched land's own tapped state, printed on the fetch: "put it onto the battlefield TAPPED".
- *  Fabled Passage — 21 slots, and the only card of the family that prints the clause — then untaps it
- *  once you control four lands, which is the `slow` shape one board count over. */
-const FETCH_UNTAPS = /untap that land/i;
-const FETCHES_TAPPED = /onto the battlefield tapped/i;
 
 /** DOES THIS CARD MAKE MANA, or does Scryfall merely think so? `producedMana` is stamped from QUOTED
  *  TOKEN TEXT as well as the card's own abilities, so **Pitiless Plunderer** — which taps for nothing
@@ -164,7 +142,7 @@ export function classifyAccelerant(dc: DeckCard): Accelerant | null {
   // it is not until it dies and transforms.
   if (/\bland\b/.test(line)) return null;
   const text = dc.card.oracleText ?? "";
-  if (LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text) && !fetchCostsMana(text)) {
+  if (isLandFetch(text)) {
     return { name, manaValue, kind: "land-fetch", fetchTapped: FETCHES_TAPPED.test(text) };
   }
   // A ONE-SHOT IS NOT A SOURCE at any confidence — `isManaSource`'s own ruling, and the measured
@@ -393,38 +371,14 @@ export function colorMask(producedMana: readonly string[] | undefined): number {
  *  the 71 decks carry one, and the entire remainder is fetchlands, which correctly produce nothing
  *  of their own.
  *
- *  THE GATE IS `LAND_FETCH` FOR A LAND AND A SPELL ALIKE (roadmap N2, 2026-08-26). It used to demand
- *  the literal words "land card" on the land side, and the fetch cycle does not print them --
- *  Scalding Tarn says "an Island or Mountain CARD" -- so all ten real fetchlands fell through, 110
- *  of the 162 slots this correction reaches. One predicate, because the two sides ask the same
- *  question, and the land side gains `ONTO_BATTLEFIELD` with it: a search that puts the land in HAND
- *  is not a land drop. */
-const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
-
-/** What a fetchland can find in THIS deck, as a colour mask.
+ *  WHAT it can find is `fetch-land.ts`'s question, shared with `mana-audit.ts`; the MASK is this
+ *  module's currency, so only the last line is here.
  *
  *  CEILING: computed once off the whole deck, not per trial off the remaining library, so it
  *  over-claims slightly as the library empties. The alternative is recomputing a mask every crack. */
 export function fetchMask(oracleText: string, deck: readonly { typeLine: string; producedMana?: readonly string[] }[]): number {
-  const text = oracleText.toLowerCase();
-  const named = BASIC_TYPES.filter((t) => text.includes(t));
-  // NAMING A TYPE IS NOT DEMANDING A BASIC, and the two are independent (owner, 2026-08-25).
-  // Scalding Tarn searches for "an Island or Mountain CARD", so it finds Steam Vents -- a
-  // `Land - Island Mountain` -- and every other dual carrying one of those types, 20 lands in
-  // `iz-it-izzet` rather than the 19 basics. Seething Landscape says "a BASIC Island, Swamp, or
-  // Mountain card" and finds only basics. The word is read on its own, not as a fallback for a
-  // fetch that names nothing. `nonbasic` needs no stripping -- `\b` does not match inside it, which
-  // the test asserts rather than assumes, because it is exactly the kind of thing that stops being
-  // true when someone "simplifies" the pattern.
-  const wantsBasic = /\bbasic\b/.test(text);
   let m = 0;
-  for (const c of deck) {
-    const line = c.typeLine.toLowerCase();
-    if (!line.includes("land")) continue;
-    if (named.length > 0 && !named.some((t) => line.includes(t))) continue;
-    if (wantsBasic && !line.includes("basic")) continue;
-    m |= colorMask(c.producedMana);
-  }
+  for (const c of fetchableLands(oracleText, deck)) m |= colorMask(c.producedMana);
   return m;
 }
 
@@ -604,6 +558,19 @@ export interface SimulateOptions {
   /** Cards to PRICE without shuffling in — a commander, which is not in the library (CR 903.6) and
    *  is still the one card a reader looks for by name. */
   alsoPrice?: readonly DeckCard[];
+  /** POOLING OFF, for the one test that has to disagree with it. Pooling is a claim about the model
+   *  -- that a non-accelerant nonland reaches the trajectory ONLY through its pips -- and a claim
+   *  nothing can contradict is not a claim. `goldfish.pooled.test.ts` runs both arms at high trial
+   *  counts and holds them together, so the day someone gives such a card a second channel, that
+   *  test goes red instead of the percentages going quietly wrong. */
+  pooled?: boolean;
+  /** FORCED-CONDITIONING MODE: place this card at a uniform position among the first
+   *  `7 + forceTurn` library slots, so EVERY trial is a held-by-forceTurn trial for it, and count
+   *  only its cells. Exact up to fetch advancement: a fetch removing a land ahead of the card can
+   *  only pull it EARLIER, so {position <= 6+turn} is a sub-event of {drawn by turn} missing the
+   *  ~0.1-0.3% of held trials where a later card was advanced in -- sized in the harness. */
+  forceName?: string;
+  forceTurn?: number;
 }
 
 export interface SimulateResult {
@@ -637,15 +604,28 @@ export interface SimulateResult {
    *  trials that now count. Measured on `Curse of Opulence`: 40.0% unconditional, 47.1% held.
    *
    *  THE DENOMINATOR IS SMALL AND `byCardHeld` CARRIES IT, because a singleton is in hand in roughly
-   *  (6 + turn)/99 of trials. `castability.ts` refuses a card whose denominator is too thin rather
-   *  than printing a percentage drawn from a hundred shuffles. */
+   *  (6 + turn)/99 of trials. `castability.ts` refuses a card held fewer than `MIN_HELD_TRIALS` times
+   *  rather than printing a percentage drawn from a hundred shuffles -- a gate this comment claimed
+   *  from T18b onwards and which was only BUILT on 2026-09-04. Until then nothing read the
+   *  denominator at all and `REPORT_TRIALS` was silently doing the guard's job.
+   *
+   *  UNDER POOLING THIS COUNT IS AN EFFECTIVE SAMPLE SIZE, not a trial count: a class of exchangeable
+   *  cards contributes one sample per held MEMBER per trial, so it routinely exceeds `trials`. That is
+   *  the point -- it is the denominator the printed ratio was actually computed over, which is exactly
+   *  what the gate has to read. */
   byCardCastable: Map<string, number[]>;
   /** Per card, per turn: P(the board could tap at least that card's mana value by then), on the same
    *  held denominator. Still not "castable" — see the colour ceiling. */
   byCard: Map<string, number[]>;
-  /** Per card, per turn: the TRIALS THAT COUNTED -- those where the card was in hand. The
-   *  denominator behind the two maps above, and the only thing that says whether they are worth
-   *  printing. A commander is priced from the command zone and is held in every trial. */
+  /** Per card, per turn: THE SAMPLES THAT COUNTED. The denominator behind the two maps above, and
+   *  the only thing that says whether they are worth printing. A commander is priced from the command
+   *  zone and is held in every trial.
+   *
+   *  IT IS A SAMPLE COUNT, NOT A TRIAL COUNT, and the difference is pooling. A trial contributes one
+   *  sample per HELD MEMBER of the card's exchangeable class, so a card sharing its pip pattern with
+   *  thirteen others routinely reads well above `trials`. Read it as "how much evidence stands behind
+   *  this cell", which is what every consumer wants and what `MIN_HELD_TRIALS` gates on -- never as
+   *  "how many games had this card in hand". With `pooled: false` the two readings coincide again. */
   byCardHeld: Map<string, number[]>;
 }
 
@@ -683,7 +663,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     const isLand = /\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout));
     const text = dc.card.oracleText ?? "";
     // A land-fetch SPELL searches the library too, so it fixes colours and thins by the same fact.
-    const fetches = LAND_FETCH.test(text) && ONTO_BATTLEFIELD.test(text) && !fetchCostsMana(text);
+    const fetches = isLandFetch(text);
     return {
       name: dc.card.name,
       manaValue: dc.card.manaValue ?? 0,
@@ -697,7 +677,7 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_COLORLESS.test(text) ? { tapBonus: "colorless" as const } : {}),
       ...(!isLand && TAP_REPLACEMENT.test(text) && BONUS_CREATURE.test(text) ? { tapBonus: "creature" as const } : {}),
       ...(!isLand && landfallMana(text) > 0 ? { landfall: landfallMana(text) } : {}),
-      ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: 3 } : {}),
+      ...(fetches && FETCH_UNTAPS.test(text) ? { fetchUntapsAt: FETCH_UNTAP_LANDS } : {}),
       // A SPLIT CARD'S JOINED COST IS NOT A COST ANYONE PAYS — see `split-cost.ts`. Identical to
       // `manaCost` for every other card, and `costKey` follows it so the memo cannot key two
       // different costs to one answer.
@@ -741,6 +721,24 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
   const seenName = new Set<string>();
   const countsForByCard = priced.map((s) => { const first = !seenName.has(s.name); seenName.add(s.name); return first; });
 
+  // POOLED CONDITIONING. A non-accelerant nonland slot touches the trial trajectory in
+  // exactly one place: its cost pips enter `demandPips` (the accelerant branch reads `a` first, the
+  // land branches read `isLand`). So two such slots with the same pip multiset are EXCHANGEABLE --
+  // swapping them maps shuffles bijectively and preserves the trajectory -- and the board law given
+  // "held X by turn n" is identical for every member of the class. Every trial holding ANY member is
+  // therefore a valid sample for EVERY member's conditional cell, weighted by how many members it
+  // holds (linearity over members keeps the ratio exactly the per-member conditional probability).
+  // An accelerant changes the board it is held in, so it stays its own class; an extra (commander)
+  // is held in every trial and stays its own class too.
+  const pooled = opts.pooled ?? true;
+  const classOf = priced.map((s, i) => !pooled
+    ? `U:${i}`
+    : s.isExtra
+      ? `X:${s.name}`
+      : s.accelerant
+        ? `A:${s.name}`
+        : `P:${[...(s.cost?.pips ?? [])].sort((a, b) => a - b).join(",")}`);
+
   const manaAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const payableShareAt: number[][] = Array.from({ length: turns }, () => [] as number[]);
   const byCardHits = new Map<string, number[]>();
@@ -752,12 +750,35 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
     if (!heldHits.has(s.name)) heldHits.set(s.name, Array(turns).fill(0));
   }
 
+  const forceTurn = opts.forceTurn ?? 0;
+  // FORCED MODE shuffles only the prefix a short trial can consume: 7 + turn draws, plus at most one
+  // library removal per fetch SLOT in the deck (each fires once) -- an exact bound, so the partial
+  // Fisher-Yates prefix is a uniform permutation prefix and never reads unshuffled tail.
+  const prefixK = opts.forceName !== undefined
+    ? Math.min(slots.length, 7 + forceTurn + slots.filter((s) => s.fetches).length + 1)
+    : slots.length;
   for (let t = 0; t < trials; t++) {
     const library = [...slots];
-    // Fisher-Yates against the seeded generator, so a run is reproducible card-for-card.
-    for (let i = library.length - 1; i > 0; i--) {
-      const j = Math.floor(random() * (i + 1));
-      [library[i], library[j]] = [library[j], library[i]];
+    if (prefixK >= library.length) {
+      // Fisher-Yates against the seeded generator, so a run is reproducible card-for-card.
+      for (let i = library.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [library[i], library[j]] = [library[j], library[i]];
+      }
+    } else {
+      for (let i = 0; i < prefixK; i++) {
+        const j = i + Math.floor(random() * (library.length - i));
+        [library[i], library[j]] = [library[j], library[i]];
+      }
+    }
+    if (opts.forceName !== undefined) {
+      // Conditioning by construction: the other 98 cards stay a uniform shuffle whatever position
+      // the forced card held, so moving it to a uniform slot among the first 7+turn IS the
+      // conditional law of the shuffle given "drawn by turn" (minus the fetch-advancement sliver).
+      const at = library.findIndex((s) => s.name === opts.forceName);
+      const target = Math.floor(random() * (7 + forceTurn));
+      const [x] = library.splice(at, 1);
+      library.splice(target, 0, x);
     }
     const hand: DeckSlot[] = library.splice(0, 7);
     // EVERY CARD THIS TRIAL HAS SEEN, and it never forgets one (T18b). "Still in hand" is the wrong
@@ -933,29 +954,46 @@ export function simulate(deck: readonly DeckCard[], opts: SimulateOptions = {}):
       // second probability to multiply in -- it is this trial answering no.
       const castableByCost = new Map<string, boolean>();
       let affordable = 0;
+      // FORCED MODE: only the forced card's cells are meaningful (and only at forceTurn, which is
+      // the one cell the caller reads); everything else is skipped for speed.
+      if (opts.forceName !== undefined) {
+        for (let i = 0; i < priced.length; i++) {
+          const s = priced[i];
+          if (!countsForByCard[i] || s.name !== opts.forceName || !drawn.has(s.name)) continue;
+          heldHits.get(s.name)![turn - 1]++;
+          if ((s.cost?.total ?? s.manaValue) > made) break;
+          byCardHits.get(s.name)![turn - 1]++;
+          if (s.cost !== null && payable(untapped, s.cost)) byCardCastHits.get(s.name)![turn - 1]++;
+          break;
+        }
+        payableShareAt[turn - 1].push(0);
+        continue;
+      }
+      // Pass 1: `affordable` (every copy, as before) and the held-member count per class.
+      const heldPerClass = new Map<string, number>();
       for (let i = 0; i < priced.length; i++) {
         const s = priced[i];
-        // A commander is always one of them: it is priced from the command zone and was never
-        // shuffled in, so "did you draw it" is not a question that applies to it.
-        const held = s.isExtra === true || drawn.has(s.name);
-        // The DENOMINATOR is counted before the mana gate: a turn where you held the card and could
-        // not pay for it is exactly the case the figure exists to report.
-        if (countsForByCard[i] && held) heldHits.get(s.name)![turn - 1]++;
-        // WHAT YOU PAY, NOT WHAT THE CARD'S MANA VALUE IS. These are the same number for every card
-        // except a non-Fuse split, where CR 202.3b makes the mana value the SUM of both halves while
-        // the cost you actually pay is one half — so `Dusk // Dawn` was gated at nine mana on the
-        // board before `payable` was ever asked about its `{2}{W}{W}`. Correcting `cost` alone moved
-        // its figure by 3.5pp, because this line was the binding constraint and still read 9.
-        //
-        // `cost` is null for a land (skipped below anyway) and for an `{X}` cost this model refuses,
-        // and for those the mana value stays the gate.
+        if (!s.isExtra && (s.cost?.total ?? s.manaValue) <= made) affordable++;
+        if (countsForByCard[i] && (s.isExtra === true || drawn.has(s.name))) {
+          heldPerClass.set(classOf[i], (heldPerClass.get(classOf[i]) ?? 0) + 1);
+        }
+      }
+      // Pass 2: pooled cells. Each trial contributes |held members of the class| samples of the SAME
+      // board to every member's cell -- denominator and numerators alike -- so the ratio stays the
+      // per-member conditional probability. A class with no held member contributes nothing, and its
+      // `payable` is never computed.
+      for (let i = 0; i < priced.length; i++) {
+        if (!countsForByCard[i]) continue;
+        const s = priced[i];
+        const w = heldPerClass.get(classOf[i]) ?? 0;
+        if (w === 0) continue;
+        heldHits.get(s.name)![turn - 1] += w;
         if ((s.cost?.total ?? s.manaValue) > made) continue;
-        if (!s.isExtra) affordable++;
-        if (countsForByCard[i] && held) byCardHits.get(s.name)![turn - 1]++;
+        byCardHits.get(s.name)![turn - 1] += w;
         if (s.cost === null) continue;
         let ok = castableByCost.get(s.costKey);
         if (ok === undefined) { ok = payable(untapped, s.cost); castableByCost.set(s.costKey, ok); }
-        if (ok && countsForByCard[i] && held) byCardCastHits.get(s.name)![turn - 1]++;
+        if (ok) byCardCastHits.get(s.name)![turn - 1] += w;
       }
       payableShareAt[turn - 1].push(nonlands.length > 0 ? affordable / nonlands.length : 0);
     }
@@ -987,26 +1025,59 @@ export function quantiles(values: readonly number[]): { p25: number; median: num
   return { p25: at(0.25), median: at(0.5), p75: at(0.75) };
 }
 
-/** Trials the REPORT runs at, against the 20k the bin uses.
+/** Trials the REPORT runs at, against the 20k the bin uses. TWO THOUSAND, RAISED TO TEN THOUSAND
+ *  (T18b), AND BACK TO TWO ONCE THE SAMPLES STOPPED BEING WASTED.
  *
- *  CHOSEN AGAINST THE WIDTH OF THE THING IT SITS INSIDE, which is the only defensible way to pick a
- *  Monte Carlo sample size. The POLICY interval it is reported inside has a median width of 7.0pp,
- *  and the sampling noise at 2,000 trials is well under that: **SD 0.83-1.22pp (median 1.03) across
- *  10 decks x 20 seeds, with the worst single excursion from the 20,000-trial answer at 3.6pp**
- *  (roadmap N5, re-measured 2026-08-26). This comment used to claim "within about 0.5pp", which is
- *  optimistic by 2x on the SD and 7x on the tail; the CONCLUSION survives the correction and the
- *  sentence did not. A figure that prints as a whole percent inside a 7pp band can carry a 1pp SE;
- *  raising the trial count on this alone would buy accuracy nothing reads.
- *  Measured cost: about 24ms per policy arm on a 99-card deck, so ~48ms on an analyze request. */
-/** TEN THOUSAND, AND IT WAS TWO (T18b). The per-card castability is conditional on having DRAWN the
- *  card, and a singleton is drawn by turn N in roughly (6 + N)/99 of trials -- so at 2,000 the
- *  headline cell on a one-drop rested on about 160 shuffles, a sampling error near +-9pp at 95%,
- *  while the row printed a policy band one point wide. Precision the sample did not support.
+ *  THE DECK-LEVEL FIGURE WAS ALWAYS FINE AT 2,000, and this paragraph is the original measurement,
+ *  kept because it is the one that governs the availability headline again. That figure is CHOSEN
+ *  AGAINST THE WIDTH OF THE THING IT SITS INSIDE, which is the only defensible way to pick a Monte
+ *  Carlo sample size: the POLICY interval it is reported inside has a median width of 7.0pp, and the
+ *  sampling noise at 2,000 trials is well under that -- **SD 0.83-1.22pp (median 1.03) across 10
+ *  decks x 20 seeds, with the worst single excursion from the 20,000-trial answer at 3.6pp**
+ *  (roadmap N5, re-measured 2026-08-26). An earlier version of this comment claimed "within about
+ *  0.5pp", which was optimistic by 2x on the SD and 7x on the tail; the CONCLUSION survived the
+ *  correction and the sentence did not. A figure that prints as a whole percent inside a 7pp band can
+ *  carry a 1pp SE. Measured cost: about 24ms per policy arm on a 99-card deck.
  *
- *  MEASURED COST: a full deck analysis goes 1.01s -> 1.70s (`packages/cli`, `enchanting-rani`,
- *  best of two). The smallest denominator across the 71 calibration decks goes 120 -> 600. One
- *  constant, and reverting it costs only precision on the thinnest rows. */
-export const REPORT_TRIALS = 10_000;
+ *  WHAT T18b ACTUALLY NEEDED 10,000 FOR was the PER-CARD cell, which is conditional on having DRAWN
+ *  the card: a singleton is drawn by turn N in roughly (6 + N)/99 of trials, so at 2,000 REAL trials
+ *  a one-drop's cell rested on about 160 shuffles -- +-9pp at 95%, under a row printing a policy band
+ *  one point wide. Running five times as many games is the brute-force answer to that. It throws away
+ *  ~90% of every trial and buys the rest back with wall clock.
+ *
+ *  POOLING ANSWERS IT INSTEAD. `simulate` shares each trial across the class of cards that trial
+ *  cannot tell apart, so the same 2,000 games carry a median 28x the samples per cell. MEASURED with
+ *  `bin/castability-conditional.ts` over the 71 calibration decks, 4,476 priced cells -- thinnest
+ *  cell, by sampler:
+ *
+ *    real @ 2,000     120      every cell under `MIN_HELD_TRIALS`
+ *    real @ 10,000    732      no cell under it, at 5x the work
+ *    pooled @ 2,000   601      no cell under it, because the top-up is floored there
+ *
+ *  MEASURED COST, `packages/cli` end to end, best of three: gisa 1.41s -> 1.05s, samut 1.56s ->
+ *  1.22s, inalla 1.54s -> 1.16s.
+ *
+ *  MEASURED PRICE, and it is paid by the deck-level headline, which pooling does NOT accelerate --
+ *  `manaAt` is one sample per trial whatever the classes do. Across the 71 decks the headline policy
+ *  gap moves |2k - 10k| by median 0.38pp, p90 1.76pp, max 2.84pp, inside the tolerance the first
+ *  paragraph states. FOUR of the 71 change how they RENDER, because their gap sits within a point of
+ *  `POLICY_COLLAPSE` and crossing it swaps a band for one number -- two decks each way, so it is
+ *  noise and not a direction. Raising this constant back to 10,000 is free and costs only wall
+ *  clock. */
+export const REPORT_TRIALS = 2_000;
+
+/** HOW MANY SAMPLES MUST STAND BEHIND A CARD'S CELL before its percentage is worth printing.
+ *
+ *  DERIVED, NOT PICKED. `POLICY_COLLAPSE` is this project's own statement of the smallest gap between
+ *  two probabilities that means anything -- 8pp, below which two figures "say the same thing twice".
+ *  Sampling noise has to sit under that or the report is reading its own jitter, so the floor is the
+ *  sample size whose 95% interval is no wider than the collapse threshold at the worst case p = 0.5:
+ *  `2 * 1.96 * sqrt(0.25 / n) <= POLICY_COLLAPSE`, i.e. `n >= (1.96 / POLICY_COLLAPSE) ** 2`.
+ *
+ *  IT LIVES HERE, NEXT TO THE TRIAL COUNT IT IS IN TENSION WITH, and `castability.ts` imports it to
+ *  do the refusing. Both directions are load-bearing: the gate refuses a cell the sampler left thin,
+ *  and `manaModel`'s forced top-up below is floored at this number so the sampler never leaves one. */
+export const MIN_HELD_TRIALS = Math.ceil((1.96 / POLICY_COLLAPSE) ** 2);
 
 /** The availability TABLE is eight rows. The simulation may run longer to price a big card. */
 const ROW_TURNS = 8;
@@ -1140,6 +1211,67 @@ export function manaModel(
       // describes the pair.
       held: greedy.byCardHeld.get(name) ?? [],
     });
+  }
+  // FORCED TOP-UP for thin classes. A singleton class -- an accelerant, or the only card
+  // with its pip pattern -- gains nothing from pooling, so its printed cell is topped up with
+  // forced-conditioning trials: the card placed uniformly among the first 7+turn library slots,
+  // simulated only to its printed turn, only its own cell counted. Combined with the base estimate
+  // by sample count, per arm.
+  // VARIANCE-TARGETED: top a cell up only to the sample size its own binomial variance asks for.
+  // A rock sitting at 99% castable needs ~30 samples for a 2pp SE; a 50% cell needs ~600. The
+  // base estimate's own noise is absorbed by widening p toward 0.5 by two of its standard errors.
+  const SE_TARGET = 0.016;
+  const copies = new Map<string, number>();
+  for (const dc of deck) copies.set(dc.card.name, (copies.get(dc.card.name) ?? 0) + 1);
+  let forcedRuns = 0;
+  const seenTop = new Set<string>();
+  for (const dc of deck) {
+    const name = dc.card.name;
+    if (seenTop.has(name)) continue;
+    seenTop.add(name);
+    if ((copies.get(name) ?? 0) > 1) continue; // multi-copy names are never thin
+    if (/\bland\b/i.test(frontTypeLine(dc.card.typeLine, dc.card.layout))) continue;
+    const turn = Math.max(1, Math.round(dc.card.manaValue ?? 0));
+    if (turn > turns) continue;
+    const curve = curves.get(name);
+    if (!curve) continue;
+    const baseHeld = curve.held[turn - 1] ?? 0;
+    // The p whose variance governs the printed cell: the edge of either band closest to one half,
+    // widened toward 0.5 by 2 SE of the base estimate itself so a noisy 0.99 is not trusted.
+    const edges = baseHeld < 50 ? [0.5] : [
+      curve.castable[turn - 1]?.low ?? 0.5, curve.castable[turn - 1]?.high ?? 0.5,
+      curve.mana[turn - 1]?.low ?? 0.5, curve.mana[turn - 1]?.high ?? 0.5,
+    ];
+    // dist = |p - 0.5| after widening each edge toward 0.5 by 2 SE; the smallest distance is the
+    // most mid-range (highest-variance) edge, and that variance sizes the sample the cell needs.
+    const dist = Math.min(...edges.map((p) => {
+      const se = Math.sqrt(Math.max(p * (1 - p), 0.01) / Math.max(baseHeld, 1));
+      return Math.max(0, Math.abs(p - 0.5) - 2 * se);
+    }));
+    // FLOORED AT `MIN_HELD_TRIALS`, which is what keeps the two halves of this file honest with each
+    // other: the variance target above sizes a cell by its own p, and a cell sitting at 99% really
+    // does need fewer samples than one at 50% -- but `castability.ts` gates on a FLAT count, so a
+    // well-measured extreme cell left at 300 would be refused for looking thin. Top every cell to the
+    // gate and the gate never fires on the sampler's own arithmetic.
+    const need = Math.max(MIN_HELD_TRIALS, Math.ceil((0.25 - dist * dist) / (SE_TARGET * SE_TARGET)));
+    const F = Math.min(2000, Math.max(0, need - baseHeld));
+    if (F === 0) continue;
+    forcedRuns++;
+    const fseed = seed + 7919 * forcedRuns;
+    const fg = simulate(deck, { trials: F, turns: turn, seed: fseed, alsoPrice, forceName: name, forceTurn: turn });
+    const fh = simulate(deck, { trials: F, turns: turn, seed: fseed, holdUp: 2, alsoPrice, forceName: name, forceTurn: turn });
+    const comb = (base: SimulateResult, forced: SimulateResult, map: "byCardCastable" | "byCard"): number => {
+      const bHeld = base.byCardHeld.get(name)![turn - 1];
+      const bHits = Math.round((base[map].get(name)![turn - 1] ?? 0) * bHeld);
+      const fHeld = forced.byCardHeld.get(name)![turn - 1];
+      const fHits = Math.round((forced[map].get(name)![turn - 1] ?? 0) * fHeld);
+      return (bHits + fHits) / (bHeld + fHeld);
+    };
+    const band2 = (a: number, b: number): { low: number; high: number } =>
+      ({ low: Math.min(a, b), high: Math.max(a, b) });
+    curve.castable[turn - 1] = band2(comb(greedy, fg, "byCardCastable"), comb(held, fh, "byCardCastable"));
+    curve.mana[turn - 1] = band2(comb(greedy, fg, "byCard"), comb(held, fh, "byCard"));
+    curve.held[turn - 1] = greedy.byCardHeld.get(name)![turn - 1] + fg.byCardHeld.get(name)![turn - 1];
   }
   return {
     turns,

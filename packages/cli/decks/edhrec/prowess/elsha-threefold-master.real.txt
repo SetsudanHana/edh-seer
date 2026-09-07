@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/rBvebdHzllWTRdQ2Z2IEJg (source https://archidekt.com/decks/24145120)
+# tags Prowess, Tokens, Burn, Spellslinger; bracket 2; saved 2026-09-04; 302 tagged of 8991 indexed
+
+Commander
+1 Elsha, Threefold Master
+
+Deck
+1 Abrade
+1 Antagonize
+1 Blacksmith's Skill
+1 Bulk Up
+1 Clever Concealment
+1 Contraband Livestock
+1 Cunning Maneuver
+1 Duty Beyond Death
+1 Energybending
+1 Expedite
+1 Final Showdown
+1 Fists of Flame
+1 Legion Leadership
+1 Loran's Escape
+1 Lorehold Charm
+1 Make a Stand
+1 Mizzium Skin
+1 Monstrous Rage
+1 Negate
+1 Opt
+1 Quicken
+1 Rebellious Strike
+1 Repeal
+1 Shadow Rift
+1 Shelter
+1 Surge of Salvation
+1 Titan's Strength
+1 Unleash Fury
+1 Wing It
+1 You're Not Alone
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+9 Island
+10 Mountain
+1 Mystic Monastery
+1 Prairie Stream
+1 Rogue's Passage
+1 Rugged Prairie
+1 Sacred Foundry
+1 Sundown Pass
+1 Temple of Enlightenment
+1 Temple of Triumph
+1 Thriving Isle
+1 Azorius Signet
+1 Boros Signet
+1 Cori-Steel Cutter
+1 Izzet Signet
+1 Skullclamp
+1 Talisman of Conviction
+1 Talisman of Progress
+1 Balmor, Battlemage Captain
+1 Erebor Flamesmith
+1 Firebrand Archer
+1 Molten Gatekeeper
+1 Monastery Mentor
+1 Raphael, Tough Turtle
+1 Shocking Sharpshooter
+1 Thermo-Alchemist
+1 Veyran, Voice of Duality
+1 Witty Roastmaster
+1 Boomerang Basics
+1 Crash Through
+1 Distortion Strike
+1 Enter the Enigma
+1 Expressive Iteration
+1 Hour of Reckoning
+1 Ponder
+1 Preordain
+1 Renegade Tactics
+1 Serum Visions
+1 Slip Through Space
+1 Warlord's Fury
+1 Wrenn's Resolve
+1 Impact Tremors
+1 Jeskai Ascendancy
+1 Warleader's Call

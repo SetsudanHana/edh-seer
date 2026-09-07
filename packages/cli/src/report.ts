@@ -225,9 +225,9 @@ export function formatReport(report: DeckReport, trim = 0): string {
   if (report.slack && report.slack.length > 0) {
     lines.push("");
     lines.push("=== Where the slack is ===");
-    lines.push("  Categories you carry more of than the Command Zone template's floor — a deckbuilding");
-    lines.push("  convention someone typed, not a number measured from any deck. The category, never a");
-    lines.push("  member — nothing here ranks two ramp cards against each other.");
+    lines.push("  Categories you carry more of than the template's floor — the archetype's median, what it");
+    lines.push("  runs and not what it needs. The category, never a member — nothing here ranks two ramp");
+    lines.push("  cards against each other.");
     for (const s of report.slack) {
       lines.push(`  ${s.category}: ${s.count}/${s.target} (+${s.over})`);
     }

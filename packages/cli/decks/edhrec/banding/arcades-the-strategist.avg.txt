@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/arcades-the-strategist/banding
+# theme Banding (9 decks)
+
+Commander
+1 Arcades, the Strategist
+
+Deck
+1 Arcane Signet
+1 Baton of Morale
+1 Helm of Chatzuk
+1 Lightning Greaves
+1 Nemesis Mask
+1 Rammas Echor, Ancient Shield
+1 Sol Ring
+1 Adarkar Wastes
+1 Bant Panorama
+1 Bountiful Promenade
+1 Branchloft Pathway
+1 Brushland
+1 Canopy Vista
+1 Citadel Gate
+1 Command Tower
+1 Exotic Orchard
+4 Forest
+1 Glacial Fortress
+1 Hinterland Harbor
+5 Island
+1 Overgrown Farmland
+5 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Sea Gate
+1 Sea of Clouds
+1 Seachrome Coast
+1 Seaside Citadel
+1 Sunpetal Grove
+1 Treva's Ruins
+1 Yavimaya Coast
+1 Axebane Guardian
+1 Battering Ram
+1 Benalish Hero
+1 Cockatrice
+1 Crashing Drawbridge
+1 Crystal Barricade
+1 Fog Bank
+1 Guard Gomazoa
+1 Hornet Nest
+1 Hover Barrier
+1 Jeskai Barricade
+1 Kjeldoran Warrior
+1 Overgrown Battlement
+1 Saprazzan Heir
+1 Shield Bearer
+1 Shield Sphere
+1 Sidar Kondo of Jamuraa
+1 Steel Wall
+1 Sunscape Familiar
+1 Tetsuko Umezawa, Fugitive
+1 The Pride of Hull Clade
+1 The Walls of Ba Sing Se
+1 Timber Wolves
+1 Tolarian Entrancer
+1 Tree of Redemption
+1 Wall of Blossoms
+1 Wall of Denial
+1 Wall of Frost
+1 Wall of Hope
+1 Wall of Junk
+1 Wall of Omens
+1 Wall of Shields
+1 Wall of Stolen Identity
+1 Wall of Tears
+1 Assault Formation
+1 Brave the Sands
+1 Cooperation
+1 Cunning Evasion
+1 Fortified Area
+1 High Alert
+1 Nature's Blessing
+1 Primal Rage
+1 Serra's Blessing
+1 Stoneskin
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Errand of Duty
+1 Heroic Intervention
+1 Swords to Plowshares
+1 Tower Defense
+1 Huatli, the Sun's Heart
+1 Cultivate
+1 Dusk // Dawn
+1 Fell the Mighty
+1 Rampant Growth
+1 Slaughter the Strong
+1 Wave of Reckoning

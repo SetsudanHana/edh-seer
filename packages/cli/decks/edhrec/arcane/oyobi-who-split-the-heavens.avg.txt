@@ -1,0 +1,80 @@
+# edhrec average deck: https://edhrec.com/average-decks/oyobi-who-split-the-heavens/arcane
+# theme Arcane (9 decks)
+
+Commander
+1 Oyobi, Who Split the Heavens
+
+Deck
+1 Arcane Signet
+1 Caged Sun
+1 Gauntlet of Power
+1 Herald's Horn
+1 Heraldic Banner
+1 Long-Forgotten Gohei
+1 Marble Diamond
+1 Patchwork Banner
+1 Pearl Medallion
+1 Sol Ring
+1 Staff of the Storyteller
+1 Vanquisher's Banner
+1 Emeria, the Sky Ruin
+1 Karoo
+1 Myriad Landscape
+1 Nykthos, Shrine to Nyx
+1 Path of Ancestry
+27 Plains
+1 Secluded Steppe
+1 Temple of the False God
+1 Windbrisk Heights
+1 Angel of Flight Alabaster
+1 Ao, the Dawn Sky
+1 Bygone Bishop
+1 Celestial Crusader
+1 Clarion Spirit
+1 Drogskol Cavalry
+1 Drogskol Reinforcements
+1 Eternal Dragon
+1 Ghost-Lit Redeemer
+1 Guardian of Faith
+1 Kami of Ancient Law
+1 Kami of False Hope
+1 Katilda, Dawnhart Martyr
+1 Moonshaker Cavalry
+1 Myojin of Blooming Dawn
+1 Myojin of Cleansing Fire
+1 Nikko-Onna
+1 Phantom General
+1 Selfless Spirit
+1 Skyclave Apparition
+1 Twilight Drover
+1 Vanguard of the Restless
+1 Waxmane Baku
+1 Windborn Muse
+1 Yomiji, Who Bars the Way
+1 Yosei, the Morning Star
+1 Anointed Procession
+1 Field of Souls
+1 Ghostly Prison
+1 Haunted Library
+1 Honor of the Pure
+1 Intangible Virtue
+1 Tocasia's Welcome
+1 Aether Shockwave
+1 Blessed Breath
+1 Charge Across the Araba
+1 Ethereal Haze
+1 Generous Gift
+1 Hundred-Talon Strike
+1 Otherworldly Journey
+1 Path to Exile
+1 Quiet Purity
+1 Shining Shoal
+1 Spiritual Visit
+1 Swords to Plowshares
+1 Terashi's Verdict
+1 Cleanfall
+1 Gift of Estates
+1 Mass Calcify
+1 Secret Rendezvous
+1 Terashi's Cry
+1 Terashi's Grasp

@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/Rg5sWLrfhrtmPOpJLsS8zA (source https://archidekt.com/decks/12016507)
+# tags Tokens, Clues, Card Draw; bracket 2; saved 2026-09-05; 1007 tagged of 7972 indexed
+
+Commander
+1 Morska, Undersea Sleuth
+
+Deck
+1 Academy Manufactor
+1 Adrix and Nev, Twincasters
+1 Alandra, Sky Dreamer
+1 Alquist Proft, Master Sleuth
+1 Bennie Bracks, Zoologist
+1 Chulane, Teller of Tales
+1 Cyberdrive Awakener
+1 Detective of the Month
+1 Displaced Dinosaurs
+1 Emrakul's Messenger
+1 Erdwal Illuminator
+1 Esix, Fractal Bloom
+1 Ethereal Investigator
+1 Forensic Gadgeteer
+1 Homunculus Horde
+1 Hydroid Krasis
+1 Jaheira, Friend of the Forest
+1 Jolrael, Mwonvuli Recluse
+1 Junk Winder
+1 Kappa Cannoneer
+1 Kellan, Inquisitive Prodigy
+1 Koma, Cosmos Serpent
+1 Lonis, Cryptozoologist
+1 Martha Jones
+1 Merchant of Truth
+1 Nadir Kraken
+1 Piper Wright, Publick Reporter
+1 Private Eye
+1 Psychosis Crawler
+1 Shimmer Dragon
+1 Stridehangar Automaton
+1 Tangletrove Kelp
+1 Tatyova, Benthic Druid
+1 Thought Monitor
+1 Tireless Tracker
+1 Whirler Rogue
+1 All That Glitters
+1 Knowledge Is Power
+1 Mechanized Production
+1 On the Trail
+1 Teferi's Ageless Insight
+1 Thopter Spy Network
+1 Ulvenwald Mysteries
+1 Wilderness Reclamation
+1 Arcane Signet
+1 Five Hundred Year Diary
+1 Idol of Oblivion
+1 Inspiring Statuary
+1 Nettlecyst
+1 Sol Ring
+1 Tamiyo's Journal
+1 Thopter Fabricator
+1 Austere Command
+1 Finale of Revelation
+1 Fumigate
+1 Organic Extinction
+1 Rise and Shine
+1 Canopy Vista
+1 Command Tower
+1 Deserted Beach
+1 Dreamroot Cascade
+1 Exotic Orchard
+3 Forest
+1 Glacial Fortress
+1 Hinterland Harbor
+20 Island
+1 Overgrown Farmland
+2 Plains
+1 Prairie Stream
+1 Reliquary Tower
+1 Seaside Citadel
+1 Sodden Verdure
+1 Sunpetal Grove
+1 Dispatch
+1 Path to Exile
+1 Swords to Plowshares
+1 Tezzeret, Betrayer of Flesh

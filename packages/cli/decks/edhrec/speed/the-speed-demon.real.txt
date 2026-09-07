@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/t5oTwU8MLan190hTMwWp9Q (source https://archidekt.com/decks/18329196)
+# tags Self-Damage, Speed, Card Draw; bracket 3; saved 2026-08-30; 17 tagged of 1680 indexed
+
+Commander
+1 The Speed Demon
+
+Deck
+1 Amonkhet Raceway
+1 Avishkar Raceway
+1 Crypt of Agadeem
+1 Muraganda Raceway
+31 Swamp
+1 Archenemy's Charm
+1 Dark Ritual
+1 Deadly Dispute
+1 Dismember
+1 Erebos's Intervention
+1 Fell the Profane
+1 Malakir Rebirth
+1 Sheoldred's Edict
+1 Snuff Out
+1 Withering Torment
+1 Archfiend of Depravity
+1 Archfiend of Ifnir
+1 Ardyn, the Usurper
+1 Ayara, First of Locthwain
+1 Battlefly Swarm
+1 Bloodghast
+1 Boggart Trawler
+1 Braids, Arisen Nightmare
+1 Creeping Bloodsucker
+1 Dauthi Voidwalker
+1 Dread Presence
+1 Elegy Acolyte
+1 Faerie Dreamthief
+1 Gas Guzzler
+1 Gifted Aetherborn
+1 Gingerbrute
+1 Gix, Yawgmoth Praetor
+1 Gixian Puppeteer
+1 Gray Merchant of Asphodel
+1 Grim Hireling
+1 Jadar, Ghoulcaller of Nephalia
+1 K'rrik, Son of Yawgmoth
+1 Knight of the Ebon Legion
+1 Madame Null, Power Broker
+1 Mai, Scornful Striker
+1 Mutant Surveyor
+1 Nether Traitor
+1 Nighthawk Scavenger
+1 Qarsi Revenant
+1 Raven Eagle
+1 Shadow Alley Denizen
+1 Sheoldred
+1 Sinkhole Surveyor
+1 Tenacious Underdog
+1 Vilis, Broker of Blood
+1 Vito, Thorn of the Dusk Rose
+1 Bitterblossom
+1 Hour of Victory
+1 Meathook Massacre II
+1 Momentum Breaker
+1 The Meathook Massacre
+1 Unholy Annex // Ritual Chamber
+1 Virtue of Persistence
+1 Bolas's Citadel
+1 Bontu's Monument
+1 Jet Medallion
+1 Lashwrithe
+1 Sceptre of Eternal Glory
+1 Sol Ring
+1 The Darkness Crystal
+1 Vorpal Sword
+1 Whip of Erebos
+1 Demonic Tutor
+1 Toxic Deluge

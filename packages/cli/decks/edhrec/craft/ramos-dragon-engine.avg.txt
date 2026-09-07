@@ -1,0 +1,101 @@
+# edhrec average deck: https://edhrec.com/average-decks/ramos-dragon-engine/craft
+# theme Craft (1 decks)
+
+Commander
+1 Ramos, Dragon Engine
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Expedition Map
+1 Fellwar Stone
+1 Hero's Heirloom
+1 Lux Artillery
+1 Paradise Mantle
+1 Patriar's Seal
+1 Peacewalker Colossus
+1 Relic of Legends
+1 Skysovereign, Consul Flagship
+1 Smuggler's Copter
+1 Ancient Ziggurat
+1 Battlefield Forge
+1 Buried Ruin
+1 Cascading Cataracts
+1 Command Tower
+1 Copperline Gorge
+1 Demolition Field
+1 Deserted Beach
+1 Evolving Wilds
+1 Exotic Orchard
+2 Forest
+1 Great Hall of the Citadel
+2 Island
+1 Llanowar Wastes
+1 Mech Hangar
+1 Mishra's Foundry
+1 Morphic Pool
+2 Mountain
+1 Nimbus Maze
+2 Plains
+1 Prairie Stream
+1 Sequestered Stash
+1 Shivan Reef
+1 Sundown Pass
+2 Swamp
+1 Temple of Deceit
+1 Thespian's Stage
+1 Thriving Grove
+1 Thriving Heath
+1 Thriving Isle
+1 Thriving Moor
+1 Vineglimmer Snarl
+1 Aethershield Artificer
+1 Arcee, Sharpshooter
+1 Blaster, Combat DJ
+1 Blitzwing, Cruel Tormentor
+1 Cyclonus, the Saboteur
+1 Emry, Lurker of the Loch
+1 Flamewar, Brash Veteran
+1 Gold-Forged Thopteryx
+1 Goldbug, Humanity's Ally
+1 Hajar, Loyal Bodyguard
+1 Jetfire, Ingenious Scientist
+1 Jhoira's Familiar
+1 Jhoira, Weatherlight Captain
+1 K-9, Mark I
+1 Kitsune Ace
+1 Lita, Mechanical Engineer
+1 Loran, Disciple of History
+1 Master Transmuter
+1 Megatron, Tyrant
+1 Optimus Prime, Hero
+1 Prowl, Stoic Strategist
+1 Ratchet, Field Medic
+1 Research Thief
+1 Slicer, Hired Muscle
+1 Solemn Simulacrum
+1 Soundwave, Sonic Spy
+1 Starscream, Power Hungry
+1 Steel Overseer
+1 Ultra Magnus, Tactician
+1 Urza, Powerstone Prodigy
+1 Urza, Prince of Kroog
+1 Aerial Modification
+1 Born to Drive
+1 Caught in the Brights
+1 The Antiquities War
+1 Thopter Spy Network
+1 Wizard Class
+1 Artificer's Epiphany
+1 Built to Last
+1 Defabricate
+1 Disenchant
+1 Dispatch
+1 Lightning Bolt
+1 Thirst for Knowledge
+1 Excavation Explosion
+1 Land Grant
+1 One with the Machine
+1 Recommission
+1 Repair and Recharge

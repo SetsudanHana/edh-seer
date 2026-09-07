@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/disa-the-restless/delirium
+# theme Delirium (24 decks)
+
+Commander
+1 Disa the Restless
+
+Deck
+1 Altar of the Goyf
+1 Arcane Signet
+1 Lightning Greaves
+1 Maskwood Nexus
+1 Sol Ring
+1 Talisman of Indulgence
+1 Talisman of Resilience
+1 Blood Crypt
+1 Cinder Glade
+1 Command Tower
+1 Dakmor Salvage
+1 Darkmoss Bridge
+1 Demolition Field
+1 Drossforge Bridge
+1 Evolving Wilds
+1 Exotic Orchard
+4 Forest
+3 Mountain
+1 Overgrown Tomb
+1 Raucous Theater
+1 Savage Lands
+1 Sheltered Thicket
+1 Shifting Woodland
+1 Slagwoods Bridge
+1 Smoldering Marsh
+1 Stomping Ground
+4 Swamp
+1 Terramorphic Expanse
+1 Tree of Tales
+1 Twisted Landscape
+1 Underground Mortuary
+1 Valgavoth's Lair
+1 Vault of Whispers
+1 Verdant Catacombs
+1 Invasion of Mercadia
+1 Invasion of Zendikar
+1 Anger
+1 Barrowgoyf
+1 Brawn
+1 Chainer, Nightmare Adept
+1 Changeling Outcast
+1 Coram, the Undertaker
+1 Demolisher Spawn
+1 Eternal Witness
+1 Fear of Missing Out
+1 Graveshifter
+1 Ignoble Hierarch
+1 Lhurgoyf
+1 Mortivore
+1 Necrogoyf
+1 Nethergoyf
+1 Nyx Weaver
+1 Polygoyf
+1 Pyrogoyf
+1 Sakura-Tribe Elder
+1 Shigeki, Jukai Visionary
+1 Six
+1 Skull Prophet
+1 Stitcher's Supplier
+1 Tarmogoyf
+1 Ursine Monstrosity
+1 Winter, Cynical Opportunist
+1 Winter, Misanthropic Guide
+1 Conspiracy
+1 Deadbridge Chant
+1 Garruk's Uprising
+1 Ripples of Undeath
+1 Tarmogoyf Nest
+1 Tortured Existence
+1 Drag to the Roots
+1 Entomb
+1 Grapple with the Past
+1 Grisly Salvage
+1 Harrow
+1 Kolaghan's Command
+1 Peer Past the Veil
+1 Revitalizing Repast
+1 Terminate
+1 Grist, the Hunger Tide
+1 Liliana, Death's Majesty
+1 Buried Alive
+1 Chandra's Ignition
+1 Cultivate
+1 Deluge of Doom
+1 Faithless Looting
+1 Formless Genesis
+1 Nature's Lore
+1 Rampant Growth
+1 Reanimate
+1 Toxic Deluge
+1 Victimize

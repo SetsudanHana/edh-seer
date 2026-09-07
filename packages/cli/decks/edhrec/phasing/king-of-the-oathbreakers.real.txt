@@ -1,0 +1,85 @@
+# edhrec deck https://edhrec.com/deckpreview/kcS0po1H6tguunYzF3b5yA (source https://archidekt.com/decks/25440022)
+# tags +1/+1 Counters, Phasing, Tokens, Spirits, Lifegain; bracket 3; saved 2026-09-05; 91 tagged of 5044 indexed
+
+Commander
+1 King of the Oathbreakers
+
+Deck
+1 Accursed Duneyard
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+1 Fetid Heath
+1 Isolated Chapel
+1 Neglected Manor
+1 Orzhov Basilica
+1 Path of Ancestry
+14 Plains
+1 Scoured Barrens
+1 Shineshadow Snarl
+9 Swamp
+1 Temple of Silence
+1 Witch's Clinic
+1 Afterlife Insurance
+1 Cauldron Haze
+1 Cloudshift
+1 Dawn Charm
+1 Defiant Strike
+1 Divine Resilience
+1 Duty Beyond Death
+1 Eerie Interlude
+1 Gods Willing
+1 Mortify
+1 Reprieve
+1 Scapegoat
+1 Village Rites
+1 Anafenza, Kin-Tree Spirit
+1 Clarion Spirit
+1 Drumbellower
+1 Fleshtaker
+1 Gollum, Riddle Master
+1 Grateful Apparition
+1 Grey Host Reinforcements
+1 Guardian of Faith
+1 Hanged Executioner
+1 Hokori, Dust Drinker
+1 Kambal, Profiteering Mayor
+1 Karmic Guide
+1 Katilda, Dawnhart Martyr
+1 Koh, the Face Stealer
+1 Lunarch Veteran
+1 Myojin of Blooming Dawn
+1 Myojin of Night's Reach
+1 Nikko-Onna
+1 Obzedat, Ghost Council
+1 Selfless Spirit
+1 Serra Redeemer
+1 Shrouded Shepherd
+1 Skyclave Apparition
+1 Soul Warden
+1 Topplegeist
+1 Twilight Drover
+1 Village Cannibals
+1 Windborn Muse
+1 Andúril, Flame of the West
+1 Arcane Signet
+1 Door of Destinies
+1 Everflowing Chalice
+1 Fellwar Stone
+1 Idol of Oblivion
+1 Orzhov Signet
+1 Sol Ring
+1 Staff of the Storyteller
+1 Séance Board
+1 Bastion of Remembrance
+1 Ethereal Absolution
+1 Feast of the Victorious Dead
+1 Flowering of the White Tree
+1 Haunted Library
+1 Oath of the Grey Host
+1 Cleansing Nova
+1 Devouring Greed
+1 Farewell
+1 Requisition Raid
+1 Rite of the Moth
+1 Shadow Summoning

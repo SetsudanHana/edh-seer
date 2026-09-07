@@ -1,0 +1,95 @@
+# edhrec average deck: https://edhrec.com/average-decks/elsha-threefold-master/prowess
+# theme Prowess (303 decks)
+
+Commander
+1 Elsha, Threefold Master
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Cascade Bluffs
+1 Clifftop Retreat
+1 Command Tower
+1 Exotic Orchard
+1 Glacial Fortress
+1 Hallowed Fountain
+6 Island
+4 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+1 Perilous Landscape
+4 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Reliquary Tower
+1 Rugged Prairie
+1 Sacred Foundry
+1 Shivan Reef
+1 Skycloud Expanse
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Archmage Emeritus
+1 Balmor, Battlemage Captain
+1 Bria, Riptide Rogue
+1 Elsha of the Infinite
+1 Kykar, Wind's Fury
+1 Leonin Lightscribe
+1 Lyse Hext
+1 Monastery Mentor
+1 Narset, Enlightened Exile
+1 Storm-Kiln Artist
+1 Stormcatch Mentor
+1 Third Path Iconoclast
+1 Veyran, Voice of Duality
+1 Aligned Heart
+1 Aqueous Form
+1 Frostcliff Siege
+1 Impact Tremors
+1 Jeskai Ascendancy
+1 Renewed Solidarity
+1 Tempest Technique
+1 Warleader's Call
+1 Whirlwind of Thought
+1 Abrade
+1 An Offer You Can't Refuse
+1 Boros Charm
+1 Brainstorm
+1 Consider
+1 Counterspell
+1 Expedite
+1 Fists of Flame
+1 Flawless Maneuver
+1 Frantic Search
+1 Leap
+1 Legion Leadership
+1 Narset's Reversal
+1 Opt
+1 Path to Exile
+1 Pongify
+1 Prismari Command
+1 Psychotic Fury
+1 Rebellious Strike
+1 Shadow Rift
+1 Snap
+1 Swords to Plowshares
+1 Crash Through
+1 Distortion Strike
+1 Enter the Enigma
+1 Expressive Iteration
+1 Faithless Looting
+1 Gitaxian Probe
+1 Mana Geyser
+1 Ponder
+1 Preordain
+1 Slip Through Space
+1 Will of the Jeskai

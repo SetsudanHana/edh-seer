@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/YF_g5FnVBMsVipeRWJFX9g (source https://moxfield.com/decks/8iKsTyo3d02HRdvarmOdTQ)
+# tags Infect; bracket 3; saved 2026-09-05; 1287 tagged of 6878 indexed
+
+Commander
+1 Ixhel, Scion of Atraxa
+
+Deck
+1 Ajani, Sleeper Agent
+1 Nissa, Ascended Animist
+1 Vraska, Betrayal's Sting
+1 Bala Ged Recovery
+1 Caress of Phyrexia
+1 Cultivate
+1 Drown in Ichor
+1 Expand the Sphere
+1 Farseek
+1 Feed the Infection
+1 Flare of Cultivation
+1 Infectious Inquiry
+1 Night's Whisper
+1 Open the Way
+1 Painful Truths
+1 Phyresis Outbreak
+1 Phyrexian Rebirth
+1 Planewide Celebration
+1 Thirsting Roots
+1 Turntimber Symbiosis
+1 Unnatural Restoration
+1 Vat Emergence
+1 White Sun's Twilight
+1 Bilious Skulldweller
+1 Blightbelly Rat
+1 Bloated Contaminator
+1 Bloodroot Apothecary
+1 Boggart Trawler
+1 Brimaz, Blight of Oreskos
+1 Cankerbloom
+1 Contaminant Grafter
+1 Elesh Norn
+1 Evolution Sage
+1 Glissa Sunslayer
+1 Glissa, Herald of Predation
+1 Ichor Rats
+1 Metastatic Evangel
+1 Mite Overseer
+1 Myr Convert
+1 Necrogen Rotpriest
+1 Patrolling Peacemaker
+1 Pestilent Syphoner
+1 Phyrexian Censor
+1 Skrelv, Defector Mite
+1 Venerated Rotpriest
+1 Viridian Corrupter
+1 Witch Enchanter
+1 Canopy Vista
+1 Command Tower
+1 Demolition Field
+1 Exotic Orchard
+3 Forest
+1 Godless Shrine
+1 Golgari Rot Farm
+1 Indatha Triome
+1 Inkmoth Nexus
+1 Karn's Bastion
+1 Orzhov Basilica
+1 Overgrown Tomb
+1 Path of Ancestry
+2 Plains
+1 Selesnya Sanctuary
+1 Shadowy Backstreet
+2 Swamp
+1 Temple Garden
+1 The Seedcore
+1 Turbulent Fen
+1 Turbulent Moor
+1 Undergrowth Stadium
+1 Vault of the Archangel
+1 Contagion Clasp
+1 Fellwar Stone
+1 Glistening Sphere
+1 Psychic Paper
+1 Swiftfoot Boots
+1 Fell the Profane
+1 Infectious Bite
+1 Kabira Takedown
+1 Malakir Rebirth
+1 Noxious Revival
+1 Path to Exile
+1 Razorgrass Ambush
+1 Ready // Willing
+1 Revitalizing Repast
+1 Sejiri Shelter
+1 Swords to Plowshares
+1 Vraska's Fall
+1 Whisper of the Dross
+1 Ghostly Prison
+1 Glasswing Grace
+1 Innkeeper's Talent
+1 Norn's Decree
+1 Sculpted Perfection
+1 Skrelv's Hive
+1 Vraska Joins Up

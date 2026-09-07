@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/c56fnuze7eLyE9M5oprnbg (source https://archidekt.com/decks/20592222)
+# tags Midrange, Indestructible, Spellslinger, +1/+1 Counters, Enrage, Burn, Control, Combo, Deathtouch; bracket 3; saved 2026-08-30; 160 tagged of 11674 indexed
+
+Commander
+1 Indoraptor, the Perfect Hybrid
+
+Deck
+1 Alesha's Legacy
+1 Arcbond
+1 Battle-Rage Blessing
+1 Horrid Vigor
+1 Manamorphose
+1 Maximum Overdrive
+1 Offer Immortality
+1 Strength of Will
+1 Arcane Signet
+1 Blazing Sunsteel
+1 Fellwar Stone
+1 Fiendlash
+1 Requiem Monolith
+1 Sol Ring
+1 Talisman of Indulgence
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Burn Down the House
+1 Chain Reaction
+1 Chandra's Ignition
+1 Cultivate
+1 Earthquake
+1 Farseek
+1 Fiery Confluence
+1 Grab the Prize
+1 Insatiable Avarice
+1 Kodama's Reach
+1 Nature's Lore
+1 Night's Whisper
+1 Reanimate
+1 Rishkar's Expertise
+1 Rolling Earthquake
+1 Sign in Blood
+1 Stitch Together
+1 Three Visits
+1 Barbed Servitor
+1 Boggart Trawler
+1 Brash Taunter
+1 Corpse Augur
+1 Crypt Rats
+1 Deathbringer Thoctar
+1 Eternal Witness
+1 Giggling Skitterspike
+1 Haruspex
+1 Hungering Hydra
+1 Ignoble Hierarch
+1 Ill-Tempered Loner
+1 Mayhem Devil
+1 Neheb, the Eternal
+1 Ripjaw Raptor
+1 Screaming Nemesis
+1 Silverclad Ferocidons
+1 Stuffy Doll
+1 Thrashing Wumpus
+1 Toski, Bearer of Secrets
+1 Varragoth, Bloodsky Sire
+1 Vashta Nerada
+1 Venomcrawler
+1 Vrondiss, Rage of Ancients
+1 Blazemire Verge
+1 Blood Crypt
+1 City of Brass
+1 Command Tower
+1 Deathcap Glade
+1 Dragonskull Summit
+1 Exotic Orchard
+1 Fire-Lit Thicket
+1 Graven Cairns
+1 Haunted Ridge
+1 Karplusan Forest
+1 Llanowar Wastes
+1 Mossfire Valley
+5 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Reflecting Pool
+1 Rockfall Vale
+1 Savage Lands
+1 Shadowblood Ridge
+1 Spymaster's Vault
+1 Stomping Ground
+1 Sulfurous Springs
+5 Swamp
+1 Twilight Mire
+1 Viridescent Bog
+1 Ziatora's Proving Ground
+1 Pain for All
+1 Pestilence
+1 Phyrexian Arena
+1 Pyrohemia
+1 Vraska Joins Up

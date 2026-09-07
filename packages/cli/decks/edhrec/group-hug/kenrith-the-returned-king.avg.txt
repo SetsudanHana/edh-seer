@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/kenrith-the-returned-king/group-hug
+# theme Group Hug (614 decks)
+
+Commander
+1 Kenrith, the Returned King
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Fellwar Stone
+1 Folio of Fancies
+1 Ghirapur Orrery
+1 Howling Mine
+1 Sol Ring
+1 Temple Bell
+1 Tempting Contract
+1 Wedding Ring
+1 Breeding Pool
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Flooded Strand
+1 Forbidden Orchard
+4 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Indatha Triome
+2 Island
+1 Ketria Triome
+2 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+4 Plains
+1 Reliquary Tower
+1 Sacred Foundry
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Steam Vents
+1 Stomping Ground
+2 Swamp
+1 Temple Garden
+1 The World Tree
+1 Watery Grave
+1 Windswept Heath
+1 Zagoth Triome
+1 Agatha of the Vile Cauldron
+1 Biomancer's Familiar
+1 Birds of Paradise
+1 Braids, Conjurer Adept
+1 Círdan the Shipwright
+1 Dryad of the Ilysian Grove
+1 Faeburrow Elder
+1 Gluntch, the Bestower
+1 Heartwood Storyteller
+1 Humble Defector
+1 Kami of the Crescent Moon
+1 Kwain, Itinerant Meddler
+1 Kynaios and Tiro of Meletis
+1 Loran of the Third Path
+1 Master of Ceremonies
+1 Ms. Bumbleflower
+1 Rootweaver Druid
+1 Seedborn Muse
+1 Selvala, Explorer Returned
+1 The Second Doctor
+1 Tidal Barracuda
+1 Veteran Explorer
+1 Zirda, the Dawnwaker
+1 Dictate of Karametra
+1 Dictate of Kruphix
+1 Ghostly Prison
+1 Heartbeat of Spring
+1 Mana Flare
+1 Propaganda
+1 Rites of Flourishing
+1 Smothering Tithe
+1 Training Grounds
+1 Wilderness Reclamation
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Beast Within
+1 Counterspell
+1 Everybody Lives!
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Approach of the Second Sun
+1 Collective Voyage
+1 Council's Judgment
+1 Cultivate
+1 Farseek
+1 Fractured Identity
+1 Minds Aglow
+1 Pir's Whim
+1 Scheming Symmetry
+1 Secret Rendezvous
+1 Tempt with Discovery

@@ -3,7 +3,7 @@
  *  This is the load-bearing part of derivation: if `control` and `type` cannot be recovered, no
  *  edge forms and the compass suite goes red for reasons unrelated to the rest of the layer. */
 import type { Control, StatPredicate, SubjectFilter } from "../schema.js";
-import { KEYWORD_ABILITIES, SUBTYPES } from "./subtypes.js";
+import { KEYWORD_ABILITIES, SPELL_SUBTYPES, SUBTYPES } from "./subtypes.js";
 
 /** Card types the engine reasons about, plus the pseudo-types the matcher expands set-wise. */
 const TYPES = [
@@ -205,6 +205,8 @@ function singulars(w: string): string[] {
   return out;
 }
 
+const SPELL_NOUN = /\b(?:spells?|instants?|sorcer(?:y|ies)|cards?)\b/;
+
 /** Subtypes named in the object text. `namesItsTargets` (derive.ts) accepts a static effect only
  *  when it names a type OR a subtype, and this half was dead — a kindred anthem ("Zombies you
  *  control get +1/+1") named neither, so its subject was dropped and it formed no edge with any
@@ -214,9 +216,14 @@ function singulars(w: string): string[] {
 function parseSubtypes(t: string): { subtype?: string | string[]; plural: boolean } {
   const found: string[] = [];
   let plural = false;
+  // A SPELL SUBTYPE COUNTS ONLY BESIDE A SPELL NOUN. "an Adventure instant or sorcery spell"
+  // (Lucky Clover), "a Spirit or Arcane spell", "a Lesson card" are typal; "lesson", "trap" and
+  // "omen" anywhere else are English. Without this Clover derived a bare `cast:instant` and claimed
+  // every instant in the deck (2026-09-05).
+  const spellNoun = SPELL_NOUN.test(t);
   for (const w of t.match(/[a-z'-]+/g) ?? []) {
     for (const s of singulars(w)) {
-      if (!SUBTYPES.has(s)) continue;
+      if (!SUBTYPES.has(s) && !(spellNoun && SPELL_SUBTYPES.has(s))) continue;
       if (!found.includes(s)) found.push(s);
       if (s !== w) plural = true;
       break;
@@ -270,6 +277,33 @@ const STAT_RE = /\b(power|toughness|mana value)\s+(\d+)\s+or\s+(less|greater|mor
 const STAT_METRIC: Record<string, StatPredicate["metric"]> = {
   power: "power", toughness: "toughness", "mana value": "mana-value",
 };
+
+/** A LITERAL PRINTED SIZE — "whenever a 1/1 creature you control enters".
+ *
+ *  `STAT_RE` above reads only the COMPARATIVE form ("power 2 or less"), so a printed size was
+ *  dropped entirely and the trigger derived as a bare `creature`. Sword of the Meek's whole
+ *  restriction is that the creature is a 1/1: without it the engine believed ANY creature entering
+ *  returns it, which is right for a Krenko token by luck and wrong for every deck making bigger
+ *  ones. Reported by a deck tuner reading the row against the card, 2026-09-04.
+ *
+ *  MEASURED over the clause corpus: 4 triggers across 4 cards name a literal size -- Sword of the
+ *  Meek, Bess Soul Nourisher, Duskana the Rage Mother, Forum Filibuster. Small, and each one is an
+ *  OVER-claim, which is the direction that costs.
+ *
+ *  BOTH HALVES OR NEITHER. "1/1" is two conditions and dropping either widens the claim, so this
+ *  emits power eq N AND toughness eq M. A `*` or an X in a printed size is not a number and is not
+ *  matched here -- the matcher stores those as 0, and reading "0/0" as a literal would claim every
+ *  such creature. */
+const LITERAL_SIZE = /\b(\d+)\s*\/\s*(\d+)\b/;
+
+function literalSize(t: string): StatPredicate[] {
+  const m = LITERAL_SIZE.exec(t);
+  if (!m) return [];
+  return [
+    { metric: "power", op: "eq", value: Number(m[1]) },
+    { metric: "toughness", op: "eq", value: Number(m[2]) },
+  ];
+}
 
 /** An ENUMERATED mana cost — Urza's Saga's "artifact card with mana cost {0} or {1}". Not a
  *  comparison, so STAT_RE never saw it, and the card derived as a bare artifact tutor
@@ -356,6 +390,10 @@ const HISTORIC = /\bhistoric\b/i;
 const OUTLAW = /\boutlaws?\b/i;
 const NOT_OUTLAW = /\bnon-?outlaws?\b/i;
 const MODIFIED = /\bmodified\b/i;
+/** A combat state, CR 506.4/509.1. "attacking" and "blocking" are participles of the state, never
+ *  of evasion: "aren't blocked" and "can't be blocked" say nothing about a blocker and match neither. */
+const ATTACKING = /\battacking\b/i;
+const BLOCKING = /\bblocking\b/i;
 const NOT_MODIFIED = /\b(?:un|non-?)modified\b|\bprotection from modified\b/i;
 
 /** The LEGENDARY supertype, and its negation. Helm of the Host, Quantum Misalignment and Vesuvan
@@ -536,7 +574,7 @@ export function parseSubject(text: string): SubjectFilter {
   const { type, notType, umbrella, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   const scope = parseScope(t, plural || subtypePlural);
-  const stats = parseStats(t);
+  const stats = [...parseStats(t), ...literalSize(t)];
   const colors = parseColors(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
   if (CHOSEN.test(t)) out.chosenType = true;
@@ -545,6 +583,8 @@ export function parseSubject(text: string): SubjectFilter {
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   if (OUTLAW.test(t) && !NOT_OUTLAW.test(t)) out.outlaw = true;
   if (MODIFIED.test(t) && !NOT_MODIFIED.test(t)) out.modified = true;
+  if (ATTACKING.test(t)) out.combat = "attacking";
+  else if (BLOCKING.test(t)) out.combat = "blocking";
   // Set BEFORE anything reads the parsed types, because the two defects are independent: the type
   // list is ALSO wrong here (`parseTypes` sweeps the relative clause, so Vesuvan Duplimancy's "a
   // spell that targets only a single artifact or creature you control" derives `[creature,

@@ -1,0 +1,81 @@
+# edhrec average deck: https://edhrec.com/average-decks/krrik-son-of-yawgmoth/life-exchange
+# theme Life Exchange (24 decks)
+
+Commander
+1 K'rrik, Son of Yawgmoth
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Bolas's Citadel
+1 Bontu's Monument
+1 Demon's Horn
+1 Jet Medallion
+1 Lightning Greaves
+1 Mind Stone
+1 Sol Ring
+1 Staff of the Death Magus
+1 Swiftfoot Boots
+1 The Darkness Crystal
+1 Thought Vessel
+1 Barren Moor
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Nykthos, Shrine to Nyx
+1 Reliquary Tower
+1 Rogue's Passage
+26 Swamp
+1 Urborg, Tomb of Yawgmoth
+1 Ayara, First of Locthwain
+1 Blood Celebrant
+1 Bloodletter of Aclazotz
+1 Bloodthirsty Conqueror
+1 Chainer, Dementia Master
+1 Crypt Ghast
+1 Dread Presence
+1 Enduring Tenacity
+1 Gray Merchant of Asphodel
+1 Magus of the Mirror
+1 Massacre Wurm
+1 Necrotic Ooze
+1 Nirkana Revenant
+1 Pestilence Demon
+1 Pontiff of Blight
+1 Reiver Demon
+1 Sangromancer
+1 Shard of the Nightbringer
+1 Sheoldred, the Apocalypse
+1 Thrull Parasite
+1 Twilight Prophet
+1 Vilis, Broker of Blood
+1 Vito, Thorn of the Dusk Rose
+1 Exquisite Blood
+1 Font of Agonies
+1 Greed
+1 Meathook Massacre II
+1 Necropotence
+1 Pestilence
+1 Phyrexian Arena
+1 Sanguine Bond
+1 Consuming Corruption
+1 Dark Ritual
+1 Deadly Rollick
+1 Defile
+1 Fell the Profane
+1 Imp's Mischief
+1 Tendrils of Corruption
+1 Vampiric Tutor
+1 Withering Torment
+1 Liliana of the Dark Realms
+1 Demonic Tutor
+1 Diabolic Tutor
+1 Exsanguinate
+1 Feed the Swarm
+1 Peer into the Abyss
+1 Profane Transfusion
+1 Read the Bones
+1 Reanimate
+1 Repay in Kind
+1 Sign in Blood
+1 Toxic Deluge

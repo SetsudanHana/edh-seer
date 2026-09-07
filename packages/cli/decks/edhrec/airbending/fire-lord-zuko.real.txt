@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/EyZ1QAVDViYkVlJ1zTLFwQ (source https://archidekt.com/decks/22473116)
+# tags Attack Triggers, Firebending, Airbending, Exile; bracket 2; saved 2026-08-30; 35 tagged of 12965 indexed
+
+Commander
+1 Fire Lord Zuko
+
+Deck
+1 Aang's Defense
+1 Acrobatic Leap
+1 Airbender's Reversal
+1 Airbending Lesson
+1 Azula Always Lies
+1 Cunning Maneuver
+1 Fire Nation Attacks
+1 Firebending Lesson
+1 Fists of Flame
+1 Lightning Strike
+1 Roku's Mastery
+1 Solstice Revelations
+1 The Last Agni Kai
+1 Zuko's Conviction
+1 Zuko's Exile
+1 Aang, the Last Airbender
+1 Appa, Steadfast Guardian
+1 Azula, On the Hunt
+1 Combustion Man
+1 Fire Nation Cadets
+1 Iroh, Firebending Instructor
+1 Iroh, Tea Master
+1 Mai, Jaded Edge
+1 Mai, Scornful Striker
+1 Ozai, the Phoenix King
+1 Ran and Shaw
+1 Rough Rhino Cavalry
+1 Sun Warriors
+1 Wartime Protestors
+1 Zhao, the Moon Slayer
+1 Zuko, Avatar Hunter
+1 Zuko, Conflicted
+1 Zuko, Exiled Prince
+1 Zuko, Firebending Master
+1 Zuko, Seeking Honor
+1 Airbender Ascension
+1 Crescent Island Temple
+1 Fated Firepower
+1 Northern Air Temple
+1 Obsessive Pursuit
+1 Southern Air Temple
+1 The Legend of Yangchen
+1 The Rise of Sozin
+1 Tolls of War
+1 Avatar's Wrath
+1 Cathartic Reunion
+1 Epic Downfall
+1 Iroh's Demonstration
+1 Ozai's Cruelty
+1 Scarring Memories
+1 Sozin's Comet
+1 Volcanic Torrent
+1 Zuko's Offense
+1 Boiling Rock Prison
+1 Fire Nation Palace
+1 Misty Palms Oasis
+16 Mountain
+7 Plains
+1 Sun-Blessed Peak
+9 Swamp
+1 Thriving Bluff
+1 Thriving Heath
+1 Thriving Moor
+1 White Lotus Hideout
+1 Fire Nation Turret
+1 Glider Staff
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Fire Nation Drill
+1 Twin Blades

@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/vJ0uvbf869NAxDcoy4M35Q (source https://moxfield.com/decks/EfYDqcIgHUKnA2P0FCC6fA)
+# tags Spellslinger, Combo, Control; bracket 3; saved 2026-09-02; 987 tagged of 39600 indexed
+
+Commander
+1 Vivi Ornitier
+
+Deck
+1 Agna Qel'a
+1 Cascade Bluffs
+1 Command Tower
+1 Fiery Islet
+11 Island
+1 Izzet Boilerworks
+1 Lindblum, Industrial Regency
+5 Mountain
+1 Mystic Sanctuary
+1 Reliquary Tower
+1 Riptide Laboratory
+1 Riverglide Pathway
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Amphibian Downpour
+1 Curiosity
+1 Ophidian Eye
+1 Sigil of Sleep
+1 Underworld Breach
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brain Freeze
+1 Brainstorm
+1 Chain of Vapor
+1 Chaos Warp
+1 Consider
+1 Counterspell
+1 Demand Answers
+1 Dig Through Time
+1 Dizzy Spell
+1 Evacuation
+1 Flame of Anor
+1 Flare of Denial
+1 Flusterstorm
+1 Frantic Search
+1 Lightning Bolt
+1 Mystical Tutor
+1 Negate
+1 Opt
+1 Pact of Negation
+1 Peek
+1 Pongify
+1 Pyretic Ritual
+1 Pyroblast
+1 Rapid Hybridization
+1 Reality Shift
+1 Sink into Stupor
+1 Snap
+1 Snapback
+1 Thrill of Possibility
+1 Arcane Signet
+1 Basilisk Collar
+1 Bender's Waterskin
+1 Izzet Signet
+1 Lightning Greaves
+1 Sol Ring
+1 Talisman of Creativity
+1 Wizard's Staff
+1 Archmage Emeritus
+1 Baral, Chief of Compliance
+1 Birgi, God of Storytelling
+1 Coruscation Mage
+1 Gandalf, Goblins' Bane
+1 Harmonic Prodigy
+1 Hydroelectric Specimen
+1 Niv-Mizzet, Parun
+1 Niv-Mizzet, Visionary
+1 Ojer Axonil, Deepest Might
+1 Pinnacle Monk
+1 Spellskite
+1 Storm-Kiln Artist
+1 Subtlety
+1 Tandem Lookout
+1 Veyran, Voice of Duality
+1 Young Pyromancer
+1 Expressive Iteration
+1 Gitaxian Probe
+1 Ponder
+1 Preordain
+1 Reckless Impulse
+1 Vandalblast
+1 Windfall
+1 Wrenn's Resolve

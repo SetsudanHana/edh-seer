@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/fhbC5xazYbfWf90fyY8aCA (source https://moxfield.com/decks/xTigAUfhz3qLsqBRARyWGw)
+# tags Ramp, Wheels; bracket 3; saved 2026-09-05; 1962 tagged of 19599 indexed
+
+Commander
+1 Xyris, the Writhing Storm
+
+Deck
+1 Arid Archway
+1 Breeding Pool
+1 Cascade Bluffs
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Fabled Passage
+1 Fire-Lit Thicket
+1 Flooded Grove
+2 Forest
+1 Frontier Bivouac
+1 Gruul Turf
+1 Guildless Commons
+1 Hinterland Harbor
+3 Island
+1 Izzet Boilerworks
+1 Karplusan Forest
+1 Ketria Triome
+1 Misty Rainforest
+1 Mosswort Bridge
+4 Mountain
+1 Rockfall Vale
+1 Rootbound Crag
+1 Scalding Tarn
+1 Shivan Reef
+1 Simic Growth Chamber
+1 Steam Vents
+1 Stomping Ground
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Wooded Foothills
+1 Yavimaya Coast
+1 Bala Ged Recovery
+1 Blasphemous Act
+1 Bridgeworks Battle
+1 Dryad's Revival
+1 Echo of Eons
+1 Farseek
+1 Game Plan
+1 Rampant Growth
+1 Reforge the Soul
+1 Shared Roots
+1 Solve the Equation
+1 Wheel of Fate
+1 Windfall
+1 Winds of Change
+1 Beast Within
+1 Commit // Memory
+1 Divide by Zero
+1 Electrodominance
+1 Galvanic Iteration
+1 Great Train Heist
+1 Heroic Intervention
+1 Invoke Calamity
+1 Magmaquake
+1 Open the Omenpaths
+1 Origin of Metalbending
+1 Perplexing Test
+1 Return of the Wildspeaker
+1 Silundi Vision
+1 Slip Out the Back
+1 Twinferno
+1 Vines of Vastwood
+1 Burgeoning
+1 Exploration
+1 Frostcliff Siege
+1 Ominous Seas
+1 Painter's Studio // Defaced Gallery
+1 Psychic Possession
+1 Cavalier of Flame
+1 Dragon Mage
+1 Efreet Flamepainter
+1 Hydroelectric Specimen
+1 Jace's Archivist
+1 Llanowar Scout
+1 Magus of the Wheel
+1 Moraug, Fury of Akoum
+1 Niv-Mizzet, Parun
+1 Niv-Mizzet, the Firemind
+1 Psychosis Crawler
+1 PuPu UFO
+1 Sage of the Falls
+1 Sakura-Tribe Elder
+1 Scaled Herbalist
+1 Songcrafter Mage
+1 Tam, Mindful First-Year
+1 The Locust God
+1 Walking Atlas
+1 Domri, Anarch of Bolas
+1 Heraldic Banner
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots

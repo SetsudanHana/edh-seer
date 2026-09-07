@@ -13,6 +13,6 @@ export class AnalyzeController {
     if (!body || typeof body.decklist !== "string" || body.decklist.trim() === "") {
       throw new BadRequestException("decklist must be a non-empty string");
     }
-    return this.service.analyze(body.decklist, body.commanders);
+    return this.service.analyze(body.decklist, body.commanders, body.state);
   }
 }

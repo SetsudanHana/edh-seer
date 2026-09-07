@@ -1,0 +1,96 @@
+# edhrec average deck: https://edhrec.com/average-decks/gwen-stacy/impulse-draw
+# theme Impulse Draw (111 decks)
+
+Commander
+1 Gwen Stacy
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Interdimensional Web Watch
+1 Izzet Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Forge and Frontier
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Talisman of Progress
+1 The Key to the Vault
+1 Adarkar Wastes
+1 Battlefield Forge
+1 Cascade Bluffs
+1 Clifftop Retreat
+1 Command Tower
+1 Cori Mountain Monastery
+1 Deserted Beach
+1 Exotic Orchard
+1 Flooded Strand
+1 Glacial Fortress
+1 Hallowed Fountain
+4 Island
+5 Mountain
+1 Mystic Monastery
+1 Path of Ancestry
+1 Perilous Landscape
+4 Plains
+1 Prairie Stream
+1 Raugrin Triome
+1 Sacred Foundry
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sundown Pass
+1 Araña, Heart of the Spider
+1 Bonehoard Dracosaur
+1 Cait Sith, Fortune Teller
+1 Commander Liara Portyr
+1 Eruth, Tormented Prophet
+1 Etali, Primal Storm
+1 Flaming Tyrannosaurus
+1 Inti, Seneschal of the Sun
+1 Kami of Celebration
+1 Laelia, the Blade Reforged
+1 Nalfeshnee
+1 Nico Minoru, Runaway
+1 Party Thrasher
+1 Pia Nalaar, Consul of Revival
+1 Plargg and Nassari
+1 Professional Face-Breaker
+1 Sage of the Beyond
+1 Spider-Man 2099
+1 Spider-Punk
+1 Urianger Augurelt
+1 Vega, the Watcher
+1 Wild-Magic Sorcerer
+1 Charred Foyer // Warped Space
+1 Passionate Archaeologist
+1 Shadow of the Goblin
+1 Showdown of the Skalds
+1 Spider-Verse
+1 The Lost and the Damned
+1 Wild Wasteland
+1 Boros Charm
+1 Chaos Warp
+1 Counterspell
+1 Delayed Blast Fireball
+1 Generous Gift
+1 Opera Love Song
+1 Path to Exile
+1 Saw It Coming
+1 Spider-Sense
+1 Surge of Brilliance
+1 Swords to Plowshares
+1 Ultimate Magic: Holy
+1 Quintorius Kand
+1 Blasphemous Act
+1 Expressive Iteration
+1 Glimpse the Impossible
+1 Heroes' Hangout
+1 Hex Magic
+1 Ignite the Future
+1 Improvisation Capstone
+1 Jeska's Will
+1 Light Up the Stage
+1 Reckless Impulse
+1 Wrenn's Resolve

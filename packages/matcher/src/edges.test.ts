@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches } from "./edges.js";
+import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
@@ -62,7 +63,7 @@ test("reason text is human-readable — no raw tag tokens leak", () => {
   // token COPY (`token: true`), and Inalla is not a token. Saying "When Inalla enters" described the
   // wrong event — the same defect that made a Sorcery die (roadmap, 2026-08-27 persona run).
   // Still no engine vocabulary and no raw tag.
-  expect(etb.text).toBe("When a wizard enters thanks to Inalla, Kindred Discovery draws you cards");
+  expect(etb.text).toBe("When a Wizard enters thanks to Inalla, Kindred Discovery draws you cards");
   // both card names still present (CLI + engine rely on this)
   expect(etb.text).toContain(maker.card.name);
   expect(etb.text).toContain(etbPayoff.card.name);
@@ -247,6 +248,29 @@ test("token mediation: a Treasure maker's own token-entry event no longer edges 
 test("token mediation: the Treasure NODE's own entry still edges the payoff -- the two-hop path stands", () => {
   const reasons = directedReasons(treasureNode(), artifactPayoff(), H);
   expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
+});
+
+/** SUPPRESSION IS A TRADE, AND A CALLER WITH NO TOKEN NODES RECEIVES NOTHING. The card pages build
+ *  one card at a time, so the second hop this rule pays for is never constructed there: the maker's
+ *  real supply is deleted and the only sentence left is about its own body. MEASURED 2026-09-04 on
+ *  the partner artifact -- 7,266 of 117,946 sampled token-only candidate pairs deleted outright,
+ *  6,407 further rows worded as the body entering. The deck report, the graph and the compass all
+ *  keep the default, so this option cannot move them. */
+test("token mediation is off for a caller with no token nodes, and the maker's own supply returns", () => {
+  const reasons = directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H, { tokensMediate: false });
+  expect(reasons.some((r) => r.tag === "enters:artifact")).toBe(true);
+  // The sentence names the TOKEN as the thing that enters, not the sorcery that made it.
+  expect(reasons.find((r) => r.tag === "enters:artifact")!.text)
+    .toBe("When a Treasure enters thanks to Deadly Dispute, Artifact ETB Payoff draws you cards");
+});
+
+/** THE DEFAULT IS THE DECK REPORT and it has to stay byte-identical, so the option is proven to be
+ *  opt-in rather than assumed to be. */
+test("token mediation still fires when the option is absent or explicitly true", () => {
+  for (const opts of [undefined, {}, { tokensMediate: true }]) {
+    const reasons = directedReasons(withTreasurePart(treasureMaker()), artifactPayoff(), H, opts);
+    expect(reasons.some((r) => r.tag.startsWith("enters:"))).toBe(false);
+  }
 });
 
 test("CR 614 multiplier still edges the maker, never the token, after mediation (owner's ruling, verified not assumed)", () => {
@@ -1194,11 +1218,12 @@ test("a self-recursion is only enabled by a fill that could contain the card its
     tags: {
       oracleId: name, schemaVersion: 1, promptVersion: 0, model: "derived",
       characteristics: { types: [type.toLowerCase()], subtypes: [], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
-      // A graveyard fill is expressed as a permanent LEAVING the battlefield; impliedGraveyardEvents
-      // turns that into the enters@graveyard event the reanimator edge reads.
+      // A graveyard fill is expressed as a permanent DYING; impliedGraveyardEvents turns that into
+      // the enters@graveyard event the reanimator edge reads. (A `leaves` no longer fills: since
+      // 2026-09-05 a flicker, a bounce or an exile is a leave that is not a death.)
       abilities: [{
         kind: "activated", effect: { kind: "" },
-        emits: [{ verb: "leaves", subject: { control: "you", token: null, zone: "battlefield", type: type.toLowerCase() } }],
+        emits: [{ verb: "dies", subject: { control: "you", token: null, zone: "battlefield", type: type.toLowerCase() } }],
       }],
     },
   });
@@ -1856,7 +1881,9 @@ test("a self trigger says whose entry it is, without moving the tag", () => {
   }]);
   const etb = pairReasons(fetch, land, H).find((r) => r.tag.startsWith("enters"))!;
   expect(etb.tag).toBe("enters:any");
-  expect(etb.text).toBe("When Shadowy Backstreet enters thanks to Marsh Flats, it triggers");
+  expect(etb.text).toBe(// The land's effect kind is `top-manipulation`, and the sentence now says so rather than
+    // stopping at "triggers" -- see the nine kinds added to PHRASES.
+    "When Shadowy Backstreet enters thanks to Marsh Flats, it sets up the top of a library");
   expect(etb.text).toContain("Marsh Flats");
 });
 
@@ -1988,6 +2015,39 @@ test("a land finder edges to the lands it can fetch, and to no others", () => {
   // it ramps your mana base is a wrong sentence, and `control` is the only thing that separates them.
   const pathToExile = finder({ control: "opp", token: null, basic: true, type: "land" });
   expect(reasons(pathToExile, land(["basic", "land"], ["forest"]))).toHaveLength(0);
+});
+
+// WASTES HAS NO LAND TYPE TO SHARE (owner, 2026-09-06). Myriad Landscape's "up to two basic land
+// cards that share a land type" derives as a plain basic-land subject, which Wastes answers as a
+// subject -- and cannot answer on the board, because two Wastes share nothing. None of the 71
+// calibration decks runs both, so this test is the only instrument that sees the gate.
+test("a shared-type land finder does not edge to Wastes; an any-basic finder still does", () => {
+  const finder = (name: string, oracleText: string): DeckCard => ({
+    card: { name, oracleText } as DeckCard["card"],
+    tags: {
+      oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: ["land"], subtypes: [], colors: [], identity: [], cmc: 0,
+        power: null, toughness: null, token: false, keywords: [] },
+      abilities: [{ kind: "activated", effect: { kind: "top-manipulation", subject: { control: "you", token: null, basic: true, type: "land" } as never } }],
+    },
+  });
+  const basic = (name: string, typeLine: string, subtypes: string[]): DeckCard => ({
+    card: { name, typeLine } as DeckCard["card"],
+    tags: {
+      oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+      characteristics: { types: ["basic", "land"], subtypes, colors: [], identity: [], cmc: 0,
+        power: null, toughness: null, token: false, keywords: [] },
+      abilities: [],
+    },
+  });
+  const edges = (p: DeckCard, c: DeckCard) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("ramp-target:"));
+  const myriad = finder("Myriad Landscape", "{2}, {T}, Sacrifice this land: Search your library for up to two basic land cards that share a land type, put them onto the battlefield tapped, then shuffle.");
+  const wilds = finder("Evolving Wilds", "{T}, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.");
+  const wastes = basic("Wastes", "Basic Land", []);
+  const island = basic("Island", "Basic Land — Island", ["island"]);
+  expect(edges(myriad, island)).toHaveLength(1);
+  expect(edges(myriad, wastes)).toHaveLength(0);
+  expect(edges(wilds, wastes)).toHaveLength(1);
 });
 
 // THE ARCHETYPE NO CALIBRATION DECK CONTAINS. 13 corpus cards say "a deck can have any number of
@@ -3343,4 +3403,403 @@ test("a type-grant that names neither drops the noun rather than guessing it", (
   // is both: Omo's land static aimed at Dryad Arbor grants LAND types to a land creature.
   const fromSubject = pairReasons(landGranter(), both, H).find((r) => r.tag === "static:type-grant")!;
   expect(fromSubject.text).toBe("Omo, Queen of Vesuva gives Dryad Arbor an extra land type");
+});
+
+/** A BOARD COUNT IS A RELATION NOTHING FIRES. Krenko, Mob Boss makes a Goblin token per Goblin you
+ *  control, so every other Goblin in the deck makes him bigger -- and no event says so: there is no
+ *  trigger, no emit, and until `scalingSubject` learned to read a battlefield count there was not
+ *  even a derived field to hang it on. OWNER-REPORTED as the fourth case a Krenko page should
+ *  answer, after goblin-entering, token-entering and creature-entering. */
+const goblinBody = () => base("Goblin Assassin", [], ["goblin"]);
+const countsGoblins = () => base("Krenko, Mob Boss", [{
+  kind: "activated", cost: "{T}",
+  effect: {
+    kind: "token-generation", scaling: "per-permanent",
+    scalingSubject: { subtype: "goblin", zone: "battlefield", control: "you", token: null },
+    subject: { control: "you", token: true, type: "creature", subtype: "goblin" },
+  },
+  emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } }],
+}] as unknown as CardTags["abilities"], ["goblin"]);
+
+test("a card of the counted subtype feeds a board-count payoff", () => {
+  const reasons = directedReasons(goblinBody(), countsGoblins(), H);
+  const scaled = reasons.find((r) => r.tag === "scales:goblin");
+  // NOT "gets bigger": Krenko is a 3/3 whatever the count says, and his X decides how many TOKENS
+  // he makes. The precon reviewer caught the old sentence against the card printed beside it.
+  expect(scaled?.text).toBe("While you control Goblin Assassin, Krenko, Mob Boss counts it and makes more tokens");
+  expect(scaled?.repeatability).toBe("activated");
+});
+
+/** THE DIRECTION IS ONE WAY. Krenko does not make the Goblin bigger. */
+test("the board count does not run backwards", () => {
+  expect(directedReasons(countsGoblins(), goblinBody(), H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
+/** A CARD THAT IS NOT ONE OF THEM IS NOT COUNTED, which is the whole gate: this reads the
+ *  PRODUCER'S PRINTED CHARACTERISTICS, not anything it does. */
+test("a card of another subtype is not counted", () => {
+  expect(directedReasons(base("Llanowar Elves", [], ["elf"]), countsGoblins(), H)
+    .some((r) => r.tag.startsWith("scales:"))).toBe(false);
+});
+
+/** A BARE CARD TYPE FORMS NOTHING, and this is the rule that keeps the channel from being a mesh.
+ *  "Creatures you control" is satisfied by every creature in the deck, which is 40 edges saying the
+ *  same nothing -- the engine's own "playing Magic is not a synergy" rule. 685 battlefield counts
+ *  are derived and only the 248 that name a SUBTYPE may form an edge. */
+test("a count of a bare card type forms no edge", () => {
+  const countsCreatures = base("Axebane Guardian", [{
+    kind: "activated", cost: "{T}",
+    effect: {
+      kind: "add-mana", scaling: "per-creature",
+      scalingSubject: { type: "creature", zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(goblinBody(), countsCreatures, H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
+/** A BASIC LAND TYPE IS THE MANA BASE, NOT A SYNERGY. 20 corpus cards count Swamps and 13 count
+ *  Mountains; a mono-black deck runs 30 Swamps, and 30 edges from lands to one payoff is the same
+ *  mesh in a different costume. */
+test("a count of a basic land type forms no edge", () => {
+  const countsSwamps = base("Cabal Coffers", [{
+    kind: "activated", cost: "{2}, {T}",
+    effect: {
+      kind: "add-mana", scaling: "per-permanent",
+      scalingSubject: { subtype: "swamp", zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(base("Swamp", [], ["swamp"]), countsSwamps, H)
+    .some((r) => r.tag.startsWith("scales:"))).toBe(false);
+});
+
+/** AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD. "Creatures your opponents control" counts THEIR
+ *  side, and a deckmate cannot add to it. */
+test("a count of what an opponent controls forms no edge", () => {
+  const countsTheirs = base("Opponent Counter", [{
+    kind: "static",
+    effect: {
+      kind: "pump", scaling: "per-permanent",
+      scalingSubject: { subtype: "goblin", zone: "battlefield", control: "opp", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(goblinBody(), countsTheirs, H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
+// KARDUR, DOOMSCOURGE <-> BLASPHEMOUS EDICT (owner, 2026-09-05). "Whenever an attacking creature
+// dies" is not "whenever a creature dies": an edict at sorcery speed kills nothing that is
+// attacking. The trigger now carries `combat: "attacking"`, and only a producer whose printed text
+// names an attacking creature can meet it.
+test("a dies trigger on an attacking creature refuses a plain sacrifice and accepts a combat-scoped death", () => {
+  const kardur = base("Kardur", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature", combat: "attacking" } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+  }]);
+  const edict = base("Edict", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature", scope: "all" } }],
+  }]);
+  const settle = base("Settle", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature", scope: "all", combat: "attacking" } }],
+  }]);
+  expect(pairReasons(edict, kardur, H)).toEqual([]);
+  expect(pairReasons(settle, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
+});
+
+// ...and an INSTANT-SPEED producer meets it without naming the state: Ayara's sac outlet can eat an
+// attacking creature in combat (owner ruling, upheld 2026-08-22), the panel's one REAL claim on a
+// combat-state consumer, and the claim the first cut of this gate deleted.
+test("an instant-speed death satisfies an attacking-creature dies trigger", () => {
+  const kardur = base("Kardur", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature", combat: "attacking" } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+  }]);
+  const ayara = base("Ayara", [{
+    kind: "activated", effect: { kind: "draw-card" }, cost: "{T}, Sacrifice another black creature",
+    emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature" }, instantSpeed: true }],
+  }]);
+  expect(pairReasons(ayara, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
+  // ...but not when the OPPONENT picks: an instant-speed edict lets them spare the attacker.
+  // Liliana's Triumph and Szat's Will -> Death Tyrant, owner-judged FALSE on the panel.
+  const triumph = base("Triumph", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "each" }, instantSpeed: true }],
+  }]);
+  expect(pairReasons(triumph, kardur, H)).toEqual([]);
+  // A targeted kill at instant speed aims at the attacker and counts.
+  const downfall = base("Downfall", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature", scope: "target" }, instantSpeed: true }],
+  }]);
+  expect(pairReasons(downfall, kardur, H).map((r) => r.tag)).toEqual(["dies:creature"]);
+});
+
+// BLOODCHIEF ASCENSION'S PRODUCER LIST READ LIKE A LIST OF CARDS DYING (owner, 2026-09-05): "When
+// Syr Konrad, the Grim hits the graveyard" for Konrad's "each player mills a card". A fill that is
+// not `self` is something the producer DOES to other cards; the sentence names those cards.
+test("a graveyard fill that is not the card itself is worded about the cards it fills with", () => {
+  const ascension = base("Ascension", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { control: "opp", token: null } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null } },
+  }]);
+  const konrad = base("Konrad", [{
+    kind: "activated", effect: { kind: "top-manipulation" },
+    emits: [{ verb: "mill", subject: { control: "any", token: null, scope: "each" } }],
+  }]);
+  expect(pairReasons(konrad, ascension, H).map((r) => r.text)).toEqual([
+    "When a card hits the graveyard thanks to Konrad, Ascension costs each opponent life",
+  ].map((t) => expect.stringContaining("When a card hits the graveyard thanks to Konrad")));
+  const outlet = base("Outlet", [{
+    kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature" } }],
+  }]);
+  expect(pairReasons(outlet, ascension, H).map((r) => r.text)[0]).toContain("When a creature hits the graveyard thanks to Outlet");
+  // A card's OWN trip to the graveyard keeps its name (against a payoff that watches any graveyard;
+  // Ascension watches an opponent's, and your own sacrifice is not that).
+  const anyYard = base("Yard", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters-graveyard"], subject: { control: "any", token: null } },
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+  }]);
+  const selfSac = base("Fodder", [{
+    kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature", self: true } }],
+  }]);
+  expect(pairReasons(selfSac, anyYard, H).map((r) => r.text)[0]).toContain("When Fodder hits the graveyard");
+});
+
+// EERIE (owner, 2026-09-05): Balemurk Leech's second half formed no edge with the Rani deck's own
+// Room and left no trace. A Room supplies `unlock` by being one.
+test("a Room feeds a fully-unlock trigger", () => {
+  const leech = base("Leech", [{
+    kind: "triggered",
+    trigger: { verbs: ["unlock"], subject: { control: "you", token: null, subtype: "room" } },
+    effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
+  }]);
+  const room = base("Mirror Room", [], ["room"]);
+  room.tags.characteristics.types = ["enchantment"];
+  const rs = pairReasons(room, leech, H);
+  expect(rs.map((r) => r.tag)).toEqual(["unlock:room"]);
+  expect(rs[0]?.text).toContain("is fully unlocked");
+});
+
+// CR 700.4: dies = battlefield -> graveyard, so a death IS a leave. A flicker, a bounce or an exile is
+// a leave that is not a death. The matcher subsumes one way only.
+describe("dies is a leave, a leave is not a death", () => {
+  const n = normalizeZoneEvent;
+  const you = { control: "you" as const, token: null, type: "creature" };
+
+  test("a leaves demand accepts a dies supply", () => {
+    expect(eventMatches(n({ verb: "dies", subject: you }), n({ verb: "leaves", subject: you }), H)).toBe(true);
+  });
+
+  test("a dies demand refuses a leaves supply (Ephemerate must not feed Blood Artist)", () => {
+    expect(eventMatches(n({ verb: "leaves", subject: you }), n({ verb: "dies", subject: you }), H)).toBe(false);
+  });
+
+  test("a leaves demand marked withoutDying refuses a dies supply and accepts a leaves supply", () => {
+    const port = n({ verb: "leaves", subject: { ...you, withoutDying: true as const } });
+    expect(eventMatches(n({ verb: "dies", subject: you }), port, H)).toBe(false);
+    expect(eventMatches(n({ verb: "leaves", subject: you }), port, H)).toBe(true);
+  });
+
+  test("a leaves-the-GRAVEYARD demand refuses both a death and a battlefield leave", () => {
+    const tomb = n({ verb: "leaves", subject: { ...you, zone: "graveyard" } });
+    expect(eventMatches(n({ verb: "dies", subject: you }), tomb, H)).toBe(false);
+    expect(eventMatches(n({ verb: "leaves", subject: you }), tomb, H)).toBe(false);
+    expect(eventMatches(n({ verb: "leaves", subject: { ...you, zone: "graveyard" } }), tomb, H)).toBe(true);
+  });
+
+  test("end to end: a flicker's leaves emit reaches The Ozolith as leaves:creature and never Blood Artist", () => {
+    const flicker = base("Ephemerate", [{
+      kind: "on-cast",
+      effect: { kind: "flicker" },
+      emits: [
+        { verb: "leaves", subject: { control: "you", token: null, type: "creature", scope: "target" } },
+        { verb: "enters", subject: { control: "you", token: null, type: "creature", scope: "target", fromZone: "exile" } },
+      ],
+    }]);
+    const ozolith = base("The Ozolith", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, type: "creature" } },
+      effect: { kind: "counter-placement" },
+    }]);
+    const artist = base("Blood Artist", [{
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature" } },
+      effect: { kind: "drain" },
+    }]);
+    expect(directedReasons(flicker, ozolith, H).map((r) => r.tag)).toEqual(["leaves:creature"]);
+    expect(directedReasons(flicker, artist, H)).toEqual([]);
+  });
+
+  test("end to end: a sac outlet still reaches The Ozolith, on the same tag it always had", () => {
+    const outlet = base("Viscera Seer", [{
+      kind: "activated",
+      effect: { kind: "top-manipulation" },
+      emits: [
+        { verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } },
+        { verb: "dies", subject: { control: "you", token: null, type: "creature" } },
+      ],
+    }]);
+    const ozolith = base("The Ozolith", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, type: "creature" } },
+      effect: { kind: "counter-placement" },
+    }]);
+    expect(directedReasons(outlet, ozolith, H).map((r) => r.tag)).toEqual(["leaves:creature"]);
+  });
+
+  test("a self leaves emit is stamped with the card's own types so it is not a wildcard", () => {
+    const phoenix = base("Lamplight Phoenix", [{
+      kind: "triggered",
+      trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } },
+      effect: { kind: "flicker" },
+      emits: [{ verb: "leaves", subject: { control: "you", token: null, self: true } }],
+    }]);
+    const enchantmentWatcher = base("Enchantment Leaves Payoff", [{
+      kind: "triggered",
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, type: "enchantment" } },
+      effect: { kind: "draw-card" },
+    }]);
+    // `base` gives every card `characteristics.types: ["creature"]`, so a stamped emit is a creature
+    // leaving, and an enchantment watcher must not see it.
+    expect(directedReasons(phoenix, enchantmentWatcher, H)).toEqual([]);
+  });
+});
+
+// ROADMAP Y1b (2026-09-05): a graveyard leave keys apart from a battlefield leave on the THEME axis
+// too, not only on the reason tag -- otherwise a reanimator deck's headline reads "leaves the
+// battlefield" on the strength of its recursion.
+test("cardThemeTags keys a graveyard leave as leaves-graveyard and a battlefield leave as leaves", () => {
+  const s = { control: "you" as const, token: null, type: "creature" };
+  const out = cardThemeTags(base("X", [
+    { kind: "spell", effect: { kind: null }, emits: [{ verb: "leaves", subject: { ...s, zone: "graveyard" } }] },
+    { kind: "spell", effect: { kind: null }, emits: [{ verb: "leaves", subject: s }] },
+    { kind: "triggered", effect: { kind: "token-generation" }, trigger: { verbs: ["leaves"], subject: { ...s, zone: "graveyard" } } },
+    { kind: "triggered", effect: { kind: "token-generation" }, trigger: { verbs: ["dies"], subject: s } },
+  ] as never).tags);
+  expect(out.has("leaves-graveyard:creature")).toBe(true);
+  expect(out.has("leaves:creature")).toBe(true);
+  expect(out.has("dies:creature")).toBe(true);
+  expect(out.has("leaves:any")).toBe(false);
+});
+
+/** DAMAGE TO A PLAYER IS LIFE LOSS (CR 120.3). Every "whenever an opponent loses life" payoff --
+ *  and Start your engines! -- saw drain and nothing else, while a burn spell to the face causes the
+ *  same loss at the table. A damage emit that names NO type is aimed at a player ("each opponent",
+ *  "target opponent", "any target"); one aimed at a creature is not, and combat damage stays out
+ *  (roadmap W15, 2026-09-05): every creature attacks, and a payoff that claims the whole deck is a
+ *  mesh, not a synergy. */
+describe("damage to a player satisfies a life-loss trigger", () => {
+  const watcher = base("Bloodchief Ascension", [{
+    kind: "triggered",
+    trigger: { verbs: ["lose-life"], subject: { control: "opp", token: null } },
+    effect: { kind: "drain" },
+  }] as unknown as CardTags["abilities"]);
+  const burn = (name: string, subject: object) => base(name, [{
+    kind: "on-cast", effect: { kind: "damage" },
+    // `dealer` as the corpus derives it: the fixture without one passed while the corpus refused.
+    emits: [{ verb: "non-combat-damage", subject: { token: null, ...subject }, dealer: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+
+  test("burn to each opponent feeds it", () => {
+    const tags = pairReasons(burn("Blazing Volley", { control: "opp", scope: "each" }), watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(true);
+  });
+
+  /** "ANY TARGET" IS THE CASTER'S CHOICE, and the caster aims at the opponent. Lightning Bolt
+   *  derives control `any`, scope `target`; a trigger that watches an OPPONENT losing life is fed
+   *  by it exactly as by "each opponent". The same reasoning `eventMatches` already applies to a
+   *  targeted kill meeting a combat demand: the producer's controller picks the victim. */
+  test("burn to any target feeds it, because the caster picks the opponent", () => {
+    const tags = pairReasons(burn("Lightning Bolt", { control: "any", scope: "target" }), watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(true);
+  });
+
+  test("a targeted drain feeds it for the same reason", () => {
+    const drain = base("Sovereign's Bite", [{
+      kind: "on-cast", effect: { kind: "drain" },
+      emits: [{ verb: "lose-life", subject: { control: "any", scope: "target", token: null } }],
+    }] as unknown as CardTags["abilities"]);
+    expect(pairReasons(drain, watcher, H).some((r) => r.tag.startsWith("lose-life"))).toBe(true);
+  });
+
+  test("burn aimed at a creature does not", () => {
+    const tags = pairReasons(burn("Flame Slash", { control: "any", type: "creature", scope: "target" }), watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(false);
+  });
+
+  test("combat damage does not", () => {
+    const attacker = base("Grizzly Bears", [{
+      kind: "static", effect: { kind: "" },
+      emits: [{ verb: "combat-damage", subject: { control: "opp", token: null } }],
+    }] as unknown as CardTags["abilities"]);
+    const tags = pairReasons(attacker, watcher, H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("lose-life"))).toBe(false);
+  });
+});
+
+/** A CARD THAT TURNS THE BOARD OFF FEEDS NOTHING ON IT. Dress Down's static applies the moment it
+ *  is on the battlefield, so when the game checks Grim Guardian's constellation the Guardian has no
+ *  abilities and nothing triggers (CR 603.2, 613.1; owner, 2026-09-05). Any creature payoff is
+ *  silenced by it; a noncreature payoff is not. */
+describe("an ability-loss static silences the creatures it reaches", () => {
+  const typed = (d: ReturnType<typeof base>, types: string[]) => {
+    d.tags!.characteristics.types = types;
+    return d;
+  };
+  const dressDown = typed(base("Dress Down", [
+    { kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "enchantment", self: true } },
+      effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }] },
+    { kind: "static", effect: { kind: "ability-loss", subject: { control: "any", token: null, type: "creature", scope: "all" } } },
+  ] as unknown as CardTags["abilities"]), ["enchantment"]);
+  const constellation = (name: string, types: string[]) => typed(base(name, [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "enchantment" } },
+    effect: { kind: "player-life-loss" },
+  }] as unknown as CardTags["abilities"]), types);
+
+  test("a creature's constellation does not trigger on it", () => {
+    expect(pairReasons(dressDown, constellation("Grim Guardian", ["enchantment", "creature"]), H)).toEqual([]);
+  });
+
+  test("a noncreature constellation still does", () => {
+    const tags = pairReasons(dressDown, constellation("Eidolon of Blossoms", ["enchantment"]), H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
+  });
+
+  /** AN AURA SILENCES ITS HOST, NOT THE DECK. "Enchanted creature loses all abilities" keeps no
+   *  class through the narrowing gate, so its subject names no type -- and a typeless subject
+   *  matches every card. The silence needs a class to apply to. */
+  test("an ability loss that names no class silences nothing", () => {
+    const mutation = typed(base("Darksteel Mutation", [
+      { kind: "static", effect: { kind: "ability-loss", subject: { control: "any", token: null } } },
+      { kind: "static", effect: { kind: "keyword-grant" }, emits: [{ verb: "enters", subject: { control: "you", token: null, type: "enchantment" } }] },
+    ] as unknown as CardTags["abilities"]), ["enchantment"]);
+    const tags = pairReasons(mutation, constellation("Grim Guardian", ["enchantment", "creature"]), H).map((r) => r.tag);
+    expect(tags.some((t) => t.startsWith("enters"))).toBe(true);
+  });
+
+  test("the static itself is never a synergy claim", () => {
+    const bear = base("Grizzly Bears", [], []);
+    expect(pairReasons(dressDown, bear, H)).toEqual([]);
+  });
+});
+
+// ---- the panel's self and controller families (2026-09-06) ----
+
+test("a card adapting ITSELF does not feed another card's own-counter trigger", () => {
+  // Incubation Druid -> Evolution Witness, owner-judged FALSE: the Druid's counters land on the Druid.
+  const producer = { verb: "counter-added", subject: { control: "any", token: null, type: "creature", counter: "+1/+1", self: true } } as const;
+  const consumer = { verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter: "+1/+1", self: true } } as const;
+  expect(eventMatches(producer as never, consumer as never, H)).toBe(false);
+  // A placer aimed at ANY creature still does.
+  const targeted = { verb: "counter-added", subject: { control: "any", token: null, type: "creature", counter: "+1/+1", scope: "target" } } as const;
+  expect(eventMatches(targeted as never, consumer as never, H)).toBe(true);
 });

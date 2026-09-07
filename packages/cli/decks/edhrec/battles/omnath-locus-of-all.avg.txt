@@ -1,0 +1,93 @@
+# edhrec average deck: https://edhrec.com/average-decks/omnath-locus-of-all/battles
+# theme Battles (8 decks)
+
+Commander
+1 Omnath, Locus of All
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Sol Ring
+1 Command Tower
+1 Exotic Orchard
+5 Forest
+1 Hallowed Fountain
+3 Island
+1 Jetmir's Garden
+1 Ketria Triome
+3 Mountain
+1 Overgrown Tomb
+3 Plains
+1 Raugrin Triome
+1 Reliquary Tower
+1 Sacred Foundry
+1 Spara's Headquarters
+1 Steam Vents
+4 Swamp
+1 Swiftwater Cliffs
+1 Temple Garden
+1 The World Tree
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Xander's Lounge
+1 Zagoth Triome
+1 Ziatora's Proving Ground
+1 Invasion of Alara
+1 Invasion of Amonkhet
+1 Invasion of Arcavios
+1 Invasion of Azgol
+1 Invasion of Belenon
+1 Invasion of Ergamon
+1 Invasion of Fiora
+1 Invasion of Gobakhan
+1 Invasion of Ikoria
+1 Invasion of Innistrad
+1 Invasion of Ixalan
+1 Invasion of Karsus
+1 Invasion of New Phyrexia
+1 Invasion of Pyrulea
+1 Invasion of Ravnica
+1 Invasion of Regatha
+1 Invasion of Segovia
+1 Invasion of Shandalar
+1 Invasion of Tolvada
+1 Invasion of Vryn
+1 Invasion of Zendikar
+1 Aetherblade Agent
+1 Atraxa, Grand Unifier
+1 Bloom Tender
+1 Drakuseth, Maw of Flames
+1 Elesh Norn
+1 Elesh Norn, Grand Cenobite
+1 Essence of Orthodoxy
+1 Etali, Primal Conqueror
+1 Faeburrow Elder
+1 Glissa Sunslayer
+1 Glissa, Herald of Predation
+1 Heliod, the Radiant Dawn
+1 Jin-Gitaxias
+1 Sheoldred
+1 Thief of Blood
+1 Thrashing Frontliner
+1 Urabrask
+1 Vampire Hexmage
+1 Vorinclex, Voice of Hunger
+1 All Will Be One
+1 Blighted Burgeoning
+1 Mana Cannons
+1 Tangled Skyline
+1 Whirlwind of Thought
+1 Electrodominance
+1 New Way Forward
+1 Tandem Takedown
+1 Unite the Coalition
+1 Void Rend
+1 Aether Snap
+1 Begin the Invasion
+1 Farseek
+1 Furnace Reins
+1 Nature's Lore
+1 Render Inert
+1 Ruinous Ultimatum
+1 Three Visits

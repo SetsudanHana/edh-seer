@@ -1,0 +1,100 @@
+# edhrec deck https://edhrec.com/deckpreview/puoJNhry8R0jq17lwoO0eA (source https://archidekt.com/decks/11409740)
+# tags Self-Discard, Reanimator, Graveyard; bracket 2; saved 2026-09-05; 230 tagged of 26359 indexed
+
+Commander
+1 Hashaton, Scarab's Fist
+
+Deck
+1 Adarkar Wastes
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Command Tower
+1 Flooded Strand
+1 Godless Shrine
+1 Hallowed Fountain
+3 Island
+1 Marsh Flats
+1 Meticulous Archive
+1 Misty Rainforest
+1 Morphic Pool
+1 Otawara, Soaring City
+3 Plains
+1 Polluted Delta
+1 Reflecting Pool
+1 Scalding Tarn
+1 Scrubland
+1 Sea of Clouds
+1 Shadowy Backstreet
+3 Swamp
+1 Tundra
+1 Undercity Sewers
+1 Underground River
+1 Underground Sea
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Champions
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 All-Seeing Arbiter
+1 Angel of Indemnity
+1 Angel of the Ruins
+1 Archfiend of Ifnir
+1 Ashen Rider
+1 Astral Dragon
+1 Avacyn, Angel of Hope
+1 Bog Witch
+1 Bone Miser
+1 Dream Trawler
+1 Elesh Norn, Grand Cenobite
+1 Esper Sentinel
+1 Ghostly Pilferer
+1 Gleaming Overseer
+1 Jace, Vryn's Prodigy
+1 Kiora, the Rising Tide
+1 Kitsa, Otterball Elite
+1 Ledger Shredder
+1 Likeness Looter
+1 Malcolm, Alluring Scoundrel
+1 Massacre Wurm
+1 Metamorphosis Fanatic
+1 Nesting Dovehawk
+1 Nezahal, Primal Tide
+1 Ocelot Pride
+1 Pollywog Prodigy
+1 Priest of Fell Rites
+1 Psychic Frog
+1 Putrid Imp
+1 Raffine, Scheming Seer
+1 Riptide Gearhulk
+1 Rona, Herald of Invasion
+1 Sheoldred, Whispering One
+1 Skirge Familiar
+1 Vohar, Vodalian Desecrator
+1 Witch Enchanter
+1 Anguished Unmaking
+1 Faithful Mending
+1 Fell the Profane
+1 Frantic Search
+1 Malakir Rebirth
+1 Path to Exile
+1 Rapid Hybridization
+1 Sink into Stupor
+1 Swords to Plowshares
+1 Tainted Indulgence
+1 Animate Dead
+1 Renewed Solidarity
+1 Ripples of Undeath
+1 Tortured Existence
+1 Arcane Signet
+1 Azorius Signet
+1 Cryptcaller Chariot
+1 Dimir Signet
+1 Monument to Endurance
+1 Orzhov Signet
+1 Sol Ring
+1 Whip of Erebos
+1 Quasiduplicate
+1 Reanimate
+1 Stitch Together
+1 Toxic Deluge
+1 Winternight Stories

@@ -1,0 +1,92 @@
+# edhrec average deck: https://edhrec.com/average-decks/etrata-the-silencer/phasing
+# theme Phasing (5 decks)
+
+Commander
+1 Etrata, the Silencer
+
+Deck
+1 Arcane Signet
+1 Blade of Selves
+1 Crystal Shard
+1 Dimir Signet
+1 Fellwar Stone
+1 Helm of the Host
+1 Lightning Greaves
+1 Mirror Box
+1 Portal of Sanctuary
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Thought Vessel
+1 Bojuka Bog
+1 Command Beacon
+1 Command Tower
+1 Darkslick Shores
+1 Darkwater Catacombs
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Gloomlake Verge
+1 Hall of the Bandit Lord
+9 Island
+1 Morphic Pool
+1 Myriad Landscape
+1 Path of Ancestry
+1 Reliquary Tower
+1 Shipwreck Marsh
+1 Sunken Hollow
+7 Swamp
+1 Tainted Isle
+1 Undercity Sewers
+1 Underground River
+1 Watery Grave
+1 Adric, Mathematical Genius
+1 Auton Soldier
+1 Baleful Strix
+1 Crashing Drawbridge
+1 Deadeye Navigator
+1 Dour Port-Mage
+1 Ezio, Blade of Vengeance
+1 Gogo, Master of Mimicry
+1 Identity Thief
+1 Mari, the Killing Quill
+1 Ramses, Assassin Lord
+1 Ravenloft Adventurer
+1 Roaming Throne
+1 Sakashima of a Thousand Faces
+1 Sakashima the Impostor
+1 Spark Double
+1 Vedalken Mastermind
+1 Vodalian Illusionist
+1 Candlekeep Sage
+1 Propaganda
+1 Reconnaissance Mission
+1 Rhystic Study
+1 Vanishing
+1 Aetherize
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Blur
+1 Brainstorm
+1 Counterspell
+1 Countersquall
+1 Dark Ritual
+1 Displace
+1 Essence Flux
+1 Ghostly Flicker
+1 Negate
+1 Planar Incision
+1 Reality Ripple
+1 Siren's Ruse
+1 Slip Out the Back
+1 Snap
+1 Swan Song
+1 Teferi's Time Twist
+1 Unsummon
+1 Eagle Vision
+1 Feed the Swarm
+1 Irenicus's Vile Duplication
+1 Nanogene Conversion
+1 Quantum Misalignment
+1 Read the Bones
+1 Toxic Deluge

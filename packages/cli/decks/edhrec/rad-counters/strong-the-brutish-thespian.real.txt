@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/S3n-DoKqTITVzqN3kTpHwg (source https://archidekt.com/decks/24585439)
+# tags Sagas, Rad Counters, Enrage, +1/+1 Counters, Fight, Lifegain, Self-Mill; bracket 2; saved 2026-08-02; 30 tagged of 1070 indexed
+
+Commander
+1 Strong, the Brutish Thespian
+
+Deck
+1 Arena
+1 Cavern of Souls
+1 Desert
+23 Forest
+1 Karn's Bastion
+1 Mariposa Military Base
+1 Mosswort Bridge
+1 Myriad Landscape
+1 Rogue's Passage
+1 Thespian's Stage
+1 War Room
+1 Barroom Brawl
+1 Bridgeworks Battle
+1 Bushwhack
+1 Bygone Marvels
+1 Clash of the Eikons
+1 Cultivate
+1 Epic Fight
+1 Far Wanderings
+1 Gaea's Blessing
+1 Go Nuts!
+1 Nature's Lore
+1 Rampant Growth
+1 Rishkar's Expertise
+1 Season of Gathering
+1 Smell Fear
+1 Beast Within
+1 Blessed Respite
+1 Break Down
+1 Fight for the Throne
+1 Heroic Intervention
+1 Khalni Ambush
+1 Lifestream's Blessing
+1 Return of the Wildspeaker
+1 Smuggler's Surprise
+1 Tail Swipe
+1 Bighorner Rancher
+1 Blossoming Bogbeast
+1 Brawn
+1 Bugenhagen, Wise Elder
+1 Cankerbloom
+1 Defiler of Vigor
+1 Emeritus of Abundance
+1 Eternal Witness
+1 Evolution Sage
+1 Fanatic of Rhonas
+1 Genesis
+1 Harold and Bob, First Numens
+1 Kami of Whispered Hopes
+1 Lily Bowen, Raging Grandma
+1 Lumbering Megasloth
+1 Quilled Greatwurm
+1 Rampaging Yao Guai
+1 Six
+1 Summon: Titan
+1 Tato Farmer
+1 Timeless Witness
+1 Ulvenwald Tracker
+1 Vorinclex
+1 Branching Evolution
+1 Claim the Kingdom
+1 Fall of Gil-galad
+1 Garruk's Uprising
+1 Hardened Scales
+1 Terrasymbiosis
+1 The First Iroan Games
+1 The Mending of Dominaria
+1 World War Hulk
+1 Caltrops
+1 Elixir of Immortality
+1 Emerald Medallion
+1 Hedge Shredder
+1 Power Fist
+1 Sol Ring
+1 Staff of Compleation
+1 Sword of Truth and Justice
+1 The Earth Crystal

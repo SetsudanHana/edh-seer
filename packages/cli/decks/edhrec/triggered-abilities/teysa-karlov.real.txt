@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/yWakxmTjJ95VmBIgYuik3w (source https://archidekt.com/decks/25192065)
+# tags Tokens, Sacrifice, Aristocrats, Triggered Abilities; bracket 3; saved 2026-08-31; 76 tagged of 21342 indexed
+
+Commander
+1 Teysa Karlov
+
+Deck
+1 Anguished Unmaking
+1 Despark
+1 Mortify
+1 Swords to Plowshares
+1 Wake the Dead
+1 Arcane Signet
+1 Ashnod's Altar
+1 Bolas's Citadel
+1 Commander's Sphere
+1 Mind Stone
+1 Orzhov Locket
+1 Orzhov Signet
+1 Skullclamp
+1 Sol Ring
+1 Spawning Pit
+1 Talisman of Hierarchy
+1 Archon of Justice
+1 Athreos, God of Passage
+1 Blood Artist
+1 Butcher of Malakir
+1 Cruel Celebrant
+1 Dutiful Attendant
+1 Endrek Sahr, Master Breeder
+1 Falkenrath Noble
+1 Grim Haruspex
+1 Hallowed Spiritkeeper
+1 Harvester of Souls
+1 Krav, the Unredeemed
+1 Massacre Wurm
+1 Midnight Reaper
+1 Ministrant of Obligation
+1 Orzhov Enforcer
+1 Pawn of Ulamog
+1 Pitiless Plunderer
+1 Reassembling Skeleton
+1 Regna, the Redeemer
+1 Reliquary Monk
+1 Requiem Angel
+1 Reveillark
+1 Sifter of Skulls
+1 Smothering Abomination
+1 Solemn Simulacrum
+1 Syr Konrad, the Grim
+1 Teysa, Orzhov Scion
+1 Vindictive Vampire
+1 Viscera Seer
+1 Woe Strider
+1 Yahenni, Undying Partisan
+1 Zulaport Cutthroat
+1 Bastion of Remembrance
+1 Black Market
+1 Dark Prophecy
+1 Dictate of Erebos
+1 Fanatical Devotion
+1 Land Tax
+1 Martyr's Bond
+1 Open the Graves
+1 Revel in Riches
+1 Tombstone Stairwell
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Forsaken Sanctuary
+1 Godless Shrine
+1 High Market
+1 Isolated Chapel
+1 Orzhov Basilica
+1 Orzhov Guildgate
+1 Phyrexian Tower
+6 Plains
+1 Reliquary Tower
+1 Scoured Barrens
+14 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Vault of the Archangel
+1 Westvale Abbey
+1 Fumigate
+1 Living Death
+1 Martial Coup
+1 Merciless Eviction

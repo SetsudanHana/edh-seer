@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/BQqvZztyn7MWN_JpuRNJnA (source https://archidekt.com/decks/12228416)
+# tags Sacrifice, Commander Matters, Food, Aristocrats; bracket 3; saved 2026-09-05; 1792 tagged of 22960 indexed
+
+Commander
+1 Ygra, Eater of All
+
+Deck
+1 Abrupt Decay
+1 Assassin's Trophy
+1 Biosynthic Burst
+1 Corrupted Conviction
+1 Gaea's Gift
+1 Krosan Grip
+1 Tamiyo's Safekeeping
+1 Accursed Marauder
+1 Birds of Paradise
+1 Brown Ouphe
+1 Butcher of Malakir
+1 Camellia, the Seedmiser
+1 Cauldron Familiar
+1 Chatterfang, Squirrel General
+1 Cirith Ungol Patrol
+1 Elanor Gardner
+1 Endrek Sahr, Master Breeder
+1 Fain, the Broker
+1 Feasting Hobbit
+1 Gilded Goose
+1 Greta, Sweettooth Scourge
+1 Honest Rutstein
+1 Honored Dreyleader
+1 Manglehorn
+1 Mirkwood Bats
+1 Morbid Opportunist
+1 Peregrin Took
+1 Quagmire Druid
+1 Quina, Qu Gourmet
+1 Rapacious Guest
+1 Ravenous Squirrel
+1 Sakura-Tribe Elder
+1 Saryth, the Viper's Fang
+1 Savvy Hunter
+1 Sephiroth, Fabled SOLDIER
+1 Steel Overseer
+1 Twitching Doll
+1 Vampire Gourmand
+1 Viscera Seer
+1 Witch of the Moors
+1 Alpha Authority
+1 Campsite Cuisine
+1 Cloakwood Hermit
+1 Fists of Ironwood
+1 Hollowmurk Siege
+1 Night of the Sweets' Revenge
+1 Perilous Forays
+1 Primal Vigor
+1 Vampiric Rites
+1 Arcane Signet
+1 Mithril Coat
+1 Sol Ring
+1 Back for Seconds
+1 Bone Shards
+1 Diabolic Intent
+1 Eaten Alive
+1 Extract a Confession
+1 Grim Tutor
+1 Lich-Knights' Conquest
+1 Many Partings
+1 Rise of the Witch-king
+1 Toxic Deluge
+1 Blighted Fen
+1 Blooming Marsh
+1 Command Tower
+1 Exotic Orchard
+8 Forest
+1 Golgari Rot Farm
+1 Grim Backwoods
+1 Mudflat Village
+1 Necroblossom Snarl
+1 Nurturing Peatland
+1 Oakhollow Village
+1 Overgrown Tomb
+1 Reliquary Tower
+1 Rogue's Passage
+8 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 The Shire
+1 Twilight Mire
+1 Viridescent Bog
+1 Woodland Cemetery
+1 Woodland Chasm
+1 Liliana, Dreadhorde General

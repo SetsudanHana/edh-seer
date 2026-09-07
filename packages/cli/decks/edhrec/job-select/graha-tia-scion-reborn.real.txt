@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/i7IzqRdEso_BL6ZNUd0qeg (source https://archidekt.com/decks/24193300)
+# tags Job Select, Equipment; bracket 2; saved 2026-07-29; 3 tagged of 4700 indexed
+
+Commander
+1 G'raha Tia, Scion Reborn
+
+Deck
+1 Adarkar Wastes
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Command Tower
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Gemstone Mine
+7 Island
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Sunken Hollow
+7 Swamp
+1 Tainted Field
+1 Tainted Isle
+1 Underground River
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Astrologian's Planisphere
+1 Black Mage's Rod
+1 Blue Mage's Cane
+1 Caduceus, Staff of Hermes
+1 Dancer's Chakrams
+1 Dark Knight's Greatsword
+1 Dragonfire Blade
+1 Dragoon's Lance
+1 Lightning Greaves
+1 Loxodon Warhammer
+1 Machinist's Arsenal
+1 Monk's Fist
+1 Nettlecyst
+1 Ninja's Blades
+1 Paladin's Arms
+1 Reaper's Scythe
+1 Sage's Nouliths
+1 Sol Ring
+1 Swiftfoot Boots
+1 Sword of Hearth and Home
+1 Sword of Truth and Justice
+1 Sword of the Animist
+1 The Mightstone and Weakstone
+1 Thief's Knife
+1 White Mage's Staff
+1 Alela, Artful Provocateur
+1 Alisaie Leveilleur
+1 Alphinaud Leveilleur
+1 Ardenn, Intrepid Archaeologist
+1 Arna Kennerüd, Skycaptain
+1 Basim Ibn Ishaq
+1 Brago, King Eternal
+1 Cloud, Midgar Mercenary
+1 Codsworth, Handy Helper
+1 Danitha Capashen, Paragon
+1 Emry, Lurker of the Loch
+1 Envoy of the Ancestors
+1 Etherium Sculptor
+1 Halvar, God of Battle
+1 Kamiz, Obscura Oculus
+1 Ledger Shredder
+1 Leonin Shikari
+1 Puresteel Paladin
+1 Raffine, Scheming Seer
+1 Serra Ascendant
+1 Silas Renn, Seeker Adept
+1 Sram, Senior Edificer
+1 Stoneforge Mystic
+1 Urza, Lord High Artificer
+1 Urza, Lord Protector
+1 Arcane Denial
+1 Flawless Maneuver
+1 Frantic Search
+1 Generous Gift
+1 Path to Exile
+1 Swords to Plowshares
+1 Forge Anew
+1 Mystic Remora
+1 Sigarda's Aid
+1 Open the Armory
+1 Steelshaper's Gift
+1 Vanquish the Horde
+1 Windfall

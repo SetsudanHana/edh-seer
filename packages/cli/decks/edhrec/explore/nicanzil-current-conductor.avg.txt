@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/nicanzil-current-conductor/explore
+# theme Explore (56 decks)
+
+Commander
+1 Nicanzil, Current Conductor
+
+Deck
+1 Arcane Signet
+1 Glowcap Lantern
+1 Lodestone Needle
+1 Shadowed Caravel
+1 Sol Ring
+1 Subterranean Schooner
+1 Breeding Pool
+1 Command Tower
+1 Dreamroot Cascade
+1 Flooded Grove
+13 Forest
+1 Hinterland Harbor
+11 Island
+1 Overflowing Basin
+1 Path of Ancestry
+1 Rejuvenating Springs
+1 Rogue's Passage
+1 Simic Growth Chamber
+1 Temple of Mystery
+1 Vineglimmer Snarl
+1 Yavimaya Coast
+1 Cenote Scout
+1 Deepfathom Echo
+1 Deeproot Elite
+1 Deeproot Historian
+1 Emperor Mihail II
+1 Forerunner of the Heralds
+1 Hakbal of the Surging Soul
+1 Herald of Secret Streams
+1 Ixalli's Diviner
+1 Jadelight Ranger
+1 Jadelight Spelunker
+1 Kumena, Tyrant of Orazca
+1 Master of the Pearl Trident
+1 Merfolk Branchwalker
+1 Merfolk Cave-Diver
+1 Merfolk Mistbinder
+1 Merfolk Sovereign
+1 Merrow Reejerey
+1 River Herald Guide
+1 River Herald Scout
+1 Seeker of Sunlight
+1 Sentinel of the Nameless City
+1 Spyglass Siren
+1 Stonybrook Banneret
+1 Storm Fleet Negotiator
+1 Svyelun of Sea and Sky
+1 Tatyova, Benthic Druid
+1 Tishana's Wayfinder
+1 Topography Tracker
+1 Waterwind Scout
+1 Wildgrowth Walker
+1 Zegana, Utopian Speaker
+1 Deeproot Pilgrimage
+1 Deeproot Waters
+1 Hardened Scales
+1 Path of Discovery
+1 Reflections of Littjara
+1 Simic Ascendancy
+1 Spelunking
+1 Twists and Turns
+1 Beast Within
+1 Brackish Blunder
+1 Counterspell
+1 Growth Spiral
+1 Inspiring Call
+1 Negate
+1 Rapid Hybridization
+1 Repulsive Mutation
+1 Ripples of Potential
+1 Cultivate
+1 Curse of the Swine
+1 Doppelgang
+1 Enter the Unknown
+1 Over the Edge
+1 Rampant Growth
+1 Wave Goodbye

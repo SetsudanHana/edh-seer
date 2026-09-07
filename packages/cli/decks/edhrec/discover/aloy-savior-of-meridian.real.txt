@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/NL1CKNh4rV5eRdXH3naV-w (source https://moxfield.com/decks/mAcGGlz8akyJW4_gCi85MA)
+# tags Discover, Artifacts; bracket 3; saved 2026-09-05; 609 tagged of 9697 indexed
+
+Commander
+1 Aloy, Savior of Meridian
+
+Deck
+1 Academy Ruins
+1 Archway of Innovation
+1 Barkchannel Pathway
+1 Breeding Pool
+1 Buried Ruin
+1 City of Brass
+1 Command Tower
+1 Darksteel Citadel
+1 Dreamroot Cascade
+1 Flooded Grove
+1 Flooded Strand
+2 Forest
+1 Hinterland Harbor
+1 Inventors' Fair
+2 Island
+1 Mosswort Bridge
+1 Rejuvenating Springs
+1 Seat of the Synod
+1 Tanglepool Bridge
+1 The Mycosynth Gardens
+1 Thriving Isle
+1 Tree of Tales
+1 Uthros, Titanic Godcore
+1 Waterlogged Grove
+1 Willowrush Verge
+1 Yavimaya Coast
+1 Yavimaya, Cradle of Growth
+1 An Offer You Can't Refuse
+1 Beast Within
+1 Counterspell
+1 Cyclonic Rift
+1 Rapid Hybridization
+1 Return of the Wildspeaker
+1 Sink into Stupor
+1 Swan Song
+1 Arcane Signet
+1 Chimil, the Inner Sun
+1 Cosmic Cube
+1 Darksteel Forge
+1 Fellwar Stone
+1 Grim Monolith
+1 Lightning Greaves
+1 Liquimetal Torque
+1 Mana Vault
+1 Mystic Forge
+1 Sensei's Divining Top
+1 Simic Signet
+1 Simulacrum Synthesizer
+1 Sol Ring
+1 Talisman of Curiosity
+1 The Great Henge
+1 The One Ring
+1 Unwinding Clock
+1 Uthros Research Craft
+1 Auton Soldier
+1 Blightsteel Colossus
+1 Cyberdrive Awakener
+1 Cybermen Squadron
+1 Disciple of Freyalise
+1 Donatello, Gadget Master
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Glasspool Mimic
+1 Haywire Mite
+1 Hydroelectric Specimen
+1 Iron Man, Bleeding Edge
+1 Kappa Cannoneer
+1 Karn, Legacy Reforged
+1 Krang, Master Mind
+1 Krang, Utrom Warlord
+1 Lady Octopus, Inspired Inventor
+1 Master Transmuter
+1 Master of Etherium
+1 Molecule Man
+1 Mycosynth Golem
+1 Oviya, Automech Artisan
+1 Padeem, Consul of Innovation
+1 Phyrexian Metamorph
+1 Roaming Throne
+1 Shuri, Wakandan Inventor
+1 Solemn Simulacrum
+1 Spellskite
+1 Traxos, Scourge of Kroog
+1 Urza, Lord High Artificer
+1 Vedalken Archmage
+1 Verdurous Gearhulk
+1 Wurmcoil Engine
+1 Bala Ged Recovery
+1 Bridgeworks Battle
+1 Fabricate
+1 Farseek
+1 One with the Machine
+1 Rishkar's Expertise
+1 Guardian Project
+1 Mystic Remora
+1 Rhystic Study
+1 Karn, Scion of Urza

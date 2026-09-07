@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/yOK8QWWzwBn5VHUUDME5lg (source https://moxfield.com/decks/YPRaxT0C0UKg5iVex53GUw)
+# tags Tokens, Extra Combats, Midrange; bracket 3; saved 2026-09-05; 621 tagged of 13926 indexed
+
+Commander
+1 Najeela, the Blade-Blossom
+
+Deck
+1 Akroma's Will
+1 Assassin's Trophy
+1 Deadly Rollick
+1 Deflecting Swat
+1 Flawless Maneuver
+1 Heroic Intervention
+1 Nature's Claim
+1 Path to Exile
+1 Pyroblast
+1 Red Elemental Blast
+1 Swan Song
+1 Swords to Plowshares
+1 Alesha, Who Laughs at Fate
+1 Baylen, the Haymaker
+1 Bramblewood Paragon
+1 Brutal Hordechief
+1 Champion of Lambholt
+1 Chatterfang, Squirrel General
+1 Combat Celebrant
+1 Gimli of the Glittering Caves
+1 Gornog, the Red Reaper
+1 Grand Warlord Radha
+1 Hardened Tactician
+1 Jazal Goldmane
+1 Kazuul, Tyrant of the Cliffs
+1 Knuckles the Echidna
+1 Kutzil, Malamet Exemplar
+1 Marisi, Breaker of the Coil
+1 Marneus Calgar
+1 Mindblade Render
+1 Mirri, Weatherlight Duelist
+1 Neheb, the Eternal
+1 Oakhame Adversary
+1 Ogre Battledriver
+1 Professional Face-Breaker
+1 Roaming Throne
+1 Ruric Thar, the Unbowed
+1 Samut, Vizier of Naktamun
+1 Species Specialist
+1 Surrak Dragonclaw
+1 Surrak, Elusive Hunter
+1 Vanguard Suppressor
+1 Vexilus Praetor
+1 Zurgo Stormrender
+1 Ancient Tomb
+1 Arena of Glory
+1 Arid Mesa
+1 Blood Crypt
+1 Bloodstained Mire
+1 Breeding Pool
+1 Cavern of Souls
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Forest
+1 Godless Shrine
+1 Hallowed Fountain
+1 Island
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mountain
+1 Overgrown Tomb
+1 Path of Ancestry
+1 Plains
+1 Polluted Delta
+1 Sacred Foundry
+1 Scalding Tarn
+1 Steam Vents
+1 Stomping Ground
+1 Swamp
+1 Temple Garden
+1 Three Tree City
+1 Unclaimed Territory
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Wooded Foothills
+1 Arcane Signet
+1 Dolmen Gate
+1 Fellwar Stone
+1 Lightning Greaves
+1 Lotus Petal
+1 Shadowspear
+1 Skullclamp
+1 Sol Ring
+1 Bear Umbra
+1 Beastmaster Ascension
+1 Druids' Repository
+1 Nature's Will
+1 Reconnaissance
+1 Rhystic Study
+1 Smothering Tithe
+1 Farseek
+1 Nature's Lore
+1 Sevinne's Reclamation
+1 Three Visits
+1 Toxic Deluge

@@ -1,0 +1,91 @@
+# edhrec deck https://edhrec.com/deckpreview/vvnZSEReqQNg_5lf--rGlw (source https://archidekt.com/decks/6741894)
+# tags Weenies, Proliferate, Infect; bracket 2; saved 2026-08-31; 34 tagged of 1624 indexed
+
+Commander
+1 Rigo, Streetwise Mentor
+
+Deck
+1 Abiding Grace
+1 Assemble the Players
+1 Crack in Time
+1 Four Knocks
+1 Inexorable Tide
+1 Out of Time
+1 Primal Prayers
+1 Season of Growth
+1 Skrelv's Hive
+1 Static Prison
+1 Abundant Countryside
+1 Adarkar Wastes
+1 Ancient Ziggurat
+1 Botanical Sanctum
+1 Brushland
+1 Command Tower
+1 Exotic Orchard
+6 Forest
+1 Horizon Canopy
+6 Island
+1 Karn's Bastion
+6 Plains
+1 Razorverge Thicket
+1 Seachrome Coast
+1 Seaside Citadel
+1 The Seedcore
+1 Tranquil Landscape
+1 Treva's Ruins
+1 Urban Retreat
+1 Vivid Creek
+1 Vivid Grove
+1 Vivid Meadow
+1 Waterlogged Grove
+1 Yavimaya Coast
+1 Astral Cornucopia
+1 Component Pouch
+1 Contagion Clasp
+1 Contagion Engine
+1 Darksteel Reactor
+1 Glaring Spotlight
+1 Glistening Sphere
+1 Lifecrafter's Bestiary
+1 Lost Jitte
+1 Oteclan Landmark
+1 Prosthetic Injector
+1 Solar Transformer
+1 Blight Mamba
+1 Blighted Agent
+1 Contaminant Grafter
+1 Crawling Chorus
+1 Dreamtide Whale
+1 Evolution Sage
+1 Flux Channeler
+1 Glistener Elf
+1 Grateful Apparition
+1 Guildpact Informant
+1 Hydroelectric Specimen
+1 Ichorclaw Myr
+1 Jawbone Duelist
+1 Mentor of the Meek
+1 Metastatic Evangel
+1 Minamo Sightbender
+1 Plague Myr
+1 Sakura-Tribe Elder
+1 Sidar Kondo of Jamuraa
+1 Skrelv, Defector Mite
+1 Snaremaster Sprite
+1 Tekuthal, Inquiry Dominus
+1 Tetsuko Umezawa, Fugitive
+1 Thrummingbird
+1 Venerated Rotpriest
+1 Viral Drake
+1 Wood Elves
+1 Bring the Ending
+1 Brokers Confluence
+1 Charge of the Mites
+1 Infectious Bite
+1 Prologue to Phyresis
+1 Serum Snare
+1 Steady Progress
+1 Swords to Plowshares
+1 Dusk // Dawn
+1 Expel the Interlopers
+1 White Sun's Twilight

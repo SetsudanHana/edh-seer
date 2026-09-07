@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { actionEmits } from "./emits.js";
 
 test("removal emits a death event even though it has no payoff kind", () => {
@@ -99,10 +99,12 @@ test("play only emits land-play for an actual land -- 'play that card' is not a 
 test("a move's events come from where it lands, not from the verb alone", () => {
   expect(actionEmits({ verb: "put", object: "those cards", toZone: "graveyard" }).map((e) => e.verb))
     .toEqual(["enters-graveyard"]);
+  // ... and, since roadmap Y1b, from where it LEFT: a reanimation is also a graveyard leave.
   expect(actionEmits({ verb: "return", object: "chosen creature cards", fromZone: "graveyard", toZone: "battlefield" }).map((e) => e.verb))
-    .toEqual(["enters"]);
-  // A bounce to hand lands nowhere anything triggers on, so it emits nothing rather than guessing.
-  expect(actionEmits({ verb: "return", object: "target creature", toZone: "hand" })).toEqual([]);
+    .toEqual(["enters", "leaves"]);
+  // A bounce to hand lands nowhere anything triggers on -- but it LEAVES the battlefield, which is
+  // what a leaves payoff watches (CR 603.6c). Since 2026-09-05 that is the one event it states.
+  expect(actionEmits({ verb: "return", object: "target creature", toZone: "hand" }).map((e) => e.verb)).toEqual(["leaves"]);
 });
 
 
@@ -325,4 +327,101 @@ test("a player-shaped object gives a draw no card type", () => {
 test("a life change still carries the player it happens to", () => {
   expect(actionEmits({ verb: "lose-life", object: "each opponent" })[0].subject)
     .toEqual({ control: "opp", token: null, scope: "each" });
+});
+
+// A FLICKER LEAVES BEFORE IT RETURNS (roadmap Y1, 2026-09-05). The exile half of "exile target
+// creature you control, then return it to the battlefield" emitted nothing, so 266 flicker cards fed
+// every ETB payoff and no leaves payoff: Ephemerate -> The Ozolith was 0 reasons.
+describe("an exile or a bounce off the battlefield is a leaves event", () => {
+  test("exile from the battlefield emits leaves with the object's subject", () => {
+    const e = actionEmits({ verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" });
+    expect(e.map((x) => x.verb)).toEqual(["leaves"]);
+    expect(e[0].subject).toEqual({ control: "you", token: null, type: "creature", scope: "target", fromZone: "battlefield" });
+  });
+
+  test("exile with an unstated origin emits leaves when the object is a typed permanent", () => {
+    const e = actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" });
+    expect(e.map((x) => x.verb)).toEqual(["leaves"]);
+  });
+
+  test("exile of a CARD, or from a stated non-battlefield zone, emits no battlefield leave", () => {
+    expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: "exile" })).toEqual([]);
+    expect(actionEmits({ verb: "exile", object: "target card from your hand", fromZone: "hand", toZone: "exile" })).toEqual([]);
+    // A graveyard origin is a leave of a different zone -- see the graveyard block below.
+    const gy = actionEmits({ verb: "exile", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "exile" });
+    expect(gy.map((e) => [e.verb, e.subject.zone])).toEqual([["leaves", "graveyard"]]);
+  });
+
+  test("exile of an untyped pronoun with no self hint emits nothing; with the self hint it emits a self leaves", () => {
+    expect(actionEmits({ verb: "exile", object: "it", fromZone: null, toZone: "exile" })).toEqual([]);
+    const self = actionEmits({ verb: "exile", object: "this creature", fromZone: null, toZone: "exile" }, undefined, { self: true });
+    expect(self.map((x) => x.verb)).toEqual(["leaves"]);
+  });
+
+  test("return to hand from the battlefield emits a battlefield leave; from a graveyard, a graveyard leave", () => {
+    const bounce = actionEmits({ verb: "return", object: "target creature", fromZone: "battlefield", toZone: "hand" });
+    expect(bounce.map((x) => [x.verb, x.subject.zone])).toEqual([["leaves", undefined]]);
+    const recursion = actionEmits({ verb: "return", object: "target creature card", fromZone: "graveyard", toZone: "hand" });
+    expect(recursion.map((x) => [x.verb, x.subject.zone])).toEqual([["leaves", "graveyard"]]);
+  });
+
+  test("return to the battlefield still emits enters and never leaves", () => {
+    const e = actionEmits({ verb: "return", object: "target creature you control", fromZone: "exile", toZone: "battlefield" });
+    expect(e.map((x) => x.verb)).toEqual(["enters"]);
+  });
+});
+
+// A CARD LEAVING A GRAVEYARD (roadmap Y1b, 2026-09-05). Y1 gave Desecrated Tomb's "whenever one or
+// more creature cards leave your graveyard" its zone, and 32 such consumers went to an honest zero:
+// a reanimation emitted only its `enters`. Clause records here are the corpus's own.
+describe("a card moved out of a graveyard is a graveyard leave", () => {
+  test("Reanimate: a reanimation emits enters AND a graveyard leave, and only the leave carries the zone", () => {
+    const e = actionEmits({ verb: "put", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "battlefield" });
+    expect(e.map((x) => x.verb)).toEqual(["enters", "leaves"]);
+    expect(e[0].subject.zone).toBeUndefined();
+    expect(e[1].subject).toEqual({ control: "any", token: null, type: "creature", scope: "target", fromZone: "graveyard", zone: "graveyard" });
+  });
+
+  test("Eternal Witness: graveyard-to-hand recursion is a graveyard leave under your control", () => {
+    const e = actionEmits({ verb: "return", object: "target card from your graveyard", fromZone: "graveyard", toZone: "hand" });
+    expect(e.map((x) => [x.verb, x.subject.zone, x.subject.control])).toEqual([["leaves", "graveyard", "you"]]);
+  });
+
+  test("Torrential Gearhulk: a cast from a graveyard emits the cast and the leave", () => {
+    const e = actionEmits({ verb: "cast", object: "target instant card from your graveyard", fromZone: "graveyard", toZone: null });
+    expect(e.map((x) => [x.verb, x.subject.zone])).toEqual([["cast", undefined], ["leaves", "graveyard"]]);
+  });
+
+  test("Cremate: an exile from a graveyard, and a put to the library, each leave the graveyard", () => {
+    expect(actionEmits({ verb: "exile", object: "target card from a graveyard", fromZone: "graveyard", toZone: null })
+      .map((x) => [x.verb, x.subject.zone])).toEqual([["leaves", "graveyard"]]);
+    expect(actionEmits({ verb: "put", object: "target card from your graveyard", fromZone: "graveyard", toZone: "library" })
+      .map((x) => [x.verb, x.subject.zone])).toEqual([["leaves", "graveyard"]]);
+  });
+
+  test("an origin stated only in the object text counts", () => {
+    const e = actionEmits({ verb: "return", object: "up to two instant and/or sorcery cards from your graveyard", fromZone: null, toZone: null });
+    expect(e.map((x) => [x.verb, x.subject.zone])).toEqual([["leaves", "graveyard"]]);
+  });
+
+  test("searching a graveyard, or naming a card in one, moves nothing", () => {
+    expect(actionEmits({ verb: "search", object: "a creature card", fromZone: "graveyard", toZone: null })).toEqual([]);
+    expect(actionEmits({ verb: "copy", object: "any creature card in a graveyard", fromZone: "graveyard", toZone: null })).toEqual([]);
+  });
+});
+
+// Swords to Plowshares, Path to Exile, Deadly Rollick: the model writes `exile target creature` with
+// no destination at all, and exile's destination is the verb's own (CR 406.2). Keyed on a stated
+// "exile" the row missed every one of them (2026-09-05).
+test("an exile with no stated destination still left the battlefield", () => {
+  const e = actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: null });
+  expect(e.map((x) => [x.verb, x.subject.type, x.subject.zone])).toEqual([["leaves", "creature", undefined]]);
+  // A card from the library is still not a permanent, and a `put` with no destination is unknown.
+  expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: null })).toEqual([]);
+  expect(actionEmits({ verb: "put", object: "target creature", fromZone: null, toZone: null })).toEqual([]);
+  // A return with no destination is a bounce only when the clause says "to its owner's hand".
+  const otawara = actionEmits({ verb: "return", object: "target artifact, creature, enchantment, or planeswalker", fromZone: null, toZone: null },
+    "Return target artifact, creature, enchantment, or planeswalker to its owner's hand.");
+  expect(otawara.map((x) => x.verb)).toEqual(["leaves"]);
+  expect(actionEmits({ verb: "return", object: "target creature", fromZone: null, toZone: null }, "Return target creature.")).toEqual([]);
 });

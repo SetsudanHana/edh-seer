@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/vhF70nq7Ptp7ECDVNXv1Bg (source https://archidekt.com/decks/25078296)
+# tags Self-Discard, Cycling, Enchantress; bracket 3; saved 2026-09-04; 153 tagged of 16887 indexed
+
+Commander
+1 Zur the Enchanter
+
+Deck
+1 Abandoned Sarcophagus
+1 Arcane Signet
+1 Azorius Signet
+1 Fluctuator
+1 Monument to Endurance
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Talisman of Progress
+1 The Mind Stone
+1 The Soul Stone
+1 Thought Vessel
+1 Aether Hub
+1 Arcane Sanctum
+1 Ash Barrens
+1 Azorius Chancery
+1 Barren Moor
+1 Blasted Landscape
+1 Capital City
+1 Choked Estuary
+1 Command Tower
+1 Contaminated Landscape
+1 Darkwater Catacombs
+1 Desert of the Glorified
+1 Desert of the Mindful
+1 Desert of the True
+1 Dimir Aqueduct
+1 Drifting Meadow
+1 Exotic Orchard
+1 Fetid Pools
+1 Flooded Strand
+1 Glacial Fortress
+1 Godless Shrine
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Irrigated Farmland
+3 Island
+1 Lonely Sandbar
+1 Orzhov Basilica
+1 Plains
+1 Polluted Mire
+1 Port Town
+1 Reliquary Tower
+1 Remote Isle
+1 Secluded Steppe
+1 Sunken Ruins
+1 Umbral Expanse
+1 Watery Grave
+1 Angel of the Ruins
+1 Archfiend of Ifnir
+1 Baleful Strix
+1 Cloud of Faeries
+1 Cloudblazer
+1 Containment Construct
+1 Curator of Mysteries
+1 Mulldrifter
+1 Nimble Obstructionist
+1 Palinchron
+1 Peregrine Drake
+1 Rhet-Tomb Mystic
+1 Undead Gladiator
+1 Valiant Rescuer
+1 Watcher for Tomorrow
+1 Waxen Shapethief
+1 Astral Drift
+1 Astral Slide
+1 Candlekeep Sage
+1 Cast Out
+1 Crystalline Resonance
+1 Diplomatic Immunity
+1 Drake Haven
+1 Dying to Serve
+1 Escape Protocol
+1 Faith of the Devoted
+1 Gift of Immortality
+1 Grasp of Fate
+1 Imprisoned in the Moon
+1 New Perspectives
+1 Oblivion Ring
+1 Ominous Seas
+1 Rhystic Study
+1 Shark Typhoon
+1 Shielded by Faith
+1 Standstill
+1 Steel of the Godhead
+1 Decree of Pain
+1 Spectacular Pileup
+1 Don't Blink
+1 Enlightened Tutor
+1 Expunge
+1 Forsake the Worldly
+1 Miscalculation
+1 Neutralize
+1 Shadow of the Grave
+1 Swords to Plowshares
+1 Teferi's Protection

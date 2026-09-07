@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/EQBlFUJMnfUXo-_-gtJC3g (source https://archidekt.com/decks/4756184)
+# tags -1/-1 Counters, Oil Counters, +1/+1 Counters, Combo, Phyrexians; bracket 2; saved 2026-08-23; 15 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Arcane Signet
+1 Chromatic Lantern
+1 Commander's Sphere
+1 Gilded Lotus
+1 Glistening Sphere
+1 Grafted Exoskeleton
+1 Machine God's Effigy
+1 Magistrate's Scepter
+1 Monument to Perfection
+1 Norn's Wellspring
+1 Ring of Three Wishes
+1 Sol Ring
+1 Synthesis Pod
+1 Tablet of Compleation
+1 Armored Scrapgorger
+1 Bloated Processor
+1 Brimaz, Blight of Oreskos
+1 Contaminant Grafter
+1 Elesh Norn, Mother of Machines
+1 Gix, Yawgmoth Praetor
+1 Glissa's Retriever
+1 Glissa, Herald of Predation
+1 Grafted Butcher
+1 Hand of the Praetors
+1 Heliod, the Radiant Dawn
+1 Ixhel, Scion of Atraxa
+1 Jin-Gitaxias
+1 Mite Overseer
+1 Mondrak, Glory Dominus
+1 Necrogen Rotpriest
+1 Norn's Choirmaster
+1 Phyrexian Obliterator
+1 Phyrexian Swarmlord
+1 Polukranos Reborn
+1 Scrawling Crawler
+1 Sheoldred
+1 Skithiryx, the Blight Dragon
+1 Skrelv, Defector Mite
+1 Tekuthal, Inquiry Dominus
+1 Thrummingbird
+1 Venerated Rotpriest
+1 Vishgraz, the Doomhive
+1 Vorinclex
+1 Zopandrel, Hunger Dominus
+1 Blue Sun's Twilight
+1 Geth's Summons
+1 Green Sun's Twilight
+1 Phyrexian Rebirth
+1 Tezzeret's Gambit
+1 Wurmquake
+1 Brokers Ascendancy
+1 Inexorable Tide
+1 Norn's Decree
+1 Phyrexian Arena
+1 Canopy Vista
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+3 Forest
+1 Hallowed Fountain
+3 Island
+1 Karn's Bastion
+1 Llanowar Wastes
+1 Mystic Gate
+1 Necroblossom Snarl
+1 Overgrown Farmland
+1 Path of Ancestry
+3 Plains
+1 Prairie Stream
+1 Razorverge Thicket
+1 Seachrome Coast
+1 Shineshadow Snarl
+1 Sunken Hollow
+3 Swamp
+1 The Dross Pits
+1 The Fair Basilica
+1 The Hunter Maze
+1 The Mycosynth Gardens
+1 The Seedcore
+1 The Surgical Bay
+1 Underground River
+1 Vineglimmer Snarl
+1 Witch's Clinic
+1 Yavimaya Coast
+1 Jace, the Perfected Mind
+1 Kaya, Intangible Slayer
+1 Nissa, Ascended Animist
+1 Tamiyo, Field Researcher
+1 Tyvar, Jubilant Brawler
+1 Vraska, Betrayal's Sting
+1 Synthetic Destiny

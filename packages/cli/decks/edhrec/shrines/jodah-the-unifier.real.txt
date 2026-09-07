@@ -1,0 +1,103 @@
+# edhrec deck https://edhrec.com/deckpreview/xhljr6l8fGZErNcuHRJSEA (source https://archidekt.com/decks/20643576)
+# tags Shrines, Enchantress, Legends, Historic; bracket 3; saved 2026-08-03; 12 tagged of 32746 indexed
+
+Commander
+1 Jodah, the Unifier
+
+Deck
+1 Aang's Journey
+1 Farseek
+1 Three Visits
+1 Urza's Ruinous Blast
+1 Absorbing Man
+1 Bello, Bard of the Brambles
+1 Bloom Tender
+1 Delighted Halfling
+1 Eidolon of Blossoms
+1 Esika, God of the Tree
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Shared Purpose
+1 Grazilaxx, Illithid Scholar
+1 Guru Pathik
+1 Hei Bai, Forest Guardian
+1 Irma, Part-Time Mutant
+1 Karametra, God of Harvests
+1 Katilda, Dawnhart Martyr
+1 Kutzil, Malamet Exemplar
+1 Pippin, Guard of the Citadel
+1 Ratadrabik of Urborg
+1 Reki, the History of Kamigawa
+1 Sanctum Weaver
+1 Setessan Champion
+1 Shanid, Sleepers' Scourge
+1 Sythis, Harvest's Hand
+1 Tam, Mindful First-Year
+1 Yenna, Redtooth Regent
+1 Zur, Eternal Schemer
+1 Annie Joins Up
+1 Crescent Island Temple
+1 Flowering of the White Tree
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Life's Web
+1 Honden of Night's Reach
+1 Honden of Seeing Winds
+1 Kellan Joins Up
+1 Kyoshi Island Plaza
+1 Northern Air Temple
+1 Rhystic Study
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Stone Fangs
+1 Smothering Tithe
+1 Southern Air Temple
+1 The Spirit Oasis
+1 Arcane Signet
+1 Heroes' Podium
+1 Mithril Coat
+1 Planetarium of Wan Shi Tong
+1 Strionic Resonator
+1 The Great Henge
+1 Arid Mesa
+1 Blood Crypt
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+2 Island
+1 Jetmir's Garden
+1 Misty Rainforest
+1 Mountain
+2 Plains
+1 Plaza of Heroes
+1 Raffine's Tower
+1 Rogue's Passage
+1 Savannah
+1 Scalding Tarn
+1 Scrubland
+1 Serra's Sanctum
+1 Shizo, Death's Storehouse
+1 Stomping Ground
+1 Swamp
+1 Taiga
+1 Temple Garden
+1 Tropical Island
+1 Tundra
+1 Volcanic Island
+1 White Lotus Hideout
+1 Windswept Heath
+1 Wooded Foothills
+1 Ziatora's Proving Ground
+1 Counterspell
+1 Deflecting Swat
+1 Desynchronization
+1 Galadriel's Dismissal
+1 Heroic Intervention
+1 Mana Drain

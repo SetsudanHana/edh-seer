@@ -1,0 +1,80 @@
+# edhrec deck https://edhrec.com/deckpreview/SvBHd56iXRyWryMZjPcwFw (source https://archidekt.com/decks/26056572)
+# tags Zombies, Crime, Control; bracket 3; saved 2026-09-05; 210 tagged of 5872 indexed
+
+Commander
+1 Gisa, the Hellraiser
+
+Deck
+1 Agatha's Soul Cauldron
+1 Altar of Dementia
+1 Amulet of Vigor
+1 Arcane Signet
+1 Blasting Station
+1 Charcoal Diamond
+1 Codex Shredder
+1 Embalmer's Tools
+1 Ghost Vacuum
+1 Glasses of Urza
+1 Idol of Oblivion
+1 Jet Medallion
+1 Phyrexian Altar
+1 Portal to Phyrexia
+1 Sol Ring
+1 The Darkness Crystal
+1 The Soul Stone
+1 Archenemy's Charm
+1 Dark Ritual
+1 Deadly Rollick
+1 Defile
+1 Dismember
+1 Fake Your Own Death
+1 Fell the Profane
+1 Hagra Mauling
+1 Imp's Mischief
+1 Infernal Grasp
+1 Malakir Rebirth
+1 Malicious Affliction
+1 Shoot the Sheriff
+1 Snuff Out
+1 Sudden Spoiling
+1 Undying Malice
+1 Withering Boon
+1 Attrition
+1 Black Market
+1 Black Market Connections
+1 Dark Prophecy
+1 Grave Pact
+1 Heartless Summoning
+1 Kaya's Ghostform
+1 Nowhere to Run
+1 Tinybones Joins Up
+1 Ayara, First of Locthwain
+1 Boggart Trawler
+1 Crypt Ghast
+1 Dread Presence
+1 Gisa, Glorious Resurrector
+1 Graveborn Muse
+1 K'rrik, Son of Yawgmoth
+1 Kaervek, the Punisher
+1 Morbid Opportunist
+1 Orcish Bowmasters
+1 Pitiless Plunderer
+1 Priest of Forgotten Gods
+1 Undead Augur
+1 Warren Soultrader
+1 Yawgmoth, Thran Physician
+1 Bojuka Bog
+1 Cabal Coffers
+1 Cabal Stronghold
+1 Nykthos, Shrine to Nyx
+27 Swamp
+1 Three Tree City
+1 Urborg, Tomb of Yawgmoth
+1 Witch's Cottage
+1 Bone Shards
+1 Damnation
+1 Decorum Dissertation
+1 Dread Return
+1 Feed the Swarm
+1 Toxic Deluge
+1 Liliana of the Dark Realms

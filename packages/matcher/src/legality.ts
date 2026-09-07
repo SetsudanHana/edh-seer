@@ -27,6 +27,14 @@ const ANY_NUMBER_NAMED = /a deck can have any number of cards named/i;
  *  PLANESWALKER and a legal commander because it says so in its own text. */
 const CAN_BE_COMMANDER = /can be your commander/i;
 
+/** CR 903.4b, as printed: "choose a color before the game begins". Three corpus cards on
+ *  2026-09-05 -- Clara Oswald, The Prismatic Piper, Faceless One -- and the chosen colour is in the
+ *  commander's identity, so a page about one of them has to offer the choice. */
+const CHOOSES_COLOUR = /choose a colou?r before the game begins/i;
+export const choosesColour = (card: Card): boolean => CHOOSES_COLOUR.test(card.oracleText ?? "");
+/** A Background (CR 702.124): the second commander beside a card that prints "Choose a Background". */
+export const isBackground = (card: Card): boolean => (card.typeLine ?? "").toLowerCase().includes("background");
+
 /** CR 702.124 — WHICH PAIRS MAY LEAD A DECK TOGETHER (roadmap J12's partner half). J4 shipped a
  *  commander check that accepts a Background without ever looking at its partner, and said so in its
  *  own comment; this is that deferred half.
@@ -64,7 +72,7 @@ function namesPartner(a: Card, b: Card): boolean {
  *  reading of 903.3 flagged five legal decks. A pair this cannot license is REPORTED, so every
  *  licensing shape the corpus actually prints has to be here — which is why the six forms were
  *  counted before the regexes were written rather than after. */
-function pairingLicense(a: Card, b: Card): string | undefined {
+export function pairingLicense(a: Card, b: Card): string | undefined {
   const ta = a.oracleText ?? "";
   const tb = b.oracleText ?? "";
   if (PARTNER_BARE.test(ta) && PARTNER_BARE.test(tb)) return "partner";
@@ -73,8 +81,7 @@ function pairingLicense(a: Card, b: Card): string | undefined {
   if (la !== undefined && la === partnerLabel(tb)) return la;
   // A Background is the SECOND commander, so the licence is on the other card. Checked both ways
   // round because a decklist states no order.
-  const isBg = (c: Card): boolean => (c.typeLine ?? "").toLowerCase().includes("background");
-  if ((CHOOSE_BACKGROUND.test(ta) && isBg(b)) || (CHOOSE_BACKGROUND.test(tb) && isBg(a))) return "choose a background";
+  if ((CHOOSE_BACKGROUND.test(ta) && isBackground(b)) || (CHOOSE_BACKGROUND.test(tb) && isBackground(a))) return "choose a background";
   // 702.124's Doctor's companion wants the OTHER to be the Doctor — a legendary creature whose type
   // line says Doctor. 17 corpus cards qualify.
   const isDoctor = (c: Card): boolean => {
@@ -103,7 +110,7 @@ export interface LegalityFinding {
  *  A BACKGROUND IS ACCEPTED WITHOUT CHECKING ITS PARTNER prints "Choose a Background". The pairing
  *  is J12's question, and flagging a legal Background because this function cannot see its partner
  *  would be the same false positive one step later. */
-function isLegalCommander(card: Card): boolean {
+export function isLegalCommander(card: Card): boolean {
   const line = (card.typeLine ?? "").toLowerCase();
   const text = card.oracleText ?? "";
   if (CAN_BE_COMMANDER.test(text)) return true;

@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/X5gCMpWK9oKZ0EKXDx6s3A (source https://archidekt.com/decks/13456597)
+# tags Summons, Sagas, Historic, Towns; bracket 2; saved 2026-08-25; 6 tagged of 19121 indexed
+
+Commander
+1 Terra, Magical Adept
+
+Deck
+1 Arcane Signet
+1 Crystal Fragments
+1 Door to Nothingness
+1 Haunted Screen
+1 Summoner's Grimoire
+1 The Fire Crystal
+1 Avacyn's Pilgrim
+1 Clive, Ifrit's Dominant
+1 Eidolon of Blossoms
+1 Entity Tracker
+1 Fíli and Kíli, Joyous
+1 Garnet, Princess of Alexandria
+1 Gladiolus Amicitia
+1 Ignis Scientia
+1 Jecht, Reluctant Guardian
+1 Jill, Shiva's Dominant
+1 Marina Vendrell
+1 Omega, Heartless Evolution
+1 Rhys, the Evermore
+1 Rikku, Resourceful Guardian
+1 Rydia, Summoner of Mist
+1 Sanctuary Warden
+1 Shadow Urchin
+1 Sin, Unending Cataclysm
+1 Soaring Lightbringer
+1 Summon: Anima
+1 Summon: Bahamut
+1 Summon: Brynhildr
+1 Summon: Choco/Mog
+1 Summon: Esper Ramuh
+1 Summon: Fat Chocobo
+1 Summon: Fenrir
+1 Summon: G.F. Ifrit
+1 Summon: Good King Mog XII
+1 Summon: Primal Garuda
+1 Summon: Primal Odin
+1 Summon: Shiva
+1 Summon: Titan
+1 The Wandering Minstrel
+1 Torgal, A Fine Hound
+1 Town Greeter
+1 Yuna, Hope of Spira
+1 Baron, Airship Kingdom
+1 Blood Crypt
+1 Canopy Vista
+1 Cinder Glade
+1 Command Tower
+1 Crossroads Village
+1 Eden, Seat of the Sanctum
+1 Exotic Orchard
+4 Forest
+1 Guadosalam, Farplane Gateway
+1 Hall of Heliod's Generosity
+1 Hallowed Fountain
+1 Insomnia, Crown City
+3 Island
+1 Krosan Verge
+1 Monumental Henge
+3 Mountain
+1 Nesting Grounds
+1 Path of Ancestry
+3 Plains
+1 Prairie Stream
+1 Rabanastre, Royal City
+1 Sharlayan, Nation of Scholars
+3 Swamp
+1 Terramorphic Expanse
+1 Valgavoth's Lair
+1 Windurst, Federation Center
+1 Ziatora's Proving Ground
+1 Clash of the Eikons
+1 Esper Origins
+1 Extinguish All Hope
+1 Farseek
+1 Open the Vaults
+1 Reach the Horizon
+1 Rydia's Return
+1 Tezzeret's Gambit
+1 Travel the Overworld
+1 Heartless Act
+1 Overkill
+1 Prishe's Wanderings
+1 Restoration Magic
+1 Prismatic Undercurrents
+1 Sidequest: Card Collection
+1 Sidequest: Catch a Fish
+1 Spelunking
+1 Static Snare

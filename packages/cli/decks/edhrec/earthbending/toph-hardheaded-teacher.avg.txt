@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/toph-hardheaded-teacher/earthbending
+# theme Earthbending (168 decks)
+
+Commander
+1 Toph, Hardheaded Teacher
+
+Deck
+1 Amulet of Vigor
+1 Arcane Signet
+1 Skullclamp
+1 Sol Ring
+1 Zuran Orb
+1 Ba Sing Se
+1 Cinder Glade
+1 Command Tower
+1 Commercial District
+1 Cryptic Caves
+1 Escape Tunnel
+1 Evolving Wilds
+1 Fabled Passage
+11 Forest
+1 Karplusan Forest
+1 Lotus Field
+7 Mountain
+1 Myriad Landscape
+1 Rockfall Vale
+1 Rootbound Crag
+1 Rumble Arena
+1 Secret Tunnel
+1 Sheltered Thicket
+1 Stomping Ground
+1 Terramorphic Expanse
+1 Wooded Foothills
+1 Badgermole
+1 Badgermole Cub
+1 Baloth Prime
+1 Bumi, Unleashed
+1 Disciple of Freyalise
+1 Earth Kingdom General
+1 Evendo Brushrazer
+1 Evolution Sage
+1 Goblin Anarchomancer
+1 Horizon Explorer
+1 Lotus Cobra
+1 Meltstrider Eulogist
+1 Omnath, Locus of Rage
+1 Orcish Lumberjack
+1 Sabotender
+1 Scute Swarm
+1 Spinner of Souls
+1 Springheart Nantuko
+1 Sylvan Safekeeper
+1 Tannuk, Memorial Ensign
+1 Tireless Provisioner
+1 Titania, Protector of Argoth
+1 Toph, Earthbending Master
+1 Toph, Greatest Earthbender
+1 Toph, the Blind Bandit
+1 Bitter Work
+1 Earthbender Ascension
+1 Evolutionary Leap
+1 Hardened Scales
+1 Solid Ground
+1 Spelunking
+1 Terrasymbiosis
+1 Valakut Exploration
+1 Beast Within
+1 Chaos Warp
+1 Crop Rotation
+1 Cycle of Renewal
+1 Entish Restoration
+1 Harrow
+1 Heroic Intervention
+1 Inspiring Call
+1 Origin of Metalbending
+1 Redirect Lightning
+1 Roiling Regrowth
+1 Blasphemous Act
+1 Cracked Earth Technique
+1 Earthbending Lesson
+1 Explore
+1 Farseek
+1 Nature's Lore
+1 Planar Engineering
+1 Rampant Growth
+1 Rockalanche
+1 Seismic Sense
+1 Shared Roots
+1 Three Visits
+1 True Ancestry

@@ -1,0 +1,101 @@
+# edhrec deck https://edhrec.com/deckpreview/NnZJEeTj1fWBoRs53Z7H7A (source https://moxfield.com/decks/fAcFXUCNE0qxISUX2kLjZA)
+# tags Aggro, Reanimator; bracket 3; saved 2026-09-05; 1154 tagged of 39340 indexed
+
+Commander
+1 Kaalia of the Vast
+
+Deck
+1 Access Tunnel
+1 Arena of Glory
+1 Battlefield Forge
+1 Blightstep Pathway
+1 Blood Crypt
+1 Brightclimb Pathway
+1 Caves of Koilos
+1 City of Brass
+1 Clifftop Retreat
+1 Command Tower
+1 Dragonskull Summit
+1 Eiganjo, Seat of the Empire
+1 Exotic Orchard
+1 Fabled Passage
+1 Godless Shrine
+1 Hall of the Bandit Lord
+1 Isolated Chapel
+1 Luxury Suite
+2 Mountain
+1 Needleverge Pathway
+2 Plains
+1 Plaza of Heroes
+1 Sacred Foundry
+1 Savai Triome
+1 Silent Clearing
+1 Sokenzan, Crucible of Defiance
+1 Spectator Seating
+1 Sulfurous Springs
+1 Sunbaked Canyon
+4 Swamp
+1 Vault of Champions
+1 Angel of Despair
+1 Archfiend of Depravity
+1 Aurelia, the Warleader
+1 Avacyn, Angel of Hope
+1 Balefire Dragon
+1 Burning-Rune Demon
+1 Gisela, Blade of Goldnight
+1 Giver of Runes
+1 Grand Abolisher
+1 Hellkite Tyrant
+1 Imperial Recruiter
+1 Isshin, Two Heavens as One
+1 Kaalia, Zenith Seeker
+1 Karmic Guide
+1 Liesa, Forgotten Archangel
+1 Mother of Runes
+1 Overseer of the Damned
+1 Professional Face-Breaker
+1 Rakdos the Defiler
+1 Razaketh, the Foulblooded
+1 Rune-Scarred Demon
+1 Sephara, Sky's Blade
+1 Serra's Emissary
+1 Terror of Mount Velus
+1 Valgavoth, Terror Eater
+1 Vilis, Broker of Blood
+1 Anguished Unmaking
+1 Boros Charm
+1 Chaos Warp
+1 Clever Concealment
+1 Generous Gift
+1 Path to Exile
+1 Rakdos Charm
+1 Rebuff the Wicked
+1 Snuff Out
+1 Swords to Plowshares
+1 Teferi's Protection
+1 Animate Dead
+1 Bitter Reunion
+1 Black Market Connections
+1 Dance of the Dead
+1 Reconnaissance
+1 Smothering Tithe
+1 Sneak Attack
+1 Arcane Signet
+1 Boros Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Mask of Memory
+1 Orzhov Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Talisman of Hierarchy
+1 Talisman of Indulgence
+1 Blasphemous Act
+1 Buried Alive
+1 Damn
+1 Faithless Looting
+1 Gamble
+1 Night's Whisper
+1 Reanimate
+1 Victimize

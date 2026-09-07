@@ -1,0 +1,98 @@
+# edhrec deck https://edhrec.com/deckpreview/6vs4OZnHe1IJ6oZ2TUdrGg (source https://archidekt.com/decks/22059651)
+# tags Web-slinging, Historic, Ramp, Legends; bracket 3; saved 2026-09-05; 109 tagged of 6381 indexed
+
+Commander
+1 Peter Parker
+
+Deck
+1 Absolute Virtue
+1 Avatar Kyoshi, Earthbender
+1 Chulane, Teller of Tales
+1 Coiling Oracle
+1 Dragonlord Dromoka
+1 Eladamri, Korvecdal
+1 Elvish Visionary
+1 Fblthp, the Lost
+1 Ghalta, Stampede Tyrant
+1 Harmonized Trio
+1 Helga, Skittish Seer
+1 Imoti, Celebrant of Bounty
+1 Inga and Esika
+1 Jaspera Sentinel
+1 Jin-Gitaxias, Core Augur
+1 Kogla, the Titan Ape
+1 Koma, Cosmos Serpent
+1 Koma, World-Eater
+1 Kona, Rescue Beastie
+1 Llanowar Elves
+1 Llanowar Loamspeaker
+1 Loran of the Third Path
+1 Myojin of Seeing Winds
+1 Myojin of Towering Might
+1 Novice Inspector
+1 Prime Speaker Zegana
+1 Prosperous Innkeeper
+1 Raff Capashen, Ship's Mage
+1 Reki, the History of Kamigawa
+1 Rishkar, Peema Renegade
+1 Scholar of New Horizons
+1 Sleep-Cursed Faerie
+1 Spiders-Man, Heroic Horde
+1 Spirited Companion
+1 Supportive Parents
+1 Sylvan Caryatid
+1 Sylvan Ranger
+1 The Tarrasque
+1 Torsten, Founder of Benalia
+1 Tyvar, the Pummeler
+1 Vorinclex, Voice of Hunger
+1 Watcher for Tomorrow
+1 Adarkar Wastes
+1 Ancient Ziggurat
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Dreamroot Cascade
+1 Exotic Orchard
+1 Flooded Grove
+5 Forest
+1 Fortified Village
+1 Gathering Place
+1 Horizon Canopy
+3 Island
+1 Meditation Pools
+1 Mosswort Bridge
+1 Overflowing Basin
+3 Plains
+1 Prairie Stream
+1 Sea of Clouds
+1 Suburban Sanctuary
+1 Sunpetal Grove
+1 Thriving Grove
+1 University Campus
+1 Urban Retreat
+1 Vibrant Cityscape
+1 Vivid Grove
+1 Waterlogged Grove
+1 Yavimaya Coast
+1 Arcane Signet
+1 Avacyn's Memorial
+1 Prophetic Prism
+1 Relic of Legends
+1 Sol Ring
+1 The Magic Mirror
+1 Beast Within
+1 Flusterstorm
+1 Hide on the Ceiling
+1 Path to Exile
+1 Spider-Sense
+1 Strength of Will
+1 Cryptolith Rite
+1 In Bolas's Clutches
+1 Opposition
+1 Up the Beanstalk
+1 Kapow!
+1 Karn's Temporal Sundering
+1 Split Up
+1 Urza's Ruinous Blast
+1 Nissa, Ascended Animist

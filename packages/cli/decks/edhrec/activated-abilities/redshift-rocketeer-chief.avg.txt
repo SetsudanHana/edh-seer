@@ -1,0 +1,90 @@
+# edhrec average deck: https://edhrec.com/average-decks/redshift-rocketeer-chief/activated-abilities
+# theme Activated Abilities (53 decks)
+
+Commander
+1 Redshift, Rocketeer Chief
+
+Deck
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Blackblade Reforged
+1 Boommobile
+1 Gruul Signet
+1 Lightning Greaves
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 Staff of Domination
+1 Swiftfoot Boots
+1 Sword of the Paruns
+1 Thousand-Year Elixir
+1 Umbral Mantle
+1 Boseiju, Who Endures
+1 Castle Garenbrig
+1 Cinder Glade
+1 Command Tower
+10 Forest
+1 Game Trail
+1 Gruul Turf
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+8 Mountain
+1 Reliquary Tower
+1 Rockfall Vale
+1 Rogue's Passage
+1 Rootbound Crag
+1 Spire Garden
+1 Stomping Ground
+1 Thornspire Verge
+1 Wooded Foothills
+1 Agatha of the Vile Cauldron
+1 Beast Whisperer
+1 Beastrider Vanguard
+1 Bhaal's Invoker
+1 Birds of Paradise
+1 Bristly Bill, Spine Sower
+1 Captivating Crew
+1 Flamewave Invoker
+1 Forgotten Ancient
+1 Goblin Anarchomancer
+1 Goro-Goro, Disciple of Ryusei
+1 Halana and Alena, Partners
+1 Hydra Broodmaster
+1 Inferno of the Star Mounts
+1 Kami of Whispered Hopes
+1 Leafkin Avenger
+1 Llanowar Elves
+1 Loot, Exuberant Explorer
+1 Magus of the Candelabra
+1 Marvin, Murderous Mimic
+1 Orochi Leafcaller
+1 Selvala, Heart of the Wilds
+1 Soul of New Phyrexia
+1 Svella, Ice Shaper
+1 Tyvar, the Pummeler
+1 Walking Ballista
+1 Xenagos, God of Revels
+1 Aggravated Assault
+1 Garruk's Uprising
+1 Hardened Scales
+1 Innkeeper's Talent
+1 Rhythm of the Wild
+1 Sylvan Library
+1 Unnatural Growth
+1 Well Rested
+1 Beast Within
+1 Chaos Warp
+1 Gift of the Viper
+1 Heroic Intervention
+1 Invigorate
+1 Legolas's Quick Reflexes
+1 Overprotect
+1 Return of the Wildspeaker
+1 Snakeskin Veil
+1 Blasphemous Act
+1 Cultivate
+1 Gamble
+1 Harmonize
+1 Rishkar's Expertise
+1 Season of Gathering
+1 Stump Stomp

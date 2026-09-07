@@ -1,0 +1,100 @@
+# edhrec average deck: https://edhrec.com/average-decks/aragorn-the-uniter/color-hack
+# theme Color Hack (37 decks)
+
+Commander
+1 Aragorn, the Uniter
+
+Deck
+1 Arcane Signet
+1 Fellwar Stone
+1 Izzet Signet
+1 Sapphire Medallion
+1 Simic Signet
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Arid Mesa
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+3 Forest
+1 Great Hall of the Citadel
+1 Hallowed Fountain
+1 Hinterland Harbor
+3 Island
+1 Ketria Triome
+1 Mana Confluence
+1 Misty Rainforest
+2 Mountain
+1 Mystic Sanctuary
+2 Plains
+1 Polluted Delta
+1 Raugrin Triome
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Scalding Tarn
+1 Sea of Clouds
+1 Spara's Headquarters
+1 Steam Vents
+1 Training Center
+1 Windswept Heath
+1 Wooded Foothills
+1 Yavimaya, Cradle of Growth
+1 Archaeomancer
+1 Archmage Emeritus
+1 Bloom Tender
+1 Captain of the Mists
+1 Defiler of Dreams
+1 Elvish Mariner
+1 Galadriel of Lothlórien
+1 Hydroelectric Specimen
+1 Llawan, Cephalid Empress
+1 Matoya, Archon Elder
+1 Mister Fantastic, Reed Richards
+1 Painter's Servant
+1 Roaming Throne
+1 Shrieking Drake
+1 Spellseeker
+1 Tam, Mindful First-Year
+1 Annie Joins Up
+1 Curator's Ward
+1 Curiosity
+1 Fable of Wolf and Owl
+1 Insight
+1 Shifting Sky
+1 Swirl the Mists
+1 Vanishing
+1 Alter Reality
+1 Brainstorm
+1 Counterspell
+1 Crystal Spray
+1 Frantic Search
+1 Glamerdye
+1 Harmonized Crescendo
+1 High Tide
+1 Hydroblast
+1 March of Swirling Mist
+1 Mind Bend
+1 Mystical Tutor
+1 Opt
+1 Pongify
+1 Rapid Hybridization
+1 Reality Ripple
+1 Resculpt
+1 Sleight of Mind
+1 Slip Out the Back
+1 Snap
+1 Spectral Shift
+1 Stubborn Denial
+1 Whim of Volrath
+1 Lórien Revealed
+1 Mass Appeal
+1 Merchant Scroll
+1 Ponder
+1 Preordain
+1 Serum Visions
+1 Solve the Equation
+1 Spirit Water Revival
+1 Trait Doctoring

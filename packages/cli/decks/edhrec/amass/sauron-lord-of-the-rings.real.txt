@@ -1,0 +1,89 @@
+# edhrec deck https://edhrec.com/deckpreview/Fk4cv3JjCxEqr42J8MJRsg (source https://archidekt.com/decks/11913792)
+# tags Reanimator, Amass; bracket 3; saved 2026-09-01; 37 tagged of 4826 indexed
+
+Commander
+1 Sauron, Lord of the Rings
+
+Deck
+1 Anger
+1 Azog, Moria's Ruin
+1 Bolg of the North
+1 Bolg's Company
+1 Captain of Umbar
+1 Corsairs of Umbar
+1 Easterling Vanguard
+1 Fearsome Goblin Pair
+1 Goblin Cratermaker
+1 Goblin-town Flunkies
+1 Gollum, Patient Plotter
+1 Gollum, Scheming Guide
+1 Gothmog, Morgul Lieutenant
+1 Great Ugly-Looking Goblin
+1 Grishnákh, Brash Instigator
+1 Gríma Wormtongue
+1 Knollspine Dragon
+1 Lobelia Sackville-Baggins
+1 Misty Mountains Raider
+1 Monstrosity of the Lake
+1 Mordor Trebuchet
+1 Moria Scavenger
+1 Notion Thief
+1 Oliphaunt
+1 Orcish Siegemaster
+1 Rampaging War Mammoth
+1 Rhovanion Rampager
+1 Sauron, the Dark Lord
+1 Sauron, the Lidless Eye
+1 Sauron, the Necromancer
+1 Siege-Gang Commander
+1 Smaug, Wicked Worm
+1 The Balrog of Moria
+1 The Balrog, Durin's Bane
+1 Troll of Khazad-dûm
+1 Uglúk of the White Hand
+1 Warg Rider
+1 Witch-king of Angmar
+1 Arcane Signet
+1 Commander's Sphere
+1 Grond, the Gatebreaker
+1 Mind Stone
+1 My Precious
+1 Nazgûl Battle-Mace
+1 Relic of Sauron
+1 Sol Ring
+1 Wayfarer's Bauble
+1 Worn Powerstone
+1 Barad-dûr
+1 Choked Estuary
+1 Command Tower
+1 Crumbling Necropolis
+1 Desolate Lighthouse
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Evolving Wilds
+1 Foreboding Ruins
+1 Frostboil Snarl
+5 Island
+6 Mountain
+1 Rogue's Passage
+1 Smoldering Marsh
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Sunken Hollow
+9 Swamp
+1 Terramorphic Expanse
+1 The Black Gate
+1 Underground River
+1 Blasphemous Act
+1 Extract from Darkness
+1 Faithless Looting
+1 Living Death
+1 Reanimate
+1 Too Greedily, Too Deep
+1 Consider
+1 Forbidden Alchemy
+1 Riddles in the Dark
+1 Thrill of Possibility
+1 March from the Black Gate
+1 One Ring to Rule Them All
+1 There and Back Again

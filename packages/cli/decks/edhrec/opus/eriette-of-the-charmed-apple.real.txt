@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/3hKAyRTWh-4nq3G-P6ZFng (source https://archidekt.com/decks/24656176)
+# tags Opus, Auras; bracket unset; saved 2026-07-29; 1 tagged of 18884 indexed
+
+Commander
+1 Eriette of the Charmed Apple
+
+Deck
+1 All That Glitters
+1 Angelic Destiny
+1 Darksteel Mutation
+1 Dead Man's Chest
+1 Ethereal Armor
+1 Exquisite Blood
+1 Gift of Immortality
+1 Glistening Oil
+1 Idolized
+1 Kaya's Ghostform
+1 Lord Skitter's Blessing
+1 Mantle of the Ancients
+1 Minion's Return
+1 Redemption Arc
+1 Sage's Reverie
+1 Sanguine Bond
+1 Sigarda's Aid
+1 Sphere of Safety
+1 Spirit Link
+1 Swift Reconfiguration
+1 Tenuous Truce
+1 Timely Ward
+1 Underworld Connections
+1 Vampiric Link
+1 Arcane Signet
+1 Fellwar Stone
+1 Orzhov Signet
+1 Sol Ring
+1 Strionic Resonator
+1 Talisman of Hierarchy
+1 Wayfarer's Bauble
+1 Well of Lost Dreams
+1 Archon of the Wild Rose
+1 Ardenn, Intrepid Archaeologist
+1 Ashiok's Reaper
+1 Codsworth, Handy Helper
+1 Danitha Capashen, Paragon
+1 Enduring Tenacity
+1 General's Enforcer
+1 Hateful Eidolon
+1 Katilda, Dawnhart Martyr
+1 Killian, Ink Duelist
+1 Knight of the White Orchid
+1 Kor Spiritdancer
+1 Light-Paws, Emperor's Voice
+1 Loyal Warhound
+1 Lurrus of the Dream-Den
+1 Mesa Enchantress
+1 Pearl-Ear, Imperial Advisor
+1 Soulless Jailer
+1 Sram, Senior Edificer
+1 Sun Titan
+1 Umbra Mystic
+1 Austere Command
+1 Feed the Swarm
+1 Open the Armory
+1 Resurgent Belief
+1 Retether
+1 Winds of Rath
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Exotic Orchard
+18 Plains
+1 Snowfield Sinkhole
+1 Sunlit Marsh
+9 Swamp
+1 Tainted Field
+1 Temple of Silence
+1 Despark
+1 Generous Gift
+1 Rebuff the Wicked
+1 Stroke of Midnight
+1 Swords to Plowshares

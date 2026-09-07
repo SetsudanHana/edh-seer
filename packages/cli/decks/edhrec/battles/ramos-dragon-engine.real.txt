@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/KK5q5e7ulEyl17gfcgHlNw (source https://archidekt.com/decks/25197461)
+# tags Battles, Guildgates; bracket 2; saved 2026-09-04; 6 tagged of 12881 indexed
+
+Commander
+1 Ramos, Dragon Engine
+
+Deck
+1 Ambush Wolf
+1 Birds of Paradise
+1 Chief Warg's Company
+1 Chief of the Wilds
+1 Etali, Primal Conqueror
+1 Etali, Primal Storm
+1 Faeburrow Elder
+1 Ferocious Pup
+1 Gisa, Glorious Resurrector
+1 Gisa, the Hellraiser
+1 Gluntch, the Bestower
+1 Head of the Hunt
+1 Hollowhenge Overlord
+1 Nighthowl Pursuer
+1 Niv-Mizzet, Guildpact
+1 Ovika, Enigma Goliath
+1 Packsong Pup
+1 Portent Tracker
+1 Rampaging Geoderm
+1 Sarulf, Realm Eater
+1 Vampire Hexmage
+1 Wilderland Scrounger
+1 Arcane Signet
+1 Chromatic Lantern
+1 Sol Ring
+1 Azorius Guildgate
+1 Baldur's Gate
+1 Basilisk Gate
+1 Black Dragon Gate
+1 Boros Guildgate
+1 Citadel Gate
+1 Cliffgate
+1 Command Tower
+1 Dimir Guildgate
+1 Exotic Orchard
+2 Forest
+1 Gateway Plaza
+1 Golgari Guildgate
+1 Gond Gate
+1 Gruul Guildgate
+1 Heap Gate
+1 Island
+1 Izzet Guildgate
+1 Manor Gate
+1 Mountain
+1 Orzhov Guildgate
+1 Plains
+1 Rakdos Guildgate
+1 Reliquary Tower
+1 Sea Gate
+1 Selesnya Guildgate
+1 Simic Guildgate
+2 Swamp
+1 Talon Gates of Madara
+1 The Black Gate
+1 Thran Portal
+1 Begin the Invasion
+1 Boros Charm
+1 Counterspell
+1 Swords to Plowshares
+1 Invasion of Alara
+1 Invasion of Amonkhet
+1 Invasion of Arcavios
+1 Invasion of Azgol
+1 Invasion of Belenon
+1 Invasion of Dominaria
+1 Invasion of Eldraine
+1 Invasion of Ergamon
+1 Invasion of Fiora
+1 Invasion of Gobakhan
+1 Invasion of Ikoria
+1 Invasion of Innistrad
+1 Invasion of Ixalan
+1 Invasion of Kaladesh
+1 Invasion of Kaldheim
+1 Invasion of Kamigawa
+1 Invasion of Karsus
+1 Invasion of Kylem
+1 Invasion of Lorwyn
+1 Invasion of Mercadia
+1 Invasion of Moag
+1 Invasion of Muraganda
+1 Invasion of New Capenna
+1 Invasion of New Phyrexia
+1 Invasion of Pyrulea
+1 Invasion of Ravnica
+1 Invasion of Regatha
+1 Invasion of Segovia
+1 Invasion of Shandalar
+1 Invasion of Tarkir
+1 Invasion of Theros
+1 Invasion of Tolvada
+1 Invasion of Ulgrotha
+1 Invasion of Vryn
+1 Invasion of Xerex
+1 Invasion of Zendikar
+1 Jeskai Ascendancy

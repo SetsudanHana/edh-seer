@@ -1,0 +1,97 @@
+# edhrec average deck: https://edhrec.com/average-decks/child-of-alara/self-destruct
+# theme Self-Destruct (8 decks)
+
+Commander
+1 Child of Alara
+
+Deck
+1 Cauldron of Essence
+1 Darksteel Ingot
+1 Skyclave Relic
+1 Sol Ring
+1 The One Ring
+1 Azorius Guildgate
+1 Bojuka Bog
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Crumbling Necropolis
+1 Evolving Wilds
+1 Flooded Strand
+4 Forest
+1 Godless Shrine
+1 Golgari Guildgate
+1 Grim Backwoods
+1 Gruul Guildgate
+1 High Market
+1 Indatha Triome
+2 Island
+1 Kessig Wolf Run
+1 Ketria Triome
+1 Marsh Flats
+1 Miren, the Moaning Well
+1 Misty Rainforest
+2 Mountain
+1 Myriad Landscape
+1 Orzhov Guildgate
+1 Phyrexian Tower
+4 Plains
+1 Savannah
+1 Simic Guildgate
+1 Steam Vents
+2 Swamp
+1 Taiga
+1 Temple Garden
+1 Terramorphic Expanse
+1 The World Tree
+1 Thespian's Stage
+1 Tundra
+1 Verdant Catacombs
+1 Windswept Heath
+1 Wooded Foothills
+1 Athreos, Shroud-Veiled
+1 Beloved Princess
+1 Bontu the Glorified
+1 Brash Taunter
+1 Darksteel Colossus
+1 Elvish Mystic
+1 Emeritus of Woe
+1 Flubs, the Fool
+1 Hexing Squelcher
+1 Icetill Explorer
+1 Scandalmonger
+1 Snapcaster Mage
+1 Stuffy Doll
+1 Summon: Fenrir
+1 The Wandering Minstrel
+1 Brilliant Wings
+1 Enchanter's Bane
+1 Exploration
+1 Gift of Immortality
+1 Greater Good
+1 Journey to Eternity
+1 Corrupted Conviction
+1 Counterspell
+1 Entish Restoration
+1 Growth Spiral
+1 Louisoix's Sacrifice
+1 Nasty End
+1 Saw It Coming
+1 Shelter
+1 Swan Song
+1 Ultimate Magic: Holy
+1 Village Rites
+1 Karn, Scion of Urza
+1 Blasphemous Act
+1 Chandra's Ignition
+1 Cultivate
+1 Diabolic Tutor
+1 Exsanguinate
+1 Farseek
+1 Flare of Cultivation
+1 Lessons from Life
+1 Open the Gates
+1 Rampant Growth
+1 Sylvan Scrying
+1 Tempt with Discovery
+1 Wrath of God

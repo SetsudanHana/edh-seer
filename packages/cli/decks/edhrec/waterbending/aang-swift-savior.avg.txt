@@ -1,0 +1,84 @@
+# edhrec average deck: https://edhrec.com/average-decks/aang-swift-savior/waterbending
+# theme Waterbending (17 decks)
+
+Commander
+1 Aang, Swift Savior
+
+Deck
+1 Arcane Signet
+1 Azorius Signet
+1 Bender's Waterskin
+1 Glider Staff
+1 Sapphire Medallion
+1 Sol Ring
+1 Waterbending Scroll
+1 Abandoned Air Temple
+1 Agna Qel'a
+1 Command Tower
+1 Deserted Beach
+1 Glacial Fortress
+1 Irrigated Farmland
+12 Island
+1 Mystic Gate
+1 North Pole Gates
+1 Path of Ancestry
+12 Plains
+1 Port Town
+1 Prairie Stream
+1 Skycloud Expanse
+1 Aang, the Last Airbender
+1 Aether Channeler
+1 Appa, Loyal Sky Bison
+1 Appa, Steadfast Guardian
+1 Archaeomancer
+1 Aven Interrupter
+1 Charming Prince
+1 Compassionate Healer
+1 Dour Port-Mage
+1 Earth Kingdom Protectors
+1 Emeritus of Ideation
+1 Glider Kids
+1 Gran-Gran
+1 Invasion Reinforcements
+1 Katara, Bending Prodigy
+1 Katara, Water Tribe's Hope
+1 Momo, Friendly Flier
+1 Momo, Playful Pet
+1 Monk Gyatso
+1 Mulldrifter
+1 North Pole Patrol
+1 Restoration Angel
+1 Skycoach Conductor
+1 Sokka, Lateral Strategist
+1 Soulherder
+1 Suki, Courageous Rescuer
+1 The Unagi of Kyoshi Island
+1 Tui and La, Moon and Ocean
+1 Water Tribe Rallier
+1 Yue, the Moon Spirit
+1 Aang's Iceberg
+1 Airbender Ascension
+1 Mystic Remora
+1 Political Triumph
+1 The Legend of Yangchen
+1 Training Grounds
+1 Waterbender Ascension
+1 Accumulate Wisdom
+1 Airbender's Reversal
+1 Airbending Lesson
+1 Cloudshift
+1 Counterspell
+1 Enter the Avatar State
+1 Ephemerate
+1 Erode
+1 Essence Flux
+1 It'll Quench Ya!
+1 Octopus Form
+1 Path to Exile
+1 Waterbender's Restoration
+1 Avatar's Wrath
+1 Boomerang Basics
+1 Crashing Wave
+1 Daydream
+1 Spirit Water Revival
+1 Waterbending Lesson

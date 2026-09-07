@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/etrata-deadly-fugitive/freerunning
+# theme Freerunning (16 decks)
+
+Commander
+1 Etrata, Deadly Fugitive
+
+Deck
+1 Adrestia
+1 Arcane Signet
+1 Cryptic Coat
+1 Dimir Signet
+1 Hidden Blade
+1 Lightning Greaves
+1 Scroll of Fate
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Dominance
+1 Bojuka Bog
+1 Brotherhood Headquarters
+1 Choked Estuary
+1 Command Tower
+1 Darkwater Catacombs
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Hidden Lair
+9 Island
+1 Path of Ancestry
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Sunken Hollow
+10 Swamp
+1 Tainted Isle
+1 Underground River
+1 Watery Grave
+1 Achilles Davenport
+1 Assassin Initiate
+1 Aven Heartstabber
+1 Basim Ibn Ishaq
+1 Brotherhood Spy
+1 Changeling Outcast
+1 Desmond Miles
+1 Etrata, the Silencer
+1 Evie Frye
+1 Ezio, Blade of Vengeance
+1 Guildsworn Prowler
+1 Hired Poisoner
+1 Hookblade Veteran
+1 Hullcarver
+1 Jacob Frye
+1 Lydia Frye
+1 Mari, the Killing Quill
+1 Massacre Girl, Known Killer
+1 Midnight Assassin
+1 Poison-Blade Mentor
+1 Ramses, Assassin Lord
+1 Ravenloft Adventurer
+1 Roshan, Hidden Magister
+1 Royal Assassin
+1 Ruthless Ripper
+1 Silumgar Assassin
+1 Thieving Amalgam
+1 Unstoppable Slasher
+1 Arcane Adaptation
+1 Cover of Darkness
+1 Double Down
+1 Leyline of Transformation
+1 Primordial Mist
+1 Rooftop Bypass
+1 The Revelations of Ezio
+1 They Came from the Pipes
+1 Training Grounds
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Become Anonymous
+1 Chain Assassination
+1 Counterspell
+1 Fatal Push
+1 Go for the Throat
+1 Memory Lapse
+1 Negate
+1 Swan Song
+1 Back in Town
+1 Eagle Vision
+1 Feed the Swarm
+1 Ghastly Conscription
+1 Kindred Dominance
+1 Raise the Palisade
+1 Restart Sequence

@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/vKTZNNJUyZkVw0iDxDw6Bg (source https://archidekt.com/decks/21548991)
+# tags Enchantress, Summons, Sagas; bracket 3; saved 2026-09-05; 41 tagged of 19121 indexed
+
+Commander
+1 Terra, Magical Adept
+
+Deck
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Dovin's Veto
+1 Overkill
+1 Restoration Magic
+1 Swallowed by Leviathan
+1 Ultimate Magic: Holy
+1 Arcane Sanctum
+1 Brushland
+1 Command Tower
+1 Eden, Seat of the Sanctum
+1 Evolving Wilds
+1 Exotic Orchard
+6 Forest
+1 Idyllic Beachfront
+1 Ishgard, the Holy See
+3 Island
+1 Jungle Shrine
+1 Mossfire Valley
+3 Mountain
+1 Path of Ancestry
+6 Plains
+1 Prairie Stream
+1 Seaside Citadel
+1 Starting Town
+1 Sunlit Marsh
+1 Swamp
+1 Temple of the False God
+1 Underground River
+1 Arcane Signet
+1 Chromatic Lantern
+1 Crystal Fragments
+1 Lightning Greaves
+1 Sol Ring
+1 Summoner's Grimoire
+1 Summoning Materia
+1 Authority of the Consuls
+1 Propaganda
+1 Rhystic Study
+1 Sphere Grid
+1 Summoner's Sending
+1 Together Forever
+1 Birds of Paradise
+1 Garnet, Princess of Alexandria
+1 Jecht, Reluctant Guardian
+1 Jill, Shiva's Dominant
+1 Joshua, Phoenix's Dominant
+1 Kenrith, the Returned King
+1 O'aka, Traveling Merchant
+1 Rikku, Resourceful Guardian
+1 Rydia, Summoner of Mist
+1 Scholar of New Horizons
+1 Summon: Anima
+1 Summon: Bahamut
+1 Summon: Brynhildr
+1 Summon: Choco/Mog
+1 Summon: Esper Ramuh
+1 Summon: Esper Valigarmanda
+1 Summon: Fat Chocobo
+1 Summon: Fenrir
+1 Summon: G.F. Cerberus
+1 Summon: G.F. Ifrit
+1 Summon: Good King Mog XII
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Kujata
+1 Summon: Leviathan
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Primal Odin
+1 Summon: Shiva
+1 Summon: Titan
+1 Summon: Valefor
+1 Summon: Yojimbo
+1 Terra, Herald of Hope
+1 Yuna, Grand Summoner
+1 Yuna, Hope of Spira
+1 Clash of the Eikons
+1 Damning Verdict
+1 Esper Origins
+1 Farewell
+1 Rampant Growth
+1 Rejoin the Fight
+1 Three Visits
+1 Yuna's Decision

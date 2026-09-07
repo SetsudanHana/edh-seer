@@ -6,6 +6,16 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# THE 404 PAGE IS NEVER REUSED. It exists so that a MISSING file 404s like a missing file rather
+# than being answered with the app shell at 200 -- the defect of 2026-09-04, where a browser cached
+# HTML under a JavaScript URL behind the `immutable` rule above. A 404 that is itself cached would
+# reintroduce the same shape one status code over: a path that starts working would keep answering
+# "gone" from a stale entry. `max-age=0, must-revalidate` rather than `no-store`, matching `sw.js`
+# and `index.html` above -- and `cache-headers.test.ts` requires an explicit max-age on every
+# shipped file, which `no-store` alone does not give it.
+/404.html
+  Cache-Control: public, max-age=0, must-revalidate
+
 # THE ONE FILE THAT IS NOT CONTENT-ADDRESSED, and therefore the only one that has to stay fresh:
 # it names the version directory everything else hangs off. A minute of caching keeps a burst of
 # analyses off the origin without letting a corpus rebuild take an hour to reach anyone.

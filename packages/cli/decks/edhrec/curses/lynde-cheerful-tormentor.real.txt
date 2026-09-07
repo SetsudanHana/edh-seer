@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/rrInrNJKXLZJF6yNjPsi2w (source https://archidekt.com/decks/19607243)
+# tags Curses, Clones, Enchantress; bracket 2; saved 2026-09-04; 1073 tagged of 7489 indexed
+
+Commander
+1 Lynde, Cheerful Tormentor
+
+Deck
+1 Accursed Witch
+1 Ashiok's Reaper
+1 Bitterheart Witch
+1 Blightcaster
+1 Callaphe, Beloved of the Sea
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Dreamshaper Shaman
+1 Entity Tracker
+1 Fear of Sleep Paralysis
+1 Fog Bank
+1 Forgeborn Oreads
+1 God-Eternal Bontu
+1 Grim Guardian
+1 Kazuul, Tyrant of the Cliffs
+1 Nightscape Familiar
+1 Obeka, Splitter of Seconds
+1 Protean Thaumaturge
+1 Sphinx of the Second Sun
+1 Tavern Scoundrel
+1 Third Path Iconoclast
+1 Arcane Signet
+1 Crystal Chimes
+1 Sol Ring
+1 Betrayer's Bargain
+1 Chaos Warp
+1 Get Out
+1 Perilous Research
+1 Spider-Sense
+1 Terminate
+1 Blazemire Verge
+1 Bloodfell Caves
+1 Cascade Bluffs
+1 Command Tower
+1 Crumbling Necropolis
+1 Gloomlake Verge
+8 Island
+8 Mountain
+1 Murky Sewer
+1 Seething Landscape
+1 Sulfur Falls
+9 Swamp
+1 Valgavoth's Lair
+1 Curse of Chaos
+1 Curse of Death's Hold
+1 Curse of Disturbance
+1 Curse of Echoes
+1 Curse of Fool's Wisdom
+1 Curse of Hospitality
+1 Curse of Inertia
+1 Curse of Leeches
+1 Curse of Misfortunes
+1 Curse of Obsession
+1 Curse of Opulence
+1 Curse of Shaken Faith
+1 Curse of Shallow Graves
+1 Curse of Stalked Prey
+1 Curse of Surveillance
+1 Curse of Thirst
+1 Curse of Unbinding
+1 Curse of Verbosity
+1 Curse of the Bloody Tome
+1 Curse of the Nightly Hunt
+1 Curse of the Restless Dead
+1 Extravagant Replication
+1 Imprisoned in the Moon
+1 Into the Pit
+1 Propaganda
+1 Shadow of the Second Sun
+1 Torment of Scarabs
+1 Trespasser's Curse
+1 Curse of the Swine
+1 Diabolic Tutor
+1 Extinguish All Hope
+1 Feed the Swarm
+1 Replication Technique
+1 Geyadrone Dihada

@@ -307,6 +307,19 @@ describe("fullscreen toggle", () => {
     expect(requestFullscreen.mock.instances[0]).toBe(getByTestId("graph-fullscreen-shell"));
   });
 
+  /** THE STATE CONTROLS RIDE INSIDE THE FULLSCREEN SHELL (W18c, owner finding 2): the backdrop
+   *  hides the report header, and the graph is where the dashed edges are. */
+  test("the state controls render inside the shell while fullscreen is on, and not otherwise", () => {
+    Element.prototype.requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    const { getByTestId, queryByText } = render(
+      <GraphView graph={SAMPLE.graph} report={SAMPLE.report} stateControls={<div>state controls here</div>} />,
+    );
+    expect(queryByText("state controls here")).toBeNull();
+    Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => getByTestId("graph-fullscreen-shell") });
+    act(() => { document.dispatchEvent(new Event("fullscreenchange")); });
+    expect(queryByText("state controls here")).not.toBeNull();
+  });
+
   test("the fullscreen button is absent when the platform does not support it", () => {
     // @ts-expect-error -- deliberately removing the API to test the capability check
     delete Element.prototype.requestFullscreen;
@@ -2705,4 +2718,28 @@ describe("bare chrome", () => {
     // And the inspector did NOT open over the board -- that is the whole point of the callback.
     expect(screen.queryByText(/Synergy edges|Feeds/)).toBeNull();
   });
+});
+
+/** BELOW `sm` THE CHROME FOLDS BEHIND ONE BUTTON (owner's phone, 2026-09-06: the board was a small
+ *  square under ~55% of chrome, fullscreen included). Narrow is `useIsNarrow`, so `matchMedia` is
+ *  stubbed to answer the width query; at desktop width nothing here renders and the facet row keeps
+ *  its own fullscreen button, which every test above relies on. */
+test("the filters button folds the board's chrome on a phone", async () => {
+  vi.stubGlobal("matchMedia", (q: string) => ({
+    matches: q.includes("max-width"), media: q, onchange: null,
+    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    dispatchEvent: () => false,
+  }));
+  try {
+    const { getByRole, container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
+    const chrome = container.querySelector(`#${CSS.escape(getByRole("button", { name: /^filters$/i }).getAttribute("aria-controls")!)}`)!;
+    expect(chrome.className).toContain("hidden");
+    const toggle = getByRole("button", { name: /^filters$/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(chrome.className).not.toContain("hidden");
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

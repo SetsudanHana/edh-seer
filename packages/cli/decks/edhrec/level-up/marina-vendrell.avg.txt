@@ -1,0 +1,101 @@
+# edhrec average deck: https://edhrec.com/average-decks/marina-vendrell/level-up
+# theme Level Up (1 decks)
+
+Commander
+1 Marina Vendrell
+
+Deck
+1 Arcane Signet
+1 Sol Ring
+1 Bleeding Woods
+1 Blighted Woodland
+1 Bloodfell Caves
+1 Clifftop Retreat
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Dromar's Cavern
+1 Etched Cornfield
+1 Evolving Wilds
+2 Forest
+1 Glacial Fortress
+1 Golgari Guildgate
+2 Island
+1 Jungle Hollow
+1 Krosan Verge
+1 Lakeside Shack
+1 Maestros Theater
+2 Mountain
+1 Murky Sewer
+1 Mystic Monastery
+1 Nomad Outpost
+1 Peculiar Lighthouse
+2 Plains
+1 Restless Anchorage
+1 Rockfall Vale
+1 Scoured Barrens
+1 Silverquill Campus
+1 Stormcarved Coast
+2 Swamp
+1 Treva's Ruins
+1 Vibrant Cityscape
+1 Waterfront District
+1 Wind-Scarred Crag
+1 Ziatora's Proving Ground
+1 Beastbreaker of Bala Ged
+1 Bloom Hulk
+1 Brimstone Mage
+1 Caravan Escort
+1 Champion's Drake
+1 Coralhelm Commander
+1 Echo Mage
+1 Enclave Cryptologist
+1 Guul Draz Assassin
+1 Hada Spy Patrol
+1 Halimar Wavewatch
+1 Hedron-Field Purists
+1 Ikiral Outrider
+1 Joraga Treespeaker
+1 Kabira Vindicator
+1 Kargan Dragonlord
+1 Kazandu Tuskcaller
+1 Knight of Cliffhaven
+1 Lord of Shatterskull Pass
+1 Nirkana Cutthroat
+1 Null Champion
+1 Pollenbright Druid
+1 Skywatcher Adept
+1 Student of Warfare
+1 Transcendent Master
+1 Urban Daggertooth
+1 Venerated Teacher
+1 Zulaport Enforcer
+1 Bard Class
+1 Bottomless Pool // Locker Room
+1 Cleric Class
+1 Derelict Attic // Widow's Walk
+1 Glassworks // Shattered Yard
+1 Gossip's Talent
+1 Grand Entryway // Elegant Rotunda
+1 Meat Locker // Drowned Diner
+1 Moldering Gym // Weight Room
+1 Monk Class
+1 Narcolepsy
+1 Painter's Studio // Defaced Gallery
+1 Restricted Office // Lecture Hall
+1 Roaring Furnace // Steaming Sauna
+1 Rogue Class
+1 Surgical Suite // Hospital Room
+1 Time of Heroes
+1 Treasure Trove
+1 Warlock Class
+1 Aura Finesse
+1 Deduce
+1 Deprive
+1 Embrace the Paradox
+1 Steady Progress
+1 Unbounded Potential
+1 Whisper of the Dross
+1 Spread the Sickness
+1 Surreal Memoir
+1 Thirsting Roots
+1 Wanderer's Strike

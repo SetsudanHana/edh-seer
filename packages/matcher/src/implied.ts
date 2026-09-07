@@ -136,6 +136,10 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
       push("attacks");
       push("combat-damage");
     }
+    // A Room can be fully unlocked (CR 717.4): both doors paid for. It is the only thing that can,
+    // so the eerie half -- "whenever you fully unlock a Room" -- is supplied by every Room in the
+    // deck and by nothing else. 28 corpus Rooms, 24 slots across the 71 decks.
+    if (face.subtypes.some((s) => s.toLowerCase() === "room")) push("unlock");
   }
   // Printed keywords are supply too, and were a dead channel until 2026-08-14. Appended once for the
   // whole card rather than per face: a keyword is printed on the card, not on a face.
@@ -284,15 +288,25 @@ const KEYWORD_TRIGGERS: Record<string, { verbs: GameEvent["verb"][]; subject: st
   extort: { verbs: ["cast"], subject: "a spell", kind: "drain" },
   // "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)"
   prowess: { verbs: ["cast"], subject: "a noncreature spell", kind: "pump" },
+  // "If you have no speed, it starts at 1. It increases once on each of your turns when an opponent
+  // loses life. Max speed is 4." (CR 702.179). The whole mechanic hangs off an opponent losing life,
+  // so that is the trigger, and every speed payoff is fed by whatever makes it happen. 40
+  // commander-legal cards print it; all derived the reminder as `none` (roadmap W9, 2026-09-05).
+  // CEILING: "once on each of your turns" and the cap of four are magnitudes the engine does not
+  // model; the relation is the same set of cards either way. And ONLY A STATED LIFE LOSS FEEDS IT:
+  // the engine has no bridge from damage to life loss, so a burn spell or an attacker does not
+  // count here though it does at the table. That bridge is its own roadmap line.
+  "start your engines!": { verbs: ["lose-life"], subject: "an opponent", kind: "speed" },
 };
 
 /** The triggered abilities a card's printed keywords give it, in the shape `directedReasons` already
  *  reads. Not merged into `CardTags.abilities`: those are DERIVED and stored, and this is a matcher
  *  fact about a printed characteristic — the same split `keywordEvents` observes.
  *
- *  CEILING, stated: only edge formation sees these. Theme, archetype and mechanism detection read
- *  `tags.abilities` directly, so a prowess creature still does not count toward a spellslinger theme.
- *  `keywordEvents` has the identical ceiling and has since it shipped. */
+ *  CEILING, stated: edge formation and the card pages (`partners-core.abilitiesOf`, 2026-09-05)
+ *  see these. Theme, archetype and mechanism detection read `tags.abilities` directly, so a prowess
+ *  creature still does not count toward a spellslinger theme. `keywordEvents` has the identical
+ *  ceiling and has since it shipped. */
 export function keywordAbilities(chars: Characteristics): Ability[] {
   const out: Ability[] = [];
   for (const raw of chars.keywords ?? []) {
@@ -302,7 +316,11 @@ export function keywordAbilities(chars: Characteristics): Ability[] {
     out.push({
       kind: "triggered",
       trigger: { verbs: spec.verbs, subject: parseSubject(spec.subject) },
-      effect: { kind: spec.kind as Ability["effect"]["kind"] },
+      // A PLAYER MARKER NAMES THE PLAYER. Speed is yours, not the card's (CR 702.179), the way a
+      // lifegain's subject is you; the sentence and the page read the recipient off this.
+      effect: spec.kind === "speed"
+        ? { kind: "speed", subject: { control: "you", token: null } }
+        : { kind: spec.kind as Ability["effect"]["kind"] },
     });
   }
   return out;
@@ -388,7 +406,7 @@ export function sagaEvents(chars: Characteristics): GameEvent[] {
 }
 
 /** Graveyard-fill events implied by a producer's (already-normalized) emits: mill/discard put an
- *  untyped card into a graveyard; a nontoken leaving the battlefield (a normalized `dies`) also
+ *  untyped card into a graveyard; a nontoken leaving the battlefield (a `dies`) also
  *  enters the graveyard carrying its type. Tokens cease to exist, so they add no graveyard card. */
 export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
   const out: GameEvent[] = [];
@@ -407,11 +425,36 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
         control: e.subject.control, token: null, zone: "graveyard",
         ...(e.subject.self === true ? { self: true } : {}),
       } });
-    } else if (e.verb === "leaves" && e.subject.zone === "battlefield" && e.subject.token !== true) {
+    } else if (e.verb === "dies" && e.subject.token !== true) {
+      // A DEATH fills the graveyard with a typed card; a `leaves` does not -- a flicker, a bounce
+      // or an exile moved the permanent anywhere but a graveyard (CR 700.4), and until 2026-09-05
+      // the two were one verb here only because `normalizeZoneEvent` spelled every death `leaves`.
       out.push({ verb: "enters", subject: { ...e.subject, zone: "graveyard" } });
     }
   }
   return out;
+}
+
+/** Stamp the card's OWN printed types onto a `leaves` emit that is the card itself.
+ *
+ *  "Exile this creature, then return it" (Lamplight Phoenix, Aetherling) records the object as a
+ *  bare self, so the emit arrives untyped -- and an untyped producer subject is a wildcard that
+ *  satisfies every consumer filter, which would let an enchantment's self-exile "supply" a
+ *  creature-leaves payoff. The card is the thing leaving, so its type line is a known fact about the
+ *  event. Union of faces, not `zoneTypes`: the permanent left the BATTLEFIELD, where a multi-face
+ *  card is whichever face was up. Only an untyped self emit is touched. */
+export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): GameEvent[] {
+  return events.map((e) => {
+    if (e.verb !== "leaves" || e.subject.self !== true) return e;
+    if (e.subject.type !== undefined || e.subject.subtype !== undefined) return e;
+    const types = chars.types.map((t) => t.toLowerCase());
+    const subtypes = chars.subtypes.map((t) => t.toLowerCase());
+    return { ...e, subject: {
+      ...e.subject,
+      ...(types.length ? { type: types } : {}),
+      ...(subtypes.length ? { subtype: subtypes } : {}),
+    } };
+  });
 }
 
 /** Stamp the card's OWN printed types onto a graveyard fill that is the card itself.

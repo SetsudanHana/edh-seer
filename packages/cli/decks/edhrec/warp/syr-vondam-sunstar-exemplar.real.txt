@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/iMGT0kEClQDYmzNJ8IUxwg (source https://archidekt.com/decks/25065713)
+# tags Warp, Blink, Lifegain, Aristocrats; bracket 2; saved 2026-09-01; 14 tagged of 5015 indexed
+
+Commander
+1 Syr Vondam, Sunstar Exemplar
+
+Deck
+1 Adagia, Windswept Bastion
+1 Bleachbone Verge
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Concealed Courtyard
+1 Fetid Heath
+1 Forum of Amity
+1 Isolated Chapel
+1 Neglected Manor
+1 Orzhov Basilica
+9 Plains
+1 Scoured Barrens
+1 Shambling Vent
+1 Strip Mine
+1 Susur Secundi, Void Altar
+12 Swamp
+1 Temple of Silence
+1 Adeline, Resplendent Cathar
+1 Ainok Strike Leader
+1 All-Fates Stalker
+1 Anticausal Vestige
+1 Bloodghast
+1 Carrion Feeder
+1 Cat Collector
+1 Eirdu, Carrier of Dawn
+1 Elegy Acolyte
+1 Embalmed Ascendant
+1 Emptiness
+1 Enduring Innocence
+1 Enduring Tenacity
+1 Fleshbag Marauder
+1 Gravecrawler
+1 Haliya, Guided by Light
+1 Honored Knight-Captain
+1 Lake-town Lookout
+1 Lotho, Corrupt Shirriff
+1 Midnight Reaper
+1 Moseo, Vein's New Dean
+1 Nesting Bot
+1 Ophiomancer
+1 Perigee Beckoner
+1 Rayblade Trooper
+1 Scheming Silvertongue
+1 Solemn Simulacrum
+1 Starfield Shepherd
+1 Sun Titan
+1 Susurian Voidborn
+1 The Queen of Dale
+1 The Speed Demon
+1 Timeline Culler
+1 Umbral Collar Zealot
+1 Wizened Mentor
+1 Zahur, Glory's Past
+1 Zulaport Cutthroat
+1 Arcane Signet
+1 Conjurer's Closet
+1 Hero's Blade
+1 Leyline Axe
+1 Orzhov Signet
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Cloudshift
+1 Corrupted Conviction
+1 Deadly Dispute
+1 Ephemerate
+1 Fake Your Own Death
+1 Not Dead After All
+1 Reprieve
+1 Reverent Howl
+1 Swords to Plowshares
+1 Village Rites
+1 Damn
+1 Daydream
+1 Fix What's Broken
+1 Morningtide's Light
+1 Scrounge for Eternity
+1 Zero Point Ballad
+1 Into the Pit
+1 Momentum Breaker

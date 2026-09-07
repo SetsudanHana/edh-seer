@@ -1,0 +1,76 @@
+# edhrec deck https://edhrec.com/deckpreview/wXHsnT0LafOorN3nDpe_DQ (source https://archidekt.com/decks/22558711)
+# tags Theft, Tap / Untap, Color Hack, Stun; bracket 3; saved 2026-09-04; 27 tagged of 908 indexed
+
+Commander
+1 Blind Seer
+
+Deck
+1 Aqueous Form
+1 Chamber of Manipulation
+1 Curiosity
+1 Mystic Remora
+1 Nerd Rage
+1 Proft's Eidetic Memory
+1 Psychic Allergy
+1 Shifting Sky
+1 Teferi's Ageless Insight
+1 Telepathy
+1 Unstoppable Plan
+1 Verity Circle
+1 Wizard Class
+1 Arcane Signet
+1 Coldsteel Heart
+1 Distorting Lens
+1 Glaring Spotlight
+1 Howling Mine
+1 Library of Leng
+1 Neurok Stealthsuit
+1 Sol Ring
+1 Spellbook
+1 Teferi's Puzzle Box
+1 Thought Vessel
+1 Archivist
+1 Chameleon Spirit
+1 Chasm Skulker
+1 Consecrated Sphinx
+1 Fylamarid
+1 Glasspool Mimic
+1 Harmonized Trio
+1 Jin-Gitaxias
+1 Jushi Apprentice
+1 Metathran Transport
+1 Mockingbird
+1 Psychosis Crawler
+1 Puppeteer
+1 Thassa, God of the Sea
+1 Triskaidekaphile
+1 Willbreaker
+1 Blue Sun's Zenith
+1 Brainstorm
+1 Counterspell
+1 Drown in Dreams
+1 High Tide
+1 Long River's Pull
+1 Long-Term Plans
+1 Negate
+1 Peek
+1 Predict
+1 Riptide
+1 Sway of Illusion
+1 Thoughtlace
+1 Three Steps Ahead
+1 Tolarian Winds
+1 Borrowing 100,000 Arrows
+1 Curse of the Swine
+1 Fabricate
+1 Mitotic Manipulation
+1 Retraced Image
+1 Rite of Replication
+1 Crystal Vein
+31 Island
+1 Lonely Sandbar
+1 Mistrise Village
+1 Moonring Island
+1 Reliquary Tower
+1 Saprazzan Skerry
+1 Jace, the Mind Sculptor

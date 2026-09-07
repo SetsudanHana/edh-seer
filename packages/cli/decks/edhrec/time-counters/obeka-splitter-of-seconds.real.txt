@@ -1,0 +1,95 @@
+# edhrec deck https://edhrec.com/deckpreview/4Iui7Sc7SbENLbUZ-GRSZg (source https://archidekt.com/decks/25065605)
+# tags Suspend, Dungeon, Time Counters, Extra Upkeeps; bracket 3; saved 2026-09-05; 49 tagged of 17646 indexed
+
+Commander
+1 Obeka, Splitter of Seconds
+
+Deck
+1 Aarakocra Sneak
+1 Acererak the Archlich
+1 Alexios, Deimos of Kosmos
+1 Bloodboil Sorcerer
+1 Caves of Chaos Adventurer
+1 Chronozoa
+1 Creeping Bloodsucker
+1 Displacer Beast
+1 Dragonmaster Outcast
+1 Eccentric Apprentice
+1 Feywild Caretaker
+1 Herald of Secret Streams
+1 Imoen, Mystic Trickster
+1 Jhoira of the Ghitu
+1 Magmatic Force
+1 Passageway Seer
+1 Quakebringer
+1 Ravenloft Adventurer
+1 Rilsa Rael, Kingpin
+1 Safana, Calimport Cutthroat
+1 Star Whale
+1 Stirring Bard
+1 Thassa, God of the Sea
+1 The Tenth Doctor
+1 Tomb of Horrors Adventurer
+1 Underdark Explorer
+1 Vicious Battlerager
+1 Agent of the Shadow Thieves
+1 As Foretold
+1 Dungeon Delver
+1 Extravagant Replication
+1 Fly
+1 Loot Dispute
+1 Omniscience
+1 Sword Coast Sailor
+1 An Offer You Can't Refuse
+1 Negate
+1 Ripples of Potential
+1 Slip Out the Back
+1 Stubborn Denial
+1 Swan Song
+1 Arcane Signet
+1 Dimir Signet
+1 Dungeoneer's Pack
+1 Fellwar Stone
+1 Izzet Signet
+1 Rakdos Signet
+1 Replicating Ring
+1 Ring of Evos Isle
+1 Ring of Valkas
+1 Ring of Xathrid
+1 Sarevok's Tome
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Trailblazer's Torch
+1 Cascade Bluffs
+1 Command Tower
+1 Crumbling Necropolis
+1 Darkwater Catacombs
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fabled Passage
+1 Ferrous Lake
+1 Haunted Ridge
+6 Island
+1 Maestros Theater
+4 Mountain
+1 Myriad Landscape
+1 Path of Ancestry
+1 Rogue's Passage
+1 Scorched Geyser
+1 Shadowblood Ridge
+1 Shipwreck Marsh
+1 Shivan Reef
+1 Smoldering Marsh
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sulfurous Springs
+1 Sunken Hollow
+4 Swamp
+1 Underground River
+1 Fates' Reversal
+1 Festering March
+1 From the Catacombs
+1 Rousing Refrain

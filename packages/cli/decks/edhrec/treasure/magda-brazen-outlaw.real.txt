@@ -1,0 +1,67 @@
+# edhrec deck https://edhrec.com/deckpreview/BJRW1mixYNocyQQEl2yU8A (source https://archidekt.com/decks/25508121)
+# tags Flying, Burn, Treasure, Dragons, Legends; bracket 2; saved 2026-09-05; 2117 tagged of 17768 indexed
+
+Commander
+1 Magda, Brazen Outlaw
+
+Deck
+1 Aether Sting
+1 Alchemist's Talent
+1 Berserkers' Onslaught
+1 City on Fire
+1 Dictate of the Twin Gods
+1 Dracogenesis
+1 Dragon Cultist
+1 Dragon Tempest
+1 Enchanter's Bane
+1 Fiery Emancipation
+1 Leyline of Combustion
+1 Leyline of Punishment
+1 Makeshift Munitions
+1 Maximum Carnage
+1 Possibility Storm
+1 Rage Reflection
+1 Rite of the Dragoncaller
+1 Vance's Blasting Cannons
+1 Akoum Hellkite
+1 Atsushi, the Blazing Sky
+1 Backdraft Hellkite
+1 Balefire Dragon
+1 Blast-Furnace Hellkite
+1 Blazing Firesinger
+1 Dragonmaster Outcast
+1 Drakuseth, Maw of Flames
+1 Electro, Assaulting Battery
+1 Fang, Roku's Companion
+1 Furnace Hellkite
+1 Furyborn Hellkite
+1 Ganax, Astral Hunter
+1 Goldlust Triad
+1 Hedron Detonator
+1 Hellkite Igniter
+1 Hellkite Tyrant
+1 Inferno of the Star Mounts
+1 Lathliss, Dragon Queen
+1 Magda, the Hoardmaster
+1 Moraug, Fury of Akoum
+1 Neheb, the Eternal
+1 Orthion, Hero of Lavabrink
+1 Overlord of the Boilerbilges
+1 Realm-Scorcher Hellkite
+1 Rubble Rouser
+7 Seven Dwarves
+1 Storm-Kiln Artist
+1 Thundermaw Hellkite
+1 Torbran, Thane of Red Fell
+1 Twinflame Tyrant
+1 Utvara Hellkite
+1 Banefire
+1 Blasphemous Act
+1 Dragonstorm
+1 Hell to Pay
+1 Brass's Tunnel-Grinder
+1 Dowsing Device
+1 Chandra, Spark Hunter
+1 Sarkhan, Dragonsoul
+1 Kazuul's Fury
+34 Mountain

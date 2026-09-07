@@ -1,0 +1,87 @@
+# edhrec deck https://edhrec.com/deckpreview/D0wJwVazqhYD68pP-TbnRw (source https://archidekt.com/decks/11755109)
+# tags Clones, Spellslinger, Bobbleheads; bracket 2; saved 2026-09-03; 14 tagged of 11089 indexed
+
+Commander
+1 Orvar, the All-Form
+
+Deck
+1 Agent of Treachery
+1 Archmage Emeritus
+1 Archmage of Runes
+1 Burnished Hart
+1 Mulldrifter
+1 Ruin Crab
+1 Solemn Simulacrum
+1 Trophy Mage
+1 Voracious Bibliophile
+1 Agility Bobblehead
+1 Charisma Bobblehead
+1 Endurance Bobblehead
+1 Expedition Map
+1 Idol of Oblivion
+1 Intelligence Bobblehead
+1 Isochron Scepter
+1 Luck Bobblehead
+1 Perception Bobblehead
+1 Sapphire Medallion
+1 Sky Diamond
+1 Sol Ring
+1 Strength Bobblehead
+1 Wayfarer's Bauble
+1 Archway of Innovation
+1 Buried Ruin
+1 Cephalid Coliseum
+1 Cloudpost
+1 Glimmerpost
+1 Ipnu Rivulet
+20 Island
+1 Lonely Sandbar
+1 Myriad Landscape
+1 Reliquary Tower
+1 Scene of the Crime
+1 Seat of the Synod
+1 Temple of the False God
+1 Trenchpost
+1 Urza's Cave
+1 War Room
+1 Argent Mutation
+1 Dig Through Time
+1 Dream's Grip
+1 Enervate
+1 Geistwave
+1 Ghostly Flicker
+1 Gigadrowse
+1 Jolt
+1 Mind Games
+1 Moonlace
+1 Planar Incision
+1 Pongify
+1 Prismatic Lace
+1 Rapid Hybridization
+1 Reality Shift
+1 Resculpt
+1 Teferi's Time Twist
+1 Thermal Flux
+1 Thirst for Knowledge
+1 Three Steps Ahead
+1 Toils of Night and Day
+1 Twiddle
+1 Twitch
+1 Whir of Invention
+1 Case of the Ransacked Lab
+1 Eaten by Piranhas
+1 Frogify
+1 Imprisoned in the Moon
+1 Psychic Corrosion
+1 Vesuvan Duplimancy
+1 Vow of Flight
+1 Witness Protection
+1 Energy Tap
+1 Hidden Strings
+1 Mirage Mockery
+1 Muse Vortex
+1 One with the Machine
+1 Replication Technique
+1 Reshape
+1 Stolen Identity
+1 Treasure Cruise

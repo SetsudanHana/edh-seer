@@ -1,0 +1,102 @@
+# edhrec deck https://edhrec.com/deckpreview/4d6q7ZKTJOlF9S5HO_gy4A (source https://archidekt.com/decks/25858255)
+# tags Guildgates, Shrines; bracket 2; saved 2026-08-31; 47 tagged of 18770 indexed
+
+Commander
+1 Sisay, Weatherlight Captain
+
+Deck
+1 Aang's Journey
+1 Circuitous Route
+1 Cultivate
+1 Explore
+1 Open the Gates
+1 Rampant Growth
+1 Agatha's Soul Cauldron
+1 Arcane Signet
+1 Chromatic Lantern
+1 Relic of Legends
+1 Sol Ring
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Refute
+1 Archon of Sun's Grace
+1 Auramancer
+1 Balemurk Leech
+1 Doomwake Giant
+1 Eidolon of Blossoms
+1 Faeburrow Elder
+1 Ghostly Dancers
+1 Go-Shintai of Ancient Wars
+1 Go-Shintai of Boundless Vigor
+1 Go-Shintai of Hidden Cruelty
+1 Go-Shintai of Life's Origin
+1 Go-Shintai of Lost Wisdom
+1 Go-Shintai of Shared Purpose
+1 Gold-Forged Thopteryx
+1 Great Divide Guide
+1 Guru Pathik
+1 Hei Bai, Forest Guardian
+1 Herald of the Pantheon
+1 Jegantha, the Wellspring
+1 Lotus Cobra
+1 Mesa Enchantress
+1 Moon-Blessed Cleric
+1 Obeka, Splitter of Seconds
+1 Sanctum Weaver
+1 Starfield Mystic
+1 Starnheim Courser
+1 Sythis, Harvest's Hand
+1 Azorius Guildgate
+1 Baldur's Gate
+1 Basilisk Gate
+1 Black Dragon Gate
+1 Boros Guildgate
+1 Citadel Gate
+1 Cliffgate
+1 Command Tower
+1 Dimir Guildgate
+1 Exotic Orchard
+3 Forest
+1 Golgari Guildgate
+1 Gond Gate
+1 Gruul Guildgate
+1 Hall of Heliod's Generosity
+1 Island
+1 Izzet Guildgate
+1 Manor Gate
+1 Maze's End
+1 Mountain
+1 Orzhov Guildgate
+1 Path of Ancestry
+3 Plains
+1 Rakdos Guildgate
+1 Reliquary Tower
+1 Sea Gate
+1 Selesnya Guildgate
+1 Simic Guildgate
+1 Swamp
+1 White Lotus Hideout
+1 Calix, Destiny's Hand
+1 Tyvar, Jubilant Brawler
+1 Crescent Island Temple
+1 Honden of Cleansing Fire
+1 Honden of Infinite Rage
+1 Honden of Life's Web
+1 Honden of Night's Reach
+1 Honden of Seeing Winds
+1 Kyoshi Island Plaza
+1 Northern Air Temple
+1 Prismatic Omen
+1 Sanctum of All
+1 Sanctum of Calm Waters
+1 Sanctum of Fruitful Harvest
+1 Sanctum of Shattered Heights
+1 Sanctum of Stone Fangs
+1 Sanctum of Tranquil Light
+1 Sigil of the Empty Throne
+1 Southern Air Temple
+1 Sphere of Safety
+1 Sterling Grove
+1 The Spirit Oasis
+1 Timely Ward
+1 Whirlwind of Thought

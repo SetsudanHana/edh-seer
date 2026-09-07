@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/shelob-child-of-ungoliant/deathtouch
+# theme Deathtouch (297 decks)
+
+Commander
+1 Shelob, Child of Ungoliant
+
+Deck
+1 Arcane Signet
+1 Golgari Signet
+1 Herald's Horn
+1 Patchwork Banner
+1 Sol Ring
+1 Swiftfoot Boots
+1 Thornbite Staff
+1 Viridian Longbow
+1 Bojuka Bog
+1 Command Tower
+1 Deathcap Glade
+13 Forest
+1 Golgari Rot Farm
+1 Jungle Hollow
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Path of Ancestry
+9 Swamp
+1 Swarmyard
+1 Tainted Wood
+1 Temple of Malady
+1 Twilight Mire
+1 Woodland Cemetery
+1 Arasta of the Endless Web
+1 Attercop
+1 Brood Weaver
+1 Chainweb Aracnir
+1 Deadly Recluse
+1 Doom Weaver
+1 Drider
+1 Fynn, the Fangbearer
+1 Hatchery Spider
+1 Ishkanah, Grafwidow
+1 Llanowar Greenwidow
+1 Mirkwood Spider
+1 Nyx Weaver
+1 Obelisk Spider
+1 Penumbra Spider
+1 Peregrin Took
+1 Realmwalker
+1 Rotwidow Pack
+1 Ruins Recluse
+1 Shelob, Dread Weaver
+1 Silklash Spider
+1 Skyfisher Spider
+1 Spinner of Souls
+1 Sporeweb Weaver
+1 Sweet-Gum Recluse
+1 Twin-Silk Spider
+1 Twitching Doll
+1 Watcher in the Web
+1 Arachnus Web
+1 Curse of Clinging Webs
+1 Deathreap Ritual
+1 Night of the Sweets' Revenge
+1 Parallel Lives
+1 Phyrexian Arena
+1 Arachnogenesis
+1 Assassin's Trophy
+1 Beast Within
+1 Bite Down
+1 Cosmic Hunger
+1 Golgari Charm
+1 Heroic Intervention
+1 Prizefight
+1 Putrefy
+1 Supper for Spiders
+1 Lolth, Spider Queen
+1 Bushwhack
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Roar of Challenge
+1 Spider Food
+1 Spider Spawning
+1 Swarmyard Massacre

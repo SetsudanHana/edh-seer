@@ -1,0 +1,106 @@
+# edhrec deck https://edhrec.com/deckpreview/rTnt2xD5cPThPv1fmcMCng (source https://moxfield.com/decks/UZZYYFETbUW3UK2OgKzoaw)
+# tags Control, Discard, Midrange, Reanimator; bracket 3; saved 2026-09-05; 455 tagged of 30432 indexed
+
+Commander
+1 Kefka, Court Mage
+
+Deck
+1 Abhorrent Oculus
+1 Anger
+1 Archon of Cruelty
+1 Bone Miser
+1 Dragon's Rage Channeler
+1 Faerie Mastermind
+1 Harmonic Prodigy
+1 Hullbreaker Horror
+1 Jin-Gitaxias, Progress Tyrant
+1 Kroxa, Titan of Death's Hunger
+1 Ledger Shredder
+1 Massacre Wurm
+1 Orcish Bowmasters
+1 Psychic Frog
+1 Sheoldred, the Apocalypse
+1 Snapcaster Mage
+1 Tergrid, God of Fright
+1 Tinybones, Bauble Burglar
+1 Toxrill, the Corrosive
+1 Twilight Diviner
+1 Valgavoth, Terror Eater
+1 Afterlife from the Loam
+1 Blasphemous Act
+1 Breach the Multiverse
+1 Buried Alive
+1 Faithless Looting
+1 Persist
+1 Reanimate
+1 Toxic Deluge
+1 Vandalblast
+1 Victimize
+1 Wheel of Fortune
+1 Windfall
+1 An Offer You Can't Refuse
+1 Bitter Triumph
+1 Chaos Warp
+1 Counterspell
+1 Cyclonic Rift
+1 Dark Ritual
+1 Deadly Rollick
+1 Deflecting Swat
+1 Drown in the Loch
+1 Entomb
+1 Frantic Search
+1 Malakir Rebirth
+1 Mana Drain
+1 Swan Song
+1 Animate Dead
+1 Black Market Connections
+1 Bloodchief Ascension
+1 Dance of the Dead
+1 Fable of the Mirror-Breaker
+1 Necromancy
+1 Waste Not
+1 Arcane Signet
+1 Dimir Signet
+1 Fellwar Stone
+1 Lightning Greaves
+1 Monument to Endurance
+1 Sol Ring
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 The Soul Stone
+1 Arid Mesa
+1 Blazemire Verge
+1 Blood Crypt
+1 Bloodstained Mire
+1 Bojuka Bog
+1 Cascade Bluffs
+1 Cavern of Souls
+1 Command Tower
+1 Flooded Strand
+1 Geier Reach Sanitarium
+1 Gemstone Caverns
+1 Gloomlake Verge
+1 Island
+1 Luxury Suite
+1 Marsh Flats
+1 Morphic Pool
+1 Mountain
+1 Otawara, Soaring City
+1 Polluted Delta
+1 Raucous Theater
+1 Riverpyre Verge
+1 Scalding Tarn
+1 Seat of the Synod
+1 Steam Vents
+1 Sunken Ruins
+1 Swamp
+1 Takenuma, Abandoned Mire
+1 Thundering Falls
+1 Training Center
+1 Undercity Sewers
+1 Urborg, Tomb of Yawgmoth
+1 Vault of Whispers
+1 Verdant Catacombs
+1 Watery Grave
+1 Xander's Lounge

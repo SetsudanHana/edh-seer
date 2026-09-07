@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/yusri-fortunes-flame/chaos
+# theme Chaos (737 decks)
+
+Commander
+1 Yusri, Fortune's Flame
+
+Deck
+1 Arcane Signet
+1 Basilisk Collar
+1 Boompile
+1 Izzet Signet
+1 Krark's Thumb
+1 Lightning Greaves
+1 Shadowspear
+1 Sol Ring
+1 Strionic Resonator
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 Cascade Bluffs
+1 Command Tower
+1 Frostboil Snarl
+10 Island
+1 Izzet Boilerworks
+11 Mountain
+1 Reliquary Tower
+1 Rogue's Passage
+1 Shivan Reef
+1 Steam Vents
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 The Gold Saucer
+1 Training Center
+1 Breeches, the Blastmaker
+1 Creepy Doll
+1 Edgar, King of Figaro
+1 Goblin Archaeologist
+1 Goblin Electromancer
+1 Goblin Traprunner
+1 Karplusan Minotaur
+1 Krark, the Thumbless
+1 Mogg Assassin
+1 Mutalith Vortex Beast
+1 Niv-Mizzet, Parun
+1 Okaun, Eye of Chaos
+1 Psychosis Crawler
+1 Tavern Scoundrel
+1 The Locust God
+1 Tribute Mage
+1 Triskaidekaphile
+1 Two-Headed Giant
+1 Zndrsplt, Eye of Wisdom
+1 Chance Encounter
+1 Impulsive Maneuvers
+1 Mirror March
+1 Planar Chaos
+1 Teferi's Ageless Insight
+1 Tide of War
+1 Wizard Class
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Brainstorm
+1 Chaos Warp
+1 Counterspell
+1 Desperate Gambit
+1 Frantic Search
+1 Invert Polarity
+1 Izzet Charm
+1 Muddle the Mixture
+1 Negate
+1 Pongify
+1 Puppet's Verdict
+1 Ral Zarek
+1 Blasphemous Act
+1 Fabricate
+1 Fiery Gambit
+1 Gamble
+1 Game of Chaos
+1 Jeska's Will
+1 Mana Clash
+1 Molten Birth
+1 Ponder
+1 Reckless Handling
+1 Squee's Revenge
+1 Stitch in Time
+1 Windfall

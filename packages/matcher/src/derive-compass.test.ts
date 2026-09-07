@@ -4,7 +4,7 @@ import { deriveCardTags } from "@edh-seer/tagger";
 import type { Characteristics } from "@edh-seer/tagger";
 import type { ClauseRecord } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "./index.js";
-import { classifyPair, type GoldPair } from "./bin/eval-pairs-core.js";
+import { classifyPair, type GoldPair } from "./eval-pairs-core.js";
 import type { DeckCard } from "./types.js";
 
 interface Fixture {

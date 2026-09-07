@@ -1,0 +1,73 @@
+# edhrec deck https://edhrec.com/deckpreview/I1Cd6mmEVuAgbTpF9YQbng (source https://archidekt.com/decks/25873964)
+# tags Aggro, Heroic, Tokens, Spellslinger; bracket 2; saved 2026-08-30; 9 tagged of 1007 indexed
+
+Commander
+1 Rosnakht, Heir of Rohgahh
+
+Deck
+1 Ancestors' Aid
+1 Barge In
+1 Battle Hymn
+1 Big Score
+1 Blazing Crescendo
+1 Chaos Warp
+1 Crowd's Favor
+1 Dynacharge
+1 Expedite
+1 Fists of Flame
+1 Flare of Duplication
+1 Kazuul's Fury
+1 Massive Raid
+1 Monstrous Rage
+1 Raze the Effigy
+1 Return the Favor
+1 Siege Smash
+1 Titan's Strength
+1 Weapon Surge
+1 Ancestral Anger
+1 Glimpse the Impossible
+1 Gravitic Punch
+1 Haze of Rage
+1 Infernal Plunge
+1 Mana Geyser
+1 Overpowering Attack
+1 Past in Flames
+1 Renegade Tactics
+1 Seize the Spoils
+1 Sundering Eruption
+1 Witch's Mark
+1 Bravado
+1 Collective Inferno
+1 Connecting the Dots
+1 Etali's Favor
+1 Impact Tremors
+1 Leyline of Resonance
+1 Mark of Fury
+1 Raid Bombardment
+1 Roar of Resistance
+1 Shared Animosity
+1 Sticky Fingers
+1 Castle Embereth
+1 Fire Nation Palace
+1 Kher Keep
+34 Mountain
+1 Combat Celebrant
+1 Devilish Valet
+1 Enduring Courage
+1 Hellrider
+1 Kobold Taskmaster
+1 Kobolds of Kher Keep
+1 Molten Gatekeeper
+1 Ogre Battledriver
+1 Rograkh, Son of Rohgahh
+1 Runaway Steam-Kin
+1 Storm-Kiln Artist
+1 Subira, Tulzidi Caravanner
+1 Taunting Kobold
+1 Weftstalker Ardent
+1 Witty Roastmaster
+1 Heraldic Banner
+1 Idol of Oblivion
+1 Skullclamp
+1 Springleaf Drum
+1 Swiftfoot Boots

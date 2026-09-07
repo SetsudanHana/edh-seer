@@ -1,0 +1,101 @@
+# edhrec average deck: https://edhrec.com/average-decks/kynaios-and-tiro-of-meletis/aikido
+# theme Aikido (60 decks)
+
+Commander
+1 Kynaios and Tiro of Meletis
+
+Deck
+1 Arcane Signet
+1 Folio of Fancies
+1 Sol Ring
+1 Sunforger
+1 Thought Vessel
+1 Arid Mesa
+1 Boseiju, Who Endures
+1 Bountiful Promenade
+1 Breeding Pool
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+1 Forbidden Orchard
+2 Forest
+1 Hallowed Fountain
+3 Island
+1 Jetmir's Garden
+1 Ketria Triome
+1 Misty Rainforest
+2 Mountain
+2 Plains
+1 Raugrin Triome
+1 Reflecting Pool
+1 Rejuvenating Springs
+1 Reliquary Tower
+1 Sacred Foundry
+1 Scalding Tarn
+1 Sea of Clouds
+1 Spara's Headquarters
+1 Spectator Seating
+1 Steam Vents
+1 Stomping Ground
+1 Temple Garden
+1 Training Center
+1 Windswept Heath
+1 Wooded Foothills
+1 Birds of Paradise
+1 Bloom Tender
+1 Brash Taunter
+1 Clever Impersonator
+1 Delney, Streetwise Lookout
+1 Faerie Artisans
+1 Faerie Mastermind
+1 Gisela, Blade of Goldnight
+1 Gluntch, the Bestower
+1 Heartwood Storyteller
+1 Loran of the Third Path
+1 Mangara, the Diplomat
+1 Master of Ceremonies
+1 Nelly Borca, Impulsive Accuser
+1 Scrawling Crawler
+1 Selfless Squire
+1 Selvala, Explorer Returned
+1 Sokrates, Athenian Teacher
+1 Tataru Taru
+1 The Council of Four
+1 The Second Doctor
+1 Xyris, the Writhing Storm
+1 Duelist's Heritage
+1 Ghostly Prison
+1 Gleaming Splendor
+1 Leyline of Anticipation
+1 Rites of Flourishing
+1 Smothering Tithe
+1 Trouble in Pairs
+1 Wilderness Reclamation
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Boros Charm
+1 Comeuppance
+1 Deflecting Palm
+1 Generous Gift
+1 Invert Polarity
+1 Narset's Reversal
+1 Naya Charm
+1 New Way Forward
+1 Olórin's Searing Light
+1 Path to Exile
+1 Reins of Power
+1 Return the Favor
+1 See Double
+1 Sink into Stupor
+1 Swords to Plowshares
+1 Take the Bait
+1 Untimely Malfunction
+1 Bala Ged Recovery
+1 Disrupt Decorum
+1 Farseek
+1 Insurrection
+1 Nature's Lore
+1 Oversimplify
+1 Taunt from the Rampart
+1 Three Visits
+1 Winds of Abandon

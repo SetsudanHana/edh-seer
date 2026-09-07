@@ -1,0 +1,92 @@
+# edhrec deck https://edhrec.com/deckpreview/H74uN_DFVASAX8lvET2oJw (source https://archidekt.com/decks/23344894)
+# tags Tokens, Proliferate, Experience Counters, Aristocrats; bracket 3; saved 2026-09-04; 137 tagged of 5405 indexed
+
+Commander
+1 Minthara, Merciless Soul
+
+Deck
+1 Abdel Adrian, Gorion's Ward
+1 Adeline, Resplendent Cathar
+1 Blightbelly Rat
+1 Cathar Commando
+1 Company Commander
+1 Corpse Knight
+1 Crashing Drawbridge
+1 Denethor, Ruling Steward
+1 Disciple of Bolas
+1 Elenda, the Dusk Rose
+1 Felidar Guardian
+1 Fiend Hunter
+1 Ghoulcaller Gisa
+1 Jadar, Ghoulcaller of Nephalia
+1 Kambal, Profiteering Mayor
+1 Keeper of the Accord
+1 Lae'zel, Vlaakith's Champion
+1 Lotho, Corrupt Shirriff
+1 Metastatic Evangel
+1 Morbid Opportunist
+1 Nested Shambler
+1 Ophiomancer
+1 Restoration Angel
+1 Rosie Cotton of South Lane
+1 Shadowheart, Dark Justiciar
+1 Solemn Simulacrum
+1 Spirited Companion
+1 Sun Titan
+1 Teysa Karlov
+1 Viscera Seer
+1 Weaponcraft Enthusiast
+1 Aetheric Amplifier
+1 Arcane Signet
+1 Ashnod's Altar
+1 Key to the City
+1 Mind Stone
+1 Orzhov Signet
+1 Panharmonicon
+1 Skullclamp
+1 Sol Ring
+1 Talisman of Hierarchy
+1 Wayfarer's Bauble
+1 Akroma's Will
+1 Anguished Unmaking
+1 Cloudshift
+1 Corrupted Conviction
+1 Deadly Dispute
+1 Disenchant
+1 Ephemerate
+1 Lae'zel's Acrobatics
+1 Path to Exile
+1 Village Rites
+1 Bastion of Remembrance
+1 Dreadhorde Invasion
+1 Hidden Stockpile
+1 Inspiring Leader
+1 Skrelv's Hive
+1 Teleportation Circle
+1 Bojuka Bog
+1 Caves of Koilos
+1 Command Tower
+1 Evolving Wilds
+1 Fetid Heath
+1 Field of the Dead
+1 High Market
+1 Isolated Chapel
+1 Mage-Ring Network
+1 Obscura Storefront
+1 Orzhov Basilica
+10 Plains
+1 Shattered Sanctum
+1 Shineshadow Snarl
+1 Snow-Covered Plains
+1 Snow-Covered Swamp
+1 Sunlit Marsh
+6 Swamp
+1 Tainted Field
+1 Terramorphic Expanse
+1 Vault of the Archangel
+1 Windbrisk Heights
+1 Damn
+1 Drown in Ichor
+1 Farewell
+1 Victimize
+1 The Eternal Wanderer

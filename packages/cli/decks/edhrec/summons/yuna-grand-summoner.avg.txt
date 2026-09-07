@@ -1,0 +1,100 @@
+# edhrec average deck: https://edhrec.com/average-decks/yuna-grand-summoner/summons
+# theme Summons (9 decks)
+
+Commander
+1 Yuna, Grand Summoner
+
+Deck
+1 Arcane Signet
+1 Blitzball Stadium
+1 Lightning Greaves
+1 Ozolith, the Shattered Spire
+1 Sol Ring
+1 The Ozolith
+1 Bountiful Promenade
+1 Breeding Pool
+1 Brushland
+1 Canopy Vista
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Grove
+1 Flooded Strand
+4 Forest
+1 Fortified Village
+1 Gavony Township
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Hinterland Harbor
+2 Island
+1 Karn's Bastion
+1 Nesting Grounds
+1 Path of Ancestry
+3 Plains
+1 Port Town
+1 Rejuvenating Springs
+1 Sea of Clouds
+1 Seaside Citadel
+1 Spara's Headquarters
+1 Sunpetal Grove
+1 Temple Garden
+1 Vineglimmer Snarl
+1 Windswept Heath
+1 Yavimaya, Cradle of Growth
+1 Auron, Venerated Guardian
+1 Duskshell Crawler
+1 Fathom Mage
+1 Garnet, Princess of Alexandria
+1 Gatta and Luzzu
+1 Herald of Secret Streams
+1 Incubation Druid
+1 Kimahri, Valiant Guardian
+1 Lulu, Stern Guardian
+1 Maester Seymour
+1 O'aka, Traveling Merchant
+1 Ouroboroid
+1 Rikku, Resourceful Guardian
+1 Scholar of New Horizons
+1 Sin, Unending Cataclysm
+1 Summon: Bahamut
+1 Summon: Fenrir
+1 Summon: Good King Mog XII
+1 Summon: Ixion
+1 Summon: Knights of Round
+1 Summon: Magus Sisters
+1 Summon: Primal Garuda
+1 Summon: Shiva
+1 Summon: Titan
+1 Summon: Valefor
+1 Summon: Yojimbo
+1 Sythis, Harvest's Hand
+1 Tidus, Yuna's Guardian
+1 Tromell, Seymour's Butler
+1 Wakka, Devoted Guardian
+1 Walking Ballista
+1 Yuna, Hope of Spira
+1 Branching Evolution
+1 Bred for the Hunt
+1 Cathars' Crusade
+1 Enchantress's Presence
+1 Freed from the Real
+1 Hardened Scales
+1 Inexorable Tide
+1 Resourceful Defense
+1 Rhystic Study
+1 Sphere Grid
+1 Terrasymbiosis
+1 Together Forever
+1 An Offer You Can't Refuse
+1 Arcane Denial
+1 Cyclonic Rift
+1 Dovin's Veto
+1 Heroic Intervention
+1 Inspiring Call
+1 Path to Exile
+1 Protection Magic
+1 Swords to Plowshares
+1 Damning Verdict
+1 Farewell
+1 Farseek
+1 Three Visits
+1 Wave Goodbye

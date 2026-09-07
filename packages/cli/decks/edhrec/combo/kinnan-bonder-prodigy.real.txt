@@ -1,0 +1,83 @@
+# edhrec deck https://edhrec.com/deckpreview/WbPhun-wICj-0xGILKnc0g (source https://moxfield.com/decks/kxjUFG4QzES64MTfNkGFJQ)
+# tags X Spells, Historic, Artifacts, +1/+1 Counters, Combo; bracket 3; saved 2026-08-21; 909 tagged of 21201 indexed
+
+Commander
+1 Kinnan, Bonder Prodigy
+
+Deck
+1 Alchemist's Refuge
+1 Command Tower
+1 Dreamroot Cascade
+1 Evolving Wilds
+1 Flooded Grove
+12 Forest
+1 Hinterland Harbor
+13 Island
+1 Path of Ancestry
+1 Reliquary Tower
+1 Simic Growth Chamber
+1 Treasure Vault
+1 Yavimaya Coast
+1 Arcane Signet
+1 Basalt Monolith
+1 Bender's Waterskin
+1 Brain in a Jar
+1 Conjurer's Closet
+1 Firdoch Core
+1 Gilded Lotus
+1 Horizon Stone
+1 Isochron Scepter
+1 Maskwood Nexus
+1 Springleaf Drum
+1 Staff of Domination
+1 Bring to Light
+1 Cultivate
+1 Finale of Devastation
+1 Preordain
+1 Primal Command
+1 Procrastinate
+1 Threats Undetected
+1 Brush Off
+1 Cancel
+1 Daze
+1 Dramatic Reversal
+1 Essence Capture
+1 Learn from the Past
+1 Magic Damper
+1 Miscast
+1 Planar Incision
+1 Quench
+1 Tamiyo's Safekeeping
+1 Teferi's Time Twist
+1 Wild Unraveling
+1 Deadeye Navigator
+1 Formidable Speaker
+1 Gene Pollinator
+1 Glen Elendra Guardian
+1 Gyre Engineer
+1 Hydro-Channeler
+1 Jin-Gitaxias, Progress Tyrant
+1 Lier, Disciple of the Drowned
+1 Llanowar Elves
+1 Maraleaf Pixie
+1 Momir Vig, Simic Visionary
+1 Murkfiend Liege
+1 Paradise Druid
+1 Ruin Crab
+1 Seedborn Muse
+1 Sylvan Caryatid
+1 The Notary Hobbits
+1 Topiary Lecturer
+1 Transit Mage
+1 Troyan, Gutsy Explorer
+1 Walking Ballista
+1 Freed from the Real
+1 Intruder Alarm
+1 Levitation
+1 Leyline of Abundance
+1 Mana Reflection
+1 Noggle the Mind
+1 Presence of Gond
+1 Spider-Man No More
+1 Tamiyo's Compleation
+1 Web of Inertia

@@ -1,0 +1,98 @@
+# edhrec average deck: https://edhrec.com/average-decks/sydri-galvanic-genius/improvise
+# theme Improvise (3 decks)
+
+Commander
+1 Sydri, Galvanic Genius
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Azorius Signet
+1 Blasting Station
+1 Bolas's Citadel
+1 Chromatic Lantern
+1 Cloud Key
+1 Cranial Plating
+1 Darksteel Ingot
+1 Deluxe Dragster
+1 Manifold Key
+1 Mind's Eye
+1 Mirage Mirror
+1 Mnemonic Sphere
+1 Nautiloid Ship
+1 Orzhov Signet
+1 Parhelion II
+1 Repurposing Bay
+1 Salvation Engine
+1 Shorikai, Genesis Engine
+1 Simulacrum Synthesizer
+1 Skysovereign, Consul Flagship
+1 Sol Ring
+1 Staff of Nin
+1 Sword of the Meek
+1 Talisman of Progress
+1 The Immortal Sun
+1 Thopter Foundry
+1 Unwinding Clock
+1 Vedalken Orrery
+1 Wayfarer's Bauble
+1 Academy Ruins
+1 Ancient Den
+1 Arcane Sanctum
+1 Archway of Innovation
+1 Buried Ruin
+1 Command Tower
+1 Darkwater Catacombs
+1 Desolate Mire
+1 Exotic Orchard
+1 Godless Shrine
+1 Goldmire Bridge
+1 Hallowed Fountain
+1 Hengegate Pathway
+1 Inventors' Fair
+4 Island
+1 Mistvault Bridge
+4 Plains
+1 Raffine's Tower
+1 Razortide Bridge
+1 Sea of Clouds
+1 Seat of the Synod
+1 Shipwreck Marsh
+1 Skycloud Expanse
+3 Swamp
+1 Uthros, Titanic Godcore
+1 Vault of Champions
+1 Vault of Whispers
+1 Watery Grave
+1 Cyberdrive Awakener
+1 Diversion Unit
+1 Emry, Lurker of the Loch
+1 Etherium Sculptor
+1 Hanna, Ship's Navigator
+1 Kappa Cannoneer
+1 Master Transmuter
+1 Metalwork Colossus
+1 Muzzio, Visionary Architect
+1 Night Market Lookout
+1 Phyrexian Metamorph
+1 Sai, Master Thopterist
+1 Sharuum the Hegemon
+1 Thought Monitor
+1 Urza, Chief Artificer
+1 Vedalken Archmage
+1 Walking Ballista
+1 Phyrexian Scriptures
+1 Anguished Unmaking
+1 Despark
+1 Dispatch
+1 Dovin's Veto
+1 Mana Drain
+1 Unwanted Remake
+1 Void Rend
+1 Tezzeret the Seeker
+1 Tezzeret, Agent of Bolas
+1 Dance of the Manse
+1 One with the Machine
+1 Organic Extinction
+1 Thoughtcast
+1 Voyage Home

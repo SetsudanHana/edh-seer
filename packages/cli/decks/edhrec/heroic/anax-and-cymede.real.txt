@@ -1,0 +1,84 @@
+# edhrec deck https://edhrec.com/deckpreview/oXXCHut-6ENDkRNMpd7Eow (source https://archidekt.com/decks/10879666)
+# tags Sunforger, Heroic, Tokens, Spellslinger, Attack Triggers; bracket 2; saved 2026-08-15; 21 tagged of 588 indexed
+
+Commander
+1 Anax and Cymede
+
+Deck
+1 Abraded Bluffs
+1 Alpine Meadow
+1 Boros Guildgate
+1 Evolving Wilds
+1 Field of Ruin
+1 Lorehold Campus
+12 Mountain
+12 Plains
+1 Rustvale Bridge
+1 Terramorphic Expanse
+1 Thriving Bluff
+1 Thriving Heath
+1 Unknown Shores
+1 Adamant Will
+1 Beaming Defiance
+1 Blacksmith's Skill
+1 Bulk Up
+1 Chaos Warp
+1 Emerge Unscathed
+1 Enter the Avatar State
+1 Erode
+1 Frontline Rush
+1 Goblin Wizardry
+1 Lightning Helix
+1 Loran's Escape
+1 Lorehold Charm
+1 Massive Raid
+1 Path to Exile
+1 Rally the Monastery
+1 Return the Favor
+1 Stroke of Midnight
+1 Take Up the Shield
+1 Team Tactics
+1 The Last Agni Kai
+1 To Arms!
+1 Ultimate Magic: Holy
+1 Unleash Fury
+1 Weapon Surge
+1 Adriana, Captain of the Guard
+1 Battle Cry Goblin
+1 Charmbreaker Devils
+1 Electrostatic Infantry
+1 Firebending Student
+1 Frontline Medic
+1 Gandalf, White Rider
+1 Goblin Chieftain
+1 Guttersnipe
+1 Hobgoblin Bandit Lord
+1 Karlach, Fury of Avernus
+1 Krenko, Mob Boss
+1 Krenko, Tin Street Kingpin
+1 Leonin Lightscribe
+1 Mockingbird, Ace Agent
+1 Odric, Master Tactician
+1 Radiant Scrollwielder
+1 Skirk Prospector
+1 Soul's Attendant
+1 Stirring Hopesinger
+1 Stonehewer Giant
+1 Storm-Kiln Artist
+1 Sun Warriors
+1 Thor Odinson
+1 Thor, God of Thunder
+1 Zada, Hedron Grinder
+1 Against All Odds
+1 Blasphemous Act
+1 Chain Reaction
+1 Deploy to the Front
+1 Impolite Entrance
+1 Past in Flames
+1 Reconstruct History
+1 Fellwar Stone
+1 Livewire Lash
+1 Sunforger
+1 Talisman of Conviction
+1 Firebender Ascension
+1 Graduation Day

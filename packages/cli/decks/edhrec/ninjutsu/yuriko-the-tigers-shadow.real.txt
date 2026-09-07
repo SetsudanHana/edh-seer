@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/lVWrcljR9Wx9UBLOQ8x6vw (source https://archidekt.com/decks/12887618)
+# tags Ninjas, Ninjutsu; bracket 3; saved 2026-09-04; 4623 tagged of 31850 indexed
+
+Commander
+1 Yuriko, the Tiger's Shadow
+
+Deck
+1 Access Tunnel
+1 Bad River
+1 Blast Zone
+1 Bojuka Bog
+1 Choked Estuary
+1 Command Tower
+1 Contaminated Aquifer
+1 Creeping Tar Pit
+1 Darkwater Catacombs
+1 Demolition Field
+1 Dimir Aqueduct
+1 Drowned Catacomb
+1 Ice Tunnel
+10 Island
+1 Path of Ancestry
+1 Reliquary Tower
+1 Rivendell
+1 Rogue's Passage
+1 Secluded Courtyard
+1 Shire Terrace
+1 Sunken Hollow
+5 Swamp
+1 Turtle Lair
+1 Underground River
+1 Arcane Heist
+1 Curse of the Swine
+1 Feed the Swarm
+1 Profane Command
+1 Arcane Signet
+1 Decanter of Endless Water
+1 Dimir Keyrune
+1 Dimir Signet
+1 Lux Cannon
+1 Manifold Key
+1 Prowler's Helm
+1 Silver Shroud Costume
+1 Sol Ring
+1 Stonespeaker Crystal
+1 Thought Vessel
+1 Whispersilk Cloak
+1 Bilbo, Luckwearer
+1 Changeling Outcast
+1 Dimir Infiltrator
+1 Fallen Shinobi
+1 Flitterstep Eidolon
+1 Gray Harbor Merfolk
+1 Higure, the Still Wind
+1 Hulking Metamorph
+1 Ingenious Infiltrator
+1 Ink-Eyes, Servant of Oni
+1 Invisible Stalker
+1 Krang & Shredder
+1 Marang River Prowler
+1 Mercurial Spelldancer
+1 Mist-Cloaked Herald
+1 Mist-Syndicate Naga
+1 Mistblade Shinobi
+1 Nashi, Moon Sage's Scion
+1 Prosperous Thief
+1 Satoru Umezawa
+1 Shark Shredder, Killer Clone
+1 Shredder, Shadow Master
+1 Silent-Blade Oni
+1 Silver-Fur Master
+1 Slither Blade
+1 Splinter, Hamato Yoshi
+1 Super Shredder
+1 Suspicious Bookcase
+1 Thousand-Faced Shadow
+1 Throat Slitter
+1 Throatseeker
+1 Triton Shorestalker
+1 Walker of Secret Ways
+1 Black Sun's Twilight
+1 Forbid
+1 Resculpt
+1 V.A.T.S.
+1 Cunning Evasion
+1 Imprisoned in the Moon
+1 Ninja Teen
+1 Reconnaissance Mission
+1 Rogue Class
+1 Waterbender Ascension
+1 Wizard Class
+1 Writ of Passage
+1 Kaito, Dancing Shadow

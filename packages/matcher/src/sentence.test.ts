@@ -3,8 +3,7 @@ import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence,
-} from "./sentence.js";
+  boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -53,6 +52,12 @@ describe("effectPhrase — the fallback ladder", () => {
 
   test("an amount of X reads as X, not as a number", () => {
     expect(effectPhrase("draw-card", "X")).toBe("draws you X cards");
+    // PROSE IS NOT AN AMOUNT (UX sweep 2026-09-06, E3): Hateful Eidolon printed "draws you for each
+    // Aura you controlled that was attached to it cards".
+    expect(effectPhrase("draw-card", "for each Aura you controlled that was attached to it")).toBe("draws you cards");
+    expect(effectPhrase("damage", "X where X is the number of Goblins you control")).toBe("deals damage");
+    // The two kinds that place their own prose keep it.
+    expect(effectPhrase("pump", "+1/+1 for each creature you control")).toBe("gives +1/+1 for each creature you control");
   });
 
   // "makes 1 tokens" and "puts 1 counters on it" both shipped from the amount branch before this
@@ -242,4 +247,137 @@ describe("the five small verbatim sentences", () => {
   test("createsSentence", () => {
     expect(createsSentence("Krenko's Command", "Goblin")).toBe("Krenko's Command creates Goblin");
   });
+});
+
+/** THE ONE VERB WHOSE SUBJECT IS ITS OBJECT. Every other emit names what the event happens to, so
+ *  the "thanks to" construction reads correctly; a `create-token` emit names what was CREATED while
+ *  the verb describes the MAKER's action, and the same construction had the token doing the making.
+ *  MEASURED on the partner artifact 2026-09-04: 7,050 of 91,061 rows (7.7%) on 2,671 cards. */
+test("a create-token cause names the maker, not the token it made", () => {
+  expect(reasonSentence({
+    producer: "Krenko, Mob Boss", consumer: "Staff of the Storyteller",
+    eventKey: "create-token:goblin", effectKind: "counters", subjectNoun: "a goblin",
+  })).toMatch(/^When Krenko, Mob Boss makes a goblin token, Staff of the Storyteller /);
+});
+
+/** "A permanent token" says nothing "a token" does not, and the untyped emit is what produces it. */
+test("an untyped create-token emit reads as a plain token", () => {
+  expect(reasonSentence({
+    producer: "Anointed Procession", consumer: "Impact Tremors",
+    eventKey: "create-token:any", subjectNoun: "a permanent",
+  })).toMatch(/^When Anointed Procession makes a token, /);
+});
+
+/** AND NO OTHER VERB MOVES. The "thanks to" grammar is right wherever the subject really is what
+ *  the event happens to, which is every emit but this one. */
+test("a non-create-token cause still names the subject the event happens to", () => {
+  expect(reasonSentence({
+    producer: "Austere Command", consumer: "Grim Haruspex",
+    eventKey: "dies:creature", effectKind: "draw-card", subjectNoun: "a creature",
+  })).toMatch(/^When a creature dies thanks to Austere Command, /);
+});
+
+/** A SUBTYPE IS A PROPER NOUN IN MAGIC AND A CARD TYPE IS NOT. Noticed on a card page printing both
+ *  at once: the event line read "a Goblin creature token" and the reason sentence under it read
+ *  "a goblin", which reads as two engines disagreeing about the same card. */
+test("an emit's subtype noun is capitalised and its type noun is not", () => {
+  expect(emitSubjectNoun({ subtype: "goblin", type: "creature" })).toBe("a Goblin");
+  expect(emitSubjectNoun({ type: "creature" })).toBe("a creature");
+  expect(emitSubjectNoun({ type: "artifact" })).toBe("an artifact");
+  expect(emitSubjectNoun({})).toBe("a permanent");
+  // An emit about the producer ITSELF names no noun -- that is what keeps every correct sentence in
+  // the corpus reading as it did.
+  expect(emitSubjectNoun({ self: true, subtype: "goblin" })).toBeUndefined();
+});
+
+/** THE COUNT NAMES WHAT IT FEEDS, and "gets bigger" was a wrong claim on most of this channel.
+ *  Reported by the precon reviewer against the card printed beside it: Krenko's X counts Goblins to
+ *  decide HOW MANY TOKENS he makes, and he is a 3/3 either way. */
+test("a board count says what actually grows, and claims nothing where it cannot tell", () => {
+  expect(boardCountFeedsScaling("Goblin Assassin", "Krenko, Mob Boss", "token-generation"))
+    .toBe("While you control Goblin Assassin, Krenko, Mob Boss counts it and makes more tokens");
+  expect(boardCountFeedsScaling("Llanowar Elves", "Bonehoard", "pump"))
+    .toContain("gets bigger");
+  // An effect this map has never seen says the true weak thing rather than inventing a growth.
+  expect(boardCountFeedsScaling("A", "B", "some-new-kind")).toContain("does more");
+  expect(boardCountFeedsScaling("A", "B")).toContain("does more");
+});
+
+/** THE KINDS THE ENGINE READ AND THE SENTENCE REFUSED TO SAY. 27.7% of every partner row on the site
+ *  ended in a bare "<card> triggers", and only 3,453 consumer abilities were a genuine blank -- the
+ *  rest were kinds the engine had identified with no words in this table. A skeptic called those
+ *  rows "the sentence generator running out"; an engine that knows a card grants haste and prints
+ *  "triggers" is hiding what it knows behind the wording it uses for what it does not. */
+test("a kind the engine identified gets said, weakly and without over-claiming", () => {
+  for (const [kind, expected] of [
+    ["keyword-grant", "grants a keyword"],
+    ["untap", "untaps a permanent"],
+    ["speed-increase", "grants haste"],
+    ["copy-spell", "copies a spell"],
+    ["flicker", "blinks a permanent"],
+    ["graveyard-hate", "hits a graveyard"],
+  ] as const) {
+    expect(effectPhrase(kind, undefined), kind).toBe(expected);
+  }
+});
+
+/** AND A GENUINE BLANK STILL SAYS NOTHING, which is the distinction the whole change exists to
+ *  restore: "the engine did not read this" and "the engine read it and won't tell you" must not
+ *  render identically. */
+test("an unread effect still has no phrase", () => {
+  expect(effectPhrase("", undefined)).toBeNull();
+  expect(effectPhrase(undefined, undefined)).toBeNull();
+});
+
+/** "PUTS COUNTERS ON IT" HAD TWO LIVE ANTECEDENTS in every row it appeared in. The sentence opens
+ *  "When a Goblin enters thanks to Krenko, Mob Boss…", so "it" reads as the Goblin — and on Quest
+ *  for the Goblin Lord the counters go on the QUEST. A skeptic: "the two readings are a real synergy
+ *  versus a nothing". 25,997 rows carried the pronoun. */
+test("a counter effect says where the counters land", () => {
+  expect(effectPhrase("counter-placement", "1", effectTargetNoun({ self: true })))
+    .toBe("puts a counter on itself");
+  expect(effectPhrase("counter-placement", "2", effectTargetNoun({ type: "creature" })))
+    .toBe("puts 2 counters on a creature");
+  expect(effectPhrase("counter-placement", undefined, effectTargetNoun({ subtype: "goblin" })))
+    .toBe("puts counters on a Goblin");
+});
+
+/** AN UNTYPED SUBJECT FALLS BACK TO THE CLASS, not to a pronoun. "a permanent" is true of every
+ *  counter target and, unlike "it", claims nothing about WHICH one -- which is the whole ambiguity. */
+test("an unknown target names the class rather than pointing", () => {
+  expect(effectPhrase("counter-placement", "1", effectTargetNoun({}))).toBe("puts a counter on a permanent");
+  // With no target threaded at all, the old wording stands -- callers that cannot know keep it.
+  expect(effectPhrase("counter-placement", "1", undefined)).toBe("puts a counter on it");
+});
+
+// Arcane Denial (owner, 2026-09-05): "its controller may draw up to two cards" derived `opp` and
+// printed "draws you up to two cards". The recipient is now part of the phrase.
+test("effectPhrase names the recipient of a draw or a life change", () => {
+  expect(effectPhrase("draw-card", "up to two", undefined, "opp")).toBe("makes an opponent draw up to two cards");
+  expect(effectPhrase("draw-card", "1", undefined, "any")).toBe("makes a player draw 1 card");
+  expect(effectPhrase("draw-card", "1", undefined, "you")).toBe("draws you 1 card");
+  expect(effectPhrase("lifegain", undefined, undefined, "opp")).toBe("gains an opponent life");
+  // Kinds whose phrase names no recipient are untouched.
+  expect(effectPhrase("damage", "3", undefined, "opp")).toBe("deals 3 damage");
+});
+
+/** THE CLIENT'S UNREAD MARK KEYS ON THIS WORD (`card-drawer.tsx` `unreadEffect`): the report's
+ *  "engine did not read what it does" appears exactly when a sentence ends in "triggers", and no
+ *  other phrase in `PHRASES` may end in it. */
+test("the fallback sentence ends in the word \"triggers\", and no real phrase does", () => {
+  expect(reasonSentence({ producer: "Arcane Signet", consumer: "Displacer Kitten", eventKey: "cast:any", effectKind: undefined })).toMatch(/\btriggers$/);
+  expect(reasonSentence({ producer: "Kaya's Ghostform", consumer: "Dress Down", eventKey: "enters:any", effectKind: undefined, self: true })).toMatch(/\btriggers$/);
+  for (const kind of ["draw-card", "token-generation", "trigger-doubling", "clone", "copy-spell", "damage"]) {
+    expect(effectPhrase(kind, undefined)).not.toMatch(/\btriggers$/);
+  }
+});
+
+/** SPEED IS THE PLAYER'S (CR 702.179), so the card RAISES it; "Samut gains speed" read as if the
+ *  card had one (owner, 2026-09-05). */
+test("raising speed is phrased on the player", () => {
+  expect(effectPhrase("speed", undefined)).toBe("raises your speed");
+});
+
+test("losing abilities has a phrase", () => {
+  expect(effectPhrase("ability-loss", undefined)).toBe("strips abilities");
 });

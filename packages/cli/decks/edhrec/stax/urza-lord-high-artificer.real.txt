@@ -1,0 +1,81 @@
+# edhrec deck https://edhrec.com/deckpreview/g-Hd82e0pFtMQ3empYoxeA (source https://moxfield.com/decks/a7Ocm8ctnUeMFE4CbQw_iQ)
+# tags Stax, Artifacts, Control; bracket 3; saved 2026-08-11; 438 tagged of 20393 indexed
+
+Commander
+1 Urza, Lord High Artificer
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Cloud Key
+1 Damping Sphere
+1 Everflowing Chalice
+1 Fellwar Stone
+1 God-Pharaoh's Statue
+1 Grafdigger's Cage
+1 Grinding Station
+1 Howling Mine
+1 Isochron Scepter
+1 Jeweled Amulet
+1 Mishra's Bauble
+1 Mystic Forge
+1 Pithing Needle
+1 Proteus Staff
+1 Sculpting Steel
+1 Sol Ring
+1 Static Orb
+1 Storage Matrix
+1 Sword of the Animist
+1 Tangle Wire
+1 Tormod's Crypt
+1 Trinisphere
+1 Unwinding Clock
+1 Vedalken Orrery
+1 Wayfarer's Bauble
+1 Weathered Runestone
+1 Welding Jar
+1 Winter Moon
+1 Winter Orb
+1 Amphibian Downpour
+1 Arcane Laboratory
+1 Back to Basics
+1 Dress Down
+1 Leyline of Anticipation
+1 Battered Golem
+1 Etherium Sculptor
+1 Foundry Inspector
+1 Hullbreaker Horror
+1 Liberator, Urza's Battlethopter
+1 Lodestone Golem
+1 Ornithopter
+1 Phyrexian Walker
+1 Scrap Trawler
+1 Shimmer Myr
+1 Spellskite
+1 Sphinx of the Second Sun
+1 Tidespout Tyrant
+1 Traxos, Scourge of Kroog
+1 Wandering Archaic
+1 Blue Sun's Zenith
+1 Dramatic Reversal
+1 Nexus of Fate
+1 Pongify
+1 Pull from Tomorrow
+1 Rapid Hybridization
+1 Resculpt
+1 Stroke of Genius
+1 Buried Ruin
+1 Darksteel Citadel
+1 Emergence Zone
+26 Island
+1 Mystic Sanctuary
+1 Capture of Jingzhou
+1 Expropriate
+1 Karn's Temporal Sundering
+1 Mind's Desire
+1 Part the Waterveil
+1 Temporal Manipulation
+1 Time Warp
+1 Windfall
+1 Karn, the Great Creator
+1 Narset, Parter of Veils

@@ -1,0 +1,94 @@
+# edhrec average deck: https://edhrec.com/average-decks/lynde-cheerful-tormentor/extra-upkeeps
+# theme Extra Upkeeps (13 decks)
+
+Commander
+1 Lynde, Cheerful Tormentor
+
+Deck
+1 Arcane Signet
+1 Claws of Gix
+1 Cloud Key
+1 Crystal Chimes
+1 Despotic Scepter
+1 Lightning Greaves
+1 Sol Ring
+1 Swiftfoot Boots
+1 Blood Crypt
+1 Bojuka Bog
+1 Command Tower
+1 Crumbling Necropolis
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Haunted Ridge
+5 Island
+1 Luxury Suite
+1 Maestros Theater
+1 Morphic Pool
+4 Mountain
+1 Reliquary Tower
+1 Shipwreck Marsh
+1 Smoldering Marsh
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Sunken Hollow
+6 Swamp
+1 Training Center
+1 Watery Grave
+1 Xander's Lounge
+1 Invasion of Karsus
+1 Accursed Witch
+1 Ashiok's Reaper
+1 Balemurk Leech
+1 Bitterheart Witch
+1 Braids, Arisen Nightmare
+1 Brash Taunter
+1 Demon of Fate's Design
+1 Doomwake Giant
+1 Entity Tracker
+1 Grim Guardian
+1 Nightscape Familiar
+1 Obeka, Splitter of Seconds
+1 Protean Thaumaturge
+1 Silent Arbiter
+1 Sphinx of the Second Sun
+1 The Ninth Doctor
+1 Wicked Visitor
+1 Court of Vantress
+1 Cruel Reality
+1 Curse of Bloodletting
+1 Curse of Death's Hold
+1 Curse of Disturbance
+1 Curse of Echoes
+1 Curse of Fool's Wisdom
+1 Curse of Hospitality
+1 Curse of Misfortunes
+1 Curse of Obsession
+1 Curse of Opulence
+1 Curse of Shaken Faith
+1 Curse of Surveillance
+1 Curse of Thirst
+1 Curse of Unbinding
+1 Curse of Vengeance
+1 Curse of Verbosity
+1 Curse of the Restless Dead
+1 Estrid's Invocation
+1 Extravagant Replication
+1 Maddening Hex
+1 Mirrormade
+1 Paradox Haze
+1 Propaganda
+1 Shadow of the Second Sun
+1 Torment of Scarabs
+1 Trespasser's Curse
+1 An Offer You Can't Refuse
+1 Bedevil
+1 Chaos Warp
+1 Counterspell
+1 Ice Out
+1 Terminate
+1 Withering Torment
+1 Asinine Antics
+1 Blasphemous Act
+1 Feed the Swarm
+1 Vandalblast

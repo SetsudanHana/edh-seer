@@ -1,0 +1,99 @@
+# edhrec average deck: https://edhrec.com/average-decks/davros-dalek-creator/menace
+# theme Menace (7 decks)
+
+Commander
+1 Davros, Dalek Creator
+
+Deck
+1 Arcane Signet
+1 Lightning Greaves
+1 Liquimetal Torque
+1 Mind Stone
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Talisman of Dominance
+1 Talisman of Indulgence
+1 Thought Vessel
+1 Wayfarer's Bauble
+1 Bojuka Bog
+1 Canyon Slough
+1 Command Tower
+1 Creeping Tar Pit
+1 Crumbling Necropolis
+1 Darkwater Catacombs
+1 Dragonskull Summit
+1 Drowned Catacomb
+1 Exotic Orchard
+1 Fetid Pools
+1 Fiery Islet
+1 Foreboding Ruins
+1 Haunted Ridge
+3 Island
+1 Lavaclaw Reaches
+3 Mountain
+1 Ominous Cemetery
+1 Path of Ancestry
+1 Reliquary Tower
+1 Shadowblood Ridge
+1 Shipwreck Marsh
+1 Smoldering Marsh
+1 Steam Vents
+1 Stormcarved Coast
+1 Sunken Hollow
+4 Swamp
+1 Temple of Deceit
+1 Temple of Malice
+1 Underground River
+1 Xander's Lounge
+1 Auton Soldier
+1 Chief of the Foundry
+1 Clockwork Droid
+1 Coalstoke Gearhulk
+1 Cult of Skaro
+1 Cyberman Patrol
+1 Cybermat
+1 Cybermen Squadron
+1 Dalek Drone
+1 Dalek Squadron
+1 Enthusiastic Mechanaut
+1 Etherium Sculptor
+1 J. Jonah Jameson
+1 Labyrinth Raptor
+1 Loyal Subordinate
+1 Master of Etherium
+1 Missy
+1 Refurbished Familiar
+1 Sin Prodder
+1 Skorpekh Lord
+1 Solemn Simulacrum
+1 Sonorous Howlbonder
+1 Steel Overseer
+1 Sygg, River Cutthroat
+1 The Cyber-Controller
+1 The Dalek Emperor
+1 The Lord of Pain
+1 The Valeyard
+1 Vashta Nerada
+1 Weeping Angel
+1 Blink
+1 Court of Ambition
+1 Fateful Discovery
+1 Genesis of the Daleks
+1 Painful Quandary
+1 An Offer You Can't Refuse
+1 Counterspell
+1 Cyber Conversion
+1 Lightning Bolt
+1 Snuff Out
+1 This Is How It Ends
+1 Blasphemous Act
+1 Delete
+1 Doomsday Confluence
+1 Ensnared by the Mara
+1 Exterminate!
+1 Feed the Swarm
+1 Great Intelligence's Plan
+1 Mind Bomb
+1 Ponder
+1 Prisoner's Dilemma

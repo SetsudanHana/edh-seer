@@ -1,0 +1,90 @@
+# edhrec deck https://edhrec.com/deckpreview/iiDtgQMYLR88VPXs6F0wjw (source https://archidekt.com/decks/18778289)
+# tags Madness, Mayhem, Discard; bracket 2; saved 2026-01-07; 4 tagged of 30432 indexed
+
+Commander
+1 Kefka, Court Mage
+
+Deck
+1 Abandon Reason
+1 Blur
+1 Broken Concentration
+1 Circular Logic
+1 Consign // Oblivion
+1 Counterspell
+1 Ghostly Flicker
+1 Hide on the Ceiling
+1 Illusionist's Stratagem
+1 Just the Wind
+1 Mana Drain
+1 Obsessive Search
+1 Planar Incision
+1 Teferi's Time Twist
+1 Terminate
+1 Abyssal Nocturnus
+1 Aclazotz, Deepest Betrayal
+1 Acquisitions Expert
+1 Anje Falkenrath
+1 Arbiter of Woe
+1 Archfiend of Ifnir
+1 Archon of Cruelty
+1 Big Game Hunter
+1 Bladecoil Serpent
+1 Bloodhusk Ritualist
+1 Burglar Rat
+1 Burnished Hart
+1 Carnage, Crimson Chaos
+1 Chameleon, Master of Disguise
+1 Corrupt Court Official
+1 Grave Scrabbler
+1 Identity Thief
+1 Long River Lurker
+1 Meneldor, Swift Savior
+1 Necrogoyf
+1 Nephalia Smuggler
+1 Norman Osborn
+1 Raging Goblinoids
+1 Revolutionist
+1 Scarlet Spider, Kaine
+1 Solemn Simulacrum
+1 Spider-Islanders
+1 Thassa, Deep-Dwelling
+1 Ultimate Green Goblin
+1 Y'shtola Rhul
+1 Angrath, the Flame-Chained
+1 Arcane Signet
+1 Conjurer's Closet
+1 Dimir Signet
+1 Izzet Signet
+1 Rakdos Signet
+1 Rocket-Powered Goblin Glider
+1 Sol Ring
+1 Arterial Flow
+1 Binding Negotiation
+1 Brainbite
+1 Call to the Netherworld
+1 Capture of Jingzhou
+1 Cerebral Confiscation
+1 Nagging Thoughts
+1 Prison Break
+1 Psychotic Episode
+1 Voidwalk
+1 Aspect of Lamprey
+1 Escape Protocol
+1 Gibbering Descent
+1 Impostor Syndrome
+1 Cascade Bluffs
+1 Command Tower
+1 Crumbling Necropolis
+8 Island
+1 Maestros Theater
+4 Mountain
+1 Oscorp Industries
+1 Raucous Theater
+1 Seething Landscape
+7 Swamp
+1 Temple of Deceit
+1 Temple of Epiphany
+1 Temple of Malice
+1 Thundering Falls
+1 Undercity Sewers
+1 Xander's Lounge

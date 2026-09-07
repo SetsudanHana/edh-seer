@@ -1,0 +1,93 @@
+# edhrec deck https://edhrec.com/deckpreview/vAM90NOeZhACOD84GINHxg (source https://archidekt.com/decks/15689478)
+# tags Tokens, Impulse Draw; bracket 3; saved 2026-09-03; 113 tagged of 5501 indexed
+
+Commander
+1 Faldorn, Dread Wolf Herald
+
+Deck
+1 Ancient Tomb
+1 Castle Embereth
+1 Cinder Glade
+1 Command Tower
+1 Exotic Orchard
+1 Fire-Lit Thicket
+6 Forest
+1 Gruul Turf
+1 Highland Forest
+1 Karplusan Forest
+1 Kessig Wolf Run
+1 Mossfire Valley
+1 Mosswort Bridge
+9 Mountain
+1 Myriad Landscape
+1 Path of Ancestry
+1 Pit of Offerings
+1 Raging Ravine
+1 Rootbound Crag
+1 Stomping Ground
+1 Temple of Abandon
+1 Wooded Foothills
+1 Anzrag's Rampage
+1 Blasphemous Act
+1 Decimate
+1 Disrupt Decorum
+1 Escape to the Wilds
+1 Farseek
+1 Glimpse the Impossible
+1 Ignite the Future
+1 Inspired Tinkering
+1 Jeska's Will
+1 Light Up the Stage
+1 Rampant Growth
+1 Reckless Impulse
+1 Rob the Archives
+1 Search for Tomorrow
+1 Sundering Eruption
+1 Three Visits
+1 Venture Forth
+1 Artifact Mutation
+1 Beast Within
+1 Chaos Warp
+1 Delayed Blast Fireball
+1 March of Reckless Joy
+1 Opera Love Song
+1 Return of the Wildspeaker
+1 Unravel the Aether
+1 You Find Some Prisoners
+1 Beastmaster Ascension
+1 Charred Foyer // Warped Space
+1 Outpost Siege
+1 Passionate Archaeologist
+1 Shadow of the Goblin
+1 Shared Animosity
+1 Stolen Strategy
+1 Sylvan Anthem
+1 Triple Triad
+1 Utopia Sprawl
+1 Valakut Exploration
+1 Visions of Phyrexia
+1 Wild Growth
+1 Cait Sith, Fortune Teller
+1 Champion of Lambholt
+1 Enduring Courage
+1 Etali, Primal Conqueror
+1 Flaming Tyrannosaurus
+1 Gala Greeters
+1 Goblin Anarchomancer
+1 Headliner Scarlett
+1 Keeper of Secrets
+1 Nalfeshnee
+1 Party Thrasher
+1 Plargg and Nassari
+1 Professional Face-Breaker
+1 Questing Druid
+1 Sakura-Tribe Elder
+1 Saryth, the Viper's Fang
+1 Savvy Trader
+1 Tangled Florahedron
+1 Urabrask, Heretic Praetor
+1 Wild-Magic Sorcerer
+1 Invasion of Kaldheim
+1 Lotus Petal
+1 Sol Ring
+1 Xenagos, the Reveler

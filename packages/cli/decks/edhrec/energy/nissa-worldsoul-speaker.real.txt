@@ -1,0 +1,66 @@
+# edhrec deck https://edhrec.com/deckpreview/KHoVzvLT1HHl_m-DpaaaGA (source https://archidekt.com/decks/26062419)
+# tags Landfall, Energy, Lands Matter; bracket 3; saved 2026-09-04; 248 tagged of 2324 indexed
+
+Commander
+1 Nissa, Worldsoul Speaker
+
+Deck
+1 Abundance
+1 Burgeoning
+1 Exploration
+1 Primal Prayers
+1 Sandwurm Convergence
+1 Aetherflux Conduit
+1 Aetherworks Marvel
+1 Decoction Module
+1 Fabrication Module
+1 Horn of Greed
+1 Stone Idol Generator
+1 The Great Henge
+1 Aetherwind Basker
+1 Ancient Greenwarden
+1 Apex Devastator
+1 Architect of the Untamed
+1 Azusa, Lost but Seeking
+1 Behemoth of Vault 0
+1 Bristling Hydra
+1 Craterhoof Behemoth
+1 Cultivator Colossus
+1 Disciple of Freyalise
+1 Electrostatic Pummeler
+1 Evolution Sage
+1 Longtusk Cub
+1 Lotus Cobra
+1 Oracle of Mul Daya
+1 Peema Aether-Seer
+1 Peema Trailblazer
+1 Rampaging Aetherhood
+1 Scute Swarm
+1 Servant of the Conduit
+1 Terastodon
+1 Tiller Engine
+1 Tireless Tracker
+1 Ulamog, the Infinite Gyre
+1 Vorinclex, Monstrous Raider
+1 Worldspine Wurm
+1 Attune with Aether
+1 Awaken the Woods
+1 Ezuri's Predation
+1 Genesis Wave
+1 Last March of the Ents
+1 Nature's Lore
+1 Rampant Growth
+1 Reshape the Earth
+1 Scapeshift
+1 Shamanic Revelation
+1 Summer Bloom
+1 Through the Forest Gate
+1 Crop Rotation
+1 Entish Restoration
+1 Fog
+1 Harrow
+1 Heroic Intervention
+41 Forest
+1 Myriad Landscape
+1 Prismatic Vista
+1 Nissa, Vital Force

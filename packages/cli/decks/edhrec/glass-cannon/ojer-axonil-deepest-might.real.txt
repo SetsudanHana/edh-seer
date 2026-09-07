@@ -1,0 +1,77 @@
+# edhrec deck https://edhrec.com/deckpreview/PgYhJ3diGsrdXEgiriTcjg (source https://archidekt.com/decks/12951725)
+# tags Group Slug, Burn, Glass Cannon; bracket 3; saved 2025-05-06; 14 tagged of 10437 indexed
+
+Commander
+1 Ojer Axonil, Deepest Might
+
+Deck
+1 Arcane Signet
+1 Blackblade Reforged
+1 Brass's Tunnel-Grinder
+1 Cursed Mirror
+1 Lavaspur Boots
+1 Lightning Greaves
+1 Ruby Medallion
+1 Sol Ring
+1 Ashling, Flame Dancer
+1 Birgi, God of Storytelling
+1 Coruscation Mage
+1 Electrostatic Field
+1 Erebor Flamesmith
+1 Firebrand Archer
+1 Guttersnipe
+1 Humble Defector
+1 Kessig Flamebreather
+1 Pinnacle Monk
+1 Razorkin Needlehead
+1 Runaway Steam-Kin
+1 Tectonic Giant
+1 Thermo-Alchemist
+1 Urabrask
+1 Big Score
+1 Bolt Bend
+1 Chaos Warp
+1 Deflecting Swat
+1 Demand Answers
+1 Desperate Ritual
+1 Flare of Duplication
+1 Lightning Bolt
+1 Pyretic Ritual
+1 Pyroblast
+1 Thrill of Possibility
+1 Titan's Strength
+1 Unexpected Windfall
+1 Unleash Fury
+1 Untimely Malfunction
+1 Valakut Awakening
+1 Blasphemous Act
+1 Cathartic Reunion
+1 Chain Reaction
+1 End the Festivities
+1 Faithless Looting
+1 Fiery Confluence
+1 Flame Rift
+1 Gamble
+1 Glimpse the Impossible
+1 Highway Robbery
+1 Ignite the Future
+1 Into the Fire
+1 Light Up the Stage
+1 Mana Geyser
+1 Reckless Impulse
+1 Rousing Refrain
+1 Strike It Rich
+1 Sundering Eruption
+1 Tectonic Hazard
+1 Vandalblast
+1 Chandra, Torch of Defiance
+1 Charred Foyer // Warped Space
+1 Curse of Opulence
+1 Descent into Avernus
+1 Fiery Inscription
+1 Manabarbs
+1 Outpost Siege
+1 Roiling Vortex
+1 Tavern Brawler
+1 Wild Wasteland
+30 Mountain

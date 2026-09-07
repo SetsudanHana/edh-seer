@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/aveline-de-grandpre/deathtouch
+# theme Deathtouch (254 decks)
+
+Commander
+1 Aveline de Grandpré
+
+Deck
+1 Arcane Signet
+1 Golgari Signet
+1 Hunter's Bow
+1 Sol Ring
+1 Swiftfoot Boots
+1 The Earth Crystal
+1 The Ozolith
+1 Viridian Longbow
+1 Bojuka Bog
+1 Command Tower
+11 Forest
+1 Golgari Rot Farm
+1 Hissing Quagmire
+1 Llanowar Wastes
+1 Necroblossom Snarl
+1 Overgrown Tomb
+1 Rogue's Passage
+9 Swamp
+1 Tainted Wood
+1 Temple of Malady
+1 Twilight Mire
+1 Undergrowth Stadium
+1 Woodland Cemetery
+1 Acidic Slime
+1 Ambush Viper
+1 Archpriest of Shadows
+1 Black Widow, Deadly Hunter
+1 Chevill, Bane of Monsters
+1 Corpsejack Menace
+1 Dragon Sniper
+1 Duskshell Crawler
+1 Frog Butler
+1 Fynn, the Fangbearer
+1 Gifted Aetherborn
+1 Glissa Sunslayer
+1 Harvester of Souls
+1 Hooded Blightfang
+1 Hornet Queen
+1 Leyline Prowler
+1 Nighthawk Scavenger
+1 Nightshade Dryad
+1 Noxious Newt
+1 Oakhame Adversary
+1 Ohran Frostfang
+1 Poison-Tip Archer
+1 Qarsi Revenant
+1 Questing Beast
+1 Rhonas the Indomitable
+1 Saryth, the Viper's Fang
+1 The Serpent Society
+1 Toski, Bearer of Secrets
+1 Tower Winder
+1 Vampire Nighthawk
+1 Vampire of the Dire Moon
+1 Vraska, the Silencer
+1 White Widow, Yelena Belova
+1 Branching Evolution
+1 Garruk's Uprising
+1 Hardened Scales
+1 Hollowmurk Siege
+1 Sphere Grid
+1 Terrasymbiosis
+1 Vraska Joins Up
+1 Assassin's Trophy
+1 Beast Within
+1 Golgari Charm
+1 Heroic Intervention
+1 Inspiring Call
+1 Putrefy
+1 Ram Through
+1 Revitalizing Repast
+1 Tear Asunder
+1 Vraska, Swarm's Eminence
+1 Cultivate
+1 Farseek
+1 Kodama's Reach
+1 Nature's Lore
+1 Rampant Growth
+1 Three Visits
+1 Toxic Deluge
+1 Viewpoint Synchronization

@@ -22,7 +22,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   stackInteraction: "Counterspells", boardWipe: "Board wipes", burn: "Burn & drain", stax: "Stax",
   protection: "Protection", tutor: "Tutors", lands: "Lands",
 };
-export const CATEGORY_ORDER: Category[] = [
+const CATEGORY_ORDER: Category[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction",
   "boardWipe", "burn", "stax", "protection", "tutor", "lands",
 ];
@@ -164,7 +164,7 @@ function Cost({ card, cell, className }: { card: DeckReport["cards"][number]; ce
   );
 }
 
-export const castRange = (c: { castable: { low: number; high: number } }): string =>
+const castRange = (c: { castable: { low: number; high: number } }): string =>
   policyBand(c.castable.low, c.castable.high);
 
 type SortKey = "synergy" | "name" | "cost";
@@ -415,7 +415,7 @@ export function CardList({ cards, artByName, coverage }: {
             *  thing S7's sticky existed to prevent: on a phone the column labels scrolled away.
             *  The scroll box is gone now (see the wrapper above), so there is no overflow ancestor
             *  at any width and `top` resolves against the viewport everywhere. */}
-          <thead className="sticky top-[var(--report-header-h,0px)] z-[5] bg-(--background)">
+          <thead className="sticky top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px))] z-[5] bg-(--background)">
             <tr className="border-b border-(--separator)">
               {/* THE COLUMNS A NARROW TABLE CANNOT HOLD MOVE INTO THE CARD CELL, they do not move
                 *  off the right edge. Pinned widths are 40 + 224 + 128 + 80 = 472px, which is more

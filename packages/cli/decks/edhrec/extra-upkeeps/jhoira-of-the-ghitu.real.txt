@@ -1,0 +1,88 @@
+# edhrec deck https://edhrec.com/deckpreview/GwPpcFCmExD21o7M0FfVSA (source https://archidekt.com/decks/21691772)
+# tags Extra Upkeeps, Suspend, Card Draw, Time Counters; bracket 2; saved 2026-09-01; 15 tagged of 4649 indexed
+
+Commander
+1 Jhoira of the Ghitu
+
+Deck
+1 Aeon Chronicler
+1 Arcanis the Omnipotent
+1 Archetype of Imagination
+1 Artisan of Kozilek
+1 Deep-Sea Kraken
+1 Drakuseth, Maw of Flames
+1 Etali, Primal Storm
+1 Jhoira's Timebug
+1 Jin-Gitaxias, Core Augur
+1 Ovika, Enigma Goliath
+1 Pathrazer of Ulamog
+1 Rift Elemental
+1 Shivan Sand-Mage
+1 Sphinx of the Second Sun
+1 Starwinder
+1 The Tenth Doctor
+1 The Unagi of Kyoshi Island
+1 Thor, God of Thunder
+1 Time Beetle
+1 Wild-Magic Sorcerer
+1 All of History, All at Once
+1 Aminatou's Augury
+1 Ancestral Vision
+1 Blasphemous Act
+1 Inevitable Betrayal
+1 Inspiring Refrain
+1 Ponder
+1 Preordain
+1 Reality Strobe
+1 Serum Visions
+1 Wibbly-wobbly, Timey-wimey
+1 Arcane Signet
+1 Doom's Time Platform
+1 Fellwar Stone
+1 Lightning Greaves
+1 Mind Stone
+1 Rotating Fireplace
+1 Sol Ring
+1 Sol Talisman
+1 Swiftfoot Boots
+1 Talisman of Creativity
+1 Thought Vessel
+1 As Foretold
+1 Extravagant Replication
+1 Mind's Dilation
+1 Omniscience
+1 One with the Multiverse
+1 Paradox Haze
+1 Shadow of the Second Sun
+1 Shark Typhoon
+1 The Lost and the Damned
+1 Brainstorm
+1 Chaos Warp
+1 Clockspinning
+1 Counterspell
+1 Fury Charm
+1 Invert Polarity
+1 Mana Sculpt
+1 Nexus of Fate
+1 Opt
+1 Pongify
+1 Return the Favor
+1 Timecrafting
+1 Coastal Peak
+1 Command Tower
+1 Exotic Orchard
+1 Frostboil Snarl
+12 Island
+1 Izzet Boilerworks
+8 Mountain
+1 Mystic Sanctuary
+1 Path of Ancestry
+1 Reliquary Tower
+1 Rivendell
+1 Rogue's Passage
+1 Scorched Geyser
+1 Stormcarved Coast
+1 Sulfur Falls
+1 Temple of Epiphany
+1 Temple of the False God
+1 Trenzalore Clocktower

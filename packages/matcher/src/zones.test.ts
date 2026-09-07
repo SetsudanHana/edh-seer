@@ -15,10 +15,18 @@ test("enters-graveyard normalizes to enters@graveyard", () => {
   expect(n.subject.type).toBe("creature");
 });
 
-test("dies normalizes to leaves@battlefield", () => {
+test("dies stays dies (CR 700.4: a death is one kind of leave, not the same event) and is stamped battlefield", () => {
   const n = normalizeZoneEvent({ verb: "dies", subject: { control: "you", token: null, type: "creature" } });
-  expect(n.verb).toBe("leaves");
+  expect(n.verb).toBe("dies");
   expect(n.subject.zone).toBe("battlefield");
+});
+
+test("leaves is stamped battlefield when the subject states no zone, and keeps a stated zone", () => {
+  const bare = normalizeZoneEvent({ verb: "leaves", subject: { control: "you", token: null, type: "creature" } });
+  expect(bare.verb).toBe("leaves");
+  expect(bare.subject.zone).toBe("battlefield");
+  const gy = normalizeZoneEvent({ verb: "leaves", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } });
+  expect(gy.subject.zone).toBe("graveyard");
 });
 
 test("non-zone verbs are unchanged", () => {
@@ -26,9 +34,13 @@ test("non-zone verbs are unchanged", () => {
   expect(normalizeZoneEvent(e)).toEqual(e);
 });
 
-test("zoneEventKey keeps legacy tag spellings", () => {
+test("zoneEventKey keeps legacy tag spellings, and a graveyard leave is its own key", () => {
   expect(zoneEventKey("enters", "battlefield", "wizard")).toBe("enters:wizard");
   expect(zoneEventKey("enters", "graveyard", "creature")).toBe("enters-graveyard:creature");
-  expect(zoneEventKey("leaves", "battlefield", "creature")).toBe("dies:creature");
+  // A death pair keyed `dies:` before this change and must key `dies:` after it -- the panel's join key.
+  expect(zoneEventKey("dies", "battlefield", "creature")).toBe("dies:creature");
+  // A leaves consumer keyed `leaves:` before this change (its subject carried no zone) and must still.
+  expect(zoneEventKey("leaves", "battlefield", "creature")).toBe("leaves:creature");
+  expect(zoneEventKey("leaves", "graveyard", "creature")).toBe("leaves-graveyard:creature");
   expect(zoneEventKey("mill", undefined, "any")).toBe("mill:any");
 });

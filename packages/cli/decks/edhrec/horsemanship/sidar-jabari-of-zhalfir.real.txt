@@ -1,0 +1,96 @@
+# edhrec deck https://edhrec.com/deckpreview/6UF5FDaXtb5Y0NfQeNK5Yw (source https://archidekt.com/decks/21567255)
+# tags Keywords, Knights, Horsemanship; bracket 2; saved 2026-08-04; 4 tagged of 17797 indexed
+
+Commander
+1 Sidar Jabari of Zhalfir
+
+Deck
+1 Acclaimed Contender
+1 Adeline, Resplendent Cathar
+1 Aryel, Knight of Windgrace
+1 Basri's Lieutenant
+1 Breathless Knight
+1 Cecil, Dark Knight
+1 Elenda and Azor
+1 Exsanguinator Cavalry
+1 Foulmire Knight
+1 Guardian of Faith
+1 Haakon, Stromgald Scourge
+1 Herald of Hoofbeats
+1 Hero of Bladehold
+1 Josu Vess, Lich Knight
+1 Kinsbaile Cavalier
+1 Knight Exemplar
+1 Knight of the White Orchid
+1 Knights of the Black Rose
+1 Liliana's Standard Bearer
+1 Locthwain Lancer
+1 Marshal of Zhalfir
+1 Moonshaker Cavalry
+1 Order of Midnight
+1 Silverwing Squadron
+1 Skyhunter Strike Force
+1 Smitten Swordmaster
+1 Summon: Primal Odin
+1 Syr Konrad, the Grim
+1 Syr Vondam, Sunstar Exemplar
+1 Syr Vondam, the Lucent
+1 Valiant Knight
+1 Vodalian Wave-Knight
+1 Vona, Butcher of Magan
+1 Wintermoor Commander
+1 Worthy Knight
+1 Anguished Unmaking
+1 Counterspell
+1 Path to Exile
+1 Return to Dust
+1 Swords to Plowshares
+1 Unbreakable Formation
+1 Arcane Sanctum
+1 Bojuka Bog
+1 Caves of Koilos
+1 Choked Estuary
+1 Command Tower
+1 Evolving Wilds
+1 Exotic Orchard
+1 Hallowed Fountain
+1 Myriad Landscape
+1 Path of Ancestry
+7 Plains
+1 Port Town
+1 Prairie Stream
+1 Secluded Courtyard
+1 Shineshadow Snarl
+1 Sunken Hollow
+5 Swamp
+1 Temple of Deceit
+1 Temple of Enlightenment
+1 Temple of Silence
+1 Terramorphic Expanse
+1 Thriving Heath
+1 Thriving Isle
+1 Thriving Moor
+1 Unclaimed Territory
+1 Arcane Signet
+1 Coat of Arms
+1 Commander's Sphere
+1 Conjurer's Mantle
+1 Fellwar Stone
+1 Herald's Horn
+1 Icon of Ancestry
+1 Mind Stone
+1 Sigiled Sword of Valeron
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Hierarchy
+1 The Circle of Loyalty
+1 Vanquisher's Banner
+1 Buried Alive
+1 Distant Melody
+1 Read the Bones
+1 Time Wipe
+1 Chivalric Alliance
+1 Kindred Discovery
+1 Knights' Charge
+1 Virtue of Loyalty
+1 Invasion of New Phyrexia

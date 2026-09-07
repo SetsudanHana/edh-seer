@@ -1,0 +1,88 @@
+# edhrec average deck: https://edhrec.com/average-decks/anje-maid-of-dishonor/blood
+# theme Blood (85 decks)
+
+Commander
+1 Anje, Maid of Dishonor
+
+Deck
+1 Arcane Signet
+1 Blood Fountain
+1 Ceremonial Knife
+1 Glass-Cast Heart
+1 Inspiring Statuary
+1 Oni-Cult Anvil
+1 Rakdos Signet
+1 Sanguine Statuette
+1 Sol Ring
+1 Talisman of Indulgence
+1 Bloodfell Caves
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Evolving Wilds
+1 Foreboding Ruins
+1 Haunted Ridge
+9 Mountain
+1 Path of Ancestry
+1 Rakdos Carnarium
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+11 Swamp
+1 Tainted Peak
+1 Temple of Malice
+1 Voldaren Estate
+1 Anowon, the Ruin Sage
+1 Belligerent Guest
+1 Blood Artist
+1 Blood Hypnotist
+1 Blood Petal Celebrant
+1 Bloodcrazed Socialite
+1 Bloodline Keeper
+1 Bloodtithe Harvester
+1 Cordial Vampire
+1 Crossway Troublemakers
+1 Falkenrath Celebrants
+1 Falkenrath Forebear
+1 Falkenrath Gorger
+1 Gluttonous Guest
+1 Ivora, Insatiable Heir
+1 Kamber, the Plunderer
+1 Marauding Blight-Priest
+1 Markov Baron
+1 Markov Enforcer
+1 Mirkwood Bats
+1 Moonstone Eulogist
+1 Olivia's Attendants
+1 Olivia, Crimson Bride
+1 Patron of the Vein
+1 Restless Bloodseeker
+1 Sanctum Seeker
+1 Strefan, Maurer Progenitor
+1 Stromkirk Captain
+1 Vampire Socialite
+1 Voldaren Bloodcaster
+1 Voldaren Epicure
+1 Wedding Security
+1 Agent of the Iron Throne
+1 Arterial Alchemy
+1 Sanguine Bond
+1 Stensia Masquerade
+1 Abrade
+1 Bedevil
+1 Chaos Warp
+1 Deadly Dispute
+1 Demand Answers
+1 Rakdos Charm
+1 Terminate
+1 Vampires' Vengeance
+1 Sorin the Mirthless
+1 Blasphemous Act
+1 Bloody Betrayal
+1 Exsanguinate
+1 Feed the Swarm
+1 Lacerate Flesh
+1 Lich-Knights' Conquest
+1 Olivia's Wrath
+1 Pointed Discussion
+1 Vampire's Kiss

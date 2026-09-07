@@ -12,7 +12,21 @@
     "./deck-cards": "./src/deck-cards.ts",
     "./wire-graph": "./src/wire-graph.ts",
     "./orchestrate": "./src/orchestrate.ts",
-    "./static-lookup": "./src/static-lookup.ts"
+    "./static-lookup": "./src/static-lookup.ts",
+    "./partner-shard": "./src/partner-shard.ts",
+    "./partners-core": "./src/bin/partners-core.ts",
+    "./edges": "./src/edges.ts",
+    "./goldfish": "./src/goldfish.ts",
+    "./land-count": "./src/land-count.ts",
+    "./mechanisms": "./src/mechanisms.ts",
+    "./mesh": "./src/mesh.ts",
+    "./otag-edges": "./src/otag-edges.ts",
+    "./pressure": "./src/pressure.ts",
+    "./ratings-diff": "./src/ratings-diff.ts",
+    "./types": "./src/types.ts",
+    "./wincon": "./src/wincon.ts",
+    "./zones": "./src/zones.ts",
+    "./eval-pairs-core": "./src/eval-pairs-core.ts"
   },
   "scripts": {
     "test": "vitest run",

@@ -1,0 +1,104 @@
+# edhrec deck https://edhrec.com/deckpreview/3QucChBzA6aBB_J6TrjpuA (source https://archidekt.com/decks/22294920)
+# tags Counters Matter, Phyrexians, Proliferate, Infect; bracket 3; saved 2026-09-03; 208 tagged of 44172 indexed
+
+Commander
+1 Atraxa, Praetors' Voice
+
+Deck
+1 Arcane Signet
+1 Brotherhood Regalia
+1 Contagion Clasp
+1 Glistening Sphere
+1 Sol Ring
+1 Staff of Compleation
+1 Talisman of Curiosity
+1 Talisman of Dominance
+1 Talisman of Hierarchy
+1 Blightbelly Rat
+1 Blighted Agent
+1 Bloated Contaminator
+1 Bloom Tender
+1 Delney, Streetwise Lookout
+1 Dreamtide Whale
+1 Evolution Sage
+1 Glistener Elf
+1 Hand of the Praetors
+1 Ichor Rats
+1 Necrogen Rotpriest
+1 Pestilent Syphoner
+1 Phyrexian Crusader
+1 Skithiryx, the Blight Dragon
+1 Skrelv, Defector Mite
+1 Tainted Observer
+1 Tekuthal, Inquiry Dominus
+1 Tetsuko Umezawa, Fugitive
+1 Venerated Rotpriest
+1 Voidwing Hybrid
+1 Vorinclex, Monstrous Raider
+1 Bountiful Promenade
+1 Breeding Pool
+1 City of Brass
+1 Command Tower
+1 Exotic Orchard
+1 Flooded Strand
+2 Forest
+1 Gloomlake Verge
+1 Hallowed Fountain
+1 Hedge Maze
+1 Hushwood Verge
+1 Indatha Triome
+1 Inkmoth Nexus
+1 Island
+1 Karn's Bastion
+1 Lush Portico
+1 Mana Confluence
+1 Marsh Flats
+1 Misty Rainforest
+1 Mystic Gate
+1 Overgrown Tomb
+1 Plains
+1 Polluted Delta
+1 Raffine's Tower
+1 Rejuvenating Springs
+1 Rogue's Passage
+1 Shipwreck Marsh
+1 Spara's Headquarters
+1 Sunken Ruins
+2 Swamp
+1 Temple Garden
+1 The Seedcore
+1 Verdant Catacombs
+1 Watery Grave
+1 Windswept Heath
+1 Zagoth Triome
+1 Brainstorm
+1 Deadly Rollick
+1 Experimental Augury
+1 Fierce Guardianship
+1 Flawless Maneuver
+1 Force of Negation
+1 Heroic Intervention
+1 Infectious Bite
+1 Path to Exile
+1 Prologue to Phyresis
+1 Swords to Plowshares
+1 Vampiric Tutor
+1 Vraska's Fall
+1 Contentious Plan
+1 Demonic Tutor
+1 Expansion Algorithm
+1 Farseek
+1 Infectious Inquiry
+1 Nature's Lore
+1 Phyresis Outbreak
+1 Scale Up
+1 Tezzeret's Gambit
+1 Three Visits
+1 Unnatural Restoration
+1 Glistening Oil
+1 Necrogen Communion
+1 Norn's Decree
+1 Phyresis
+1 Tamiyo, Field Researcher
+1 Teferi, Time Raveler
+1 Vraska, Betrayal's Sting

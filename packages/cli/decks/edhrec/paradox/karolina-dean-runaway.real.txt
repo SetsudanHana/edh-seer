@@ -1,0 +1,99 @@
+# edhrec deck https://edhrec.com/deckpreview/YqEaUVv2F__u48UmhJIZiw (source https://archidekt.com/decks/23423286)
+# tags Heroes, Paradox; bracket 2; saved 2026-08-26; 8 tagged of 997 indexed
+
+Commander
+1 Karolina Dean, Runaway
+
+Deck
+1 Alex Wilder, Runaway
+1 Chase Stein, Runaway
+1 Eruth, Tormented Prophet
+1 Gert and Old Lace, Runaways
+1 Gwen Stacy
+1 Gwenom, Remorseless
+1 Hawkeye, Young Avenger
+1 Hulkling, Young Avenger
+1 Iron Lad, Young Avenger
+1 Keeper of Secrets
+1 Kid Loki
+1 Loot, the Key to Everything
+1 Molly Hayes, Runaway
+1 Nico Minoru, Runaway
+1 Patriot, Young Avenger
+1 Speed, Young Avenger
+1 Spider-Man 2099
+1 Stature, Young Avenger
+1 Super-Skrull
+1 The Vision
+1 Victor Mancha, Runaway
+1 Wiccan, Rising Magician
+1 Wiccan, Young Avenger
+1 Arcane Denial
+1 Blazing Crescendo
+1 Bovine Intervention
+1 Crossover Collaboration
+1 Deadly Rollick
+1 Heroic Intervention
+1 Heroic Sacrifice
+1 Opera Love Song
+1 We Say Thee Nay!
+1 Arcane Signet
+1 Chromatic Lantern
+1 Hawkeye's Bow
+1 Iconic Shield
+1 Interdimensional Web Watch
+1 Legacy Weapon
+1 Peter Parker's Camera
+1 Relic of Legends
+1 Sol Ring
+1 Swiftfoot Boots
+1 Tablet of Discovery
+1 Talisman of Conviction
+1 Talisman of Creativity
+1 Thought Vessel
+1 Artist's Talent
+1 Charred Foyer // Warped Space
+1 Furious Rise
+1 Love on the Battlefield
+1 Super Speed
+1 Tavern Brawler
+1 Asgardian Inspiration
+1 Dismantling Wave
+1 Expressive Iteration
+1 Heroes' Hangout
+1 Hex Magic
+1 Promise of Loyalty
+1 Rampant Growth
+1 Reckless Impulse
+1 Restorative Technique
+1 Ultimate Magic: Meteor
+1 Avengers Tower
+1 Baxter Building
+1 Clifftop Retreat
+1 Command Tower
+1 Daily Bugle Building
+1 Dark Fortress
+1 Evolving Wilds
+1 Exotic Orchard
+1 Forest
+1 Frostboil Snarl
+1 Hidden Lair
+1 Island
+8 Mountain
+1 Multiversal Passage
+1 Mystic Monastery
+1 Oscorp Industries
+1 Path of Ancestry
+1 Plains
+1 Plaza of Heroes
+1 Prairie Stream
+1 Radiant Summit
+1 Rootbound Crag
+1 Scorched Geyser
+1 Surveillance Room
+1 Swamp
+1 Terramorphic Expanse
+1 The World Tree
+1 Training Compound
+1 Urban Retreat
+1 Vibrant Cityscape

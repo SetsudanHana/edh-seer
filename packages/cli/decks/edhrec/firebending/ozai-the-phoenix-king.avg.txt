@@ -1,0 +1,87 @@
+# edhrec average deck: https://edhrec.com/average-decks/ozai-the-phoenix-king/firebending
+# theme Firebending (166 decks)
+
+Commander
+1 Ozai, the Phoenix King
+
+Deck
+1 Arcane Signet
+1 Bender's Waterskin
+1 Doubling Cube
+1 Fire Nation Turret
+1 Lightning Greaves
+1 Rakdos Signet
+1 Ruby Medallion
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Indulgence
+1 The Fire Nation Drill
+1 Blazemire Verge
+1 Blood Crypt
+1 Boiling Rock Prison
+1 Bojuka Bog
+1 Command Tower
+1 Dragonskull Summit
+1 Fire Nation Palace
+1 Foreboding Ruins
+1 Graven Cairns
+1 Haunted Ridge
+1 Luxury Suite
+12 Mountain
+1 Rogue's Passage
+1 Shadowblood Ridge
+1 Smoldering Marsh
+1 Sulfurous Springs
+9 Swamp
+1 Ashling, Flame Dancer
+1 Avatar Roku, Firebender
+1 Azula, On the Hunt
+1 Combustion Man
+1 Cruel Administrator
+1 Electro, Assaulting Battery
+1 Fire Lord Ozai
+1 Fire Sages
+1 Firebending Student
+1 Hellkite Charger
+1 Inferno of the Star Mounts
+1 Iroh, Dragon of the West
+1 Leyline Tyrant
+1 Lo and Li, Twin Tutors
+1 Neheb, the Eternal
+1 Vindictive Warden
+1 Zhao, Ruthless Admiral
+1 Zuko, Exiled Prince
+1 Zuko, Firebending Master
+1 Zuko, Seeking Honor
+1 Aggravated Assault
+1 Braid of Fire
+1 Fated Firepower
+1 Fire Nation Occupation
+1 Firebender Ascension
+1 The Legend of Roku
+1 The Rise of Sozin
+1 Big Score
+1 Bolt Bend
+1 Chaos Warp
+1 Comet Storm
+1 Dark Ritual
+1 Deflecting Swat
+1 Electrodominance
+1 Fire Nation Attacks
+1 Lightning Bolt
+1 Redirect Lightning
+1 Return the Favor
+1 Seething Song
+1 The Last Agni Kai
+1 Unexpected Windfall
+1 Blasphemous Act
+1 Crackle with Power
+1 Day of Black Sun
+1 Exsanguinate
+1 Feed the Swarm
+1 Jaya's Immolating Inferno
+1 Jeska's Will
+1 Mana Geyser
+1 Night's Whisper
+1 Sozin's Comet
+1 Torment of Hailfire

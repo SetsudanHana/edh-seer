@@ -1,0 +1,86 @@
+# edhrec average deck: https://edhrec.com/average-decks/brion-stoutarm/fling
+# theme Fling (130 decks)
+
+Commander
+1 Brion Stoutarm
+
+Deck
+1 Arcane Signet
+1 Boros Signet
+1 Illusionist's Bracers
+1 Lightning Greaves
+1 Mimic Vat
+1 Patriar's Seal
+1 Phyrexian Processor
+1 Skullclamp
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Conviction
+1 Thousand-Year Elixir
+1 Well of Lost Dreams
+1 Battlefield Forge
+1 Boros Garrison
+1 Clifftop Retreat
+1 Command Tower
+1 Evolving Wilds
+1 Furycalm Snarl
+13 Mountain
+1 Myriad Landscape
+9 Plains
+1 Rugged Prairie
+1 Sacred Foundry
+1 Slayers' Stronghold
+1 Spectator Seating
+1 Spinerock Knoll
+1 Sundown Pass
+1 Temple of Triumph
+1 Adarkar Valkyrie
+1 Anger
+1 Bre of Clan Stoutarm
+1 Calamity Bearer
+1 Captivating Crew
+1 Evra, Halcyon Witness
+1 Feldon of the Third Path
+1 Firbolg Flutist
+1 Gisela, Blade of Goldnight
+1 Hamletback Goliath
+1 Hofri Ghostforge
+1 Kiki-Jiki, Mirror Breaker
+1 Luminous Broodmoth
+1 Malignus
+1 Molten Primordial
+1 Realm-Cloaked Giant
+1 Serra Avatar
+1 Solemn Simulacrum
+1 Solphim, Mayhem Dominus
+1 Soul of Eternity
+1 Stalking Vengeance
+1 Sun Titan
+1 Surtland Flinger
+1 Taurean Mauler
+1 Zealous Conscripts
+1 Gift of Immortality
+1 Gratuitous Violence
+1 Smothering Tithe
+1 Sneak Attack
+1 Warstorm Surge
+1 Act of Aggression
+1 Boros Charm
+1 Chaos Warp
+1 Fling
+1 Grab the Reins
+1 Kazuul's Fury
+1 Legion Leadership
+1 Path to Exile
+1 Swords to Plowshares
+1 Unleash Fury
+1 Act of Treason
+1 Blasphemous Act
+1 Faithless Looting
+1 Furnace Reins
+1 Hijack
+1 Kari Zev's Expertise
+1 Mark of Mutiny
+1 Seize the Spotlight
+1 Thud
+1 Vandalblast

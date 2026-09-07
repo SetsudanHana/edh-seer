@@ -1,0 +1,89 @@
+# edhrec average deck: https://edhrec.com/average-decks/zethi-arcane-blademaster/kicker
+# theme Kicker (23 decks)
+
+Commander
+1 Zethi, Arcane Blademaster
+
+Deck
+1 Aetherflux Reservoir
+1 Arcane Signet
+1 Azorius Signet
+1 Fellwar Stone
+1 Sapphire Medallion
+1 Sentinel Tower
+1 Sol Ring
+1 Swiftfoot Boots
+1 Talisman of Progress
+1 Thought Vessel
+1 Adarkar Wastes
+1 Azorius Chancery
+1 Command Tower
+1 Deserted Beach
+1 Glacial Fortress
+1 Hallowed Fountain
+1 Irrigated Farmland
+11 Island
+1 Meticulous Archive
+1 Mystic Sanctuary
+8 Plains
+1 Port Town
+1 Prairie Stream
+1 Reliquary Tower
+1 Rogue's Passage
+1 Sea of Clouds
+1 Seachrome Coast
+1 Temple of Enlightenment
+1 Archmage Emeritus
+1 Baral, Chief of Compliance
+1 Grand Arbiter Augustin IV
+1 Hullbreaker Horror
+1 Kykar, Zephyr Awakener
+1 Leonin Lightscribe
+1 Lyse Hext
+1 Monastery Mentor
+1 Murmuring Mystic
+1 Niblis of Frost
+1 Stenn, Paranoid Partisan
+1 Stirring Hopesinger
+1 Talrand, Sky Summoner
+1 Thunderclap Drake
+1 Vega, the Watcher
+1 Case of the Ransacked Lab
+1 Ghostly Prison
+1 Graduation Day
+1 Jace's Sanctum
+1 Reconnaissance
+1 Brainstorm
+1 Consider
+1 Counterspell
+1 Curate
+1 Cyclonic Rift
+1 Disenchant
+1 Dramatic Reversal
+1 Fact or Fiction
+1 Fading Hope
+1 Faithful Mending
+1 Frantic Search
+1 Generous Gift
+1 High Tide
+1 Leap
+1 Loran's Escape
+1 Mystical Tutor
+1 Negate
+1 Opt
+1 Path to Exile
+1 Pongify
+1 Rapid Hybridization
+1 Shadow Rift
+1 Shelter
+1 Show of Confidence
+1 Snap
+1 Stroke of Midnight
+1 Surge of Brilliance
+1 Swords to Plowshares
+1 Take Up the Shield
+1 Thought Scour
+1 You Come to a River
+1 Supreme Verdict
+1 Time Wipe
+1 Windfall
