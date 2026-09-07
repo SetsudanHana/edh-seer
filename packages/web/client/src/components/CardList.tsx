@@ -70,12 +70,13 @@ function Thumb({ art, alt }: { art?: string; alt: string }) {
 function GridCard({
   name, art, count, dim, onOpen,
 }: { name: string; art?: string; count?: number; dim?: boolean; onOpen: () => void }) {
+  const src = art === undefined ? null : cardImageUrl(art);
   return (
     <figure className="relative m-0 rounded-[7px] overflow-hidden border border-(--separator) bg-(--surface-secondary) aspect-[488/680]">
       <button type="button" onClick={onOpen} className="block w-full h-full text-left" aria-label={name}>
-        {art ? (
+        {src ? (
           <img
-            src={cardImageUrl(art)}
+            src={src}
             alt={name}
             loading="lazy"
             className={`w-full h-full object-cover transition-[opacity,filter] duration-200 ${

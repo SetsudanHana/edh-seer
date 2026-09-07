@@ -124,7 +124,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
     return (
       <article className="flex flex-col gap-8 max-w-[68ch]">
         <div className="max-w-[68ch]">{header}</div>
-        <CardArt artCrop={page.artCrop} name={page.name} />
+        <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
         <p className="text-(--muted) max-w-[65ch]">
           {page.name} cannot lead a deck. This page is for cards that can be a commander; the card
           itself has one.
@@ -272,8 +272,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
       * you chose". Side by side on a phone, where the rail sits above the text and has the width;
       * stacked in the desktop rail, which is one card wide. */}
     <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] flex flex-row lg:flex-col gap-4">
-      <CardArt artCrop={page.artCrop} name={page.name} />
-      {pair ? <CardArt artCrop={pair.artCrop} name={pair.name} /> : null}
+      <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
+      {pair ? <CardArt artCrop={pair.artCrop} backArtCrop={pair.backArtCrop} name={pair.name} /> : null}
     </aside>
     </article>
   );

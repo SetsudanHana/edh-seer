@@ -115,7 +115,12 @@ export function CardInspector({
   const face = faces.length > 1 ? faces[Math.min(faceIdx, faces.length - 1)] : undefined;
   // ONE ANSWER FOR "IS THE CARD ITSELF ON SCREEN", read by the image and by the text below it: the
   // panel prints the oracle text only when the picture is not already printing it.
-  const hasImage = Boolean(face?.artCrop ?? node.artCrop);
+  //
+  // SO THE URL GUARD BELONGS INSIDE THIS, not beside the `<img>`. `cardImageUrl` refuses a URL that
+  // is not Scryfall's; refusing it at the tag alone would leave `hasImage` true and the panel would
+  // print NEITHER the picture nor the oracle text the picture was standing in for.
+  const faceImage = ((art) => (art === undefined ? null : cardImageUrl(art)))(face?.artCrop ?? node.artCrop);
+  const hasImage = faceImage !== null;
 
   const routes = routesThrough(edges, node.id);
   const cutDown = flow?.truncated.get(node.id)?.down;
@@ -234,7 +239,7 @@ export function CardInspector({
         *  the panel. `object-contain` stays as the guarantee that a card face is never stretched. */}
       {hasImage ? (
         <img
-          src={cardImageUrl((face?.artCrop ?? node.artCrop)!)}
+          src={faceImage}
           alt={face?.name ?? node.label}
           // NOT IN THE HALF SHEET BELOW `sm`. The sheet is ~35vh; measured at 390, a 14vh card still
           // left the first pair 130px under the sheet's fold behind the close row, the name, the

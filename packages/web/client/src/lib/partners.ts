@@ -1,5 +1,6 @@
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
 import type { CardPageRecord, NameIndexEntry, PartnerRow } from "@edh-seer/matcher/partners-core";
+import { CARD_PAGE_DATA_ID } from "./inject.js";
 
 /** THE CARD PAGES' DATA PLANE, and it is deliberately three lines over `StaticLookup`.
  *
@@ -15,9 +16,38 @@ import type { CardPageRecord, NameIndexEntry, PartnerRow } from "@edh-seer/match
 export type CardPageData = CardPageRecord;
 export type { NameIndexEntry, PartnerRow };
 
+/** THE RECORD THE EDGE ALREADY PUT IN THIS DOCUMENT, or null.
+ *
+ *  THE NETWORK IS NOT ALWAYS AVAILABLE TO THE THING RENDERING THIS PAGE. Googlebot's renderer obeys
+ *  `robots.txt` for subresources, `/static/` is disallowed, and so the fetch below returned nothing
+ *  and every card page rendered as `<NotFound />` in the DOM Google indexed. The edge has the record
+ *  at serve time; reading it here is what makes the rendered page true. It is also two round trips
+ *  a human no longer waits for.
+ *
+ *  IT MUST MATCH THE SLUG BEING ASKED FOR. React Router navigates without reloading the document, so
+ *  after one click on a partner link this tag still holds the card the reader ARRIVED on. Returning
+ *  it then would show the wrong card under the right URL -- a worse failure than the one being
+ *  fixed, because nothing about it looks broken.
+ *
+ *  EVERY FAILURE IS `null`, WHICH MEANS "ASK THE NETWORK". No tag (a dev server, the SPA fallback,
+ *  a degraded edge response), a body that will not parse, no `document` at all under SSR or a test:
+ *  all of them fall through to the fetch that has always been here. */
+export function inlineCardPage(slug: string, doc?: Document): CardPageData | null {
+  const d = doc ?? (typeof document === "undefined" ? undefined : document);
+  const el = d?.getElementById(CARD_PAGE_DATA_ID);
+  if (!el || el.getAttribute("data-slug") !== slug) return null;
+  try {
+    return JSON.parse(el.textContent ?? "") as CardPageData;
+  } catch {
+    return null;
+  }
+}
+
 export function loadCardPage(
   slug: string, baseUrl: string, fetchImpl: typeof fetch = fetch,
 ): Promise<CardPageData | null> {
+  const inline = inlineCardPage(slug);
+  if (inline) return Promise.resolve(inline);
   return new StaticLookup(baseUrl, fetchImpl).cardPage(slug);
 }
 

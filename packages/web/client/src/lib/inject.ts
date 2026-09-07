@@ -19,6 +19,32 @@ import { eventKeySentence } from "./demand-sentence.js";
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/** JSON THAT IS SAFE TO PUT INSIDE A `<script>` ELEMENT, WHICH IS NOT THE SAME AS SAFE JSON.
+ *
+ *  `esc` above is for HTML text and attributes and is the WRONG tool here: inside a `<script>` the
+ *  HTML parser does not decode entities, so `&lt;` would land in the JSON literally and
+ *  `JSON.parse` would hand the page a corrupted string. The parser instead scans raw text for the
+ *  sequence `</script` (case-insensitively) and ends the element there -- so a single `</script>`
+ *  anywhere in this data closes the block early and everything after it is parsed as MARKUP. That
+ *  is the injection: the JSON cannot execute (`type="application/json"` is not a script the browser
+ *  runs), but breaking out of the element lets whatever follows become real HTML, including a real
+ *  `<script>`.
+ *
+ *  THE DATA IS NOT USER INPUT TODAY -- it is Scryfall oracle data plus sentences this engine
+ *  generates -- and that is exactly the argument not to rely on. The corpus is 34,433 third-party
+ *  rows and grows every set; "no card name contains `</script>`" is a fact about today that nothing
+ *  enforces. So the escape is mechanical rather than reasoned.
+ *
+ *  `<` BECOMES `\u003c`, WHICH IS STILL VALID JSON and cannot start any HTML token, so `</script`
+ *  can never appear however the data nests it. `>` and `&` go too, so `]]>` and entity-ish text
+ *  cannot confuse an XHTML or XML parser either. U+2028 and U+2029 are legal in JSON strings and
+ *  are line terminators in JavaScript -- harmless for `JSON.parse`, but escaped here so the same
+ *  string stays safe if it is ever embedded somewhere that IS evaluated. */
+export const jsonForScript = (value: unknown): string =>
+  JSON.stringify(value)
+    .replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+
 export interface InjectedPage {
   title: string;
   description: string;
@@ -27,7 +53,35 @@ export interface InjectedPage {
   indexable: boolean;
   /** Already-escaped HTML. Built by `cardPageHtml` below, never by a caller pasting strings. */
   bodyHtml: string;
+  /** THE RECORD THE PAGE IS ABOUT, HANDED TO THE APP INSTEAD OF FETCHED.
+   *
+   *  WITHOUT THIS, GOOGLE INDEXES EVERY CARD PAGE AS A 404, and the chain that produced it is four
+   *  files long: React boots -> `html[data-app-booted] .prerendered { display: none }` hides the
+   *  block above -> `CardPage` calls `loadCardPage` -> that fetches `/static/manifest.json` and a
+   *  shard under `/static/` -> `robots.txt` says `Disallow: /static/` and Googlebot's renderer will
+   *  not fetch a disallowed subresource -> `static-lookup.ts` returns `null` on the failed
+   *  response -> `<NotFound />`. Confirmed in Search Console on 2026-09-08 against
+   *  `/cards/accursed-witch-infectious-curse`, a page the edge serves with 24 partner links: the
+   *  rendered DOM Google keeps says "NO SUCH PAGE". All 17,338 card URLs rendered as the same
+   *  near-identical soft 404.
+   *
+   *  THE FIX IS TO REMOVE THE FETCH, NOT TO OPEN `/static/`. Loosening robots.txt would trade one
+   *  leak for another -- 2,048 shard files into the crawl budget the rule exists to protect. The
+   *  edge already HAS the record; it was rendering it as prose and then making the browser go and
+   *  buy it again.
+   *
+   *  IT IS ALSO THE FASTER PATH FOR A HUMAN. A card page cost a `manifest.json` round trip plus a
+   *  ~20 KB shard before it could draw; inline it costs a median 0.7 KB gzipped, p99 2.2 KB, max
+   *  6.5 KB (measured over all 16,715 records, 2026-09-08) and nothing.
+   *
+   *  Omitted -- not `null` -- on a page that has no record, so `injectPage` writes no tag at all. */
+  data?: { slug: string; record: unknown };
 }
+
+/** WHERE THE APP LOOKS FOR THE INLINE RECORD. One constant, imported by the writer and the reader,
+ *  because a page that hands over data under an id nobody reads is the silent half of this bug
+ *  happening again. */
+export const CARD_PAGE_DATA_ID = "edh-card-page";
 
 export function injectPage(shell: string, page: InjectedPage): string {
   let out = shell
@@ -48,7 +102,14 @@ export function injectPage(shell: string, page: InjectedPage): string {
   // result could honestly summarise.
   if (!page.indexable) out = out.replace("</head>", '  <meta name="robots" content="noindex" />\n  </head>');
 
-  return out.replace('<div id="root"></div>', `<div id="root"></div>\n${page.bodyHtml}`);
+  // KEYED BY SLUG, because a client-side navigation does not reload the document. Click a partner
+  // link and this tag still describes the card you ARRIVED on; the reader compares the slug it
+  // wants against `data-slug` and falls back to the network when they differ. Without that check
+  // every partner link would show the previous card's page.
+  const data = page.data === undefined ? "" : `\n    <script type="application/json" id="${CARD_PAGE_DATA_ID}"`
+    + ` data-slug="${esc(page.data.slug)}">${jsonForScript(page.data.record)}</script>`;
+
+  return out.replace('<div id="root"></div>', `<div id="root"></div>\n${page.bodyHtml}${data}`);
 }
 
 /** As much of one artifact record as the static block prints. */

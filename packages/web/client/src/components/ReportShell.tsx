@@ -166,7 +166,10 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
     // prefetch path still covers the card being zoomed into, it just pays for it on arrival.
     const conn = (navigator as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
     if (conn?.saveData || /^(slow-)?2g$/.test(conn?.effectiveType ?? "")) return;
-    for (const n of nodes) if (n.artCrop) loader.request(cardImageUrl(n.artCrop));
+    for (const n of nodes) {
+      const warm = n.artCrop ? cardImageUrl(n.artCrop) : null;
+      if (warm !== null) loader.request(warm);
+    }
   }, [data]);
 
   useScrollMemory();

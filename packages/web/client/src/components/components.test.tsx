@@ -719,7 +719,7 @@ test("ReportShell starts fetching card art on the chapters, before the graph is 
     graph: {
       ...SAMPLE.graph,
       nodes: SAMPLE.graph.nodes.map((n, i) =>
-        (i === 0 ? { ...n, artCrop: "https://cards.example/art_crop/a/b/c.jpg" } : n)),
+        (i === 0 ? { ...n, artCrop: "https://cards.scryfall.io/art_crop/a/b/c.jpg" } : n)),
     },
   };
 
@@ -743,7 +743,7 @@ test("ReportTabs warms the full card images too, not just the discs", async () =
     graph: {
       ...SAMPLE.graph,
       nodes: SAMPLE.graph.nodes.map((n, i) =>
-        (i === 0 ? { ...n, artCrop: "https://cards.example/art_crop/a/b/c.jpg" } : n)),
+        (i === 0 ? { ...n, artCrop: "https://cards.scryfall.io/art_crop/a/b/c.jpg" } : n)),
     },
   };
 

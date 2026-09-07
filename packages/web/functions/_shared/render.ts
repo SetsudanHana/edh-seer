@@ -94,6 +94,11 @@ export async function renderCardPage(
       // adding one of ~1,900 near-identical thin pages.
       indexable: usable && partners.length > 0,
       bodyHtml: cardPageHtml({ ...record, partners }, slug, kind),
+      // THE RAW SHARD RECORD, NOT THE MERGED ONE THE PROSE BLOCK GETS. `{...record, partners}`
+      // above swaps in whichever list this ROUTE prints; the app wants what `loadCardPage` would
+      // have returned, so that both pages read the same shape they already read and neither needs
+      // to know it came from the document instead of the network.
+      data: { slug, record },
     }), { headers: { "content-type": "text/html; charset=utf-8" } });
   } catch {
     return degraded();

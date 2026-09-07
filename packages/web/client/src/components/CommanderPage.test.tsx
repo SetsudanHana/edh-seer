@@ -13,6 +13,7 @@ const KRENKO: CardPageData = {
   typeLine: "Legendary Creature — Goblin Warrior",
   manaCost: "{2}{R}{R}",
   artCrop: "https://cards.scryfall.io/art_crop/front/8/2/824b2d73.jpg",
+  backArtCrop: null,
   abilities: [{
     kind: "activated", cost: "{T}", when: [], effect: "token-generation",
     scaling: "per-permanent", counts: "goblin",

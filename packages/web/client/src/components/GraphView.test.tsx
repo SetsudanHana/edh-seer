@@ -1097,7 +1097,7 @@ describe("hover", () => {
     const fetchSpy = vi.fn((_url: unknown) => Promise.reject(new Error("no network in this test")));
     vi.stubGlobal("fetch", fetchSpy);
     const { canvas } = frames(graphOf([
-      card({ id: "Sol Ring", artCrop: "https://cards.example/art_crop/front/a/b/x.jpg" }),
+      card({ id: "Sol Ring", artCrop: "https://cards.scryfall.io/art_crop/front/a/b/x.jpg" }),
     ]));
     const node = canvas.__graphProbe!()[0];
     fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x, clientY: node.y, bubbles: true }));
@@ -1107,7 +1107,7 @@ describe("hover", () => {
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
     await new Promise((r) => setTimeout(r, 250));
     expect(fetchSpy.mock.calls.map((c) => String(c[0]))).toEqual([
-      "https://cards.example/art_crop/front/a/b/x.jpg",
+      "https://cards.scryfall.io/art_crop/front/a/b/x.jpg",
     ]);
   });
 });
