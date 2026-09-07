@@ -30,6 +30,9 @@ jobs:
           # security-and-quality also reports maintainability findings; this repo wants the
           # security signal to stay readable, so it runs the extended SECURITY pack only.
           queries: security-extended
+          # `paths-ignore: research` lives in the config rather than here, because the workflow
+          # input has no equivalent. See that file for why the exclusion is drawn where it is.
+          config-file: ./.github/codeql/codeql-config.yml
       - uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"

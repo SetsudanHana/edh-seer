@@ -1,0 +1,24 @@
+# CodeQL configuration. Referenced by `.github/workflows/codeql.yml` via `config-file:`.
+#
+# WHY THIS EXISTS: on 2026-09-07 the repo went from 0 open alerts to 33 without a line of product
+# code changing. PRs #221 and #223 moved 70 one-shot measurement scripts into `research/` and 30
+# instruments into their own package, and CodeQL re-raises a DISMISSED alert as a brand-new alert
+# when the path changes. 27 of the 33 were the owner's own "won't fix" decisions, resurfaced by a
+# file move. Re-dismissing 27 alerts is not a security review, it is bookkeeping that hides the one
+# finding that mattered — which that day was a real ReDoS in `packages/matcher/src/legality.ts`,
+# sitting in the same list as 32 things nobody was going to act on.
+#
+# WHAT IS EXCLUDED, AND THE HONEST COST: `research/` holds one-shot measurement scripts — censuses,
+# sweeps, audits, dumps — that the OWNER runs by hand against a local corpus. Nothing there is
+# deployed, imported by the site, or reachable by a visitor; see CLAUDE.md, "Where a script lives".
+# The cost is real and is the point of writing it down: a genuine vulnerability introduced in
+# `research/` will now go unreported. That is accepted because the attacker would already have to
+# be the person running the script.
+#
+# NOT EXCLUDED: `packages/` — every line of the engine, the web client, the server and the Workers
+# stays analysed, including `packages/instruments/`, which accounted for 14 of that day's 33. The
+# instruments are also offline tooling, but they are a workspace whose tests run in CI and whose
+# code the product's own modules are imported into, so the line is drawn at the package boundary
+# rather than at "is it deployed".
+paths-ignore:
+  - research
