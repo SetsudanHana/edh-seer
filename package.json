@@ -2,7 +2,8 @@
   "name": "edh-seer",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "research"
   ],
   "engines": {
     "node": ">=20"
@@ -10,6 +11,7 @@
   "scripts": {
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint:bins": "python3 scripts/check_bin_placement.py --self-test && python3 scripts/check_bin_placement.py",
     "tokens:build": "node scripts/build_tokens.mjs --out tokens/theme.css && cat tokens/app-surface.css >> tokens/theme.css",
     "tokens:check": "python3 scripts/validate_tokens.py && python3 scripts/validate_contrast.py && python3 scripts/validate_theme_refs.py tokens/theme.css packages/web/client/src"
   },
