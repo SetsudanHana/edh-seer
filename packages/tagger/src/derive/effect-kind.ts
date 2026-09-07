@@ -45,6 +45,17 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // stated no origin at all. Corpus: put->graveyard is library 148, exile 18, unstated 11 — the 11
   // are now unclassified, which is the honest answer for a clause that never said where from.
   { verb: "put", from: "library", to: "graveyard", kind: "top-manipulation" },
+  // SETTING THE TOP OF YOUR LIBRARY. Sensei's Divining Top reorders the top three; Brainstorm and
+  // Hidetsugu and Kairi put cards from hand on top. Both are the player choosing what they draw
+  // next, and neither had a kind before 2026-09-07 -- which is why an entire top-of-library deck
+  // read as `["draw-card", "player-life-loss", ""]` on its commander.
+  //
+  // THE ORIGIN IS THE GUARD. `put -> library` from the BATTLEFIELD is tuck REMOVAL (52 actions:
+  // Aetherspouts, Spin into Myth, Jeskai Charm) and from the STACK is Approach of the Second Sun
+  // (12). Only library and hand origins are the player stacking their own deck. Checked: of the 31
+  // corpus cards that put something "Nth from the top", NONE has a library or hand origin.
+  { verb: "put", from: "library", to: "library", kind: "top-manipulation" },
+  { verb: "put", from: "hand", to: "library", kind: "top-manipulation" },
   // NO ROW FOR `put library -> hand`, AND THE REASON IS WORTH KEEPING (added and reverted the same
   // day, 2026-09-07). It looked like the missing half of a tutor. It is not: a REAL tutor states the
   // `search` verb, which VERB_KIND already maps to top-manipulation, so the row bought nothing for
@@ -72,6 +83,9 @@ export const ZONE_SCOPED_KINDS: ReadonlySet<string> = new Set(["graveyard-recurs
  *  clause that merely mentions entering ("whenever a creature enters, put a counter on it") is not
  *  caught: that one really does place counters later and is ordinary `counter-placement`. */
 const ENTERS_WITH = /\benters? with\b[^.]{0,40}\bcounters?\b/i;
+
+/** "…on the bottom of your library" — the disposal half of a dig, never a top-of-library supply. */
+const ON_THE_BOTTOM = /on the bottom of (?:your|their|its owner's|a|the) librar/i;
 
 /** The energy object as the clause layer writes it: a bare `E`, `{E}`, or the word itself. No mana
  *  symbol is ever `E` -- mana is WUBRGC, a number, or X -- so this cannot catch a real mana object.
@@ -365,6 +379,20 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   if (verb === "cant" && /\babilit(?:y|ies)\b/i.test(action.object ?? "")) return "ability-loss";
   if (verb === "cant") return PAYABLE.test(action.object ?? "") ? "tax" : null;
   if (verb === "cost-modify") return costDirection(action.object ?? "", clauseText);
+  // THE OBJECT SOMETIMES STATES THE ORIGIN THE FIELD OMITTED. Hidetsugu and Kairi reads "put two
+  // cards FROM YOUR HAND on top of your library" and the normalizer left `fromZone` unset, so the
+  // rows below could not see a hand origin -- and an entire top-of-library commander derived
+  // nothing for its defining ability. Read from the clause's own words rather than assuming a
+  // default, which is the mistake canonicalAction used to make.
+  //
+  // DELIBERATELY ONLY "from your hand", and only for put -> library. The other nine unstated cases
+  // in the corpus are tuck removal (Commit // Memory, Submerge, Azorius Charm), a wish (The Raven's
+  // Warning) or already bottom-guarded (House Cartographer). The real fix is normalize-side -- the
+  // model should set `fromZone: "hand"` -- and this is the free half of it.
+  if (verb === "put" && action.toZone === "library" && !action.fromZone
+      && /\bfrom your hand\b/i.test(action.object ?? "") && !ON_THE_BOTTOM.test(clauseText)) {
+    return "top-manipulation";
+  }
   for (const r of ZONE_RULES) {
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;
@@ -373,6 +401,13 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // is carried by the OTHER actions in the same clause, and a near-miss kind is consumed as if it
     // were true while null is honestly inert.
     if (r.kind === "graveyard-hate" && exilesOwnGraveyard(action.object ?? "", clauseText)) return null;
+    // THE BOTTOM IS NOT THE TOP. `toZone: "library"` says nothing about position and the canonical
+    // action has no field for it, so the clause text decides. Of the 359 corpus cards with a
+    // put library|hand -> library action, 311 say "on the bottom" -- Dig Through Time and
+    // Descendants' Fury put the REST on the bottom, which is the discard half of card selection,
+    // the opposite of a supply. Only 48 are real top manipulation. Negative rather than positive
+    // because Sensei's Divining Top never says "on top": it says "put them BACK".
+    if (r.kind === "top-manipulation" && r.to === "library" && ON_THE_BOTTOM.test(clauseText)) return null;
     return r.kind;
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.
