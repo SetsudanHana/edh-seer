@@ -21,8 +21,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 20 is the floor declared in package.json engines; 22 is current LTS.
-        node: [20, 22]
+        # The FLOOR declared in package.json engines, and the current LTS. Both legs are
+        # required checks in branch protection, so changing this list means changing that list
+        # too -- a leg that stops running never reports, and a required check that never reports
+        # blocks every PR forever.
+        # Node 20 (Iron) was dropped 2026-09-07: it went EOL in April 2026, its last release was
+        # v20.20.2 on 2026-03-24, and @testing-library/jest-dom 7 already declares a floor of 22.
+        node: [22, 24]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -45,7 +50,7 @@ jobs:
       # that has actually bitten -- a test under research/ is collected by NO vitest project, so it
       # reads as covered while its coverage is simply absent from the run above. Runs its own
       # self-test first, because a gate nobody has watched fail is decoration.
-      # Inside this job for the same reason as the token gates below: `test (node 20|22)` are the
+      # Inside this job for the same reason as the token gates below: `test (node 22|24)` are the
       # only two checks branch protection knows about.
       - run: npm run lint:bins
       # The design system in tokens/ is EXTRACTED from the shipped packages/web/client/src/index.css,
@@ -54,7 +59,7 @@ jobs:
       #   validate_contrast - the required WCAG 2.2 pairs still pass on the real hex values
       #   validate_theme_refs - no component reaches for a var() no token defines (a "floating token",
       #                         the defect css-tokens.test.ts was written for)
-      # Inside the existing job, not a new one: `test (node 20|22)` are the only two checks branch
+      # Inside the existing job, not a new one: `test (node 22|24)` are the only two checks branch
       # protection knows about, and a separate job would gate nothing until someone adds it there.
       - run: npm run tokens:check
       # tokens/theme.css is GENERATED. Editing tokens/*.json without rebuilding it is the drift the

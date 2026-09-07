@@ -6,7 +6,7 @@
     "research"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "test": "npm run test --workspaces --if-present",
