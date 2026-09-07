@@ -1,7 +1,7 @@
 /** Normalize ONE card: segment mechanically, ask the model about the clauses that state an action,
  *  answer the inert ones in code, and gate the answer before it is worth anything.
  *
- *  This is the third place the askable/inert split has been written (`bin/build-gold-fixture.ts`,
+ *  This is the third place the askable/inert split has been written (`bin/build-compass-fixture.ts`,
  *  `bin/normalize-experiment.ts`), which is why it is a function now. Those two are deliberately NOT
  *  migrated onto it: they are measurement harnesses whose stored runs are compared across commits,
  *  and quietly changing how they assemble a request would invalidate that comparison. */

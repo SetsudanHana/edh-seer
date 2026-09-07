@@ -4,7 +4,7 @@
 
 Measures whether the structured engine finds known-good synergies for the right reason.
 
-- `goldpairs.json` — curated card pairs, each labeled with a mechanism category. `verified: true` entries count.
+- `compass-pairs.json` — curated card pairs, each labeled with a mechanism category. `verified: true` entries count.
 - `npx tsx src/bin/source-pairs.ts --category=all --topK=6` — source candidates from EDHREC theme pages (no API key; needs network — run outside the sandbox). Appended unverified.
 - `npx tsx src/bin/review-pairs.ts` — interactively accept/reject pending candidates.
 - `npx tsx src/bin/eval-pairs.ts [--json]` — run the compass: per-category recall + miss causes.

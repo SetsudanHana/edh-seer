@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { applyDecision, pendingIndices } from "./review-core.js";
-import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 
-const pair = (verified: boolean, a = "A"): GoldPair => ({
+const pair = (verified: boolean, a = "A"): CompassPair => ({
   a, b: "B", category: "aristocrats", note: "", source: "llm-proposed", verified,
 });
 

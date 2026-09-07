@@ -9,7 +9,7 @@ import { producerEvents } from "@edh-seer/matcher/edges";
 import { normalizeZoneEvent } from "@edh-seer/matcher/zones";
 import type { DeckCard } from "@edh-seer/matcher/types";
 import { buildOtagEdges, pairKey, undirectedPairs } from "@edh-seer/matcher/otag-edges";
-import type { GoldPair } from "@edh-seer/matcher/eval-pairs-core";
+import type { CompassPair } from "@edh-seer/matcher/eval-pairs-core";
 import { edhrecPairSet, seededRandom } from "./edhrec-pairs.js";
 
 const DECK_DIR = new URL("../../cli/decks/", import.meta.url).pathname;
@@ -19,8 +19,8 @@ const DECKS = JSON.parse(
 ) as Array<{ name: string; path: string; saltId: string }>;
 
 const GOLD = JSON.parse(
-  readFileSync(new URL("../../matcher/src/goldpairs.json", import.meta.url), "utf8"),
-) as GoldPair[];
+  readFileSync(new URL("../../matcher/src/compass-pairs.json", import.meta.url), "utf8"),
+) as CompassPair[];
 
 interface Loaded {
   name: string;

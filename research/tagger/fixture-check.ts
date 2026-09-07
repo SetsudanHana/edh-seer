@@ -1,7 +1,7 @@
 /** THE SMALLEST SPEND THAT PROVES THE PIPELINE. ~$0.25, 58 cards.
  *
  *  Re-normalizes the gold-fixture cards through the NEW path (normalize-card + the persist gate)
- *  and compares against `gold-clauses.json`. That fixture is the only set in the project where
+ *  and compares against `compass-clauses.json`. That fixture is the only set in the project where
  *  known-good output already exists, which makes it the one place a $0.25 run can answer questions
  *  a $9.07 run would otherwise answer expensively:
  *
@@ -24,7 +24,7 @@ import { createProvider } from "../../packages/tagger/src/llm/factory.js";
 import { normalizeCard } from "../../packages/tagger/src/normalize-card.js";
 
 const FIXTURE = JSON.parse(readFileSync(
-  new URL("../../packages/matcher/src/fixtures/gold-clauses.json", import.meta.url), "utf8",
+  new URL("../../packages/matcher/src/fixtures/compass-clauses.json", import.meta.url), "utf8",
 )) as { name: string; clauses: ClauseRecord[] }[];
 
 const cfg = loadTaggerConfig();

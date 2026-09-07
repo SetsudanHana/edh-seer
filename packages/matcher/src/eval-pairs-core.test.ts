@@ -2,9 +2,9 @@ import { expect, test } from "vitest";
 import type { Reason, Card } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard } from "./types.js";
-import { classifyPair, type GoldPair } from "./eval-pairs-core.js";
+import { classifyPair, type CompassPair } from "./eval-pairs-core.js";
 
-const pair: GoldPair = {
+const pair: CompassPair = {
   a: "Blood Artist", b: "Viscera Seer", category: "aristocrats",
   note: "", source: "test", verified: true,
 };
