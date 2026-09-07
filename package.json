@@ -2,7 +2,8 @@
   "name": "edh-seer",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "research"
   ],
   "engines": {
     "node": ">=20"

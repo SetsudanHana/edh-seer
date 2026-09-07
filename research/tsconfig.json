@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.base.json",
+  // Research scripts reach into package SOURCE by relative path rather than through a package
+  // name, which is the convention the first six here already set. It keeps a one-off measurement
+  // from forcing a module into a package's public export map -- the surface would have grown by
+  // 53 entries to relocate 70 scripts, which is the opposite of what the export audit just did.
+  "compilerOptions": { "noEmit": true, "resolveJsonModule": true },
+  "include": ["."]
+}
