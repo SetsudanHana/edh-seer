@@ -1,0 +1,10 @@
+{
+  "extends": "../client/tsconfig.json",
+  "compilerOptions": {
+    // The edge is not a browser and not Node: no DOM, and the only ambient types are the ones
+    // `globals.d.ts` declares. `Request`/`Response` come from the ES lib plus DOM, which is the
+    // closest available shape for the fetch API the Workers runtime implements.
+    "types": []
+  },
+  "include": ["."]
+}

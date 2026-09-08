@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 
@@ -110,8 +110,24 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
 
   const cards = index.filter((e) => !e.noPartners);
   const commanders = index.filter((e) => e.commander && !e.noCommanderPartners);
-  expect(locs).toHaveLength(2 + cards.length + commanders.length);
-  expect(locs.slice(0, 2)).toEqual([canonical, `${canonical}how-it-works`]);
+
+  // THE BROWSE PAGES, WHICH ARE THE ONLY ROUTE FROM THIS SITE INTO THE CARD PAGES (2026-09-08).
+  // A letter with nothing on it is withheld for the same reason a partnerless card is: the page
+  // renders and stays walkable, but it is served `noindex` and a sitemap may not promise one.
+  const browse = readdirSync(join(DIST, "static", version, "browse"))
+    .filter((f) => f.endsWith(".json")).sort()
+    .map((f) => [f.replace(/\.json$/, ""), JSON.parse(
+      readFileSync(join(DIST, "static", version, "browse", f), "utf8"),
+    ) as { commander: boolean }[]] as const);
+  const browseCards = browse.filter(([, r]) => r.length > 0).map(([l]) => `${canonical}browse/cards/${l}`);
+  const browseCommanders = browse.filter(([, r]) => r.some((e) => e.commander))
+    .map(([l]) => `${canonical}browse/commanders/${l}`);
+
+  const fixed = [canonical, `${canonical}how-it-works`, `${canonical}cards`, `${canonical}commanders`];
+  expect(locs).toHaveLength(fixed.length + browseCards.length + browseCommanders.length
+    + cards.length + commanders.length);
+  expect(locs.slice(0, 4)).toEqual(fixed);
+  expect(locs.slice(4, 4 + browseCards.length)).toEqual(browseCards);
   // Every URL is on the canonical origin -- a sitemap that names another host is a sitemap for
   // another site.
   for (const loc of locs) expect(loc.startsWith(canonical.slice(0, -1))).toBe(true);
@@ -119,11 +135,32 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
   // neither is one the edge will answer `noindex` on.
   const indexableCards = new Set(cards.map((e) => e.slug));
   const indexableCommanders = new Set(commanders.map((e) => e.slug));
-  for (const loc of locs.slice(2)) {
+  const browseUrls = new Set([...browseCards, ...browseCommanders]);
+  for (const loc of locs.slice(fixed.length)) {
+    if (browseUrls.has(loc)) continue;
     const slug = loc.slice(loc.lastIndexOf("/") + 1);
     const set = loc.includes("/commanders/") ? indexableCommanders : indexableCards;
     expect(set.has(slug), `${loc} is a page the site will let be indexed`).toBe(true);
   }
+});
+
+/** AND THE BROWSE TREE ACTUALLY REACHES EVERY CARD PAGE, which is the whole point of it. A sitemap
+ *  proves a URL is DECLARED; this proves the site has a path to it that a crawler can walk, which
+ *  is what "Discovered - currently not indexed" is the absence of. */
+test.skipIf(!existsSync(builtSitemap))("every indexable card is reachable by walking the alphabet", () => {
+  const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
+  const index = JSON.parse(
+    readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
+  ) as { slug: string; noPartners?: true }[];
+  const reachable = new Set(readdirSync(join(DIST, "static", version, "browse"))
+    .filter((f) => f.endsWith(".json"))
+    .flatMap((f) => JSON.parse(readFileSync(join(DIST, "static", version, "browse", f), "utf8")) as { slug: string }[])
+    .map((e) => e.slug));
+  const missing = index.filter((e) => !e.noPartners).filter((e) => !reachable.has(e.slug));
+  expect(missing.map((e) => e.slug).slice(0, 5)).toEqual([]);
+  // And the slices hold the WHOLE index, not just the indexable part -- a thin page is still a page
+  // and a reader browsing to it is the case the search box cannot serve.
+  expect(reachable.size).toBe(index.length);
 });
 
 /** THE PRERENDER ROUTES EXIST, AND ARE NAMED WHAT CLOUDFLARE EXPECTS.

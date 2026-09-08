@@ -182,3 +182,58 @@ ${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).j
 ${partners}
     </section>`;
 }
+
+/** THE LETTERS A BROWSE PAGE OFFERS, in the order a reader expects them. `#` last: it holds the
+ *  names with no leading letter, and putting it first would make the alphabet start with a
+ *  footnote. */
+export const BROWSE_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
+
+/** The path segment a letter is served at -- `#` cannot be one, so it is `0`. */
+export const browseSegment = (letter: string): string =>
+  letter === "#" ? "0" : letter.toLowerCase();
+
+const browseNav = (kind: "cards" | "commanders", current?: string): string =>
+  `    <nav class="browse-letters" aria-label="Browse by letter">\n`
+  + BROWSE_LETTERS.map((l) => (l === current
+    ? `      <span aria-current="page">${esc(l)}</span>`
+    : `      <a href="/browse/${kind}/${browseSegment(l)}">${esc(l)}</a>`)).join("\n")
+  + `\n    </nav>`;
+
+/** THE A-Z BLOCK ON `/cards` AND `/commanders`, which is what makes those two pages a door.
+ *
+ *  BOTH RENDERED EMPTY TO A CRAWLER UNTIL NOW, and for the same reason every card page did: the
+ *  React listing fetches `name-index.json` from `/static/`, `robots.txt` disallows `/static/`, and
+ *  Googlebot's renderer will not fetch a disallowed subresource. Measured 2026-09-08 -- zero links
+ *  to any card on either page. They are the only route from the site into 17,338 URLs, so the whole
+ *  corpus hung off the sitemap alone. */
+export function browseIndexHtml(kind: "cards" | "commanders", total: number): string {
+  const what = kind === "commanders" ? "commanders" : "cards";
+  return `    <section class="prerendered">
+    <h2>Every ${what} the engine has read</h2>
+    <p>${total.toLocaleString("en")} ${what}, by first letter.</p>
+${browseNav(kind)}
+    </section>`;
+}
+
+/** ONE LETTER'S WORTH OF LINKS, and the reason this page needs no JavaScript at all.
+ *
+ *  IT IS A LIST OF LINKS. React owns nothing here, the block is not hidden on boot, and a reader and
+ *  a crawler get the identical DOM -- which also means the data is in the document once rather than
+ *  twice, as HTML rather than as HTML plus a copy in JSON. The search box on `/cards` is the
+ *  interactive surface; this is the walkable one. */
+export function browseLetterHtml(
+  kind: "cards" | "commanders", letter: string, rows: { slug: string; name: string }[],
+): string {
+  const what = kind === "commanders" ? "commanders" : "cards";
+  const items = rows.map((r) =>
+    `      <li><a href="/${kind}/${esc(r.slug)}">${esc(r.name)}</a></li>`).join("\n");
+  const list = rows.length === 0
+    ? `    <p>No ${what} start with this letter.</p>`
+    : `    <ul class="browse-list">\n${items}\n    </ul>`;
+  return `    <section class="prerendered">
+    <h2>${what.replace(/^./, (c) => c.toUpperCase())} starting with ${esc(letter)}</h2>
+    <p>${rows.length.toLocaleString("en")} ${rows.length === 1 ? what.replace(/s$/, "") : what}.</p>
+${browseNav(kind, letter)}
+${list}
+    </section>`;
+}

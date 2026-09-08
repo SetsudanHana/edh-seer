@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { cardPageHtml, htmlHeaders, injectPage, type InjectableCard } from "./inject.js";
+import {
+  BROWSE_LETTERS, browseIndexHtml, browseLetterHtml, browseSegment, cardPageHtml, htmlHeaders,
+  injectPage, type InjectableCard,
+} from "./inject.js";
 
 /** THE REAL SHELL, not a fixture of one. Every replacement here is a regex against tags this repo
  *  writes by hand in `index.html`; a fixture would keep passing after someone reformatted the head
@@ -186,4 +189,59 @@ test("a page that refuses the index says so in the header as well as the tag", (
   // The two must not be able to disagree: `render.ts` reads one binding for both, and this is the
   // pairing that binding exists to keep true.
   expect(page({ indexable: true })).not.toContain('content="noindex"');
+});
+
+/** THE BROWSE PAGES ARE THE DOOR INTO THE CORPUS, and until 2026-09-08 there was none: `/cards` and
+ *  `/commanders` fetch `name-index.json` from `/static/`, `robots.txt` disallows `/static/`, and
+ *  Googlebot's renderer will not fetch a disallowed subresource -- so both rendered with zero links
+ *  to any card, and 17,338 URLs hung off the sitemap alone. */
+test("the collection page offers the whole alphabet and says how much is behind it", () => {
+  const html = browseIndexHtml("cards", 16715);
+  for (const l of BROWSE_LETTERS) {
+    expect(html, `letter ${l} is reachable`).toContain(`/browse/cards/${browseSegment(l)}`);
+  }
+  expect(html).toContain("16,715 cards");
+});
+
+/** `#` CANNOT BE A PATH SEGMENT -- it starts a fragment. It is served at `0`, and the page exists so
+ *  that walking the alphabet reaches every card rather than almost every card. */
+test("the letter with no letter is still a URL", () => {
+  expect(browseSegment("#")).toBe("0");
+  expect(browseSegment("K")).toBe("k");
+  expect(BROWSE_LETTERS).toHaveLength(27);
+  // Last, not first: it holds the names with no leading letter, and an alphabet that opens on a
+  // footnote reads as a mistake.
+  expect(BROWSE_LETTERS[26]).toBe("#");
+});
+
+test("a letter page links every card on it, and marks where the reader is", () => {
+  const html = browseLetterHtml("cards", "K", [
+    { slug: "krenko-mob-boss", name: "Krenko, Mob Boss" },
+    { slug: "kodamas-reach", name: "Kodama's Reach" },
+  ]);
+  expect(html).toContain('<a href="/cards/krenko-mob-boss">Krenko, Mob Boss</a>');
+  expect(html).toContain('<a href="/cards/kodamas-reach">Kodama\'s Reach</a>');
+  expect(html).toContain("2 cards");
+  // The current letter is not a link to itself, and says so to a screen reader too.
+  expect(html).toContain('<span aria-current="page">K</span>');
+  expect(html).not.toContain('href="/browse/cards/k"');
+});
+
+/** A NAME IS NOT MARKUP. These strings come from Scryfall and the corpus grows every set, so the
+ *  escape is mechanical here exactly as it is in the JSON block. */
+test("a hostile card name cannot inject markup into a browse listing", () => {
+  const html = browseLetterHtml("cards", "X", [
+    { slug: "x", name: '</a><script>alert(1)</script>' },
+  ]);
+  expect(html).not.toContain("<script>");
+  expect(html).toContain("&lt;/a&gt;&lt;script&gt;");
+});
+
+/** THE COMMANDER SIDE RANKS A DIFFERENT SET, so a letter can be full of cards and empty of
+ *  commanders. It still renders and still carries the alphabet -- the walk continues -- it simply
+ *  makes no promise a crawler should index. */
+test("a letter with nothing on it still carries the alphabet", () => {
+  const html = browseLetterHtml("commanders", "Q", []);
+  expect(html).toContain("No commanders start with this letter");
+  expect(html).toContain("/browse/commanders/a");
 });

@@ -14,7 +14,7 @@
     "test": "npm run test:server && npm run test:client",
     "test:server": "vitest run --config server/vitest.config.ts",
     "test:client": "vitest run --config client/vitest.config.ts",
-    "typecheck": "tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit"
+    "typecheck": "tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit && tsc -p functions/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@edh-seer/data": "*",

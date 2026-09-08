@@ -110,13 +110,32 @@ const version = JSON.parse(readFileSync(join(target, "manifest.json"), "utf8")).
 const nameIndex = JSON.parse(readFileSync(join(target, version, "name-index.json"), "utf8"));
 const indexableCards = nameIndex.filter((e) => !e.noPartners);
 const indexableCommanders = nameIndex.filter((e) => e.commander && !e.noCommanderPartners);
+// THE BROWSE PAGES, WHICH ARE THE ONLY ROUTE FROM THIS SITE INTO THE CARD PAGES. `/cards` and
+// `/commanders` were not listed here at all until 2026-09-08 -- two real pages the sitemap never
+// mentioned -- and the letter pages under them did not exist. Read off the artifact rather than
+// generated from a hard-coded alphabet, so a letter with no file cannot be promised a page.
+//
+// AND AN EMPTY LETTER IS NOT PROMISED, the same rule the thin card pages are held to since #245:
+// the page renders, carries the alphabet and stays walkable, but it is served `noindex` and so must
+// not be submitted. The commander side empties letters the card side fills, so the two are counted
+// separately off the slices themselves rather than from the file list.
+const browseRows = readdirSync(join(target, version, "browse"))
+  .filter((f) => f.endsWith(".json")).sort()
+  .map((f) => [f.replace(/\.json$/, ""), JSON.parse(readFileSync(join(target, version, "browse", f), "utf8"))]);
+const browseCardLetters = browseRows.filter(([, r]) => r.length > 0).map(([l]) => l);
+const browseCommanderLetters = browseRows.filter(([, r]) => r.some((e) => e.commander)).map(([l]) => l);
 const sitemapUrls = [
   `${origin}/`,
   `${origin}/how-it-works`,
+  `${origin}/cards`,
+  `${origin}/commanders`,
+  ...browseCardLetters.map((l) => `${origin}/browse/cards/${l}`),
+  ...browseCommanderLetters.map((l) => `${origin}/browse/commanders/${l}`),
   ...indexableCards.map((e) => `${origin}/cards/${e.slug}`),
   ...indexableCommanders.map((e) => `${origin}/commanders/${e.slug}`),
 ];
-const expectedUrls = 2 + indexableCards.length + indexableCommanders.length;
+const expectedUrls = 4 + browseCardLetters.length + browseCommanderLetters.length
+  + indexableCards.length + indexableCommanders.length;
 // ASSERTED HERE RATHER THAN TRUSTED: a half-built artifact should fail the deploy, not publish a
 // sitemap full of URLs with nothing behind them.
 if (sitemapUrls.length !== expectedUrls) {
@@ -130,7 +149,8 @@ writeFileSync(
   + `\n</urlset>\n`,
 );
 console.log(`sitemap: ${sitemapUrls.length} URLs (${indexableCards.length} cards, `
-  + `${indexableCommanders.length} commanders; `
+  + `${indexableCommanders.length} commanders, `
+  + `${browseCardLetters.length + browseCommanderLetters.length} browse; `
   + `${nameIndex.length - indexableCards.length} + `
   + `${nameIndex.filter((e) => e.commander).length - indexableCommanders.length} withheld as noindex)`);
 
