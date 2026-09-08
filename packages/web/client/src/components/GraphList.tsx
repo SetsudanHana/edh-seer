@@ -48,6 +48,7 @@ export function GraphList({ graph, unread, onOpenBoard }: {
         id: n.id,
         label: n.label,
         isToken: n.isToken === true,
+        isEmblem: n.isEmblem === true,
         // THE BACK FACE OF A DOUBLE-FACED CARD, which is its own node but not its own card. Detected
         // by `cardName` differing from the id rather than by the `face:` id prefix, so the client
         // does not have to value-import the projection module for one constant. Checked on the
@@ -75,8 +76,9 @@ export function GraphList({ graph, unread, onOpenBoard }: {
    *  three parts costs a few words and makes the total equal the rows below it, which is the only
    *  version a reader can verify by scrolling. */
   const backFaces = rows.filter((r) => r.isBackFace).length;
-  const tokenCount = rows.filter((r) => r.isToken).length;
-  const cardCount = rows.length - backFaces - tokenCount;
+  const emblemCount = rows.filter((r) => r.isEmblem).length;
+  const tokenCount = rows.filter((r) => r.isToken && !r.isEmblem).length;
+  const cardCount = rows.length - backFaces - tokenCount - emblemCount;
   /** A pair with an edge in BOTH directions is one synergy to a player, not two. `graph.edges` is
    *  directed and 2 of the example deck's 237 point both ways, which is where "237" came from
    *  against 235 real relationships. */
@@ -101,6 +103,7 @@ export function GraphList({ graph, unread, onOpenBoard }: {
         {cardCount} card{cardCount === 1 ? "" : "s"}
         {backFaces > 0 ? `, ${backFaces} second face${backFaces === 1 ? "" : "s"}` : ""}
         {tokenCount > 0 ? ` and ${tokenCount} token${tokenCount === 1 ? "" : "s"} they make` : ""}
+        {emblemCount > 0 ? ` and ${emblemCount} emblem${emblemCount === 1 ? "" : "s"} they grant` : ""}
         {" — "}{synergyCount} synerg{synergyCount === 1 ? "y" : "ies"}
         {/* THE COUNT, BECAUSE A ROW-BY-ROW MARK CANNOT BE SURVEYED. The board says the same thing
           *  in a chip; this list has no chip row, and counting "not read" across 92 rows by
@@ -121,7 +124,7 @@ export function GraphList({ graph, unread, onOpenBoard }: {
                 *  card's and a tap must never open the wrong one. */}
               <span className="min-w-0 truncate">
                 {r.isToken ? <span>{r.label}</span> : <CardName name={r.label} />}
-                {r.isToken ? <span className="ml-2 text-xs text-(--muted)">token</span> : null}
+                {r.isToken ? <span className="ml-2 text-xs text-(--muted)">{r.isEmblem ? "emblem" : "token"}</span> : null}
               </span>
               {r.unread ? (
                 <span className="shrink-0 flex items-center gap-1.5 text-xs text-(--muted)">

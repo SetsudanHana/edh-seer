@@ -105,8 +105,8 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
    *  `face:1:Mirror Room // Fractured Realm`, on the owner's phone (2026-09-06) -- the same map
    *  `GraphView` hands its own in-canvas inspector. */
   const nameOf = useMemo(() => {
-    const m = new Map<string, { label: string; isToken: boolean }>();
-    for (const n of graph?.nodes ?? []) m.set(n.id, { label: n.label, isToken: n.isToken === true });
+    const m = new Map<string, { label: string; isToken: boolean; isEmblem: boolean }>();
+    for (const n of graph?.nodes ?? []) m.set(n.id, { label: n.label, isToken: n.isToken === true, isEmblem: n.isEmblem === true });
     return (id: string) => m.get(id);
   }, [graph]);
   /** A PIN IS THE PHYSICAL CARD, NEVER A FACE (roadmap S8). `byName` already maps both spellings
