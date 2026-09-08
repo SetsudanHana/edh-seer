@@ -10,6 +10,7 @@
  *  error rather than silence, which is the class of bug that let Bitterblossom sit in the corpus
  *  with zero abilities, indistinguishable from a vanilla bear. */
 import { KEYWORD_ABILITIES } from "./derive/subtypes.js";
+import { GETS_AN_EMBLEM } from "./emblem.js";
 
 export type ClauseKind =
   | "ability"        // ordinary rules text
@@ -286,10 +287,8 @@ const CREATES_A_TOKEN = /\bcreates?\b[^.]*\btokens?\b/i;
  *  the ability. Measured over the whole clause corpus: 94 granted clauses on 92 cards, and this cue
  *  selects the 25 token-receiver ones with ZERO false positives against the other 69.
  *
- *  NOT AN EMBLEM, though "You get an emblem with that ability" is the same wrong sentence one
- *  object over: an emblem has no node for the relation to move to, so refusing it would delete a
- *  claim rather than relocate it, and no panel claim witnesses the defect. Its own item if one
- *  appears. */
+ *  AN EMBLEM IS THE SAME SHAPE ONE OBJECT OVER, and has its own cue below (`grantedToOwnEmblem`)
+ *  since it got a node (spec 2026-09-08). */
 export function grantedToOwnToken(clauses: Clause[]): Set<number> {
   const byId = new Map(clauses.map((c) => [c.id, c]));
   const out = new Set<number>();
@@ -297,6 +296,27 @@ export function grantedToOwnToken(clauses: Clause[]): Set<number> {
     if (c.kind !== "granted" || c.parentId === undefined) continue;
     const parent = byId.get(c.parentId);
     if (parent && CREATES_A_TOKEN.test(parent.text)) out.add(c.id);
+  }
+  return out;
+}
+
+/** The granted clauses whose receiver is an EMBLEM the same clause grants -- Kaito, Cunning
+ *  Infiltrator's "You get an emblem with '<a triggered ability>'". CR 114.1: the emblem is an
+ *  object of its own, and since 2026-09-08 it has its own row in `tokens` and derives the ability
+ *  there. Deriving it on the card as well states the relation twice, and states it on the wrong
+ *  controller when the emblem goes to an opponent (Chandra, Roaring Flame).
+ *
+ *  THE CALLER GATES THIS ON THE CARD HAVING AN EMBLEM PART: `derive-corpus` applies it only when
+ *  `allParts` names an "Emblem — …" `combo_piece`. Karn, Living Legacy's emblem is not in
+ *  Scryfall's parts, so his clause stays on the card -- a claim on the wrong object beats a
+ *  deleted one. */
+export function grantedToOwnEmblem(clauses: Clause[]): Set<number> {
+  const byId = new Map(clauses.map((c) => [c.id, c]));
+  const out = new Set<number>();
+  for (const c of clauses) {
+    if (c.kind !== "granted" || c.parentId === undefined) continue;
+    const parent = byId.get(c.parentId);
+    if (parent && GETS_AN_EMBLEM.test(parent.text)) out.add(c.id);
   }
   return out;
 }
