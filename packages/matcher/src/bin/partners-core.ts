@@ -924,6 +924,59 @@ export interface NameIndexEntry {
   noCommanderPartners?: true;
 }
 
+/** ONE ROW OF A BROWSE PAGE: the least that makes a link. Deliberately not `NameIndexEntry` -- the
+ *  browse slices exist so a page can be built WITHOUT the 1.6 MB index, and carrying fields no
+ *  listing renders would give that size back. */
+export interface BrowseEntry {
+  slug: string;
+  name: string;
+  commander: boolean;
+}
+
+/** WHICH BROWSE PAGE A NAME BELONGS ON, taken from the SLUG rather than from the name.
+ *
+ *  `slugOf` ALREADY DOES THE FOLDING, and reusing it is not only the shorter answer -- it is the
+ *  correct one. It maps `Æ` explicitly (NFD does not decompose a ligature, so a first pass at this
+ *  filed `Ætherling` under `#`), strips apostrophes, and folds diacritics. Keying the letter off its
+ *  output means the page a card is filed under always matches the first character of the URL it is
+ *  filed at: `Æther Vial` is on A and lives at `/cards/aether-vial`.
+ *
+ *  `#` collects everything left with no leading a-z -- a name that is all punctuation, or one that
+ *  starts with a digit. One card in the corpus today, and the page exists so that walking the
+ *  alphabet reaches every card rather than almost every card. */
+/** The 27 keys, in the order a reader expects: A-Z, then the one for names with no leading letter.
+ *  Mirrored by `BROWSE_LETTERS` in the client's `inject.ts`, which is what the nav renders from --
+ *  the two are asserted equal by `inject.test.ts` rather than merely intended to match. */
+export const BROWSE_LETTER_KEYS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
+
+export function browseLetterOf(name: string): string {
+  const c = slugOf(name)[0]?.toUpperCase() ?? "#";
+  return c >= "A" && c <= "Z" ? c : "#";
+}
+
+/** THE INDEX CUT INTO ONE FILE PER LETTER, so a browse page costs one small fetch at the edge.
+ *
+ *  THE ALTERNATIVE WAS READING `name-index.json` PER REQUEST, and it is 1.6 MB: parsing that in a
+ *  Worker to render 640 links is the kind of cost that only shows up under the crawl it exists to
+ *  attract. Sorted by name here rather than in the Function, because the order is a property of the
+ *  page and not of the request. */
+export function browseSlices(index: NameIndexEntry[]): Map<string, BrowseEntry[]> {
+  // EVERY LETTER GETS A SLICE, EMPTY ONES INCLUDED, so the alphabet a browse page prints and the
+  // files behind it cannot disagree. Keying the letter off `slugOf` emptied `#` -- the one card
+  // that starts with no letter slugs to `card` -- and with slices written only for letters that had
+  // rows, the nav went on linking to `/browse/cards/0` and the Function fell through to a bare
+  // shell. An empty page that says so is a fine page; a link into nothing is not.
+  const out = new Map<string, BrowseEntry[]>(BROWSE_LETTER_KEYS.map((l) => [l, []]));
+  for (const e of index) {
+    const key = browseLetterOf(e.name);
+    const rows = out.get(key) ?? [];
+    rows.push({ slug: e.slug, name: e.name, commander: e.commander });
+    out.set(key, rows);
+  }
+  for (const rows of out.values()) rows.sort((a, b) => a.name.localeCompare(b.name, "en"));
+  return out;
+}
+
 export interface PartnerArtifact {
   shards: Map<string, Record<string, CardPageRecord>>;
   freq: EventFrequency;

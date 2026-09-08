@@ -16,7 +16,7 @@ import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
-import { buildPartnerArtifact } from "./partners-core.js";
+import { browseSlices, buildPartnerArtifact } from "./partners-core.js";
 import { loadHierarchy } from "../hierarchy.js";
 
 const outIdx = process.argv.indexOf("--out");
@@ -174,6 +174,19 @@ for (const [name, shard] of partners.shards) {
 writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify(partners.freq));
 writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify(partners.index));
 
+// THE BROWSE SLICES: one file per letter, so `/browse/cards/<letter>` costs one small fetch at the
+// edge instead of parsing the 1.6 MB name index on every request. `#` holds the names that do not
+// start with a letter, so walking the alphabet reaches every card rather than almost every card.
+const browseDir = join(stagingDir, "browse");
+mkdirSync(browseDir, { recursive: true });
+const slices = browseSlices(partners.index);
+for (const [letter, rows] of slices) {
+  writeFileSync(join(browseDir, `${letter === "#" ? "0" : letter.toLowerCase()}.json`), JSON.stringify(rows));
+}
+console.log(`browse slices: ${slices.size} letters, largest `
+  + `${[...slices].sort((a, b) => b[1].length - a[1].length)[0]![0]} with `
+  + `${Math.max(...[...slices.values()].map((r) => r.length))} cards`);
+
 await store.close();
 
 // THE VERSION IS THE CONTENT, so a rebuild that changes nothing produces the same directory and a
@@ -187,6 +200,13 @@ for (const f of readdirSync(cardsDir).sort()) {
 for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json"]) {
   hash.update(f);
   hash.update(readFileSync(join(stagingDir, f)));
+}
+// The browse slices are derived from the index that is already hashed, but they are SHIPPED files
+// and a rebuild that changed how they are cut must move the version -- otherwise a reader keeps a
+// year-immutable copy of the old shape.
+for (const f of readdirSync(browseDir).sort()) {
+  hash.update(f);
+  hash.update(readFileSync(join(browseDir, f)));
 }
 // The partner shards hash the same way the card shards do: name then bytes, sorted, so two files
 // swapping contents is a different corpus and cannot hash the same.

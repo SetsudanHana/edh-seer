@@ -343,6 +343,12 @@ export default function App() {
       <Route path="/cards/:slug" element={<CardPage />} />
       <Route path="/commanders" element={<CardSearch mode="commanders" />} />
       <Route path="/commanders/:slug" element={<CommanderPage />} />
+      {/* THE BROWSE PAGES RENDER NOTHING HERE, AND THAT IS THE DESIGN. Their content is the
+        * prerendered block the Function injected, which on these routes stays visible after boot --
+        * a list of links needs no JavaScript, so React re-rendering it would put the same data in
+        * the document twice and buy nothing. The route exists so the router does not fall through
+        * to the landing page underneath it. */}
+      <Route path="/browse/:kind/:letter" element={null} />
       <Route path="*" element={<>
       {/* RENDERS NOTHING HERE. It portals into the static header's nav, and only once the browser
         *  has said the app can be installed -- see `InstallButton` for why the event is the whole

@@ -1222,5 +1222,50 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    the content.
    `.intro` is kept on the landing route, where it is the page's own argument rather than a
    duplicate -- `data-route` says which. */
-html[data-app-booted] .prerendered { display: none; }
+/* A BROWSE PAGE IS THE ONE PLACE THE PRERENDERED BLOCK IS THE PRODUCT. React owns nothing on
+   `/browse/<kind>/<letter>` -- the page is a list of links and needs no JavaScript -- so hiding the
+   block on boot would empty the page the instant the bundle ran. It also means the list exists in
+   the document ONCE, as HTML, rather than as HTML plus a copy in JSON for the client to re-render. */
+html[data-app-booted]:not([data-route="browse"]) .prerendered { display: none; }
 html[data-app-booted][data-route="page"] .intro { display: none; }
+
+/* THE BROWSE PAGES. Server-rendered, no JavaScript, and styled here because the markup comes from
+   `inject.ts` at the edge rather than from a component -- Tailwind never sees those strings, so
+   utility classes on them would be purged. Two rules and a wrap: the alphabet, and the list.
+
+   THE LIST IS COLUMNS, NOT ONE LONG RUN. The S page carries 2,059 names; a single column is a
+   9-metre scroll, and `column-width` gives the browser the count without a breakpoint per size. */
+.browse-letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 1.25rem 0;
+}
+.browse-letters a,
+.browse-letters span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 2.75rem;
+  min-block-size: 2.75rem;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+.browse-letters a:hover { border-color: var(--accent); color: var(--accent); }
+/* The current letter is not a link, and says so to a screen reader through `aria-current` as well
+   as by looking different -- colour alone is never the only signal. */
+.browse-letters span[aria-current] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.browse-list {
+  column-width: 18rem;
+  column-gap: 2rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.browse-list li { break-inside: avoid; padding: 0.15rem 0; }

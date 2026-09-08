@@ -3,7 +3,7 @@ import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
-  partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts,
+  partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts, browseLetterOf, browseSlices,
   supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
 
@@ -1167,4 +1167,45 @@ test("an ability row carries its game-state requirement", () => {
     effect: { kind: "draw-card" }, emits: [{ verb: "draw", subject: { control: "you", token: null } }],
   }] as unknown as CardTags["abilities"]);
   expect(abilityRowsOf(surveyor)[0]!.requires).toEqual({ marker: "speed", min: 4 });
+});
+
+/** THE BROWSE SLICES: one file per letter, so a browse page costs one small fetch at the edge
+ *  rather than parsing the 1.6 MB name index on every request. */
+test("the index slices by first letter, sorted by name", () => {
+  const slices = browseSlices([
+    { slug: "krenko-mob-boss", name: "Krenko, Mob Boss", identity: ["R"], commander: true },
+    { slug: "kodamas-reach", name: "Kodama's Reach", identity: ["G"], commander: false },
+    { slug: "impact-tremors", name: "Impact Tremors", identity: ["R"], commander: false },
+  ]);
+  // Every letter has a slice, empty ones included: the alphabet the page prints and the files
+  // behind it must not be able to disagree.
+  expect(slices.size).toBe(27);
+  expect(slices.get("Q")).toEqual([]);
+  expect(slices.get("K")!.map((r) => r.name)).toEqual(["Kodama's Reach", "Krenko, Mob Boss"]);
+  // The row is the least that makes a link -- the slices exist to be SMALL, so a field no listing
+  // renders would give back the size they were cut for.
+  expect(Object.keys(slices.get("I")![0]!).sort()).toEqual(["commander", "name", "slug"]);
+});
+
+/** DIACRITICS FOLD, exactly as they do in `slugOf`. `Jötun Grunt` belongs on J -- not on a page of
+ *  its own, and not missing from the walk entirely. */
+test("a diacritic lands on the letter a reader would look under", () => {
+  expect(browseLetterOf("Jötun Grunt")).toBe("J");
+  // `Æ` is a ligature and NFD does not decompose it; a first pass at this filed `Ætherling` under
+  // `#`. Reading the letter off `slugOf` fixes it AND guarantees the page a card is filed under
+  // matches the first character of the URL it is filed at.
+  expect(browseLetterOf("Ætherling")).toBe("A");
+  expect(slugOf("Ætherling")[0]).toBe("a");
+  expect(browseLetterOf("Lim-Dûl's Vault")).toBe("L");
+});
+
+/** `#` COLLECTS WHAT DOES NOT START WITH A LETTER. One card in the corpus today, and the page
+ *  exists so that walking the alphabet reaches every card rather than almost every card. */
+test("a name that starts with no letter still has a page to be found on", () => {
+  // No corpus card lands here today -- `_____` slugs to `card` and files under C -- which is
+  // exactly why the slice is written anyway: the nav prints the letter regardless.
+  expect(browseSlices([]).get("#")).toEqual([]);
+  expect(browseLetterOf("!!!")).toBe("#");
+  expect(browseLetterOf("+2 Mace")).toBe("#");
+  expect(browseLetterOf("")).toBe("#");
 });

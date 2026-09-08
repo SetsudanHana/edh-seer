@@ -10,7 +10,12 @@ import { useLocation } from "react-router";
 export function RouteMarker(): null {
   const { pathname } = useLocation();
   useEffect(() => {
-    document.documentElement.dataset.route = pathname === "/" ? "home" : "page";
+    // THREE KINDS, AND THE THIRD IS WHY THIS IS NOT A BOOLEAN. A browse page's content IS the
+    // prerendered block -- React renders nothing into `#root` there -- so the rule that hides that
+    // block on boot must not fire, or the page empties itself the moment the bundle runs.
+    document.documentElement.dataset.route = pathname === "/"
+      ? "home"
+      : pathname.startsWith("/browse/") ? "browse" : "page";
   }, [pathname]);
   return null;
 }
