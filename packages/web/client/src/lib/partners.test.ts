@@ -1,7 +1,7 @@
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { partnerShardOf } from "@edh-seer/matcher/partners-core";
 import { CARD_PAGE_DATA_ID } from "./inject.js";
-import { inlineCardPage, loadCardPage, loadNameIndex } from "./partners.js";
+import { inlineCardPage, loadCardPage, loadNameIndex, resetSharedNameIndex, sharedNameIndex } from "./partners.js";
 
 const fetchOf = (files: Record<string, unknown>) => vi.fn(async (url: string) =>
   url in files
@@ -107,4 +107,32 @@ test("a page whose record is inline fetches nothing", async () => {
   } finally {
     document.getElementById(CARD_PAGE_DATA_ID)?.remove();
   }
+});
+
+/** ONE LOAD PER SESSION (spec 2026-09-08 part 1). The header field on every page and the Cards page
+ *  both read the name index; `loadNameIndex` builds a fresh `StaticLookup` per call, and the 1.5 MB
+ *  parse would be paid twice. An empty answer must not be remembered, or one bad network moment
+ *  empties search for the rest of the session. */
+afterEach(() => { resetSharedNameIndex(); });
+
+test("two callers share one index fetch", async () => {
+  const index = [{ slug: "skullclamp", name: "Skullclamp", identity: [], commander: false }];
+  const f = fetchOf({ "/static/manifest.json": { version: "v-abc" }, "/static/v-abc/name-index.json": index });
+  const [a, b] = await Promise.all([
+    sharedNameIndex("/static", f as unknown as typeof fetch),
+    sharedNameIndex("/static", f as unknown as typeof fetch),
+  ]);
+  expect(a).toBe(b);
+  expect(a).toEqual(index);
+  expect(f.mock.calls.filter(([u]) => u.endsWith("/name-index.json"))).toHaveLength(1);
+});
+
+test("an empty answer is not remembered, so the next call fetches again", async () => {
+  // `StaticLookup.nameIndex()` resolves to [] on a miss; it never throws.
+  const empty = fetchOf({ "/static/manifest.json": { version: "v-abc" } });
+  expect(await sharedNameIndex("/static", empty as unknown as typeof fetch)).toEqual([]);
+  const index = [{ slug: "skullclamp", name: "Skullclamp", identity: [], commander: false }];
+  const f = fetchOf({ "/static/manifest.json": { version: "v-abc" }, "/static/v-abc/name-index.json": index });
+  expect(await sharedNameIndex("/static", f as unknown as typeof fetch)).toEqual(index);
+  expect(f.mock.calls.some(([u]) => u.endsWith("/name-index.json"))).toBe(true);
 });

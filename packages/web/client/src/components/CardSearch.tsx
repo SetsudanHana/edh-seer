@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { matchNames, needleOf } from "../lib/name-match.js";
-import { loadNameIndex, type NameIndexEntry } from "../lib/partners.js";
+import { sharedNameIndex, type NameIndexEntry } from "../lib/partners.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
@@ -35,7 +35,7 @@ const COLOURS: [code: string, label: string][] = [
 ];
 
 export function CardSearch({
-  load = loadNameIndex, hash, replace, mode = "cards",
+  load = sharedNameIndex, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
   hash?: string;
