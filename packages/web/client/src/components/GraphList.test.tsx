@@ -162,3 +162,23 @@ test("GraphList states how many cards were not read", () => {
   );
   expect(screen.getByText(/1 not read/)).toBeInTheDocument();
 });
+
+/** AN EMBLEM IS NOT A TOKEN (CR 114.1, spec 2026-09-08): its own marker, and its own count, so the
+ *  parts still sum to the rows. */
+test("an emblem row carries an emblem marker and is counted apart from tokens", () => {
+  const emblemGraph = {
+    ...graph,
+    nodes: [
+      ...graph.nodes,
+      { id: "emblem:Elspeth, Knight-Errant Emblem", label: "Elspeth, Knight-Errant Emblem", isToken: true, isEmblem: true, copies: 1, types: ["emblem"], subtypes: [], supertypes: [], colors: [], cmc: 0 },
+    ],
+  } as typeof graph;
+  render(
+    <CardDrawerProvider graph={emblemGraph}>
+      <GraphList graph={emblemGraph} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByText("emblem")).toBeInTheDocument();
+  expect(screen.getByText(/1 emblem they grant/)).toBeInTheDocument();
+  expect(screen.queryByText(/token they make/)).toBeNull();
+});

@@ -10,6 +10,8 @@ export interface WireGraphNode {
   label: string;
   /** True on a token node: a permanent the deck MAKES rather than a card it holds. */
   isToken?: boolean;
+  /** An emblem node (spec 2026-09-08); `isToken` is true on it too. */
+  isEmblem?: boolean;
   /** Which printed face this node is, 1 or more for a back face. Absent on a front face and on a
    *  single-face card -- see `ProjectedNode.face`. The board rims the two faces of one card as a
    *  pair and seeds the inspector's open face from whichever one was clicked. */
@@ -163,6 +165,7 @@ export function attachRolesAndArt(
       // A token node joins no card doc by design (its id is `token:<name>`, and there is no corpus
       // row for a token) -- so it carries no roles. Its ART comes from `tokenArtById` above.
       ...(n.isToken ? { isToken: true as const } : {}),
+      ...(n.isEmblem ? { isEmblem: true as const } : {}),
       // FACE AND CARDNAME RIDE THE WIRE TOO (Task 8): the board rims the two faces of one card as a
       // pair and the inspector opens on the face that was clicked, both of which need these on the
       // client, not just here where the doc join uses them.

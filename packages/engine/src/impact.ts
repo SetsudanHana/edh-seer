@@ -39,6 +39,9 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
   kinds: {
     "draw-card": 1.0,
     "token-generation": 1.0,
+    // An emblem grant reaches only the emblem node the card creates; the emblem's own abilities
+    // carry their own kinds. The relation itself is a fact of the deck, not a payoff.
+    emblem: 0.5,
     "token-doubling": 1.0,
     "trigger-doubling": 1.0,
     drain: 0.9,

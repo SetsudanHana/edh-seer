@@ -125,7 +125,9 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
     // just by existing on the node set: measured on the 71 calibration decks, 1,115 reasons touching
     // a token carried the `cast` verb before this line existed, more than every other family
     // combined including `creates` itself (511).
-    if (!isLand && !chars.token) push("cast");
+    // CR 114.1: an emblem is not a card either, and it is not a permanent, so it gets no `cast` here
+    // and no `enters` below (its type line names no permanent type).
+    if (!isLand && !chars.token && chars.emblem !== true) push("cast");
     if (isPermanent) push("enters");
     // A creature on the battlefield can attack and connect, exactly as a nonland card can be cast.
     // These only ever reach a consumer that filters on WHICH creature attacks -- see

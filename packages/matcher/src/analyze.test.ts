@@ -1642,3 +1642,79 @@ describe("boolean markers", () => {
     expect(analyzeDeckStructured([venturer, court], undefined, H).markers).toEqual(["monarch", "dungeon"]);
   });
 });
+
+/** AN EMBLEM NODE, AND WHO CONTROLS IT (spec 2026-09-08). Chandra's back face grants it to each
+ *  opponent she hits, so the node is built from the opponent's seat: its upkeep trigger deals
+ *  damage to `opp` from a dealer `opp`. The FRONT face prints no grant and is not its maker.
+ *  The faces come from `faceDeckCards`, never built by hand: `collectTokenNodes` reads a face's
+ *  siblings through `dc.parent`, which only `faceDeckCards` sets. */
+const chandraGrant: CardTags["abilities"] = [{
+  kind: "activated", cost: "−7", face: 1,
+  effect: { kind: "emblem", subject: { control: "opp", token: null } },
+}];
+const chandraParts = [{ component: "combo_piece", name: "Chandra, Roaring Flame Emblem", typeLine: "Emblem — Chandra", printingId: "emblem-printing-id" }];
+const chandraPhysical = (): DeckCard => ({
+  card: {
+    name: "Chandra, Fire of Kaladesh // Chandra, Roaring Flame",
+    typeLine: "Legendary Creature — Human Shaman // Legendary Planeswalker — Chandra",
+    oracleText: "Whenever you cast a red spell, untap Chandra.\n//\n−7: Chandra deals 6 damage to each opponent. Each player dealt damage this way gets an emblem with \"At the beginning of your upkeep, this emblem deals 3 damage to you.\"",
+    keywords: [], colors: ["R"], manaValue: 3, layout: "transform",
+    faces: [
+      { name: "Chandra, Fire of Kaladesh", typeLine: "Legendary Creature — Human Shaman", oracleText: "Whenever you cast a red spell, untap Chandra.", manaCost: "{1}{R}{R}", colors: ["R"] },
+      { name: "Chandra, Roaring Flame", typeLine: "Legendary Planeswalker — Chandra", oracleText: "−7: Chandra deals 6 damage to each opponent. Each player dealt damage this way gets an emblem with \"At the beginning of your upkeep, this emblem deals 3 damage to you.\"", colors: ["R"] },
+    ],
+    allParts: chandraParts,
+  } as never,
+  tags: {
+    oracleId: "chandra", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature", "planeswalker"], subtypes: ["human", "shaman", "chandra"], faces: [{ types: ["creature"], subtypes: ["human", "shaman"] }], layout: "transform", colors: ["R"], identity: ["R"], cmc: 3, power: "2", toughness: "2", token: false, keywords: [] },
+    abilities: chandraGrant,
+  },
+});
+const chandraEmblemTags = (abilities: CardTags["abilities"]): CardTags => ({
+  oracleId: "emblem-oracle", schemaVersion: 1, promptVersion: 0, model: "t",
+  characteristics: { types: ["emblem"], subtypes: ["chandra"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, emblem: true, keywords: [] },
+  abilities,
+});
+
+test("collectTokenNodes builds an opponent's emblem flipped, attributed to the granting face", () => {
+  const [front, back] = faceDeckCards(chandraPhysical());
+  expect(back!.card.name).toBe("Chandra, Roaring Flame");
+  const emblemTags = chandraEmblemTags([{
+    kind: "triggered",
+    trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
+    effect: { kind: "damage", subject: { control: "you", token: null } },
+    amount: "3",
+    emits: [{ verb: "non-combat-damage", subject: { control: "you", token: null }, dealer: { control: "you", token: null } }],
+  }]);
+  const { nodes, tokenCreators } = collectTokenNodes(
+    [front!, back!],
+    (ref) => (ref.printingId === "emblem-printing-id" ? emblemTags : null),
+  );
+  expect(nodes).toHaveLength(1);
+  expect(nodes[0]!.isToken).toBe(true);
+  expect(nodes[0]!.tags!.characteristics.emblem).toBe(true);
+  expect(nodes[0]!.tags!.abilities[0]!.effect.subject!.control).toBe("opp");
+  expect(nodes[0]!.tags!.abilities[0]!.emits![0]!.dealer!.control).toBe("opp");
+  expect(tokenCreators.get("emblem-oracle")).toEqual(new Set(["Chandra, Roaring Flame"]));
+});
+
+/** THE MAKER EDGE. Chandra's back face gives the emblem, so the pair pool forms `creates:emblem`
+ *  between that face and the node, and nothing between the front face and the node. The sentence
+ *  says who gets it. The emblem never reaches the ranked card list. */
+test("a granting face forms creates:emblem to the emblem node, and the emblem stays off the card list", () => {
+  const report = analyzeDeckStructured(
+    [chandraPhysical()], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "emblem-printing-id" ? chandraEmblemTags([]) : null),
+  );
+  const creates = report.edges.filter((e) => e.reasons.some((r) => r.tag === "creates:emblem"));
+  expect(creates).toHaveLength(1);
+  const r = creates[0]!.reasons.find((x) => x.tag === "creates:emblem")!;
+  // The FACE's name, as the token sentence does: the grant is printed on the back face.
+  expect(r.text).toBe("Chandra, Roaring Flame gives each opponent an emblem");
+  expect(r.producerFace).toBe(1);
+  expect(r.consumerIsEmblem).toBe(true);
+  expect(r.consumerIsToken).toBe(true);
+  expect(r.effectKind).toBe("emblem");
+  expect(report.cards.map((c) => c.name)).not.toContain("Chandra, Roaring Flame Emblem");
+});

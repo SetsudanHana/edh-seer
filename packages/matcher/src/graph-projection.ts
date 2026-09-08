@@ -16,6 +16,9 @@ export interface ProjectedNode {
   /** True on a token node. Present so the view can mark it as one rather than inferring it from
    *  the id's shape. */
   isToken?: boolean;
+  /** True on an emblem node (spec 2026-09-08). Beside `isToken`, which is also true on it: the
+   *  token flag says "not one of the 99", the emblem flag says what the object is. */
+  isEmblem?: boolean;
   copies: number;
   types: string[];
   subtypes: string[];
@@ -101,6 +104,10 @@ const DEFAULT_FLOOR = 0;
  *  reads node ids and a caller comparing an id against a card name has to know the shape. */
 export const TOKEN_ID_PREFIX = "token:";
 
+/** The prefix for an EMBLEM node. Its own space rather than `token:` because the board and the
+ *  inspector name the object by its id's shape, and an emblem is not a token (CR 114.1). */
+export const EMBLEM_ID_PREFIX = "emblem:";
+
 /** The prefix that separates a BACK face from the card it is a face of. Exported for the same reason
  *  `TOKEN_ID_PREFIX` is: the view reads node ids. */
 export const FACE_ID_PREFIX = "face:";
@@ -108,7 +115,8 @@ export const FACE_ID_PREFIX = "face:";
 /** A node's identity. Tokens are prefixed; a BACK face is prefixed with its index; the FRONT face and
  *  every single-face card keep the bare card name, so every id that existed before faces were nodes
  *  still reads exactly as it did -- `pairs.json`'s 895 panel keys and every fixture included. */
-export function nodeId(name: string, isToken?: boolean, face?: number): string {
+export function nodeId(name: string, isToken?: boolean, face?: number, isEmblem?: boolean): string {
+  if (isEmblem) return `${EMBLEM_ID_PREFIX}${name}`;
   if (isToken) return `${TOKEN_ID_PREFIX}${name}`;
   return face ? `${FACE_ID_PREFIX}${face}:${name}` : name;
 }
@@ -124,14 +132,14 @@ export function projectDeckGraph(
 
   const copies = new Map<string, number>();
   for (const d of deck) {
-    const id = nodeId(d.parentName ?? d.card.name, d.isToken, d.face);
+    const id = nodeId(d.parentName ?? d.card.name, d.isToken, d.face, d.tags?.characteristics.emblem === true);
     copies.set(id, (copies.get(id) ?? 0) + 1);
   }
 
   const nodes: ProjectedNode[] = [];
   const seen = new Set<string>();
   for (const d of deck) {
-    const id = nodeId(d.parentName ?? d.card.name, d.isToken, d.face);
+    const id = nodeId(d.parentName ?? d.card.name, d.isToken, d.face, d.tags?.characteristics.emblem === true);
     if (seen.has(id)) continue;
     seen.add(id);
     // Stale note, corrected 2026-08-27: this predates Task 7 (faces-as-nodes), when `deck` held one
@@ -148,6 +156,7 @@ export function projectDeckGraph(
       id,
       label: d.card.name,
       ...(d.isToken ? { isToken: true } : {}),
+      ...(d.tags?.characteristics.emblem === true ? { isEmblem: true } : {}),
       copies: copies.get(id) ?? 1,
       types, subtypes, supertypes,
       typeLine: d.card.typeLine,
@@ -169,8 +178,8 @@ export function projectDeckGraph(
     // reads as "both sides are cards", the only thing that engine can produce. `producerFace`/
     // `consumerFace` do the same for a face: `stampSides` already rewrote `producer`/`consumer` to
     // the PHYSICAL card's name, so the face index is what routes the reason to its own node.
-    const from = nodeId(r.producer, r.producerIsToken, r.producerFace);
-    const to = nodeId(r.consumer, r.consumerIsToken, r.consumerFace);
+    const from = nodeId(r.producer, r.producerIsToken, r.producerFace, r.producerIsEmblem);
+    const to = nodeId(r.consumer, r.consumerIsToken, r.consumerFace, r.consumerIsEmblem);
     if (!seen.has(from) || !seen.has(to)) { offDeckReasons++; continue; }
     const key = `${from}->${to}`;
     const g = grouped.get(key) ?? { from, to, reasons: [] };

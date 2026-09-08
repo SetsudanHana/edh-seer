@@ -1,4 +1,5 @@
 import type { Card } from "@edh-seer/engine";
+import { isEmblemPart } from "@edh-seer/tagger/emblem";
 
 /** A token a card can make, identified the way the `tokens` collection is indexed.
  *
@@ -6,7 +7,16 @@ import type { Card } from "@edh-seer/engine";
  *  ambiguous: four "Wizard" / "Token Creature — Wizard" rows differ only in oracle text, and Kuja,
  *  Genome Sorcerer's Wizard part is one of them. Optional because a card ingested before
  *  `scryfall.ts` started carrying it has none. */
-export interface TokenRef { name: string; typeLine: string; printingId?: string }
+export interface TokenRef {
+  name: string;
+  typeLine: string;
+  printingId?: string;
+  /** An EMBLEM part (spec 2026-09-08): Scryfall's `combo_piece` with an "Emblem — …" type line,
+   *  which has its own row in `tokens` under layout `emblem`. Never mediates (`isMediatingTokenRef`
+   *  stays false: an emblem replaces no direct edge), and the node built from it carries
+   *  `characteristics.emblem`, never `token`. */
+  emblem?: true;
+}
 
 /** The tokens this card creates, from `allParts`, which `scryfall.ts` already parses and which
  *  resolves 413 of the 424 clause-corpus creators (97.4%).
@@ -15,18 +25,21 @@ export interface TokenRef { name: string; typeLine: string; printingId?: string 
  *  Scryfall does not guarantee uniqueness) must still yield one ref, and the printingId is carried
  *  along for whichever occurrence is kept — it does not change which rows collapse.
  *
- *  `meld_part` and `combo_piece` point at real cards and are excluded: putting one on the graph
- *  would duplicate a card as a phantom token. */
+ *  `meld_part` and a `combo_piece` pointing at a real card are excluded: putting one on the graph
+ *  would duplicate a card as a phantom token. The one `combo_piece` that is NOT a card, an emblem,
+ *  is kept and flagged. */
 export function createdTokenRefs(card: Card): TokenRef[] {
   const parts = (card as unknown as { allParts?: { component?: string; name?: string; typeLine?: string; printingId?: string }[] }).allParts;
   if (!parts) return [];
   const out = new Map<string, TokenRef>();
   for (const p of parts) {
-    if (p.component !== "token" || !p.name || !p.typeLine) continue;
+    const emblem = isEmblemPart(p);
+    if ((p.component !== "token" && !emblem) || !p.name || !p.typeLine) continue;
     out.set(`${p.name}|${p.typeLine}`, {
       name: p.name,
       typeLine: p.typeLine,
       ...(p.printingId !== undefined ? { printingId: p.printingId } : {}),
+      ...(emblem ? { emblem: true as const } : {}),
     });
   }
   return [...out.values()];

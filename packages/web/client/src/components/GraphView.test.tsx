@@ -1995,6 +1995,17 @@ describe("token nodes", () => {
     expect(labelOf(container)).toBe("Deck graph: 2 cards, 0 synergies");
   });
 
+  // An emblem is marked as what it is (CR 114.1), never as a token: a third dash pattern and the
+  // word under the disc. `isToken` stays true on it so every token exclusion still applies.
+  test("draws an emblem marker, not the token one", () => {
+    const calls: string[] = [];
+    const emblem = card({ id: "emblem:Elspeth, Knight-Errant Emblem", label: "Elspeth, Knight-Errant Emblem", isToken: true, isEmblem: true });
+    const { tick } = frames(graphOf([card({ id: "Bear" }), emblem]), calls);
+    tick();
+    expect(calls.some((c) => c.startsWith("fillText:emblem,"))).toBe(true);
+    expect(calls.some((c) => c.startsWith("fillText:token,"))).toBe(false);
+  });
+
   // Distinguishable on the board, not only in the data: a dashed rim and the word under the disc.
   test("draws a token marker no card node gets", () => {
     const calls: string[] = [];

@@ -163,7 +163,8 @@ export async function buildWireGraph(
     const artByOracle = await sources.tokenArt(oracleIds);
     for (const t of tokenNodes) {
       const art = artByOracle.get(t.tags!.oracleId);
-      if (art) tokenArtById.set(nodeId(t.card.name, true), art);
+      // An emblem node lives in the `emblem:` id space (spec 2026-09-08); its art is in `tokens` too.
+      if (art) tokenArtById.set(nodeId(t.card.name, true, undefined, t.tags?.characteristics.emblem === true), art);
     }
   }
   const projected = projectDeckGraph(

@@ -745,3 +745,12 @@ test("an unstated origin without that phrase is still not top-set", () => {
     expect(actionEffectKind({ verb: "put", object: obj, toZone: "library" }, "")).not.toBe("top-set");
   }
 });
+
+/** CR 111.1 versus CR 114.1: a token is a permanent, an emblem is an object in the command zone.
+ *  For as long as this table existed `emblem` mapped to `token-generation`, so 86 planeswalkers
+ *  read "makes a token" and voted Tokens. Its own kind, and the node work (spec 2026-09-08) is what
+ *  the kind exists for. */
+test("an emblem is not a token", () => {
+  expect(actionEffectKind({ verb: "emblem" })).toBe("emblem");
+  expect(EFFECT_KINDS).toContain("emblem");
+});

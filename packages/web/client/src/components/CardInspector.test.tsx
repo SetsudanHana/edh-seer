@@ -118,6 +118,21 @@ describe("CardInspector", () => {
     expect(screen.getByTestId("partner-token")).toBeInTheDocument();
   });
 
+  // An emblem partner says "emblem", not "token" (CR 114.1, spec 2026-09-08).
+  it("says a partner is an emblem when the resolver says so", () => {
+    const emblemEdge = [
+      { from: "Bitterblossom", to: "emblem:Elspeth, Knight-Errant Emblem", weight: 1, tags: [], reasonTexts: ["gives you an emblem"] },
+    ];
+    render(
+      <CardInspector
+        node={node} edges={emblemEdge} onClose={() => {}}
+        nameOf={(id) => (id === "emblem:Elspeth, Knight-Errant Emblem" ? { label: "Elspeth, Knight-Errant Emblem", isToken: true, isEmblem: true } : undefined)}
+      />,
+    );
+    expect(screen.getByTestId("partner-token")).toHaveTextContent("emblem");
+    expect(screen.queryByText(/emblem:Elspeth/)).toBeNull();
+  });
+
   it("falls back to the id when nothing resolves it, rather than inventing a name", () => {
     const tokenEdge = [
       { from: "Bitterblossom", to: "token:Faerie Rogue", weight: 1, tags: [], reasonTexts: ["makes it"] },

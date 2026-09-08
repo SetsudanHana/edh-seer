@@ -518,6 +518,10 @@ export const EFFECT_KINDS = [
   // `pressure.ts` reads that kind and an extra combat is not an extra untap.
   "extra-turn",
   "extra-phase",
+  // AN EMBLEM GRANT (CR 114.2). Its own kind since 2026-09-08 -- it was `token-generation` for the
+  // table's whole life, and an emblem is not a token (CR 111.1 vs 114.1). Forms an edge only to the
+  // emblem NODE the card structurally creates (`createsReasons`, matcher), never to a token payoff.
+  "emblem",
 ] as const;
 
 export type EffectKind = (typeof EFFECT_KINDS)[number];
@@ -739,6 +743,13 @@ export interface Characteristics {
   toughness: string | null;
   /** Printed cards are always false. */
   token: boolean;
+  /** AN EMBLEM (CR 114): an object in the command zone with abilities and no other characteristics.
+   *  Present, and `true`, only on an emblem's own row in `cardTagsDerived`, which `derive-corpus`
+   *  builds from the `tokens` collection's layout-`emblem` rows. Absent everywhere else, so
+   *  `chars.emblem === true` is the whole test. Not a permanent (no `enters`, no `dies`), not a
+   *  card (no `cast`), and NOT a token: `token` stays false on it, so "whenever a token enters"
+   *  never matches one. */
+  emblem?: true;
   /** THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander`
    *  (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a
    *  characteristic of the object represented by the card". It lives here anyway because a card's

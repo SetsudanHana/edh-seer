@@ -64,3 +64,18 @@ test("empty arrays are not written", () => {
   expect(d).not.toHaveProperty("colors");
   expect(d).not.toHaveProperty("keywords");
 });
+
+/** AN EMBLEM IS A SCRYFALL OBJECT (spec 2026-09-08): layout `emblem`, its own oracle id, oracle text
+ *  equal to the granted ability. It rides the same document shape as a token; the layout is what
+ *  the derive side reads to set `emblem: true` instead of `token: true`. */
+test("an emblem payload becomes a token document carrying its layout and text", () => {
+  const d = tokenDoc({
+    id: "4a8123a6", oracle_id: "64c3e607", name: "Chandra, Roaring Flame Emblem",
+    type_line: "Emblem — Chandra", layout: "emblem",
+    oracle_text: "At the beginning of your upkeep, this emblem deals 3 damage to you.",
+  })!;
+  expect(d.layout).toBe("emblem");
+  expect(d.typeLine).toBe("Emblem — Chandra");
+  expect(d.oracleText).toContain("deals 3 damage");
+  expect(d.printingIds).toEqual(["4a8123a6"]);
+});

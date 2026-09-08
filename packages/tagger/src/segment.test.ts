@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { effectActions, grantedToOwnToken, segment } from "./segment.js";
+import { effectActions, grantedToOwnEmblem, grantedToOwnToken, segment } from "./segment.js";
 
 // Every card here is one the extraction experiment or the quality audit got wrong.
 
@@ -631,17 +631,33 @@ test("a grant to a token the clause creates is selected, and a grant to your own
   expect(grantedToOwnToken(bello).size).toBe(0);
 });
 
-/** The cue reads the PARENT and never the granted text, because the word "token" routinely appears
- *  inside the granted ability itself: Kaito, Cunning Infiltrator's emblem creates a Ninja token, and
- *  the clause that grants it merely says "You get an emblem with that ability". An emblem is the
- *  same wrong sentence one object over and is deliberately left alone -- it has no node for the
- *  relation to move to, so refusing it would delete a claim rather than relocate it. */
-test("a token named only inside the granted ability does not select the grant", () => {
+/** The token cue reads the PARENT and never the granted text, because the word "token" routinely
+ *  appears inside the granted ability itself: Kaito, Cunning Infiltrator's emblem creates a Ninja,
+ *  and the clause that grants it merely says "You get an emblem with that ability". */
+test("a token named only inside the granted ability does not select the grant as a token grant", () => {
   const kaito = segment(
     'You get an emblem with "Whenever a player casts a spell, you create a 2/1 blue Ninja creature token."',
   );
   expect(kaito.some((c) => c.kind === "granted")).toBe(true);
   expect(grantedToOwnToken(kaito).size).toBe(0);
+});
+
+/** AN EMBLEM HAS A NODE NOW (spec 2026-09-08). The granted ability belongs to the emblem, which
+ *  derives it from its own row in `tokens`, so the card keeps only the grant. Same shape as the
+ *  token cue, one object over -- and `derive-corpus` applies it only when the card's `allParts`
+ *  names an Emblem part, so Karn, Living Legacy, whose emblem Scryfall does not list, keeps his
+ *  claim rather than losing it. */
+test("a grant to an emblem is selected by the emblem cue, and a grant to your creatures is not", () => {
+  const kaito = segment(
+    'You get an emblem with "Whenever a player casts a spell, you create a 2/1 blue Ninja creature token."',
+  );
+  const granted = kaito.find((c) => c.kind === "granted")!;
+  expect([...grantedToOwnEmblem(kaito)]).toEqual([granted.id]);
+
+  const bello = segment(
+    'During your turn, each non-Equipment artifact you control with mana value 4 or greater is a 4/4 Elemental creature in addition to its other types and has indestructible, haste, and "Whenever this creature deals combat damage to a player, draw a card."',
+  );
+  expect(grantedToOwnEmblem(bello).size).toBe(0);
 });
 
 /** WHICH FACE A CLAUSE IS PRINTED ON. The loop has always tracked this in order to classify each

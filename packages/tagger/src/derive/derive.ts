@@ -22,6 +22,7 @@ import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
 import { triggerHasCue } from "../clause-store.js";
+import { emblemRecipient } from "../emblem.js";
 
 /** Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike
  *  NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored
@@ -30,7 +31,9 @@ import { triggerHasCue } from "../clause-store.js";
 // on the consumer side, new emits on the producer side.
 // 114: top-manipulation retired; scry, surveil, mill, search and top-set replace it (CR 701.22 /
 // 701.25 / 701.17 / 701.23), and the tutor gate in edges.ts now reads `search` directly.
-export const DERIVE_VERSION = 114;
+// 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
+// granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
+export const DERIVE_VERSION = 115;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1065,6 +1068,11 @@ export function deriveAbilities(
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
         }
       }
+      // WHO GETS THE EMBLEM (CR 114.2) is read off the sentence, not the object: the object says
+      // "an emblem with that ability" and nothing more on 20 of the 86 corpus grants. The recipient
+      // becomes the node's CONTROLLER in the matcher (`collectTokenNodes` flips the emblem's own
+      // abilities to the opponent's perspective when this says `opp`), so it has to be right here.
+      if (effectKind === "emblem" && subject) subject.control = clauseText ? emblemRecipient(clauseText) : "you";
       // A `clone` reaches edges.ts's applies-to pass whatever its ability kind, so it answers to the
       // same discipline a static does: name WHO becomes the copy, or form no edge. "Each other
       // creature you control becomes a copy of that creature" is the whole board, and a subject that

@@ -32,6 +32,7 @@ import { segment } from "../segment.js";
 import {
   CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, segmentHash, type CardClausesDoc,
 } from "../clause-store.js";
+import { isEmblemPart } from "../emblem.js";
 
 /** Haiku 4.5 list price, same figures as normalize-corpus.ts. */
 const USD_PER_M_INPUT = 1;
@@ -63,9 +64,10 @@ const store = await connect(loadConfig());
 await ensureClauseIndexes(store.db);
 const clausesCol = store.db.collection<TokenClausesDoc>(CLAUSES_COLLECTION);
 
-/** Cards already normalized (the clause corpus) that reference a token via `allParts`. `component`
- *  can also be `meld_part` or `combo_piece`, which are real cards and must be excluded — only
- *  `"token"` is a token. */
+/** Cards already normalized (the clause corpus) that reference a token OR AN EMBLEM via `allParts`.
+ *  `component` can also be `meld_part` or `combo_piece`, which point at real cards and must be
+ *  excluded -- except the `combo_piece` whose type line starts with "Emblem", which since
+ *  2026-09-08 is an object with its own row in `tokens` (`isEmblemPart`). */
 const corpusOracleIds = await clausesCol.distinct("oracleId", { isToken: { $ne: true } });
 const referencingCards = await store.db.collection("cards")
   .find(
@@ -94,7 +96,7 @@ const resolvedIds = new Set<string>();
 const unresolved: { card: string; part: string; reason: string }[] = [];
 for (const c of referencingCards) {
   for (const p of c.allParts) {
-    if (p.component !== "token") continue;
+    if (p.component !== "token" && !isEmblemPart(p)) continue;
     tokenPartEntries++;
     if (!p.printingId) { unresolved.push({ card: c.name, part: p.name, reason: "no printingId on this allParts entry" }); continue; }
     const rows = byPrintingId.get(p.printingId) ?? [];
@@ -137,7 +139,7 @@ const outputTokens = billable * EST_OUTPUT_TOKENS;
 const usd = (inputTokens / 1e6) * USD_PER_M_INPUT + (outputTokens / 1e6) * USD_PER_M_OUTPUT;
 
 const cfg = loadTaggerConfig();
-console.log(`token allParts entries (component=token) on clause-corpus cards: ${tokenPartEntries}`);
+console.log(`token and emblem allParts entries on clause-corpus cards: ${tokenPartEntries}`);
 console.log(`  resolved to exactly one token row via printingId: ${resolvedIds.size} distinct token(s)`);
 console.log(`  UNRESOLVED (refused, not guessed): ${unresolved.length}`);
 if (unresolved.length) {

@@ -37,6 +37,11 @@ export interface Reason {
   producerIsToken?: boolean;
   /** True when the CONSUMING side is a token node. See `producerIsToken`. */
   consumerIsToken?: boolean;
+  /** The side is an EMBLEM node (spec 2026-09-08): a token-shaped node whose characteristics say
+   *  `emblem`, so the projection gives it the `emblem:` id space and the board its own marker. Set
+   *  beside `producerIsToken`, never instead of it. */
+  producerIsEmblem?: boolean;
+  consumerIsEmblem?: boolean;
   /** WHICH FACE of the producing card printed this relation, when the producer is one face of a
    *  multi-face card. Absent for the front face and for every single-face card, so a front-face
    *  reason is byte-identical to what this engine produced before faces were nodes.

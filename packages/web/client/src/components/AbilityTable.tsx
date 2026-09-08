@@ -1,5 +1,6 @@
 import { effectPhrase, type AbilityRow } from "@edh-seer/matcher/partners-core";
 import { eventKeySentence } from "../lib/demand-sentence.js";
+import { LoyaltyCost } from "./LoyaltyCost.js";
 
 /** HOW THE ENGINE READ THIS CARD, one row per derived ability.
  *
@@ -67,7 +68,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
                 <span className="eyebrow text-(--muted)">{KIND_LABEL[a.kind] ?? a.kind}{a.requires ? ` · at max ${a.requires.marker}` : ""}</span>
                 {/* THE COST IS PART OF "HOW IT FIRES", not a separate fact: an activated ability
                   * with no cost shown is an ability a reader cannot judge the speed of. */}
-                {a.cost && <span className="block font-mono text-sm mt-1">{a.cost}</span>}
+                {a.cost && <span className="block mt-1"><LoyaltyCost cost={a.cost} /></span>}
               </td>
               <td className="py-3 pr-4">
                 {a.when.length === 0
@@ -103,7 +104,7 @@ export function AbilityTable({ rows, stacked }: { rows: AbilityRow[]; stacked?: 
           <li key={i} className="flex flex-col gap-1 border-t border-(--separator) pt-3 first:border-t-0 first:pt-0">
             <p className="flex flex-wrap items-baseline gap-x-2">
               <span className="eyebrow text-(--muted)">{KIND_LABEL[a.kind] ?? a.kind}{a.requires ? ` · at max ${a.requires.marker}` : ""}</span>
-              {a.cost && <span className="font-mono text-sm">{a.cost}</span>}
+              {a.cost && <LoyaltyCost cost={a.cost} />}
             </p>
             {a.when.length > 0 && (
               <p><span className="eyebrow text-(--muted)">when </span>{a.when.map((w) => eventKeySentence(w, a.self ? "this card" : undefined)).join(", ")}</p>

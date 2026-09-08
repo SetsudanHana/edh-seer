@@ -553,8 +553,8 @@ export function GraphView(
    *  and same reason as `textById` above: built from the FULL graph, because a node hidden from the
    *  BOARD can still be named by a relationship the panel lists. */
   const nameById = useMemo(() => {
-    const m = new Map<string, { label: string; isToken: boolean }>();
-    for (const n of fullGraph.nodes) m.set(n.id, { label: n.label, isToken: n.isToken === true });
+    const m = new Map<string, { label: string; isToken: boolean; isEmblem: boolean }>();
+    for (const n of fullGraph.nodes) m.set(n.id, { label: n.label, isToken: n.isToken === true, isEmblem: n.isEmblem === true });
     return (id: string) => m.get(id);
   }, [fullGraph]);
 
@@ -1406,9 +1406,12 @@ export function GraphView(
         // card sitting next to it (92 corpus token names are also a card). Dashed rim: the node is a
         // permanent the deck MAKES, not one of the 99 it holds. The word goes in the copies badge's
         // slot, which is free here -- a token is always exactly one node.
+        // AN EMBLEM IS NOT A TOKEN EITHER (CR 114.1), so it gets a third dash pattern and its own
+        // word; `isToken` is true on it as well, which is what keeps every token exclusion applied.
         if (n.isToken) {
+          const emblem = n.isEmblem === true;
           ctx.save();
-          ctx.setLineDash([4 / cam.z, 3 / cam.z]);
+          ctx.setLineDash(emblem ? [2 / cam.z, 3 / cam.z] : [4 / cam.z, 3 / cam.z]);
           ctx.lineWidth = 1.5 / cam.z;
           ctx.strokeStyle = paintColors.muted;
           ctx.beginPath();
@@ -1419,7 +1422,7 @@ export function GraphView(
           ctx.font = `500 ${10 / cam.z}px "JetBrains Mono", ui-monospace, monospace`;
           ctx.textAlign = "center";
           ctx.fillStyle = paintColors.muted;
-          ctx.fillText("token", n.x, n.y + ART_RADIUS + 11 / cam.z);
+          ctx.fillText(emblem ? "emblem" : "token", n.x, n.y + ART_RADIUS + 11 / cam.z);
         }
 
         // SHARED RIM, NO LINK (owner's ruling, 2026-08-27). The two faces of one card -- Task 7's

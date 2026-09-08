@@ -61,7 +61,7 @@ export function CardInspector({
    *
    *  Optional, so every existing caller and fixture keeps working; unresolved ids fall back to the
    *  id itself rather than to an invented name. */
-  nameOf?: (id: string) => { label: string; isToken: boolean } | undefined;
+  nameOf?: (id: string) => { label: string; isToken: boolean; isEmblem?: boolean } | undefined;
   /** The drawn flow, when a flow is active. Only `truncated` is read: the panel states what the
    *  board had to leave out -- direction-keyed, since the root can have its own fanout cut on
    *  BOTH walks and each has to report its own count under its own heading. */
@@ -147,7 +147,7 @@ export function CardInspector({
                   data-testid="partner-token"
                   className="ml-1.5 eyebrow text-(--muted)"
                 >
-                  token
+                  {named.isEmblem === true ? "emblem" : "token"}
                 </span>
               ) : null}
             </>

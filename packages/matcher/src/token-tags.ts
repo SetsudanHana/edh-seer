@@ -42,7 +42,9 @@ export function synthesizeTokenTags(t: TokenDocShape): CardTags {
       toughness: t.toughness ?? null,
       layout: t.layout,
     }),
-    token: true as const,
+    // An emblem row (layout `emblem`) is an object in the command zone, not a token (CR 114.1 vs
+    // 111.1): `token` stays false so "whenever a token enters" never matches it.
+    ...(t.layout === "emblem" ? { token: false as const, emblem: true as const } : { token: true as const }),
   };
   return { oracleId: t._id, schemaVersion: SCHEMA_VERSION, promptVersion: 0, model: "synthesized", characteristics, abilities: [] };
 }

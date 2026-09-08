@@ -9,7 +9,8 @@ import { connect, loadConfig } from "@edh-seer/data";
 import { extractCharacteristics } from "../characteristics.js";
 import { clauseRequiresOf } from "../derive/markers.js";
 import type { Requirement } from "../schema.js";
-import { grantedToOwnToken, segment } from "../segment.js";
+import { grantedToOwnEmblem, grantedToOwnToken, segment } from "../segment.js";
+import { hasEmblemPart } from "../emblem.js";
 import { DERIVE_VERSION } from "../derive/derive.js";
 import { deriveCardTags } from "../derive/derive.js";
 import {
@@ -104,12 +105,19 @@ function clauseFaces(doc: { oracleText?: string; keywords?: string[]; typeLine?:
   return out;
 }
 
-/** The clause ids whose ability was granted to a token the clause itself creates, from the same
- *  deterministic `segment()` the two maps above use. `grantedToOwnToken` needs the `kind`/`parentId`
- *  structure, which `ClauseRecord` does not carry -- the persisted clause doc is the model's answer,
- *  and this is a fact about the SEGMENTATION, so it is recomputed here rather than stored. */
-function grantedTokenClauses(doc: { oracleText?: string; keywords?: string[]; typeLine?: string }): ReadonlySet<number> {
-  return grantedToOwnToken(segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? ""));
+/** The clause ids whose ability was granted to a token the clause itself creates, or to an emblem
+ *  the clause grants, from the same deterministic `segment()` the two maps above use. Both cues
+ *  need the `kind`/`parentId` structure, which `ClauseRecord` does not carry -- the persisted clause
+ *  doc is the model's answer, and this is a fact about the SEGMENTATION, so it is recomputed here
+ *  rather than stored.
+ *
+ *  THE EMBLEM CUE ONLY WHEN THE NODE EXISTS: Scryfall lists the emblem in `allParts` for 139 of the
+ *  140 corpus cards that grant one; Karn, Living Legacy is the exception and keeps his clause. */
+function grantedTokenClauses(doc: { oracleText?: string; keywords?: string[]; typeLine?: string; allParts?: { component?: string; typeLine?: string }[] }): ReadonlySet<number> {
+  const clauses = segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "");
+  const out = new Set(grantedToOwnToken(clauses));
+  if (hasEmblemPart(doc.allParts)) for (const id of grantedToOwnEmblem(clauses)) out.add(id);
+  return out;
 }
 
 /** Clause id -> the game-state requirement its ability word carries ("Max speed —"), from the same
@@ -159,12 +167,17 @@ function charsFrom(doc: {
   } as never) as DerivedTagsDoc["characteristics"];
 }
 
-/** Same shape as `charsFrom`, plus `token: true`. `extractCharacteristics` hardcodes `token: false`
- *  (right for every card, which is all it has ever seen) so this is the one place that flips it.
- *  Load-bearing in both directions per `subject.ts`'s asymmetric tri-state check: it is what lets a
- *  token satisfy a consumer demanding `token: true`, and what stops it satisfying one demanding
- *  `token: false`. A token document carries no `manaValue` -- `charsFrom` already defaults an
- *  absent one to 0, which is correct for a token (it is never cast, so it has none). */
-function tokenCharsFrom(doc: Parameters<typeof charsFrom>[0]): DerivedTagsDoc["characteristics"] {
+/** Same shape as `charsFrom`, plus `token: true` -- or, for a layout-`emblem` row, `emblem: true`
+ *  and `token: false`. `extractCharacteristics` hardcodes `token: false` (right for every card,
+ *  which is all it has ever seen) so this is the one place that flips it. Load-bearing in both
+ *  directions per `subject.ts`'s asymmetric tri-state check: it is what lets a token satisfy a
+ *  consumer demanding `token: true`, and what stops it satisfying one demanding `token: false`.
+ *
+ *  AN EMBLEM IS NOT A TOKEN (CR 114.1 vs 111.1): "whenever a token enters" must never match one,
+ *  so `token` stays false and `emblem` says what it is. `splitTypeLine` already reads
+ *  "Emblem — Chandra" as types `["emblem"]`, subtypes `["chandra"]`, which is what the node wants.
+ *  A token document carries no `manaValue` -- `charsFrom` already defaults an absent one to 0. */
+function tokenCharsFrom(doc: Parameters<typeof charsFrom>[0] & { layout?: string }): DerivedTagsDoc["characteristics"] {
+  if (doc.layout === "emblem") return { ...charsFrom(doc), token: false, emblem: true };
   return { ...charsFrom(doc), token: true };
 }
