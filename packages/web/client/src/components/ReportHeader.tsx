@@ -13,6 +13,10 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { RunDiffLine, signed } from "./RunDiffLine.js";
 
 /** THE REPORT'S SUMMARY, ON EVERY SURFACE — sticky above the chapters AND above the graph, the
+ *  (NOT ON A PHONE: below `sm` it is `static`. Measured at 390 on 2026-09-08, the pinned stack was
+ *  the site header 92px, this bar 73px and the chapter rail 53px, 26% of an 844px screen, on the
+ *  page with the most to scroll. The summary is read once; the rail is the navigation, and it
+ *  stays. `stickyPx` reports 0 for a static bar, so the rail re-stacks itself under the header.)
  *  cards table and the combo list.
  *
  *  It resolves a split the sub-tabs left standing: `HeadlineScores` lived inside the Engine tab and
@@ -81,7 +85,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
       // figure that qualify the whole report. `region` plus a name gives it one.
       role="region"
       aria-label="Deck summary"
-      className="sticky top-[var(--site-header-h,0px)] z-20 -mx-1 px-1 bg-(--background) border-b border-(--separator) py-2"
+      className="max-sm:static sticky top-[var(--site-header-h,0px)] z-20 -mx-1 px-1 bg-(--background) border-b border-(--separator) py-2"
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 min-w-0">
         {commanders.length > 0 ? (

@@ -8,5 +8,11 @@
  *
  *  Fractional heights are the normal case, not the edge one. These bars are sized by line boxes and
  *  padding in `rem`, so a half pixel is what you get on most widths and every zoom level. */
-export const stickyPx = (el: Element): string =>
-  `${Math.floor(el.getBoundingClientRect().height)}px`;
+export const stickyPx = (el: Element): string => {
+  // AN UNPINNED BAR TAKES NO ROOM IN THE STACK (cohesion sweep 2026-09-08). The report header is
+  // `static` below the phone breakpoint; reporting its height there would pin the chapter rail
+  // 73px under the site header with nothing in the gap. A fake in a test is not an Element and
+  // keeps the plain measurement.
+  if (el instanceof Element && getComputedStyle(el).position !== "sticky") return "0px";
+  return `${Math.floor(el.getBoundingClientRect().height)}px`;
+};

@@ -24,3 +24,19 @@ test("a whole number is left alone", () => {
   expect(stickyPx(withHeight(49))).toBe("49px");
   expect(stickyPx(withHeight(0))).toBe("0px");
 });
+
+/** AN UNPINNED BAR TAKES NO ROOM IN THE STACK (cohesion sweep 2026-09-08, finding 6). The report
+ *  header goes `static` below the phone breakpoint; if this still reported its height, the chapter
+ *  rail would pin 73px under the site header with nothing in the gap. A real element is asked for
+ *  its computed position; the fakes above have none and keep the old behaviour. */
+test("a real element that is not sticky measures 0px; a sticky one measures its height", () => {
+  const el = document.createElement("div");
+  el.getBoundingClientRect = () => ({ height: 73 }) as DOMRect;
+  document.body.appendChild(el);
+  try {
+    el.style.position = "static";
+    expect(stickyPx(el)).toBe("0px");
+    el.style.position = "sticky";
+    expect(stickyPx(el)).toBe("73px");
+  } finally { el.remove(); }
+});
