@@ -6,6 +6,18 @@ The thesis in one sentence: **a language model reads oracle text exactly once, o
 into structured data — everything after that is deterministic code.** That is what makes the engine
 measurable. Change a rule and you get a diff you can read, not a different mood.
 
+**This page is the tour.** Each stage has a page of its own with the shapes, the commands and the
+failure modes it has actually hit:
+
+| | |
+|---|---|
+| [Stage 1 — Segmentation](pipeline/1-segment.md) | oracle text into numbered clauses, free |
+| [Stage 2 — Normalization](pipeline/2-normalize.md) | the model, once per card. The only paid step |
+| [Stage 3 — Derivation](pipeline/3-derive.md) | clauses into game events, plus what no card prints |
+| [Stage 4 — Matching](pipeline/4-match.md) | supply against demand, and every reason a claim is refused |
+| [Schema reference](reference/SCHEMA.md) | every vocabulary, constant and field. Generated from the source |
+| [Runbook](RUNBOOK.md) | what to run, what it costs, and how to measure it afterwards |
+
 ---
 
 ## The whole pipeline
@@ -14,7 +26,7 @@ measurable. Change a rule and you get a diff you can read, not a different mood.
 flowchart TD
     A["Scryfall / MTGJSON<br/>bulk data"] -->|ingest| B[("cards<br/>34,433 docs")]
     B -->|"segment()<br/>pure, free"| C["clauses<br/>one per printed ability"]
-    C -->|"LLM, ONCE, offline<br/>💰 the only paid step"| D[("cardClauses<br/>structured sentences")]
+    C -->|"LLM, ONCE, offline<br/>THE ONLY PAID STEP"| D[("cardClauses<br/>structured sentences")]
     D -->|"deriveAbilities()<br/>pure, free"| E[("cardTagsDerived<br/>triggers · effects · emits")]
 
     F["your decklist"] -->|resolve names| G["DeckCard[]"]
@@ -84,11 +96,11 @@ Skullclamp, for contrast, produces three clauses — and the third is *inert*:
 `kind` matters: a `keyword` or `reminder` clause is inert and never reaches the model, which is how
 a card whose whole text is "Flying" costs nothing to process.
 
-> ⚠️ Inertness has bitten this project twice. Cycling and Extort live *entirely inside reminder
+> Inertness has bitten this project twice. Cycling and Extort live *entirely inside reminder
 > text*, so both were invisible for months. Where a keyword's reminder **is** the ability, it is
 > handled separately at match time rather than through the model.
 
-### Stage 2 — Normalization (the LLM, once, offline) 💰
+### Stage 2 — Normalization (the LLM, once, offline) — the only paid step
 
 Each non-inert clause is turned into a structured sentence: an ability type, a trigger, and a list
 of actions with verbs drawn from a **closed vocabulary**.
@@ -186,7 +198,7 @@ flowchart TD
     O -->|yes| G{"self-supplied?<br/>combat · cast · self-ETB"}
     G -->|"already supplies<br/>its own trigger"| N
     G -->|no| T{"subject types<br/>compatible?"}
-    T -->|"goblin is a creature"| Y["✅ Reason"]
+    T -->|"goblin is a creature"| Y["Reason"]
     T -->|no| N
 
     style Y fill:#14532d,color:#fff
@@ -313,14 +325,14 @@ are unchanged, its clauses are still valid however many times the rules around t
 | implied events + match | edges, reasons | free — pure functions |
 | score, report, graph | `DeckReport` | free |
 
-Four version constants control what gets re-bought:
+Five version constants control what gets re-bought. **Their current values live in
+[`docs/reference/SCHEMA.md`](reference/SCHEMA.md#version-constants), which is generated from the
+source and gated by a test** — this page carried four of them wrong for a month, which is why they
+are no longer written here. The procedure for each is in
+[the runbook](RUNBOOK.md#bumping-a-version-constant).
 
-| constant | current | bumping it means |
-|---|---|---|
-| `NORMALIZE_VERSION` | 14 | identifies the prompt; free to bump |
-| `NORMALIZE_MIN_COMPATIBLE` | 3 | **re-buys the entire corpus** — raise only for a breaking change |
-| `VOCAB_VERSION` / `TRIGGER_VOCAB_VERSION` | 13 / 14 | re-asks only cards that fell back to the escape hatch |
-| `DERIVE_VERSION` | 85 | free — re-derive and measure |
+Only one of the five costs anything: raising `NORMALIZE_MIN_COMPATIBLE` re-buys the entire corpus.
+The rest are free.
 
 ---
 
@@ -347,15 +359,31 @@ express at all.
 ## How correctness is measured
 
 - **A frozen panel** of 895 card pairs, every claim hand-judged by a human on both the *real* and
-  *false* side. Precision **95.1% [92.5, 96.8]**.
+  *false* side. Measured 2026-09-08 by `npx tsx packages/instruments/src/panel-score.ts`:
+  **precision 98.7% [97.1, 99.5] on 421 live claims**, judging debt 3, and
+  **retention 91.4% (383 pairs held, 36 lost)**.
 - **Population diffs** — every change reports edges and reasons before and after.
 - **A mesh census** — a single card claiming relations to 50+ others fails a gate; that is the shape
   an over-general rule takes.
 - **Ratchets** — quarantined known defects are capped, and a quarantined case that starts passing
   *fails the build*, so improvements have to be banked rather than drifting.
 
-The panel is deliberately blind outside its 895 pairs. A correctness fix that removed 204 edges once
-moved it by exactly zero — which is why population diffs are read alongside it, never instead.
+**Never quote the precision without the second number.** A gate that deletes every claim it is
+unsure of scores 100%, so precision alone is not comparable across any change that shrinks the claim
+set — and every de-meshing ruling shrinks it.
+
+**And the second number is retention, not recall.** The panel was built from claims this engine
+already made, so every pair in it is an edge the engine once found; it cannot see an edge that was
+never claimed. Real recall is drawn separately by `recall-sample.ts`.
+
+The panel is also deliberately blind outside its 895 pairs. A correctness fix that removed 204 edges
+once moved it by exactly zero — which is why population diffs are read alongside it, never instead.
+
+The engine's own losses are worth reading rather than summing. Of the 703 cached verdicts the engine
+no longer claims, **527 were judged FALSE** — the engine correctly ceasing to make a wrong claim,
+which is a win, not a loss. Of the ones judged real: 74 retags (the pair still joins under another
+tag), 18 re-attributed through a token, 8 rot (a card named by the verdict has left that deck), and
+**47 genuine regressions**.
 
 ---
 
