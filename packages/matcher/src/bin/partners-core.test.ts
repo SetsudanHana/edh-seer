@@ -767,6 +767,18 @@ test("a triggered ability names what sets it off", () => {
   expect(rows[0]!.emits).toEqual([]);
 });
 
+/** A ROW KNOWS ITS FACE (owner, 2026-09-08: the art flips, the rows did not). A back-face ability
+ *  carries the face index the derivation stamped; a front-face or single-face row carries none. */
+test("a back-face ability row carries its face, a front-face row does not", () => {
+  const chandra = base("Chandra, Fire of Kaladesh // Chandra, Roaring Flame", [
+    { kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: "spell" } }, effect: { kind: "untap" } },
+    { kind: "activated", cost: "−7", face: 1, effect: { kind: "emblem", subject: { control: "opp", token: null } } },
+  ] as never);
+  const rows = abilityRowsOf(chandra);
+  expect(rows[0]!.face).toBeUndefined();
+  expect(rows[1]!.face).toBe(1);
+});
+
 /** A MAGNITUDE THAT COUNTS SOMETHING SAYS WHAT IT COUNTS. Without it "per-permanent" is a word with
  *  no object, and the count is the whole reason a Goblin deck runs this card. */
 test("a scaling ability carries its basis and what it counts", () => {
