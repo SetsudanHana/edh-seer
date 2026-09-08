@@ -157,6 +157,18 @@ test("every prerender route answers HEAD as well as GET", () => {
   }
 });
 
+/** AND NO FUNCTION HAND-ROLLS ITS OWN CONTENT-TYPE, which is how one of them comes to be the route
+ *  without `nosniff` on it. `htmlHeaders` is the single answer; a literal header object at one of
+ *  these call sites is the drift this asserts against. */
+test("every Function builds its HTML response headers from one place", () => {
+  const functions = join(CLIENT, "..", "functions");
+  for (const route of ["_shared/render.ts", "[[path]].ts"]) {
+    const src = readFileSync(join(functions, route), "utf8");
+    expect(src, `${route} uses htmlHeaders`).toContain("htmlHeaders(");
+    expect(src, `${route} sets no content-type of its own`).not.toContain('"content-type":');
+  }
+});
+
 /** THE WORDMARK GOES HOME, ON BOTH PAGES (owner, 2026-09-03).
  *
  *  `how-it-works` has had `<a class="brand" href="/">` since it was written; the home page's header

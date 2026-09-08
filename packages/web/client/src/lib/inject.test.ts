@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { cardPageHtml, injectPage, type InjectableCard } from "./inject.js";
+import { cardPageHtml, htmlHeaders, injectPage, type InjectableCard } from "./inject.js";
 
 /** THE REAL SHELL, not a fixture of one. Every replacement here is a regex against tags this repo
  *  writes by hand in `index.html`; a fixture would keep passing after someone reformatted the head
@@ -159,4 +159,31 @@ test("the prose block still uses HTML entities, not the JSON escape", () => {
     bodyHtml: cardPageHtml({ ...KRENKO, name: "A & B <c>" }, "s", "card"),
   });
   expect(html).toContain("A &amp; B &lt;c&gt;");
+});
+
+/** WHAT EVERY HTML RESPONSE THE EDGE WRITES CARRIES, and why it is written here rather than ticked
+ *  in a dashboard. `_headers` governs ASSET responses; the two security headers the rest of the
+ *  site has are Pages' own defaults on assets. A Function response gets neither. Measured on the
+ *  deployed site 2026-09-08: `/how-it-works/` carried both, `/cards/krenko-mob-boss` carried
+ *  neither, and the Function routes are the majority of this site's HTML. */
+test("an html response carries the headers the rest of the site gets for free", () => {
+  const h = htmlHeaders();
+  expect(h["content-type"]).toBe("text/html; charset=utf-8");
+  expect(h["x-content-type-options"]).toBe("nosniff");
+  expect(h["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  // Indexable by default: the header is a refusal, and a refusal must be asked for.
+  expect(h["x-robots-tag"]).toBeUndefined();
+});
+
+/** THE HEADER TWIN OF THE META TAG, on the same condition. The tag is read by anything that renders
+ *  the page; the header is read by everything, including Cloudflare's Crawler Hints -- whose
+ *  documented opt-out is this header or the tag, and which does not say which of the two it
+ *  actually inspects. 2,823 of these pages are `noindex` and Crawler Hints was enabled 2026-09-08,
+ *  so "probably parses the body" stopped being a good enough answer. */
+test("a page that refuses the index says so in the header as well as the tag", () => {
+  expect(htmlHeaders(false)["x-robots-tag"]).toBe("noindex");
+  expect(page({ indexable: false })).toContain('<meta name="robots" content="noindex" />');
+  // The two must not be able to disagree: `render.ts` reads one binding for both, and this is the
+  // pairing that binding exists to keep true.
+  expect(page({ indexable: true })).not.toContain('content="noindex"');
 });
