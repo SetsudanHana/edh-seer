@@ -1,4 +1,4 @@
-import { partnerShardOf } from "@edh-seer/matcher/partner-shard";
+import { MIN_INDEXABLE_PARTNERS, partnerShardOf } from "@edh-seer/matcher/partner-shard";
 import { cardImageUrl } from "../../client/src/components/card-node.js";
 import { cardPageHtml, htmlHeaders, injectPage, type InjectableCard } from "../../client/src/lib/inject.js";
 
@@ -85,14 +85,15 @@ export async function renderCardPage(
       ? `${partners.length} cards ${record.name} interacts with, each with the reason the engine drew the edge.`
       : `What the engine reads on ${record.name}: the events it produces and the ones it cares about.`;
 
-    // NOTHING TO SAY, NOTHING TO INDEX. A page with no partners is real and reachable and has no
-    // content a search result could honestly summarise, so it stays out of the index rather than
-    // adding one of ~1,900 near-identical thin pages.
+    // TOO LITTLE TO SAY, NOTHING TO INDEX. A page below the partner floor is real and reachable
+    // and has no content a search result could honestly summarise, so it stays out of the index
+    // rather than adding to the near-identical thin pages. The floor and its reasons live beside
+    // the shard rule; `partners-core.ts` writes the same decision into the index the sitemap reads.
     //
     // ONE BINDING, READ TWICE: the `<meta name="robots">` tag and the `X-Robots-Tag` header say the
     // same thing about the same page, and writing the expression out at both call sites is how they
     // would come to disagree.
-    const indexable = usable && partners.length > 0;
+    const indexable = usable && partners.length >= MIN_INDEXABLE_PARTNERS;
 
     return new Response(injectPage(shell, {
       title,
@@ -102,6 +103,13 @@ export async function renderCardPage(
       bodyHtml: cardPageHtml({ ...record, partners }, slug, kind),
       // The same function `CardArt` renders with, so the preloaded URL is the one the app asks for.
       image: record.artCrop ? cardImageUrl(record.artCrop) ?? undefined : undefined,
+      breadcrumbs: [
+        { name: "EDH Seer", url: `${origin}/` },
+        isCommanderPage
+          ? { name: "Commanders", url: `${origin}/commanders` }
+          : { name: "Cards", url: `${origin}/cards` },
+        { name: record.name, url: `${origin}/${isCommanderPage ? "commanders" : "cards"}/${slug}` },
+      ],
       // THE RAW SHARD RECORD, NOT THE MERGED ONE THE PROSE BLOCK GETS. `{...record, partners}`
       // above swaps in whichever list this ROUTE prints; the app wants what `loadCardPage` would
       // have returned, so that both pages read the same shape they already read and neither needs

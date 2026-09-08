@@ -271,3 +271,29 @@ test("a page without an image keeps the site's share image untouched", () => {
   expect(out).toContain('<meta property="og:image" content="https://edhseer.cards/og-image.png" />');
   expect(out).toContain('<meta name="twitter:card" content="summary_large_image" />');
 });
+
+/** THE PATH UNDER THE TITLE. Every edge-rendered page carried the landing's WebApplication block and
+ *  nothing about itself; a BreadcrumbList is what a result page shows for a card page's position. */
+test("breadcrumbs become a BreadcrumbList block, escaped for a script element", () => {
+  const out = page({ breadcrumbs: [
+    { name: "EDH Seer", url: "https://edhseer.cards/" },
+    { name: "Cards", url: "https://edhseer.cards/cards" },
+    { name: "Krenko, Mob Boss </script>", url: "https://edhseer.cards/cards/krenko-mob-boss" },
+  ] });
+  const blocks = [...out.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => m[1]!);
+  const crumbs = blocks.map((b) => JSON.parse(b) as { "@type": string; itemListElement?: { position: number; name: string; item: string }[] })
+    .find((b) => b["@type"] === "BreadcrumbList")!;
+  expect(crumbs.itemListElement!.map((e) => [e.position, e.name, e.item])).toEqual([
+    [1, "EDH Seer", "https://edhseer.cards/"],
+    [2, "Cards", "https://edhseer.cards/cards"],
+    [3, "Krenko, Mob Boss </script>", "https://edhseer.cards/cards/krenko-mob-boss"],
+  ]);
+  // The raw sequence never appears in the document: the name above parsed back intact, and the
+  // element did not end early.
+  expect(out.split("</script>").length - 1).toBe(blocks.length + (out.match(/<script(?![^>]*ld\+json)/g)?.length ?? 0));
+});
+
+test("a page without breadcrumbs adds no structured data", () => {
+  expect((page().match(/application\/ld\+json/g) ?? []).length)
+    .toBe((SHELL.match(/application\/ld\+json/g) ?? []).length);
+});

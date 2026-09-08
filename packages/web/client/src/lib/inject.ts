@@ -93,6 +93,11 @@ export interface InjectedPage {
    *  oblige an artist credit the corpus does not hold, and the card prints its own. Omitted when
    *  the record has no image, and then nothing in the head changes. */
   image?: string;
+  /** THE PATH TO THIS PAGE, for the result page. Every route here carried the landing's one
+   *  WebApplication block and nothing about itself; a BreadcrumbList is the one structured-data
+   *  type a search engine shows for a page like this, as the path under the title. Home first,
+   *  the page itself last, never fewer than two. */
+  breadcrumbs?: { name: string; url: string }[];
   /** THE RECORD THE PAGE IS ABOUT, HANDED TO THE APP INSTEAD OF FETCHED.
    *
    *  WITHOUT THIS, GOOGLE INDEXES EVERY CARD PAGE AS A 404, and the chain that produced it is four
@@ -123,6 +128,16 @@ export interface InjectedPage {
  *  happening again. */
 export const CARD_PAGE_DATA_ID = "edh-card-page";
 
+/** The BreadcrumbList block, as JSON that is safe inside a `<script>` (see `jsonForScript`). */
+export const breadcrumbJsonLd = (crumbs: { name: string; url: string }[]): string =>
+  jsonForScript({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem", position: i + 1, name: c.name, item: c.url,
+    })),
+  });
+
 export function injectPage(shell: string, page: InjectedPage): string {
   let out = shell
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(page.title)}</title>`)
@@ -136,6 +151,11 @@ export function injectPage(shell: string, page: InjectedPage): string {
       `<meta property="og:description" content="${esc(page.description)}" />`)
     .replace(/<meta property="og:url" content="[^"]*"\s*\/?>/,
       `<meta property="og:url" content="${esc(page.canonical)}" />`);
+
+  if (page.breadcrumbs !== undefined && page.breadcrumbs.length >= 2) {
+    out = out.replace("</head>",
+      `  <script type="application/ld+json">${breadcrumbJsonLd(page.breadcrumbs)}</script>\n  </head>`);
+  }
 
   if (page.image !== undefined) {
     const image = esc(page.image);

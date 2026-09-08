@@ -1,7 +1,7 @@
 import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
-import { PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
+import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
 import { ROLE_NOT_SYNERGY, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
 import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
@@ -918,10 +918,13 @@ export interface NameIndexEntry {
    *  refuses to have indexed, any more than one that 404s.
    *
    *  SPARSE AND OPTIONAL because the client downloads this file to search by name: the flags are
-   *  absent on the 14,936 cards that have partners, so the browse index barely moves. */
-  noPartners?: true;
+   *  absent on the cards above the floor, so the browse index barely moves.
+   *
+   *  `thin`, NOT `noPartners`: since 2026-09-08 the floor is `MIN_INDEXABLE_PARTNERS`, not zero, so
+   *  a flag named for emptiness would fire on a page with two partners and lie about it. */
+  thin?: true;
   /** The same fact for `/commanders/<slug>`, which ranks a different list. Commander records only. */
-  noCommanderPartners?: true;
+  thinCommander?: true;
 }
 
 /** ONE ROW OF A BROWSE PAGE: the least that makes a link. Deliberately not `NameIndexEntry` -- the
@@ -1157,9 +1160,9 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     const written = shard[slug] as CardPageRecord & { commanderPartners?: PartnerRow[] };
     index.push({
       slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
-      ...(written.partners.length === 0 ? { noPartners: true as const } : {}),
-      ...(commander && (written.commanderPartners ?? []).length === 0
-        ? { noCommanderPartners: true as const } : {}),
+      ...(written.partners.length < MIN_INDEXABLE_PARTNERS ? { thin: true as const } : {}),
+      ...(commander && (written.commanderPartners ?? []).length < MIN_INDEXABLE_PARTNERS
+        ? { thinCommander: true as const } : {}),
     });
   }
 

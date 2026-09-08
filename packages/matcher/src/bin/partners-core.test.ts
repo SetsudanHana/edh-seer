@@ -1,3 +1,4 @@
+import { MIN_INDEXABLE_PARTNERS } from "../partner-shard.js";
 import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "../types.js";
@@ -870,24 +871,32 @@ test("a commander with only statics gets a page, an index row and legal partners
  *  2026-09-08, and 2,823 of the sitemap's 20,161 URLs were submitted to Google and then served
  *  `<meta name="robots" content="noindex">` -- a Search Console error apiece.
  *
- *  A card with no partners is a real page and stays reachable; it is only not PROMISED. */
-test("the index flags a page with nothing to index, per surface", () => {
-  // Samut ranks partners on both surfaces, so she carries neither flag.
+ *  A card below the floor is a real page and stays reachable; it is only not PROMISED.
+ *
+ *  THE FLOOR IS `MIN_INDEXABLE_PARTNERS`, NOT ZERO (2026-09-08): a page whose body is one or two
+ *  sentences is thin content. This fixture ranks Samut two partners on the card surface and one on
+ *  the commander surface, so with a floor of three she is flagged on both -- which is the
+ *  assertion, because a flag that only fired on emptiness would let those pages through. */
+test("the index flags a page below the partner floor, per surface", () => {
+  expect(MIN_INDEXABLE_PARTNERS).toBe(3);
   const cmdr = asCommander(samut(), ["G", "R", "W"]);
   const offColour = asCommander(withIdentity(plainSorcery("Counterspell"), ["U"]), ["U"]);
-  const { index } = buildPartnerArtifact([cmdr, offColour, dragonFodder(), forest()], H);
+  const { index, shards } = buildPartnerArtifact([cmdr, offColour, dragonFodder(), forest()], H);
   const at = (name: string) => index.find((e) => e.name === name)!;
-  expect(at("Samut, the Driving Force").noPartners).toBeUndefined();
-  expect(at("Samut, the Driving Force").noCommanderPartners).toBeUndefined();
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Samut, the Driving Force")!;
+  expect(rec.partners.length).toBeLessThan(MIN_INDEXABLE_PARTNERS);
+  expect(rec.partners.length).toBeGreaterThan(0);
+  expect(at("Samut, the Driving Force").thin).toBe(true);
+  expect(at("Samut, the Driving Force").thinCommander).toBe(true);
   // Nothing to rank on either surface: both URLs are withheld from the sitemap and both are still
   // served, because a page with nothing to say is reachable and merely not promised.
   expect(at("Counterspell").commander).toBe(true);
-  expect(at("Counterspell").noPartners).toBe(true);
-  expect(at("Counterspell").noCommanderPartners).toBe(true);
+  expect(at("Counterspell").thin).toBe(true);
+  expect(at("Counterspell").thinCommander).toBe(true);
   // A card that cannot lead a deck never carries the commander flag -- there is no such URL to
   // withhold, and the sitemap already filters it on `commander`.
   expect(at("Dragon Fodder").commander).toBe(false);
-  expect(at("Dragon Fodder").noCommanderPartners).toBeUndefined();
+  expect(at("Dragon Fodder").thinCommander).toBeUndefined();
 });
 
 /** CR 903.3 IS ALREADY READ IN `legality.ts`, and this file had rewritten it narrower: a legendary

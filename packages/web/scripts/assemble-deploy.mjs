@@ -107,11 +107,12 @@ console.log(`service worker: precaches ${shell.length} shell files (${shell.filt
 // least one emit or one trigger -- so a card the engine has never read is not promised a page here.
 // The index lives under the version directory, which `manifest.json` names.
 //
-// AND ONLY WHAT THE SITE WILL LET BE INDEXED. A card page with no partners is served
-// `<meta name="robots" content="noindex">` at the edge (spec D5, `render.ts`), and a sitemap that
-// submits a page the site then refuses to have indexed is a Search Console error per URL. Measured
-// on the deployed artifact 2026-09-08: 1,779 card and 1,044 commander URLs -- 2,823 of 20,161, 14%
-// of this file -- were exactly that. `noPartners` / `noCommanderPartners` come off the same shard
+// AND ONLY WHAT THE SITE WILL LET BE INDEXED. A card page below the partner floor
+// (`MIN_INDEXABLE_PARTNERS`, three since 2026-09-08) is served `<meta name="robots"
+// content="noindex">` at the edge (spec D5, `render.ts`), and a sitemap that submits a page the
+// site then refuses to have indexed is a Search Console error per URL. Measured on the deployed
+// artifact 2026-09-08 with the floor at zero: 1,779 card and 1,044 commander URLs -- 2,823 of
+// 20,161, 14% of this file -- were exactly that. `thin` / `thinCommander` come off the same shard
 // record the edge reads, so the two cannot drift.
 const canonical = /<link rel="canonical" href="([^"]+)"/.exec(readFileSync(join(dist, "index.html"), "utf8"))?.[1];
 if (!canonical) {
@@ -121,8 +122,8 @@ if (!canonical) {
 const origin = canonical.replace(/\/$/, "");
 const version = JSON.parse(readFileSync(join(target, "manifest.json"), "utf8")).version;
 const nameIndex = JSON.parse(readFileSync(join(target, version, "name-index.json"), "utf8"));
-const indexableCards = nameIndex.filter((e) => !e.noPartners);
-const indexableCommanders = nameIndex.filter((e) => e.commander && !e.noCommanderPartners);
+const indexableCards = nameIndex.filter((e) => !e.thin);
+const indexableCommanders = nameIndex.filter((e) => e.commander && !e.thinCommander);
 // THE BROWSE PAGES, WHICH ARE THE ONLY ROUTE FROM THIS SITE INTO THE CARD PAGES. `/cards` and
 // `/commanders` were not listed here at all until 2026-09-08 -- two real pages the sitemap never
 // mentioned -- and the letter pages under them did not exist. Read off the artifact rather than

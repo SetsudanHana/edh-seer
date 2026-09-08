@@ -105,11 +105,11 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
   const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
   const index = JSON.parse(
     readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
-  ) as { slug: string; commander: boolean; noPartners?: true; noCommanderPartners?: true }[];
+  ) as { slug: string; commander: boolean; thin?: true; thinCommander?: true }[];
   const locs = [...readFileSync(builtSitemap, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
 
-  const cards = index.filter((e) => !e.noPartners);
-  const commanders = index.filter((e) => e.commander && !e.noCommanderPartners);
+  const cards = index.filter((e) => !e.thin);
+  const commanders = index.filter((e) => e.commander && !e.thinCommander);
 
   // THE BROWSE PAGES, WHICH ARE THE ONLY ROUTE FROM THIS SITE INTO THE CARD PAGES (2026-09-08).
   // A letter with nothing on it is withheld for the same reason a partnerless card is: the page
@@ -151,12 +151,12 @@ test.skipIf(!existsSync(builtSitemap))("every indexable card is reachable by wal
   const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
   const index = JSON.parse(
     readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
-  ) as { slug: string; noPartners?: true }[];
+  ) as { slug: string; thin?: true }[];
   const reachable = new Set(readdirSync(join(DIST, "static", version, "browse"))
     .filter((f) => f.endsWith(".json"))
     .flatMap((f) => JSON.parse(readFileSync(join(DIST, "static", version, "browse", f), "utf8")) as { slug: string }[])
     .map((e) => e.slug));
-  const missing = index.filter((e) => !e.noPartners).filter((e) => !reachable.has(e.slug));
+  const missing = index.filter((e) => !e.thin).filter((e) => !reachable.has(e.slug));
   expect(missing.map((e) => e.slug).slice(0, 5)).toEqual([]);
   // And the slices hold the WHOLE index, not just the indexable part -- a thin page is still a page
   // and a reader browsing to it is the case the search box cannot serve.
@@ -318,7 +318,10 @@ test("the how-it-works page is a page, not an app route", () => {
   // Asked of the parsed document rather than the source text, for the reason above.
   const parsed = new DOMParser().parseFromString(page, "text/html");
   expect(parsed.querySelectorAll("script[src]")).toHaveLength(0);
-  const inline = [...parsed.querySelectorAll("script")].map((el) => el.textContent ?? "");
+  // A JSON-LD block is data the browser never runs, not a script in the sense this test guards.
+  const inline = [...parsed.querySelectorAll("script")]
+    .filter((el) => el.getAttribute("type") !== "application/ld+json")
+    .map((el) => el.textContent ?? "");
   expect(inline.filter((body) => !body.includes(".site-more[open]"))).toEqual([]);
   expect(page).toContain('<link rel="canonical" href="' + canonical + 'how-it-works"');
   expect(page).toMatch(/<h1>How it works<\/h1>/);
@@ -482,4 +485,18 @@ test("the canonical host the edge redirects to is the one this page states", asy
 test.skipIf(!existsSync(builtSitemap))("the built docs page is a file Pages serves at the extensionless URL", () => {
   expect(existsSync(join(DIST, "how-it-works.html"))).toBe(true);
   expect(existsSync(join(DIST, "how-it-works", "index.html"))).toBe(false);
+});
+
+/** THE DOCS PAGE SAYS WHAT IT IS, in structured data, the way the landing does. A TechArticle whose
+ *  `url` is the page's own canonical and which claims nothing it has no evidence for. */
+test("the docs page's structured data parses, is a TechArticle, and points at itself", () => {
+  const page = readFileSync(join(CLIENT, PAGES["/how-it-works"]), "utf8");
+  const doc = new DOMParser().parseFromString(page, "text/html");
+  const raw = doc.querySelector('script[type="application/ld+json"]')?.textContent ?? "";
+  const data = JSON.parse(raw);
+  expect(data["@type"]).toBe("TechArticle");
+  expect(data.url).toBe(`${canonical}how-it-works`);
+  expect(data.headline).toBeTruthy();
+  expect(data.aggregateRating).toBeUndefined();
+  expect(data.dateModified).toBeUndefined();
 });
