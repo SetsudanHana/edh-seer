@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { eventKeySentence } from "../lib/demand-sentence.js";
 import type { PartnerRow } from "../lib/partners.js";
+import { usePeek } from "./peek.js";
 
 /** THE PARTNER LIST, GROUPED BY THE EVENT THAT EARNED EACH ROW.
  *
@@ -23,6 +24,7 @@ export function PartnerList({ rows, pool, rarity, empty }: {
   rarity: Record<string, number>;
   empty: string;
 }) {
+  const peek = usePeek();
   if (rows.length === 0) {
     return <p className="text-(--muted) max-w-[65ch]">{empty}</p>;
   }
@@ -80,8 +82,17 @@ export function PartnerList({ rows, pool, rarity, empty }: {
                     * A feeder row has no payoff (its sentence describes the subject, not this card)
                     * and keeps the sentence whole. */}
                   <p className="flex flex-wrap items-baseline gap-x-2">
+                    {/* A PLAIN CLICK PEEKS, EVERYTHING ELSE NAVIGATES (spec 2026-09-08 part 3).
+                      *  The href stays the page: a crawler reads it, a middle click or a modifier
+                      *  opens it in a tab, copy-link copies it. Only the ordinary left click, the one
+                      *  that used to lose the reader's place, is turned into a look. */}
                     <Link className="font-semibold text-(--accent) hover:underline underline-offset-2"
-                      to={`/cards/${p.slug}`}>{p.name}</Link>
+                      to={`/cards/${p.slug}`}
+                      onClick={(ev) => {
+                        if (!peek || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+                        ev.preventDefault();
+                        peek.push(p.slug, ev.currentTarget);
+                      }}>{p.name}</Link>
                     {p.payoff && <span className="text-(--muted)">— {p.payoff}</span>}
                   </p>
                   {!p.payoff && <p className="text-(--muted) max-w-[65ch]">{p.reason}</p>}
