@@ -22,7 +22,11 @@ const show = (list: Row[], a: string): void => {
 console.log(`artifact ${v}, ${rows.length} rows\n`);
 
 // 1. Cards: draws cards, +1/+1 Counters, fits in green.
-const q1 = rows.filter((r) => r.e.includes("draw-card") && r.t.includes("counters") && fits(r.i, "G"));
+const byAsk = (a: Row, b: Row): number =>
+  Number(b.d.includes("counters")) - Number(a.d.includes("counters"))
+  || (names.get(a.s) ?? a.s).localeCompare(names.get(b.s) ?? b.s);
+// Ordered as the page orders it (`applyFacets`): the cards that ask for the strategy first.
+const q1 = rows.filter((r) => r.e.includes("draw-card") && r.t.includes("counters") && fits(r.i, "G")).sort(byAsk);
 console.log(`Q1  cards  does=draws cards  strategy=${ARCHETYPE_LABELS.counters}  fits within G: ${q1.length}`);
 show(q1, "counters");
 console.log(`   of which ask for counters: ${q1.filter((r) => r.d.includes("counters")).length}`);
@@ -30,8 +34,6 @@ console.log(`   of which ask for counters: ${q1.filter((r) => r.d.includes("coun
 // 2. Commanders: supports +1/+1 Counters, identity exactly Bant.
 const bant = identityKeyOf(["W", "U", "G"]);
 const q2 = rows.filter((r) => r.c === 1 && r.t.includes("counters") && r.i === bant);
-const ordered = [...q2].sort((a, b) =>
-  Number(b.d.includes("counters")) - Number(a.d.includes("counters"))
-  || (names.get(a.s) ?? a.s).localeCompare(names.get(b.s) ?? b.s));
+const ordered = [...q2].sort(byAsk);
 console.log(`\nQ2  commanders  supports=${ARCHETYPE_LABELS.counters}  identity=${bant}: ${q2.length}`);
 show(ordered, "counters");
