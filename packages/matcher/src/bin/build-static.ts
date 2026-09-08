@@ -17,6 +17,7 @@ import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact } from "./partners-core.js";
+import { buildFacetIndex } from "./facet-index-core.js";
 import { loadHierarchy } from "../hierarchy.js";
 
 const outIdx = process.argv.indexOf("--out");
@@ -173,6 +174,10 @@ for (const [name, shard] of partners.shards) {
 }
 writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify(partners.freq));
 writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify(partners.index));
+// THE FACET INDEX (spec 2026-09-08 part 4): what each card does and which strategies it belongs
+// to, from the same signal builder and matcher the deck report uses. Fetched by the Cards page on
+// the first facet interaction, never on page load.
+writeFileSync(join(stagingDir, "facet-index.json"), JSON.stringify(buildFacetIndex(partnerDeckCards as never, partners.index)));
 
 // THE BROWSE SLICES: one file per letter, so `/browse/cards/<letter>` costs one small fetch at the
 // edge instead of parsing the 1.6 MB name index on every request. `#` holds the names that do not
@@ -197,7 +202,7 @@ for (const f of readdirSync(cardsDir).sort()) {
   hash.update(f);
   hash.update(readFileSync(join(cardsDir, f)));
 }
-for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json"]) {
+for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json", "facet-index.json"]) {
   hash.update(f);
   hash.update(readFileSync(join(stagingDir, f)));
 }

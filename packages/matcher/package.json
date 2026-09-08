@@ -15,6 +15,7 @@
     "./static-lookup": "./src/static-lookup.ts",
     "./partner-shard": "./src/partner-shard.ts",
     "./partners-core": "./src/bin/partners-core.ts",
+    "./archetypes": "./src/archetypes.ts",
     "./edges": "./src/edges.ts",
     "./goldfish": "./src/goldfish.ts",
     "./land-count": "./src/land-count.ts",

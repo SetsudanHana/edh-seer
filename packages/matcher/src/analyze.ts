@@ -28,6 +28,7 @@ import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
+import { cardSignalOf } from "./card-signal.js";
 import { buildAxis, maxAxisWeight } from "./axis.js";
 import { makeFold } from "./theme-fold.js";
 import { magnitudeMultipliers } from "./magnitude.js";
@@ -850,51 +851,7 @@ export function analyzeDeckStructured(
 
   const cardSignals = resolved
     .filter((dc) => dc.tags && !isLand(dc))
-    .map((dc) => ({
-      name: dc.card.name,
-      // A CONDITION IS AN ARCHETYPE SIGNAL TOO (owner, 2026-08-20). `cardThemeTags` already carries a
-      // card's trigger verbs, so "whenever a creature dies" reads as aristocrats — but Warlock Class
-      // triggers on the END STEP and names the deaths only in its intervening if ("at the beginning
-      // of your end step, IF A CREATURE DIED THIS TURN"), so the payoff was invisible to every
-      // archetype. `conditionCares` is the demand the condition makes, and a card that pays off when
-      // creatures die belongs to aristocrats whether or not it causes any.
-      themeTags: [...cardThemeTags(dc.tags!), ...dc.tags!.abilities.flatMap((a) => a.conditionCares ?? [])],
-      // The demand half, for the archetypes that are defined by their payoffs rather than by what
-      // their cards do -- see `ARCHETYPE_SIGNATURE`'s `demandDefined`.
-      caresTags: [...cardCaresTags(dc.tags!), ...dc.tags!.abilities.flatMap((a) => a.conditionCares ?? [])],
-      effectKinds: dc.tags!.abilities.map((a) => a.effect.kind),
-      // WHAT each token-generation ability MAKES, so the Tokens row can tell a Zombie from a
-      // Treasure (roadmap T2b). `type: "creature"` is the outright answer where the clause carries
-      // it; otherwise the subtype is the only identity there is, and a token with neither
-      // contributes nothing rather than a guess.
-      tokenKinds: dc.tags!.abilities
-        .filter((a) => a.effect.kind === "token-generation")
-        .map((a) => (a.effect.subject?.type === "creature" ? "creature" : a.effect.subject?.subtype))
-        .filter((k): k is string => typeof k === "string"),
-      subtypes: (dc.tags!.characteristics?.subtypes ?? []).filter(
-        (s) => s === "equipment" || (s === "aura" && /enchant creature/i.test(dc.card.oracleText)),
-      ),
-      // The type COUNT half, for the one archetype no mechanism defines — see ARCHETYPE_SIGNATURE's
-      // `superfriends` row. Read off the derived characteristics, which is where every other field
-      // here comes from, so a card with no tags contributes nothing rather than a guess.
-      cardTypes: (dc.tags!.characteristics?.types ?? []).map((t) => t.toLowerCase()),
-      // The vocabulary's newer rows (2026-09-06): printed keywords for the named mechanics, the
-      // type-line words for the object classes, and the two halves of kindred -- what creature
-      // types the card HAS and which ones its abilities NAME (a lord's subject, a trigger's).
-      keywords: (dc.tags!.characteristics?.keywords ?? []).map((k) => k.toLowerCase()),
-      lineWords: [...(dc.tags!.characteristics?.types ?? []), ...(dc.tags!.characteristics?.subtypes ?? [])].map((w) => w.toLowerCase()),
-      creatureTypes: (dc.tags!.characteristics?.types ?? []).some((t) => t.toLowerCase() === "creature")
-        ? ((dc.tags!.characteristics?.keywords ?? []).some((k) => k.toLowerCase() === "changeling")
-          ? ["*"]
-          : (dc.tags!.characteristics?.subtypes ?? []).map((s) => s.toLowerCase()))
-        : [],
-      namedTypes: dc.tags!.abilities.flatMap((a) =>
-        [a.trigger?.subject, a.effect.subject, ...(a.emits ?? []).map((e) => e.subject)]
-          .filter((s): s is NonNullable<typeof s> => s !== undefined && s !== null && s.self !== true)
-          .flatMap((s) => (Array.isArray(s.subtype) ? s.subtype : s.subtype ? [s.subtype] : []))
-          .map((s) => s.toLowerCase()),
-      ),
-    }));
+    .map((dc) => cardSignalOf(dc.card, dc.tags!));
   const comboCards = [...new Set(foundCombos.flatMap((c) => c.cards))];
   const strategies = detectArchetypes(cardSignals, comboCards, nonlandCount);
   // TASK 9: `recommendedLands` (the Karsten regression) is called ONCE here and threaded to both

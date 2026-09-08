@@ -1,3 +1,4 @@
+export type { FacetRow } from "./facet-index-core.js";
 import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";

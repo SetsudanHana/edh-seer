@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { detectArchetypes, dominantArchetype, type CardSignal } from "./archetypes.js";
+import { archetypesOf } from "./archetypes.js";
 
 const sig = (name: string, opts: {
   themeTags?: string[]; effectKinds?: string[]; subtypes?: string[]; cardTypes?: string[];
@@ -376,4 +377,20 @@ test("a changeling is a body of every type, and a cares subject that is a class 
   const k = out.find((r) => r.name === "kindred")!;
   expect(k.label).toBe("Kindred: Sliver");
   expect(k.confidence).toBeCloseTo((1 + 7 * 0.35) / 20, 5); // six Slivers + the changeling
+});
+
+/** THE FACET INDEX ASKS PER CARD WHAT THE DETECTOR ASKS PER DECK (spec 2026-09-08 part 4). Same
+ *  signatures, same matcher, so "+1/+1 Counters" on the Cards page is the report's. */
+test("archetypesOf: a counter placer supplies counters; an aristocrats payoff demands it", () => {
+  const placer = { name: "Placer", themeTags: [], caresTags: [], effectKinds: ["counter-placement"], subtypes: [] };
+  expect(archetypesOf(placer).supplies).toContain("counters");
+  expect(archetypesOf(placer).demands).not.toContain("counters");
+  const payoff = { name: "Payoff", themeTags: ["dies:creature"], caresTags: ["dies:creature"], effectKinds: ["draw-card"], subtypes: [] };
+  expect(archetypesOf(payoff).supplies).toContain("aristocrats");
+  expect(archetypesOf(payoff).demands).toContain("aristocrats");
+});
+
+test("archetypesOf: a card that makes only Treasure is not a Tokens card", () => {
+  const treasure = { name: "T", themeTags: ["create-token:treasure"], caresTags: [], effectKinds: ["token-generation"], tokenKinds: ["treasure"], subtypes: [] };
+  expect(archetypesOf(treasure).supplies).not.toContain("tokens");
 });
