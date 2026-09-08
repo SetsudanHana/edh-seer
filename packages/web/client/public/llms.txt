@@ -28,8 +28,8 @@ engine has never read forms no edges. Edges are binary — it says two cards int
   covers synergy pairs and their reasons, archetypes, the mana curve, land maths, castability,
   combos and legality.
 - [How it works](https://edhseer.cards/how-it-works): the method in full — how a clause is
-  segmented, how an edge forms, what the engine refuses to claim, how it is calibrated against 71
-  real decks, and what it does not know.
+  segmented, how an edge forms, what the engine refuses to claim, how well it does (precision and
+  retention, measured and dated), what it does not know, and the engineering documents behind it.
 
 ## Source
 

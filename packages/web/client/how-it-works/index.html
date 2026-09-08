@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0d0912" />
     <link rel="canonical" href="https://edhseer.cards/how-it-works" />
     <title>How EDH Seer works — rules, clauses and synergy edges</title>
-    <meta name="description" content="How EDH Seer turns Magic card text into synergy edges: one offline language-model pass to structure the text, then deterministic rules that match what one card produces against what another cares about." />
+    <meta name="description" content="How EDH Seer turns Magic card text into synergy claims you can check: one offline language-model pass to structure the text, then deterministic rules that match what one card produces against what another cares about. How well it does, measured, and how to read the engine." />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="EDH Seer" />
     <meta property="og:title" content="How EDH Seer works — rules, clauses and synergy edges" />
@@ -113,40 +113,67 @@
       <h1>How it works</h1>
       <p class="prose-lead">
         EDH Seer claims that two cards work together only when it can print the sentence that says
-        why. This page is how that sentence gets made, and what the engine refuses to say when it
-        cannot make one.
+        why. The first half of this page is for the player reading a report, in plain words. The
+        second half, <a href="#under-the-hood">under the hood</a>, is for the engineer who wants to
+        change it, and it is fine to stop before it.
       </p>
 
-      <!-- THE SCALE, IN THREE NUMBERS. Every one is measured rather than rounded for effect: the
-           corpus size comes from the build; the edge figure from
-           `npx tsx packages/matcher/src/bin/population-compare.ts` (free, no API, no writes),
-           measured 2026-09-01 on the shipped `derived` population -- 35,165 edges across the 71
-           calibration decks, so ~495 a deck. It is written with a tilde because it is an average
-           and not a count of anything.
-           The deck count itself is deliberately NOT shown as a headline figure here: it is method
-           detail, not a reason for a reader to trust the tool, so it appears below in "How it is
-           checked" instead ("calibrated against 71 real Commander decks").
+      <!-- THE SCALE, IN THREE NUMBERS, and the first one is a FRACTION on purpose. This page said
+           "34,433 cards read from oracle text" while the README said 21,317 of them carried a
+           structured reading -- two readers, two levels of honesty. The corpus and the derived count
+           come from the build (`README.md` carries the command and the date, and
+           `how-it-works.test.ts` holds this page to it); the edge figure from
+           `npx tsx packages/matcher/src/bin/population-compare.ts`, 35,165 edges across the 71
+           calibration decks, so ~495 a deck, written with a tilde because it is an average.
            The third number is the one that matters and is not a size at all. -->
       <dl class="figures">
-        <div><dt>34,433</dt><dd>cards read from oracle text</dd></div>
-        <div><dt>~495</dt><dd>synergy edges in an average Commander deck</dd></div>
-        <div><dt>0</dt><dd>model calls when you analyse a deck</dd></div>
+        <div><dt>21,317</dt><dd>cards read in full, of the 34,433 it knows</dd></div>
+        <div><dt>~495</dt><dd>pairs of cards it points out in an average Commander deck</dd></div>
+        <div><dt>0</dt><dd>AI calls when you analyse a deck, so the same list always gets the same report</dd></div>
       </dl>
 
-      <h2>The model runs once, offline</h2>
+      <h2>What you get</h2>
       <p>
-        A language model is used exactly once per card, months before you paste anything, to turn
-        printed oracle text into structured clauses. It never runs at analysis time. That is not a
-        cost-saving detail — it is what makes the tool answerable: the same decklist always produces
-        the same report, every claim can be traced to a rule, and the whole analysis runs in your
-        browser with no server to ask.
+        One sentence per claim, naming both cards and the mechanism. This is a real line from a real
+        report, and the same pair is carried through every stage below.
       </p>
-      <p>
-        The structuring pass is deliberately narrow. It is asked to say what a sentence <em>is</em> —
-        a trigger, an effect, a subject — never whether two cards are good together. It is a parser,
-        not a judge.
-      </p>
+      <!-- THE CLAIM BEFORE THE THEORY. A player's first question is "what do I get and can I check
+           it", and every earlier draft of this page answered "what a clause looks like" instead. The
+           three notes are the three things the sentence rests on; the third is the one that makes a
+           wrong claim REPORTABLE, which is the property the whole product is built around. The
+           oracle text quoted here was fetched from Scryfall on 2026-09-08, not written from memory. -->
+      <figure class="claim">
+        <blockquote class="claim-text">
+          When <strong>Siege-Gang Commander</strong> dies, <strong>Skullclamp</strong> draws you 2 cards
+        </blockquote>
+        <ol class="claim-notes">
+          <li>
+            <span class="claim-k">supplies</span>
+            <span>Siege-Gang Commander is a creature, and its own ability lets you sacrifice a Goblin.
+            Either way, something of yours dies.</span>
+          </li>
+          <li>
+            <span class="claim-k">watches for</span>
+            <span>Skullclamp reads "Whenever equipped creature dies, draw two cards." Same event, and a
+            Goblin is a creature.</span>
+          </li>
+          <li>
+            <span class="claim-k">check it</span>
+            <span>Open both cards. If the printed text does not say this, the claim is wrong, and a wrong
+            claim is a bug you can <a href="https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml">report with two card names</a>.</span>
+          </li>
+        </ol>
+      </figure>
 
+      <h2>How it decides</h2>
+      <p>
+        Long before you paste anything, every card's printed text is read once and turned into two
+        lists: what the card <strong>does</strong>, and what it <strong>reacts to</strong>. An AI
+        does that reading, once per card, and it is only asked what each sentence says, never whether
+        two cards are good together. When you analyse a deck no AI is involved at all. The tool
+        checks lists against lists, which is why the same deck always gets the same report and every
+        sentence can be traced back to a line on a card.
+      </p>
       <!-- THE PIPELINE AS BOXES, and the point of drawing it is the MONEY LINE: one step costs and
            the rest are free to re-run, which is why the engine can be corrected at all. HTML and CSS
            rather than an SVG so it is real text that wraps on a phone and can be read aloud. -->
@@ -159,32 +186,18 @@
         <li><span class="pipeline-step">Report</span><span class="pipeline-note">a sentence per claim</span></li>
       </ol>
       <p class="pipeline-key">
-        <span class="key-swatch"></span> The one step that costs money, and the only one a model
-        touches. Everything after it is deterministic and free to run again — which is what makes a
-        wrong claim fixable rather than permanent.
+        <span class="key-swatch"></span> The one step that costs money, paid once per card by the
+        project and never by you, and the only step an AI touches. Everything after it is plain
+        rules that can be re-run for free, which is what makes a wrong claim fixable rather than
+        permanent.
       </p>
 
-      <h2>What a clause looks like</h2>
+      <h2>How a pair is found</h2>
       <p>
-        "Whenever another creature you control enters, it gets +2/+0 and gains haste until end of
-        turn" becomes a trigger (<span class="tok">enters</span>, on a subject that is a creature you
-        control and is not this card) and an effect (<span class="tok">pump</span>, amount
-        <span class="tok">+2/+0</span>). "Create a 1/1 red Goblin creature token" becomes an effect
-        (<span class="tok">token-generation</span>) that <em>emits</em> two events: a token being
-        created, and a creature entering the battlefield.
-      </p>
-      <p>
-        Every card ends up with two lists: the events it <strong>produces</strong>, and the events it
-        <strong>cares about</strong>.
-      </p>
-
-      <h2>How an edge forms</h2>
-      <p>
-        One card's produced event is matched against another card's demand. Both sides carry filters,
-        and all of them have to agree: the card type and subtype, who controls it, whether it is a
-        token, whether it arrives tapped, which counter it carries. Krenko, Mob Boss emits "a creature
-        you control enters, and it is a token"; Impact Tremors demands "a creature you control
-        enters"; the demand is satisfied, so the edge exists and the report writes the sentence.
+        A pair is found when something one card <strong>produces</strong> is something another card
+        <strong>cares about</strong>. Both sides carry details that all have to agree: what kind of
+        card it is, who controls it, whether it is a token. The tool calls a found pair an
+        <em>edge</em>, and that is the word the report uses.
       </p>
       <!-- THE CONCEPT THE WHOLE TOOL RESTS ON, drawn once. The matched row is the ordinary case; the
            refused row is a REAL defect this engine shipped and had reported from the board, which is
@@ -232,72 +245,183 @@
           </p>
         </div>
       </div>
-
       <p>
-        The filters are where the engine earns its keep, and where it is most often wrong in an
-        interesting way. A card that fetches "a Plains, Island, Swamp or Mountain card" produces a
-        <em>land</em> entering — so it must not satisfy "whenever another creature you control
-        enters", even though one Magic card in history is a Land Creature with a basic land type. The
-        rules that decide this are ordinary code, reviewed against the Comprehensive Rules, and every
-        one of them is a place a bug can live.
+        Those details are where the tool earns its keep, and where it is most often wrong in an
+        interesting way. The rules that decide them are written by people, checked against the
+        game's own rulebook, and every one of them is a place a mistake can live.
       </p>
 
       <h2>What it refuses to claim</h2>
-      <ul>
+      <p>A large part of the engine exists to say nothing. Each of these is a mistake it once made.</p>
+      <!-- SIX REFUSALS AS A GRID, replacing five paragraphs of bullets. Each card is a rule, one line
+           of why, and the concrete case, because a reader skims the titles and stops on the example.
+           Six and not five so the two-column grid has no orphan. -->
+      <ul class="refusals">
         <li>
-          <strong>Roles are not synergies.</strong> Ramp, removal, card draw and tax make a deck work
-          without pairing with anything in it. They are counted as slots against a target, never
-          drawn as edges — otherwise a single cost reducer forms an edge with half the deck and says
-          nothing.
+          <strong>A job is not a pair.</strong>
+          Mana rocks, removal, card draw: cards every deck needs, that do their job with no partner.
+          They are counted, not paired.
+          <span class="refusal-eg">Sol Ring gets no sentence with every spell it helps you cast. The report counts it as one of your mana sources.</span>
         </li>
         <li>
-          <strong>A card that names itself means itself.</strong> "This creature", "this spell", the
-          card's own name. Reading those as a class was once responsible for roughly three quarters
-          of all false edges.
+          <strong>A card that names itself means itself.</strong>
+          "This creature", "this spell", the card's own name. Reading those as a class once produced
+          three quarters of all false edges.
+          <span class="refusal-eg">"This creature deals 2 damage" on Siege-Gang Commander is about Siege-Gang Commander.</span>
         </li>
         <li>
-          <strong>Playing Magic is not a synergy.</strong> "Whenever you cast a spell" is satisfied by
-          every nonland card in every deck, so it excludes nothing and carries no information.
+          <strong>Playing Magic is not a pair.</strong>
+          Something every card in every deck does cannot single any card out.
+          <span class="refusal-eg">"Whenever you cast a spell" forms no edge on its own.</span>
         </li>
         <li>
-          <strong>An unreadable trigger is reported, not guessed.</strong> When a card's text names an
-          event the vocabulary cannot spell, it is recorded as unknown rather than matched to the
-          nearest thing that fits. A missing claim is better than a confident wrong one.
+          <strong>A card cannot feed its own trigger.</strong>
+          A creature attacking does not satisfy its own "whenever a creature attacks".
+          <span class="refusal-eg">The card would be claiming synergy with itself.</span>
         </li>
         <li>
-          <strong>Popularity is not synergy.</strong> Nothing here is derived from how many decks run
-          a card. Two cards are related because their printed text says so, or they are not related
-          at all — a card no one plays and a staple in every deck are read the same way.
+          <strong>An unreadable card is reported, not guessed.</strong>
+          Text the tool cannot make sense of is marked as unread rather than matched to the nearest
+          thing that fits.
+          <span class="refusal-eg">A missing claim is better than a confident wrong one.</span>
+        </li>
+        <li>
+          <strong>Popularity is not a pair.</strong>
+          Nothing here comes from how many decks run a card.
+          <span class="refusal-eg">A card no one plays and a staple in every deck are read the same way.</span>
         </li>
       </ul>
 
-      <h2>How it is checked</h2>
+      <h2>How much to trust it</h2>
+      <!-- TWO NUMBERS, NEVER ONE. A gate that deletes every claim it is unsure of scores 100%
+           precision, so precision alone is not a figure; retention is what stops the engine gaming
+           it. Both are read off `README.md`, which carries the command and the date, and
+           `how-it-works.test.ts` fails this page the day it disagrees. Retention is NOT recall: the
+           panel was built from claims the engine already made, so it cannot see an edge that was
+           never claimed. -->
+      <dl class="figures figures-2">
+        <div><dt>98.7%</dt><dd>of the sentences it prints today were judged correct by a person, 421 checked</dd></div>
+        <div><dt>91.4%</dt><dd>of the pairs a person confirmed real are still found today, 383 held and 36 lost</dd></div>
+      </dl>
       <p>
-        The engine is calibrated against 71 real Commander decks, every one of them fully resolved
-        against the card corpus. Changes are measured on that set before and after — how many pairs
-        formed, how many disappeared, and which ones — so a fix that quietly deletes real claims
-        shows up as a number rather than as a feeling.
-      </p>
-      <p>
-        Individual pairs are hand-judged into a frozen panel: once a pair has a verdict, a change that
-        flips it fails the build. Disagreements are quarantined with a cap, so a new one cannot be
-        waved through and a fixed one has to be banked. The browser and the server paths are compared
-        deck by deck and must produce byte-identical reports.
+        Measured 2026-09-08. A person has judged 895 pairs of cards from the 71 real Commander decks
+        the tool is calibrated against, and that set is frozen. Today's engine prints 421 sentences
+        about those pairs, and 98.7% of them are ones the person agreed with; the true figure is
+        very likely between 97.1% and 99.5%, written [97.1, 99.5]. Separately, 419 of the pairs
+        were confirmed real, and the engine still finds 383 of them. The two numbers only mean
+        anything together: a tool that deleted every sentence it was unsure of would score 100% on
+        the first and collapse on the second. Every change to the engine is checked against this
+        set before it ships, so a fix that quietly deletes real pairs shows up as a number rather
+        than a feeling.
       </p>
 
-      <h2>What it does not know</h2>
+      <h2>What it cannot see</h2>
+      <ul>
+        <li>
+          <strong>A card it has not read.</strong> A card outside the 21,317 forms no edges, and the
+          report lists it as unread rather than pretending the deck is fully understood. Its mana
+          cost, type and text still count everywhere else.
+        </li>
+        <li>
+          <strong>How much.</strong> A pair is either found or not. Krenko, Mob Boss handing Impact
+          Tremors a token every turn and a lone creature entering once are the same pair.
+        </li>
+        <li>
+          <strong>Some pairs it cannot put into words.</strong> A card that searches your library
+          for another, a spell that returns one from the graveyard. Real synergies, and the way this
+          tool reads cards cannot state them. They are known limits, not undiscovered bugs.
+        </li>
+      </ul>
+
+      <h2 id="under-the-hood">Under the hood</h2>
       <p>
-        The card corpus is large but not complete, and a card the engine has never read forms no
-        edges — the report says so rather than pretending the deck is fully understood. Edges are
-        binary: the engine says two cards interact, not how much, which is why a token engine feeding
-        a trigger forty times and a lone creature feeding it once look alike on the board. And the
-        rules are written by people, so some claims are wrong.
+        The thesis in one sentence: <em>a model reads oracle text once and turns it into structured
+        data, and everything after that is deterministic code.</em> Change a rule and you get a diff
+        you can read, not a different mood. Here is the same pair, Siege-Gang Commander and
+        Skullclamp, through each stage as the corpus holds it.
       </p>
+      <!-- FOUR STAGES, REAL OUTPUT. Every block is the live corpus's answer for this pair, lifted
+           from `docs/HOW-IT-WORKS.md` where it is kept current; the stage pages carry the shapes,
+           the commands and the failure modes. Links go to GitHub rather than a rendered copy: the
+           stage docs name source paths and Mongo commands a site reader cannot act on. -->
+      <ol class="stages">
+        <li>
+          <h3><span class="stage-n">Stage 1</span> Segment <span class="stage-cost">free</span></h3>
+          <p>Oracle text is split into clauses, one per printed ability, and each is classified. A keyword or reminder clause is inert and never reaches the model.</p>
+<pre><code>{id:1, kind:"ability"}
+  "When this creature enters, create three 1/1 red
+   Goblin creature tokens."
+{id:2, kind:"ability"}
+  "This creature deals 2 damage to any target."</code></pre>
+          <a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/pipeline/1-segment.md">Stage 1 in full</a>
+        </li>
+        <li class="stage-paid">
+          <h3><span class="stage-n">Stage 2</span> Normalize <span class="stage-cost">the model, once per card</span></h3>
+          <p>Each clause becomes a structured sentence: an ability type, a trigger, and actions whose verbs come from a closed vocabulary. An answer outside the vocabulary is refused and not persisted.</p>
+<pre><code>{"id": 2, "abilityType": "activated",
+ "actions": [
+   {"verb": "sacrifice",   "object": "a Goblin"},
+   {"verb": "deal-damage", "object": "any target",
+    "amount": "2"}]}</code></pre>
+          <a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/pipeline/2-normalize.md">Stage 2 in full</a>
+        </li>
+        <li>
+          <h3><span class="stage-n">Stage 3</span> Derive <span class="stage-cost">free</span></h3>
+          <p>Clauses become typed game events: what the card watches for, and what it supplies. Events no card prints, like a creature being cast or dying, are added from its printed characteristics.</p>
+<pre><code>Siege-Gang Commander
+  emit:     dies  {control:"you", subtype:"goblin"}
+Skullclamp
+  trigger:  dies  {control:"you", type:"creature"}
+  effect:   draw-card</code></pre>
+          <a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/pipeline/3-derive.md">Stage 3 in full</a>
+        </li>
+        <li>
+          <h3><span class="stage-n">Stage 4</span> Match <span class="stage-cost">free</span></h3>
+          <p>Every card's supply is compared against every other card's demand. Same verb, same controller, and a Goblin is a creature through a subtype hierarchy generated from MTGJSON, so a claim forms.</p>
+<pre><code>tag   = "dies:creature"
+text  = "When Siege-Gang Commander dies,
+         Skullclamp draws you 2 cards"</code></pre>
+          <a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/pipeline/4-match.md">Stage 4 in full</a>
+        </li>
+      </ol>
+
+      <h3>The order the gates run in</h3>
+      <p>
+        One function decides every claim, and the order is deliberate: each gate assumes the ones
+        above it have passed. Any gate can refuse, and a refusal is silent by design.
+      </p>
+      <!-- THE MATCHER'S ACTUAL DECISION ORDER, from `eventMatches()` in
+           `packages/matcher/src/edges.ts`. If that order changes, this list is wrong; the stage 4
+           doc is the reference and this is its picture. -->
+      <ol class="gates">
+        <li><strong>Same verb?</strong> <span>Including the rules bridges: a life-loss trigger accepts a damage emit.</span></li>
+        <li><strong>Is the demand restricted?</strong> <span>"Targets only" and the like are refused. A targeting restriction is a demand nothing here can check.</span></li>
+        <li><strong>Instant-speed relaxation.</strong> <span>A producer that acts at instant speed and picks its own victim can satisfy a combat-state demand it never names.</span></li>
+        <li><strong>Origin compatible?</strong> <span>Token, not-cast, enters-tapped.</span></li>
+        <li><strong>Self-supplied?</strong> <span>A card must not satisfy its own trigger: combat, cast, its own entry.</span></li>
+        <li><strong>Special-cased verbs.</strong> <span>A graveyard fill, a counter being added, and damage each route to their own comparison.</span></li>
+        <li><strong>Subjects compatible?</strong> <span>Through the type hierarchy. A Goblin is a creature; a land is not.</span></li>
+      </ol>
+
+      <h3>Read the rest</h3>
+      <p>The engine is open source. These are the documents, in the order they are worth reading.</p>
+      <table class="docs-table">
+        <tbody>
+          <tr><td><a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/HOW-IT-WORKS.md">How it works</a></td><td>the tour, with diagrams and this pair worked the whole way through</td></tr>
+          <tr><td><a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/pipeline/1-segment.md">Stages 1 to 4</a></td><td>a page per stage: what it reads, what it writes, what it costs, the failure modes it has hit</td></tr>
+          <tr><td><a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/reference/SCHEMA.md">Schema reference</a></td><td>every vocabulary, version constant and field. Generated from the source and gated by a test</td></tr>
+          <tr><td><a href="https://github.com/SetsudanHana/edh-seer/blob/main/docs/RUNBOOK.md">Runbook</a></td><td>what to run, what it costs, how to measure a change</td></tr>
+          <tr><td><a href="https://github.com/SetsudanHana/edh-seer/tree/main/docs/engineering-log">Engineering log</a></td><td>what was measured, on what day, and what turned out to be wrong</td></tr>
+          <tr><td><a href="https://github.com/SetsudanHana/edh-seer/blob/main/CONTRIBUTING.md">Contributing</a></td><td>how a change is measured before it merges</td></tr>
+          <tr><td><a href="https://github.com/SetsudanHana/edh-seer/blob/main/SECURITY.md">Security</a></td><td>how to report privately</td></tr>
+        </tbody>
+      </table>
+
       <p class="prose-cta">
-        If you find one, it is a bug with a name and a sentence attached —
-        <a href="https://github.com/SetsudanHana/edh-seer/issues/new">open an issue</a> with the two
-        card names and the line the report printed. The engine is
-        <a href="https://github.com/SetsudanHana/edh-seer">open source</a>.
+        A wrong edge is a bug with a name and a sentence attached.
+        <a href="https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml">Report it</a>
+        with the two card names and the line the report printed, or read the
+        <a href="https://github.com/SetsudanHana/edh-seer">source</a>.
       </p>
 
     </article>
