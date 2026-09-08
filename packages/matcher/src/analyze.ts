@@ -24,6 +24,8 @@ import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
 import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
+import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
+import { flipPerspective } from "./perspective.js";
 import { markCommander } from "./commander.js";
 import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
@@ -119,8 +121,12 @@ function tokenDeckCard(ref: TokenRef, tags: CardTags): DeckCard {
  *  typeless "Copy" row is never named in printed text, and a face whose text the corpus never stored
  *  names nothing either; attributing the token to no face at all would make it read PARTNERED off
  *  its own maker, which is the over-claim this scan exists to avoid. */
-function facesCreating(faces: DeckCard[], tokenName: string): DeckCard[] {
-  const named = new RegExp(`\\bcreate[sd]?\\b[^.]*${tokenName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i");
+function facesCreating(faces: DeckCard[], ref: TokenRef): DeckCard[] {
+  // AN EMBLEM IS GRANTED, NOT CREATED: the printed sentence is CR 114.2's "gets an emblem", and a
+  // card has at most one emblem, so the cue needs no name.
+  const named = ref.emblem
+    ? GETS_AN_EMBLEM
+    : new RegExp(`\\bcreate[sd]?\\b[^.]*${ref.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i");
   const printers = faces.filter((f) => named.test(f.card.oracleText ?? ""));
   return printers.length > 0 ? printers : faces;
 }
@@ -157,14 +163,19 @@ export function collectTokenNodes(
       const tags = tokenTags(ref);
       if (!tags) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
       if (!byOracle.has(tags.oracleId)) {
-        const node = tokenDeckCard(ref, tags);
+        // WHO CONTROLS AN EMBLEM is whoever the granting ability names (CR 114.2), and the node is
+        // read from OUR seat: an opponent's emblem gets its `you`/`opp` swapped (`flipPerspective`).
+        // Read off the sibling faces' own abilities, because the grant sits on one face.
+        const givenToOpp = ref.emblem === true && siblings.some((f) =>
+          (f.tags?.abilities ?? []).some((a) => a.effect.kind === "emblem" && a.effect.subject?.control === "opp"));
+        const node = tokenDeckCard(ref, givenToOpp ? flipPerspective(tags) : tags);
         byOracle.set(tags.oracleId, node);
         nodes.push(node);
       }
       // THE NODE EXISTS FOR THE CARD AND THE CREATION BELONGS TO A FACE. A token the deck can make
       // is on the graph whichever face makes it, so node building above is card-scoped; only the
       // maker relation below asks which face.
-      if (!facesCreating(siblings, ref.name).some((f) => f.card.name === dc.card.name)) continue;
+      if (!facesCreating(siblings, ref).some((f) => f.card.name === dc.card.name)) continue;
       let oracles = producerTokenOracles.get(dc.card.name);
       if (!oracles) producerTokenOracles.set(dc.card.name, (oracles = new Set()));
       oracles.add(tags.oracleId);
