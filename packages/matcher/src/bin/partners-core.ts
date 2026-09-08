@@ -613,6 +613,8 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
         eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
       // THE TRIGGER IS THE CARD ITSELF: the key cannot carry it, so the row says it beside the key.
       ...(a.trigger?.subject?.self === true ? { self: true as const } : {}),
+      ...(a.trigger?.subject?.colors?.length ? { whenColors: [...a.trigger.subject.colors] } : {}),
+      ...(a.effect?.subject?.self === true ? { effectSelf: true as const } : {}),
       ...(a.face !== undefined ? { face: a.face } : {}),
       // A GAME-STATE REQUIREMENT the deck report honours only under a state (roadmap W18).
       ...(a.requires ? { requires: a.requires } : {}),
@@ -819,6 +821,13 @@ export interface AbilityRow {
   /** The trigger is the card itself ("whenever this creature attacks"); the page reads `when` as
    *  "this card …" rather than "anything …". */
   self?: true;
+  /** THE TRIGGER'S COLOUR FILTER, Scryfall letters, when it has one: Chandra, Fire of Kaladesh
+   *  untaps on a RED spell, and the four-field key has no colour slot, so the page printed "a spell
+   *  being cast" while the matcher joined on red (owner, 2026-09-08). */
+  whenColors?: string[];
+  /** THE EFFECT'S SUBJECT IS THE CARD ITSELF ("untap Chandra"), so the page says "untaps itself"
+   *  rather than "untaps a permanent". Same job `self` does for the trigger. */
+  effectSelf?: true;
   /** WHICH PRINTED FACE this ability sits on, 1 or more for a back face, absent on the front and on
    *  a single-face card -- the same convention `Ability.face` uses. The page flips the art; without
    *  this it could not flip the rows with it, and a reader looking at Chandra, Fire of Kaladesh saw

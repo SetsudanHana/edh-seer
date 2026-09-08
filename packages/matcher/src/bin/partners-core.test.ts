@@ -797,6 +797,23 @@ test("an ability row lists the emits whose subject is the card itself", () => {
   expect(abilityRowsOf(impactTremors)[0]!.selfEmits).toBeUndefined();
 });
 
+/** THE COLOUR AND THE SELF THE KEY CANNOT CARRY (owner, 2026-09-08). Chandra untaps on a red spell
+ *  and untaps herself; the row says both beside the keys. */
+test("an ability row carries the trigger's colours and whether the effect is on itself", () => {
+  const chandra = base("Chandra, Fire of Kaladesh", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: "spell", colors: ["R"] } },
+    effect: { kind: "untap", subject: { control: "any", token: null, self: true } },
+    emits: [{ verb: "untaps", subject: { control: "any", token: null, self: true } }],
+  }] as never);
+  const row = abilityRowsOf(chandra)[0]!;
+  expect(row.whenColors).toEqual(["R"]);
+  expect(row.effectSelf).toBe(true);
+  const tremors = abilityRowsOf(impactTremors)[0]!;
+  expect(tremors.whenColors).toBeUndefined();
+  expect(tremors.effectSelf).toBeUndefined();
+});
+
 /** A MAGNITUDE THAT COUNTS SOMETHING SAYS WHAT IT COUNTS. Without it "per-permanent" is a word with
  *  no object, and the count is the whole reason a Goblin deck runs this card. */
 test("a scaling ability carries its basis and what it counts", () => {

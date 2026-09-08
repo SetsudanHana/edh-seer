@@ -366,7 +366,10 @@ const STATIC_REACH: Record<string, string> = {
   "protection": "it protects",
 };
 
-export function eventKeySentence(key: string, subject?: string): string {
+/** Scryfall's colour letters, as a player says them. */
+const COLOUR_WORD: Record<string, string> = { W: "white", U: "blue", B: "black", R: "red", G: "green", C: "colourless" };
+
+export function eventKeySentence(key: string, subject?: string, colors?: string[]): string {
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
   // A phase and a player action carry no subject to glue a noun onto -- the same two escapes
@@ -411,8 +414,13 @@ export function eventKeySentence(key: string, subject?: string): string {
     raw === "-" ? [] : raw.split(",").map((m) => proper ? capitalize(m) : m);
   // Subtypes are proper nouns in Magic -- a Goblin, not a goblin -- and they qualify the type
   // rather than replacing it: "a Goblin creature", the way a type line reads.
+  // THE COLOUR THE KEY CANNOT CARRY (owner, 2026-09-08): "a red spell being cast", not "a spell
+  // being cast", when the caller hands the filter in. Two colours read as a choice, which is what
+  // a colour filter means.
+  const colour = colors?.length ? [colors.map((c) => COLOUR_WORD[c] ?? c.toLowerCase()).join(" or ")] : [];
   const words = [
     ...list(subtype, true),
+    ...colour,
     ...list(type, false),
     ...(token === "t" ? ["token"] : []),
   ];

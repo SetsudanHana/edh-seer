@@ -138,6 +138,11 @@ const RECIPIENT_PHRASES: Record<string, Record<string, [(n: string) => string, s
   },
 };
 
+const SELF_PHRASES: Record<string, string> = {
+  untap: "untaps itself",
+  flicker: "blinks itself",
+};
+
 const PROSE_AMOUNT = /\bfor each\b|\bequal to\b|\bwhere\b|\bthe number of\b/i;
 
 export function effectPhrase(
@@ -152,6 +157,9 @@ export function effectPhrase(
   if (amount !== undefined && PROSE_AMOUNT.test(amount) && kind !== "pump" && kind !== "cost-reduction") amount = undefined;
   const aimed = recipient ? RECIPIENT_PHRASES[kind]?.[recipient] : undefined;
   if (aimed) return amount ? aimed[0](amount) : aimed[1];
+  // THE CARD DOES IT TO ITSELF. "Untap Chandra" is not "untaps a permanent" (owner, 2026-09-08);
+  // the two kinds a card routinely does to itself get the reflexive phrase, the rest keep theirs.
+  if (target === "itself" && SELF_PHRASES[kind]) return SELF_PHRASES[kind]!;
   // THE ONE KIND WHOSE PHRASE NAMES A TARGET, and the one that was naming the wrong one.
   if (kind === "counter-placement" && target) {
     const n = amount === undefined ? "counters" : amount === "1" ? "a counter" : `${amount} counters`;

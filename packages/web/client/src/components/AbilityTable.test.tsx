@@ -35,3 +35,15 @@ test("an emit whose subject is the card itself reads as this card", () => {
   expect(screen.getAllByText(/a creature dealing noncombat damage/).length).toBeGreaterThan(0);
   expect(screen.queryByText(/anything untapping/)).toBeNull();
 });
+
+/** THE COLOUR AND THE SELF (owner, 2026-09-08): Chandra untaps herself on a red spell, and the row
+ *  said "a spell being cast" and "untaps a permanent". */
+test("a coloured trigger names the colour, and a self effect reads reflexively", () => {
+  render(<AbilityTable rows={[{
+    kind: "triggered", when: ["cast|spell|-|-"], whenColors: ["R"], effect: "untap", effectSelf: true,
+    emits: ["untaps|-|-|-"], selfEmits: ["untaps|-|-|-"],
+  }]} stacked />);
+  expect(screen.getAllByText(/a red spell being cast/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/untaps itself/).length).toBeGreaterThan(0);
+  expect(screen.queryByText(/untaps a permanent/)).toBeNull();
+});
