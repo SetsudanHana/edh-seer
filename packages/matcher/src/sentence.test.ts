@@ -386,3 +386,10 @@ test("an emblem grant says who gets it", () => {
   expect(effectPhrase("emblem", undefined)).toBe("gets an emblem");
   expect(effectPhrase("emblem", undefined, undefined, "opp")).toBe("gives each opponent an emblem");
 });
+
+test("an untap or a blink of the card itself reads reflexively", () => {
+  expect(effectPhrase("untap", undefined, "itself")).toBe("untaps itself");
+  expect(effectPhrase("flicker", undefined, "itself")).toBe("blinks itself");
+  expect(effectPhrase("untap", undefined)).toBe("untaps a permanent");
+  expect(effectPhrase("damage", "3", "itself")).toBe("deals 3 damage");
+});

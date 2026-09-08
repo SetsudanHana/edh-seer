@@ -178,3 +178,12 @@ test("a self trigger reads as this card doing the thing", () => {
   expect(eventKeySentence("dies|creature|-|-", "this card")).toBe("this card dying");
   expect(eventKeySentence("attacks|-|-|-")).toBe("anything attacking");
 });
+
+/** THE COLOUR THE KEY CANNOT CARRY (owner, 2026-09-08). Chandra, Fire of Kaladesh untaps on a red
+ *  spell; the key says only "spell". */
+test("a colour filter reads inside the noun", () => {
+  expect(eventKeySentence("cast|spell|-|-", undefined, ["R"])).toBe("a red spell being cast");
+  expect(eventKeySentence("cast|spell|-|-", undefined, ["R", "G"])).toBe("a red or green spell being cast");
+  expect(eventKeySentence("enters|creature|-|-", undefined, ["W"])).toBe("a white creature entering the battlefield");
+  expect(eventKeySentence("cast|spell|-|-", undefined, [])).toBe("a spell being cast");
+});

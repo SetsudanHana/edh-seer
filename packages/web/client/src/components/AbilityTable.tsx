@@ -92,11 +92,11 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
                 {a.when.length === 0
                   ? <span className="text-(--muted)">—</span>
                   : <ul className="flex flex-col gap-1">
-                      {a.when.map((w) => <li key={w}>{eventKeySentence(w, a.self ? "this card" : undefined)}</li>)}
+                      {a.when.map((w) => <li key={w}>{eventKeySentence(w, a.self ? "this card" : undefined, a.whenColors)}</li>)}
                     </ul>}
               </td>
               <td className="py-3 pr-4">
-                {effectPhrase(a.effect, a.amount, undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
+                {effectPhrase(a.effect, a.amount, a.effectSelf ? "itself" : undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
                 {/* A MAGNITUDE THAT COUNTS SOMETHING SAYS WHAT IT COUNTS. "per-permanent" alone is a
                   * word with no object, and the count is the whole reason a Goblin deck runs this. */}
                 {a.counts && (
@@ -125,10 +125,10 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
               {a.cost && <LoyaltyCost cost={a.cost} />}
             </p>
             {a.when.length > 0 && (
-              <p><span className="eyebrow text-(--muted)">when </span>{a.when.map((w) => eventKeySentence(w, a.self ? "this card" : undefined)).join(", ")}</p>
+              <p><span className="eyebrow text-(--muted)">when </span>{a.when.map((w) => eventKeySentence(w, a.self ? "this card" : undefined, a.whenColors)).join(", ")}</p>
             )}
             <p>
-              {effectPhrase(a.effect, a.amount, undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
+              {effectPhrase(a.effect, a.amount, a.effectSelf ? "itself" : undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
               {a.counts && (
                 <span className="text-(--muted)">
                   {" "}once for every {countedNoun(a.counts)} you control
