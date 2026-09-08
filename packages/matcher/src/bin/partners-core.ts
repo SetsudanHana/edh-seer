@@ -612,6 +612,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
         eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
       // THE TRIGGER IS THE CARD ITSELF: the key cannot carry it, so the row says it beside the key.
       ...(a.trigger?.subject?.self === true ? { self: true as const } : {}),
+      ...(a.face !== undefined ? { face: a.face } : {}),
       // A GAME-STATE REQUIREMENT the deck report honours only under a state (roadmap W18).
       ...(a.requires ? { requires: a.requires } : {}),
       effect: a.effect?.kind ?? "",
@@ -816,6 +817,11 @@ export interface AbilityRow {
   /** The trigger is the card itself ("whenever this creature attacks"); the page reads `when` as
    *  "this card …" rather than "anything …". */
   self?: true;
+  /** WHICH PRINTED FACE this ability sits on, 1 or more for a back face, absent on the front and on
+   *  a single-face card -- the same convention `Ability.face` uses. The page flips the art; without
+   *  this it could not flip the rows with it, and a reader looking at Chandra, Fire of Kaladesh saw
+   *  Chandra, Roaring Flame's loyalty abilities under her (owner, 2026-09-08). */
+  face?: number;
   /** "Max speed —": the player's speed this ability needs (CR 702.179), shown on the row. */
   requires?: { marker: string; min: number };
   /** The effect's kind (`token-generation`, `draw-card`). Humanised at the edge, never here. */

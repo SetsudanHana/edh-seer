@@ -27,10 +27,17 @@ import { cardImageUrl } from "./card-node.js";
  *  (`inject.ts`), so the bytes are in flight before React exists. The aspect ratio stays fixed so
  *  nothing below it moves when the picture lands. */
 export function CardArt(
-  { artCrop, backArtCrop = null, name }:
-  { artCrop: string | null; backArtCrop?: string | null; name: string },
+  { artCrop, backArtCrop = null, name, back: controlled, onFlip }:
+  {
+    artCrop: string | null; backArtCrop?: string | null; name: string;
+    /** CONTROLLED when the page owns the flip (`CardShell`, so the ability rows turn with the
+     *  picture); uncontrolled everywhere else, where the picture is the only thing that turns. */
+    back?: boolean; onFlip?: () => void;
+  },
 ) {
-  const [back, setBack] = useState(false);
+  const [own, setOwn] = useState(false);
+  const back = controlled ?? own;
+  const flip = onFlip ?? (() => { setOwn((b) => !b); });
   if (!artCrop) return null;
 
   // THE FACE NAMES ARE ALREADY IN THE CARD NAME. Scryfall writes a two-faced card as
@@ -66,7 +73,7 @@ export function CardArt(
         <button
           type="button"
           aria-pressed={showing}
-          onClick={() => { setBack((b) => !b); }}
+          onClick={flip}
           className="inline-flex items-center gap-2 min-h-11 rounded-(--radius) border border-(--separator) px-3 py-1.5 text-sm text-(--muted) hover:border-(--accent) hover:text-(--accent) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">

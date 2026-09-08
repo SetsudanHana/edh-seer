@@ -7,6 +7,8 @@ import { CardPeek } from "./CardPeek.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
 import { PeekContext, usePeekState } from "./peek.js";
+import { FaceContext } from "./face.js";
+import { useState } from "react";
 
 /** ONE PAGE SHAPE, TWO SURFACES (spec 2026-09-08 part 2). `/cards/<slug>` and `/commanders/<slug>`
  *  were two components with different headings, rail widths and intro copy for the same card; a
@@ -30,6 +32,9 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
   peekLoad?: (slug: string) => Promise<CardPageData | null>;
 }) {
   const peek = usePeekState();
+  // THE FLIP IS THE PAGE'S, NOT THE PICTURE'S (owner, 2026-09-08): the ability rows turn with it.
+  const [back, setBack] = useState(false);
+  const faceView = { face: back && page.backArtCrop ? 1 : 0, names: page.name.split(" // ") };
   const tab = (to: string, label: string, current: boolean) => (
     <Link
       to={to}
@@ -41,6 +46,7 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
   );
   return (
     <PeekContext.Provider value={peek}>
+    <FaceContext.Provider value={faceView}>
     <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start max-w-7xl">
       <div className="flex flex-col gap-8 min-w-0">
         <header className="flex flex-col gap-3">
@@ -61,7 +67,7 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
         {peek.stack.length > 0
           ? <CardPeek load={peekLoad} />
           : (<>
-            <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
+            <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} back={back} onFlip={() => { setBack((b) => !b); }} />
             {railExtra}
             <div className="hidden lg:flex lg:flex-col gap-3">
               {/* A label, not a heading: the rail is the card's, and a screen reader's heading list
@@ -72,6 +78,7 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
           </>)}
       </aside>
     </article>
+    </FaceContext.Provider>
     </PeekContext.Provider>
   );
 }
