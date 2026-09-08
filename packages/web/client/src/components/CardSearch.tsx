@@ -149,7 +149,7 @@ export function CardSearch({
                 onClick={() => setColours((cs) => on
                   ? cs.filter((c) => c !== code)
                   : code === "C" ? ["C"] : [...cs.filter((c) => c !== "C"), code])}
-                className={`inline-flex items-center gap-1.5 rounded-(--radius) border px-3 py-1.5 text-sm ${on
+                className={`inline-flex items-center gap-1.5 min-h-11 rounded-(--radius) border px-3 text-sm ${on
                   ? "border-(--accent) text-(--accent)"
                   : "border-(--separator) text-(--muted) hover:text-(--foreground)"}`}
               >
