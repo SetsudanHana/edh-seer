@@ -26,6 +26,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // why they survive a hydration it does not perform; it is also why they were still on screen UNDER
 // every card page, printing the same partner list twice. Once the app is running they have done
 // their job.
+// THE ROUTE BEFORE THE BOOT FLAG (cohesion sweep 2026-09-08). `RouteMarker` sets `data-route` from
+// inside React, one effect after the first render; the boot flag below fired first, and for that
+// frame `html[data-app-booted]:not([data-route="browse"]) .prerendered` hid a browse page's whole
+// list. Caught in a screenshot: a blank page under the header. The same rule, once, from the path.
+const path = location.pathname;
+document.documentElement.dataset.route = path === "/" ? "home" : path.startsWith("/browse/") ? "browse" : "page";
 document.documentElement.dataset.appBooted = "1";
 
 /** THE STICKY SITE HEADER'S HEIGHT, INTO `--site-header-h`.

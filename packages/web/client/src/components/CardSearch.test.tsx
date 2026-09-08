@@ -200,7 +200,7 @@ test("the count line agrees with itself when there is one result", async () => {
  *  appeared under "Red" and under nothing of their own. */
 test("a colourless facet reaches the commanders no colour can ask for", async () => {
   commanders();
-  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Colourless$/ }));
   expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Kess/ })).not.toBeInTheDocument();
@@ -211,7 +211,7 @@ test("a colourless facet reaches the commanders no colour can ask for", async ()
  *  empty list. Ticking a colour unticks it, and it unticks every colour. */
 test("ticking a colour unticks colourless, and colourless unticks the colours", async () => {
   commanders();
-  const colourless = await screen.findByRole("button", { name: /^Colorless$/ });
+  const colourless = await screen.findByRole("button", { name: /^Colourless$/ });
   await userEvent.click(colourless);
   expect(colourless).toHaveAttribute("aria-pressed", "true");
 
@@ -231,7 +231,7 @@ test("ticking a colour unticks colourless, and colourless unticks the colours", 
  *  rows whose identity had failed to load. */
 test("a colourless row shows the colourless symbol rather than nothing", async () => {
   commanders();
-  await userEvent.click(await screen.findByRole("button", { name: /^Colorless$/ }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Colourless$/ }));
   const row = (await screen.findByRole("link", { name: /Kozilek/ })).closest("li")!;
   // `ManaSymbols` labels both the wrapper and the symbol itself, so this asserts presence rather
   // than uniqueness.

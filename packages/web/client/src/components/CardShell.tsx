@@ -64,7 +64,9 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
             {railExtra}
             <div className="hidden lg:flex lg:flex-col gap-3">
-              <h3 className="eyebrow text-(--muted)">how the engine reads this card</h3>
+              {/* A label, not a heading: the rail is the card's, and a screen reader's heading list
+                *  should carry the page's sections, not the rail's captions (cohesion sweep). */}
+              <p className="eyebrow text-(--muted)">how the engine reads this card</p>
               <AbilityTable rows={page.abilities} stacked />
             </div>
           </>)}

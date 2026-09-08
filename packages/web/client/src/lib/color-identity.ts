@@ -28,7 +28,7 @@ const MANA_HEX: Record<ColorLetter, string> = {
 const NEUTRAL_IDENTITY = "#7e7a85";
 
 const NAME_TABLE: Record<string, string> = {
-  "": "Colorless",
+  "": "Colourless",
   W: "White",
   U: "Blue",
   B: "Black",
@@ -70,7 +70,7 @@ export function identityKey(colors: readonly string[]): string {
 }
 
 export function identityLabel(colors: readonly string[]): string {
-  return NAME_TABLE[identityKey(colors)] ?? "Colorless";
+  return NAME_TABLE[identityKey(colors)] ?? "Colourless";
 }
 
 function anchorHex(c: ColorLetter): string {

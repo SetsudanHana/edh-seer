@@ -58,8 +58,7 @@ export function StateControls({ markers, state = {}, onState, edges, busy = fals
   const hasSpeed = markers.includes("speed");
   if (!hasSpeed && switches.length === 0) return null;
   const pill = (pressed: boolean) =>
-    `inline-flex min-w-9 justify-center rounded-(--radius) border px-3 py-1.5 text-sm hover:border-(--accent) hover:text-(--accent) ${
-      pressed ? "border-(--accent) text-(--accent)" : "border-(--separator)"}`;
+    `chip min-w-11 justify-center${pressed ? "" : ""}`;
   // The next state carries only what is on: a cleared marker leaves the object, so "{}" is "none".
   const set = (patch: Partial<GameState>) => {
     const next: GameState = { ...state, ...patch };

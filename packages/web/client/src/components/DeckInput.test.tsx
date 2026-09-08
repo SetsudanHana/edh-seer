@@ -35,9 +35,9 @@ test("typing reaches the handler", async () => {
  *  and the control says so in the one way the rules allow: opacity plus a real `disabled`. */
 test("the primary action is unavailable until there is a decklist", () => {
   const { rerender } = render(<DeckInput {...props} />);
-  expect(screen.getByRole("button", { name: "Analyze deck" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Analyse deck" })).toBeDisabled();
   rerender(<DeckInput {...props} value="1 Sol Ring" />);
-  expect(screen.getByRole("button", { name: "Analyze deck" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Analyse deck" })).toBeEnabled();
 });
 
 /** LOADING IS NOT DISABLED (components.md rule 8): "Reusing the disabled dimming for an in-flight
@@ -47,7 +47,7 @@ test("the primary action is unavailable until there is a decklist", () => {
  *  separates the two states for the stylesheet and for a screen reader. */
 test("an in-flight analysis keeps the button at full strength and says what it is doing", () => {
   render(<DeckInput {...props} value="1 Sol Ring" loading />);
-  const btn = screen.getByRole("button", { name: "Analyzing…" });
+  const btn = screen.getByRole("button", { name: "Analysing…" });
   expect(btn).toHaveAttribute("aria-busy", "true");
   // Still not submittable twice -- busy is about the LOOK, not about letting the click through.
   expect(btn).toBeDisabled();
@@ -58,7 +58,7 @@ test("an in-flight analysis keeps the button at full strength and says what it i
 test("pressing the primary action runs the analysis once", async () => {
   let runs = 0;
   render(<DeckInput {...props} value="1 Sol Ring" onAnalyze={() => { runs += 1; }} />);
-  await userEvent.click(screen.getByRole("button", { name: "Analyze deck" }));
+  await userEvent.click(screen.getByRole("button", { name: "Analyse deck" }));
   expect(runs).toBe(1);
 });
 
@@ -66,7 +66,7 @@ test("pressing the primary action runs the analysis once", async () => {
 /** A WAY OUT OF A REPORT (owner, 2026-09-03: "we do not have way to clear and start from the
  *  beginning").
  *
- *  The collapsed bar had `Copy link`, `Copy decklist`, `Edit` and `Re-analyze` -- and every one of
+ *  The collapsed bar had `Copy link`, `Copy decklist`, `Edit` and `Re-analyse` -- and every one of
  *  them keeps the deck you are already looking at. `Edit` reopens THIS list; the deck is in the
  *  hash, so a reload brings it back too. There was no door.
  *
@@ -123,7 +123,7 @@ test("Clear is the neutral variant and Analyze keeps the accent", () => {
   render(<DeckInput {...props} value="1 Sol Ring" />);
   expect(screen.getByRole("button", { name: "Clear" }).className).toContain("btn-secondary");
   expect(screen.getByRole("button", { name: "Clear" }).className).not.toContain("btn-primary");
-  expect(screen.getByRole("button", { name: "Analyze deck" }).className).toContain("btn-primary");
+  expect(screen.getByRole("button", { name: "Analyse deck" }).className).toContain("btn-primary");
 });
 
 /** THE COLLAPSED BAR ALREADY HAS ITS OWN WAY OUT -- `Start over`, which navigates -- and two

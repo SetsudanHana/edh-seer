@@ -18,7 +18,7 @@ test("identityKey dedupes repeated colors", () => {
 });
 
 test("identityLabel resolves mono, guild, shard, four-color, and five-color names", () => {
-  expect(identityLabel([])).toBe("Colorless");
+  expect(identityLabel([])).toBe("Colourless");
   expect(identityLabel(["G"])).toBe("Green");
   expect(identityLabel(["U", "R"])).toBe("Izzet");
   expect(identityLabel(["B", "R", "G"])).toBe("Jund");

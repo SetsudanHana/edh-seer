@@ -500,3 +500,13 @@ test("the docs page's structured data parses, is a TechArticle, and points at it
   expect(data.aggregateRating).toBeUndefined();
   expect(data.dateModified).toBeUndefined();
 });
+
+/** THE ROUTE IS MARKED BEFORE THE BOOT FLAG. `main.tsx` sets `data-app-booted` synchronously; the
+ *  `.prerendered` hiding rule keys on it and exempts `data-route="browse"`, which `RouteMarker` sets
+ *  one React effect later. In that frame a browse page went blank (screenshot, cohesion sweep
+ *  2026-09-08). Source order is the property: the route line comes first. */
+test("main.tsx marks the route before it marks the app booted", () => {
+  const main = readFileSync(join(CLIENT, "src", "main.tsx"), "utf8");
+  expect(main.indexOf("dataset.route = ")).toBeGreaterThan(-1);
+  expect(main.indexOf("dataset.route = ")).toBeLessThan(main.indexOf('dataset.appBooted = "1"'));
+});
