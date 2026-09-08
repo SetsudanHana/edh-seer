@@ -37,8 +37,13 @@ export const OUT = "docs/reference/SCHEMA.md";
  *  not when a comment above it grows a sentence. */
 const link = (file: string, symbol: string): string => `[\`${symbol}\`](../../${file})`;
 
-/** A table cell may not contain a raw pipe, and `string | string[]` is a type this schema uses. */
-const cell = (s: string): string => s.replace(/\|/g, "\\|");
+/** A table cell may not contain a raw pipe, and `string | string[]` is a type this schema uses.
+ *
+ *  THE BACKSLASH GOES FIRST. Escaping the pipe alone means a value already ending in a backslash
+ *  produces `\\|`, which is an escaped BACKSLASH followed by a live pipe -- the cell breaks on the
+ *  one input that was trying to be literal. No type in the schema carries one today; the order
+ *  costs nothing and the reverse is a defect waiting for the first field that does. */
+const cell = (s: string): string => s.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
 
 /** THE FIRST PARAGRAPH OF THE DOC COMMENT ABOVE A LINE, as one line of text.
  *
