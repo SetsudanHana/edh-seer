@@ -291,3 +291,31 @@ test("on Commanders the strategy select reads Supports and askers come first", a
   const links = await screen.findAllByRole("link", { name: /Fathom Mage|Inspiring Call|Skullclamp/ });
   expect(links.map((l) => l.textContent)).toEqual([expect.stringContaining("Fathom Mage")]);
 });
+
+/** THE RESULT LIST PEEKS TOO (owner 2026-09-08: "the same issue with the new filters, you open a new
+ *  page and so on"). A plain click on a result looks at the card beside the list; the filters, the
+ *  count and the URL stay. A modifier click still opens the page. */
+test("a plain click on a result peeks and keeps the filtered list and URL", async () => {
+  const spy = atUrl("/cards?colors=G&does=draw-card&theme=counters", {
+    peekLoad: async (slug: string) => ({
+      name: slug === "inspiring-call" ? "Inspiring Call" : slug, typeLine: "Instant", manaCost: "{2}{G}", artCrop: null,
+      backArtCrop: null, abilities: [], identity: ["G"], commander: false, emits: [], demands: [], partners: [], pool: {}, rarity: {},
+    }),
+  });
+  const link = await screen.findByRole("link", { name: /Inspiring Call/ });
+  fireEvent.click(link);
+  expect(await screen.findByRole("dialog", { name: "Inspiring Call" })).toBeInTheDocument();
+  expect(spy.search).toBe("?colors=G&does=draw-card&theme=counters");
+  // The row is still there, under the results; the peek's own Open control is the other link.
+  expect(within(screen.getByRole("list", { name: "Results" })).getByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "draws cards" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+});
+
+test("a modifier click on a result opens the page", async () => {
+  atUrl("/cards?q=skull");
+  const link = await screen.findByRole("link", { name: /Skullclamp/ });
+  fireEvent.click(link, { metaKey: true });
+  expect(screen.queryByRole("dialog")).toBeNull();
+});

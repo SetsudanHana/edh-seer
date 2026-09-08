@@ -6,6 +6,9 @@ import { DOES, STRATEGIES, applyFacets, facetsFromParams, facetsToParams, matche
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
+import { CardPeek } from "./CardPeek.js";
+import { PeekContext, peekOnPlainClick, usePeekState } from "./peek.js";
+import type { CardPageData } from "../lib/partners.js";
 
 /** HOW MANY ROWS ONE QUERY MAY DRAW. A readability choice and a jank one at once: "a" matches most
  *  of the corpus, and 15,350 links is a page nobody scrolls and a frame nobody gets back. The count
@@ -36,11 +39,13 @@ const COLOURS: [code: string, label: string][] = [
 ];
 
 export function CardSearch({
-  load = sharedNameIndex, facets = sharedFacetIndex, hash, replace, mode = "cards",
+  load = sharedNameIndex, facets = sharedFacetIndex, peekLoad, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
   /** The facet rows (spec 2026-09-08 part 4), asked for on the first facet interaction only. */
   facets?: (baseUrl: string) => Promise<FacetRow[]>;
+  /** The peek's own loader; tests pass one, the page reads the shard. */
+  peekLoad?: (slug: string) => Promise<CardPageData | null>;
   hash?: string;
   replace?: (url: string) => void;
   /** ONE COMPONENT, TWO ROUTES. The commander list is the same index, the same box and the same cap
@@ -50,6 +55,9 @@ export function CardSearch({
   mode?: "cards" | "commanders";
 }) {
   const commanderMode = mode === "commanders";
+  // THE RESULT LIST PEEKS (owner 2026-09-08): a click on a result used to leave the filtered list
+  // and Back rebuilt it. Same stack, same panel, same click rule as the card pages.
+  const peek = usePeekState();
   const [index, setIndex] = useState<NameIndexEntry[] | null>(null);
   // THE QUERY LIVES IN THE URL, so a search is a link. `/cards/krenko-mob` is a slug nobody minted;
   // its page cannot guess what was meant, but it CAN hand the reader here with what they typed
@@ -109,6 +117,8 @@ export function CardSearch({
   }, [index, query, asked, colours, commanderMode, needsFacets, facetRows, facetQuery, mode]);
 
   return (
+    <PeekContext.Provider value={peek}>
+    <div className="lg:grid lg:grid-cols-[minmax(0,68ch)_20rem] lg:gap-x-10 lg:items-start">
     <section className="flex flex-col gap-6 max-w-[68ch]">
       {/* ONLY `/cards` EVER CARRIED A SHARE LINK. `/commanders` is a new path, so there is no
         * stale link to catch and nothing to redirect. */}
@@ -265,6 +275,7 @@ export function CardSearch({
                   <Link
                     className="flex items-baseline gap-3 py-2.5 hover:text-(--accent) group"
                     to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
+                    onClick={(ev) => { peekOnPlainClick(peek, e.slug, ev); }}
                   >
                     <span className="group-hover:underline underline-offset-2">{e.name}</span>
                     {/* AN EMPTY IDENTITY IS COLOURLESS, NOT ABSENT. Rendering nothing there made
@@ -294,5 +305,15 @@ export function CardSearch({
         )}
       <PageFoot />
     </section>
+    {/* The peek beside the list on a wide viewport; below `lg` `.peek` is a fixed bottom sheet, so
+      * the aside's position does not matter there. Rendered only while a card is being looked at,
+      * so the list keeps its measure the rest of the time. */}
+    {peek.stack.length > 0 && (
+      <aside className="lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)]">
+        <CardPeek load={peekLoad} />
+      </aside>
+    )}
+    </div>
+    </PeekContext.Provider>
   );
 }
