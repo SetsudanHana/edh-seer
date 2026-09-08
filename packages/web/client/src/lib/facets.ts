@@ -40,29 +40,35 @@ export const STRATEGIES: { slug: string; label: string; cls: string }[] = ARCHET
 
 export interface FacetQuery { colours: string[]; does: string[]; strategy?: string }
 
-/** Cards: "fits in these colours", the identity within the choice; colourless fits anything, and
- *  `C` chosen means colourless only. Commanders: exact identity, the ruling the chips already
- *  answer with (owner 2026-09-04). */
-export function coloursFit(identity: string, colours: string[], mode: "cards" | "commanders"): boolean {
+/** EXACT IDENTITY ON BOTH PAGES (owner 2026-09-08, the same ruling the Commanders chips carried
+ *  since 2026-09-04): Green and White list green-white cards, not everything a green-white deck
+ *  could play. A "fits in" subset was built first and rejected on sight. `C` chosen means
+ *  colourless only. The `mode` stays in the signature because the caller passes it. */
+export function coloursFit(identity: string, colours: string[], _mode: "cards" | "commanders"): boolean {
   if (colours.length === 0) return true;
   if (colours.includes("C")) return identity === "";
-  if (mode === "commanders") return identity.length === colours.length && colours.every((c) => identity.includes(c));
-  return [...identity].every((c) => colours.includes(c));
+  return identity.length === colours.length && colours.every((c) => identity.includes(c));
 }
 
 const strategyHit = (r: FacetRow, q: FacetQuery): boolean => q.strategy === undefined || r.t.includes(q.strategy);
-const doesHit = (r: FacetRow, q: FacetQuery): boolean => q.does.length === 0 || q.does.some((k) => r.e.includes(k));
+/** How many of the chosen Does chips the card satisfies. OR within the group, so one is enough to
+ *  list it; the count is the order (owner 2026-09-08): a card that does three of the chosen things
+ *  sits above one that does one. */
+const doesHits = (r: FacetRow, q: FacetQuery): number => q.does.filter((k) => r.e.includes(k)).length;
 
 export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "commanders"): FacetRow[] {
   const out = rows.filter((r) =>
-    (mode !== "commanders" || r.c === 1) && coloursFit(r.i, q.colours, mode) && doesHit(r, q) && strategyHit(r, q));
-  if (q.strategy !== undefined) {
-    // A card that ASKS for the strategy is its payoff; one that merely supplies it is a member.
-    // Payoffs first on both pages: measured on the first artifact (2026-09-08), the unranked list
-    // for "draws cards, +1/+1 Counters" opened with ten cards that merely enter with a counter.
-    const s = q.strategy;
-    out.sort((a, b) => Number(b.d.includes(s)) - Number(a.d.includes(s)) || a.s.localeCompare(b.s));
-  }
+    (mode !== "commanders" || r.c === 1) && coloursFit(r.i, q.colours, mode)
+    && (q.does.length === 0 || doesHits(r, q) > 0) && strategyHit(r, q));
+  // THE ORDER: most chosen chips matched first; then the cards that ASK for the strategy (its
+  // payoffs) before the ones that merely supply it (measured on the first artifact, 2026-09-08:
+  // the unranked list for "draws cards, +1/+1 Counters" opened with ten cards that merely enter
+  // with a counter); then slug, so two equal rows print the same way round every time.
+  const s = q.strategy;
+  out.sort((a, b) =>
+    doesHits(b, q) - doesHits(a, q)
+    || (s === undefined ? 0 : Number(b.d.includes(s)) - Number(a.d.includes(s)))
+    || a.s.localeCompare(b.s));
   return out;
 }
 

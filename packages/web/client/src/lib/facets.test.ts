@@ -12,9 +12,10 @@ test("every Does chip names a real effect kind, and every Strategy option carrie
   expect(STRATEGIES.find((s) => s.slug === "counters")?.label).toBe("+1/+1 Counters");
 });
 
-test("colours: subset on cards, exact on commanders, C is colourless", () => {
-  expect(coloursFit("G", ["G", "W"], "cards")).toBe(true);
-  expect(coloursFit("", ["G"], "cards")).toBe(true);
+test("colours: exact identity on both pages, C is colourless, none means any", () => {
+  expect(coloursFit("WG", ["G", "W"], "cards")).toBe(true);
+  expect(coloursFit("G", ["G", "W"], "cards")).toBe(false);
+  expect(coloursFit("", ["G"], "cards")).toBe(false);
   expect(coloursFit("UG", ["G"], "cards")).toBe(false);
   expect(coloursFit("G", ["C"], "cards")).toBe(false);
   expect(coloursFit("", ["C"], "cards")).toBe(true);
@@ -31,12 +32,22 @@ const ROWS: FacetRow[] = [
   { s: "zaxara", i: "UBG", c: 1, e: ["token-generation"], t: ["counters"], d: [] },
 ];
 
-test("groups AND, chips within a group OR, colours by mode", () => {
+test("groups AND, chips within a group OR, exact colours", () => {
   expect(applyFacets(ROWS, { colours: ["G"], does: ["draw-card"], strategy: "counters" }, "cards").map((r) => r.s))
     .toEqual(["inspiring-call"]);
   expect(applyFacets(ROWS, { colours: [], does: ["draw-card", "counter-placement"], strategy: "counters" }, "cards").map((r) => r.s))
     .toEqual(["fathom-mage", "inspiring-call", "hardened-scales"]);
   expect(applyFacets(ROWS, { colours: [], does: [], strategy: undefined }, "cards")).toHaveLength(5);
+});
+
+test("more chosen chips matched puts a card higher (owner 2026-09-08)", () => {
+  const rows: FacetRow[] = [
+    { s: "one", i: "", c: 0, e: ["draw-card"], t: [], d: [] },
+    { s: "both", i: "", c: 0, e: ["draw-card", "mill"], t: [], d: [] },
+    { s: "also-one", i: "", c: 0, e: ["mill"], t: [], d: [] },
+  ];
+  expect(applyFacets(rows, { colours: [], does: ["draw-card", "mill"], strategy: undefined }, "cards").map((r) => r.s))
+    .toEqual(["both", "also-one", "one"]);
 });
 
 test("with a strategy chosen, askers first, then suppliers, then slug; commanders only on that page", () => {

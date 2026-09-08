@@ -155,15 +155,16 @@ test("a facet toggles off again", async () => {
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
 
-/** THE CARD SEARCH ASKS "FITS IN THESE COLOURS" (spec 2026-09-08 part 4), which is the deckbuilding
- *  question; the Commanders page keeps the exact-identity chips. The chips used to be absent here
- *  because the card page ranks over the whole corpus; the page still does, and the chips narrow
- *  the list rather than the ranking. */
-test("the card search offers colour chips under a Fits in legend", async () => {
+/** THE CARD SEARCH HAS THE COLOUR CHIPS TOO (spec 2026-09-08 part 4), exact identity on both pages
+ *  (owner 2026-09-08). They used to be absent here because the card page ranks over the whole
+ *  corpus; it still does, and the chips narrow the list rather than the ranking. */
+test("the card search offers the colour chips too, exact identity like the Commanders page", async () => {
   at();
   await screen.findByRole("searchbox");
   expect(screen.getByRole("button", { name: /^Red$/ })).toBeInTheDocument();
-  expect(screen.getByText("Fits in")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /^Red$/ }));
+  expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Ajani's Chosen/ })).toBeNull();
 });
 
 /** A SEARCH IS A LINK. `/cards/krenko-mob` is a slug nobody minted and its page cannot guess what
@@ -262,7 +263,7 @@ const atUrl = (url: string, props: Partial<Parameters<typeof CardSearch>[0]> = {
   return Spy as unknown as { search: string };
 };
 
-test("draws cards, +1/+1 Counters, within green: one card, with the reason it is listed", async () => {
+test("draws cards, +1/+1 Counters, green: one card, with the reason it is listed", async () => {
   const facets = vi.fn(async () => FACETS);
   atUrl("/cards?colors=G&does=draw-card&theme=counters", { facets });
   expect(await screen.findByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();

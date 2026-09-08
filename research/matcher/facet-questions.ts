@@ -13,7 +13,6 @@ const names = new Map(
   (JSON.parse(readFileSync(`static-out/${v}/name-index.json`, "utf8")) as { slug: string; name: string }[])
     .map((e) => [e.slug, e.name]),
 );
-const fits = (identity: string, colours: string): boolean => [...identity].every((c) => colours.includes(c));
 const side = (r: Row, a: string): string => (r.d.includes(a) ? "asks for it" : "supplies it");
 const show = (list: Row[], a: string): void => {
   for (const r of list.slice(0, 10)) console.log(`   ${names.get(r.s) ?? r.s}  [${r.i || "C"}]  ${side(r, a)}`);
@@ -26,8 +25,8 @@ const byAsk = (a: Row, b: Row): number =>
   Number(b.d.includes("counters")) - Number(a.d.includes("counters"))
   || (names.get(a.s) ?? a.s).localeCompare(names.get(b.s) ?? b.s);
 // Ordered as the page orders it (`applyFacets`): the cards that ask for the strategy first.
-const q1 = rows.filter((r) => r.e.includes("draw-card") && r.t.includes("counters") && fits(r.i, "G")).sort(byAsk);
-console.log(`Q1  cards  does=draws cards  strategy=${ARCHETYPE_LABELS.counters}  fits within G: ${q1.length}`);
+const q1 = rows.filter((r) => r.e.includes("draw-card") && r.t.includes("counters") && r.i === "G").sort(byAsk);
+console.log(`Q1  cards  does=draws cards  strategy=${ARCHETYPE_LABELS.counters}  identity=G: ${q1.length}`);
 show(q1, "counters");
 console.log(`   of which ask for counters: ${q1.filter((r) => r.d.includes("counters")).length}`);
 

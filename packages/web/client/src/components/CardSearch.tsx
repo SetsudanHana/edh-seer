@@ -71,11 +71,10 @@ export function CardSearch({
     void load("/static").then((i) => { if (live) setIndex(i); });
     return () => { live = false; };
   }, [load]);
-  // THE FACET ROWS ARE READ ONLY WHEN A FACET NEEDS THEM: the name index answers a name, and on
-  // Commanders the exact-identity chips too. Cards' "fits in these colours", Does and Strategy
-  // need what the rows carry, and that file is not fetched on a page that never asks.
-  const needsFacets = facetQuery.does.length > 0 || facetQuery.strategy !== undefined
-    || (!commanderMode && colours.length > 0);
+  // THE FACET ROWS ARE READ ONLY WHEN A FACET NEEDS THEM: the name index answers a name and the
+  // exact-identity chips on both pages. Does and Strategy need what the rows carry, and that file
+  // is not fetched on a page that never asks.
+  const needsFacets = facetQuery.does.length > 0 || facetQuery.strategy !== undefined;
   const [facetRows, setFacetRows] = useState<FacetRow[] | null>(null);
   useEffect(() => {
     if (!needsFacets || facetRows !== null) return;
@@ -99,9 +98,9 @@ export function CardSearch({
     if (index === null || !asked) return [];
     // A FACET IS A COMPLETE QUESTION ON ITS OWN: with no name typed, the facets narrow the whole
     // index, not the empty answer `matchNames` gives an empty needle.
-    const byName = needle.length === 0 && needsFacets
+    const byName = needle.length === 0 && needsFacets && colours.length === 0
       ? index.filter((e) => !commanderMode || e.commander)
-      : matchNames(index, { query, ...(commanderMode ? { commanders: true, colours } : {}) });
+      : matchNames(index, { query, colours, ...(commanderMode ? { commanders: true } : {}) });
     if (!needsFacets) return byName;
     if (facetRows === null) return null;
     const kept = applyFacets(facetRows, facetQuery, mode);
@@ -131,10 +130,10 @@ export function CardSearch({
         </p>
       </header>
 
-      {/* ON BOTH PAGES NOW (spec part 4). Commanders: the exact identity, as ruled. Cards: "fits in
-        *  these colours", the card's identity within the choice, which is the deckbuilding question. */}
+      {/* ON BOTH PAGES NOW (spec part 4), and EXACT on both (owner 2026-09-08): Green and White list
+        *  green-white cards. A "fits in" subset was built first for the Cards page and rejected. */}
       <fieldset className="flex flex-wrap items-center gap-2">
-        <legend className="eyebrow">{commanderMode ? "Colour identity" : "Fits in"}</legend>
+        <legend className="eyebrow">Colour identity</legend>
           {COLOURS.map(([code, label]) => {
             const on = colours.includes(code);
             return (
