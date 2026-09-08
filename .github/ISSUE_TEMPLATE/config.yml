@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How the engine works
+    url: https://github.com/SetsudanHana/edh-seer/blob/main/docs/HOW-IT-WORKS.md
+    about: The pipeline from a printed card to a synergy graph, stage by stage. Worth a look before filing a correctness issue.
+  - name: Card data is wrong
+    url: https://scryfall.com/docs/faqs
+    about: Oracle text and printings come from Scryfall and MTGJSON. Report data errors upstream, not here.

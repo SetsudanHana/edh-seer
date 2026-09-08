@@ -1,6 +1,11 @@
 # EDH Seer
 
+[![CI](https://github.com/SetsudanHana/edh-seer/actions/workflows/ci.yml/badge.svg)](https://github.com/SetsudanHana/edh-seer/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Oracle-text deck analysis for Magic: The Gathering Commander (EDH).
+
+**Live at [edhseer.cards](https://edhseer.cards)** — paste a decklist, no account, nothing stored.
 
 Paste a decklist, get a reading: which cards actually work together and **why**, in a sentence you
 can check against the card. Plus mana and land math, build benchmarks, per-card roles, archetype
@@ -23,14 +28,21 @@ That matters because it makes the engine *measurable*. A rule change produces a 
 
 | | |
 |---|---|
-| synergy-claim precision | **95.1%** `[92.5, 96.8]` |
+| synergy-claim precision | **98.7%** `[97.1, 99.5]` on 421 live claims |
+| retention of pairs judged real | **91.4%** — 383 held, 36 lost |
 | judged against | 895 frozen card pairs, every claim hand-judged by a human |
 | calibration corpus | 71 real decks |
-| tests | 2,706, green |
+| tests | 3,711, green |
+
+Measured 2026-09-08 by `npx tsx packages/instruments/src/panel-score.ts`, which is free to re-run.
 
 Precision is measured on a frozen panel where both the "real" and "false" columns are human-judged,
 not model-judged. The number is deliberately conservative: a claim the engine cannot verify is
 **refused** rather than guessed, because a silent wrong answer is worse than a missing one.
+
+**The second row is not optional.** A gate that deletes every claim it is unsure of scores 100%
+precision, so the two numbers only mean anything together. And retention is not recall: the panel was
+built from claims this engine already made, so it cannot see an edge that was never claimed.
 
 ## The pipeline
 
@@ -67,11 +79,11 @@ changed and re-measured cheaply.
 
 ## Running it
 
-Requires Node >= 20 and a MongoDB instance holding the card corpus.
+Requires Node >= 22 and a MongoDB instance holding the card corpus.
 
 ```bash
 npm install
-npm test                                    # 2,706 tests
+npm test                                    # 3,711 tests
 
 npx tsx packages/cli/src/main.ts <decklist.txt>
 
@@ -81,9 +93,9 @@ cd packages/web && npx vite --config client/vite.config.ts      # UI   :5173
 
 ## Honest limitations
 
-- **Corpus coverage.** The full card corpus is ~34,000 cards; **2,767** currently carry derived tags.
-  Cards outside that set form no synergy edges — the report says so explicitly rather than quietly
-  under-reporting. Their mana cost, type and text still count everywhere else.
+- **Corpus coverage.** The corpus is **34,433** cards, of which **21,317** carry derived tags
+  (measured 2026-09-08). Cards outside that set form no synergy edges — the report says so explicitly
+  rather than quietly under-reporting. Their mana cost, type and text still count everywhere else.
 - **Synergy is binary, not weighted.** An edge says two cards relate; it does not say how much. A
   supply/demand magnitude discount was built, swept across a 2-D parameter grid, and **refused** on
   measurement three separate times — it consistently penalised exactly the scarce payoffs it was
@@ -104,8 +116,22 @@ measurement beside every change.
 
 ## Documentation
 
-[How it works](docs/HOW-IT-WORKS.md) — the full pipeline from a printed card to a synergy graph,
-stage by stage, with diagrams and a real worked example.
+Start at **[docs/](docs/)**, or go straight to what you need:
+
+| | |
+|---|---|
+| [How it works](docs/HOW-IT-WORKS.md) | the tour — a printed card to a synergy graph, with diagrams and a worked example |
+| [Stage 1 — Segmentation](docs/pipeline/1-segment.md) | oracle text into numbered clauses, free |
+| [Stage 2 — Normalization](docs/pipeline/2-normalize.md) | the model, once per card. The only paid step |
+| [Stage 3 — Derivation](docs/pipeline/3-derive.md) | clauses into game events, plus what no card prints |
+| [Stage 4 — Matching](docs/pipeline/4-match.md) | supply against demand, and every reason a claim is refused |
+| [Schema reference](docs/reference/SCHEMA.md) | every vocabulary, constant and field. Generated from the source and gated by a test |
+| [Runbook](docs/RUNBOOK.md) | what to run, what it costs, how to measure it afterwards |
+| [Engineering log](docs/engineering-log/) | what was measured, on what day, and what it cost |
+
+Contributing: **[CONTRIBUTING.md](CONTRIBUTING.md)**. Found a wrong synergy claim?
+[Report the edge](https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml) —
+it is the most useful issue this project can receive.
 
 ## License
 
