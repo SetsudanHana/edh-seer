@@ -77,7 +77,9 @@ test("the page carries the player devices and the engineering devices", () => {
   }
   // The claim is the real sentence the report prints, worked through every stage of the docs.
   // Read as text, because the page sets the card names in bold and the sentence still has to read.
-  const text = page.replace(/<[^>]+>/g, "").replace(/\s+/g, " ");
+  // A parser, not a regex: CodeQL reads a tag-stripping regex as a sanitiser and flags it.
+  const body = new DOMParser().parseFromString(page, "text/html").body.textContent ?? "";
+  const text = body.replace(/\s+/g, " ");
   expect(text).toContain("When Siege-Gang Commander dies, Skullclamp draws you 2 cards");
   // Two audiences, one page, and the split is a heading a reader can jump to.
   expect(page).toMatch(/<h2 id="under-the-hood">/);
