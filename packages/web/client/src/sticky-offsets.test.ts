@@ -47,10 +47,12 @@ test("every vertically-pinned element offsets by --site-header-h", () => {
   expect(offenders).toEqual([]);
 });
 
-/** THE SITE HEADER IS NOT PINNED ON A PHONE (owner 2026-09-08). The rule lives in the phone media
- *  block of index.css; a tidy that drops it puts 92px back on top of every phone report. */
-test("the phone media block makes the site header static", () => {
+/** THE SITE HEADER ON A PHONE: static without the bundle, pinned-but-returning with it (owner
+ *  2026-09-08). Both halves live in the phone media block of index.css; a tidy that drops either
+ *  puts 92px back on top of every phone report, or scrolls the nav away for good. */
+test("the phone media block makes the site header static, and sticky-with-hide once booted", () => {
   const css = readFileSync(join(process.cwd(), "client", "src", "index.css"), "utf8");
-  // One phone block whose `.site-header` rule carries the line; comments inside the rule allowed.
   expect(css).toMatch(/@media \(max-width: 47\.99rem\) \{\s*\.site-header \{[^}]*position: static;/);
+  expect(css).toMatch(/html\[data-app-booted\] \.site-header \{\s*position: sticky;/);
+  expect(css).toMatch(/html\[data-app-booted\] \.site-header\[data-hidden\] \{ transform: translateY\(-100%\); \}/);
 });
