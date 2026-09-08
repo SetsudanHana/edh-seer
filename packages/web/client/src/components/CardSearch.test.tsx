@@ -313,6 +313,28 @@ test("a plain click on a result peeks and keeps the filtered list and URL", asyn
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 });
 
+/** A COMMANDER PEEK OPENS THE COMMANDER VIEW (owner 2026-09-08: "choose a commander, the popup says
+ *  open a card and opens a card view"). The list row already points at `/commanders/<slug>`; the
+ *  peek's own Open control has to agree with it. */
+test("on /commanders the peek's Open control goes to the commander page", async () => {
+  commanders({
+    peekLoad: async () => ({
+      name: "Krenko, Mob Boss", typeLine: "Legendary Creature", manaCost: "{2}{R}{R}", artCrop: null,
+      backArtCrop: null, abilities: [], identity: ["R"], commander: true, emits: [], demands: [],
+      partners: [{ name: "Skullclamp", slug: "skullclamp", score: 0.3, event: "dies|creature|-|-", reason: "equip" }], pool: {}, rarity: {},
+    }),
+  });
+  await userEvent.type(await screen.findByRole("searchbox"), "krenko");
+  fireEvent.click(await screen.findByRole("link", { name: /Krenko/ }));
+  await screen.findByRole("dialog", { name: "Krenko, Mob Boss" });
+  expect(screen.getByRole("link", { name: "Open Krenko, Mob Boss" })).toHaveAttribute("href", "/commanders/krenko-mob-boss");
+  expect(screen.getByRole("link", { name: "Open Krenko, Mob Boss" })).toHaveTextContent("Open commander");
+  // A deeper look is one of its partners, and a partner is a card.
+  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Skullclamp" }));
+  await screen.findByRole("button", { name: "Back" });
+  expect(screen.getByRole("link", { name: /^Open / })).toHaveAttribute("href", "/cards/skullclamp");
+});
+
 test("a modifier click on a result opens the page", async () => {
   atUrl("/cards?q=skull");
   const link = await screen.findByRole("link", { name: /Skullclamp/ });
