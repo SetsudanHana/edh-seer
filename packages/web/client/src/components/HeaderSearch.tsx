@@ -24,10 +24,12 @@ import { ManaSymbols } from "./ManaSymbols.js";
 const LIMIT = 8;
 const LIST_ID = "site-search-list";
 const optId = (i: number): string => `site-search-opt-${i}`;
+// Module-level, so the default is one stable function and the mount effect runs once, not per render.
+const defaultHost = (): Element | null => document.querySelector(".site-header");
 
 export function HeaderSearch({
   load = sharedNameIndex,
-  host = () => document.querySelector(".site-header"),
+  host = defaultHost,
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
   host?: () => Element | null;
@@ -43,8 +45,11 @@ export function HeaderSearch({
   const field = useRef<HTMLInputElement>(null);
   // A ref, not state: the load is asked for once per mount, and a re-render must not ask again.
   const asked = useRef(false);
+  // The blur timer, cleared on unmount and on the next blur, so it never fires into a gone field.
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setMount(host()); }, [host]);
+  useEffect(() => () => { if (blurTimer.current !== null) clearTimeout(blurTimer.current); }, []);
 
   const ensureIndex = () => {
     if (asked.current) return;
@@ -123,7 +128,10 @@ export function HeaderSearch({
           onKeyDown={onKey}
           // Late enough for a click on a row to land before the list goes; the row's `mousedown`
           // also keeps focus on the field, so this is the keyboard reader's path only.
-          onBlur={() => { setTimeout(() => setOpen(false), 120); }}
+          onBlur={() => {
+            if (blurTimer.current !== null) clearTimeout(blurTimer.current);
+            blurTimer.current = setTimeout(() => { blurTimer.current = null; setOpen(false); }, 120);
+          }}
         />
         {listed && (
           <ul id={LIST_ID} role="listbox" aria-label="Cards" className="site-search-list">
