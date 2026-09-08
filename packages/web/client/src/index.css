@@ -1154,12 +1154,22 @@ a.brand:hover .brand-edh { color: var(--foreground); }
     gap: 0.5rem 1rem;
     padding-top: 0.6rem;
     padding-bottom: 0.5rem;
-    /* NOT PINNED ON A PHONE (owner, 2026-09-08, reversing the 2026-09-04 call that made it
-       sticky everywhere). Measured at 390 on a report: after the report header was unpinned the
-       stack was still this bar at 92px plus the chapter rail at 53px, 17% of the screen; the rail
-       is the navigation a reader mid-report needs, and the site nav is one flick up. `stickyPx`
-       reports 0 for a static bar, so `--site-header-h` is 0 here and the rail pins at the top. */
+    /* STATIC WITHOUT THE BUNDLE, PINNED-BUT-RETURNING WITH IT (owner, 2026-09-08, twice). The
+       first ruling made it static on phones: a pinned 92px over the chapter rail was 17% of a
+       report's screen. The cost was the nav and the search scrolling away, so the second ruling
+       is the middle: with the app booted, the header is pinned but slides off while the reader
+       scrolls down and returns the moment they scroll up (`main.tsx`, `header-hide.ts`, the
+       rail's own rule). While hidden `--site-header-h` reads 0, so the rail pins at the top and
+       its own hide takes it fully off screen. The docs page runs no bundle and keeps `static`. */
     position: static;
+  }
+  html[data-app-booted] .site-header {
+    position: sticky;
+    transition: transform 200ms ease-out;
+  }
+  html[data-app-booted] .site-header[data-hidden] { transform: translateY(-100%); }
+  @media (prefers-reduced-motion: reduce) {
+    html[data-app-booted] .site-header { transition: none; }
   }
   .site-nav {
     /* ITS OWN ROW, AND ALL OF IT. Sharing the brand's line leaves ~121px of a 390px screen, which

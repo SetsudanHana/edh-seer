@@ -4,6 +4,7 @@ import App from "./App.js";
 import { Calibrate } from "./components/Calibrate.js";
 import "./index.css";
 import { stickyPx } from "./lib/sticky-px.js";
+import { headerHidden } from "./lib/header-hide.js";
 
 // `#calibrate` STAYS A HASH VIEW, and stays outside the router: it is a local dev tool (mounted
 // only under `MTG_CALIBRATE=1`), not a surface of the product, and it has nothing under it to
@@ -52,12 +53,36 @@ document.documentElement.dataset.appBooted = "1";
  *  answer there rather than a missing one. */
 const siteHeader = document.querySelector<HTMLElement>(".site-header");
 if (siteHeader && typeof ResizeObserver !== "undefined") {
+  // A HIDDEN HEADER TAKES NO ROOM IN THE STACK: while it is translated away the chapter rail
+  // pins at the top and its own hide slides it fully off screen, rather than leaving 53px of rail
+  // exposed under a header that is no longer there.
   const writeSiteHeaderHeight = (): void =>
     document.documentElement.style.setProperty(
-      "--site-header-h", stickyPx(siteHeader),
+      "--site-header-h", siteHeader.hasAttribute("data-hidden") ? "0px" : stickyPx(siteHeader),
     );
   writeSiteHeaderHeight();
   new ResizeObserver(writeSiteHeaderHeight).observe(siteHeader);
+
+  // THE HEADER RETURNS ON SCROLL UP (owner 2026-09-08): pinned on a phone, hidden while the reader
+  // scrolls down, back the moment they scroll up. `header-hide.ts` is the rule; this is the wiring.
+  const wide = window.matchMedia("(min-width: 48rem)");
+  let last = window.scrollY;
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY;
+    const dy = y - last;
+    const was = siteHeader.hasAttribute("data-hidden");
+    const hidden = headerHidden({ y, dy, wide: wide.matches, was });
+    if (Math.abs(dy) >= 8) last = y;
+    if (hidden === was) return;
+    siteHeader.toggleAttribute("data-hidden", hidden);
+    writeSiteHeaderHeight();
+  }, { passive: true });
+  wide.addEventListener("change", () => {
+    if (wide.matches && siteHeader.hasAttribute("data-hidden")) {
+      siteHeader.removeAttribute("data-hidden");
+      writeSiteHeaderHeight();
+    }
+  });
 }
 
 /** OFFLINE, WHICH THIS APP IS UNUSUALLY CLOSE TO ALREADY: the analysis runs entirely in the browser
