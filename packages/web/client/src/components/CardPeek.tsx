@@ -58,8 +58,13 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
       <div className="peek-bar">
         {deeper && <button type="button" className="peek-btn" onClick={() => peek.back()}>Back</button>}
         {page && (
-          <Link className="peek-btn peek-open-link" to={`/cards/${slug}`} onClick={() => peek.close()}>
-            Open {page.name}
+          <Link
+            className="peek-btn peek-open-link"
+            to={`/cards/${slug}`}
+            aria-label={`Open ${page.name}`}
+            onClick={() => peek.close()}
+          >
+            Open card
           </Link>
         )}
         <button ref={closeButton} type="button" className="peek-btn ml-auto" onClick={() => peek.close()}>Close</button>
