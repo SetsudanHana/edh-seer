@@ -11,6 +11,7 @@ export {
 } from "./otags/semantics.js";
 export { loadFunctionalOtags, loadDescriptorOtags } from "./otags/functional.js";
 export { deriveAbilities, deriveCardTags, type DeriveInput } from "./derive/derive.js";
+export { emblemRecipient, GETS_AN_EMBLEM, hasEmblemPart, isEmblemPart } from "./emblem.js";
 export { CARD_TYPES, UMBRELLA_TYPES, parseSubject } from "./derive/subject.js";
 export { canonicalize, canonicalClause, type Action, type ClauseRecord } from "./canonicalize.js";
 export { segment, type Clause } from "./segment.js";
