@@ -3132,3 +3132,13 @@ test("a hardest-to-cast row shows what the card costs", () => {
   const row = screen.getByLabelText(/Curse of Opulence \{R\}/);
   expect(within(row).getAllByRole("img", { name: /mana/i }).length).toBeGreaterThan(0);
 });
+
+/** THE INLINE CARD NAME HAS A 24px HIT BOX WITHOUT MOVING ITS LINE (cohesion sweep 2026-09-08,
+ *  finding 7). Padding and a matching negative margin are the whole mechanism; a later "tidy" that
+ *  drops either one puts 81 sub-24px targets back on a phone report. */
+test("CardName carries the padding-plus-negative-margin pair", () => {
+  const { container } = render(<CardDrawerProvider graph={SAMPLE.graph}><CardName name={SAMPLE.graph.nodes[0]!.label} /></CardDrawerProvider>);
+  const btn = container.querySelector("button")!;
+  expect(btn.className).toContain("py-1");
+  expect(btn.className).toContain("-my-1");
+});

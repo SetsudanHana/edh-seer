@@ -283,7 +283,11 @@ export function CardName({ name, className }: { name: string; className?: string
     <button
       type="button"
       onClick={() => open(name)}
-      className={`text-left hover:text-(--accent) hover:underline underline-offset-2 ${className ?? ""}`}
+      // A 24px HIT BOX ON A 16px LINE (cohesion sweep 2026-09-08, finding 7): 81 of the 84 sub-24px
+      // targets on a phone report were this button. Vertical padding grows the box; the matching
+      // negative margin hands the space back, so the sentence or the table row it sits in does not
+      // move. WCAG 2.5.8 exempts inline links in prose; this is a button, in tables as often as not.
+      className={`py-1 -my-1 text-left hover:text-(--accent) hover:underline underline-offset-2 ${className ?? ""}`}
     >
       {name}
     </button>
