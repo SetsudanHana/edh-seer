@@ -48,7 +48,7 @@ test("a commander's partners are the ones its deck could legally contain", async
 
 test("the commander page links to the card page", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  expect(await screen.findByRole("link", { name: /what the engine reads/i }))
+  expect(await screen.findByRole("link", { name: "As a card" }))
     .toHaveAttribute("href", "/cards/krenko-mob-boss");
 });
 
@@ -86,7 +86,7 @@ test("a self-supplied demand is not listed as a gap", async () => {
 test("a card that is not a commander says so and points at its card page", async () => {
   at("sol-ring", async () => ({ ...KRENKO, name: "Sol Ring", commander: false, commanderPartners: undefined }));
   expect(await screen.findByText(/cannot lead a deck/i)).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /what the engine reads/i }))
+  expect(screen.getByRole("link", { name: "As a card" }))
     .toHaveAttribute("href", "/cards/sol-ring");
 });
 

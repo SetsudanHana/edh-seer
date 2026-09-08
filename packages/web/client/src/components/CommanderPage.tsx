@@ -5,9 +5,8 @@ import { identityLabel } from "../lib/color-identity.js";
 import { eventKeySentence } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData, type PartnerRow } from "../lib/partners.js";
 import { CardArt } from "./CardArt.js";
-import { ManaSymbols } from "./ManaSymbols.js";
+import { CardShell } from "./CardShell.js";
 import { NotFound } from "./NotFound.js";
-import { PageFoot } from "./PageFoot.js";
 import { PartnerList } from "./PartnerList.js";
 
 type Ranked = { partners: PartnerRow[]; pool: Record<string, number>; rarity: Record<string, number> };
@@ -92,45 +91,16 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   if (page === undefined) return <p className="eyebrow text-(--muted)">reading the corpus</p>;
   if (page === null) return <NotFound slug={slug} kind="commander" />;
 
-  const toCard = (
-    <Link
-      className="inline-flex items-center gap-2 rounded-(--radius) border border-(--separator) px-3 py-1.5 text-sm hover:border-(--accent) hover:text-(--accent)"
-      to={`/cards/${slug}`}
-    >
-      What the engine reads on this card
-      <span aria-hidden="true">→</span>
-    </Link>
-  );
-
-  // THE CARD LEADS, AND NOW IT IS THE CARD. A page about a card that never showed the card was the
-  // first thing anyone asked about it. Beside the heading on a wide viewport, above it on a phone --
-  // `flex-wrap-reverse` does both without a media query.
-  const header = (
-    <header className="flex flex-col gap-3">
-      <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
-        {page.name}
-        {page.manaCost && (
-          <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>
-        )}
-      </h2>
-      <p className="text-(--muted)">{page.typeLine}</p>
-      <p>{toCard}</p>
-    </header>
-  );
-
   // THE URL IS GUESSABLE, so a reader will arrive here for Sol Ring. Saying what is wrong with the
   // question beats rendering an empty page that looks broken.
   if (!page.commander) {
     return (
-      <article className="flex flex-col gap-8 max-w-[68ch]">
-        <div className="max-w-[68ch]">{header}</div>
-        <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
+      <CardShell page={page} slug={slug} surface="commander" peekLoad={load}>
         <p className="text-(--muted) max-w-[65ch]">
           {page.name} cannot lead a deck. This page is for cards that can be a commander; the card
-          itself has one.
+          itself has one, under "As a card".
         </p>
-        <PageFoot />
-      </article>
+      </CardShell>
     );
   }
 
@@ -156,9 +126,13 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
   const licences = [...new Set((page.pairsWith ?? []).map((p) => p.licence))];
 
   return (
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-x-10 lg:items-start max-w-7xl">
-    <div className="flex flex-col gap-10 min-w-0">
-      {header}
+    <CardShell
+      page={page} slug={slug} surface="commander" peekLoad={load}
+      // THE PAIR IS TWO CARDS, SO THE RAIL SHOWS TWO. A picked partner's card sits under the
+      // commander's -- owner 2026-09-05: "you should see the card image next to the main commander
+      // you chose".
+      railExtra={pair ? <CardArt artCrop={pair.artCrop} backArtCrop={pair.backArtCrop} name={pair.name} /> : undefined}
+    >
 
       {/* ONE LINE, NOT A PANEL. It was a ~1,000px surface holding two items and ~30px of content,
         * and both of them were kickers -- "ITS EVENTS POINT AT" stacked above "Tokens" -- which is
@@ -246,12 +220,11 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h3 className="text-2xl font-bold tracking-[-0.01em]">Partners inside its colour identity</h3>
+          <h3 className="text-2xl font-bold tracking-[-0.01em]">Partners</h3>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over the cards a deck led by {page.name}{pair ? ` and ${pair.name}` : ""} could
-            legally contain — not the whole corpus, which is what the card page ranks over.
-          {" "}
-            The fewer cards can cause an event, the higher the pairing ranks.
+            legally contain, not the whole corpus. The fewer cards can cause an event, the higher
+            the pairing ranks. Click a name to look at it here; open it from there.
             {fallback ? " The pair's own list was not built; showing each card's own." : ""}
           </p>
         </div>
@@ -265,16 +238,6 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         />
       </section>
 
-      <PageFoot />
-    </div>
-    {/* THE PAIR IS TWO CARDS, SO THE RAIL SHOWS TWO. A picked partner's card sits under the
-      * commander's -- owner 2026-09-05: "you should see the card image next to the main commander
-      * you chose". Side by side on a phone, where the rail sits above the text and has the width;
-      * stacked in the desktop rail, which is one card wide. */}
-    <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] flex flex-row lg:flex-col gap-4">
-      <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
-      {pair ? <CardArt artCrop={pair.artCrop} backArtCrop={pair.backArtCrop} name={pair.name} /> : null}
-    </aside>
-    </article>
+    </CardShell>
   );
 }

@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
 import { AbilityTable } from "./AbilityTable.js";
-import { CardArt } from "./CardArt.js";
-import { ManaSymbols } from "./ManaSymbols.js";
+import { CardShell } from "./CardShell.js";
 import { NotFound } from "./NotFound.js";
-import { PageFoot } from "./PageFoot.js";
 import { PartnerList } from "./PartnerList.js";
 
 /** ONE CARD: what the engine reads on it, and the cards it is most specifically connected to.
@@ -40,36 +38,9 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
   // the one thing on this page that earns the extra width -- four columns squeezed into 68ch wrap
   // every cell. DESIGN.md's own rule: a wide viewport buys columns.
   return (
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start max-w-7xl">
-    <div className="flex flex-col gap-10 min-w-0">
-      {/* THE CARD IS A RAIL, NOT A BLOCK. It sat beside a 68ch column with the other half of a
-        * 2,000px viewport empty beside it (owner-reported 2026-09-04) -- and DESIGN.md's own rule is
-        * that width buys COLUMNS, never longer lines. The grid below puts the card in its own column
-        * on a wide screen and stacks it above the name on a narrow one; the reading column keeps its
-        * measure either way. */}
-      <div className="flex flex-wrap-reverse items-end gap-x-6 gap-y-4">
-      <header className="flex flex-col gap-3 flex-1 min-w-[16rem]">
-        <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
-          {page.name}
-          {page.manaCost && (
-            <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>
-          )}
-        </h2>
-        <p className="text-(--muted)">{page.typeLine}</p>
-        {page.commander && (
-          <p>
-            <Link
-              className="inline-flex items-center gap-2 rounded-(--radius) border border-(--separator) px-3 py-1.5 text-sm hover:border-(--accent) hover:text-(--accent)"
-              to={`/commanders/${slug}`}
-            >
-              What a deck led by this card wants
-              <span aria-hidden="true">→</span>
-            </Link>
-          </p>
-        )}
-      </header>
-      </div>
-
+    <CardShell page={page} slug={slug} surface="card" peekLoad={load}>
+      {/* The reading table on a phone sits here, above the partners, because the rail's stacked
+        *  copy is hidden below `lg` (it is card-shaped metadata and the rail is the card's). */}
       <section className="lg:hidden flex flex-col gap-3">
         <h3 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h3>
         <AbilityTable rows={page.abilities} />
@@ -77,12 +48,12 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h3 className="text-2xl font-bold tracking-[-0.01em]">Most specific partners</h3>
+          <h3 className="text-2xl font-bold tracking-[-0.01em]">Partners</h3>
           <p className="text-(--muted) max-w-[65ch]">
-            Ranked by how rare the matched event is across the corpus — how precisely these two cards
-            interact, not how good either one is. Every row is an edge the engine drew, in its own
-            words.{" "}
-            The fewer cards can cause an event, the higher the pairing ranks.
+            Ranked over every card the engine has read, by how rare the matched event is across the
+            corpus: how precisely these two cards interact, not how good either one is. Every row is
+            an edge the engine drew, in its own words. Click a name to look at it here; open it from
+            there.
           </p>
         </div>
         <PartnerList
@@ -92,25 +63,6 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           empty="No partners. Every card this one could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."
         />
       </section>
-
-      <div className="max-w-[68ch]"><PageFoot /></div>
-    </div>
-    {/* ONE IMAGE, PLACED BY THE GRID. Rendering it twice behind media queries put two of the same
-      * card in the document -- invisible on screen, and two hits for anything reading the page,
-      * a screen reader and a test alike. Sticky on a wide viewport, because the partner list is
-      * long and the card is what every row on it is about. */}
-    {/* THE RAIL IS A COLUMN, NOT A GUTTER. MEASURED on the deployed preview: the card ended around
-      * y440 and below it ran ~400px of pure background for the whole ~1,300px length of the partner
-      * list -- a quarter of the viewport doing nothing on the densest page. The engine's reading is
-      * card-shaped metadata and belongs with the card; moving it here also demotes a diagnostic
-      * table out of the reader's first scroll and promotes the partners, which are the product. */}
-    <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] flex flex-col gap-6">
-      <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
-      <div className="hidden lg:flex lg:flex-col gap-3">
-        <h3 className="eyebrow text-(--muted)">how the engine reads this card</h3>
-        <AbilityTable rows={page.abilities} stacked />
-      </div>
-    </aside>
-    </article>
+    </CardShell>
   );
 }
