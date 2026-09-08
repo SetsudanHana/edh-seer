@@ -5,7 +5,7 @@ import { saveLastDeck } from "./lib/run-diff.js";
 
 test("renders a styled HeroUI Analyze button", () => {
   render(<App />);
-  const btn = screen.getByRole("button", { name: "Analyze deck" });
+  const btn = screen.getByRole("button", { name: "Analyse deck" });
   expect(btn).toBeInTheDocument();
   // HeroUI Buttons carry generated utility classes; unstyled plain buttons would not.
   expect(btn.className.length).toBeGreaterThan(0);
@@ -49,7 +49,7 @@ test("a card URL renders the card page and not the deck tool", async () => {
   try {
     render(<App />);
     expect(await screen.findByText(/no such page/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Analyze deck" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Analyse deck" })).toBeNull();
   } finally {
     fetchSpy.mockRestore();
     window.history.pushState({}, "", "/");
@@ -66,7 +66,7 @@ test("the /cards URL renders the card search and not the deck tool", async () =>
   try {
     render(<App />);
     expect(await screen.findByRole("searchbox")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Analyze deck" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Analyse deck" })).toBeNull();
   } finally {
     fetchSpy.mockRestore();
     window.history.pushState({}, "", "/");
@@ -80,7 +80,7 @@ test("the commander URLs render their own pages and not the deck tool", async ()
     window.history.pushState({}, "", "/commanders");
     const list = render(<App />);
     expect(await screen.findByRole("heading", { name: "Commanders" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Analyze deck" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Analyse deck" })).toBeNull();
     list.unmount();
 
     window.history.pushState({}, "", "/commanders/krenko-mob-boss");

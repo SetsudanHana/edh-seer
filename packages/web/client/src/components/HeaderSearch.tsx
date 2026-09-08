@@ -99,7 +99,7 @@ export function HeaderSearch({
         *  icon, for the same reason the More menu is a word. */}
       <button
         type="button"
-        className="site-search-toggle"
+        className="btn-secondary site-search-toggle"
         aria-expanded={revealed}
         aria-controls="site-search-field"
         onClick={() => {

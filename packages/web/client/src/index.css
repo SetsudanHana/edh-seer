@@ -258,7 +258,7 @@ summary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-block-size: 2.25rem;
+    min-block-size: 2.75rem;
     padding-inline: 1rem;
     border-radius: 9999px;
     background: var(--accent);
@@ -310,7 +310,7 @@ summary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-block-size: 2.25rem;
+    min-block-size: 2.75rem;
     padding-inline: 1rem;
     border-radius: 9999px;
     background: transparent;
@@ -338,6 +338,28 @@ summary {
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  /* THE CHIP: a toggle or a filter, never an action (cohesion sweep 2026-09-08). The site had
+     five button families and six control heights; now ACTIONS are pills (`.btn-primary`,
+     `.btn-secondary`) and TOGGLES are chips, both 44px. A chip is square-cornered so a row of them
+     reads as options rather than as a row of buttons, and `aria-pressed` / `aria-current` is the
+     one selected state, in the accent. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-block-size: 2.75rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--separator);
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+  .chip:hover { color: var(--foreground); }
+  .chip[aria-pressed="true"], .chip[aria-current] { border-color: var(--accent); color: var(--accent); }
 
   /** A PASTE FIELD: recessed below its container, which is what says "type here" without a border
    *  doing it. `--background` inside a `--surface` card is the same well the HeroUI field drew. */
@@ -561,12 +583,14 @@ summary {
    safe precisely because it is the only thing in its block. */
 .intro-more a {
   text-decoration: none;
-  color: var(--foreground);
+  /* An action link, in the accent the foot links use (cohesion sweep 2026-09-08); prose links keep
+     the foreground-plus-underline the docs page uses. Two link styles, by intent. */
+  color: var(--accent);
   display: inline-flex;
   align-items: center;
   min-block-size: 1.5rem;
 }
-.intro-more a:hover { color: var(--accent); }
+.intro-more a:hover { text-decoration: underline; }
 
 @media (min-width: 80rem) {
   .intro { max-width: none; }
@@ -1030,21 +1054,27 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    sticky below it offsets by. A word, not an icon, for the same reason the More menu is a word. */
 @media (max-width: 47.99rem) {
   .site-search { flex: 0 0 auto; margin-inline-start: auto; }
-  .site-search-toggle {
+  /* The toggle is a `.btn-secondary` in the markup; this only shows it. `[aria-expanded="true"]`
+     borrows the accent the pressed chip uses, so "open" reads the same everywhere. */
+  .site-search-toggle { display: inline-flex; }
+  .site-search-toggle[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+  /* THE INSTALL BUTTON SITS BESIDE IT on the brand row (cohesion sweep 2026-09-08): a bare mono
+     word next to a pill read as two different kinds of thing. Same box here; on a wide header it
+     stays the nav-style word it always was, beside the nav. */
+  .site-nav-install {
     display: inline-flex;
     align-items: center;
     min-block-size: 2.75rem;
-    padding: 0 0.75rem;
-    background: none;
-    border: 1px solid var(--separator);
-    border-radius: var(--radius);
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    padding-inline: 1rem;
+    border: 1px solid var(--field-border);
+    border-radius: 9999px;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--foreground);
   }
-  .site-search-toggle:hover, .site-search-toggle[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
   .site-search-field { display: none; }
   .site-search[data-open] { flex: 1 0 100%; order: 3; gap: 0.5rem; margin-inline-start: 0; }
   /* `static`, so the list's containing block is the whole row (the form) rather than the field
@@ -1070,27 +1100,9 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 .peek-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 /* The one control that leaves: the accent border says so. Two words, so the bar stays one row
    beside Back and Close in a 20rem rail; the card's name is its accessible name. */
-.peek-open-link {
-  display: inline-flex;
-  align-items: center;
-  color: var(--accent);
-  border-color: var(--accent);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.peek-btn {
-  min-block-size: 2.75rem;
-  padding: 0 0.75rem;
-  background: none;
-  border: 1px solid var(--separator);
-  border-radius: var(--radius);
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.peek-btn:hover, .peek-btn:focus-visible { color: var(--accent); border-color: var(--accent); }
+.peek-open-link { white-space: nowrap; }
+/* The bar's controls are the site's pills (`.btn-primary` for Open card, `.btn-secondary` for
+   Back and Close), so the peek carries no button family of its own. */
 .peek-body { display: flex; flex-direction: column; gap: 0.75rem; }
 /* THE CARD IS A THUMBNAIL HERE. At the rail's full width the image alone is 446px tall and the
    panel ran to 1,268px inside a sticky rail on a 1,080px viewport (measured 2026-09-08), so the

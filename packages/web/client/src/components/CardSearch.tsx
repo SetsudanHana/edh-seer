@@ -35,7 +35,7 @@ const COLOURS: [code: string, label: string][] = [
   // the five colours could ask for them. `C` narrows to exactly them, and is EXCLUSIVE of the five:
   // every identity already contains the colourless cards, so "Red and colourless" is either a
   // redundant question or an empty one. Ticking a colour unticks it, and it unticks every colour.
-  ["C", "Colorless"],
+  ["C", "Colourless"],
 ];
 
 export function CardSearch({
@@ -158,9 +158,7 @@ export function CardSearch({
                 onClick={() => setColours((cs) => on
                   ? cs.filter((c) => c !== code)
                   : code === "C" ? ["C"] : [...cs.filter((c) => c !== "C"), code])}
-                className={`inline-flex items-center gap-1.5 min-h-11 rounded-(--radius) border px-3 text-sm ${on
-                  ? "border-(--accent) text-(--accent)"
-                  : "border-(--separator) text-(--muted) hover:text-(--foreground)"}`}
+                className="chip"
               >
                 {/* DECORATIVE HERE, and marked so: the chip's own word is its accessible name, and
                   * letting the symbol contribute one turns "Red" into "one red mana Red". */}
@@ -185,9 +183,7 @@ export function CardSearch({
               onClick={() => setFacets({ ...facetQuery, does: on
                 ? facetQuery.does.filter((k) => k !== d.kind)
                 : [...facetQuery.does, d.kind] })}
-              className={`inline-flex items-center min-h-11 rounded-(--radius) border px-3 text-sm ${on
-                ? "border-(--accent) text-(--accent)"
-                : "border-(--separator) text-(--muted) hover:text-(--foreground)"}`}
+              className="chip"
             >
               {d.label}
             </button>
@@ -204,7 +200,7 @@ export function CardSearch({
         <select
           value={facetQuery.strategy ?? ""}
           onChange={(e) => setFacets({ ...facetQuery, strategy: e.target.value || undefined })}
-          className="min-h-11 max-w-full rounded-md border border-(--field-border) bg-(--field-background) text-(--field-foreground) px-3"
+          className="min-h-11 max-w-full rounded-(--field-radius) border border-(--field-border) bg-(--field-background) text-(--field-foreground) px-3"
         >
           <option value="">any strategy</option>
           {[...new Set(STRATEGIES.map((s) => s.cls))].map((cls) => (
@@ -224,8 +220,8 @@ export function CardSearch({
           // A CONTROL'S BOUNDARY IS `--field-border`, which is the 3:1 one (WCAG 1.4.11).
           // `--border` does not exist: it was absorbed into `--separator`, the decorative hairline,
           // and `css-tokens.test.ts` caught this line naming it.
-          className="w-full max-w-lg rounded-md border border-(--field-border) bg-(--field-background)
-            text-(--field-foreground) placeholder:text-(--field-placeholder) px-3 py-2"
+          className="w-full max-w-lg min-h-11 rounded-(--field-radius) border border-(--field-border) bg-(--field-background)
+            text-(--field-foreground) placeholder:text-(--field-placeholder) px-3"
         />
       </label>
 

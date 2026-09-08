@@ -56,10 +56,10 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
         *  foot of the panel first, under a body that scrolls with no visible cue; the phone
         *  reviewer (2026-09-08) never found it and took Close for the only control. */}
       <div className="peek-bar">
-        {deeper && <button type="button" className="peek-btn" onClick={() => peek.back()}>Back</button>}
+        {deeper && <button type="button" className="btn-secondary" onClick={() => peek.back()}>Back</button>}
         {page && (
           <Link
-            className="peek-btn peek-open-link"
+            className="btn-primary peek-open-link"
             to={`/cards/${slug}`}
             aria-label={`Open ${page.name}`}
             onClick={() => peek.close()}
@@ -67,7 +67,7 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
             Open card
           </Link>
         )}
-        <button ref={closeButton} type="button" className="peek-btn ml-auto" onClick={() => peek.close()}>Close</button>
+        <button ref={closeButton} type="button" className="btn-secondary ml-auto" onClick={() => peek.close()}>Close</button>
       </div>
       {page === undefined && <p id="peek-title" className="eyebrow text-(--muted)">reading the corpus</p>}
       {page === null && (
@@ -86,12 +86,12 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
           </h3>
           <p className="text-(--muted) text-sm">{page.typeLine}</p>
           <div className="flex flex-col gap-2">
-            <h4 className="eyebrow text-(--muted)">how the engine reads this card</h4>
+            <p className="eyebrow text-(--muted)">how the engine reads this card</p>
             <AbilityTable rows={page.abilities} stacked />
           </div>
           {page.partners.length > 0 && (
             <div className="flex flex-col gap-2">
-              <h4 className="eyebrow text-(--muted)">its own partners</h4>
+              <p className="eyebrow text-(--muted)">its own partners</p>
               <ul className="flex flex-col">
                 {page.partners.slice(0, PEEK_PARTNERS).map((p) => (
                   <li key={p.slug} className="border-t border-(--separator) py-2 first:border-t-0 first:pt-0 flex flex-col gap-0.5">
