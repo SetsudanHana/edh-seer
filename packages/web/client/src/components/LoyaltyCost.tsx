@@ -3,7 +3,11 @@
  *  the same day), so this is the site's own drawing -- one inline SVG, sized in em so it scales
  *  with the row, coloured from the site's tokens, and the number is REAL TEXT so a screen reader
  *  reads "minus 7 loyalty" rather than a private-use glyph. Anything that is not a signed integer
- *  renders as the plain monospace cost it always was. */
+ *  renders as the plain monospace cost it always was.
+ *
+ *  SIZED TO BE READ. The first cut was 1.6em: measured live at desktop, a 26px badge with 12px
+ *  digits beside 16px text, and the owner asked for it bigger the same evening (2026-09-08).
+ *  2.4em and an 11-unit glyph put the digits above the row's own text size. */
 const LOYALTY = /^([+−-]?)(\d+)$/;
 
 export function isLoyaltyCost(cost: string): boolean {
@@ -25,9 +29,9 @@ export function LoyaltyCost({ cost }: { cost: string }): React.JSX.Element {
     : "M4 5 Q12 1 20 5 L20 19 Q12 23 4 19 Z";
   return (
     <span role="img" aria-label={label} className="inline-flex items-center align-baseline">
-      <svg viewBox="0 0 24 24" className="h-[1.6em] w-[1.6em]" aria-hidden="true" focusable="false">
+      <svg viewBox="0 0 24 24" className="h-[2.4em] w-[2.4em]" aria-hidden="true" focusable="false">
         <path d={path} fill="var(--surface-tertiary)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <text x="12" y="13" textAnchor="middle" dominantBaseline="middle" fontSize="9.5" fontWeight="600" fontFamily="JetBrains Mono, ui-monospace, monospace" fill="currentColor">{`${sign}${n}`}</text>
+        <text x="12" y="13" textAnchor="middle" dominantBaseline="middle" fontSize="11" fontWeight="600" fontFamily="JetBrains Mono, ui-monospace, monospace" fill="currentColor">{`${sign}${n}`}</text>
       </svg>
     </span>
   );
