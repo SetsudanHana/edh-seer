@@ -1154,6 +1154,12 @@ a.brand:hover .brand-edh { color: var(--foreground); }
     gap: 0.5rem 1rem;
     padding-top: 0.6rem;
     padding-bottom: 0.5rem;
+    /* NOT PINNED ON A PHONE (owner, 2026-09-08, reversing the 2026-09-04 call that made it
+       sticky everywhere). Measured at 390 on a report: after the report header was unpinned the
+       stack was still this bar at 92px plus the chapter rail at 53px, 17% of the screen; the rail
+       is the navigation a reader mid-report needs, and the site nav is one flick up. `stickyPx`
+       reports 0 for a static bar, so `--site-header-h` is 0 here and the rail pins at the top. */
+    position: static;
   }
   .site-nav {
     /* ITS OWN ROW, AND ALL OF IT. Sharing the brand's line leaves ~121px of a 390px screen, which
