@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { eventKeySentence } from "../lib/demand-sentence.js";
 import type { PartnerRow } from "../lib/partners.js";
-import { usePeek } from "./peek.js";
+import { peekOnPlainClick, usePeek } from "./peek.js";
 
 /** THE PARTNER LIST, GROUPED BY THE EVENT THAT EARNED EACH ROW.
  *
@@ -88,11 +88,7 @@ export function PartnerList({ rows, pool, rarity, empty }: {
                       *  that used to lose the reader's place, is turned into a look. */}
                     <Link className="font-semibold text-(--accent) hover:underline underline-offset-2"
                       to={`/cards/${p.slug}`}
-                      onClick={(ev) => {
-                        if (!peek || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
-                        ev.preventDefault();
-                        peek.push(p.slug, ev.currentTarget);
-                      }}>{p.name}</Link>
+                      onClick={(ev) => { peekOnPlainClick(peek, p.slug, ev); }}>{p.name}</Link>
                     {p.payoff && <span className="text-(--muted)">— {p.payoff}</span>}
                   </p>
                   {!p.payoff && <p className="text-(--muted) max-w-[65ch]">{p.reason}</p>}

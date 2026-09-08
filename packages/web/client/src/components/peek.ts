@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type MouseEvent } from "react";
 
 /** THE PEEK STACK (spec 2026-09-08 part 3). A partner click looks at the partner beside the list
  *  instead of leaving the page; a name inside the peek looks further; back returns one; close
@@ -19,6 +19,17 @@ export const PeekContext = createContext<PeekApi | null>(null);
 
 export function usePeek(): PeekApi | null {
   return useContext(PeekContext);
+}
+
+/** THE CLICK RULE, ONCE. A plain left click on a card name peeks; a click with a modifier, or any
+ *  button but the first, or any click outside a provider, navigates as the link always did. The
+ *  partner list and the search results both follow it, and one definition is how they cannot
+ *  drift. Returns false when the click was left to the link. */
+export function peekOnPlainClick(peek: PeekApi | null, slug: string, ev: MouseEvent<HTMLElement>): boolean {
+  if (!peek || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return false;
+  ev.preventDefault();
+  peek.push(slug, ev.currentTarget);
+  return true;
 }
 
 /** The provider's own state. Focus goes back to the element that opened the FIRST peek, because
