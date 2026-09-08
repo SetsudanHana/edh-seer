@@ -871,6 +871,8 @@ function stampSides(r: Reason, producer: DeckCard, consumer: DeckCard): Reason {
     ...r,
     ...(producer.isToken ? { producerIsToken: true } : {}),
     ...(consumer.isToken ? { consumerIsToken: true } : {}),
+    ...(producer.tags?.characteristics.emblem === true ? { producerIsEmblem: true } : {}),
+    ...(consumer.tags?.characteristics.emblem === true ? { consumerIsEmblem: true } : {}),
     // A FACE NODE CARRIES THE FACE'S NAME so the by-name maps in `analyze.ts` stay collision-free —
     // two faces of one card would otherwise share a `dir` key. The REASON carries the physical
     // card's name, because the panel keys on it. Rewritten here, in the one place every reason
@@ -1969,15 +1971,46 @@ export function meldReason(a: DeckCard, b: DeckCard): Reason[] {
  *  Eruption) creates it under its own controller, and refusing those would delete nearly every real
  *  token maker in the corpus. */
 export function createsForYou(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
-  if (!p.tags || !c.tags || c.tags.characteristics.token !== true) return false;
+  if (!p.tags || !c.tags) return false;
+  // AN EMBLEM IS OURS WHEN THE GRANT SAYS SO (CR 114.2). An opponent's emblem is on the board but
+  // never credits its granter with supporting our payoffs.
+  if (c.tags.characteristics.emblem === true) {
+    return p.tags.abilities.some((pa) => pa.effect.kind === "emblem" && pa.effect.subject?.control !== "opp");
+  }
+  if (c.tags.characteristics.token !== true) return false;
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);
   return p.tags.abilities.some((pa) =>
     (pa.emits ?? []).some((e) =>
       e.verb === "create-token" && e.subject.control !== "opp" && subjectMatches(consumerSubject, e.subject, h)));
 }
 
+/** THE EMBLEM MAKER EDGE (spec 2026-09-08). Keyed on the producer's `emblem` ability rather than an
+ *  emit, because an emblem grant puts no event into the game -- nothing "enters". The caller has
+ *  already gated on the structural ref (`producerTokenOracles`), exactly as for a token, so this
+ *  only says HOW the relation reads. `creates:` is the prefix the panel's re-attribution keys on,
+ *  which is why the tag shares it. The sentence names the producer and says who gets it. */
+function emblemReasons(p: DeckCard, c: DeckCard): Reason[] {
+  if (!p.tags || !c.tags || c.tags.characteristics.emblem !== true) return [];
+  const reasons: Reason[] = [];
+  for (const pa of p.tags.abilities) {
+    if (pa.effect.kind !== "emblem") continue;
+    const control = pa.effect.subject?.control;
+    reasons.push({
+      tag: "creates:emblem",
+      text: `${p.card.name} ${control === "opp" ? "gives each opponent an emblem" : "gives you an emblem"}`,
+      effectKind: "emblem",
+      repeatability: pa.kind === "static" ? "static" : pa.kind === "activated" ? "activated" : pa.kind === "on-cast" ? "oneshot" : "triggered",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
+  return dedupeReasons(reasons.map((r) => stampSides(r, p, c)));
+}
+
 export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[] {
-  if (!p.tags || !c.tags || c.tags.characteristics.token !== true) return [];
+  if (!p.tags || !c.tags) return [];
+  if (c.tags.characteristics.emblem === true) return emblemReasons(p, c);
+  if (c.tags.characteristics.token !== true) return [];
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);
   const reasons: Reason[] = [];
   for (const pa of p.tags.abilities) {

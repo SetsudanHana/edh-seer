@@ -1698,3 +1698,23 @@ test("collectTokenNodes builds an opponent's emblem flipped, attributed to the g
   expect(nodes[0]!.tags!.abilities[0]!.emits![0]!.dealer!.control).toBe("opp");
   expect(tokenCreators.get("emblem-oracle")).toEqual(new Set(["Chandra, Roaring Flame"]));
 });
+
+/** THE MAKER EDGE. Chandra's back face gives the emblem, so the pair pool forms `creates:emblem`
+ *  between that face and the node, and nothing between the front face and the node. The sentence
+ *  says who gets it. The emblem never reaches the ranked card list. */
+test("a granting face forms creates:emblem to the emblem node, and the emblem stays off the card list", () => {
+  const report = analyzeDeckStructured(
+    [chandraPhysical()], undefined, H, undefined, undefined, undefined,
+    (ref) => (ref.printingId === "emblem-printing-id" ? chandraEmblemTags([]) : null),
+  );
+  const creates = report.edges.filter((e) => e.reasons.some((r) => r.tag === "creates:emblem"));
+  expect(creates).toHaveLength(1);
+  const r = creates[0]!.reasons.find((x) => x.tag === "creates:emblem")!;
+  // The FACE's name, as the token sentence does: the grant is printed on the back face.
+  expect(r.text).toBe("Chandra, Roaring Flame gives each opponent an emblem");
+  expect(r.producerFace).toBe(1);
+  expect(r.consumerIsEmblem).toBe(true);
+  expect(r.consumerIsToken).toBe(true);
+  expect(r.effectKind).toBe("emblem");
+  expect(report.cards.map((c) => c.name)).not.toContain("Chandra, Roaring Flame Emblem");
+});
