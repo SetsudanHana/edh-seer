@@ -22,21 +22,33 @@ import { fileURLToPath } from "node:url";
 import { connect, loadConfig } from "@edh-seer/data";
 import { mergeTokenDocs, tokenDoc, tokenKey, type ScryfallToken } from "./ingest-tokens-core.js";
 
-const SEARCH = "https://api.scryfall.com/cards/search?q=is%3Atoken&unique=prints&order=name";
+/** TWO SEARCHES, ONE COLLECTION. `is:token` does not return layout `emblem` (checked live
+ *  2026-09-08: 0 of its rows are emblems, while `t:emblem` returns 138 printings across `emblem`
+ *  and `double_faced_token`). An emblem is not a token (CR 114.1) but it is the same kind of
+ *  structural object -- its own oracle id and text, joined from a card's `allParts` by printing id
+ *  -- so it lives in the same collection with `layout: "emblem"` saying which it is. The Ring
+ *  emblem was already here through the double-faced-token search; the merge keys on oracle id, so
+ *  it stays one row. */
+const SEARCHES = [
+  "https://api.scryfall.com/cards/search?q=is%3Atoken&unique=prints&order=name",
+  "https://api.scryfall.com/cards/search?q=t%3Aemblem&unique=prints&order=name",
+];
 const HEADERS = { "User-Agent": "edh-seer/0.1", Accept: "application/json" };
 const sleep = (ms: number): Promise<void> => new Promise((r) => { setTimeout(r, ms); });
 
 async function fetchAll(): Promise<ScryfallToken[]> {
   const out: ScryfallToken[] = [];
-  let url: string | undefined = SEARCH;
-  while (url) {
-    const res = await fetch(url, { headers: HEADERS });
-    if (!res.ok) throw new Error(`Scryfall search failed: ${res.status}`);
-    const page = await res.json() as { data: ScryfallToken[]; has_more?: boolean; next_page?: string };
-    out.push(...page.data);
-    url = page.has_more ? page.next_page : undefined;
-    // Scryfall asks for 50-100ms between requests.
-    if (url) await sleep(100);
+  for (const search of SEARCHES) {
+    let url: string | undefined = search;
+    while (url) {
+      const res = await fetch(url, { headers: HEADERS });
+      if (!res.ok) throw new Error(`Scryfall search failed: ${res.status}`);
+      const page = await res.json() as { data: ScryfallToken[]; has_more?: boolean; next_page?: string };
+      out.push(...page.data);
+      url = page.has_more ? page.next_page : undefined;
+      // Scryfall asks for 50-100ms between requests.
+      await sleep(100);
+    }
   }
   return out;
 }
@@ -47,6 +59,7 @@ async function main(): Promise<void> {
   const perPrinting = raw.map(tokenDoc).filter((d): d is NonNullable<typeof d> => d !== null);
   const docs = mergeTokenDocs(perPrinting);
   console.log(`fetched ${raw.length} printings | merged to ${docs.length} tokens | with an image ${docs.filter((d) => d.image).length}`);
+  console.log(`  of which emblems (layout emblem): ${docs.filter((d) => d.layout === "emblem").length}`);
 
   const store = await connect(loadConfig());
   // How much of what our decks actually reference is covered — the number that decides whether a
