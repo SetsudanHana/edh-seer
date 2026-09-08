@@ -1,4 +1,5 @@
 import { partnerShardOf } from "@edh-seer/matcher/partner-shard";
+import { cardImageUrl } from "../../client/src/components/card-node.js";
 import { cardPageHtml, htmlHeaders, injectPage, type InjectableCard } from "../../client/src/lib/inject.js";
 
 /** WHAT A CRAWLER GETS FOR A CARD URL, AND WHAT A BROWSER GETS TOO.
@@ -59,6 +60,7 @@ export async function renderCardPage(
     if (!shard.ok) return degraded();
     const record = (await shard.json() as Record<string, InjectableCard & {
       commanderPartners?: InjectableCard["partners"];
+      artCrop?: string | null;
     }>)[slug];
     if (!record) return notFound();
 
@@ -98,6 +100,8 @@ export async function renderCardPage(
       canonical: `${origin}/${isCommanderPage ? "commanders" : "cards"}/${slug}`,
       indexable,
       bodyHtml: cardPageHtml({ ...record, partners }, slug, kind),
+      // The same function `CardArt` renders with, so the preloaded URL is the one the app asks for.
+      image: record.artCrop ? cardImageUrl(record.artCrop) ?? undefined : undefined,
       // THE RAW SHARD RECORD, NOT THE MERGED ONE THE PROSE BLOCK GETS. `{...record, partners}`
       // above swaps in whichever list this ROUTE prints; the app wants what `loadCardPage` would
       // have returned, so that both pages read the same shape they already read and neither needs

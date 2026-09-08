@@ -116,7 +116,7 @@ test("the page shows the whole card, at the /normal/ size and never the crop", a
   const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
   expect(img).toHaveAttribute("src", expect.stringContaining("/normal/"));
   expect(img.getAttribute("src")).not.toContain("art_crop");
-  expect(img).toHaveAttribute("loading", "lazy");
+  expect(img).toHaveAttribute("loading", "eager");
 });
 
 /** A CARD SCRYFALL HAS NO IMAGE FOR renders without one rather than reserving a hole.
@@ -140,7 +140,7 @@ test("the page shows the whole card, at the /normal/ size and never the crop", a
   const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
   expect(img.getAttribute("src")).toContain("/normal/");
   expect(img.getAttribute("src")).not.toContain("art_crop");
-  expect(img).toHaveAttribute("loading", "lazy");
+  expect(img).toHaveAttribute("loading", "eager");
 });
 
 /** 491 CORPUS CARDS HAVE NO IMAGE. The page renders without one rather than reserving a hole. */

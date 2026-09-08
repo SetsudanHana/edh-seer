@@ -455,3 +455,31 @@ test("the landing carries the devices that replaced its prose", () => {
     expect(prose, `how-it-works has ${shared}`).toContain(shared);
   }
 });
+
+/** A DESCRIPTION IS A SEARCH SNIPPET, and the result page cuts it at roughly 160 characters. The
+ *  docs page carried 273 (measured 2026-09-08), so the sentence a searcher saw ended mid-clause.
+ *  Both static pages are held to the cut, and to a floor so nobody satisfies this with a stub. */
+test.each(Object.entries(PAGES))("%s has a description that fits a search snippet", (_url, file) => {
+  const page = readFileSync(join(CLIENT, file), "utf8");
+  const description = /<meta name="description" content="([^"]*)"/.exec(page)?.[1] ?? "";
+  expect(description.length).toBeGreaterThanOrEqual(80);
+  expect(description.length).toBeLessThanOrEqual(160);
+});
+
+/** THE EDGE REDIRECTS THE OLD HOST TO THIS ONE, and the host it redirects to is written in a file
+ *  the Functions can import rather than read out of this tag at request time. The two have to
+ *  agree, or the day the domain moves again the redirect sends every old link to the wrong place. */
+test("the canonical host the edge redirects to is the one this page states", async () => {
+  const { CANONICAL_HOST } = await import("./lib/origin.js");
+  expect(new URL(canonical).host).toBe(CANONICAL_HOST);
+});
+
+/** `/how-it-works` IS SERVED, NOT REDIRECTED. Built as `how-it-works/index.html`, Pages answered the
+ *  canonical URL with a 308 to `/how-it-works/` -- so the sitemap URL, the canonical tag and every
+ *  inbound link took a redirect on each crawl (measured 2026-09-08). Pages serves `<name>.html` at
+ *  `/<name>` directly, so the deploy step renames the file. Dist-dependent, so it runs where a
+ *  build exists, the same guard the sitemap checks use. */
+test.skipIf(!existsSync(builtSitemap))("the built docs page is a file Pages serves at the extensionless URL", () => {
+  expect(existsSync(join(DIST, "how-it-works.html"))).toBe(true);
+  expect(existsSync(join(DIST, "how-it-works", "index.html"))).toBe(false);
+});

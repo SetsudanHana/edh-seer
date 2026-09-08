@@ -245,3 +245,29 @@ test("a letter with nothing on it still carries the alphabet", () => {
   expect(html).toContain("No commanders start with this letter");
   expect(html).toContain("/browse/commanders/a");
 });
+
+/** A SHARED CARD LINK SHOWED THE SITE'S ONE GENERIC IMAGE, on all 17,338 card and commander pages
+ *  (measured 2026-09-08). The record already carries the card's own image, and a Discord or Reddit
+ *  preview that shows the card is the difference between a grey box and a click. The same URL is
+ *  preloaded, because the `<img>` the app renders for it is the page's LCP element and used to wait
+ *  for the bundle before its request began. */
+test("a page with an image preloads it and hands it to the share cards", () => {
+  const image = "https://cards.scryfall.io/normal/front/8/2/824b2d73.jpg";
+  const out = page({ image });
+  expect(out).toContain(`<link rel="preload" as="image" href="${image}" fetchpriority="high" />`);
+  expect(out).toContain(`<meta property="og:image" content="${image}" />`);
+  expect(out).toContain(`<meta name="twitter:image" content="${image}" />`);
+  // A card is portrait; the large-image card crops a square out of its middle.
+  expect(out).toContain('<meta name="twitter:card" content="summary" />');
+  expect(out).toContain('<meta property="og:image:width" content="488" />');
+  expect(out).toContain('<meta property="og:image:height" content="680" />');
+  expect(out).toContain('<meta property="og:image:alt" content="Krenko, Mob Boss — EDH Seer" />');
+  expect(out).not.toContain("og-image.png");
+});
+
+test("a page without an image keeps the site's share image untouched", () => {
+  const out = page();
+  expect(out).not.toContain('rel="preload" as="image"');
+  expect(out).toContain('<meta property="og:image" content="https://edhseer.cards/og-image.png" />');
+  expect(out).toContain('<meta name="twitter:card" content="summary_large_image" />');
+});
