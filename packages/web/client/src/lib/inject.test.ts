@@ -297,3 +297,14 @@ test("a page without breadcrumbs adds no structured data", () => {
   expect((page().match(/application\/ld\+json/g) ?? []).length)
     .toBe((SHELL.match(/application\/ld\+json/g) ?? []).length);
 });
+
+/** THE CRAWLER'S HEADING IS THE PAGE'S HEADING. The block said "Most specific partners" for two
+ *  days after the page said "Partners" (PR #256), which is a search snippet naming a section the
+ *  reader will not find. Held to the word CardPage renders. */
+test("the prerendered partner heading is the word the page uses", () => {
+  const block = cardPageHtml(KRENKO, "krenko-mob-boss", "card");
+  expect(block).toContain("<h3>Partners</h3>");
+  expect(block).not.toContain("Most specific");
+  const page = readFileSync(join(import.meta.dirname, "..", "components", "CardPage.tsx"), "utf8");
+  expect(page).toContain(">Partners</h3>");
+});
