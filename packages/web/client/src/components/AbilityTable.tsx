@@ -109,7 +109,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
                 {a.emits.length === 0
                   ? <span className="text-(--muted)">—</span>
                   : <ul className="flex flex-col gap-1">
-                      {a.emits.map((e) => <li key={e}>{eventKeySentence(e)}</li>)}
+                      {a.emits.map((e) => <li key={e}>{eventKeySentence(e, a.selfEmits?.includes(e) ? "this card" : undefined)}</li>)}
                     </ul>}
               </td>
             </tr>
@@ -138,7 +138,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
             {a.emits.length > 0 && (
               <p>
                 <span className="eyebrow text-(--muted)">puts into the game </span>
-                {a.emits.map((w) => eventKeySentence(w)).join(", ")}
+                {a.emits.map((w) => eventKeySentence(w, a.selfEmits?.includes(w) ? "this card" : undefined)).join(", ")}
               </p>
             )}
           </li>
