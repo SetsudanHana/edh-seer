@@ -1,3 +1,4 @@
+import type { FacetRow } from "./bin/facet-index-core.js";
 import type { CardTags } from "@edh-seer/tagger";
 import type { CardDoc, ComboDoc } from "@edh-seer/data/docs";
 import type { CardLookup } from "@edh-seer/data/resolve";
@@ -67,6 +68,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
   private tokenArtPromise: Promise<Record<string, string>> | null = null;
   private nameIndexPromise: Promise<NameIndexEntry[]> | null = null;
+  private facetIndexPromise: Promise<FacetRow[]> | null = null;
 
   private readonly fetchImpl: typeof fetch;
 
@@ -274,6 +276,16 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     return (this.nameIndexPromise ??= (async () => {
       const res = await this.fetchCached("/name-index.json");
       return res.ok ? (await res.json() as NameIndexEntry[]) : [];
+    })());
+  }
+
+  /** The facet rows (spec 2026-09-08 part 4), fetched on the first facet interaction and never on
+   *  page load. Empty on a miss for the reason the name index is: a page that says "no cards" is
+   *  recoverable. */
+  async facetIndex(): Promise<FacetRow[]> {
+    return (this.facetIndexPromise ??= (async () => {
+      const res = await this.fetchCached("/facet-index.json");
+      return res.ok ? (await res.json() as FacetRow[]) : [];
     })());
   }
 }

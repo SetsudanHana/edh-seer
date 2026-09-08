@@ -551,7 +551,11 @@ export const ARCHETYPE_SIGNATURE: Partial<Record<Archetype, ArchetypeSignature>>
   landfall: { tags: ["enters:land"] },
   spellslinger: { tags: ["cast:instant", "cast:sorcery"], effectKinds: ["copy-spell"] },
   reanimator: { effectKinds: ["graveyard-recursion", "animate"] },
-  counters: { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters", "proliferate"] },
+  // THE DEMAND SIDE (2026-09-08, facet gate). Without it no card ever ASKED for counters: Fathom
+  // Mage (draws when counters land) and Hardened Scales (watches counters land) were members by
+  // nothing, and "draw spells for a counters deck" listed ten cards that merely enter with one.
+  // A payoff that watches counters being placed is the card a counters deck is built around.
+  counters: { tags: ["proliferate:any"], effectKinds: ["counter-placement", "enters-with-counters", "proliferate"], demandTags: ["counter-added:"] },
   voltron: { subtypes: ["equipment", "aura"] },
   // SUPERFRIENDS IS A CARD TYPE COUNT AND NOTHING ELSE (roadmap M1, owner-reported 2026-08-23). A
   // 21-planeswalker deck read as "wins by damage or drain" with no planeswalker label in existence,

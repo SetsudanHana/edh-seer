@@ -165,6 +165,22 @@ function matchesDemand(signal: CardSignal, sig: ArchetypeSignature): boolean {
 /** The weight a supply-only card carries toward a DEMAND-DEFINED archetype. The same constant the
  *  theme ranking uses for the same reason (`analyze.ts`'s `PRODUCER_SHARE`): a card that supplies
  *  the event is evidence, and a card that watches for it is the archetype. */
+/** WHICH SIGNATURES ONE CARD SATISFIES, per side (spec 2026-09-08 part 4). `detectArchetypes`
+ *  asks this of every card in a deck and sums; the facet index asks it of every card in the corpus
+ *  and stores the answer, so the Cards page's "+1/+1 Counters" is the report's. The tokens
+ *  exclusion is the detector's own: a card that makes only Treasure is not a Tokens card. */
+export function archetypesOf(signal: CardSignal): { supplies: Archetype[]; demands: Archetype[] } {
+  const supplies: Archetype[] = [];
+  const demands: Archetype[] = [];
+  for (const [archetype, sig] of Object.entries(ARCHETYPE_SIGNATURE) as [Archetype, ArchetypeSignature][]) {
+    if (!matchesSignature(signal, sig)) continue;
+    if (archetype === "tokens" && makesOnlyResourceTokens(signal)) continue;
+    supplies.push(archetype);
+    if (signal.caresTags !== undefined && matchesDemand(signal, sig)) demands.push(archetype);
+  }
+  return { supplies, demands };
+}
+
 const PRODUCER_SHARE = 0.35;
 
 export function detectArchetypes(

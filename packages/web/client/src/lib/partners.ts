@@ -1,5 +1,5 @@
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
-import type { CardPageRecord, NameIndexEntry, PartnerRow } from "@edh-seer/matcher/partners-core";
+import type { CardPageRecord, FacetRow, NameIndexEntry, PartnerRow } from "@edh-seer/matcher/partners-core";
 import { CARD_PAGE_DATA_ID } from "./inject.js";
 
 /** THE CARD PAGES' DATA PLANE, and it is deliberately three lines over `StaticLookup`.
@@ -14,7 +14,7 @@ import { CARD_PAGE_DATA_ID } from "./inject.js";
  *  -- the part that is actually large -- are cached by URL in the browser's own cache, which is
  *  where the version directory exists to put them. */
 export type CardPageData = CardPageRecord;
-export type { NameIndexEntry, PartnerRow };
+export type { FacetRow, NameIndexEntry, PartnerRow };
 
 /** THE RECORD THE EDGE ALREADY PUT IN THIS DOCUMENT, or null.
  *
@@ -75,4 +75,18 @@ export function sharedNameIndex(baseUrl: string, fetchImpl: typeof fetch = fetch
 }
 
 /** Tests only: forget every cached load. */
-export function resetSharedNameIndex(): void { shared.clear(); }
+export function resetSharedNameIndex(): void { shared.clear(); sharedFacets.clear(); }
+
+/** THE FACET ROWS, ONCE PER SESSION (spec 2026-09-08 part 4), fetched on the first facet
+ *  interaction and never on page load. Same memo rule as the name index. */
+const sharedFacets = new Map<string, Promise<FacetRow[]>>();
+
+export function sharedFacetIndex(baseUrl: string, fetchImpl: typeof fetch = fetch): Promise<FacetRow[]> {
+  const hit = sharedFacets.get(baseUrl);
+  if (hit) return hit;
+  const p = new StaticLookup(baseUrl, fetchImpl).facetIndex();
+  sharedFacets.set(baseUrl, p);
+  p.then((rows) => { if (rows.length === 0 && sharedFacets.get(baseUrl) === p) sharedFacets.delete(baseUrl); })
+    .catch(() => { if (sharedFacets.get(baseUrl) === p) sharedFacets.delete(baseUrl); });
+  return p;
+}

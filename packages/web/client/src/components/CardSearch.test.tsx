@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
 import { CardSearch, SEARCH_LIMIT } from "./CardSearch.js";
 import type { NameIndexEntry } from "../lib/partners.js";
@@ -155,12 +155,16 @@ test("a facet toggles off again", async () => {
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
 
-/** THE CARD SEARCH HAS NO FACETS. Colour identity is a question about a DECK, and the card page
- *  ranks over the whole corpus regardless of colour. */
-test("the card search shows no identity facets", async () => {
+/** THE CARD SEARCH HAS THE COLOUR CHIPS TOO (spec 2026-09-08 part 4), exact identity on both pages
+ *  (owner 2026-09-08). They used to be absent here because the card page ranks over the whole
+ *  corpus; it still does, and the chips narrow the list rather than the ranking. */
+test("the card search offers the colour chips too, exact identity like the Commanders page", async () => {
   at();
   await screen.findByRole("searchbox");
-  expect(screen.queryByRole("button", { name: /^Red$/ })).toBeNull();
+  expect(screen.getByRole("button", { name: /^Red$/ })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /^Red$/ }));
+  expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Ajani's Chosen/ })).toBeNull();
 });
 
 /** A SEARCH IS A LINK. `/cards/krenko-mob` is a slug nobody minted and its page cannot guess what
@@ -232,4 +236,58 @@ test("a colourless row shows the colourless symbol rather than nothing", async (
   // `ManaSymbols` labels both the wrapper and the symbol itself, so this asserts presence rather
   // than uniqueness.
   expect(within(row).getAllByRole("img", { name: /colorless/i }).length).toBeGreaterThan(0);
+});
+
+/** FIND BY WHAT IT DOES (spec 2026-09-08 part 4). The facet index is read only once a facet is
+ *  used; groups AND; every listed row says why it is on the list; facets live in the URL. */
+const FACETS = [
+  { s: "fathom-mage", i: "UG", c: 1 as const, e: ["draw-card"], t: ["counters"], d: ["counters"] },
+  { s: "inspiring-call", i: "G", c: 0 as const, e: ["draw-card"], t: ["counters"], d: ["counters"] },
+  { s: "skullclamp", i: "", c: 0 as const, e: ["draw-card"], t: ["aristocrats"], d: [] },
+];
+const INDEX2: NameIndexEntry[] = [
+  { slug: "fathom-mage", name: "Fathom Mage", identity: ["U", "G"], commander: true },
+  { slug: "inspiring-call", name: "Inspiring Call", identity: ["G"], commander: false },
+  { slug: "skullclamp", name: "Skullclamp", identity: [], commander: false },
+];
+const atUrl = (url: string, props: Partial<Parameters<typeof CardSearch>[0]> = {}, spy?: () => void) => {
+  const path = url.split("?")[0]!;
+  function Spy() { const loc = useLocation(); spy?.(); (Spy as unknown as { search: string }).search = loc.search; return null; }
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <Routes>
+        <Route path={path} element={<><CardSearch load={async () => INDEX2} facets={async () => FACETS} {...props} /><Spy /></>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  return Spy as unknown as { search: string };
+};
+
+test("draws cards, +1/+1 Counters, green: one card, with the reason it is listed", async () => {
+  const facets = vi.fn(async () => FACETS);
+  atUrl("/cards?colors=G&does=draw-card&theme=counters", { facets });
+  expect(await screen.findByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
+  expect(screen.getByText("draws cards · +1/+1 Counters (asks for it)")).toBeInTheDocument();
+  expect(facets).toHaveBeenCalledTimes(1);
+});
+
+test("the facet index is not fetched until a facet is used", async () => {
+  const facets = vi.fn(async () => FACETS);
+  atUrl("/cards?q=skull", { facets });
+  await screen.findByRole("link", { name: /Skullclamp/ });
+  expect(facets).not.toHaveBeenCalled();
+});
+
+test("choosing a Does chip writes the URL", async () => {
+  const spy = atUrl("/cards");
+  fireEvent.click(await screen.findByRole("button", { name: "draws cards" }));
+  await waitFor(() => expect(spy.search).toBe("?does=draw-card"));
+});
+
+test("on Commanders the strategy select reads Supports and askers come first", async () => {
+  atUrl("/commanders?theme=counters", { mode: "commanders" });
+  expect(await screen.findByLabelText("Supports")).toBeInTheDocument();
+  const links = await screen.findAllByRole("link", { name: /Fathom Mage|Inspiring Call|Skullclamp/ });
+  expect(links.map((l) => l.textContent)).toEqual([expect.stringContaining("Fathom Mage")]);
 });
