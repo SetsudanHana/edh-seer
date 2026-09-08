@@ -52,8 +52,16 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
       className="peek"
       onKeyDown={(ev) => { if (ev.key === "Escape") { ev.stopPropagation(); peek.close(); } }}
     >
+      {/* THE BAR CARRIES EVERY WAY OUT, including the way IN to the full page. "Open" sat at the
+        *  foot of the panel first, under a body that scrolls with no visible cue; the phone
+        *  reviewer (2026-09-08) never found it and took Close for the only control. */}
       <div className="peek-bar">
         {deeper && <button type="button" className="peek-btn" onClick={() => peek.back()}>Back</button>}
+        {page && (
+          <Link className="peek-btn peek-open-link" to={`/cards/${slug}`} onClick={() => peek.close()}>
+            Open {page.name}
+          </Link>
+        )}
         <button ref={closeButton} type="button" className="peek-btn ml-auto" onClick={() => peek.close()}>Close</button>
       </div>
       {page === undefined && <p id="peek-title" className="eyebrow text-(--muted)">reading the corpus</p>}
@@ -78,7 +86,7 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
           </div>
           {page.partners.length > 0 && (
             <div className="flex flex-col gap-2">
-              <h4 className="eyebrow text-(--muted)">its own first partners</h4>
+              <h4 className="eyebrow text-(--muted)">its own partners</h4>
               <ul className="flex flex-col">
                 {page.partners.slice(0, PEEK_PARTNERS).map((p) => (
                   <li key={p.slug} className="border-t border-(--separator) py-2 first:border-t-0 first:pt-0 flex flex-col gap-0.5">
@@ -97,13 +105,6 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
               </ul>
             </div>
           )}
-          <Link
-            className="inline-flex items-center justify-center min-h-11 rounded-(--radius) border border-(--accent) px-4 text-(--accent) hover:bg-(--surface-secondary)"
-            to={`/cards/${slug}`}
-            onClick={() => peek.close()}
-          >
-            Open {page.name}
-          </Link>
         </div>
       )}
     </section>

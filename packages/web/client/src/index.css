@@ -1067,7 +1067,20 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   border-radius: var(--radius);
   padding: 0.75rem 1rem 1rem;
 }
-.peek-bar { display: flex; align-items: center; gap: 0.5rem; }
+.peek-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+/* The one control that leaves: the accent border says so, and the name is truncated rather than
+   wrapped so the bar stays one row beside Back and Close on a phone. */
+.peek-open-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  border-color: var(--accent);
+  text-decoration: none;
+  max-inline-size: 14rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .peek-btn {
   min-block-size: 2.75rem;
   padding: 0 0.75rem;
