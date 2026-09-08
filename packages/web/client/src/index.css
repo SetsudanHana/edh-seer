@@ -1082,6 +1082,16 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 }
 .peek-btn:hover, .peek-btn:focus-visible { color: var(--accent); border-color: var(--accent); }
 .peek-body { display: flex; flex-direction: column; gap: 0.75rem; }
+/* THE CARD IS A THUMBNAIL HERE. At the rail's full width the image alone is 446px tall and the
+   panel ran to 1,268px inside a sticky rail on a 1,080px viewport (measured 2026-09-08), so the
+   Open control at its foot could not be reached. Half width, and the panel scrolls on its own. */
+.peek-art { max-inline-size: 11rem; }
+@media (min-width: 64rem) {
+  .peek {
+    max-block-size: calc(100svh - var(--site-header-h, 0px) - 3rem);
+    overflow-y: auto;
+  }
+}
 @media (max-width: 63.99rem) {
   .peek {
     position: fixed;

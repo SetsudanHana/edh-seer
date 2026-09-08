@@ -62,7 +62,9 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
       )}
       {page && (
         <div className="peek-body">
-          <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
+          <div className="peek-art">
+            <CardArt artCrop={page.artCrop} backArtCrop={page.backArtCrop} name={page.name} />
+          </div>
           <h3 className="text-xl font-bold tracking-[-0.01em] flex flex-wrap items-baseline gap-x-3">
             {/* The dialog's name is the card's name alone: the mana symbols carry their own label
               *  and would otherwise be read as part of it. */}
