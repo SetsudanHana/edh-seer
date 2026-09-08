@@ -60,6 +60,7 @@ export async function renderCardPage(
     if (!shard.ok) return degraded();
     const record = (await shard.json() as Record<string, InjectableCard & {
       commanderPartners?: InjectableCard["partners"];
+      commanderRarity?: InjectableCard["rarity"];
       artCrop?: string | null;
     }>)[slug];
     if (!record) return notFound();
@@ -70,6 +71,8 @@ export async function renderCardPage(
     const isCommanderPage = kind === "commander";
     const usable = !isCommanderPage || record.commander;
     const partners = isCommanderPage ? record.commanderPartners ?? [] : record.partners;
+    // The commander list is ranked over a different pool, so its counts are a different map.
+    const rarity = isCommanderPage ? record.commanderRarity : record.rarity;
 
     // THE TITLE MUST NOT CLAIM WHAT THE PAGE REFUSES. A `noindex` page is still shared, still read
     // aloud, and still shows its title in a tab: "what a deck led by Impact Tremors wants" is a
@@ -100,7 +103,7 @@ export async function renderCardPage(
       description,
       canonical: `${origin}/${isCommanderPage ? "commanders" : "cards"}/${slug}`,
       indexable,
-      bodyHtml: cardPageHtml({ ...record, partners }, slug, kind),
+      bodyHtml: cardPageHtml({ ...record, partners, rarity }, slug, kind),
       // The same function `CardArt` renders with, so the preloaded URL is the one the app asks for.
       image: record.artCrop ? cardImageUrl(record.artCrop) ?? undefined : undefined,
       breadcrumbs: [

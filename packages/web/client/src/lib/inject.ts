@@ -202,6 +202,9 @@ export interface InjectableCard {
   emits: string[];
   demands: string[];
   partners: { name: string; slug: string; event: string; reason: string }[];
+  /** How many cards can cause each event, keyed the way `partners[].event` is. Optional because
+   *  the field is younger than the shard format; an absent map prints no count. */
+  rarity?: Record<string, number>;
 }
 
 /** THE STATIC BLOCK A CRAWLER READS, and the one place this feature's claim is testable without a
@@ -218,8 +221,24 @@ export interface InjectableCard {
 export function cardPageHtml(
   card: InjectableCard, slug: string, kind: "card" | "commander",
 ): string {
-  const rows = card.partners.slice(0, 24).map((p) =>
-    `      <li><a href="/cards/${esc(p.slug)}">${esc(p.name)}</a> — ${esc(p.reason)}</li>`).join("\n");
+  // ONE GROUP PER EVENT, IN ARRIVAL ORDER, the same split `PartnerList` draws, and above each the
+  // number the ranking is computed from. The count is what makes this block THIS card's and not a
+  // template: "793 cards can cause an artifact dying" is a sentence no other page prints with that
+  // figure, and until 2026-09-08 it lived only in the React tree a crawler with JavaScript off
+  // never saw. Same wording as the app's, so the two readers agree.
+  const groups: { event: string; rows: string[] }[] = [];
+  for (const p of card.partners.slice(0, 24)) {
+    const row = `      <li><a href="/cards/${esc(p.slug)}">${esc(p.name)}</a> — ${esc(p.reason)}</li>`;
+    const last = groups.at(-1);
+    if (last?.event === p.event) last.rows.push(row);
+    else groups.push({ event: p.event, rows: [row] });
+  }
+  const rows = groups.map((g) => {
+    const n = card.rarity?.[g.event];
+    const count = n === undefined ? ""
+      : `    <p>${n.toLocaleString("en-US")} cards can cause ${esc(eventKeySentence(g.event))}.</p>\n`;
+    return `${count}    <ol>\n${g.rows.join("\n")}\n    </ol>`;
+  }).join("\n");
   const crossLink = kind === "card"
     ? (card.commander
       ? `    <p><a href="/commanders/${esc(slug)}">What a deck led by this card wants</a></p>\n`
@@ -227,7 +246,7 @@ export function cardPageHtml(
     : `    <p><a href="/cards/${esc(slug)}">What the engine reads on this card</a></p>\n`;
   const partners = card.partners.length === 0
     ? "    <p>No partners specific enough to list.</p>"
-    : `    <h3>Partners</h3>\n    <ol>\n${rows}\n    </ol>`;
+    : `    <h3>Partners</h3>\n${rows}`;
   return `    <section class="prerendered">
     <h2>${esc(card.name)}</h2>
     <p>${esc(card.typeLine)}</p>

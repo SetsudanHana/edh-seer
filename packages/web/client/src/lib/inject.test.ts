@@ -67,6 +67,32 @@ test("every interpolated field is escaped", () => {
   expect(html).toContain("&amp; Co");
 });
 
+/** THE COUNT IS IN THE HTML TOO (2026-09-08). "793 cards can cause an artifact dying" is the one
+ *  figure that makes a card page's static block that card's and not the template's; it had only
+ *  ever been rendered by React. One sentence per event group, above that group's list, in the
+ *  app's own wording, and nothing when the shard carries no map. */
+test("the static block prints how many cards can cause each event, per group", () => {
+  const two: InjectableCard = {
+    ...KRENKO,
+    partners: [
+      ...KRENKO.partners,
+      { name: "Purphoros, God of the Forge", slug: "purphoros-god-of-the-forge", event: "enters|creature|-|t",
+        reason: "When a goblin enters thanks to Krenko, Mob Boss, Purphoros deals 2 damage" },
+      { name: "Skullclamp", slug: "skullclamp", event: "dies|creature|-|-",
+        reason: "When a creature dies thanks to Krenko, Mob Boss, Skullclamp draws you 2 cards" },
+    ],
+    rarity: { "enters|creature|-|t": 1234, "dies|creature|-|-": 1451 },
+  };
+  const html = cardPageHtml(two, "krenko-mob-boss", "card");
+  expect(html).toContain("1,234 cards can cause a creature token entering the battlefield.");
+  expect(html).toContain("1,451 cards can cause a creature dying.");
+  // One list per event, the count directly above its own list.
+  expect(html.match(/<ol>/g)).toHaveLength(2);
+  expect(html.indexOf("1,234 cards")).toBeLessThan(html.indexOf("purphoros-god-of-the-forge"));
+  expect(html.indexOf("purphoros-god-of-the-forge")).toBeLessThan(html.indexOf("1,451 cards"));
+  expect(cardPageHtml(KRENKO, "krenko-mob-boss", "card")).not.toContain("cards can cause");
+});
+
 /** THE CLAIM THIS FEATURE MAKES: the reasons are in the HTML before any JavaScript runs. */
 test("the static block carries the card, its derivation and the engine's sentences", () => {
   const html = cardPageHtml(KRENKO, "krenko-mob-boss", "card");
