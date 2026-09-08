@@ -1,0 +1,71 @@
+name: A synergy claim is wrong
+description: The engine drew an edge between two cards that should not be there, or missed one that should.
+title: "[edge] "
+labels: ["edge", "correctness"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most useful report this project receives.
+
+        Every edge the engine draws is a printed sentence naming both cards and the mechanism, which
+        means it can be checked against the card and disagreed with. A wrong one is a defect with a
+        witness already attached.
+
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Which way is it wrong?
+      options:
+        - The claim is FALSE — these two cards do not work together like that
+        - The claim is MISSING — these two cards clearly relate and got no edge
+    validations:
+      required: true
+
+  - type: input
+    id: producer
+    attributes:
+      label: First card
+      description: Exactly as printed. If the claim has a direction, this is the card doing the supplying.
+      placeholder: Siege-Gang Commander
+    validations:
+      required: true
+
+  - type: input
+    id: consumer
+    attributes:
+      label: Second card
+      placeholder: Skullclamp
+    validations:
+      required: true
+
+  - type: textarea
+    id: sentence
+    attributes:
+      label: The sentence the site printed
+      description: Copy it verbatim if the claim exists. Leave blank for a missing edge.
+      placeholder: When Siege-Gang Commander dies, Skullclamp draws you 2 cards
+    validations:
+      required: false
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is wrong
+      description: |
+        The rules reason, in your own words. "The trigger only counts creatures you control and this
+        one is on the opponent's side" is exactly the right level of detail.
+
+        Some misses are known ceilings rather than bugs — a tutor that could find a card, a recursion
+        spell that could return it. Those cannot be expressed by a producer-event/consumer-trigger
+        model at all, and are documented as limits in the README.
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: Link to the page, if you have one
+      placeholder: https://edhseer.cards/cards/siege-gang-commander
+    validations:
+      required: false

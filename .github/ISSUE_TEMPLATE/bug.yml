@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in the site, the CLI or the engine behaves wrongly.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If the problem is a **wrong synergy claim**, use the "A synergy claim is wrong" template
+        instead — it asks for the things that make such a report actionable.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - The site (edhseer.cards)
+        - The CLI
+        - The engine or a package, running locally
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce it
+      description: |
+        The smallest thing that shows it. A decklist is welcome — paste it, or link the page.
+        For a local reproduction, the command you ran and the output you got.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser or Node version
+      description: Only if it might matter. The project supports Node 22 and 24.
+    validations:
+      required: false

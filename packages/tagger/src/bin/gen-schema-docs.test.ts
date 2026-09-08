@@ -80,15 +80,21 @@ test("only the first paragraph of a doc comment reaches the page", () => {
  *  than it rots into wrong prose, and a dead link is the one kind of staleness a reader cannot work
  *  around. Anchors are not checked -- only that the file on the other end exists. */
 test("no doc links to a file that is not there", () => {
-  const docs = ["HOW-IT-WORKS.md", "RUNBOOK.md", "reference/SCHEMA.md",
-    "pipeline/1-segment.md", "pipeline/2-normalize.md", "pipeline/3-derive.md", "pipeline/4-match.md"];
+  // The front door is included, not just `docs/`: the README and CONTRIBUTING now carry most of the
+  // links a first-time reader follows, and a dead one there is the worst place to have it.
+  const docs = [
+    "README.md", "CONTRIBUTING.md", "SECURITY.md",
+    "docs/README.md", "docs/HOW-IT-WORKS.md", "docs/RUNBOOK.md", "docs/reference/SCHEMA.md",
+    "docs/pipeline/1-segment.md", "docs/pipeline/2-normalize.md",
+    "docs/pipeline/3-derive.md", "docs/pipeline/4-match.md",
+  ];
   const broken: string[] = [];
   for (const doc of docs) {
-    const text = readFileSync(join(ROOT, "docs", doc), "utf8");
+    const text = readFileSync(join(ROOT, doc), "utf8");
     for (const m of text.matchAll(/\]\(([^)#][^)]*)\)/g)) {
       const target = m[1]!.split("#")[0]!;
       if (target === "" || /^https?:/.test(target)) continue;
-      if (!existsSync(join(ROOT, "docs", dirname(doc), target))) broken.push(`${doc} -> ${target}`);
+      if (!existsSync(join(ROOT, dirname(doc), target))) broken.push(`${doc} -> ${target}`);
     }
   }
   expect(broken).toEqual([]);
