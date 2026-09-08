@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { matchNames, needleOf } from "../lib/name-match.js";
-import { sharedNameIndex, type NameIndexEntry } from "../lib/partners.js";
+import { sharedFacetIndex, sharedNameIndex, type FacetRow, type NameIndexEntry } from "../lib/partners.js";
+import { DOES, STRATEGIES, applyFacets, facetsFromParams, facetsToParams, matchedTerms, type FacetQuery } from "../lib/facets.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
@@ -35,9 +36,11 @@ const COLOURS: [code: string, label: string][] = [
 ];
 
 export function CardSearch({
-  load = sharedNameIndex, hash, replace, mode = "cards",
+  load = sharedNameIndex, facets = sharedFacetIndex, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
+  /** The facet rows (spec 2026-09-08 part 4), asked for on the first facet interaction only. */
+  facets?: (baseUrl: string) => Promise<FacetRow[]>;
   hash?: string;
   replace?: (url: string) => void;
   /** ONE COMPONENT, TWO ROUTES. The commander list is the same index, the same box and the same cap
@@ -57,12 +60,29 @@ export function CardSearch({
   const setQuery = (next: string) => {
     setParams(next ? { q: next } : {}, { replace: true });
   };
-  const [colours, setColours] = useState<string[]>([]);
+  // THE FACETS LIVE IN THE URL (spec 2026-09-08 part 4), so a result set is a link and the back
+  // button is honest; the colour chips moved here from local state for the same reason.
+  const facetQuery = useMemo(() => facetsFromParams(params), [params]);
+  const setFacets = (next: FacetQuery) => setParams(facetsToParams(next, params), { replace: true });
+  const colours = facetQuery.colours;
+  const setColours = (f: (cs: string[]) => string[]) => setFacets({ ...facetQuery, colours: f(colours) });
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
     return () => { live = false; };
   }, [load]);
+  // THE FACET ROWS ARE READ ONLY WHEN A FACET NEEDS THEM: the name index answers a name, and on
+  // Commanders the exact-identity chips too. Cards' "fits in these colours", Does and Strategy
+  // need what the rows carry, and that file is not fetched on a page that never asks.
+  const needsFacets = facetQuery.does.length > 0 || facetQuery.strategy !== undefined
+    || (!commanderMode && colours.length > 0);
+  const [facetRows, setFacetRows] = useState<FacetRow[] | null>(null);
+  useEffect(() => {
+    if (!needsFacets || facetRows !== null) return;
+    let live = true;
+    void facets("/static").then((r) => { if (live) setFacetRows(r); });
+    return () => { live = false; };
+  }, [needsFacets, facetRows, facets]);
 
   // MATCHED THE WAY THE URL IS BUILT. `slugOf` folds diacritics and drops apostrophes, so "jotun"
   // finds `Jötun Grunt` and "ajanis" finds `Ajani's Chosen` -- and finds them under the spelling the
@@ -70,14 +90,24 @@ export function CardSearch({
   const needle = needleOf(query);
   // A FACET IS A COMPLETE QUESTION ON ITS OWN. "Show me red commanders" needs no text, so the
   // empty-query gate lifts as soon as one is chosen -- browsing by colour is what this page is for.
-  const asked = needle.length > 0 || (commanderMode && colours.length > 0);
+  const asked = needle.length > 0 || colours.length > 0 || needsFacets;
   // ONE RULE WITH THE HEADER FIELD. `matchNames` is the rule (and carries the exact-identity ruling
-  // the colour chips answer with); this page adds only the commander and colour predicates the
-  // header does not offer.
-  const matches = useMemo(() => {
+  // the colour chips answer with); this page adds the commander and colour predicates the header
+  // does not offer, and the facets narrow that answer by slug. `null` while the rows are read.
+  const rowBySlug = useMemo(() => new Map((facetRows ?? []).map((r) => [r.s, r])), [facetRows]);
+  const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
-    return matchNames(index, { query, ...(commanderMode ? { commanders: true, colours } : {}) });
-  }, [index, query, asked, colours, commanderMode]);
+    // A FACET IS A COMPLETE QUESTION ON ITS OWN: with no name typed, the facets narrow the whole
+    // index, not the empty answer `matchNames` gives an empty needle.
+    const byName = needle.length === 0 && needsFacets
+      ? index.filter((e) => !commanderMode || e.commander)
+      : matchNames(index, { query, ...(commanderMode ? { commanders: true, colours } : {}) });
+    if (!needsFacets) return byName;
+    if (facetRows === null) return null;
+    const kept = applyFacets(facetRows, facetQuery, mode);
+    const order = new Map(kept.map((r, i) => [r.s, i]));
+    return byName.filter((e) => order.has(e.slug)).sort((a, b) => order.get(a.slug)! - order.get(b.slug)!);
+  }, [index, query, asked, colours, commanderMode, needsFacets, facetRows, facetQuery, mode]);
 
   return (
     <section className="flex flex-col gap-6 max-w-[68ch]">
@@ -101,9 +131,10 @@ export function CardSearch({
         </p>
       </header>
 
-      {commanderMode && (
-        <fieldset className="flex flex-wrap items-center gap-2">
-          <legend className="eyebrow">Colour identity</legend>
+      {/* ON BOTH PAGES NOW (spec part 4). Commanders: the exact identity, as ruled. Cards: "fits in
+        *  these colours", the card's identity within the choice, which is the deckbuilding question. */}
+      <fieldset className="flex flex-wrap items-center gap-2">
+        <legend className="eyebrow">{commanderMode ? "Colour identity" : "Fits in"}</legend>
           {COLOURS.map(([code, label]) => {
             const on = colours.includes(code);
             return (
@@ -131,8 +162,49 @@ export function CardSearch({
               </button>
             );
           })}
-        </fieldset>
-      )}
+      </fieldset>
+
+      {/* WHAT IT DOES. Curated chips with player labels (`lib/facets.ts`); the rest of the effect
+        *  kinds stay reachable by name, and the line under the chips says so. OR within the group. */}
+      <fieldset className="flex flex-wrap items-center gap-2">
+        <legend className="eyebrow">Does</legend>
+        {DOES.map((d) => {
+          const on = facetQuery.does.includes(d.kind);
+          return (
+            <button
+              key={d.kind} type="button" aria-pressed={on}
+              onClick={() => setFacets({ ...facetQuery, does: on
+                ? facetQuery.does.filter((k) => k !== d.kind)
+                : [...facetQuery.does, d.kind] })}
+              className={`inline-flex items-center min-h-11 rounded-(--radius) border px-3 text-sm ${on
+                ? "border-(--accent) text-(--accent)"
+                : "border-(--separator) text-(--muted) hover:text-(--foreground)"}`}
+            >
+              {d.label}
+            </button>
+          );
+        })}
+        <p className="basis-full text-(--muted) text-sm">Anything else a card does is reachable by name.</p>
+      </fieldset>
+
+      {/* THE STRATEGY: the report's own archetype dictionary, one at a time. A native select, because
+        *  121 strategies are not a chip row; grouped by the vocabulary's class. On Commanders it reads
+        *  "Supports", and askers come before suppliers (`applyFacets`). */}
+      <label className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="eyebrow text-(--muted)">{commanderMode ? "Supports" : "Strategy"}</span>
+        <select
+          value={facetQuery.strategy ?? ""}
+          onChange={(e) => setFacets({ ...facetQuery, strategy: e.target.value || undefined })}
+          className="min-h-11 max-w-full rounded-md border border-(--field-border) bg-(--field-background) text-(--field-foreground) px-3"
+        >
+          <option value="">any strategy</option>
+          {[...new Set(STRATEGIES.map((s) => s.cls))].map((cls) => (
+            <optgroup key={cls} label={cls}>
+              {STRATEGIES.filter((s) => s.cls === cls).map((s) => <option key={s.slug} value={s.slug}>{s.label}</option>)}
+            </optgroup>
+          ))}
+        </select>
+      </label>
 
       {/* NO KICKER: the label pairs INLINE with the field rather than stacking above it. */}
       <label className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -165,6 +237,8 @@ export function CardSearch({
                 : "cards the engine has read. Type a name to find one."}
             </p>
           </div>
+        : matches === null
+        ? <p className="eyebrow text-(--muted)">reading what cards do</p>
         : matches.length === 0
         ? <p className="text-(--muted)">
             No {commanderMode ? "commander" : "card"} matches. The engine has read{" "}
@@ -205,6 +279,15 @@ export function CardSearch({
                       <span className="eyebrow text-(--muted) shrink-0">commander</span>
                     )}
                   </Link>
+                  {/* WHY IT IS ON THE LIST: the chip labels that hit. A list with no reason is what
+                    *  this product refuses everywhere else. */}
+                  {(() => {
+                    const row = rowBySlug.get(e.slug);
+                    const terms = row ? matchedTerms(row, facetQuery) : [];
+                    return terms.length > 0
+                      ? <p className="text-(--muted) text-sm pb-2">{terms.join(" · ")}</p>
+                      : null;
+                  })()}
                 </li>
               ))}
             </ul>
