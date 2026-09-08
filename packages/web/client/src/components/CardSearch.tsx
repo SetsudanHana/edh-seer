@@ -329,7 +329,7 @@ export function CardSearch({
       * so the list keeps its measure the rest of the time. */}
     {peek.stack.length > 0 && (
       <aside className="lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)]">
-        <CardPeek load={peekLoad} />
+        <CardPeek load={peekLoad} surface={commanderMode ? "commander" : "card"} />
       </aside>
     )}
     </div>

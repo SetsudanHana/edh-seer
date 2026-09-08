@@ -20,7 +20,14 @@ import { usePeek } from "./peek.js";
  *  Focus goes to Close on open and back to the opening row on close (`usePeekState`). */
 const PEEK_PARTNERS = 5;
 
-export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageData | null> }) {
+export function CardPeek({ load, surface = "card" }: {
+  load?: (slug: string) => Promise<CardPageData | null>;
+  /** WHICH PAGE "OPEN" GOES TO. The commander list peeks a commander, so its Open control has to
+   *  land on `/commanders/<slug>`, the page the row itself links to (owner 2026-09-08: "the popup
+   *  says open a card and opens a card view"). Only the FIRST look is the commander; every deeper
+   *  look is one of its partners, and a partner is a card. */
+  surface?: "card" | "commander";
+}) {
   const peek = usePeek();
   const slug = peek?.stack.at(-1);
   const [page, setPage] = useState<CardPageData | null | undefined>(undefined);
@@ -43,6 +50,7 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
 
   if (!peek || !slug) return null;
   const deeper = peek.stack.length > 1;
+  const asCommander = surface === "commander" && !deeper;
 
   return (
     <section
@@ -60,11 +68,11 @@ export function CardPeek({ load }: { load?: (slug: string) => Promise<CardPageDa
         {page && (
           <Link
             className="btn-primary peek-open-link"
-            to={`/cards/${slug}`}
+            to={`${asCommander ? "/commanders" : "/cards"}/${slug}`}
             aria-label={`Open ${page.name}`}
             onClick={() => peek.close()}
           >
-            Open card
+            {asCommander ? "Open commander" : "Open card"}
           </Link>
         )}
         <button ref={closeButton} type="button" className="btn-secondary ml-auto" onClick={() => peek.close()}>Close</button>
