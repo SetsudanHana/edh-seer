@@ -121,6 +121,7 @@ Start at **[docs/](docs/)**, or go straight to what you need:
 | | |
 |---|---|
 | [How it works](docs/HOW-IT-WORKS.md) | the tour — a printed card to a synergy graph, with diagrams and a worked example |
+| [edhseer.cards/how-it-works](https://edhseer.cards/how-it-works) | the same story on the site: a player's half, then an engineer's half, with the figures above held to this README by a test |
 | [Stage 1 — Segmentation](docs/pipeline/1-segment.md) | oracle text into numbered clauses, free |
 | [Stage 2 — Normalization](docs/pipeline/2-normalize.md) | the model, once per card. The only paid step |
 | [Stage 3 — Derivation](docs/pipeline/3-derive.md) | clauses into game events, plus what no card prints |

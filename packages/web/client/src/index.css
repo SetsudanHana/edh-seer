@@ -613,7 +613,9 @@ summary {
    sides match, and the margin computes to 0. No media query, and nothing to overflow at 390px. */
 .prose > .figures,
 .prose > .pipeline,
-.prose > .edge-demo {
+.prose > .edge-demo,
+.prose > .refusals,
+.prose > .stages {
   width: min(65rem, calc(100vw - 4rem));
   margin-inline: calc((100% - min(65rem, calc(100vw - 4rem))) / 2);
 }
@@ -1178,6 +1180,213 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    dashed row border, the bolded mismatch in the chip, and the verdict sentence. */
 .edge-row-refused .edge-link { color: var(--fill); }
 
+/* TWO FIGURES, NOT THREE. The trust pair (precision, retention) is two numbers by rule -- a third
+   would be a size again -- and two items in the three-column grid leave a hole on the right. */
+.figures-2 { grid-template-columns: repeat(2, 1fr); }
+
+/* THE CLAIM, ANNOTATED (how-it-works). The one sentence the report prints, set large, and the three
+   things it rests on numbered under it. Stays inside the prose measure: it is a sentence, not a
+   diagram, and a 65rem blockquote is a banner. */
+.claim {
+  margin: 1.5rem 0 2rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border: 1px solid var(--separator);
+  border-left: 3px solid var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.claim-text {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  line-height: 1.45;
+  color: var(--foreground);
+}
+.claim-notes {
+  list-style: none;
+  counter-reset: note;
+  margin: 0;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--separator);
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.claim-notes li {
+  counter-increment: note;
+  display: grid;
+  grid-template-columns: 1.25rem 6.5rem 1fr;
+  gap: 0.5rem;
+  margin: 0;
+}
+.claim-notes li::before {
+  content: counter(note);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--edge);
+  line-height: 1.8;
+}
+.claim-k {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 2;
+}
+
+/* THE REFUSALS AS A GRID. Five bullet paragraphs became six cards: a reader skims the bold line
+   and stops on the example, which is set apart so it reads as the case and not the rule. */
+.refusals {
+  list-style: none;
+  margin: 1.25rem 0 1.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+.refusals li {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.refusals strong { display: block; margin-bottom: 0.25rem; }
+.refusal-eg {
+  display: block;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--separator);
+  color: var(--foreground);
+}
+
+/* THE FOUR STAGES, with real output. Same box as the pipeline strip so the two read as one system;
+   the paid stage carries the same accent border for the same reason. */
+.stages {
+  list-style: none;
+  margin: 1.25rem 0 1.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+.stages li {
+  margin: 0;
+  padding: 0.85rem 1rem 1rem;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.stages li.stage-paid { border-color: var(--accent); }
+/* `.prose h3` below sets a 2rem top margin at the same specificity, and it is later in the file. */
+.prose .stages h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.stage-n, .stage-cost {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.stage-paid .stage-cost { color: var(--accent); }
+.stages p { margin: 0; font-size: 0.8125rem; line-height: 1.5; }
+.stages a { font-size: 0.8125rem; margin-top: auto; }
+
+/* A CODE BLOCK IN PROSE: the corpus's own output, so it is data and scrolls sideways inside its box
+   rather than breaking the page's width on a phone. */
+.prose pre {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--surface-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--foreground);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.prose h3 {
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 2rem 0 0.5rem;
+}
+
+/* THE GATES AS A STEPPER: a numbered rail, because the ORDER is the content. Not a flowchart; every
+   gate has the same two exits (pass to the next, or refuse) and drawing seven identical forks says
+   less than the list. */
+.gates {
+  list-style: none;
+  counter-reset: gate;
+  margin: 1rem 0 1.5rem;
+  padding: 0;
+  position: relative;
+}
+.gates::before {
+  content: "";
+  position: absolute;
+  left: 0.6875rem;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  border-left: 1px dashed var(--edge);
+}
+.gates li {
+  counter-increment: gate;
+  position: relative;
+  margin: 0;
+  padding: 0.35rem 0 0.35rem 2.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.gates li::before {
+  content: counter(gate);
+  position: absolute;
+  left: 0;
+  top: 0.45rem;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  border: 1px solid var(--edge);
+  background: var(--background);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--foreground);
+  display: grid;
+  place-items: center;
+}
+.gates strong { display: block; }
+
+.docs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.docs-table td {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-top: 1px solid var(--separator);
+  vertical-align: top;
+}
+.docs-table td:first-child { white-space: nowrap; color: var(--foreground); }
+
 @media (max-width: 40rem) {
   .figures { grid-template-columns: 1fr; gap: 1rem; }
   .edge-row { grid-template-columns: 1fr; }
@@ -1186,6 +1395,13 @@ a.brand:hover .brand-edh { color: var(--foreground); }
      each other rather than left and right. */
   .edge-arrow { max-width: 3rem; transform: rotate(90deg); }
   .pipeline { grid-template-columns: repeat(2, 1fr); }
+  .figures-2, .refusals, .stages { grid-template-columns: 1fr; }
+  /* Wrapped, not scrolled: a sideways scroll inside a card has no visible cue on a phone, and
+     losing the right third of a JSON line is losing the value. */
+  .prose pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .claim-notes li { grid-template-columns: 1.25rem 1fr; }
+  .claim-k { grid-column: 2; }
+  .claim-notes li > :last-child { grid-column: 2; }
 }
 
 /* DECK GAUGES ORPHAN RULE: BACK, PER GROUP, NOT REMOVED (task 9 fix round 1, whole-branch review,
