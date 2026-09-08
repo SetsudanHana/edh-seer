@@ -75,11 +75,11 @@ The events a card can supply or watch for. Defined in [`VERB_VOCAB`](../../packa
 `enters`, `enters-graveyard`, `dies`, `leaves`, `cast`, `attacks`, `taps`, `non-combat-damage`, `combat-damage`, `draw`, `discard`, `mill`, `gain-life`, `lose-life`, `sacrifice`, `create-token`, `counter-added`, `land-play`, `untaps`, `proliferate`, `unlock`, `upkeep`, `begin-combat`, `end-step`, `dice-rolled`, `scry`, `surveil`, `search`
 
 
-### EFFECT_KINDS — 41 members
+### EFFECT_KINDS — 42 members
 
 What an ability DOES, once its trigger is satisfied. Defined in [`EFFECT_KINDS`](../../packages/tagger/src/schema.ts).
 
-`token-generation`, `damage`, `player-life-loss`, `lifegain`, `drain`, `draw-card`, `forced-sacrifice`, `pump`, `ability-loss`, `cost-reduction`, `trigger-doubling`, `graveyard-recursion`, `clone`, `token-doubling`, `damage-multiplier`, `tax`, `scry`, `surveil`, `mill`, `search`, `top-set`, `counter-placement`, `enters-with-counters`, `mana-generation`, `fast-mana`, `ritual`, `copy-spell`, `speed-increase`, `speed`, `flicker`, `animate`, `untap`, `proliferate`, `graveyard-hate`, `extra-combat`, `keyword-grant`, `type-grant`, `win-game`, `extra-turn`, `extra-phase`
+`token-generation`, `damage`, `player-life-loss`, `lifegain`, `drain`, `draw-card`, `forced-sacrifice`, `pump`, `ability-loss`, `cost-reduction`, `trigger-doubling`, `graveyard-recursion`, `clone`, `token-doubling`, `damage-multiplier`, `tax`, `scry`, `surveil`, `mill`, `search`, `top-set`, `counter-placement`, `enters-with-counters`, `mana-generation`, `fast-mana`, `ritual`, `copy-spell`, `speed-increase`, `speed`, `flicker`, `animate`, `untap`, `proliferate`, `graveyard-hate`, `extra-combat`, `keyword-grant`, `type-grant`, `win-game`, `extra-turn`, `extra-phase`, `emblem`
 
 | member | why it exists |
 |---|---|
@@ -217,6 +217,7 @@ Defined in [`Characteristics`](../../packages/tagger/src/schema.ts).
 | `power` | `string \| null` | **required** |  |
 | `toughness` | `string \| null` | **required** |  |
 | `token` | `boolean` | **required** | Printed cards are always false. |
+| `emblem` | `true` | optional | AN EMBLEM (CR 114): an object in the command zone with abilities and no other characteristics. Present, and `true`, only on an emblem's own row in `cardTagsDerived`, which `derive-corpus` builds from the `tokens` collection's layout-`emblem` rows. Absent everywhere else, so `chars.emblem === true` is the whole test. Not a permanent (no `enters`, no `dies`), not a card (no `cast`), and NOT a token: `token` stays false on it, so "whenever a token enters" never matches one. |
 | `commander` | `boolean` | optional | THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander` (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a characteristic of the object represented by the card". It lives here anyway because a card's IMPLIED events (`impliedEvents` → `selfSubject`) are synthesized from `Characteristics` at match time and are exactly the ones a commander-matters consumer needs: a commander's combat damage, entry and death. Stamping only the authored emits left Kediss unable to see its own partner. |
 | `keywords` | `string[]` | **required** |  |
 

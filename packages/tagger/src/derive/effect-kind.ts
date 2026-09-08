@@ -123,7 +123,9 @@ const SIMPLE: Record<string, EffectKind> = {
   // VERB and false of the CLAUSE: the OBJECT says which is copied — "target spell" versus "target
   // creature" — exactly as it does for `double`. Resolved in `actionEffectKind`.)
   mill: "mill",
-  emblem: "token-generation",
+  // Its own kind. It read `token-generation` until 2026-09-08 and put "makes a token" on 86
+  // planeswalkers; CR 114.1 says an emblem is an object in the command zone, not a permanent.
+  emblem: "emblem",
   // A tutor rearranges what you draw, which is the same payoff `mill` names. Demonic Tutor's live
   // flat tag is exactly this, so the kind is one the engine already consumes.
   search: "search",

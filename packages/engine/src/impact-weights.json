@@ -2,6 +2,7 @@
   "kinds": {
     "draw-card": 1.0,
     "token-generation": 1.0,
+    "emblem": 0.5,
     "token-doubling": 1.0,
     "trigger-doubling": 1.0,
     "win-game": 1.0,

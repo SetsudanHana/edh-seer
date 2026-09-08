@@ -381,3 +381,8 @@ test("raising speed is phrased on the player", () => {
 test("losing abilities has a phrase", () => {
   expect(effectPhrase("ability-loss", undefined)).toBe("strips abilities");
 });
+
+test("an emblem grant says who gets it", () => {
+  expect(effectPhrase("emblem", undefined)).toBe("gets an emblem");
+  expect(effectPhrase("emblem", undefined, undefined, "opp")).toBe("gives each opponent an emblem");
+});

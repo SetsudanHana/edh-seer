@@ -16,6 +16,8 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   "player-life-loss": [(n) => `costs each opponent ${n} life`, "costs each opponent life"],
   "counter-placement": [(n) => (n === "1" ? "puts a counter on it" : `puts ${n} counters on it`), "puts counters on it"],
   "token-generation": [(n) => (n === "1" ? "makes a token" : `makes ${n} tokens`), "makes a token"],
+  // CR 114.2's own verb. An emblem is not a token, and the row must not say it is.
+  emblem: [() => "gets an emblem", "gets an emblem"],
   "mana-generation": [(n) => `adds ${n} mana`, "adds mana"],
   "graveyard-recursion": [() => "brings a card back", "brings a card back"],
   // NINE KINDS THE ENGINE READ AND THE SENTENCE REFUSED TO SAY. MEASURED 2026-09-04 over every
@@ -127,6 +129,12 @@ const RECIPIENT_PHRASES: Record<string, Record<string, [(n: string) => string, s
   lifegain: {
     opp: [(n) => `gains an opponent ${n} life`, "gains an opponent life"],
     any: [(n) => `gains a player ${n} life`, "gains a player life"],
+  },
+  // Chandra, Roaring Flame's −7 hands the emblem to each opponent she hits; the sentence has to say
+  // so, because CR 114.2 makes that opponent its controller.
+  emblem: {
+    opp: [() => "gives each opponent an emblem", "gives each opponent an emblem"],
+    any: [() => "gives a player an emblem", "gives a player an emblem"],
   },
 };
 
