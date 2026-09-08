@@ -42,6 +42,10 @@ export async function renderBrowseIndex(
       canonical: `${origin}/${kind}`,
       indexable: true,
       bodyHtml: browseIndexHtml(kind, total),
+      breadcrumbs: [
+        { name: "EDH Seer", url: `${origin}/` },
+        { name: kind === "commanders" ? "Commanders" : "Cards", url: `${origin}/${kind}` },
+      ],
     }), { headers: htmlHeaders() });
   } catch {
     return degraded();
@@ -83,6 +87,11 @@ export async function renderBrowseLetter(
       // the card side fills. It still renders and still carries the alphabet, so the walk continues.
       indexable: mine.length > 0,
       bodyHtml: browseLetterHtml(kind, letter, mine),
+      breadcrumbs: [
+        { name: "EDH Seer", url: `${origin}/` },
+        { name: kind === "commanders" ? "Commanders" : "Cards", url: `${origin}/${kind}` },
+        { name: `Starting with ${letter}`, url: `${origin}/browse/${kind}/${segment}` },
+      ],
     }), { headers: htmlHeaders(mine.length > 0) });
   } catch {
     return degraded();

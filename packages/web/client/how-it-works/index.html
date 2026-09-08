@@ -20,6 +20,22 @@
          never drift. It loads no JavaScript at all: the page is prose, and a reader with JS off —
          or a crawler that does not run it — gets the whole thing. -->
     <link rel="stylesheet" href="/src/index.css" />
+    <!-- WHAT THIS PAGE IS, in the vocabulary a crawler reads. A TechArticle and not an Article: it
+         explains a method, with code, for two audiences. No dates: a `dateModified` nobody updates
+         is a claim that goes false on the next edit, and the measurements on the page already carry
+         their own dates. `seo.test.ts` parses this and holds `url` to the canonical. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "How EDH Seer works",
+        "url": "https://edhseer.cards/how-it-works",
+        "description": "How EDH Seer turns Magic card text into synergy claims you can check: one offline model pass structures the text, then plain rules match what cards do and want.",
+        "isAccessibleForFree": true,
+        "isPartOf": { "@type": "WebApplication", "name": "EDH Seer", "url": "https://edhseer.cards/" },
+        "about": "Rule-based synergy analysis for Magic: The Gathering Commander decks"
+      }
+    </script>
   </head>
   <body>
     <!-- The same header, with the brand as a LINK rather than the heading: this page's `h1` is its
