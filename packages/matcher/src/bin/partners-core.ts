@@ -605,6 +605,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
     const counted = a.effect?.scalingSubject;
     // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
     const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
+    const selfEmits = (a.emits ?? []).filter((e) => e.subject.self === true).map(eventKey);
     return {
       kind: a.kind,
       ...(a.cost ? { cost: a.cost } : {}),
@@ -621,6 +622,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
       ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
       ...(subtype ? { counts: subtype } : {}),
       emits: (a.emits ?? []).map(eventKey),
+      ...(selfEmits.length > 0 ? { selfEmits } : {}),
     };
   });
 
@@ -834,6 +836,11 @@ export interface AbilityRow {
   counts?: string;
   /** The events it puts into the game. */
   emits: string[];
+  /** THE EMITS WHOSE SUBJECT IS THE CARD ITSELF, as keys, so the page reads "this card untapping"
+   *  rather than "anything untapping" (owner, 2026-09-08, Chandra, Fire of Kaladesh: "the untap
+   *  should say this card untapping"). The key cannot carry the self flag; `self` above does the
+   *  same job for the trigger. Absent when no emit is self-referential. */
+  selfEmits?: string[];
 }
 
 export interface CardPageRecord {

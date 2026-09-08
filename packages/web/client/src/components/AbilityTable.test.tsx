@@ -23,3 +23,15 @@ test("a row with a speed requirement says it needs max speed", () => {
   render(<AbilityTable rows={[{ kind: "activated", cost: "{3}", when: [], effect: "draw-card", emits: [], requires: { marker: "speed", min: 4 } }]} stacked />);
   expect(screen.getAllByText(/at max speed/i).length).toBeGreaterThan(0);
 });
+
+/** A SELF EMIT READS AS THIS CARD (owner, 2026-09-08). "Untap Chandra" is Chandra untapping, and the
+ *  row said "anything untapping" because the key cannot carry the flag. */
+test("an emit whose subject is the card itself reads as this card", () => {
+  render(<AbilityTable rows={[{
+    kind: "triggered", when: ["cast|spell|-|-"], effect: "untap",
+    emits: ["untaps|-|-|-", "non-combat-damage|creature|-|-"], selfEmits: ["untaps|-|-|-"],
+  }]} stacked />);
+  expect(screen.getAllByText(/this card untapping/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/a creature dealing noncombat damage/).length).toBeGreaterThan(0);
+  expect(screen.queryByText(/anything untapping/)).toBeNull();
+});

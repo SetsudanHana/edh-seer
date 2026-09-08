@@ -779,6 +779,24 @@ test("a back-face ability row carries its face, a front-face row does not", () =
   expect(rows[1]!.face).toBe(1);
 });
 
+/** A SELF EMIT NAMES THE CARD. "Untap Chandra" puts Chandra untapping into the game, not anything
+ *  untapping; the key drops the flag, so the row carries the self keys beside the emits. */
+test("an ability row lists the emits whose subject is the card itself", () => {
+  const chandra = base("Chandra, Fire of Kaladesh", [{
+    kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: "spell" } },
+    effect: { kind: "untap", subject: { control: "any", token: null, self: true } },
+    emits: [
+      { verb: "untaps", subject: { control: "any", token: null, self: true } },
+      { verb: "non-combat-damage", subject: { control: "any", token: null, type: "creature" } },
+    ],
+  }] as never);
+  const rows = abilityRowsOf(chandra);
+  expect(rows[0]!.emits).toEqual(["untaps|-|-|-", "non-combat-damage|creature|-|-"]);
+  expect(rows[0]!.selfEmits).toEqual(["untaps|-|-|-"]);
+  expect(abilityRowsOf(impactTremors)[0]!.selfEmits).toBeUndefined();
+});
+
 /** A MAGNITUDE THAT COUNTS SOMETHING SAYS WHAT IT COUNTS. Without it "per-permanent" is a word with
  *  no object, and the count is the whole reason a Goblin deck runs this card. */
 test("a scaling ability carries its basis and what it counts", () => {
