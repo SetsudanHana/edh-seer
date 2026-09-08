@@ -238,3 +238,21 @@ test("an edge whose reasons the state enabled carries the marker", () => {
   expect(enabled.enabledBy).toEqual(["speed"]);
   expect(plain.enabledBy).toBeUndefined();
 });
+
+/** AN EMBLEM HAS ITS OWN ID SPACE (spec 2026-09-08), for the reason a token does: the node is not
+ *  a card, and the board marks it as what it is rather than inferring it from the id's shape. */
+test("an emblem node is prefixed emblem: and flagged, and its reasons route to it", () => {
+  const granter = card("Elspeth, Knight-Errant");
+  const emblem: DeckCard = {
+    card: { name: "Elspeth, Knight-Errant Emblem", typeLine: "Emblem — Elspeth", oracleText: "", keywords: [], colors: [], manaValue: 0 } as DeckCard["card"],
+    tags: { oracleId: "e", schemaVersion: 1, promptVersion: 0, model: "t", characteristics: { types: ["emblem"], subtypes: ["elspeth"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: false, emblem: true, keywords: [] }, abilities: [] },
+    isToken: true,
+  };
+  const g = projectDeckGraph([granter, emblem], [{
+    tag: "creates:emblem", text: "Elspeth, Knight-Errant gives you an emblem", effectKind: "emblem",
+    producer: "Elspeth, Knight-Errant", consumer: "Elspeth, Knight-Errant Emblem", consumerIsToken: true, consumerIsEmblem: true,
+  }], W);
+  expect(g.nodes.map((n) => n.id).sort()).toEqual(["Elspeth, Knight-Errant", "emblem:Elspeth, Knight-Errant Emblem"]);
+  expect(g.nodes.find((n) => n.isEmblem)?.id).toBe("emblem:Elspeth, Knight-Errant Emblem");
+  expect(g.edges.map((e) => `${e.from}->${e.to}`)).toEqual(["Elspeth, Knight-Errant->emblem:Elspeth, Knight-Errant Emblem"]);
+});
