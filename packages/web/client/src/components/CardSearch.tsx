@@ -74,6 +74,13 @@ export function CardSearch({
   const setFacets = (next: FacetQuery) => setParams(facetsToParams(next, params), { replace: true });
   const colours = facetQuery.colours;
   const setColours = (f: (cs: string[]) => string[]) => setFacets({ ...facetQuery, colours: f(colours) });
+  const activeFacets = (colours.length > 0 ? 1 : 0) + facetQuery.does.length + (facetQuery.strategy !== undefined ? 1 : 0);
+  // Wide opens the disclosure; on a phone it is closed until the reader opens it, EVEN with facets
+  // set: measured at 390, an open disclosure put the results at 1,242px on a shared facet link,
+  // the same place the finding started from. The summary's count says what is applied.
+  const wide = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 40rem)").matches : true;
+  const [filtersManual, setFiltersManual] = useState<boolean | null>(null);
+  const filtersOpen = wide || (filtersManual ?? false);
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
@@ -140,6 +147,34 @@ export function CardSearch({
         </p>
       </header>
 
+      {/* NO KICKER: the label pairs INLINE with the field rather than stacking above it. */}
+      <label className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="eyebrow text-(--muted)">{commanderMode ? "find a commander" : "find a card"}</span>
+        <input
+          type="search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
+          placeholder={commanderMode ? "Kess, Dissident Mage" : "Krenko, Mob Boss"}
+          // A CONTROL'S BOUNDARY IS `--field-border`, which is the 3:1 one (WCAG 1.4.11).
+          // `--border` does not exist: it was absorbed into `--separator`, the decorative hairline,
+          // and `css-tokens.test.ts` caught this line naming it.
+          className="w-full max-w-lg min-h-11 rounded-(--field-radius) border border-(--field-border) bg-(--field-background)
+            text-(--field-foreground) placeholder:text-(--field-placeholder) px-3"
+        />
+      </label>
+
+      {/* THE FILTERS FOLD ON A PHONE (cohesion sweep 2026-09-08). Measured at 390: six colour chips,
+        *  22 Does chips, the select and the field put the first result 1,220px down. Below `sm` the
+        *  three groups sit behind a disclosure, closed until opened, whose summary counts what is
+        *  on; on a wide viewport it is open and the summary is not drawn. A native
+        *  `<details>`, so the keyboard and screen-reader model is the platform's. `matchMedia` is
+        *  read at render and absent under jsdom, which counts as wide. */}
+      <details
+        className="facets flex flex-col gap-6"
+        open={filtersOpen}
+        onToggle={(e) => setFiltersManual((e.currentTarget as HTMLDetailsElement).open)}
+      >
+        <summary className="eyebrow cursor-pointer min-h-11 flex items-center sm:hidden">
+          {activeFacets > 0 ? `Filters · ${activeFacets} active` : "Filters"}
+        </summary>
       {/* ON BOTH PAGES NOW (spec part 4), and EXACT on both (owner 2026-09-08): Green and White list
         *  green-white cards. A "fits in" subset was built first for the Cards page and rejected. */}
       <fieldset className="flex flex-wrap items-center gap-2">
@@ -211,19 +246,7 @@ export function CardSearch({
         </select>
       </label>
 
-      {/* NO KICKER: the label pairs INLINE with the field rather than stacking above it. */}
-      <label className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="eyebrow text-(--muted)">{commanderMode ? "find a commander" : "find a card"}</span>
-        <input
-          type="search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
-          placeholder={commanderMode ? "Kess, Dissident Mage" : "Krenko, Mob Boss"}
-          // A CONTROL'S BOUNDARY IS `--field-border`, which is the 3:1 one (WCAG 1.4.11).
-          // `--border` does not exist: it was absorbed into `--separator`, the decorative hairline,
-          // and `css-tokens.test.ts` caught this line naming it.
-          className="w-full max-w-lg min-h-11 rounded-(--field-radius) border border-(--field-border) bg-(--field-background)
-            text-(--field-foreground) placeholder:text-(--field-placeholder) px-3"
-        />
-      </label>
+      </details>
 
       {index === null
         ? <p className="text-(--muted)">Reading the index…</p>

@@ -319,3 +319,35 @@ test("a modifier click on a result opens the page", async () => {
   fireEvent.click(link, { metaKey: true });
   expect(screen.queryByRole("dialog")).toBeNull();
 });
+
+/** THE FILTERS FOLD ON A PHONE (cohesion sweep 2026-09-08, finding 5): at 390 the six colour chips,
+ *  22 Does chips, the select and the field pushed the first result 1,220px down. Below `sm` the
+ *  three groups sit behind a Filters disclosure, closed until opened, and the summary says how many
+ *  facets are applied. On a wide viewport the disclosure is open and its summary hidden. jsdom has no
+ *  matchMedia: the component treats that as wide, so the narrow case is mocked. */
+const narrow = (matches: boolean) => {
+  window.matchMedia = ((q: string) => ({ matches, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
+};
+
+test("on a phone the filters are closed, and the summary counts what is applied", async () => {
+  narrow(false);
+  try {
+    atUrl("/cards");
+    const details = (await screen.findByText("Filters")).closest("details")!;
+    expect(details.open).toBe(false);
+  } finally { narrow(true); }
+  narrow(false);
+  try {
+    atUrl("/cards?colors=G&does=draw-card,mill&theme=counters");
+    const summary = await screen.findByText("Filters · 4 active");
+    // Closed even with facets set: the results, not the controls, are what a shared link is for.
+    expect(summary.closest("details")!.open).toBe(false);
+  } finally { narrow(true); }
+});
+
+test("on a wide viewport the filters are open", async () => {
+  narrow(true);
+  atUrl("/cards");
+  const details = (await screen.findByText("Filters")).closest("details")!;
+  expect(details.open).toBe(true);
+});
