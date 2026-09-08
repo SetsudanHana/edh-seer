@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { slugOf } from "@edh-seer/matcher/partners-core";
-import { loadNameIndex, type NameIndexEntry } from "../lib/partners.js";
+import { matchNames, needleOf } from "../lib/name-match.js";
+import { sharedNameIndex, type NameIndexEntry } from "../lib/partners.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
@@ -35,7 +35,7 @@ const COLOURS: [code: string, label: string][] = [
 ];
 
 export function CardSearch({
-  load = loadNameIndex, hash, replace, mode = "cards",
+  load = sharedNameIndex, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
   hash?: string;
@@ -67,31 +67,17 @@ export function CardSearch({
   // MATCHED THE WAY THE URL IS BUILT. `slugOf` folds diacritics and drops apostrophes, so "jotun"
   // finds `Jötun Grunt` and "ajanis" finds `Ajani's Chosen` -- and finds them under the spelling the
   // link will use. Reusing the build's own function is also what keeps the two from drifting.
-  const needle = slugOf(query);
+  const needle = needleOf(query);
   // A FACET IS A COMPLETE QUESTION ON ITS OWN. "Show me red commanders" needs no text, so the
   // empty-query gate lifts as soon as one is chosen -- browsing by colour is what this page is for.
   const asked = needle.length > 0 || (commanderMode && colours.length > 0);
+  // ONE RULE WITH THE HEADER FIELD. `matchNames` is the rule (and carries the exact-identity ruling
+  // the colour chips answer with); this page adds only the commander and colour predicates the
+  // header does not offer.
   const matches = useMemo(() => {
     if (index === null || !asked) return [];
-    const chosen = new Set(colours);
-    return index.filter((e) =>
-      (!commanderMode || e.commander)
-      && e.slug.includes(needle)
-      // THE FACETS NAME THE IDENTITY EXACTLY (owner ruling 2026-09-04). "Red, Green" asks for Gruul
-      // commanders -- not for the ones that merely CONTAIN Gruul, and not for the ones a Gruul deck
-      // could lead with. A colour pair is how a player names a deck, so the chips have to answer
-      // with that pair and nothing wider.
-      // TWO WIDER RULES WERE TRIED AND ARE BOTH WRONG HERE. A subset ceiling ("what may I lead with
-      // in these colours") answered every multi-colour question with mostly mono-coloured cards; a
-      // contains-all AND buried Gruul itself under the Jund, Naya and five-colour commanders that
-      // also happen to have both.
-      // COLOURLESS IS THE SAME QUESTION with an empty set, and it is why `C` is exclusive: it is
-      // the only way to name "no colours at all".
-      && (!commanderMode || colours.length === 0
-        || (chosen.has("C")
-          ? e.identity.length === 0
-          : e.identity.length === colours.length && colours.every((c) => e.identity.includes(c)))));
-  }, [index, needle, asked, colours, commanderMode]);
+    return matchNames(index, { query, ...(commanderMode ? { commanders: true, colours } : {}) });
+  }, [index, query, asked, colours, commanderMode]);
 
   return (
     <section className="flex flex-col gap-6 max-w-[68ch]">

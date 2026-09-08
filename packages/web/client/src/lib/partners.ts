@@ -56,3 +56,23 @@ export function loadNameIndex(
 ): Promise<NameIndexEntry[]> {
   return new StaticLookup(baseUrl, fetchImpl).nameIndex();
 }
+
+/** ONE LOAD PER SESSION (spec 2026-09-08 part 1). `loadNameIndex` builds a fresh `StaticLookup` per
+ *  call; the Cache API keeps the second fetch cheap but the 1.5 MB parse is paid again, and the
+ *  header field on every page would pay it beside the Cards page's own. Keyed by base URL because
+ *  tests and the dev server use different ones. An empty answer is forgotten so the next focus
+ *  retries: `nameIndex()` resolves to [] on a miss rather than throwing. */
+const shared = new Map<string, Promise<NameIndexEntry[]>>();
+
+export function sharedNameIndex(baseUrl: string, fetchImpl: typeof fetch = fetch): Promise<NameIndexEntry[]> {
+  const hit = shared.get(baseUrl);
+  if (hit) return hit;
+  const p = loadNameIndex(baseUrl, fetchImpl);
+  shared.set(baseUrl, p);
+  p.then((index) => { if (index.length === 0 && shared.get(baseUrl) === p) shared.delete(baseUrl); })
+    .catch(() => { if (shared.get(baseUrl) === p) shared.delete(baseUrl); });
+  return p;
+}
+
+/** Tests only: forget every cached load. */
+export function resetSharedNameIndex(): void { shared.clear(); }

@@ -7,6 +7,7 @@ import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
 import { CardPage } from "./components/CardPage.js";
 import { RouteMarker } from "./components/RouteMarker.js";
+import { HeaderSearch } from "./components/HeaderSearch.js";
 import { CardSearch } from "./components/CardSearch.js";
 import { CommanderPage } from "./components/CommanderPage.js";
 import { BrowserRouter, Route, Routes } from "react-router";
@@ -338,6 +339,9 @@ export default function App() {
       * edge of the viewport. Caught on a screenshot, which is the only way that class of defect is
       * ever caught: every test passed, because a test asks what is on the page and not where. */}
     <RouteMarker />
+    {/* THE SEARCH FIELD ON EVERY APP PAGE (spec 2026-09-08 part 1). Outside `<Routes>`, because it
+      *  is the header's, not any page's; a portal, because the header is static HTML. */}
+    <HeaderSearch />
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
     <Routes>
       <Route path="/cards" element={<CardSearch />} />

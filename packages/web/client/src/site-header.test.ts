@@ -106,3 +106,20 @@ describe("the header menu closes the two ways the element cannot", () => {
     expect(() => pressOn(outside)).not.toThrow();
   });
 });
+
+/** THE FIELD IS RUNTIME, THE HEADER IS STATIC (spec 2026-09-08 part 1). `HeaderSearch` portals into
+ *  `.site-header`; nothing in either page's HTML may carry it, or the two headers stop being
+ *  byte-identical and the docs page starts shipping a field it cannot run. And the app has to mount
+ *  it OUTSIDE its routes, or a page would exist without it. */
+test("neither static header carries the search field; the app mounts it once, outside the routes", () => {
+  for (const file of ["index.html", "how-it-works/index.html"]) {
+    expect(readFileSync(join(CLIENT, file), "utf8")).not.toContain("site-search");
+  }
+  const app = readFileSync(join(CLIENT, "src", "App.tsx"), "utf8");
+  expect(app.match(/<HeaderSearch \/>/g)).toHaveLength(1);
+  // Outside every `<Routes>` block: each one opened before the mount is closed before it. (App has
+  // two blocks, the legacy redirects and the pages, so "before the first" would be the wrong test.)
+  // Tags on their own line, so a comment that mentions `<Routes>` does not count as one.
+  const before = app.slice(0, app.indexOf("<HeaderSearch />"));
+  expect(before.match(/^\s*<Routes>\s*$/gm)?.length ?? 0).toBe(before.match(/^\s*<\/Routes>\s*$/gm)?.length ?? 0);
+});
