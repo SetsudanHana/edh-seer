@@ -33,7 +33,8 @@ import { emblemRecipient } from "../emblem.js";
 // 701.25 / 701.17 / 701.23), and the tutor gate in edges.ts now reads `search` directly.
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
-export const DERIVE_VERSION = 115;
+// 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
+export const DERIVE_VERSION = 116;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -357,8 +358,13 @@ const MULTIPLIER_VERBS: ReadonlySet<string> = new Set(["double", "triple"]);
  *  by a player and not by this engine. */
 const UNEXPRESSIBLE_NARROWING = /\bwith counters on (?:them|it)\b|\bequipped creature\b|\benchanted creature\b/i;
 
+// "HER" AND "HIM" ARE PRONOUNS TOO. The Origins flip-walkers and their kin say "exile her, then
+// return her to the battlefield" where every other card says "it"; nine corpus cards, all
+// planeswalkers. Unlisted, "her" parsed as a noun with no class and the re-entry became an
+// untyped `enters` with no self flag -- the wildcard shape this file's own comments warn about --
+// so Chandra, Fire of Kaladesh "supplied" Horn of Gondor's own ETB (owner, 2026-09-08).
 const PRONOUN_OBJECT =
-  /^(?:(?:the |that |those )?(?:searched|exiled|chosen) cards?|that cards?|those cards|it|them|the cards?|one|one of those cards)$/i;
+  /^(?:(?:the |that |those )?(?:searched|exiled|chosen) cards?|that cards?|those cards|it|them|her|him|herself|himself|the cards?|one|one of those cards)$/i;
 
 /** The effect's subject, with the origin zone restored for the kinds that are defined by it. The
  *  clause states the zone on the ACTION (`fromZone: "graveyard"`), never inside the object text, so

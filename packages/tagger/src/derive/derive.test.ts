@@ -2161,3 +2161,29 @@ test("an emblem grant's control is the recipient the sentence names", () => {
   expect(grant("Chandra deals 6 damage to each opponent. Each player dealt damage this way gets an emblem with that ability.")).toBe("opp");
   expect(grant("You get an emblem with that ability.")).toBe("you");
 });
+
+/** "EXILE HER, THEN RETURN HER TO THE BATTLEFIELD" (owner, 2026-09-08, the Chandra, Fire of Kaladesh
+ *  page: Horn of Gondor's own ETB read as supplied by Chandra). The Origins flip-walkers and their
+ *  kin say "her" and "him" where every other card says "it", and the pronoun list did not know the
+ *  words, so "her" parsed as a noun with no class: an untyped `enters` emit with no self flag, a
+ *  wildcard that satisfied every entry trigger in the deck. Nine corpus cards, all planeswalkers. */
+test("a gendered pronoun for the card itself is a self reference, not a wildcard", () => {
+  const { abilities } = deriveAbilities([{
+    id: 2, abilityType: "activated",
+    actions: [
+      { verb: "deal-damage", object: "target player or planeswalker", amount: "1" },
+      { verb: "exile", object: "Chandra" },
+      { verb: "return", object: "her", fromZone: "exile", toZone: "battlefield" },
+    ],
+  }], "Chandra, Fire of Kaladesh // Chandra, Roaring Flame",
+  { 2: "Chandra deals 1 damage to target player or planeswalker. If Chandra has dealt 3 or more damage this turn, exile her, then return her to the battlefield transformed under her owner's control." },
+  { 2: "{T}" });
+  const enters = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters).toBeDefined();
+  expect(enters!.subject.self).toBe(true);
+  const ajani = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "a Cat you control", control: "you" },
+    actions: [{ verb: "exile", object: "Ajani" }, { verb: "return", object: "him", fromZone: "exile", toZone: "battlefield" }],
+  }], "Ajani, Nacatl Pariah // Ajani, Nacatl Avenger", { 1: "Whenever a Cat you control dies, you may exile Ajani, then return him to the battlefield transformed under his owner's control." });
+  expect(ajani.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters")!.subject.self).toBe(true);
+});
