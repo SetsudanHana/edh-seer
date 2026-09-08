@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
+import { PageFoot } from "./components/PageFoot.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
 import { CardPage } from "./components/CardPage.js";
@@ -455,6 +456,10 @@ export default function App() {
       {data && (
         <div className="reveal">
           <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
+          {/* THE REPORT ENDS ON PURPOSE. It used to stop at its last panel, and the only route from a
+            *  finished report to "how was any of this decided" was the header's More menu; the card
+            *  and commander pages have carried this foot since they were built. */}
+          <div className="max-w-[68ch]"><PageFoot /></div>
         </div>
       )}
       {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after

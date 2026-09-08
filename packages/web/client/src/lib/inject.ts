@@ -81,6 +81,18 @@ export interface InjectedPage {
   indexable: boolean;
   /** Already-escaped HTML. Built by `cardPageHtml` below, never by a caller pasting strings. */
   bodyHtml: string;
+  /** THE CARD'S OWN IMAGE, for the share card and for the paint.
+   *
+   *  Every card page sent the site's one generic `og-image.png` (all 17,338 of them, 2026-09-08),
+   *  so a link pasted into Discord or Reddit showed a wordmark where the card would have been. The
+   *  same URL is also preloaded: the `<img>` the app renders for it is the page's largest paint,
+   *  and it used to wait for the bundle before its request could begin (Lighthouse mobile LCP
+   *  4.4 s on `/cards/skullclamp`, `lcp-lazy-loaded` failing).
+   *
+   *  THE WHOLE CARD, NOT THE ART CROP -- the licence line `CardArt` already argues: the crop would
+   *  oblige an artist credit the corpus does not hold, and the card prints its own. Omitted when
+   *  the record has no image, and then nothing in the head changes. */
+  image?: string;
   /** THE RECORD THE PAGE IS ABOUT, HANDED TO THE APP INSTEAD OF FETCHED.
    *
    *  WITHOUT THIS, GOOGLE INDEXES EVERY CARD PAGE AS A 404, and the chain that produced it is four
@@ -124,6 +136,28 @@ export function injectPage(shell: string, page: InjectedPage): string {
       `<meta property="og:description" content="${esc(page.description)}" />`)
     .replace(/<meta property="og:url" content="[^"]*"\s*\/?>/,
       `<meta property="og:url" content="${esc(page.canonical)}" />`);
+
+  if (page.image !== undefined) {
+    const image = esc(page.image);
+    out = out
+      .replace(/<meta property="og:image" content="[^"]*"\s*\/?>/,
+        `<meta property="og:image" content="${image}" />`)
+      // Scryfall's `normal` size, the one `cardImageUrl` asks for.
+      .replace(/<meta property="og:image:width" content="[^"]*"\s*\/?>/,
+        '<meta property="og:image:width" content="488" />')
+      .replace(/<meta property="og:image:height" content="[^"]*"\s*\/?>/,
+        '<meta property="og:image:height" content="680" />')
+      .replace(/<meta property="og:image:alt" content="[^"]*"\s*\/?>/,
+        `<meta property="og:image:alt" content="${esc(page.title)}" />`)
+      // A card is portrait. `summary_large_image` crops a landscape band out of its middle;
+      // `summary` shows the whole thing small, which is the card.
+      .replace(/<meta name="twitter:card" content="[^"]*"\s*\/?>/,
+        '<meta name="twitter:card" content="summary" />')
+      .replace(/<meta name="twitter:image" content="[^"]*"\s*\/?>/,
+        `<meta name="twitter:image" content="${image}" />`)
+      .replace("</head>",
+        `  <link rel="preload" as="image" href="${image}" fetchpriority="high" />\n  </head>`);
+  }
 
   // A PAGE THAT PROMISES NOTHING DOES NOT ENTER THE INDEX. It still renders -- the reporting
   // surface wants every card reachable -- but a card with no partners has no content a search

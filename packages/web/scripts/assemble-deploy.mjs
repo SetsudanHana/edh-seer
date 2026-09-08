@@ -13,7 +13,7 @@
  *  rather than from a git push, and it is a fact about the data plane, not a preference.
  *
  *  Usage: `npm run deploy -w @edh-seer/web` (see that script; this runs after the client build). */
-import { cpSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
@@ -45,6 +45,19 @@ if (!existsSync(join(dist, "index.html"))) {
 
 rmSync(target, { recursive: true, force: true });
 cpSync(staticOut, target, { recursive: true });
+
+// `/how-it-works` IS SERVED, NOT REDIRECTED. Vite emits the second entry as
+// `how-it-works/index.html`, and Pages answers the extensionless URL for a directory index with a
+// 308 to the slash form -- so the canonical URL, the sitemap URL and every inbound link took a
+// redirect on each visit (measured 2026-09-08). Pages serves `<name>.html` at `/<name>` directly and
+// 308s `/<name>/` and `/<name>.html` back to it, which is the shape the canonical tag already
+// states. Renamed here rather than in the Vite config because the config's input path is what
+// gives the dev server the same URL, and the dev server has no such redirect to avoid.
+const docsDir = join(dist, "how-it-works");
+if (existsSync(join(docsDir, "index.html"))) {
+  renameSync(join(docsDir, "index.html"), join(dist, "how-it-works.html"));
+  rmSync(docsDir, { recursive: true, force: true });
+}
 
 // THE SERVICE WORKER IS WRITTEN HERE because only now do the shell's filenames exist: Vite content-
 // hashes its output, so the precache list cannot be typed into a file checked into `public/`. The

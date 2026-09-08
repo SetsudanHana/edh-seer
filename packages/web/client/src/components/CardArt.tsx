@@ -20,8 +20,12 @@ import { cardImageUrl } from "./card-node.js";
  *  the reader has seen what the page is about. A flip is the affordance every other Magic tool
  *  already teaches, and it costs one piece of state.
  *
- *  Lazy and async: it is never the reason a page takes longer to become readable, and the aspect
- *  ratio is fixed so nothing below it moves when the picture lands. */
+ *  EAGER AND HIGH PRIORITY, because it IS the paint the page is waiting for. It was lazy on the
+ *  theory that it should never delay readability; Lighthouse mobile measured the opposite on
+ *  2026-09-08 -- this `<img>` is the LCP element on every card page, 4.4 s, and `lazy` made its
+ *  request wait for layout and the bundle. The edge now also preloads the same URL from the head
+ *  (`inject.ts`), so the bytes are in flight before React exists. The aspect ratio stays fixed so
+ *  nothing below it moves when the picture lands. */
 export function CardArt(
   { artCrop, backArtCrop = null, name }:
   { artCrop: string | null; backArtCrop?: string | null; name: string },
@@ -47,7 +51,8 @@ export function CardArt(
       <img
         src={src}
         alt={`${facing} — the card, including its rules text and artist credit`}
-        loading="lazy"
+        loading="eager"
+        fetchPriority="high"
         decoding="async"
         width={488}
         height={680}
