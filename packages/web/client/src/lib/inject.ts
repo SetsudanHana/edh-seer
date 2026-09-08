@@ -227,7 +227,7 @@ export function cardPageHtml(
     : `    <p><a href="/cards/${esc(slug)}">What the engine reads on this card</a></p>\n`;
   const partners = card.partners.length === 0
     ? "    <p>No partners specific enough to list.</p>"
-    : `    <h3>Most specific partners</h3>\n    <ol>\n${rows}\n    </ol>`;
+    : `    <h3>Partners</h3>\n    <ol>\n${rows}\n    </ol>`;
   return `    <section class="prerendered">
     <h2>${esc(card.name)}</h2>
     <p>${esc(card.typeLine)}</p>
