@@ -80,3 +80,13 @@ test("loadTokenTags: a `tokens` row with no derived row synthesizes; one with a 
   const wizard = lookup({ name: "Wizard", typeLine: "Token Creature — Wizard", printingId: "wizard-printing" });
   expect(wizard).toBe(derivedRow); // the REAL bought row, not a synthesized stand-in
 });
+
+test("a layout-emblem row synthesizes emblem:true, token:false characteristics", () => {
+  const tags = synthesizeTokenTags({
+    _id: "emblem-oracle", name: "Elspeth, Knight-Errant Emblem", typeLine: "Emblem — Elspeth",
+    layout: "emblem", printingIds: ["p"],
+  });
+  expect(tags.characteristics.emblem).toBe(true);
+  expect(tags.characteristics.token).toBe(false);
+  expect(tags.characteristics.types).toEqual(["emblem"]);
+});

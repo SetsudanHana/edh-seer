@@ -30,3 +30,12 @@ test("only token parts count, and a card with none yields none", () => {
   ]))).toEqual([]);
   expect(createdTokenRefs(card(undefined))).toEqual([]);
 });
+
+/** AN EMBLEM PART IS A REF (spec 2026-09-08). Scryfall lists it as a combo_piece with an
+ *  "Emblem — …" type line; every other combo_piece still points at a real card and is excluded. */
+test("an Emblem combo_piece is a ref flagged emblem; a card combo_piece is not", () => {
+  expect(createdTokenRefs(card([
+    { component: "combo_piece", name: "Chandra, Roaring Flame Emblem", typeLine: "Emblem — Chandra", printingId: "4a8123a6" },
+    { component: "combo_piece", name: "Magic Origins Checklist", typeLine: "Card", printingId: "f3dcc7b5" },
+  ]))).toEqual([{ name: "Chandra, Roaring Flame Emblem", typeLine: "Emblem — Chandra", printingId: "4a8123a6", emblem: true }]);
+});

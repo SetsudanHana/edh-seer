@@ -667,3 +667,10 @@ test("start your engines! watches an opponent losing life and gains speed", () =
   // The PLAYER's marker, not the card's: the effect names you, as a lifegain does.
   expect(a[0].effect.subject?.control).toBe("you");
 });
+
+/** CR 114.1: an emblem is not a permanent and not a card. Nothing is implied for it -- no cast (it
+ *  is never cast), no enters, no dies. Its only events are the ones its own abilities author. */
+test("an emblem implies nothing", () => {
+  const emblem: Characteristics = { ...chars(["emblem"], ["chandra"]), emblem: true };
+  expect(impliedEvents(emblem)).toEqual([]);
+});
