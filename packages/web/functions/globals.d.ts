@@ -8,9 +8,12 @@
  *
  *  CEILING: this is the shape this repo uses, not Cloudflare's full definition -- adding
  *  `@cloudflare/workers-types` would be a dependency for a single type. Upgrade to the real package
- *  the first time a Function needs more of the runtime than `request`, `env.ASSETS` and `params`. */
+ *  the first time a Function needs more of the runtime than `request`, `env.ASSETS`, `params` and
+ *  `next` (added 2026-09-08 for `_middleware.ts`, and only it calls it). */
 declare type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env & { ASSETS: { fetch: (input: Request | string) => Promise<Response> } };
   params: Record<string, string | string[]>;
+  /** Middleware only: hands the request to the next Function, or to the asset store. */
+  next: () => Promise<Response>;
 }) => Response | Promise<Response>;
