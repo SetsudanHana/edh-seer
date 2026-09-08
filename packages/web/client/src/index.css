@@ -1656,4 +1656,7 @@ html[data-app-booted][data-route="page"] .intro { display: none; }
   padding: 0;
   margin: 0;
 }
-.browse-list li { break-inside: avoid; padding: 0.15rem 0; }
+.browse-list li { break-inside: avoid; }
+/* A ROW IS THE TARGET (cohesion sweep 2026-09-08, finding 7): 995 links at 19px on a letter page.
+   Block, with the row's padding inside the link, so the whole line answers a thumb. */
+.browse-list li a { display: block; padding-block: 0.3rem; }

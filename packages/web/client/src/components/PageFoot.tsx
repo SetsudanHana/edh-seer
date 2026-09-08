@@ -17,9 +17,9 @@ export function PageFoot() {
   return (
     <nav className="border-t border-(--separator) pt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm">
       {links.map((l) => (
-        <Link key={l.to} className="text-(--accent) hover:underline" to={l.to}>{l.label}</Link>
+        <Link key={l.to} className="inline-flex items-center min-h-6 text-(--accent) hover:underline" to={l.to}>{l.label}</Link>
       ))}
-      <a className="text-(--accent) hover:underline" href="/how-it-works">How the engine decides</a>
+      <a className="inline-flex items-center min-h-6 text-(--accent) hover:underline" href="/how-it-works">How the engine decides</a>
     </nav>
   );
 }
