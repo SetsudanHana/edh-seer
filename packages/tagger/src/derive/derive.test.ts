@@ -2142,3 +2142,22 @@ test("a real scry trigger survives the phantom guard because the card prints the
   expect(out.abilities[0]?.trigger?.verbs).toEqual(["scry"]);
   expect(out.unknownTriggers).toEqual([]);
 });
+
+/** CR 114.2: the player who gets the emblem owns and controls it. Chandra, Roaring Flame's −7 gives
+ *  it to each opponent she hits; Elspeth gives it to you. The clause object says only "an emblem
+ *  with that ability", so the control is read off the printed sentence (`emblemRecipient`). */
+test("an emblem grant's control is the recipient the sentence names", () => {
+  const grant = (text: string) => {
+    const clauses = [{
+      id: 5, abilityType: "activated" as const,
+      actions: [
+        { verb: "deal-damage", object: "each opponent", fromZone: null, toZone: null, amount: "6", optional: false },
+        { verb: "emblem", object: "an emblem with that ability", fromZone: null, toZone: null, amount: null, optional: false },
+      ],
+    }];
+    const { abilities } = deriveAbilities(clauses, "Chandra, Roaring Flame", { 5: text }, { 5: "−7" });
+    return abilities.find((a) => a.effect.kind === "emblem")!.effect.subject!.control;
+  };
+  expect(grant("Chandra deals 6 damage to each opponent. Each player dealt damage this way gets an emblem with that ability.")).toBe("opp");
+  expect(grant("You get an emblem with that ability.")).toBe("you");
+});
