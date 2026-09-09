@@ -29,6 +29,7 @@ const TESTED: Record<string, string> = {
   "701.44": "verb-accounting.test.ts — explore is OPEN, a conditional outcome emits nothing",
   "705": "verb-accounting.test.ts — flip-coin is OPEN",
   "706.1": "emits — roll-dice emits dice-rolled (706.1 defines the roll)",
+  "705.1": "emits — a coin is flipped by the ability's controller; flip-coin joins CONTROLLER_DEFAULT (AC11 batch 4)",
   "706": "verb-accounting.test.ts / emits — roll-dice emits dice-rolled",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */

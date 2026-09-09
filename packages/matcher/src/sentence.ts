@@ -244,6 +244,12 @@ export const VERB_PHRASES: Record<string, string> = {
   airbend: "airbends",
   waterbend: "waterbends",
   foretell: "foretells",
+  // AC11 batch 4, the designations.
+  "flip-coin": "flips a coin",
+  monarch: "makes you the monarch",
+  initiative: "gives you the initiative",
+  "city-blessing": "gives you the city's blessing",
+  "ring-tempts": "has the Ring tempt you",
   "loses-game": "makes a player lose the game",
   "gain-life": "gains life",
   "lose-life": "makes a player lose life",

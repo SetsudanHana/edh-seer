@@ -257,14 +257,17 @@ test("a keyword action emits its own event (every-event ruling)", () => {
   expect(actionEmits({ verb: "clash", object: "an opponent" }, "Clash with an opponent.")[0]?.subject.control).toBe("you");
 });
 
-test("rolling dice emits the event 7 corpus consumers watch; flipping a coin emits nothing", () => {
+test("rolling dice and flipping a coin each emit their event", () => {
   // CR 706.1 — 162 corpus cards instruct a roll against 7 that trigger on one, so supply was never
   // the scarce side; it simply had no verb to arrive as.
   expect(actionEmits({ verb: "roll-dice", object: "a d20" }).map((e) => e.verb)).toEqual(["dice-rolled"]);
-  // CR 705 — 81 cards flip and ZERO trigger on another card's flip. A flip is self-contained
-  // ("flip a coin. If you win the flip, ..."), and even Okaun and Zndrsplt flip and pay off on one
-  // card. A word with no event, like goad and vote.
-  expect(actionEmits({ verb: "flip-coin", object: "a coin" })).toEqual([]);
+  // CR 705 — this test used to pin "a flip is self-contained, no event". The 2026-09-09 census over
+  // the commander-legal corpus counted 27 cards printing "whenever you flip a coin" and 6 more on
+  // winning a flip, and the every-event ruling gives it a name (AC11 batch 4). The flip is the
+  // FLIPPER's: "flip a coin" names nobody, so the controller default applies from the sentence.
+  const flip = actionEmits({ verb: "flip-coin", object: "a coin" }, "Flip a coin.");
+  expect(flip.map((e) => e.verb)).toEqual(["flip-coin"]);
+  expect(flip[0]?.subject.control).toBe("you");
 });
 
 // FAMILY A (panel, 2026-08-20): an UNSTATED controller is the ability's controller, not a wildcard

@@ -389,7 +389,17 @@ export type Verb =
   | "face-a-villainous-choice"
   | "airbend"
   | "waterbend"
-  | "foretell";
+  | "foretell"
+  /** AC11 BATCH 4 (2026-09-09): the designations and the coin. A coin flipped (CR 705; 65
+   *  producers, 27 consumers "whenever you flip a coin" plus 6 "win a flip"), becoming the monarch
+   *  (CR 725; 55 / 27), taking the initiative (CR 726; 23 / 20), the city's blessing (CR 702.131;
+   *  2 / 2) and the Ring tempting you (CR 701.54; 49 / 19). The object of every one is the
+   *  PLAYER, so the emit's subject is the player (RECIPIENT_VERBS) and a flip is the flipper's. */
+  | "flip-coin"
+  | "monarch"
+  | "initiative"
+  | "city-blessing"
+  | "ring-tempts";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -480,6 +490,12 @@ export const VERB_VOCAB: readonly Verb[] = [
   "airbend",
   "waterbend",
   "foretell",
+  // AC11 batch 4, designations (2026-09-09): see the union comment.
+  "flip-coin",
+  "monarch",
+  "initiative",
+  "city-blessing",
+  "ring-tempts",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */

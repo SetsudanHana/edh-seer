@@ -34,7 +34,10 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // union comment. Fourteen at once because the shape is one shape.
   // 45 -> 67 on 2026-09-09 for AC11 batch 3, the 22 CR 701 keyword actions the rules give no
   // primitive: each emits under its own name so the card that watches it can join. One shape.
-  expect(VERB_VOCAB).toHaveLength(67);
+  // 67 -> 72 on 2026-09-09 for AC11 batch 4, the designations: flip-coin, monarch, initiative,
+  // city-blessing, ring-tempts. The last OPEN rows of the every-event queue except `play`.
+  expect(VERB_VOCAB).toHaveLength(72);
+  for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["goad", "explore", "clash", "vote", "venture-into-the-dungeon", "foretell"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);
   expect(VERB_VOCAB).toContain("counter-removed");
