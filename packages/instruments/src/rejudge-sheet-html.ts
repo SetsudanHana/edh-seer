@@ -231,12 +231,15 @@ ${lineBuilder}    function refresh() {
 </script>`;
 }
 
-/** What `rejudge-sheet.ts` stores for a PAIRWISE verdict. Unchanged by the extraction. */
-const LINE_BUILDER = `    function line(i) {
+/** What `rejudge-sheet.ts` stores for a PAIRWISE verdict. The note prefix is the sheet's own --
+ *  it read "cost-reduction re-judge, 2026-08-20" on every sheet until the 2026-09-09 debt sheet
+ *  came back stamped with a date three weeks old. Only the `USER VERDICT` head is load-bearing
+ *  (`mergeVerdicts` reads it); the rest is provenance, and provenance has to be true. */
+const lineBuilder = (notePrefix: string): string => `    function line(i) {
       return JSON.stringify({
         producer: rows[i].producer, consumer: rows[i].consumer, tag: rows[i].tag,
         verdict: verdicts[i], cause: "",
-        note: "USER VERDICT (cost-reduction re-judge, 2026-08-20). " + (notes[i] || "")
+        note: ${JSON.stringify(notePrefix)} + (notes[i] || "")
       });
     }
 `;
@@ -256,7 +259,7 @@ const cardPanel = (c: SheetCard, role: string): string => `
         <div class="oracle">${esc(c.oracle).split("\n").map((l) => `<p>${l}</p>`).join("")}</div>
       </div>`;
 
-export function renderSheet(rows: SheetRow[], tag: string, want: string): string {
+export function renderSheet(rows: SheetRow[], tag: string, want: string, notePrefix = "USER VERDICT. "): string {
   const claims = rows.map((r, i) => `
     <article class="claim" id="claim-${i}" data-index="${i}">
       <header class="claim-head">
@@ -320,6 +323,6 @@ ${SHEET_CSS}
 </div>
 
 <script id="rows" type="application/json">${JSON.stringify(rows.map((r) => ({ producer: r.producer.name, consumer: r.consumer.name, tag: r.tag }))).replace(/</g, "\\u003c")}</script>
-${sheetScript(LINE_BUILDER)}
+${sheetScript(lineBuilder(notePrefix))}
 `;
 }
