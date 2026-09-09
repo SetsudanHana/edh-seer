@@ -39,12 +39,7 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
   play: { cards: 250, note: "CR 305.1 / 116.2a. The TRIGGER `play` maps to `land-play` when its subject is a land (batch 2); the ACTION 'play that card' emits land-play only for a land, and a card played from exile has no event yet" },
   amass: { cards: 0, note: "CR 701.44; `amass` (26 consumers). Has the kind `counter-placement`, emits nothing — the Army token and its counters are the AC11 row" },
   // --- CR 701 keyword actions the rules give no primitive — CLOSED 2026-09-09 (AC11 batch 3).
-  // --- CR 705 / 725-731 designations
-  "flip-coin": { cards: 65, note: "CR 705; `flip-coin` (27 flip, 6 'win a flip')" },
-  monarch: { cards: 55, note: "CR 725; `monarch` (27)" },
-  initiative: { cards: 23, note: "CR 726; `initiative` (20)" },
-  "city-blessing": { cards: 2, note: "CR 702.131; `city-blessing`" },
-  "ring-tempts": { cards: 49, note: "CR 701.54; `ring-tempts` (19)" },
+  // --- CR 705 / 725-731 designations — CLOSED 2026-09-09 (AC11 batch 4).
 };
 
 /** Every engine event -> the clause word a consumer says. The reverse of `CLAUSE_TRIGGER_TO_VERB`
@@ -82,6 +77,11 @@ export const ENGINE_TO_TRIGGER: Record<string, string> = {
   airbend: "airbend",
   waterbend: "waterbend",
   foretell: "foretell",
+  "flip-coin": "flip-coin",
+  monarch: "monarch",
+  initiative: "initiative",
+  "city-blessing": "city-blessing",
+  "ring-tempts": "ring-tempts",
 };
 
 /** TRIGGERS words that map to NO engine verb, each with the reason, so `unknownTriggers` at runtime
@@ -90,8 +90,10 @@ export const ENGINE_TO_TRIGGER: Record<string, string> = {
 const PHASE_WORDS = ["draw-step", "main-phase", "combat-damage-step", "untap-step", "declare-attackers", "declare-blockers", "end-of-combat", "cleanup"];
 const TEXT_SPLIT = ["damage-dealt"];
 /** The trigger side of a verb in OPEN (or its passive spelling): the emit is the queue item. */
-const AWAITING_EMIT = ["flip-coin", "monarch", "initiative", "city-blessing", "ring-tempts", "play",
-  "roll-dice", "dungeon-completed"];
+/** After the four AC11 batches of 2026-09-09, two remain: `play` (a card played from exile has no
+ *  event; a land played maps to land-play at the trigger site) and `dungeon-completed` (a state
+ *  reached after several ventures, which no single action performs). */
+const AWAITING_EMIT = ["play", "dungeon-completed"];
 /** Keyword actions whose PRIMITIVE is emitted (connive emits draw+discard) while the word itself
  *  waits for an emit row named after the action, so "whenever a creature connives" can join. */
 const PRIMITIVE_EMITTED = ["connive", "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate",

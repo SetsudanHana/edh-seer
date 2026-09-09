@@ -92,6 +92,12 @@ const EMITS: Record<string, Verb[]> = {
   airbend: ["airbend"],
   waterbend: ["waterbend"],
   foretell: ["foretell"],
+  // AC11 batch 4: the designations and the coin, each its own name.
+  "flip-coin": ["flip-coin"],
+  monarch: ["monarch"],
+  initiative: ["initiative"],
+  "city-blessing": ["city-blessing"],
+  "ring-tempts": ["ring-tempts"],
 
   // KEYWORD ACTIONS, EXPANDED INTO THE PRIMITIVES THEY ARE (owner's ruling 2026-08-15).
   //
@@ -268,6 +274,8 @@ function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean
 const CONTROLLER_DEFAULT: ReadonlySet<string> = new Set([
   "draw", "mill", "discard", "sacrifice", "search", "scry", "surveil", "add-mana", "create",
   "gain-life", "lose-life",
+  // A coin is flipped by the ability's controller (CR 705.1); "flip a coin" names nobody.
+  "flip-coin",
 ]);
 
 /** Does the text name a player at all? 226 of the 6,729 `any` objects do, and they are the ones the
@@ -288,6 +296,8 @@ const ACTOR_IS_THE_EVENT: ReadonlySet<string> = new Set(["gains-control", "clash
 
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
   "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "loses-game",
+  // AC11 batch 4: "you become the monarch", "you take the initiative" — the object IS the player.
+  "monarch", "initiative", "city-blessing", "ring-tempts",
 ]);
 
 /** An object that IS a player. "target spell's controller", "that player's owner", "you", "each

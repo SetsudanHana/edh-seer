@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 120;
+export const DERIVE_VERSION = 121;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -143,6 +143,8 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   countered: "counter-spell",
   // AC11 batch 2: the passive clause words for the CR 4xx/7xx object events.
   shuffled: "shuffle",
+  // Two clause spellings of one event (both legal since 2026-08-15); the engine has one name.
+  "roll-dice": "dice-rolled",
 };
 
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving

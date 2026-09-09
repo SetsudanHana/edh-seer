@@ -137,6 +137,12 @@ export const DEMAND_SUBJECTLESS: Record<string, string> = {
   "venture-into-the-dungeon": "venturing into the dungeon",
   "face-a-villainous-choice": "a villainous choice",
   waterbend: "waterbending",
+  // AC11 batch 4, the designations: player events, no permanent subject.
+  "flip-coin": "a coin being flipped",
+  monarch: "becoming the monarch",
+  initiative: "taking the initiative",
+  "city-blessing": "gaining the city's blessing",
+  "ring-tempts": "the Ring tempting you",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
