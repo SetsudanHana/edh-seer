@@ -51,6 +51,8 @@ export const DEMAND_VERB: Record<string, string> = {
   sacrifice: "being sacrificed",
   "create-token": "being created",
   "counter-added": "getting a counter",
+  // CR 701.5, verb added 2026-09-09 (the Baral witness).
+  "counter-spell": "being countered",
   "land-play": "being played",
 };
 

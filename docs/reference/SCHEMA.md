@@ -21,11 +21,11 @@ one of these re-buys the corpus and the rest are free.
 
 | constant | value | what it is |
 |---|---|---|
-| `NORMALIZE_VERSION` | **19** | Bump when ANYTHING that determines the request changes: SYSTEM, VERBS, TRIGGERS, ZONES — and `segment.ts`, because the segmenter decides which clauses exist and what ids they carry. |
+| `NORMALIZE_VERSION` | **20** | Bump when ANYTHING that determines the request changes: SYSTEM, VERBS, TRIGGERS, ZONES — and `segment.ts`, because the segmenter decides which clauses exist and what ids they carry. |
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
-| `VOCAB_VERSION` | **19** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
-| `TRIGGER_VOCAB_VERSION` | **18** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **116** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
+| `TRIGGER_VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
+| `DERIVE_VERSION` | **117** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -38,18 +38,18 @@ and not persisted** — the card re-queues rather than banking a guess. They are
 game can express (the Comprehensive Rules), not against what the current decks happen to play,
 because normalization is a one-way ratchet: nobody re-runs 36,000 cards to add a word.
 
-### VERBS — 98 members
+### VERBS — 99 members
 
 The action a clause performs. Defined in [`VERBS`](../../packages/tagger/src/normalize-prompt.ts).
 
-`destroy`, `exile`, `sacrifice`, `tap`, `untap`, `draw`, `discard`, `mill`, `search`, `put`, `return`, `create`, `counter-spell`, `copy`, `gain-life`, `lose-life`, `deal-damage`, `add-mana`, `add-counter`, `remove-counter`, `grant-ability`, `modify-pt`, `prevent`, `cast`, `play`, `shuffle`, `reveal`, `attach`, `transform`, `trigger-again`, `extra-turn`, `extra-combat`, `animate`, `cant`, `emblem`, `fight`, `set-life`, `proliferate`, `scry`, `surveil`, `cost-modify`, `amass`, `turn-face-up`, `extra-phase`, `connive`, `recruit`, `bolster`, `support`, `adapt`, `monstrosity`, `blight`, `investigate`, `populate`, `incubate`, `manifest`, `discover`, `meld`, `cloak`, `manifest-dread`, `earthbend`, `goad`, `regenerate`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `exchange`, `convert`, `double`, `triple`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `waterbend`, `airbend`, `ring-tempts`, `roll-dice`, `flip-coin`, `initiative`, `city-blessing`, `gain-control`, `phase-out`, `monarch`, `foretell`, `win-game`, `lose-game`, `other`, `none`
+`destroy`, `exile`, `sacrifice`, `tap`, `untap`, `draw`, `discard`, `mill`, `search`, `put`, `return`, `create`, `counter-spell`, `copy`, `gain-life`, `lose-life`, `deal-damage`, `add-mana`, `add-counter`, `remove-counter`, `grant-ability`, `modify-pt`, `prevent`, `cast`, `play`, `shuffle`, `reveal`, `attach`, `transform`, `trigger-again`, `extra-turn`, `extra-combat`, `animate`, `cant`, `emblem`, `fight`, `set-life`, `proliferate`, `scry`, `surveil`, `cost-modify`, `amass`, `turn-face-up`, `extra-phase`, `connive`, `recruit`, `bolster`, `support`, `adapt`, `monstrosity`, `blight`, `investigate`, `populate`, `incubate`, `manifest`, `discover`, `meld`, `cloak`, `manifest-dread`, `earthbend`, `goad`, `regenerate`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `exchange`, `convert`, `double`, `triple`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `waterbend`, `airbend`, `ring-tempts`, `roll-dice`, `flip-coin`, `initiative`, `city-blessing`, `gain-control`, `phase-out`, `monarch`, `foretell`, `win-game`, `lose-game`, `unattach`, `other`, `none`
 
 
-### TRIGGERS — 134 members
+### TRIGGERS — 135 members
 
 The event a triggered ability watches for. Defined in [`TRIGGERS`](../../packages/tagger/src/normalize-prompt.ts).
 
-`enters`, `dies`, `leaves`, `attacks`, `blocks`, `taps`, `untaps`, `cast`, `upkeep`, `begin-combat`, `end-step`, `draw`, `draw-step`, `main-phase`, `combat-damage-step`, `damage-dealt`, `life-gained`, `life-lost`, `counter-added`, `sacrificed`, `discarded`, `milled`, `turned-face-up`, `level-up`, `chapter`, `proliferate`, `search`, `becomes-target`, `scry`, `surveil`, `unlocked`, `transform`, `copy`, `crime`, `expend`, `descended`, `day-night`, `dice-rolled`, `dungeon-completed`, `monarch`, `ring-tempts`, `clash`, `untap-step`, `declare-attackers`, `declare-blockers`, `end-of-combat`, `cleanup`, `initiative`, `city-blessing`, `activate`, `connive`, `discover`, `explore`, `vote`, `manifest-dread`, `exiled`, `phases-out`, `create`, `reveal`, `recruit`, `bolster`, `support`, `adapt`, `monstrosity`, `blight`, `investigate`, `populate`, `incubate`, `manifest`, `meld`, `cloak`, `earthbend`, `goad`, `regenerate`, `exert`, `detain`, `suspect`, `harness`, `fateseal`, `behold`, `heal`, `exchange`, `convert`, `double`, `triple`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `waterbend`, `airbend`, `roll-dice`, `flip-coin`, `put-into-graveyard`, `becomes-crewed`, `loses-control`, `phases-in`, `tapped-for-mana`, `becomes-blocked`, `cycled`, `mutates`, `becomes-monstrous`, `play`, `fight`, `amass`, `exploit`, `shuffled`, `attached`, `prevented`, `gains-control`, `countered`, `firebend`, `reflexive`, `state`, `counter-removed`, `mana-spent`, `damaged`, `loses-game`, `unattached`, `returned-to-hand`, `put-into-library`, `becomes-renowned`, `becomes-saddled`, `plotted`, `foretell`, `give-gift`, `mentors`, `solved`, `resolves`, `other`, `none`
+`enters`, `dies`, `leaves`, `attacks`, `blocks`, `taps`, `untaps`, `cast`, `upkeep`, `begin-combat`, `end-step`, `draw`, `draw-step`, `main-phase`, `combat-damage-step`, `damage-dealt`, `life-gained`, `life-lost`, `counter-added`, `sacrificed`, `discarded`, `milled`, `turned-face-up`, `level-up`, `chapter`, `proliferate`, `search`, `becomes-target`, `scry`, `surveil`, `unlocked`, `transform`, `copy`, `crime`, `expend`, `descended`, `day-night`, `dice-rolled`, `dungeon-completed`, `monarch`, `ring-tempts`, `clash`, `untap-step`, `declare-attackers`, `declare-blockers`, `end-of-combat`, `cleanup`, `initiative`, `city-blessing`, `activate`, `connive`, `discover`, `explore`, `vote`, `manifest-dread`, `exiled`, `phases-out`, `create`, `reveal`, `recruit`, `bolster`, `support`, `adapt`, `monstrosity`, `blight`, `investigate`, `populate`, `incubate`, `manifest`, `meld`, `cloak`, `earthbend`, `goad`, `regenerate`, `exert`, `detain`, `suspect`, `harness`, `fateseal`, `behold`, `heal`, `exchange`, `convert`, `double`, `triple`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `waterbend`, `airbend`, `roll-dice`, `flip-coin`, `put-into-graveyard`, `becomes-crewed`, `loses-control`, `phases-in`, `tapped-for-mana`, `becomes-blocked`, `cycled`, `mutates`, `becomes-monstrous`, `play`, `fight`, `amass`, `exploit`, `shuffled`, `attached`, `prevented`, `gains-control`, `countered`, `firebend`, `reflexive`, `state`, `counter-removed`, `mana-spent`, `damaged`, `loses-game`, `unattached`, `returned-to-hand`, `put-into-library`, `becomes-renowned`, `becomes-saddled`, `plotted`, `foretell`, `give-gift`, `mentors`, `solved`, `resolves`, `evolve`, `other`, `none`
 
 
 ### ZONES — 7 members
@@ -68,11 +68,11 @@ Derivation maps the model's words onto these. The two lists are **not** the same
 be: the clause vocabulary describes what a sentence says, the engine vocabulary describes what the
 matcher can join on.
 
-### VERB_VOCAB — 28 members
+### VERB_VOCAB — 29 members
 
 The events a card can supply or watch for. Defined in [`VERB_VOCAB`](../../packages/tagger/src/schema.ts).
 
-`enters`, `enters-graveyard`, `dies`, `leaves`, `cast`, `attacks`, `taps`, `non-combat-damage`, `combat-damage`, `draw`, `discard`, `mill`, `gain-life`, `lose-life`, `sacrifice`, `create-token`, `counter-added`, `land-play`, `untaps`, `proliferate`, `unlock`, `upkeep`, `begin-combat`, `end-step`, `dice-rolled`, `scry`, `surveil`, `search`
+`enters`, `enters-graveyard`, `dies`, `leaves`, `cast`, `attacks`, `taps`, `non-combat-damage`, `combat-damage`, `draw`, `discard`, `mill`, `gain-life`, `lose-life`, `sacrifice`, `create-token`, `counter-added`, `land-play`, `untaps`, `proliferate`, `unlock`, `upkeep`, `begin-combat`, `end-step`, `dice-rolled`, `scry`, `surveil`, `search`, `counter-spell`
 
 
 ### EFFECT_KINDS — 42 members

@@ -19,7 +19,12 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // 328 scry / 169 surveil / 799 search; 29 trigger instances over 27 distinct cards (Matoya and
   // Planetarium of Wan Shi Tong each trigger on two), edges reachable ZERO. `mill` is the
   // proof this was a gap and not a design -- the same mechanic one word over already worked.
-  expect(VERB_VOCAB).toHaveLength(28);
+  // 28 -> 29 on 2026-09-09 for `counter-spell` (CR 701.5), the Baral witness of the every-event
+  // ruling: 361 commander-legal cards counter a spell and emitted nothing, 3 trigger on it, and
+  // Baral -- stored as `counter-added` before `countered` was a clause word -- was joined to every
+  // counter placer and to no counterspell.
+  expect(VERB_VOCAB).toHaveLength(29);
+  expect(VERB_VOCAB).toContain("counter-spell");
   expect(VERB_VOCAB).toContain("enters");
   expect(VERB_VOCAB).toContain("create-token");
   expect(VERB_VOCAB).toContain("land-play");

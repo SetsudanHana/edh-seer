@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 19;
+export const NORMALIZE_VERSION = 20;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 19;
+export const VOCAB_VERSION = 20;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -60,7 +60,7 @@ export const VOCAB_VERSION = 19;
  *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
  *  while everything below is still selected. No doc is de-selected by the change -- none exists at
  *  13 or above.  */
-export const TRIGGER_VOCAB_VERSION = 18;
+export const TRIGGER_VOCAB_VERSION = 20;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -154,6 +154,10 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // Lives, Slaughter Pact, Phage — joined to every life-loss payoff), `set-life` on 7, `other` on
   // 30+. The trigger side (`loses-game`) had just been added; the action side was missed.
   "win-game", "lose-game",
+  // CR 701.3d, FOUND BY THE BUY'S REFUSALS (2026-09-09): four cards instruct "unattach" ("Unattach
+  // all Equipment attached to it", Batterskull's "Return this to its owner's hand" family) and the
+  // model invented the verb because `unattached` had been added on the TRIGGER side only.
+  "unattach",
   "other", "none"];
 /** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
  *  cards instead of sitting untested until someone happens to play one.
@@ -189,6 +193,7 @@ export const EXEMPLAR_TERMS = [
   "becomes renowned", "becomes saddled", "becomes plotted", "foretell a card", "give a gift",
   "mentors a creature", "solve a Case", "ability resolves", "you control no", "there are no",
   "you get {E}",
+  "unattach", "creature evolves",
 ] as const;
 
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
@@ -476,6 +481,11 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // mana ability of this creature resolves" (Tyvar, stored `activate`), "when this ability
   // resolves for the third time" (Gimli, `other`) — 2.
   "solved", "resolves",
+  // CR 702.100 Evolve, FOUND BY THE BUY'S REFUSALS: "Whenever this creature evolves" (Renegade
+  // Krasis, Watchful Radstag) — a keyword ability whose rule defines its own trigger head, the
+  // firebend / mentors precedent, missed because the 09-09 probe list did not walk every 702 rule
+  // text for "evolves". 2 cards, both refused with unknown-trigger-event.
+  "evolve",
   // JUDGED AND NOT ADDED, with the reading, so the next walk does not re-propose them:
   //   - "whenever you add mana" (Caged Sun, Dictate of Karametra): every printed head is a land
   //     being tapped for mana, which `tapped-for-mana` (CR 106.12a) already spells. 0 heads left.
@@ -589,7 +599,9 @@ Rules:
   never "other".
 - STATE (CR 603.8). "When you control no Islands", "When there are five or more plot counters on
   this", "When you have 30 or more life": event "state", subject the condition verbatim. It is NOT
-  the event that produced the state — "has no ice counters" is "state", not counter-removed.
+  the event that produced the state — "has no ice counters" is "state", not counter-removed. Only a
+  clause typed triggered ("When ...") is a state trigger; "As long as you have 5 or less life" is
+  a STATIC condition and gets no trigger at all.
 - HOMONYMS. These pairs share a word and are different events; pick by what the card says:
   * counter-added is a counter put ON; counter-removed is a counter taken OFF; countered is a spell
     or ability being countered. "Whenever a spell you control counters a spell" is countered.
