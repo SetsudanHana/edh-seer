@@ -359,7 +359,37 @@ export type Verb =
   | "prevented"
   | "exchange"
   | "double"
-  | "triple";
+  | "triple"
+  /** AC11 BATCH 3 (2026-09-09): the CR 701 keyword actions the rules give no primitive — a status
+   *  (goad, exert, detain, suspect, harness), a player procedure (vote, clash, fateseal, behold,
+   *  heal, convert, time travel, collect evidence, venture, a villainous choice, waterbend), a
+   *  conditional outcome (explore, endure, learn, forage), airbend (exiles, and exile carries no
+   *  emit) and foretell (702.143, the one keyword ABILITY a card instructs). Each is an event a
+   *  card can watch ("whenever a creature you control explores" — 24 consumers; "whenever you
+   *  clash" — 12; "whenever players finish voting" — 3), so each emits under its own name. The
+   *  clause records the card's word and the emit says the same word; no primitive is invented. */
+  | "goad"
+  | "exert"
+  | "detain"
+  | "suspect"
+  | "harness"
+  | "vote"
+  | "clash"
+  | "fateseal"
+  | "behold"
+  | "heal"
+  | "convert"
+  | "explore"
+  | "endure"
+  | "learn"
+  | "forage"
+  | "time-travel"
+  | "collect-evidence"
+  | "venture-into-the-dungeon"
+  | "face-a-villainous-choice"
+  | "airbend"
+  | "waterbend"
+  | "foretell";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -427,6 +457,29 @@ export const VERB_VOCAB: readonly Verb[] = [
   "exchange",
   "double",
   "triple",
+  // AC11 batch 3, CR 701 keyword actions (2026-09-09): see the union comment.
+  "goad",
+  "exert",
+  "detain",
+  "suspect",
+  "harness",
+  "vote",
+  "clash",
+  "fateseal",
+  "behold",
+  "heal",
+  "convert",
+  "explore",
+  "endure",
+  "learn",
+  "forage",
+  "time-travel",
+  "collect-evidence",
+  "venture-into-the-dungeon",
+  "face-a-villainous-choice",
+  "airbend",
+  "waterbend",
+  "foretell",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */

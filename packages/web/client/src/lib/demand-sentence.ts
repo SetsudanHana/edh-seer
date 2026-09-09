@@ -62,6 +62,18 @@ export const DEMAND_VERB: Record<string, string> = {
   "gains-control": "changing control",
   "phases-out": "phasing out",
   regenerate: "regenerating",
+  // AC11 batch 3, keyword actions done to a permanent.
+  goad: "being goaded",
+  exert: "being exerted",
+  detain: "being detained",
+  suspect: "being suspected",
+  harness: "being harnessed",
+  convert: "converting",
+  explore: "exploring",
+  endure: "enduring",
+  heal: "being healed",
+  airbend: "being airbent",
+  foretell: "being foretold",
   // CR 701.5, verb added 2026-09-09 (the Baral witness).
   "counter-spell": "being countered",
   "land-play": "being played",
@@ -113,6 +125,18 @@ export const DEMAND_SUBJECTLESS: Record<string, string> = {
   exchange: "an exchange",
   double: "doubling",
   triple: "tripling",
+  // AC11 batch 3, keyword actions a PLAYER performs.
+  vote: "a vote",
+  clash: "a clash",
+  fateseal: "fatesealing",
+  behold: "beholding",
+  learn: "learning",
+  forage: "foraging",
+  "time-travel": "time travelling",
+  "collect-evidence": "collecting evidence",
+  "venture-into-the-dungeon": "venturing into the dungeon",
+  "face-a-villainous-choice": "a villainous choice",
+  waterbend: "waterbending",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
