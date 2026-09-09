@@ -51,6 +51,7 @@ export const DEMAND_VERB: Record<string, string> = {
   sacrifice: "being sacrificed",
   "create-token": "being created",
   "counter-added": "getting a counter",
+  "counter-removed": "losing a counter",
   // CR 701.5, verb added 2026-09-09 (the Baral witness).
   "counter-spell": "being countered",
   "land-play": "being played",
@@ -94,6 +95,8 @@ export const DEMAND_SUBJECTLESS: Record<string, string> = {
   // The engine emits this only for a LIBRARY search (emits.ts), which is what all four consumers
   // watch, so the phrase says the zone rather than leaving the reader to guess it.
   search: "a library being searched",
+  // CR 104.3, AC11 batch 1: a player event, no permanent subject.
+  "loses-game": "a player losing the game",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

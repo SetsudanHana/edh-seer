@@ -192,7 +192,7 @@ const PLAYER_ONLY =
  *  upkeep") names a player and is right to. */
 const THING_EVENTS: ReadonlySet<string> = new Set([
   "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "leaves",
-  "counter-added", "create-token", "land-play", "untaps", "taps",
+  "counter-added", "counter-removed", "create-token", "land-play", "untaps", "taps",
 ]);
 
 /** A word in a trigger clause that says WHAT, beyond the bare umbrella. */
@@ -292,6 +292,8 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   // Loose on purpose, like `counter-added`: the cue rejects an INVENTED trigger, and every card
   // that watches a spell being countered prints the word.
   "counter-spell": /\bcounter/i,
+  "counter-removed": /\bcounter/i,
+  "loses-game": /\blos(?:es|e|ing) the game\b/i,
 };
 
 /** Did the model INVENT a trigger the card does not have?

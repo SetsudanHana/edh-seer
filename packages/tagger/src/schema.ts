@@ -325,7 +325,17 @@ export type Verb =
    *  the 3 consumers (Baral, Lullmage Mentor, Ambiguity) derived no trigger and the 361 cards
    *  that counter a spell emitted nothing. Baral, bought before the word existed, was stored as
    *  `counter-added` and joined to every +1/+1 counter placer instead of to any counterspell. */
-  | "counter-spell";
+  | "counter-spell"
+  /** CR 122: a counter taken OFF. AC11 batch 1 (2026-09-09): 590 producers, 18 consumers
+   *  ("whenever one or more counters are removed from", "when you remove the last"). The word
+   *  arrived 2026-09-09 morning; before it, Chandra, Fire Artisan's removal trigger was stored as
+   *  `counter-added` and refused by derive reading its subject. Mirrors `counter-added`: the emit
+   *  carries the counter KIND so a +1/+1 removal never feeds a loyalty-removal payoff. */
+  | "counter-removed"
+  /** CR 104.3: a player loses the game. 42 producers ("target player loses the game"), 10
+   *  consumers (Ramses, Assassin Lord; Zenos). Was refused as `loses-the-game` by derive reading
+   *  the text of a lose-life trigger; now the event the card means. */
+  | "loses-game";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -375,6 +385,9 @@ export const VERB_VOCAB: readonly Verb[] = [
   "search",
   // CR 701.5, 2026-09-09 (AC7). 361 commander-legal producers, 3 consumers; see the union comment.
   "counter-spell",
+  // AC11 batch 1, CR 1xx (2026-09-09): see the union comments.
+  "counter-removed",
+  "loses-game",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */

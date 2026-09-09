@@ -48,6 +48,10 @@ const EMITS: Record<string, Verb[]> = {
   fight: ["non-combat-damage"],
   // CR 701.5. The action's object IS the countered spell, so the emit subject is that spell.
   "counter-spell": ["counter-spell"],
+  // AC11 batch 1 (CR 122, 104.3). `remove-counter`'s object is the counter, like add-counter's, so
+  // the emit carries the kind; `lose-game`'s object is the PLAYER (RECIPIENT_VERBS below).
+  "remove-counter": ["counter-removed"],
+  "lose-game": ["loses-game"],
 
   // KEYWORD ACTIONS, EXPANDED INTO THE PRIMITIVES THEY ARE (owner's ruling 2026-08-15).
   //
@@ -237,7 +241,7 @@ const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bpl
  *  `CONTROLLER_DEFAULT` pins to the controller, for the same reason: the rules make the player the
  *  object of a draw, a mill or a life change. */
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
-  "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life",
+  "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "loses-game",
 ]);
 
 /** An object that IS a player. "target spell's controller", "that player's owner", "you", "each
@@ -344,7 +348,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // An add-counter's object IS the counter kind, not a permanent, so the emit can say WHICH counter
   // it adds. Without it every counter placer emitted an untyped counter-added that wildcarded onto
   // any counter payoff -- a +1/+1 producer "feeding" a poison or time consumer.
-  const counter = action.verb === "add-counter"
+  const counter = action.verb === "add-counter" || action.verb === "remove-counter"
     ? counterKindOf(action.object ?? "")
     : KEYWORD_COUNTER[action.verb ?? ""];
   // A NAMED token ("create two Treasure tokens") states a subtype and no type, because "token" is

@@ -23,7 +23,13 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // ruling: 361 commander-legal cards counter a spell and emitted nothing, 3 trigger on it, and
   // Baral -- stored as `counter-added` before `countered` was a clause word -- was joined to every
   // counter placer and to no counterspell.
-  expect(VERB_VOCAB).toHaveLength(29);
+  // 29 -> 31 on 2026-09-09 for `counter-removed` (CR 122) and `loses-game` (CR 104.3): AC11
+  // batch 1, the OPEN verbs of CR 1xx in the rulebook order the owner's every-event ruling set.
+  // Both were near-misses derive REFUSED by reading text (Chandra's removal stored as
+  // counter-added, Ramses' "loses the game" as life-lost); with a verb of their own they are read.
+  expect(VERB_VOCAB).toHaveLength(31);
+  expect(VERB_VOCAB).toContain("counter-removed");
+  expect(VERB_VOCAB).toContain("loses-game");
   expect(VERB_VOCAB).toContain("counter-spell");
   expect(VERB_VOCAB).toContain("enters");
   expect(VERB_VOCAB).toContain("create-token");

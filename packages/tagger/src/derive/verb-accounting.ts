@@ -33,9 +33,8 @@ export const NOT_AN_EVENT: Record<string, string> = {
 
 /** Events the rules let a trigger watch, with no emit yet. Value = cards dropped, the ratchet. */
 export const OPEN: Record<string, { cards: number; note: string }> = {
-  // --- CR 1xx: objects, mana, players
-  "remove-counter": { cards: 590, note: "CR 122; `counter-removed` is the trigger word (18 consumers)" },
-  "lose-game": { cards: 42, note: "CR 104.3; `loses-game` (10 consumers)" },
+  // --- CR 1xx: objects, mana, players — CLOSED 2026-09-09 (AC11 batch 1): remove-counter and
+  // lose-game emit `counter-removed` / `loses-game`.
   // --- CR 4xx / 7xx: zones and objects
   shuffle: { cards: 1157, note: "CR 701.20; `shuffled` (15 consumers)" },
   play: { cards: 250, note: "CR 305.1 / 116.2a; `play` (35). `land-play` exists as an engine verb and is supplied by IMPLIED events, not by this action" },
@@ -93,7 +92,7 @@ export const ENGINE_TO_TRIGGER: Record<string, string> = {
   sacrifice: "sacrificed", "create-token": "create", "counter-added": "counter-added", "land-play": "play",
   untaps: "untaps", proliferate: "proliferate", unlock: "unlocked", upkeep: "upkeep", "begin-combat": "begin-combat",
   "end-step": "end-step", "dice-rolled": "dice-rolled", scry: "scry", surveil: "surveil", search: "search",
-  "counter-spell": "countered",
+  "counter-spell": "countered", "counter-removed": "counter-removed", "loses-game": "loses-game",
 };
 
 /** TRIGGERS words that map to NO engine verb, each with the reason, so `unknownTriggers` at runtime
@@ -106,7 +105,7 @@ const AWAITING_EMIT = ["transform", "copy", "reveal", "attached", "unattached", 
   "prevented", "exchange", "double", "triple", "goad", "exert", "detain", "suspect", "harness", "vote", "clash", "fateseal",
   "behold", "heal", "convert", "explore", "endure", "learn", "forage", "time-travel", "collect-evidence",
   "venture-into-the-dungeon", "face-a-villainous-choice", "airbend", "waterbend", "foretell", "flip-coin", "monarch",
-  "initiative", "city-blessing", "ring-tempts", "shuffled", "play", "turned-face-up", "counter-removed", "loses-game",
+  "initiative", "city-blessing", "ring-tempts", "shuffled", "play", "turned-face-up",
   "roll-dice", "dungeon-completed"];
 /** Keyword actions whose PRIMITIVE is emitted (connive emits draw+discard) while the word itself
  *  waits for an emit row named after the action, so "whenever a creature connives" can join. */

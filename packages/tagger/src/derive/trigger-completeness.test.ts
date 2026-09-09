@@ -272,7 +272,9 @@ test("every homonym pair is in TRIGGERS and named in the prompt's HOMONYMS rule"
  *  `unknownTriggers`, never near-miss. (`put-into-graveyard` -> `enters-graveyard` is the one word
  *  with a verb waiting, pinned in cr-completeness.test.ts.) */
 test("the 2026-09-09 words refuse rather than near-miss", () => {
-  const added = ["reflexive", "state", "counter-removed", "mana-spent", "damaged", "loses-game", "unattached",
+  // `counter-removed` and `loses-game` left this list on 2026-09-09 afternoon: AC11 batch 1 gave
+  // them engine verbs, and verb-accounting.test.ts now pins them as EMITS instead.
+  const added = ["reflexive", "state", "mana-spent", "damaged", "unattached",
     "returned-to-hand", "put-into-library", "becomes-renowned", "becomes-saddled", "plotted", "foretell",
     "give-gift", "mentors", "solved", "resolves", "evolve"];
   for (const w of added) {
