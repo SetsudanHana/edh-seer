@@ -424,6 +424,8 @@ const STATIC_REACH: Record<string, string> = {
 /** Scryfall's colour letters, as a player says them. */
 const COLOUR_WORD: Record<string, string> = { W: "white", U: "blue", B: "black", R: "red", G: "green", C: "colourless" };
 
+const CARD_TYPE_WORDS = new Set(["artifact", "creature", "enchantment", "land", "planeswalker", "instant", "sorcery", "battle", "permanent", "kindred"]);
+
 export function eventKeySentence(key: string, subject?: string, colors?: string[]): string {
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
@@ -453,9 +455,19 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
   // A BOARD COUNT IS NOT AN EVENT AND HAS NO VERB PHRASE. "Goblins you control" is a standing fact
   // about the board, not something that happens, so the sentence is the noun and the possession --
   // gluing `DEMAND_VERB` onto it would invent an event nothing fires.
+  // A FEEDER KEY CARRIES ITS NOUN IN THE SUBTYPE SLOT whether it is a subtype (Goblin) or, since the
+  // type-count ruling of 2026-09-09, a card type (artifact). Subtypes are proper nouns; types are not.
+  const feederNoun = (n: string): string => CARD_TYPE_WORDS.has(n) ? n : capitalize(n);
   if (verb === "counts") {
-    const counted = subtype !== "-" ? capitalize(subtype) : type !== "-" ? type : "permanent";
+    const counted = subtype !== "-" ? feederNoun(subtype) : type !== "-" ? type : "permanent";
     return `${/^[aeiou]/i.test(counted) ? "an" : "a"} ${counted} you control`;
+  }
+  // THE OTHER TWO FEEDER SHAPES (2026-09-09): a copier wants a KIND of ability, an outlet wants
+  // something to EAT. Neither is an event; both read as the thing wanted.
+  if (verb === "copies") return `${/^[aeiou]/i.test(subtype) ? "an" : "a"} ${subtype} ability to copy`;
+  if (verb === "fodder") {
+    const eaten = subtype !== "-" ? feederNoun(subtype) : type !== "-" ? type : "permanent";
+    return `${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten} to sacrifice`;
   }
 
   const event = DEMAND_VERB[verb];

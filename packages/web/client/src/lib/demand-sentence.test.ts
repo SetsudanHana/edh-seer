@@ -158,6 +158,8 @@ test("an unmapped verb de-slugs rather than printing a raw key", () => {
 test("a board count reads as what you control, not as something happening", () => {
   expect(eventKeySentence("counts|-|goblin|-")).toBe("a Goblin you control");
   expect(eventKeySentence("counts|-|elf|-")).toBe("an Elf you control");
+  // A card TYPE in the noun slot (the 2026-09-09 type-count ruling) is not a proper noun.
+  expect(eventKeySentence("counts|-|artifact|-")).toBe("an artifact you control");
 });
 
 /** A STATIC'S REACH IS A KEY TOO, and it names the class the static applies to rather than an
@@ -186,4 +188,12 @@ test("a colour filter reads inside the noun", () => {
   expect(eventKeySentence("cast|spell|-|-", undefined, ["R", "G"])).toBe("a red or green spell being cast");
   expect(eventKeySentence("enters|creature|-|-", undefined, ["W"])).toBe("a white creature entering the battlefield");
   expect(eventKeySentence("cast|spell|-|-", undefined, [])).toBe("a spell being cast");
+});
+
+/** THE OTHER TWO FEEDER SHAPES read as the thing wanted, like a board count (2026-09-09). */
+test("a copy demand and a fodder demand read as what is wanted", () => {
+  expect(eventKeySentence("copies|-|triggered|-")).toBe("a triggered ability to copy");
+  expect(eventKeySentence("copies|-|activated|-")).toBe("an activated ability to copy");
+  expect(eventKeySentence("fodder|-|artifact|-")).toBe("an artifact to sacrifice");
+  expect(eventKeySentence("fodder|-|goblin|-")).toBe("a Goblin to sacrifice");
 });
