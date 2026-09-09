@@ -14,6 +14,12 @@ const FACE_SEP = " // ";
  *  split card, a `prepare` card's copied spell), and a reject-list would silently narrow whatever
  *  layout gets printed next. */
 const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
+/** CR 702.162 (More Than Meets the Eye): "You may cast this card converted" -- the back face is cast
+ *  from hand like a modal DFC's, on a card Scryfall files under `transform`. Fifteen corpus cards,
+ *  all Transformers. Read off the printed keyword rather than the layout, because the layout is the
+ *  one thing that does not say it: Starscream cast converted is a Vehicle entering, which Tails'
+ *  "whenever a Vehicle you control enters" watches (recall v4 #151, 2026-09-09). */
+const CAST_EITHER_FACE = "more than meets the eye";
 
 /** The faces this card can actually be PLAYED as, one at a time — each with its own types and
  *  subtypes, never merged. `undefined` for a single-face card, where the card is its one face and
@@ -23,10 +29,12 @@ const FRONT_FACE_ONLY = new Set(["transform", "flip"]);
  *  and wrong for what enters or is cast. Read as one subject, "Instant // Land" is a land that gets
  *  cast and an instant that enters the battlefield — neither of which happens. Per face it is a
  *  land that enters OR an instant that is cast, which is exactly the card. */
-export function playableFaces(typeLine: string, layout?: string): Characteristics["faces"] {
+export function playableFaces(typeLine: string, layout?: string, keywords: readonly string[] = []): Characteristics["faces"] {
   const parts = typeLine.split(FACE_SEP);
   if (parts.length < 2) return undefined;
-  const playable = layout && FRONT_FACE_ONLY.has(layout) ? parts.slice(0, 1) : parts;
+  const frontOnly = layout !== undefined && FRONT_FACE_ONLY.has(layout)
+    && !keywords.some((k) => k.toLowerCase() === CAST_EITHER_FACE);
+  const playable = frontOnly ? parts.slice(0, 1) : parts;
   return playable.map((face) => {
     const [types, subtypes] = splitTypeLine(face);
     return { types, subtypes };
@@ -60,7 +68,7 @@ function alsoTypes(card: Card): string[] {
 
 export function extractCharacteristics(card: Card): Characteristics {
   const [left, right] = splitTypeLine(card.typeLine);
-  const faces = playableFaces(card.typeLine, card.layout);
+  const faces = playableFaces(card.typeLine, card.layout, card.keywords);
   const keywords = card.keywords.map((k) => k.toLowerCase());
   // CHANGELING IS A CHARACTERISTIC-DEFINING ABILITY: the card has EVERY creature type, in every
   // zone — not only on the battlefield, which is why it belongs here and not in an implied event.
