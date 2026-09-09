@@ -2272,3 +2272,32 @@ test("the self twin keeps the class half's origin zone (River Kelpie)", () => {
   const self = abilities.find((a) => a.trigger?.subject?.self === true)?.trigger?.subject;
   expect(self).toMatchObject({ type: "creature", fromZone: "graveyard" });
 });
+
+// RECALL v4 #120 (2026-09-09): a damage multiplier's trigger names the DEALER, which is the half a
+// damage emit records and the matcher compares. Fiery Emancipation used to demand `permanent` (the
+// victim), which Khalni Ambush's typeless fight dealer could never satisfy.
+test("a damage multiplier watches the source that deals, not the thing dealt to", () => {
+  const text = "If a source you control would deal damage to a permanent or player, it deals triple that damage to that permanent or player instead.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "triple", object: "damage dealt by a source you control to a permanent or player" }],
+  }], "Fiery Emancipation", { 1: text });
+  const a = abilities[0]!;
+  expect(a.effect.kind).toBe("damage-multiplier");
+  expect(a.trigger?.verbs).toEqual(["combat-damage", "non-combat-damage"]);
+  expect(a.trigger?.subject).toEqual({ control: "you", token: null });
+  expect(a.emits ?? []).toEqual([]);
+  // Gratuitous Violence narrows to creatures, which is a demand the matcher can check on a dealer.
+  const gv = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "double", object: "damage dealt by a creature you control" }],
+  }], "Gratuitous Violence", { 1: "If a creature you control would deal damage to a permanent or player, it deals double that damage to that permanent or player instead." });
+  expect(gv.abilities[0]?.trigger?.subject).toMatchObject({ control: "you", type: "creature" });
+  // And a fight's dealer is the fighting CREATURE (CR 701.14a), which is what that demand checks.
+  const fight = deriveAbilities([{
+    id: 1, abilityType: "spell",
+    actions: [{ verb: "fight", object: "target creature you control and target creature you don't control" }],
+  }], "Khalni Ambush", { 1: "Target creature you control fights target creature you don't control." });
+  const dmg = fight.abilities.flatMap((x) => x.emits ?? []).find((e) => e.verb === "non-combat-damage");
+  expect(dmg?.dealer).toEqual({ control: "you", token: null, type: "creature" });
+});
