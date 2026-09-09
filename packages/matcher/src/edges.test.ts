@@ -3930,3 +3930,23 @@ describe("copy-ability (AC12)", () => {
     expect(pairReasons(tawnos, solemn, H).map((r) => r.tag)).not.toContain("copies:triggered");
   });
 });
+
+// OWNER'S RULING 2026-09-09: a NON-creature type count is a relation to each card of that type.
+describe("board count over a bare type", () => {
+  const artist = base("Storm-Kiln Artist", [{
+    kind: "static", effect: { kind: "pump", scaling: "per-permanent", scalingSubject: { control: "you", token: null, type: "artifact", zone: "battlefield" } },
+    amount: "+1/+0 for each artifact you control", repeats: "continuous",
+  }]);
+  const creatureCounter = base("Bounty of Skemfar", [{
+    kind: "static", effect: { kind: "pump", scaling: "per-permanent", scalingSubject: { control: "you", token: null, type: "creature", zone: "battlefield" } },
+    repeats: "continuous",
+  }]);
+  test("an artifact count reaches an artifact in the deck, and not a creature", () => {
+    const rock = artifact("Sol Ring", []);
+    expect(pairReasons(artist, rock, H).map((r) => r.tag)).toContain("scales:artifact");
+    expect(pairReasons(artist, base("Grizzly Bears", []), H)).toEqual([]);
+  });
+  test("a CREATURE count is still the whole deck and forms no edge until magnitude can weigh it", () => {
+    expect(pairReasons(creatureCounter, base("Grizzly Bears", []), H)).toEqual([]);
+  });
+});
