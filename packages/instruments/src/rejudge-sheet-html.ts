@@ -12,7 +12,7 @@ export interface SheetRow {
   cachedVerdict: string; cause: string; judgedBy: string; note: string;
 }
 
-const esc = (s: string): string =>
+export const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** THE PAGE'S LOOK AND ITS INTERACTION, SHARED BY EVERY JUDGING SHEET.
@@ -248,7 +248,7 @@ const lineBuilder = (notePrefix: string): string => `    function line(i) {
 const pips = (cost: string): string =>
   cost ? [...cost.matchAll(/\{([^{}]+)\}/g)].map((m) => `<span class="pip">${esc(m[1])}</span>`).join("") : `<span class="pip pip-none">no cost</span>`;
 
-const cardPanel = (c: SheetCard, role: string): string => `
+export const cardPanel = (c: SheetCard, role: string): string => `
       <div class="card" data-role="${role}">
         <div class="card-head">
           <span class="role">${role}</span>
