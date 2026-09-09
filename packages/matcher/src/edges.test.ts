@@ -4002,8 +4002,10 @@ test("under tokensMediate: false a token maker is fodder for an outlet, said on 
   expect(directedReasons(krenko, seer, H).map((r) => r.tag)).not.toContain("fodder:creature");
 });
 
-// RECALL v4 #145 (2026-09-09): recursion re-fires a death trigger.
-describe("recursion refires a death trigger", () => {
+// RECALL v4 #145 (2026-09-09) built a `refires:dies` pass here; the owner ruled it out the same day
+// (all three panel claims FALSE): a death trigger firing after a reanimation is the reanimation,
+// not a second edge. The pass is gone and this pins that it stays gone.
+test("a recursion does NOT claim to re-fire a death trigger (owner ruling 2026-09-09)", () => {
   const sheoldred = base("Sheoldred, Whispering One", [{
     kind: "triggered", trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
     effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", scope: "target", zone: "graveyard" } },
@@ -4012,18 +4014,7 @@ describe("recursion refires a death trigger", () => {
   const lich = base("Vindictive Lich", [{
     kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature", self: true } }, effect: { kind: "player-life-loss" },
   }]);
-  test("a creature with a death trigger is returned to die again; an artifact recursion does not reach it", () => {
-    expect(pairReasons(sheoldred, lich, H).map((r) => r.tag)).toContain("refires:dies");
-    const artifactOnly = base("Myr Retriever", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } },
-      effect: { kind: "graveyard-recursion" }, emits: [{ verb: "enters", subject: { control: "any", token: null, type: "artifact", fromZone: "graveyard" } }] }]);
-    expect(pairReasons(artifactOnly, lich, H).map((r) => r.tag)).not.toContain("refires:dies");
-  });
-  test("a self-recursion returns nobody else, and a vanilla has nothing to re-fire", () => {
-    const skeleton = base("Reassembling Skeleton", [{ kind: "activated", cost: "{1}{B}", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } },
-      emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature", self: true, fromZone: "graveyard" } }] }]);
-    expect(pairReasons(skeleton, lich, H).map((r) => r.tag)).not.toContain("refires:dies");
-    expect(pairReasons(sheoldred, base("Grizzly Bears", []), H).map((r) => r.tag)).not.toContain("refires:dies");
-  });
+  expect(pairReasons(sheoldred, lich, H).map((r) => r.tag).filter((t) => t.startsWith("refires"))).toEqual([]);
 });
 
 // 2026-09-09: a copy never enters from a graveyard, so a from-graveyard self ETB is not re-fired.

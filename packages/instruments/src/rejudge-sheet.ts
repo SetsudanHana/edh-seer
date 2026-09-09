@@ -144,10 +144,10 @@ const payload = rows.map((r) => {
     note: (c?.note ?? "").replace(/^USER VERDICT[^.]*\.\s*/, "").trim(),
   };
 });
-writeFileSync(`${OUT}.html`, renderSheet(payload, TAG ?? "all tags", WANT));
+const notePrefix = `USER VERDICT (${WANT === "debt" ? "debt" : `${TAG ?? "all tags"} re-judge`}, ${new Date().toISOString().slice(0, 10)}). `;
+writeFileSync(`${OUT}.html`, renderSheet(payload, TAG ?? "all tags", WANT, notePrefix));
 console.log(`${rows.length} rows -> ${OUT}.md, ${OUT}.jsonl and ${OUT}.html`);
 writeFileSync(`${OUT}.jsonl`, `${rows.map((r) => JSON.stringify({
-  producer: r.producer, consumer: r.consumer, tag: r.tag,
-  verdict: "", cause: "", note: `USER VERDICT (${WANT === "debt" ? "debt" : `${TAG ?? "all tags"} re-judge`}, ${new Date().toISOString().slice(0, 10)}). `,
+  producer: r.producer, consumer: r.consumer, tag: r.tag, verdict: "", cause: "", note: notePrefix,
 })).join("\n")}\n`);
 process.exit(0);
