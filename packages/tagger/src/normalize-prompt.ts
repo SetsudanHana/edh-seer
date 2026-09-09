@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 18;
+export const NORMALIZE_VERSION = 19;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 18;
+export const VOCAB_VERSION = 19;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -147,6 +147,13 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // EMITS row: foretelling moves nothing a consumer watches beyond the exile the clause already
   // records.
   "foretell",
+  // CR 104.2 / 104.3, FOUND BY THE 2026-09-09 REFRESH ITSELF: Hidetsugu's Poison Rite ("target
+  // player ... loses the game") was refused for inventing `loses-game` as a verb, because the
+  // action had no word. 117 commander-legal cards print winning or losing the game, 109 of them
+  // bought, and what they had recorded is the near-miss family in full: `lose-life` on 30+ (Nine
+  // Lives, Slaughter Pact, Phage — joined to every life-loss payoff), `set-life` on 7, `other` on
+  // 30+. The trigger side (`loses-game`) had just been added; the action side was missed.
+  "win-game", "lose-game",
   "other", "none"];
 /** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
  *  cards instead of sitting untested until someone happens to play one.
@@ -597,7 +604,11 @@ Rules:
     opposite events.
   * transform is a double-faced card turning over; turned-face-up is a face-down permanent turned
     up; neither is animate.
-  * life-lost is losing life; loses-game is losing the GAME.
+  * life-lost is losing life; loses-game is losing the GAME. As ACTIONS: "you lose the game" is
+    lose-game and "you win the game" is win-game — never lose-life, set-life or other.
+- PAYING LIFE is losing life (CR 118.3b): "pay 2 life", "pay any amount of life" is verb lose-life.
+- Planechase and Archenemy words a card may still print — "planeswalk", "chaos ensues", "set in
+  motion" — are verb "other". They are never events in this format.
 - ENERGY. {E} is an energy COUNTER (CR 107.14): "you get {E}{E}" is verb add-counter, object
   "energy", amount 2 — never add-mana. Paying {E} is a cost.
 - A TriggerEvent of "other" is the same escape hatch for a trigger no event above names ("whenever
