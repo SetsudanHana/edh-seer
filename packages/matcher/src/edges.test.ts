@@ -3988,3 +3988,16 @@ describe("fodder", () => {
     expect(pairReasons(saproling, selfSac, H).map((r) => r.tag)).not.toContain("fodder:creature");
   });
 });
+
+// ON A CARD PAGE (no token nodes) the MAKER stands in for its token as fodder.
+test("under tokensMediate: false a token maker is fodder for an outlet, said on the maker", () => {
+  const seer = base("Viscera Seer", [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "scry" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }] }]);
+  const krenko = base("Krenko, Mob Boss", [{ kind: "activated", cost: "{T}", effect: { kind: "token-generation", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } },
+    emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } }, { verb: "enters", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } }] }]);
+  const page = directedReasons(krenko, seer, H, { tokensMediate: false });
+  expect(page.map((r) => r.tag)).toContain("fodder:creature");
+  expect(page.find((r) => r.tag === "fodder:creature")!.text).toBe("Krenko, Mob Boss makes fodder for Viscera Seer");
+  // In the deck report the token node carries it, so the maker itself says nothing.
+  expect(directedReasons(krenko, seer, H).map((r) => r.tag)).not.toContain("fodder:creature");
+});

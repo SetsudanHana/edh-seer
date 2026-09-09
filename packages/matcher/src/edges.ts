@@ -1758,11 +1758,18 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
     const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
     const narrowType = types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!);
-    if (!isToken && subtype === undefined && !narrowType) continue;
-    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h)) continue;
+    // ON A CARD PAGE NO TOKEN NODE EXISTS (`tokensMediate: false`), so the MAKER stands in for the
+    // token it makes: Krenko's Goblins are fodder for Viscera Seer, said on Krenko's row. The deck
+    // report keeps the two-hop path through the node, exactly as the entry channel does.
+    const made = (opts.tokensMediate ?? true) ? [] : (p.tags?.abilities ?? []).flatMap((pa) =>
+      (pa.emits ?? []).filter((e) => e.verb === "create-token" && e.subject.token === true).map((e) => e.subject));
+    const makes = made.some((s) => subjectMatches({ ...s, token: null }, { ...wanted, token: null }, h));
+    const is = (isToken || subtype !== undefined || narrowType)
+      && subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h);
+    if (!is && !makes) continue;
     reasons.push({
       tag: `fodder:${themeSubjectKey(wanted)}`,
-      text: `${p.card.name} is fodder for ${c.card.name}`,
+      text: is ? `${p.card.name} is fodder for ${c.card.name}` : `${p.card.name} makes fodder for ${c.card.name}`,
       effectKind: a.effect.kind || "sacrifice",
       repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : "static",
       consumer: c.card.name,
@@ -2118,8 +2125,9 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
   return dedupeReasons(reasons.map((r) => stampSides(r, p, c)));
 }
 
-/** Does an authored ability count as the kind a copier names? See the copy-ability pass. */
-function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
+/** Does an authored ability count as the kind a copier names? See the copy-ability pass. Shared with
+ *  `partners-core.ts`, which keys a card page's `copies|` supply on the same reading. */
+export function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
   const loyalty = ca.kind === "activated" && /^[+\u2212-]?(?:\d+|X)$/.test((ca.cost ?? "").trim());
   const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
   if (kind === "triggered") return ca.kind === "triggered";

@@ -5,7 +5,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts, browseLetterOf, browseSlices,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
+  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -1279,4 +1279,43 @@ test("an artifact count keys on the type; a creature count keys on nothing; an a
   const rock = { card: { name: "Sol Ring" }, tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [] } } as unknown as DeckCard;
   expect(supplyKeysOf(rock)).toContain("counts|-|artifact|-");
   expect(supplyKeysOf(goblinBody())).not.toContain("counts|-|creature|-");
+});
+
+// THE TWO NEW FEEDER SHAPES (2026-09-09): a copier's and an outlet's page can name their feeders.
+test("a copier demands ability kinds and a card with a triggered ability supplies one", () => {
+  const strionic = { card: { name: "Strionic Resonator" }, tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [{
+    kind: "activated", cost: "{2}, {T}", effect: { kind: "copy-ability", subject: { control: "you", token: null, abilityKind: ["triggered"] } },
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(strionic)).toEqual(["copies|-|triggered|-"]);
+  const solemn = { card: { name: "Solemn Simulacrum" }, tags: { characteristics: { types: ["artifact", "creature"], subtypes: ["golem"] }, abilities: [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "ramp" },
+  }] } } as unknown as DeckCard;
+  expect(supplyKeysOf(solemn)).toContain("copies|-|triggered|-");
+  expect(supplyKeysOf(solemn)).not.toContain("copies|-|activated|-");
+  const rock = { card: { name: "Sol Ring" }, tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [{ kind: "activated", cost: "{T}", effect: { kind: "mana-generation" } }] } } as unknown as DeckCard;
+  expect(supplyKeysOf(rock)).toContain("copies|-|mana|-");
+  expect(supplyKeysOf(rock)).not.toContain("copies|-|activated|-");
+});
+
+test("an outlet demands what it eats; a token maker and a narrow type supply it, a plain creature does not", () => {
+  const engineer = { card: { name: "Goblin Engineer" }, tags: { characteristics: { types: ["creature"], subtypes: ["goblin", "artificer"] }, abilities: [{
+    kind: "activated", cost: "{R}, {T}, Sacrifice an artifact", effect: { kind: "graveyard-recursion" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "artifact" } }],
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(engineer)).toEqual(["fodder|-|artifact|-"]);
+  const seer = { card: { name: "Viscera Seer" }, tags: { characteristics: { types: ["creature"], subtypes: ["vampire", "wizard"] }, abilities: [{
+    kind: "activated", cost: "Sacrifice a creature", effect: { kind: "scry" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }],
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(seer)).toEqual(["fodder|-|creature|-"]);
+  expect(supplyKeysOf(krenkoCounting())).toContain("fodder|-|creature|-");   // makes Goblin creature tokens
+  expect(supplyKeysOf(goblinBody())).not.toContain("fodder|-|creature|-");   // a body is not free fodder
+  expect(supplyKeysOf(goblinBody())).toContain("fodder|-|goblin|-");          // but it is a Goblin to eat
+  const rock = { card: { name: "Sol Ring" }, tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [] } } as unknown as DeckCard;
+  expect(supplyKeysOf(rock)).toContain("fodder|-|artifact|-");
+  // An edict demands nothing.
+  const edict = { card: { name: "Fleshbag" }, tags: { characteristics: { types: ["creature"], subtypes: [] }, abilities: [{
+    kind: "triggered", effect: { kind: "forced-sacrifice" }, emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature" } }],
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(edict)).toEqual([]);
 });

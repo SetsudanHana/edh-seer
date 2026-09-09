@@ -3,7 +3,7 @@ import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
-import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
 import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
@@ -459,7 +459,7 @@ export function partnersFor(
   // ONE LIST, NOT TWO SECTIONS: the engine's own sentence names both cards and says which way it
   // runs ("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets
   // bigger"), so the row itself tells a reader the direction.
-  for (const { key, tag } of boardCountsOf(subject)) {
+  for (const { key, tag } of feederDemandsOf(subject)) {
     if (key in pool) continue;
     const score = specificity(key, freq);
     // A FEEDER SITS UNDER THE KEY IT SUPPLIES. A party count has four keys and the engine confirms
@@ -668,6 +668,35 @@ const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "fore
  *  against each other. */
 export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(boardCountsOf(d).map((b) => b.key))];
 
+/** THE THREE FEEDER SHAPES, one list. A board count (Krenko wants Goblins), a copier (Strionic
+ *  Resonator wants triggered abilities, AC12) and a sacrifice outlet (Goblin Engineer wants artifacts
+ *  to eat, the fodder pass) are all "this card wants what the other card IS", verified feeder ->
+ *  subject on the engine's own tag. The two-gate trap this closes: `edges.ts` grew the `copies:`
+ *  and `fodder:` passes on 2026-09-09 and this artifact had a twin only for board counts, so the
+ *  deck report claimed relations the commander page could not offer (roadmap, token-supply family). */
+export const feederDemandsOf = (d: DeckCard): { key: string; tag: string }[] => [
+  ...boardCountsOf(d), ...copyDemandsOf(d), ...fodderDemandsOf(d),
+];
+export const feederKeysOf = (d: DeckCard): string[] => [...new Set(feederDemandsOf(d).map((b) => b.key))];
+
+const ABILITY_OBJECT_KINDS = ["activated", "triggered", "loyalty", "mana"] as const;
+/** `copies|-|<kind>|-`: what a copy-ability card wants the other card to HAVE (CR 113.3). */
+export const copyDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
+  abilitiesOf(d).flatMap((a) => a.effect?.kind !== "copy-ability" ? []
+    : (a.effect.subject?.abilityKind ?? ["activated", "triggered"]).map((k) => ({ key: `copies|-|${k}|-`, tag: `copies:${k}` })));
+/** `fodder|-|<noun>|-`: what a sacrifice outlet eats -- the emit's subject, subtype first, else its
+ *  single type. Edicts (control any) and self-sacrifices demand nothing, as in the engine. */
+export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
+  abilitiesOf(d).flatMap((a) => {
+    const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.control === "you" && e.subject.self !== true);
+    if (!eats) return [];
+    const { zone: _z, scope: _s, ...wanted } = eats.subject;
+    const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
+    const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
+    const noun = subtype ?? (types.length === 1 ? types[0] : undefined);
+    return noun ? [{ key: `fodder|-|${noun}|-`, tag: `fodder:${themeSubjectKey(wanted)}` }] : [];
+  });
+
 /** EVERY SUBTYPE A BOARD COUNT NAMES IS ITS OWN KEY, each carrying the tag the engine writes for
  *  the ability. A party count (CR 700.7) names Cleric, Rogue, Warrior and Wizard; keyed on the
  *  first alone, Burakos's page asked only for Clerics (owner, 2026-09-05). The engine's tag takes
@@ -705,7 +734,26 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
   ...(d.tags?.characteristics.types ?? [])
     .filter((t) => !WHOLE_DECK_TYPES.has(t))
     .map((t) => `counts|-|${t}|-`),
+  // WHAT A COPIER CAN COPY: the kinds of ability this card HAS (AC12; `abilityIsKind` is the
+  // engine's own reading, mana excluded from "activated").
+  ...ABILITY_OBJECT_KINDS.filter((k) => abilitiesOf(d).some((a) => abilityIsKind(a, k))).map((k) => `copies|-|${k}|-`),
+  // WHAT AN OUTLET CAN EAT. A real card is fodder by its subtypes and by a non-whole-deck type; a
+  // TOKEN MAKER is fodder by what it makes, creature tokens included -- the engine's maker path
+  // under `tokensMediate: false`. A plain creature card never supplies `fodder|-|creature|-`.
+  ...fodderSupplyKeysOf(d),
 ];
+
+const fodderSupplyKeysOf = (d: DeckCard): string[] => {
+  const nouns = new Set<string>();
+  for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPES.has(t)) nouns.add(t);
+  for (const t of d.tags?.characteristics.types ?? []) if (!WHOLE_DECK_TYPES.has(t)) nouns.add(t);
+  for (const a of abilitiesOf(d)) for (const e of a.emits ?? []) {
+    if (e.verb !== "create-token" || e.subject.token !== true) continue;
+    for (const t of asList(e.subject.type)) nouns.add(t);
+    for (const t of asList(e.subject.subtype)) nouns.add(t);
+  }
+  return [...nouns].map((n) => `fodder|-|${n}|-`);
+};
 
 /** SUBSTANTIVE = at least one emit or one trigger.
  *
@@ -1051,13 +1099,14 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       if (b) b.push(d); else byDemand.set(k, [d]);
     }
   }
-  // THE MIRROR INDEX, AND ONLY FOR BOARD COUNTS. A card that COUNTS Goblins needs the Goblins, and
-  // they are found by what they ARE rather than by what they demand. Restricted to `counts|` keys:
+  // THE MIRROR INDEX, AND ONLY FOR THE FEEDER SHAPES. A card that COUNTS Goblins needs the Goblins,
+  // a copier needs cards WITH abilities, an outlet needs what it EATS -- all found by what a card IS
+  // rather than by what it demands. Restricted to the `counts|`, `copies|` and `fodder|` keys:
   // indexing every card by every event it supplies would be the quadratic build this file avoids.
   const bySubtype = new Map<string, DeckCard[]>();
   for (const d of substantive) {
     for (const k of supplyKeysOf(d)) {
-      if (!k.startsWith("counts|")) continue;
+      if (!k.startsWith("counts|") && !k.startsWith("copies|") && !k.startsWith("fodder|")) continue;
       const b = bySubtype.get(k);
       if (b) b.push(d); else bySubtype.set(k, [d]);
     }
@@ -1110,7 +1159,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...supplyKeysOf(d).flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []),
       ...staticCandidates(d),
     ])];
-    const feeders = [...new Set(boardCountKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
+    const feeders = [...new Set(feederKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
     const commander = isCommander(d);
     const meldWith = byName.get((d.card as { meldPartner?: string }).meldPartner ?? "");
 
