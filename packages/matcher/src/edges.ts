@@ -1784,34 +1784,12 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     });
     break; // one fodder claim per pair
   }
-  // RECURSION RE-FIRES A DEATH TRIGGER (recall v4 #145, 2026-09-09). Sheoldred, Whispering One
-  // returns a creature card from your graveyard every upkeep; Vindictive Lich's "when this
-  // creature dies" is worth more each time it comes back. The entry side already joins (a
-  // from-graveyard `enters` emit meets a self ETB through the identity gate above); the death side
-  // had no channel, because nothing EMITS a second death. Same shape as the self-ETB gate: the
-  // producer's from-graveyard entry is compared against the consumer's printed characteristics.
-  // Tokens are never returned; a recursion of the producer ITSELF (Reassembling Skeleton) returns
-  // no one else; an opponent's graveyard is not this deck's.
-  if (c.tags?.characteristics.token !== true) {
-    const deathTrigger = (c.tags?.abilities ?? []).find((a) => a.trigger?.subject?.self === true && a.trigger.verbs.includes("dies"));
-    if (deathTrigger && p !== c) {
-      for (const a of p.tags?.abilities ?? []) {
-        const back = (a.emits ?? []).find((e) => e.verb === "enters" && e.subject.fromZone === "graveyard" && e.subject.self !== true && e.subject.control !== "opp");
-        if (!back) continue;
-        const { zone: _z, scope: _s, fromZone: _f, entersTapped: _t, counter: _c, ...identity } = back.subject;
-        if (!subjectMatches(characteristicsSubject(c.tags!, c.card.name), identity, h)) continue;
-        reasons.push({
-          tag: "refires:dies",
-          text: `${p.card.name} returns ${c.card.name}, so it can die again`,
-          effectKind: a.effect.kind,
-          repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : a.kind === "on-cast" ? "oneshot" : "static",
-          consumer: c.card.name,
-          producer: p.card.name,
-        });
-        break;
-      }
-    }
-  }
+  // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
+  // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its
+  // panel claims FALSE on 2026-09-09: "the edge should be just reanimation -- sure it can die again,
+  // but that is the point of reanimation in the first place." A death trigger firing after a
+  // reanimation is what reanimating a creature IS, not a second relation between the two cards, so
+  // the recursion channel (`graveyard-recursion:*`, the entry gate above) carries the whole claim.
   // TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
   // consumer-trigger relation, which is why the recall measurement filed the family as
   // `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an

@@ -124,8 +124,7 @@ test("CEILING: an UNTYPED recursion does not feed a TYPED graveyard-leave payoff
 test("a graveyard leave feeds no battlefield-leave payoff, no without-dying payoff and no death payoff", () => {
   expect(tags(reanimate, ozolith).filter((t) => t.startsWith("leaves"))).toEqual([]);
   expect(tags(reanimate, portMage).filter((t) => t.startsWith("leaves"))).toEqual([]);
-  // `refires:dies` is not a death claim: Reanimate returning Blood Artist lets its OWN death
-  // trigger fire again (the recursion-refire pass, 2026-09-09). The graveyard leave still feeds
-  // no `dies:` payoff.
-  expect(tags(reanimate, bloodArtist).filter((t) => !t.startsWith("refires"))).toEqual([]);
+  // Reanimate returning Blood Artist is a reanimation and nothing more: the `refires:dies` pass that
+  // briefly claimed "so it can die again" was ruled out by the owner on 2026-09-09.
+  expect(tags(reanimate, bloodArtist)).toEqual([]);
 });
