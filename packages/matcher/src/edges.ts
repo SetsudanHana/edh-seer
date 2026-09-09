@@ -1024,7 +1024,7 @@ export interface ReasonOptions {
  *  board-count channel for why. */
 const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
 /** A board count over one of these is a count of the deck itself. See the board-count edge. */
-const WHOLE_DECK_TYPES = new Set(["creature", "permanent", "card", "spell", "land"]);
+export const WHOLE_DECK_TYPES: ReadonlySet<string> = new Set(["creature", "permanent", "card", "spell", "land"]);
 
 /** A CARD THAT TURNS THE BOARD OFF FEEDS NOTHING ON IT. Dress Down's "creatures lose all abilities"
  *  is a layer-6 effect (CR 613.1f) that applies the moment it is on the battlefield, so when the
