@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 117;
+export const DERIVE_VERSION = 118;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -864,29 +864,19 @@ export function deriveAbilities(
     /** Does this clause fire on the card's own LEAVING? See the sacrifice filter below. */
     let selfLeavesTrigger = false;
     if (clause.trigger?.event) {
-      const verb = normalizeTriggerVerb(clause.trigger.event);
+      const mapped = normalizeTriggerVerb(clause.trigger.event);
+      // READ BACK INTO THE EVENT THE CARD MEANS (AC11 batch 1, 2026-09-09). Two near-misses this
+      // branch used to REFUSE now have an engine verb of their own, so a doc that banked them is
+      // read as what it says: "loses the game" on a lose-life trigger is `loses-game` (CR 104.3),
+      // and a counter-added trigger whose subject says "removed" is `counter-removed` (CR 122;
+      // Chandra, Fire Artisan). The refusal was right while the words did not exist -- a visible
+      // refusal beats a banked near-miss -- and reinterpretation is right only now that the
+      // reading has a name. `taps-for-mana` stays refused: no engine event exists for it yet.
+      const verb = mapped === "lose-life" && LOSES_THE_GAME.test(text) ? "loses-game" as const
+        : mapped === "counter-added" && COUNTER_REMOVED.test(clause.trigger.subject ?? "") ? "counter-removed" as const
+        : mapped;
       if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
         unknownTriggers.push("taps-for-mana");
-      } else if (verb === "lose-life" && LOSES_THE_GAME.test(text)) {
-        unknownTriggers.push("loses-the-game");
-      } else if (verb === "counter-added" && COUNTER_REMOVED.test(clause.trigger.subject ?? "")) {
-        // A COUNTER COMING OFF IS THE OPPOSITE EVENT, AND THE CLAUSE ALREADY SAYS SO — in its
-        // SUBJECT, which is where this pipeline keeps putting the direction (roadmap M4, free).
-        // Chandra, Fire Artisan prints "whenever one or more loyalty counters are REMOVED from
-        // Chandra, she deals that much damage" and normalizes to
-        // `{event: "counter-added", subject: "loyalty counters removed from Chandra"}`: the model
-        // reached for the nearest legal event and left the truth in the subject. Derived as written
-        // it is a FALSE claim rather than a missing one — every counter-placer in the deck feeds a
-        // trigger that fires when counters LEAVE.
-        //
-        // REFUSED RATHER THAN REINTERPRETED, exactly as `loses-the-game` and `taps-for-mana` are
-        // one branch up: `counter-removed` is not in `TRIGGERS`, and adding it is a vocabulary bump
-        // that re-selects the whole `other`-trigger population and SPENDS. A visible refusal beats
-        // a banked near-miss.
-        //
-        // ONE CLAUSE CORPUS-WIDE, measured — and the size is not the point: 9 corpus cards print a
-        // trigger on counters being removed, so this is the one the normalizer happened to answer.
-        unknownTriggers.push("counter-removed");
       } else if (clause.trigger.event === "damage-dealt") {
         // DIRECTION IS NOT IN THE EVENT NAME. `damage-dealt` covers both "deals combat damage to a
         // player" and "is dealt damage", which are opposite facts, so the clause TEXT decides —
@@ -945,7 +935,7 @@ export function deriveAbilities(
         // the head of the phrase. Without the flag, Incubation Druid adapting ITSELF fed the
         // Witness's own-counter trigger (owner-judged FALSE, 2026-08-22); with it, edges.ts's
         // self-on-both-sides gate refuses the pair.
-        if (verb === "counter-added" && COUNTER_ON_SELF.test(clause.trigger.subject ?? "")) subject.self = true;
+        if ((verb === "counter-added" || verb === "counter-removed") && COUNTER_ON_SELF.test(clause.trigger.subject ?? "")) subject.self = true;
         // ON AN `attacks` TRIGGER THE STATE IS THE EVENT: "a creature you control attacking" (Arni
         // Metalbrow, Seifer) is every attacker, and the implied `attacks` producer never states
         // the state, so keeping it here would delete every real edge these have. Kept on every

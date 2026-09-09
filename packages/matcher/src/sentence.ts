@@ -205,6 +205,8 @@ export const VERB_PHRASES: Record<string, string> = {
   taps: "becomes tapped",
   untaps: "untaps",
   "counter-added": "gets a counter",
+  "counter-removed": "loses a counter",
+  "loses-game": "makes a player lose the game",
   "gain-life": "gains life",
   "lose-life": "makes a player lose life",
   sacrifice: "sacrifices something",

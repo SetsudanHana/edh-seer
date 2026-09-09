@@ -1177,7 +1177,7 @@ test("an unrecognised trigger event still produces no ability", () => {
 // threshold-lines task 3) -- an untriggered `win-game` ability, exactly the same shape the
 // taps-for-mana refusal above already produces for `add-mana`. The refusal is of the TRIGGER, not
 // of the effect.
-test("a life-lost trigger on a loses-the-game clause is refused, but its win effect survives untriggered", () => {
+test("a life-lost trigger on a loses-the-game clause is read as loses-game (AC11), and its win effect survives", () => {
   const { abilities, unknownTriggers } = deriveAbilities(
     [{
       id: 1,
@@ -1189,9 +1189,10 @@ test("a life-lost trigger on a loses-the-game clause is refused, but its win eff
     { 1: "When the chosen player loses the game, you win the game." },
   );
   expect(abilities).toHaveLength(1);
-  expect(abilities[0].trigger).toBeUndefined();
+  // Refused into unknownTriggers until 2026-09-09; `loses-game` is an engine verb since AC11 batch 1.
+  expect(abilities[0].trigger?.verbs).toEqual(["loses-game"]);
   expect(abilities[0].effect.kind).toBe("win-game");
-  expect(unknownTriggers).toContain("loses-the-game");
+  expect(unknownTriggers).not.toContain("loses-the-game");
 });
 
 // A real life-loss trigger on a card that ALSO mentions winning the game must survive.
@@ -1611,14 +1612,16 @@ test("a clause granted to a token the card creates derives nothing, and the same
 // `loses-the-game`, `damage-dealt` all read a string the model left behind rather than the event
 // name). Derived as written, Chandra, Fire Artisan claims to trigger when counters are ADDED, so
 // every counter-placer in the deck falsely feeds a trigger that fires when they LEAVE.
-test("a counter trigger whose subject says the counters were removed is refused, not inverted", () => {
+test("a counter trigger whose subject says the counters were removed is read as counter-removed, never inverted", () => {
   const removed = deriveAbilities([{
     id: 1,
     abilityType: "triggered",
     trigger: { event: "counter-added", subject: "loyalty counters removed from Chandra", control: "you" },
     actions: [{ verb: "deal-damage", object: "target opponent", amount: "that much" }],
   }], "Chandra, Fire Artisan");
-  expect(removed.unknownTriggers).toContain("counter-removed");
+  // Refused into unknownTriggers until 2026-09-09; now `counter-removed` is an engine verb (AC11).
+  expect(removed.unknownTriggers).not.toContain("counter-removed");
+  expect(removed.abilities.some((a) => a.trigger?.verbs?.includes("counter-removed"))).toBe(true);
   expect(removed.abilities.some((a) => a.trigger?.verbs?.includes("counter-added"))).toBe(false);
 
   // …and the ADDING half is untouched, which is the direction that matters: a planeswalker names

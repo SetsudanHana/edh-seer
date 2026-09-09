@@ -774,8 +774,9 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // SELF ON BOTH SIDES: a card adapting ITSELF cannot put the counter on another card's "this
   // creature" (Incubation Druid -> Evolution Witness, owner-judged FALSE 2026-08-22). The same
   // shape `selfEtbSelfSupplied` refuses for entries.
-  if (producer.verb === "counter-added" && producer.subject.self === true && consumer.subject.self === true) return false;
-  if (producer.verb === "counter-added") return counterAddMatches(producer.subject, consumer.subject, h);
+  if ((producer.verb === "counter-added" || producer.verb === "counter-removed") && producer.subject.self === true && consumer.subject.self === true) return false;
+  // A removal is compared the way a placement is: by the counter KIND first (AC11 batch 1).
+  if (producer.verb === "counter-added" || producer.verb === "counter-removed") return counterAddMatches(producer.subject, consumer.subject, h);
   // A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
   //
   // A damage TRIGGER always names the source — "whenever another source you control deals exactly 1

@@ -125,11 +125,12 @@ test("CR 614: a multiplier performs no action — Hardened Scales places no coun
   for (const a of abilities) expect(a.emits ?? []).toEqual([]);
 });
 
-test("CR 106.12a and 104.3: 'tapped for mana' and 'loses the game' are refused, never near-missed to taps or lose-life", () => {
+test("CR 106.12a and 104.3: 'tapped for mana' is refused, and 'loses the game' is read as loses-game, never as lose-life", () => {
   const mana = clause("Whenever a land is tapped for mana, add an additional {G}.", "add-mana", "{G}", { event: "taps", subject: "a land", control: "any" });
   expect(deriveAbilities(mana.clauses, "Mana Reflection", mana.texts, undefined, mana.texts[1]).unknownTriggers).toContain("taps-for-mana");
   const lose = clause("Whenever a player loses the game, draw a card.", "draw", "a card", { event: "life-lost", subject: "a player", control: "any" });
-  expect(deriveAbilities(lose.clauses, "Ramses", lose.texts, undefined, lose.texts[1]).unknownTriggers).toContain("loses-the-game");
+  const out = deriveAbilities(lose.clauses, "Ramses", lose.texts, undefined, lose.texts[1]);
+  expect(out.abilities[0]?.trigger?.verbs).toEqual(["loses-game"]);
 });
 
 test("CR 603.8 and 603.12c: a state trigger and a reflexive trigger refuse into unknownTriggers, forming no edge", () => {
