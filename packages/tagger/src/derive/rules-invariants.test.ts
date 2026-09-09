@@ -19,6 +19,7 @@ const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2"
 const TESTED: Record<string, string> = {
   "701.14a": "derive.test.ts — a fight's dealer is the fighting creature, not the spell",
   "702.162": "characteristics.test.ts — a More Than Meets the Eye card is cast from either face",
+  "113.8": "derive.test.ts — \"you\" in a granted ability is the recipient's controller (Hellish Rebuke)",
   "122.1b": "subject.test.ts — every keyword counter named by rule 122.1b is in the dictionary",
   "614.1c": "derive.test.ts — entering WITH counters is 614.1c, not placing counters later",
   "701": "cr-completeness.test.ts — every CR 701 keyword action is covered by a verb or excluded",
