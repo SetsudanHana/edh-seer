@@ -17,12 +17,18 @@
  *
  *  THE SUBJECT IS THE ONE THE PRODUCER'S EMIT WILL CARRY, which is the action's OBJECT and never its
  *  actor (`actionEmits` parses `action.object`). So the phrase captured here is the RECEIVING half of
- *  each sentence: the permanent the counters go on, the token created, the thing damage is dealt TO.
- *  Capturing "a creature you control would deal damage" instead would compare a damage SOURCE against
- *  an emit describing its VICTIM — two different objects, and no edge would ever form. Where the
- *  sentence has no comparable half at all (mill names cards, proliferate names nothing) the subject
- *  is left EMPTY, which is a wildcard: for a multiplier that is the right reading, since it doubles
- *  every such event in the deck. */
+ *  each sentence: the permanent the counters go on, the token created. Where the sentence has no
+ *  comparable half at all (mill names cards, proliferate names nothing) the subject is left EMPTY,
+ *  which is a wildcard: for a multiplier that is the right reading, since it doubles every such
+ *  event in the deck.
+ *
+ *  DAMAGE IS THE EXCEPTION, AND IT IS THE DEALER (recall v4 #120, 2026-09-09). A damage emit carries
+ *  BOTH participants since 2026-08-27 -- `subject` is the victim and `GameEvent.dealer` the source --
+ *  and `eventMatches` compares a damage trigger against the DEALER, because every damage trigger
+ *  names its source ("whenever a source you control deals damage"). This module was written before
+ *  that field existed and captured the victim, so Fiery Emancipation's trigger read `permanent` and
+ *  Khalni Ambush's fight -- dealer `{control: you}`, no type -- could never satisfy it. The source
+ *  phrase before "would" is now the half the matcher checks, so it is the subject. */
 import type { EffectKind, Verb } from "../schema.js";
 
 export interface Replacement {
@@ -37,11 +43,11 @@ export interface Replacement {
    *  no emit records. Label only: the kind is still true and the product classifiers want it, but no
    *  consumer trigger is synthesized, because the edge would claim more than the card says.
    *
-   *  Gratuitous Violence doubles damage from A CREATURE YOU CONTROL, so a burn spell is not doubled;
-   *  Uncivil Unrest narrows further to creatures with a +1/+1 counter; Bruvac doubles only what an
-   *  OPPONENT mills, so your own self-mill is not it. A damage or mill emit's subject is the victim
-   *  or the cards, never the dealer, so the engine cannot check the restriction — and a claim it
-   *  cannot check is the wrong-answer direction this repo refuses. */
+   *  Bruvac doubles only what an OPPONENT mills, so your own self-mill is not it, and a mill emit's
+   *  subject is the cards, never the miller -- a claim the engine cannot check is the wrong-answer
+   *  direction this repo refuses. DAMAGE IS NO LONGER HERE: Gratuitous Violence's "a creature you
+   *  control" is the dealer, the emit records the dealer, and `subjectMatches` refuses a burn spell's
+   *  typeless dealer against a `creature` demand on its own. */
   restricted?: true;
 }
 
@@ -49,10 +55,10 @@ export interface Replacement {
  *  match wins; the templates are disjoint on the corpus. */
 const TEMPLATES: {
   re: RegExp; verbs: Verb[]; kind: EffectKind; subject: number; counter?: number;
-  /** Capture group holding the half the engine CANNOT check — the source that deals or the player
-   *  who mills. Anything narrower than "a source" or "you" sets `restricted`. Omitted where the
-   *  sentence has no such half: a counter template's "would be put on X" is passive and names only
-   *  the receiving permanent, which IS the half emits record. */
+  /** Capture group holding the half the engine CANNOT check — the player who mills. Anything
+   *  narrower than "a source" or "you" sets `restricted`. Omitted where the sentence has no such
+   *  half: a counter template's "would be put on X" is passive and names only the receiving
+   *  permanent, which IS the half emits record; a damage template's source IS its subject. */
   actor?: number;
 }[] = [
   // "If one or more +1/+1 counters would be put on a creature you control, ... instead."
@@ -71,12 +77,11 @@ const TEMPLATES: {
   },
   // "If a creature you control would deal damage TO a permanent or player, it deals double that
   // damage instead." BOTH damage verbs: the printed word is "damage", which covers combat and
-  // noncombat alike, and the engine spells them separately. The capture is what damage is dealt TO,
-  // per the subject rule above — the source phrase before "would" names the actor, which no emit
-  // records.
+  // noncombat alike, and the engine spells them separately. The capture is the SOURCE before
+  // "would" -- the dealer, per the damage exception above; the victim after "to" is not compared.
   {
-    re: /\bif\s+([^.]{0,60}?)\s+would deal\b[^.]{0,40}?\bdamage to\s+([^,.]+)/i,
-    verbs: ["combat-damage", "non-combat-damage"], kind: "damage-multiplier", subject: 2, actor: 1,
+    re: /\bif\s+([^.]{0,60}?)\s+would deal\b[^.]{0,40}?\bdamage to\b/i,
+    verbs: ["combat-damage", "non-combat-damage"], kind: "damage-multiplier", subject: 1,
   },
   // "If an opponent would mill one or more cards, they mill twice that many cards instead." A mill
   // emit's subject is the CARDS milled, which the sentence names only as a count, so no subject.
@@ -92,8 +97,7 @@ const TEMPLATES: {
 ];
 
 /** "a source", "a source you control", "you" — the whole of what your deck can do. Anything else
- *  ("a creature you control", "an opponent", "a creature you control with a +1/+1 counter on it")
- *  narrows the multiplier to a subset the emit cannot identify. */
+ *  ("an opponent") narrows the multiplier to a subset the emit cannot identify. */
 const UNRESTRICTED_ACTOR = /^(?:a source(?: you control)?|you|any source)$/i;
 
 export function replacementOf(clauseText: string): Replacement | null {

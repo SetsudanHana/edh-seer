@@ -15,12 +15,16 @@ test("each measured template", () => {
   expect(replacementOf("If you would create one or more Treasure tokens, instead create those "
     + "tokens plus an additional Treasure token.")?.verbs).toEqual(["create-token"]);
   // Gratuitous Violence — damage, both halves, because the printed word says only "damage". The
-  // subject is what damage is dealt TO: an emit's subject is the action's object, so comparing the
-  // source phrase against it would compare a dealer with a victim and match nothing.
+  // subject is the DEALER: a damage emit records its source (`GameEvent.dealer`) and the matcher
+  // compares a damage trigger against it, so the source phrase is the checkable half (v4 #120).
   const gv = replacementOf("If a creature you control would deal damage to a permanent or player, "
     + "it deals double that damage instead.");
   expect(gv?.verbs).toEqual(["combat-damage", "non-combat-damage"]);
-  expect(gv?.subjectText).toBe("a permanent or player");
+  expect(gv?.subjectText).toBe("a creature you control");
+  // Fiery Emancipation: "a source you control" is every source, which `parseSubject` reads as a
+  // typeless `{control: you}` -- the shape Khalni Ambush's fight dealer carries.
+  expect(replacementOf("If a source you control would deal damage to a permanent or player, it "
+    + "deals triple that damage instead.")?.subjectText).toBe("a source you control");
   // Bruvac the Grandiloquent — mill.
   expect(replacementOf("If an opponent would mill one or more cards, they mill twice that many "
     + "cards instead.")?.verbs).toEqual(["mill"]);
@@ -40,10 +44,10 @@ test("the kind names the multiplication, which is what the product code counts",
 
 test("a restriction the emit cannot check is LABEL-ONLY, never an edge", () => {
   // Gratuitous Violence doubles damage from A CREATURE YOU CONTROL, so a burn spell is not doubled —
-  // and a damage emit's subject is the victim, so nothing downstream could check it. The kind is
-  // still true and the classifiers want it; the consumer trigger is what gets withheld.
+  // and since the dealer is the subject, that is a `creature` demand the matcher checks itself, so
+  // it is no longer withheld (v4 #120).
   expect(replacementOf("If a creature you control would deal damage to a permanent or player, it "
-    + "deals double that damage instead.")?.restricted).toBe(true);
+    + "deals double that damage instead.")?.restricted).toBeUndefined();
   // Bruvac doubles only what an OPPONENT mills; your own self-mill is not it.
   expect(replacementOf("If an opponent would mill one or more cards, they mill twice that many "
     + "cards instead.")?.restricted).toBe(true);

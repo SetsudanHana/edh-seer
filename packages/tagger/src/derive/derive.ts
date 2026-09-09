@@ -34,7 +34,10 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 130;
+// 131: a damage multiplier's trigger subject is the DEALER ("a source you control"), the half
+// `GameEvent.dealer` records and `eventMatches` compares; "a creature you control" is no longer
+// `restricted`, because the matcher checks it (recall v4 #120).
+export const DERIVE_VERSION = 131;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off

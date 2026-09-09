@@ -511,7 +511,10 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // THE DEALER IS THE ABILITY'S OWN SOURCE, WHICH IS A RULES FACT AND NOT A GUESS: CR 609.7 makes
     // the source of an effect's damage the object that produced the effect, and that object is this
     // card, controlled by its controller. So `{control: "you"}` — the same reading `CONTROLLER_DEFAULT`
-    // takes for every other verb whose actor the sentence leaves unstated.
-    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null } } : {}),
+    // takes for every other verb whose actor the sentence leaves unstated. A FIGHT is the exception:
+    // CR 701.14a, each creature deals damage equal to its power to the other, so the dealer is the
+    // fighting creature and not the spell -- Gratuitous Violence's "a creature you control" can
+    // check it (recall v4 #120).
+    ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature" } : {}) } } : {}),
   }));
 }
