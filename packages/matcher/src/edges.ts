@@ -633,6 +633,8 @@ const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
 /** An UNTYPED recursion on an ability that carries its own graveyard-entry trigger: it returns the
  *  object that trigger saw, never an arbitrary card someone else put there. Reached only AFTER the
  *  trigger-match skip above, so by here the fill is one the trigger does NOT see. */
+/** The mana value at or below which a real card counts as sacrifice fodder. See the fodder pass. */
+const EXPENDABLE_MV = 2;
 const GRAVEYARD_ENTRY_VERBS = new Set(["dies", "milled", "discarded", "sacrificed", "enters-graveyard"]);
 function returnsWhatItsOwnTriggerSaw(a: CardTags["abilities"][number]): boolean {
   const s = a.effect.subject;
@@ -1771,7 +1773,20 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     const made = (opts.tokensMediate ?? true) ? [] : (p.tags?.abilities ?? []).flatMap((pa) =>
       (pa.emits ?? []).filter((e) => e.verb === "create-token" && e.subject.token === true).map((e) => e.subject));
     const makes = made.some((s) => subjectMatches({ ...s, token: null }, { ...wanted, token: null }, h));
-    const is = (isToken || subtype !== undefined || narrowType)
+    // FODDER IS WHAT YOU MAKE IN QUANTITY OR WOULD NOT MIND LOSING (owner ruling 2026-09-09, off
+    // the debt sheet): "sacrifice fodder is something you can easily create in high quantity, like
+    // a token, or something that is cheap and expendable; a 7-mana artifact that has an effect is
+    // not fodder, those are things you typically would like to keep around." Four verdicts set the
+    // line: Surgehacker Mech (mv 4, an ETB) and Midnight Crusader Shuttle (mv 4, an attack trigger)
+    // are not fodder for Threefold Thunderhulk / Daretti; Syr Ginger (mv 2, LEGENDARY, a payoff) is
+    // not fodder for Trading Post; Aether Spellbomb (mv 1) is. So a real card is fodder only when it
+    // is cheap and not legendary; a token always is. Measured before the rule: 1,702 of the 2,694
+    // fodder reasons on the 71 decks were real cards, 956 of them above mana value 2.
+    // CEILING: "cheap" is a mana-value line, set at 2 on those four verdicts; a rate model (Y9 /
+    // AE4) would compare the card against what the outlet pays out instead.
+    const expendable = isToken || (p.card.manaValue <= EXPENDABLE_MV
+      && !p.tags.characteristics.types.some((t) => t.toLowerCase() === "legendary"));
+    const is = expendable && (isToken || subtype !== undefined || narrowType)
       && subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h);
     if (!is && !makes) continue;
     reasons.push({

@@ -1873,5 +1873,180 @@
    "1": "Adapt 2.",
    "2": "Whenever one or more +1/+1 counters are put on this creature, return target permanent card from your graveyard to your hand."
   }
+ },
+ {
+  "name": "Surgehacker Mech",
+  "oracleId": "bf9421d2-54e2-44d8-8b39-2e41192a6517",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Menace",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "target creature or planeswalker an opponent controls",
+      "amount": "twice the number of Vehicles you control",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Crew 4",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "artifact"
+   ],
+   "subtypes": [
+    "vehicle"
+   ],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 4,
+   "power": "5",
+   "toughness": "5",
+   "token": false,
+   "keywords": [
+    "crew",
+    "menace"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Menace",
+   "2": "When this Vehicle enters, it deals damage equal to twice the number of Vehicles you control to target creature or planeswalker an opponent controls.",
+   "3": "Crew 4"
+  }
+ },
+ {
+  "name": "Threefold Thunderhulk",
+  "oracleId": "b8020a8b-557b-465d-865d-b59fecd7abc1",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "1/1 colorless Gnome artifact creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its power",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "1/1 colorless Gnome artifact creature tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "its power",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "another artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "artifact",
+    "creature"
+   ],
+   "subtypes": [
+    "gnome"
+   ],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 7,
+   "power": "0",
+   "toughness": "0",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "This creature enters with three +1/+1 counters on it.",
+   "2": "Whenever this creature enters or attacks, create a number of 1/1 colorless Gnome artifact creature tokens equal to its power.",
+   "3": "Put a +1/+1 counter on this creature."
+  }
  }
 ]
