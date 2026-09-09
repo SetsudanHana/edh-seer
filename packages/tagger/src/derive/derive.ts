@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 128;
+export const DERIVE_VERSION = 130;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1192,6 +1192,23 @@ export function deriveAbilities(
       if (emits.length) ability.emits = emits;
       if (face) ability.face = face;
       abilities.push(ability);
+      // A SELF-OR-CLASS TRIGGER IS TWO TRIGGERS (recall v4 #144, 2026-09-09). "Whenever this
+      // creature or another enchantment you control enters" (Fear of Sleep Paralysis, and every
+      // constellation card) had its self half STRIPPED so the class half could not union with it
+      // (Kappa Cannoneer, above) -- and with it went the card's own ETB, which is exactly what a
+      // flicker re-fires. The class half stays as it was; a twin carries the self half, subject
+      // `{self: true}` typed by the word after "this", the same shape a plain "when this creature
+      // enters" derives. Essence Flux -> Fear now joins on the twin.
+      const rawTrigger = clause.trigger?.subject ?? "";
+      const selfWord = trigger && SELF_DISJUNCT.test(rawTrigger) ? /^this (\w+)/i.exec(rawTrigger)?.[1] : undefined;
+      if (selfWord && selfWord !== "spell" && selfWord !== "card") {
+        // The zone qualifier belongs to BOTH halves: River Kelpie's "this creature or another
+        // permanent enters from a graveyard" is a from-graveyard trigger for Kelpie too, and a twin
+        // without it re-made two panel FALSEs (Phantasmal Image -> Kelpie) on the first derive.
+        const own = parseSubject(`this ${selfWord}`);
+        const zone = trigger!.subject.fromZone !== undefined ? { fromZone: trigger!.subject.fromZone } : {};
+        abilities.push({ ...ability, trigger: { ...trigger!, subject: { ...own, control: "you", self: true, ...zone } } });
+      }
     }
 
     // A RESTRICTION THE ENGINE CANNOT CHECK MAKES THE STATIC LABEL-ONLY TOO, not just the trigger
