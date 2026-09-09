@@ -56,7 +56,10 @@ const PROSE: Record<string, string> = {
   "702.26": "phasing", "708": "face-down: OPEN", "712": "double-faced", "714.2b": "Saga chapters", "717": "Attractions excluded",
   "719": "Cases: solved, a word", "720": "Omen: OPEN", "725": "monarch", "726": "initiative", "730": "mutate: OPEN",
   "903": "Commander", "903.3": "the commander designation is a deck fact (matcher asserts it)",
-  "118.3b": "paying life is losing life — prompt rule", "603.8": "state triggers — prompt rule", "603.12c": "reflexive — prompt rule",
+  "118.3b": "paying life is losing life — prompt rule",
+  "113.3": "schema: the ability kinds a card can name as an OBJECT (abilityKind, AC12)",
+  "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
+  "605.3b": "schema: a mana ability does not use the stack, so 'activated' as an object excludes it (AC12)", "603.8": "state triggers — prompt rule", "603.12c": "reflexive — prompt rule",
 };
 
 const SRC = fileURLToPath(new URL("..", import.meta.url));

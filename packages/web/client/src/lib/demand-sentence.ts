@@ -290,6 +290,8 @@ export const MECHANISM: Record<string, string> = {
   meld: "melding",
   "land-condition": "needing a basic type",
   clone: "copying a permanent",
+  // AC12: the copy-ability pass's tag is `copies:<kind>`.
+  copies: "having an ability copied",
 };
 
 /** A STATIC IS A CLASS, NOT A MECHANISM, AND EVERY OTHER TAG'S FIRST COMPONENT IS A MECHANISM.

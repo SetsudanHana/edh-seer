@@ -52,6 +52,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     "graveyard-recursion": 0.8,
     flicker: 0.8,
     "copy-spell": 0.8,
+    "copy-ability": 0.8,
     clone: 0.7,
     // ALL THREE ARE REACHABLE, and the comment that used to sit here saying otherwise was
     // measured false on 2026-08-18: across the 71 calibration decks, win-game carries 11 reasons

@@ -626,6 +626,13 @@ export function parseSubject(text: string): SubjectFilter {
   // it just stops firing on the one text where the name belongs to something being CREATED.
   const named = TOKEN_CREATION.test(t) ? null : t.match(NAMED);
   if (named) out.named = named[1].trim();
+  // AN ABILITY AS THE OBJECT (AC12): "target activated or triggered ability you control", "a
+  // loyalty ability of a Chandra planeswalker", "a mana ability". The kinds named, in the order
+  // named; nothing when the text does not say "ability".
+  if (/\babilit(?:y|ies)\b/.test(t)) {
+    const kinds = [...t.matchAll(/\b(activated|triggered|loyalty|mana)\b/g)].map((m) => m[1] as SubjectFilter["abilityKind"] extends (infer K)[] | undefined ? K : never);
+    if (kinds.length) out.abilityKind = [...new Set(kinds)];
+  }
   const origin = t.match(ORIGIN_ZONE);
   if (origin) out.fromZone = origin[1].toLowerCase();
   if (colors) out.colors = colors;

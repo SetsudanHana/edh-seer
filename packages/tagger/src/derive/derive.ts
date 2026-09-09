@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 121;
+export const DERIVE_VERSION = 122;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1047,6 +1047,12 @@ export function deriveAbilities(
           for (const e of emits) if (e.subject.control === "any") e.subject.control = inherited;
           if (subject && subject.control === "any") subject.control = inherited;
         }
+      }
+      // "Whenever you activate an ability ... copy THAT ability" (Rings of Brighthearth): the object
+      // is a pronoun and the kind lives in the trigger. `activate` itself is refused as a trigger
+      // (no producer), so the fact is carried here instead of lost (AC12).
+      if (effectKind === "copy-ability" && subject && !subject.abilityKind && clause.trigger?.event === "activate") {
+        subject.abilityKind = ["activated"];
       }
       const actor = actorFor(action.verb);
       if (actor) {

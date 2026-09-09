@@ -35,6 +35,8 @@ const PROSE: Record<string, string> = {
   "704.5s": "Saga sacrifice", "708.2": "face-down 2/2", "712.4a": "a DFC's back face", "717.4": "Attractions excluded",
   "903": "Commander", "903.10a": "commander damage", "903.2": "a Commander deck", "903.4": "colour identity", "903.6": "singleton",
   "903.8": "commander tax is a caveat, not a number",
+  "113.3": "edges: the copy-ability pass reads the other card's ability kinds (AC12; edges.test asserts Strionic, Gogo, Tawnos)",
+  "605.3b": "edges: 'activated' excludes mana abilities in the copy-ability pass (AC12)",
 };
 
 const SRC = fileURLToPath(new URL(".", import.meta.url));

@@ -23,6 +23,7 @@ export const DOES: { kind: string; label: string }[] = [
   { kind: "untap", label: "untaps" },
   { kind: "flicker", label: "flickers" },
   { kind: "copy-spell", label: "copies spells" },
+  { kind: "copy-ability", label: "copies abilities" },
   { kind: "clone", label: "copies permanents" },
   { kind: "keyword-grant", label: "grants keywords" },
   { kind: "pump", label: "pumps" },

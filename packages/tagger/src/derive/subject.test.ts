@@ -702,3 +702,12 @@ test("blocked, unblocked and a bare creature carry no combat state", () => {
   expect(parseSubject("one or more creatures an opponent controls that aren't blocked").combat).toBeUndefined();
   expect(parseSubject("target creature").combat).toBeUndefined();
 });
+
+// AN ABILITY AS THE OBJECT (roadmap AC12, 2026-09-09).
+test("a subject that names an ability records which kinds, in the order named", () => {
+  expect(parseSubject("target activated or triggered ability you control").abilityKind).toEqual(["activated", "triggered"]);
+  expect(parseSubject("a loyalty ability of a Chandra planeswalker").abilityKind).toEqual(["loyalty"]);
+  expect(parseSubject("an ability of an artifact, creature, or land on the battlefield that isn't a mana ability").abilityKind).toEqual(["mana"]);
+  // No "ability" in the text, no field -- "a triggered creature" is not a sentence a card prints.
+  expect(parseSubject("target creature an opponent controls").abilityKind).toBeUndefined();
+});

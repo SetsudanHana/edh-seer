@@ -240,6 +240,16 @@ export interface SubjectFilter {
    *  singleton pointer in EDH, but 13 corpus cards say "a deck can have any number of cards named
    *  ..." and all 13 count their own name, which is an archetype the engine could not see at all. */
   named?: string;
+  /** AN ABILITY AS AN OBJECT (roadmap AC12, owner's note 2026-09-08: "hard time recognizing
+   *  trigger vs activated abilities, and cards like Gogo that can copy those"). CR 113.3 names the
+   *  kinds; CR 707.10 lets a spell or ability be copied; 316 commander-legal cards name an
+   *  activated, triggered, loyalty or mana ability as the THING they act on -- copy it (Gogo,
+   *  Strionic Resonator, Rings of Brighthearth), counter it (Stifle), trigger on activating one
+   *  (Harsh Mentor). Set by `parseSubject` when the object names one; the matcher answers it from
+   *  the other card's own `abilities[].kind`. "activated" here means a NON-mana activated ability,
+   *  as the cards mean it (mana abilities do not use the stack, CR 605.3b, and cannot be targeted);
+   *  `mana` and `loyalty` are named only when the card names them. */
+  abilityKind?: AbilityObjectKind[];
   /** Counter kind for `counter-added` events, e.g. "+1/+1", "-1/-1", "loyalty". */
   counter?: string;
   /** Which phase or step an `extra-phase` effect grants, over a closed CR vocabulary: `untap`,
@@ -618,6 +628,11 @@ export const EFFECT_KINDS = [
   "fast-mana",
   "ritual",
   "copy-spell",
+  // CR 707.10: a spell, a permanent and an ABILITY are three copyable objects, and this is the third
+  // (roadmap AC12, 2026-09-09). Gogo, Strionic Resonator, Lithoform Engine, Rings of Brighthearth
+  // derived as `copy-spell` with no subject that said which abilities. `effect.subject.abilityKind`
+  // says which; the matcher pairs the copier with every card in the deck that HAS one.
+  "copy-ability",
   "speed-increase",
   // SPEED, the Start your engines! resource (CR 702.179) -- not `speed-increase`, which is the flat
   // tagger's old name for a haste grant and stays what it is.
@@ -720,6 +735,8 @@ export interface Effect {
 }
 
 export type AbilityKind = "triggered" | "activated" | "static" | "on-cast";
+/** The kinds a card can name as an OBJECT (CR 113.3 plus the two the cards single out). */
+export type AbilityObjectKind = "activated" | "triggered" | "loyalty" | "mana";
 
 /** How often an ability fires, per turn CYCLE — a full round of the pod. `per-turn` fires on every
  *  player's turn and so up to pod-size times a round; `per-cycle` fires only on yours. */

@@ -3892,3 +3892,41 @@ test("a basic-land search still forms ramp-target", () => {
   };
   expect(pairReasons(finder, swamp, H).some((r) => r.tag.startsWith("ramp-target"))).toBe(true);
 });
+
+// ROADMAP AC12: a copier relates to the cards whose ABILITIES it can copy, read off their kinds.
+describe("copy-ability (AC12)", () => {
+  const strionic = base("Strionic Resonator", [{
+    kind: "activated", cost: "{2}, {T}",
+    effect: { kind: "copy-ability", subject: { control: "you", token: null, scope: "target", abilityKind: ["triggered"] } },
+  }]);
+  const solemn = base("Solemn Simulacrum", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "ramp", subject: { control: "you", token: null, type: ["land"] } },
+  }]);
+  const signet = base("Arcane Signet", [{ kind: "activated", cost: "{T}", effect: { kind: "mana-generation" } }]);
+  const vanilla = base("Grizzly Bears", []);
+
+  test("Strionic Resonator copies a triggered ability, never a mana ability, never a vanilla", () => {
+    expect(pairReasons(strionic, solemn, H).map((r) => r.tag)).toContain("copies:triggered");
+    expect(pairReasons(strionic, signet, H).map((r) => r.tag)).not.toContain("copies:triggered");
+    expect(pairReasons(strionic, vanilla, H)).toEqual([]);
+  });
+
+  test("'activated' means a NON-mana activated ability, and a loyalty ability is a loyalty ability", () => {
+    const gogo = base("Gogo", [{ kind: "activated", cost: "{X}{X}, {T}", effect: { kind: "copy-ability", subject: { control: "you", token: null, scope: "target", abilityKind: ["activated", "triggered"] } } }]);
+    const pump = base("Pump Knight", [{ kind: "activated", cost: "{1}", effect: { kind: "pump" } }]);
+    const walker = base("Chandra", [{ kind: "activated", cost: "+1", effect: { kind: "damage" } }]);
+    expect(pairReasons(gogo, pump, H).map((r) => r.tag)).toContain("copies:activated");
+    expect(pairReasons(gogo, signet, H).map((r) => r.tag)).toEqual([]);
+    const loyaltyCopier = base("Loyalty Copier", [{ kind: "activated", cost: "{T}", effect: { kind: "copy-ability", subject: { control: "you", token: null, abilityKind: ["loyalty"] } } }]);
+    expect(pairReasons(loyaltyCopier, walker, H).map((r) => r.tag)).toContain("copies:loyalty");
+    expect(pairReasons(loyaltyCopier, pump, H)).toEqual([]);
+  });
+
+  test("Tawnos copies only from an ARTIFACT source", () => {
+    const tawnos = base("Tawnos", [{ kind: "activated", cost: "{U}{R}, {T}", effect: { kind: "copy-ability", subject: { control: "you", token: null, type: "artifact", scope: "target", abilityKind: ["activated", "triggered"] } } }]);
+    const artifactTrigger = artifact("Myr Retriever", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } }, effect: { kind: "graveyard-recursion" } }]);
+    expect(pairReasons(tawnos, artifactTrigger, H).map((r) => r.tag)).toContain("copies:triggered");
+    expect(pairReasons(tawnos, solemn, H).map((r) => r.tag)).not.toContain("copies:triggered");
+  });
+});
