@@ -20,7 +20,7 @@ import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@edh-seer/matcher";
+import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
 import { sample, seededRng } from "./precision-core.js";
 import { blindRecall, stratumOf, type SilentPair, type Stratum } from "./recall-core.js";
 
@@ -36,6 +36,13 @@ const OUT = arg("--out", scratchDir("recall"));
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
 const derivedTags: CardTagsLookup = createTagsLookup(store.db, "derived");
+// TOKENS ARE NODES (2026-08-16) AND THIS INSTRUMENT RAN WITHOUT THEM until 2026-09-09 (roadmap
+// AC13). The 09-07 draw's largest miss family -- "a card creates a token and the payoff that
+// triggers on it is not joined", 6 of 15 -- was the instrument's shape: `panel-score` passes
+// `tokenTags` and attributes a token-carried claim back to the card that makes the token; this
+// file did neither, so Zariel -> Devil [token] -> Purphoros read as silence. Five of the six pairs
+// join today in the CLI. Same analysis call as the panel, same attribution.
+const tokenTags = await loadTokenTags(store.db);
 
 const pools: Record<Stratum, SilentPair[]> = { "verb-match": [], "derive-empty": [], base: [] };
 const oracle = new Map<string, { typeLine: string; text: string }>();
@@ -57,13 +64,27 @@ for (const file of decks) {
   const index = new ComboIndex(combos);
 
   const derivedCards = await buildDeckCards(cards, lookup, derivedTags);
-  const report = analyzeDeckStructured(derivedCards, commanders, undefined, undefined, index);
+  const report = analyzeDeckStructured(derivedCards, commanders, undefined, undefined, index, undefined, tokenTags);
 
   // Undirected pair keys: a claim in EITHER direction means the engine is not silent about the pair.
   const key = (x: string, y: string): string => (x < y ? `${x}|${y}` : `${y}|${x}`);
   const claimed = new Set<string>();
+  // A claim carried by a TOKEN belongs to every card that makes that token, on either side --
+  // the `madeBy` read `panel-score.ts` makes, built from the engine's own `creates:` reasons.
+  const makers = new Map<string, Set<string>>();       // token -> cards that create it
   for (const e of report.edges) for (const r of e.reasons) {
-    if (r.producer && r.consumer) claimed.add(key(r.producer, r.consumer));
+    if (r.producer && r.consumer && r.tag.startsWith("creates:")) {
+      if (!makers.has(r.consumer)) makers.set(r.consumer, new Set());
+      makers.get(r.consumer)!.add(r.producer);
+    }
+  }
+  const owners = (name: string, isToken: boolean | undefined): string[] =>
+    isToken ? [...(makers.get(name) ?? [])] : [name];
+  for (const e of report.edges) for (const r of e.reasons) {
+    if (!r.producer || !r.consumer) continue;
+    for (const p of owners(r.producer, r.producerIsToken)) {
+      for (const c of owners(r.consumer, r.consumerIsToken)) if (p !== c) claimed.add(key(p, c));
+    }
   }
   // The relation an edge is MADE of: one card's emit verb against the other's trigger verb.
   const emits: Record<string, string[]> = {};

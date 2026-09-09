@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 122;
+export const DERIVE_VERSION = 124;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -449,7 +449,10 @@ const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
  *  "Target Shapeshifter becomes a copy of TARGET CREATURE" -- so the recipient, the half that names
  *  the subtype, is lost the way a grant's was. 122 corpus clauses carry a `copy` action. */
 const COPIED_INTO = /^(.*?\S)\s+\bbecomes?\s+(?:a\s+copy|copies)\s+of\b/i;
-const CLAUSE_PREAMBLE = /^(?:when|whenever|at)\b[^,]*,\s*|^[^:.]{1,60}:\s*/i;
+// THE COST PREAMBLE NEVER CONTAINS A QUOTE. Springleaf Parade's "Creature tokens you control have
+// \"{T}: Add one mana of any color.\"" matched the cost branch at the {T}: inside the GRANTED
+// ability, which threw the recipient away with it (AC13, 2026-09-09).
+const CLAUSE_PREAMBLE = /^(?:when|whenever|at)\b[^,]*,\s*|^[^:."\u201c]{1,60}:\s*/i;
 
 /** A leading SUBORDINATE clause, which states a condition or a setup and never the recipient.
  *  Anger's "As long as this card is in your graveyard and you control a MOUNTAIN, creatures you
@@ -521,7 +524,13 @@ function effectSubject(
       // commanders, all four run a Background, and the edges between the pair read 0 · 0 · 0 · 1.
       // The one that worked (Cultist of the Absolute) got there by `modify-pt`, which never passes
       // through this gate at all.
-      if (s.subtype === undefined && s.commander !== true) return parseSubject("");
+      // A TOKEN CLASS IS BOUNDED TOO (roadmap AC13, 2026-09-09). "Creature tokens you control have
+      // '{T}: Add one mana of any color'" (Springleaf Parade) reaches the deck's TOKEN NODES, which
+      // exist only because a card in the deck makes them -- so the edge is to each token maker,
+      // which is exactly the synergy the card is played for. Tokens have been nodes since
+      // 2026-08-16; this gate predates them and read "creature tokens" as "creatures". Found by the
+      // recall draw's one token-family miss that was not the instrument's own shape.
+      if (s.subtype === undefined && s.commander !== true && s.token !== true) return parseSubject("");
       return s;
     }
   }

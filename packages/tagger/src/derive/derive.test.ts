@@ -2211,3 +2211,17 @@ test("Rings of Brighthearth copies THAT ability, and the kind comes from its act
   expect(abilities[0]?.effect.kind).toBe("copy-ability");
   expect(abilities[0]?.effect.subject?.abilityKind).toEqual(["activated"]);
 });
+
+// ROADMAP AC13: a grant to a TOKEN class keeps its subject (Springleaf Parade), a grant to a bare
+// type class still does not (the whole-deck lord edge stays refused).
+test("a grant to creature TOKENS keeps its token subject; a grant to creatures still refuses", () => {
+  const tokens = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "that ability" }],
+  }], "Springleaf Parade", { 1: "Creature tokens you control have \"{T}: Add one mana of any color.\"" });
+  expect(tokens.abilities[0]?.effect.kind).toBe("keyword-grant");
+  expect(tokens.abilities[0]?.effect.subject).toMatchObject({ token: true, type: "creature", control: "you" });
+  const creatures = deriveAbilities([{
+    id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "haste" }],
+  }], "Fervor", { 1: "Creatures you control have haste." });
+  expect(creatures.abilities[0]?.effect.subject).toBeUndefined();
+});

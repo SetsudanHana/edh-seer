@@ -573,7 +573,9 @@ export function parseSubject(text: string): SubjectFilter {
   const t = text.toLowerCase().trim().split(ATTACHED_TO)[0].trim();
   const { type, notType, umbrella, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
-  const scope = parseScope(t, plural || subtypePlural);
+  // "creature TOKENS you control": the plural sits on the word `tokens`, which is neither a type nor
+  // a subtype, so neither parser saw it and the phrase read as a bare singular (AC13, 2026-09-09).
+  const scope = parseScope(t, plural || subtypePlural || /\btokens\b/.test(t));
   const stats = [...parseStats(t), ...literalSize(t)];
   const colors = parseColors(t);
   const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
