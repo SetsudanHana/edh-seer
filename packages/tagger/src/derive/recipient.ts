@@ -20,7 +20,12 @@ import type { Control } from "../schema.js";
 
 /** Every way the corpus names an actor before a verb. Kept as one alternation so the cue table below
  *  stays one line per verb. */
-const WHO = "its controller|their controller|target opponent|each opponent|each other player|that player|target player|each player|those players";
+// COMBAT NAMES THE OPPONENT WITHOUT SAYING "OPPONENT" (the same fact `subject.ts` records for a
+// subject): "defending player sacrifices an artifact of their choice" (Kibo, Uktabi Prince) is the
+// OPPONENT sacrificing, and it derived `you` -- so Reaper King was "fodder" for Kibo's edict,
+// owner-judged FALSE 2026-09-09. 25 corpus cards print "defending player sacrifices", the
+// annihilator Eldrazi among them.
+const WHO = "its controller|their controller|target opponent|each opponent|each other player|defending player|attacking player|that player|target player|each player|those players";
 
 /** The actor must sit immediately against its OWN verb. "each opponent loses 1 life and you gain 1
  *  life" is the commonest drain wording in the corpus, and reading its recipient onto the gain would
@@ -57,7 +62,7 @@ const CUES: [string, RegExp][] = [
 function controlOf(phrase: string, text: string, at: number): Control | undefined {
   const p = phrase.toLowerCase();
   if (p === "its controller" || p === "their controller") return "opp";
-  if (p === "target opponent" || p === "each opponent" || p === "each other player") return "opp";
+  if (p === "target opponent" || p === "each opponent" || p === "each other player" || p === "defending player" || p === "attacking player") return "opp";
   // "that player" points back at whoever the clause already named. The antecedent is in the same
   // clause, so this one needs no judgment: Massacre Wurm's "a creature an opponent controls dies,
   // that player..." is an opponent, while "choose target player. That player..." is not.

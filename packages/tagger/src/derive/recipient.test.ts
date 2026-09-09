@@ -58,6 +58,12 @@ test("life loss follows its actor too", () => {
   expect(actionRecipients("Each player loses 3 life.")).toEqual({ "lose-life": "any" });
 });
 
+test("the DEFENDING player is an opponent (Kibo, Uktabi Prince; owner-judged 2026-09-09)", () => {
+  expect(actionRecipients("Whenever Kibo attacks, defending player sacrifices an artifact of their choice."))
+    .toEqual({ sacrifice: "opp" });
+  expect(actionRecipients("Whenever this creature attacks, attacking player draws a card.")).toEqual({ draw: "opp" });
+});
+
 test("a sacrifice the OPPONENT makes is the opponent's creature dying", () => {
   // Dictate of Erebos: "whenever a creature you control dies, EACH OPPONENT sacrifices a creature of
   // their choice." The object is "creature of their choice", which parses to control `any`, and

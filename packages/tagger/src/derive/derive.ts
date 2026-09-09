@@ -42,7 +42,9 @@ import { emblemRecipient } from "../emblem.js";
 // 133: a granted trigger's self emits and its "you" are the recipient's (CR 113.8), the recipient may be a
 // permanent, and a card that exiles what would hit an opponent's graveyard AND plays it is a
 // graveyard-recursion over their fills (recall v4 #28).
-export const DERIVE_VERSION = 133;
+// 134: "defending player" and "attacking player" are an opponent as an ACTOR too, so Kibo's edict is
+// the opponent's sacrifice and not a demand for your artifacts (owner-judged FALSE 2026-09-09).
+export const DERIVE_VERSION = 134;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
