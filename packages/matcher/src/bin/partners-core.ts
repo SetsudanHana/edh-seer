@@ -646,7 +646,10 @@ export const demandKeysOf = (d: DeckCard): string[] => [
   ...abilitiesOf(d).flatMap((a) =>
     a.trigger?.subject?.self === true ? []
       : (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
-  ...boardCountKeysOf(d),
+  // ALL THREE FEEDER SHAPES ARE DEMANDS. Listing only board counts here left Strionic Resonator --
+  // no trigger, no emit, one copy-ability -- with no demand at all, so `isSubstantive` dropped it
+  // from the pool and its page had no rows, feeder pass or not (found on the first rebuild).
+  ...feederKeysOf(d),
 ];
 
 /** THE FIVE BASIC LAND TYPES, which a board count may name and which never form a row -- the same
