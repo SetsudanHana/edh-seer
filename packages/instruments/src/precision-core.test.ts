@@ -145,6 +145,15 @@ test("every row states WHICH WAY the claim runs", () => {
     .toBe("Withering Torment puts creature cards into a graveyard; Necromancy returns them from it");
   expect(claimFor("counter-added:creature", "Shelinda", "Simic Ascendancy"))
     .toBe("Shelinda puts counters on creature; Simic Ascendancy benefits from them being there");
+  // The four channel families shipped 2026-09-09, each worded from the tag alone.
+  expect(claimFor("scales:artifact", "Thought Vessel", "Dowsing Device // Geode Grotto"))
+    .toBe("Thought Vessel adds to how many artifacts there are, on the battlefield or in a graveyard; Dowsing Device // Geode Grotto scales with that count");
+  expect(claimFor("fodder:artifact", "Aether Spellbomb", "Sai, Master Thopterist"))
+    .toBe("Aether Spellbomb is, or makes, artifact fodder; Sai, Master Thopterist is a sacrifice outlet that wants it");
+  expect(claimFor("copies:triggered", "Breaker of Creation", "Ulalek, Fused Atrocity"))
+    .toBe("Ulalek, Fused Atrocity copies Breaker of Creation's triggered ability");
+  expect(claimFor("refires:dies", "Necromancy", "Gixian Puppeteer"))
+    .toBe("Necromancy returns Gixian Puppeteer from the graveyard, so its death trigger fires again");
   expect(claimFor("static:pump", "Coat of Arms", "Lord of the Unreal"))
     .toBe("Coat of Arms's pump applies to Lord of the Unreal");
   // The default, and the shape of the great majority: an event the producer causes.

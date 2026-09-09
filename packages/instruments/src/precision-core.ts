@@ -121,8 +121,21 @@ export function claimFor(tag: string, producer: string, consumer: string, implie
   if (family === "ramp-target") {
     return `${producer} can search up ${consumer}, which is ${subject === "basic" ? "a basic land" : `a ${subject}`}`;
   }
+  // TWO SOURCES SHARE THE TAG (edges.ts: a graveyard fill and a board count), and the tag alone
+  // cannot say which, so the sentence names the count rather than guessing the zone. It used to
+  // say "puts cards into a graveyard", which was false for every board-count claim (Thought Vessel
+  // -> Dowsing Device is an artifact ON THE BATTLEFIELD) and would have steered the judge.
   if (family === "scales") {
-    return `${producer} puts ${subject} cards into a graveyard; ${consumer} counts them and gets bigger`;
+    return `${producer} adds to how many ${subject}s there are, on the battlefield or in a graveyard; ${consumer} scales with that count`;
+  }
+  if (family === "fodder") {
+    return `${producer} is, or makes, ${subject} fodder; ${consumer} is a sacrifice outlet that wants it`;
+  }
+  if (family === "copies") {
+    return `${consumer} copies ${producer}'s ${subject} ability`;
+  }
+  if (family === "refires") {
+    return `${producer} returns ${consumer} from the graveyard, so its death trigger fires again`;
   }
   if (family === "tutor") {
     return `${producer} can search up ${consumer}`;
