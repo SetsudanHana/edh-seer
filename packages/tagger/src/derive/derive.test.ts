@@ -2300,6 +2300,8 @@ test("a damage multiplier watches the source that deals, not the thing dealt to"
   }], "Khalni Ambush", { 1: "Target creature you control fights target creature you don't control." });
   const dmg = fight.abilities.flatMap((x) => x.emits ?? []).find((e) => e.verb === "non-combat-damage");
   expect(dmg?.dealer).toEqual({ control: "you", token: null, type: "creature" });
+});
+
 // RECALL v4 #28 (2026-09-09): Hellish Rebuke -> Valgavoth, Terror Eater. An edict granted to
 // OPPONENTS' permanents fills THEIR graveyard, and Valgavoth plays what would land there.
 test("a granted trigger on opponents' permanents makes THEIR permanent die, not the instant", () => {
