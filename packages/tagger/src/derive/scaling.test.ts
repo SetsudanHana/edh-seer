@@ -127,3 +127,12 @@ test("a clause that defines X hands the count to every action whose amount is X"
   // A bare X with no definition in the clause is still the X the player paid.
   expect(actionScaling(tokens, "Create X Treasure tokens.")).toBe("x-cost");
 });
+
+// RECALL v4 #138 (2026-09-09): a qualifier after "you control" is part of what is counted.
+test("a board count keeps the subtype qualifier that follows 'you control'", () => {
+  const s = scalingSubject({ verb: "modify-pt", object: "each creature that isn't an Insect, Rat, Spider, or Squirrel", amount: "-1/-1 for each creature you control that's an Insect, Rat, Spider, or Squirrel" });
+  expect(s).toMatchObject({ zone: "battlefield", control: "you", type: "creature" });
+  expect(s?.subtype).toEqual(["insect", "rat", "spider", "squirrel"]);
+  // Nothing after "you control": unchanged.
+  expect(scalingSubject({ verb: "modify-pt", object: "this creature", amount: "+1/+1 for each Goblin you control" })).toMatchObject({ subtype: "goblin", control: "you" });
+});

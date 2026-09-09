@@ -1736,6 +1736,40 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       producer: p.card.name,
     });
   }
+  // FODDER edges: P is what C's sacrifice EATS (recall v4 token family, 2026-09-09). A sacrifice
+  // outlet -- "{R}, {T}, Sacrifice an artifact" (Goblin Engineer), "you may sacrifice a creature"
+  // (Disciple of Freyalise) -- derives a `sacrifice` emit whose subject is what it eats, and until
+  // now that emit was only ever a SUPPLY of dies events for aristocrats payoffs; nothing said that
+  // the outlet WANTS something to feed it. Read off the emit rather than the cost string: an
+  // effect sacrifice of your own permanent is the same demand, and an edict ("each player
+  // sacrifices", control any) or a self-sacrifice is not.
+  //
+  // A TOKEN IS FODDER WHATEVER ITS TYPE: a Construct, a Saproling, a Treasure is a free body, which
+  // is the whole aristocrats shape. A real card is fodder only when the outlet names a non-whole-
+  // deck type ("sacrifice an artifact" reaches Solemn; "sacrifice a creature" does NOT reach every
+  // creature in the deck -- that is the whole board, and waits for magnitude like the creature
+  // board count). The type-count ruling of the same day is the precedent.
+  for (const a of c.tags?.abilities ?? []) {
+    if (p === c) break;
+    const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.control === "you" && e.subject.self !== true);
+    if (!eats) continue;
+    const { zone: _z, scope: _s, ...wanted } = eats.subject;
+    const isToken = p.tags?.characteristics.token === true;
+    const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
+    const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
+    const narrowType = types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!);
+    if (!isToken && subtype === undefined && !narrowType) continue;
+    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h)) continue;
+    reasons.push({
+      tag: `fodder:${themeSubjectKey(wanted)}`,
+      text: `${p.card.name} is fodder for ${c.card.name}`,
+      effectKind: a.effect.kind || "sacrifice",
+      repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    break; // one fodder claim per pair
+  }
   // TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
   // consumer-trigger relation, which is why the recall measurement filed the family as
   // `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an
