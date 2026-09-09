@@ -1023,6 +1023,8 @@ export interface ReasonOptions {
 /** The five basic land types, which a board count may name and which never form an edge -- see the
  *  board-count channel for why. */
 const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
+/** A board count over one of these is a count of the deck itself. See the board-count edge. */
+const WHOLE_DECK_TYPES = new Set(["creature", "permanent", "card", "spell", "land"]);
 
 /** A CARD THAT TURNS THE BOARD OFF FEEDS NOTHING ON IT. Dress Down's "creatures lose all abilities"
  *  is a layer-6 effect (CR 613.1f) that applies the moment it is on the battlefield, so when the
@@ -1418,12 +1420,23 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     // 2026-09-04: 685 battlefield counts are derived and 248 name a subtype -- those are the ones
     // that say something about a DECK rather than about Magic.
     const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
-    if (subtype === undefined) continue;
+    // A NON-CREATURE CARD TYPE COUNTS TOO (owner's ruling, 2026-09-09, on the recall v4 scaling
+    // family): "this creature gets +1/+0 for each ARTIFACT you control" (Storm-Kiln Artist) relates
+    // to every artifact in the deck, Sol Ring included, and refusing it was wrong -- "at some point
+    // we have to have magnitude of specific edges, cause some are stronger than others". So the
+    // subtype-only gate above is relaxed to any single type except the three that ARE the deck:
+    // `creature` (313 corpus counts; a creature deck) and `permanent` (71) are the whole board, and
+    // `land` (129) is the mana base, which the standing ruling keeps out of synergy. Those wait for
+    // magnitude, not for a rule. Measured on the 71 decks: edges 36,596 -> 38,238, reasons 47,737
+    // -> 50,416, MESHED 289 unchanged, panel precision unchanged, 10 new claims to judge.
+    const types = Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : [];
+    const typedCount = subtype === undefined && types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!);
+    if (subtype === undefined && !typedCount) continue;
     // A BASIC LAND TYPE IS THE MANA BASE. 20 corpus cards count Swamps and 13 count Mountains; a
     // mono-black deck runs thirty Swamps, and thirty edges into one payoff is the same mesh wearing
     // a different costume. The partial reversal for fetchlands and Urza's Saga is about a land that
     // FINDS something, not about a basic being counted.
-    if (BASIC_LAND_TYPES.has(subtype)) continue;
+    if (subtype !== undefined && BASIC_LAND_TYPES.has(subtype)) continue;
     // AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD.
     if (counted.control === "opp") continue;
     // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what
