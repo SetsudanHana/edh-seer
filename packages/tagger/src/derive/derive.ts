@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 116;
+export const DERIVE_VERSION = 117;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -138,6 +138,9 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   // creation and a card creating one meet on the same tag. Added 2026-08-21 with the TRIGGERS entry;
   // without this the event would derive to nothing and land in `unknownTriggers`.
   create: "create-token",
+  // CR 701.5, 2026-09-09 (AC7). The clause word is the passive `countered`; the engine event is the
+  // action's own name, which the 361 counterspells emit.
+  countered: "counter-spell",
 };
 
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving

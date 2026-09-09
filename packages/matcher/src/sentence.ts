@@ -225,6 +225,8 @@ export const VERB_PHRASES: Record<string, string> = {
   // Not "searches" alone: the sentence reads "When X searches a library, Y ...", and every consumer
   // of this event names a library (three watch an opponent's, one your own).
   search: "searches a library",
+  // CR 701.5, 2026-09-09: the consumer sentence reads "When X counters a spell, Y ...".
+  "counter-spell": "counters a spell",
   "land-play": "plays a land",
   "dice-rolled": "rolls a die",
   // Phase triggers. Nothing in the corpus ever EMITS these (no card supplies your upkeep — see

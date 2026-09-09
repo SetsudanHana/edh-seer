@@ -289,6 +289,9 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   scry: /\bscry/i,
   surveil: /\bsurveil/i,
   search: /\bsearch/i,
+  // Loose on purpose, like `counter-added`: the cue rejects an INVENTED trigger, and every card
+  // that watches a spell being countered prints the word.
+  "counter-spell": /\bcounter/i,
 };
 
 /** Did the model INVENT a trigger the card does not have?

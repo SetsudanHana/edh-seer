@@ -319,7 +319,13 @@ export type Verb =
    *  description". 701.23b makes the FINDING optional, so this event means a search HAPPENED and
    *  never that anything was found — the distinction PR #240 settled when it un-tutored digging.
    *  799 cards search, 4 trigger on one, and three of those four watch an OPPONENT. */
-  | "search";
+  | "search"
+  /** CR 701.5: a spell or ability is countered. THE BARAL WITNESS (roadmap AC7, 2026-09-09):
+   *  `countered` has been a legal CLAUSE event since 2026-08-29 and was never an ENGINE event, so
+   *  the 3 consumers (Baral, Lullmage Mentor, Ambiguity) derived no trigger and the 361 cards
+   *  that counter a spell emitted nothing. Baral, bought before the word existed, was stored as
+   *  `counter-added` and joined to every +1/+1 counter placer instead of to any counterspell. */
+  | "counter-spell";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -367,6 +373,8 @@ export const VERB_VOCAB: readonly Verb[] = [
   "scry",
   "surveil",
   "search",
+  // CR 701.5, 2026-09-09 (AC7). 361 commander-legal producers, 3 consumers; see the union comment.
+  "counter-spell",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */

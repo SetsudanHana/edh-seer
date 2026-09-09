@@ -46,6 +46,8 @@ const EMITS: Record<string, Verb[]> = {
   proliferate: ["proliferate"],
   cast: ["cast"],
   fight: ["non-combat-damage"],
+  // CR 701.5. The action's object IS the countered spell, so the emit subject is that spell.
+  "counter-spell": ["counter-spell"],
 
   // KEYWORD ACTIONS, EXPANDED INTO THE PRIMITIVES THEY ARE (owner's ruling 2026-08-15).
   //

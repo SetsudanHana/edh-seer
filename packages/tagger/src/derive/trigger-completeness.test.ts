@@ -148,6 +148,7 @@ const CR_EVENTS: Row[] = [
   row("702.171", "becomes saddled", "becomes-saddled", 1),
   row("702.174c", "gives a gift", "give-gift", 1),
   row("702.189b", "firebends", "firebend"),
+  row("702.100", "evolves", "evolve", 2),
   row("701.37", "becomes monstrous (the event side of monstrosity)", "becomes-monstrous"),
   row("714", "a Saga chapter", "chapter"),
   row("709.5", "a Room is unlocked", "unlocked"),
@@ -214,6 +215,7 @@ const VERB_TO_TRIGGER: Record<string, string> = {
   "extra-combat": "begin-combat",
   "extra-phase": "main-phase",
   "lose-game": "loses-game",
+  unattach: "unattached",
 };
 const VERB_NO_TRIGGER: Record<string, string> = {
   put: "named by destination: enters, put-into-graveyard, put-into-library, returned-to-hand",
@@ -272,7 +274,7 @@ test("every homonym pair is in TRIGGERS and named in the prompt's HOMONYMS rule"
 test("the 2026-09-09 words refuse rather than near-miss", () => {
   const added = ["reflexive", "state", "counter-removed", "mana-spent", "damaged", "loses-game", "unattached",
     "returned-to-hand", "put-into-library", "becomes-renowned", "becomes-saddled", "plotted", "foretell",
-    "give-gift", "mentors", "solved", "resolves"];
+    "give-gift", "mentors", "solved", "resolves", "evolve"];
   for (const w of added) {
     expect(TRIGGERS, w).toContain(w);
     expect(normalizeTriggerVerb(w), `${w} must refuse, not map to a verb`).toBeNull();
