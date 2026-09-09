@@ -2316,6 +2316,9 @@ test("a granted trigger on opponents' permanents makes THEIR permanent die, not 
   const dies = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
   expect(dies?.subject).toMatchObject({ type: "permanent", control: "opp" });
   expect(dies?.subject.self).toBeUndefined();
+  // "You lose 2 life" is said by the OPPONENT's permanent, so it is the opponent who loses it.
+  const loses = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "lose-life");
+  expect(loses?.subject.control).toBe("opp");
 });
 
 test("a card that exiles what would hit an opponent's graveyard AND plays it is a recursion over their fills", () => {

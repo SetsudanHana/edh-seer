@@ -1093,6 +1093,11 @@ export function deriveAbilities(
         const { self: _self, ...rest } = e.subject;
         e.subject = { ...rest, ...grantedTo };
       }
+      // AND "YOU" IN A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (CR 113.8: an ability's
+      // controller is the controller of the object it is on). Hellish Rebuke's "You lose 2 life"
+      // is the opponent whose permanent carries it, so the emit reads `opp` -- the same seat
+      // swap `flipPerspective` makes for an opponent's emblem.
+      if (grantedTo) for (const e of emits) if (e.subject.control === "you" && e.subject.self !== true) e.subject.control = grantedTo.control;
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
