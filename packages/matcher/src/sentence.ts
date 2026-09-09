@@ -45,6 +45,7 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   // SPEED IS THE PLAYER'S (CR 702.179): the card raises yours, it does not gain one.
   speed: [() => "raises your speed", "raises your speed"],
   "copy-spell": [() => "copies a spell", "copies a spell"],
+  "copy-ability": [() => "copies an ability", "copies an ability"],
   flicker: [() => "blinks a permanent", "blinks a permanent"],
   animate: [() => "turns something into a creature", "turns something into a creature"],
   "graveyard-hate": [() => "hits a graveyard", "hits a graveyard"],

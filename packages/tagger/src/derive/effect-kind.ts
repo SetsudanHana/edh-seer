@@ -364,7 +364,10 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     const object = action.object ?? "";
     const named = /\b(creature|permanent|artifact|enchantment|land|planeswalker|token|spells?|instant|sorcery|ability)\b/i.test(object);
     const o = named ? object : `${object} ${clauseText}`;
-    return /\bspells?\b|\binstant\b|\bsorcery\b|\bability\b/i.test(o) ? "copy-spell" : "clone";
+    // AN ABILITY IS THE THIRD COPYABLE OBJECT (CR 707.10; roadmap AC12). Read off the OBJECT only:
+    // "copy that spell ... choose new targets for the copy of the ability" is still a spell copy.
+    if (/\babilit(?:y|ies)\b/i.test(object)) return "copy-ability";
+    return /\bspells?\b|\binstant\b|\bsorcery\b/i.test(o) ? "copy-spell" : "clone";
   }
   // A SACRIFICE SOMEONE ELSE IS MADE TO PERFORM is `forced-sacrifice` — an edict. Required by
   // `mechanisms.ts:43` for aristocrats and `buckets.ts:10` as a win condition, and never produced.

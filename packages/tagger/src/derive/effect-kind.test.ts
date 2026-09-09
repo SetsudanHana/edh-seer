@@ -519,6 +519,14 @@ test("doubling something unnamed is refused, not guessed", () => {
 // THREE OF THE SEVEN NEVER-PRODUCED EFFECT_KINDS, and all three are load-bearing in live product
 // code: mechanisms.ts needs copy-spell for spellslinger, forced-sacrifice for aristocrats and
 // enters-with-counters for counters; buckets.ts counts forced-sacrifice as a win condition.
+test("copying an ABILITY is the third copyable object (CR 707.10), not a spell copy and not a clone", () => {
+  // Roadmap AC12. Gogo, Strionic Resonator, Lithoform Engine and Tawnos all derived as copy-spell.
+  expect(actionEffectKind({ verb: "copy", object: "target activated or triggered ability you control" })).toBe("copy-ability");
+  expect(actionEffectKind({ verb: "copy", object: "that ability" })).toBe("copy-ability");
+  // The OBJECT decides: a spell copy whose clause mentions the copy's abilities stays a spell copy.
+  expect(actionEffectKind({ verb: "copy", object: "that spell" }, "Copy that spell. The copy has this ability.")).toBe("copy-spell");
+});
+
 test("copying a SPELL is not cloning a permanent", () => {
   expect(actionEffectKind({ verb: "copy", object: "target instant or sorcery spell" })).toBe("copy-spell");
   expect(actionEffectKind({ verb: "copy", object: "that spell" })).toBe("copy-spell");

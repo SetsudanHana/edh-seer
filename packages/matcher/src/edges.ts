@@ -1689,6 +1689,40 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       break; // one claim per consumer ability, not one per matching verb
     }
   }
+  // COPY-ABILITY edges: P copies C's ABILITY (roadmap AC12, 2026-09-09). A trigger-to-ability pass
+  // in the `doubles` shape above: the copier emits no event, and the consumer side is matched on
+  // what the other card HAS -- an authored ability of the kind the copier names (CR 113.3), read
+  // straight off `abilities[].kind`. Gogo and Strionic Resonator say "activated or triggered
+  // ability you control"; Rings of Brighthearth says "an ability, if it isn't a mana ability";
+  // Tawnos says "from an artifact source", which `subject.type` carries and the other card's
+  // characteristics answer.
+  //
+  // "activated" EXCLUDES MANA ABILITIES, as the cards mean it: a mana ability does not use the
+  // stack (CR 605.3b) and cannot be targeted, so "copy target activated ability" never reaches
+  // one; `mana` must be named. A LOYALTY ability is an activated ability whose cost is a loyalty
+  // symbol. IMPLIED events are not abilities and never count. No self-gates: the other card's own
+  // printed ability is exactly the thing copied, and P never copies itself (Gogo prints "this
+  // ability can't be copied").
+  //
+  // WIDE BY NATURE, AND SAID SO: Strionic Resonator really does relate to every triggered ability
+  // in the deck. The spec's ruling is that specificity is the matcher's problem and not a reason to
+  // refuse the subject; the width is measured, not hidden.
+  for (const a of p.tags?.abilities ?? []) {
+    if (a.effect?.kind !== "copy-ability" || p === c) continue;
+    const kinds = a.effect.subject?.abilityKind ?? ["activated", "triggered"];
+    const wanted = a.effect.subject?.type;
+    if (wanted !== undefined && !typeMatchesCharacteristics(wanted, c.tags?.characteristics, h)) continue;
+    const kind = kinds.find((k) => (c.tags?.abilities ?? []).some((ca) => abilityIsKind(ca, k)));
+    if (!kind) continue;
+    reasons.push({
+      tag: `copies:${kind}`,
+      text: `${p.card.name} copies ${c.card.name}'s ${kind} ability`,
+      effectKind: "copy-ability",
+      repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
   // TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
   // consumer-trigger relation, which is why the recall measurement filed the family as
   // `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an
@@ -2035,6 +2069,23 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
     }
   }
   return dedupeReasons(reasons.map((r) => stampSides(r, p, c)));
+}
+
+/** Does an authored ability count as the kind a copier names? See the copy-ability pass. */
+function abilityIsKind(ca: CardTags["abilities"][number], kind: string): boolean {
+  const loyalty = ca.kind === "activated" && /^[+\u2212-]?(?:\d+|X)$/.test((ca.cost ?? "").trim());
+  const mana = ca.kind === "activated" && ca.effect?.kind === "mana-generation";
+  if (kind === "triggered") return ca.kind === "triggered";
+  if (kind === "loyalty") return loyalty;
+  if (kind === "mana") return mana;
+  if (kind === "activated") return ca.kind === "activated" && !mana;
+  return false;
+}
+/** Does a card's type line satisfy a type the copier names ("from an artifact source")? */
+function typeMatchesCharacteristics(wanted: string | string[], chars: CardTags["characteristics"] | undefined, h: Hierarchy): boolean {
+  if (!chars) return false;
+  const types = new Set([...(chars.types ?? []), ...(chars.subtypes ?? [])].map((t) => t.toLowerCase()));
+  return (Array.isArray(wanted) ? wanted : [wanted]).some((w) => types.has(w.toLowerCase()) || (h[w.toLowerCase()] ?? []).some((t) => types.has(t)));
 }
 
 const SELF_BOTH_REFUSED: ReadonlySet<string> = new Set([

@@ -2190,3 +2190,24 @@ test("a gendered pronoun for the card itself is a self reference, not a wildcard
   }], "Ajani, Nacatl Pariah // Ajani, Nacatl Avenger", { 1: "Whenever a Cat you control dies, you may exile Ajani, then return him to the battlefield transformed under his owner's control." });
   expect(ajani.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters")!.subject.self).toBe(true);
 });
+
+// ROADMAP AC12: an ability as an object.
+test("Gogo copies activated or triggered abilities, and says which (AC12)", () => {
+  const text = "Copy target activated or triggered ability you control X times. You may choose new targets for the copies.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated", actions: [{ verb: "copy", object: "target activated or triggered ability you control", amount: "X" }],
+  }], "Gogo, Master of Mimicry", { 1: text }, { 1: "{X}{X}, {T}" }, text);
+  expect(abilities[0]?.effect.kind).toBe("copy-ability");
+  expect(abilities[0]?.effect.subject?.abilityKind).toEqual(["activated", "triggered"]);
+  expect(abilities[0]?.effect.subject?.control).toBe("you");
+});
+
+test("Rings of Brighthearth copies THAT ability, and the kind comes from its activate trigger (AC12)", () => {
+  const text = "Whenever you activate an ability, if it isn't a mana ability, you may pay {2}. If you do, copy that ability.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "activate", subject: "an ability", control: "you" },
+    actions: [{ verb: "copy", object: "that ability", optional: true }],
+  }], "Rings of Brighthearth", { 1: text }, undefined, text);
+  expect(abilities[0]?.effect.kind).toBe("copy-ability");
+  expect(abilities[0]?.effect.subject?.abilityKind).toEqual(["activated"]);
+});
