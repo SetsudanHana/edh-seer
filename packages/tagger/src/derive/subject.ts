@@ -628,6 +628,10 @@ export function parseSubject(text: string): SubjectFilter {
   // it just stops firing on the one text where the name belongs to something being CREATED.
   const named = TOKEN_CREATION.test(t) ? null : t.match(NAMED);
   if (named) out.named = named[1].trim();
+  // "another creature", "two other creatures", "each other creature": not this card (see `other`).
+  // Not when the phrase ALSO names this card ("this creature or another creature you control",
+  // Zulaport): that subject includes the card, so it is neither self nor other.
+  if (!/\bthis\b/.test(t) && (/^(?:(?:\w+\s+)?(?:another|other)\b)/.test(t) || /\b(?:each|all|any|two|three|X)\s+other\b/.test(t))) out.other = true;
   // AN ABILITY AS THE OBJECT (AC12): "target activated or triggered ability you control", "a
   // loyalty ability of a Chandra planeswalker", "a mana ability". The kinds named, in the order
   // named; nothing when the text does not say "ability".

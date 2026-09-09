@@ -2225,3 +2225,28 @@ test("a grant to creature TOKENS keeps its token subject; a grant to creatures s
   }], "Fervor", { 1: "Creatures you control have haste." });
   expect(creatures.abilities[0]?.effect.subject).toBeUndefined();
 });
+
+// RECALL v4 SACRIFICE FAMILY (2026-09-09).
+test("a cost sacrifice is the controller's even when the effect names other players (CR 701.17a)", () => {
+  const text = "Any number of target players each lose 2 life and sacrifice a creature of their choice. You add {B}{B} and draw a card.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "sacrifice", object: "two other creatures" }, { verb: "lose-life", object: "any number of target players", amount: "2" }, { verb: "sacrifice", object: "a creature of their choice" }],
+  }], "Priest of Forgotten Gods", { 1: text }, { 1: "{T}, Sacrifice two other creatures" }, text);
+  const sacs = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.verb === "sacrifice"));
+  expect(sacs[0]?.subject.control).toBe("you");   // the cost
+  expect(sacs[1]?.subject.control).toBe("any");   // the edict on other players
+});
+
+test("a granted 'when this creature dies' watches the recipient, not the card that granted it", () => {
+  const card = "Until end of turn, target creature you control gains \"When this creature dies, return it to the battlefield tapped under its owner's control.\"";
+  const granted = "When this creature dies, return it to the battlefield tapped under its owner's control.";
+  const { abilities } = deriveAbilities([
+    { id: 1, abilityType: "spell", actions: [{ verb: "grant-ability", object: "that ability" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" }, actions: [{ verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" }] },
+  ], "Not Dead After All", { 1: card.split(" gains ")[0]!, 2: granted }, undefined, card);
+  const t = abilities.find((a) => a.trigger)?.trigger;
+  expect(t?.verbs).toEqual(["dies"]);
+  expect(t?.subject.self).toBeUndefined();
+  expect(t?.subject).toMatchObject({ type: "creature", control: "you" });
+});

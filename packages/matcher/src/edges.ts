@@ -1002,7 +1002,10 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
   // No derived tags means no characteristics to compare, so nothing can be ruled out — keep the
   // old wording rather than invent a noun on a card the engine has not read.
   if (!p.tags) return true;
-  const { zone: _z, counter: _c, entersTapped: _t, self: _s, ...printed } = subject;
+  // "Sacrifice two OTHER creatures": the emit says so itself. Priest of Forgotten Gods is a creature
+  // and would otherwise read as the one dying (2026-09-09).
+  if (subject.other === true) return false;
+  const { zone: _z, counter: _c, entersTapped: _t, self: _s, other: _o, ...printed } = subject;
   return subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h);
 }
 
