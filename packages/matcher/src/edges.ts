@@ -1720,16 +1720,20 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // WIDE BY NATURE, AND SAID SO: Strionic Resonator really does relate to every triggered ability
   // in the deck. The spec's ruling is that specificity is the matcher's problem and not a reason to
   // refuse the subject; the width is measured, not hidden.
-  for (const a of p.tags?.abilities ?? []) {
+  // THE COPIER IS THE CONSUMER, like the outlet in the fodder pass and the counter in the
+  // board-count pass: P has the ability, C copies it. Written copier-as-producer at first; the
+  // deck report computes both directions and never noticed, the commander page verifies feeder ->
+  // subject and Strionic Resonator's page had no rows until this was turned round.
+  for (const a of c.tags?.abilities ?? []) {
     if (a.effect?.kind !== "copy-ability" || p === c) continue;
     const kinds = a.effect.subject?.abilityKind ?? ["activated", "triggered"];
     const wanted = a.effect.subject?.type;
-    if (wanted !== undefined && !typeMatchesCharacteristics(wanted, c.tags?.characteristics, h)) continue;
-    const kind = kinds.find((k) => (c.tags?.abilities ?? []).some((ca) => abilityIsKind(ca, k)));
+    if (wanted !== undefined && !typeMatchesCharacteristics(wanted, p.tags?.characteristics, h)) continue;
+    const kind = kinds.find((k) => (p.tags?.abilities ?? []).some((pa) => abilityIsKind(pa, k)));
     if (!kind) continue;
     reasons.push({
       tag: `copies:${kind}`,
-      text: `${p.card.name} copies ${c.card.name}'s ${kind} ability`,
+      text: `${c.card.name} copies ${p.card.name}'s ${kind} ability`,
       effectKind: "copy-ability",
       repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : "static",
       consumer: c.card.name,
