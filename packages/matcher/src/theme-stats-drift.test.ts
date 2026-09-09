@@ -24,7 +24,9 @@ test("every canonical verb family appears in the committed theme-stats artifact"
   const families = new Set(Object.keys(stats.counts).map((t) => t.slice(0, t.indexOf(":") === -1 ? undefined : t.indexOf(":"))));
   // Phase/structural verbs legitimately carry no theme tag in any deck, so absence proves nothing
   // about freshness for them — they are excluded rather than allowed to weaken the assertion.
-  const STRUCTURAL = new Set(["dice-rolled"]);
+  // `detain` (AC11 batch 3, 2026-09-09): the corpus has 12 cards that detain and none that trigger
+  // on it, so no card carries a detain theme tag and absence proves nothing about freshness.
+  const STRUCTURAL = new Set(["dice-rolled", "detain"]);
   const missing = VERB_VOCAB.filter((v) => !STRUCTURAL.has(v) && !families.has(v));
   expect(missing).toEqual([]);
 });

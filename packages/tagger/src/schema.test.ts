@@ -32,7 +32,10 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // prevented, exchange, double, triple. The every-event ruling: an action the rules let a
   // trigger watch emits its own event whatever today's consumer count; the counts are in the
   // union comment. Fourteen at once because the shape is one shape.
-  expect(VERB_VOCAB).toHaveLength(45);
+  // 45 -> 67 on 2026-09-09 for AC11 batch 3, the 22 CR 701 keyword actions the rules give no
+  // primitive: each emits under its own name so the card that watches it can join. One shape.
+  expect(VERB_VOCAB).toHaveLength(67);
+  for (const v of ["goad", "explore", "clash", "vote", "venture-into-the-dungeon", "foretell"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);
   expect(VERB_VOCAB).toContain("counter-removed");
   expect(VERB_VOCAB).toContain("loses-game");

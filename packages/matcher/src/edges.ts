@@ -2040,6 +2040,8 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
 const SELF_BOTH_REFUSED: ReadonlySet<string> = new Set([
   "counter-added", "counter-removed", "transform", "turned-face-up", "attached", "unattached", "gains-control",
   "phases-out", "regenerate", "copy", "reveal", "exchange", "double", "triple", "shuffle", "prevented",
+  // AC11 batch 3, the keyword actions done TO a creature.
+  "goad", "exert", "detain", "suspect", "harness", "explore", "endure", "convert", "heal", "airbend", "foretell",
 ]);
 
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {

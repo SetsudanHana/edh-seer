@@ -247,12 +247,14 @@ test("investigate creates a token and something enters; manifest does NOT create
     .toEqual(["enters"]);
 });
 
-test("a keyword action emits its own event (every-event ruling), and the status ones wait for batch 3", () => {
+test("a keyword action emits its own event (every-event ruling)", () => {
   // Until 2026-09-09 this test pinned "goad and regenerate emit nothing". The owner's every-event
-  // ruling reversed the premise: a card DOES print "when it regenerates this way" (Matopi Golem),
-  // so regenerating is an event with its own name. Goad follows in AC11 batch 3.
+  // ruling reversed the premise: a card DOES print "when it regenerates this way" (Matopi Golem)
+  // and "whenever you goad a creature", so each is an event with its own name (AC11 batches 2, 3).
   expect(actionEmits({ verb: "regenerate", object: "this creature" }).map((e) => e.verb)).toEqual(["regenerate"]);
-  expect(actionEmits({ verb: "goad", object: "target creature" })).toEqual([]);
+  expect(actionEmits({ verb: "goad", object: "target creature" }).map((e) => e.verb)).toEqual(["goad"]);
+  // A player-performed keyword action is the ACTOR's event, whatever the object names.
+  expect(actionEmits({ verb: "clash", object: "an opponent" }, "Clash with an opponent.")[0]?.subject.control).toBe("you");
 });
 
 test("rolling dice emits the event 7 corpus consumers watch; flipping a coin emits nothing", () => {

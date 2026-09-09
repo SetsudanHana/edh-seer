@@ -68,6 +68,30 @@ const EMITS: Record<string, Verb[]> = {
   exchange: ["exchange"],
   double: ["double"],
   triple: ["triple"],
+  // AC11 batch 3: the CR 701 keyword actions with no primitive emit their own name. (The ones WITH
+  // a primitive — connive, bolster, investigate … — keep their primitive rows above.)
+  goad: ["goad"],
+  exert: ["exert"],
+  detain: ["detain"],
+  suspect: ["suspect"],
+  harness: ["harness"],
+  vote: ["vote"],
+  clash: ["clash"],
+  fateseal: ["fateseal"],
+  behold: ["behold"],
+  heal: ["heal"],
+  convert: ["convert"],
+  explore: ["explore"],
+  endure: ["endure"],
+  learn: ["learn"],
+  forage: ["forage"],
+  "time-travel": ["time-travel"],
+  "collect-evidence": ["collect-evidence"],
+  "venture-into-the-dungeon": ["venture-into-the-dungeon"],
+  "face-a-villainous-choice": ["face-a-villainous-choice"],
+  airbend: ["airbend"],
+  waterbend: ["waterbend"],
+  foretell: ["foretell"],
 
   // KEYWORD ACTIONS, EXPANDED INTO THE PRIMITIVES THEY ARE (owner's ruling 2026-08-15).
   //
@@ -256,6 +280,12 @@ const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bpl
 /** Verbs whose object names WHO the thing happens to, not WHAT it happens to. The same list
  *  `CONTROLLER_DEFAULT` pins to the controller, for the same reason: the rules make the player the
  *  object of a draw, a mill or a life change. */
+/** Events whose PLAYER is the one performing the action, though the object names someone else:
+ *  "gain control of target creature an opponent controls" is yours afterwards, "clash with an
+ *  opponent" is your clash, "each opponent faces a villainous choice" is your effect. The consumer
+ *  watches the actor ("whenever you clash"), so the emit says `you`. */
+const ACTOR_IS_THE_EVENT: ReadonlySet<string> = new Set(["gains-control", "clash", "face-a-villainous-choice"]);
+
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
   "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "loses-game",
 ]);
@@ -454,7 +484,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // ("whenever you gain control of a permanent", Zidane) watches who has it AFTER. So the
       // emit says `you`. CEILING: "target opponent gains control of ..." (Donate, a handful of
       // cards) is read as yours too; the object rarely names the gainer.
-      control: verb === "gains-control" ? "you" as const : control,
+      control: ACTOR_IS_THE_EVENT.has(verb) ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),

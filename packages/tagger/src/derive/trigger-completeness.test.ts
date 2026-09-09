@@ -275,8 +275,9 @@ test("the 2026-09-09 words refuse rather than near-miss", () => {
   // `counter-removed` and `loses-game` left this list on 2026-09-09 afternoon: AC11 batch 1 gave
   // them engine verbs, and verb-accounting.test.ts now pins them as EMITS instead.
   // `unattached` left on the same afternoon (AC11 batch 2 gave the object events engine verbs).
+  // `foretell` left with AC11 batch 3, which gave every keyword action its own event.
   const added = ["reflexive", "state", "mana-spent", "damaged",
-    "returned-to-hand", "put-into-library", "becomes-renowned", "becomes-saddled", "plotted", "foretell",
+    "returned-to-hand", "put-into-library", "becomes-renowned", "becomes-saddled", "plotted",
     "give-gift", "mentors", "solved", "resolves", "evolve"];
   for (const w of added) {
     expect(TRIGGERS, w).toContain(w);

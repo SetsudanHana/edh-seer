@@ -194,6 +194,7 @@ const THING_EVENTS: ReadonlySet<string> = new Set([
   "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "leaves",
   "counter-added", "counter-removed", "create-token", "land-play", "untaps", "taps",
   "transform", "turned-face-up", "attached", "unattached", "gains-control", "phases-out", "regenerate", "copy",
+  "goad", "exert", "detain", "suspect", "harness", "explore", "endure", "convert", "heal", "airbend", "foretell",
 ]);
 
 /** A word in a trigger clause that says WHAT, beyond the bare umbrella. */
@@ -300,6 +301,29 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   reveal: /\breveal/i, attached: /\battach/i, unattached: /\bunattach/i, "gains-control": /\bcontrol\b/i,
   "phases-out": /\bphas/i, regenerate: /\bregenerat/i, prevented: /\bprevent/i, exchange: /\bexchang/i,
   double: /\bdoubl/i, triple: /\btripl/i,
+  // AC11 batch 3, the keyword actions: the printed keyword is the cue.
+  goad: /\bgoad/i,
+  exert: /\bexert/i,
+  detain: /\bdetain/i,
+  suspect: /\bsuspect/i,
+  harness: /\bharness/i,
+  vote: /\bvot(?:e|ing)/i,
+  clash: /\bclash/i,
+  fateseal: /\bfateseal/i,
+  behold: /\bbehold/i,
+  heal: /\bheal/i,
+  convert: /\bconvert/i,
+  explore: /\bexplore/i,
+  endure: /\bendure/i,
+  learn: /\blearn/i,
+  forage: /\bforage/i,
+  "time-travel": /\btime travel/i,
+  "collect-evidence": /\bcollect evidence/i,
+  "venture-into-the-dungeon": /\bventure/i,
+  "face-a-villainous-choice": /\bvillainous choice/i,
+  airbend: /\bairbend/i,
+  waterbend: /\bwaterbend/i,
+  foretell: /\bforetell/i,
 };
 
 /** Did the model INVENT a trigger the card does not have?

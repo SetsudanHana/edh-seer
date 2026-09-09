@@ -38,29 +38,7 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
   // --- CR 4xx / 7xx: zones and objects — CLOSED 2026-09-09 (AC11 batch 2) except `play`.
   play: { cards: 250, note: "CR 305.1 / 116.2a. The TRIGGER `play` maps to `land-play` when its subject is a land (batch 2); the ACTION 'play that card' emits land-play only for a land, and a card played from exile has no event yet" },
   amass: { cards: 0, note: "CR 701.44; `amass` (26 consumers). Has the kind `counter-placement`, emits nothing — the Army token and its counters are the AC11 row" },
-  // --- CR 701 keyword actions the rules give no primitive (recorded, emit nothing)
-  goad: { cards: 95, note: "701.15 status; `goad`" },
-  exert: { cards: 28, note: "701.43 status; `exert`" },
-  detain: { cards: 12, note: "701.35 status; `detain`" },
-  suspect: { cards: 17, note: "701.60 status; `suspect`" },
-  harness: { cards: 2, note: "701.64; `harness`" },
-  vote: { cards: 28, note: "701.38; `vote` (3 'finish voting' consumers)" },
-  clash: { cards: 29, note: "701.30; `clash` (12)" },
-  fateseal: { cards: 3, note: "701.29; `fateseal`" },
-  behold: { cards: 15, note: "701.4; `behold`" },
-  heal: { cards: 1, note: "701.69; `heal`" },
-  convert: { cards: 16, note: "701.28; `convert`" },
-  explore: { cards: 40, note: "701.44 conditional outcome; `explore` (24)" },
-  endure: { cards: 10, note: "701.63 conditional; `endure`" },
-  learn: { cards: 21, note: "701.48 conditional; `learn`" },
-  forage: { cards: 5, note: "701.61 conditional; `forage` (4)" },
-  "time-travel": { cards: 9, note: "701.56 conditional; `time-travel`" },
-  "collect-evidence": { cards: 16, note: "701.59; `collect-evidence`" },
-  "venture-into-the-dungeon": { cards: 37, note: "701.49; `venture-into-the-dungeon`, `dungeon-completed` (5)" },
-  "face-a-villainous-choice": { cards: 13, note: "701.55; a choice wrapper" },
-  airbend: { cards: 13, note: "701.65 exiles; `airbend`" },
-  waterbend: { cards: 10, note: "701.67 a cost payment; `waterbend`" },
-  foretell: { cards: 1, note: "702.143; `foretell` (1)" },
+  // --- CR 701 keyword actions the rules give no primitive — CLOSED 2026-09-09 (AC11 batch 3).
   // --- CR 705 / 725-731 designations
   "flip-coin": { cards: 65, note: "CR 705; `flip-coin` (27 flip, 6 'win a flip')" },
   monarch: { cards: 55, note: "CR 725; `monarch` (27)" },
@@ -82,6 +60,28 @@ export const ENGINE_TO_TRIGGER: Record<string, string> = {
   shuffle: "shuffled", transform: "transform", "turned-face-up": "turned-face-up", copy: "copy", reveal: "reveal",
   attached: "attached", unattached: "unattached", "gains-control": "gains-control", "phases-out": "phases-out",
   regenerate: "regenerate", prevented: "prevented", exchange: "exchange", double: "double", triple: "triple",
+  goad: "goad",
+  exert: "exert",
+  detain: "detain",
+  suspect: "suspect",
+  harness: "harness",
+  vote: "vote",
+  clash: "clash",
+  fateseal: "fateseal",
+  behold: "behold",
+  heal: "heal",
+  convert: "convert",
+  explore: "explore",
+  endure: "endure",
+  learn: "learn",
+  forage: "forage",
+  "time-travel": "time-travel",
+  "collect-evidence": "collect-evidence",
+  "venture-into-the-dungeon": "venture-into-the-dungeon",
+  "face-a-villainous-choice": "face-a-villainous-choice",
+  airbend: "airbend",
+  waterbend: "waterbend",
+  foretell: "foretell",
 };
 
 /** TRIGGERS words that map to NO engine verb, each with the reason, so `unknownTriggers` at runtime
@@ -90,10 +90,7 @@ export const ENGINE_TO_TRIGGER: Record<string, string> = {
 const PHASE_WORDS = ["draw-step", "main-phase", "combat-damage-step", "untap-step", "declare-attackers", "declare-blockers", "end-of-combat", "cleanup"];
 const TEXT_SPLIT = ["damage-dealt"];
 /** The trigger side of a verb in OPEN (or its passive spelling): the emit is the queue item. */
-const AWAITING_EMIT = ["goad", "exert", "detain", "suspect", "harness", "vote", "clash", "fateseal",
-  "behold", "heal", "convert", "explore", "endure", "learn", "forage", "time-travel", "collect-evidence",
-  "venture-into-the-dungeon", "face-a-villainous-choice", "airbend", "waterbend", "foretell", "flip-coin", "monarch",
-  "initiative", "city-blessing", "ring-tempts", "play",
+const AWAITING_EMIT = ["flip-coin", "monarch", "initiative", "city-blessing", "ring-tempts", "play",
   "roll-dice", "dungeon-completed"];
 /** Keyword actions whose PRIMITIVE is emitted (connive emits draw+discard) while the word itself
  *  waits for an emit row named after the action, so "whenever a creature connives" can join. */
