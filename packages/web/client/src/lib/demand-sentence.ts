@@ -292,6 +292,8 @@ export const MECHANISM: Record<string, string> = {
   clone: "copying a permanent",
   // AC12: the copy-ability pass's tag is `copies:<kind>`.
   copies: "having an ability copied",
+  // The fodder pass's tag is `fodder:<what it eats>` (recall v4 token family, 2026-09-09).
+  fodder: "being sacrificed to it",
 };
 
 /** A STATIC IS A CLASS, NOT A MECHANISM, AND EVERY OTHER TAG'S FIRST COMPONENT IS A MECHANISM.

@@ -56,7 +56,9 @@ const BASES: [RegExp, ScalingBasis][] = [
  *  Dragonspark Reactor's "the number of charge counters on this artifact" counts counters, not
  *  artifacts, and the table would have called it per-permanent off the word "artifact". Everything
  *  from " on " is dropped for that reason; " in " is kept, because "in your graveyard" IS the basis. */
-const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60})/i;
+// A comma-separated TYPE LIST is part of the noun ("that's an Insect, Rat, Spider, or Squirrel");
+// any other comma still ends it ("for each creature you control, draw a card").
+const COUNTED = /\b(?:for each|number of)\s+([^.,;]{1,60}(?:,\s*(?:or\s+)?[A-Z][a-z-]+)*)/;
 
 /** "WHERE X IS THE NUMBER OF ..." DEFINES X FOR THE WHOLE CLAUSE, and the own-text rule still holds:
  *  the count reaches only an action whose amount IS that bare X, never a sibling with a fixed
@@ -116,7 +118,13 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
   // names neither a controller nor the battlefield, so the order is what keeps a graveyard count
   // from claiming a board -- the same precedence `BASES` states above.
   if (!BATTLEFIELD_COUNT.test(noun)) return undefined;
-  const subject = parseSubject(noun.split(/\s{1,4}(?:you control|on the battlefield)\b/i)[0]);
+  // "each creature you control THAT'S AN INSECT, RAT, SPIDER, OR SQUIRREL" (Swarmyard Massacre):
+  // the qualifier sits AFTER "you control", and splitting there threw it away, leaving a bare
+  // `creature` count -- the whole deck, which the board-count pass rightly refuses. Folded back in
+  // front of the noun so `parseSubject` reads the subtypes (recall v4 #138, 2026-09-09).
+  const [head = "", tail = ""] = noun.split(/\s{1,4}(?:you control|on the battlefield)\b/i);
+  const qualifier = /\bthat(?:'s| is| are)\b[^.]*/i.exec(tail)?.[0];
+  const subject = parseSubject(qualifier ? `${head} ${qualifier}` : head);
   subject.zone = "battlefield";
   // "ON THE BATTLEFIELD" IS EVERYONE'S BOARD and "you control" is yours -- the same distinction the
   // graveyard branch draws between "your graveyard" and "all graveyards", and it decides whether an

@@ -3950,3 +3950,41 @@ describe("board count over a bare type", () => {
     expect(pairReasons(creatureCounter, base("Grizzly Bears", []), H)).toEqual([]);
   });
 });
+
+// RECALL v4 TOKEN FAMILY (2026-09-09): an outlet's sacrifice is a DEMAND for what it eats.
+describe("fodder", () => {
+  const engineer = base("Goblin Engineer", [{
+    kind: "activated", cost: "{R}, {T}, Sacrifice an artifact", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "artifact", zone: "graveyard" } },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "artifact" } }, { verb: "dies", subject: { control: "you", token: null, type: "artifact" } }],
+  }]);
+  const tokenNode = (name: string, types: string[], subtypes: string[]): DeckCard => ({
+    card: { name, typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as unknown as DeckCard["card"],
+    tags: { oracleId: `${name}-token`, schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types, subtypes, colors: [], identity: [], cmc: 0, power: "1", toughness: "1", token: true, keywords: [] }, abilities: [] } as CardTags,
+    isToken: true,
+  } as unknown as DeckCard);
+  const construct = tokenNode("Construct", ["artifact", "creature"], ["construct"]);
+  const creatureOutlet = base("Disciple of Freyalise", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "draw-card" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }, { verb: "dies", subject: { control: "you", token: null, type: "creature" } }],
+  }]);
+  const saproling = tokenNode("Saproling", ["creature"], ["saproling"]);
+
+  test("an artifact outlet eats an artifact token and an artifact card, never a creature", () => {
+    expect(pairReasons(construct, engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
+    expect(pairReasons(artifact("Solemn Simulacrum", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
+    expect(pairReasons(base("Grizzly Bears", []), engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+  });
+  test("a creature outlet eats a creature TOKEN, and not every creature in the deck", () => {
+    expect(pairReasons(saproling, creatureOutlet, H).map((r) => r.tag)).toContain("fodder:creature");
+    expect(pairReasons(base("Grizzly Bears", []), creatureOutlet, H).map((r) => r.tag)).not.toContain("fodder:creature");
+  });
+  test("an edict and a self-sacrifice demand no fodder", () => {
+    const edict = base("Fleshbag Marauder", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "forced-sacrifice" },
+      emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature" } }] }]);
+    const selfSac = base("Sakura-Tribe Elder", [{ kind: "activated", cost: "Sacrifice this creature", effect: { kind: "ramp" },
+      emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature", self: true } }] }]);
+    expect(pairReasons(saproling, edict, H).map((r) => r.tag)).not.toContain("fodder:creature");
+    expect(pairReasons(saproling, selfSac, H).map((r) => r.tag)).not.toContain("fodder:creature");
+  });
+});
