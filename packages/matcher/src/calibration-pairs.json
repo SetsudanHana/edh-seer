@@ -135,5 +135,13 @@
   "stratum": "linked",
   "judgedAt": "2026-09-09T19:34:33.660Z",
   "note": "Banked from the panel 2026-09-06 (W22 families 1-3): the engine claimed [fodder:artifact] and the owner judged it FALSE -- USER VERDICT (debt, 2026-09-09). "
+ },
+ {
+  "a": "Misty Rainforest",
+  "b": "Deep Gnome Terramancer",
+  "verdict": "neutral",
+  "stratum": "linked",
+  "judgedAt": "2026-09-09T19:50:13.348Z",
+  "note": "Banked from the panel 2026-09-06 (W22 families 1-3): the engine claimed [enters:land] and the owner judged it FALSE -- USER VERDICT (blind agreement draw, ROUND 3, 2026-08-15). Gnome cares about opponent's lands entering without being played, so either fetched or land ramp on opponent side"
  }
 ]

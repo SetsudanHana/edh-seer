@@ -44,7 +44,10 @@ import { emblemRecipient } from "../emblem.js";
 // graveyard-recursion over their fills (recall v4 #28).
 // 134: "defending player" and "attacking player" are an opponent as an ACTOR too, so Kibo's edict is
 // the opponent's sacrifice and not a demand for your artifacts (owner-judged FALSE 2026-09-09).
-export const DERIVE_VERSION = 134;
+// 135: what you PUT onto the battlefield enters under your control (CR 110.2a), so a fetched land
+// no longer satisfies "lands enter under an opponent's control" (Misty Rainforest -> Deep Gnome
+// Terramancer, owner-judged FALSE 2026-09-09). Emit only; a recursion's effect subject keeps `any`.
+export const DERIVE_VERSION = 135;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1163,6 +1166,23 @@ export function deriveAbilities(
         for (const e of emits) {
           if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
         }
+      }
+      // WHAT YOU PUT ONTO THE BATTLEFIELD ENTERS UNDER YOUR CONTROL (CR 110.2a: "If an effect
+      // instructs a player to put an object onto the battlefield, that object enters the battlefield
+      // under that player's control unless the effect states otherwise"). "Search your library for a
+      // Forest or Island card, put it onto the battlefield" names no player for the put, so the
+      // `enters` emit read `any` -- and `any` satisfies "whenever one or more lands enter under an
+      // OPPONENT's control": Misty Rainforest -> Deep Gnome Terramancer, owner-judged FALSE
+      // (2026-09-09, "some of those effects care about opponents actually searching"). 1,479 of the
+      // corpus's 1,860 authored from-zone entries carried `any`. Only the emit moves: the EFFECT
+      // subject of a recursion keeps `any` for "from a graveyard", the reading the matcher's
+      // kill-theirs-take-it rule depends on (Feed the Swarm -> Animate Dead, owner-judged REAL).
+      // "Under its owner's control" and every other stated controller is untouched, and
+      // `entersUnderAnotherPlayer` still refuses the I7 shapes.
+      if ((action.verb === "put" || action.verb === "return") && clauseText !== ""
+        && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1
+        && !sentenceNamesAPlayer(clauseText, action.verb ?? "")) {
+        for (const e of emits) if (e.verb === "enters" && e.subject.control === "any") e.subject.control = "you";
       }
       // WHO GETS THE EMBLEM (CR 114.2) is read off the sentence, not the object: the object says
       // "an emblem with that ability" and nothing more on 20 of the 86 corpus grants. The recipient
