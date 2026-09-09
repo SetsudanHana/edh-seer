@@ -2048,5 +2048,163 @@
    "2": "Whenever this creature enters or attacks, create a number of 1/1 colorless Gnome artifact creature tokens equal to its power.",
    "3": "Put a +1/+1 counter on this creature."
   }
+ },
+ {
+  "name": "Misty Rainforest",
+  "oracleId": "09dd85aa-47bc-4713-a9b9-8b52ff2285ed",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this land",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "lose-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     },
+     {
+      "verb": "search",
+      "object": "your library for a Forest or Island card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "land"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 0,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Search your library for a Forest or Island card, put it onto the battlefield, then shuffle."
+  }
+ },
+ {
+  "name": "Deep Gnome Terramancer",
+  "oracleId": "d4e3440d-4e34-40d7-8a42-c673225c0332",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Flash",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "one or more lands without being played",
+     "control": "opponent"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a Plains card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "put",
+      "object": "it onto the battlefield tapped",
+      "fromZone": null,
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "gnome",
+    "wizard"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 2,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "mold earth",
+    "flash"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Flash",
+   "2": "Whenever one or more lands enter under an opponent's control without being played, you may search your library for a Plains card, put it onto the battlefield tapped, then shuffle. Do this only once each turn."
+  }
  }
 ]

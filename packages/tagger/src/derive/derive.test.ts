@@ -2007,6 +2007,33 @@ test("an action with no player named is the controller's: 'draw a card' is you d
   expect(named.abilities[0].emits?.[0]?.subject.control).toBe("any");
 });
 
+test("what you put onto the battlefield enters under YOUR control (CR 110.2a)", () => {
+  // Misty Rainforest: the put names no player, so the fetched land's entry read `any` and satisfied
+  // Deep Gnome Terramancer's "lands enter under an OPPONENT's control" (owner-judged FALSE 2026-09-09).
+  const misty = "Search your library for a Forest or Island card, put it onto the battlefield, then shuffle.";
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [
+    { verb: "search", object: "your library for a Forest or Island card", fromZone: "library" },
+    { verb: "put", object: "it", fromZone: "library", toZone: "battlefield" },
+  ] }], "Misty Rainforest", { 1: misty }, { 1: "{T}, Pay 1 life, Sacrifice this land" }, misty);
+  const enters = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters?.subject.control).toBe("you");
+  // A put that names a player keeps what it says: Path to Exile's land is the CONTROLLER's.
+  const path = "Exile target creature. Its controller may search their library for a basic land card, put that card onto the battlefield tapped, then shuffle.";
+  const named = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+    { verb: "exile", object: "target creature" },
+    { verb: "search", object: "their library for a basic land card", fromZone: "library" },
+    { verb: "put", object: "that card", fromZone: "library", toZone: "battlefield" },
+  ] }], "Path to Exile", { 1: path }, undefined, path);
+  expect(named.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters")?.subject.control).not.toBe("you");
+  // A recursion's EFFECT subject is untouched: "from a graveyard" stays any, the kill-theirs-take-it reading.
+  const reanimate = "Put target creature card from a graveyard onto the battlefield under your control. You lose life equal to its mana value.";
+  const r = deriveAbilities([{ id: 1, abilityType: "spell", actions: [
+    { verb: "put", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "battlefield" },
+    { verb: "lose-life", object: "you" },
+  ] }], "Reanimate", { 1: reanimate }, undefined, reanimate);
+  expect(r.abilities.find((a) => a.effect.kind === "graveyard-recursion")?.effect.subject?.control).toBe("any");
+});
+
 test("'that creature' inherits the controller of the creature the trigger named", () => {
   // The Sibsig Ceremony: "Whenever a creature you control enters, destroy that creature" is YOUR
   // creature dying, and derived `dies creature/any` it fed Massacre Wurm's opponents-only trigger.
