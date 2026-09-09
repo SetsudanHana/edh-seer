@@ -335,7 +335,31 @@ export type Verb =
   /** CR 104.3: a player loses the game. 42 producers ("target player loses the game"), 10
    *  consumers (Ramses, Assassin Lord; Zenos). Was refused as `loses-the-game` by derive reading
    *  the text of a lose-life trigger; now the event the card means. */
-  | "loses-game";
+  | "loses-game"
+  /** AC11 BATCH 2 (2026-09-09), the OPEN verbs of CR 4xx/7xx — objects and what happens to them.
+   *  Each is the event the same-named clause action performs and the same-named (or passive)
+   *  clause trigger watches; the owner's every-event ruling gives each an emit whatever today's
+   *  consumer count. Per event, corpus producers / consumers: shuffle 1,157 / 15 (CR 701.20;
+   *  every consumer watches an OPPONENT, so no in-deck edge forms, by design); transform 286 / 36
+   *  (CR 712); turned-face-up 0 authored + every morph, megamorph and disguise card implied / 114
+   *  (CR 708); copy 18 / 3 (CR 707); reveal ~1,000 / 8 (CR 701.15); attached 296 / 11 and
+   *  unattached 4 / 4 (CR 701.3); gains-control 369 / 13 (CR 611, the emit's control is the
+   *  GAINER); phases-out 50 / 3 (CR 702.26); regenerate 268 / 1 (CR 701.19); prevented 570 / 16
+   *  (CR 615.13); exchange 67, double 58, triple 2 (CR 701.10, CR 701.9) with no consumer yet. */
+  | "shuffle"
+  | "transform"
+  | "turned-face-up"
+  | "copy"
+  | "reveal"
+  | "attached"
+  | "unattached"
+  | "gains-control"
+  | "phases-out"
+  | "regenerate"
+  | "prevented"
+  | "exchange"
+  | "double"
+  | "triple";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -388,6 +412,21 @@ export const VERB_VOCAB: readonly Verb[] = [
   // AC11 batch 1, CR 1xx (2026-09-09): see the union comments.
   "counter-removed",
   "loses-game",
+  // AC11 batch 2, CR 4xx/7xx objects (2026-09-09): see the union comment.
+  "shuffle",
+  "transform",
+  "turned-face-up",
+  "copy",
+  "reveal",
+  "attached",
+  "unattached",
+  "gains-control",
+  "phases-out",
+  "regenerate",
+  "prevented",
+  "exchange",
+  "double",
+  "triple",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */

@@ -52,6 +52,22 @@ const EMITS: Record<string, Verb[]> = {
   // the emit carries the kind; `lose-game`'s object is the PLAYER (RECIPIENT_VERBS below).
   "remove-counter": ["counter-removed"],
   "lose-game": ["loses-game"],
+  // AC11 batch 2 (CR 4xx/7xx objects, 2026-09-09): each action emits its own event. `play` is
+  // not here -- it emits `land-play` only when the thing played is a land (landPlayVerbs).
+  shuffle: ["shuffle"],
+  transform: ["transform"],
+  "turn-face-up": ["turned-face-up"],
+  copy: ["copy"],
+  reveal: ["reveal"],
+  attach: ["attached"],
+  unattach: ["unattached"],
+  "gain-control": ["gains-control"],
+  "phase-out": ["phases-out"],
+  regenerate: ["regenerate"],
+  prevent: ["prevented"],
+  exchange: ["exchange"],
+  double: ["double"],
+  triple: ["triple"],
 
   // KEYWORD ACTIONS, EXPANDED INTO THE PRIMITIVES THEY ARE (owner's ruling 2026-08-15).
   //
@@ -433,7 +449,12 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     verb,
     subject: {
       ...subject,
-      control,
+      // A CONTROL CHANGE IS ABOUT THE GAINER. "Gain control of target creature an opponent
+      // controls" names the opponent as the creature's controller BEFORE the event; the consumer
+      // ("whenever you gain control of a permanent", Zidane) watches who has it AFTER. So the
+      // emit says `you`. CEILING: "target opponent gains control of ..." (Donate, a handful of
+      // cards) is read as yours too; the object rarely names the gainer.
+      control: verb === "gains-control" ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),

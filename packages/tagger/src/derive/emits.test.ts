@@ -247,11 +247,12 @@ test("investigate creates a token and something enters; manifest does NOT create
     .toEqual(["enters"]);
 });
 
-test("a keyword the rules give no event emits nothing at all", () => {
-  // goad 701.15 and regenerate 701.19 are a status and a replacement effect. They earn a VERB so the
-  // clause survives, and no emit, because there is no event to claim.
+test("a keyword action emits its own event (every-event ruling), and the status ones wait for batch 3", () => {
+  // Until 2026-09-09 this test pinned "goad and regenerate emit nothing". The owner's every-event
+  // ruling reversed the premise: a card DOES print "when it regenerates this way" (Matopi Golem),
+  // so regenerating is an event with its own name. Goad follows in AC11 batch 3.
+  expect(actionEmits({ verb: "regenerate", object: "this creature" }).map((e) => e.verb)).toEqual(["regenerate"]);
   expect(actionEmits({ verb: "goad", object: "target creature" })).toEqual([]);
-  expect(actionEmits({ verb: "regenerate", object: "this creature" })).toEqual([]);
 });
 
 test("rolling dice emits the event 7 corpus consumers watch; flipping a coin emits nothing", () => {
@@ -406,7 +407,9 @@ describe("a card moved out of a graveyard is a graveyard leave", () => {
 
   test("searching a graveyard, or naming a card in one, moves nothing", () => {
     expect(actionEmits({ verb: "search", object: "a creature card", fromZone: "graveyard", toZone: null })).toEqual([]);
-    expect(actionEmits({ verb: "copy", object: "any creature card in a graveyard", fromZone: "graveyard", toZone: null })).toEqual([]);
+    // A copy is an event of its own since AC11 batch 2, but still no zone move: no leaves, no enters.
+    const copied = actionEmits({ verb: "copy", object: "any creature card in a graveyard", fromZone: "graveyard", toZone: null });
+    expect(copied.map((e) => e.verb)).toEqual(["copy"]);
   });
 });
 
