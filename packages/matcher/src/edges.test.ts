@@ -4001,3 +4001,36 @@ test("under tokensMediate: false a token maker is fodder for an outlet, said on 
   // In the deck report the token node carries it, so the maker itself says nothing.
   expect(directedReasons(krenko, seer, H).map((r) => r.tag)).not.toContain("fodder:creature");
 });
+
+// RECALL v4 #145 (2026-09-09): recursion re-fires a death trigger.
+describe("recursion refires a death trigger", () => {
+  const sheoldred = base("Sheoldred, Whispering One", [{
+    kind: "triggered", trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", scope: "target", zone: "graveyard" } },
+    emits: [{ verb: "enters", subject: { control: "any", token: null, type: "creature", scope: "target", fromZone: "graveyard" } }],
+  }]);
+  const lich = base("Vindictive Lich", [{
+    kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature", self: true } }, effect: { kind: "player-life-loss" },
+  }]);
+  test("a creature with a death trigger is returned to die again; an artifact recursion does not reach it", () => {
+    expect(pairReasons(sheoldred, lich, H).map((r) => r.tag)).toContain("refires:dies");
+    const artifactOnly = base("Myr Retriever", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } },
+      effect: { kind: "graveyard-recursion" }, emits: [{ verb: "enters", subject: { control: "any", token: null, type: "artifact", fromZone: "graveyard" } }] }]);
+    expect(pairReasons(artifactOnly, lich, H).map((r) => r.tag)).not.toContain("refires:dies");
+  });
+  test("a self-recursion returns nobody else, and a vanilla has nothing to re-fire", () => {
+    const skeleton = base("Reassembling Skeleton", [{ kind: "activated", cost: "{1}{B}", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } },
+      emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature", self: true, fromZone: "graveyard" } }] }]);
+    expect(pairReasons(skeleton, lich, H).map((r) => r.tag)).not.toContain("refires:dies");
+    expect(pairReasons(sheoldred, base("Grizzly Bears", []), H).map((r) => r.tag)).not.toContain("refires:dies");
+  });
+});
+
+// 2026-09-09: a copy never enters from a graveyard, so a from-graveyard self ETB is not re-fired.
+test("a clone does not re-fire a self ETB that demands entry from a graveyard (River Kelpie)", () => {
+  const kelpie = base("River Kelpie", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature", self: true, fromZone: "graveyard" } }, effect: { kind: "card-draw" },
+  }]);
+  const image = { ...base("Phantasmal Image", []), card: { ...base("Phantasmal Image", []).card, oracleText: "You may have Phantasmal Image enter as a copy of any creature on the battlefield." } };
+  expect(pairReasons(image, kelpie, H).map((r) => r.tag)).toEqual([]);
+});

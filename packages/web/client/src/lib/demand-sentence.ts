@@ -294,6 +294,8 @@ export const MECHANISM: Record<string, string> = {
   copies: "having an ability copied",
   // The fodder pass's tag is `fodder:<what it eats>` (recall v4 token family, 2026-09-09).
   fodder: "being sacrificed to it",
+  // The recursion-refire pass's tag is `refires:dies` (2026-09-09).
+  refires: "coming back to die again",
 };
 
 /** A STATIC IS A CLASS, NOT A MECHANISM, AND EVERY OTHER TAG'S FIRST COMPONENT IS A MECHANISM.

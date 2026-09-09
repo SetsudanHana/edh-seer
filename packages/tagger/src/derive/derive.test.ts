@@ -2250,3 +2250,25 @@ test("a granted 'when this creature dies' watches the recipient, not the card th
   expect(t?.subject.self).toBeUndefined();
   expect(t?.subject).toMatchObject({ type: "creature", control: "you" });
 });
+
+// RECALL v4 #144 (2026-09-09): a self-or-class trigger keeps its self half as a twin.
+test("'this creature or another enchantment you control enters' derives the class half AND a self twin", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "this creature or another enchantment you control", control: "you" },
+    actions: [{ verb: "tap", object: "up to one target creature" }],
+  }], "Fear of Sleep Paralysis");
+  const triggers = abilities.map((a) => a.trigger?.subject);
+  expect(triggers).toContainEqual({ control: "you", token: null, type: "enchantment" });
+  expect(triggers).toContainEqual({ control: "you", token: null, type: "creature", self: true });
+});
+
+test("the self twin keeps the class half's origin zone (River Kelpie)", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "this creature or another permanent from a graveyard", control: "any" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }], "River Kelpie");
+  const self = abilities.find((a) => a.trigger?.subject?.self === true)?.trigger?.subject;
+  expect(self).toMatchObject({ type: "creature", fromZone: "graveyard" });
+});

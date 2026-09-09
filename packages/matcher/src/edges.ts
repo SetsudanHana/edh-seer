@@ -1784,6 +1784,34 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     });
     break; // one fodder claim per pair
   }
+  // RECURSION RE-FIRES A DEATH TRIGGER (recall v4 #145, 2026-09-09). Sheoldred, Whispering One
+  // returns a creature card from your graveyard every upkeep; Vindictive Lich's "when this
+  // creature dies" is worth more each time it comes back. The entry side already joins (a
+  // from-graveyard `enters` emit meets a self ETB through the identity gate above); the death side
+  // had no channel, because nothing EMITS a second death. Same shape as the self-ETB gate: the
+  // producer's from-graveyard entry is compared against the consumer's printed characteristics.
+  // Tokens are never returned; a recursion of the producer ITSELF (Reassembling Skeleton) returns
+  // no one else; an opponent's graveyard is not this deck's.
+  if (c.tags?.characteristics.token !== true) {
+    const deathTrigger = (c.tags?.abilities ?? []).find((a) => a.trigger?.subject?.self === true && a.trigger.verbs.includes("dies"));
+    if (deathTrigger && p !== c) {
+      for (const a of p.tags?.abilities ?? []) {
+        const back = (a.emits ?? []).find((e) => e.verb === "enters" && e.subject.fromZone === "graveyard" && e.subject.self !== true && e.subject.control !== "opp");
+        if (!back) continue;
+        const { zone: _z, scope: _s, fromZone: _f, entersTapped: _t, counter: _c, ...identity } = back.subject;
+        if (!subjectMatches(characteristicsSubject(c.tags!, c.card.name), identity, h)) continue;
+        reasons.push({
+          tag: "refires:dies",
+          text: `${p.card.name} returns ${c.card.name}, so it can die again`,
+          effectKind: a.effect.kind,
+          repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : a.kind === "on-cast" ? "oneshot" : "static",
+          consumer: c.card.name,
+          producer: p.card.name,
+        });
+        break;
+      }
+    }
+  }
   // TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
   // consumer-trigger relation, which is why the recall measurement filed the family as
   // `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an
@@ -1943,6 +1971,12 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
           // a copy" (Sakashima's Will) rewrites a permanent already in play -- no entry, still two
           // legends. DIES needs the legend rule, so it needs a legendary consumer and nothing else.
           if (rawVerb === "enters" && !copy.enters) continue;
+          // A COPY ENTERS FROM THE STACK OR THE HAND, NEVER FROM A GRAVEYARD. River Kelpie's own
+          // entry trigger is "enters from a graveyard" (the self twin of a self-or-class trigger
+          // keeps the class half's origin, 2026-09-09), and a clone of Kelpie cast from hand does
+          // not fire it. Phantasmal Image -> Kelpie, owner-judged FALSE, came back through this
+          // pass the day the twin existed.
+          if (rawVerb === "enters" && a.trigger.subject.fromZone !== undefined) continue;
           if (rawVerb === "dies" && !legendary) continue;
           const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
