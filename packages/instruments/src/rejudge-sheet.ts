@@ -35,6 +35,9 @@ const arg = (f: string): string | undefined => {
   return i > 0 ? process.argv[i + 1] : undefined;
 };
 const TAG = arg("--tag");
+/** A cached verdict to re-judge (`false`, `real`, `uncertain`) -- or `debt`, the live claims with
+ *  NO cached verdict at all, which is the panel's judging debt. `#calibrate` cannot serve those:
+ *  it draws random pairs by stratum, so the 23 debt claims of 2026-09-09 had no sheet until this. */
 const WANT = arg("--verdict") ?? "false";
 const OUT = arg("--out") ?? scratchDir("rejudge-sheet");
 const PANEL = "docs/measurements/panel";
@@ -46,6 +49,16 @@ for (const line of readFileSync(`${PANEL}/verdicts.jsonl`, "utf8").split("\n")) 
   if (!line.trim()) continue;
   const v = JSON.parse(line) as Cached;
   cache.set(`${v.producer}|${v.consumer}|${v.tag}`, v);
+}
+
+/** THE DEBT IS THE PANEL'S, not the population's: a claim with no cached verdict counts as debt only
+ *  on a pair `pairs.json` holds, in the deck it holds it for -- the same `deck|producer|consumer`
+ *  narrowing `panel-score.ts` makes. Without it "debt" was every unjudged live claim in the 71 decks:
+ *  36,272 rows, a 100 MB sheet, and not the 23 the score reports. */
+const panelPairs = new Map<string, Set<string>>();
+for (const p of (JSON.parse(readFileSync(`${PANEL}/pairs.json`, "utf8")) as { pairs: { producer: string; consumer: string; deck: string }[] }).pairs) {
+  if (!panelPairs.has(p.deck)) panelPairs.set(p.deck, new Set());
+  panelPairs.get(p.deck)!.add(`${p.producer}|${p.consumer}`);
 }
 
 const store = await connect(loadConfig());
@@ -70,7 +83,8 @@ for (const file of readdirSync(DECKS).filter((f) => f.endsWith(".txt")).sort()) 
     if (TAG && r.tag !== TAG) continue;
     const key = `${r.producer}|${r.consumer}|${r.tag}`;
     const cached = cache.get(key);
-    if (!cached || cached.verdict !== WANT) continue;
+    if (WANT === "debt" ? cached !== undefined : cached?.verdict !== WANT) continue;
+    if (WANT === "debt" && !panelPairs.get(file.replace(/\.txt$/, ""))?.has(`${r.producer}|${r.consumer}`)) continue;
     const row = live.get(key) ?? { producer: r.producer, consumer: r.consumer, tag: r.tag, decks: new Set<string>() };
     row.decks.add(file.replace(/\.txt$/, ""));
     live.set(key, row);
@@ -95,12 +109,12 @@ const md: string[] = [
   "drop it into `docs/measurements/panel/` as `verdicts-<name>.jsonl` and rebuild.", "",
 ];
 for (const [i, r] of rows.entries()) {
-  const c = cache.get(`${r.producer}|${r.consumer}|${r.tag}`)!;
-  const authored = (c.note ?? "").startsWith("USER VERDICT") ? "OWNER" : "Claude";
+  const c = cache.get(`${r.producer}|${r.consumer}|${r.tag}`);
+  const authored = (c?.note ?? "").startsWith("USER VERDICT") ? "OWNER" : "Claude";
   md.push(`## ${i + 1}. ${r.producer} → ${r.consumer}`, "",
     `- tag \`${r.tag}\` · seen in: ${[...r.decks].join(", ")}`,
-    `- cached: **${c.verdict}** by ${authored}${c.cause ? ` (cause: ${c.cause})` : ""}`,
-    `- note: ${(c.note ?? "").trim() || "—"}`, "",
+    c ? `- cached: **${c.verdict}** by ${authored}${c.cause ? ` (cause: ${c.cause})` : ""}` : "- cached: none (judging debt)",
+    `- note: ${(c?.note ?? "").trim() || "—"}`, "",
     `- producer ${fmt(r.producer)}`,
     `  > ${String(card.get(r.producer)?.oracleText ?? "").replace(/\n/g, "\n  > ")}`, "",
     `- consumer ${fmt(r.consumer)}`,
@@ -113,7 +127,7 @@ writeFileSync(`${OUT}.md`, `${md.join("\n")}\n`);
 // facts, one claim at a time, and writes the JSONL itself. Self-contained: no fonts, no scripts, no
 // styles fetched from anywhere, so it renders under a strict CSP.
 const payload = rows.map((r) => {
-  const c = cache.get(`${r.producer}|${r.consumer}|${r.tag}`)!;
+  const c = cache.get(`${r.producer}|${r.consumer}|${r.tag}`);
   const facts = (n: string) => {
     const d = card.get(n);
     return { name: n, cost: d?.manaCost ?? "", typeLine: d?.typeLine ?? "", colors: d?.colors ?? [], oracle: d?.oracleText ?? "" };
@@ -125,15 +139,15 @@ const payload = rows.map((r) => {
     // reasoning. `Calibrate.tsx` had the answer already: it hides the engine's reasons until asked,
     // because seeing what the engine believes anchors the verdict to it.
     claim: claimFor(r.tag, r.producer, r.consumer),
-    decks: [...r.decks], cachedVerdict: c.verdict, cause: c.cause ?? "",
-    judgedBy: (c.note ?? "").startsWith("USER VERDICT") ? "owner" : "Claude",
-    note: (c.note ?? "").replace(/^USER VERDICT[^.]*\.\s*/, "").trim(),
+    decks: [...r.decks], cachedVerdict: c?.verdict ?? "unjudged", cause: c?.cause ?? "",
+    judgedBy: c ? ((c.note ?? "").startsWith("USER VERDICT") ? "owner" : "Claude") : "nobody yet",
+    note: (c?.note ?? "").replace(/^USER VERDICT[^.]*\.\s*/, "").trim(),
   };
 });
 writeFileSync(`${OUT}.html`, renderSheet(payload, TAG ?? "all tags", WANT));
 console.log(`${rows.length} rows -> ${OUT}.md, ${OUT}.jsonl and ${OUT}.html`);
 writeFileSync(`${OUT}.jsonl`, `${rows.map((r) => JSON.stringify({
   producer: r.producer, consumer: r.consumer, tag: r.tag,
-  verdict: "", cause: "", note: "USER VERDICT (cost-reduction re-judge, 2026-08-20). ",
+  verdict: "", cause: "", note: `USER VERDICT (${WANT === "debt" ? "debt" : `${TAG ?? "all tags"} re-judge`}, ${new Date().toISOString().slice(0, 10)}). `,
 })).join("\n")}\n`);
 process.exit(0);
