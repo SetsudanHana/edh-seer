@@ -21,9 +21,9 @@ one of these re-buys the corpus and the rest are free.
 
 | constant | value | what it is |
 |---|---|---|
-| `NORMALIZE_VERSION` | **18** | Bump when ANYTHING that determines the request changes: SYSTEM, VERBS, TRIGGERS, ZONES — and `segment.ts`, because the segmenter decides which clauses exist and what ids they carry. |
+| `NORMALIZE_VERSION` | **19** | Bump when ANYTHING that determines the request changes: SYSTEM, VERBS, TRIGGERS, ZONES — and `segment.ts`, because the segmenter decides which clauses exist and what ids they carry. |
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
-| `VOCAB_VERSION` | **18** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
+| `VOCAB_VERSION` | **19** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **18** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
 | `DERIVE_VERSION` | **116** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
@@ -38,11 +38,11 @@ and not persisted** — the card re-queues rather than banking a guess. They are
 game can express (the Comprehensive Rules), not against what the current decks happen to play,
 because normalization is a one-way ratchet: nobody re-runs 36,000 cards to add a word.
 
-### VERBS — 96 members
+### VERBS — 98 members
 
 The action a clause performs. Defined in [`VERBS`](../../packages/tagger/src/normalize-prompt.ts).
 
-`destroy`, `exile`, `sacrifice`, `tap`, `untap`, `draw`, `discard`, `mill`, `search`, `put`, `return`, `create`, `counter-spell`, `copy`, `gain-life`, `lose-life`, `deal-damage`, `add-mana`, `add-counter`, `remove-counter`, `grant-ability`, `modify-pt`, `prevent`, `cast`, `play`, `shuffle`, `reveal`, `attach`, `transform`, `trigger-again`, `extra-turn`, `extra-combat`, `animate`, `cant`, `emblem`, `fight`, `set-life`, `proliferate`, `scry`, `surveil`, `cost-modify`, `amass`, `turn-face-up`, `extra-phase`, `connive`, `recruit`, `bolster`, `support`, `adapt`, `monstrosity`, `blight`, `investigate`, `populate`, `incubate`, `manifest`, `discover`, `meld`, `cloak`, `manifest-dread`, `earthbend`, `goad`, `regenerate`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `exchange`, `convert`, `double`, `triple`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `waterbend`, `airbend`, `ring-tempts`, `roll-dice`, `flip-coin`, `initiative`, `city-blessing`, `gain-control`, `phase-out`, `monarch`, `foretell`, `other`, `none`
+`destroy`, `exile`, `sacrifice`, `tap`, `untap`, `draw`, `discard`, `mill`, `search`, `put`, `return`, `create`, `counter-spell`, `copy`, `gain-life`, `lose-life`, `deal-damage`, `add-mana`, `add-counter`, `remove-counter`, `grant-ability`, `modify-pt`, `prevent`, `cast`, `play`, `shuffle`, `reveal`, `attach`, `transform`, `trigger-again`, `extra-turn`, `extra-combat`, `animate`, `cant`, `emblem`, `fight`, `set-life`, `proliferate`, `scry`, `surveil`, `cost-modify`, `amass`, `turn-face-up`, `extra-phase`, `connive`, `recruit`, `bolster`, `support`, `adapt`, `monstrosity`, `blight`, `investigate`, `populate`, `incubate`, `manifest`, `discover`, `meld`, `cloak`, `manifest-dread`, `earthbend`, `goad`, `regenerate`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `exchange`, `convert`, `double`, `triple`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `waterbend`, `airbend`, `ring-tempts`, `roll-dice`, `flip-coin`, `initiative`, `city-blessing`, `gain-control`, `phase-out`, `monarch`, `foretell`, `win-game`, `lose-game`, `other`, `none`
 
 
 ### TRIGGERS — 134 members

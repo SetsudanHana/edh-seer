@@ -213,6 +213,7 @@ const VERB_TO_TRIGGER: Record<string, string> = {
   "extra-turn": "untap-step",
   "extra-combat": "begin-combat",
   "extra-phase": "main-phase",
+  "lose-game": "loses-game",
 };
 const VERB_NO_TRIGGER: Record<string, string> = {
   put: "named by destination: enters, put-into-graveyard, put-into-library, returned-to-hand",
@@ -226,6 +227,7 @@ const VERB_NO_TRIGGER: Record<string, string> = {
   animate: "a type change is a continuous effect (611), no printed head",
   "trigger-again": "603.2d: makes another trigger fire again; not an event of its own",
   double: "CR 701 action with a TRIGGERS word of the same name",
+  "win-game": "winning ends the game (104.2); nothing can trigger on it. 0 corpus heads",
 };
 
 test("every VERB the rules let a trigger watch has a TRIGGERS word", () => {
