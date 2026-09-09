@@ -107,6 +107,19 @@ test("a TRANSFORM card's only PLAYABLE face is its front", () => {
   expect(c.faces).toEqual([{ types: ["artifact"], subtypes: [] }]);
 });
 
+test("a More Than Meets the Eye card is cast from EITHER face, whatever its layout says", () => {
+  // Starscream, Power Hungry // Starscream, Seeker Leader: layout "transform", but CR 702.161 lets
+  // the back face be cast converted, so it is a Vehicle that ENTERS -- which is what Tails watches.
+  const c = extractCharacteristics({
+    ...inalla, typeLine: "Legendary Artifact Creature — Robot // Legendary Artifact — Vehicle",
+    layout: "transform", keywords: ["More Than Meets the Eye", "Flying"],
+  });
+  expect(c.faces).toEqual([
+    { types: ["legendary", "artifact", "creature"], subtypes: ["robot"] },
+    { types: ["legendary", "artifact"], subtypes: ["vehicle"] },
+  ]);
+});
+
 test("a FLIP card's only playable face is its front too -- the back is reached in play", () => {
   const c = extractCharacteristics({
     ...inalla,

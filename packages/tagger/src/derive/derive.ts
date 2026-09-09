@@ -37,7 +37,9 @@ import { emblemRecipient } from "../emblem.js";
 // 131: a damage multiplier's trigger subject is the DEALER ("a source you control"), the half
 // `GameEvent.dealer` records and `eventMatches` compares; "a creature you control" is no longer
 // `restricted`, because the matcher checks it (recall v4 #120).
-export const DERIVE_VERSION = 131;
+// 132: a More Than Meets the Eye card is playable from either face (CR 702.162), so its back face
+// implies its own cast and enters (recall v4 #151).
+export const DERIVE_VERSION = 132;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
