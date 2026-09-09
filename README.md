@@ -93,8 +93,9 @@ cd packages/web && npx vite --config client/vite.config.ts      # UI   :5173
 
 ## Honest limitations
 
-- **Corpus coverage.** The corpus is **34,433** cards, of which **21,317** carry derived tags
-  (measured 2026-09-08). Cards outside that set form no synergy edges — the report says so explicitly
+- **Corpus coverage.** The corpus is **34,433** cards, of which **28,416** carry derived tags
+  (measured 2026-09-09; 31,731 of the 31,829 commander-legal cards are read in full, the 98 left
+  being persist-gate refusals). Cards outside that set form no synergy edges — the report says so explicitly
   rather than quietly under-reporting. Their mana cost, type and text still count everywhere else.
 - **Synergy is binary, not weighted.** An edge says two cards relate; it does not say how much. A
   supply/demand magnitude discount was built, swept across a 2-D parameter grid, and **refused** on
