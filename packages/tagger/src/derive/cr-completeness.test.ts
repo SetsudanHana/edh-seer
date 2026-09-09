@@ -19,29 +19,7 @@ import { normalizeTriggerVerb } from "./derive.js";
 import { KEYWORD_ABILITIES } from "./subtypes.js";
 import crKeywords from "./cr-keywords.json" with { type: "json" };
 
-/** CR English -> our engine spelling, only where they differ. */
-const ALIASES: Record<string, string> = {
-  counter: "counter-spell",
-  "tap and untap": "tap",
-  "venture into the dungeon": "venture-into-the-dungeon",
-  "the ring tempts you": "ring-tempts",
-  "time travel": "time-travel",
-  "collect evidence": "collect-evidence",
-  "manifest dread": "manifest-dread",
-  "face a villainous choice": "face-a-villainous-choice",
-};
-
-/** Not a gap. Each entry is excluded on LEGALITY — the card can never appear in an EDH decklist —
- *  and never on "no demand", which is the exclusion the vocabulary ruling forbids. */
-const EXCLUDED: Record<string, string> = {
-  activate: "not an action a card text states; it is what an activated ability IS (ability kind)",
-  assemble: "Unstable/silver-bordered. CR 701.45a itself says those cards 'aren't included in these rules'",
-  planeswalk: "Planechase. No plane is ever in a decklist",
-  "set in motion": "Archenemy scheme. Never in a decklist",
-  abandon: "Archenemy scheme. Never in a decklist",
-  "open an attraction": "Unfinity Attractions live in a separate deck, never the 99",
-  "roll to visit your attractions": "Unfinity Attractions, as above",
-};
+import { EXCLUDED_701 as EXCLUDED, VERB_ALIASES_701 as ALIASES } from "./cr-exclusions.js";
 
 test("every CR 701 keyword action is covered by a verb or excluded with a reason", () => {
   const verbs = new Set(VERBS.map((v) => v.toLowerCase()));

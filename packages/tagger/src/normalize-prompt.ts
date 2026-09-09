@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 17;
+export const NORMALIZE_VERSION = 18;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 13;
+export const VOCAB_VERSION = 18;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -60,7 +60,7 @@ export const VOCAB_VERSION = 13;
  *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
  *  while everything below is still selected. No doc is de-selected by the change -- none exists at
  *  13 or above.  */
-export const TRIGGER_VOCAB_VERSION = 17;
+export const TRIGGER_VOCAB_VERSION = 18;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -141,6 +141,12 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // here is that the CLAUSE SURVIVES rather than being lost whole -- the same reason goad, vote and
   // regenerate each earned one.
   "gain-control", "phase-out", "monarch",
+  // CR 702.143 / 116.2h. THE ONE 702 KEYWORD A CARD INSTRUCTS AS AN ACTION: Ethereal Valkyrie
+  // exiles a card face down and says "It becomes foretold", and Dream Devourer watches "whenever
+  // you foretell a card". Missing from BOTH lists until the 2026-09-09 rules walk (AC1/AC4). No
+  // EMITS row: foretelling moves nothing a consumer watches beyond the exile the clause already
+  // records.
+  "foretell",
   "other", "none"];
 /** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
  *  cards instead of sitting untested until someone happens to play one.
@@ -170,6 +176,12 @@ export const EXEMPLAR_TERMS = [
   // The action-side additions of 2026-08-22. "becomes the monarch" is already listed above as a
   // trigger word and now exercises the VERB too, so only the other two are new here.
   "gain control of", "phases out",
+  // The 2026-09-09 rules walk, phrased as the cards phrase them.
+  "When you do", "counters are removed from", "remove the last", "spend mana", "mana is spent",
+  "is dealt damage", "loses the game", "becomes unattached", "is returned to", "put into a library",
+  "becomes renowned", "becomes saddled", "becomes plotted", "foretell a card", "give a gift",
+  "mentors a creature", "solve a Case", "ability resolves", "you control no", "there are no",
+  "you get {E}",
 ] as const;
 
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
@@ -397,6 +409,76 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // could state that narrowing exactly (`firebending` is already in KEYWORD_ABILITIES) -- an emit
   // row is the follow-up, not this word.
   "firebend",
+  // THE 2026-09-09 RULES WALK (roadmap AC1-AC4, spec 2026-09-09-rules-driven-accuracy-audit), the
+  // last vocabulary change before the remaining 10,615 commander-legal cards are bought. Method: a
+  // head census of every "when/whenever <subject> <verb>" over the 31,829 commander-legal cards
+  // (`research/tagger/trigger-head-census.ts`), a probe per rule-defined event
+  // (`trigger-event-probe.ts`), and for each family what the ALREADY-BOUGHT clauses had recorded
+  // (`near-miss-clauses.ts`). `derive/trigger-completeness.test.ts` ratchets the result: every
+  // rule-defined event has a word, a rules reading, or a legality exclusion, and every word here
+  // has a rule. Counts are commander-legal cards printing the trigger head / bought at that time.
+  //
+  // CR 603.12c, THE REFLEXIVE TRIGGER. "You may pay {1}{R}. When you do, ..." — 252 / 193, and the
+  // single largest family the prompt could not say: 115 of the 183 bought `other` triggers. The
+  // segmenter already gives "When you do" its own triggered clause; the event is the optional
+  // action the previous clause named, so the record is `reflexive` with that action as subject.
+  "reflexive",
+  // CR 603.8, STATE TRIGGERS. "When you control no Islands", "When there are nine or more
+  // incarnation counters on this", "When you have 30 or more life" — 50 / 12. Not an event but a
+  // condition that became true, and without a word the model reached for the event that PRODUCED
+  // the state: Dark Depths ("has no ice counters") answered `counter-added`, Transcendence ("have
+  // 20 or more life") answered `life-lost`, Rune-Tail `life-gained`. Each of those is a false join
+  // to every card that does the opposite thing.
+  "state",
+  // CR 122. A counter coming OFF. ~18 trigger heads ("whenever one or more counters are removed
+  // from", "when you remove the last"); 5 bought cards answered `counter-added` — Magma Pummeler,
+  // Alaundo, Chandra Fire Artisan, Protean Hydra — which derive.ts has been refusing by reading the
+  // SUBJECT for the word "removed". Baral's shape exactly: one "counter" word, the opposite event.
+  "counter-removed",
+  // CR 106.4 / 118.3a. "Whenever you spend mana", "whenever mana is spent to cast", "whenever you
+  // pay a kicker cost" — 11 of the bought `other` triggers (Forger's Foundry, Gilanra, Path of
+  // Ancestry). `tapped-for-mana` is the producing side and does not cover it.
+  "mana-spent",
+  // CR 120. THE RECEIVING SIDE OF DAMAGE. "Whenever this creature is dealt damage" — 122 / 98, and
+  // 82 of them stored as `damage-dealt`, which derive.ts has been splitting by re-reading the text
+  // for "is dealt" (`DAMAGE_RECEIVED`). Hornet Nest does not DEAL damage; with the word the clause
+  // says so instead of the derive layer guessing it back.
+  "damaged",
+  // CR 104.3. "Whenever a player loses the game" — 10 / 10; Ramses and Transcendence stored
+  // `life-lost`, refused by `LOSES_THE_GAME` in derive.ts. Losing life is not losing the game.
+  "loses-game",
+  // CR 701.3d. "Whenever this Equipment becomes unattached from a permanent" — 4 / 3, stored as
+  // `leaves` (Grafted Wargear, Grafted Exoskeleton) and `loses-control` (Captain's Hook). Mirror
+  // of `attached`, missed the same way `phases-in` was.
+  "unattached",
+  // CR 400.7 zone changes the list could not name by DESTINATION. "Whenever a permanent is returned
+  // to your hand" (Azorius Aethermage, Warped Devotion, Justice) — 5 / 0: every one is in the
+  // unbought tail, the exact case the ratchet argument is about. "Whenever one or more cards are
+  // put into a library from anywhere" (Wan Shi Tong, Dutiful Knowledge Seeker) — 2 / 2, both
+  // stored as `put-into-graveyard`.
+  "returned-to-hand", "put-into-library",
+  // CR 702 keyword abilities whose OWN rule text defines a trigger head (the `firebend` precedent,
+  // found by grepping the rules for "triggers whenever"): renown 702.112 "becomes renowned" (Relic
+  // Seeker, Valeron Wardens — 2, stored `other`), saddle 702.171 "becomes saddled" (Stubborn
+  // Burrowfiend — 1 / 0), plot 702.170 "becomes plotted" (Longhorn Sharpshooter, Aloe Alchemist —
+  // 2, stored `other`), foretell 702.143 "whenever you foretell" (Dream Devourer — 1, `other`),
+  // gift 702.174c "whenever you give a gift" (Jolly Gerbils — 1, `other`), mentor 702.134c
+  // "whenever a creature mentors" (Aegis of the Legion — 1, `other`).
+  "becomes-renowned", "becomes-saddled", "plotted", "foretell", "give-gift", "mentors",
+  // CR 719 Cases: "whenever you solve a Case" (Case File Auditor — 1 / 0). CR 608: "whenever a
+  // mana ability of this creature resolves" (Tyvar, stored `activate`), "when this ability
+  // resolves for the third time" (Gimli, `other`) — 2.
+  "solved", "resolves",
+  // JUDGED AND NOT ADDED, with the reading, so the next walk does not re-propose them:
+  //   - "whenever you add mana" (Caged Sun, Dictate of Karametra): every printed head is a land
+  //     being tapped for mana, which `tapped-for-mana` (CR 106.12a) already spells. 0 heads left.
+  //   - an extra turn or combat beginning (CR 500.7/500.8): no card prints "whenever you take an
+  //     extra turn"; the turn's own steps (`untap-step`, `begin-combat`) are the events. 0 corpus.
+  //   - "you get {E}": an ACTION, and the rules say what it is — CR 107.14, one energy COUNTER —
+  //     so it is `add-counter` with object energy. 57 bought clauses said `add-mana`; the prompt
+  //     rule below is the fix, not a word.
+  //   - stickers (9 cards, 0 bought): Unfinity sticker sheets, excluded on the same legality
+  //     footing as Attractions; "the Ring-bearer chosen" is part of the Ring tempting (701.54a).
   // The same escape hatch VERBS has always had. Its absence was pure asymmetry: the model, told to
   // pick EXACTLY one member, invented "other" anyway on 9 cards and lost all of them.
   "other",
@@ -494,6 +576,30 @@ Rules:
   reuse the number of another clause — Brinelin and Titans' Vanguard both numbered the overflow as
   the next sequential id, which was already a printed keyword, and the whole card was refused. Only a clause marked twoConditions may be
   answered this way, and only with one extra record.
+- REFLEXIVE (CR 603.12c). "When you do" / "When they do" is a trigger whose event is the
+  OPTIONAL ACTION the previous sentence named: event "reflexive", subject that action verbatim
+  ("pay {1}{R}", "sacrifice a creature", "exert this creature"). Never the parent's own event and
+  never "other".
+- STATE (CR 603.8). "When you control no Islands", "When there are five or more plot counters on
+  this", "When you have 30 or more life": event "state", subject the condition verbatim. It is NOT
+  the event that produced the state — "has no ice counters" is "state", not counter-removed.
+- HOMONYMS. These pairs share a word and are different events; pick by what the card says:
+  * counter-added is a counter put ON; counter-removed is a counter taken OFF; countered is a spell
+    or ability being countered. "Whenever a spell you control counters a spell" is countered.
+  * damage-dealt is a source DEALING damage; damaged is a creature or player BEING dealt damage.
+  * taps is a permanent becoming tapped; tapped-for-mana is one tapped FOR MANA; mana-spent is
+    mana being spent or paid.
+  * exiled is a card put into exile; put-into-graveyard, put-into-library and returned-to-hand are
+    named by their DESTINATION zone; dies is only the battlefield-to-graveyard case.
+  * cast is a spell cast; copy is a spell or ability copied; play is a land played or a card
+    played from exile — a land that merely enters was not necessarily played.
+  * gains-control / loses-control, attached / unattached, phases-in / phases-out are each two
+    opposite events.
+  * transform is a double-faced card turning over; turned-face-up is a face-down permanent turned
+    up; neither is animate.
+  * life-lost is losing life; loses-game is losing the GAME.
+- ENERGY. {E} is an energy COUNTER (CR 107.14): "you get {E}{E}" is verb add-counter, object
+  "energy", amount 2 — never add-mana. Paying {E} is a cost.
 - A TriggerEvent of "other" is the same escape hatch for a trigger no event above names ("whenever
   you choose a Ring-bearer"): use it and put the event verbatim in the trigger's subject. Never
   force a near-miss event — a wrong event forms false edges with every payoff for the real one.
