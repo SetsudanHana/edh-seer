@@ -711,3 +711,11 @@ test("a subject that names an ability records which kinds, in the order named", 
   // No "ability" in the text, no field -- "a triggered creature" is not a sentence a card prints.
   expect(parseSubject("target creature an opponent controls").abilityKind).toBeUndefined();
 });
+
+test("'another' and 'other' mark a subject as not the card itself", () => {
+  expect(parseSubject("another creature you control").other).toBe(true);
+  expect(parseSubject("two other creatures").other).toBe(true);
+  expect(parseSubject("each other creature").other).toBe(true);
+  expect(parseSubject("a creature you control").other).toBeUndefined();
+  expect(parseSubject("this creature").other).toBeUndefined();
+});

@@ -110,6 +110,13 @@ export interface SubjectFilter {
    *  {type: creature}, so without this the matcher cannot tell a self-ETB from a real payoff -- the
    *  defect behind 74% of the false edges in the 2026-08-05 precision measurement. */
   self?: true;
+  /** THE SUBJECT IS EXPLICITLY NOT THE CARD ITSELF: "another creature", "two other creatures".
+   *  The opposite fact to `self`, and a prose fact more than a matching one: `subjectMatches`
+   *  never reads it (the producer is never the consumer), but the sentence does -- Priest of
+   *  Forgotten Gods' "Sacrifice two other creatures" printed as "When Priest of Forgotten Gods
+   *  dies" because a creature producer could otherwise BE the creature its emit names. Set by
+   *  `parseSubject` (2026-09-09, recall v4 sacrifice family). */
+  other?: true;
   control: Control;
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;

@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 125;
+export const DERIVE_VERSION = 128;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -314,6 +314,9 @@ function boundedByEnchantLine(text: string, enchantText: string): string {
 function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType<typeof parseSubject> {
   const stripped = stripCardName(boundedByEnchantLine(text, cardText).replace(SELF_DISJUNCT, ""), cardName);
   const subject = parseSubject(stripped);
+  // "this creature OR another creature you control" includes the card: once the self half is
+  // stripped the remainder reads as `other`, and it is not.
+  if (SELF_DISJUNCT.test(text)) delete subject.other;
   if (subject.type !== undefined && subject.subtype !== undefined && dropsCrossSlotOr(stripped)) {
     const branches = orBranches(stripped);
     if (branches.length >= 2) {
@@ -474,6 +477,19 @@ function recipientBefore(clauseText: string, re: RegExp): string | undefined {
   const body = clauseText.replace(CLAUSE_PREAMBLE, "");
   const left = body.match(re)?.[1];
   return left?.split(/[.;]/).pop()?.replace(SUBORDINATE, "").trim() || undefined;
+}
+
+/** Who a quoted ability was handed to. `target creature you control gains "When this creature
+ *  dies, ..."`: the clause AFTER the quote is the granted ability, and the words BEFORE `gains "`
+ *  on the same sentence name its recipient. Only a creature-shaped recipient is returned; a token
+ *  or an emblem recipient is handled elsewhere (`grantedToOwnToken`, the emblem row). */
+function grantedRecipientOf(cardText: string, clauseText: string): string | undefined {
+  const head = clauseText.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = new RegExp(`([^."\\n]{1,80}?)\\s+gains?\\s+"${head}`, "i").exec(cardText);
+  if (!m) return undefined;
+  const who = m[1]!.replace(/^.*?\b(?:until end of turn|this turn),\s*/i, "").trim();
+  if (!/\b(?:target|that|each|another)\b.*\bcreatures?\b|\bcreatures? you control\b/i.test(who)) return undefined;
+  return who.replace(/^(?:choose )?/i, "");
 }
 
 function grantRecipient(clauseText: string): string | undefined {
@@ -947,6 +963,20 @@ export function deriveAbilities(
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+        // A GRANTED TRIGGER BELONGS TO THE RECIPIENT (recall v4 #194/#199, 2026-09-09). Not Dead
+        // After All and Malakir Rebirth print `target creature ... gains "When this creature dies,
+        // return it"`: the quoted ability's "this creature" is the TARGET, not the card, so the
+        // trigger watches a creature you control dying -- which a sacrifice outlet supplies -- and
+        // not the instant's own death, which nothing does. Read off the card text: the sentence
+        // that hands the clause over names who gets it.
+        const recipient = grantedRecipientOf(cardText, text);
+        if (subject.self === true && recipient) {
+          const r = parseSubject(recipient);
+          delete subject.self;
+          subject.type = r.type ?? "creature";
+          if (r.subtype) subject.subtype = r.subtype;
+          subject.control = r.control === "any" && /\byou control\b/i.test(recipient) ? "you" : r.control;
+        }
         // "Whenever one or more +1/+1 counters are put ON THIS CREATURE" (Evolution Witness): the
         // subject is the counter, the recipient is the card itself, and `isSelfSubject` reads only
         // the head of the phrase. Without the flag, Incubation Druid adapting ITSELF fed the
@@ -1062,6 +1092,17 @@ export function deriveAbilities(
       // (no producer), so the fact is carried here instead of lost (AC12).
       if (effectKind === "copy-ability" && subject && !subject.abilityKind && clause.trigger?.event === "activate") {
         subject.abilityKind = ["activated"];
+      }
+      // A COST SACRIFICE IS THE CONTROLLER'S (CR 701.17a): "{T}, Sacrifice two other creatures" eats
+      // your creatures whatever the effect goes on to do to "any number of target players". The
+      // sentence-wide actor default below refuses when the clause names another player, which is
+      // exactly Priest of Forgotten Gods' shape, so the cost's own sacrifice -- the FIRST sacrifice
+      // action, since the clause lists cost actions first -- is pinned here (recall v4, 2026-09-09).
+      const costSacrifice = action.verb === "sacrifice" && /\bsacrifice\b/i.test(cost)
+        && (clause.actions ?? []).find((x) => x.verb === "sacrifice") === action;
+      if (costSacrifice) {
+        for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
+        if (subject && subject.control === "any") subject.control = "you";
       }
       const actor = actorFor(action.verb);
       if (actor) {

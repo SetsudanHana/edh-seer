@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **125** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **128** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -124,6 +124,7 @@ Defined in [`SubjectFilter`](../../packages/tagger/src/schema.ts).
 | `subtype` | `string \| string[]` | optional | A subtype, or an array meaning OR (e.g. ["faerie","wizard"]). |
 | `colors` | `string[]` | optional |  |
 | `self` | `true` | optional | The subject IS the card whose ability this is ("when THIS creature enters", or the card named by its own name). Set by derivation from the clause text, which is the only layer that can see it: parseSubject reduces "this creature" and "another creature you control" to the same {type: creature}, so without this the matcher cannot tell a self-ETB from a real payoff -- the defect behind 74% of the false edges in the 2026-08-05 precision measurement. |
+| `other` | `true` | optional | THE SUBJECT IS EXPLICITLY NOT THE CARD ITSELF: "another creature", "two other creatures". The opposite fact to `self`, and a prose fact more than a matching one: `subjectMatches` never reads it (the producer is never the consumer), but the sentence does -- Priest of Forgotten Gods' "Sacrifice two other creatures" printed as "When Priest of Forgotten Gods dies" because a creature producer could otherwise BE the creature its emit names. Set by `parseSubject` (2026-09-09, recall v4 sacrifice family). |
 | `control` | `Control` | **required** |  |
 | `token` | `boolean \| null` | **required** | false = nontoken only, true = token only, null = any. |
 | `chosenType` | `boolean` | optional | Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. |
