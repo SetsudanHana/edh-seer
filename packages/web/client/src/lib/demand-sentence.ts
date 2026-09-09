@@ -52,6 +52,16 @@ export const DEMAND_VERB: Record<string, string> = {
   "create-token": "being created",
   "counter-added": "getting a counter",
   "counter-removed": "losing a counter",
+  // AC11 batch 2, the object events (2026-09-09).
+  transform: "transforming",
+  "turned-face-up": "being turned face up",
+  copy: "being copied",
+  reveal: "being revealed",
+  attached: "becoming attached",
+  unattached: "becoming unattached",
+  "gains-control": "changing control",
+  "phases-out": "phasing out",
+  regenerate: "regenerating",
   // CR 701.5, verb added 2026-09-09 (the Baral witness).
   "counter-spell": "being countered",
   "land-play": "being played",
@@ -97,6 +107,12 @@ export const DEMAND_SUBJECTLESS: Record<string, string> = {
   search: "a library being searched",
   // CR 104.3, AC11 batch 1: a player event, no permanent subject.
   "loses-game": "a player losing the game",
+  // AC11 batch 2: player-scoped events with no permanent subject.
+  shuffle: "a library being shuffled",
+  prevented: "damage being prevented",
+  exchange: "an exchange",
+  double: "doubling",
+  triple: "tripling",
 };
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

@@ -34,7 +34,7 @@ import { emblemRecipient } from "../emblem.js";
 // 115: emblem is its own effect kind, its control is the recipient the sentence names, and a
 // granted clause on a card with an Emblem part derives on the emblem's own row (spec 2026-09-08).
 // 116: "her" and "him" are pronouns, so a planeswalker's own re-entry is a self emit, not a wildcard.
-export const DERIVE_VERSION = 118;
+export const DERIVE_VERSION = 119;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -141,6 +141,8 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   // CR 701.5, 2026-09-09 (AC7). The clause word is the passive `countered`; the engine event is the
   // action's own name, which the 361 counterspells emit.
   countered: "counter-spell",
+  // AC11 batch 2: the passive clause words for the CR 4xx/7xx object events.
+  shuffled: "shuffle",
 };
 
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving
@@ -872,8 +874,12 @@ export function deriveAbilities(
       // Chandra, Fire Artisan). The refusal was right while the words did not exist -- a visible
       // refusal beats a banked near-miss -- and reinterpretation is right only now that the
       // reading has a name. `taps-for-mana` stays refused: no engine event exists for it yet.
+      // "Whenever you play a land" is `land-play`, the event every land in the deck implies; a
+      // card played from exile is a different event with no engine verb yet, so it stays refused.
+      const playsALand = clause.trigger.event === "play" && /\bland\b/i.test(clause.trigger.subject ?? "");
       const verb = mapped === "lose-life" && LOSES_THE_GAME.test(text) ? "loses-game" as const
         : mapped === "counter-added" && COUNTER_REMOVED.test(clause.trigger.subject ?? "") ? "counter-removed" as const
+        : playsALand ? "land-play" as const
         : mapped;
       if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
         unknownTriggers.push("taps-for-mana");

@@ -27,7 +27,13 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // batch 1, the OPEN verbs of CR 1xx in the rulebook order the owner's every-event ruling set.
   // Both were near-misses derive REFUSED by reading text (Chandra's removal stored as
   // counter-added, Ramses' "loses the game" as life-lost); with a verb of their own they are read.
-  expect(VERB_VOCAB).toHaveLength(31);
+  // 31 -> 45 on 2026-09-09 for AC11 batch 2, the OPEN verbs of CR 4xx/7xx: shuffle, transform,
+  // turned-face-up, copy, reveal, attached, unattached, gains-control, phases-out, regenerate,
+  // prevented, exchange, double, triple. The every-event ruling: an action the rules let a
+  // trigger watch emits its own event whatever today's consumer count; the counts are in the
+  // union comment. Fourteen at once because the shape is one shape.
+  expect(VERB_VOCAB).toHaveLength(45);
+  for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);
   expect(VERB_VOCAB).toContain("counter-removed");
   expect(VERB_VOCAB).toContain("loses-game");
   expect(VERB_VOCAB).toContain("counter-spell");

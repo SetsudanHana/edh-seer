@@ -188,6 +188,14 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
 interface EmitSpec { verb: GameEvent["verb"]; counter?: string; control?: "you" | "opp"; token?: true; self?: true }
 
 const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
+  // A FACE-DOWN CREATURE TURNS ITSELF FACE UP (AC11 batch 2, 2026-09-09). Morph, megamorph and
+  // disguise are the special action of turning this permanent face up, so each such card SUPPLIES
+  // `turned-face-up` for itself -- which is what "whenever a permanent is turned face up" (Trail of
+  // Mystery, Kadena's Silencer's 114 relatives) waits for. Self, so the self-on-both-sides gate
+  // keeps one morph's flip off another morph's own "when this is turned face up".
+  morph: [{ verb: "turned-face-up", self: true }],
+  megamorph: [{ verb: "turned-face-up", self: true }],
+  disguise: [{ verb: "turned-face-up", self: true }],
   // "Damage dealt by this creature also causes you to gain that much life."
   lifelink: [{ verb: "gain-life" }],
   // "each opponent loses 1 life and you gain that much life."

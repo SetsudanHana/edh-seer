@@ -193,6 +193,7 @@ const PLAYER_ONLY =
 const THING_EVENTS: ReadonlySet<string> = new Set([
   "cast", "enters", "dies", "draw", "mill", "discard", "sacrifice", "attacks", "leaves",
   "counter-added", "counter-removed", "create-token", "land-play", "untaps", "taps",
+  "transform", "turned-face-up", "attached", "unattached", "gains-control", "phases-out", "regenerate", "copy",
 ]);
 
 /** A word in a trigger clause that says WHAT, beyond the bare umbrella. */
@@ -294,6 +295,11 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   "counter-spell": /\bcounter/i,
   "counter-removed": /\bcounter/i,
   "loses-game": /\blos(?:es|e|ing) the game\b/i,
+  // AC11 batch 2. Each cue is the printed word; a consumer of the event says it.
+  shuffle: /\bshuffl/i, transform: /\btransform/i, "turned-face-up": /\bface up\b/i, copy: /\bcop(?:y|ies|ied)\b/i,
+  reveal: /\breveal/i, attached: /\battach/i, unattached: /\bunattach/i, "gains-control": /\bcontrol\b/i,
+  "phases-out": /\bphas/i, regenerate: /\bregenerat/i, prevented: /\bprevent/i, exchange: /\bexchang/i,
+  double: /\bdoubl/i, triple: /\btripl/i,
 };
 
 /** Did the model INVENT a trigger the card does not have?

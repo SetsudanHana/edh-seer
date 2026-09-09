@@ -274,7 +274,8 @@ test("every homonym pair is in TRIGGERS and named in the prompt's HOMONYMS rule"
 test("the 2026-09-09 words refuse rather than near-miss", () => {
   // `counter-removed` and `loses-game` left this list on 2026-09-09 afternoon: AC11 batch 1 gave
   // them engine verbs, and verb-accounting.test.ts now pins them as EMITS instead.
-  const added = ["reflexive", "state", "mana-spent", "damaged", "unattached",
+  // `unattached` left on the same afternoon (AC11 batch 2 gave the object events engine verbs).
+  const added = ["reflexive", "state", "mana-spent", "damaged",
     "returned-to-hand", "put-into-library", "becomes-renowned", "becomes-saddled", "plotted", "foretell",
     "give-gift", "mentors", "solved", "resolves", "evolve"];
   for (const w of added) {

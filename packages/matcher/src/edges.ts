@@ -774,7 +774,12 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // SELF ON BOTH SIDES: a card adapting ITSELF cannot put the counter on another card's "this
   // creature" (Incubation Druid -> Evolution Witness, owner-judged FALSE 2026-08-22). The same
   // shape `selfEtbSelfSupplied` refuses for entries.
-  if ((producer.verb === "counter-added" || producer.verb === "counter-removed") && producer.subject.self === true && consumer.subject.self === true) return false;
+  // SELF ON BOTH SIDES IS TWO DIFFERENT CARDS: a producer doing X to ITSELF can never be the
+  // consumer's "when THIS does X". Ulrich's "whenever this creature transforms" is not fed by
+  // another werewolf transforming. Applied to the object events of AC11 batch 2 as it was to
+  // counters (Incubation Druid -> Evolution Witness, owner-judged FALSE 2026-08-22); entries and
+  // combat have their own gates above.
+  if (SELF_BOTH_REFUSED.has(producer.verb) && producer.subject.self === true && consumer.subject.self === true) return false;
   // A removal is compared the way a placement is: by the counter KIND first (AC11 batch 1).
   if (producer.verb === "counter-added" || producer.verb === "counter-removed") return counterAddMatches(producer.subject, consumer.subject, h);
   // A DAMAGE EVENT HAS TWO PARTICIPANTS, AND A DEALER MUST BE COMPARED AGAINST A DEALER.
@@ -2031,6 +2036,11 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
   }
   return dedupeReasons(reasons.map((r) => stampSides(r, p, c)));
 }
+
+const SELF_BOTH_REFUSED: ReadonlySet<string> = new Set([
+  "counter-added", "counter-removed", "transform", "turned-face-up", "attached", "unattached", "gains-control",
+  "phases-out", "regenerate", "copy", "reveal", "exchange", "double", "triple", "shuffle", "prevented",
+]);
 
 export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
   return dedupeReasons([
