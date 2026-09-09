@@ -3,7 +3,7 @@ import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
-import { ROLE_NOT_SYNERGY, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
 import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
@@ -660,10 +660,12 @@ const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "fore
  *  cards and it fires nothing -- no trigger, no emit -- so until this existed his record's
  *  `demands` was EMPTY and his page could not answer the question his deck is built around.
  *
- *  ONLY A SUBTYPE, AND NEVER A BASIC LAND TYPE. `edges.ts` refuses a bare card type on the same
- *  ground ("creatures you control" is satisfied by every creature in the deck), and a key the
- *  matcher would refuse is a row the page must not offer. The two gates state the same rule and are
- *  tested against each other. */
+ *  A SUBTYPE, OR A NON-WHOLE-DECK CARD TYPE, AND NEVER A BASIC LAND TYPE. `edges.ts` admits a bare
+ *  artifact, enchantment or planeswalker count since the owner's 2026-09-09 ruling and still
+ *  refuses creature, permanent and land ("creatures you control" is every creature in the deck;
+ *  lands are the mana base) -- `WHOLE_DECK_TYPES` is that list, shared so a key the matcher would
+ *  refuse is never a row the page offers. The two gates state the same rule and are tested
+ *  against each other. */
 export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(boardCountsOf(d).map((b) => b.key))];
 
 /** EVERY SUBTYPE A BOARD COUNT NAMES IS ITS OWN KEY, each carrying the tag the engine writes for
@@ -678,7 +680,10 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
     const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
       .filter((st) => !BASIC_LAND_TYPES.has(st));
     const tag = `scales:${themeSubjectKey(counted)}`;
-    return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
+    if (subtypes.length > 0) return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
+    // A bare type count (Storm-Kiln Artist's artifacts), keyed on the type itself.
+    const types = Array.isArray(counted.type) ? counted.type : counted.type === undefined ? [] : [counted.type];
+    return types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!) ? [{ key: `counts|-|${types[0]}|-`, tag }] : [];
   });
 
 /** WHAT A CARD IS, as a supply key -- its own printed subtypes.
@@ -695,6 +700,10 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
   ...emitKeysOf(d),
   ...(d.tags?.characteristics.subtypes ?? [])
     .filter((t) => !BASIC_LAND_TYPES.has(t))
+    .map((t) => `counts|-|${t}|-`),
+  // An artifact supplies "an artifact you control" the way a Goblin supplies a Goblin (2026-09-09).
+  ...(d.tags?.characteristics.types ?? [])
+    .filter((t) => !WHOLE_DECK_TYPES.has(t))
     .map((t) => `counts|-|${t}|-`),
 ];
 

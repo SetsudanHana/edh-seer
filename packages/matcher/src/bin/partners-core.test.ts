@@ -1265,3 +1265,18 @@ test("a name that starts with no letter still has a page to be found on", () => 
   expect(browseLetterOf("+2 Mace")).toBe("#");
   expect(browseLetterOf("")).toBe("#");
 });
+
+// OWNER'S RULING 2026-09-09: a bare non-creature type count is a row, and the two gates agree.
+test("an artifact count keys on the type; a creature count keys on nothing; an artifact supplies the type", () => {
+  const artist = { card: { name: "Storm-Kiln Artist" }, tags: { characteristics: { types: ["creature"], subtypes: ["dwarf"] }, abilities: [{
+    kind: "static", effect: { kind: "pump", scaling: "per-permanent", scalingSubject: { control: "you", token: null, type: "artifact", zone: "battlefield" } },
+  }] } } as unknown as DeckCard;
+  expect(boardCountKeysOf(artist)).toEqual(["counts|-|artifact|-"]);
+  const anthem = { card: { name: "Anthem" }, tags: { characteristics: { types: ["enchantment"], subtypes: [] }, abilities: [{
+    kind: "static", effect: { kind: "pump", scaling: "per-permanent", scalingSubject: { control: "you", token: null, type: "creature", zone: "battlefield" } },
+  }] } } as unknown as DeckCard;
+  expect(boardCountKeysOf(anthem)).toEqual([]);
+  const rock = { card: { name: "Sol Ring" }, tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [] } } as unknown as DeckCard;
+  expect(supplyKeysOf(rock)).toContain("counts|-|artifact|-");
+  expect(supplyKeysOf(goblinBody())).not.toContain("counts|-|creature|-");
+});
