@@ -2300,4 +2300,35 @@ test("a damage multiplier watches the source that deals, not the thing dealt to"
   }], "Khalni Ambush", { 1: "Target creature you control fights target creature you don't control." });
   const dmg = fight.abilities.flatMap((x) => x.emits ?? []).find((e) => e.verb === "non-combat-damage");
   expect(dmg?.dealer).toEqual({ control: "you", token: null, type: "creature" });
+// RECALL v4 #28 (2026-09-09): Hellish Rebuke -> Valgavoth, Terror Eater. An edict granted to
+// OPPONENTS' permanents fills THEIR graveyard, and Valgavoth plays what would land there.
+test("a granted trigger on opponents' permanents makes THEIR permanent die, not the instant", () => {
+  const card = "Until end of turn, permanents your opponents control gain \"When this permanent deals damage to the player who cast Hellish Rebuke, sacrifice this permanent. You lose 2 life.\"";
+  const granted = "When this permanent deals damage to the player who cast Hellish Rebuke, sacrifice this permanent. You lose 2 life.";
+  const { abilities } = deriveAbilities([
+    { id: 1, abilityType: "spell", actions: [{ verb: "grant-ability", object: "that ability" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this permanent", control: "any" },
+      actions: [{ verb: "lose-life", object: "you", amount: "2" }, { verb: "sacrifice", object: "this permanent" }] },
+  ], "Hellish Rebuke", { 1: card.split(" gain ")[0]!, 2: granted }, undefined, card);
+  const t = abilities.find((a) => a.trigger)?.trigger;
+  expect(t?.subject).toMatchObject({ type: "permanent", control: "opp" });
+  expect(t?.subject.self).toBeUndefined();
+  const dies = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
+  expect(dies?.subject).toMatchObject({ type: "permanent", control: "opp" });
+  expect(dies?.subject.self).toBeUndefined();
+});
+
+test("a card that exiles what would hit an opponent's graveyard AND plays it is a recursion over their fills", () => {
+  const valgavoth = "Flying, lifelink\nWard—Sacrifice three nonland permanents.\nIf a card you didn't control would be put into an opponent's graveyard from anywhere, exile it instead.\nDuring your turn, you may play cards exiled with Valgavoth. If you cast a spell this way, pay life equal to its mana value rather than pay its mana cost.";
+  const { abilities } = deriveAbilities([], "Valgavoth, Terror Eater", {}, undefined, valgavoth);
+  expect(abilities).toContainEqual({
+    kind: "static", repeats: "continuous",
+    effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" } },
+  });
+  // Dauthi Voidwalker plays ONE such card, via its own sacrifice; still a payoff over their fills.
+  const dauthi = "Shadow\nIf a card would be put into an opponent's graveyard from anywhere, instead exile it with a void counter on it.\n{T}, Sacrifice this creature: Choose an exiled card an opponent owns with a void counter on it. You may play it this turn without paying its mana cost.";
+  expect(deriveAbilities([], "Dauthi Voidwalker", {}, undefined, dauthi).abilities.some((a) => a.effect.kind === "graveyard-recursion")).toBe(true);
+  // Leyline of the Void exiles and plays nothing: hate, not a payoff.
+  const leyline = "If Leyline of the Void is in your opening hand, you may begin the game with it on the battlefield.\nIf a card would be put into an opponent's graveyard from anywhere, exile it instead.";
+  expect(deriveAbilities([], "Leyline of the Void", {}, undefined, leyline).abilities).toEqual([]);
 });

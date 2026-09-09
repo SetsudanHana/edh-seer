@@ -39,7 +39,10 @@ import { emblemRecipient } from "../emblem.js";
 // `restricted`, because the matcher checks it (recall v4 #120).
 // 132: a More Than Meets the Eye card is playable from either face (CR 702.162), so its back face
 // implies its own cast and enters (recall v4 #151).
-export const DERIVE_VERSION = 132;
+// 133: a granted trigger's self emits and its "you" are the recipient's (CR 113.8), the recipient may be a
+// permanent, and a card that exiles what would hit an opponent's graveyard AND plays it is a
+// graveyard-recursion over their fills (recall v4 #28).
+export const DERIVE_VERSION = 133;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -493,7 +496,10 @@ function grantedRecipientOf(cardText: string, clauseText: string): string | unde
   const m = new RegExp(`([^."\\n]{1,80}?)\\s+gains?\\s+"${head}`, "i").exec(cardText);
   if (!m) return undefined;
   const who = m[1]!.replace(/^.*?\b(?:until end of turn|this turn),\s*/i, "").trim();
-  if (!/\b(?:target|that|each|another)\b.*\bcreatures?\b|\bcreatures? you control\b/i.test(who)) return undefined;
+  // A creature- or PERMANENT-shaped recipient. Hellish Rebuke hands "when this permanent deals
+  // damage ... sacrifice this permanent" to PERMANENTS YOUR OPPONENTS CONTROL, so its sacrifice is
+  // an opponent's permanent dying into THEIR graveyard, not the instant's own (recall v4 #28).
+  if (!/\b(?:target|that|each|another)\b.*\b(?:creatures?|permanents?)\b|\b(?:creatures?|permanents?) (?:you|your opponents|an opponent) controls?\b/i.test(who)) return undefined;
   return who.replace(/^(?:choose )?/i, "");
 }
 
@@ -897,6 +903,28 @@ export function deriveAbilities(
     let trigger: Ability["trigger"];
     /** Does this clause fire on the card's own LEAVING? See the sacrifice filter below. */
     let selfLeavesTrigger = false;
+    /** Who a granted clause belongs to, when the grant sentence names them. A self emit inside the
+     *  granted ability ("sacrifice this permanent", "return it to the battlefield") is the
+     *  RECIPIENT's, for the same reason its trigger is. */
+    let grantedTo: { control: SubjectFilter["control"]; token: null; type?: SubjectFilter["type"]; subtype?: SubjectFilter["subtype"] } | undefined;
+    // A GRANTED TRIGGER BELONGS TO THE RECIPIENT (recall v4 #194/#199, 2026-09-09). Not Dead
+    // After All and Malakir Rebirth print `target creature ... gains "When this creature dies,
+    // return it"`: the quoted ability's "this creature" is the TARGET, not the card, so the
+    // trigger watches a creature you control dying -- which a sacrifice outlet supplies -- and
+    // not the instant's own death, which nothing does. Read off the card text: the sentence
+    // that hands the clause over names who gets it. Called from BOTH trigger branches: the
+    // damage-dealt branch sits above the general one, and Hellish Rebuke's granted trigger is a
+    // damage trigger (recall v4 #28).
+    const adoptGrantedRecipient = (subject: SubjectFilter): void => {
+      const recipient = grantedRecipientOf(cardText, text);
+      if (subject.self !== true || !recipient) return;
+      const r = parseSubject(recipient);
+      delete subject.self;
+      subject.type = r.type ?? "creature";
+      if (r.subtype) subject.subtype = r.subtype;
+      subject.control = r.control === "any" && /\byou control\b/i.test(recipient) ? "you" : r.control;
+      grantedTo = { control: subject.control, token: null, type: subject.type, ...(subject.subtype ? { subtype: subject.subtype } : {}) };
+    };
     if (clause.trigger?.event) {
       const mapped = normalizeTriggerVerb(clause.trigger.event);
       // READ BACK INTO THE EVENT THE CARD MEANS (AC11 batch 1, 2026-09-09). Two near-misses this
@@ -952,6 +980,7 @@ export function deriveAbilities(
             const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
             if (control) subject.control = control;
             if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+            adoptGrantedRecipient(subject);
             trigger = { verbs: [damageVerb], subject };
           }
         }
@@ -968,20 +997,7 @@ export function deriveAbilities(
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
-        // A GRANTED TRIGGER BELONGS TO THE RECIPIENT (recall v4 #194/#199, 2026-09-09). Not Dead
-        // After All and Malakir Rebirth print `target creature ... gains "When this creature dies,
-        // return it"`: the quoted ability's "this creature" is the TARGET, not the card, so the
-        // trigger watches a creature you control dying -- which a sacrifice outlet supplies -- and
-        // not the instant's own death, which nothing does. Read off the card text: the sentence
-        // that hands the clause over names who gets it.
-        const recipient = grantedRecipientOf(cardText, text);
-        if (subject.self === true && recipient) {
-          const r = parseSubject(recipient);
-          delete subject.self;
-          subject.type = r.type ?? "creature";
-          if (r.subtype) subject.subtype = r.subtype;
-          subject.control = r.control === "any" && /\byou control\b/i.test(recipient) ? "you" : r.control;
-        }
+        adoptGrantedRecipient(subject);
         // "Whenever one or more +1/+1 counters are put ON THIS CREATURE" (Evolution Witness): the
         // subject is the counter, the recipient is the card itself, and `isSelfSubject` reads only
         // the head of the phrase. Without the flag, Incubation Druid adapting ITSELF fed the
@@ -1071,7 +1087,12 @@ export function deriveAbilities(
         // ROADMAP I7. The permanent arrives under a controller the schema cannot name, so the emit
         // claims nothing rather than claiming everyone. See `entersUnderAnotherPlayer`.
         .filter((e) => !(e.verb === "enters" && entersUnderAnotherPlayer(cardText)));
-      if (emitsSelf) for (const e of emits) e.subject.self = true;
+      if (emitsSelf) for (const e of emits) {
+        if (!grantedTo) { e.subject.self = true; continue; }
+        // The granted ability's "this permanent"/"it" is the recipient -- see `grantedTo`.
+        const { self: _self, ...rest } = e.subject;
+        e.subject = { ...rest, ...grantedTo };
+      }
       if (!effectKind && emits.length === 0) { unclaimed.push(action); continue; }
 
       // A subject is attached ONLY when there is a kind. matcher's edges.ts emits a
@@ -1289,8 +1310,25 @@ export function deriveAbilities(
       }
     }
   }
+  // AN OPPONENT'S GRAVEYARD, TAKEN ON THE WAY IN (recall v4 #28, 2026-09-09). Valgavoth, Terror
+  // Eater and Dauthi Voidwalker exile what would go to an opponent's graveyard and let you play it,
+  // so the card is a recursion payoff over THEIR graveyard fills -- an edict you cast feeds it. Two
+  // sentences, two clauses, so it is read off the card text. The replacement alone is Leyline of
+  // the Void (hate, no payoff), which `replacementOf` refuses on purpose. Two corpus cards.
+  if (OPP_GRAVEYARD_TAKER.test(cardText) && PLAYS_WHAT_IT_EXILED.test(cardText)) {
+    abilities.push({
+      kind: "static", repeats: "continuous",
+      effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" } },
+    });
+  }
   return { abilities, unclaimed, unknownTriggers };
 }
+
+/** "If a card ... would be put into an opponent's graveyard from anywhere, exile it instead." */
+const OPP_GRAVEYARD_TAKER = /\bwould be put into an opponent's graveyard\b[^.]*\bexile\b/i;
+/** Valgavoth: "you may play cards exiled with Valgavoth"; Dauthi Voidwalker: "Choose an exiled card
+ *  an opponent owns with a void counter on it. You may play it". */
+const PLAYS_WHAT_IT_EXILED = /\bplay cards exiled with\b|\ban exiled card an opponent owns\b/i;
 
 export interface DeriveInput {
   oracleId: string;
