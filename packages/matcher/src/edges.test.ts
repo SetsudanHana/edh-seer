@@ -3970,10 +3970,25 @@ describe("fodder", () => {
   }]);
   const saproling = tokenNode("Saproling", ["creature"], ["saproling"]);
 
-  test("an artifact outlet eats an artifact token and an artifact card, never a creature", () => {
+  test("an artifact outlet eats an artifact token and a CHEAP artifact card, never a creature", () => {
     expect(pairReasons(construct, engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
-    expect(pairReasons(artifact("Solemn Simulacrum", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
+    expect(pairReasons(artifact("Aether Spellbomb", []), engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
     expect(pairReasons(base("Grizzly Bears", []), engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+  });
+  // OWNER RULING 2026-09-09: fodder is a token or something cheap and expendable, never a card with an
+  // effect you keep around (Surgehacker Mech -> Threefold Thunderhulk, Midnight Crusader Shuttle ->
+  // Daretti, both mana value 4, judged FALSE) nor a legendary payoff (Syr Ginger -> Trading Post,
+  // mana value 2, judged FALSE).
+  test("a real card is fodder only when cheap and not legendary", () => {
+    const mech = artifact("Surgehacker Mech", []);
+    (mech.card as { manaValue: number }).manaValue = 4;
+    expect(pairReasons(mech, engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+    const ginger = artifact("Syr Ginger, the Meal Ender", []);
+    ginger.tags!.characteristics.types = ["legendary", "artifact", "creature"];
+    expect(pairReasons(ginger, engineer, H).map((r) => r.tag)).not.toContain("fodder:artifact");
+    const cheap = artifact("Mind Stone", []);
+    (cheap.card as { manaValue: number }).manaValue = 2;
+    expect(pairReasons(cheap, engineer, H).map((r) => r.tag)).toContain("fodder:artifact");
   });
   test("a creature outlet eats a creature TOKEN, and not every creature in the deck", () => {
     expect(pairReasons(saproling, creatureOutlet, H).map((r) => r.tag)).toContain("fodder:creature");
