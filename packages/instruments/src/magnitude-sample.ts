@@ -21,7 +21,7 @@ import { ComboIndex, impactEdgeWeight, loadImpactWeights, type Reason } from "@e
 import { createTagsLookup, type CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
 import { sample, seededRng } from "./precision-core.js";
-import { AXIS_BOOST, narrowestWidth, productEdgeWeight, type Width } from "./magnitude-core.js";
+import { AXIS_BOOST, edgeTerms, narrowestWidth, productEdgeWeight, type Width } from "./magnitude-core.js";
 import { renderMagnitudeSheet, type MagnitudeRow } from "./magnitude-sheet-html.js";
 import type { SheetCard } from "./rejudge-sheet-html.js";
 
@@ -106,7 +106,8 @@ for (const width of ["narrow", "type", "wide"] as Width[]) {
         const reasons = c.feeders.get(p)!;
         const today = impactEdgeWeight(reasons, weights) * (1 + AXIS_BOOST * maxAxis(reasons, c.axis));
         const product = productEdgeWeight(reasons, { kinds: weights.kinds, producer: c.tags.get(p), consumer: c.tags.get(c.consumer), axis: c.axis });
-        return { name: p, tags: [...new Set(reasons.map((r) => r.tag))], today, product };
+        const terms = edgeTerms(reasons, { kinds: weights.kinds, producer: c.tags.get(p), consumer: c.tags.get(c.consumer), axis: c.axis });
+        return { name: p, tags: [...new Set(reasons.map((r) => r.tag))], today, product, terms };
       }),
     });
   }

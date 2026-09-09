@@ -100,6 +100,26 @@ export interface WeightContext {
   axis: ReadonlyMap<string, number>;
 }
 
+/** The five terms of the best reason per tag, so a scorer can ablate one term at a time against the
+ *  owner's rankings and say WHICH term lost -- the report the spec's §4.3 promises. */
+export interface EdgeTerms { tag: string; kind: number; rate: number; reach: number; specificity: number; strategy: number }
+
+export function edgeTerms(reasons: readonly Reason[], ctx: WeightContext): EdgeTerms[] {
+  const best = new Map<string, EdgeTerms>();
+  for (const r of reasons) {
+    const t: EdgeTerms = {
+      tag: r.tag,
+      kind: r.effectKind ? (ctx.kinds[r.effectKind] ?? UNKNOWN_KIND) : UNKNOWN_KIND,
+      rate: rateOf(ctx.producer, r.tag), reach: reachOf(ctx.consumer, r.tag),
+      specificity: specificityOf(r.tag), strategy: 1 + AXIS_BOOST * (ctx.axis.get(r.tag) ?? 0),
+    };
+    const w = t.kind * t.rate * t.reach * t.specificity * t.strategy;
+    const prev = best.get(r.tag);
+    if (!prev || prev.kind * prev.rate * prev.reach * prev.specificity * prev.strategy < w) best.set(r.tag, t);
+  }
+  return [...best.values()];
+}
+
 /** The candidate: KIND × RATE × REACH × SPECIFICITY × STRATEGY, per reason; summed over distinct tags
  *  keeping the max per tag, the same anti-inflation shape `impactEdgeWeight` uses. */
 export function productEdgeWeight(reasons: readonly Reason[], ctx: WeightContext): number {
