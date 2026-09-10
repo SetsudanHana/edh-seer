@@ -739,3 +739,27 @@ test("a cross-slot OR in the head noun phrase is a disjunction", () => {
   expect(s.anyOf).toEqual([{ type: "creature" }, { subtype: "vehicle" }]);
   expect(s.type).toBeUndefined();
 });
+
+// A COUNT IS A MAGNITUDE, NOT A CLASS (recall v6 #77, 2026-09-10). Gadrak's "create a Treasure token
+// for each nontoken creature that died this turn" read `type: creature` off the count, so the
+// Treasure was a creature and Swashbuckler's "sacrifice one or more Treasures" never met it.
+// `parseControl` already stops at the count cue; the class words must too.
+test("a class is read from the head, not from the count phrase after it", () => {
+  const s = parseSubject("a treasure token for each nontoken creature that died this turn");
+  expect(s.subtype).toBe("treasure");
+  expect(s.type).not.toBe("creature");
+  expect(s.token).toBe(true);
+});
+
+// A SUBJECT THAT IS ONLY A COUNT NAMES NO CLASS AT ALL: "you gain life equal to the number of
+// creatures you control" is lifegain, not a creature. The reviewer's case: a bare variable before
+// the cue ("X, where X is the number of Elves") is the same shape with a non-empty head, and the
+// two must agree. Derive's own cut (`COUNT_CUE`) also knows "where Y is" and "the total"; so does
+// this one now.
+test("a subject that is only a count names no class", () => {
+  expect(parseSubject("equal to the number of creatures you control").type).toBeUndefined();
+  const s = parseSubject("x, where x is the number of elves you control");
+  expect(s.subtype).toBeUndefined();
+  expect(s.type).toBeUndefined();
+  expect(parseSubject("+1/+1 counters where y is the total number of goblins you control").subtype).toBeUndefined();
+});

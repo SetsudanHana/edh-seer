@@ -57,7 +57,7 @@ import { emblemRecipient } from "../emblem.js";
 // ruling 2026-09-10; recall v5 #156, Toxic Deluge). A targeted debuff still says nothing.
 // 139: "if you descended this turn" cares about `dies:any` (CR 700.11) -- a deck demand, no edge
 // (recall v5 #179, Scalding Tarn -> Brass's Tunnel-Grinder).
-export const DERIVE_VERSION = 141;
+export const DERIVE_VERSION = 142;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
