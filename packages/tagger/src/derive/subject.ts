@@ -17,7 +17,7 @@ const TYPES = [
  *  the multiplier. `parseControl` matched the nearest player and handed the tokens to the opponent,
  *  so the card supplied nothing to its own deck's token payoffs — the opposite of what it does.
  *  Same family as C6, one layer along, and it is the second half of roadmap I2. */
-export const COUNT_PHRASE = /\b(?:for each\b|where x is\b|equal to the number of\b)/;
+export const COUNT_PHRASE = /\b(?:for each\b|where [xyz] is\b|equal to the (?:number|total)\b|times the (?:number|total)\b)/i;
 
 function parseControl(t: string): Control {
   // A PLAYER NAMED ONLY INSIDE A COUNT IS NOT THE ACTOR. Cut there first, so the branches below read
@@ -570,7 +570,14 @@ const TARGETS_ONLY = /\btargets? only\b/i;
 const ATTACHED_TO = /\battached to\b/i;
 
 export function parseSubject(text: string): SubjectFilter {
-  const t = text.toLowerCase().trim().split(ATTACHED_TO)[0].trim();
+  const whole = text.toLowerCase().trim().split(ATTACHED_TO)[0].trim();
+  // A COUNT IS A MAGNITUDE, NOT A CLASS (recall v6 #77, 2026-09-10). "a Treasure token for each
+  // nontoken creature that died this turn" (Gadrak) read `type: creature` off the count, so the
+  // Treasure was a creature and no Treasure payoff met it. `parseControl` has cut at the cue since
+  // roadmap I2; the class words cut there too. A subject that IS only a count ("equal to the number
+  // of creatures you control", "X, where X is the number of Elves") names NO class: the head is
+  // what is left, empty or a bare variable, and the count stays a magnitude for `scaling.ts` to read.
+  const t = whole.split(COUNT_PHRASE)[0].trim();
   const { type, notType, umbrella, plural } = parseTypes(t);
   const { subtype, plural: subtypePlural } = parseSubtypes(t);
   // "creature TOKENS you control": the plural sits on the word `tokens`, which is neither a type nor
@@ -578,7 +585,9 @@ export function parseSubject(text: string): SubjectFilter {
   const scope = parseScope(t, plural || subtypePlural || /\btokens\b/.test(t));
   const stats = [...parseStats(t), ...literalSize(t)];
   const colors = parseColors(t);
-  const out: SubjectFilter = { control: parseControl(t), token: parseToken(t) };
+  // Control reads the WHOLE text: `parseControl` makes the same cut and keeps its own empty-head
+  // fallback ("equal to the number of creatures your opponents control" still names them).
+  const out: SubjectFilter = { control: parseControl(whole), token: parseToken(t) };
   if (CHOSEN.test(t)) out.chosenType = true;
   const counter = parseCounter(t);
   if (counter) out.counter = counter;
