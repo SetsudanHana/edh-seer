@@ -652,5 +652,49 @@ export function parseSubject(text: string): SubjectFilter {
   if (subtype) out.subtype = subtype;
   if (scope) out.scope = scope;
   if (stats.length) out.stats = stats;
+  // A CROSS-SLOT OR IS A DISJUNCTION, NOT AN AND. "another creature or Vehicle you control" (Prowl),
+  // "an artifact or Dragon card" (Magda): one half fills `type`, the other `subtype`, and the matcher
+  // ANDs the two fields. Both halves move into `anyOf` and the outer subject keeps only what is
+  // shared, which is what "you control" governs. HERE, in the parser, since recall v6 (2026-09-10):
+  // it used to live on the trigger path alone, so Skullport Merchant's "sacrifice another creature
+  // or a Treasure" -- an EMIT -- derived a creature with subtype Treasure, which nothing is; and
+  // even there the outer kept `allTypes` while the branch lost it, so Canoptek Spyder's "another
+  // nontoken artifact creature or Vehicle" demanded an artifact creature of every Vehicle.
+  if (out.type !== undefined && out.subtype !== undefined) {
+    const branches = orBranches(t);
+    if (branches.length >= 2) {
+      delete out.type;
+      delete out.subtype;
+      delete out.allTypes;
+      out.anyOf = branches;
+    }
+  }
+  return out;
+}
+
+/** The type/subtype alternatives of a cross-slot OR, in text order; empty unless one half names a
+ *  type and no subtype and another a subtype and no type. Only the differing halves are kept -- a
+ *  branch carrying neither says nothing and is dropped, and everything else (control, scope,
+ *  colours, `other`, `token`) belongs on the outer subject where it binds every alternative. A
+ *  compound type ("artifact creature") keeps its `allTypes` IN the branch: it is that half's AND. */
+function orBranches(text: string): Partial<SubjectFilter>[] {
+  // THE HEAD NOUN PHRASE ENDS AT A RELATIVE PRONOUN. "target creature that blocked or was blocked by
+  // a Zombie" (Time to Reflect) names one class; the "or" inside the clause joins two things it did.
+  const head = text.split(/\b(?:that|which|who)\b/i)[0];
+  const parts = head.split(/\bor\b/i).map((p) => p.trim()).filter((p) => p !== "");
+  if (parts.length < 2) return [];
+  const parsed = parts.map((p) => parseSubject(p));
+  const typeOnly = parsed.some((s) => s.type !== undefined && s.subtype === undefined);
+  const subtypeOnly = parsed.some((s) => s.subtype !== undefined && s.type === undefined);
+  if (!typeOnly || !subtypeOnly) return [];
+  const out: Partial<SubjectFilter>[] = [];
+  for (const p of parsed) {
+    const branch: Partial<SubjectFilter> = {
+      ...(p.type !== undefined ? { type: p.type } : {}),
+      ...(p.allTypes !== undefined ? { allTypes: p.allTypes } : {}),
+      ...(p.subtype !== undefined ? { subtype: p.subtype } : {}),
+    };
+    if (Object.keys(branch).length > 0) out.push(branch);
+  }
   return out;
 }

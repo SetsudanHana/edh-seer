@@ -57,7 +57,7 @@ import { emblemRecipient } from "../emblem.js";
 // ruling 2026-09-10; recall v5 #156, Toxic Deluge). A targeted debuff still says nothing.
 // 139: "if you descended this turn" cares about `dies:any` (CR 700.11) -- a deck demand, no edge
 // (recall v5 #179, Scalding Tarn -> Brass's Tunnel-Grinder).
-export const DERIVE_VERSION = 139;
+export const DERIVE_VERSION = 140;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -283,32 +283,6 @@ function stripCardName(text: string, cardName?: string): string {
   return out.replace(/\s+/g, " ").trim();
 }
 
-/** "another creature or Vehicle you control" (Prowl, Pursuit Vehicle) is a DISJUNCTION, but `type`
- *  and `subtype` are separate SubjectFilter fields the matcher ANDs, so it derived "a creature that
- *  is also a Vehicle" and the plain creature entering that the oracle plainly triggers on matched
- *  nothing. Three clauses on two corpus cards.
- *
- *  The schema has no way to say OR across the two slots — an array means OR only WITHIN one — so the
- *  subtype branch is dropped rather than invented as an AND. That loses the Vehicles that are not
- *  creatures, which is a MISSING edge; keeping the AND is a WRONG one, and a silent wrong answer is
- *  worse than a missing one.
- *
- *  Only fires when the OR genuinely separates the slots: one side naming a type and no subtype, the
- *  other a subtype and no type. "A Faerie or Wizard permanent spell" is an OR inside the subtype
- *  array and keeps both; "an Eldrazi creature spell with mana value 7 or greater" is not a subject
- *  OR at all; "another Dragon creature you control" is a genuine compound AND. */
-function dropsCrossSlotOr(text: string): boolean {
-  const parts = text.split(/\bor\b/i).map((p) => p.trim()).filter((p) => p !== "");
-  if (parts.length < 2) return false;
-  const slots = parts.map((p) => {
-    const s = parseSubject(p);
-    return { type: s.type !== undefined, subtype: s.subtype !== undefined };
-  });
-  const typeOnly = slots.some((s) => s.type && !s.subtype);
-  const subtypeOnly = slots.some((s) => s.subtype && !s.type);
-  return typeOnly && subtypeOnly;
-}
-
 /** AN AURA'S "ENCHANT X" LINE BOUNDS ITS "ENCHANTED PERMANENT" (UX sweep 2026-09-06, E1). Kaya's
  *  Ghostform prints `Enchant creature or planeswalker you control` and then `When enchanted
  *  permanent dies` -- and "enchanted permanent" parsed as ANY permanent, so a land dying (Fabled
@@ -340,39 +314,7 @@ function subjectFrom(text: string, cardName?: string, cardText = ""): ReturnType
   // "this creature OR another creature you control" includes the card: once the self half is
   // stripped the remainder reads as `other`, and it is not.
   if (SELF_DISJUNCT.test(text)) delete subject.other;
-  if (subject.type !== undefined && subject.subtype !== undefined && dropsCrossSlotOr(stripped)) {
-    const branches = orBranches(stripped);
-    if (branches.length >= 2) {
-      // The AND was never asserted by the text. Both halves move into the disjunction and the outer
-      // subject keeps only what is shared, which is what "you control" governs.
-      delete subject.type;
-      delete subject.subtype;
-      subject.anyOf = branches;
-    } else {
-      // Fallback to the older, lossy behaviour: a missing branch is a missing edge, an invented AND
-      // is a wrong one.
-      delete subject.subtype;
-    }
-  }
   return subject;
-}
-
-/** The type/subtype alternatives of a cross-slot OR, in text order.
- *
- *  Only the differing halves are kept — a branch carrying neither a type nor a subtype says nothing
- *  and is dropped, and everything else (control, scope, colours) belongs on the outer subject where
- *  it binds every alternative. */
-function orBranches(text: string): Partial<SubjectFilter>[] {
-  const out: Partial<SubjectFilter>[] = [];
-  for (const part of text.split(/\bor\b/i)) {
-    const p = parseSubject(part.trim());
-    const branch: Partial<SubjectFilter> = {
-      ...(p.type !== undefined ? { type: p.type } : {}),
-      ...(p.subtype !== undefined ? { subtype: p.subtype } : {}),
-    };
-    if (Object.keys(branch).length > 0) out.push(branch);
-  }
-  return out;
 }
 
 /** The "your library for ..." preamble a search object always carries; stripping it leaves the thing

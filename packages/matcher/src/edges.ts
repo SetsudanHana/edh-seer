@@ -1452,7 +1452,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     // Nettlecyst counts "each artifact and/or enchantment", and demanding exactly ONE type refused
     // it. Every branch must be outside the whole deck; "artifact or creature" is still the board.
     // AND A KEYWORD NARROWS THE WAY A SUBTYPE DOES (v6 #106): Blight Pile counts "creatures with
-    // defender", which is `creature` plus `keyword` -- read only the type, that is the whole board.
+    // defender", which is `creature` plus `keyword` -- the type alone is the whole board, and the
+    // keyword is what makes it a minority of it.
     const typedCount = subtype === undefined && types.length > 0 && types.every((ty) => !WHOLE_DECK_TYPES.has(ty));
     const keywordCount = subtype === undefined && (counted.keyword?.length ?? 0) > 0;
     if (subtype === undefined && !typedCount && !keywordCount) continue;

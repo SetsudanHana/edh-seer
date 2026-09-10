@@ -1106,6 +1106,59 @@ test("a cross-slot OR becomes a disjunction, not a dropped branch", () => {
   expect(s.control).toBe("you");
 });
 
+// RECALL V6 #92 AND #125 (2026-09-10): the disjunction was handled on the TRIGGER path only, and
+// even there the outer subject kept `allTypes` while the branch lost it -- Canoptek Spyder's
+// "another nontoken artifact creature or Vehicle" derived `anyOf` AND `allTypes: [artifact,
+// creature]`, so a Vehicle that is not a creature (Necron Monolith) never matched. The EMIT path
+// read the object with a bare `parseSubject`, so Skullport Merchant's "sacrifice another creature
+// or a Treasure" derived a creature WITH SUBTYPE Treasure, which nothing is. Both now go through
+// the parser itself, where every caller gets the same reading.
+test("a cross-slot OR keeps the compound type in its branch and leaves no allTypes outside", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "triggered",
+    trigger: { event: "enters", subject: "another nontoken artifact creature or Vehicle you control" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Canoptek Spyder");
+  const s = abilities[0].trigger!.subject;
+  expect(s.anyOf).toEqual([{ type: ["creature", "artifact"], allTypes: ["artifact", "creature"] }, { subtype: "vehicle" }]);
+  expect(s.allTypes).toBeUndefined();
+  expect(s.type).toBeUndefined();
+  expect(s.token).toBe(false);
+  expect(s.other).toBe(true);
+});
+
+test("a cross-slot OR in a sacrifice object is a disjunction on the emit", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "activated",
+    actions: [
+      { verb: "sacrifice", object: "another creature or a Treasure" },
+      { verb: "draw", object: "a card", amount: "1" },
+    ],
+  }], "Skullport Merchant");
+  const sac = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "sacrifice")!;
+  expect(sac.subject.anyOf).toEqual([{ type: "creature" }, { subtype: "treasure" }]);
+  expect(sac.subject.type).toBeUndefined();
+  expect(sac.subject.subtype).toBeUndefined();
+  expect(sac.subject.other).toBe(true);
+});
+
+// AND THE REMOVAL THAT NAMES TWO CLASSES STILL LEAVES THE BATTLEFIELD. Bounce Off's "return target
+// creature or Vehicle to its owner's hand" and Gravkill's "exile target creature or Spacecraft"
+// derived NOTHING the moment their objects became disjunctions: the permanent-shaped test read
+// only the outer type. Three corpus cards went to zero abilities before this test existed.
+test("a bounce over a cross-slot OR still emits leaves", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1,
+    abilityType: "spell",
+    actions: [{ verb: "return", object: "target creature or Vehicle", fromZone: null, toZone: "hand" }],
+  }], "Bounce Off");
+  const leaves = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
+  expect(leaves).toBeDefined();
+  expect(leaves.subject.anyOf).toEqual([{ type: "creature" }, { subtype: "vehicle" }]);
+});
+
 test("a compound with no OR is still a plain AND", () => {
   const { abilities } = deriveAbilities([{
     id: 1,

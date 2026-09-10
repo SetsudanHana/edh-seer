@@ -3517,6 +3517,18 @@ test("a count of creatures WITH a keyword is not fed by a creature without it", 
     .toBe(false);
 });
 
+test("an empty keyword list does not narrow a whole-deck count", () => {
+  const countsCreatures = base("Axebane Guardian", [{
+    kind: "activated", cost: "{T}",
+    effect: {
+      kind: "add-mana", scaling: "per-creature",
+      scalingSubject: { type: "creature", keyword: [], zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(goblinBody(), countsCreatures, H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
 /** A DISJUNCTION OF TWO NARROW TYPES IS NARROWER THAN EITHER WHOLE BOARD (recall v6 #161).
  *  Nettlecyst's "+1/+1 for each artifact and/or enchantment you control" derives
  *  `type: [artifact, enchantment]`, and the gate demanded exactly one type. Call of the Ring is an
