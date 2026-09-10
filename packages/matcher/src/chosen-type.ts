@@ -81,6 +81,9 @@ export function resolveChosenTypes(tags: CardTags, counts: Map<string, number>, 
         ? { ...a.effect, subject: resolveSubject(a.effect.subject, counts, hierarchy) }
         : a.effect,
       emits: a.emits?.map((e) => ({ ...e, subject: resolveSubject(e.subject, counts, hierarchy) })),
+      // Roaming Throne doubles "a triggered ability of another creature you control of the chosen
+      // type": the class it doubles is chosen the same way, and it lives on its own field.
+      ...(a.doublesOf ? { doublesOf: resolveSubject(a.doublesOf, counts, hierarchy) } : {}),
     })),
   };
 }

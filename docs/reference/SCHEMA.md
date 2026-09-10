@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **135** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **136** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -195,6 +195,7 @@ Defined in [`Ability`](../../packages/tagger/src/schema.ts).
 | `face` | `number` | optional | WHICH FACE PRINTS THIS ABILITY — absent for the front face and for every single-face card, 1 or more for a back face. From `segment.ts`'s own face counter, recomputed at derive time. |
 | `cost` | `string` | optional | An activated ability's activation cost, verbatim as `segment.ts` split it out of the body — "{X}{X}, {T}", "{T}, Sacrifice a creature". Unparsed on purpose: this records what the card says, and what a cost MEANS for a loop's economy is sub-project B's question. |
 | `doubles` | `Verb[]` | optional | WHICH TRIGGERS THIS ABILITY DOUBLES. Present only on `trigger-doubling`. |
+| `doublesOf` | `SubjectFilter` | optional | WHOSE TRIGGERS THIS ABILITY DOUBLES. Present only on `trigger-doubling`, and only when the printed frame names a CLASS of permanent rather than an event: "a triggered ability of another Elemental you control" (Twinflame Travelers), "of a Shaman or another Wizard" (Harmonic Prodigy), "of a legendary creature you control" (Annie Joins Up), "of a creature you control with power 2 or less" (Delney). This is the axis `doubles` recorded as its ceiling on 2026-08-22 -- WHOSE ability, not WHICH event -- and it reached the recall draw on 2026-09-10 (v5 #196, Cavalier of Thorns -> Twinflame Travelers). Eight corpus cards. |
 | `temporary` | `true` | optional | THE TOKEN THIS ABILITY CREATES LEAVES AT THE NEXT END STEP. Present only on `token-generation`. |
 | `amount` | `string` | optional | The amount stated by the action that produced this ability, verbatim from the clause — "2", "X", "1,000". |
 | `conditionCares` | `string[]` | optional | THEME TAGS THE ABILITY'S INTERVENING-IF CONDITION DEMANDS — "if it had counters on it" wants a counters deck, "if a creature died this turn" wants an aristocrats one. |

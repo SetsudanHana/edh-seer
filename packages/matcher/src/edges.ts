@@ -16,7 +16,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesSentence, landConditionSentence,
+  staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesClassSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -1689,7 +1689,34 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // passes need -- there is no class-vs-self ambiguity when the consumer's own printed trigger is
   // the thing being doubled.
   for (const a of p.tags?.abilities ?? []) {
-    if (a.effect?.kind !== "trigger-doubling" || !a.doubles?.length) continue;
+    if (a.effect?.kind !== "trigger-doubling") continue;
+    // THE WHOSE AXIS (recall v5 #196, 2026-09-10): "a triggered ability of another Elemental you
+    // control" doubles EVERY trigger of every Elemental, so the consumer is matched on what it IS
+    // (its printed characteristics against the class) and on having any triggered ability of its
+    // own, whatever the event. The opponent-board rule below applies unchanged, and the claim is
+    // one per consumer. `doublesOf` is matched here and nowhere else, for the same reason
+    // `a.doubles` is: a subject on `effect.subject` would reach the static applies-to pass.
+    if (a.doublesOf && c.tags) {
+      // A CHOSEN TYPE IS A DECK FACT. `resolveChosenTypes` rewrites it to the deck's top subtype
+      // before this runs in the product; in pair isolation (the compass, the probe) it is still
+      // `chosenType: true`, which `subjectMatches` does not read -- so Roaming Throne would have
+      // doubled every creature with a trigger. Unresolved is a refusal, not a wildcard.
+      if (a.doublesOf.chosenType === true) continue;
+      const member = subjectMatches(characteristicsSubject(c.tags, c.card.name), a.doublesOf, h);
+      const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0 && ca.trigger?.subject?.control !== "opp");
+      if (member && hasTrigger) {
+        reasons.push({
+          tag: `doubles:${themeSubjectKey(a.doublesOf)}`,
+          text: doublesClassSentence(p.card.name, c.card.name),
+          effectKind: "trigger-doubling",
+          repeatability: "static",
+          consumer: c.card.name,
+          producer: p.card.name,
+        });
+      }
+      continue;
+    }
+    if (!a.doubles?.length) continue;
     for (const ca of c.tags?.abilities ?? []) {
       const verb = (ca.trigger?.verbs ?? []).find((v) => a.doubles!.includes(v));
       if (!verb) continue;

@@ -4040,3 +4040,41 @@ test("a clone does not re-fire a self ETB that demands entry from a graveyard (R
   const image = { ...base("Phantasmal Image", []), card: { ...base("Phantasmal Image", []).card, oracleText: "You may have Phantasmal Image enter as a copy of any creature on the battlefield." } };
   expect(pairReasons(image, kelpie, H).map((r) => r.tag)).toEqual([]);
 });
+
+// RECALL v5 #196 (2026-09-10): a doubler on the WHOSE axis pairs with every card of that class that
+// has a triggered ability, whatever the event.
+test("a doubler naming WHOSE triggers it doubles pairs with a class member that has any trigger", () => {
+  const twinflame = base("Twinflame Travelers", [{
+    kind: "static", effect: { kind: "trigger-doubling" }, doublesOf: { control: "you", token: null, subtype: "elemental" },
+  }]);
+  const cavalier = base("Cavalier of Thorns", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null, type: "creature" } },
+    effect: { kind: "graveyard-recursion" },
+  }], ["elemental", "knight"]);
+  const doubled = pairReasons(twinflame, cavalier, H);
+  expect(doubled.find((r) => r.tag === "doubles:elemental")?.text).toBe("Twinflame Travelers doubles Cavalier of Thorns's triggers");
+  // Not an Elemental: nothing, however many triggers it has.
+  const solemn = base("Solemn Simulacrum", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "ramp" },
+  }], ["golem"]);
+  expect(pairReasons(twinflame, solemn, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
+  // An Elemental with no triggered ability has nothing to double.
+  const vanilla = base("Flamekin Bladewhirl", [], ["elemental", "warrior"]);
+  expect(pairReasons(twinflame, vanilla, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
+  // A trigger that watches the OPPONENT's board is not doubled (same rule as the event axis).
+  const watcher = base("Flamekin Watcher", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { control: "opp", token: null, type: "creature" } },
+    effect: { kind: "damage" },
+  }], ["elemental"]);
+  expect(pairReasons(twinflame, watcher, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
+  // An UNRESOLVED chosen type (Roaming Throne outside a deck) claims nothing rather than every
+  // creature with a trigger; `resolveChosenTypes` is what turns it into a real class.
+  const throne = base("Roaming Throne", [{
+    kind: "static", effect: { kind: "trigger-doubling" }, doublesOf: { control: "you", token: null, chosenType: true, type: "creature" },
+  }]);
+  expect(pairReasons(throne, cavalier, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
+});

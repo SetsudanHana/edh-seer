@@ -519,6 +519,11 @@ export function doublesSentence(producer: string, consumer: string, verb: string
   return `${producer} doubles ${consumer}'s ${VERB_PHRASES[verb] ?? verb} trigger`;
 }
 
+/** The WHOSE axis: every trigger the consumer has, not one event's. */
+export function doublesClassSentence(producer: string, consumer: string): string {
+  return `${producer} doubles ${consumer}'s triggers`;
+}
+
 /** The cost-reduction branch was already plain English and its text does not change — moved here
  *  only so sentence.ts is the single place every reason sentence is built. */
 export function costReductionSentence(producer: string, consumer: string): string {
