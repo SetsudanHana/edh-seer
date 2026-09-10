@@ -103,6 +103,12 @@ export function actionRecipients(clauseText: string): Record<string, Control> {
   for (const [verb, re] of CUES) {
     const m = re.exec(clauseText);
     if (!m) continue;
+    // YOUR OWN VERB, WRITTEN FIRST, KEEPS THE ACTION (Braids, Arisen Nightmare, recall v6 #104):
+    // "you may sacrifice an artifact, creature, ... If you do, each opponent may sacrifice a
+    // permanent" -- the clause's one sacrifice is yours; the cue would hand it to the opponents.
+    const stem = STEMS[verb];
+    const yours = stem ? new RegExp(`\\byou\\s+${ADVERB}${stem}`, "i").exec(clauseText) : null;
+    if (yours && yours.index < m.index) continue;
     const control = controlOf(m[1], clauseText, m.index);
     if (control) out[verb] = control;
   }

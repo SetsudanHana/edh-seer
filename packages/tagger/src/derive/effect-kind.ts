@@ -217,10 +217,14 @@ function costDirection(object: string, clauseText = ""): EffectKind | null {
  *  The object is asked first because it is the action's own text; the clause is a fallback for the
  *  cards whose object is just "that card" or "it" (Necropotence, Cavalier of Thorns). A clause
  *  naming BOTH graveyards refuses to answer rather than guess, which leaves today's kind. */
+/** The clause goes on to copy, play, cast or put onto the battlefield what it exiled -- read from
+ *  the exile onward, so a use named BEFORE it is not this exile's. "exiled this way" alone is NOT a
+ *  use -- "you gain 1 life for each card exiled this way" is still hate. */
+const USES_THE_EXILED_CARD = /\bcopy of (?:it|them|that card|those cards)\b|\bplay (?:it|them|that card|those cards|a card from exile|cards? (?:exiled|from exile))\b|\bcast (?:it|them|that card|those cards)\b|\bput (?:it|them|that card|those cards) onto the battlefield\b/i;
 const YOUR_YARD = /\byour graveyard\b/i;
 const OTHER_YARD = /\b(?:target player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
 
-function exilesOwnGraveyard(object: string, clauseText: string): boolean {
+export function exilesOwnGraveyard(object: string, clauseText: string): boolean {
   if (YOUR_YARD.test(object)) return true;
   if (OTHER_YARD.test(object)) return false;
   return YOUR_YARD.test(clauseText) && !OTHER_YARD.test(clauseText);
@@ -405,6 +409,10 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // See exilesOwnGraveyard. Null rather than a kind of its own: the payoff this card actually has
     // is carried by the OTHER actions in the same clause, and a near-miss kind is consumed as if it
     // were true while null is honestly inert.
+    // AN EXILE THAT THEN USES THE CARD IS RECURSION (recall v6 #172, roadmap AF7a): Lazotep Quarry
+    // copies what it exiled from your graveyard, Lara Croft plays what she exiled from any. The
+    // graveyard is the source of the value, which is the recursion shape, whoever's it was.
+    if (r.kind === "graveyard-hate" && USES_THE_EXILED_CARD.test(clauseText.slice(Math.max(0, clauseText.search(/\bexile/i))))) return "graveyard-recursion";
     if (r.kind === "graveyard-hate" && exilesOwnGraveyard(action.object ?? "", clauseText)) return null;
     // THE BOTTOM IS NOT THE TOP. `toZone: "library"` says nothing about position and the canonical
     // action has no field for it, so the clause text decides. Of the 359 corpus cards with a

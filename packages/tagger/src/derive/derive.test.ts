@@ -1159,6 +1159,131 @@ test("a bounce over a cross-slot OR still emits leaves", () => {
   expect(leaves.subject.anyOf).toEqual([{ type: "creature" }, { subtype: "vehicle" }]);
 });
 
+// RECALL V6 #62 AND #104 (2026-09-10): Morbid Opportunist's clause carries `control: "you"` on
+// "whenever one or more other creatures die" -- the normalizer's guess, and the printed phrase names
+// no controller, so nothing an opponent lost fed it (Feed the Swarm, Braids). The clause field
+// overrides the subject text on purpose ("whenever you cast a spell" normalizes to subject "a
+// spell"), but on a PERMANENT-EVENT verb the controller is the permanent's, and a printed phrase
+// that says neither "you control" nor "your" cannot promise yours. 44 corpus triggers flip; a self
+// trigger and a phrase that says "you control" keep the clause's answer.
+test("a permanent-event trigger whose printed phrase names no controller is any, whatever the clause says", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "one or more other creatures", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Morbid Opportunist", { 1: "Whenever one or more other creatures die, draw a card. This ability triggers only once each turn." });
+  expect(abilities[0].trigger!.subject.control).toBe("any");
+});
+
+test("the clause's you stands when the printed phrase says you control", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "a legendary creature", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Tinybones Joins Up", { 1: "Whenever a legendary creature you control enters, draw a card." });
+  expect(abilities[0].trigger!.subject.control).toBe("you");
+});
+
+test("a self trigger keeps the clause's you", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "Junji", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Junji, the Midnight Sky", { 1: "When Junji dies, draw a card." });
+  expect(abilities[0].trigger!.subject.self).toBe(true);
+  expect(abilities[0].trigger!.subject.control).toBe("you");
+});
+
+test("a list subject's own commas do not cut the printed phrase before you control", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "another Frog, Rabbit, Raccoon, or Squirrel", control: "you" },
+    actions: [{ verb: "add-counter", object: "+1/+1", amount: "1" }],
+  }], "Valley Mightcaller", { 1: "Whenever another Frog, Rabbit, Raccoon, or Squirrel you control enters, put a +1/+1 counter on this creature." });
+  expect(abilities[0].trigger!.subject.control).toBe("you");
+});
+
+test("a class subject that merely says this turn still flips to any", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "a creature dealt damage by this creature this turn", control: "you" },
+    actions: [{ verb: "create", object: "a 2/2 black Zombie creature token", amount: "1" }],
+  }], "Wight", { 1: "Whenever a creature dealt damage by this creature this turn dies, create a 2/2 black Zombie creature token." });
+  expect(abilities[0].trigger!.subject.control).toBe("any");
+});
+
+// A BACK FACE NAMES ITSELF TOO. `isSelfSubject` read the short name of the FIRST face only, so
+// "Whenever Venom attacks" on Eddie Brock // Venom was never self -- a class with no type, kept
+// `you` by the clause -- and the any-flip above would have widened it to every attacker.
+test("a back face's own name is a self trigger", () => {
+  const { abilities } = deriveAbilities([{
+    id: 3, abilityType: "triggered",
+    trigger: { event: "attacks", subject: "Venom", control: "you" },
+    actions: [{ verb: "sacrifice", object: "another creature", optional: true }],
+  }], "Eddie Brock // Venom, Lethal Protector", { 3: "Whenever Venom attacks, you may sacrifice another creature." });
+  expect(abilities[0].trigger!.subject.self).toBe(true);
+  expect(abilities[0].trigger!.subject.control).toBe("you");
+});
+
+// AND A BARE NAME THAT IS NOT SELF IS NOT A CLASS EITHER: only a subject with a type, subtype or
+// keyword flips. "When Jumblebones leaves the battlefield" names the token Ozox makes -- no type
+// word at all -- and widening it to `any` would make an untyped leaves over everyone's board.
+test("a bare name the self test does not know keeps the clause's you", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "leaves", subject: "Jumblebones", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], "Ozox, the Clattering King", { 1: "When Jumblebones leaves the battlefield, draw a card." });
+  expect(abilities[0].trigger!.subject.control).toBe("you");
+});
+
+// LAZOTEP QUARRY (recall v6 #172): "exile target creature card with mana value X from your
+// graveyard. Create a token that's a copy of it" -- an exile from YOUR graveyard that then USES the
+// card is recursion, not hate and not nothing, and its target is yours: the targeted-removal
+// default read it as an opponent's. Lara Croft's "exile ... from a graveyard ... you may play a card
+// from exile" is the same shape over any graveyard (roadmap AF7a).
+test("an exile from your graveyard that copies the card is recursion over your graveyard", () => {
+  const { abilities } = deriveAbilities([{
+    id: 3, abilityType: "activated",
+    actions: [
+      { verb: "sacrifice", object: "a Desert" },
+      { verb: "exile", object: "target creature card with mana value X", fromZone: "graveyard", toZone: "exile" },
+      { verb: "create", object: "a token that's a copy of it, except it's a 4/4 black Zombie", amount: "1" },
+    ],
+  }], "Lazotep Quarry", { 3: "Exile target creature card with mana value X from your graveyard. Create a token that's a copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery." });
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(rec?.effect.subject?.control).toBe("you");
+  expect(rec?.effect.subject?.zone).toBe("graveyard");
+  const leaves = abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves");
+  expect(leaves?.subject.control).toBe("you");
+});
+
+test("an exile from a graveyard that you may then play is recursion over any graveyard", () => {
+  const { abilities } = deriveAbilities([{
+    id: 2, abilityType: "triggered",
+    trigger: { event: "attacks", subject: "Lara Croft, Tomb Raider", control: "you" },
+    actions: [
+      { verb: "exile", object: "up to one target legendary artifact card or legendary land card", fromZone: "graveyard", toZone: "exile" },
+      { verb: "add-counter", object: "discovery", amount: "1" },
+      { verb: "play", object: "a card from exile with a discovery counter on it" },
+    ],
+  }], "Lara Croft, Tomb Raider", { 2: "Whenever Lara Croft attacks, exile up to one target legendary artifact card or legendary land card from a graveyard and put a discovery counter on it. You may play a card from exile with a discovery counter on it this turn." });
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(rec?.effect.subject?.control).toBe("any");
+});
+
+test("an exile from a graveyard that uses nothing stays hate", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [
+      { verb: "exile", object: "target card", fromZone: "graveyard", toZone: "exile" },
+      { verb: "gain-life", object: "you", amount: "2" },
+    ],
+  }], "Some Hate", { 1: "Exile target card from a graveyard. You gain 2 life." });
+  expect(abilities.some((a) => a.effect.kind === "graveyard-recursion")).toBe(false);
+  expect(abilities.some((a) => a.effect.kind === "graveyard-hate")).toBe(true);
+});
+
 test("a compound with no OR is still a plain AND", () => {
   const { abilities } = deriveAbilities([{
     id: 1,
