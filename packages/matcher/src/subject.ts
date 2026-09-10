@@ -43,6 +43,13 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     // equality check below against a producer that states one.
     return anyOf.some((b) => subjectMatches(producer, { ...shared, ...b }, h));
   }
+  // AND ON THE PRODUCER SIDE (recall v6 #125, 2026-09-10): an emit over "another creature or a
+  // Treasure" has no outer type, and an untyped producer fails every typed demand. Any branch
+  // satisfying the consumer is a supply, with the shared fields binding each.
+  if (producer.anyOf !== undefined && producer.anyOf.length > 0) {
+    const { anyOf, ...shared } = producer;
+    return anyOf.some((b) => subjectMatches({ ...shared, ...b }, consumer, h));
+  }
   // "Historic" is artifact, legendary or Saga -- a printed fact the matcher stamps on the producer
   // from its type line. Opt-in like every other field: a consumer that does not ask is unaffected,
   // and a consumer that DOES ask is satisfied only by a card that is one.
