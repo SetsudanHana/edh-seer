@@ -4095,3 +4095,53 @@ test("static edge: a grant to artifact creatures reaches an artifact creature an
   const signet = withTypes(base("Arcane Signet", []), ["artifact"]);
   expect(pairReasons(cybermen, signet, H).some((r) => r.tag === "static:keyword-grant")).toBe(false);
 });
+
+// RECALL v5 #140 / #166 (2026-09-10): a TYPED recursion joins the CARDS of its class in the deck,
+// the way a typed tutor does (owner ruling 2026-09-10, extending the 2026-09-07 tutor ruling).
+// Bloodline Necromancer returns "target Vampire or Wizard creature card"; Lara Croft replays "a
+// legendary artifact card or legendary land card". The fill side is unchanged: a creature edict
+// still cannot promise a Vampire, so Merciless Executioner -> Necromancer stays refused.
+test("a typed recursion pairs with each card of its class, and an untyped one with none", () => {
+  const withTypes = (card: ReturnType<typeof base>, types: string[]) =>
+    ({ ...card, tags: { ...card.tags, characteristics: { ...card.tags.characteristics, types } } });
+  const necromancer = base("Bloodline Necromancer", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null, type: "creature" } },
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", subtype: ["vampire", "wizard"], scope: "target", zone: "graveyard" } },
+  }]);
+  const sengir = base("Sengir Vampire", [], ["vampire"]);
+  const found = pairReasons(necromancer, sengir, H).find((r) => r.tag === "recursion-target:vampire");
+  expect(found?.text).toBe("Bloodline Necromancer can bring back Sengir Vampire");
+  expect(found?.producer).toBe("Bloodline Necromancer");
+  expect(pairReasons(necromancer, base("Grizzly Bears", [], ["bear"]), H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
+
+  const lara = base("Lara Croft, Tomb Raider", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "graveyard-recursion", subject: { control: "any", token: null, legendary: true, type: ["artifact", "land"], scope: "target", zone: "graveyard" } },
+  }]);
+  const coat = withTypes(base("Mithril Coat", [], ["equipment"]), ["legendary", "artifact"]);
+  expect(pairReasons(lara, coat, H).some((r) => r.tag === "recursion-target:artifact")).toBe(true);
+  const solRing = withTypes(base("Sol Ring", []), ["artifact"]);
+  expect(pairReasons(lara, solRing, H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
+
+  // Untyped ("target creature card") is the whole board and claims no card, and so is a bare type
+  // -- the tutor pass's own bar: "return target artifact card" reached 62 cards in each artifact
+  // deck when lone types were admitted (measured 2026-09-10).
+  const animate = base("Animate Dead", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", subject: { control: "any", token: null, type: "creature", scope: "target", zone: "graveyard" } },
+  }]);
+  expect(pairReasons(animate, sengir, H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
+  const crucible = base("Crucible of Worlds", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "land", zone: "graveyard" } },
+  }]);
+  expect(pairReasons(crucible, withTypes(base("Forest", [], ["forest"]), ["basic", "land"]), H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
+  const retriever = base("Myr Retriever", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null, type: "creature" } },
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "artifact", scope: "target", zone: "graveyard" } },
+  }]);
+  expect(pairReasons(retriever, solRing, H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
+});
