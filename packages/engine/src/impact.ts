@@ -2,6 +2,13 @@ import impactWeights from "./impact-weights.json" with { type: "json" };
 import type { Reason } from "./synergy.js";
 
 export interface ImpactWeights {
+  /** Which quantity an EDGE weight is. `"priors"` (absent, what has always shipped) is
+   *  kinds × repeatability × scaling per reason. `"strategy"` is the owner's 2026-09-09 ruling —
+   *  "an enchantress deck cares about enchantment edges, as simple as that" — every reason weighs 1
+   *  and the deck's axis boost (analyze.ts) is the whole edge weight. KIND and the other priors are
+   *  CARD-shaped and belong to card impact (roadmap Y9), not the edge. See
+   *  `specs/2026-09-09-edge-magnitude-design.md` §8. */
+  edgeModel?: "priors" | "strategy";
   kinds: Record<string, number>;
   repeatability: Record<string, number>;
   scaling: Record<string, number>;
@@ -126,6 +133,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     unbounded: 2.5,
   },
   damping: 0.5,
+  edgeModel: "priors",
   magnitude: { glut: 3, beta: 0 },
   roleBlend: 1,
   themeRank: { alpha: 0, massShare: 0.5 },
@@ -138,6 +146,7 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
  * "fixed" multiplier (1.0).
  */
 export function impactWeightOf(reason: Reason, w: ImpactWeights): number {
+  if (w.edgeModel === "strategy") return 1;
   const k = reason.effectKind !== undefined ? (w.kinds[reason.effectKind] ?? UNKNOWN_KIND_WEIGHT) : UNKNOWN_KIND_WEIGHT;
   const r = reason.repeatability !== undefined ? (w.repeatability[reason.repeatability] ?? 1.0) : 1.0;
   const fixedMult = w.scaling?.fixed ?? 1.0;

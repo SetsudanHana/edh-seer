@@ -140,3 +140,16 @@ test("every impact weight names a real EFFECT_KINDS member", () => {
   const kinds = new Set<string>(EFFECT_KINDS as readonly string[]);
   expect(Object.keys(impactWeights.kinds).filter((k) => !kinds.has(k))).toEqual([]);
 });
+
+test('edgeModel "strategy" makes every reason weigh 1 — the axis boost is the whole edge weight', () => {
+  // Owner ruling 2026-09-09 (magnitude spec §8): KIND / repeatability / scaling are card-shaped priors
+  // and come OUT of the edge weight. Under "strategy" a bare reason, an unknown kind and a fully
+  // specified one all weigh the same; only the deck's axis separates edges downstream.
+  const w = { ...SEED_IMPACT_WEIGHTS, edgeModel: "strategy" as const };
+  expect(impactWeightOf(r({ effectKind: "pump", repeatability: "static", scaling: "fixed" }), w)).toBe(1);
+  expect(impactWeightOf(r({ effectKind: "no-such-kind" }), w)).toBe(1);
+  expect(impactWeightOf(r({}), w)).toBe(1);
+  // Absent and "priors" are the same thing: what has always shipped.
+  expect(impactWeightOf(r({ effectKind: "pump", repeatability: "static" }), { ...SEED_IMPACT_WEIGHTS, edgeModel: "priors" }))
+    .toBeCloseTo(0.5 * 0.6);
+});
