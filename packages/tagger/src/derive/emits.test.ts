@@ -498,3 +498,29 @@ test("a search outside the library emits nothing", () => {
     object: "its owner's graveyard, hand, and library for any number of cards with that name" })
     .map((x) => x.verb)).toEqual(["search"]);
 });
+
+// RECALL v5 #156 (2026-09-10): Toxic Deluge ("all creatures get -X/-X") derived `debuff` and emitted
+// nothing, so it filled no graveyard and fed no death payoff. Owner ruling 2026-09-10: a -X/-X or
+// -N/-N sweep on all or each creatures emits `dies`, control as printed (`any` for all creatures --
+// yours die too -- `opp` for creatures your opponents control); a -1/-1 sweep counts the same as
+// -5/-5, magnitude is not modelled. A targeted debuff is not a sweep and stays silent.
+test("a sweep debuff emits a death for every creature it reaches", () => {
+  const deluge = actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-X/-X" });
+  expect(deluge).toHaveLength(1);
+  expect(deluge[0]).toMatchObject({ verb: "dies", subject: { control: "any", type: "creature", scope: "all" } });
+  const massacre = actionEmits({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" });
+  expect(massacre[0]).toMatchObject({ verb: "dies", subject: { control: "opp", type: "creature", scope: "all" } });
+  const each = actionEmits({ verb: "modify-pt", object: "each creature", amount: "-1/-1" });
+  expect(each[0]).toMatchObject({ verb: "dies", subject: { scope: "each" } });
+  // Not sweeps: a targeted debuff, and an anthem.
+  expect(actionEmits({ verb: "modify-pt", object: "target creature", amount: "-3/-3" })).toEqual([]);
+  expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "+1/+1" })).toEqual([]);
+  expect(actionEmits({ verb: "modify-pt", object: "creatures you control", amount: "+2/+2" })).toEqual([]);
+  // A mixed modifier kills nothing on its own; a toughness-only one does (every X/1).
+  expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-1/+1" })).toEqual([]);
+  expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "+X/-X" })).toEqual([]);
+  expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-0/-1" })[0]?.verb).toBe("dies");
+  // The clause layer writes a -X/-X sweep as one half with its definition (Deluge of Doom, Terror
+  // Tide, Essence Pulse, Dead of Winter).
+  expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-X, where X is the number of card types among cards in your graveyard" })[0]?.verb).toBe("dies");
+});

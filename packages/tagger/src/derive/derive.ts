@@ -53,7 +53,9 @@ import { emblemRecipient } from "../emblem.js";
 // 137: a grant to a TYPE-narrowed class keeps its recipient (owner ruling 2026-09-10, recall v5 #2:
 // Cybermen Squadron's "nonlegendary artifact creatures you control have myriad"); board state
 // (attacking, tapped, equipped) and the whole board stay refused.
-export const DERIVE_VERSION = 137;
+// 138: a -X/-X or -N/-N sweep on all or each creatures emits `dies`, control as printed (owner
+// ruling 2026-09-10; recall v5 #156, Toxic Deluge). A targeted debuff still says nothing.
+export const DERIVE_VERSION = 138;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off

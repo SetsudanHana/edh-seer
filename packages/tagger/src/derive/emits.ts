@@ -207,6 +207,24 @@ function tapVerbs(subject: SubjectFilter): Verb[] | undefined {
   return subject.scope ? ["taps"] : undefined;
 }
 
+/** A SWEEP DEBUFF IS A WIPE (owner ruling 2026-09-10; recall v5 #156, Toxic Deluge -> Espers to
+ *  Magicite). "All creatures get -X/-X" derived `debuff` -- correctly not an anthem -- and emitted
+ *  nothing, so it filled no graveyard and fed no death payoff, while "destroy all creatures" has
+ *  always emitted `dies`. A negative modifier on ALL or EACH creatures emits the same death, with
+ *  the control the text states: `any` for "all creatures" (yours die too), `opp` for "creatures
+ *  your opponents control". A -1/-1 sweep counts the same as -5/-5; magnitude is not modelled. A
+ *  targeted debuff is not a sweep and says nothing. 57 all-creature and 55 opponents-only cards. */
+function sweepVerbs(action: Action, subject: SubjectFilter): Verb[] | undefined {
+  // BOTH halves negative. "-1/+1" and "+X/-X" trade one stat for the other and kill nothing by
+  // themselves; "-0/-1" is a death for every X/1, which is the magnitude question the ruling set
+  // aside, so it counts. Stated as "starts negative and has no positive half" rather than as two
+  // negative halves, because the clause layer writes Deluge of Doom's -X/-X as "-X, where X is
+  // the number of card types among cards in your graveyard" -- one half, four corpus sweeps.
+  const amount = String(action.amount ?? "");
+  if (!/^\s*-/.test(amount) || /\/\s*\+/.test(amount)) return undefined;
+  return subject.scope === "all" || subject.scope === "each" ? ["dies"] : undefined;
+}
+
 /** Zone-conditioned emits, checked before EMITS. A move's events depend on where it lands, not on
  *  the verb: `return` is a flicker to the battlefield and a bounce to hand, `put` is reanimation to
  *  the battlefield and self-mill to a graveyard. The destination is read because a card arriving
@@ -367,6 +385,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   const destination = zoned?.verbs
     ?? (action.verb === "play" ? landPlayVerbs(subject)
       : action.verb === "tap" ? tapVerbs(subject)
+      : action.verb === "modify-pt" ? sweepVerbs(action, subject)
       : EMITS[action.verb ?? ""]);
   // The ORIGIN zone, for the consumers that demand one (River Kelpie's "enters from a graveyard",
   // Rivaz's "casts a Dragon spell from your graveyard"). Taken from the action rather than the object
