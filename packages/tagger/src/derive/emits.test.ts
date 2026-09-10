@@ -520,4 +520,7 @@ test("a sweep debuff emits a death for every creature it reaches", () => {
   expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-1/+1" })).toEqual([]);
   expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "+X/-X" })).toEqual([]);
   expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-0/-1" })[0]?.verb).toBe("dies");
+  // The clause layer writes a -X/-X sweep as one half with its definition (Deluge of Doom, Terror
+  // Tide, Essence Pulse, Dead of Winter).
+  expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-X, where X is the number of card types among cards in your graveyard" })[0]?.verb).toBe("dies");
 });

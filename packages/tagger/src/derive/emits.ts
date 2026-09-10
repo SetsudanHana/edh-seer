@@ -217,8 +217,11 @@ function tapVerbs(subject: SubjectFilter): Verb[] | undefined {
 function sweepVerbs(action: Action, subject: SubjectFilter): Verb[] | undefined {
   // BOTH halves negative. "-1/+1" and "+X/-X" trade one stat for the other and kill nothing by
   // themselves; "-0/-1" is a death for every X/1, which is the magnitude question the ruling set
-  // aside, so it counts.
-  if (!/^\s*-\S*\/\s*-/.test(String(action.amount ?? ""))) return undefined;
+  // aside, so it counts. Stated as "starts negative and has no positive half" rather than as two
+  // negative halves, because the clause layer writes Deluge of Doom's -X/-X as "-X, where X is
+  // the number of card types among cards in your graveyard" -- one half, four corpus sweeps.
+  const amount = String(action.amount ?? "");
+  if (!/^\s*-/.test(amount) || /\/\s*\+/.test(amount)) return undefined;
   return subject.scope === "all" || subject.scope === "each" ? ["dies"] : undefined;
 }
 
