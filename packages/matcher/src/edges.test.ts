@@ -4078,3 +4078,20 @@ test("a doubler naming WHOSE triggers it doubles pairs with a class member that 
   }]);
   expect(pairReasons(throne, cavalier, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
 });
+
+// RECALL v5 #2 (2026-09-10): a grant to a TYPE-narrowed class reaches the cards of that class and no
+// other. `allTypes` is a conjunction: an artifact creature qualifies, an artifact alone does not.
+test("static edge: a grant to artifact creatures reaches an artifact creature and nothing else", () => {
+  const cybermen = base("Cybermen Squadron", [{
+    kind: "static",
+    effect: { kind: "keyword-grant", subject: { control: "you", token: null, type: ["creature", "artifact"], allTypes: ["artifact", "creature"], scope: "all" } },
+  }]);
+  const withTypes = (card: ReturnType<typeof base>, types: string[]) =>
+    ({ ...card, tags: { ...card.tags, characteristics: { ...card.tags.characteristics, types } } });
+  const solemn = withTypes(base("Solemn Simulacrum", [], ["golem"]), ["artifact", "creature"]);
+  expect(pairReasons(cybermen, solemn, H).some((r) => r.tag === "static:keyword-grant")).toBe(true);
+  const human = base("Loyal Apprentice", [], ["human", "artificer"]);
+  expect(pairReasons(cybermen, human, H).some((r) => r.tag === "static:keyword-grant")).toBe(false);
+  const signet = withTypes(base("Arcane Signet", []), ["artifact"]);
+  expect(pairReasons(cybermen, signet, H).some((r) => r.tag === "static:keyword-grant")).toBe(false);
+});
