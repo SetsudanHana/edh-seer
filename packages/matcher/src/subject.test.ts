@@ -408,3 +408,14 @@ test("a combat-state demand is met only by a producer that states the same state
   // A consumer that does not ask is unaffected by a producer that states one.
   expect(subjectMatches(s({ type: "creature", combat: "attacking" }), s({ type: "creature" }), H)).toBe(true);
 });
+
+// A DISJUNCTION ON THE PRODUCER SIDE (recall v6 #125, 2026-09-10). Skullport Merchant's "sacrifice
+// another creature or a Treasure" emits `dies` over `anyOf: [{type: creature}, {subtype: treasure}]`
+// with no outer type, and an untyped producer fails every typed demand -- so the emit fed nothing.
+// A producer satisfies the consumer when ANY of its branches does, the shared fields binding each.
+test("a producer disjunction satisfies a consumer that any branch satisfies", () => {
+  const eats = s({ anyOf: [{ type: "creature" }, { subtype: "treasure" }], other: true });
+  expect(subjectMatches(eats, s({ type: "creature" }), H)).toBe(true);
+  expect(subjectMatches(eats, s({ subtype: "treasure" }), H)).toBe(true);
+  expect(subjectMatches(eats, s({ type: "land" }), H)).toBe(false);
+});

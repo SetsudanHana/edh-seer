@@ -265,7 +265,11 @@ function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean
   if (a.fromZone != null) return false;
   if (/\bcards?\b/i.test(a.object ?? "")) return false;
   if (s.fromZone !== undefined) return false;
-  return s.type !== undefined || s.subtype !== undefined || self;
+  // A DISJUNCTION IS PERMANENT-SHAPED WHEN EVERY BRANCH IS (recall v6, 2026-09-10): "target creature
+  // or Vehicle" has no outer type, and reading only the outer emptied Bounce Off and Gravkill.
+  const branches = s.anyOf ?? [];
+  const typedBranches = branches.length > 0 && branches.every((b) => b.type !== undefined || b.subtype !== undefined);
+  return s.type !== undefined || s.subtype !== undefined || typedBranches || self;
 }
 
 /** Verbs whose object is NECESSARILY the ability's controller's when the text names no player.

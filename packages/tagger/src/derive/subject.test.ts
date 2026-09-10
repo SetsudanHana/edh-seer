@@ -719,3 +719,23 @@ test("'another' and 'other' mark a subject as not the card itself", () => {
   expect(parseSubject("a creature you control").other).toBeUndefined();
   expect(parseSubject("this creature").other).toBeUndefined();
 });
+
+// A CROSS-SLOT OR INSIDE A RELATIVE CLAUSE IS NOT A DISJUNCTION OF THE SUBJECT (recall v6 follow-up,
+// 2026-09-10). "target creature that blocked or was blocked by a Zombie this turn" (Time to Reflect)
+// names ONE class -- a creature -- and the "or" joins two things it did; splitting on it read
+// "was blocked by a zombie" as a Zombie alternative and the emit vanished. The head noun phrase
+// ends at the relative pronoun.
+test("an OR after a relative pronoun does not split the subject", () => {
+  const s = parseSubject("target creature that blocked or was blocked by a zombie this turn");
+  expect(s.anyOf).toBeUndefined();
+  expect(s.type).toBe("creature");
+  // And the Zombie half does NOT stay as an AND: the text never asserted a Zombie creature. A missing
+  // branch is a missing edge; an invented AND is a wrong one (the fallback the trigger path had).
+  expect(s.subtype).toBeUndefined();
+});
+
+test("a cross-slot OR in the head noun phrase is a disjunction", () => {
+  const s = parseSubject("target creature or vehicle");
+  expect(s.anyOf).toEqual([{ type: "creature" }, { subtype: "vehicle" }]);
+  expect(s.type).toBeUndefined();
+});
