@@ -50,7 +50,10 @@ import { emblemRecipient } from "../emblem.js";
 // 136: a trigger doubler records WHOSE triggers it doubles (`doublesOf`, the class named in "a
 // triggered ability of another Elemental you control"), the axis `doubles` had no slot for (recall
 // v5 #196, Cavalier of Thorns -> Twinflame Travelers). Eight corpus cards.
-export const DERIVE_VERSION = 136;
+// 137: a grant to a TYPE-narrowed class keeps its recipient (owner ruling 2026-09-10, recall v5 #2:
+// Cybermen Squadron's "nonlegendary artifact creatures you control have myriad"); board state
+// (attacking, tapped, equipped) and the whole board stay refused.
+export const DERIVE_VERSION = 137;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -462,6 +465,21 @@ function countTruncated(object: string): string {
  *  recipient to end on a non-space removes the overlap. The capture is unchanged — lazy already
  *  preferred the shortest recipient, which is the one ending on a non-space. */
 const GRANTED_TO = /^(.*?\S)\s+\b(?:have|has|gain|gains)\b/i;
+/** A single card type that is the whole board rather than a class of it. "Creatures you control"
+ *  reaches every creature in the deck (the ordinary-card claim), "permanents" and "spells" wider
+ *  still; every other lone type -- artifact, enchantment, land, planeswalker, battle -- names a
+ *  class the deck can be searched for. */
+const WHOLE_BOARD_TYPES: ReadonlySet<string> = new Set(["creature", "permanent", "spell", "card"]);
+/** Does a grant's recipient name a CLASS of the deck, or the whole board? A subtype, a commander, a
+ *  token class (the three the gate has always admitted), a legendary supertype, a conjunction of
+ *  types ("artifact creatures"), or a lone type outside WHOLE_BOARD_TYPES. */
+function boundedGrantClass(s: SubjectFilter): boolean {
+  if (s.subtype !== undefined || s.commander === true || s.token === true) return true;
+  if (s.legendary === true) return true;
+  if ((s.allTypes?.length ?? 0) >= 2) return true;
+  const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+  return types.length === 1 && !WHOLE_BOARD_TYPES.has(types[0]!);
+}
 /** Who LOSES abilities: "Creatures lose all abilities", "Enchanted creature loses all abilities". */
 const LOSES_ABILITIES = /^(.*?\S)\s+\bloses?\s+all\s+abilities\b/i;
 /** The same defect one verb over. `copy` records the copy SOURCE as its object -- Shapesharer's
@@ -565,7 +583,14 @@ function effectSubject(
       // which is exactly the synergy the card is played for. Tokens have been nodes since
       // 2026-08-16; this gate predates them and read "creature tokens" as "creatures". Found by the
       // recall draw's one token-family miss that was not the instrument's own shape.
-      if (s.subtype === undefined && s.commander !== true && s.token !== true) return parseSubject("");
+      // A TYPE IS A CLASS TOO (owner ruling 2026-09-10, recall v5 #2: Cybermen Squadron's
+      // "nonlegendary artifact creatures you control have myriad" reached nothing). It extends the
+      // 2026-09-07 tutor ruling -- a tutor limited to a TYPE is a real edge to every card of that
+      // type -- to grants: artifact, enchantment, land, planeswalker and legendary narrowings pick
+      // out particular cards the way a subtype does. Board STATE dressed as a class does not:
+      // "attacking", "tapped", "equipped" and "face-down" all parse to a bare creature and stay
+      // refused with the whole board, and "nontoken creatures" is the whole board minus tokens.
+      if (!boundedGrantClass(s)) return parseSubject("");
       return s;
     }
   }

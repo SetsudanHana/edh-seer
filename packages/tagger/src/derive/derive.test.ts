@@ -2394,3 +2394,31 @@ test("a doubler that names WHOSE triggers it doubles records that class as `doub
   expect(pan?.doubles).toEqual(["enters"]);
   expect(pan?.doublesOf).toBeUndefined();
 });
+
+// RECALL v5 #2 (2026-09-10): Cybermen Squadron -> Solemn Simulacrum. "Nonlegendary artifact
+// creatures you control have myriad" named its recipients by TYPE, and the typal gate admitted only
+// a subtype, a commander or a token class -- so the grant derived no subject and reached nothing.
+// Owner ruling 2026-09-10, extending the typed-tutor ruling of 2026-09-07: a TYPE narrowing
+// (artifact / enchantment / land / legendary / planeswalker creatures, legendary permanents) picks out
+// particular cards and is a synergy; a STATE narrowing (attacking, tapped, equipped, face-down) is
+// not, and the whole board ("creatures you control") stays refused.
+test("a grant to a TYPE-narrowed class keeps its recipient; a state-narrowed or whole-board one does not", () => {
+  const grant = (name: string, text: string, granted = "flying") => deriveAbilities([
+    { id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: granted }] },
+  ], name, { 1: text }).abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject;
+  expect(grant("Cybermen Squadron", "Nonlegendary artifact creatures you control have myriad.", "myriad"))
+    .toMatchObject({ control: "you", allTypes: ["artifact", "creature"] });
+  expect(grant("Enchanted Evening Host", "Enchantment creatures you control have lifelink.", "lifelink"))
+    .toMatchObject({ control: "you", allTypes: ["enchantment", "creature"] });
+  expect(grant("Legendary Anthem", "Legendary creatures you control have hexproof.", "hexproof"))
+    .toMatchObject({ control: "you", legendary: true, type: "creature" });
+  expect(grant("Walker Guard", "Each other planeswalker you control has hexproof.", "hexproof"))
+    .toMatchObject({ control: "you", type: "planeswalker" });
+  // Unchanged refusals: the whole board, and board state dressed as a class.
+  expect(grant("Concordant Crossroads", "Creatures you control have haste.", "haste")).toBeUndefined();
+  expect(grant("Nontoken Anthem", "Nontoken creatures you control have vigilance.", "vigilance")).toBeUndefined();
+  expect(grant("Tapped Anthem", "Other tapped creatures you control have hexproof.", "hexproof")).toBeUndefined();
+  expect(grant("Mithril Coat", "Equipped creature has indestructible.", "indestructible")).toBeUndefined();
+  // Unchanged admissions: a subtype, a token class.
+  expect(grant("Elvish Anthem", "Other Elves you control have vigilance.", "vigilance")).toMatchObject({ subtype: "elf" });
+});
