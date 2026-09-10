@@ -16,7 +16,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, tutorSentence, winconSentence, doublesClassSentence, doublesSentence, landConditionSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, doublesClassSentence, doublesSentence, landConditionSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -373,6 +373,19 @@ export function producerEvents(tags: CardTags): GameEvent[] {
  *  statistical condition and narrows. */
 function combatConsumerNarrows(subject: SubjectFilter): boolean {
   return combatNarrowsByType(subject) || combatNarrowsOffType(subject);
+}
+
+/** Does a recursion's subject name a CLASS of the deck the way a typed tutor does? The same bar
+ *  the tutor pass sets -- a subtype (in the subject or an `anyOf` branch) or a stats predicate --
+ *  plus a legendary supertype (Lara Croft) and a conjunction of types. A BARE TYPE DOES NOT
+ *  NARROW, exactly as the tutor pass says: measured 2026-09-10 with lone types admitted, "return
+ *  target artifact card" reached 62 cards in each artifact deck (Buried Ruin, Myr Retriever,
+ *  Trading Post, Scrap Trawler) and the mesh census went 449 -> 990 -- the every-card claim in a
+ *  deck built of that type, which is the ordinary-card claim wearing a type. */
+function recursionClassNarrows(s: SubjectFilter): boolean {
+  const subs = [...list(s.subtype), ...(s.anyOf ?? []).flatMap((b) => list(b.subtype))];
+  if (subs.length > 0 || (s.stats?.length ?? 0) > 0 || s.legendary === true) return true;
+  return (s.allTypes?.length ?? 0) >= 2;
 }
 
 /** Does this combat consumer narrow via its type line -- a non-creature type, or any subtype?
@@ -1919,6 +1932,43 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
+
+  // TYPED RECURSION -> THE CARDS OF ITS CLASS (owner ruling 2026-09-10; recall v5 #140, #166). A
+  // tutor limited to a type is a real edge to every card of that type (2026-09-07), and the owner
+  // extended that to recursion: Bloodline Necromancer relates to each Vampire and Wizard in the
+  // deck, Lara Croft to each legendary artifact and land. Same shape as the tutor pass above: the
+  // recursion is the producer, the card it can return the consumer, matched on printed
+  // characteristics. The FILL side is untouched -- the entry gate above still refuses a fill that
+  // cannot promise the class, so a creature edict does not become a Vampire supplier.
+  //
+  // WHAT NARROWS, and what does not. A subtype (in the subject or an `anyOf` branch), a stats
+  // predicate, a legendary supertype, a conjunction of types, or a lone type outside the whole
+  // board. "Target creature card" (835 corpus recursions) is every creature in the deck -- the
+  // ordinary-card claim -- and so is a lone artifact, instant or land in a deck built of them
+  // (`recursionClassNarrows` records the measurement). An opponent's graveyard names cards that
+  // are not in this deck; a self recursion names one card, handled by the entry gate. Corpus,
+  // admitted shapes: subtype 119, stats 124, legendary 8, allTypes 6.
+  for (const a of p.tags.abilities) {
+    if (a.effect.kind !== "graveyard-recursion" || !a.effect.subject) continue;
+    const s = a.effect.subject;
+    if (s.zone !== "graveyard" || s.self === true || s.control === "opp" || s.named !== undefined) continue;
+    if (!recursionClassNarrows(s)) continue;
+    const found = characteristicsSubject(c.tags, c.card.name);
+    // A card's printed characteristics sit in no zone and have no scope; only the class is tested.
+    const { zone: _z, scope: _sc, fromZone: _fz, anyOf, ...shared } = s;
+    const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
+    if (anyOf?.length ? !matched : !subjectMatches(found, shared, h)) continue;
+    reasons.push({
+      tag: `recursion-target:${themeSubjectKey(matched ?? shared)}`,
+      text: recursionTargetSentence(p.card.name, c.card.name),
+      effectKind: a.effect.kind,
+      repeatability:
+        a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+      scaling: a.effect.scaling,
       consumer: c.card.name,
       producer: p.card.name,
     });
