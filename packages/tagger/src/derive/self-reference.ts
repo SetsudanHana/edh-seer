@@ -48,13 +48,20 @@ export function isSelfSubject(text: string, cardName?: string): boolean {
   if (SELF_REFERENCE.test(t)) return true;
   if (!cardName) return false;
   const name = cardName.toLowerCase();
-  // The model names the card either in full ("Urza, Lord High Artificer") or by the short name a
-  // card's own text uses ("Urza"), which is everything before the first comma or face divider.
-  if (t === name || t === name.split(/[,/]/)[0].trim()) return true;
-  // A card with no comma in its name still shortens itself: Imskir Iron-Eater's own text says
-  // "Imskir". Accept the FIRST WORD — but never when that word is a creature type, because
-  // "whenever a Goblin enters" on a card named Goblin Bombardment is a real typal payoff and
-  // marking it self would delete the edges a Goblin deck is made of.
-  const first = name.split(/\s+/)[0];
-  return t === first && !SUBTYPES.has(first);
+  if (t === name) return true;
+  // EVERY FACE NAMES ITSELF (2026-09-10). Until then only the FIRST face's short name was known, so
+  // "Whenever Venom attacks" on Eddie Brock // Venom was never self -- a class with no type, kept
+  // yours only by the clause's `control`, and one controller fix away from every attacker.
+  for (const face of name.split(" // ")) {
+    // The model names the card either in full ("Urza, Lord High Artificer") or by the short name a
+    // card's own text uses ("Urza"), which is everything before the first comma.
+    if (t === face.trim() || t === face.split(",")[0].trim()) return true;
+    // A card with no comma in its name still shortens itself: Imskir Iron-Eater's own text says
+    // "Imskir". Accept the FIRST WORD — but never when that word is a creature type, because
+    // "whenever a Goblin enters" on a card named Goblin Bombardment is a real typal payoff and
+    // marking it self would delete the edges a Goblin deck is made of.
+    const first = face.trim().split(/\s+/)[0];
+    if (t === first && !SUBTYPES.has(first)) return true;
+  }
+  return false;
 }

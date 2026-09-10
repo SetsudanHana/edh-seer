@@ -94,3 +94,14 @@ test("the controller default asks the SENTENCE that holds the verb whether a pla
   expect(sentenceNamesAPlayer("Each opponent, if able, discards a card.", "discard")).toBe(true);
   expect(sentenceNamesAPlayer("Draw a card.", "draw")).toBe(false);
 });
+
+// BRAIDS, ARISEN NIGHTMARE (recall v6 #104, 2026-09-10): "you may sacrifice an artifact, creature,
+// ... If you do, each opponent may sacrifice a permanent" -- the clause's ONE sacrifice action is
+// yours, and the cue handed it to the opponents (the second sacrifice was folded into the life
+// loss). Your own verb, written first, keeps the action; a plain edict still reads opp. 11 cards.
+test("a sacrifice you make first is not the opponents' sacrifice that follows", () => {
+  expect(actionRecipients("At the beginning of your end step, you may sacrifice an artifact, creature, enchantment, land, or planeswalker. If you do, each opponent may sacrifice a permanent of their choice that shares a card type with it. For each opponent who doesn't, that player loses 2 life and you draw a card."))
+    .not.toHaveProperty("sacrifice");
+  expect(actionRecipients("When this creature enters, each opponent sacrifices a creature."))
+    .toEqual({ sacrifice: "opp" });
+});

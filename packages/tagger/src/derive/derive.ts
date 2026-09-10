@@ -8,7 +8,7 @@
 import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
-import { ZONE_SCOPED_KINDS, actionEffectKind, extraPhaseName } from "./effect-kind.js";
+import { ZONE_SCOPED_KINDS, actionEffectKind, exilesOwnGraveyard, extraPhaseName } from "./effect-kind.js";
 import { actionEmits } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
@@ -57,7 +57,7 @@ import { emblemRecipient } from "../emblem.js";
 // ruling 2026-09-10; recall v5 #156, Toxic Deluge). A targeted debuff still says nothing.
 // 139: "if you descended this turn" cares about `dies:any` (CR 700.11) -- a deck demand, no edge
 // (recall v5 #179, Scalding Tarn -> Brass's Tunnel-Grinder).
-export const DERIVE_VERSION = 140;
+export const DERIVE_VERSION = 141;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -625,6 +625,31 @@ function namesItsTargets(subject: ReturnType<typeof parseSubject>): boolean {
  *  anyone casts. The clause vocabulary spells the opponent side "opponent"; the engine says "opp". */
 const CLAUSE_CONTROL: Record<string, Control> = { you: "you", opponent: "opp", any: "any" };
 
+/** Verbs whose subject is a PERMANENT, so its controller is the permanent's and not the ability's.
+ *  See the trigger branch: a clause `you` with nothing printed behind it is refused on these only.
+ *  Every name is a `VERB_VOCAB` member (blocking has no verb; the transform verb is `transform`). */
+const PERMANENT_EVENT_VERBS: ReadonlySet<string> = new Set([
+  "dies", "enters", "leaves", "attacks", "taps", "untaps", "counter-added", "counter-removed",
+  "enters-graveyard", "sacrifice", "transform", "turned-face-up", "phases-out",
+]);
+/** Subjects that are the card's own business whatever the printed phrase says: an attached
+ *  permanent, a back-reference at the head, a counter on this card. Not a bare "this" -- "a
+ *  creature dealt damage by this creature THIS TURN" (Wight) is a class, and any player's. */
+const KEEPS_CLAUSE_CONTROL = /^(?:the |that |this )?(?:equipped|enchanted)\b|^(?:it|them|the|that|this)\b|\bon this\b|\bcounters?\b/i;
+/** The printed trigger phrase: the clause text up to the comma that ends it. A list subject
+ *  carries commas of its own -- "Whenever another Frog, Rabbit, Raccoon, or Squirrel you control
+ *  enters" (Valley Mightcaller) -- so as many commas as the clause's subject text holds are
+ *  skipped before the cut, and "you control" stays inside the phrase. */
+function printedTriggerPhrase(text: string, subjectText: string): string {
+  const skip = (subjectText.match(/,/g) ?? []).length;
+  let cut = -1;
+  for (let i = 0; i <= skip; i++) {
+    cut = text.indexOf(",", cut + 1);
+    if (cut < 0) return text;
+  }
+  return text.slice(0, cut);
+}
+
 /** A permanent ARRIVING tapped never becomes tapped, so nothing triggers on it (CR 614 — it is a
  *  replacement on the entry, not an event). `emits.ts` already refuses the entry-state tap the
  *  segmenter records as object "this", using SCOPE as the discriminator; that holds for the singular
@@ -975,6 +1000,22 @@ export function deriveAbilities(
         const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
         const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
         if (control) subject.control = control;
+        // A PERMANENT-EVENT TRIGGER WHOSE PRINTED PHRASE NAMES NO CONTROLLER IS `any` (recall v6
+        // #62, #104, 2026-09-10). The clause's `you` is right for an ACTOR verb ("whenever you cast
+        // a spell" normalizes to subject "a spell"), but on dies / enters / attacks the controller
+        // is the permanent's, and Morbid Opportunist's "whenever one or more other creatures die"
+        // carried `you` from the normalizer with nothing printed to back it -- so Feed the Swarm
+        // and Braids fed it nothing. Read off the printed trigger phrase (up to the first comma):
+        // "you control" or "your" there keeps the clause's answer; a self trigger, an attached
+        // permanent ("equipped creature"), a back-reference and a counter on this card all keep
+        // it too. 44 corpus triggers flip, 259 keep.
+        if (control === "you" && PERMANENT_EVENT_VERBS.has(verb) && text !== ""
+          // Only a CLASS flips: a bare name the self test does not know ("Jumblebones", a token)
+          // has no type to widen, and `any` on an untyped subject is everyone's board.
+          && (subject.type !== undefined || subject.subtype !== undefined || subject.keyword !== undefined)
+          && !isSelfSubject(clause.trigger.subject ?? "", cardName)
+          && !KEEPS_CLAUSE_CONTROL.test(clause.trigger.subject ?? "")
+          && !/\b(?:you|your)\b/i.test(printedTriggerPhrase(text, clause.trigger.subject ?? ""))) subject.control = "any";
         if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
         adoptGrantedRecipient(subject);
         // "Whenever one or more +1/+1 counters are put ON THIS CREATURE" (Evolution Witness): the
@@ -1137,8 +1178,11 @@ export function deriveAbilities(
         // aimed at your own graveyard as readily as theirs, so recursion keeps `any`. An `exile` from
         // a graveyard is still a REMOVAL_VERB and reads `opp` -- Bojuka Bog -> Desecrated Tomb is the
         // accepted cost, the same one Saw in Half -> Bloodchief pays.
+        // ...EXCEPT AN EXILE FROM YOUR OWN GRAVEYARD (recall v6 #172): Lazotep Quarry's "exile
+        // target creature card ... from your graveyard" is aimed at nothing but yours.
+        const own = action.fromZone === "graveyard" && exilesOwnGraveyard(action.object ?? "", clauseText);
         for (const e of emits) {
-          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = "opp";
+          if (e.subject.control === "any" && e.subject.scope === "target") e.subject.control = own ? "you" : "opp";
         }
       }
       // WHAT YOU PUT ONTO THE BATTLEFIELD ENTERS UNDER YOUR CONTROL (CR 110.2a: "If an effect
