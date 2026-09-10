@@ -226,7 +226,15 @@ test("high-impact repeatable payoff out-scores a broad low-impact one (2.1 mis-r
     trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
     effect: { kind: "damage" },
   }]);
-  const report = analyzeDeckStructured([w1, w2, w3, kindred, tremors], undefined, H);
+  // TWO ARMS SINCE 2026-09-10. Under the shipping `edgeModel: "strategy"` (owner ruling, magnitude
+  // spec §8: KIND is CARD impact, never EDGE weight) the two payoffs share every partner and every
+  // tag, so they score the SAME -- what separates them is a card-level question parked as Y9. The
+  // priors arithmetic below is kept under an explicit `"priors"` switch so it stays proven.
+  const strategy = analyzeDeckStructured([w1, w2, w3, kindred, tremors], undefined, H);
+  expect(strategy.cards.find((c) => c.name === "Kindred")!.score)
+    .toBeCloseTo(strategy.cards.find((c) => c.name === "Tremors")!.score, 9);
+  const priors = { ...SEED_IMPACT_WEIGHTS, edgeModel: "priors" as const };
+  const report = analyzeDeckStructured([w1, w2, w3, kindred, tremors], undefined, H, priors);
   const kScore = report.cards.find((c) => c.name === "Kindred")!.score;
   const tScore = report.cards.find((c) => c.name === "Tremors")!.score;
   expect(kScore).toBeGreaterThan(tScore);
@@ -264,7 +272,13 @@ test("a scaling payoff out-ranks an otherwise-identical fixed payoff", () => {
     trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
     effect: scaling ? { kind: "drain", scaling } : { kind: "drain" },
   }]);
-  const report = analyzeDeckStructured([w1, w2, w3, mk("Scaler", "per-creature"), mk("Flat")], undefined, H);
+  // Same two arms as above: scaling is a fact about the CARD (spec §8), so under the shipping
+  // "strategy" model the two score the same; the priors ordering is kept under its own switch.
+  const strategy = analyzeDeckStructured([w1, w2, w3, mk("Scaler", "per-creature"), mk("Flat")], undefined, H);
+  expect(strategy.cards.find((c) => c.name === "Scaler")!.score)
+    .toBeCloseTo(strategy.cards.find((c) => c.name === "Flat")!.score, 9);
+  const priors = { ...SEED_IMPACT_WEIGHTS, edgeModel: "priors" as const };
+  const report = analyzeDeckStructured([w1, w2, w3, mk("Scaler", "per-creature"), mk("Flat")], undefined, H, priors);
   const scaler = report.cards.find((c) => c.name === "Scaler")!.score;
   const flat = report.cards.find((c) => c.name === "Flat")!.score;
   expect(scaler).toBeGreaterThan(flat);
