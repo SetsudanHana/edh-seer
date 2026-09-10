@@ -427,6 +427,16 @@ test("echo sacrifices the permanent that does not pay", () => {
   expect(ev.find((e) => e.verb === "dies")?.subject.self).toBe(true);
 });
 
+test("evoke sacrifices the creature as it enters (CR 702.74a)", () => {
+  // "Evoke {R} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it
+  // enters.)" -- Ingot Chewer, an Elemental, so the self events carry the subtype Ashling, the
+  // Limitless waits for (recall v5 #167).
+  const ev = impliedEvents({ ...kw(["evoke"]), subtypes: ["elemental"] });
+  const sac = ev.find((e) => e.verb === "sacrifice");
+  expect(sac?.subject).toMatchObject({ self: true, control: "you", token: false, subtype: "elemental" });
+  expect(ev.find((e) => e.verb === "dies")?.subject.self).toBe(true);
+});
+
 test("station names the counter kind it adds", () => {
   // "Tap another creature you control: Put charge counters equal to its power on this Spacecraft."
   expect(impliedEvents(kw(["station"], ["artifact"])).find((e) => e.verb === "counter-added")?.subject.counter)

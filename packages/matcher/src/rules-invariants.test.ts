@@ -13,6 +13,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 
 const ASSERTED = new Set(["111.7", "114.1", "903.3", "712.3a"]);
 const TESTED: Record<string, string> = {
+  "702.74a": "implied.test.ts — evoke sacrifices the creature as it enters",
   "614": "edges.test.ts — CR 614 multiplier still edges the maker, never the token",
   "601.2f": "edges.test.ts — keeps it when the consumer has an ADDITIONAL COST",
   "704.5j": "edges.test.ts — copy: a token copy of a legend fires its entry trigger AND its death trigger",
