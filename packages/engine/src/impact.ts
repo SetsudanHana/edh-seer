@@ -2,8 +2,9 @@ import impactWeights from "./impact-weights.json" with { type: "json" };
 import type { Reason } from "./synergy.js";
 
 export interface ImpactWeights {
-  /** Which quantity an EDGE weight is. `"priors"` (absent, what has always shipped) is
-   *  kinds × repeatability × scaling per reason. `"strategy"` is the owner's 2026-09-09 ruling —
+  /** Which quantity an EDGE weight is. `"priors"` (absent; what shipped until 2026-09-10) is
+   *  kinds × repeatability × scaling per reason. `"strategy"` SHIPS since the owner's 2026-09-10
+   *  ruling on the §8.1 gate ("I would ship strategy") and is the 2026-09-09 ruling —
    *  "an enchantress deck cares about enchantment edges, as simple as that" — every reason weighs 1
    *  and the deck's axis boost (analyze.ts) is the whole edge weight. KIND and the other priors are
    *  CARD-shaped and belong to card impact (roadmap Y9), not the edge. See
@@ -133,6 +134,8 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     unbounded: 2.5,
   },
   damping: 0.5,
+  // The SEED describes the priors' arithmetic (it is calibration's regularisation target), so it
+  // stays "priors"; what SHIPS is the committed JSON, which reads "strategy" since 2026-09-10.
   edgeModel: "priors",
   magnitude: { glut: 3, beta: 0 },
   roleBlend: 1,
