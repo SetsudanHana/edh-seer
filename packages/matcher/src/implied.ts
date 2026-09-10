@@ -256,6 +256,13 @@ const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
   // "At the beginning of your upkeep, if this came under your control since the beginning of your
   // last upkeep, sacrifice it unless you pay its echo cost." Same shape, same reasoning.
   echo: [{ verb: "sacrifice", self: true }, { verb: "dies", self: true }],
+  // CR 702.74a: evoke is two abilities, and the second is "When this permanent enters, if its evoke
+  // cost was paid, its controller sacrifices it." Same shape as echo, one turn sooner: the body
+  // dies on entry, so Ashling, the Limitless ("whenever you sacrifice a nontoken Elemental") sees
+  // an evoked Ingot Chewer (recall v5 #167, 2026-09-10). 35 commander-legal cards, every one a
+  // creature. Its own ETB still fires (the sacrifice is a trigger, not a replacement), so the
+  // card's authored `enters` emits stand beside these.
+  evoke: [{ verb: "sacrifice", self: true }, { verb: "dies", self: true }],
   // "Tap another creature you control: Put charge counters equal to its power on this Spacecraft."
   // The tap of the OTHER creature is real supply too, but 4 corpus consumers watch `taps` against
   // 17 on `counter-added`, and the spec shape here cannot say "another creature you control".
