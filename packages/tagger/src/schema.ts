@@ -814,6 +814,21 @@ export interface Ability {
    *  Veyran ("instant or sorcery spell you cast"), Wayta, Harmonic Prodigy. Refusal over a guessed
    *  near-miss, as everywhere else in this file. */
   doubles?: Verb[];
+  /** WHOSE TRIGGERS THIS ABILITY DOUBLES. Present only on `trigger-doubling`, and only when the
+   *  printed frame names a CLASS of permanent rather than an event: "a triggered ability of another
+   *  Elemental you control" (Twinflame Travelers), "of a Shaman or another Wizard" (Harmonic
+   *  Prodigy), "of a legendary creature you control" (Annie Joins Up), "of a creature you control
+   *  with power 2 or less" (Delney). This is the axis `doubles` recorded as its ceiling on
+   *  2026-08-22 -- WHOSE ability, not WHICH event -- and it reached the recall draw on 2026-09-10
+   *  (v5 #196, Cavalier of Thorns -> Twinflame Travelers). Eight corpus cards.
+   *
+   *  The whole board is not a class: "a triggered ability of a permanent you control" (Mirror Room)
+   *  records nothing here and stays silent, the same refusal a whole-deck grant gets. An attachment
+   *  ("equipped creature", Wizard's Staff) is board state and records nothing either. The matcher
+   *  pairs a card carrying this with every class member that has a triggered ability of its own,
+   *  whatever the event -- one claim per consumer -- and never lets it flow into the static
+   *  applies-to pass, for the reason `doubles` gives. */
+  doublesOf?: SubjectFilter;
   /** THE TOKEN THIS ABILITY CREATES LEAVES AT THE NEXT END STEP. Present only on
    *  `token-generation`.
    *

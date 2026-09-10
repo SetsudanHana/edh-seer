@@ -56,6 +56,14 @@ test("resolveChosenTypes substitutes the deck's top subtype and drops chosenType
   expect(subj.chosenType).toBeUndefined();
 });
 
+test("resolveChosenTypes resolves a doubler's WHOSE class too (Roaming Throne)", () => {
+  const tags = tagsWith([], [
+    { kind: "static", effect: { kind: "trigger-doubling" }, doublesOf: { control: "you", token: null, chosenType: true } },
+  ]);
+  const resolved = resolveChosenTypes(tags, new Map([["elemental", 9], ["human", 2]]), NO_HIERARCHY);
+  expect(resolved.abilities[0].doublesOf).toEqual({ control: "you", token: null, subtype: "elemental" });
+});
+
 test("unresolvable chosenType (no deck subtypes) yields a subtype that matches nothing", () => {
   const tags = tagsWith([], [
     { kind: "static", effect: { kind: "pump", subject: { control: "you", token: null, chosenType: true } } },

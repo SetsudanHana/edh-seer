@@ -2364,3 +2364,33 @@ test("a card that exiles what would hit an opponent's graveyard AND plays it is 
   const leyline = "If Leyline of the Void is in your opening hand, you may begin the game with it on the battlefield.\nIf a card would be put into an opponent's graveyard from anywhere, exile it instead.";
   expect(deriveAbilities([], "Leyline of the Void", {}, undefined, leyline).abilities).toEqual([]);
 });
+
+// RECALL v5 #196 (2026-09-10): Cavalier of Thorns -> Twinflame Travelers. A doubler that names WHOSE
+// triggered abilities it doubles ("a triggered ability of another Elemental you control") rather
+// than WHICH event -- the axis `doubles` has no slot for, recorded as its ceiling on 2026-08-22.
+// Eight corpus cards sit on it: Harmonic Prodigy, Twinflame Travelers, Roaming Throne, Annie Joins
+// Up, Bifur, Katara, Clara Oswald, Splinter. The whole-board doublers (Mirror Room) and the
+// attachment ones (Wizard's Staff) stay silent, as before.
+test("a doubler that names WHOSE triggers it doubles records that class as `doublesOf`", () => {
+  const derive = (name: string, text: string) => deriveAbilities([
+    { id: 1, abilityType: "static", actions: [{ verb: "trigger-again", object: "that ability" }] },
+  ], name, { 1: text }).abilities.find((a) => a.effect.kind === "trigger-doubling");
+  expect(derive("Twinflame Travelers", "If a triggered ability of another Elemental you control triggers, it triggers an additional time.")?.doublesOf)
+    .toEqual({ control: "you", token: null, subtype: "elemental" });
+  expect(derive("Harmonic Prodigy", "If a triggered ability of a Shaman or another Wizard you control triggers, that ability triggers an additional time.")?.doublesOf)
+    .toEqual({ control: "you", token: null, subtype: ["shaman", "wizard"] });
+  expect(derive("Annie Joins Up", "If a triggered ability of a legendary creature you control triggers, that ability triggers an additional time.")?.doublesOf)
+    .toEqual({ control: "you", token: null, legendary: true, type: "creature" });
+  expect(derive("Delney, Streetwise Lookout", "If a triggered ability of a creature you control with power 2 or less triggers, that ability triggers an additional time.")?.doublesOf)
+    .toMatchObject({ type: "creature", stats: [{ metric: "power", op: "lte", value: 2 }] });
+  // The whole board is not a class: Mirror Room doubles everything and claims nothing.
+  const room = derive("Mirror Room // Fractured Realm", "If a triggered ability of a permanent you control triggers, that ability triggers an additional time.");
+  expect(room?.doublesOf).toBeUndefined();
+  expect(room?.doubles).toBeUndefined();
+  // An attachment is board state, not a class.
+  expect(derive("Wizard's Staff", "If a triggered ability of equipped creature triggers, that ability triggers an additional time.")?.doublesOf).toBeUndefined();
+  // The event frame is untouched: Panharmonicon still records WHICH, and no WHOSE.
+  const pan = derive("Panharmonicon", "If an artifact or creature entering causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.");
+  expect(pan?.doubles).toEqual(["enters"]);
+  expect(pan?.doublesOf).toBeUndefined();
+});

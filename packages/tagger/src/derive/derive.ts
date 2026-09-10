@@ -17,7 +17,7 @@ import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject } from "./subject.js";
 import { repeatsFor, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
-import { doubledVerbs } from "./doubles.js";
+import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
@@ -47,7 +47,10 @@ import { emblemRecipient } from "../emblem.js";
 // 135: what you PUT onto the battlefield enters under your control (CR 110.2a), so a fetched land
 // no longer satisfies "lands enter under an opponent's control" (Misty Rainforest -> Deep Gnome
 // Terramancer, owner-judged FALSE 2026-09-09). Emit only; a recursion's effect subject keeps `any`.
-export const DERIVE_VERSION = 135;
+// 136: a trigger doubler records WHOSE triggers it doubles (`doublesOf`, the class named in "a
+// triggered ability of another Elemental you control"), the axis `doubles` had no slot for (recall
+// v5 #196, Cavalier of Thorns -> Twinflame Travelers). Eight corpus cards.
+export const DERIVE_VERSION = 136;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1233,6 +1236,10 @@ export function deriveAbilities(
       if (effectKind === "trigger-doubling") {
         const doubles = doubledVerbs(text);
         if (doubles.length) ability.doubles = doubles;
+        // WHOSE, the other axis (recall v5 #196): "a triggered ability of another Elemental you
+        // control". Read off the same text, refused unless it names a class -- see doubles.ts.
+        const of = doublesOf(text);
+        if (of) ability.doublesOf = of;
       }
       // TIMING, the smallest model that holds a ruling: an activated ability is used in combat, a
       // sorcery is not, so "a sac outlet can eat an attacking creature" (owner, Ayara -> Death

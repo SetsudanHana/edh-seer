@@ -31,7 +31,8 @@
  *
  *  READ FROM THE TEXT AND NOT FROM A NEW MODEL ANSWER, so this is free: no NORMALIZE_VERSION bump
  *  and no re-buy. Same move `reducesItself`, `triggerHasCue` and `ARRIVES_TAPPED` already make. */
-import type { Verb } from "../schema.js";
+import type { SubjectFilter, Verb } from "../schema.js";
+import { parseSubject } from "./subject.js";
 
 /** The printed participle -> the engine verb whose triggers it doubles. */
 const DOUBLED_EVENT: ReadonlyArray<readonly [RegExp, Verb]> = [
@@ -55,4 +56,28 @@ export function doubledVerbs(text: string): Verb[] {
   const out: Verb[] = [];
   for (const [re, verb] of DOUBLED_EVENT) if (re.test(head) && !out.includes(verb)) out.push(verb);
   return out;
+}
+
+/** The WHOSE frame: "If a triggered ability of <class> triggers, that ability triggers an additional
+ *  time." Distinct from the event frame above ("if <event> causes a triggered ability of a permanent
+ *  you control to trigger"), which names WHICH event and always says "a permanent you control" for
+ *  whose. Lazy, so a trailing condition ("... triggers while you control six or more Shrines",
+ *  Sanctum of All) is not read into the class. */
+const WHOSE_FRAME = /\ba triggered ability of (.+?) triggers\b/i;
+
+/** WHOSE triggered abilities this text says it doubles, as a class the deck can be searched for;
+ *  undefined when the frame is absent or the class is the whole board. Recorded only when the
+ *  subject narrows past "a permanent / creature you control" on some axis the matcher can test
+ *  against a card's printed characteristics: a subtype, a legendary supertype, the chosen type, a
+ *  stats predicate, a colour. A recipient the parser reads as nothing narrower (Mirror Room's "a
+ *  permanent you control", Wizard's Staff's "equipped creature") is a refusal, not a wildcard --
+ *  the same gate a grant's recipient passes in derive.ts. `other` is dropped: a pair is never the
+ *  card and itself. */
+export function doublesOf(text: string): SubjectFilter | undefined {
+  const m = text.match(WHOSE_FRAME);
+  if (!m) return undefined;
+  const { other: _other, ...s } = parseSubject(m[1]!);
+  const bounded = s.subtype !== undefined || s.legendary === true || s.chosenType === true
+    || (s.stats?.length ?? 0) > 0 || (s.colors?.length ?? 0) > 0 || s.commander === true;
+  return bounded ? s : undefined;
 }
