@@ -61,6 +61,7 @@
     "unbounded": 2.5
   },
   "damping": 0.5,
+  "edgeModel": "priors",
   "magnitude": {
     "glut": 3,
     "beta": 0
