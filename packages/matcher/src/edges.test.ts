@@ -3492,6 +3492,77 @@ test("a count of what an opponent controls forms no edge", () => {
     .toBe(false);
 });
 
+/** A KEYWORD NARROWS A BOARD COUNT THE WAY A SUBTYPE DOES (recall v6 #106, 2026-09-10). Blight
+ *  Pile drains "X, where X is the number of creatures with defender you control": the count is
+ *  `creature` plus `keyword: [defender]`, and the whole-board gate read only the type, refusing a
+ *  count that names a minority of the deck. Sylvan Caryatid has defender; Goblin Assassin does not. */
+const countsDefenders = () => base("Blight Pile", [{
+  kind: "activated", cost: "{2}{B}, {T}",
+  effect: {
+    kind: "player-life-loss", scaling: "per-opponent",
+    scalingSubject: { type: "creature", keyword: ["defender"], zone: "battlefield", control: "you", token: null },
+  },
+}] as unknown as CardTags["abilities"]);
+const withKeywords = (c: ReturnType<typeof base>, keywords: string[]) =>
+  ({ ...c, tags: { ...c.tags, characteristics: { ...c.tags.characteristics, keywords } } });
+
+test("a count of creatures WITH a keyword is fed by a creature that has it", () => {
+  const caryatid = withKeywords(base("Sylvan Caryatid", []), ["defender", "hexproof"]);
+  const scaled = directedReasons(caryatid, countsDefenders(), H).find((r) => r.tag.startsWith("scales:"));
+  expect(scaled?.text).toBe("While you control Sylvan Caryatid, Blight Pile counts it and does more");
+});
+
+test("a count of creatures WITH a keyword is not fed by a creature without it", () => {
+  expect(directedReasons(goblinBody(), countsDefenders(), H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
+test("an empty keyword list does not narrow a whole-deck count", () => {
+  const countsCreatures = base("Axebane Guardian", [{
+    kind: "activated", cost: "{T}",
+    effect: {
+      kind: "add-mana", scaling: "per-creature",
+      scalingSubject: { type: "creature", keyword: [], zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(goblinBody(), countsCreatures, H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
+/** A DISJUNCTION OF TWO NARROW TYPES IS NARROWER THAN EITHER WHOLE BOARD (recall v6 #161).
+ *  Nettlecyst's "+1/+1 for each artifact and/or enchantment you control" derives
+ *  `type: [artifact, enchantment]`, and the gate demanded exactly one type. Call of the Ring is an
+ *  enchantment. A disjunction that includes a whole-deck type ("each artifact or creature") is
+ *  still the whole board, and stays refused. */
+const countsArtifactsOrEnchantments = () => base("Nettlecyst", [{
+  kind: "static",
+  effect: {
+    kind: "pump", scaling: "per-creature",
+    scalingSubject: { type: ["artifact", "enchantment"], zone: "battlefield", control: "you", token: null },
+  },
+}] as unknown as CardTags["abilities"]);
+const enchantment = () => {
+  const c = base("Call of the Ring", []);
+  return { ...c, tags: { ...c.tags, characteristics: { ...c.tags.characteristics, types: ["enchantment"] } } };
+};
+
+test("a count over a disjunction of narrow types is fed by a card of either type", () => {
+  const scaled = directedReasons(enchantment(), countsArtifactsOrEnchantments(), H).find((r) => r.tag.startsWith("scales:"));
+  expect(scaled?.text).toBe("While you control Call of the Ring, Nettlecyst counts it and gets bigger");
+});
+
+test("a count over a disjunction that includes a whole-deck type forms no edge", () => {
+  const countsArtifactsOrCreatures = base("Wide Counter", [{
+    kind: "static",
+    effect: {
+      kind: "pump", scaling: "per-creature",
+      scalingSubject: { type: ["artifact", "creature"], zone: "battlefield", control: "you", token: null },
+    },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(goblinBody(), countsArtifactsOrCreatures, H).some((r) => r.tag.startsWith("scales:")))
+    .toBe(false);
+});
+
 // KARDUR, DOOMSCOURGE <-> BLASPHEMOUS EDICT (owner, 2026-09-05). "Whenever an attacking creature
 // dies" is not "whenever a creature dies": an edict at sorcery speed kills nothing that is
 // attacking. The trigger now carries `combat: "attacking"`, and only a producer whose printed text

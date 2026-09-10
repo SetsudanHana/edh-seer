@@ -1448,8 +1448,15 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     // magnitude, not for a rule. Measured on the 71 decks: edges 36,596 -> 38,238, reasons 47,737
     // -> 50,416, MESHED 289 unchanged, panel precision unchanged, 10 new claims to judge.
     const types = Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : [];
-    const typedCount = subtype === undefined && types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!);
-    if (subtype === undefined && !typedCount) continue;
+    // A DISJUNCTION OF NARROW TYPES IS NARROWER THAN EITHER WHOLE BOARD (recall v6 #161, 2026-09-10):
+    // Nettlecyst counts "each artifact and/or enchantment", and demanding exactly ONE type refused
+    // it. Every branch must be outside the whole deck; "artifact or creature" is still the board.
+    // AND A KEYWORD NARROWS THE WAY A SUBTYPE DOES (v6 #106): Blight Pile counts "creatures with
+    // defender", which is `creature` plus `keyword` -- the type alone is the whole board, and the
+    // keyword is what makes it a minority of it.
+    const typedCount = subtype === undefined && types.length > 0 && types.every((ty) => !WHOLE_DECK_TYPES.has(ty));
+    const keywordCount = subtype === undefined && (counted.keyword?.length ?? 0) > 0;
+    if (subtype === undefined && !typedCount && !keywordCount) continue;
     // A BASIC LAND TYPE IS THE MANA BASE. 20 corpus cards count Swamps and 13 count Mountains; a
     // mono-black deck runs thirty Swamps, and thirty edges into one payoff is the same mesh wearing
     // a different costume. The partial reversal for fetchlands and Urza's Saga is about a land that
