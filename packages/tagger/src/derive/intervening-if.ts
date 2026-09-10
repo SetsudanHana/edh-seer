@@ -97,5 +97,15 @@ export function conditionCares(condition: string): string[] {
   // Oath of Chandra).
   const entered = condition.match(/\ban? (planeswalker|creature|artifact|enchantment|land) entered\b/i);
   if (entered) out.push(`enters:${entered[1].toLowerCase()}`);
+  // "if you descended this turn" (Brass's Tunnel-Grinder; 12 commander-legal cards print the
+  // word). CR 700.11: a permanent card was put into your graveyard FROM ANYWHERE this turn -- so
+  // the demand is every fill family, one tag each: a death or sacrifice from the battlefield
+  // (`dies`), a mill from the library, a discard from the hand, and `enters-graveyard` for the
+  // rest. All four are tags the theme layer already speaks (corpus supply 452 / 595 / 1,534 /
+  // 226). Recall v5 #179, Scalding Tarn -> Tunnel-Grinder, 2026-09-10: a DEMAND, not an edge --
+  // an intervening if forms none (owner, 2026-08-20), so that pair stays refused by design.
+  // "Descend 4" / "descend 8" cards word their condition as "N or more permanent cards in your
+  // graveyard" and never say "descended"; they are a count-threshold, not covered here.
+  if (/\bdescended\b/i.test(condition)) out.push("dies:any", "mill:any", "discard:any", "enters-graveyard:any");
   return [...new Set(out)];
 }

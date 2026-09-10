@@ -55,7 +55,9 @@ import { emblemRecipient } from "../emblem.js";
 // (attacking, tapped, equipped) and the whole board stay refused.
 // 138: a -X/-X or -N/-N sweep on all or each creatures emits `dies`, control as printed (owner
 // ruling 2026-09-10; recall v5 #156, Toxic Deluge). A targeted debuff still says nothing.
-export const DERIVE_VERSION = 138;
+// 139: "if you descended this turn" cares about `dies:any` (CR 700.11) -- a deck demand, no edge
+// (recall v5 #179, Scalding Tarn -> Brass's Tunnel-Grinder).
+export const DERIVE_VERSION = 139;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
