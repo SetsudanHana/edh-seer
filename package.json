@@ -16,7 +16,7 @@
     "tokens:check": "python3 scripts/validate_tokens.py && python3 scripts/validate_contrast.py && python3 scripts/validate_theme_refs.py tokens/theme.css packages/web/client/src"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
-    "@types/node": "^26.4.1"
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.5.0"
   }
 }
