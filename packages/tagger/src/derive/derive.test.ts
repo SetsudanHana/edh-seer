@@ -2659,3 +2659,32 @@ test("an activated ability carries its activation restriction's count", () => {
   expect(abilities[0]).toMatchObject({ kind: "activated", effect: { kind: "mana-generation" }, threshold: { atLeast: 3 },
     thresholdSubject: { type: "artifact", control: "you" } });
 });
+
+// MIND FUNERAL: the put's actor is the opponent, so the fill is theirs -- an opponent's graveyard
+// filling never fed your Animate Dead, and only a printed-text cue in the delve pass said so.
+test("a put with a named actor fills THAT player's graveyard; an object naming its own controller keeps it", () => {
+  const funeral = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [
+      { verb: "reveal", object: "cards from the top of target opponent's library until four land cards are revealed" },
+      { verb: "put", object: "all cards revealed this way", fromZone: "library", toZone: "graveyard" },
+    ] }],
+    "Mind Funeral",
+    { 1: "Target opponent reveals cards from the top of their library until four land cards are revealed. That player puts all cards revealed this way into their graveyard." },
+  ).abilities;
+  const mill = funeral.find((a) => a.effect.kind === "mill");
+  expect(mill?.effect.subject?.control).toBe("opp");
+  expect(mill?.emits?.every((e) => e.subject.control === "opp")).toBe(true);
+
+  // Visions of Dread's shape: the opponent acts, YOUR creature enters. (The corpus row for the card
+  // itself has the model dropping "under your control" from the object and reads `opp` on both
+  // counts -- a clause-layer gap, not this rule's; the object here states the controller.)
+  const visions = deriveAbilities(
+    [{ id: 1, abilityType: "spell", actions: [
+      { verb: "put", object: "a creature card from their graveyard onto the battlefield under your control", fromZone: "graveyard", toZone: "battlefield" },
+    ] }],
+    "Visions of Dread",
+    { 1: "Target opponent puts a creature card of their choice from their graveyard onto the battlefield under your control." },
+  ).abilities;
+  const enters = visions.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(enters?.subject.control).toBe("you");
+});

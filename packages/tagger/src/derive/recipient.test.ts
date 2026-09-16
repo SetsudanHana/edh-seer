@@ -105,3 +105,15 @@ test("a sacrifice you make first is not the opponents' sacrifice that follows", 
   expect(actionRecipients("When this creature enters, each opponent sacrifices a creature."))
     .toEqual({ sacrifice: "opp" });
 });
+
+// MIND FUNERAL (recall v7 #114 queue item, 2026-09-16): a mill written as a put. "Target opponent
+// reveals cards from the top of their library until four land cards are revealed. That player puts
+// all cards revealed this way into their graveyard" -- "that player" points back at the opponent.
+test("a put reads its named actor; 'that player' after an opponent is the opponent", () => {
+  expect(actionRecipients("Target opponent reveals cards from the top of their library until four land cards are revealed. That player puts all cards revealed this way into their graveyard."))
+    .toEqual({ put: "opp" });
+  expect(actionRecipients("Each player puts a creature card from their graveyard onto the battlefield.")).toEqual({ put: "any" });
+  // Your own put, written first, keeps the action (the Braids rule).
+  expect(actionRecipients("You may put a land card from your hand onto the battlefield. If you do, each opponent puts a card from their hand on top of their library."))
+    .not.toHaveProperty("put");
+});

@@ -71,7 +71,10 @@ import { emblemRecipient } from "../emblem.js";
 // controller is read from the words before the number, and an event count refuses.
 // 147: `characteristics.enchants` -- an Aura's printed Enchant line as a subject, so the matcher
 // can let the host's death carry the Aura to the graveyard (CR 704.5m; recall v6 #57 Chime of Night).
-export const DERIVE_VERSION = 147;
+// 148: a `put` reads its named actor ("that player puts all cards revealed this way into their
+// graveyard", Mind Funeral) -- the fill is the opponent's, not `any`; an object that states its own
+// controller ("under your control") keeps it.
+export const DERIVE_VERSION = 148;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1164,8 +1167,13 @@ export function deriveAbilities(
       }
       const actor = actorFor(action.verb);
       if (actor) {
-        for (const e of emits) e.subject.control = actor;
-        if (subject) subject.control = actor;
+        // A PUT'S OBJECT MAY NAME ITS OWN CONTROLLER, and that outranks the actor: Visions of Dread's
+        // "target opponent puts a creature card ... onto the battlefield under your control" is the
+        // opponent acting and YOUR creature entering. The other cued verbs never state one on the
+        // object ("each opponent draws a card"), so for them the actor stands as before.
+        const fillOnly = action.verb === "put";
+        for (const e of emits) if (!fillOnly || e.subject.control === "any") e.subject.control = actor;
+        if (subject && (!fillOnly || subject.control === "any")) subject.control = actor;
       } else if (ACTOR_DEFAULTS_TO_YOU.has(action.verb ?? "") && clauseText !== ""
         && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1
         && !sentenceNamesAPlayer(clauseText, action.verb ?? "")) {
