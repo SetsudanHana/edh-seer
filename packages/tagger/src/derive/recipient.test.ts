@@ -41,7 +41,7 @@ test("the actor must sit against its OWN verb", () => {
   // lifegain payoffs to the opponent. 50 of the 86 actions measured are this shape.
   // The loss IS the opponent's; the gain is yours, and must not inherit the loss's actor.
   expect(actionRecipients("Whenever this creature dies, each opponent loses 1 life and you gain 1 life."))
-    .toEqual({ "lose-life": "opp" });
+    .toEqual({ "lose-life": "opp", "gain-life": "you" });
   // Flumph: "each" between the actor and the verb means they are not this verb's actor alone.
   expect(actionRecipients("Whenever this creature is dealt damage, you and target opponent each draw a card."))
     .toEqual({});
@@ -116,4 +116,22 @@ test("a put reads its named actor; 'that player' after an opponent is the oppone
   // Your own put, written first, keeps the action (the Braids rule).
   expect(actionRecipients("You may put a land card from your hand onto the battlefield. If you do, each opponent puts a card from their hand on top of their library."))
     .not.toHaveProperty("put");
+});
+
+// "YOU DRAW" IS STATED (owner-reported 2026-09-17): a player named in the CONDITION must not turn the
+// controller's own draw into anyone's. Y'shtola, Night's Blessed fed Scrawling Crawler's "whenever
+// an opponent draws" through an `any` this refused to sharpen.
+test("a printed 'you <verb>' is the controller's, whatever player the condition names", () => {
+  expect(actionRecipients("At the beginning of each end step, if a player lost 4 or more life this turn, you draw a card."))
+    .toEqual({ draw: "you" });
+  expect(actionRecipients("Whenever an opponent casts a noncreature spell, you may draw a card."))
+    .toEqual({ draw: "you" });
+  // CEILING: only the verb "you" sits against. "you draw a card and lose 1 life" states the draw's
+  // actor and not the loss's, which still falls to the sentence default.
+  expect(actionRecipients("Whenever one or more creatures you control deal combat damage to a player, you draw a card and lose 1 life."))
+    .toEqual({ draw: "you" });
+  // An opponent cue on the same verb: written first it wins; written after yours it is contested
+  // and the verb stays unstated (the Braids rule), which derive reads as ambiguous.
+  expect(actionRecipients("Each opponent draws a card, then you draw a card.")).toEqual({ draw: "opp" });
+  expect(actionRecipients("You draw a card, then each opponent draws a card.")).not.toHaveProperty("draw");
 });
