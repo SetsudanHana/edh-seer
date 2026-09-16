@@ -61,6 +61,7 @@ const PROSE: Record<string, string> = {
   "701.23": "search", "701.23a": "search means a search HAPPENED", "701.25": "surveil", "701.25a": "surveil's graveyard half is any number",
   "701.3": "attach: OPEN", "701.30": "clash", "701.34a": "populate", "701.36": "vote", "701.45a": "assemble excluded (Unstable)",
   "701.50": "connive", "701.54": "the Ring tempts", "701.6": "create", "701.68": "blight", "701.9": "double/triple: OPEN",
+  "701.46": "adapt puts its counters on the card itself (a self counter emit)", "701.37": "monstrosity puts its counters on the card itself",
   "702.100": "evolve, a trigger word", "702.111": "exploit, a word", "702.122": "becomes-crewed", "702.131": "city-blessing",
   "702.143": "foretell", "702.147": "decayed: a temporary token", "702.179": "speed", "702.189b": "firebend", "702.25": "flanking",
   "702.26": "phasing", "708": "face-down: OPEN", "712": "double-faced", "714.2b": "Saga chapters", "717": "Attractions excluded",

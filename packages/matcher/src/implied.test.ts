@@ -208,6 +208,16 @@ test("selfLeavesTypes stamps the card's own types on an untyped self leaves and 
 // RECALL v7 #25 (2026-09-16): a self SACRIFICE or DEATH is the same known permanent. Riveteers
 // Overlook's "sacrifice it" emitted no type, so Juri's "whenever you sacrifice a permanent" never
 // saw it; a self enters is left alone (the self-trigger gate reads it).
+test("selfLeavesTypes stamps the card's own types on a self counter-added (DERIVE 153)", () => {
+  const events: GameEvent[] = [
+    { verb: "counter-added", subject: { control: "any", token: null, counter: "charge", self: true } },
+    { verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1" } },
+  ];
+  const out = selfLeavesTypes(events, chars(["artifact"]));
+  expect(out[0].subject).toMatchObject({ type: ["artifact"], counter: "charge", self: true });
+  expect(out[1]).toEqual(events[1]);
+});
+
 test("selfLeavesTypes stamps the card's own types on a self sacrifice and a self dies too", () => {
   const events: GameEvent[] = [
     { verb: "sacrifice", subject: { control: "you", token: null, self: true } },

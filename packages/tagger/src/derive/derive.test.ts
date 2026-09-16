@@ -1194,6 +1194,39 @@ test("a self trigger keeps the clause's you", () => {
   expect(abilities[0].trigger!.subject.control).toBe("you");
 });
 
+// A COUNTER PUT ON THE CARD ITSELF IS A SELF EMIT (owner-reported 2026-09-17): Primal Amulet's
+// charge counter lands on Primal Amulet, so it can never be Exemplar of Light's "whenever you put
+// +1/+1 counters on THIS creature". The object names the counter; the clause text names where.
+test("a counter put on this card is a self emit; one put on another permanent is not", () => {
+  const emitOf = (text: string, name: string, object = "+1/+1", verb = "add-counter") => deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell", control: "you" }, actions: [{ verb, object, amount: "1" }] }],
+    name, { 1: text },
+  ).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(emitOf("Whenever you cast an instant or sorcery spell, put a charge counter on this artifact.", "Primal Amulet", "charge counter")?.subject.self).toBe(true);
+  expect(emitOf("Whenever you gain life, put a +1/+1 counter on this creature.", "Wall of Limbs")?.subject.self).toBe(true);
+  expect(emitOf("This creature enters with two +1/+1 counters on it.", "Towering Titan")?.subject.self).toBe(true);
+  expect(emitOf("Whenever you cast a spell, put a +1/+1 counter on Fathom Mage.", "Fathom Mage")?.subject.self).toBe(true);
+  expect(emitOf("Whenever you cast a spell, put a +1/+1 counter on target creature.", "Placer")?.subject.self).toBeUndefined();
+  expect(emitOf("Whenever you cast a spell, put a +1/+1 counter on each creature you control.", "Anthem")?.subject.self).toBeUndefined();
+  expect(emitOf("Whenever you cast a spell, exile target creature, then return it to the battlefield with a +1/+1 counter on it.", "Blinker")?.subject.self).toBeUndefined();
+  // "on it" after a trigger naming ANOTHER creature is that creature (The Great Henge; the panel's
+  // Henge -> Dusk Legion Duelist is REAL). After a self trigger it is the card.
+  const henge = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a nontoken creature", control: "you" },
+    actions: [{ verb: "add-counter", object: "+1/+1", amount: "1" }, { verb: "draw", object: "a card", amount: "1" }] }],
+    "The Great Henge", { 1: "Whenever a nontoken creature you control enters, put a +1/+1 counter on it and draw a card." })
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(henge?.subject.self).toBeUndefined();
+  const attacks = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "attacks", subject: "this creature", control: "you" },
+    actions: [{ verb: "add-counter", object: "+1/+1", amount: "1" }] }],
+    "Grower", { 1: "Whenever this creature attacks, put a +1/+1 counter on it." })
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-added");
+  expect(attacks?.subject.self).toBe(true);
+  // Both recipients in one clause: nothing is claimed either way.
+  expect(emitOf("Whenever you cast a spell, put a +1/+1 counter on target creature and a charge counter on this artifact.", "Both")?.subject.self).toBeUndefined();
+  // Adapt and monstrosity are self by rule.
+  expect(emitOf("Adapt 2", "Incubation Druid", "2", "adapt")?.subject.self).toBe(true);
+});
+
 test("a list subject's own commas do not cut the printed phrase before you control", () => {
   const { abilities } = deriveAbilities([{
     id: 1, abilityType: "triggered",

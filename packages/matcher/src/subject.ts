@@ -239,7 +239,11 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // into the strict path it cannot satisfy, and The Great Henge stopped feeding its own +1/+1
   // payoffs the moment the kind was recorded.
   const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
-  if (!untyped) return subjectMatches(producer, consumer, h);
+  // A KNOWN PERMANENT WITH AN UNKNOWN KIND (DERIVE 153): a self counter emit is stamped with the
+  // card's own types, which puts it on the strict path -- where a consumer's `counter: "+1/+1"`
+  // against a producer that recorded no kind read as a mismatch and Shelinda, Yevon Acolyte
+  // stopped feeding Simic Ascendancy. The kind is compared only when BOTH sides state one (above).
+  if (!untyped) return subjectMatches(producer, producer.counter === undefined ? { ...consumer, counter: undefined } : consumer, h);
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
   return true;
