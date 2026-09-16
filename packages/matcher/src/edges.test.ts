@@ -2237,6 +2237,37 @@ test("a producer that removes what an Aura enchants supplies the Aura's own dies
   expect(reasons(chime({ type: "creature" }), outlet({ type: "land" }))).toHaveLength(0);
   // A producer removing ITSELF is not removing a host.
   expect(reasons(chime({ type: "creature" }), outlet({ type: "creature", self: true }))).toHaveLength(0);
+  // "Enchant creature you control": an opponent's creature dying is not the host.
+  expect(reasons(chime({ type: "creature", control: "you" }), outlet({ type: "creature" }))).toHaveLength(1);
+  expect(reasons(chime({ type: "creature", control: "you" }), outlet({ type: "creature", control: "opp" }))).toHaveLength(0);
+  // "Enchant Swamp" (Spreading Algae): a Swamp dying is the host, a Forest is not.
+  expect(reasons(chime({ subtype: "swamp" }), outlet({ type: "land", subtype: "swamp" }))).toHaveLength(1);
+  expect(reasons(chime({ subtype: "swamp" }), outlet({ type: "land", subtype: "forest" }))).toHaveLength(0);
+});
+
+test("a bounce or an exile unattaches an Aura the way a death does (CR 704.5m)", () => {
+  // Gift of Wrath: "When this Aura leaves the battlefield, create a 2/2 Spirit". A flicker on the
+  // host is a `leaves` from the battlefield; a `leaves` from a GRAVEYARD is a different event.
+  const gift: CardTags = {
+    oracleId: "gift", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: ["aura"], colors: ["R"], identity: ["R"], cmc: 3,
+      power: null, toughness: null, token: false, keywords: [], enchants: { control: "any", token: null, type: ["artifact", "creature"] } },
+    abilities: [{ kind: "triggered", effect: { kind: "token-generation" },
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, subtype: "aura", self: true } } }],
+  };
+  const remover = (zone?: string): CardTags => ({
+    oracleId: "rift", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["instant"], subtypes: [], colors: ["U"], identity: ["U"], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "on-cast", effect: { kind: "" },
+      emits: [{ verb: "leaves", subject: { control: "any", token: null, type: "creature", ...(zone ? { zone } : {}) } as never }] }],
+  });
+  const reasons = (p: CardTags) => directedReasons(
+    { card: { name: "Cyclonic Rift" } as DeckCard["card"], tags: p },
+    { card: { name: "Gift of Wrath" } as DeckCard["card"], tags: gift }, H,
+  ).filter((r) => r.tag.startsWith("leaves:"));
+  expect(reasons(remover())).toHaveLength(1);
+  expect(reasons(remover("graveyard"))).toHaveLength(0);
 });
 
 // A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION AS A WIN CONDITION'S (2026-09-16; recall v6
