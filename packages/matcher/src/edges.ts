@@ -397,8 +397,24 @@ function recursionClassNarrows(s: SubjectFilter): boolean {
  *  `WHOLE_DECK_TYPES`: "a creature card" (Worldly Tutor, Animate Dead) and "a land card" are still
  *  the board itself, the same line the board-count pass draws with `typedCount`. */
 function loneTypeNarrows(s: SubjectFilter): boolean {
+  // A NEGATION NAMES NO CLASS. "A noncreature, nonland card" (Narset, Parter of Veils) resolves to
+  // the six remaining types, every one outside the whole board, and read as a type list it reached
+  // 63 cards in a spellslinger deck on the first derive-143 measurement. Same rank
+  // `themeSubjectKey` gives it: the negation outranks the list it resolves to.
+  if ((s.notType?.length ?? 0) > 0) return false;
   const types = [...list(s.type), ...(s.anyOf ?? []).flatMap((b) => list(b.type))];
   return types.length > 0 && types.every((t) => !WHOLE_DECK_TYPES.has(t));
+}
+
+/** The member of a subtype LIST that the found card actually carries, for the tag key. "An
+ *  Elemental, Island, or Mountain card" (Eclipsed Flamekin) reaching Smoldering Marsh is
+ *  `tutor:mountain`; `themeSubjectKey` alone takes the first of the list and reported the Marsh
+ *  as an Elemental -- the same wrong-class key the negation and `anyOf` cases already guard. */
+function keyedOn(subject: SubjectFilter, found: SubjectFilter): SubjectFilter {
+  const subs = list(subject.subtype);
+  if (subs.length < 2) return subject;
+  const hit = subs.find((s) => list(found.subtype).includes(s));
+  return hit === undefined ? subject : { ...subject, subtype: hit };
 }
 
 /** Does this combat consumer narrow via its type line -- a non-creature type, or any subtype?
@@ -2009,7 +2025,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     const { anyOf, ...shared } = a.effect.subject;
     const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     reasons.push({
-      tag: `tutor:${themeSubjectKey(matched ?? a.effect.subject)}`,
+      tag: `tutor:${themeSubjectKey(matched ?? keyedOn(a.effect.subject, found))}`,
       text: tutorSentence(p.card.name, c.card.name),
       effectKind: a.effect.kind,
       repeatability:
@@ -2045,7 +2061,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     if (anyOf?.length ? !matched : !subjectMatches(found, shared, h)) continue;
     reasons.push({
-      tag: `recursion-target:${themeSubjectKey(matched ?? shared)}`,
+      tag: `recursion-target:${themeSubjectKey(matched ?? keyedOn(shared, found))}`,
       text: recursionTargetSentence(p.card.name, c.card.name),
       effectKind: a.effect.kind,
       repeatability:

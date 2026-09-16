@@ -672,13 +672,19 @@ test("setting a base power and toughness is neither a pump nor a debuff", () => 
   expect(actionEffectKind({ verb: "modify-pt", object: "creatures your opponents control", amount: "-2/-2" }, "")).toBe("debuff");
 });
 
-// A TUTOR SEARCHES; DIGGING DOES NOT (owner, 2026-09-07: "Sensei is not a tutor, it is basically
-// brainstorm"). A real tutor states the `search` verb, which VERB_KIND already maps, so a
-// `put library -> hand` row bought nothing for Demonic Tutor and only caught the 343 corpus actions
-// that dig -- Eclipsed Flamekin reads the top FOUR cards and cannot find a piece deeper than that.
-test("putting a card from the library into hand is NOT a tutor on its own", () => {
+// A CLASS-RESTRICTED DIG IS A TYPED SEARCH (owner ruling 2026-09-16, AF10 ruling 4; recall v6
+// #165 Eclipsed Flamekin -> Smoldering Marsh). An UNTYPED dig is still not one (owner, 2026-09-07:
+// "Sensei is not a tutor, it is basically brainstorm"): Dig Through Time's "two of them" and a bare
+// "a card" find no particular card. A real tutor is carried by its own verb either way.
+test("a dig is a search only when its object names a class", () => {
   expect(actionEffectKind({ verb: "put", object: "an Elemental, Island, or Mountain card",
-    fromZone: "library", toZone: "hand" })).not.toBe("search");
+    fromZone: "library", toZone: "hand" })).toBe("search");
+  expect(actionEffectKind({ verb: "put", object: "a creature card with mana value 3 or less",
+    fromZone: "library", toZone: "hand" })).toBe("search");
+  expect(actionEffectKind({ verb: "put", object: "two of them", fromZone: "library", toZone: "hand" }))
+    .not.toBe("search");
+  expect(actionEffectKind({ verb: "put", object: "a card", fromZone: "library", toZone: "hand" }))
+    .not.toBe("search");
   // A real tutor is carried by its own verb and is unaffected.
   expect(actionEffectKind({ verb: "search", object: "your library for a creature card" }))
     .toBe("search");

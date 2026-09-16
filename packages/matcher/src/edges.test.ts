@@ -1783,6 +1783,21 @@ test("a typal tutor forms an edge with what it can find", () => {
   expect(reasons.some((r) => r.tag === "tutor:elemental")).toBe(true);
 });
 
+// A CLASS-RESTRICTED DIG IS A TYPED SEARCH (owner ruling 2026-09-16, AF10 ruling 4; derive 143
+// gives Eclipsed Flamekin a `search` over "an Elemental, Island, or Mountain card"). The key names
+// the member of the list the found card carries, not the first of the list.
+test("a subtype-list tutor is keyed on the subtype the found card carries", () => {
+  const flamekin = base("Eclipsed Flamekin", [{
+    kind: "triggered",
+    effect: { kind: "search", subject: { control: "any", token: null, subtype: ["elemental", "island", "mountain"] } },
+  }]);
+  const marsh = { ...base("Smoldering Marsh", [], ["swamp", "mountain"]), tags: { ...base("Smoldering Marsh", [], ["swamp", "mountain"]).tags,
+    characteristics: { ...base("Smoldering Marsh", [], ["swamp", "mountain"]).tags.characteristics, types: ["land"] } } } as DeckCard;
+  expect(pairReasons(flamekin, marsh, H).map((r) => r.tag)).toContain("tutor:mountain");
+  expect(pairReasons(flamekin, base("Omnath", [], ["elemental"]), H).map((r) => r.tag)).toContain("tutor:elemental");
+  expect(pairReasons(flamekin, base("Grizzly Bears", [], ["bear"]), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+});
+
 test("a whole-board-type tutor forms no edge, because it reaches the whole deck", () => {
   const worldly = base("Worldly Tutor", [{
     kind: "on-cast",
@@ -1818,6 +1833,14 @@ test("an off-board-type tutor forms an edge with each card of that type", () => 
     effect: { kind: "search", subject: { control: "you", token: null, type: ["creature", "artifact"] } },
   }]);
   expect(pairReasons(broad, solRing, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+  // A NEGATION names no class: "a noncreature, nonland card" (Narset) resolves to six types and
+  // is still most of the deck.
+  const narset = base("Narset, Parter of Veils", [{
+    kind: "activated",
+    effect: { kind: "search", subject: { control: "you", token: null, notType: ["creature", "land"],
+      type: ["artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle"] } },
+  }]);
+  expect(pairReasons(narset, counterspell, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
 
 test("an untyped tutor forms no edge at all", () => {

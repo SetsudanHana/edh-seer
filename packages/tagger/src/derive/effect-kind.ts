@@ -56,23 +56,34 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // corpus cards that put something "Nth from the top", NONE has a library or hand origin.
   { verb: "put", from: "library", to: "library", kind: "top-set" },
   { verb: "put", from: "hand", to: "library", kind: "top-set" },
-  // NO ROW FOR `put library -> hand`, AND THE REASON IS WORTH KEEPING (added and reverted the same
-  // day, 2026-09-07). It looked like the missing half of a tutor. It is not: a REAL tutor states the
-  // `search` verb, which VERB_KIND already maps to `search`, so the row bought nothing for
-  // Demonic Tutor, Worldly Tutor or Entomb. What it DID catch was the other bucket -- 343 corpus
-  // actions that put a card from library to hand with NO search in the clause, which is DIGGING
-  // (Eclipsed Flamekin looks at the top four; Dig Through Time at the top seven), not searching.
+  // A CLASS-RESTRICTED DIG IS A TYPED SEARCH (owner ruling 2026-09-16, AF10 ruling 4; recall v6
+  // #165 Eclipsed Flamekin -> Smoldering Marsh, first drawn as v3 #141). This row was added and
+  // reverted on 2026-09-07 because it caught the wrong bucket: a REAL tutor states the `search`
+  // verb, which VERB_KIND already maps, so the row bought nothing for Demonic Tutor or Entomb and
+  // only tagged the 343 corpus actions that put a card from library to hand with NO search in the
+  // clause -- DIGGING (Eclipsed Flamekin looks at the top four; Dig Through Time at the top seven).
+  // The 09-07 reading was that a dig four cards deep cannot find the piece, so it is not a copy of
+  // it. The owner's 09-16 ruling is that a dig restricted to a CLASS reaches the cards of that
+  // class the way a class-restricted search does. So the row is gated in `actionEffectKind` on the
+  // object naming a class: "an Elemental, Island, or Mountain card" is a search, "two of them"
+  // (Dig Through Time) and "a card" are not, and the matcher's tutor pass keeps its own bar on what
+  // narrows (a whole-board type still forms no edge).
   //
-  // The owner's ruling is specifically about a search: "Mystical Tutor can find you that piece, so
-  // it is another copy of your combo". A dig four cards deep cannot find the piece, so it is not a
-  // copy of it, and `edges.ts` was minting the sentence "Eclipsed Flamekin can search up Titan of
-  // Industry" for a card that searches nothing.
-  //
-  // The corpus splits cleanly on the `search` verb and that is the discriminator to use if this is
-  // ever revisited: WITH search -- put->battlefield 311 (Farseek), put->hand 258 (Demonic Tutor),
-  // put->library 58 (Worldly Tutor), put->graveyard 25 (Entomb). WITHOUT -- put->library 348
-  // (Sensei's Divining Top, which is Brainstorm-shaped and not a tutor at all), put->hand 343.
+  // The corpus splits on the `search` verb: WITH search -- put->battlefield 311 (Farseek),
+  // put->hand 258 (Demonic Tutor), put->library 58 (Worldly Tutor), put->graveyard 25 (Entomb).
+  // WITHOUT -- put->library 348 (Sensei's Divining Top, Brainstorm-shaped, not a tutor), put->hand
+  // 343, of which the typed ones are what this row admits.
+  { verb: "put", from: "library", to: "hand", kind: "search" },
 ];
+
+/** Does a dig's object name a class -- a type, subtype, stat predicate or name, on the subject or
+ *  in an `anyOf` branch? "Two of them" and "a card" do not. See the `put library -> hand` row. */
+function digNamesAClass(object: string): boolean {
+  const s = parseSubject(object);
+  const has = (b: Partial<typeof s>): boolean =>
+    b.type !== undefined || b.subtype !== undefined || (b.stats?.length ?? 0) > 0 || b.named !== undefined;
+  return has(s) || (s.anyOf ?? []).some(has);
+}
 
 /** Kinds whose whole meaning is the zone the subject sits in: `edges.ts` will not draw a
  *  reanimator edge unless `effect.subject.zone === "graveyard"`, so a recursion effect that loses
@@ -424,6 +435,8 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // two graveyard-recursion rows above have it too -- but because the condition was only ever
     // standing in for "is this the top-of-library family?", which the kind now says outright.
     if (r.kind === "top-set" && ON_THE_BOTTOM.test(clauseText)) return null;
+    // AN UNTYPED DIG FINDS NO PARTICULAR CARD. See the `put library -> hand` row.
+    if (r.kind === "search" && verb === "put" && !digNamesAClass(String(action.object ?? ""))) return null;
     return r.kind;
   }
   // Life change is one verb per direction, but which kind depends on whose life it is.
