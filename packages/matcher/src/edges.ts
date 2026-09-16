@@ -722,6 +722,13 @@ export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): b
  *  nonland type, so it narrows nothing — but `permanent` excludes instants and sorceries, a named
  *  type excludes the rest, and a subtype/colour/stat/counter/token filter all narrow for real. */
 function castConsumerNarrows(subject: SubjectFilter): boolean {
+  // A DISJUNCTION NARROWS WHEN EVERY BRANCH DOES (Alania's "the first instant spell, the first
+  // sorcery spell, or the first Otter spell", DERIVE 145, 2026-09-16): the outer subject carries
+  // no type at all, and reading only it refused the trigger as the bare umbrella.
+  if (subject.anyOf !== undefined && subject.anyOf.length > 0) {
+    const { anyOf, ...shared } = subject;
+    return anyOf.every((b) => castConsumerNarrows({ ...shared, ...b }));
+  }
   if (subject.subtype !== undefined || subject.colors !== undefined) return true;
   if (subject.stats !== undefined || subject.chosenType === true) return true;
   if (subject.historic === true) return true;

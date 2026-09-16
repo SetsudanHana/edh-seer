@@ -62,7 +62,10 @@ import { emblemRecipient } from "../emblem.js";
 // #165 Eclipsed Flamekin -> Smoldering Marsh). An untyped dig ("two of them") stays kindless.
 // 144: "puts all cards they exiled this way onto the battlefield" (Living Death, Living End) is
 // exile-then-use, so a mass reanimation derives `graveyard-recursion` (recall v7 #187).
-export const DERIVE_VERSION = 144;
+// 145: the class inside an intervening-if is the trigger's class when the trigger subject is the bare
+// `spell` -- Alania's "if it's the first instant spell, the first sorcery spell, or the first Otter
+// spell" (owner, 2026-09-16, recall v7 #178); the once-per-turn condition is dropped.
+export const DERIVE_VERSION = 145;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1355,6 +1358,19 @@ export function deriveAbilities(
       const requires = clauseRequires?.[clause.id] ?? requiresOf(text);
       if (requires) abilities[i] = { ...abilities[i], requires };
       const trig = abilities[i].trigger;
+      // THE CLASS INSIDE THE IF IS THE TRIGGER'S CLASS (owner, 2026-09-16, recall v7 #178): "whenever
+      // you cast a spell, if it's the first instant spell, the first sorcery spell, or the first
+      // Otter spell ... this turn" (Alania, Divergent Storm) is a trigger on instants, sorceries and
+      // Otters; the once-per-turn half is dropped ("skip the if part"). Only when the trigger's own
+      // subject is the bare `spell`, so a narrowed trigger keeps its narrowing. One corpus card.
+      if (trig && trig.verbs.includes("cast") && trig.subject.type === "spell" && trig.subject.subtype === undefined && trig.subject.anyOf === undefined) {
+        const classes = [...text.matchAll(/\bthe first (\w+) spell\b/gi)].map((m) => m[1]!);
+        if (classes.length > 0) {
+          const { type: _t, ...shared } = trig.subject;
+          abilities[i] = { ...abilities[i], trigger: { ...trig, subject: { ...shared,
+            anyOf: classes.map((cls) => { const { control: _c, token: _k, ...b } = parseSubject(`a ${cls} spell`); return b; }) } } };
+        }
+      }
       if (trig && trig.verbs.includes("enters") && (arrivalNotCast || arrivalTapped)) {
         abilities[i] = { ...abilities[i], trigger: { ...trig, subject: {
           ...trig.subject,

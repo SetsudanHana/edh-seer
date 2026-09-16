@@ -2600,3 +2600,24 @@ test("a grant to a TYPE-narrowed class keeps its recipient; a state-narrowed or 
   // Unchanged admissions: a subtype, a token class.
   expect(grant("Elvish Anthem", "Other Elves you control have vigilance.", "vigilance")).toMatchObject({ subtype: "elf" });
 });
+
+// OWNER, 2026-09-16 (recall v7 #178): the class inside an intervening-if is the trigger's class
+// when the trigger subject is the bare `spell` -- Alania "synergizes with instant, sorcery and
+// Otter spells"; the once-per-turn half is dropped. A trigger that already narrows keeps its own.
+test("Alania's 'first instant, sorcery or Otter spell' if-clause becomes the cast trigger's class", () => {
+  const text = "Whenever you cast a spell, if it's the first instant spell, the first sorcery spell, or the first Otter spell other than Alania you've cast this turn, you may have target opponent draw a card. If you do, copy that spell. You may choose new targets for the copy.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "cast", subject: "a spell", control: "you" },
+    actions: [{ verb: "copy", object: "that spell" }],
+  }], "Alania, Divergent Storm", { 1: text });
+  const trig = abilities.find((a) => a.trigger?.verbs.includes("cast"))?.trigger;
+  expect(trig?.subject.type).toBeUndefined();
+  expect(trig?.subject.anyOf).toEqual([{ type: "instant" }, { type: "sorcery" }, { type: "spell", subtype: "otter" }]);
+  const { abilities: plain } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "cast", subject: "a noncreature spell", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }],
+  }], "Prowess Payoff", { 1: "Whenever you cast a noncreature spell, if it's the first noncreature spell you've cast this turn, draw a card." });
+  expect(plain[0]?.trigger?.subject.anyOf).toBeUndefined();
+});

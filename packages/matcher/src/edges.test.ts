@@ -4194,6 +4194,24 @@ test("a fill feeds a delve spell, an opponent's fill and a token's death do not"
   expect(directedReasons(scour, base("Counterspell", []), H).some((r) => r.tag === "mill:any")).toBe(false);
 });
 
+// DERIVE 145 (owner, 2026-09-16, recall v7 #178): Alania's cast trigger is a disjunction of classes
+// with no outer type; the narrowing gate reads every branch. An instant, a sorcery and an Otter
+// feed her; a creature spell does not.
+test("a cast consumer whose classes sit in anyOf branches narrows, and is fed by each branch", () => {
+  const alania = base("Alania, Divergent Storm", [{ kind: "triggered",
+    trigger: { verbs: ["cast"], subject: { control: "you", token: null, anyOf: [{ type: "instant" }, { type: "sorcery" }, { type: "spell", subtype: "otter" }] } },
+    effect: { kind: "copy-spell" } }]);
+  const spell = (name: string, types: string[], subs: string[] = []) => {
+    const c = base(name, [], subs);
+    c.tags.characteristics.types = types;
+    return c;
+  };
+  expect(directedReasons(spell("Counterspell", ["instant"]), alania, H).map((r) => r.tag)).toContain("cast:instant");
+  expect(directedReasons(spell("Mizzix's Mastery", ["sorcery"]), alania, H).map((r) => r.tag)).toContain("cast:instant");
+  expect(directedReasons(spell("Otter", ["creature"], ["otter"]), alania, H).some((r) => r.tag.startsWith("cast:"))).toBe(true);
+  expect(directedReasons(spell("Grizzly Bears", ["creature"], ["bear"]), alania, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+});
+
 describe("fodder", () => {
   const engineer = base("Goblin Engineer", [{
     kind: "activated", cost: "{R}, {T}, Sacrifice an artifact", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "artifact", zone: "graveyard" } },
