@@ -190,6 +190,14 @@ test("the verbs the undocced cards needed derive real kinds", () => {
   expect(actionEffectKind({ verb: "turn-face-up", object: "target face-down creature" })).toBe("animate");
 });
 
+// RECALL v7 #187 (2026-09-16): Living Death "puts all cards they exiled this way onto the
+// battlefield" -- the exile is how the cards travel, so the action is a mass reanimation.
+test("exiling every graveyard and putting the cards back is recursion, not hate", () => {
+  expect(actionEffectKind({ verb: "exile", object: "all creature cards from their graveyard", fromZone: "graveyard", toZone: null },
+    "Each player exiles all creature cards from their graveyard, then sacrifices all creatures they control, then puts all cards they exiled this way onto the battlefield."))
+    .toBe("graveyard-recursion");
+});
+
 test("exiling your OWN graveyard is fuel, not graveyard hate", () => {
   // 25 of the 58 graveyard-hate actions in the corpus exile the controller's own graveyard --
   // Mizzix's Mastery, Aphemia, Lazotep Quarry, Necropotence. That is a COST paid in your own

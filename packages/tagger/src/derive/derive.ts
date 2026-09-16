@@ -60,7 +60,9 @@ import { emblemRecipient } from "../emblem.js";
 // 143: a class-restricted DIG ("look at the top four, reveal an Elemental, Island, or Mountain
 // card and put it into your hand") is a `search` (owner ruling 2026-09-16, AF10 ruling 4; recall v6
 // #165 Eclipsed Flamekin -> Smoldering Marsh). An untyped dig ("two of them") stays kindless.
-export const DERIVE_VERSION = 143;
+// 144: "puts all cards they exiled this way onto the battlefield" (Living Death, Living End) is
+// exile-then-use, so a mass reanimation derives `graveyard-recursion` (recall v7 #187).
+export const DERIVE_VERSION = 144;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
