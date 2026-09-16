@@ -93,6 +93,22 @@ test("the static block prints how many cards can cause each event, per group", (
   expect(cardPageHtml(KRENKO, "krenko-mob-boss", "card")).not.toContain("cards can cause");
 });
 
+// THE WITHHELD COUNT IS IN THE HTML TOO (2026-09-16), under its own group, and only when the
+// artifact's pool says more asked than are shown. Grouping is by key, not adjacency.
+test("the static block prints the withheld count per group, and groups by key", () => {
+  const rows = [
+    { name: "Purphoros, God of the Forge", slug: "purphoros-god-of-the-forge", event: "enters|creature|-|t", reason: "a" },
+    { name: "Skullclamp", slug: "skullclamp", event: "dies|creature|-|-", reason: "b" },
+    { name: "Impact Tremors", slug: "impact-tremors", event: "enters|creature|-|t", reason: "c" },
+  ];
+  const html = cardPageHtml({ ...KRENKO, partners: rows, pool: { "enters|creature|-|t": 1906, "dies|creature|-|-": 1 } }, "krenko-mob-boss", "card");
+  expect(html.match(/<ol>/g)).toHaveLength(2);
+  expect(html).toContain("1,904 other cards ask for it too");
+  expect(html).not.toContain("0 other cards");
+  // Tremors sits in Purphoros's list, not in a third one.
+  expect(html.indexOf("impact-tremors")).toBeLessThan(html.indexOf("skullclamp"));
+});
+
 /** THE CLAIM THIS FEATURE MAKES: the reasons are in the HTML before any JavaScript runs. */
 test("the static block carries the card, its derivation and the engine's sentences", () => {
   const html = cardPageHtml(KRENKO, "krenko-mob-boss", "card");

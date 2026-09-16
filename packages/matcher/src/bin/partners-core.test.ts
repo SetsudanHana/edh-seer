@@ -5,7 +5,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts, browseLetterOf, browseSlices,
-  supplyForms, supplyKeysOf, themesOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
+  supplyForms, supplyKeysOf, themesOf, fillDemandsOf, rankOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -898,7 +898,7 @@ test("a noncreature spell that makes creatures leads the cost-reduction group", 
   const plain = ["Beast Within", "Rampant Growth", "Cultivate", "Chaos Warp"].map(plainSorcery);
   const slugs = resolveSlugs([...plain.map((p) => p.card.name), "Dragon Fodder", "Samut, the Driving Force"]);
   const { rows } = partnersFor(samut(), [...plain, dragonFodder()], [], {}, slugs, H);
-  expect(rows).toHaveLength(PER_EVENT_CAP);
+  expect(rows).toHaveLength(Math.min(PER_EVENT_CAP, 5));
   expect(rows[0]!.name).toBe("Dragon Fodder");
 });
 
@@ -1318,6 +1318,106 @@ test("an outlet demands what it eats; a token maker and a narrow type supply it,
     kind: "triggered", effect: { kind: "forced-sacrifice" }, emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature" } }],
   }] } } as unknown as DeckCard;
   expect(feederKeysOf(edict)).toEqual([]);
+});
+
+// THE `fills|` BRIDGE (2026-09-16): four engine passes read a graveyard and none is a trigger, so
+// no page could ask about a mill. A fill emit supplies the key; a reanimator, a per-graveyard
+// payoff, a graveyard count and a delve spell demand it; the engine verifies on its own tag.
+test("supplyForms: a nontoken death fills the graveyard with its class, a mill fills it untyped, a token fills nothing", () => {
+  expect(supplyForms("dies|creature|goblin|n")).toEqual(expect.arrayContaining(["fills|creature|goblin|-", "fills|creature|-|-", "fills|-|-|-"]));
+  expect(supplyForms("mill|-|-|-")).toContain("fills|-|-|-");
+  expect(supplyForms("mill|-|-|-")).not.toContain("fills|creature|-|-");
+  expect(supplyForms("discard|-|-|-")).toContain("fills|-|-|-");
+  expect(supplyForms("enters-graveyard|-|-|-")).toContain("fills|-|-|-");
+  expect(supplyForms("dies|creature|-|t")).not.toContain("fills|-|-|-");
+  expect(supplyForms("enters|creature|-|n")).not.toContain("fills|-|-|-");
+});
+
+test("fillDemandsOf: a recursion, a per-graveyard payoff, a graveyard count and delve each demand a fill, with the engine's tag", () => {
+  const animate = { card: { name: "Animate Dead" }, tags: { characteristics: { types: ["enchantment"], subtypes: ["aura"], keywords: [] }, abilities: [{
+    kind: "triggered", effect: { kind: "graveyard-recursion", subject: { control: "any", token: null, type: "creature", zone: "graveyard" } },
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(animate)).toEqual(["fills|creature|-|-"]);
+  expect(fillDemandsOf(animate)[0]!.tags).toEqual(["graveyard-recursion:creature"]);
+  const beast = { card: { name: "Krosan Beast" }, tags: { characteristics: { types: ["creature"], subtypes: ["squirrel"], keywords: [] }, abilities: [{
+    kind: "static", effect: { kind: "pump" }, threshold: { atLeast: 7 }, thresholdSubject: { control: "you", token: null, zone: "graveyard" },
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(beast)).toEqual(["fills|-|-|-"]);
+  expect(fillDemandsOf(beast)[0]!.tags).toEqual(["threshold:any"]);
+  const glamdring = { card: { name: "Glamdring" }, tags: { characteristics: { types: ["artifact"], subtypes: ["equipment"], keywords: [] }, abilities: [{
+    kind: "static", effect: { kind: "pump", scaling: "per-graveyard", scalingSubject: { control: "you", token: null, type: ["instant", "sorcery"], zone: "graveyard" } },
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(glamdring)).toEqual(["fills|instant,sorcery|-|-"]);
+  // An untyped per-graveyard count is refused by the engine, so it is not proposed either.
+  const monument = { card: { name: "Riverchurn Monument" }, tags: { characteristics: { types: ["artifact"], subtypes: [], keywords: [] }, abilities: [{
+    kind: "activated", effect: { kind: "mill", scaling: "per-graveyard", scalingSubject: { control: "any", token: null, zone: "graveyard" } },
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(monument)).toEqual([]);
+  const dig = { card: { name: "Dig Through Time" }, tags: { characteristics: { types: ["instant"], subtypes: [], keywords: ["Delve"] }, abilities: [] } } as unknown as DeckCard;
+  expect(feederKeysOf(dig)).toEqual(["fills|-|-|-"]);
+  expect(fillDemandsOf(dig)[0]!.tags).toEqual(["mill:any", "discard:any", "dies:any", "enters-graveyard:any"]);
+  // A battlefield count is not a fill.
+  expect(fillDemandsOf(krenkoCounting())).toEqual([]);
+});
+
+// PLAY RATE BREAKS A TIE, AND ONLY A TIE (owner ruling 2026-09-16). Two payoffs with the same
+// demand score identically; the more played one is verified and printed first whatever order the
+// corpus handed them over in. A rarer demand still outranks a popular card on a common one.
+test("equal specificity is ordered by edhrecRank; a rarer demand still leads", () => {
+  const payoff = (name: string, rank: number | undefined, subtype?: string) => {
+    const d = base(name, [{
+      kind: "triggered",
+      trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, ...(subtype ? { subtype } : {}) } },
+      effect: { kind: "draw-card" },
+    }] as unknown as CardTags["abilities"]);
+    if (rank !== undefined) (d.card as { edhrecRank?: number }).edhrecRank = rank;
+    return d;
+  };
+  const obscure = payoff("Obscure Payoff", 9000);
+  const popular = payoff("Popular Payoff", 12);
+  const unranked = payoff("Unranked Payoff", undefined);
+  const goblinOnly = payoff("Goblin Payoff", 20000, "goblin");
+  const slugs = resolveSlugs(["Obscure Payoff", "Popular Payoff", "Unranked Payoff", "Goblin Payoff"]);
+  const freq = { "enters|creature|-|-": 2000, "enters|creature|goblin|-": 40 };
+  const { rows } = partnersFor(krenko, [unranked, obscure, goblinOnly, popular], [], freq, slugs, H);
+  expect(rows.map((r) => r.name)).toEqual(["Goblin Payoff", "Popular Payoff", "Obscure Payoff", "Unranked Payoff"]);
+  expect(rankOf(unranked)).toBe(Number.POSITIVE_INFINITY);
+});
+
+// THE `fills|` BRIDGE END TO END: a graveyard count's page lists the mill that feeds it (feeder
+// phase), the mill's page lists the count (forward phase), and delve is fed the same way -- every
+// row verified on the engine's own tag.
+test("a graveyard count is fed by a mill on both pages, and delve too", () => {
+  const scour = base("Thought Scour", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "you", token: null } }] }]);
+  const beast = base("Krosan Beast", [{ kind: "static", effect: { kind: "pump" }, threshold: { atLeast: 7 },
+    thresholdSubject: { control: "you", token: null, zone: "graveyard" } }] as unknown as CardTags["abilities"]);
+  const dig = base("Dig Through Time", []);
+  dig.tags.characteristics.keywords = ["Delve"];
+  dig.tags.characteristics.types = ["instant"];
+  const slugs = resolveSlugs(["Thought Scour", "Krosan Beast", "Dig Through Time"]);
+  const freq = { "fills|-|-|-": 900 };
+  const onBeast = partnersFor(beast, [], [scour], freq, slugs, H);
+  expect(onBeast.rows.map((r) => [r.name, r.event])).toEqual([["Thought Scour", "fills|-|-|-"]]);
+  expect(onBeast.rows[0]!.reason).toBe("Thought Scour fills your graveyard toward the 7 or more cards Krosan Beast needs");
+  expect(onBeast.pool["fills|-|-|-"]).toBe(1);
+  const onScour = partnersFor(scour, [beast, dig], [], freq, slugs, H);
+  expect(onScour.rows.map((r) => r.name).sort()).toEqual(["Dig Through Time", "Krosan Beast"]);
+  const onDig = partnersFor(dig, [], [scour], freq, slugs, H);
+  expect(onDig.rows.map((r) => r.name)).toEqual(["Thought Scour"]);
+  expect(onDig.rows[0]!.reason).toBe("Thought Scour fills the graveyard Dig Through Time delves from");
+  // A FETCHLAND FILLS WITH ITSELF, ONCE, and sorts behind a mill engine however played it is.
+  const wilds = base("Evolving Wilds", [{ kind: "activated", cost: "{T}, Sacrifice this land", effect: { kind: "search" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "land", self: true } }, { verb: "dies", subject: { control: "you", token: null, type: "land", self: true } }] }]);
+  wilds.tags.characteristics.types = ["land"];
+  (wilds.card as { edhrecRank?: number }).edhrecRank = 1;
+  (scour.card as { edhrecRank?: number }).edhrecRank = 800;
+  const ordered = partnersFor(beast, [], [wilds, scour], freq, resolveSlugs(["Evolving Wilds", "Thought Scour", "Krosan Beast"]), H);
+  expect(ordered.rows.map((r) => r.name)).toEqual(["Thought Scour", "Evolving Wilds"]);
+  // An opponent's mill fills nothing of yours: proposed by key, refused by the engine, counted.
+  const funeral = base("Mind Funeral", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "opp", token: null } }] }]);
+  const refused = partnersFor(beast, [], [funeral], freq, resolveSlugs(["Mind Funeral", "Krosan Beast"]), H);
+  expect(refused.rows).toEqual([]);
+  expect(refused.pool["fills|-|-|-"]).toBe(1);
 });
 
 // AF7d: a damage emit proposes itself to the receiving side too; the engine verifies the victim.

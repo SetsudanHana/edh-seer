@@ -205,6 +205,8 @@ export interface InjectableCard {
   /** How many cards can cause each event, keyed the way `partners[].event` is. Optional because
    *  the field is younger than the shard format; an absent map prints no count. */
   rarity?: Record<string, number>;
+  /** How many cards ASK for each event -- the withheld count the app prints under a group. */
+  pool?: Record<string, number>;
 }
 
 /** THE STATIC BLOCK A CRAWLER READS, and the one place this feature's claim is testable without a
@@ -226,18 +228,27 @@ export function cardPageHtml(
   // template: "793 cards can cause an artifact dying" is a sentence no other page prints with that
   // figure, and until 2026-09-08 it lived only in the React tree a crawler with JavaScript off
   // never saw. Same wording as the app's, so the two readers agree.
+  // EVERY ROW THE ARTIFACT HOLDS (`KEEP` caps it at the build), grouped by key and not by
+  // adjacency, the same split `PartnerList` draws. A `slice(0, 24)` lived here until 2026-09-16
+  // and would have silently cut the 60-row pages back to 24 for every crawler.
   const groups: { event: string; rows: string[] }[] = [];
-  for (const p of card.partners.slice(0, 24)) {
+  for (const p of card.partners) {
     const row = `      <li><a href="/cards/${esc(p.slug)}">${esc(p.name)}</a> — ${esc(p.reason)}</li>`;
-    const last = groups.at(-1);
-    if (last?.event === p.event) last.rows.push(row);
+    const g = groups.find((x) => x.event === p.event);
+    if (g) g.rows.push(row);
     else groups.push({ event: p.event, rows: [row] });
   }
   const rows = groups.map((g) => {
     const n = card.rarity?.[g.event];
     const count = n === undefined ? ""
       : `    <p>${n.toLocaleString("en-US")} cards can cause ${esc(eventKeySentence(g.event))}.</p>\n`;
-    return `${count}    <ol>\n${g.rows.join("\n")}\n    </ol>`;
+    // THE WITHHELD COUNT, in the HTML too: it is the other number that makes this block this
+    // card's, and the app has printed it under every group since the list was grouped.
+    const withheld = (card.pool?.[g.event] ?? g.rows.length) - g.rows.length;
+    const more = withheld > 0
+      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ask for it too, equally specific — the ones shown are the most played.</p>`
+      : "";
+    return `${count}    <ol>\n${g.rows.join("\n")}\n    </ol>${more}`;
   }).join("\n");
   const crossLink = kind === "card"
     ? (card.commander
