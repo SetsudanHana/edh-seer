@@ -341,27 +341,28 @@ test("a life change still carries the player it happens to", () => {
 describe("an exile or a bounce off the battlefield is a leaves event", () => {
   test("exile from the battlefield emits leaves with the object's subject", () => {
     const e = actionEmits({ verb: "exile", object: "target creature you control", fromZone: "battlefield", toZone: "exile" });
-    expect(e.map((x) => x.verb)).toEqual(["leaves"]);
-    expect(e[0].subject).toEqual({ control: "you", token: null, type: "creature", scope: "target", fromZone: "battlefield" });
+    expect(e.map((x) => x.verb)).toEqual(["exiled", "leaves"]);
+    expect(e[1].subject).toEqual({ control: "you", token: null, type: "creature", scope: "target", fromZone: "battlefield" });
   });
 
   test("exile with an unstated origin emits leaves when the object is a typed permanent", () => {
     const e = actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" });
-    expect(e.map((x) => x.verb)).toEqual(["leaves"]);
+    expect(e.map((x) => x.verb)).toEqual(["exiled", "leaves"]);
   });
 
   test("exile of a CARD, or from a stated non-battlefield zone, emits no battlefield leave", () => {
-    expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: "exile" })).toEqual([]);
-    expect(actionEmits({ verb: "exile", object: "target card from your hand", fromZone: "hand", toZone: "exile" })).toEqual([]);
+    // No battlefield leave -- but every exile puts a card into exile (AF7b), so `exiled` alone.
+    expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: "exile" }).map((x) => x.verb)).toEqual(["exiled"]);
+    expect(actionEmits({ verb: "exile", object: "target card from your hand", fromZone: "hand", toZone: "exile" }).map((x) => x.verb)).toEqual(["exiled"]);
     // A graveyard origin is a leave of a different zone -- see the graveyard block below.
     const gy = actionEmits({ verb: "exile", object: "target creature card from a graveyard", fromZone: "graveyard", toZone: "exile" });
-    expect(gy.map((e) => [e.verb, e.subject.zone])).toEqual([["leaves", "graveyard"]]);
+    expect(gy.map((e) => [e.verb, e.subject.zone])).toEqual([["exiled", undefined], ["leaves", "graveyard"]]);
   });
 
   test("exile of an untyped pronoun with no self hint emits nothing; with the self hint it emits a self leaves", () => {
     expect(actionEmits({ verb: "exile", object: "it", fromZone: null, toZone: "exile" })).toEqual([]);
     const self = actionEmits({ verb: "exile", object: "this creature", fromZone: null, toZone: "exile" }, undefined, { self: true });
-    expect(self.map((x) => x.verb)).toEqual(["leaves"]);
+    expect(self.map((x) => x.verb)).toEqual(["exiled", "leaves"]);
   });
 
   test("return to hand from the battlefield emits a battlefield leave; from a graveyard, a graveyard leave", () => {
@@ -400,7 +401,7 @@ describe("a card moved out of a graveyard is a graveyard leave", () => {
 
   test("Cremate: an exile from a graveyard, and a put to the library, each leave the graveyard", () => {
     expect(actionEmits({ verb: "exile", object: "target card from a graveyard", fromZone: "graveyard", toZone: null })
-      .map((x) => [x.verb, x.subject.zone])).toEqual([["leaves", "graveyard"]]);
+      .map((x) => [x.verb, x.subject.zone])).toEqual([["exiled", undefined], ["leaves", "graveyard"]]);
     expect(actionEmits({ verb: "put", object: "target card from your graveyard", fromZone: "graveyard", toZone: "library" })
       .map((x) => [x.verb, x.subject.zone])).toEqual([["leaves", "graveyard"]]);
   });
@@ -423,9 +424,9 @@ describe("a card moved out of a graveyard is a graveyard leave", () => {
 // "exile" the row missed every one of them (2026-09-05).
 test("an exile with no stated destination still left the battlefield", () => {
   const e = actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: null });
-  expect(e.map((x) => [x.verb, x.subject.type, x.subject.zone])).toEqual([["leaves", "creature", undefined]]);
+  expect(e.map((x) => [x.verb, x.subject.type, x.subject.zone])).toEqual([["exiled", "creature", undefined], ["leaves", "creature", undefined]]);
   // A card from the library is still not a permanent, and a `put` with no destination is unknown.
-  expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: null })).toEqual([]);
+  expect(actionEmits({ verb: "exile", object: "the top card of your library", fromZone: null, toZone: null }).map((x) => x.verb)).toEqual(["exiled"]);
   expect(actionEmits({ verb: "put", object: "target creature", fromZone: null, toZone: null })).toEqual([]);
   // A return with no destination is a bounce only when the clause says "to its owner's hand".
   const otawara = actionEmits({ verb: "return", object: "target artifact, creature, enchantment, or planeswalker", fromZone: null, toZone: null },
@@ -538,4 +539,26 @@ test("a fight against an opponent's creature emits both halves; one among your o
   const own = actionEmits({ verb: "fight", object: "target creature you control and another target creature you control" },
     "Target creature you control fights another target creature you control.");
   expect(own.filter((e) => e.verb === "non-combat-damage")).toHaveLength(1);
+});
+
+// EVERY EXILE PUTS SOMETHING INTO EXILE (CR 406.2; AF7b, 2026-09-16): the event the 39 corpus
+// "put into exile" triggers watch and the processors demand. A battlefield exile also leaves.
+test("an exile emits `exiled` whatever its origin; a battlefield exile also leaves", () => {
+  const top = actionEmits({ verb: "exile", object: "the top four cards of target opponent's library", fromZone: "library" },
+    "Target opponent exiles the top four cards of their library.");
+  expect(top.map((e) => e.verb)).toEqual(["exiled"]);
+  expect(top[0].subject).toMatchObject({ control: "opp", fromZone: "library" });
+  const removal = actionEmits({ verb: "exile", object: "target creature", fromZone: "battlefield" }, "Exile target creature.");
+  expect(removal.map((e) => e.verb).sort()).toEqual(["exiled", "leaves"]);
+});
+
+// THE TEMPORARY-TOKEN RIDER IS NOT AN EXILE EVENT: "exile it at the beginning of the next end step"
+// is `Ability.temporary` on the maker, and reading it as `exiled` doubled every trigger reason on
+// Flameshadow Conjuring, Inalla and Stormsplitter (+187 rows on the 71 before this).
+test("an end-step exile of the clause's own token emits nothing", () => {
+  const text = "Whenever a nontoken creature enters under your control, you may pay {R}. If you do, create a token that's a copy of that creature. That token gains haste. Exile it at the beginning of the next end step.";
+  expect(actionEmits({ verb: "exile", object: "it", fromZone: null, toZone: "exile" }, text)).toEqual([]);
+  expect(actionEmits({ verb: "exile", object: "the tokens", fromZone: null, toZone: "exile" }, "Create two tokens. Exile the tokens at the beginning of the next end step.")).toEqual([]);
+  // A real exile in the same sentence shape is still one.
+  expect(actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" }, "Exile target creature.").map((e) => e.verb)).toContain("exiled");
 });

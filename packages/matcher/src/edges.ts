@@ -16,7 +16,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, auraHostSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -1569,6 +1569,28 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // copied onto every Reason and read by impact.ts, buckets.ts and wincon.ts. Bonehoard is a 0/0
   // Germ until something dies.
   //
+  // A PROCESSOR EATS WHAT YOU EXILED OF THEIRS (AF7b, 2026-09-16; recall v5 #160 Oblivion Sower ->
+  // Ulamog's Nullifier). The same shape as the recursion pass one zone over: an `exiled` emit
+  // aimed at an opponent's cards -- a removal, their top cards, their graveyard -- is the supply,
+  // and `exile-processing` (a from-exile move whose object names an opponent as owner) is the
+  // demand. Your OWN exiles (an impulse draw, a self-exile cost, a flicker) feed nothing here:
+  // the processor wants a card an opponent owns. `any` is kept -- "exile target card from a
+  // graveyard" reaches theirs as readily as yours.
+  for (const e of pEvents) {
+    if (e.verb !== "exiled" || e.subject.control === "you" || e.subject.self === true) continue;
+    for (const a of c.tags.abilities) {
+      if (a.effect.kind !== "exile-processing") continue;
+      reasons.push({
+        tag: `exile-processing:${themeSubjectKey(e.subject)}`,
+        text: processorSentence(p.card.name, c.card.name),
+        effectKind: a.effect.kind,
+        repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+    }
+  }
+
   // GATED ON WHAT IS COUNTED, never on the basis alone. `per-graveyard` covers Cavalier of Flame's
   // LAND cards, Glamdring's instants and sorceries and Bonehoard's creatures alike, and the basis
   // would claim all three are fed by milling anything — 676 candidate pairs across the 71 decks.
@@ -2503,7 +2525,7 @@ function typeMatchesCharacteristics(wanted: string | string[], chars: CardTags["
 
 const SELF_BOTH_REFUSED: ReadonlySet<string> = new Set([
   "counter-added", "counter-removed", "transform", "turned-face-up", "attached", "unattached", "gains-control",
-  "phases-out", "regenerate", "copy", "reveal", "exchange", "double", "triple", "shuffle", "prevented",
+  "phases-out", "regenerate", "copy", "reveal", "exchange", "double", "triple", "shuffle", "prevented", "exiled",
   // AC11 batch 3, the keyword actions done TO a creature.
   "goad", "exert", "detain", "suspect", "harness", "explore", "endure", "convert", "heal", "airbend", "foretell",
 ]);

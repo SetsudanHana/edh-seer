@@ -22,6 +22,7 @@ export const DOES: { kind: string; label: string }[] = [
   { kind: "mill", label: "mills" },
   { kind: "untap", label: "untaps" },
   { kind: "flicker", label: "flickers" },
+  { kind: "exile-processing", label: "processes exiled cards" },
   { kind: "copy-spell", label: "copies spells" },
   { kind: "copy-ability", label: "copies abilities" },
   { kind: "clone", label: "copies permanents" },

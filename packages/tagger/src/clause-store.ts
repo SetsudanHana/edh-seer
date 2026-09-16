@@ -278,6 +278,9 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   // word, checked before the row was added (one, Belltower Sphinx, says "deals damage to this
   // creature" rather than "is dealt", so the cue is the noun, not the passive).
   damaged: /\bdamage\b/i,
+  // AF7b (2026-09-16): 36 `exiled` clause docs, 3 of them phantoms that never print the word --
+  // Imotekh, Erebos's Titan and Ultron's Auxiliary trigger on a card LEAVING a graveyard.
+  exiled: /\bexile/i,
   "non-combat-damage": /\bdamage/i,
   // ADDED 2026-09-07 WITH THE VERBS THEMSELVES, and this table is the reason the addition is safe.
   // Before `scry`/`surveil`/`search` were engine verbs, `normalizeTriggerVerb` returned null for

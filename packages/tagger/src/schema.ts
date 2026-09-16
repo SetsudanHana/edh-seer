@@ -312,6 +312,12 @@ export type Verb =
    *  emit's VICTIM subject is what supplies it (matcher `damagedMatches`). 120 corpus triggers,
    *  34 in the 71 decks (recall v5 #116, v7 #82; AF7d). */
   | "damaged"
+  /** A CARD PUT INTO EXILE (CR 406.2), emitted by every `exile` action whatever the origin -- a
+   *  removal, an impulse draw off the top, a graveyard exile, a self-exile cost. Consumed by
+   *  "whenever one or more cards are put into exile" (39 corpus triggers) and, through the
+   *  `exile-processing` kind, by the processors that eat an opponent's exiled cards (AF7b,
+   *  recall v5 #160 Oblivion Sower -> Ulamog's Nullifier). */
+  | "exiled"
   | "draw"
   | "discard"
   | "mill"
@@ -435,6 +441,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "non-combat-damage",
   "combat-damage",
   "damaged",
+  "exiled",
   "draw",
   "discard",
   "mill",
@@ -656,6 +663,13 @@ export const EFFECT_KINDS = [
   "untap",
   "proliferate",
   "graveyard-hate",
+  // A PROCESSOR (Battle for Zendikar's Eldrazi, 22 corpus cards): "put a card an opponent owns from
+  // exile into that player's graveyard" (Ulamog's Nullifier, Ruin Processor, Blight Herder). The
+  // demand is on cards an OPPONENT owns in exile, so the kind is keyed on the owner phrase in the
+  // action's object, not on the zone move alone -- Oblivion Sower's lands "that player owns from
+  // exile" are the same demand aimed at the battlefield, and a flicker returning YOUR exiled
+  // creature is not. Fed by an `exiled` emit aimed at an opponent's cards (AF7b, 2026-09-16).
+  "exile-processing",
   "extra-combat",
   // A keyword handed to OTHER permanents. Deliberately not attempted for a long time -- see
   // effect-kind.ts -- because hexproof/indestructible/ward are the `protection` deck ROLE and

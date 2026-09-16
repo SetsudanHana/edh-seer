@@ -319,6 +319,13 @@ export function extraPhaseName(object: string, clauseText: string): string | und
   return read(object.toLowerCase()) ?? read(clauseText.toLowerCase());
 }
 
+/** The verbs a processor uses on an opponent's exiled card: put/return it into a graveyard or
+ *  onto the battlefield, exile it again (Cryptic Cruiser), cast it (Draugr Necromancer). */
+const PROCESSES_EXILE: ReadonlySet<string> = new Set(["put", "return", "exile", "cast"]);
+/** "a card an opponent owns", "two cards your opponents own", "land cards that player owns" -- the
+ *  owner phrase that makes a from-exile move a processor rather than a flicker. */
+const OPPONENT_OWNS = /\b(?:an opponent|your opponents|target opponent|that player|each opponent) owns?\b/i;
+
 export function actionEffectKind(action: Action, clauseText = ""): EffectKind | null {
   const verb = action.verb ?? "";
   // CR 614.1c — "this creature enters with three +1/+1 counters on it" is a REPLACEMENT EFFECT on
@@ -338,6 +345,13 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // removal, you always would target opponent creatures"). Neither a pump nor a debuff: no kind.
   if (verb === "modify-pt" && !/^\s*[+-]/.test(String(action.amount ?? "")) && /\bbase power\b/i.test(clauseText)) return null;
   if (verb === "other" && WINS.test(`${action.object ?? ""} ${clauseText}`)) return "win-game";
+  // A PROCESSOR takes from cards an OPPONENT OWNS in exile (AF7b, 2026-09-16): the owner phrase is
+  // what tells Ulamog's Nullifier's "two cards your opponents own" from a flicker returning your
+  // own exiled creature, and Oblivion Sower's "land cards that player owns from exile" from a
+  // plain put onto the battlefield. 22 corpus cards, every one an owner phrase. Checked before the
+  // zone rules, which would file the battlefield-bound ones as `flicker`.
+  if (PROCESSES_EXILE.has(verb) && (action.fromZone === "exile" || /from exile/i.test(action.object ?? ""))
+    && OPPONENT_OWNS.test(action.object ?? "")) return "exile-processing";
   if (verb === "extra-turn" || verb === "extra-phase") {
     return extraUnitKind(String(action.object ?? ""), clauseText);
   }

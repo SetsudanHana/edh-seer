@@ -243,12 +243,35 @@ const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, 
   // when the object is permanent-shaped: no "card", no origin zone of its own, and either a type or
   // the card itself. A bare "it" that derive could not resolve emits nothing -- silence over a
   // wildcard that would satisfy every leaves payoff in the deck.
-  { verb: "exile", to: "exile", verbs: ["leaves"], when: leftTheBattlefield },
+  // EVERY EXILE PUTS SOMETHING INTO EXILE (CR 406.2), so `exiled` is unconditional (AF7b,
+  // 2026-09-16); a battlefield exile ALSO left the battlefield. First row wins, so the conditional
+  // one sits first.
+  { verb: "exile", to: "exile", verbs: ["exiled", "leaves"], when: leftTheBattlefield },
+  // ...but "exile it" with no antecedent left is a wildcard supply and stays silent, the refusal
+  // every untyped pronoun emit gets; "the top card of your library" names its owner and origin.
+  { verb: "exile", to: "exile", verbs: ["exiled"], when: (a, _s, self) => self || !BARE_PRONOUN.test((a.object ?? "").trim()) },
   // A BOUNCE. "Return target creature to its owner's hand" is a leave for exactly the same reason;
   // "return target creature card from your graveyard to your hand" is recursion and stays silent
   // here (its origin is stated and it is not the battlefield).
   { verb: "return", to: "hand", verbs: ["leaves"], when: leftTheBattlefield },
 ];
+
+/** An object that is nothing but a back-reference: "it", "them", "that card". */
+const BARE_PRONOUN = /^(?:it|them|this|that|those|that card|those cards|that permanent|that creature|the exiled cards?)$/i;
+
+/** A TOKEN THAT LEAVES THE SAME TURN IT ARRIVED -- "Exile it at the beginning of the next end step"
+ *  (Inalla, Cogwork Assembler, Flameshadow Conjuring), "Sacrifice that token at end of combat"
+ *  (Geist of Saint Traft), "exile the tokens/the copies" (Stormsplitter, Manaform Hellkite). The
+ *  fact is `Ability.temporary` on the token-generation (derive.ts); the rider is NOT an exile event
+ *  of its own -- read as one it gave every temporary-token maker a second, kindless ability
+ *  carrying the clause's trigger, and every entering creature a second reason "...Flameshadow
+ *  Conjuring triggers" beside "...makes a token" (+187 duplicate rows on the 71, 2026-09-16).
+ *  Anchored on the token back-reference so a clause that exiles something ELSE at end of turn
+ *  cannot match; "sacrifice" sits beside "exile" because the family splits on the MANNER. */
+export const LEAVES_SAME_TURN =
+  /\b(?:exile|sacrifice)\s+(?:it|them|that token|those tokens|the tokens?|the cop(?:y|ies)|that copy|those copies)\b[^.]{0,80}?\b(?:at the beginning of the next end step|at end of turn|at end of combat)\b/i;
+/** The rider's own object: the token(s) the clause just made. */
+export const TEMPORARY_TOKEN_REF = /^(?:it|them|that token|those tokens|the tokens?|the cop(?:y|ies)|that copy|those copies)$/i;
 
 /** The verbs that move a card out of the zone `fromZone` names. See the `leftTheGraveyard` read in
  *  `actionEmits`. `search` is not one; neither is `none`, `modify-pt` or `copy`, which name a card in
@@ -363,6 +386,9 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // sibling's strength to its own (subsumption), so `draw:spell` inherited all 29 cards of
   // `draw:any` and outranked it: `birb-control` read "draw" at cohesion 0.02, one card of 78.
   // Same shape on Ledger Shredder ("this creature connives") -> `draw:creature`.
+  // The temporary-token rider ("exile it at the beginning of the next end step") is the token
+  // leaving, already recorded as `temporary` on the maker's own ability -- not an exile event.
+  if (action.verb === "exile" && LEAVES_SAME_TURN.test(clauseText ?? "") && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim())) return [];
   const subject = parseSubject(action.object ?? "");
   // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
   // model writes it out less often than not -- Swords to Plowshares, Path to Exile and Deadly
