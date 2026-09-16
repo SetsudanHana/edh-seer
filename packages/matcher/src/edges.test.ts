@@ -1798,6 +1798,37 @@ test("a subtype-list tutor is keyed on the subtype the found card carries", () =
   expect(pairReasons(flamekin, base("Grizzly Bears", [], ["bear"]), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
 
+// TYPECYCLING IS A TYPED LAND SEARCH (recall v7 #199, 2026-09-16): Lorien Revealed's islandcycling
+// reaches every Island in the deck, a dual included; basic landcycling reaches the basics only;
+// Wizardcycling is a typal tutor. The umbrella keywords Scryfall stamps beside them name no class.
+test("a typecycling keyword searches like an authored typed land search", () => {
+  const withKw = (name: string, kws: string[]) => {
+    const c = base(name, []);
+    c.tags.characteristics.keywords = kws;
+    c.tags.characteristics.types = ["sorcery"];
+    return c;
+  };
+  const land = (name: string, types: string[], subs: string[]) => {
+    const c = base(name, [], subs);
+    c.tags.characteristics.types = types;
+    (c.card as { typeLine: string }).typeLine = `Land — ${subs.join(" ")}`;
+    return c;
+  };
+  const lorien = withKw("Lorien Revealed", ["Islandcycling", "Landcycling", "Typecycling", "Cycling"]);
+  const hollow = land("Sunken Hollow", ["land"], ["island", "swamp"]);
+  expect(pairReasons(lorien, hollow, H).map((r) => r.tag)).toContain("ramp-target:island");
+  expect(pairReasons(lorien, land("Swamp", ["basic", "land"], ["swamp"]), H).some((r) => r.tag.startsWith("ramp-target"))).toBe(false);
+  const troll = withKw("Troll of Khazad-dum", ["Swampcycling", "Landcycling", "Typecycling", "Cycling"]);
+  expect(pairReasons(troll, hollow, H).map((r) => r.tag)).toContain("ramp-target:swamp");
+  const dragon = withKw("Eternal Dragon", ["Basic landcycling", "Landcycling", "Typecycling", "Cycling"]);
+  expect(pairReasons(dragon, land("Plains", ["basic", "land"], ["plains"]), H).map((r) => r.tag)).toContain("ramp-target:basic");
+  expect(pairReasons(dragon, hollow, H).some((r) => r.tag.startsWith("ramp-target"))).toBe(false);
+  const wizardcycler = withKw("Vedalken Aethermage", ["Wizardcycling", "Typecycling", "Cycling"]);
+  expect(pairReasons(wizardcycler, base("Naru Meha", [], ["human", "wizard"]), H).map((r) => r.tag)).toContain("tutor:wizard");
+  // Plain cycling and the umbrellas alone search for nothing.
+  expect(pairReasons(withKw("Plain Cycler", ["Cycling", "Landcycling"]), hollow, H).some((r) => r.tag.startsWith("ramp-target") || r.tag.startsWith("tutor"))).toBe(false);
+});
+
 test("a whole-board-type tutor forms no edge, because it reaches the whole deck", () => {
   const worldly = base("Worldly Tutor", [{
     kind: "on-cast",
