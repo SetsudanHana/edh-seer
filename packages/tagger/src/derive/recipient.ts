@@ -52,6 +52,14 @@ const CUES: [string, RegExp][] = [
   // controller the vocabulary knows -- and `any` matched every payoff for YOUR creatures dying.
   ["sacrifice", new RegExp(`\\b(${WHO})\\s+${ADVERB}sacrifices?\\b`, "i")],
   ["discard", new RegExp(`\\b(${WHO})\\s+${ADVERB}discards?\\b`, "i")],
+  // Mind Funeral: "Target opponent reveals cards ... That player puts all cards revealed this way
+  // into their graveyard" -- a mill written as a put, and the only verb the actor table did not
+  // know, so the fill derived `any` and the delve pass had to read the printed "target opponent"
+  // itself (`fillsOnlyOpponents`, PR #344). 54 corpus clauses put with a named actor; "that player"
+  // 27, "each player" 11, "target opponent" 6. derive.ts fills only an UNSTATED control for this
+  // verb: "puts a creature card ... onto the battlefield under your control" (Visions of Dread) is
+  // the opponent acting and YOUR permanent entering, and the object text already says so.
+  ["put", new RegExp(`\\b(${WHO})\\s+${ADVERB}puts?\\b`, "i")],
 ];
 
 /** An actor phrase to the control it states, or undefined when it states nothing sharper than "any".
@@ -80,7 +88,7 @@ function controlOf(phrase: string, text: string, at: number): Control | undefine
  *  player words matter. */
 const STEMS: Record<string, string> = {
   draw: "draw", cast: "cast", play: "play", discard: "discard", mill: "mill", create: "creat",
-  search: "search", sacrifice: "sacrific", "gain-life": "gain", "lose-life": "los",
+  search: "search", sacrifice: "sacrific", "gain-life": "gain", "lose-life": "los", put: "put",
 };
 const PLAYER_WORD = /\b(?:opponents?|players?|controllers?|owners?)\b/i;
 
