@@ -205,6 +205,21 @@ test("selfLeavesTypes stamps the card's own types on an untyped self leaves and 
   expect(out[2]).toEqual(events[2]);
 });
 
+// RECALL v7 #25 (2026-09-16): a self SACRIFICE or DEATH is the same known permanent. Riveteers
+// Overlook's "sacrifice it" emitted no type, so Juri's "whenever you sacrifice a permanent" never
+// saw it; a self enters is left alone (the self-trigger gate reads it).
+test("selfLeavesTypes stamps the card's own types on a self sacrifice and a self dies too", () => {
+  const events: GameEvent[] = [
+    { verb: "sacrifice", subject: { control: "you", token: null, self: true } },
+    { verb: "dies", subject: { control: "you", token: null, self: true } },
+    { verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } },
+  ];
+  const out = selfLeavesTypes(events, chars(["land"], []));
+  expect(out[0].subject.type).toEqual(["land"]);
+  expect(out[1].subject.type).toEqual(["land"]);
+  expect(out[2]).toEqual(events[2]);
+});
+
 test("mill/discard do NOT imply a leaves (Blood Artist must stay unfed)", () => {
   const emits: GameEvent[] = [{ verb: "mill", subject: { control: "opp", token: null } }];
   const out = impliedGraveyardEvents(emits);
