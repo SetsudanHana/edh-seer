@@ -535,6 +535,14 @@ export function winconSentence(producer: string, consumer: string): string {
   return `${producer} is what ${consumer} counts toward winning`;
 }
 
+/** CR 704.5m: an Aura whose host leaves goes to the graveyard with it. The producer never touches
+ *  the Aura; it removes the thing the Aura is attached to, so the sentence names the host by the
+ *  Aura's own Enchant line ("what it enchants") and states the rule, not a trigger the producer
+ *  fires. */
+export function auraHostSentence(producer: string, consumer: string, hostNoun: string): string {
+  return `${producer} removes the ${hostNoun} ${consumer} enchants, and ${consumer} goes to the graveyard with it`;
+}
+
 /** A count the consumer is GATED on, not one it grows with: Gadrak "can't attack unless you control
  *  four or more artifacts", Chrome Steed "as long as you control three or more artifacts", Urza's
  *  Workshop "activate only if". The producer is one of the things counted, so the sentence says

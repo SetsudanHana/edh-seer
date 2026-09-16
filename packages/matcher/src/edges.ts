@@ -16,7 +16,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, auraHostSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -1120,6 +1120,26 @@ export interface ReasonOptions {
   landTypes?: LandTypes;
 }
 
+/** AN AURA DIES WITH ITS HOST (CR 704.5m; recall v6 #57, Chime of Night <- Dockside Chef). "When
+ *  this Aura is put into a graveyard from the battlefield" is a self trigger on an ENCHANTMENT, and
+ *  no sacrifice outlet eats an enchantment -- but every one that eats the creature it is attached
+ *  to sends the Aura to the graveyard by rule, and that is what the card is for. So a producer
+ *  whose event removes the class the Aura's printed Enchant line names (a death, or a leave from the
+ *  battlefield -- a bounce or a flicker unattaches it just the same) supplies the Aura's own `dies`
+ *  or `leaves` trigger. The host is matched against the Enchant line as a subject, so "Enchant
+ *  creature card in a graveyard" (Animate Dead, zone graveyard) is never fed by a battlefield death,
+ *  and a producer removing ITSELF is not removing a host. 42 corpus Auras carry the shape, 4 in the
+ *  71 decks; the other 109 Aura dies-triggers say "when enchanted creature dies" and already read as
+ *  a `dies:creature` demand. */
+function auraHostLeaves(chars: CardTags["characteristics"], e: GameEvent, t: GameEvent, h: Hierarchy): boolean {
+  const host = chars.enchants;
+  if (!host || t.subject.self !== true || (t.verb !== "dies" && t.verb !== "leaves")) return false;
+  if (e.verb !== "dies" && e.verb !== "leaves") return false;
+  if (e.subject.self === true) return false;
+  const { zone: _z, fromZone: _f, ...printed } = e.subject;
+  return subjectMatches({ ...printed, zone: e.subject.zone ?? "battlefield" }, host.zone === undefined ? { ...host, zone: "battlefield" } : host, h);
+}
+
 /** AN UNTYPED LAND PUT RESOLVES AGAINST THE DECK'S OWN LANDS (owner ruling 2026-09-16, recall v6
  *  #197 PuPu UFO -> Valakut). "Put a land card from your hand onto the battlefield" promises no
  *  Mountain in isolation -- the #140 line, a fill that cannot promise the class -- but in a deck
@@ -1288,7 +1308,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
-        const e = landPutFor(e0, t, opts.landTypes, ownEvents, h);
+        const viaHost = auraHostLeaves(c.tags.characteristics, e0, t, h);
+        const e = viaHost ? e0 : landPutFor(e0, t, opts.landTypes, ownEvents, h);
         if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"
         // event and the Treasure NODE's own implied "it enters" event (Task 6 -- `selfSubject` in
@@ -1337,7 +1358,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
         // ETB, and a rule that deleted that would be the mistake the taps work already caught once.
         // `zone` is dropped for the same reason as in the reanimator gate below: printed
         // characteristics sit in no zone.
-        if (t.subject.self === true) {
+        if (t.subject.self === true && !viaHost) {
           // "EXILED WITH THIS CARD" IS A SET ONLY THE PRODUCER CAN ENUMERATE, and the emit drops the
           // restriction: Gisa, Glorious Resurrector and The Darkness Crystal both emit a bare
           // `enters: creature` for "put all creature cards exiled with <me> onto the battlefield",
@@ -1389,7 +1410,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
         const clonesOnEntry = a.effect.kind === "clone" && t.verb === "enters" && t.subject.self === true;
         reasons.push({
           tag: key,
-          text: proliferateDemand ? proliferateSentence(p.card.name, c.card.name)
+          text: viaHost ? auraHostSentence(p.card.name, c.card.name, (emitSubjectNoun(c.tags.characteristics.enchants) ?? "a permanent").replace(/^an? /, ""))
+            : proliferateDemand ? proliferateSentence(p.card.name, c.card.name)
             : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)
             : reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,

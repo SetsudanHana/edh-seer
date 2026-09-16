@@ -2202,6 +2202,43 @@ test("a typed win condition edges to what it counts; an untyped one stays a role
   expect(reasons(false)).toHaveLength(0);
 });
 
+// AN AURA DIES WITH ITS HOST (CR 704.5m; recall v6 #57). "When this Aura is put into a graveyard from
+// the battlefield" is a self trigger on an enchantment that no outlet eats -- but every outlet that
+// eats the creature it is attached to sends it to the graveyard by rule.
+test("a producer that removes what an Aura enchants supplies the Aura's own dies trigger", () => {
+  const chime = (enchants?: Record<string, unknown>): CardTags => ({
+    oracleId: "chime", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: ["aura"], colors: ["B"], identity: ["B"], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      ...(enchants ? { enchants: { control: "any", token: null, ...enchants } as CardTags["characteristics"]["enchants"] } : {}) },
+    abilities: [{
+      kind: "triggered", effect: { kind: "" },
+      trigger: { verbs: ["dies"], subject: { control: "you", token: null, subtype: "aura", self: true } },
+    }],
+  });
+  const outlet = (emit: Record<string, unknown>): CardTags => ({
+    oracleId: "chef", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment", "creature"], subtypes: ["human", "citizen"], colors: ["B"], identity: ["B"], cmc: 2,
+      power: "1", toughness: "2", token: false, keywords: [] },
+    abilities: [{ kind: "activated", cost: "{1}{B}, Sacrifice an artifact or creature", effect: { kind: "" },
+      emits: [{ verb: "dies", subject: { control: "you", token: null, ...emit } as CardTags["abilities"][number]["emits"] extends (infer E)[] | undefined ? E extends { subject: infer S } ? S : never : never, instantSpeed: true }] }],
+  });
+  const reasons = (c: CardTags, p: CardTags) => directedReasons(
+    { card: { name: "Dockside Chef" } as DeckCard["card"], tags: p },
+    { card: { name: "Chime of Night" } as DeckCard["card"], tags: c }, H,
+  ).filter((r) => r.tag.startsWith("dies:"));
+
+  const fed = reasons(chime({ type: "creature" }), outlet({ type: ["creature", "artifact"] }));
+  expect(fed).toHaveLength(1);
+  expect(fed[0].text).toBe("Dockside Chef removes the creature Chime of Night enchants, and Chime of Night goes to the graveyard with it");
+  // Without the Enchant line the self trigger is what it always was: fed by nothing that eats creatures.
+  expect(reasons(chime(), outlet({ type: ["creature", "artifact"] }))).toHaveLength(0);
+  // A land dying is not the creature the Aura sits on.
+  expect(reasons(chime({ type: "creature" }), outlet({ type: "land" }))).toHaveLength(0);
+  // A producer removing ITSELF is not removing a host.
+  expect(reasons(chime({ type: "creature" }), outlet({ type: "creature", self: true }))).toHaveLength(0);
+});
+
 // A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION AS A WIN CONDITION'S (2026-09-16; recall v6
 // #77 Gadrak, v7 #79 Urza's Workshop): the producer is one of the things the consumer counts, and
 // below the count the consumer does nothing. Whatever the effect kind -- Gadrak's `cant` derives no

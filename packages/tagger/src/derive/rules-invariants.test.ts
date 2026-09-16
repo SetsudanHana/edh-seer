@@ -38,6 +38,8 @@ const TESTED: Record<string, string> = {
   "706": "verb-accounting.test.ts / emits — roll-dice emits dice-rolled",
   "602.5": "threshold.test.ts — 'activate only if' gates the whole ability, the one later sentence that is not a rider",
   "611.3a": "threshold.test.ts / derive.test.ts — a static's 'as long as' count is a threshold on the ability",
+  "702.5a": "characteristics.test.ts — an Aura's Enchant line is carried as `characteristics.enchants`",
+  "704.5m": "matcher edges.test.ts — a producer removing what an Aura enchants supplies the Aura's own dies trigger",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {

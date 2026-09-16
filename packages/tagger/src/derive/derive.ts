@@ -69,7 +69,9 @@ import { emblemRecipient } from "../emblem.js";
 // Steed's "as long as", Urza's Workshop's "activate only if", Gadrak's "can't attack unless" (recall
 // v6 #77, v7 #79); a typed count keeps a kindless ability alive the way a trigger does; the count's
 // controller is read from the words before the number, and an event count refuses.
-export const DERIVE_VERSION = 146;
+// 147: `characteristics.enchants` -- an Aura's printed Enchant line as a subject, so the matcher
+// can let the host's death carry the Aura to the graveyard (CR 704.5m; recall v6 #57 Chime of Night).
+export const DERIVE_VERSION = 147;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
