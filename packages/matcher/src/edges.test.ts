@@ -1783,12 +1783,41 @@ test("a typal tutor forms an edge with what it can find", () => {
   expect(reasons.some((r) => r.tag === "tutor:elemental")).toBe(true);
 });
 
-test("a bare-type tutor forms no edge, because it reaches the whole deck", () => {
+test("a whole-board-type tutor forms no edge, because it reaches the whole deck", () => {
   const worldly = base("Worldly Tutor", [{
     kind: "on-cast",
     effect: { kind: "search", subject: { control: "you", token: null, type: "creature" } },
   }]);
   expect(pairReasons(worldly, base("Any Creature", []), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+});
+
+// A LONE TYPE OUTSIDE THE WHOLE BOARD NARROWS (owner ruling 2026-09-16, the third ask). Mystical
+// Tutor was the 09-07 ruling's own witness -- "Mystical Tutor can find you that piece, so it is
+// another copy of your combo" -- and the subtype bar refused it. Fabricate reaches the artifacts,
+// Mystical Tutor the instants and sorceries; "a creature card" and "a land card" stay the board.
+test("an off-board-type tutor forms an edge with each card of that type", () => {
+  const withTypes = (card: ReturnType<typeof base>, types: string[]) =>
+    ({ ...card, tags: { ...card.tags, characteristics: { ...card.tags.characteristics, types } } });
+  const fabricate = base("Fabricate", [{
+    kind: "on-cast",
+    effect: { kind: "search", subject: { control: "you", token: null, type: "artifact" } },
+  }]);
+  const solRing = withTypes(base("Sol Ring", []), ["artifact"]);
+  expect(pairReasons(fabricate, solRing, H).some((r) => r.tag === "tutor:artifact")).toBe(true);
+  expect(pairReasons(fabricate, base("Grizzly Bears", [], ["bear"]), H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+  const mystical = base("Mystical Tutor", [{
+    kind: "on-cast",
+    effect: { kind: "search", subject: { control: "you", token: null, type: ["instant", "sorcery"] } },
+  }]);
+  const counterspell = withTypes(base("Counterspell", []), ["instant"]);
+  expect(pairReasons(mystical, counterspell, H).some((r) => r.tag.startsWith("tutor:"))).toBe(true);
+  expect(pairReasons(mystical, solRing, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
+  // A disjunction with a whole-board branch is still the board: "a creature or artifact card".
+  const broad = base("Broad Tutor", [{
+    kind: "on-cast",
+    effect: { kind: "search", subject: { control: "you", token: null, type: ["creature", "artifact"] } },
+  }]);
+  expect(pairReasons(broad, solRing, H).some((r) => r.tag.startsWith("tutor"))).toBe(false);
 });
 
 test("an untyped tutor forms no edge at all", () => {
@@ -4196,9 +4225,10 @@ test("a typed recursion pairs with each card of its class, and an untyped one wi
   const solRing = withTypes(base("Sol Ring", []), ["artifact"]);
   expect(pairReasons(lara, solRing, H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
 
-  // Untyped ("target creature card") is the whole board and claims no card, and so is a bare type
-  // -- the tutor pass's own bar: "return target artifact card" reached 62 cards in each artifact
-  // deck when lone types were admitted (measured 2026-09-10).
+  // A whole-board type ("target creature card", "a land card") claims no card. A lone type OUTSIDE
+  // the board does, since the owner's 2026-09-16 ruling: "return target artifact card" reaches
+  // each artifact in the deck (Myr Retriever -> Sol Ring), the fan-out measured 2026-09-10 at 62
+  // cards in each artifact deck and taken with eyes open.
   const animate = base("Animate Dead", [{
     kind: "static",
     effect: { kind: "graveyard-recursion", subject: { control: "any", token: null, type: "creature", scope: "target", zone: "graveyard" } },
@@ -4214,5 +4244,6 @@ test("a typed recursion pairs with each card of its class, and an untyped one wi
     trigger: { verbs: ["dies"], subject: { self: true, control: "you", token: null, type: "creature" } },
     effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "artifact", scope: "target", zone: "graveyard" } },
   }]);
-  expect(pairReasons(retriever, solRing, H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
+  expect(pairReasons(retriever, solRing, H).some((r) => r.tag === "recursion-target:artifact")).toBe(true);
+  expect(pairReasons(retriever, sengir, H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
 });
