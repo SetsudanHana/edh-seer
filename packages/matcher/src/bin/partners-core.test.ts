@@ -1319,3 +1319,10 @@ test("an outlet demands what it eats; a token maker and a narrow type supply it,
   }] } } as unknown as DeckCard;
   expect(feederKeysOf(edict)).toEqual([]);
 });
+
+// AF7d: a damage emit proposes itself to the receiving side too; the engine verifies the victim.
+test("supplyForms: a damage emit also stands for `damaged`", () => {
+  expect(supplyForms("non-combat-damage|creature|-|n")).toContain("damaged|creature|-|n");
+  expect(supplyForms("combat-damage|-|-|n")).toContain("damaged|-|-|n");
+  expect(supplyForms("dies|creature|-|n")).not.toContain("damaged|creature|-|n");
+});

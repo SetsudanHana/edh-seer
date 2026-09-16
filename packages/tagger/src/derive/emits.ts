@@ -508,7 +508,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // `create-token` precisely because a manifested permanent is a CARD, not a token (CR 701.34a) --
   // keying on the emitted verbs keeps them out rather than needing a second exclusion list.
   const createsAToken = verbs.includes("create-token");
-  return verbs.map((verb) => ({
+  const events: GameEvent[] = verbs.map((verb) => ({
     verb,
     subject: {
       ...subject,
@@ -540,4 +540,15 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
     // check it (recall v4 #120).
     ...(DAMAGE_VERBS.has(verb) ? { dealer: { control: "you" as const, token: null, ...(action.verb === "fight" ? { type: "creature" } : {}) } } : {}),
   }));
+  // A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a): each creature deals damage to the other, and the emit
+  // above carries only the half where YOUR creature is the dealer -- the object parses to the
+  // opponent's creature as the victim. The mirror is the half the receiving side needs: Khalni
+  // Ambush makes your Stuffy Doll the VICTIM of their creature's damage (recall v7 #82, AF7d).
+  // Only when the parsed victim is theirs; a fight among your own creatures (Savage Punch's
+  // "another target creature") keeps one event, as before.
+  if (action.verb === "fight") {
+    const half = events.find((e) => e.verb === "non-combat-damage" && e.subject.control === "opp");
+    if (half) events.push({ ...half, subject: { ...half.subject, control: "you" }, dealer: { control: "opp", token: null, type: "creature" } });
+  }
+  return events;
 }

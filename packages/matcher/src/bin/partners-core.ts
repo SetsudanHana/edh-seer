@@ -134,9 +134,12 @@ export function supplyForms(key: string): string[] {
     // only in the engine is a pair the page never asks about. A death is one kind of leave
     // (CR 700.4); damage aimed at a player -- no type, no subtype -- is life loss (CR 120.3).
     // Lightning Bolt's page listed three damage payoffs and no life-loss one (2026-09-05).
+    // And any damage emit is a supply for the RECEIVING side (`damaged`, AF7d 2026-09-16): the
+    // engine judges the victim's shape (`damagedMatches`), the page only has to ask.
     const verbs = [verb,
       ...(verb === "dies" ? ["leaves"] : []),
-      ...(verb === "non-combat-damage" && type === "-" && subtype === "-" ? ["lose-life"] : [])];
+      ...(verb === "non-combat-damage" && type === "-" && subtype === "-" ? ["lose-life"] : []),
+      ...(verb === "non-combat-damage" || verb === "combat-damage" ? ["damaged"] : [])];
     for (const v of verbs) for (const tk of suffixes) {
       out.add(`${v}|${type}|${subtype}|${tk}`);
       out.add(`${v}|${type}|-|${tk}`);

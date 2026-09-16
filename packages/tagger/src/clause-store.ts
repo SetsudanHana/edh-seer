@@ -274,6 +274,10 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   // every one of which prints the word and means it. Measured against the corpus: the loose cue
   // recovers all 9 orphans with none ambiguous, and marks ZERO additional cards phantom.
   "damage-dealt": /\bdamage\b/i,
+  // The receiving side (AF7d, 2026-09-16): every one of the 120 `damaged` clause docs prints the
+  // word, checked before the row was added (one, Belltower Sphinx, says "deals damage to this
+  // creature" rather than "is dealt", so the cue is the noun, not the passive).
+  damaged: /\bdamage\b/i,
   "non-combat-damage": /\bdamage/i,
   // ADDED 2026-09-07 WITH THE VERBS THEMSELVES, and this table is the reason the addition is safe.
   // Before `scry`/`surveil`/`search` were engine verbs, `normalizeTriggerVerb` returned null for

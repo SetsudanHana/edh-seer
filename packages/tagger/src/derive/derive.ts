@@ -74,7 +74,9 @@ import { emblemRecipient } from "../emblem.js";
 // 148: a `put` reads its named actor ("that player puts all cards revealed this way into their
 // graveyard", Mind Funeral) -- the fill is the opponent's, not `any`; an object that states its own
 // controller ("under your control") keeps it.
-export const DERIVE_VERSION = 148;
+// 149: `damaged`, the receiving side of damage, is an engine verb (AF7d): "whenever this creature is
+// dealt damage" derives a trigger, from the clause word and from the older `damage-dealt` spelling.
+export const DERIVE_VERSION = 149;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -185,10 +187,15 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   shuffled: "shuffle",
   // Two clause spellings of one event (both legal since 2026-08-15); the engine has one name.
   "roll-dice": "dice-rolled",
+  // THE RECEIVING SIDE OF DAMAGE (AF7d, 2026-09-16). The clause word has existed since the 09-09
+  // trigger walk; the engine verb is the same word. The older `damage-dealt` spelling of the same
+  // fact is split by `DAMAGE_RECEIVED` in the branch below.
+  damaged: "damaged",
 };
 
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving
- *  side, which no engine verb spells. 20 of the 180 `damage-dealt` clauses. */
+ *  side, stored under `damage-dealt` before the clause word `damaged` existed. 20 of the 180
+ *  `damage-dealt` clauses; the engine verb is `damaged` since 2026-09-16. */
 const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
 /** A token that LEAVES THE SAME TURN IT ARRIVED — see `Ability.temporary`. Three printed shapes,
  *  and the third is only reachable by NAME.
@@ -973,10 +980,15 @@ export function deriveAbilities(
         // damage", and only 20 say "IS dealt damage". So ~118 of them name an event the engine
         // ALREADY HAS a verb for and were dropped whole for want of a table row.
         //
-        // RECEIVING damage gets no verb rather than a near-miss: it is the opposite direction, and
-        // handing it `combat-damage` would make Hornet Nest and Boros Reckoner claim they DEAL it.
+        // RECEIVING damage is its own verb (`damaged`, AF7d): the opposite direction, and handing
+        // it `combat-damage` would make Hornet Nest and Boros Reckoner claim they DEAL it.
         if (DAMAGE_RECEIVED.test(text)) {
-          unknownTriggers.push("damage-received");
+          const subject = subjectFrom(clause.trigger.subject ?? "", cardName, enchantText);
+          const control = CLAUSE_CONTROL[clause.trigger.control ?? ""];
+          if (control) subject.control = control;
+          if (isSelfSubject(clause.trigger.subject ?? "", cardName)) subject.self = true;
+          adoptGrantedRecipient(subject);
+          trigger = { verbs: ["damaged"], subject };
         } else if (text === "") {
           // No clause text, no way to tell. Refusing matches today's behaviour exactly, since
           // `damage-dealt` maps to nothing at all right now — so this can only add, never regress.

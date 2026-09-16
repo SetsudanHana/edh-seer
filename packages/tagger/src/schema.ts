@@ -306,6 +306,12 @@ export type Verb =
   | "taps"
   | "non-combat-damage"
   | "combat-damage"
+  /** THE RECEIVING SIDE OF DAMAGE (CR 120.1). "Whenever this creature is dealt damage" (Stuffy Doll,
+   *  Brash Taunter, every enrage Dinosaur) is the opposite fact from dealing it, so it is its own
+   *  verb rather than a near-miss on `combat-damage`. Consumer only: nothing emits it -- a damage
+   *  emit's VICTIM subject is what supplies it (matcher `damagedMatches`). 120 corpus triggers,
+   *  34 in the 71 decks (recall v5 #116, v7 #82; AF7d). */
+  | "damaged"
   | "draw"
   | "discard"
   | "mill"
@@ -428,6 +434,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "taps",
   "non-combat-damage",
   "combat-damage",
+  "damaged",
   "draw",
   "discard",
   "mill",

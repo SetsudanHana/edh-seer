@@ -2202,6 +2202,45 @@ test("a typed win condition edges to what it counts; an untyped one stays a role
   expect(reasons(false)).toHaveLength(0);
 });
 
+// THE RECEIVING SIDE OF DAMAGE (AF7d; recall v5 #116, v7 #82). "Whenever this creature is dealt
+// damage" is supplied by a damage emit whose VICTIM it could be; a player and a permanent never meet
+// (the CR 120.3 convention: an untyped victim is a player), and an implied combat event -- no
+// `dealer`, victim unknown -- never supplies it.
+test("a damage emit feeds a `damaged` trigger through its victim, permanent to permanent, player to player", () => {
+  const watcher = (subject: Record<string, unknown>): CardTags => ({
+    oracleId: "doll", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact", "creature"], subtypes: ["construct"], colors: [], identity: [], cmc: 5,
+      power: "0", toughness: "1", token: false, keywords: ["indestructible"] },
+    abilities: [{ kind: "triggered", effect: { kind: "damage" },
+      trigger: { verbs: ["damaged"], subject: { control: "you", token: null, ...subject } as CardTags["abilities"][number]["trigger"] extends infer T ? T extends { subject: infer S } ? S : never : never } }],
+  });
+  const dealer = (victim: Record<string, unknown>, authored = true): CardTags => ({
+    oracleId: "act", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["sorcery"], subtypes: [], colors: ["R"], identity: ["R"], cmc: 9,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "on-cast", effect: { kind: "damage" },
+      emits: [{ verb: "non-combat-damage", subject: { token: null, ...victim }, ...(authored ? { dealer: { control: "you", token: null, self: true } } : {}) } as never] }],
+  });
+  const reasons = (c: CardTags, p: CardTags) => directedReasons(
+    { card: { name: "Blasphemous Act" } as DeckCard["card"], tags: p },
+    { card: { name: "Stuffy Doll" } as DeckCard["card"], tags: c }, H,
+  ).filter((r) => r.tag.startsWith("damaged:"));
+
+  const doll = watcher({ self: true });
+  // "13 damage to each creature" hits the Doll.
+  const fed = reasons(doll, dealer({ control: "any", type: "creature", scope: "all" }));
+  expect(fed).toHaveLength(1);
+  expect(fed[0].text).toBe("When Stuffy Doll is dealt damage thanks to Blasphemous Act, it deals damage");
+  // Impact Tremors' "each opponent" is a player: the Doll is not hurt.
+  expect(reasons(doll, dealer({ control: "opp", scope: "each" }))).toHaveLength(0);
+  // An implied combat event (no dealer) has no known victim.
+  expect(reasons(doll, dealer({ control: "any", type: "creature", scope: "all" }, false))).toHaveLength(0);
+  // A player watcher ("whenever an opponent is dealt damage", Chandra's Phoenix) takes the player victim and not the creature one.
+  const phoenix = watcher({ control: "opp" });
+  expect(reasons(phoenix, dealer({ control: "opp", scope: "each" }))).toHaveLength(1);
+  expect(reasons(phoenix, dealer({ control: "any", type: "creature", scope: "all" }))).toHaveLength(0);
+});
+
 // AN AURA DIES WITH ITS HOST (CR 704.5m; recall v6 #57). "When this Aura is put into a graveyard from
 // the battlefield" is a self trigger on an enchantment that no outlet eats -- but every outlet that
 // eats the creature it is attached to sends it to the graveyard by rule.

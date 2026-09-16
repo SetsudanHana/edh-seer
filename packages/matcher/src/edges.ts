@@ -796,8 +796,14 @@ function verbSatisfies(producer: GameEvent, consumer: GameEvent): boolean {
   // and nothing else. CEILING: COMBAT DAMAGE STAYS OUT. Every creature attacks, so a payoff that
   // accepted it would claim the whole deck -- a mesh, not a synergy. The upgrade path is a gate on
   // evasion, so an unblockable body feeds a life-loss payoff and a vanilla bear does not (W15).
-  return consumer.verb === "lose-life" && producer.verb === "non-combat-damage"
-    && list(producer.subject.type).length === 0 && list(producer.subject.subtype).length === 0;
+  if (consumer.verb === "lose-life" && producer.verb === "non-combat-damage"
+    && list(producer.subject.type).length === 0 && list(producer.subject.subtype).length === 0) return true;
+  // THE RECEIVING SIDE (AF7d): "whenever this creature is dealt damage" is supplied by a damage emit
+  // whose VICTIM it could be. Only an AUTHORED emit carries a `dealer`; an implied combat event's
+  // victim is whoever blocks, unknown, and every creature attacks -- the same mesh the life-loss
+  // bridge refuses. The victim's shape is judged in `damagedMatches`.
+  return consumer.verb === "damaged" && (producer.verb === "non-combat-damage" || producer.verb === "combat-damage")
+    && producer.dealer !== undefined;
 }
 
 function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
@@ -877,10 +883,25 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   // this line Impact Tremors (dealer: you) met Samut's "an opponent loses life" on the dealer and
   // was refused on the real corpus while the fixture passed (2026-09-05).
   if (producer.verb === "non-combat-damage" || producer.verb === "combat-damage") {
+    if (consumer.verb === "damaged") return damagedMatches(producer.subject, consumer.subject, h);
     const side = consumer.verb === "lose-life" ? producer.subject : producer.dealer ?? producer.subject;
     return subjectMatches(side, consumer.subject, h);
   }
   return subjectMatches(producer.subject, consumer.subject, h);
+}
+
+/** A `damaged` trigger against a damage emit's VICTIM. A PLAYER AND A PERMANENT NEVER MEET: by the
+ *  CR 120.3 convention above, an untyped victim ("each opponent", "any target") is a player, so it
+ *  feeds "whenever you are dealt damage" (Darien) and "an opponent is dealt damage" (Chandra's
+ *  Phoenix) and never Stuffy Doll -- Impact Tremors does not hurt the Doll. A typed victim ("each
+ *  creature", Blasphemous Act; "target creature", a fight) feeds a permanent's trigger and never a
+ *  player's. CEILING: "any target" (836 corpus emits) really can hit a creature and reads as a
+ *  player here, so Lightning Bolt -> Stuffy Doll is a missing answer, not a wrong one. */
+function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
+  const victimIsPermanent = list(victim.type).length > 0 || list(victim.subtype).length > 0;
+  const consumerIsPermanent = consumer.self === true || list(consumer.type).length > 0 || list(consumer.subtype).length > 0;
+  if (victimIsPermanent !== consumerIsPermanent) return false;
+  return subjectMatches(victim, consumer, h);
 }
 
 /** Repeatability of a triggered CONSUMER: a bare self-ETB (trigger names neither a type nor a

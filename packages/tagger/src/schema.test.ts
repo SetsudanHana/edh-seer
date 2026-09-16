@@ -36,7 +36,11 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // primitive: each emits under its own name so the card that watches it can join. One shape.
   // 67 -> 72 on 2026-09-09 for AC11 batch 4, the designations: flip-coin, monarch, initiative,
   // city-blessing, ring-tempts. The last OPEN rows of the every-event queue except `play`.
-  expect(VERB_VOCAB).toHaveLength(72);
+  // 72 -> 73 on 2026-09-16 for `damaged`, the receiving side of damage (AF7d; recall v5 #116, v7
+  // #82): "whenever this creature is dealt damage" had a clause word since 09-09 and no engine verb,
+  // so Stuffy Doll and every enrage Dinosaur derived no trigger at all. Consumer-only by design.
+  expect(VERB_VOCAB).toHaveLength(73);
+  expect(VERB_VOCAB).toContain("damaged");
   for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["goad", "explore", "clash", "vote", "venture-into-the-dungeon", "foretell"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);

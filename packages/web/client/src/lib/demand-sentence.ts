@@ -46,6 +46,7 @@ export const DEMAND_VERB: Record<string, string> = {
   untaps: "untapping",
   "non-combat-damage": "dealing noncombat damage",
   "combat-damage": "dealing combat damage",
+  damaged: "being dealt damage",
   discard: "being discarded",
   mill: "being milled",
   sacrifice: "being sacrificed",

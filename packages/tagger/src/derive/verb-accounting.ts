@@ -47,6 +47,8 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
 export const ENGINE_TO_TRIGGER: Record<string, string> = {
   enters: "enters", "enters-graveyard": "put-into-graveyard", dies: "dies", leaves: "leaves", cast: "cast",
   attacks: "attacks", taps: "taps", "non-combat-damage": "damage-dealt", "combat-damage": "damage-dealt",
+  // The receiving side (AF7d, 2026-09-16). Consumer-only: no emit row, a damage emit's VICTIM supplies it.
+  damaged: "damaged",
   draw: "draw", discard: "discarded", mill: "milled", "gain-life": "life-gained", "lose-life": "life-lost",
   sacrifice: "sacrificed", "create-token": "create", "counter-added": "counter-added", "land-play": "play",
   untaps: "untaps", proliferate: "proliferate", unlock: "unlocked", upkeep: "upkeep", "begin-combat": "begin-combat",
@@ -102,7 +104,7 @@ const PRIMITIVE_EMITTED = ["connive", "recruit", "bolster", "support", "adapt", 
 /** Events no action supplies: the game or an opponent does. Refused by design, never near-missed. */
 const NO_PRODUCER = ["blocks", "becomes-blocked", "becomes-target", "level-up", "chapter", "crime", "expend", "descended",
   "day-night", "activate", "exiled", "phases-in", "loses-control", "becomes-crewed", "tapped-for-mana", "cycled",
-  "mutates", "exploit", "firebend", "reflexive", "state", "mana-spent", "damaged", "returned-to-hand", "put-into-library",
+  "mutates", "exploit", "firebend", "reflexive", "state", "mana-spent", "returned-to-hand", "put-into-library",
   "becomes-renowned", "becomes-saddled", "plotted", "give-gift", "mentors", "solved", "resolves", "evolve"];
 export const TRIGGER_REFUSED: Record<string, string> = Object.fromEntries([
   ...PHASE_WORDS.map((w) => [w, "a phase or step: the turn supplies it, no card emits it"]),
