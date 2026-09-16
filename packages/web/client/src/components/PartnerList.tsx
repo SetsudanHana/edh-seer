@@ -29,12 +29,13 @@ export function PartnerList({ rows, pool, rarity, empty }: {
     return <p className="text-(--muted) max-w-[65ch]">{empty}</p>;
   }
 
-  // Grouped in the order the rows arrive, which is already specificity order -- the most precisely
-  // matched event leads the page.
+  // Grouped BY EVENT in the order each event first arrives, which is specificity order -- the
+  // most precisely matched event leads the page. By key and not by adjacency: two events can share
+  // a score and interleave under the stable sort, and adjacency split one group in two.
   const groups: { event: string; rows: PartnerRow[] }[] = [];
   for (const row of rows) {
-    const last = groups.at(-1);
-    if (last?.event === row.event) last.rows.push(row);
+    const g = groups.find((x) => x.event === row.event);
+    if (g) g.rows.push(row);
     else groups.push({ event: row.event, rows: [row] });
   }
 
@@ -104,15 +105,13 @@ export function PartnerList({ rows, pool, rarity, empty }: {
             </ul>
             {withheld > 0 && (
               // COUNTED CANDIDATES, NOT VERIFIED EDGES, and the sentence has to say so: the engine
-              // was never asked about the cards past the cap.
-              // IT SAYS WHAT IS TRUE AND STOPS PROMISING WHAT IS NOT. "The page shows a few" read as
-              // an announcement of hidden content with no way to reach it -- five dead ends per page,
-              // and every reviewer stopped at one. There is no event-browse page to link to yet, so
-              // this states the fact and names the reason rather than dangling a door.
+              // was never asked about the cards past the cap. Equal members are ordered by play
+              // rate since 2026-09-16 (owner ruling; `rankOf` in partners-core), so the ones shown
+              // are the ones players run, and the sentence says that instead of the older "nothing
+              // here can rank one above another", which stopped being true.
               <p className="text-(--muted) text-sm">
                 <span className="font-mono tabular-nums">{withheld.toLocaleString("en-US")}</span>{" "}
-                other cards ask for it too, and they are equally specific — nothing here can rank one
-                above another, so this shows a few rather than pretending to choose.
+                other cards ask for it too, equally specific — the ones shown are the most played.
               </p>
             )}
           </section>

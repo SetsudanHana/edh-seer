@@ -106,8 +106,14 @@ export type EventFrequency = Record<string, number>;
  *
  *  Inverse log of how many cards in the corpus touch that event, so `enters|creature|goblin` (41
  *  cards) outranks `enters|creature|-` (1,909) without any appeal to how often either card is
- *  PLAYED. Popularity is not synergy: `cards.edhrecRank` exists, and is deliberately not consulted
- *  here or anywhere downstream of it.
+ *  PLAYED. Popularity is not synergy, and it is not consulted HERE: the score is specificity alone.
+ *
+ *  IT BREAKS TIES, AND ONLY TIES (owner ruling 2026-09-16, reversing the 09-05 revert). ~2,000
+ *  cards demand `enters|creature|-` and score identically; which of them reached a page was corpus
+ *  iteration order, and the page said so in a sentence about being unable to choose. The owner's
+ *  call: among equally specific partners, show the ones players actually run -- the EDHREC top-10
+ *  shape -- so `rankOf` orders equal scores by `cards.edhrecRank`. Specificity still decides which
+ *  EVENT leads; popularity only decides which of its equal members are printed.
  *
  *  WHAT THIS DOES AND DOES NOT CLAIM. It ranks how PRECISELY two cards interact, not how good
  *  either one is. A rare event can belong to a bad card, and the pages say so in those words rather
@@ -146,9 +152,31 @@ export function supplyForms(key: string): string[] {
       out.add(`${v}|-|${subtype}|${tk}`);
       out.add(`${v}|-|-|${tk}`);
     }
+    // A GRAVEYARD FILL, whatever verb put the card there (`impliedGraveyardEvents` in the engine):
+    // a nontoken death carries its type, a mill / discard / surveil / direct put is untyped. A
+    // token's death fills nothing (CR 704.5d). The token flag is dropped: a graveyard demand never
+    // asks it.
+    if (FILL_VERBS.has(verb) && token !== "t") {
+      const [t, st] = verb === "dies" ? [type, subtype] : ["-", "-"];
+      out.add(`fills|${t}|${st}|-`);
+      out.add(`fills|${t}|-|-`);
+      out.add(`fills|-|${st}|-`);
+      out.add(`fills|-|-|-`);
+    }
   }
   return [...out];
 }
+
+/** The emit verbs that put a card into a graveyard -- the engine's `impliedGraveyardEvents` list
+ *  plus the direct put (`enters-graveyard`, Entomb). */
+const FILL_VERBS: ReadonlySet<string> = new Set(["dies", "mill", "discard", "surveil", "enters-graveyard"]);
+
+/** Every fill this card emits is its OWN card going to the graveyard (a fetchland's sacrifice, a
+ *  cycling, a bauble): one card, once. Used only to order equal feeders, never to refuse one. */
+export const fillsOnlyItself = (d: DeckCard): boolean => {
+  const fills = abilitiesOf(d).flatMap((a) => (a.emits ?? []).filter((e) => FILL_VERBS.has(e.verb) && e.subject.token !== true));
+  return fills.length > 0 && fills.every((e) => e.subject.self === true);
+};
 
 /** THE FORMS A DEMAND ACCEPTS -- the list split, and NOTHING ELSE.
  *
@@ -308,9 +336,11 @@ export interface PartnerRow {
  *  key cannot be crowded out by a common one. */
 export const VERIFY_LIMIT = 200;
 
-/** How many rows a page shows. A readability choice, not a measured one -- a list a reader can
- *  finish. Tunable. */
-export const KEEP = 24;
+/** How many rows a page shows. 24 until 2026-09-16, "a readability choice, not a measured one";
+ *  raised to 60 with the owner's SEO ruling: 14,280 of 25,081 pages had over 100 verified-eligible
+ *  candidates behind a 24-row cut, and a 3-row page carried ~60 unique words against ~390 of
+ *  boilerplate, which is one template printed twenty thousand times. */
+export const KEEP = 60;
 
 /** HOW MANY ROWS ONE EVENT MAY OCCUPY.
  *
@@ -320,10 +350,17 @@ export const KEEP = 24;
  *
  *  Capping is the fix rather than a tie-break, because there is no honest tie-break available: the
  *  cards really are equally specific, and the only orderings that would separate them are quality
- *  or popularity, neither of which this engine will assert. Twenty rows that all say "triggers when
- *  a creature enters" are ONE fact printed twenty times; three of them plus a count says the same
- *  thing and leaves room for the card's other interactions. `pool` carries the count. */
-export const PER_EVENT_CAP = 3;
+ *  or popularity. Twenty rows that all say "triggers when a creature enters" are ONE fact printed
+ *  twenty times; a few of them plus a count says the same thing and leaves room for the card's
+ *  other interactions. `pool` carries the count. Three until 2026-09-16, eight since: the tie is
+ *  now broken by play rate (`rankOf`), so the eight are the eight players run, and a page that
+ *  shows them reads as EDHREC's "top cards" rather than a random sample. */
+export const PER_EVENT_CAP = 8;
+
+/** WHERE A CARD SITS IN PLAY RATE, for tie-breaking only (see `specificity`). Scryfall's
+ *  `edhrec_rank`, lower is more played; a card without one sorts last. */
+export const rankOf = (d: DeckCard): number =>
+  (d.card as { edhrecRank?: number }).edhrecRank ?? Number.POSITIVE_INFINITY;
 
 /** THE PARTNER LIST FOR ONE CARD: rank by specificity, then verify with the engine.
  *
@@ -409,11 +446,21 @@ export function partnersFor(
           events.set(key, e);
         }
       }
+      // A GRAVEYARD FILL THE CANDIDATE WANTS (the `fills|` bridge): a reanimator, a delve spell, a
+      // per-graveyard payoff, a graveyard count. No trigger names it, so the loop above never saw
+      // it and Animate Dead's page listed no mill (measured 2026-09-16). Same gate, same shape.
+      for (const { key, tags } of fillDemandsOf(c)) {
+        if (events.has(key) || !demandForms(key).some((f) => subjectEmits.has(f))) continue;
+        events.set(key, { score: specificity(key, freq), tags: new Set(tags) });
+      }
       const byScore = [...events].sort((a, b) => b[1].score - a[1].score);
       return { card: c, events: byScore, score: byScore[0]?.[1].score ?? 0 };
     })
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score);
+    // EQUAL SCORES BREAK ON PLAY RATE (see `specificity`), and the tie-break has to sit HERE and
+    // not only at the cut: `VERIFY_LIMIT` takes the top of this order, so a popular card below
+    // rank 200 in corpus order was never even asked about.
+    .sort((a, b) => b.score - a.score || rankOf(a.card) - rankOf(b.card));
 
   // COUNTED BEFORE THE CUT, so the page can say how many it is not showing. Counted over EVERY
   // event a candidate matched rather than only its best, because any of them can end up pricing a
@@ -462,13 +509,24 @@ export function partnersFor(
   // ONE LIST, NOT TWO SECTIONS: the engine's own sentence names both cards and says which way it
   // runs ("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets
   // bigger"), so the row itself tells a reader the direction.
-  for (const { key, tag } of feederDemandsOf(subject)) {
+  for (const { key, tag, tags } of feederDemandsOf(subject)) {
     if (key in pool) continue;
     const score = specificity(key, freq);
+    const accepts = new Set(tags ?? [tag]);
     // A FEEDER SITS UNDER THE KEY IT SUPPLIES. A party count has four keys and the engine confirms
     // a Rogue under any of them (an array subtype is OR), so without this every feeder landed under
     // the first key and the page said "a Cleric you control" over a Rogue.
-    const usable = feeders.filter((f) => f.card.name !== subject.card.name && supplyKeysOf(f).includes(key));
+    // A FEEDER SUPPLIES THE KEY OR A FORM OF IT: a Goblin supplies `counts|-|goblin|-` exactly, a
+    // creature's death supplies `fills|creature|-|-` and so `fills|-|-|-` (the untyped count). Equal
+    // suppliers in play-rate order, the same tie-break the forward phase uses.
+    // A CARD THAT ONLY PUTS ITSELF THERE SORTS LAST. Measured on the first 60-row build: every
+    // untyped graveyard count opened with Evolving Wilds, Terramorphic Expanse, Myriad Landscape,
+    // Mind Stone and Polluted Delta -- the most-played cards whose death is their own, one card
+    // each, ahead of every mill engine. True rows, but the same five on two thousand pages, and
+    // the fill a threshold deck is built around is the repeatable one.
+    const usable = feeders
+      .filter((f) => f.card.name !== subject.card.name && supplyKeysOf(f).flatMap(supplyForms).includes(key))
+      .sort((a, b) => Number(fillsOnlyItself(a)) - Number(fillsOnlyItself(b)) || rankOf(a) - rankOf(b));
     for (const f of usable) {
       if ((shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP) break;
       const slug = slugs.get(f.card.name)!;
@@ -476,7 +534,7 @@ export function partnersFor(
       // VERIFIED THE WAY EVERY OTHER ROW IS, just in the other direction: the engine decides whether
       // the relation exists and writes the sentence.
       const on = directedReasons(f, subject, h, { tokensMediate: false })
-        .filter((r) => r.tag === tag);
+        .filter((r) => accepts.has(r.tag));
       if (on.length === 0) continue;
       shown[key] = (shown[key] ?? 0) + 1;
       const chosen = pickReason(on);
@@ -501,14 +559,12 @@ export function partnersFor(
       .filter((c) => c.card.name !== subject.card.name)
       .map((c) => ({ c, matched: staticKeys.filter((k) => staticReaches(k, c)) }))
       .filter((x) => x.matched.length > 0)
-      // CEILING: among cards the same statics reach, the order is corpus order -- a discount on
-      // every noncreature spell reaches five thousand cards and the page shows three, and on
-      // 2026-09-05 that put Lattice Library ahead of Raise the Alarm. An EDHREC-rank tie-break was
-      // built, passed, and REVERTED the same hour against the rule recorded on `specificity`:
-      // popularity is not synergy and `edhrecRank` is consulted nowhere downstream of it. The
-      // upgrade path is a second synergy signal (how many of the CANDIDATE's own emits the subject
-      // answers), not a play-rate.
-      .sort((a, b) => b.matched.length - a.matched.length);
+      // Among cards the same statics reach, play rate breaks the tie (owner 2026-09-16; see
+      // `specificity`). A discount on every noncreature spell reaches five thousand cards and the
+      // page shows eight; on 2026-09-05 corpus order put Lattice Library ahead of Raise the Alarm,
+      // and the EDHREC-rank tie-break built that day was reverted the same hour under the older
+      // rule. The rule changed; the code came back.
+      .sort((a, b) => b.matched.length - a.matched.length || rankOf(a.c) - rankOf(b.c));
     for (const key of staticKeys) pool[key] = hits.filter((x) => x.matched.includes(key)).length;
     for (const { c, matched } of hits.slice(0, VERIFY_LIMIT)) {
       if (rows.length >= KEEP) break;
@@ -680,8 +736,47 @@ export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(boardCoun
  *  subject on the engine's own tag. The two-gate trap this closes: `edges.ts` grew the `copies:`
  *  and `fodder:` passes on 2026-09-09 and this artifact had a twin only for board counts, so the
  *  deck report claimed relations the commander page could not offer (roadmap, token-supply family). */
-export const feederDemandsOf = (d: DeckCard): { key: string; tag: string }[] => [
-  ...boardCountsOf(d), ...copyDemandsOf(d), ...fodderDemandsOf(d),
+/** WHAT A CARD WANTS IN A GRAVEYARD, as a demand key: `fills|<type>|<subtype>|-`, the class the
+ *  consumer reads there, matched by what a fill emit supplies (`supplyForms`). FOUR ENGINE PASSES,
+ *  ONE KEY -- none of them is a trigger, so until 2026-09-16 no page could ask about any of them
+ *  and Animate Dead listed no mill, Cabal Ritual and Dig Through Time had no page at all:
+ *   - a recursion reads a class from a graveyard (`graveyard-recursion:<subject>`);
+ *   - a per-graveyard payoff scales on a class there (`scales:<subject>`, typed only, as the engine
+ *     refuses the untyped count);
+ *   - a graveyard count gates an ability (`threshold:<subject>`, AF7c);
+ *   - delve pays from your graveyard, tagged by the fill's own verb.
+ *  Each carries the tag(s) the engine writes, so the row is verified on string equality with the
+ *  same sentence the deck report prints -- a key proposes, the engine decides. */
+export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: string[] }[] => {
+  const keyOf = (s: SubjectFilter): string => {
+    const one = (v: string | string[] | undefined): string =>
+      v === undefined ? "-" : Array.isArray(v) ? [...v].sort().join(",") : v;
+    return `fills|${one(s.type)}|${one(s.subtype)}|-`;
+  };
+  const out: { key: string; tag: string; tags: string[] }[] = [];
+  const push = (key: string, tags: string[]): void => {
+    if (!out.some((o) => o.key === key && o.tags.join() === tags.join())) out.push({ key, tag: tags[0]!, tags });
+  };
+  for (const a of abilitiesOf(d)) {
+    const s = a.effect?.subject;
+    if (a.effect?.kind === "graveyard-recursion" && s?.zone === "graveyard" && s.self !== true) {
+      push(keyOf(s), [`graveyard-recursion:${themeSubjectKey(s)}`]);
+    }
+    const scaled = a.effect?.scalingSubject;
+    if (a.effect?.scaling === "per-graveyard" && scaled && (asList(scaled.type).length > 0 || asList(scaled.subtype).length > 0)) {
+      push(keyOf(scaled), [`scales:${themeSubjectKey(scaled)}`]);
+    }
+    const gated = a.thresholdSubject;
+    if (gated?.zone === "graveyard" && a.threshold) push(keyOf(gated), [`threshold:${themeSubjectKey(gated)}`]);
+  }
+  if ((d.tags?.characteristics.keywords ?? []).some((k) => String(k).toLowerCase().trim() === "delve")) {
+    push("fills|-|-|-", ["mill:any", "discard:any", "dies:any", "enters-graveyard:any"]);
+  }
+  return out;
+};
+
+export const feederDemandsOf = (d: DeckCard): { key: string; tag: string; tags?: string[] }[] => [
+  ...boardCountsOf(d), ...copyDemandsOf(d), ...fodderDemandsOf(d), ...fillDemandsOf(d),
 ];
 export const feederKeysOf = (d: DeckCard): string[] => [...new Set(feederDemandsOf(d).map((b) => b.key))];
 
@@ -1119,8 +1214,10 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // indexing every card by every event it supplies would be the quadratic build this file avoids.
   const bySubtype = new Map<string, DeckCard[]>();
   for (const d of substantive) {
-    for (const k of supplyKeysOf(d)) {
-      if (!k.startsWith("counts|") && !k.startsWith("copies|") && !k.startsWith("fodder|")) continue;
+    const supplies = supplyKeysOf(d);
+    // A fill is a FORM of an emit (`supplyForms`), never a raw key: a death supplies `fills|creature|-|-`.
+    for (const k of new Set([...supplies, ...supplies.flatMap(supplyForms).filter((f) => f.startsWith("fills|"))])) {
+      if (!k.startsWith("counts|") && !k.startsWith("copies|") && !k.startsWith("fodder|") && !k.startsWith("fills|")) continue;
       const b = bySubtype.get(k);
       if (b) b.push(d); else bySubtype.set(k, [d]);
     }
