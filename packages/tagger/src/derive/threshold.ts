@@ -31,9 +31,11 @@ const NUMBER = `(\\d+(?:,\\d{3})*|${Object.keys(WORD_NUMBER).join("|")})`;
 /** "N or more", "N or greater", "at least N" — the three spellings the corpus uses. */
 const COMPARISON = new RegExp(`\\b${NUMBER}\\s+or\\s+(?:more|greater)\\b|\\bat\\s+least\\s+${NUMBER}\\b`, "gi");
 
-/** A threshold conditions a trigger. Without a cue the number is a magnitude, which is
- *  `Ability.amount`'s business. */
-const CONDITION_CUE = /\b(?:if|when there are|whenever|as long as|only if)\b/i;
+/** A threshold conditions an ability. Without a cue the number is a magnitude, which is
+ *  `Ability.amount`'s business. `unless` is the restriction's spelling of the same fact: Gadrak
+ *  "can't attack unless you control four or more artifacts" is on at four, exactly as Chrome Steed
+ *  is on "as long as you control three or more artifacts" (59 corpus statics, 2026-09-16). */
+const CONDITION_CUE = /\b(?:if|when there are|whenever|as long as|only if|unless)\b/i;
 
 /** A stat comparison is ALREADY `SubjectFilter.stats`, which `Reason.hasStatPredicate` already
  *  reads. Two slots claiming one fact is the collision `notType` and `umbrella` were introduced to
@@ -41,6 +43,13 @@ const CONDITION_CUE = /\b(?:if|when there are|whenever|as long as|only if)\b/i;
  *  while "four or more lands" in a sentence that mentions power elsewhere is not. 29 corpus
  *  matches. */
 const STAT_SHAPE = /\b(?:power|toughness|mana value|life total)\b[^.]{0,25}$/i;
+
+/** THE ONE LATER SENTENCE THAT IS NOT A RIDER. "Activate only if you control three or more
+ *  artifacts" (Urza's Workshop, Argent Sphinx; 28 corpus) always follows the effect as its own
+ *  sentence, and it gates the WHOLE ability (CR 602.5): nothing happens at all below the count,
+ *  which is the opposite of Primal Amulet's counter going on regardless. So exclusion 3 lets it
+ *  through, and only it. */
+const ACTIVATION_RESTRICTION = /\.\s+Activate only if\b[^.]*$/i;
 
 function valueOf(raw: string): number {
   const word = WORD_NUMBER[raw.toLowerCase()];
@@ -58,7 +67,7 @@ function valueOf(raw: string): number {
  *  more Rats" (excluded by #1, an English plural) AND "seven or more cards" (the real threshold), and
  *  the independent exec picked the FIRST one up, pairing `threshold: {atLeast: 7}` with
  *  `thresholdSubject: {subtype: "rat"}` -- a number and a noun from two different sentences. */
-function selectThreshold(text: string): { atLeast: number; end: number } | undefined {
+function selectThreshold(text: string): { atLeast: number; start: number; end: number } | undefined {
   if (!CONDITION_CUE.test(text)) return undefined;
 
   for (const match of text.matchAll(COMPARISON)) {
@@ -94,14 +103,17 @@ function selectThreshold(text: string): { atLeast: number; end: number } | undef
     // THE TRADE, accepted by the owner: the predicate refuses the whole clause, so ~7 currently
     // CORRECT thresholds are lost with the 12 wrong ones. A missing answer beats a wrong one.
     const before = text.slice(0, match.index);
-    if (/\bThen\b/.test(before) || before.includes(". ")) continue;
+    if (/\bThen\b/.test(before) || (before.includes(". ") && !ACTIVATION_RESTRICTION.test(before))) continue;
 
-    return { atLeast, end: (match.index ?? 0) + match[0].length };
+    return { atLeast, start: match.index ?? 0, end: (match.index ?? 0) + match[0].length };
   }
   return undefined;
 }
 
-/** The trigger threshold stated by `text`, or `undefined` when it states none.
+/** The threshold stated by `text`, or `undefined` when it states none. On any ability kind: a
+ *  trigger's intervening if (CR 603.4), a static's "as long as" (CR 611.3a), an activation
+ *  restriction's "activate only if" (CR 602.5) and a restriction's "unless" all gate the ability on
+ *  the same count.
  *
  *  Refuses rather than guesses, as `repeatsFor` does: an unrecognised numeric condition leaves the
  *  field unset and stays visible as a gap. */
@@ -121,6 +133,17 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
  *  a separate alternative -- "twenty or more life" names no zone phrase at all. */
 const NON_PERMANENT_NOUN = /\bin (?:your|their|a|each|all) [^.]{0,20}(?:hand|graveyard|library|exile)\b|\blife\b/i;
 
+/** WHOSE board the count is of, read from the words that END just before the number. The
+ *  controller sits on the wrong side of the number for `parseSubject` to see it -- "you control
+ *  three or more artifacts" scrapes the noun "artifacts" and read as `control: any`, so an
+ *  OPPONENT's count ("if an opponent controls seven or more lands", Avatar of Fury) was
+ *  indistinguishable from yours and would have edged to your own cards. Measured 2026-09-16 on the
+ *  88 static/activated clauses that carry a typed count: 218 of 235 derived trigger thresholds read
+ *  `any`. */
+const COUNT_CONTROLLER = /\b(you|an opponent|each opponent|your opponents|opponents|defending player|each player|a player|that player)\s+controls?\s+(?:at\s+least\s+)?$/i;
+/** "five or more Islands ON THE BATTLEFIELD" (Harbor Serpent): a board count with no controller. */
+const ON_THE_BATTLEFIELD = /\bon the battlefield\b/i;
+
 /** WHAT the threshold counts. `thresholdFor` returns the number; this returns the noun, and without
  *  it a win condition claims every card in the deck. Revel in Riches counts TREASURES, Hellkite
  *  Tyrant ARTIFACTS, and both derive an untyped subject today.
@@ -128,7 +151,17 @@ const NON_PERMANENT_NOUN = /\bin (?:your|their|a|each|all) [^.]{0,20}(?:hand|gra
  *  Reads the words after `selectThreshold`'s winning match and stops at the clause end, so "ten or
  *  more Treasures, you win the game" yields "treasures" and not the whole sentence. Refuses when the
  *  noun is not a countable permanent — a zone-scoped card count (`NON_PERMANENT_NOUN`) or a
- *  self-reference (`mentionsSelf`) is not one, and neither is a noun `parseSubject` cannot type. */
+ *  self-reference (`mentionsSelf`) is not one, and neither is a noun `parseSubject` cannot type.
+ *
+ *  A BOARD COUNT OR NOTHING. The matcher judges the subject against a card's PRINTED
+ *  characteristics, and that is only a true test of a count of permanents someone controls. An
+ *  EVENT count wears the same grammar and is not one: "you've cast three or more spells this turn"
+ *  (The Howling Abomination), "attacked with three or more Merfolk this turn" (Deepway Navigator),
+ *  "two or more creatures died under your control this turn" (Gimli) -- a Merfolk in the deck does
+ *  not satisfy "attacked with three Merfolk" by being one. Nor is an attachment count ("enchanted by
+ *  three or more Auras", Ancestral Mask's shape) -- an Aura in the deck is not one on this
+ *  creature. So the count must be introduced by `<someone> control(s)` or end `on the battlefield`;
+ *  everything else refuses, and stays visible as a gap (CEILING: the attachment counts, 3 corpus). */
 export function thresholdSubjectFor(text: string): SubjectFilter | undefined {
   const m = selectThreshold(text);
   if (!m) return undefined;
@@ -140,9 +173,13 @@ export function thresholdSubjectFor(text: string): SubjectFilter | undefined {
   // own exile pile, not a deck-wide class of artifacts -- and unlike a trigger subject field, this
   // noun is scraped from free prose, so the self-reference can sit anywhere in it, not just the head.
   if (mentionsSelf(noun)) return undefined;
+  const controller = COUNT_CONTROLLER.exec(text.slice(0, m.start))?.[1]?.toLowerCase();
+  if (controller === undefined && !ON_THE_BATTLEFIELD.test(noun)) return undefined;
+  const control: SubjectFilter["control"] = controller === undefined || /^(?:each|a|that) player$/.test(controller) ? "any"
+    : controller === "you" ? "you" : "opp";
   const subject = parseSubject(noun);
   const hasType = subject.type !== undefined || subject.subtype !== undefined;
-  return hasType ? subject : undefined;
+  return hasType ? { ...subject, control } : undefined;
 }
 
 /** Per-exclusion tallies for `ledger-coverage.ts`'s §8 breakdown. */
@@ -169,7 +206,7 @@ export function tallyThresholds(text: string, tally: ThresholdTally): void {
     if (atLeast <= 1) { tally.excluded1++; continue; }
     if (STAT_SHAPE.test(text.slice(0, match.index))) { tally.excluded2++; continue; }
     const before = text.slice(0, match.index);
-    if (/\bThen\b/.test(before) || before.includes(". ")) { tally.excluded3++; continue; }
+    if (/\bThen\b/.test(before) || (before.includes(". ") && !ACTIVATION_RESTRICTION.test(before))) { tally.excluded3++; continue; }
     tally.accepted++;
   }
 }

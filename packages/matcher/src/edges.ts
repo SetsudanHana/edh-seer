@@ -16,7 +16,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -1164,6 +1164,49 @@ const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "fore
 /** A board count over one of these is a count of the deck itself. See the board-count edge. */
 export const WHOLE_DECK_TYPES: ReadonlySet<string> = new Set(["creature", "permanent", "card", "spell", "land"]);
 
+/** DOES A BOARD COUNT SAY SOMETHING ABOUT A DECK, OR ABOUT MAGIC? The one gate the two count passes
+ *  share -- a payoff that GROWS with the count (`scalingSubject`) and one that is GATED on it
+ *  (`thresholdSubject`).
+ *
+ *  A BARE CARD TYPE IS A MESH, NOT A SYNERGY, and this is the gate that keeps the channel honest.
+ *  "Creatures you control" is satisfied by every creature in the deck: forty edges saying the same
+ *  nothing, which is the engine's own "playing Magic is not a synergy" rule. MEASURED 2026-09-04:
+ *  685 battlefield counts are derived and 248 name a subtype -- those are the ones that say
+ *  something about a DECK rather than about Magic.
+ *
+ *  A NON-CREATURE CARD TYPE COUNTS TOO (owner's ruling, 2026-09-09, on the recall v4 scaling
+ *  family): "this creature gets +1/+0 for each ARTIFACT you control" (Storm-Kiln Artist) relates to
+ *  every artifact in the deck, Sol Ring included, and refusing it was wrong -- "at some point we
+ *  have to have magnitude of specific edges, cause some are stronger than others". So the
+ *  subtype-only gate is relaxed to any single type except the three that ARE the deck: `creature`
+ *  (313 corpus counts; a creature deck) and `permanent` (71) are the whole board, and `land` (129)
+ *  is the mana base, which the standing ruling keeps out of synergy. Those wait for magnitude, not
+ *  for a rule. Measured on the 71 decks: edges 36,596 -> 38,238, reasons 47,737 -> 50,416, MESHED
+ *  289 unchanged, panel precision unchanged, 10 new claims to judge.
+ *
+ *  A DISJUNCTION OF NARROW TYPES IS NARROWER THAN EITHER WHOLE BOARD (recall v6 #161, 2026-09-10):
+ *  Nettlecyst counts "each artifact and/or enchantment", and demanding exactly ONE type refused it.
+ *  Every branch must be outside the whole deck; "artifact or creature" is still the board. AND A
+ *  KEYWORD NARROWS THE WAY A SUBTYPE DOES (v6 #106): Blight Pile counts "creatures with defender",
+ *  which is `creature` plus `keyword` -- the type alone is the whole board, and the keyword is what
+ *  makes it a minority of it.
+ *
+ *  A BASIC LAND TYPE IS THE MANA BASE. 20 corpus cards count Swamps and 13 count Mountains; a
+ *  mono-black deck runs thirty Swamps, and thirty edges into one payoff is the same mesh wearing a
+ *  different costume. The partial reversal for fetchlands and Urza's Saga is about a land that FINDS
+ *  something, not about a basic being counted.
+ *
+ *  AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD. */
+export function boardCountNarrows(counted: SubjectFilter): boolean {
+  const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
+  const types = Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : [];
+  const typedCount = subtype === undefined && types.length > 0 && types.every((ty) => !WHOLE_DECK_TYPES.has(ty));
+  const keywordCount = subtype === undefined && (counted.keyword?.length ?? 0) > 0;
+  if (subtype === undefined && !typedCount && !keywordCount) return false;
+  if (subtype !== undefined && BASIC_LAND_TYPES.has(subtype)) return false;
+  return counted.control !== "opp";
+}
+
 /** A CARD THAT TURNS THE BOARD OFF FEEDS NOTHING ON IT. Dress Down's "creatures lose all abilities"
  *  is a layer-6 effect (CR 613.1f) that applies the moment it is on the battlefield, so when the
  *  game checks Grim Guardian's constellation the Guardian has no abilities and nothing triggers;
@@ -1559,38 +1602,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     const counted = a.effect.scalingSubject;
     if (!counted || counted.zone !== "battlefield") continue;
     if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
-    // A BARE CARD TYPE IS A MESH, NOT A SYNERGY, and this is the gate that keeps the channel honest.
-    // "Creatures you control" is satisfied by every creature in the deck: forty edges saying the
-    // same nothing, which is the engine's own "playing Magic is not a synergy" rule. MEASURED
-    // 2026-09-04: 685 battlefield counts are derived and 248 name a subtype -- those are the ones
-    // that say something about a DECK rather than about Magic.
-    const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
-    // A NON-CREATURE CARD TYPE COUNTS TOO (owner's ruling, 2026-09-09, on the recall v4 scaling
-    // family): "this creature gets +1/+0 for each ARTIFACT you control" (Storm-Kiln Artist) relates
-    // to every artifact in the deck, Sol Ring included, and refusing it was wrong -- "at some point
-    // we have to have magnitude of specific edges, cause some are stronger than others". So the
-    // subtype-only gate above is relaxed to any single type except the three that ARE the deck:
-    // `creature` (313 corpus counts; a creature deck) and `permanent` (71) are the whole board, and
-    // `land` (129) is the mana base, which the standing ruling keeps out of synergy. Those wait for
-    // magnitude, not for a rule. Measured on the 71 decks: edges 36,596 -> 38,238, reasons 47,737
-    // -> 50,416, MESHED 289 unchanged, panel precision unchanged, 10 new claims to judge.
-    const types = Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : [];
-    // A DISJUNCTION OF NARROW TYPES IS NARROWER THAN EITHER WHOLE BOARD (recall v6 #161, 2026-09-10):
-    // Nettlecyst counts "each artifact and/or enchantment", and demanding exactly ONE type refused
-    // it. Every branch must be outside the whole deck; "artifact or creature" is still the board.
-    // AND A KEYWORD NARROWS THE WAY A SUBTYPE DOES (v6 #106): Blight Pile counts "creatures with
-    // defender", which is `creature` plus `keyword` -- the type alone is the whole board, and the
-    // keyword is what makes it a minority of it.
-    const typedCount = subtype === undefined && types.length > 0 && types.every((ty) => !WHOLE_DECK_TYPES.has(ty));
-    const keywordCount = subtype === undefined && (counted.keyword?.length ?? 0) > 0;
-    if (subtype === undefined && !typedCount && !keywordCount) continue;
-    // A BASIC LAND TYPE IS THE MANA BASE. 20 corpus cards count Swamps and 13 count Mountains; a
-    // mono-black deck runs thirty Swamps, and thirty edges into one payoff is the same mesh wearing
-    // a different costume. The partial reversal for fetchlands and Urza's Saga is about a land that
-    // FINDS something, not about a basic being counted.
-    if (subtype !== undefined && BASIC_LAND_TYPES.has(subtype)) continue;
-    // AN OPPONENT'S BOARD IS NOT FED BY YOUR CARD.
-    if (counted.control === "opp") continue;
+    if (!boardCountNarrows(counted)) continue;
     // `zone` IS DROPPED BEFORE THE COMPARISON and `control` IS KEPT, which is the opposite of what
     // the first cut did. A type line sits in no zone -- the fifth time this file records that
     // lesson -- but an ABSENT `control` on the consumer side is not a wildcard: `subjectMatches`
@@ -1609,21 +1621,38 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     });
   }
 
-  // A WIN CONDITION THAT NAMES WHAT IT COUNTS IS A RELATION, NOT A ROLE. `win-game` sits in
-  // ROLE_NOT_SYNERGY because "this card wins the game" says the identical thing next to every card —
-  // true of Laboratory Maniac, false of Revel in Riches, which wins on ten TREASURES and is
-  // therefore a claim about Treasure producers. Gated on `thresholdSubject`: an untyped win
-  // condition stays a role, exactly as before.
+  // A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION, one step before scaling: the producer is
+  // one of the things the consumer counts, and below the count the consumer does nothing at all.
+  // Started as the win-condition pass -- `win-game` sits in ROLE_NOT_SYNERGY because "this card
+  // wins the game" says the identical thing next to every card, true of Laboratory Maniac and false
+  // of Revel in Riches, which wins on ten TREASURES and is therefore a claim about Treasure
+  // producers -- and the same argument holds for every kind (2026-09-16, recall v6 #77 Gadrak, v7
+  // #79 Urza's Workshop): Gadrak "can't attack unless you control four or more artifacts" is a
+  // claim about artifacts, whatever `cant` maps to, so `ROLE_NOT_SYNERGY` is deliberately NOT
+  // consulted here. The board-count gate is: a whole-deck type, a basic land type or an opponent's
+  // board forms nothing, as above. An untyped count stays a role, exactly as before.
+  //
+  // ONE COUNT PER CARD, HOWEVER MANY ABILITIES STATE IT. Inventors' Fair prints "three or more
+  // artifacts" on its upkeep trigger AND on its activated ability, and the activation derives two
+  // abilities -- so every artifact in its deck earned the same sentence three times (195 rows for
+  // 65 artifacts in the-capitoline-triad, measured 2026-09-16). The relation is between two cards,
+  // not between a card and each of the other's abilities.
+  const countsSeen = new Set<string>();
   for (const a of c.tags.abilities) {
-    if (a.effect.kind !== "win-game") continue;
-    const counted = a.trigger?.thresholdSubject;
-    if (!counted) continue;
-    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), counted, h)) continue;
+    const counted = a.thresholdSubject;
+    if (!counted || !a.threshold || !boardCountNarrows(counted)) continue;
+    const win = a.effect.kind === "win-game";
+    const tag = `${win ? "wincon" : "threshold"}:${themeSubjectKey(counted)}`;
+    if (countsSeen.has(`${tag}|${a.threshold.atLeast}`)) continue;
+    const { zone: _z, ...printed } = counted;
+    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
+    countsSeen.add(`${tag}|${a.threshold.atLeast}`);
     reasons.push({
-      tag: `wincon:${themeSubjectKey(counted)}`,
-      text: winconSentence(p.card.name, c.card.name),
+      tag,
+      text: win ? winconSentence(p.card.name, c.card.name)
+        : thresholdSentence(p.card.name, c.card.name, a.threshold.atLeast, countedNounPlural(counted)),
       effectKind: a.effect.kind,
-      repeatability: "static",
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
       consumer: c.card.name,
       producer: p.card.name,
     });

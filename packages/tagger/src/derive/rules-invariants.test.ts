@@ -36,6 +36,8 @@ const TESTED: Record<string, string> = {
   "706.1": "emits — roll-dice emits dice-rolled (706.1 defines the roll)",
   "705.1": "emits — a coin is flipped by the ability's controller; flip-coin joins CONTROLLER_DEFAULT (AC11 batch 4)",
   "706": "verb-accounting.test.ts / emits — roll-dice emits dice-rolled",
+  "602.5": "threshold.test.ts — 'activate only if' gates the whole ability, the one later sentence that is not a rider",
+  "611.3a": "threshold.test.ts / derive.test.ts — a static's 'as long as' count is a threshold on the ability",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {

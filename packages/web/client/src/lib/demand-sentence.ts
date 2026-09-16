@@ -287,6 +287,9 @@ export const MECHANISM: Record<string, string> = {
   scales: "getting bigger from a graveyard",
   doubles: "doubling a trigger",
   wincon: "counting toward a win",
+  // The threshold pass's tag is `threshold:<what it counts>` (2026-09-16): a count the ability is
+  // GATED on -- Gadrak's four artifacts, Chrome Steed's metalcraft -- as `wincon` is for a win.
+  threshold: "counting toward a condition",
   meld: "melding",
   "land-condition": "needing a basic type",
   clone: "copying a permanent",

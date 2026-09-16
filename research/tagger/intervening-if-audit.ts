@@ -50,7 +50,7 @@ for (const doc of await clauses.find({}).toArray()) {
     // whose OTHER trigger has a threshold says nothing about this one.
     const verb = normalizeTriggerVerb(clause.trigger.event);
     const represented = (tags?.abilities ?? []).some((a) =>
-      a.trigger?.threshold !== undefined && (verb === null || a.trigger.verbs.includes(verb)));
+      a.threshold !== undefined && a.trigger !== undefined && (verb === null || a.trigger.verbs.includes(verb)));
     if (!represented) unrepresented.push(row);
   }
 }

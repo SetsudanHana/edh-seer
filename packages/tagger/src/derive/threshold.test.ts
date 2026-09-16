@@ -162,3 +162,49 @@ test("REVIEW FINDING 3: a self-referencing noun is refused, not read as a type",
   expect(thresholdFor(text)).toEqual({ atLeast: 3 });
   expect(thresholdSubjectFor(text)).toBeUndefined();
 });
+
+// THE COUNT IS ON THE ABILITY, WHATEVER ITS KIND (2026-09-16; recall v6 #77 Gadrak, v7 #79 Urza's
+// Workshop). A static's "as long as", an activation's "only if" and a restriction's "unless" gate
+// the ability on a board count exactly as an intervening if gates a trigger, and the noun is a
+// demand the matcher can join. Every witness below is corpus text.
+test("a restriction's 'unless' is a condition cue", () => {
+  const text = "Gadrak can't attack unless you control four or more artifacts.";
+  expect(thresholdFor(text)).toEqual({ atLeast: 4 });
+  expect(thresholdSubjectFor(text)).toMatchObject({ type: "artifact", control: "you" });
+});
+
+test("'activate only if' is the one later sentence that is NOT a rider", () => {
+  // Urza's Workshop. The restriction always follows the effect as its own sentence and gates the
+  // whole ability (CR 602.5b) -- the opposite of Primal Amulet's counter going on regardless.
+  const text = "Add {C} for each Urza's land you control. Activate only if you control three or more artifacts.";
+  expect(thresholdFor(text)).toEqual({ atLeast: 3 });
+  expect(thresholdSubjectFor(text)).toMatchObject({ type: "artifact", control: "you" });
+  // Primal Amulet's rider is still a rider.
+  expect(thresholdFor("Put a charge counter on this artifact. Then if there are four or more charge counters on it, transform it.")).toBeUndefined();
+});
+
+test("the count's controller is read from the words before the number", () => {
+  // The controller sits on the wrong side of the number for parseSubject to see it, so every count
+  // read as `any` -- and an OPPONENT's board (Avatar of Fury) would have edged to your own cards.
+  expect(thresholdSubjectFor("As long as you control three or more artifacts, this creature gets +2/+2."))
+    .toMatchObject({ type: "artifact", control: "you" });
+  expect(thresholdSubjectFor("If an opponent controls seven or more lands, this spell costs {6} less to cast."))
+    .toMatchObject({ type: "land", control: "opp" });
+  expect(thresholdSubjectFor("Ayesha Tanaka can't be blocked as long as defending player controls three or more artifacts."))
+    .toMatchObject({ type: "artifact", control: "opp" });
+  // Harbor Serpent: a board count with no controller at all.
+  expect(thresholdSubjectFor("This creature can't attack unless there are five or more Islands on the battlefield."))
+    .toMatchObject({ subtype: "island", control: "any" });
+});
+
+test("an EVENT count is not a board count and refuses", () => {
+  // A Merfolk in the deck does not satisfy "attacked with three Merfolk" by being one; a spell does
+  // not satisfy "cast three spells this turn" by being a spell. The number is still recorded.
+  const cast = "The Howling Abomination has trample as long as you've cast three or more spells this turn.";
+  expect(thresholdFor(cast)).toEqual({ atLeast: 3 });
+  expect(thresholdSubjectFor(cast)).toBeUndefined();
+  expect(thresholdSubjectFor("As long as you attacked with three or more Merfolk this turn, Merfolk you control get +1/+0.")).toBeUndefined();
+  expect(thresholdSubjectFor("Gimli has indestructible as long as two or more creatures died under your control this turn.")).toBeUndefined();
+  // And an attachment count (CEILING): an Aura in the deck is not one on this creature.
+  expect(thresholdSubjectFor("As long as this creature is enchanted by three or more Auras, it has base power and toughness 10/10.")).toBeUndefined();
+});

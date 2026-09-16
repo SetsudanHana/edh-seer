@@ -2181,11 +2181,9 @@ test("a typed win condition edges to what it counts; an untyped one stays a role
       power: null, toughness: null, token: false, keywords: [] },
     abilities: [{
       kind: "triggered",
-      trigger: {
-        verbs: ["upkeep"], subject: { control: "you", token: null },
-        threshold: { atLeast: 10 },
-        ...(withSubject ? { thresholdSubject: { control: "you", token: null, subtype: "treasure" } } : {}),
-      },
+      trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
+      threshold: { atLeast: 10 },
+      ...(withSubject ? { thresholdSubject: { control: "you", token: null, subtype: "treasure" } } : {}),
       effect: { kind: "win-game" },
     }],
   });
@@ -2202,6 +2200,67 @@ test("a typed win condition edges to what it counts; an untyped one stays a role
 
   expect(reasons(true)).toHaveLength(1);
   expect(reasons(false)).toHaveLength(0);
+});
+
+// A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION AS A WIN CONDITION'S (2026-09-16; recall v6
+// #77 Gadrak, v7 #79 Urza's Workshop): the producer is one of the things the consumer counts, and
+// below the count the consumer does nothing. Whatever the effect kind -- Gadrak's `cant` derives no
+// kind at all -- so ROLE_NOT_SYNERGY is not consulted; the board-count gate is.
+test("a typed count an ability is gated on edges to what it counts, with the board-count gate", () => {
+  const gated = (counted: Record<string, unknown>): CardTags => ({
+    oracleId: "gadrak", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["legendary", "creature"], subtypes: ["dragon"], colors: ["R"], identity: ["R"], cmc: 4,
+      power: "5", toughness: "4", token: false, keywords: ["flying"] },
+    abilities: [{ kind: "static", effect: { kind: "" }, threshold: { atLeast: 4 },
+      thresholdSubject: { token: null, scope: "all", ...counted } as CardTags["abilities"][number]["thresholdSubject"] }],
+  });
+  const solRing = (): CardTags => ({
+    oracleId: "sol-ring", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 1,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [],
+  });
+  const reasons = (counted: Record<string, unknown>) => directedReasons(
+    { card: { name: "Sol Ring" } as DeckCard["card"], tags: solRing() },
+    { card: { name: "Gadrak, the Crown-Scourge" } as DeckCard["card"], tags: gated(counted) }, H,
+  ).filter((r) => r.tag.startsWith("threshold:"));
+
+  const yours = reasons({ control: "you", type: "artifact" });
+  expect(yours).toHaveLength(1);
+  expect(yours[0].tag).toBe("threshold:artifact");
+  expect(yours[0].text).toBe("Sol Ring counts toward the 4 or more artifacts Gadrak, the Crown-Scourge needs");
+  // An opponent's board is not fed by your card (Avatar of Fury's shape).
+  expect(reasons({ control: "opp", type: "artifact" })).toHaveLength(0);
+  // A whole-deck type is a count of the deck itself (Topiary Stomper's seven lands, Bast's three
+  // creatures) -- the same refusal the scaling pass makes.
+  expect(reasons({ control: "you", type: "permanent" })).toHaveLength(0);
+});
+
+test("a count stated by three abilities of one card is one claim, not three", () => {
+  // Inventors' Fair: the upkeep trigger and the activated ability both say "three or more
+  // artifacts", and the activation derives two abilities. 195 rows for 65 artifacts before this.
+  const counted = { control: "you" as const, token: null, type: "artifact", scope: "all" as const };
+  const fair: CardTags = {
+    oracleId: "fair", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["legendary", "land"], subtypes: [], colors: [], identity: [], cmc: 0,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [
+      { kind: "triggered", trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } }, effect: { kind: "lifegain" }, threshold: { atLeast: 3 }, thresholdSubject: counted },
+      { kind: "activated", cost: "{4}, {T}", effect: { kind: "" }, threshold: { atLeast: 3 }, thresholdSubject: counted },
+      { kind: "activated", cost: "{4}, {T}", effect: { kind: "search" }, threshold: { atLeast: 3 }, thresholdSubject: counted },
+    ],
+  };
+  const solRing: CardTags = {
+    oracleId: "sol-ring", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["artifact"], subtypes: [], colors: [], identity: [], cmc: 1,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [],
+  };
+  const reasons = directedReasons(
+    { card: { name: "Sol Ring" } as DeckCard["card"], tags: solRing },
+    { card: { name: "Inventors' Fair" } as DeckCard["card"], tags: fair }, H,
+  ).filter((r) => r.tag.startsWith("threshold:"));
+  expect(reasons).toHaveLength(1);
 });
 
 // ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE CLAIM (2026-08-18). Archon of Cruelty's single entry

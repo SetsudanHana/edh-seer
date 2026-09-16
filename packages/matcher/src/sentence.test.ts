@@ -3,7 +3,8 @@ import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence } from "./sentence.js";
+  boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence,
+  thresholdSentence, countedNounPlural } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -392,4 +393,23 @@ test("an untap or a blink of the card itself reads reflexively", () => {
   expect(effectPhrase("flicker", undefined, "itself")).toBe("blinks itself");
   expect(effectPhrase("untap", undefined)).toBe("untaps a permanent");
   expect(effectPhrase("damage", "3", "itself")).toBe("deals 3 damage");
+});
+
+// A count the consumer is GATED on (2026-09-16): the sentence says the number and the class the card
+// prints, and claims nothing about what turns on -- "gets bigger" was the wrong claim on the scaling
+// channel for the same reason.
+describe("thresholdSentence and its plural", () => {
+  test("names the count and the class, plural as printed", () => {
+    expect(thresholdSentence("Sol Ring", "Gadrak, the Crown-Scourge", 4, countedNounPlural({ type: "artifact" })))
+      .toBe("Sol Ring counts toward the 4 or more artifacts Gadrak, the Crown-Scourge needs");
+  });
+  test("a subtype is a proper noun and pluralises by suffix; a type does not capitalise", () => {
+    expect(countedNounPlural({ subtype: "shrine" })).toBe("Shrines");
+    expect(countedNounPlural({ subtype: "merfolk" })).toBe("Merfolk");
+    expect(countedNounPlural({ subtype: "elf" })).toBe("Elves");
+    expect(countedNounPlural({ subtype: "dwarf" })).toBe("Dwarves");
+    expect(countedNounPlural({ subtype: ["cleric", "rogue"] })).toBe("Clerics");
+    expect(countedNounPlural({ type: "enchantment" })).toBe("enchantments");
+    expect(countedNounPlural({})).toBe("permanents");
+  });
 });
