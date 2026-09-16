@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
+import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import type { CardTags } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 
@@ -121,4 +121,18 @@ test("chosenType with an OR type constraint (string[]) considers subtypes legal 
   const counts = new Map([["treasure", 2], ["wizard", 1]]);
   const resolved = resolveChosenTypes(tags, counts, hierarchy);
   expect(resolved.abilities[0].effect.subject!.subtype).toBe("treasure");
+});
+
+// OWNER RULING 2026-09-16 (recall v6 #197): an untyped land put resolves against the deck's lands.
+test("deckLandTypes lists the deck's land subtypes, and the basics alone", () => {
+  const land = (types: string[], subtypes: string[]): CardTags => ({
+    ...tagsWith(subtypes), characteristics: { ...chars(subtypes), types },
+  });
+  const out = deckLandTypes([
+    { card: { name: "Mountain" } as never, tags: land(["basic", "land"], ["mountain"]) },
+    { card: { name: "Smoldering Marsh" } as never, tags: land(["land"], ["swamp", "mountain"]) },
+    { card: { name: "Grizzly Bears" } as never, tags: tagsWith(["bear"]) },
+    { card: { name: "Untagged" } as never, tags: null },
+  ]);
+  expect(out).toEqual({ any: ["mountain", "swamp"], basic: ["mountain"] });
 });

@@ -22,6 +22,7 @@ import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { parseTypeLineAllFaces } from "./typeline.js";
 import { faceDeckCards } from "./faces.js";
+import type { LandTypes } from "./chosen-type.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -1058,6 +1059,46 @@ export interface ReasonOptions {
   /** False where no token node will exist to carry the second hop. Default true (the deck report,
    *  the graph, the compass -- everything that builds token nodes). */
   tokensMediate?: boolean;
+  /** The deck's land subtypes, for `landPutFor`. Absent on a card page and in the compass. */
+  landTypes?: LandTypes;
+}
+
+/** AN UNTYPED LAND PUT RESOLVES AGAINST THE DECK'S OWN LANDS (owner ruling 2026-09-16, recall v6
+ *  #197 PuPu UFO -> Valakut). "Put a land card from your hand onto the battlefield" promises no
+ *  Mountain in isolation -- the #140 line, a fill that cannot promise the class -- but in a deck
+ *  whose lands ARE Mountains it puts one, and the owner chose the deck reading over the refusal.
+ *  Resolved at MATCH time, against the subtype the consumer's trigger names, and never written
+ *  back to the tags: the reason's key comes from the CONSUMER's trigger (`enters:mountain`), and
+ *  `themeSubjectKey` reads a subject's first `anyOf` branch, so a rewritten emit would have
+ *  re-keyed every ramp spell's landfall supply from `enters:land` to `enters:forest`. A "basic
+ *  land card" put reaches only the basics' types, so Rampant Growth finds Valakut a basic Mountain
+ *  and never a Smoldering Marsh. Corpus: 87 basic-from-library puts, 49 untyped from hand, 34 from
+ *  a graveyard; 25 `enters` triggers name a land subtype (Mountain 8, Forest 7, Swamp 3, Gate 3). */
+function landPutFor(e: GameEvent, t: GameEvent, landTypes: LandTypes | undefined, own: ReadonlySet<string>, h: Hierarchy): GameEvent | null {
+  if (eventMatches(e, t, h)) return e;
+  if (!landTypes || t.verb !== "enters") return null;
+  const s = e.subject;
+  if (e.verb !== "enters" || (s.zone !== undefined && s.zone !== "battlefield") || s.self === true) return null;
+  if (s.subtype !== undefined || s.anyOf !== undefined || !list(s.type).includes("land")) return null;
+  // ONLY AN AUTHORED PUT IS RESOLVED. A subtype-less land's own implied "it enters" is the same
+  // untyped land event, and resolving it read Bloodstained Mire ENTERING as a Mountain entering
+  // (rakdos-landfall, caught on the second measurement). The card's own events are excluded by the
+  // identity `producerEvents` dedupes on.
+  if (own.has(JSON.stringify(e))) return null;
+  const pool = s.basic === true ? landTypes.basic : landTypes.any;
+  // Resolved to the subtype the CONSUMER asks for, one at a time, so the sentence names the land
+  // that was actually put ("When a Mountain enters thanks to PuPu UFO") and `producerCanBeSubject`
+  // cannot mistake the put for the producer's own entry. Two earlier shapes failed exactly there:
+  // an `anyOf` over every deck subtype dropped the plain reading and lost 89 edges (subtype-less
+  // lands' own ETBs), and an empty first branch to restore it read as the producer itself
+  // entering ("When Gerrard's Hourglass Pendant enters, Valakut deals 3 damage").
+  const wanted = [...list(t.subject.subtype), ...(t.subject.anyOf ?? []).flatMap((b) => list(b.subtype))];
+  for (const subtype of wanted) {
+    if (!pool.includes(subtype)) continue;
+    const typed = { ...e, subject: { ...s, subtype } };
+    if (eventMatches(typed, t, h)) return typed;
+  }
+  return null;
 }
 
 /** The five basic land types, which a board count may name and which never form an edge -- see the
@@ -1094,6 +1135,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   if (silencedBy(p, c, h)) return [];
   const reasons: Reason[] = [];
   const pEvents = producerEvents(p.tags);
+  // The producer's own implied events, for `landPutFor`; built only where a deck is known.
+  const ownEvents: ReadonlySet<string> = opts.landTypes
+    ? new Set(impliedEvents(p.tags.characteristics).map((x) => JSON.stringify(normalizeZoneEvent(x))))
+    : new Set();
 
   // Event edges: normalized producer event ↔ normalized consumer trigger.
   // A printed KEYWORD can be a triggered ability too, and its reminder text is inert at the clause
@@ -1135,13 +1180,16 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       if (!authored.has(k)) notAnOrigin.add(k);
     }
   }
-  for (const e of pEvents) {
+  for (const e0 of pEvents) {
     for (const a of cAbilities) {
       if (!a.trigger) continue;
-      if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e))) continue;
+      if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
         const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
-        if (!eventMatches(e, t, h)) continue;
+        // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
+        // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
+        const e = landPutFor(e0, t, opts.landTypes, ownEvents, h);
+        if (!e) continue;
         // TOKENS MEDIATE (Task 7, tokens-as-nodes, 2026-08-16). A maker's own "a Treasure enters"
         // event and the Treasure NODE's own implied "it enters" event (Task 6 -- `selfSubject` in
         // implied.ts now reads `chars.token` instead of hardcoding false) state the identical fact
@@ -2295,10 +2343,10 @@ const SELF_BOTH_REFUSED: ReadonlySet<string> = new Set([
   "goad", "exert", "detain", "suspect", "harness", "explore", "endure", "convert", "heal", "airbend", "foretell",
 ]);
 
-export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
+export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
   return dedupeReasons([
-    ...directedReasons(a, b, h),
-    ...directedReasons(b, a, h),
+    ...directedReasons(a, b, h, opts),
+    ...directedReasons(b, a, h, opts),
     ...meldReason(a, b),
   ]);
 }
@@ -2322,15 +2370,15 @@ export function pairReasons(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
  *  `pairReasons` and nothing here can change it. Reasons are deduped on (tag, text): two faces of
  *  one card can produce the same sentence, and `stampSides` has already rewritten both endpoints to
  *  the PHYSICAL card name (`parentName`), so such rows really are one claim said twice. */
-export function pairReasonsAcrossFaces(a: DeckCard, b: DeckCard, h: Hierarchy): Reason[] {
+export function pairReasonsAcrossFaces(a: DeckCard, b: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
   const fa = faceDeckCards(a);
   const fb = faceDeckCards(b);
-  if (fa.length === 1 && fb.length === 1) return pairReasons(a, b, h);
+  if (fa.length === 1 && fb.length === 1) return pairReasons(a, b, h, opts);
   const out: Reason[] = [];
   const seen = new Set<string>();
   for (const x of fa) {
     for (const y of fb) {
-      for (const r of pairReasons(x, y, h)) {
+      for (const r of pairReasons(x, y, h, opts)) {
         const key = `${r.tag} ${r.text}`;
         if (seen.has(key)) continue;
         seen.add(key);

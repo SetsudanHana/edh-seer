@@ -22,12 +22,12 @@ import { deckCoverage } from "./coverage.js";
 import { loadHierarchy, subsumptionMap } from "./hierarchy.js";
 import { deckSentence } from "./deck-sentence.js";
 import { applyAnthems, applyState, reachableMarkers } from "./layers.js";
-import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason } from "./edges.js";
+import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReasons, createsForYou, claimCount, ROLE_NOT_SYNERGY, meldReason, type ReasonOptions } from "./edges.js";
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective } from "./perspective.js";
 import { markCommander } from "./commander.js";
-import { deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
+import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
 import { cardSignalOf } from "./card-signal.js";
@@ -239,6 +239,9 @@ export function analyzeDeckStructured(
     const tags = resolveChosenTypes(dc.tags, counts, hierarchy);
     return { card: dc.card, tags: commanderSet.has(dc.card.name) ? markCommander(tags) : tags };
   });
+  // The third deck fact, read at match time rather than written into the tags: what land types an
+  // untyped land put can put, given the lands this deck runs. See `landPutFor` in edges.ts.
+  const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved) };
 
   // ONE NODE PER CARD, WITH ITS COUNT (owner's ruling, 2026-08-15). `parseDecklistSections` expands
   // "6 Plains" into six entries, so the pair loop was producing six identical Farseek->Plains edges
@@ -323,7 +326,7 @@ export function analyzeDeckStructured(
     for (let j = i + 1; j < pairPool.length; j++) {
       const a = pairPool[i], b = pairPool[j];
       if (sameCard(a, b)) continue; // a face never partners with its own other face
-      const reasons = pairReasons(a, b, hierarchy);
+      const reasons = pairReasons(a, b, hierarchy, reasonOpts);
       if (b.isToken && producerTokenOracles.get(a.card.name)?.has(b.tags!.oracleId)) {
         reasons.push(...createsReasons(a, b, hierarchy));
       }
@@ -513,8 +516,8 @@ export function analyzeDeckStructured(
     if (ourMakers.length === 0) continue;
     for (const other of unique) {
       const name = other.card.name;
-      const tokenFeeds = directedReasons(t, other, hierarchy); // token -> card
-      const feedsToken = directedReasons(other, t, hierarchy); // card -> token
+      const tokenFeeds = directedReasons(t, other, hierarchy, reasonOpts); // token -> card
+      const feedsToken = directedReasons(other, t, hierarchy, reasonOpts); // card -> token
       for (const maker of ourMakers) {
         addHop(maker, name, tokenFeeds);
         addHop(name, maker, feedsToken);
@@ -560,7 +563,7 @@ export function analyzeDeckStructured(
       // with 0 cards" on both card lines. Symmetric, so each direction adds it once and
       // `distinctPartners` below dedupes the pair. Found 2026-09-05, the day `meldPartner` came back
       // onto the corpus (docs.ts) -- the month it was absent hid this.
-      const direct = [...directedReasons(p, c, hierarchy), ...meldReason(p, c)]; // p feeds c
+      const direct = [...directedReasons(p, c, hierarchy, reasonOpts), ...meldReason(p, c)]; // p feeds c
       const reasons = hop ? [...direct, ...hop] : direct;
       if (reasons.length === 0) continue;
       const maxW = maxAxisWeight(reasons, axis);

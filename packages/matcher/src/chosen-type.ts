@@ -87,3 +87,30 @@ export function resolveChosenTypes(tags: CardTags, counts: Map<string, number>, 
     })),
   };
 }
+
+/** The land subtypes a deck's lands carry: every land, and the basics alone. */
+export interface LandTypes { any: string[]; basic: string[] }
+
+/** THE DECK'S LAND BASE, AS A FACT AN UNTYPED LAND PUT RESOLVES AGAINST (owner ruling 2026-09-16,
+ *  recall v6 #197 PuPu UFO -> Valakut). "Put a land card onto the battlefield" promises no Mountain
+ *  on its own; in a deck whose lands are Mountains it puts one. Read by `directedReasons` through
+ *  `ReasonOptions.landTypes` -- the same deck-aware shape as a chosen type, and like it absent on a
+ *  card page. `basic` is the subset a "basic land card" put can reach: Rampant Growth finds a basic
+ *  Mountain, never a Smoldering Marsh. Every face of a modal DFC counts, as `impliedEvents` does. */
+export function deckLandTypes(inputs: DeckCard[]): LandTypes {
+  const any = new Set<string>();
+  const basic = new Set<string>();
+  for (const { tags } of inputs) {
+    if (!tags) continue;
+    const chars = tags.characteristics;
+    for (const face of chars.faces ?? [{ types: chars.types, subtypes: chars.subtypes }]) {
+      const types = face.types.map((t) => t.toLowerCase());
+      if (!types.includes("land")) continue;
+      for (const s of face.subtypes.map((x) => x.toLowerCase())) {
+        any.add(s);
+        if (types.includes("basic")) basic.add(s);
+      }
+    }
+  }
+  return { any: [...any].sort(), basic: [...basic].sort() };
+}
