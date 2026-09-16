@@ -4052,6 +4052,34 @@ describe("board count over a bare type", () => {
 });
 
 // RECALL v4 TOKEN FAMILY (2026-09-09): an outlet's sacrifice is a DEMAND for what it eats.
+// OWNER RULING 2026-09-16 (recall v6 #197): an untyped land put resolves against the DECK's lands.
+// "Put a land card onto the battlefield" promises no Mountain on its own; in a deck running
+// Mountains it puts one, so PuPu UFO reaches Valakut there and nowhere else. A "basic land card"
+// put reaches the type only through a basic of that type. The key stays the consumer's.
+test("an untyped land put reaches a typed land demand through the deck's lands", () => {
+  const ufo = base("PuPu UFO", [{ kind: "activated", effect: { kind: "" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, fromZone: "hand", type: "land" } }] }]);
+  const growth = base("Rampant Growth", [{ kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, basic: true, type: "land", fromZone: "library" } }] }]);
+  const valakut = base("Valakut, the Molten Pinnacle", [{ kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, subtype: "mountain" } }, effect: { kind: "damage" } }]);
+  const landfall = base("Tireless Tracker", [{ kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } }, effect: { kind: "draw-card" } }]);
+  const tags = (p: DeckCard, c: DeckCard, landTypes?: { any: string[]; basic: string[] }) =>
+    directedReasons(p, c, H, landTypes ? { landTypes } : {}).map((r) => r.tag);
+  expect(tags(ufo, valakut)).not.toContain("enters:mountain");
+  expect(tags(ufo, valakut, { any: ["swamp"], basic: ["swamp"] })).not.toContain("enters:mountain");
+  expect(tags(ufo, valakut, { any: ["mountain", "swamp"], basic: ["swamp"] })).toContain("enters:mountain");
+  expect(tags(growth, valakut, { any: ["mountain", "swamp"], basic: ["swamp"] })).not.toContain("enters:mountain");
+  expect(tags(growth, valakut, { any: ["mountain", "swamp"], basic: ["mountain"] })).toContain("enters:mountain");
+  expect(tags(ufo, landfall, { any: ["mountain"], basic: [] })).toContain("enters:land");
+  // A subtype-less LAND's own entry is the same untyped event and is never widened: Bloodstained
+  // Mire entering is not a Mountain entering (a false edge the second measurement caught).
+  const mire = { ...base("Bloodstained Mire", []), tags: { ...base("Bloodstained Mire", []).tags,
+    characteristics: { ...base("Bloodstained Mire", []).tags.characteristics, types: ["land"] } } } as DeckCard;
+  expect(tags(mire, valakut, { any: ["mountain"], basic: ["mountain"] })).not.toContain("enters:mountain");
+});
+
 describe("fodder", () => {
   const engineer = base("Goblin Engineer", [{
     kind: "activated", cost: "{R}, {T}, Sacrifice an artifact", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "artifact", zone: "graveyard" } },
