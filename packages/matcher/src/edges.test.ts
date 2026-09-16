@@ -2202,6 +2202,33 @@ test("a typed win condition edges to what it counts; an untyped one stays a role
   expect(reasons(false)).toHaveLength(0);
 });
 
+// A PROCESSOR EATS WHAT YOU EXILED OF THEIRS (AF7b; recall v5 #160): an `exiled` emit aimed at an
+// opponent's cards is the supply, `exile-processing` the demand; your own exiles feed nothing.
+test("an exile of an opponent's cards enables a processor; an exile of your own does not", () => {
+  const nullifier: CardTags = {
+    oracleId: "nullifier", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: ["eldrazi", "processor"], colors: ["U", "B"], identity: ["U", "B"], cmc: 5,
+      power: "2", toughness: "3", token: false, keywords: ["flying", "flash"] },
+    abilities: [{ kind: "on-cast", effect: { kind: "exile-processing", subject: { control: "opp", token: null, scope: "all" } } }],
+  };
+  const exiler = (control: "you" | "opp" | "any"): CardTags => ({
+    oracleId: "sower", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: ["eldrazi"], colors: [], identity: [], cmc: 6,
+      power: "5", toughness: "8", token: false, keywords: [] },
+    abilities: [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "exiled", subject: { control, token: null, fromZone: "library" } }] }],
+  });
+  const reasons = (p: CardTags) => directedReasons(
+    { card: { name: "Oblivion Sower" } as DeckCard["card"], tags: p },
+    { card: { name: "Ulamog's Nullifier" } as DeckCard["card"], tags: nullifier }, H,
+  ).filter((r) => r.tag.startsWith("exile-processing:"));
+  const fed = reasons(exiler("opp"));
+  expect(fed).toHaveLength(1);
+  expect(fed[0].text).toBe("When Oblivion Sower exiles an opponent's card, Ulamog's Nullifier can process it");
+  expect(reasons(exiler("any"))).toHaveLength(1);
+  // An impulse draw off your own top is not an opponent's card.
+  expect(reasons(exiler("you"))).toHaveLength(0);
+});
+
 // THE RECEIVING SIDE OF DAMAGE (AF7d; recall v5 #116, v7 #82). "Whenever this creature is dealt
 // damage" is supplied by a damage emit whose VICTIM it could be; a player and a permanent never meet
 // (the CR 120.3 convention: an untyped victim is a player), and an implied combat event -- no

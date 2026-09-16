@@ -39,8 +39,11 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // 72 -> 73 on 2026-09-16 for `damaged`, the receiving side of damage (AF7d; recall v5 #116, v7
   // #82): "whenever this creature is dealt damage" had a clause word since 09-09 and no engine verb,
   // so Stuffy Doll and every enrage Dinosaur derived no trigger at all. Consumer-only by design.
-  expect(VERB_VOCAB).toHaveLength(73);
+  // 73 -> 74 on 2026-09-16 for `exiled` (AF7b; recall v5 #160): a card put into exile is an event
+  // 39 corpus triggers watch and the processors demand, and no exile action emitted it.
+  expect(VERB_VOCAB).toHaveLength(74);
   expect(VERB_VOCAB).toContain("damaged");
+  expect(VERB_VOCAB).toContain("exiled");
   for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["goad", "explore", "clash", "vote", "venture-into-the-dungeon", "foretell"]) expect(VERB_VOCAB).toContain(v);
   for (const v of ["shuffle", "transform", "turned-face-up", "attached", "gains-control", "prevented"]) expect(VERB_VOCAB).toContain(v);

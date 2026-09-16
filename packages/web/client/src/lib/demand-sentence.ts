@@ -47,6 +47,7 @@ export const DEMAND_VERB: Record<string, string> = {
   "non-combat-damage": "dealing noncombat damage",
   "combat-damage": "dealing combat damage",
   damaged: "being dealt damage",
+  exiled: "being exiled",
   discard: "being discarded",
   mill: "being milled",
   sacrifice: "being sacrificed",
@@ -288,6 +289,8 @@ export const MECHANISM: Record<string, string> = {
   scales: "getting bigger from a graveyard",
   doubles: "doubling a trigger",
   wincon: "counting toward a win",
+  // The processor pass's tag is `exile-processing:<what was exiled>` (AF7b, 2026-09-16).
+  "exile-processing": "processing an opponent's exiled card",
   // The threshold pass's tag is `threshold:<what it counts>` (2026-09-16): a count the ability is
   // GATED on -- Gadrak's four artifacts, Chrome Steed's metalcraft -- as `wincon` is for a win.
   threshold: "counting toward a condition",

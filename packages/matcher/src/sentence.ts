@@ -49,6 +49,7 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   flicker: [() => "blinks a permanent", "blinks a permanent"],
   animate: [() => "turns something into a creature", "turns something into a creature"],
   "graveyard-hate": [() => "hits a graveyard", "hits a graveyard"],
+  "exile-processing": [() => "processes an opponent's exiled card", "processes an opponent's exiled card"],
   debuff: [(n) => `shrinks a creature by ${n}`, "shrinks a creature"],
   "ability-loss": [() => "strips abilities", "strips abilities"],
   // AND THE MULTIPLIERS, which a sample of the still-bare rows put next in volume: 28 of 400 were
@@ -262,6 +263,7 @@ export const VERB_PHRASES: Record<string, string> = {
   "combat-damage": "deals combat damage",
   "non-combat-damage": "deals noncombat damage",
   damaged: "is dealt damage",
+  exiled: "is exiled",
   draw: "draws a card",
   discard: "discards a card",
   mill: "mills a card",
@@ -534,6 +536,13 @@ export function costReductionSentence(producer: string, consumer: string): strin
 /** The five remaining sites' text, moved verbatim (byte-identical) — single-sourced, not reworded. */
 export function winconSentence(producer: string, consumer: string): string {
   return `${producer} is what ${consumer} counts toward winning`;
+}
+
+/** A PROCESSOR (AF7b): the producer put an opponent's card into exile, and the consumer's whole
+ *  ability is spending such a card. Not a trigger the producer fires -- the card sits in exile
+ *  until the processor comes -- so the sentence is an enabling fact, the recursion shape. */
+export function processorSentence(producer: string, consumer: string): string {
+  return `When ${producer} exiles an opponent's card, ${consumer} can process it`;
 }
 
 /** CR 704.5m: an Aura whose host leaves goes to the graveyard with it. The producer never touches

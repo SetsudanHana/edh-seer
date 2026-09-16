@@ -100,6 +100,10 @@ export const SEED_IMPACT_WEIGHTS: ImpactWeights = {
     // interaction, same band as player-life-loss/lifegain. NOT graveyard-recursion (0.8) despite
     // the similar name: these two kinds are opposites (deny vs. reuse a graveyard).
     "graveyard-hate": 0.3,
+    // A PROCESSOR (AF7b, 2026-09-16): spending an opponent's exiled card is a rider on a body --
+    // Nullifier counters, Ruin Processor gains life, Blight Herder makes tokens -- so it sits between
+    // hate (0.3) and recursion (0.8), neither a role nor a whole engine.
+    "exile-processing": 0.6,
     // ALL FIVE AT 0.3, the weight their shared ancestor `top-manipulation` carried until the kind
     // split on 2026-09-07. Identical on purpose: the split is behaviour-preserving, so no card's
     // impact moves and the panel can be compared byte for byte. Whether a `search` and a `surveil`

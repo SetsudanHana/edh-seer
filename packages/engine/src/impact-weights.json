@@ -34,6 +34,7 @@
     "player-life-loss": 0.3,
     "lifegain": 0.3,
     "graveyard-hate": 0.3,
+    "exile-processing": 0.6,
     "keyword-grant": 0.3,
     "speed-increase": 0.3,
     "speed": 0.3,

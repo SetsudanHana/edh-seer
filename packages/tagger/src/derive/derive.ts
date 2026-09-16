@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, exilesOwnGraveyard, extraPhaseName } from "./effect-kind.js";
-import { actionEmits } from "./emits.js";
+import { actionEmits, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
@@ -76,7 +76,9 @@ import { emblemRecipient } from "../emblem.js";
 // controller ("under your control") keeps it.
 // 149: `damaged`, the receiving side of damage, is an engine verb (AF7d): "whenever this creature is
 // dealt damage" derives a trigger, from the clause word and from the older `damage-dealt` spelling.
-export const DERIVE_VERSION = 149;
+// 150: `exiled` is an engine verb emitted by every exile action (AF7b), and a from-exile move whose
+// object names an opponent as owner is the `exile-processing` kind (Ulamog's Nullifier, 22 cards).
+export const DERIVE_VERSION = 150;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -191,6 +193,8 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   // trigger walk; the engine verb is the same word. The older `damage-dealt` spelling of the same
   // fact is split by `DAMAGE_RECEIVED` in the branch below.
   damaged: "damaged",
+  // A card put into exile (AF7b, 2026-09-16); every exile action emits it.
+  exiled: "exiled",
 };
 
 /** "Whenever this creature IS DEALT damage" (Hornet Nest, Flumph, Boros Reckoner) — the receiving
@@ -217,8 +221,7 @@ const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
  *  Anchored on the token pronoun in shapes 1 and 2 so a clause that exiles something ELSE at end of
  *  turn cannot match. "sacrifice" sits beside "exile" because the family splits on the MANNER and
  *  what undermines a go-wide plan is the LEAVING, not how it happens. */
-const LEAVES_SAME_TURN =
-  /\b(?:exile|sacrifice)\s+(?:it|them|that token|those tokens)\b[^.]{0,80}?\b(?:at the beginning of the next end step|at end of turn|at end of combat)\b/i;
+// LIVES IN emits.ts since 2026-09-16 (AF7b): the same rider must also refuse an `exiled` emit.
 /** Shape 3, matched on the keyword's NAME because its reminder text is stripped before derive. */
 const DECAYED = /\bwith decayed\b/i;
 /** Combat vs noncombat, read off the clause the trigger sits in. Plural "deal combat damage" counts:
@@ -1107,7 +1110,12 @@ export function deriveAbilities(
       // below, which is the shape `prompt.ts` already documents for Tekuthal.
       const effectKind = replacement?.kind ?? actionEffectKind(action, text);
       // A tap the clause states as an ARRIVAL state is not an event. See ARRIVES_TAPPED.
-      const emits = actionEmits(antecedent ? { ...action, object: antecedent } : action, text, { self: emitsSelf })
+      // THE TEMPORARY-TOKEN RIDER IS NOT AN EVENT. "Exile it at the beginning of the next end step"
+      // resolves its pronoun to the token the clause just made, so the emit builder would see a
+      // typed exile; tested on the RAW object here, before the antecedent, the way emits.ts tests
+      // it for a direct call. The fact is `temporary` on the maker's own ability (below).
+      const temporaryRider = action.verb === "exile" && LEAVES_SAME_TURN.test(text) && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim());
+      const emits = temporaryRider ? [] : actionEmits(antecedent ? { ...action, object: antecedent } : action, text, { self: emitsSelf })
         .filter((e) => !(e.verb === "taps" && ARRIVES_TAPPED.test(text)))
         // A SACRIFICE triggered by the card's own LEAVING is drawback, not supply. "When this
         // enchantment leaves the battlefield, that creature's controller sacrifices it" (Necromancy,

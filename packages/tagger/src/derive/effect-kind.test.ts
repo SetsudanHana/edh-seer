@@ -776,3 +776,14 @@ test("an emblem is not a token", () => {
   expect(actionEffectKind({ verb: "emblem" })).toBe("emblem");
   expect(EFFECT_KINDS).toContain("emblem");
 });
+
+// A PROCESSOR is keyed on the OWNER phrase, not the zone move (AF7b, 2026-09-16): "a card an
+// opponent owns from exile" is the demand; a flicker returning your own exiled creature is not.
+test("a from-exile move whose object names an opponent as owner is exile-processing", () => {
+  expect(actionEffectKind({ verb: "put", object: "two cards your opponents own", fromZone: "exile", toZone: "graveyard" })).toBe("exile-processing");
+  expect(actionEffectKind({ verb: "put", object: "any number of land cards that player owns from exile", fromZone: "exile", toZone: "battlefield" })).toBe("exile-processing");
+  expect(actionEffectKind({ verb: "return", object: "up to two cards your opponents own from exile", fromZone: "exile", toZone: "graveyard" })).toBe("exile-processing");
+  // Ephemerate's second half: your own card, a flicker as before.
+  expect(actionEffectKind({ verb: "return", object: "that card", fromZone: "exile", toZone: "battlefield" })).toBe("flicker");
+  expect(EFFECT_KINDS).toContain("exile-processing");
+});

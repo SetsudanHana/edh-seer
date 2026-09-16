@@ -2051,7 +2051,7 @@ test("a flicker derives leaves from its exile half and enters from its return ha
     characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["instant"] },
   });
   const verbs = ephemerate.abilities.flatMap((a) => (a.emits ?? []).map((e) => e.verb)).sort();
-  expect(verbs).toEqual(["enters", "leaves"]);
+  expect(verbs).toEqual(["enters", "exiled", "leaves"]);
   const leaves = ephemerate.abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "leaves")!;
   expect(leaves.subject.control).toBe("you");
   expect(leaves.subject.type).toBe("creature");
@@ -2698,4 +2698,48 @@ test("a put with a named actor fills THAT player's graveyard; an object naming i
   ).abilities;
   const enters = visions.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
   expect(enters?.subject.control).toBe("you");
+});
+
+// AF7b: the processor demand and the `exiled` event (recall v5 #160, Oblivion Sower -> Ulamog's Nullifier).
+test("a processor derives exile-processing on an opponent's cards, and an exile emits `exiled`", () => {
+  const nullifier = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "this spell", control: "you" },
+      actions: [{ verb: "put", object: "two cards your opponents own", fromZone: "exile", toZone: "graveyard" }, { verb: "counter-spell", object: "target spell" }] }],
+    "Ulamog's Nullifier",
+    { 1: "When you cast this spell, you may put two cards your opponents own from exile into their owners' graveyards. If you do, counter target spell." },
+  ).abilities;
+  const processing = nullifier.find((a) => a.effect.kind === "exile-processing");
+  expect(processing?.effect.subject?.control).toBe("opp");
+
+  const sower = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+      actions: [{ verb: "exile", object: "the top four cards of target opponent's library", fromZone: "library" }] }],
+    "Oblivion Sower",
+    { 1: "When you cast this spell, target opponent exiles the top four cards of their library." },
+  ).abilities;
+  const exiled = sower.flatMap((a) => a.emits ?? []).find((e) => e.verb === "exiled");
+  expect(exiled?.subject).toMatchObject({ control: "opp", fromZone: "library" });
+
+  // The clause word maps to the verb of the same name.
+  const doctor = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "exiled", subject: "one or more other cards from anywhere", control: "any" },
+      actions: [{ verb: "draw", object: "a card" }] }],
+    "The War Doctor",
+    { 1: "Whenever one or more other cards are put into exile from anywhere, draw a card." },
+  ).abilities;
+  expect(doctor[0]?.trigger?.verbs).toEqual(["exiled"]);
+});
+
+// Flameshadow Conjuring: the end-step exile of the token the clause made is `temporary`, not a
+// second ability -- read as one, every entering creature earned "...Flameshadow Conjuring triggers"
+// beside "...makes a token" (+62 rows on the 71, 2026-09-16).
+test("the temporary-token rider makes no second ability", () => {
+  const text = "Whenever a nontoken creature enters under your control, you may pay {R}. If you do, create a token that's a copy of that creature. That token gains haste. Exile it at the beginning of the next end step.";
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "a nontoken creature", control: "you" },
+      actions: [{ verb: "create", object: "a token that's a copy of that creature" }, { verb: "grant-ability", object: "haste" }, { verb: "exile", object: "it", toZone: "exile" }] }],
+    "Flameshadow Conjuring", { 1: text }, undefined, text,
+  );
+  expect(abilities.find((a) => a.effect.kind === "token-generation")?.temporary).toBe(true);
+  expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "exiled"))).toBe(false);
 });
