@@ -261,6 +261,7 @@ export const VERB_PHRASES: Record<string, string> = {
   // ("combat-damages", "land-plays", "dice-rolleds").
   "combat-damage": "deals combat damage",
   "non-combat-damage": "deals noncombat damage",
+  damaged: "is dealt damage",
   draw: "draws a card",
   discard: "discards a card",
   mill: "mills a card",

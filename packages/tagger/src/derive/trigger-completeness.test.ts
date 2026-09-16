@@ -276,7 +276,8 @@ test("the 2026-09-09 words refuse rather than near-miss", () => {
   // them engine verbs, and verb-accounting.test.ts now pins them as EMITS instead.
   // `unattached` left on the same afternoon (AC11 batch 2 gave the object events engine verbs).
   // `foretell` left with AC11 batch 3, which gave every keyword action its own event.
-  const added = ["reflexive", "state", "mana-spent", "damaged",
+  // `damaged` left 2026-09-16 (AF7d): the receiving side of damage is the engine verb of the same name.
+  const added = ["reflexive", "state", "mana-spent",
     "returned-to-hand", "put-into-library", "becomes-renowned", "becomes-saddled", "plotted",
     "give-gift", "mentors", "solved", "resolves", "evolve"];
   for (const w of added) {
@@ -284,4 +285,5 @@ test("the 2026-09-09 words refuse rather than near-miss", () => {
     expect(normalizeTriggerVerb(w), `${w} must refuse, not map to a verb`).toBeNull();
   }
   expect(VERBS).toContain("foretell");
+  expect(normalizeTriggerVerb("damaged")).toBe("damaged");
 });

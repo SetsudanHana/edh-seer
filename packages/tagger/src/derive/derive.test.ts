@@ -1652,9 +1652,11 @@ test("noncombat damage takes the other verb, not the combat one", () => {
   expect(out.abilities[0]?.trigger?.verbs).toEqual(["non-combat-damage"]);
 });
 
-test("RECEIVING damage is refused, never given the dealing verb", () => {
+test("RECEIVING damage is its own verb, never the dealing one (AF7d)", () => {
   // Hornet Nest: "Whenever this creature is dealt damage, create that many 1/1 Insect tokens."
-  // Mapped to `combat-damage` it would claim Hornet Nest DEALS damage — the opposite fact.
+  // Mapped to `combat-damage` it would claim Hornet Nest DEALS damage — the opposite fact. Stored
+  // under the older `damage-dealt` spelling, the text decides; under the clause word `damaged`
+  // (Stuffy Doll, normalized after the 09-09 walk) the map decides. Both derive `damaged` on self.
   const clauses = [{
     id: 1, abilityType: "triggered" as const,
     trigger: { event: "damage-dealt", subject: "this creature", control: "you" },
@@ -1662,8 +1664,17 @@ test("RECEIVING damage is refused, never given the dealing verb", () => {
   }];
   const text = "Whenever this creature is dealt damage, create that many 1/1 green Insect creature tokens with flying and deathtouch.";
   const out = deriveAbilities(clauses, "Hornet Nest", { 1: text }, undefined, text);
-  expect(out.unknownTriggers).toContain("damage-received");
-  expect(out.abilities.some((a) => a.trigger !== undefined)).toBe(false);
+  expect(out.unknownTriggers).not.toContain("damage-received");
+  expect(out.abilities[0]?.trigger).toMatchObject({ verbs: ["damaged"], subject: { self: true, control: "you" } });
+
+  const doll = deriveAbilities(
+    [{ id: 1, abilityType: "triggered" as const, trigger: { event: "damaged", subject: "this creature", control: "you" },
+      actions: [{ verb: "deal-damage", object: "target player", amount: "that much" }] }],
+    "Stuffy Doll",
+    { 1: "Whenever this creature is dealt damage, it deals that much damage to target player." },
+    undefined, "Whenever this creature is dealt damage, it deals that much damage to target player.",
+  );
+  expect(doll.abilities[0]?.trigger).toMatchObject({ verbs: ["damaged"], subject: { self: true } });
 });
 
 // `damage-dealt` IS WHERE AN INVENTED TRIGGER HIDES: it is the event the normalizer reaches for when

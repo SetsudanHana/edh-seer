@@ -524,3 +524,18 @@ test("a sweep debuff emits a death for every creature it reaches", () => {
   // Tide, Essence Pulse, Dead of Winter).
   expect(actionEmits({ verb: "modify-pt", object: "all creatures", amount: "-X, where X is the number of card types among cards in your graveyard" })[0]?.verb).toBe("dies");
 });
+
+// A FIGHT IS TWO DAMAGE EVENTS (CR 701.14a; recall v7 #82, AF7d). The parsed object names the
+// opponent's creature as the victim and your creature as the dealer; the mirror is the half where
+// YOUR creature is dealt damage -- Khalni Ambush making Stuffy Doll the victim.
+test("a fight against an opponent's creature emits both halves; one among your own emits one", () => {
+  const both = actionEmits({ verb: "fight", object: "target creature you control and target creature you don't control" },
+    "Target creature you control fights target creature you don't control.");
+  const damage = both.filter((e) => e.verb === "non-combat-damage");
+  expect(damage).toHaveLength(2);
+  expect(damage[0]).toMatchObject({ subject: { control: "opp", type: "creature" }, dealer: { control: "you", type: "creature" } });
+  expect(damage[1]).toMatchObject({ subject: { control: "you", type: "creature" }, dealer: { control: "opp", type: "creature" } });
+  const own = actionEmits({ verb: "fight", object: "target creature you control and another target creature you control" },
+    "Target creature you control fights another target creature you control.");
+  expect(own.filter((e) => e.verb === "non-combat-damage")).toHaveLength(1);
+});

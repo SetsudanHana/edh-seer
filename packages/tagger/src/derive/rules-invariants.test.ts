@@ -40,6 +40,7 @@ const TESTED: Record<string, string> = {
   "611.3a": "threshold.test.ts / derive.test.ts — a static's 'as long as' count is a threshold on the ability",
   "702.5a": "characteristics.test.ts — an Aura's Enchant line is carried as `characteristics.enchants`",
   "704.5m": "matcher edges.test.ts — a producer removing what an Aura enchants supplies the Aura's own dies trigger",
+  "120.1": "derive.test.ts — the receiving side of damage is its own verb `damaged`, never the dealing one",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {
