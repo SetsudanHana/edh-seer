@@ -4165,6 +4165,35 @@ test("an untyped land put reaches a typed land demand through the deck's lands",
   expect(tags(mire, valakut, { any: ["mountain"], basic: ["mountain"] })).not.toContain("enters:mountain");
 });
 
+// OWNER RULING 2026-09-16 (recall v7 #114): "delve is an edge, fill feeds the delve spell". A
+// self-mill, a discard, a death or a direct put into YOUR graveyard pays for a delve card; an
+// opponent's fill and a token's death (CR 704.5d) pay nothing.
+test("a fill feeds a delve spell, an opponent's fill and a token's death do not", () => {
+  const dig = base("Dig Through Time", []);
+  dig.tags.characteristics.keywords = ["Delve"];
+  dig.tags.characteristics.types = ["instant"];
+  const scour = base("Thought Scour", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "you", token: null } }] }]);
+  const found = directedReasons(scour, dig, H).find((r) => r.tag === "mill:any");
+  expect(found?.text).toBe("Thought Scour fills the graveyard Dig Through Time delves from");
+  const oppMill = base("Mind Funeral", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "opp", token: null } }] }]);
+  expect(directedReasons(oppMill, dig, H).length).toBe(0);
+  // The parser's `any` on a fill is yours unless the text names only opponents.
+  const targetPlayer = base("Thought Scour", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "any", token: null } }] }]);
+  (targetPlayer.card as { oracleText: string }).oracleText = "Target player mills two cards. Draw a card.";
+  expect(directedReasons(targetPlayer, dig, H).map((r) => r.tag)).toContain("mill:any");
+  const oppOnly = base("Mind Funeral (any)", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "enters-graveyard", subject: { control: "any", token: null } }] }]);
+  (oppOnly.card as { oracleText: string }).oracleText = "Target opponent reveals cards from the top of their library until four land cards are revealed. That player puts all cards revealed this way into their graveyard.";
+  expect(directedReasons(oppOnly, dig, H).length).toBe(0);
+  const outlet = base("Viscera Seer", [{ kind: "activated", effect: { kind: "scry" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }, { verb: "dies", subject: { control: "you", token: null, type: "creature" } }] }]);
+  expect(directedReasons(outlet, dig, H).map((r) => r.tag)).toContain("dies:any");
+  const tokenDeath = base("Goblin token", []);
+  (tokenDeath as unknown as { isToken: boolean }).isToken = true;
+  expect(directedReasons(tokenDeath, dig, H).length).toBe(0);
+  // Not a delve card: nothing.
+  expect(directedReasons(scour, base("Counterspell", []), H).some((r) => r.tag === "mill:any")).toBe(false);
+});
+
 describe("fodder", () => {
   const engineer = base("Goblin Engineer", [{
     kind: "activated", cost: "{R}, {T}, Sacrifice an artifact", effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "artifact", zone: "graveyard" } },

@@ -16,7 +16,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, doublesClassSentence, doublesSentence, landConditionSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -679,6 +679,14 @@ const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
 /** An UNTYPED recursion on an ability that carries its own graveyard-entry trigger: it returns the
  *  object that trigger saw, never an arbitrary card someone else put there. Reached only AFTER the
  *  trigger-match skip above, so by here the fill is one the trigger does NOT see. */
+/** A fill whose printed text names only opponents -- "target opponent", "each opponent", "an
+ *  opponent" and never "each player" / "target player" -- lands in their graveyard. Card-scoped
+ *  printed cue for the delve pass, the `recursionIsSelfSupplied` shape. */
+function fillsOnlyOpponents(oracle: string | undefined): boolean {
+  const t = oracle ?? "";
+  return /\b(?:target|each|an) opponent\b/i.test(t) && !/\b(?:each|target) player\b/i.test(t);
+}
+
 /** The mana value at or below which a real card counts as sacrifice fodder. See the fodder pass. */
 const EXPENDABLE_MV = 2;
 
@@ -1961,6 +1969,41 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       producer: p.card.name,
     });
     break; // one fodder claim per pair
+  }
+  // DELVE edges: P fills the graveyard C delves from (owner ruling 2026-09-16, recall v7 #114:
+  // "delve is an edge, fill feeds the delve spell"). CR 702.66: each card exiled from YOUR
+  // graveyard pays {1}, so a self-mill, a discard, a death or a direct put into your graveyard is
+  // the mana. An opponent's fill lands in their graveyard and pays nothing; a TOKEN's death pays
+  // nothing either (CR 704.5d, it ceases to exist there), so a token node and a token-only emit
+  // are refused. One claim per pair, keyed on the fill's own verb so it sits on the aristocrats /
+  // mill / discard axis the theme layer already speaks (the four cares tags `keywordAbilities`
+  // gives the same keyword). 30 commander-legal delve cards; 3 of the 71 decks run one.
+  if (!p.isToken && (c.tags.characteristics.keywords ?? []).some((k) => String(k).toLowerCase().trim() === "delve")) {
+    for (const e of pEvents) {
+      const s = e.subject;
+      if (s.token === true) continue;
+      // WHOSE GRAVEYARD. `opp` never pays. `any` is the parser's "could not tell", and on fills it
+      // is mostly YOURS -- measured 2026-09-16 over the 924 corpus fill emits at `any`: 498 say
+      // "each/target player" (Thought Scour, Windfall), 308 name nobody (Entomb, Unmarked Grave),
+      // 118 name only opponents (Mind Funeral's "target opponent ... that player puts", Archon of
+      // Cruelty). The last are read off the printed cue below until derive's WHO marks them `opp`;
+      // a death at `any` ("each player sacrifices", a wrath) kills yours too and always counts.
+      const yours = s.control === "you" || (s.control === "any" && !fillsOnlyOpponents(p.card.oracleText));
+      const key = e.verb === "mill" && yours ? "mill:any" : e.verb === "discard" && yours ? "discard:any"
+        : e.verb === "dies" && s.control !== "opp" ? "dies:any"
+        : (e.verb === "enters-graveyard" || (e.verb === "enters" && s.zone === "graveyard" && !e.implied)) && yours ? "enters-graveyard:any"
+        : undefined;
+      if (!key) continue;
+      reasons.push({
+        tag: key,
+        text: delveSentence(p.card.name, c.card.name),
+        effectKind: "",
+        repeatability: "oneshot",
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+      break;
+    }
   }
   // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
   // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its

@@ -549,6 +549,12 @@ export function recursionTargetSentence(producer: string, consumer: string): str
   return `${producer} can bring back ${consumer}`;
 }
 
+/** A fill and the delve spell it pays for (CR 702.66): the producer puts cards in your graveyard,
+ *  the consumer exiles them as mana. */
+export function delveSentence(producer: string, consumer: string): string {
+  return `${producer} fills the graveyard ${consumer} delves from`;
+}
+
 /** A conditional land's demand, stated as the relation it is: this land is better because that card
  *  carries the basic land type it names. Two templates, two different sentences — a check land is
  *  about ENTERING, a verge land is about ACTIVATING, and saying "enters untapped" about a verge is a
