@@ -2649,14 +2649,18 @@ test("a static gated on a typed count keeps a kindless ability that carries the 
   expect(abilities[0].trigger).toBeUndefined();
 });
 
-test("a static with a count that names no class derives nothing, as before", () => {
-  // Cephalid Inkmage: a graveyard card count is not a class of permanent. Nothing to join on.
+test("a static gated on a graveyard count keeps a kindless ability that carries the count (AF7c)", () => {
+  // Cephalid Inkmage: until DERIVE 151 a graveyard card count was refused as "not a class of
+  // permanent" and the clause derived nothing. It is a fill demand now, and the one thing the
+  // card asks of its deck -- a full graveyard -- rides on the kindless ability.
   const { abilities } = deriveAbilities(
     [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "be blocked as long as there are seven or more cards in your graveyard" }] }],
     "Cephalid Inkmage",
     { 1: "This creature can't be blocked as long as there are seven or more cards in your graveyard." },
   );
-  expect(abilities).toHaveLength(0);
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0]).toMatchObject({ kind: "static", effect: { kind: "" }, threshold: { atLeast: 7 },
+    thresholdSubject: { control: "you", zone: "graveyard" } });
 });
 
 test("an activated ability carries its activation restriction's count", () => {

@@ -130,10 +130,9 @@ test("REVIEW FINDING 1: the noun comes from the SAME comparison the number does"
     + "graveyard, you may pay {2}{B}. If you do, return this card from your graveyard to the "
     + "battlefield tapped and attacking.";
   expect(thresholdFor(text)).toEqual({ atLeast: 7 });
-  // "cards in your graveyard" is a zone-scoped card count (also finding 2's shape below), not a
-  // permanent class, and the number that survives is the graveyard one, not the Rats one -- so this
-  // must be undefined, NOT {subtype: "rat"}.
-  expect(thresholdSubjectFor(text)).toBeUndefined();
+  // "cards in your graveyard" is a graveyard count (AF7c below), and the number that survives is
+  // the graveyard one, not the Rats one -- so the subject is the graveyard, NOT {subtype: "rat"}.
+  expect(thresholdSubjectFor(text)).toEqual({ control: "you", token: null, zone: "graveyard" });
 });
 
 // Review finding 2 (Important): the hand/life exclusion was an allow-list of ONE zone ("hand") and
@@ -142,11 +141,44 @@ test("REVIEW FINDING 1: the noun comes from the SAME comparison the number does"
 // or more permanent cards in your graveyard, transform The Everflowing Well." The noun "permanent
 // cards in your graveyard" used to derive {type: "permanent"} with no zone, which a consumer reads
 // as "permanents you control" -- the opposite zone from the one printed.
+// SINCE AF7c the graveyard is the one zone that IS read, with its zone on the subject -- so the
+// Well derives {type: "permanent", zone: "graveyard"}, never a bare {type: "permanent"}. Hand and
+// library counts still refuse.
 test("REVIEW FINDING 2: a zone-scoped card count is refused for ANY zone, not just hand", () => {
   const text = "Descend 8 — At the beginning of your upkeep, if there are eight or more permanent "
     + "cards in your graveyard, transform The Everflowing Well.";
   expect(thresholdFor(text)).toEqual({ atLeast: 8 });
-  expect(thresholdSubjectFor(text)).toBeUndefined();
+  expect(thresholdSubjectFor(text)).toEqual({ control: "you", token: null, zone: "graveyard", type: "permanent" });
+  expect(thresholdSubjectFor("At the beginning of your upkeep, if you have seven or more cards in "
+    + "your hand, draw a card.")).toBeUndefined();
+  expect(thresholdSubjectFor("At the beginning of your upkeep, if there are ten or more cards in "
+    + "your library, draw a card.")).toBeUndefined();
+});
+
+// A GRAVEYARD CARD COUNT IS A FILL DEMAND (AF7c, 2026-09-16; recall v5 #154). Every witness is
+// corpus text. The owner comes from the possessive on the graveyard, the class from the words
+// before "cards"; a diversity count (delirium) is not a fill count.
+test("AF7c: a graveyard card count derives the zone, the owner and the class", () => {
+  // Cabal Ritual -- an on-cast "instead" gated on your graveyard.
+  expect(thresholdSubjectFor("Add {B}{B}{B}{B}{B} instead if there are seven or more cards in your graveyard."))
+    .toEqual({ control: "you", token: null, zone: "graveyard" });
+  // Capricious Hellraiser -- "you have", not "there are".
+  expect(thresholdSubjectFor("This spell costs {3} less to cast if you have nine or more cards in your graveyard."))
+    .toEqual({ control: "you", token: null, zone: "graveyard" });
+  // Blackbloom Rogue -- an opponent's graveyard.
+  expect(thresholdSubjectFor("This creature gets +3/+0 as long as an opponent has eight or more cards in their graveyard."))
+    .toEqual({ control: "opp", token: null, zone: "graveyard" });
+  // Dark Dabbling -- a typed count keeps its class.
+  expect(thresholdSubjectFor("Spell mastery — If there are two or more instant and/or sorcery cards in "
+    + "your graveyard, also regenerate each other creature you control."))
+    .toEqual({ control: "you", token: null, zone: "graveyard", type: ["instant", "sorcery"] });
+  // All graveyards is anyone's.
+  expect(thresholdSubjectFor("At the beginning of your upkeep, if there are twenty or more cards in all "
+    + "graveyards, you win the game.")).toEqual({ control: "any", token: null, zone: "graveyard" });
+  // Traverse the Ulvenwald -- delirium counts TYPES, and a fill adds one card, not one type.
+  expect(thresholdSubjectFor("Delirium — If there are four or more card types among cards in your "
+    + "graveyard, instead search your library for a creature or land card, reveal it, put it into "
+    + "your hand, then shuffle.")).toBeUndefined();
 });
 
 // Review finding 3 (Important): no self-reference guard ran before the noun was parsed as a type.

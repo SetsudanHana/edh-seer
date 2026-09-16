@@ -562,6 +562,18 @@ export function thresholdSentence(producer: string, consumer: string, atLeast: n
   return `${producer} counts toward the ${atLeast} or more ${noun} ${consumer} needs`;
 }
 
+/** A GRAVEYARD COUNT the consumer is gated on (AF7c): the producer fills the graveyard the count
+ *  is of, so the sentence names whose graveyard and what is counted, and claims nothing about what
+ *  turns on. Untyped counts say "cards", typed ones "creature cards". */
+export function graveyardThresholdSentence(
+  producer: string, consumer: string, atLeast: number, counted: { control?: string; type?: string | string[] },
+): string {
+  const whose = counted.control === "opp" ? "an opponent's" : counted.control === "you" ? "your" : "a";
+  const first = Array.isArray(counted.type) ? counted.type.join(" or ") : counted.type;
+  const noun = first ? `${first} cards` : "cards";
+  return `${producer} fills ${whose} graveyard toward the ${atLeast} or more ${noun} ${consumer} needs`;
+}
+
 /** The plural a card prints for a counted class. Subtypes are proper nouns ("Shrines", "Humans");
  *  card types are not ("artifacts"). CEILING: English plurals by suffix -- Merfolk, Elves, Dwarves
  *  and the sibilants are spelled; anything else takes an s, which is right for every type and for

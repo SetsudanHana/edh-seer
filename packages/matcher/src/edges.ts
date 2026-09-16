@@ -16,7 +16,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -684,7 +684,20 @@ const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
  *  printed cue for the delve pass, the `recursionIsSelfSupplied` shape. */
 function fillsOnlyOpponents(oracle: string | undefined): boolean {
   const t = oracle ?? "";
-  return /\b(?:target|each|an) opponent\b/i.test(t) && !/\b(?:each|target) player\b/i.test(t);
+  // THE OPPONENT MUST BE THE ONE FILLING (2026-09-16, AF7c): Looter il-Kor "deals damage to an
+  // opponent, draw a card, then discard a card" names an opponent and the discard is yours; the
+  // bare word refused it from every delve spell. The verb after the player word is the test.
+  return /\b(?:target|each|an) opponents?\s+(?:each\s+)?(?:mills?|discards?|sacrifices?|puts?|reveals?|exiles?)\b/i.test(t)
+    && !/\b(?:each|target) player\b/i.test(t);
+}
+
+/** The printed text has another player DO the filling -- "each opponent sacrifices", "target
+ *  player mills", "target players each mill", "that player puts" -- so a fill at `any` can land in
+ *  an OPPONENT's graveyard. The player word must be the verb's subject: Looter il-Kor "deals damage
+ *  to an opponent, draw a card, then discard a card" names an opponent and the discard is still
+ *  yours. The mirror of `fillsOnlyOpponents`, for the opponent-count pass. */
+function namesAnotherPlayer(oracle: string | undefined): boolean {
+  return /\b(?:opponents?|players?)\s+(?:each\s+)?(?:mills?|discards?|sacrifices?|puts?)\b/i.test(oracle ?? "");
 }
 
 /** The mana value at or below which a real card counts as sacrifice fodder. See the fodder pass. */
@@ -1703,9 +1716,50 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // 65 artifacts in the-capitoline-triad, measured 2026-09-16). The relation is between two cards,
   // not between a card and each of the other's abilities.
   const countsSeen = new Set<string>();
+  // A GRAVEYARD COUNT IS A FILL DEMAND (AF7c, 2026-09-16; recall v5 #154 In Garruk's Wake -> See
+  // Double): "seven or more cards in your graveyard" is fed by what puts YOUR cards there, "an
+  // opponent has eight or more cards in their graveyard" by what puts THEIRS there -- the delve
+  // shape with a number, judged by `graveyardFillMatches` like every other graveyard demand. An
+  // untyped count is fed by any fill of that graveyard, which is the truth of "cards"; a typed one
+  // ("instant and/or sorcery cards") by fills that promise the class. Implied fills (a spell's own
+  // resolution into the graveyard) are left out as the delve pass leaves them out: every instant
+  // in the deck would otherwise feed Cabal Ritual, and a token never fills a graveyard.
   for (const a of c.tags.abilities) {
     const counted = a.thresholdSubject;
-    if (!counted || !a.threshold || !boardCountNarrows(counted)) continue;
+    if (!counted || !a.threshold || counted.zone !== "graveyard") continue;
+    const tag = `threshold:${themeSubjectKey(counted)}`;
+    if (countsSeen.has(`${tag}|${a.threshold.atLeast}|gy`)) continue;
+    // WHOSE GRAVEYARD, read as the delve pass reads it: `any` on a fill is YOURS unless the printed
+    // text names only opponents (Mind Funeral fills theirs, not Cabal Ritual's) -- and it is THEIRS
+    // only when the text names another player ("each player discards", "target player mills") or
+    // the fill is a typed death, which is a wrath or an edict killing theirs too (Toxic Deluge).
+    // Measured on the first derive-151 dump: Looter il-Kor's "draw a card, then discard a card"
+    // (`any`, and yours) fed Merfolk Windrobber's opponent count, as did Ledger Shredder's connive.
+    const reaches = (e: GameEvent): boolean => {
+      const ctl = e.subject.control;
+      if (counted.control === "you") return ctl !== "opp" && !(ctl === "any" && fillsOnlyOpponents(p.card.oracleText));
+      // A SELF fill is the producer's own card into YOUR graveyard (a cycling, a channel, a connive's
+      // discard stamped with its printed types by `selfFillTypes`), never a death of theirs.
+      if (counted.control === "opp") return ctl === "opp" || (ctl === "any" && e.subject.self !== true
+        && (list(e.subject.type).length > 0 || namesAnotherPlayer(p.card.oracleText)));
+      return true;
+    };
+    const fill = pEvents.find((e) => e.verb === "enters" && e.subject.zone === "graveyard" && !e.implied
+      && e.subject.token !== true && reaches(e) && graveyardFillMatches(e.subject, counted, h));
+    if (!fill) continue;
+    countsSeen.add(`${tag}|${a.threshold.atLeast}|gy`);
+    reasons.push({
+      tag,
+      text: graveyardThresholdSentence(p.card.name, c.card.name, a.threshold.atLeast, counted),
+      effectKind: a.effect.kind,
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+  }
+  for (const a of c.tags.abilities) {
+    const counted = a.thresholdSubject;
+    if (!counted || !a.threshold || counted.zone === "graveyard" || !boardCountNarrows(counted)) continue;
     const win = a.effect.kind === "win-game";
     const tag = `${win ? "wincon" : "threshold"}:${themeSubjectKey(counted)}`;
     if (countsSeen.has(`${tag}|${a.threshold.atLeast}`)) continue;

@@ -78,7 +78,9 @@ import { emblemRecipient } from "../emblem.js";
 // dealt damage" derives a trigger, from the clause word and from the older `damage-dealt` spelling.
 // 150: `exiled` is an engine verb emitted by every exile action (AF7b), and a from-exile move whose
 // object names an opponent as owner is the `exile-processing` kind (Ulamog's Nullifier, 22 cards).
-export const DERIVE_VERSION = 150;
+// 151: a graveyard card count is a threshold subject with the zone and the owner (AF7c): "seven or
+// more cards in your graveyard", "an opponent has eight or more cards in their graveyard".
+export const DERIVE_VERSION = 151;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
