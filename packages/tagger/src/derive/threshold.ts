@@ -131,7 +131,27 @@ export function thresholdFor(text: string): { atLeast: number } | undefined {
  *  General to every zone rather than an allow-list of "hand": refusing beats guessing, and a zone
  *  word this doesn't know about is a gap that stays visible instead of a wrong sentence. `life` stays
  *  a separate alternative -- "twenty or more life" names no zone phrase at all. */
-const NON_PERMANENT_NOUN = /\bin (?:your|their|a|each|all) [^.]{0,20}(?:hand|graveyard|library|exile)\b|\blife\b/i;
+const NON_PERMANENT_NOUN = /\bin (?:your|their|a|each|all) [^.]{0,20}(?:hand|library|exile)\b|\blife\b/i;
+
+/** A GRAVEYARD CARD COUNT IS A FILL DEMAND (AF7c, 2026-09-16; recall v5 #154 In Garruk's Wake -> See
+ *  Double). "Seven or more cards in your graveyard" (Cabal Ritual, Krosan Beast), "an opponent has
+ *  eight or more cards in their graveyard" (See Double, Blackbloom Rogue), "two or more instant
+ *  and/or sorcery cards in your graveyard" (Dark Dabbling) -- the delve shape with a number, and
+ *  the matcher already judges a fill against a graveyard-scoped subject (`graveyardFillMatches`).
+ *  232 corpus abilities; 8 cards in the 71. The owner comes from the possessive on the graveyard,
+ *  since the words before the number say "there are" / "you have" / "an opponent has" and not
+ *  "controls". A DIVERSITY count ("four or more card types among cards in your graveyard",
+ *  delirium, 65 corpus; "mana values") is not a fill count and refuses -- a fill adds one card,
+ *  not one type.
+ *
+ *  CEILING: a count on a MODAL INTRO ("Choose one. If an opponent has eight or more cards in their
+ *  graveyard, you may choose both instead" -- See Double, recall v5 #154 itself) is not read: the
+ *  intro segments as its own clause with no action, its modes carry no parent link into derive,
+ *  and exclusion 3 refuses a second sentence. TWO corpus cards have the shape (See Double, Let's
+ *  Play a Game -- the latter a delirium count that refuses anyway), measured 2026-09-16, so the
+ *  parent-clause plumbing waits until a third. */
+const GRAVEYARD_COUNT_NOUN = /\b(?:in|among) (?:your|their|an opponent's|a|each|all|its owner's) (?:[^.]{0,20}?\s)?graveyards?\b/i;
+const DIVERSITY_COUNT = /\b(?:card types?|mana values?|permanent types?|creature types?|colou?rs?|names?)\b/i;
 
 /** WHOSE board the count is of, read from the words that END just before the number. The
  *  controller sits on the wrong side of the number for `parseSubject` to see it -- "you control
@@ -173,6 +193,15 @@ export function thresholdSubjectFor(text: string): SubjectFilter | undefined {
   // own exile pile, not a deck-wide class of artifacts -- and unlike a trigger subject field, this
   // noun is scraped from free prose, so the self-reference can sit anywhere in it, not just the head.
   if (mentionsSelf(noun)) return undefined;
+  if (GRAVEYARD_COUNT_NOUN.test(noun)) {
+    if (DIVERSITY_COUNT.test(noun)) return undefined;
+    const before = text.slice(0, m.start);
+    const control: SubjectFilter["control"] = /\byour graveyard\b/i.test(noun) ? "you"
+      : /\b(?:their|an opponent's) graveyard/i.test(noun) && /\bopponent/i.test(`${before} ${noun}`) ? "opp"
+      : "any";
+    const { type } = parseSubject(noun.replace(GRAVEYARD_COUNT_NOUN, "").trim());
+    return { control, token: null, zone: "graveyard", ...(type !== undefined ? { type } : {}) };
+  }
   const controller = COUNT_CONTROLLER.exec(text.slice(0, m.start))?.[1]?.toLowerCase();
   if (controller === undefined && !ON_THE_BATTLEFIELD.test(noun)) return undefined;
   const control: SubjectFilter["control"] = controller === undefined || /^(?:each|a|that) player$/.test(controller) ? "any"

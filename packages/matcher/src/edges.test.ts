@@ -2397,6 +2397,75 @@ test("a count stated by three abilities of one card is one claim, not three", ()
   expect(reasons).toHaveLength(1);
 });
 
+// A GRAVEYARD COUNT IS A FILL DEMAND (AF7c, 2026-09-16; recall v5 #154 In Garruk's Wake -> See
+// Double). The producer fills the graveyard the count is of; whose graveyard and what class are
+// judged by `graveyardFillMatches`, and a token or an opponent-only fill never reaches YOUR count.
+test("a graveyard count an ability is gated on is fed by what fills that graveyard", () => {
+  const gated = (name: string, counted: Record<string, unknown>, kind: CardTags["abilities"][number]["kind"] = "static"): DeckCard => base(name, [
+    { kind, effect: { kind: "pump" }, threshold: { atLeast: 7 },
+      thresholdSubject: { token: null, zone: "graveyard", ...counted } as CardTags["abilities"][number]["thresholdSubject"] },
+  ]);
+  const krosan = gated("Krosan Beast", { control: "you" });
+  const scour = base("Thought Scour", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "you", token: null } }] }]);
+  const reasons = (p: DeckCard, c: DeckCard) => directedReasons(p, c, H).filter((r) => r.tag.startsWith("threshold:"));
+  const [r] = reasons(scour, krosan);
+  expect(r.tag).toBe("threshold:any");
+  expect(r.text).toBe("Thought Scour fills your graveyard toward the 7 or more cards Krosan Beast needs");
+  expect(r.repeatability).toBe("static");
+  // A death fills yours with a typed card; a token's death fills nothing (CR 704.5d).
+  const outlet = base("Viscera Seer", [{ kind: "activated", effect: { kind: "scry" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }, { verb: "dies", subject: { control: "you", token: null, type: "creature" } }] }]);
+  expect(reasons(outlet, krosan)).toHaveLength(1);
+  const tokenDeath = base("Goblin Bombardment", [{ kind: "activated", effect: { kind: "damage" },
+    emits: [{ verb: "dies", subject: { control: "you", token: true, type: "creature" } }] }]);
+  expect(reasons(tokenDeath, krosan)).toHaveLength(0);
+  // An opponent's fill never reaches your count -- and `any` on an opponent-only text is theirs.
+  const oppMill = base("Mind Funeral", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "opp", token: null } }] }]);
+  expect(reasons(oppMill, krosan)).toHaveLength(0);
+  const oppAny = base("Mind Funeral (any)", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "any", token: null } }] }]);
+  (oppAny.card as { oracleText: string }).oracleText = "Target opponent reveals cards from the top of their library until four land cards are revealed. That player puts all cards revealed this way into their graveyard.";
+  expect(reasons(oppAny, krosan)).toHaveLength(0);
+  // An OPPONENT's count (Blackbloom Rogue, See Double) is fed by what fills theirs: the opponent
+  // mill, a wrath's deaths at `any`; your own self-mill does not.
+  const rogue = gated("Blackbloom Rogue", { control: "opp" });
+  expect(reasons(oppMill, rogue).map((r) => r.text)).toEqual(["Mind Funeral fills an opponent's graveyard toward the 7 or more cards Blackbloom Rogue needs"]);
+  const wake = base("In Garruk's Wake", [{ kind: "on-cast", effect: { kind: "removal" },
+    emits: [{ verb: "dies", subject: { control: "opp", token: null, type: "creature" } }] }]);
+  expect(reasons(wake, rogue)).toHaveLength(1);
+  expect(reasons(scour, rogue)).toHaveLength(0);
+  // `any` on a fill reaches THEIR graveyard only when the text names another player or the fill is
+  // a typed death: Rankle's "each player discards" and Toxic Deluge's "all creatures" do, Looter
+  // il-Kor's "draw a card, then discard a card" is yours (measured on the first derive-151 dump).
+  const rankle = base("Rankle, Master of Pranks", [{ kind: "triggered", trigger: { verbs: ["attacks"], subject: { control: "you", token: null } }, effect: { kind: "discard" },
+    emits: [{ verb: "discard", subject: { control: "any", token: null } }] }]);
+  (rankle.card as { oracleText: string }).oracleText = "Whenever Rankle deals combat damage to a player, choose any number — • Each player discards a card.";
+  expect(reasons(rankle, rogue)).toHaveLength(1);
+  const deluge = base("Toxic Deluge", [{ kind: "on-cast", effect: { kind: "sweeper" }, emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature" } }] }]);
+  (deluge.card as { oracleText: string }).oracleText = "As an additional cost to cast this spell, pay X life. All creatures get -X/-X until end of turn.";
+  expect(reasons(deluge, rogue)).toHaveLength(1);
+  const looter = base("Looter il-Kor", [{ kind: "triggered", trigger: { verbs: ["attacks"], subject: { control: "you", token: null } }, effect: { kind: "draw" },
+    emits: [{ verb: "discard", subject: { control: "any", token: null } }] }]);
+  (looter.card as { oracleText: string }).oracleText = "Whenever this creature deals damage to an opponent, draw a card, then discard a card.";
+  expect(reasons(looter, rogue)).toHaveLength(0);
+  expect(reasons(looter, krosan)).toHaveLength(1);
+  // A connive's self-discard arrives typed (`selfFillTypes` stamps the creature's own types on it)
+  // and is still yours: Ledger Shredder fed Merfolk Windrobber's opponent count on the second dump.
+  const shredder = base("Ledger Shredder", [{ kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "any", token: null } }, effect: { kind: "draw" },
+    emits: [{ verb: "discard", subject: { control: "any", token: null, self: true } }] }]);
+  (shredder.card as { oracleText: string }).oracleText = "Whenever a player casts their second spell each turn, this creature connives.";
+  expect(reasons(shredder, rogue)).toHaveLength(0);
+  // A TYPED count: an untyped fill (a mill) is a wildcard on a graveyard demand, as it is for a
+  // reanimator; a typed fill of the WRONG class (a creature's death) refuses.
+  const dabbling = gated("Dark Dabbling", { control: "you", type: ["instant", "sorcery"] }, "on-cast");
+  expect(reasons(outlet, dabbling)).toHaveLength(0);
+  expect(reasons(scour, dabbling).map((r) => r.text)).toEqual(["Thought Scour fills your graveyard toward the 7 or more instant or sorcery cards Dark Dabbling needs"]);
+  // A card that merely exists -- an instant with no fill emit -- feeds nothing.
+  expect(reasons(base("Counterspell", []), krosan)).toHaveLength(0);
+  // One claim per pair, however many abilities repeat the count.
+  const twice: DeckCard = base("Krosan Beast (x2)", [...krosan.tags!.abilities, ...krosan.tags!.abilities]);
+  expect(reasons(scour, twice)).toHaveLength(1);
+});
+
 // ONE TRIGGER WITH A CHAIN OF EFFECTS IS ONE CLAIM (2026-08-18). Archon of Cruelty's single entry
 // trigger derives six reasons identical in tag and text, differing only in `effectKind`, so every
 // reanimation spell in the deck scored 6 against it. Measured: 9,268 of 40,563 reasons (22.8%) sit
