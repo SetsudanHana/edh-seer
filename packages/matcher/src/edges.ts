@@ -962,7 +962,12 @@ const COPY_BECOMES_CUE = /becomes? a copy of/i;
  *  reading that as its target made it claim every Dragon in a Dragon deck. Additive wording is left
  *  alone on purpose -- Phantasmal Image's "except it's an Illusion IN ADDITION TO its other types"
  *  is still a copy of the creature -- as is a stat-only change (Saw in Half's halved power). */
-const COPY_REPLACES_TYPE_CUE = /loses all other card types|except (?:it|they)(?:'s|'re| is| are) \d+\/\d+/i;
+// THE STAT BRANCH NAMES A TYPE AFTER THE NUMBERS ("3/3 Dragon"), since 2026-09-16. It used to
+// refuse any "except it's N/N", which is 20 corpus cards and every one of them keeps its types:
+// Nightmare Shepherd's "except it's 1/1 and it's a Nightmare in addition to its other types",
+// Coiling Rebirth's bare "except it's 1/1", the four Guts. A stat-only change is the copy the
+// comment above already says it is (recall v7 #160).
+const COPY_REPLACES_TYPE_CUE = /loses all other card types|except (?:it|they)(?:'s|'re| is| are) (?:an? )?\d+\/\d+ [A-Z]/;
 /** A populate effect copies a TOKEN, never the commander -- refused rather than claimed, on the
  *  same rule as everything else here: a wrong claim costs more than a missing one. */
 const COPY_OF_TOKEN_CUE = /copy of (?:a |an |another |target |that )*(?:\w+ )?token/i;
@@ -1025,7 +1030,24 @@ function copySubject(
   // MEASURED: it recovers Saheeli's Artistry's creature mode (its artifact mode derives first) and
   // costs a FALSE claim on the frozen panel -- 86.4% -> 86.2%, false 63 -> 64. Under-claiming is the
   // correct failure direction, so the wider read is refused, not tuned.
-  const raw: Partial<SubjectFilter> | undefined = typed[0]
+  // A COPY OF "THAT CREATURE" COPIES THE TRIGGER'S SUBJECT (recall v7 #160, 2026-09-16). Nightmare
+  // Shepherd's "whenever another nontoken creature you control dies ... create a token that's a copy
+  // of that creature, except it's 1/1 and it's a Nightmare in addition to its other types" derives a
+  // token-generation whose subject is the token's EXCEPTIONS -- a 1/1 Nightmare -- and Baleful
+  // Strix is neither, so its entry trigger was never claimed where Helm of the Host's plain copy
+  // claimed it. The class of what is copied is the trigger's own subject: every creature for
+  // Shepherd, every legendary creature for Ratadrabik, the chosen type for Molten Echoes (resolved
+  // in the deck pass; refused unresolved), and an opponent's creatures for Faerie Artisans, which
+  // names no deck-mate and is refused on control. 73 corpus "copy of that/it" clauses; a self
+  // trigger (Ochre Jelly copying itself) keeps the old path.
+  const copiesThatCreature = /copy of that creature\b/i.test(oracle)
+    ? abilities.find((a) => a.effect.kind === "token-generation" && a.trigger !== undefined
+      && a.trigger.subject.self !== true && a.trigger.subject.chosenType !== true && a.trigger.subject.control !== "opp"
+      && (a.trigger.subject.type !== undefined || a.trigger.subject.subtype !== undefined))?.trigger?.subject
+    : undefined;
+  const raw: Partial<SubjectFilter> | undefined = copiesThatCreature
+    ? (({ self: _s, other: _o, fromZone: _f, ...cls }) => cls)(copiesThatCreature)
+    : typed[0]
     ?? (abilities.some((a) => a.effect.kind === "clone") ? { type: "creature" } : undefined);
   if (raw === undefined) return undefined;
   // SCOPED TO THE EXPLICIT TYPED ABILITY ONLY (`typed.length > 0`), never the untyped `clone`-static

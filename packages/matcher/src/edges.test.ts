@@ -2582,6 +2582,24 @@ test("copy: a token whose card types are REWRITTEN copies something else entirel
   expect(directedReasons(p, selfTriggerLegend("Hidetsugu and Kairi"), H).length).toBe(0);
 });
 
+// RECALL v7 #160 (2026-09-16): a copy of "that creature" copies the TRIGGER's subject, not the token's
+// exceptions. Shepherd's 1/1 Nightmare token is still a copy of the creature that died, so Baleful
+// Strix's entry fires again; Ratadrabik copies legendary creatures only; a stat-only "except it's
+// 1/1" is not a type rewrite, "3/3 Dragon" still is.
+test("copy: 'a copy of that creature' takes its class from the trigger, and a stat-only exception is still a copy", () => {
+  const shepherd = copyFixture("Nightmare Shepherd", "Whenever another nontoken creature you control dies, you may exile it. If you do, create a token that's a copy of that creature, except it's 1/1 and it's a Nightmare in addition to its other types.",
+    { control: "you", token: true, type: "creature", subtype: "nightmare", stats: [{ metric: "power", op: "eq", value: 1 }] });
+  shepherd.tags.abilities[0] = { ...shepherd.tags.abilities[0], kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "you", token: false, other: true, type: "creature" } } } as never;
+  expect(directedReasons(shepherd, selfTriggerLegend("Baleful Strix", false), H).some((x) => x.tag === "enters:any" && /copies it/.test(x.text))).toBe(true);
+  const ratadrabik = copyFixture("Ratadrabik of Urborg", "Whenever another legendary creature you control dies, create a token that's a copy of that creature, except it's not legendary and it's a 2/2 black Zombie in addition to its other colors and types.",
+    { control: "you", token: true, type: "creature", subtype: "zombie", legendary: true });
+  ratadrabik.tags.abilities[0] = { ...ratadrabik.tags.abilities[0], kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { control: "you", token: null, other: true, legendary: true, type: "creature" } } } as never;
+  expect(directedReasons(ratadrabik, selfTriggerLegend("Kardur, Doomscourge", true), H).some((x) => x.tag === "enters:any")).toBe(true);
+  expect(directedReasons(ratadrabik, selfTriggerLegend("Solemn Simulacrum", false), H).length).toBe(0);
+});
+
 test("copy: an untyped token-generation ability does not widen a card that also names types", () => {
   // Court of Vantress derives two token-generation abilities; only the second names what it copies.
   const p = copyFixture("Court of Vantress", "At the beginning of your upkeep, choose up to one other target enchantment or artifact. If you're the monarch, you may create a token that's a copy of it.", { control: "any", token: null });
