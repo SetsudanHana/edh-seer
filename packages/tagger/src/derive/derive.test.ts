@@ -2196,6 +2196,18 @@ test("an action with no player named is the controller's: 'draw a card' is you d
   expect(named.abilities[0].emits?.[0]?.subject.control).toBe("any");
 });
 
+// A STATED "YOU MAY PUT" IS YOU ACTING ON THEIR CARD (first derive-152 diff, 2026-09-17): the
+// recursion subject keeps the graveyard it names; only the entry is yours.
+test("'you may put ... from that player's graveyard' keeps the subject's graveyard, and the entry is yours", () => {
+  const text = "When this creature enters, for each opponent, you may put up to one target creature card from that player's graveyard onto the battlefield under your control.";
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" }, actions: [
+    { verb: "put", object: "up to one target creature card from that player's graveyard", fromZone: "graveyard", toZone: "battlefield" },
+  ] }], "Sepulchral Primordial", { 1: text });
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(rec?.effect.subject?.control).not.toBe("you");
+  expect(rec?.emits?.find((e) => e.verb === "enters")?.subject.control).toBe("you");
+});
+
 test("what you put onto the battlefield enters under YOUR control (CR 110.2a)", () => {
   // Misty Rainforest: the put names no player, so the fetched land's entry read `any` and satisfied
   // Deep Gnome Terramancer's "lands enter under an OPPONENT's control" (owner-judged FALSE 2026-09-09).

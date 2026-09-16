@@ -110,13 +110,18 @@ export function actionRecipients(clauseText: string): Record<string, Control> {
   const out: Record<string, Control> = {};
   for (const [verb, re] of CUES) {
     const m = re.exec(clauseText);
-    if (!m) continue;
-    // YOUR OWN VERB, WRITTEN FIRST, KEEPS THE ACTION (Braids, Arisen Nightmare, recall v6 #104):
-    // "you may sacrifice an artifact, creature, ... If you do, each opponent may sacrifice a
-    // permanent" -- the clause's one sacrifice is yours; the cue would hand it to the opponents.
+    // "YOU DRAW" IS A STATED ACTOR, NOT AN UNSTATED ONE (owner-reported 2026-09-17, Scrawling
+    // Crawler <- Y'shtola, Night's Blessed): "if a player lost 4 or more life this turn, you draw a
+    // card" names a player in the condition, so the controller default below refused to fill `you`
+    // and the draw derived `any` -- which met "whenever an OPPONENT draws". 350 of the 671 corpus
+    // draw emits at `any` had the same shape. The printed "you" outranks a player word elsewhere in
+    // the sentence; it yields only to an opponent cue written BEFORE it on the same verb.
     const stem = STEMS[verb];
     const yours = stem ? new RegExp(`\\byou\\s+${ADVERB}${stem}`, "i").exec(clauseText) : null;
-    if (yours && yours.index < m.index) continue;
+    // Contested -- yours first, then an opponent's on the same verb (Braids) -- stays unstated.
+    if (yours && m && yours.index < m.index) continue;
+    if (yours && !m) { out[verb] = "you"; continue; }
+    if (!m) continue;
     const control = controlOf(m[1], clauseText, m.index);
     if (control) out[verb] = control;
   }

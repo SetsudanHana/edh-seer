@@ -80,7 +80,9 @@ import { emblemRecipient } from "../emblem.js";
 // object names an opponent as owner is the `exile-processing` kind (Ulamog's Nullifier, 22 cards).
 // 151: a graveyard card count is a threshold subject with the zone and the owner (AF7c): "seven or
 // more cards in your graveyard", "an opponent has eight or more cards in their graveyard".
-export const DERIVE_VERSION = 151;
+// 152: a printed "you draws/gains/loses/..." is a stated actor (Y'shtola, Night's Blessed's draw read
+// `any` because the condition named "a player", and met "whenever an opponent draws").
+export const DERIVE_VERSION = 152;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1187,15 +1189,25 @@ export function deriveAbilities(
         for (const e of emits) if (e.subject.control === "any") e.subject.control = "you";
         if (subject && subject.control === "any") subject.control = "you";
       }
-      const actor = actorFor(action.verb);
+      // A STATED "you" INSIDE A GRANTED ABILITY IS THE RECIPIENT'S CONTROLLER (Hellish Rebuke: "You
+      // lose 2 life" is said by the opponent's permanent), the same flip line 1154 applied to the
+      // object's own "you" -- the actor cue runs after it and must not undo it.
+      const stated = actorFor(action.verb);
+      const actor = stated === "you" && grantedTo ? grantedTo.control : stated;
       if (actor) {
         // A PUT'S OBJECT MAY NAME ITS OWN CONTROLLER, and that outranks the actor: Visions of Dread's
         // "target opponent puts a creature card ... onto the battlefield under your control" is the
         // opponent acting and YOUR creature entering. The other cued verbs never state one on the
         // object ("each opponent draws a card"), so for them the actor stands as before.
+        // AND A STATED "YOU" ON A PUT NEVER REACHES THE SUBJECT: "you may put up to one target
+        // creature card from that player's graveyard onto the battlefield under your control"
+        // (Sepulchral Primordial, Ink-Eyes) is you acting on THEIR card -- the subject is whose
+        // graveyard it leaves, and writing `you` there turned the recursion into one over your own
+        // graveyard (10 pairs lost on the first derive-152 diff). The enters emit still takes it:
+        // the card lands under your control, which is the fact the actor states.
         const fillOnly = action.verb === "put";
         for (const e of emits) if (!fillOnly || e.subject.control === "any") e.subject.control = actor;
-        if (subject && (!fillOnly || subject.control === "any")) subject.control = actor;
+        if (subject && (!fillOnly || (subject.control === "any" && stated !== "you"))) subject.control = actor;
       } else if (ACTOR_DEFAULTS_TO_YOU.has(action.verb ?? "") && clauseText !== ""
         && (clause.actions ?? []).filter((a) => a.verb === action.verb).length === 1
         && !sentenceNamesAPlayer(clauseText, action.verb ?? "")) {
