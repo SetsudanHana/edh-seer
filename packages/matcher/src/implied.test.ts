@@ -538,6 +538,11 @@ test("extort watches casting, and the argument form is matched too", () => {
   // `castSelfSupplied` refuses every implied producer and only an authored cast emit can feed it.
   // Correct, and measured: that is why extort is not the member of this table that moves anything.
   expect(keywordAbilities(kw(["Extort"]))[0].trigger?.verbs).toEqual(["cast"]);
+  // RECALL v7 #114 (2026-09-16): delve is a graveyard DEMAND -- the descend tags, no edge.
+  const delve = keywordAbilities(kw(["Delve"]));
+  expect(delve).toHaveLength(1);
+  expect(delve[0].conditionCares).toEqual(["dies:any", "mill:any", "discard:any", "enters-graveyard:any"]);
+  expect(delve[0].trigger).toBeUndefined();
   expect(keywordAbilities(kw(["Ward {2}"]))).toHaveLength(0);
 });
 

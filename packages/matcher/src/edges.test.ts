@@ -2799,6 +2799,19 @@ test("an untyped recursion behind its own trigger is not fed by a fill that trig
 
 // An intervening-if condition reaches the theme layer as a DEMAND (owner, 2026-08-20): Yuna is a
 // counters payoff and Warlock Class an aristocrats one, and neither fact is in a trigger verb.
+// RECALL v7 #114 (2026-09-16): a printed DELVE is a graveyard demand the theme layer reads.
+test("cardCaresTags carries delve's graveyard demand off the printed keyword", () => {
+  const dig: CardTags = {
+    oracleId: "d", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["instant"], subtypes: [], colors: [], identity: [], cmc: 8,
+      power: null, toughness: null, token: false, keywords: ["Delve"] },
+    abilities: [],
+  };
+  const cares = cardCaresTags(dig);
+  expect(cares.has("mill:any")).toBe(true);
+  expect(cares.has("discard:any")).toBe(true);
+});
+
 test("cardCaresTags carries the demand an intervening-if condition makes", () => {
   const warlockClass: CardTags = {
     oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",

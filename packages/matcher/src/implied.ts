@@ -347,6 +347,14 @@ export function keywordAbilities(chars: Characteristics): Ability[] {
     // Landcycling (92) and Typecycling (95) beside it, and those name no class.
     const search = KEYWORD_SEARCHES[whole] ?? KEYWORD_SEARCHES[whole.split(/[\s{]/)[0]];
     if (search) out.push({ kind: "activated", effect: { kind: "search", subject: parseSubject(search) } });
+    // DELVE WANTS CARDS IN YOUR GRAVEYARD (recall v7 #114, 2026-09-16: Otawara's channel discard and
+    // Dig Through Time, which derives nothing at all -- the untyped dig is kindless by design and
+    // the keyword was in neither table). CR 702.66: each card exiled from your graveyard pays {1},
+    // so every fill family is what it spends -- the same four tags "if you descended this turn"
+    // cares about (`intervening-if.ts`), and the same standing: a DEMAND the theme and rating
+    // layers read, not an edge. An edge from a fill to a delve spell is the owner's to rule, as
+    // descend's was (2026-08-20 / 2026-09-10). 30 commander-legal cards.
+    if (whole === "delve") out.push({ kind: "static", effect: { kind: "" }, conditionCares: ["dies:any", "mill:any", "discard:any", "enters-graveyard:any"] });
     const spec = KEYWORD_TRIGGERS[whole] ?? KEYWORD_TRIGGERS[whole.split(/[\s{]/)[0]];
     if (!spec) continue;
     out.push({

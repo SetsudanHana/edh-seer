@@ -295,6 +295,10 @@ export function cardCaresTags(tags: CardTags): Set<string> {
     // that population and panel stay byte-identical while themes and ratings move.
     for (const tag of a.conditionCares ?? []) out.add(tag);
   }
+  // A PRINTED KEYWORD CAN CARRY A DEMAND TOO: delve's graveyard (`keywordAbilities`). Only the
+  // condition tags are read here -- a keyword's TRIGGER (prowess, extort) still does not reach the
+  // theme layer, the ceiling `keywordAbilities` states.
+  for (const a of keywordAbilities(tags.characteristics)) for (const tag of a.conditionCares ?? []) out.add(tag);
   // THE RE-FIRER IS THE PAYOFF THAT WATCHES: a flicker, a copy or a trigger doubler is worth nothing
   // beside vanilla creatures and everything beside a deck full of entry triggers.
   if (refiresEntries(tags)) out.add(ETB_REFIRE);
