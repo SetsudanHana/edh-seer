@@ -4094,13 +4094,30 @@ describe("fodder", () => {
     expect(pairReasons(saproling, creatureOutlet, H).map((r) => r.tag)).toContain("fodder:creature");
     expect(pairReasons(base("Grizzly Bears", []), creatureOutlet, H).map((r) => r.tag)).not.toContain("fodder:creature");
   });
-  test("an edict and a self-sacrifice demand no fodder", () => {
-    const edict = base("Fleshbag Marauder", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "forced-sacrifice" },
-      emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature" } }] }]);
+  // OWNER RULING 2026-09-16 (recall v6 #30): a SYMMETRIC edict eats your token on your side, so
+  // Bitterbloom Bearer's Faerie is fodder for Fleshbag Marauder. The emit's `control: "any"` is
+  // shared with "target player sacrifices" and "each opponent sacrifices", which your token never
+  // feeds, so the printed "each player sacrifices" cue decides; a self-sacrifice still wants nothing.
+  test("a symmetric edict eats a token; a targeted or opponents-only one and a self-sacrifice do not", () => {
+    const edictOf = (name: string, text: string) => {
+      const c = base(name, [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } }, effect: { kind: "forced-sacrifice" },
+        emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature" } }] }]);
+      (c.card as { oracleText: string }).oracleText = text;
+      return c;
+    };
+    const fleshbag = edictOf("Fleshbag Marauder", "When this creature enters, each player sacrifices a creature of their choice.");
+    const vortex = edictOf("Mana Vortex", "At the beginning of each player's upkeep, that player sacrifices a land of their choice.");
+    const hunger = edictOf("Vona's Hunger", "Each opponent sacrifices a creature of their choice.");
+    const justice = edictOf("Twisted Justice", "Target player sacrifices a creature of their choice.");
     const selfSac = base("Sakura-Tribe Elder", [{ kind: "activated", cost: "Sacrifice this creature", effect: { kind: "ramp" },
       emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature", self: true } }] }]);
-    expect(pairReasons(saproling, edict, H).map((r) => r.tag)).not.toContain("fodder:creature");
+    expect(pairReasons(saproling, fleshbag, H).find((r) => r.tag === "fodder:creature")?.text).toBe("Saproling is fodder for Fleshbag Marauder");
+    expect(pairReasons(saproling, vortex, H).map((r) => r.tag)).toContain("fodder:creature");
+    expect(pairReasons(saproling, hunger, H).map((r) => r.tag)).not.toContain("fodder:creature");
+    expect(pairReasons(saproling, justice, H).map((r) => r.tag)).not.toContain("fodder:creature");
     expect(pairReasons(saproling, selfSac, H).map((r) => r.tag)).not.toContain("fodder:creature");
+    // A real creature is still not fodder for a creature edict: that is the whole board.
+    expect(pairReasons(base("Grizzly Bears", []), fleshbag, H).map((r) => r.tag)).not.toContain("fodder:creature");
   });
 });
 

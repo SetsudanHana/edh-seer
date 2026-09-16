@@ -660,6 +660,16 @@ const recursionIsSelfSupplied = (oracleText: string | undefined): boolean =>
  *  trigger-match skip above, so by here the fill is one the trigger does NOT see. */
 /** The mana value at or below which a real card counts as sacrifice fodder. See the fodder pass. */
 const EXPENDABLE_MV = 2;
+
+/** "Each player sacrifices a creature" -- a SYMMETRIC edict, which your own token answers on your
+ *  side (owner ruling 2026-09-16; recall v6 #30 Bitterbloom Bearer -> Fleshbag Marauder). The
+ *  emit's `control: "any"` alone cannot say so: "target player sacrifices" (Twisted Justice) and
+ *  "each opponent sacrifices" (Vona's Hunger, Perilous Predicament) derive the same `any`, and your
+ *  token feeds neither. Card-scoped printed cue, the shape of `recursionIsSelfSupplied`; the second
+ *  branch is the per-player phase template ("at the beginning of each player's upkeep, that player
+ *  sacrifices" -- Mana Vortex, Molder Slug, Stoneshaker Shaman). 131 corpus creature edicts carry
+ *  `any`; the cue is what separates Innocent Blood from Wing Shards. */
+const EACH_PLAYER_SACRIFICES = /\beach player(?:'s [\w ]{1,30}, that player)? sacrifices\b/i;
 const GRAVEYARD_ENTRY_VERBS = new Set(["dies", "milled", "discarded", "sacrificed", "enters-graveyard"]);
 function returnsWhatItsOwnTriggerSaw(a: CardTags["abilities"][number]): boolean {
   const s = a.effect.subject;
@@ -1809,8 +1819,11 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // (Disciple of Freyalise) -- derives a `sacrifice` emit whose subject is what it eats, and until
   // now that emit was only ever a SUPPLY of dies events for aristocrats payoffs; nothing said that
   // the outlet WANTS something to feed it. Read off the emit rather than the cost string: an
-  // effect sacrifice of your own permanent is the same demand, and an edict ("each player
-  // sacrifices", control any) or a self-sacrifice is not.
+  // effect sacrifice of your own permanent is the same demand, and a self-sacrifice is not. A
+  // SYMMETRIC edict ("each player sacrifices", control any) IS one since 2026-09-16: the owner's
+  // answer to recall v6 #30 was that Bitterbloom Bearer's Faerie is what Fleshbag Marauder eats on
+  // your side, and the printed cue `EACH_PLAYER_SACRIFICES` keeps the targeted and opponents-only
+  // shapes out, which derive the same `any`.
   //
   // A TOKEN IS FODDER WHATEVER ITS TYPE: a Construct, a Saproling, a Treasure is a free body, which
   // is the whole aristocrats shape. A real card is fodder only when the outlet names a non-whole-
@@ -1819,7 +1832,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // board count). The type-count ruling of the same day is the precedent.
   for (const a of c.tags?.abilities ?? []) {
     if (p === c) break;
-    const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.control === "you" && e.subject.self !== true);
+    const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.self !== true
+      && (e.subject.control === "you" || (e.subject.control === "any" && EACH_PLAYER_SACRIFICES.test(c.card.oracleText ?? ""))));
     if (!eats) continue;
     const { zone: _z, scope: _s, ...wanted } = eats.subject;
     const isToken = p.tags?.characteristics.token === true;
