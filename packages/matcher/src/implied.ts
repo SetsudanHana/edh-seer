@@ -496,9 +496,16 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
  *  creature-leaves payoff. The card is the thing leaving, so its type line is a known fact about the
  *  event. Union of faces, not `zoneTypes`: the permanent left the BATTLEFIELD, where a multi-face
  *  card is whichever face was up. Only an untyped self emit is touched. */
+/** The self events that name this permanent leaving the battlefield one way or another. */
+const SELF_TYPED_VERBS: ReadonlySet<string> = new Set(["leaves", "sacrifice", "dies"]);
+
 export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): GameEvent[] {
   return events.map((e) => {
-    if (e.verb !== "leaves" || e.subject.self !== true) return e;
+    // A SELF SACRIFICE OR DEATH IS THE SAME KNOWN PERMANENT (recall v7 #25, 2026-09-16): Riveteers
+    // Overlook's "When this land enters, sacrifice it" emitted `sacrifice {self}` with no type, so
+    // Juri's "whenever you sacrifice a permanent" never saw a land leave. The noun form ("Sacrifice
+    // this land", Buried Ruin) carries the type from the clause; the pronoun form carries nothing.
+    if (!SELF_TYPED_VERBS.has(e.verb) || e.subject.self !== true) return e;
     if (e.subject.type !== undefined || e.subject.subtype !== undefined) return e;
     const types = chars.types.map((t) => t.toLowerCase());
     const subtypes = chars.subtypes.map((t) => t.toLowerCase());
