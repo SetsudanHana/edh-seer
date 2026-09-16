@@ -57,7 +57,10 @@ import { emblemRecipient } from "../emblem.js";
 // ruling 2026-09-10; recall v5 #156, Toxic Deluge). A targeted debuff still says nothing.
 // 139: "if you descended this turn" cares about `dies:any` (CR 700.11) -- a deck demand, no edge
 // (recall v5 #179, Scalding Tarn -> Brass's Tunnel-Grinder).
-export const DERIVE_VERSION = 142;
+// 143: a class-restricted DIG ("look at the top four, reveal an Elemental, Island, or Mountain
+// card and put it into your hand") is a `search` (owner ruling 2026-09-16, AF10 ruling 4; recall v6
+// #165 Eclipsed Flamekin -> Smoldering Marsh). An untyped dig ("two of them") stays kindless.
+export const DERIVE_VERSION = 143;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
