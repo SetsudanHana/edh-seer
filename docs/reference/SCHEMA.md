@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **146** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **147** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -225,6 +225,7 @@ Defined in [`Characteristics`](../../packages/tagger/src/schema.ts).
 | `emblem` | `true` | optional | AN EMBLEM (CR 114): an object in the command zone with abilities and no other characteristics. Present, and `true`, only on an emblem's own row in `cardTagsDerived`, which `derive-corpus` builds from the `tokens` collection's layout-`emblem` rows. Absent everywhere else, so `chars.emblem === true` is the whole test. Not a permanent (no `enters`, no `dies`), not a card (no `cast`), and NOT a token: `token` stays false on it, so "whenever a token enters" never matches one. |
 | `commander` | `boolean` | optional | THE ONE DECK FACT ON AN OTHERWISE PRINTED RECORD. Set per deck by `markCommander` (matcher/commander.ts), never by extraction — CR 903.3 says the commander designation "is not a characteristic of the object represented by the card". It lives here anyway because a card's IMPLIED events (`impliedEvents` → `selfSubject`) are synthesized from `Characteristics` at match time and are exactly the ones a commander-matters consumer needs: a commander's combat damage, entry and death. Stamping only the authored emits left Kediss unable to see its own partner. |
 | `keywords` | `string[]` | **required** |  |
+| `enchants` | `SubjectFilter` | optional | WHAT AN AURA CAN BE ATTACHED TO, from its printed "Enchant ..." line (CR 702.5a), parsed as a subject: "Enchant creature" is `{type: creature}`, "Enchant creature you control" adds the control, "Enchant creature card in a graveyard" (Animate Dead) carries the zone. Absent on every non-Aura, and on an Aura whose line names no class ("Enchant player"). |
 
 ### CardTags
 

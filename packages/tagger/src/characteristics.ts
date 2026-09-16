@@ -1,6 +1,7 @@
 import type { Card } from "@edh-seer/engine";
 import type { Characteristics } from "./schema.js";
 import { CREATURE_SUBTYPES, joinMultiWordSubtypes } from "./derive/subtypes.js";
+import { parseSubject } from "./derive/subject.js";
 
 /** Scryfall type lines use an em dash (U+2014) between types and subtypes. */
 const TYPE_SUBTYPE_SEP = " — ";
@@ -80,6 +81,7 @@ export function extractCharacteristics(card: Card): Characteristics {
   const subtypes = keywords.includes("changeling")
     ? [...new Set([...right, ...CREATURE_SUBTYPES])]
     : [...new Set([...right, ...alsoTypes(card)])];
+  const enchants = right.includes("aura") ? enchantsOf(card.oracleText ?? "") : undefined;
   return {
     types: left,
     subtypes,
@@ -93,7 +95,24 @@ export function extractCharacteristics(card: Card): Characteristics {
     toughness: card.toughness ?? null,
     token: false,
     keywords,
+    ...(enchants ? { enchants } : {}),
   };
+}
+
+/** The printed "Enchant ..." line (CR 702.5a), reminder text and the trailing period dropped. Only
+ *  the FIRST such line: a two-face card with two Auras is a ceiling here, as it is for
+ *  `boundedByEnchantLine` in derive.ts, which reads the same line per face. */
+const ENCHANT_LINE = /^Enchant ([^\n(]+)/m;
+
+/** WHAT AN AURA ATTACHES TO, as a subject -- see `Characteristics.enchants`. Refuses a line that
+ *  names no class ("Enchant player"), so an Aura on a player never reads as one on a permanent, and
+ *  a line that names a CARD in a zone ("Enchant creature card in a graveyard", Animate Dead): the
+ *  parser drops the zone, and a card in a graveyard has no host that can die. */
+function enchantsOf(oracleText: string): Characteristics["enchants"] {
+  const raw = ENCHANT_LINE.exec(oracleText)?.[1]?.trim().replace(/\.$/, "");
+  if (!raw || /\bcards?\b/i.test(raw)) return undefined;
+  const subject = parseSubject(raw);
+  return subject.type !== undefined || subject.subtype !== undefined ? subject : undefined;
 }
 
 /** Types and subtypes across EVERY face, deduped.

@@ -183,3 +183,18 @@ test("characteristics survive a card with no name", () => {
   const { name: _n, ...nameless } = inalla;
   expect(extractCharacteristics(nameless as never).subtypes).toEqual(["human", "wizard"]);
 });
+
+// AN AURA'S ENCHANT LINE IS A PRINTED CHARACTERISTIC (CR 702.5a), carried so the matcher can apply
+// CR 704.5m -- the host dies, the Aura goes with it (Chime of Night <- Dockside Chef, recall v6 #57).
+test("an Aura carries its Enchant line as a subject; a non-Aura never does", () => {
+  const aura = (oracleText: string) => extractCharacteristics({ ...inalla, typeLine: "Enchantment — Aura", oracleText } as never).enchants;
+  expect(aura("Enchant creature\nWhen this Aura is put into a graveyard from the battlefield, destroy target nonblack creature."))
+    .toMatchObject({ type: "creature" });
+  expect(aura("Enchant creature you control (Reminder.)\nEnchanted creature gets +1/+1.")).toMatchObject({ type: "creature", control: "you" });
+  expect(aura("Enchant Swamp\nWhen this Aura is put into a graveyard from the battlefield, return it to its owner's hand.")).toMatchObject({ subtype: "swamp" });
+  // No class, no subject: an Aura on a player has no host that can die.
+  expect(aura("Enchant player\nEnchanted player loses 1 life.")).toBeUndefined();
+  // A CARD in a zone is not a permanent that can die: Animate Dead's line names a graveyard card.
+  expect(aura("Enchant creature card in a graveyard\nWhen this Aura enters, if it's on the battlefield, ...")).toBeUndefined();
+  expect(extractCharacteristics({ ...inalla, oracleText: "Enchant creature" } as never).enchants).toBeUndefined();
+});

@@ -940,6 +940,16 @@ export interface Characteristics {
    *  entry and death. Stamping only the authored emits left Kediss unable to see its own partner. */
   commander?: boolean;
   keywords: string[];
+  /** WHAT AN AURA CAN BE ATTACHED TO, from its printed "Enchant ..." line (CR 702.5a), parsed as a
+   *  subject: "Enchant creature" is `{type: creature}`, "Enchant creature you control" adds the
+   *  control, "Enchant creature card in a graveyard" (Animate Dead) carries the zone. Absent on
+   *  every non-Aura, and on an Aura whose line names no class ("Enchant player").
+   *
+   *  Carried so the matcher can apply CR 704.5m -- an Aura attached illegally, or to nothing, goes
+   *  to the graveyard -- which is how a sacrifice outlet eating the enchanted creature feeds "when
+   *  this Aura is put into a graveyard from the battlefield" (Chime of Night <- Dockside Chef,
+   *  recall v6 #57). A printed fact of the card, so it lives here beside the type line. */
+  enchants?: SubjectFilter;
 }
 
 export interface CardTags {

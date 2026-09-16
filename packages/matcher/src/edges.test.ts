@@ -2202,6 +2202,74 @@ test("a typed win condition edges to what it counts; an untyped one stays a role
   expect(reasons(false)).toHaveLength(0);
 });
 
+// AN AURA DIES WITH ITS HOST (CR 704.5m; recall v6 #57). "When this Aura is put into a graveyard from
+// the battlefield" is a self trigger on an enchantment that no outlet eats -- but every outlet that
+// eats the creature it is attached to sends it to the graveyard by rule.
+test("a producer that removes what an Aura enchants supplies the Aura's own dies trigger", () => {
+  const chime = (enchants?: Record<string, unknown>): CardTags => ({
+    oracleId: "chime", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: ["aura"], colors: ["B"], identity: ["B"], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [],
+      ...(enchants ? { enchants: { control: "any", token: null, ...enchants } as CardTags["characteristics"]["enchants"] } : {}) },
+    abilities: [{
+      kind: "triggered", effect: { kind: "" },
+      trigger: { verbs: ["dies"], subject: { control: "you", token: null, subtype: "aura", self: true } },
+    }],
+  });
+  const outlet = (emit: Record<string, unknown>): CardTags => ({
+    oracleId: "chef", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment", "creature"], subtypes: ["human", "citizen"], colors: ["B"], identity: ["B"], cmc: 2,
+      power: "1", toughness: "2", token: false, keywords: [] },
+    abilities: [{ kind: "activated", cost: "{1}{B}, Sacrifice an artifact or creature", effect: { kind: "" },
+      emits: [{ verb: "dies", subject: { control: "you", token: null, ...emit } as CardTags["abilities"][number]["emits"] extends (infer E)[] | undefined ? E extends { subject: infer S } ? S : never : never, instantSpeed: true }] }],
+  });
+  const reasons = (c: CardTags, p: CardTags) => directedReasons(
+    { card: { name: "Dockside Chef" } as DeckCard["card"], tags: p },
+    { card: { name: "Chime of Night" } as DeckCard["card"], tags: c }, H,
+  ).filter((r) => r.tag.startsWith("dies:"));
+
+  const fed = reasons(chime({ type: "creature" }), outlet({ type: ["creature", "artifact"] }));
+  expect(fed).toHaveLength(1);
+  expect(fed[0].text).toBe("Dockside Chef removes the creature Chime of Night enchants, and Chime of Night goes to the graveyard with it");
+  // Without the Enchant line the self trigger is what it always was: fed by nothing that eats creatures.
+  expect(reasons(chime(), outlet({ type: ["creature", "artifact"] }))).toHaveLength(0);
+  // A land dying is not the creature the Aura sits on.
+  expect(reasons(chime({ type: "creature" }), outlet({ type: "land" }))).toHaveLength(0);
+  // A producer removing ITSELF is not removing a host.
+  expect(reasons(chime({ type: "creature" }), outlet({ type: "creature", self: true }))).toHaveLength(0);
+  // "Enchant creature you control": an opponent's creature dying is not the host.
+  expect(reasons(chime({ type: "creature", control: "you" }), outlet({ type: "creature" }))).toHaveLength(1);
+  expect(reasons(chime({ type: "creature", control: "you" }), outlet({ type: "creature", control: "opp" }))).toHaveLength(0);
+  // "Enchant Swamp" (Spreading Algae): a Swamp dying is the host, a Forest is not.
+  expect(reasons(chime({ subtype: "swamp" }), outlet({ type: "land", subtype: "swamp" }))).toHaveLength(1);
+  expect(reasons(chime({ subtype: "swamp" }), outlet({ type: "land", subtype: "forest" }))).toHaveLength(0);
+});
+
+test("a bounce or an exile unattaches an Aura the way a death does (CR 704.5m)", () => {
+  // Gift of Wrath: "When this Aura leaves the battlefield, create a 2/2 Spirit". A flicker on the
+  // host is a `leaves` from the battlefield; a `leaves` from a GRAVEYARD is a different event.
+  const gift: CardTags = {
+    oracleId: "gift", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: ["aura"], colors: ["R"], identity: ["R"], cmc: 3,
+      power: null, toughness: null, token: false, keywords: [], enchants: { control: "any", token: null, type: ["artifact", "creature"] } },
+    abilities: [{ kind: "triggered", effect: { kind: "token-generation" },
+      trigger: { verbs: ["leaves"], subject: { control: "you", token: null, subtype: "aura", self: true } } }],
+  };
+  const remover = (zone?: string): CardTags => ({
+    oracleId: "rift", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["instant"], subtypes: [], colors: ["U"], identity: ["U"], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "on-cast", effect: { kind: "" },
+      emits: [{ verb: "leaves", subject: { control: "any", token: null, type: "creature", ...(zone ? { zone } : {}) } as never }] }],
+  });
+  const reasons = (p: CardTags) => directedReasons(
+    { card: { name: "Cyclonic Rift" } as DeckCard["card"], tags: p },
+    { card: { name: "Gift of Wrath" } as DeckCard["card"], tags: gift }, H,
+  ).filter((r) => r.tag.startsWith("leaves:"));
+  expect(reasons(remover())).toHaveLength(1);
+  expect(reasons(remover("graveyard"))).toHaveLength(0);
+});
+
 // A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION AS A WIN CONDITION'S (2026-09-16; recall v6
 // #77 Gadrak, v7 #79 Urza's Workshop): the producer is one of the things the consumer counts, and
 // below the count the consumer does nothing. Whatever the effect kind -- Gadrak's `cant` derives no
