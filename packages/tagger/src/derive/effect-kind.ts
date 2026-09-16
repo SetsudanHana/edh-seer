@@ -231,7 +231,11 @@ function costDirection(object: string, clauseText = ""): EffectKind | null {
 /** The clause goes on to copy, play, cast or put onto the battlefield what it exiled -- read from
  *  the exile onward, so a use named BEFORE it is not this exile's. "exiled this way" alone is NOT a
  *  use -- "you gain 1 life for each card exiled this way" is still hate. */
-const USES_THE_EXILED_CARD = /\bcopy of (?:it|them|that card|those cards)\b|\bplay (?:it|them|that card|those cards|a card from exile|cards? (?:exiled|from exile))\b|\bcast (?:it|them|that card|those cards)\b|\bput (?:it|them|that card|those cards) onto the battlefield\b/i;
+// "puts all cards they exiled this way onto the battlefield" is Living Death and Living End (recall
+// v7 #187, 2026-09-16): a mass reanimation that derived `graveyard-hate` + `flicker`, so no
+// sacrifice outlet ever fed it. 2 corpus cards; the other 30 "exiled this way" wordings exile from
+// a library, a hand or the battlefield and are not this row's.
+const USES_THE_EXILED_CARD = /\bcopy of (?:it|them|that card|those cards)\b|\bplay (?:it|them|that card|those cards|a card from exile|cards? (?:exiled|from exile))\b|\bcast (?:it|them|that card|those cards)\b|\bputs? (?:it|them|that card|those cards|all cards (?:they|you) exiled this way) onto the battlefield\b/i;
 const YOUR_YARD = /\byour graveyard\b/i;
 const OTHER_YARD = /\b(?:target player'?s?|opponents?'?s?|each player'?s?|their)\s+graveyards?\b/i;
 
