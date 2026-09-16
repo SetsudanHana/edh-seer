@@ -377,15 +377,27 @@ function combatConsumerNarrows(subject: SubjectFilter): boolean {
 
 /** Does a recursion's subject name a CLASS of the deck the way a typed tutor does? The same bar
  *  the tutor pass sets -- a subtype (in the subject or an `anyOf` branch) or a stats predicate --
- *  plus a legendary supertype (Lara Croft) and a conjunction of types. A BARE TYPE DOES NOT
- *  NARROW, exactly as the tutor pass says: measured 2026-09-10 with lone types admitted, "return
- *  target artifact card" reached 62 cards in each artifact deck (Buried Ruin, Myr Retriever,
- *  Trading Post, Scrap Trawler) and the mesh census went 449 -> 990 -- the every-card claim in a
- *  deck built of that type, which is the ordinary-card claim wearing a type. */
+ *  plus a legendary supertype (Lara Croft), a conjunction of types, and a lone type outside the
+ *  whole board (`loneTypeNarrows`). */
 function recursionClassNarrows(s: SubjectFilter): boolean {
   const subs = [...list(s.subtype), ...(s.anyOf ?? []).flatMap((b) => list(b.subtype))];
   if (subs.length > 0 || (s.stats?.length ?? 0) > 0 || s.legendary === true) return true;
-  return (s.allTypes?.length ?? 0) >= 2;
+  return (s.allTypes?.length ?? 0) >= 2 || loneTypeNarrows(s);
+}
+
+/** A LONE TYPE OUTSIDE THE WHOLE BOARD NARROWS (owner ruling 2026-09-16, asked three times on
+ *  Buried Ruin -> Scrap Trawler): "an artifact card", "an instant or sorcery card" pick out the
+ *  cards of that type, and the 09-07 tutor ruling's own witness -- Mystical Tutor finding the
+ *  combo's instant -- was refused by the subtype bar until this. The owner's word on the refusal:
+ *  it was the dies-mesh reflex ("previously everything dying had this edge"), not a judgement on
+ *  the relation. The fan-out was measured before it was taken: lone types admitted took the mesh
+ *  census 449 -> 990 on 2026-09-10 (Buried Ruin, Myr Retriever, Trading Post, Scrap Trawler at 62
+ *  cards each in the artifact decks). Every type in the subject and its branches must sit outside
+ *  `WHOLE_DECK_TYPES`: "a creature card" (Worldly Tutor, Animate Dead) and "a land card" are still
+ *  the board itself, the same line the board-count pass draws with `typedCount`. */
+function loneTypeNarrows(s: SubjectFilter): boolean {
+  const types = [...list(s.type), ...(s.anyOf ?? []).flatMap((b) => list(b.type))];
+  return types.length > 0 && types.every((t) => !WHOLE_DECK_TYPES.has(t));
 }
 
 /** Does this combat consumer narrow via its type line -- a non-creature type, or any subtype?
@@ -1857,10 +1869,11 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an
   // Elemental card genuinely relates to every Elemental in the deck.
   //
-  // GATED ON A SUBTYPE, for exactly the reason the clone gate is. Of 115 corpus search actions,
-  // "a card" (Demonic Tutor, Grim Tutor, Gamble) reaches all 99 others, "a creature card" (Worldly
-  // Tutor) reaches the whole creature base, "an artifact card" (Fabricate) the whole artifact base.
-  // A bare TYPE is not a relation to any particular card. A SUBTYPE is.
+  // GATED ON A CLASS, for exactly the reason the clone gate is. Of 115 corpus search actions,
+  // "a card" (Demonic Tutor, Grim Tutor, Gamble) reaches all 99 others and "a creature card" (Worldly
+  // Tutor) the whole creature base. A SUBTYPE narrows, and since 2026-09-16 so does a lone type
+  // outside the whole board -- "an artifact card" (Fabricate), "an instant or sorcery card"
+  // (Mystical Tutor) -- see `loneTypeNarrows` for the ruling and the measured fan-out.
   //
   // LAND subtypes are excluded on top of that: a fetchland naming Swamp is the MANA BASE, and the
   // cost-reduction and tax rulings already settled that a deck property is not a pairwise synergy.
@@ -1874,9 +1887,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // card that matches a description.
   for (const a of p.tags.abilities) {
     if (a.effect.kind !== "search" || !a.effect.subject) continue;
-    // A SUBTYPE or a STAT PREDICATE narrows; a bare type does not. `combatNarrowsOffType` has said
-    // the same about stats all along — Imperial Recruiter's "power 2 or less" and Spellseeker's
-    // "mana value 2 or less" pick out particular cards, not a whole type.
+    // A SUBTYPE, a STAT PREDICATE or a lone off-board type narrows; a whole-board type does not.
+    // `combatNarrowsOffType` has said the same about stats all along — Imperial Recruiter's "power
+    // 2 or less" and Spellseeker's "mana value 2 or less" pick out particular cards, not a whole type.
     // A disjunction keeps its subtypes in the branches: Magda's "an artifact or Dragon card" is
     // `anyOf: [{type: artifact}, {subtype: dragon}]`, and reading only the outer subject would miss
     // the Dragon half that makes her a typal tutor at all.
@@ -1888,7 +1901,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     // "a card named TARDIS" and derived a bare `search` the gate refused as unnarrowed, so
     // the most specific tutor in the corpus was the one that formed nothing.
     const narrows = subs.length > 0 || (a.effect.subject.stats?.length ?? 0) > 0
-      || a.effect.subject.named !== undefined;
+      || a.effect.subject.named !== undefined || loneTypeNarrows(a.effect.subject);
     // A LAND FINDER IS ITS OWN RELATION, and it is the one the ramp diagnostic is built on (owner's
     // ruling, 2026-08-15, reversing the blanket land exclusion above). Farseek relates to the Plains,
     // Islands, Swamps and Mountains it can actually fetch — including every dual carrying one of
