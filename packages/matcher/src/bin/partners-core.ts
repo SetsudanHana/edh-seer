@@ -1,5 +1,5 @@
 export type { FacetRow } from "./facet-index-core.js";
-import type { CardTags, GameEvent } from "@edh-seer/tagger";
+import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
@@ -707,15 +707,23 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
  *  the tag is carried beside the key rather than rebuilt from it. */
 export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
   abilitiesOf(d).flatMap((a) => {
-    const counted = a.effect?.scalingSubject;
-    if (!counted || counted.zone !== "battlefield" || counted.control === "opp") return [];
-    const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
-      .filter((st) => !BASIC_LAND_TYPES.has(st));
-    const tag = `scales:${themeSubjectKey(counted)}`;
-    if (subtypes.length > 0) return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
-    // A bare type count (Storm-Kiln Artist's artifacts), keyed on the type itself.
-    const types = Array.isArray(counted.type) ? counted.type : counted.type === undefined ? [] : [counted.type];
-    return types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!) ? [{ key: `counts|-|${types[0]}|-`, tag }] : [];
+    // Two counts, one demand: the count a payoff GROWS with (`scalingSubject`, stamped with the
+    // battlefield zone by derive) and the count it is GATED on (`thresholdSubject`, a board count by
+    // construction -- see `thresholdSubjectFor`). Same keys, each carrying the tag the engine writes.
+    const counts: { counted: SubjectFilter; tag: string }[] = [];
+    const scaled = a.effect?.scalingSubject;
+    if (scaled && scaled.zone === "battlefield") counts.push({ counted: scaled, tag: `scales:${themeSubjectKey(scaled)}` });
+    const gated = a.thresholdSubject;
+    if (gated && a.threshold) counts.push({ counted: gated, tag: `${a.effect?.kind === "win-game" ? "wincon" : "threshold"}:${themeSubjectKey(gated)}` });
+    return counts.flatMap(({ counted, tag }) => {
+      if (counted.control === "opp") return [];
+      const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
+        .filter((st) => !BASIC_LAND_TYPES.has(st));
+      if (subtypes.length > 0) return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
+      // A bare type count (Storm-Kiln Artist's artifacts), keyed on the type itself.
+      const types = Array.isArray(counted.type) ? counted.type : counted.type === undefined ? [] : [counted.type];
+      return types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!) ? [{ key: `counts|-|${types[0]}|-`, tag }] : [];
+    });
   });
 
 /** WHAT A CARD IS, as a supply key -- its own printed subtypes.

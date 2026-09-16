@@ -535,6 +535,30 @@ export function winconSentence(producer: string, consumer: string): string {
   return `${producer} is what ${consumer} counts toward winning`;
 }
 
+/** A count the consumer is GATED on, not one it grows with: Gadrak "can't attack unless you control
+ *  four or more artifacts", Chrome Steed "as long as you control three or more artifacts", Urza's
+ *  Workshop "activate only if". The producer is one of the things counted, so the sentence says
+ *  what the card says -- the number and the class -- and claims nothing about what turns on.
+ *  `noun` is the count's own word, plural as the card prints it ("artifacts", "Merfolk"). */
+export function thresholdSentence(producer: string, consumer: string, atLeast: number, noun: string): string {
+  return `${producer} counts toward the ${atLeast} or more ${noun} ${consumer} needs`;
+}
+
+/** The plural a card prints for a counted class. Subtypes are proper nouns ("Shrines", "Humans");
+ *  card types are not ("artifacts"). CEILING: English plurals by suffix -- Merfolk, Elves, Dwarves
+ *  and the sibilants are spelled; anything else takes an s, which is right for every type and for
+ *  the great majority of the 300-odd subtypes. */
+export function countedNounPlural(subject: { subtype?: string | string[]; type?: string | string[] }): string {
+  const first = (v: string | string[] | undefined): string | undefined => Array.isArray(v) ? v[0] : v;
+  const subtype = first(subject.subtype);
+  const word = subtype !== undefined ? subtype.charAt(0).toUpperCase() + subtype.slice(1) : (first(subject.type) ?? "permanent");
+  if (/(?:folk|fish|sheep|moose)$/i.test(word)) return word;
+  if (/(?:elf|arf)$/i.test(word)) return word.replace(/f$/i, "ves");
+  if (/(?:s|x|z|ch|sh)$/i.test(word)) return `${word}es`;
+  if (/[^aeiou]y$/i.test(word)) return `${word.slice(0, -1)}ies`;
+  return `${word}s`;
+}
+
 export function fetchSentence(producer: string, consumer: string): string {
   return `${producer} can fetch ${consumer}`;
 }

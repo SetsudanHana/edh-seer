@@ -1543,7 +1543,7 @@ test("a trigger carries its numeric threshold", () => {
     "The Millennium Calendar",
     { 1: "When there are 1,000 or more time counters on The Millennium Calendar, sacrifice it and each opponent loses 1,000 life." },
   );
-  expect(abilities[0].trigger?.threshold).toEqual({ atLeast: 1000 });
+  expect(abilities[0].threshold).toEqual({ atLeast: 1000 });
   expect(abilities[0].amount).toBe("1,000");
 });
 
@@ -1564,8 +1564,8 @@ test("a trigger with no threshold leaves the field unset", () => {
     { 1: "Whenever one or more other creatures you control with power 2 or less enter, draw a card." },
   );
   expect(abilities[0].trigger?.verbs).toEqual(["enters"]);
-  expect(abilities[0].trigger?.threshold).toBeUndefined();
-  expect(abilities[0].trigger && "threshold" in abilities[0].trigger).toBe(false);
+  expect(abilities[0].threshold).toBeUndefined();
+  expect("threshold" in abilities[0]).toBe(false);
 });
 
 // threshold-lines task 3, fix round 2 (owner's ruling): extra-phase now records WHICH phase, so
@@ -2620,4 +2620,42 @@ test("Alania's 'first instant, sorcery or Otter spell' if-clause becomes the cas
     actions: [{ verb: "draw", object: "a card" }],
   }], "Prowess Payoff", { 1: "Whenever you cast a noncreature spell, if it's the first noncreature spell you've cast this turn, draw a card." });
   expect(plain[0]?.trigger?.subject.anyOf).toBeUndefined();
+});
+
+// THE THRESHOLD IS ON THE ABILITY, NOT THE TRIGGER (2026-09-16; recall v6 #77, v7 #79). A static or
+// an activated ability gated on a board count had nowhere to carry it, and Gadrak -- whose `cant`
+// action maps to no kind -- derived no ability at all, so the one thing the card asks of its deck
+// was invisible.
+test("a static gated on a typed count keeps a kindless ability that carries the count", () => {
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "attack unless you control four or more artifacts" }] }],
+    "Gadrak, the Crown-Scourge",
+    { 1: "Gadrak can't attack unless you control four or more artifacts." },
+  );
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0]).toMatchObject({ kind: "static", effect: { kind: "" }, threshold: { atLeast: 4 },
+    thresholdSubject: { type: "artifact", control: "you" } });
+  expect(abilities[0].trigger).toBeUndefined();
+});
+
+test("a static with a count that names no class derives nothing, as before", () => {
+  // Cephalid Inkmage: a graveyard card count is not a class of permanent. Nothing to join on.
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "static", actions: [{ verb: "cant", object: "be blocked as long as there are seven or more cards in your graveyard" }] }],
+    "Cephalid Inkmage",
+    { 1: "This creature can't be blocked as long as there are seven or more cards in your graveyard." },
+  );
+  expect(abilities).toHaveLength(0);
+});
+
+test("an activated ability carries its activation restriction's count", () => {
+  // Urza's Workshop, second ability. The mana ability derives as before; the count rides on it.
+  const { abilities } = deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object: "{C}", amount: "for each Urza's land you control" }] }],
+    "Urza's Workshop",
+    { 1: "Add {C} for each Urza's land you control. Activate only if you control three or more artifacts." },
+  );
+  expect(abilities).toHaveLength(1);
+  expect(abilities[0]).toMatchObject({ kind: "activated", effect: { kind: "mana-generation" }, threshold: { atLeast: 3 },
+    thresholdSubject: { type: "artifact", control: "you" } });
 });

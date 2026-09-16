@@ -129,10 +129,10 @@ describe("detectLines", () => {
         { kind: "activated", effect: { kind: "pump", subject: { control: "any", token: null, counter: "time" } },
           cost: "{2}, {T}", amount: "double", repeats: "per-cycle" },
         { kind: "triggered", effect: { kind: "" },
-          trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "time" }, threshold: { atLeast: 1000 } },
+          trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "time" } }, threshold: { atLeast: 1000 },
           emits: [{ verb: "sacrifice", subject: { control: "any", token: null, self: true } }] },
         { kind: "triggered", effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
-          trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "time" }, threshold: { atLeast: 1000 } },
+          trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, counter: "time" } }, threshold: { atLeast: 1000 },
           amount: "1,000",
           emits: [{ verb: "lose-life", subject: { control: "opp", token: null, scope: "each" } }] },
       ],
@@ -186,7 +186,7 @@ describe("detectLines", () => {
       card: { name: "Test Anchor" },
       tags: { characteristics: { types: ["enchantment"], subtypes: [] }, abilities: [
         { kind: "triggered", effect: { kind: "draw-card" },
-          trigger: { verbs: ["upkeep"], subject: { control: "you", token: null }, threshold: { atLeast: 5 } } },
+          trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } }, threshold: { atLeast: 5 } },
       ] },
     } as unknown as DeckCard;
     const result = detectLines([anchorless], hierarchy);
@@ -211,10 +211,10 @@ describe("detectLines", () => {
           repeats: "repeatable" },
         { kind: "triggered",
           effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", scope: "target", zone: "graveyard" } },
-          trigger: { verbs: ["end-step"], subject: { control: "you", token: null }, threshold: { atLeast: 4 } },
+          trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, threshold: { atLeast: 4 },
           repeats: "per-cycle" },
         { kind: "triggered", effect: { kind: "player-life-loss", subject: { control: "opp", token: null, scope: "each" } },
-          trigger: { verbs: ["end-step"], subject: { control: "you", token: null }, threshold: { atLeast: 4 } },
+          trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, threshold: { atLeast: 4 },
           amount: "that card's power",
           emits: [{ verb: "lose-life", subject: { control: "opp", token: null, scope: "each" } }],
           repeats: "per-cycle" },
@@ -276,7 +276,7 @@ describe("detectLines", () => {
       abilities: [
         { kind: "activated", effect: { kind: "mana-generation", subject: { control: "any", token: null } }, cost: "{T}", repeats: "per-cycle" },
         { kind: "triggered", effect: { kind: "token-generation", subject: { control: "any", token: true, colors: ["B"], type: "creature", subtype: "zombie" } },
-          trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" }, threshold: { atLeast: 7 } },
+          trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } }, threshold: { atLeast: 7 },
           amount: "1",
           emits: [{ verb: "create-token", subject: { control: "any", token: true, colors: ["B"], type: "creature", subtype: "zombie" } }, { verb: "enters", subject: { control: "any", token: true, colors: ["B"], type: "creature", subtype: "zombie" } }],
           repeats: "repeatable" },
@@ -321,7 +321,7 @@ describe("detectLines", () => {
         characteristics: { types: ["creature", "sorcery"], subtypes: ["elf", "druid"] },
         abilities: [
           { kind: "triggered", effect: { kind: "" },
-            trigger: { verbs: ["attacks"], subject: { control: "you", token: null, type: "creature", self: true }, threshold: { atLeast: 8 } },
+            trigger: { verbs: ["attacks"], subject: { control: "you", token: null, type: "creature", self: true } }, threshold: { atLeast: 8 },
             repeats: "per-cycle" },
         ],
       },
@@ -337,7 +337,7 @@ describe("detectLines", () => {
         abilities: [
           { kind: "triggered",
             effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, self: true, zone: "graveyard" } },
-            trigger: { verbs: ["attacks"], subject: { control: "you", token: null, subtype: "rat", scope: "all" }, threshold: { atLeast: 7 } },
+            trigger: { verbs: ["attacks"], subject: { control: "you", token: null, subtype: "rat", scope: "all" } }, threshold: { atLeast: 7 },
             emits: [{ verb: "enters", subject: { control: "any", token: null, fromZone: "graveyard", self: true } }],
             repeats: "repeatable" },
         ],
@@ -376,7 +376,7 @@ describe("detectLines", () => {
       card: { name: "Test Creature Anchor" },
       tags: { characteristics: { types: ["enchantment"], subtypes: [] }, abilities: [
         { kind: "triggered", effect: { kind: "draw-card" },
-          trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature" }, threshold: { atLeast: 5 } } },
+          trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature" } }, threshold: { atLeast: 5 } },
       ] },
     } as unknown as DeckCard;
 

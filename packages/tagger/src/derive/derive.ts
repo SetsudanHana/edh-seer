@@ -65,7 +65,11 @@ import { emblemRecipient } from "../emblem.js";
 // 145: the class inside an intervening-if is the trigger's class when the trigger subject is the bare
 // `spell` -- Alania's "if it's the first instant spell, the first sorcery spell, or the first Otter
 // spell" (owner, 2026-09-16, recall v7 #178); the once-per-turn condition is dropped.
-export const DERIVE_VERSION = 145;
+// 146: the threshold moves from the trigger to the ABILITY and is read on every kind -- Chrome
+// Steed's "as long as", Urza's Workshop's "activate only if", Gadrak's "can't attack unless" (recall
+// v6 #77, v7 #79); a typed count keeps a kindless ability alive the way a trigger does; the count's
+// controller is read from the words before the number, and an event count refuses.
+export const DERIVE_VERSION = 146;
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1043,14 +1047,7 @@ export function deriveAbilities(
         if (verb === "leaves" && LEAVES_GRAVEYARD.test(text)) subject.zone = "graveyard";
         if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
         selfLeavesTrigger = subject.self === true && verb === "leaves";
-        // Read from the clause TEXT, not the trigger subject string: the count sits in the trigger
-        // clause's prose ("when there are 1,000 or more time counters on ..."), which is the same
-        // channel repeatsFor reads for its once-each-turn rule.
-        const threshold = thresholdFor(text);
-        const thresholdSubject = threshold ? thresholdSubjectFor(text) : undefined;
-        trigger = threshold
-          ? { verbs: [verb], subject, threshold, ...(thresholdSubject ? { thresholdSubject } : {}) }
-          : { verbs: [verb], subject };
+        trigger = { verbs: [verb], subject };
       } else {
         unknownTriggers.push(clause.trigger.event);
       }
@@ -1325,13 +1322,25 @@ export function deriveAbilities(
     //
     // The effect stays honestly EMPTY — we know when it triggers, not what it does — and the actions
     // remain in `unclaimed`, so the derivation gap is still visible rather than papered over.
-    if (trigger && abilities.length === before) {
+    // THE COUNT THE ABILITY IS GATED ON, read from the clause TEXT (the same channel repeatsFor
+    // reads for its once-each-turn rule) and stamped on every ability the clause derives, whatever
+    // its kind: a trigger's intervening if, a static's "as long as", an activation's "only if", a
+    // restriction's "unless". Once per clause, so `thresholdFor` and `thresholdSubjectFor` cannot
+    // disagree between two abilities of one sentence.
+    const threshold = thresholdFor(text);
+    const thresholdSubject = threshold ? thresholdSubjectFor(text) : undefined;
+    // A TYPED COUNT IS A DEMAND IN ITS OWN RIGHT, as a trigger is (recall v6 #77, v7 #79). Gadrak
+    // "can't attack unless you control four or more artifacts" is a `cant` static whose action maps
+    // to no kind, so the clause pushed nothing and the one thing the card asks of its deck --
+    // artifacts -- went with it. Kept only when the count NAMES a class: a bare number gates nothing
+    // the matcher can join, and a kindless ability with nothing on it is noise.
+    if ((trigger || thresholdSubject) && abilities.length === before) {
       // A multiplier reaches here when its action was refused upstream — Tekuthal's `proliferate` on
       // a static clause, which `keywordActionOnStaticClause` drops precisely so it never becomes a
       // proliferate source. The KIND is known even though the action was refused, so the ability is
       // labelled rather than left empty.
-      abilities.push({ kind, effect: replacement ? { kind: replacement.kind } : { kind: "" as const }, trigger,
-        ...(face ? { face } : {}) });
+      abilities.push({ kind, effect: replacement ? { kind: replacement.kind } : { kind: "" as const },
+        ...(trigger ? { trigger } : {}), ...(face ? { face } : {}) });
     }
 
     // Label everything this clause produced, in ONE place rather than at each of the three push
@@ -1350,6 +1359,7 @@ export function deriveAbilities(
     for (let i = before; i < abilities.length; i++) {
       const repeats = repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
+      if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };
       }

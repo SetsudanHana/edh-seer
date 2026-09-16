@@ -18,7 +18,7 @@ for (const doc of derived) {
     total++;
     if (a.kind === "activated") { activated++; if (a.cost) withCost++; }
     if (a.amount !== undefined) withAmount++;
-    if (a.trigger) { triggers++; if (a.trigger.threshold) withThreshold++; }
+    if (a.trigger) { triggers++; if (a.threshold) withThreshold++; }
   }
 }
 console.log(`cost:      ${withCost} of ${activated} activated abilities non-empty`);
@@ -62,7 +62,7 @@ for (const [name, expected] of WITNESSES) {
   if (!card) { console.log(`  ${name}: NOT IN CORPUS`); failed++; continue; }
   const doc = await store.db.collection(DERIVED_COLLECTION).findOne({ oracleId: card._id as unknown as string });
   const abilities = ((doc as Record<string, unknown> | null)?.abilities ?? []) as Ability[];
-  const found = abilities.map((a) => a.trigger?.threshold?.atLeast).filter((n) => n !== undefined);
+  const found = abilities.map((a) => a.threshold?.atLeast).filter((n) => n !== undefined);
   const ok = expected === "threshold" ? found.length > 0 : found.length === 0;
   console.log(`  ${ok ? "PASS" : "FAIL"} ${name}: thresholds=${JSON.stringify(found)} (expected ${expected})`);
   if (!ok) failed++;

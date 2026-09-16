@@ -1,6 +1,6 @@
 /** Threshold lines: what a deck must hold to reach a printed number.
  *
- *  Reads the resource ledger's three fields (`trigger.threshold`, `Ability.amount`, `Ability.cost`)
+ *  Reads the resource ledger's three fields (`Ability.threshold`, `Ability.amount`, `Ability.cost`)
  *  and emits one record per threshold anchor. Pure -- no store, no I/O.
  *  Design: docs/superpowers/specs/2026-08-14-threshold-lines-design.md */
 
@@ -240,8 +240,8 @@ export function detectLines(deck: readonly DeckCard[], hierarchy: Hierarchy): De
     const triggerKey = (t: unknown): string => JSON.stringify(t);
     const seen = new Set<string>();
     for (const a of abilities) {
-      const threshold = a.trigger?.threshold?.atLeast;
-      if (typeof threshold !== "number") continue;
+      const threshold = a.threshold?.atLeast;
+      if (typeof threshold !== "number" || !a.trigger) continue;
       const key = triggerKey(a.trigger);
       if (seen.has(key)) continue;
       seen.add(key);

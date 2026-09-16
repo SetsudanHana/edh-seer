@@ -764,28 +764,42 @@ export interface Ability {
    *  front were indistinguishable and both matched against that union. `Characteristics.faces`
    *  already fixed the same problem for IMPLIED events; this is the authored half. */
   face?: number;
-  /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs.
-   *
-   *  `threshold` is a numeric condition on WHEN the trigger fires — The Millennium Calendar's
-   *  "when there are 1,000 or more time counters". Absent means the trigger states no count, which
-   *  is the overwhelming majority; see `threshold.ts` for the two shapes deliberately excluded.
-   *
-   *  It records HOW MANY and never OF WHAT. For Calendar the trigger's own `subject.counter` supplies
-   *  the resource; for "if you control four or more lands" nothing does. A consumer must not assume
-   *  the threshold's subject is the trigger's subject.
-   *
-   *  `thresholdSubject` is the noun the threshold counts, when it names a countable permanent — see
-   *  `thresholdSubjectFor`. Present only alongside `threshold`, and only sometimes even then: "if you
-   *  control ten or more Treasures" carries one, Cabal Ritual's "seven or more cards in your
-   *  graveyard" carries none (a zone-scoped card count has no `type`/`subtype` to parse), and
-   *  "thirteen cards in your hand" is refused on purpose because no `SubjectFilter` can express a
-   *  hand-size condition. */
+  /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];
     subject: SubjectFilter;
-    threshold?: { atLeast: number };
-    thresholdSubject?: SubjectFilter;
   };
+  /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
+   *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
+   *  Urza's Workshop's "activate only if you control three or more artifacts", Gadrak's "can't
+   *  attack unless you control four or more artifacts". Absent means the ability states no count,
+   *  which is the overwhelming majority; see `threshold.ts` for the shapes deliberately excluded.
+   *
+   *  ON THE ABILITY, NOT THE TRIGGER (2026-09-16). It lived on `trigger` for a month, and a static
+   *  or an activated ability had nowhere to carry the count it is gated on -- Gadrak derived no
+   *  ability at all and Inventors' Fair's upkeep trigger carried `thresholdSubject: artifact` into a
+   *  matcher that read it only on a win condition (recall v6 #77, v7 #79). One slot for the one
+   *  fact, whichever ability kind states it: CR 603.4 for the intervening if, 611.3a for a static's
+   *  condition, 602.5 for an activation restriction.
+   *
+   *  It records HOW MANY and never OF WHAT. For Calendar the trigger's own `subject.counter` supplies
+   *  the resource; for "if you control four or more lands" `thresholdSubject` does. A consumer must
+   *  not assume the threshold's subject is the trigger's subject.
+   *
+   *  `thresholdSubject` is the noun the threshold counts, when it names a class of permanent
+   *  someone controls — see `thresholdSubjectFor`. Present only alongside `threshold`, and only
+   *  sometimes even then: "if you control ten or more Treasures" carries one, Cabal Ritual's "seven
+   *  or more cards in your graveyard" carries none (a zone-scoped card count has no `type`/`subtype`
+   *  to parse), "thirteen cards in your hand" is refused on purpose because no `SubjectFilter` can
+   *  express a hand-size condition, and an EVENT count ("you've cast three or more spells this
+   *  turn") is refused because a card's type line cannot satisfy it. Its `control` is read from the
+   *  words before the number: "you control" / "an opponent controls" / "on the battlefield". */
+  threshold?: { atLeast: number };
+  /** WHAT `threshold` counts, when it names a class of permanent someone controls -- see the note
+   *  above and `thresholdSubjectFor`. The matcher joins it against a card's printed characteristics
+   *  under the board-count gate (`boardCountNarrows`): Sol Ring counts toward Gadrak's four
+   *  artifacts; a whole-deck type, a basic land type and an opponent's board form nothing. */
+  thresholdSubject?: SubjectFilter;
   /** An activated ability's activation cost, verbatim as `segment.ts` split it out of the body —
    *  "{X}{X}, {T}", "{T}, Sacrifice a creature". Unparsed on purpose: this records what the card
    *  says, and what a cost MEANS for a loop's economy is sub-project B's question.
