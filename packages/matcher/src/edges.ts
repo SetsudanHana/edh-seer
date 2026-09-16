@@ -1963,7 +1963,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // a mill carrying a narrowing subject was reported as a tutor, and nothing in those four kinds
   // finds a card. CR 701.23a is the whole justification — only a search looks through a zone for a
   // card that matches a description.
-  for (const a of p.tags.abilities) {
+  // A PRINTED KEYWORD CAN SEARCH TOO: typecycling (`keywordAbilities`, recall v7 #199).
+  for (const a of [...p.tags.abilities, ...keywordAbilities(p.tags.characteristics)]) {
     if (a.effect.kind !== "search" || !a.effect.subject) continue;
     // A SUBTYPE, a STAT PREDICATE or a lone off-board type narrows; a whole-board type does not.
     // `combatNarrowsOffType` has said the same about stats all along — Imperial Recruiter's "power

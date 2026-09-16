@@ -316,6 +316,16 @@ const KEYWORD_TRIGGERS: Record<string, { verbs: GameEvent["verb"][]; subject: st
   "start your engines!": { verbs: ["lose-life"], subject: "an opponent", kind: "speed" },
 };
 
+/** What a typecycling keyword SEARCHES for, in the reminder's own words, so `parseSubject` gives
+ *  it the shape an authored search has. Corpus: Plains/Island/Swamp/Mountain/Forestcycling 13/11/11/
+ *  13/11, Basic landcycling 37, Wizardcycling 2, Slivercycling 1, Halflingcycling 1. */
+const KEYWORD_SEARCHES: Record<string, string> = {
+  plainscycling: "a Plains card", islandcycling: "an Island card", swampcycling: "a Swamp card",
+  mountaincycling: "a Mountain card", forestcycling: "a Forest card",
+  "basic landcycling": "a basic land card",
+  wizardcycling: "a Wizard card", slivercycling: "a Sliver card", halflingcycling: "a Halfling card",
+};
+
 /** The triggered abilities a card's printed keywords give it, in the shape `directedReasons` already
  *  reads. Not merged into `CardTags.abilities`: those are DERIVED and stored, and this is a matcher
  *  fact about a printed characteristic — the same split `keywordEvents` observes.
@@ -328,6 +338,15 @@ export function keywordAbilities(chars: Characteristics): Ability[] {
   const out: Ability[] = [];
   for (const raw of chars.keywords ?? []) {
     const whole = String(raw).toLowerCase().trim();
+    // TYPECYCLING IS A TYPED LAND SEARCH (recall v7 #199, 2026-09-16). `KEYWORD_EMITS.typecycling`
+    // emits the discard and its comment says "a library search is no emitted event" -- true until
+    // the 2026-08-15 land-finder ruling made a typed land SEARCH an edge to the lands it finds (the
+    // tutor pass, `ramp-target:*`, off `effect.kind: search`). Lorien Revealed's islandcycling
+    // reaches every Island in the deck, Sunken Hollow included; Eternal Dragon's plainscycling the
+    // Plains. The activated ability is keyed on the SPECIFIC keyword: Scryfall stamps the umbrellas
+    // Landcycling (92) and Typecycling (95) beside it, and those name no class.
+    const search = KEYWORD_SEARCHES[whole] ?? KEYWORD_SEARCHES[whole.split(/[\s{]/)[0]];
+    if (search) out.push({ kind: "activated", effect: { kind: "search", subject: parseSubject(search) } });
     const spec = KEYWORD_TRIGGERS[whole] ?? KEYWORD_TRIGGERS[whole.split(/[\s{]/)[0]];
     if (!spec) continue;
     out.push({
