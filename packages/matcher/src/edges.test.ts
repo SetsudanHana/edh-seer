@@ -4253,6 +4253,21 @@ test("a card adapting ITSELF does not feed another card's own-counter trigger", 
   // A placer aimed at ANY creature still does.
   const targeted = { verb: "counter-added", subject: { control: "any", token: null, type: "creature", counter: "+1/+1", scope: "target" } } as const;
   expect(eventMatches(targeted as never, consumer as never, H)).toBe(true);
+  // Primal Amulet -> Exemplar of Light (owner-reported 2026-09-17): a charge counter on the Amulet
+  // itself is self on both sides, and an artifact besides. A self-growing creature still feeds a
+  // payoff that watches ANY creature you control.
+  const amulet = { verb: "counter-added", subject: { control: "any", token: null, type: ["artifact"], counter: "charge", self: true } } as const;
+  expect(eventMatches(amulet as never, consumer as never, H)).toBe(false);
+  const anyCreature = { verb: "counter-added", subject: { control: "you", token: null, type: "creature" } } as const;
+  expect(eventMatches(producer as never, anyCreature as never, H)).toBe(true);
+  expect(eventMatches(amulet as never, anyCreature as never, H)).toBe(false);
+  // A typed self counter whose KIND the clause never recorded still meets a +1/+1 consumer on a
+  // creature you control (Shelinda, Yevon Acolyte -> Simic Ascendancy): the kind is compared only
+  // when both sides state one.
+  const shelinda = { verb: "counter-added", subject: { control: "any", token: null, self: true, type: ["legendary", "creature"], subtype: ["human", "cleric"] } } as const;
+  const ascendancy = { verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter: "+1/+1" } } as const;
+  expect(eventMatches(shelinda as never, ascendancy as never, H)).toBe(true);
+  expect(eventMatches(amulet as never, ascendancy as never, H)).toBe(false);
 });
 
 /** THE WHOLE POINT OF THE CHANGE, PINNED. Preordain scries; Matoya draws whenever you scry. There is

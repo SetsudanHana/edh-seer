@@ -505,7 +505,11 @@ export function impliedGraveyardEvents(emits: GameEvent[]): GameEvent[] {
  *  event. Union of faces, not `zoneTypes`: the permanent left the BATTLEFIELD, where a multi-face
  *  card is whichever face was up. Only an untyped self emit is touched. */
 /** The self events that name this permanent leaving the battlefield one way or another. */
-const SELF_TYPED_VERBS: ReadonlySet<string> = new Set(["leaves", "sacrifice", "dies"]);
+const SELF_TYPED_VERBS: ReadonlySet<string> = new Set(["leaves", "sacrifice", "dies",
+  // A counter on the card ITSELF lands on a known permanent (DERIVE 153): Primal Amulet's charge
+  // counter is on an artifact, so "whenever counters are put on a creature you control" refuses it
+  // by type instead of by luck.
+  "counter-added"]);
 
 export function selfLeavesTypes(events: GameEvent[], chars: Characteristics): GameEvent[] {
   return events.map((e) => {

@@ -82,7 +82,37 @@ import { emblemRecipient } from "../emblem.js";
 // more cards in your graveyard", "an opponent has eight or more cards in their graveyard".
 // 152: a printed "you draws/gains/loses/..." is a stated actor (Y'shtola, Night's Blessed's draw read
 // `any` because the condition named "a player", and met "whenever an opponent draws").
-export const DERIVE_VERSION = 152;
+// 153: a counter put on the card itself is a `self` emit (Primal Amulet's charge counter, a creature's
+// own +1/+1), read off the clause text since an add-counter's object names only the counter.
+export const DERIVE_VERSION = 153;
+
+/** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
+ *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
+ *  ("on target creature", "on each creature you control", "on that creature"). Adapt and monstrosity
+ *  put their counters on the card by definition (CR 701.46, CR 701.37). A clause naming BOTH
+ *  recipients states nothing here: "put a +1/+1 counter on target creature and a charge counter on
+ *  this artifact" is two counters and one emit, and the honest answer is the one it had. */
+const COUNTER_ON_THIS = /\bcounters?\s+on\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)\b/i;
+const COUNTER_ON_IT = /\bcounters?\s+on\s+(?:it|itself)\b/i;
+const COUNTER_ON_OTHER = /\bcounters?\s+on\s+(?:(?:up to \w+ |any number of )?(?:target|each|another|any|all|those|that)\b|(?:a|an|the)\s+(?!(?:creature|permanent|artifact|enchantment|land|planeswalker)\s+(?:you control )?(?:that|with)\b)[a-z]+\b(?!\s+you control\b)|(?:creatures|permanents|artifacts|lands)\s+you control\b)/i;
+const OTHER_OBJECT = /\b(?:target|another|each other|any other)\b/i;
+function counterOnSelf(verb: string | undefined, text: string, cardName?: string, triggerIsSelf = false): boolean {
+  if (verb === "adapt" || verb === "monstrosity") return true;
+  if (verb !== "add-counter" || !text) return false;
+  const named = cardName
+    ? new RegExp(`\\bcounters?\\s+on\\s+${cardName.split(" // ")[0]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(text)
+    : false;
+  const onThis = COUNTER_ON_THIS.test(text) || named;
+  // "on it" is the card only when nothing else in the clause could be "it": "This creature enters
+  // with two +1/+1 counters on it" is self, and so is a self-triggered "when this creature attacks,
+  // put a counter on it"; "whenever a nontoken creature you control enters, put a +1/+1 counter
+  // on it" (The Great Henge) is that creature -- the panel's Henge -> Dusk Legion Duelist REAL
+  // pair was unjoined by reading it as self on the first derive-153 run.
+  const onIt = COUNTER_ON_IT.test(text) && !OTHER_OBJECT.test(text)
+    && (triggerIsSelf || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
+  if (!onThis && !onIt) return false;
+  return !COUNTER_ON_OTHER.test(text);
+}
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
  *  permanent … THEY put it onto the battlefield", "ITS CONTROLLER may search THEIR library" — off
@@ -1103,6 +1133,12 @@ export function deriveAbilities(
       const emitsSelf = SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
         || isSelfSubject(action.object ?? "", cardName)
+        // A COUNTER PUT ON THE CARD ITSELF (owner-reported 2026-09-17, Primal Amulet -> Exemplar of
+        // Light). An add-counter's object is the COUNTER ("charge counter", "+1/+1"), never the
+        // permanent receiving it, so the object could never say "this artifact" and 4,240 of the
+        // 4,321 corpus counter emits carried no `self` -- every self-growing creature "fed" every
+        // "whenever you put counters on THIS creature" payoff. The recipient is in the clause text.
+        || counterOnSelf(action.verb, text, cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
         // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())
