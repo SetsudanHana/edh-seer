@@ -156,6 +156,13 @@ test("an emit with no stated origin keeps none", () => {
 test("a counter-added emit carries the kind of counter it adds", () => {
   expect(actionEmits({ verb: "add-counter", object: "+1/+1" })[0].subject.counter).toBe("+1/+1");
   expect(actionEmits({ verb: "add-counter", object: "everything" })[0].subject.counter).toBe("everything");
+  // DERIVE 157: an object naming the RECIPIENT takes the one kind the sentence names; two kinds stay unknown.
+  expect(actionEmits({ verb: "add-counter", object: "this artifact" }, "Whenever two or more creatures attack, put an oil counter on this artifact.")[0]?.subject.counter).toBe("oil");
+  expect(actionEmits({ verb: "add-counter", object: "Shelinda" }, "Otherwise, put a +1/+1 counter on Shelinda.")[0]?.subject.counter).toBe("+1/+1");
+  expect(actionEmits({ verb: "add-counter", object: "target creature" }, "put a +1/+1 counter on target creature and a charge counter on this artifact.")[0]?.subject.counter).toBeUndefined();
+  // "you get {E}{E}" is an energy counter on a player (CR 107.14), whatever verb the normalizer chose.
+  expect(actionEmits({ verb: "add-mana", object: "{E}{E}" }, "you get {E}{E}.")).toMatchObject([{ verb: "counter-added", subject: { control: "you", counter: "energy" } }]);
+  expect(actionEmits({ verb: "add-mana", object: "{G}" }, "add {G}.").some((e) => e.verb === "counter-added")).toBe(false);
   // The model writes the noun both ways.
   expect(actionEmits({ verb: "add-counter", object: "charge counter" })[0].subject.counter).toBe("charge");
 });

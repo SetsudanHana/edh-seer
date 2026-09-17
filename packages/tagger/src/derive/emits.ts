@@ -3,7 +3,7 @@
  *  vocabulary, but without its `dies` emit no aristocrats edge ever forms. */
 import type { Action } from "../canonicalize.js";
 import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
-import { counterKindOf, parseSubject, COUNT_PHRASE } from "./subject.js";
+import { counterKindOf, parseCounter, parseSubject, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
 import { tokenTypeFor } from "./token-types.js";
 
@@ -349,7 +349,27 @@ const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
  *  opponent" -- none of them describes a card, so none should become a typed subject. */
 const PLAYER_OBJECT = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*you\s*$/i;
 
+/** Only the energy symbol, one or more times: "{E}", "{E}{E}{E}". */
+const ENERGY_ONLY = /^(?:\{e\})+$/i;
+
+/** The one counter kind a sentence names, or undefined when it names none or several. */
+function soleCounterKind(text: string): string | undefined {
+  const kinds = new Set<string>();
+  for (const m of text.toLowerCase().matchAll(/(?:[+-]\d\/[+-]\d|[a-z]+(?: strike)?) counters?\b/g)) {
+    const k = parseCounter(m[0]);
+    if (k) kinds.add(k);
+  }
+  return kinds.size === 1 ? [...kinds][0] : undefined;
+}
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
+  // "YOU GET {E}{E}" IS A COUNTER ON A PLAYER (CR 107.14: the energy symbol represents one energy
+  // counter). The normalizer wrote 57 of these as `add-mana`; the EFFECT KIND stays refused
+  // (effect-kind.ts, 2026-09-04 -- nothing downstream can spend energy) but the EVENT is real, and
+  // "whenever you get one or more {E}" (Territorial Gorger) waits for exactly it (DERIVE 157).
+  if (action.verb === "add-mana" && ENERGY_ONLY.test((action.object ?? "").trim())) {
+    return [{ verb: "counter-added", subject: { control: "you", token: null, counter: "energy" } }];
+  }
   // CR 701.22b AND 701.25c, both stated outright in the rules: "If a player is instructed to scry 0,
   // no scry event occurs. Abilities that trigger whenever a player scries won't trigger." A card
   // printing a literal 0 emits nothing rather than a phantom event.
@@ -453,8 +473,13 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // An add-counter's object IS the counter kind, not a permanent, so the emit can say WHICH counter
   // it adds. Without it every counter placer emitted an untyped counter-added that wildcarded onto
   // any counter payoff -- a +1/+1 producer "feeding" a poison or time consumer.
+  // WHEN THE OBJECT NAMES THE RECIPIENT INSTEAD ("put an oil counter on THIS ARTIFACT" arrives as
+  // object "this artifact"; Shelinda's own counter as "Shelinda"), the kind is still in the sentence.
+  // Taken only when the sentence names exactly ONE kind -- "a +1/+1 counter on target creature and a
+  // charge counter on this artifact" stays unknown rather than guessed. 82 of the 253 kindless corpus
+  // counter emits, 16 of them self (DERIVE 157; Argent Dais's oil fed Territorial Gorger's energy).
   const counter = action.verb === "add-counter" || action.verb === "remove-counter"
-    ? counterKindOf(action.object ?? "")
+    ? (counterKindOf(action.object ?? "") ?? soleCounterKind(clauseText ?? ""))
     : KEYWORD_COUNTER[action.verb ?? ""];
   // A NAMED token ("create two Treasure tokens") states a subtype and no type, because "token" is
   // not a type word -- and an emit with no type falls through to matcher's CARD hierarchy, which

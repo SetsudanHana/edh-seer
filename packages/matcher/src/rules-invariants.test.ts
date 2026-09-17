@@ -29,7 +29,7 @@ const TESTED: Record<string, string> = {
   "614.1c": "edges.test.ts — an UNTYPED enters emit does not reach a clone (a clone replaces its own entry)",
 };
 const PROSE: Record<string, string> = {
-  "106.1b": "mana colours", "107.4c": "hybrid mana", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",
+  "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",
   "120.3": "damage to a player", "202.3b": "mana value of a split card", "205.2a": "type line", "205.3": "subtypes", "205.4a": "supertypes",
   "302.6": "a creature's summoning sickness", "305.1": "land play", "500.4": "effects expire as a step begins", "501": "beginning phase",
   "603.4": "intervening if", "603.6c": "leaves the battlefield", "613": "layers: OPEN", "613.1f": "P/T layer", "700.6": "leaves",

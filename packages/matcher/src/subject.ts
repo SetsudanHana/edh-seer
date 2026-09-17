@@ -229,10 +229,20 @@ export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectF
  *  proliferate adds) wildcards type/subtype/counter because the kind is unknown; control/token
  *  stay strict. A counter-TYPED producer (a normal counter placer) delegates to subjectMatches so
  *  its kind must match. */
+/** Counters that sit on a PLAYER, never on a permanent: energy (CR 107.14), poison (122.1f), rad
+ *  (122.1i) and experience. */
+const PLAYER_COUNTERS: ReadonlySet<string> = new Set(["energy", "experience", "poison", "rad"]);
+
 export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   // A kind MISMATCH is real information on either path: a +1/+1 placer is not a poison enabler.
   if (consumer.counter !== undefined && producer.counter !== undefined
     && consumer.counter !== producer.counter) return false;
+  // A COUNTER ON A PERMANENT IS NEVER A PLAYER'S COUNTER. A kindless emit that names the permanent it
+  // lands on (a card's own counters, "a counter on target creature") cannot be the energy Territorial
+  // Gorger's "whenever you get one or more {E}" waits for, so the unknown-kind wildcard below must not
+  // reach a player-counter demand. A proliferate stays untyped and still can (2026-09-17).
+  if (consumer.counter !== undefined && PLAYER_COUNTERS.has(consumer.counter) && producer.counter === undefined
+    && (producer.self === true || arr(producer.type).length > 0 || arr(producer.subtype).length > 0)) return false;
   // `counter` is deliberately NOT part of this test. An add-counter's subject is parsed from its
   // object -- "+1/+1" -- which describes the COUNTER, never the permanent receiving it, so knowing
   // the kind tells us nothing about the recipient's type. Including it flipped every counter placer

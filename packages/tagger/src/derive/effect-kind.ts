@@ -106,7 +106,7 @@ const ON_THE_BOTTOM = /on the bottom of (?:your|their|its owner's|a|the) librar/
  *  (`js/polynomial-redos`, high). Stripping the braces and trimming asks the same question in one
  *  linear pass, and reads as what it means. */
 const isEnergyObject = (object: string): boolean =>
-  object.replaceAll("{", "").replaceAll("}", "").trim().toLowerCase() === "e";
+  /^e+$/.test(object.replaceAll("{", "").replaceAll("}", "").trim().toLowerCase());
 
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",

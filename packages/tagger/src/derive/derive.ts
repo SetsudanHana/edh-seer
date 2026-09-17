@@ -92,7 +92,10 @@ import { emblemRecipient } from "../emblem.js";
 // 156: a counter on the card's SHORT name is self ("on Lonis" for Lonis, Genetics Expert), a replacement
 // on the card's own counters is self (Mowu), and the printed {E} symbol is an energy counter
 // (Territorial Gorger, whose reminder text the segmenter strips).
-export const DERIVE_VERSION = 156;
+// 157: a counter emit whose object names the recipient takes the ONE kind its sentence names (Argent
+// Dais's oil, Shelinda's +1/+1); "you get {E}" emits an energy counter on a player (CR 107.14) even
+// though the normalizer called it mana; `{E}{E}` counts as energy too.
+export const DERIVE_VERSION = 157;
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
  *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
