@@ -47,7 +47,10 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
   return (
     <PeekContext.Provider value={peek}>
     <FaceContext.Provider value={faceView}>
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start max-w-7xl">
+    {/* NO WIDTH CAP (owner, 2026-09-17: "we have a lot of space on the right on desktop"). The 1280px
+      * cap left a third of a 1920 screen empty beside the rail; the prose inside keeps its own 65ch
+      * measure and the tile grid takes the columns the width buys. */}
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start">
       <div className="flex flex-col gap-8 min-w-0">
         <header className="flex flex-col gap-3">
           <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
