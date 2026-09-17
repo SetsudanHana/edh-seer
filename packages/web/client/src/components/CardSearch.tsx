@@ -163,9 +163,9 @@ export function CardSearch({
         {/* THE LABEL IS NOT THE PAGE. "Cards" at 48px was the largest thing on a screen whose real
           * lead is the box you type in -- a generic noun out-ranking the only control that does
           * anything. */}
-        <h2 className="text-2xl font-bold tracking-[-0.01em]">
+        <h1 className="text-2xl font-bold tracking-[-0.01em]">
           {commanderMode ? "Commanders" : "Cards"}
-        </h2>
+        </h1>
         <p className="text-(--muted) max-w-[65ch]">
           {commanderMode
             ? "Every legendary creature the engine has read that can lead a deck, with the cards inside its colour identity it is most specifically connected to."

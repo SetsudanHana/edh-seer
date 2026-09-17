@@ -53,10 +53,11 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
     <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start">
       <div className="flex flex-col gap-8 min-w-0">
         <header className="flex flex-col gap-3">
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
+          {/* THE PAGE'S ONE `h1` (owner, 2026-09-17); the wordmark in the shell is a link. */}
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
             {page.name}
             {page.manaCost && <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>}
-          </h2>
+          </h1>
           <p className="text-(--muted)">{page.typeLine}</p>
         </header>
         <nav aria-label="Surface" className="flex gap-1 border-b border-(--separator)">

@@ -176,7 +176,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
       {(licences.length > 0 || chooses) && (
         <section className="flex flex-col gap-4 max-w-[68ch]">
-          <h3 className="text-2xl font-bold tracking-[-0.01em]">Pair with</h3>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">Pair with</h2>
           {chooses && (
             <div className="flex flex-col gap-2">
               <p id="pair-colour" className="eyebrow text-(--muted)">
@@ -220,7 +220,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h3 className="text-2xl font-bold tracking-[-0.01em]">Partners</h3>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">Partners</h2>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over the cards a deck led by {page.name}{pair ? ` and ${pair.name}` : ""} could
             legally contain, not the whole corpus. The fewer cards can cause an event, the higher

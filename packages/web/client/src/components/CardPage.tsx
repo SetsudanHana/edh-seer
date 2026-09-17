@@ -46,7 +46,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         *  page's "What it does" chip carries. */}
       <details className="lg:hidden group/reads flex flex-col gap-3">
         <summary className="cursor-pointer list-none flex items-center gap-2 w-fit">
-          <h3 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h3>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h2>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/reads:rotate-180 motion-reduce:transition-none">
             <path d="m6 9 6 6 6-6" />
           </svg>
@@ -56,7 +56,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h3 className="text-2xl font-bold tracking-[-0.01em]">Partners</h3>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">Partners</h2>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over every card the engine has read, by how rare the matched event is across the
             corpus: how precisely these two cards interact, not how good either one is. Every row is

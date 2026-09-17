@@ -37,20 +37,19 @@ const at = (slug: string, load: () => Promise<CardPageData | null>) =>
 
 test("the page names the card and prints the engine's own reason for each partner", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  expect(await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /Impact Tremors/ })).toHaveAttribute("href", "/cards/impact-tremors");
   expect(screen.getByText(/Impact Tremors deals 1 damage/)).toBeInTheDocument();
 });
 
-/** THE CARD NAME IS AN `h2`, NOT AN `h1`, AND THAT IS NOT A STYLE CHOICE. `index.html` carries the
- *  page's one `h1` on the static header -- the heading a crawler reads without running the bundle --
- *  and `seo.test.ts` asserts there is exactly one. A second `h1` here would be two answers to the
- *  same question. Task 11 injects a card-specific heading OUTSIDE `#root`, which is where a crawler
- *  reads it from and where that trade can be revisited. */
-test("the card name does not claim the page's one h1", async () => {
+/** THE CARD NAME IS THE PAGE'S ONE `h1` (owner, 2026-09-17). It was an `h2` under the wordmark's
+ *  `h1` for a year of card pages; the wordmark is a link now, on every route, and the sections
+ *  under the name step down from it without a skipped level. */
+test("the card name is the page's one h1, and the sections step down from it", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
-  expect(screen.queryAllByRole("heading", { level: 1 })).toHaveLength(0);
+  await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  expect(screen.getByRole("heading", { level: 2, name: "Partners" })).toBeInTheDocument();
 });
 
 /** 38% OF THE CORPUS IS UNREAD, so this is the ordinary case and not the error case. A missing
@@ -127,7 +126,7 @@ test("the page shows the whole card, at the /normal/ size and never the crop", a
  *  population. */
 test("a card with no image renders without one", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
-  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
   expect(screen.queryByRole("img", { name: /the card/ })).toBeNull();
 });
 
@@ -146,7 +145,7 @@ test("the page shows the whole card, at the /normal/ size and never the crop", a
 /** 491 CORPUS CARDS HAVE NO IMAGE. The page renders without one rather than reserving a hole. */
 test("a card with no image renders without one", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, artCrop: null }));
-  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
   expect(screen.queryByRole("img", { name: /the card/ })).toBeNull();
 });
 
@@ -173,7 +172,7 @@ test("a row whose effect the engine could not read says so", async () => {
 
 test("a row the engine did read carries no such marker", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  await screen.findByRole("heading", { level: 2, name: /Krenko, Mob Boss/ });
+  await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
   expect(screen.queryByText(/engine did not read/)).toBeNull();
 });
 
