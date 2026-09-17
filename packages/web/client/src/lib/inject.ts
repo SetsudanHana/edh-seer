@@ -205,7 +205,7 @@ export interface InjectableCard {
   commander: boolean;
   emits: string[];
   demands: string[];
-  partners: { name: string; slug: string; event: string; reason: string }[];
+  partners: { name: string; slug: string; event: string; reason: string; producer?: true }[];
   /** How many cards can cause each event, keyed the way `partners[].event` is. Optional because
    *  the field is younger than the shard format; an absent map prints no count. */
   rarity?: Record<string, number>;
@@ -235,12 +235,12 @@ export function cardPageHtml(
   // EVERY ROW THE ARTIFACT HOLDS (`KEEP` caps it at the build), grouped by key and not by
   // adjacency, the same split `PartnerList` draws. A `slice(0, 24)` lived here until 2026-09-16
   // and would have silently cut the 60-row pages back to 24 for every crawler.
-  const groups: { event: string; rows: string[] }[] = [];
+  const groups: { event: string; rows: string[]; producers: boolean }[] = [];
   for (const p of card.partners) {
     const row = `      <li><a href="/cards/${esc(p.slug)}">${esc(p.name)}</a> — ${esc(p.reason)}</li>`;
     const g = groups.find((x) => x.event === p.event);
-    if (g) g.rows.push(row);
-    else groups.push({ event: p.event, rows: [row] });
+    if (g) { g.rows.push(row); g.producers &&= p.producer === true; }
+    else groups.push({ event: p.event, rows: [row], producers: p.producer === true });
   }
   const rows = groups.map((g) => {
     const n = card.rarity?.[g.event];
@@ -250,7 +250,7 @@ export function cardPageHtml(
     // card's, and the app has printed it under every group since the list was grouped.
     const withheld = (card.pool?.[g.event] ?? g.rows.length) - g.rows.length;
     const more = withheld > 0
-      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ask for it too, equally specific. The ones shown are the best connected.</p>`
+      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ${g.producers ? "cause it" : "ask for it"} too, equally specific. The ones shown are the best connected.</p>`
       : "";
     return `${count}    <ol>\n${g.rows.join("\n")}\n    </ol>${more}`;
   }).join("\n");

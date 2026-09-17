@@ -109,3 +109,20 @@ test("a group past one phone row hides the rest behind a button that says how ma
   expect(screen.getAllByRole("listitem").some((li) => li.className.includes("max-sm:hidden"))).toBe(false);
   expect(screen.queryByRole("button", { name: /Show \d+ more/ })).toBeNull();
 });
+
+/** A PRODUCER ROW RUNS TOWARD THE PAGE'S CARD (owner 2026-09-17, "payoff pages omit producers"):
+ *  the tile is a card that CAUSES the event the page's card asks for, so its withheld line says
+ *  "cause it", and the tile carries that direction as its note rather than a payoff of its own. */
+test("a producer group's withheld line says cause, and its tiles say they cause it", () => {
+  render(
+    <MemoryRouter>
+      <PartnerList subject="Impact Tremors" pool={{ "enters|creature|-|-": 4 }} rarity={{}} empty="none" rows={[{
+        name: "Krenko, Mob Boss", slug: "krenko-mob-boss", score: 0.2, event: "enters|creature|-|-",
+        reason: "When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage", producer: true,
+      }]} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/other cards cause it too/)).toBeInTheDocument();
+  expect(screen.getByText("causes it")).toBeInTheDocument();
+  expect(screen.queryByText(/deals 1 damage/)).toBeNull();
+});
