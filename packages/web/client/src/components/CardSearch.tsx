@@ -3,12 +3,29 @@ import { Link, useSearchParams } from "react-router";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedFacetIndex, sharedNameIndex, type FacetRow, type NameIndexEntry } from "../lib/partners.js";
 import { DOES, STRATEGIES, applyFacets, facetsFromParams, facetsToParams, matchedTerms, type FacetQuery } from "../lib/facets.js";
+import { CardTile } from "./CardTile.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
 import { CardPeek } from "./CardPeek.js";
-import { PeekContext, peekOnPlainClick, usePeekState } from "./peek.js";
+import { PeekContext, usePeekState } from "./peek.js";
 import type { CardPageData } from "../lib/partners.js";
+
+/** WHAT THIS PAGE CAN ANSWER, AS THREE QUESTIONS A READER CAN CLICK (owner, 2026-09-17: the landing
+ *  was a wall of chips and a count). Built from the site's own facet vocabulary and nothing else --
+ *  no play-rate, no EDHREC -- so the empty state shows what the page will look like once asked. */
+const EXAMPLES: Record<"cards" | "commanders", { label: string; q: FacetQuery }[]> = {
+  cards: [
+    { label: "draws cards, in green", q: { colours: ["G"], does: ["draw-card"] } },
+    { label: "makes tokens, in red", q: { colours: ["R"], does: ["token-generation"] } },
+    { label: "puts counters, for a +1/+1 counters deck", q: { colours: [], does: ["counter-placement"], strategy: "plus-1-plus-1-counters" } },
+  ],
+  commanders: [
+    { label: "supports +1/+1 counters, green and white", q: { colours: ["G", "W"], does: [], strategy: "plus-1-plus-1-counters" } },
+    { label: "supports tokens, in red", q: { colours: ["R"], does: [], strategy: "tokens" } },
+    { label: "supports aristocrats, black and red", q: { colours: ["B", "R"], does: [], strategy: "aristocrats" } },
+  ],
+};
 
 /** HOW MANY ROWS ONE QUERY MAY DRAW. A readability choice and a jank one at once: "a" matches most
  *  of the corpus, and 15,350 links is a page nobody scrolls and a frame nobody gets back. The count
@@ -80,6 +97,7 @@ export function CardSearch({
   // the same place the finding started from. The summary's count says what is applied.
   const wide = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 40rem)").matches : true;
   const [filtersManual, setFiltersManual] = useState<boolean | null>(null);
+  const [doesOpen, setDoesOpen] = useState(false);
   const filtersOpen = wide || (filtersManual ?? false);
   useEffect(() => {
     let live = true;
@@ -125,8 +143,10 @@ export function CardSearch({
 
   return (
     <PeekContext.Provider value={peek}>
-    <div className="lg:grid lg:grid-cols-[minmax(0,68ch)_20rem] lg:gap-x-10 lg:items-start">
-    <section className="flex flex-col gap-6 max-w-[68ch]">
+    {/* THE LIST IS A GRID OF TILES NOW, so the reading measure that bounded a column of names would
+      * bound a grid to three tiles; the header and the prose keep their own 65ch. */}
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start">
+    <section className="flex flex-col gap-6">
       {/* ONLY `/cards` EVER CARRIED A SHARE LINK. `/commanders` is a new path, so there is no
         * stale link to catch and nothing to redirect. */}
       {!commanderMode && (
@@ -172,8 +192,13 @@ export function CardSearch({
         open={filtersOpen}
         onToggle={(e) => setFiltersManual((e.currentTarget as HTMLDetailsElement).open)}
       >
-        <summary className="eyebrow cursor-pointer min-h-11 flex items-center sm:hidden">
+        {/* A CHIP WITH A CHEVRON, not a bare label: the phone review (2026-09-17) read "FILTERS" over
+          * empty space as a heading for nothing and never found the chips. */}
+        <summary className="chip cursor-pointer list-none w-fit sm:hidden group/filters">
           {activeFacets > 0 ? `Filters · ${activeFacets} active` : "Filters"}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/filters:rotate-180 motion-reduce:transition-none">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
         </summary>
       {/* ON BOTH PAGES NOW (spec part 4), and EXACT on both (owner 2026-09-08): Green and White list
         *  green-white cards. A "fits in" subset was built first for the Cards page and rejected. */}
@@ -208,8 +233,24 @@ export function CardSearch({
 
       {/* WHAT IT DOES. Curated chips with player labels (`lib/facets.ts`); the rest of the effect
         *  kinds stay reachable by name, and the line under the chips says so. OR within the group. */}
+      {/* BEHIND A DISCLOSURE ON EVERY VIEWPORT (owner, 2026-09-17): 24 chips made the landing a wall
+        *  and the box the reader came for the smallest thing on it. Open when one is chosen -- a
+        *  shared link lands with its filters visible -- and the summary counts what is on. */}
+      <details
+        open={doesOpen || facetQuery.does.length > 0}
+        onToggle={(e) => setDoesOpen((e.currentTarget as HTMLDetailsElement).open)}
+        className="flex flex-col gap-3"
+      >
+        <summary className="chip cursor-pointer list-none w-fit group/does">
+          What it does{facetQuery.does.length > 0 ? ` · ${facetQuery.does.length} chosen` : ""}
+          {/* THE CHIP HAS TO SAY IT OPENS: `list-none` removed the platform's marker, and a chip
+            * without one reads as a filter that is already applied. */}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/does:rotate-180 motion-reduce:transition-none">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </summary>
       <fieldset className="flex flex-wrap items-center gap-2">
-        <legend className="eyebrow">Does</legend>
+        <legend className="sr-only">Does</legend>
         {DOES.map((d) => {
           const on = facetQuery.does.includes(d.kind);
           return (
@@ -226,6 +267,7 @@ export function CardSearch({
         })}
         <p className="basis-full text-(--muted) text-sm">Anything else a card does is reachable by name.</p>
       </fieldset>
+      </details>
 
       {/* THE STRATEGY: the report's own archetype dictionary, one at a time. A native select, because
         *  121 strategies are not a chip row; grouped by the vocabulary's class. On Commanders it reads
@@ -264,6 +306,14 @@ export function CardSearch({
                 ? "commanders the engine has read. Pick a colour, or type a name."
                 : "cards the engine has read. Type a name to find one."}
             </p>
+            <p className="eyebrow text-(--muted) mt-4">or ask, for example</p>
+            <ul className="flex flex-wrap gap-2 list-none p-0 m-0" aria-label="Example questions">
+              {EXAMPLES[mode].map((ex) => (
+                <li key={ex.label}>
+                  <button type="button" className="chip" onClick={() => setFacets(ex.q)}>{ex.label}</button>
+                </li>
+              ))}
+            </ul>
           </div>
         : matches === null
         ? <p className="eyebrow text-(--muted)">reading what cards do</p>
@@ -288,37 +338,24 @@ export function CardSearch({
               * align to. */}
             {/* WIDTH BUYS COLUMNS HERE TOO: a single 685px column of names left the right half of a
               * 1920px screen black and showed twelve results where two columns show twenty-four. */}
-            <ul aria-label="Results" className="flex flex-col lg:block lg:columns-2 lg:gap-x-10">
-              {matches.slice(0, SEARCH_LIMIT).map((e) => (
-                <li key={e.slug} className="border-t border-(--separator) first:border-t-0 break-inside-avoid">
-                  <Link
-                    className="flex items-baseline gap-3 py-2.5 hover:text-(--accent) group"
-                    to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
-                    onClick={(ev) => { peekOnPlainClick(peek, e.slug, ev); }}
-                  >
-                    <span className="group-hover:underline underline-offset-2">{e.name}</span>
-                    {/* AN EMPTY IDENTITY IS COLOURLESS, NOT ABSENT. Rendering nothing there made
-                      * 1,354 cards look like rows whose identity had failed to load. */}
-                    <span className="text-sm shrink-0">
-                      <ManaSymbols cost={e.identity.length > 0
-                        ? e.identity.map((c) => `{${c}}`).join("")
-                        : "{C}"} />
-                    </span>
-                    {!commanderMode && e.commander && (
-                      <span className="eyebrow text-(--muted) shrink-0">commander</span>
-                    )}
-                  </Link>
-                  {/* WHY IT IS ON THE LIST: the chip labels that hit. A list with no reason is what
-                    *  this product refuses everywhere else. */}
-                  {(() => {
-                    const row = rowBySlug.get(e.slug);
-                    const terms = row ? matchedTerms(row, facetQuery) : [];
-                    return terms.length > 0
-                      ? <p className="text-(--muted) text-sm pb-2">{terms.join(" · ")}</p>
-                      : null;
-                  })()}
-                </li>
-              ))}
+            {/* TILES (owner, 2026-09-17): the whole card small, the name, its pips, and under it why
+              * it is on the list -- the chip labels that hit. A list with no reason is what this
+              * product refuses everywhere else. */}
+            <ul aria-label="Results" className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
+              {matches.slice(0, SEARCH_LIMIT).map((e) => {
+                const row = rowBySlug.get(e.slug);
+                const terms = row ? matchedTerms(row, facetQuery) : [];
+                return (
+                  <li key={e.slug} className="min-w-0">
+                    <CardTile
+                      slug={e.slug} name={e.name} art={e.art} identity={e.identity}
+                      to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
+                      caption={terms.length > 0 ? terms.join(" · ") : undefined}
+                      note={!commanderMode && e.commander ? "commander" : undefined}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

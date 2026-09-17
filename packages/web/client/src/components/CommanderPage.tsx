@@ -224,11 +224,12 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over the cards a deck led by {page.name}{pair ? ` and ${pair.name}` : ""} could
             legally contain, not the whole corpus. The fewer cards can cause an event, the higher
-            the pairing ranks. Click a name to look at it here; open it from there.
+            the pairing ranks. Pick a card to look at it here; open it from there.
             {fallback ? " The pair's own list was not built; showing each card's own." : ""}
           </p>
         </div>
         <PartnerList
+          subject={page.name}
           rows={ranked.partners}
           pool={ranked.pool}
           rarity={ranked.rarity}

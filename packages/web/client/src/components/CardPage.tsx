@@ -52,11 +52,12 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over every card the engine has read, by how rare the matched event is across the
             corpus: how precisely these two cards interact, not how good either one is. Every row is
-            an edge the engine drew, in its own words. Click a name to look at it here; open it from
+            an edge the engine drew, in its own words. Pick a card to look at it here; open it from
             there.
           </p>
         </div>
         <PartnerList
+          subject={page.name}
           rows={page.partners}
           pool={page.pool}
           rarity={page.rarity}
