@@ -32,3 +32,18 @@ test("one row per index entry, with identity, commander flag, kinds and archetyp
 test("every effect kind a row carries is a real one", () => {
   for (const r of buildFacetIndex(cards, index)) for (const e of r.e) expect(EFFECT_KINDS).toContain(e);
 });
+
+/** THE ROW CARRIES THE BEST RATE PER FAMILY (spec 2026-09-04 step 3). Divination: "Draw two
+ *  cards." {2}{U} (corpus, 2026-09-17). Sol Ring states no rate and carries no `r`. */
+test("a rated card's row carries floor, ceiling and mana per family; an unrated one has no r", () => {
+  const divination = {
+    card: { name: "Divination", manaCost: "{2}{U}", oracleText: "Draw two cards.", typeLine: "Sorcery", keywords: [], colorIdentity: ["U"] },
+    tags: {
+      abilities: [{ kind: "on-cast", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "2", repeats: "once" }],
+      characteristics: { types: ["sorcery"], subtypes: [], keywords: [] },
+    },
+  } as never;
+  const rows = buildFacetIndex([...cards, divination], [...index, { slug: "divination", name: "Divination", identity: ["U"], commander: false }]);
+  expect(rows[2]).toMatchObject({ s: "divination", e: ["draw-card"], r: { cards: [2, 2, 3] } });
+  expect(rows[1]).not.toHaveProperty("r");
+});

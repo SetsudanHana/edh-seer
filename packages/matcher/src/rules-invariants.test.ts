@@ -28,6 +28,7 @@ const TESTED: Record<string, string> = {
   "702.124": "partners.test.ts — 702.124a/c",
   "614.1c": "edges.test.ts — an UNTYPED enters emit does not reach a clone (a clone replaces its own entry)",
   "118.12a": "rate.test.ts — the payment that stops an effect is the rate's fallback, floor 0 (Rhystic Study)",
+  "606.5": "rate.test.ts — a loyalty cost is not mana; the ability has no rate (Teferi, Temporal Pilgrim)",
 };
 const PROSE: Record<string, string> = {
   "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",

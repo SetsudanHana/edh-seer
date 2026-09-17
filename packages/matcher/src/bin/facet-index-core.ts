@@ -1,5 +1,6 @@
 import { archetypesOf } from "../archetypes.js";
 import { cardSignalOf } from "../card-signal.js";
+import { bestRates, ratesOf, type RateFamily, type RateTriple } from "../rate.js";
 import type { DeckCard } from "../types.js";
 import { identityKeyOf, type NameIndexEntry } from "./partners-core.js";
 
@@ -26,6 +27,9 @@ export interface FacetRow {
   d: string[];
   /** candidate partner count, the order among equal rows (owner 2026-09-17) */
   p?: number;
+  /** the best cost-to-effect rate per family (spec 2026-09-04 step 3): floor, ceiling, mana;
+   *  the order of a single Does chip. Absent when no ability of the card states one. */
+  r?: Partial<Record<RateFamily, RateTriple>>;
 }
 
 export function buildFacetIndex(all: DeckCard[], index: NameIndexEntry[]): FacetRow[] {
@@ -40,6 +44,7 @@ export function buildFacetIndex(all: DeckCard[], index: NameIndexEntry[]): Facet
     if (!d?.tags) return { ...base, e: [], t: [], d: [] };
     const signal = cardSignalOf(d.card, d.tags);
     const { supplies, demands } = archetypesOf(signal);
-    return { ...base, e: [...new Set(signal.effectKinds)].sort(), t: supplies, d: demands };
+    const r = bestRates(ratesOf(d));
+    return { ...base, e: [...new Set(signal.effectKinds)].sort(), t: supplies, d: demands, ...(Object.keys(r).length > 0 ? { r } : {}) };
   });
 }

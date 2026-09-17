@@ -1,5 +1,6 @@
 import { ARCHETYPE_SIGNATURE, ARCHETYPE_VOCABULARY } from "@edh-seer/matcher/archetypes";
 import type { FacetRow } from "@edh-seer/matcher/partners-core";
+import { compareRates, type RateFamily, type RateTriple } from "@edh-seer/matcher/rate";
 
 /** FIND BY WHAT IT DOES (spec 2026-09-08 part 4). Three facets over the facet index: colours, what
  *  the card does (effect kinds, curated to the chips a player would reach for), and the strategy
@@ -7,8 +8,8 @@ import type { FacetRow } from "@edh-seer/matcher/partners-core";
 
 /** THE CHIPS A PLAYER REACHES FOR, in this order. Not all 39 kinds earn one; the rest stay
  *  reachable by name. Player labels, not engine names. A renamed kind fails `facets.test.ts`. */
-export const DOES: { kind: string; label: string }[] = [
-  { kind: "draw-card", label: "draws cards" },
+export const DOES: { kind: string; label: string; rate?: RateFamily }[] = [
+  { kind: "draw-card", label: "draws cards", rate: "cards" },
   { kind: "token-generation", label: "makes tokens" },
   { kind: "counter-placement", label: "puts counters" },
   { kind: "proliferate", label: "proliferates" },
@@ -16,7 +17,7 @@ export const DOES: { kind: string; label: string }[] = [
   { kind: "lifegain", label: "gains life" },
   { kind: "graveyard-recursion", label: "returns from the graveyard" },
   { kind: "search", label: "searches the library" },
-  { kind: "damage", label: "deals damage" },
+  { kind: "damage", label: "deals damage", rate: "damage" },
   { kind: "drain", label: "drains" },
   { kind: "player-life-loss", label: "makes opponents lose life" },
   { kind: "mill", label: "mills" },
@@ -58,28 +59,57 @@ const strategyHit = (r: FacetRow, q: FacetQuery): boolean => q.strategy === unde
  *  sits above one that does one. */
 const doesHits = (r: FacetRow, q: FacetQuery): number => q.does.filter((k) => r.e.includes(k)).length;
 
+/** THE RATE A QUERY SORTS BY (spec 2026-09-04 step 3): a SINGLE Does chip with a family. Two chips
+ *  get no rate order -- cards per mana and damage per mana are two rates, and a constant that
+ *  trades one for the other is what killed edge magnitude three times (log 2026-08-16). */
+const rateFamily = (q: FacetQuery): RateFamily | undefined =>
+  q.does.length === 1 ? DOES.find((d) => d.kind === q.does[0])?.rate : undefined;
+const rateOf = (r: FacetRow, q: FacetQuery): RateTriple | undefined => {
+  const f = rateFamily(q);
+  return f === undefined ? undefined : r.r?.[f];
+};
+
 export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "commanders"): FacetRow[] {
   const out = rows.filter((r) =>
     (mode !== "commanders" || r.c === 1) && coloursFit(r.i, q.colours, mode)
     && (q.does.length === 0 || doesHits(r, q) > 0) && strategyHit(r, q));
-  // THE ORDER: most chosen chips matched first; then the cards that ASK for the strategy (its
+  // THE ORDER: on a single Does chip with a rate, the best rate first (floor per mana, ceiling to
+  // break it) and every card that states one above every card that does not; then most chosen
+  // chips matched first; then the cards that ASK for the strategy (its
   // payoffs) before the ones that merely supply it (measured on the first artifact, 2026-09-08:
   // the unranked list for "draws cards, +1/+1 Counters" opened with ten cards that merely enter
   // with a counter); then partner count, the best-connected card first (owner 2026-09-17: "makes
   // tokens, in red" opened on three Aether cards with nothing but the alphabet between 467 equal
   // rows); then slug, so two equal rows print the same way round every time.
   const s = q.strategy;
+  const byRate = (a: FacetRow, b: FacetRow): number => {
+    const ra = rateOf(a, q), rb = rateOf(b, q);
+    if (ra === undefined || rb === undefined) return Number(ra === undefined) - Number(rb === undefined);
+    return compareRates(ra, rb);
+  };
   out.sort((a, b) =>
-    doesHits(b, q) - doesHits(a, q)
+    byRate(a, b)
+    || doesHits(b, q) - doesHits(a, q)
     || (s === undefined ? 0 : Number(b.d.includes(s)) - Number(a.d.includes(s)))
     || (b.p ?? 0) - (a.p ?? 0)
     || a.s.localeCompare(b.s));
   return out;
 }
 
-/** The labels that hit, for the line under a result that says why it is on the list. */
+/** THE RATE, BOTH ENDS PRINTED (owner 2026-09-17: floor and ceiling, never one number): "3 cards
+ *  / 1 mana", "0–9 cards / 3 mana", "0+ damage / 4 mana" for an open ceiling. */
+export function rateLabel([floor, ceiling, mana]: RateTriple, family: RateFamily): string {
+  const span = ceiling === null ? `${floor}+` : ceiling === floor ? `${floor}` : `${floor}–${ceiling}`;
+  const unit = family === "cards" ? (ceiling === 1 && floor === 1 ? "card" : "cards") : "damage";
+  return `${span} ${unit} / ${mana} mana`;
+}
+
+/** The labels that hit, for the line under a result that says why it is on the list, and on a
+ *  single rated chip the rate the card charges. */
 export function matchedTerms(row: FacetRow, q: FacetQuery): string[] {
   const terms = DOES.filter((d) => q.does.includes(d.kind) && row.e.includes(d.kind)).map((d) => d.label);
+  const rate = rateOf(row, q);
+  if (rate !== undefined) terms.push(rateLabel(rate, rateFamily(q)!));
   if (q.strategy !== undefined && row.t.includes(q.strategy)) {
     const label = STRATEGIES.find((s) => s.slug === q.strategy)?.label ?? q.strategy;
     terms.push(row.d.includes(q.strategy) ? `${label} (asks for it)` : label);
