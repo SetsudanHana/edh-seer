@@ -4,7 +4,7 @@ import type { Clause } from "./segment.js";
 import type { ClauseRecord } from "./canonicalize.js";
 import {
   segmentHash, needsNormalize, needsDerive, carriesOther, missesASplit, disagreesOnType,
-  dropsOriginZone, worthReasking, dropsTriggerObject, hasPhantomTrigger, carriesOtherTrigger,
+  dropsOriginZone, worthReasking, dropsTriggerObject, hasPhantomTrigger, carriesOtherTrigger, dropsUnlessPayment,
   type CardClausesDoc, type DerivedTagsDoc,
 } from "./clause-store.js";
 import {
@@ -358,4 +358,17 @@ test("the damage cue reads the passive voice too", () => {
   expect(triggerHasCue("damage-dealt", "Whenever your opponents are dealt combat damage, ...")).toBe(true);
   expect(triggerHasCue("damage-dealt", "Whenever you're dealt damage, you may create that many tokens.")).toBe(true);
   expect(triggerHasCue("damage-dealt", "Whenever combat damage is dealt to you or a planeswalker you control, ...")).toBe(true);
+});
+
+/** THE PAYMENT THE PROMPT USED TO DROP (CR 118.12a; owner 2026-09-17, the rate axis): "draw a card
+ *  unless that player pays {1}" came back as a bare optional draw, so Rhystic Study's floor -- a
+ *  tax -- was nowhere. The selector for `--refresh-unless` after the prompt learned the field. */
+test("dropsUnlessPayment: a stated payment the doc does not carry is worth re-asking; a carried one is not", () => {
+  const text = "Whenever an opponent casts a spell, you may draw a card unless that player pays {1}.";
+  const bare = clauseDoc({ canonical: [{ id: 1, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", amount: "1", optional: true }] }] });
+  expect(dropsUnlessPayment(bare, text)).toBe(true);
+  const kept = clauseDoc({ canonical: [{ id: 1, abilityType: "triggered", actions: [{ verb: "draw", object: "a card", amount: "1", optional: true, unless: { cost: "{1}", payer: "opponent" } }] }] });
+  expect(dropsUnlessPayment(kept, text)).toBe(false);
+  expect(dropsUnlessPayment(bare, "Draw two cards.")).toBe(false);
+  expect(dropsUnlessPayment(null, text)).toBe(false);
 });

@@ -895,6 +895,15 @@ export interface Ability {
    *  Unset when the action states no amount. Never defaulted to 1 — "draw a card" and "draw 1 card"
    *  are the same fact, but "no amount recorded" and "amount is one" are not. */
   amount?: string;
+  /** THE PAYMENT THAT STOPS THIS ABILITY'S EFFECT (CR 118.12a), verbatim from the clause: Rhystic
+   *  Study draws "unless that player pays {1}", a counterspell counters "unless its controller pays
+   *  {3}", an upkeep cost sacrifices "unless you pay {W}{W}". The effect is what happens when the
+   *  payment is not made, so this is its FLOOR: at worst the card is a tax of `cost` on `payer`.
+   *  Recorded, never priced — what a {1} tax per opponent spell is worth is the rate axis's call
+   *  (spec 2026-09-04, revision 2026-09-17). Absent on the ~98% of abilities that name no payment.
+   *  `payer` is the prompt's closed set plus "any", which the model answered on 3 of 319 refreshed
+   *  clauses ("unless any player pays"); recorded as said rather than forced into a side. */
+  unless?: { cost: string; payer: "you" | "opponent" | "controller" | "any" };
   /** THEME TAGS THE ABILITY'S INTERVENING-IF CONDITION DEMANDS — "if it had counters on it" wants a
    *  counters deck, "if a creature died this turn" wants an aristocrats one.
    *

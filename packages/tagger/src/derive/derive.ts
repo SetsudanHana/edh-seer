@@ -101,7 +101,10 @@ import { emblemRecipient } from "../emblem.js";
 // Trenzalore Clocktower"), is a self emit -- "on" for a placement, "from" for a removal, so Forgotten
 // Ancient's move onto other creatures stays theirs; a GRANTED counter trigger ("creatures you control
 // have 'whenever counters are put on this creature'", Danny Pink) is the recipients', never self.
-export const DERIVE_VERSION = 158;
+// 159: the payment that stops an effect ("draw a card unless that player pays {1}", CR 118.12a)
+// rides onto the ability as `unless` {cost, payer}, verbatim from the clause; the prompt learned
+// the field at NORMALIZE_VERSION 21 and the ~550 cards that state one were re-asked (2026-09-17).
+export const DERIVE_VERSION = 159;
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
  *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
@@ -1404,6 +1407,8 @@ export function deriveAbilities(
       // The amount belongs to the ACTION, not the clause: Kaya's -2 is one clause whose two actions
       // each carry their own. Assigned here, in the per-action loop, for that reason.
       if (action.amount != null && action.amount !== "") ability.amount = action.amount;
+      // The payment that stops the effect (CR 118.12a), verbatim: the floor the rate axis reads.
+      if (action.unless?.cost) ability.unless = { cost: action.unless.cost, payer: action.unless.payer as "you" | "opponent" | "controller" | "any" };
       // WHICH triggers a doubler doubles, read off the printed text — the clause layer records only
       // the object and drops the qualifier, so Panharmonicon (entering), Isshin (attacking) and
       // Drivnod (dying) were byte-identical before this. Empty for a doubler whose qualifier names

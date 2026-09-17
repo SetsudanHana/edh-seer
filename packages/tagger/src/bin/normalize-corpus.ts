@@ -22,6 +22,7 @@
  *    tsx src/bin/normalize-corpus.ts --run              # spends
  *    tsx src/bin/normalize-corpus.ts --run --limit 3    # smallest useful end-to-end check
  *    tsx src/bin/normalize-corpus.ts --refresh-other    # re-ask only the cards stuck on `other`
+ *    tsx src/bin/normalize-corpus.ts --commander-legal --refresh-unless   # re-ask the cards whose "unless ... pays" was dropped
  *    tsx src/bin/normalize-corpus.ts --commander-legal  # scope every commander-legal card, not the 71 decks
  *    tsx src/bin/normalize-corpus.ts --commander-legal --max-rank 20000
  *                                                       # ... but only the ones EDHREC ranks that high
@@ -44,8 +45,7 @@ import { batchResults, batchStatus, safeBatchId, submitBatch } from "../llm/anth
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE, VOCAB_VERSION, TRIGGER_VOCAB_VERSION, TRIGGERS, EXEMPLAR_TERMS } from "../normalize-prompt.js";
 import { segment } from "../segment.js";
 import {
-  CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, missesASplit,
-  disagreesOnType, dropsOriginZone, dropsTriggerObject, hasPhantomTrigger, carriesOtherTrigger, worthReasking, segmentHash, type CardClausesDoc,
+  CLAUSES_COLLECTION, ensureClauseIndexes, needsNormalize, carriesOther, missesASplit, disagreesOnType, dropsOriginZone, dropsTriggerObject, hasPhantomTrigger, carriesOtherTrigger, worthReasking, segmentHash, type CardClausesDoc, dropsUnlessPayment,
 } from "../clause-store.js";
 
 const CALIBRATION = new URL("../../../cli/decks/calibration/", import.meta.url);
@@ -83,6 +83,11 @@ const CONCURRENCY = Number(arg("--concurrency") ?? 6);
  *  clauses corpus-wide without moving a single clause id, so 34 persisted docs carry an answer given
  *  under the wrong typing — hence `disagreesOnType`. */
 const REFRESH_OTHER = process.argv.includes("--refresh-other");
+/** ONLY the cards whose text states a payment the doc does not carry (CR 118.12a; `dropsUnlessPayment`).
+ *  Its own flag rather than one more `--refresh-other` predicate because that chain re-asks every
+ *  older doc with ANY lingering defect, and the owner authorised this refresh at its own size:
+ *  ~550 commander-legal cards (census 2026-09-17), not the treadmill. */
+const REFRESH_UNLESS = process.argv.includes("--refresh-unless");
 /** Re-ask every doc answered under a prompt older than N. NOT `NORMALIZE_MIN_COMPATIBLE`, which is a
  *  claim that older answers are INVALID and re-buys the whole corpus the moment it moves -- this is
  *  a refresh you can point at part of the corpus and stop. Measured 2026-08-21: 1,985 of the 2,756
@@ -317,7 +322,8 @@ for await (const doc of scopeDocs()) {
       || hasPhantomTrigger(existing, doc.oracleText ?? "")
       || carriesOtherTrigger(existing, TRIGGERS, TRIGGER_VOCAB_VERSION));
   const stale = BELOW_VERSION > 0 && existing !== null && existing.normalizeVersion < BELOW_VERSION;
-  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable && !stale) continue;
+  const unless = REFRESH_UNLESS && worthReasking(existing, NORMALIZE_VERSION) && dropsUnlessPayment(existing, doc.oracleText ?? "");
+  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable && !stale && !unless) continue;
   // Tested AFTER `needsModel`, never before it: an all-inert card costs nothing, so excluding it
   // would buy no money back and would leave it reading as unread. An UNRANKED card is out — EDHREC
   // has no record of the format playing it, which is the same claim the cutoff makes.
