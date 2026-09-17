@@ -92,7 +92,9 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
                 <li key={p.slug} className="min-w-0">
                   <CardTile
                     slug={p.slug} name={p.name} art={p.art} identity={p.identity}
-                    caption={p.payoff ?? feederCaption(p, subject)}
+                    // AN UNREAD ROW HAS NO PAYOFF TO SHOW. Its "triggers" over the limit read as the
+                    // payoff with a footnote (UX review, 2026-09-17); the limit is the whole caption.
+                    caption={p.unread ? undefined : p.payoff ?? feederCaption(p, subject)}
                     note={p.unread ? "engine did not read what it does" : undefined}
                   />
                 </li>
@@ -110,8 +112,8 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
                   * this card counts, so "ask for it" named the wrong direction under them. A feeder
                   * row is the one whose sentence opens on the row's card being controlled. */}
                 {group.rows.every((r) => /^While you control /i.test(r.reason))
-                  ? "other cards feed it too, equally specific — the ones shown are the most played."
-                  : "other cards ask for it too, equally specific — the ones shown are the most played."}
+                  ? "other cards feed it too, equally specific. The ones shown are the most played."
+                  : "other cards ask for it too, equally specific. The ones shown are the most played."}
               </p>
             )}
           </section>

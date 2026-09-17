@@ -74,3 +74,19 @@ test("a feeder group's withheld line says feed, a payoff group's says ask", () =
   expect(screen.getByText(/other cards feed it too/)).toBeInTheDocument();
   expect(screen.getByText(/other cards ask for it too/)).toBeInTheDocument();
 });
+
+/** AN UNREAD ROW SHOWS THE LIMIT, NOT A PAYOFF. "triggers" over "engine did not read what it does"
+ *  read as the payoff with a footnote (UX review, 2026-09-17); the engine knows only that the card
+ *  triggers, so the caption slot says that and nothing else. */
+test("an unread row's caption is the limit alone", () => {
+  render(
+    <MemoryRouter>
+      <PartnerList subject="Krenko, Mob Boss" pool={{}} rarity={{}} empty="none" rows={[{
+        name: "Mystery", slug: "mystery", score: 0.1, event: "enters|creature|-|-",
+        reason: "When a Goblin enters thanks to Krenko, Mystery triggers", payoff: "triggers", unread: true,
+      }]} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/engine did not read what it does/)).toBeInTheDocument();
+  expect(screen.queryByText("triggers")).toBeNull();
+});

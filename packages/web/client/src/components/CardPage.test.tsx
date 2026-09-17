@@ -113,7 +113,7 @@ test("a card with no partners says so", async () => {
  *  printing a second copy of the oracle text. */
 test("the page shows the whole card, at the /normal/ size and never the crop", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss, the card/ });
   expect(img).toHaveAttribute("src", expect.stringContaining("/normal/"));
   expect(img.getAttribute("src")).not.toContain("art_crop");
   expect(img).toHaveAttribute("loading", "eager");
@@ -137,7 +137,7 @@ test("a card with no image renders without one", async () => {
  *  pages around it stop printing a second copy of the oracle text. */
 test("the page shows the whole card, at the /normal/ size and never the crop", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  const img = await screen.findByRole("img", { name: /Krenko, Mob Boss, the card/ });
   expect(img.getAttribute("src")).toContain("/normal/");
   expect(img.getAttribute("src")).not.toContain("art_crop");
   expect(img).toHaveAttribute("loading", "eager");
@@ -202,18 +202,18 @@ const VALKI: CardPageData = {
 test("a two-faced card can be turned over, and the control names the side it turns to", async () => {
   at("valki-god-of-lies-tibalt-cosmic-impostor", async () => VALKI);
   const flip = await screen.findByRole("button", { name: /Flip to Tibalt, Cosmic Impostor/ });
-  expect(screen.getByRole("img", { name: /Valki, God of Lies — the card/ }).getAttribute("src"))
+  expect(screen.getByRole("img", { name: /Valki, God of Lies, the card/ }).getAttribute("src"))
     .toContain("/normal/front/");
   expect(flip).toHaveAttribute("aria-pressed", "false");
 
   fireEvent.click(flip);
-  expect(screen.getByRole("img", { name: /Tibalt, Cosmic Impostor — the card/ }).getAttribute("src"))
+  expect(screen.getByRole("img", { name: /Tibalt, Cosmic Impostor, the card/ }).getAttribute("src"))
     .toContain("/normal/back/");
   // And back again: the label names the destination both ways, so the control is never a one-shot.
   const unflip = screen.getByRole("button", { name: /Flip to Valki, God of Lies/ });
   expect(unflip).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(unflip);
-  expect(screen.getByRole("img", { name: /Valki, God of Lies — the card/ })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /Valki, God of Lies, the card/ })).toBeInTheDocument();
 });
 
 /** ONE PHYSICAL FACE, NO CONTROL. A card with nothing to turn to must not offer a button that does
@@ -221,12 +221,12 @@ test("a two-faced card can be turned over, and the control names the side it tur
  *  card in the corpus. */
 test("a card with one face offers no flip", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  await screen.findByRole("img", { name: /Krenko, Mob Boss — the card/ });
+  await screen.findByRole("img", { name: /Krenko, Mob Boss, the card/ });
   expect(screen.queryByRole("button", { name: /flip/i })).toBeNull();
 });
 
 test("a split card is not offered a flip either, despite the // in its name", async () => {
   at("fire-ice", async () => ({ ...KRENKO, name: "Fire // Ice", backArtCrop: null }));
-  await screen.findByRole("img", { name: /Fire — the card/ });
+  await screen.findByRole("img", { name: /Fire, the card/ });
   expect(screen.queryByRole("button", { name: /flip/i })).toBeNull();
 });

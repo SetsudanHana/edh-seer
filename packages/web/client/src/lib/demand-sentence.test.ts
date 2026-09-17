@@ -197,3 +197,20 @@ test("a copy demand and a fodder demand read as what is wanted", () => {
   expect(eventKeySentence("fodder|-|artifact|-")).toBe("an artifact to sacrifice");
   expect(eventKeySentence("fodder|-|goblin|-")).toBe("a Goblin to sacrifice");
 });
+
+/** THE ARTICLE IS CHOSEN ON THE WHOLE PHRASE. "an nontoken artifact" (live on Ayara's page,
+ *  2026-09-17) picked the article for "artifact" and then put "nontoken" between them. */
+test("the article agrees with the first word said, token flag included", () => {
+  expect(eventKeySentence("enters|artifact|-|n")).toBe("a nontoken artifact entering the battlefield");
+  expect(eventKeySentence("enters|artifact|-|-")).toBe("an artifact entering the battlefield");
+});
+
+/** A GRAVEYARD FILL IS A DEMAND KEY (`fills|<type>|<subtype>|-`, partners-core) and it read as the
+ *  raw key -- "fills creature" -- on every reanimator group. It is the thing wanted in the yard. */
+test("a fill key reads as the card wanted in a graveyard", () => {
+  expect(eventKeySentence("fills|creature|-|-")).toBe("a creature in a graveyard");
+  expect(eventKeySentence("fills|-|goblin|-")).toBe("a Goblin in a graveyard");
+  expect(eventKeySentence("fills|artifact|-|-")).toBe("an artifact in a graveyard");
+  expect(eventKeySentence("fills|creature|goblin|-")).toBe("a Goblin creature in a graveyard");
+  expect(eventKeySentence("fills|-|-|-")).toBe("a card in a graveyard");
+});

@@ -396,3 +396,11 @@ test("an example question sets the facets and lists its answer as tiles", async 
   expect(screen.getByRole("button", { name: /^Green$/ })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByText(/draws cards/, { selector: "p" })).toBeInTheDocument();
 });
+
+/** THE COUNT IS A STATUS MESSAGE (WCAG 4.1.3). A chip changes the set and a sighted reader sees
+ *  the number move; a screen reader heard nothing until this paragraph announced itself. */
+test("the result count announces itself when the set changes", async () => {
+  at();
+  await userEvent.type(await screen.findByRole("searchbox"), "krenko");
+  expect(await screen.findByRole("status")).toHaveTextContent(/card(s)? match/);
+});

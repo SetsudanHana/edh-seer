@@ -143,8 +143,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         <p>
           <span className="eyebrow text-(--muted)">colour identity </span>
           {identityLabel(identity)}
-          {pair ? <span className="text-(--muted)"> — with {pair.name}</span> : null}
-          {colour ? <span className="text-(--muted)"> — {COLOURS.find((c) => c.letter === colour)!.word} chosen</span> : null}
+          {pair ? <span className="text-(--muted)">, with {pair.name}</span> : null}
+          {colour ? <span className="text-(--muted)">, {COLOURS.find((c) => c.letter === colour)!.word} chosen</span> : null}
         </p>
         {page.pairingOnly ? (
           <p className="text-(--muted) max-w-[65ch]">
@@ -156,19 +156,19 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           <p className="text-(--muted) max-w-[65ch]">
             The engine read nothing on this card: no ability it could derive, so no events, no
             gaps and no partners to rank. Either the card prints only keywords, or its text is one
-            the engine cannot yet read — the card page shows which.
+            the engine cannot yet read. The card page shows which.
           </p>
         ) : (<>
         <p>
           <span className="eyebrow text-(--muted)">its events point at </span>
           {themes.length === 0
-            ? <span className="text-(--muted)">no archetype — its events are the broad ones every deck runs</span>
+            ? <span className="text-(--muted)">no archetype; its events are the broad ones every deck runs</span>
             : themes.join(" · ")}
         </p>
         <p>
           <span className="eyebrow text-(--muted)">the other 99 have to bring </span>
           {gaps.length === 0
-            ? <span className="text-(--muted)">nothing — it answers every event it watches</span>
+            ? <span className="text-(--muted)">nothing. It answers every event it watches</span>
             : gaps.map((w) => eventKeySentence(w)).join(" · ")}
         </p>
         </>)}
