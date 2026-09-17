@@ -7,6 +7,7 @@ import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, mel
 import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
+import { ratesOf, type Rate } from "../rate.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
@@ -1103,6 +1104,10 @@ export interface CardPageRecord {
   /** How the engine read the card, one row per derived ability -- the page's real argument, and the
    *  half of it that was missing while the record carried only the UNION of a card's events. */
   abilities: AbilityRow[];
+  /** THE COST-TO-EFFECT RATES the card's abilities state (`rate.ts`; owner 2026-09-17), one per
+   *  ability a family reads: cards per mana, damage per mana, each a floor and a ceiling. Absent
+   *  when no ability states a number the axis can read. Recorded on the page, never on an edge. */
+  rates?: Rate[];
   identity: string[];
   commander: boolean;
   /** A Background: a commander that never leads alone (CR 702.124). The page says so. */
@@ -1401,6 +1406,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       artCrop: artCropOf(d),
       backArtCrop: (d.card as { faces?: { artCrop?: string }[] }).faces?.[1]?.artCrop ?? null,
       abilities: abilityRowsOf(d),
+      ...(() => { const rates = ratesOf(d); return rates.length > 0 ? { rates } : {}; })(),
       identity: d.card.colorIdentity ?? [],
       commander,
       ...(commander && isBackground(d) ? { pairingOnly: true as const } : {}),

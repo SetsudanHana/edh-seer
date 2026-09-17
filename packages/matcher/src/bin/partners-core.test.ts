@@ -1496,3 +1496,15 @@ test("producer rows respect the per-event cap and the pool counts them all", () 
   expect(rows.every((r) => r.producer)).toBe(true);
   expect(rec["impact-tremors"]!.pool[rows[0]!.event]).toBe(PER_EVENT_CAP + 2);
 });
+
+/** THE RATE RIDES ON THE PAGE RECORD (owner 2026-09-17), and only when there is one to state. */
+test("a page record carries the card's rates, and none when no ability states a number", () => {
+  // An emit, so the card is substantive and gets a page at all (`isSubstantive`).
+  const divination = base("Divination", [{ kind: "on-cast", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "2", repeats: "once",
+    emits: [{ verb: "draw", subject: { control: "you", token: null } }] }] as unknown as CardTags["abilities"]);
+  (divination.card as { manaCost?: string }).manaCost = "{2}{U}";
+  const { shards } = buildPartnerArtifact([divination, krenko, impactTremors], H);
+  const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  expect(rec["divination"]?.rates).toEqual([{ family: "cards", kind: "on-cast", amount: 2, mana: 3, repeats: "once", floor: 2, ceiling: 2 }]);
+  expect(rec["krenko-mob-boss"]?.rates).toBeUndefined();
+});
