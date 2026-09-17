@@ -398,6 +398,10 @@ test("a keyword followed by cost is not a keyword demand", () => {
 test("a keyword counter is a counter, not a keyword demand", () => {
   const s = parseSubject("a creature you control with a flying counter on it");
   expect(s.counter).toBe("flying");
+  // A kind starts a word: "one or mORE counters" is not an ore counter (Shadow Urchin, 2026-09-17);
+  // Orcish Mine's "ore counter" is.
+  expect(parseSubject("one or more counters").counter).toBeUndefined();
+  expect(parseSubject("an ore counter").counter).toBe("ore");
   expect(s.keyword).toBeUndefined();
 });
 
