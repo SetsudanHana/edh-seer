@@ -402,6 +402,8 @@ test("a keyword counter is a counter, not a keyword demand", () => {
   // Orcish Mine's "ore counter" is.
   expect(parseSubject("one or more counters").counter).toBeUndefined();
   expect(parseSubject("an ore counter").counter).toBe("ore");
+  // CR 107.14: {E} is one energy counter, with or without the reminder text.
+  expect(parseSubject("one or more {E}").counter).toBe("energy");
   expect(s.keyword).toBeUndefined();
 });
 

@@ -89,7 +89,10 @@ import { emblemRecipient } from "../emblem.js";
 // 155: an active-voice counter trigger ("whenever you put one or more +1/+1 counters on X") records
 // the kind from the trigger phrase (Exemplar of Light <- Sorin's lifelink counter); `parseCounter`
 // needs a word start, so "one or more counters" is no longer an ore counter (Shadow Urchin).
-export const DERIVE_VERSION = 155;
+// 156: a counter on the card's SHORT name is self ("on Lonis" for Lonis, Genetics Expert), a replacement
+// on the card's own counters is self (Mowu), and the printed {E} symbol is an energy counter
+// (Territorial Gorger, whose reminder text the segmenter strips).
+export const DERIVE_VERSION = 156;
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
  *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
@@ -767,8 +770,13 @@ function counterTriggerOnSelf(text: string, cardName?: string): boolean {
   const phrase = text.split(",")[0] ?? "";
   if (/\bon\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(phrase)) return true;
   if (!cardName) return false;
-  const short = cardName.split(" // ")[0]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`\\bon\\s+${short}\\b`, "i").test(phrase);
+  // EVERY FACE NAMES ITSELF, BY ITS SHORT NAME (DERIVE 156): the card's own text says "on Lonis",
+  // never "on Lonis, Genetics Expert", and the whole first face was compared here, so Lonis, Berta
+  // and Aragorn read their own counters as a class (Exemplar of Light fed Lonis's investigate).
+  return cardName.split(" // ").some((face) => {
+    const short = face.split(",")[0]!.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return short !== "" && new RegExp(`\\bon\\s+${short}\\b`, "i").test(phrase);
+  });
 }
 
 /** "Whenever one or more creature cards leave YOUR GRAVEYARD" (Desecrated Tomb, Fang, Chalk Outline
@@ -1144,6 +1152,9 @@ export function deriveAbilities(
     if (replacement && !replacement.restricted && !trigger) {
       const subject = subjectFrom(replacement.subjectText, cardName, enchantText);
       if (replacement.counter) subject.counter = replacement.counter;
+      // "If one or more +1/+1 counters would be put on MOWU" (Mowu, Loyal Companion) multiplies only
+      // its own counters; without the flag every +1/+1 placer in the deck fed it (DERIVE 156).
+      if (isSelfSubject(replacement.subjectText, cardName)) subject.self = true;
       trigger = { verbs: replacement.verbs, subject };
     }
 

@@ -1242,6 +1242,16 @@ test("a counter put on this card is a self emit; one put on another permanent is
   expect(trig("Whenever you put one or more -1/-1 counters on a creature, draw a card.", "a creature", "Hapatra, Vizier of Poisons")?.counter).toBe("-1/-1");
   expect(trig("Whenever one or more counters are removed from this creature, draw a card.", "a counter", "Shadow Urchin")?.counter).toBeUndefined();
   expect(trig("Whenever you put one or more counters on a creature, put a charge counter on this artifact.", "a creature", "Both")?.counter).toBeUndefined();
+  // DERIVE 156: the card's SHORT name is self on every face; {E} is an energy counter.
+  expect(trig("Whenever one or more +1/+1 counters are put on Lonis, investigate that many times.", "Lonis with +1/+1 counters", "Lonis, Genetics Expert")).toMatchObject({ self: true, counter: "+1/+1" });
+  expect(trig("Whenever one or more +1/+1 counters are put on Berta, draw a card.", "a +1/+1 counter", "Berta, Wise Extrapolator")?.self).toBe(true);
+  expect(trig("Whenever you get one or more {E}, this creature gets +2/+2 until end of turn.", "energy", "Territorial Gorger")?.counter).toBe("energy");
+  // A replacement on the card's OWN counters is self (Mowu); on a class it is not (Caradora).
+  const repl = (text: string, name: string) => deriveAbilities(
+    [{ id: 1, abilityType: "static", actions: [{ verb: "add-counter", object: "+1/+1", amount: "that many plus one" }] }], name, { 1: text },
+  ).abilities.find((a) => (a.trigger?.verbs ?? []).includes("counter-added"))?.trigger?.subject;
+  expect(repl("If one or more +1/+1 counters would be put on Mowu, that many plus one +1/+1 counters are put on it instead.", "Mowu, Loyal Companion")).toMatchObject({ self: true, counter: "+1/+1" });
+  expect(repl("If one or more +1/+1 counters would be put on a creature or Vehicle you control, that many plus one +1/+1 counters are put on it instead.", "Caradora, Heart of Alacria")?.self).toBeUndefined();
   expect(trig("Whenever you put a counter on a creature you control, put a +1/+1 counter on this creature.", "a counter", "Grower")?.self).toBeUndefined();
   // Adapt and monstrosity are self by rule.
   expect(emitOf("Adapt 2", "Incubation Druid", "2", "adapt")?.subject.self).toBe(true);
