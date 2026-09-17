@@ -28,10 +28,22 @@ export interface Rate {
   family: RateFamily;
   /** `on-cast`, `triggered`, `activated`: what has to happen for the yield. */
   kind: string;
-  /** What one resolution, trigger or activation yields, in the family's unit. 0 on a slope. */
+  /** What one resolution, trigger or activation yields, in the family's unit, NET of what the same
+   *  ability gives back (`back`). 0 on a slope. */
   amount: number;
+  /** THE CARDS THE ABILITY PUTS BACK OR DISCARDS FOR THE DRAW (owner 2026-09-17: "Brainstorm
+   *  makes you draw 3 cards, but then you have to put 2 back"): Brainstorm is +1, a loot is 0 --
+   *  selection, not advantage. Read off the companion ability derive made from the same clause:
+   *  a `top-set` from the hand, or a `discard` emit, on the same kind and cost. CEILING: the
+   *  pairing is card-wide (an ability carries no clause id), guarded by kind and cost; the
+   *  upgrade path is a clause id on the ability from derive. */
+  back?: number;
   /** The mana it charges: an activation's own cost, else the card's; the fixed part of an X cost. */
   mana: number;
+  /** THE CARD HAD TO BE CAST FIRST (owner 2026-09-17: "you are not accounting for actually
+   *  casting the card to then use its ability"). On an activation, the card's own mana: the
+   *  first yield costs `cast + mana`, and only a repeatable one amortises to `mana` after. */
+  cast?: number;
   /** Yield per further mana, on an X cost. */
   slope?: number;
   /** How often it can happen: `once`, `repeatable`, `per-cycle`, `per-turn`. */
@@ -82,7 +94,7 @@ export function manaOf(cost: string | undefined): number | null {
 
 /** The words that put an amount behind a condition on a card's printed text. A list, not a parse:
  *  the derived ability carries the amount and nothing about what has to be true for it. */
-const CONDITION = /\bif\b|\bunless\b|\binstead\b|flip a coin|choose one|additional cost|\btiered\b|\bkicked\b|\bup to\b|\bthat many\b/i;
+const CONDITION = /\bif\b|\bunless\b|\binstead\b|\bas long as\b|flip a coin|choose one|additional cost|\btiered\b|\bkicked\b|\bup to\b|\bthat many\b/i;
 
 const integer = (s: string | undefined): number | null => {
   if (s === undefined) return null;
@@ -110,7 +122,25 @@ export function ratesOf(d: DeckCard): Rate[] {
     creature && !haste && (
       (a.kind === "activated" && /\{[TQ]\}/i.test(a.cost ?? ""))
       || (a.kind === "triggered" && a.trigger?.subject?.self === true && (a.trigger.verbs ?? []).includes("attacks")));
-  for (const a of d.tags?.abilities ?? []) {
+  const abilities = d.tags?.abilities ?? [];
+  const manaCost = (d.card as { manaCost?: string }).manaCost;
+  /** What the same clause takes back for a draw: `top-set` from the hand (Brainstorm), or a
+   *  `discard` emit (a loot), on the same kind and cost. `null` when a companion states no amount
+   *  ("discard a card", the `dropsUnitAmount` gap) -- the draw is refused rather than left gross. */
+  const backOf = (a: (typeof abilities)[number]): number | null => {
+    let back = 0;
+    for (const b of abilities) {
+      if (b === a || b.kind !== a.kind || b.cost !== a.cost) continue;
+      const putsBack = b.effect?.kind === "top-set" && b.effect.subject?.fromZone === "hand" && b.effect.subject.control === "you";
+      const discards = (b.emits ?? []).some((e) => e.verb === "discard" && e.subject?.control === "you");
+      if (!putsBack && !discards) continue;
+      const n = integer(b.amount);
+      if (n === null) return null;
+      back += n;
+    }
+    return back;
+  };
+  for (const a of abilities) {
     const family = FAMILY_OF[a.effect?.kind ?? ""];
     if (family === undefined) continue;
     const control = a.effect?.subject?.control;
@@ -119,11 +149,16 @@ export function ratesOf(d: DeckCard): Rate[] {
     if (family === "cards" && control !== undefined && control !== "you") continue;
     if (family === "damage" && control === "you") continue;
     if (a.unless && a.unless.payer === "you") continue;
-    const cost = a.kind === "activated" ? a.cost : (d.card as { manaCost?: string }).manaCost;
+    const cost = a.kind === "activated" ? a.cost : manaCost;
     // NO MANA TO READ: a loyalty cost ("+1", "−3", "0"; CR 606.5) is paid in loyalty, not mana, and
     // an empty or words-only cost states none. Measured 2026-09-17 on the first chip sort: 341
     // "+1" abilities read as free and put every planeswalker above Brainstorm.
     if (cost === undefined || !/\{[^{}]+\}/.test(cost)) continue;
+    // THE CAST BEFORE THE ACTIVATION: a land charges no mana to land; a card with X in its own
+    // cost has no honest cast to add, so its activations are refused.
+    const cast = a.kind !== "activated" ? undefined : manaCost === undefined ? 0 : manaOf(manaCost);
+    if (cast === null) continue;
+    const castOf = cast === undefined ? {} : { cast };
     const extra = a.kind === "activated" && /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, ""));
     const repeats = a.repeats ?? (a.kind === "on-cast" ? "once" : "repeatable");
     const mana = manaOf(cost);
@@ -131,16 +166,19 @@ export function ratesOf(d: DeckCard): Rate[] {
     if (mana === null) {
       if (a.effect?.scaling !== "x-cost") continue;
       const fixed = manaOf(cost.replace(/\{X\}/gi, "")) ?? 0;
-      out.push({ family, kind: a.kind, amount: 0, mana: fixed, slope: 1, repeats, floor: 0, ceiling: null, ...(extra ? { extraCost: true as const } : {}), ...(sick(a) ? { delayed: true as const } : {}) });
+      out.push({ family, kind: a.kind, amount: 0, mana: fixed, ...castOf, slope: 1, repeats, floor: 0, ceiling: null, ...(extra ? { extraCost: true as const } : {}), ...(sick(a) ? { delayed: true as const } : {}) });
       continue;
     }
-    const amount = integer(a.amount);
-    if (amount === null || (a.effect?.scaling !== undefined && a.effect.scaling !== "fixed")) continue;
+    const gross = integer(a.amount);
+    if (gross === null || (a.effect?.scaling !== undefined && a.effect.scaling !== "fixed")) continue;
+    const back = family === "cards" ? backOf(a) : 0;
+    if (back === null) continue;
+    const amount = Math.max(0, gross - back);
     // A TRIGGER MAY NEVER FIRE; an activation or a cast yields every time it is paid for.
     const open = a.kind === "triggered" || a.kind === "static";
     const stopped = a.unless !== undefined;
     out.push({
-      family, kind: a.kind, amount, mana, repeats,
+      family, kind: a.kind, amount, ...(back > 0 ? { back } : {}), mana, ...castOf, repeats,
       floor: open || stopped || conditional ? 0 : amount,
       ceiling: open ? null : amount,
       ...(stopped ? { fallback: { cost: a.unless!.cost, payer: a.unless!.payer } } : {}),
@@ -152,32 +190,43 @@ export function ratesOf(d: DeckCard): Rate[] {
   return out;
 }
 
-/** THE RATE A SEARCH ROW CARRIES: floor, ceiling (null when open), mana. Three numbers, not the
- *  record, because the facet index is fetched by the browser. */
-export type RateTriple = [floor: number, ceiling: number | null, mana: number];
+/** THE RATE A SEARCH ROW CARRIES: the floor and the mana it costs, the ceiling (null when open)
+ *  and the mana IT costs. Two prices because an activation's first yield includes the cast and a
+ *  repeatable one's later yields do not. Four numbers, not the record, because the facet index
+ *  is fetched by the browser. */
+export type RateSpan = [floor: number, floorMana: number, ceiling: number | null, ceilingMana: number];
 
 const desc = (x: number, y: number): number => (x === y ? 0 : y > x ? 1 : -1);
-const priced = (t: RateTriple): boolean => t[2] > 0;
-/** Per mana when there is mana; a free activation ({T} alone) compares by its yield. */
-const per = (n: number | null, t: RateTriple): number => (n === null ? Infinity : priced(t) ? n / t[2] : n);
+const priced = (s: RateSpan): boolean => s[1] > 0;
+/** Per mana when there is mana; for nothing, the yield itself (Infinity when there is one). */
+const per = (n: number | null, mana: number): number => (n === null ? Infinity : mana > 0 ? n / mana : n > 0 ? Infinity : 0);
 
 /** THE ORDER WITHIN A FAMILY (spec 2026-09-04 step 3): every rate with mana to divide by before
- *  any free one -- a {T} loot has no per-mana figure, and dividing by zero put 103 tap abilities
- *  above Brainstorm on the first build (2026-09-17); then floor per mana, ceiling per mana to break
- *  it, an open ceiling above any bounded one -- a trigger's yield is what a deck makes of it, a
- *  one-shot's is written down -- then the cheaper ability. Negative when `a` is better. */
-export function compareRates(a: RateTriple, b: RateTriple): number {
+ *  any free one -- dividing by zero put 103 tap abilities above Brainstorm on the first build
+ *  (2026-09-17), and since the cast counts, only a land's tap ability is free now; then floor per
+ *  its mana, ceiling per its mana to break it, an open ceiling above any bounded one -- a
+ *  trigger's yield is what a deck makes of it, a one-shot's is written down -- then the raw yield
+ *  (two free rates tie per mana), then the cheaper first yield. Negative when `a` is better. */
+export function compareRates(a: RateSpan, b: RateSpan): number {
   if (priced(a) !== priced(b)) return priced(a) ? -1 : 1;
-  return desc(per(a[0], a), per(b[0], b)) || desc(per(a[1], a), per(b[1], b)) || a[2] - b[2];
+  return desc(per(a[0], a[1]), per(b[0], b[1])) || desc(per(a[2], a[3]), per(b[2], b[3]))
+    || desc(a[0], b[0]) || desc(a[2] ?? Infinity, b[2] ?? Infinity) || a[1] - b[1];
+}
+
+/** The row's span of a rate: the first yield is priced with the cast, and only a repeatable
+ *  activation's ceiling amortises to the activation alone. */
+export function spanOf(r: Rate): RateSpan {
+  const first = r.mana + (r.cast ?? 0);
+  return [r.floor, first, r.ceiling, r.repeats === "once" ? first : r.mana];
 }
 
 /** THE BEST RATE PER FAMILY among a card's rates, for the row. An activation that charges more
  *  than mana (`extraCost`) is left out: Bloodfire Colossus is not 6 damage for {R}. */
-export function bestRates(rates: Rate[]): Partial<Record<RateFamily, RateTriple>> {
-  const out: Partial<Record<RateFamily, RateTriple>> = {};
+export function bestRates(rates: Rate[]): Partial<Record<RateFamily, RateSpan>> {
+  const out: Partial<Record<RateFamily, RateSpan>> = {};
   for (const r of rates) {
     if (r.extraCost) continue;
-    const t: RateTriple = [r.floor, r.ceiling, r.mana];
+    const t = spanOf(r);
     const have = out[r.family];
     if (have === undefined || compareRates(t, have) < 0) out[r.family] = t;
   }

@@ -91,21 +91,24 @@ test("facets round-trip through the URL, and unknown values are dropped", () => 
  *  the cards that state one above the ones that do not; two chips get no rate order. */
 test("a single rated chip orders by floor per mana, rated above unrated; two chips do not", () => {
   const rows: FacetRow[] = [
-    { s: "rhystic-study", i: "U", c: 0, e: ["draw-card"], t: [], d: [], p: 900, r: { cards: [0, null, 3] } },
+    { s: "rhystic-study", i: "U", c: 0, e: ["draw-card"], t: [], d: [], p: 900, r: { cards: [0, 3, null, 3] } },
     { s: "unrated", i: "U", c: 0, e: ["draw-card"], t: [], d: [], p: 2000 },
-    { s: "divination", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [2, 2, 3] } },
-    { s: "brainstorm", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [3, 3, 1] } },
-    { s: "fiery-gambit", i: "R", c: 0, e: ["draw-card", "damage"], t: [], d: [], r: { cards: [0, 9, 3], damage: [0, 3, 3] } },
+    { s: "divination", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [2, 3, 2, 3] } },
+    { s: "brainstorm", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [1, 1, 1, 1] } },
+    { s: "fiery-gambit", i: "R", c: 0, e: ["draw-card", "damage"], t: [], d: [], r: { cards: [0, 3, 9, 3], damage: [0, 3, 3, 3] } },
+    { s: "jayemdae-tome", i: "", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [1, 8, 1, 4] } },
   ];
   expect(applyFacets(rows, { colours: [], does: ["draw-card"], strategy: undefined }, "cards").map((r) => r.s))
-    .toEqual(["brainstorm", "divination", "rhystic-study", "fiery-gambit", "unrated"]);
+    .toEqual(["brainstorm", "divination", "jayemdae-tome", "rhystic-study", "fiery-gambit", "unrated"]);
   expect(applyFacets(rows, { colours: [], does: ["draw-card", "damage"], strategy: undefined }, "cards").map((r) => r.s))
-    .toEqual(["fiery-gambit", "unrated", "rhystic-study", "brainstorm", "divination"]);
+    .toEqual(["fiery-gambit", "unrated", "rhystic-study", "brainstorm", "divination", "jayemdae-tome"]);
   const q = { colours: [], does: ["draw-card"], strategy: undefined };
-  expect(matchedTerms(rows[3]!, q)).toEqual(["draws cards", "3 cards / 1 mana"]);
+  expect(matchedTerms(rows[3]!, q)).toEqual(["draws cards", "1 card / 1 mana"]);
+  expect(matchedTerms(rows[2]!, q)).toEqual(["draws cards", "2 cards / 3 mana"]);
   expect(matchedTerms(rows[0]!, q)).toEqual(["draws cards", "0+ cards / 3 mana"]);
   expect(matchedTerms(rows[4]!, q)).toEqual(["draws cards", "0–9 cards / 3 mana"]);
+  expect(matchedTerms(rows[5]!, q)).toEqual(["draws cards", "1 card / 8 mana, then 1 / 4"]);
   expect(matchedTerms(rows[4]!, { ...q, does: ["damage"] })).toEqual(["deals damage", "0–3 damage / 3 mana"]);
   expect(matchedTerms(rows[1]!, q)).toEqual(["draws cards"]);
-  expect(rateLabel([1, 1, 0], "cards")).toBe("1 card / 0 mana");
+  expect(rateLabel([0, 3, 0, 3], "cards")).toBe("0 cards / 3 mana");
 });

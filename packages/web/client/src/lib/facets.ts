@@ -1,6 +1,6 @@
 import { ARCHETYPE_SIGNATURE, ARCHETYPE_VOCABULARY } from "@edh-seer/matcher/archetypes";
 import type { FacetRow } from "@edh-seer/matcher/partners-core";
-import { compareRates, type RateFamily, type RateTriple } from "@edh-seer/matcher/rate";
+import { compareRates, type RateFamily, type RateSpan } from "@edh-seer/matcher/rate";
 
 /** FIND BY WHAT IT DOES (spec 2026-09-08 part 4). Three facets over the facet index: colours, what
  *  the card does (effect kinds, curated to the chips a player would reach for), and the strategy
@@ -64,7 +64,7 @@ const doesHits = (r: FacetRow, q: FacetQuery): number => q.does.filter((k) => r.
  *  trades one for the other is what killed edge magnitude three times (log 2026-08-16). */
 const rateFamily = (q: FacetQuery): RateFamily | undefined =>
   q.does.length === 1 ? DOES.find((d) => d.kind === q.does[0])?.rate : undefined;
-const rateOf = (r: FacetRow, q: FacetQuery): RateTriple | undefined => {
+const rateOf = (r: FacetRow, q: FacetQuery): RateSpan | undefined => {
   const f = rateFamily(q);
   return f === undefined ? undefined : r.r?.[f];
 };
@@ -97,11 +97,13 @@ export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "co
 }
 
 /** THE RATE, BOTH ENDS PRINTED (owner 2026-09-17: floor and ceiling, never one number): "3 cards
- *  / 1 mana", "0–9 cards / 3 mana", "0+ damage / 4 mana" for an open ceiling. */
-export function rateLabel([floor, ceiling, mana]: RateTriple, family: RateFamily): string {
+ *  / 1 mana", "0–9 cards / 3 mana", "0+ damage / 4 mana" for an open ceiling, and for a repeatable
+ *  activation whose first yield includes the cast, "1 card / 8 mana, then 1 / 4". */
+export function rateLabel([floor, floorMana, ceiling, ceilingMana]: RateSpan, family: RateFamily): string {
   const span = ceiling === null ? `${floor}+` : ceiling === floor ? `${floor}` : `${floor}–${ceiling}`;
   const unit = family === "cards" ? (ceiling === 1 && floor === 1 ? "card" : "cards") : "damage";
-  return `${span} ${unit} / ${mana} mana`;
+  const then = ceiling !== null && ceilingMana !== floorMana ? `, then ${ceiling} / ${ceilingMana}` : "";
+  return `${span} ${unit} / ${floorMana} mana${then}`;
 }
 
 /** The labels that hit, for the line under a result that says why it is on the list, and on a
