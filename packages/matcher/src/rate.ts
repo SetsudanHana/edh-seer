@@ -18,7 +18,8 @@ import type { DeckCard } from "./types.js";
  *  RECORDED, NOT JUDGED. This says what a card charges for what it does. Whether the deck wants it
  *  is the synergy engine's question, and the two stay separate on purpose (spec 2026-09-04). */
 
-export type RateFamily = "cards" | "damage" | "mana" | "life" | "life-loss" | "mill" | "tokens" | "counters";
+export type RateFamily = "cards" | "damage" | "mana" | "life" | "life-loss" | "mill" | "tokens" | "counters"
+  | "search" | "recursion" | "untap" | "flicker" | "copies";
 
 /** The effect kinds a family reads. The census (2026-09-17) found an amount on 79% of draw
  *  abilities and 99% of damage; mana read 6% until DERIVE 160 put the mana a mana ability adds on
@@ -30,6 +31,11 @@ export type RateFamily = "cards" | "damage" | "mana" | "life" | "life-loss" | "m
 const FAMILY_OF: Record<string, RateFamily> = {
   "draw-card": "cards", damage: "damage", "mana-generation": "mana", lifegain: "life",
   "player-life-loss": "life-loss", mill: "mill", "token-generation": "tokens", "counter-placement": "counters",
+  // THE UNIT EFFECTS, since DERIVE 161 reads "a card" and "up to two" off the object: Vampiric
+  // Tutor is 1 card for {B} and Diabolic Tutor 1 for {3}{B}, which is the draw comparison
+  // applied to tutors. Extra turns, scry, surveil and clone stay out: no amount, or card quality
+  // rather than yield.
+  search: "search", "graveyard-recursion": "recursion", untap: "untap", flicker: "flicker", "copy-spell": "copies",
 };
 /** The families whose yield must be YOURS: another player's cards, life or tokens are not your
  *  rate (Swords to Plowshares' life goes to the creature's controller). Mana is not here: "Add
@@ -40,6 +46,9 @@ const YOURS = new Set<RateFamily>(["cards", "life", "tokens"]);
  *  what the card charges, not what it does for you. Mill and counters are read whoever they land
  *  on -- self-mill is a purpose, and a counter goes where it is put. */
 const NOT_YOURS = new Set<RateFamily>(["damage", "life-loss"]);
+/** The families read whoever the target is, except an OPPONENT'S own: "target player searches"
+ *  and "each opponent untaps" are not your rate. */
+const NOT_THEIRS = new Set<RateFamily>(["search", "recursion", "untap", "flicker", "copies"]);
 
 export interface Rate {
   family: RateFamily;
@@ -184,6 +193,7 @@ export function ratesOf(d: DeckCard): Rate[] {
     // own side (Flame Rift's damage to you is a cost the card charges, not a thing it does for you).
     if (YOURS.has(family) && control !== undefined && control !== "you") continue;
     if (NOT_YOURS.has(family) && control === "you") continue;
+    if (NOT_THEIRS.has(family) && control === "opp") continue;
     // A LAND'S MANA IS ITS LAND DROP, not a price in mana: every basic would top "adds mana" at
     // infinity. The same for any land activation that charges no mana of its own (Fountain of Cho's
     // "{T}: Put a storage counter" topped "puts counters" as free); one that does (Castle

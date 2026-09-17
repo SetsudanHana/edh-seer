@@ -15,16 +15,16 @@ export const DOES: { kind: string; label: string; rate?: RateFamily }[] = [
   { kind: "proliferate", label: "proliferates" },
   { kind: "mana-generation", label: "adds mana", rate: "mana" },
   { kind: "lifegain", label: "gains life", rate: "life" },
-  { kind: "graveyard-recursion", label: "returns from the graveyard" },
-  { kind: "search", label: "searches the library" },
+  { kind: "graveyard-recursion", label: "returns from the graveyard", rate: "recursion" },
+  { kind: "search", label: "searches the library", rate: "search" },
   { kind: "damage", label: "deals damage", rate: "damage" },
   { kind: "drain", label: "drains" },
   { kind: "player-life-loss", label: "makes opponents lose life", rate: "life-loss" },
   { kind: "mill", label: "mills", rate: "mill" },
-  { kind: "untap", label: "untaps" },
-  { kind: "flicker", label: "flickers" },
+  { kind: "untap", label: "untaps", rate: "untap" },
+  { kind: "flicker", label: "flickers", rate: "flicker" },
   { kind: "exile-processing", label: "processes exiled cards" },
-  { kind: "copy-spell", label: "copies spells" },
+  { kind: "copy-spell", label: "copies spells", rate: "copies" },
   { kind: "copy-ability", label: "copies abilities" },
   { kind: "clone", label: "copies permanents" },
   { kind: "keyword-grant", label: "grants keywords" },
@@ -105,6 +105,7 @@ export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "co
 const UNIT: Record<RateFamily, [string, string]> = {
   cards: ["card", "cards"], damage: ["damage", "damage"], mana: ["mana", "mana"], life: ["life", "life"],
   "life-loss": ["life", "life"], mill: ["card", "cards"], tokens: ["token", "tokens"], counters: ["counter", "counters"],
+  search: ["card", "cards"], recursion: ["card", "cards"], untap: ["permanent", "permanents"], flicker: ["permanent", "permanents"], copies: ["copy", "copies"],
 };
 export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: RateSpan, family: RateFamily): string {
   const span = ceiling === null ? `${floor}+` : ceiling === floor ? `${floor}` : `${floor}–${ceiling}`;
