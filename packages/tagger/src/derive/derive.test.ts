@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { manaAdded, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { manaAdded, unitAmount, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import type { Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
@@ -1621,12 +1621,14 @@ test("an amount stays a STRING, because X is a legitimate value", () => {
   expect(abilities[0].amount).toBe("X");
 });
 
-test("an action with no amount leaves the field unset -- refused, not defaulted to 1", () => {
+test("an action whose object states no count leaves the field unset -- refused, not defaulted to 1", () => {
   const { abilities } = deriveAbilities([{
-    id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card" }],
+    id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "that many cards" }],
   }]);
   expect(abilities[0].amount).toBeUndefined();
   expect("amount" in abilities[0]).toBe(false);
+  // "a card" STATES one (DERIVE 161): that is a reading of the card, not a default.
+  expect(deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card" }] }]).abilities[0].amount).toBe("1");
 });
 
 test("a trigger carries its numeric threshold", () => {
@@ -2891,4 +2893,33 @@ test("a mana ability's amount is the mana it adds; a counted, X or energy object
   expect(added("X mana of any one color", "X")).toBe("X");
   expect(added("{C}", "for each Urza's land you control")).toBe("for each Urza's land you control");
   expect(manaAdded("{E}{E}")).toBeUndefined();
+});
+
+/** A COUNTED ACTION'S AMOUNT IS READ OFF ITS OBJECT when the clause states none (DERIVE 161).
+ *  Object shapes are the census's own (2026-09-17): "a card" led 558 unset draws and 1,037 unset
+ *  discards; "up to two basic land cards" the searches; "target creature card" the returns. */
+test("a unit amount comes off the object: a card is one, up to two is two, all and that many stay unset", () => {
+  expect(unitAmount("draw", "a card")).toBe("1");
+  expect(unitAmount("draw", "two cards")).toBe("2");
+  expect(unitAmount("draw", "cards equal to the number of creatures you control")).toBeUndefined();
+  expect(unitAmount("draw", "that many cards")).toBeUndefined();
+  expect(unitAmount("draw", "target player")).toBeUndefined();
+  expect(unitAmount("discard", "a card")).toBe("1");
+  expect(unitAmount("discard", "your hand")).toBeUndefined();
+  expect(unitAmount("search", "your library for up to two basic land cards")).toBe("2");
+  expect(unitAmount("search", "your library for a card")).toBe("1");
+  expect(unitAmount("search", "your library")).toBeUndefined();
+  expect(unitAmount("search", "a card")).toBe("1"); // Vampiric Tutor's object, the library dropped
+  expect(unitAmount("search", "up to two basic land cards")).toBe("2");
+  expect(unitAmount("return", "target creature card from your graveyard to your hand")).toBe("1");
+  expect(unitAmount("return", "all creature cards from your graveyard")).toBeUndefined();
+  expect(unitAmount("untap", "up to three lands")).toBe("3");
+  expect(unitAmount("untap", "X target creatures")).toBe("X");
+  expect(unitAmount("copy", "that spell")).toBe("1");
+  expect(unitAmount("create-token", "a 1/1 white Soldier creature token")).toBe("1");
+  expect(unitAmount("scry", "2")).toBe("2");
+  expect(unitAmount("add-counter", "+1/+1")).toBeUndefined();
+  // Through derive: Merfolk Looter's discard reads 1 now, and a stated amount is never overwritten.
+  const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "discard", object: "a card" }] }], "Merfolk Looter");
+  expect(abilities.map((a) => a.amount)).toEqual(["1", "1"]);
 });
