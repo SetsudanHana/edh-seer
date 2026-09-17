@@ -10,6 +10,13 @@ export interface ImpactWeights {
    *  CARD-shaped and belong to card impact (roadmap Y9), not the edge. See
    *  `specs/2026-09-09-edge-magnitude-design.md` §8. */
   edgeModel?: "priors" | "strategy";
+  /** CARD IMPACT FROM THE COST-TO-EFFECT RATE (roadmap Y9; owner 2026-09-18: rates "overall impact
+   *  the score of the card within the deck"). A card's headline score is multiplied by
+   *  `1 + rateWeight × (percentile − 0.5)`, the percentile being the card's best rate WITHIN ITS
+   *  FAMILY over the corpus (`matcher/rate-stats.json`) -- unitless, so no exchange rate between
+   *  cards and damage is ever written down. Absent or 0 is inert; a card with no rate reads 1.
+   *  Never on an EDGE: edge weight is the deck's strategy alone (ruling 2026-09-10). */
+  rateWeight?: number;
   kinds: Record<string, number>;
   repeatability: Record<string, number>;
   scaling: Record<string, number>;

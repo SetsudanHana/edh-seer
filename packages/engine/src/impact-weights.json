@@ -63,6 +63,7 @@
   },
   "damping": 0.5,
   "edgeModel": "strategy",
+  "rateWeight": 0,
   "magnitude": {
     "glut": 3,
     "beta": 0
