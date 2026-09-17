@@ -456,15 +456,18 @@ const COUNTER_KINDS = [
 
 /** The counter kind a subject names, or undefined. Anchored on the word "counter" so a subject that
  *  merely mentions flying or a Blood token is not read as a counter filter. */
-function parseCounter(t: string): string | undefined {
+export function parseCounter(t: string): string | undefined {
   if (!/\bcounters?\b/.test(t)) return undefined;
   for (const k of COUNTER_KINDS) {
     // The kinds contain regex metacharacters (+, /), so match on plain text against the words that
-    // precede "counter".
-    const i = t.indexOf(k);
-    if (i < 0) continue;
-    const after = t.slice(i + k.length);
-    if (/^\s+counters?\b/.test(after)) return k;
+    // precede "counter". The kind must START a word: without the left boundary "one or mORE
+    // counters" read as an ore counter on Shadow Urchin, Magma Pummeler and Goldberry (2026-09-17),
+    // a kind that refuses every real producer. Orcish Mine's "ore counter" still reads.
+    let i = -1;
+    while ((i = t.indexOf(k, i + 1)) >= 0) {
+      if (i > 0 && /[a-z0-9]/i.test(t[i - 1]!)) continue;
+      if (/^\s+counters?\b/.test(t.slice(i + k.length))) return k;
+    }
   }
   return undefined;
 }

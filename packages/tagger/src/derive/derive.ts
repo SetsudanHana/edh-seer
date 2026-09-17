@@ -14,7 +14,7 @@ import { interveningIfOf, conditionCares as conditionCares_ } from "./intervenin
 import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
-import { parseSubject } from "./subject.js";
+import { parseSubject, parseCounter } from "./subject.js";
 import { repeatsFor, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
@@ -86,7 +86,10 @@ import { emblemRecipient } from "../emblem.js";
 // own +1/+1), read off the clause text since an add-counter's object names only the counter.
 // 154: a passive own-counter trigger ("whenever counters are put on this creature") is self, read off
 // the trigger phrase; the model's subject there is the counter, never the recipient.
-export const DERIVE_VERSION = 154;
+// 155: an active-voice counter trigger ("whenever you put one or more +1/+1 counters on X") records
+// the kind from the trigger phrase (Exemplar of Light <- Sorin's lifelink counter); `parseCounter`
+// needs a word start, so "one or more counters" is no longer an ore counter (Shadow Urchin).
+export const DERIVE_VERSION = 155;
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
  *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
@@ -1107,6 +1110,15 @@ export function deriveAbilities(
         // -- the text up to the first comma -- so an emit's "on this creature" later in the same
         // sentence is not mistaken for the trigger's.
         if ((verb === "counter-added" || verb === "counter-removed") && counterTriggerOnSelf(text, cardName)) { subject.self = true; subject.control = "you"; }
+        // THE ACTIVE FORM NAMES THE KIND IN THE TEXT, NOT IN THE MODEL'S SUBJECT (DERIVE 155): "whenever
+        // you put one or more +1/+1 counters on this creature" (Exemplar of Light) normalizes to
+        // subject "this creature", so the kind the passive form's subject carries ("a +1/+1 counter",
+        // Fathom Mage) was never recorded, and Sorin's -6 lifelink counter fed Exemplar's +1/+1 draw.
+        // 15 of the 45 kindless corpus counter triggers name one in the trigger phrase.
+        if ((verb === "counter-added" || verb === "counter-removed") && subject.counter === undefined) {
+          const kind = parseCounter(printedTriggerPhrase(text, clause.trigger.subject ?? "").toLowerCase());
+          if (kind) subject.counter = kind;
+        }
         // ON AN `attacks` TRIGGER THE STATE IS THE EVENT: "a creature you control attacking" (Arni
         // Metalbrow, Seifer) is every attacker, and the implied `attacks` producer never states
         // the state, so keeping it here would delete every real edge these have. Kept on every

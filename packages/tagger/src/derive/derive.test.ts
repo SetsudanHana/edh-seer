@@ -1234,6 +1234,14 @@ test("a counter put on this card is a self emit; one put on another permanent is
   expect(trig("Whenever one or more +1/+1 counters are put on this creature, draw a card.", "a +1/+1 counter", "Fathom Mage")).toMatchObject({ self: true, control: "you" });
   expect(trig("Whenever one or more +1/+1 counters are put on Fathom Mage, draw a card.", "a +1/+1 counter", "Fathom Mage")).toMatchObject({ self: true });
   expect(trig("Whenever one or more +1/+1 counters are put on a creature you control, draw a card.", "a +1/+1 counter", "Simic Ascendancy")?.self).toBeUndefined();
+  // THE ACTIVE FORM (DERIVE 155): the model's subject is the recipient, so the kind is read off the
+  // trigger phrase. Exemplar of Light triggers on +1/+1 counters and not on Sorin's lifelink counter;
+  // a kindless "one or more counters" stays unset (and is NOT an ore counter); a kind after the
+  // comma belongs to the effect, not the trigger.
+  expect(trig("Whenever you put one or more +1/+1 counters on this creature, draw a card.", "this creature", "Exemplar of Light")).toMatchObject({ self: true, counter: "+1/+1" });
+  expect(trig("Whenever you put one or more -1/-1 counters on a creature, draw a card.", "a creature", "Hapatra, Vizier of Poisons")?.counter).toBe("-1/-1");
+  expect(trig("Whenever one or more counters are removed from this creature, draw a card.", "a counter", "Shadow Urchin")?.counter).toBeUndefined();
+  expect(trig("Whenever you put one or more counters on a creature, put a charge counter on this artifact.", "a creature", "Both")?.counter).toBeUndefined();
   expect(trig("Whenever you put a counter on a creature you control, put a +1/+1 counter on this creature.", "a counter", "Grower")?.self).toBeUndefined();
   // Adapt and monstrosity are self by rule.
   expect(emitOf("Adapt 2", "Incubation Druid", "2", "adapt")?.subject.self).toBe(true);
