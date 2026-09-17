@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
-import { manaOf, ratesOf } from "./rate.js";
+import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateTriple } from "./rate.js";
 import type { DeckCard } from "./types.js";
 
 /** A card with one derived ability and a printed cost. Verified oracle texts from the corpus
@@ -124,4 +124,39 @@ test("an activation cost with words in it is flagged as more than mana", () => {
   expect(ratesOf(card("Bloodfire Colossus", "{6}{R}{R}", sac, { types: ["creature"] }))[0]).toMatchObject({ mana: 1, floor: 6, extraCost: true });
   const tap = [{ kind: "activated", cost: "{4}, {T}", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "repeatable" }];
   expect(ratesOf(card("Jayemdae Tome", "{4}", tap))[0]).not.toHaveProperty("extraCost");
+});
+
+/** THE ORDER A SEARCH ROW SORTS BY: floor per mana, then ceiling per mana with open above bounded,
+ *  then the cheaper ability. */
+test("compareRates: priced before free, floor per mana first, open ceiling breaks above a bounded one, cheaper last", () => {
+  const rows: RateTriple[] = [
+    [0, 9, 3],      // Fiery Gambit: conditional, ceiling 9
+    [2, 2, 3],      // Divination
+    [3, 3, 1],      // Brainstorm
+    [0, null, 3],   // Rhystic Study: a trigger
+    [1, 1, 0],      // Merfolk Looter: free activation
+    [1, 1, 1],      // one for one
+  ];
+  expect([...rows].sort(compareRates)).toEqual([[3, 3, 1], [1, 1, 1], [2, 2, 3], [0, null, 3], [0, 9, 3], [1, 1, 0]]);
+  expect(compareRates([3, 3, 0], [1, 1, 0])).toBeLessThan(0);
+  expect(compareRates([0, null, 0], [0, null, 0])).toBe(0);
+});
+
+test("bestRates keeps the best per family and leaves an extraCost activation out", () => {
+  const rate = (over: Partial<Rate>): Rate => ({ family: "cards", kind: "activated", amount: 1, mana: 1, repeats: "repeatable", floor: 1, ceiling: 1, ...over });
+  expect(bestRates([
+    rate({ floor: 1, ceiling: 1, mana: 2 }),
+    rate({ floor: 1, ceiling: 1, mana: 1 }),
+    rate({ family: "damage", floor: 6, ceiling: 6, mana: 1, extraCost: true }),
+    rate({ family: "damage", floor: 0, ceiling: null, mana: 4 }),
+  ])).toEqual({ cards: [1, 1, 1], damage: [0, null, 4] });
+  expect(bestRates([])).toEqual({});
+});
+
+/** A LOYALTY COST IS NOT MANA (CR 606.5). Teferi, Temporal Pilgrim "0: Draw a card." (corpus,
+ *  2026-09-17) read as one card for nothing on the first chip sort. */
+test("a loyalty or empty cost has no mana to read and is refused", () => {
+  const draw = (cost: string) => ({ kind: "activated", cost, effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "per-turn" });
+  expect(ratesOf(card("Teferi, Temporal Pilgrim", "{3}{U}{U}", [draw("0"), draw("+1"), draw("−3"), draw("")], { types: ["planeswalker"] }))).toEqual([]);
+  expect(ratesOf(card("Obsessive Stitcher", "{1}{U}{B}", [draw("{T}")], { types: ["creature"] }))).toMatchObject([{ mana: 0, floor: 1, delayed: true }]);
 });

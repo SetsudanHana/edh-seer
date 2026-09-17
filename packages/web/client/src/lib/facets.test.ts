@@ -2,7 +2,7 @@ import { EFFECT_KINDS } from "@edh-seer/tagger/schema";
 import { ARCHETYPE_SIGNATURE } from "@edh-seer/matcher/archetypes";
 import type { FacetRow } from "@edh-seer/matcher/partners-core";
 import { expect, test } from "vitest";
-import { DOES, STRATEGIES, applyFacets, coloursFit, facetsFromParams, facetsToParams, matchedTerms } from "./facets.js";
+import { DOES, STRATEGIES, applyFacets, coloursFit, facetsFromParams, facetsToParams, matchedTerms, rateLabel } from "./facets.js";
 
 /** FIND BY WHAT IT DOES (spec 2026-09-08 part 4): the chips name real kinds, the strategies carry
  *  signatures, colours mean subset on Cards and exact on Commanders, groups AND and chips OR. */
@@ -85,4 +85,27 @@ test("facets round-trip through the URL, and unknown values are dropped", () => 
   expect(facetsFromParams(new URLSearchParams(""))).toEqual({ colours: [], does: [], strategy: undefined });
   expect(facetsFromParams(new URLSearchParams("colors=GX&does=nope,mill&theme=nope")))
     .toEqual({ colours: ["G"], does: ["mill"], strategy: undefined });
+});
+
+/** ONE DOES CHIP SORTS BY ITS RATE (spec 2026-09-04 step 3): floor per mana, ceiling to break it,
+ *  the cards that state one above the ones that do not; two chips get no rate order. */
+test("a single rated chip orders by floor per mana, rated above unrated; two chips do not", () => {
+  const rows: FacetRow[] = [
+    { s: "rhystic-study", i: "U", c: 0, e: ["draw-card"], t: [], d: [], p: 900, r: { cards: [0, null, 3] } },
+    { s: "unrated", i: "U", c: 0, e: ["draw-card"], t: [], d: [], p: 2000 },
+    { s: "divination", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [2, 2, 3] } },
+    { s: "brainstorm", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [3, 3, 1] } },
+    { s: "fiery-gambit", i: "R", c: 0, e: ["draw-card", "damage"], t: [], d: [], r: { cards: [0, 9, 3], damage: [0, 3, 3] } },
+  ];
+  expect(applyFacets(rows, { colours: [], does: ["draw-card"], strategy: undefined }, "cards").map((r) => r.s))
+    .toEqual(["brainstorm", "divination", "rhystic-study", "fiery-gambit", "unrated"]);
+  expect(applyFacets(rows, { colours: [], does: ["draw-card", "damage"], strategy: undefined }, "cards").map((r) => r.s))
+    .toEqual(["fiery-gambit", "unrated", "rhystic-study", "brainstorm", "divination"]);
+  const q = { colours: [], does: ["draw-card"], strategy: undefined };
+  expect(matchedTerms(rows[3]!, q)).toEqual(["draws cards", "3 cards / 1 mana"]);
+  expect(matchedTerms(rows[0]!, q)).toEqual(["draws cards", "0+ cards / 3 mana"]);
+  expect(matchedTerms(rows[4]!, q)).toEqual(["draws cards", "0–9 cards / 3 mana"]);
+  expect(matchedTerms(rows[4]!, { ...q, does: ["damage"] })).toEqual(["deals damage", "0–3 damage / 3 mana"]);
+  expect(matchedTerms(rows[1]!, q)).toEqual(["draws cards"]);
+  expect(rateLabel([1, 1, 0], "cards")).toBe("1 card / 0 mana");
 });

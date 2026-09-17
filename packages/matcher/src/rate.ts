@@ -120,7 +120,10 @@ export function ratesOf(d: DeckCard): Rate[] {
     if (family === "damage" && control === "you") continue;
     if (a.unless && a.unless.payer === "you") continue;
     const cost = a.kind === "activated" ? a.cost : (d.card as { manaCost?: string }).manaCost;
-    if (cost === undefined) continue;
+    // NO MANA TO READ: a loyalty cost ("+1", "−3", "0"; CR 606.5) is paid in loyalty, not mana, and
+    // an empty or words-only cost states none. Measured 2026-09-17 on the first chip sort: 341
+    // "+1" abilities read as free and put every planeswalker above Brainstorm.
+    if (cost === undefined || !/\{[^{}]+\}/.test(cost)) continue;
     const extra = a.kind === "activated" && /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, ""));
     const repeats = a.repeats ?? (a.kind === "on-cast" ? "once" : "repeatable");
     const mana = manaOf(cost);
@@ -145,6 +148,38 @@ export function ratesOf(d: DeckCard): Rate[] {
       ...(extra ? { extraCost: true as const } : {}),
       ...(sick(a) ? { delayed: true as const } : {}),
     });
+  }
+  return out;
+}
+
+/** THE RATE A SEARCH ROW CARRIES: floor, ceiling (null when open), mana. Three numbers, not the
+ *  record, because the facet index is fetched by the browser. */
+export type RateTriple = [floor: number, ceiling: number | null, mana: number];
+
+const desc = (x: number, y: number): number => (x === y ? 0 : y > x ? 1 : -1);
+const priced = (t: RateTriple): boolean => t[2] > 0;
+/** Per mana when there is mana; a free activation ({T} alone) compares by its yield. */
+const per = (n: number | null, t: RateTriple): number => (n === null ? Infinity : priced(t) ? n / t[2] : n);
+
+/** THE ORDER WITHIN A FAMILY (spec 2026-09-04 step 3): every rate with mana to divide by before
+ *  any free one -- a {T} loot has no per-mana figure, and dividing by zero put 103 tap abilities
+ *  above Brainstorm on the first build (2026-09-17); then floor per mana, ceiling per mana to break
+ *  it, an open ceiling above any bounded one -- a trigger's yield is what a deck makes of it, a
+ *  one-shot's is written down -- then the cheaper ability. Negative when `a` is better. */
+export function compareRates(a: RateTriple, b: RateTriple): number {
+  if (priced(a) !== priced(b)) return priced(a) ? -1 : 1;
+  return desc(per(a[0], a), per(b[0], b)) || desc(per(a[1], a), per(b[1], b)) || a[2] - b[2];
+}
+
+/** THE BEST RATE PER FAMILY among a card's rates, for the row. An activation that charges more
+ *  than mana (`extraCost`) is left out: Bloodfire Colossus is not 6 damage for {R}. */
+export function bestRates(rates: Rate[]): Partial<Record<RateFamily, RateTriple>> {
+  const out: Partial<Record<RateFamily, RateTriple>> = {};
+  for (const r of rates) {
+    if (r.extraCost) continue;
+    const t: RateTriple = [r.floor, r.ceiling, r.mana];
+    const have = out[r.family];
+    if (have === undefined || compareRates(t, have) < 0) out[r.family] = t;
   }
   return out;
 }
