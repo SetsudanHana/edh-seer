@@ -41,10 +41,18 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
     <CardShell page={page} slug={slug} surface="card" peekLoad={load}>
       {/* The reading table on a phone sits here, above the partners, because the rail's stacked
         *  copy is hidden below `lg` (it is card-shaped metadata and the rail is the card's). */}
-      <section className="lg:hidden flex flex-col gap-3">
-        <h3 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h3>
-        <AbilityTable rows={page.abilities} />
-      </section>
+      {/* FOLDED ON A PHONE (UX review, 2026-09-17): open, this table put the partners 1,335px
+        *  down a 390px screen. The heading is the summary, the chevron the same one the search
+        *  page's "What it does" chip carries. */}
+      <details className="lg:hidden group/reads flex flex-col gap-3">
+        <summary className="cursor-pointer list-none flex items-center gap-2 w-fit">
+          <h3 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/reads:rotate-180 motion-reduce:transition-none">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </summary>
+        <div className="mt-3"><AbilityTable rows={page.abilities} /></div>
+      </details>
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">

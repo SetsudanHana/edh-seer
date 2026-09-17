@@ -1631,7 +1631,11 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    block on boot would empty the page the instant the bundle ran. It also means the list exists in
    the document ONCE, as HTML, rather than as HTML plus a copy in JSON for the client to re-render. */
 html[data-app-booted]:not([data-route="browse"]) .prerendered { display: none; }
-html[data-app-booted][data-route="page"] .intro { display: none; }
+html[data-app-booted][data-route="page"] .intro,
+html[data-app-booted][data-route="search"] .intro { display: none; }
+/* THE SEARCH PAGES CARRY THEIR OWN BOX. Beside it the header's was a second "Find a card" with a
+   different label (UX review, 2026-09-17); on a phone the toggle goes with it. */
+html[data-app-booted][data-route="search"] .site-search { display: none; }
 
 /* THE BROWSE PAGES. Server-rendered, no JavaScript, and styled here because the markup comes from
    `inject.ts` at the edge rather than from a component -- Tailwind never sees those strings, so

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { eventKeySentence } from "../lib/demand-sentence.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
@@ -30,6 +31,9 @@ function feederCaption(p: PartnerRow, subject?: string): string {
   return p.reason.replace(lead, "");
 }
 
+/** Tiles in one row below `sm`, where the grid is `grid-cols-3`. */
+const PHONE_ROW = 3;
+
 export function PartnerList({ rows, pool, rarity, empty, subject }: {
   rows: PartnerRow[];
   /** The page's own card, so a feeder caption can leave its name out. */
@@ -38,6 +42,12 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
   rarity: Record<string, number>;
   empty: string;
 }) {
+  // ONE ROW PER GROUP ON A PHONE (UX review, 2026-09-17: 9.6 screens, Partners at 1,335px). Three
+  // tiles is the row below `sm`; the rest stay in the document and hide by CSS until the group is
+  // asked for, so nothing here knows the viewport and a wide screen never sees the button.
+  const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
+  // A new list is a new page; what was unfolded on the last one does not carry over.
+  useEffect(() => { setOpened(new Set()); }, [rows]);
   if (rows.length === 0) {
     return <p className="text-(--muted) max-w-[65ch]">{empty}</p>;
   }
@@ -88,8 +98,8 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
               * row has no payoff (its sentence describes the subject, not this card) and shows the
               * sentence whole. The click rule lives in `CardTile`. */}
             <ul className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-x-3 gap-y-5 sm:gap-x-4 list-none p-0 m-0">
-              {group.rows.map((p) => (
-                <li key={p.slug} className="min-w-0">
+              {group.rows.map((p, i) => (
+                <li key={p.slug} className={i >= PHONE_ROW && !opened.has(group.event) ? "min-w-0 max-sm:hidden" : "min-w-0"}>
                   <CardTile
                     slug={p.slug} name={p.name} art={p.art} identity={p.identity}
                     // AN UNREAD ROW HAS NO PAYOFF TO SHOW. Its "triggers" over the limit read as the
@@ -100,6 +110,15 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
                 </li>
               ))}
             </ul>
+            {group.rows.length > PHONE_ROW && !opened.has(group.event) && (
+              <button
+                type="button"
+                className="btn-secondary self-start sm:hidden"
+                onClick={() => setOpened((s) => new Set(s).add(group.event))}
+              >
+                Show {group.rows.length - PHONE_ROW} more
+              </button>
+            )}
             {withheld > 0 && (
               // COUNTED CANDIDATES, NOT VERIFIED EDGES, and the sentence has to say so: the engine
               // was never asked about the cards past the cap. Equal members are ordered by play
