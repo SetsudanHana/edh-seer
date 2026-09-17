@@ -109,13 +109,46 @@ import { emblemRecipient } from "../emblem.js";
 // alternative), "three mana of any one color" is 3; a counted or X object stays unset, as does
 // energy. The cost-to-effect rate's mana family reads it (roadmap X2; 2,528 add-mana actions,
 // 94% of them without an amount before this).
-export const DERIVE_VERSION = 160;
+// 161: a counted action's amount is read off its object when the clause states none (the census
+// 2026-09-17: 754 draws, 1,505 discards, 1,118 searches, 2,701 returns without one): "a card" is
+// 1, "two cards" 2, "up to two basic land cards" 2 (the rate's condition list puts the floor at
+// 0), "X target creatures" X; for a verb whose object IS the thing counted (return, untap, copy,
+// exile, put, tap, sacrifice, destroy) "target creature", "this", "it", "another" are 1; "all",
+// "each", "the", "those", "that many", "cards equal to" stay unset. Scry and surveil carry the
+// number as the object. This retires the paid `dropsUnitAmount` refresh.
+export const DERIVE_VERSION = 161;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
  *  number, alternatives joined by "or" take the smallest. Unset on a counted, X, or "that much"
  *  object -- `scaling` says how those grow -- and on energy, which is not mana (CR 107.14). */
 const NUMBER_WORD: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+/** THE VERBS WHOSE OBJECT IS THE THING COUNTED, so a single reference ("target creature card",
+ *  "this", "it", "another") is one of it. A draw's or a discard's object is the count itself ("a
+ *  card") or a player, so only a number head counts there. */
+const OBJECT_IS_COUNTED = new Set(["return", "untap", "copy", "exile", "put", "tap", "sacrifice", "destroy", "flicker"]);
+/** The verbs a unit amount is read for at all: the rate families and the unit effects behind
+ *  them. Counters are not here -- an `add-counter` object is the counter's KIND, and "a +1/+1
+ *  counter on each creature you control" is not one counter. */
+const UNIT_VERBS = new Set(["draw", "discard", "mill", "search", "create-token", "scry", "surveil", ...OBJECT_IS_COUNTED]);
+const UNIT_HEAD = /^(?:up to )?(a|an|one|two|three|four|five|six|seven|eight|nine|ten|x)\b/;
+/** THE AMOUNT A COUNTED ACTION STATES IN ITS OBJECT, when the clause put none on `amount`. `undefined`
+ *  where the object counts nothing this can read: "all", "each", "the top card", "those", "that
+ *  many", "cards equal to", "any number of". A search counts what comes after "for", or its whole
+ *  object when the normalizer dropped the library ("a card", Vampiric Tutor); a bare "your library"
+ *  counts nothing. */
+export function unitAmount(verb: string, object: string): string | undefined {
+  if (!UNIT_VERBS.has(verb)) return undefined;
+  let o = object.trim().toLowerCase();
+  if (verb === "search") { const m = /\bfor (.+)$/.exec(o); if (m) o = m[1]!; else if (/^(?:your|their|its|his|her) /.test(o)) return undefined; }
+  if (verb === "scry" || verb === "surveil") return /^\d+$/.test(o) ? o : /^x$/.test(o) ? "X" : undefined;
+  if (/^(?:that many|any number|those|all|each|the|your|their|cards? equal)\b/.test(o)) return undefined;
+  const head = UNIT_HEAD.exec(o)?.[1];
+  if (head) return head === "x" ? "X" : head === "a" || head === "an" ? "1" : String(NUMBER_WORD[head]);
+  if (OBJECT_IS_COUNTED.has(verb) && /^(?:target|this|it|that|another|enchanted|equipped)\b/.test(o)) return "1";
+  return undefined;
+}
+
 export function manaAdded(object: string): number | undefined {
   if (/\bfor each\b|\bequal to\b|\bthat m(?:any|uch)\b|\bnumber of\b|\bX\b|\{E\}|\bE\b/.test(object)) return undefined;
   const counts = object.split(/\s*,?\s+or\s+/i).map((alt) => {
@@ -1432,6 +1465,9 @@ export function deriveAbilities(
       else if (action.verb === "add-mana" && effectKind === "mana-generation") {
         const added = manaAdded(action.object ?? "");
         if (added !== undefined) ability.amount = String(added);
+      } else {
+        const unit = unitAmount(action.verb ?? "", action.object ?? "");
+        if (unit !== undefined) ability.amount = unit;
       }
       // The payment that stops the effect (CR 118.12a), verbatim: the floor the rate axis reads.
       if (action.unless?.cost) ability.unless = { cost: action.unless.cost, payer: action.unless.payer as "you" | "opponent" | "controller" | "any" };
