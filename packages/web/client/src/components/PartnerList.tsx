@@ -87,7 +87,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
               * sentence is still in the artifact and still what the deck report prints. A feeder
               * row has no payoff (its sentence describes the subject, not this card) and shows the
               * sentence whole. The click rule lives in `CardTile`. */}
-            <ul className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 sm:gap-x-4 list-none p-0 m-0">
+            <ul className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-x-3 gap-y-5 sm:gap-x-4 list-none p-0 m-0">
               {group.rows.map((p) => (
                 <li key={p.slug} className="min-w-0">
                   <CardTile
