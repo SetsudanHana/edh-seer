@@ -1,7 +1,6 @@
-import { Link } from "react-router";
 import { eventKeySentence } from "../lib/demand-sentence.js";
 import type { PartnerRow } from "../lib/partners.js";
-import { peekOnPlainClick, usePeek } from "./peek.js";
+import { CardTile } from "./CardTile.js";
 
 /** THE PARTNER LIST, GROUPED BY THE EVENT THAT EARNED EACH ROW.
  *
@@ -18,13 +17,21 @@ import { peekOnPlainClick, usePeek } from "./peek.js";
  *  NO SCORES. The specificity number decides the ORDER and never appears: on a reading surface the
  *  reason sentence is the atomic unit (DESIGN.md, the graph doc's ban on scores), and a 0.233 beside
  *  a sentence invites a reader to compare two numbers whose scale nothing on the page explains. */
+/** A FEEDER ROW'S SENTENCE OPENS WITH THE ROW'S OWN NAME -- "While you control Guttersnipe, Krenko,
+ *  Mob Boss counts it and makes more tokens" -- which under a tile that already shows Guttersnipe is
+ *  the one half a two-line clamp should not spend itself on. The remainder names the page's card
+ *  and what it does, which is the claim. Any other shape is kept whole. */
+function feederCaption(p: PartnerRow): string {
+  const lead = new RegExp(`^While you control ${p.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")},\s*`, "i");
+  return p.reason.replace(lead, "");
+}
+
 export function PartnerList({ rows, pool, rarity, empty }: {
   rows: PartnerRow[];
   pool: Record<string, number>;
   rarity: Record<string, number>;
   empty: string;
 }) {
-  const peek = usePeek();
   if (rows.length === 0) {
     return <p className="text-(--muted) max-w-[65ch]">{empty}</p>;
   }
@@ -39,14 +46,11 @@ export function PartnerList({ rows, pool, rarity, empty }: {
     else groups.push({ event: row.event, rows: [row] });
   }
 
-  // WIDTH BUYS COLUMNS, WHICH IS THE HOUSE RULE AND ALSO THE FIX FOR THE REAL COMPLAINT. MEASURED on
-  // the deployed preview at 1440px: the partner rows used 640px of a 1440px viewport -- 44% -- with
-  // the rest empty, because a reading measure sat on a list of INDEPENDENT groups. A group is a
-  // self-contained unit (one event, up to three rows, one withheld count), so two of them side by
-  // side is two facts, not a longer line. Native CSS columns with `break-inside-avoid`, the same
-  // pattern the Overview blocks already use.
+  // GROUPS STACK FULL WIDTH (2026-09-17). Two side-by-side columns made sense for rows of text;
+  // for tiles they halved the tile to ~105px. One group per band, five tiles across on a wide
+  // viewport, is the shape EDHREC readers already know.
   return (
-    <div className="flex flex-col gap-6 lg:block lg:columns-2 lg:gap-x-10 lg:space-y-6">
+    <div className="flex flex-col gap-8">
       {groups.map((group) => {
         const withheld = (pool[group.event] ?? group.rows.length) - group.rows.length;
         return (
@@ -63,43 +67,28 @@ export function PartnerList({ rows, pool, rarity, empty }: {
                 * descending exactly as the intro claims. Sound reasoning, missing evidence. */}
               {rarity[group.event] !== undefined && (
                 <p className="text-(--muted) text-sm">
-                  <span className="font-mono tabular-nums">
-                    {rarity[group.event]!.toLocaleString("en-US")}
-                  </span>{" "}
-                  cards can cause this
+                  <span className="inline-flex items-baseline gap-1 rounded-full border border-(--separator) px-2 py-0.5">
+                    <span className="font-mono tabular-nums text-(--foreground)">
+                      {rarity[group.event]!.toLocaleString("en-US")}
+                    </span>
+                    cards can cause this
+                  </span>
                 </p>
               )}
             </div>
-            <ul className="flex flex-col">
+            {/* TILES, NOT ROWS (owner, 2026-09-17: "just a wall of text"). Each row is the whole card
+              * small, the name, its pips and the payoff clamped to two lines; the engine's full
+              * sentence is still in the artifact and still what the deck report prints. A feeder
+              * row has no payoff (its sentence describes the subject, not this card) and shows the
+              * sentence whole. The click rule lives in `CardTile`. */}
+            <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-5 list-none p-0 m-0">
               {group.rows.map((p) => (
-                <li key={p.slug}
-                  className="border-t border-(--separator) py-3 flex flex-col gap-1 first:border-t-0 first:pt-0">
-                  {/* THE HEADING ALREADY SAID THE EVENT. Every row under one group opened with the
-                    * same 60 characters -- "When a Goblin enters thanks to Krenko, Mob Boss," ten
-                    * times over -- and a design review measured ~60% of this section as repetition
-                    * with the payoff, the only new information, pushed to the end of every line. The
-                    * row now leads with what the card DOES; the engine's full sentence is still in
-                    * the artifact and still what the deck report prints.
-                    * A feeder row has no payoff (its sentence describes the subject, not this card)
-                    * and keeps the sentence whole. */}
-                  <p className="flex flex-wrap items-baseline gap-x-2">
-                    {/* A PLAIN CLICK PEEKS, EVERYTHING ELSE NAVIGATES (spec 2026-09-08 part 3).
-                      *  The href stays the page: a crawler reads it, a middle click or a modifier
-                      *  opens it in a tab, copy-link copies it. Only the ordinary left click, the one
-                      *  that used to lose the reader's place, is turned into a look. */}
-                    <Link className="font-semibold text-(--accent) hover:underline underline-offset-2"
-                      to={`/cards/${p.slug}`}
-                      onClick={(ev) => { peekOnPlainClick(peek, p.slug, ev); }}>{p.name}</Link>
-                    {p.payoff && <span className="text-(--muted)">— {p.payoff}</span>}
-                  </p>
-                  {!p.payoff && <p className="text-(--muted) max-w-[65ch]">{p.reason}</p>}
-                  {/* A LIMIT THE PAGE STATES IS HONEST; A LIMIT IT HIDES IS NOT. 3,453 consumer
-                    * abilities carry no effect kind, so their sentence ends at "triggers" -- in the
-                    * same typeface as the informative rows, which a skeptic called a refusal that
-                    * reads as a hole. */}
-                  {p.unread && (
-                    <p className="eyebrow text-(--muted)">engine did not read what it does</p>
-                  )}
+                <li key={p.slug} className="min-w-0">
+                  <CardTile
+                    slug={p.slug} name={p.name} art={p.art} identity={p.identity}
+                    caption={p.payoff ?? feederCaption(p)}
+                    note={p.unread ? "engine did not read what it does" : undefined}
+                  />
                 </li>
               ))}
             </ul>
