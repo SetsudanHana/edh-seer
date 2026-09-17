@@ -323,7 +323,34 @@ export interface PartnerRow {
    *  marker -- which a skeptic called a refusal that reads as a hole. A limit the page states is
    *  honest; a limit it hides is not. */
   unread?: true;
+  /** THE ROW'S OWN CARD, AS A TILE (2026-09-17). The partner list rendered as two columns of names
+   *  and sentences -- a wall of text -- because a row carried nothing a reader could scan. The
+   *  Scryfall PRINTING id is 36 characters and every art URL in the corpus embeds it (745 of 745
+   *  sampled), so the row carries the id and the client rebuilds the crop URL; absent when the card
+   *  has no art, so the tile shows the name on a plain surface instead of a broken image. */
+  art?: string;
+  /** Colour identity, WUBRG order, for the mana pips beside the name. Empty is colourless. */
+  identity?: string[];
 }
+
+/** The Scryfall printing id inside an art URL: `.../art_crop/front/5/7/<id>.jpg?<ts>`. The path's two
+ *  hex directories are the id's first two characters, and the `?ts` cache-buster is optional, so the
+ *  id alone rebuilds the URL. */
+export function printingIdOf(artCrop: string | null | undefined): string | undefined {
+  return artCrop?.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(?:jpg|png)/i)?.[1];
+}
+
+/** THE FRONT FACE IS THE FALLBACK: Scryfall puts `image_uris` on each FACE for transform and
+ *  modal_dfc and omits the top-level one (491 corpus cards, every one with `faces[0].artCrop`). */
+const artCropOf = (d: DeckCard): string | null =>
+  (d.card as { artCrop?: string }).artCrop
+  ?? (d.card as { faces?: { artCrop?: string }[] }).faces?.[0]?.artCrop ?? null;
+
+/** What a partner row needs to draw itself as a tile. */
+const tileOf = (d: DeckCard): Pick<PartnerRow, "art" | "identity"> => {
+  const art = printingIdOf(artCropOf(d));
+  return { identity: d.card.colorIdentity ?? [], ...(art ? { art } : {}) };
+};
 
 /** HOW MANY CANDIDATES ARE WORTH RUNNING THE ENGINE OVER.
  *
@@ -497,6 +524,7 @@ export function partnersFor(
       reason: chosen.text,
       ...payoffOf(chosen.text, r.card.card.name),
       ...(chosen.effectKind ? {} : { unread: true as const }),
+      ...tileOf(r.card),
     });
     if (rows.length === KEEP) break;
   }
@@ -541,6 +569,7 @@ export function partnersFor(
       rows.push({
         name: f.card.name, slug, score, event: key, reason: chosen.text,
         ...(chosen.effectKind ? {} : { unread: true as const }),
+        ...tileOf(f),
       });
     }
     // COUNTED BEFORE THE CUT, like every other pool: how many cards in the corpus are one of these.
@@ -581,6 +610,7 @@ export function partnersFor(
           name: c.card.name, slug, score: specificity(key, freq), event: key, reason: chosen.text,
           ...payoffOf(chosen.text, c.card.name),
           ...(chosen.effectKind ? {} : { unread: true as const }),
+          ...tileOf(c),
         });
         break;
       }
@@ -603,6 +633,7 @@ export function partnersFor(
       rows.push({
         name: meldWith.card.name, slug: slugs.get(meldWith.card.name)!,
         score: specificity(key, freq), event: key, reason: pickReason(on).text,
+        ...tileOf(meldWith),
       });
     }
   }
@@ -1112,6 +1143,8 @@ export interface NameIndexEntry {
    *  `thin`, NOT `noPartners`: since 2026-09-08 the floor is `MIN_INDEXABLE_PARTNERS`, not zero, so
    *  a flag named for emptiness would fire on a page with two partners and lie about it. */
   thin?: true;
+  /** The Scryfall printing id, so a search result can be a tile (see `PartnerRow.art`). */
+  art?: string;
   /** The same fact for `/commanders/<slug>`, which ranks a different list. Commander records only. */
   thinCommander?: true;
 }
@@ -1287,8 +1320,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       // and the image is the ONLY place these pages print rules text (spec D2a), so a DFC page was
       // the name, the type line and no card at all. Same chain `graph.ts` and `wire-graph.ts`
       // already use; this was the last reader that did not.
-      artCrop: (d.card as { artCrop?: string }).artCrop
-        ?? (d.card as { faces?: { artCrop?: string }[] }).faces?.[0]?.artCrop ?? null,
+      artCrop: artCropOf(d),
       backArtCrop: (d.card as { faces?: { artCrop?: string }[] }).faces?.[1]?.artCrop ?? null,
       abilities: abilityRowsOf(d),
       identity: d.card.colorIdentity ?? [],
@@ -1350,8 +1382,10 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     // READ BACK OFF THE RECORD JUST WRITTEN, so the index can never disagree with the shard the
     // edge reads its `indexable` decision from -- the two lists are the same two lists.
     const written = shard[slug] as CardPageRecord & { commanderPartners?: PartnerRow[] };
+    const art = printingIdOf(artCropOf(d));
     index.push({
       slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
+      ...(art ? { art } : {}),
       ...(written.partners.length < MIN_INDEXABLE_PARTNERS ? { thin: true as const } : {}),
       ...(commander && (written.commanderPartners ?? []).length < MIN_INDEXABLE_PARTNERS
         ? { thinCommander: true as const } : {}),

@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "../types.js";
 import {
-  KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, demandForms, eventKey, isSubstantive,
+  KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts, browseLetterOf, browseSlices,
   supplyForms, supplyKeysOf, themesOf, fillDemandsOf, rankOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
@@ -1425,4 +1425,24 @@ test("supplyForms: a damage emit also stands for `damaged`", () => {
   expect(supplyForms("non-combat-damage|creature|-|n")).toContain("damaged|creature|-|n");
   expect(supplyForms("combat-damage|-|-|n")).toContain("damaged|-|-|n");
   expect(supplyForms("dies|creature|-|n")).not.toContain("damaged|creature|-|n");
+});
+
+/** A TILE NEEDS THE ROW'S ART AND COLOURS (2026-09-17). The partner list rendered as two text
+ *  columns because a row carried nothing scannable. The row carries the 36-character printing id,
+ *  not the URL, and no field at all when the card has no art. */
+test("a partner row and an index entry carry the printing id and the identity", () => {
+  const tremors = base("Impact Tremors", impactTremors.tags.abilities);
+  (tremors.card as unknown as { artCrop: string; colorIdentity: string[] }).artCrop =
+    "https://cards.scryfall.io/art_crop/front/5/7/57adbd6e-88ec-4472-a9c9-90b679fa881f.jpg?1783922746";
+  (tremors.card as unknown as { colorIdentity: string[] }).colorIdentity = ["R"];
+  const { shards, index } = buildPartnerArtifact([krenko, tremors], H);
+  const rec = [...shards.values()].flatMap((sh) => Object.values(sh)).find((r) => r.name === "Krenko, Mob Boss")!;
+  const row = rec.partners.find((p) => p.name === "Impact Tremors")!;
+  expect(row.art).toBe("57adbd6e-88ec-4472-a9c9-90b679fa881f");
+  expect(row.identity).toEqual(["R"]);
+  expect(index.find((e) => e.name === "Impact Tremors")?.art).toBe("57adbd6e-88ec-4472-a9c9-90b679fa881f");
+  expect(index.find((e) => e.name === "Krenko, Mob Boss")?.art).toBeUndefined();
+  expect(printingIdOf(null)).toBeUndefined();
+  expect(printingIdOf("https://example.com/x.jpg")).toBeUndefined();
+  expect(printingIdOf("https://cards.scryfall.io/art_crop/back/e/a/ea7e0000-0000-4000-8000-000000000000.png")).toBe("ea7e0000-0000-4000-8000-000000000000");
 });
