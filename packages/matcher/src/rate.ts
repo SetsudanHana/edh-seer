@@ -18,12 +18,28 @@ import type { DeckCard } from "./types.js";
  *  RECORDED, NOT JUDGED. This says what a card charges for what it does. Whether the deck wants it
  *  is the synergy engine's question, and the two stay separate on purpose (spec 2026-09-04). */
 
-export type RateFamily = "cards" | "damage" | "mana";
+export type RateFamily = "cards" | "damage" | "mana" | "life" | "life-loss" | "mill" | "tokens" | "counters";
 
 /** The effect kinds a family reads. The census (2026-09-17) found an amount on 79% of draw
  *  abilities and 99% of damage; mana read 6% until DERIVE 160 put the mana a mana ability adds on
- *  its amount, which is the Signet-versus-Sphere comparison this axis was named for. */
-const FAMILY_OF: Record<string, RateFamily> = { "draw-card": "cards", damage: "damage", "mana-generation": "mana" };
+ *  its amount, which is the Signet-versus-Sphere comparison this axis was named for. The five that
+ *  followed (owner 2026-09-17, "what about the rest of effects") carry a numeric amount on 89%,
+ *  92%, 70%, 84% and 55% of their abilities. Tokens are a COUNT -- a 1/1 and a 4/4 read the same
+ *  until the token's size joins the unit -- and counters a count across kinds. Drain is not here:
+ *  its amount sits on the clause's two actions and derive drops it composing the kind. */
+const FAMILY_OF: Record<string, RateFamily> = {
+  "draw-card": "cards", damage: "damage", "mana-generation": "mana", lifegain: "life",
+  "player-life-loss": "life-loss", mill: "mill", "token-generation": "tokens", "counter-placement": "counters",
+};
+/** The families whose yield must be YOURS: another player's cards, life or tokens are not your
+ *  rate (Swords to Plowshares' life goes to the creature's controller). Mana is not here: "Add
+ *  {G}" is always the controller's, and derive marks its subject `any` (18 of 758 rows survived
+ *  the first draft that filtered it). */
+const YOURS = new Set<RateFamily>(["cards", "life", "tokens"]);
+/** The families whose yield must NOT be yours: Flame Rift's damage to you and a cost in life are
+ *  what the card charges, not what it does for you. Mill and counters are read whoever they land
+ *  on -- self-mill is a purpose, and a counter goes where it is put. */
+const NOT_YOURS = new Set<RateFamily>(["damage", "life-loss"]);
 
 export interface Rate {
   family: RateFamily;
@@ -45,6 +61,10 @@ export interface Rate {
    *  casting the card to then use its ability"). On an activation, the card's own mana: the
    *  first yield costs `cast + mana`, and only a repeatable one amortises to `mana` after. */
   cast?: number;
+  /** EQUIPPING IS A COST TOO (owner 2026-09-17, Paradise Mantle at {0}): on an Equipment, the
+   *  cheapest printed Equip cost, paid before the equipped creature's ability can be used. In the
+   *  first price with the cast; the equipment stays on for the later ones. */
+  equip?: number;
   /** Yield per further mana, on an X cost. */
   slope?: number;
   /** How often it can happen: `once`, `repeatable`, `per-cycle`, `per-turn`. */
@@ -58,7 +78,8 @@ export interface Rate {
   fallback?: { cost: string; payer: string };
   /** THE AMOUNT SITS BEHIND A CONDITION THE ABILITY CANNOT SHOW: Fiery Gambit's nine cards behind
    *  coin flips, Diviner's Lockbox's three behind a guess, Unholy Heat's six behind delirium,
-   *  Thunder Magic's eight behind a tier. The floor is 0 and the amount is the ceiling. CEILING:
+   *  Thunder Magic's eight behind a tier, Kazandu Tuskcaller's tokens behind level up. The floor is
+ *  0 and the amount is the ceiling. CEILING:
    *  read off the card's printed text by a word list (`CONDITION`), card-wide, so a card with one
    *  conditional ability marks its plain one too; the upgrade path is a condition on the ability
    *  from derive. Measured 2026-09-17: 258 of 590 cast draws with an amount sit on such a card. */
@@ -70,8 +91,10 @@ export interface Rate {
   extraCost?: true;
   /** SUMMONING SICKNESS (CR 302.6; owner 2026-09-17). A creature's activated ability with {T} or
    *  {Q} in its cost, and its own attack trigger, wait until the creature has been yours since your
-   *  turn began: the first yield is a turn later than the mana. Absent with printed haste, on a
-   *  noncreature, and on everything else. Recorded, so a consumer that counts turns can. */
+   *  turn began: the first yield is a turn later than the mana. The same for a tap ability an
+   *  Equipment or a creature Aura grants: the creature carrying it is the one that taps. Absent
+   *  with printed haste and on everything else. A turn has no price in mana without the constant
+   *  this file refuses, so the sort breaks a per-mana tie on it and the tile prints it. */
   delayed?: true;
 }
 
@@ -95,10 +118,10 @@ export function manaOf(cost: string | undefined): number | null {
 
 /** The words that put an amount behind a condition on a card's printed text. A list, not a parse:
  *  the derived ability carries the amount and nothing about what has to be true for it. */
-const CONDITION = /\bif\b|\bunless\b|\binstead\b|\bas long as\b|flip a coin|choose one|additional cost|\btiered\b|\bkicked\b|\bup to\b|\bthat many\b/i;
+const CONDITION = /\bif\b|\bunless\b|\binstead\b|\bas long as\b|\blevel up\b|flip a coin|choose one|additional cost|\btiered\b|\bkicked\b|\bup to\b|\bthat many\b/i;
 
 const integer = (s: string | undefined): number | null => {
-  if (s === undefined) return null;
+  if (s === undefined || s.trim() === "") return null;
   const n = Number(s.replace(/,/g, ""));
   return Number.isInteger(n) && n >= 0 ? n : null;
 };
@@ -117,13 +140,24 @@ export function ratesOf(d: DeckCard): Rate[] {
   const types = d.tags?.characteristics.types ?? [];
   const creature = types.includes("creature") || /\bCreature\b/.test(d.card.typeLine ?? "");
   const land = types.includes("land") || /\bLand\b/.test(d.card.typeLine ?? "");
+  const equipment = /\bEquipment\b/.test(d.card.typeLine ?? "");
+  const creatureAura = /\bAura\b/.test(d.card.typeLine ?? "") && /^Enchant creature\b/m.test(d.card.oracleText ?? "");
+  /** The cheapest printed "Equip {N}"; `null` when every Equip line charges something other than
+   *  mana ("Equip—Pay 2 life"), 0 when the card prints none. */
+  const equipCost = ((): number | null => {
+    const costs = [...(d.card.oracleText ?? "").matchAll(/^Equip\b[^\n{]*(\{[^\n]*)$/gm)].map((m) => manaOf(m[1]!));
+    if (costs.length === 0) return equipment ? null : 0;
+    const priced = costs.filter((n): n is number => n !== null);
+    return priced.length > 0 ? Math.min(...priced) : null;
+  })();
   const haste = (d.card.keywords ?? []).some((k) => k.toLowerCase() === "haste");
   const conditional = CONDITION.test(d.card.oracleText ?? "");
   /** CR 302.6, on this card: a tap or untap activation, or the card's own attack trigger. */
   const sick = (a: { kind: string; cost?: string; trigger?: { verbs?: string[]; subject?: { self?: boolean } } }): boolean =>
-    creature && !haste && (
+    (creature && !haste && (
       (a.kind === "activated" && /\{[TQ]\}/i.test(a.cost ?? ""))
-      || (a.kind === "triggered" && a.trigger?.subject?.self === true && (a.trigger.verbs ?? []).includes("attacks")));
+      || (a.kind === "triggered" && a.trigger?.subject?.self === true && (a.trigger.verbs ?? []).includes("attacks"))))
+    || ((equipment || creatureAura) && a.kind === "activated" && /\{[TQ]\}/i.test(a.cost ?? ""));
   const abilities = d.tags?.abilities ?? [];
   const manaCost = (d.card as { manaCost?: string }).manaCost;
   /** What the same clause takes back for a draw: `top-set` from the hand (Brainstorm), or a
@@ -148,11 +182,13 @@ export function ratesOf(d: DeckCard): Rate[] {
     const control = a.effect?.subject?.control;
     // WHOSE YIELD: cards are a rate only when YOU draw them; damage only when it is not to your
     // own side (Flame Rift's damage to you is a cost the card charges, not a thing it does for you).
-    if (family === "cards" && control !== undefined && control !== "you") continue;
+    if (YOURS.has(family) && control !== undefined && control !== "you") continue;
+    if (NOT_YOURS.has(family) && control === "you") continue;
     // A LAND'S MANA IS ITS LAND DROP, not a price in mana: every basic would top "adds mana" at
-    // infinity. A land's other abilities are priced like anything else.
+    // infinity. The same for any land activation that charges no mana of its own (Fountain of Cho's
+    // "{T}: Put a storage counter" topped "puts counters" as free); one that does (Castle
+    // Locthwain) is priced on it, with a cast of nothing.
     if (family === "mana" && land) continue;
-    if (family === "damage" && control === "you") continue;
     if (a.unless && a.unless.payer === "you") continue;
     const cost = a.kind === "activated" ? a.cost : manaCost;
     // NO MANA TO READ: a loyalty cost ("+1", "−3", "0"; CR 606.5) is paid in loyalty, not mana, and
@@ -162,9 +198,14 @@ export function ratesOf(d: DeckCard): Rate[] {
     // THE CAST BEFORE THE ACTIVATION: a land charges no mana to land; a nonland with no printed
     // cost (Sol Talisman, suspend only; Scryfall prints it as "", not absent) has no cast to add,
     // nor does a card with X in its own cost, so their activations are refused.
-    const cast = a.kind !== "activated" ? undefined : !manaCost ? (land ? 0 : null) : manaOf(manaCost);
+    const cast = a.kind !== "activated" ? undefined : !manaCost ? (land && (manaOf(cost) ?? 0) > 0 ? 0 : null) : manaOf(manaCost);
     if (cast === null) continue;
-    const castOf = cast === undefined ? {} : { cast };
+    // An Equipment's activation is the equipped creature's, and its trigger watches the equipped
+    // creature (Skullclamp): the Equip cost is paid before either. An Equip line that charges no
+    // mana is more than mana, and the rate says so.
+    const equipped = equipment && a.kind !== "on-cast";
+    if (equipped && equipCost === null) continue;
+    const castOf = { ...(cast === undefined ? {} : { cast }), ...(equipped && equipCost ? { equip: equipCost } : {}) };
     const extra = a.kind === "activated" && /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, ""));
     const repeats = a.repeats ?? (a.kind === "on-cast" ? "once" : "repeatable");
     const mana = manaOf(cost);
@@ -200,7 +241,7 @@ export function ratesOf(d: DeckCard): Rate[] {
  *  and the mana IT costs. Two prices because an activation's first yield includes the cast and a
  *  repeatable one's later yields do not. Four numbers, not the record, because the facet index
  *  is fetched by the browser. */
-export type RateSpan = [floor: number, floorMana: number, ceiling: number | null, ceilingMana: number];
+export type RateSpan = [floor: number, floorMana: number, ceiling: number | null, ceilingMana: number, delayed?: 1];
 
 const desc = (x: number, y: number): number => (x === y ? 0 : y > x ? 1 : -1);
 /** Per mana; a yield for no mana at all is the best rate there is, and no yield for nothing is 0. */
@@ -208,21 +249,25 @@ const per = (n: number | null, mana: number): number => (n === null ? Infinity :
 
 /** THE ORDER WITHIN A FAMILY (spec 2026-09-04 step 3): floor per its mana, ceiling per its mana
  *  to break it, an open ceiling above any bounded one -- a trigger's yield is what a deck makes of
- *  it, a one-shot's is written down -- then the raw yield (two free rates tie per mana), then the
- *  cheaper first yield. Negative when `a` is better. A free rate sorts FIRST: it did not on the
+ *  it, a one-shot's is written down -- then the one that yields THIS turn (CR 302.6) -- then the
+ *  raw yield (two free rates tie per mana), then the cheaper first yield. Negative when `a` is better. A free rate sorts FIRST: it did not on the
  *  first build (2026-09-17), when an activation's own {T} divided by zero and 103 tap abilities
  *  sat above Brainstorm; with the cast in the price, free means Mana Crypt, and a land's mana is
  *  refused before it gets here. */
 export function compareRates(a: RateSpan, b: RateSpan): number {
   return desc(per(a[0], a[1]), per(b[0], b[1])) || desc(per(a[2], a[3]), per(b[2], b[3]))
+    || (a[4] ?? 0) - (b[4] ?? 0)
     || desc(a[0], b[0]) || desc(a[2] ?? Infinity, b[2] ?? Infinity) || a[1] - b[1];
 }
 
-/** The row's span of a rate: the first yield is priced with the cast, and only a repeatable
- *  activation's ceiling amortises to the activation alone. */
+/** The row's span of a rate: the first yield is priced with the cast and the equip, only a
+ *  repeatable activation's ceiling amortises to the activation alone, and a fifth element marks
+ *  the yield that waits a turn. */
 export function spanOf(r: Rate): RateSpan {
-  const first = r.mana + (r.cast ?? 0);
-  return [r.floor, first, r.ceiling, r.repeats === "once" ? first : r.mana];
+  const first = r.mana + (r.cast ?? 0) + (r.equip ?? 0);
+  const span: RateSpan = [r.floor, first, r.ceiling, r.repeats === "once" ? first : r.mana];
+  if (r.delayed) span[4] = 1;
+  return span;
 }
 
 /** THE BEST RATE PER FAMILY among a card's rates, for the row. An activation that charges more

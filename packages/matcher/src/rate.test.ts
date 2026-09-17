@@ -149,6 +149,10 @@ test("an amount behind a condition on the card's text has a floor of 0 and keeps
   const learner = ratesOf(card("Learned Learner", "{U}", [{ kind: "activated", cost: "{T}", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "per-cycle" }],
     { types: ["creature"], text: "As long as you have a maximum hand size other than 7, this creature has \"{T}: Draw a card.\"" }))[0];
   expect(learner).toMatchObject({ floor: 0, ceiling: 1, conditional: true });
+  // Kazandu Tuskcaller's "{T}: Create two 1/1 Elephant tokens" sits at LEVEL 2-5 (corpus, 2026-09-17).
+  const tuskcaller = ratesOf(card("Kazandu Tuskcaller", "{1}{G}", [{ kind: "activated", cost: "{T}", effect: { kind: "token-generation", subject: { control: "you", token: true } }, amount: "2", repeats: "per-cycle" }],
+    { types: ["creature"], text: "Level up {1}\nLEVEL 2-5\n1/1\n{T}: Create two 1/1 green Elephant creature tokens." }))[0];
+  expect(tuskcaller).toMatchObject({ floor: 0, ceiling: 2, conditional: true, delayed: true });
 });
 
 /** AN ACTIVATION THAT CHARGES MORE THAN MANA says so: "{R}, Sacrifice this creature: 6 damage" is
@@ -210,4 +214,55 @@ test("mana is a family: Sol Ring two for one then two for nothing, Signet above 
   expect(spanOf(rock("Mana Crypt", "{0}", "2")!)).toEqual([2, 0, 2, 0]);
   expect(rock("Forest", "", "1", ["land"])).toBeUndefined();
   expect(ratesOf(card("Cabal Coffers-ish", "", [{ kind: "activated", cost: "{2}, {T}", effect: { kind: "mana-generation", subject: { control: "you", token: null }, scaling: "per-swamp" }, amount: "X", repeats: "per-cycle" }], { types: ["land"] }))).toEqual([]);
+});
+
+/** FIVE MORE FAMILIES (owner 2026-09-17: "what about the rest of effects"). Derived shapes verified
+ *  in the corpus 2026-09-17: Lightning Helix's lifegain is `you` amount 3; Swords to Plowshares'
+ *  goes to `opp`; Zulaport Cutthroat's loss is `opp` scope each amount 1; Glimpse the Unthinkable
+ *  mills `any` 10; Raise the Alarm creates 2 for `you`; a counter lands on `any`. */
+test("life, life-loss, mill, tokens and counters are families; whose yield decides the refusal", () => {
+  const one = (kind: string, control: string | undefined, amount = "1", abilityKind = "on-cast") =>
+    ratesOf(card("T", "{1}{W}", [{ kind: abilityKind, effect: { kind, subject: { control, token: null } }, amount, repeats: "once" }]))[0];
+  expect(one("lifegain", "you", "3")).toMatchObject({ family: "life", amount: 3, mana: 2, floor: 3, ceiling: 3 });
+  expect(one("lifegain", "opp", "3")).toBeUndefined();
+  expect(one("player-life-loss", "opp")).toMatchObject({ family: "life-loss", amount: 1 });
+  expect(one("player-life-loss", "any")).toMatchObject({ family: "life-loss" });
+  expect(one("player-life-loss", "you")).toBeUndefined();
+  expect(one("mill", "any", "10")).toMatchObject({ family: "mill", amount: 10 });
+  expect(one("mill", "you", "3")).toMatchObject({ family: "mill", amount: 3 });
+  expect(one("token-generation", "you", "2")).toMatchObject({ family: "tokens", amount: 2 });
+  expect(one("token-generation", "opp", "2")).toBeUndefined();
+  expect(one("counter-placement", "any")).toMatchObject({ family: "counters", amount: 1 });
+  expect(one("counter-placement", "any", "")).toBeUndefined(); // "put a +1/+1 counter" states no amount
+  expect(one("drain", "opp")).toBeUndefined();
+  // A land's free activation is its land drop: Fountain of Cho "{T}: Put a storage counter on this
+  // land" is refused; Castle Locthwain's "{1}{B}{B}, {T}: Draw a card" is priced on its own mana.
+  const landAbility = (cost: string, kind: string) => { const c = card("L", "", [{ kind: "activated", cost, effect: { kind, subject: { control: "any", token: null } }, amount: "1", repeats: "per-cycle" }], { types: ["land"] }); delete (c.card as { manaCost?: string }).manaCost; return ratesOf(c)[0]; };
+  expect(landAbility("{T}", "counter-placement")).toBeUndefined();
+  expect(landAbility("{1}{B}{B}, {T}", "counter-placement")).toMatchObject({ mana: 3, cast: 0 });
+});
+
+/** EQUIPPING IS A COST, AND THE CREATURE THAT TAPS CAN BE SICK (owner 2026-09-17: "for stuff like
+ *  Paradise Mantle you forgot that equipping the equipment is also a cost, plus ... summoning
+ *  sickness"). Paradise Mantle {0}, "Equipped creature has '{T}: Add one mana of any color.' Equip
+ *  {1}" (corpus). The first mana costs the equip; later ones nothing; every one waits for an
+ *  unsick creature. Two Equip lines take the cheapest; an Equip line with no mana refuses. */
+test("an Equipment's tap ability pays the equip first and is delayed; the sort breaks a tie on the delay", () => {
+  const tap = [{ kind: "activated", cost: "{T}", effect: { kind: "mana-generation", subject: { control: "any", token: null } }, amount: "1", repeats: "per-cycle" }];
+  const withType = (text: string, typeLine: string) => { const c = card("E", "{0}", tap, { types: ["artifact"], text }); (c.card as { typeLine: string }).typeLine = typeLine; return ratesOf(c)[0]; };
+  const m = withType("Equipped creature has \"{T}: Add one mana of any color.\"\nEquip {1}", "Artifact — Equipment");
+  expect(m).toMatchObject({ equip: 1, delayed: true });
+  expect(spanOf(m!)).toEqual([1, 1, 1, 0, 1]);
+  expect(withType("Equipped creature has \"{T}: Add {G}.\"\nEquip {3}\nEquip legendary creature {1}", "Artifact — Equipment")).toMatchObject({ equip: 1 });
+  expect(withType("Equipped creature has \"{T}: Add {G}.\"\nEquip—Pay 2 life.", "Artifact — Equipment")).toBeUndefined();
+  // Skullclamp's trigger watches the equipped creature: the equip is paid before it can fire.
+  const clamp = card("Skullclamp", "{1}", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature" } }, effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "2", repeats: "repeatable" }], { types: ["artifact"], text: "Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}" });
+  (clamp.card as { typeLine: string }).typeLine = "Artifact — Equipment";
+  expect(spanOf(ratesOf(clamp)[0]!)).toEqual([0, 2, null, 1]);
+  const aura = withType("Enchant creature\nEnchanted creature has \"{T}: Add {G}.\"", "Enchantment — Aura");
+  expect(aura).toMatchObject({ delayed: true });
+  expect(aura).not.toHaveProperty("equip");
+  // Llanowar Elves waits a turn; a rock at the same rate does not, and lists first.
+  expect(compareRates([1, 1, 1, 0], [1, 1, 1, 0, 1])).toBeLessThan(0);
+  expect(compareRates([2, 1, 2, 0, 1], [1, 1, 1, 0])).toBeLessThan(0); // but a better rate still wins
 });

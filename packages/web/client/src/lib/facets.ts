@@ -10,17 +10,17 @@ import { compareRates, type RateFamily, type RateSpan } from "@edh-seer/matcher/
  *  reachable by name. Player labels, not engine names. A renamed kind fails `facets.test.ts`. */
 export const DOES: { kind: string; label: string; rate?: RateFamily }[] = [
   { kind: "draw-card", label: "draws cards", rate: "cards" },
-  { kind: "token-generation", label: "makes tokens" },
-  { kind: "counter-placement", label: "puts counters" },
+  { kind: "token-generation", label: "makes tokens", rate: "tokens" },
+  { kind: "counter-placement", label: "puts counters", rate: "counters" },
   { kind: "proliferate", label: "proliferates" },
   { kind: "mana-generation", label: "adds mana", rate: "mana" },
-  { kind: "lifegain", label: "gains life" },
+  { kind: "lifegain", label: "gains life", rate: "life" },
   { kind: "graveyard-recursion", label: "returns from the graveyard" },
   { kind: "search", label: "searches the library" },
   { kind: "damage", label: "deals damage", rate: "damage" },
   { kind: "drain", label: "drains" },
-  { kind: "player-life-loss", label: "makes opponents lose life" },
-  { kind: "mill", label: "mills" },
+  { kind: "player-life-loss", label: "makes opponents lose life", rate: "life-loss" },
+  { kind: "mill", label: "mills", rate: "mill" },
   { kind: "untap", label: "untaps" },
   { kind: "flicker", label: "flickers" },
   { kind: "exile-processing", label: "processes exiled cards" },
@@ -99,12 +99,20 @@ export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "co
 /** THE RATE, BOTH ENDS PRINTED (owner 2026-09-17: floor and ceiling, never one number): "3 cards
  *  / 1 mana", "0–9 cards / 3 mana", "0+ damage / 4 mana" for an open ceiling, and for a repeatable
  *  activation whose first yield includes the cast, "1 card / 8 mana, then 1 / 4"; Sol Ring reads
- *  "2 mana / 1 mana, then 2 / 0". */
-export function rateLabel([floor, floorMana, ceiling, ceilingMana]: RateSpan, family: RateFamily): string {
+ *  "2 mana / 1 mana, then 2 / 0", Llanowar Elves "1 mana / 1 mana, then 1 / 0, from next turn". */
+/** The unit each family prints, singular and plural. Mill counts cards; life loss prints as life
+ *  and the chip label in front says whose. */
+const UNIT: Record<RateFamily, [string, string]> = {
+  cards: ["card", "cards"], damage: ["damage", "damage"], mana: ["mana", "mana"], life: ["life", "life"],
+  "life-loss": ["life", "life"], mill: ["card", "cards"], tokens: ["token", "tokens"], counters: ["counter", "counters"],
+};
+export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: RateSpan, family: RateFamily): string {
   const span = ceiling === null ? `${floor}+` : ceiling === floor ? `${floor}` : `${floor}–${ceiling}`;
-  const unit = family === "cards" ? (ceiling === 1 && floor === 1 ? "card" : "cards") : family;
+  const [singular, plural] = UNIT[family];
+  const unit = ceiling === 1 && floor === 1 ? singular : plural;
   const then = ceiling !== null && ceilingMana !== floorMana ? `, then ${ceiling} / ${ceilingMana}` : "";
-  return `${span} ${unit} / ${floorMana} mana${then}`;
+  // SUMMONING SICKNESS (CR 302.6) is printed, not priced: a turn has no exchange rate in mana.
+  return `${span} ${unit} / ${floorMana} mana${then}${delayed ? ", from next turn" : ""}`;
 }
 
 /** The labels that hit, for the line under a result that says why it is on the list, and on a
