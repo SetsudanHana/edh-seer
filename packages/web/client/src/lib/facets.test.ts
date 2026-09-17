@@ -118,7 +118,10 @@ test("a single rated chip orders by floor per mana, rated above unrated; two chi
   expect(rateLabel([10, 2, 10, 2], "mill")).toBe("10 cards / 2 mana");
   expect(rateLabel([1, 2, 1, 2], "tokens")).toBe("1 token / 2 mana");
   expect(rateLabel([2, 3, 2, 3], "counters")).toBe("2 counters / 3 mana");
-  expect(DOES.filter((d) => d.rate).map((d) => d.kind)).toEqual(["draw-card", "token-generation", "counter-placement", "mana-generation", "lifegain", "damage", "player-life-loss", "mill"]);
+  expect(rateLabel([1, 1, 1, 1], "search")).toBe("1 card / 1 mana");
+  expect(rateLabel([2, 3, 2, 3], "untap")).toBe("2 permanents / 3 mana");
+  expect(rateLabel([1, 2, 1, 2], "copies")).toBe("1 copy / 2 mana");
+  expect(DOES.filter((d) => d.rate).map((d) => d.kind)).toEqual(["draw-card", "token-generation", "counter-placement", "mana-generation", "lifegain", "graveyard-recursion", "search", "damage", "player-life-loss", "mill", "untap", "flicker", "copy-spell"]);
   const rocks: FacetRow[] = [
     { s: "commanders-sphere", i: "", c: 0, e: ["draw-card", "mana-generation"], t: [], d: [], r: { mana: [1, 3, 1, 0] } },
     { s: "sol-ring", i: "", c: 0, e: ["mana-generation"], t: [], d: [], r: { mana: [2, 1, 2, 0] } },

@@ -266,3 +266,23 @@ test("an Equipment's tap ability pays the equip first and is delayed; the sort b
   expect(compareRates([1, 1, 1, 0], [1, 1, 1, 0, 1])).toBeLessThan(0);
   expect(compareRates([2, 1, 2, 0, 1], [1, 1, 1, 0])).toBeLessThan(0); // but a better rate still wins
 });
+
+/** THE UNIT EFFECTS ARE FAMILIES once DERIVE 161 gives them an amount: Vampiric Tutor {B} search
+ *  1, Demonic Tutor {1}{B} search 1, Regrowth {1}{G} recursion 1, Ephemerate {W} flicker `any` 1,
+ *  Twincast {U}{U} copy `any` 1 (corpus, 2026-09-17). An opponent's is refused; a target is not. */
+test("search, recursion, untap, flicker and copies are families; an opponent's own is refused", () => {
+  const one = (kind: string, control: string | undefined, manaCost = "{1}{B}") =>
+    ratesOf(card("T", manaCost, [{ kind: "on-cast", effect: { kind, subject: { control, token: null } }, amount: "1", repeats: "once" }]))[0];
+  expect(one("search", "you", "{B}")).toMatchObject({ family: "search", amount: 1, mana: 1, floor: 1, ceiling: 1 });
+  expect(one("search", "opp")).toBeUndefined();
+  expect(one("graveyard-recursion", "you")).toMatchObject({ family: "recursion" });
+  expect(one("graveyard-recursion", "any")).toMatchObject({ family: "recursion" });
+  expect(one("untap", "any")).toMatchObject({ family: "untap" });
+  expect(one("untap", "opp")).toBeUndefined();
+  expect(one("flicker", "any")).toMatchObject({ family: "flicker" });
+  expect(one("copy-spell", "any")).toMatchObject({ family: "copies" });
+  expect(one("extra-turn", "any")).toBeUndefined();
+  expect(one("scry", "any")).toBeUndefined();
+  const spans = [spanOf(one("search", "you", "{3}{B}")!), spanOf(one("search", "you", "{B}")!)].sort(compareRates);
+  expect(spans).toEqual([[1, 1, 1, 1], [1, 4, 1, 4]]);
+});
