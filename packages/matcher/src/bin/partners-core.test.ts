@@ -5,7 +5,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts, browseLetterOf, browseSlices,
-  supplyForms, supplyKeysOf, themesOf, fillDemandsOf, rankOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
+  supplyForms, supplyKeysOf, themesOf, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -335,6 +335,26 @@ test("the artifact shards every substantive card and skips the rest", () => {
   const all = [...shards.values()].flatMap((s) => Object.keys(s));
   expect(all.sort()).toEqual(["impact-tremors", "krenko-mob-boss"]);
   expect(index.map((e) => e.slug).sort()).toEqual(["impact-tremors", "krenko-mob-boss"]);
+});
+
+/** THE INDEX CARRIES EACH CARD'S PARTNER COUNT AND IS SORTED BY IT (owner 2026-09-17). The header
+ *  field, the search page and the facet path all read the index in its own order, so the most
+ *  connected card is the first answer to a name without any of them ranking. The count is the
+ *  candidate set before verification -- the same population the pages' "N cards can cause this"
+ *  counts -- because the verified list is capped and the tie-break it breaks cannot depend on it. */
+test("the index carries a partner count and lists the best-connected card first", () => {
+  const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
+  const { index } = buildPartnerArtifact([vanilla, impactTremors, krenko], H);
+  const bySlug = Object.fromEntries(index.map((e) => [e.slug, e.partners]));
+  // DIRECTIONAL, LIKE THE PAGES: Krenko's page lists Impact Tremors (a payoff that asks for what
+  // Krenko supplies), Impact Tremors' page lists nothing, and the counts say the same. A payoff
+  // whose only relations are the cards that feed it counts 0 until the pages list producers.
+  expect(bySlug["krenko-mob-boss"]).toBe(1);
+  expect(bySlug["impact-tremors"]).toBe(0);
+  expect(index.map((e) => e.slug)).toEqual(["krenko-mob-boss", "impact-tremors"]);
+  const lonely = base("Lonely Card", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }] as unknown as CardTags["abilities"]);
+  const { index: three } = buildPartnerArtifact([lonely, impactTremors, krenko], H);
+  expect(three.map((e) => [e.slug, e.partners])).toEqual([["krenko-mob-boss", 2], ["impact-tremors", 0], ["lonely-card", 0]]);
 });
 
 /** NO CARD RULES TEXT ON THE RECORD (spec D2, reversed 2026-09-04). The evidence a reader checks a
@@ -1360,28 +1380,27 @@ test("fillDemandsOf: a recursion, a per-graveyard payoff, a graveyard count and 
   expect(fillDemandsOf(krenkoCounting())).toEqual([]);
 });
 
-// PLAY RATE BREAKS A TIE, AND ONLY A TIE (owner ruling 2026-09-16). Two payoffs with the same
-// demand score identically; the more played one is verified and printed first whatever order the
-// corpus handed them over in. A rarer demand still outranks a popular card on a common one.
-test("equal specificity is ordered by edhrecRank; a rarer demand still leads", () => {
-  const payoff = (name: string, rank: number | undefined, subtype?: string) => {
-    const d = base(name, [{
-      kind: "triggered",
-      trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, ...(subtype ? { subtype } : {}) } },
-      effect: { kind: "draw-card" },
-    }] as unknown as CardTags["abilities"]);
-    if (rank !== undefined) (d.card as { edhrecRank?: number }).edhrecRank = rank;
-    return d;
-  };
-  const obscure = payoff("Obscure Payoff", 9000);
-  const popular = payoff("Popular Payoff", 12);
-  const unranked = payoff("Unranked Payoff", undefined);
-  const goblinOnly = payoff("Goblin Payoff", 20000, "goblin");
-  const slugs = resolveSlugs(["Obscure Payoff", "Popular Payoff", "Unranked Payoff", "Goblin Payoff"]);
+// THE PARTNER COUNT BREAKS A TIE, AND ONLY A TIE (owner ruling 2026-09-17, replacing the
+// 2026-09-16 play-rate tie-break: "edhrec rank changes daily, so I would not use that"). Two payoffs
+// with the same demand score identically; the better-connected one -- more candidate partners in
+// the corpus, the engine's own number -- is verified and printed first whatever order the corpus
+// handed them over in. A rarer demand still outranks a well-connected card on a common one, and a
+// card with no count sorts last.
+test("equal specificity is ordered by partner count; a rarer demand still leads", () => {
+  const payoff = (name: string, subtype?: string) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, ...(subtype ? { subtype } : {}) } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const lonely = payoff("Lonely Payoff");
+  const connected = payoff("Connected Payoff");
+  const uncounted = payoff("Uncounted Payoff");
+  const goblinOnly = payoff("Goblin Payoff", "goblin");
+  const slugs = resolveSlugs(["Lonely Payoff", "Connected Payoff", "Uncounted Payoff", "Goblin Payoff"]);
   const freq = { "enters|creature|-|-": 2000, "enters|creature|goblin|-": 40 };
-  const { rows } = partnersFor(krenko, [unranked, obscure, goblinOnly, popular], [], freq, slugs, H);
-  expect(rows.map((r) => r.name)).toEqual(["Goblin Payoff", "Popular Payoff", "Obscure Payoff", "Unranked Payoff"]);
-  expect(rankOf(unranked)).toBe(Number.POSITIVE_INFINITY);
+  const degree = new Map([["Lonely Payoff", 3], ["Connected Payoff", 900], ["Goblin Payoff", 1]]);
+  const { rows } = partnersFor(krenko, [uncounted, lonely, goblinOnly, connected], [], freq, slugs, H, undefined, degree);
+  expect(rows.map((r) => r.name)).toEqual(["Goblin Payoff", "Connected Payoff", "Lonely Payoff", "Uncounted Payoff"]);
 });
 
 // THE `fills|` BRIDGE END TO END: a graveyard count's page lists the mill that feeds it (feeder
@@ -1405,13 +1424,12 @@ test("a graveyard count is fed by a mill on both pages, and delve too", () => {
   const onDig = partnersFor(dig, [], [scour], freq, slugs, H);
   expect(onDig.rows.map((r) => r.name)).toEqual(["Thought Scour"]);
   expect(onDig.rows[0]!.reason).toBe("Thought Scour fills the graveyard Dig Through Time delves from");
-  // A FETCHLAND FILLS WITH ITSELF, ONCE, and sorts behind a mill engine however played it is.
+  // A FETCHLAND FILLS WITH ITSELF, ONCE, and sorts behind a mill engine however connected it is.
   const wilds = base("Evolving Wilds", [{ kind: "activated", cost: "{T}, Sacrifice this land", effect: { kind: "search" },
     emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "land", self: true } }, { verb: "dies", subject: { control: "you", token: null, type: "land", self: true } }] }]);
   wilds.tags.characteristics.types = ["land"];
-  (wilds.card as { edhrecRank?: number }).edhrecRank = 1;
-  (scour.card as { edhrecRank?: number }).edhrecRank = 800;
-  const ordered = partnersFor(beast, [], [wilds, scour], freq, resolveSlugs(["Evolving Wilds", "Thought Scour", "Krosan Beast"]), H);
+  const degree = new Map([["Evolving Wilds", 5000], ["Thought Scour", 40]]);
+  const ordered = partnersFor(beast, [], [wilds, scour], freq, resolveSlugs(["Evolving Wilds", "Thought Scour", "Krosan Beast"]), H, undefined, degree);
   expect(ordered.rows.map((r) => r.name)).toEqual(["Thought Scour", "Evolving Wilds"]);
   // An opponent's mill fills nothing of yours: proposed by key, refused by the engine, counted.
   const funeral = base("Mind Funeral", [{ kind: "on-cast", effect: { kind: "mill" }, emits: [{ verb: "mill", subject: { control: "opp", token: null } }] }]);
