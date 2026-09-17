@@ -140,12 +140,18 @@ export function CardSearch({
     const order = new Map(kept.map((r, i) => [r.s, i]));
     return byName.filter((e) => order.has(e.slug)).sort((a, b) => order.get(a.slug)! - order.get(b.slug)!);
   }, [index, query, asked, colours, commanderMode, needsFacets, facetRows, facetQuery, mode]);
+  // THE CAP IS A PAGE (UX review, 2026-09-17). "467 match, showing the first 50" with no way to the
+  // rest was a dead end; each press shows another fifty, and a new question starts over.
+  const [shown, setShown] = useState(SEARCH_LIMIT);
+  useEffect(() => { setShown(SEARCH_LIMIT); }, [matches]);
 
   return (
     <PeekContext.Provider value={peek}>
     {/* THE LIST IS A GRID OF TILES NOW, so the reading measure that bounded a column of names would
       * bound a grid to three tiles; the header and the prose keep their own 65ch. */}
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start">
+    {/* THE RAIL EXISTS ONLY WHILE A CARD IS PEEKED. Reserving its 20rem always left the landing
+      * page a 650px column with the right two thirds of a 1920 screen empty (UX review, 2026-09-17). */}
+    <div className={peek.stack.length > 0 ? "lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start" : undefined}>
     <section className="flex flex-col gap-6">
       {/* ONLY `/cards` EVER CARRIED A SHARE LINK. `/commanders` is a new path, so there is no
         * stale link to catch and nothing to redirect. */}
@@ -331,7 +337,7 @@ export function CardSearch({
               {matches.length === 1
                 ? (commanderMode ? "commander matches" : "card matches")
                 : (commanderMode ? "commanders match" : "cards match")}
-              {matches.length > SEARCH_LIMIT ? `, showing the first ${SEARCH_LIMIT}` : ""}.
+              {matches.length > shown ? `, showing the first ${shown}` : ""}.
             </p>
             {/* IDENTITY IS THE ROW'S DIFFERENTIATOR. Fifty near-identical lines of blue text is a
               * list nobody scans; the mana symbols give the eye something that varies, and they are
@@ -344,7 +350,7 @@ export function CardSearch({
               * it is on the list -- the chip labels that hit. A list with no reason is what this
               * product refuses everywhere else. */}
             <ul aria-label="Results" className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
-              {matches.slice(0, SEARCH_LIMIT).map((e) => {
+              {matches.slice(0, shown).map((e) => {
                 const row = rowBySlug.get(e.slug);
                 const terms = row ? matchedTerms(row, facetQuery) : [];
                 return (
@@ -359,6 +365,11 @@ export function CardSearch({
                 );
               })}
             </ul>
+            {matches.length > shown && (
+              <button type="button" className="btn-secondary self-start" onClick={() => setShown((n) => n + SEARCH_LIMIT)}>
+                Show {Math.min(SEARCH_LIMIT, matches.length - shown)} more
+              </button>
+            )}
           </div>
         )}
       <PageFoot />

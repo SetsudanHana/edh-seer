@@ -13,9 +13,12 @@ export function RouteMarker(): null {
     // THREE KINDS, AND THE THIRD IS WHY THIS IS NOT A BOOLEAN. A browse page's content IS the
     // prerendered block -- React renders nothing into `#root` there -- so the rule that hides that
     // block on boot must not fire, or the page empties itself the moment the bundle runs.
+    // A FOURTH KIND (UX review, 2026-09-17): /cards and /commanders ARE a search box, and the
+    // header's beside it was two boxes with two labels for one purpose. CSS hides the header's.
     document.documentElement.dataset.route = pathname === "/"
       ? "home"
-      : pathname.startsWith("/browse/") ? "browse" : "page";
+      : pathname.startsWith("/browse/") ? "browse"
+      : pathname === "/cards" || pathname === "/commanders" ? "search" : "page";
   }, [pathname]);
   return null;
 }

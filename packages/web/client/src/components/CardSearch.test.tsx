@@ -404,3 +404,19 @@ test("the result count announces itself when the set changes", async () => {
   await userEvent.type(await screen.findByRole("searchbox"), "krenko");
   expect(await screen.findByRole("status")).toHaveTextContent(/card(s)? match/);
 });
+
+/** THE CAP IS A PAGE, NOT A WALL (UX review, 2026-09-17). "467 cards match, showing the first 50"
+ *  with no way to the other 417 was a dead end for any name past the letter A. */
+test("a query past the cap offers the next page, and the count line follows", async () => {
+  const many = Array.from({ length: SEARCH_LIMIT + 7 }, (_, i) => ({
+    slug: `goblin-${i}`, name: `Goblin ${i}`, identity: ["R"], commander: false,
+  }));
+  at(many);
+  await userEvent.type(await screen.findByRole("searchbox"), "goblin");
+  await screen.findByText(new RegExp(`showing the first ${SEARCH_LIMIT}`));
+  await userEvent.click(screen.getByRole("button", { name: "Show 7 more" }));
+  expect(within(screen.getByRole("list", { name: "Results" })).getAllByRole("link"))
+    .toHaveLength(SEARCH_LIMIT + 7);
+  expect(screen.queryByRole("button", { name: /Show \d+ more/ })).toBeNull();
+  expect(screen.queryByText(/showing the first/)).toBeNull();
+});

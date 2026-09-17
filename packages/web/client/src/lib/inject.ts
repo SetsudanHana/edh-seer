@@ -246,7 +246,7 @@ export function cardPageHtml(
     // card's, and the app has printed it under every group since the list was grouped.
     const withheld = (card.pool?.[g.event] ?? g.rows.length) - g.rows.length;
     const more = withheld > 0
-      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ask for it too, equally specific — the ones shown are the most played.</p>`
+      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ask for it too, equally specific. The ones shown are the most played.</p>`
       : "";
     return `${count}    <ol>\n${g.rows.join("\n")}\n    </ol>${more}`;
   }).join("\n");

@@ -90,3 +90,22 @@ test("an unread row's caption is the limit alone", () => {
   expect(screen.getByText(/engine did not read what it does/)).toBeInTheDocument();
   expect(screen.queryByText("triggers")).toBeNull();
 });
+
+/** ONE ROW PER GROUP ON A PHONE (UX review, 2026-09-17: 9.6 screens, Partners at 1,335px). Every
+ *  tile stays in the document; below `sm` the ones past the first row hide until asked for, and
+ *  the button that asks says how many it holds. jsdom applies no stylesheet, so the class is the
+ *  assertion. */
+test("a group past one phone row hides the rest behind a button that says how many", () => {
+  const rows = Array.from({ length: 5 }, (_, i) => ({
+    name: `Payoff ${i}`, slug: `payoff-${i}`, score: 0.1, event: "enters|creature|-|-",
+    reason: `When a Goblin enters, Payoff ${i} triggers`, payoff: "triggers",
+  }));
+  render(<MemoryRouter><PartnerList pool={{}} rarity={{}} empty="none" rows={rows} /></MemoryRouter>);
+  const items = screen.getAllByRole("listitem");
+  expect(items).toHaveLength(5);
+  expect(items.slice(0, 3).some((li) => li.className.includes("max-sm:hidden"))).toBe(false);
+  expect(items.slice(3).every((li) => li.className.includes("max-sm:hidden"))).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Show 2 more" }));
+  expect(screen.getAllByRole("listitem").some((li) => li.className.includes("max-sm:hidden"))).toBe(false);
+  expect(screen.queryByRole("button", { name: /Show \d+ more/ })).toBeNull();
+});
