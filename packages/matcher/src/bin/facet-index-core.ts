@@ -24,6 +24,8 @@ export interface FacetRow {
   t: string[];
   /** the subset it also satisfies on the demand side */
   d: string[];
+  /** candidate partner count, the order among equal rows (owner 2026-09-17) */
+  p?: number;
 }
 
 export function buildFacetIndex(all: DeckCard[], index: NameIndexEntry[]): FacetRow[] {
@@ -31,7 +33,10 @@ export function buildFacetIndex(all: DeckCard[], index: NameIndexEntry[]): Facet
   return index.map((entry) => {
     const d = byName.get(entry.name);
     const key = identityKeyOf(entry.identity);
-    const base = { s: entry.slug, i: key === "C" ? "" : key, c: entry.commander ? (1 as const) : (0 as const) };
+    const base = {
+      s: entry.slug, i: key === "C" ? "" : key, c: entry.commander ? (1 as const) : (0 as const),
+      ...(entry.partners !== undefined ? { p: entry.partners } : {}),
+    };
     if (!d?.tags) return { ...base, e: [], t: [], d: [] };
     const signal = cardSignalOf(d.card, d.tags);
     const { supplies, demands } = archetypesOf(signal);

@@ -65,11 +65,14 @@ export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "co
   // THE ORDER: most chosen chips matched first; then the cards that ASK for the strategy (its
   // payoffs) before the ones that merely supply it (measured on the first artifact, 2026-09-08:
   // the unranked list for "draws cards, +1/+1 Counters" opened with ten cards that merely enter
-  // with a counter); then slug, so two equal rows print the same way round every time.
+  // with a counter); then partner count, the best-connected card first (owner 2026-09-17: "makes
+  // tokens, in red" opened on three Aether cards with nothing but the alphabet between 467 equal
+  // rows); then slug, so two equal rows print the same way round every time.
   const s = q.strategy;
   out.sort((a, b) =>
     doesHits(b, q) - doesHits(a, q)
     || (s === undefined ? 0 : Number(b.d.includes(s)) - Number(a.d.includes(s)))
+    || (b.p ?? 0) - (a.p ?? 0)
     || a.s.localeCompare(b.s));
   return out;
 }

@@ -50,6 +50,19 @@ test("more chosen chips matched puts a card higher (owner 2026-09-08)", () => {
     .toEqual(["both", "also-one", "one"]);
 });
 
+/** EQUAL ROWS ORDER BY PARTNER COUNT BEFORE SLUG (owner 2026-09-17). "makes tokens, in red" opened
+ *  on three Aether cards because nothing but the alphabet separated 467 equal rows. */
+test("equal rows list the best-connected card first, then slug", () => {
+  const rows: FacetRow[] = [
+    { s: "aether", i: "R", c: 0, e: ["token-generation"], t: [], d: [], p: 12 },
+    { s: "krenko", i: "R", c: 1, e: ["token-generation"], t: [], d: [], p: 2400 },
+    { s: "zealous", i: "R", c: 0, e: ["token-generation"], t: [], d: [], p: 12 },
+    { s: "uncounted", i: "R", c: 0, e: ["token-generation"], t: [], d: [] },
+  ];
+  expect(applyFacets(rows, { colours: [], does: ["token-generation"], strategy: undefined }, "cards").map((r) => r.s))
+    .toEqual(["krenko", "aether", "zealous", "uncounted"]);
+});
+
 test("with a strategy chosen, askers first, then suppliers, then slug; commanders only on that page", () => {
   expect(applyFacets(ROWS, { colours: [], does: [], strategy: "counters" }, "cards").map((r) => r.s))
     .toEqual(["fathom-mage", "inspiring-call", "hardened-scales", "zaxara"]);

@@ -108,12 +108,14 @@ export type EventFrequency = Record<string, number>;
  *  cards) outranks `enters|creature|-` (1,909) without any appeal to how often either card is
  *  PLAYED. Popularity is not synergy, and it is not consulted HERE: the score is specificity alone.
  *
- *  IT BREAKS TIES, AND ONLY TIES (owner ruling 2026-09-16, reversing the 09-05 revert). ~2,000
- *  cards demand `enters|creature|-` and score identically; which of them reached a page was corpus
- *  iteration order, and the page said so in a sentence about being unable to choose. The owner's
- *  call: among equally specific partners, show the ones players actually run -- the EDHREC top-10
- *  shape -- so `rankOf` orders equal scores by `cards.edhrecRank`. Specificity still decides which
- *  EVENT leads; popularity only decides which of its equal members are printed.
+ *  IT BREAKS TIES, AND ONLY TIES. ~2,000 cards demand `enters|creature|-` and score identically;
+ *  which of them reached a page was corpus iteration order, and the page said so in a sentence
+ *  about being unable to choose. From 2026-09-16 the tie broke on `cards.edhrecRank`; on
+ *  2026-09-17 the owner refused that field ("edhrec rank changes daily, so I would not use that" --
+ *  the corpus copy is as old as its last ingest) and ruled for the engine's own number: among
+ *  equally specific partners, the better-connected card first, `degreeOf` reading the candidate
+ *  partner count `buildPartnerArtifact` computes for every card. Specificity still decides which
+ *  EVENT leads; the count only decides which of its equal members are printed.
  *
  *  WHAT THIS DOES AND DOES NOT CLAIM. It ranks how PRECISELY two cards interact, not how good
  *  either one is. A rare event can belong to a bad card, and the pages say so in those words rather
@@ -380,14 +382,15 @@ export const KEEP = 60;
  *  or popularity. Twenty rows that all say "triggers when a creature enters" are ONE fact printed
  *  twenty times; a few of them plus a count says the same thing and leaves room for the card's
  *  other interactions. `pool` carries the count. Three until 2026-09-16, eight since: the tie is
- *  now broken by play rate (`rankOf`), so the eight are the eight players run, and a page that
- *  shows them reads as EDHREC's "top cards" rather than a random sample. */
+ *  broken by partner count (`degreeOf`), so the eight are the eight best connected, and a page that
+ *  shows them reads as the corpus's own top cards rather than a random sample. */
 export const PER_EVENT_CAP = 8;
 
-/** WHERE A CARD SITS IN PLAY RATE, for tie-breaking only (see `specificity`). Scryfall's
- *  `edhrec_rank`, lower is more played; a card without one sorts last. */
-export const rankOf = (d: DeckCard): number =>
-  (d.card as { edhrecRank?: number }).edhrecRank ?? Number.POSITIVE_INFINITY;
+/** HOW CONNECTED A CARD IS, for tie-breaking only (see `specificity`): its candidate partner count
+ *  from the map `buildPartnerArtifact` hands in, the same population the pages' "N cards can cause
+ *  this" counts. A card the map does not know sorts last. */
+export const degreeOf = (degree: ReadonlyMap<string, number> | undefined, d: DeckCard): number =>
+  degree?.get(d.card.name) ?? -1;
 
 /** THE PARTNER LIST FOR ONE CARD: rank by specificity, then verify with the engine.
  *
@@ -435,7 +438,10 @@ export function partnersFor(
   h: Hierarchy,
   /** The card this one melds with, when it is in the pool -- the one candidate no key can find. */
   meldWith?: DeckCard,
+  /** Candidate partner count by card name, the tie-break (`degreeOf`); absent keeps corpus order. */
+  degree?: ReadonlyMap<string, number>,
 ): PartnerResult {
+  const deg = (d: DeckCard): number => degreeOf(degree, d);
   // EVERY DEMAND SHAPE THIS CARD'S EMITS CAN SATISFY. `supplyForms` splits type lists and adds the
   // coarser shapes, so a goblin-token emit is found by a demand for a creature entering.
   // WHAT THE SUBJECT SUPPLIES, WHICH INCLUDES WHAT IT IS. A Goblin body supplies "a Goblin you
@@ -481,13 +487,15 @@ export function partnersFor(
         events.set(key, { score: specificity(key, freq), tags: new Set(tags) });
       }
       const byScore = [...events].sort((a, b) => b[1].score - a[1].score);
-      return { card: c, events: byScore, score: byScore[0]?.[1].score ?? 0 };
+      // The count is read ONCE here, not in the comparator: two map lookups per comparison over
+      // a 25,000-card candidate list took the build from 80 s to 388 s (measured 2026-09-17).
+      return { card: c, events: byScore, score: byScore[0]?.[1].score ?? 0, deg: deg(c) };
     })
     .filter((r) => r.score > 0)
-    // EQUAL SCORES BREAK ON PLAY RATE (see `specificity`), and the tie-break has to sit HERE and
-    // not only at the cut: `VERIFY_LIMIT` takes the top of this order, so a popular card below
-    // rank 200 in corpus order was never even asked about.
-    .sort((a, b) => b.score - a.score || rankOf(a.card) - rankOf(b.card));
+    // EQUAL SCORES BREAK ON PARTNER COUNT (see `specificity`), and the tie-break has to sit HERE
+    // and not only at the cut: `VERIFY_LIMIT` takes the top of this order, so a well-connected card
+    // below rank 200 in corpus order was never even asked about.
+    .sort((a, b) => b.score - a.score || b.deg - a.deg);
 
   // COUNTED BEFORE THE CUT, so the page can say how many it is not showing. Counted over EVERY
   // event a candidate matched rather than only its best, because any of them can end up pricing a
@@ -546,7 +554,7 @@ export function partnersFor(
     // the first key and the page said "a Cleric you control" over a Rogue.
     // A FEEDER SUPPLIES THE KEY OR A FORM OF IT: a Goblin supplies `counts|-|goblin|-` exactly, a
     // creature's death supplies `fills|creature|-|-` and so `fills|-|-|-` (the untyped count). Equal
-    // suppliers in play-rate order, the same tie-break the forward phase uses.
+    // suppliers in partner-count order, the same tie-break the forward phase uses.
     // A CARD THAT ONLY PUTS ITSELF THERE SORTS LAST. Measured on the first 60-row build: every
     // untyped graveyard count opened with Evolving Wilds, Terramorphic Expanse, Myriad Landscape,
     // Mind Stone and Polluted Delta -- the most-played cards whose death is their own, one card
@@ -554,7 +562,9 @@ export function partnersFor(
     // the fill a threshold deck is built around is the repeatable one.
     const usable = feeders
       .filter((f) => f.card.name !== subject.card.name && supplyKeysOf(f).flatMap(supplyForms).includes(key))
-      .sort((a, b) => Number(fillsOnlyItself(a)) - Number(fillsOnlyItself(b)) || rankOf(a) - rankOf(b));
+      .map((f) => ({ f, self: Number(fillsOnlyItself(f)), deg: deg(f) }))
+      .sort((a, b) => a.self - b.self || b.deg - a.deg)
+      .map((x) => x.f);
     for (const f of usable) {
       if ((shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP) break;
       const slug = slugs.get(f.card.name)!;
@@ -586,14 +596,12 @@ export function partnersFor(
   if (staticKeys.length > 0) {
     const hits = candidates
       .filter((c) => c.card.name !== subject.card.name)
-      .map((c) => ({ c, matched: staticKeys.filter((k) => staticReaches(k, c)) }))
+      .map((c) => ({ c, matched: staticKeys.filter((k) => staticReaches(k, c)), deg: deg(c) }))
       .filter((x) => x.matched.length > 0)
-      // Among cards the same statics reach, play rate breaks the tie (owner 2026-09-16; see
-      // `specificity`). A discount on every noncreature spell reaches five thousand cards and the
-      // page shows eight; on 2026-09-05 corpus order put Lattice Library ahead of Raise the Alarm,
-      // and the EDHREC-rank tie-break built that day was reverted the same hour under the older
-      // rule. The rule changed; the code came back.
-      .sort((a, b) => b.matched.length - a.matched.length || rankOf(a.c) - rankOf(b.c));
+      // Among cards the same statics reach, partner count breaks the tie (see `specificity`). A
+      // discount on every noncreature spell reaches five thousand cards and the page shows eight;
+      // on 2026-09-05 corpus order put Lattice Library ahead of Raise the Alarm.
+      .sort((a, b) => b.matched.length - a.matched.length || b.deg - a.deg);
     for (const key of staticKeys) pool[key] = hits.filter((x) => x.matched.includes(key)).length;
     for (const { c, matched } of hits.slice(0, VERIFY_LIMIT)) {
       if (rows.length >= KEEP) break;
@@ -1127,6 +1135,9 @@ export interface NameIndexEntry {
   name: string;
   identity: string[];
   commander: boolean;
+  /** Candidate partner count -- how connected the card is in the corpus (owner 2026-09-17). The
+   *  index is sorted on it; absent on an index built before the field existed. */
+  partners?: number;
   /** NO PARTNERS TO SHOW, WHICH IS THE EXACT CONDITION THE EDGE SERVES `noindex` ON (spec D5).
    *
    *  It rides in the index because the SITEMAP is built from the index and the noindex decision is
@@ -1290,22 +1301,47 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // first (bare Partner, label, Background, Doctor) so each card is compared only with its own form.
   const commanders = substantive.filter(isCommander);
 
+  // CANDIDATES COME FROM WHAT THE CARD SUPPLIES, WHICH INCLUDES WHAT IT IS. `emits` is what the
+  // record PRINTS; `supplyKeysOf` is what the ranking may ask about, and the difference is the
+  // card's own subtypes -- a Goblin body is a candidate for every payoff that counts Goblins.
+  const triggerCandidatesOf = (d: DeckCard): DeckCard[] =>
+    [...new Set(supplyKeysOf(d).flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []))];
+  const feedersOf = (d: DeckCard): DeckCard[] => [...new Set(feederKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
+  const meldOf = (d: DeckCard): DeckCard | undefined => byName.get((d.card as { meldPartner?: string }).meldPartner ?? "");
+
+  // THE PARTNER COUNT, BEFORE ANY LIST IS RANKED (owner 2026-09-17). It is the tie-break inside
+  // `partnersFor`, so it cannot be read off the lists it orders: it is the size of the candidate
+  // set -- trigger candidates, feeders and the meld half, minus the card itself -- which the
+  // indexes above make cheap and which no ordering touches. The verified list would not do: it
+  // is capped at `KEEP` and cut at `VERIFY_LIMIT` in the very order this breaks.
+  // NEVER A STATIC'S CLASS. A static reaches everything of a type -- a discount on every red
+  // spell, play from the graveyard -- and counting that put Yawgmoth's Agenda (25,156), Ugin and
+  // the Fire Crystal at the top of the corpus on the first build (2026-09-17). That is the size
+  // of a class, not a connection, which is why a static is priced last on the pages too.
+  // Kept for the main loop, so `staticCandidates` -- the one lookup that runs a predicate over
+  // its pool -- is paid once per card and not twice.
+  const candidateSets = new Map<string, { triggers: DeckCard[]; candidates: DeckCard[]; feeders: DeckCard[] }>();
+  const degree = new Map<string, number>();
+  for (const d of substantive) {
+    const triggers = triggerCandidatesOf(d);
+    const sets = { triggers, candidates: [...new Set([...triggers, ...staticCandidates(d)])], feeders: feedersOf(d) };
+    candidateSets.set(d.card.name, sets);
+    const names = new Set([...triggers, ...sets.feeders].map((c) => c.card.name));
+    const meld = meldOf(d);
+    if (meld) names.add(meld.card.name);
+    names.delete(d.card.name);
+    degree.set(d.card.name, names.size);
+  }
+
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
 
   for (const d of substantive) {
     const slug = slugs.get(d.card.name)!;
     const emits = emitKeysOf(d);
-    // CANDIDATES COME FROM WHAT THE CARD SUPPLIES, WHICH INCLUDES WHAT IT IS. `emits` is what the
-    // record PRINTS; `supplyKeysOf` is what the ranking may ask about, and the difference is the
-    // card's own subtypes -- a Goblin body is a candidate for every payoff that counts Goblins.
-    const candidates = [...new Set([
-      ...supplyKeysOf(d).flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []),
-      ...staticCandidates(d),
-    ])];
-    const feeders = [...new Set(feederKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
+    const { candidates, feeders } = candidateSets.get(d.card.name)!;
     const commander = isCommander(d);
-    const meldWith = byName.get((d.card as { meldPartner?: string }).meldPartner ?? "");
+    const meldWith = meldOf(d);
 
     const shardName = partnerShardOf(slug);
     const shard = shards.get(shardName) ?? {};
@@ -1328,7 +1364,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(commander && isBackground(d) ? { pairingOnly: true as const } : {}),
       emits: [...new Set(emits)],
       demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d), ...meldKeysOf(d)])],
-      ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith);
+      ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith, degree);
         return { partners: rows, pool, rarity }; })(),
       // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
       // rule `legality.ts` reports a violation against. An empty identity is inside every one,
@@ -1350,7 +1386,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
           const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
           const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
           // The other half is in the same deck by construction, so it needs no identity check.
-          const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith);
+          const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith, degree);
           return { partners: rows, pool, rarity };
         };
         const own = d.card.colorIdentity ?? [];
@@ -1385,6 +1421,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     const art = printingIdOf(artCropOf(d));
     index.push({
       slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
+      partners: degree.get(d.card.name) ?? 0,
       ...(art ? { art } : {}),
       ...(written.partners.length < MIN_INDEXABLE_PARTNERS ? { thin: true as const } : {}),
       ...(commander && (written.commanderPartners ?? []).length < MIN_INDEXABLE_PARTNERS
@@ -1392,5 +1429,10 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     });
   }
 
+  // THE INDEX IS IN PARTNER-COUNT ORDER (owner 2026-09-17), best connected first, then by name.
+  // The header field, the search page and the facet index all read it in its own order, so the
+  // first answer to a name is the card the corpus connects most -- without any of them ranking,
+  // and without the play-rate field the owner refused as stale.
+  index.sort((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.name.localeCompare(b.name, "en"));
   return { shards, freq, index };
 }

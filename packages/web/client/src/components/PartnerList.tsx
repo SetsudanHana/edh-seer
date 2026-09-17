@@ -121,18 +121,19 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
             )}
             {withheld > 0 && (
               // COUNTED CANDIDATES, NOT VERIFIED EDGES, and the sentence has to say so: the engine
-              // was never asked about the cards past the cap. Equal members are ordered by play
-              // rate since 2026-09-16 (owner ruling; `rankOf` in partners-core), so the ones shown
-              // are the ones players run, and the sentence says that instead of the older "nothing
-              // here can rank one above another", which stopped being true.
+              // was never asked about the cards past the cap. Equal members are ordered by partner
+              // count since 2026-09-17 (owner ruling; `degreeOf` in partners-core, replacing a
+              // play-rate tie-break refused as stale), so the ones shown are the best connected,
+              // and the sentence says that instead of the older "nothing here can rank one above
+              // another", which stopped being true.
               <p className="text-(--muted) text-sm">
                 <span className="font-mono tabular-nums">{withheld.toLocaleString("en-US")}</span>{" "}
                 {/* A FEEDER GROUP RUNS THE OTHER WAY (skeptic review, 2026-09-17): its tiles are cards
                   * this card counts, so "ask for it" named the wrong direction under them. A feeder
                   * row is the one whose sentence opens on the row's card being controlled. */}
                 {group.rows.every((r) => /^While you control /i.test(r.reason))
-                  ? "other cards feed it too, equally specific. The ones shown are the most played."
-                  : "other cards ask for it too, equally specific. The ones shown are the most played."}
+                  ? "other cards feed it too, equally specific. The ones shown are the best connected."
+                  : "other cards ask for it too, equally specific. The ones shown are the best connected."}
               </p>
             )}
           </section>
