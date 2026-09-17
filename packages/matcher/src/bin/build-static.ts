@@ -162,7 +162,15 @@ writeFileSync(join(stagingDir, "token-art.json"), JSON.stringify(tokenArt));
 // double-faced card's `manaCost` off its front face, which 359 records (129 commanders) were
 // shipping as null. The document's own fields the mapper drops (`legalities`, `artCrop`) survive
 // underneath the spread.
-const partnerDeckCards = cards.map((card) => ({
+// A CARD LEGAL IN NO FORMAT GETS NO PAGE (roadmap X4). The corpus keeps every card so a paste can
+// RESOLVE it, but a 2021 Mystery Booster playtest Red Herring shared its name and its slug with
+// the 2024 Clue Fish, and the page it took was the real card's. Banned and restricted count as
+// legal somewhere; a card whose legalities are all `not_legal` is a playtest or an un-card.
+const legalSomewhere = (card: { legalities?: Record<string, string> }): boolean =>
+  !card.legalities || Object.values(card.legalities).some((v) => v !== "not_legal");
+const pageCards = cards.filter(legalSomewhere);
+console.log(`cards with a page: ${pageCards.length} of ${cards.length} (${cards.length - pageCards.length} legal in no format)`);
+const partnerDeckCards = pageCards.map((card) => ({
   card: { ...card, ...docToCard(card) },
   tags: tagsByOracle.get(card._id) ?? null,
 }));

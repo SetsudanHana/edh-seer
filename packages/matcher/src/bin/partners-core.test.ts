@@ -1515,3 +1515,13 @@ test("a page record carries the card's rates, and none when no ability states a 
   expect(rec["divination"]?.rates).toEqual([{ family: "cards", kind: "on-cast", amount: 2, mana: 3, repeats: "once", floor: 2, ceiling: 2 }]);
   expect(rec["krenko-mob-boss"]?.rates).toBeUndefined();
 });
+
+/** ONE PAGE PER NAME (roadmap X4): two documents named alike got one slug between them, and the
+ *  index listed the slug twice. The first keeps the name; the build filters a card legal nowhere out
+ *  before this, so the second is only ever a duplicate. */
+test("two cards with one name make one index entry and one slug", () => {
+  const twin = { ...krenko, card: { ...krenko.card } };
+  const { index } = buildPartnerArtifact([krenko, twin, impactTremors] as never, { subtypes: {}, types: {} } as never);
+  expect(index.filter((e) => e.name === "Krenko, Mob Boss")).toHaveLength(1);
+  expect(new Set(index.map((e) => e.slug)).size).toBe(index.length);
+});

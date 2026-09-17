@@ -107,10 +107,11 @@ const UNIT: Record<RateFamily, [string, string]> = {
   "life-loss": ["life", "life"], mill: ["card", "cards"], tokens: ["token", "tokens"], counters: ["counter", "counters"],
   search: ["card", "cards"], recursion: ["card", "cards"], untap: ["permanent", "permanents"], flicker: ["permanent", "permanents"], copies: ["copy", "copies"],
 };
-export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: RateSpan, family: RateFamily): string {
+export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: RateSpan, family: RateFamily, size?: string): string {
   const span = ceiling === null ? `${floor}+` : ceiling === floor ? `${floor}` : `${floor}–${ceiling}`;
   const [singular, plural] = UNIT[family];
-  const unit = ceiling === 1 && floor === 1 ? singular : plural;
+  // THE TOKEN'S SIZE beside the count: "2 1/1 tokens / 2 mana". A 1/1 and a 4/4 are not the same token.
+  const unit = `${size ? `${size} ` : ""}${ceiling === 1 && floor === 1 ? singular : plural}`;
   const then = ceiling !== null && ceilingMana !== floorMana ? `, then ${ceiling} / ${ceilingMana}` : "";
   // SUMMONING SICKNESS (CR 302.6) is printed, not priced: a turn has no exchange rate in mana.
   return `${span} ${unit} / ${floorMana} mana${then}${delayed ? ", from next turn" : ""}`;
@@ -121,7 +122,7 @@ export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: Rat
 export function matchedTerms(row: FacetRow, q: FacetQuery): string[] {
   const terms = DOES.filter((d) => q.does.includes(d.kind) && row.e.includes(d.kind)).map((d) => d.label);
   const rate = rateOf(row, q);
-  if (rate !== undefined) terms.push(rateLabel(rate, rateFamily(q)!));
+  if (rate !== undefined) terms.push(rateLabel(rate, rateFamily(q)!, rateFamily(q) === "tokens" ? row.z : undefined));
   if (q.strategy !== undefined && row.t.includes(q.strategy)) {
     const label = STRATEGIES.find((s) => s.slug === q.strategy)?.label ?? q.strategy;
     terms.push(row.d.includes(q.strategy) ? `${label} (asks for it)` : label);

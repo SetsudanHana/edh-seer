@@ -117,6 +117,8 @@ test("a single rated chip orders by floor per mana, rated above unrated; two chi
   expect(rateLabel([0, 2, null, 2], "life-loss")).toBe("0+ life / 2 mana");
   expect(rateLabel([10, 2, 10, 2], "mill")).toBe("10 cards / 2 mana");
   expect(rateLabel([1, 2, 1, 2], "tokens")).toBe("1 token / 2 mana");
+  expect(rateLabel([2, 2, 2, 2], "tokens", "1/1")).toBe("2 1/1 tokens / 2 mana");
+  expect(matchedTerms({ s: "raise-the-alarm", i: "W", c: 0, e: ["token-generation"], t: [], d: [], r: { tokens: [2, 2, 2, 2] }, z: "1/1" }, { colours: [], does: ["token-generation"], strategy: undefined })).toEqual(["makes tokens", "2 1/1 tokens / 2 mana"]);
   expect(rateLabel([2, 3, 2, 3], "counters")).toBe("2 counters / 3 mana");
   expect(rateLabel([1, 1, 1, 1], "search")).toBe("1 card / 1 mana");
   expect(rateLabel([2, 3, 2, 3], "untap")).toBe("2 permanents / 3 mana");

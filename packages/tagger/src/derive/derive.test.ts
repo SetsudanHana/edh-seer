@@ -2923,3 +2923,12 @@ test("a unit amount comes off the object: a card is one, up to two is two, all a
   const { abilities } = deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "a card", amount: "1" }, { verb: "discard", object: "a card" }] }], "Merfolk Looter");
   expect(abilities.map((a) => a.amount)).toEqual(["1", "1"]);
 });
+
+/** EXHAUST REACHES DERIVE THROUGH THE PRINTED TEXT (CR 702.176a): the segmenter strips the ability
+ *  word, so the clause never says it. Loot, the Pathfinder, "Exhaust — {U}, {T}: Draw three cards." */
+test("an Exhaust line in the printed text makes its ability once, matched on the cost", () => {
+  const clauses = [{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "three cards", amount: "3" }] }];
+  const printed = "Exhaust — {G}, {T}: Add three mana of any one color.\nExhaust — {U}, {T}: Draw three cards.";
+  expect(deriveAbilities(clauses, "Loot, the Pathfinder", undefined, { 1: "{U}, {T}" }, printed).abilities[0]?.repeats).toBe("once");
+  expect(deriveAbilities(clauses, "Looter", undefined, { 1: "{U}, {T}" }, "{U}, {T}: Draw three cards.").abilities[0]?.repeats).toBe("per-cycle");
+});

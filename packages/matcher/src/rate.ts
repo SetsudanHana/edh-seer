@@ -98,6 +98,10 @@ export interface Rate {
    *  read as 6 damage for one mana on the first build. Recorded so a per-mana sort can leave it out;
    *  a cast's additional cost is caught by `conditional` from the printed text. */
   extraCost?: true;
+  /** THE TOKEN'S SIZE, when the ability states one ("two 1/1 white Soldier creature tokens"): the
+   *  count is the rate's unit and this is printed beside it, because a 1/1 and a 4/4 are not the
+   *  same token (owner residue, 2026-09-17). Absent on a Treasure, a Clue, or a variable size. */
+  size?: string;
   /** SUMMONING SICKNESS (CR 302.6; owner 2026-09-17). A creature's activated ability with {T} or
    *  {Q} in its cost, and its own attack trigger, wait until the creature has been yours since your
    *  turn began: the first yield is a turn later than the mana. The same for a tap ability an
@@ -160,6 +164,9 @@ export function ratesOf(d: DeckCard): Rate[] {
     return priced.length > 0 ? Math.min(...priced) : null;
   })();
   const haste = (d.card.keywords ?? []).some((k) => k.toLowerCase() === "haste");
+  // IMPRINT IS A CARD, NOT MANA (Chrome Mox at {0} led "adds mana"): every activation on an imprint
+  // card charges the exiled card first, so its rate is more than mana says.
+  const imprint = (d.card.keywords ?? []).some((k) => k.toLowerCase() === "imprint");
   const conditional = CONDITION.test(d.card.oracleText ?? "");
   /** CR 302.6, on this card: a tap or untap activation, or the card's own attack trigger. */
   const sick = (a: { kind: string; cost?: string; trigger?: { verbs?: string[]; subject?: { self?: boolean } } }): boolean =>
@@ -216,7 +223,7 @@ export function ratesOf(d: DeckCard): Rate[] {
     const equipped = equipment && a.kind !== "on-cast";
     if (equipped && equipCost === null) continue;
     const castOf = { ...(cast === undefined ? {} : { cast }), ...(equipped && equipCost ? { equip: equipCost } : {}) };
-    const extra = a.kind === "activated" && /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, ""));
+    const extra = a.kind === "activated" && (imprint || /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, "")));
     const repeats = a.repeats ?? (a.kind === "on-cast" ? "once" : "repeatable");
     const mana = manaOf(cost);
     // AN X COST IS A SLOPE: the fixed pips are the mana, each further mana is one of the unit.
@@ -231,11 +238,14 @@ export function ratesOf(d: DeckCard): Rate[] {
     const back = family === "cards" ? backOf(a) : 0;
     if (back === null) continue;
     const amount = Math.max(0, gross - back);
+    const stats = (a.effect?.subject as { stats?: { metric: string; op: string; value: number }[] } | undefined)?.stats ?? [];
+    const power = stats.find((x) => x.metric === "power" && x.op === "eq")?.value, toughness = stats.find((x) => x.metric === "toughness" && x.op === "eq")?.value;
+    const size = family === "tokens" && power !== undefined && toughness !== undefined ? `${power}/${toughness}` : undefined;
     // A TRIGGER MAY NEVER FIRE; an activation or a cast yields every time it is paid for.
     const open = a.kind === "triggered" || a.kind === "static";
     const stopped = a.unless !== undefined;
     out.push({
-      family, kind: a.kind, amount, ...(back > 0 ? { back } : {}), mana, ...castOf, repeats,
+      family, kind: a.kind, amount, ...(back > 0 ? { back } : {}), ...(size ? { size } : {}), mana, ...castOf, repeats,
       floor: open || stopped || conditional ? 0 : amount,
       ceiling: open ? null : amount,
       ...(stopped ? { fallback: { cost: a.unless!.cost, payer: a.unless!.payer } } : {}),
@@ -284,11 +294,16 @@ export function spanOf(r: Rate): RateSpan {
  *  than mana (`extraCost`) is left out: Bloodfire Colossus is not 6 damage for {R}. */
 export function bestRates(rates: Rate[]): Partial<Record<RateFamily, RateSpan>> {
   const out: Partial<Record<RateFamily, RateSpan>> = {};
+  for (const r of bestPerFamily(rates)) out[r.family] = spanOf(r);
+  return out;
+}
+/** The best rate per family, as records: what `bestRates` spans, and what a note (`size`) reads. */
+export function bestPerFamily(rates: Rate[]): Rate[] {
+  const best = new Map<RateFamily, Rate>();
   for (const r of rates) {
     if (r.extraCost) continue;
-    const t = spanOf(r);
-    const have = out[r.family];
-    if (have === undefined || compareRates(t, have) < 0) out[r.family] = t;
+    const have = best.get(r.family);
+    if (have === undefined || compareRates(spanOf(r), spanOf(have)) < 0) best.set(r.family, r);
   }
-  return out;
+  return [...best.values()];
 }

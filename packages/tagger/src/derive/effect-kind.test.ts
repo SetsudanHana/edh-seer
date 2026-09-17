@@ -787,3 +787,13 @@ test("a from-exile move whose object names an opponent as owner is exile-process
   expect(actionEffectKind({ verb: "return", object: "that card", fromZone: "exile", toZone: "battlefield" })).toBe("flicker");
   expect(EFFECT_KINDS).toContain("exile-processing");
 });
+
+/** A CHOICE OF TOP OR BOTTOM IS TOP MANIPULATION (DERIVE 162). Dream Cache: "Draw three cards, then
+ *  put two cards from your hand both on top of your library or both on the bottom of your
+ *  library." Dig Through Time's rest "on the bottom" stays refused. */
+test("a put from your hand that may go on top is top-set even when the bottom is offered too", () => {
+  const put = { verb: "put", object: "two cards from your hand", fromZone: "hand", toZone: "library" } as Parameters<typeof actionEffectKind>[0];
+  expect(actionEffectKind(put, "Draw three cards, then put two cards from your hand both on top of your library or both on the bottom of your library.")).toBe("top-set");
+  expect(actionEffectKind(put, "Put two cards from your hand on the bottom of your library.")).toBeNull();
+  expect(actionEffectKind(put, "Put two cards from your hand on top of your library in any order.")).toBe("top-set");
+});
