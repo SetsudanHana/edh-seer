@@ -44,6 +44,6 @@ test("a rated card's row carries floor, ceiling and mana per family; an unrated 
     },
   } as never;
   const rows = buildFacetIndex([...cards, divination], [...index, { slug: "divination", name: "Divination", identity: ["U"], commander: false }]);
-  expect(rows[2]).toMatchObject({ s: "divination", e: ["draw-card"], r: { cards: [2, 2, 3] } });
+  expect(rows[2]).toMatchObject({ s: "divination", e: ["draw-card"], r: { cards: [2, 3, 2, 3] } });
   expect(rows[1]).not.toHaveProperty("r");
 });

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
-import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateTriple } from "./rate.js";
+import { bestRates, compareRates, manaOf, ratesOf, spanOf, type Rate, type RateSpan } from "./rate.js";
 import type { DeckCard } from "./types.js";
 
 /** A card with one derived ability and a printed cost. Verified oracle texts from the corpus
@@ -55,12 +55,38 @@ test("Blue Sun's Zenith: a slope of one card per mana after three", () => {
   expect(r).toEqual({ family: "cards", kind: "on-cast", amount: 0, mana: 3, slope: 1, repeats: "once", floor: 0, ceiling: null });
 });
 
-/** AN ACTIVATION IS PRICED ON ITS OWN COST, not the card's: paying gives the effect every time. */
-test("an activated draw is one card per four mana, each activation", () => {
-  const [r] = ratesOf(card("Jayemdae Tome", "{4}", [
-    { kind: "activated", cost: "{4}, {T}", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "repeatable" },
-  ]));
-  expect(r).toEqual({ family: "cards", kind: "activated", amount: 1, mana: 4, repeats: "repeatable", floor: 1, ceiling: 1 });
+/** AN ACTIVATION IS PRICED ON ITS OWN COST AND THE CARD'S (owner 2026-09-17: "you are not
+ *  accounting for actually casting the card to then use its ability"): the first card costs the
+ *  cast plus the activation, every later one the activation alone. A land casts for nothing. */
+test("an activated draw carries the cast: the first card is eight mana, each later one four", () => {
+  const tome = { kind: "activated", cost: "{4}, {T}", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "repeatable" };
+  const [r] = ratesOf(card("Jayemdae Tome", "{4}", [tome]));
+  expect(r).toEqual({ family: "cards", kind: "activated", amount: 1, mana: 4, cast: 4, repeats: "repeatable", floor: 1, ceiling: 1 });
+  expect(spanOf(r!)).toEqual([1, 8, 1, 4]);
+  expect(spanOf({ ...r!, repeats: "once" })).toEqual([1, 8, 1, 8]);
+  const land = card("Mikokoro-ish", "", [tome]); delete (land.card as { manaCost?: string }).manaCost;
+  expect(ratesOf(land)[0]).toMatchObject({ mana: 4, cast: 0 });
+  expect(ratesOf(card("X Creature", "{X}{U}", [tome], { types: ["creature"] }))).toEqual([]);
+});
+
+/** A DRAW IS NET OF WHAT THE SAME CLAUSE TAKES BACK (owner 2026-09-17: "brainstorm makes you
+ *  draw 3 cards, but then you have to put 2 cards back"). Brainstorm: draw 3, `top-set` 2 from
+ *  the hand, +1. Faithless Looting: draw 2, discard 2, 0 -- selection, not advantage. Merfolk
+ *  Looter's "discard a card" states no amount, so its draw is refused, not left gross. Damage is
+ *  never netted, and a discard on another cost is not this ability's. Derived shapes verified
+ *  in the corpus 2026-09-17. */
+test("Brainstorm nets to one card, a loot to zero, an unamounted discard refuses the draw", () => {
+  const draw = (n: string, kind = "on-cast", cost?: string) => ({ kind, ...(cost ? { cost } : {}), effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: n, repeats: kind === "on-cast" ? "once" : "per-cycle" });
+  const [b] = ratesOf(card("Brainstorm", "{U}", [draw("3"),
+    { kind: "on-cast", effect: { kind: "top-set", subject: { control: "you", token: null, fromZone: "hand" } }, amount: "2", repeats: "once" }]));
+  expect(b).toEqual({ family: "cards", kind: "on-cast", amount: 1, back: 2, mana: 1, repeats: "once", floor: 1, ceiling: 1 });
+  const [l] = ratesOf(card("Faithless Looting", "{R}", [draw("2"),
+    { kind: "on-cast", effect: { kind: "" }, amount: "2", emits: [{ verb: "discard", subject: { control: "you", token: null } }], repeats: "once" }]));
+  expect(l).toMatchObject({ amount: 0, back: 2, floor: 0, ceiling: 0 });
+  expect(ratesOf(card("Merfolk Looter", "{1}{U}", [draw("1", "activated", "{T}"),
+    { kind: "activated", cost: "{T}", effect: { kind: "" }, emits: [{ verb: "discard", subject: { control: "you", token: null } }], repeats: "per-cycle" }], { types: ["creature"] }))).toEqual([]);
+  expect(ratesOf(card("Two Abilities", "{1}{U}", [draw("1", "activated", "{T}"),
+    { kind: "activated", cost: "{2}", effect: { kind: "" }, emits: [{ verb: "discard", subject: { control: "you", token: null } }], repeats: "repeatable" }]))[0]).toMatchObject({ amount: 1 });
 });
 
 test("damage is its own family, and a bolt is three for one", () => {
@@ -115,6 +141,11 @@ test("an amount behind a condition on the card's text has a floor of 0 and keeps
   const plain = ratesOf(card("Divination", "{2}{U}", [{ kind: "on-cast", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "2", repeats: "once" }], { text: "Draw two cards." }))[0];
   expect(plain).toMatchObject({ floor: 2, ceiling: 2 });
   expect(plain).not.toHaveProperty("conditional");
+  // A GRANT BEHIND A STATE: Learned Learner has "{T}: Draw a card" only while your hand size is not
+  // seven (corpus, 2026-09-17); the derived activation says nothing of the state.
+  const learner = ratesOf(card("Learned Learner", "{U}", [{ kind: "activated", cost: "{T}", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "per-cycle" }],
+    { types: ["creature"], text: "As long as you have a maximum hand size other than 7, this creature has \"{T}: Draw a card.\"" }))[0];
+  expect(learner).toMatchObject({ floor: 0, ceiling: 1, conditional: true });
 });
 
 /** AN ACTIVATION THAT CHARGES MORE THAN MANA says so: "{R}, Sacrifice this creature: 6 damage" is
@@ -129,27 +160,28 @@ test("an activation cost with words in it is flagged as more than mana", () => {
 /** THE ORDER A SEARCH ROW SORTS BY: floor per mana, then ceiling per mana with open above bounded,
  *  then the cheaper ability. */
 test("compareRates: priced before free, floor per mana first, open ceiling breaks above a bounded one, cheaper last", () => {
-  const rows: RateTriple[] = [
-    [0, 9, 3],      // Fiery Gambit: conditional, ceiling 9
-    [2, 2, 3],      // Divination
-    [3, 3, 1],      // Brainstorm
-    [0, null, 3],   // Rhystic Study: a trigger
-    [1, 1, 0],      // Merfolk Looter: free activation
-    [1, 1, 1],      // one for one
+  const rows: RateSpan[] = [
+    [0, 3, 9, 3],      // Fiery Gambit: conditional, ceiling 9
+    [2, 3, 2, 3],      // Divination
+    [1, 1, 1, 1],      // Brainstorm, net
+    [0, 3, null, 3],   // Rhystic Study: a trigger
+    [1, 0, 1, 0],      // a land's tap draw: free
+    [1, 8, 1, 4],      // Jayemdae Tome: cast and activation, then activation
+    [1, 2, 1, 2],      // one for two
   ];
-  expect([...rows].sort(compareRates)).toEqual([[3, 3, 1], [1, 1, 1], [2, 2, 3], [0, null, 3], [0, 9, 3], [1, 1, 0]]);
-  expect(compareRates([3, 3, 0], [1, 1, 0])).toBeLessThan(0);
-  expect(compareRates([0, null, 0], [0, null, 0])).toBe(0);
+  expect([...rows].sort(compareRates)).toEqual([[1, 1, 1, 1], [2, 3, 2, 3], [1, 2, 1, 2], [1, 8, 1, 4], [0, 3, null, 3], [0, 3, 9, 3], [1, 0, 1, 0]]);
+  expect(compareRates([3, 0, 3, 0], [1, 0, 1, 0])).toBeLessThan(0);
+  expect(compareRates([0, 0, null, 0], [0, 0, null, 0])).toBe(0);
 });
 
 test("bestRates keeps the best per family and leaves an extraCost activation out", () => {
-  const rate = (over: Partial<Rate>): Rate => ({ family: "cards", kind: "activated", amount: 1, mana: 1, repeats: "repeatable", floor: 1, ceiling: 1, ...over });
+  const rate = (over: Partial<Rate>): Rate => ({ family: "cards", kind: "activated", amount: 1, mana: 1, cast: 2, repeats: "repeatable", floor: 1, ceiling: 1, ...over });
   expect(bestRates([
     rate({ floor: 1, ceiling: 1, mana: 2 }),
     rate({ floor: 1, ceiling: 1, mana: 1 }),
     rate({ family: "damage", floor: 6, ceiling: 6, mana: 1, extraCost: true }),
-    rate({ family: "damage", floor: 0, ceiling: null, mana: 4 }),
-  ])).toEqual({ cards: [1, 1, 1], damage: [0, null, 4] });
+    rate({ family: "damage", kind: "triggered", floor: 0, ceiling: null, mana: 4, cast: undefined }),
+  ])).toEqual({ cards: [1, 3, 1, 1], damage: [0, 4, null, 4] });
   expect(bestRates([])).toEqual({});
 });
 
@@ -158,5 +190,5 @@ test("bestRates keeps the best per family and leaves an extraCost activation out
 test("a loyalty or empty cost has no mana to read and is refused", () => {
   const draw = (cost: string) => ({ kind: "activated", cost, effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "per-turn" });
   expect(ratesOf(card("Teferi, Temporal Pilgrim", "{3}{U}{U}", [draw("0"), draw("+1"), draw("−3"), draw("")], { types: ["planeswalker"] }))).toEqual([]);
-  expect(ratesOf(card("Obsessive Stitcher", "{1}{U}{B}", [draw("{T}")], { types: ["creature"] }))).toMatchObject([{ mana: 0, floor: 1, delayed: true }]);
+  expect(ratesOf(card("Obsessive Stitcher", "{1}{U}{B}", [draw("{T}")], { types: ["creature"] }))).toMatchObject([{ mana: 0, cast: 3, floor: 1, delayed: true }]);
 });
