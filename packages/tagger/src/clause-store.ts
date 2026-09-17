@@ -182,6 +182,19 @@ export function dropsOriginZone(doc: CardClausesDoc | null, oracleText: string):
   return kept < wanted.length;
 }
 
+/** A clause that states a payment stopping its action: "unless that player pays {1}". */
+const UNLESS_PAYS = /\bunless\b[^.]*\bpays?\b/i;
+
+/** Did the model drop a payment this card's text states (CR 118.12a)? The prompt learned the
+ *  `unless` field on 2026-09-17 (NORMALIZE_VERSION 21); every doc answered before then carries the
+ *  bare action -- Rhystic Study as an optional draw with no tax anywhere -- and looks fresh to every
+ *  other selector. The selector for `--refresh-unless`. */
+export function dropsUnlessPayment(doc: CardClausesDoc | null, oracleText: string): boolean {
+  if (!doc) return false; // no doc at all is `needsNormalize`'s business
+  if (!UNLESS_PAYS.test(oracleText)) return false;
+  return !doc.canonical.some((c) => (c.actions ?? []).some((a) => a.unless?.cost));
+}
+
 /** A trigger subject that names only a PLAYER. Legitimate for most triggers — "whenever you cast a
  *  spell", "whenever you draw a card", "whenever you attack" name no thing beyond the bare umbrella,
  *  and 62 of the corpus's 72 player-only trigger subjects are exactly that. */

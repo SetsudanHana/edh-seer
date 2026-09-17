@@ -78,3 +78,10 @@ test("a non-library origin is still preserved verbatim", () => {
     expect(canonicalAction({ verb: "return", object: "target card", fromZone: z }).fromZone).toBe(z);
   }
 });
+
+/** ONE ENCODING FOR "NO PAYMENT": the prompt answers `"unless": null` when a clause names none, and
+ *  an absent field and a null field must be the same fact. */
+test("a null unless is dropped, a stated one is kept", () => {
+  expect(canonicalAction({ verb: "draw", object: "a card", unless: null })).not.toHaveProperty("unless");
+  expect(canonicalAction({ verb: "draw", object: "a card", unless: { cost: "{1}", payer: "opponent" } }).unless).toEqual({ cost: "{1}", payer: "opponent" });
+});

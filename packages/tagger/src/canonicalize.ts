@@ -42,6 +42,11 @@ export interface Action {
   toZone?: string | null;
   amount?: string | null;
   optional?: boolean;
+  /** THE PAYMENT THAT STOPS THE ACTION (CR 118.12a): "draw a card unless that player pays {1}",
+   *  "counter target spell unless its controller pays {3}", "sacrifice this unless you pay {W}".
+   *  The action is what happens when the payment is NOT made; the payment is its floor. Added
+   *  2026-09-17 for the rate axis, after the census showed the prompt had been dropping it. */
+  unless?: { cost: string; payer: string } | null;
 }
 
 export interface ClauseRecord {
@@ -65,11 +70,14 @@ export function canonicalTrigger(t: ClauseRecord["trigger"]): ClauseRecord["trig
 export function canonicalAction(a: Action): Action {
   // A STATED ZONE IS KEPT, WHATEVER IT IS. Only an UNSTATED origin becomes null, and null now means
   // exactly "the model did not say" rather than "the verb's default". See the header.
-  return {
+  const out: Action = {
     ...a,
     fromZone: a.fromZone === "" ? null : a.fromZone ?? null,
     toZone: a.verb === "cast" ? null : a.toZone ?? null,
   };
+  // An absent payment and a null one are the same fact; one encoding.
+  if (!a.unless?.cost) delete out.unless;
+  return out;
 }
 
 /** The actions a clause states, in one encoding. Order is preserved: it is data, not spelling. */

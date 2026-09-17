@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 20;
+export const NORMALIZE_VERSION = 21;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -515,7 +515,8 @@ For each clause return:
   "abilityType": copied from type=, or "none" for keyword/reminder clauses,
   "trigger": { "event": TriggerEvent, "subject": string, "control": "you"|"opponent"|"any" },  // omit if not triggered
   "actions": [ { "verb": Verb, "object": string, "fromZone": Zone|null, "toZone": Zone|null,
-                 "amount": string|null, "optional": boolean } ] }
+                 "amount": string|null, "optional": boolean,
+                 "unless": { "cost": string, "payer": "you"|"opponent"|"controller"|"any" } | null } ] }
 
 Verb is EXACTLY one of: ${VERBS.join(", ")}
 Zone is EXACTLY one of: ${ZONES.join(", ")}
@@ -558,6 +559,14 @@ Rules:
 - "Enters tapped" is a property of entering, not an action: record it as verb "tap" with object
   "this", so the fact survives without inventing a second entry event.
 - List one action per game action the clause states, in the order written.
+- UNLESS A PLAYER PAYS (CR 118.12a). When the clause says an action happens UNLESS a player pays
+  a cost -- "draw a card unless that player pays {1}", "counter target spell unless its controller
+  pays {3}", "sacrifice this creature unless you pay {U}" -- record the action as written and put
+  the payment on it: "unless": { "cost": the cost verbatim ("{1}", "{W}{W}", "2 life"), "payer":
+  "you" when the card's own controller pays, "opponent" when the text names an opponent or "that
+  player" after an opponent's action, "controller" when it is the spell's or permanent's
+  controller, "any" when any player may pay }. Every other action has "unless": null. Never turn the payment into an action of
+  its own: paying is the player's choice, and the action is what happens when they do not.
 - "cant" is for restrictions ("can't attack", "can't be countered"); put the restriction in object.
 - "animate" is a permanent BECOMING a creature ("becomes a 0/0 Elemental creature", man-lands,
   Ensoul Artifact). Do not reach for transform, modify-pt or grant-ability for this — transform is

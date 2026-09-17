@@ -2860,3 +2860,16 @@ test("the temporary-token rider makes no second ability", () => {
   expect(abilities.find((a) => a.effect.kind === "token-generation")?.temporary).toBe(true);
   expect(abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "exiled"))).toBe(false);
 });
+
+/** THE PAYMENT RIDES ONTO THE ABILITY VERBATIM (CR 118.12a; DERIVE 159). Derivation records what
+ *  the card says; what a floor of "a {1} tax per opponent spell" is worth is the rate axis's call. */
+test("an action's unless-payment is carried onto the ability", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "cast", subject: "a spell", control: "opponent" },
+    actions: [{ verb: "draw", object: "a card", amount: "1", optional: true, unless: { cost: "{1}", payer: "opponent" } }],
+  }], "Rhystic Study");
+  expect(abilities[0]?.unless).toEqual({ cost: "{1}", payer: "opponent" });
+  const plain = deriveAbilities([{ id: 1, abilityType: "on-cast", actions: [{ verb: "draw", object: "two cards", amount: "2" }] }], "Divination");
+  expect(plain.abilities[0]?.unless).toBeUndefined();
+});
