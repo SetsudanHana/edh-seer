@@ -104,8 +104,10 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
                     slug={p.slug} name={p.name} art={p.art} identity={p.identity}
                     // AN UNREAD ROW HAS NO PAYOFF TO SHOW. Its "triggers" over the limit read as the
                     // payoff with a footnote (UX review, 2026-09-17); the limit is the whole caption.
-                    caption={p.unread ? undefined : p.payoff ?? feederCaption(p, subject)}
-                    note={p.unread ? "engine did not read what it does" : undefined}
+                    // A PRODUCER ROW SAYS ITS DIRECTION AND NOTHING ELSE (2026-09-17): its sentence's
+                    // tail is this page's own card, and its head is the group heading.
+                    caption={p.unread || p.producer ? undefined : p.payoff ?? feederCaption(p, subject)}
+                    note={p.producer ? "causes it" : p.unread ? "engine did not read what it does" : undefined}
                   />
                 </li>
               ))}
@@ -131,7 +133,9 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
                 {/* A FEEDER GROUP RUNS THE OTHER WAY (skeptic review, 2026-09-17): its tiles are cards
                   * this card counts, so "ask for it" named the wrong direction under them. A feeder
                   * row is the one whose sentence opens on the row's card being controlled. */}
-                {group.rows.every((r) => /^While you control /i.test(r.reason))
+                {group.rows.every((r) => r.producer)
+                  ? "other cards cause it too, equally specific. The ones shown are the best connected."
+                  : group.rows.every((r) => /^While you control /i.test(r.reason))
                   ? "other cards feed it too, equally specific. The ones shown are the best connected."
                   : "other cards ask for it too, equally specific. The ones shown are the best connected."}
               </p>

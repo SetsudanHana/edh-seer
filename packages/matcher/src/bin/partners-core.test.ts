@@ -346,15 +346,14 @@ test("the index carries a partner count and lists the best-connected card first"
   const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
   const { index } = buildPartnerArtifact([vanilla, impactTremors, krenko], H);
   const bySlug = Object.fromEntries(index.map((e) => [e.slug, e.partners]));
-  // DIRECTIONAL, LIKE THE PAGES: Krenko's page lists Impact Tremors (a payoff that asks for what
-  // Krenko supplies), Impact Tremors' page lists nothing, and the counts say the same. A payoff
-  // whose only relations are the cards that feed it counts 0 until the pages list producers.
+  // SYMMETRIC (2026-09-17): the Krenko-Tremors pair counts once for each end, so a payoff whose
+  // only relations are the cards that feed it counts them. Equal counts order by name.
   expect(bySlug["krenko-mob-boss"]).toBe(1);
-  expect(bySlug["impact-tremors"]).toBe(0);
-  expect(index.map((e) => e.slug)).toEqual(["krenko-mob-boss", "impact-tremors"]);
+  expect(bySlug["impact-tremors"]).toBe(1);
+  expect(index.map((e) => e.slug)).toEqual(["impact-tremors", "krenko-mob-boss"]);
   const lonely = base("Lonely Card", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }] as unknown as CardTags["abilities"]);
   const { index: three } = buildPartnerArtifact([lonely, impactTremors, krenko], H);
-  expect(three.map((e) => [e.slug, e.partners])).toEqual([["krenko-mob-boss", 2], ["impact-tremors", 0], ["lonely-card", 0]]);
+  expect(three.map((e) => [e.slug, e.partners])).toEqual([["krenko-mob-boss", 2], ["impact-tremors", 1], ["lonely-card", 1]]);
 });
 
 /** NO CARD RULES TEXT ON THE RECORD (spec D2, reversed 2026-09-04). The evidence a reader checks a
@@ -1463,4 +1462,37 @@ test("a partner row and an index entry carry the printing id and the identity", 
   expect(printingIdOf(null)).toBeUndefined();
   expect(printingIdOf("https://example.com/x.jpg")).toBeUndefined();
   expect(printingIdOf("https://cards.scryfall.io/art_crop/back/e/a/ea7e0000-0000-4000-8000-000000000000.png")).toBe("ea7e0000-0000-4000-8000-000000000000");
+});
+
+/** PRODUCERS ON A PAYOFF'S PAGE (owner 2026-09-17: "lets start with 1"). Every pair the forward
+ *  phase verifies is one edge seen from the producer's side; the same edge, mirrored, is the row
+ *  the payoff's page never had. Krenko's page said Impact Tremors; Impact Tremors' page said
+ *  nothing, and its count was the cards that ask for damage. Same sentence, same event, same
+ *  score, `producer` set so the page can say which way it runs, and no payoff of its own -- the
+ *  tail of that sentence is the PAYOFF's behaviour, not the producer's. The count is symmetric. */
+test("a payoff's page mirrors every verified producer, and the count is symmetric", () => {
+  const { shards, index } = buildPartnerArtifact([krenko, impactTremors], H);
+  const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  const onKrenko = rec["krenko-mob-boss"]!.partners.find((r) => r.name === "Impact Tremors")!;
+  const onTremors = rec["impact-tremors"]!.partners;
+  expect(onTremors).toHaveLength(1);
+  expect(onTremors[0]).toMatchObject({ name: "Krenko, Mob Boss", slug: "krenko-mob-boss", producer: true,
+    event: onKrenko.event, reason: onKrenko.reason, score: onKrenko.score });
+  expect(onTremors[0]!.payoff).toBeUndefined();
+  expect(onTremors[0]!.unread).toBeUndefined();
+  expect(rec["impact-tremors"]!.pool[onKrenko.event]).toBe(1);
+  expect(rec["impact-tremors"]!.rarity[onKrenko.event]).toBe(rec["krenko-mob-boss"]!.rarity[onKrenko.event]);
+  expect(Object.fromEntries(index.map((e) => [e.slug, e.partners]))).toEqual({ "impact-tremors": 1, "krenko-mob-boss": 1 });
+});
+
+/** THE MIRROR IS CAPPED LIKE EVERY OTHER GROUP, and counted before the cap: ten token makers all
+ *  verified against one payoff put eight on its page and a pool of ten beside them. */
+test("producer rows respect the per-event cap and the pool counts them all", () => {
+  const makers = Array.from({ length: PER_EVENT_CAP + 2 }, (_, i) => base(`Maker ${i}`, krenko.tags.abilities, ["goblin"]));
+  const { shards } = buildPartnerArtifact([...makers, impactTremors], H);
+  const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  const rows = rec["impact-tremors"]!.partners;
+  expect(rows).toHaveLength(PER_EVENT_CAP);
+  expect(rows.every((r) => r.producer)).toBe(true);
+  expect(rec["impact-tremors"]!.pool[rows[0]!.event]).toBe(PER_EVENT_CAP + 2);
 });

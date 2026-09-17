@@ -333,6 +333,12 @@ export interface PartnerRow {
   art?: string;
   /** Colour identity, WUBRG order, for the mana pips beside the name. Empty is colourless. */
   identity?: string[];
+  /** THE ROW RUNS TOWARD THE PAGE'S CARD (owner 2026-09-17): this card CAUSES the event the page's
+   *  card asks for. It is the forward phase's own verified pair seen from the payoff's side -- the
+   *  same sentence, event and score the producer's page carries -- so a payoff page lists what
+   *  feeds it without a second engine call. No `payoff`: the sentence's tail is the payoff's
+   *  behaviour, which is the page's own card. */
+  producer?: true;
 }
 
 /** The Scryfall printing id inside an art URL: `.../art_crop/front/5/7/<id>.jpg?<ts>`. The path's two
@@ -405,6 +411,11 @@ export const degreeOf = (degree: ReadonlyMap<string, number> | undefined, d: Dec
  *  and this artifact would drift the same way for the same reason. */
 export interface PartnerResult {
   rows: PartnerRow[];
+  /** EVERY PAIR THE ENGINE CONFIRMED in the forward and static phases, including the ones the
+   *  per-event cap kept off this page. The engine had already been asked; throwing the answer away
+   *  was the only reason a payoff's page could not list its producers. Feeder rows are not here --
+   *  they already run the other way. */
+  verified: PartnerRow[];
   /** Per event key, how many cards in the corpus demand something this card supplies. The rows are
    *  capped; this is what the page says instead of padding -- "and 1,974 more trigger on a creature
    *  entering". A CANDIDATE count, not a verified-edge count, and the page must word it that way. */
@@ -504,6 +515,7 @@ export function partnersFor(
   for (const r of ranked) for (const [key] of r.events) pool[key] = (pool[key] ?? 0) + 1;
 
   const rows: PartnerRow[] = [];
+  const verified: PartnerRow[] = [];
   const shown: Record<string, number> = {};
   for (const r of ranked.slice(0, VERIFY_LIMIT)) {
     // NO TOKEN NODE EXISTS ON A CARD PAGE, so the engine's token suppression would trade this
@@ -521,10 +533,8 @@ export function partnersFor(
     const hit = r.events.map(([event, { score, tags }]) => ({ event, score, on: reasons.filter((x) => tags.has(x.tag)) }))
       .find((e) => e.on.length > 0);
     if (!hit) continue;
-    if ((shown[hit.event] ?? 0) >= PER_EVENT_CAP) continue;
-    shown[hit.event] = (shown[hit.event] ?? 0) + 1;
     const chosen = pickReason(hit.on);
-    rows.push({
+    const row: PartnerRow = {
       name: r.card.card.name,
       slug: slugs.get(r.card.card.name)!,
       score: hit.score,
@@ -533,7 +543,12 @@ export function partnersFor(
       ...payoffOf(chosen.text, r.card.card.name),
       ...(chosen.effectKind ? {} : { unread: true as const }),
       ...tileOf(r.card),
-    });
+    };
+    // RECORDED BEFORE THE CAP: the cap decides this page, not whether the pair exists.
+    verified.push(row);
+    if ((shown[hit.event] ?? 0) >= PER_EVENT_CAP) continue;
+    shown[hit.event] = (shown[hit.event] ?? 0) + 1;
+    rows.push(row);
     if (rows.length === KEEP) break;
   }
   // THE ROWS THAT RUN THE OTHER WAY. Everything above is "this card supplies, that card consumes".
@@ -609,17 +624,19 @@ export function partnersFor(
       if (rows.some((r) => r.slug === slug)) continue;
       const reasons = directedReasons(subject, c, h, { tokensMediate: false });
       for (const key of matched) {
-        if ((shown[key] ?? 0) >= PER_EVENT_CAP) continue;
         const on = reasons.filter((r) => r.tag === `static:${splitStaticKey(key).kind}`);
         if (on.length === 0) continue;
-        shown[key] = (shown[key] ?? 0) + 1;
         const chosen = pickReason(on);
-        rows.push({
+        const row: PartnerRow = {
           name: c.card.name, slug, score: specificity(key, freq), event: key, reason: chosen.text,
           ...payoffOf(chosen.text, c.card.name),
           ...(chosen.effectKind ? {} : { unread: true as const }),
           ...tileOf(c),
-        });
+        };
+        verified.push(row);
+        if ((shown[key] ?? 0) >= PER_EVENT_CAP) continue;
+        shown[key] = (shown[key] ?? 0) + 1;
+        rows.push(row);
         break;
       }
     }
@@ -654,7 +671,7 @@ export function partnersFor(
   // THE RANKING BASIS, FOR THE EVENTS THAT ACTUALLY EARNED A ROW.
   const rarity: Record<string, number> = {};
   for (const row of rows) rarity[row.event] = freq[row.event] ?? 1;
-  return { rows, pool, rarity };
+  return { rows, verified, pool, rarity };
 }
 
 /** WHICH OF THE ENGINE'S SENTENCES TO STORE.
@@ -1320,21 +1337,46 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // of a class, not a connection, which is why a static is priced last on the pages too.
   // Kept for the main loop, so `staticCandidates` -- the one lookup that runs a predicate over
   // its pool -- is paid once per card and not twice.
+  // SYMMETRIC (owner 2026-09-17, "lets start with 1"). A payoff's candidates are the cards that
+  // ask for what it produces, so a pure payoff -- Impact Tremors, rank 14,260 on the first build --
+  // counted none of the thousands of token makers that feed it. The count is the size of the
+  // card's neighbourhood in the undirected candidate graph: a pair counts for both ends, once.
+  // A bitset because the exact count needs a dedupe over ~50 M ordered pairs, and a name Set per
+  // card is a gigabyte where n^2/8 bytes (79 MB on 25,189 cards) is not.
   const candidateSets = new Map<string, { triggers: DeckCard[]; candidates: DeckCard[]; feeders: DeckCard[] }>();
-  const degree = new Map<string, number>();
-  for (const d of substantive) {
+  const at = new Map(substantive.map((d, i) => [d.card.name, i] as const));
+  const n = substantive.length;
+  const stride = (n + 7) >> 3;
+  const bits = new Uint8Array(n * stride);
+  const link = (a: number, b: number): void => {
+    bits[a * stride + (b >> 3)]! |= 1 << (b & 7);
+    bits[b * stride + (a >> 3)]! |= 1 << (a & 7);
+  };
+  for (const [i, d] of substantive.entries()) {
     const triggers = triggerCandidatesOf(d);
     const sets = { triggers, candidates: [...new Set([...triggers, ...staticCandidates(d)])], feeders: feedersOf(d) };
     candidateSets.set(d.card.name, sets);
-    const names = new Set([...triggers, ...sets.feeders].map((c) => c.card.name));
     const meld = meldOf(d);
-    if (meld) names.add(meld.card.name);
-    names.delete(d.card.name);
-    degree.set(d.card.name, names.size);
+    for (const c of meld ? [...triggers, ...sets.feeders, meld] : [...triggers, ...sets.feeders]) {
+      const j = at.get(c.card.name);
+      if (j !== undefined && j !== i) link(i, j);
+    }
+  }
+  const degree = new Map<string, number>();
+  for (const [i, d] of substantive.entries()) {
+    let count = 0;
+    for (let b = i * stride, end = b + stride; b < end; b++) {
+      let v = bits[b]!;
+      while (v) { v &= v - 1; count++; }
+    }
+    degree.set(d.card.name, count);
   }
 
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
+  // THE MIRROR: every pair the forward phase verified, filed under the card it points AT, so the
+  // second pass can hand each payoff the producers whose pages already list it.
+  const producers = new Map<string, PartnerRow[]>();
 
   for (const d of substantive) {
     const slug = slugs.get(d.card.name)!;
@@ -1364,8 +1406,15 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(commander && isBackground(d) ? { pairingOnly: true as const } : {}),
       emits: [...new Set(emits)],
       demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d), ...meldKeysOf(d)])],
-      ...(() => { const { rows, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith, degree);
-        return { partners: rows, pool, rarity }; })(),
+      ...(() => {
+        const { rows, verified, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith, degree);
+        for (const v of verified) {
+          const mirrored: PartnerRow = { name: d.card.name, slug, score: v.score, event: v.event, reason: v.reason, producer: true, ...tileOf(d) };
+          const list = producers.get(v.slug);
+          if (list) list.push(mirrored); else producers.set(v.slug, [mirrored]);
+        }
+        return { partners: rows, pool, rarity };
+      })(),
       // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
       // rule `legality.ts` reports a violation against. An empty identity is inside every one,
       // which is why a colourless card belongs in every deck and `every` over `[]` says so.
@@ -1415,10 +1464,51 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       })() : {}),
     };
     shards.set(shardName, shard);
+  }
+
+  // THE SECOND PASS: producers onto every page that asks for them, then the index. Capped and
+  // counted like every other group (`PER_EVENT_CAP` per event, `KEEP` in all, the pool counted
+  // first), best connected first among equal scores, and filtered by identity on a commander's
+  // lists exactly as its candidates were. Merged into the one list: the row says which way it
+  // runs, as a feeder row does.
+  const attach = (list: PartnerRow[], pool: Record<string, number>, rarity: Record<string, number>, all: PartnerRow[], legal: (r: PartnerRow) => boolean): PartnerRow[] => {
+    const usable = all.filter(legal)
+      .sort((a, b) => b.score - a.score || (degree.get(b.name) ?? 0) - (degree.get(a.name) ?? 0) || a.name.localeCompare(b.name, "en"));
+    const shown: Record<string, number> = {};
+    const kept: PartnerRow[] = [];
+    // ONE ROW PER CARD PER LIST, the rule `partnersFor` keeps: a mutual pair -- each supplies what
+    // the other asks -- is already on this page as an asker and does not land twice.
+    const onPage = new Set(list.map((r) => r.slug));
+    for (const r of usable) {
+      pool[r.event] = (pool[r.event] ?? 0) + 1;
+      if (onPage.has(r.slug)) continue;
+      if ((shown[r.event] ?? 0) >= PER_EVENT_CAP || kept.length >= KEEP) continue;
+      onPage.add(r.slug);
+      shown[r.event] = (shown[r.event] ?? 0) + 1;
+      kept.push(r);
+      rarity[r.event] = freq[r.event] ?? 1;
+    }
+    return [...list, ...kept].sort((a, b) => b.score - a.score);
+  };
+  const within = (identity: Set<string>) => (r: PartnerRow): boolean => (r.identity ?? []).every((c) => identity.has(c));
+  for (const d of substantive) {
+    const slug = slugs.get(d.card.name)!;
+    const rec = shards.get(partnerShardOf(slug))![slug]!;
+    const mine = producers.get(slug) ?? [];
+    if (mine.length > 0) {
+      rec.partners = attach(rec.partners, rec.pool, rec.rarity, mine, within(new Set(d.card.colorIdentity ?? [])));
+      if (rec.commanderPartners) {
+        rec.commanderPartners = attach(rec.commanderPartners, rec.commanderPool!, rec.commanderRarity!, mine, within(new Set(d.card.colorIdentity ?? [])));
+      }
+      for (const [key, v] of Object.entries(rec.commanderPartnersBy ?? {})) {
+        v.partners = attach(v.partners, v.pool, v.rarity, mine, within(new Set(key === "C" ? [] : key.split(""))));
+      }
+    }
     // READ BACK OFF THE RECORD JUST WRITTEN, so the index can never disagree with the shard the
     // edge reads its `indexable` decision from -- the two lists are the same two lists.
-    const written = shard[slug] as CardPageRecord & { commanderPartners?: PartnerRow[] };
+    const written = rec as CardPageRecord & { commanderPartners?: PartnerRow[] };
     const art = printingIdOf(artCropOf(d));
+    const commander = isCommander(d);
     index.push({
       slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
       partners: degree.get(d.card.name) ?? 0,
