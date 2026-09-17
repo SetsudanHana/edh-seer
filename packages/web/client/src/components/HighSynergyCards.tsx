@@ -2,6 +2,7 @@ import type { DeckReport } from "../types.js";
 import { CardName, ReasonText } from "./card-drawer.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 import { CATEGORY_LABELS } from "./CardList.js";
+import { RATE_FAMILY_LABEL, rateLabel, type RateFamily } from "../lib/facets.js";
 
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
 /** What the badge means, said once where it is first used rather than left to be guessed. */
@@ -95,6 +96,16 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                   <span className="block text-xs text-(--muted)">
                     one of <span className="stat-num">{c.partnerCount}</span> pairs behind this
                     score
+                  </span>
+                ) : null}
+                {/* THE CARD'S BEST RATE (roadmap Y9): what it charges for what it does, and where
+                  *  that sits among every card that does the same thing. Per family, so a draw
+                  *  rate is compared with draw rates and never with damage. */}
+                {c.rate ? (
+                  <span className="block text-xs text-(--muted)">
+                    {rateLabel(c.rate.span, c.rate.family as RateFamily, c.rate.size)} · top{" "}
+                    <span className="stat-num">{Math.max(1, Math.round((1 - c.rate.percentile) * 100))}%</span> of{" "}
+                    {RATE_FAMILY_LABEL[c.rate.family as RateFamily] ?? c.rate.family} rates
                   </span>
                 ) : null}
               </span>

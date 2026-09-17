@@ -69,6 +69,10 @@ export interface CardSynergy {
    *  analyzeDeckStructured. Absent when the card qualifies for none of the three, or when
    *  produced by the flat (retired-from-web/CLI) analyzeDeck below. */
   bucketScores?: { consistency: number; efficiency: number; "win-condition": number };
+  /** THE CARD'S BEST COST-TO-EFFECT RATE (roadmap Y9): the family, the span the search tile prints
+   *  ([floor, floorMana, ceiling, ceilingMana, delayed?]), the token's size, and where it sits
+   *  within its family over the corpus (0 worst, 1 best). Absent when no ability states a rate. */
+  rate?: { family: string; span: [number, number, number | null, number, 1?]; size?: string; percentile: number };
   /** 1-4: how many of the 4 UI buckets (the 3 above + Synergy via score>0) this card
    *  qualifies for. Absent (not 0) when the card qualifies for none. */
   bucketCount?: number;

@@ -1,3 +1,4 @@
+import { cardRate } from "./rate-stats.js";
 import {
   COMMANDER_BOOST,
   rankThemes,
@@ -609,7 +610,11 @@ export function analyzeDeckStructured(
       // score summed across BOTH roles, so a discount on its glutted-FEEDER role drags its rating
       // in a scarce-PAYOFF role nothing discounted -- the measured reason the magnitude term ships
       // off. `roleBlend: 1` is the historical behaviour exactly; absent reads as 1.
-      const score = authority + ROLE_BLEND * feederLift;
+      // CARD IMPACT FROM THE RATE (roadmap Y9; owner 2026-09-18): the headline score times
+      // `1 + rateWeight × (percentile − 0.5)`, the percentile within the card's family over the
+      // corpus. On the CARD, never the edge (ruling 2026-09-10). Inert at rateWeight 0.
+      const rated = cardRate(uniqueByName.get(name)!, impactWeights.rateWeight ?? 0);
+      const score = (authority + ROLE_BLEND * feederLift) * rated.factor;
       // `name` is a `dir` key -- a FACE name once `unique` is face-split -- and `tagsByName`/
       // `comboCardNames` are built from `resolved`, keyed by the PHYSICAL card (review fix,
       // 2026-08-27: pre-fix a two-faced card's buckets and combo bonus were silently lost).
@@ -638,6 +643,7 @@ export function analyzeDeckStructured(
         score,
         authority,
         feederLift,
+        ...(rated.best ? { rate: rated.best } : {}),
         partnerCount: distinctPartners.length,
         topPartners: distinctPartners
           .sort((x, y) => y.contribution - x.contribution)

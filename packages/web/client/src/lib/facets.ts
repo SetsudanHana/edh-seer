@@ -1,6 +1,7 @@
 import { ARCHETYPE_SIGNATURE, ARCHETYPE_VOCABULARY } from "@edh-seer/matcher/archetypes";
 import type { FacetRow } from "@edh-seer/matcher/partners-core";
 import { compareRates, type RateFamily, type RateSpan } from "@edh-seer/matcher/rate";
+export type { RateFamily } from "@edh-seer/matcher/rate";
 
 /** FIND BY WHAT IT DOES (spec 2026-09-08 part 4). Three facets over the facet index: colours, what
  *  the card does (effect kinds, curated to the chips a player would reach for), and the strategy
@@ -106,6 +107,11 @@ const UNIT: Record<RateFamily, [string, string]> = {
   cards: ["card", "cards"], damage: ["damage", "damage"], mana: ["mana", "mana"], life: ["life", "life"],
   "life-loss": ["life", "life"], mill: ["card", "cards"], tokens: ["token", "tokens"], counters: ["counter", "counters"],
   search: ["card", "cards"], recursion: ["card", "cards"], untap: ["permanent", "permanents"], flicker: ["permanent", "permanents"], copies: ["copy", "copies"],
+};
+/** The family in a player's words, for "top 5% of draw rates". */
+export const RATE_FAMILY_LABEL: Record<RateFamily, string> = {
+  cards: "draw", damage: "damage", mana: "mana", life: "lifegain", "life-loss": "life loss", mill: "mill",
+  tokens: "token", counters: "counter", search: "tutor", recursion: "recursion", untap: "untap", flicker: "flicker", copies: "copy",
 };
 export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: RateSpan, family: RateFamily, size?: string): string {
   const span = ceiling === null ? `${floor}+` : ceiling === floor ? `${floor}` : `${floor}–${ceiling}`;
