@@ -1223,6 +1223,18 @@ test("a counter put on this card is a self emit; one put on another permanent is
   expect(attacks?.subject.self).toBe(true);
   // Both recipients in one clause: nothing is claimed either way.
   expect(emitOf("Whenever you cast a spell, put a +1/+1 counter on target creature and a charge counter on this artifact.", "Both")?.subject.self).toBeUndefined();
+  // THE CONSUMER SIDE, passive: "whenever one or more +1/+1 counters are put on this creature" is a
+  // trigger on the card itself, though the model's subject is the counter (Fathom Mage, Herd
+  // Baloth). A trigger on "a creature you control" is not; an emit's "on this creature" after the
+  // comma does not leak into the trigger.
+  const trig = (text: string, subject: string, name: string) => deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "counter-added", subject, control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] }],
+    name, { 1: text },
+  ).abilities[0]?.trigger?.subject;
+  expect(trig("Whenever one or more +1/+1 counters are put on this creature, draw a card.", "a +1/+1 counter", "Fathom Mage")).toMatchObject({ self: true, control: "you" });
+  expect(trig("Whenever one or more +1/+1 counters are put on Fathom Mage, draw a card.", "a +1/+1 counter", "Fathom Mage")).toMatchObject({ self: true });
+  expect(trig("Whenever one or more +1/+1 counters are put on a creature you control, draw a card.", "a +1/+1 counter", "Simic Ascendancy")?.self).toBeUndefined();
+  expect(trig("Whenever you put a counter on a creature you control, put a +1/+1 counter on this creature.", "a counter", "Grower")?.self).toBeUndefined();
   // Adapt and monstrosity are self by rule.
   expect(emitOf("Adapt 2", "Incubation Druid", "2", "adapt")?.subject.self).toBe(true);
 });

@@ -84,7 +84,9 @@ import { emblemRecipient } from "../emblem.js";
 // `any` because the condition named "a player", and met "whenever an opponent draws").
 // 153: a counter put on the card itself is a `self` emit (Primal Amulet's charge counter, a creature's
 // own +1/+1), read off the clause text since an add-counter's object names only the counter.
-export const DERIVE_VERSION = 153;
+// 154: a passive own-counter trigger ("whenever counters are put on this creature") is self, read off
+// the trigger phrase; the model's subject there is the counter, never the recipient.
+export const DERIVE_VERSION = 154;
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
  *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
@@ -757,6 +759,14 @@ const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 /** The recipient of a counter, when it is the card itself. Anchored at the END of the trigger
  *  subject so "on this creature" is the recipient and not a stray mention. */
 const COUNTER_ON_SELF = /\bon this (?:creature|permanent|artifact|enchantment|land|planeswalker)$/i;
+/** The trigger PHRASE (text before the first comma) says the counter lands on this card. */
+function counterTriggerOnSelf(text: string, cardName?: string): boolean {
+  const phrase = text.split(",")[0] ?? "";
+  if (/\bon\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(phrase)) return true;
+  if (!cardName) return false;
+  const short = cardName.split(" // ")[0]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\bon\\s+${short}\\b`, "i").test(phrase);
+}
 
 /** "Whenever one or more creature cards leave YOUR GRAVEYARD" (Desecrated Tomb, Fang, Chalk Outline
  *  -- 32 of the 71 corpus leaves-payoffs). The model's trigger subject dropped the zone on every one
@@ -1090,6 +1100,13 @@ export function deriveAbilities(
         // Witness's own-counter trigger (owner-judged FALSE, 2026-08-22); with it, edges.ts's
         // self-on-both-sides gate refuses the pair.
         if ((verb === "counter-added" || verb === "counter-removed") && COUNTER_ON_SELF.test(clause.trigger.subject ?? "")) subject.self = true;
+        // THE PASSIVE FORM NAMES THE RECIPIENT IN THE TEXT, NOT IN THE MODEL'S SUBJECT: "whenever one
+        // or more +1/+1 counters are put on this creature" (Fathom Mage, Herd Baloth, Basking
+        // Broodscale) normalizes to subject "a +1/+1 counter", so the check above never saw the
+        // card. 22 of the 50 corpus own-counter triggers (2026-09-17). Read off the trigger phrase
+        // -- the text up to the first comma -- so an emit's "on this creature" later in the same
+        // sentence is not mistaken for the trigger's.
+        if ((verb === "counter-added" || verb === "counter-removed") && counterTriggerOnSelf(text, cardName)) { subject.self = true; subject.control = "you"; }
         // ON AN `attacks` TRIGGER THE STATE IS THE EVENT: "a creature you control attacking" (Arni
         // Metalbrow, Seifer) is every attacker, and the implied `attacks` producer never states
         // the state, so keeping it here would delete every real edge these have. Kept on every
