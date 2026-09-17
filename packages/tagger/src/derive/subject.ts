@@ -457,6 +457,9 @@ const COUNTER_KINDS = [
 /** The counter kind a subject names, or undefined. Anchored on the word "counter" so a subject that
  *  merely mentions flying or a Blood token is not read as a counter filter. */
 export function parseCounter(t: string): string | undefined {
+  // CR 107.14: {E} is the energy symbol, one energy counter. The word "counter" is only in the reminder
+  // text, which the segmenter strips ("whenever you get one or more {E}", Territorial Gorger).
+  if (/\{e\}/i.test(t)) return "energy";
   if (!/\bcounters?\b/.test(t)) return undefined;
   for (const k of COUNTER_KINDS) {
     // The kinds contain regex metacharacters (+, /), so match on plain text against the words that
