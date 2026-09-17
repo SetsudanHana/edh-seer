@@ -57,7 +57,7 @@ export function CardArt(
     <div className="flex flex-col gap-2 items-start">
       <img
         src={src}
-        alt={`${facing} — the card, including its rules text and artist credit`}
+        alt={`${facing}, the card, including its rules text and artist credit`}
         loading="eager"
         fetchPriority="high"
         decoding="async"

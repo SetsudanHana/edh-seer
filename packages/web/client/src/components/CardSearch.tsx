@@ -324,7 +324,9 @@ export function CardSearch({
           </p>
         : (
           <div className="flex flex-col gap-2">
-            <p className="text-(--muted) text-sm">
+            {/* A STATUS MESSAGE (WCAG 4.1.3): a chip changes the set and the number moves; a
+              * screen reader hears it only if the paragraph says it is one. */}
+            <p role="status" className="text-(--muted) text-sm">
               {matches.length.toLocaleString("en-US")}{" "}
               {matches.length === 1
                 ? (commanderMode ? "commander matches" : "card matches")

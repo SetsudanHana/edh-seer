@@ -53,7 +53,7 @@ export function CardTile({ slug, name, art, identity, to, caption, note }: {
             src={src}
             srcSet={srcSet}
             sizes="(min-width: 1536px) 14vw, (min-width: 1024px) 17vw, (min-width: 640px) 28vw, 45vw"
-            alt={`${name} — the card`}
+            alt={`${name}, the card`}
             loading="lazy"
             decoding="async"
             width={146}
@@ -63,7 +63,7 @@ export function CardTile({ slug, name, art, identity, to, caption, note }: {
         ) : (
           <div
             role="img"
-            aria-label={`${name} — no picture`}
+            aria-label={`${name}, no picture`}
             className="w-full aspect-[488/680] rounded-[4.75%_/_3.5%] border border-(--separator) bg-(--surface-secondary) flex items-center justify-center p-3 text-center text-sm text-(--muted)"
           >
             {name}

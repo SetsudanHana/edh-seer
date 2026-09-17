@@ -476,6 +476,13 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
     const eaten = subtype !== "-" ? feederNoun(subtype) : type !== "-" ? type : "permanent";
     return `${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten} to sacrifice`;
   }
+  // A GRAVEYARD FILL WANTS A CARD IN THE YARD (`fills|<type>|<subtype>|-`, partners-core). It is
+  // not an event either; the key read raw -- "fills creature" -- over every reanimator group.
+  if (verb === "fills") {
+    // Both slots set reads as a type line does, "a Goblin creature", the way the trigger nouns do.
+    const wanted = [subtype !== "-" ? feederNoun(subtype) : "", type !== "-" ? type : ""].filter(Boolean).join(" ") || "card";
+    return `${/^[aeiou]/i.test(wanted) ? "an" : "a"} ${wanted} in a graveyard`;
+  }
 
   const event = DEMAND_VERB[verb];
   // A verb this map has never seen says the true ugly thing rather than inventing a phrase for it.
@@ -508,8 +515,10 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
   const noun = words.length > 1 && (list(subtype, true).length > 1 || list(type, false).length > 1)
     ? oneOfWords(words)
     : words.join(" ");
-  const article = /^[aeiou]/i.test(noun) ? "an" : "a";
-  return `${article} ${token === "n" ? "nontoken " : ""}${noun} ${event}`;
+  // THE ARTICLE AGREES WITH THE FIRST WORD SAID, which is "nontoken" when the flag is set: "an
+  // nontoken artifact" was live on every artifact-sacrifice group (2026-09-17).
+  const phrase = `${token === "n" ? "nontoken " : ""}${noun}`;
+  return `${/^[aeiou]/i.test(phrase) ? "an" : "a"} ${phrase} ${event}`;
 }
 
 /** "artifact, creature or enchantment" -- the same joining `demandSentence` does inline, kept here

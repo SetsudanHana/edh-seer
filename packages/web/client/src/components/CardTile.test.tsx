@@ -17,16 +17,16 @@ test("a tile is the whole card, lazy, with the name and pips; no picture still g
   const { container } = render(
     <MemoryRouter><CardTile slug="krenko-mob-boss" name="Krenko, Mob Boss" art={ID} identity={["R"]} caption="makes more tokens" /></MemoryRouter>,
   );
-  const img = container.querySelector('img[alt$="— the card"]')!;
+  const img = container.querySelector('img[alt$=", the card"]')!;
   expect(img.getAttribute("src")).toBe(`https://cards.scryfall.io/small/front/5/7/${ID}.jpg`);
   expect(img.getAttribute("loading")).toBe("lazy");
-  expect(img.getAttribute("alt")).toBe("Krenko, Mob Boss — the card");
+  expect(img.getAttribute("alt")).toBe("Krenko, Mob Boss, the card");
   expect(screen.getByText("makes more tokens")).toBeTruthy();
   expect(screen.getByRole("link").getAttribute("href")).toBe("/cards/krenko-mob-boss");
 
   const bare = render(<MemoryRouter><CardTile slug="x" name="No Picture" /></MemoryRouter>);
-  expect(bare.container.querySelector('img[alt$="— the card"]')).toBeNull();
-  expect(bare.getByRole("img", { name: "No Picture — no picture" })).toBeTruthy();
+  expect(bare.container.querySelector('img[alt$=", the card"]')).toBeNull();
+  expect(bare.getByRole("img", { name: "No Picture, no picture" })).toBeTruthy();
 });
 
 test("a plain click peeks; a modified click is left to the link", () => {
