@@ -217,7 +217,7 @@ test("every Function builds its HTML response headers from one place", () => {
  *  without running the bundle -- the test below asserts exactly that -- so the anchor wraps the
  *  mark and the word INSIDE the heading rather than replacing it. Parsed, not pattern-matched, for
  *  the same reason the JS-free text test is. */
-test("the wordmark links home on every page, and stays the page's h1", () => {
+test("the wordmark links home on every page, and is not a heading on either", () => {
   const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
   for (const [name, markup] of [["index", html], ["how-it-works", page]] as const) {
     const doc = new DOMParser().parseFromString(markup, "text/html");
@@ -229,10 +229,12 @@ test("the wordmark links home on every page, and stays the page's h1", () => {
     // it is a 24px target for the thing the reader is aiming at.
     expect(link?.textContent?.replace(/\s+/g, ""), `${name}'s wordmark reads edhseer`).toContain("edhseer");
   }
-  // And the home page's heading is still the heading.
+  // THE BRAND IS NOT A HEADING (owner, 2026-09-17: "make the card name the h1"). A wordmark that
+  // was the h1 of every route left the card pages with their name as an h2; the h1 is the page's
+  // own on every page now, and the brand is the same `.brand` link the prose page always had.
   const home = new DOMParser().parseFromString(html, "text/html");
-  expect(home.querySelectorAll("h1")).toHaveLength(1);
-  expect(home.querySelector("h1")!.classList.contains("brand")).toBe(true);
+  expect(home.querySelector("h1")!.classList.contains("brand")).toBe(false);
+  expect(home.querySelector(".brand")!.tagName).not.toMatch(/^H[1-6]$/);
 });
 
 /** WHAT AN LLM CRAWLER GETS TOLD, in the one file the convention has agreed on (llmstxt.org, and
@@ -411,16 +413,18 @@ test.each(Object.entries(PAGES))("%s keeps the three product destinations out of
   expect(/<summary>[A-Za-z][^<]*<\/summary>/.test(menu!), `${file} labels the menu`).toBe(true);
 });
 
-/** ONE `h1` PER PAGE, and it has to be the one that says what the page is about. The app page's is
- *  the brand; the prose page's is its own title, which is why the brand is a link there — two `h1`s
- *  is two answers to the same question. */
+/** ONE `h1` PER PAGE, and it has to be the one that says what the page is about. The landing's is
+ *  its thesis sentence, the prose page's is its own title, and a card page's is the card's name
+ *  (`inject.test.ts`); the brand is a link on all of them — two `h1`s is two answers to the same
+ *  question, and so is a wordmark that outranks the page. */
 test.each(Object.entries(PAGES))("%s has exactly one h1", (_url, file) => {
   const page = readFileSync(join(CLIENT, file), "utf8");
   expect([...page.matchAll(/<h1\b/g)]).toHaveLength(1);
 });
 
-test("the app page's h1 is the brand, and the prose page's is its title", () => {
-  expect(html).toMatch(/<h1 class="brand">/);
+test("the landing's h1 is its thesis, and the prose page's is its title", () => {
+  expect(html).toMatch(/<h1 class="intro-thesis">/);
+  expect(html).not.toMatch(/<h1 class="brand">/);
   const prose = readFileSync(join(CLIENT, PAGES["/how-it-works"]), "utf8");
   expect(prose).toMatch(/<h1>How it works<\/h1>/);
   expect(prose).toMatch(/<a class="brand" href="\/">/);

@@ -140,6 +140,10 @@ export const breadcrumbJsonLd = (crumbs: { name: string; url: string }[]): strin
 
 export function injectPage(shell: string, page: InjectedPage): string {
   let out = shell
+    // THE LANDING'S ARGUMENT STAYS ON THE LANDING. `.intro` is index.html's own pitch, and its
+    // thesis is the landing's `h1`; on a served card, commander or browse page it was a second
+    // answer to "what is this page" for every crawler, and hidden by CSS for every reader.
+    .replace(/\n?\s*<section class="intro"[\s\S]*?<\/section>/, "")
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(page.title)}</title>`)
     .replace(/<meta name="description" content="[^"]*"\s*\/?>/,
       `<meta name="description" content="${esc(page.description)}" />`)
@@ -213,10 +217,10 @@ export interface InjectableCard {
  *  browser: if the partner sentences are not in this string, the 17,775 URLs in the sitemap are
  *  17,775 empty divs.
  *
- *  IT USES `h2`, NOT `h1`. The shell's own `h1` is the wordmark and stays where it is --
- *  `seo.test.ts` asserts exactly one per page -- so this block sits under it as the first line of
- *  real content, which is also what `CardPage` renders in the app. Two answers to "what is this
- *  page" would be worse than a generic first one.
+ *  THE NAME IS THE `h1` (owner, 2026-09-17). It was an `h2` under the wordmark's `h1` for as long
+ *  as the shell had one; the wordmark is a link on every route now, and `injectPage` drops the
+ *  landing's `.intro` -- whose thesis is the landing's own `h1` -- so a served page carries exactly
+ *  one, the card's, which is also what `CardShell` renders in the app.
  *
  *  NO CARD RULES TEXT (spec D2a), the same rule the React page follows: name, type line, our
  *  derivation, and the engine's own sentences. */
@@ -257,9 +261,9 @@ export function cardPageHtml(
     : `    <p><a href="/cards/${esc(slug)}">What the engine reads on this card</a></p>\n`;
   const partners = card.partners.length === 0
     ? "    <p>No partners specific enough to list.</p>"
-    : `    <h3>Partners</h3>\n${rows}`;
+    : `    <h2>Partners</h2>\n${rows}`;
   return `    <section class="prerendered">
-    <h2>${esc(card.name)}</h2>
+    <h1>${esc(card.name)}</h1>
     <p>${esc(card.typeLine)}</p>
 ${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeySentence(d))).join(", ") || "nothing"}.</p>
@@ -293,7 +297,7 @@ const browseNav = (kind: "cards" | "commanders", current?: string): string =>
 export function browseIndexHtml(kind: "cards" | "commanders", total: number): string {
   const what = kind === "commanders" ? "commanders" : "cards";
   return `    <section class="prerendered">
-    <h2>Every ${what} the engine has read</h2>
+    <h1>Every ${what} the engine has read</h1>
     <p>${total.toLocaleString("en")} ${what}, by first letter.</p>
 ${browseNav(kind)}
     </section>`;
@@ -315,7 +319,7 @@ export function browseLetterHtml(
     ? `    <p>No ${what} start with this letter.</p>`
     : `    <ul class="browse-list">\n${items}\n    </ul>`;
   return `    <section class="prerendered">
-    <h2>${what.replace(/^./, (c) => c.toUpperCase())} starting with ${esc(letter)}</h2>
+    <h1>${what.replace(/^./, (c) => c.toUpperCase())} starting with ${esc(letter)}</h1>
     <p>${rows.length.toLocaleString("en")} ${rows.length === 1 ? what.replace(/s$/, "") : what}.</p>
 ${browseNav(kind, letter)}
 ${list}

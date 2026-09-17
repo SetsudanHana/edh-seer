@@ -129,14 +129,18 @@ test("the commander block links back to the card page", () => {
     .toContain('<a href="/cards/krenko-mob-boss">What the engine reads on this card</a>');
 });
 
-/** THE SHELL KEEPS ITS ONE `h1` -- the wordmark. A second one here would be two answers to "what
- *  is this page", which is the defect `seo.test.ts` guards against on the static pages. */
-test("the block adds no second h1", () => {
+/** THE CARD'S NAME IS THE PAGE'S ONE `h1` (owner, 2026-09-17). The shell's thesis heading belongs
+ *  to the landing and leaves with the rest of `.intro`, so a served card page carries exactly one
+ *  `h1` and it is the card's -- two would be two answers to "what is this page". */
+test("the block carries the page's one h1, and the landing's intro is not on it", () => {
   const out = injectPage(SHELL, {
     title: "t", description: "d", canonical: "https://edhseer.cards/cards/x", indexable: true,
     bodyHtml: cardPageHtml(KRENKO, "krenko-mob-boss", "card"),
   });
   expect([...out.matchAll(/<h1\b/g)]).toHaveLength(1);
+  expect(out).toContain("<h1>Krenko, Mob Boss</h1>");
+  expect(out).not.toContain('class="intro"');
+  expect(out).not.toContain("intro-thesis");
 });
 
 test("a card with no partners says so rather than printing an empty list", () => {
@@ -345,8 +349,8 @@ test("a page without breadcrumbs adds no structured data", () => {
  *  reader will not find. Held to the word CardPage renders. */
 test("the prerendered partner heading is the word the page uses", () => {
   const block = cardPageHtml(KRENKO, "krenko-mob-boss", "card");
-  expect(block).toContain("<h3>Partners</h3>");
+  expect(block).toContain("<h2>Partners</h2>");
   expect(block).not.toContain("Most specific");
   const page = readFileSync(join(import.meta.dirname, "..", "components", "CardPage.tsx"), "utf8");
-  expect(page).toContain(">Partners</h3>");
+  expect(page).toContain(">Partners</h2>");
 });

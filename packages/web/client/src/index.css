@@ -522,10 +522,16 @@ summary {
 
 /* The section's one claim, set above its evidence. Foreground rather than `--muted` because it is
    a proposition and the devices under it are the support. */
+/* THE LANDING'S `h1` (2026-09-17), at reading size: it is a sentence, and the UA's 2em bold would
+   make the claim shout over the figures it introduces. */
 .intro-thesis {
   color: var(--foreground);
   max-width: 65ch;
   margin: 0 0 2rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
 }
 
 /* A HEADING, NOT AN EYEBROW. These four were `--font-mono` 0.6875rem uppercase `--muted`: 11px,
@@ -790,7 +796,7 @@ summary {
   font-synthesis: none;
 }
 
-/* THE LINK INSIDE THE `h1` IS THE WORDMARK, so it inherits everything and adds nothing: an
+/* THE LINK INSIDE `.brand` IS THE WORDMARK, so it inherits everything and adds nothing: an
    underline or a colour of its own would make the site's own name look like body copy with a link
    in it. `inline-flex` and the same gap keep the mark beside the word exactly as they sat when the
    heading held them directly. Focus is the exception -- a keyboard reader has to see it, and the
@@ -803,7 +809,7 @@ summary {
   text-decoration: none;
 }
 /* Both pages hover the same: `how-it-works` makes `.brand` itself the anchor, the home page wraps
-   one inside its `h1`, and a wordmark that lights up on one page and not the other is two brands. */
+   one inside its `.brand`, and a wordmark that lights up on one page and not the other is two brands. */
 .brand-home:hover .brand-edh,
 a.brand:hover .brand-edh { color: var(--foreground); }
 

@@ -33,7 +33,7 @@ test("a card that cannot lead shows the card tab only", () => {
 
 test("the header, the body and the rail are one shape on either surface", () => {
   mount(true, "commander");
-  expect(screen.getByRole("heading", { level: 2, name: /Krenko, Mob Boss/ })).toBeTruthy();
+  expect(screen.getByRole("heading", { level: 1, name: /Krenko, Mob Boss/ })).toBeTruthy();
   expect(screen.getByText("body")).toBeTruthy();
   expect(screen.getByRole("img", { name: /the card, including its rules text/ })).toBeTruthy();
   expect(screen.getByRole("navigation", { name: "Surface" }).querySelectorAll("a")[1]).toHaveAttribute("aria-current", "page");

@@ -368,9 +368,9 @@ export default function App() {
         *  THE COPY IS THE SENTENCE THAT WAS ALREADY THERE, split at its own full stop: the claim
         *  becomes the heading, the list of what you get stays prose. Nothing new is asserted.
         *
-        *  IT IS AN `h2`, NOT AN `h1`. `index.html` carries the page's one `h1` on the static header
-        *  deliberately — it is the heading a crawler reads without running the bundle, and
-        *  `seo.test.ts` asserts it — so a second `h1` here would be the defect, not the fix.
+        *  IT IS AN `h2`, NOT AN `h1`. The landing's `h1` is `index.html`'s thesis sentence, which a
+        *  crawler reads without running the bundle (`seo.test.ts` asserts it); this pitch is gated
+        *  on a first visit and a page whose `h1` comes and goes is worse than one whose `h2` does.
         *
         *  ABOVE THE FORM, and it replaces nothing: the "load example deck" button stays below,
         *  where it is an action on the form rather than part of the pitch. Both are gated on the
