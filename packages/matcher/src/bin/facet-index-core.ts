@@ -1,6 +1,6 @@
 import { archetypesOf } from "../archetypes.js";
 import { cardSignalOf } from "../card-signal.js";
-import { bestRates, ratesOf, type RateFamily, type RateSpan } from "../rate.js";
+import { bestPerFamily, bestRates, ratesOf, type RateFamily, type RateSpan } from "../rate.js";
 import type { DeckCard } from "../types.js";
 import { identityKeyOf, type NameIndexEntry } from "./partners-core.js";
 
@@ -30,6 +30,8 @@ export interface FacetRow {
   /** the best cost-to-effect rate per family (spec 2026-09-04 step 3): floor and its mana,
    *  ceiling and its mana; the order of a single Does chip. Absent when no ability states one. */
   r?: Partial<Record<RateFamily, RateSpan>>;
+  /** the token's size beside the tokens rate ("1/1"), when the ability states one */
+  z?: string;
 }
 
 export function buildFacetIndex(all: DeckCard[], index: NameIndexEntry[]): FacetRow[] {
@@ -44,7 +46,9 @@ export function buildFacetIndex(all: DeckCard[], index: NameIndexEntry[]): Facet
     if (!d?.tags) return { ...base, e: [], t: [], d: [] };
     const signal = cardSignalOf(d.card, d.tags);
     const { supplies, demands } = archetypesOf(signal);
-    const r = bestRates(ratesOf(d));
-    return { ...base, e: [...new Set(signal.effectKinds)].sort(), t: supplies, d: demands, ...(Object.keys(r).length > 0 ? { r } : {}) };
+    const rates = ratesOf(d);
+    const r = bestRates(rates);
+    const z = bestPerFamily(rates).find((x) => x.family === "tokens")?.size;
+    return { ...base, e: [...new Set(signal.effectKinds)].sort(), t: supplies, d: demands, ...(Object.keys(r).length > 0 ? { r } : {}), ...(z ? { z } : {}) };
   });
 }

@@ -92,8 +92,9 @@ const RAW_PHASE_EVENTS: ReadonlySet<string> = new Set([
 export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?: RawTrigger): Repeats | undefined {
   const text = clauseText ?? "";
 
-  // 1-2: the cost, most restrictive first.
-  if (SACRIFICES_ITSELF.test(cost)) return "once";
+  // 1-2: the cost, most restrictive first. EXHAUST (CR 702.176a, "activate only once") is once
+  // per game: Loot, the Pathfinder amortised a once-per-game draw as per-cycle (rate, 2026-09-17).
+  if (SACRIFICES_ITSELF.test(cost) || /^Exhaust\b/i.test(text.trim())) return "once";
   if (TAP_COST.test(cost)) return "per-cycle";
   // 3: an explicit text limit. Faerie Mastermind's "each turn" and "Activate only once each turn"
   // both live in the body after the colon, not in the cost.

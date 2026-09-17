@@ -1262,7 +1262,12 @@ const isBackground = (d: DeckCard): boolean => isBackgroundCard(d.card as Card);
 /** THE WHOLE ARTIFACT, PURELY. Mongo reads and fs writes stay in `build-static.ts`; everything
  *  decidable is here so it can be tested without either. */
 export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArtifact {
-  const substantive = all.filter(isSubstantive);
+  // ONE PAGE PER NAME. Every join below is by card name and `resolveSlugs` keys by it, so two
+  // documents with one name (Red Herring: a 2021 playtest card and the 2024 Clue Fish) got ONE
+  // slug between them and the alphabet walk found 25,203 pages for 25,204 entries (roadmap X4).
+  // The first by input order keeps the name; the build filters the illegal one out before this.
+  const seen = new Set<string>();
+  const substantive = all.filter(isSubstantive).filter((d) => !seen.has(d.card.name) && (seen.add(d.card.name), true));
   const slugs = resolveSlugs(substantive.map((d) => d.card.name));
   const freq = supplyCounts(
     substantive.map((d) => ({ emits: supplyKeysOf(d), demands: demandKeysOf(d) })),

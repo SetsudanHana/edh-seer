@@ -97,6 +97,10 @@ const ENTERS_WITH = /\benters? with\b[^.]{0,40}\bcounters?\b/i;
 
 /** "…on the bottom of your library" — the disposal half of a dig, never a top-of-library supply. */
 const ON_THE_BOTTOM = /on the bottom of (?:your|their|its owner's|a|the) librar/i;
+/** A CHOICE OF TOP OR BOTTOM IS TOP MANIPULATION: Dream Cache puts two cards from your hand "both
+ *  on top of your library or both on the bottom", and the bottom guard alone dropped it (DERIVE
+ *  162; the rate then read it as 3 cards for 3 mana with nothing to net). */
+const ON_TOP = /on top of (?:your|their|its owner's|a|the) librar/i;
 
 /** The energy object as the clause layer writes it: a bare `E`, `{E}`, or the word itself. No mana
  *  symbol is ever `E` -- mana is WUBRGC, a number, or X -- so this cannot catch a real mana object.
@@ -428,7 +432,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // Warning) or already bottom-guarded (House Cartographer). The real fix is normalize-side -- the
   // model should set `fromZone: "hand"` -- and this is the free half of it.
   if (verb === "put" && action.toZone === "library" && !action.fromZone
-      && /\bfrom your hand\b/i.test(action.object ?? "") && !ON_THE_BOTTOM.test(clauseText)) {
+      && /\bfrom your hand\b/i.test(action.object ?? "") && (!ON_THE_BOTTOM.test(clauseText) || ON_TOP.test(clauseText))) {
     return "top-set";
   }
   for (const r of ZONE_RULES) {
@@ -452,7 +456,7 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     // `r.to === "library"` is gone with the split. NOT because top-set owns that destination -- the
     // two graveyard-recursion rows above have it too -- but because the condition was only ever
     // standing in for "is this the top-of-library family?", which the kind now says outright.
-    if (r.kind === "top-set" && ON_THE_BOTTOM.test(clauseText)) return null;
+    if (r.kind === "top-set" && ON_THE_BOTTOM.test(clauseText) && !ON_TOP.test(clauseText)) return null;
     // AN UNTYPED DIG FINDS NO PARTICULAR CARD. See the `put library -> hand` row.
     if (r.kind === "search" && verb === "put" && !digNamesAClass(String(action.object ?? ""))) return null;
     return r.kind;

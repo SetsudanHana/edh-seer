@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
-import { bestRates, compareRates, manaOf, ratesOf, spanOf, type Rate, type RateSpan } from "./rate.js";
+import { bestPerFamily, bestRates, compareRates, manaOf, ratesOf, spanOf, type Rate, type RateSpan } from "./rate.js";
 import type { DeckCard } from "./types.js";
 
 /** A card with one derived ability and a printed cost. Verified oracle texts from the corpus
@@ -285,4 +285,15 @@ test("search, recursion, untap, flicker and copies are families; an opponent's o
   expect(one("scry", "any")).toBeUndefined();
   const spans = [spanOf(one("search", "you", "{3}{B}")!), spanOf(one("search", "you", "{B}")!)].sort(compareRates);
   expect(spans).toEqual([[1, 1, 1, 1], [1, 4, 1, 4]]);
+});
+
+/** IMPRINT IS A CARD (Chrome Mox led "adds mana" at {0}), and A TOKEN HAS A SIZE (Raise the Alarm:
+ *  two 1/1 Soldiers; a Treasure has none). Both residue items of the first eight families. */
+test("an imprint card's activation charges more than mana; a token rate carries the size it states", () => {
+  const mox = card("Chrome Mox", "{0}", [{ kind: "activated", cost: "{T}", effect: { kind: "mana-generation", subject: { control: "any", token: null } }, amount: "1", repeats: "per-cycle" }], { types: ["artifact"], keywords: ["Imprint"] });
+  expect(ratesOf(mox)[0]).toMatchObject({ extraCost: true });
+  expect(bestRates(ratesOf(mox))).toEqual({});
+  const alarm = ratesOf(card("Raise the Alarm", "{1}{W}", [{ kind: "on-cast", effect: { kind: "token-generation", subject: { control: "you", token: true, type: "creature", stats: [{ metric: "power", op: "eq", value: 1 }, { metric: "toughness", op: "eq", value: 1 }] } }, amount: "2", repeats: "once" }]))[0];
+  expect(alarm).toMatchObject({ family: "tokens", amount: 2, size: "1/1" });
+  expect(bestPerFamily(ratesOf(card("Treasure Maker", "{1}", [{ kind: "on-cast", effect: { kind: "token-generation", subject: { control: "you", token: true, subtype: "treasure" } }, amount: "1", repeats: "once" }])))[0]).not.toHaveProperty("size");
 });

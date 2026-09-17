@@ -116,7 +116,9 @@ import { emblemRecipient } from "../emblem.js";
 // exile, put, tap, sacrifice, destroy) "target creature", "this", "it", "another" are 1; "all",
 // "each", "the", "those", "that many", "cards equal to" stay unset. Scry and surveil carry the
 // number as the object. This retires the paid `dropsUnitAmount` refresh.
-export const DERIVE_VERSION = 161;
+// 162: a put from your hand that offers top OR bottom is top manipulation (Dream Cache), so the
+// ability exists and the rate can net it; an Exhaust ability repeats once (CR 702.176a).
+export const DERIVE_VERSION = 162;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1582,8 +1584,12 @@ export function deriveAbilities(
     // condition evaluator. "Without being played" is the land wording of the same fact.
     const arrivalNotCast = ARRIVED_WITHOUT_CASTING.test(text);
     const arrivalTapped = /\benters tapped\b/i.test(text);
+    // EXHAUST IS ONCE PER GAME (CR 702.176a). The segmenter strips "Exhaust —" as an ability
+    // word, so the clause text cannot say it; the printed line that starts with it and this
+    // ability's own cost can. Loot, the Pathfinder amortised a once-per-game draw (2026-09-17).
+    const exhaust = cost !== "" && new RegExp(`^Exhaust — ${cost.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:`, "m").test(cardText);
     for (let i = before; i < abilities.length; i++) {
-      const repeats = repeatsFor(abilities[i], text, cost, rawTrigger);
+      const repeats = exhaust ? "once" : repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
       if (conditionCares.length > 0 && abilities[i].trigger) {
