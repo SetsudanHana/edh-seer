@@ -64,8 +64,11 @@ test("an activated draw carries the cast: the first card is eight mana, each lat
   expect(r).toEqual({ family: "cards", kind: "activated", amount: 1, mana: 4, cast: 4, repeats: "repeatable", floor: 1, ceiling: 1 });
   expect(spanOf(r!)).toEqual([1, 8, 1, 4]);
   expect(spanOf({ ...r!, repeats: "once" })).toEqual([1, 8, 1, 8]);
-  const land = card("Mikokoro-ish", "", [tome]); delete (land.card as { manaCost?: string }).manaCost;
+  const land = card("Mikokoro-ish", "", [tome], { types: ["land"] }); delete (land.card as { manaCost?: string }).manaCost;
   expect(ratesOf(land)[0]).toMatchObject({ mana: 4, cast: 0 });
+  const suspendOnly = card("Sol Talisman-ish", "", [tome], { types: ["artifact"] }); delete (suspendOnly.card as { manaCost?: string }).manaCost;
+  expect(ratesOf(suspendOnly)).toEqual([]);
+  expect(ratesOf(card("Sol Talisman-ish", "", [tome], { types: ["artifact"] }))).toEqual([]); // Scryfall's "" for no cost
   expect(ratesOf(card("X Creature", "{X}{U}", [tome], { types: ["creature"] }))).toEqual([]);
 });
 
@@ -159,17 +162,17 @@ test("an activation cost with words in it is flagged as more than mana", () => {
 
 /** THE ORDER A SEARCH ROW SORTS BY: floor per mana, then ceiling per mana with open above bounded,
  *  then the cheaper ability. */
-test("compareRates: priced before free, floor per mana first, open ceiling breaks above a bounded one, cheaper last", () => {
+test("compareRates: free first, then floor per mana, open ceiling breaks above a bounded one, cheaper last", () => {
   const rows: RateSpan[] = [
     [0, 3, 9, 3],      // Fiery Gambit: conditional, ceiling 9
     [2, 3, 2, 3],      // Divination
     [1, 1, 1, 1],      // Brainstorm, net
     [0, 3, null, 3],   // Rhystic Study: a trigger
-    [1, 0, 1, 0],      // a land's tap draw: free
+    [1, 0, 1, 0],      // Mana Crypt: free
     [1, 8, 1, 4],      // Jayemdae Tome: cast and activation, then activation
     [1, 2, 1, 2],      // one for two
   ];
-  expect([...rows].sort(compareRates)).toEqual([[1, 1, 1, 1], [2, 3, 2, 3], [1, 2, 1, 2], [1, 8, 1, 4], [0, 3, null, 3], [0, 3, 9, 3], [1, 0, 1, 0]]);
+  expect([...rows].sort(compareRates)).toEqual([[1, 0, 1, 0], [1, 1, 1, 1], [2, 3, 2, 3], [1, 2, 1, 2], [1, 8, 1, 4], [0, 3, null, 3], [0, 3, 9, 3]]);
   expect(compareRates([3, 0, 3, 0], [1, 0, 1, 0])).toBeLessThan(0);
   expect(compareRates([0, 0, null, 0], [0, 0, null, 0])).toBe(0);
 });
@@ -191,4 +194,20 @@ test("a loyalty or empty cost has no mana to read and is refused", () => {
   const draw = (cost: string) => ({ kind: "activated", cost, effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "1", repeats: "per-turn" });
   expect(ratesOf(card("Teferi, Temporal Pilgrim", "{3}{U}{U}", [draw("0"), draw("+1"), draw("−3"), draw("")], { types: ["planeswalker"] }))).toEqual([]);
   expect(ratesOf(card("Obsessive Stitcher", "{1}{U}{B}", [draw("{T}")], { types: ["creature"] }))).toMatchObject([{ mana: 0, cast: 3, floor: 1, delayed: true }]);
+});
+
+/** MANA PER MANA, the comparison the axis was named for (owner 2026-09-04: Arcane Signet {2} and
+ *  Commander's Sphere {3} print the same ability; Sol Ring is {1} for {C}{C}). DERIVE 160 puts the
+ *  mana added on the amount. A land's mana is its land drop and is refused; Mana Crypt's is free. */
+test("mana is a family: Sol Ring two for one then two for nothing, Signet above Sphere, a land refused", () => {
+  const rock = (name: string, manaCost: string, amount: string, types: string[] = ["artifact"]) =>
+    ratesOf(card(name, manaCost, [{ kind: "activated", cost: "{T}", effect: { kind: "mana-generation", subject: { control: "you", token: null } }, amount, repeats: "per-cycle" }], { types }))[0];
+  const sol = rock("Sol Ring", "{1}", "2");
+  expect(sol).toEqual({ family: "mana", kind: "activated", amount: 2, mana: 0, cast: 1, repeats: "per-cycle", floor: 2, ceiling: 2 });
+  expect(spanOf(sol!)).toEqual([2, 1, 2, 0]);
+  const signet = spanOf(rock("Arcane Signet", "{2}", "1")!), sphere = spanOf(rock("Commander's Sphere", "{3}", "1")!);
+  expect([sphere, signet, spanOf(sol!)].sort(compareRates)).toEqual([[2, 1, 2, 0], [1, 2, 1, 0], [1, 3, 1, 0]]);
+  expect(spanOf(rock("Mana Crypt", "{0}", "2")!)).toEqual([2, 0, 2, 0]);
+  expect(rock("Forest", "", "1", ["land"])).toBeUndefined();
+  expect(ratesOf(card("Cabal Coffers-ish", "", [{ kind: "activated", cost: "{2}, {T}", effect: { kind: "mana-generation", subject: { control: "you", token: null }, scaling: "per-swamp" }, amount: "X", repeats: "per-cycle" }], { types: ["land"] }))).toEqual([]);
 });

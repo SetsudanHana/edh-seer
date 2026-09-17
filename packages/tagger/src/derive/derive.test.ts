@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
+import { manaAdded, deriveAbilities, deriveCardTags, entersUnderAnotherPlayer, textForClause } from "./derive.js";
 import type { Characteristics } from "../schema.js";
 
 test("one ability per action, sharing the clause kind and trigger", () => {
@@ -2872,4 +2872,23 @@ test("an action's unless-payment is carried onto the ability", () => {
   expect(abilities[0]?.unless).toEqual({ cost: "{1}", payer: "opponent" });
   const plain = deriveAbilities([{ id: 1, abilityType: "on-cast", actions: [{ verb: "draw", object: "two cards", amount: "2" }] }], "Divination");
   expect(plain.abilities[0]?.unless).toBeUndefined();
+});
+
+/** A MANA ABILITY'S AMOUNT IS THE MANA IT ADDS (DERIVE 160), read off the object when the clause
+ *  states none. Oracle texts verified in the corpus 2026-09-17: Sol Ring "{T}: Add {C}{C}."; Arcane
+ *  Signet "Add one mana of any color in your commander's color identity."; Talisman of Dominance
+ *  "Add {U} or {B}."; Gilded Lotus "Add three mana of any one color."; Cabal Coffers "Add {B} for
+ *  each Swamp you control." */
+test("a mana ability's amount is the mana it adds; a counted, X or energy object stays unset", () => {
+  const added = (object: string, amount?: string) => deriveAbilities([{ id: 1, abilityType: "activated", actions: [{ verb: "add-mana", object, ...(amount ? { amount } : {}) }] }], "Rock").abilities[0]?.amount;
+  expect(added("{C}{C}")).toBe("2");
+  expect(added("one mana of any color in your commander's color identity")).toBe("1");
+  expect(added("{U} or {B}")).toBe("1");
+  expect(added("{G}{G}, {U}{U}, or {R}{R}")).toBe("2");
+  expect(added("three mana of any one color")).toBe("3");
+  expect(added("{G/U}")).toBe("1");
+  expect(added("{B} for each Swamp you control")).toBeUndefined();
+  expect(added("X mana of any one color", "X")).toBe("X");
+  expect(added("{C}", "for each Urza's land you control")).toBe("for each Urza's land you control");
+  expect(manaAdded("{E}{E}")).toBeUndefined();
 });

@@ -19,6 +19,7 @@ const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2"
 const TESTED: Record<string, string> = {
   "110.2a": "derive.test.ts — what you put onto the battlefield enters under your control (Misty Rainforest)",
   "118.12a": "derive.test.ts / clause-store.test.ts — an action's unless-payment rides onto the ability, and a doc that dropped one is re-asked",
+  "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",
   "700.11": "intervening-if.test.ts — 'you descended this turn' cares about permanents hitting your graveyard",
   "701.14a": "derive.test.ts — a fight's dealer is the fighting creature, not the spell",
   "702.162": "characteristics.test.ts — a More Than Meets the Eye card is cast from either face",
