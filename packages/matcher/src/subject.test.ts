@@ -71,6 +71,14 @@ test("untyped proliferate counter-added matches a typed +1/+1 counter payoff", (
   expect(counterAddMatches(fill, consumer, HH)).toBe(true);
 });
 
+test("a permanent-bound kindless counter never feeds a player-counter payoff; an untyped one still can", () => {
+  const energy: SubjectFilter = { control: "you", token: null, counter: "energy" };
+  expect(counterAddMatches({ control: "any", token: null, self: true }, energy, HH)).toBe(false);
+  expect(counterAddMatches({ control: "any", token: null, type: "creature" }, { control: "you", token: null, counter: "poison" }, HH)).toBe(false);
+  expect(counterAddMatches({ control: "you", token: null }, energy, HH)).toBe(true);
+  expect(counterAddMatches({ control: "you", token: null, counter: "energy" }, energy, HH)).toBe(true);
+});
+
 test("control gate stays strict: an opp untyped counter-added does not feed a you-only payoff", () => {
   const fill: SubjectFilter = { control: "opp", token: null };
   const consumer: SubjectFilter = { control: "you", token: null, counter: "+1/+1" };
