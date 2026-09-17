@@ -104,7 +104,29 @@ import { emblemRecipient } from "../emblem.js";
 // 159: the payment that stops an effect ("draw a card unless that player pays {1}", CR 118.12a)
 // rides onto the ability as `unless` {cost, payer}, verbatim from the clause; the prompt learned
 // the field at NORMALIZE_VERSION 21 and the ~550 cards that state one were re-asked (2026-09-17).
-export const DERIVE_VERSION = 159;
+// 160: a mana ability's amount is the mana it adds, read off the action's object when the clause
+// states none: "{C}{C}" is 2, "one mana of any color" is 1, "{U} or {B}" is 1 (the smallest
+// alternative), "three mana of any one color" is 3; a counted or X object stays unset, as does
+// energy. The cost-to-effect rate's mana family reads it (roadmap X2; 2,528 add-mana actions,
+// 94% of them without an amount before this).
+export const DERIVE_VERSION = 160;
+
+/** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
+ *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
+ *  number, alternatives joined by "or" take the smallest. Unset on a counted, X, or "that much"
+ *  object -- `scaling` says how those grow -- and on energy, which is not mana (CR 107.14). */
+const NUMBER_WORD: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+export function manaAdded(object: string): number | undefined {
+  if (/\bfor each\b|\bequal to\b|\bthat m(?:any|uch)\b|\bnumber of\b|\bX\b|\{E\}|\bE\b/.test(object)) return undefined;
+  const counts = object.split(/\s*,?\s+or\s+/i).map((alt) => {
+    const symbols = (alt.match(/\{[WUBRGC](?:\/[WUBRGCP])?\}/gi) ?? []).length;
+    if (symbols > 0) return symbols;
+    const word = /\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+mana\b/i.exec(alt)?.[1]?.toLowerCase();
+    return word ? NUMBER_WORD[word] : undefined;
+  });
+  if (counts.some((n) => n === undefined)) return undefined;
+  return Math.min(...(counts as number[]));
+}
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
  *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
@@ -1407,6 +1429,10 @@ export function deriveAbilities(
       // The amount belongs to the ACTION, not the clause: Kaya's -2 is one clause whose two actions
       // each carry their own. Assigned here, in the per-action loop, for that reason.
       if (action.amount != null && action.amount !== "") ability.amount = action.amount;
+      else if (action.verb === "add-mana" && effectKind === "mana-generation") {
+        const added = manaAdded(action.object ?? "");
+        if (added !== undefined) ability.amount = String(added);
+      }
       // The payment that stops the effect (CR 118.12a), verbatim: the floor the rate axis reads.
       if (action.unless?.cost) ability.unless = { cost: action.unless.cost, payer: action.unless.payer as "you" | "opponent" | "controller" | "any" };
       // WHICH triggers a doubler doubles, read off the printed text — the clause layer records only

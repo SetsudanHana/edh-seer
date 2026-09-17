@@ -111,4 +111,12 @@ test("a single rated chip orders by floor per mana, rated above unrated; two chi
   expect(matchedTerms(rows[4]!, { ...q, does: ["damage"] })).toEqual(["deals damage", "0–3 damage / 3 mana"]);
   expect(matchedTerms(rows[1]!, q)).toEqual(["draws cards"]);
   expect(rateLabel([0, 3, 0, 3], "cards")).toBe("0 cards / 3 mana");
+  expect(rateLabel([2, 1, 2, 0], "mana")).toBe("2 mana / 1 mana, then 2 / 0");
+  const rocks: FacetRow[] = [
+    { s: "commanders-sphere", i: "", c: 0, e: ["draw-card", "mana-generation"], t: [], d: [], r: { mana: [1, 3, 1, 0] } },
+    { s: "sol-ring", i: "", c: 0, e: ["mana-generation"], t: [], d: [], r: { mana: [2, 1, 2, 0] } },
+    { s: "arcane-signet", i: "", c: 0, e: ["mana-generation"], t: [], d: [], r: { mana: [1, 2, 1, 0] } },
+  ];
+  expect(applyFacets(rocks, { colours: [], does: ["mana-generation"], strategy: undefined }, "cards").map((r) => r.s))
+    .toEqual(["sol-ring", "arcane-signet", "commanders-sphere"]);
 });

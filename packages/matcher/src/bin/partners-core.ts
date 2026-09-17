@@ -935,7 +935,12 @@ export const isSubstantive = (d: DeckCard): boolean =>
   // nowhere to link (real build, 2026-09-05). A commander the engine read NOTHING on needs a page
   // more than most: an empty ability table is where a wrong "no ability" can be seen at all
   // (roadmap W10) -- 117 derived commanders carried zero abilities and 373 were never bought.
-  || isCommander(d);
+  || isCommander(d)
+  // A CARD THAT STATES A RATE (roadmap X2). Sol Ring emits nothing the edge layer reads -- mana is
+  // not a synergy -- so the first mana family (2026-09-17) rated 449 cards and Sol Ring, Arcane
+  // Signet and Llanowar Elves had no row for "adds mana" to sort. Its page is thin (no partners),
+  // the rate is its content, and the search can find it by name at all.
+  || ratesOf(d).length > 0;
 
 /** MELD, as a demand key. `meld|-|-|-` when the card names its other half; the candidate is that
  *  one card, found by name, and the row is verified on the engine's own `meld` tag. A card-NAME

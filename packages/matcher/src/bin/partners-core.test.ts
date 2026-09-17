@@ -266,7 +266,7 @@ test("a partner shard name is stable and inside the count", () => {
  *  page, and what the sitemap promises. A card with abilities but neither an emit nor a trigger is
  *  NOT substantive -- it forms no edge -- and an earlier draft of the spec enumerated the excluded
  *  groups instead of defining them and silently left that one out. */
-test("substantive means at least one emit or one trigger, nothing else", () => {
+test("substantive means at least one emit, one trigger, or a stated rate, nothing else", () => {
   expect(isSubstantive(krenko)).toBe(true);
   expect(isSubstantive(impactTremors)).toBe(true);
   const vanilla = base("Grizzly Bears", [] as unknown as CardTags["abilities"]);
@@ -275,6 +275,13 @@ test("substantive means at least one emit or one trigger, nothing else", () => {
     kind: "static", effect: { kind: "pump" },
   }] as unknown as CardTags["abilities"]);
   expect(isSubstantive(staticOnly)).toBe(false);
+  // A CARD THAT STATES A RATE IS SUBSTANTIVE (roadmap X2, 2026-09-17): Sol Ring emits nothing the
+  // edge layer reads, and without this it had no page for "adds mana" to sort.
+  const solRing = base("Sol Ring", [{
+    kind: "activated", cost: "{T}", effect: { kind: "mana-generation", subject: { control: "you", token: null } }, amount: "2", repeats: "per-cycle",
+  }] as unknown as CardTags["abilities"]);
+  (solRing.card as { manaCost?: string }).manaCost = "{1}";
+  expect(isSubstantive(solRing)).toBe(true);
 });
 
 /** A GENUINELY TWO-FACED CARD HAS NO CARD-LEVEL ART, so the record has to reach into the front

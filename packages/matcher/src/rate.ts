@@ -18,11 +18,12 @@ import type { DeckCard } from "./types.js";
  *  RECORDED, NOT JUDGED. This says what a card charges for what it does. Whether the deck wants it
  *  is the synergy engine's question, and the two stay separate on purpose (spec 2026-09-04). */
 
-export type RateFamily = "cards" | "damage";
+export type RateFamily = "cards" | "damage" | "mana";
 
 /** The effect kinds a family reads. The census (2026-09-17) found an amount on 79% of draw
- *  abilities and 99% of damage; mana is 6% and needs the emit's symbols, so it is not here yet. */
-const FAMILY_OF: Record<string, RateFamily> = { "draw-card": "cards", damage: "damage" };
+ *  abilities and 99% of damage; mana read 6% until DERIVE 160 put the mana a mana ability adds on
+ *  its amount, which is the Signet-versus-Sphere comparison this axis was named for. */
+const FAMILY_OF: Record<string, RateFamily> = { "draw-card": "cards", damage: "damage", "mana-generation": "mana" };
 
 export interface Rate {
   family: RateFamily;
@@ -115,6 +116,7 @@ export function ratesOf(d: DeckCard): Rate[] {
   const out: Rate[] = [];
   const types = d.tags?.characteristics.types ?? [];
   const creature = types.includes("creature") || /\bCreature\b/.test(d.card.typeLine ?? "");
+  const land = types.includes("land") || /\bLand\b/.test(d.card.typeLine ?? "");
   const haste = (d.card.keywords ?? []).some((k) => k.toLowerCase() === "haste");
   const conditional = CONDITION.test(d.card.oracleText ?? "");
   /** CR 302.6, on this card: a tap or untap activation, or the card's own attack trigger. */
@@ -147,6 +149,9 @@ export function ratesOf(d: DeckCard): Rate[] {
     // WHOSE YIELD: cards are a rate only when YOU draw them; damage only when it is not to your
     // own side (Flame Rift's damage to you is a cost the card charges, not a thing it does for you).
     if (family === "cards" && control !== undefined && control !== "you") continue;
+    // A LAND'S MANA IS ITS LAND DROP, not a price in mana: every basic would top "adds mana" at
+    // infinity. A land's other abilities are priced like anything else.
+    if (family === "mana" && land) continue;
     if (family === "damage" && control === "you") continue;
     if (a.unless && a.unless.payer === "you") continue;
     const cost = a.kind === "activated" ? a.cost : manaCost;
@@ -154,9 +159,10 @@ export function ratesOf(d: DeckCard): Rate[] {
     // an empty or words-only cost states none. Measured 2026-09-17 on the first chip sort: 341
     // "+1" abilities read as free and put every planeswalker above Brainstorm.
     if (cost === undefined || !/\{[^{}]+\}/.test(cost)) continue;
-    // THE CAST BEFORE THE ACTIVATION: a land charges no mana to land; a card with X in its own
-    // cost has no honest cast to add, so its activations are refused.
-    const cast = a.kind !== "activated" ? undefined : manaCost === undefined ? 0 : manaOf(manaCost);
+    // THE CAST BEFORE THE ACTIVATION: a land charges no mana to land; a nonland with no printed
+    // cost (Sol Talisman, suspend only; Scryfall prints it as "", not absent) has no cast to add,
+    // nor does a card with X in its own cost, so their activations are refused.
+    const cast = a.kind !== "activated" ? undefined : !manaCost ? (land ? 0 : null) : manaOf(manaCost);
     if (cast === null) continue;
     const castOf = cast === undefined ? {} : { cast };
     const extra = a.kind === "activated" && /[A-Za-z]/.test(cost.replace(/\{[^{}]+\}/g, ""));
@@ -197,18 +203,17 @@ export function ratesOf(d: DeckCard): Rate[] {
 export type RateSpan = [floor: number, floorMana: number, ceiling: number | null, ceilingMana: number];
 
 const desc = (x: number, y: number): number => (x === y ? 0 : y > x ? 1 : -1);
-const priced = (s: RateSpan): boolean => s[1] > 0;
-/** Per mana when there is mana; for nothing, the yield itself (Infinity when there is one). */
+/** Per mana; a yield for no mana at all is the best rate there is, and no yield for nothing is 0. */
 const per = (n: number | null, mana: number): number => (n === null ? Infinity : mana > 0 ? n / mana : n > 0 ? Infinity : 0);
 
-/** THE ORDER WITHIN A FAMILY (spec 2026-09-04 step 3): every rate with mana to divide by before
- *  any free one -- dividing by zero put 103 tap abilities above Brainstorm on the first build
- *  (2026-09-17), and since the cast counts, only a land's tap ability is free now; then floor per
- *  its mana, ceiling per its mana to break it, an open ceiling above any bounded one -- a
- *  trigger's yield is what a deck makes of it, a one-shot's is written down -- then the raw yield
- *  (two free rates tie per mana), then the cheaper first yield. Negative when `a` is better. */
+/** THE ORDER WITHIN A FAMILY (spec 2026-09-04 step 3): floor per its mana, ceiling per its mana
+ *  to break it, an open ceiling above any bounded one -- a trigger's yield is what a deck makes of
+ *  it, a one-shot's is written down -- then the raw yield (two free rates tie per mana), then the
+ *  cheaper first yield. Negative when `a` is better. A free rate sorts FIRST: it did not on the
+ *  first build (2026-09-17), when an activation's own {T} divided by zero and 103 tap abilities
+ *  sat above Brainstorm; with the cast in the price, free means Mana Crypt, and a land's mana is
+ *  refused before it gets here. */
 export function compareRates(a: RateSpan, b: RateSpan): number {
-  if (priced(a) !== priced(b)) return priced(a) ? -1 : 1;
   return desc(per(a[0], a[1]), per(b[0], b[1])) || desc(per(a[2], a[3]), per(b[2], b[3]))
     || desc(a[0], b[0]) || desc(a[2] ?? Infinity, b[2] ?? Infinity) || a[1] - b[1];
 }

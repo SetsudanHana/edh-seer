@@ -13,7 +13,7 @@ export const DOES: { kind: string; label: string; rate?: RateFamily }[] = [
   { kind: "token-generation", label: "makes tokens" },
   { kind: "counter-placement", label: "puts counters" },
   { kind: "proliferate", label: "proliferates" },
-  { kind: "mana-generation", label: "adds mana" },
+  { kind: "mana-generation", label: "adds mana", rate: "mana" },
   { kind: "lifegain", label: "gains life" },
   { kind: "graveyard-recursion", label: "returns from the graveyard" },
   { kind: "search", label: "searches the library" },
@@ -98,10 +98,11 @@ export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "co
 
 /** THE RATE, BOTH ENDS PRINTED (owner 2026-09-17: floor and ceiling, never one number): "3 cards
  *  / 1 mana", "0–9 cards / 3 mana", "0+ damage / 4 mana" for an open ceiling, and for a repeatable
- *  activation whose first yield includes the cast, "1 card / 8 mana, then 1 / 4". */
+ *  activation whose first yield includes the cast, "1 card / 8 mana, then 1 / 4"; Sol Ring reads
+ *  "2 mana / 1 mana, then 2 / 0". */
 export function rateLabel([floor, floorMana, ceiling, ceilingMana]: RateSpan, family: RateFamily): string {
   const span = ceiling === null ? `${floor}+` : ceiling === floor ? `${floor}` : `${floor}–${ceiling}`;
-  const unit = family === "cards" ? (ceiling === 1 && floor === 1 ? "card" : "cards") : "damage";
+  const unit = family === "cards" ? (ceiling === 1 && floor === 1 ? "card" : "cards") : family;
   const then = ceiling !== null && ceilingMana !== floorMana ? `, then ${ceiling} / ${ceilingMana}` : "";
   return `${span} ${unit} / ${floorMana} mana${then}`;
 }
