@@ -441,7 +441,18 @@ const COUNTER_KINDS = [
   "pressure", "prey", "pupa", "rally", "ribbon", "ritual", "rope", "rust", "scream", "scroll",
   "shell", "shred", "silver", "sleep", "slime", "slumber", "soot", "soul", "spark", "spite",
   "storage", "strife", "study", "task", "theft", "tide", "training", "trap", "treasure", "valor",
-  "velocity", "vitality", "vortex", "vow", "voyage", "wage", "wind", "wish",
+  "velocity", "vitality", "vortex", "vow", "voyage", "wage", "wind", "wish", "intel",
+  // Named counters the corpus prints and this list lacked, from a census of "<word> counter(s)" over
+  // every oracle text (2026-09-17; plan 18 cards, dream 10, the rest 2-6 each). Vocabulary is sized
+  // to the corpus, not to demand: a kind absent here is a kindless emit that wildcards.
+  "plan", "dream", "corpse", "dread", "stash", "coin", "cage", "acorn", "aim", "blaze", "fire", "blight",
+  "flame", "collection", "ingenuity", "phyresis", "pause", "knickknack", "eyeball", "hope", "burden",
+  "component", "revival", "eruption", "arrowhead", "refine", "sleight", "elixir", "ticket", "book",
+  "ingredient", "curse", "eyestalk", "paralyzation", "odor", "contract", "supply", "story", "film",
+  "descent", "husk", "suspect", "incarnation", "invitation", "unity", "chip", "bait", "cube", "fury",
+  "rev", "release", "midway", "traffic", "croak", "aegis", "foreshadow", "carrion", "fetch", "day",
+  "ember", "globe", "blessing", "influence", "brain", "bribery", "invasion", "exposure", "resonance",
+  "unlock",
   // KEYWORD counters, verbatim from Comprehensive Rules 122.1b — "flying, first strike, double
   // strike, deathtouch, decayed, exalted, haste, hexproof, indestructible, lifelink, menace, reach,
   // shadow, trample, and vigilance". The hand-written version of this list invented a `ward` counter,
@@ -461,6 +472,7 @@ export function parseCounter(t: string): string | undefined {
   // text, which the segmenter strips ("whenever you get one or more {E}", Territorial Gorger).
   if (/\{e\}/i.test(t)) return "energy";
   if (!/\bcounters?\b/.test(t)) return undefined;
+  const found = new Set<string>();
   for (const k of COUNTER_KINDS) {
     // The kinds contain regex metacharacters (+, /), so match on plain text against the words that
     // precede "counter". The kind must START a word: without the left boundary "one or mORE
@@ -469,10 +481,12 @@ export function parseCounter(t: string): string | undefined {
     let i = -1;
     while ((i = t.indexOf(k, i + 1)) >= 0) {
       if (i > 0 && /[a-z0-9]/i.test(t[i - 1]!)) continue;
-      if (/^\s+counters?\b/.test(t.slice(i + k.length))) return k;
+      if (/^\s+counters?\b/.test(t.slice(i + k.length))) { found.add(k); break; }
     }
   }
-  return undefined;
+  // ONE KIND OR NONE. "a menace counter, trample counter, or lifelink counter" used to answer whichever
+  // came first in this list (lifelink), a narrowing the card never printed (DERIVE 158).
+  return found.size === 1 ? [...found][0] : undefined;
 }
 
 /** The counter kind an `add-counter` action names in its OBJECT, where the object IS the kind
@@ -482,7 +496,14 @@ export function parseCounter(t: string): string | undefined {
  *  matcher already wildcards on purpose. */
 export function counterKindOf(object: string): string | undefined {
   const t = object.trim().toLowerCase().replace(/\s{1,4}counters?$/, "").trim();
-  return (COUNTER_KINDS as readonly string[]).includes(t) ? t : undefined;
+  if ((COUNTER_KINDS as readonly string[]).includes(t)) return t;
+  // "THIS, OIL" / "TARGET CREATURE, +1/+1": the model also writes the object as recipient-comma-kind
+  // (25 corpus actions, 15 naming a kind). The ONE kind among the parts is taken; "menace counter,
+  // trample counter, or lifelink counter" names three and stays unknown (DERIVE 158; Argent Dais's
+  // removed oil counters fed Chandra's loyalty and Riftmarked Knight's time).
+  if (!t.includes(",")) return undefined;
+  const kinds = new Set(t.split(",").map((p) => counterKindOf(p.replace(/^\s*or\s+/, ""))).filter((k): k is string => k !== undefined));
+  return kinds.size === 1 ? [...kinds][0] : undefined;
 }
 
 /** Keyword abilities a subject narrows by: "creatures you control with flying".

@@ -1252,6 +1252,44 @@ test("a counter put on this card is a self emit; one put on another permanent is
   ).abilities.find((a) => (a.trigger?.verbs ?? []).includes("counter-added"))?.trigger?.subject;
   expect(repl("If one or more +1/+1 counters would be put on Mowu, that many plus one +1/+1 counters are put on it instead.", "Mowu, Loyal Companion")).toMatchObject({ self: true, counter: "+1/+1" });
   expect(repl("If one or more +1/+1 counters would be put on a creature or Vehicle you control, that many plus one +1/+1 counters are put on it instead.", "Caradora, Heart of Alacria")?.self).toBeUndefined();
+  // DERIVE 158: a counter REMOVED from the card itself is self too, by noun or by short name.
+  const rem = (text: string, subject: string, name: string) => deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "counter-removed", subject, control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] }], name, { 1: text },
+  ).abilities[0]?.trigger?.subject;
+  expect(rem("Whenever one or more loyalty counters are removed from Chandra, she deals that much damage to target opponent.", "a loyalty counter", "Chandra, Fire Artisan")).toMatchObject({ self: true, counter: "loyalty" });
+  expect(rem("When the last time counter is removed from this card while it's exiled, create a 2/2 black Knight creature token.", "a time counter", "Riftmarked Knight")).toMatchObject({ self: true, counter: "time" });
+  expect(rem("Whenever a counter is removed from a permanent you control, draw a card.", "a counter", "Watcher")?.self).toBeUndefined();
+  // The EMIT side: counters removed from the card itself, named in the activation COST, are self;
+  // removed from a target are not.
+  const remEmit = (cost: string, text: string, object: string, name: string) => deriveAbilities(
+    [{ id: 1, abilityType: "activated", actions: [{ verb: "remove-counter", object, amount: "twelve" }, { verb: "draw", object: "seven cards", amount: "7" }] }], name, { 1: text }, { 1: cost },
+  ).abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "counter-removed")?.subject;
+  expect(remEmit("{1}{U}, {T}, Remove twelve time counters from Trenzalore Clocktower and exile it", "Shuffle your graveyard and hand into your library, then draw seven cards.", "time counter", "Trenzalore Clocktower")).toMatchObject({ self: true, counter: "time" });
+  expect(remEmit("{T}, Remove a time counter from target permanent", "Draw a card.", "time counter", "Clock")?.self).toBeUndefined();
+  // A MOVE is a removal from itself and an addition to others: only the removal is self.
+  const move = deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" }, actions: [{ verb: "remove-counter", object: "+1/+1" }, { verb: "add-counter", object: "+1/+1" }] }],
+    "Forgotten Ancient", { 1: "At the beginning of your upkeep, you may move any number of +1/+1 counters from this creature onto other creatures." },
+  ).abilities.flatMap((a) => a.emits ?? []);
+  expect(move.find((e) => e.verb === "counter-removed")?.subject.self).toBe(true);
+  expect(move.find((e) => e.verb === "counter-added")?.subject.self).toBeUndefined();
+  // A GRANTED counter trigger is the recipients', not self (Danny Pink).
+  const granted = deriveAbilities(
+    [{ id: 2, abilityType: "triggered", trigger: { event: "counter-added", subject: "this creature", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] }],
+    "Danny Pink", { 2: "Whenever one or more counters are put on this creature for the first time each turn, draw a card." }, undefined,
+    "Mentor\nCreatures you control have \"Whenever one or more counters are put on this creature for the first time each turn, draw a card.\"",
+  ).abilities[0]?.trigger?.subject;
+  expect(granted?.self).toBeUndefined();
+  expect(granted).toMatchObject({ control: "you", type: "creature" });
+  // A static grant ("have") with a colour: Unctus's blue creatures, not Unctus and not every creature.
+  const unctus = deriveAbilities(
+    [{ id: 2, abilityType: "triggered", trigger: { event: "taps", subject: "this creature", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] }],
+    "Unctus, Grand Metatect", { 2: "Whenever this creature becomes tapped, draw a card, then discard a card." }, undefined,
+    "Other blue creatures you control have \"Whenever this creature becomes tapped, draw a card, then discard a card.\"",
+  ).abilities[0]?.trigger?.subject;
+  expect(unctus?.self).toBeUndefined();
+  expect(unctus).toMatchObject({ control: "you", type: "creature" });
+  expect(unctus?.colors).toBeUndefined(); // CEILING, see adoptGrantedRecipient
   expect(trig("Whenever you put a counter on a creature you control, put a +1/+1 counter on this creature.", "a counter", "Grower")?.self).toBeUndefined();
   // Adapt and monstrosity are self by rule.
   expect(emitOf("Adapt 2", "Incubation Druid", "2", "adapt")?.subject.self).toBe(true);

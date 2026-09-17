@@ -95,7 +95,13 @@ import { emblemRecipient } from "../emblem.js";
 // 157: a counter emit whose object names the recipient takes the ONE kind its sentence names (Argent
 // Dais's oil, Shelinda's +1/+1); "you get {E}" emits an energy counter on a player (CR 107.14) even
 // though the normalizer called it mana; `{E}{E}` counts as energy too.
-export const DERIVE_VERSION = 157;
+// 158: a counter REMOVED from the card itself is self ("removed from Chandra", "from this card while
+// it's exiled"), and a recipient-comma-kind object ("this, oil") names its kind; a counter removed
+// from the card itself, in the text or in an activation cost ("remove twelve time counters from
+// Trenzalore Clocktower"), is a self emit -- "on" for a placement, "from" for a removal, so Forgotten
+// Ancient's move onto other creatures stays theirs; a GRANTED counter trigger ("creatures you control
+// have 'whenever counters are put on this creature'", Danny Pink) is the recipients', never self.
+export const DERIVE_VERSION = 158;
 
 /** WHERE A COUNTER LANDS, read from the clause text: on this card ("on this creature", "on it"
  *  when nothing else in the clause could be "it", "on <its own name>"), or on some other permanent
@@ -103,26 +109,41 @@ export const DERIVE_VERSION = 157;
  *  put their counters on the card by definition (CR 701.46, CR 701.37). A clause naming BOTH
  *  recipients states nothing here: "put a +1/+1 counter on target creature and a charge counter on
  *  this artifact" is two counters and one emit, and the honest answer is the one it had. */
-const COUNTER_ON_THIS = /\bcounters?\s+on\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)\b/i;
-const COUNTER_ON_IT = /\bcounters?\s+on\s+(?:it|itself)\b/i;
-const COUNTER_ON_OTHER = /\bcounters?\s+on\s+(?:(?:up to \w+ |any number of )?(?:target|each|another|any|all|those|that)\b|(?:a|an|the)\s+(?!(?:creature|permanent|artifact|enchantment|land|planeswalker)\s+(?:you control )?(?:that|with)\b)[a-z]+\b(?!\s+you control\b)|(?:creatures|permanents|artifacts|lands)\s+you control\b)/i;
+// "ON" for a counter placed, "FROM" for one removed (DERIVE 158): "remove twelve time counters from
+// Trenzalore Clocktower" is the card's own counters leaving, and read as a class it fed every
+// vanishing and suspend payoff in the deck.
+// THE PREPOSITION FOLLOWS THE VERB: a counter is put ON and removed FROM. Read together they broke
+// Forgotten Ancient -- "move any number of +1/+1 counters FROM this creature ONTO other creatures" is
+// a removal from itself AND an addition to others, and "from this creature" made the addition self.
+const counterRegexes = (prep: "on" | "from") => ({
+  onThis: new RegExp(`\\bcounters?\\s+${prep}\\s+this\\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)\\b`, "i"),
+  onIt: new RegExp(`\\bcounters?\\s+${prep}\\s+(?:it|itself)\\b`, "i"),
+  onOther: new RegExp(`\\bcounters?\\s+${prep}\\s+(?:(?:up to \\w+ |any number of )?(?:target|each|another|any|all|those|that)\\b|(?:a|an|the)\\s+(?!(?:creature|permanent|artifact|enchantment|land|planeswalker)\\s+(?:you control )?(?:that|with)\\b)[a-z]+\\b(?!\\s+you control\\b)|(?:creatures|permanents|artifacts|lands)\\s+you control\\b)`, "i"),
+});
+const COUNTER_ON = counterRegexes("on");
+const COUNTER_FROM = counterRegexes("from");
 const OTHER_OBJECT = /\b(?:target|another|each other|any other)\b/i;
 function counterOnSelf(verb: string | undefined, text: string, cardName?: string, triggerIsSelf = false): boolean {
   if (verb === "adapt" || verb === "monstrosity") return true;
-  if (verb !== "add-counter" || !text) return false;
-  const named = cardName
-    ? new RegExp(`\\bcounters?\\s+on\\s+${cardName.split(" // ")[0]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(text)
-    : false;
-  const onThis = COUNTER_ON_THIS.test(text) || named;
+  if ((verb !== "add-counter" && verb !== "remove-counter") || !text) return false;
+  const prep = verb === "remove-counter" ? "from" : "on";
+  const re = verb === "remove-counter" ? COUNTER_FROM : COUNTER_ON;
+  // Every face, by the SHORT name the card's own text uses ("on Lonis", never "on Lonis, Genetics
+  // Expert") -- the same miss `counterTriggerOnSelf` had until DERIVE 156.
+  const named = (cardName ?? "").split(" // ").some((face) => {
+    const short = face.split(",")[0]!.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return short !== "" && new RegExp(`\\bcounters?\\s+${prep}\\s+${short}\\b`, "i").test(text);
+  });
+  const onThis = re.onThis.test(text) || named;
   // "on it" is the card only when nothing else in the clause could be "it": "This creature enters
   // with two +1/+1 counters on it" is self, and so is a self-triggered "when this creature attacks,
   // put a counter on it"; "whenever a nontoken creature you control enters, put a +1/+1 counter
   // on it" (The Great Henge) is that creature -- the panel's Henge -> Dusk Legion Duelist REAL
   // pair was unjoined by reading it as self on the first derive-153 run.
-  const onIt = COUNTER_ON_IT.test(text) && !OTHER_OBJECT.test(text)
+  const onIt = re.onIt.test(text) && !OTHER_OBJECT.test(text)
     && (triggerIsSelf || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
   if (!onThis && !onIt) return false;
-  return !COUNTER_ON_OTHER.test(text);
+  return !re.onOther.test(text);
 }
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
@@ -537,7 +558,9 @@ function recipientBefore(clauseText: string, re: RegExp): string | undefined {
  *  or an emblem recipient is handled elsewhere (`grantedToOwnToken`, the emblem row). */
 function grantedRecipientOf(cardText: string, clauseText: string): string | undefined {
   const head = clauseText.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const m = new RegExp(`([^."\\n]{1,80}?)\\s+gains?\\s+"${head}`, "i").exec(cardText);
+  // "gains" for a one-shot grant, "has"/"have" for a static one: Danny Pink's "Creatures you control
+  // have 'Whenever one or more counters are put on this creature ...'" (2026-09-17).
+  const m = new RegExp(`([^."\\n]{1,80}?)\\s+(?:gains?|has|have)\\s+"${head}`, "i").exec(cardText);
   if (!m) return undefined;
   const who = m[1]!.replace(/^.*?\b(?:until end of turn|this turn),\s*/i, "").trim();
   // A creature- or PERMANENT-shaped recipient. Hellish Rebuke hands "when this permanent deals
@@ -767,18 +790,22 @@ const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 
 /** The recipient of a counter, when it is the card itself. Anchored at the END of the trigger
  *  subject so "on this creature" is the recipient and not a stray mention. */
-const COUNTER_ON_SELF = /\bon this (?:creature|permanent|artifact|enchantment|land|planeswalker)$/i;
+const COUNTER_ON_SELF = /\b(?:on|from) this (?:creature|permanent|artifact|enchantment|land|planeswalker|card)$/i;
 /** The trigger PHRASE (text before the first comma) says the counter lands on this card. */
 function counterTriggerOnSelf(text: string, cardName?: string): boolean {
   const phrase = text.split(",")[0] ?? "";
-  if (/\bon\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(phrase)) return true;
+  // A COUNTER COMES OFF THE CARD THE SAME WAY IT WENT ON (DERIVE 158): "whenever one or more loyalty
+  // counters are removed FROM Chandra", "when the last time counter is removed from this card while
+  // it's exiled" (Riftmarked Knight, Dinosaurs on a Spaceship). 4 of the 19 corpus counter-removed
+  // triggers read as a class without it, and Argent Dais's own oil counters fed all four.
+  if (/\b(?:on|from)\s+this\s+(?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle|card)\b/i.test(phrase)) return true;
   if (!cardName) return false;
   // EVERY FACE NAMES ITSELF, BY ITS SHORT NAME (DERIVE 156): the card's own text says "on Lonis",
   // never "on Lonis, Genetics Expert", and the whole first face was compared here, so Lonis, Berta
   // and Aragorn read their own counters as a class (Exemplar of Light fed Lonis's investigate).
   return cardName.split(" // ").some((face) => {
     const short = face.split(",")[0]!.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return short !== "" && new RegExp(`\\bon\\s+${short}\\b`, "i").test(phrase);
+    return short !== "" && new RegExp(`\\b(?:on|from)\\s+${short}\\b`, "i").test(phrase);
   });
 }
 
@@ -1011,6 +1038,11 @@ export function deriveAbilities(
       delete subject.self;
       subject.type = r.type ?? "creature";
       if (r.subtype) subject.subtype = r.subtype;
+      // CEILING: the recipient's COLOUR is not carried ("other BLUE creatures you control have ...",
+      // Unctus, Grand Metatect). `subjectMatches` reads a producer with no colours as satisfying no
+      // coloured filter, and a "tap target permanent" emit (Merrow Reejerey) has none, so carrying the
+      // colour deleted a real edge (measured 2026-09-17). Carry it once the matcher tells an unknown
+      // colour from a colourless one.
       subject.control = r.control === "any" && /\byou control\b/i.test(recipient) ? "you" : r.control;
       grantedTo = { control: subject.control, token: null, type: subject.type, ...(subject.subtype ? { subtype: subject.subtype } : {}) };
     };
@@ -1113,14 +1145,17 @@ export function deriveAbilities(
         // the head of the phrase. Without the flag, Incubation Druid adapting ITSELF fed the
         // Witness's own-counter trigger (owner-judged FALSE, 2026-08-22); with it, edges.ts's
         // self-on-both-sides gate refuses the pair.
-        if ((verb === "counter-added" || verb === "counter-removed") && COUNTER_ON_SELF.test(clause.trigger.subject ?? "")) subject.self = true;
+        // NOT ON A GRANTED CLAUSE: Danny Pink's "creatures you control have 'whenever one or more counters
+        // are put on THIS CREATURE ... draw a card'" is every creature you control, and `adoptGrantedRecipient`
+        // has already said so; re-reading "this creature" as self here made every self-grower miss it.
+        if (!grantedTo && (verb === "counter-added" || verb === "counter-removed") && COUNTER_ON_SELF.test(clause.trigger.subject ?? "")) subject.self = true;
         // THE PASSIVE FORM NAMES THE RECIPIENT IN THE TEXT, NOT IN THE MODEL'S SUBJECT: "whenever one
         // or more +1/+1 counters are put on this creature" (Fathom Mage, Herd Baloth, Basking
         // Broodscale) normalizes to subject "a +1/+1 counter", so the check above never saw the
         // card. 22 of the 50 corpus own-counter triggers (2026-09-17). Read off the trigger phrase
         // -- the text up to the first comma -- so an emit's "on this creature" later in the same
         // sentence is not mistaken for the trigger's.
-        if ((verb === "counter-added" || verb === "counter-removed") && counterTriggerOnSelf(text, cardName)) { subject.self = true; subject.control = "you"; }
+        if (!grantedTo && (verb === "counter-added" || verb === "counter-removed") && counterTriggerOnSelf(text, cardName)) { subject.self = true; subject.control = "you"; }
         // THE ACTIVE FORM NAMES THE KIND IN THE TEXT, NOT IN THE MODEL'S SUBJECT (DERIVE 155): "whenever
         // you put one or more +1/+1 counters on this creature" (Exemplar of Light) normalizes to
         // subject "this creature", so the kind the passive form's subject carries ("a +1/+1 counter",
@@ -1181,7 +1216,8 @@ export function deriveAbilities(
         // permanent receiving it, so the object could never say "this artifact" and 4,240 of the
         // 4,321 corpus counter emits carried no `self` -- every self-growing creature "fed" every
         // "whenever you put counters on THIS creature" payoff. The recipient is in the clause text.
-        || counterOnSelf(action.verb, text, cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
+        // A COUNTER REMOVED AS A COST names its permanent in the cost, not in the effect text.
+        || counterOnSelf(action.verb, action.verb === "remove-counter" && /\bcounters?\b/i.test(cost) ? cost : text, cardName, isSelfSubject(clause.trigger?.subject ?? "", cardName))
         // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())
