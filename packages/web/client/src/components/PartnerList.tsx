@@ -21,13 +21,19 @@ import { CardTile } from "./CardTile.js";
  *  Mob Boss counts it and makes more tokens" -- which under a tile that already shows Guttersnipe is
  *  the one half a two-line clamp should not spend itself on. The remainder names the page's card
  *  and what it does, which is the claim. Any other shape is kept whole. */
-function feederCaption(p: PartnerRow): string {
-  const lead = new RegExp(`^While you control ${p.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")},\s*`, "i");
+function feederCaption(p: PartnerRow, subject?: string): string {
+  const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // The page's own card leads the second half too -- "Krenko, Mob Boss counts it and makes more
+  // tokens" -- and under a two-line clamp at phone width that name was all that survived (phone
+  // review, 2026-09-17). The page already says whose page it is.
+  const lead = new RegExp(`^While you control ${esc(p.name)},\\s*(?:${subject ? esc(subject) + "\\s+" : ""})?`, "i");
   return p.reason.replace(lead, "");
 }
 
-export function PartnerList({ rows, pool, rarity, empty }: {
+export function PartnerList({ rows, pool, rarity, empty, subject }: {
   rows: PartnerRow[];
+  /** The page's own card, so a feeder caption can leave its name out. */
+  subject?: string;
   pool: Record<string, number>;
   rarity: Record<string, number>;
   empty: string;
@@ -81,12 +87,12 @@ export function PartnerList({ rows, pool, rarity, empty }: {
               * sentence is still in the artifact and still what the deck report prints. A feeder
               * row has no payoff (its sentence describes the subject, not this card) and shows the
               * sentence whole. The click rule lives in `CardTile`. */}
-            <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-5 list-none p-0 m-0">
+            <ul className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 sm:gap-x-4 list-none p-0 m-0">
               {group.rows.map((p) => (
                 <li key={p.slug} className="min-w-0">
                   <CardTile
                     slug={p.slug} name={p.name} art={p.art} identity={p.identity}
-                    caption={p.payoff ?? feederCaption(p)}
+                    caption={p.payoff ?? feederCaption(p, subject)}
                     note={p.unread ? "engine did not read what it does" : undefined}
                   />
                 </li>
@@ -100,7 +106,12 @@ export function PartnerList({ rows, pool, rarity, empty }: {
               // here can rank one above another", which stopped being true.
               <p className="text-(--muted) text-sm">
                 <span className="font-mono tabular-nums">{withheld.toLocaleString("en-US")}</span>{" "}
-                other cards ask for it too, equally specific — the ones shown are the most played.
+                {/* A FEEDER GROUP RUNS THE OTHER WAY (skeptic review, 2026-09-17): its tiles are cards
+                  * this card counts, so "ask for it" named the wrong direction under them. A feeder
+                  * row is the one whose sentence opens on the row's card being controlled. */}
+                {group.rows.every((r) => /^While you control /i.test(r.reason))
+                  ? "other cards feed it too, equally specific — the ones shown are the most played."
+                  : "other cards ask for it too, equally specific — the ones shown are the most played."}
               </p>
             )}
           </section>

@@ -373,3 +373,26 @@ test("on a wide viewport the filters are open", async () => {
   const details = (await screen.findByText("Filters")).closest("details")!;
   expect(details.open).toBe(true);
 });
+
+/** THE LANDING IS SEARCH-FIRST (owner, 2026-09-17: the chips were a wall). The Does chips sit behind
+ *  a disclosure that opens itself when a shared link arrives with one chosen, and the empty state
+ *  offers three questions built from the facet vocabulary -- our data, no play-rate. */
+test("the Does chips are behind a disclosure that opens when one is chosen", async () => {
+  atUrl("/cards");
+  await screen.findByText(/cards the engine has read/);
+  const summary = screen.getByText("What it does");
+  expect(summary.closest("details")!.open).toBe(false);
+  atUrl("/cards?does=draw-card", { facets: vi.fn(async () => FACETS) });
+  const chosen = await screen.findByText("What it does · 1 chosen");
+  expect(chosen.closest("details")!.open).toBe(true);
+});
+
+test("an example question sets the facets and lists its answer as tiles", async () => {
+  const facets = vi.fn(async () => FACETS);
+  atUrl("/cards", { facets });
+  fireEvent.click(await screen.findByRole("button", { name: "draws cards, in green" }));
+  const link = await screen.findByRole("link", { name: "Inspiring Call" });
+  expect(within(screen.getByRole("list", { name: "Results" })).getByRole("link", { name: "Inspiring Call" })).toBe(link);
+  expect(screen.getByRole("button", { name: /^Green$/ })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByText(/draws cards/, { selector: "p" })).toBeInTheDocument();
+});

@@ -47,3 +47,30 @@ test("outside a provider a click navigates as before", () => {
   fireEvent.click(screen.getByRole("link", { name: "Impact Tremors" }));
   expect(screen.getByTestId("where").textContent).toBe("/cards/impact-tremors");
 });
+
+/** A FEEDER CAPTION LEAVES BOTH NAMES OUT (phone review, 2026-09-17): the tile shows the row's card
+ *  and the page says whose page it is, so the two clamped lines go to what happens. */
+test("a feeder row's caption is the sentence minus the two names it already shows", () => {
+  render(
+    <MemoryRouter>
+      <PartnerList subject="Krenko, Mob Boss" pool={{}} rarity={{}} empty="none" rows={[{
+        name: "Guttersnipe", slug: "guttersnipe", score: 0.1, event: "counts|creature|goblin|-",
+        reason: "While you control Guttersnipe, Krenko, Mob Boss counts it and makes more tokens",
+      }]} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText("counts it and makes more tokens")).toBeInTheDocument();
+});
+
+test("a feeder group's withheld line says feed, a payoff group's says ask", () => {
+  render(
+    <MemoryRouter>
+      <PartnerList subject="Krenko, Mob Boss" pool={{ "counts|creature|goblin|-": 9, "enters|creature|-|-": 5 }} rarity={{}} empty="none" rows={[
+        { name: "Guttersnipe", slug: "guttersnipe", score: 0.2, event: "counts|creature|goblin|-", reason: "While you control Guttersnipe, Krenko, Mob Boss counts it and makes more tokens" },
+        { name: "Impact Tremors", slug: "impact-tremors", score: 0.1, event: "enters|creature|-|-", reason: "When a goblin enters thanks to Krenko, Impact Tremors deals 1 damage", payoff: "deals 1 damage" },
+      ]} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/other cards feed it too/)).toBeInTheDocument();
+  expect(screen.getByText(/other cards ask for it too/)).toBeInTheDocument();
+});
