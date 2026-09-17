@@ -46,6 +46,15 @@ const CARD_IMAGE_ORIGIN = "https://cards.scryfall.io/";
  *  this is not the classic reflected-XSS stop; what it actually prevents is this app being talked
  *  into making a request to somebody else's host, carrying the reader's IP and referrer. That is a
  *  real thing to prevent and it costs one comparison. */
+/** THE FULL CARD FROM ITS PRINTING ID (2026-09-17). The partner rows and the name index carry the
+ *  36-character id instead of a URL, and Scryfall's path is the id's first two characters as
+ *  directories: `.../small/front/5/7/57adbd6e-....jpg`. `small` (146x204) is the tile size; the
+ *  full card and never the crop, for the artist-credit reason `CardArt` records. */
+export function printingImageUrl(id: string, size: "small" | "normal" = "small"): string | null {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  return `${CARD_IMAGE_ORIGIN}${size}/front/${id[0]}/${id[1]}/${id.toLowerCase()}.jpg`;
+}
+
 export function cardImageUrl(artCrop: string): string | null {
   if (!artCrop.startsWith(CARD_IMAGE_ORIGIN)) return null;
   return artCrop.replace(/\/art_crop\//, "/normal/");
