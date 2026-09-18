@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build:server": "nest build",
+    "build:server": "tsc -p server/tsconfig.json",
     "start:server": "node --import tsx dist/main.js",
-    "dev:server": "NODE_OPTIONS=\"--import tsx\" nest start --watch",
+    "dev:server": "concurrently -n tsc,api -c gray,blue \"tsc -p server/tsconfig.json --watch --preserveWatchOutput\" \"node --watch --import tsx dist/main.js\"",
     "dev:client": "vite --config client/vite.config.ts",
     "dev": "concurrently -n server,client -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
     "build:client": "vite --config client/vite.config.ts build",
@@ -37,7 +37,6 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^12.0.0",
     "@nestjs/testing": "^12.0.1",
     "@swc/core": "^1.16.2",
     "@tailwindcss/vite": "^4.3.3",

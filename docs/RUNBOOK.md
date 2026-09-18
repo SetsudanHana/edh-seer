@@ -26,9 +26,24 @@ fresh clone has no `.env` at all. The dry run prints a `provider:` line; read it
 
 ```bash
 npx tsx packages/cli/src/main.ts <decklist.txt>                  # analyse a deck
-cd packages/web && NODE_OPTIONS="--import tsx" npx nest start    # API on :3001
-cd packages/web && npx vite --config client/vite.config.ts       # UI on :5173
+npm run dev -w @edh-seer/web                                     # API on :3001 + UI on :5173
 ```
+
+Or the two halves separately:
+
+```bash
+npm run dev:server -w @edh-seer/web    # tsc --watch beside node --watch, API on :3001
+npm run dev:client -w @edh-seer/web    # UI on :5173
+```
+
+There is no Nest CLI in this project. TypeScript 7 ships the `tsc` executable only, without the
+programmatic compiler API the CLI drives, so `build:server` is plain `tsc -p server/tsconfig.json` —
+which is all `nest build` ever was. Decorators work because that tsconfig sets
+`experimentalDecorators` and `emitDecoratorMetadata`. Do not try to run the server through tsx
+instead: esbuild emits standard ES decorators and Nest needs the legacy ones, so it dies in
+`request-mapping.decorator.js` rather than failing in a way that points at the cause.
+
+`start:server` runs the built `dist/`, so it is only as fresh as your last `build:server`.
 
 If the UI is serving code you know you changed, kill the old servers first — an `EADDRINUSE` in the
 log means the browser is measuring yesterday's build.
