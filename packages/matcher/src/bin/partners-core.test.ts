@@ -363,18 +363,34 @@ test("the index carries a partner count and lists the best-connected card first"
   expect(three.map((e) => [e.slug, e.partners])).toEqual([["krenko-mob-boss", 2], ["impact-tremors", 1], ["lonely-card", 1]]);
 });
 
-/** NO CARD RULES TEXT ON THE RECORD (spec D2, reversed 2026-09-04). The evidence a reader checks a
- *  claim against is the engine's reason sentence, not the card's printed text -- so `oracleText`
- *  must not be able to creep back in through a future field. */
-test("a page record carries metadata and derivation, never card rules text", () => {
-  const { shards } = buildPartnerArtifact([krenko, impactTremors], H);
-  const rec = [...shards.values()].flatMap((s) => Object.entries(s))
-    .find(([slug]) => slug === "krenko-mob-boss")![1];
+/** THE RECORD CARRIES THE CLAUSES NOW (spec D2a option 2, taken 2026-09-18). This test read "never
+ *  card rules text" until then, and it was RIGHT for option 1: the page showed our derivation and
+ *  nothing a reader could check it against, which is unfalsifiable rather than honest.
+ *
+ *  IT PASSED ON AN EMPTY FIXTURE, WHICH IS WHY THE FIXTURE IS NO LONGER EMPTY. `base()` builds cards
+ *  with `oracleText: ""`, so `segment()` returned nothing and the key simply never appeared -- the
+ *  allowlist below would have gone on reporting "no rules text" while the corpus shipped it on every
+ *  page. A guard that passes because its fixture cannot reach the code is not a guard.
+ *
+ *  THE ALLOWLIST IS STILL THE POINT. It is what stops a future field putting the RAW oracle text
+ *  back: `clauses` is `segment()`'s output, reminder text stripped, which is the engine's reading
+ *  and the thing D2a's "additional value" clause turns on. */
+test("a page record carries metadata, derivation, and the clauses the engine read", () => {
+  const spoken = base("Spoken Card", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } }] as unknown as CardTags["abilities"]);
+  spoken.card = { ...spoken.card, oracleText: "Whenever a creature you control enters, draw a card." } as DeckCard["card"];
+  const { shards } = buildPartnerArtifact([spoken, krenko, impactTremors], H);
+  const all = [...shards.values()].flatMap((s) => Object.entries(s));
+  const rec = all.find(([slug]) => slug === "spoken-card")![1];
   expect(Object.keys(rec).sort()).toEqual(
-    ["abilities", "artCrop", "backArtCrop", "commander", "demands", "emits", "identity", "manaCost",
-      "name", "partners", "pool", "rarity", "typeLine"],
+    ["abilities", "artCrop", "backArtCrop", "clauses", "commander", "demands", "emits", "identity",
+      "manaCost", "name", "partners", "pool", "rarity", "typeLine"],
   );
-  expect(JSON.stringify(rec)).not.toContain("Create X 1/1 red Goblin");
+  expect(rec.clauses).toEqual(["Whenever a creature you control enters, draw a card."]);
+
+  // A CARD WITH NO RULES TEXT GETS NO KEY, not an empty array: a heading over nothing is worse than
+  // no heading, and the readers decide on the field's presence.
+  const vanilla = all.find(([slug]) => slug === "krenko-mob-boss")![1];
+  expect(Object.keys(vanilla)).not.toContain("clauses");
 });
 
 test("the artifact wires the partner list through the engine", () => {

@@ -8,7 +8,8 @@
     "./schema": "./src/schema.ts",
     "./subject": "./src/derive/subject.ts",
     "./subtypes": "./src/derive/subtypes.ts",
-    "./emblem": "./src/emblem.ts"
+    "./emblem": "./src/emblem.ts",
+    "./segment": "./src/segment.ts"
   },
   "scripts": {
     "test": "vitest run",

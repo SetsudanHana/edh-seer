@@ -226,6 +226,11 @@ export interface InjectableCard {
   /** `{1}{W}`, in the notation every Magic reader already reads. Short card METADATA, which D2a
    *  names as staying on the page beside the type line -- it is not rules text. A land has none. */
   manaCost?: string;
+  /** THE CLAUSES THE ENGINE READ, verbatim and in printed order (spec D2a option 2, taken
+   *  2026-09-18). Unattributed on purpose: one clause can yield several abilities, so naming which
+   *  one produced a given edge would be a guess wearing a citation's clothes. Absent on a card with
+   *  no rules text. */
+  clauses?: string[];
 }
 
 /** A SHARED LEAD SHORT ENOUGH TO BE NOISE IS NOT WORTH A HEADING. Twenty characters is about where
@@ -341,6 +346,23 @@ export function cardPageHtml(
   const partners = card.partners.length === 0
     ? "    <p>No partners specific enough to list.</p>"
     : `    <h2>Partners</h2>\n${rows}`;
+  // WHAT THE ENGINE READ, so a reader can check a claim without leaving for Scryfall. Option 2 of
+  // spec D2a, taken 2026-09-18: option 1 shipped with our derivation and nothing to check it
+  // against, and "Produces: a card being drawn" is unfalsifiable on a page that never shows the
+  // line it came from.
+  //
+  // UNATTRIBUTED, WHICH IS THE ONLY HONEST SHAPE. The original D2 wanted each edge to cite its own
+  // clause; that needs a clause id `Ability` does not carry, and the mapping is not 1:1 anyway --
+  // Kogla and Yidaro's single activated line derives four abilities. So the clauses are offered as
+  // the card's text and the reader does the matching, rather than the page guessing and looking
+  // precise about it.
+  //
+  // THE CARD IMAGE ALREADY SHOWED THIS, as pixels. Making it text is what a crawler, a screen
+  // reader and a reader who wants to copy a line all needed.
+  const read = card.clauses === undefined || card.clauses.length === 0 ? ""
+    : `    <h2>What the engine read</h2>\n    <blockquote>\n`
+      + card.clauses.map((c) => `      <p>${esc(c)}</p>`).join("\n")
+      + `\n    </blockquote>\n`;
   // THE ONLY IMAGE ON THE CRAWLABLE PAGE. The art renders client-side, so until now a crawler read
   // 22,209 card pages with no `<img>` on any of them and Google Images had nothing to index. This is
   // the URL `injectPage` already preloads and the app already asks for, so a reader pays no extra
@@ -355,7 +377,7 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
 ${art}    <p>${esc(card.typeLine)}</p>
-${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
+${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeySentence(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;
