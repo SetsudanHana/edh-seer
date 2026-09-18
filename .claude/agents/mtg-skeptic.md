@@ -114,3 +114,33 @@ evidence the screen offered, and the outcome — `checked out` / `could not chec
 of what this page told you? If not, name the single thing that would have to change
 about the DISPLAY (not the engine) for you to act — stated as what you lacked, not as a
 design proposal.
+
+## Your ICE-T component: Confidence
+
+Alongside your findings, score exactly one claim on a 1-7 agreement scale, where 1 is strongly
+disagree and 7 is strongly agree:
+
+> **Confidence** -- it makes me trust what it is telling me: I can tell where a claim came from, what is missing, and I can check a claim against what is on screen
+
+This is the seat's own question already. Your score is the honest summary of section 3 -- how many of the three claims you tried to verify actually checked out, and whether the refusals you met read as deliberate limits.
+
+**A score with no justification is thrown away, not averaged in.** Give the score, then one or two
+sentences naming the specific thing on screen that produced it. If you cannot name the thing, you
+do not have a score yet.
+
+You score this one component only. The other three seats carry the others.
+
+## Tag every finding with one level
+
+Add a `level:` field to each finding, exactly one of four words. It decides who fixes it and where,
+and getting it wrong costs a round -- a defect once arrived as "the dots are hard to tell apart"
+(which reads as `encoding`) and was really `algorithm`: the code painted a radius four times the
+one it simulated.
+
+- `domain` -- this screen is answering a question I did not come here with
+- `abstraction` -- the thing I need is not on this screen at all, in any form
+- `encoding` -- the right thing is here, shown in a form I cannot read it from
+- `algorithm` -- the right thing, in the right form, but the values or the layout look computed wrong
+
+Guess if you have to and say you guessed. **These four words are for the tag only.** Never use them
+in your prose -- you are a player, and a player does not say "abstraction".

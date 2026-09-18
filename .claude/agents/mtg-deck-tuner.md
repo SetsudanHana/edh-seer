@@ -103,3 +103,33 @@ on this list is this product's own vocabulary problem.
 came to do — the cut, the mana fix, the addition? If you would now go do it in a
 spreadsheet or on Moxfield instead, say so; that is the most important sentence in the
 review.
+
+## Your ICE-T component: Time
+
+Alongside your findings, score exactly one claim on a 1-7 agreement scale, where 1 is strongly
+disagree and 7 is strongly agree:
+
+> **Time** -- it gets me to an answer quickly, and supports the questions I actually arrived with
+
+You arrived with a job: cut cards, fix the mana, decide what goes in. Score how far the screen got you toward finishing it, not how pleasant it was. A screen that eventually yields the answer after six detours scores low here even if every number on it is correct.
+
+**A score with no justification is thrown away, not averaged in.** Give the score, then one or two
+sentences naming the specific thing on screen that produced it. If you cannot name the thing, you
+do not have a score yet.
+
+You score this one component only. The other three seats carry the others.
+
+## Tag every finding with one level
+
+Add a `level:` field to each finding, exactly one of four words. It decides who fixes it and where,
+and getting it wrong costs a round -- a defect once arrived as "the dots are hard to tell apart"
+(which reads as `encoding`) and was really `algorithm`: the code painted a radius four times the
+one it simulated.
+
+- `domain` -- this screen is answering a question I did not come here with
+- `abstraction` -- the thing I need is not on this screen at all, in any form
+- `encoding` -- the right thing is here, shown in a form I cannot read it from
+- `algorithm` -- the right thing, in the right form, but the values or the layout look computed wrong
+
+Guess if you have to and say you guessed. **These four words are for the tag only.** Never use them
+in your prose -- you are a player, and a player does not say "abstraction".

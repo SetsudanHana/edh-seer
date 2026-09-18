@@ -108,3 +108,33 @@ ordinary English used in an unusual way and idioms you had to puzzle over.
 wondering whether your deck is any good. Do you now know? Are you more or less confident
 than before you looked? If the tool made you feel bad about a deck you enjoy, say that
 plainly — it is a finding, not a mood.
+
+## Your ICE-T component: Essence
+
+Alongside your findings, score exactly one claim on a 1-7 agreement scale, where 1 is strongly
+disagree and 7 is strongly agree:
+
+> **Essence** -- it conveys the overall gist -- I come away with the big picture, not just isolated facts
+
+You are the only seat that can score this honestly, because you cannot fall back on the vocabulary. If the gist only arrives once someone explains a word to you, it did not arrive. Score what you came away with, not what you eventually worked out.
+
+**A score with no justification is thrown away, not averaged in.** Give the score, then one or two
+sentences naming the specific thing on screen that produced it. If you cannot name the thing, you
+do not have a score yet.
+
+You score this one component only. The other three seats carry the others.
+
+## Tag every finding with one level
+
+Add a `level:` field to each finding, exactly one of four words. It decides who fixes it and where,
+and getting it wrong costs a round -- a defect once arrived as "the dots are hard to tell apart"
+(which reads as `encoding`) and was really `algorithm`: the code painted a radius four times the
+one it simulated.
+
+- `domain` -- this screen is answering a question I did not come here with
+- `abstraction` -- the thing I need is not on this screen at all, in any form
+- `encoding` -- the right thing is here, shown in a form I cannot read it from
+- `algorithm` -- the right thing, in the right form, but the values or the layout look computed wrong
+
+Guess if you have to and say you guessed. **These four words are for the tag only.** Never use them
+in your prose -- you are a player, and a player does not say "abstraction".
