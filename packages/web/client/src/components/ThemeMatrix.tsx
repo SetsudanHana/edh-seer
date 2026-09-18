@@ -229,8 +229,16 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
         <details className="text-sm">
           <summary className="cursor-pointer py-1">
             <span className="text-(--warning)">{m.unaffiliated.length} cards are in no group at all</span>
+            {/* SAYS WHAT IT MEASURES, WHICH IS THEME MEMBERSHIP AND NOT EDGES. This read "nothing
+              *  the engine can see connects them to the rest" — a claim about CONNECTIONS, made
+              *  from `count === 0` over the theme columns above. The Fixes chapter's cut list,
+              *  which really is about connections, then says "No card here is unconnected", and a
+              *  tuner hit the pair head-on in persona round 2 (2026-09-18): the five cards are the
+              *  whole reason that seat opens the report, and the chapter that exists to act on them
+              *  appeared to deny they existed. Both panels were right; only this sentence was
+              *  describing the wrong quantity. */}
             <span className="text-(--muted)">
-              {" "}— nothing the engine can see connects them to the rest
+              {" "}— none of the themes above claim them
             </span>
           </summary>
           <p className="text-xs text-(--muted) leading-relaxed pt-2 max-w-[60ch]">

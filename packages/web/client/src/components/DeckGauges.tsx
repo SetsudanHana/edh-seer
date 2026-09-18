@@ -5,6 +5,7 @@ import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
 import { bandScale } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
 import type { RunDiff } from "../lib/run-diff.js";
+import { themePct1 } from "../lib/theme-pct.js";
 
 /** A COUNT AGAINST ITS REFERENCE, AS A FRACTION OF THE TRACK. The target parks at `TARGET_MARK`,
  *  so the bar runs past it when the count clears it and stops short when it does not -- and every
@@ -132,7 +133,7 @@ export function DeckGauges({ data, diff }: {
   const lead = report.strategies?.[0];
   const underFloor = lead && template?.leadFloor !== undefined
     // Floored to a decimal, not rounded: 0.2499 must not print as "25.0%, under the 25%".
-    ? `${lead.label} reads ${(Math.floor(lead.confidence * 1000) / 10).toFixed(1)}%, under the ${Math.round(template.leadFloor * 100)}% an archetype needs to set its own row`
+    ? `${lead.label} reads ${themePct1(lead.confidence)}%, under the ${Math.round(template.leadFloor * 100)}% an archetype needs to set its own row`
     : "no archetype read strongly enough here to set its own row";
   const tickSource = !template
     ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"
