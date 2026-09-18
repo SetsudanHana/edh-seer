@@ -3,6 +3,7 @@ import { identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { percent, policyBand } from "@edh-seer/engine/percent";
+import { themePct } from "../lib/theme-pct.js";
 
 /** WHAT IS THIS DECK — answered by the instrument built to answer it.
  *
@@ -245,8 +246,14 @@ export function DeckIdentity({
             <span>
               {/* "signals Tokens 42%" (T1). The verb is the engine's, and the bare percentage reads
                 *  as confidence -- "42% sure it is tokens" -- rather than as a share of the deck,
-                *  which is what it is. `ArchetypeBoard`'s disclosure carries the denominator. */}
-              themes {top.map((s) => `${s.label} ${Math.round(s.confidence * 100)}%`).join(" · ")}
+                *  which is what it is. `ArchetypeBoard`'s disclosure carries the denominator.
+                *
+                *  FLOORED VIA `themePct`, NOT ROUNDED. This line used `Math.round` while
+                *  `ArchetypeBoard` floored the same field, so Glance and the Plan bars printed
+                *  different percentages for the same theme two screens apart -- caught by three
+                *  persona seats on three decks, 2026-09-18. The rule and its reason are in
+                *  `lib/theme-pct.ts`. */}
+              themes {top.map((s) => `${s.label} ${themePct(s.confidence)}%`).join(" · ")}
             </span>
           ) : null}
         </p>

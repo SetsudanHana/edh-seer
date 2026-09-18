@@ -4,16 +4,16 @@ import { Explain } from "./Explain.js";
 import { ThemeMatrix } from "./ThemeMatrix.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardName } from "./card-drawer.js";
+import { themePct } from "../lib/theme-pct.js";
 
 type Group = NonNullable<DeckReport["archetypes"]>[number];
 type Strategy = NonNullable<DeckReport["strategies"]>[number];
 const PAIR_CAP = 8;
 
 function StrategyRow({ s, max }: { s: Strategy; max: number }) {
-  // FLOORED, NOT ROUNDED (UX sweep 2026-09-06, D4): 0.249 printed "25%" beside a note saying the
-  // theme was under the 25% floor. The floor is what the template compares against, so the bar
-  // never shows a number the theme did not reach.
-  const pct = Math.floor(s.confidence * 100);
+  // Floored, not rounded -- the rule and the defect behind it live in `lib/theme-pct.ts`, because
+  // stating it here as a comment is exactly how `DeckIdentity` came to round the same field.
+  const pct = themePct(s.confidence);
   const widthPct = max > 0 ? Math.max(4, Math.round((s.confidence / max) * 100)) : 4;
   return (
     <div className="flex items-center gap-3 py-2 border-b border-(--separator)">
