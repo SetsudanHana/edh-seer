@@ -35,6 +35,25 @@ const at = (slug: string, load: () => Promise<CardPageData | null>) =>
     </MemoryRouter>,
   );
 
+/** THE APP MUST RENDER WHAT THE PRERENDERED BLOCK DOES. `cardPageHtml` puts the clauses in
+ *  `.prerendered`, which `html[data-app-booted] .prerendered { display: none }` hides the moment
+ *  React boots -- so a block the app does not also render is served to Googlebot and hidden from
+ *  every human. That shipped on 2,665 commander pages for one deploy, because the block was written
+ *  inline here and never copied there. `ClausesRead` is now one component and both pages assert it. */
+test("the page shows the clauses the engine read", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO, clauses: [
+    "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.",
+  ] }));
+  expect(await screen.findByRole("heading", { level: 2, name: /What the engine read/ })).toBeInTheDocument();
+  expect(screen.getByText(/Create X 1\/1 red Goblin creature tokens/)).toBeInTheDocument();
+});
+
+test("a card with no rules text gets no clause heading", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  expect(await screen.findByRole("heading", { level: 1, name: /Krenko/ })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: /What the engine read/ })).not.toBeInTheDocument();
+});
+
 test("the page names the card and prints the engine's own reason for each partner", async () => {
   at("krenko-mob-boss", async () => KRENKO);
   expect(await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ })).toBeInTheDocument();
