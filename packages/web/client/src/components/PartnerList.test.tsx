@@ -62,10 +62,15 @@ test("a feeder row's caption is the sentence minus the two names it already show
   expect(screen.getByText("counts it and makes more tokens")).toBeInTheDocument();
 });
 
+/** THE FIXTURE CARRIED THE DEFECT (fixed 2026-09-19). Both counts used to sit in `pool` and the
+ *  component read `pool` for every group, so this passed while the feeder line printed a figure
+ *  counted from the cards that ASK for the event. A feeder SUPPLIES it, so its count comes from
+ *  `rarity` -- measured on Sanctum of Fruitful Harvest's `counts|-|shrine` (rarity 22, pool 21).
+ *  The payoff group's stays in `pool`, which was always the right map for rows that ask. */
 test("a feeder group's withheld line says feed, a payoff group's says ask", () => {
   render(
     <MemoryRouter>
-      <PartnerList subject="Krenko, Mob Boss" pool={{ "counts|creature|goblin|-": 9, "enters|creature|-|-": 5 }} rarity={{}} empty="none" rows={[
+      <PartnerList subject="Krenko, Mob Boss" pool={{ "enters|creature|-|-": 5 }} rarity={{ "counts|creature|goblin|-": 9 }} empty="none" rows={[
         { name: "Guttersnipe", slug: "guttersnipe", score: 0.2, event: "counts|creature|goblin|-", reason: "While you control Guttersnipe, Krenko, Mob Boss counts it and makes more tokens" },
         { name: "Impact Tremors", slug: "impact-tremors", score: 0.1, event: "enters|creature|-|-", reason: "When a goblin enters thanks to Krenko, Impact Tremors deals 1 damage", payoff: "deals 1 damage" },
       ]} />
@@ -112,11 +117,15 @@ test("a group past one phone row hides the rest behind a button that says how ma
 
 /** A PRODUCER ROW RUNS TOWARD THE PAGE'S CARD (owner 2026-09-17, "payoff pages omit producers"):
  *  the tile is a card that CAUSES the event the page's card asks for, so its withheld line says
- *  "cause it", and the tile carries that direction as its note rather than a payoff of its own. */
+ *  "cause it", and the tile carries that direction as its note rather than a payoff of its own.
+ *
+ *  ITS COUNT COMES FROM `rarity` (2026-09-19): the rows supply the event, so the honest denominator
+ *  is how many cards CAN CAUSE it, not how many ask. This fixture had the figure in `pool` and
+ *  passed because the component read `pool` for every direction. */
 test("a producer group's withheld line says cause, and its tiles say they cause it", () => {
   render(
     <MemoryRouter>
-      <PartnerList subject="Impact Tremors" pool={{ "enters|creature|-|-": 4 }} rarity={{}} empty="none" rows={[{
+      <PartnerList subject="Impact Tremors" pool={{}} rarity={{ "enters|creature|-|-": 4 }} empty="none" rows={[{
         name: "Krenko, Mob Boss", slug: "krenko-mob-boss", score: 0.2, event: "enters|creature|-|-",
         reason: "When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage", producer: true,
       }]} />

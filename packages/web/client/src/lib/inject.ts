@@ -233,6 +233,41 @@ export interface InjectableCard {
   clauses?: string[];
 }
 
+/** WHICH WAY A PARTNER GROUP RUNS. The three cases the copy already named -- "cause it", "feed it",
+ *  "ask for it" -- now also decide which COUNTER the withheld figure comes from, because they are
+ *  the same fact and reading it from two places is how they came to disagree. */
+export type GroupDirection = "causes" | "feeds" | "asks";
+
+export const groupDirection = (rows: InjectableCard["partners"]): GroupDirection =>
+  rows.every((r) => r.producer === true) ? "causes"
+  : rows.every((r) => /^While you control /i.test(r.reason)) ? "feeds"
+  : "asks";
+
+/** HOW MANY MORE COULD HAVE BEEN SHOWN, counted from the map that runs the group's own direction.
+ *
+ *  THE BUG THIS REPLACES SAID ONE DIRECTION AND COUNTED THE OTHER. Both readers took the figure
+ *  from `pool` -- how many cards ASK for the event -- and then printed "N other cards CAUSE it
+ *  too" under a group whose rows all supply it. Measured on Samut, the Driving Force (2026-09-19):
+ *  the `lose-life` group shows 8 rows, every one `producer: true`, and printed "930 other cards
+ *  cause it too", where 930 is `pool(938) - 8` and the honest figure is `rarity(2,679) - 8`.
+ *
+ *  ON A NARROW GROUP IT WAS WORSE THAN WRONG, IT WAS ABSENT: `applies:keyword-grant|creature|cleric`
+ *  has `pool 1`, so the count came out 0 and NO line rendered at all -- under a chip reading "589
+ *  cards can cause this" above a list of one. That is the owner-reported "it says 589 and shows 1".
+ *
+ *  ROWS THAT SUPPLY THE EVENT COUNT FROM `rarity`, ROWS THAT ASK FOR IT COUNT FROM `pool`, measured
+ *  across the artifact 2026-09-19: a consumer group (Patrol Hound's `discard`: rarity 1,609, pool
+ *  67, rows are cards that ask) was always right on `pool`; a producer group and a feeder group
+ *  (Sanctum of Fruitful Harvest's `counts|-|shrine`: rarity 22, pool 21, rows are the shrines it
+ *  counts) were both wrong. So consumer groups do not move and the other two do. */
+export const withheldFrom = (
+  dir: GroupDirection,
+  event: string,
+  shown: number,
+  rarity: Record<string, number> | undefined,
+  pool: Record<string, number> | undefined,
+): number => Math.max(0, ((dir === "asks" ? pool?.[event] : rarity?.[event]) ?? shown) - shown);
+
 /** A SHARED LEAD SHORT ENOUGH TO BE NOISE IS NOT WORTH A HEADING. Twenty characters is about where
  *  "When a creature dies thanks to X," starts and a bare "When" stops. */
 const MIN_SHARED_LEAD = 20;
@@ -316,11 +351,13 @@ export function cardPageHtml(
   // EVERY ROW THE ARTIFACT HOLDS (`KEEP` caps it at the build), grouped by key and not by
   // adjacency, the same split `PartnerList` draws. A `slice(0, 24)` lived here until 2026-09-16
   // and would have silently cut the 60-row pages back to 24 for every crawler.
-  const groups: { event: string; rows: InjectableCard["partners"]; producers: boolean }[] = [];
+  // The direction is read off the rows by `groupDirection` where it is needed, so the group no
+  // longer carries a `producers` flag that answered only two of the three cases.
+  const groups: { event: string; rows: InjectableCard["partners"] }[] = [];
   for (const p of card.partners) {
     const g = groups.find((x) => x.event === p.event);
-    if (g) { g.rows.push(p); g.producers &&= p.producer === true; }
-    else groups.push({ event: p.event, rows: [p], producers: p.producer === true });
+    if (g) g.rows.push(p);
+    else groups.push({ event: p.event, rows: [p] });
   }
   const rows = groups.map((g) => {
     const n = card.rarity?.[g.event];
@@ -328,9 +365,11 @@ export function cardPageHtml(
       : `    <p>${n.toLocaleString("en-US")} cards can cause ${esc(eventKeySentence(g.event))}.</p>\n`;
     // THE WITHHELD COUNT, in the HTML too: it is the other number that makes this block this
     // card's, and the app has printed it under every group since the list was grouped.
-    const withheld = (card.pool?.[g.event] ?? g.rows.length) - g.rows.length;
+    const dir = groupDirection(g.rows);
+    const withheld = withheldFrom(dir, g.event, g.rows.length, card.rarity, card.pool);
+    const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "feed it" : "ask for it";
     const more = withheld > 0
-      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ${g.producers ? "cause it" : "ask for it"} too, equally specific. The ones shown are the best connected.</p>`
+      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ${verb} too, equally specific. The ones shown are the best connected.</p>`
       : "";
     const { head, rows: cells } = factorLead(g.rows);
     const lead = head === "" ? "" : `    <p>${esc(head)}:</p>\n`;

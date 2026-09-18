@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { eventKeySentence } from "../lib/demand-sentence.js";
+import { groupDirection, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
 
@@ -68,7 +69,12 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
   return (
     <div className="flex flex-col gap-8">
       {groups.map((group) => {
-        const withheld = (pool[group.event] ?? group.rows.length) - group.rows.length;
+        // THE SAME DIRECTION DECIDES THE COUNTER AND THE VERB (2026-09-19). This read `pool` for
+        // every group and then printed "cause it" under producer rows -- the sentence named one
+        // direction and the number came from the other. `withheldFrom` is shared with the
+        // prerendered block so the two readers cannot drift again.
+        const dir = groupDirection(group.rows);
+        const withheld = withheldFrom(dir, group.event, group.rows.length, rarity, pool);
         return (
           <section key={group.event} className="flex flex-col gap-3 break-inside-avoid">
             <div className="flex flex-col gap-0.5">
@@ -133,9 +139,9 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
                 {/* A FEEDER GROUP RUNS THE OTHER WAY (skeptic review, 2026-09-17): its tiles are cards
                   * this card counts, so "ask for it" named the wrong direction under them. A feeder
                   * row is the one whose sentence opens on the row's card being controlled. */}
-                {group.rows.every((r) => r.producer)
+                {dir === "causes"
                   ? "other cards cause it too, equally specific. The ones shown are the best connected."
-                  : group.rows.every((r) => /^While you control /i.test(r.reason))
+                  : dir === "feeds"
                   ? "other cards feed it too, equally specific. The ones shown are the best connected."
                   : "other cards ask for it too, equally specific. The ones shown are the best connected."}
               </p>
