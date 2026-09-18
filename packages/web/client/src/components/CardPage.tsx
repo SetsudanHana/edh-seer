@@ -54,6 +54,26 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         <div className="mt-3"><AbilityTable rows={page.abilities} /></div>
       </details>
 
+      {/* WHAT THE ENGINE READ, and it renders HERE as well as in the prerendered block on purpose.
+        *  `html[data-app-booted] .prerendered { display: none }` hides that block the moment React
+        *  boots, so a clause block that existed only there would be shown to Googlebot and hidden
+        *  from every human -- which is cloaking, not an optimisation.
+        *
+        *  UNATTRIBUTED, which is the only honest shape: one clause can derive several abilities
+        *  (Kogla and Yidaro's single activated line derives four), so pinning an edge to a clause
+        *  would be a guess wearing a citation's clothes. The reader does the matching, which is
+        *  spec D2a option 2 and the reason the heading says "read" rather than "proves". */}
+      {page.clauses !== undefined && page.clauses.length > 0 && (
+        <section className="flex flex-col gap-2 max-w-[68ch]">
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">What the engine read</h2>
+          <blockquote className="flex flex-col gap-2 border-l-2 border-(--separator) pl-4">
+            {page.clauses.map((c, i) => (
+              <p key={i} className="text-(--muted)">{c}</p>
+            ))}
+          </blockquote>
+        </section>
+      )}
+
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
           <h2 className="text-2xl font-bold tracking-[-0.01em]">Partners</h2>

@@ -179,6 +179,32 @@ test("the block carries the mana cost, and omits the line when a card has none",
   expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("Mana cost:");
 });
 
+/** WHAT THE ENGINE READ, so a claim can be checked without leaving the page. Spec D2a option 2,
+ *  taken 2026-09-18: option 1 shipped our derivation with nothing to check it against, and
+ *  "Produces: a card being drawn" is unfalsifiable on a page that never shows the line it came
+ *  from. Unattributed, because one clause can yield several abilities and naming which one produced
+ *  a given edge would be a guess wearing a citation's clothes. */
+test("the block quotes the clauses the engine read, in printed order", () => {
+  const html = cardPageHtml({ ...KRENKO, clauses: [
+    "When Kogla and Yidaro enters, choose one",
+    "{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.",
+  ] }, "x", "card");
+  expect(html).toContain("<h2>What the engine read</h2>");
+  expect(html).toContain("<p>When Kogla and Yidaro enters, choose one</p>");
+  expect(html).toContain(
+    "<p>{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.</p>");
+  // Printed order, which is the order a player reads the card in.
+  expect(html.indexOf("When Kogla")).toBeLessThan(html.indexOf("{2}{R}{G}"));
+  // It is evidence for the derivation, so it sits above the derivation it explains.
+  expect(html.indexOf("What the engine read")).toBeLessThan(html.indexOf("Produces:"));
+});
+
+test("a card with no rules text gets no heading over an empty quote", () => {
+  expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("What the engine read");
+  expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("What the engine read");
+  expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("<blockquote>");
+});
+
 /** THE CONDITION IS SAID ONCE PER GROUP, NOT ONCE PER ROW. Every reason in an event group opens on
  *  the same clause by construction, so a crawler read it once per partner -- 29% of all reason bytes
  *  over a 2,573-row sample. The claim is not shortened: the heading plus the row is the whole

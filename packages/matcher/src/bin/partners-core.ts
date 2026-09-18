@@ -1,5 +1,11 @@
 export type { FacetRow } from "./facet-index-core.js";
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+// THE SUBPATH, NOT THE PACKAGE ROOT. `static-lookup.ts` pulls this module into the BROWSER, and
+// tagger's barrel reaches `otags/functional.ts`, which `readFileSync`s a JSON file at import
+// time -- a value import of the root took every client test down with "The URL must be of
+// scheme file". `segment.ts` closes over `./subtypes` and `./emblem` only, both already public,
+// and does nothing but read strings.
+import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
@@ -714,6 +720,20 @@ function pickReason<T extends { text: string; repeatability?: string; impliedPro
  *  because the Pages Function needs the shard rule without `edges.ts` behind it. */
 export { PARTNER_SHARD_COUNT, partnerShardOf };
 
+/** THE CARD'S CLAUSES, verbatim, in printed order, from the SAME deterministic `segment()` the
+ *  clause docs were built from and `derive-corpus.ts` recomputes with. Recomputed rather than
+ *  stored for the same reason it is there: it is pure, it is free, and a second code path that has
+ *  to agree with the first is how the page comes to quote a clause the engine never read.
+ *
+ *  A CARD WITH NO RULES TEXT GETS NO LIST, not an empty one -- a vanilla creature has nothing to
+ *  quote and a heading over nothing is worse than no heading. */
+const clauseTextsOf = (d: DeckCard): string[] => {
+  const c = d.card as { oracleText?: string; keywords?: string[]; typeLine?: string };
+  return segment(c.oracleText ?? "", c.keywords ?? [], c.typeLine ?? "")
+    .map((x) => x.text.trim())
+    .filter((x) => x.length > 0);
+};
+
 /** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
  *  appear on the card -- so the table reads down the card the way a player does. */
 export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
@@ -1109,6 +1129,23 @@ export interface CardPageRecord {
   /** How the engine read the card, one row per derived ability -- the page's real argument, and the
    *  half of it that was missing while the record carried only the UNION of a card's events. */
   abilities: AbilityRow[];
+  /** THE CLAUSES THE ENGINE READ, verbatim and in printed order -- spec D2a option 2, taken
+   *  2026-09-18 after option 1 shipped with nothing on the page a reader could check a claim
+   *  against.
+   *
+   *  UNATTRIBUTED, AND THAT IS THE WHOLE POINT. The original D2 wanted each edge to cite the clause
+   *  it came from and that CANNOT be built: `Ability` carries no clause id and the mapping is not
+   *  1:1 -- Kogla and Yidaro's one activated line yields four abilities, so the citation would name
+   *  the same paragraph four times while looking precise. A guessed attribution is the
+   *  silent-wrong-answer failure this engine exists to avoid, so the clauses are offered as the
+   *  card's text and the reader does the matching.
+   *
+   *  `segment()`, NOT THE RAW ORACLE TEXT, and not a second code path. It is deterministic over the
+   *  same three inputs the clause docs were built from, so these are exactly the clauses the model
+   *  was asked about -- `derive-corpus.ts` recomputes them the same way for the same reason. It also
+   *  strips reminder text, which is ours to strip and is why this is the engine's reading rather
+   *  than a reprint. Absent on a card with no rules text. */
+  clauses?: string[];
   /** THE COST-TO-EFFECT RATES the card's abilities state (`rate.ts`; owner 2026-09-17), one per
    *  ability a family reads: cards per mana, damage per mana, each a floor and a ceiling. Absent
    *  when no ability states a number the axis can read. Recorded on the page, never on an edge. */
@@ -1416,6 +1453,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       artCrop: artCropOf(d),
       backArtCrop: (d.card as { faces?: { artCrop?: string }[] }).faces?.[1]?.artCrop ?? null,
       abilities: abilityRowsOf(d),
+      ...(() => { const c = clauseTextsOf(d); return c.length > 0 ? { clauses: c } : {}; })(),
       ...(() => { const rates = ratesOf(d); return rates.length > 0 ? { rates } : {}; })(),
       identity: d.card.colorIdentity ?? [],
       commander,
