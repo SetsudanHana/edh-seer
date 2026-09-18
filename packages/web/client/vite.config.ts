@@ -30,9 +30,31 @@ const staticOut = {
   },
 };
 
+/** THE COMMENTS IN `index.html` ARE FOR US AND THEY WERE SHIPPING TO EVERYONE. Measured on the live
+ *  `/cards/impact-tremors` (2026-09-18): 38.0 KB served, 11.4 KB of it HTML comments against 5.6 KB
+ *  of visible text -- 29% of every byte a reader and every crawler downloaded was an internal essay
+ *  about a nav decision. `how-it-works/index.html` carries 8.5 KB more.
+ *
+ *  BUILD ONLY, so the source keeps them. They are the reasoning behind hand-written markup that no
+ *  component file explains, and a comment nobody can read while editing the file is worse than no
+ *  comment. `apply: "build"` leaves the dev server showing what the author wrote.
+ *
+ *  A PLAIN LITERAL MATCH, no leading `\s*`: an ambiguous whitespace prefix before a literal is the
+ *  shape CodeQL's polynomial-ReDoS rule has failed this repo's required check for twice. The blank
+ *  lines it leaves are collapsed by the bounded pass after it. */
+const stripHtmlComments = {
+  name: "edh-seer-strip-html-comments",
+  apply: "build" as const,
+  transformIndexHtml: {
+    order: "post" as const,
+    handler: (html: string): string =>
+      html.replace(/<!--[\s\S]*?-->/g, "").replace(/\n{3,}/g, "\n\n"),
+  },
+};
+
 export default defineConfig({
   root: "client",
-  plugins: [react(), tailwindcss(), staticOut],
+  plugins: [react(), tailwindcss(), staticOut, stripHtmlComments],
   build: {
     rollupOptions: {
       // TWO HTML ENTRIES. `how-it-works/` is prose, not an app route: listing it here makes Vite
