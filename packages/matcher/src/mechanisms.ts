@@ -202,6 +202,22 @@ export const MECHANISM_LABELS: Record<MechanismCategory, string> = {
   "power-matters": "Power Matters",
 };
 
+/** The pair's reasons, with the ones that DEFINE this category first.
+ *
+ *  A pair carries every reason the two cards give each other, and a group is only about one of
+ *  them. `Sarevok + Bontu's Monument` has three `cast:creature` drain reasons and one
+ *  `static:cost-reduction`; under `Ramp Payoff` the cost reduction is the whole point and the drain
+ *  is noise, and under `Aristocrats` it is the other way round. Whoever renders one sentence per
+ *  pair should get the category's own sentence without having to know the category's rules.
+ *
+ *  Stable within each half. `other` has no defining rule, so it keeps the matcher's order. */
+function reasonsForCategory(reasons: Reason[], category: MechanismCategory | "other"): Reason[] {
+  if (category === "other") return [...reasons];
+  const defining = reasons.filter((r) => categoryDefines(r, category));
+  if (defining.length === 0 || defining.length === reasons.length) return [...reasons];
+  return [...defining, ...reasons.filter((r) => !categoryDefines(r, category))];
+}
+
 /** Groups synergy edges by mechanism category. An edge can land in more than one
  *  group (a pair can be both Aristocrats and Tokens); edges matching zero categories
  *  collect into a synthetic "other" group so nothing silently disappears. Categories
@@ -242,8 +258,28 @@ export function groupEdgesByArchetype(
       const g = groups.get(category)!;
       g.cards.add(edge.a);
       g.cards.add(edge.b);
-      g.pairs.push({ a: edge.a, b: edge.b, reasons: edge.reasons });
+      // A COPY, ORDERED FOR THIS CATEGORY. The same pair legitimately sits in several groups and
+      // each wants a different sentence first, so the reasons array cannot be shared by reference:
+      // Sarevok + Bontu's Monument is both `Aristocrats` (its `cast:creature` drain) and
+      // `Ramp Payoff` (its `static:cost-reduction`), and one order cannot serve both.
+      g.pairs.push({ a: edge.a, b: edge.b, reasons: reasonsForCategory(edge.reasons, category) });
     }
+  }
+
+  // DEFINING PAIRS FIRST, because the reader checks the label by reading the pairs. `ArchetypeBoard`
+  // shows the first two of these and nothing else until a click, and a group whose two visible
+  // exhibits are SUPPORTING reasons reads as mislabelled -- the persona skeptic filed exactly that
+  // on 2026-09-18: `Tokens Go Wide` opened with "Cultist of the Absolute gives Sarevok bigger
+  // stats" (a `static:pump`) and a `dies:creature` trigger, neither of which mentions a token.
+  //
+  // The group itself is NOT wrong and is not re-scoped here: a supporting kind earns membership on
+  // purpose (see the Krenko note above -- token mediation points a maker's edge at the token node,
+  // which `cardEdges` excludes). Only the ORDER was arbitrary, and the view was reading meaning
+  // into it. Stable within each half, so an equal-standing pair keeps the order the matcher found.
+  for (const [category, g] of groups) {
+    if (category === "other") continue;
+    const defines = (p: { reasons: Reason[] }) => p.reasons.some((r) => categoryDefines(r, category));
+    g.pairs = [...g.pairs.filter(defines), ...g.pairs.filter((p) => !defines(p))];
   }
 
   const result: ArchetypeGroup[] = [...groups.entries()].map(([category, g]) => ({

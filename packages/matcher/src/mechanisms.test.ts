@@ -199,3 +199,45 @@ test("every mechanism category carries a non-empty label", () => {
     expect(MECHANISM_LABELS[c as MechanismCategory], c).toBeTruthy();
   }
 });
+
+/** THE EXHIBIT HAS TO DEMONSTRATE THE LABEL, because the label is the thing a reader cannot check.
+ *
+ *  `ArchetypeBoard` shows a group's first two pairs and one sentence each, and nothing else until a
+ *  click. The persona skeptic filed it on 2026-09-18: `Tokens Go Wide` opened with "Cultist of the
+ *  Absolute gives Sarevok bigger stats" -- a `static:pump` -- and a `dies:creature` trigger, neither
+ *  of which mentions a token, so the group read as mislabelled.
+ *
+ *  The membership was right and is not changed here: a supporting kind earns a place on purpose.
+ *  Only the ORDER was arbitrary while the view read meaning into it. */
+test("a group's defining pairs sort ahead of the ones that merely support it", () => {
+  const defining = { a: "Maker", b: "Payoff", reasons: [reason({ tag: "create-token:any" })] };
+  const supporting = { a: "Pump", b: "Body", reasons: [reason({ effectKind: "pump" })] };
+  const groups = groupEdgesByArchetype([supporting, defining]);
+  const tokens = groups.find((g) => g.category === "tokens-go-wide");
+  expect(tokens, "tokens-go-wide should exist").toBeTruthy();
+  // The supporting pair was passed in FIRST and must not be what the reader sees first.
+  expect(tokens!.pairs[0]!.a).toBe("Maker");
+});
+
+/** ONE PAIR, TWO GROUPS, TWO SENTENCES. `Sarevok + Bontu's Monument` is `Aristocrats` through its
+ *  `cast:creature` drain and `Ramp Payoff` through its `static:cost-reduction`, and each group has
+ *  to lead with its own reason. This is why the group holds a COPY of the reasons rather than the
+ *  edge's array: one shared order cannot serve both, and mutating it would corrupt the other group. */
+test("a pair in two groups leads with each group's own reason", () => {
+  const edge = {
+    a: "Sarevok",
+    b: "Bontu's Monument",
+    reasons: [
+      reason({ tag: "cast:creature", effectKind: "drain", text: "drains each opponent" }),
+      reason({ tag: "static:cost-reduction", text: "reduces what Sarevok costs" }),
+    ],
+  };
+  const groups = groupEdgesByArchetype([edge]);
+  const find = (c: string) => groups.find((g) => g.category === c)?.pairs[0]?.reasons[0];
+  const ramp = find("ramp-payoff");
+  const aristocrats = find("aristocrats");
+  if (ramp) expect(ramp.tag).toBe("static:cost-reduction");
+  if (aristocrats) expect(aristocrats.tag).toBe("cast:creature");
+  // And the edge the caller handed in is untouched, whatever the groups did to their copies.
+  expect(edge.reasons[0]!.tag).toBe("cast:creature");
+});
