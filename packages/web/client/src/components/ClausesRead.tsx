@@ -16,8 +16,20 @@ export function ClausesRead({ clauses }: { clauses?: string[] }) {
   return (
     <section className="flex flex-col gap-2 max-w-[68ch]">
       <h2 className="text-2xl font-bold tracking-[-0.01em]">What the engine read</h2>
-      <blockquote className="flex flex-col gap-2 border-l-2 border-(--separator) pl-4">
-        {clauses.map((c, i) => <p key={i} className="text-(--muted)">{c}</p>)}
+      {/* ONE BOX PER CLAUSE, because the SEGMENTATION is the claim. Four paragraphs behind a single
+        *  left rule read as one passage of card text, which is the one thing this block is not: it
+        *  is the engine's own division of the card into the units it reasoned over, and a reader
+        *  who cannot see where one ends cannot tell that "Start your engines!" was read apart from
+        *  the line above it. A list, because they are discrete items; inside a blockquote, because
+        *  they are quoted from the card. */}
+      <blockquote>
+        <ul className="flex flex-col gap-2">
+          {clauses.map((c, i) => (
+            <li key={i} className="rounded-(--radius) border border-(--separator) px-3 py-2 text-(--muted)">
+              {c}
+            </li>
+          ))}
+        </ul>
       </blockquote>
     </section>
   );
