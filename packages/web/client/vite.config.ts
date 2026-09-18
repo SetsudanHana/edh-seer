@@ -30,9 +30,49 @@ const staticOut = {
   },
 };
 
+/** THE COMMENTS IN `index.html` ARE FOR US AND THEY WERE SHIPPING TO EVERYONE. Measured on the live
+ *  `/cards/impact-tremors` (2026-09-18): 38.0 KB served, 11.4 KB of it HTML comments against 5.6 KB
+ *  of visible text -- 29% of every byte a reader and every crawler downloaded was an internal essay
+ *  about a nav decision. `how-it-works/index.html` carries 8.5 KB more.
+ *
+ *  BUILD ONLY, so the source keeps them. They are the reasoning behind hand-written markup that no
+ *  component file explains, and a comment nobody can read while editing the file is worse than no
+ *  comment. `apply: "build"` leaves the dev server showing what the author wrote.
+ *
+ *  NO REGEX. `replace(/<!--[\s\S]*?-->/g, "")` is the obvious version and it fails CodeQL's
+ *  `js/incomplete-multi-character-sanitization` as a high-severity alert, because one pass over an
+ *  UNTERMINATED `<!--` leaves the marker in the output. The rule is right about the string even
+ *  though this is a build-time pass over our own file rather than sanitisation. Scanning indices
+ *  cannot leave one behind, and it reads more plainly than the regex did.
+ *
+ *  AN UNTERMINATED COMMENT TAKES THE REST WITH IT, which is what a browser does too: `<!--` with no
+ *  `-->` comments out everything after it, so dropping the tail matches how the document would have
+ *  rendered anyway. */
+const stripHtmlComments = {
+  name: "edh-seer-strip-html-comments",
+  apply: "build" as const,
+  transformIndexHtml: {
+    order: "post" as const,
+    handler: (html: string): string => {
+      let out = "";
+      let i = 0;
+      for (;;) {
+        const start = html.indexOf("<!--", i);
+        if (start === -1) { out += html.slice(i); break; }
+        out += html.slice(i, start);
+        const end = html.indexOf("-->", start + 4);
+        if (end === -1) break;
+        i = end + 3;
+      }
+      // Bounded repetition of one character: no ambiguity for the ReDoS rule to find.
+      return out.replace(/\n{3,}/g, "\n\n");
+    },
+  },
+};
+
 export default defineConfig({
   root: "client",
-  plugins: [react(), tailwindcss(), staticOut],
+  plugins: [react(), tailwindcss(), staticOut, stripHtmlComments],
   build: {
     rollupOptions: {
       // TWO HTML ENTRIES. `how-it-works/` is prose, not an app route: listing it here makes Vite

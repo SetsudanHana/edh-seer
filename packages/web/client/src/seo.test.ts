@@ -170,6 +170,21 @@ test.skipIf(!existsSync(builtSitemap))("every indexable card is reachable by wal
  *  where `functions/` is not beside the output, and every card URL quietly goes back to serving the
  *  empty shell -- with a green suite, a correct sitemap, and 17,775 URLs a crawler reads as blank.
  *  The logic is tested in `inject.test.ts`; this asserts the wiring that carries it. */
+/** THE SHELL'S COMMENTS ARE INTERNAL DOCUMENTATION AND THEY WERE SHIPPING. Measured on the live
+ *  `/cards/impact-tremors` (2026-09-18): 11.4 KB of HTML comments against 5.6 KB of visible text,
+ *  29% of every byte served, on a page whose whole problem is that it reads as thin. The source
+ *  keeps them -- `stripHtmlComments` in `vite.config.ts` runs on build only -- so this asserts the
+ *  thing that actually ships, which is why it needs a build to run. */
+test.skipIf(!existsSync(join(DIST, "index.html")))(
+  "the built shell ships no HTML comments, while the source keeps them", () => {
+    for (const built of ["index.html", join("how-it-works", "index.html")]) {
+      const out = readFileSync(join(DIST, built), "utf8");
+      expect(out, `${built} still carries comments`).not.toContain("<!--");
+    }
+    // The source is where they belong, and a strip that reached it would be the real regression.
+    expect(html).toContain("<!--");
+  });
+
 test("the card and commander prerender functions are where Pages looks for them", () => {
   const functions = join(CLIENT, "..", "functions");
   for (const route of ["cards/[slug].ts", "commanders/[slug].ts"]) {
