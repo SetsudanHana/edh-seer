@@ -39,16 +39,34 @@ const staticOut = {
  *  component file explains, and a comment nobody can read while editing the file is worse than no
  *  comment. `apply: "build"` leaves the dev server showing what the author wrote.
  *
- *  A PLAIN LITERAL MATCH, no leading `\s*`: an ambiguous whitespace prefix before a literal is the
- *  shape CodeQL's polynomial-ReDoS rule has failed this repo's required check for twice. The blank
- *  lines it leaves are collapsed by the bounded pass after it. */
+ *  NO REGEX. `replace(/<!--[\s\S]*?-->/g, "")` is the obvious version and it fails CodeQL's
+ *  `js/incomplete-multi-character-sanitization` as a high-severity alert, because one pass over an
+ *  UNTERMINATED `<!--` leaves the marker in the output. The rule is right about the string even
+ *  though this is a build-time pass over our own file rather than sanitisation. Scanning indices
+ *  cannot leave one behind, and it reads more plainly than the regex did.
+ *
+ *  AN UNTERMINATED COMMENT TAKES THE REST WITH IT, which is what a browser does too: `<!--` with no
+ *  `-->` comments out everything after it, so dropping the tail matches how the document would have
+ *  rendered anyway. */
 const stripHtmlComments = {
   name: "edh-seer-strip-html-comments",
   apply: "build" as const,
   transformIndexHtml: {
     order: "post" as const,
-    handler: (html: string): string =>
-      html.replace(/<!--[\s\S]*?-->/g, "").replace(/\n{3,}/g, "\n\n"),
+    handler: (html: string): string => {
+      let out = "";
+      let i = 0;
+      for (;;) {
+        const start = html.indexOf("<!--", i);
+        if (start === -1) { out += html.slice(i); break; }
+        out += html.slice(i, start);
+        const end = html.indexOf("-->", start + 4);
+        if (end === -1) break;
+        i = end + 3;
+      }
+      // Bounded repetition of one character: no ambiguity for the ReDoS rule to find.
+      return out.replace(/\n{3,}/g, "\n\n");
+    },
   },
 };
 
