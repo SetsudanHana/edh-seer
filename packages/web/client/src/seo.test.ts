@@ -177,9 +177,14 @@ test.skipIf(!existsSync(builtSitemap))("every indexable card is reachable by wal
  *  thing that actually ships, which is why it needs a build to run. */
 test.skipIf(!existsSync(join(DIST, "index.html")))(
   "the built shell ships no HTML comments, while the source keeps them", () => {
-    for (const built of ["index.html", join("how-it-works", "index.html")]) {
-      const out = readFileSync(join(DIST, built), "utf8");
-      expect(out, `${built} still carries comments`).not.toContain("<!--");
+    // BOTH LAYOUTS, because the answer depends on how far the build got: vite emits
+    // `how-it-works/index.html` and `assemble-deploy.mjs` renames it to `how-it-works.html`, so
+    // hardcoding either one fails depending on whether a deploy has run since the build.
+    const built = ["index.html", "how-it-works.html", join("how-it-works", "index.html")]
+      .filter((f) => existsSync(join(DIST, f)));
+    expect(built.length, "no built HTML found to check").toBeGreaterThanOrEqual(2);
+    for (const f of built) {
+      expect(readFileSync(join(DIST, f), "utf8"), `${f} still carries comments`).not.toContain("<!--");
     }
     // The source is where they belong, and a strip that reached it would be the real regression.
     expect(html).toContain("<!--");

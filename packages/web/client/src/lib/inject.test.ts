@@ -170,6 +170,62 @@ test("a card with no usable art prints no image rather than a broken one", () =>
     .not.toContain("<img");
 });
 
+/** MANA COST IS METADATA AND IT WAS MISSING. D2a names "card name, type line, mana cost, our
+ *  derived events, our reason sentences" as what the page carries; the block printed everything but
+ *  the cost. A land has none, and prints no line rather than an empty one. */
+test("the block carries the mana cost, and omits the line when a card has none", () => {
+  expect(cardPageHtml({ ...KRENKO, manaCost: "{2}{R}{R}" }, "x", "card"))
+    .toContain("<p>Mana cost: {2}{R}{R}</p>");
+  expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("Mana cost:");
+});
+
+/** THE CONDITION IS SAID ONCE PER GROUP, NOT ONCE PER ROW. Every reason in an event group opens on
+ *  the same clause by construction, so a crawler read it once per partner -- 29% of all reason bytes
+ *  over a 2,573-row sample. The claim is not shortened: the heading plus the row is the whole
+ *  sentence, which matters because the sentence is the evidence for the edge. */
+test("an event group says its shared condition once, as a heading", () => {
+  const rows = [
+    { name: "God-Eternal Bontu", slug: "god-eternal-bontu", event: "dies|creature|-|-",
+      reason: "When a creature dies thanks to Krenko, Mob Boss, God-Eternal Bontu triggers" },
+    { name: "Cavalier of Night", slug: "cavalier-of-night", event: "dies|creature|-|-",
+      reason: "When a creature dies thanks to Krenko, Mob Boss, Cavalier of Night deals 2 damage" },
+  ];
+  const html = cardPageHtml({ ...KRENKO, partners: rows }, "krenko-mob-boss", "card");
+  expect(html).toContain("<p>When a creature dies thanks to Krenko, Mob Boss:</p>");
+  expect(html).toContain('<a href="/cards/god-eternal-bontu">God-Eternal Bontu</a> — triggers');
+  expect(html).toContain('<a href="/cards/cavalier-of-night">Cavalier of Night</a> — deals 2 damage');
+  // Said once, not twice.
+  expect([...html.matchAll(/When a creature dies thanks to/g)]).toHaveLength(1);
+});
+
+/** IT REFUSES RATHER THAN GUESSES, in all three ways it can go wrong. */
+test("a group with nothing worth factoring keeps every sentence whole", () => {
+  const one = [{ name: "Impact Tremors", slug: "impact-tremors", event: "e",
+    reason: "When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage" }];
+  // A group of one has no shared lead to find.
+  expect(cardPageHtml({ ...KRENKO, partners: one }, "x", "card"))
+    .toContain("When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage");
+
+  // A lead under MIN_SHARED_LEAD is noise, not a heading.
+  const short = [
+    { name: "A", slug: "a", event: "e", reason: "Krenko draws a card" },
+    { name: "B", slug: "b", event: "e", reason: "Krenko gains a life" },
+  ];
+  const shortHtml = cardPageHtml({ ...KRENKO, partners: short }, "x", "card");
+  expect(shortHtml).toContain("Krenko draws a card");
+  expect(shortHtml).toContain("Krenko gains a life");
+
+  // A row that would be left with nothing takes the whole group back to full sentences: a row
+  // reading "Bontu —" is worse than the repetition the factoring removes.
+  const empty = [
+    { name: "Bontu", slug: "bontu", event: "e", reason: "When a creature dies thanks to Krenko, Bontu" },
+    { name: "Cavalier", slug: "cav", event: "e", reason: "When a creature dies thanks to Krenko, Cavalier" },
+  ];
+  const emptyHtml = cardPageHtml({ ...KRENKO, partners: empty }, "x", "card");
+  expect(emptyHtml).toContain("When a creature dies thanks to Krenko, Bontu");
+  expect(emptyHtml).not.toContain("</a> — </li>");
+});
+
 test("a card with no partners says so rather than printing an empty list", () => {
   const html = cardPageHtml({ ...KRENKO, partners: [] }, "x", "card");
   expect(html).toContain("No partners specific enough to list");
