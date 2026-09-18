@@ -143,6 +143,33 @@ test("the block carries the page's one h1, and the landing's intro is not on it"
   expect(out).not.toContain("intro-thesis");
 });
 
+/** THE CRAWLABLE PAGE HAD NO IMAGE AT ALL (measured 2026-09-18): zero `<img>` across 22,209 card
+ *  pages, because the art renders client-side and `og:image` is a head tag, which Google Images
+ *  does not index. The `<img>` is the same URL the page already preloads, so a reader pays nothing
+ *  for it and the crawler gets a picture.
+ *
+ *  THE FULL CARD, NEVER THE CROP. Scryfall's image rule requires an artist credit beside an
+ *  `art_crop`, or a full card image in the same interface; the corpus has no artist field, so the
+ *  second branch is the only one open (spec `2026-09-03-card-and-commander-pages-design.md`, D2a
+ *  constraint 2). `cardImageUrl` performs that rewrite and refuses a URL off Scryfall's origin. */
+test("the static block carries the card's image, rewritten to the full card", () => {
+  const html = cardPageHtml(
+    { ...KRENKO, artCrop: "https://cards.scryfall.io/art_crop/front/8/2/824b2d73.jpg?1712" },
+    "krenko-mob-boss", "card");
+  expect(html).toContain(
+    '<img src="https://cards.scryfall.io/normal/front/8/2/824b2d73.jpg?1712"'
+    + ' alt="Krenko, Mob Boss" width="488" height="680" />');
+  expect(html).not.toContain("art_crop");
+});
+
+test("a card with no usable art prints no image rather than a broken one", () => {
+  expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("<img");
+  expect(cardPageHtml({ ...KRENKO, artCrop: null }, "x", "card")).not.toContain("<img");
+  // Not Scryfall's origin: `cardImageUrl` returns null and the block prints nothing.
+  expect(cardPageHtml({ ...KRENKO, artCrop: "https://evil.example/x.jpg" }, "x", "card"))
+    .not.toContain("<img");
+});
+
 test("a card with no partners says so rather than printing an empty list", () => {
   const html = cardPageHtml({ ...KRENKO, partners: [] }, "x", "card");
   expect(html).toContain("No partners specific enough to list");
@@ -309,6 +336,21 @@ test("a page with an image preloads it and hands it to the share cards", () => {
   expect(out).toContain('<meta property="og:image:height" content="680" />');
   expect(out).toContain('<meta property="og:image:alt" content="Krenko, Mob Boss — EDH Seer" />');
   expect(out).not.toContain("og-image.png");
+});
+
+/** THE SHARE CARD'S TITLE AND TEXT WERE THE SITE'S, ON ALL 24,874 PAGES (measured 2026-09-18).
+ *  `og:` was per-card from the start and `twitter:` was not, so every Discord and Twitter paste of
+ *  any card page previewed as the home page -- one grey generic card for the whole corpus. The two
+ *  vocabularies describe the same page and there is no reading on which they should disagree, so
+ *  they are replaced together, outside the image branch: a browse page has no image and still has
+ *  its own name. */
+test("the share card's title and description are the page's, not the shell's", () => {
+  const out = page();
+  expect(out).toContain('<meta name="twitter:title" content="Krenko, Mob Boss — EDH Seer" />');
+  expect(out).toContain(
+    '<meta name="twitter:description" content="What the engine reads on Krenko, Mob Boss." />');
+  expect(out).not.toContain('content="EDH Seer — Commander Deck Analysis" />\n    <meta name="twitter:description"');
+  expect(out).not.toContain("Why two cards work together, from the oracle text itself.");
 });
 
 test("a page without an image keeps the site's share image untouched", () => {
