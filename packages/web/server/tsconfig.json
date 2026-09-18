@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
-    // NodeNext with no "type":"module" in package.json keeps nest build (tsc) output as CJS;
-    // do not set a "builder":"swc" in nest-cli.json without re-checking the module format.
+    // NodeNext with no "type":"module" in package.json keeps the tsc output as CJS. This file IS
+    // the server build now -- `build:server` is `tsc -p server/tsconfig.json` and there is no Nest
+    // CLI (TypeScript 7 ships tsc only, without the programmatic API the CLI drives), so a change
+    // to "module" here changes what ships. The two decorator flags below are why tsc is required
+    // and tsx cannot substitute: esbuild emits standard ES decorators, Nest needs the legacy ones.
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
