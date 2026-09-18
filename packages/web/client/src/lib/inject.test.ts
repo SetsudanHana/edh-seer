@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import {
-  BROWSE_LETTERS, browseIndexHtml, browseLetterHtml, browseSegment, cardPageHtml, htmlHeaders,
-  injectPage, type InjectableCard,
+  BROWSE_LETTERS, browseIndexHtml, browseLetterHtml, browseSegment, cardPageHtml, groupDirection,
+  htmlHeaders, injectPage, withheldFrom, type InjectableCard,
 } from "./inject.js";
 
 /** THE REAL SHELL, not a fixture of one. Every replacement here is a regex against tags this repo
@@ -256,6 +256,81 @@ test("a group with nothing worth factoring keeps every sentence whole", () => {
   const emptyHtml = cardPageHtml({ ...KRENKO, partners: empty }, "x", "card");
   expect(emptyHtml).toContain("When a creature dies thanks to Krenko, Bontu");
   expect(emptyHtml).not.toContain("</a> — </li>");
+});
+
+/** THE WITHHELD LINE NAMED ONE DIRECTION AND COUNTED THE OTHER. Both readers took the figure from
+ *  `pool` -- how many cards ASK for the event -- and printed "N other cards CAUSE it too" under a
+ *  group whose rows all supply it. Measured on Samut, the Driving Force (2026-09-19): the
+ *  `lose-life` group shows 8 rows, all `producer: true`, and printed 930 (`pool 938 - 8`) where the
+ *  honest figure is `rarity 2,679 - 8 = 2,671`.
+ *
+ *  AND ON A NARROW GROUP IT VANISHED: `applies:keyword-grant|creature|cleric` has `pool 1`, so the
+ *  count came out 0 and no line rendered at all, under a chip reading "589 cards can cause this"
+ *  above a list of one. That was the owner-reported "it says 589 and shows 1". */
+test("a producer group counts the cards that can CAUSE the event, not the ones that ask", () => {
+  const rows = [{
+    name: "Zahur, Glory's Past", slug: "zahur-glorys-past", event: "lose-life|-|-|-",
+    reason: "When a permanent makes a player lose life thanks to Krenko, Zahur raises your speed",
+    producer: true as const,
+  }];
+  const html = cardPageHtml({
+    ...KRENKO, partners: rows,
+    rarity: { "lose-life|-|-|-": 2679 },
+    pool: { "lose-life|-|-|-": 938 },
+  }, "x", "card");
+  expect(html).toContain("2,678 other cards cause it too");
+  expect(html).not.toContain("937 other cards");
+});
+
+test("a consumer group still counts the cards that ASK, which was always right", () => {
+  const rows = [{
+    name: "Pitchstone Wall", slug: "pitchstone-wall", event: "discard|-|-|-",
+    reason: "When Patrol Hound discards a card, Pitchstone Wall triggers",
+  }];
+  const html = cardPageHtml({
+    ...KRENKO, partners: rows,
+    rarity: { "discard|-|-|-": 1609 },
+    pool: { "discard|-|-|-": 67 },
+  }, "x", "card");
+  expect(html).toContain("66 other cards ask for it too");
+  expect(html).not.toContain("1,608 other cards");
+});
+
+/** A FEEDER SUPPLIES THE EVENT TOO, so it counts from `rarity` like a producer and not from `pool`
+ *  -- measured on Sanctum of Fruitful Harvest's `counts|-|shrine` (rarity 22, pool 21): the rows
+ *  are the shrines it counts. The verb stays "feed it", which the copy already said. */
+test("a feeder group counts from rarity and keeps its own verb", () => {
+  const rows = [{
+    name: "Sanctum of Stone Fangs", slug: "sanctum-of-stone-fangs", event: "counts|-|shrine|-",
+    reason: "While you control Sanctum of Stone Fangs, Sanctum of Fruitful Harvest counts it",
+  }];
+  const html = cardPageHtml({
+    ...KRENKO, partners: rows,
+    rarity: { "counts|-|shrine|-": 22 },
+    pool: { "counts|-|shrine|-": 21 },
+  }, "x", "card");
+  expect(html).toContain("21 other cards feed it too");
+});
+
+test("the direction is read off the rows, three ways", () => {
+  expect(groupDirection([{ name: "a", slug: "a", event: "e", reason: "x", producer: true }]))
+    .toBe("causes");
+  expect(groupDirection([{ name: "a", slug: "a", event: "e", reason: "While you control a, b counts it" }]))
+    .toBe("feeds");
+  expect(groupDirection([{ name: "a", slug: "a", event: "e", reason: "When b discards, a triggers" }]))
+    .toBe("asks");
+  // A MIXED GROUP IS NOT A PRODUCER GROUP: one row without the flag makes the whole group ask, which
+  // is the conservative reading -- the old code had the same rule and only the counter was wrong.
+  expect(groupDirection([
+    { name: "a", slug: "a", event: "e", reason: "x", producer: true },
+    { name: "b", slug: "b", event: "e", reason: "y" },
+  ])).toBe("asks");
+});
+
+test("a missing counter prints no line rather than a guess", () => {
+  expect(withheldFrom("causes", "e", 3, undefined, undefined)).toBe(0);
+  // Never negative: a counter smaller than what is shown is a stale artifact, not a negative count.
+  expect(withheldFrom("causes", "e", 8, { e: 3 }, undefined)).toBe(0);
 });
 
 test("a card with no partners says so rather than printing an empty list", () => {
