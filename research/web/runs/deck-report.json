@@ -1,21 +1,23 @@
 {
   "surface": "deck-report",
   "baseUrl": "http://localhost:5173",
-  "_deck_note": "ONE DECK PER SEAT. Four personas are one model wearing four hats, so 4/4 agreement on a single shared input can be one blind spot rather than four readers (.claude/agents/README.md, 'The honest ceiling of this technique'). Suggested assignment: abzan-defenders -> mtg-deck-tuner (a real build-around with a concrete tuning job), acererak-combo -> mtg-skeptic (combo claims are the most checkable thing we assert), judith-tokens-connoiseur -> mtg-phone-player (token-dense, so the graph is at its worst on 390px), mono-blue-blink -> mtg-precon-player (least jargon burden, so a vocabulary failure here is the tool's and not the deck's).",
+  "_deck_note": "ONE DECK PER SEAT, and the picks are NOT free: they come from the fixture table in .claude/agents/README.md, which reasons about each one. precon-party-time is the arbitrary-pasted-deck path plus the bad-deck case (cohesion 0.11); inalla is tuned, so a false alarm is the strong signal, and it serves BOTH the tuner and the phone seat so modality is the only variable between them; sarevok-lord-of-pain is seeded with claims the owner hand-judged FALSE and is the instrument's own calibration. RE-VERIFY THE SEEDING BEFORE EVERY ROUND -- on 2026-09-18 the two claims the README named were gone from a live analysis and two different FALSE ones had survived in their place.",
   "decks": [
-    "packages/cli/decks/calibration/abzan-defenders.txt",
-    "packages/cli/decks/calibration/acererak-combo.txt",
-    "packages/cli/decks/calibration/judith-tokens-connoiseur.txt",
-    "packages/cli/decks/calibration/mono-blue-blink.txt"
+    "packages/cli/decks/precon-party-time.txt",
+    "packages/cli/decks/calibration/inalla.txt",
+    "packages/cli/decks/calibration/sarevok-lord-of-pain.txt"
   ],
-
   "_goal_note": "Every goal below is phrased the way a PLAYER would say it, never in this tool's vocabulary. A goal written as 'inspect the breadth axis' tests nothing, because it hands the persona the word we are trying to find out whether they know. That is the whole knowledge-ceiling axis, and it is the only axis that has ever produced a persona-specific finding here.",
-
   "keyScreens": [
-    { "id": "report", "path": "/" },
-    { "id": "graph", "path": "/analysis/graph" }
+    {
+      "id": "report",
+      "path": "/"
+    },
+    {
+      "id": "graph",
+      "path": "/analysis/graph"
+    }
   ],
-
   "steps": [
     {
       "id": "land",
@@ -23,9 +25,100 @@
       "goal": "work out what this deck is trying to do, without reading anything twice"
     },
     {
-      "id": "judge",
-      "path": "/",
-      "goal": "decide whether this deck is any good, and work out what the numbers on screen are measuring"
+      "id": "verdict",
+      "goal": "decide whether this deck is any good",
+      "acts": [
+        {
+          "any": [
+            {
+              "click": "button[data-chapter='stand']"
+            },
+            {
+              "select": [
+                "select[aria-label='Jump to chapter']",
+                "stand"
+              ]
+            }
+          ]
+        }
+      ],
+      "path": "/"
+    },
+    {
+      "id": "plan",
+      "goal": "see what each of my cards is actually doing for the deck",
+      "acts": [
+        {
+          "any": [
+            {
+              "click": "button[data-chapter='plan']"
+            },
+            {
+              "select": [
+                "select[aria-label='Jump to chapter']",
+                "plan"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mana",
+      "goal": "find out whether my mana can actually cast this stuff, and which colour is worst",
+      "acts": [
+        {
+          "any": [
+            {
+              "click": "button[data-chapter='mana']"
+            },
+            {
+              "select": [
+                "select[aria-label='Jump to chapter']",
+                "mana"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "roles",
+      "goal": "check whether I have enough removal and enough ramp",
+      "acts": [
+        {
+          "any": [
+            {
+              "click": "button[data-chapter='roles']"
+            },
+            {
+              "select": [
+                "select[aria-label='Jump to chapter']",
+                "roles"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fix",
+      "goal": "find out what is wrong with the deck and what to change",
+      "acts": [
+        {
+          "any": [
+            {
+              "click": "button[data-chapter='fix']"
+            },
+            {
+              "select": [
+                "select[aria-label='Jump to chapter']",
+                "fix"
+              ]
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "graph",
@@ -35,10 +128,18 @@
     {
       "id": "graph-find",
       "path": "/analysis/graph",
-      "goal": "find one specific card I am thinking of cutting, and see what it would take down with it",
+      "goal": "find my commander in the picture and see what it is connected to",
+      "_note": "{{commander}} resolves per deck from the decklist. Round 1 hard-coded a card from a deck that had since been swapped out, so all three seats searched for something genuinely absent and reviewed the empty state by accident.",
       "acts": [
-        { "waitFor": "input[placeholder='Find a card…']" },
-        { "type": ["input[placeholder='Find a card…']", "Crashing Drawbridge"] }
+        {
+          "waitFor": "input[placeholder='Find a card\u2026']"
+        },
+        {
+          "type": [
+            "input[placeholder='Find a card\u2026']",
+            "{{commander}}"
+          ]
+        }
       ]
     },
     {
@@ -52,7 +153,6 @@
       "goal": "check whether this deck can do something degenerate I did not know about"
     }
   ],
-
   "measure": [
     "h1",
     "h2",
@@ -65,6 +165,8 @@
     "[data-testid='paint-legend-row']",
     "[data-testid='matrix-row']",
     "[data-testid='graph-search-count']",
-    "svg circle"
-  ]
+    "svg circle",
+    "button[data-chapter]"
+  ],
+  "_steps_note": "THE SIX CHAPTERS ARE SEPARATE STEPS. Round 1 had one `land` step blind-scrolling the report, and 3 of 4 seats reported the same thing: 'the report is cropped, I never saw MANA, ROLES or FIX'. The rail is buttons at desktop and a native <select> below 1023px, so each chapter step uses `any` to reach it whichever way this width offers -- a failure is recorded only if BOTH fail, which keeps the act log meaningful. Round 1 also had `land` and `judge` byte-identical (same path, no acts) and 3/4 seats said so."
 }
