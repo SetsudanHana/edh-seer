@@ -1,0 +1,70 @@
+{
+  "surface": "deck-report",
+  "baseUrl": "http://localhost:5173",
+  "_deck_note": "ONE DECK PER SEAT. Four personas are one model wearing four hats, so 4/4 agreement on a single shared input can be one blind spot rather than four readers (.claude/agents/README.md, 'The honest ceiling of this technique'). Suggested assignment: abzan-defenders -> mtg-deck-tuner (a real build-around with a concrete tuning job), acererak-combo -> mtg-skeptic (combo claims are the most checkable thing we assert), judith-tokens-connoiseur -> mtg-phone-player (token-dense, so the graph is at its worst on 390px), mono-blue-blink -> mtg-precon-player (least jargon burden, so a vocabulary failure here is the tool's and not the deck's).",
+  "decks": [
+    "packages/cli/decks/calibration/abzan-defenders.txt",
+    "packages/cli/decks/calibration/acererak-combo.txt",
+    "packages/cli/decks/calibration/judith-tokens-connoiseur.txt",
+    "packages/cli/decks/calibration/mono-blue-blink.txt"
+  ],
+
+  "_goal_note": "Every goal below is phrased the way a PLAYER would say it, never in this tool's vocabulary. A goal written as 'inspect the breadth axis' tests nothing, because it hands the persona the word we are trying to find out whether they know. That is the whole knowledge-ceiling axis, and it is the only axis that has ever produced a persona-specific finding here.",
+
+  "keyScreens": [
+    { "id": "report", "path": "/" },
+    { "id": "graph", "path": "/analysis/graph" }
+  ],
+
+  "steps": [
+    {
+      "id": "land",
+      "path": "/",
+      "goal": "work out what this deck is trying to do, without reading anything twice"
+    },
+    {
+      "id": "judge",
+      "path": "/",
+      "goal": "decide whether this deck is any good, and work out what the numbers on screen are measuring"
+    },
+    {
+      "id": "graph",
+      "path": "/analysis/graph",
+      "goal": "see which cards actually work with each other"
+    },
+    {
+      "id": "graph-find",
+      "path": "/analysis/graph",
+      "goal": "find one specific card I am thinking of cutting, and see what it would take down with it",
+      "acts": [
+        { "waitFor": "input[placeholder='Find a card…']" },
+        { "type": ["input[placeholder='Find a card…']", "Crashing Drawbridge"] }
+      ]
+    },
+    {
+      "id": "cards",
+      "path": "/analysis/cards",
+      "goal": "get a shortlist of cards worth cutting"
+    },
+    {
+      "id": "combos",
+      "path": "/analysis/combos",
+      "goal": "check whether this deck can do something degenerate I did not know about"
+    }
+  ],
+
+  "measure": [
+    "h1",
+    "h2",
+    "p.eyebrow",
+    ".chip",
+    ".btn-primary",
+    ".btn-secondary",
+    "[data-testid='bar-label']",
+    "[data-testid='bar-readout']",
+    "[data-testid='paint-legend-row']",
+    "[data-testid='matrix-row']",
+    "[data-testid='graph-search-count']",
+    "svg circle"
+  ]
+}
