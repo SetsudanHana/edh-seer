@@ -11,10 +11,10 @@
  *    npx tsx research/web/ui-review-capture.ts --self-test      # the pure maths, no browser
  *
  *  BOTH SERVERS HAVE TO BE UP (the run file's baseUrl is the vite one):
- *    cd packages/web && NODE_OPTIONS="--import tsx" npx nest start      # :3001
- *    cd packages/web && npx vite --config client/vite.config.ts         # :5173
+ *    npm run dev -w @edh-seer/web          # API :3001 + UI :5173, both watching
  *  and kill any stale ones first -- a dev server left from yesterday serves yesterday's code, which
- *  is indistinguishable from a fix that did not work.
+ *  is indistinguishable from a fix that did not work. There is no `nest start` here; see
+ *  `packages/web/server/tsconfig.json`.
  *
  *  Output lands in `persona-shots/<surface>/`, already gitignored. */
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
@@ -28,14 +28,25 @@ import { encodeShare } from "../../packages/web/client/src/lib/share-link.js";
 // The run file
 // ---------------------------------------------------------------------------------------------
 
-/** One act inside a step. Deliberately four verbs and no expression language: a run file is a task
+/** One act inside a step. A small fixed vocabulary and no expression language: a run file is a task
  *  list a reader can check against the product, not a test script. Anything that needs branching
- *  wants a Playwright test, not a review capture. */
+ *  wants a Playwright test, not a review capture.
+ *
+ *  Any string may carry `{{commander}}`, resolved per deck from the decklist itself. */
 type Act =
   | { click: string }
   | { type: [selector: string, text: string] }
   | { press: string }
-  | { waitFor: string };
+  | { waitFor: string }
+  | { select: [selector: string, value: string] }
+  /** Try each in turn, stop at the first that works, and only report a failure if ALL of them fail.
+   *
+   *  This exists because one reader action is two different controls at two widths: the chapter
+   *  rail is `button[data-chapter=...]` on a desktop and a native `<select>` below 1023px. Listing
+   *  both as ordinary acts would log an expected failure at every width for every chapter -- twelve
+   *  of them -- and drown the one real unreachable control the last round found. "Reach the chapter,
+   *  however this width does it" is the honest unit. */
+  | { any: Act[] };
 
 type Step = {
   id: string;
@@ -171,6 +182,12 @@ type RawNode = {
   fontSize: number;
   fontWeight: number;
   text: string;
+  /** The element's own content is wider than its box, i.e. text is being clipped or scrolled away
+   *  INSIDE a container. The page-level `scrollWidth > clientWidth` check cannot see this: a
+   *  clipping ancestor absorbs the overflow and the document reports none. Round 2 of 2026-09-18
+   *  measured 30 phone pages with no document overflow while the phone seat reported pair reasons
+   *  walking off the right edge -- this is the number that was missing. */
+  clipped: boolean;
   /** Whether WCAG 2.5.8 applies at all. It governs TARGETS, and a caption is not a target --
    *  flagging `p.eyebrow` for being 14px tall is a false positive that trains a reader to skim
    *  the column. */
@@ -221,6 +238,8 @@ async function measure(page: Page, selectors: string[]): Promise<RawMeasure> {
           fontSize: parseFloat(s.fontSize) || 0,
           fontWeight: parseInt(s.fontWeight, 10) || 400,
           text: (el.textContent ?? "").trim().slice(0, 60),
+          // +1 absorbs sub-pixel rounding; real clipping is never a fraction of a pixel.
+          clipped: el.scrollWidth > el.clientWidth + 1,
           interactive:
             el.matches("a[href], button, input, select, textarea, summary, [role=button], [role=link], [role=tab], [role=checkbox], [role=switch], [tabindex]") ||
             !!el.closest("a[href], button, [role=button], [role=link], [role=tab]"),
@@ -260,6 +279,7 @@ function deriveMetrics(raw: RawMeasure, viewport: { width: number; height: numbe
         contrastRequired: need,
         contrastPasses: ratio === null ? null : ratio >= need,
         offscreen: isOffscreen(n.rect, viewport, documentHeight),
+        clipped: n.clipped,
         interactive: n.interactive,
         // WCAG 2.5.8, and only where it applies. Zero-sized boxes are layout wrappers, not targets.
         belowMinTarget: n.interactive && n.rect.w > 0 && n.rect.h > 0 && (n.rect.w < 24 || n.rect.h < 24),
@@ -270,6 +290,7 @@ function deriveMetrics(raw: RawMeasure, viewport: { width: number; height: numbe
       count: nodes.length,
       overlapPairs: overlapPairs(rects),
       offscreenCount: readouts.filter((r) => r.offscreen).length,
+      clippedCount: readouts.filter((r) => r.clipped).length,
       contrastFailures: readouts.filter((r) => r.contrastPasses === false).length,
       belowMinTargetCount: readouts.filter((r) => r.belowMinTarget).length,
       nodes: readouts,
@@ -313,23 +334,33 @@ async function openPage(context: BrowserContext): Promise<Page> {
  *
  *  `fullPage` on a long tab produces something a reviewer has to shrink ~2.5x to look at, which put
  *  three seats at the edge of legibility in the 2026-08-20 round and made them hedge every reading.
- *  Slices stay at 1:1. Bounded at `MAX_SLICES`, and a page that fits in one viewport costs exactly
- *  one frame, so this is free on short pages. */
-const MAX_SLICES = 3;
+ *  Slices stay at 1:1. A page that fits in one viewport costs exactly one frame, so this is free on
+ *  short pages.
+ *
+ *  TWO, not three. The run file now walks the report's six chapters as separate steps, so each step
+ *  starts where the reader actually is and two screens covers a section; three was chosen when one
+ *  step had to blind-scroll the whole report, and at ten steps it would have cost 320 frames a
+ *  round. Coverage went UP when the cap came down, because navigation replaced guessing. */
+const MAX_SLICES = 2;
 
 async function shoot(page: Page, dir: string, stem: string): Promise<string[]> {
   const files: string[] = [];
   const { height } = page.viewportSize() ?? { height: 0 };
+  // FROM WHERE THE STEP LEFT THE READER, not from the top. A step that navigates to a chapter has
+  // already scrolled the page to it; slicing from 0 would quietly discard that and shoot the
+  // landing screen again, which is how the first round produced two byte-identical steps.
+  const startY = await page.evaluate(() => window.scrollY);
   const full = await page.evaluate(() => document.documentElement.scrollHeight);
-  const slices = height > 0 ? Math.min(MAX_SLICES, Math.max(1, Math.ceil(full / height))) : 1;
+  const remaining = Math.max(0, full - startY);
+  const slices = height > 0 ? Math.min(MAX_SLICES, Math.max(1, Math.ceil(remaining / height))) : 1;
   for (let i = 0; i < slices; i++) {
-    await page.evaluate((y: number) => window.scrollTo(0, y), i * height);
+    await page.evaluate((y: number) => window.scrollTo(0, y), startY + i * height);
     await page.waitForTimeout(120);
     const file = slices === 1 ? `${stem}.png` : `${stem}-p${i + 1}.png`;
     await page.screenshot({ path: join(dir, file) });
     files.push(file);
   }
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.evaluate((y: number) => window.scrollTo(0, y), startY);
   return files;
 }
 
@@ -346,7 +377,13 @@ async function shoot(page: Page, dir: string, stem: string): Promise<string[]> {
  *  closed disclosure pays for nothing. */
 async function expandDetails(page: Page): Promise<number> {
   return page.evaluate(() => {
-    const shut = Array.from(document.querySelectorAll("details")).filter((d) => !d.open);
+    // NOT THE SITE NAVIGATION. The header's MORE menu is a `<details>`, so opening "every"
+    // disclosure dropped a menu over the top-right of every expanded frame -- the phone seat caught
+    // it last round and correctly hedged it as a possible capture artefact. A nav menu is not a
+    // disclosure a reader is failing to find; it is chrome, and chrome belongs shut.
+    const shut = Array.from(document.querySelectorAll("details")).filter(
+      (d) => !d.open && !d.closest("header, nav, [role=navigation], [role=banner]"),
+    );
     for (const d of shut) d.open = true;
     (globalThis as unknown as { __shut?: Element[] }).__shut = shut;
     return shut.length;
@@ -361,23 +398,68 @@ async function restoreDetails(page: Page): Promise<void> {
   });
 }
 
-async function apply(page: Page, acts: Act[] | undefined): Promise<void> {
-  for (const act of acts ?? []) {
-    if ("click" in act) await page.locator(act.click).first().click();
-    else if ("type" in act) await page.locator(act.type[0]).first().fill(act.type[1]);
-    else if ("press" in act) await page.keyboard.press(act.press);
-    else if ("waitFor" in act) await page.locator(act.waitFor).first().waitFor();
+/** Performs a step's acts, and reports the ones that could not be performed.
+ *
+ *  `.first()` throughout, deliberately. A selector matching twice is a strict-mode error in
+ *  Playwright, and a capture should not die because a control also exists in a sibling surface --
+ *  the graph's "Find a card" box exists in both `GraphView` and `GraphList`. Acting on the first
+ *  match is deterministic and is what a reader hitting the visible control does.
+ *
+ *  AN ACT THAT CANNOT BE PERFORMED IS A FINDING, NOT A CRASH. The first real round died here: the
+ *  graph's search input is present but HIDDEN at 390px, so `waitFor` (which waits for visible) hit
+ *  its timeout and took two of the three decks down with it. "The reader cannot reach this control
+ *  at this width" is among the most valuable things this harness can report, and losing the round
+ *  to it is the worst possible way to say so. Each act is attempted; a failure is RECORDED and the
+ *  capture carries on.
+ *
+ *  The timeout is short on purpose: a control that has not appeared in 5s has not appeared for a
+ *  reader either, and 30s x every act x every width is most of a round spent waiting for an answer
+ *  already known. */
+const ACT_TIMEOUT = 5_000;
+
+async function one(page: Page, act: Act, vars: Record<string, string>): Promise<void> {
+  const fill = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (m, k: string) => vars[k] ?? m);
+  if ("click" in act) await page.locator(fill(act.click)).first().click({ timeout: ACT_TIMEOUT });
+  else if ("type" in act) await page.locator(fill(act.type[0])).first().fill(fill(act.type[1]), { timeout: ACT_TIMEOUT });
+  else if ("press" in act) await page.keyboard.press(act.press);
+  else if ("waitFor" in act) await page.locator(fill(act.waitFor)).first().waitFor({ timeout: ACT_TIMEOUT });
+  else if ("select" in act) await page.locator(fill(act.select[0])).first().selectOption(fill(act.select[1]), { timeout: ACT_TIMEOUT });
+  else if ("any" in act) {
+    let last: unknown;
+    for (const alt of act.any) {
+      try { await one(page, alt, vars); return; } catch (e) { last = e; }
+    }
+    throw last;
   }
+}
+
+async function apply(page: Page, acts: Act[] | undefined, vars: Record<string, string>): Promise<string[]> {
+  const failures: string[] = [];
+  for (const act of acts ?? []) {
+    try {
+      await one(page, act, vars);
+    } catch (e) {
+      // Playwright's message carries WHY -- "resolved to hidden", "not found", "intercepts pointer
+      // events" -- and which of those it is decides whether this is a defect or a deliberate limit.
+      failures.push(`${JSON.stringify(act)}: ${(e as Error).message.split("\n").slice(0, 3).join(" ").slice(0, 240)}`);
+    }
+  }
+  return failures;
 }
 
 /** The app keeps a deck in the fragment and nowhere else, so every report URL carries one. Built
  *  with the product's own `encodeShare`, which is also what makes this fail loudly if the share
  *  format ever changes. */
-async function deckHash(deckFile: string): Promise<string> {
+async function deckHash(deckFile: string): Promise<{ hash: string; commander: string }> {
   const { commanders, deck } = parseDecklistSections(readFileSync(deckFile, "utf8"));
   const payload = await encodeShare({ commanders: commanders.join("\n"), decklist: deck.join("\n") });
   if (!payload) throw new Error(`${deckFile} does not fit in a share link (over MAX_PAYLOAD)`);
-  return `#deck=${payload}`;
+  // `{{commander}}` in an act resolves to this. Last round the run file typed a hard-coded card
+  // name left over from a deck that had been swapped out, so all three seats searched the graph for
+  // a card genuinely absent from their own deck and reviewed the empty state by accident. A name
+  // taken FROM the deck cannot go stale when the deck changes.
+  const commander = (commanders[0] ?? "").replace(/^\d+\s*x?\s*/i, "").trim();
+  return { hash: `#deck=${payload}`, commander };
 }
 
 /** Settling matters for the graph and nothing else, but waiting costs a second and a mid-tick frame
@@ -410,7 +492,9 @@ async function main(runPath: string): Promise<void> {
   // --- the walkthrough pass: every step, both widths, one deck per seat -----------------------
   for (const deckFile of deckFiles) {
     const stem = deckFile === "" ? "no-deck" : deckFile.split("/").pop()!.replace(/\.txt$/, "");
-    const hash = deckFile === "" ? "" : await deckHash(deckFile);
+    const got = deckFile === "" ? { hash: "", commander: "" } : await deckHash(deckFile);
+    const hash = got.hash;
+    const vars = { commander: got.commander };
     const deckDir = deckFiles.length > 1 ? join(out, stem) : out;
     mkdirSync(deckDir, { recursive: true });
     const url = (path: string) => `${run.baseUrl}${path}${hash}`;
@@ -425,11 +509,18 @@ async function main(runPath: string): Promise<void> {
             await page.goto(url(step.path));
             at = step.path;
           }
-          await apply(page, step.acts);
+          const actFailures = await apply(page, step.acts, vars);
           await settle(page);
 
+          const stepScrollY = await page.evaluate(() => window.scrollY);
           const files = await shoot(page, deckDir, `${step.id}-${label}`);
-          manifest.push({ deck: stem, step: step.id, goal: step.goal, viewport: label, files });
+          manifest.push({
+            deck: stem, step: step.id, goal: step.goal, viewport: label, files,
+            // Present and non-empty means the reader could not do this step at this width. The
+            // frames are still real -- they show the page as the reader would be stuck seeing it.
+            ...(actFailures.length ? { actFailures } : {}),
+          });
+          if (actFailures.length) console.log(`  UNREACHABLE ${step.id}/${label}: ${actFailures[0].slice(0, 150)}`);
 
           // MEASURED BEFORE ANY DISCLOSURE IS OPENED, so the numbers describe the same page the
           // primary frame shows. Measuring after the expansion would hand the judge a metric for a
@@ -449,6 +540,14 @@ async function main(runPath: string): Promise<void> {
             };
           }
 
+          // BACK TO WHERE THE STEP LEFT THE READER. `measure` scrolls to 0 so that viewport rects
+          // and the document-relative `isOffscreen` bound agree; without restoring it here, every
+          // expanded frame after a chapter step re-shot the TOP of the report instead of the
+          // section. The tuner caught exactly that in round 2 -- "every -expanded frame except
+          // verdict resets to the top" -- which means the pass that exists to separate "never
+          // explained" from "explained one click away" was showing the wrong screen.
+          await page.evaluate((y: number) => window.scrollTo(0, y), stepScrollY);
+
           // The second frame, only where a disclosure was actually shut -- then put them back.
           if (await expandDetails(page)) {
             await page.waitForTimeout(200);
@@ -467,7 +566,7 @@ async function main(runPath: string): Promise<void> {
   //
   // Once, not once per deck: these catch RENDERING failure, and a forced-colors frame of the same
   // component with a different decklist behind it is the same frame.
-  const variantHash = deckFiles[0] === "" ? "" : await deckHash(deckFiles[0]);
+  const variantHash = deckFiles[0] === "" ? "" : (await deckHash(deckFiles[0])).hash;
   const url = (path: string) => `${run.baseUrl}${path}${variantHash}`;
 
   // One frame each. A second frame of the same rendering failure tells a judge nothing. The app
