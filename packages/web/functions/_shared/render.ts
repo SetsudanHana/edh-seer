@@ -62,7 +62,6 @@ export async function renderCardPage(
       commanderPartners?: InjectableCard["partners"];
       commanderRarity?: InjectableCard["rarity"];
       commanderPool?: InjectableCard["pool"];
-      artCrop?: string | null;
     }>)[slug];
     if (!record) return notFound();
 

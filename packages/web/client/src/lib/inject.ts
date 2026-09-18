@@ -14,6 +14,7 @@
  *  section is already real content outside `#root` that React never owns. That is what lets this
  *  work with no prerender step and no hydration mismatch -- React mounts into an empty div and the
  *  crawler's copy sits beside it. */
+import { cardImageUrl } from "../components/card-node.js";
 import { eventKeySentence } from "./demand-sentence.js";
 
 const esc = (s: string): string =>
@@ -154,7 +155,15 @@ export function injectPage(shell: string, page: InjectedPage): string {
     .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/,
       `<meta property="og:description" content="${esc(page.description)}" />`)
     .replace(/<meta property="og:url" content="[^"]*"\s*\/?>/,
-      `<meta property="og:url" content="${esc(page.canonical)}" />`);
+      `<meta property="og:url" content="${esc(page.canonical)}" />`)
+    // THE SAME PAGE, SAID TWICE. `og:` was per-page from the start and `twitter:` was not, so every
+    // Discord and Twitter paste of any of 24,874 card, commander and browse pages previewed as the
+    // home page. These two belong in the chain that always runs, not in the image branch below: a
+    // browse page carries no image and still has a name of its own.
+    .replace(/<meta name="twitter:title" content="[^"]*"\s*\/?>/,
+      `<meta name="twitter:title" content="${esc(page.title)}" />`)
+    .replace(/<meta name="twitter:description" content="[^"]*"\s*\/?>/,
+      `<meta name="twitter:description" content="${esc(page.description)}" />`);
 
   if (page.breadcrumbs !== undefined && page.breadcrumbs.length >= 2) {
     out = out.replace("</head>",
@@ -211,6 +220,9 @@ export interface InjectableCard {
   rarity?: Record<string, number>;
   /** How many cards ASK for each event -- the withheld count the app prints under a group. */
   pool?: Record<string, number>;
+  /** Scryfall's `art_crop` URL, which `cardImageUrl` rewrites to the full card. Optional and
+   *  nullable because the shard carries it as either; a card without one prints no image. */
+  artCrop?: string | null;
 }
 
 /** THE STATIC BLOCK A CRAWLER READS, and the one place this feature's claim is testable without a
@@ -262,9 +274,20 @@ export function cardPageHtml(
   const partners = card.partners.length === 0
     ? "    <p>No partners specific enough to list.</p>"
     : `    <h2>Partners</h2>\n${rows}`;
+  // THE ONLY IMAGE ON THE CRAWLABLE PAGE. The art renders client-side, so until now a crawler read
+  // 22,209 card pages with no `<img>` on any of them and Google Images had nothing to index. This is
+  // the URL `injectPage` already preloads and the app already asks for, so a reader pays no extra
+  // bytes for it and it is hidden with the rest of `.prerendered` once React boots.
+  //
+  // THE FULL CARD, NOT THE CROP: Scryfall requires an artist credit beside an `art_crop`, or a full
+  // card image in the same interface, and this corpus has no artist field (D2a constraint 2). That
+  // rewrite, and the refusal of any URL off Scryfall's origin, are `cardImageUrl`'s job.
+  const image = card.artCrop == null ? null : cardImageUrl(card.artCrop);
+  const art = image === null ? ""
+    : `    <img src="${esc(image)}" alt="${esc(card.name)}" width="488" height="680" />\n`;
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
-    <p>${esc(card.typeLine)}</p>
+${art}    <p>${esc(card.typeLine)}</p>
 ${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeySentence(d))).join(", ") || "nothing"}.</p>
 ${partners}
