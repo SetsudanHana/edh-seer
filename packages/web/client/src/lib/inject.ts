@@ -360,9 +360,11 @@ export function cardPageHtml(
   // THE CARD IMAGE ALREADY SHOWED THIS, as pixels. Making it text is what a crawler, a screen
   // reader and a reader who wants to copy a line all needed.
   const read = card.clauses === undefined || card.clauses.length === 0 ? ""
-    : `    <h2>What the engine read</h2>\n    <blockquote>\n`
-      + card.clauses.map((c) => `      <p>${esc(c)}</p>`).join("\n")
-      + `\n    </blockquote>\n`;
+    // THE SAME SHAPE THE APP RENDERS (`ClausesRead`): a list inside the quote, one item per clause.
+    // The two readers diverged once already and it served 2,665 commander pages to Googlebot alone.
+    : `    <h2>What the engine read</h2>\n    <blockquote>\n    <ul>\n`
+      + card.clauses.map((c) => `      <li>${esc(c)}</li>`).join("\n")
+      + `\n    </ul>\n    </blockquote>\n`;
   // THE ONLY IMAGE ON THE CRAWLABLE PAGE. The art renders client-side, so until now a crawler read
   // 22,209 card pages with no `<img>` on any of them and Google Images had nothing to index. This is
   // the URL `injectPage` already preloads and the app already asks for, so a reader pays no extra

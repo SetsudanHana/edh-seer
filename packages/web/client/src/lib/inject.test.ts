@@ -190,9 +190,15 @@ test("the block quotes the clauses the engine read, in printed order", () => {
     "{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.",
   ] }, "x", "card");
   expect(html).toContain("<h2>What the engine read</h2>");
-  expect(html).toContain("<p>When Kogla and Yidaro enters, choose one</p>");
+  // ONE ITEM PER CLAUSE, the same shape `ClausesRead` renders: the segmentation is the claim, and
+  // a run of paragraphs reads as one passage of card text instead of the units the engine read.
+  expect(html).toContain("<li>When Kogla and Yidaro enters, choose one</li>");
   expect(html).toContain(
-    "<p>{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.</p>");
+    "<li>{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.</li>");
+  // Scoped to the quote: the partner rows are `<li>` too, so a whole-document count is not a
+  // statement about the clauses.
+  const quote = /<blockquote>[\s\S]*?<\/blockquote>/.exec(html)![0];
+  expect([...quote.matchAll(/<li>/g)]).toHaveLength(2);
   // Printed order, which is the order a player reads the card in.
   expect(html.indexOf("When Kogla")).toBeLessThan(html.indexOf("{2}{R}{G}"));
   // It is evidence for the derivation, so it sits above the derivation it explains.

@@ -6,6 +6,7 @@ import { eventKeySentence } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData, type PartnerRow } from "../lib/partners.js";
 import { CardArt } from "./CardArt.js";
 import { CardShell } from "./CardShell.js";
+import { ClausesRead } from "./ClausesRead.js";
 import { NotFound } from "./NotFound.js";
 import { PartnerList } from "./PartnerList.js";
 
@@ -217,6 +218,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           ))}
         </section>
       )}
+
+      <ClausesRead clauses={page.clauses} />
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">

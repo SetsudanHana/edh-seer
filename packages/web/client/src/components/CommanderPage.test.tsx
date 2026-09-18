@@ -37,6 +37,19 @@ const at = (slug: string, load: () => Promise<CardPageData | null>) =>
     </MemoryRouter>,
   );
 
+/** THE DEFECT THIS TEST EXISTS FOR, and it shipped. `cardPageHtml` writes the clause block for BOTH
+ *  surfaces, and the app rendered it on the card page only -- so for one deploy 2,665 commander
+ *  pages served the clauses to Googlebot inside `.prerendered` and hid them from every human the
+ *  moment React booted. Cloaking, introduced by writing a block inline in one component instead of
+ *  once. `ClausesRead` is shared now and both pages assert it. */
+test("the commander page shows the clauses the engine read", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO, clauses: [
+    "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.",
+  ] }));
+  expect(await screen.findByRole("heading", { level: 2, name: /What the engine read/ })).toBeInTheDocument();
+  expect(screen.getByText(/Create X 1\/1 red Goblin creature tokens/)).toBeInTheDocument();
+});
+
 /** THE WHOLE REASON THIS URL EXISTS (spec D5). Two pages about the same card that print the same
  *  list are duplicate content competing with each other; the commander page ranks over the cards
  *  this commander's deck could legally contain, which is a different list and a different order. */
