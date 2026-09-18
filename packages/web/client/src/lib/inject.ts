@@ -223,6 +223,70 @@ export interface InjectableCard {
   /** Scryfall's `art_crop` URL, which `cardImageUrl` rewrites to the full card. Optional and
    *  nullable because the shard carries it as either; a card without one prints no image. */
   artCrop?: string | null;
+  /** `{1}{W}`, in the notation every Magic reader already reads. Short card METADATA, which D2a
+   *  names as staying on the page beside the type line -- it is not rules text. A land has none. */
+  manaCost?: string;
+}
+
+/** A SHARED LEAD SHORT ENOUGH TO BE NOISE IS NOT WORTH A HEADING. Twenty characters is about where
+ *  "When a creature dies thanks to X," starts and a bare "When" stops. */
+const MIN_SHARED_LEAD = 20;
+
+/** No regex: `js/polynomial-redos` and `js/incomplete-multi-character-sanitization` have both failed
+ *  this repo's required check, and a two-character trim does not need one. */
+function trimLead(s: string): string {
+  let i = 0;
+  while (i < s.length && (s[i] === "," || s[i] === " ")) i += 1;
+  return s.slice(i);
+}
+
+/** The same at the other end. A prefix ending in a space makes `lastIndexOf(" ")` win over
+ *  `lastIndexOf(", ")`, which leaves the heading as "... Mob Boss," and renders "Mob Boss,:". */
+function trimTrail(s: string): string {
+  let i = s.length;
+  while (i > 0 && (s[i - 1] === "," || s[i - 1] === " ")) i -= 1;
+  return s.slice(0, i);
+}
+
+/** EIGHT COPIES OF ONE SENTENCE IS WHAT A THIN PAGE LOOKS LIKE. Every reason in an event group opens
+ *  on the same condition by construction -- "When a creature dies thanks to Krenko, X triggers" --
+ *  so a crawler read that opening once per ROW. Measured over 2,573 rows in 591 groups: 29% of all
+ *  reason bytes were a repeated prefix.
+ *
+ *  THE CLAIM IS NOT SHORTENED, IT IS SAID ONCE. The condition becomes the group's heading and each
+ *  row keeps its own half, so the full sentence is still on the page and still reconstructible. That
+ *  matters more here than bytes: the reason sentence IS the evidence for the edge, and a page that
+ *  drops it to look less repetitive would be trading the product's honesty for a ranking.
+ *
+ *  IT REFUSES RATHER THAN GUESSES. A group of one, a lead under `MIN_SHARED_LEAD`, or any row left
+ *  with nothing to say -- and every row keeps its whole sentence. A row reading "Krenko --" is worse
+ *  than the repetition this removes.
+ *
+ *  NOT THE APP'S SHAPE. `PartnerList.feederCaption` trims a lead too, but per row and for a phone's
+ *  two-line clamp; this is per group and for a reader who sees the whole list at once. The count
+ *  sentences above each group are still word-for-word the app's. */
+function factorLead(rows: InjectableCard["partners"]):
+  { head: string; rows: { name: string; slug: string; text: string }[] } {
+  const whole = () => ({ head: "", rows: rows.map((r) => ({ name: r.name, slug: r.slug, text: r.reason })) });
+  if (rows.length < 2) return whole();
+  let shared = rows[0].reason;
+  for (const r of rows) {
+    let i = 0;
+    while (i < shared.length && i < r.reason.length && shared[i] === r.reason[i]) i += 1;
+    shared = shared.slice(0, i);
+  }
+  // A character-wise prefix stops wherever two names diverge, which is usually mid-word. Back off to
+  // the last separator so the heading ends on a whole word rather than "Cai".
+  const cut = Math.max(shared.lastIndexOf(", "), shared.lastIndexOf(" "));
+  const head = cut > 0 ? trimTrail(shared.slice(0, cut)) : "";
+  if (head.length < MIN_SHARED_LEAD) return whole();
+  const out = rows.map((r) => {
+    let text = trimLead(r.reason.slice(head.length));
+    // The remainder opens on the row's own name, which is already the link beside it.
+    if (text.startsWith(r.name)) text = trimLead(text.slice(r.name.length));
+    return { name: r.name, slug: r.slug, text };
+  });
+  return out.some((r) => r.text.length === 0) ? whole() : { head, rows: out };
 }
 
 /** THE STATIC BLOCK A CRAWLER READS, and the one place this feature's claim is testable without a
@@ -247,12 +311,11 @@ export function cardPageHtml(
   // EVERY ROW THE ARTIFACT HOLDS (`KEEP` caps it at the build), grouped by key and not by
   // adjacency, the same split `PartnerList` draws. A `slice(0, 24)` lived here until 2026-09-16
   // and would have silently cut the 60-row pages back to 24 for every crawler.
-  const groups: { event: string; rows: string[]; producers: boolean }[] = [];
+  const groups: { event: string; rows: InjectableCard["partners"]; producers: boolean }[] = [];
   for (const p of card.partners) {
-    const row = `      <li><a href="/cards/${esc(p.slug)}">${esc(p.name)}</a> — ${esc(p.reason)}</li>`;
     const g = groups.find((x) => x.event === p.event);
-    if (g) { g.rows.push(row); g.producers &&= p.producer === true; }
-    else groups.push({ event: p.event, rows: [row], producers: p.producer === true });
+    if (g) { g.rows.push(p); g.producers &&= p.producer === true; }
+    else groups.push({ event: p.event, rows: [p], producers: p.producer === true });
   }
   const rows = groups.map((g) => {
     const n = card.rarity?.[g.event];
@@ -264,7 +327,11 @@ export function cardPageHtml(
     const more = withheld > 0
       ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ${g.producers ? "cause it" : "ask for it"} too, equally specific. The ones shown are the best connected.</p>`
       : "";
-    return `${count}    <ol>\n${g.rows.join("\n")}\n    </ol>${more}`;
+    const { head, rows: cells } = factorLead(g.rows);
+    const lead = head === "" ? "" : `    <p>${esc(head)}:</p>\n`;
+    const items = cells.map((c) =>
+      `      <li><a href="/cards/${esc(c.slug)}">${esc(c.name)}</a> — ${esc(c.text)}</li>`).join("\n");
+    return `${count}${lead}    <ol>\n${items}\n    </ol>${more}`;
   }).join("\n");
   const crossLink = kind === "card"
     ? (card.commander
@@ -288,7 +355,7 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
 ${art}    <p>${esc(card.typeLine)}</p>
-${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
+${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeySentence(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;
