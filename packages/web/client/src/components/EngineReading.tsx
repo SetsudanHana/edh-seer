@@ -1,5 +1,5 @@
 import { effectPhrase, type AbilityRow } from "@edh-seer/matcher/partners-core";
-import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
+import { eventKeyAction, eventKeyClause, eventKeySentence } from "../lib/demand-sentence.js";
 import { groupAnchor } from "../lib/group-anchor.js";
 import { useFace } from "./face.js";
 
@@ -119,8 +119,16 @@ function AbilityLines({ row, rarity, grouped }: { row: AbilityRow; rarity?: Reco
       </p>
       {/* WHAT IT WAITS FOR, then WHAT IT PUTS INTO THE GAME -- the two directions the whole engine
         * is built on, in the reader's own words, each jumping to the cards on the other side. */}
+      {/* "WANTS" TAKES THE NOUN FORM, not the clause: the label is a verb, so the words after it
+        * have to be a thing. "wants life being lost" reads; "wants life is lost" does not. The
+        * static rows already read this way because their label form is a noun phrase. */}
       {row.when.map((key) => (
-        <EventRow key={`w${key}`} label="wants" text={eventKeyClause(key, row.self ? "this card" : undefined, row.whenColors)}
+        <EventRow key={`w${key}`} label="wants" text={eventKeySentence(key, row.self ? "this card" : undefined, row.whenColors)}
+          event={key} count={rarity?.[key]} grouped={grouped} />
+      ))}
+      {/* A STATIC DEMANDS BY REACH, not by trigger: the anthem wants the creatures it boosts. */}
+      {(row.applies ?? []).map((key) => (
+        <EventRow key={`a${key}`} label="wants" text={eventKeySentence(key)}
           event={key} count={rarity?.[key]} grouped={grouped} />
       ))}
       {row.emits.map((key) => (

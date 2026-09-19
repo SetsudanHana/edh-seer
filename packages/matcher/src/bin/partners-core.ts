@@ -906,6 +906,9 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
       ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
       ...(subtype ? { counts: subtype } : {}),
       emits: (a.emits ?? []).flatMap((e) => splitKey(eventKey(e))),
+      // A STATIC'S DEMAND IS ITS REACH, not a trigger: without this the page's clause-led reading
+      // showed no event under an anthem or a cost-reducer at all (roadmap AJ4).
+      ...(() => { const k = staticKeysOfAbility(a); return k.length > 0 ? { applies: k } : {}; })(),
       ...(selfEmits.length > 0 ? { selfEmits } : {}),
     };
   });
@@ -1148,19 +1151,24 @@ const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((
   const t = raw.toLowerCase();
   return (ALL_CARD_TYPES as readonly string[]).includes(t) ? [t] : PSEUDO_TYPE_SETS[t] ?? [];
 }))];
-export const staticKeysOf = (d: DeckCard): string[] => [...new Set(
-  abilitiesOf(d).flatMap((a) => {
-    const s = a.effect?.subject;
-    if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
-    const types = concreteTypes(asList(s.type));
-    const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
-    if (types.length === 0 && subtypes.length === 0) return [];
-    // ONE TYPE AND ONE SUBTYPE PER KEY (roadmap AK5): a static reaching four subtypes across
-    // seven types reaches each of the 28 pairs, and naming them in one key produced the 128
-    // character sentence the owner reported.
-    return splitKey(`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`);
-  }),
-)];
+/** THE STATIC KEYS ONE ABILITY REACHES. Split out of `staticKeysOf` so the PAGE ROW can name them
+ *  too (roadmap AJ4): a static's demand is this key, never a trigger, so a clause-led reading that
+ *  showed only `when` left every anthem and every cost-reducer with no event row at all -- which
+ *  on Samut is three of his four lines. */
+export const staticKeysOfAbility = (a: CardTags["abilities"][number]): string[] => {
+  const s = a.effect?.subject;
+  if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
+  const types = concreteTypes(asList(s.type));
+  const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
+  if (types.length === 0 && subtypes.length === 0) return [];
+  // ONE TYPE AND ONE SUBTYPE PER KEY (roadmap AK5): a static reaching four subtypes across
+  // seven types reaches each of the 28 pairs, and naming them in one key produced the 128
+  // character sentence the owner reported.
+  return splitKey(`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`);
+};
+
+export const staticKeysOf = (d: DeckCard): string[] =>
+  [...new Set(abilitiesOf(d).flatMap(staticKeysOfAbility))];
 
 /** WHAT A CARD IS FOR A STATIC'S PURPOSES: its printed types and subtypes, AND those of the tokens
  *  it makes. A noncreature spell that makes creature bodies is what a Samut deck is built from --
@@ -1251,6 +1259,9 @@ export interface AbilityRow {
    *  should say this card untapping"). The key cannot carry the self flag; `self` above does the
    *  same job for the trigger. Absent when no emit is self-referential. */
   selfEmits?: string[];
+  /** THE CLASSES A STATIC REACHES, as event keys. A static demands by REACH rather than by
+   *  trigger, so a reading that showed only `when` left every anthem and cost-reducer bare. */
+  applies?: string[];
   /** WHICH PRINTED CLAUSE DERIVED THIS ROW (roadmap AJ4, spec C2), as an index into the record's
    *  own `clauses`. The card page reads down the card: each clause carries the abilities it
    *  derived and the events those produce or consume.

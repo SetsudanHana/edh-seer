@@ -53,13 +53,13 @@ test("an event links to its partner group, and only when there is one", () => {
   const rows: AbilityRow[] = [{ kind: "triggered", clause: 2, effect: "speed", when: ["lose-life|-|-|-"], emits: [] }];
   const { rerender } = render(<EngineReading clauses={CLAUSES} abilities={rows} rarity={{ "lose-life|-|-|-": 1204 }}
     grouped={new Set(["lose-life|-|-|-"])} />);
-  const link = screen.getByRole("link", { name: /life is lost/i });
+  const link = screen.getByRole("link", { name: /life being lost/i });
   expect(link).toHaveAttribute("href", `#${groupAnchor("lose-life|-|-|-")}`);
   expect(link.textContent).toMatch(/1,204 cards/);
   // No group on this page: the same words, no link to nowhere.
   rerender(<EngineReading clauses={CLAUSES} abilities={rows} rarity={{ "lose-life|-|-|-": 1204 }} grouped={new Set()} />);
-  expect(screen.queryByRole("link", { name: /life is lost/i })).toBeNull();
-  expect(screen.getByText(/life is lost/i)).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /life being lost/i })).toBeNull();
+  expect(screen.getByText(/life being lost/i)).toBeInTheDocument();
 });
 
 /** THE CARD-LEVEL EMPTY STATE STAYS (roadmap W10): an empty reading is where a wrong "no ability"
