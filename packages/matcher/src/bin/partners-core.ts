@@ -213,7 +213,10 @@ const splitList = (key: string): [string, string, string, string][] => {
  *  `(own & ~mask) === 0`. */
 const COLOUR_BIT: Record<string, number> = { W: 1, U: 2, B: 4, R: 8, G: 16 };
 const IDENTITIES = 32;
-const identityMask = (colors: readonly string[]): number =>
+
+/** EXPORTED FOR THE SEARCH PAGE (roadmap AJ3). The picker scopes a count to the chosen colours in
+ *  the browser, and a second hand-written WUBRG bit table is how the two stop agreeing. */
+export const identityMask = (colors: readonly string[]): number =>
   colors.reduce((m, c) => m | (COLOUR_BIT[c] ?? 0), 0);
 
 /** HOW MANY CARDS IN THE CORPUS CAN ACTUALLY SATISFY EACH DEMAND.
@@ -297,6 +300,15 @@ const inIdentity = (bucket: Int32Array, mask: number): number => {
   for (let v = 0; v < IDENTITIES; v++) if ((v & ~mask) === 0) n += bucket[v]!;
   return n;
 };
+
+/** THE SAME SLICE, OVER THE SLOTS AS JSON SHIPS THEM. `inIdentity` reads the Int32Array the build
+ *  holds; a browser reads a plain array out of `event-frequency.json` and needs the identical test,
+ *  or a picker row and a commander page disagree about the same number. */
+export function inIdentityOf(slots: readonly number[], mask: number): number {
+  let n = 0;
+  for (let v = 0; v < IDENTITIES; v++) if ((v & ~mask) === 0) n += slots[v] ?? 0;
+  return n;
+}
 
 /** ONE CARD'S OWN EVENTS, ONTO THE DECK-LEVEL ARCHETYPE NAMES.
  *
@@ -1343,6 +1355,9 @@ export interface PartnerArtifact {
   /** WHO causes and WHO asks, as positions in `index`. `freq` is the size of `p`, and the two come
    *  from one pass so a page cannot print a count over a different set (roadmap AJ3). */
   events: Map<string, EventMembers>;
+  /** `freq`, split into the 32 colour identities (AJ5's buckets), so a count can be scoped to the
+   *  colours a reader chose. Read with `inIdentityOf`. */
+  freqByIdentity: Record<string, number[]>;
   index: NameIndexEntry[];
 }
 
@@ -1710,6 +1725,11 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   }
   const consumers: Record<string, number> = {};
   for (const [k, ids] of consumersOf) consumers[k] = ids.length;
+  // THE SPLIT AJ5 ALREADY COMPUTES, SHIPPED. A picker row prints a count beside an event while the
+  // list under it is identity-filtered; printing the corpus figure there is the defect AJ5 was
+  // opened for, one surface along.
+  const freqByIdentity: Record<string, number[]> = {};
+  for (const [k, b] of buckets) freqByIdentity[k] = [...b];
 
-  return { shards, freq, consumers, events, index };
+  return { shards, freq, consumers, events, freqByIdentity, index };
 }

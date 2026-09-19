@@ -5,7 +5,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
-  supplyForms, supplyKeysOf, themesOf, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
+  supplyForms, supplyKeysOf, themesOf, inIdentityOf, identityMask, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
 
 /** THE CORPUS COUNT ALONE. `supplyBuckets` splits every key by colour identity (AJ5); the rules
@@ -1634,4 +1634,30 @@ test("every counted key ships a member list of exactly that length", () => {
     expect(events.get(key)?.p.length ?? 0, key).toBe(count);
   }
   expect(events.get("meld|-|-|-")?.p ?? []).toEqual([]);
+});
+
+/** THE PICKER PRINTS A COUNT BESIDE EVERY EVENT, and a corpus figure over an identity-filtered
+ *  list is the defect AJ5 was opened for. The slots AJ5 already computes ship, so the count a
+ *  reader sees narrows with the colour chips. */
+test("the frequency ships split by colour identity, and the split sums to the corpus count", () => {
+  const emitter = (name: string, identity: string[]) => withIdentity(base(name, [{
+    kind: "activated", cost: "{T}",
+    effect: { kind: "token-generation", subject: { control: "any", token: true, type: "creature" } },
+    emits: [{ verb: "enters", subject: { control: "you", token: true, type: "creature" } }],
+  }] as unknown as CardTags["abilities"]), identity);
+  const asker = base("Impact Tremors", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "deal-damage" },
+  }] as unknown as CardTags["abilities"]);
+
+  const { freq, freqByIdentity } = buildPartnerArtifact(
+    [emitter("Red Maker", ["R"]), emitter("Blue Maker", ["U"]), emitter("Grey Maker", []), asker], H);
+  const slots = freqByIdentity["enters|creature|-|-"]!;
+  expect(slots.length).toBe(32);
+  expect(slots.reduce((a, b) => a + b, 0)).toBe(freq["enters|creature|-|-"]);
+  // A mono-red deck counts the red maker and the colourless one, never the blue.
+  expect(inIdentityOf(slots, identityMask(["R"]))).toBe(2);
+  expect(inIdentityOf(slots, identityMask(["R", "U"]))).toBe(3);
+  expect(inIdentityOf(slots, identityMask([]))).toBe(1);
 });
