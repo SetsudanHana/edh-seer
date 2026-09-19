@@ -276,14 +276,15 @@ test("an event with no actor has no action", () => {
   expect(eventKeyAction("counts|-|goblin|-")).toBeUndefined();
 });
 
-/** A STATIC DOES HAVE ONE. `STATIC_REACH` words the relation from the payoff's end ("a creature it
- *  boosts"); on the causing side the card is doing something, and this is that map in the
- *  imperative rather than a second vocabulary. */
-test("a static reads as the thing the card does", () => {
-  expect(eventKeyAction("applies:keyword-grant|creature|cleric|-")).toBe("grant abilities to a Cleric creature");
-  expect(eventKeyAction("applies:pump|creature|-|-")).toBe("boost a creature");
-  expect(eventKeyAction("applies:cost-reduction|artifact,creature,enchantment,instant,land,sorcery|-|-"))
-    .toBe("make cheaper to cast a permanent or spell");
+/** A STATIC HAS NO ACTION, AND THE ONE IT HAD WAS BACKWARDS (engine review, 2026-09-19). The
+ *  suppliers of `applies:pump|creature|-|-` are the 15,005 cards the anthem REACHES -- Llanowar
+ *  Elves is in that list and Glorious Anthem is not -- so "boost a creature" named the wrong side
+ *  of every `applies:*` key. A static is a standing fact about a class, like `counts` and
+ *  `copies`, and the label already reads correctly from both ends. */
+test("a static has no action, because its suppliers are the class it reaches", () => {
+  expect(eventKeyAction("applies:keyword-grant|creature|cleric|-")).toBeUndefined();
+  expect(eventKeyAction("applies:pump|creature|-|-")).toBeUndefined();
+  expect(eventKeyClause("applies:pump|creature|-|-")).toBe("a creature it boosts");
 });
 
 /** A FILL PUTS CARDS IN THE YARD, and its object is a card when the key names no type. */
@@ -354,11 +355,12 @@ test("every feeder shape's causing side provides rather than performs", () => {
 test("dies is creature-specific, and everything else is put into a graveyard", () => {
   expect(eventKeyClause("dies|creature|-|-")).toBe("a creature dies");
   expect(eventKeyClause("dies|creature|goblin|-")).toBe("a Goblin creature dies");
-  expect(eventKeyClause("dies|artifact|-|-")).toBe("an artifact is put into a graveyard");
-  expect(eventKeyClause("dies|land|-|-")).toBe("a land is put into a graveyard");
-  expect(eventKeyClause("dies|permanent|-|-")).toBe("a permanent is put into a graveyard");
-  expect(eventKeyClause("dies|-|-|-")).toBe("a permanent is put into a graveyard");
-  expect(eventKeyClause("dies|artifact,creature|-|-")).toBe("an artifact or creature is put into a graveyard");
+  // FROM THE BATTLEFIELD is what makes it dying rather than milling or discarding (CR 700.4).
+  // Without the origin the phrase describes three different events.
+  expect(eventKeyClause("dies|artifact|-|-")).toBe("an artifact is put into a graveyard from the battlefield");
+  expect(eventKeyClause("dies|land|-|-")).toBe("a land is put into a graveyard from the battlefield");
+  expect(eventKeyClause("dies|-|-|-")).toBe("a permanent is put into a graveyard from the battlefield");
+  expect(eventKeyClause("dies|artifact,creature|-|-")).toBe("an artifact or creature is put into a graveyard from the battlefield");
 });
 
 /** A TOKEN DIES TOO (CR 700.4 names creature cards AND tokens), and the nontoken flag is a
