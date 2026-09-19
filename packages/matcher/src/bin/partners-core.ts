@@ -207,6 +207,15 @@ const splitList = (key: string): [string, string, string, string][] => {
   return out;
 };
 
+/** THE FIVE COLOURS AS A BITMASK, so "could this deck legally contain that card" is one AND rather
+ *  than a subset walk over strings -- the test runs once per supplier per demand key on a 25,000
+ *  card corpus. Thirty-two identities exist, and a card is legal under `mask` when
+ *  `(own & ~mask) === 0`. */
+const COLOUR_BIT: Record<string, number> = { W: 1, U: 2, B: 4, R: 8, G: 16 };
+const IDENTITIES = 32;
+const identityMask = (colors: readonly string[]): number =>
+  colors.reduce((m, c) => m | (COLOUR_BIT[c] ?? 0), 0);
+
 /** HOW MANY CARDS IN THE CORPUS CAN ACTUALLY SATISFY EACH DEMAND.
  *
  *  THIS REPLACED A COUNT OF IDENTICAL KEY STRINGS, WHICH WAS MEASURABLY WRONG. Key-string rarity is
@@ -219,26 +228,60 @@ const splitList = (key: string): [string, string, string, string][] => {
  *  Counting SUPPLIERS fixes both, and fixes a third thing for free: every permanent implicitly emits
  *  "I enter", so a "when a permanent enters" demand is satisfied by nearly the whole corpus, scores
  *  near zero, and stops crowding out real interactions -- without a special case. That is the
- *  engine's own "playing Magic is not a synergy" rule falling out of the arithmetic. */
-export function supplyCounts(rows: Iterable<{ emits: string[]; demands: string[] }>): EventFrequency {
-  const list = [...rows];
+ *  engine's own "playing Magic is not a synergy" rule falling out of the arithmetic.
+ *
+ *  SPLIT BY THE COLOUR IDENTITY EACH SUPPLIER SITS IN, because a commander page was printing this
+ *  count over cards its deck can never play (roadmap AJ5, measured 2026-09-19). `rankedFor` has
+ *  always filtered the candidates and recomputed `pool` over the legal set, but `rarity` came
+ *  straight off the one corpus-wide map, so `commanderRarity` was byte-identical to `rarity` --
+ *  Samut, the Driving Force (R/G/W) showed ONE Cleric-granting partner above "588 other cards
+ *  cause it too". Thirty-two slots per key, indexed by `identityMask`, are the whole fix: a
+ *  corpus count is every slot, a scoped one is the slots that sit inside the commander's identity.
+ *
+ *  THE UNION IS NEVER RETAINED. One demand's supplier set holds fifteen thousand cards on the real
+ *  corpus; keeping one per key to count it twice is hundreds of megabytes, so each is bucketed and
+ *  dropped as it is built.
+ *
+ *  THE SCORE DOES NOT READ THE SPLIT. `specificity` stays corpus-wide by design -- "how rare is
+ *  this event in Magic", not "in your colours" -- and only the DISPLAYED count is scoped. */
+export function supplyBuckets(
+  rows: readonly { emits: string[]; demands: string[]; identity: readonly string[] }[],
+): Map<string, Int32Array> {
   const suppliersOf = new Map<string, Set<number>>();
-  list.forEach((r, i) => {
+  rows.forEach((r, i) => {
     for (const form of new Set(r.emits.flatMap(supplyForms))) {
       const set = suppliersOf.get(form);
       if (set) set.add(i); else suppliersOf.set(form, new Set([i]));
     }
   });
-  const out: EventFrequency = {};
-  for (const demand of new Set(list.flatMap((r) => r.demands))) {
+  const masks = rows.map((r) => identityMask(r.identity));
+  const out = new Map<string, Int32Array>();
+  for (const demand of new Set(rows.flatMap((r) => r.demands))) {
     const union = new Set<number>();
     for (const form of demandForms(demand)) {
       for (const i of suppliersOf.get(form) ?? []) union.add(i);
     }
-    out[demand] = union.size;
+    const bucket = new Int32Array(IDENTITIES);
+    for (const i of union) {
+      const m = masks[i]!;
+      bucket[m] = (bucket[m] ?? 0) + 1;
+    }
+    out.set(demand, bucket);
   }
   return out;
 }
+
+/** THE WHOLE CORPUS, WHICH IS EVERY SLOT. What `specificity` is taken on. */
+export const totalOf = (bucket: Int32Array): number => bucket.reduce((a, x) => a + x, 0);
+
+/** THE SLICE ONE DECK COULD LEGALLY CONTAIN: the slots whose identity sits inside `mask`. A card is
+ *  legal under an identity when its own identity is a subset of it -- the same rule `legality.ts`
+ *  reports a violation against, as one bitwise test. */
+const inIdentity = (bucket: Int32Array, mask: number): number => {
+  let n = 0;
+  for (let v = 0; v < IDENTITIES; v++) if ((v & ~mask) === 0) n += bucket[v]!;
+  return n;
+};
 
 /** ONE CARD'S OWN EVENTS, ONTO THE DECK-LEVEL ARCHETYPE NAMES.
  *
@@ -1306,9 +1349,13 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const seen = new Set<string>();
   const substantive = all.filter(isSubstantive).filter((d) => !seen.has(d.card.name) && (seen.add(d.card.name), true));
   const slugs = resolveSlugs(substantive.map((d) => d.card.name));
-  const freq = supplyCounts(
-    substantive.map((d) => ({ emits: supplyKeysOf(d), demands: demandKeysOf(d) })),
-  );
+  // ONE PASS, TWO READINGS: the corpus count every score is taken on, and the same count split by
+  // colour identity so a commander page can say how many of the causes its own deck could play.
+  const buckets = supplyBuckets(substantive.map((d) => ({
+    emits: supplyKeysOf(d), demands: demandKeysOf(d), identity: d.card.colorIdentity ?? [],
+  })));
+  const freq: EventFrequency = {};
+  for (const [k, b] of buckets) freq[k] = totalOf(b);
 
   // CANDIDATES BY DEMAND KEY, INCLUDING THE COARSER FORMS. Without this index every card would be
   // compared against all ~14,900 and the build is quadratic before `partnersFor` can bound it. A
@@ -1356,13 +1403,34 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     return pool.filter((c) => staticReaches(k, c));
   }))];
   for (const d of substantive) {
-    for (const k of staticKeysOf(d)) if (freq[k] === undefined) freq[k] = staticCandidates(d).filter((c) => staticReaches(k, c)).length;
+    for (const k of staticKeysOf(d)) {
+      if (freq[k] !== undefined) continue;
+      const reached = staticCandidates(d).filter((c) => staticReaches(k, c));
+      freq[k] = reached.length;
+      // Split like every other key, so a commander page scopes a static's count too.
+      const bucket = new Int32Array(IDENTITIES);
+      for (const c of reached) {
+        const m = identityMask(c.card.colorIdentity ?? []);
+        bucket[m] = (bucket[m] ?? 0) + 1;
+      }
+      buckets.set(k, bucket);
+    }
   }
 
   // THE ONE CANDIDATE A NAME FINDS. A meld card names its other half; nothing else here is keyed
   // on a card name, and one card can cause the relation, so the key is priced as a rarity of one.
   const byName = new Map(substantive.map((d) => [d.card.name, d] as const));
   freq["meld|-|-|-"] = 1;
+
+  // THE COUNT A PAGE PRINTS BESIDE A GROUP, and the ONLY thing AJ5 scopes. A card page keeps the
+  // corpus figure -- there is no deck there, so there are no colours to filter by -- and a
+  // commander page counts what that deck could legally contain. A key with no split (`meld` is the
+  // only one) falls back to the corpus figure rather than to a guess.
+  const corpusRarity = (key: string): number => freq[key] ?? 1;
+  const rarityIn = (mask: number) => (key: string): number => {
+    const bucket = buckets.get(key);
+    return bucket ? inIdentity(bucket, mask) : (freq[key] ?? 1);
+  };
 
   // EVERY COMMANDER, ONCE, for the pairing scan below. CEILING: `pairsWith` is O(commanders^2)
   // regex pairs -- a full scan per commander, 3,444 x 3,443 = 11.9 M cheap tests on the 2026-09-05
@@ -1489,7 +1557,14 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
           const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
           const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
           // The other half is in the same deck by construction, so it needs no identity check.
-          const { rows, pool, rarity } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith, degree);
+          const { rows, pool } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith, degree);
+          // THE ROWS ARE SCOPED, SO THE COUNT BESIDE THEM IS (AJ5). `partnersFor` prices them on
+          // the corpus map and returns the corpus rarity with them; that is the right number for a
+          // card page and the wrong one here, so it is recomputed rather than passed in -- the
+          // SCORE must stay corpus-wide and reading one map for both would move it.
+          const scoped = rarityIn(identityMask([...identity]));
+          const rarity: Record<string, number> = {};
+          for (const r of rows) rarity[r.event] = scoped(r.event);
           return { partners: rows, pool, rarity };
         };
         const own = d.card.colorIdentity ?? [];
@@ -1525,7 +1600,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // first), best connected first among equal scores, and filtered by identity on a commander's
   // lists exactly as its candidates were. Merged into the one list: the row says which way it
   // runs, as a feeder row does.
-  const attach = (list: PartnerRow[], pool: Record<string, number>, rarity: Record<string, number>, all: PartnerRow[], legal: (r: PartnerRow) => boolean): PartnerRow[] => {
+  const attach = (list: PartnerRow[], pool: Record<string, number>, rarity: Record<string, number>, all: PartnerRow[], legal: (r: PartnerRow) => boolean, rarityOf: (key: string) => number): PartnerRow[] => {
     const usable = all.filter(legal)
       .sort((a, b) => b.score - a.score || (degree.get(b.name) ?? 0) - (degree.get(a.name) ?? 0) || a.name.localeCompare(b.name, "en"));
     const shown: Record<string, number> = {};
@@ -1540,7 +1615,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       onPage.add(r.slug);
       shown[r.event] = (shown[r.event] ?? 0) + 1;
       kept.push(r);
-      rarity[r.event] = freq[r.event] ?? 1;
+      rarity[r.event] = rarityOf(r.event);
     }
     return [...list, ...kept].sort((a, b) => b.score - a.score);
   };
@@ -1550,12 +1625,14 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     const rec = shards.get(partnerShardOf(slug))![slug]!;
     const mine = producers.get(slug) ?? [];
     if (mine.length > 0) {
-      rec.partners = attach(rec.partners, rec.pool, rec.rarity, mine, within(new Set(d.card.colorIdentity ?? [])));
+      const own = d.card.colorIdentity ?? [];
+      rec.partners = attach(rec.partners, rec.pool, rec.rarity, mine, within(new Set(own)), corpusRarity);
       if (rec.commanderPartners) {
-        rec.commanderPartners = attach(rec.commanderPartners, rec.commanderPool!, rec.commanderRarity!, mine, within(new Set(d.card.colorIdentity ?? [])));
+        rec.commanderPartners = attach(rec.commanderPartners, rec.commanderPool!, rec.commanderRarity!, mine, within(new Set(own)), rarityIn(identityMask(own)));
       }
       for (const [key, v] of Object.entries(rec.commanderPartnersBy ?? {})) {
-        v.partners = attach(v.partners, v.pool, v.rarity, mine, within(new Set(key === "C" ? [] : key.split(""))));
+        const identity = key === "C" ? [] : key.split("");
+        v.partners = attach(v.partners, v.pool, v.rarity, mine, within(new Set(identity)), rarityIn(identityMask(identity)));
       }
     }
     // READ BACK OFF THE RECORD JUST WRITTEN, so the index can never disagree with the shard the
