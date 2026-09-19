@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE, eventKeySentence } from "./demand-sentence.js";
+import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE, eventKeySentence, eventKeyAction, eventKeyClause, eventMatches } from "./demand-sentence.js";
 
 /** The graph's trace-event chips label a census key's VERB half. It reuses `DEMAND_VERB` rather
  *  than adding a second vocabulary — this repo has twice shipped an internal identifier rendered as
@@ -213,4 +213,97 @@ test("a fill key reads as the card wanted in a graveyard", () => {
   expect(eventKeySentence("fills|artifact|-|-")).toBe("an artifact in a graveyard");
   expect(eventKeySentence("fills|creature|goblin|-")).toBe("a Goblin creature in a graveyard");
   expect(eventKeySentence("fills|-|-|-")).toBe("a card in a graveyard");
+});
+
+// ---------------------------------------------------------------------------------------------
+// THE TWO PLAYER-FACING FORMS (roadmap AK4, owner 2026-09-19).
+// ---------------------------------------------------------------------------------------------
+
+/** A CLAUSE READS INSIDE A SENTENCE, which is what the ability table needs and what it has never
+ *  had: "when this card dying" and "when a card being drawn" shipped on every card page. */
+test("a clause is present tense, and works after 'when'", () => {
+  expect(eventKeyClause("dies|creature|-|-")).toBe("a creature dies");
+  expect(eventKeyClause("enters|land|-|-")).toBe("a land enters the battlefield");
+  expect(eventKeyClause("cast|spell|-|-")).toBe("a spell is cast");
+  expect(eventKeyClause("draw|-|-|-")).toBe("a card is drawn");
+  expect(eventKeyClause("mill|-|-|-")).toBe("a card is milled");
+  expect(eventKeyClause("gain-life|-|-|-")).toBe("life is gained");
+});
+
+test("a self trigger names the card, and still conjugates", () => {
+  expect(eventKeyClause("dies|creature|-|-", "this card")).toBe("this card dies");
+  expect(eventKeyClause("enters|creature|-|-", "this card")).toBe("this card enters the battlefield");
+  expect(eventKeyClause("attacks|creature|-|-", "Burakos")).toBe("Burakos attacks");
+});
+
+test("a clause keeps the noun grammar the label has", () => {
+  expect(eventKeyClause("enters|creature|-|t")).toBe("a creature token enters the battlefield");
+  expect(eventKeyClause("dies|creature|goblin|-")).toBe("a Goblin creature dies");
+  expect(eventKeyClause("enters|artifact,creature|-|-")).toBe("an artifact or creature enters the battlefield");
+});
+
+/** AN ACTION IS WHAT A PLAYER SAYS THEY DO (owner: "draw a card"). */
+test("an action is the verb a player would type", () => {
+  expect(eventKeyAction("draw|-|-|-")).toBe("draw a card");
+  expect(eventKeyAction("fodder|-|creature|-")).toBe("sacrifice a creature");
+  expect(eventKeyAction("fodder|-|token|-")).toBe("sacrifice a Token");
+  expect(eventKeyAction("mill|-|-|-")).toBe("mill a card");
+  expect(eventKeyAction("dies|creature|-|-")).toBe("kill a creature");
+  expect(eventKeyAction("cast|spell|-|-")).toBe("cast a spell");
+  expect(eventKeyAction("search|-|-|-")).toBe("search your library");
+  expect(eventKeyAction("counter-added|creature|-|-")).toBe("put a counter on a creature");
+});
+
+/** THE OBJECT SITS INSIDE THE PHRASE for the two "put" verbs, not after it. */
+test("put reads around its object", () => {
+  expect(eventKeyAction("enters|land|-|-")).toBe("put a land onto the battlefield");
+  expect(eventKeyAction("enters|creature|-|t")).toBe("put a creature token onto the battlefield");
+  expect(eventKeyAction("enters-graveyard|creature|-|-")).toBe("put a creature into a graveyard");
+});
+
+/** NOT EVERY EVENT HAS AN ACTION, and inventing one would be worse than having none: nobody
+ *  "attacks" a creature into attacking, and a board count is a standing fact rather than a deed.
+ *  The caller falls back to the clause. */
+test("an event with no actor has no action", () => {
+  expect(eventKeyAction("attacks|creature|-|-")).toBeUndefined();
+  expect(eventKeyAction("leaves|-|-|-")).toBeUndefined();
+  expect(eventKeyAction("counts|-|goblin|-")).toBeUndefined();
+});
+
+/** A STATIC DOES HAVE ONE. `STATIC_REACH` words the relation from the payoff's end ("a creature it
+ *  boosts"); on the causing side the card is doing something, and this is that map in the
+ *  imperative rather than a second vocabulary. */
+test("a static reads as the thing the card does", () => {
+  expect(eventKeyAction("applies:keyword-grant|creature|cleric|-")).toBe("grant abilities to a Cleric creature");
+  expect(eventKeyAction("applies:pump|creature|-|-")).toBe("boost a creature");
+  expect(eventKeyAction("applies:cost-reduction|artifact,creature,enchantment,instant,land,sorcery|-|-"))
+    .toBe("make cheaper to cast a permanent or spell");
+});
+
+/** A FILL PUTS CARDS IN THE YARD, and its object is a card when the key names no type. */
+test("a graveyard fill is an action on the causing side", () => {
+  expect(eventKeyAction("fills|-|-|-")).toBe("put a card into a graveyard");
+  expect(eventKeyAction("fills|creature|-|-")).toBe("put a creature into a graveyard");
+});
+
+/** THE SEARCH HAS TO FIND WHAT A PLAYER TYPES (owner-reported: "sacrifice token" found nothing).
+ *  Every typed word, in any order, on stems, across both forms and the player synonyms. */
+test("a query matches in any order, on stems", () => {
+  expect(eventMatches("fodder|-|token|-", "sacrifice token")).toBe(true);
+  expect(eventMatches("fodder|-|token|-", "token sacrifice")).toBe(true);
+  expect(eventMatches("dies|creature|-|-", "dies")).toBe(true);
+  expect(eventMatches("dies|creature|-|-", "dying")).toBe(true);
+  expect(eventMatches("draw|-|-|-", "draw")).toBe(true);
+  expect(eventMatches("draw|-|-|-", "card draw")).toBe(true);
+  expect(eventMatches("dies|creature|-|-", "land")).toBe(false);
+});
+
+test("the words a player uses reach the event the engine names", () => {
+  expect(eventMatches("enters|creature|-|-", "etb")).toBe(true);
+  expect(eventMatches("dies|creature|-|-", "death trigger")).toBe(true);
+  expect(eventMatches("fodder|-|creature|-", "sac outlet")).toBe(true);
+  expect(eventMatches("enters|land|-|-", "landfall")).toBe(true);
+  expect(eventMatches("search|-|-|-", "tutor")).toBe(true);
+  expect(eventMatches("leaves|-|-|-", "blink")).toBe(true);
+  expect(eventMatches("draw|-|-|-", "wheel")).toBe(false);
 });
