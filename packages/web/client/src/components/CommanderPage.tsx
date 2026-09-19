@@ -6,6 +6,7 @@ import { eventKeyClause } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData, type PartnerRow } from "../lib/partners.js";
 import { CardArt } from "./CardArt.js";
 import { CardShell } from "./CardShell.js";
+import { ManaSymbols } from "./ManaSymbols.js";
 import { EngineReading } from "./EngineReading.js";
 import { NotFound } from "./NotFound.js";
 import { PartnerList } from "./PartnerList.js";
@@ -38,6 +39,14 @@ const merge = (halves: Ranked[]): Ranked => {
   }
   return { partners: [...bySlug.values()].sort((a, b) => b.score - a.score), pool, rarity };
 };
+
+/** The identity as a mana-cost string, WUBRG, deduplicated. Empty for colourless, which has no pip
+ *  of its own to draw -- the word "Colourless" is the whole answer there. */
+const WUBRG = ["W", "U", "B", "R", "G"] as const;
+function identityPips(identity: readonly string[]): string {
+  const held = new Set(identity.map((c) => c.toUpperCase()));
+  return WUBRG.filter((c) => held.has(c)).map((c) => `{${c}}`).join("");
+}
 
 const COLOURS: { letter: string; word: string }[] = [
   { letter: "W", word: "white" }, { letter: "U", word: "blue" }, { letter: "B", word: "black" },
@@ -144,6 +153,14 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         <p>
           <span className="eyebrow text-(--muted)">colour identity </span>
           {identityLabel(identity)}
+          {/* THE PIPS BESIDE THE NAME (owner, 2026-09-20). "Naya" is the nickname and a reader who
+            * does not carry the nicknames has nothing to read; the symbols are the identity itself,
+            * and they are the same drawings the card's own mana cost prints in the heading above.
+            * WUBRG ORDER, not the order the faces happen to list, so two Naya commanders show the
+            * same three pips in the same order. */}
+          {identityPips(identity) && (
+            <span className="ml-2 align-middle"><ManaSymbols cost={identityPips(identity)} /></span>
+          )}
           {pair ? <span className="text-(--muted)">, with {pair.name}</span> : null}
           {colour ? <span className="text-(--muted)">, {COLOURS.find((c) => c.letter === colour)!.word} chosen</span> : null}
         </p>
@@ -221,9 +238,27 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
       {/* THE SAME SECTION THE CARD PAGE RENDERS (roadmap AJ4). This call site is the one that was
         * missed when the clause block shipped, and 2,665 commander pages served it to Googlebot
-        * alone until PR #395 -- one component, every page that reads a card. */}
-      <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={ranked.rarity}
-        grouped={new Set(ranked.partners.map((r) => r.event))} />
+        * alone until PR #395 -- one component, every page that reads a card.
+        *
+        * AND IT IS THE PHONE'S COPY ONLY, which the card page already knew and this one did not
+        * (owner, 2026-09-20, on the deployed site: "we have now 2 copies of the same section").
+        * `CardShell`'s rail renders the identical block above `lg`, so without this wrapper the
+        * desktop commander page drew it twice -- once full width, once in the rail beside it.
+        * Deleting the call outright was the other option and it is wrong: the rail is `hidden lg:`,
+        * so the section would vanish from every phone. Folded, for the reason `CardPage` folds it:
+        * open, it puts the partners over a thousand pixels down a 390px screen. */}
+      <details className="lg:hidden group/reads flex flex-col gap-3">
+        <summary className="cursor-pointer list-none flex items-center gap-2 w-fit">
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h2>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/reads:rotate-180 motion-reduce:transition-none">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </summary>
+        <div className="mt-3">
+          <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={ranked.rarity}
+            grouped={new Set(ranked.partners.map((r) => r.event))} headless />
+        </div>
+      </details>
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
