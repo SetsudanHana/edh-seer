@@ -2053,6 +2053,13 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // subject and Strionic Resonator's page had no rows until this was turned round.
   for (const a of c.tags?.abilities ?? []) {
     if (a.effect?.kind !== "copy-ability" || p === c) continue;
+    // WHOSE ABILITY. `subject.control` is the seat the copied ability sits in, and the deck being
+    // read is yours -- so a copier that names an OPPONENT'S has no feeder here at all. Aboleth
+    // Spawn ("a creature entering under an opponent's control causes a triggered ability of that
+    // creature to trigger") is the only `opp` copier in the corpus, and until 2026-09-20 it claimed
+    // a `copies:triggered` edge to every triggered-ability card in the deck. `any` is not `opp`:
+    // Rings of Brighthearth derives `any` and really does copy yours.
+    if (a.effect.subject?.control === "opp") continue;
     const kinds = a.effect.subject?.abilityKind ?? ["activated", "triggered"];
     const wanted = a.effect.subject?.type;
     if (wanted !== undefined && !typeMatchesCharacteristics(wanted, p.tags?.characteristics, h)) continue;

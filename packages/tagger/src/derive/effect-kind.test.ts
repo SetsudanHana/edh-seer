@@ -533,6 +533,18 @@ test("copying an ABILITY is the third copyable object (CR 707.10), not a spell c
   expect(actionEffectKind({ verb: "copy", object: "that ability" })).toBe("copy-ability");
   // The OBJECT decides: a spell copy whose clause mentions the copy's abilities stays a spell copy.
   expect(actionEffectKind({ verb: "copy", object: "that spell" }, "Copy that spell. The copy has this ability.")).toBe("copy-spell");
+  // AND THE OBJECT'S HEAD DECIDES, not its "except" tail. A CLONE keeps its own ability
+  // ("...except it has this ability", CR 707.2) and copies no ability off the stack. Four corpus
+  // cards read as copy-ability on that tail until 2026-09-20 -- Dimir Doppelganger, Cryptoplasm,
+  // Unstable Shapeshifter and Mizzium Transreliquat -- and each then claimed to copy an ability of
+  // every activated-or-triggered card in the deck, with no type gate to narrow it.
+  expect(actionEffectKind({ verb: "copy", object: "another target creature, except it has this ability" })).toBe("clone");
+  expect(actionEffectKind({ verb: "copy", object: "that creature, except it has this ability" })).toBe("clone");
+  expect(actionEffectKind({ verb: "copy", object: "target artifact, except it has this ability" })).toBe("clone");
+  expect(actionEffectKind({ verb: "copy", object: "that card, except it has this ability" },
+    "{1}{U}{B}: Exile target creature card from a graveyard. This creature becomes a copy of that card, except it has this ability.")).toBe("clone");
+  // The tail is stripped, not the sentence: a real ability copy that carries one is still one.
+  expect(actionEffectKind({ verb: "copy", object: "that ability, except it targets only you" })).toBe("copy-ability");
 });
 
 test("copying a SPELL is not cloning a permanent", () => {

@@ -1397,6 +1397,13 @@ test("a copier demands ability kinds and a card with a triggered ability supplie
   const rock = { card: { name: "Sol Ring" }, tags: { characteristics: { types: ["artifact"], subtypes: [] }, abilities: [{ kind: "activated", cost: "{T}", effect: { kind: "mana-generation" } }] } } as unknown as DeckCard;
   expect(supplyKeysOf(rock)).toContain("copies|-|mana|-");
   expect(supplyKeysOf(rock)).not.toContain("copies|-|activated|-");
+  // AN OPPONENT'S ABILITY HAS NO FEEDER ON YOUR PAGE: Aboleth Spawn copies a trigger of a creature
+  // entering under an OPPONENT'S control, so its page demands nothing of this deck. Same reading as
+  // the engine's copy-ability pass, which is the contract this module is held to.
+  const spawn = { card: { name: "Aboleth Spawn" }, tags: { characteristics: { types: ["creature"], subtypes: ["fish", "horror"] }, abilities: [{
+    kind: "triggered", effect: { kind: "copy-ability", subject: { control: "opp", token: null, abilityKind: ["triggered"] } },
+  }] } } as unknown as DeckCard;
+  expect(feederKeysOf(spawn)).toEqual([]);
 });
 
 test("an outlet demands what it eats; a token maker and a narrow type supply it, a plain creature does not", () => {

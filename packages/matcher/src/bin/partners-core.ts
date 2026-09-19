@@ -1011,9 +1011,10 @@ export const feederDemandsOf = (d: DeckCard): { key: string; tag: string; tags?:
 export const feederKeysOf = (d: DeckCard): string[] => [...new Set(feederDemandsOf(d).map((b) => b.key))];
 
 const ABILITY_OBJECT_KINDS = ["activated", "triggered", "loyalty", "mana"] as const;
-/** `copies|-|<kind>|-`: what a copy-ability card wants the other card to HAVE (CR 113.3). */
+/** `copies|-|<kind>|-`: what a copy-ability card wants the other card to HAVE (CR 113.3). An `opp`
+ *  copier demands nothing of THIS deck -- see the same gate in the engine's copy-ability pass. */
 export const copyDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
-  abilitiesOf(d).flatMap((a) => a.effect?.kind !== "copy-ability" ? []
+  abilitiesOf(d).flatMap((a) => a.effect?.kind !== "copy-ability" || a.effect.subject?.control === "opp" ? []
     : (a.effect.subject?.abilityKind ?? ["activated", "triggered"]).map((k) => ({ key: `copies|-|${k}|-`, tag: `copies:${k}` })));
 /** `fodder|-|<noun>|-`: what a sacrifice outlet eats -- the emit's subject, subtype first, else its
  *  single type. Edicts (control any) and self-sacrifices demand nothing, as in the engine. */

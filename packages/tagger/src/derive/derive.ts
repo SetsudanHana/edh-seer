@@ -118,6 +118,12 @@ import { emblemRecipient } from "../emblem.js";
 // number as the object. This retires the paid `dropsUnitAmount` refresh.
 // 162: a put from your hand that offers top OR bottom is top manipulation (Dream Cache), so the
 // ability exists and the rate can net it; an Exhaust ability repeats once (CR 702.176a).
+// 165: the copy-ability family reads WHICH KIND and WHOSE. A pronoun object ("copy that ability")
+// takes the kind from its trigger subject and not only from an `activate` trigger, so Aboleth
+// Spawn and Firebender Ascension stop claiming activated copies they cannot make; and a clone's
+// "except it has this ability" tail stops making the clone an ability copier (Dimir Doppelganger,
+// Cryptoplasm, Unstable Shapeshifter, Mizzium Transreliquat). The matcher refuses an `opp` copier
+// in the same PR -- Aboleth Spawn copies an opponent's trigger and has no feeder in your deck.
 // 164: every derived ability carries the id of the clause that printed it (roadmap AJ4), so the
 // card page can read down the card instead of zipping two lists that do not line up. An IMPLIED
 // ability -- read off characteristics, not rules text -- carries none, which is how the page tells
@@ -129,7 +135,7 @@ import { emblemRecipient } from "../emblem.js";
 // as kind `mill` while emitting the Entomb verb -- Cavalier of Thorns, Shigeki, Shadow Prophecy.
 // `supplyForms` bridges mill to the enters-graveyard forms, so no payoff that asks for a graveyard
 // put loses its supplier.
-export const DERIVE_VERSION = 164;
+export const DERIVE_VERSION = 165;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1361,8 +1367,19 @@ export function deriveAbilities(
       // "Whenever you activate an ability ... copy THAT ability" (Rings of Brighthearth): the object
       // is a pronoun and the kind lives in the trigger. `activate` itself is refused as a trigger
       // (no producer), so the fact is carried here instead of lost (AC12).
-      if (effectKind === "copy-ability" && subject && !subject.abilityKind && clause.trigger?.event === "activate") {
-        subject.abilityKind = ["activated"];
+      //
+      // AND `activate` WAS ONLY THE FIRST SHAPE OF THAT. "Whenever a creature ... causes a TRIGGERED
+      // ability of that creature to trigger, copy that ability" (Aboleth Spawn, Firebender
+      // Ascension) says the kind in its trigger SUBJECT, which `parseSubject` already reads. Left
+      // on the trigger, the effect carried none and the matcher fell back to BOTH kinds, claiming
+      // activated copies neither card can make (measured 2026-09-20). Read the derived trigger
+      // first, then the raw clause subject -- an event outside the `Verb` union ("a creature you
+      // control ATTACKING causes...") derives no trigger at all, and the string still says it.
+      if (effectKind === "copy-ability" && subject && !subject.abilityKind) {
+        const fromTrigger = trigger?.subject.abilityKind
+          ?? (clause.trigger?.subject ? parseSubject(clause.trigger.subject).abilityKind : undefined);
+        if (fromTrigger?.length) subject.abilityKind = fromTrigger;
+        else if (clause.trigger?.event === "activate") subject.abilityKind = ["activated"];
       }
       // A COST SACRIFICE IS THE CONTROLLER'S (CR 701.17a): "{T}, Sacrifice two other creatures" eats
       // your creatures whatever the effect goes on to do to "any number of target players". The
