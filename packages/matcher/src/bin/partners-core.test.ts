@@ -11,7 +11,7 @@ import {
 /** THE CORPUS COUNT ALONE. `supplyBuckets` splits every key by colour identity (AJ5); the rules
  *  these tests pin -- what satisfies what -- are about the total, so the split is summed away. */
 const counts = (rows: { emits: string[]; demands: string[] }[]): Record<string, number> =>
-  Object.fromEntries([...supplyBuckets(rows.map((r) => ({ ...r, identity: [] })))]
+  Object.fromEntries([...supplyBuckets(rows.map((r) => ({ ...r, identity: [] }))).buckets]
     .map(([k, b]) => [k, totalOf(b)]));
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
@@ -1583,4 +1583,55 @@ test("two cards with one name make one index entry and one slug", () => {
   const { index } = buildPartnerArtifact([krenko, twin, impactTremors] as never, { subtypes: {}, types: {} } as never);
   expect(index.filter((e) => e.name === "Krenko, Mob Boss")).toHaveLength(1);
   expect(new Set(index.map((e) => e.slug)).size).toBe(index.length);
+});
+
+// ---------------------------------------------------------------------------------------------
+// THE MEMBERSHIP INDEX (roadmap AJ3): the cards behind every count, kept rather than dropped.
+// ---------------------------------------------------------------------------------------------
+
+/** THE UNION USED TO BE COUNTED AND THROWN AWAY. The search page needs the cards themselves, and
+ *  taking them from the same pass is what makes the number it prints and the list it shows ONE
+ *  computation -- the defect class AJ1 shipped, where the line named one direction and counted
+ *  the other. */
+test("supplyBuckets keeps one member list per key, and its length is the count", () => {
+  const rows = [
+    { emits: ["dies|creature|goblin|n"], demands: [], identity: ["R"] },
+    { emits: ["dies|creature|-|n"], demands: [], identity: [] },
+    { emits: [], demands: ["dies|creature|-|-"], identity: ["B"] },
+  ];
+  const { buckets, members } = supplyBuckets(rows);
+  expect(members.get("dies|creature|-|-")).toEqual([0, 1]);
+  expect(members.get("dies|creature|-|-")!.length).toBe(totalOf(buckets.get("dies|creature|-|-")!));
+});
+
+test("a member list is positions in the artifact index, and it carries both directions", () => {
+  const { events, index, freq } = buildPartnerArtifact([krenko, impactTremors], H);
+  const at = (name: string): number => index.findIndex((e) => e.name === name);
+  const members = events.get("enters|creature|-|-")!;
+  // Krenko's tokens enter; Impact Tremors asks for exactly that and supplies nothing.
+  expect(members.p).toEqual([at("Krenko, Mob Boss")]);
+  expect(members.c).toEqual([at("Impact Tremors")]);
+  expect(members.p.length).toBe(freq["enters|creature|-|-"]);
+});
+
+test("the artifact counts the askers beside the causers", () => {
+  const { consumers } = buildPartnerArtifact([krenko, impactTremors], H);
+  expect(consumers["enters|creature|-|-"]).toBe(1);
+  expect(consumers["create-token|creature|goblin|t"]).toBeUndefined();
+});
+
+/** EVERY KEY THE PAGE CAN BE ASKED, AND NOT ONE MORE. A key with a count must have a list of that
+ *  length; a chip that says 389 linking to a page that lists 400 is the AJ1 defect wearing a URL.
+ *
+ *  `meld|-|-|-` IS A PRICE, NOT A CENSUS, and it is the one exception. Its `freq` is set to 1 by
+ *  hand (`partners-core.ts:1449`) because a meld card's partner is the ONE card it names, not a
+ *  class the corpus can be counted for. So it ships no cause list and the search must never offer
+ *  it as a cause -- which is exactly what "offered only when `p` is non-empty" gives for free. */
+test("every counted key ships a member list of exactly that length", () => {
+  const { events, freq } = buildPartnerArtifact([krenko, impactTremors, millstone], H);
+  for (const [key, count] of Object.entries(freq)) {
+    if (key === "meld|-|-|-") continue;
+    expect(events.get(key)?.p.length ?? 0, key).toBe(count);
+  }
+  expect(events.get("meld|-|-|-")?.p ?? []).toEqual([]);
 });
