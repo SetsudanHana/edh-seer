@@ -248,7 +248,6 @@ test("an action is the verb a player would type", () => {
   expect(eventKeyAction("fodder|-|land|-")).toBe("provide a land to sacrifice");
   expect(eventKeyAction("fodder|-|token|-")).toBe("provide a Token to sacrifice");
   expect(eventKeyAction("mill|-|-|-")).toBe("mill a card");
-  expect(eventKeyAction("dies|creature|-|-")).toBe("kill a creature");
   expect(eventKeyAction("cast|spell|-|-")).toBe("cast a spell");
   expect(eventKeyAction("search|-|-|-")).toBe("search your library");
   expect(eventKeyAction("counter-added|creature|-|-")).toBe("put a counter on a creature");
@@ -265,6 +264,13 @@ test("put reads around its object", () => {
  *  "attacks" a creature into attacking, and a board count is a standing fact rather than a deed.
  *  The caller falls back to the clause. */
 test("an event with no actor has no action", () => {
+  // `dies` has no honest verb: CR 700.4 dying covers destruction, sacrifice, damage and state-based
+  // death, and CR 701.7 destroy is only one of them (owner, 2026-09-19: "kill is not a word in
+  // magic, you have destroy"). The rules word is the clause, and both terms find it.
+  expect(eventKeyAction("dies|creature|-|-")).toBeUndefined();
+  expect(eventKeyClause("dies|creature|-|-")).toBe("a creature dies");
+  expect(eventMatches("dies|creature|-|-", "destroy")).toBe(true);
+  expect(eventMatches("dies|creature|-|-", "kill")).toBe(true);
   expect(eventKeyAction("attacks|creature|-|-")).toBeUndefined();
   expect(eventKeyAction("leaves|-|-|-")).toBeUndefined();
   expect(eventKeyAction("counts|-|goblin|-")).toBeUndefined();
@@ -336,4 +342,29 @@ test("every feeder shape's causing side provides rather than performs", () => {
   for (const key of ["fodder|-|creature|-", "fills|creature|-|-"]) {
     expect(eventKeyAction(key)!.startsWith("sacrifice")).toBe(false);
   }
+});
+
+/** ONLY A CREATURE DIES (CR 700.4, owner 2026-09-19: "dies describes an event of creature moving
+ *  from battlefield to graveyard, and it is creature specific"). The engine keys plenty of
+ *  non-creature ones -- 14 of the 75 `dies` keys, including `dies|-|-|-` with 4,661 suppliers and
+ *  `dies|artifact|-|-` with 1,059 -- and "a land dies" is not a sentence the rules can say.
+ *
+ *  A MIXED LIST TAKES THE GENERAL WORDING because it must be true of every member: a creature
+ *  dying IS put into a graveyard, so the general phrase is right for both halves. */
+test("dies is creature-specific, and everything else is put into a graveyard", () => {
+  expect(eventKeyClause("dies|creature|-|-")).toBe("a creature dies");
+  expect(eventKeyClause("dies|creature|goblin|-")).toBe("a Goblin creature dies");
+  expect(eventKeyClause("dies|artifact|-|-")).toBe("an artifact is put into a graveyard");
+  expect(eventKeyClause("dies|land|-|-")).toBe("a land is put into a graveyard");
+  expect(eventKeyClause("dies|permanent|-|-")).toBe("a permanent is put into a graveyard");
+  expect(eventKeyClause("dies|-|-|-")).toBe("a permanent is put into a graveyard");
+  expect(eventKeyClause("dies|artifact,creature|-|-")).toBe("an artifact or creature is put into a graveyard");
+});
+
+/** A TOKEN DIES TOO (CR 700.4 names creature cards AND tokens), and the nontoken flag is a
+ *  narrowing of the same noun, not a different event. */
+test("a token creature still dies", () => {
+  expect(eventKeyClause("dies|creature|-|t")).toBe("a creature token dies");
+  expect(eventKeyClause("dies|creature|-|n")).toBe("a nontoken creature dies");
+  expect(eventKeyClause("dies|creature|-|-", "this card")).toBe("this card dies");
 });
