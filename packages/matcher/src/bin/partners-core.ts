@@ -1,4 +1,3 @@
-export type { FacetRow } from "./facet-index-core.js";
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 // THE SUBPATH, NOT THE PACKAGE ROOT. `static-lookup.ts` pulls this module into the BROWSER, and
 // tagger's barrel reaches `otags/functional.ts`, which `readFileSync`s a JSON file at import
@@ -254,6 +253,16 @@ export interface EventMembers {
   p: number[];
   /** Positions of the cards that ASK for it. */
   c: number[];
+}
+
+/** THE COUNTS FILE, as `event-frequency.json` ships it (roadmap AJ3). `supply` is how many cards
+ *  can CAUSE each event and `consume` how many ask for it; `byIdentity` is `supply` split into the
+ *  32 colour identities, read with `inIdentityOf`. Declared here beside `EventMembers` so the
+ *  shipped shapes have ONE home and the web client needs no second entry in the export map. */
+export interface EventFrequencyFile {
+  supply: Record<string, number>;
+  consume: Record<string, number>;
+  byIdentity: Record<string, number[]>;
 }
 
 export function supplyBuckets(

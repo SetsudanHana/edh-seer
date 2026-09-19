@@ -1,5 +1,5 @@
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
-import type { CardPageRecord, FacetRow, NameIndexEntry, PartnerRow } from "@edh-seer/matcher/partners-core";
+import type { CardPageRecord, EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow } from "@edh-seer/matcher/partners-core";
 import { CARD_PAGE_DATA_ID } from "./inject.js";
 
 /** THE CARD PAGES' DATA PLANE, and it is deliberately three lines over `StaticLookup`.
@@ -14,7 +14,7 @@ import { CARD_PAGE_DATA_ID } from "./inject.js";
  *  -- the part that is actually large -- are cached by URL in the browser's own cache, which is
  *  where the version directory exists to put them. */
 export type CardPageData = CardPageRecord;
-export type { FacetRow, NameIndexEntry, PartnerRow };
+export type { EventFrequencyFile, EventMembers, NameIndexEntry, PartnerRow };
 
 /** THE RECORD THE EDGE ALREADY PUT IN THIS DOCUMENT, or null.
  *
@@ -75,18 +75,37 @@ export function sharedNameIndex(baseUrl: string, fetchImpl: typeof fetch = fetch
 }
 
 /** Tests only: forget every cached load. */
-export function resetSharedNameIndex(): void { shared.clear(); sharedFacets.clear(); }
+export function resetSharedNameIndex(): void { shared.clear(); sharedFreq.clear(); sharedMembers.clear(); }
 
-/** THE FACET ROWS, ONCE PER SESSION (spec 2026-09-08 part 4), fetched on the first facet
- *  interaction and never on page load. Same memo rule as the name index. */
-const sharedFacets = new Map<string, Promise<FacetRow[]>>();
+/** THE EVENT COUNTS, ONCE PER SESSION (roadmap AJ3): what every picker row prints, fetched on the
+ *  first search interaction and never on page load. Same memo rule as the name index -- an empty
+ *  answer is forgotten so the next interaction retries. */
+const sharedFreq = new Map<string, Promise<EventFrequencyFile>>();
 
-export function sharedFacetIndex(baseUrl: string, fetchImpl: typeof fetch = fetch): Promise<FacetRow[]> {
-  const hit = sharedFacets.get(baseUrl);
+export function sharedEventFrequency(baseUrl: string, fetchImpl: typeof fetch = fetch): Promise<EventFrequencyFile> {
+  const hit = sharedFreq.get(baseUrl);
   if (hit) return hit;
-  const p = new StaticLookup(baseUrl, fetchImpl).facetIndex();
-  sharedFacets.set(baseUrl, p);
-  p.then((rows) => { if (rows.length === 0 && sharedFacets.get(baseUrl) === p) sharedFacets.delete(baseUrl); })
-    .catch(() => { if (sharedFacets.get(baseUrl) === p) sharedFacets.delete(baseUrl); });
+  const p = new StaticLookup(baseUrl, fetchImpl).eventFrequency();
+  sharedFreq.set(baseUrl, p);
+  p.then((f) => { if (Object.keys(f.supply).length === 0 && sharedFreq.get(baseUrl) === p) sharedFreq.delete(baseUrl); })
+    .catch(() => { if (sharedFreq.get(baseUrl) === p) sharedFreq.delete(baseUrl); });
+  return p;
+}
+
+/** ONE FETCH PER EVENT, SHARED BY BOTH PICKERS AND THE RESULT LIST. Keyed by base URL and key
+ *  together: two controls asking for the same event must not fetch its shard twice, and a `null`
+ *  (the shard did not carry it) is forgotten so a later build can answer differently. */
+const sharedMembers = new Map<string, Promise<EventMembers | null>>();
+
+export function sharedEventMembers(
+  baseUrl: string, key: string, fetchImpl: typeof fetch = fetch,
+): Promise<EventMembers | null> {
+  const id = `${baseUrl}\u0000${key}`;
+  const hit = sharedMembers.get(id);
+  if (hit) return hit;
+  const p = new StaticLookup(baseUrl, fetchImpl).eventMembers(key);
+  sharedMembers.set(id, p);
+  p.then((m) => { if (m === null && sharedMembers.get(id) === p) sharedMembers.delete(id); })
+    .catch(() => { if (sharedMembers.get(id) === p) sharedMembers.delete(id); });
   return p;
 }
