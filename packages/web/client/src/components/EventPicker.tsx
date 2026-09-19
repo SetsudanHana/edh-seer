@@ -73,7 +73,15 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, onCh
     // THE CONTROL IS THE WIDTH OF A FIELD, not the width of the page. At 1920 the box spanned
     // 1,856px beside a `max-w-lg` search field above it and read as a broken input; a listbox that
     // wide also puts its count 1,800px from its sentence, which is two separate things to read.
-    <div className="flex flex-col gap-2 w-full max-w-2xl">
+    //
+    // AND THE LIST CLOSES WHEN FOCUS LEAVES IT (owner-reported 2026-09-19, on the deployed site).
+    // `open` was set on focus and cleared only by Escape, so both pickers stayed open at once and
+    // pushed the results off the page. The check is containment, not a bare blur: focus moving
+    // from the field to a chip's remove button is still inside this control.
+    <div
+      className="flex flex-col gap-2 w-full max-w-2xl"
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}
+    >
       <p className="eyebrow text-(--muted)" id={`${id}-label`}>{label}</p>
       <p className="text-(--muted) text-sm">{hint}</p>
       {/* THE CHIPS LIVE IN THE FIELD, so what is chosen and where to choose more are one control
@@ -112,7 +120,14 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, onCh
         />
       </div>
       {open && (
-        <ul id={listId} role="listbox" aria-labelledby={`${id}-label`} className="flex flex-col m-0 p-0 list-none max-h-96 overflow-y-auto">
+        <ul
+          id={listId} role="listbox" aria-labelledby={`${id}-label`}
+          // AN OPTION IS NOT FOCUSABLE, so pressing the mouse on one would blur the field and close
+          // the list before the click could land -- the row would simply never be chosen. Holding
+          // focus in the field is what lets the blur rule above be this simple.
+          onMouseDown={(e) => e.preventDefault()}
+          className="flex flex-col m-0 p-0 list-none max-h-96 overflow-y-auto"
+        >
           {rows.map((row, i) => {
             const on = chosen.includes(row.key);
             return (

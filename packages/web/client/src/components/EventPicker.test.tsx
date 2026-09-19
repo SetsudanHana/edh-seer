@@ -123,3 +123,40 @@ test("a long list is capped, and the line says what is withheld", async () => {
   expect(screen.getAllByRole("option")).toHaveLength(50);
   expect(screen.getByText(/10 more/)).toBeInTheDocument();
 });
+
+/** THE LIST HAS TO GO AWAY (owner-reported 2026-09-19, on the deployed site): `open` was set on
+ *  focus and cleared only by Escape, so both pickers' lists stayed open at once and pushed the
+ *  results off the page. `HeaderSearch` has always closed on blur; this one never did. */
+test("leaving the field closes the list", async () => {
+  render(<>
+    <EventPicker label="Causes" hint="" options={OPTIONS} chosen={[]} counts={counts} demand={demand} onChange={vi.fn()} />
+    <button type="button">elsewhere</button>
+  </>);
+  await userEvent.click(field());
+  expect(screen.getAllByRole("option")).toHaveLength(3);
+  await userEvent.click(screen.getByRole("button", { name: "elsewhere" }));
+  expect(screen.queryAllByRole("option")).toHaveLength(0);
+});
+
+/** BUT CHOOSING MUST NOT COUNT AS LEAVING. The option is not focusable, so a click on it blurs the
+ *  field; if that closed the list the click would land on nothing and the row would never be
+ *  chosen. It is also a MULTI-select: the list stays up so a second event can be picked. */
+test("choosing a row keeps the list open, because more than one event can be chosen", async () => {
+  const onChange = vi.fn();
+  const { rerender } = mount([], onChange);
+  await userEvent.click(field());
+  await userEvent.click(screen.getAllByRole("option")[0]!);
+  expect(onChange).toHaveBeenCalledWith(["dies|creature|-|-"]);
+  rerender(<EventPicker label="Causes" hint="what a card can cause" options={OPTIONS} chosen={["dies|creature|-|-"]} counts={counts} demand={demand} onChange={onChange} />);
+  expect(screen.getAllByRole("option")).toHaveLength(3);
+});
+
+test("removing a chip does not leave the list open behind it", async () => {
+  render(<>
+    <EventPicker label="Causes" hint="" options={OPTIONS} chosen={["mill|-|-|-"]} counts={counts} demand={demand} onChange={vi.fn()} />
+    <button type="button">elsewhere</button>
+  </>);
+  await userEvent.click(screen.getByRole("button", { name: /^Remove/ }));
+  await userEvent.click(screen.getByRole("button", { name: "elsewhere" }));
+  expect(screen.queryAllByRole("option")).toHaveLength(0);
+});
