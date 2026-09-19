@@ -188,30 +188,26 @@ test("the block carries the mana cost, and omits the line when a card has none",
  *  "Produces: a card being drawn" is unfalsifiable on a page that never shows the line it came
  *  from. Unattributed, because one clause can yield several abilities and naming which one produced
  *  a given edge would be a guess wearing a citation's clothes. */
-test("the block quotes the clauses the engine read, in printed order", () => {
+test("the block reads down the card, clause by clause, in printed order", () => {
   const html = cardPageHtml({ ...KRENKO, clauses: [
-    "When Kogla and Yidaro enters, choose one",
-    "{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.",
+    { id: 1, text: "When Kogla and Yidaro enters, choose one" },
+    { id: 2, text: "{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment." },
   ] }, "x", "card");
-  expect(html).toContain("<h2>What the engine read</h2>");
-  // ONE ITEM PER CLAUSE, the same shape `ClausesRead` renders: the segmentation is the claim, and
-  // a run of paragraphs reads as one passage of card text instead of the units the engine read.
-  expect(html).toContain("<li>When Kogla and Yidaro enters, choose one</li>");
+  expect(html).toContain("<h2>How the engine reads this card</h2>");
+  // ONE QUOTE PER CLAUSE, the same shape `EngineReading` renders: the segmentation is the claim,
+  // and a run of paragraphs reads as one passage of card text instead of the units the engine read.
+  expect(html).toContain("<blockquote>When Kogla and Yidaro enters, choose one</blockquote>");
   expect(html).toContain(
-    "<li>{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.</li>");
-  // Scoped to the quote: the partner rows are `<li>` too, so a whole-document count is not a
-  // statement about the clauses.
-  const quote = /<blockquote>[\s\S]*?<\/blockquote>/.exec(html)![0];
-  expect([...quote.matchAll(/<li>/g)]).toHaveLength(2);
+    "<blockquote>{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment.</blockquote>");
   // Printed order, which is the order a player reads the card in.
   expect(html.indexOf("When Kogla")).toBeLessThan(html.indexOf("{2}{R}{G}"));
   // It is evidence for the derivation, so it sits above the derivation it explains.
-  expect(html.indexOf("What the engine read")).toBeLessThan(html.indexOf("Produces:"));
+  expect(html.indexOf("How the engine reads this card")).toBeLessThan(html.indexOf("Produces:"));
 });
 
-test("a card with no rules text gets no heading over an empty quote", () => {
-  expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("What the engine read");
-  expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("What the engine read");
+test("a card with no rules text and no abilities gets no section at all", () => {
+  expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("How the engine reads this card");
+  expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("How the engine reads this card");
   expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("<blockquote>");
 });
 

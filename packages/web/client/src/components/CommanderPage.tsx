@@ -6,7 +6,7 @@ import { eventKeyClause } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData, type PartnerRow } from "../lib/partners.js";
 import { CardArt } from "./CardArt.js";
 import { CardShell } from "./CardShell.js";
-import { ClausesRead } from "./ClausesRead.js";
+import { EngineReading } from "./EngineReading.js";
 import { NotFound } from "./NotFound.js";
 import { PartnerList } from "./PartnerList.js";
 
@@ -219,7 +219,11 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         </section>
       )}
 
-      <ClausesRead clauses={page.clauses} />
+      {/* THE SAME SECTION THE CARD PAGE RENDERS (roadmap AJ4). This call site is the one that was
+        * missed when the clause block shipped, and 2,665 commander pages served it to Googlebot
+        * alone until PR #395 -- one component, every page that reads a card. */}
+      <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={ranked.rarity}
+        grouped={new Set(ranked.partners.map((r) => r.event))} />
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">

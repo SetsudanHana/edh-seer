@@ -391,7 +391,10 @@ test("a page record carries metadata, derivation, and the clauses the engine rea
     ["abilities", "artCrop", "backArtCrop", "clauses", "commander", "demands", "emits", "identity",
       "manaCost", "name", "partners", "pool", "rarity", "typeLine"],
   );
-  expect(rec.clauses).toEqual(["Whenever a creature you control enters, draw a card."]);
+  // THE ID TRAVELS WITH THE TEXT since AJ4: every derived ability is stamped with the clause that
+  // printed it, and the page joins the two by ID -- never by position, which this list's own
+  // empty-segment filter would shift.
+  expect(rec.clauses).toEqual([{ id: 1, text: "Whenever a creature you control enters, draw a card." }]);
 
   // A CARD WITH NO RULES TEXT GETS NO KEY, not an empty array: a heading over nothing is worse than
   // no heading, and the readers decide on the field's presence.
@@ -1737,4 +1740,25 @@ test("a trigger naming two types demands both", () => {
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
   expect(demandKeysOf(payoff)).toEqual(["enters|artifact|-|-", "enters|creature|-|-"]);
+});
+
+/** THE ROW SAYS WHICH CLAUSE PRINTED IT (roadmap AJ4, spec C2), so the page can read down the card
+ *  instead of zipping two lists that do not line up. An IMPLIED row -- synthesised from the keyword
+ *  list rather than from rules text -- carries none, and the page puts those at the end. */
+test("an ability row carries its clause, and an implied row does not", () => {
+  // DERIVE 164 stamps the clause; a fixture states it the way the derived corpus does.
+  const stamped = base("Stamped", [{
+    kind: "activated", cost: "{T}", clause: 2,
+    effect: { kind: "draw-card" },
+    emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  const rows = abilityRowsOf(stamped);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.clause).toBe(2);
+  // An ability with no clause of its own -- an implied row -- says so by absence, and the page
+  // puts those at the end with no quote above them.
+  const implied = base("Implied", [{
+    kind: "static", effect: { kind: "graveyard-recursion" },
+  }] as unknown as CardTags["abilities"]);
+  for (const r of abilityRowsOf(implied)) expect(r.clause).toBeUndefined();
 });

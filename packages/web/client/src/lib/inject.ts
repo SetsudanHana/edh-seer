@@ -15,7 +15,9 @@
  *  work with no prerender step and no hydration mismatch -- React mounts into an empty div and the
  *  crawler's copy sits beside it. */
 import { cardImageUrl } from "../components/card-node.js";
+import { effectPhrase } from "@edh-seer/matcher/partners-core";
 import { eventKeyAction, eventKeyClause } from "./demand-sentence.js";
+import { groupAnchor } from "./group-anchor.js";
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -234,7 +236,10 @@ export interface InjectableCard {
    *  2026-09-18). Unattributed on purpose: one clause can yield several abilities, so naming which
    *  one produced a given edge would be a guess wearing a citation's clothes. Absent on a card with
    *  no rules text. */
-  clauses?: string[];
+  clauses?: { id: number; text: string }[];
+  /** THE DERIVED ABILITY ROWS, each stamped with the clause that printed it (roadmap AJ4). Rides
+   *  in on the record spread; declared here because the crawlable block renders them now. */
+  abilities?: { kind: string; cost?: string; effect: string; amount?: string; when: string[]; emits: string[]; clause?: number; self?: true; selfEmits?: string[] }[];
 }
 
 /** WHICH WAY A PARTNER GROUP RUNS. The three cases the copy already named -- "cause it", "feed it",
@@ -411,7 +416,8 @@ export function cardPageHtml(
     const lead = head === "" ? "" : `    <p>${esc(head)}:</p>\n`;
     const items = cells.map((c) =>
       `      <li><a href="/cards/${esc(c.slug)}">${esc(c.name)}</a> — ${esc(c.text)}</li>`).join("\n");
-    return `${count}${lead}    <ol>\n${items}\n    </ol>${more}`;
+    // THE ANCHOR THE CLAUSE'S EVENT ROW JUMPS TO (spec C5), the same id the app writes.
+    return `    <div id="${esc(groupAnchor(g.event))}">\n${count}${lead}    <ol>\n${items}\n    </ol>${more}\n    </div>`;
   }).join("\n");
   const crossLink = kind === "card"
     ? (card.commander
@@ -434,12 +440,31 @@ export function cardPageHtml(
   //
   // THE CARD IMAGE ALREADY SHOWED THIS, as pixels. Making it text is what a crawler, a screen
   // reader and a reader who wants to copy a line all needed.
-  const read = card.clauses === undefined || card.clauses.length === 0 ? ""
-    // THE SAME SHAPE THE APP RENDERS (`ClausesRead`): a list inside the quote, one item per clause.
-    // The two readers diverged once already and it served 2,665 commander pages to Googlebot alone.
-    : `    <h2>What the engine read</h2>\n    <blockquote>\n    <ul>\n`
-      + card.clauses.map((c) => `      <li>${esc(c)}</li>`).join("\n")
-      + `\n    </ul>\n    </blockquote>\n`;
+  // THE CARD, READ DOWN THE CARD (roadmap AJ4, spec C1), and the same section the app renders --
+  // the two readers diverged once already and it served 2,665 commander pages to Googlebot alone.
+  //
+  // ATTRIBUTION IS BY ID, NEVER BY POSITION: `segment` numbers clauses from 1, DERIVE 164 stamps
+  // that number onto every ability, and this list drops empty segments -- so a positional zip
+  // would misattribute every row after the first gap.
+  const abilityLines = (id: number | undefined): string =>
+    (card.abilities ?? []).filter((a) => a.clause === id).map((a) => {
+      const does = esc(effectPhrase(a.effect, a.amount, undefined, undefined) ?? a.effect.replace(/-/g, " "));
+      const wants = a.when.map((k) =>
+        `        <li>wants <a href="#${esc(groupAnchor(k))}">${esc(eventKeyClause(k, a.self ? "this card" : undefined))}</a></li>`);
+      const makes = a.emits.map((k) =>
+        `        <li>makes <a href="#${esc(groupAnchor(k))}">${esc(eventKeyAction(k) ?? eventKeyClause(k))}</a></li>`);
+      const events = [...wants, ...makes];
+      return `      <p>${esc(a.kind)}${a.cost ? ` ${esc(a.cost)}` : ""} — ${does}</p>\n`
+        + (events.length > 0 ? `      <ul>\n${events.join("\n")}\n      </ul>\n` : "");
+    }).join("");
+  const implied = (card.abilities ?? []).filter((a) => a.clause === undefined);
+  const read = (card.clauses === undefined || card.clauses.length === 0) && implied.length === 0 ? ""
+    : `    <h2>How the engine reads this card</h2>\n`
+      + (card.clauses ?? []).map((c) =>
+        `    <blockquote>${esc(c.text)}</blockquote>\n${abilityLines(c.id)}`).join("")
+      // AN IMPLIED ABILITY HAS NO PRINTED LINE (spec C4): read off the card's characteristics, so
+      // it sits at the end with no quote above it. 226 of 54,586 rows corpus-wide.
+      + (implied.length > 0 ? `    <p>read off the card itself</p>\n${abilityLines(undefined)}` : "");
   // THE ONLY IMAGE ON THE CRAWLABLE PAGE. The art renders client-side, so until now a crawler read
   // 22,209 card pages with no `<img>` on any of them and Google Images had nothing to index. This is
   // the URL `injectPage` already preloads and the app already asks for, so a reader pays no extra

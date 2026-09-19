@@ -785,6 +785,15 @@ export interface Ability {
    *  front were indistinguishable and both matched against that union. `Characteristics.faces`
    *  already fixed the same problem for IMPLIED events; this is the authored half. */
   face?: number;
+  /** WHICH CLAUSE PRINTED THIS ABILITY (roadmap AJ4, spec C2). Stamped beside `face` in the derive
+   *  loop, which already holds `clause.id`. The card page reads down the card -- each clause
+   *  carrying the abilities it derived and the events those produce -- and without this the page
+   *  can only ZIP the two lists positionally, which is wrong on every row of any card whose first
+   *  clause derives nothing. Samut has 4 clauses and 3 abilities and every zipped row lies.
+   *
+   *  ABSENT ON AN IMPLIED ABILITY, which is read off characteristics rather than rules text and so
+   *  has no printed line to attribute to (spec C4). */
+  clause?: number;
   /** Present for triggered abilities. "enters or attacks" = one trigger, two verbs. */
   trigger?: {
     verbs: Verb[];

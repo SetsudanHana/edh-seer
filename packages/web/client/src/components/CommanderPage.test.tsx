@@ -42,12 +42,11 @@ const at = (slug: string, load: () => Promise<CardPageData | null>) =>
  *  pages served the clauses to Googlebot inside `.prerendered` and hid them from every human the
  *  moment React booted. Cloaking, introduced by writing a block inline in one component instead of
  *  once. `ClausesRead` is shared now and both pages assert it. */
-test("the commander page shows the clauses the engine read", async () => {
-  at("krenko-mob-boss", async () => ({ ...KRENKO, clauses: [
-    "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.",
-  ] }));
-  expect(await screen.findByRole("heading", { level: 2, name: /What the engine read/ })).toBeInTheDocument();
-  expect(screen.getByText(/Create X 1\/1 red Goblin creature tokens/)).toBeInTheDocument();
+test("the commander page reads down the card too", async () => {
+  at("krenko-mob-boss", async () => ({ ...KRENKO, clauses: [{ id: 1, text: "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control." }] }));
+  expect(await screen.findByRole("heading", { level: 2, name: /How the engine reads this card/ })).toBeInTheDocument();
+  // The rail and the page body both render the section; one component, two call sites.
+  expect(screen.getAllByText(/Create X 1\/1 red Goblin creature tokens/).length).toBeGreaterThan(0);
 });
 
 /** THE WHOLE REASON THIS URL EXISTS (spec D5). Two pages about the same card that print the same

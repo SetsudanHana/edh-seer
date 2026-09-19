@@ -118,6 +118,10 @@ import { emblemRecipient } from "../emblem.js";
 // number as the object. This retires the paid `dropsUnitAmount` refresh.
 // 162: a put from your hand that offers top OR bottom is top manipulation (Dream Cache), so the
 // ability exists and the rate can net it; an Exhaust ability repeats once (CR 702.176a).
+// 164: every derived ability carries the id of the clause that printed it (roadmap AJ4), so the
+// card page can read down the card instead of zipping two lists that do not line up. An IMPLIED
+// ability -- read off characteristics, not rules text -- carries none, which is how the page tells
+// them apart.
 // 163: a put from the LIBRARY into a graveyard emits `mill`, not `enters-graveyard`, UNLESS the
 // clause searched -- Entomb and Buried Alive tutor a card into the yard and never mill (CR
 // 701.13b: milling is the top cards). Both layers make that test now (roadmap AK1).
@@ -125,7 +129,7 @@ import { emblemRecipient } from "../emblem.js";
 // as kind `mill` while emitting the Entomb verb -- Cavalier of Thorns, Shigeki, Shadow Prophecy.
 // `supplyForms` bridges mill to the enters-graveyard forms, so no payoff that asks for a graveyard
 // put loses its supplier.
-export const DERIVE_VERSION = 163;
+export const DERIVE_VERSION = 164;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1596,6 +1600,12 @@ export function deriveAbilities(
     // ability's own cost can. Loot, the Pathfinder amortised a once-per-game draw (2026-09-17).
     const exhaust = cost !== "" && new RegExp(`^Exhaust — ${cost.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:`, "m").test(cardText);
     for (let i = before; i < abilities.length; i++) {
+      // WHICH CLAUSE PRINTED IT (roadmap AJ4, spec C2). Stamped in the same one place as the rest,
+      // for the same reason: a fourth push site cannot silently skip it. The card page reads down
+      // the card, and without this it could only ZIP the clause list against the ability list --
+      // which is wrong on every row of any card whose first clause derives nothing (Samut: 4
+      // clauses, 3 abilities, every zipped row a lie).
+      abilities[i] = { ...abilities[i], clause: clause.id };
       const repeats = exhaust ? "once" : repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
