@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
-import { ManaSymbols, parseManaCost } from "./ManaSymbols.js";
+import { ManaSymbols, ManaText, parseManaCost } from "./ManaSymbols.js";
 
 describe("parseManaCost", () => {
   test("splits a plain cost into its symbols", () => {
@@ -46,4 +46,37 @@ test("an empty cost renders an em dash, not an empty cell", () => {
 test("an unreadable cost prints verbatim rather than disappearing", () => {
   render(<ManaSymbols cost="banana" />);
   expect(screen.getByText("banana")).toBeInTheDocument();
+});
+
+// A COST ROW AND A PRINTED LINE ARE NOT PURE SYMBOL STRINGS (owner, 2026-09-20, on the deployed
+// card page): "{T}, Sacrifice an artifact" and "Noncreature spells you cast cost {X} less to cast"
+// rendered their braces verbatim while the card image beside them drew the real symbols.
+describe("ManaText", () => {
+  test("draws the symbols inside a sentence and keeps the words between them", () => {
+    render(<ManaText text="{T}, Sacrifice an artifact" />);
+    expect(screen.getByAltText("tap this permanent")).toBeInTheDocument();
+    expect(screen.getByText(/, Sacrifice an artifact/)).toBeInTheDocument();
+  });
+
+  test("a symbol mid-sentence is drawn where it sits", () => {
+    render(<ManaText text="Noncreature spells you cast cost {X} less to cast." />);
+    expect(screen.getByAltText("X generic mana")).toBeInTheDocument();
+    expect(screen.getByText(/Noncreature spells you cast cost/)).toBeInTheDocument();
+    expect(screen.getByText(/less to cast\./)).toBeInTheDocument();
+  });
+
+  test("text with no symbol renders as plain text, and empty renders nothing", () => {
+    const { container } = render(<ManaText text="Haste" />);
+    expect(container.textContent).toBe("Haste");
+    expect(container.querySelector("img")).toBeNull();
+    expect(render(<ManaText text="" />).container.textContent).toBe("");
+  });
+
+  // A LOYALTY COST IS NOT A MANA SYMBOL. "+1" and "-7" carry no braces, so nothing is drawn and
+  // `LoyaltyCost` keeps its own badge -- this must not start eating them.
+  test("a loyalty cost passes through untouched", () => {
+    const { container } = render(<ManaText text="+1" />);
+    expect(container.textContent).toBe("+1");
+    expect(container.querySelector("img")).toBeNull();
+  });
 });

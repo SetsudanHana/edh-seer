@@ -1,6 +1,8 @@
 import { effectPhrase, type AbilityRow } from "@edh-seer/matcher/partners-core";
 import { eventKeyAction, eventKeyClause, eventKeySentence } from "../lib/demand-sentence.js";
 import { groupAnchor } from "../lib/group-anchor.js";
+import { ManaText } from "./ManaSymbols.js";
+import { isLoyaltyCost, LoyaltyCost } from "./LoyaltyCost.js";
 import { useFace } from "./face.js";
 
 /** THE CARD, READ DOWN THE CARD (roadmap AJ4, spec C1). One section replacing two.
@@ -83,7 +85,7 @@ export function EngineReading({ clauses, abilities: allAbilities, rarity, groupe
             {/* THE CLAUSE AT FULL STRENGTH, the abilities under it quieter: on a vanilla creature
               * every clause renders bare, and a list of clauses with no events has to read as
               * "nothing to claim here" rather than as a page that failed to load. */}
-            <blockquote className="border-l-2 border-(--separator) pl-3">{c.text}</blockquote>
+            <blockquote className="border-l-2 border-(--separator) pl-3"><ManaText text={c.text} /></blockquote>
             {byClause(c.id).map((a, i) => (
               <AbilityLines key={i} row={a} rarity={rarity} grouped={grouped} />
             ))}
@@ -114,7 +116,20 @@ function AbilityLines({ row, rarity, grouped }: { row: AbilityRow; rarity?: Reco
     <div className="flex flex-col gap-1 pl-3">
       <p className="flex flex-wrap items-baseline gap-x-2">
         <span className="eyebrow text-(--muted)">{KIND_LABEL[row.kind] ?? row.kind}</span>
-        {row.cost && <span className="font-mono text-sm">{row.cost}</span>}
+        {/* A LOYALTY COST IS THE PRINTED BADGE, EVERY OTHER COST IS ITS SYMBOLS. AJ4 replaced
+          * `AbilityTable` here and the badge did not come with it, so a planeswalker's "+1" read as
+          * bare monospace on the card page while the rail's peek still drew it (owner, 2026-09-20). */}
+        {row.cost && (isLoyaltyCost(row.cost)
+          // SIZED FOR A SENTENCE, NOT FOR THE TABLE IT WAS DRAWN FOR. The badge is `2.4em`, chosen
+          // in a stacked `AbilityTable` row where it had the column to itself; inline on this line
+          // it stands a full text-line above its own baseline and reads as a mark on the row above.
+          // `text-xs` scales it against this row rather than capping it in px, so it still grows
+          // with the reader's font size. Measured in the browser: 2.4em of 12px is a 29px badge
+          // with a 13px digit beside 16px text -- the digit readable, the badge on the line. The
+          // first cut of this was `text-[0.5em]`, which put the badge on the line and made the
+          // sign unreadable, which is the same defect the other way round.
+          ? <span className="text-xs leading-none self-center"><LoyaltyCost cost={row.cost} /></span>
+          : <span className="font-mono text-sm"><ManaText text={row.cost} /></span>)}
         <span>{does}</span>
       </p>
       {/* WHAT IT WAITS FOR, then WHAT IT PUTS INTO THE GAME -- the two directions the whole engine
