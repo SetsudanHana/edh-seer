@@ -85,8 +85,14 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, say,
     // `open` was set on focus and cleared only by Escape, so both pickers stayed open at once and
     // pushed the results off the page. The check is containment, not a bare blur: focus moving
     // from the field to a chip's remove button is still inside this control.
+    // AND THE LIST IS A POPUP, NOT A BLOCK IN THE FLOW (owner, 2026-09-20: "when I scroll all the
+    // way to the bottom and start typing in the search bar my page is scrolling up"). In the flow,
+    // the open listbox IS page height: 50 rows tall on focus, nine rows tall two keystrokes later,
+    // and each narrowing shortens the document under a reader who is already at the bottom -- the
+    // browser clamps scrollTop to the new height and the page appears to jump. Out of flow, the
+    // document height never moves while you type, which is also what every other combobox does.
     <div
-      className="flex flex-col gap-2 w-full max-w-2xl"
+      className="relative flex flex-col gap-2 w-full max-w-2xl"
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}
     >
       <p className="eyebrow text-(--muted)" id={`${id}-label`}>{label}</p>
@@ -133,7 +139,7 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, say,
           // the list before the click could land -- the row would simply never be chosen. Holding
           // focus in the field is what lets the blur rule above be this simple.
           onMouseDown={(e) => e.preventDefault()}
-          className="flex flex-col m-0 p-0 list-none max-h-96 overflow-y-auto"
+          className="absolute top-full left-0 right-0 z-30 mt-1 flex flex-col m-0 p-0 list-none max-h-96 overflow-y-auto overscroll-contain rounded-(--field-radius) border border-(--field-border) bg-(--field-background) shadow-lg"
         >
           {rows.map((row, i) => {
             const on = chosen.includes(row.key);

@@ -164,3 +164,28 @@ test("removing a chip does not leave the list open behind it", async () => {
   await userEvent.click(screen.getByRole("button", { name: "elsewhere" }));
   expect(screen.queryAllByRole("option")).toHaveLength(0);
 });
+
+/** THE LIST IS A POPUP, NOT A BLOCK IN THE FLOW (owner, 2026-09-20: "when I scroll all the way to
+ *  the bottom and start typing in the search bar my page is scrolling up").
+ *
+ *  In the flow, the open listbox IS document height -- 50 rows on focus, one row two keystrokes
+ *  later -- so each narrowing shortened the page under a reader already at the bottom and the
+ *  browser clamped scrollTop to the new height. Measured in the browser at 1920x1080 on `/cards`:
+ *  opening the list at the bottom grew the document 1,337 -> 1,628px, typing a narrow query shrank
+ *  it straight back and the page jumped up 290px. Out of flow the document stays 1,337px
+ *  throughout and the jump is 0.
+ *
+ *  A CLASS ASSERTION, because jsdom resolves no Tailwind: what it pins is that the positioning is
+ *  still declared, which is the thing a later refactor would drop without noticing. The pixel
+ *  measurement is in the commit message and cannot run here. */
+test("the open list is positioned out of the flow, so filtering never moves the page", async () => {
+  mount([]);
+  await userEvent.click(field());
+  const list = screen.getByRole("listbox");
+  expect(list.className).toMatch(/\babsolute\b/);
+  // An absolute child needs a positioned ancestor, or it resolves against the page and lands
+  // somewhere else entirely -- the `.sr-only` trap the UI rules name, in a different costume.
+  const anchored = list.closest(".relative");
+  expect(anchored).not.toBeNull();
+  expect(anchored!.contains(field())).toBe(true);
+});
