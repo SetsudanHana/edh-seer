@@ -4385,6 +4385,41 @@ describe("copy-ability (AC12)", () => {
     expect(pairReasons(loyaltyCopier, pump, H)).toEqual([]);
   });
 
+  test("a copier that names an OPPONENT's ability reaches nothing in your deck", () => {
+    // Aboleth Spawn: "Whenever a creature entering under an OPPONENT'S CONTROL causes a triggered
+    // ability of that creature to trigger, you may copy that ability." The ability it copies is
+    // never one of yours, so it has no feeder in this deck -- `subject.control` says so and the
+    // pass used to read only the kind and the type. Measured 2026-09-20: it claimed a
+    // `copies:triggered` edge to every triggered-ability card in the deck, and every one was false.
+    const spawn = base("Aboleth Spawn", [{
+      kind: "triggered",
+      trigger: { verbs: ["enters"], subject: { control: "opp", token: null, abilityKind: ["triggered"], type: "creature" } },
+      effect: { kind: "copy-ability", subject: { control: "opp", token: null, abilityKind: ["triggered"] } },
+    }]);
+    // No `copies:` tag AT ALL, not just not this one: a gate that only refused one kind would let
+    // the same false claim back in under another.
+    expect(pairReasons(spawn, solemn, H).map((r) => r.tag).filter((t) => t.startsWith("copies:"))).toEqual([]);
+    // A copier that says nothing about control still reaches you -- Rings of Brighthearth derives
+    // `any` and must not be caught by the same gate.
+    // No trigger: `activate` is outside the Verb union and derives none, which is the real shape.
+    const rings = base("Rings of Brighthearth", [{
+      kind: "triggered",
+      effect: { kind: "copy-ability", subject: { control: "any", token: null, abilityKind: ["activated"] } },
+    }]);
+    const pump = base("Pump Knight", [{ kind: "activated", cost: "{1}", effect: { kind: "pump" } }]);
+    expect(pairReasons(rings, pump, H).map((r) => r.tag)).toContain("copies:activated");
+    // AND THE POSITIVE SIDE OF THE KIND FIX, end to end. Firebender Ascension is Aboleth Spawn's
+    // twin on YOUR side: it copies a TRIGGERED ability of a creature you control, and derive now
+    // carries that kind onto the effect instead of leaving it in the trigger. With no kind it fell
+    // back to both and claimed an activated copy it cannot make.
+    const firebender = base("Firebender Ascension", [{
+      kind: "triggered",
+      effect: { kind: "copy-ability", subject: { control: "any", token: null, abilityKind: ["triggered"] } },
+    }]);
+    expect(pairReasons(firebender, solemn, H).map((r) => r.tag)).toContain("copies:triggered");
+    expect(pairReasons(firebender, pump, H).map((r) => r.tag)).not.toContain("copies:activated");
+  });
+
   test("Tawnos copies only from an ARTIFACT source", () => {
     const tawnos = base("Tawnos", [{ kind: "activated", cost: "{U}{R}, {T}", effect: { kind: "copy-ability", subject: { control: "you", token: null, type: "artifact", scope: "target", abilityKind: ["activated", "triggered"] } } }]);
     const artifactTrigger = artifact("Myr Retriever", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, self: true } }, effect: { kind: "graveyard-recursion" } }]);

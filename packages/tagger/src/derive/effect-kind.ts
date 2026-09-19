@@ -402,7 +402,13 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
   // target creature, except it has THIS ABILITY" -- a spell copier, and a nine-instant deck a
   // Spellslinger deck on the site's own example (UX sweep 2026-09-06, E2).
   if (verb === "copy") {
-    const object = action.object ?? "";
+    // A CLONE'S EXCEPTION CLAUSE IS NOT ITS OBJECT. "becomes a copy of another target creature,
+    // EXCEPT IT HAS THIS ABILITY" (CR 707.2) names a creature and keeps one ability of its own;
+    // the tail made four corpus clones read as ability copiers -- Dimir Doppelganger, Cryptoplasm,
+    // Unstable Shapeshifter, Mizzium Transreliquat -- each then claiming to copy an ability of
+    // every activated-or-triggered card in the deck, with no type gate to narrow it (2026-09-20).
+    // The head is what is copied; the tail only says what the copy differs in.
+    const object = (action.object ?? "").split(/,\s*except\b/i)[0]!;
     const named = /\b(creature|permanent|artifact|enchantment|land|planeswalker|token|spells?|instant|sorcery|ability)\b/i.test(object);
     const o = named ? object : `${object} ${clauseText}`;
     // AN ABILITY IS THE THIRD COPYABLE OBJECT (CR 707.10; roadmap AC12). Read off the OBJECT only:

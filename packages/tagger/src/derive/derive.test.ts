@@ -2543,6 +2543,39 @@ test("Rings of Brighthearth copies THAT ability, and the kind comes from its act
   expect(abilities[0]?.effect.subject?.abilityKind).toEqual(["activated"]);
 });
 
+// THE KIND LIVES IN THE TRIGGER WHENEVER THE OBJECT IS A PRONOUN, and `activate` was only the
+// first shape of that. "Whenever a creature ... causes a TRIGGERED ability of that creature to
+// trigger, copy that ability" says the kind in its trigger subject and "that ability" carries
+// none, so the copy-ability pass fell back to BOTH kinds and claimed activated copies neither
+// card can make (measured 2026-09-20 on Aboleth Spawn and Firebender Ascension).
+test("a copier whose trigger names the ability kind inherits it onto the effect (AC12)", () => {
+  const text = "Whenever a creature entering under an opponent's control causes a triggered ability of that creature to trigger, you may copy that ability.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "a creature entering under an opponent's control that causes a triggered ability of that creature to trigger", control: "opponent" },
+    actions: [{ verb: "copy", object: "that ability", optional: true }],
+  }], "Aboleth Spawn", { 1: text }, undefined, text);
+  expect(abilities[0]?.effect.kind).toBe("copy-ability");
+  expect(abilities[0]?.effect.subject?.abilityKind).toEqual(["triggered"]);
+  // And the seat it copies from is the opponent's -- the matcher refuses the edge on this field.
+  expect(abilities[0]?.effect.subject?.control).toBe("opp");
+});
+
+// The same shape on YOUR side, where the trigger event is outside the Verb union ("other") and the
+// derived trigger is therefore dropped: the raw clause subject still says "triggered ability".
+test("the kind is read off the RAW trigger subject when the event is not a known verb", () => {
+  const text = "Whenever a creature you control attacking causes a triggered ability of that creature to trigger, copy that ability. You may choose new targets for the copy.";
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "triggered",
+    trigger: { event: "other", subject: "a creature you control attacking causes a triggered ability of that creature to trigger", control: "you" },
+    actions: [{ verb: "copy", object: "that ability" }],
+  }], "Firebender Ascension", { 1: text }, undefined, text);
+  expect(abilities[0]?.effect.kind).toBe("copy-ability");
+  expect(abilities[0]?.effect.subject?.abilityKind).toEqual(["triggered"]);
+  // Your side, so the matcher's `opp` gate does not refuse it.
+  expect(abilities[0]?.effect.subject?.control).not.toBe("opp");
+});
+
 // ROADMAP AC13: a grant to a TOKEN class keeps its subject (Springleaf Parade), a grant to a bare
 // type class still does not (the whole-deck lord edge stays refused).
 test("a grant to creature TOKENS keeps its token subject; a grant to creatures still refuses", () => {

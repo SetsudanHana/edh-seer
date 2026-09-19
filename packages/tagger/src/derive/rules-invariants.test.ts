@@ -74,6 +74,7 @@ const PROSE: Record<string, string> = {
   "118.3b": "paying life is losing life — prompt rule",
   "113.3": "schema: the ability kinds a card can name as an OBJECT (abilityKind, AC12)",
   "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
+  "707.2": "effect-kind: a clone's 'except it has this ability' is an exception to the copy, not the object copied (effect-kind.test asserts Cryptoplasm)",
   "605.3b": "schema: a mana ability does not use the stack, so 'activated' as an object excludes it (AC12)", "603.8": "state triggers — prompt rule", "603.12c": "reflexive — prompt rule",
 };
 
