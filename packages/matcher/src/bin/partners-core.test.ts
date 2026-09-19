@@ -4,9 +4,15 @@ import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
-  partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyCounts, browseLetterOf, browseSlices,
+  partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
   supplyForms, supplyKeysOf, themesOf, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
+
+/** THE CORPUS COUNT ALONE. `supplyBuckets` splits every key by colour identity (AJ5); the rules
+ *  these tests pin -- what satisfies what -- are about the total, so the split is summed away. */
+const counts = (rows: { emits: string[]; demands: string[] }[]): Record<string, number> =>
+  Object.fromEntries([...supplyBuckets(rows.map((r) => ({ ...r, identity: [] })))]
+    .map(([k, b]) => [k, totalOf(b)]));
 
 test("a slug is lowercase, punctuation-free and hyphen-joined", () => {
   expect(slugOf("Krenko, Mob Boss")).toBe("krenko-mob-boss");
@@ -98,7 +104,7 @@ test("a demand naming many types is counted as broad, not as rare", () => {
     { emits: ["enters|enchantment|-"], demands: [] },
     { emits: [], demands: ["enters|creature,land,enchantment|-|-", "enters|creature|goblin|-"] },
   ];
-  const freq = supplyCounts(rows);
+  const freq = counts(rows);
   expect(freq["enters|creature,land,enchantment|-|-"]).toBe(3);
   expect(freq["enters|creature|goblin|-"]).toBe(1);
   expect(specificity("enters|creature|goblin|-", freq))
@@ -108,7 +114,7 @@ test("a demand naming many types is counted as broad, not as rare", () => {
 /** A DEMAND IS NEVER WIDENED. `enters|-|goblin` means a goblin entering; counting every permanent as
  *  satisfying it would rebuild the bug this replaced. */
 test("a subtype demand is satisfied only by that subtype", () => {
-  const freq = supplyCounts([
+  const freq = counts([
     { emits: ["enters|creature|goblin|-"], demands: [] },
     { emits: ["enters|creature|elf|-"], demands: [] },
     { emits: ["enters|artifact|-"], demands: [] },
@@ -669,6 +675,43 @@ test("a commander's own partner list holds only cards its deck could legally con
   expect(rec.commanderPool!["enters|creature|-|-"]).toBe(2);
 });
 
+/** AND THE COUNT BESIDE THOSE ROWS IS SCOPED TOO (roadmap AJ5, measured 2026-09-19).
+ *
+ *  `rankedFor` has always filtered the candidates and recomputed `pool` over the legal set, but
+ *  `rarity` came straight off the one corpus-wide supply map, so `commanderRarity` was
+ *  byte-identical to `rarity`. Samut, the Driving Force (R/G/W) showed ONE Cleric-granting partner
+ *  above "588 other cards cause it too" -- a figure counted over cards its deck can never play.
+ *  The card page keeps the corpus figure: there is no deck there, so there are no colours to
+ *  filter by. THE SCORE DOES NOT MOVE -- `specificity` stays corpus-wide by design. */
+test("a commander's rarity counts only the causes its deck could legally contain", () => {
+  const maker = (name: string, identity: string[]) => withIdentity(base(name, [{
+    kind: "activated", cost: "{T}",
+    effect: { kind: "token-generation", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } },
+    emits: [
+      { verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } },
+      { verb: "enters", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } },
+    ],
+  }] as unknown as CardTags["abilities"], ["goblin"]), identity);
+  const asker = asCommander(base("Red Asker", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]), ["R"]);
+
+  const { shards } = buildPartnerArtifact(
+    [asker, maker("Red Maker", ["R"]), maker("Simic Maker", ["G", "U"]), maker("Colourless Maker", [])], H);
+  const rec = [...shards.values()].flatMap((s) => Object.values(s)).find((r) => r.name === "Red Asker")!;
+
+  // The rows themselves are already scoped: the Simic maker is in neither list.
+  expect(rec.commanderPartners!.map((p) => p.name).sort())
+    .toEqual(["Colourless Maker", "Red Maker"]);
+
+  expect(rec.rarity["enters|creature|-|-"]).toBe(3);
+  expect(rec.commanderRarity!["enters|creature|-|-"]).toBe(2);
+  // The ranking basis is untouched: both rows are priced on the corpus figure, not the scoped one.
+  expect(rec.commanderPartners![0]!.score).toBe(rec.partners.find((p) => p.name === "Red Maker")!.score);
+});
+
 /** A NON-COMMANDER CARRIES NEITHER FIELD. Every record pays for the bytes of every field it has,
  *  and 12,927 of the 15,350 cards can never lead a deck. */
 test("only a commander's record carries the commander partner list", () => {
@@ -708,7 +751,7 @@ test("an unstated supply answers a nontoken demand, never a token one", () => {
  *  actually make tokens, so it counts fewer suppliers than the untyped demand and scores above it --
  *  which is the sentence "a token payoff is a better match for a token maker" as arithmetic. */
 test("a token demand is rarer than an untyped one, so it outranks it", () => {
-  const freq = supplyCounts([
+  const freq = counts([
     { emits: ["enters|creature|goblin|t"], demands: [] },
     { emits: ["enters|creature|-|-"], demands: [] },
     { emits: ["enters|creature|-|-"], demands: [] },
