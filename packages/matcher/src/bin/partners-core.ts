@@ -865,11 +865,18 @@ export { PARTNER_SHARD_COUNT, partnerShardOf };
  *
  *  A CARD WITH NO RULES TEXT GETS NO LIST, not an empty one -- a vanilla creature has nothing to
  *  quote and a heading over nothing is worse than no heading. */
-const clauseTextsOf = (d: DeckCard): string[] => {
+const clauseTextsOf = (d: DeckCard): { id: number; text: string; face?: number }[] => {
   const c = d.card as { oracleText?: string; keywords?: string[]; typeLine?: string };
+  // THE ID TRAVELS WITH THE TEXT (roadmap AJ4). `segment` numbers clauses from 1 and derive stamps
+  // that number onto every ability the clause produces, so the page joins the two by ID. It must
+  // not join them by POSITION: this list drops empty segments, and one dropped clause shifts every
+  // row after it -- the same silent misattribution the spec refuses the positional zip for.
+  // AND THE FACE IT IS PRINTED ON, because the page turns with the picture: a back-face clause
+  // shown beside the front face's abilities would render bare and read as "derives nothing", which
+  // is a lie about a line the reader cannot even see.
   return segment(c.oracleText ?? "", c.keywords ?? [], c.typeLine ?? "")
-    .map((x) => x.text.trim())
-    .filter((x) => x.length > 0);
+    .map((x) => ({ id: x.id, text: x.text.trim(), ...(x.face !== undefined ? { face: x.face } : {}) }))
+    .filter((x) => x.text.length > 0);
 };
 
 /** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
@@ -882,6 +889,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
     const selfEmits = (a.emits ?? []).filter((e) => e.subject.self === true).map(eventKey);
     return {
       kind: a.kind,
+      ...(a.clause !== undefined ? { clause: a.clause } : {}),
       ...(a.cost ? { cost: a.cost } : {}),
       when: (a.trigger?.verbs ?? []).flatMap((v) =>
         splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
@@ -898,6 +906,9 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
       ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
       ...(subtype ? { counts: subtype } : {}),
       emits: (a.emits ?? []).flatMap((e) => splitKey(eventKey(e))),
+      // A STATIC'S DEMAND IS ITS REACH, not a trigger: without this the page's clause-led reading
+      // showed no event under an anthem or a cost-reducer at all (roadmap AJ4).
+      ...(() => { const k = staticKeysOfAbility(a); return k.length > 0 ? { applies: k } : {}; })(),
       ...(selfEmits.length > 0 ? { selfEmits } : {}),
     };
   });
@@ -1140,19 +1151,24 @@ const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((
   const t = raw.toLowerCase();
   return (ALL_CARD_TYPES as readonly string[]).includes(t) ? [t] : PSEUDO_TYPE_SETS[t] ?? [];
 }))];
-export const staticKeysOf = (d: DeckCard): string[] => [...new Set(
-  abilitiesOf(d).flatMap((a) => {
-    const s = a.effect?.subject;
-    if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
-    const types = concreteTypes(asList(s.type));
-    const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
-    if (types.length === 0 && subtypes.length === 0) return [];
-    // ONE TYPE AND ONE SUBTYPE PER KEY (roadmap AK5): a static reaching four subtypes across
-    // seven types reaches each of the 28 pairs, and naming them in one key produced the 128
-    // character sentence the owner reported.
-    return splitKey(`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`);
-  }),
-)];
+/** THE STATIC KEYS ONE ABILITY REACHES. Split out of `staticKeysOf` so the PAGE ROW can name them
+ *  too (roadmap AJ4): a static's demand is this key, never a trigger, so a clause-led reading that
+ *  showed only `when` left every anthem and every cost-reducer with no event row at all -- which
+ *  on Samut is three of his four lines. */
+export const staticKeysOfAbility = (a: CardTags["abilities"][number]): string[] => {
+  const s = a.effect?.subject;
+  if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
+  const types = concreteTypes(asList(s.type));
+  const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
+  if (types.length === 0 && subtypes.length === 0) return [];
+  // ONE TYPE AND ONE SUBTYPE PER KEY (roadmap AK5): a static reaching four subtypes across
+  // seven types reaches each of the 28 pairs, and naming them in one key produced the 128
+  // character sentence the owner reported.
+  return splitKey(`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`);
+};
+
+export const staticKeysOf = (d: DeckCard): string[] =>
+  [...new Set(abilitiesOf(d).flatMap(staticKeysOfAbility))];
 
 /** WHAT A CARD IS FOR A STATIC'S PURPOSES: its printed types and subtypes, AND those of the tokens
  *  it makes. A noncreature spell that makes creature bodies is what a Samut deck is built from --
@@ -1243,6 +1259,17 @@ export interface AbilityRow {
    *  should say this card untapping"). The key cannot carry the self flag; `self` above does the
    *  same job for the trigger. Absent when no emit is self-referential. */
   selfEmits?: string[];
+  /** THE CLASSES A STATIC REACHES, as event keys. A static demands by REACH rather than by
+   *  trigger, so a reading that showed only `when` left every anthem and cost-reducer bare. */
+  applies?: string[];
+  /** WHICH PRINTED CLAUSE DERIVED THIS ROW (roadmap AJ4, spec C2), as an index into the record's
+   *  own `clauses`. The card page reads down the card: each clause carries the abilities it
+   *  derived and the events those produce or consume.
+   *
+   *  ABSENT ON AN IMPLIED ROW -- one read off characteristics rather than rules text, which
+   *  `abilitiesOf` synthesises from the keyword list and which has no printed line to attribute to.
+   *  Those rows go at the END of the page's list with no quote above them (spec C4). */
+  clause?: number;
 }
 
 export interface CardPageRecord {
@@ -1274,7 +1301,8 @@ export interface CardPageRecord {
   /** How the engine read the card, one row per derived ability -- the page's real argument, and the
    *  half of it that was missing while the record carried only the UNION of a card's events. */
   abilities: AbilityRow[];
-  /** THE CLAUSES THE ENGINE READ, verbatim and in printed order -- spec D2a option 2, taken
+  /** THE CLAUSES THE ENGINE READ, with the id every derived ability is stamped with, verbatim and
+   *  in printed order -- spec D2a option 2, taken
    *  2026-09-18 after option 1 shipped with nothing on the page a reader could check a claim
    *  against.
    *
@@ -1290,7 +1318,7 @@ export interface CardPageRecord {
    *  was asked about -- `derive-corpus.ts` recomputes them the same way for the same reason. It also
    *  strips reminder text, which is ours to strip and is why this is the engine's reading rather
    *  than a reprint. Absent on a card with no rules text. */
-  clauses?: string[];
+  clauses?: { id: number; text: string; face?: number }[];
   /** THE COST-TO-EFFECT RATES the card's abilities state (`rate.ts`; owner 2026-09-17), one per
    *  ability a family reads: cards per mana, damage per mana, each a floor and a ceiling. Absent
    *  when no ability states a number the axis can read. Recorded on the page, never on an edge. */

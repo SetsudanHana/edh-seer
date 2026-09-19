@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
-import { AbilityTable } from "./AbilityTable.js";
 import { CardShell } from "./CardShell.js";
-import { ClausesRead } from "./ClausesRead.js";
+import { EngineReading } from "./EngineReading.js";
 import { NotFound } from "./NotFound.js";
 import { PartnerList } from "./PartnerList.js";
 
@@ -34,6 +33,10 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
   if (page === undefined) return <p className="eyebrow text-(--muted)">reading the corpus</p>;
   if (page === null) return <NotFound slug={slug} kind="card" />;
 
+  // WHICH EVENTS HAVE A GROUP ON THIS PAGE, so a clause's event row links only where the anchor
+  // exists (spec C5). The partner list below groups by exactly this key.
+  const grouped = new Set(page.partners.map((r) => r.event));
+
   // THE MEASURE IS PER SECTION, NOT PER PAGE. Prose gets a reading width so hairlines stop running
   // a third of the viewport past the text they belong to; the TABLE does not, because a table is
   // the one thing on this page that earns the extra width -- four columns squeezed into 68ch wrap
@@ -42,9 +45,10 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
     <CardShell page={page} slug={slug} surface="card" peekLoad={load}>
       {/* The reading table on a phone sits here, above the partners, because the rail's stacked
         *  copy is hidden below `lg` (it is card-shaped metadata and the rail is the card's). */}
-      {/* FOLDED ON A PHONE (UX review, 2026-09-17): open, this table put the partners 1,335px
-        *  down a 390px screen. The heading is the summary, the chevron the same one the search
-        *  page's "What it does" chip carries. */}
+      {/* FOLDED ON A PHONE (UX review, 2026-09-17): open, this section put the partners 1,335px
+        *  down a 390px screen, and since AJ4 it is taller still -- a clause with its events is more
+        *  than an ability row was. The heading is the summary, the chevron the same one the search
+        *  page's chips carry. */}
       <details className="lg:hidden group/reads flex flex-col gap-3">
         <summary className="cursor-pointer list-none flex items-center gap-2 w-fit">
           <h2 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h2>
@@ -52,10 +56,11 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
             <path d="m6 9 6 6 6-6" />
           </svg>
         </summary>
-        <div className="mt-3"><AbilityTable rows={page.abilities} /></div>
+        {/* THE SAME SECTION THE RAIL SHOWS, heading suppressed: the disclosure's summary is it. */}
+        <div className="mt-3">
+          <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={page.rarity} grouped={grouped} headless />
+        </div>
       </details>
-
-      <ClausesRead clauses={page.clauses} />
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">

@@ -2932,3 +2932,23 @@ test("an Exhaust line in the printed text makes its ability once, matched on the
   expect(deriveAbilities(clauses, "Loot, the Pathfinder", undefined, { 1: "{U}, {T}" }, printed).abilities[0]?.repeats).toBe("once");
   expect(deriveAbilities(clauses, "Looter", undefined, { 1: "{U}, {T}" }, "{U}, {T}: Draw three cards.").abilities[0]?.repeats).toBe("per-cycle");
 });
+
+/** WHICH CLAUSE PRINTED IT (roadmap AJ4, spec C2). The card page reads down the card, so each
+ *  ability has to say which printed line it came from. Without the stamp the page could only ZIP
+ *  the clause list against the ability list, and a zip is wrong on every row of any card whose
+ *  first clause derives nothing -- Samut has 4 clauses and 3 abilities and every zipped row lies. */
+test("every ability carries the id of the clause that printed it", () => {
+  const { abilities } = deriveAbilities([
+    // A keyword line that derives nothing, which is exactly what makes a positional zip wrong.
+    { id: 1, abilityType: "static", actions: [] },
+    { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "a creature you control" },
+      actions: [{ verb: "lose-life", object: "each opponent" }, { verb: "gain-life", object: "you" }] },
+    { id: 3, abilityType: "activated", actions: [{ verb: "draw", object: "a card" }] },
+  ]);
+  // Clause 1 produced nothing; the rest name their own clause, not their position.
+  expect(abilities.every((a) => a.clause !== undefined)).toBe(true);
+  expect(new Set(abilities.filter((a) => a.effect?.kind === "draw-card").map((a) => a.clause))).toEqual(new Set([3]));
+  for (const a of abilities.filter((a) => a.trigger)) expect(a.clause).toBe(2);
+  // And no ability claims the clause that derived nothing.
+  expect(abilities.some((a) => a.clause === 1)).toBe(false);
+});

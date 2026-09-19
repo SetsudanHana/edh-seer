@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import type { CardPageData } from "../lib/partners.js";
-import { AbilityTable } from "./AbilityTable.js";
+import { EngineReading } from "./EngineReading.js";
 import { CardArt } from "./CardArt.js";
 import { CardPeek } from "./CardPeek.js";
 import { ManaSymbols } from "./ManaSymbols.js";
@@ -77,7 +77,10 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
               {/* A label, not a heading: the rail is the card's, and a screen reader's heading list
                 *  should carry the page's sections, not the rail's captions (cohesion sweep). */}
               <p className="eyebrow text-(--muted)">how the engine reads this card</p>
-              <AbilityTable rows={page.abilities} stacked />
+              {/* THE CLAUSE IS THE SPINE SINCE AJ4: the rail's ability table became the card's own
+                * lines, each carrying what it derived and what that produces or waits for. */}
+              <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={page.rarity}
+                grouped={new Set(page.partners.map((r) => r.event))} headless />
             </div>
           </>)}
       </aside>

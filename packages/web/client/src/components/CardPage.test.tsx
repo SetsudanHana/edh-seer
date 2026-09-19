@@ -35,23 +35,17 @@ const at = (slug: string, load: () => Promise<CardPageData | null>) =>
     </MemoryRouter>,
   );
 
-/** THE APP MUST RENDER WHAT THE PRERENDERED BLOCK DOES. `cardPageHtml` puts the clauses in
+/** THE APP MUST RENDER WHAT THE PRERENDERED BLOCK DOES. `cardPageHtml` puts this section in
  *  `.prerendered`, which `html[data-app-booted] .prerendered { display: none }` hides the moment
  *  React boots -- so a block the app does not also render is served to Googlebot and hidden from
  *  every human. That shipped on 2,665 commander pages for one deploy, because the block was written
- *  inline here and never copied there. `ClausesRead` is now one component and both pages assert it. */
-test("the page shows the clauses the engine read", async () => {
+ *  inline here and never copied there. `EngineReading` is one component and both pages assert it. */
+test("the page reads down the card, clause by clause", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, clauses: [
-    "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.",
+    { id: 1, text: "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control." },
   ] }));
-  expect(await screen.findByRole("heading", { level: 2, name: /What the engine read/ })).toBeInTheDocument();
-  expect(screen.getByText(/Create X 1\/1 red Goblin creature tokens/)).toBeInTheDocument();
-});
-
-test("a card with no rules text gets no clause heading", async () => {
-  at("krenko-mob-boss", async () => KRENKO);
-  expect(await screen.findByRole("heading", { level: 1, name: /Krenko/ })).toBeInTheDocument();
-  expect(screen.queryByRole("heading", { name: /What the engine read/ })).not.toBeInTheDocument();
+  expect((await screen.findAllByRole("heading", { level: 2, name: /How the engine reads this card/ })).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Create X 1\/1 red Goblin creature tokens/).length).toBeGreaterThan(0);
 });
 
 test("the page names the card and prints the engine's own reason for each partner", async () => {
@@ -200,6 +194,8 @@ test("a row the engine did read carries no such marker", async () => {
  *  read as a broken page rather than as the refusal it is (branch review, 2026-09-05). */
 test("an empty ability table says the engine read nothing on this card", async () => {
   at("faceless-one", async () => ({ ...KRENKO, name: "Faceless One", abilities: [], emits: [], demands: [], partners: [] }));
+  // THE CARD-LEVEL EMPTY STATE (roadmap W10): an empty reading is where a wrong "no ability" can
+  // be seen at all. AJ4's C3 bans copy under an individual clause, which is a different statement.
   expect((await screen.findAllByText(/read nothing on this card/i)).length).toBeGreaterThan(0);
 });
 

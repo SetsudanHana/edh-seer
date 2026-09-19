@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { Link } from "react-router";
+import { groupAnchor } from "../lib/group-anchor.js";
 import { groupDirection, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
@@ -81,7 +82,9 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
         const dir = groupDirection(group.rows);
         const withheld = withheldFrom(dir, group.event, group.rows.length, rarity, pool);
         return (
-          <section key={group.event} className="flex flex-col gap-3 break-inside-avoid">
+          // THE TARGET OF THE CLAUSE'S EVENT ROW (roadmap AJ4, spec C5). A plain anchor, so it
+          // works with JavaScript off -- which the prerendered page needs -- and holds no state.
+          <section key={group.event} id={groupAnchor(group.event)} className="flex flex-col gap-3 break-inside-avoid scroll-mt-[calc(var(--site-header-h,0px)+1rem)]">
             <div className="flex flex-col gap-0.5">
               {/* THE HEADING RUNS THE GROUP'S OWN DIRECTION (roadmap AK4). Under a producer group
                 * the cards DO this -- "sacrifice a creature" -- and under an asker group they are
