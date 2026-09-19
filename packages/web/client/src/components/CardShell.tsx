@@ -67,7 +67,14 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
         {children}
         <div className="max-w-[68ch]"><PageFoot /></div>
       </div>
-      <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] flex flex-col gap-6">
+      {/* THE RAIL SCROLLS ITSELF (owner, 2026-09-20: "the panel on the right scrolls all the way to
+        * the bottom only if I scroll whole page"). A sticky box TALLER than the viewport pins its
+        * top and parks its own overflow below the fold -- the reader has to scroll the article past
+        * it to read the end of the rail, at which point the rail stops being sticky and leaves.
+        * Capping it at the space it actually has and letting it scroll inside that is what makes
+        * "sticky" mean what it looks like. `overscroll-contain` so reaching the rail's bottom does
+        * not hand the wheel back to the page mid-read. */}
+      <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] lg:max-h-[calc(100dvh-var(--site-header-h,0px)-3rem)] lg:overflow-y-auto lg:overscroll-contain flex flex-col gap-6">
         {peek.stack.length > 0
           ? <CardPeek load={peekLoad} />
           : (<>
