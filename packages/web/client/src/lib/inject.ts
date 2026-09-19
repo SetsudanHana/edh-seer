@@ -21,7 +21,7 @@ import { cardImageUrl } from "../components/card-node.js";
 // it; `tsc -p client` did not, because the client config is the one that HAS those types.
 // `sentence.ts` imports nothing at all.
 import { effectPhrase } from "@edh-seer/matcher/sentence";
-import { eventKeyAction, eventKeyClause } from "./demand-sentence.js";
+import { eventKeyAction, eventKeyClause, eventKeySentence } from "./demand-sentence.js";
 import { groupAnchor } from "./group-anchor.js";
 
 const esc = (s: string): string =>
@@ -244,7 +244,7 @@ export interface InjectableCard {
   clauses?: { id: number; text: string }[];
   /** THE DERIVED ABILITY ROWS, each stamped with the clause that printed it (roadmap AJ4). Rides
    *  in on the record spread; declared here because the crawlable block renders them now. */
-  abilities?: { kind: string; cost?: string; effect: string; amount?: string; when: string[]; emits: string[]; clause?: number; self?: true; selfEmits?: string[] }[];
+  abilities?: { kind: string; cost?: string; effect: string; amount?: string; when: string[]; emits: string[]; applies?: string[]; clause?: number; self?: true; selfEmits?: string[] }[];
 }
 
 /** WHICH WAY A PARTNER GROUP RUNS. The three cases the copy already named -- "cause it", "feed it",
@@ -454,11 +454,18 @@ export function cardPageHtml(
   const abilityLines = (id: number | undefined): string =>
     (card.abilities ?? []).filter((a) => a.clause === id).map((a) => {
       const does = esc(effectPhrase(a.effect, a.amount, undefined, undefined) ?? a.effect.replace(/-/g, " "));
+      // THE SAME WORDS THE APP RENDERS. "wants" is a verb, so what follows it has to be a noun --
+      // the label form ("life being lost"), never the clause ("life is lost"). The component was
+      // fixed and this reader was not, and the two shipped different sentences for one event.
       const wants = a.when.map((k) =>
-        `        <li>wants <a href="#${esc(groupAnchor(k))}">${esc(eventKeyClause(k, a.self ? "this card" : undefined))}</a></li>`);
+        `        <li>wants <a href="#${esc(groupAnchor(k))}">${esc(eventKeySentence(k, a.self ? "this card" : undefined))}</a></li>`);
+      // A STATIC DEMANDS BY REACH, not by trigger. Without this the crawlable page showed an
+      // anthem and a cost-reducer with no events at all, while the app showed eight rows.
+      const reaches = (a.applies ?? []).map((k) =>
+        `        <li>wants <a href="#${esc(groupAnchor(k))}">${esc(eventKeySentence(k))}</a></li>`);
       const makes = a.emits.map((k) =>
         `        <li>makes <a href="#${esc(groupAnchor(k))}">${esc(eventKeyAction(k) ?? eventKeyClause(k))}</a></li>`);
-      const events = [...wants, ...makes];
+      const events = [...wants, ...reaches, ...makes];
       return `      <p>${esc(a.kind)}${a.cost ? ` ${esc(a.cost)}` : ""} — ${does}</p>\n`
         + (events.length > 0 ? `      <ul>\n${events.join("\n")}\n      </ul>\n` : "");
     }).join("");

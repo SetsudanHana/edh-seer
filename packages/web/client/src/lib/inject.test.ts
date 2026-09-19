@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+import { groupAnchor } from "./group-anchor.js";
 import {
   BROWSE_LETTERS, browseIndexHtml, browseLetterHtml, browseSegment, cardPageHtml, groupDirection,
   htmlHeaders, injectPage, withheldFrom, type InjectableCard,
@@ -603,4 +604,27 @@ test("a commander page's link is scoped to its identity, a card page's is not", 
   };
   expect(cardPageHtml(card, "x", "commander")).toContain("colors=RGW");
   expect(cardPageHtml(card, "x", "card")).not.toContain("colors=");
+});
+
+/** BOTH READERS SAY THE SAME WORDS (roadmap AJ4, the spec's headline risk). `.prerendered` is
+ *  hidden the instant React boots, so a sentence only one of them renders is served to a crawler
+ *  and hidden from every human -- or the reverse. This shipped once: the component's "wants" rows
+ *  were fixed to the noun form and this reader was left on the clause form, so one event had two
+ *  sentences, and the static reach rows existed in the app and not here at all. */
+test("the crawlable reading carries a static's reach, in the same words the app uses", () => {
+  const html = cardPageHtml({
+    ...KRENKO,
+    clauses: [{ id: 3, text: "Other creatures you control get +X/+0, where X is your speed." }],
+    abilities: [
+      { kind: "static", clause: 3, effect: "pump", when: [], emits: [], applies: ["applies:pump|creature|-|-"] },
+      { kind: "triggered", effect: "speed", when: ["lose-life|-|-|-"], emits: [] },
+    ],
+  }, "x", "card");
+  // The static's demand is its reach; without it the anthem rendered with no events at all.
+  expect(html).toContain(`<li>wants <a href="#${groupAnchor("applies:pump|creature|-|-")}">a creature it boosts</a></li>`);
+  // "wants" takes the NOUN form, the way the component renders it.
+  expect(html).toContain("life being lost");
+  expect(html).not.toContain("wants <a href=\"#event-lose-life\">life is lost</a>");
+  // An implied ability still has no quote above it, and still carries its events.
+  expect(html).toContain("read off the card itself");
 });
