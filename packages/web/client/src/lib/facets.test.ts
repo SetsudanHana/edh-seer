@@ -1,134 +1,68 @@
-import { EFFECT_KINDS } from "@edh-seer/tagger/schema";
-import { ARCHETYPE_SIGNATURE } from "@edh-seer/matcher/archetypes";
-import type { FacetRow } from "@edh-seer/matcher/partners-core";
 import { expect, test } from "vitest";
-import { DOES, STRATEGIES, applyFacets, coloursFit, facetsFromParams, facetsToParams, matchedTerms, rateLabel } from "./facets.js";
+import { coloursFit, eventsFromParams, eventsToParams, intersect, rateLabel } from "./facets.js";
 
-/** FIND BY WHAT IT DOES (spec 2026-09-08 part 4): the chips name real kinds, the strategies carry
- *  signatures, colours mean subset on Cards and exact on Commanders, groups AND and chips OR. */
-test("every Does chip names a real effect kind, and every Strategy option carries a signature", () => {
-  for (const d of DOES) expect(EFFECT_KINDS).toContain(d.kind);
-  for (const s of STRATEGIES) expect(Object.keys(ARCHETYPE_SIGNATURE)).toContain(s.slug);
-  expect(STRATEGIES.find((s) => s.slug === "counters")?.label).toBe("+1/+1 Counters");
+/** THE SEARCH IS ASKED IN EVENTS (spec 2026-09-19): repeated params because a key can carry a
+ *  comma, everything ANDs, and identity is fits-in on Cards and exact on Commanders. */
+
+/** A JOINED LIST WOULD HAVE BEEN UNSPLITTABLE. 274 of the 1,187 corpus keys contain a comma; this
+ *  pins the param shape against a "tidy it into one param" change. */
+test("a key carrying a comma survives the round trip", () => {
+  const comma = "fills|creature,enchantment|-|-";
+  const params = eventsToParams({ produce: [comma, "enters|land|-|-"], consume: [], colours: ["R", "G"] }, new URLSearchParams());
+  expect(params.getAll("produce")).toEqual([comma, "enters|land|-|-"]);
+  expect(eventsFromParams(params)).toEqual({ produce: [comma, "enters|land|-|-"], consume: [], colours: ["R", "G"] });
 });
 
-test("colours: exact identity on both pages, C is colourless, none means any", () => {
-  expect(coloursFit("WG", ["G", "W"], "cards")).toBe(true);
-  expect(coloursFit("G", ["G", "W"], "cards")).toBe(false);
-  expect(coloursFit("", ["G"], "cards")).toBe(false);
-  expect(coloursFit("UG", ["G"], "cards")).toBe(false);
-  expect(coloursFit("G", ["C"], "cards")).toBe(false);
+test("a static key carrying colons and commas survives too", () => {
+  const key = "applies:cost-reduction|creature,artifact|cleric,rogue|-";
+  const params = eventsToParams({ produce: [], consume: [key], colours: [] }, new URLSearchParams());
+  expect(eventsFromParams(params).consume).toEqual([key]);
+});
+
+test("params the reader did not set are left alone, and an emptied group is removed", () => {
+  const before = new URLSearchParams("q=samut&produce=a&produce=b&colors=RG");
+  const after = eventsToParams({ produce: [], consume: ["c"], colours: [] }, before);
+  expect(after.get("q")).toBe("samut");
+  expect(after.getAll("produce")).toEqual([]);
+  expect(after.getAll("consume")).toEqual(["c"]);
+  expect(after.get("colors")).toBeNull();
+});
+
+/** `does` AND `theme` ARE NOT READ ANY MORE. An old shared link lands on an unfiltered page rather
+ *  than on an answer to a question the vocabulary no longer has. */
+test("the retired params are ignored, not honoured", () => {
+  const q = eventsFromParams(new URLSearchParams("does=draw-card&theme=tokens&produce=a"));
+  expect(q).toEqual({ produce: ["a"], consume: [], colours: [] });
+});
+
+/** THE REVERSAL (owner 2026-09-19): a card list is read while building a deck, a commander list to
+ *  choose a commander. The 2026-09-08 exact-on-both ruling survives on Commanders. */
+test("colours: fits-in on Cards, exact on Commanders", () => {
+  expect(coloursFit("R", ["R", "G"], "cards")).toBe(true);
+  expect(coloursFit("RG", ["R", "G"], "cards")).toBe(true);
+  expect(coloursFit("", ["R", "G"], "cards")).toBe(true);
+  expect(coloursFit("RU", ["R", "G"], "cards")).toBe(false);
+  expect(coloursFit("R", ["R", "G"], "commanders")).toBe(false);
+  expect(coloursFit("RG", ["R", "G"], "commanders")).toBe(true);
+  expect(coloursFit("R", [], "cards")).toBe(true);
+});
+
+test("C is colourless only, on both pages", () => {
   expect(coloursFit("", ["C"], "cards")).toBe(true);
-  expect(coloursFit("WG", ["G", "W"], "commanders")).toBe(true);
-  expect(coloursFit("G", ["G", "W"], "commanders")).toBe(false);
-  expect(coloursFit("G", [], "cards")).toBe(true);
+  expect(coloursFit("", ["C"], "commanders")).toBe(true);
+  expect(coloursFit("R", ["C"], "cards")).toBe(false);
 });
 
-const ROWS: FacetRow[] = [
-  { s: "fathom-mage", i: "UG", c: 1, e: ["draw-card"], t: ["counters"], d: ["counters"] },
-  { s: "inspiring-call", i: "G", c: 0, e: ["draw-card"], t: ["counters"], d: ["counters"] },
-  { s: "skullclamp", i: "", c: 0, e: ["draw-card"], t: ["aristocrats"], d: [] },
-  { s: "hardened-scales", i: "G", c: 0, e: ["counter-placement"], t: ["counters"], d: [] },
-  { s: "zaxara", i: "UBG", c: 1, e: ["token-generation"], t: ["counters"], d: [] },
-];
-
-test("groups AND, chips within a group OR, exact colours", () => {
-  expect(applyFacets(ROWS, { colours: ["G"], does: ["draw-card"], strategy: "counters" }, "cards").map((r) => r.s))
-    .toEqual(["inspiring-call"]);
-  expect(applyFacets(ROWS, { colours: [], does: ["draw-card", "counter-placement"], strategy: "counters" }, "cards").map((r) => r.s))
-    .toEqual(["fathom-mage", "inspiring-call", "hardened-scales"]);
-  expect(applyFacets(ROWS, { colours: [], does: [], strategy: undefined }, "cards")).toHaveLength(5);
+test("intersect keeps only the ids in every list", () => {
+  expect([...intersect([[1, 2, 3], [2, 3, 4], [3, 2]])].sort()).toEqual([2, 3]);
+  expect([...intersect([[1, 2], []])]).toEqual([]);
+  expect([...intersect([[5, 6]])].sort()).toEqual([5, 6]);
+  expect([...intersect([])]).toEqual([]);
 });
 
-test("more chosen chips matched puts a card higher (owner 2026-09-08)", () => {
-  const rows: FacetRow[] = [
-    { s: "one", i: "", c: 0, e: ["draw-card"], t: [], d: [] },
-    { s: "both", i: "", c: 0, e: ["draw-card", "mill"], t: [], d: [] },
-    { s: "also-one", i: "", c: 0, e: ["mill"], t: [], d: [] },
-  ];
-  expect(applyFacets(rows, { colours: [], does: ["draw-card", "mill"], strategy: undefined }, "cards").map((r) => r.s))
-    .toEqual(["both", "also-one", "one"]);
-});
-
-/** EQUAL ROWS ORDER BY PARTNER COUNT BEFORE SLUG (owner 2026-09-17). "makes tokens, in red" opened
- *  on three Aether cards because nothing but the alphabet separated 467 equal rows. */
-test("equal rows list the best-connected card first, then slug", () => {
-  const rows: FacetRow[] = [
-    { s: "aether", i: "R", c: 0, e: ["token-generation"], t: [], d: [], p: 12 },
-    { s: "krenko", i: "R", c: 1, e: ["token-generation"], t: [], d: [], p: 2400 },
-    { s: "zealous", i: "R", c: 0, e: ["token-generation"], t: [], d: [], p: 12 },
-    { s: "uncounted", i: "R", c: 0, e: ["token-generation"], t: [], d: [] },
-  ];
-  expect(applyFacets(rows, { colours: [], does: ["token-generation"], strategy: undefined }, "cards").map((r) => r.s))
-    .toEqual(["krenko", "aether", "zealous", "uncounted"]);
-});
-
-test("with a strategy chosen, askers first, then suppliers, then slug; commanders only on that page", () => {
-  expect(applyFacets(ROWS, { colours: [], does: [], strategy: "counters" }, "cards").map((r) => r.s))
-    .toEqual(["fathom-mage", "inspiring-call", "hardened-scales", "zaxara"]);
-  const out = applyFacets(ROWS, { colours: [], does: [], strategy: "counters" }, "commanders").map((r) => r.s);
-  expect(out).toEqual(["fathom-mage", "zaxara"]);
-});
-
-test("the why-line names what hit", () => {
-  expect(matchedTerms(ROWS[0]!, { colours: [], does: ["draw-card"], strategy: "counters" }))
-    .toEqual(["draws cards", "+1/+1 Counters (asks for it)"]);
-  expect(matchedTerms(ROWS[3]!, { colours: [], does: [], strategy: "counters" })).toEqual(["+1/+1 Counters"]);
-  expect(matchedTerms(ROWS[2]!, { colours: [], does: [], strategy: undefined })).toEqual([]);
-});
-
-test("facets round-trip through the URL, and unknown values are dropped", () => {
-  const q = { colours: ["G", "W"], does: ["draw-card", "mill"], strategy: "counters" };
-  const p = facetsToParams(q, new URLSearchParams("q=kren"));
-  expect(p.toString()).toBe("q=kren&colors=GW&does=draw-card%2Cmill&theme=counters");
-  expect(facetsFromParams(p)).toEqual(q);
-  expect(facetsFromParams(new URLSearchParams(""))).toEqual({ colours: [], does: [], strategy: undefined });
-  expect(facetsFromParams(new URLSearchParams("colors=GX&does=nope,mill&theme=nope")))
-    .toEqual({ colours: ["G"], does: ["mill"], strategy: undefined });
-});
-
-/** ONE DOES CHIP SORTS BY ITS RATE (spec 2026-09-04 step 3): floor per mana, ceiling to break it,
- *  the cards that state one above the ones that do not; two chips get no rate order. */
-test("a single rated chip orders by floor per mana, rated above unrated; two chips do not", () => {
-  const rows: FacetRow[] = [
-    { s: "rhystic-study", i: "U", c: 0, e: ["draw-card"], t: [], d: [], p: 900, r: { cards: [0, 3, null, 3] } },
-    { s: "unrated", i: "U", c: 0, e: ["draw-card"], t: [], d: [], p: 2000 },
-    { s: "divination", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [2, 3, 2, 3] } },
-    { s: "brainstorm", i: "U", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [1, 1, 1, 1] } },
-    { s: "fiery-gambit", i: "R", c: 0, e: ["draw-card", "damage"], t: [], d: [], r: { cards: [0, 3, 9, 3], damage: [0, 3, 3, 3] } },
-    { s: "jayemdae-tome", i: "", c: 0, e: ["draw-card"], t: [], d: [], r: { cards: [1, 8, 1, 4] } },
-  ];
-  expect(applyFacets(rows, { colours: [], does: ["draw-card"], strategy: undefined }, "cards").map((r) => r.s))
-    .toEqual(["brainstorm", "divination", "jayemdae-tome", "rhystic-study", "fiery-gambit", "unrated"]);
-  expect(applyFacets(rows, { colours: [], does: ["draw-card", "damage"], strategy: undefined }, "cards").map((r) => r.s))
-    .toEqual(["fiery-gambit", "unrated", "rhystic-study", "brainstorm", "divination", "jayemdae-tome"]);
-  const q = { colours: [], does: ["draw-card"], strategy: undefined };
-  expect(matchedTerms(rows[3]!, q)).toEqual(["draws cards", "1 card / 1 mana"]);
-  expect(matchedTerms(rows[2]!, q)).toEqual(["draws cards", "2 cards / 3 mana"]);
-  expect(matchedTerms(rows[0]!, q)).toEqual(["draws cards", "0+ cards / 3 mana"]);
-  expect(matchedTerms(rows[4]!, q)).toEqual(["draws cards", "0–9 cards / 3 mana"]);
-  expect(matchedTerms(rows[5]!, q)).toEqual(["draws cards", "1 card / 8 mana, then 1 / 4"]);
-  expect(matchedTerms(rows[4]!, { ...q, does: ["damage"] })).toEqual(["deals damage", "0–3 damage / 3 mana"]);
-  expect(matchedTerms(rows[1]!, q)).toEqual(["draws cards"]);
-  expect(rateLabel([0, 3, 0, 3], "cards")).toBe("0 cards / 3 mana");
-  expect(rateLabel([2, 1, 2, 0], "mana")).toBe("2 mana / 1 mana, then 2 / 0");
-  expect(rateLabel([1, 1, 1, 0, 1], "mana")).toBe("1 mana / 1 mana, then 1 / 0, from next turn");
-  expect(rateLabel([3, 2, 3, 2], "life")).toBe("3 life / 2 mana");
-  expect(rateLabel([0, 2, null, 2], "life-loss")).toBe("0+ life / 2 mana");
-  expect(rateLabel([10, 2, 10, 2], "mill")).toBe("10 cards / 2 mana");
-  expect(rateLabel([1, 2, 1, 2], "tokens")).toBe("1 token / 2 mana");
-  expect(rateLabel([2, 2, 2, 2], "tokens", "1/1")).toBe("2 1/1 tokens / 2 mana");
-  expect(matchedTerms({ s: "raise-the-alarm", i: "W", c: 0, e: ["token-generation"], t: [], d: [], r: { tokens: [2, 2, 2, 2] }, z: "1/1" }, { colours: [], does: ["token-generation"], strategy: undefined })).toEqual(["makes tokens", "2 1/1 tokens / 2 mana"]);
-  expect(rateLabel([2, 3, 2, 3], "counters")).toBe("2 counters / 3 mana");
-  expect(rateLabel([1, 1, 1, 1], "search")).toBe("1 card / 1 mana");
-  expect(rateLabel([2, 3, 2, 3], "untap")).toBe("2 permanents / 3 mana");
-  expect(rateLabel([1, 2, 1, 2], "copies")).toBe("1 copy / 2 mana");
-  expect(DOES.filter((d) => d.rate).map((d) => d.kind)).toEqual(["draw-card", "token-generation", "counter-placement", "mana-generation", "lifegain", "graveyard-recursion", "search", "damage", "player-life-loss", "mill", "untap", "flicker", "copy-spell"]);
-  const rocks: FacetRow[] = [
-    { s: "commanders-sphere", i: "", c: 0, e: ["draw-card", "mana-generation"], t: [], d: [], r: { mana: [1, 3, 1, 0] } },
-    { s: "sol-ring", i: "", c: 0, e: ["mana-generation"], t: [], d: [], r: { mana: [2, 1, 2, 0] } },
-    { s: "arcane-signet", i: "", c: 0, e: ["mana-generation"], t: [], d: [], r: { mana: [1, 2, 1, 0] } },
-  ];
-  expect(applyFacets(rocks, { colours: [], does: ["mana-generation"], strategy: undefined }, "cards").map((r) => r.s))
-    .toEqual(["sol-ring", "arcane-signet", "commanders-sphere"]);
+/** THE RATE LABELS STAY (`HighSynergyCards` prints them); only the rate ORDER went with the chip
+ *  that named its family. */
+test("a rate still prints both ends", () => {
+  expect(rateLabel([1, 1, 1, 1, false], "cards")).toBe("1 card / 1 mana");
+  expect(rateLabel([0, 3, 9, 3, false], "cards")).toBe("0–9 cards / 3 mana");
 });

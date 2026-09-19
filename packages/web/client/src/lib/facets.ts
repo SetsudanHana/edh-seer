@@ -1,100 +1,84 @@
-import { ARCHETYPE_SIGNATURE, ARCHETYPE_VOCABULARY } from "@edh-seer/matcher/archetypes";
-import type { FacetRow } from "@edh-seer/matcher/partners-core";
-import { compareRates, type RateFamily, type RateSpan } from "@edh-seer/matcher/rate";
+import type { RateFamily, RateSpan } from "@edh-seer/matcher/rate";
 export type { RateFamily } from "@edh-seer/matcher/rate";
 
-/** FIND BY WHAT IT DOES (spec 2026-09-08 part 4). Three facets over the facet index: colours, what
- *  the card does (effect kinds, curated to the chips a player would reach for), and the strategy
- *  it belongs to (the report's own archetype dictionary). Groups AND; chips within a group OR. */
-
-/** THE CHIPS A PLAYER REACHES FOR, in this order. Not all 39 kinds earn one; the rest stay
- *  reachable by name. Player labels, not engine names. A renamed kind fails `facets.test.ts`. */
-export const DOES: { kind: string; label: string; rate?: RateFamily }[] = [
-  { kind: "draw-card", label: "draws cards", rate: "cards" },
-  { kind: "token-generation", label: "makes tokens", rate: "tokens" },
-  { kind: "counter-placement", label: "puts counters", rate: "counters" },
-  { kind: "proliferate", label: "proliferates" },
-  { kind: "mana-generation", label: "adds mana", rate: "mana" },
-  { kind: "lifegain", label: "gains life", rate: "life" },
-  { kind: "graveyard-recursion", label: "returns from the graveyard", rate: "recursion" },
-  { kind: "search", label: "searches the library", rate: "search" },
-  { kind: "damage", label: "deals damage", rate: "damage" },
-  { kind: "drain", label: "drains" },
-  { kind: "player-life-loss", label: "makes opponents lose life", rate: "life-loss" },
-  { kind: "mill", label: "mills", rate: "mill" },
-  { kind: "untap", label: "untaps", rate: "untap" },
-  { kind: "flicker", label: "flickers", rate: "flicker" },
-  { kind: "exile-processing", label: "processes exiled cards" },
-  { kind: "copy-spell", label: "copies spells", rate: "copies" },
-  { kind: "copy-ability", label: "copies abilities" },
-  { kind: "clone", label: "copies permanents" },
-  { kind: "keyword-grant", label: "grants keywords" },
-  { kind: "pump", label: "pumps" },
-  { kind: "cost-reduction", label: "reduces costs" },
-  { kind: "trigger-doubling", label: "doubles triggers" },
-  { kind: "extra-turn", label: "takes extra turns" },
-  { kind: "extra-combat", label: "takes extra combats" },
-];
-
-/** The strategies a card can belong to: vocabulary members that carry a signature, so membership
- *  is computable. Labelled as the report labels them. */
-export const STRATEGIES: { slug: string; label: string; cls: string }[] = ARCHETYPE_VOCABULARY
-  .filter((a) => a.slug in ARCHETYPE_SIGNATURE)
-  .map((a) => ({ slug: a.slug, label: a.label, cls: a.class }));
-
-export interface FacetQuery { colours: string[]; does: string[]; strategy?: string }
-
-/** EXACT IDENTITY ON BOTH PAGES (owner 2026-09-08, the same ruling the Commanders chips carried
- *  since 2026-09-04): Green and White list green-white cards, not everything a green-white deck
- *  could play. A "fits in" subset was built first and rejected on sight. `C` chosen means
- *  colourless only. The `mode` stays in the signature because the caller passes it. */
-export function coloursFit(identity: string, colours: string[], _mode: "cards" | "commanders"): boolean {
-  if (colours.length === 0) return true;
-  if (colours.includes("C")) return identity === "";
-  return identity.length === colours.length && colours.every((c) => identity.includes(c));
+/** FIND BY WHAT A CARD CAUSES AND WHAT IT ASKS FOR (spec 2026-09-19, roadmap AJ3).
+ *
+ *  THE SEARCH IS ASKED IN THE ENGINE'S OWN VOCABULARY, and in no second one. The owner's ruling:
+ *  "we should base ourselves on our events not on the does and theme, cause events are does and
+ *  theme basically". Measured before it was taken -- lifegain against `gain-life|*` agrees on
+ *  1.00, draw on 0.98, tokens on 0.95 -- and where a pair disagrees the ENGINE is wrong and gets
+ *  fixed on its own line (mill reads 0.70; roadmap AK1), rather than a second vocabulary living
+ *  beside this one under one heading.
+ *
+ *  WHAT WENT WITH THEM. The `DOES` chips, the strategy select and `applyFacets` are deleted here,
+ *  and `facet-index.json` with them. The rate ORDER went too: it was defined only for a single
+ *  Does chip carrying a rate family, and no event names one (roadmap AK3). The rate LABELS stay --
+ *  `HighSynergyCards` prints them -- and the card pages still ship their rates.
+ *
+ *  WHAT NO EVENT CAN ASK, and it is the ruling's measured cost (roadmap AK2): mana-generation
+ *  (1,702 cards), drain (270), copy-spell (198), clone (169), trigger-doubling (46), extra-turn
+ *  (39). Adding mana triggers nothing, so the trigger vocabulary has no word for it. Ramp is
+ *  reachable by name and on the report, and is unaskable here until AK2. */
+export interface EventQuery {
+  /** Events the card can CAUSE. Every one must match. */
+  produce: string[];
+  /** Events the card ASKS FOR. Every one must match. */
+  consume: string[];
+  colours: string[];
 }
 
-const strategyHit = (r: FacetRow, q: FacetQuery): boolean => q.strategy === undefined || r.t.includes(q.strategy);
-/** How many of the chosen Does chips the card satisfies. OR within the group, so one is enough to
- *  list it; the count is the order (owner 2026-09-08): a card that does three of the chosen things
- *  sits above one that does one. */
-const doesHits = (r: FacetRow, q: FacetQuery): number => q.does.filter((k) => r.e.includes(k)).length;
-
-/** THE RATE A QUERY SORTS BY (spec 2026-09-04 step 3): a SINGLE Does chip with a family. Two chips
- *  get no rate order -- cards per mana and damage per mana are two rates, and a constant that
- *  trades one for the other is what killed edge magnitude three times (log 2026-08-16). */
-const rateFamily = (q: FacetQuery): RateFamily | undefined =>
-  q.does.length === 1 ? DOES.find((d) => d.kind === q.does[0])?.rate : undefined;
-const rateOf = (r: FacetRow, q: FacetQuery): RateSpan | undefined => {
-  const f = rateFamily(q);
-  return f === undefined ? undefined : r.r?.[f];
-};
-
-export function applyFacets(rows: FacetRow[], q: FacetQuery, mode: "cards" | "commanders"): FacetRow[] {
-  const out = rows.filter((r) =>
-    (mode !== "commanders" || r.c === 1) && coloursFit(r.i, q.colours, mode)
-    && (q.does.length === 0 || doesHits(r, q) > 0) && strategyHit(r, q));
-  // THE ORDER: on a single Does chip with a rate, the best rate first (floor per mana, ceiling to
-  // break it) and every card that states one above every card that does not; then most chosen
-  // chips matched first; then the cards that ASK for the strategy (its
-  // payoffs) before the ones that merely supply it (measured on the first artifact, 2026-09-08:
-  // the unranked list for "draws cards, +1/+1 Counters" opened with ten cards that merely enter
-  // with a counter); then partner count, the best-connected card first (owner 2026-09-17: "makes
-  // tokens, in red" opened on three Aether cards with nothing but the alphabet between 467 equal
-  // rows); then slug, so two equal rows print the same way round every time.
-  const s = q.strategy;
-  const byRate = (a: FacetRow, b: FacetRow): number => {
-    const ra = rateOf(a, q), rb = rateOf(b, q);
-    if (ra === undefined || rb === undefined) return Number(ra === undefined) - Number(rb === undefined);
-    return compareRates(ra, rb);
+/** REPEATED PARAMS, NEVER A JOINED LIST. 274 of the 1,187 keys contain a comma
+ *  (`fills|creature,enchantment|-|-`, measured 2026-09-19), so a split cannot recover what a join
+ *  destroyed -- and the longest key is 118 characters, which three of still fits any URL.
+ *
+ *  `does` AND `theme` ARE NOT READ. An old link carrying them lands on an unfiltered page, which
+ *  is a smaller lie than answering a question the vocabulary no longer has. */
+export function eventsFromParams(p: URLSearchParams): EventQuery {
+  return {
+    produce: p.getAll("produce").filter((k) => k.length > 0),
+    consume: p.getAll("consume").filter((k) => k.length > 0),
+    colours: [...(p.get("colors") ?? "")].filter((c) => "WUBRGC".includes(c)),
   };
-  out.sort((a, b) =>
-    byRate(a, b)
-    || doesHits(b, q) - doesHits(a, q)
-    || (s === undefined ? 0 : Number(b.d.includes(s)) - Number(a.d.includes(s)))
-    || (b.p ?? 0) - (a.p ?? 0)
-    || a.s.localeCompare(b.s));
+}
+
+export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchParams {
+  const out = new URLSearchParams(p);
+  for (const k of ["produce", "consume", "colors"]) out.delete(k);
+  for (const k of q.produce) out.append("produce", k);
+  for (const k of q.consume) out.append("consume", k);
+  if (q.colours.length > 0) out.set("colors", q.colours.join(""));
   return out;
+}
+
+/** WHAT A COLOUR CHIP MEANS, AND IT IS NOT THE SAME QUESTION ON THE TWO PAGES (owner 2026-09-19).
+ *
+ *  A card list is read while BUILDING a deck, so `colors=RG` means "playable in a RG deck": the
+ *  card's identity sits inside the chosen one, and a colourless card sits inside every one. A
+ *  commander list is read to CHOOSE a commander, where a mono-red commander is a different deck
+ *  from a RG one -- so it stays EXACT.
+ *
+ *  THIS REVERSES THE 2026-09-08 RULING, FOR CARDS ONLY. That ruling read "EXACT IDENTITY ON BOTH
+ *  PAGES ... a fits-in subset was built first and rejected on sight", and it is written here
+ *  rather than deleted so the next reader knows it was decided twice and why it changed.
+ *
+ *  `C` IS UNCHANGED BY THE REVERSAL: colourless only, on both pages, and exclusive of the five.
+ *  Every identity already contains the colourless cards, so "red and colourless" is a redundant
+ *  question and not a wider one. */
+export function coloursFit(identity: string, colours: string[], mode: "cards" | "commanders"): boolean {
+  if (colours.length === 0) return true;
+  if (colours.includes("C")) return identity === "";
+  if (mode === "commanders") return identity.length === colours.length && colours.every((c) => identity.includes(c));
+  return [...identity].every((c) => colours.includes(c));
+}
+
+/** THE AND. Every event narrows; the shortest list leads, so the walk is over the smallest input
+ *  rather than over the 24,982-member one. No lists at all is not "everything" -- the caller asks
+ *  only when it has events, and an empty answer for an empty question would hide that. */
+export function intersect(lists: number[][]): Set<number> {
+  if (lists.length === 0) return new Set();
+  const sorted = [...lists].sort((a, b) => a.length - b.length);
+  const rest = sorted.slice(1).map((l) => new Set(l));
+  return new Set(sorted[0]!.filter((id) => rest.every((s) => s.has(id))));
 }
 
 /** THE RATE, BOTH ENDS PRINTED (owner 2026-09-17: floor and ceiling, never one number): "3 cards
