@@ -147,6 +147,210 @@ export const DEMAND_SUBJECTLESS: Record<string, string> = {
   "ring-tempts": "the Ring tempting you",
 };
 
+/** THE SAME EVENT, AS A CLAUSE (roadmap AK4, owner 2026-09-19: "this is not how mtg players say
+ *  things"). `DEMAND_VERB` holds participles because it was built to be GLUED to a noun -- "a
+ *  creature dying" -- which reads as a label and nowhere else. Inside a sentence it was simply
+ *  wrong, and shipped that way: the ability table has been printing "when this card dying" and
+ *  "when a card being drawn" on every card page.
+ *
+ *  Present tense, third person, because that is the tense the rules text a player reads is in. */
+export const CLAUSE_VERB: Record<string, string> = {
+  enters: "enters the battlefield",
+  "enters-graveyard": "goes to a graveyard",
+  unlock: "is fully unlocked",
+  dies: "dies",
+  leaves: "leaves the battlefield",
+  "leaves-graveyard": "leaves a graveyard",
+  cast: "is cast",
+  attacks: "attacks",
+  taps: "becomes tapped",
+  untaps: "untaps",
+  "non-combat-damage": "deals noncombat damage",
+  "combat-damage": "deals combat damage",
+  damaged: "is dealt damage",
+  exiled: "is exiled",
+  discard: "is discarded",
+  mill: "is milled",
+  sacrifice: "is sacrificed",
+  "create-token": "is created",
+  "counter-added": "gets a counter",
+  "counter-removed": "loses a counter",
+  transform: "transforms",
+  "turned-face-up": "is turned face up",
+  copy: "is copied",
+  reveal: "is revealed",
+  attached: "becomes attached",
+  unattached: "becomes unattached",
+  "gains-control": "changes control",
+  "phases-out": "phases out",
+  regenerate: "regenerates",
+  goad: "is goaded",
+  exert: "is exerted",
+  detain: "is detained",
+  suspect: "is suspected",
+  harness: "is harnessed",
+  convert: "converts",
+  explore: "explores",
+  endure: "endures",
+  heal: "is healed",
+  airbend: "is airbent",
+  foretell: "is foretold",
+  "counter-spell": "is countered",
+  "land-play": "is played",
+};
+
+/** The subjectless events as clauses. Most already read as one; the participles do not. */
+export const SUBJECTLESS_CLAUSE: Record<string, string> = {
+  draw: "a card is drawn",
+  // WITH NO TYPE IN THE KEY THE OBJECT IS STILL KNOWN: milling and discarding are done to CARDS,
+  // so the bare key reads "a card is milled" rather than the generic "anything is milled". A key
+  // that names a type (`mill|creature|-|-`) never reaches here and keeps its own noun.
+  mill: "a card is milled",
+  discard: "a card is discarded",
+  "gain-life": "life is gained",
+  "lose-life": "life is lost",
+  "dice-rolled": "a die is rolled",
+  proliferate: "you proliferate",
+  scry: "you scry",
+  surveil: "you surveil",
+  search: "a library is searched",
+  "loses-game": "a player loses the game",
+  shuffle: "a library is shuffled",
+  prevented: "damage is prevented",
+  exchange: "an exchange happens",
+  double: "something is doubled",
+  triple: "something is tripled",
+  vote: "you vote",
+  clash: "you clash",
+  fateseal: "you fateseal",
+  behold: "you behold",
+  learn: "you learn",
+  forage: "you forage",
+  "time-travel": "you time travel",
+  "collect-evidence": "you collect evidence",
+  "venture-into-the-dungeon": "you venture into the dungeon",
+  "face-a-villainous-choice": "you face a villainous choice",
+  waterbend: "you waterbend",
+  "flip-coin": "a coin is flipped",
+  monarch: "you become the monarch",
+  initiative: "you take the initiative",
+  "city-blessing": "you gain the city's blessing",
+  "ring-tempts": "the Ring tempts you",
+};
+
+/** WHAT A CARD DOES, IN A PLAYER'S WORDS (roadmap AK4, owner's ruling: "draw a card").
+ *
+ *  A card that CAUSES an event performs an action, and a player names the action, not the event --
+ *  "sacrifice a creature", not "a creature being sacrificed"; "kill a creature", not "a creature
+ *  dying". This is the verb; the object noun is glued on by `eventKeyAction`.
+ *
+ *  NOT EVERY EVENT HAS ONE, and that is not a gap. Nobody "deaths" a creature, and no card makes
+ *  "a creature attack" the way it makes one die -- those keep the clause. An absent entry here is
+ *  the caller's signal to fall back, which is why this map is deliberately shorter than the other
+ *  two rather than padded with invented verbs.
+ *
+ *  `ONTO`/`INTO` are placeholders the composer splits on: the object sits inside the phrase ("put
+ *  a creature onto the battlefield"), not after it. */
+export const ACTION_VERB: Record<string, string> = {
+  mill: "mill",
+  discard: "discard",
+  exiled: "exile",
+  sacrifice: "sacrifice",
+  dies: "kill",
+  "create-token": "create",
+  taps: "tap",
+  untaps: "untap",
+  copy: "copy",
+  reveal: "reveal",
+  goad: "goad",
+  detain: "detain",
+  suspect: "suspect",
+  exert: "exert",
+  transform: "transform",
+  regenerate: "regenerate",
+  heal: "heal",
+  harness: "harness",
+  cast: "cast",
+  "counter-spell": "counter",
+  "land-play": "play",
+  "gains-control": "take control of",
+  "counter-added": "put a counter on",
+  "counter-removed": "remove a counter from",
+  damaged: "deal damage to",
+  enters: "put ONTO the battlefield",
+  "enters-graveyard": "put INTO a graveyard",
+  // A FILL IS AN ACTION ON THE CAUSING SIDE. The label reads as the thing wanted ("a creature in a
+  // graveyard") because a reanimator is waiting for it; the card that puts it there is doing
+  // something, and a player calls that filling the yard.
+  fills: "put INTO a graveyard",
+};
+
+/** A STATIC APPLIES SOMETHING TO A CLASS, and on the causing side that is an action too: the card
+ *  BOOSTS creatures. `STATIC_REACH` words the same relation from the other end ("a creature it
+ *  boosts"), so this is that map in the imperative rather than a second vocabulary. */
+const STATIC_ACTION: Record<string, string> = {
+  pump: "boost",
+  // The four other static kinds whose action is not in doubt. The rest keep the generic "it
+  // applies X to" wording: inventing a verb for `applies:graveyard-recursion` or
+  // `applies:emblem` would be a guess, and a guess in a label is one a reader cannot check.
+  "speed-increase": "increase the speed of",
+  animate: "animate",
+  untap: "untap",
+  "counter-placement": "put counters on",
+  "cost-reduction": "make cheaper to cast",
+  "keyword-grant": "grant abilities to",
+  "type-grant": "grant types to",
+  "trigger-doubling": "double the triggers of",
+  "damage-multiplier": "multiply the damage of",
+  "token-doubling": "double the tokens of",
+  protection: "protect",
+};
+
+/** THE OBJECT A VERB IMPLIES WHEN THE KEY NAMES NO CLASS. "untap anything" is not what a player
+ *  says; "untap a permanent" is, and the verb already tells you which noun it must be. Only for
+ *  verbs whose object is never in doubt -- everything else keeps "anything", which is honest about
+ *  the key naming no class at all. */
+const DEFAULT_OBJECT: Record<string, string> = {
+  taps: "a permanent",
+  untaps: "a permanent",
+  exiled: "a card",
+  reveal: "a card",
+  sacrifice: "a permanent",
+  "create-token": "a token",
+  "counter-spell": "a spell",
+  "land-play": "a land",
+};
+
+/** The subjectless actions, whole: there is no object noun to glue on. */
+export const SUBJECTLESS_ACTION: Record<string, string> = {
+  draw: "draw a card",
+  // The same known object the clauses name: you mill a CARD, you discard a CARD.
+  mill: "mill a card",
+  discard: "discard a card",
+  "gain-life": "gain life",
+  "lose-life": "drain life",
+  search: "search your library",
+  scry: "scry",
+  surveil: "surveil",
+  proliferate: "proliferate",
+  shuffle: "shuffle a library",
+  "flip-coin": "flip a coin",
+  "dice-rolled": "roll a die",
+  vote: "vote",
+  clash: "clash",
+  fateseal: "fateseal",
+  behold: "behold",
+  learn: "learn",
+  forage: "forage",
+  "time-travel": "time travel",
+  "collect-evidence": "collect evidence",
+  "venture-into-the-dungeon": "venture into the dungeon",
+  waterbend: "waterbend",
+  monarch: "become the monarch",
+  initiative: "take the initiative",
+  "city-blessing": "gain the city's blessing",
+};
+
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** A raw census key, de-slugified. Reached only when a verb or a subject shape has no entry above
@@ -507,13 +711,26 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
   // key cannot carry the self flag, so the caller hands the noun in.
   if (subject !== undefined) return `${subject} ${event}`;
 
+  const noun = subjectNoun(type, subtype, token, colors);
+  return noun === null
+    ? `${token === "n" ? "anything that is not a token" : "anything"} ${event}`
+    : `${noun.article} ${noun.phrase} ${event}`;
+}
+
+/** THE NOUN THE KEY NAMES, shared by every form of the sentence (roadmap AK4). One grammar, so the
+ *  label, the clause and the action cannot disagree about what a key is ABOUT -- only about what
+ *  happens to it. `null` is "the key names no class", which each form words its own way.
+ *
+ *  Subtypes are proper nouns in Magic -- a Goblin, not a goblin -- and they qualify the type rather
+ *  than replacing it: "a Goblin creature", the way a type line reads.
+ *  THE COLOUR THE KEY CANNOT CARRY (owner, 2026-09-08): "a red spell being cast", not "a spell
+ *  being cast", when the caller hands the filter in. Two colours read as a choice, which is what a
+ *  colour filter means. */
+function subjectNoun(
+  type: string, subtype: string, token: string, colors?: string[],
+): { article: string; phrase: string } | null {
   const list = (raw: string, proper: boolean): string[] =>
     raw === "-" ? [] : raw.split(",").map((m) => proper ? capitalize(m) : m);
-  // Subtypes are proper nouns in Magic -- a Goblin, not a goblin -- and they qualify the type
-  // rather than replacing it: "a Goblin creature", the way a type line reads.
-  // THE COLOUR THE KEY CANNOT CARRY (owner, 2026-09-08): "a red spell being cast", not "a spell
-  // being cast", when the caller hands the filter in. Two colours read as a choice, which is what
-  // a colour filter means.
   const colour = colors?.length ? [colors.map((c) => COLOUR_WORD[c] ?? c.toLowerCase()).join(" or ")] : [];
   const words = [
     ...list(subtype, true),
@@ -521,10 +738,7 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
     ...list(type, false),
     ...(token === "t" ? ["token"] : []),
   ];
-  if (words.length === 0) {
-    return `${token === "n" ? "anything that is not a token" : "anything"} ${event}`;
-  }
-
+  if (words.length === 0) return null;
   // A LIST IS A DISJUNCTION, because that is what the key means: `enters|artifact,creature|-|-`
   // fires on an artifact OR a creature, and reading it as "an artifact creature" would be a
   // narrower claim than the card makes.
@@ -534,7 +748,157 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
   // THE ARTICLE AGREES WITH THE FIRST WORD SAID, which is "nontoken" when the flag is set: "an
   // nontoken artifact" was live on every artifact-sacrifice group (2026-09-17).
   const phrase = `${token === "n" ? "nontoken " : ""}${noun}`;
-  return `${/^[aeiou]/i.test(phrase) ? "an" : "a"} ${phrase} ${event}`;
+  return { article: /^[aeiou]/i.test(phrase) ? "an" : "a", phrase };
+}
+
+/** THE EVENT AS A CLAUSE: "a creature dies", "a card is drawn", "this card enters the battlefield".
+ *
+ *  Use it wherever the words sit INSIDE a sentence -- after "when", in a list of what a deck wants
+ *  -- and wherever the reader is waiting for the event rather than causing it. `eventKeySentence`
+ *  is the label form and reads as a noun; this one reads as English.
+ *
+ *  It falls back to the label for the shapes that are not events at all: a board count ("a Goblin
+ *  you control"), a static's reach, a graveyard fill. Those are standing facts, and conjugating
+ *  them would invent an event nothing fires -- the same rule `eventKeySentence` already keeps. */
+export function eventKeyClause(key: string, subject?: string, colors?: string[]): string {
+  const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
+
+  if (type === "-" && subtype === "-") {
+    const phase = DEMAND_PHASE[verb];
+    if (phase) return phase;
+    const subjectless = SUBJECTLESS_CLAUSE[verb];
+    if (subjectless) return subjectless;
+  }
+  const event = CLAUSE_VERB[verb];
+  // No clause form means this is not an event with a subject -- a feeder, a static, a count. The
+  // label already words those correctly, so there is nothing to conjugate.
+  if (!event) return eventKeySentence(key, subject, colors);
+  if (subject !== undefined) return `${subject} ${event}`;
+  const noun = subjectNoun(type, subtype, token, colors);
+  return noun === null
+    ? `${token === "n" ? "anything that is not a token" : "anything"} ${event}`
+    : `${noun.article} ${noun.phrase} ${event}`;
+}
+
+/** WHAT A CARD DOES, IN A PLAYER'S WORDS: "draw a card", "sacrifice a creature", "kill a creature".
+ *
+ *  `undefined` when the event has no actor -- nothing makes "a creature attack" the way it makes
+ *  one die -- and the caller falls back to the clause. Inventing a verb for every key would give
+ *  every row a phrase and give some of them a lie. */
+export function eventKeyAction(key: string, colors?: string[]): string | undefined {
+  const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
+
+  // AN OUTLET EATS SOMETHING, and "sacrifice a creature" is the phrase a player uses for it. The
+  // feeder key is the one shape whose LABEL is already about the action ("a creature to sacrifice").
+  if (verb === "fodder") {
+    // THE FEEDER NOUN RULE, not the trigger one: a card TYPE sitting in the subtype slot (the
+    // type-count ruling of 2026-09-09) is not a proper noun, so "sacrifice a creature" and
+    // "sacrifice a Goblin" are both right and "sacrifice a Creature" is not.
+    const eaten = subtype !== "-"
+      ? (CARD_TYPE_WORDS.has(subtype) ? subtype : capitalize(subtype))
+      : type !== "-" ? type : "permanent";
+    return `sacrifice ${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten}`;
+  }
+  if (verb.startsWith("applies:")) {
+    const does = STATIC_ACTION[verb.slice("applies:".length)];
+    if (!does) return undefined;
+    // The same collapse the label makes: a list of five or more types is a way of writing
+    // "anything", not a distinction.
+    if (subtype === "-" && type !== "-") {
+      const types = type.split(",");
+      if (types.length >= 5) {
+        return `${does} a ${types.every((t) => PERMANENT_TYPES.has(t)) ? "permanent" : "permanent or spell"}`;
+      }
+    }
+    const noun = subjectNoun(type, subtype, "-", colors);
+    return `${does} ${noun === null ? "anything" : `${noun.article} ${noun.phrase}`}`;
+  }
+  if (type === "-" && subtype === "-") {
+    const whole = SUBJECTLESS_ACTION[verb];
+    if (whole) return whole;
+  }
+  const action = ACTION_VERB[verb];
+  if (!action) return undefined;
+  const noun = subjectNoun(type, subtype, token, colors);
+  // A FILL'S OBJECT IS A CARD when the key names no type, the same known object `mill` and
+  // `discard` have: you put a CARD into a graveyard, not "anything".
+  const object = noun === null
+    ? (verb === "fills" ? "a card" : DEFAULT_OBJECT[verb] ?? "anything")
+    : `${noun.article} ${noun.phrase}`;
+  // `put ONTO the battlefield` -- the object belongs inside the phrase, not after it.
+  const around = action.match(/^(.*)\b(ONTO|INTO)\b(.*)$/);
+  return around
+    ? `${around[1]}${object} ${around[2]!.toLowerCase()}${around[3]}`
+    : `${action} ${object}`;
+}
+
+/** WHAT A PLAYER TYPES, AGAINST WHAT THE ENGINE CALLS IT (roadmap AK4, owner-reported: searching
+ *  "sacrifice token" found nothing, and so did "dies", "etb" and "tutor").
+ *
+ *  Three faults were stacked. The match was a raw substring, so word ORDER decided it. It was
+ *  literal, so "dies" missed "dying" and "draw" missed "drawn". And no amount of either turns
+ *  "etb" into "entering the battlefield" -- that needs saying out loud, which is what this map is.
+ *
+ *  Kept deliberately small and only for terms a player would actually type at a search box. A
+ *  synonym that reaches the wrong event is worse than one that is missing, because the reader has
+ *  no way to see that it went wrong. */
+const PLAYER_TERMS: Record<string, string[]> = {
+  etb: ["enters"],
+  "enters the battlefield": ["enters"],
+  blink: ["leaves", "enters"],
+  flicker: ["leaves", "enters"],
+  bounce: ["leaves"],
+  sac: ["fodder", "sacrifice"],
+  "sac outlet": ["fodder"],
+  "death trigger": ["dies"],
+  deathtrigger: ["dies"],
+  removal: ["dies"],
+  landfall: ["enters"],
+  tutor: ["search"],
+  "card draw": ["draw"],
+  cantrip: ["draw"],
+  "self mill": ["mill"],
+  selfmill: ["mill"],
+  reanimate: ["fills", "enters-graveyard"],
+  reanimator: ["fills"],
+  graveyard: ["fills", "enters-graveyard"],
+  yard: ["fills", "enters-graveyard"],
+  counters: ["counter-added"],
+  "+1/+1": ["counter-added"],
+  lifegain: ["gain-life"],
+  drain: ["lose-life"],
+  ping: ["non-combat-damage"],
+  "combat trigger": ["attacks"],
+  aristocrats: ["fodder", "dies"],
+};
+
+/** A CRUDE STEM, and deliberately crude: it has to make "dies" find "dying" and "draw" find
+ *  "drawn" without a stemmer library, over a vocabulary of about sixty verbs. Trailing inflections
+ *  come off, and three irregular pairs the maps actually contain are named. */
+const STEM_PAIRS: Record<string, string> = { dies: "die", dying: "die", died: "die", drawn: "draw", cast: "cast", milled: "mill", milling: "mill" };
+const stem = (word: string): string =>
+  STEM_PAIRS[word] ?? word.replace(/(ing|ed|es|s)$/, "").replace(/([^aeiou])\1$/, "$1");
+
+/** Does this event answer what the reader typed? Every typed word must hit SOMETHING -- the label,
+ *  the clause, the action or a synonym -- so extra words narrow rather than widen. */
+export function eventMatches(key: string, query: string): boolean {
+  const typed = query.toLowerCase().split(/\s+/).filter((w) => w.length > 0);
+  if (typed.length === 0) return true;
+  const verb = key.split("|")[0] ?? "";
+  const synonyms = Object.entries(PLAYER_TERMS)
+    .filter(([, verbs]) => verbs.some((v) => verb === v || verb.startsWith(`${v}:`)))
+    .map(([term]) => term);
+  const haystack = [eventKeySentence(key), eventKeyClause(key), eventKeyAction(key) ?? "", ...synonyms]
+    .join(" ").toLowerCase();
+  const words = new Set(haystack.split(/[^a-z0-9+/]+/).filter(Boolean).map(stem));
+  const whole = haystack;
+  // A typed word counts when it stems onto a WORD of the phrase. The substring fallback exists
+  // only for what cannot be a word -- "+1/+1" -- and for a multi-word synonym typed whole ("sac
+  // outlet"): applying it to every word made "token" match "nontoken", which is the opposite
+  // event, and rank it above the row the reader meant.
+  const odd = (w: string): boolean => /[^a-z]/.test(w);
+  return typed.every((w) => words.has(stem(w)) || (odd(w) && whole.includes(w)))
+    || whole.includes(query.toLowerCase().trim());
 }
 
 /** "artifact, creature or enchantment" -- the same joining `demandSentence` does inline, kept here

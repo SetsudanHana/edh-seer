@@ -15,7 +15,7 @@
  *  work with no prerender step and no hydration mismatch -- React mounts into an empty div and the
  *  crawler's copy sits beside it. */
 import { cardImageUrl } from "../components/card-node.js";
-import { eventKeySentence } from "./demand-sentence.js";
+import { eventKeyAction, eventKeyClause } from "./demand-sentence.js";
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -386,11 +386,18 @@ export function cardPageHtml(
   }
   const rows = groups.map((g) => {
     const n = card.rarity?.[g.event];
+    const dirHere = groupDirection(g.rows);
+    // THE EVENT NAMED THE WAY THE GROUP RUNS (roadmap AK4), and the count after it rather than
+    // wrapped around it: "2,525 cards can cause a creature dies" is not a sentence, and the
+    // player-facing wording is a clause or an action, never a noun phrase.
+    const said = dirHere === "asks"
+      ? eventKeyClause(g.event)
+      : eventKeyAction(g.event) ?? eventKeyClause(g.event);
     const count = n === undefined ? ""
-      : `    <p>${n.toLocaleString("en-US")} cards can cause ${esc(eventKeySentence(g.event))}.</p>\n`;
+      : `    <p>${esc(said)} — ${n.toLocaleString("en-US")} cards can cause this.</p>\n`;
     // THE WITHHELD COUNT, in the HTML too: it is the other number that makes this block this
     // card's, and the app has printed it under every group since the list was grouped.
-    const dir = groupDirection(g.rows);
+    const dir = dirHere;
     const withheld = withheldFrom(dir, g.event, g.rows.length, card.rarity, card.pool);
     const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "feed it" : "ask for it";
     // AND THE CRAWLER GETS THE SAME LINK THE APP DRAWS (roadmap AJ3), from the same builder: two
@@ -447,8 +454,8 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
 ${art}    <p>${esc(card.typeLine)}</p>
-${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeySentence(e))).join(", ") || "nothing"}.</p>
-    <p>Cares about: ${card.demands.map((d) => esc(eventKeySentence(d))).join(", ") || "nothing"}.</p>
+${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
+    <p>Cares about: ${card.demands.map((d) => esc(eventKeyClause(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;
 }

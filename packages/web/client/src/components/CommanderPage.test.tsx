@@ -78,7 +78,7 @@ test("a demand the commander does not answer itself is listed as one the deck mu
   at("krenko-mob-boss", async () => KRENKO);
   // ENGLISH, NOT THE KEY: `dies|creature|-|-` is engine vocabulary and this page is read by someone
   // who has never seen it.
-  expect(await screen.findByText("a creature dying")).toBeInTheDocument();
+  expect(await screen.findByText("a creature dies")).toBeInTheDocument();
 });
 
 /** A GOBLIN TOKEN ENTERING IS A CREATURE ENTERING, so this commander answers its own demand and the

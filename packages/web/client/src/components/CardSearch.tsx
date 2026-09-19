@@ -4,7 +4,7 @@ import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/par
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
 import { coloursFit, eventsFromParams, eventsToParams, intersect, type EventQuery } from "../lib/facets.js";
-import { eventKeySentence } from "../lib/demand-sentence.js";
+import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { EventPicker } from "./EventPicker.js";
 import { CardTile } from "./CardTile.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
@@ -209,14 +209,19 @@ export function CardSearch({
     return colours.length > 0 && slots ? inIdentityOf(slots, mask) : (freq.supply[key] ?? 0);
   }, [freq, colours, mask]);
   const consumeCountOf = useMemo(() => (key: string): number => freq?.consume[key] ?? 0, [freq]);
-  // The corpus supply, unscoped: it ranks the "asks for" list rather than being printed on it.
-  const supplyCountOf = useMemo(() => (key: string): number => freq?.supply[key] ?? 0, [freq]);
+
   const produceOptions = useMemo(
     () => (freq === null ? [] : Object.keys(freq.supply).filter((k) => (freq.supply[k] ?? 0) > 0 && k in freq.byIdentity)),
     [freq]);
   const consumeOptions = useMemo(
     () => (freq === null ? [] : Object.keys(freq.consume).filter((k) => (freq.consume[k] ?? 0) > 0)),
     [freq]);
+
+  // HOW EACH SIDE SAYS AN EVENT (roadmap AK4). A card that CAUSES one is doing something, so it
+  // takes the action a player would name ("sacrifice a creature"); a card WAITING for one takes
+  // the clause ("a creature dies"). Not every event has an action -- nobody makes a creature
+  // attack the way they make one die -- so the clause is the fallback rather than an invented verb.
+  const causeWording = (key: string): string => eventKeyAction(key) ?? eventKeyClause(key);
 
   // THE CAP IS A PAGE (UX review, 2026-09-17). "467 match, showing the first 50" with no way to the
   // rest was a dead end; each press shows another fifty, and a new question starts over.
@@ -331,6 +336,7 @@ export function CardSearch({
           chosen={eventQuery.produce}
           counts={countOf}
           demand={consumeCountOf}
+          say={causeWording}
           onChange={(next) => setEvents({ ...eventQuery, produce: next })}
         />
         <EventPicker
@@ -339,7 +345,8 @@ export function CardSearch({
           options={consumeOptions}
           chosen={eventQuery.consume}
           counts={consumeCountOf}
-          demand={supplyCountOf}
+          demand={consumeCountOf}
+          say={eventKeyClause}
           onChange={(next) => setEvents({ ...eventQuery, consume: next })}
         />
       </div>
@@ -404,7 +411,10 @@ export function CardSearch({
                 // WHY IT IS ON THE LIST, in the sentences that were asked. Every kept row answers
                 // every term (the query ANDs), so the caption is the question rather than a
                 // per-row computation over data this page no longer fetches.
-                const terms = chosenKeys.map((k) => eventKeySentence(k));
+                const terms = [
+                  ...eventQuery.produce.map(causeWording),
+                  ...eventQuery.consume.map((k) => eventKeyClause(k)),
+                ];
                 return (
                   <li key={e.slug} className="min-w-0">
                     <CardTile

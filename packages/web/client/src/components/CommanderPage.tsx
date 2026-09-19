@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { identityKeyOf, themesOf, unmetDemands } from "@edh-seer/matcher/partners-core";
 import { identityLabel } from "../lib/color-identity.js";
-import { eventKeySentence } from "../lib/demand-sentence.js";
+import { eventKeyClause } from "../lib/demand-sentence.js";
 import { loadCardPage, type CardPageData, type PartnerRow } from "../lib/partners.js";
 import { CardArt } from "./CardArt.js";
 import { CardShell } from "./CardShell.js";
@@ -170,7 +170,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           <span className="eyebrow text-(--muted)">the other 99 have to bring </span>
           {gaps.length === 0
             ? <span className="text-(--muted)">nothing. It answers every event it watches</span>
-            : gaps.map((w) => eventKeySentence(w)).join(" · ")}
+            : gaps.map((w) => eventKeyClause(w)).join(" · ")}
         </p>
         </>)}
       </div>
