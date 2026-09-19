@@ -511,12 +511,13 @@ test("a row carries the confirmed event, not the best-scoring one", async () => 
   } finally { spy.mockRestore(); }
 });
 
-/** ONE EVENT, TWO SPELLINGS. `eventKey` reads the RAW verb, `zoneEventKey` renames the canonical
- *  one, so a "leave your graveyard" demand keys as `leaves|creature|-` and tags as
- *  `leaves-graveyard:creature`. Matching the two strings against each other would drop the whole
- *  family without a test noticing; both are built here by the functions that build them for real.
- *  (Until 2026-09-05 the witness was a sacrifice outlet's `leaves` tagging `dies:`; a death and a
- *  leave are two verbs now and neither is renamed, so the rename that remains is the graveyard one.) */
+/** ONE EVENT, ONE SPELLING SINCE AK6. `zoneEventKey` has always renamed the canonical tag
+ *  (`leaves-graveyard:creature`) while `eventKey` dropped the zone and kept `leaves|creature|-`,
+ *  so the two layers spelled one event two ways. The pair still formed -- the engine verifies on
+ *  the TAG, which is why Tormod's page was never polluted with blink cards -- but the KEY is what
+ *  the event search lists and groups by, and under it 2,350 reanimation cards answered "a creature
+ *  leaves the battlefield". Both layers now say `leaves-graveyard`, and this test still proves the
+ *  join survives the rename: both sides are built by the functions that build them for real. */
 test("a zone-renamed tag matches the demand key that kept the raw verb", async () => {
   const leaver = base("Graveyard Leaver", [{
     kind: "activated", cost: "{T}",
@@ -537,7 +538,7 @@ test("a zone-renamed tag matches the demand key that kept the raw verb", async (
   try {
     const { rows } = partnersFor(leaver, [tombPayoff], [], FREQ, slugs, H);
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.event).toBe("leaves|creature|-|-");
+    expect(rows[0]!.event).toBe("leaves-graveyard|creature|-|-");
     expect(rows[0]!.reason).toBe("ON EVENT");
   } finally { spy.mockRestore(); }
 });
@@ -1674,4 +1675,22 @@ test("a mill also supplies the graveyard put, and the general does not supply th
   expect(forms).toContain("fills|-|-|-");
   // The bridge is one-way: a direct put (Entomb) is not a mill and must not answer a mill payoff.
   expect(supplyForms("enters-graveyard|-|-|-")).not.toContain("mill|-|-|-");
+});
+
+/** A GRAVEYARD LEAVE AND A BATTLEFIELD LEAVE ARE DIFFERENT EVENTS (CR 400.1, roadmap AK6). The
+ *  key reads the zone the clause already recorded, so the event search stops offering 2,350
+ *  reanimation cards as "a creature leaves the battlefield". The two fields say different things:
+ *  a trigger records where the subject LIVES, an emit where the move came FROM. */
+test("a graveyard leave keys apart from a battlefield leave", () => {
+  const trigger = { verb: "leaves", subject: { type: "creature", zone: "graveyard", control: "you", token: null } };
+  expect(eventKey(trigger as never)).toBe("leaves-graveyard|creature|-|-");
+  const emit = { verb: "leaves", subject: { type: "creature", fromZone: "graveyard", control: "you", token: null } };
+  expect(eventKey(emit as never)).toBe("leaves-graveyard|creature|-|-");
+  // A bounce leaves the BATTLEFIELD and keeps the plain verb.
+  expect(eventKey({ verb: "leaves", subject: { type: "creature", control: "any", token: null } } as never))
+    .toBe("leaves|creature|-|-");
+  // A REANIMATION IS A BATTLEFIELD ARRIVAL, whatever it came from: `enters` reads only where the
+  // subject lives, never the origin, or every reanimator would stop answering an ETB payoff.
+  expect(eventKey({ verb: "enters", subject: { type: "creature", fromZone: "graveyard", control: "you", token: null } } as never))
+    .toBe("enters|creature|-|-");
 });

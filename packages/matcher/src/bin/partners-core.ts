@@ -92,7 +92,29 @@ export function eventKey(e: GameEvent): string {
   const s = e.subject ?? {};
   const one = (v: string | string[] | undefined): string =>
     v === undefined ? "-" : Array.isArray(v) ? [...v].sort().join(",") : v;
-  return `${e.verb}|${one(s.type)}|${one(s.subtype)}|${tokenOf(s.token)}`;
+  return `${zonedVerb(e.verb, s)}|${one(s.type)}|${one(s.subtype)}|${tokenOf(s.token)}`;
+}
+
+/** A GRAVEYARD LEAVE IS NOT A BATTLEFIELD LEAVE (roadmap AK6; CR 400.1 -- they are different
+ *  zones and different events).
+ *
+ *  `zones.ts` has mapped this correctly for the flat tag path since it was written
+ *  (`leaves@graveyard -> leaves-graveyard:`), and the KEY builder dropped the zone, so the two
+ *  layers disagreed -- the same split AK1 fixed between `effect-kind` and `emits`. Measured on the
+ *  real corpus before the fix: 2,350 cards emitted a graveyard leave keyed as a BATTLEFIELD one,
+ *  so every reanimation spell (Patriarch's Bidding, Gravedig, Shepherd of the Clouds) was claimed
+ *  as a supplier for blink payoffs; and 36 cards asked for it from the other side, so Tormod and
+ *  Quintorius were joined to every bounce and flicker in the format. False in both directions.
+ *
+ *  THE TWO FIELDS SAY DIFFERENT THINGS, and the schema is explicit about it: `zone` is where the
+ *  subject LIVES (a trigger's "cards leave your graveyard") and `fromZone` is where a move came
+ *  FROM (an emit's "return it from your graveyard"). A leave reads either. An ENTER reads only
+ *  `zone`: a reanimation emits `enters` with `fromZone: graveyard` and that is a battlefield
+ *  arrival, which is the whole point of it. */
+function zonedVerb(verb: string, s: GameEvent["subject"] & {}): string {
+  if (verb === "leaves" && (s.zone === "graveyard" || s.fromZone === "graveyard")) return "leaves-graveyard";
+  if (verb === "enters" && s.zone === "graveyard") return "enters-graveyard";
+  return verb;
 }
 
 /** WHETHER THE EVENT IS ABOUT A TOKEN: `t` yes, `n` no, `-` not stated.
