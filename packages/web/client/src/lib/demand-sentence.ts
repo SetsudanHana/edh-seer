@@ -241,8 +241,13 @@ export const SUBJECTLESS_CLAUSE: Record<string, string> = {
 /** WHAT A CARD DOES, IN A PLAYER'S WORDS (roadmap AK4, owner's ruling: "draw a card").
  *
  *  A card that CAUSES an event performs an action, and a player names the action, not the event --
- *  "sacrifice a creature", not "a creature being sacrificed"; "kill a creature", not "a creature
- *  dying". This is the verb; the object noun is glued on by `eventKeyAction`.
+ *  "mill a card", not "a card being milled". This is the verb; the object noun is glued on by
+ *  `eventKeyAction`.
+ *
+ *  AND THE VERB HAS TO BE A REAL ONE. `dies` was given "kill", which is not a word in Magic; the
+ *  obvious replacement is not right either, because CR 701.7 `destroy` is only ONE of the ways CR
+ *  700.4 `dies` happens and this key's suppliers use several. It has no entry, and the clause "a
+ *  creature dies" -- which IS the rules word -- carries it. Both terms reach it through the search.
  *
  *  NOT EVERY EVENT HAS ONE, and that is not a gap. Nobody "deaths" a creature, and no card makes
  *  "a creature attack" the way it makes one die -- those keep the clause. An absent entry here is
@@ -256,7 +261,6 @@ export const ACTION_VERB: Record<string, string> = {
   discard: "discard",
   exiled: "exile",
   sacrifice: "sacrifice",
-  dies: "kill",
   "create-token": "create",
   taps: "tap",
   untaps: "untap",
@@ -751,6 +755,12 @@ function subjectNoun(
   return { article: /^[aeiou]/i.test(phrase) ? "an" : "a", phrase };
 }
 
+/** WHETHER THE RULES' OWN WORD FITS. `dies` is creature-and-token specific (CR 700.4), so the key
+ *  may use it only when every type it names is a creature -- a self trigger ("this card dies") is
+ *  the card's own, and the caller has already said it is a creature by keying `dies` on it. */
+const diesProper = (type: string): boolean =>
+  type === "creature" || type === "-" ? type === "creature" : type.split(",").every((t) => t === "creature");
+
 /** THE EVENT AS A CLAUSE: "a creature dies", "a card is drawn", "this card enters the battlefield".
  *
  *  Use it wherever the words sit INSIDE a sentence -- after "when", in a list of what a deck wants
@@ -768,6 +778,20 @@ export function eventKeyClause(key: string, subject?: string, colors?: string[])
     if (phase) return phase;
     const subjectless = SUBJECTLESS_CLAUSE[verb];
     if (subjectless) return subjectless;
+  }
+  // ONLY A CREATURE DIES (CR 700.4, owner 2026-09-19: "dies describes an event of creature moving
+  // from battlefield to graveyard, and it is creature specific"). Everything else is PUT INTO a
+  // graveyard, and the engine keys plenty of those: 14 of the 75 `dies` keys name a non-creature
+  // type, including `dies|-|-|-` (4,661 suppliers), `dies|artifact|-|-` (1,059) and `dies|land|-|-`
+  // (533). "A land dies" is not a sentence the rules can say.
+  //
+  // A MIXED LIST TAKES THE GENERAL WORDING, because it has to be true of every member: a creature
+  // dying IS put into a graveyard, so "an artifact or creature is put into a graveyard" is right
+  // for both halves where "dies" is right for only one.
+  if (verb === "dies" && !diesProper(type)) {
+    const noun = subjectNoun(type, subtype, token, colors);
+    const put = "is put into a graveyard";
+    return noun === null ? `a permanent ${put}` : `${noun.article} ${noun.phrase} ${put}`;
   }
   const event = CLAUSE_VERB[verb];
   // No clause form means this is not an event with a subject -- a feeder, a static, a count. The
@@ -791,13 +815,19 @@ export function eventKeyAction(key: string, colors?: string[]): string | undefin
   // AN OUTLET EATS SOMETHING, and "sacrifice a creature" is the phrase a player uses for it. The
   // feeder key is the one shape whose LABEL is already about the action ("a creature to sacrifice").
   if (verb === "fodder") {
+    // A FODDER KEY IS A DEMAND, AND THE CAUSING SIDE IS THE ONE THAT FEEDS IT (owner-reported
+    // 2026-09-19, on the deployed site). `fodderDemandsOf` says what a sacrifice OUTLET eats, so
+    // the cards that SUPPLY the key are the ones providing the meal -- Staff of Titania and Awaken
+    // the Woods make land tokens, and "sacrifice a land" described the outlet instead of them.
+    // Searching "sacrifice a land" returned eight cards, not one of which sacrifices a land.
+    //
     // THE FEEDER NOUN RULE, not the trigger one: a card TYPE sitting in the subtype slot (the
-    // type-count ruling of 2026-09-09) is not a proper noun, so "sacrifice a creature" and
-    // "sacrifice a Goblin" are both right and "sacrifice a Creature" is not.
+    // type-count ruling of 2026-09-09) is not a proper noun, so "a creature" and "a Goblin" are
+    // both right and "a Creature" is not.
     const eaten = subtype !== "-"
       ? (CARD_TYPE_WORDS.has(subtype) ? subtype : capitalize(subtype))
       : type !== "-" ? type : "permanent";
-    return `sacrifice ${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten}`;
+    return `provide ${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten} to sacrifice`;
   }
   if (verb.startsWith("applies:")) {
     const does = STATIC_ACTION[verb.slice("applies:".length)];
@@ -853,6 +883,14 @@ const PLAYER_TERMS: Record<string, string[]> = {
   "death trigger": ["dies"],
   deathtrigger: ["dies"],
   removal: ["dies"],
+  // DESTROY AND KILL ARE HOW A PLAYER ASKS FOR THIS, and neither is what the key MEANS (owner,
+  // 2026-09-19: "kill is not a word in magic, you have destroy"). CR 700.4 defines `dies` as
+  // going to the graveyard from the battlefield; CR 701.7 defines `destroy` as one way that
+  // happens, and a sacrificed creature dies without being destroyed. The suppliers of this key do
+  // both -- Come Back Wrong destroys, Victimize sacrifices -- so the label stays the rules word
+  // and these two only find it.
+  destroy: ["dies"],
+  kill: ["dies"],
   landfall: ["enters"],
   tutor: ["search"],
   "card draw": ["draw"],
