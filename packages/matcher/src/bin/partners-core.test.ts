@@ -1661,3 +1661,17 @@ test("the frequency ships split by colour identity, and the split sums to the co
   expect(inIdentityOf(slots, identityMask(["R", "U"]))).toBe(3);
   expect(inIdentityOf(slots, identityMask([]))).toBe(1);
 });
+
+/** A MILL SUPPLIES THE GENERAL GRAVEYARD PUT TOO (roadmap AK1). DERIVE 163 moved 211 abilities
+ *  from `enters-graveyard` onto `mill`; without this bridge that would have been a MOVE, and the
+ *  payoffs that ask for a graveyard put by type would have lost their suppliers rather than gained
+ *  a more precise word for them. Specific supplies general, never the other way round. */
+test("a mill also supplies the graveyard put, and the general does not supply the mill", () => {
+  const forms = supplyForms("mill|-|-|-");
+  expect(forms).toContain("enters-graveyard|-|-|-");
+  expect(forms).toContain("mill|-|-|-");
+  // A graveyard fill, the way every FILL_VERB supplies one.
+  expect(forms).toContain("fills|-|-|-");
+  // The bridge is one-way: a direct put (Entomb) is not a mill and must not answer a mill payoff.
+  expect(supplyForms("enters-graveyard|-|-|-")).not.toContain("mill|-|-|-");
+});

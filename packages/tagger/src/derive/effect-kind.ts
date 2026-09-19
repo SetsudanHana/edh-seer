@@ -44,6 +44,10 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // rely on canonicalAction having folded library into it, which also swept up 11 actions that
   // stated no origin at all. Corpus: put->graveyard is library 148, exile 18, unstated 11 — the 11
   // are now unclassified, which is the honest answer for a clause that never said where from.
+  // A SEARCHED PUT IS NOT ONE (CR 701.13b: milling is the TOP cards). Entomb and Buried Alive put
+  // a card into a graveyard from the library too, and the origin alone cannot tell them from
+  // Cavalier of Thorns -- the clause does, because a tutor states the search. Guarded below rather
+  // than here so the row stays a plain zone rule; `searchedPut` is the predicate.
   { verb: "put", from: "library", to: "graveyard", kind: "mill" },
   // SETTING THE TOP OF YOUR LIBRARY. Sensei's Divining Top reorders the top three; Brainstorm and
   // Hidetsugu and Kairi put cards from hand on top. Both are the player choosing what they draw
@@ -439,6 +443,9 @@ export function actionEffectKind(action: Action, clauseText = ""): EffectKind | 
     if (r.verb !== verb) continue;
     if (r.from !== undefined && (action.fromZone ?? null) !== r.from) continue;
     if (r.to && (action.toZone ?? null) !== r.to) continue;
+    // The tutored put keeps the search's own kind instead of claiming a library event that never
+    // ran; `emits.ts` makes the identical test, so the two layers agree on what a mill is.
+    if (r.kind === "mill" && /\bsearch(?:es|ed|ing)?\b/i.test(clauseText)) continue;
     // See exilesOwnGraveyard. Null rather than a kind of its own: the payoff this card actually has
     // is carried by the OTHER actions in the same clause, and a near-miss kind is consumed as if it
     // were true while null is honestly inert.

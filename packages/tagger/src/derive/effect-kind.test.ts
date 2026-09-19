@@ -797,3 +797,14 @@ test("a put from your hand that may go on top is top-set even when the bottom is
   expect(actionEffectKind(put, "Put two cards from your hand on the bottom of your library.")).toBeNull();
   expect(actionEffectKind(put, "Put two cards from your hand on top of your library in any order.")).toBe("top-set");
 });
+
+
+/** A SEARCHED PUT KEEPS THE SEARCH'S KIND (CR 701.13b, roadmap AK1). `from: library` alone called
+ *  Entomb a mill, which `emits.ts` then had to agree with; both layers now read the clause. */
+test("a tutored put into a graveyard is not a mill", () => {
+  const put = { verb: "put", object: "that card", fromZone: "library", toZone: "graveyard" };
+  expect(actionEffectKind(put, "Search your library for a card, then put that card into your graveyard."))
+    .not.toBe("mill");
+  expect(actionEffectKind({ ...put, object: "the rest" }, "Reveal the top five cards of your library. Put the rest into your graveyard."))
+    .toBe("mill");
+});

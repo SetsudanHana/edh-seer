@@ -152,6 +152,14 @@ export function supplyForms(key: string): string[] {
     // engine judges the victim's shape (`damagedMatches`), the page only has to ask.
     const verbs = [verb,
       ...(verb === "dies" ? ["leaves"] : []),
+      // A MILL IS A CARD PUT INTO A GRAVEYARD FROM THE LIBRARY (CR 701.13b), so it satisfies a
+      // payoff that asks for the general event as well as one that asks to mill (roadmap AK1).
+      // Without this the retag in DERIVE 163 would have MOVED 211 abilities off
+      // `enters-graveyard` rather than added them to `mill`, and the 248 suppliers of
+      // `enters-graveyard|-|-|-` would have lost the payoffs that ask for it by type -- 15 that
+      // want a creature there, 12 a land, 8 an artifact. Same shape as the death/leave bridge
+      // above: specific supplies general, never the other way round.
+      ...(verb === "mill" ? ["enters-graveyard"] : []),
       ...(verb === "non-combat-damage" && type === "-" && subtype === "-" ? ["lose-life"] : []),
       ...(verb === "non-combat-damage" || verb === "combat-damage" ? ["damaged"] : [])];
     for (const v of verbs) for (const tk of suffixes) {
