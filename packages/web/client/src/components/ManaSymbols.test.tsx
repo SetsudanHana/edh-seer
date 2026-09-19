@@ -80,3 +80,22 @@ describe("ManaText", () => {
     expect(container.querySelector("img")).toBeNull();
   });
 });
+
+// A BRACE IS NOT A PROMISE THAT WHAT IS INSIDE IT IS A SYMBOL. `ManaText` reads clause text, so
+// the token between the braces is whatever the card (or a corpus defect) printed, and it used to
+// go straight into a URL -- CodeQL called it on PR #409 as `js/xss-through-dom`, and the concrete
+// shape is a traversal: `{../../x}` builds `.../card-symbols/../../x.svg`. Anything that is not a
+// symbol code renders as the raw text it always was, which is also what a reader should see
+// instead of a 404 image.
+describe("an unknown token never becomes a URL", () => {
+  test.each(["{../../x}", "{a b}", "{W.U}", "{TOOLONGTOKEN}", "{}"])("%s renders as text", (raw) => {
+    const { container } = render(<ManaText text={`cost ${raw} here`} />);
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.textContent).toContain(raw);
+  });
+
+  test("the real symbols still draw", () => {
+    const { container } = render(<ManaText text="{T}{W/U}{B/P}{15}{X}" />);
+    expect(container.querySelectorAll("img")).toHaveLength(5);
+  });
+});
