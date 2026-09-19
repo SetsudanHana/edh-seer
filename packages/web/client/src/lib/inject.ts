@@ -15,7 +15,12 @@
  *  work with no prerender step and no hydration mismatch -- React mounts into an empty div and the
  *  crawler's copy sits beside it. */
 import { cardImageUrl } from "../components/card-node.js";
-import { effectPhrase } from "@edh-seer/matcher/partners-core";
+// THE LEAF MODULE, NOT `partners-core` (2026-09-20). This file runs inside a Cloudflare Function,
+// whose tsconfig has no node types on purpose -- and importing a VALUE from `partners-core` drags
+// the whole matcher-to-tagger graph in with it, including the files that read `node:fs`. CI caught
+// it; `tsc -p client` did not, because the client config is the one that HAS those types.
+// `sentence.ts` imports nothing at all.
+import { effectPhrase } from "@edh-seer/matcher/sentence";
 import { eventKeyAction, eventKeyClause } from "./demand-sentence.js";
 import { groupAnchor } from "./group-anchor.js";
 
