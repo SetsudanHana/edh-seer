@@ -289,26 +289,16 @@ export const ACTION_VERB: Record<string, string> = {
   fills: "put INTO a graveyard",
 };
 
-/** A STATIC APPLIES SOMETHING TO A CLASS, and on the causing side that is an action too: the card
- *  BOOSTS creatures. `STATIC_REACH` words the same relation from the other end ("a creature it
- *  boosts"), so this is that map in the imperative rather than a second vocabulary. */
-const STATIC_ACTION: Record<string, string> = {
-  pump: "boost",
-  // The four other static kinds whose action is not in doubt. The rest keep the generic "it
-  // applies X to" wording: inventing a verb for `applies:graveyard-recursion` or
-  // `applies:emblem` would be a guess, and a guess in a label is one a reader cannot check.
-  "speed-increase": "increase the speed of",
-  animate: "animate",
-  untap: "untap",
-  "counter-placement": "put counters on",
-  "cost-reduction": "make cheaper to cast",
-  "keyword-grant": "grant abilities to",
-  "type-grant": "grant types to",
-  "trigger-doubling": "double the triggers of",
-  "damage-multiplier": "multiply the damage of",
-  "token-doubling": "double the tokens of",
-  protection: "protect",
-};
+/** A STATIC HAS NO ACTION FORM, AND THE ONE IT HAD WAS BACKWARDS (owner-commissioned engine
+ *  review, 2026-09-19). `STATIC_ACTION` read "boost a creature" on the CAUSES list -- but the
+ *  suppliers of `applies:pump|creature|-|-` are the 15,005 cards the anthem REACHES, not the
+ *  anthems: Llanowar Elves and Dimir Doppelganger are in that list and Glorious Anthem is not.
+ *  The engine models a static as WANTING its class, so the anthem is the consumer (Koll, Rienne,
+ *  Divine Sacrament, all on the cares side) and the creatures supply it.
+ *
+ *  So a static is a standing fact about a class, exactly like `counts` and `copies`, and the label
+ *  form -- "a creature it boosts" -- already reads correctly from both ends. Naming an action here
+ *  described the wrong side of every `applies:*` key, including cost-reduction at 24,982 cards. */
 
 /** THE OBJECT A VERB IMPLIES WHEN THE KEY NAMES NO CLASS. "untap anything" is not what a player
  *  says; "untap a permanent" is, and the verb already tells you which noun it must be. Only for
@@ -332,7 +322,9 @@ export const SUBJECTLESS_ACTION: Record<string, string> = {
   mill: "mill a card",
   discard: "discard a card",
   "gain-life": "gain life",
-  "lose-life": "drain life",
+  // NOT "drain": a drain loses life AND gains it, and the suppliers here are mostly plain burn
+  // (Fire Ambush deals damage, which is life loss, and gains nothing). Review finding, 2026-09-19.
+  "lose-life": "make a player lose life",
   search: "search your library",
   scry: "scry",
   surveil: "surveil",
@@ -790,7 +782,10 @@ export function eventKeyClause(key: string, subject?: string, colors?: string[])
   // for both halves where "dies" is right for only one.
   if (verb === "dies" && !diesProper(type)) {
     const noun = subjectNoun(type, subtype, token, colors);
-    const put = "is put into a graveyard";
+    // FROM THE BATTLEFIELD, because CR 700.4 is what makes this dying rather than milling or
+    // discarding. Without the origin the phrase describes three different events (review finding,
+    // 2026-09-19) and the search would read as a graveyard-filler rather than a removal.
+    const put = "is put into a graveyard from the battlefield";
     return noun === null ? `a permanent ${put}` : `${noun.article} ${noun.phrase} ${put}`;
   }
   const event = CLAUSE_VERB[verb];
@@ -829,20 +824,8 @@ export function eventKeyAction(key: string, colors?: string[]): string | undefin
       : type !== "-" ? type : "permanent";
     return `provide ${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten} to sacrifice`;
   }
-  if (verb.startsWith("applies:")) {
-    const does = STATIC_ACTION[verb.slice("applies:".length)];
-    if (!does) return undefined;
-    // The same collapse the label makes: a list of five or more types is a way of writing
-    // "anything", not a distinction.
-    if (subtype === "-" && type !== "-") {
-      const types = type.split(",");
-      if (types.length >= 5) {
-        return `${does} a ${types.every((t) => PERMANENT_TYPES.has(t)) ? "permanent" : "permanent or spell"}`;
-      }
-    }
-    const noun = subjectNoun(type, subtype, "-", colors);
-    return `${does} ${noun === null ? "anything" : `${noun.article} ${noun.phrase}`}`;
-  }
+  // A static names a CLASS, and its suppliers are the members of that class. See the note above.
+  if (verb.startsWith("applies:")) return undefined;
   if (type === "-" && subtype === "-") {
     const whole = SUBJECTLESS_ACTION[verb];
     if (whole) return whole;
