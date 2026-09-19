@@ -95,6 +95,31 @@ export function eventKey(e: GameEvent): string {
   return `${zonedVerb(e.verb, s)}|${one(s.type)}|${one(s.subtype)}|${tokenOf(s.token)}`;
 }
 
+/** ONE TYPE AND ONE SUBTYPE PER EVENT (roadmap AK5, owner ruling 2026-09-19).
+ *
+ *  A clause that says "whenever you cast an instant or sorcery" is TWO events the card cares
+ *  about, and it triggers on either; Weftstalker Ardent's "another creature or artifact you
+ *  control enters" is likewise two. The key used to carry the disjunction as a comma list, which
+ *  made one event out of two and produced names no reader could use -- Krenko's page showed "an
+ *  artifact or creature enters the battlefield" above "an artifact, creature or enchantment enters
+ *  the battlefield", two groups that say the same thing, and the worst name in the corpus ran to
+ *  128 characters.
+ *
+ *  SPLITTING IS WHAT MAKES THE NAME SHORT, at the source: no key holds a list, so no sentence has
+ *  one to render.
+ *
+ *  IT IS A CROSS PRODUCT, because both slots can hold a list: a static reaching four subtypes
+ *  across seven types reaches each of the 28 pairs. Measured over the shipped artifact: 274 of the
+ *  1,188 keys fan out at all, and the key count goes 1,188 -> 1,497. The vocabulary grows by a
+ *  quarter and every member of it is a thing a card can actually be. */
+export function splitKey(key: string): string[] {
+  const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
+  if (!type.includes(",") && !subtype.includes(",")) return [key];
+  const out: string[] = [];
+  for (const t of type.split(",")) for (const st of subtype.split(",")) out.push(`${verb}|${t}|${st}|${token}`);
+  return [...new Set(out)];
+}
+
 /** A GRAVEYARD LEAVE IS NOT A BATTLEFIELD LEAVE (roadmap AK6; CR 400.1 -- they are different
  *  zones and different events).
  *
@@ -588,7 +613,10 @@ export function partnersFor(
       const events = new Map<string, { score: number; tags: Set<string> }>();
       for (const a of abilitiesOf(c)) {
         for (const verb of a.trigger?.verbs ?? []) {
-          const key = eventKey({ verb, subject: a.trigger!.subject } as GameEvent);
+          // ONE EVENT PER TYPE (roadmap AK5): a trigger naming two types proposes two, and the
+          // candidate keeps whichever scores best -- so a partner is still listed once, under the
+          // half that is actually rare.
+          for (const key of splitKey(eventKey({ verb, subject: a.trigger!.subject } as GameEvent))) {
           // THE DEMAND ONLY SPLITS, IT NEVER WIDENS -- the same asymmetry `supplyCounts` relies on.
           // Widening it here would admit every permanent as a candidate for a goblin demand, and the
           // score is taken on the demand's own key, so a widened match would also be mispriced.
@@ -604,6 +632,7 @@ export function partnersFor(
           const e = events.get(key) ?? { score: specificity(key, freq), tags: new Set<string>() };
           e.tags.add(tag);
           events.set(key, e);
+          }
         }
       }
       // A GRAVEYARD FILL THE CANDIDATE WANTS (the `fills|` bridge): a reanimator, a delve spell, a
@@ -854,8 +883,8 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
     return {
       kind: a.kind,
       ...(a.cost ? { cost: a.cost } : {}),
-      when: (a.trigger?.verbs ?? []).map((v) =>
-        eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)),
+      when: (a.trigger?.verbs ?? []).flatMap((v) =>
+        splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
       // THE TRIGGER IS THE CARD ITSELF: the key cannot carry it, so the row says it beside the key.
       ...(a.trigger?.subject?.self === true ? { self: true as const } : {}),
       ...(a.trigger?.subject?.colors?.length ? { whenColors: [...a.trigger.subject.colors] } : {}),
@@ -868,7 +897,7 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
       ...(a.effect?.subject?.control && a.effect.subject.control !== "you" ? { recipient: a.effect.subject.control } : {}),
       ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
       ...(subtype ? { counts: subtype } : {}),
-      emits: (a.emits ?? []).map(eventKey),
+      emits: (a.emits ?? []).flatMap((e) => splitKey(eventKey(e))),
       ...(selfEmits.length > 0 ? { selfEmits } : {}),
     };
   });
@@ -881,7 +910,7 @@ export const abilitiesOf = (d: DeckCard): CardTags["abilities"] =>
   d.tags ? [...d.tags.abilities, ...keywordAbilities(d.tags.characteristics)] : [];
 
 export const emitKeysOf = (d: DeckCard): string[] =>
-  abilitiesOf(d).flatMap((a) => (a.emits ?? []).map(eventKey));
+  abilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e))));
 
 export const demandKeysOf = (d: DeckCard): string[] => [
   // A CARD'S OWN TRIGGER IS NOT A DEMAND ON THE OTHER 99. Burakos, Party Leader fires when HE
@@ -890,7 +919,7 @@ export const demandKeysOf = (d: DeckCard): string[] => [
   // already gates self triggers; the page now does the same.
   ...abilitiesOf(d).flatMap((a) =>
     a.trigger?.subject?.self === true ? []
-      : (a.trigger?.verbs ?? []).map((v) => eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
+      : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
   // ALL THREE FEEDER SHAPES ARE DEMANDS. Listing only board counts here left Strionic Resonator --
   // no trigger, no emit, one copy-ability -- with no demand at all, so `isSubstantive` dropped it
   // from the pool and its page had no rows, feeder pass or not (found on the first rebuild).
@@ -940,8 +969,12 @@ export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: st
     return `fills|${one(s.type)}|${one(s.subtype)}|-`;
   };
   const out: { key: string; tag: string; tags: string[] }[] = [];
+  // ONE ROW PER TYPE (roadmap AK5). A reanimator that wants "an artifact or creature card in a
+  // graveyard" wants each of them, and the tags it carries are the same either way.
   const push = (key: string, tags: string[]): void => {
-    if (!out.some((o) => o.key === key && o.tags.join() === tags.join())) out.push({ key, tag: tags[0]!, tags });
+    for (const k of splitKey(key)) {
+      if (!out.some((o) => o.key === k && o.tags.join() === tags.join())) out.push({ key: k, tag: tags[0]!, tags });
+    }
   };
   for (const a of abilitiesOf(d)) {
     const s = a.effect?.subject;
@@ -1114,7 +1147,10 @@ export const staticKeysOf = (d: DeckCard): string[] => [...new Set(
     const types = concreteTypes(asList(s.type));
     const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
     if (types.length === 0 && subtypes.length === 0) return [];
-    return [`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`];
+    // ONE TYPE AND ONE SUBTYPE PER KEY (roadmap AK5): a static reaching four subtypes across
+    // seven types reaches each of the 28 pairs, and naming them in one key produced the 128
+    // character sentence the owner reported.
+    return splitKey(`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`);
   }),
 )];
 
