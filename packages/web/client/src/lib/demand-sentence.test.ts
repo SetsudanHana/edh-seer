@@ -245,8 +245,8 @@ test("a clause keeps the noun grammar the label has", () => {
 /** AN ACTION IS WHAT A PLAYER SAYS THEY DO (owner: "draw a card"). */
 test("an action is the verb a player would type", () => {
   expect(eventKeyAction("draw|-|-|-")).toBe("draw a card");
-  expect(eventKeyAction("fodder|-|creature|-")).toBe("sacrifice a creature");
-  expect(eventKeyAction("fodder|-|token|-")).toBe("sacrifice a Token");
+  expect(eventKeyAction("fodder|-|land|-")).toBe("provide a land to sacrifice");
+  expect(eventKeyAction("fodder|-|token|-")).toBe("provide a Token to sacrifice");
   expect(eventKeyAction("mill|-|-|-")).toBe("mill a card");
   expect(eventKeyAction("dies|creature|-|-")).toBe("kill a creature");
   expect(eventKeyAction("cast|spell|-|-")).toBe("cast a spell");
@@ -306,4 +306,34 @@ test("the words a player uses reach the event the engine names", () => {
   expect(eventMatches("search|-|-|-", "tutor")).toBe(true);
   expect(eventMatches("leaves|-|-|-", "blink")).toBe(true);
   expect(eventMatches("draw|-|-|-", "wheel")).toBe(false);
+});
+
+
+/** A FODDER KEY IS A DEMAND, SO ITS CAUSING SIDE FEEDS THE OUTLET (owner-reported 2026-09-19).
+ *  Searching Causes for "sacrifice a land" returned eight cards -- Staff of Titania, Awaken the
+ *  Woods, Jyoti -- and every one of them MAKES land tokens. None sacrifices anything. The action
+ *  form had described the consumer of the key while sitting on the producer's list. */
+test("a fodder cause provides the meal, it does not eat it", () => {
+  expect(eventKeyAction("fodder|-|land|-")).toBe("provide a land to sacrifice");
+  expect(eventKeyAction("fodder|-|creature|-")).toBe("provide a creature to sacrifice");
+  // And the asking side still reads as what the outlet wants.
+  expect(eventKeyClause("fodder|-|land|-")).toBe("a land to sacrifice");
+});
+
+/** THE FEEDER FAMILY IS FOUR DEMAND SHAPES, and the direction trap is the same in all of them:
+ *  `counts`, `copies`, `fodder` and `fills` say what a card WANTS, so whatever supplies one is
+ *  providing it, never performing it. `fodder` shipped inverted; this pins all four so the next
+ *  one cannot.
+ *
+ *  `counts` and `copies` have no action at all -- being a Goblin is not a deed -- and fall back to
+ *  the label, which already reads from the supplier's side. */
+test("every feeder shape's causing side provides rather than performs", () => {
+  expect(eventKeyAction("fodder|-|creature|-")).toBe("provide a creature to sacrifice");
+  expect(eventKeyAction("fills|creature|-|-")).toBe("put a creature into a graveyard");
+  expect(eventKeyAction("counts|-|goblin|-")).toBeUndefined();
+  expect(eventKeyAction("copies|-|activated|-")).toBeUndefined();
+  // None of them may read as the outlet's own move.
+  for (const key of ["fodder|-|creature|-", "fills|creature|-|-"]) {
+    expect(eventKeyAction(key)!.startsWith("sacrifice")).toBe(false);
+  }
 });

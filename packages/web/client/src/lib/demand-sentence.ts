@@ -791,13 +791,19 @@ export function eventKeyAction(key: string, colors?: string[]): string | undefin
   // AN OUTLET EATS SOMETHING, and "sacrifice a creature" is the phrase a player uses for it. The
   // feeder key is the one shape whose LABEL is already about the action ("a creature to sacrifice").
   if (verb === "fodder") {
+    // A FODDER KEY IS A DEMAND, AND THE CAUSING SIDE IS THE ONE THAT FEEDS IT (owner-reported
+    // 2026-09-19, on the deployed site). `fodderDemandsOf` says what a sacrifice OUTLET eats, so
+    // the cards that SUPPLY the key are the ones providing the meal -- Staff of Titania and Awaken
+    // the Woods make land tokens, and "sacrifice a land" described the outlet instead of them.
+    // Searching "sacrifice a land" returned eight cards, not one of which sacrifices a land.
+    //
     // THE FEEDER NOUN RULE, not the trigger one: a card TYPE sitting in the subtype slot (the
-    // type-count ruling of 2026-09-09) is not a proper noun, so "sacrifice a creature" and
-    // "sacrifice a Goblin" are both right and "sacrifice a Creature" is not.
+    // type-count ruling of 2026-09-09) is not a proper noun, so "a creature" and "a Goblin" are
+    // both right and "a Creature" is not.
     const eaten = subtype !== "-"
       ? (CARD_TYPE_WORDS.has(subtype) ? subtype : capitalize(subtype))
       : type !== "-" ? type : "permanent";
-    return `sacrifice ${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten}`;
+    return `provide ${/^[aeiou]/i.test(eaten) ? "an" : "a"} ${eaten} to sacrifice`;
   }
   if (verb.startsWith("applies:")) {
     const does = STATIC_ACTION[verb.slice("applies:".length)];
