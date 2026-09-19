@@ -231,7 +231,29 @@ function sweepVerbs(action: Action, subject: SubjectFilter): Verb[] | undefined 
  *  somewhere is what other cards trigger on -- and, since 2026-09-05, the ORIGIN is read for the two
  *  rows that state a departure, because a permanent leaving the battlefield is what a leaves payoff
  *  triggers on (CR 603.6c) and the flicker's exile half stated nothing at all. */
-const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, s: SubjectFilter, self: boolean) => boolean }[] = [
+/** A SEARCHED PUT IS NOT A MILL (CR 701.13b: milling is the TOP cards of a library). Entomb and
+ *  Buried Alive put a card into the graveyard FROM the library, so the origin alone cannot tell
+ *  them from Cavalier of Thorns -- and the origin alone made both of them mill suppliers on the
+ *  first build of DERIVE 163, which would have joined Entomb to every "whenever you mill" payoff
+ *  as a false edge. The clause says which it is: a tutor states the search. */
+const SEARCHED = (text?: string): boolean => /\bsearch(?:es|ed|ing)?\b/i.test(text ?? "");
+
+const ZONE_EMITS: { verb: string; to: string; verbs: Verb[]; when?: (a: Action, s: SubjectFilter, self: boolean, text?: string) => boolean }[] = [
+  // A PUT FROM THE LIBRARY IS A MILL, AND THIS LAYER USED TO DISAGREE WITH THE OTHER ONE (roadmap
+  // AK1). `effect-kind.ts` has read the ORIGIN since 2026-09-07 -- `put · from library · to
+  // graveyard` is `kind: "mill"` -- while this row ignored it and emitted the Entomb verb for
+  // every graveyard put. So 211 abilities derived as a mill and then emitted `enters-graveyard`,
+  // which is why `mill|-|-|-` had 602 suppliers where 769 cards carry the mill kind, and why
+  // Cavalier of Thorns, Shigeki and Shadow Prophecy were missing from every mill search.
+  //
+  // THE TWO LAYERS NOW READ THE SAME SIGNAL. What derive already calls a mill emits `mill`; a put
+  // from anywhere else -- exile (Murk Strider), the battlefield, an unstated origin -- keeps
+  // `enters-graveyard`, which is the row below.
+  //
+  // NOTHING LOSES AN EDGE: `supplyForms` bridges `mill` to the `enters-graveyard` forms the way it
+  // bridges `dies` to `leaves`, so the 248 suppliers of `enters-graveyard|-|-|-` keep every payoff
+  // that asks for a graveyard put by type.
+  { verb: "put", to: "graveyard", verbs: ["mill"], when: (a, _s, _self, text) => a.fromZone === "library" && !SEARCHED(text) },
   { verb: "put", to: "graveyard", verbs: ["enters-graveyard"] },
   { verb: "return", to: "battlefield", verbs: ["enters"] },
   { verb: "put", to: "battlefield", verbs: ["enters"] },
@@ -426,7 +448,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       : action.verb === "return" && RETURNS_TO_HAND.test(clauseText ?? "") ? "hand"
       : null);
   const zoned = ZONE_EMITS.find((r) =>
-    r.verb === action.verb && r.to === toZone && (r.when === undefined || r.when(action, subject, opts.self === true)));
+    r.verb === action.verb && r.to === toZone && (r.when === undefined || r.when(action, subject, opts.self === true, clauseText)));
   // A DRAW'S OBJECT IS ALMOST NEVER THE CARD DRAWN. It is the player ("target spell's controller",
   // Arcane Denial) or the permanent whose ability it is ("this creature connives", Ledger Shredder),
   // and `parseSubject` reads a type word out of either. A real typed draw says so -- "reveal cards

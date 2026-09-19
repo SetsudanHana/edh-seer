@@ -573,3 +573,32 @@ test("an end-step exile of the clause's own token emits nothing", () => {
   // A real exile in the same sentence shape is still one.
   expect(actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" }, "Exile target creature.").map((e) => e.verb)).toContain("exiled");
 });
+
+/** A PUT FROM THE LIBRARY IS A MILL (CR 701.13b, roadmap AK1). `effect-kind` has read the origin
+ *  since 2026-09-07 and this layer did not, so 211 abilities derived as `kind: "mill"` and then
+ *  emitted the Entomb verb -- Cavalier of Thorns, Shigeki, Shadow Prophecy -- which is why
+ *  `mill|-|-|-` listed 602 suppliers where 769 cards carry the mill kind. */
+test("a put into a graveyard says where it came from", () => {
+  expect(actionEmits({ verb: "put", object: "the rest", fromZone: "library", toZone: "graveyard" }).map((e) => e.verb))
+    .toEqual(["mill"]);
+  // Any other origin is the direct put it always was: exile (Murk Strider), the battlefield, or a
+  // clause that never said. Inventing a mill for those would claim a library event that never ran.
+  expect(actionEmits({ verb: "put", object: "a card an opponent owns", fromZone: "exile", toZone: "graveyard" }).map((e) => e.verb))
+    .toEqual(["enters-graveyard"]);
+  expect(actionEmits({ verb: "put", object: "those cards", toZone: "graveyard" }).map((e) => e.verb))
+    .toEqual(["enters-graveyard"]);
+});
+
+/** A SEARCHED PUT IS NOT A MILL (CR 701.13b: milling is the TOP cards of a library). Entomb and
+ *  Buried Alive put a card into a graveyard FROM the library, so the origin alone cannot tell them
+ *  from Cavalier of Thorns -- and on the first build of DERIVE 163 it did not, which would have
+ *  joined Entomb to every "whenever you mill" payoff as a false edge. The clause states the
+ *  search, and `effect-kind` makes the identical test so the two layers agree. */
+test("a tutored put into a graveyard is not a mill", () => {
+  const entomb = { verb: "put", object: "that card", fromZone: "library", toZone: "graveyard" };
+  expect(actionEmits(entomb, "Search your library for a card, then put that card into your graveyard.").map((e) => e.verb))
+    .toEqual(["enters-graveyard"]);
+  // The same action in a clause that dug rather than searched IS a mill.
+  expect(actionEmits({ ...entomb, object: "the rest" }, "Reveal the top five cards of your library. Put the rest into your graveyard.").map((e) => e.verb))
+    .toEqual(["mill"]);
+});

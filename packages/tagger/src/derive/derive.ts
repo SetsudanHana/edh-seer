@@ -118,7 +118,14 @@ import { emblemRecipient } from "../emblem.js";
 // number as the object. This retires the paid `dropsUnitAmount` refresh.
 // 162: a put from your hand that offers top OR bottom is top manipulation (Dream Cache), so the
 // ability exists and the rate can net it; an Exhaust ability repeats once (CR 702.176a).
-export const DERIVE_VERSION = 162;
+// 163: a put from the LIBRARY into a graveyard emits `mill`, not `enters-graveyard`, UNLESS the
+// clause searched -- Entomb and Buried Alive tutor a card into the yard and never mill (CR
+// 701.13b: milling is the top cards). Both layers make that test now (roadmap AK1).
+// `effect-kind` has read the origin since 2026-09-07 and `emits` did not, so 211 abilities derived
+// as kind `mill` while emitting the Entomb verb -- Cavalier of Thorns, Shigeki, Shadow Prophecy.
+// `supplyForms` bridges mill to the enters-graveyard forms, so no payoff that asks for a graveyard
+// put loses its supplier.
+export const DERIVE_VERSION = 163;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
