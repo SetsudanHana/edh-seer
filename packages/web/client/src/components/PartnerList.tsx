@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { eventKeySentence } from "../lib/demand-sentence.js";
-import { groupDirection, withheldFrom } from "../lib/inject.js";
+import { Link } from "react-router";
+import { groupDirection, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
 
@@ -35,10 +36,14 @@ function feederCaption(p: PartnerRow, subject?: string): string {
 /** Tiles in one row below `sm`, where the grid is `grid-cols-3`. */
 const PHONE_ROW = 3;
 
-export function PartnerList({ rows, pool, rarity, empty, subject }: {
+export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
   rows: PartnerRow[];
   /** The page's own card, so a feeder caption can leave its name out. */
   subject?: string;
+  /** THE DECK'S COLOURS, on a commander page only. The withheld count is scoped to them (AJ5), so
+   *  the link under it has to be scoped the same way or it opens a corpus-wide set under a
+   *  commander-sized number. A card page passes nothing: there is no deck there. */
+  identity?: readonly string[];
   pool: Record<string, number>;
   rarity: Record<string, number>;
   empty: string;
@@ -134,7 +139,12 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
               // play-rate tie-break refused as stale), so the ones shown are the best connected,
               // and the sentence says that instead of the older "nothing here can rank one above
               // another", which stopped being true.
+              // AND THE COUNT IS A LINK (roadmap AJ3). The set it opens is the one this number
+              // counted: a producer group asks `produce`, an asker group asks `consume`, and a
+              // commander page carries its own colours so the page lands on the cards its deck
+              // could actually play. A link to a superset would be AJ1 again, with a URL.
               <p className="text-(--muted) text-sm">
+                <Link to={searchHref(dir, group.event, identity)} className="underline">
                 <span className="font-mono tabular-nums">{withheld.toLocaleString("en-US")}</span>{" "}
                 {/* A FEEDER GROUP RUNS THE OTHER WAY (skeptic review, 2026-09-17): its tiles are cards
                   * this card counts, so "ask for it" named the wrong direction under them. A feeder
@@ -144,6 +154,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject }: {
                   : dir === "feeds"
                   ? "other cards feed it too, equally specific. The ones shown are the best connected."
                   : "other cards ask for it too, equally specific. The ones shown are the best connected."}
+                </Link>
               </p>
             )}
           </section>

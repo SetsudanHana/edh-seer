@@ -233,6 +233,10 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         </div>
         <PartnerList
           subject={page.name}
+          // THE SCOPE THE COUNTS WERE TAKEN AT (AJ5), handed to the link under them: `key` is the
+          // identity this list was ranked under, colour choice and pairing included, so the search
+          // it opens holds the cards this deck could actually contain.
+          identity={key === "C" ? [] : [...key]}
           rows={ranked.partners}
           pool={ranked.pool}
           rarity={ranked.rarity}

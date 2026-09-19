@@ -135,3 +135,53 @@ test("a producer group's withheld line says cause, and its tiles say they cause 
   expect(screen.getByText("causes it")).toBeInTheDocument();
   expect(screen.queryByText(/deals 1 damage/)).toBeNull();
 });
+
+// ---------------------------------------------------------------------------------------------
+// THE WITHHELD COUNT IS A LINK (roadmap AJ3).
+// ---------------------------------------------------------------------------------------------
+
+/** THE NUMBER THAT WAS CLICKED IS THE NUMBER THAT LANDS. A producer group counts the cards that
+ *  CAUSE the event, so its link asks `produce`; a consumer group counts the askers, so it asks
+ *  `consume`. Sending both to the same param is the AJ1 defect with a URL on it. */
+const EVENT = "applies:keyword-grant|creature|cleric|-";
+const producerRows = [{
+  name: "Akroma's Devoted", slug: "akromas-devoted", score: 0.15, event: EVENT, producer: true,
+  reason: "Akroma's Devoted gives Samut an extra ability",
+}];
+const consumerRows = [{
+  name: "Impact Tremors", slug: "impact-tremors", score: 0.1, event: "enters|creature|-|-",
+  reason: "When a goblin enters thanks to Krenko, Impact Tremors deals 1 damage",
+}];
+const linkFor = (rows: typeof producerRows | typeof consumerRows, extra: Partial<Parameters<typeof PartnerList>[0]> = {}) => {
+  render(
+    <MemoryRouter initialEntries={["/commanders/samut-the-driving-force"]}>
+      <PartnerList rows={rows} pool={{ [rows[0]!.event]: 40 }} rarity={{ [rows[0]!.event]: 589 }} empty="none" {...extra} />
+    </MemoryRouter>,
+  );
+  const anchor = screen.getByRole("link", { name: /cards (cause|ask for|feed) it too/i });
+  return new URL(anchor.getAttribute("href")!, "https://edhseer.cards");
+};
+
+test("a producer group's withheld count links to the cards that cause it", () => {
+  const url = linkFor(producerRows);
+  expect(url.pathname).toBe("/cards");
+  expect(url.searchParams.getAll("produce")).toEqual([EVENT]);
+  expect(url.searchParams.getAll("consume")).toEqual([]);
+});
+
+test("a consumer group links by consume, not produce", () => {
+  const url = linkFor(consumerRows);
+  expect(url.searchParams.getAll("consume")).toEqual(["enters|creature|-|-"]);
+  expect(url.searchParams.getAll("produce")).toEqual([]);
+});
+
+/** ON A COMMANDER PAGE THE SET IS THE ONE ITS OWN DECK COULD PLAY, which is what AJ5 made the
+ *  count mean. Without the colours the link would open a corpus-wide set under a scoped number. */
+test("a commander page carries its identity into the link", () => {
+  const url = linkFor(producerRows, { identity: ["R", "G", "W"] });
+  expect(url.searchParams.get("colors")).toBe("RGW");
+});
+
+test("a card page carries no colours, because there is no deck there", () => {
+  expect(linkFor(producerRows).searchParams.get("colors")).toBeNull();
+});
