@@ -84,8 +84,12 @@ test("the static block prints how many cards can cause each event, per group", (
     rarity: { "enters|creature|-|t": 1234, "dies|creature|-|-": 1451 },
   };
   const html = cardPageHtml(two, "krenko-mob-boss", "card");
-  expect(html).toContain("1,234 cards can cause a creature token entering the battlefield.");
-  expect(html).toContain("1,451 cards can cause a creature dying.");
+  // AK4: the event is named the way the group runs -- these rows are what the cards CAUSE -- and
+  // the count follows it, because "1,234 cards can cause a creature dies" is not a sentence.
+  // These fixture rows carry no `producer` flag, so the group runs the ASKER direction and the
+  // event is named as the thing those cards wait for. A producer group says "kill a creature".
+  expect(html).toContain("a creature token enters the battlefield — 1,234 cards can cause this.");
+  expect(html).toContain("a creature dies — 1,451 cards can cause this.");
   // One list per event, the count directly above its own list.
   expect(html.match(/<ol>/g)).toHaveLength(2);
   expect(html.indexOf("1,234 cards")).toBeLessThan(html.indexOf("purphoros-god-of-the-forge"));
@@ -115,7 +119,7 @@ test("the static block carries the card, its derivation and the engine's sentenc
   expect(html).toContain("Krenko, Mob Boss");
   expect(html).toContain("Legendary Creature");
   // The block a crawler reads carries ENGLISH, not the artifact's key vocabulary.
-  expect(html).toContain("a Goblin creature token being created");
+  expect(html).toContain("create a Goblin creature token");
   expect(html).not.toContain("|");
   expect(html).toContain("Impact Tremors deals 1 damage");
   expect(html).toContain('href="/cards/impact-tremors"');

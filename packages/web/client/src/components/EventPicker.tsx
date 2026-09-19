@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { eventKeySentence } from "../lib/demand-sentence.js";
+import { eventMatches } from "../lib/demand-sentence.js";
 import { useListboxKeys } from "../lib/listbox-keys.js";
 
 /** ONE QUESTION, MANY EVENTS (spec 2026-09-19, roadmap AJ3).
@@ -8,9 +8,9 @@ import { useListboxKeys } from "../lib/listbox-keys.js";
  *  combobox-with-listbox pattern -- through the same hook `HeaderSearch` uses, so there is one
  *  keyboard contract on this site rather than two that agree today.
  *
- *  THE ROWS READ AS THE CARD PAGES READ. `eventKeySentence` is what a partner group prints, so a
- *  reader who arrived by clicking "389 other cards cause it too" meets that same sentence here
- *  instead of a second phrasing invented for this control.
+ *  THE ROWS READ AS THE CARD PAGES READ, and the caller decides which way round. A partner group
+ *  prints the same two forms (roadmap AK4), so a reader who arrived by clicking "389 other cards
+ *  cause it too" meets the sentence they clicked rather than a second phrasing invented here.
  *
  *  ONLY `ROWS` ARE RENDERED. There are 1,187 keys; a listbox of all of them is a frame nobody gets
  *  back, and the search box is how a reader reaches the one they want. The line under the list
@@ -18,7 +18,7 @@ import { useListboxKeys } from "../lib/listbox-keys.js";
  *  result list's own cap follows. */
 const ROWS = 50;
 
-export function EventPicker({ label, hint, options, chosen, counts, demand, onChange }: {
+export function EventPicker({ label, hint, options, chosen, counts, demand, say, onChange }: {
   label: string;
   /** What this question means, in one line under the label. */
   hint: string;
@@ -29,6 +29,10 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, onCh
   counts: (key: string) => number;
   /** THE SIZE OF THE OTHER SIDE, which is what orders the list. See `rows` below. */
   demand: (key: string) => number;
+  /** HOW THIS PICKER SAYS AN EVENT (roadmap AK4). The two ask different questions about the same
+   *  key -- one about a card that CAUSES it, one about a card WAITING for it -- so the Causes
+   *  picker hands in the action ("sacrifice a creature") and Cares the clause ("a creature dies"). */
+  say: (key: string) => string;
   onChange: (next: string[]) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -52,10 +56,13 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, onCh
   const all = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return options
-      .map((key) => ({ key, sentence: eventKeySentence(key), count: counts(key), rank: demand(key) }))
-      .filter((r) => needle.length === 0 || r.sentence.toLowerCase().includes(needle))
+      .map((key) => ({ key, sentence: say(key), count: counts(key), rank: demand(key) }))
+      // MATCHED THE WAY A PLAYER TYPES (roadmap AK4): every word, in any order, on stems, across
+      // both forms and the player synonyms. A raw substring over one form found nothing for
+      // "sacrifice token", "dies" or "etb".
+      .filter((r) => needle.length === 0 || eventMatches(r.key, needle))
       .sort((a, b) => b.rank - a.rank || b.count - a.count || a.sentence.localeCompare(b.sentence, "en"));
-  }, [options, counts, demand, query]);
+  }, [options, counts, demand, say, query]);
   const rows = all.slice(0, ROWS);
 
   const toggle = (key: string) => {
@@ -89,11 +96,11 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, onCh
       <div className="flex flex-wrap items-center gap-2 rounded-(--field-radius) border border-(--field-border) bg-(--field-background) p-2">
         {chosen.map((key) => (
           <span key={key} className="chip">
-            {eventKeySentence(key)}
+            {say(key)}
             <button
               type="button"
               onClick={() => toggle(key)}
-              aria-label={`Remove ${eventKeySentence(key)}`}
+              aria-label={`Remove ${say(key)}`}
               className="min-h-11 min-w-11 inline-flex items-center justify-center"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">

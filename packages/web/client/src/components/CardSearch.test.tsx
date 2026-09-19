@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
 import { CardSearch, SEARCH_LIMIT } from "./CardSearch.js";
 import type { EventFrequencyFile, EventMembers, NameIndexEntry } from "../lib/partners.js";
-import { eventKeySentence } from "../lib/demand-sentence.js";
+import { eventKeyAction } from "../lib/demand-sentence.js";
 
 const INDEX: NameIndexEntry[] = [
   { slug: "krenko-mob-boss", name: "Krenko, Mob Boss", identity: ["R"], commander: true },
@@ -457,7 +457,8 @@ test("an example question sets the events and lists its answer as tiles", async 
 test("a listed card carries the event that put it there", async () => {
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
   await screen.findByRole("link", { name: /Inspiring Call/ });
-  expect(screen.getAllByText(eventKeySentence(MILL)).length).toBeGreaterThan(0);
+  // AK4: a produce term is named as the action a player would say.
+  expect(screen.getAllByText(eventKeyAction(MILL)!).length).toBeGreaterThan(0);
 });
 
 /** THE COUNT IS A STATUS MESSAGE (WCAG 4.1.3). A chip changes the set and a sighted reader sees

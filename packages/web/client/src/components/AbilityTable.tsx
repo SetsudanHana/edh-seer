@@ -1,5 +1,5 @@
 import { effectPhrase, type AbilityRow } from "@edh-seer/matcher/partners-core";
-import { eventKeySentence } from "../lib/demand-sentence.js";
+import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { LoyaltyCost } from "./LoyaltyCost.js";
 import { useFace } from "./face.js";
 
@@ -32,6 +32,16 @@ const countedNoun = (counts: string): string => {
   const words = counts.split(",").map((w) => w.trim()).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1));
   return words.length <= 1 ? words.join("") : `${words.slice(0, -1).join(", ")} or ${words.at(-1)}`;
 };
+
+/** WHAT AN EMIT PUTS INTO THE GAME, in a player's words (roadmap AK4). The ability is DOING this,
+ *  so it takes the action form -- "mill a card", "put a land onto the battlefield" -- and falls
+ *  back to the clause for the events nobody performs ("a creature attacks"). A self emit names the
+ *  card, which only the clause can say.
+ *
+ *  This column used to print the label form, so it read "a card being drawn" under a heading that
+ *  says what the ability does. */
+const emitPhrase = (key: string, self?: boolean): string =>
+  self === true ? eventKeyClause(key, "this card") : eventKeyAction(key) ?? eventKeyClause(key);
 
 export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; stacked?: boolean }) {
   // THE ROWS OF THE FACE ON VIEW. A two-faced card's rows carry `face` on the back face; under a
@@ -92,7 +102,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
                 {a.when.length === 0
                   ? <span className="text-(--muted)">—</span>
                   : <ul className="flex flex-col gap-1">
-                      {a.when.map((w) => <li key={w}>{eventKeySentence(w, a.self ? "this card" : undefined, a.whenColors)}</li>)}
+                      {a.when.map((w) => <li key={w}>{eventKeyClause(w, a.self ? "this card" : undefined, a.whenColors)}</li>)}
                     </ul>}
               </td>
               <td className="py-3 pr-4">
@@ -109,7 +119,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
                 {a.emits.length === 0
                   ? <span className="text-(--muted)">—</span>
                   : <ul className="flex flex-col gap-1">
-                      {a.emits.map((e) => <li key={e}>{eventKeySentence(e, a.selfEmits?.includes(e) ? "this card" : undefined)}</li>)}
+                      {a.emits.map((e) => <li key={e}>{emitPhrase(e, a.selfEmits?.includes(e))}</li>)}
                     </ul>}
               </td>
             </tr>
@@ -125,7 +135,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
               {a.cost && <LoyaltyCost cost={a.cost} />}
             </p>
             {a.when.length > 0 && (
-              <p><span className="eyebrow text-(--muted)">when </span>{a.when.map((w) => eventKeySentence(w, a.self ? "this card" : undefined, a.whenColors)).join(", ")}</p>
+              <p><span className="eyebrow text-(--muted)">when </span>{a.when.map((w) => eventKeyClause(w, a.self ? "this card" : undefined, a.whenColors)).join(", ")}</p>
             )}
             <p>
               {effectPhrase(a.effect, a.amount, a.effectSelf ? "itself" : undefined, a.recipient) ?? a.effect.replace(/-/g, " ") ?? "—"}
@@ -138,7 +148,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
             {a.emits.length > 0 && (
               <p>
                 <span className="eyebrow text-(--muted)">puts into the game </span>
-                {a.emits.map((w) => eventKeySentence(w, a.selfEmits?.includes(w) ? "this card" : undefined)).join(", ")}
+                {a.emits.map((w) => emitPhrase(w, a.selfEmits?.includes(w))).join(", ")}
               </p>
             )}
           </li>

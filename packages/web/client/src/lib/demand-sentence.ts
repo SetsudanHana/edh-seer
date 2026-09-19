@@ -290,6 +290,13 @@ export const ACTION_VERB: Record<string, string> = {
  *  boosts"), so this is that map in the imperative rather than a second vocabulary. */
 const STATIC_ACTION: Record<string, string> = {
   pump: "boost",
+  // The four other static kinds whose action is not in doubt. The rest keep the generic "it
+  // applies X to" wording: inventing a verb for `applies:graveyard-recursion` or
+  // `applies:emblem` would be a guess, and a guess in a label is one a reader cannot check.
+  "speed-increase": "increase the speed of",
+  animate: "animate",
+  untap: "untap",
+  "counter-placement": "put counters on",
   "cost-reduction": "make cheaper to cast",
   "keyword-grant": "grant abilities to",
   "type-grant": "grant types to",
@@ -297,6 +304,21 @@ const STATIC_ACTION: Record<string, string> = {
   "damage-multiplier": "multiply the damage of",
   "token-doubling": "double the tokens of",
   protection: "protect",
+};
+
+/** THE OBJECT A VERB IMPLIES WHEN THE KEY NAMES NO CLASS. "untap anything" is not what a player
+ *  says; "untap a permanent" is, and the verb already tells you which noun it must be. Only for
+ *  verbs whose object is never in doubt -- everything else keeps "anything", which is honest about
+ *  the key naming no class at all. */
+const DEFAULT_OBJECT: Record<string, string> = {
+  taps: "a permanent",
+  untaps: "a permanent",
+  exiled: "a card",
+  reveal: "a card",
+  sacrifice: "a permanent",
+  "create-token": "a token",
+  "counter-spell": "a spell",
+  "land-play": "a land",
 };
 
 /** The subjectless actions, whole: there is no object noun to glue on. */
@@ -801,7 +823,7 @@ export function eventKeyAction(key: string, colors?: string[]): string | undefin
   // A FILL'S OBJECT IS A CARD when the key names no type, the same known object `mill` and
   // `discard` have: you put a CARD into a graveyard, not "anything".
   const object = noun === null
-    ? (verb === "fills" ? "a card" : "anything")
+    ? (verb === "fills" ? "a card" : DEFAULT_OBJECT[verb] ?? "anything")
     : `${noun.article} ${noun.phrase}`;
   // `put ONTO the battlefield` -- the object belongs inside the phrase, not after it.
   const around = action.match(/^(.*)\b(ONTO|INTO)\b(.*)$/);
@@ -870,9 +892,13 @@ export function eventMatches(key: string, query: string): boolean {
     .join(" ").toLowerCase();
   const words = new Set(haystack.split(/[^a-z0-9+/]+/).filter(Boolean).map(stem));
   const whole = haystack;
-  // A typed word counts when it stems onto a word of the phrase, or appears in it outright -- the
-  // second is what lets a multi-word synonym ("sac outlet") and a "+1/+1" match at all.
-  return typed.every((w) => words.has(stem(w)) || whole.includes(w));
+  // A typed word counts when it stems onto a WORD of the phrase. The substring fallback exists
+  // only for what cannot be a word -- "+1/+1" -- and for a multi-word synonym typed whole ("sac
+  // outlet"): applying it to every word made "token" match "nontoken", which is the opposite
+  // event, and rank it above the row the reader meant.
+  const odd = (w: string): boolean => /[^a-z]/.test(w);
+  return typed.every((w) => words.has(stem(w)) || (odd(w) && whole.includes(w)))
+    || whole.includes(query.toLowerCase().trim());
 }
 
 /** "artifact, creature or enchantment" -- the same joining `demandSentence` does inline, kept here

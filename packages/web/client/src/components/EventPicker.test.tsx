@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { EventPicker } from "./EventPicker.js";
+import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 
 /** THE EVENT PICKER (roadmap AJ3). What these assert is what a reader and a screen reader both
  *  depend on: the rows read in the engine's own sentences, the count beside each is the caller's
@@ -12,9 +13,12 @@ const counts = (k: string): number => COUNTS[k] ?? 0;
 /** THE OTHER SIDE'S SIZE, which is what orders the list: how many cards are waiting for each. */
 const ASKERS: Record<string, number> = { "mill|-|-|-": 30, "dies|creature|-|-": 418, "enters|land|-|-": 12 };
 const demand = (k: string): number => ASKERS[k] ?? 0;
+/** HOW THIS PICKER SAYS AN EVENT (roadmap AK4). The page hands the Causes picker the action and
+ *  the Cares picker the clause; here the action stands in for both. */
+const say = (k: string): string => eventKeyAction(k) ?? eventKeyClause(k);
 
 const mount = (chosen: string[] = [], onChange = vi.fn()) => {
-  const r = render(<EventPicker label="Causes" hint="what a card can cause" options={OPTIONS} chosen={chosen} counts={counts} demand={demand} onChange={onChange} />);
+  const r = render(<EventPicker label="Causes" hint="what a card can cause" options={OPTIONS} chosen={chosen} counts={counts} demand={demand} say={say} onChange={onChange} />);
   return { onChange, ...r };
 };
 const field = () => screen.getByRole("combobox", { name: /causes/i });
@@ -43,7 +47,7 @@ test("a huge cause count does not buy the top of the list", async () => {
     label="Causes" hint="" options={keys} chosen={[]}
     counts={(k) => (k.startsWith("applies:") ? 24982 : 2525)}
     demand={(k) => (k.startsWith("applies:") ? 3 : 418)}
-    onChange={vi.fn()} />);
+    say={say} onChange={vi.fn()} />);
   await userEvent.click(field());
   const rows = screen.getAllByRole("option").map((o) => o.textContent ?? "");
   expect(rows[0]).toContain("2,525");
@@ -51,7 +55,7 @@ test("a huge cause count does not buy the top of the list", async () => {
 });
 
 test("the count printed is the caller's, so it can be scoped to the reader's colours", async () => {
-  render(<EventPicker label="Causes" hint="" options={["mill|-|-|-"]} chosen={[]} counts={() => 7} demand={demand} onChange={vi.fn()} />);
+  render(<EventPicker label="Causes" hint="" options={["mill|-|-|-"]} chosen={[]} counts={() => 7} demand={demand} say={say} onChange={vi.fn()} />);
   await userEvent.click(field());
   expect(screen.getByRole("option").textContent).toContain("7");
 });
@@ -118,7 +122,7 @@ test("Escape closes the list", async () => {
  *  result list's own cap does. */
 test("a long list is capped, and the line says what is withheld", async () => {
   const many = Array.from({ length: 60 }, (_, i) => `enters|creature|type${i}|-`);
-  render(<EventPicker label="Causes" hint="" options={many} chosen={[]} counts={() => 1} demand={(k) => Number(k.split("type")[1])} onChange={vi.fn()} />);
+  render(<EventPicker label="Causes" hint="" options={many} chosen={[]} counts={() => 1} demand={(k) => Number(k.split("type")[1])} say={say} onChange={vi.fn()} />);
   await userEvent.click(field());
   expect(screen.getAllByRole("option")).toHaveLength(50);
   expect(screen.getByText(/10 more/)).toBeInTheDocument();
@@ -129,7 +133,7 @@ test("a long list is capped, and the line says what is withheld", async () => {
  *  results off the page. `HeaderSearch` has always closed on blur; this one never did. */
 test("leaving the field closes the list", async () => {
   render(<>
-    <EventPicker label="Causes" hint="" options={OPTIONS} chosen={[]} counts={counts} demand={demand} onChange={vi.fn()} />
+    <EventPicker label="Causes" hint="" options={OPTIONS} chosen={[]} counts={counts} demand={demand} say={say} onChange={vi.fn()} />
     <button type="button">elsewhere</button>
   </>);
   await userEvent.click(field());
@@ -147,13 +151,13 @@ test("choosing a row keeps the list open, because more than one event can be cho
   await userEvent.click(field());
   await userEvent.click(screen.getAllByRole("option")[0]!);
   expect(onChange).toHaveBeenCalledWith(["dies|creature|-|-"]);
-  rerender(<EventPicker label="Causes" hint="what a card can cause" options={OPTIONS} chosen={["dies|creature|-|-"]} counts={counts} demand={demand} onChange={onChange} />);
+  rerender(<EventPicker label="Causes" hint="what a card can cause" options={OPTIONS} chosen={["dies|creature|-|-"]} counts={counts} demand={demand} say={say} onChange={onChange} />);
   expect(screen.getAllByRole("option")).toHaveLength(3);
 });
 
 test("removing a chip does not leave the list open behind it", async () => {
   render(<>
-    <EventPicker label="Causes" hint="" options={OPTIONS} chosen={["mill|-|-|-"]} counts={counts} demand={demand} onChange={vi.fn()} />
+    <EventPicker label="Causes" hint="" options={OPTIONS} chosen={["mill|-|-|-"]} counts={counts} demand={demand} say={say} onChange={vi.fn()} />
     <button type="button">elsewhere</button>
   </>);
   await userEvent.click(screen.getByRole("button", { name: /^Remove/ }));

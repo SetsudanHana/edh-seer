@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { eventKeySentence } from "../lib/demand-sentence.js";
+import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { Link } from "react-router";
 import { groupDirection, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
@@ -83,8 +83,12 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
         return (
           <section key={group.event} className="flex flex-col gap-3 break-inside-avoid">
             <div className="flex flex-col gap-0.5">
+              {/* THE HEADING RUNS THE GROUP'S OWN DIRECTION (roadmap AK4). Under a producer group
+                * the cards DO this -- "sacrifice a creature" -- and under an asker group they are
+                * waiting for it -- "a creature dies". The direction is already read off the rows
+                * for the withheld line; saying it two ways from one fact is how AJ1 happened. */}
               <h3 className="text-lg font-semibold tracking-[-0.01em]">
-                {eventKeySentence(group.event)}
+                {dir === "asks" ? eventKeyClause(group.event) : eventKeyAction(group.event) ?? eventKeyClause(group.event)}
               </h3>
               {/* THE NUMBER THE ORDER IS ACTUALLY COMPUTED FROM. The page showed only the count of
                 * cards that ASK for this event and ranked on how many can CAUSE it -- two different
