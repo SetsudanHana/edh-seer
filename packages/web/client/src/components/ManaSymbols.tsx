@@ -45,13 +45,27 @@ export function parseManaCost(cost: string): ManaSymbol[] {
  *  receives nothing and the 390px legibility problem the phone persona reported gets worse. */
 const SYMBOL_URL = (code: string): string => `https://svgs.scryfall.io/card-symbols/${code}.svg`;
 
+/** IS THIS ACTUALLY A SYMBOL CODE? A brace is not a promise that what is inside it is one.
+ *  `ManaText` reads printed clause text, so the token is whatever the card -- or a corpus defect --
+ *  put there, and building a URL out of it unchecked is a path the caller does not control:
+ *  `{../../x}` gives `.../card-symbols/../../x.svg`. CodeQL called it on PR #409
+ *  (`js/xss-through-dom`).
+ *
+ *  LETTERS AND DIGITS ONLY, AND SHORT. Every symbol Scryfall names is one after the slashes come
+ *  out -- `T`, `15`, `WU`, `BP`, `CHAOS` is the longest at five. A dot, a space or a slash cannot
+ *  survive it, which is the whole traversal. Anything else renders as the raw text it always was,
+ *  which is also what a reader should be shown rather than a 404 image. */
+export function isSymbolCode(code: string): boolean {
+  return /^[A-Z0-9]{1,5}$/.test(code);
+}
+
 export function ManaSymbols({ cost }: { cost: string }): React.JSX.Element {
   const symbols = parseManaCost(cost);
   if (symbols.length === 0) return <span className="text-(--muted)">—</span>;
   return (
     <span role="img" aria-label={symbols.map((s) => s.label).join(", ")} className="inline-flex items-center gap-0.5">
       {symbols.map((s, i) =>
-        s.code
+        s.code && isSymbolCode(s.code)
           ? (
             // Sized in em so a symbol scales with the row it sits in rather than fighting it.
             <img
@@ -88,6 +102,7 @@ export function ManaText({ text }: { text: string }): React.JSX.Element {
       {parts.map((part, i) => {
         if (!/^\{[^}]+\}$/.test(part)) return <span key={i}>{part}</span>;
         const code = part.slice(1, -1).replace(/\//g, "").toUpperCase();
+        if (!isSymbolCode(code)) return <span key={i}>{part}</span>;
         const label = labelFor(code, part);
         return (
           <img
