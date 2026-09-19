@@ -5,7 +5,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
-  supplyForms, supplyKeysOf, themesOf, inIdentityOf, identityMask, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
+  supplyForms, supplyKeysOf, themesOf, inIdentityOf, identityMask, splitKey, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
 } from "./partners-core.js";
 
 /** THE CORPUS COUNT ALONE. `supplyBuckets` splits every key by colour identity (AJ5); the rules
@@ -948,7 +948,14 @@ const forest = () => withTypes(base("Forest", []), ["land"], "");
 test("a static's reach is a demand key, and a role or a self-reference is not", () => {
   expect(staticKeysOf(samut())).toEqual([
     "applies:pump|creature|-|-",
-    "applies:cost-reduction|artifact,enchantment,planeswalker,instant,sorcery,battle|-|-",
+    // ONE TYPE PER KEY since AK5: the discount reaches six types, so it is six demands, in the
+    // order the key listed them.
+    "applies:cost-reduction|artifact|-|-",
+    "applies:cost-reduction|enchantment|-|-",
+    "applies:cost-reduction|planeswalker|-|-",
+    "applies:cost-reduction|instant|-|-",
+    "applies:cost-reduction|sorcery|-|-",
+    "applies:cost-reduction|battle|-|-",
   ]);
   const propaganda = base("Propaganda", [
     { kind: "static", effect: { kind: "tax", subject: { control: "opp", token: null, type: "creature" } } },
@@ -965,14 +972,20 @@ test("a static reaches the cards it applies to, each verified by the engine's ow
   const { rows, pool } = partnersFor(samut(), [forest(), bauble, dragonFodder(), goblinBody()], [], {}, slugs, H);
   expect(rows.map((r) => r.name).sort()).toEqual(["Dragon Fodder", "Goblin Assassin"]);
   const fodder = rows.find((r) => r.name === "Dragon Fodder")!;
-  expect(fodder.event).toBe("applies:cost-reduction|artifact,enchantment,planeswalker,instant,sorcery,battle|-|-");
+  // AK5 attributes the row to the type the card actually IS -- Dragon Fodder is a sorcery -- where
+  // the combined key named six types the reader had to sift.
+  expect(fodder.event).toBe("applies:cost-reduction|sorcery|-|-");
   expect(fodder.reason).toBe("Samut, the Driving Force reduces what Dragon Fodder costs");
   const body = rows.find((r) => r.name === "Goblin Assassin")!;
   expect(body.event).toBe("applies:pump|creature|-|-");
   expect(body.reason).toBe("Samut, the Driving Force gives Goblin Assassin bigger stats");
-  // A `{U}` spell cannot cost less (CR 118.7): the engine refuses it, and the pool counted it before
-  // the cut. The land was never a candidate -- the key names no land type.
-  expect(pool[fodder.event]).toBe(2);
+  // A `{U}` spell cannot cost less (CR 118.7): the engine refuses it, and the pool counted it
+  // before the cut. Since AK5 the pool is counted PER TYPE, so the artifact Bauble sits under
+  // `applies:cost-reduction|artifact|-|-` and the sorcery key counts the sorcery alone -- which is
+  // the honest denominator for "a sorcery it makes cheaper to cast". The land was never a
+  // candidate: the key names no land type.
+  expect(pool[fodder.event]).toBe(1);
+  expect(pool["applies:cost-reduction|artifact|-|-"]).toBe(1);
 });
 
 /** THE CARD THAT HITS BOTH STATICS LEADS. A noncreature spell that makes creature bodies is what a
@@ -1433,7 +1446,8 @@ test("fillDemandsOf: a recursion, a per-graveyard payoff, a graveyard count and 
   const glamdring = { card: { name: "Glamdring" }, tags: { characteristics: { types: ["artifact"], subtypes: ["equipment"], keywords: [] }, abilities: [{
     kind: "static", effect: { kind: "pump", scaling: "per-graveyard", scalingSubject: { control: "you", token: null, type: ["instant", "sorcery"], zone: "graveyard" } },
   }] } } as unknown as DeckCard;
-  expect(feederKeysOf(glamdring)).toEqual(["fills|instant,sorcery|-|-"]);
+  // AK5: an instant OR a sorcery in the yard is two demands, not one.
+  expect(feederKeysOf(glamdring)).toEqual(["fills|instant|-|-", "fills|sorcery|-|-"]);
   // An untyped per-graveyard count is refused by the engine, so it is not proposed either.
   const monument = { card: { name: "Riverchurn Monument" }, tags: { characteristics: { types: ["artifact"], subtypes: [], keywords: [] }, abilities: [{
     kind: "activated", effect: { kind: "mill", scaling: "per-graveyard", scalingSubject: { control: "any", token: null, zone: "graveyard" } },
@@ -1693,4 +1707,34 @@ test("a graveyard leave keys apart from a battlefield leave", () => {
   // subject lives, never the origin, or every reanimator would stop answering an ETB payoff.
   expect(eventKey({ verb: "enters", subject: { type: "creature", fromZone: "graveyard", control: "you", token: null } } as never))
     .toBe("enters|creature|-|-");
+});
+
+/** ONE TYPE AND ONE SUBTYPE PER EVENT (roadmap AK5, owner ruling 2026-09-19: "whenever you cast an
+ *  instant or sorcery ... 2 separate events it cares about and triggers on any of those").
+ *
+ *  The key carried the disjunction as a comma list, which made one event out of two and produced
+ *  names no reader could use -- Krenko's page showed "an artifact or creature enters the
+ *  battlefield" above "an artifact, creature or enchantment enters the battlefield". */
+test("a disjunctive trigger is several events, one per type", () => {
+  expect(splitKey("cast|instant,sorcery|-|-")).toEqual(["cast|instant|-|-", "cast|sorcery|-|-"]);
+  expect(splitKey("enters|artifact,creature|-|-")).toEqual(["enters|artifact|-|-", "enters|creature|-|-"]);
+  // A key with nothing to split is returned as it is, and the order the key lists is kept.
+  expect(splitKey("dies|creature|-|n")).toEqual(["dies|creature|-|n"]);
+  // BOTH SLOTS SPLIT, as a cross product: a static reaching two subtypes across two types reaches
+  // each of the four pairs.
+  expect(splitKey("applies:pump|creature,artifact|goblin,elf|-")).toEqual([
+    "applies:pump|creature|goblin|-", "applies:pump|creature|elf|-",
+    "applies:pump|artifact|goblin|-", "applies:pump|artifact|elf|-",
+  ]);
+});
+
+/** AND A CARD'S DEMANDS ARE THE SPLIT SET, which is what makes the name short: no key holds a
+ *  list, so no sentence has one to render. */
+test("a trigger naming two types demands both", () => {
+  const payoff = base("Two Ways", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: ["artifact", "creature"], control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  expect(demandKeysOf(payoff)).toEqual(["enters|artifact|-|-", "enters|creature|-|-"]);
 });
