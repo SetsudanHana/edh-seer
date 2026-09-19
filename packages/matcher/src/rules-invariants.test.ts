@@ -22,6 +22,7 @@ const TESTED: Record<string, string> = {
   "707.2": "edges.test.ts — copy: a NONLEGENDARY consumer gets the entry and never the legend rule",
   "700.4": "zones.test.ts — dies stays dies (CR 700.4)",
   "701.13b": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
+  "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",
   "700.12": "implied.test.ts — isOutlaw is the five CR 700.12 creature types",
   "111.1": "edges.test.ts — a token is never cast (CR 111.1), so it is never reduced",
   "903.5b": "legality.test.ts — 903.5b flags a repeated nonbasic",
