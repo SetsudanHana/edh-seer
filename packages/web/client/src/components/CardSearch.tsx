@@ -209,6 +209,8 @@ export function CardSearch({
     return colours.length > 0 && slots ? inIdentityOf(slots, mask) : (freq.supply[key] ?? 0);
   }, [freq, colours, mask]);
   const consumeCountOf = useMemo(() => (key: string): number => freq?.consume[key] ?? 0, [freq]);
+  // The corpus supply, unscoped: it ranks the "asks for" list rather than being printed on it.
+  const supplyCountOf = useMemo(() => (key: string): number => freq?.supply[key] ?? 0, [freq]);
   const produceOptions = useMemo(
     () => (freq === null ? [] : Object.keys(freq.supply).filter((k) => (freq.supply[k] ?? 0) > 0 && k in freq.byIdentity)),
     [freq]);
@@ -328,6 +330,7 @@ export function CardSearch({
           options={produceOptions}
           chosen={eventQuery.produce}
           counts={countOf}
+          demand={consumeCountOf}
           onChange={(next) => setEvents({ ...eventQuery, produce: next })}
         />
         <EventPicker
@@ -336,6 +339,7 @@ export function CardSearch({
           options={consumeOptions}
           chosen={eventQuery.consume}
           counts={consumeCountOf}
+          demand={supplyCountOf}
           onChange={(next) => setEvents({ ...eventQuery, consume: next })}
         />
       </div>

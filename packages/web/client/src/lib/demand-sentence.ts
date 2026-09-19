@@ -433,6 +433,10 @@ const COLOUR_WORD: Record<string, string> = { W: "white", U: "blue", B: "black",
 
 const CARD_TYPE_WORDS = new Set(["artifact", "creature", "enchantment", "land", "planeswalker", "instant", "sorcery", "battle", "permanent", "kindred"]);
 
+/** THE EIGHT CARD TYPES A STATIC CAN NAME (CR 205.2a), minus the ones no EDH card carries. A list
+ *  covering five or more of them is a way of writing "anything", not a distinction. */
+const PERMANENT_TYPES: ReadonlySet<string> = new Set(["artifact", "battle", "creature", "enchantment", "land", "planeswalker"]);
+
 export function eventKeySentence(key: string, subject?: string, colors?: string[]): string {
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
 
@@ -454,6 +458,18 @@ export function eventKeySentence(key: string, subject?: string, colors?: string[
     const kind = verb.slice("applies:".length);
     const does = STATIC_REACH[kind] ?? `it applies ${kind.replace(/-/g, " ")} to`;
     const nouns = [...(subtype === "-" ? [] : subtype.split(",").map(capitalize)), ...(type === "-" ? [] : type.split(","))];
+    // A LIST OF NEARLY EVERY TYPE MEANS "ANYTHING", AND READS AS NOISE. 37 corpus keys enumerate
+    // five or more of the eight card types -- "a creature, artifact, enchantment, planeswalker,
+    // instant, sorcery or battle it makes cheaper to cast" is 99 characters that say "a spell",
+    // and nine of them opened the event picker as nine near-identical rows (measured 2026-09-19).
+    // Collapsed to the word the enumeration means; anything shorter still lists its types.
+    if (subtype === "-" && type !== "-") {
+      const types = type.split(",");
+      if (types.length >= 5) {
+        const permanentsOnly = types.every((t) => PERMANENT_TYPES.has(t));
+        return `a ${permanentsOnly ? "permanent" : "permanent or spell"} ${does}`;
+      }
+    }
     const head = nouns.length <= 1 ? nouns.join(" ") : `${nouns.slice(0, -1).join(", ")} or ${nouns.at(-1)}`;
     const noun = subtype !== "-" && type !== "-" ? `${capitalize(subtype.split(",")[0]!)} ${type.split(",").join(" or ")}` : head;
     return `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun} ${does}`;

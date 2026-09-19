@@ -18,7 +18,7 @@ import { useListboxKeys } from "../lib/listbox-keys.js";
  *  result list's own cap follows. */
 const ROWS = 50;
 
-export function EventPicker({ label, hint, options, chosen, counts, onChange }: {
+export function EventPicker({ label, hint, options, chosen, counts, demand, onChange }: {
   label: string;
   /** What this question means, in one line under the label. */
   hint: string;
@@ -27,6 +27,8 @@ export function EventPicker({ label, hint, options, chosen, counts, onChange }: 
   /** The count a row prints -- scoped to the reader's colours by the caller, never a corpus
    *  figure over an identity-filtered list (the defect AJ5 was opened for). */
   counts: (key: string) => number;
+  /** THE SIZE OF THE OTHER SIDE, which is what orders the list. See `rows` below. */
+  demand: (key: string) => number;
   onChange: (next: string[]) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -36,13 +38,24 @@ export function EventPicker({ label, hint, options, chosen, counts, onChange }: 
   const listId = `${id}-listbox`;
   const optId = (i: number): string => `${id}-opt-${i}`;
 
+  // THE ORDER IS THE OTHER SIDE'S SIZE, NOT THIS ONE'S (measured 2026-09-19).
+  //
+  // Ordering the causes by how many cards CAUSE them opened this control on nine near-identical
+  // rows -- every one a static reaching 20,032 to 24,982 cards, which is the whole corpus -- while
+  // "a creature dies" sat below the fold. An event nearly every card can cause is the worst filter
+  // on the list, and the engine already says so in its own scoring: specificity is 1/log(count+1).
+  //
+  // What a reader wants first is an event the deck is WAITING for, so a cause ranks by how many
+  // cards ask for it (418 ask for a creature dying, 539 for a creature to sacrifice), and an ask
+  // ranks by how many cards can pay it. Both numbers ship in `event-frequency.json`; neither is a
+  // threshold anyone had to invent.
   const all = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return options
-      .map((key) => ({ key, sentence: eventKeySentence(key), count: counts(key) }))
+      .map((key) => ({ key, sentence: eventKeySentence(key), count: counts(key), rank: demand(key) }))
       .filter((r) => needle.length === 0 || r.sentence.toLowerCase().includes(needle))
-      .sort((a, b) => b.count - a.count || a.sentence.localeCompare(b.sentence, "en"));
-  }, [options, counts, query]);
+      .sort((a, b) => b.rank - a.rank || b.count - a.count || a.sentence.localeCompare(b.sentence, "en"));
+  }, [options, counts, demand, query]);
   const rows = all.slice(0, ROWS);
 
   const toggle = (key: string) => {
@@ -57,7 +70,10 @@ export function EventPicker({ label, hint, options, chosen, counts, onChange }: 
   });
 
   return (
-    <div className="flex flex-col gap-2">
+    // THE CONTROL IS THE WIDTH OF A FIELD, not the width of the page. At 1920 the box spanned
+    // 1,856px beside a `max-w-lg` search field above it and read as a broken input; a listbox that
+    // wide also puts its count 1,800px from its sentence, which is two separate things to read.
+    <div className="flex flex-col gap-2 w-full max-w-2xl">
       <p className="eyebrow text-(--muted)" id={`${id}-label`}>{label}</p>
       <p className="text-(--muted) text-sm">{hint}</p>
       {/* THE CHIPS LIVE IN THE FIELD, so what is chosen and where to choose more are one control

@@ -9,26 +9,49 @@ import { EventPicker } from "./EventPicker.js";
 const OPTIONS = ["mill|-|-|-", "dies|creature|-|-", "enters|land|-|-"];
 const COUNTS: Record<string, number> = { "mill|-|-|-": 602, "dies|creature|-|-": 2525, "enters|land|-|-": 406 };
 const counts = (k: string): number => COUNTS[k] ?? 0;
+/** THE OTHER SIDE'S SIZE, which is what orders the list: how many cards are waiting for each. */
+const ASKERS: Record<string, number> = { "mill|-|-|-": 30, "dies|creature|-|-": 418, "enters|land|-|-": 12 };
+const demand = (k: string): number => ASKERS[k] ?? 0;
 
 const mount = (chosen: string[] = [], onChange = vi.fn()) => {
-  const r = render(<EventPicker label="Causes" hint="what a card can cause" options={OPTIONS} chosen={chosen} counts={counts} onChange={onChange} />);
+  const r = render(<EventPicker label="Causes" hint="what a card can cause" options={OPTIONS} chosen={chosen} counts={counts} demand={demand} onChange={onChange} />);
   return { onChange, ...r };
 };
 const field = () => screen.getByRole("combobox", { name: /causes/i });
 
-test("it lists the events by their engine sentence, most common first", async () => {
+/** THE ORDER IS THE OTHER SIDE'S SIZE. Ordering causes by how many cards CAUSE them put nine
+ *  statics reaching the whole corpus at the top of this list and "a creature dies" below the fold
+ *  (measured 2026-09-19); an event nearly every card can cause is the worst filter on the list. */
+test("it lists the events by their engine sentence, most asked-for first", async () => {
   mount();
   await userEvent.click(field());
   const rows = screen.getAllByRole("option").map((o) => o.textContent ?? "");
   expect(rows).toHaveLength(3);
+  // 418 cards wait for a creature to die; 30 for a mill; 12 for a land.
   expect(rows[0]).toContain("2,525");
+  expect(rows[1]).toContain("602");
   expect(rows[2]).toContain("406");
   // The sentence, not the key: a reader never sees `dies|creature|-|-`.
   expect(rows[0]).not.toContain("|");
 });
 
+/** AND IT IS NOT THE PRINTED COUNT THAT ORDERS. A row that 24,982 cards can cause, which nothing
+ *  asks for, belongs below one that 2,525 can cause and 418 are waiting for. */
+test("a huge cause count does not buy the top of the list", async () => {
+  const keys = ["applies:pump|creature,artifact,enchantment,land,planeswalker,battle|-|-", "dies|creature|-|-"];
+  render(<EventPicker
+    label="Causes" hint="" options={keys} chosen={[]}
+    counts={(k) => (k.startsWith("applies:") ? 24982 : 2525)}
+    demand={(k) => (k.startsWith("applies:") ? 3 : 418)}
+    onChange={vi.fn()} />);
+  await userEvent.click(field());
+  const rows = screen.getAllByRole("option").map((o) => o.textContent ?? "");
+  expect(rows[0]).toContain("2,525");
+  expect(rows[1]).toContain("24,982");
+});
+
 test("the count printed is the caller's, so it can be scoped to the reader's colours", async () => {
-  render(<EventPicker label="Causes" hint="" options={["mill|-|-|-"]} chosen={[]} counts={() => 7} onChange={vi.fn()} />);
+  render(<EventPicker label="Causes" hint="" options={["mill|-|-|-"]} chosen={[]} counts={() => 7} demand={demand} onChange={vi.fn()} />);
   await userEvent.click(field());
   expect(screen.getByRole("option").textContent).toContain("7");
 });
@@ -95,7 +118,7 @@ test("Escape closes the list", async () => {
  *  result list's own cap does. */
 test("a long list is capped, and the line says what is withheld", async () => {
   const many = Array.from({ length: 60 }, (_, i) => `enters|creature|type${i}|-`);
-  render(<EventPicker label="Causes" hint="" options={many} chosen={[]} counts={() => 1} onChange={vi.fn()} />);
+  render(<EventPicker label="Causes" hint="" options={many} chosen={[]} counts={() => 1} demand={(k) => Number(k.split("type")[1])} onChange={vi.fn()} />);
   await userEvent.click(field());
   expect(screen.getAllByRole("option")).toHaveLength(50);
   expect(screen.getByText(/10 more/)).toBeInTheDocument();
