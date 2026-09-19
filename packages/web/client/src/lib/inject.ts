@@ -226,6 +226,10 @@ export interface InjectableCard {
   /** `{1}{W}`, in the notation every Magic reader already reads. Short card METADATA, which D2a
    *  names as staying on the page beside the type line -- it is not rules text. A land has none. */
   manaCost?: string;
+  /** THE CARD'S COLOUR IDENTITY. Read on a COMMANDER page only, where it scopes the link under the
+   *  withheld count to the cards that deck could legally contain -- the same scope AJ5 gave the
+   *  number itself. Optional: the field rides in on the shard record's spread. */
+  identity?: readonly string[];
   /** THE CLAUSES THE ENGINE READ, verbatim and in printed order (spec D2a option 2, taken
    *  2026-09-18). Unattributed on purpose: one clause can yield several abilities, so naming which
    *  one produced a given edge would be a guess wearing a citation's clothes. Absent on a card with
@@ -242,6 +246,27 @@ export const groupDirection = (rows: InjectableCard["partners"]): GroupDirection
   rows.every((r) => r.producer === true) ? "causes"
   : rows.every((r) => /^While you control /i.test(r.reason)) ? "feeds"
   : "asks";
+
+/** WHERE A GROUP'S WITHHELD COUNT LINKS (roadmap AJ3), and it is built ONCE for both readers.
+ *
+ *  THE PARAM FOLLOWS THE DIRECTION THE SENTENCE CLAIMS. A group whose rows all CAUSE the event
+ *  counts causes, so it asks `produce`; an asker group counts askers, so it asks `consume`. A
+ *  feeder group's rows are cards this card counts -- they supply it, so they are causes too.
+ *  Sending both directions to one param would be AJ1 again with a URL on it.
+ *
+ *  THE COLOURS COME FROM THE DECK, NOT THE CORPUS. On a commander page the number above this link
+ *  is already scoped to that commander's identity (AJ5); opening a corpus-wide set under it would
+ *  put a 389 over a page of 589. A card page has no deck and passes none.
+ *
+ *  ONE PARAM PER KEY, appended rather than joined: 274 of the corpus keys contain a comma. */
+export const searchHref = (
+  dir: GroupDirection, event: string, identity?: readonly string[],
+): string => {
+  const params = new URLSearchParams();
+  params.append(dir === "asks" ? "consume" : "produce", event);
+  if (identity && identity.length > 0) params.set("colors", identity.join(""));
+  return `/cards?${params.toString()}`;
+};
 
 /** HOW MANY MORE COULD HAVE BEEN SHOWN, counted from the map that runs the group's own direction.
  *
@@ -368,8 +393,12 @@ export function cardPageHtml(
     const dir = groupDirection(g.rows);
     const withheld = withheldFrom(dir, g.event, g.rows.length, card.rarity, card.pool);
     const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "feed it" : "ask for it";
+    // AND THE CRAWLER GETS THE SAME LINK THE APP DRAWS (roadmap AJ3), from the same builder: two
+    // readers printing one sentence is exactly how AJ1's withheld count came to say one direction
+    // and count the other.
+    const href = searchHref(dir, g.event, kind === "commander" ? card.identity : undefined);
     const more = withheld > 0
-      ? `\n    <p>${withheld.toLocaleString("en-US")} other cards ${verb} too, equally specific. The ones shown are the best connected.</p>`
+      ? `\n    <p><a href="${esc(href)}">${withheld.toLocaleString("en-US")} other cards ${verb} too</a>, equally specific. The ones shown are the best connected.</p>`
       : "";
     const { head, rows: cells } = factorLead(g.rows);
     const lead = head === "" ? "" : `    <p>${esc(head)}:</p>\n`;

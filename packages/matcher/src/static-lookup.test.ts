@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { StaticLookup } from "./static-lookup.js";
 import { shardOf } from "./bin/build-static-core.js";
+import { eventShardOf } from "./bin/events-index-core.js";
 
 const CARD = {
   card: { _id: "id-krenko", name: "Krenko", typeLine: "Legendary Creature — Goblin", oracleText: "",
@@ -236,4 +237,45 @@ test("the default fetchImpl survives a native receiver brand-check", async () =>
   } finally {
     globalThis.fetch = original;
   }
+});
+
+// ---------------------------------------------------------------------------------------------
+// THE EVENT INDEX (roadmap AJ3).
+// ---------------------------------------------------------------------------------------------
+
+/** ONE EVENT, ONE SHARD. The client runs the build's own hash to find the file, so these fixtures
+ *  derive the path from `eventShardOf` rather than hard-coding it. */
+test("an event's members come from its own shard", async () => {
+  const key = "enters|land|-|-";
+  const l = new StaticLookup("/static", fetchOf({
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/events/${eventShardOf(key)}.json`]: { [key]: { p: [1, 2], c: [7] } },
+  }));
+  expect(await l.eventMembers(key)).toEqual({ p: [1, 2], c: [7] });
+});
+
+/** A MISSING SHARD AND A SHARD WITHOUT THE KEY ARE THE SAME ANSWER, and it is `null` -- never an
+ *  empty set, which a page would render as "no cards cause this" and be wrong. */
+test("an absent key and an absent shard are both null, not an empty set", async () => {
+  const key = "enters|land|-|-";
+  const l = new StaticLookup("/static", fetchOf({
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/events/${eventShardOf(key)}.json`]: { [key]: { p: [1], c: [] } },
+  }));
+  expect(await l.eventMembers("dies|creature|-|-")).toBeNull();
+  const empty = new StaticLookup("/static", fetchOf({ "/static/manifest.json": { version: VERSION } }));
+  expect(await empty.eventMembers(key)).toBeNull();
+});
+
+/** AN ABSENT FREQUENCY FILE IS EMPTY, NOT FATAL, for the reason the name index is: a search page
+ *  that offers no events is recoverable and one that throws is not. */
+test("the frequency file carries both directions and the identity split, and a miss is empty", async () => {
+  const file = { supply: { "enters|land|-|-": 406 }, consume: { "enters|land|-|-": 12 }, byIdentity: { "enters|land|-|-": [406] } };
+  const l = new StaticLookup("/static", fetchOf({
+    "/static/manifest.json": { version: VERSION },
+    [`/static/${VERSION}/event-frequency.json`]: file,
+  }));
+  expect(await l.eventFrequency()).toEqual(file);
+  const missing = new StaticLookup("/static", fetchOf({ "/static/manifest.json": { version: VERSION } }));
+  expect(await missing.eventFrequency()).toEqual({ supply: {}, consume: {}, byIdentity: {} });
 });

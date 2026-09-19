@@ -559,3 +559,48 @@ test("the prerendered partner heading is the word the page uses", () => {
   const page = readFileSync(join(import.meta.dirname, "..", "components", "CardPage.tsx"), "utf8");
   expect(page).toContain(">Partners</h2>");
 });
+
+/** THE WITHHELD COUNT IS A LINK IN THE HTML TOO (roadmap AJ3). A crawler with JavaScript off and a
+ *  reader in the app must reach the same set: the two readers print this sentence from one builder
+ *  precisely because AJ1 shipped a version where they disagreed. */
+test("a producer group's count links to the cards that cause it", () => {
+  const rows = [{
+    name: "Zahur, Glory's Past", slug: "zahur-glorys-past", event: "lose-life|-|-|-",
+    reason: "When a permanent makes a player lose life thanks to Krenko, Zahur raises your speed",
+    producer: true as const,
+  }];
+  const html = cardPageHtml({
+    ...KRENKO, partners: rows,
+    rarity: { "lose-life|-|-|-": 2679 }, pool: { "lose-life|-|-|-": 938 },
+  }, "x", "card");
+  expect(html).toContain('<a href="/cards?produce=lose-life%7C-%7C-%7C-">2,678 other cards cause it too</a>');
+});
+
+test("a consumer group links by consume", () => {
+  const rows = [{
+    name: "Pitchstone Wall", slug: "pitchstone-wall", event: "discard|-|-|-",
+    reason: "When Patrol Hound discards a card, Pitchstone Wall triggers",
+  }];
+  const html = cardPageHtml({
+    ...KRENKO, partners: rows,
+    rarity: { "discard|-|-|-": 1609 }, pool: { "discard|-|-|-": 67 },
+  }, "x", "card");
+  expect(html).toContain("consume=discard");
+  expect(html).not.toContain("produce=discard");
+});
+
+/** ON A COMMANDER PAGE THE LINK CARRIES THE DECK'S COLOURS, because the number above it is already
+ *  scoped to them (AJ5). A corpus-wide set under a commander-sized count is the same lie AJ5 fixed. */
+test("a commander page's link is scoped to its identity, a card page's is not", () => {
+  const rows = [{
+    name: "Zahur, Glory's Past", slug: "zahur-glorys-past", event: "lose-life|-|-|-",
+    reason: "When a permanent makes a player lose life thanks to Krenko, Zahur raises your speed",
+    producer: true as const,
+  }];
+  const card = {
+    ...KRENKO, commander: true, identity: ["R", "G", "W"], partners: rows,
+    rarity: { "lose-life|-|-|-": 2679 }, pool: { "lose-life|-|-|-": 938 },
+  };
+  expect(cardPageHtml(card, "x", "commander")).toContain("colors=RGW");
+  expect(cardPageHtml(card, "x", "card")).not.toContain("colors=");
+});

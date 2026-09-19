@@ -1,4 +1,3 @@
-export type { FacetRow } from "./facet-index-core.js";
 import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 // THE SUBPATH, NOT THE PACKAGE ROOT. `static-lookup.ts` pulls this module into the BROWSER, and
 // tagger's barrel reaches `otags/functional.ts`, which `readFileSync`s a JSON file at import
@@ -213,7 +212,10 @@ const splitList = (key: string): [string, string, string, string][] => {
  *  `(own & ~mask) === 0`. */
 const COLOUR_BIT: Record<string, number> = { W: 1, U: 2, B: 4, R: 8, G: 16 };
 const IDENTITIES = 32;
-const identityMask = (colors: readonly string[]): number =>
+
+/** EXPORTED FOR THE SEARCH PAGE (roadmap AJ3). The picker scopes a count to the chosen colours in
+ *  the browser, and a second hand-written WUBRG bit table is how the two stop agreeing. */
+export const identityMask = (colors: readonly string[]): number =>
   colors.reduce((m, c) => m | (COLOUR_BIT[c] ?? 0), 0);
 
 /** HOW MANY CARDS IN THE CORPUS CAN ACTUALLY SATISFY EACH DEMAND.
@@ -238,15 +240,34 @@ const identityMask = (colors: readonly string[]): number =>
  *  cause it too". Thirty-two slots per key, indexed by `identityMask`, are the whole fix: a
  *  corpus count is every slot, a scoped one is the slots that sit inside the commander's identity.
  *
- *  THE UNION IS NEVER RETAINED. One demand's supplier set holds fifteen thousand cards on the real
- *  corpus; keeping one per key to count it twice is hundreds of megabytes, so each is bucketed and
- *  dropped as it is built.
+ *  THE UNION IS RETAINED AS IDS SINCE AJ3, AND ONLY AS IDS. One demand's supplier set holds fifteen
+ *  thousand cards on the real corpus; keeping the CARDS per key is hundreds of megabytes, which is
+ *  why this used to bucket and drop each one. A sorted `number[]` of index positions is a different
+ *  order of cost -- 1.2M ids, ~10 MB -- and it is what lets the search page list the cards a count
+ *  counted instead of approximating them from a second index.
  *
  *  THE SCORE DOES NOT READ THE SPLIT. `specificity` stays corpus-wide by design -- "how rare is
  *  this event in Magic", not "in your colours" -- and only the DISPLAYED count is scoped. */
+export interface EventMembers {
+  /** Positions in the artifact index of the cards that can CAUSE this event. */
+  p: number[];
+  /** Positions of the cards that ASK for it. */
+  c: number[];
+}
+
+/** THE COUNTS FILE, as `event-frequency.json` ships it (roadmap AJ3). `supply` is how many cards
+ *  can CAUSE each event and `consume` how many ask for it; `byIdentity` is `supply` split into the
+ *  32 colour identities, read with `inIdentityOf`. Declared here beside `EventMembers` so the
+ *  shipped shapes have ONE home and the web client needs no second entry in the export map. */
+export interface EventFrequencyFile {
+  supply: Record<string, number>;
+  consume: Record<string, number>;
+  byIdentity: Record<string, number[]>;
+}
+
 export function supplyBuckets(
   rows: readonly { emits: string[]; demands: string[]; identity: readonly string[] }[],
-): Map<string, Int32Array> {
+): { buckets: Map<string, Int32Array>; members: Map<string, number[]> } {
   const suppliersOf = new Map<string, Set<number>>();
   rows.forEach((r, i) => {
     for (const form of new Set(r.emits.flatMap(supplyForms))) {
@@ -256,6 +277,7 @@ export function supplyBuckets(
   });
   const masks = rows.map((r) => identityMask(r.identity));
   const out = new Map<string, Int32Array>();
+  const members = new Map<string, number[]>();
   for (const demand of new Set(rows.flatMap((r) => r.demands))) {
     const union = new Set<number>();
     for (const form of demandForms(demand)) {
@@ -267,8 +289,13 @@ export function supplyBuckets(
       bucket[m] = (bucket[m] ?? 0) + 1;
     }
     out.set(demand, bucket);
+    // KEPT, WHERE THE UNION USED TO BE DROPPED (roadmap AJ3). The search page needs the cards this
+    // count counted, and taking them from the same pass is the whole reason a chip saying 389 can
+    // link to a page listing 389. A SET OF OBJECTS per key was never affordable; a sorted number[]
+    // is: 1,184,624 ids over the real corpus, about 10 MB of plain arrays.
+    members.set(demand, [...union].sort((a, b) => a - b));
   }
-  return out;
+  return { buckets: out, members };
 }
 
 /** THE WHOLE CORPUS, WHICH IS EVERY SLOT. What `specificity` is taken on. */
@@ -282,6 +309,15 @@ const inIdentity = (bucket: Int32Array, mask: number): number => {
   for (let v = 0; v < IDENTITIES; v++) if ((v & ~mask) === 0) n += bucket[v]!;
   return n;
 };
+
+/** THE SAME SLICE, OVER THE SLOTS AS JSON SHIPS THEM. `inIdentity` reads the Int32Array the build
+ *  holds; a browser reads a plain array out of `event-frequency.json` and needs the identical test,
+ *  or a picker row and a commander page disagree about the same number. */
+export function inIdentityOf(slots: readonly number[], mask: number): number {
+  let n = 0;
+  for (let v = 0; v < IDENTITIES; v++) if ((v & ~mask) === 0) n += slots[v] ?? 0;
+  return n;
+}
 
 /** ONE CARD'S OWN EVENTS, ONTO THE DECK-LEVEL ARCHETYPE NAMES.
  *
@@ -1323,6 +1359,14 @@ export function browseSlices(index: NameIndexEntry[]): Map<string, BrowseEntry[]
 export interface PartnerArtifact {
   shards: Map<string, Record<string, CardPageRecord>>;
   freq: EventFrequency;
+  /** HOW MANY CARDS ASK for each event -- the mirror of `freq`, which counts who can cause it. */
+  consumers: Record<string, number>;
+  /** WHO causes and WHO asks, as positions in `index`. `freq` is the size of `p`, and the two come
+   *  from one pass so a page cannot print a count over a different set (roadmap AJ3). */
+  events: Map<string, EventMembers>;
+  /** `freq`, split into the 32 colour identities (AJ5's buckets), so a count can be scoped to the
+   *  colours a reader chose. Read with `inIdentityOf`. */
+  freqByIdentity: Record<string, number[]>;
   index: NameIndexEntry[];
 }
 
@@ -1351,11 +1395,14 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const slugs = resolveSlugs(substantive.map((d) => d.card.name));
   // ONE PASS, TWO READINGS: the corpus count every score is taken on, and the same count split by
   // colour identity so a commander page can say how many of the causes its own deck could play.
-  const buckets = supplyBuckets(substantive.map((d) => ({
+  const { buckets, members } = supplyBuckets(substantive.map((d) => ({
     emits: supplyKeysOf(d), demands: demandKeysOf(d), identity: d.card.colorIdentity ?? [],
   })));
   const freq: EventFrequency = {};
   for (const [k, b] of buckets) freq[k] = totalOf(b);
+  // A CARD'S POSITION IS ITS ID EVERYWHERE BELOW. `index` is written from `substantive` in this
+  // order, so a member list is read by the browser as an offset into the name index it already has.
+  const atName = new Map(substantive.map((d, i) => [d.card.name, i] as const));
 
   // CANDIDATES BY DEMAND KEY, INCLUDING THE COARSER FORMS. Without this index every card would be
   // compared against all ~14,900 and the build is quadratic before `partnersFor` can bound it. A
@@ -1407,6 +1454,9 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       if (freq[k] !== undefined) continue;
       const reached = staticCandidates(d).filter((c) => staticReaches(k, c));
       freq[k] = reached.length;
+      // The static branch counts a DIFFERENT set from `supplyBuckets` -- what the static REACHES,
+      // not what emits it -- so its members are recorded here or they are recorded nowhere.
+      members.set(k, reached.map((c) => atName.get(c.card.name)!).sort((a, b) => a - b));
       // Split like every other key, so a commander page scopes a static's count too.
       const bucket = new Int32Array(IDENTITIES);
       for (const c of reached) {
@@ -1655,5 +1705,40 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // first answer to a name is the card the corpus connects most -- without any of them ranking,
   // and without the play-rate field the owner refused as stale.
   index.sort((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.name.localeCompare(b.name, "en"));
-  return { shards, freq, index };
+
+  // ---------------------------------------------------------------------------------------------
+  // THE MEMBERSHIP INDEX (roadmap AJ3): who causes each event, who asks for it, by INDEX position.
+  //
+  // THE IDS ARE REMAPPED HERE AND NOT EARLIER, because `index` is sorted just above -- by partner
+  // count, then by name -- while `members` was collected in `substantive` order. Shipping the
+  // collection order would have pointed every id at the wrong card, and silently: the lists would
+  // still be the right LENGTH, so the count would have agreed with a set of unrelated cards.
+  const positionOf = new Map(index.map((e, i) => [e.name, i] as const));
+  const reindex = (ids: readonly number[]): number[] => ids
+    .map((i) => positionOf.get(substantive[i]!.card.name))
+    .filter((x): x is number => x !== undefined)
+    .sort((a, b) => a - b);
+
+  // WHO ASKS, BESIDE WHO CAUSES. 11,988 memberships over the real corpus against 1,184,624 on the
+  // supply side (measured 2026-09-19): a card asks for 0.4 events on average and at most 6.
+  const consumersOf = new Map<string, number[]>();
+  substantive.forEach((d, i) => {
+    for (const k of new Set([...demandKeysOf(d), ...staticKeysOf(d)])) {
+      const b = consumersOf.get(k);
+      if (b) b.push(i); else consumersOf.set(k, [i]);
+    }
+  });
+  const events = new Map<string, EventMembers>();
+  for (const k of new Set([...members.keys(), ...consumersOf.keys()])) {
+    events.set(k, { p: reindex(members.get(k) ?? []), c: reindex(consumersOf.get(k) ?? []) });
+  }
+  const consumers: Record<string, number> = {};
+  for (const [k, ids] of consumersOf) consumers[k] = ids.length;
+  // THE SPLIT AJ5 ALREADY COMPUTES, SHIPPED. A picker row prints a count beside an event while the
+  // list under it is identity-filtered; printing the corpus figure there is the defect AJ5 was
+  // opened for, one surface along.
+  const freqByIdentity: Record<string, number[]> = {};
+  for (const [k, b] of buckets) freqByIdentity[k] = [...b];
+
+  return { shards, freq, consumers, events, freqByIdentity, index };
 }

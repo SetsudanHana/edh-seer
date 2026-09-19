@@ -1,20 +1,34 @@
 /** THE JUDGING SHEET FOR RATE ON THE CARD SCORE (roadmap Y9, 2026-09-18). Reads two
- *  `ratings-compare --save` snapshots (rateWeight 0 and 0.5) and the built facet index, and prints
+ *  `ratings-compare --save` snapshots (rateWeight 0 and 0.5) and the built artifact, and prints
  *  per deck the top ten after, each with its rating before -> after and the card's best rate as
  *  the search tile prints it, so the owner can say whether the moves read right. One-shot; prints.
  *
- *  Usage: tsx research/matcher/rate-impact-sheet.ts before.json after.json static-out/<version>/facet-index.json */
-import { readFileSync } from "node:fs";
+ *  READS THE PARTNER SHARDS, not the facet index: AJ3 deleted `facet-index.json` with the chips it
+ *  fed, and the shards carry the fuller `rates` array this sheet was compacting anyway.
+ *
+ *  Usage: tsx research/matcher/rate-impact-sheet.ts before.json after.json static-out/<version> */
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { slugOf } from "../../packages/matcher/src/bin/partners-core.js";
-import type { FacetRow } from "../../packages/matcher/src/bin/facet-index-core.js";
+import { bestPerFamily, bestRates, type Rate, type RateFamily, type RateSpan } from "../../packages/matcher/src/rate.js";
+
+interface Sheet { r: Partial<Record<RateFamily, RateSpan>>; z?: string }
 
 type Snap = { deck: string; cards: Record<string, { rating: number; score: number }> }[];
-const [beforePath, afterPath, facetPath] = process.argv.slice(2);
+const [beforePath, afterPath, artifactPath] = process.argv.slice(2);
 const before = JSON.parse(readFileSync(beforePath!, "utf8")) as Snap;
 const after = JSON.parse(readFileSync(afterPath!, "utf8")) as Snap;
-const rows = new Map((JSON.parse(readFileSync(facetPath!, "utf8")) as FacetRow[]).map((r) => [r.s, r]));
+const rows = new Map<string, Sheet>();
+for (const file of readdirSync(join(artifactPath!, "partners"))) {
+  const shard = JSON.parse(readFileSync(join(artifactPath!, "partners", file), "utf8")) as Record<string, { rates?: Rate[] }>;
+  for (const [slug, rec] of Object.entries(shard)) {
+    if (!rec.rates || rec.rates.length === 0) continue;
+    const size = bestPerFamily(rec.rates).find((x) => x.family === "tokens")?.size;
+    rows.set(slug, { r: bestRates(rec.rates), ...(size ? { z: size } : {}) });
+  }
+}
 
-const label = (r: FacetRow | undefined): string => {
+const label = (r: Sheet | undefined): string => {
   if (!r?.r) return "no rate";
   return Object.entries(r.r).map(([family, s]) => {
     const [floor, floorMana, ceiling, ceilingMana, delayed] = s!;

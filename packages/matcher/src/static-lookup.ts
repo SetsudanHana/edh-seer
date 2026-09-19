@@ -1,11 +1,11 @@
-import type { FacetRow } from "./bin/facet-index-core.js";
 import type { CardTags } from "@edh-seer/tagger";
 import type { CardDoc, ComboDoc } from "@edh-seer/data/docs";
 import type { CardLookup } from "@edh-seer/data/resolve";
 import type { CardTagsLookup } from "./deck-cards.js";
 import type { AnalysisSources } from "./orchestrate.js";
 import { shardOf } from "./bin/build-static-core.js";
-import { partnerShardOf, type CardPageRecord, type NameIndexEntry } from "./bin/partners-core.js";
+import { partnerShardOf, type CardPageRecord, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "./bin/partners-core.js";
+import { eventShardOf } from "./bin/events-index-core.js";
 
 /** Re-exported so a consumer of this module can address a shard the way it does -- the client's
  *  own tests build their fixture files from it, which is what keeps them honest when the layout
@@ -68,7 +68,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
   private tokenArtPromise: Promise<Record<string, string>> | null = null;
   private nameIndexPromise: Promise<NameIndexEntry[]> | null = null;
-  private facetIndexPromise: Promise<FacetRow[]> | null = null;
+  private eventFrequencyPromise: Promise<EventFrequencyFile> | null = null;
 
   private readonly fetchImpl: typeof fetch;
 
@@ -279,13 +279,28 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     })());
   }
 
-  /** The facet rows (spec 2026-09-08 part 4), fetched on the first facet interaction and never on
-   *  page load. Empty on a miss for the reason the name index is: a page that says "no cards" is
-   *  recoverable. */
-  async facetIndex(): Promise<FacetRow[]> {
-    return (this.facetIndexPromise ??= (async () => {
-      const res = await this.fetchCached("/facet-index.json");
-      return res.ok ? (await res.json() as FacetRow[]) : [];
+  /** ONE EVENT'S CARDS (roadmap AJ3), from the shard its key hashes into -- one fetch per event a
+   *  reader actually picked, never the whole index.
+   *
+   *  A MISSING SHARD AND A SHARD WITHOUT THE KEY ARE THE SAME ANSWER, and it is `null`. An empty
+   *  array would render as "no card causes this", which is a claim; `null` is the page saying it
+   *  cannot answer, which is the honest one and the rule this repo keeps. */
+  async eventMembers(key: string): Promise<EventMembers | null> {
+    const res = await this.fetchCached(`/events/${eventShardOf(key)}.json`);
+    if (!res.ok) return null;
+    const shard = await res.json() as Record<string, EventMembers>;
+    return shard[key] ?? null;
+  }
+
+  /** The counts an event picker prints: how many cards can cause each event, how many ask for it,
+   *  and the corpus count split into the 32 colour identities. Empty on a miss for the reason the
+   *  name index is: a page that offers no events is recoverable, a page that throws is not. */
+  async eventFrequency(): Promise<EventFrequencyFile> {
+    return (this.eventFrequencyPromise ??= (async () => {
+      const res = await this.fetchCached("/event-frequency.json");
+      return res.ok
+        ? (await res.json() as EventFrequencyFile)
+        : { supply: {}, consume: {}, byIdentity: {} };
     })());
   }
 }

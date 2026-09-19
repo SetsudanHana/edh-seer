@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
+import { useListboxKeys } from "../lib/listbox-keys.js";
 import { matchNames } from "../lib/name-match.js";
 import { sharedNameIndex, type NameIndexEntry } from "../lib/partners.js";
 import { ManaSymbols } from "./ManaSymbols.js";
@@ -40,7 +41,6 @@ export function HeaderSearch({
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(-1);
   const [revealed, setRevealed] = useState(false);
   const field = useRef<HTMLInputElement>(null);
   // A ref, not state: the load is asked for once per mount, and a re-render must not ask again.
@@ -69,21 +69,22 @@ export function HeaderSearch({
 
   const go = (e: NameIndexEntry | undefined) => {
     if (!e) return;
-    setQuery(""); setOpen(false); setActive(-1);
+    setQuery(""); setOpen(false); reset();
     void navigate(`/cards/${e.slug}`);
   };
 
+  // THE KEYBOARD IS THE SHARED ONE (`lib/listbox-keys.ts`), so this field and the event pickers
+  // cannot drift apart. Two rules stay here because they are this field's own: an arrow OPENS the
+  // list, and Enter is ignored until the list is actually shown -- an empty box must submit
+  // nothing rather than navigate to whatever row 0 happens to be.
+  const { active, setActive, onKey: onListKey, reset } = useListboxKeys({
+    count: matches.length,
+    onChoose: (i) => { if (listed) go(matches[i]); },
+    onClose: () => setOpen(false),
+  });
   const onKey = (ev: KeyboardEvent<HTMLInputElement>) => {
-    if (ev.key === "ArrowDown" && matches.length > 0) {
-      ev.preventDefault(); setOpen(true); setActive((a) => (a + 1) % matches.length);
-    } else if (ev.key === "ArrowUp" && matches.length > 0) {
-      ev.preventDefault(); setOpen(true); setActive((a) => (a <= 0 ? matches.length - 1 : a - 1));
-    } else if (ev.key === "Enter") {
-      if (!listed) return;
-      ev.preventDefault(); go(matches[active >= 0 ? active : 0]);
-    } else if (ev.key === "Escape") {
-      setOpen(false); setActive(-1);
-    }
+    if ((ev.key === "ArrowDown" || ev.key === "ArrowUp") && matches.length > 0) setOpen(true);
+    onListKey(ev);
   };
 
   if (!mount) return null;

@@ -17,7 +17,7 @@ import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact } from "./partners-core.js";
-import { buildFacetIndex } from "./facet-index-core.js";
+import { eventShards } from "./events-index-core.js";
 import { loadHierarchy } from "../hierarchy.js";
 
 const outIdx = process.argv.indexOf("--out");
@@ -180,12 +180,23 @@ mkdirSync(partnersDir, { recursive: true });
 for (const [name, shard] of partners.shards) {
   writeFileSync(join(partnersDir, `${name}.json`), JSON.stringify(shard));
 }
-writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify(partners.freq));
+// THE COUNTS EVERY EVENT PICKER PRINTS (roadmap AJ3): how many cards can cause each event, how
+// many ask for it, and the corpus count split into the 32 colour identities so a row's figure
+// narrows with the colour chips instead of repeating AJ5's defect one surface along.
+writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify({
+  supply: partners.freq, consume: partners.consumers, byIdentity: partners.freqByIdentity,
+}));
 writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify(partners.index));
-// THE FACET INDEX (spec 2026-09-08 part 4): what each card does and which strategies it belongs
-// to, from the same signal builder and matcher the deck report uses. Fetched by the Cards page on
-// the first facet interaction, never on page load.
-writeFileSync(join(stagingDir, "facet-index.json"), JSON.stringify(buildFacetIndex(partnerDeckCards as never, partners.index)));
+// THE EVENT INDEX (roadmap AJ3): who causes each event and who asks for it, as positions in the
+// name index the page has already fetched. Sharded like the card and partner artifacts, so a
+// reader pays for the events they picked and not for the 1,187 they did not.
+const eventsDir = join(stagingDir, "events");
+mkdirSync(eventsDir, { recursive: true });
+for (const [name, shard] of eventShards(partners.events)) {
+  writeFileSync(join(eventsDir, `${name}.json`), JSON.stringify(shard));
+}
+const memberships = [...partners.events.values()].reduce((n, m) => n + m.p.length + m.c.length, 0);
+console.log(`events: ${partners.events.size} keys, ${memberships} memberships, ${eventShards(partners.events).size} shards`);
 
 // THE BROWSE SLICES: one file per letter, so `/browse/cards/<letter>` costs one small fetch at the
 // edge instead of parsing the 1.6 MB name index on every request. `#` holds the names that do not
@@ -210,7 +221,7 @@ for (const f of readdirSync(cardsDir).sort()) {
   hash.update(f);
   hash.update(readFileSync(join(cardsDir, f)));
 }
-for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json", "facet-index.json"]) {
+for (const f of ["token-tags.json", "token-art.json", "event-frequency.json", "name-index.json"]) {
   hash.update(f);
   hash.update(readFileSync(join(stagingDir, f)));
 }
@@ -226,6 +237,13 @@ for (const f of readdirSync(browseDir).sort()) {
 for (const f of readdirSync(partnersDir).sort()) {
   hash.update(f);
   hash.update(readFileSync(join(partnersDir, f)));
+}
+// The event shards are SHIPPED files and they are not derivable from anything already hashed --
+// a change to what an event lists must move the version, or a reader keeps the old lists under an
+// `immutable, max-age=31536000` URL and the search answers last week's corpus.
+for (const f of readdirSync(eventsDir).sort()) {
+  hash.update(f);
+  hash.update(readFileSync(join(eventsDir, f)));
 }
 const version = `v-${hash.digest("hex").slice(0, 12)}`;
 
