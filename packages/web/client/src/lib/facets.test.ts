@@ -63,6 +63,7 @@ test("intersect keeps only the ids in every list", () => {
 /** THE RATE LABELS STAY (`HighSynergyCards` prints them); only the rate ORDER went with the chip
  *  that named its family. */
 test("a rate still prints both ends", () => {
-  expect(rateLabel([1, 1, 1, 1, false], "cards")).toBe("1 card / 1 mana");
-  expect(rateLabel([0, 3, 9, 3, false], "cards")).toBe("0–9 cards / 3 mana");
+  expect(rateLabel([1, 1, 1, 1], "cards")).toBe("1 card / 1 mana");
+  expect(rateLabel([0, 3, 9, 3], "cards")).toBe("0–9 cards / 3 mana");
+  expect(rateLabel([1, 8, 1, 4, 1], "cards")).toBe("1 card / 8 mana, then 1 / 4, from next turn");
 });

@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
 import { CardSearch, SEARCH_LIMIT } from "./CardSearch.js";
-import type { NameIndexEntry } from "../lib/partners.js";
+import type { EventFrequencyFile, EventMembers, NameIndexEntry } from "../lib/partners.js";
+import { eventKeySentence } from "../lib/demand-sentence.js";
 
 const INDEX: NameIndexEntry[] = [
   { slug: "krenko-mob-boss", name: "Krenko, Mob Boss", identity: ["R"], commander: true },
@@ -155,15 +156,22 @@ test("a facet toggles off again", async () => {
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
 
-/** THE CARD SEARCH HAS THE COLOUR CHIPS TOO (spec 2026-09-08 part 4), exact identity on both pages
- *  (owner 2026-09-08). They used to be absent here because the card page ranks over the whole
- *  corpus; it still does, and the chips narrow the list rather than the ranking. */
-test("the card search offers the colour chips too, exact identity like the Commanders page", async () => {
-  at();
+/** THE CARD SEARCH HAS THE COLOUR CHIPS TOO (spec 2026-09-08 part 4). What they MEAN here changed
+ *  on 2026-09-19: a card list is read while building a deck, so "Red" asks for the cards a red deck
+ *  could play -- red, and colourless. The 2026-09-08 exact-on-both ruling survives on Commanders,
+ *  which is read to CHOOSE a commander, where a mono-red commander is a different deck. */
+test("the card search fits the identity in: a colourless card answers a colour query", async () => {
+  const index: NameIndexEntry[] = [
+    ...INDEX,
+    { slug: "sol-ring", name: "Sol Ring", identity: [], commander: false },
+  ];
+  at(index);
   await screen.findByRole("searchbox");
-  expect(screen.getByRole("button", { name: /^Red$/ })).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
+  // Playable in a red deck, and the whole point of the reversal.
+  expect(screen.getByRole("link", { name: /Sol Ring/ })).toBeInTheDocument();
+  // Still not playable in a red deck.
   expect(screen.queryByRole("link", { name: /Ajani's Chosen/ })).toBeNull();
 });
 
@@ -238,13 +246,23 @@ test("a colourless row shows the colourless symbol rather than nothing", async (
   expect(within(row).getAllByRole("img", { name: /colorless/i }).length).toBeGreaterThan(0);
 });
 
-/** FIND BY WHAT IT DOES (spec 2026-09-08 part 4). The facet index is read only once a facet is
- *  used; groups AND; every listed row says why it is on the list; facets live in the URL. */
-const FACETS = [
-  { s: "fathom-mage", i: "UG", c: 1 as const, e: ["draw-card"], t: ["counters"], d: ["counters"] },
-  { s: "inspiring-call", i: "G", c: 0 as const, e: ["draw-card"], t: ["counters"], d: ["counters"] },
-  { s: "skullclamp", i: "", c: 0 as const, e: ["draw-card"], t: ["aristocrats"], d: [] },
-];
+/** FIND BY WHAT A CARD CAUSES (spec 2026-09-19, roadmap AJ3). The counts are read only once the
+ *  pickers are touched; a member list is read only for an event actually chosen; every term ANDs.
+ *
+ *  THE IDS ARE POSITIONS IN THE NAME INDEX, which is exactly how the artifact ships them. */
+const MILL = "mill|-|-|-";
+const DIES = "dies|creature|-|-";
+const FREQ: EventFrequencyFile = {
+  supply: { [MILL]: 2, [DIES]: 1 },
+  consume: { [DIES]: 2 },
+  byIdentity: { [MILL]: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [DIES]: Array.from({ length: 32 }, () => 0) },
+};
+/** index 0 Fathom Mage (UG), 1 Inspiring Call (G), 2 Skullclamp (colourless). */
+const MEMBERS: Record<string, EventMembers> = {
+  [MILL]: { p: [1, 2], c: [] },
+  [DIES]: { p: [0], c: [0, 1] },
+};
+const members = async (_base: string, key: string): Promise<EventMembers | null> => MEMBERS[key] ?? null;
 const INDEX2: NameIndexEntry[] = [
   { slug: "fathom-mage", name: "Fathom Mage", identity: ["U", "G"], commander: true },
   { slug: "inspiring-call", name: "Inspiring Call", identity: ["G"], commander: false },
@@ -256,47 +274,97 @@ const atUrl = (url: string, props: Partial<Parameters<typeof CardSearch>[0]> = {
   render(
     <MemoryRouter initialEntries={[url]}>
       <Routes>
-        <Route path={path} element={<><CardSearch load={async () => INDEX2} facets={async () => FACETS} {...props} /><Spy /></>} />
+        <Route path={path} element={<><CardSearch load={async () => INDEX2} frequency={async () => FREQ} members={members} {...props} /><Spy /></>} />
       </Routes>
     </MemoryRouter>,
   );
   return Spy as unknown as { search: string };
 };
 
-test("draws cards, +1/+1 Counters, green: one card, with the reason it is listed", async () => {
-  const facets = vi.fn(async () => FACETS);
-  atUrl("/cards?colors=G&does=draw-card&theme=counters", { facets });
+test("a produce key lists that event's cards and nothing else", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
   expect(await screen.findByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Fathom Mage/ })).toBeNull();
+  expect(await screen.findByRole("status")).toHaveTextContent("2 cards match");
+});
+
+/** THE COUNT IS THE LIST. A chip that says 2 linking to a page that lists 3 is the AJ1 defect
+ *  wearing a URL, so the status line is asserted against the rendered links. */
+test("the count above the list is the length of the list", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
+  await screen.findByRole("status");
+  const links = within(screen.getByRole("list", { name: "Results" })).getAllByRole("link");
+  expect(screen.getByRole("status")).toHaveTextContent(`${links.length} cards match`);
+});
+
+test("two events AND rather than widen", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&produce=${encodeURIComponent(DIES)}`);
+  // Nothing both mills and causes a death in this fixture.
+  expect(await screen.findByText(/No card matches/)).toBeInTheDocument();
+});
+
+test("produce and consume are different questions about the same event", async () => {
+  atUrl(`/cards?consume=${encodeURIComponent(DIES)}`);
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Skullclamp/ })).toBeNull();
-  expect(screen.getByText("draws cards · +1/+1 Counters (asks for it)")).toBeInTheDocument();
-  expect(facets).toHaveBeenCalledTimes(1);
 });
 
-test("the facet index is not fetched until a facet is used", async () => {
-  const facets = vi.fn(async () => FACETS);
-  atUrl("/cards?q=skull", { facets });
+/** A MISSING LIST IS NOT AN EMPTY ONE. A shard that does not carry the key means the page cannot
+ *  answer; rendering "no cards" there would be a claim, and a wrong one. */
+test("an event the artifact does not carry says nothing rather than no cards", async () => {
+  atUrl("/cards?produce=enters%7Cland%7C-%7C-");
+  await waitFor(() => expect(screen.queryByText(/reading/i)).not.toBeNull());
+  expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
+  expect(screen.queryByText(/No card matches/)).toBeNull();
+});
+
+test("the counts are not fetched until the pickers are touched", async () => {
+  const frequency = vi.fn(async () => FREQ);
+  atUrl("/cards?q=skull", { frequency });
   await screen.findByRole("link", { name: /Skullclamp/ });
-  expect(facets).not.toHaveBeenCalled();
+  expect(frequency).not.toHaveBeenCalled();
 });
 
-test("choosing a Does chip writes the URL", async () => {
-  const spy = atUrl("/cards");
-  fireEvent.click(await screen.findByRole("button", { name: "draws cards" }));
-  await waitFor(() => expect(spy.search).toBe("?does=draw-card"));
+test("a chosen event fetches its list, and only its list", async () => {
+  const spy = vi.fn(members);
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`, { members: spy });
+  await screen.findByRole("link", { name: /Inspiring Call/ });
+  expect(spy).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalledWith("/static", MILL);
 });
 
-test("on Commanders the strategy select reads Supports and askers come first", async () => {
-  atUrl("/commanders?theme=counters", { mode: "commanders" });
-  expect(await screen.findByLabelText("Supports")).toBeInTheDocument();
-  const links = await screen.findAllByRole("link", { name: /Fathom Mage|Inspiring Call|Skullclamp/ });
-  expect(links.map((l) => l.textContent)).toEqual([expect.stringContaining("Fathom Mage")]);
+/** TYPING A NAME USED TO ERASE THE REST OF THE QUERY: `setParams({ q })` replaced the whole search
+ *  string. Harmless when the only other params were chips a reader could see; a silent loss now. */
+test("typing a name keeps the events that are already chosen", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
+  await userEvent.type(await screen.findByRole("searchbox"), "skull");
+  await waitFor(() => expect(new URLSearchParams(spy.search).get("q")).toBe("skull"));
+  expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]);
+});
+
+/** THE REVERSAL (owner 2026-09-19). A card list is read while building a deck, so it fits in; a
+ *  commander list is read to choose a commander, so it stays exact. */
+test("cards fit the identity in, commanders match it exactly", async () => {
+  atUrl("/cards?colors=UG");
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  // Playable in a UG deck: mono-green, and the colourless card.
+  expect(screen.getByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+});
+
+test("a commander query still names the identity exactly", async () => {
+  atUrl("/commanders?colors=UG", { mode: "commanders" });
+  expect(await screen.findByRole("link", { name: /Fathom Mage/ })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Inspiring Call/ })).toBeNull();
 });
 
 /** THE RESULT LIST PEEKS TOO (owner 2026-09-08: "the same issue with the new filters, you open a new
  *  page and so on"). A plain click on a result looks at the card beside the list; the filters, the
  *  count and the URL stay. A modifier click still opens the page. */
 test("a plain click on a result peeks and keeps the filtered list and URL", async () => {
-  const spy = atUrl("/cards?colors=G&does=draw-card&theme=counters", {
+  const spy = atUrl(`/cards?colors=G&produce=${encodeURIComponent(MILL)}`, {
     peekLoad: async (slug: string) => ({
       name: slug === "inspiring-call" ? "Inspiring Call" : slug, typeLine: "Instant", manaCost: "{2}{G}", artCrop: null,
       backArtCrop: null, abilities: [], identity: ["G"], commander: false, emits: [], demands: [], partners: [], pool: {}, rarity: {},
@@ -305,10 +373,10 @@ test("a plain click on a result peeks and keeps the filtered list and URL", asyn
   const link = await screen.findByRole("link", { name: /Inspiring Call/ });
   fireEvent.click(link);
   expect(await screen.findByRole("dialog", { name: "Inspiring Call" })).toBeInTheDocument();
-  expect(spy.search).toBe("?colors=G&does=draw-card&theme=counters");
+  expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]);
+  expect(new URLSearchParams(spy.search).get("colors")).toBe("G");
   // The row is still there, under the results; the peek's own Open control is the other link.
   expect(within(screen.getByRole("list", { name: "Results" })).getByRole("link", { name: /Inspiring Call/ })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "draws cards" })).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(screen.getByRole("button", { name: "Close" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 });
@@ -360,8 +428,8 @@ test("on a phone the filters are closed, and the summary counts what is applied"
   } finally { narrow(true); }
   narrow(false);
   try {
-    atUrl("/cards?colors=G&does=draw-card,mill&theme=counters");
-    const summary = await screen.findByText("Filters · 4 active");
+    atUrl(`/cards?colors=G&produce=${encodeURIComponent(MILL)}&consume=${encodeURIComponent(DIES)}`);
+    const summary = await screen.findByText("Filters · 3 active");
     // Closed even with facets set: the results, not the controls, are what a shared link is for.
     expect(summary.closest("details")!.open).toBe(false);
   } finally { narrow(true); }
@@ -374,27 +442,22 @@ test("on a wide viewport the filters are open", async () => {
   expect(details.open).toBe(true);
 });
 
-/** THE LANDING IS SEARCH-FIRST (owner, 2026-09-17: the chips were a wall). The Does chips sit behind
- *  a disclosure that opens itself when a shared link arrives with one chosen, and the empty state
- *  offers three questions built from the facet vocabulary -- our data, no play-rate. */
-test("the Does chips are behind a disclosure that opens when one is chosen", async () => {
+/** THE LANDING IS SEARCH-FIRST (owner, 2026-09-17: the chips were a wall), and since AJ3 the
+ *  question is asked in events. The empty state offers three of them, built from real keys. */
+test("an example question sets the events and lists its answer as tiles", async () => {
   atUrl("/cards");
   await screen.findByText(/cards the engine has read/);
-  const summary = screen.getByText("What it does");
-  expect(summary.closest("details")!.open).toBe(false);
-  atUrl("/cards?does=draw-card", { facets: vi.fn(async () => FACETS) });
-  const chosen = await screen.findByText("What it does · 1 chosen");
-  expect(chosen.closest("details")!.open).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "wants a creature to die" }));
+  const link = await screen.findByRole("link", { name: "Fathom Mage" });
+  expect(within(screen.getByRole("list", { name: "Results" })).getByRole("link", { name: "Fathom Mage" })).toBe(link);
 });
 
-test("an example question sets the facets and lists its answer as tiles", async () => {
-  const facets = vi.fn(async () => FACETS);
-  atUrl("/cards", { facets });
-  fireEvent.click(await screen.findByRole("button", { name: "draws cards, in green" }));
-  const link = await screen.findByRole("link", { name: "Inspiring Call" });
-  expect(within(screen.getByRole("list", { name: "Results" })).getByRole("link", { name: "Inspiring Call" })).toBe(link);
-  expect(screen.getByRole("button", { name: /^Green$/ })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByText(/draws cards/, { selector: "p" })).toBeInTheDocument();
+/** EVERY LISTED CARD SAYS WHY IT IS THERE. A list with no reason is what this product refuses
+ *  everywhere else, and the reason is the question that was asked, in the engine's own words. */
+test("a listed card carries the event that put it there", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
+  await screen.findByRole("link", { name: /Inspiring Call/ });
+  expect(screen.getAllByText(eventKeySentence(MILL)).length).toBeGreaterThan(0);
 });
 
 /** THE COUNT IS A STATUS MESSAGE (WCAG 4.1.3). A chip changes the set and a sighted reader sees

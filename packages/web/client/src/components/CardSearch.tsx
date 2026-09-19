@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
+import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
-import { sharedFacetIndex, sharedNameIndex, type FacetRow, type NameIndexEntry } from "../lib/partners.js";
-import { DOES, STRATEGIES, applyFacets, facetsFromParams, facetsToParams, matchedTerms, type FacetQuery } from "../lib/facets.js";
+import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
+import { coloursFit, eventsFromParams, eventsToParams, intersect, type EventQuery } from "../lib/facets.js";
+import { eventKeySentence } from "../lib/demand-sentence.js";
+import { EventPicker } from "./EventPicker.js";
 import { CardTile } from "./CardTile.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
@@ -12,18 +15,19 @@ import { PeekContext, usePeekState } from "./peek.js";
 import type { CardPageData } from "../lib/partners.js";
 
 /** WHAT THIS PAGE CAN ANSWER, AS THREE QUESTIONS A READER CAN CLICK (owner, 2026-09-17: the landing
- *  was a wall of chips and a count). Built from the site's own facet vocabulary and nothing else --
- *  no play-rate, no EDHREC -- so the empty state shows what the page will look like once asked. */
-const EXAMPLES: Record<"cards" | "commanders", { label: string; q: FacetQuery }[]> = {
+ *  was a wall of chips and a count). Asked in the engine's own events since AJ3, so the empty state
+ *  shows the shape of a question rather than a vocabulary that no longer exists. The keys are real
+ *  and were checked against the built artifact; an invented one would render an empty page. */
+const EXAMPLES: Record<"cards" | "commanders", { label: string; q: EventQuery }[]> = {
   cards: [
-    { label: "draws cards, in green", q: { colours: ["G"], does: ["draw-card"] } },
-    { label: "makes tokens, in red", q: { colours: ["R"], does: ["token-generation"] } },
-    { label: "puts counters, for a +1/+1 counters deck", q: { colours: [], does: ["counter-placement"], strategy: "plus-1-plus-1-counters" } },
+    { label: "mills a card, in blue", q: { produce: ["mill|-|-|-"], consume: [], colours: ["U"] } },
+    { label: "makes a creature token", q: { produce: ["create-token|creature|-|t"], consume: [], colours: [] } },
+    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [] } },
   ],
   commanders: [
-    { label: "supports +1/+1 counters, green and white", q: { colours: ["G", "W"], does: [], strategy: "plus-1-plus-1-counters" } },
-    { label: "supports tokens, in red", q: { colours: ["R"], does: [], strategy: "tokens" } },
-    { label: "supports aristocrats, black and red", q: { colours: ["B", "R"], does: [], strategy: "aristocrats" } },
+    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [] } },
+    { label: "wants a counter added", q: { produce: [], consume: ["counter-added|creature|-|-"], colours: [] } },
+    { label: "wants a land to enter, in green", q: { produce: [], consume: ["enters|land|-|-"], colours: ["G"] } },
   ],
 };
 
@@ -56,11 +60,14 @@ const COLOURS: [code: string, label: string][] = [
 ];
 
 export function CardSearch({
-  load = sharedNameIndex, facets = sharedFacetIndex, peekLoad, hash, replace, mode = "cards",
+  load = sharedNameIndex, frequency = sharedEventFrequency, members = sharedEventMembers,
+  peekLoad, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
-  /** The facet rows (spec 2026-09-08 part 4), asked for on the first facet interaction only. */
-  facets?: (baseUrl: string) => Promise<FacetRow[]>;
+  /** The counts every picker row prints, asked for on the first search interaction only. */
+  frequency?: (baseUrl: string) => Promise<EventFrequencyFile>;
+  /** One event's cards, one fetch per event the reader actually picked. */
+  members?: (baseUrl: string, key: string) => Promise<EventMembers | null>;
   /** The peek's own loader; tests pass one, the page reads the shard. */
   peekLoad?: (slug: string) => Promise<CardPageData | null>;
   hash?: string;
@@ -82,39 +89,59 @@ export function CardSearch({
   // Shareable for free, and `replace` keeps a keystroke out of the back button.
   const [params, setParams] = useSearchParams();
   const query = params.get("q") ?? "";
+  // THE NAME FILTER USED TO ERASE EVERY OTHER PARAM. `setParams({ q: next })` replaced the whole
+  // query string, so typing a name after picking an event silently dropped the event -- harmless
+  // while the only other params were chips a reader could see, a real loss now. Merge instead.
   const setQuery = (next: string) => {
-    setParams(next ? { q: next } : {}, { replace: true });
+    const out = new URLSearchParams(params);
+    if (next) out.set("q", next); else out.delete("q");
+    setParams(out, { replace: true });
   };
-  // THE FACETS LIVE IN THE URL (spec 2026-09-08 part 4), so a result set is a link and the back
-  // button is honest; the colour chips moved here from local state for the same reason.
-  const facetQuery = useMemo(() => facetsFromParams(params), [params]);
-  const setFacets = (next: FacetQuery) => setParams(facetsToParams(next, params), { replace: true });
-  const colours = facetQuery.colours;
-  const setColours = (f: (cs: string[]) => string[]) => setFacets({ ...facetQuery, colours: f(colours) });
-  const activeFacets = (colours.length > 0 ? 1 : 0) + facetQuery.does.length + (facetQuery.strategy !== undefined ? 1 : 0);
+  // THE QUESTION LIVES IN THE URL (spec 2026-09-19), so a result set is a link and the back button
+  // is honest -- the same rule the colour chips have followed since they moved out of local state.
+  const eventQuery = useMemo(() => eventsFromParams(params), [params]);
+  const setEvents = (next: EventQuery) => setParams(eventsToParams(next, params), { replace: true });
+  const colours = eventQuery.colours;
+  const setColours = (f: (cs: string[]) => string[]) => setEvents({ ...eventQuery, colours: f(colours) });
+  const chosenKeys = useMemo(() => [...eventQuery.produce, ...eventQuery.consume], [eventQuery]);
+  const activeFacets = (colours.length > 0 ? 1 : 0) + chosenKeys.length;
   // Wide opens the disclosure; on a phone it is closed until the reader opens it, EVEN with facets
   // set: measured at 390, an open disclosure put the results at 1,242px on a shared facet link,
   // the same place the finding started from. The summary's count says what is applied.
   const wide = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 40rem)").matches : true;
   const [filtersManual, setFiltersManual] = useState<boolean | null>(null);
-  const [doesOpen, setDoesOpen] = useState(false);
   const filtersOpen = wide || (filtersManual ?? false);
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
     return () => { live = false; };
   }, [load]);
-  // THE FACET ROWS ARE READ ONLY WHEN A FACET NEEDS THEM: the name index answers a name and the
-  // exact-identity chips on both pages. Does and Strategy need what the rows carry, and that file
-  // is not fetched on a page that never asks.
-  const needsFacets = facetQuery.does.length > 0 || facetQuery.strategy !== undefined;
-  const [facetRows, setFacetRows] = useState<FacetRow[] | null>(null);
+
+  // THE COUNTS ARE READ ON THE FIRST SEARCH INTERACTION, never on page load: a reader who lands on
+  // `/cards` and types a name pays for the name index and nothing else.
+  const [freq, setFreq] = useState<EventFrequencyFile | null>(null);
+  const [pickersOpen, setPickersOpen] = useState(false);
+  const needsFreq = pickersOpen || chosenKeys.length > 0;
   useEffect(() => {
-    if (!needsFacets || facetRows !== null) return;
+    if (!needsFreq || freq !== null) return;
     let live = true;
-    void facets("/static").then((r) => { if (live) setFacetRows(r); });
+    void frequency("/static").then((f) => { if (live) setFreq(f); });
     return () => { live = false; };
-  }, [needsFacets, facetRows, facets]);
+  }, [needsFreq, freq, frequency]);
+
+  // ONE FETCH PER CHOSEN EVENT. Nothing is read for an event nobody picked, and the shared loader
+  // means the two pickers and the list ask for a key once between them.
+  const [lists, setLists] = useState<ReadonlyMap<string, EventMembers | null>>(new Map());
+  const keySignature = chosenKeys.join("\u0000");
+  useEffect(() => {
+    if (chosenKeys.length === 0) { setLists(new Map()); return; }
+    let live = true;
+    void Promise.all(chosenKeys.map(async (k) => [k, await members("/static", k)] as const))
+      .then((pairs) => { if (live) setLists(new Map(pairs)); });
+    return () => { live = false; };
+    // `keySignature` is the dependency, not the array: a new array of the same keys must not refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keySignature, members]);
 
   // MATCHED THE WAY THE URL IS BUILT. `slugOf` folds diacritics and drops apostrophes, so "jotun"
   // finds `Jötun Grunt` and "ajanis" finds `Ajani's Chosen` -- and finds them under the spelling the
@@ -122,24 +149,73 @@ export function CardSearch({
   const needle = needleOf(query);
   // A FACET IS A COMPLETE QUESTION ON ITS OWN. "Show me red commanders" needs no text, so the
   // empty-query gate lifts as soon as one is chosen -- browsing by colour is what this page is for.
-  const asked = needle.length > 0 || colours.length > 0 || needsFacets;
-  // ONE RULE WITH THE HEADER FIELD. `matchNames` is the rule (and carries the exact-identity ruling
-  // the colour chips answer with); this page adds the commander and colour predicates the header
-  // does not offer, and the facets narrow that answer by slug. `null` while the rows are read.
-  const rowBySlug = useMemo(() => new Map((facetRows ?? []).map((r) => [r.s, r])), [facetRows]);
+  const asked = needle.length > 0 || colours.length > 0 || chosenKeys.length > 0;
+
+  // THE SET THE EVENTS DESCRIBE. `null` means no event was asked (the whole index is the base);
+  // `undefined` means the answer is not knowable yet -- still reading, or a shard that did not
+  // carry the key. A MISSING LIST IS NOT AN EMPTY ONE: rendering an empty set would claim that no
+  // card causes the event, which is a claim, and this engine says nothing rather than guessing.
+  const keptIds = useMemo((): Set<number> | null | undefined => {
+    if (chosenKeys.length === 0) return null;
+    if (chosenKeys.some((k) => !lists.has(k))) return undefined;
+    if (chosenKeys.some((k) => lists.get(k) === null)) return undefined;
+    return intersect([
+      ...eventQuery.produce.map((k) => lists.get(k)!.p),
+      ...eventQuery.consume.map((k) => lists.get(k)!.c),
+    ]);
+  }, [chosenKeys, lists, eventQuery]);
+  const unanswerable = chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
+    && chosenKeys.some((k) => lists.get(k) === null);
+
+  // ONE RULE WITH THE HEADER FIELD. `matchNames` is the rule; this page adds the commander and
+  // colour predicates the header does not offer, and the events narrow that answer by position.
   const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
-    // A FACET IS A COMPLETE QUESTION ON ITS OWN: with no name typed, the facets narrow the whole
-    // index, not the empty answer `matchNames` gives an empty needle.
-    const byName = needle.length === 0 && needsFacets && colours.length === 0
-      ? index.filter((e) => !commanderMode || e.commander)
-      : matchNames(index, { query, colours, ...(commanderMode ? { commanders: true } : {}) });
-    if (!needsFacets) return byName;
-    if (facetRows === null) return null;
-    const kept = applyFacets(facetRows, facetQuery, mode);
-    const order = new Map(kept.map((r, i) => [r.s, i]));
-    return byName.filter((e) => order.has(e.slug)).sort((a, b) => order.get(a.slug)! - order.get(b.slug)!);
-  }, [index, query, asked, colours, commanderMode, needsFacets, facetRows, facetQuery, mode]);
+    if (keptIds === undefined) return null;
+    const base = keptIds === null
+      ? index
+      : [...keptIds].map((id) => index[id]).filter((e): e is NameIndexEntry => e !== undefined);
+    const named = needle.length === 0 ? base : matchNames(base, { query });
+    // `identityKeyOf` spells colourless "C" and `coloursFit` spells it "", the same normalisation
+    // the facet rows carried. Getting it wrong would make every colourless card answer only the
+    // `C` chip, which is the opposite of the fits-in ruling.
+    const identityOf = (e: NameIndexEntry): string => {
+      const key = identityKeyOf(e.identity);
+      return key === "C" ? "" : key;
+    };
+    return named
+      .filter((e) => (!commanderMode || e.commander) && coloursFit(identityOf(e), colours, mode))
+      // AMONG CARDS THAT ALL ANSWER THE QUESTION, THE BETTER-CONNECTED ONE FIRST (owner
+      // 2026-09-17). The rate order went with the chip that named its family (roadmap AK3).
+      .sort((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.name.localeCompare(b.name, "en"));
+  }, [index, keptIds, needle, query, colours, commanderMode, mode, asked]);
+
+  // WHAT THE PICKERS OFFER, AND WHAT EACH ROW COSTS TO SAY.
+  //
+  // A KEY WITH NO CAUSES IS NOT OFFERED AS A CAUSE. `meld|-|-|-` is the case that matters: its
+  // count is a PRICE set by hand (a meld card's partner is the one card it names), not a census,
+  // so it ships no cause list and must never be offered as one.
+  //
+  // THE ROW'S COUNT NARROWS WITH THE COLOUR CHIPS, from the 32 identity slots AJ5 already
+  // computes. Printing the corpus figure beside an identity-filtered list is the defect AJ5 was
+  // opened for, and this is the same page one surface along.
+  // CEILING: it narrows by COLOURS only, not by the other events already chosen. Doing that would
+  // mean fetching every candidate event's member list to intersect against the selection -- the
+  // whole index, to label a dropdown. The count above the results is the exact one.
+  const mask = useMemo(() => identityMask(colours.filter((c) => c !== "C")), [colours]);
+  const countOf = useMemo(() => (key: string): number => {
+    if (freq === null) return 0;
+    const slots = freq.byIdentity[key];
+    return colours.length > 0 && slots ? inIdentityOf(slots, mask) : (freq.supply[key] ?? 0);
+  }, [freq, colours, mask]);
+  const consumeCountOf = useMemo(() => (key: string): number => freq?.consume[key] ?? 0, [freq]);
+  const produceOptions = useMemo(
+    () => (freq === null ? [] : Object.keys(freq.supply).filter((k) => (freq.supply[k] ?? 0) > 0 && k in freq.byIdentity)),
+    [freq]);
+  const consumeOptions = useMemo(
+    () => (freq === null ? [] : Object.keys(freq.consume).filter((k) => (freq.consume[k] ?? 0) > 0)),
+    [freq]);
+
   // THE CAP IS A PAGE (UX review, 2026-09-17). "467 match, showing the first 50" with no way to the
   // rest was a dead end; each press shows another fifty, and a new question starts over.
   const [shown, setShown] = useState(SEARCH_LIMIT);
@@ -237,62 +313,32 @@ export function CardSearch({
           })}
       </fieldset>
 
-      {/* WHAT IT DOES. Curated chips with player labels (`lib/facets.ts`); the rest of the effect
-        *  kinds stay reachable by name, and the line under the chips says so. OR within the group. */}
-      {/* BEHIND A DISCLOSURE ON EVERY VIEWPORT (owner, 2026-09-17): 24 chips made the landing a wall
-        *  and the box the reader came for the smallest thing on it. Open when one is chosen -- a
-        *  shared link lands with its filters visible -- and the summary counts what is on. */}
-      <details
-        open={doesOpen || facetQuery.does.length > 0}
-        onToggle={(e) => setDoesOpen((e.currentTarget as HTMLDetailsElement).open)}
-        className="flex flex-col gap-3"
-      >
-        <summary className="chip cursor-pointer list-none w-fit group/does">
-          What it does{facetQuery.does.length > 0 ? ` · ${facetQuery.does.length} chosen` : ""}
-          {/* THE CHIP HAS TO SAY IT OPENS: `list-none` removed the platform's marker, and a chip
-            * without one reads as a filter that is already applied. */}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/does:rotate-180 motion-reduce:transition-none">
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-        </summary>
-      <fieldset className="flex flex-wrap items-center gap-2">
-        <legend className="sr-only">Does</legend>
-        {DOES.map((d) => {
-          const on = facetQuery.does.includes(d.kind);
-          return (
-            <button
-              key={d.kind} type="button" aria-pressed={on}
-              onClick={() => setFacets({ ...facetQuery, does: on
-                ? facetQuery.does.filter((k) => k !== d.kind)
-                : [...facetQuery.does, d.kind] })}
-              className="chip"
-            >
-              {d.label}
-            </button>
-          );
-        })}
-        <p className="basis-full text-(--muted) text-sm">Anything else a card does is reachable by name.</p>
-      </fieldset>
-      </details>
-
-      {/* THE STRATEGY: the report's own archetype dictionary, one at a time. A native select, because
-        *  121 strategies are not a chip row; grouped by the vocabulary's class. On Commanders it reads
-        *  "Supports", and askers come before suppliers (`applyFacets`). */}
-      <label className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="eyebrow text-(--muted)">{commanderMode ? "Supports" : "Strategy"}</span>
-        <select
-          value={facetQuery.strategy ?? ""}
-          onChange={(e) => setFacets({ ...facetQuery, strategy: e.target.value || undefined })}
-          className="min-h-11 max-w-full rounded-(--field-radius) border border-(--field-border) bg-(--field-background) text-(--field-foreground) px-3"
-        >
-          <option value="">any strategy</option>
-          {[...new Set(STRATEGIES.map((s) => s.cls))].map((cls) => (
-            <optgroup key={cls} label={cls}>
-              {STRATEGIES.filter((s) => s.cls === cls).map((s) => <option key={s.slug} value={s.slug}>{s.label}</option>)}
-            </optgroup>
-          ))}
-        </select>
-      </label>
+      {/* THE TWO QUESTIONS THIS ENGINE CAN ACTUALLY ANSWER (spec 2026-09-19, owner: "events are
+        *  does and theme basically"). What a card CAUSES and what it ASKS FOR, in the same
+        *  vocabulary the card pages print -- so a reader who clicked through from a partner group
+        *  meets the sentence they clicked.
+        *
+        *  EVERY TERM ANDS, including between the two. The `does` chips ORed within their group;
+        *  keeping both vocabularies on one page under one heading, with two different meanings for
+        *  choosing two things, is the reason only one of them survived. */}
+      <div className="flex flex-col gap-6" onFocus={() => setPickersOpen(true)} onPointerDown={() => setPickersOpen(true)}>
+        <EventPicker
+          label="Causes"
+          hint={commanderMode ? "events this commander can cause for the rest of the deck" : "events the card can cause"}
+          options={produceOptions}
+          chosen={eventQuery.produce}
+          counts={countOf}
+          onChange={(next) => setEvents({ ...eventQuery, produce: next })}
+        />
+        <EventPicker
+          label="Asks for"
+          hint={commanderMode ? "events this commander is built to be paid" : "events the card is waiting for"}
+          options={consumeOptions}
+          chosen={eventQuery.consume}
+          counts={consumeCountOf}
+          onChange={(next) => setEvents({ ...eventQuery, consume: next })}
+        />
+      </div>
 
       </details>
 
@@ -316,7 +362,7 @@ export function CardSearch({
             <ul className="flex flex-wrap gap-2 list-none p-0 m-0" aria-label="Example questions">
               {EXAMPLES[mode].map((ex) => (
                 <li key={ex.label}>
-                  <button type="button" className="chip" onClick={() => setFacets(ex.q)}>{ex.label}</button>
+                  <button type="button" className="chip" onClick={() => setEvents(ex.q)}>{ex.label}</button>
                 </li>
               ))}
             </ul>
@@ -351,8 +397,10 @@ export function CardSearch({
               * product refuses everywhere else. */}
             <ul aria-label="Results" className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
               {matches.slice(0, shown).map((e) => {
-                const row = rowBySlug.get(e.slug);
-                const terms = row ? matchedTerms(row, facetQuery) : [];
+                // WHY IT IS ON THE LIST, in the sentences that were asked. Every kept row answers
+                // every term (the query ANDs), so the caption is the question rather than a
+                // per-row computation over data this page no longer fetches.
+                const terms = chosenKeys.map((k) => eventKeySentence(k));
                 return (
                   <li key={e.slug} className="min-w-0">
                     <CardTile

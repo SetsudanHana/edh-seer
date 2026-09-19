@@ -106,32 +106,3 @@ export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: Rat
   // SUMMONING SICKNESS (CR 302.6) is printed, not priced: a turn has no exchange rate in mana.
   return `${span} ${unit} / ${floorMana} mana${then}${delayed ? ", from next turn" : ""}`;
 }
-
-/** The labels that hit, for the line under a result that says why it is on the list, and on a
- *  single rated chip the rate the card charges. */
-export function matchedTerms(row: FacetRow, q: FacetQuery): string[] {
-  const terms = DOES.filter((d) => q.does.includes(d.kind) && row.e.includes(d.kind)).map((d) => d.label);
-  const rate = rateOf(row, q);
-  if (rate !== undefined) terms.push(rateLabel(rate, rateFamily(q)!, rateFamily(q) === "tokens" ? row.z : undefined));
-  if (q.strategy !== undefined && row.t.includes(q.strategy)) {
-    const label = STRATEGIES.find((s) => s.slug === q.strategy)?.label ?? q.strategy;
-    terms.push(row.d.includes(q.strategy) ? `${label} (asks for it)` : label);
-  }
-  return terms;
-}
-
-export function facetsFromParams(p: URLSearchParams): FacetQuery {
-  const colours = [...(p.get("colors") ?? "")].filter((c) => "WUBRGC".includes(c));
-  const does = (p.get("does") ?? "").split(",").filter((k) => DOES.some((d) => d.kind === k));
-  const theme = p.get("theme") ?? undefined;
-  return { colours, does, strategy: theme && STRATEGIES.some((s) => s.slug === theme) ? theme : undefined };
-}
-
-export function facetsToParams(q: FacetQuery, p: URLSearchParams): URLSearchParams {
-  const out = new URLSearchParams(p);
-  for (const k of ["colors", "does", "theme"]) out.delete(k);
-  if (q.colours.length > 0) out.set("colors", q.colours.join(""));
-  if (q.does.length > 0) out.set("does", q.does.join(","));
-  if (q.strategy !== undefined) out.set("theme", q.strategy);
-  return out;
-}

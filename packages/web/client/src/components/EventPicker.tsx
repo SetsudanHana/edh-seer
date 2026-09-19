@@ -108,7 +108,10 @@ export function EventPicker({ label, hint, options, chosen, counts, onChange }: 
                 aria-selected={on}
                 onMouseEnter={() => setActive(i)}
                 onClick={() => toggle(row.key)}
-                className={`min-h-11 flex items-center justify-between gap-3 px-2 py-1 cursor-pointer ${i === active ? "bg-(--surface-raised)" : ""}`}
+                // THE ACTIVE ROW READS AS THE HEADER SEARCH'S DOES (`index.css:1045`,
+                // `.site-search-row[aria-selected]`): same surface, same accent, so two comboboxes
+                // on one site do not signal the same state two ways.
+                className={`min-h-11 flex items-center justify-between gap-3 px-2 py-1 cursor-pointer ${i === active ? "bg-(--surface-secondary) text-(--accent)" : ""}`}
               >
                 <span className="flex items-baseline gap-2">
                   {/* A TICK, NOT A CHARACTER. lucide `check`, `currentColor`, and it keeps its box
