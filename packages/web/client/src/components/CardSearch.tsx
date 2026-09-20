@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
-import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { coloursFit, eventsFromParams, eventsToParams, intersect, type EventQuery } from "../lib/facets.js";
+import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
+import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, intersect, type EventQuery } from "../lib/facets.js";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { EventPicker } from "./EventPicker.js";
+import { CardSymbol } from "./CardSymbol.js";
 import { CardTile } from "./CardTile.js";
+import { SubtypePicker } from "./SubtypePicker.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
@@ -20,14 +22,14 @@ import type { CardPageData } from "../lib/partners.js";
  *  and were checked against the built artifact; an invented one would render an empty page. */
 const EXAMPLES: Record<"cards" | "commanders", { label: string; q: EventQuery }[]> = {
   cards: [
-    { label: "mills a card, in blue", q: { produce: ["mill|-|-|-"], consume: [], colours: ["U"] } },
-    { label: "makes a creature token", q: { produce: ["create-token|creature|-|t"], consume: [], colours: [] } },
-    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [] } },
+    { label: "mills a card, in blue", q: { produce: ["mill|-|-|-"], consume: [], colours: ["U"], types: [], subtypes: [] } },
+    { label: "makes a creature token", q: { produce: ["create-token|creature|-|t"], consume: [], colours: [], types: [], subtypes: [] } },
+    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [] } },
   ],
   commanders: [
-    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [] } },
-    { label: "wants a counter added", q: { produce: [], consume: ["counter-added|creature|-|-"], colours: [] } },
-    { label: "wants a land to enter, in green", q: { produce: [], consume: ["enters|land|-|-"], colours: ["G"] } },
+    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [] } },
+    { label: "wants a counter added", q: { produce: [], consume: ["counter-added|creature|-|-"], colours: [], types: [], subtypes: [] } },
+    { label: "wants a land to enter, in green", q: { produce: [], consume: ["enters|land|-|-"], colours: ["G"], types: [], subtypes: [] } },
   ],
 };
 
@@ -61,9 +63,12 @@ const COLOURS: [code: string, label: string][] = [
 
 export function CardSearch({
   load = sharedNameIndex, frequency = sharedEventFrequency, members = sharedEventMembers,
+  vocabulary: loadVocabulary = sharedNameIndexVocabulary,
   peekLoad, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
+  /** The type and subtype tables the rows' codes index into. */
+  vocabulary?: (baseUrl: string) => Promise<{ types: string[]; subtypes: string[] }>;
   /** The counts every picker row prints, asked for on the first search interaction only. */
   frequency?: (baseUrl: string) => Promise<EventFrequencyFile>;
   /** One event's cards, one fetch per event the reader actually picked. */
@@ -83,6 +88,10 @@ export function CardSearch({
   // and Back rebuilt it. Same stack, same panel, same click rule as the card pages.
   const peek = usePeekState();
   const [index, setIndex] = useState<NameIndexEntry[] | null>(null);
+  // EMPTY UNTIL IT LOADS, AND EMPTY IS SAFE: `characteristicsFit` fails a chosen type it has no
+  // code for, so a filter chosen before the tables arrive keeps the list empty rather than showing
+  // cards that do not answer it. The chips cannot be chosen before they are drawn from the tables.
+  const [vocabulary, setVocabulary] = useState<{ types: string[]; subtypes: string[] }>({ types: [], subtypes: [] });
   // THE QUERY LIVES IN THE URL, so a search is a link. `/cards/krenko-mob` is a slug nobody minted;
   // its page cannot guess what was meant, but it CAN hand the reader here with what they typed
   // already in the box -- which is the whole recovery from a truncated or misremembered name.
@@ -114,6 +123,7 @@ export function CardSearch({
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
+    void loadVocabulary("/static").then((v) => { if (live) setVocabulary(v); });
     return () => { live = false; };
   }, [load]);
 
@@ -149,7 +159,15 @@ export function CardSearch({
   const needle = needleOf(query);
   // A FACET IS A COMPLETE QUESTION ON ITS OWN. "Show me red commanders" needs no text, so the
   // empty-query gate lifts as soon as one is chosen -- browsing by colour is what this page is for.
-  const asked = needle.length > 0 || colours.length > 0 || chosenKeys.length > 0;
+  // WHETHER THE READER HAS ASKED ANYTHING AT ALL, and the three new dimensions belong in it.
+  // `?subtype=sliver` on its own rendered an EMPTY page with no count until they did -- the filter
+  // applied and the list was never drawn, which reads as "no Slivers" rather than as "nothing
+  // asked". Found by opening the URL rather than by a test, because every test set a colour too.
+  //
+  // `sort` IS DELIBERATELY NOT HERE: an order is not a question, and sorting an unasked list would
+  // draw the whole corpus because someone chose "A to Z".
+  const asked = needle.length > 0 || colours.length > 0 || chosenKeys.length > 0
+    || eventQuery.types.length > 0 || eventQuery.subtypes.length > 0 || eventQuery.maxMv !== undefined;
 
   // THE SET THE EVENTS DESCRIBE. `null` means no event was asked (the whole index is the base);
   // `undefined` means the answer is not knowable yet -- still reading, or a shard that did not
@@ -183,12 +201,26 @@ export function CardSearch({
       const key = identityKeyOf(e.identity);
       return key === "C" ? "" : key;
     };
-    return named
-      .filter((e) => (!commanderMode || e.commander) && coloursFit(identityOf(e), colours, mode))
-      // AMONG CARDS THAT ALL ANSWER THE QUESTION, THE BETTER-CONNECTED ONE FIRST (owner
-      // 2026-09-17). The rate order went with the chip that named its family (roadmap AK3).
-      .sort((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.name.localeCompare(b.name, "en"));
-  }, [index, keptIds, needle, query, colours, commanderMode, mode, asked]);
+    // WHAT THE CARD IS, answered off the row rather than from the membership index (2026-09-21).
+    // Compiled ONCE per pass: the names become codes here, not inside the filter, or a chosen
+    // subtype costs a 488-entry scan per card on every keystroke.
+    const fitsCharacteristics = compileCharacteristics(eventQuery, vocabulary);
+    const kept = named.filter((e) => (!commanderMode || e.commander)
+      && coloursFit(identityOf(e), colours, mode)
+      && fitsCharacteristics(e));
+    // AMONG CARDS THAT ALL ANSWER THE QUESTION, THE BETTER-CONNECTED ONE FIRST (owner 2026-09-17),
+    // and that stays the default. The other two orders exist so a reader can ESCAPE that ranking:
+    // the deck-build run found rare events outranking good cards and could only reach staples "by
+    // already knowing their names and typing them in". A sort does not fix the ranking; it stops
+    // the ranking being the only way through the list.
+    const byName = (a: NameIndexEntry, b: NameIndexEntry): number => a.name.localeCompare(b.name, "en");
+    const order = eventQuery.sort ?? "partners";
+    return [...kept].sort(
+      order === "name" ? byName
+        : order === "mv" ? ((a, b) => (a.mv ?? 0) - (b.mv ?? 0) || byName(a, b))
+        : ((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || byName(a, b)),
+    );
+  }, [index, keptIds, needle, query, colours, commanderMode, mode, asked, eventQuery, vocabulary]);
 
   // WHAT THE PICKERS OFFER, AND WHAT EACH ROW COSTS TO SAY.
   //
@@ -350,6 +382,73 @@ export function CardSearch({
               </button>
             );
           })}
+      </fieldset>
+
+      {/* WHAT THE CARD IS (owner, 2026-09-21: slivers, and "mill instants which are blue and cost
+        *  less than 3 mana"). A printed type line is not a second vocabulary competing with the
+        *  events below -- it is the same kind of fact as the colour chips above, which have sat
+        *  beside them since the day they shipped.
+        *
+        *  TYPES ARE CHIPS AND SUBTYPES ARE A FIELD, because 18 fit a row and 488 do not. The field
+        *  reaches every subtype rather than a curated tribe list: Equipment, Saga, Aura and the
+        *  land types are subtypes too, and a list of "the tribes people search for" is a judgement
+        *  we would have to keep defending. */}
+      <fieldset className="flex flex-col gap-3">
+        <legend className="eyebrow">What the card is</legend>
+        <div className="flex flex-wrap items-center gap-2">
+          {vocabulary.types.map((name) => {
+            const on = eventQuery.types.includes(name);
+            return (
+              <button
+                key={name} type="button" aria-pressed={on} className="chip capitalize"
+                onClick={() => setEvents({ ...eventQuery,
+                  types: on ? eventQuery.types.filter((t) => t !== name) : [...eventQuery.types, name] })}
+              >
+                <CardSymbol name={name} className="text-(--muted) text-xs" />
+                {name}
+              </button>
+            );
+          })}
+        </div>
+        {/* A CHANGELING IS EVERY CREATURE TYPE (CR 702.73), and the derive already expands it -- so
+          *  `subtype=sliver` answers with 137 cards where the corpus prints about a hundred Slivers,
+          *  and Bloodline Pretender is in the answer. That is correct and it is what a Sliver deck
+          *  wants to know; it will be reported as a bug at some point, so it is written down here. */}
+        <div className="flex flex-wrap items-end gap-4">
+          <SubtypePicker
+            all={vocabulary.subtypes}
+            chosen={eventQuery.subtypes}
+            onChange={(next) => setEvents({ ...eventQuery, subtypes: next })}
+          />
+          <label className="flex flex-col gap-1">
+            <span className="eyebrow">Mana value</span>
+            <select
+              className="field w-40"
+              value={eventQuery.maxMv === undefined ? "" : String(eventQuery.maxMv)}
+              onChange={(e) => setEvents({ ...eventQuery,
+                ...(e.target.value === "" ? { maxMv: undefined } : { maxMv: Number(e.target.value) }) })}
+            >
+              <option value="">any</option>
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n} or less</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="eyebrow">Order</span>
+            {/* THE DEFAULT IS THE ARTIFACT'S OWN ORDER and stays first. The other two exist so a
+              *  reader can ESCAPE the ranking, which the deck-build run needed: rare events
+              *  outranked good cards, and it reached staples only by typing names it already knew.
+              *  This does not fix the ranking. It stops the ranking being the only way through. */}
+            <select
+              className="field w-44"
+              value={eventQuery.sort ?? "partners"}
+              onChange={(e) => setEvents({ ...eventQuery, sort: e.target.value as EventQuery["sort"] })}
+            >
+              <option value="partners">most connected</option>
+              <option value="mv">cheapest first</option>
+              <option value="name">A to Z</option>
+            </select>
+          </label>
+        </div>
       </fieldset>
 
       {/* THE TWO QUESTIONS THIS ENGINE CAN ACTUALLY ANSWER (spec 2026-09-19, owner: "events are

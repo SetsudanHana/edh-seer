@@ -67,7 +67,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   private manifestPromise: Promise<string> | null = null;
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
   private tokenArtPromise: Promise<Record<string, string>> | null = null;
-  private nameIndexPromise: Promise<NameIndexEntry[]> | null = null;
+  private nameIndexPromise: Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; cards?: NameIndexEntry[] } | null> | undefined;
   private eventFrequencyPromise: Promise<EventFrequencyFile> | null = null;
 
   private readonly fetchImpl: typeof fetch;
@@ -272,11 +272,36 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *
    *  AN ABSENT INDEX IS EMPTY, NOT FATAL, for the reason the token files are: a search page that
    *  renders "no cards" is recoverable and a page that throws is not. */
-  async nameIndex(): Promise<NameIndexEntry[]> {
+  /** BOTH SHAPES, AND THIS IS THE ONLY PLACE THAT KNOWS THERE ARE TWO. Until 2026-09-21 the file
+   *  WAS the array; it is now `{ types, subtypes, cards }`, because the rows carry `t`/`s` codes
+   *  and the tables they point into have to travel with them. A reader expecting an array and
+   *  handed the object would report a corpus of ZERO CARDS rather than a changed format -- the
+   *  silent-wrong-answer shape this repo refuses -- and an artifact built before today is still
+   *  sitting in a browser cache somewhere. */
+  /** ONE FETCH AND ONE PARSE, WHICH THE TWO PUBLIC READERS SHARE. They were a method each, and each
+   *  called `fetchCached` on its own: with no Cache API (tests, and any path without one) that is a
+   *  guaranteed second download of a 4.3 MB file and a second parse of it, while `partners.ts`
+   *  claimed one request per session. The rows and the tables come out of the same body because
+   *  they ARE the same body. */
+  private nameIndexBody(): Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; cards?: NameIndexEntry[] } | null> {
     return (this.nameIndexPromise ??= (async () => {
       const res = await this.fetchCached("/name-index.json");
-      return res.ok ? (await res.json() as NameIndexEntry[]) : [];
+      return res.ok ? await res.json() as NameIndexEntry[] | { cards?: NameIndexEntry[] } : null;
     })());
+  }
+
+  async nameIndex(): Promise<NameIndexEntry[]> {
+    const body = await this.nameIndexBody();
+    if (!body) return [];
+    return Array.isArray(body) ? body : body.cards ?? [];
+  }
+
+  /** The type and subtype tables `NameIndexEntry.t`/`.s` index into, or empty on an artifact built
+   *  before they existed -- in which case no row carries a code either, so the two agree. */
+  async nameIndexVocabulary(): Promise<{ types: string[]; subtypes: string[] }> {
+    const body = await this.nameIndexBody();
+    if (!body || Array.isArray(body)) return { types: [], subtypes: [] };
+    return { types: body.types ?? [], subtypes: body.subtypes ?? [] };
   }
 
   /** ONE EVENT'S CARDS (roadmap AJ3), from the shard its key hashes into -- one fetch per event a
