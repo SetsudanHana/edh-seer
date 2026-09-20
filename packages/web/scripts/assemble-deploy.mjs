@@ -75,7 +75,11 @@ if (existsSync(join(docsDir, "index.html"))) {
 // shell a cold start pays for, to cache a file the app itself never reads.
 const shellFiles = (dir, prefix = "") => readdirSync(dir).flatMap((entry) => {
   if (prefix === "" && (entry === "static" || entry === "sw.js" || entry === "_headers"
-    || entry === "sitemap.xml")) return [];
+    // EVERY sitemap file, not just the one: the index gained `sitemap-core`, `-commanders` and
+    // `-cards` children (AI5), and a prefix match is what stops the next one being precached by
+    // whoever adds it. They are written after this runs, so this is belt and braces -- which is the
+    // right amount for a rule whose failure is silently doubling the offline shell.
+    || entry.startsWith("sitemap"))) return [];
   const path = join(dir, entry);
   return statSync(path).isDirectory()
     ? shellFiles(path, `${prefix}/${entry}`)
@@ -138,16 +142,24 @@ const browseRows = readdirSync(join(target, version, "browse"))
   .map((f) => [f.replace(/\.json$/, ""), JSON.parse(readFileSync(join(target, version, "browse", f), "utf8"))]);
 const browseCardLetters = browseRows.filter(([, r]) => r.length > 0).map(([l]) => l);
 const browseCommanderLetters = browseRows.filter(([, r]) => r.some((e) => e.commander)).map(([l]) => l);
-const sitemapUrls = [
+// ORDERED BY PARTNER COUNT, AND THAT IS THE WHOLE POINT OF THE SPLIT BELOW (AI5). Search Console
+// 2026-09-16: 23,754 URLs "Discovered, currently not indexed", 5 indexed, ~10 crawl requests a day
+// and falling. Nothing here raises that number -- it is demand, not a technical block -- but it
+// decides WHERE those ten land, and alphabetical order spent them on `/browse/cards/a` and the
+// cards whose names start with A. `partners` is the symmetric candidate degree the artifact already
+// carries, so the page with the most to say is offered first.
+const byPartners = (a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.slug.localeCompare(b.slug);
+const coreUrls = [
   `${origin}/`,
   `${origin}/how-it-works`,
   `${origin}/cards`,
   `${origin}/commanders`,
   ...browseCardLetters.map((l) => `${origin}/browse/cards/${l}`),
   ...browseCommanderLetters.map((l) => `${origin}/browse/commanders/${l}`),
-  ...indexableCards.map((e) => `${origin}/cards/${e.slug}`),
-  ...indexableCommanders.map((e) => `${origin}/commanders/${e.slug}`),
 ];
+const commanderUrls = [...indexableCommanders].sort(byPartners).map((e) => `${origin}/commanders/${e.slug}`);
+const cardUrls = [...indexableCards].sort(byPartners).map((e) => `${origin}/cards/${e.slug}`);
+const sitemapUrls = [...coreUrls, ...commanderUrls, ...cardUrls];
 const expectedUrls = 4 + browseCardLetters.length + browseCommanderLetters.length
   + indexableCards.length + indexableCommanders.length;
 // ASSERTED HERE RATHER THAN TRUSTED: a half-built artifact should fail the deploy, not publish a
@@ -156,13 +168,38 @@ if (sitemapUrls.length !== expectedUrls) {
   console.error(`sitemap: built ${sitemapUrls.length} URLs, expected ${expectedUrls}`);
   process.exit(1);
 }
+// THREE FILES BEHIND ONE INDEX, and it is a measurement instrument rather than a size fix: 24,921
+// URLs fit one file twice over (the protocol's limit is 50,000). Search Console reports coverage
+// PER SUBMITTED SITEMAP, so a single file can only ever answer "5 indexed of 24,921" -- it cannot
+// say whether commanders index better than cards, which is exactly the question AI7 re-measures on
+// 2026-10-01. Split, that answer is read straight off the Sitemaps report.
+//
+// `lastmod` IS ON THE INDEX AND NOT ON THE URLS, and the distinction is the honest one. In a sitemap
+// index `lastmod` means "when this sitemap FILE changed", which is true: it was just written. On a
+// `<url>` it means the PAGE changed, and this build cannot know that -- the artifact is regenerated
+// wholesale, so Sol Ring's page is usually byte-identical across two builds. Stamping every URL with
+// the build time would be a claim that everything changed every deploy, which Google discounts on
+// exactly the sites that do it. A real per-URL date needs a per-slug content hash carried between
+// builds; that is a bigger machine than the signal is worth today.
+const lastmod = new Date().toISOString().slice(0, 10);
+const urlset = (urls) =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+  + urls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")
+  + `\n</urlset>\n`;
+const children = [
+  ["sitemap-core.xml", coreUrls],
+  ["sitemap-commanders.xml", commanderUrls],
+  ["sitemap-cards.xml", cardUrls],
+];
+for (const [file, urls] of children) writeFileSync(join(dist, file), urlset(urls));
 writeFileSync(
   join(dist, "sitemap.xml"),
-  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
-  + sitemapUrls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")
-  + `\n</urlset>\n`,
+  `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+  + children.map(([file]) =>
+    `  <sitemap><loc>${origin}/${file}</loc><lastmod>${lastmod}</lastmod></sitemap>`).join("\n")
+  + `\n</sitemapindex>\n`,
 );
-console.log(`sitemap: ${sitemapUrls.length} URLs (${indexableCards.length} cards, `
+console.log(`sitemap: index + ${children.length} children, ${sitemapUrls.length} URLs (${indexableCards.length} cards, `
   + `${indexableCommanders.length} commanders, `
   + `${browseCardLetters.length + browseCommanderLetters.length} browse; `
   + `${nameIndex.length - indexableCards.length} + `

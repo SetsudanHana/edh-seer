@@ -18,6 +18,19 @@ from printed rules text, and every claim is a sentence you can verify:
 
 > *"When Siege-Gang Commander dies, Skullclamp draws you 2 cards"*
 
+Both halves of that sentence have a page, and the page shows the engine's working:
+[Skullclamp](https://edhseer.cards/cards/skullclamp) and
+[Siege-Gang Commander](https://edhseer.cards/cards/siege-gang-commander) — the events each one
+supplies, the ones it cares about, and every partner the engine will name, with its reason.
+
+A commander page asks the same question of a whole deck — what a deck led by this card wants:
+[Atraxa, Praetors' Voice](https://edhseer.cards/commanders/atraxa-praetors-voice) ·
+[Inalla, Archmage Ritualist](https://edhseer.cards/commanders/inalla-archmage-ritualist) ·
+[Krenko, Mob Boss](https://edhseer.cards/commanders/krenko-mob-boss) ·
+[Edgar Markov](https://edhseer.cards/commanders/edgar-markov) ·
+[Yuna, Grand Summoner](https://edhseer.cards/commanders/yuna-grand-summoner) ·
+or [browse all of them](https://edhseer.cards/commanders).
+
 **There is no LLM at analysis time.** A model is used exactly once, offline, to normalize oracle text
 into structured clauses. Everything downstream — deriving tags, matching producers to consumers,
 scoring, reporting — is deterministic, free to re-run, and identical on every machine.
