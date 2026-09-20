@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { expect, test, vi } from "vitest";
-import App from "./App.js";
+import App, { DeckBar } from "./App.js";
 import { saveLastDeck } from "./lib/run-diff.js";
 
 test("renders a styled HeroUI Analyze button", () => {
@@ -101,4 +102,32 @@ test("no router warning is logged on a page the legacy block does not match", as
     render(<App />);
     expect(warn.mock.calls.flat().join(" ")).not.toContain("No routes matched");
   } finally { warn.mockRestore(); }
+});
+
+/** THE DECK BAR IS REPORT FURNITURE, AND THE BOARD IS THE SURFACE SHORT OF HEIGHT (AL2). Measured
+ *  at 1920x1080: 560px of chrome sits above the canvas, which leaves it 518px -- a 3.6:1 letterbox
+ *  framing a board that paints 660x661, so `fitToView` is bound by the height every time and the
+ *  discs pay for it (20.2 to 25.7px diameter on the three review decks, two of them under the 24px
+ *  floor `disc-fit.ts` names). The collapsed bar is ~128px of that, and every control on it is one
+ *  tab away on the report. It stays everywhere else, and the EXPANDED editor stays everywhere --
+ *  hiding that would strand a reader who pressed Edit. */
+test("the collapsed deck bar stands down on the board, and nowhere else", () => {
+  const props = {
+    commanders: "", onCommandersChange: () => {}, value: "1 Sol Ring", onChange: () => {},
+    onAnalyze: () => {}, loading: false, onEdit: () => {}, onStartOver: () => {},
+  };
+  const at = (path: string, collapsed: boolean) => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={[path]}><DeckBar {...props} collapsed={collapsed} /></MemoryRouter>,
+    );
+    const present = screen.queryByRole("button", { name: "Copy decklist" }) !== null
+      || screen.queryByRole("button", { name: /analyse/i }) !== null;
+    unmount();
+    return present;
+  };
+  expect(at("/analysis/graph", true)).toBe(false);
+  expect(at("/analysis/cards", true)).toBe(true);
+  expect(at("/analysis", true)).toBe(true);
+  // The editor is not furniture: a reader who pressed Edit keeps it on every surface.
+  expect(at("/analysis/graph", false)).toBe(true);
 });

@@ -926,7 +926,13 @@ describe("fit to view", () => {
   // torn the canvas down holds a live reference to a detached element for the life of the page, and
   // this effect re-runs on every deck (`graph` in the dependency array a few lines below), so a
   // long session accumulates one per deck ever opened.
-  test("disconnects the resize observer on unmount", () => {
+  //
+  // COUNTED AGAINST HOW MANY WERE CONSTRUCTED, not against 1. The board grew a second observer when
+  // its height stopped being a constant (AL2), and a hard-coded 1 turns "a new observer is not
+  // cleaned up" and "a new observer exists at all" into the same red -- the second of which is not
+  // a leak. The stub shares one `disconnect` spy across every instance, so this reads as: everything
+  // this component constructed, it tore down.
+  test("disconnects every resize observer it made, on unmount", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 300, height: 200, right: 300, bottom: 200, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
@@ -934,8 +940,10 @@ describe("fit to view", () => {
     makeContextSpy();
     const { unmount } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
     expect(ro.disconnect).not.toHaveBeenCalled();
+    const made = (globalThis.ResizeObserver as unknown as { mock: { calls: unknown[] } }).mock.calls.length;
+    expect(made).toBeGreaterThan(0);
     unmount();
-    expect(ro.disconnect).toHaveBeenCalledTimes(1);
+    expect(ro.disconnect).toHaveBeenCalledTimes(made);
   });
 });
 

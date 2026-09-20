@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
@@ -10,7 +10,7 @@ import { RouteMarker } from "./components/RouteMarker.js";
 import { HeaderSearch } from "./components/HeaderSearch.js";
 import { CardSearch } from "./components/CardSearch.js";
 import { CommanderPage } from "./components/CommanderPage.js";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { clearLastRun, diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
@@ -19,6 +19,23 @@ import { searchWithState, stateFromSearch } from "./lib/game-state.js";
 import type { GameState } from "@edh-seer/engine";
 import { deckSourceOf, importDeck } from "./lib/deck-import.js";
 
+
+/** THE DECK BAR IS REPORT FURNITURE, AND THE BOARD IS THE ONE SURFACE SHORT OF HEIGHT (AL2).
+ *
+ *  Measured at 1920x1080: 560px of chrome sits above the canvas, so it gets 518px -- a 3.6:1
+ *  letterbox framing a board that paints 660x661, which means `fitToView`'s `min(w/boxW, h/boxH)`
+ *  is bound by the HEIGHT every time and the discs pay for it: 20.2 to 25.7px diameter on the three
+ *  review decks, two of them under the 24px floor `disc-fit.ts` names. The collapsed bar is ~128px
+ *  of that 560, and every control on it -- Copy link, Copy decklist, Edit, Start over, Re-analyse --
+ *  is one tab away on the report.
+ *
+ *  ONLY THE COLLAPSED BAR, AND ONLY THERE. The EXPANDED editor stays on every surface: hiding that
+ *  would strand a reader who pressed Edit and then walked to the board. `ReportHeader` stays too --
+ *  "the summary on every surface" is a decision with a test on it (`ReportShell.test.tsx`), and this
+ *  is not the change that reverses it. */
+export function DeckBar(props: ComponentProps<typeof DeckInput>) {
+  return useLocation().pathname === "/analysis/graph" && props.collapsed ? null : <DeckInput {...props} />;
+}
 
 export default function App() {
   /** WHAT WAS IN THE BOX LAST TIME (roadmap S9). Read once, before anything else, because it feeds
@@ -411,7 +428,7 @@ export default function App() {
           its nav, neither of which should wait for a bundle, and it carries the page's `h1` where a
           crawler can read it. The identity picker that used to sit at its right, and the gradient
           rule under it, went with DESIGN.md v2. */}
-      <DeckInput
+      <DeckBar
         commanders={commanders}
         onCommandersChange={setCommanders}
         value={decklist}
