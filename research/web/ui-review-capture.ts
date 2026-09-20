@@ -80,8 +80,22 @@ type RunFile = {
   measure: string[];
 };
 
-const DESKTOP = { width: 1920, height: 1080 };
-const PHONE = { width: 390, height: 844 };
+const DESKTOP = { viewport: { width: 1920, height: 1080 } };
+
+/** A PHONE IS A POINTER, NOT A WIDTH, and for three rounds this context was only the width.
+ *
+ *  Playwright reports `pointer: coarse` false and `any-pointer: fine` TRUE for a plain narrow
+ *  viewport (measured 2026-09-20, all three context shapes). `useBoardMode` returns `board` on
+ *  `!coarse || alsoFine`, so every 390px frame this harness has ever taken of the graph was the
+ *  DESKTOP board squeezed into a phone -- the ego view a real phone gets has never been captured,
+ *  and the phone seat has been reviewing a surface no phone reaches. `hasTouch` flips all three
+ *  queries at once (coarse true, any-fine false, hover false), which is the whole defect.
+ *
+ *  `isMobile` is deliberately NOT set. It additionally turns on viewport-meta emulation, which
+ *  moves layout on every phone frame in the run and would make this round incomparable with the
+ *  ones before it. The pointer is what the surface switch reads; add `isMobile` as its own change,
+ *  with its own round, if a layout question ever needs it. */
+const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true };
 
 // ---------------------------------------------------------------------------------------------
 // The maths, in Node, where it can be tested
@@ -499,8 +513,8 @@ async function main(runPath: string): Promise<void> {
     mkdirSync(deckDir, { recursive: true });
     const url = (path: string) => `${run.baseUrl}${path}${hash}`;
 
-    for (const [label, viewport] of [["desktop", DESKTOP], ["phone", PHONE]] as const) {
-      const context = await browser.newContext({ viewport, reducedMotion: "reduce" });
+    for (const [label, device] of [["desktop", DESKTOP], ["phone", PHONE]] as const) {
+      const context = await browser.newContext({ ...device, reducedMotion: "reduce" });
       try {
         const page = await openPage(context);
         let at = "";
@@ -530,7 +544,7 @@ async function main(runPath: string): Promise<void> {
           // restate the same contrast ratios would bury the one figure that differs by width --
           // which is the overflow check, and that is page-level.
           if (label === "desktop") {
-            metrics[key] = deriveMetrics(await measure(page, run.measure), viewport);
+            metrics[key] = deriveMetrics(await measure(page, run.measure), device.viewport);
           } else {
             const raw = await measure(page, []);
             metrics[`${key}-phone-overflow`] = {
@@ -576,7 +590,7 @@ async function main(runPath: string): Promise<void> {
   for (const screen of run.keyScreens) {
     // forced-colors: d3 sets `fill` and `stroke` as SVG ATTRIBUTES, which forced-colors mode does
     // not override. The graph is the most likely thing in this product to fail it.
-    const fc = await browser.newContext({ viewport: DESKTOP, forcedColors: "active", reducedMotion: "reduce" });
+    const fc = await browser.newContext({ ...DESKTOP, forcedColors: "active", reducedMotion: "reduce" });
     try {
       const fcPage = await openPage(fc);
       await fcPage.goto(url(screen.path));
@@ -591,7 +605,7 @@ async function main(runPath: string): Promise<void> {
     // worst case for red-green deficiency, and nothing else in this repo checks that claim on
     // rendered pixels. An LLM cannot roleplay this -- it can see the colours -- so the TRANSFORMED
     // image is what goes to the personas.
-    const cvd = await browser.newContext({ viewport: DESKTOP, reducedMotion: "reduce" });
+    const cvd = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
     try {
       const cvdPage = await openPage(cvd);
       await cvdPage.goto(url(screen.path));
@@ -607,7 +621,7 @@ async function main(runPath: string): Promise<void> {
     // axe, once per key screen. Its value here is COMPOSITED contrast: validate_contrast.py checks
     // token PAIRS and can never see what actually lands on screen. Ceiling: axe catches roughly a
     // third of WCAG issues and will never find the "measures perfectly, still unfindable" class.
-    const ax = await browser.newContext({ viewport: DESKTOP, reducedMotion: "reduce" });
+    const ax = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
     try {
       const axPage = await openPage(ax);
       await axPage.goto(url(screen.path));
