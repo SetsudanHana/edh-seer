@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
@@ -85,6 +85,37 @@ test("a query matching more than the cap shows the cap and says how many it foun
   expect(await screen.findByText(new RegExp(`${SEARCH_LIMIT + 7} cards match`))).toBeInTheDocument();
   expect(within(screen.getByRole("list", { name: "Results" })).getAllByRole("link"))
     .toHaveLength(SEARCH_LIMIT);
+});
+
+/** THE PAGE TURNS ITSELF (owner, 2026-09-21). The deck-build agent read "798 cards match, showing
+ *  the first 50", never found the button under the grid, and never saw the other 748.
+ *
+ *  THE RULE IS ASSERTED, NOT THE LAYOUT. jsdom lays nothing out, so the observer is driven by hand
+ *  -- the same shape `ReportShell.test.tsx` uses for the chapter rail. What can actually be wrong
+ *  is whether an intersection adds a page, whether the BUTTON survives for a keyboard, and whether
+ *  loading stops so the footer below stays reachable. */
+test("scrolling the end of the list into view loads the next page, and the button stays", async () => {
+  let fire: (entries: { isIntersecting: boolean }[]) => void = () => {};
+  vi.stubGlobal("IntersectionObserver", class {
+    constructor(cb: typeof fire) { fire = cb; }
+    observe() {} disconnect() {}
+  });
+  const many = Array.from({ length: SEARCH_LIMIT + 7 }, (_, i) => ({
+    slug: `goblin-${i}`, name: `Goblin ${i}`, identity: ["R"], commander: false,
+  }));
+  at(many);
+  await userEvent.type(await screen.findByRole("searchbox"), "goblin");
+  const results = () => within(screen.getByRole("list", { name: "Results" })).getAllByRole("link");
+  expect(results()).toHaveLength(SEARCH_LIMIT);
+  // A KEYBOARD STILL HAS A WAY THROUGH -- the half infinite scroll is known for breaking.
+  expect(screen.getByRole("button", { name: /Show \d+ more/ })).toBeInTheDocument();
+
+  act(() => { fire([{ isIntersecting: true }]); });
+  await waitFor(() => expect(results()).toHaveLength(SEARCH_LIMIT + 7));
+
+  // AND IT STOPS. With nothing left to show the button unmounts, so the list ends and `PageFoot`
+  // below it is reachable -- a footer that retreats forever is this pattern's real defect.
+  expect(screen.queryByRole("button", { name: /Show \d+ more/ })).toBeNull();
 });
 
 test("a query that matches nothing says so", async () => {
