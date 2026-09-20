@@ -31,6 +31,8 @@ const TESTED: Record<string, string> = {
   "614.1c": "edges.test.ts — an UNTYPED enters emit does not reach a clone (a clone replaces its own entry)",
   "118.12a": "rate.test.ts — the payment that stops an effect is the rate's fallback, floor 0 (Rhystic Study)",
   "606.5": "rate.test.ts — a loyalty cost is not mana; the ability has no rate (Teferi, Temporal Pilgrim)",
+  "714.3": "edges.test.ts — a Saga carries lore counters, so it can satisfy a counter-presence condition (AL4)",
+  "702.24": "edges.test.ts — cumulative upkeep carries age counters, same (AL4)",
 };
 const PROSE: Record<string, string> = {
   "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",
@@ -38,12 +40,16 @@ const PROSE: Record<string, string> = {
   "302.6": "a creature's summoning sickness", "305.1": "land play", "500.4": "effects expire as a step begins", "501": "beginning phase",
   "603.4": "intervening if", "603.6c": "leaves the battlefield", "613": "layers: OPEN", "613.1f": "P/T layer", "700.6": "leaves",
   "700.7": "colours", "700.9": "historic", "701.17": "sacrifice", "701.22": "scry", "701.23a": "search", "701.25": "surveil",
-  "701.29": "fateseal", "701.5": "counter (tagger asserts the emit)", "702": "keyword abilities", "702.179": "speed", "702.62": "changeling", "704.5d": "a token in a graveyard ceases to exist",
+  "701.29": "fateseal", "701.5": "counter (tagger asserts the emit)", "702": "keyword abilities", "702.179": "speed", "702.62": "suspend (goldfish.ts: a suspended card is never cast from hand for its printed cost)", "704.5d": "a token in a graveyard ceases to exist",
   "704.5s": "Saga sacrifice", "708.2": "face-down 2/2", "712.4a": "a DFC's back face", "717.4": "Attractions excluded",
   "903": "Commander", "903.10a": "commander damage", "903.2": "a Commander deck", "903.4": "colour identity", "903.6": "singleton",
   "903.8": "commander tax is a caveat, not a number",
   "113.3": "edges: the copy-ability pass reads the other card's ability kinds (AC12; edges.test asserts Strionic, Gogo, Tawnos)",
   "605.3b": "edges: 'activated' excludes mana abilities in the copy-ability pass (AC12)",
+  "306.5b": "edges: a planeswalker's loyalty is a counter (canCarryCounters, AL4)",
+  "310.6": "edges: a battle's defence is a counter (canCarryCounters, AL4)",
+  "702.63": "edges: vanishing puts time counters on (canCarryCounters, AL4)",
+  "702.32": "edges: fading puts fade counters on (canCarryCounters, AL4)",
 };
 
 const SRC = fileURLToPath(new URL(".", import.meta.url));

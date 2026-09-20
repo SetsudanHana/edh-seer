@@ -45,6 +45,14 @@
       "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
       "verified": true,
       "tag": "counter-added:creature"
+    },
+    {
+      "a": "Misty Rainforest",
+      "b": "Yuna, Grand Summoner",
+      "class": "intervening-if",
+      "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied. \u2014 FIXED 2026-09-20 (AL4): the condition is a refusal when the producer IS the dying thing and cannot carry a counter. Banked here so a regression fails the compass.",
+      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
+      "tag": "dies:permanent"
     }
   ],
   "knownDefects": [
@@ -55,14 +63,6 @@
       "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Same pair as the false-care row above, under a different tag: the consumer's qualifier is not being read, so a broader cast tag still joins them.",
       "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
       "tag": "cast:spell"
-    },
-    {
-      "a": "Misty Rainforest",
-      "b": "Yuna, Grand Summoner",
-      "class": "intervening-if",
-      "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied.",
-      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
-      "tag": "dies:permanent"
     }
   ],
   "context": "MEASURED ON THE SHIPPED ENGINE (derived tags) IN PAIR ISOLATION. `eval-pairs` read the retired FLAT collection until 2026-09-07, which is why the compass reported 55/55 while its own CI gate reported 41/55 for the same set. Isolation remains: `pairReasons(a,b,hierarchy)` has no deck around it, and the product's `analyzeDeckStructured` adds deck-level passes. See roadmap Z4."
