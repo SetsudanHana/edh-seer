@@ -89,6 +89,21 @@ const LABEL_ZOOM_FLOOR = 0.6;
 /** Fraction of the canvas the fitted board occupies on whichever axis is tighter -- a board that
  *  touches the edges reads as cropped, not framed. */
 const FIT_MARGIN = 0.9;
+
+/** Breathing room under the board when it is sized to the viewport, so the last row of discs is not
+ *  flush against the fold and the page foot is visibly there rather than hidden by one pixel. */
+const BOARD_GUTTER_PX = 24;
+
+/** THE SHORTEST BOARD WORTH DRAWING, and it is measured rather than chosen for looks.
+ *
+ *  "Take what the viewport has left" is right on a tall screen and not on a 1080 one, where the
+ *  chrome above the board runs 464px on two of the three review decks and 561px on the third --
+ *  the facet chips wrap to three rows on the precon -- so the remainder alone gave 592, 592 and
+ *  495px, and the precon's discs came out SMALLER than the 520px constant they replaced. At this
+ *  height all three clear the 24px floor `disc-fit.ts` names: 27.6 / 32.6 / 24.6px diameter,
+ *  against 22.5 / 25.7 / 20.2 before. Below the fold by 68px on two decks and 165px on the precon,
+ *  which is the trade taken: a board you scroll 100px to finish beats one you cannot read. */
+const MIN_BOARD_PX = 660;
 /** How settled the board has to be before the one-time fit-to-view reads its bounding box. Close to
  *  a magic tick count: alpha decays at a fixed per-TICK rate regardless of frame rate, so this lands
  *  at the same physical amount of settling on a slow device as a fast one. UPDATED 2026-08-20 with
@@ -254,6 +269,35 @@ export function GraphView(
   const [chromeOpen, setChromeOpen] = useState(false);
   const narrow = useIsNarrow();
   const chromeId = useId();
+  /** THE BOARD TAKES WHAT THE VIEWPORT HAS LEFT, MEASURED, rather than a constant nobody re-derived.
+   *
+   *  `sm:h-[520px]` against a 1920x1080 viewport gave a 1854x518 canvas -- a 3.6:1 letterbox framing
+   *  a board that paints 660x661 -- so `fitToView`'s `min(w/boxW, h/boxH)` was bound by the HEIGHT
+   *  every time and the discs paid for it: 20.2 to 25.7px diameter on the three review decks, two
+   *  under the 24px floor `disc-fit.ts` names (AL2). 520 was not arbitrary: it is almost exactly
+   *  what was left under 560px of chrome, so TRIMMING the chrome alone moved nothing -- the freed
+   *  space became a gap below a canvas that still measured 518. The height has to follow.
+   *
+   *  MEASURED AND NOT WRITTEN DOWN, the same mechanism `--report-header-h` uses and for the same
+   *  reason: the chrome above the board wraps differently per deck (the facet chips run one row or
+   *  three), so any constant here is wrong for some deck at some width. `document` offset, not the
+   *  live `rect.top`, so scrolling does not resize the board under the reader. */
+  const boardBoxRef = useRef<HTMLDivElement>(null);
+  const [boardH, setBoardH] = useState<number | null>(null);
+  useEffect(() => {
+    if (isFullscreen || bare || narrow) { setBoardH(null); return; }
+    const measure = (): void => {
+      const el = boardBoxRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setBoardH(Math.max(MIN_BOARD_PX, Math.round(window.innerHeight - top - BOARD_GUTTER_PX)));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (boardBoxRef.current?.parentElement) ro.observe(boardBoxRef.current.parentElement);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+  }, [isFullscreen, bare, narrow]);
   /** THE BOARD'S ANSWER TO "SHOW ME THE ONES YOU COULD NOT READ". The hatch says WHICH card is
    *  unread once your eye is on it; it cannot be surveyed. A blind judge given a 90-of-100 deck
    *  and told the mark exists found FOUR of the ten, and only after a tooltip named the first one
@@ -2440,6 +2484,10 @@ export function GraphView(
         )}
 
         <div
+          ref={boardBoxRef}
+          // The class stays as the fallback for the first paint and for the phone, where the board
+          // is 70svh in flow by the R1 ruling; `boardH` overrides it at `sm` and up once measured.
+          style={boardH === null ? undefined : { height: `${boardH}px` }}
           className={`relative rounded-(--radius) border border-(--separator) overflow-hidden ${
             isFullscreen || bare ? "flex-1 min-h-0" : "h-[70svh] sm:h-[520px]"
           }`}
