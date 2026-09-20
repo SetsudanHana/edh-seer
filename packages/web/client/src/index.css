@@ -1107,12 +1107,15 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 .site-search-row[aria-selected="true"] { background: var(--surface-secondary); color: var(--accent); }
 .site-search-name { flex: 1 1 auto; min-inline-size: 0; overflow-wrap: anywhere; }
 .site-search-id { flex-shrink: 0; font-size: 0.8125rem; }
+/* A GLYPH SINCE 2026-09-20, NOT THE WORD "commander". The mono/uppercase/letter-spacing rules that
+   shaped the word are gone -- they styled text this element no longer contains -- and the size steps
+   up from the word's 0.625rem because a 10px glyph beside a mana pip is a smudge. Muted, so it reads
+   as the annotation it is and not as a second pip: the identity pips next to it are the coloured
+   thing on that row and the mark must not compete with them. */
 .site-search-mark {
   flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.875rem;
+  line-height: 1;
   color: var(--muted);
 }
 
