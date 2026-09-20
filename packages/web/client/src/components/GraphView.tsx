@@ -5,6 +5,7 @@ import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
 import type { CardGraph, DeckReport } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
+import { CardSymbol } from "./CardSymbol.js";
 import { usePinned } from "./card-drawer.js";
 import { cachedImageLoad } from "./art-cache.js";
 import {
@@ -2460,6 +2461,18 @@ export function GraphView(
                 style={{ background: row.hue }}
                 className="inline-block size-2.5 shrink-0 rounded-full"
               />
+              {/* THE SAME ALPHABET AS THE REPORT'S TYPE LEGEND AND ITS ANSWERS LIST (AM5). Third
+                *  surface, one icon set -- which is the only thing this row buys: the words were
+                *  already there and already readable, so this is consistency, not new information.
+                *  ONLY THE TYPE PAINT HAS MARKS, and that falls out rather than being branched on:
+                *  `paint` also runs over identity, role and mana value, whose values ("R", "ramp",
+                *  "3") are not in `CardSymbol`'s `KNOWN`, and an unknown name returns null rather
+                *  than the empty box an unguarded class would paint.
+                *  WHAT THIS DOES NOT FIX: `graph-deuteranopia.png` shows creature / sorcery /
+                *  enchantment / instant as near-identical hues on the CANVAS NODES. That is
+                *  colour-only encoding on a canvas a font cannot reach; it needs shape or pattern
+                *  and belongs with AL1/AL2. */}
+              <CardSymbol name={row.value} className="text-xs shrink-0" />
               <span className="whitespace-nowrap">{row.label}</span>
               {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
             </div>
