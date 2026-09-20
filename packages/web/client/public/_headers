@@ -74,6 +74,19 @@
 /sitemap.xml
   Cache-Control: public, max-age=3600
 
+# THE INDEX'S CHILDREN (AI5). They are generated into `dist` rather than shipped from `public/`, so
+# `cache-headers.test.ts` never sees them and cannot ask for this rule -- which is exactly why it is
+# written down: without it they free-ride on the zone setting this whole section exists to stop.
+/sitemap-*
+  Cache-Control: public, max-age=3600
+
+# THE INDEXNOW KEY (AI4). The protocol's only check is that this file is fetchable and contains its
+# own filename, so it is public by design and must never be treated as a secret. Named explicitly
+# rather than matched by a `*.txt` wildcard, which would swallow `llms.txt` above: rotating the key
+# means editing this line, and `cache-headers.test.ts` fails the build if anyone forgets.
+/1c5d74be24ce43a474e3c6a0a0f3d346.txt
+  Cache-Control: public, max-age=3600
+
 /llms.txt
   Cache-Control: public, max-age=3600
 

@@ -102,11 +102,30 @@ test("no hand-written sitemap survives in public/", () => {
  *  Skipped without a build, because `dist/` is produced by `npm run build` plus `assemble-deploy`
  *  and a fresh checkout has neither. */
 test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card and commander, and nothing else", () => {
+  // THE ENTRY POINT IS AN INDEX SINCE AI5, so the URLs live in three children. Read through it
+  // rather than from it: a test that parsed `<loc>` out of the index alone would see three sitemap
+  // files and call them pages, which is the failure mode this whole file exists to prevent.
+  const indexXml = readFileSync(builtSitemap, "utf8");
+  expect(indexXml).toContain("<sitemapindex");
+  const childUrls = [...indexXml.matchAll(/<sitemap><loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
+  expect(childUrls).toEqual([
+    `${canonical}sitemap-core.xml`,
+    `${canonical}sitemap-commanders.xml`,
+    `${canonical}sitemap-cards.xml`,
+  ]);
+  // `lastmod` belongs to the FILE in an index, which is a date this build can state truthfully.
+  // It is deliberately absent from the `<url>` rows -- see `assemble-deploy.mjs`.
+  for (const m of indexXml.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)) {
+    expect(m[1]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  }
+  expect(indexXml).not.toMatch(/<url>/);
   const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
   const index = JSON.parse(
     readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
-  ) as { slug: string; commander: boolean; thin?: true; thinCommander?: true }[];
-  const locs = [...readFileSync(builtSitemap, "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
+  ) as { slug: string; commander: boolean; partners?: number; thin?: true; thinCommander?: true }[];
+  const locs = childUrls.flatMap((u) => [
+    ...readFileSync(join(DIST, u.slice(canonical.length)), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g),
+  ].map((m) => m[1]!));
 
   const cards = index.filter((e) => !e.thin);
   const commanders = index.filter((e) => e.commander && !e.thinCommander);
@@ -141,6 +160,20 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
     const slug = loc.slice(loc.lastIndexOf("/") + 1);
     const set = loc.includes("/commanders/") ? indexableCommanders : indexableCards;
     expect(set.has(slug), `${loc} is a page the site will let be indexed`).toBe(true);
+  }
+
+  // ORDERED BY PARTNER COUNT, WHICH IS THE ONLY THING THIS SPLIT BUYS (AI5). Crawl budget is ~10
+  // requests a day against 24,921 URLs; alphabetical order spent them on the letter A. A sitemap
+  // that lists the same URLs in a worse order passes every other assertion in this test, so the
+  // order needs one of its own.
+  const partners = new Map(index.map((e) => [e.slug, e.partners ?? 0]));
+  for (const [file, host] of [["sitemap-commanders.xml", "/commanders/"], ["sitemap-cards.xml", "/cards/"]] as const) {
+    const urls = [...readFileSync(join(DIST, file), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
+    expect(urls.length).toBeGreaterThan(0);
+    const counts = urls.map((u) => partners.get(u.slice(u.lastIndexOf("/") + 1)) ?? 0);
+    expect(counts, `${file} is ordered by partner count, most first`)
+      .toEqual([...counts].sort((a, b) => b - a));
+    for (const u of urls) expect(u).toContain(host);
   }
 });
 
