@@ -97,3 +97,24 @@ test("no groups, or no cards, means no matrix at all", () => {
   expect(themeMatrix(groups, [])).toBeNull();
   expect(themeMatrix(undefined, ["Sol Ring"])).toBeNull();
 });
+
+/** AL3 — THE SAME JOIN, THE OTHER WAY ROUND, and the 2026-08-27 wave's THIRTEENTH site. The test
+ *  above names the physical card in a REASON; this one names it in the row list, which is where
+ *  `nonlandNames` comes from: `ReportChapters` reads the graph's whole-card nodes, so a modal DFC
+ *  arrives as `"Kuja, Genome Sorcerer // Trance Kuja, Fate Defied"` while the group's `cards` hold
+ *  the FACE. `sets[i].has(name)` therefore missed every `//` card, `count` came out 0, and the card
+ *  was printed under "in no group at all" — the list the Plan tab calls the one a cut conversation
+ *  starts from. Two persona seats were handed modal DFCs to cut. Measured on the round's decks:
+ *  Inalla 17 unaffiliated of which 6 were `//` cards; Yuna's five "unaffiliated" were exactly its
+ *  five DFCs. */
+test("a row naming the physical card joins the group its face is in", () => {
+  const faced = [{
+    category: "draw", label: "Draw Engine", cards: ["Kuja, Genome Sorcerer", "Protean Thaumaturge"],
+    pairs: [pair("Kuja, Genome Sorcerer // Trance Kuja, Fate Defied", "Protean Thaumaturge")],
+  }] as never;
+  const m = themeMatrix(faced, ["Kuja, Genome Sorcerer // Trance Kuja, Fate Defied", "Protean Thaumaturge"]);
+  expect(m!.unaffiliated).toEqual([]);
+  expect(m!.rows.find((r) => r.name.startsWith("Kuja"))!.cells).toEqual(["earned"]);
+  expect(m!.columns[0]!.total).toBe(2);
+  expect(m!.columns[0]!.earned).toBe(2);
+});

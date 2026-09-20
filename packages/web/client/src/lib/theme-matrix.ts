@@ -50,8 +50,10 @@ export interface ThemeMatrix {
  *  of Kiki-Jiki"`. Joining on the name alone left EVERY multi-face card unattributable -- 8 of 61
  *  in Spellslinger, 8 of 62 in Tokens Go Wide -- and they would have defaulted silently to whatever
  *  the classifier's else-branch was. This is the twelfth site of the join the 2026-08-27 wave fixed
- *  in eleven others. With the split applied the residue is ZERO on both measured decks, which is
- *  what makes the else-branch below safe to state rather than guess. */
+ *  in eleven others -- and the THIRTEENTH was this same file, because the split was applied when
+ *  building `earnedSets` and not when testing membership, so every `//` card read as being in no
+ *  group at all (AL3, 2026-09-20). Both directions are joined here now: a name is matched on any of
+ *  its faces, and the columns count the cells rather than asking the sets again. */
 const facesOf = (name: string): string[] => (name.includes(" // ") ? [name, ...name.split(" // ")] : [name]);
 
 /** WHICH CARDS BELONG TO WHICH OF THIS DECK'S MECHANISMS, as a matrix.
@@ -92,8 +94,13 @@ export function themeMatrix(
   });
 
   const all = nonlandNames.map((name) => {
+    // THE SAME SPLIT, ON THE ROW SIDE (AL3). A row name comes from the graph's whole-card nodes, so
+    // a multi-face card arrives JOINED while a group's `cards` hold the FACE -- the mirror of the
+    // case `facesOf` was written for, and the site it was not applied to.
+    const faces = facesOf(name);
     const cells: Membership[] = sets.map((s, i) =>
-      !s.has(name) ? null : earnedSets[i]!.has(name) ? "earned" : "implied");
+      !faces.some((f) => s.has(f)) ? null
+        : faces.some((f) => earnedSets[i]!.has(f)) ? "earned" : "implied");
     return {
       name,
       cells,
@@ -108,8 +115,10 @@ export function themeMatrix(
     columns: groups.map((g, i) => ({
       category: g.category,
       label: g.label,
-      earned: nonlandNames.filter((n) => sets[i]!.has(n) && earnedSets[i]!.has(n)).length,
-      total: nonlandNames.filter((n) => sets[i]!.has(n)).length,
+      // COUNTED OFF THE CELLS THE GRID ALREADY DREW, not by asking the sets a second time. The
+      // second ask was a second copy of the face join, and it went stale while the first was fixed.
+      earned: all.filter((r) => r.cells[i] === "earned").length,
+      total: all.filter((r) => r.cells[i] !== null).length,
     })),
     // EARNED FIRST, and that is a change of meaning rather than of taste. Ranking on total
     // memberships put `Mystic Remora` -- implied in all seven of its groups, earning none of them
