@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { HeaderSearch } from "./HeaderSearch.js";
@@ -55,8 +55,26 @@ test("typing lists the matches with identity and a commander mark", async () => 
     expect.stringContaining("Krenko, Mob Boss"),
     expect.stringContaining("Krenko, Tin Street Kingpin"),
   ]);
-  expect(options[0]!.textContent).toContain("commander");
+  // THE MARK IS A GLYPH, NOT THE WORD (owner, 2026-09-20: "if we have the top search, then I would
+  // replace that"). An `<i>` has no `textContent`, so the row's accessible content is the name plus
+  // this image's label -- asserted as the ACCESSIBLE NAME rather than as text, which is the only
+  // form that fails if the label is dropped and the glyph left bare. The pips stay `aria-hidden`.
+  expect(within(options[0]!).getByRole("img", { name: "Commander" })).toBeInTheDocument();
+  expect(options[0]!.textContent).not.toContain("commander");
   expect(field()).toHaveAttribute("aria-expanded", "true");
+});
+
+/** A NON-COMMANDER ROW HAS NO MARK AT ALL, which is what makes the mark mean anything. Its own test
+ *  because both Krenko rows in the fixture ARE commanders -- asserting the absence inside that
+ *  result set proved nothing and passed for the wrong reason. */
+test("a card that cannot lead a deck carries no commander mark", async () => {
+  mount();
+  fireEvent.focus(field());
+  fireEvent.change(field(), { target: { value: "skullclamp" } });
+  const options = await screen.findAllByRole("option");
+  expect(options).toHaveLength(1);
+  expect(options[0]!.textContent).toContain("Skullclamp");
+  expect(within(options[0]!).queryByRole("img", { name: "Commander" })).toBeNull();
 });
 
 test("at most eight rows", async () => {

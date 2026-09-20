@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { useListboxKeys } from "../lib/listbox-keys.js";
 import { matchNames } from "../lib/name-match.js";
 import { sharedNameIndex, type NameIndexEntry } from "../lib/partners.js";
+import { CardSymbol } from "./CardSymbol.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 
 /** SEARCH IN THE HEADER, ON EVERY APP PAGE (spec 2026-09-08 part 1).
@@ -151,11 +152,21 @@ export function HeaderSearch({
               >
                 <span className="site-search-name">{e.name}</span>
                 {/* The pips repeat the identity a sighted reader gets from colour; the name and the
-                  *  commander word are the accessible content of the row. */}
+                  *  commander MARK are the accessible content of the row. */}
                 <span className="site-search-id" aria-hidden="true">
                   <ManaSymbols cost={e.identity.length > 0 ? e.identity.map((c) => `{${c}}`).join("") : "{C}"} />
                 </span>
-                {e.commander && <span className="site-search-mark">commander</span>}
+                {/* THE MARK IS CHROME, NOT PROSE, AND THIS IS THE CASE THE RULE NAMED (owner,
+                  *  2026-09-20: "if it is part of the whole sentence then do not replace it, but if
+                  *  we have the top search, then I would replace that"). `CardShell`'s commander tab
+                  *  already carried `ms-commander` while this row still spelled the word, so the two
+                  *  surfaces disagreed about the same fact.
+                  *  IT KEEPS AN ACCESSIBLE NAME, which the word used to supply on its own: the pips
+                  *  beside it are `aria-hidden`, so a bare glyph would leave the row announcing
+                  *  nothing but the card's name and a screen-reader user unable to tell a commander
+                  *  from a card. `label` is what turns `CardSymbol` from `aria-hidden` into
+                  *  `role="img"`. */}
+                {e.commander && <CardSymbol name="commander" label="Commander" className="site-search-mark" />}
               </li>
             ))}
           </ul>
