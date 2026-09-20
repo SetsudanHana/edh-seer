@@ -1,6 +1,7 @@
 import type { DeckReport } from "../types.js";
 import { TYPE_ORDER } from "../lib/deck-shape.js";
 import { hatchImage } from "../lib/unread.js";
+import { CardSymbol } from "./CardSymbol.js";
 import { TYPE_SEGMENT_HUE } from "./presets.js";
 import type { WaffleSquare } from "../lib/waffle.js";
 import { useCardDrawer, usePinned } from "./card-drawer.js";
@@ -193,6 +194,14 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
         {ordered.map((s) => (
           <li key={s.type} data-testid={`type-legend-${s.type}`} className="flex items-center gap-1.5">
             {grid ? <span aria-hidden className="inline-block w-2.5 h-2.5 rounded-[2px] shrink-0" style={{ background: TYPE_SEGMENT_HUE[s.type] }} /> : null}
+            {/* THE TYPE'S OWN MARK (AM2). Six words with no delimiter running as one phrase is the
+              *  first line of every report and the highest-frequency surface on the site; the glyph
+              *  is the delimiter. `aria-hidden` by default, because the word beside it is already
+              *  the accessible content and a `role="img"` here would say "creature creature".
+              *  It does NOT replace the swatch: the swatch keys the GRID by colour, which a glyph
+              *  cannot do, so on a page that draws the grid both are present and mean different
+              *  things. See `TYPE_ORDER` -- every member is in `CardSymbol`'s `KNOWN`. */}
+            <CardSymbol name={s.type} className="text-(--muted) text-xs" />
             <span className="text-(--muted)">{s.type}</span>
             <span className="stat-num text-(--foreground)">{s.count}</span>
           </li>
@@ -200,6 +209,7 @@ export function DeckWaffle({ squares, slices, lands, mdfc }: {
         {lands !== undefined && lands > 0 ? (
           <li data-testid="type-legend-land" className="flex items-center gap-1.5">
             {grid ? <span aria-hidden className="inline-block w-2.5 h-2.5 rounded-[2px] shrink-0" style={{ background: LAND_FILL }} /> : null}
+            <CardSymbol name="land" className="text-(--muted) text-xs" />
             <span className="text-(--muted)">land</span>
             <span className="stat-num text-(--foreground)">{lands}</span>
           </li>

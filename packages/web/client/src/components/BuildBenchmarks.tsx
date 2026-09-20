@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
+import { CardSymbol } from "./CardSymbol.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName, usePinned } from "./card-drawer.js";
@@ -550,7 +551,34 @@ function DeckMathRows({
                 {/* `planeswalker` and `enchantment` both overrun 80px and clipped mid-word with no
                   *  ellipsis, at every viewport -- the longest class name has to fit, because a
                   *  truncated row label is a row the reader cannot identify. */}
-                <span className="w-24 shrink-0 capitalize">{a.class}</span>
+                {/* THE SAME ALPHABET AS THE WAFFLE LEGEND (AM3), which is the point of shipping the
+                  *  two together: one icon set taught once and repeated, rather than two. One word
+                  *  per row with vertical space is the cleanest layout a glyph can ask for.
+                  *  `graveyard` GETS NONE AND THAT IS CORRECT -- it is a zone, not a card type, so
+                  *  it is absent from `KNOWN` and `CardSymbol` returns null. The partial is the
+                  *  designed behaviour, not a hole to fill.
+                  *  `aria-hidden` by default: the `<li>` above already carries an `aria-label` that
+                  *  names the class, so a labelled mark here would announce it twice. */}
+                {/* `w-32`, NOT `w-24`, AND THE ICON IS WHY. The 96px was sized to exactly fit
+                  *  "planeswalker" and "enchantment" with nothing to spare -- see the note above,
+                  *  which is emphatic that this label may never truncate. Adding a 16px mark and a
+                  *  6px gap INSIDE that same box put content at 106-107px against a 96px client
+                  *  width and clipped both of the longest labels at every viewport, measured.
+                  *  128px leaves ~21px of headroom, which is the margin `.claude/rules/ui.md` asks
+                  *  for against per-platform font metrics rather than a fit that works on one
+                  *  machine. */}
+                <span className="w-32 shrink-0 capitalize inline-flex items-center gap-1.5">
+                  {/* THE SLOT IS ALWAYS THERE, EVEN WHEN THE MARK IS NOT. `graveyard` is a zone and
+                    *  gets no glyph by design -- but rendering nothing pulled its word to the left
+                    *  while the other five sat indented by the icon, so the one correct absence
+                    *  read as a broken row. Caught on a frame, not by a test: no assertion here
+                    *  measures x-position. A fixed slot keeps every word on one left edge and the
+                    *  partial reads as deliberate. */}
+                  <span aria-hidden className="w-4 shrink-0 inline-flex justify-center">
+                    <CardSymbol name={a.class} className="text-(--muted) text-xs" />
+                  </span>
+                  {a.class}
+                </span>
                 <span className="flex-1 text-right stat-num flex items-baseline justify-end gap-1.5">
                   <span className={none ? "text-(--warning)" : "text-(--muted)"}>
                     {none ? "none" : plural(a.count, "card")}

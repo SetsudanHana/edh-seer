@@ -251,8 +251,13 @@ test("the theme is a display line of its own, not a word inside the metadata run
  *  draws them so the next change of set does not read as a dropped pip. */
 test("draws the colour identity as mana pips beside its name", () => {
   const grixis = { ...DATA, commanderColorIdentity: ["R", "B", "U"] } as typeof DATA;
-  const { container } = render(<RecognitionPanel data={grixis} />);
-  const pips = container.querySelectorAll("i.ms");
+  render(<RecognitionPanel data={grixis} />);
+  // SCOPED TO THE IDENTITY BLOCK, not to the whole panel. `i.ms` across the container used to mean
+  // "the pips" because they were the only mana-font glyphs on screen; since AM2 the type legend
+  // draws `ms-creature` and friends, and an unscoped query picked those up as three undefined
+  // pips. The test still names the SYMBOLS rather than what draws them -- it just asks the element
+  // that is actually about colour identity.
+  const pips = screen.getByTestId("recognition-identity").querySelectorAll("i.ms");
   expect([...pips].map((p) => [...p.classList].find((c) => /^ms-[wubrgc]$/.test(c)))).toEqual([
     "ms-u", "ms-b", "ms-r",
   ]);
