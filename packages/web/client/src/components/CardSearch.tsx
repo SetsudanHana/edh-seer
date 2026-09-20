@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
@@ -228,6 +228,38 @@ export function CardSearch({
   const [shown, setShown] = useState(SEARCH_LIMIT);
   useEffect(() => { setShown(SEARCH_LIMIT); }, [matches]);
 
+  /** AND THE PAGE TURNS ITSELF (owner, 2026-09-21: "infinity scroll is pretty standard"). The
+   *  deck-build agent read "798 cards match, showing the first 50", never found the button under
+   *  the grid, and spent the rest of its run typing in names it already knew -- so it never saw
+   *  748 of the cards the question matched.
+   *
+   *  THE BUTTON STAYS, AND THE OBSERVER PRESSES IT. This is infinite scroll for anyone scrolling:
+   *  the sentinel sits where the button is, the next fifty arrive before it is reached, and a
+   *  mouse never meets a control. What the button buys is the half infinite scroll is known for
+   *  breaking -- a keyboard user can still reach more results, and `IntersectionObserver` missing
+   *  (jsdom, and the same guard `ChapterRail` keeps) degrades to the press that has worked since
+   *  September.
+   *
+   *  AND IT STOPS. Loading only continues while `matches.length > shown`, so the list ends and
+   *  `PageFoot` below it stays reachable -- the footer that retreats forever is the one thing this
+   *  pattern is genuinely bad at, and it is a layout problem rather than a taste one. */
+  const moreRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const el = moreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries.some((e) => e.isIntersecting)) setShown((n) => n + SEARCH_LIMIT); },
+      // A SCREEN EARLY, so the fifty land before the reader arrives rather than after a stall. Any
+      // more and a flick of the wheel loads pages nobody asked for.
+      { rootMargin: "0px 0px 600px 0px" },
+    );
+    observer.observe(el);
+    return () => { observer.disconnect(); };
+    // `shown` is in the deps because the button unmounts when the list is exhausted and remounts
+    // on the next question: the observer must attach to whatever button is there now.
+  }, [shown, matches]);
+
   return (
     <PeekContext.Provider value={peek}>
     {/* THE LIST IS A GRID OF TILES NOW, so the reading measure that bounded a column of names would
@@ -428,7 +460,12 @@ export function CardSearch({
               })}
             </ul>
             {matches.length > shown && (
-              <button type="button" className="btn-secondary self-start" onClick={() => setShown((n) => n + SEARCH_LIMIT)}>
+              <button
+                ref={moreRef}
+                type="button"
+                className="btn-secondary self-start"
+                onClick={() => setShown((n) => n + SEARCH_LIMIT)}
+              >
                 Show {Math.min(SEARCH_LIMIT, matches.length - shown)} more
               </button>
             )}
