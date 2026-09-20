@@ -2,6 +2,20 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.js";
 import { Calibrate } from "./components/Calibrate.js";
+// VENDOR CSS FIRST, OURS SECOND. mana's own @font-face for the "Mana" family does not mention
+// woff2 (its src list is eot, woff, ttf, svg), so `index.css` redeclares the family -- and for one
+// family the LAST matching @font-face wins, which is only true if this import comes first.
+// Imported here rather than @import-ed from index.css: Vite inlines a bare-specifier @import in
+// place, and Tailwind's output then leaves the remaining @import statements non-consecutive, which
+// postcss rejects.
+// CEILING: importing the compiled CSS makes Vite emit every format its @font-face names -- eot,
+// ttf, woff, svg, and MPlantin's three -- 3.5 MB of assets no browser ever fetches (verified in
+// the page: only `mana.woff2` appears in `performance.getEntriesByType("resource")`). Measured
+// against what the deploy already carries, 364 MB over 18,719 files, that is 1% of the bytes and
+// 0.04% of the files, so it is not worth a build step today. If it ever is: mana ships its sass
+// sources and `_path.scss` is the @font-face partial on its own -- compile `mana.scss` without it
+// and the dead formats go with it.
+import "mana-font/css/mana.min.css";
 import "./index.css";
 import { stickyPx } from "./lib/sticky-px.js";
 import { headerHidden } from "./lib/header-hide.js";

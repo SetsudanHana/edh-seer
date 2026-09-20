@@ -572,12 +572,15 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
   const inline = row.querySelector('[data-cell="cost-inline"]')!;
   expect(cost.closest("td")!.className).toContain("hidden sm:table-cell");
   expect(inline.className).toContain("sm:hidden");
-  // Pins the actual symbol set "{5}{B}{B}" decodes to, not merely "some image rendered" -- a
-  // dropped pip (e.g. only one black symbol) would still pass a bare non-empty check.
+  // Pins the actual symbol set "{5}{B}{B}" decodes to, not merely "some mark rendered" -- a
+  // dropped pip (e.g. only one black symbol) would still pass a bare non-empty check. Read off the
+  // COST'S accessible name, which is one label since 2026-09-20: a cost is one fact, and labelling
+  // both the wrapper and every symbol announced it twice.
   for (const where of [cost, inline]) {
-    expect([...where.querySelectorAll("img")].map((img) => img.getAttribute("alt"))).toEqual([
-      "5 generic mana", "one black mana", "one black mana",
-    ]);
+    expect(where.querySelector('[role="img"]')!.getAttribute("aria-label"))
+      .toBe("5 generic mana, one black mana, one black mana");
+    expect([...where.querySelectorAll("i.ms")].map((i) => [...i.classList].find((c) => /^ms-(\d+|[wubrgc])$/.test(c))))
+      .toEqual(["ms-5", "ms-b", "ms-b"]);
     expect(where.textContent).toContain("22% – 40% by T7");
   }
   expect(within(row).getByText("3.7")).toBeInTheDocument();

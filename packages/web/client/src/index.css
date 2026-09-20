@@ -1,6 +1,23 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
+/* MANA, THE ICON SET FOR THE ONE DOMAIN LUCIDE DOES NOT COVER (owner, 2026-09-20: "why not
+   incorporate mana font? Moxfield uses it, other websites use it as well").
+   SELF-HOSTED, NOT jsDelivr: it is an npm dependency Vite bundles, so the site takes no
+   third-party runtime dependency and the CDN allowlist stays irrelevant to it.
+   AND THE SHIPPED @font-face DOES NOT MENTION woff2, though the package ships `mana.woff2` --
+   its `src` list is eot, woff, ttf, svg, so every modern browser would pull the 408 KB woff and
+   leave the 187 KB woff2 on disk. Redeclared below, AFTER the import, because for one family the
+   last matching @font-face wins -- `main.tsx` imports mana's CSS before this file for exactly
+   that reason. */
+@font-face {
+  font-family: "Mana";
+  src: url("../../../../node_modules/mana-font/fonts/mana.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /*
   Standings-desk theme (canon, chosen deliberately over two rolled alternates
   — see App.tsx's direction contract): a conventional dark analytics
