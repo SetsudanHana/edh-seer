@@ -5,6 +5,8 @@ import { cardImageUrl } from "./card-node.js";
 import { routesThrough } from "../lib/routes.js";
 import { demandSentence } from "../lib/demand-sentence.js";
 import { subcategoryLabel } from "./presets.js";
+import { CardSymbol } from "./CardSymbol.js";
+import { TypeLine } from "./TypeLine.js";
 
 type Edge = CardGraph["edges"][number];
 
@@ -145,8 +147,9 @@ export function CardInspector({
               {named?.isToken === true ? (
                 <span
                   data-testid="partner-token"
-                  className="ml-1.5 eyebrow text-(--muted)"
+                  className="ml-1.5 inline-flex items-center gap-1 eyebrow text-(--muted)"
                 >
+                  {named.isEmblem !== true && <CardSymbol name="token" />}
                   {named.isEmblem === true ? "emblem" : "token"}
                 </span>
               ) : null}
@@ -283,7 +286,7 @@ export function CardInspector({
           *  is right when the panel is describing the CARD; once it is describing one FACE, that
           *  face's own line is the true sentence and the joined one names an object you are not
           *  looking at. */}
-        <p className="text-(--muted) text-xs">{face?.typeLine ?? typeLine}</p>
+        <p className="text-(--muted) text-xs"><TypeLine line={face?.typeLine ?? typeLine} /></p>
         {face?.manaCost ? (
           <p className="text-(--muted) text-xs">{face.manaCost}</p>
         ) : null}

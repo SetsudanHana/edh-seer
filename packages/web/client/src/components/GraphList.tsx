@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { CardGraph } from "../types.js";
 import { CardName } from "./card-drawer.js";
 import { hatchImage } from "../lib/unread.js";
+import { CardSymbol } from "./CardSymbol.js";
 
 /** THE GRAPH'S DATA WITHOUT THE GRAPH, for a screen the board cannot use.
  *
@@ -124,7 +125,7 @@ export function GraphList({ graph, unread, onOpenBoard }: {
                 *  card's and a tap must never open the wrong one. */}
               <span className="min-w-0 truncate">
                 {r.isToken ? <span>{r.label}</span> : <CardName name={r.label} />}
-                {r.isToken ? <span className="ml-2 text-xs text-(--muted)">{r.isEmblem ? "emblem" : "token"}</span> : null}
+                {r.isToken ? <span className="ml-2 inline-flex items-center gap-1 text-xs text-(--muted)">{!r.isEmblem && <CardSymbol name="token" />}{r.isEmblem ? "emblem" : "token"}</span> : null}
               </span>
               {r.unread ? (
                 <span className="shrink-0 flex items-center gap-1.5 text-xs text-(--muted)">

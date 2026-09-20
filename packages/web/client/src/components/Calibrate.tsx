@@ -5,6 +5,7 @@
  *  engine already believes anchors the answer to it, which is exactly what would make a calibration
  *  set worthless. */
 import { useCallback, useEffect, useState } from "react";
+import { TypeLine } from "./TypeLine.js";
 
 type Verdict = "synergy" | "neutral" | "anti-synergy";
 
@@ -41,7 +42,7 @@ function CardPanel({
     <section className="flex-1 border border-(--separator) p-4 flex flex-col gap-3 min-w-0">
       <header>
         <h2 className="text-lg font-semibold">{card.name}</h2>
-        <p className="text-xs opacity-60">{card.typeLine}</p>
+        <p className="text-xs opacity-60"><TypeLine line={card.typeLine} /></p>
       </header>
       <p className="text-sm whitespace-pre-wrap opacity-90">{card.oracleText}</p>
       <div className="text-xs font-mono opacity-70 flex flex-col gap-1 border-t border-(--separator) pt-2">
