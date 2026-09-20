@@ -1,7 +1,7 @@
 export interface ManaSymbol {
   /** The original `{…}` token, kept so a caller can fall back to text. */
   raw: string;
-  /** Scryfall's symbology file name without extension: "3", "B", "WU", "BP". */
+  /** Scryfall's symbology code, slashes removed and upper-cased: "3", "B", "WU", "BP". */
   code: string;
   /** What a screen reader says instead of the picture. */
   label: string;
@@ -37,26 +37,62 @@ export function parseManaCost(cost: string): ManaSymbol[] {
   });
 }
 
-/** Scryfall's symbology SVGs. The board already loads card art from Scryfall at runtime
- *  (`cardImageUrl`), so this adds no new external dependency -- and roughly 25 distinct symbols
- *  cover a whole deck, so the browser caches them after first paint.
- *
- *  A WEBFONT WAS REJECTED: mana-font renders symbols as private-use glyphs, so a screen reader
- *  receives nothing and the 390px legibility problem the phone persona reported gets worse. */
-const SYMBOL_URL = (code: string): string => `https://svgs.scryfall.io/card-symbols/${code}.svg`;
-
 /** IS THIS ACTUALLY A SYMBOL CODE? A brace is not a promise that what is inside it is one.
  *  `ManaText` reads printed clause text, so the token is whatever the card -- or a corpus defect --
- *  put there, and building a URL out of it unchecked is a path the caller does not control:
- *  `{../../x}` gives `.../card-symbols/../../x.svg`. CodeQL called it on PR #409
- *  (`js/xss-through-dom`).
- *
- *  LETTERS AND DIGITS ONLY, AND SHORT. Every symbol Scryfall names is one after the slashes come
- *  out -- `T`, `15`, `WU`, `BP`, `CHAOS` is the longest at five. A dot, a space or a slash cannot
- *  survive it, which is the whole traversal. Anything else renders as the raw text it always was,
- *  which is also what a reader should be shown rather than a 404 image. */
+ *  put there. It used to go straight into a Scryfall URL, which CodeQL called on PR #409
+ *  (`js/xss-through-dom`): `{../../x}` gave `.../card-symbols/../../x.svg`. Nothing is fetched per
+ *  symbol any more, so the traversal is gone with the URL -- but the guard stays, because an
+ *  unknown token must not become an unknown CSS CLASS either, and because what a reader should see
+ *  for a token we cannot read is the text the card printed. */
 export function isSymbolCode(code: string): boolean {
   return /^[A-Z0-9]{1,5}$/.test(code);
+}
+
+/** THE SYMBOL SET IS MANA (owner, 2026-09-20: "why not incorporate mana font? Moxfield uses it,
+ *  other websites use it as well"), replacing one Scryfall SVG request per symbol.
+ *
+ *  THE OBJECTION THAT WAS RECORDED HERE DID NOT SURVIVE. It read "a webfont was rejected:
+ *  mana-font renders symbols as private-use glyphs, so a screen reader receives nothing" -- true of
+ *  the glyph, and irrelevant to this site, because every symbol on it renders through the two
+ *  functions BELOW and nowhere else. The `role="img"` and the `aria-label` are applied in one
+ *  place whichever way the mark is drawn; the comment was written as though bare `<i>` tags would
+ *  be scattered through the components, and there is nowhere to scatter them. `aria-hidden` on the
+ *  glyph span keeps the private-use codepoint itself out of the accessibility tree.
+ *
+ *  AND IT BUYS THE THING SCRYFALL'S SET DOES NOT HAVE. There is no loyalty badge in Scryfall's
+ *  symbology (`+1.svg` and `-1.svg` both 404, checked 2026-09-08), which is the whole reason
+ *  `LoyaltyCost` was drawing its own shield by hand.
+ *
+ *  SELF-HOSTED. `mana-font` is an npm dependency Vite bundles; nothing is fetched from jsDelivr,
+ *  so the site keeps its "no third-party at runtime" property and loses the per-symbol round trip
+ *  it used to pay Scryfall.
+ *
+ *  THE CLASS IS THE CODE, LOWER-CASED, with exactly two exceptions: mana calls `{T}` `ms-tap` and
+ *  `{Q}` `ms-untap`. Everything else -- `w`, `u`, `b`, `r`, `g`, `c`, `s`, `x`, `0`-`20`, the
+ *  hybrids (`wu`) and the phyrexians (`bp`) -- is the Scryfall code in lower case. Checked against
+ *  all 565 classes in `mana.min.css`, not assumed. */
+const CLASS_EXCEPTIONS: Record<string, string> = { T: "tap", Q: "untap" };
+
+export function manaClass(code: string): string {
+  return CLASS_EXCEPTIONS[code] ?? code.toLowerCase();
+}
+
+/** One symbol. `ms-cost` is the coloured disc a printed cost sits in -- the part Scryfall's SVG
+ *  drew into the image and the bare glyph does not.
+ *
+ *  `silent` IS THE WHOLE ACCESSIBILITY DESIGN, and the two callers want opposite things. A MANA
+ *  COST is one fact -- announcing "{5}{B}{B}" as three separate images makes a reader assemble it
+ *  themselves -- so `ManaSymbols` labels the WRAPPER and silences the glyphs. A symbol INSIDE A
+ *  SENTENCE is not: "{T}, Sacrifice an artifact" has words between the marks, and a wrapper label
+ *  would have to swallow the sentence to hold them together, so `ManaText` labels each glyph where
+ *  it sits. The old Scryfall markup did BOTH at once and announced every cost twice. */
+function Glyph({ code, label, silent }: { code: string; label: string; silent?: boolean }): React.JSX.Element {
+  return (
+    <i
+      {...(silent ? { "aria-hidden": true } : { role: "img", "aria-label": label })}
+      className={`ms ms-cost ms-${manaClass(code)}`}
+    />
+  );
 }
 
 export function ManaSymbols({ cost }: { cost: string }): React.JSX.Element {
@@ -66,17 +102,8 @@ export function ManaSymbols({ cost }: { cost: string }): React.JSX.Element {
     <span role="img" aria-label={symbols.map((s) => s.label).join(", ")} className="inline-flex items-center gap-0.5">
       {symbols.map((s, i) =>
         s.code && isSymbolCode(s.code)
-          ? (
-            // Sized in em so a symbol scales with the row it sits in rather than fighting it.
-            <img
-              key={`${s.raw}-${i}`}
-              src={SYMBOL_URL(s.code)}
-              alt={s.label}
-              className="inline-block"
-              style={{ width: "0.95em", height: "0.95em" }}
-            />
-          )
-          : <span key={`${s.raw}-${i}`}>{s.raw}</span>,
+          ? <Glyph key={`${s.raw}-${i}`} code={s.code} label={s.label} silent />
+          : <span key={`${s.raw}-${i}`} aria-hidden="true">{s.raw}</span>,
       )}
     </span>
   );
@@ -103,16 +130,7 @@ export function ManaText({ text }: { text: string }): React.JSX.Element {
         if (!/^\{[^}]+\}$/.test(part)) return <span key={i}>{part}</span>;
         const code = part.slice(1, -1).replace(/\//g, "").toUpperCase();
         if (!isSymbolCode(code)) return <span key={i}>{part}</span>;
-        const label = labelFor(code, part);
-        return (
-          <img
-            key={i}
-            src={SYMBOL_URL(code)}
-            alt={label}
-            className="inline-block align-[-0.1em]"
-            style={{ width: "0.95em", height: "0.95em" }}
-          />
-        );
+        return <Glyph key={i} code={code} label={labelFor(code, part)} />;
       })}
     </>
   );

@@ -31,20 +31,31 @@ test("anything else is not a loyalty cost and renders as the plain cost", () => 
   expect(screen.getByText("{T}")).toBeInTheDocument();
 });
 
-// ONE BADGE, AND THE SIGN CARRIES THE MEANING (owner, 2026-09-20). Three silhouettes -- a shield
-// pointing up for a plus, down for a minus, flat for zero -- is not what the printed card does,
-// and it read as three different marks rather than one cost.
-test("the badge is one shape whatever the sign", () => {
-  const shape = (cost: string): string | null => {
+// THREE SHAPES, BECAUSE THE CARD PRINTS THREE. This test replaces a "the badge is one shape
+// whatever the sign" test that shipped in PR #409 and was WRONG: the claim that a planeswalker
+// prints one badge and the sign carries the meaning was asserted without checking. mana ships four
+// separate loyalty glyphs -- `loyalty-up`, `loyalty-down`, `loyalty-zero`, `loyalty-start` -- with
+// genuinely different paths, because the card draws them separately.
+test("plus, minus and zero each get their own badge", () => {
+  const shape = (cost: string): string | undefined => {
     const { container, unmount } = render(<LoyaltyCost cost={cost} />);
-    const d = container.querySelector("path")?.getAttribute("d") ?? null;
+    const cls = [...(container.querySelector("i.ms")?.classList ?? [])].find((c) => c.startsWith("ms-loyalty-"));
     unmount();
-    return d;
+    return cls;
   };
-  const plus = shape("+1");
-  expect(plus).not.toBeNull();
-  expect(shape("−7")).toBe(plus);
-  expect(shape("0")).toBe(plus);
+  expect(shape("+1")).toBe("ms-loyalty-up");
+  expect(shape("\u22127")).toBe("ms-loyalty-down");
+  expect(shape("0")).toBe("ms-loyalty-zero");
+});
+
+// THE NUMBER IS REAL TEXT, not mana's `:after` CSS content in MPlantin. That is the property the
+// hand-drawn SVG had, the reason the badge is assembled here rather than taken wholesale, and the
+// reason we ship one font instead of two.
+test("the number is a real text node and the glyph is hidden from the tree", () => {
+  const { container } = render(<LoyaltyCost cost="+1" />);
+  expect(screen.getByText("+1")).toBeInTheDocument();
+  expect(container.querySelector("i.ms")!.getAttribute("aria-hidden")).toBe("true");
+  expect(screen.getByRole("img", { name: "plus 1 loyalty" })).toBeInTheDocument();
 });
 
 // A LOYALTY COST CAN BE X (Chandra, Awakened Inferno prints "−X"). Digits-only left the two costs

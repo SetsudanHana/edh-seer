@@ -246,16 +246,15 @@ test("the theme is a display line of its own, not a word inside the metadata run
 /** COLOUR PIPS BESIDE THE IDENTITY NAME (owner review, 2026-09-01). "Grixis" is a name a player has
  *  to know to read; the three mana symbols are the same fact rendered in the game's own vocabulary,
  *  and index.css has said "identity in the interface uses real mana symbols" since the ramp was
- *  written. Reuses `ManaSymbols` (Scryfall symbology SVGs) rather than a second symbol path, and
- *  the pips are aria-hidden because the word next to them already says it. */
+ *  written. Reuses `ManaSymbols` rather than a second symbol path -- mana-font glyphs since
+ *  2026-09-20, Scryfall SVGs before that, and this test names the SYMBOLS rather than whatever
+ *  draws them so the next change of set does not read as a dropped pip. */
 test("draws the colour identity as mana pips beside its name", () => {
   const grixis = { ...DATA, commanderColorIdentity: ["R", "B", "U"] } as typeof DATA;
   const { container } = render(<RecognitionPanel data={grixis} />);
-  const pips = container.querySelectorAll("img[src*='card-symbols']");
-  expect([...pips].map((p) => p.getAttribute("src"))).toEqual([
-    "https://svgs.scryfall.io/card-symbols/U.svg",
-    "https://svgs.scryfall.io/card-symbols/B.svg",
-    "https://svgs.scryfall.io/card-symbols/R.svg",
+  const pips = container.querySelectorAll("i.ms");
+  expect([...pips].map((p) => [...p.classList].find((c) => /^ms-[wubrgc]$/.test(c)))).toEqual([
+    "ms-u", "ms-b", "ms-r",
   ]);
   expect(screen.getByTestId("recognition-identity")).toHaveTextContent("Grixis");
 });
