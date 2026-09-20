@@ -43,11 +43,33 @@ export function typeClass(typeLine: string): string | undefined {
  *  Measured over the corpus on 2026-09-20: 134 of 811 distinct keywords have a glyph, covering
  *  69.0% of the 22,682 keyword renderings. The misses are not a long tail -- `equip` (605) is more
  *  common than `haste` (671) -- which is exactly why the WORD is always printed and the glyph is
- *  only ever an addition to it. `undefined` here means "print the word alone", never "hide it". */
+ *  only ever an addition to it. `undefined` here means "print the word alone", never "hide it".
+ *
+ *  THERE WAS A THIRD ARM, `counter-<slug>`, AND IT IS GONE (AM1, 2026-09-20). A specialist review
+ *  found it could never match -- `KNOWN` holds zero `counter-` entries while mana ships 38 -- and
+ *  proposed widening `KNOWN` to reach them. Measured before doing so, the widening does not pay:
+ *
+ *    - Of 811 distinct printed keywords, exactly TWO would be served by that arm: `echo` and
+ *      `void`. Every other keyword naming a counter (`deathtouch`, `goad`) already resolves on the
+ *      first two arms.
+ *    - And the rules say neither has a counter. `rules/MagicCompRules.txt` (revision 20260925)
+ *      contains no "echo counter" and no "void counter". CR 702.30 Echo names no counter at all --
+ *      it is "sacrifice it unless you pay [cost]"; age counters belong to cumulative upkeep
+ *      (702.24), which is a different keyword. And `void` is an ABILITY WORD, listed at CR 207.2c
+ *      beside threshold, undergrowth and valiant -- a real Magic term on 14 corpus cards, with no
+ *      rules meaning by that same rule, and no counter. (`devoid` is a separate keyword, CR 702.114
+ *      on 132 cards; it slugs to `devoid` and never reaches this arm.) So the widening would have
+ *      marked both with a counter the game does not define.
+ *
+ *  The counter FAMILY still has no call site either: a planeswalker's loyalty is already drawn by
+ *  `LoyaltyCost`, a Saga already carries its own type glyph and no surface names its lore counters,
+ *  and the `+1/+1 Counters` theme heading is 1 of 17 mechanism categories -- one marked heading in
+ *  a row of seven is the same defect this review rejected for the role chips. Re-add the arm the
+ *  day a call site exists, with the class it needs. */
 export function abilityClass(keyword: string): string | undefined {
   const slug = keyword.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   if (!slug) return undefined;
-  return [`ability-${slug}`, slug, `counter-${slug}`].find((c) => KNOWN.has(c));
+  return [`ability-${slug}`, slug].find((c) => KNOWN.has(c));
 }
 
 /** The classes this module is allowed to name. A class mana does not define renders as an empty
