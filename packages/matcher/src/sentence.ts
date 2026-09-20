@@ -164,7 +164,17 @@ export function effectPhrase(
   if (target === "itself" && SELF_PHRASES[kind]) return SELF_PHRASES[kind]!;
   // THE ONE KIND WHOSE PHRASE NAMES A TARGET, and the one that was naming the wrong one.
   if (kind === "counter-placement" && target) {
-    const n = amount === undefined ? "counters" : amount === "1" ? "a counter" : `${amount} counters`;
+    // A QUANTITY THAT REFERS TO A COUNT ELSEWHERE IN THE SENTENCE NEEDS "of" TO ATTACH TO ITS NOUN.
+    // Yuna, Grand Summoner puts "that number" of counters -- the count the dying permanent had --
+    // and the template read "puts that number counters on a permanent" (AL4). "that many" is a
+    // determiner and already attaches, so only the noun form takes the preposition.
+    const n = amount === undefined ? "counters"
+      : amount === "1" ? "a counter"
+      // THE AMOUNT IS ALREADY THE NOUN. Resourceful Defense moves "those counters" themselves, not a
+      // count of them, and the template doubled the word.
+      : /\bcounters?$/i.test(amount) ? amount
+      : /\bnumber$/i.test(amount) ? `${amount} of counters`
+      : `${amount} counters`;
     return `puts ${n} on ${target}`;
   }
   const entry = PHRASES[kind];

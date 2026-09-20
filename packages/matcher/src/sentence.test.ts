@@ -413,3 +413,17 @@ describe("thresholdSentence and its plural", () => {
     expect(countedNounPlural({})).toBe("permanents");
   });
 });
+
+/** AL4's wording half. Yuna, Grand Summoner's effect carries `amount: "that number"` — the count of
+ *  counters the dying permanent had — and the template rendered "puts that number counters on a
+ *  permanent". A quantity that REFERS to a count elsewhere in the sentence needs "of" to attach to
+ *  its noun; "that many" already does not. */
+test("a referring amount attaches to its noun", () => {
+  expect(effectPhrase("counter-placement", "that number", "a creature")).toBe("puts that number of counters on a creature");
+  expect(effectPhrase("counter-placement", "that many", "a creature")).toBe("puts that many counters on a creature");
+  expect(effectPhrase("counter-placement", "2", "a creature")).toBe("puts 2 counters on a creature");
+  expect(effectPhrase("counter-placement", "1", "a creature")).toBe("puts a counter on a creature");
+  // Resourceful Defense moves the counters themselves rather than a count of them, so the amount IS
+  // the noun: "puts those counters counters on a permanent" was on 6 rows of the 71 decks.
+  expect(effectPhrase("counter-placement", "those counters", "a permanent")).toBe("puts those counters on a permanent");
+});

@@ -1127,6 +1127,68 @@ function fillNoun(e: GameEvent): string | undefined {
   return emitSubjectNoun(e.subject) === "a permanent" && list(e.subject.type).length === 0 ? "a card" : emitSubjectNoun(e.subject);
 }
 
+/** COULD THIS PERMANENT EVER HAVE A COUNTER ON IT WHEN IT DIES?
+ *
+ *  The question an intervening if asks — Yuna, Grand Summoner's "whenever another permanent you
+ *  control is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT".
+ *  `intervening-if.ts` has recorded since 2026-08-15 that the engine drops the condition and is
+ *  "right BY COINCIDENCE": every producer in her own deck happened to be a Saga, and the first
+ *  counterless sacrifice outlet turns those claims false with nothing watching. Measured on the 71
+ *  decks 2026-09-20, that outlet had arrived — three fetchlands, four noncreature tokens and two
+ *  counterless lands, all claiming to feed a counters payoff.
+ *
+ *  A CLOSED LIST, NOT AN EVALUATOR, and the distinction is the same one `conditionCares` draws: it
+ *  is not asked whether a counter IS there, which is board state no card can answer, but whether
+ *  this permanent is the KIND of thing counters live on.
+ *
+ *  - a CREATURE, always. +1/+1 counters are what a counters deck puts on creatures, and Yuna's own
+ *    other ability puts two on the next creature cast each turn. Refusing creatures would delete the
+ *    claims the card is actually about, which is why the rule is the type line and never tokenhood:
+ *    a Treasure has no counters, a Zombie token can carry five.
+ *  - a PLANESWALKER (CR 306.5b, loyalty) or a BATTLE (CR 310.6, defence). The counter IS the
+ *    permanent's life total.
+ *  - a SAGA (CR 714.3, "Sagas use lore counters to track their progress"): it enters with one,
+ *    gains one each precombat main phase, and is sacrificed on the last chapter, so it always has
+ *    counters when it dies. Urza's Saga is `Enchantment Land`, which is why the rule cannot be
+ *    "a land never carries counters".
+ *  - CUMULATIVE UPKEEP (CR 702.24), VANISHING (CR 702.63), FADING (CR 702.32), SUSPEND (CR
+ *    702.62): each puts a counter on the permanent and removes one on a clock.
+ *  - anything whose own abilities put a counter ON ITSELF -- 1,696 cards, and the branch that
+ *    carries a noncreature entering with its own (Astral Cornucopia, Everflowing Chalice).
+ *
+ *  NOT `effect.kind === "enters-with-counters"`, and the measurement is why: 564 cards carry
+ *  that effect and NOT ONE of them sets `subject.self`, so the kind alone cannot say whose entry
+ *  it is about. Yuna's own second ability is the counterexample -- "that creature enters with two
+ *  additional +1/+1 counters" is about the creature you cast, not about Yuna. Reading the kind as
+ *  a self-signal passed all 564 blindly, 98 of them noncreatures qualifying on nothing else. The
+ *  `counter-added` emit naming `self` is the honest version of the question and already catches
+ *  the real cards.
+ *
+ *  Every rule number above was checked against `rules/MagicCompRules.txt` rather than recalled --
+ *  see `research/rules/fetch-comprehensive-rules.ts` for why that file now exists.
+ *
+ *  Everything else is false: a fetchland, a Treasure, a Clue, a plain land. Corpus counts at the
+ *  time of writing: saga 223, planeswalker 303, battle 36, cumulative upkeep 80, suspend 70,
+ *  vanishing 21, fading 17. */
+export function canCarryCounters(tags: CardTags): boolean {
+  const c = tags.characteristics;
+  const types = c.types.map((t) => t.toLowerCase());
+  if (types.includes("creature") || types.includes("planeswalker") || types.includes("battle")) return true;
+  if (c.subtypes.some((t) => t.toLowerCase() === "saga")) return true;
+  const kw = new Set((c.keywords ?? []).map((k) => k.toLowerCase()));
+  if (COUNTER_CLOCK_KEYWORDS.some((k) => kw.has(k))) return true;
+  return tags.abilities.some((a) => (a.emits ?? [])
+    .some((e) => e.verb === "counter-added" && e.subject?.self === true));
+}
+
+/** Keywords whose printed reminder text puts a counter on the permanent itself.
+ *
+ *  MATCHED EXACTLY, not as a prefix. The printed ability carries a number ("Vanishing 3", "Suspend
+ *  4"), but `characteristics.keywords` does not: it is Scryfall's `keywords` array lowercased
+ *  verbatim, and measured over the corpus only 3 cards carry a digit in ANY keyword value -- these
+ *  four arrive as the bare words. A prefix match was dead weight dressed up as care. */
+const COUNTER_CLOCK_KEYWORDS = ["cumulative upkeep", "vanishing", "fading", "suspend"];
+
 function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy): boolean {
   // No derived tags means no characteristics to compare, so nothing can be ruled out — keep the
   // old wording rather than invent a noun on a card the engine has not read.
@@ -1432,6 +1494,37 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
           const { counter: _stateOnly, entersTapped: _arrival, ...printedMatchable } = identity;
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), printedMatchable, h)) continue;
         }
+        // AN INTERVENING IF ABOUT THE DYING THING'S COUNTERS IS A REFUSAL, NOT AN EDGE (AL4).
+        //
+        // The owner's 2026-08-20 ruling that an intervening if forms NO edge is untouched: nothing
+        // here forms one. This removes one, and only in the case the condition can actually be read
+        // against a printed type line -- the producer IS the object the condition is about, and that
+        // object is not the kind of thing a counter lives on. Same predicate as the sentence's own
+        // `subjectNoun`, so a row that reads "When Misty Rainforest dies" is exactly a row this can
+        // refuse, and a row that reads "thanks to" is exactly one it leaves alone: the engine cannot
+        // know what the sacrificed creature had on it, and guessing either way is the second rules
+        // engine the 2026-08-15 refusal already declined to build.
+        //
+        // WHOSE COUNTERS, AND THE FIRST CUT OF THIS GOT IT WRONG ON THREE CARDS OUT OF FOUR.
+        // `conditionCares` records the DEMAND and not the noun it attaches to, so the condition is
+        // provably about the producer in exactly one shape: the trigger watches something LEAVE THE
+        // BATTLEFIELD and that something is not the consumer itself. Everywhere else "it" is the
+        // card's own counters -- Runaway Steam-Kin's "if this has fewer than three counters on it"
+        // on a CAST trigger, Nine-Lives Familiar's "when THIS creature dies", The Ozolith's
+        // begin-combat check -- and gating on the condition alone took 26, 2 and 1 rows off them
+        // respectively, measured on the 71 decks.
+        // CEILING: `conditionCares` is a TAG and not the condition's text, and `intervening-if.ts`
+        // sets `counter-added:any` off a bare /counters?/ match anywhere in the condition -- so a
+        // card worded "whenever a permanent you control dies, if you control a permanent with a
+        // counter on it" would trip this guard about the WRONG permanent. Censused before shipping:
+        // 24 corpus cards pair a dies trigger with a counter condition and ALL 24 are the "if it had
+        // counters on IT" shape, so the misread has no witness today. The upgrade path is a
+        // derive-side field naming which noun the condition is about, not a wider guess here.
+        const objectLeftTheBattlefield = (t.verb === "dies" || t.verb === "leaves")
+          && (t.subject.zone ?? "battlefield") === "battlefield" && t.subject.self !== true;
+        if (objectLeftTheBattlefield && (a.conditionCares ?? []).some((tag) => tag.startsWith("counter-added:"))
+          && fillNoun(e) === undefined && producerCanBeSubject(p, e.subject, h)
+          && p.tags && !canCarryCounters(p.tags)) continue;
         const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
         // A PROLIFERATE DEMAND NEEDS ITS OWN PROSE. The generic grammar below would render this as
         // "When <producer> gets a counter, <consumer> triggers" — the producer does not get the

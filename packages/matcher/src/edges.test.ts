@@ -4736,3 +4736,93 @@ test("a typed recursion pairs with each card of its class, and an untyped one wi
   expect(pairReasons(retriever, solRing, H).some((r) => r.tag === "recursion-target:artifact")).toBe(true);
   expect(pairReasons(retriever, sengir, H).some((r) => r.tag.startsWith("recursion-target:"))).toBe(false);
 });
+
+/** AL4 — AN INTERVENING IF ABOUT THE DYING THING'S COUNTERS, USED AS A REFUSAL.
+ *
+ *  Yuna, Grand Summoner reads "Whenever another permanent you control is put into a graveyard from
+ *  the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT, ...". `intervening-if.ts` has recorded
+ *  since 2026-08-15 that the engine drops the condition and is "right BY COINCIDENCE" — every
+ *  producer in her own deck happened to be a Saga. Measured on the 71 decks 2026-09-20: 15 of her
+ *  23 rows are producers that ARE the dying thing, and they include three fetchlands, four
+ *  noncreature tokens and two counterless lands.
+ *
+ *  The owner's 2026-08-20 ruling that an intervening if forms NO edge is untouched: this never
+ *  forms one. It refuses one, and only where the producer is the thing that dies and that thing
+ *  cannot carry a counter. A producer that merely CAUSES a death ("a creature dies thanks to Mount
+ *  Doom") is not the object of the condition and is left alone — the engine cannot know what the
+ *  sacrificed creature had on it, and guessing either way would be the second rules engine the
+ *  2026-08-15 refusal already declined to build. */
+describe("a counter-presence condition refuses a producer that cannot carry one", () => {
+  /** A permanent that can put ITSELF into the graveyard, which is what every producer on the real
+   *  list has: `impliedEvents` pushes no `dies` for merely being a permanent, so the emit comes
+   *  either from an ability that sacrifices the card (Misty Rainforest's fetch, Boromir's outlet)
+   *  or from `sagaEvents`, which is why the Saga fixture below needs no ability at all. */
+  const permanent = (name: string, types: string[], subtypes: string[] = [], keywords: string[] = [], token = false, sacrificesItself = true) => ({
+    card: { name, typeLine: "", oracleText: "", keywords: [], colors: [], manaValue: 0 } as unknown as DeckCard["card"],
+    tags: {
+      oracleId: name, schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types, subtypes, colors: [], identity: [], cmc: 0, power: null, toughness: null, token, keywords },
+      abilities: sacrificesItself
+        ? [{
+          kind: "activated",
+          effect: { kind: "" },
+          emits: [
+            { verb: "sacrifice", subject: { control: "you", token: null, self: true } },
+            { verb: "dies", subject: { control: "you", token: null, self: true } },
+          ],
+        }]
+        : [],
+    } as unknown as CardTags,
+  });
+  const yuna = base("Yuna, Grand Summoner", [{
+    kind: "triggered",
+    trigger: { verbs: ["dies"], subject: { type: "permanent", control: "you", token: null, other: true } },
+    effect: { kind: "counter-placement", subject: { control: "any", token: null } },
+    amount: "that number",
+    emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "+1/+1" } }],
+    conditionCares: ["counter-added:any"],
+  }] as unknown as CardTags["abilities"]);
+  const dies = (p: DeckCard) => pairReasons(p, yuna, H).filter((r) => r.tag.startsWith("dies"));
+
+  // A cracked fetchland has never had a counter on it. This is the claim the skeptic's calibration
+  // deck is seeded with, hand-judged FALSE by the owner.
+  test("a land that sacrifices itself is not a counters feeder", () => {
+    expect(dies(permanent("Misty Rainforest", ["land"]))).toEqual([]);
+  });
+
+  // A Saga enters with a lore counter and gains one each precombat main phase, so it ALWAYS has
+  // counters when it is sacrificed. Urza's Saga is `enchantment land` — which is why the rule
+  // cannot be "a land never carries counters".
+  test("a Saga is, because the rules put lore counters on it", () => {
+    expect(dies(permanent("Urza's Saga", ["enchantment", "land"], ["urza's", "saga"], [], false, false)).length).toBeGreaterThan(0);
+  });
+
+  // Cumulative upkeep's printed reminder: "put an age counter on it", every upkeep.
+  test("cumulative upkeep carries age counters, so it is", () => {
+    expect(dies(permanent("Mystic Remora", ["enchantment"], [], ["cumulative upkeep"])).length).toBeGreaterThan(0);
+  });
+
+  // THE DELIBERATE WIDTH. A creature is where +1/+1 counters live, and Yuna's own other ability puts
+  // two on the next creature cast each turn — refusing creatures would delete the claims the card
+  // is actually about.
+  test("a creature is, because a counters deck is a deck that puts counters on creatures", () => {
+    expect(dies(permanent("Boromir, Warden of the Tower", ["creature"])).length).toBeGreaterThan(0);
+  });
+
+  // A Treasure, Blood, Food or Clue has no counters and nothing puts one there. A CREATURE token
+  // does, so the rule is the type line and never tokenhood.
+  test("a noncreature token is not, and a creature token still is", () => {
+    expect(dies(permanent("Treasure", ["artifact"], [], [], true))).toEqual([]);
+    expect(dies(permanent("Zombie", ["creature"], ["zombie"], [], true)).length).toBeGreaterThan(0);
+  });
+
+  /** WHOSE COUNTERS THE CONDITION IS ABOUT is guarded in `directedReasons` and proven on the DECKS,
+   *  not here: `conditionCares` records the demand and not the noun it attaches to, so the gate is
+   *  restricted to a trigger watching something LEAVE THE BATTLEFIELD that is not the consumer
+   *  itself. Gating on the condition alone took 26 rows off Runaway Steam-Kin ("whenever you cast a
+   *  red spell, if this has fewer than three counters on it"), 2 off Nine-Lives Familiar ("when THIS
+   *  creature dies") and 1 off The Ozolith's begin-combat check — every one a card asking about its
+   *  OWN counters. A fixture cannot reach those paths (none of the three shapes forms an edge
+   *  against a synthetic producer at all), so the check that matters is the reason diff across the
+   *  71 decks, which is what caught them. */
+});
