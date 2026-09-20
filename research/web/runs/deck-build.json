@@ -1,0 +1,7 @@
+{
+  "commander": "Inalla, Archmage Ritualist",
+  "commanderSlug": "inalla-archmage-ritualist",
+  "baseUrl": "https://edhseer.cards",
+  "out": "persona-shots/deck-build/inalla-archmage-ritualist",
+  "maxIterations": 3
+}

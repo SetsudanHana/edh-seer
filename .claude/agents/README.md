@@ -39,6 +39,39 @@ and modality.
 - **Budget player, rule-zero conversation.** Each yields one finding once ("no prices",
   "no share link"). Product notes, not reviewers.
 
+## The deck-build agent is not one of these four
+
+`mtg-deck-builder` is a different instrument and must not be run like a persona round. The four
+above are READERS: handed screenshots of a finished report and asked what they make of it. None of
+them ever has to DO anything with the product, which is why none can answer the two questions the
+builder exists for -- **can the site be built FROM**, and **are our findings ACTIONABLE**.
+
+It drives the live site in a loop (build a 99, paste it in, read the report, repair from its
+findings), and `research/web/deck-build-run.ts` keeps the record. Give it **one phase brief at a
+time**; a single agent holding 99 cards, a browser, a report and a repair plan will drift, and a
+long session cannot say which iteration the drift began in.
+
+**The measurement is a SPLIT, not a count.** A citation can be true and meaningless: an agent that
+already wants Sol Ring searches for it, lands on the page and cites a real URL for an idea the site
+never supplied. So every citation is classified from the URL trail as **discovery** (the name was
+listed on a page the agent was already on) or **confirmation** (the page was reached by searching
+that name). Discovery is the number that says a partner list is a deckbuilding substrate.
+
+**The first run is calibration, not a result.** A split with zero discovery means either the
+classifier is mislabelling or the site never offered a card the agent did not already want, and
+those are indistinguishable in a record -- the report says so out loud when it happens.
+
+Its rules for an invalid run mirror the ones below, plus one: a citation naming a page the trail
+never visited throws the whole run out. The trail is self-reported because only the agent drives
+the browser, so that cross-check is what keeps the classification honest.
+
+    npx tsx research/web/deck-build-run.ts --self-test                     # the pure maths
+    npx tsx research/web/deck-build-run.ts init   runs/deck-build.json
+    npx tsx research/web/deck-build-run.ts build  runs/deck-build.json <phase.json>
+    npx tsx research/web/deck-build-run.ts report runs/deck-build.json
+
+→ `docs/superpowers/specs/2026-09-20-deck-build-agent-design.md`
+
 ## Running a round
 
 1. **Capture full-viewport screenshots.** Never element crops. A round of the old
@@ -72,7 +105,7 @@ and modality.
 |---|---|---|
 | precon | `packages/cli/decks/precon-party-time.txt` — the Baldur's Gate "Party Time" precon (Nalia de'Arnise), supplied by the owner | exercises the arbitrary-pasted-deck path nothing else does: partial derived-corpus coverage, flat-export commander detection (no header, no blank line — the 2026-08-18 alphabetical-order rule fires on it), and the unsatisfiable-condition case CLAUDE.md says is "far commoner on an arbitrary pasted deck". It also IS the bad-deck case: theme "shapeshifters entering / creatures dying", cohesion **0.11 unfocused**, top card **2.29** |
 | tuner | `packages/cli/decks/calibration/inalla.txt` | tuned, so a false alarm is the strong signal (usability review §8) — and the F-series review used this same deck, so findings stay comparable across rounds |
-| skeptic | `packages/cli/decks/calibration/sarevok-lord-of-pain.txt` | **re-verified 2026-09-18**: still carries two claims the owner hand-judged FALSE, both `Ayara, First of Locthwain → Death Tyrant` — one `dies:creature` ("When a creature dies thanks to Ayara, Death Tyrant makes a token") and one `graveyard-recursion:any` ("When Ayara is in the graveyard, Death Tyrant can bring it back"). **The pair this row named until 2026-09-18 — `Liliana's Triumph` and `Szat's Will` — is GONE from a live analysis**, which is exactly the decay this table warns about; the deck kept calibrating only because different FALSE claims survived in it. Re-run the cross-reference, do not trust this cell. |
+| skeptic | `packages/cli/decks/calibration/yuna-grand-summoner.txt` | **re-verified 2026-09-20**: carries exactly one live claim whose latest verdict in `verdicts.jsonl` is FALSE — `Misty Rainforest -> Yuna, Grand Summoner`, tag `dies:permanent`, rendered as "When Misty Rainforest dies, Yuna, Grand Summoner puts that number counters on a permanent". Yuna only triggers on a permanent that **had a counter on it**, which a cracked fetchland never does, so the defect is catchable from the two cards' oracle text alone — the right difficulty for this seat. **It replaced `sarevok-lord-of-pain`**, whose cell this was until 2026-09-20: both claims that row named (`Ayara, First of Locthwain -> Death Tyrant`, `dies:creature` and `graveyard-recursion:any`) were judged **REAL** by the owner in rounds 3 and 4, and a full cross-reference found **zero** live FALSE claims left in that deck. That is the second consecutive round this cell has decayed. Re-run the cross-reference every round: only 4 of 96 decks scanned still carry one, and each carries exactly one. |
 | phone | `inalla.txt` captured at 390px | same deck as the tuner, so modality is the only variable between those two seats |
 
 **How the skeptic's fixture was chosen, because the method matters more than the pick.** 523 claims in
