@@ -551,6 +551,12 @@ summary {
   letter-spacing: 0;
 }
 
+/* THE SENTENCE THAT USED TO BE THE HEADING. Same type as the h1 it now sits under, because it is
+   the same proposition -- only the heading in front of it is new. The h1 loses its bottom margin so
+   the two read as one block rather than as a heading and an unrelated paragraph. */
+.intro-thesis-body { margin-block-start: 0.5rem; }
+h1.intro-thesis { margin-block-end: 0; }
+
 /* A HEADING, NOT AN EYEBROW. These four were `--font-mono` 0.6875rem uppercase `--muted`: 11px,
    which is SMALLER than the 14px prose they head and smaller than the 12px footer legal text below
    them, so the section headings were the smallest type on the page and the hierarchy read
@@ -860,7 +866,11 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   flex-wrap: wrap;
   gap: 1.25rem;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  /* 12px, NOT 11. An SEO audit and the phone seat agree on this one: 0.6875rem is 11px, under the
+     12px every mobile-friendliness heuristic draws its line at, on the one row of text that is the
+     site's whole map. The hover hairline below still reads as a link rather than a dash at this
+     size -- that comment was written about 11px and survives the extra pixel. */
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -962,10 +972,42 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 .site-nav-install {
   color: var(--muted);
   text-decoration: none;
-  /* A hairline that only appears on hover: at 11px an always-on underline reads as a row of dashes
-     rather than as three links. */
+  /* A hairline that only appears on hover: at this size an always-on underline reads as a row of
+     dashes rather than as three links. */
   border-bottom: 1px solid transparent;
   padding-bottom: 2px;
+}
+
+/* A THUMB, NOT A CURSOR. Measured on the deployed site at 390px with touch emulation: every nav
+   item was a 20px-tall target -- 12px of text plus the 2px hairline padding -- against this
+   project's own 44px rule and WCAG 2.5.8's 24px floor. They pass 2.5.8 today only through its
+   SPACING exception (1.25rem gaps), which is a conformance technicality and not a thumb.
+   THE SAME POINTER TEST `use-board-mode.ts` USES, and matching it is deliberate: coarse AND NO
+   precise pointer anywhere. A touchscreen laptop reports `pointer: coarse` while `any-pointer:
+   fine` still holds, and that file already ruled such a device is a desktop -- so a bare `coarse`
+   here would have reflowed the header on the exact machine the board logic keeps on the desktop
+   branch, with this file silently disagreeing with that one. A browser too old for `not()` fails
+   the whole query and keeps today's behaviour, which is the safe direction to fall.
+   So the desktop header keeps the exact height it has: the hit area grows, the type does not move,
+   and nothing reflows on a mouse. `inline-flex` because the padding has to
+   make a BOX -- vertical padding on an inline element paints outside the line box without
+   enlarging the target, which is the trap this looks like it fell into the first time.
+   The FOOTER's legal links are deliberately untouched: they sit inline in a sentence of prose,
+   which 2.5.8 exempts by name, and padding them would break their line boxes.
+   WHAT IT COSTS, measured at 390px: the header goes 92px -> 173px, because the nav wraps to two
+   rows and both rows triple in height. That is 81px of an 844px viewport, paid once -- the site
+   header is NOT pinned on phones (owner reversal, 2026-09-08), so it scrolls away and does not
+   spend the screen again. Dropping the nav's row gap to claw some back was tried and MEASURED AT
+   ZERO: `@media (min-width: …) .site-nav { gap: 0.9rem }` further down wins on source order, so
+   the override was dead CSS claiming a saving it did not make. */
+@media (pointer: coarse) and (not (any-pointer: fine)) {
+  .site-nav a,
+  .site-more > summary,
+  .site-nav-install {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
 }
 
 .site-nav-install {
@@ -987,7 +1029,10 @@ a.brand:hover .brand-edh { color: var(--foreground); }
   order: 1;
   margin-left: auto;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  /* IN LOCKSTEP WITH `.site-nav` ABOVE, which is the whole point of the comment above this one: it
+     inherits nothing, so a bump there without a bump here makes this button read a pixel smaller
+     than the links it sits against. 12px, same reason. */
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;

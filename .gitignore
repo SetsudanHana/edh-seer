@@ -49,3 +49,6 @@ static-out/
 # The Comprehensive Rules, fetched by research/rules/fetch-comprehensive-rules.ts.
 # Wizards’ text, ~1MB, and it changes with every set -- a local copy, never a committed one.
 /rules/
+
+# Third-party SEO report drops (screenshots, exports). Local review material, never shipped.
+/seo-review/
