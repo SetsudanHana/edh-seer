@@ -1299,6 +1299,16 @@ export interface CardPageRecord {
    *
    *  359 of the 491 are substantive and have a page. */
   backArtCrop: string | null;
+  /** THE CARD'S KEYWORD ABILITIES, for the page's keyword row (owner, 2026-09-20). Straight off
+   *  `characteristics.keywords`, which is Scryfall's list and therefore includes ability WORDS
+   *  ("probing telepathy") beside real keyword abilities ("flash") -- the row prints both, because
+   *  both are things the card announces about itself.
+   *
+   *  OMITTED WHEN EMPTY, like `clauses` and `rates` below, so a vanilla card costs the record
+   *  nothing. The client must render without it: an artifact built before this field existed has
+   *  no `keywords` on any card, and a row that assumed one would be a crash rather than an
+   *  absence. */
+  keywords?: string[];
   /** How the engine read the card, one row per derived ability -- the page's real argument, and the
    *  half of it that was missing while the record carried only the UNION of a card's events. */
   abilities: AbilityRow[];
@@ -1666,6 +1676,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       artCrop: artCropOf(d),
       backArtCrop: (d.card as { faces?: { artCrop?: string }[] }).faces?.[1]?.artCrop ?? null,
       abilities: abilityRowsOf(d),
+      ...(() => { const k = d.tags?.characteristics?.keywords ?? []; return k.length > 0 ? { keywords: [...k] } : {}; })(),
       ...(() => { const c = clauseTextsOf(d); return c.length > 0 ? { clauses: c } : {}; })(),
       ...(() => { const rates = ratesOf(d); return rates.length > 0 ? { rates } : {}; })(),
       identity: d.card.colorIdentity ?? [],

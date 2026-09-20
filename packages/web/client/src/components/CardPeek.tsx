@@ -5,6 +5,7 @@ import { AbilityTable } from "./AbilityTable.js";
 import { CardArt } from "./CardArt.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { usePeek } from "./peek.js";
+import { TypeLine } from "./TypeLine.js";
 
 /** THE PEEK (spec 2026-09-08 part 3). What a partner click shows instead of a new page: the card,
  *  what the engine reads on it, its own first partners, and one control to go there for real.
@@ -92,7 +93,7 @@ export function CardPeek({ load, surface = "card" }: {
             <span id="peek-title">{page.name}</span>
             {page.manaCost && <span className="text-base"><ManaSymbols cost={page.manaCost} /></span>}
           </h3>
-          <p className="text-(--muted) text-sm">{page.typeLine}</p>
+          <p className="text-(--muted) text-sm"><TypeLine line={page.typeLine} /></p>
           <div className="flex flex-col gap-2">
             <p className="eyebrow text-(--muted)">how the engine reads this card</p>
             <AbilityTable rows={page.abilities} stacked />

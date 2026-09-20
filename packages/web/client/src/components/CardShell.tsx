@@ -8,6 +8,9 @@ import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
 import { PeekContext, usePeekState } from "./peek.js";
 import { FaceContext } from "./face.js";
+import { CardSymbol } from "./CardSymbol.js";
+import { KeywordRow } from "./KeywordRow.js";
+import { TypeLine } from "./TypeLine.js";
 import { useState } from "react";
 
 /** ONE PAGE SHAPE, TWO SURFACES (spec 2026-09-08 part 2). `/cards/<slug>` and `/commanders/<slug>`
@@ -35,12 +38,17 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
   // THE FLIP IS THE PAGE'S, NOT THE PICTURE'S (owner, 2026-09-08): the ability rows turn with it.
   const [back, setBack] = useState(false);
   const faceView = { face: back && page.backArtCrop ? 1 : 0, names: page.name.split(" // ") };
-  const tab = (to: string, label: string, current: boolean) => (
+  // THE MARK IS CHROME, NEVER PROSE (owner's rule, 2026-09-20: "if it is part of the whole sentence
+  // then do not replace it, but if we have the top search, then I would replace that"). A tab is a
+  // label, so the commander tab carries `ms-commander`; the sentences further down the commander
+  // page that say the word "commander" are left exactly as they read.
+  const tab = (to: string, label: string, current: boolean, mark?: string) => (
     <Link
       to={to}
       aria-current={current ? "page" : undefined}
-      className="inline-flex items-center min-h-11 px-3 border-b-2 border-transparent text-(--muted) hover:text-(--foreground) aria-[current=page]:border-(--accent) aria-[current=page]:text-(--foreground)"
+      className="inline-flex items-center gap-1.5 min-h-11 px-3 border-b-2 border-transparent text-(--muted) hover:text-(--foreground) aria-[current=page]:border-(--accent) aria-[current=page]:text-(--foreground)"
     >
+      {mark && <CardSymbol name={mark} />}
       {label}
     </Link>
   );
@@ -58,11 +66,14 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             {page.name}
             {page.manaCost && <span className="text-2xl sm:text-3xl"><ManaSymbols cost={page.manaCost} /></span>}
           </h1>
-          <p className="text-(--muted)">{page.typeLine}</p>
+          <p className="text-(--muted)"><TypeLine line={page.typeLine} /></p>
+          {/* THE KEYWORDS THE CARD PRINTS, as their own row rather than marked up inside the
+            * reading below -- a printed line is prose and keeps its words (owner, 2026-09-20). */}
+          <KeywordRow keywords={page.keywords} />
         </header>
         <nav aria-label="Surface" className="flex gap-1 border-b border-(--separator)">
           {tab(`/cards/${slug}`, "As a card", surface === "card")}
-          {page.commander && tab(`/commanders/${slug}`, "As a commander", surface === "commander")}
+          {page.commander && tab(`/commanders/${slug}`, "As a commander", surface === "commander", "commander")}
         </nav>
         {children}
         <div className="max-w-[68ch]"><PageFoot /></div>
