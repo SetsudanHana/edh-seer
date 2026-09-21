@@ -191,7 +191,8 @@ writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify({
 // before today still loads -- a reader given the new object where it expected an array would
 // otherwise report a corpus of zero cards rather than a changed format.
 writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify({
-  types: partners.typeNames, subtypes: partners.subtypeNames, cards: partners.index,
+  types: partners.typeNames, subtypes: partners.subtypeNames, keywords: partners.keywordNames,
+  cards: partners.index,
 }));
 // THE EVENT INDEX (roadmap AJ3): who causes each event and who asks for it, as positions in the
 // name index the page has already fetched. Sharded like the card and partner artifacts, so a

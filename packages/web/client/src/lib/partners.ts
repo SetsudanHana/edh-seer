@@ -56,7 +56,7 @@ export function loadCardPage(
  *  the header field needs the ROWS on first keystroke and never needs the tables, while the facet
  *  row needs the tables to draw itself before any card has been filtered. The underlying fetch is
  *  the same file and `StaticLookup` caches it, so asking twice costs one request. */
-const sharedVocabulary = new Map<string, Promise<{ types: string[]; subtypes: string[] }>>();
+const sharedVocabulary = new Map<string, Promise<{ types: string[]; subtypes: string[]; keywords: string[] }>>();
 /** ONE `StaticLookup` BEHIND BOTH SHARED READERS, so they share its single fetch and single parse
  *  of a 4.3 MB file. Two instances meant two downloads on any path without a Cache API -- every
  *  test, and a browser's first visit -- while the comment above promised one request per session.
@@ -78,7 +78,7 @@ const forget = (baseUrl: string): void => { sharedLookups.delete(baseUrl); };
 
 export function sharedNameIndexVocabulary(
   baseUrl: string, fetchImpl: typeof fetch = fetch,
-): Promise<{ types: string[]; subtypes: string[] }> {
+): Promise<{ types: string[]; subtypes: string[]; keywords: string[] }> {
   const hit = sharedVocabulary.get(baseUrl);
   if (hit) return hit;
   const p = sharedLookup(baseUrl, fetchImpl).nameIndexVocabulary();

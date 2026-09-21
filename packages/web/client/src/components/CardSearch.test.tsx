@@ -19,7 +19,7 @@ const INDEX: NameIndexEntry[] = [
  *  OUTSIDE the test as an unhandled error. The suite still reported every test passing and exited
  *  1, which is the shape that is easy to read as green. Empty tables are the old-artifact answer
  *  the component already handles; the tests that are ABOUT type and subtype pass their own. */
-const NO_VOCABULARY = async () => ({ types: [], subtypes: [] });
+const NO_VOCABULARY = async () => ({ types: [], subtypes: [], keywords: [] });
 
 const at = (index: NameIndexEntry[] = INDEX, props: Partial<Parameters<typeof CardSearch>[0]> = {}) =>
   render(<MemoryRouter><CardSearch load={async () => index} vocabulary={NO_VOCABULARY} {...props} /></MemoryRouter>);
@@ -496,7 +496,9 @@ test("a filter is added from the menu, and leaves the menu once it is there", as
 test("a link carrying a question arrives with that question's rows open", async () => {
   atUrl("/cards?colors=G&mv=3");
   expect(await screen.findByRole("button", { name: /^Green$/ })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByLabelText("Mana value")).toHaveValue("3");
+  // `?mv=3` was the ceiling, so it arrives as the range's TO end and its FROM end is open.
+  expect(screen.getByLabelText("Mana value, to")).toHaveValue("3");
+  expect(screen.getByLabelText("Mana value, from")).toHaveValue("");
   // And only those: an event row was not asked for.
   expect(screen.queryByText("events the card can cause")).toBeNull();
 });
@@ -507,7 +509,7 @@ test("removing a row clears what it was asking", async () => {
   const spy = atUrl("/cards?colors=G&mv=3");
   await screen.findByRole("button", { name: /^Green$/ });
   await userEvent.click(screen.getByRole("button", { name: "Remove the Mana value filter" }));
-  expect(screen.queryByLabelText("Mana value")).toBeNull();
+  expect(screen.queryByLabelText("Mana value, to")).toBeNull();
   expect(spy.search).not.toContain("mv=");
   // Its neighbour is untouched -- a removal that widened two questions would be a silent one.
   expect(spy.search).toContain("colors=G");
@@ -543,9 +545,9 @@ test("emptying a row keeps the row, so a colour can be swapped for another", asy
 
 test("a mana value set back to any keeps its select", async () => {
   atUrl("/cards?mv=3");
-  const select = await screen.findByLabelText("Mana value");
+  const select = await screen.findByLabelText("Mana value, to");
   await userEvent.selectOptions(select, "");
-  expect(screen.getByLabelText("Mana value")).toBeInTheDocument();
+  expect(screen.getByLabelText("Mana value, to")).toBeInTheDocument();
 });
 
 test("the remove button is still the way a row goes away", async () => {
@@ -573,6 +575,74 @@ test("the add menu carries the positioning its list needs", async () => {
   atUrl("/cards");
   const summary = await screen.findByText("Add a filter");
   expect(summary.closest("details")).toHaveClass("relative");
+});
+
+/** THE WIDER VOCABULARY (owner, 2026-09-21: "if we have + add filter now, we should add all filter
+ *  types that make sense"). A row costs a line of a menu instead of a band of chrome, so the four
+ *  dimensions the corpus could already answer are offered. */
+const VOCABULARY = async () => ({
+  types: ["creature", "instant"], subtypes: ["sliver"], keywords: ["flying", "trample"],
+});
+
+test("the menu offers every dimension the corpus can answer", async () => {
+  atUrl("/cards");
+  await userEvent.click(await screen.findByText("Add a filter"));
+  const offered = screen.getAllByRole("button").map((b) => b.textContent?.trim());
+  for (const label of ["Colour identity", "Colour", "Type line", "Keywords", "Mana value", "Power", "Toughness", "Causes", "Asks for"]) {
+    expect(offered).toContain(label);
+  }
+});
+
+/** A RANGE IS THE POINT: "not everyone looks for just X or less". Both ends, and either alone. */
+test("a mana value range asks for a span, not just a ceiling", async () => {
+  const spy = atUrl("/cards?q=a");
+  await screen.findByRole("searchbox");
+  await addFilter("Mana value");
+  await userEvent.selectOptions(await screen.findByLabelText("Mana value, from"), "2");
+  await userEvent.selectOptions(screen.getByLabelText("Mana value, to"), "4");
+  expect(spy.search).toContain("mvmin=2");
+  expect(spy.search).toContain("mvmax=4");
+});
+
+/** ZERO IS A REAL BOUND and must survive the round trip through the URL -- a falsy check anywhere
+ *  on this path turns "power 0 to 0" into "no power filter" and answers a different question. */
+test("a bound of zero is a question, not an absent filter", async () => {
+  const spy = atUrl("/cards?q=a");
+  await screen.findByRole("searchbox");
+  await addFilter("Power");
+  await userEvent.selectOptions(await screen.findByLabelText("Power, to"), "0");
+  expect(spy.search).toContain("powmax=0");
+});
+
+/** A BACKWARDS RANGE SAYS SO. Left alone it answers "No card matches", which is true and useless:
+ *  the reader reads it as "there are none" rather than as "you asked backwards". */
+test("a backwards range explains itself", async () => {
+  atUrl("/cards?mvmin=5&mvmax=2");
+  expect(await screen.findByText(/backwards, so nothing can match/i)).toBeInTheDocument();
+});
+
+test("a keyword row is a typeahead over the keyword table", async () => {
+  atUrl("/cards?q=a", { vocabulary: VOCABULARY });
+  await screen.findByRole("searchbox");
+  await addFilter("Keywords");
+  await userEvent.type(await screen.findByLabelText("Keywords"), "fly");
+  const shown = within(screen.getByRole("listbox", { name: "Keywords" })).getAllByRole("option");
+  expect(shown.map((o) => o.textContent)).toEqual(["flying"]);
+});
+
+/** COLOUR AND COLOUR IDENTITY ARE TWO ROWS asking two questions, and they must not write the same
+ *  param -- `colors` was identity the day it shipped, so the new one could not have it. */
+test("colour and colour identity are separate rows and separate params", async () => {
+  const spy = atUrl("/cards?q=a");
+  await screen.findByRole("searchbox");
+  await addFilter("Colour identity");
+  await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
+  await addFilter("Colour");
+  // Two rows are on screen now, so the colour chips are ambiguous by name -- scope to the fieldset.
+  const own = screen.getByRole("group", { name: "Colour" });
+  await userEvent.click(within(own).getByRole("button", { name: /^Blue$/ }));
+  expect(spy.search).toContain("colors=R");
+  expect(spy.search).toContain("cardcolors=U");
 });
 
 /** THE LANDING IS SEARCH-FIRST (owner, 2026-09-17: the chips were a wall), and since AJ3 the

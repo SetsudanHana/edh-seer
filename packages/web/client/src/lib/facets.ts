@@ -37,9 +37,26 @@ export interface EventQuery {
    *  proxy and took the false positives that brings. */
   types: string[];
   subtypes: string[];
-  /** Mana value ceiling, inclusive. `undefined` asks nothing. A CEILING and not a range: "cost
-   *  less than 3" is the question people ask; nobody has asked for a floor. */
-  maxMv?: number;
+  /** PRINTED KEYWORD ABILITIES, all of them -- the same AND as `types`. 811 distinct over 16,302
+   *  cards, which is a typeahead and not a row of chips, exactly like the subtypes. */
+  keywords: string[];
+  /** THE CARD'S OWN COLOURS, which is NOT `colours` above. That one is colour IDENTITY and asks
+   *  what deck a card is legal in; this asks what the card IS. 1,751 of 32,334 cards answer the
+   *  two differently, which is why Scryfall splits `c:` from `id:` and why this is a second row
+   *  rather than a rename -- `colors` in the URL was identity the day it shipped. */
+  cardColours: string[];
+  /** MANA VALUE AS A RANGE, both ends inclusive, either end optional (owner, 2026-09-21: "not
+   *  everyone looks for just X or less"). It was a bare ceiling until then, and `?mv=N` still
+   *  reads as `mvMax` so no link already shared changes meaning.
+   *
+   *  ZERO IS A REAL BOUND, which is why every one of these is `undefined`-checked and never tested
+   *  for truthiness: "power 0 to 0" asks for the Ornithopters. */
+  mvMin?: number;
+  mvMax?: number;
+  powMin?: number;
+  powMax?: number;
+  touMin?: number;
+  touMax?: number;
   /** How the kept rows are ordered. `partners` is the artifact's own order (best connected first)
    *  and stays the default -- the sort exists so a reader can ESCAPE that ranking, not because it
    *  is wrong. The deck-build run's complaint: rare events outranked good cards, so it found
@@ -55,31 +72,58 @@ export interface EventQuery {
  *  is a smaller lie than answering a question the vocabulary no longer has. */
 const SORTS = new Set(["partners", "mv", "name"]);
 
+/** ONE BOUND OUT OF THE URL. A BAD ONE IS NO FILTER, NOT ZERO: `?mvmax=abc` reading as "at most 0
+ *  mana" would answer a question nobody asked with a confident empty list. Zero itself IS allowed,
+ *  which is the whole reason this returns an object to spread rather than a number. */
+const bound = (raw: string | null): number | undefined => {
+  if (raw === null || raw.trim() === "") return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : undefined;
+};
+
 export function eventsFromParams(p: URLSearchParams): EventQuery {
-  const mv = Number(p.get("mv"));
   const sort = p.get("sort") ?? "";
+  // THE OLD CEILING, STILL READ. `?mv=3` is live on the deployed site and in every link shared
+  // since #423; it meant "3 or less" and it still does. `mvmax` wins where both are present.
+  const legacyMv = bound(p.get("mv"));
+  const mvMax = bound(p.get("mvmax")) ?? legacyMv;
+  const ranges = {
+    mvMin: bound(p.get("mvmin")), mvMax,
+    powMin: bound(p.get("powmin")), powMax: bound(p.get("powmax")),
+    touMin: bound(p.get("toumin")), touMax: bound(p.get("toumax")),
+  };
   return {
     produce: p.getAll("produce").filter((k) => k.length > 0),
     consume: p.getAll("consume").filter((k) => k.length > 0),
     colours: [...(p.get("colors") ?? "")].filter((c) => "WUBRGC".includes(c)),
     types: p.getAll("type").filter((k) => k.length > 0),
     subtypes: p.getAll("subtype").filter((k) => k.length > 0),
-    // A BAD `mv` IS NO FILTER, NOT ZERO. `?mv=abc` reading as "at most 0 mana" would answer a
-    // question nobody asked with a confident empty list.
-    ...(Number.isFinite(mv) && mv > 0 ? { maxMv: Math.floor(mv) } : {}),
+    keywords: p.getAll("keyword").filter((k) => k.length > 0),
+    cardColours: [...(p.get("cardcolors") ?? "")].filter((c) => "WUBRGC".includes(c)),
+    ...Object.fromEntries(Object.entries(ranges).filter(([, v]) => v !== undefined)),
     ...(SORTS.has(sort) ? { sort: sort as EventQuery["sort"] } : {}),
   };
 }
 
 export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchParams {
   const out = new URLSearchParams(p);
-  for (const k of ["produce", "consume", "colors", "type", "subtype", "mv", "sort"]) out.delete(k);
+  for (const k of [
+    "produce", "consume", "colors", "type", "subtype", "keyword", "cardcolors", "sort",
+    // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
+    // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
+    "mv", "mvmin", "mvmax", "powmin", "powmax", "toumin", "toumax",
+  ]) out.delete(k);
   for (const k of q.produce) out.append("produce", k);
   for (const k of q.consume) out.append("consume", k);
   if (q.colours.length > 0) out.set("colors", q.colours.join(""));
   for (const k of q.types) out.append("type", k);
   for (const k of q.subtypes) out.append("subtype", k);
-  if (q.maxMv !== undefined) out.set("mv", String(q.maxMv));
+  for (const k of q.keywords) out.append("keyword", k);
+  if (q.cardColours.length > 0) out.set("cardcolors", q.cardColours.join(""));
+  for (const [name, v] of [
+    ["mvmin", q.mvMin], ["mvmax", q.mvMax], ["powmin", q.powMin],
+    ["powmax", q.powMax], ["toumin", q.touMin], ["toumax", q.touMax],
+  ] as const) if (v !== undefined) out.set(name, String(v));
   // THE DEFAULT IS NOT WRITTEN DOWN. `?sort=partners` in every shared link is noise, and it would
   // pin the order against a future change of default.
   if (q.sort && q.sort !== "partners") out.set("sort", q.sort);
@@ -89,9 +133,10 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
 /** Does this card pass the characteristic half of the query? The event half is answered from the
  *  membership index; this is answered from the row itself, which is why it lives here. */
 export function compileCharacteristics(
-  q: Pick<EventQuery, "types" | "subtypes" | "maxMv">,
-  vocab: { types: string[]; subtypes: string[] },
-): (card: { t?: number[]; s?: number[]; mv?: number }) => boolean {
+  q: Pick<EventQuery, "types" | "subtypes" | "keywords" | "cardColours"
+    | "mvMin" | "mvMax" | "powMin" | "powMax" | "touMin" | "touMax">,
+  vocab: { types: string[]; subtypes: string[]; keywords: string[] },
+): (card: { t?: number[]; s?: number[]; k?: number[]; mv?: number; pow?: number; tou?: number; c?: number }) => boolean {
   // THE NAMES BECOME CODES ONCE, NOT ONCE PER CARD. Resolving them inside the predicate meant a
   // 488-entry `indexOf` scan per card per chosen subtype, over 25,582 rows, re-run on every
   // keystroke of the name field -- about twelve million string comparisons to answer one letter.
@@ -101,16 +146,50 @@ export function compileCharacteristics(
   // would show cards that do not answer the question.
   const types = q.types.map((n) => vocab.types.indexOf(n));
   const subtypes = q.subtypes.map((n) => vocab.subtypes.indexOf(n));
-  const { maxMv } = q;
+  const keywords = q.keywords.map((n) => vocab.keywords.indexOf(n));
+  const { mvMin, mvMax, powMin, powMax, touMin, touMax } = q;
+  // THE CARD IS AT LEAST THESE COLOURS, which is Scryfall's `c:` and not the identity row's
+  // fits-in: "Blue" answers every blue card including Dimir, "Blue, Black" answers the ones that
+  // are both. Colourless is exclusive of the five, as it is in the identity row.
+  const wantColourless = q.cardColours.includes("C");
+  const colourMask = wantColourless ? 0 : COLOUR_BIT_MASK(q.cardColours);
   return (card) => {
     // EVERY CHOSEN TYPE MUST MATCH, the same AND the event chips use -- "artifact creature" is a
     // real question and two chips is how it is asked.
     for (const code of types) if (code < 0 || !(card.t ?? []).includes(code)) return false;
     for (const code of subtypes) if (code < 0 || !(card.s ?? []).includes(code)) return false;
+    for (const code of keywords) if (code < 0 || !(card.k ?? []).includes(code)) return false;
+    if (wantColourless) { if ((card.c ?? 0) !== 0) return false; }
+    else if (colourMask !== 0 && ((card.c ?? 0) & colourMask) !== colourMask) return false;
     // ABSENT `mv` IS ZERO, which is what the artifact means by leaving it out.
-    return maxMv === undefined || (card.mv ?? 0) <= maxMv;
+    const mv = card.mv ?? 0;
+    if (mvMin !== undefined && mv < mvMin) return false;
+    if (mvMax !== undefined && mv > mvMax) return false;
+    // AN ABSENT POWER IS NOT ZERO, unlike an absent mana value. 242 cards print `*`, `1+*` or `X`
+    // and the build omits the field for them, along with every noncreature: answering "power 0"
+    // for a Tarmogoyf or an Island would be a claim, and this engine says nothing instead.
+    if (powMin !== undefined || powMax !== undefined) {
+      if (card.pow === undefined) return false;
+      if (powMin !== undefined && card.pow < powMin) return false;
+      if (powMax !== undefined && card.pow > powMax) return false;
+    }
+    if (touMin !== undefined || touMax !== undefined) {
+      if (card.tou === undefined) return false;
+      if (touMin !== undefined && card.tou < touMin) return false;
+      if (touMax !== undefined && card.tou > touMax) return false;
+    }
+    return true;
   };
 }
+
+/** THE WUBRG BITS, and the browser's copy of the build's table. `identityMask` in `partners-core`
+ *  is the original; importing it here would drag the matcher graph into a Cloudflare Function that
+ *  has no node types, which is the `inject.ts` trap CLAUDE.md records. Five constants, pinned by a
+ *  test on both sides rather than by an import. */
+const COLOUR_BIT_MASK = (colours: readonly string[]): number => {
+  const bit: Record<string, number> = { W: 1, U: 2, B: 4, R: 8, G: 16 };
+  return colours.reduce((m, c) => m | (bit[c] ?? 0), 0);
+};
 
 /** WHAT A COLOUR CHIP MEANS, AND IT IS NOT THE SAME QUESTION ON THE TWO PAGES (owner 2026-09-19).
  *
@@ -178,12 +257,22 @@ export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: Rat
  *  subtypes with NO word in both -- so a merged control resolves each choice to its own param
  *  without ever having to ask which was meant. Only the control merged; the params did not, so
  *  every link shared before today still opens the search it named. */
-export type FilterKind = "colours" | "typeline" | "mv" | "produce" | "consume";
+export type FilterKind =
+  | "colours" | "cardColours" | "typeline" | "keywords"
+  | "mv" | "power" | "toughness"
+  | "produce" | "consume";
 
 /** THE ORDER THE ROWS ARE DRAWN IN, and it is fixed rather than the order they were added: a
  *  reader's own panel and the link they share are the same question, and rows that shuffle between
  *  the two make them look like different ones. Cheapest question first. */
-export const FILTER_KINDS: FilterKind[] = ["colours", "typeline", "mv", "produce", "consume"];
+export const FILTER_KINDS: FilterKind[] = [
+  // WHAT THE CARD IS, then what it COSTS, then what it DOES. Three groups a player already thinks
+  // in, and the events last because they are the question only this engine can answer -- a reader
+  // who came for them scrolls past nothing to reach them, since none of this is drawn unasked.
+  "colours", "cardColours", "typeline", "keywords",
+  "mv", "power", "toughness",
+  "produce", "consume",
+];
 
 /** WHICH ROWS THE URL IS ALREADY ASKING FOR. Derived, never stored: a link carrying
  *  `?subtype=sliver&mv=3` has to arrive with those two rows open and filled, or a shared search
@@ -195,8 +284,14 @@ export const FILTER_KINDS: FilterKind[] = ["colours", "typeline", "mv", "produce
 export function filterKindsOf(q: EventQuery): FilterKind[] {
   const asked: Record<FilterKind, boolean> = {
     colours: q.colours.length > 0,
+    cardColours: q.cardColours.length > 0,
     typeline: q.types.length > 0 || q.subtypes.length > 0,
-    mv: q.maxMv !== undefined,
+    keywords: q.keywords.length > 0,
+    // EITHER END IS THE SAME ROW. "3 or more" is a range with no ceiling and still the mana value
+    // question; two rows for one dimension would let a reader remove half of it.
+    mv: q.mvMin !== undefined || q.mvMax !== undefined,
+    power: q.powMin !== undefined || q.powMax !== undefined,
+    toughness: q.touMin !== undefined || q.touMax !== undefined,
     produce: q.produce.length > 0,
     consume: q.consume.length > 0,
   };
@@ -209,13 +304,17 @@ export function filterKindsOf(q: EventQuery): FilterKind[] {
 export function withoutFilterKind(q: EventQuery, kind: FilterKind): EventQuery {
   switch (kind) {
     case "colours": return { ...q, colours: [] };
+    case "cardColours": return { ...q, cardColours: [] };
+    case "keywords": return { ...q, keywords: [] };
     // BOTH, because one row asked both. Clearing only the one the reader last typed would leave the
     // row gone from the panel and its other param still narrowing the list, which is the shape of
     // "the filter I removed is still filtering".
     case "typeline": return { ...q, types: [], subtypes: [] };
-    // `undefined`, NOT 0: a ceiling of zero is a real question (it answers lands and little else)
-    // and this is the reader saying they no longer have one.
-    case "mv": { const { maxMv: _drop, ...rest } = q; return rest; }
+    // BOTH ENDS, and by DELETING rather than setting 0: a bound of zero is a real question
+    // ("power 0 to 0" asks for the Ornithopters) and this is the reader saying they have none.
+    case "mv": { const { mvMin: _a, mvMax: _b, ...rest } = q; return rest; }
+    case "power": { const { powMin: _a, powMax: _b, ...rest } = q; return rest; }
+    case "toughness": { const { touMin: _a, touMax: _b, ...rest } = q; return rest; }
     case "produce": return { ...q, produce: [] };
     case "consume": return { ...q, consume: [] };
   }

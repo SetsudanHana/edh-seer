@@ -1421,6 +1421,20 @@ export interface NameIndexEntry {
   s?: number[];
   /** Mana value, absent when 0 -- which is most lands, and the most common value in the corpus. */
   mv?: number;
+  /** PRINTED KEYWORD ABILITIES, as indices into `NameIndexFile.keywords` (owner, 2026-09-21: "we
+   *  should add all filter types that make sense"). 811 distinct over 16,302 of the 32,334 derived
+   *  cards -- flying 3,261, trample 1,021, vigilance 745. Same integer-table shape as `s`. */
+  k?: number[];
+  /** POWER AND TOUGHNESS, and ABSENT IS NOT ZERO. Omitted for every noncreature and for the 242
+   *  cards that print `*`, `1+*` or `X` -- they cannot answer a numeric range, and recording them
+   *  as 0 would put Tarmogoyf in the answer to "power 0". 17,736 cards carry a numeric power. */
+  pow?: number;
+  tou?: number;
+  /** THE CARD'S OWN COLOURS AS A WUBRG BITMASK, absent when colourless. NOT `identity` above: that
+   *  says what deck the card is legal in, this says what it IS, and 1,751 of 32,334 cards answer
+   *  the two differently. A mask rather than an array of letters because this file is downloaded
+   *  whole by every visitor -- `"c":6` against `"c":["U","B"]` over 25,582 rows. */
+  c?: number;
 }
 
 /** THE INDEX AS SHIPPED: the rows plus the tables their `t`/`s` point into.
@@ -1431,6 +1445,7 @@ export interface NameIndexEntry {
 export interface NameIndexFile {
   types: string[];
   subtypes: string[];
+  keywords: string[];
   cards: NameIndexEntry[];
 }
 
@@ -1499,9 +1514,10 @@ export interface PartnerArtifact {
    *  colours a reader chose. Read with `inIdentityOf`. */
   freqByIdentity: Record<string, number[]>;
   index: NameIndexEntry[];
-  /** The tables `NameIndexEntry.t` / `.s` are positions in. Shipped beside the rows. */
+  /** The tables `NameIndexEntry.t` / `.s` / `.k` are positions in. Shipped beside the rows. */
   typeNames: string[];
   subtypeNames: string[];
+  keywordNames: string[];
 }
 
 /** A COMMANDER, for `/commanders`: CR 903.3 exactly as `legality.ts` reads it -- legendary creature,
@@ -1683,8 +1699,17 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // code for. Sorted, so the file is stable across builds that changed nothing.
   const typeNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.types ?? []).map((x) => x.toLowerCase())))].sort();
   const subtypeNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.subtypes ?? []).map((x) => x.toLowerCase())))].sort();
-  const typeCode = (x: string): number => typeNames.indexOf(x);
-  const subtypeCode = (x: string): number => subtypeNames.indexOf(x);
+  const keywordNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.keywords ?? []).map((x) => x.toLowerCase())))].sort();
+  // LINEAR SCANS BECAME MAPS HERE. `indexOf` over 811 keywords for every keyword on every one of
+  // 25,582 cards is the same per-card scan `compileCharacteristics` was fixed for on the reader
+  // side, and this runs on every build rather than every keystroke -- but it is the same mistake.
+  const codeOf = (names: string[]): ((x: string) => number) => {
+    const at = new Map(names.map((n, i) => [n, i] as const));
+    return (x) => at.get(x) ?? -1;
+  };
+  const typeCode = codeOf(typeNames);
+  const subtypeCode = codeOf(subtypeNames);
+  const keywordCode = codeOf(keywordNames);
   // THE MIRROR: every pair the forward phase verified, filed under the card it points AT, so the
   // second pass can hand each payoff the producers whose pages already list it.
   const producers = new Map<string, PartnerRow[]>();
@@ -1835,14 +1860,27 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     const chars = d.tags?.characteristics;
     const tIdx = (chars?.types ?? []).map((x) => typeCode(x.toLowerCase())).filter((n) => n >= 0);
     const sIdx = (chars?.subtypes ?? []).map((x) => subtypeCode(x.toLowerCase())).filter((n) => n >= 0);
+    const kIdx = (chars?.keywords ?? []).map((x) => keywordCode(x.toLowerCase())).filter((n) => n >= 0);
     const mv = chars?.cmc ?? 0;
+    // A NUMBER OR NOTHING. `power` is `string | null` because Magic prints `*`, `1+*` and `X`; a
+    // card whose power is not a number cannot answer "power 2 to 4", so it carries no field and
+    // the reader excludes it rather than guessing a value for it.
+    const stat = (raw: string | null | undefined): number | undefined =>
+      (raw !== null && raw !== undefined && /^\d+$/.test(raw.trim()) ? Number(raw.trim()) : undefined);
+    const pow = stat(chars?.power);
+    const tou = stat(chars?.toughness);
+    const colourMask = identityMask(chars?.colors ?? []);
     index.push({
       slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
       partners: degree.get(d.card.name) ?? 0,
       ...(art ? { art } : {}),
       ...(tIdx.length > 0 ? { t: tIdx } : {}),
       ...(sIdx.length > 0 ? { s: sIdx } : {}),
+      ...(kIdx.length > 0 ? { k: kIdx } : {}),
       ...(mv > 0 ? { mv } : {}),
+      ...(pow !== undefined ? { pow } : {}),
+      ...(tou !== undefined ? { tou } : {}),
+      ...(colourMask > 0 ? { c: colourMask } : {}),
       ...(written.partners.length < MIN_INDEXABLE_PARTNERS ? { thin: true as const } : {}),
       ...(commander && (written.commanderPartners ?? []).length < MIN_INDEXABLE_PARTNERS
         ? { thinCommander: true as const } : {}),
@@ -1889,5 +1927,5 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const freqByIdentity: Record<string, number[]> = {};
   for (const [k, b] of buckets) freqByIdentity[k] = [...b];
 
-  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames };
+  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames, keywordNames };
 }
