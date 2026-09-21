@@ -186,7 +186,13 @@ for (const [name, shard] of partners.shards) {
 writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify({
   supply: partners.freq, consume: partners.consumers, byIdentity: partners.freqByIdentity,
 }));
-writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify(partners.index));
+// AN OBJECT, NOT THE BARE ARRAY, SINCE 2026-09-21: the rows now carry `t`/`s` codes and the tables
+// they point into have to ship with them. `loadNameIndex` reads either shape, so an artifact built
+// before today still loads -- a reader given the new object where it expected an array would
+// otherwise report a corpus of zero cards rather than a changed format.
+writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify({
+  types: partners.typeNames, subtypes: partners.subtypeNames, cards: partners.index,
+}));
 // THE EVENT INDEX (roadmap AJ3): who causes each event and who asks for it, as positions in the
 // name index the page has already fetched. Sharded like the card and partner artifacts, so a
 // reader pays for the events they picked and not for the 1,187 they did not.
