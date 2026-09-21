@@ -1425,9 +1425,14 @@ export interface NameIndexEntry {
    *  should add all filter types that make sense"). 811 distinct over 16,302 of the 32,334 derived
    *  cards -- flying 3,261, trample 1,021, vigilance 745. Same integer-table shape as `s`. */
   k?: number[];
-  /** POWER AND TOUGHNESS, and ABSENT IS NOT ZERO. Omitted for every noncreature and for the 242
-   *  cards that print `*`, `1+*` or `X` -- they cannot answer a numeric range, and recording them
-   *  as 0 would put Tarmogoyf in the answer to "power 0". 17,736 cards carry a numeric power. */
+  /** POWER AND TOUGHNESS AS PRINTED, and ABSENT IS NOT ZERO. Omitted for anything that prints no
+   *  power and for the 242 cards printing `*`, `1+*` or `X` -- they cannot answer a numeric range,
+   *  and recording them as 0 would put Tarmogoyf in the answer to "power 0".
+   *
+   *  PRINTED, NOT "CREATURE": a Vehicle prints power and toughness without being a creature until
+   *  it crews (CR 301.7a), and Smuggler's Copter answers "power 3" here. That matches Scryfall's
+   *  `pow>=` and it is deliberate -- a reader asking for a 3-power threat wants the Copter in the
+   *  answer. Pair the row with Type line: creature if they do not. */
   pow?: number;
   tou?: number;
   /** THE CARD'S OWN COLOURS AS A WUBRG BITMASK, absent when colourless. NOT `identity` above: that

@@ -208,6 +208,9 @@ export function CardSearch({
   // "no Slivers" rather than as "nothing asked". `filterKindsOf` is the same reading of the same
   // query, so asking it here means a dimension can never again be added to one and not the other.
   const asked = needle.length > 0 || chosenKeys.length > 0 || filterKindsOf(eventQuery).length > 0;
+  // ONCE PER INDEX, not once per pass: `some` over 25,582 rows is cheap but it is not free, and
+  // the answer only changes when a different artifact loads.
+  const carriesColours = useMemo(() => (index ?? []).some((e) => e.c !== undefined), [index]);
 
   // THE SET THE EVENTS DESCRIBE. `null` means no event was asked (the whole index is the base);
   // `undefined` means the answer is not knowable yet -- still reading, or a shard that did not
@@ -244,7 +247,10 @@ export function CardSearch({
     // WHAT THE CARD IS, answered off the row rather than from the membership index (2026-09-21).
     // Compiled ONCE per pass: the names become codes here, not inside the filter, or a chosen
     // subtype costs a 488-entry scan per card on every keystroke.
-    const fitsCharacteristics = compileCharacteristics(eventQuery, vocabulary);
+    // WHETHER THIS ARTIFACT CAN ANSWER A COLOUR QUESTION AT ALL, read off the rows rather than
+    // assumed. A missing `c` is colourless on a fresh artifact and meaningless on an old one, and
+    // the deploy ships `static-out/` without rebuilding it -- so the row is told, not guessed.
+    const fitsCharacteristics = compileCharacteristics(eventQuery, { ...vocabulary, colours: carriesColours });
     const kept = named.filter((e) => (!commanderMode || e.commander)
       && coloursFit(identityOf(e), colours, mode)
       && fitsCharacteristics(e));

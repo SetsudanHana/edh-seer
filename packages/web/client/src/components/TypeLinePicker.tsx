@@ -35,10 +35,22 @@ export function TypeLinePicker(
       placeholder="Instant, Sliver, Equipment…"
       all={all}
       chosen={[...chosenTypes, ...chosenSubtypes]}
-      onChange={(next) => onChange({
-        types: next.filter((w) => isType.has(w)),
-        subtypes: next.filter((w) => !isType.has(w)),
-      })}
+      onChange={(next) => {
+        // A WORD ALREADY CHOSEN KEEPS THE TABLE IT CAME IN UNDER, and re-deriving it from
+        // `isType` was a real defect for the whole first paint: the tables arrive with a 4.8 MB
+        // fetch, the chips are on screen from the URL immediately, and until then `isType` is
+        // EMPTY -- so removing one chip on `?type=creature&subtype=sliver` re-filed "creature"
+        // as a subtype, rewrote the URL to `?subtype=creature`, and emptied the list. It could
+        // not self-heal, because by then the URL said something else.
+        const keep = new Set(next);
+        const types = chosenTypes.filter((w) => keep.has(w));
+        const subtypes = chosenSubtypes.filter((w) => keep.has(w));
+        // ONLY A NEW WORD IS RESOLVED, and a new word can only have come from the listbox --
+        // which is drawn from the vocabulary, so by the time one arrives here it has loaded.
+        const known = new Set([...chosenTypes, ...chosenSubtypes]);
+        for (const w of next) if (!known.has(w)) (isType.has(w) ? types : subtypes).push(w);
+        onChange({ types, subtypes });
+      }}
     />
   );
 }

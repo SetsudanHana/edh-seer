@@ -135,7 +135,9 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
 export function compileCharacteristics(
   q: Pick<EventQuery, "types" | "subtypes" | "keywords" | "cardColours"
     | "mvMin" | "mvMax" | "powMin" | "powMax" | "touMin" | "touMax">,
-  vocab: { types: string[]; subtypes: string[]; keywords: string[] },
+  /** WHAT THIS ARTIFACT CAN ANSWER, not only what the words are. `colours` says whether its rows
+   *  carry `c` at all -- see the colourless branch below for why that needs saying out loud. */
+  vocab: { types: string[]; subtypes: string[]; keywords: string[]; colours?: boolean },
 ): (card: { t?: number[]; s?: number[]; k?: number[]; mv?: number; pow?: number; tou?: number; c?: number }) => boolean {
   // THE NAMES BECOME CODES ONCE, NOT ONCE PER CARD. Resolving them inside the predicate meant a
   // 488-entry `indexOf` scan per card per chosen subtype, over 25,582 rows, re-run on every
@@ -153,12 +155,24 @@ export function compileCharacteristics(
   // are both. Colourless is exclusive of the five, as it is in the identity row.
   const wantColourless = q.cardColours.includes("C");
   const colourMask = wantColourless ? 0 : COLOUR_BIT_MASK(q.cardColours);
+  // AN ARTIFACT WITHOUT COLOURS ANSWERS NO COLOUR QUESTION. This is the one of the four new
+  // dimensions that does not fail closed on its own: a missing `c` means colourless on a fresh
+  // artifact -- the build omits the field only when the mask is 0 -- but EVERY row of an artifact
+  // built before today is missing it, so "Colourless" would answer with the whole corpus. The
+  // keyword row fails closed for free (an unknown word is -1 and matches nothing) and so do
+  // `pow`/`tou` (absent is excluded); this one has to be told.
+  //
+  // NOT HYPOTHETICAL: `npm run deploy` ships `static-out/` and nothing rebuilds it, and code has
+  // already gone out against a stale artifact once (Samut, 2026-09-05). A silent wrong answer is
+  // worse than a missing one, which is the rule this repo keeps.
+  const canAnswerColours = vocab.colours !== false;
   return (card) => {
     // EVERY CHOSEN TYPE MUST MATCH, the same AND the event chips use -- "artifact creature" is a
     // real question and two chips is how it is asked.
     for (const code of types) if (code < 0 || !(card.t ?? []).includes(code)) return false;
     for (const code of subtypes) if (code < 0 || !(card.s ?? []).includes(code)) return false;
     for (const code of keywords) if (code < 0 || !(card.k ?? []).includes(code)) return false;
+    if (q.cardColours.length > 0 && !canAnswerColours) return false;
     if (wantColourless) { if ((card.c ?? 0) !== 0) return false; }
     else if (colourMask !== 0 && ((card.c ?? 0) & colourMask) !== colourMask) return false;
     // ABSENT `mv` IS ZERO, which is what the artifact means by leaving it out.
@@ -166,8 +180,9 @@ export function compileCharacteristics(
     if (mvMin !== undefined && mv < mvMin) return false;
     if (mvMax !== undefined && mv > mvMax) return false;
     // AN ABSENT POWER IS NOT ZERO, unlike an absent mana value. 242 cards print `*`, `1+*` or `X`
-    // and the build omits the field for them, along with every noncreature: answering "power 0"
-    // for a Tarmogoyf or an Island would be a claim, and this engine says nothing instead.
+    // and the build omits the field for them, along with everything that prints no power at all:
+    // answering "power 0" for a Tarmogoyf or an Island would be a claim, and this engine says
+    // nothing instead. A VEHICLE DOES print one and does answer, which is Scryfall's rule too.
     if (powMin !== undefined || powMax !== undefined) {
       if (card.pow === undefined) return false;
       if (powMin !== undefined && card.pow < powMin) return false;

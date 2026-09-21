@@ -370,3 +370,35 @@ describe("the wider compileCharacteristics", () => {
     expect(fits({ touMin: 1 }, { pow: 2 })).toBe(false);
   });
 });
+
+/** THE ONE NEW DIMENSION THAT DOES NOT FAIL CLOSED ON ITS OWN (review, 2026-09-21).
+ *
+ *  A missing `c` means colourless on a fresh artifact, because the build omits the field only when
+ *  the mask is 0 -- but every row of an artifact built before the field existed is missing it, so
+ *  "Colourless" would answer with the whole corpus. The keyword row fails closed for free (an
+ *  unknown word resolves to -1) and so do power and toughness (absent is excluded). This one has
+ *  to be told, and `npm run deploy` shipping a stale `static-out/` is a thing that has happened. */
+describe("a colour question against an artifact that cannot answer it", () => {
+  const vocab = { types: [], subtypes: [], keywords: [] };
+  const ask = (over: Partial<EventQuery>): EventQuery => ({
+    produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], ...over,
+  });
+
+  test("colourless claims nothing rather than everything", () => {
+    const old = { ...vocab, colours: false };
+    expect(compileCharacteristics(ask({ cardColours: ["C"] }), old)({})).toBe(false);
+    expect(compileCharacteristics(ask({ cardColours: ["U"] }), old)({})).toBe(false);
+  });
+
+  test("and a fresh artifact still answers it", () => {
+    const fresh = { ...vocab, colours: true };
+    expect(compileCharacteristics(ask({ cardColours: ["C"] }), fresh)({})).toBe(true);
+    expect(compileCharacteristics(ask({ cardColours: ["C"] }), fresh)({ c: 2 })).toBe(false);
+  });
+
+  /** AND AN UNASKED COLOUR QUESTION IS NOT A FILTER, whatever the artifact carries -- a reader who
+   *  never opened the row must not lose the corpus to it. */
+  test("no colour chosen filters nothing, on either artifact", () => {
+    expect(compileCharacteristics(ask({}), { ...vocab, colours: false })({})).toBe(true);
+  });
+});
