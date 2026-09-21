@@ -10,8 +10,8 @@ interface Row { s: string; i: string; c: 0 | 1; e: string[]; t: string[]; d: str
 const v = (JSON.parse(readFileSync("static-out/manifest.json", "utf8")) as { version: string }).version;
 const rows = JSON.parse(readFileSync(`static-out/${v}/facet-index.json`, "utf8")) as Row[];
 const names = new Map(
-  (JSON.parse(readFileSync(`static-out/${v}/name-index.json`, "utf8")) as { slug: string; name: string }[])
-    .map((e) => [e.slug, e.name]),
+  (JSON.parse(readFileSync(`static-out/${v}/name-index.json`, "utf8")) as { cards: { slug: string; name: string }[] })
+    .cards.map((e) => [e.slug, e.name]),
 );
 const side = (r: Row, a: string): string => (r.d.includes(a) ? "asks for it" : "supplies it");
 const show = (list: Row[], a: string): void => {

@@ -20,7 +20,7 @@ const base = join(out, version);
 console.log(`artifact: ${base}`);
 
 const freq = JSON.parse(readFileSync(join(base, "event-frequency.json"), "utf8")) as EventFrequencyFile;
-const index = JSON.parse(readFileSync(join(base, "name-index.json"), "utf8")) as { name: string; identity: string[] }[];
+const index = (JSON.parse(readFileSync(join(base, "name-index.json"), "utf8")) as { cards: { name: string; identity: string[] }[] }).cards;
 
 const members = new Map<string, EventMembers>();
 for (const file of readdirSync(join(base, "events"))) {
