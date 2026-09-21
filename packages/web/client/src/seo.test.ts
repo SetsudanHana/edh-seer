@@ -120,9 +120,11 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
   }
   expect(indexXml).not.toMatch(/<url>/);
   const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
-  const index = JSON.parse(
+  // THE ROWS OUT OF THE FILE: `name-index.json` is an object since 2026-09-21, not the bare array
+  // it was before the type and subtype tables had to ship beside the rows.
+  const { cards: index } = JSON.parse(
     readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
-  ) as { slug: string; commander: boolean; partners?: number; thin?: true; thinCommander?: true }[];
+  ) as { cards: { slug: string; commander: boolean; partners?: number; thin?: true; thinCommander?: true }[] };
   const locs = childUrls.flatMap((u) => [
     ...readFileSync(join(DIST, u.slice(canonical.length)), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g),
   ].map((m) => m[1]!));
@@ -182,9 +184,9 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
  *  is what "Discovered - currently not indexed" is the absence of. */
 test.skipIf(!existsSync(builtSitemap))("every indexable card is reachable by walking the alphabet", () => {
   const version = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
-  const index = JSON.parse(
+  const { cards: index } = JSON.parse(
     readFileSync(join(DIST, "static", version, "name-index.json"), "utf8"),
-  ) as { slug: string; thin?: true }[];
+  ) as { cards: { slug: string; thin?: true }[] };
   const reachable = new Set(readdirSync(join(DIST, "static", version, "browse"))
     .filter((f) => f.endsWith(".json"))
     .flatMap((f) => JSON.parse(readFileSync(join(DIST, "static", version, "browse", f), "utf8")) as { slug: string }[])

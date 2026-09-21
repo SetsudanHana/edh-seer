@@ -125,7 +125,19 @@ if (!canonical) {
 }
 const origin = canonical.replace(/\/$/, "");
 const version = JSON.parse(readFileSync(join(target, "manifest.json"), "utf8")).version;
-const nameIndex = JSON.parse(readFileSync(join(target, version, "name-index.json"), "utf8"));
+// THE ROWS OUT OF THE FILE, WHICH IS AN OBJECT SINCE 2026-09-21. It was the bare array until the
+// type and subtype tables had to ship beside the rows. This reader is BUILD TIME and reads an
+// artifact the same tree just produced, so it takes the new shape only -- the browser's reader
+// (`static-lookup.ts`) is the one that must also accept a stale cached array.
+const nameIndexFile = JSON.parse(readFileSync(join(target, version, "name-index.json"), "utf8"));
+const nameIndex = nameIndexFile.cards;
+if (!Array.isArray(nameIndex)) {
+  console.error(
+    "name-index.json has no `cards` array — the artifact in static-out/ predates the 2026-09-21 " +
+    "format. Rebuild it: npx tsx packages/matcher/src/bin/build-static.ts",
+  );
+  process.exit(1);
+}
 const indexableCards = nameIndex.filter((e) => !e.thin);
 const indexableCommanders = nameIndex.filter((e) => e.commander && !e.thinCommander);
 // THE BROWSE PAGES, WHICH ARE THE ONLY ROUTE FROM THIS SITE INTO THE CARD PAGES. `/cards` and
