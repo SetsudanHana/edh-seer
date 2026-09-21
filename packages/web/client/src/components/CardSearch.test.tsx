@@ -13,8 +13,16 @@ const INDEX: NameIndexEntry[] = [
   { slug: "ajanis-chosen", name: "Ajani's Chosen", identity: ["W"], commander: false },
 ];
 
+/** NO VOCABULARY IN THIS FILE, AND IT MUST BE SAID OUT LOUD. `vocabulary` defaults to
+ *  `sharedNameIndexVocabulary`, which fetches -- so a render that stubs `load` and forgets this one
+ *  reaches undici with `/static/name-index.json`, a URL with no origin, and the rejection lands
+ *  OUTSIDE the test as an unhandled error. The suite still reported every test passing and exited
+ *  1, which is the shape that is easy to read as green. Empty tables are the old-artifact answer
+ *  the component already handles; the tests that are ABOUT type and subtype pass their own. */
+const NO_VOCABULARY = async () => ({ types: [], subtypes: [] });
+
 const at = (index: NameIndexEntry[] = INDEX, props: Partial<Parameters<typeof CardSearch>[0]> = {}) =>
-  render(<MemoryRouter><CardSearch load={async () => index} {...props} /></MemoryRouter>);
+  render(<MemoryRouter><CardSearch load={async () => index} vocabulary={NO_VOCABULARY} {...props} /></MemoryRouter>);
 
 test("typing a name lists matching cards as links", async () => {
   at();
@@ -132,7 +140,7 @@ const COMMANDERS: NameIndexEntry[] = [
 ];
 
 const commanders = (props: Partial<Parameters<typeof CardSearch>[0]> = {}) =>
-  render(<MemoryRouter><CardSearch mode="commanders" load={async () => COMMANDERS} {...props} /></MemoryRouter>);
+  render(<MemoryRouter><CardSearch mode="commanders" load={async () => COMMANDERS} vocabulary={NO_VOCABULARY} {...props} /></MemoryRouter>);
 
 /** THE INDEX IS EVERY CARD; ONLY 2,423 OF THE 15,350 CAN LEAD A DECK. A commander search that
  *  answered Sol Ring would be answering a different question. */
@@ -212,7 +220,7 @@ test("the card search fits the identity in: a colourless card answers a colour q
 test("the box is seeded from the URL, and typing puts the query back into it", async () => {
   render(
     <MemoryRouter initialEntries={["/cards?q=krenko%20mob"]}>
-      <CardSearch load={async () => INDEX} />
+      <CardSearch load={async () => INDEX} vocabulary={NO_VOCABULARY} />
     </MemoryRouter>,
   );
   const box = await screen.findByRole("searchbox");
@@ -228,7 +236,7 @@ test("the box is seeded from the URL, and typing puts the query back into it", a
  *  the not-found page's seeded search produces when a reader mistyped one card's name. */
 test("the count line agrees with itself when there is one result", async () => {
   render(
-    <MemoryRouter initialEntries={["/cards?q=jotun"]}><CardSearch load={async () => INDEX} /></MemoryRouter>,
+    <MemoryRouter initialEntries={["/cards?q=jotun"]}><CardSearch load={async () => INDEX} vocabulary={NO_VOCABULARY} /></MemoryRouter>,
   );
   expect(await screen.findByText("1 card matches.")).toBeInTheDocument();
 });
@@ -305,7 +313,7 @@ const atUrl = (url: string, props: Partial<Parameters<typeof CardSearch>[0]> = {
   render(
     <MemoryRouter initialEntries={[url]}>
       <Routes>
-        <Route path={path} element={<><CardSearch load={async () => INDEX2} frequency={async () => FREQ} members={members} {...props} /><Spy /></>} />
+        <Route path={path} element={<><CardSearch load={async () => INDEX2} frequency={async () => FREQ} members={members} vocabulary={NO_VOCABULARY} {...props} /><Spy /></>} />
       </Routes>
     </MemoryRouter>,
   );

@@ -25,6 +25,26 @@ export interface EventQuery {
   /** Events the card ASKS FOR. Every one must match. */
   consume: string[];
   colours: string[];
+  /** WHAT THE CARD IS, added 2026-09-21. The owner asked for two things this could not answer:
+   *  Slivers, and "show me mill instants which are blue and cost less than 3 mana".
+   *
+   *  NOT A SECOND VOCABULARY, and the distinction is the 09-19 ruling's own. That ruling deleted
+   *  the `DOES` chips and the strategy select because they said what a card DOES in words the
+   *  events already said better. A printed type line does not compete with an event -- it is the
+   *  same kind of fact as `colours` above, which has sat beside the event facets since the day
+   *  they shipped. The deck-build agent's first run is the measured case: Inalla's whole deck is a
+   *  creature type, and with no way to ask for one it abused "provides a Wizard to sacrifice" as a
+   *  proxy and took the false positives that brings. */
+  types: string[];
+  subtypes: string[];
+  /** Mana value ceiling, inclusive. `undefined` asks nothing. A CEILING and not a range: "cost
+   *  less than 3" is the question people ask; nobody has asked for a floor. */
+  maxMv?: number;
+  /** How the kept rows are ordered. `partners` is the artifact's own order (best connected first)
+   *  and stays the default -- the sort exists so a reader can ESCAPE that ranking, not because it
+   *  is wrong. The deck-build run's complaint: rare events outranked good cards, so it found
+   *  staples "only by already knowing their names and typing them in". */
+  sort?: "partners" | "mv" | "name";
 }
 
 /** REPEATED PARAMS, NEVER A JOINED LIST. 274 of the 1,187 keys contain a comma
@@ -33,21 +53,63 @@ export interface EventQuery {
  *
  *  `does` AND `theme` ARE NOT READ. An old link carrying them lands on an unfiltered page, which
  *  is a smaller lie than answering a question the vocabulary no longer has. */
+const SORTS = new Set(["partners", "mv", "name"]);
+
 export function eventsFromParams(p: URLSearchParams): EventQuery {
+  const mv = Number(p.get("mv"));
+  const sort = p.get("sort") ?? "";
   return {
     produce: p.getAll("produce").filter((k) => k.length > 0),
     consume: p.getAll("consume").filter((k) => k.length > 0),
     colours: [...(p.get("colors") ?? "")].filter((c) => "WUBRGC".includes(c)),
+    types: p.getAll("type").filter((k) => k.length > 0),
+    subtypes: p.getAll("subtype").filter((k) => k.length > 0),
+    // A BAD `mv` IS NO FILTER, NOT ZERO. `?mv=abc` reading as "at most 0 mana" would answer a
+    // question nobody asked with a confident empty list.
+    ...(Number.isFinite(mv) && mv > 0 ? { maxMv: Math.floor(mv) } : {}),
+    ...(SORTS.has(sort) ? { sort: sort as EventQuery["sort"] } : {}),
   };
 }
 
 export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchParams {
   const out = new URLSearchParams(p);
-  for (const k of ["produce", "consume", "colors"]) out.delete(k);
+  for (const k of ["produce", "consume", "colors", "type", "subtype", "mv", "sort"]) out.delete(k);
   for (const k of q.produce) out.append("produce", k);
   for (const k of q.consume) out.append("consume", k);
   if (q.colours.length > 0) out.set("colors", q.colours.join(""));
+  for (const k of q.types) out.append("type", k);
+  for (const k of q.subtypes) out.append("subtype", k);
+  if (q.maxMv !== undefined) out.set("mv", String(q.maxMv));
+  // THE DEFAULT IS NOT WRITTEN DOWN. `?sort=partners` in every shared link is noise, and it would
+  // pin the order against a future change of default.
+  if (q.sort && q.sort !== "partners") out.set("sort", q.sort);
   return out;
+}
+
+/** Does this card pass the characteristic half of the query? The event half is answered from the
+ *  membership index; this is answered from the row itself, which is why it lives here. */
+export function compileCharacteristics(
+  q: Pick<EventQuery, "types" | "subtypes" | "maxMv">,
+  vocab: { types: string[]; subtypes: string[] },
+): (card: { t?: number[]; s?: number[]; mv?: number }) => boolean {
+  // THE NAMES BECOME CODES ONCE, NOT ONCE PER CARD. Resolving them inside the predicate meant a
+  // 488-entry `indexOf` scan per card per chosen subtype, over 25,582 rows, re-run on every
+  // keystroke of the name field -- about twelve million string comparisons to answer one letter.
+  //
+  // A NAME THE VOCABULARY DOES NOT KNOW YIELDS -1 AND MATCHES NOTHING, deliberately: the tables
+  // load asynchronously, and a filter that silently stopped applying while they were in flight
+  // would show cards that do not answer the question.
+  const types = q.types.map((n) => vocab.types.indexOf(n));
+  const subtypes = q.subtypes.map((n) => vocab.subtypes.indexOf(n));
+  const { maxMv } = q;
+  return (card) => {
+    // EVERY CHOSEN TYPE MUST MATCH, the same AND the event chips use -- "artifact creature" is a
+    // real question and two chips is how it is asked.
+    for (const code of types) if (code < 0 || !(card.t ?? []).includes(code)) return false;
+    for (const code of subtypes) if (code < 0 || !(card.s ?? []).includes(code)) return false;
+    // ABSENT `mv` IS ZERO, which is what the artifact means by leaving it out.
+    return maxMv === undefined || (card.mv ?? 0) <= maxMv;
+  };
 }
 
 /** WHAT A COLOUR CHIP MEANS, AND IT IS NOT THE SAME QUESTION ON THE TWO PAGES (owner 2026-09-19).

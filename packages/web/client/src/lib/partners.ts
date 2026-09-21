@@ -51,6 +51,46 @@ export function loadCardPage(
   return new StaticLookup(baseUrl, fetchImpl).cardPage(slug);
 }
 
+/** THE TYPE AND SUBTYPE TABLES the index's `t`/`s` codes point into (2026-09-21). Its own loader
+ *  rather than a second field on `sharedNameIndex`, because the two are wanted at different times:
+ *  the header field needs the ROWS on first keystroke and never needs the tables, while the facet
+ *  row needs the tables to draw itself before any card has been filtered. The underlying fetch is
+ *  the same file and `StaticLookup` caches it, so asking twice costs one request. */
+const sharedVocabulary = new Map<string, Promise<{ types: string[]; subtypes: string[] }>>();
+/** ONE `StaticLookup` BEHIND BOTH SHARED READERS, so they share its single fetch and single parse
+ *  of a 4.3 MB file. Two instances meant two downloads on any path without a Cache API -- every
+ *  test, and a browser's first visit -- while the comment above promised one request per session.
+ *
+ *  THE SHARED PATH ONLY. `loadNameIndex` below stays unmemoised on purpose: it is the "ask again"
+ *  variant, and a test calls it twice with different stubs and expects two different answers.
+ *  Caching it broke that, which is what the suite said the moment this map was introduced. */
+const sharedLookups = new Map<string, StaticLookup>();
+const sharedLookup = (baseUrl: string, fetchImpl: typeof fetch): StaticLookup => {
+  const hit = sharedLookups.get(baseUrl);
+  if (hit) return hit;
+  const made = new StaticLookup(baseUrl, fetchImpl);
+  sharedLookups.set(baseUrl, made);
+  return made;
+};
+/** Forgetting a base URL forgets its lookup too, or the retry the empty-answer rule buys would be
+ *  answered from the same instance that already resolved empty. */
+const forget = (baseUrl: string): void => { sharedLookups.delete(baseUrl); };
+
+export function sharedNameIndexVocabulary(
+  baseUrl: string, fetchImpl: typeof fetch = fetch,
+): Promise<{ types: string[]; subtypes: string[] }> {
+  const hit = sharedVocabulary.get(baseUrl);
+  if (hit) return hit;
+  const p = sharedLookup(baseUrl, fetchImpl).nameIndexVocabulary();
+  sharedVocabulary.set(baseUrl, p);
+  // An empty answer is forgotten, the same rule the index itself keeps: an artifact built before
+  // the tables existed, or a fetch that missed, must not pin an empty vocabulary for the session.
+  p.then((v) => {
+    if (v.types.length === 0 && sharedVocabulary.get(baseUrl) === p) { sharedVocabulary.delete(baseUrl); forget(baseUrl); }
+  }).catch(() => { sharedVocabulary.delete(baseUrl); forget(baseUrl); });
+  return p;
+}
+
 export function loadNameIndex(
   baseUrl: string, fetchImpl: typeof fetch = fetch,
 ): Promise<NameIndexEntry[]> {
@@ -67,15 +107,28 @@ const shared = new Map<string, Promise<NameIndexEntry[]>>();
 export function sharedNameIndex(baseUrl: string, fetchImpl: typeof fetch = fetch): Promise<NameIndexEntry[]> {
   const hit = shared.get(baseUrl);
   if (hit) return hit;
-  const p = loadNameIndex(baseUrl, fetchImpl);
+  // THE SHARED LOOKUP, NOT `loadNameIndex`: the rows and the vocabulary have to come out of one
+  // fetch, and `loadNameIndex` makes a fresh instance every call by design.
+  const p = sharedLookup(baseUrl, fetchImpl).nameIndex();
   shared.set(baseUrl, p);
-  p.then((index) => { if (index.length === 0 && shared.get(baseUrl) === p) shared.delete(baseUrl); })
-    .catch(() => { if (shared.get(baseUrl) === p) shared.delete(baseUrl); });
+  p.then((index) => {
+    if (index.length === 0 && shared.get(baseUrl) === p) { shared.delete(baseUrl); forget(baseUrl); }
+  }).catch(() => { if (shared.get(baseUrl) === p) { shared.delete(baseUrl); forget(baseUrl); } });
   return p;
 }
 
 /** Tests only: forget every cached load. */
-export function resetSharedNameIndex(): void { shared.clear(); sharedFreq.clear(); sharedMembers.clear(); }
+/** EVERY MAP THAT REMEMBERS A BASE URL, and the two added on 2026-09-21 belong here. Clearing the
+ *  promise maps while leaving `sharedLookups` holding an instance that has already memoised a body
+ *  makes the reset look like it worked and answer from the old fetch -- which is what the suite
+ *  said when they were first left out. */
+export function resetSharedNameIndex(): void {
+  shared.clear();
+  sharedVocabulary.clear();
+  sharedLookups.clear();
+  sharedFreq.clear();
+  sharedMembers.clear();
+}
 
 /** THE EVENT COUNTS, ONCE PER SESSION (roadmap AJ3): what every picker row prints, fetched on the
  *  first search interaction and never on page load. Same memo rule as the name index -- an empty

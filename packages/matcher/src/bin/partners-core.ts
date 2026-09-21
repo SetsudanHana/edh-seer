@@ -1406,6 +1406,32 @@ export interface NameIndexEntry {
   art?: string;
   /** The same fact for `/commanders/<slug>`, which ranks a different list. Commander records only. */
   thinCommander?: true;
+  /** WHAT THE CARD IS, so the list can be asked for it (owner, 2026-09-21: slivers, and "mill
+   *  instants which are blue and cost less than 3 mana").
+   *
+   *  A TYPE IS NOT AN EVENT, which is why these could not be reached by widening the facet
+   *  vocabulary. The 2026-09-19 ruling that deleted the `DOES` chips was against a second SEMANTIC
+   *  vocabulary competing with events; a printed type line is not that, and `identity` above is
+   *  already a characteristic sitting beside the event facets.
+   *
+   *  INDICES INTO `NameIndexFile.types` / `.subtypes`, NOT NAMES. Measured over the corpus: spelled
+   *  out they add 1.51 MB to a 3.74 MB file the client downloads; as indices, 0.89 MB with 5 KB of
+   *  tables. 18 distinct types, 488 distinct subtypes. */
+  t?: number[];
+  s?: number[];
+  /** Mana value, absent when 0 -- which is most lands, and the most common value in the corpus. */
+  mv?: number;
+}
+
+/** THE INDEX AS SHIPPED: the rows plus the tables their `t`/`s` point into.
+ *
+ *  A FILE SHAPE, NOT AN ARRAY, SINCE 2026-09-21. The old file WAS the array, so a reader that has
+ *  not been updated would read the new object as zero cards rather than as a changed format --
+ *  which is why `loadNameIndex` accepts both and is the only place that knows. */
+export interface NameIndexFile {
+  types: string[];
+  subtypes: string[];
+  cards: NameIndexEntry[];
 }
 
 /** ONE ROW OF A BROWSE PAGE: the least that makes a link. Deliberately not `NameIndexEntry` -- the
@@ -1473,6 +1499,9 @@ export interface PartnerArtifact {
    *  colours a reader chose. Read with `inIdentityOf`. */
   freqByIdentity: Record<string, number[]>;
   index: NameIndexEntry[];
+  /** The tables `NameIndexEntry.t` / `.s` are positions in. Shipped beside the rows. */
+  typeNames: string[];
+  subtypeNames: string[];
 }
 
 /** A COMMANDER, for `/commanders`: CR 903.3 exactly as `legality.ts` reads it -- legendary creature,
@@ -1649,6 +1678,13 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
 
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
+  // THE TABLES THE ROWS POINT INTO. Collected from the corpus rather than from a written-down list,
+  // so a set that introduces a type cannot leave the index describing cards with a word it has no
+  // code for. Sorted, so the file is stable across builds that changed nothing.
+  const typeNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.types ?? []).map((x) => x.toLowerCase())))].sort();
+  const subtypeNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.subtypes ?? []).map((x) => x.toLowerCase())))].sort();
+  const typeCode = (x: string): number => typeNames.indexOf(x);
+  const subtypeCode = (x: string): number => subtypeNames.indexOf(x);
   // THE MIRROR: every pair the forward phase verified, filed under the card it points AT, so the
   // second pass can hand each payoff the producers whose pages already list it.
   const producers = new Map<string, PartnerRow[]>();
@@ -1796,10 +1832,17 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     const written = rec as CardPageRecord & { commanderPartners?: PartnerRow[] };
     const art = printingIdOf(artCropOf(d));
     const commander = isCommander(d);
+    const chars = d.tags?.characteristics;
+    const tIdx = (chars?.types ?? []).map((x) => typeCode(x.toLowerCase())).filter((n) => n >= 0);
+    const sIdx = (chars?.subtypes ?? []).map((x) => subtypeCode(x.toLowerCase())).filter((n) => n >= 0);
+    const mv = chars?.cmc ?? 0;
     index.push({
       slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
       partners: degree.get(d.card.name) ?? 0,
       ...(art ? { art } : {}),
+      ...(tIdx.length > 0 ? { t: tIdx } : {}),
+      ...(sIdx.length > 0 ? { s: sIdx } : {}),
+      ...(mv > 0 ? { mv } : {}),
       ...(written.partners.length < MIN_INDEXABLE_PARTNERS ? { thin: true as const } : {}),
       ...(commander && (written.commanderPartners ?? []).length < MIN_INDEXABLE_PARTNERS
         ? { thinCommander: true as const } : {}),
@@ -1846,5 +1889,5 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const freqByIdentity: Record<string, number[]> = {};
   for (const [k, b] of buckets) freqByIdentity[k] = [...b];
 
-  return { shards, freq, consumers, events, freqByIdentity, index };
+  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames };
 }
