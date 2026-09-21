@@ -6,7 +6,6 @@ import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIn
 import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, intersect, withoutFilterKind, FILTER_KINDS, type EventQuery, type FilterKind } from "../lib/facets.js";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { EventPicker } from "./EventPicker.js";
-import { CardSymbol } from "./CardSymbol.js";
 import { CardTile } from "./CardTile.js";
 import { TypeLinePicker } from "./TypeLinePicker.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
@@ -129,6 +128,15 @@ export function CardSearch({
   // the link that nobody asked.
   const [pending, setPending] = useState<FilterKind[]>([]);
   const askedKinds = useMemo(() => filterKindsOf(eventQuery), [eventQuery]);
+  // A ROW OUTLIVES ITS OWN VALUE. Emptying one must not unmount it: untick the only colour to swap
+  // Red for Blue and the control the reader is operating would disappear under them (WCAG 3.2.2),
+  // and the same for a select put back to "any" or the last event deselected on a shared link.
+  // Once a kind has been shown it stays until the remove button takes it, which is the only thing
+  // that should. Recording the URL's kinds here rather than filtering them in below is what makes
+  // that true for a row that arrived from a link and was never added from the menu.
+  useEffect(() => {
+    setPending((ks) => (askedKinds.every((k) => ks.includes(k)) ? ks : [...new Set([...ks, ...askedKinds])]));
+  }, [askedKinds]);
   const shownKinds = FILTER_KINDS.filter((k) => askedKinds.includes(k) || pending.includes(k));
   const available = FILTER_KINDS.filter((k) => !shownKinds.includes(k));
   const [menuOpen, setMenuOpen] = useState(false);
@@ -503,7 +511,12 @@ export function CardSearch({
           * because a menu still standing over the control it just created is in the way. */}
         {available.length > 0 && (
           <details
-            className="w-fit"
+            // `relative`, AND IT IS LOAD-BEARING: `.site-search-list` below is `position:absolute`,
+            // so without a positioned ancestor it resolves against the INITIAL containing block.
+            // Measured in a browser when this was missing: the open menu painted at left:0,
+            // top:1084, width:1920 -- full-bleed and entirely below a 1080px viewport. No test saw
+            // it, because jsdom does no layout. `TypeLinePicker` wraps its own list for this reason.
+            className="relative w-fit"
             open={menuOpen}
             onToggle={(e) => setMenuOpen((e.currentTarget as HTMLDetailsElement).open)}
           >
@@ -557,11 +570,6 @@ export function CardSearch({
           </div>
         : matches === null
         ? <p className="eyebrow text-(--muted)">reading what cards do</p>
-        : matches.length === 0
-        ? <p className="text-(--muted)">
-            No {commanderMode ? "commander" : "card"} matches. The engine has read{" "}
-            {index.length.toLocaleString("en-US")} cards; one it has never read has no page.
-          </p>
         : (
           <div className="flex flex-col gap-2">
             {/* THE ORDER SITS WITH THE COUNT, NOT IN THE FILTER MENU (2026-09-21). An order is not
@@ -576,11 +584,17 @@ export function CardSearch({
               {/* A STATUS MESSAGE (WCAG 4.1.3): a chip changes the set and the number moves; a
                 * screen reader hears it only if the paragraph says it is one. */}
               <p role="status" className="text-(--muted) text-sm">
-                {matches.length.toLocaleString("en-US")}{" "}
-                {matches.length === 1
-                  ? (commanderMode ? "commander matches" : "card matches")
-                  : (commanderMode ? "commanders match" : "cards match")}
-                {matches.length > shown ? `, showing the first ${shown}` : ""}.
+                {/* THE REFUSAL SITS WHERE THE COUNT SITS, so the order control is reachable on a
+                  * zero-result answer too -- a shared `?sort=name` link that matches nothing had
+                  * no way to undo the order it arrived carrying. */}
+                {matches.length === 0
+                  ? <>No {commanderMode ? "commander" : "card"} matches. The engine has read{" "}
+                      {index.length.toLocaleString("en-US")} cards; one it has never read has no page.</>
+                  : <>{matches.length.toLocaleString("en-US")}{" "}
+                      {matches.length === 1
+                        ? (commanderMode ? "commander matches" : "card matches")
+                        : (commanderMode ? "commanders match" : "cards match")}
+                      {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
               </p>
               <label className="flex items-center gap-2">
                 <span className="eyebrow">Order</span>

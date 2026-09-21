@@ -524,6 +524,57 @@ test("the event counts are read when an event row is added, not before", async (
   await waitFor(() => expect(freq).toHaveBeenCalled());
 });
 
+/** A ROW OUTLIVES ITS OWN VALUE (review, 2026-09-21). `shownKinds` was the URL's rows plus the ones
+ *  added from the menu, so emptying a row that CAME from a link unmounted it -- untick the only
+ *  colour to swap Red for Blue and the whole control vanished, taking the reader's place in the
+ *  task with it. Reproduced in a browser before it was fixed: `/cards?colors=R`, click Red, and
+ *  the row is gone. Destroying the control someone is operating is WCAG 3.2.2 territory, and the
+ *  remove button is the only thing that should ever take a row away. */
+test("emptying a row keeps the row, so a colour can be swapped for another", async () => {
+  atUrl("/cards?colors=R");
+  const red = await screen.findByRole("button", { name: /^Red$/ });
+  await userEvent.click(red);
+  expect(red).toHaveAttribute("aria-pressed", "false");
+  // Still there, and still usable for the question the reader was in the middle of asking.
+  const blue = screen.getByRole("button", { name: /^Blue$/ });
+  await userEvent.click(blue);
+  expect(blue).toHaveAttribute("aria-pressed", "true");
+});
+
+test("a mana value set back to any keeps its select", async () => {
+  atUrl("/cards?mv=3");
+  const select = await screen.findByLabelText("Mana value");
+  await userEvent.selectOptions(select, "");
+  expect(screen.getByLabelText("Mana value")).toBeInTheDocument();
+});
+
+test("the remove button is still the way a row goes away", async () => {
+  atUrl("/cards?colors=R");
+  await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Remove the Colour identity filter" }));
+  expect(screen.queryByRole("button", { name: /^Red$/ })).toBeNull();
+});
+
+/** THE ORDER SURVIVES A ZERO-RESULT ANSWER (review, 2026-09-21). It moved beside the count, and
+ *  the count only exists when something matched -- so a shared `?sort=name` link that matches
+ *  nothing had no control to undo the order it arrived with. */
+test("the order control is there even when nothing matched", async () => {
+  atUrl("/cards?q=zzzznothing&sort=name");
+  expect(await screen.findByText(/No card matches/)).toBeInTheDocument();
+  expect(screen.getByLabelText("Order")).toHaveValue("name");
+});
+
+/** THE MENU NEEDS A POSITIONED ANCESTOR, and this is a className assertion on purpose: jsdom does
+ *  no layout, so nothing here can see where the menu actually paints. It shipped without one and
+ *  a browser put the open menu at left:0, top:1084, width:1920 -- full-bleed and entirely below a
+ *  1080px viewport, because `.site-search-list` is `position:absolute` and resolved against the
+ *  initial containing block. The same trap `.claude/rules/ui.md` names for `.sr-only`. */
+test("the add menu carries the positioning its list needs", async () => {
+  atUrl("/cards");
+  const summary = await screen.findByText("Add a filter");
+  expect(summary.closest("details")).toHaveClass("relative");
+});
+
 /** THE LANDING IS SEARCH-FIRST (owner, 2026-09-17: the chips were a wall), and since AJ3 the
  *  question is asked in events. The empty state offers three of them, built from real keys. */
 test("an example question sets the events and lists its answer as tiles", async () => {
