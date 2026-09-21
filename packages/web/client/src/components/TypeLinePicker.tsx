@@ -1,12 +1,19 @@
 import { useId, useMemo, useRef, useState } from "react";
 import { useListboxKeys } from "../lib/listbox-keys.js";
 
-/** FOUR HUNDRED AND EIGHTY-EIGHT SUBTYPES, WHICH IS A FIELD AND NOT A ROW OF CHIPS.
+/** FOUR HUNDRED AND EIGHTY-SEVEN WORDS A CARD CAN BE, WHICH IS A FIELD AND NOT A ROW OF CHIPS.
  *
- *  Asked for by the owner twice (2026-09-21): Slivers, and before that the same question about a
- *  tribe the facet vocabulary could not express. The deck-build run is the measured case -- Inalla's
- *  whole deck is a creature type, and with nothing to ask for one the agent abused "provides a
- *  Wizard to sacrifice" as a proxy and accepted the non-Wizards it drags in.
+ *  ONE CONTROL OVER TYPES AND SUBTYPES BOTH (owner, 2026-09-21: "why type and subtype is not one
+ *  like on scryfall"). They were already one question -- every term in this query ANDs, which is
+ *  exactly what `t:` does on Scryfall, and asking a reader to know that Equipment is a subtype
+ *  while Artifact is a type is asking them to know our storage layout. Measured over the shipped
+ *  artifact: 13 types, 474 subtypes, and NO word in both, so each choice resolves to its own param
+ *  with nothing to disambiguate. Only the control merged; `type=` and `subtype=` did not, so every
+ *  link shared before today still opens the search it named.
+ *
+ *  It was thirteen chips and a field until then. The chips cost a whole wrapped row of the panel
+ *  to say what this field says in the same breath as the subtype -- and the row was drawn whether
+ *  or not anyone wanted to ask about a type.
  *
  *  EVERY SUBTYPE, NOT A TRIBE LIST. Equipment, Saga, Aura, Cave and the basic land types are
  *  subtypes too, and "the tribes people actually search for" is a judgement that would need
@@ -15,25 +22,40 @@ import { useListboxKeys } from "../lib/listbox-keys.js";
  *  THE KEYBOARD MODEL IS THE ONE THE HEADER SEARCH ALREADY HAS. `useListboxKeys` carries the
  *  arrow/enter/escape behaviour and the `aria-activedescendant` bookkeeping that a combobox owes a
  *  screen reader; a second implementation of it is a second place for that to be wrong. */
-export function SubtypePicker(
-  { all, chosen, onChange }: { all: string[]; chosen: string[]; onChange: (next: string[]) => void },
+export function TypeLinePicker(
+  { types, subtypes, chosenTypes, chosenSubtypes, onChange }: {
+    types: string[];
+    subtypes: string[];
+    chosenTypes: string[];
+    chosenSubtypes: string[];
+    onChange: (next: { types: string[]; subtypes: string[] }) => void;
+  },
 ): React.JSX.Element {
   const [query, setQuery] = useState("");
   const listId = useId();
   const fieldRef = useRef<HTMLInputElement>(null);
 
+  /** THE TABLE A WORD CAME FROM, so choosing it can write the right param. Built from the
+   *  vocabulary rather than from a list written down here: a set that introduces a type would
+   *  otherwise be filed as a subtype by a reader who cannot see the difference anyway. */
+  const isType = useMemo(() => new Set(types), [types]);
+  /** TYPES FIRST, because they are the coarser question and the shorter list -- so "creature"
+   *  outranks "Crewmate" for a reader who typed "cre" and meant the card type. */
+  const all = useMemo(() => [...types, ...subtypes], [types, subtypes]);
+
   /** PREFIX FIRST, THEN ANYWHERE. Typing "sli" should put Sliver above Basilisk, and a plain
    *  `includes` does not: 28 subtypes contain "sli" and the one that starts with it is what was
    *  meant. Capped at eight because a listbox longer than the viewport is a scroll inside a scroll
-   *  on the phone this page already folds for. */
+   *  on the phone this panel is now one row of. */
   const options = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (q.length === 0) return [];
-    const free = all.filter((s) => !chosen.includes(s));
+    const taken = new Set([...chosenTypes, ...chosenSubtypes]);
+    const free = all.filter((s) => !taken.has(s));
     const starts = free.filter((s) => s.startsWith(q));
     const contains = free.filter((s) => !s.startsWith(q) && s.includes(q));
     return [...starts, ...contains].slice(0, 8);
-  }, [all, chosen, query]);
+  }, [all, chosenTypes, chosenSubtypes, query]);
 
   // DECLARED BEFORE `take` USES IT, and `take` is referenced by the hook -- so the hook's callback
   // reads `options` through the closure rather than taking the name as an argument.
@@ -44,27 +66,37 @@ export function SubtypePicker(
   });
 
   const take = (name: string): void => {
-    onChange([...chosen, name]);
+    onChange(isType.has(name)
+      ? { types: [...chosenTypes, name], subtypes: chosenSubtypes }
+      : { types: chosenTypes, subtypes: [...chosenSubtypes, name] });
     setQuery("");
     reset();
     fieldRef.current?.focus();
   };
 
+  const drop = (name: string): void => {
+    onChange({
+      types: chosenTypes.filter((s) => s !== name),
+      subtypes: chosenSubtypes.filter((s) => s !== name),
+    });
+  };
+
   const optId = (i: number): string => `${listId}-o${i}`;
   return (
     <div className="flex flex-col gap-1">
-      <label className="eyebrow" htmlFor={`${listId}-field`}>Subtype</label>
+      <label className="eyebrow" htmlFor={`${listId}-field`}>Type line</label>
       {/* THE CHOSEN ONES ARE CHIPS, so removing one is a click rather than a re-typed field, and so
-        * the ANSWERED question stays visible while the next is being asked. */}
-      {chosen.length > 0 && (
+        * the ANSWERED question stays visible while the next is being asked. Types before subtypes,
+        * which is the order a card prints them in. */}
+      {chosenTypes.length + chosenSubtypes.length > 0 && (
         <ul className="flex flex-wrap gap-2 list-none p-0 m-0">
-          {chosen.map((name) => (
+          {[...chosenTypes, ...chosenSubtypes].map((name) => (
             <li key={name}>
               <button
                 type="button"
                 className="chip capitalize"
                 aria-label={`Remove ${name}`}
-                onClick={() => onChange(chosen.filter((s) => s !== name))}
+                onClick={() => drop(name)}
               >
                 {name}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
@@ -87,13 +119,13 @@ export function SubtypePicker(
           aria-autocomplete="list"
           {...(options.length > 0 && active >= 0 ? { "aria-activedescendant": optId(active) } : {})}
           className="field w-52"
-          placeholder="Sliver, Equipment, Saga…"
+          placeholder="Instant, Sliver, Equipment…"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setActive(-1); }}
           onKeyDown={onKey}
         />
         {options.length > 0 && (
-          <ul id={listId} role="listbox" aria-label="Subtypes" className="site-search-list absolute z-20 mt-1 list-none p-0">
+          <ul id={listId} role="listbox" aria-label="Types and subtypes" className="site-search-list absolute z-20 mt-1 list-none p-0">
             {options.map((name, i) => (
               <li
                 key={name}

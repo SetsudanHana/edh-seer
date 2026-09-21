@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { coloursFit, eventsFromParams, eventsToParams, intersect, rateLabel, compileCharacteristics, type EventQuery } from "./facets.js";
+import { coloursFit, eventsFromParams, eventsToParams, intersect, rateLabel, compileCharacteristics, filterKindsOf, withoutFilterKind, type EventQuery } from "./facets.js";
 
 /** THE SEARCH IS ASKED IN EVENTS (spec 2026-09-19): repeated params because a key can carry a
  *  comma, everything ANDs, and identity is fits-in on Cards and exact on Commanders. */
@@ -130,5 +130,85 @@ describe("characteristicsFit", () => {
    *  shows cards that do not answer the question. */
   test("a type the vocabulary does not know matches nothing", () => {
     expect(compileCharacteristics(ask({ types: ["planeswalker"] }), vocab)({ t: [1] })).toBe(false);
+  });
+});
+
+/** THE PANEL IS A LIST OF ROWS NOW (owner, 2026-09-21: "cards are like 20 % of the screen").
+ *
+ *  Measured before the change: the first card sat at 772px of a 930px viewport -- 83% of the
+ *  screen was chrome, and the reader scrolled past eight labelled groups to reach a result. Every
+ *  control is a row you ADD; the page starts as a search box, a plus and the count.
+ *
+ *  WHICH ROWS ARE DRAWN IS A QUESTION ABOUT THE URL, not about what was clicked. A link carrying
+ *  `?subtype=sliver&mv=3` has to arrive with those two rows already open and filled, or a shared
+ *  search would land on a page that does not show what it is asking. */
+describe("filterKindsOf", () => {
+  const empty: EventQuery = { produce: [], consume: [], colours: [], types: [], subtypes: [] };
+
+  test("a question nobody has asked draws no rows", () => {
+    expect(filterKindsOf(empty)).toEqual([]);
+  });
+
+  test("each param brings its own row", () => {
+    expect(filterKindsOf({ ...empty, colours: ["R"] })).toEqual(["colours"]);
+    expect(filterKindsOf({ ...empty, maxMv: 3 })).toEqual(["mv"]);
+    expect(filterKindsOf({ ...empty, produce: ["mill|-|-|-"] })).toEqual(["produce"]);
+    expect(filterKindsOf({ ...empty, consume: ["dies|creature|-|-"] })).toEqual(["consume"]);
+  });
+
+  /** ONE ROW, BOTH PARAMS. Type and subtype are one control (owner: "why type and subtype is not
+   *  one like on scryfall") over one vocabulary of 487 words -- 13 types and 474 subtypes, with no
+   *  word in both, so each resolves to its own param without asking which was meant. */
+  test("type and subtype are one row", () => {
+    expect(filterKindsOf({ ...empty, types: ["instant"] })).toEqual(["typeline"]);
+    expect(filterKindsOf({ ...empty, subtypes: ["sliver"] })).toEqual(["typeline"]);
+    expect(filterKindsOf({ ...empty, types: ["instant"], subtypes: ["sliver"] })).toEqual(["typeline"]);
+  });
+
+  /** A STABLE ORDER, AND NOT THE ORDER THEY WERE ADDED: the rows would otherwise shuffle between a
+   *  reader's own session and the link they share, which are the same question. */
+  test("the rows keep one order however the params arrive", () => {
+    const q: EventQuery = { produce: ["a"], consume: ["b"], colours: ["R"], types: ["instant"], subtypes: [], maxMv: 2 };
+    expect(filterKindsOf(q)).toEqual(["colours", "typeline", "mv", "produce", "consume"]);
+  });
+
+  /** SORT IS NOT A FILTER and must never become a row: it applies with nothing asked, so a reader
+   *  cannot "add" it and there is nothing to remove. It lives beside the count instead. */
+  test("an order is not a filter", () => {
+    expect(filterKindsOf({ ...empty, sort: "name" })).toEqual([]);
+  });
+});
+
+/** REMOVING A ROW CLEARS ITS OWN PARAMS AND NOTHING ELSE. The remove control is the only way back
+ *  to "not asked" for a row, so a kind that clears a neighbour's question silently narrows a search
+ *  the reader still wanted. */
+describe("withoutFilterKind", () => {
+  const full: EventQuery = {
+    produce: ["mill|-|-|-"], consume: ["dies|creature|-|-"], colours: ["U"],
+    types: ["instant"], subtypes: ["sliver"], maxMv: 3, sort: "name",
+  };
+
+  test("the type line row clears both its params", () => {
+    const next = withoutFilterKind(full, "typeline");
+    expect(next.types).toEqual([]);
+    expect(next.subtypes).toEqual([]);
+    expect(next.colours).toEqual(["U"]);
+    expect(next.maxMv).toBe(3);
+  });
+
+  test("mana value goes back to asking nothing, not to zero", () => {
+    expect(withoutFilterKind(full, "mv").maxMv).toBeUndefined();
+  });
+
+  test("each other row clears itself alone", () => {
+    expect(withoutFilterKind(full, "colours").colours).toEqual([]);
+    expect(withoutFilterKind(full, "produce").produce).toEqual([]);
+    expect(withoutFilterKind(full, "consume").consume).toEqual([]);
+  });
+
+  test("an order survives every removal", () => {
+    for (const k of ["colours", "typeline", "mv", "produce", "consume"] as const) {
+      expect(withoutFilterKind(full, k).sort).toBe("name");
+    }
   });
 });

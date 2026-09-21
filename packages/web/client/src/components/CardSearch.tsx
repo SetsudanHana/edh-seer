@@ -3,12 +3,12 @@ import { Link, useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, intersect, type EventQuery } from "../lib/facets.js";
+import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, intersect, withoutFilterKind, FILTER_KINDS, type EventQuery, type FilterKind } from "../lib/facets.js";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { EventPicker } from "./EventPicker.js";
 import { CardSymbol } from "./CardSymbol.js";
 import { CardTile } from "./CardTile.js";
-import { SubtypePicker } from "./SubtypePicker.js";
+import { TypeLinePicker } from "./TypeLinePicker.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
@@ -60,6 +60,16 @@ const COLOURS: [code: string, label: string][] = [
   // redundant question or an empty one. Ticking a colour unticks it, and it unticks every colour.
   ["C", "Colourless"],
 ];
+
+/** WHAT EACH ROW CALLS ITSELF IN THE MENU. British spelling, and the two event rows keep the words
+ *  the card pages print -- a reader who clicked through from a partner group meets the same two. */
+const FILTER_LABEL: Record<FilterKind, string> = {
+  colours: "Colour identity",
+  typeline: "Type line",
+  mv: "Mana value",
+  produce: "Causes",
+  consume: "Asks for",
+};
 
 export function CardSearch({
   load = sharedNameIndex, frequency = sharedEventFrequency, members = sharedEventMembers,
@@ -113,13 +123,21 @@ export function CardSearch({
   const colours = eventQuery.colours;
   const setColours = (f: (cs: string[]) => string[]) => setEvents({ ...eventQuery, colours: f(colours) });
   const chosenKeys = useMemo(() => [...eventQuery.produce, ...eventQuery.consume], [eventQuery]);
-  const activeFacets = (colours.length > 0 ? 1 : 0) + chosenKeys.length;
-  // Wide opens the disclosure; on a phone it is closed until the reader opens it, EVEN with facets
-  // set: measured at 390, an open disclosure put the results at 1,242px on a shared facet link,
-  // the same place the finding started from. The summary's count says what is applied.
-  const wide = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 40rem)").matches : true;
-  const [filtersManual, setFiltersManual] = useState<boolean | null>(null);
-  const filtersOpen = wide || (filtersManual ?? false);
+  // THE ROWS THE URL IS ASKING FOR, plus the ones added and not yet filled. `pending` is the only
+  // part that is local state, and it has to be: a row a reader just created has nothing in the URL
+  // to be read back out of, and writing an empty param to hold its place would put a question in
+  // the link that nobody asked.
+  const [pending, setPending] = useState<FilterKind[]>([]);
+  const askedKinds = useMemo(() => filterKindsOf(eventQuery), [eventQuery]);
+  const shownKinds = FILTER_KINDS.filter((k) => askedKinds.includes(k) || pending.includes(k));
+  const available = FILTER_KINDS.filter((k) => !shownKinds.includes(k));
+  const [menuOpen, setMenuOpen] = useState(false);
+  // REMOVING A ROW CLEARS ITS QUESTION AND FORGETS THE ROW. Doing only the first would leave an
+  // empty control standing where a reader had just said they were finished with it.
+  const dropKind = (kind: FilterKind): void => {
+    setEvents(withoutFilterKind(eventQuery, kind));
+    setPending((ks) => ks.filter((k) => k !== kind));
+  };
   useEffect(() => {
     let live = true;
     void load("/static").then((i) => { if (live) setIndex(i); });
@@ -130,8 +148,10 @@ export function CardSearch({
   // THE COUNTS ARE READ ON THE FIRST SEARCH INTERACTION, never on page load: a reader who lands on
   // `/cards` and types a name pays for the name index and nothing else.
   const [freq, setFreq] = useState<EventFrequencyFile | null>(null);
-  const [pickersOpen, setPickersOpen] = useState(false);
-  const needsFreq = pickersOpen || chosenKeys.length > 0;
+  // ADDING THE ROW IS THE INTERACTION, which is a tighter rule than the focus handler this
+  // replaces: nothing is fetched for a reader who never asks about an event, and the fetch starts
+  // the moment one is asked for rather than when the control happens to take focus.
+  const needsFreq = shownKinds.includes("produce") || shownKinds.includes("consume") || chosenKeys.length > 0;
   useEffect(() => {
     if (!needsFreq || freq !== null) return;
     let live = true;
@@ -292,6 +312,110 @@ export function CardSearch({
     // on the next question: the observer must attach to whatever button is there now.
   }, [shown, matches]);
 
+  /** ONE ROW'S CONTROL. Each keeps its own label -- the colours have a legend, the picker and the
+   *  select have their own -- so the row wrapper adds a remove button and nothing else. Wrapping
+   *  them in a second heading would give a screen reader every filter's name twice. */
+  const filterRow = (kind: FilterKind): React.JSX.Element => {
+    switch (kind) {
+      /* ON BOTH PAGES (spec part 4), and EXACT on both (owner 2026-09-08): Green and White list
+       * green-white cards. A "fits in" subset was built first for the Cards page and rejected. */
+      case "colours":
+        return (
+          <fieldset className="flex flex-wrap items-center gap-2">
+            <legend className="eyebrow">Colour identity</legend>
+            {COLOURS.map(([code, label]) => {
+              const on = colours.includes(code);
+              return (
+                // FILTER CHIP, the system's own: `--separator` border at rest, `--accent` border
+                // and text when selected -- the same grammar the tabs use, so a selected filter
+                // and an active tab read as the same kind of state.
+                <button
+                  key={code} type="button" aria-pressed={on}
+                  // COLOURLESS UNTICKS THE COLOURS AND THEY UNTICK IT. Every identity already
+                  // contains the colourless cards, so the two questions cannot be asked at once --
+                  // holding both would only ever draw an empty list.
+                  onClick={() => setColours((cs) => on
+                    ? cs.filter((c) => c !== code)
+                    : code === "C" ? ["C"] : [...cs.filter((c) => c !== "C"), code])}
+                  className="chip"
+                >
+                  {/* DECORATIVE HERE, and marked so: the chip's own word is its accessible name,
+                    * and letting the symbol contribute one turns "Red" into "one red mana Red". */}
+                  <span aria-hidden="true" className="text-base leading-none">
+                    <ManaSymbols cost={`{${code}}`} />
+                  </span>
+                  {label}
+                </button>
+              );
+            })}
+          </fieldset>
+        );
+      /* A CHANGELING IS EVERY CREATURE TYPE (CR 702.73), and the derive already expands it -- so
+       * `subtype=sliver` answers with 137 cards where the corpus prints about a hundred Slivers,
+       * and Bloodline Pretender is in the answer. That is correct and it is what a Sliver deck
+       * wants to know; it will be reported as a bug at some point, so it is written down here. */
+      case "typeline":
+        return (
+          <TypeLinePicker
+            types={vocabulary.types}
+            subtypes={vocabulary.subtypes}
+            chosenTypes={eventQuery.types}
+            chosenSubtypes={eventQuery.subtypes}
+            onChange={(next) => setEvents({ ...eventQuery, types: next.types, subtypes: next.subtypes })}
+          />
+        );
+      case "mv":
+        return (
+          <label className="flex flex-col gap-1">
+            <span className="eyebrow">Mana value</span>
+            <select
+              className="field w-40"
+              value={eventQuery.maxMv === undefined ? "" : String(eventQuery.maxMv)}
+              onChange={(e) => setEvents({ ...eventQuery,
+                ...(e.target.value === "" ? { maxMv: undefined } : { maxMv: Number(e.target.value) }) })}
+            >
+              <option value="">any</option>
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n} or less</option>)}
+            </select>
+          </label>
+        );
+      /* THE TWO QUESTIONS THIS ENGINE CAN ACTUALLY ANSWER (spec 2026-09-19, owner: "events are
+       * does and theme basically"). What a card CAUSES and what it ASKS FOR, in the same
+       * vocabulary the card pages print -- so a reader who clicked through from a partner group
+       * meets the sentence they clicked.
+       *
+       * EVERY TERM ANDS, including between the two. The `does` chips ORed within their group;
+       * keeping both vocabularies on one page under one heading, with two different meanings for
+       * choosing two things, is the reason only one of them survived. */
+      case "produce":
+        return (
+          <EventPicker
+            label="Causes"
+            hint={commanderMode ? "events this commander can cause for the rest of the deck" : "events the card can cause"}
+            options={produceOptions}
+            chosen={eventQuery.produce}
+            counts={countOf}
+            demand={consumeCountOf}
+            say={causeWording}
+            onChange={(next) => setEvents({ ...eventQuery, produce: next })}
+          />
+        );
+      case "consume":
+        return (
+          <EventPicker
+            label="Asks for"
+            hint={commanderMode ? "events this commander is built to be paid" : "events the card is waiting for"}
+            options={consumeOptions}
+            chosen={eventQuery.consume}
+            counts={consumeCountOf}
+            demand={consumeCountOf}
+            say={eventKeyClause}
+            onChange={(next) => setEvents({ ...eventQuery, consume: next })}
+          />
+        );
+    }
+  };
+
   return (
     <PeekContext.Provider value={peek}>
     {/* THE LIST IS A GRID OF TILES NOW, so the reading measure that bounded a column of names would
@@ -334,155 +458,77 @@ export function CardSearch({
         />
       </label>
 
-      {/* THE FILTERS FOLD ON A PHONE (cohesion sweep 2026-09-08). Measured at 390: six colour chips,
-        *  22 Does chips, the select and the field put the first result 1,220px down. Below `sm` the
-        *  three groups sit behind a disclosure, closed until opened, whose summary counts what is
-        *  on; on a wide viewport it is open and the summary is not drawn. A native
-        *  `<details>`, so the keyboard and screen-reader model is the platform's. `matchMedia` is
-        *  read at render and absent under jsdom, which counts as wide. */}
-      <details
-        className="facets flex flex-col gap-6"
-        open={filtersOpen}
-        onToggle={(e) => setFiltersManual((e.currentTarget as HTMLDetailsElement).open)}
-      >
-        {/* A CHIP WITH A CHEVRON, not a bare label: the phone review (2026-09-17) read "FILTERS" over
-          * empty space as a heading for nothing and never found the chips. */}
-        <summary className="chip cursor-pointer list-none w-fit sm:hidden group/filters">
-          {activeFacets > 0 ? `Filters · ${activeFacets} active` : "Filters"}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/filters:rotate-180 motion-reduce:transition-none">
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-        </summary>
-      {/* ON BOTH PAGES NOW (spec part 4), and EXACT on both (owner 2026-09-08): Green and White list
-        *  green-white cards. A "fits in" subset was built first for the Cards page and rejected. */}
-      <fieldset className="flex flex-wrap items-center gap-2">
-        <legend className="eyebrow">Colour identity</legend>
-          {COLOURS.map(([code, label]) => {
-            const on = colours.includes(code);
-            return (
-              // FILTER CHIP, the system's own: `--separator` border at rest, `--accent` border and
-              // text when selected -- the same grammar the tabs use, so a selected filter and an
-              // active tab read as the same kind of state.
-              <button
-                key={code} type="button" aria-pressed={on}
-                // COLOURLESS UNTICKS THE COLOURS AND THEY UNTICK IT. Every identity already contains
-                // the colourless cards, so the two questions cannot be asked at once -- holding both
-                // selected would only ever draw an empty list.
-                onClick={() => setColours((cs) => on
-                  ? cs.filter((c) => c !== code)
-                  : code === "C" ? ["C"] : [...cs.filter((c) => c !== "C"), code])}
-                className="chip"
-              >
-                {/* DECORATIVE HERE, and marked so: the chip's own word is its accessible name, and
-                  * letting the symbol contribute one turns "Red" into "one red mana Red". */}
-                <span aria-hidden="true" className="text-base leading-none">
-                  <ManaSymbols cost={`{${code}}`} />
-                </span>
-                {label}
-              </button>
-            );
-          })}
-      </fieldset>
-
-      {/* WHAT THE CARD IS (owner, 2026-09-21: slivers, and "mill instants which are blue and cost
-        *  less than 3 mana"). A printed type line is not a second vocabulary competing with the
-        *  events below -- it is the same kind of fact as the colour chips above, which have sat
-        *  beside them since the day they shipped.
+      {/* THE PANEL IS A LIST OF ROWS YOU ADD (owner, 2026-09-21: "cards are like 20 % of the
+        *  screen, which is not very userfriendly"). Measured on the deployed page at 1920x1080
+        *  before this: the first card sat at 772px of a 930px viewport -- 83% chrome -- behind
+        *  eight labelled groups every reader scrolled past whether or not they wanted any of them.
         *
-        *  TYPES ARE CHIPS AND SUBTYPES ARE A FIELD, because 18 fit a row and 488 do not. The field
-        *  reaches every subtype rather than a curated tribe list: Equipment, Saga, Aura and the
-        *  land types are subtypes too, and a list of "the tribes people search for" is a judgement
-        *  we would have to keep defending. */}
-      <fieldset className="flex flex-col gap-3">
-        <legend className="eyebrow">What the card is</legend>
-        <div className="flex flex-wrap items-center gap-2">
-          {vocabulary.types.map((name) => {
-            const on = eventQuery.types.includes(name);
-            return (
-              <button
-                key={name} type="button" aria-pressed={on} className="chip capitalize"
-                onClick={() => setEvents({ ...eventQuery,
-                  types: on ? eventQuery.types.filter((t) => t !== name) : [...eventQuery.types, name] })}
-              >
-                <CardSymbol name={name} className="text-(--muted) text-xs" />
-                {name}
-              </button>
-            );
-          })}
-        </div>
-        {/* A CHANGELING IS EVERY CREATURE TYPE (CR 702.73), and the derive already expands it -- so
-          *  `subtype=sliver` answers with 137 cards where the corpus prints about a hundred Slivers,
-          *  and Bloodline Pretender is in the answer. That is correct and it is what a Sliver deck
-          *  wants to know; it will be reported as a bug at some point, so it is written down here. */}
-        <div className="flex flex-wrap items-end gap-4">
-          <SubtypePicker
-            all={vocabulary.subtypes}
-            chosen={eventQuery.subtypes}
-            onChange={(next) => setEvents({ ...eventQuery, subtypes: next })}
-          />
-          <label className="flex flex-col gap-1">
-            <span className="eyebrow">Mana value</span>
-            <select
-              className="field w-40"
-              value={eventQuery.maxMv === undefined ? "" : String(eventQuery.maxMv)}
-              onChange={(e) => setEvents({ ...eventQuery,
-                ...(e.target.value === "" ? { maxMv: undefined } : { maxMv: Number(e.target.value) }) })}
-            >
-              <option value="">any</option>
-              {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n} or less</option>)}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="eyebrow">Order</span>
-            {/* THE DEFAULT IS THE ARTIFACT'S OWN ORDER and stays first. The other two exist so a
-              *  reader can ESCAPE the ranking, which the deck-build run needed: rare events
-              *  outranked good cards, and it reached staples only by typing names it already knew.
-              *  This does not fix the ranking. It stops the ranking being the only way through. */}
-            <select
-              className="field w-44"
-              value={eventQuery.sort ?? "partners"}
-              onChange={(e) => setEvents({ ...eventQuery, sort: e.target.value as EventQuery["sort"] })}
-            >
-              <option value="partners">most connected</option>
-              <option value="mv">cheapest first</option>
-              <option value="name">A to Z</option>
-            </select>
-          </label>
-        </div>
-      </fieldset>
-
-      {/* THE TWO QUESTIONS THIS ENGINE CAN ACTUALLY ANSWER (spec 2026-09-19, owner: "events are
-        *  does and theme basically"). What a card CAUSES and what it ASKS FOR, in the same
-        *  vocabulary the card pages print -- so a reader who clicked through from a partner group
-        *  meets the sentence they clicked.
+        *  NOTHING IS DRAWN UNTIL IT IS ASKED FOR, colour identity included. A uniform rule was the
+        *  owner's call over keeping the colours permanently visible: no control is privileged, so
+        *  there is one thing to learn here rather than one row plus a menu of exceptions.
         *
-        *  EVERY TERM ANDS, including between the two. The `does` chips ORed within their group;
-        *  keeping both vocabularies on one page under one heading, with two different meanings for
-        *  choosing two things, is the reason only one of them survived. */}
-      <div className="flex flex-col gap-6" onFocus={() => setPickersOpen(true)} onPointerDown={() => setPickersOpen(true)}>
-        <EventPicker
-          label="Causes"
-          hint={commanderMode ? "events this commander can cause for the rest of the deck" : "events the card can cause"}
-          options={produceOptions}
-          chosen={eventQuery.produce}
-          counts={countOf}
-          demand={consumeCountOf}
-          say={causeWording}
-          onChange={(next) => setEvents({ ...eventQuery, produce: next })}
-        />
-        <EventPicker
-          label="Asks for"
-          hint={commanderMode ? "events this commander is built to be paid" : "events the card is waiting for"}
-          options={consumeOptions}
-          chosen={eventQuery.consume}
-          counts={consumeCountOf}
-          demand={consumeCountOf}
-          say={eventKeyClause}
-          onChange={(next) => setEvents({ ...eventQuery, consume: next })}
-        />
+        *  AND THE ROWS COME FROM THE URL, not from what was clicked. `filterKindsOf` reads the
+        *  question, so a shared `?subtype=sliver&mv=3` arrives with both rows open and filled --
+        *  otherwise a link would land on a page that does not show what it is asking. A row added
+        *  and not yet filled has no param to be found in, which is what `pending` remembers.
+        *
+        *  ONE MODEL AT EVERY WIDTH. This replaces the `<details>` that folded the panel below
+        *  `sm`, and with it the `matchMedia` read that decided which width it was -- a branch the
+        *  test harness could never take, because a max-width media query is false under jsdom. */}
+      <div className="facets flex flex-col gap-4">
+        {shownKinds.length > 0 && (
+          <ul className="flex flex-col gap-4 list-none p-0 m-0">
+            {shownKinds.map((kind) => (
+              <li key={kind} className="flex flex-wrap items-end gap-x-3 gap-y-2">
+                <div className="min-w-0">{filterRow(kind)}</div>
+                {/* THE ONLY WAY BACK TO "NOT ASKED" for a row, so it is a real control and not a
+                  * hover affordance: this page is used on a phone, where hover does not exist. */}
+                <button
+                  type="button"
+                  className="chip"
+                  aria-label={`Remove the ${FILTER_LABEL[kind]} filter`}
+                  onClick={() => dropKind(kind)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {/* A NATIVE `<details>`, so the keyboard and screen-reader model is the platform's -- the
+          * same reason the panel it replaces was one. It closes itself once a row is added,
+          * because a menu still standing over the control it just created is in the way. */}
+        {available.length > 0 && (
+          <details
+            className="w-fit"
+            open={menuOpen}
+            onToggle={(e) => setMenuOpen((e.currentTarget as HTMLDetailsElement).open)}
+          >
+            <summary className="chip cursor-pointer list-none w-fit group/add">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add a filter
+            </summary>
+            <ul className="site-search-list mt-1 list-none p-0 w-fit">
+              {available.map((kind) => (
+                <li key={kind}>
+                  <button
+                    type="button"
+                    className="site-search-row w-full text-left"
+                    onClick={() => { setPending((ks) => [...ks, kind]); setMenuOpen(false); }}
+                  >
+                    {FILTER_LABEL[kind]}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </div>
-
-      </details>
 
       {index === null
         ? <p className="text-(--muted)">Reading the index…</p>
@@ -518,15 +564,37 @@ export function CardSearch({
           </p>
         : (
           <div className="flex flex-col gap-2">
-            {/* A STATUS MESSAGE (WCAG 4.1.3): a chip changes the set and the number moves; a
-              * screen reader hears it only if the paragraph says it is one. */}
-            <p role="status" className="text-(--muted) text-sm">
-              {matches.length.toLocaleString("en-US")}{" "}
-              {matches.length === 1
-                ? (commanderMode ? "commander matches" : "card matches")
-                : (commanderMode ? "commanders match" : "cards match")}
-              {matches.length > shown ? `, showing the first ${shown}` : ""}.
-            </p>
+            {/* THE ORDER SITS WITH THE COUNT, NOT IN THE FILTER MENU (2026-09-21). An order is not
+              * a question: it applies with nothing asked, so there is no "add" that turns it on
+              * and nothing to remove -- and a reader looking for it looks at the list it reorders.
+              *
+              * THE DEFAULT IS THE ARTIFACT'S OWN ORDER and stays first. The other two exist so a
+              * reader can ESCAPE the ranking, which the deck-build run needed: rare events
+              * outranked good cards, and it reached staples only by typing names it already knew.
+              * This does not fix the ranking. It stops the ranking being the only way through. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              {/* A STATUS MESSAGE (WCAG 4.1.3): a chip changes the set and the number moves; a
+                * screen reader hears it only if the paragraph says it is one. */}
+              <p role="status" className="text-(--muted) text-sm">
+                {matches.length.toLocaleString("en-US")}{" "}
+                {matches.length === 1
+                  ? (commanderMode ? "commander matches" : "card matches")
+                  : (commanderMode ? "commanders match" : "cards match")}
+                {matches.length > shown ? `, showing the first ${shown}` : ""}.
+              </p>
+              <label className="flex items-center gap-2">
+                <span className="eyebrow">Order</span>
+                <select
+                  className="field w-44"
+                  value={eventQuery.sort ?? "partners"}
+                  onChange={(e) => setEvents({ ...eventQuery, sort: e.target.value as EventQuery["sort"] })}
+                >
+                  <option value="partners">most connected</option>
+                  <option value="mv">cheapest first</option>
+                  <option value="name">A to Z</option>
+                </select>
+              </label>
+            </div>
             {/* IDENTITY IS THE ROW'S DIFFERENTIATOR. Fifty near-identical lines of blue text is a
               * list nobody scans; the mana symbols give the eye something that varies, and they are
               * the one thing a player reads before the name when choosing a card. Present colours
