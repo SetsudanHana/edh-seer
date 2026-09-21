@@ -50,6 +50,7 @@ const PROSE: Record<string, string> = {
   "310.6": "edges: a battle's defence is a counter (canCarryCounters, AL4)",
   "702.63": "edges: vanishing puts time counters on (canCarryCounters, AL4)",
   "702.32": "edges: fading puts fade counters on (canCarryCounters, AL4)",
+  "301.7a": "partners-core: a Vehicle prints power and toughness without being a creature, so it carries `pow`/`tou` in the index and answers a Power range -- printed, not \"is a creature\"",
 };
 
 const SRC = fileURLToPath(new URL(".", import.meta.url));

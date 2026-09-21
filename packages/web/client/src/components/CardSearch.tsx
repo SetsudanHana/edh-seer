@@ -8,6 +8,8 @@ import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { EventPicker } from "./EventPicker.js";
 import { CardTile } from "./CardTile.js";
 import { TypeLinePicker } from "./TypeLinePicker.js";
+import { WordPicker } from "./WordPicker.js";
+import { RangeRow } from "./RangeRow.js";
 import { LegacyDeckRedirect } from "./LegacyDeckRedirect.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { PageFoot } from "./PageFoot.js";
@@ -21,14 +23,14 @@ import type { CardPageData } from "../lib/partners.js";
  *  and were checked against the built artifact; an invented one would render an empty page. */
 const EXAMPLES: Record<"cards" | "commanders", { label: string; q: EventQuery }[]> = {
   cards: [
-    { label: "mills a card, in blue", q: { produce: ["mill|-|-|-"], consume: [], colours: ["U"], types: [], subtypes: [] } },
-    { label: "makes a creature token", q: { produce: ["create-token|creature|-|t"], consume: [], colours: [], types: [], subtypes: [] } },
-    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [] } },
+    { label: "mills a card, in blue", q: { produce: ["mill|-|-|-"], consume: [], colours: ["U"], types: [], subtypes: [], keywords: [], cardColours: [] } },
+    { label: "makes a creature token", q: { produce: ["create-token|creature|-|t"], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] } },
+    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] } },
   ],
   commanders: [
-    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [] } },
-    { label: "wants a counter added", q: { produce: [], consume: ["counter-added|creature|-|-"], colours: [], types: [], subtypes: [] } },
-    { label: "wants a land to enter, in green", q: { produce: [], consume: ["enters|land|-|-"], colours: ["G"], types: [], subtypes: [] } },
+    { label: "wants a creature to die", q: { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] } },
+    { label: "wants a counter added", q: { produce: [], consume: ["counter-added|creature|-|-"], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] } },
+    { label: "wants a land to enter, in green", q: { produce: [], consume: ["enters|land|-|-"], colours: ["G"], types: [], subtypes: [], keywords: [], cardColours: [] } },
   ],
 };
 
@@ -64,8 +66,14 @@ const COLOURS: [code: string, label: string][] = [
  *  the card pages print -- a reader who clicked through from a partner group meets the same two. */
 const FILTER_LABEL: Record<FilterKind, string> = {
   colours: "Colour identity",
+  // "Colour", NOT "Card colour": beside "Colour identity" the shorter word is already the
+  // contrast, and the two sit next to each other in the menu where the pair reads as a pair.
+  cardColours: "Colour",
   typeline: "Type line",
+  keywords: "Keywords",
   mv: "Mana value",
+  power: "Power",
+  toughness: "Toughness",
   produce: "Causes",
   consume: "Asks for",
 };
@@ -76,8 +84,8 @@ export function CardSearch({
   peekLoad, hash, replace, mode = "cards",
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
-  /** The type and subtype tables the rows' codes index into. */
-  vocabulary?: (baseUrl: string) => Promise<{ types: string[]; subtypes: string[] }>;
+  /** The type, subtype and keyword tables the rows' codes index into. */
+  vocabulary?: (baseUrl: string) => Promise<{ types: string[]; subtypes: string[]; keywords: string[] }>;
   /** The counts every picker row prints, asked for on the first search interaction only. */
   frequency?: (baseUrl: string) => Promise<EventFrequencyFile>;
   /** One event's cards, one fetch per event the reader actually picked. */
@@ -100,7 +108,8 @@ export function CardSearch({
   // EMPTY UNTIL IT LOADS, AND EMPTY IS SAFE: `characteristicsFit` fails a chosen type it has no
   // code for, so a filter chosen before the tables arrive keeps the list empty rather than showing
   // cards that do not answer it. The chips cannot be chosen before they are drawn from the tables.
-  const [vocabulary, setVocabulary] = useState<{ types: string[]; subtypes: string[] }>({ types: [], subtypes: [] });
+  const [vocabulary, setVocabulary] = useState<{ types: string[]; subtypes: string[]; keywords: string[] }>(
+    { types: [], subtypes: [], keywords: [] });
   // THE QUERY LIVES IN THE URL, so a search is a link. `/cards/krenko-mob` is a slug nobody minted;
   // its page cannot guess what was meant, but it CAN hand the reader here with what they typed
   // already in the box -- which is the whole recovery from a truncated or misremembered name.
@@ -194,8 +203,14 @@ export function CardSearch({
   //
   // `sort` IS DELIBERATELY NOT HERE: an order is not a question, and sorting an unasked list would
   // draw the whole corpus because someone chose "A to Z".
-  const asked = needle.length > 0 || colours.length > 0 || chosenKeys.length > 0
-    || eventQuery.types.length > 0 || eventQuery.subtypes.length > 0 || eventQuery.maxMv !== undefined;
+  // EVERY DIMENSION BELONGS IN IT, and the one time that was forgotten `?subtype=sliver` rendered
+  // an EMPTY page with no count -- the filter applied and the list was never drawn, which reads as
+  // "no Slivers" rather than as "nothing asked". `filterKindsOf` is the same reading of the same
+  // query, so asking it here means a dimension can never again be added to one and not the other.
+  const asked = needle.length > 0 || chosenKeys.length > 0 || filterKindsOf(eventQuery).length > 0;
+  // ONCE PER INDEX, not once per pass: `some` over 25,582 rows is cheap but it is not free, and
+  // the answer only changes when a different artifact loads.
+  const carriesColours = useMemo(() => (index ?? []).some((e) => e.c !== undefined), [index]);
 
   // THE SET THE EVENTS DESCRIBE. `null` means no event was asked (the whole index is the base);
   // `undefined` means the answer is not knowable yet -- still reading, or a shard that did not
@@ -232,7 +247,10 @@ export function CardSearch({
     // WHAT THE CARD IS, answered off the row rather than from the membership index (2026-09-21).
     // Compiled ONCE per pass: the names become codes here, not inside the filter, or a chosen
     // subtype costs a 488-entry scan per card on every keystroke.
-    const fitsCharacteristics = compileCharacteristics(eventQuery, vocabulary);
+    // WHETHER THIS ARTIFACT CAN ANSWER A COLOUR QUESTION AT ALL, read off the rows rather than
+    // assumed. A missing `c` is colourless on a fresh artifact and meaningless on an old one, and
+    // the deploy ships `static-out/` without rebuilding it -- so the row is told, not guessed.
+    const fitsCharacteristics = compileCharacteristics(eventQuery, { ...vocabulary, colours: carriesColours });
     const kept = named.filter((e) => (!commanderMode || e.commander)
       && coloursFit(identityOf(e), colours, mode)
       && fitsCharacteristics(e));
@@ -372,20 +390,67 @@ export function CardSearch({
             onChange={(next) => setEvents({ ...eventQuery, types: next.types, subtypes: next.subtypes })}
           />
         );
+      /* KEYWORDS ARE A TYPEAHEAD, NOT CHIPS, for the same reason the subtypes are: 811 of them.
+       * Same control, a different vocabulary. */
+      case "keywords":
+        return (
+          <WordPicker
+            label="Keywords"
+            listLabel="Keywords"
+            placeholder="Flying, trample, deathtouch…"
+            all={vocabulary.keywords}
+            chosen={eventQuery.keywords}
+            onChange={(next) => setEvents({ ...eventQuery, keywords: next })}
+          />
+        );
+      /* WHAT THE CARD IS, which is NOT the identity row above it. 1,751 of 32,334 cards answer the
+       * two differently -- the gap Scryfall splits `c:` from `id:` for. */
+      case "cardColours":
+        return (
+          <fieldset className="flex flex-wrap items-center gap-2">
+            <legend className="eyebrow">Colour</legend>
+            {COLOURS.map(([code, label]) => {
+              const on = eventQuery.cardColours.includes(code);
+              return (
+                <button
+                  key={code} type="button" aria-pressed={on}
+                  onClick={() => setEvents({ ...eventQuery, cardColours: on
+                    ? eventQuery.cardColours.filter((c) => c !== code)
+                    : code === "C" ? ["C"] : [...eventQuery.cardColours.filter((c) => c !== "C"), code] })}
+                  className="chip"
+                >
+                  <span aria-hidden="true" className="text-base leading-none">
+                    <ManaSymbols cost={`{${code}}`} />
+                  </span>
+                  {label}
+                </button>
+              );
+            })}
+          </fieldset>
+        );
       case "mv":
         return (
-          <label className="flex flex-col gap-1">
-            <span className="eyebrow">Mana value</span>
-            <select
-              className="field w-40"
-              value={eventQuery.maxMv === undefined ? "" : String(eventQuery.maxMv)}
-              onChange={(e) => setEvents({ ...eventQuery,
-                ...(e.target.value === "" ? { maxMv: undefined } : { maxMv: Number(e.target.value) }) })}
-            >
-              <option value="">any</option>
-              {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n} or less</option>)}
-            </select>
-          </label>
+          <RangeRow
+            label="Mana value"
+            min={eventQuery.mvMin} max={eventQuery.mvMax}
+            onChange={(r) => setEvents({ ...eventQuery, mvMin: r.min, mvMax: r.max })}
+          />
+        );
+      case "power":
+        return (
+          <RangeRow
+            label="Power"
+            min={eventQuery.powMin} max={eventQuery.powMax}
+            onChange={(r) => setEvents({ ...eventQuery, powMin: r.min, powMax: r.max })}
+          />
+        );
+      case "toughness":
+        return (
+          <RangeRow
+            label="Toughness"
+            min={eventQuery.touMin} max={eventQuery.touMax}
+            onChange={(r) => setEvents({ ...eventQuery, touMin: r.min, touMax: r.max })}
+          />
         );
       /* THE TWO QUESTIONS THIS ENGINE CAN ACTUALLY ANSWER (spec 2026-09-19, owner: "events are
        * does and theme basically"). What a card CAUSES and what it ASKS FOR, in the same

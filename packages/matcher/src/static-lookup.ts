@@ -283,7 +283,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *  guaranteed second download of a 4.3 MB file and a second parse of it, while `partners.ts`
    *  claimed one request per session. The rows and the tables come out of the same body because
    *  they ARE the same body. */
-  private nameIndexBody(): Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; cards?: NameIndexEntry[] } | null> {
+  private nameIndexBody(): Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; keywords?: string[]; cards?: NameIndexEntry[] } | null> {
     return (this.nameIndexPromise ??= (async () => {
       const res = await this.fetchCached("/name-index.json");
       return res.ok ? await res.json() as NameIndexEntry[] | { cards?: NameIndexEntry[] } : null;
@@ -296,12 +296,15 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
     return Array.isArray(body) ? body : body.cards ?? [];
   }
 
-  /** The type and subtype tables `NameIndexEntry.t`/`.s` index into, or empty on an artifact built
-   *  before they existed -- in which case no row carries a code either, so the two agree. */
-  async nameIndexVocabulary(): Promise<{ types: string[]; subtypes: string[] }> {
+  /** The tables `NameIndexEntry.t`/`.s`/`.k` index into, or empty on an artifact built before they
+   *  existed -- in which case no row carries a code either, so the two agree. `keywords` arrived
+   *  after the first two and is missing from an artifact built between, which the same `?? []`
+   *  covers: an absent table means no row has a `k`, so the keyword row matches nothing and offers
+   *  nothing rather than offering words it cannot answer. */
+  async nameIndexVocabulary(): Promise<{ types: string[]; subtypes: string[]; keywords: string[] }> {
     const body = await this.nameIndexBody();
-    if (!body || Array.isArray(body)) return { types: [], subtypes: [] };
-    return { types: body.types ?? [], subtypes: body.subtypes ?? [] };
+    if (!body || Array.isArray(body)) return { types: [], subtypes: [], keywords: [] };
+    return { types: body.types ?? [], subtypes: body.subtypes ?? [], keywords: body.keywords ?? [] };
   }
 
   /** ONE EVENT'S CARDS (roadmap AJ3), from the shard its key hashes into -- one fetch per event a

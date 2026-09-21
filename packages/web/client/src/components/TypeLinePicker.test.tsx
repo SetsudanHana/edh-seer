@@ -107,3 +107,35 @@ test("the field announces whether a list is open", async () => {
   await userEvent.type(field, "sli");
   expect(field).toHaveAttribute("aria-expanded", "true");
 });
+
+/** THE TABLES ARRIVE WITH A 4.8 MB FETCH; THE CHIPS ARRIVE WITH THE URL (review, 2026-09-21).
+ *
+ *  Between the two, `isType` is empty -- and re-deriving every chosen word from it re-filed the
+ *  types as subtypes. On `?type=creature&subtype=sliver`, removing "sliver" during the fetch wrote
+ *  `?subtype=creature`, and since no subtype table knows "creature" the list went empty. It could
+ *  not self-heal either: by the time the vocabulary landed the URL said something else. */
+test("a chip removed before the vocabulary arrives keeps the others in their own tables", async () => {
+  const onChange = vi.fn();
+  render(
+    <TypeLinePicker
+      types={[]} subtypes={[]}
+      chosenTypes={["creature"]} chosenSubtypes={["sliver"]}
+      onChange={onChange}
+    />,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Remove sliver" }));
+  expect(onChange).toHaveBeenCalledWith({ types: ["creature"], subtypes: [] });
+});
+
+test("and the same the other way round", async () => {
+  const onChange = vi.fn();
+  render(
+    <TypeLinePicker
+      types={[]} subtypes={[]}
+      chosenTypes={["creature"]} chosenSubtypes={["sliver"]}
+      onChange={onChange}
+    />,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Remove creature" }));
+  expect(onChange).toHaveBeenCalledWith({ types: [], subtypes: ["sliver"] });
+});
