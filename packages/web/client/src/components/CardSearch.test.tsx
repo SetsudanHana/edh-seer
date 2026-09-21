@@ -24,6 +24,14 @@ const NO_VOCABULARY = async () => ({ types: [], subtypes: [] });
 const at = (index: NameIndexEntry[] = INDEX, props: Partial<Parameters<typeof CardSearch>[0]> = {}) =>
   render(<MemoryRouter><CardSearch load={async () => index} vocabulary={NO_VOCABULARY} {...props} /></MemoryRouter>);
 
+/** ADDING A ROW IS NOW PART OF ASKING (owner, 2026-09-21). Nothing is drawn until it is asked for,
+ *  so a test that clicks a colour chip has to create the colour row first -- which is exactly what
+ *  a reader does, and the reason these seven tests changed rather than the behaviour they pin. */
+const addFilter = async (label: string) => {
+  await userEvent.click(await screen.findByText("Add a filter"));
+  await userEvent.click(await screen.findByRole("button", { name: label }));
+};
+
 test("typing a name lists matching cards as links", async () => {
   at();
   await userEvent.type(await screen.findByRole("searchbox"), "krenko");
@@ -162,6 +170,7 @@ test("a commander link goes to the commander page, not the card page", async () 
  *  choosing "red" has asked a complete question and should not have to type as well. */
 test("an identity facet lists commanders without anything typed", async () => {
   commanders();
+  await addFilter("Colour identity");
   await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   // "Red" NAMES THE IDENTITY: mono-red, not everything with red in it. A Grixis commander is a
@@ -176,6 +185,7 @@ test("an identity facet lists commanders without anything typed", async () => {
  *  deck, and the chips answer with that pair and nothing wider. */
 test("the facets name an identity exactly, not the ones that contain it", async () => {
   commanders();
+  await addFilter("Colour identity");
   await userEvent.click(await screen.findByRole("button", { name: /^Blue$/ }));
   await userEvent.click(screen.getByRole("button", { name: /^Black$/ }));
   // Two of Kess's three: Kess is Grixis, and Dimir is not Grixis.
@@ -187,6 +197,7 @@ test("the facets name an identity exactly, not the ones that contain it", async 
 
 test("a facet toggles off again", async () => {
   commanders();
+  await addFilter("Colour identity");
   const red = await screen.findByRole("button", { name: /^Red$/ });
   await userEvent.click(red);
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
@@ -206,6 +217,7 @@ test("the card search fits the identity in: a colourless card answers a colour q
   ];
   at(index);
   await screen.findByRole("searchbox");
+  await addFilter("Colour identity");
   await userEvent.click(screen.getByRole("button", { name: /^Red$/ }));
   expect(await screen.findByRole("link", { name: /Krenko, Mob Boss/ })).toBeInTheDocument();
   // Playable in a red deck, and the whole point of the reversal.
@@ -247,6 +259,7 @@ test("the count line agrees with itself when there is one result", async () => {
  *  appeared under "Red" and under nothing of their own. */
 test("a colourless facet reaches the commanders no colour can ask for", async () => {
   commanders();
+  await addFilter("Colour identity");
   await userEvent.click(await screen.findByRole("button", { name: /^Colourless$/ }));
   expect(await screen.findByRole("link", { name: /Kozilek/ })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Krenko, Mob Boss/ })).not.toBeInTheDocument();
@@ -258,6 +271,7 @@ test("a colourless facet reaches the commanders no colour can ask for", async ()
  *  empty list. Ticking a colour unticks it, and it unticks every colour. */
 test("ticking a colour unticks colourless, and colourless unticks the colours", async () => {
   commanders();
+  await addFilter("Colour identity");
   const colourless = await screen.findByRole("button", { name: /^Colourless$/ });
   await userEvent.click(colourless);
   expect(colourless).toHaveAttribute("aria-pressed", "true");
@@ -278,6 +292,7 @@ test("ticking a colour unticks colourless, and colourless unticks the colours", 
  *  rows whose identity had failed to load. */
 test("a colourless row shows the colourless symbol rather than nothing", async () => {
   commanders();
+  await addFilter("Colour identity");
   await userEvent.click(await screen.findByRole("button", { name: /^Colourless$/ }));
   const row = (await screen.findByRole("link", { name: /Kozilek/ })).closest("li")!;
   // `ManaSymbols` labels both the wrapper and the symbol itself, so this asserts presence rather
@@ -449,36 +464,115 @@ test("a modifier click on a result opens the page", async () => {
   expect(screen.queryByRole("dialog")).toBeNull();
 });
 
-/** THE FILTERS FOLD ON A PHONE (cohesion sweep 2026-09-08, finding 5): at 390 the six colour chips,
- *  22 Does chips, the select and the field pushed the first result 1,220px down. Below `sm` the
- *  three groups sit behind a Filters disclosure, closed until opened, and the summary says how many
- *  facets are applied. On a wide viewport the disclosure is open and its summary hidden. jsdom has no
- *  matchMedia: the component treats that as wide, so the narrow case is mocked. */
-const narrow = (matches: boolean) => {
-  window.matchMedia = ((q: string) => ({ matches, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
-};
-
-test("on a phone the filters are closed, and the summary counts what is applied", async () => {
-  narrow(false);
-  try {
-    atUrl("/cards");
-    const details = (await screen.findByText("Filters")).closest("details")!;
-    expect(details.open).toBe(false);
-  } finally { narrow(true); }
-  narrow(false);
-  try {
-    atUrl(`/cards?colors=G&produce=${encodeURIComponent(MILL)}&consume=${encodeURIComponent(DIES)}`);
-    const summary = await screen.findByText("Filters · 3 active");
-    // Closed even with facets set: the results, not the controls, are what a shared link is for.
-    expect(summary.closest("details")!.open).toBe(false);
-  } finally { narrow(true); }
+/** THE PANEL IS A LIST OF ROWS YOU ADD (owner, 2026-09-21: "cards are like 20 % of the screen").
+ *
+ *  This replaces the phone disclosure and the `matchMedia` branch that chose it. Measured on the
+ *  deployed page at 1920x1080 before the change: the first card sat at 772px of a 930px viewport,
+ *  behind eight labelled groups. One model at every width now, so there is no narrow branch left
+ *  to mock -- which is just as well, because a max-width media query reads false under jsdom and
+ *  that branch was never really covered. */
+test("nothing is asked, so no filter row is drawn", async () => {
+  atUrl("/cards");
+  await screen.findByRole("searchbox");
+  expect(screen.getByText("Add a filter")).toBeInTheDocument();
+  // The controls exist only once asked for. Colour identity included: no row is privileged.
+  expect(screen.queryByRole("button", { name: /^Red$/ })).toBeNull();
+  expect(screen.queryByRole("combobox")).toBeNull();
 });
 
-test("on a wide viewport the filters are open", async () => {
-  narrow(true);
+test("a filter is added from the menu, and leaves the menu once it is there", async () => {
   atUrl("/cards");
-  const details = (await screen.findByText("Filters")).closest("details")!;
-  expect(details.open).toBe(true);
+  await addFilter("Colour identity");
+  expect(await screen.findByRole("button", { name: /^Red$/ })).toBeInTheDocument();
+  // Offering it twice would be offering a row that already exists.
+  await userEvent.click(screen.getByText("Add a filter"));
+  expect(screen.queryByRole("button", { name: "Colour identity" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Mana value" })).toBeInTheDocument();
+});
+
+/** A SHARED LINK ARRIVES SHOWING WHAT IT ASKS. The rows come from the URL, not from what was
+ *  clicked -- otherwise `?subtype=sliver&mv=3` would land on a page filtering by two things it
+ *  does not mention, which is the worst of both: narrowed, and silent about why. */
+test("a link carrying a question arrives with that question's rows open", async () => {
+  atUrl("/cards?colors=G&mv=3");
+  expect(await screen.findByRole("button", { name: /^Green$/ })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByLabelText("Mana value")).toHaveValue("3");
+  // And only those: an event row was not asked for.
+  expect(screen.queryByText("events the card can cause")).toBeNull();
+});
+
+/** REMOVING A ROW CLEARS ITS QUESTION. Hiding the control while the param went on narrowing the
+ *  list is the shape of "the filter I removed is still filtering". */
+test("removing a row clears what it was asking", async () => {
+  const spy = atUrl("/cards?colors=G&mv=3");
+  await screen.findByRole("button", { name: /^Green$/ });
+  await userEvent.click(screen.getByRole("button", { name: "Remove the Mana value filter" }));
+  expect(screen.queryByLabelText("Mana value")).toBeNull();
+  expect(spy.search).not.toContain("mv=");
+  // Its neighbour is untouched -- a removal that widened two questions would be a silent one.
+  expect(spy.search).toContain("colors=G");
+});
+
+/** AND THE COUNTS FOLLOW THE ROW. Nothing is fetched for a reader who never asks about an event;
+ *  the fetch starts when the row is added rather than when a control happens to take focus. */
+test("the event counts are read when an event row is added, not before", async () => {
+  const freq = vi.fn(async () => FREQ);
+  atUrl("/cards", { frequency: freq });
+  await screen.findByRole("searchbox");
+  expect(freq).not.toHaveBeenCalled();
+  await addFilter("Causes");
+  await waitFor(() => expect(freq).toHaveBeenCalled());
+});
+
+/** A ROW OUTLIVES ITS OWN VALUE (review, 2026-09-21). `shownKinds` was the URL's rows plus the ones
+ *  added from the menu, so emptying a row that CAME from a link unmounted it -- untick the only
+ *  colour to swap Red for Blue and the whole control vanished, taking the reader's place in the
+ *  task with it. Reproduced in a browser before it was fixed: `/cards?colors=R`, click Red, and
+ *  the row is gone. Destroying the control someone is operating is WCAG 3.2.2 territory, and the
+ *  remove button is the only thing that should ever take a row away. */
+test("emptying a row keeps the row, so a colour can be swapped for another", async () => {
+  atUrl("/cards?colors=R");
+  const red = await screen.findByRole("button", { name: /^Red$/ });
+  await userEvent.click(red);
+  expect(red).toHaveAttribute("aria-pressed", "false");
+  // Still there, and still usable for the question the reader was in the middle of asking.
+  const blue = screen.getByRole("button", { name: /^Blue$/ });
+  await userEvent.click(blue);
+  expect(blue).toHaveAttribute("aria-pressed", "true");
+});
+
+test("a mana value set back to any keeps its select", async () => {
+  atUrl("/cards?mv=3");
+  const select = await screen.findByLabelText("Mana value");
+  await userEvent.selectOptions(select, "");
+  expect(screen.getByLabelText("Mana value")).toBeInTheDocument();
+});
+
+test("the remove button is still the way a row goes away", async () => {
+  atUrl("/cards?colors=R");
+  await userEvent.click(await screen.findByRole("button", { name: /^Red$/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Remove the Colour identity filter" }));
+  expect(screen.queryByRole("button", { name: /^Red$/ })).toBeNull();
+});
+
+/** THE ORDER SURVIVES A ZERO-RESULT ANSWER (review, 2026-09-21). It moved beside the count, and
+ *  the count only exists when something matched -- so a shared `?sort=name` link that matches
+ *  nothing had no control to undo the order it arrived with. */
+test("the order control is there even when nothing matched", async () => {
+  atUrl("/cards?q=zzzznothing&sort=name");
+  expect(await screen.findByText(/No card matches/)).toBeInTheDocument();
+  expect(screen.getByLabelText("Order")).toHaveValue("name");
+});
+
+/** THE MENU NEEDS A POSITIONED ANCESTOR, and this is a className assertion on purpose: jsdom does
+ *  no layout, so nothing here can see where the menu actually paints. It shipped without one and
+ *  a browser put the open menu at left:0, top:1084, width:1920 -- full-bleed and entirely below a
+ *  1080px viewport, because `.site-search-list` is `position:absolute` and resolved against the
+ *  initial containing block. The same trap `.claude/rules/ui.md` names for `.sr-only`. */
+test("the add menu carries the positioning its list needs", async () => {
+  atUrl("/cards");
+  const summary = await screen.findByText("Add a filter");
+  expect(summary.closest("details")).toHaveClass("relative");
 });
 
 /** THE LANDING IS SEARCH-FIRST (owner, 2026-09-17: the chips were a wall), and since AJ3 the

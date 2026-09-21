@@ -168,3 +168,55 @@ export function rateLabel([floor, floorMana, ceiling, ceilingMana, delayed]: Rat
   // SUMMONING SICKNESS (CR 302.6) is printed, not priced: a turn has no exchange rate in mana.
   return `${span} ${unit} / ${floorMana} mana${then}${delayed ? ", from next turn" : ""}`;
 }
+
+/** ONE FILTER ROW'S IDENTITY. The panel is a list of rows a reader ADDS (owner, 2026-09-21: the
+ *  first card sat at 772px of a 930px viewport, so 83% of the screen was chrome before a result).
+ *
+ *  `typeline` IS ONE KIND OVER TWO PARAMS, which is the owner's question answered ("why type and
+ *  subtype is not one like on scryfall"). They were already one question: every term in this query
+ *  ANDs, which is exactly what `t:` does on Scryfall, and the 487 words are 13 types and 474
+ *  subtypes with NO word in both -- so a merged control resolves each choice to its own param
+ *  without ever having to ask which was meant. Only the control merged; the params did not, so
+ *  every link shared before today still opens the search it named. */
+export type FilterKind = "colours" | "typeline" | "mv" | "produce" | "consume";
+
+/** THE ORDER THE ROWS ARE DRAWN IN, and it is fixed rather than the order they were added: a
+ *  reader's own panel and the link they share are the same question, and rows that shuffle between
+ *  the two make them look like different ones. Cheapest question first. */
+export const FILTER_KINDS: FilterKind[] = ["colours", "typeline", "mv", "produce", "consume"];
+
+/** WHICH ROWS THE URL IS ALREADY ASKING FOR. Derived, never stored: a link carrying
+ *  `?subtype=sliver&mv=3` has to arrive with those two rows open and filled, or a shared search
+ *  lands on a page that does not show what it asks. A row the reader has added but not yet filled
+ *  has no param to be found in, and is the caller's business to remember.
+ *
+ *  `sort` IS NOT A KIND. An order applies with nothing asked, so there is no "add" that turns it on
+ *  and nothing to remove; it belongs beside the count, not in a list of questions. */
+export function filterKindsOf(q: EventQuery): FilterKind[] {
+  const asked: Record<FilterKind, boolean> = {
+    colours: q.colours.length > 0,
+    typeline: q.types.length > 0 || q.subtypes.length > 0,
+    mv: q.maxMv !== undefined,
+    produce: q.produce.length > 0,
+    consume: q.consume.length > 0,
+  };
+  return FILTER_KINDS.filter((k) => asked[k]);
+}
+
+/** THE ROW'S OWN PARAMS, CLEARED, AND NOBODY ELSE'S. Removing a row is the only way back to "not
+ *  asked" for it, so a kind that also clears a neighbour would silently narrow a search the reader
+ *  still wanted -- and `sort` survives every removal, because it was never one of the questions. */
+export function withoutFilterKind(q: EventQuery, kind: FilterKind): EventQuery {
+  switch (kind) {
+    case "colours": return { ...q, colours: [] };
+    // BOTH, because one row asked both. Clearing only the one the reader last typed would leave the
+    // row gone from the panel and its other param still narrowing the list, which is the shape of
+    // "the filter I removed is still filtering".
+    case "typeline": return { ...q, types: [], subtypes: [] };
+    // `undefined`, NOT 0: a ceiling of zero is a real question (it answers lands and little else)
+    // and this is the reader saying they no longer have one.
+    case "mv": { const { maxMv: _drop, ...rest } = q; return rest; }
+    case "produce": return { ...q, produce: [] };
+    case "consume": return { ...q, consume: [] };
+  }
+}
