@@ -121,6 +121,8 @@ test("scrolling the end of the list into view loads the next page, and the butto
   }));
   at(many);
   await userEvent.type(await screen.findByRole("searchbox"), "goblin");
+  // THE LIST ANSWERS WHEN TYPING SETTLES, not on the last key (QUERY_SETTLE_MS).
+  await screen.findByRole("list", { name: "Results" });
   const results = () => within(screen.getByRole("list", { name: "Results" })).getAllByRole("link");
   expect(results()).toHaveLength(SEARCH_LIMIT);
   // A KEYBOARD STILL HAS A WAY THROUGH -- the half infinite scroll is known for breaking.
@@ -334,6 +336,41 @@ const atUrl = (url: string, props: Partial<Parameters<typeof CardSearch>[0]> = {
   );
   return Spy as unknown as { search: string };
 };
+
+/** THE BOX ASKS WHEN TYPING SETTLES, NOT PER KEY (owner, 2026-09-22). Bound to the URL, every key
+ *  was a navigation, and on the live site a burst of them raced each other: "Snapcaster" arrived as
+ *  `q=ar`. jsdom cannot reproduce that race, so the RULE is asserted instead -- the letters are all
+ *  in the box at once, and the URL is written once, after the pause. Proven to fail on the old
+ *  binding, which wrote `?q=Skull` before the pause was over. */
+test("the name box keeps every letter at once and writes the URL only when typing settles", async () => {
+  const url = atUrl("/cards");
+  const box = await screen.findByRole("searchbox");
+  await userEvent.type(box, "Skull", { delay: null });
+  expect(box).toHaveValue("Skull");
+  expect(url.search).not.toContain("q=");
+  await waitFor(() => expect(url.search).toBe("?q=Skull"));
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+});
+
+/** A CONTROL CHANGED MID-WORD KEEPS BOTH (review, 2026-09-22). The order select writes the URL
+ *  from its render-time params while the name is still waiting to be written; neither may undo the
+ *  other. */
+test("changing the order while a name is still settling keeps the name and the order", async () => {
+  const url = atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
+  await screen.findByRole("link", { name: /Inspiring Call/ });
+  await userEvent.type(screen.getByRole("searchbox"), "Insp", { delay: null });
+  await userEvent.selectOptions(screen.getByLabelText("Order"), "name");
+  await waitFor(() => expect(url.search).toContain("q=Insp"));
+  expect(url.search).toContain("sort=name");
+  expect(url.search).toContain("produce=");
+  expect(screen.getByRole("searchbox")).toHaveValue("Insp");
+});
+
+/** AND THE BOX FOLLOWS A URL IT DID NOT WRITE. A shared link arrives with `q` and the box shows it. */
+test("the name box shows the query a link arrived with", async () => {
+  atUrl("/cards?q=fathom");
+  expect(await screen.findByRole("searchbox")).toHaveValue("fathom");
+});
 
 test("a produce key lists that event's cards and nothing else", async () => {
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);

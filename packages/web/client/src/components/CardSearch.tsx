@@ -17,6 +17,11 @@ import { CardPeek } from "./CardPeek.js";
 import { PeekContext, usePeekState } from "./peek.js";
 import type { CardPageData } from "../lib/partners.js";
 
+/** How long the name box waits after the last key before it asks. Long enough to cover a word typed
+ *  at speed, short enough that a pause reads as the list answering. A CEILING rather than a token:
+ *  it is input latency, not motion, so `tokens/motion.json` has no say in it. */
+export const QUERY_SETTLE_MS = 250;
+
 /** WHAT THIS PAGE CAN ANSWER, AS THREE QUESTIONS A READER CAN CLICK (owner, 2026-09-17: the landing
  *  was a wall of chips and a count). Asked in the engine's own events since AJ3, so the empty state
  *  shows the shape of a question rather than a vocabulary that no longer exists. The keys are real
@@ -119,11 +124,31 @@ export function CardSearch({
   // THE NAME FILTER USED TO ERASE EVERY OTHER PARAM. `setParams({ q: next })` replaced the whole
   // query string, so typing a name after picking an event silently dropped the event -- harmless
   // while the only other params were chips a reader could see, a real loss now. Merge instead.
-  const setQuery = (next: string) => {
-    const out = new URLSearchParams(params);
-    if (next) out.set("q", next); else out.delete("q");
-    setParams(out, { replace: true });
-  };
+  //
+  // THE BOX TYPES LOCALLY AND THE URL CATCHES UP WHEN THE READER PAUSES (owner, 2026-09-22). The
+  // input used to be bound straight to `q`, so each keystroke was a navigation and the list
+  // re-filtered 25k rows under the reader's fingers; typing faster than the router could commit
+  // lost characters ("Snapcaster" arrived as `q=ar`). Text is local and never lags; the question
+  // is asked once, `QUERY_SETTLE_MS` after the last key. The updater form reads the params as they
+  // are when the timer fires, so a chip clicked mid-word is not undone by a stale copy.
+  const [text, setText] = useState(query);
+  const written = useRef(query);
+  useEffect(() => {
+    // THE URL MOVED WITHOUT US (Back, a link, a cleared filter): the box follows it.
+    if (query !== written.current) { written.current = query; setText(query); }
+  }, [query]);
+  useEffect(() => {
+    if (text === written.current) return;
+    const timer = setTimeout(() => {
+      written.current = text;
+      setParams((prev) => {
+        const out = new URLSearchParams(prev);
+        if (text) out.set("q", text); else out.delete("q");
+        return out;
+      }, { replace: true });
+    }, QUERY_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [text, setParams]);
   // THE QUESTION LIVES IN THE URL (spec 2026-09-19), so a result set is a link and the back button
   // is honest -- the same rule the colour chips have followed since they moved out of local state.
   const eventQuery = useMemo(() => eventsFromParams(params), [params]);
@@ -534,7 +559,7 @@ export function CardSearch({
       <label className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="eyebrow text-(--muted)">{commanderMode ? "find a commander" : "find a card"}</span>
         <input
-          type="search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
+          type="search" autoFocus value={text} onChange={(e) => setText(e.target.value)}
           placeholder={commanderMode ? "Kess, Dissident Mage" : "Krenko, Mob Boss"}
           // A CONTROL'S BOUNDARY IS `--field-border`, which is the 3:1 one (WCAG 1.4.11).
           // `--border` does not exist: it was absorbed into `--separator`, the decorative hairline,
