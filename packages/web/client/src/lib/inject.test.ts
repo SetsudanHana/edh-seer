@@ -33,7 +33,7 @@ const page = (over: Partial<Parameters<typeof injectPage>[1]> = {}) => injectPag
 test("the injected head replaces the shell's title, description, canonical and og tags", () => {
   const out = page();
   expect(out).toContain("<title>Krenko, Mob Boss — EDH Seer</title>");
-  expect(out).not.toContain("<title>EDH Seer — Commander Deck Analysis</title>");
+  expect(out).not.toContain("<title>EDH Seer — Commander Deck Synergy Analysis</title>");
   expect(out).toContain('<link rel="canonical" href="https://edhseer.cards/cards/krenko-mob-boss" />');
   expect(out).toContain('<meta property="og:url" content="https://edhseer.cards/cards/krenko-mob-boss" />');
   expect(out).toContain('<meta property="og:title" content="Krenko, Mob Boss — EDH Seer" />');
@@ -513,7 +513,7 @@ test("the share card's title and description are the page's, not the shell's", (
   expect(out).toContain('<meta name="twitter:title" content="Krenko, Mob Boss — EDH Seer" />');
   expect(out).toContain(
     '<meta name="twitter:description" content="What the engine reads on Krenko, Mob Boss." />');
-  expect(out).not.toContain('content="EDH Seer — Commander Deck Analysis" />\n    <meta name="twitter:description"');
+  expect(out).not.toContain('content="EDH Seer — Commander Deck Synergy Analysis" />\n    <meta name="twitter:description"');
   expect(out).not.toContain("Why two cards work together, from the oracle text itself.");
 });
 
