@@ -61,7 +61,7 @@ export interface EventQuery {
    *  and stays the default -- the sort exists so a reader can ESCAPE that ranking, not because it
    *  is wrong. The deck-build run's complaint: rare events outranked good cards, so it found
    *  staples "only by already knowing their names and typing them in". */
-  sort?: "partners" | "mv" | "name";
+  sort?: "partners" | "mv" | "name" | "pow" | "tou";
 }
 
 /** REPEATED PARAMS, NEVER A JOINED LIST. 274 of the 1,187 keys contain a comma
@@ -70,7 +70,7 @@ export interface EventQuery {
  *
  *  `does` AND `theme` ARE NOT READ. An old link carrying them lands on an unfiltered page, which
  *  is a smaller lie than answering a question the vocabulary no longer has. */
-const SORTS = new Set(["partners", "mv", "name"]);
+const SORTS = new Set(["partners", "mv", "name", "pow", "tou"]);
 
 /** ONE BOUND OUT OF THE URL. A BAD ONE IS NO FILTER, NOT ZERO: `?mvmax=abc` reading as "at most 0
  *  mana" would answer a question nobody asked with a confident empty list. Zero itself IS allowed,
