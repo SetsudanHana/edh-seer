@@ -67,6 +67,7 @@ const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n =
  *  `@edh-seer/matcher`'s `PHASE_VERBS` — the two engine lists that define what a census key's verb half
  *  can ever be. Not a public API otherwise; read `demandSentence` if you want the rendering. */
 import { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "../lib/demand-sentence.js";
+import { cardsSubject } from "../lib/findings.js";
 export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 
 /** Stable ids for the four deck-math groups. The sub-tabs route these to three different panels,
@@ -1001,7 +1002,7 @@ function DeckMathRows({
               // The deadline is the CARD's own mana value, not a chosen turn: a 3-drop wants its
               // pips on turn 3. That is why this row can name a turn without guessing one.
               const label = c.worst
-                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${(c.worst.names ?? []).join(" and ") || `${c.worst.cards} card${c.worst.cards === 1 ? "" : "s"}`} want${c.worst.cards === 1 ? "s" : ""} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
+                ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${cardsSubject(c.worst.names ?? [], c.worst.cards)} want${c.worst.cards === 1 ? "s" : ""} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
                 : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
                 <li key={c.color} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" aria-label={label}>

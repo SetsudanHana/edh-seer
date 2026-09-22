@@ -66,8 +66,9 @@ test("a colour finding names the card and reads the deadline count", () => {
   expect(row.shortfall).toBeCloseTo(2 / 37);
 });
 
-/** Too many to list is a count, not a wall of names. */
-test("a colour finding past two cards names one and counts the rest", () => {
+/** Too many to list is a count, not a wall of names -- and the count is of the cards NOT named. It
+ *  read "Bitterblossom and 3 other cards" for five: one named, two subtracted, one card gone. */
+test("a colour finding past two cards names what it has and counts the rest", () => {
   const [row] = findings(report({
     deckMath: {
       colors: [{
@@ -76,7 +77,7 @@ test("a colour finding past two cards names one and counts the rest", () => {
       }],
     } as DeckReport["deckMath"],
   }));
-  expect(row.headline).toBe("Bitterblossom and 3 other cards want two black on turn 2.");
+  expect(row.headline).toBe("Bitterblossom, Dark Confidant and 3 other cards want two black on turn 2.");
   // Not a timing problem: the deck does not hold the sources at all.
   expect(row.detail).not.toContain("timing problem");
 });
@@ -162,7 +163,8 @@ test("lands are a finding in BOTH directions", () => {
   expect(findings(report({ deckMath: lands(42) }))[0].headline).toContain("more");
   expect(findings(report({ deckMath: lands(36) }))).toEqual([]);
   // AND THE SAME BAND THE DIAL USES, or the two surfaces contradict each other (S16). `bandState`
-  // calls anything within `LAND_BAND` "on the modelled count"; this used to fire on any non-zero
+  // reads anything within `LAND_BAND` as on-band (labelled "inside the model's ±3" since
+  // 2026-09-22, "on the modelled count" only at zero); this used to fire on any non-zero
   // delta, so a deck at 38 against 36 was simultaneously on the modelled count and two lands over.
   // Three of three judges filed it. The band wins, and this finding's own body is the argument:
   // the published formulas disagree by about four lands on the same deck.

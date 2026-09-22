@@ -56,7 +56,14 @@ export function bandState(count: number, target: number): GaugeReading {
   if (target <= 0) return { state: "on-band", label: "no model", tone: "neutral", position: 0 };
   const d = count - target;
   const far = LAND_BAND + LAND_FALLOFF;
-  if (Math.abs(d) <= LAND_BAND) return { state: "on-band", label: "on the modelled count", tone: "success", position: 0 };
+  // THE MARGIN IS SAID WHEN IT IS USED (deck-build run, 2026-09-22). 34 against 36 read "on the
+  // modelled count" beside a row saying "wants 36", and a player took the two for a contradiction.
+  // Both are true -- the model's resolution is ±LAND_BAND -- so the label names the distance and
+  // the margin it falls inside, and only an exact hit is simply "on" the count.
+  if (Math.abs(d) <= LAND_BAND) {
+    const label = d === 0 ? "on the modelled count" : `${Math.abs(d)} ${d > 0 ? "over" : "under"}, inside the model's ±${LAND_BAND}`;
+    return { state: "on-band", label, tone: "success", position: 0 };
+  }
   const dir = d > 0 ? "over" : "under";
   const size = Math.abs(d);
   if (size < far) {
