@@ -85,3 +85,14 @@ test("a land carries no composition type", () => {
   const squares = waffleSquares([node({ id: "Bojuka Bog", types: ["land"] })], [card({ name: "Bojuka Bog" })], []);
   expect(squares[0]!.type).toBeNull();
 });
+
+// THE COMPANION IS A NODE ON THE BOARD AND NOT A SQUARE (CR 702.139): the grid is the hundred, and
+// drawing it would make a correct deck's census read 101.
+test("a companion node is not a square in the hundred", () => {
+  const squares = waffleSquares(
+    [node({ id: "Sol Ring", types: ["artifact"] }), node({ id: "Kaheera, the Orphanguard", isCompanion: true })],
+    [card({ name: "Sol Ring" }), card({ name: "Kaheera, the Orphanguard", isCompanion: true })],
+    [],
+  );
+  expect(squares.map((s) => s.name)).toEqual(["Sol Ring"]);
+});

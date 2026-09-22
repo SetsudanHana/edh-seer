@@ -60,6 +60,9 @@ export function GraphList({ graph, unread, onOpenBoard }: {
         // `derived` flag, and `unreadCardNames` is keyed on `cardName ?? name` for exactly this
         // join -- the one `GraphView`'s commander set already makes.
         unread: unread?.has(n.cardName ?? n.id) === true,
+        // THE COMPANION (CR 702.139) is tagged so a reader can tell a card in the 99 from the one
+        // whose condition binds how the 99 is built. The node carries the flag itself.
+        companion: n.isCompanion === true,
         partners: partners.get(n.id)?.size ?? 0,
         reason: strongest.get(n.id)?.text ?? "",
       }))
@@ -79,7 +82,8 @@ export function GraphList({ graph, unread, onOpenBoard }: {
   const backFaces = rows.filter((r) => r.isBackFace).length;
   const emblemCount = rows.filter((r) => r.isEmblem).length;
   const tokenCount = rows.filter((r) => r.isToken && !r.isEmblem).length;
-  const cardCount = rows.length - backFaces - tokenCount - emblemCount;
+  const companionCount = rows.filter((r) => r.companion).length;
+  const cardCount = rows.length - backFaces - tokenCount - emblemCount - companionCount;
   /** A pair with an edge in BOTH directions is one synergy to a player, not two. `graph.edges` is
    *  directed and 2 of the example deck's 237 point both ways, which is where "237" came from
    *  against 235 real relationships. */
@@ -103,6 +107,7 @@ export function GraphList({ graph, unread, onOpenBoard }: {
       <p className="text-(--muted) text-sm">
         {cardCount} card{cardCount === 1 ? "" : "s"}
         {backFaces > 0 ? `, ${backFaces} second face${backFaces === 1 ? "" : "s"}` : ""}
+        {companionCount > 0 ? `, ${companionCount === 1 ? "the companion" : `${companionCount} companions`}` : ""}
         {tokenCount > 0 ? ` and ${tokenCount} token${tokenCount === 1 ? "" : "s"} they make` : ""}
         {emblemCount > 0 ? ` and ${emblemCount} emblem${emblemCount === 1 ? "" : "s"} they grant` : ""}
         {" — "}{synergyCount} synerg{synergyCount === 1 ? "y" : "ies"}
@@ -126,6 +131,7 @@ export function GraphList({ graph, unread, onOpenBoard }: {
               <span className="min-w-0 truncate">
                 {r.isToken ? <span>{r.label}</span> : <CardName name={r.label} />}
                 {r.isToken ? <span className="ml-2 inline-flex items-center gap-1 text-xs text-(--muted)">{!r.isEmblem && <CardSymbol name="token" />}{r.isEmblem ? "emblem" : "token"}</span> : null}
+                {r.companion ? <span className="ml-2 inline-flex items-center gap-1 text-xs"><CardSymbol name="ability-companion" />companion</span> : null}
               </span>
               {r.unread ? (
                 <span className="shrink-0 flex items-center gap-1.5 text-xs text-(--muted)">

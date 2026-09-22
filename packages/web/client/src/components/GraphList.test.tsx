@@ -182,3 +182,23 @@ test("an emblem row carries an emblem marker and is counted apart from tokens", 
   expect(screen.getByText(/1 emblem they grant/)).toBeInTheDocument();
   expect(screen.queryByText(/token they make/)).toBeNull();
 });
+
+/** THE COMPANION IS TAGGED, WITH THE MANA FONT'S OWN MARK, AND COUNTED APART FROM THE CARDS
+ *  (owner, 2026-09-22): a reader has to see whether a card is in the 99 or is the companion whose
+ *  condition binds the 99. */
+test("the companion row carries its tag and glyph, and the count names it apart from the cards", () => {
+  const withCompanion = {
+    ...graph,
+    nodes: [...graph.nodes, { id: "Kaheera, the Orphanguard", label: "Kaheera, the Orphanguard", isCompanion: true, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: ["G", "W"], cmc: 3 }],
+  } as typeof graph;
+  const { container } = render(
+    <CardDrawerProvider graph={withCompanion}>
+      <GraphList graph={withCompanion} />
+    </CardDrawerProvider>,
+  );
+  const row = screen.getAllByRole("listitem").find((li) => li.textContent?.includes("Kaheera"))!;
+  expect(within(row).getByText("companion")).toBeInTheDocument();
+  expect(row.querySelector(".ms-ability-companion")).not.toBeNull();
+  expect(container.textContent).toMatch(/, the companion/);
+  expect(container.textContent).toMatch(new RegExp(`^${graph.nodes.filter((n) => !n.isToken && n.face === undefined).length} cards`, "m"));
+});

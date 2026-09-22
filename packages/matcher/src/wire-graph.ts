@@ -12,6 +12,9 @@ export interface WireGraphNode {
   isToken?: boolean;
   /** An emblem node (spec 2026-09-08); `isToken` is true on it too. */
   isEmblem?: boolean;
+  /** The COMPANION (CR 702.139): drawn on the board, outside the hundred. Every reader that counts
+   *  the deck off the nodes skips it; the board and the list tag it. */
+  isCompanion?: boolean;
   /** Which printed face this node is, 1 or more for a back face. Absent on a front face and on a
    *  single-face card -- see `ProjectedNode.face`. The board rims the two faces of one card as a
    *  pair and seeds the inspector's open face from whichever one was clicked. */

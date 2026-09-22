@@ -46,7 +46,9 @@ export function waffleSquares(
 
   // The FRONT face survives, exactly as `CardList`'s unread grid resolves the same collision: a
   // back face's id is `face:<n>:<name>`, and its own `face` field is what marks it.
-  const physical = nodes.filter((n) => n.face === undefined && n.isToken !== true);
+  // THE COMPANION IS A NODE ON THE BOARD AND NOT A SQUARE HERE: this grid is the hundred, and a
+  // companion is outside it (CR 702.139). Drawn, it would make the census read 101.
+  const physical = nodes.filter((n) => n.face === undefined && n.isToken !== true && n.isCompanion !== true);
 
   // A CARD WITH A LAND BACK GETS A LAND SQUARE (roadmap T3, and it is the same rule the census
   // line above the grid now counts by). The grid's whole claim is that a doubter can COUNT it, so

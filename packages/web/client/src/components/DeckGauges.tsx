@@ -196,7 +196,7 @@ export function DeckGauges({ data, diff }: {
                   on-theme edge — a card connected to nothing still counts, and drags it down.{" "}
                   <span className="text-(--foreground)">Anchor</span> is how heavily the deck's best-fed
                   card is supported
-                  {anchorCard ? <> — here that is {anchorCard.name}</> : null}; it tops out at 5, so two
+                  {anchorCard ? <> — here that is {anchorCard.name}{anchorCard.isCompanion ? ", your companion" : ""}</> : null}; it tops out at 5, so two
                   decks with very different engines can both read 5.0.
                 </Explain>
                 </>

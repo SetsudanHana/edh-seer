@@ -26,6 +26,9 @@ import { BoardTuner, type ProbeSnapshot } from "./BoardTuner.js";
 import { CardInspector } from "./CardInspector.js";
 import { labelCandidates, labelPriority, placeLabels } from "./labels.js";
 import { HATCH, unreadCardNames } from "../lib/unread.js";
+
+/** mana-font's `ms-ability-companion` glyph, read out of `mana.min.css` (v1.18.0) on 2026-09-22. */
+const COMPANION_GLYPH = "\ue97b";
 // Re-exported so this module stays the import site every consumer (and GraphView.test.tsx) already
 // uses, while board-force.ts owns the values.
 export { ART_RADIUS, nodeRadius };
@@ -640,6 +643,26 @@ export function GraphView(
   );
   const commandersRef = useRef<Set<string>>(new Set());
   commandersRef.current = commanders;
+  // THE COMPANION IS NAMED AS ONE (owner, 2026-09-22): a player has to see whether a card is played
+  // in the 99 or revealed as the companion, because the companion's condition then binds how the
+  // rest of the deck is built. The node carries the flag (`buildWireGraph` sets it).
+  const companions = useMemo(
+    () => new Set(graph.nodes.filter((n) => n.isCompanion === true).map((n) => n.id)),
+    [graph],
+  );
+  const companionsRef = useRef<Set<string>>(new Set());
+  companionsRef.current = companions;
+  // Always labelled, like a commander: an unlabelled "companion" tag says what, never which.
+  const alwaysLabelled = (): Set<string> => new Set([...commandersRef.current, ...companionsRef.current]);
+  // A WEB FONT LOADS ONLY WHEN SOMETHING ASKS FOR IT, and nothing in this board's DOM uses Mana --
+  // measured on the dev server: `document.fonts.check('10px "Mana"')` read false on a board with a
+  // companion, so the glyph would never have drawn. Ask for it, and redraw once it lands.
+  useEffect(() => {
+    if (companions.size === 0 || typeof document === "undefined" || !document.fonts?.load) return;
+    let live = true;
+    document.fonts.load('10px "Mana"').then(() => { if (live) dirtyRef.current = true; }, () => {});
+    return () => { live = false; };
+  }, [companions]);
 
   /** Nodes for cards THE SYNERGY ENGINE NEVER READ. This board is the deck's synergy, drawn — and
    *  an unread card painted here is indistinguishable from a card that was read and connects to
@@ -1470,6 +1493,36 @@ export function GraphView(
           ctx.fillText(emblem ? "emblem" : "token", n.x, n.y + ART_RADIUS + 11 / cam.z);
         }
 
+        // THE COMPANION SAYS SO, in the same free slot a token's word uses: it is one card, so the
+        // copies badge never needs the space. Foreground rather than muted -- it is a card the
+        // player chose to build around, not a derived one.
+        // THE MANA FONT'S OWN COMPANION MARK leads the word (owner, 2026-09-22: use the Magic
+        // glyph wherever one exists). `ms-ability-companion` is U+E97B in mana-font's CSS. Drawn
+        // only once the face has loaded: a canvas has no fallback glyph, so an unloaded font would
+        // paint an empty box where the word alone was honest.
+        if (companionsRef.current.has(n.id)) {
+          const y = n.y + ART_RADIUS + 11 / cam.z;
+          const size = 10 / cam.z;
+          const word = "companion";
+          ctx.font = `500 ${size}px "JetBrains Mono", ui-monospace, monospace`;
+          const wordW = ctx.measureText(word).width;
+          const glyph = document.fonts?.check(`${size}px "Mana"`) ? COMPANION_GLYPH : "";
+          ctx.fillStyle = paintColors.fg;
+          if (glyph) {
+            ctx.font = `${size}px "Mana"`;
+            const glyphW = ctx.measureText(glyph).width;
+            const gap = 3 / cam.z;
+            const left = n.x - (glyphW + gap + wordW) / 2;
+            ctx.textAlign = "left";
+            ctx.fillText(glyph, left, y);
+            ctx.font = `500 ${size}px "JetBrains Mono", ui-monospace, monospace`;
+            ctx.fillText(word, left + glyphW + gap, y);
+          } else {
+            ctx.textAlign = "center";
+            ctx.fillText(word, n.x, y);
+          }
+        }
+
         // SHARED RIM, NO LINK (owner's ruling, 2026-08-27). The two faces of one card -- Task 7's
         // front (bare id) and back (`face:<n>:<name>`) -- both carry `cardName`, so a rim marks
         // them as one card without an edge drawn between them: no new edge kind, no legend entry,
@@ -1520,7 +1573,7 @@ export function GraphView(
         // because an unread card is edgeless and the degree cull drops it first. "How many" without
         // "which" is not enough to decide whether the cards you just added are worth keeping.
         eligibleBelowFloor: new Set([
-          ...commandersRef.current, ...hoveredSet,
+          ...alwaysLabelled(), ...hoveredSet,
           ...(spotlightRef.current ? matchesRef.current ?? [] : []),
         ]),
         placeholders: placeholderIds,
@@ -1546,7 +1599,7 @@ export function GraphView(
         ctx.fillStyle = paintColors.fg;
         // Spotlit matches rank with the hovered neighbourhood: when a reader has asked to see one
         // set of cards, that set wins the scarce slots over whatever the degree ordering prefers.
-        const order = labelPriority(candidates, weightedDegree, commandersRef.current,
+        const order = labelPriority(candidates, weightedDegree, alwaysLabelled(),
           spotlightRef.current && matchesRef.current ? new Set([...hoveredSet, ...matchesRef.current]) : hoveredSet);
         // TWO SLOTS PER LABEL, above then below -- see placeLabels. `mode === "card"` uses the
         // card's own half-height, so a label clears the printed card rather than the disc that is

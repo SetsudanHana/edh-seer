@@ -52,6 +52,9 @@ export interface CardSynergy {
    *  `Reason.producerFace`/`consumerFace`, the same "front is unmarked" convention. */
   face?: number;
   isCommander: boolean;
+  /** CR 702.139: this row is the COMPANION -- outside the 100, in the graph. Every reader that
+   *  counts the deck skips it; the ones that relate cards keep it. Absent on every other row. */
+  isCompanion?: boolean;
   /** THE ENGINE READ THIS CARD'S ORACLE TEXT. False when the card resolved against the corpus but
    *  carries no derived tags — it forms no edge, carries no theme and reaches no archetype, so
    *  every synergy figure on the row is a structural zero rather than a measurement.

@@ -85,7 +85,7 @@ async function reportFromDecklist(input: string, trim: number): Promise<string> 
     for (const name of companions.missing) console.error(`warning: companion not found: ${name}`);
     return formatReport(
       analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags,
-        undefined, companions.cards, companions.missing),
+        undefined, await buildDeckCards(companions.cards, lookup, tagsLookup), companions.missing),
       trim,
     );
   } finally {
