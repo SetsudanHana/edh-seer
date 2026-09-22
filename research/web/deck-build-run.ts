@@ -36,8 +36,10 @@ import { dirname, join } from "node:path";
 export type Visit = {
   url: string;
   /** `search` — typed into the header field or a browse filter. `link` — followed something the
-   *  page listed. `direct` — typed a URL, which a player cannot do and an agent can. */
-  from: "search" | "link" | "direct";
+   *  page listed. `back` — the browser's Back button. `start` — the page the operator opened before
+   *  handing over, which the agent did not choose. `direct` — typed a URL, which a player cannot do;
+   *  FORBIDDEN since 2026-09-22 (AN6), so it only ever appears to invalidate a run. */
+  from: "search" | "link" | "back" | "start" | "direct";
   /** What was typed, when `from` is `search`. */
   query?: string;
 };
@@ -126,7 +128,11 @@ function confirms(v: Visit, cardName: string): boolean {
   if (v.from === "direct") return detailSlug(v.url) === slug(cardName);
   if (v.from !== "search") return false;
   const q = slug(v.query ?? "");
-  if (q.length === 0) return true;
+  // AN EMPTY SEARCH ON A LIST IS A BROWSE, NOT A LOOKUP (second run, 2026-09-22). `sameUrl` folds
+  // every `/cards?…` into one page, so a single cleared filter box logged as `search` with no query
+  // turned 36 Wizards the agent read off a filtered list into "confirmations". The conservative
+  // rule still holds on a DETAIL page, where landing IS naming.
+  if (q.length === 0) return detailSlug(v.url) !== "";
   return q.length >= 3 && slug(cardName).startsWith(q);
 }
 
@@ -197,6 +203,12 @@ export function invalidities(rec: Record_): string[] {
   // THE GUARD ON THE SELF-REPORTED TRAIL. A citation naming a page the trail never visited is not
   // a scoring judgement to make later -- it means the two halves of the report disagree, and the
   // run cannot be trusted at all.
+  // A TYPED URL IS NOT A PLAYER (owner, 2026-09-22, AN6). The first run came back 22 of 23 visits
+  // `direct`: it measured the query-string surface, which no player knows exists. The agent has no
+  // navigate tool now, so a `direct` visit means the rule was broken some other way -- and a run
+  // that broke it measured the wrong thing, whatever its numbers say.
+  const typed = trail.filter((v) => v.from === "direct").length;
+  if (typed > 0) out.push(`${typed} page(s) reached by typing a URL — this run forbids it (AN6)`);
   if (ghosts.length > 0) out.push(`${ghosts.length} citation(s) name a page the trail never visited: ${ghosts.slice(0, 5).join(", ")}`);
   return out;
 }
@@ -378,6 +390,26 @@ function selfTest(): void {
   eq(citationKind({ name: "Viscera Seer", source: "https://e/cards?produce=fodder&colors=UBR" }, [
     { url: "https://e/cards?produce=fodder&colors=UBR", from: "direct" }]), "discovery",
     "typing a LIST url and reading the names off it is still discovery");
+
+  eq(citationKind({ name: "Spellseeker", source: "https://e/cards?subtype=wizard&colors=BRU" }, [
+    { url: "https://e/cards?subtype=wizard&colors=BRU", from: "link" },
+    { url: "https://e/cards?subtype=wizard&colors=BRU", from: "search", query: "" },
+    { url: "https://e/cards?subtype=wizard&colors=BRU&q=Snapcaster", from: "search", query: "Snapcaster" }]),
+    "discovery", "clearing or searching a list for OTHER names does not confirm a card read off it");
+  eq(citationKind({ name: "Snapcaster Mage", source: "https://e/cards?subtype=wizard" }, [
+    { url: "https://e/cards?subtype=wizard&q=snapcaster", from: "search", query: "snapcaster" }]),
+    "confirmation", "searching a list for the card's own name still confirms it");
+  eq(invalidities({
+    ...base,
+    iterations: [{ n: 1, build: { decklist: [], citations: [], trail: [
+      { url: "https://e/cards/sol-ring", from: "link" },
+      { url: "https://e/cards?produce=fodder", from: "direct" }] } }],
+  }), ["1 page(s) reached by typing a URL — this run forbids it (AN6)"],
+    "a single typed URL invalidates the run");
+  eq(citationKind({ name: "Skullclamp", source: "https://e/cards/skullclamp" }, [
+    { url: "https://e/cards/skullclamp", from: "link" },
+    { url: "https://e/cards/skullclamp", from: "back" }]), "discovery",
+    "returning to a page with Back does not turn it into a confirmation");
 
   console.log(process.exitCode ? "\nself-test FAILED" : "\nself-test passed");
 }
