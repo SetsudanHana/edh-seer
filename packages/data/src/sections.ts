@@ -1,6 +1,6 @@
 export { beforeBracket, MAX_CARD_LINE };
 
-type Section = "commander" | "deck" | "ignore";
+type Section = "commander" | "companion" | "deck" | "ignore";
 
 /** A pasted decklist is UNTRUSTED INPUT, and two regexes here were measurably quadratic in it.
  *
@@ -63,9 +63,13 @@ function cardQty(line: string): number {
  * is 1-2 cards, a blank line follows it, and more cards follow that. A list with no blank line, or
  * whose first block is longer, is left exactly as it was.
  */
-export function parseDecklistSections(text: string): { commanders: string[]; deck: string[] } {
+export function parseDecklistSections(text: string): { commanders: string[]; deck: string[]; companions: string[] } {
   const commanders: string[] = [];
   const deck: string[] = [];
+  // CR 702.139: a companion is OUTSIDE the 100. Moxfield and Archidekt both export it under its own
+  // header, and until 2026-09-22 that header was read as a CARD called "Companion" and the companion
+  // itself was counted into the 99 -- a correct 100-card deck with a companion reported 101.
+  const companions: string[] = [];
   let section: Section = "deck";
   let sawBlankAfterCommander = false;
   // Whether any explicit section header appeared. An export that names its sections is authoritative
@@ -86,6 +90,12 @@ export function parseDecklistSections(text: string): { commanders: string[]; dec
     const header = stripTrailingSeparators(line.toLowerCase()).trim();
     if (header === "commander" || header === "commanders") {
       section = "commander";
+      sawHeader = true;
+      sawBlankAfterCommander = false;
+      continue;
+    }
+    if (header === "companion" || header === "companions") {
+      section = "companion";
       sawHeader = true;
       sawBlankAfterCommander = false;
       continue;
@@ -111,12 +121,13 @@ export function parseDecklistSections(text: string): { commanders: string[]; dec
     if (section === "ignore") continue;
     const name = cleanCardLine(line);
     if (!name) continue;
-    const target = section === "commander" ? commanders : deck;
+    const target = section === "commander" ? commanders : section === "companion" ? companions : deck;
     for (let i = 0; i < cardQty(line); i++) target.push(name);
   }
 
-  if (commanders.length > 0 || sawHeader) return { commanders, deck };
-  return implicitCommanderBlock(text) ?? flatExportCommander(text) ?? { commanders, deck };
+  if (commanders.length > 0 || sawHeader) return { commanders, deck, companions };
+  const implicit = implicitCommanderBlock(text) ?? flatExportCommander(text);
+  return implicit ? { ...implicit, companions } : { commanders, deck, companions };
 }
 
 /** The headerless convention: commander(s), blank line, the 99. Returns undefined unless the text

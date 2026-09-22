@@ -204,3 +204,172 @@ test("903.4b — a card that chooses its colour before the game is recognised", 
   expect(choosesColour(clara)).toBe(true);
   expect(choosesColour(cmd)).toBe(false);
 });
+
+// ---------------------------------------------------------------------------------------------
+// CARDS THAT CHANGE DECK CONSTRUCTION (deck-rules.ts, owner 2026-09-22). Oracle text below is the
+// corpus's own, copied from Mongo on 2026-09-22, not written from memory.
+// ---------------------------------------------------------------------------------------------
+
+const deckOf = (commander: Card, rest: Card[]): Card[] => [commander, ...rest, ...filler(99 - rest.length)];
+
+test("903.5b's capped exception: up to seven Seven Dwarves is legal, eight is not", () => {
+  const dwarves = (n: number) => Array.from({ length: n }, () => card("Seven Dwarves", "Creature — Dwarf", {
+    colorIdentity: ["R"], oracleText: "Seven Dwarves gets +1/+1 for each other creature named Seven Dwarves you control.\nA deck can have up to seven cards named Seven Dwarves.",
+  }));
+  expect(deckLegality({ cards: deckOf(cmd, dwarves(7)), commanders: [cmd] })).toEqual([]);
+  expect(deckLegality({ cards: deckOf(cmd, dwarves(8)), commanders: [cmd] }).map((f) => f.rule)).toEqual(["duplicate"]);
+});
+
+test("903.4b: a choose-a-colour commander allows ONE colour outside its printed identity, never two", () => {
+  const clara = card("Clara Oswald", "Legendary Creature — Human Advisor", {
+    colorIdentity: [], oracleText: "Impossible Girl — If Clara Oswald is your commander, choose a color before the game begins. Clara Oswald is the chosen color.",
+  });
+  const red = card("Shock", "Instant", { colorIdentity: ["R"] });
+  const blue = card("Opt", "Instant", { colorIdentity: ["U"] });
+  expect(deckLegality({ cards: deckOf(clara, [red]), commanders: [clara] }).map((f) => f.rule)).toEqual([]);
+  expect(deckLegality({ cards: deckOf(clara, [red, blue]), commanders: [clara] }).map((f) => f.rule)).toEqual(["color-identity"]);
+});
+
+test("banned and not-legal cards are reported from the card's own Commander legality", () => {
+  const crypt = card("Mana Crypt", "Artifact", { commanderLegality: "banned" });
+  const un = card("Sovereign's Plaything", "Artifact", { commanderLegality: "not_legal" });
+  const rules = deckLegality({ cards: deckOf(cmd, [crypt, un]), commanders: [cmd] });
+  expect(rules.find((f) => f.rule === "banned")?.cards).toEqual(["Mana Crypt"]);
+  expect(rules.find((f) => f.rule === "not-legal")?.cards).toEqual(["Sovereign's Plaything"]);
+});
+
+const LURRUS = card("Lurrus of the Dream-Den", "Legendary Creature — Cat Nightmare", {
+  colorIdentity: ["W", "B"], manaValue: 3,
+  oracleText: "Companion — Each permanent card in your starting deck has mana value 2 or less. (If this card is your chosen companion, you may put it into your hand from outside the game for {3} as a sorcery.)\nLifelink",
+});
+const WB = card("Teysa Karlov", "Legendary Creature — Human Advisor", { colorIdentity: ["W", "B"], manaValue: 4 });
+const cheap = (n: number): Card[] => Array.from({ length: n }, () => card("Plains", "Basic Land — Plains", { colorIdentity: ["W"], manaValue: 0 }));
+
+// 702.139a/b and 903.11a.
+test("702.139b: a companion's condition counts the COMMANDER as part of the starting deck", () => {
+  // A synthetic W/B two-drop: the only thing under test is its mana value against Lurrus.
+  const cheapCmd = card("Two-Drop Commander", "Legendary Creature — Human Soldier", { colorIdentity: ["W", "B"], manaValue: 2 });
+  expect(deckLegality({ cards: [cheapCmd, ...cheap(99)], commanders: [cheapCmd], companions: [LURRUS] })).toEqual([]);
+  // Teysa is a four-drop PERMANENT and she is in the starting deck in a Commander game.
+  const out = deckLegality({ cards: [WB, ...cheap(99)], commanders: [WB], companions: [LURRUS] });
+  expect(out.map((f) => f.rule)).toEqual(["companion"]);
+  expect(out[0]!.cards).toEqual(["Teysa Karlov"]);
+  // One card, and the sentence agrees with it ("1 card are" shipped in the first browser check).
+  expect(out[0]!.detail).toMatch(/1 card is a permanent over mana value 2$/);
+});
+
+test("903.11a: a companion may not share a name with the deck nor leave the commander's identity", () => {
+  const redCompanion = card("Obosh, the Preypiercer", "Legendary Creature — Horror", {
+    colorIdentity: ["B", "R"], oracleText: "Companion — Your starting deck contains only cards with odd mana values and land cards.",
+  });
+  const out = deckLegality({ cards: [WB, ...cheap(99)], commanders: [WB], companions: [redCompanion] });
+  expect(out.some((f) => /outside your commander's colour identity/.test(f.detail))).toBe(true);
+  const dup = deckLegality({ cards: [WB, LURRUS, ...cheap(98)], commanders: [WB], companions: [LURRUS] });
+  expect(dup.some((f) => /also in the deck/.test(f.detail))).toBe(true);
+});
+
+test("702.139a: one companion only, and a card with no Companion ability cannot be one", () => {
+  const plain = card("Sol Ring", "Artifact", { manaValue: 1 });
+  const out = deckLegality({ cards: [cmd, ...filler(99)], commanders: [cmd], companions: [plain] });
+  expect(out.find((f) => f.rule === "companion")?.detail).toMatch(/no Companion ability/);
+  const two = deckLegality({ cards: [WB, ...cheap(99)], commanders: [WB], companions: [LURRUS, { ...LURRUS, name: "Other Companion" }] });
+  expect(two.some((f) => /may reveal only one/.test(f.detail))).toBe(true);
+});
+
+test("903.5a: Yorion can never be met in a 100-card format, and says so", () => {
+  const yorion = card("Yorion, Sky Nomad", "Legendary Creature — Bird Serpent", {
+    colorIdentity: ["W", "U"], oracleText: "Companion — Your starting deck contains at least twenty cards more than the minimum deck size.",
+  });
+  const wu = card("Brago, King Eternal", "Legendary Creature — Spirit", { colorIdentity: ["W", "U"] });
+  const out = deckLegality({ cards: [wu, ...cheap(99)], commanders: [wu], companions: [yorion] });
+  expect(out.find((f) => f.rule === "companion")?.detail).toMatch(/exactly 100 cards/);
+});
+
+test("702.73a: Kaheera accepts a changeling as every creature type", () => {
+  const kaheera = card("Kaheera, the Orphanguard", "Legendary Creature — Cat Beast", {
+    colorIdentity: ["G", "W"], oracleText: "Companion — Each creature card in your starting deck is a Cat, Elemental, Nightmare, Dinosaur, or Beast card.",
+  });
+  const gw = card("Arahbo, Roar of the World", "Legendary Creature — Cat Avatar", { colorIdentity: ["G", "W"] });
+  const shifter = card("Changeling Outcast", "Creature — Shapeshifter", { keywords: ["Changeling"] });
+  const bear = card("Grizzly Bears", "Creature — Bear");
+  const lands = (n: number) => Array.from({ length: n }, () => card("Forest", "Basic Land — Forest", { colorIdentity: ["G"] }));
+  expect(deckLegality({ cards: [gw, shifter, ...lands(98)], commanders: [gw], companions: [kaheera] })).toEqual([]);
+  expect(deckLegality({ cards: [gw, bear, ...lands(98)], commanders: [gw], companions: [kaheera] })[0]!.cards).toEqual(["Grizzly Bears"]);
+});
+
+test("712.8a: Umori reads a double-faced card by its FRONT face", () => {
+  const umori = card("Umori, the Collector", "Legendary Creature — Ooze", {
+    colorIdentity: ["B", "G"], oracleText: "Companion — Each nonland card in your starting deck shares a card type.",
+  });
+  const bg = card("Meren of Clan Nel Toth", "Legendary Creature — Human Shaman", { colorIdentity: ["B", "G"] });
+  const mdfc = card("Tangled Florahedron // Tangled Vale", "Creature — Elf Druid // Land");
+  const spell = card("Cultivate", "Sorcery");
+  const lands = (n: number) => Array.from({ length: n }, () => card("Swamp", "Basic Land — Swamp", { colorIdentity: ["B"] }));
+  expect(deckLegality({ cards: [bg, mdfc, ...lands(98)], commanders: [bg], companions: [umori] })).toEqual([]);
+  expect(deckLegality({ cards: [bg, mdfc, spell, ...lands(97)], commanders: [bg], companions: [umori] }).map((f) => f.rule)).toEqual(["companion"]);
+});
+
+test("a companion condition this tool cannot read is reported as NOT CHECKED, never passed", () => {
+  const zirda = card("Zirda, the Dawnwaker", "Legendary Creature — Elemental Fox", {
+    colorIdentity: ["R", "W"], oracleText: "Companion — Each permanent card in your starting deck has an activated ability.",
+  });
+  const rw = card("Feather, the Redeemed", "Legendary Creature — Angel", { colorIdentity: ["R", "W"] });
+  const out = deckLegality({ cards: [rw, ...filler(99)], commanders: [rw], companions: [zirda] });
+  expect(out.map((f) => f.rule)).toEqual(["unchecked"]);
+});
+
+test("a card that changes deck construction in wording no rule reads is reported, never passed", () => {
+  // Invented wording on purpose: this is the net for a mechanic printed after the table was built.
+  const novel = card("Future Rule Card", "Artifact", { oracleText: "Your starting deck may have two commanders of any kind." });
+  const out = deckLegality({ cards: deckOf(cmd, [novel]), commanders: [cmd] });
+  expect(out).toEqual([{ rule: "unchecked", detail: expect.stringMatching(/does not check/), cards: ["Future Rule Card"] }]);
+});
+
+test("Sovereign's Realm forbids basics when it is in the deck", () => {
+  const realm = card("Sovereign's Realm", "Enchantment", { oracleText: "Your starting deck can't have basic land cards and your starting hand size is five." });
+  const out = deckLegality({ cards: deckOf(cmd, [realm]), commanders: [cmd] });
+  expect(out.map((f) => f.rule)).toEqual(["construction"]);
+  expect(out[0]!.cards).toEqual(["Mountain"]);
+});
+
+// REVIEW FINDINGS, 2026-09-22 -- each reproduced before it was fixed.
+
+test("903.4b: a choose-a-colour commander's ONE extra colour is shared by deck and companion", () => {
+  const clara = card("Clara Oswald", "Legendary Creature — Human Advisor", {
+    colorIdentity: [], oracleText: "If Clara Oswald is your commander, choose a color before the game begins.",
+  });
+  const jegantha = card("Jegantha, the Wellspring", "Legendary Creature — Elemental Elk", {
+    colorIdentity: ["W", "U", "B", "R", "G"],
+    oracleText: "Companion — No card in your starting deck has more than one of the same mana symbol in its mana cost.",
+  });
+  const out = deckLegality({ cards: [clara, ...filler(99)], commanders: [clara], companions: [jegantha] });
+  expect(out.some((f) => /outside your commander's colour identity/.test(f.detail))).toBe(true);
+  // One colour, and it is the colour the deck already chose: legal.
+  const redCompanion = { ...jegantha, name: "Red Companion", colorIdentity: ["R"] };
+  const withRed = deckLegality({ cards: [clara, ...filler(99)], commanders: [clara], companions: [redCompanion] });
+  expect(withRed.some((f) => /colour identity/.test(f.detail))).toBe(false);
+});
+
+test("a companion name that did not resolve is reported by legality, not silently dropped", () => {
+  const out = deckLegality({ cards: [cmd, ...filler(99)], commanders: [cmd], unresolvedCompanions: ["Lurus of the Dream Den"] });
+  expect(out).toEqual([{ rule: "unchecked", detail: expect.stringMatching(/not recognised/), cards: ["Lurus of the Dream Den"] }]);
+});
+
+test("'before the game begins' in a flavour clause is not a deck-building rule", () => {
+  const flavour = card("Rule Zero Card", "Creature — Human", { oracleText: "Before the game begins, each player may tell a story." });
+  expect(deckLegality({ cards: deckOf(cmd, [flavour]), commanders: [cmd] })).toEqual([]);
+});
+
+test("a copy cap this cannot read is reported, never read as ONE (which would flag a legal deck)", () => {
+  const odd = (n: number) => Array.from({ length: n }, () => card("Many Rats", "Creature — Rat", {
+    colorIdentity: ["R"], oracleText: "A deck can have up to umpteen cards named Many Rats.",
+  }));
+  const out = deckLegality({ cards: deckOf(cmd, odd(12)), commanders: [cmd] });
+  expect(out.map((f) => f.rule)).toEqual(["unchecked"]);
+  // And a spelled-out cap past ten is read.
+  const eleven = (n: number) => Array.from({ length: n }, () => card("Eleven Rats", "Creature — Rat", {
+    colorIdentity: ["R"], oracleText: "A deck can have up to eleven cards named Eleven Rats.",
+  }));
+  expect(deckLegality({ cards: deckOf(cmd, eleven(11)), commanders: [cmd] })).toEqual([]);
+  expect(deckLegality({ cards: deckOf(cmd, eleven(12)), commanders: [cmd] }).map((f) => f.rule)).toEqual(["duplicate"]);
+});

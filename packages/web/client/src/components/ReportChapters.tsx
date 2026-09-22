@@ -131,7 +131,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
           {/* A deck the format would not let you play is not a deck this report can diagnose. It
             *  renders nothing when the deck is clean, which is every one of the 71 calibration
             *  decks. */}
-          <LegalityPanel legality={report.legality} />
+          <LegalityPanel legality={report.legality} companions={report.companions} />
           {/* THE HERO: what this deck IS, before anything judges it — and the waffle inside it is
             *  where a reader checks the engine's work card by card. */}
           <RecognitionPanel data={data} />

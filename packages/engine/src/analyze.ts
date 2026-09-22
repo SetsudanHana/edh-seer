@@ -400,6 +400,8 @@ export interface DeckCoverage {
 
 export interface DeckReport {
   commanders: string[];
+  /** CR 702.139: the companion(s) the decklist named, outside the 100. Absent when there are none. */
+  companions?: string[];
   cards: CardSynergy[];
   edges: SynergyEdge[];
   /** Copies per repeated card, so ONE node can show "x6" instead of six identical nodes. Only cards

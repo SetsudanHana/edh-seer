@@ -33,6 +33,13 @@ const TESTED: Record<string, string> = {
   "606.5": "rate.test.ts — a loyalty cost is not mana; the ability has no rate (Teferi, Temporal Pilgrim)",
   "714.3": "edges.test.ts — a Saga carries lore counters, so it can satisfy a counter-presence condition (AL4)",
   "702.24": "edges.test.ts — cumulative upkeep carries age counters, same (AL4)",
+  "702.139": "legality.test.ts — 702.139a: one companion only, and a card with no Companion ability cannot be one",
+  "702.139a": "legality.test.ts — 702.139a: one companion only",
+  "702.139b": "legality.test.ts — 702.139b: a companion's condition counts the COMMANDER as part of the starting deck",
+  "903.11a": "legality.test.ts — 903.11a: a companion may not share a name with the deck nor leave the commander's identity",
+  "903.5a": "legality.test.ts — 903.5a counts COPIES; Yorion can never be met in a 100-card format",
+  "702.73a": "legality.test.ts — 702.73a: Kaheera accepts a changeling as every creature type",
+  "712.8a": "legality.test.ts — 712.8a: Umori reads a double-faced card by its FRONT face",
 };
 const PROSE: Record<string, string> = {
   "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",

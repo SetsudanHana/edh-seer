@@ -53,9 +53,13 @@ export function moxfieldDeckToSections(json: unknown): DeckSections {
   if (!boards || typeof boards !== "object" || !boards.mainboard) {
     throw new Error("Moxfield response shape changed: no boards.mainboard");
   }
+  // `companions` IS KEPT, OUTSIDE THE 100 (owner, 2026-09-22): it used to be dropped with the other
+  // non-deck boards, so an imported Lurrus deck was checked as if it had no companion at all.
+  const companions = namesFromBoard(boards.companions, "companions");
   return {
     commanders: namesFromBoard(boards.commanders, "commanders"),
     deck: namesFromBoard(boards.mainboard, "mainboard"),
+    ...(companions.length > 0 ? { companions } : {}),
   };
 }
 

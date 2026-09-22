@@ -1,4 +1,5 @@
 import type { Card } from "@edh-seer/engine";
+import { allowsChosenColour, companionFindings, constructionFindings, copyLimit } from "./deck-rules.js";
 
 /** DECK LEGALITY AS A REPORT, NEVER A GATE (roadmap J4, CR 903.3 and 903.5a-d).
  *
@@ -18,10 +19,9 @@ import type { Card } from "@edh-seer/engine";
  *  colour identity. Like I9's `bfz` row, this is built for the arbitrary pasted list and not for the
  *  owner's own well-built decks. */
 
-/** CR 903.5b's own exception, printed on the card. Thirteen corpus cards say it — Dragon's Approach,
- *  Persistent Petitioners, Shadowborn Apostle, Rat Colony — and `SubjectFilter.named` already reads
- *  the same sentence for a different purpose. */
-const ANY_NUMBER_NAMED = /a deck can have any number of cards named/i;
+/** CR 903.5b's own exceptions live in `deck-rules.ts` with every other card that changes deck
+ *  construction: `copyLimit` reads "any number of cards named" AND the capped "up to nine cards
+ *  named" (Nazgûl, Seven Dwarves), which this file used to miss and flag as duplicates. */
 
 /** CR 903.3's carve-out, printed verbatim on 49 corpus cards. Will Kenrith is a Legendary
  *  PLANESWALKER and a legal commander because it says so in its own text. */
@@ -30,8 +30,7 @@ const CAN_BE_COMMANDER = /can be your commander/i;
 /** CR 903.4b, as printed: "choose a color before the game begins". Three corpus cards on
  *  2026-09-05 -- Clara Oswald, The Prismatic Piper, Faceless One -- and the chosen colour is in the
  *  commander's identity, so a page about one of them has to offer the choice. */
-const CHOOSES_COLOUR = /choose a colou?r before the game begins/i;
-export const choosesColour = (card: Card): boolean => CHOOSES_COLOUR.test(card.oracleText ?? "");
+export { choosesColour } from "./deck-rules.js";
 /** A Background (CR 702.124): the second commander beside a card that prints "Choose a Background". */
 export const isBackground = (card: Card): boolean => (card.typeLine ?? "").toLowerCase().includes("background");
 
@@ -110,7 +109,8 @@ export function pairingLicense(a: Card, b: Card): string | undefined {
 }
 
 export interface LegalityFinding {
-  rule: "size" | "duplicate" | "color-identity" | "commander" | "pairing";
+  rule: "size" | "duplicate" | "color-identity" | "commander" | "pairing"
+    | "banned" | "not-legal" | "companion" | "construction" | "unchecked";
   /** What a reader should do about it, in their own words. */
   detail: string;
   /** The cards involved, where naming them helps. Empty for a deck-level count. */
@@ -143,11 +143,17 @@ export interface LegalityInput {
   /** Every card slot, one entry per COPY — the size check counts copies, not distinct names. */
   cards: readonly Card[];
   commanders: readonly Card[];
+  /** CR 702.139: outside the 100, so never in `cards`. Checked against 903.11a and its own printed
+   *  condition, with the commander counted as part of the starting deck (702.139b). */
+  companions?: readonly Card[];
+  /** Companion names the decklist gave that did not resolve. Reported here, never added to the
+   *  deck's own missing list -- that list is drawn as the 100, and a companion is not in it. */
+  unresolvedCompanions?: readonly string[];
 }
 
 /** What is off about this deck, as a list of findings. Empty means nothing was found — never
  *  "the deck is legal", because this checks four rules and the format has more. */
-export function deckLegality({ cards, commanders }: LegalityInput): LegalityFinding[] {
+export function deckLegality({ cards, commanders, companions = [], unresolvedCompanions = [] }: LegalityInput): LegalityFinding[] {
   const out: LegalityFinding[] = [];
 
   // 903.5a — one hundred cards, the commander included.
@@ -167,9 +173,7 @@ export function deckLegality({ cards, commanders }: LegalityInput): LegalityFind
     e.n++;
     counts.set(c.name, e);
   }
-  const dups = [...counts.values()].filter((e) => e.n > 1
-    && !/\bbasic\b/i.test(e.card.typeLine ?? "")
-    && !ANY_NUMBER_NAMED.test(e.card.oracleText ?? ""));
+  const dups = [...counts.values()].filter((e) => e.n > copyLimit(e.card));
   if (dups.length > 0) {
     out.push({
       rule: "duplicate",
@@ -177,6 +181,11 @@ export function deckLegality({ cards, commanders }: LegalityInput): LegalityFind
       cards: dups.map((e) => `${e.card.name} x${e.n}`).sort(),
     });
   }
+
+  // The colours cards need beyond the printed identity. Kept at function scope because a
+  // choose-a-colour commander widens the identity by ONE colour for the deck AND the companion
+  // together -- the choice is made once (CR 903.4b).
+  const extra = new Set<string>();
 
   // 903.5c/d — every card inside the commander's colour identity. Checked only when a commander was
   // identified: with none, the identity is empty and EVERY coloured card would be flagged, which is
@@ -188,9 +197,13 @@ export function deckLegality({ cards, commanders }: LegalityInput): LegalityFind
     for (const c of cards) {
       if (seen.has(c.name)) continue;
       seen.add(c.name);
-      if ((c.colorIdentity ?? []).some((x) => !identity.has(x))) off.push(c.name);
+      const outside = (c.colorIdentity ?? []).filter((x) => !identity.has(x));
+      if (outside.length > 0) { off.push(c.name); outside.forEach((x) => extra.add(x)); }
     }
-    if (off.length > 0) {
+    // CR 903.4b: a commander that chooses its colour before the game widens the identity by ONE
+    // colour the decklist does not name. Outsiders that all need the same single colour are that
+    // choice; two or more colours outside is still a finding.
+    if (off.length > 0 && !(allowsChosenColour(commanders) && extra.size <= 1)) {
       out.push({
         rule: "color-identity",
         detail: `${off.length} card${off.length === 1 ? " is" : "s are"} outside ${[...identity].sort().join("") || "colourless"}, your commander's colour identity`,
@@ -220,6 +233,58 @@ export function deckLegality({ cards, commanders }: LegalityInput): LegalityFind
       cards: distinct.map((c) => c.name).sort(),
     });
   }
+
+  // BANNED AND NOT LEGAL, from Scryfall's own `legalities.commander` on each card (83 banned, 2,521
+  // not legal -- Un-cards, conspiracies, playtest cards -- on 2026-09-22). AS OF THE CARD DATA: the
+  // banned list changes, and a deck checked against last month's corpus is checked against last
+  // month's list, which the panel says.
+  const everyone = [...cards, ...companions];
+  const byLegality = (want: string): string[] =>
+    [...new Set(everyone.filter((c) => c.commanderLegality === want).map((c) => c.name))].sort();
+  const banned = byLegality("banned");
+  if (banned.length > 0) {
+    out.push({ rule: "banned", detail: `${banned.length} ${banned.length === 1 ? "card is" : "cards are"} banned in Commander`, cards: banned });
+  }
+  const notLegal = byLegality("not_legal");
+  if (notLegal.length > 0) {
+    out.push({ rule: "not-legal", detail: `${notLegal.length} ${notLegal.length === 1 ? "card is" : "cards are"} not legal in Commander at all`, cards: notLegal });
+  }
+
+  // CR 702.139a — ONE companion, revealed from outside the game.
+  const distinctCompanions = [...new Map(companions.map((c) => [c.name, c])).values()];
+  if (distinctCompanions.length > 1) {
+    out.push({ rule: "companion", detail: `${distinctCompanions.length} companions, and a player may reveal only one`, cards: distinctCompanions.map((c) => c.name).sort() });
+  }
+  const deckNames = new Set(cards.map((c) => c.name));
+  const identity = new Set(commanders.flatMap((c) => c.colorIdentity ?? []));
+  for (const companion of distinctCompanions) {
+    // CR 903.11a — a card brought in from outside the game may not share a name with a card in
+    // the starting deck, nor carry a colour outside the commander's identity.
+    if (deckNames.has(companion.name)) {
+      out.push({ rule: "companion", detail: `${companion.name} is also in the deck, and a companion cannot share a name with a card in it`, cards: [companion.name] });
+    }
+    // A choose-a-colour commander admits ONE colour beyond its identity, and it is the same one the
+    // deck used (review, 2026-09-22: this was skipped outright, and a five-colour companion passed).
+    const companionExtra = (companion.colorIdentity ?? []).filter((x) => !identity.has(x));
+    const offIdentity = allowsChosenColour(commanders)
+      ? new Set([...extra, ...companionExtra]).size > 1 && companionExtra.length > 0
+      : companionExtra.length > 0;
+    if (commanders.length > 0 && offIdentity) {
+      out.push({ rule: "companion", detail: `${companion.name} is outside your commander's colour identity`, cards: [companion.name] });
+    }
+    out.push(...companionFindings(companion, { cards, commanders }));
+  }
+
+  if (unresolvedCompanions.length > 0) {
+    out.push({
+      rule: "unchecked",
+      detail: `the companion you named was not recognised, so it is not checked`,
+      cards: [...unresolvedCompanions].sort(),
+    });
+  }
+
+  // Rules printed on cards in the deck, and the net for any this tool does not model.
+  out.push(...constructionFindings({ cards, commanders }));
 
   // 903.3 — who may lead the deck.
   const bad = commanders.filter((c) => !isLegalCommander(c));

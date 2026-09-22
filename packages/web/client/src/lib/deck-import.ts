@@ -52,8 +52,12 @@ export async function importDeck(
   }
   if (!res.ok) throw new Error(MESSAGES[res.status] ?? MESSAGES[502]);
   const sections = (await res.json()) as DeckSections;
+  // THE COMPANION RIDES IN THE DECK TEXT under its own header, the way Moxfield and Archidekt export
+  // it: the parser reads the section back out, and the share link carries it with no format change.
+  const companions = sections.companions ?? [];
+  const decklist = toDecklistLines(sections.deck ?? []);
   return {
     commanders: toDecklistLines(sections.commanders ?? []),
-    decklist: toDecklistLines(sections.deck ?? []),
+    decklist: companions.length > 0 ? `${decklist}\n\nCompanion\n${toDecklistLines(companions)}` : decklist,
   };
 }

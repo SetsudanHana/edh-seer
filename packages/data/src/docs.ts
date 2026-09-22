@@ -145,6 +145,10 @@ export function docToCard(d: CardDoc): Card {
     // there as "stored, unused", and unused because it never reached `Card`. The bracket rule is
     // its first consumer.
     ...(d.gameChanger !== undefined ? { gameChanger: d.gameChanger } : {}),
+    // FIFTH, and the pattern holds: `legalities` has been on every `CardDoc` (and every static
+    // shard) since ingest and never reached `Card`. The banned-list check is its first reader, and
+    // it takes only the Commander entry.
+    ...(d.legalities?.commander !== undefined ? { commanderLegality: d.legalities.commander } : {}),
     // FOURTH field found on `CardDoc` and dropped here, after `producedMana`, `allParts` and
     // `gameChanger`. A FACE IS A NODE (2026-08-27) and the graph cannot count faces without it.
     ...(d.faces !== undefined ? { faces: d.faces } : {}),

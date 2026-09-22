@@ -55,6 +55,13 @@ test("docToCard strips storage-only fields back to an engine Card", () => {
   expect("searchNames" in card).toBe(false);
 });
 
+/** The Commander legality reaches the engine Card -- the fifth CardDoc field found dropped there. */
+test("docToCard carries the Commander legality for the banned-list check", () => {
+  const doc = { ...toCardDoc(treasureMaker), legalities: { commander: "banned", vintage: "legal" } };
+  expect(docToCard(doc).commanderLegality).toBe("banned");
+  expect("commanderLegality" in docToCard(toCardDoc(treasureMaker))).toBe(false);
+});
+
 test("toCardDoc carries edhrecRank from the normalized card", () => {
   const doc = toCardDoc({
     oracleId: "o1",

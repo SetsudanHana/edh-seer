@@ -18,16 +18,16 @@ export async function analyzeDeckStatic(
   // `StaticLookup` binds `fetchImpl` itself now (see its constructor) -- the receiver-check defect
   // this fixed lives at the one place every caller routes through, not at each call site.
   const lookup = new StaticLookup(baseUrl, fetchImpl);
-  await lookup.prefetch([...commanderNames, ...sections.deck].map(normalizeName));
+  await lookup.prefetch([...commanderNames, ...sections.deck, ...sections.companions].map(normalizeName));
 
   const sources: AnalysisSources = {
     lookup, tagsLookup: lookup,
     tokenTags: await lookup.tokenTags(),
     tokenArt: (ids: string[]) => lookup.tokenArt(ids),
   };
-  const { cards, combos, missing, commanderResolved, commanderColorIdentity } =
-    await resolveDeck(commanderNames, sections.deck, lookup);
-  const report = await analyzeResolvedDeck(cards, combos, commanderResolved, sources, state);
+  const { cards, combos, missing, commanderResolved, commanderColorIdentity, companionCards, companionMissing } =
+    await resolveDeck(commanderNames, sections.deck, lookup, sections.companions);
+  const report = await analyzeResolvedDeck(cards, combos, commanderResolved, sources, state, companionCards, companionMissing);
   // KEYED ON THE PHYSICAL CARD (`cardName ?? name`), because `attachRolesAndArt` looks roles up
   // under `normalize(n.cardName ?? n.id)`. `report.cards[].name` is a FACE name, so keying on it
   // drops every multi-face card's roles — announced only by a console.warn nobody reads.

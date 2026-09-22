@@ -78,8 +78,14 @@ async function reportFromDecklist(input: string, trim: number): Promise<string> 
     // ratings from the same deck the web server rates. Found 2026-08-18 by the same deck printing
     // one partner count in the CLI and another through the API.
     const tokenTags = await loadTokenTags(store.db);
+    // THE COMPANION, OUTSIDE THE 100 (CR 702.139), resolved on its own the way the web paths do it,
+    // so the CLI checks the same Companion section a pasted deck carries.
+    const companionNames = sections.companions ?? [];
+    const companions = companionNames.length > 0 ? await resolveNames(companionNames, lookup) : { cards: [], missing: [] };
+    for (const name of companions.missing) console.error(`warning: companion not found: ${name}`);
     return formatReport(
-      analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags),
+      analyzeDeckStructured(deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags,
+        undefined, companions.cards, companions.missing),
       trim,
     );
   } finally {
