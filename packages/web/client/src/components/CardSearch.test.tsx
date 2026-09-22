@@ -591,6 +591,31 @@ test("ordering by toughness is its own axis, not power again", async () => {
   ]);
 });
 
+/** THE DIRECTION IS ITS OWN CONTROL (owner 2026-09-22), and the unprinted card stays last when the
+ *  order is turned round -- lowest power first must not open on the card that has none. */
+test("power lowest first keeps the unprinted last", async () => {
+  atUrl("/cards?mvmax=9&sort=pow&dir=asc", { load: async () => STATS });
+  await screen.findByRole("link", { name: /Big Beater/ });
+  expect(screen.getByLabelText("Direction")).toHaveValue("asc");
+  expect(resultNames()).toEqual([
+    expect.stringContaining("A Wall"),
+    expect.stringContaining("Big Beater"),
+    expect.stringContaining("No Power"),
+  ]);
+});
+
+test("the order names its axis, and changing it resets the direction", async () => {
+  atUrl("/cards?mvmax=9&sort=mv&dir=desc", { load: async () => STATS });
+  await screen.findByRole("link", { name: /Big Beater/ });
+  const order = screen.getByLabelText("Order");
+  expect(within(order).getByRole("option", { name: "Power" })).toBeInTheDocument();
+  expect(within(order).getByRole("option", { name: "Toughness" })).toBeInTheDocument();
+  await userEvent.selectOptions(order, "pow");
+  expect(screen.getByLabelText("Direction")).toHaveValue("desc");
+  await userEvent.selectOptions(screen.getByLabelText("Direction"), "asc");
+  expect(resultNames()[0]).toEqual(expect.stringContaining("A Wall"));
+});
+
 test("the order control is there even when nothing matched", async () => {
   atUrl("/cards?q=zzzznothing&sort=name");
   expect(await screen.findByText(/No card matches/)).toBeInTheDocument();

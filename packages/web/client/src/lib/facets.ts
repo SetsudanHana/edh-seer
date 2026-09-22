@@ -62,7 +62,16 @@ export interface EventQuery {
    *  is wrong. The deck-build run's complaint: rare events outranked good cards, so it found
    *  staples "only by already knowing their names and typing them in". */
   sort?: "partners" | "mv" | "name" | "pow" | "tou";
+  /** Which end comes first. Absent means the order's own natural direction (`NATURAL_DIR`), so a
+   *  link written before the control existed still reads the way it did. */
+  dir?: "asc" | "desc";
 }
+
+/** EACH ORDER'S NATURAL END. Connections, power and toughness read biggest first; mana value
+ *  cheapest first; names A to Z. The URL carries `dir` only when the reader turned it round. */
+export const NATURAL_DIR: Record<NonNullable<EventQuery["sort"]>, "asc" | "desc"> = {
+  partners: "desc", mv: "asc", name: "asc", pow: "desc", tou: "desc",
+};
 
 /** REPEATED PARAMS, NEVER A JOINED LIST. 274 of the 1,187 keys contain a comma
  *  (`fills|creature,enchantment|-|-`, measured 2026-09-19), so a split cannot recover what a join
@@ -83,6 +92,7 @@ const bound = (raw: string | null): number | undefined => {
 
 export function eventsFromParams(p: URLSearchParams): EventQuery {
   const sort = p.get("sort") ?? "";
+  const dir = p.get("dir") ?? "";
   // THE OLD CEILING, STILL READ. `?mv=3` is live on the deployed site and in every link shared
   // since #423; it meant "3 or less" and it still does. `mvmax` wins where both are present.
   const legacyMv = bound(p.get("mv"));
@@ -102,13 +112,14 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
     cardColours: [...(p.get("cardcolors") ?? "")].filter((c) => "WUBRGC".includes(c)),
     ...Object.fromEntries(Object.entries(ranges).filter(([, v]) => v !== undefined)),
     ...(SORTS.has(sort) ? { sort: sort as EventQuery["sort"] } : {}),
+    ...(dir === "asc" || dir === "desc" ? { dir } : {}),
   };
 }
 
 export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchParams {
   const out = new URLSearchParams(p);
   for (const k of [
-    "produce", "consume", "colors", "type", "subtype", "keyword", "cardcolors", "sort",
+    "produce", "consume", "colors", "type", "subtype", "keyword", "cardcolors", "sort", "dir",
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
     "mv", "mvmin", "mvmax", "powmin", "powmax", "toumin", "toumax",
@@ -127,6 +138,7 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
   // THE DEFAULT IS NOT WRITTEN DOWN. `?sort=partners` in every shared link is noise, and it would
   // pin the order against a future change of default.
   if (q.sort && q.sort !== "partners") out.set("sort", q.sort);
+  if (q.dir && q.dir !== NATURAL_DIR[q.sort ?? "partners"]) out.set("dir", q.dir);
   return out;
 }
 
