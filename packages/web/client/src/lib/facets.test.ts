@@ -79,6 +79,13 @@ test("types, subtypes, mana value and order survive the URL", () => {
   expect(round).toEqual(q);
 });
 
+test("the two printed-number orders survive the URL", () => {
+  for (const sort of ["pow", "tou"] as const) {
+    const q: EventQuery = { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], sort };
+    expect(eventsFromParams(eventsToParams(q, new URLSearchParams())).sort).toBe(sort);
+  }
+});
+
 test("the default order is not written into the link", () => {
   const p = eventsToParams({ produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [], sort: "partners" }, new URLSearchParams());
   expect(p.get("sort")).toBeNull();

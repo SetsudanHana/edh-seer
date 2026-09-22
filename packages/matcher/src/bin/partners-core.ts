@@ -1416,7 +1416,9 @@ export interface NameIndexEntry {
    *
    *  INDICES INTO `NameIndexFile.types` / `.subtypes`, NOT NAMES. Measured over the corpus: spelled
    *  out they add 1.51 MB to a 3.74 MB file the client downloads; as indices, 0.89 MB with 5 KB of
-   *  tables. 18 distinct types, 488 distinct subtypes. */
+   *  tables. 13 distinct types, 474 distinct subtypes in the shipped artifact (measured
+   *  2026-09-22) -- the tables carry only the 25,582 indexed cards, not the full derived corpus,
+   *  which is where the larger figures this comment used to claim came from. */
   t?: number[];
   s?: number[];
   /** Mana value, absent when 0 -- which is most lands, and the most common value in the corpus. */

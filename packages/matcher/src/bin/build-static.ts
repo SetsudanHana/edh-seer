@@ -265,10 +265,12 @@ renameSync(stagingDir, versionDir);
 writeFileSync(join(outDir, "manifest.json"), JSON.stringify({ version }));
 
 const versionedCards = join(versionDir, "cards");
-let totalBytes = 0;
-for (const f of readdirSync(versionedCards)) totalBytes += statSync(join(versionedCards, f)).size;
-totalBytes += statSync(join(versionDir, "token-tags.json")).size;
-totalBytes += statSync(join(versionDir, "token-art.json")).size;
+// EVERY SHIPPED BYTE, not a hand-picked subset: the old three-line sum skipped name-index.json --
+// the single largest file a visitor downloads -- plus the event and partner shards and the browse
+// slices, so the printed size understated the deploy and never moved when a new artifact was added.
+const bytesUnder = (dir: string): number => readdirSync(dir, { withFileTypes: true })
+  .reduce((n, e) => n + (e.isDirectory() ? bytesUnder(join(dir, e.name)) : statSync(join(dir, e.name)).size), 0);
+const totalBytes = bytesUnder(versionDir) + statSync(join(outDir, "manifest.json")).size;
 
 const actualFiles = readdirSync(versionedCards).length;
 console.log(`version: ${version}`);

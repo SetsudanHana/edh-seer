@@ -260,10 +260,22 @@ export function CardSearch({
     // already knowing their names and typing them in". A sort does not fix the ranking; it stops
     // the ranking being the only way through the list.
     const byName = (a: NameIndexEntry, b: NameIndexEntry): number => a.name.localeCompare(b.name, "en");
+    // THE PRINTED-NUMBER ORDERS ARE DESCENDING AND ABSENT SORTS LAST: a reader ordering by power
+    // wants the biggest thing first, and a card that prints no power (the index omits `*` and `X`
+    // the same way) is not a zero -- it goes to the back rather than shuffling in among the 0/4s.
+    const byPrinted = (v: (e: NameIndexEntry) => number | undefined) =>
+      (a: NameIndexEntry, b: NameIndexEntry): number => {
+        const av = v(a); const bv = v(b);
+        if (av === undefined) return bv === undefined ? byName(a, b) : 1;
+        if (bv === undefined) return -1;
+        return bv - av || byName(a, b);
+      };
     const order = eventQuery.sort ?? "partners";
     return [...kept].sort(
       order === "name" ? byName
         : order === "mv" ? ((a, b) => (a.mv ?? 0) - (b.mv ?? 0) || byName(a, b))
+        : order === "pow" ? byPrinted((e) => e.pow)
+        : order === "tou" ? byPrinted((e) => e.tou)
         : ((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || byName(a, b)),
     );
   }, [index, keptIds, needle, query, colours, commanderMode, mode, asked, eventQuery, vocabulary]);
@@ -670,6 +682,8 @@ export function CardSearch({
                 >
                   <option value="partners">most connected</option>
                   <option value="mv">cheapest first</option>
+                  <option value="pow">biggest first</option>
+                  <option value="tou">toughest first</option>
                   <option value="name">A to Z</option>
                 </select>
               </label>

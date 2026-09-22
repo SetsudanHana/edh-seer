@@ -560,6 +560,37 @@ test("the remove button is still the way a row goes away", async () => {
 /** THE ORDER SURVIVES A ZERO-RESULT ANSWER (review, 2026-09-21). It moved beside the count, and
  *  the count only exists when something matched -- so a shared `?sort=name` link that matches
  *  nothing had no control to undo the order it arrived with. */
+/** THE TWO PRINTED-NUMBER ORDERS (2026-09-22). Descending, because "sort by power" is a reader
+ *  looking for the biggest thing they can play -- and a card that prints no power (or prints `*`,
+ *  which the index omits the same way) sorts LAST under both, never as a pretend zero. */
+const STATS: NameIndexEntry[] = [
+  { slug: "a-wall", name: "A Wall", identity: [], commander: false, pow: 0, tou: 4 },
+  { slug: "big-beater", name: "Big Beater", identity: [], commander: false, pow: 7, tou: 2 },
+  { slug: "no-power", name: "No Power", identity: [], commander: false },
+];
+const resultNames = () => within(screen.getByRole("list", { name: "Results" }))
+  .getAllByRole("link").map((a) => a.textContent);
+
+test("ordering by power puts the biggest first and the unprinted last", async () => {
+  atUrl("/cards?mvmax=9&sort=pow", { load: async () => STATS });
+  await screen.findByRole("link", { name: /Big Beater/ });
+  expect(resultNames()).toEqual([
+    expect.stringContaining("Big Beater"),
+    expect.stringContaining("A Wall"),
+    expect.stringContaining("No Power"),
+  ]);
+});
+
+test("ordering by toughness is its own axis, not power again", async () => {
+  atUrl("/cards?mvmax=9&sort=tou", { load: async () => STATS });
+  await screen.findByRole("link", { name: /A Wall/ });
+  expect(resultNames()).toEqual([
+    expect.stringContaining("A Wall"),
+    expect.stringContaining("Big Beater"),
+    expect.stringContaining("No Power"),
+  ]);
+});
+
 test("the order control is there even when nothing matched", async () => {
   atUrl("/cards?q=zzzznothing&sort=name");
   expect(await screen.findByText(/No card matches/)).toBeInTheDocument();
