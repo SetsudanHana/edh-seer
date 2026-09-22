@@ -14,8 +14,13 @@ import { CardName } from "./card-drawer.js";
  *
  *  IT FIRES ON NOTHING IN THE 71 CALIBRATION DECKS, by construction — they are the owner's own
  *  well-built lists. This exists for the arbitrary pasted one. */
-export function LegalityPanel({ legality }: { legality: DeckReport["legality"] }) {
+export function LegalityPanel({ legality, companions = [] }: {
+  legality: DeckReport["legality"];
+  /** CR 702.139, outside the 100: named here because this is where it is judged. */
+  companions?: readonly string[];
+}) {
   if (!legality) return null;
+  const companionClause = companions.length > 0 ? `, and ${companions.join(" and ")} as your companion` : "";
   // A CLEAN RESULT SAYS WHAT WAS CHECKED (owner, 2026-09-22). Silence was meant to read "nothing
   // found", and the deck-build agent read it as "the report never checks legality". So a deck with
   // nothing off gets one line naming the five rules and what they do NOT cover. It still never says
@@ -23,8 +28,9 @@ export function LegalityPanel({ legality }: { legality: DeckReport["legality"] }
   if (legality.length === 0) {
     return (
       <p className="text-xs text-(--muted) max-w-[65ch]">
-        Checked against five Commander rules: 100 cards, one of each, colour identity, who may lead,
-        and partner pairing. Nothing is off. The banned list is not checked.
+        Checked against Commander&rsquo;s deck rules: 100 cards, one of each, colour identity, who may
+        lead, partner pairing and the banned list{companionClause}. Nothing is off. The banned list is
+        as of the card data, which can trail an announcement.
       </p>
     );
   }
@@ -33,7 +39,9 @@ export function LegalityPanel({ legality }: { legality: DeckReport["legality"] }
       <h3 className="eyebrow">Against the format</h3>
       <ul className="flex flex-col gap-2">
         {legality.map((l) => (
-          <li key={l.rule} className="rounded-lg border border-(--separator) px-3 py-2">
+          // ONE RULE CAN FIND SEVERAL THINGS (a companion outside the identity AND short of its condition),
+          // so the rule alone is not a key. The detail is what differs.
+          <li key={`${l.rule}:${l.detail}`} className="rounded-lg border border-(--separator) px-3 py-2">
             <p className="text-sm">{l.detail}</p>
             {l.cards.length > 0 && (
               // CAPPED AT EIGHT, as the CLI caps it: a colour-identity finding on a badly pasted
@@ -52,8 +60,9 @@ export function LegalityPanel({ legality }: { legality: DeckReport["legality"] }
         ))}
       </ul>
       <p className="text-xs text-(--muted)">
-        A report, not a verdict — nothing here stops the analysis. Five rules are checked and the
-        format has more, so an empty list means nothing was <em>found</em>.
+        A report, not a verdict — nothing here stops the analysis. The banned list is as of the card
+        data, and a card that changes deck building in a way this tool does not read is listed rather
+        than passed.
       </p>
     </div>
   );

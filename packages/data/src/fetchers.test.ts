@@ -175,6 +175,11 @@ test("moxfieldDeckToSections imports only mainboard and commanders", () => {
   }
 });
 
+/** THE COMPANION BOARD IS KEPT, OUTSIDE THE 100 (2026-09-22): it was dropped with the sideboard. */
+test("moxfieldDeckToSections carries the companion board separately", () => {
+  expect(moxfieldDeckToSections(MOXFIELD_V3).companions).toEqual(["Lurrus of the Dream-Den"]);
+});
+
 test("moxfieldDeckToSections refuses a shape it does not recognise", () => {
   // The v2 body the previous implementation was written against: boards at the top level, maps
   // keyed by card name. It must fail loudly rather than import zero cards.

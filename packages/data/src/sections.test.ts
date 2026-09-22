@@ -13,6 +13,7 @@ test("splits a Commander section from the deck", () => {
   expect(parseDecklistSections(text)).toEqual({
     commanders: ["Krenko, Mob Boss"],
     deck: ["Sol Ring", "Impact Tremors"],
+    companions: [],
   });
 });
 
@@ -37,6 +38,7 @@ test("no Commander header → everything is deck, commanders empty", () => {
   expect(parseDecklistSections(text)).toEqual({
     commanders: [],
     deck: ["Sol Ring", "Krenko, Mob Boss"],
+    companions: [],
   });
 });
 
@@ -123,4 +125,17 @@ test("an explicit header still wins over the flat-export inference", () => {
 test("a short sorted fragment is not a decklist and infers nothing", () => {
   const text = ["1 Zzz Card", "1 Arid Mesa", "1 Birds of Paradise"].join("\n");
   expect(parseDecklistSections(text).commanders).toEqual([]);
+});
+
+/** CR 702.139: THE COMPANION IS OUTSIDE THE 100 (2026-09-22). The header used to be read as a card
+ *  named "Companion" and the companion counted into the 99, so a correct deck reported 101 cards. */
+test("a Companion section is its own list, never a card and never part of the deck", () => {
+  const text = ["Commander", "1 Kaheera, the Orphanguard", "", "Companion", "1 Lurrus of the Dream-Den", "", "Deck", "1 Sol Ring"].join("\n");
+  expect(parseDecklistSections(text)).toEqual({
+    commanders: ["Kaheera, the Orphanguard"], deck: ["Sol Ring"], companions: ["Lurrus of the Dream-Den"],
+  });
+  // And after the deck, the way the importer writes it.
+  const tail = parseDecklistSections("1 Sol Ring\n\nCompanions\n1 Lurrus of the Dream-Den");
+  expect(tail.deck).toEqual(["Sol Ring"]);
+  expect(tail.companions).toEqual(["Lurrus of the Dream-Den"]);
 });

@@ -23,6 +23,13 @@ test("fills both form fields from one import", async () => {
   expect(deck.decklist).toBe("1 Sol Ring\n2 Swamp");
 });
 
+/** The companion rides in the deck text under its own header, which the parser reads back out. */
+test("an imported companion becomes a Companion section after the deck", async () => {
+  const fetchImpl = vi.fn(async () => ok({ commanders: ["Kaheera, the Orphanguard"], deck: ["Sol Ring"], companions: ["Lurrus of the Dream-Den"] }));
+  const deck = await importDeck("moxfield", "abc", fetchImpl as unknown as typeof fetch);
+  expect(deck.decklist).toBe("1 Sol Ring\n\nCompanion\n1 Lurrus of the Dream-Den");
+});
+
 test("every refusal the pacer can send names the way out", async () => {
   for (const status of [404, 429, 503, 502]) {
     const err = await importDeck("moxfield", "x", (async () => fail(status)) as unknown as typeof fetch).catch(

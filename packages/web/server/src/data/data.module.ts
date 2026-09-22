@@ -53,12 +53,12 @@ export const STORE = "MONGO_STORE";
           parseDecklistSections: data.parseDecklistSections,
           parseLines: data.parseDecklistText,
           makeLookup: () => data.mongoLookup(store as never),
-          resolveDeck: (commanderNames, deckNames, lookup) =>
-            orchestrate.resolveDeck(commanderNames, deckNames, lookup as never),
+          resolveDeck: (commanderNames, deckNames, lookup, companionNames) =>
+            orchestrate.resolveDeck(commanderNames, deckNames, lookup as never, companionNames),
           graph: (cardNames, rolesByName, copiesByName, report) =>
             orchestrate.buildWireGraph(cardNames, rolesByName, copiesByName, sources, report as never),
-          analyze: (cards, combos, commanderNames, state) =>
-            orchestrate.analyzeResolvedDeck(cards as never, combos as never, commanderNames, sources, state),
+          analyze: (cards, combos, commanderNames, state, companions, unresolvedCompanions) =>
+            orchestrate.analyzeResolvedDeck(cards as never, combos as never, commanderNames, sources, state, companions as never, unresolvedCompanions),
         };
       },
     },

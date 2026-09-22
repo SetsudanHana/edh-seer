@@ -49,6 +49,10 @@ export interface Card {
    *  THE THIRD FIELD FOUND SITTING ON `CardDoc` AND DROPPED BY `docToCard`, after `producedMana`
    *  and `allParts`. Check that join before recording a field as "stored, unused". */
   gameChanger?: boolean;
+  /** Scryfall `legalities.commander` -- "legal", "banned" or "not_legal". The deck legality report
+   *  reads it for the banned list. AS OF THE CARD DATA: the list changes and the corpus is a
+   *  snapshot. Absent when the source card carried no legalities. */
+  commanderLegality?: string;
   /** Scryfall produced_mana: the colours this card can add, e.g. ["B","G"]. Includes "C" for
    *  colorless. Present only on cards that produce mana at all.
    *

@@ -2897,7 +2897,7 @@ test("the legality panel reports and never gates, and says how many rules it che
   expect(screen.getByText(/Haunted One/)).toBeInTheDocument();
   expect(screen.getByText(/report, not a verdict/i)).toBeInTheDocument();
   expect(screen.getByText(/nothing here stops the analysis/i)).toBeInTheDocument();
-  expect(screen.getByText(/Five rules are checked/i)).toBeInTheDocument();
+  expect(screen.getByText(/listed rather than passed/i)).toBeInTheDocument();
   unmount();
 
   // CAPPED AT EIGHT, as the CLI caps it — a colour-identity finding on a badly pasted deck can name
@@ -2912,11 +2912,29 @@ test("the legality panel reports and never gates, and says how many rules it che
   // A CLEAN RESULT NAMES WHAT WAS CHECKED (owner, 2026-09-22) -- silence read as "never checked" --
   // and still never says "legal", which five rules cannot claim. The banned list is named as unchecked.
   const clean = render(<LegalityPanel legality={[]} />);
-  expect(screen.getByText(/Checked against five Commander rules/)).toBeInTheDocument();
-  expect(screen.getByText(/banned list is not checked/)).toBeInTheDocument();
+  expect(screen.getByText(/Checked against Commander.s deck rules/)).toBeInTheDocument();
+  expect(screen.getByText(/as of the card data/)).toBeInTheDocument();
   expect(clean.container.textContent).not.toMatch(/\blegal\b/i);
   expect(screen.queryByRole("heading")).toBeNull();
   clean.unmount();
+
+  // TWO FINDINGS UNDER ONE RULE BOTH RENDER. The list was keyed on `rule`, so a companion outside
+  // the identity AND short of its condition collided (React duplicate-key error in the browser).
+  const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const two = render(<LegalityPanel legality={[
+    { rule: "companion", detail: "Lurrus is outside your commander's colour identity", cards: [] },
+    { rule: "companion", detail: "Lurrus's condition is not met", cards: [] },
+  ]} />);
+  expect(screen.getByText(/outside your commander/)).toBeInTheDocument();
+  expect(screen.getByText(/condition is not met/)).toBeInTheDocument();
+  expect(spy.mock.calls.some((c) => String(c[0]).includes("same key"))).toBe(false);
+  spy.mockRestore();
+  two.unmount();
+
+  // A companion is named where it is judged.
+  const withCompanion = render(<LegalityPanel legality={[]} companions={["Lurrus of the Dream-Den"]} />);
+  expect(screen.getByText(/Lurrus of the Dream-Den as your companion/)).toBeInTheDocument();
+  withCompanion.unmount();
 
   // NO REPORT FIELD, NO CLAIM: an old report without `legality` renders nothing at all.
   const { container } = render(<LegalityPanel legality={undefined} />);

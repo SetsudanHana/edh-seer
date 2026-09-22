@@ -85,7 +85,7 @@ export default {
       body: JSON.stringify({ source, id }),
     });
     const outcome = (await res.json()) as
-      | { kind: "deck"; sections: { commanders: string[]; deck: string[] } }
+      | { kind: "deck"; sections: { commanders: string[]; deck: string[]; companions?: string[] } }
       | { kind: "rejected"; status: number; message: string };
 
     if (outcome.kind === "rejected") return json({ error: outcome.message }, outcome.status);

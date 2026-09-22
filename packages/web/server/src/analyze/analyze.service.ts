@@ -5,21 +5,24 @@ import type { AnalyzeResponse, WireGraph } from "./analyze.types.js";
 export const ANALYZE_DEPS = "ANALYZE_DEPS";
 
 export interface AnalyzeDeps {
-  parseDecklistSections(text: string): { commanders: string[]; deck: string[] };
+  parseDecklistSections(text: string): { commanders: string[]; deck: string[]; companions?: string[] };
   parseLines(text: string): string[];
   makeLookup(): unknown;
   resolveDeck(
     commanderNames: string[],
     deckNames: string[],
     lookup: unknown,
+    companionNames?: string[],
   ): Promise<{
     cards: unknown[];
     combos: unknown[];
     missing: string[];
     commanderResolved: string[];
     commanderColorIdentity: string[];
+    companionCards?: unknown[];
+    companionMissing?: string[];
   }>;
-  analyze(cards: unknown[], combos: unknown[], commanderNames: string[], state?: GameState): Promise<DeckReport>;
+  analyze(cards: unknown[], combos: unknown[], commanderNames: string[], state?: GameState, companions?: unknown[], unresolvedCompanions?: string[]): Promise<DeckReport>;
   graph(
     cardNames: string[],
     rolesByName: Map<string, string[]>,
@@ -37,12 +40,13 @@ export class AnalyzeService {
     const commanderNames =
       commanders && commanders.trim() !== "" ? this.deps.parseLines(commanders) : sections.commanders;
 
-    const { cards, combos, missing, commanderResolved, commanderColorIdentity } = await this.deps.resolveDeck(
+    const { cards, combos, missing, commanderResolved, commanderColorIdentity, companionCards, companionMissing } = await this.deps.resolveDeck(
       commanderNames,
       sections.deck,
       this.deps.makeLookup(),
+      sections.companions ?? [],
     );
-    const report = await this.deps.analyze(cards, combos, commanderResolved, state);
+    const report = await this.deps.analyze(cards, combos, commanderResolved, state, companionCards ?? [], companionMissing ?? []);
     // Keyed by raw report name, not a normalized one: the dep already normalizes both sides of
     // this join off its own `docs` array (the ESM `@edh-seer/data` it dynamically imports), so doing
     // it again here would just be a second, easy-to-drift copy of the same normalization.

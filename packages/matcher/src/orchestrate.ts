@@ -26,14 +26,24 @@ export async function resolveDeck(
   commanderNames: string[],
   deckNames: string[],
   lookup: CardLookup,
+  /** CR 702.139: resolved on their own and NEVER joined into `cards`, which is the 100 -- every
+   *  size, curve and category count downstream reads `cards`. */
+  companionNames: string[] = [],
 ): Promise<{
   cards: Card[];
   combos: Combo[];
   missing: string[];
   commanderResolved: string[];
   commanderColorIdentity: string[];
+  companionCards: Card[];
+  companionMissing: string[];
 }> {
   const names = [...commanderNames, ...deckNames];
+  const resolvedCompanions = companionNames.length > 0
+    ? await resolveNames(companionNames, lookup)
+    : { cards: [] as Card[], missing: [] as string[] };
+  // KEPT APART FROM `missing` (review, 2026-09-22): that list is drawn as squares in the deck's
+  // hundred, and a mistyped companion would have made it 101. It reaches the legality report.
   const { cards, combos, missing } = await resolveNames(names, lookup);
   const allCards = cards as Array<Parameters<typeof detectCommanders>[0][number]>;
   const cmdNorm = new Set(commanderNames.map(normalizeName));
@@ -49,7 +59,7 @@ export async function resolveDeck(
   // Deck color identity comes from the commander(s) only, per MTG rules — never a
   // union of every card's colors, which would drift from what a player calls "on-color".
   const commanderColorIdentity = [...new Set(commanderCards.flatMap((c) => c.colorIdentity ?? []))];
-  return { cards, combos, missing, commanderResolved, commanderColorIdentity };
+  return { cards, combos, missing, commanderResolved, commanderColorIdentity, companionCards: resolvedCompanions.cards as Card[], companionMissing: resolvedCompanions.missing };
 }
 
 /** NOT called `analyzeDeck`: the client already exports a function by that name from `api.ts`, and
@@ -61,6 +71,10 @@ export async function analyzeResolvedDeck(
   sources: AnalysisSources,
   /** A game state the owner set (roadmap W18); undefined is the report as it always was. */
   state?: GameState,
+  /** Outside the 100 (CR 702.139); checked for legality and named on the report. */
+  companions: Card[] = [],
+  /** Companion names that did not resolve, reported by legality rather than as missing cards. */
+  unresolvedCompanions: string[] = [],
 ): Promise<DeckReport> {
   const deckCards = await buildDeckCards(cards, sources.lookup, sources.tagsLookup);
   // Same token lookup `buildWireGraph` uses -- the two must agree, or the report's
@@ -75,6 +89,8 @@ export async function analyzeResolvedDeck(
     undefined,
     sources.tokenTags,
     state,
+    companions,
+    unresolvedCompanions,
   );
 }
 

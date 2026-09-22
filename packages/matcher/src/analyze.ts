@@ -15,7 +15,7 @@ import {
   type CardSynergy,
   type Reason,
   type TagStats,
-  type ImpactWeights, type GameState, type Marker } from "@edh-seer/engine";
+  type ImpactWeights, type GameState, type Marker, type Card } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { faceDeckCards } from "./faces.js";
@@ -205,6 +205,10 @@ export function analyzeDeckStructured(
    *  speed" resolves, creatures are read under the deck's anthems, and every edge the state alone
    *  created carries `enabledBy`. Undefined is the report as it always was. */
   state?: GameState,
+  /** CR 702.139: the companion, outside the 100. Legality reads it; nothing that counts the deck
+   *  does. */
+  companions: Card[] = [],
+  unresolvedCompanions: string[] = [],
 ): DeckReport {
   const rawInputs = inputs;
   inputs = applyState(inputs, state);
@@ -1034,7 +1038,10 @@ export function analyzeDeckStructured(
     legality: deckLegality({
       cards: resolved.map((dc) => dc.card),
       commanders: resolved.filter((dc) => commanderSet.has(dc.card.name)).map((dc) => dc.card),
+      companions,
+      unresolvedCompanions,
     }),
+    ...(companions.length > 0 ? { companions: companions.map((c) => c.name) } : {}),
     // CR 903.8 (roadmap J5), a CAVEAT and never a number: the tax is a function of how many times
     // the commander has DIED and nothing here simulates a game. Shipped as data because no subpath
     // of `@edh-seer/matcher` is safe to value-import from client code, so this is the only way the CLI
