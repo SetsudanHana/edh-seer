@@ -99,6 +99,14 @@ test("a junk mana value asks nothing", () => {
   expect(eventsFromParams(new URLSearchParams("sort=sideways")).sort).toBeUndefined();
 });
 
+test("a direction is written only when it turns the order's natural end round", () => {
+  const base: EventQuery = { produce: [], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] };
+  expect(eventsToParams({ ...base, sort: "pow", dir: "desc" }, new URLSearchParams()).get("dir")).toBeNull();
+  const p = eventsToParams({ ...base, sort: "pow", dir: "asc" }, new URLSearchParams());
+  expect(eventsFromParams(p)).toMatchObject({ sort: "pow", dir: "asc" });
+  expect(eventsFromParams(new URLSearchParams("dir=up")).dir).toBeUndefined();
+});
+
 describe("characteristicsFit", () => {
   const vocab = { types: ["artifact", "creature", "instant"], subtypes: ["sliver", "wizard"], keywords: [] };
   const ask = (q: Partial<EventQuery>): EventQuery =>

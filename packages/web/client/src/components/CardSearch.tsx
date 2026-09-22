@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, intersect, withoutFilterKind, FILTER_KINDS, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, intersect, withoutFilterKind, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { EventPicker } from "./EventPicker.js";
 import { CardTile } from "./CardTile.js";
@@ -260,23 +260,24 @@ export function CardSearch({
     // already knowing their names and typing them in". A sort does not fix the ranking; it stops
     // the ranking being the only way through the list.
     const byName = (a: NameIndexEntry, b: NameIndexEntry): number => a.name.localeCompare(b.name, "en");
-    // THE PRINTED-NUMBER ORDERS ARE DESCENDING AND ABSENT SORTS LAST: a reader ordering by power
-    // wants the biggest thing first, and a card that prints no power (the index omits `*` and `X`
-    // the same way) is not a zero -- it goes to the back rather than shuffling in among the 0/4s.
-    const byPrinted = (v: (e: NameIndexEntry) => number | undefined) =>
+    const order = eventQuery.sort ?? "partners";
+    const sign = (eventQuery.dir ?? NATURAL_DIR[order]) === "asc" ? 1 : -1;
+    // A MISSING NUMBER SORTS LAST IN EITHER DIRECTION: a card that prints no power (the index omits
+    // `*` and `X` the same way) is not a zero, and turning the order round must not bring the
+    // unprinted to the top. Ties fall back to the name, A to Z, whichever way the order runs.
+    const byNumber = (v: (e: NameIndexEntry) => number | undefined) =>
       (a: NameIndexEntry, b: NameIndexEntry): number => {
         const av = v(a); const bv = v(b);
         if (av === undefined) return bv === undefined ? byName(a, b) : 1;
         if (bv === undefined) return -1;
-        return bv - av || byName(a, b);
+        return sign * (av - bv) || byName(a, b);
       };
-    const order = eventQuery.sort ?? "partners";
     return [...kept].sort(
-      order === "name" ? byName
-        : order === "mv" ? ((a, b) => (a.mv ?? 0) - (b.mv ?? 0) || byName(a, b))
-        : order === "pow" ? byPrinted((e) => e.pow)
-        : order === "tou" ? byPrinted((e) => e.tou)
-        : ((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || byName(a, b)),
+      order === "name" ? (a, b) => sign * byName(a, b)
+        : order === "mv" ? byNumber((e) => e.mv ?? 0)
+        : order === "pow" ? byNumber((e) => e.pow)
+        : order === "tou" ? byNumber((e) => e.tou)
+        : byNumber((e) => e.partners ?? 0),
     );
   }, [index, keptIds, needle, query, colours, commanderMode, mode, asked, eventQuery, vocabulary]);
 
@@ -673,20 +674,39 @@ export function CardSearch({
                         : (commanderMode ? "commanders match" : "cards match")}
                       {matches.length > shown ? `, showing the first ${shown}` : ""}.</>}
               </p>
-              <label className="flex items-center gap-2">
-                <span className="eyebrow">Order</span>
+              {/* THE ORDER NAMES ITS AXIS AND THE DIRECTION IS ITS OWN CONTROL (owner 2026-09-22):
+                * "biggest first" did not say whether it meant power or toughness, and there was no
+                * way to turn any order round. Changing the axis resets the direction to its
+                * natural end rather than carrying "lowest first" from mana value into power. */}
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-2">
+                  <span className="eyebrow">Order</span>
+                  <select
+                    className="field w-40"
+                    value={eventQuery.sort ?? "partners"}
+                    onChange={(e) => {
+                      const { dir: _dir, ...rest } = eventQuery;
+                      setEvents({ ...rest, sort: e.target.value as EventQuery["sort"] });
+                    }}
+                  >
+                    <option value="partners">Connections</option>
+                    <option value="mv">Mana value</option>
+                    <option value="pow">Power</option>
+                    <option value="tou">Toughness</option>
+                    <option value="name">Name</option>
+                  </select>
+                </label>
+                {/* NO VISIBLE LABEL: the options read "Highest first" / "A to Z", which says it. */}
                 <select
-                  className="field w-44"
-                  value={eventQuery.sort ?? "partners"}
-                  onChange={(e) => setEvents({ ...eventQuery, sort: e.target.value as EventQuery["sort"] })}
+                  aria-label="Direction"
+                  className="field w-36"
+                  value={eventQuery.dir ?? NATURAL_DIR[eventQuery.sort ?? "partners"]}
+                  onChange={(e) => setEvents({ ...eventQuery, dir: e.target.value as EventQuery["dir"] })}
                 >
-                  <option value="partners">most connected</option>
-                  <option value="mv">cheapest first</option>
-                  <option value="pow">biggest first</option>
-                  <option value="tou">toughest first</option>
-                  <option value="name">A to Z</option>
+                  <option value="desc">{eventQuery.sort === "name" ? "Z to A" : "Highest first"}</option>
+                  <option value="asc">{eventQuery.sort === "name" ? "A to Z" : "Lowest first"}</option>
                 </select>
-              </label>
+              </div>
             </div>
             {/* IDENTITY IS THE ROW'S DIFFERENTIATOR. Fifty near-identical lines of blue text is a
               * list nobody scans; the mana symbols give the eye something that varies, and they are
