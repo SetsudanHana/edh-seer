@@ -114,7 +114,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
    *  on — so the matrix's row count and the waffle's nonland total cannot disagree. */
   const nonlandNames = useMemo(
     () => (data.graph?.nodes ?? [])
-      .filter((n) => n.face === undefined && n.isToken !== true && primaryType(n.types) !== null)
+      .filter((n) => n.face === undefined && n.isToken !== true && n.isCompanion !== true && primaryType(n.types) !== null)
       .map((n) => n.cardName ?? n.id),
     [data.graph],
   );

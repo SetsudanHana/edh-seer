@@ -77,6 +77,8 @@ export async function analyzeResolvedDeck(
   unresolvedCompanions: string[] = [],
 ): Promise<DeckReport> {
   const deckCards = await buildDeckCards(cards, sources.lookup, sources.tagsLookup);
+  // The companion gets its tags the same way, so its relations are read like any card's.
+  const companionCards = companions.length > 0 ? await buildDeckCards(companions, sources.lookup, sources.tagsLookup) : [];
   // Same token lookup `buildWireGraph` uses -- the two must agree, or the report's
   // `tokenNodes` (which the view's toggle reads) would describe a different deck than the
   // board draws.
@@ -89,7 +91,7 @@ export async function analyzeResolvedDeck(
     undefined,
     sources.tokenTags,
     state,
-    companions,
+    companionCards,
     unresolvedCompanions,
   );
 }
@@ -186,5 +188,10 @@ export async function buildWireGraph(
   const projected = projectDeckGraph(
     projectionDeck as never, reasons, loadImpactWeights(),
   );
-  return attachRolesAndArt(projected, docs, rolesByName, normalizeName, tokenArtById);
+  const wire = attachRolesAndArt(projected, docs, rolesByName, normalizeName, tokenArtById);
+  // THE NODE SAYS IT IS THE COMPANION, so no client reader has to cross-reference the report to
+  // keep it out of a count -- the reader that did not was an off-by-one (review, 2026-09-22).
+  const companions = new Set(report.companions ?? []);
+  if (companions.size === 0) return wire;
+  return { ...wire, nodes: wire.nodes.map((n) => companions.has(n.cardName ?? n.id) && !n.isToken ? { ...n, isCompanion: true } : n) };
 }

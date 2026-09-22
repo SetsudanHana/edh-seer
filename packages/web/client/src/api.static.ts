@@ -38,7 +38,9 @@ export async function analyzeDeckStatic(
   const names = cards.map((c) => c.name);
   const copiesByName = new Map<string, number>();
   for (const n of names) copiesByName.set(n, (copiesByName.get(n) ?? 0) + 1);
-  const graph = await buildWireGraph(names, rolesByName, copiesByName, sources, report);
+  // THE COMPANION IS A NODE (owner, 2026-09-22): its edges are in `report.edges`, so the board has
+  // to draw it. It is not in `names` above, which is the 100 the census counts.
+  const graph = await buildWireGraph([...names, ...(report.companions ?? [])], rolesByName, copiesByName, sources, report);
   return { report, missing, resolvedCount: cards.length,
     totalCount: commanderNames.length + sections.deck.length, commanderColorIdentity, graph };
 }

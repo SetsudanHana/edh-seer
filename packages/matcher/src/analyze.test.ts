@@ -1732,3 +1732,52 @@ test("a granting face forms creates:emblem to the emblem node, and the emblem st
   expect(r.effectKind).toBe("emblem");
   expect(report.cards.map((c) => c.name)).not.toContain("Chandra, Roaring Flame Emblem");
 });
+
+/** THE COMPANION IS IN THE GRAPH AND NOT IN THE 100 (CR 702.139, owner 2026-09-22). Its relations
+ *  are read like any card's -- a row, edges, a rating -- and every figure that describes the deck
+ *  as a hundred cards reads exactly what it read without it. */
+test("a companion forms edges and a row, and moves no count the 100 owns", () => {
+  const maker = dc("Wizard Maker", inallaAbility, ["wizard"]);
+  const land: DeckCard = {
+    card: { name: "Island", typeLine: "Basic Land — Island", oracleText: "", keywords: [], colors: [], manaValue: 0 } as never,
+    tags: null,
+  };
+  const companion: DeckCard = { ...dc("Draw Companion", kindredDiscoveryAbility), card: { ...dc("Draw Companion", kindredDiscoveryAbility).card, manaValue: 5 } as never };
+  const without = analyzeDeckStructured([maker, land], undefined, H);
+  const withC = analyzeDeckStructured([maker, land], undefined, H, undefined, undefined, undefined, undefined, undefined, [companion]);
+
+  const row = withC.cards.find((c) => c.name === "Draw Companion");
+  expect(row?.isCompanion).toBe(true);
+  expect(withC.edges.some((e) => [e.a, e.b].includes("Draw Companion") && [e.a, e.b].includes("Wizard Maker"))).toBe(true);
+  expect(withC.companions).toEqual(["Draw Companion"]);
+  // The hundred's own figures do not see it: a mana-value-5 companion is not on the curve.
+  expect(withC.landCount).toBe(without.landCount);
+  expect(withC.avgManaValue).toBe(without.avgManaValue);
+  expect(withC.manaCurve).toEqual(without.manaCurve);
+  // And it is never a cut -- there is no slot in the 99 to free.
+  expect(JSON.stringify(withC.cutList ?? [])).not.toContain("Draw Companion");
+  // The deck's own rows are unchanged in number: one more row, the companion's.
+  expect(withC.cards.length).toBe(without.cards.length + 1);
+  // BY RULING IT COUNTS TOWARD SYNERGY (owner, 2026-09-22), so the score is computed with it --
+  // and the CENSUS, which is counted against the hundred, never names it (review, 2026-09-22).
+  expect(withC.synergyOverall).toBeDefined();
+  expect(withC.archetypes).toEqual(without.archetypes);
+  expect(withC.themeMembership).toEqual(without.themeMembership);
+});
+
+/** THE CENSUS IS THE HUNDRED'S (review, 2026-09-22). A theme's payoffs and an archetype's cards are
+ *  counted against `resolved`; with the companion's relations in them, this deck read two payoffs
+ *  over a baseline of 8 and an eight-card archetype for a seven-card deck. */
+test("a companion joins no theme membership and no archetype", () => {
+  const payoff: CardTags["abilities"] = [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" },
+  }];
+  const cmd = dc("Cmd", payoff);
+  const deck = [cmd, ...Array.from({ length: 6 }, (_, i) => dc(`Wiz ${i}`, [], ["wizard"]))];
+  const without = analyzeDeckStructured(deck, ["Cmd"], H);
+  const withC = analyzeDeckStructured(deck, ["Cmd"], H, undefined, undefined, undefined, undefined, undefined, [dc("Comp", payoff)]);
+  expect(withC.themeMembership).toEqual(without.themeMembership);
+  expect(withC.archetypes).toEqual(without.archetypes);
+  // And it IS related -- the census excludes a card that has edges, not one that has none.
+  expect(withC.edges.some((e) => [e.a, e.b].includes("Comp"))).toBe(true);
+});

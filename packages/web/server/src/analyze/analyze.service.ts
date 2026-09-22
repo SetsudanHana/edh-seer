@@ -68,7 +68,8 @@ export class AnalyzeService {
     const names = (cards as Array<{ name: string }>).map((c) => c.name);
     const copiesByName = new Map<string, number>();
     for (const n of names) copiesByName.set(n, (copiesByName.get(n) ?? 0) + 1);
-    const graph = await this.deps.graph(names, rolesByName, copiesByName, report);
+    // THE COMPANION IS A NODE: its edges are in `report.edges`. Not in `names`, which is the 100.
+    const graph = await this.deps.graph([...names, ...(report.companions ?? [])], rolesByName, copiesByName, report);
     const totalCount = commanderNames.length + sections.deck.length;
     return { report, missing, resolvedCount: cards.length, totalCount, commanderColorIdentity, graph };
   }

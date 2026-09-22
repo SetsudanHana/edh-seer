@@ -205,9 +205,10 @@ export function analyzeDeckStructured(
    *  speed" resolves, creatures are read under the deck's anthems, and every edge the state alone
    *  created carries `enabledBy`. Undefined is the report as it always was. */
   state?: GameState,
-  /** CR 702.139: the companion, outside the 100. Legality reads it; nothing that counts the deck
-   *  does. */
-  companions: Card[] = [],
+  /** CR 702.139: the companion, outside the 100 (owner, 2026-09-22: legality AND synergy). It
+   *  joins `unique` -- the pair search, the ratings and the card rows -- and NEVER `resolved`, which
+   *  is the 100 every count, curve, category and simulation reads. */
+  companions: DeckCard[] = [],
   unresolvedCompanions: string[] = [],
 ): DeckReport {
   const rawInputs = inputs;
@@ -247,6 +248,16 @@ export function analyzeDeckStructured(
   // The third deck fact, read at match time rather than written into the tags: what land types an
   // untyped land put can put, given the lands this deck runs. See `landPutFor` in edges.ts.
   const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved) };
+  // THE COMPANION, READ LIKE A DECK CARD FOR ITS RELATIONS AND COUNTED NOWHERE. A companion that is
+  // also in the deck is a 903.11a violation legality reports; here it is simply not added twice.
+  const deckNameSet = new Set(resolved.map((dc) => dc.card.name));
+  const companionResolved: DeckCard[] = companions
+    .filter((dc) => !deckNameSet.has(dc.card.name))
+    .map((dc) => (dc.tags ? { card: dc.card, tags: resolveChosenTypes(dc.tags, counts, hierarchy) } : dc));
+  const companionSet = new Set(companionResolved.map((dc) => dc.card.name));
+  // Lookups by name (tags, cost, derivation, land-ness) must find the companion's row; the COUNTS
+  // built off `resolved` must not see it. This is the array for the first kind only.
+  const lookupPool: DeckCard[] = [...resolved, ...companionResolved];
 
   // ONE NODE PER CARD, WITH ITS COUNT (owner's ruling, 2026-08-15). `parseDecklistSections` expands
   // "6 Plains" into six entries, so the pair loop was producing six identical Farseek->Plains edges
@@ -269,7 +280,7 @@ export function analyzeDeckStructured(
   // `land-count.ts` keep counting a two-faced card once. E4 already prices an "Instant // Land" as a
   // FRACTION of a land; turning 100 slots into 105 entries there would break `lands 37/36`, the mana
   // simulation and castability at once.
-  const unique = [...byName.values()].flatMap((v) => faceDeckCards(v.card));
+  const unique = [...[...byName.values()].flatMap((v) => faceDeckCards(v.card)), ...companionResolved.flatMap(faceDeckCards)];
   const quantities = Object.fromEntries([...byName].filter(([, v]) => v.copies > 1).map(([n, v]) => [n, v.copies]));
   // A rated row / an edge endpoint / a two-hop maker name is keyed by FACE name once `unique` is
   // face-split; every join below that reads `resolved` (built from PHYSICAL cards, one entry per
@@ -596,10 +607,12 @@ export function analyzeDeckStructured(
   for (const [name, d] of dir) authorityByName.set(name, Math.sqrt(d.support));
 
   const presentCommanders = resolved.map((dc) => dc.card.name).filter((n) => commanderSet.has(n));
-  const deckNames = new Set(resolved.map((dc) => dc.card.name));
+  // The companion reaches the hand once a game, so a combo it completes is a combo this deck can
+  // assemble -- and it is in the bracket's Game Changer and combo count for the same reason.
+  const deckNames = new Set([...resolved.map((dc) => dc.card.name), ...companionSet]);
   const foundCombos: Combo[] = combos?.combosContainedIn(deckNames) ?? [];
   const comboCardNames = new Set(foundCombos.flatMap((c) => c.cards));
-  const tagsByName = new Map(resolved.map((dc) => [dc.card.name, dc.tags] as const));
+  const tagsByName = new Map(lookupPool.map((dc) => [dc.card.name, dc.tags] as const));
 
   const VERSATILITY_STEP = 0.15;
   const COMBO_BONUS = 1.5;
@@ -644,6 +657,7 @@ export function analyzeDeckStructured(
         // (built off the same `unique` array) is the way back to the DeckCard `isCommanderNode`
         // needs. Every name in `dir` came from `unique`, so the lookup is never absent.
         isCommander: isCommanderNode(uniqueByName.get(name)!),
+        ...(companionSet.has(physicalName(name)) ? { isCompanion: true } : {}),
         score,
         authority,
         feederLift,
@@ -660,7 +674,7 @@ export function analyzeDeckStructured(
     })
     .sort((x, y) => y.score - x.score || y.partnerCount - x.partnerCount || x.name.localeCompare(y.name));
 
-  const nonlandByName = new Map(resolved.map((dc) => [dc.card.name, !isLand(dc)] as const));
+  const nonlandByName = new Map(lookupPool.map((dc) => [dc.card.name, !isLand(dc)] as const));
   const { ratingByName, payoffRatingByName, feederRatingByName, positiveCoherence } = computeSynergyRatings(
     cards.map((c) => ({
       name: c.name,
@@ -707,11 +721,11 @@ export function analyzeDeckStructured(
     deckCastability(resolved, manaSim.curves).cards
       .map((r: CardCastability) => [r.name, { turn: r.turn, castable: r.castable!, mana: r.mana! }] as const),
   );
-  const printedCost = new Map(resolved.map((dc) => [dc.card.name, dc.card] as const));
+  const printedCost = new Map(lookupPool.map((dc) => [dc.card.name, dc.card] as const));
   // WHICH CARDS THE ENGINE ACTUALLY READ, read from the same fact `deckCoverage` reports as a
   // headline: a resolved card carrying no derived tags. It rides on every rated row and on the cut
   // list, so a surface can tell "reads zero" apart from "was never opened".
-  const derivedByName = new Map(resolved.map((dc) => [dc.card.name, dc.tags !== null && dc.tags !== undefined]));
+  const derivedByName = new Map(lookupPool.map((dc) => [dc.card.name, dc.tags !== null && dc.tags !== undefined]));
   const ratedCards: CardSynergy[] = cards.map((c) => {
     // `c.name` is a FACE name (from `cards`, built off `dir`); `buildRoles`/`printedCost`/
     // `castByName`/`derivedByName` are all keyed by the PHYSICAL card (built from `resolved`).
@@ -800,7 +814,12 @@ export function analyzeDeckStructured(
   // Family-grouped ranking, gated on `themeRank` in impact-weights.json. `alpha: 0` (the shipped
   // default) is the per-tag ranking exactly. See specs/2026-08-19-theme-family-ranking-design.md.
   // Hoisted above the theme ranking: loop ranking reads the reasons to split surplus from payoffs.
-  const allReasons = [...cardEdges.flatMap((e) => e.reasons), ...twoHopCensusReasons];
+  // THE CENSUS DESCRIBES THE HUNDRED (review, 2026-09-22). The companion's relations are real and
+  // feed its row and the synergy score, but a theme's members and an archetype's cards are counted
+  // against `resolved` -- a companion member over a denominator of 100 was the two disagreeing.
+  const inHundred = (r: Reason): boolean =>
+    !companionSet.has(physicalName(r.producer ?? "")) && !companionSet.has(physicalName(r.consumer ?? ""));
+  const allReasons = [...cardEdges.flatMap((e) => e.reasons), ...twoHopCensusReasons].filter(inHundred);
   const themeRank = impactWeights.themeRank;
   const tfidfRanked = rankThemes(rankFreq, themeStats, themeRank && themeRank.alpha > 0
     ? { fold: makeFold(hierarchy), alpha: themeRank.alpha, massShare: themeRank.massShare }
@@ -871,7 +890,8 @@ export function analyzeDeckStructured(
   // e.g. "Fell Mire" rather than "Fell the Profane // Fell Mire". Comment only, not a guard: the
   // physical-name translation this file already carries (`physicalName`) is for JOINS back onto
   // `resolved`-keyed maps, and rewriting a RENDERED list is a presentation concern, not this one.
-  const archetypes = groupEdgesByArchetype(cardEdges);
+  const archetypes = groupEdgesByArchetype(cardEdges.filter((e) =>
+    !companionSet.has(physicalName(e.a)) && !companionSet.has(physicalName(e.b))));
 
   const cardSignals = resolved
     .filter((dc) => dc.tags && !isLand(dc))
@@ -909,8 +929,9 @@ export function analyzeDeckStructured(
       .filter((dc) => dc.tags?.abilities?.some((a) => ROLE_NOT_SYNERGY.has(a.effect.kind)))
       .map((dc) => dc.card.name),
   );
-  const manaValueByName = new Map(resolved.map((dc) => [dc.card.name, dc.card.manaValue]));
-  const cutInputs = ratedCards.map((c) => {
+  const manaValueByName = new Map(lookupPool.map((dc) => [dc.card.name, dc.card.manaValue]));
+  // THE COMPANION IS NEVER A CUT: it is not one of the 99, so there is no slot to free.
+  const cutInputs = ratedCards.filter((c) => !c.isCompanion).map((c) => {
     // Same PHYSICAL-name translation as the `ratedCards` map above: `c.name` is a FACE name,
     // `manaValueByName`/`nonlandByName`/`comboCardNames`/`deckRoleCards`/`derivedByName`/
     // `unmetByCard` are all keyed on `resolved`'s physical cards.
@@ -1020,7 +1041,7 @@ export function analyzeDeckStructured(
     ...(deckCoverage(resolved) ?? {}),
     // WotC's bracket rule over facts the engine already had: `gameChanger` on every corpus card
     // and the combos `foundCombos` resolved above. A join, so it forms no edge and reads no rating.
-    bracket: deckBracket(resolved.map((dc) => dc.card), foundCombos),
+    bracket: deckBracket([...resolved, ...companionResolved].map((dc) => dc.card), foundCombos),
     // The deck-level half of I9: the pairwise pass states the POSITIVE and can say nothing when the
     // answer is zero, and that silence reads exactly like a card with no condition at all.
     landConditions: unmetLandConditions(resolved.map((dc) => dc.card)),
@@ -1038,10 +1059,10 @@ export function analyzeDeckStructured(
     legality: deckLegality({
       cards: resolved.map((dc) => dc.card),
       commanders: resolved.filter((dc) => commanderSet.has(dc.card.name)).map((dc) => dc.card),
-      companions,
+      companions: companions.map((dc) => dc.card),
       unresolvedCompanions,
     }),
-    ...(companions.length > 0 ? { companions: companions.map((c) => c.name) } : {}),
+    ...(companions.length > 0 ? { companions: companions.map((dc) => dc.card.name) } : {}),
     // CR 903.8 (roadmap J5), a CAVEAT and never a number: the tax is a function of how many times
     // the commander has DIED and nothing here simulates a game. Shipped as data because no subpath
     // of `@edh-seer/matcher` is safe to value-import from client code, so this is the only way the CLI

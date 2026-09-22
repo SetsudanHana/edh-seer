@@ -283,7 +283,8 @@ function synergyFinding(report: DeckReport): Finding | null {
   // supplies it itself. Only a row with a real probability and no supplier is an unmet demand.
   const unmet = demand.filter((d) => d.available !== null && d.suppliers === 0 && d.consumers > 0);
   if (unmet.length === 0) return null;
-  const cards = report.cards?.length ?? 0;
+  // The hundred's rows: the idle count comes off `resolved`, so the denominator must too.
+  const cards = report.cards?.filter((c) => !c.isCompanion).length ?? 0;
   if (cards === 0) return null;
   const idle = unmet.reduce((n, d) => n + d.consumers, 0);
   const worst = unmet.reduce((a, b) => (a.consumers >= b.consumers ? a : b));
