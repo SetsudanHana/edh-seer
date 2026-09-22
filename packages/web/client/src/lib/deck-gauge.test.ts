@@ -43,6 +43,10 @@ test("the lands dial names the direction", () => {
   expect(bandState(40, 36).label).toBe("4 over");
   expect(bandState(32, 36).label).toBe("4 under");
   expect(bandState(36, 36).label).toBe("on the modelled count");
+  // INSIDE THE MARGIN, THE DISTANCE STILL SHOWS: "on the modelled count" beside "wants 36" at 34
+  // read as a contradiction to a player (deck-build run, 2026-09-22).
+  expect(bandState(34, 36).label).toBe("2 under, inside the model's ±3");
+  expect(bandState(34, 36).state).toBe("on-band");
 });
 
 /** A score has a ceiling, not a floor, so it never has an over state -- and synergy loses its

@@ -209,15 +209,7 @@ function colourFindings(report: DeckReport): Finding[] {
     if (!worst || worst.pips < 2) continue;
     const colour = NAME[c.color]?.toLowerCase() ?? c.color;
     const pips = PIP_WORD[worst.pips] ?? String(worst.pips);
-    // Named where the wire carries names, counted where it does not or where there are too many to
-    // read: "Archmage's Charm and 3 other cards" beats a list nobody finishes.
-    const named = worst.names ?? [];
-    const others = worst.cards - named.length;
-    const subject = named.length === 0
-      ? `${worst.cards} ${worst.cards === 1 ? "card" : "cards"}`
-      : others > 0
-        ? `${named[0]} and ${others} other ${others === 1 ? "card" : "cards"}`
-        : named.join(" and ");
+    const subject = cardsSubject(worst.names ?? [], worst.cards);
     const verb = worst.cards === 1 ? "wants" : "want";
     // THE ONE THE DECK CAN FIX BY SEQUENCING RATHER THAN BY BUILDING. When the deck holds the
     // sources and they simply are not online that early, saying "short of blue" is the false half.
@@ -239,6 +231,21 @@ function colourFindings(report: DeckReport): Finding[] {
     });
   }
   return out;
+}
+
+/** THE CARDS A COLOUR DEMAND IS ABOUT, AS A SENTENCE SUBJECT. Every name the wire carries (it sends
+ *  two), then a count of the rest: "Harbinger of the Tides, Counterspell and 1 other card".
+ *
+ *  IT NAMED ONE AND SUBTRACTED TWO (deck-build run, 2026-09-22). `others` was `cards - names.length`
+ *  while the sentence printed only `names[0]`, so three cards read as "Harbinger of the Tides and 1
+ *  other card" -- one card vanished, and the agent went looking for the "1 other" and could not
+ *  find it. The colour panel's label had the mirror defect: it joined both names and dropped the
+ *  count. One function for both readers. */
+export function cardsSubject(names: readonly string[], cards: number): string {
+  if (names.length === 0) return `${cards} ${cards === 1 ? "card" : "cards"}`;
+  const others = cards - names.length;
+  if (others <= 0) return names.length === 1 ? names[0]! : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+  return `${names.join(", ")} and ${others} other ${others === 1 ? "card" : "cards"}`;
 }
 
 /** Pips read as words because the figure beside the row is already digits, and "2 blue" next to

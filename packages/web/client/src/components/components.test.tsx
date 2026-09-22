@@ -2909,9 +2909,17 @@ test("the legality panel reports and never gates, and says how many rules it che
   expect(screen.queryByText("Card 10")).toBeNull();
   many.unmount();
 
-  // A legal deck renders NOTHING — never a heading over an empty panel saying the deck is fine,
-  // which would be a claim these five rules cannot make.
-  const { container } = render(<LegalityPanel legality={[]} />);
+  // A CLEAN RESULT NAMES WHAT WAS CHECKED (owner, 2026-09-22) -- silence read as "never checked" --
+  // and still never says "legal", which five rules cannot claim. The banned list is named as unchecked.
+  const clean = render(<LegalityPanel legality={[]} />);
+  expect(screen.getByText(/Checked against five Commander rules/)).toBeInTheDocument();
+  expect(screen.getByText(/banned list is not checked/)).toBeInTheDocument();
+  expect(clean.container.textContent).not.toMatch(/\blegal\b/i);
+  expect(screen.queryByRole("heading")).toBeNull();
+  clean.unmount();
+
+  // NO REPORT FIELD, NO CLAIM: an old report without `legality` renders nothing at all.
+  const { container } = render(<LegalityPanel legality={undefined} />);
   expect(container).toBeEmptyDOMElement();
 });
 

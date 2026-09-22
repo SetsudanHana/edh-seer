@@ -15,7 +15,19 @@ import { CardName } from "./card-drawer.js";
  *  IT FIRES ON NOTHING IN THE 71 CALIBRATION DECKS, by construction — they are the owner's own
  *  well-built lists. This exists for the arbitrary pasted one. */
 export function LegalityPanel({ legality }: { legality: DeckReport["legality"] }) {
-  if (!legality || legality.length === 0) return null;
+  if (!legality) return null;
+  // A CLEAN RESULT SAYS WHAT WAS CHECKED (owner, 2026-09-22). Silence was meant to read "nothing
+  // found", and the deck-build agent read it as "the report never checks legality". So a deck with
+  // nothing off gets one line naming the five rules and what they do NOT cover. It still never says
+  // "legal": that is a claim five rules cannot make, which is what the old silence was protecting.
+  if (legality.length === 0) {
+    return (
+      <p className="text-xs text-(--muted) max-w-[65ch]">
+        Checked against five Commander rules: 100 cards, one of each, colour identity, who may lead,
+        and partner pairing. Nothing is off. The banned list is not checked.
+      </p>
+    );
+  }
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Against the format</h3>
