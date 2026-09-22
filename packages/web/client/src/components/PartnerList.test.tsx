@@ -136,6 +136,33 @@ test("a producer group's withheld line says cause, and its tiles say they cause 
   expect(screen.queryByText(/deals 1 damage/)).toBeNull();
 });
 
+/** THE CAUSE COUNT SAYS WHOSE IT IS under a group of askers (owner, 2026-09-22). Inalla's page read
+ *  "17 cards can cause this" over one Diviner's Wand, and the deck-build agent took the 17 for tiles
+ *  it could not see. The askers are partners because this page's card causes the event, so it is
+ *  one of the 17; a producer group's tiles ARE causers and keep the bare count. */
+test("an asker group's cause count names this page's card among the causes; a producer group's does not", () => {
+  const asker = render(
+    <MemoryRouter>
+      <PartnerList subject="Inalla, Archmage Ritualist" pool={{}} rarity={{ "enters|creature|wizard|-": 17 }} empty="none" rows={[{
+        name: "Diviner's Wand", slug: "diviners-wand", score: 0.2, event: "enters|creature|wizard|-",
+        reason: "Whenever a Wizard creature enters, Diviner's Wand may attach to it",
+      }]} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/cards can cause this, Inalla, Archmage Ritualist among them/)).toBeInTheDocument();
+  asker.unmount();
+  render(
+    <MemoryRouter>
+      <PartnerList subject="Impact Tremors" pool={{}} rarity={{ "enters|creature|-|-": 4 }} empty="none" rows={[{
+        name: "Krenko, Mob Boss", slug: "krenko-mob-boss", score: 0.2, event: "enters|creature|-|-",
+        reason: "When a goblin enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage", producer: true,
+      }]} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/cards can cause this$/)).toBeInTheDocument();
+  expect(screen.queryByText(/among them/)).toBeNull();
+});
+
 // ---------------------------------------------------------------------------------------------
 // THE WITHHELD COUNT IS A LINK (roadmap AJ3).
 // ---------------------------------------------------------------------------------------------

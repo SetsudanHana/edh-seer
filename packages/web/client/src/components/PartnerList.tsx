@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { Link } from "react-router";
 import { groupAnchor } from "../lib/group-anchor.js";
-import { groupDirection, searchHref, withheldFrom } from "../lib/inject.js";
+import { causeCountTail, groupDirection, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
 
@@ -105,7 +105,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                     <span className="font-mono tabular-nums text-(--foreground)">
                       {rarity[group.event]!.toLocaleString("en-US")}
                     </span>
-                    cards can cause this
+                    {causeCountTail(group.rows, subject)}
                   </span>
                 </p>
               )}

@@ -257,6 +257,19 @@ export const groupDirection = (rows: InjectableCard["partners"]): GroupDirection
   : rows.every((r) => /^While you control /i.test(r.reason)) ? "feeds"
   : "asks";
 
+/** WHAT THE CAUSE COUNT IS A COUNT OF, said once for both readers (owner, 2026-09-22).
+ *
+ *  The badge is the RANKING figure -- how many cards can cause the event -- and it stays that on
+ *  every group. Under a group whose tiles all ASK for the event, though, the number is not the
+ *  tiles': the deck-build agent read Inalla's "17 cards can cause this" over one Diviner's Wand as
+ *  sixteen missing cards. Those tiles are partners only because this page's card causes the event,
+ *  so it is one of the 17, and the sentence says so. A mixed group falls back to `asks` in
+ *  `groupDirection` without that guarantee, so it keeps the bare count. */
+export const causeCountTail = (rows: InjectableCard["partners"], subject?: string): string =>
+  subject && rows.every((r) => r.producer !== true && !/^While you control /i.test(r.reason))
+    ? `cards can cause this, ${subject} among them`
+    : "cards can cause this";
+
 /** WHERE A GROUP'S WITHHELD COUNT LINKS (roadmap AJ3), and it is built ONCE for both readers.
  *
  *  THE PARAM FOLLOWS THE DIRECTION THE SENTENCE CLAIMS. A group whose rows all CAUSE the event
@@ -404,7 +417,7 @@ export function cardPageHtml(
       ? eventKeyClause(g.event)
       : eventKeyAction(g.event) ?? eventKeyClause(g.event);
     const count = n === undefined ? ""
-      : `    <p>${esc(said)} — ${n.toLocaleString("en-US")} cards can cause this.</p>\n`;
+      : `    <p>${esc(said)} — ${n.toLocaleString("en-US")} ${esc(causeCountTail(g.rows, card.name))}.</p>\n`;
     // THE WITHHELD COUNT, in the HTML too: it is the other number that makes this block this
     // card's, and the app has printed it under every group since the list was grouped.
     const dir = dirHere;

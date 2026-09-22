@@ -89,8 +89,10 @@ test("the static block prints how many cards can cause each event, per group", (
   // the count follows it, because "1,234 cards can cause a creature dies" is not a sentence.
   // These fixture rows carry no `producer` flag, so the group runs the ASKER direction and the
   // event is named as the thing those cards wait for. A producer group says "kill a creature".
-  expect(html).toContain("a creature token enters the battlefield — 1,234 cards can cause this.");
-  expect(html).toContain("a creature dies — 1,451 cards can cause this.");
+  // AND THE COUNT SAYS WHOSE IT IS (2026-09-22): every row here ASKS, so this page's card is one of
+  // the cards that cause the event -- the reason those rows are its partners at all.
+  expect(html).toContain("a creature token enters the battlefield — 1,234 cards can cause this, Krenko, Mob Boss among them.");
+  expect(html).toContain("a creature dies — 1,451 cards can cause this, Krenko, Mob Boss among them.");
   // One list per event, the count directly above its own list.
   expect(html.match(/<ol>/g)).toHaveLength(2);
   expect(html.indexOf("1,234 cards")).toBeLessThan(html.indexOf("purphoros-god-of-the-forge"));
