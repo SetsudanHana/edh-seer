@@ -185,3 +185,44 @@ test("an Exhaust ability repeats once, whatever its cost says", () => {
   expect(repeatsFor(draw, "Exhaust — {U}, {T}: Draw three cards.", "{U}, {T}")).toBe("once");
   expect(repeatsFor(draw, "{U}, {T}: Draw three cards.", "{U}, {T}")).toBe("per-cycle");
 });
+
+/** A TRIGGER ON ONE OBJECT (roadmap AN7, 2026-09-23). "When THAT creature dies", "when ENCHANTED
+ *  creature dies", "whenever EQUIPPED creature attacks" watch a single object, not a class: a death
+ *  or a leave happens to it once, and its attacks come once a combat. Before, every one read
+ *  `repeatable` -- Make Your Mark ranked beside Midnight Reaper as a death engine. */
+test("rule 7b: a death or leave of ONE named object fires once", () => {
+  for (const text of [
+    "When that creature dies this turn, create a 3/2 red and white Spirit creature token.",
+    "When enchanted creature dies, return this card to its owner's hand and you create a 1/3 black Demon creature token.",
+    "When equipped creature dies, create a 1/1 white Soldier creature token.",
+    "When enchanted creature leaves the battlefield, create a 1/1 white Spirit creature token.",
+  ]) expect(repeatsFor(triggered(["dies"], { control: "you", type: "creature" }), text)).toBe("once");
+});
+
+test("rule 7b: ONE creature's combat fires once a combat, on whose turn `control` says", () => {
+  const text = "Whenever equipped creature deals combat damage to a player, draw a card.";
+  expect(repeatsFor(triggered(["combat-damage"], { control: "you", type: "creature" }), text)).toBe("per-cycle");
+  expect(repeatsFor(triggered(["attacks"], { control: "opp", type: "creature" }), "Whenever enchanted creature attacks, you gain 1 life.")).toBe("per-turn");
+});
+
+test("rule 7b leaves a CLASS trigger alone: Midnight Reaper is still an engine", () => {
+  expect(repeatsFor(triggered(["dies"], { control: "you", type: "creature", token: false }),
+    "Whenever a nontoken creature you control dies, this creature deals 1 damage to you and you draw a card.")).toBe("repeatable");
+});
+
+/** Review of rule 7b (2026-09-23): only a DEATH and a COMBAT are bounded for one object. Curse of
+ *  Echoes' "whenever enchanted player casts an instant or sorcery spell" can fire many times a
+ *  turn, and so can Curiosity's "whenever enchanted creature deals damage" -- they keep falling to
+ *  rule 9. And a printed ability-word label sits in front of the trigger phrase in the clause text
+ *  (Inquisitorial Rosette: "Inquisition Agents — Whenever equipped creature attacks"). */
+test("rule 7b bounds only death and combat; any other act of one object stays unbounded", () => {
+  expect(repeatsFor(triggered(["cast"], { control: "opp" }),
+    "Whenever enchanted player casts an instant or sorcery spell, each other player may copy that spell.")).toBe("repeatable");
+  expect(repeatsFor(triggered(["non-combat-damage"], { control: "you", type: "creature" }),
+    "Whenever enchanted creature deals damage to an opponent, you may draw a card.")).toBe("repeatable");
+});
+
+test("rule 7b reads past a printed ability-word label", () => {
+  expect(repeatsFor(triggered(["attacks"], { control: "you", type: "creature" }),
+    "Inquisition Agents — Whenever equipped creature attacks, create a 2/2 white Astartes Warrior creature token.")).toBe("per-cycle");
+});
