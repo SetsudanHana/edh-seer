@@ -27,10 +27,10 @@ const tremorsAbilities = [{
   effect: { kind: "deal-damage" },
 }];
 
-interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[]; tokenParts?: true }
+interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[] | null; tokenParts?: true; typeLine?: string }
 const entry = (s: Spec, pi?: [number, number][]) => ({
   card: {
-    _id: `id-${s.name}`, name: s.name, typeLine: s.types.join(" "), oracleText: "", keywords: [], colors: s.identity,
+    _id: `id-${s.name}`, name: s.name, typeLine: s.typeLine ?? s.types.join(" "), oracleText: "", keywords: [], colors: s.identity,
     manaValue: 3, colorIdentity: s.identity, power: null, toughness: null, searchNames: [normalizeName(s.name)],
     ...(s.tokenParts ? { allParts: [{ component: "token", name: "Goblin", typeLine: "Token Creature — Goblin" }] } : {}),
   },
@@ -138,5 +138,40 @@ test("a token maker's partner is verified the way a card page draws it, not drop
   const s = await suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files(withTokens)) });
   const tremors = s.plan.find((c) => c.name === "Impact Tremors");
   expect(tremors?.connections).toContain("Goblin Maker");
+  warn.mockRestore();
+});
+
+/** A DOUBLE-FACED CARD IS MATCHED FACE BY FACE, as the report does (`faceDeckCards`): the reason
+ *  names the face that does the work, and the other face's abilities are not read as always live. */
+test("a double-faced candidate is verified per face, and its reason names the face", async () => {
+  const dfc: Spec = {
+    name: "Tremor Front // Quiet Back", typeLine: "Enchantment // Enchantment", identity: ["R"], types: ["enchantment"],
+    abilities: [{ ...tremorsAbilities[0]!, face: 0 }],
+  };
+  const specs = [...SPECS.slice(0, 7), dfc];   // position 7
+  const pi = { "Krenko, Mob Boss": [[7, 0.3]], "Goblin Maker": [[7, 0.3]] } as Record<string, [number, number][]>;
+  const withPi = (f: Record<string, unknown>) => {
+    for (const [path, shard] of Object.entries(f)) {
+      if (!path.includes("/cards/")) continue;
+      for (const [k, e] of Object.entries(shard as Record<string, { card: { name: string }; pi?: unknown }>)) {
+        if (pi[e.card.name]) (shard as Record<string, unknown>)[k] = { ...e, pi: pi[e.card.name] };
+      }
+    }
+    return f;
+  };
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const s = await suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(withPi(files(specs))) });
+  const card = s.plan.find((c) => c.name === "Tremor Front // Quiet Back");
+  expect(card?.reasons[0]).toContain("Tremor Front");
+  expect(card?.reasons[0]).not.toContain("//");
+  warn.mockRestore();
+});
+
+/** ONE CARD WITH DATA THE ENGINE CANNOT READ drops out alone; it does not take every list with it. */
+test("a candidate the engine throws on is dropped, and the rest still arrive", async () => {
+  const broken = SPECS.map((s) => (s.name === "Unrelated Rock" ? { ...s, abilities: null } : s));
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const s = await suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files(broken)) });
+  expect(s.plan.map((c) => c.name)).toContain("Impact Tremors");
   warn.mockRestore();
 });

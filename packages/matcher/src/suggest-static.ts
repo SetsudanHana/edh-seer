@@ -6,7 +6,7 @@
  *  the `cards/` shards the report already prefetched), ranked by `suggest.ts`.
  *
  *  THE ENGINE HAS THE LAST WORD. Every row shown carries reasons from `directedReasons`, asked the
- *  way a card page asks it (a pair, no token nodes). A pool candidate the live engine draws nothing for is DROPPED --
+ *  way a card page asks it (a pair, no token nodes) with the report's face split and land types. A pool candidate the live engine draws nothing for is DROPPED --
  *  only a stale artifact produces one, and a card with no reason under it is a claim with nothing
  *  behind it. Unmet-demand candidates, which come from an over-collecting key filter, are shown only
  *  when the engine finds a reason from them to a deck card. */
@@ -14,7 +14,9 @@ import type { DeckReport } from "@edh-seer/engine";
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
-import { directedReasons } from "./edges.js";
+import { directedReasons, type ReasonOptions } from "./edges.js";
+import { faceDeckCards } from "./faces.js";
+import { deckLandTypes } from "./chosen-type.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
@@ -99,29 +101,45 @@ type Verify = (candidate: IndexCard, against: readonly string[], producerOnly: b
 
 /** Run the engine on (deck card, candidate) in both directions -- or candidate -> deck card only,
  *  for an unmet demand the candidate must SUPPLY -- and keep the deck cards it draws a reason with. */
-function verifier(dc: (name: string) => Promise<DeckCard | null>): Verify {
+function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: ReasonOptions["landTypes"]): Verify {
   const h = loadHierarchy();
   // NO TOKEN NODE EXISTS HERE, exactly as on a card page: the report drops a maker's direct "a token
   // enters" edge for the two-hop path through the token node, and a suggestion has no node to carry
   // that hop -- so ask the way `partners-core` asks, or every token maker's partner reads as stale.
-  const opts = { tokensMediate: false };
+  // THE DECK'S LAND TYPES, as the report threads them (`analyze.ts` reasonOpts), so an untyped land
+  // put resolves against this deck's lands here too.
+  const opts: ReasonOptions = { tokensMediate: false, ...(landTypes ? { landTypes } : {}) };
   return async (candidate, against, producerOnly) => {
-    const y = await dc(candidate.name);
-    if (!y) return null;
-    const connections: string[] = [];
-    const reasons: string[] = [];
-    for (const name of against) {
-      const x = await dc(name);
-      if (!x) continue;
-      const found = producerOnly
-        ? directedReasons(y, x, h, opts)
-        : [...directedReasons(x, y, h, opts), ...directedReasons(y, x, h, opts)];
-      if (found.length === 0) continue;
-      connections.push(name);
-      for (const r of found) if (!reasons.includes(r.text)) reasons.push(r.text);
+    // ONE CARD'S UNREADABLE DATA DROPS THAT CARD, not every list: a throw here would reject the
+    // whole result and the reader would see nothing at all.
+    try {
+      const y = await dc(candidate.name);
+      if (!y) return null;
+      // FACE BY FACE, as the report matches (`faceDeckCards`): the reason names the face that does
+      // the work, and one face's abilities are never read as live on the other.
+      const yFaces = faceDeckCards(y);
+      const connections: string[] = [];
+      const reasons: string[] = [];
+      for (const name of against) {
+        const x = await dc(name);
+        if (!x) continue;
+        const found = [];
+        for (const xf of faceDeckCards(x)) {
+          for (const yf of yFaces) {
+            found.push(...directedReasons(yf, xf, h, opts));
+            if (!producerOnly) found.push(...directedReasons(xf, yf, h, opts));
+          }
+        }
+        if (found.length === 0) continue;
+        connections.push(name);
+        for (const r of found) if (!reasons.includes(r.text)) reasons.push(r.text);
+      }
+      if (connections.length === 0) return null;
+      return { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons };
+    } catch (err) {
+      console.warn("[suggest] the engine could not read", candidate.name, err);
+      return null;
     }
-    if (connections.length === 0) return null;
-    return { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons };
   };
 }
 
@@ -188,9 +206,8 @@ export async function suggestForDeck(input: {
   const synergyRanked: (readonly [string, Candidate[]])[] = [];
   for (const d of unmet) {
     const positions = new Set<number>();
-    for (const k of eventKeysForDemand(d.key, eventKeys)) {
-      for (const p of (await lookup.eventMembers(k))?.p ?? []) positions.add(p);
-    }
+    const members = await Promise.all(eventKeysForDemand(d.key, eventKeys).map((k) => lookup.eventMembers(k)));
+    for (const m of members) for (const p of m?.p ?? []) positions.add(p);
     const ranked = [...positions]
       .map((p) => index[p])
       .filter((c): c is IndexCard => c !== undefined && admissible(c))
@@ -212,7 +229,9 @@ export async function suggestForDeck(input: {
     ...synergyRanked.flatMap(([, l]) => l), ...pairsRanked.map((p) => p.add),
   ].map((c) => c.card.name));
   await lookup.prefetch(shown.map(normalizeName));
-  const verify = verifier(deckCards(lookup));
+  const dc = deckCards(lookup);
+  const deckDcs = (await Promise.all(physical.map(dc))).filter((x): x is DeckCard => x !== null);
+  const verify = verifier(dc, deckLandTypes(deckDcs));
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
 
   const out: DeckSuggestions = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [] };
@@ -223,6 +242,10 @@ export async function suggestForDeck(input: {
     for (const c of list) {
       const s = await verify(c.card, nonland, true);
       if (s) cards.push(s);
+      // EACH CANDIDATE HERE RUNS THE ENGINE AGAINST THE WHOLE DECK, synchronously once the lookup is
+      // warm; hand the thread back between them so a deck with many unmet demands cannot jank the
+      // page the report has already painted.
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
     out.synergy[key] = cards;
   }
