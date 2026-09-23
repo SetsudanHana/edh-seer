@@ -376,7 +376,7 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   "countered",
   // REFUSED ON MEASUREMENT, recorded so it is not re-proposed: `destroyed` reads ZERO corpus cards.
   // Destruction is not an event a card watches, because destroying a creature makes it DIE (CR
-  // 701.7) and `dies` already IS that event. Also refused, on LEGALITY rather than on count:
+  // 701.8) and `dies` already IS that event. Also refused, on LEGALITY rather than on count:
   // `assemble` (Contraptions), `planeswalk`, `set-in-motion`, `abandon`, `open-an-attraction` and
   // `roll-to-visit-your-attractions` — no plane, scheme or Attraction is ever in an EDH decklist.
   //

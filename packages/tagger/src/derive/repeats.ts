@@ -41,6 +41,11 @@ const SACRIFICES_ITSELF = /\b(?:sacrifice|discard|exile) (?:this|it|~)\b/i;
  *  verified against real costs like "{T}, Sacrifice this land", "{1}, {T}, Sacrifice this creature",
  *  "{X}{R}, {T}, Sacrifice this creature". */
 const TAP_COST = /\{[TQ]\}/;
+/** A LOYALTY SYMBOL AS THE COST ("+1", "−3", "0", "−X") -- the shape `segment.ts` hands over for
+ *  a planeswalker ability. CR 606.3: one loyalty ability of a permanent per turn, on your own turn,
+ *  so once a ROUND. No mana and no {T}, so without its own rule it fell through to `repeatable` and
+ *  every planeswalker read as a free unbounded sacrifice outlet (Grist, Liliana, Garruk; AN3). */
+const LOYALTY_COST = /^[+\u2212-]?(?:\d+|X)$/;
 const ONCE_EACH_TURN = /\bonce each turn\b/i;
 /** "Whenever an opponent draws their second card each turn" (Faerie Mastermind) is bounded to once
  *  per that player's turn by the ORDINAL, not by a "once each turn" cost clause and not by the verb
@@ -96,6 +101,9 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
   // per game: Loot, the Pathfinder amortised a once-per-game draw as per-cycle (rate, 2026-09-17).
   if (SACRIFICES_ITSELF.test(cost) || /^Exhaust\b/i.test(text.trim())) return "once";
   if (TAP_COST.test(cost)) return "per-cycle";
+  // A loyalty cost only prices an ACTIVATED ability: the refused fixture carries Ral, Storm
+  // Conduit's damage TRIGGER beside his "+2" clause's cost, and that trigger is not once a round.
+  if (ability.kind === "activated" && LOYALTY_COST.test(cost.trim())) return "per-cycle";
   // 3: an explicit text limit. Faerie Mastermind's "each turn" and "Activate only once each turn"
   // both live in the body after the colon, not in the cost.
   if (ONCE_EACH_TURN.test(text)) return "per-turn";

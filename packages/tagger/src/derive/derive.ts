@@ -130,7 +130,7 @@ import { emblemRecipient } from "../emblem.js";
 // them apart.
 // 163: a put from the LIBRARY into a graveyard emits `mill`, not `enters-graveyard`, UNLESS the
 // clause searched -- Entomb and Buried Alive tutor a card into the yard and never mill (CR
-// 701.13b: milling is the top cards). Both layers make that test now (roadmap AK1).
+// 701.17a: milling is the top cards). Both layers make that test now (roadmap AK1).
 // `effect-kind` has read the origin since 2026-09-07 and `emits` did not, so 211 abilities derived
 // as kind `mill` while emitting the Entomb verb -- Cavalier of Thorns, Shigeki, Shadow Prophecy.
 // `supplyForms` bridges mill to the enters-graveyard forms, so no payoff that asks for a graveyard
@@ -139,7 +139,10 @@ import { emblemRecipient } from "../emblem.js";
 // singular one ("cast one permanent spell with mana value 2 or less from your graveyard"), and
 // edges.ts skips a subjectless recursion, so 66 corpus cards -- Lurrus, Karador, Gisa and Geralf,
 // Gravecrawler -- formed no recursion edge.
-export const DERIVE_VERSION = 166;
+// 167: a LOYALTY ability repeats once per round (CR 606.3). It has neither mana nor {T} in its
+// cost, so it fell through to `repeatable` and every planeswalker read as a free, unbounded
+// ability -- Grist, Liliana and Garruk among the sacrifice outlets (roadmap AN3).
+export const DERIVE_VERSION = 167;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
