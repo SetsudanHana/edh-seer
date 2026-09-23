@@ -23,7 +23,7 @@ export function printedFaces(card: Card): CardFace[] {
 /** Narrow a card's derived tags to ONE face: the abilities that face prints, and its own types.
  *
  *  `characteristics.faces` is the PLAYABLE faces and is a different question from the printed ones —
- *  a transform back is absent from it (CR 712.4a: the back is reached by transforming a permanent
+ *  a transform back is absent from it (CR 712.8a: the back is reached by transforming a permanent
  *  already in play, never cast or played). So a face that is playable keeps its own single entry and
  *  a face that is not gets an EMPTY list, which is what makes `impliedEvents` give it no `cast` and
  *  no `enters` rather than falling back to the union. */

@@ -811,7 +811,7 @@ test("a put from your hand that may go on top is top-set even when the bottom is
 });
 
 
-/** A SEARCHED PUT KEEPS THE SEARCH'S KIND (CR 701.13b, roadmap AK1). `from: library` alone called
+/** A SEARCHED PUT KEEPS THE SEARCH'S KIND (CR 701.17a, roadmap AK1). `from: library` alone called
  *  Entomb a mill, which `emits.ts` then had to agree with; both layers now read the clause. */
 test("a tutored put into a graveyard is not a mill", () => {
   const put = { verb: "put", object: "that card", fromZone: "library", toZone: "graveyard" };

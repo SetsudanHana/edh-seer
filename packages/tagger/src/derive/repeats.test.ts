@@ -168,7 +168,7 @@ test("rule 1: a cost that discards or exiles the card itself fires once (channel
   expect(repeatsFor(activated(), "Draw a card.", "{1}, Discard a card")).toBe("repeatable");
 });
 
-/** EXHAUST IS ONCE PER GAME (CR 702.176a). Loot, the Pathfinder: "Exhaust — {U}, {T}: Draw three
+/** EXHAUST IS ONCE PER GAME (CR 702.177a). Loot, the Pathfinder: "Exhaust — {U}, {T}: Draw three
  *  cards." read per-cycle from the tap and amortised a once-per-game draw. */
 test("an Exhaust ability repeats once, whatever its cost says", () => {
   const draw = { kind: "activated", cost: "{U}, {T}", effect: { kind: "draw-card" } } as unknown as Parameters<typeof repeatsFor>[0];

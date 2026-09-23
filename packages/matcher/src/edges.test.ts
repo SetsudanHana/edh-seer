@@ -3602,7 +3602,7 @@ test("a counter source feeds a card that proliferates", () => {
 });
 
 test("a proliferate is not the ORIGIN of a counter, so two of them do not feed each other", () => {
-  // CR 701.29: proliferate gives another counter of each kind ALREADY THERE. Without the
+  // CR 701.34: proliferate gives another counter of each kind ALREADY THERE. Without the
   // implied-minus-authored exclusion in `directedReasons`, the producer's own proliferate-implied
   // counter-added satisfies the consumer's proliferate demand and the two edge over a counter
   // neither of them made.
@@ -3713,7 +3713,7 @@ test("an UNTYPED enters emit does not reach a clone, because a real self-ETB tri
   expect(pairReasons(manifest, sakashima, H).some((r) => r.tag.startsWith("enters"))).toBe(false);
 });
 
-/** ONE CLAIM PER PHYSICAL CARD. A permanent shows one face at a time (CR 712.3a), so a card-wide
+/** ONE CLAIM PER PHYSICAL CARD. A permanent shows one face at a time (CR 712.8d-f), so a card-wide
  *  static relates to it ONCE — but faces-as-nodes pairs the anthem with each face separately, and
  *  both rows stamp back to the same physical name. Measured on the 71 decks: 217 such rows, and
  *  MESHED 287 -> 332 entirely inside five (deck, producer, tag) groups whose FAN-OUT never moved. */

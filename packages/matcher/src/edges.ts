@@ -1373,7 +1373,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     ...proliferateAbilities(c.tags),
     ...enterAsCopyAbilities(c.card.oracleText, c.tags.characteristics),
   ];
-  // A PROLIFERATE MULTIPLIES A COUNTER THAT IS ALREADY THERE (CR 701.29); IT CANNOT BE THE ORIGIN OF
+  // A PROLIFERATE MULTIPLIES A COUNTER THAT IS ALREADY THERE (CR 701.34); IT CANNOT BE THE ORIGIN OF
   // ONE. Without this, the producer's own proliferate-implied counter-added satisfies the consumer's
   // proliferate demand and two proliferate cards edge to each other over a counter neither of them
   // made. Computed only when the consumer actually asks, so an ordinary pair pays nothing.
@@ -1885,7 +1885,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // wide on Mizzix's Mastery and Lithoform Engine. "Copy target instant" names no permanent it
   // applies to, and an untyped subject matches the whole deck.
   // ONE CLAIM PER PHYSICAL CARD, AND THE FIRST FACE THAT SATISFIES KEEPS IT. A permanent shows one
-  // face at a time (CR 712.3a), so a card-wide static relates to it ONCE -- but faces-as-nodes
+  // face at a time (CR 712.8d-f), so a card-wide static relates to it ONCE -- but faces-as-nodes
   // (2026-08-27) pairs the producer with each printed face separately, and `stampSides` rewrites
   // both rows back to the same physical name. Measured on the 71 decks: 217 duplicate rows
   // (cost-reduction 154, pump 60, type-grant 3), and MESHED 287 -> 332 sat ENTIRELY inside five

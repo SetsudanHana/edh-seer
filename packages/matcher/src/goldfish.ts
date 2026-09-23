@@ -382,7 +382,7 @@ export function fetchMask(oracleText: string, deck: readonly { typeLine: string;
   return m;
 }
 
-/** CR 712.4a: A CARD IN HAND IS ITS FRONT FACE, so a transform card's land back can never be played
+/** CR 712.8a: A CARD IN HAND IS ITS FRONT FACE, so a transform card's land back can never be played
  *  as a land -- it is reached by transforming a permanent already on the battlefield. The type-line
  *  test alone took a phantom land drop on 10 distinct cards / 23 deck-slots (Treasure Map, Primal
  *  Amulet, Ojer Axonil, Dowsing Dagger and friends) and dropped each from the priced denominator.

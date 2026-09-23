@@ -265,7 +265,7 @@ test("put reads around its object", () => {
  *  The caller falls back to the clause. */
 test("an event with no actor has no action", () => {
   // `dies` has no honest verb: CR 700.4 dying covers destruction, sacrifice, damage and state-based
-  // death, and CR 701.7 destroy is only one of them (owner, 2026-09-19: "kill is not a word in
+  // death, and CR 701.8 destroy is only one of them (owner, 2026-09-19: "kill is not a word in
   // magic, you have destroy"). The rules word is the clause, and both terms find it.
   expect(eventKeyAction("dies|creature|-|-")).toBeUndefined();
   expect(eventKeyClause("dies|creature|-|-")).toBe("a creature dies");

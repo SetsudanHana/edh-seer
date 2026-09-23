@@ -1242,7 +1242,7 @@ test("a self trigger is a row that says so, and never a demand", () => {
 
 /** A PARTY COUNT DEMANDS FOUR TYPES, and each is a key of its own so a Rogue body and a Cleric body
  *  both feed it. Keyed on the first subtype alone, Burakos's page would have asked only for
- *  Clerics (owner, 2026-09-05; CR 700.7). */
+ *  Clerics (owner, 2026-09-05; CR 700.8). */
 test("a board count over a list of subtypes is one demand key per subtype, each verified", () => {
   const burakos = base("Burakos, Party Leader", [{
     kind: "triggered",

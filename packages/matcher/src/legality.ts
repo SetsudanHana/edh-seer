@@ -31,7 +31,7 @@ const CAN_BE_COMMANDER = /can be your commander/i;
  *  2026-09-05 -- Clara Oswald, The Prismatic Piper, Faceless One -- and the chosen colour is in the
  *  commander's identity, so a page about one of them has to offer the choice. */
 export { choosesColour } from "./deck-rules.js";
-/** A Background (CR 702.124): the second commander beside a card that prints "Choose a Background". */
+/** A Background (CR 702.124k): the second commander beside a card that prints "Choose a Background". */
 export const isBackground = (card: Card): boolean => (card.typeLine ?? "").toLowerCase().includes("background");
 
 /** CR 702.124 — WHICH PAIRS MAY LEAD A DECK TOGETHER (roadmap J12's partner half). J4 shipped a

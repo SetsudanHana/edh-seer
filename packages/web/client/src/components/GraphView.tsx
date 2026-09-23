@@ -820,7 +820,7 @@ export function GraphView(
     // THE TWO FACES OF ONE CARD SIT TOGETHER — a FORCE-ONLY link, never a drawn edge.
     //
     // "Shared rim, no link" (owner's ruling, 2026-08-27) is a statement about the DATA: a permanent
-    // is one face at a time (CR 712.3a), so an edge between the faces would claim a relation that
+    // is one face at a time (CR 712.8d-f), so an edge between the faces would claim a relation that
     // does not exist. But the layout positions purely by links, so with none the two faces landed
     // wherever their own partners pulled them, and a rim that says "these are one card" cannot say
     // it from across the board. Owner, testing a Jodah deck: "I can see just some random faces
@@ -962,7 +962,7 @@ export function GraphView(
       // selection lit that node's flow and dimmed the card's OTHER half to 0.15 along with the rest
       // of the board -- owner, testing a Jodah deck: "if I click on one side only that side
       // highlights not both of them". The two faces have no edge between them and must not get one
-      // (a permanent is one face at a time, CR 712.3a), so the sibling is not in the flow and is not
+      // (a permanent is one face at a time, CR 712.8d-f), so the sibling is not in the flow and is not
       // being claimed to be: it stays at full strength and its shared rim turns ACCENT, which says
       // "this is the card you clicked" rather than "this participates in the flow".
       // Empty for a single-faced selection, which is every selection on most boards.

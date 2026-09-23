@@ -179,7 +179,7 @@ export function supplyForms(key: string): string[] {
     // engine judges the victim's shape (`damagedMatches`), the page only has to ask.
     const verbs = [verb,
       ...(verb === "dies" ? ["leaves"] : []),
-      // A MILL IS A CARD PUT INTO A GRAVEYARD FROM THE LIBRARY (CR 701.13b), so it satisfies a
+      // A MILL IS A CARD PUT INTO A GRAVEYARD FROM THE LIBRARY (CR 701.17a), so it satisfies a
       // payoff that asks for the general event as well as one that asks to mill (roadmap AK1).
       // Without this the retag in DERIVE 163 would have MOVED 211 abilities off
       // `enters-graveyard` rather than added them to `mill`, and the 248 suppliers of
@@ -1010,7 +1010,7 @@ export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
   });
 
 /** EVERY SUBTYPE A BOARD COUNT NAMES IS ITS OWN KEY, each carrying the tag the engine writes for
- *  the ability. A party count (CR 700.7) names Cleric, Rogue, Warrior and Wizard; keyed on the
+ *  the ability. A party count (CR 700.8) names Cleric, Rogue, Warrior and Wizard; keyed on the
  *  first alone, Burakos's page asked only for Clerics (owner, 2026-09-05). The engine's tag takes
  *  the first subtype (`themeSubjectKey`), so a Rogue feeder is verified under `scales:cleric` --
  *  the tag is carried beside the key rather than rebuilt from it. */
@@ -1320,7 +1320,7 @@ export interface CardPageRecord {
   rates?: Rate[];
   identity: string[];
   commander: boolean;
-  /** A Background: a commander that never leads alone (CR 702.124). The page says so. */
+  /** A Background: a commander that never leads alone (CR 702.124k). The page says so. */
   pairingOnly?: true;
   /** THE CARDS THIS COMMANDER MAY LEAD WITH (CR 702.124), from `pairingLicense` -- the same
    *  function the legality report uses, so the page can never offer a pair the report would flag.

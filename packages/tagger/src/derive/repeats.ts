@@ -92,7 +92,7 @@ const RAW_PHASE_EVENTS: ReadonlySet<string> = new Set([
 export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?: RawTrigger): Repeats | undefined {
   const text = clauseText ?? "";
 
-  // 1-2: the cost, most restrictive first. EXHAUST (CR 702.176a, "activate only once") is once
+  // 1-2: the cost, most restrictive first. EXHAUST (CR 702.177a, "activate only once") is once
   // per game: Loot, the Pathfinder amortised a once-per-game draw as per-cycle (rate, 2026-09-17).
   if (SACRIFICES_ITSELF.test(cost) || /^Exhaust\b/i.test(text.trim())) return "once";
   if (TAP_COST.test(cost)) return "per-cycle";

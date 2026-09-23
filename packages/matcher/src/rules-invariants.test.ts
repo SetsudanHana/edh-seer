@@ -11,7 +11,7 @@ import { markCommander } from "./commander.js";
 import { pairReasonsAcrossFaces } from "./edges.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 
-const ASSERTED = new Set(["111.7", "114.1", "903.3", "712.3a"]);
+const ASSERTED = new Set(["111.7", "114.1", "903.3", "712.8d"]);
 const TESTED: Record<string, string> = {
   "702.74a": "implied.test.ts — evoke sacrifices the creature as it enters",
   "702.66": "implied.test.ts — delve is a graveyard demand (the descend tags, no edge)",
@@ -21,7 +21,7 @@ const TESTED: Record<string, string> = {
   "704.5j": "edges.test.ts — copy: a token copy of a legend fires its entry trigger AND its death trigger",
   "707.2": "edges.test.ts — copy: a NONLEGENDARY consumer gets the entry and never the legend rule",
   "700.4": "zones.test.ts — dies stays dies (CR 700.4)",
-  "701.13b": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
+  "701.17a": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",
   "700.12": "implied.test.ts — isOutlaw is the five CR 700.12 creature types",
   "111.1": "edges.test.ts — a token is never cast (CR 111.1), so it is never reduced",
@@ -45,10 +45,10 @@ const PROSE: Record<string, string> = {
   "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",
   "120.3": "damage to a player", "202.3b": "mana value of a split card", "205.2a": "type line", "205.3": "subtypes", "205.4a": "supertypes",
   "302.6": "a creature's summoning sickness", "305.1": "land play", "500.4": "effects expire as a step begins", "501": "beginning phase",
-  "603.4": "intervening if", "603.6c": "leaves the battlefield", "613": "layers: OPEN", "613.1f": "P/T layer", "700.6": "leaves",
-  "700.7": "colours", "700.9": "historic", "701.17": "sacrifice", "701.22": "scry", "701.23a": "search", "701.25": "surveil",
-  "701.29": "fateseal", "701.5": "counter (tagger asserts the emit)", "702": "keyword abilities", "702.179": "speed", "702.62": "suspend (goldfish.ts: a suspended card is never cast from hand for its printed cost)", "704.5d": "a token in a graveyard ceases to exist",
-  "704.5s": "Saga sacrifice", "708.2": "face-down 2/2", "712.4a": "a DFC's back face", "717.4": "Attractions excluded",
+  "603.4": "intervening if", "603.6c": "leaves the battlefield", "613": "layers: OPEN", "613.1f": "P/T layer", "700.6": "historic",
+  "700.8": "party", "700.9": "modified", "701.17": "mill", "701.22": "scry", "701.23a": "search", "701.25": "surveil",
+  "701.34": "proliferate", "701.5": "cast (tagger asserts the emit)", "702": "keyword abilities", "702.179": "speed", "702.62": "suspend (goldfish.ts: a suspended card is never cast from hand for its printed cost)", "704.5d": "a token in a graveyard ceases to exist",
+  "704.5s": "Saga sacrifice", "708.2": "face-down 2/2", "709.5i": "a Room fully unlocked", "702.124k": "Choose a Background",
   "903": "Commander", "903.10a": "commander damage", "903.2": "a Commander deck", "903.4": "colour identity", "903.6": "singleton",
   "903.8": "commander tax is a caveat, not a number",
   "113.3": "edges: the copy-ability pass reads the other card's ability kinds (AC12; edges.test asserts Strionic, Gogo, Tawnos)",
@@ -105,7 +105,7 @@ test("CR 903.3: the commander designation is a deck fact — stamped on the card
   expect(tags.characteristics.commander).toBeUndefined();
 });
 
-test("CR 712.3a: a permanent shows one face at a time, so a card-wide static relates to it ONCE", () => {
+test("CR 712.8d-f: a permanent shows one face at a time, so a card-wide static relates to it ONCE", () => {
   const H: Hierarchy = {};
   const reducer: DeckCard = {
     card: { name: "Etherium Sculptor", typeLine: "Artifact Creature", oracleText: "Artifact spells you cast cost {1} less to cast.", keywords: [], colors: [], manaValue: 2 } as unknown as DeckCard["card"],

@@ -37,7 +37,7 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
   // lose-game emit `counter-removed` / `loses-game`.
   // --- CR 4xx / 7xx: zones and objects — CLOSED 2026-09-09 (AC11 batch 2) except `play`.
   play: { cards: 250, note: "CR 305.1 / 116.2a. The TRIGGER `play` maps to `land-play` when its subject is a land (batch 2); the ACTION 'play that card' emits land-play only for a land, and a card played from exile has no event yet" },
-  amass: { cards: 0, note: "CR 701.44; `amass` (26 consumers). Has the kind `counter-placement`, emits nothing — the Army token and its counters are the AC11 row" },
+  amass: { cards: 0, note: "CR 701.47; `amass` (26 consumers). Has the kind `counter-placement`, emits nothing — the Army token and its counters are the AC11 row" },
   // --- CR 701 keyword actions the rules give no primitive — CLOSED 2026-09-09 (AC11 batch 3).
   // --- CR 705 / 725-731 designations — CLOSED 2026-09-09 (AC11 batch 4).
 };

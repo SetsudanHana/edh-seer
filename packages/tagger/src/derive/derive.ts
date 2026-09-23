@@ -117,7 +117,7 @@ import { emblemRecipient } from "../emblem.js";
 // "each", "the", "those", "that many", "cards equal to" stay unset. Scry and surveil carry the
 // number as the object. This retires the paid `dropsUnitAmount` refresh.
 // 162: a put from your hand that offers top OR bottom is top manipulation (Dream Cache), so the
-// ability exists and the rate can net it; an Exhaust ability repeats once (CR 702.176a).
+// ability exists and the rate can net it; an Exhaust ability repeats once (CR 702.177a).
 // 165: the copy-ability family reads WHICH KIND and WHOSE. A pronoun object ("copy that ability")
 // takes the kind from its trigger subject and not only from an `activate` trigger, so Aboleth
 // Spawn and Firebender Ascension stop claiming activated copies they cannot make; and a clone's
@@ -324,7 +324,7 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
   // it for all three origins. Mapping it to any one of them would be a narrower claim than the card
   // makes: Syr Konrad, the Grim watches the battlefield, the library AND the graveyard's exits.
   "put-into-graveyard": "enters-graveyard",
-  // CR 701.6. The clause layer names the ACTION ("create"), the engine names the EVENT the matcher
+  // CR 701.7. The clause layer names the ACTION ("create"), the engine names the EVENT the matcher
   // keys on -- and `create-token` is the verb every token maker already emits, so a payoff watching
   // creation and a card creating one meet on the same tag. Added 2026-08-21 with the TRIGGERS entry;
   // without this the event would derive to nothing and land in `unknownTriggers`.
@@ -1622,7 +1622,7 @@ export function deriveAbilities(
     // condition evaluator. "Without being played" is the land wording of the same fact.
     const arrivalNotCast = ARRIVED_WITHOUT_CASTING.test(text);
     const arrivalTapped = /\benters tapped\b/i.test(text);
-    // EXHAUST IS ONCE PER GAME (CR 702.176a). The segmenter strips "Exhaust —" as an ability
+    // EXHAUST IS ONCE PER GAME (CR 702.177a). The segmenter strips "Exhaust —" as an ability
     // word, so the clause text cannot say it; the printed line that starts with it and this
     // ability's own cost can. Loot, the Pathfinder amortised a once-per-game draw (2026-09-17).
     const exhaust = cost !== "" && new RegExp(`^Exhaust — ${cost.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:`, "m").test(cardText);
