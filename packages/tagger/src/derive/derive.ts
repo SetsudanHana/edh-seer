@@ -147,7 +147,10 @@ import { emblemRecipient } from "../emblem.js";
 // combat -- 358 corpus cards read `repeatable`, and Make Your Mark ranked beside Midnight Reaper.
 // And an Aura whose Enchant line names an opponent's creature gives its "enchanted creature"
 // trigger the opponent's side (Nurgle's Rot claimed your own creatures' deaths).
-export const DERIVE_VERSION = 168;
+// 169: an EQUIPPED or FORTIFIED host's death repeats once a round, not once: the Equipment stays
+// (CR 301.5c) and re-equips for its paid cost. 168 read it once and dropped Skullclamp from 22nd to
+// 2,010th on the draw list; an Aura's host death stays once (CR 704.5m).
+export const DERIVE_VERSION = 169;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
