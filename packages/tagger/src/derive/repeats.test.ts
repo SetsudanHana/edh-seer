@@ -29,6 +29,16 @@ test("rule 2: a tap cost fires once per ROUND", () => {
   expect(repeatsFor(activated(), "Untap target artifact.", "{Q}")).toBe("per-cycle");
 });
 
+test("rule 2b: a LOYALTY ability fires once per ROUND (CR 606.3), whatever its sign", () => {
+  // Grist, the Hunger Tide: cost="−2", text="You may sacrifice a creature. When you do, ..." -- read
+  // `repeatable` before this, which put every planeswalker among the free sacrifice outlets. A
+  // loyalty ability is activated once a turn, at sorcery speed, on your own turn: once a round.
+  expect(repeatsFor(activated(), "You may sacrifice a creature.", "−2")).toBe("per-cycle");
+  expect(repeatsFor(activated(), "Draw a card.", "+1")).toBe("per-cycle");
+  expect(repeatsFor(activated(), "Create a 1/1 token.", "0")).toBe("per-cycle");
+  expect(repeatsFor(activated(), "Deal X damage.", "−X")).toBe("per-cycle");
+});
+
 test("rule 2 BEATS rule 3 -- the tap is the harder cap", () => {
   // "once each turn" is once per TURN (up to pod-size a round); {T} is once per ROUND. Taking the
   // text rule first would overstate this by the pod size.
