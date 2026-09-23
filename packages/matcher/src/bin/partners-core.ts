@@ -12,7 +12,7 @@ import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, mel
 import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
-import { ratesOf, type Rate } from "../rate.js";
+import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } from "../rate.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
@@ -1075,6 +1075,95 @@ const fodderSupplyKeysOf = (d: DeckCard): string[] => {
   return [...nouns].map((n) => `fodder|-|${n}|-`);
 };
 
+/** HOW MUCH A CARD DOES, the order an event's causers ship in (owner 2026-09-23, roadmap AN3/AK3):
+ *  "for all the effects you have to account the cost and impact ... focus on how much this card
+ *  does". The partner count ranked "sacrifices a creature" with Boneshard Slasher 5th and Ashnod's
+ *  Altar 242nd, because breadth is not impact.
+ *
+ *  THREE KEYS, IN ORDER, and no constant between them -- trading frequency against yield needs a
+ *  game length, the exchange rate that killed edge magnitude three times (log 2026-08-16):
+ *
+ *  1. HOW OFTEN. At will AND FREE (no mana, no other price: Ashnod's Altar), an unbounded trigger
+ *     or static (Midnight Reaper), once per turn of every player, once per round (a tap, a phase
+ *     trigger, a loyalty ability -- CR 606.3 -- and a PAID at-will activation, which your mana caps
+ *     at about one real use a round: Jade Mage beside Krenko, not above him), once. An ability `repeats.ts` refused to label
+ *     ranks with `once`: promoting an unknown is a silent wrong answer.
+ *  2. WHAT EACH TIME YIELDS PER MANA, where the event has a rate family (`compareRates`, the X2
+ *     interval): draw three for three before draw two for three.
+ *  3. WHAT IT COSTS BESIDES MANA, unless that cost IS the asked event -- Greater Good pays a creature
+ *     for its draw; Ashnod's sacrifice is the outlet -- then the mana: the activation's for an
+ *     activated ability (the cast amortises, as the rate's does), the card's otherwise.
+ *
+ *  Only an ability whose own emit satisfies the key counts, and never one that acts on the card
+ *  ITSELF: sacrificing itself is not an outlet however often it happens. A card that supplies the
+ *  key by being something (a Goblin supplies "a Goblin you control") has no ability to rank and
+ *  sits with the unbounded ones -- it is one all game. Returns 0 on a tie; the caller breaks it.
+ *
+ *  CEILING: the yield in (2) is the card's best rate in the family, not the matching ability's own
+ *  (a `Rate` names no ability); the upgrade path is an ability id on the rate. */
+const FAMILY_OF_VERB: Record<string, RateFamily> = {
+  draw: "cards", "non-combat-damage": "damage", "combat-damage": "damage", "gain-life": "life",
+  "lose-life": "life-loss", mill: "mill", "create-token": "tokens", "counter-added": "counters",
+  search: "search", untaps: "untap", copy: "copies",
+};
+const PRICE_VERBS: readonly (readonly [RegExp, string])[] = [
+  [/\bsacrifice\b/i, "sacrifice"], [/\bdiscard\b/i, "discard"], [/\bpay\b[^,]*\blife\b/i, "lose-life"],
+  [/\bexile\b/i, "exiled"], [/\btap\b[^,]*\buntapped\b/i, "taps"], [/\bremove\b[^,]*\bcounters?\b/i, "counter-removed"],
+  [/\breturn\b/i, "leaves"],
+];
+interface Doing { often: number; span?: ReturnType<typeof bestRates>[RateFamily]; extra: number; mana: number }
+/** ONE RATE READING PER CARD across every key: the build orders ~1,200 keys over 1.2M memberships. */
+const ratesCache = new WeakMap<DeckCard, ReturnType<typeof bestRates>>();
+const bestRatesOf = (d: DeckCard): ReturnType<typeof bestRates> => {
+  let r = ratesCache.get(d);
+  if (!r) { r = bestRates(ratesOf(d)); ratesCache.set(d, r); }
+  return r;
+};
+export function effectOrder(key: string): (a: DeckCard, b: DeckCard) => number {
+  const asked = key.split("|")[0]!;
+  const family = FAMILY_OF_VERB[asked];
+  const forms = new Set(demandForms(key));
+  const cache = new Map<DeckCard, Doing>();
+  const doing = (d: DeckCard): Doing => {
+    const hit = cache.get(d);
+    if (hit) return hit;
+    let best: Doing | undefined;
+    let supplies = false;
+    for (const a of abilitiesOf(d)) {
+      const emits = (a.emits ?? []).filter((e) => splitKey(eventKey(e)).flatMap(supplyForms).some((f) => forms.has(f)));
+      if (emits.length === 0) continue;
+      supplies = true;
+      if (emits.every((e) => e.subject.self === true)) continue;
+      const activated = a.kind === "activated";
+      const cost = activated ? a.cost ?? "" : "";
+      const words = cost.replace(/\{[^{}]+\}/g, "");
+      const extra = PRICE_VERBS.some(([re, verb]) => verb !== asked && re.test(words)) ? 1 : 0;
+      // AN X COST IS PRICED ON ITS FIXED PIPS, the way the rate prices a slope: {X}{B} is one mana
+      // and more buys more. Pricing it at Infinity sank every X outlet below its fixed siblings.
+      const mana = activated ? (/\{[^{}]+\}/.test(cost) ? manaOf(cost.replace(/\{X\}/gi, "")) ?? 0 : 0) : (d.card.manaValue ?? 0);
+      // AT WILL MEANS FREE (owner 2026-09-23). A paid activation is capped by the mana you have --
+      // about one real use a round -- so it ranks with the once-a-round ones, and price decides.
+      const free = mana === 0 && extra === 0;
+      const often = a.repeats === "repeatable" && activated ? (free ? 0 : 3)
+        : a.repeats === "repeatable" || a.repeats === "continuous" ? 1
+        : a.repeats === "per-turn" ? 2 : a.repeats === "per-cycle" ? 3 : 4;
+      const t: Doing = { often, extra, mana };
+      if (!best || compareDoing(t, best) < 0) best = t;
+    }
+    // Supplies the key by what it IS, or only through its own self-acting abilities.
+    const out: Doing = best ?? (supplies ? { often: 4, extra: 1, mana: Infinity } : { often: 1, extra: 0, mana: 0 });
+    if (family) { const span = bestRatesOf(d)[family]; if (span) out.span = span; }
+    cache.set(d, out);
+    return out;
+  };
+  return (a, b) => compareDoing(doing(a), doing(b));
+}
+function compareDoing(a: Doing, b: Doing): number {
+  return a.often - b.often
+    || (a.span && b.span ? compareRates(a.span, b.span) : a.span ? -1 : b.span ? 1 : 0)
+    || a.extra - b.extra || a.mana - b.mana;
+}
+
 /** SUBSTANTIVE = at least one emit or one trigger.
  *
  *  This one predicate decides three things at once: which cards get a partner record, which get an
@@ -1897,6 +1986,18 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     .filter((x): x is number => x !== undefined)
     .sort((a, b) => a - b);
 
+  // THE CAUSERS SHIP IN "HOW MUCH IT DOES" ORDER (`effectOrder`, AN3), the partner count only
+  // breaking a tie -- same ids, same bytes, so the page reads the order off the list and nothing
+  // new ships. Nothing reads `p` as sorted: the page intersects it as a set.
+  const byEffect = (k: string, ids: readonly number[]): number[] => {
+    const cmp = effectOrder(k);
+    return ids
+      .map((i) => ({ d: substantive[i]!, at: positionOf.get(substantive[i]!.card.name) }))
+      .filter((r): r is { d: DeckCard; at: number } => r.at !== undefined)
+      .sort((x, y) => cmp(x.d, y.d) || x.at - y.at)
+      .map((r) => r.at);
+  };
+
   // WHO ASKS, BESIDE WHO CAUSES. 11,988 memberships over the real corpus against 1,184,624 on the
   // supply side (measured 2026-09-19): a card asks for 0.4 events on average and at most 6.
   const consumersOf = new Map<string, number[]>();
@@ -1908,7 +2009,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   });
   const events = new Map<string, EventMembers>();
   for (const k of new Set([...members.keys(), ...consumersOf.keys()])) {
-    events.set(k, { p: reindex(members.get(k) ?? []), c: reindex(consumersOf.get(k) ?? []) });
+    events.set(k, { p: byEffect(k, members.get(k) ?? []), c: reindex(consumersOf.get(k) ?? []) });
   }
   const consumers: Record<string, number> = {};
   for (const [k, ids] of consumersOf) consumers[k] = ids.length;
