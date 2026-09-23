@@ -145,7 +145,14 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
     // trigger. Anything else it does is as often as it happens and falls through. Before rule 8,
     // which needs `self` and this subject has none.
     if (ONE_OBJECT.test(withoutAbilityWord(text))) {
-      if (verbs.some((v) => ONE_LIFE_VERBS.has(v))) return "once";
+      // An Equipment or Fortification OUTLIVES its host (CR 301.5c) and re-attaches for its paid
+      // cost -- Skullclamp -- so the host's death repeats once a round, the paid-at-will rung. An
+      // Aura dies with its host (CR 704.5m), and "that creature" names one object for good: once.
+      // CEILING: Dancing Sword may stop being an Equipment on that very trigger and never re-equip;
+      // it reads once a round like the rest. The upgrade path is reading the trigger's own effect.
+      if (verbs.some((v) => ONE_LIFE_VERBS.has(v))) {
+        return /^(?:when|whenever)\s+(?:equipped|fortified)\s/i.test(withoutAbilityWord(text)) ? "per-cycle" : "once";
+      }
       if (verbs.some((v) => ONE_COMBAT_VERBS.has(v))) return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
     }
     // 6-7: a phase trigger fires once per turn; `control` says whose turns count. An ordinal

@@ -194,7 +194,6 @@ test("rule 7b: a death or leave of ONE named object fires once", () => {
   for (const text of [
     "When that creature dies this turn, create a 3/2 red and white Spirit creature token.",
     "When enchanted creature dies, return this card to its owner's hand and you create a 1/3 black Demon creature token.",
-    "When equipped creature dies, create a 1/1 white Soldier creature token.",
     "When enchanted creature leaves the battlefield, create a 1/1 white Spirit creature token.",
   ]) expect(repeatsFor(triggered(["dies"], { control: "you", type: "creature" }), text)).toBe("once");
 });
@@ -225,4 +224,16 @@ test("rule 7b bounds only death and combat; any other act of one object stays un
 test("rule 7b reads past a printed ability-word label", () => {
   expect(repeatsFor(triggered(["attacks"], { control: "you", type: "creature" }),
     "Inquisition Agents — Whenever equipped creature attacks, create a 2/2 white Astartes Warrior creature token.")).toBe("per-cycle");
+});
+
+/** AN EQUIPMENT OUTLIVES ITS HOST (CR 301.5c, 2026-09-23). Skullclamp: "Whenever equipped creature
+ *  dies, draw two cards" -- the host dies once, but the Equipment stays and re-equips for {1}, so
+ *  the trigger repeats as often as the equip is paid: once a round, the owner's paid-at-will rung.
+ *  An Aura goes to the graveyard with its host (CR 704.5m) and stays `once`. Reading every one-object
+ *  death as once (#445) dropped Skullclamp from 22nd to 2,010th on the draw list. */
+test("rule 7b: an equipped or fortified host's death is once a round; an enchanted one's is once", () => {
+  const dies = triggered(["dies"], { control: "you", type: "creature" });
+  expect(repeatsFor(dies, "Whenever equipped creature dies, draw two cards.")).toBe("per-cycle");
+  expect(repeatsFor(dies, "Whenever fortified land is put into a graveyard, draw a card.")).toBe("per-cycle");
+  expect(repeatsFor(dies, "When enchanted creature dies, draw a card.")).toBe("once");
 });
