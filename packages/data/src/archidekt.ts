@@ -13,6 +13,8 @@ interface ArchidektCategory {
 interface ArchidektCard {
   quantity?: unknown;
   categories?: unknown;
+  /** The site's own companion flag (CR 702.139), per card -- see `archidektDeckToSections`. */
+  companion?: unknown;
   card?: { oracleCard?: { name?: unknown } };
 }
 interface ArchidektDeck {
@@ -43,7 +45,12 @@ function categoryNames(value: unknown): string[] {
  *    carry it by default. MEASURED on a real 94-entry deck: 11 of its cards sit in one, so taking
  *    `.cards[]` whole imports eleven cards the player did not build with.
  *  - `isPremier: true` marks the commander category. Reading the literal name "Commander" instead
- *    would break on a renamed category; the flag is what the site itself keys on. */
+ *    would break on a renamed category; the flag is what the site itself keys on.
+ *  - `companion: true` ON THE CARD marks the companion, outside the 100 (measured 2026-09-23 on three
+ *    real Lurrus decks). It is read FIRST, before both flags above: one of those decks marked its
+ *    "Companion" category `isPremier`, which would have made Lurrus a second commander, and a
+ *    companion kept in a Sideboard the deck excludes is still the deck's companion. A category name
+ *    alone ("Companion", "Sideboard") is never read as one -- the player invents those. */
 export function archidektDeckToSections(json: unknown): DeckSections {
   const deckJson = json as ArchidektDeck | null;
   const cards = deckJson?.cards;
@@ -60,17 +67,19 @@ export function archidektDeckToSections(json: unknown): DeckSections {
 
   const commanders: string[] = [];
   const deck: string[] = [];
+  const companions: string[] = [];
   for (const entry of cards as ArchidektCard[]) {
     const cats = categoryNames(entry?.categories);
-    if (cats.some((c) => excluded.has(c))) continue;
+    const isCompanion = entry?.companion === true;
+    if (!isCompanion && cats.some((c) => excluded.has(c))) continue;
     const name = entry?.card?.oracleCard?.name;
     if (typeof name !== "string" || name === "") {
       throw new Error("Archidekt response shape changed: card has no card.oracleCard.name");
     }
-    const target = cats.some((c) => premier.has(c)) ? commanders : deck;
+    const target = isCompanion ? companions : cats.some((c) => premier.has(c)) ? commanders : deck;
     for (let i = 0; i < quantityOf(entry); i++) target.push(name);
   }
-  return { commanders, deck };
+  return { commanders, deck, ...(companions.length > 0 ? { companions } : {}) };
 }
 
 export async function fetchArchidektDeck(
