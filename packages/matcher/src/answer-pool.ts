@@ -3,7 +3,10 @@ import type { DeckCard } from "./types.js";
 
 /** Every answer class the pool counts. `graveyard` is counted and stored even though
  *  `answer-coverage.ts` excludes it from the coverage denominator (design §3) -- the artifact
- *  records what the corpus contains; deciding what to score with it is a separate question. */
+ *  records what the corpus contains; deciding what to score with it is a separate question.
+ *
+ *  THE ORDER IS A WIRE FORMAT since 2026-09-24: `NameIndexEntry.a` ships indices into it. Append
+ *  only. */
 export const POOL_CLASSES = ["creature", "artifact", "enchantment", "planeswalker", "land", "graveyard"] as const;
 
 /** WUBRG order, which is the order every Magic source prints an identity in. `C` for the empty

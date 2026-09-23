@@ -53,7 +53,7 @@ const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c
 // BELOW the pre-collision name count. Tracked here rather than guessed: `occurrences` counts every
 // (card, name) pair written, and any name written more than once is a real collision, resolved
 // below.
-type CardEntry = { card: (typeof cards)[number]; tags: CardTags | null; combos: StaticCombo[] };
+type CardEntry = { card: (typeof cards)[number]; tags: CardTags | null; combos: StaticCombo[]; pi?: [number, number][] };
 const entryOf = (card: (typeof cards)[number]): CardEntry => ({
   card,
   tags: tagsByOracle.get(card._id) ?? null,
@@ -92,29 +92,6 @@ for (const [name] of collisions) {
   if (!winner) continue; // cannot happen: `name` was just written from a real card above
   winners.set(name, winner);
   entryByName.set(name, entryOf(winner));
-}
-
-// ONE FILE PER SHARD, and every shard is written even when it is empty: a missing file is a 404,
-// and a 404 means "no such card" to `StaticLookup`. That is the right answer for a name nobody
-// has, but a shard file that does not exist because no corpus card hashed into it would make the
-// host's 404 mean two different things. `{}` says "this shard is real and holds nothing".
-const shards = new Map<string, Record<string, CardEntry>>();
-for (let i = 0; i < SHARD_COUNT; i++) shards.set(i.toString(16).padStart(4, "0"), {});
-for (const [name, entry] of entryByName) shards.get(shardOf(name))![name] = entry;
-for (const [shard, body] of shards) {
-  writeFileSync(join(cardsDir, `${shard}.json`), JSON.stringify(body));
-}
-
-// PROOF, NOT ASSERTION: read every rewritten file back and confirm its card matches the live
-// lookup's answer, rather than trusting the write above did what it says.
-let parityOk = 0;
-const parityMismatches: string[] = [];
-for (const [name, winner] of winners) {
-  const onDisk = JSON.parse(
-    readFileSync(join(cardsDir, `${shardOf(name)}.json`), "utf8"),
-  ) as Record<string, { card: { _id: string } }>;
-  if (onDisk[name]?.card._id === winner._id) parityOk++;
-  else parityMismatches.push(name);
 }
 
 const resolveToken = await loadTokenTags(store.db);
@@ -175,6 +152,36 @@ const partnerDeckCards = pageCards.map((card) => ({
   tags: tagsByOracle.get(card._id) ?? null,
 }));
 const partners = buildPartnerArtifact(partnerDeckCards as never, loadHierarchy());
+// THE REPORT'S CANDIDATE POOL RIDES IN THE CARD SHARDS (spec 2026-09-24 deck suggestions, §1): the
+// report already prefetches these, so `pi` costs it no request, where reading `partners/` would
+// have cost about 9 MB a report. One entry object serves every alias of a card, so setting it once
+// covers all of its names. The shard write below therefore happens AFTER the partner build.
+for (const entry of new Set(entryByName.values())) {
+  const pi = partners.partnerIds.get(entry.card.name);
+  if (pi && pi.length > 0) entry.pi = pi;
+}
+// ONE FILE PER SHARD, and every shard is written even when it is empty: a missing file is a 404,
+// and a 404 means "no such card" to `StaticLookup`. That is the right answer for a name nobody
+// has, but a shard file that does not exist because no corpus card hashed into it would make the
+// host's 404 mean two different things. `{}` says "this shard is real and holds nothing".
+const shards = new Map<string, Record<string, CardEntry>>();
+for (let i = 0; i < SHARD_COUNT; i++) shards.set(i.toString(16).padStart(4, "0"), {});
+for (const [name, entry] of entryByName) shards.get(shardOf(name))![name] = entry;
+for (const [shard, body] of shards) {
+  writeFileSync(join(cardsDir, `${shard}.json`), JSON.stringify(body));
+}
+
+// PROOF, NOT ASSERTION: read every rewritten file back and confirm its card matches the live
+// lookup's answer, rather than trusting the write above did what it says.
+let parityOk = 0;
+const parityMismatches: string[] = [];
+for (const [name, winner] of winners) {
+  const onDisk = JSON.parse(
+    readFileSync(join(cardsDir, `${shardOf(name)}.json`), "utf8"),
+  ) as Record<string, { card: { _id: string } }>;
+  if (onDisk[name]?.card._id === winner._id) parityOk++;
+  else parityMismatches.push(name);
+}
 const partnersDir = join(stagingDir, "partners");
 mkdirSync(partnersDir, { recursive: true });
 for (const [name, shard] of partners.shards) {

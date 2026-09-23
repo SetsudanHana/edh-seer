@@ -28,6 +28,8 @@ import type { DeckCard, Hierarchy } from "../types.js";
 // THE SLUG RULE LIVES IN A LEAF (`../slug.ts`) so the browser's search field can import it without
 // pulling this whole module -- and, through `themesOf`, the archetype table -- into the entry chunk.
 import { slugOf } from "../slug.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories } from "../build.js";
+import { POOL_CLASSES } from "../answer-pool.js";
 export { slugOf };
 
 /** TWO CARDS CAN SLUG THE SAME AND ONE URL CANNOT SERVE BOTH.
@@ -1510,6 +1512,14 @@ export interface NameIndexEntry {
    *  answer. Pair the row with Type line: creature if they do not. */
   pow?: number;
   tou?: number;
+  /** BUILD ROLES, as indices into `BUILD_CATEGORIES` (spec 2026-09-24 deck suggestions): what
+   *  `detectBuildCategories` says this card fills, so a suggestion's role equals the role it would
+   *  have in a report. Absent when it fills none. The ORDER of `BUILD_CATEGORIES` is therefore a
+   *  wire format -- append only. */
+  r?: number[];
+  /** ANSWER CLASSES, as indices into `POOL_CLASSES`: what `detectAnswerClasses` says this card
+   *  answers. Absent when none. Same wire-format rule for `POOL_CLASSES`' order. */
+  a?: number[];
   /** THE CARD'S OWN COLOURS AS A WUBRG BITMASK, absent when colourless. NOT `identity` above: that
    *  says what deck the card is legal in, this says what it IS, and 1,751 of 32,334 cards answer
    *  the two differently. A mask rather than an array of letters because this file is downloaded
@@ -1598,6 +1608,11 @@ export interface PartnerArtifact {
   typeNames: string[];
   subtypeNames: string[];
   keywordNames: string[];
+  /** THE REPORT'S CANDIDATE POOL (spec 2026-09-24 deck suggestions, §1): each card's `partners`
+   *  list as `[position in the SORTED index, score to 3 decimals]`, in partner order. Written into
+   *  the `cards/` shards as `pi`, which the report already downloads -- the `partners/` shards it
+   *  never fetches would have cost about 9 MB a report. */
+  partnerIds: Map<string, [number, number][]>;
 }
 
 /** A COMMANDER, for `/commanders`: CR 903.3 exactly as `legality.ts` reads it -- legendary creature,
@@ -1774,6 +1789,17 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
 
   const shards = new Map<string, Record<string, CardPageRecord>>();
   const index: NameIndexEntry[] = [];
+  // ROLES AND ANSWER CLASSES, FROM THE SAME DETECTORS THE REPORT RUNS (spec 2026-09-24 deck
+  // suggestions, §1), so a suggested card's role is the role it would have in a report. Indices,
+  // like `t`/`s`/`k`.
+  const listOf = (m: Map<string, number[]>, n: string): number[] => m.get(n) ?? (m.set(n, []), m.get(n)!);
+  const cats = detectBuildCategories(substantive);
+  const rolesOf = new Map<string, number[]>();
+  BUILD_CATEGORIES.forEach((c, i) => { for (const n of cats.get(c) ?? []) listOf(rolesOf, n).push(i); });
+  const classes = detectAnswerClasses(substantive);
+  const answersOf = new Map<string, number[]>();
+  POOL_CLASSES.forEach((c, i) => { for (const n of classes.get(c)?.cards ?? []) listOf(answersOf, n).push(i); });
+  const partnersByName = new Map<string, PartnerRow[]>();
   // THE TABLES THE ROWS POINT INTO. Collected from the corpus rather than from a written-down list,
   // so a set that introduces a type cannot leave the index describing cards with a word it has no
   // code for. Sorted, so the file is stable across builds that changed nothing.
@@ -1935,6 +1961,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     // READ BACK OFF THE RECORD JUST WRITTEN, so the index can never disagree with the shard the
     // edge reads its `indexable` decision from -- the two lists are the same two lists.
     const written = rec as CardPageRecord & { commanderPartners?: PartnerRow[] };
+    partnersByName.set(d.card.name, written.partners);
     const art = printingIdOf(artCropOf(d));
     const commander = isCommander(d);
     const chars = d.tags?.characteristics;
@@ -1957,6 +1984,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(tIdx.length > 0 ? { t: tIdx } : {}),
       ...(sIdx.length > 0 ? { s: sIdx } : {}),
       ...(kIdx.length > 0 ? { k: kIdx } : {}),
+      ...(rolesOf.has(d.card.name) ? { r: rolesOf.get(d.card.name)! } : {}),
+      ...(answersOf.has(d.card.name) ? { a: answersOf.get(d.card.name)! } : {}),
       ...(mv > 0 ? { mv } : {}),
       ...(pow !== undefined ? { pow } : {}),
       ...(tou !== undefined ? { tou } : {}),
@@ -1981,6 +2010,17 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // collection order would have pointed every id at the wrong card, and silently: the lists would
   // still be the right LENGTH, so the count would have agreed with a set of unrelated cards.
   const positionOf = new Map(index.map((e, i) => [e.name, i] as const));
+  // POSITIONS TAKEN AFTER THE SORT, for the same reason `reindex` below remaps: collection order
+  // would point every id at the wrong card with every length still right.
+  const partnerIds = new Map<string, [number, number][]>();
+  for (const [name, rows] of partnersByName) {
+    const ids: [number, number][] = [];
+    for (const p of rows) {
+      const pos = positionOf.get(p.name);
+      if (pos !== undefined) ids.push([pos, Math.round(p.score * 1000) / 1000]);
+    }
+    partnerIds.set(name, ids);
+  }
   const reindex = (ids: readonly number[]): number[] => ids
     .map((i) => positionOf.get(substantive[i]!.card.name))
     .filter((x): x is number => x !== undefined)
@@ -2019,5 +2059,5 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const freqByIdentity: Record<string, number[]> = {};
   for (const [k, b] of buckets) freqByIdentity[k] = [...b];
 
-  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames, keywordNames };
+  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames, keywordNames, partnerIds };
 }

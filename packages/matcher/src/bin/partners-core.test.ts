@@ -1,4 +1,6 @@
 import { MIN_INDEXABLE_PARTNERS } from "../partner-shard.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories } from "../build.js";
+import { POOL_CLASSES } from "../answer-pool.js";
 import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "../types.js";
@@ -1833,4 +1835,58 @@ test("an X activation is priced on its fixed pips, not sunk below every fixed co
   const x = doer("X Maker", "{2}", [{ kind: "activated", cost: "{X}, {T}", repeats: "per-cycle", effect: { kind: "" }, emits: [sac] }]);
   const fixed = doer("Fixed", "{2}", [{ kind: "activated", cost: "{3}, {T}", repeats: "per-cycle", effect: { kind: "" }, emits: [sac] }]);
   expect(rank("sacrifice|creature|-|-", [fixed, x])).toEqual(["X Maker", "Fixed"]);
+});
+
+// ---------------------------------------------------------------------------------------------
+// SUGGESTION ARTIFACTS (spec 2026-09-24 deck suggestions, AO1): roles, answer classes, partner ids.
+
+/** DIVINATION'S REAL DERIVED ABILITIES, read out of `cardTagsDerived` on 2026-09-24, so the role
+ *  parity tests below cannot pass vacuously on a corpus where every `r` is empty. */
+const divination = base("Divination", [{
+  kind: "on-cast", effect: { kind: "draw-card", subject: { control: "you", token: null } }, amount: "2",
+  emits: [{ verb: "draw", subject: { control: "you", token: null } }], clause: 1, repeats: "once",
+}] as unknown as CardTags["abilities"]);
+
+/** SWORDS TO PLOWSHARES, text, type line and derived abilities read from Mongo on 2026-09-24: the
+ *  removal rules match on ORACLE TEXT, so the fixture carries the printed line, not only the tags. */
+const swords = (() => {
+  const d = base("Swords to Plowshares", [
+    { kind: "on-cast", effect: { kind: "" }, amount: "1", clause: 1, repeats: "once", emits: [
+      { verb: "exiled", subject: { control: "opp", token: null, type: "creature", scope: "target" }, instantSpeed: true },
+      { verb: "leaves", subject: { control: "opp", token: null, type: "creature", scope: "target" }, instantSpeed: true }] },
+    { kind: "on-cast", effect: { kind: "lifegain", subject: { control: "opp", token: null } }, amount: "its power", clause: 1,
+      repeats: "once", emits: [{ verb: "gain-life", subject: { control: "opp", token: null }, instantSpeed: true }] },
+  ] as unknown as CardTags["abilities"]);
+  return { ...d, card: { ...d.card, typeLine: "Instant", oracleText: "Exile target creature. Its controller gains life equal to its power." } as DeckCard["card"] };
+})();
+
+test("name-index roles are exactly what detectBuildCategories says, as BUILD_CATEGORIES indices", () => {
+  const cards = [krenko, impactTremors, divination];
+  const { index } = buildPartnerArtifact(cards, H);
+  const cats = detectBuildCategories(cards);
+  for (const row of index) {
+    const want = BUILD_CATEGORIES.filter((c) => cats.get(c)?.has(row.name)).map((c) => BUILD_CATEGORIES.indexOf(c));
+    expect(row.r ?? []).toEqual(want);
+  }
+  expect(index.find((r) => r.name === "Divination")!.r).toContain(BUILD_CATEGORIES.indexOf("draw"));
+});
+
+test("name-index answer classes are exactly what detectAnswerClasses says, as POOL_CLASSES indices", () => {
+  const cards = [krenko, impactTremors, divination, swords];
+  const { index } = buildPartnerArtifact(cards, H);
+  const cls = detectAnswerClasses(cards);
+  for (const row of index) {
+    const want = POOL_CLASSES.filter((c) => cls.get(c)?.cards.has(row.name)).map((c) => POOL_CLASSES.indexOf(c));
+    expect(row.a ?? []).toEqual(want);
+  }
+  expect(index.find((r) => r.name === "Swords to Plowshares")?.a).toContain(POOL_CLASSES.indexOf("creature"));
+});
+
+test("partnerIds points at the SORTED index position of each partner, in partner order", () => {
+  const { index, shards, partnerIds } = buildPartnerArtifact([krenko, impactTremors], H);
+  const rec = [...shards.values()].flatMap((sh) => Object.values(sh)).find((r) => r.name === "Krenko, Mob Boss")!;
+  expect(rec.partners.length).toBeGreaterThan(0);
+  const ids = partnerIds.get("Krenko, Mob Boss")!;
+  expect(ids.map(([pos]) => index[pos]!.name)).toEqual(rec.partners.map((p) => p.name));
+  expect(ids.map(([, s]) => s)).toEqual(rec.partners.map((p) => Math.round(p.score * 1000) / 1000));
 });

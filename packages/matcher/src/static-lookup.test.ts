@@ -279,3 +279,30 @@ test("the frequency file carries both directions and the identity split, and a m
   const missing = new StaticLookup("/static", fetchOf({ "/static/manifest.json": { version: VERSION } }));
   expect(await missing.eventFrequency()).toEqual({ supply: {}, consume: {}, byIdentity: {} });
 });
+
+/** THE REPORT'S CANDIDATE POOL (spec 2026-09-24 deck suggestions, §1): `pi` rides in the card shard
+ *  the report already prefetched, so reading it costs no request. */
+test("partnerIds reads the pi field of a prefetched card and is null for an unknown name", async () => {
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ krenko: { ...CARD, pi: [[4, 0.273], [9, 0.196]] } })));
+  await l.prefetch(["krenko", "not a card"]);
+  expect(l.partnerIds("krenko")).toEqual([[4, 0.273], [9, 0.196]]);
+  expect(l.partnerIds("not a card")).toBeNull();
+  expect(l.partnerIds("never prefetched")).toBeNull();
+});
+
+test("a card entry without pi reads as no partners, not as unknown", async () => {
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ krenko: CARD })));
+  await l.prefetch(["krenko"]);
+  expect(l.partnerIds("krenko")).toEqual([]);
+});
+
+/** AN ALTERNATE PRINTING'S NAME (the Jodah / Command Tower case `byAlias` exists for): the paste
+ *  names the alt, `prefetch` is handed the alt, and a later read by the canonical name must still
+ *  find the card's partners -- not report "never prefetched" and silently drop it from the pool. */
+test("partnerIds answers under every name the prefetched card carries", async () => {
+  const alt = { ...CARD, card: { ...CARD.card, searchNames: ["krenko", "krenko alt"] }, pi: [[4, 0.273]] };
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ "krenko alt": alt })));
+  await l.prefetch(["krenko alt"]);
+  expect(l.partnerIds("krenko alt")).toEqual([[4, 0.273]]);
+  expect(l.partnerIds("krenko")).toEqual([[4, 0.273]]);
+});
