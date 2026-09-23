@@ -2,6 +2,7 @@
   "name": "@edh-seer/matcher",
   "version": "0.0.0",
   "type": "module",
+  "sideEffects": false,
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
@@ -16,6 +17,7 @@
     "./partner-shard": "./src/partner-shard.ts",
     "./partners-core": "./src/bin/partners-core.ts",
     "./sentence": "./src/sentence.ts",
+    "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",
     "./archetypes": "./src/archetypes.ts",
     "./edges": "./src/edges.ts",

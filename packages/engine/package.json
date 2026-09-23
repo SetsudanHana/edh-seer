@@ -2,6 +2,7 @@
   "name": "@edh-seer/engine",
   "version": "0.0.0",
   "type": "module",
+  "sideEffects": false,
   "main": "src/index.ts",
   "//exports": "The barrel is NODE-ONLY: index.ts pulls analyze.ts, which readFileSync's its tag weights at module load. Pure-computation modules a browser may evaluate get their own subpath here.",
   "exports": {
