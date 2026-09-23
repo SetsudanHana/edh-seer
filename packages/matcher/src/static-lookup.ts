@@ -193,6 +193,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
         // card, its tags and its combos are all already here.
         for (const alias of entry.card.searchNames ?? []) {
           if (!this.byAlias.has(alias)) this.byAlias.set(alias, entry.card);
+          if (!this.piByName.has(alias)) this.piByName.set(alias, entry.pi ?? []);
         }
         this.byId.set(entry.card._id, entry.tags ?? null);
         for (const c of entry.combos ?? []) this.combos.push(c);
@@ -203,7 +204,9 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
   /** THE REPORT'S CANDIDATE POOL, one card's worth: read from the shard `prefetch` already fetched,
    *  so the suggestions cost the report no request. Null = never prefetched, or no such card. */
   partnerIds(normalized: string): readonly (readonly [number, number])[] | null {
-    if (!this.byName.get(normalized)) return null;
+    // Every name the card answers to, like `findByName`'s alias fallback -- a paste that named an
+    // alternate printing must not drop the card from the pool when it is later read by its own name.
+    if (!this.byName.get(normalized) && !this.byAlias.has(normalized)) return null;
     return this.piByName.get(normalized) ?? [];
   }
 

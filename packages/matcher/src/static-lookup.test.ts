@@ -295,3 +295,14 @@ test("a card entry without pi reads as no partners, not as unknown", async () =>
   await l.prefetch(["krenko"]);
   expect(l.partnerIds("krenko")).toEqual([]);
 });
+
+/** AN ALTERNATE PRINTING'S NAME (the Jodah / Command Tower case `byAlias` exists for): the paste
+ *  names the alt, `prefetch` is handed the alt, and a later read by the canonical name must still
+ *  find the card's partners -- not report "never prefetched" and silently drop it from the pool. */
+test("partnerIds answers under every name the prefetched card carries", async () => {
+  const alt = { ...CARD, card: { ...CARD.card, searchNames: ["krenko", "krenko alt"] }, pi: [[4, 0.273]] };
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ "krenko alt": alt })));
+  await l.prefetch(["krenko alt"]);
+  expect(l.partnerIds("krenko alt")).toEqual([[4, 0.273]]);
+  expect(l.partnerIds("krenko")).toEqual([[4, 0.273]]);
+});

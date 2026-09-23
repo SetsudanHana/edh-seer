@@ -94,8 +94,6 @@ for (const [name] of collisions) {
   entryByName.set(name, entryOf(winner));
 }
 
-
-
 const resolveToken = await loadTokenTags(store.db);
 const tokens = await store.db.collection<{ _id: string; artCrop?: string; printingIds: string[] }>(
   "tokens",
