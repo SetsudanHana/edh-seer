@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within, act } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { expect, test, vi } from "vitest";
-import { CardSearch, SEARCH_LIMIT } from "./CardSearch.js";
+import { CardSearch, QUERY_SETTLE_MS, SEARCH_LIMIT } from "./CardSearch.js";
 import type { EventFrequencyFile, EventMembers, NameIndexEntry } from "../lib/partners.js";
 import { eventKeyAction } from "../lib/demand-sentence.js";
 
@@ -121,7 +121,12 @@ test("scrolling the end of the list into view loads the next page, and the butto
   }));
   at(many);
   await userEvent.type(await screen.findByRole("searchbox"), "goblin");
-  // THE LIST ANSWERS WHEN TYPING SETTLES, not on the last key (QUERY_SETTLE_MS).
+  // THE LIST ANSWERS WHEN TYPING SETTLES, not on the last key (QUERY_SETTLE_MS) -- and the list is
+  // ALREADY drawn before then, because "g" matches every goblin too. Waiting for the list alone
+  // raced the settle: when it landed after the scroll below, the new `matches` reset the page to 50
+  // (`setShown` on `[matches]`) and the assertion read 50 of 57. Failed on CI twice on 2026-09-23,
+  // once per Node leg, never locally. So the settle is waited out, not guessed at.
+  await act(() => new Promise((r) => setTimeout(r, QUERY_SETTLE_MS + 50)));
   await screen.findByRole("list", { name: "Results" });
   const results = () => within(screen.getByRole("list", { name: "Results" })).getAllByRole("link");
   expect(results()).toHaveLength(SEARCH_LIMIT);
