@@ -44,7 +44,7 @@ const ZONE_RULES: { verb: string; from?: string | null; to?: string; kind: Effec
   // rely on canonicalAction having folded library into it, which also swept up 11 actions that
   // stated no origin at all. Corpus: put->graveyard is library 148, exile 18, unstated 11 — the 11
   // are now unclassified, which is the honest answer for a clause that never said where from.
-  // A SEARCHED PUT IS NOT ONE (CR 701.13b: milling is the TOP cards). Entomb and Buried Alive put
+  // A SEARCHED PUT IS NOT ONE (CR 701.17a: milling is the TOP cards). Entomb and Buried Alive put
   // a card into a graveyard from the library too, and the origin alone cannot tell them from
   // Cavalier of Thorns -- the clause does, because a tutor states the search. Guarded below rather
   // than here so the row stays a plain zone rule; `searchedPut` is the predicate.

@@ -79,7 +79,7 @@ const countedText = (action: Action, clauseText?: string): string => {
   return defined ? `number of ${defined}` : own;
 };
 
-/** A PARTY IS A BOARD COUNT OF FOUR TYPES (CR 700.7): up to one each of Cleric, Rogue, Warrior and
+/** A PARTY IS A BOARD COUNT OF FOUR TYPES (CR 700.8): up to one each of Cleric, Rogue, Warrior and
  *  Wizard among creatures you control. CEILING: the cap of four is a magnitude the engine does not
  *  model; the count is read as "creatures you control that are one of these", which is the same
  *  set of cards, over-counted past four. 43 corpus cards say party. */

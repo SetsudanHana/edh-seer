@@ -490,7 +490,7 @@ test("N2: the fetch cycle matches the gate, on its own printed text", () => {
   expect(withFetch.byCardCastable.get("Triple")![3]).toBeGreaterThan(0.3);
 });
 
-// N3. CR 712.4a -- A CARD IN HAND IS ITS FRONT FACE, so a transform card's land back can never be
+// N3. CR 712.8a -- A CARD IN HAND IS ITS FRONT FACE, so a transform card's land back can never be
 // played as a land. `land-count.ts` already makes this check (E4); `goldfish.ts` never learned it,
 // and took a phantom land drop on 23 deck-slots while dropping the card from the priced denominator.
 test("N3: a transform card's land back is not a land drop, and the front face is priced", () => {

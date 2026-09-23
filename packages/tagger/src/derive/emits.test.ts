@@ -14,7 +14,7 @@ test("a token maker emits both the creation and the entry", () => {
 });
 
 /** A CREATED TOKEN IS A TOKEN (CR 111.1), even when the sentence never says so. `investigate` names
- *  no object at all — CR 701.36 supplies the Clue — so the emit read a blank string and described
+ *  no object at all — CR 701.16 supplies the Clue — so the emit read a blank string and described
  *  nothing, and an emit that names nothing matches everything.
  *
  *  REPORTED FROM THE BOARD: The Rani's investigate emitted a bare `enters: any`, which is the one
@@ -33,7 +33,7 @@ test("a token maker whose object DOES name the token still says token", () => {
   for (const emit of e) expect(emit.subject.token).toBe(true);
 });
 
-/** MANIFEST IS A CARD, NOT A TOKEN (CR 701.34a), which is why it emits `enters` and no
+/** MANIFEST IS A CARD, NOT A TOKEN (CR 701.40a), which is why it emits `enters` and no
  *  `create-token`. Keying the stamp on the emitted verbs is what keeps it out — a second exclusion
  *  list would be one more thing to forget. */
 test("manifest enters the battlefield without being marked a token", () => {
@@ -574,7 +574,7 @@ test("an end-step exile of the clause's own token emits nothing", () => {
   expect(actionEmits({ verb: "exile", object: "target creature", fromZone: null, toZone: "exile" }, "Exile target creature.").map((e) => e.verb)).toContain("exiled");
 });
 
-/** A PUT FROM THE LIBRARY IS A MILL (CR 701.13b, roadmap AK1). `effect-kind` has read the origin
+/** A PUT FROM THE LIBRARY IS A MILL (CR 701.17a, roadmap AK1). `effect-kind` has read the origin
  *  since 2026-09-07 and this layer did not, so 211 abilities derived as `kind: "mill"` and then
  *  emitted the Entomb verb -- Cavalier of Thorns, Shigeki, Shadow Prophecy -- which is why
  *  `mill|-|-|-` listed 602 suppliers where 769 cards carry the mill kind. */
@@ -589,7 +589,7 @@ test("a put into a graveyard says where it came from", () => {
     .toEqual(["enters-graveyard"]);
 });
 
-/** A SEARCHED PUT IS NOT A MILL (CR 701.13b: milling is the TOP cards of a library). Entomb and
+/** A SEARCHED PUT IS NOT A MILL (CR 701.17a: milling is the TOP cards of a library). Entomb and
  *  Buried Alive put a card into a graveyard FROM the library, so the origin alone cannot tell them
  *  from Cavalier of Thorns -- and on the first build of DERIVE 163 it did not, which would have
  *  joined Entomb to every "whenever you mill" payoff as a false edge. The clause states the

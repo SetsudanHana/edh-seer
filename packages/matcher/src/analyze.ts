@@ -222,7 +222,7 @@ export function analyzeDeckStructured(
   // its front face" test above and a partner-boost test below.
   const isCommanderNode = (dc: DeckCard): boolean => commanderSet.has(dc.parentName ?? dc.card.name);
   // A CARD IS NOT ITS OWN PARTNER. Two faces are one physical object and never both on the
-  // battlefield (CR 712.4a for a transform, one chosen face for an MDFC), so a relation between
+  // battlefield (CR 712.8d-e for a transform, one chosen face for an MDFC), so a relation between
   // them is the self-reference family with a new door -- and the board's own ruling is
   // "shared rim, no link" (2026-08-27).
   // CORRECTED FROM THE REVIEW'S LITERAL PREDICATE (`(a.parentName ?? a.card.name) === (b.parentName

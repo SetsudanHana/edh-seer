@@ -138,7 +138,7 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
       push("attacks");
       push("combat-damage");
     }
-    // A Room can be fully unlocked (CR 717.4): both doors paid for. It is the only thing that can,
+    // A Room can be fully unlocked (CR 709.5i): both doors paid for. It is the only thing that can,
     // so the eerie half -- "whenever you fully unlock a Room" -- is supplied by every Room in the
     // deck and by nothing else. 28 corpus Rooms, 24 slots across the 71 decks.
     if (face.subtypes.some((s) => s.toLowerCase() === "room")) push("unlock");
@@ -622,7 +622,7 @@ export function impliedCounterEvents(emits: GameEvent[]): GameEvent[] {
  *  open when it was re-measured on 2026-08-28.
  *
  *  Proliferate gives each chosen permanent and player another counter of each kind ALREADY THERE
- *  (CR 701.29), so a board with no counter on it makes the card do nothing. That is a demand for a
+ *  (CR 701.34), so a board with no counter on it makes the card do nothing. That is a demand for a
  *  counter SOURCE, and it is the same shape `keywordAbilities` gives a printed keyword: a synthetic
  *  triggered ability in the form `directedReasons` already reads.
  *

@@ -231,7 +231,7 @@ function sweepVerbs(action: Action, subject: SubjectFilter): Verb[] | undefined 
  *  somewhere is what other cards trigger on -- and, since 2026-09-05, the ORIGIN is read for the two
  *  rows that state a departure, because a permanent leaving the battlefield is what a leaves payoff
  *  triggers on (CR 603.6c) and the flicker's exile half stated nothing at all. */
-/** A SEARCHED PUT IS NOT A MILL (CR 701.13b: milling is the TOP cards of a library). Entomb and
+/** A SEARCHED PUT IS NOT A MILL (CR 701.17a: milling is the TOP cards of a library). Entomb and
  *  Buried Alive put a card into the graveyard FROM the library, so the origin alone cannot tell
  *  them from Cavalier of Thorns -- and the origin alone made both of them mill suppliers on the
  *  first build of DERIVE 163, which would have joined Entomb to every "whenever you mill" payoff
@@ -566,7 +566,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   const arrivesTapped = verbs.includes("enters")
     && /\b(?:battlefield|enters?|play)\b[^.]{0,30}?\btapped\b|\btapped\b[^.]{0,20}?\bunder\b/i.test(clauseText ?? "");
   // A CREATED TOKEN IS A TOKEN (CR 111.1), and 170 emits across 161 cards did not say so, because
-  // the fact was never in the object text to read: `investigate` names no object at all (CR 701.36
+  // the fact was never in the object text to read: `investigate` names no object at all (CR 701.16
   // supplies the Clue), and `incubate`, `populate` and the plain `create` on an unreadable phrase
   // are the same shape.
   //
@@ -578,7 +578,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // from a self-ETB, and a token payoff that demands one now correctly sees these.
   //
   // ONLY WHERE THE ABILITY REALLY CREATES ONE. `manifest` and `cloak` emit `enters` and no
-  // `create-token` precisely because a manifested permanent is a CARD, not a token (CR 701.34a) --
+  // `create-token` precisely because a manifested permanent is a CARD, not a token (CR 701.40a) --
   // keying on the emitted verbs keeps them out rather than needing a second exclusion list.
   const createsAToken = verbs.includes("create-token");
   const events: GameEvent[] = verbs.map((verb) => ({

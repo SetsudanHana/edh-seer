@@ -125,7 +125,7 @@ test("searchNames never carries an empty key", () => {
 // commander is castable 0% of the time on turn two, when Ashling, Rekindled costs {1}{R}.
 // 58 distinct cards / 116 slots across the 71 calibration decks. Found in a live run, and it is the
 // FOURTH field on the document that this join was dropping (producedMana, allParts, gameChanger).
-test("a double-faced card carries its FRONT face's mana cost (CR 712.4a)", () => {
+test("a double-faced card carries its FRONT face's mana cost (CR 712.8a)", () => {
   const doc = {
     _id: "x", name: "Ashling, Rekindled // Ashling, Rimebound",
     typeLine: "Legendary Creature — Elemental Sorcerer // Legendary Creature — Elemental Wizard",

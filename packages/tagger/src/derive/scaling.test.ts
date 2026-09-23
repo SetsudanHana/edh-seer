@@ -113,7 +113,7 @@ test("a creature count keeps per-creature", () => {
  *  amount. Burakos, Party Leader: "defending player loses X life and you create X Treasure tokens,
  *  where X is the number of creatures in your party" -- the normalizer keeps the tail on neither
  *  action, so both derived `x-cost` and no subject (owner, 2026-09-05). And "in your party" is a
- *  board count of the four party types (CR 700.7). 43 corpus cards say party. */
+ *  board count of the four party types (CR 700.8). 43 corpus cards say party. */
 test("a clause that defines X hands the count to every action whose amount is X", () => {
   const clause = "Whenever Burakos attacks, defending player loses X life and you create X Treasure tokens, where X is the number of creatures in your party.";
   const life = { verb: "lose-life", object: "defending player", amount: "X" } as never;

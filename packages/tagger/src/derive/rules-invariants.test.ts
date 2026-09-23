@@ -15,15 +15,14 @@ import { actionEmits } from "./emits.js";
 import { actionEffectKind } from "./effect-kind.js";
 import { emblemRecipient } from "../emblem.js";
 
-const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12c", "614", "701.5", "701.17a", "701.22b"]);
+const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
   "110.2a": "derive.test.ts — what you put onto the battlefield enters under your control (Misty Rainforest)",
   "118.12a": "derive.test.ts / clause-store.test.ts — an action's unless-payment rides onto the ability, and a doc that dropped one is re-asked",
   "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",
-  "702.176a": "repeats.test.ts — an Exhaust ability repeats once (Loot, the Pathfinder)",
+  "702.177a": "repeats.test.ts — an Exhaust ability repeats once (Loot, the Pathfinder)",
   "700.11": "intervening-if.test.ts — 'you descended this turn' cares about permanents hitting your graveyard",
   "701.14a": "derive.test.ts — a fight's dealer is the fighting creature, not the spell",
-  "701.13b": "emits.test.ts / effect-kind.test.ts — a tutored put into a graveyard is not a mill, a dug one is",
   "702.162": "characteristics.test.ts — a More Than Meets the Eye card is cast from either face",
   "113.8": "derive.test.ts — \"you\" in a granted ability is the recipient's controller (Hellish Rebuke)",
   "122.1b": "subject.test.ts — every keyword counter named by rule 122.1b is in the dictionary",
@@ -35,7 +34,6 @@ const TESTED: Record<string, string> = {
   "701.3d": "trigger-completeness.test.ts (unattached) and verb-accounting.test.ts (unattach OPEN)",
   "114": "cr-sections.test.ts — 114 stays MODELLED",
   "707": "emits.test.ts / derive.test.ts — copy is the kind `clone`, no emit (verb-accounting OPEN)",
-  "701.44": "verb-accounting.test.ts — explore is OPEN, a conditional outcome emits nothing",
   "705": "verb-accounting.test.ts — flip-coin is OPEN",
   "706.1": "emits — roll-dice emits dice-rolled (706.1 defines the roll)",
   "705.1": "emits — a coin is flipped by the ability's controller; flip-coin joins CONTROLLER_DEFAULT (AC11 batch 4)",
@@ -49,33 +47,33 @@ const TESTED: Record<string, string> = {
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {
   "100.2a": "schema: the CR's own numbering for a rules reference", "104.2": "verb-accounting: win-game NOT AN EVENT",
-  "106.11": "emits: snow mana is colourless", "106.4": "normalize-prompt / verb-accounting: mana-spent, add-mana",
+  "106.4": "normalize-prompt / verb-accounting: mana-spent, add-mana",
   "107.14": "normalize-prompt ENERGY rule: {E} is a counter", "120": "derive: damage direction split by text",
   "122": "counters — COUNTER_KINDS", "205.3": "subtypes generated from MTGJSON", "205.3i": "subtypes: Saga", "205.3k": "subtypes: Class",
   "305": "lands", "305.1": "play a land is `play`, not `enters`", "307.5": "a sorcery's own text", "309": "dungeons: words, no room model",
   "400.1": "ZONES lists the seven", "400.7": "zone changes: the enters/leaves family", "406.2": "exile is a public zone",
   "500": "phase words", "500.7": "extra turn: NOT AN EVENT", "506.4": "removed from combat", "602": "activate, a word with no producer",
   "603.4": "intervening-if (ratcheted in intervening-if-ratchet.test.ts)", "603.6c": "leaves-the-battlefield reads its zone off the text",
-  "606": "loyalty abilities", "606.3": "loyalty cost is a counter change", "608": "resolves, a word", "609.7": "effects that set a value",
+  "606": "loyalty abilities", "606.3": "loyalty cost is a counter change", "608": "resolves, a word", "609.7": "damage from a source",
   "611": "continuous effects: NOT AN EVENT verbs", "613": "layers: OPEN", "613.1f": "P/T layer", "614.17": "cant: NOT AN EVENT",
   "615": "prevent: OPEN", "615.13": "prevented, a word", "700.11": "descended", "700.12": "outlaw", "700.13": "crime", "700.14": "expend",
-  "700.16": "modified", "700.4": "dies (matcher asserts it)", "700.7": "monocolored/multicolored", "700.9": "historic",
-  "701.10": "exchange: OPEN", "701.12": "fight emits non-combat-damage", "701.15": "reveal: OPEN", "701.17": "sacrifice",
-  "701.19": "regenerate is a shield, emits nothing", "701.20": "shuffle: OPEN", "701.22": "scry", "701.22a": "scry never touches a graveyard",
+  "700.16": "worthy", "700.4": "dies (matcher asserts it)", "700.8": "party", "700.9": "modified",
+  "701.10": "double: OPEN", "701.11": "triple: OPEN", "701.12": "exchange: OPEN", "701.14": "fight emits non-combat-damage", "701.17": "mill",
+  "701.19": "regenerate is a shield, emits nothing", "701.20": "reveal: OPEN", "701.24": "shuffle: OPEN", "701.22": "scry", "701.22a": "scry never touches a graveyard",
   "701.23": "search", "701.23a": "search means a search HAPPENED", "701.25": "surveil", "701.25a": "surveil's graveyard half is any number",
-  "701.3": "attach: OPEN", "701.30": "clash", "701.34a": "populate", "701.36": "vote", "701.45a": "assemble excluded (Unstable)",
-  "701.50": "connive", "701.54": "the Ring tempts", "701.6": "create", "701.68": "blight", "701.9": "double/triple: OPEN",
+  "701.3": "attach: OPEN", "701.30": "clash", "701.40a": "manifest is a card, not a token", "701.16": "investigate names no object; the rule supplies the Clue", "701.45a": "assemble excluded (Unstable)",
+  "701.50": "connive", "701.54": "the Ring tempts", "701.7": "create", "701.68": "blight", "701.47": "amass: counter-placement, emits nothing",
   "701.46": "adapt puts its counters on the card itself (a self counter emit)", "701.37": "monstrosity puts its counters on the card itself",
-  "702.100": "evolve, a trigger word", "702.111": "exploit, a word", "702.122": "becomes-crewed", "702.131": "city-blessing",
-  "702.143": "foretell", "702.147": "decayed: a temporary token", "702.179": "speed", "702.189b": "firebend", "702.25": "flanking",
-  "702.26": "phasing", "708": "face-down: OPEN", "712": "double-faced", "714.2b": "Saga chapters", "717": "Attractions excluded",
-  "719": "Cases: solved, a word", "720": "Omen: OPEN", "725": "monarch", "726": "initiative", "730": "mutate: OPEN",
+  "702.100": "evolve, a trigger word", "702.110": "exploit, a word", "702.122": "becomes-crewed", "702.131": "city-blessing",
+  "702.143": "foretell", "702.147": "decayed: a temporary token", "702.179": "speed", "702.189b": "firebend",
+  "702.26": "phasing", "708": "face-down: OPEN", "712": "double-faced", "714.2b": "Saga chapters", "709.5i": "unlock: fully unlocking a Room, a word",
+  "719": "Cases: solved, a word", "725": "monarch", "726": "initiative", "731": "day/night",
   "903": "Commander", "903.3": "the commander designation is a deck fact (matcher asserts it)",
   "118.3b": "paying life is losing life — prompt rule",
   "113.3": "schema: the ability kinds a card can name as an OBJECT (abilityKind, AC12)",
   "707.10": "schema / effect-kind: an ability is the third copyable object, kind copy-ability (AC12; derive.test asserts Gogo)",
   "707.2": "effect-kind: a clone's 'except it has this ability' is an exception to the copy, not the object copied (effect-kind.test asserts Cryptoplasm)",
-  "605.3b": "schema: a mana ability does not use the stack, so 'activated' as an object excludes it (AC12)", "603.8": "state triggers — prompt rule", "603.12c": "reflexive — prompt rule",
+  "605.3b": "schema: a mana ability does not use the stack, so 'activated' as an object excludes it (AC12)", "603.8": "state triggers — prompt rule", "603.12": "reflexive — prompt rule",
 };
 
 const SRC = fileURLToPath(new URL("..", import.meta.url));
@@ -153,7 +151,7 @@ test("CR 106.12a and 104.3: 'tapped for mana' is refused, and 'loses the game' i
   expect(out.abilities[0]?.trigger?.verbs).toEqual(["loses-game"]);
 });
 
-test("CR 603.8 and 603.12c: a state trigger and a reflexive trigger refuse into unknownTriggers, forming no edge", () => {
+test("CR 603.8 and 603.12: a state trigger and a reflexive trigger refuse into unknownTriggers, forming no edge", () => {
   for (const [event, text] of [["state", "When you control no Islands, sacrifice this creature."], ["reflexive", "When you do, draw a card."]] as const) {
     const c = clause(text, "draw", "a card", { event, subject: "you control no Islands" });
     const out = deriveAbilities(c.clauses, "Seasinger", c.texts, undefined, text);

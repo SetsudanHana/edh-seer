@@ -122,7 +122,7 @@ export function docToCard(d: CardDoc): Card {
     // Both were on the documents and dropped here, which is why CLAUDE.md could list producedMana
     // as an available win with nothing consuming it: 2,641 corpus cards carry it and it never
     // reached `Card`. The mana audit is its first consumer.
-    // A DOUBLE-FACED CARD'S COST IS ON ITS FRONT FACE (CR 712.4a: a card in hand is its front face,
+    // A DOUBLE-FACED CARD'S COST IS ON ITS FRONT FACE (CR 712.8a: a card in hand is its front face,
     // and that is the cost you pay). Scryfall puts no `mana_cost` on the card itself for those
     // layouts, so this arrived undefined, `parseCost` refused it, and the mana model published an
     // all-zero castability curve -- `iz-it-izzet` was told its own commander casts 0% of the time on

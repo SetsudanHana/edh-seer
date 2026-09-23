@@ -1817,7 +1817,7 @@ test("a damage trigger on a card that never mentions damage is refused", () => {
   expect(out.unknownTriggers).toContain("phantom:non-combat-damage");
 });
 
-// CR 701.6 `create` IS A TRIGGER EVENT (2026-08-21). `create-token` was always a legal VERB as an
+// CR 701.7 `create` IS A TRIGGER EVENT (2026-08-21). `create-token` was always a legal VERB as an
 // ACTION and the trigger side was missing, so a card watching token creation could not be recorded —
 // the same story `copy` has in the TRIGGERS list. The owner named the witness from memory against a
 // claim this repo carried in two files: Mirkwood Bats, "Whenever you create or sacrifice a token".
@@ -2971,7 +2971,7 @@ test("a unit amount comes off the object: a card is one, up to two is two, all a
   expect(abilities.map((a) => a.amount)).toEqual(["1", "1"]);
 });
 
-/** EXHAUST REACHES DERIVE THROUGH THE PRINTED TEXT (CR 702.176a): the segmenter strips the ability
+/** EXHAUST REACHES DERIVE THROUGH THE PRINTED TEXT (CR 702.177a): the segmenter strips the ability
  *  word, so the clause never says it. Loot, the Pathfinder, "Exhaust — {U}, {T}: Draw three cards." */
 test("an Exhaust line in the printed text makes its ability once, matched on the cost", () => {
   const clauses = [{ id: 1, abilityType: "activated", actions: [{ verb: "draw", object: "three cards", amount: "3" }] }];

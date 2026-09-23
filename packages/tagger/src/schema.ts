@@ -329,7 +329,7 @@ export type Verb =
   | "land-play"
   | "untaps"
   | "proliferate"
-  /** A Room is fully unlocked (CR 717). Consumer: "whenever you fully unlock a Room" (the eerie
+  /** A Room is fully unlocked (CR 709.5i). Consumer: "whenever you fully unlock a Room" (the eerie
    *  half). Producer: every Room, implied from its type line -- see `impliedEvents`. */
   | "unlock"
   | "upkeep"
@@ -368,13 +368,13 @@ export type Verb =
   /** AC11 BATCH 2 (2026-09-09), the OPEN verbs of CR 4xx/7xx — objects and what happens to them.
    *  Each is the event the same-named clause action performs and the same-named (or passive)
    *  clause trigger watches; the owner's every-event ruling gives each an emit whatever today's
-   *  consumer count. Per event, corpus producers / consumers: shuffle 1,157 / 15 (CR 701.20;
+   *  consumer count. Per event, corpus producers / consumers: shuffle 1,157 / 15 (CR 701.24;
    *  every consumer watches an OPPONENT, so no in-deck edge forms, by design); transform 286 / 36
    *  (CR 712); turned-face-up 0 authored + every morph, megamorph and disguise card implied / 114
-   *  (CR 708); copy 18 / 3 (CR 707); reveal ~1,000 / 8 (CR 701.15); attached 296 / 11 and
+   *  (CR 708); copy 18 / 3 (CR 707); reveal ~1,000 / 8 (CR 701.20); attached 296 / 11 and
    *  unattached 4 / 4 (CR 701.3); gains-control 369 / 13 (CR 611, the emit's control is the
    *  GAINER); phases-out 50 / 3 (CR 702.26); regenerate 268 / 1 (CR 701.19); prevented 570 / 16
-   *  (CR 615.13); exchange 67, double 58, triple 2 (CR 701.10, CR 701.9) with no consumer yet. */
+   *  (CR 615.13); exchange 67, double 58, triple 2 (CR 701.12, CR 701.10, CR 701.11) with no consumer yet. */
   | "shuffle"
   | "transform"
   | "turned-face-up"

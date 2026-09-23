@@ -73,7 +73,7 @@ test("a face's characteristics are that face's types, not the union", () => {
 
 // TWO QUESTIONS, TWO SOURCES. How many nodes comes from the PRINTED faces (`Card.faces`, every
 // layout); what a face SUPPLIES comes from the PLAYABLE faces (`Characteristics.faces`, which lists
-// only the front for a transform, CR 712.4a). A playable face keeps its own entry there; a back face
+// only the front for a transform, CR 712.8a). A playable face keeps its own entry there; a back face
 // that is never cast gets an EMPTY list, so `impliedEvents` gives it no `cast` and no `enters`.
 test("a transform back face is a node that supplies nothing implied", () => {
   const dc: DeckCard = {

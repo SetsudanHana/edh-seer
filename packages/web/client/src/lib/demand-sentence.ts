@@ -245,7 +245,7 @@ export const SUBJECTLESS_CLAUSE: Record<string, string> = {
  *  `eventKeyAction`.
  *
  *  AND THE VERB HAS TO BE A REAL ONE. `dies` was given "kill", which is not a word in Magic; the
- *  obvious replacement is not right either, because CR 701.7 `destroy` is only ONE of the ways CR
+ *  obvious replacement is not right either, because CR 701.8 `destroy` is only ONE of the ways CR
  *  700.4 `dies` happens and this key's suppliers use several. It has no entry, and the clause "a
  *  creature dies" -- which IS the rules word -- carries it. Both terms reach it through the search.
  *
@@ -868,7 +868,7 @@ const PLAYER_TERMS: Record<string, string[]> = {
   removal: ["dies"],
   // DESTROY AND KILL ARE HOW A PLAYER ASKS FOR THIS, and neither is what the key MEANS (owner,
   // 2026-09-19: "kill is not a word in magic, you have destroy"). CR 700.4 defines `dies` as
-  // going to the graveyard from the battlefield; CR 701.7 defines `destroy` as one way that
+  // going to the graveyard from the battlefield; CR 701.8 defines `destroy` as one way that
   // happens, and a sacrificed creature dies without being destroyed. The suppliers of this key do
   // both -- Come Back Wrong destroys, Victimize sacrifices -- so the label stays the rules word
   // and these two only find it.

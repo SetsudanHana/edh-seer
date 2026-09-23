@@ -132,7 +132,7 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   //   monarch        64 corpus,  5 of 15 normalized on `other` (Forth Eorlingas!, Court of Embereth)
   //
   // THE CONTROL FOR THE MECHANISM IS `initiative`, one line above: the same KIND of concept as
-  // `monarch` (a designation the game tracks, CR 726 against CR 720) and already a VERB. 23 corpus
+  // `monarch` (a designation the game tracks, CR 726 against CR 725) and already a VERB. 23 corpus
   // cards, 8 normalized, ZERO on the escape hatch. Having the word is the entire difference.
   //
   // NONE GETS AN `EMITS` ROW, following `initiative` and `city-blessing` exactly. Their trigger
@@ -225,8 +225,8 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // surfaced it, because these cards phrase it as a condition rather than a trigger. 2.
   "descended",
   // Corpus-only, each with a card stuck behind it and each a named CR concept in a section the
-  // vocabulary diff does not reach: day/night (CR 730, The Celestus), dice (Vrondiss), dungeons
-  // (CR 309, Loot Dispute), the monarch (CR 720, Starscream), the Ring (Sauron, Call of the Ring),
+  // vocabulary diff does not reach: day/night (CR 731, The Celestus), dice (Vrondiss), dungeons
+  // (CR 309, Loot Dispute), the monarch (CR 725, Starscream), the Ring (Sauron, Call of the Ring),
   // clash (CR 701.30, Marvo).
   "day-night", "dice-rolled", "dungeon-completed", "monarch", "ring-tempts", "clash",
   // THE REST OF THE TURN, from CR 500-514. A turn is five phases and eleven steps; this list had six
@@ -271,9 +271,9 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // out and whenever one or more other cards are put into exile from anywhere". Exile is the larger
   // by far at **59 corpus consumers**, and whether it also earns an ENGINE verb is a separate
   // question with its own blast radius: 294 unclaimed `exile` ACTIONS are the supply side.
-  // Phasing is CR 702.25; 3 consumers.
+  // Phasing is CR 702.26; 3 consumers.
   "exiled", "phases-out",
-  // CR 701.6 `create`, ADDED 2026-08-21 — the same story as `copy` above, and found the same way.
+  // CR 701.7 `create`, ADDED 2026-08-21 — the same story as `copy` above, and found the same way.
   // `create-token` has always been a legal VERB as an ACTION; the trigger side was missing, so a
   // card that watches token creation could not be recorded. The OWNER named the witness from memory
   // against a claim this repo carried in two files ("nothing in the corpus triggers on token
@@ -283,7 +283,7 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // card for exactly this absence — the gate working, and naming its own missing word.
   // Corpus consumers: 13 cards print "whenever you create ..." plus Mirkwood Bats' OR shape.
   "create",
-  // CR 701.15 `reveal`, ADDED 2026-08-21 in the same run that added `create` -- and named the same
+  // CR 701.20 `reveal`, ADDED 2026-08-21 in the same run that added `create` -- and named the same
   // way, by the persist gate refusing a card for it: `unknown-trigger-event — "reveal" is not in
   // TRIGGERS` (Yuna's Whistle). Cards really do watch a reveal: "whenever you reveal a card",
   // "whenever a player reveals a card". Added BEFORE the bulk re-normalization rather than after,
@@ -313,11 +313,11 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // exactly what these cards mean.
   "put-into-graveyard",
   // "becomes crewed" (4 cards, all triggers) — CR 702.122. "loses control" (10 / 8) — a control
-  // change is a real event with no other spelling. "phases in" (45 / 6) — CR 702.25 and 703.4a;
+  // change is a real event with no other spelling. "phases in" (45 / 6) — CR 702.26 and 703.4a;
   // `phases-out` was added on 2026-08-15 and its other half was missed, which is the kind of gap
   // only a rule-by-rule walk finds.
   "becomes-crewed", "loses-control", "phases-in",
-  // "tapped for mana" (32 / 23) — CR 106.11. `derive.ts` already REFUSES this into `unknownTriggers`
+  // "tapped for mana" (32 / 23) — CR 106.12a. `derive.ts` already REFUSES this into `unknownTriggers`
   // by reading the clause text (`TAPPED_FOR_MANA`), because the engine has no such event; the word
   // changes nothing downstream today and makes the stored clause say what the card says instead of
   // the near-miss `taps`. When an engine event arrives, the fact is already recorded rather than
@@ -356,14 +356,14 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // that is the whole reason it is here: a land put onto the battlefield by Cultivate ENTERS without
   // being PLAYED, so a "whenever you play a land" trigger is a strictly narrower event.
   "play",
-  // CR 701.12 `Fight`, 31 / 22. CR 701.44 `Amass`, 30 / 26.
+  // CR 701.14 `Fight`, 31 / 22. CR 701.47 `Amass`, 30 / 26.
   "fight", "amass",
-  // CR 702.111 `Exploit` is a keyword ABILITY rather than an action, and it is here on the
+  // CR 702.110 `Exploit` is a keyword ABILITY rather than an action, and it is here on the
   // `search`/`scry`/`becomes-target` precedent: no engine verb, forms no edge, but 23 cards print
   // "whenever this creature exploits a creature" and one unnameable clause should not throw away
   // the whole card. 23 / 5.
   "exploit",
-  // CR 701.20 `Shuffle`, 15 / 6. CR 701.3 `Attach`, 9 / 2. CR 615 damage prevention, 9 / 5.
+  // CR 701.24 `Shuffle`, 15 / 6. CR 701.3 `Attach`, 9 / 2. CR 615 damage prevention, 9 / 5.
   "shuffled", "attached", "prevented",
   // `loses-control` has been here since the 2026-08-20 CR sweep and its MIRROR was missed — the
   // same shape as `phases-out` shipping without `phases-in`, which that sweep's own comment calls
@@ -430,7 +430,7 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // rule-defined event has a word, a rules reading, or a legality exclusion, and every word here
   // has a rule. Counts are commander-legal cards printing the trigger head / bought at that time.
   //
-  // CR 603.12c, THE REFLEXIVE TRIGGER. "You may pay {1}{R}. When you do, ..." — 252 / 193, and the
+  // CR 603.12, THE REFLEXIVE TRIGGER. "You may pay {1}{R}. When you do, ..." — 252 / 193, and the
   // single largest family the prompt could not say: 115 of the 183 bought `other` triggers. The
   // segmenter already gives "When you do" its own triggered clause; the event is the optional
   // action the previous clause named, so the record is `reflexive` with that action as subject.
@@ -602,7 +602,7 @@ Rules:
   reuse the number of another clause — Brinelin and Titans' Vanguard both numbered the overflow as
   the next sequential id, which was already a printed keyword, and the whole card was refused. Only a clause marked twoConditions may be
   answered this way, and only with one extra record.
-- REFLEXIVE (CR 603.12c). "When you do" / "When they do" is a trigger whose event is the
+- REFLEXIVE (CR 603.12). "When you do" / "When they do" is a trigger whose event is the
   OPTIONAL ACTION the previous sentence named: event "reflexive", subject that action verbatim
   ("pay {1}{R}", "sacrifice a creature", "exert this creature"). Never the parent's own event and
   never "other".

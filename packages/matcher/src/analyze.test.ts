@@ -1261,7 +1261,7 @@ test("a commander that is a multi-face card is still the commander on its front 
 // ============================================================================
 
 // CRITICAL: two faces of one physical card must not partner with each other -- they are never
-// both on the battlefield (CR 712.4a for a transform, one chosen face for an MDFC). Reproduced on
+// both on the battlefield (CR 712.8d-e for a transform, one chosen face for an MDFC). Reproduced on
 // the reviewer's own probe shape: a front face with a landfall-caring trigger, a back face that is
 // itself a Land. Pre-fix, the back face's own implied `enters` (a land entering) satisfied the
 // front face's trigger, reading as a genuine synergy -- the board's ruling is "shared rim, no
