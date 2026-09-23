@@ -15,7 +15,7 @@ import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject, parseCounter } from "./subject.js";
-import { repeatsFor, type RawTrigger } from "./repeats.js";
+import { repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
@@ -142,7 +142,12 @@ import { emblemRecipient } from "../emblem.js";
 // 167: a LOYALTY ability repeats once per round (CR 606.3). It has neither mana nor {T} in its
 // cost, so it fell through to `repeatable` and every planeswalker read as a free, unbounded
 // ability -- Grist, Liliana and Garruk among the sacrifice outlets (roadmap AN3).
-export const DERIVE_VERSION = 167;
+// 168: a trigger on ONE object repeats once or once a combat, not at will (roadmap AN7): "when
+// that/enchanted/equipped/fortified creature dies" is once, its attacks and combat damage once a
+// combat -- 358 corpus cards read `repeatable`, and Make Your Mark ranked beside Midnight Reaper.
+// And an Aura whose Enchant line names an opponent's creature gives its "enchanted creature"
+// trigger the opponent's side (Nurgle's Rot claimed your own creatures' deaths).
+export const DERIVE_VERSION = 168;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1724,9 +1729,26 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   const chars = input.characteristics;
   const castAtInstantSpeed = chars.types.some((t) => t.toLowerCase() === "instant")
     || (chars.keywords ?? []).some((k) => k.toLowerCase() === "flash");
-  const { abilities, unknownTriggers } = deriveAbilities(
+  const derived = deriveAbilities(
     input.clauses, input.name, input.clauseTexts, input.clauseCosts, input.oracleText, input.grantedToken,
     input.clauseFaces, castAtInstantSpeed, input.clauseRequires);
+  const { unknownTriggers } = derived;
+  // AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7).
+  // Nurgle's Rot prints "Enchant creature an opponent controls / When enchanted creature dies": the
+  // clause subject "enchanted creature" carries no controller and derived `you`, so the report
+  // claimed "When Viscera Seer dies, Nurgle's Rot triggers". The Enchant line is the only place the
+  // side is printed. Only `opp` is taken from it: "Enchant creature" can go on either side, and
+  // whether that host is yours is an open ruling (One with the Kami), not a derive fact.
+  // Text through `textForClause`, which recovers a normalizer-split clause's sentence (a "2.1" id
+  // the segmenter never produced), and past a printed ability-word label.
+  const clauseById = new Map(input.clauses.map((c) => [c.id as number | string, c] as const));
+  const abilities = chars.enchants?.control !== "opp" ? derived.abilities : derived.abilities.map((a) => {
+    const clause = a.clause !== undefined ? clauseById.get(a.clause) : undefined;
+    const text = clause ? withoutAbilityWord(textForClause(clause, input.clauseTexts)) : "";
+    return a.trigger && /^(?:when|whenever)\s+enchanted\s/i.test(text)
+      ? { ...a, trigger: { ...a.trigger, subject: { ...a.trigger.subject, control: "opp" as const } } }
+      : a;
+  });
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,

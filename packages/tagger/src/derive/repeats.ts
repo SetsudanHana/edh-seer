@@ -73,6 +73,23 @@ const ORDINAL_EACH_TURN = /\b(?:first|second|third|fourth|fifth)\b(?:(?!\.).){0,
  *  fix -- the largest rule-6 group, per the design spec's §5 measurement. */
 const PHASE_VERBS = new Set(["upkeep", "end-step", "begin-combat"]);
 
+/** A TRIGGER THAT WATCHES ONE OBJECT (roadmap AN7, 2026-09-23): "when THAT creature dies this turn"
+ *  (Make Your Mark's delayed trigger), "when ENCHANTED creature dies" (Nurgle's Rot), "whenever
+ *  EQUIPPED creature attacks" (the Swords). The derived subject cannot say it -- it reads exactly
+ *  like Midnight Reaper's class -- so it is read off the printed trigger phrase. Oracle census over
+ *  the derived corpus: 358 cards, every one labelled `repeatable` before this. */
+const ONE_OBJECT = /^(?:when|whenever)\s+(?:that|enchanted|equipped|fortified)\s/i;
+/** What happens to ONE object at most once: it can only die, leave or be put in a graveyard once. */
+const ONE_LIFE_VERBS = new Set(["dies", "leaves", "enters-graveyard", "sacrifice"]);
+/** What ONE creature does at most once a combat. Nothing else it does is bounded: "whenever
+ *  enchanted player casts a spell" (Curse of Echoes) and "whenever enchanted creature deals damage"
+ *  (Curiosity) fire as often as it happens, and stay with rule 9. */
+const ONE_COMBAT_VERBS = new Set(["attacks", "blocks", "combat-damage"]);
+/** The trigger phrase without a printed ABILITY-WORD label in front of it. `segment.ts` keeps the
+ *  label on a trigger clause's text ("Inquisition Agents — Whenever equipped creature attacks",
+ *  Inquisitorial Rosette), so a phrase anchored at the start would miss it. */
+export const withoutAbilityWord = (text: string): string => text.trim().replace(/^[^\u2014.\n]{1,60}\s\u2014\s+/, "");
+
 /** Trigger events that name the card's own arrival or departure -- they happen once. `sacrifice`,
  *  `enters-graveyard` and `cast` joined 2026-09-05: "when you sacrifice this", "when this card is
  *  put into a graveyard" and "when you cast this spell" are the same one-life shape. */
@@ -123,6 +140,14 @@ export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?
   const trigger = ability.trigger;
   if (trigger) {
     const verbs = trigger.verbs as readonly string[];
+    // 7b: ONE OBJECT. Its death or departure happens once; its combat (attacks, blocks, deals
+    // combat damage) once a combat, on whose turn `control` says -- the same split as a phase
+    // trigger. Anything else it does is as often as it happens and falls through. Before rule 8,
+    // which needs `self` and this subject has none.
+    if (ONE_OBJECT.test(withoutAbilityWord(text))) {
+      if (verbs.some((v) => ONE_LIFE_VERBS.has(v))) return "once";
+      if (verbs.some((v) => ONE_COMBAT_VERBS.has(v))) return trigger.subject.control === "you" ? "per-cycle" : "per-turn";
+    }
     // 6-7: a phase trigger fires once per turn; `control` says whose turns count. An ordinal
     // "first/second/... each turn" trigger is bounded the same way even when the verb isn't a
     // phase verb -- Faerie Mastermind's "opponent draws their second card each turn" is `draw`.

@@ -2081,7 +2081,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     // THE WHOSE AXIS (recall v5 #196, 2026-09-10): "a triggered ability of another Elemental you
     // control" doubles EVERY trigger of every Elemental, so the consumer is matched on what it IS
     // (its printed characteristics against the class) and on having any triggered ability of its
-    // own, whatever the event. The opponent-board rule below applies unchanged, and the claim is
+    // own, whatever the event, and whoever's object that trigger watches. The claim is
     // one per consumer. `doublesOf` is matched here and nowhere else, for the same reason
     // `a.doubles` is: a subject on `effect.subject` would reach the static applies-to pass.
     if (a.doublesOf && c.tags) {
@@ -2091,7 +2091,8 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       // doubled every creature with a trigger. Unresolved is a refusal, not a wildcard.
       if (a.doublesOf.chosenType === true) continue;
       const member = subjectMatches(characteristicsSubject(c.tags, c.card.name), a.doublesOf, h);
-      const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0 && ca.trigger?.subject?.control !== "opp");
+      // Any trigger of the member counts, whoever's object it watches -- the same reading as below.
+      const hasTrigger = c.tags.abilities.some((ca) => (ca.trigger?.verbs.length ?? 0) > 0);
       if (member && hasTrigger) {
         reasons.push({
           tag: `doubles:${themeSubjectKey(a.doublesOf)}`,
@@ -2108,9 +2109,11 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     for (const ca of c.tags?.abilities ?? []) {
       const verb = (ca.trigger?.verbs ?? []).find((v) => a.doubles!.includes(v));
       if (!verb) continue;
-      // A doubler says "a triggered ability of a permanent YOU CONTROL". A consumer whose trigger
-      // watches an OPPONENT's board is not doubled by it.
-      if (ca.trigger?.subject?.control === "opp") continue;
+      // "A triggered ability of a permanent YOU CONTROL" is the ABILITY's side, and the consumer is
+      // in your deck, so it always is. The event's object is anyone's -- "a creature dying" (Teysa),
+      // "an artifact or creature entering" (Panharmonicon) -- so a trigger watching an opponent's
+      // board IS doubled (Nurgle's Rot, AN7). This used to skip it, reading the clause as the
+      // creature's side.
       reasons.push({
         tag: `doubles:${verb}`,
         text: doublesSentence(p.card.name, c.card.name, verb),

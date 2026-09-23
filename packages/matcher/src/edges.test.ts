@@ -4677,13 +4677,15 @@ test("a doubler naming WHOSE triggers it doubles pairs with a class member that 
   // An Elemental with no triggered ability has nothing to double.
   const vanilla = base("Flamekin Bladewhirl", [], ["elemental", "warrior"]);
   expect(pairReasons(twinflame, vanilla, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
-  // A trigger that watches the OPPONENT's board is not doubled (same rule as the event axis).
+  // A trigger that watches the OPPONENT's board IS doubled (AN7, 2026-09-23): "a triggered ability
+  // of another Elemental you control" names the ability's side and no event at all. This line used
+  // to assert the opposite, pinning the misreading the event pass shared.
   const watcher = base("Flamekin Watcher", [{
     kind: "triggered",
     trigger: { verbs: ["attacks"], subject: { control: "opp", token: null, type: "creature" } },
     effect: { kind: "damage" },
   }], ["elemental"]);
-  expect(pairReasons(twinflame, watcher, H).some((r) => r.tag.startsWith("doubles:"))).toBe(false);
+  expect(pairReasons(twinflame, watcher, H).some((r) => r.tag.startsWith("doubles:"))).toBe(true);
   // An UNRESOLVED chosen type (Roaming Throne outside a deck) claims nothing rather than every
   // creature with a trigger; `resolveChosenTypes` is what turns it into a real class.
   const throne = base("Roaming Throne", [{
@@ -4849,4 +4851,18 @@ describe("a counter-presence condition refuses a producer that cannot carry one"
    *  OWN counters. A fixture cannot reach those paths (none of the three shapes forms an edge
    *  against a synthetic producer at all), so the check that matters is the reason diff across the
    *  71 decks, which is what caught them. */
+});
+
+/** A DOUBLER DOUBLES YOUR PERMANENT'S TRIGGER WHOEVER'S CREATURE CAUSED IT (roadmap AN7, 2026-09-23).
+ *  Teysa Karlov: "If a creature dying causes a triggered ability of a permanent YOU CONTROL to
+ *  trigger" -- "you control" is the ABILITY's side, and "a creature" is anyone's. Nurgle's Rot
+ *  watches an opponent's creature die, is your permanent, and is doubled. The pass used to skip
+ *  every trigger that watches an opponent's board, which read the clause as the creature's side. */
+test("a doubler doubles your permanent's trigger even when the trigger watches an opponent's creature", () => {
+  const teysa = base("Teysa Karlov", [{ kind: "static", effect: { kind: "trigger-doubling" }, doubles: ["dies"] }]);
+  const rot = base("Nurgle's Rot", [{
+    kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "opp", token: null, type: "creature" } },
+    effect: { kind: "token-generation" },
+  }]);
+  expect(pairReasons(teysa, rot, H).some((r) => r.effectKind === "trigger-doubling")).toBe(true);
 });

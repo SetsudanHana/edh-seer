@@ -2999,3 +2999,32 @@ test("every ability carries the id of the clause that printed it", () => {
   // And no ability claims the clause that derived nothing.
   expect(abilities.some((a) => a.clause === 1)).toBe(false);
 });
+
+/** AN AURA ON AN OPPONENT'S CREATURE WATCHES THE OPPONENT'S CREATURE (owner 2026-09-23, AN7). Nurgle's
+ *  Rot: "Enchant creature an opponent controls / When enchanted creature dies, ...". The trigger
+ *  derived `control: you`, so a deck report claimed "When Viscera Seer dies, Nurgle's Rot triggers"
+ *  and scored the Aura above Midnight Reaper. The Enchant line says whose creature it is. */
+test("an Aura that enchants an opponent's creature gives its host trigger the opponent's side", () => {
+  const tags = deriveCardTags({
+    oracleId: "test-nurgle",
+    clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "enchanted creature" },
+      actions: [{ verb: "create-token", object: "a 1/3 black Demon creature token", amount: "1" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["enchantment"], subtypes: ["aura"],
+      enchants: { control: "opp", token: null, type: "creature" } },
+    clauseTexts: { 1: "When enchanted creature dies, return this card to its owner's hand and you create a 1/3 black Demon creature token." },
+  });
+  const trigger = tags.abilities.find((a) => a.trigger)!.trigger!;
+  expect(trigger.subject.control).toBe("opp");
+});
+
+test("an Aura on any creature keeps the reading it had (the open One with the Kami question)", () => {
+  const tags = deriveCardTags({
+    oracleId: "test-kami",
+    clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "enchanted creature" },
+      actions: [{ verb: "create-token", object: "a 1/1 colorless Spirit creature token", amount: "1" }] }],
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["enchantment"], subtypes: ["aura"],
+      enchants: { control: "you", token: null, type: "creature" } },
+    clauseTexts: { 1: "When enchanted creature dies, create a 1/1 colorless Spirit creature token." },
+  });
+  expect(tags.abilities.find((a) => a.trigger)!.trigger!.subject.control).not.toBe("opp");
+});
