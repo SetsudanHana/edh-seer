@@ -2290,6 +2290,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // A PRINTED KEYWORD CAN SEARCH TOO: typecycling (`keywordAbilities`, recall v7 #199).
   for (const a of [...p.tags.abilities, ...keywordAbilities(p.tags.characteristics)]) {
     if (a.effect.kind !== "search" || !a.effect.subject) continue;
+    // A TOKEN IS NEVER IN A LIBRARY. It exists only on the battlefield (CR 111.7), so no search can
+    // find one: Magda "searched up" the Shapeshifter token a changeling card makes.
+    if (c.isToken) continue;
     // A SUBTYPE, a STAT PREDICATE or a lone off-board type narrows; a whole-board type does not.
     // `combatNarrowsOffType` has said the same about stats all along — Imperial Recruiter's "power
     // 2 or less" and Spellseeker's "mana value 2 or less" pick out particular cards, not a whole type.
@@ -2377,6 +2380,9 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // admitted shapes: subtype 119, stats 124, legendary 8, allTypes 6.
   for (const a of p.tags.abilities) {
     if (a.effect.kind !== "graveyard-recursion" || !a.effect.subject) continue;
+    // NOR IN A GRAVEYARD. A token that leaves the battlefield ceases to exist and cannot come back
+    // (CR 111.7, 111.8): Lively Dirge and Rivaz "brought back" a Shapeshifter token.
+    if (c.isToken) continue;
     const s = a.effect.subject;
     if (s.zone !== "graveyard" || s.self === true || s.control === "opp" || s.named !== undefined) continue;
     if (!recursionClassNarrows(s)) continue;

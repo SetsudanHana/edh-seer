@@ -1783,6 +1783,30 @@ test("a typal tutor forms an edge with what it can find", () => {
   expect(reasons.some((r) => r.tag === "tutor:elemental")).toBe(true);
 });
 
+// A TOKEN IS NEITHER IN A LIBRARY NOR IN A GRAVEYARD (CR 111.7, 111.8): it exists only on the
+// battlefield and ceases to exist the moment it leaves. So a typed tutor or a typed recursion that
+// names its class never reaches the token node of that class -- Magda "searched up" and Rivaz
+// "brought back" the Shapeshifter token a changeling card makes. The nontoken card still joins.
+test("a typed tutor or recursion does not reach a token of its class", () => {
+  const asToken = (card: ReturnType<typeof base>) => ({
+    ...card, isToken: true,
+    tags: { ...card.tags, characteristics: { ...card.tags.characteristics, token: true } },
+  });
+  const harbinger = base("Flamekin Harbinger", [{
+    kind: "triggered",
+    effect: { kind: "search", subject: { control: "you", token: null, subtype: "elemental" } },
+  }]);
+  const rivaz = base("Rivaz of the Claw", [{
+    kind: "static",
+    effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", subtype: "dragon", zone: "graveyard" } },
+  }]);
+  const tags = (a: ReturnType<typeof base>, b: ReturnType<typeof base>) => pairReasons(a, b, H).map((r) => r.tag);
+  expect(tags(harbinger, base("Omnath", [], ["elemental"]))).toContain("tutor:elemental");
+  expect(tags(harbinger, asToken(base("Shapeshifter", [], ["elemental"])))).not.toContain("tutor:elemental");
+  expect(tags(rivaz, base("Shivan Dragon", [], ["dragon"]))).toContain("recursion-target:dragon");
+  expect(tags(rivaz, asToken(base("Shapeshifter", [], ["dragon"])))).not.toContain("recursion-target:dragon");
+});
+
 // A CLASS-RESTRICTED DIG IS A TYPED SEARCH (owner ruling 2026-09-16, AF10 ruling 4; derive 143
 // gives Eclipsed Flamekin a `search` over "an Elemental, Island, or Mountain card"). The key names
 // the member of the list the found card carries, not the first of the list.
