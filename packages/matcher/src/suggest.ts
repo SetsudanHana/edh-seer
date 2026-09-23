@@ -129,6 +129,9 @@ export function pairReplacements(
     list.find((c) => !used.has(c.card.pos) && c.connections.length > than);
   const out: Replacement[] = [];
   for (const cut of cuts) {
+    // A CUT FILLING TWO GROUPS' LEAVES takes the first in `buildParents` order (Consistency, Ramp,
+    // Interaction, Board wipes). A ruling, not a finding: no rule here can say which job a
+    // double-duty card is "really" doing, and the order is the report's own.
     const g = groups.find((x) => x.leaves.some((l) => cut.roles.includes(l)));
     let pick: Replacement | undefined;
     if (g && count.get(g.name)! > g.target) {
