@@ -42,9 +42,10 @@ function authoredSurplusTags(tags: CardTags): Set<string> {
  *  where the claim inverts -- an anthem does nothing when a creature dies.
  *
  *  AN UNMAPPED KIND CREDITS NOTHING. `tax` is opponent-facing and stays out by the same ruling that
- *  keeps it in `ROLE_NOT_SYNERGY`; `graveyard-recursion`, `untap`, `damage-multiplier` and
- *  `token-generation` reach 2 or fewer instances each as statics and are left unanswered rather
- *  than guessed. The five mapped kinds are 305 of the 313 statics carrying a usable subject (97.4%).
+ *  keeps it in `ROLE_NOT_SYNERGY`; `untap`, `damage-multiplier` and `token-generation` reach 2 or
+ *  fewer instances each as statics and are left unanswered rather than guessed. A static
+ *  `graveyard-recursion` is common since DERIVE 166 kept its subject (Lurrus, Karador), but its
+ *  subject sits in the graveyard: the recursion passes in `edges.ts` answer it, not an event here. The five mapped kinds are 305 of the 313 statics carrying a usable subject (97.4%).
  */
 const STATIC_PAYOFF_VERB: Record<string, string> = {
   pump: "enters",

@@ -135,7 +135,11 @@ import { emblemRecipient } from "../emblem.js";
 // as kind `mill` while emitting the Entomb verb -- Cavalier of Thorns, Shigeki, Shadow Prophecy.
 // `supplyForms` bridges mill to the enters-graveyard forms, so no payoff that asks for a graveyard
 // put loses its supplier.
-export const DERIVE_VERSION = 165;
+// 166: a STATIC graveyard-recursion keeps its subject. The whole-deck-lord refusal dropped a
+// singular one ("cast one permanent spell with mana value 2 or less from your graveyard"), and
+// edges.ts skips a subjectless recursion, so 66 corpus cards -- Lurrus, Karador, Gisa and Geralf,
+// Gravecrawler -- formed no recursion edge.
+export const DERIVE_VERSION = 166;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1465,8 +1469,14 @@ export function deriveAbilities(
       // names nothing is a wildcard that matches every card in the deck.
       // AN ABILITY LOSS KEEPS ITS CLASS SUBJECT. It is a silence the matcher applies, never a
       // claim, so the whole-deck-lord refusal in `namesItsTargets` does not apply to it.
+      // NOR DOES IT APPLY TO A RECURSION. "Cast one permanent spell with mana value 2 or less from
+      // your graveyard" (Lurrus) is singular, so the refusal dropped it, and both recursion passes in
+      // edges.ts skip a subjectless recursion: 66 corpus cards, Lurrus, Karador and Gisa and Geralf
+      // among them, formed no recursion edge. The kept subject carries `zone: graveyard`, which no
+      // printed card matches, so it cannot reach the applies-to pass either (Muldrotha, measured).
       const keepSubject = subject
-        && (kind !== "static" || namesItsTargets(subject) || effectKind === "ability-loss")
+        && (kind !== "static" || namesItsTargets(subject) || effectKind === "ability-loss"
+          || (effectKind === "graveyard-recursion" && subject.zone === "graveyard"))
         && (effectKind !== "clone" || subject.subtype !== undefined);
       // What the payoff's magnitude counts. Already consumed by edges.ts, impact.ts and buckets.ts;
       // derivation had simply never set it, so the channel was dark under TAGS_SOURCE=derived.

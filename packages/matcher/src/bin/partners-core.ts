@@ -1159,6 +1159,10 @@ const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((
 export const staticKeysOfAbility = (a: CardTags["abilities"][number]): string[] => {
   const s = a.effect?.subject;
   if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
+  // A ZONE-SCOPED subject reaches no printed card -- `subjectMatches` refuses any zone the card's
+  // characteristics do not sit in, so `staticClaim` never verifies one. Lurrus's graveyard recursion
+  // (DERIVE 166 keeps the subject) otherwise named every nonland type as a whole-board reach.
+  if (s.zone !== undefined) return [];
   const types = concreteTypes(asList(s.type));
   const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
   if (types.length === 0 && subtypes.length === 0) return [];
