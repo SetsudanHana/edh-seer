@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, intersect, withoutFilterKind, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, intersect, orderOf, withoutFilterKind, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { EventPicker } from "./EventPicker.js";
 import { CardTile } from "./CardTile.js";
@@ -236,6 +236,8 @@ export function CardSearch({
   // ONCE PER INDEX, not once per pass: `some` over 25,582 rows is cheap but it is not free, and
   // the answer only changes when a different artifact loads.
   const carriesColours = useMemo(() => (index ?? []).some((e) => e.c !== undefined), [index]);
+  // A ROW'S POSITION IN THE INDEX, which is what the event lists hold. Once per artifact.
+  const positionOf = useMemo(() => new Map((index ?? []).map((e, i) => [e, i] as const)), [index]);
 
   // THE SET THE EVENTS DESCRIBE. `null` means no event was asked (the whole index is the base);
   // `undefined` means the answer is not knowable yet -- still reading, or a shard that did not
@@ -285,8 +287,20 @@ export function CardSearch({
     // already knowing their names and typing them in". A sort does not fix the ranking; it stops
     // the ranking being the only way through the list.
     const byName = (a: NameIndexEntry, b: NameIndexEntry): number => a.name.localeCompare(b.name, "en");
-    const order = eventQuery.sort ?? "partners";
+    const order = orderOf(eventQuery);
     const sign = (eventQuery.dir ?? NATURAL_DIR[order]) === "asc" ? 1 : -1;
+    // HOW MUCH IT DOES (owner 2026-09-23, AN3): each cause's list ships best doer first
+    // (`effectOrder` in the build), so a card's place in it IS the measurement. Asked two causes,
+    // the WEAKER place governs -- a card has to do both, and doing one superbly does not make up
+    // for doing the other badly. CEILING: a fraction of each list's length, so a long list and a
+    // short one weigh alike; the upgrade path is shipping the order's own keys.
+    const place = order !== "effect" ? null : (() => {
+      const at = eventQuery.produce.map((k) => {
+        const p = lists.get(k)?.p ?? [];
+        return new Map(p.map((id, i) => [id, i / p.length] as const));
+      });
+      return (e: NameIndexEntry): number => Math.max(...at.map((m) => m.get(positionOf.get(e) ?? -1) ?? 1));
+    })();
     // A MISSING NUMBER SORTS LAST IN EITHER DIRECTION: a card that prints no power (the index omits
     // `*` and `X` the same way) is not a zero, and turning the order round must not bring the
     // unprinted to the top. Ties fall back to the name, A to Z, whichever way the order runs.
@@ -298,13 +312,14 @@ export function CardSearch({
         return sign * (av - bv) || byName(a, b);
       };
     return [...kept].sort(
-      order === "name" ? (a, b) => sign * byName(a, b)
+      place ? (a, b) => -sign * (place(a) - place(b)) || (b.partners ?? 0) - (a.partners ?? 0) || byName(a, b)
+        : order === "name" ? (a, b) => sign * byName(a, b)
         : order === "mv" ? byNumber((e) => e.mv ?? 0)
         : order === "pow" ? byNumber((e) => e.pow)
         : order === "tou" ? byNumber((e) => e.tou)
         : byNumber((e) => e.partners ?? 0),
     );
-  }, [index, keptIds, needle, query, colours, commanderMode, mode, asked, eventQuery, vocabulary]);
+  }, [index, keptIds, needle, query, colours, commanderMode, mode, asked, eventQuery, vocabulary, lists, positionOf]);
 
   // WHAT THE PICKERS OFFER, AND WHAT EACH ROW COSTS TO SAY.
   //
@@ -708,12 +723,14 @@ export function CardSearch({
                   <span className="eyebrow">Order</span>
                   <select
                     className="field w-40"
-                    value={eventQuery.sort ?? "partners"}
+                    value={orderOf(eventQuery)}
                     onChange={(e) => {
                       const { dir: _dir, ...rest } = eventQuery;
                       setEvents({ ...rest, sort: e.target.value as EventQuery["sort"] });
                     }}
                   >
+                    {/* OFFERED ONLY WHEN A CAUSE IS ASKED: there is nothing to measure otherwise. */}
+                    {eventQuery.produce.length > 0 && <option value="effect">How much it does</option>}
                     <option value="partners">Connections</option>
                     <option value="mv">Mana value</option>
                     <option value="pow">Power</option>
@@ -725,11 +742,11 @@ export function CardSearch({
                 <select
                   aria-label="Direction"
                   className="field w-36"
-                  value={eventQuery.dir ?? NATURAL_DIR[eventQuery.sort ?? "partners"]}
+                  value={eventQuery.dir ?? NATURAL_DIR[orderOf(eventQuery)]}
                   onChange={(e) => setEvents({ ...eventQuery, dir: e.target.value as EventQuery["dir"] })}
                 >
-                  <option value="desc">{eventQuery.sort === "name" ? "Z to A" : "Highest first"}</option>
-                  <option value="asc">{eventQuery.sort === "name" ? "A to Z" : "Lowest first"}</option>
+                  <option value="desc">{{ name: "Z to A", effect: "Most first" }[orderOf(eventQuery) as string] ?? "Highest first"}</option>
+                  <option value="asc">{{ name: "A to Z", effect: "Least first" }[orderOf(eventQuery) as string] ?? "Lowest first"}</option>
                 </select>
               </div>
             </div>

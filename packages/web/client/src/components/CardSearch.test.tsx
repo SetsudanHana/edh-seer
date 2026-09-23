@@ -780,3 +780,25 @@ test("a query past the cap offers the next page, and the count line follows", as
   expect(screen.queryByRole("button", { name: /Show \d+ more/ })).toBeNull();
   expect(screen.queryByText(/showing the first/)).toBeNull();
 });
+
+/** HOW MUCH IT DOES IS THE DEFAULT ORDER OF A CAUSE (owner 2026-09-23, AN3). The build ships each
+ *  cause's list best doer first; the page follows that list, not the partner count -- Ashnod's
+ *  Altar was 242nd on "sacrifices a creature" under the count. Connections is one choice away. */
+test("a cause lists its cards in the order the build ranked them, and Connections undoes it", async () => {
+  const ranked = async (_base: string, key: string): Promise<EventMembers | null> =>
+    key === MILL ? { p: [2, 1], c: [] } : MEMBERS[key] ?? null;
+  const connected = INDEX2.map((e) => ({ ...e, partners: e.slug === "inspiring-call" ? 9 : 1 }));
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}`, { members: ranked, load: async () => connected });
+  await screen.findByRole("link", { name: /Skullclamp/ });
+  const names = () => within(screen.getByRole("list", { name: "Results" })).getAllByRole("link").map((l) => l.textContent);
+  expect(names()[0]).toMatch(/Skullclamp/);
+  expect(screen.getByLabelText("Order")).toHaveValue("effect");
+  await userEvent.selectOptions(screen.getByLabelText("Order"), "partners");
+  await waitFor(() => expect(names()[0]).toMatch(/Inspiring Call/));
+});
+
+test("with no cause asked there is nothing to measure, so the order is not offered", async () => {
+  atUrl(`/cards?consume=${encodeURIComponent(DIES)}`);
+  await screen.findByRole("link", { name: /Fathom Mage/ });
+  expect(within(screen.getByLabelText("Order")).queryByRole("option", { name: "How much it does" })).toBeNull();
+});

@@ -57,11 +57,12 @@ export interface EventQuery {
   powMax?: number;
   touMin?: number;
   touMax?: number;
-  /** How the kept rows are ordered. `partners` is the artifact's own order (best connected first)
-   *  and stays the default -- the sort exists so a reader can ESCAPE that ranking, not because it
-   *  is wrong. The deck-build run's complaint: rare events outranked good cards, so it found
-   *  staples "only by already knowing their names and typing them in". */
-  sort?: "partners" | "mv" | "name" | "pow" | "tou";
+  /** How the kept rows are ordered. Absent means `orderOf`'s default. `effect` is HOW MUCH THE
+   *  CARD DOES at what it was asked to cause (owner 2026-09-23, AN3): the deck-build run found rare
+   *  events outranking good cards -- Ashnod's Altar 242nd on "sacrifices a creature" -- and reached
+   *  staples "only by already knowing their names and typing them in". `partners` is the artifact's
+   *  own order, best connected first. */
+  sort?: "effect" | "partners" | "mv" | "name" | "pow" | "tou";
   /** Which end comes first. Absent means the order's own natural direction (`NATURAL_DIR`), so a
    *  link written before the control existed still reads the way it did. */
   dir?: "asc" | "desc";
@@ -70,8 +71,17 @@ export interface EventQuery {
 /** EACH ORDER'S NATURAL END. Connections, power and toughness read biggest first; mana value
  *  cheapest first; names A to Z. The URL carries `dir` only when the reader turned it round. */
 export const NATURAL_DIR: Record<NonNullable<EventQuery["sort"]>, "asc" | "desc"> = {
-  partners: "desc", mv: "asc", name: "asc", pow: "desc", tou: "desc",
+  effect: "desc", partners: "desc", mv: "asc", name: "asc", pow: "desc", tou: "desc",
 };
+
+/** THE ORDER A QUERY READS IN. A CAUSE IS MEASURED: asked what a card causes, the default is how
+ *  much it does. With no cause there is nothing to measure, so `effect` -- the default or a link
+ *  carrying it -- reads as connections rather than as an order with no input. */
+export function orderOf(q: EventQuery): NonNullable<EventQuery["sort"]> {
+  const measured = q.produce.length > 0;
+  const order = q.sort ?? (measured ? "effect" : "partners");
+  return order === "effect" && !measured ? "partners" : order;
+}
 
 /** REPEATED PARAMS, NEVER A JOINED LIST. 274 of the 1,187 keys contain a comma
  *  (`fills|creature,enchantment|-|-`, measured 2026-09-19), so a split cannot recover what a join
@@ -79,7 +89,7 @@ export const NATURAL_DIR: Record<NonNullable<EventQuery["sort"]>, "asc" | "desc"
  *
  *  `does` AND `theme` ARE NOT READ. An old link carrying them lands on an unfiltered page, which
  *  is a smaller lie than answering a question the vocabulary no longer has. */
-const SORTS = new Set(["partners", "mv", "name", "pow", "tou"]);
+const SORTS = new Set(["effect", "partners", "mv", "name", "pow", "tou"]);
 
 /** ONE BOUND OUT OF THE URL. A BAD ONE IS NO FILTER, NOT ZERO: `?mvmax=abc` reading as "at most 0
  *  mana" would answer a question nobody asked with a confident empty list. Zero itself IS allowed,
@@ -136,9 +146,11 @@ export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchPara
     ["powmax", q.powMax], ["toumin", q.touMin], ["toumax", q.touMax],
   ] as const) if (v !== undefined) out.set(name, String(v));
   // THE DEFAULT IS NOT WRITTEN DOWN. `?sort=partners` in every shared link is noise, and it would
-  // pin the order against a future change of default.
-  if (q.sort && q.sort !== "partners") out.set("sort", q.sort);
-  if (q.dir && q.dir !== NATURAL_DIR[q.sort ?? "partners"]) out.set("dir", q.dir);
+  // pin the order against a future change of default. The default depends on the query (a cause
+  // makes it `effect`), so it is compared against the query's own.
+  const def = q.produce.length > 0 ? "effect" : "partners";
+  if (q.sort && q.sort !== def) out.set("sort", q.sort);
+  if (q.dir && q.dir !== NATURAL_DIR[orderOf(q)]) out.set("dir", q.dir);
   return out;
 }
 

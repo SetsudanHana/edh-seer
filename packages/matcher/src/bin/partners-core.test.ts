@@ -5,7 +5,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
-  supplyForms, supplyKeysOf, themesOf, inIdentityOf, identityMask, splitKey, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf,
+  supplyForms, supplyKeysOf, themesOf, inIdentityOf, identityMask, splitKey, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf, effectOrder,
 } from "./partners-core.js";
 
 /** THE CORPUS COUNT ALONE. `supplyBuckets` splits every key by colour identity (AJ5); the rules
@@ -1776,4 +1776,61 @@ test("an ability row carries its clause, and an implied row does not", () => {
     kind: "static", effect: { kind: "graveyard-recursion" },
   }] as unknown as CardTags["abilities"]);
   for (const r of abilityRowsOf(implied)) expect(r.clause).toBeUndefined();
+});
+
+/** HOW MUCH THE CARD DOES, the order an event's causers ship in (owner 2026-09-23, AN3/AK3): how
+ *  often first, then what each time yields per mana, then what it costs besides mana. */
+const doer = (name: string, manaCost: string, abilities: unknown[]): DeckCard => ({
+  card: { name, manaCost, manaValue: (manaCost.match(/\{(\d+)\}/)?.[1] ? Number(manaCost.match(/\{(\d+)\}/)![1]) : 0) + (manaCost.match(/\{[WUBRG]\}/g) ?? []).length },
+  tags: { characteristics: { types: ["artifact"], subtypes: [], keywords: [] }, abilities },
+}) as unknown as DeckCard;
+const sac = { verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } };
+const draws = (amount: string) => ({ effect: { kind: "draw-card", subject: { control: "you" } }, amount, emits: [{ verb: "draw", subject: { control: "you", token: null } }] });
+const rank = (key: string, cards: DeckCard[]): string[] => [...cards].sort(effectOrder(key)).map((d) => d.card.name);
+
+test("a free outlet you use at will outranks a once-a-round one (a loyalty ability before a paid tap), and all outrank a one-shot", () => {
+  const ashnod = doer("Ashnod's Altar", "{3}", [{ kind: "activated", cost: "Sacrifice a creature", repeats: "repeatable", effect: { kind: "mana-generation" }, emits: [sac] }]);
+  const post = doer("Trading Post", "{4}", [{ kind: "activated", cost: "{1}, {T}, Sacrifice a creature", repeats: "per-cycle", effect: { kind: "graveyard-recursion" }, emits: [sac] }]);
+  const walker = doer("Grist", "{1}{B}{G}", [{ kind: "activated", cost: "\u22122", repeats: "per-cycle", effect: { kind: "" }, emits: [sac] }]);
+  const victimize = doer("Victimize", "{2}{B}", [{ kind: "on-cast", repeats: "once", effect: { kind: "graveyard-recursion" }, emits: [sac] }]);
+  // Sacrificing ITSELF is not an outlet, however often it happens (Boneshard Slasher, Pitchstone Wall).
+  const self = doer("Pitchstone Wall", "{2}{R}", [{ kind: "triggered", repeats: "repeatable", effect: { kind: "" }, emits: [{ ...sac, subject: { ...sac.subject, self: true } }] }]);
+  expect(rank("sacrifice|creature|-|-", [victimize, self, post, walker, ashnod]))
+    .toEqual(["Ashnod's Altar", "Grist", "Trading Post", "Victimize", "Pitchstone Wall"]);
+});
+
+test("within one frequency, more for the same mana first: draw three before draw two", () => {
+  const three = doer("Draw Three", "{2}{U}", [{ kind: "on-cast", repeats: "once", ...draws("3") }]);
+  const two = doer("Draw Two", "{2}{U}", [{ kind: "on-cast", repeats: "once", ...draws("2") }]);
+  const arena = doer("Arena", "{1}{B}{B}", [{ kind: "triggered", repeats: "per-cycle", trigger: { verbs: ["upkeep"], subject: { control: "you" } }, ...draws("1") }]);
+  expect(rank("draw|-|-|-", [two, three, arena])).toEqual(["Arena", "Draw Three", "Draw Two"]);
+});
+
+test("a cost that is not the asked event is a price: pay mana before paying a creature for the draw", () => {
+  const paid = doer("Paid", "{2}", [{ kind: "activated", cost: "{1}", repeats: "repeatable", ...draws("1") }]);
+  const eats = doer("Greater Good", "{2}{G}{G}", [{ kind: "activated", cost: "Sacrifice a creature", repeats: "repeatable", ...draws("1") }]);
+  expect(rank("draw|-|-|-", [eats, paid])).toEqual(["Paid", "Greater Good"]);
+});
+
+/** AT WILL MEANS FREE (owner 2026-09-23). A paid activation is capped by the mana you have, about
+ *  one real use a turn cycle, so it ranks with the once-a-round abilities and NOT above them: Jade
+ *  Mage's {2}{G} token sat above Krenko before this, and Mystic Archaeologist above Phyrexian Arena. */
+test("a paid at-will activation ranks with the once-a-round ones, below a free at-will one", () => {
+  const goblin = { verb: "create-token", subject: { control: "you", token: true, type: "creature" } };
+  const tokens = (amount: string) => ({ effect: { kind: "token-generation", subject: { control: "you" } }, amount, emits: [goblin] });
+  const free = doer("Free Maker", "{3}", [{ kind: "activated", cost: "Pay 1 life", repeats: "repeatable", ...tokens("1") }]);
+  const jade = doer("Jade Mage", "{1}{G}", [{ kind: "activated", cost: "{2}{G}", repeats: "repeatable", ...tokens("1") }]);
+  const tapper = doer("Tapper", "{2}{R}", [{ kind: "activated", cost: "{T}", repeats: "per-cycle", ...tokens("2") }]);
+  const once = doer("Once", "{2}", [{ kind: "on-cast", repeats: "once", ...tokens("3") }]);
+  // "Pay 1 life" is a price that is not the asked event, so Free Maker is NOT free: it drops too.
+  expect(rank("create-token|creature|-|t", [once, jade, free, tapper])[3]).toBe("Once");
+  const trulyFree = doer("Truly Free", "{3}", [{ kind: "activated", cost: "{Q}", repeats: "repeatable", ...tokens("1") }]);
+  expect(rank("create-token|creature|-|t", [tapper, jade, trulyFree])[0]).toBe("Truly Free");
+  expect(rank("create-token|creature|-|t", [jade, tapper])).toEqual(["Tapper", "Jade Mage"]);
+});
+
+test("an X activation is priced on its fixed pips, not sunk below every fixed cost", () => {
+  const x = doer("X Maker", "{2}", [{ kind: "activated", cost: "{X}, {T}", repeats: "per-cycle", effect: { kind: "" }, emits: [sac] }]);
+  const fixed = doer("Fixed", "{2}", [{ kind: "activated", cost: "{3}, {T}", repeats: "per-cycle", effect: { kind: "" }, emits: [sac] }]);
+  expect(rank("sacrifice|creature|-|-", [fixed, x])).toEqual(["X Maker", "Fixed"]);
 });

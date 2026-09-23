@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { coloursFit, eventsFromParams, eventsToParams, intersect, rateLabel, compileCharacteristics, filterKindsOf, withoutFilterKind, type EventQuery } from "./facets.js";
+import { coloursFit, eventsFromParams, eventsToParams, orderOf, intersect, rateLabel, compileCharacteristics, filterKindsOf, withoutFilterKind, type EventQuery } from "./facets.js";
 
 /** THE SEARCH IS ASKED IN EVENTS (spec 2026-09-19): repeated params because a key can carry a
  *  comma, everything ANDs, and identity is fits-in on Cards and exact on Commanders. */
@@ -416,4 +416,22 @@ describe("a colour question against an artifact that cannot answer it", () => {
   test("no colour chosen filters nothing, on either artifact", () => {
     expect(compileCharacteristics(ask({}), { ...vocab, colours: false })({})).toBe(true);
   });
+});
+
+/** HOW MUCH IT DOES IS THE ORDER OF A CAUSE (owner 2026-09-23, AN3). Asked for what a card causes,
+ *  the list reads best doer first; asked nothing a card causes, there is nothing to measure. */
+test("a cause makes 'how much it does' the order, and only a departure from it is written", () => {
+  const cause: EventQuery = { produce: ["sacrifice|creature|-|-"], consume: [], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] };
+  expect(orderOf(cause)).toBe("effect");
+  expect(eventsToParams(cause, new URLSearchParams()).get("sort")).toBeNull();
+  // Connections is no longer the default here, so choosing it has to survive a reload.
+  const connections = eventsToParams({ ...cause, sort: "partners" }, new URLSearchParams());
+  expect(connections.get("sort")).toBe("partners");
+  expect(orderOf(eventsFromParams(connections))).toBe("partners");
+});
+
+test("with no cause asked, 'how much it does' falls back to connections, even off a link", () => {
+  const none: EventQuery = { produce: [], consume: ["dies|creature|-|-"], colours: [], types: [], subtypes: [], keywords: [], cardColours: [] };
+  expect(orderOf(none)).toBe("partners");
+  expect(orderOf(eventsFromParams(new URLSearchParams("consume=dies%7Ccreature%7C-%7C-&sort=effect")))).toBe("partners");
 });
