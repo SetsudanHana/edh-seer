@@ -18,6 +18,9 @@ interface CardEntry {
   card: CardDoc;
   tags: CardTags | null;
   combos: ComboDoc[];
+  /** Partner positions in the name index + scores (spec 2026-09-24 deck suggestions, §1). Absent on
+   *  a card with none. */
+  pi?: [number, number][];
 }
 
 /** A shard file: every card name that hashes into it, keyed by name. */
@@ -63,6 +66,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *  always wins; this only answers what it does not. */
   private readonly byAlias = new Map<string, CardDoc>();
   private readonly byId = new Map<string, CardTags | null>();
+  private readonly piByName = new Map<string, readonly (readonly [number, number])[]>();
   private readonly combos: ComboDoc[] = [];
   private manifestPromise: Promise<string> | null = null;
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
@@ -183,6 +187,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
         const entry = file[n];
         if (!entry) { this.byName.set(n, null); continue; }
         this.byName.set(n, entry.card);
+        this.piByName.set(n, entry.pi ?? []);
         // Every name this card answers to, so a later lookup by any of them hits without a second
         // request. The entry is the same object under every one of its names in the build, so the
         // card, its tags and its combos are all already here.
@@ -193,6 +198,13 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
         for (const c of entry.combos ?? []) this.combos.push(c);
       }
     }));
+  }
+
+  /** THE REPORT'S CANDIDATE POOL, one card's worth: read from the shard `prefetch` already fetched,
+   *  so the suggestions cost the report no request. Null = never prefetched, or no such card. */
+  partnerIds(normalized: string): readonly (readonly [number, number])[] | null {
+    if (!this.byName.get(normalized)) return null;
+    return this.piByName.get(normalized) ?? [];
   }
 
   async findByName(normalized: string): Promise<CardDoc | null> {

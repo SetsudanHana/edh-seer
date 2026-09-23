@@ -279,3 +279,19 @@ test("the frequency file carries both directions and the identity split, and a m
   const missing = new StaticLookup("/static", fetchOf({ "/static/manifest.json": { version: VERSION } }));
   expect(await missing.eventFrequency()).toEqual({ supply: {}, consume: {}, byIdentity: {} });
 });
+
+/** THE REPORT'S CANDIDATE POOL (spec 2026-09-24 deck suggestions, §1): `pi` rides in the card shard
+ *  the report already prefetched, so reading it costs no request. */
+test("partnerIds reads the pi field of a prefetched card and is null for an unknown name", async () => {
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ krenko: { ...CARD, pi: [[4, 0.273], [9, 0.196]] } })));
+  await l.prefetch(["krenko", "not a card"]);
+  expect(l.partnerIds("krenko")).toEqual([[4, 0.273], [9, 0.196]]);
+  expect(l.partnerIds("not a card")).toBeNull();
+  expect(l.partnerIds("never prefetched")).toBeNull();
+});
+
+test("a card entry without pi reads as no partners, not as unknown", async () => {
+  const l = new StaticLookup("/static", fetchOf(shardsOf({ krenko: CARD })));
+  await l.prefetch(["krenko"]);
+  expect(l.partnerIds("krenko")).toEqual([]);
+});
