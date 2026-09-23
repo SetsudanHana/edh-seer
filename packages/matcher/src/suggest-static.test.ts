@@ -27,11 +27,12 @@ const tremorsAbilities = [{
   effect: { kind: "deal-damage" },
 }];
 
-interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[] }
+interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[]; tokenParts?: true }
 const entry = (s: Spec, pi?: [number, number][]) => ({
   card: {
     _id: `id-${s.name}`, name: s.name, typeLine: s.types.join(" "), oracleText: "", keywords: [], colors: s.identity,
     manaValue: 3, colorIdentity: s.identity, power: null, toughness: null, searchNames: [normalizeName(s.name)],
+    ...(s.tokenParts ? { allParts: [{ component: "token", name: "Goblin", typeLine: "Token Creature — Goblin" }] } : {}),
   },
   tags: {
     oracleId: `id-${s.name}`, schemaVersion: 1, promptVersion: 1, model: "t",
@@ -65,16 +66,16 @@ const PI: Record<string, [number, number][]> = {
   "Goblin Maker": [[0, 0.2], [3, 0.1], [4, 0.1]],
 };
 
-function files(): Record<string, unknown> {
+function files(specs: Spec[] = SPECS): Record<string, unknown> {
   const out: Record<string, Record<string, unknown>> = {};
-  for (const s of SPECS) {
+  for (const s of specs) {
     const key = normalizeName(s.name);
     const path = `/static/${VERSION}/cards/${shardOf(key)}.json`;
     out[path] = { ...(out[path] ?? {}), [key]: entry(s, PI[s.name]) };
   }
   return {
     "/static/manifest.json": { version: VERSION },
-    [`/static/${VERSION}/name-index.json`]: { types: TYPES, subtypes: [], keywords: [], cards: SPECS.map(indexRow) },
+    [`/static/${VERSION}/name-index.json`]: { types: TYPES, subtypes: [], keywords: [], cards: specs.map(indexRow) },
     [`/static/${VERSION}/event-frequency.json`]: { supply: {}, consume: {}, byIdentity: {} },
     ...out,
   };
@@ -120,5 +121,22 @@ test("lands, off-colour cards and pairs the live engine does not draw are nowher
   expect(everywhere).not.toContain("Black Tremors");        // mono-red commander this time
   expect(everywhere).not.toContain("Unrelated Rock");       // in the pool, but no live reason: a stale pair
   expect(warn).toHaveBeenCalled();
+  warn.mockRestore();
+});
+
+/** A TOKEN MAKER'S EDGE, AS A CARD PAGE DRAWS IT. The report routes Krenko -> Impact Tremors
+ *  through a Goblin token NODE and drops the direct edge (`tokensMediate`); a suggestion has no
+ *  token node, exactly like a card page, so verification must ask the way `partners-core` does or
+ *  every token maker's partner reads as a stale pair. Found by the A-vs-B run (Ugin, the Ineffable;
+ *  Eldrazi Confluence; Woodland Champion). */
+test("a token maker's partner is verified the way a card page draws it, not dropped as stale", async () => {
+  // GOBLIN MAKER AS AN ENCHANTMENT: a creature maker's own body entering would supply Tremors on its
+  // own and hide the dropped token edge.
+  const withTokens = SPECS.map((s) => (s.abilities !== krenkoAbilities ? s
+    : { ...s, tokenParts: true as const, ...(s.name === "Goblin Maker" ? { types: ["enchantment"] } : {}) }));
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const s = await suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files(withTokens)) });
+  const tremors = s.plan.find((c) => c.name === "Impact Tremors");
+  expect(tremors?.connections).toContain("Goblin Maker");
   warn.mockRestore();
 });

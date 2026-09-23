@@ -5,8 +5,8 @@
  *  same static artifacts. The candidate pool is each deck card's `pi` (partner positions riding in
  *  the `cards/` shards the report already prefetched), ranked by `suggest.ts`.
  *
- *  THE ENGINE HAS THE LAST WORD. Every row shown carries reasons from `directedReasons`, run here
- *  exactly as the report runs it. A pool candidate the live engine draws nothing for is DROPPED --
+ *  THE ENGINE HAS THE LAST WORD. Every row shown carries reasons from `directedReasons`, asked the
+ *  way a card page asks it (a pair, no token nodes). A pool candidate the live engine draws nothing for is DROPPED --
  *  only a stale artifact produces one, and a card with no reason under it is a claim with nothing
  *  behind it. Unmet-demand candidates, which come from an over-collecting key filter, are shown only
  *  when the engine finds a reason from them to a deck card. */
@@ -101,6 +101,10 @@ type Verify = (candidate: IndexCard, against: readonly string[], producerOnly: b
  *  for an unmet demand the candidate must SUPPLY -- and keep the deck cards it draws a reason with. */
 function verifier(dc: (name: string) => Promise<DeckCard | null>): Verify {
   const h = loadHierarchy();
+  // NO TOKEN NODE EXISTS HERE, exactly as on a card page: the report drops a maker's direct "a token
+  // enters" edge for the two-hop path through the token node, and a suggestion has no node to carry
+  // that hop -- so ask the way `partners-core` asks, or every token maker's partner reads as stale.
+  const opts = { tokensMediate: false };
   return async (candidate, against, producerOnly) => {
     const y = await dc(candidate.name);
     if (!y) return null;
@@ -110,8 +114,8 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>): Verify {
       const x = await dc(name);
       if (!x) continue;
       const found = producerOnly
-        ? directedReasons(y, x, h)
-        : [...directedReasons(x, y, h), ...directedReasons(y, x, h)];
+        ? directedReasons(y, x, h, opts)
+        : [...directedReasons(x, y, h, opts), ...directedReasons(y, x, h, opts)];
       if (found.length === 0) continue;
       connections.push(name);
       for (const r of found) if (!reasons.includes(r.text)) reasons.push(r.text);
