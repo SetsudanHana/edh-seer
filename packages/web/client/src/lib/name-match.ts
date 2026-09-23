@@ -1,4 +1,4 @@
-import { slugOf } from "@edh-seer/matcher/partners-core";
+import { slugOf } from "@edh-seer/matcher/slug";
 import type { NameIndexEntry } from "./partners.js";
 
 /** ONE MATCHING RULE, read by the header field and the Cards page alike (spec 2026-09-08 part 1).

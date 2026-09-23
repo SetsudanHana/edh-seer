@@ -1,7 +1,6 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.js";
-import { Calibrate } from "./components/Calibrate.js";
 // VENDOR CSS FIRST, OURS SECOND. mana's own @font-face for the "Mana" family does not mention
 // woff2 (its src list is eot, woff, ttf, svg), so `index.css` redeclares the family -- and for one
 // family the LAST matching @font-face wins, which is only true if this import comes first.
@@ -23,7 +22,8 @@ import { headerHidden } from "./lib/header-hide.js";
 // `#calibrate` STAYS A HASH VIEW, and stays outside the router: it is a local dev tool (mounted
 // only under `MTG_CALIBRATE=1`), not a surface of the product, and it has nothing under it to
 // route to. The report's own router lives inside `App`, over the report only.
-const view = window.location.hash === "#calibrate" ? <Calibrate /> : <App />;
+const Calibrate = lazy(() => import("./components/Calibrate.js").then((m) => ({ default: m.Calibrate })));
+const view = window.location.hash === "#calibrate" ? <Suspense fallback={null}><Calibrate /></Suspense> : <App />;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>{view}</React.StrictMode>,
@@ -34,6 +34,23 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // and the module was refused on its MIME type -- nothing in this file runs, so the page cannot heal
 // itself from here. The shell can, and it needs exactly one fact from us: that we got this far.
 (window as unknown as { __appBooted?: boolean }).__appBooted = true;
+
+// A LAZY CHUNK FROM A DEPLOY THAT NO LONGER EXISTS. The pages load on demand (2026-09-23), so a tab
+// opened before a deploy asks for the OLD chunk hashes when the reader clicks into a card -- and
+// Pages answers a missing path with the HTML shell, which the module loader refuses. With no error
+// boundary that unmounted the whole app. Vite fires `vite:preloadError` for exactly this (a failed
+// preload or a failed import); the answer is the new deploy, so reload. NOT TWICE IN TEN SECONDS:
+// a chunk that is missing from the CURRENT deploy would otherwise reload forever, and letting that
+// error through is the honest failure.
+window.addEventListener("vite:preloadError", (event) => {
+  try {
+    const last = Number(sessionStorage.getItem("edh-chunk-reload") ?? 0);
+    if (Date.now() - last < 10_000) return;
+    sessionStorage.setItem("edh-chunk-reload", String(Date.now()));
+  } catch { return; }
+  event.preventDefault();
+  location.reload();
+});
 
 // AND THE SAME FACT AS AN ATTRIBUTE, so CSS can act on it. The shell carries two blocks of static
 // content that exist for readers WITHOUT JavaScript -- the crawler block a Pages Function injects
@@ -47,7 +64,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 // list. Caught in a screenshot: a blank page under the header. The same rule, once, from the path.
 const path = location.pathname;
 document.documentElement.dataset.route = path === "/" ? "home" : path.startsWith("/browse/") ? "browse" : "page";
-document.documentElement.dataset.appBooted = "1";
+// THE BOOT FLAG ITSELF IS SET BY `AppBooted` IN `App.tsx`, once the lazy page has rendered. The
+// calibration view has no routes and no prerendered block, so it is booted as soon as it runs.
+if (window.location.hash === "#calibrate") document.documentElement.dataset.appBooted = "1";
 
 /** THE STICKY SITE HEADER'S HEIGHT, INTO `--site-header-h`.
  *

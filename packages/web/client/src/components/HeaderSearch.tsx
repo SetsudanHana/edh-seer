@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import { useListboxKeys } from "../lib/listbox-keys.js";
 import { matchNames } from "../lib/name-match.js";
-import { sharedNameIndex, type NameIndexEntry } from "../lib/partners.js";
-import { CardSymbol } from "./CardSymbol.js";
-import { ManaSymbols } from "./ManaSymbols.js";
+import type { NameIndexEntry } from "../lib/partners.js";
 
 /** SEARCH IN THE HEADER, ON EVERY APP PAGE (spec 2026-09-08 part 1).
  *
@@ -29,8 +27,21 @@ const optId = (i: number): string => `site-search-opt-${i}`;
 // Module-level, so the default is one stable function and the mount effect runs once, not per render.
 const defaultHost = (): Element | null => document.querySelector(".site-header");
 
+/* NOTHING HERE IS NEEDED UNTIL THE FIELD IS FOCUSED, and it all sat in the entry chunk: `partners.js`
+ * pulls `@edh-seer/matcher/static-lookup` (edges, sentences, partner shards) and the two symbol
+ * components pull the mana-font tables -- on every page view, for a field most never use. The index
+ * is fetched on first focus anyway, so the code travels with it: `defaultLoad` starts all three
+ * imports together, and the rows that need the symbols cannot render before the index arrives. */
+const ManaSymbols = lazy(() => import("./ManaSymbols.js").then((m) => ({ default: m.ManaSymbols })));
+const CardSymbol = lazy(() => import("./CardSymbol.js").then((m) => ({ default: m.CardSymbol })));
+const defaultLoad = (baseUrl: string): Promise<NameIndexEntry[]> => {
+  void import("./ManaSymbols.js");
+  void import("./CardSymbol.js");
+  return import("../lib/partners.js").then((m) => m.sharedNameIndex(baseUrl));
+};
+
 export function HeaderSearch({
-  load = sharedNameIndex,
+  load = defaultLoad,
   host = defaultHost,
 }: {
   load?: (baseUrl: string) => Promise<NameIndexEntry[]>;
@@ -154,7 +165,9 @@ export function HeaderSearch({
                 {/* The pips repeat the identity a sighted reader gets from colour; the name and the
                   *  commander MARK are the accessible content of the row. */}
                 <span className="site-search-id" aria-hidden="true">
-                  <ManaSymbols cost={e.identity.length > 0 ? e.identity.map((c) => `{${c}}`).join("") : "{C}"} />
+                  <Suspense fallback={null}>
+                    <ManaSymbols cost={e.identity.length > 0 ? e.identity.map((c) => `{${c}}`).join("") : "{C}"} />
+                  </Suspense>
                 </span>
                 {/* THE MARK IS CHROME, NOT PROSE, AND THIS IS THE CASE THE RULE NAMED (owner,
                   *  2026-09-20: "if it is part of the whole sentence then do not replace it, but if
@@ -166,7 +179,7 @@ export function HeaderSearch({
                   *  nothing but the card's name and a screen-reader user unable to tell a commander
                   *  from a card. `label` is what turns `CardSymbol` from `aria-hidden` into
                   *  `role="img"`. */}
-                {e.commander && <CardSymbol name="commander" label="Commander" className="site-search-mark" />}
+                {e.commander && <Suspense fallback={null}><CardSymbol name="commander" label="Commander" className="site-search-mark" /></Suspense>}
               </li>
             ))}
           </ul>

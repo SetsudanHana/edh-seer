@@ -1,23 +1,38 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
 import { DeckInput } from "./components/DeckInput.js";
 import { PageFoot } from "./components/PageFoot.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
-import { CardPage } from "./components/CardPage.js";
 import { RouteMarker } from "./components/RouteMarker.js";
 import { HeaderSearch } from "./components/HeaderSearch.js";
-import { CardSearch } from "./components/CardSearch.js";
-import { CommanderPage } from "./components/CommanderPage.js";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
-import { ReportView } from "./components/ReportView.js";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
-import { clearLastRun, diffRuns, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun, snapshotRun, type RunDiff } from "./lib/run-diff.js";
+import { clearLastRun, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun } from "./lib/run-store.js";
+import type { RunDiff } from "./lib/run-diff.js";
 import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share-link.js";
 import { searchWithState, stateFromSearch } from "./lib/game-state.js";
 import type { GameState } from "@edh-seer/engine";
 import { deckSourceOf, importDeck } from "./lib/deck-import.js";
+
+const CardPage = lazy(() => import("./components/CardPage.js").then((m) => ({ default: m.CardPage })));
+const CardSearch = lazy(() => import("./components/CardSearch.js").then((m) => ({ default: m.CardSearch })));
+const CommanderPage = lazy(() => import("./components/CommanderPage.js").then((m) => ({ default: m.CommanderPage })));
+const ReportView = lazy(() => import("./components/ReportView.js").then((m) => ({ default: m.ReportView })));
+
+/** THE BOOT FLAG, SET WHEN THE PAGE HAS RENDERED -- NOT WHEN THE BUNDLE HAS RUN.
+ *
+ *  `html[data-app-booted] .prerendered { display: none }` hands a card page from the edge's HTML to
+ *  the app. `main.tsx` used to set the flag synchronously, which was right while every page was in
+ *  the entry chunk. The pages are lazy now (2026-09-23, the landing's JavaScript 218 -> 90 KB), so
+ *  that would hide the prerendered block and leave the page blank until `CardPage` downloads. This
+ *  sits INSIDE the routes' `Suspense`, so React commits it only once every route in the boundary has
+ *  resolved: the block stays up until the component that replaces it is on screen. */
+function AppBooted() {
+  useLayoutEffect(() => { document.documentElement.dataset.appBooted = "1"; }, []);
+  return null;
+}
 
 
 /** THE DECK BAR IS REPORT FURNITURE, AND THE BOARD IS THE ONE SURFACE SHORT OF HEIGHT (AL2).
@@ -130,6 +145,11 @@ export default function App() {
     // catch below reopens it, because an error is the one case where the boxes are wanted back.
     setEditing(false);
     try {
+      // THE REPORT'S CODE LOADS WHILE THE ENGINE RUNS. Both are split out of the entry chunk so the
+      // landing page does not download them; starting them here overlaps the fetch with the
+      // analysis instead of adding it after. The browser's module map dedupes the `lazy` import.
+      const runDiff = import("./lib/run-diff.js");
+      void import("./components/ReportView.js");
       // THE CALL KEEPS ITS OLD SHAPE WITHOUT A STATE, so nothing that observed it changes; a state
       // adds the arguments only when the owner set one (roadmap W18).
       const next = Object.keys(stateRef.current).length > 0
@@ -138,6 +158,7 @@ export default function App() {
       // WAS THAT A DECKLIST? `resolvedCount` counts cards the engine actually found, and a real list
       // finds at least one. Everything that outlives the page view is gated on it.
       const looksLikeDeck = next.resolvedCount > 0;
+      const { snapshotRun, diffRuns } = await runDiff;
       const previous = loadLastRun();
       const snapshot = snapshotRun(next);
       setDiff(previous ? diffRuns(previous, snapshot) : null);
@@ -360,6 +381,8 @@ export default function App() {
       *  is the header's, not any page's; a portal, because the header is static HTML. */}
     <HeaderSearch />
     <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
+    <Suspense fallback={null}>
+    <AppBooted />
     <Routes>
       <Route path="/cards" element={<CardSearch />} />
       <Route path="/cards/:slug" element={<CardPage />} />
@@ -476,7 +499,10 @@ export default function App() {
       )}
       {data && (
         <div className="reveal">
-          <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
+          {/* ITS OWN BOUNDARY: suspending in the routes' one would blank the deck bar above it too. */}
+          <Suspense fallback={null}>
+            <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
+          </Suspense>
           {/* THE REPORT ENDS ON PURPOSE. It used to stop at its last panel, and the only route from a
             *  finished report to "how was any of this decided" was the header's More menu; the card
             *  and commander pages have carried this foot since they were built. */}
@@ -489,6 +515,7 @@ export default function App() {
           depend on the bundle loading at all. */}
       </>} />
     </Routes>
+    </Suspense>
     </main>
     </BrowserRouter>
   );

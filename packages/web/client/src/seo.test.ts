@@ -566,6 +566,16 @@ test("the docs page's structured data parses, is a TechArticle, and points at it
  *  2026-09-08). Source order is the property: the route line comes first. */
 test("main.tsx marks the route before it marks the app booted", () => {
   const main = readFileSync(join(CLIENT, "src", "main.tsx"), "utf8");
+  const app = readFileSync(join(CLIENT, "src", "App.tsx"), "utf8");
+  // The route is set synchronously in `main.tsx`; the flag is set from a React layout effect in
+  // `App.tsx` (`AppBooted`), which cannot run before the module that renders it.
   expect(main.indexOf("dataset.route = ")).toBeGreaterThan(-1);
-  expect(main.indexOf("dataset.route = ")).toBeLessThan(main.indexOf('dataset.appBooted = "1"'));
+  // Only the calibration view (no routes, no prerendered block) is flagged from `main.tsx`.
+  expect(main.match(/dataset\.appBooted = "1"/g)).toHaveLength(1);
+  expect(main).toContain('if (window.location.hash === "#calibrate") document.documentElement.dataset.appBooted = "1"');
+  expect(app).toContain('dataset.appBooted = "1"');
+  // AND INSIDE AN OPEN SUSPENSE, so a lazy card page keeps its prerendered block until it renders.
+  const at = app.indexOf("<AppBooted />");
+  expect(at).toBeGreaterThan(-1);
+  expect(app.lastIndexOf("<Suspense", at)).toBeGreaterThan(app.lastIndexOf("</Suspense>", at));
 });

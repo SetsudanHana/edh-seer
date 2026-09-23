@@ -59,7 +59,8 @@ test("typing lists the matches with identity and a commander mark", async () => 
   // replace that"). An `<i>` has no `textContent`, so the row's accessible content is the name plus
   // this image's label -- asserted as the ACCESSIBLE NAME rather than as text, which is the only
   // form that fails if the label is dropped and the glyph left bare. The pips stay `aria-hidden`.
-  expect(within(options[0]!).getByRole("img", { name: "Commander" })).toBeInTheDocument();
+  // Awaited: the symbol components are lazy (the entry chunk split, 2026-09-23).
+  expect(await within(options[0]!).findByRole("img", { name: "Commander" })).toBeInTheDocument();
   expect(options[0]!.textContent).not.toContain("commander");
   expect(field()).toHaveAttribute("aria-expanded", "true");
 });
