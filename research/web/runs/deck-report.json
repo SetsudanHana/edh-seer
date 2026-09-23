@@ -1,11 +1,11 @@
 {
   "surface": "deck-report",
   "baseUrl": "http://localhost:5173",
-  "_deck_note": "ONE DECK PER SEAT, and the picks are NOT free: they come from the fixture table in .claude/agents/README.md, which reasons about each one. precon-party-time is the arbitrary-pasted-deck path plus the bad-deck case (cohesion 0.11); inalla is tuned, so a false alarm is the strong signal, and it serves BOTH the tuner and the phone seat so modality is the only variable between them; sarevok-lord-of-pain is seeded with claims the owner hand-judged FALSE and is the instrument's own calibration. RE-VERIFY THE SEEDING BEFORE EVERY ROUND -- on 2026-09-18 the two claims the README named were gone from a live analysis and two different FALSE ones had survived in their place.",
+  "_deck_note": "ONE DECK PER SEAT, and the picks are NOT free: they come from the fixture table in .claude/agents/README.md, which reasons about each one. precon-party-time is the arbitrary-pasted-deck path plus the bad-deck case (cohesion 0.11); inalla is tuned, so a false alarm is the strong signal, and it serves BOTH the tuner and the phone seat so modality is the only variable between them; yuna-grand-summoner is seeded with a claim the owner hand-judged FALSE and is the instrument's own calibration -- it replaced sarevok-lord-of-pain on 2026-09-20, when a re-verify found sarevok carried NO live FALSE claim at all (its two seeded ones had since been judged REAL by the owner). RE-VERIFY THE SEEDING BEFORE EVERY ROUND -- on 2026-09-18 the two claims the README named were gone from a live analysis and two different FALSE ones had survived in their place.",
   "decks": [
     "packages/cli/decks/precon-party-time.txt",
     "packages/cli/decks/calibration/inalla.txt",
-    "packages/cli/decks/calibration/sarevok-lord-of-pain.txt"
+    "packages/cli/decks/calibration/yuna-grand-summoner.txt"
   ],
   "_goal_note": "Every goal below is phrased the way a PLAYER would say it, never in this tool's vocabulary. A goal written as 'inspect the breadth axis' tests nothing, because it hands the persona the word we are trying to find out whether they know. That is the whole knowledge-ceiling axis, and it is the only axis that has ever produced a persona-specific finding here.",
   "keyScreens": [

@@ -1,0 +1,83 @@
+{
+  "surface": "player-journey",
+  "baseUrl": "http://localhost:5173",
+  "_note": "THE HALF THE deck-report RUN CANNOT SEE: arriving with no deck, getting one in, and the card/commander pages a reader reaches from the header search. No `decks` key on purpose -- the point is the cold, empty, first-visit state, and the deck arrives by TYPING it the way a reader does rather than by a prebuilt hash.",
+  "keyScreens": [
+    {
+      "id": "landing",
+      "path": "/"
+    },
+    {
+      "id": "card",
+      "path": "/cards/sol-ring"
+    },
+    {
+      "id": "commander",
+      "path": "/commanders/sarevok-deathbringer"
+    }
+  ],
+  "steps": [
+    {
+      "id": "arrive",
+      "path": "/",
+      "goal": "work out what this site does and whether it is going to be any use to me"
+    },
+    {
+      "id": "paste",
+      "path": "/",
+      "goal": "get my decklist into it",
+      "acts": [
+        {
+          "waitFor": "textarea[aria-label='Decklist']"
+        },
+        {
+          "type": [
+            "textarea[aria-label='Decklist']",
+            "1 Nalia de'Arnise (CLB) 649 *F*\n1 Arcane Signet (CLB) 298\n1 Archpriest of Iona (CLB) 686\n1 Ash Barrens (CLB) 880\n1 Austere Command (CLB) 687\n1 Aven Mindcensor (CLB) 688\n1 Black Market Connections (CLB) 669\n1 Bloodsoaked Champion (CLB) 740\n1 Bojuka Bog (CLB) 882\n1 Burakos, Party Leader (CLB) 653 *F*\n1 Butcher of Malakir (CLB) 741\n1 Bygone Bishop (CLB) 689\n1 Calculating Lich (CLB) 742\n1 Castle Locthwain (CLB) 884\n1 Changeling Outcast (CLB) 743\n1 Command Tower (CLB) 351\n1 Corpse Augur (CLB) 744\n1 Crib Swap (CLB) 690\n1 Deep Gnome Terramancer (CLB) 658\n1 Despark (CLB) 841\n1 Dire Fleet Ravager (CLB) 749\n1 Dusk / Dawn (CLB) 691\n1 Eight-and-a-Half-Tails (CLB) 692\n1 Felisa, Fang of Silverquill (CLB) 845\n1 Firja's Retribution (CLB) 846\n1 Folk Hero (CLB) 650 *F*\n1 Frontline Medic (CLB) 693\n1 Galepowder Mage (CLB) 694\n1 Glorious Protector (CLB) 695\n1 Gonti, Lord of Luxury (CLB) 753\n1 Grim Haruspex (CLB) 754\n1 Grim Hireling (CLB) 755\n1 Harper Recruiter (CLB) 659\n1 High Priest of Penance (CLB) 848\n1 Irregular Cohort (CLB) 696\n1 Jazal Goldmane (CLB) 697\n1 Mage's Attendant (CLB) 698\n1 Magus of the Balance (CLB) 699\n1 Malakir Blood-Priest (CLB) 760\n1 Mardu Strike Leader (CLB) 761\n1 Maskwood Nexus (CLB) 865\n1 Mikaeus, the Lunarch (CLB) 700\n1 Mindblade Render (CLB) 762\n1 Mirror Entity (CLB) 701\n1 Mortuary Mire (CLB) 900\n1 Mother of Runes (CLB) 702\n1 Multiclass Baldric (CLB) 684\n1 Mutavault (CLB) 903\n1 Myriad Landscape (CLB) 904\n1 Nighthawk Scavenger (CLB) 763\n1 Order of Whiteclay (CLB) 703\n1 Orzhov Basilica (CLB) 906\n1 Orzhov Signet (CLB) 867\n1 Path of Ancestry (CLB) 907\n3 Plains (CLB) 451\n3 Plains (CLB) 452\n2 Plains (CLB) 453\n2 Plains (CLB) 454\n1 Pontiff of Blight (CLB) 768\n1 Priest of Ancient Lore (CLB) 704\n1 Puppeteer Clique (CLB) 769\n1 Rumor Gatherer (CLB) 705\n1 Seasoned Dungeoneer (CLB) 660\n1 Selfless Spirit (CLB) 706\n1 Sevinne's Reclamation (CLB) 707\n1 Shambling Vent (CLB) 914\n1 Skullclamp (CLB) 870\n1 Snowfield Sinkhole (CLB) 915\n1 Sol Ring (CLB) 871\n1 Solemn Doomguide (CLB) 672\n1 Solemn Recruit (CLB) 708\n1 Squad Commander (CLB) 709\n1 Starlit Sanctum (CLB) 917\n1 Stick Together (CLB) 661\n3 Swamp (CLB) 459\n3 Swamp (CLB) 460\n2 Swamp (CLB) 461\n2 Swamp (CLB) 462\n1 Tainted Field (CLB) 919\n1 Talisman of Hierarchy (CLB) 878\n1 Temple of Silence (CLB) 924\n1 Thwart the Grave (CLB) 773\n1 Unbreakable Formation (CLB) 710\n1 Valiant Changeling (CLB) 711\n1 Vault of the Archangel (CLB) 927\n1 War Room (CLB) 929\n1 Windbrisk Heights (CLB) 930\n1 Zulaport Cutthroat (CLB) 775"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "submitted",
+      "goal": "set it going and know that it heard me",
+      "acts": [
+        {
+          "click": "button:has-text('Analyse deck')"
+        }
+      ]
+    },
+    {
+      "id": "arrived",
+      "goal": "see whether it understood the deck I gave it"
+    },
+    {
+      "id": "card-search",
+      "path": "/cards",
+      "goal": "look up one card I am thinking about putting in"
+    },
+    {
+      "id": "card",
+      "path": "/cards/sol-ring",
+      "goal": "find out what this card would actually do for a deck"
+    },
+    {
+      "id": "commander",
+      "path": "/commanders/sarevok-deathbringer",
+      "goal": "work out what sort of deck this commander wants me to build"
+    }
+  ],
+  "measure": [
+    "h1",
+    "h2",
+    "p.eyebrow",
+    ".chip",
+    ".btn-primary",
+    ".btn-secondary",
+    "textarea",
+    "[data-testid='bar-label']",
+    "[data-testid='bar-readout']",
+    "a[href^='/cards/']",
+    "a[href^='/commanders/']"
+  ]
+}
