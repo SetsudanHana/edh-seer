@@ -88,3 +88,75 @@ export function answerList(
     .filter((c) => !exclude.has(c.card.pos) && c.card.answers.includes(cls))
     .sort(bandFirst(costBand)).slice(0, limit);
 }
+
+// ---------------------------------------------------------------------------------------------
+// REPLACEMENT PAIRS (spec §3)
+
+/** A cut-list row, as the pairing needs it: its build leaves and how many deck cards it connects to. */
+export interface CutSide { name: string; roles: readonly string[]; connections: number }
+/** A build group (`buildParents` row) with its cost band. */
+export interface GroupState {
+  name: string;
+  count: number;
+  target: number;
+  leaves: readonly string[];
+  costBand: readonly [number, number];
+}
+export interface CountChange { group: string; from: number; to: number }
+export interface Replacement {
+  cut: string;
+  add: Candidate;
+  rule: "cross-job" | "same-job" | "no-role";
+  counts: CountChange[];
+}
+
+/** THREE RULES, CROSS-JOB CHECKED FIRST (owner 2026-09-24: "if you have too much ramp and lack
+ *  removal you can suggest synergistic removal in replacement of ramp"). Where the cut's group is
+ *  over target and another is short, the swap moves a slot across; otherwise it stays inside its
+ *  job, and a cut with no role takes a plan card.
+ *
+ *  AN ADD MUST OUT-CONNECT THE CUT or there is no pair -- a sideways swap is advice with nothing
+ *  behind it. Each add is used once, and the running counts move with every cross-job pair, so the
+ *  surplus that justified the first swap is not spent twice. */
+export function pairReplacements(
+  cuts: readonly CutSide[], groups: readonly GroupState[],
+  pool: ReadonlyMap<number, Candidate>, plan: readonly Candidate[],
+): Replacement[] {
+  const count = new Map(groups.map((g) => [g.name, g.count] as const));
+  const shortBy = (g: GroupState): number => (g.target - count.get(g.name)!) / g.target;
+  const used = new Set<number>();
+  const firstBetter = (list: readonly Candidate[], than: number): Candidate | undefined =>
+    list.find((c) => !used.has(c.card.pos) && c.connections.length > than);
+  const out: Replacement[] = [];
+  for (const cut of cuts) {
+    const g = groups.find((x) => x.leaves.some((l) => cut.roles.includes(l)));
+    let pick: Replacement | undefined;
+    if (g && count.get(g.name)! > g.target) {
+      const short = groups
+        .filter((u) => u !== g && u.target > 0 && count.get(u.name)! < u.target)
+        .sort((a, b) => shortBy(b) - shortBy(a))[0];
+      const add = short && firstBetter(gapList(pool, short.leaves, short.costBand, Infinity), cut.connections);
+      if (short && add) {
+        const gFrom = count.get(g.name)!;
+        const uFrom = count.get(short.name)!;
+        count.set(g.name, gFrom - 1);
+        count.set(short.name, uFrom + 1);
+        pick = { cut: cut.name, add, rule: "cross-job", counts: [
+          { group: g.name, from: gFrom, to: gFrom - 1 }, { group: short.name, from: uFrom, to: uFrom + 1 }] };
+      }
+    }
+    if (!pick && g) {
+      const add = firstBetter(gapList(pool, g.leaves, g.costBand, Infinity), cut.connections);
+      if (add) pick = { cut: cut.name, add, rule: "same-job", counts: [] };
+    }
+    if (!pick && !g) {
+      const add = firstBetter(plan, cut.connections);
+      if (add) pick = { cut: cut.name, add, rule: "no-role", counts: [] };
+    }
+    if (pick) {
+      used.add(pick.add.card.pos);
+      out.push(pick);
+    }
+  }
+  return out;
+}
