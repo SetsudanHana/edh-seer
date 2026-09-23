@@ -20,6 +20,8 @@ export type BuildCategory =
   | "graveyardHate"
   | "lands";
 
+/** THE ORDER IS A WIRE FORMAT since 2026-09-24: `NameIndexEntry.r` ships indices into it. Append
+ *  only; reordering silently relabels every card's role in a deployed artifact. */
 export const BUILD_CATEGORIES: BuildCategory[] = [
   "ramp", "draw", "cardSelection", "impulseDraw", "targetedRemoval", "stackInteraction", "boardWipe", "burn", "stax", "protection", "tutor", "graveyardHate", "lands",
 ];
