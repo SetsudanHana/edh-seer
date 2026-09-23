@@ -4,9 +4,8 @@
 export interface DeckSections {
   commanders: string[];
   deck: string[];
-  /** CR 702.139, outside the 100. Absent when the source named none -- and absent from every
-   *  Archidekt import today. CEILING: Archidekt's companion shape (category name, includedInDeck)
-   *  has not been measured on a real deck, and guessing it would import a card as the wrong thing. */
+  /** CR 702.139, outside the 100. Absent when the source named none. Moxfield reads its
+   *  `companions` board; Archidekt its per-card `companion` flag (measured 2026-09-23). */
   companions?: string[];
 }
 

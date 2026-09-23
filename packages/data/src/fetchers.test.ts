@@ -250,6 +250,31 @@ test("archidektDeckToSections takes the commander from isPremier, not the catego
   expect(archidektDeckToSections(renamed).commanders).toEqual(["Teysa Karlov"]);
 });
 
+/** THE COMPANION IS A PER-CARD FLAG, `companion: true`, measured on three real Lurrus decks
+ *  (2026-09-23: 24565066, 26277258 flagged; 26631512 not). Not a category: one deck named its
+ *  Companion category `isPremier: true`, which the commander rule would have read as a SECOND
+ *  commander, and the flagged card sat in "Sideboard" -- a category these decks mark
+ *  `includedInDeck: true` and the 2026-09-03 sample marked `false`. Before this, every one of them
+ *  imported a 100-card deck plus a commander, with Lurrus counted into the 99 (CR 702.139: outside). */
+test("archidektDeckToSections takes the companion from its flag, outside the 100", () => {
+  const withCompanion = {
+    ...ARCHIDEKT,
+    categories: [...ARCHIDEKT.categories, { name: "Companion", isPremier: true, includedInDeck: true }],
+    cards: [
+      ...ARCHIDEKT.cards,
+      { quantity: 1, companion: true, categories: ["Sideboard", "Recursion"], card: { oracleCard: { name: "Lurrus of the Dream-Den" } } },
+    ],
+  };
+  const { commanders, deck, companions } = archidektDeckToSections(withCompanion);
+  expect(companions).toEqual(["Lurrus of the Dream-Den"]);
+  expect(commanders).toEqual(["Teysa Karlov"]);
+  expect(deck).not.toContain("Lurrus of the Dream-Den");
+  expect(deck).toHaveLength(10);
+  // An unflagged card in the same place is a guess, and stays out of `companions`.
+  const unflagged = { ...withCompanion, cards: withCompanion.cards.map((c) => ({ ...c, companion: false })) };
+  expect(archidektDeckToSections(unflagged).companions).toBeUndefined();
+});
+
 test("archidektDeckToSections refuses a shape it does not recognise", () => {
   expect(() => archidektDeckToSections({ cards: {} })).toThrow(/cards array/);
   expect(() => archidektDeckToSections({ cards: [{ quantity: 1, categories: [] }] })).toThrow(
