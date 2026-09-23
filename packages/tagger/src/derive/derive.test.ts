@@ -175,6 +175,20 @@ test("a graveyard-recursion effect keeps the zone its subject lives in", () => {
   expect(abilities[0]?.effect.subject?.zone).toBe("graveyard");
 });
 
+test("a STATIC graveyard-recursion keeps its subject, singular or not", () => {
+  // Lurrus of the Dream-Den: "you may cast one permanent spell with mana value 2 or less from your
+  // graveyard". The whole-deck-lord guard dropped the singular subject, and both recursion passes in
+  // edges.ts skip a subjectless recursion, so 66 corpus cards (Lurrus, Karador, Gisa and Geralf,
+  // Gravecrawler) formed no recursion edge at all.
+  const { abilities } = deriveAbilities([{
+    id: 3, abilityType: "static",
+    actions: [{ verb: "cast", object: "a permanent spell with mana value 2 or less", fromZone: "graveyard" }],
+  }]);
+  const rec = abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(rec?.effect.subject).toMatchObject({ zone: "graveyard", umbrella: "permanent" });
+  expect(rec?.effect.subject?.stats).toEqual([{ metric: "mana-value", op: "lte", value: 2 }]);
+});
+
 test("a static ability that does not name WHICH permanents it applies to gets no subject", () => {
   // Psychosis Crawler: "its power and toughness are each equal to the number of cards in your hand"
   // is a self-referential P/T definition, not an anthem. edges.ts matches a static effect subject

@@ -965,6 +965,14 @@ test("a static's reach is a demand key, and a role or a self-reference is not", 
     { kind: "static", effect: { kind: "type-grant", subject: { control: "you", token: null, type: "land", self: true } } },
   ] as unknown as CardTags["abilities"]);
   expect(staticKeysOf(propaganda)).toEqual([]);
+  // A ZONE-SCOPED static reaches no printed card: `staticClaim` fails it in `subjectMatches`, so
+  // Lurrus's graveyard recursion (DERIVE 166 kept the subject) must not become five whole-board keys.
+  const lurrus = base("Lurrus of the Dream-Den", [
+    { kind: "static", effect: { kind: "graveyard-recursion", subject: {
+      control: "you", token: null, type: ["creature", "artifact", "enchantment", "planeswalker", "battle"],
+      umbrella: "permanent", stats: [{ metric: "mana-value", op: "lte", value: 2 }], zone: "graveyard" } } },
+  ] as unknown as CardTags["abilities"]);
+  expect(staticKeysOf(lurrus)).toEqual([]);
   expect(isSubstantive(samut())).toBe(true);
   expect(isSubstantive(propaganda)).toBe(false);
 });
