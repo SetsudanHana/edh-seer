@@ -252,7 +252,7 @@ export function ReasonText({ text, className }: { text: string; className?: stri
   return (
     <span className={className}>
       {unreadEffect(text) ? (
-        <span className="eyebrow text-(--muted) mr-2">engine did not read what it does ·</span>
+        <span className="eyebrow text-(--muted) mr-2">couldn&rsquo;t read this card ·</span>
       ) : null}
       {segments.map((seg, i) =>
         seg.kind === "card" ? <CardName key={i} name={seg.text} />

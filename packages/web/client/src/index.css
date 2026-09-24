@@ -1,5 +1,41 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+/* INTER AND JETBRAINS MONO ARE SELF-HOSTED, the same way Mana is below: npm packages Vite bundles
+   into content-hashed `/assets/`, so the header and the report no longer wait on (or fall back
+   without) fonts.googleapis.com -- measured 2026-09-24, a network that blocked Google rendered the
+   whole site in the platform fallback, and the header's measured widths with it. One variable file
+   per family and subset; `unicode-range` means latin-ext is only fetched for a name that needs it. */
+@font-face {
+  font-family: "Inter";
+  src: url("../../../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("../../../../node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../../../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../../../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-ext-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
 
 /* MANA, THE ICON SET FOR THE ONE DOMAIN LUCIDE DOES NOT COVER (owner, 2026-09-20: "why not
    incorporate mana font? Moxfield uses it, other websites use it as well").
@@ -1205,7 +1241,15 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    that width, and the sentence under the paste box says the same thing at more length. */
 @media (max-width: 30rem) {
   .brand-tagline { display: none; }
-  .site-nav { gap: 0.9rem; }
+  /* ONE ROW AT 390px, MEASURED WITH THE REAL FONTS (2026-09-24). At 0.1em tracking and a 0.9rem
+     gap the four items came to ~341px in 326px of room, so MORE wrapped onto a row of its own and
+     the header stood at ~172px -- a fifth of the screen above every page. Tracking at 0.05em is
+     still visibly letter-spaced caps; the column gap stays well clear of WCAG 2.5.8's spacing. */
+  .site-nav { gap: 0.9rem 0.7rem; letter-spacing: 0.05em; }
+}
+/* 360px phones (the common Android width) need the gap too: 269px of labels in 296px of room. */
+@media (max-width: 23rem) {
+  .site-nav { column-gap: 0.45rem; }
 }
 
 /* WRAP IS THE COST, AND ON A PINNED BAR IT IS THE WHOLE COST. Measured at 390px with the header

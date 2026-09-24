@@ -91,7 +91,7 @@ export function StateControls({ markers, state = {}, onState, edges, busy = fals
           ? `re-reading the deck under ${stateLabel(state) || "no state"}…`
           : any
             ? (edges ? stateSummary(edges, state) : "dashed edges exist because of this state")
-            : "no state set — conditional abilities are off"}
+            : "Nothing toggled: cards that need these aren't counted"}
       </span>
     </div>
   );

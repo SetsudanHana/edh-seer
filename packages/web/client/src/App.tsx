@@ -15,6 +15,7 @@ import { decodeShare, encodeShare, payloadFromHash, shareUrl } from "./lib/share
 import { searchWithState, stateFromSearch } from "./lib/game-state.js";
 import type { GameState } from "@edh-seer/engine";
 import { deckSourceOf, importDeck } from "./lib/deck-import.js";
+import { ReportLoading } from "./components/ReportLoading.js";
 
 const CardPage = lazy(() => import("./components/CardPage.js").then((m) => ({ default: m.CardPage })));
 const CardSearch = lazy(() => import("./components/CardSearch.js").then((m) => ({ default: m.CardSearch })));
@@ -254,6 +255,9 @@ export default function App() {
    *  introduce itself. Named once because the lead above the form and the example-deck button below
    *  it are two halves of the same empty state and must appear and vanish together. */
   const firstVisit = !data && !loading && !fromLink && decklist.trim() === "";
+  // What the loading skeleton names: the same summary the collapsed deck bar prints.
+  const loadingLines = decklist.split("\n").filter((l) => l.trim()).length;
+  const loadingCommander = commanders.split("\n")[0]?.replace(/^\d+\s+/, "").trim() || undefined;
 
   /** A SHARED LINK IS A DECK THAT ANALYSES ITSELF. Anything else -- filling the boxes and waiting for
    *  a click -- makes the recipient do the work the sender already did.
@@ -412,19 +416,20 @@ export default function App() {
         *  crawler reads without running the bundle (`seo.test.ts` asserts it); this pitch is gated
         *  on a first visit and a page whose `h1` comes and goes is worse than one whose `h2` does.
         *
-        *  ABOVE THE FORM, and it replaces nothing: the "load example deck" button stays below,
-        *  where it is an action on the form rather than part of the pitch. Both are gated on the
+        *  ABOVE THE FORM, and it replaces nothing: the "Try an example" button sits in the form's
+        *  own button row, where it is an action on the form rather than part of the pitch. Both are gated on the
         *  same `firstVisit`, so a reader who has pasted anything sees neither. */}
       {firstVisit && (
         <div className="flex flex-col gap-3">
           <h2 className="max-w-[22ch] text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-(--foreground)">
-            Paste a decklist to get an oracle-text synergy read.
+            Paste a decklist and see which cards work together.
           </h2>
           {/* 65ch, and the cap is the whole point: this ran the full width of the container, which
             *  above `xl` is the viewport — 1,376px at 1440, or 156 characters a line against the
             *  45–75 the type rules allow. `.intro p` already caps at 68ch; this one never did. */}
           <p className="max-w-[65ch] text-sm text-(--muted)">
-            Mana curve, land math, role spend, per-card roles, and combos. No account needed.
+            You also get your mana curve, land count, ramp, draw and removal counts, and combos. No
+            account needed.
           </p>
         </div>
       )}
@@ -481,32 +486,28 @@ export default function App() {
         // reloading the page to empty two fields would be a flash and a lost scroll position for no
         // gain. `clearLastRun` still runs, or the next visit refills what was just cleared.
         onClear={() => { clearLastRun(); setCommanders(""); setDecklist(""); }}
+        onExample={firstVisit ? () => { setCommanders(EXAMPLE_DECK.commanders); setDecklist(EXAMPLE_DECK.decklist); } : undefined}
         shareLink={link}
       />
-      {firstVisit && (
-        <div className="flex flex-col gap-2 text-sm text-(--muted)">
-          <button
-            type="button"
-            className="btn-secondary self-start"
-            onClick={() => { setCommanders(EXAMPLE_DECK.commanders); setDecklist(EXAMPLE_DECK.decklist); }}
-          >
-            Load example deck
-          </button>
-        </div>
-      )}
       {error && (
         <div className="text-danger border border-danger rounded-(--radius) p-3 text-sm font-mono">{error}</div>
       )}
+      {/* THE WAIT HAS A SHAPE (review 2026-09-24): a first analysis, or a shared link opening, used
+        *  to show the deck bar over nothing for several seconds. A re-analyse keeps the old report
+        *  on screen instead, which is the better thing to look at while the new one is built. */}
+      {loading && !data && <ReportLoading commander={loadingCommander} lines={loadingLines} />}
       {data && (
         <div className="reveal">
-          {/* ITS OWN BOUNDARY: suspending in the routes' one would blank the deck bar above it too. */}
-          <Suspense fallback={null}>
+          {/* ITS OWN BOUNDARY: suspending in the routes' one would blank the deck bar above it too.
+            *  The report's code is a lazy chunk, so the skeleton covers that fetch as well. */}
+          <Suspense fallback={<ReportLoading commander={loadingCommander} lines={loadingLines} />}>
             <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
+            {/* THE REPORT ENDS ON PURPOSE. It used to stop at its last panel, and the only route from
+              *  a finished report to "how was any of this decided" was the header's More menu; the
+              *  card and commander pages have carried this foot since they were built. Inside the
+              *  boundary, so the foot never shows under a report that has not arrived. */}
+            <div className="max-w-[68ch]"><PageFoot /></div>
           </Suspense>
-          {/* THE REPORT ENDS ON PURPOSE. It used to stop at its last panel, and the only route from a
-            *  finished report to "how was any of this decided" was the header's More menu; the card
-            *  and commander pages have carried this foot since they were built. */}
-          <div className="max-w-[68ch]"><PageFoot /></div>
         </div>
       )}
       {/* The fan-content notice used to render here. It is static HTML in `index.html` now, after

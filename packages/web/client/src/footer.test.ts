@@ -49,7 +49,7 @@ test("credits the data sources the app actually uses, and claims no prices", () 
 /** A wrong edge is a reportable bug, and this is the only route to reporting it: the site has no
  *  server, no account and no contact form. */
 test("points a reader at the repository when a claim is wrong", () => {
-  expect(text).toMatch(/wrong edge/i);
+  expect(text).toMatch(/wrong pairing/i);
   expect(text).toMatch(/two card names/i);
   expect(footer).toContain('href="https://github.com/SetsudanHana/edh-seer/issues/new"');
   // ONE ROUTE, NOT TWO. The paragraph used to end with a bare repository URL as well, which made

@@ -64,12 +64,11 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">Partners</h2>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
-            Ranked over every card the engine has read, by how rare the matched event is across the
-            corpus: how precisely these two cards interact, not how good either one is. Every row is
-            an edge the engine drew, in its own words. Pick a card to look at it here; open it from
-            there.
+            Sorted by how specific the link is, not by how good the cards are: a pairing only a few
+            cards can make ranks above one that hundreds can. Each row says why in one sentence. Pick
+            a card to preview it here.
           </p>
         </div>
         <PartnerList
@@ -77,7 +76,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           rows={page.partners}
           pool={page.pool}
           rarity={page.rarity}
-          empty="No partners. Every card this one could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."
+          empty="No standout pairings. Whatever this card helps, hundreds of other cards help just as well, or none of the possible pairings held up."
         />
       </section>
     </CardShell>

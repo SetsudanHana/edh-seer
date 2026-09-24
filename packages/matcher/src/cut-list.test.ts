@@ -21,7 +21,7 @@ test("a dead card is a candidate and its reasons name every condition", () => {
   expect(row.reasons).toEqual([
     "nothing in the deck connects to it",
     "no edge on your main theme",
-    "fills none of the functional roles the deck is measured on",
+    "doesn't fill a core role (ramp, draw, removal…)",
   ]);
 });
 
@@ -45,7 +45,7 @@ test("any functional role protects the card, even in a category way over target"
     card({ name: "Roleless", roles: [] }),
   ]);
   expect(rows.map((r) => r.name)).toEqual(["Roleless"]);
-  expect(rows[0].reasons[2]).toBe("fills none of the functional roles the deck is measured on");
+  expect(rows[0].reasons[2]).toBe("doesn't fill a core role (ramp, draw, removal…)");
 });
 
 // A deliberate silence is not evidence: cost reduction and tax form no edge by design, so their

@@ -14,7 +14,7 @@ test("renders a styled HeroUI Analyze button", () => {
 
 test("empty state offers a one-click example deck", async () => {
   render(<App />);
-  expect(screen.getByRole("button", { name: /example deck/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /try an example/i })).toBeInTheDocument();
 });
 
 /** RUN TWO STARTS WITH THE TEXT IN THE BOX (roadmap S9). */

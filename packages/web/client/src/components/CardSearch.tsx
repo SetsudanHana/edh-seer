@@ -565,8 +565,8 @@ export function CardSearch({
         </h1>
         <p className="text-(--muted) max-w-[65ch]">
           {commanderMode
-            ? "Every legendary creature the engine has read that can lead a deck, with the cards inside its colour identity it is most specifically connected to."
-            : "Every card the engine has read, with what it produces, what it cares about, and the cards it is most specifically connected to."}
+            ? "Look up any commander to see what it does and the cards in its colours it works best with."
+            : "Look up any card to see what it does, what it's looking for, and the cards it's most tightly linked to."}
         </p>
       </header>
 
@@ -662,7 +662,7 @@ export function CardSearch({
       </div>
 
       {index === null
-        ? <p className="text-(--muted)">Reading the index…</p>
+        ? <p className="text-(--muted)">Loading cards…</p>
         : !asked
         // AN EMPTY QUERY IS NOT AN EMPTY PAGE and not the whole corpus either: it says what is here
         // and waits. A bare box with nothing under it reads as a page that failed to load.
@@ -674,8 +674,8 @@ export function CardSearch({
             </p>
             <p className="text-(--muted) max-w-[55ch]">
               {commanderMode
-                ? "commanders the engine has read. Pick a colour, or type a name."
-                : "cards the engine has read. Type a name to find one."}
+                ? "commanders. Pick a colour, or type a name."
+                : "cards. Type a name to start."}
             </p>
             <p className="eyebrow text-(--muted) mt-4">or ask, for example</p>
             <ul className="flex flex-wrap gap-2 list-none p-0 m-0" aria-label="Example questions">

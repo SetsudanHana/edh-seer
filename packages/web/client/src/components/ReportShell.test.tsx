@@ -117,11 +117,11 @@ test("the header carries the finding count, and reaches chapter 6 from a referen
   const expected = findings(SAMPLE.report).length;
   render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
 
-  screen.getByRole("button", { name: new RegExp(`^${expected} finding`) });
+  screen.getByRole("button", { name: new RegExp(`^${expected} fix`) });
   await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
   expect(document.getElementById("fix")).toBeNull(); // the chapters are not mounted here
 
-  await userEvent.click(screen.getByRole("button", { name: new RegExp(`^${expected} finding`) }));
+  await userEvent.click(screen.getByRole("button", { name: new RegExp(`^${expected} fix`) }));
   await vi.waitFor(() => expect(document.getElementById("fix")).not.toBeNull());
   // ON THE SECTION ITSELF, not on whatever happened to be scrolled. Measured on the live page:
   // scrolling one frame after the navigation ran before React had committed the chapters, so the

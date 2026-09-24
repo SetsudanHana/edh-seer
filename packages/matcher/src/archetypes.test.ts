@@ -353,7 +353,7 @@ test("kindred is the type the PAYOFFS name, not the type the bodies share", () =
   const lords = Array.from({ length: 3 }, (_, i) => sig2(`L${i}`, { creatureTypes: ["elf"], namedTypes: ["elf"] }));
   const out = detectArchetypes([...humans, ...elves, ...lords], [], 60);
   const k = out.find((r) => r.name === "kindred")!;
-  expect(k.label).toBe("Kindred: Elf");
+  expect(k.label).toBe("Elf typal");
   expect(k.confidence).toBeCloseTo((3 + 12 * 0.35) / 60, 5);
 });
 
@@ -362,7 +362,7 @@ test("kindred needs a payoff: thirty Zombies with nothing caring is a deck with 
   expect(detectArchetypes(zombies, [], 60).map((r) => r.name)).not.toContain("kindred");
   const payoff = sig2("Gravecrawler", { creatureTypes: ["zombie"], caresTags: ["enters:zombie"] });
   const out = detectArchetypes([...zombies, payoff], [], 60);
-  expect(out.find((r) => r.name === "kindred")?.label).toBe("Kindred: Zombie");
+  expect(out.find((r) => r.name === "kindred")?.label).toBe("Zombie typal");
 });
 
 test("a changeling is a body of every type, and a cares subject that is a class is not a tribe", () => {
@@ -375,7 +375,7 @@ test("a changeling is a body of every type, and a cares subject that is a class 
   expect(detectArchetypes(bodies, [], 20).map((r) => r.name)).not.toContain("kindred");
   const out = detectArchetypes([...bodies, sig2("Sliver Overlord", { creatureTypes: ["sliver"], namedTypes: ["sliver"] })], [], 20);
   const k = out.find((r) => r.name === "kindred")!;
-  expect(k.label).toBe("Kindred: Sliver");
+  expect(k.label).toBe("Sliver typal");
   expect(k.confidence).toBeCloseTo((1 + 7 * 0.35) / 20, 5); // six Slivers + the changeling
 });
 

@@ -4028,7 +4028,7 @@ test("a graveyard fill that is not the card itself is worded about the cards it 
     emits: [{ verb: "mill", subject: { control: "any", token: null, scope: "each" } }],
   }]);
   expect(pairReasons(konrad, ascension, H).map((r) => r.text)).toEqual([
-    "When a card hits the graveyard thanks to Konrad, Ascension costs each opponent life",
+    "When a card hits the graveyard thanks to Konrad, Ascension makes each opponent lose life",
   ].map((t) => expect.stringContaining("When a card hits the graveyard thanks to Konrad")));
   const outlet = base("Outlet", [{
     kind: "activated", effect: { kind: "" },

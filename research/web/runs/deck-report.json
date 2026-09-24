@@ -163,7 +163,6 @@
     "[data-testid='bar-label']",
     "[data-testid='bar-readout']",
     "[data-testid='paint-legend-row']",
-    "[data-testid='matrix-row']",
     "[data-testid='graph-search-count']",
     "svg circle",
     "button[data-chapter]"

@@ -133,12 +133,12 @@ export function DeckGauges({ data, diff }: {
   const lead = report.strategies?.[0];
   const underFloor = lead && template?.leadFloor !== undefined
     // Floored to a decimal, not rounded: 0.2499 must not print as "25.0%, under the 25%".
-    ? `${lead.label} reads ${themePct1(lead.confidence)}%, under the ${Math.round(template.leadFloor * 100)}% an archetype needs to set its own row`
-    : "no archetype read strongly enough here to set its own row";
+    ? `${lead.label} is only ${themePct1(lead.confidence)}% of this list, and it takes ${Math.round(template.leadFloor * 100)}% to get targets of its own`
+    : "no archetype is strong enough here to get targets of its own";
   const tickSource = !template
     ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"
     : !template.primary
-      ? `Ticks are the archetype median over every deck \u2014 ${underFloor}`
+      ? `Ticks show the median Commander deck: ${underFloor}`
       : !template.secondary
         ? `Ticks are the ${template.primary.label} archetype\u2019s median \u2014 what the archetype runs, not what it needs`
         : `Ticks blend the ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) archetype medians \u2014 what the archetypes run, not what they need`;
@@ -191,13 +191,13 @@ export function DeckGauges({ data, diff }: {
                 <>
                 <BandScale />
                 <Explain label="what this measures">
-                  The mean of two halves, each 0–5. <span className="text-(--foreground)">Breadth</span> is
-                  how much of the deck sits on its main theme, counting each nonland card by its strongest
-                  on-theme edge — a card connected to nothing still counts, and drags it down.{" "}
-                  <span className="text-(--foreground)">Anchor</span> is how heavily the deck's best-fed
-                  card is supported
-                  {anchorCard ? <> — here that is {anchorCard.name}{anchorCard.isCompanion ? ", your companion" : ""}</> : null}; it tops out at 5, so two
-                  decks with very different engines can both read 5.0.
+                  Two halves averaged, each out of 5. <span className="text-(--foreground)">Focus</span> is
+                  how much of the deck is on its main theme. Every nonland card counts, so cards that
+                  connect to nothing pull it down.{" "}
+                  <span className="text-(--foreground)">Key card</span> is how well your best-supported
+                  card is backed up
+                  {anchorCard ? <> (here, {anchorCard.name}{anchorCard.isCompanion ? ", your companion" : ""})</> : null}. It caps at 5, so two
+                  very different engines can both max it out.
                 </Explain>
                 </>
               }
@@ -216,7 +216,7 @@ export function DeckGauges({ data, diff }: {
             <div className="synergy-inputs-grid grid grid-cols-2 gap-3 w-full">
               {report.positiveCoherence !== undefined ? (
                 <Bullet
-                  name="Breadth"
+                  name="Focus"
                   value={report.positiveCoherence.toFixed(1)}
                   reading={scoreState(report.positiveCoherence, partial)}
                   fill={scoreFill(scoreState(report.positiveCoherence, partial))}
@@ -225,7 +225,7 @@ export function DeckGauges({ data, diff }: {
               ) : null}
               {report.anchoring !== undefined ? (
                 <Bullet
-                  name="Anchor"
+                  name="Key card"
                   value={report.anchoring.toFixed(1)}
                   reading={scoreState(report.anchoring, partial)}
                   fill={scoreFill(scoreState(report.anchoring, partial))}
@@ -261,12 +261,10 @@ export function DeckGauges({ data, diff }: {
                 <>
                 <BandScale />
                 <Explain label="what this measures">
-                  How close the deck sits to the category targets in Roles — ramp, draw, removal and the
-                  rest. It says nothing about how the cards work together, and a target is the
-                  archetype&rsquo;s median &mdash; measured over the decks we checked it on, ten per
-                  archetype from EDHREC &mdash; what it runs, not what it needs. It counts cards per
-                  role; which KINDS of permanent those cards can answer is a Fixes question, so a 5.0
-                  here can sit beside a thin-answers finding without contradiction.
+                  How close your ramp, draw, removal and other counts are to what similar decks run:
+                  the median of ten EDHREC decks per archetype. That is what they run, not what they
+                  need. It ignores how the cards work together and what your removal can hit; Fixes
+                  covers that, so a high Build score can sit beside a &ldquo;thin answers&rdquo; fix.
                 </Explain>
                 </>
               }
@@ -309,8 +307,8 @@ export function DeckGauges({ data, diff }: {
               *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
               *  over real decks, which is also why it is the one two-sided reading here. */}
             <p className="text-xs text-(--muted) max-w-[52ch]">
-              {tickSource}. Over a tick is not a fault; Fixes says where that room is
-              {lands ? <> · the land tick is the exception, modelled from this deck&rsquo;s own curve</> : null}.
+              {tickSource}. Going over a tick is fine; Fixes says where the spare slots are
+              {lands ? <>. The land tick is worked out from your own curve</> : null}.
             </p>
           </div>
         ) : null}

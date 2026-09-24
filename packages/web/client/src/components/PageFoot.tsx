@@ -19,7 +19,7 @@ export function PageFoot() {
       {links.map((l) => (
         <Link key={l.to} className="inline-flex items-center min-h-6 text-(--accent) hover:underline" to={l.to}>{l.label}</Link>
       ))}
-      <a className="inline-flex items-center min-h-6 text-(--accent) hover:underline" href="/how-it-works">How the engine decides</a>
+      <a className="inline-flex items-center min-h-6 text-(--accent) hover:underline" href="/how-it-works">How it works</a>
     </nav>
   );
 }

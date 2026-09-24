@@ -86,7 +86,7 @@ function buildFindings(report: DeckReport): Finding[] {
     // `min(count / target, 1)` and stays capped all the way down to the target. That is what makes
     // the add side the whole delta, and what makes the impact figure true of a legal deck.
     const donor = (report.slack ?? [])[0];
-    const cut = donor ? `, cutting from ${donor.category} (${donor.count}/${donor.target})` : "";
+    const cut = donor ? `. Take the slots from ${donor.category}, where you have ${donor.count} against a target of ${donor.target}.` : "";
     out.push({
       kind: "build",
       id: `build:${p.name}`,
@@ -97,7 +97,7 @@ function buildFindings(report: DeckReport): Finding[] {
       // five places, which is what made the page read as machine-written -- but a finding read on
       // its own still has to say where its target came from, so the provenance stays and the
       // disclaimer goes.
-      detail: `${p.count} in the deck; the template asks for ${p.target}.`,
+      detail: `You run ${p.count}, against a target of ${p.target}.`,
       // Strip the leading "Name 6/14 — " the CLI sentence carries, since the figure is rendered
       // beside the row already.
       action: suggestion
@@ -169,7 +169,7 @@ function answerFinding(report: DeckReport): Finding | null {
       + `, against the ${worst.required} copies it takes to call an answer reliable`
       + `${turn ? ` — the thinnest is ${worst.class}, about a ${pct(worst.available)}% chance of holding one by turn ${turn}` : ""}.`
       + " Graveyard hate is counted separately: it is hate rather than removal, and a Naturalize does not answer it.",
-    action: "Two or three pieces that hit a permanent of any type.",
+    action: "Swap in two or three answers that can hit any kind of permanent.",
     figure: `${permanent.length - short.length}/${permanent.length}`,
     // "COVERED" MEANS FIVE COPIES, AND THE LABEL SAYS SO (UX sweep 2026-09-06, D5): "0/5 permanent
     // answer types covered" beside "4 for creatures, 3 for artifacts …" read as zero types answered.
@@ -214,15 +214,15 @@ function colourFindings(report: DeckReport): Finding[] {
     // THE ONE THE DECK CAN FIX BY SEQUENCING RATHER THAN BY BUILDING. When the deck holds the
     // sources and they simply are not online that early, saying "short of blue" is the false half.
     const timing = c.supplied >= worst.required
-      ? ` The deck runs ${c.supplied} in total, so this is a timing problem rather than a colour one.`
+      ? ` You have enough ${colour} overall; it's a speed problem.`
       : "";
     out.push({
       kind: "colour",
       id: `colour:${c.color}`,
       headline: `${subject} ${verb} ${pips} ${colour} on turn ${worst.turn}.`,
-      detail: `${worst.available} of the deck's ${c.supplied} ${colour} sources can be producing by then`
-        + " — a land that enters tapped, or a rock you could not have cast yet, is not one —"
-        + ` against the ${worst.required} it takes to make that cast nine games in ten.${timing}`,
+      detail: `Only ${worst.available} of your ${c.supplied} ${colour} sources can tap for mana by then`
+        + " (tapped lands, and rocks you couldn't have cast yet, don't count)."
+        + ` Casting it on curve nine games in ten takes ${worst.required}.${timing}`,
       action: "Delay or cut the early double pip, or trade a tapped source for one that enters untapped.",
       figure: `${worst.available}/${worst.required}`,
       figureLabel: `${colour} sources by turn ${worst.turn}`,
@@ -447,10 +447,10 @@ export function slotTrade(report: DeckReport, shortfalls: readonly Finding[]): s
   // "N of those slots are the ones you need" said the OPPOSITE of what it meant — the N are the
   // SURPLUS, which is where the room comes from. The skeptic persona read it three times and stayed
   // unsure (2026-08-27). It names the surplus as a surplus now.
-  return `${top.category} sits at ${top.count} against a target of ${top.target}`
-    + ` — ${top.over} more ${top.over === 1 ? "slot" : "slots"} than it needs.`
-    + " That is where the room is: the deck is not short of space, it is spending it in one place."
+  return `${top.category} sits at ${top.count} against a target of ${top.target},`
+    + ` so ${top.over === 1 ? "one slot is" : `${top.over} slots are`} spare.`
+    + " You are not short on space; it is all in one place."
     + (asksForSame
-      ? ` And it is the same category the finding above asks for: the count is not the problem, what those ${top.count} cards can answer is. Swap inside ${top.category}, do not add to it.`
+      ? ` The count is fine; what those ${top.count} cards can hit is not. Swap within ${top.category} rather than adding more.`
       : "");
 }

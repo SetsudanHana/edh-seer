@@ -148,7 +148,7 @@ export function HeaderSearch({
         />
         {listed && (
           <ul id={LIST_ID} role="listbox" aria-label="Cards" className="site-search-list">
-            {loading && index === null && <li className="site-search-note">Reading the index</li>}
+            {loading && index === null && <li className="site-search-note">Loading cards…</li>}
             {index !== null && matches.length === 0 && <li className="site-search-note">No card by that name</li>}
             {matches.map((e, i) => (
               <li

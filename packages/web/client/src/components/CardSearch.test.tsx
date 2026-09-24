@@ -87,7 +87,7 @@ test("before anything is typed the page says what it holds, and lists nothing", 
   at();
   // The figure leads and the sentence follows it, so they are two elements.
   expect(await screen.findByText("4")).toBeInTheDocument();
-  expect(screen.getByText(/cards the engine has read/)).toBeInTheDocument();
+  expect(screen.getByText(/Type a name to start/)).toBeInTheDocument();
   // Scoped to the results list: the page foot carries links of its own.
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
 });
@@ -747,7 +747,7 @@ test("colour and colour identity are separate rows and separate params", async (
  *  question is asked in events. The empty state offers three of them, built from real keys. */
 test("an example question sets the events and lists its answer as tiles", async () => {
   atUrl("/cards");
-  await screen.findByText(/cards the engine has read/);
+  await screen.findByText(/Type a name to start/);
   fireEvent.click(screen.getByRole("button", { name: "wants a creature to die" }));
   const link = await screen.findByRole("link", { name: "Fathom Mage" });
   expect(within(screen.getByRole("list", { name: "Results" })).getByRole("link", { name: "Fathom Mage" })).toBe(link);
