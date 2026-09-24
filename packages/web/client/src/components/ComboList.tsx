@@ -47,7 +47,11 @@ export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
         </p>
       ) : null}
       {combos.length === 0 ? (
-        <p className="text-(--muted) text-sm">None found.</p>
+        // A BARE "None found." ON AN EMPTY PANEL READ AS A PAGE STILL LOADING (review 2026-09-24).
+        // Say what was checked, so the zero reads as an answer.
+        <p className="text-(--muted) text-sm">
+          No known infinite combos in this list, checked against the Commander Spellbook database.
+        </p>
       ) : (
         <ul className="flex flex-col gap-2">
           {combos.map((c, i) => (

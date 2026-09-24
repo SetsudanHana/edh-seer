@@ -105,7 +105,7 @@ test("a shared link that does not decode falls back to the empty state", async (
   window.history.replaceState(null, "", "/#deck=not-a-real-payload");
   render(<App />);
   expect(await screen.findByLabelText("Decklist")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /example deck/i })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /try an example/i })).toBeInTheDocument();
   window.history.replaceState(null, "", "/");
 });
 
@@ -243,4 +243,19 @@ test("an import failure leaves the link in the box and says what to do", async (
   expect(analyze).not.toHaveBeenCalled();
   expect(screen.getByLabelText("Decklist")).toHaveValue("https://moxfield.com/decks/AbC-123");
   fetchSpy.mockRestore();
+});
+
+/** THE WAIT HAS A SHAPE (look-and-feel review, 2026-09-24). Four of four player reviewers read the
+ *  bare deck bar over an empty page as a crash; while an analysis is in flight the page now says
+ *  what it is doing, in a live region, and hides the report's foot until there is a report. */
+test("an analysis in flight says so instead of leaving the page empty", async () => {
+  vi.spyOn(api, "analyzeDeck").mockReturnValue(new Promise(() => {}));
+  window.history.replaceState(null, "", "/");
+  render(<App />);
+  await userEvent.type(screen.getByRole("textbox", { name: /commander/i }), "1 Krenko, Mob Boss");
+  await userEvent.type(screen.getByRole("textbox", { name: /decklist/i }), "1 Impact Tremors\n1 Sol Ring");
+  await userEvent.click(screen.getByRole("button", { name: /analyse deck/i }));
+  expect(await screen.findByRole("status")).toHaveTextContent("Reading 2 lines for Krenko, Mob Boss");
+  expect(screen.queryByRole("link", { name: /how the engine decides/i })).toBeNull();
+  window.history.replaceState(null, "", "/");
 });

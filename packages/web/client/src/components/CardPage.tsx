@@ -77,7 +77,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           rows={page.partners}
           pool={page.pool}
           rarity={page.rarity}
-          empty="No partners. Every card this one could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."
+          empty="No standout pairings. Whatever this card helps, hundreds of other cards help just as well, or none of the possible pairings held up."
         />
       </section>
     </CardShell>

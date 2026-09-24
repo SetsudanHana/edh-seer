@@ -12,6 +12,7 @@ export function DeckInput({
   onEdit,
   onStartOver,
   onClear,
+  onExample,
   shareLink,
 }: {
   commanders: string;
@@ -27,6 +28,8 @@ export function DeckInput({
   /** Empties both fields in place, and forgets the remembered deck with them. Distinct from
    *  `onStartOver`, which NAVIGATES: this one is for a reader already looking at the form. */
   onClear?: () => void;
+  /** Fills the form with the example deck. Present only on a first visit, like the pitch above it. */
+  onExample?: () => void;
   /** The URL that reproduces the analysis on screen, or null when the deck is too long to encode.
    *  Absent rather than disabled in that case: a button that cannot do its job is worse than none. */
   shareLink?: string | null;
@@ -154,7 +157,9 @@ export function DeckInput({
         *  so Back rebuilds the deck from the hash, and this does not. What stands in for it is the
         *  disabled state -- there is nothing to clear until there is -- and the quiet treatment
         *  beside a full-width primary, which is not a control a thumb finds by accident. */}
-      <div className="flex gap-2">
+      {/* THE EXAMPLE SITS WITH THE FORM'S OTHER ACTIONS (review 2026-09-24). Alone below the panel it
+        *  fell under the fold on a phone and read as unrelated to the form it fills. */}
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           className="btn-secondary shrink-0"
@@ -163,11 +168,18 @@ export function DeckInput({
         >
           Clear
         </button>
+        {onExample ? (
+          <button type="button" className="btn-secondary shrink-0" disabled={loading} onClick={onExample}>
+            Try an example
+          </button>
+        ) : null}
         {/* DISABLED HERE MEANS UNAVAILABLE -- there is no decklist to analyse -- and that is the one
           *  case that earns the dimming. Loading keeps full strength; see the collapsed bar above. */}
+        {/* FULL WIDTH ON A PHONE, where it is the thumb's target; CONTENT WIDTH FROM `sm` UP, where a
+          *  1,743px bar read as a banner rather than a button (review 2026-09-24). */}
         <button
           type="button"
-          className="btn-primary grow"
+          className="btn-primary grow sm:grow-0 sm:ml-auto sm:px-8"
           disabled={loading || value.trim() === ""}
           aria-busy={loading}
           onClick={onAnalyze}

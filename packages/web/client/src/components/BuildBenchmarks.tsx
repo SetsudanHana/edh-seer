@@ -690,9 +690,10 @@ function DeckMathRows({
                       // the gap is worth acting on -- below that it is a second number saying the
                       // same thing, which is how a panel stops being read.
                       const gap = c.mana.high - c.castable.high;
-                      const note = gap >= COLOUR_GAP
-                        ? `mana alone ${band(c.mana)} — the colours are what is short`
-                        : "";
+                      // THE FIGURE PER ROW, THE MEANING ONCE (review 2026-09-24): the full clause on
+                      // every row took the row's width and cut the card NAME to "Wate…" or "C".
+                      // What the gap means is said once, under the list.
+                      const note = gap >= COLOUR_GAP ? `mana alone ${band(c.mana)}` : "";
                       return (
                         <li
                           key={c.name}
@@ -717,7 +718,9 @@ function DeckMathRows({
                             *  "42% to cast by turn 1" is unreadable without knowing the card costs
                             *  {R}. Carried on the report rather than joined back on the name, which
                             *  is the MDFC defect this repo has already fixed in eleven places. */}
-                          <span className="flex-1 sm:truncate text-(--muted)">
+                          {/* THE NAME WRAPS, IT NEVER TRUNCATES: it is the one thing on the row that
+                            *  says which card this is (review 2026-09-24, "Wate…", "Rakd…", "C"). */}
+                          <span className="flex-1 min-w-0 text-(--foreground)">
                             {c.name}
                             {c.manaCost ? (
                               <span className="ml-1.5 align-baseline"><ManaSymbols cost={c.manaCost} /></span>
@@ -734,6 +737,12 @@ function DeckMathRows({
               );
             })}
           </ul>
+          {castability.cards.some((c) => c.mana.high - c.castable.high >= COLOUR_GAP) ? (
+            <p className="text-xs text-(--muted) max-w-[65ch]">
+              &ldquo;Mana alone&rdquo; is the same chance with colour ignored. Where it is well above
+              the row&rsquo;s figure, the colours are what is short, not the mana.
+            </p>
+          ) : null}
           {/* WHICH CARDS WERE REFUSED, NOT JUST HOW MANY (S19). A refused card leaves the list
             *  above entirely, so before this the only trace of it was a count inside a collapsed
             *  caveat -- measured on the example deck, `Blasphemous Act` stopped being called a

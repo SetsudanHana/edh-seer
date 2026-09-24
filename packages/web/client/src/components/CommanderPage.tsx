@@ -280,8 +280,8 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           pool={ranked.pool}
           rarity={ranked.rarity}
           empty={unread
-            ? "No partners, because the engine read nothing on this card to rank them by."
-            : "No partners inside this identity. Every card it could feed is fed by so many others that the pairing says nothing, or the engine refused each one on the merits."}
+            ? "No pairings yet: we couldn't read this card's text, so there is nothing to rank them by."
+            : "No standout pairings in these colours. Whatever this commander helps, hundreds of other cards help just as well, or none of the possible pairings held up."}
         />
       </section>
 

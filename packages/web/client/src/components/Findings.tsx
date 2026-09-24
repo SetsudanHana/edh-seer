@@ -80,7 +80,7 @@ export function Findings({ report, diff }: {
           *  the unseen rows below carry the numbers that follow on. */}
         <span className="text-xs text-(--muted)">
           <span className="tabular-nums">{all.length + unseen.length}</span>{" "}
-          {all.length + unseen.length === 1 ? "finding" : "findings"}, by what fixing it is worth
+          {all.length + unseen.length === 1 ? "fix" : "fixes"}, biggest payoff first
         </span>
       </div>
       <ul className="flex flex-col border-t border-(--separator)">

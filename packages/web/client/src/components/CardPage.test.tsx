@@ -116,7 +116,7 @@ test("a capped event says how many candidates it is not showing, as candidates",
  *  list with no sentence reads as a page that failed to load. */
 test("a card with no partners says so", async () => {
   at("lonely-card", async () => ({ ...KRENKO, partners: [], pool: {} }));
-  expect(await screen.findByText(/no partner/i)).toBeInTheDocument();
+  expect(await screen.findByText(/no standout pairings/i)).toBeInTheDocument();
 });
 
 /** THE CARD ITSELF, WHOLE — and whole is a licence line, not a taste one. An art crop obliges the

@@ -71,10 +71,16 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             * reading below -- a printed line is prose and keeps its words (owner, 2026-09-20). */}
           <KeywordRow keywords={page.keywords} />
         </header>
-        <nav aria-label="Surface" className="flex gap-1 border-b border-(--separator)">
-          {tab(`/cards/${slug}`, "As a card", surface === "card")}
-          {page.commander && tab(`/commanders/${slug}`, "As a commander", surface === "commander", "commander")}
-        </nav>
+        {/* A TAB BAR WITH ONE TAB IS NOT A CHOICE (review 2026-09-24): on a card that cannot lead,
+          *  "As a card" alone read as an unfinished page. The bar appears when there are two
+          *  surfaces -- or on a commander URL for a card that cannot lead, where its one tab is the
+          *  way back to the page that does exist. */}
+        {(page.commander || surface === "commander") && (
+          <nav aria-label="Surface" className="flex gap-1 border-b border-(--separator)">
+            {tab(`/cards/${slug}`, "As a card", surface === "card")}
+            {page.commander && tab(`/commanders/${slug}`, "As a commander", surface === "commander", "commander")}
+          </nav>
+        )}
         {children}
         <div className="max-w-[68ch]"><PageFoot /></div>
       </div>

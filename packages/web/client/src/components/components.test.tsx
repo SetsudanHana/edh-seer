@@ -1898,7 +1898,9 @@ test("BuildBenchmarks never prints a range whose two ends are the same figure", 
   } as never;
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={math} />);
   expect(screen.getByText(/31% to cast by turn 1/i)).toBeInTheDocument();
-  expect(screen.getByText(/mana alone 91% — the colours are what is short/i)).toBeInTheDocument();
+  expect(screen.getByText(/^mana alone 91%$/i)).toBeInTheDocument();
+  // The meaning of the gap is said once, under the list, rather than on every row.
+  expect(screen.getByText(/the colours are what is short/i)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/(\d+)% – \1%/);
 });
 
@@ -2225,7 +2227,7 @@ test("the Fixes tab carries both the diagnosis and the prescription", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   // The diagnosis is the findings list; its heading restated the chapter title and went with T1, so
   // the pin is the count sentence that heading sat beside.
-  expect(screen.getByText(/by what fixing it is worth/i)).toBeInTheDocument();
+  expect(screen.getByText(/biggest payoff first/i)).toBeInTheDocument();
   expect(screen.getByText("What to change")).toBeInTheDocument();
 });
 
@@ -3170,4 +3172,16 @@ test("CardName carries the padding-plus-negative-margin pair", () => {
   const btn = container.querySelector("button")!;
   expect(btn.className).toContain("py-1");
   expect(btn.className).toContain("-my-1");
+});
+
+/** AN ARCHETYPE BAR IS DRAWN AGAINST THE WHOLE DECK (look-and-feel review, 2026-09-24). Scaled to
+ *  the leader, a 17% archetype drew a full-width track and every seat read it as "all of it". */
+test("an archetype bar's length is its share of the deck, not its share of the leader", () => {
+  const strategies = [
+    { name: "tokens", label: "Tokens", confidence: 0.17 },
+    { name: "aristocrats", label: "Aristocrats", confidence: 0.12 },
+  ] as never;
+  const { container } = render(<ArchetypeBoard archetypes={SAMPLE.report.archetypes} strategies={strategies} />);
+  const widths = [...container.querySelectorAll<HTMLElement>(".bg-\\(--fill\\)")].map((el) => el.style.width);
+  expect(widths.slice(0, 2)).toEqual(["17%", "12%"]);
 });

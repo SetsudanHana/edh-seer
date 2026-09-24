@@ -10,11 +10,14 @@ type Group = NonNullable<DeckReport["archetypes"]>[number];
 type Strategy = NonNullable<DeckReport["strategies"]>[number];
 const PAIR_CAP = 8;
 
-function StrategyRow({ s, max }: { s: Strategy; max: number }) {
+function StrategyRow({ s }: { s: Strategy }) {
   // Floored, not rounded -- the rule and the defect behind it live in `lib/theme-pct.ts`, because
   // stating it here as a comment is exactly how `DeckIdentity` came to round the same field.
   const pct = themePct(s.confidence);
-  const widthPct = max > 0 ? Math.max(4, Math.round((s.confidence / max) * 100)) : 4;
+  // AGAINST THE WHOLE DECK, NOT THE LEADER (look-and-feel review 2026-09-24). Scaled to the leader,
+  // a 17% archetype drew a full ~1,500px track on desktop, and every seat read a full bar as "all
+  // of it". The bar now says what the number says; a 2% floor keeps a tiny share visible.
+  const widthPct = Math.max(2, Math.min(100, Math.round(s.confidence * 100)));
   return (
     <div className="flex items-center gap-3 py-2 border-b border-(--separator)">
       <span className="w-40 shrink-0 truncate">{s.label}</span>
@@ -135,7 +138,6 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
   if (!hasStrategies && !hasGroups) {
     return <p className="text-(--muted) text-sm">No recognizable archetype patterns — try adding more synergy pieces.</p>;
   }
-  const sMax = hasStrategies ? Math.max(...strategies!.map((s) => s.confidence)) : 1;
   const unread = coverage ? coverage.resolved - coverage.derived : 0;
   // THE SAME SPLIT THE MATRIX DRAWS, asked once. `themeMatrix` is pure and its column stats are the
   // only definition of "earned" on the page -- deriving a second one here is how two counts of one
@@ -181,12 +183,12 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">Archetypes</h3>
           {/* A PERCENTAGE WITH NO DENOMINATOR IS NOT A FIGURE. "Tokens 22%" was 22% of something the
-            *  page never named — and the bars are scaled to the leader, not to 100%, so the widest
-            *  one says "most" and not "all". */}
+            *  page never named — the bars are scaled to the whole deck, so a bar's length and its
+            *  number say the same thing. */}
           <Explain label="what the percentages count">
             The share of the deck's nonland cards whose own text signals that plan. A card can
-            signal several, so these do not add to 100% — and the bars are drawn against the
-            strongest plan rather than against the whole deck.
+            signal several, so these do not add to 100% — and each bar is drawn against the
+            whole deck, so a full bar would mean every card.
             {/* WHY THE DECK'S OWN HEADLINE IS NOT IN THIS LIST (S16, 2026-09-02). Chapter 1 prints
               *  the theme in the largest type on the page -- "enchantments entering" -- and none of
               *  these six bars says enchantment, because they are two different classifiers: this
@@ -197,7 +199,8 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
             {" "}These are named archetypes from a fixed list, so the deck&rsquo;s own theme will
             often not be one of these names.
           </Explain>
-          <div className="flex flex-col">{strategies!.map((s) => <StrategyRow key={s.name} s={s} max={sMax} />)}</div>
+          {/* 48rem, so the percentage sits a glance from its label rather than a screen away. */}
+          <div className="flex flex-col max-w-3xl">{strategies!.map((s) => <StrategyRow key={s.name} s={s} />)}</div>
         </div>
       ) : null}
       {/* THE MATRIX IS THE GROUPS' MEMBERSHIP, drawn per CARD (roadmap S6). It goes above the
