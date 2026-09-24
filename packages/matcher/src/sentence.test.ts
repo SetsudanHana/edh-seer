@@ -12,6 +12,9 @@ describe("effectPhrase — the fallback ladder", () => {
   test("rung 1: kind and amount", () => {
     expect(effectPhrase("draw-card", "2")).toBe("draws you 2 cards");
     expect(effectPhrase("drain", "1")).toBe("drains for 1");
+    // Magic's verb, and a quantity reads "equal to" rather than as a number (review 2026-09-24).
+    expect(effectPhrase("player-life-loss", "2")).toBe("makes each opponent lose 2 life");
+    expect(effectPhrase("player-life-loss", "Sarevok's power")).toBe("makes each opponent lose life equal to Sarevok's power");
   });
 
   /** REPORTED FROM A REAL DECK: "Samut, the Driving Force + Enduring Courage — When Samut enters,

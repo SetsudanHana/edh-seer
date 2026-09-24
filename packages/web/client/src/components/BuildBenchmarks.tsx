@@ -295,7 +295,8 @@ export function BuildBenchmarks({
             *  question and are routed to different sub-tabs. Foreground weight is the whole
             *  difference from a child heading; the children keep the muted eyebrow. */}
           <h3 className="eyebrow text-(--foreground)">How the roles are spent</h3>
-          <ul className="flex flex-col gap-1.5">
+          {/* Capped for the same reason as a lone block below: the count sat a screen from its row. */}
+          <ul className="flex flex-col gap-1.5 max-w-4xl">
             {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO `DeckGauges`, one floor dial per
               *  parent, on the Summary sub-tab. That is where a reader now sees Interaction's 19
               *  against its target of 10 as a mark; printing the same ratio here as well would put
@@ -1278,7 +1279,10 @@ function DeckMathRows({
               *  nothing, which is the exact defect this same item found in the Fixes chapter. */}
             {(() => {
               const blocks = s.blocks.filter(Boolean);
-              if (blocks.length < 2) return blocks.map((block, i) => <Fragment key={i}>{block}</Fragment>);
+              // A LONE BLOCK IS CAPPED, not stretched (look-and-feel review 2026-09-24): full width at
+              // 1920px put "Land" at x=168 and its "4 short" at x=1880, a screen's width apart. 56rem
+              // is the width two blocks get side by side, so one alone reads the same as a pair.
+              if (blocks.length < 2) return <div className="max-w-4xl flex flex-col gap-5">{blocks.map((block, i) => <Fragment key={i}>{block}</Fragment>)}</div>;
               return (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-5 items-start [&>*]:min-w-0">
                   {blocks.map((block, i) => (

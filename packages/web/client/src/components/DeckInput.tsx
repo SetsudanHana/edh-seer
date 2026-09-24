@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { deckExportText } from "../lib/deck-export.js";
+import { useIsNarrow } from "../lib/use-narrow.js";
 
 export function DeckInput({
   commanders,
@@ -38,6 +39,11 @@ export function DeckInput({
   // separate toast is a second surface for a fact that fits on the control that caused it.
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  // THE PHONE TOOLBAR (look-and-feel review 2026-09-24): five buttons wrapped to two rows and, with
+  // the header, put the first card row of the Cards view ~850px down. On a narrow screen the three
+  // actions a reader takes once -- copy, copy, start over -- sit behind one disclosure.
+  const narrow = useIsNarrow();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   async function onCopy() {
     await navigator.clipboard.writeText(deckExportText(commanders, value));
@@ -69,29 +75,46 @@ export function DeckInput({
           {cmdName ? <> · {cmdName}</> : null}
         </span>
         <div className="flex flex-wrap gap-2">
-          {/* THE LINK IS THE ANALYSIS, not the decklist: it reopens this exact report rather than
-            *  handing someone a list to paste themselves. The address bar already carries it — this
-            *  is for the reader who does not think to look there. */}
-          {shareLink ? (
-            <button
-              type="button"
-              onClick={() => void copyLink()}
-              className="btn-secondary"
-            >
-              {linkCopied ? "Link copied" : "Copy link"}
-            </button>
-          ) : null}
-          <button type="button" onClick={() => void onCopy()} className="btn-secondary">{copied ? "Copied" : "Copy decklist"}</button>
-          <button type="button" onClick={onEdit} className="btn-secondary">Edit</button>
-          {/* A WAY BACK TO AN EMPTY PAGE (owner, 2026-09-03: "we do not have way to clear and start
-            *  from the beginning"). `Edit` reopens THIS deck; nothing offered a different one, and
-            *  the report has no other exit -- the deck is in the hash, so even reloading brings it
-            *  back.
-            *  NO CONFIRMATION, BECAUSE IT IS NOT LOST: this navigates, so Back returns to the
-            *  address the report was at and the hash rebuilds it. `Copy decklist` is also two
-            *  buttons to the left. A modal on an action the browser already undoes is a modal that
-            *  teaches readers to dismiss modals. */}
-          <button type="button" onClick={onStartOver} className="btn-secondary">Start over</button>
+          {narrow ? (
+            <>
+              <button type="button" onClick={onEdit} className="btn-secondary">Edit</button>
+              <button
+                type="button"
+                className="btn-secondary"
+                aria-expanded={moreOpen}
+                aria-controls="deck-bar-more"
+                onClick={() => setMoreOpen((v) => !v)}
+              >
+                {moreOpen ? "Less" : "More"}
+              </button>
+            </>
+          ) : (
+            <>
+              {/* THE LINK IS THE ANALYSIS, not the decklist: it reopens this exact report rather than
+                *  handing someone a list to paste themselves. The address bar already carries it — this
+                *  is for the reader who does not think to look there. */}
+              {shareLink ? (
+                <button
+                  type="button"
+                  onClick={() => void copyLink()}
+                  className="btn-secondary"
+                >
+                  {linkCopied ? "Link copied" : "Copy link"}
+                </button>
+              ) : null}
+              <button type="button" onClick={() => void onCopy()} className="btn-secondary">{copied ? "Copied" : "Copy decklist"}</button>
+              <button type="button" onClick={onEdit} className="btn-secondary">Edit</button>
+              {/* A WAY BACK TO AN EMPTY PAGE (owner, 2026-09-03: "we do not have way to clear and start
+                *  from the beginning"). `Edit` reopens THIS deck; nothing offered a different one, and
+                *  the report has no other exit -- the deck is in the hash, so even reloading brings it
+                *  back.
+                *  NO CONFIRMATION, BECAUSE IT IS NOT LOST: this navigates, so Back returns to the
+                *  address the report was at and the hash rebuilds it. `Copy decklist` is also two
+                *  buttons to the left. A modal on an action the browser already undoes is a modal that
+                *  teaches readers to dismiss modals. */}
+              <button type="button" onClick={onStartOver} className="btn-secondary">Start over</button>
+            </>
+          )}
           {/* IN-FLIGHT IS NOT DISABLED (components.md rule 8): a button waiting on the analysis
             *  keeps its full strength and says so, because dimming it reads as "you cannot do this"
             *  rather than "this is happening". It still refuses a second submit -- `aria-busy` is
@@ -106,6 +129,17 @@ export function DeckInput({
             {loading ? "Analysing…" : "Re-analyse"}
           </button>
         </div>
+        {narrow && moreOpen ? (
+          <div id="deck-bar-more" className="basis-full flex flex-wrap gap-2">
+            {shareLink ? (
+              <button type="button" onClick={() => void copyLink()} className="btn-secondary">
+                {linkCopied ? "Link copied" : "Copy link"}
+              </button>
+            ) : null}
+            <button type="button" onClick={() => void onCopy()} className="btn-secondary">{copied ? "Copied" : "Copy decklist"}</button>
+            <button type="button" onClick={onStartOver} className="btn-secondary">Start over</button>
+          </div>
+        ) : null}
       </div>
     );
   }

@@ -58,8 +58,12 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
     {/* NO WIDTH CAP (owner, 2026-09-17: "we have a lot of space on the right on desktop"). The 1280px
       * cap left a third of a 1920 screen empty beside the rail; the prose inside keeps its own 65ch
       * measure and the tile grid takes the columns the width buys. */}
-    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-10 lg:items-start">
-      <div className="flex flex-col gap-8 min-w-0">
+    {/* THE RAIL LEADS, ON THE LEFT (owner, 2026-09-24, from the look-and-feel review): with the rail
+      * on the right, a text-only card left its image stranded ~850px from the words at 1920px. On the
+      * left the image sits beside the title the way Scryfall lays a card out, and the content keeps
+      * every column the width buys -- the no-cap ruling above still holds. */}
+    <article className="flex flex-col gap-10 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-x-10 lg:items-start">
+      <div className="flex flex-col gap-8 min-w-0 lg:col-start-2 lg:row-start-1">
         <header className="flex flex-col gap-3">
           {/* THE PAGE'S ONE `h1` (owner, 2026-09-17); the wordmark in the shell is a link. */}
           <h1 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -91,7 +95,7 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
         * Capping it at the space it actually has and letting it scroll inside that is what makes
         * "sticky" mean what it looks like. `overscroll-contain` so reaching the rail's bottom does
         * not hand the wheel back to the page mid-read. */}
-      <aside className="order-first lg:order-last lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] lg:max-h-[calc(100dvh-var(--site-header-h,0px)-3rem)] lg:overflow-y-auto lg:overscroll-contain flex flex-col gap-6">
+      <aside className="order-first lg:col-start-1 lg:row-start-1 lg:sticky lg:top-[calc(var(--site-header-h,0px)+1.5rem)] lg:max-h-[calc(100dvh-var(--site-header-h,0px)-3rem)] lg:overflow-y-auto lg:overscroll-contain flex flex-col gap-6">
         {peek.stack.length > 0
           ? <CardPeek load={peekLoad} />
           : (<>

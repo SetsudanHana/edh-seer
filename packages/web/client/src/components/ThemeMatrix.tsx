@@ -108,12 +108,14 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
             <tr>
               <th className="text-left font-normal text-(--muted) pb-2 pr-3 sticky left-0 z-[1] bg-(--background)">card</th>
               {m.columns.map((c) => (
-                <th key={c.category} className="pb-2 px-1 align-bottom" title={c.label}>
+                <th key={c.category} className="pb-2 px-2 align-bottom" title={c.label}>
                   {/* THE LABEL IS ALREADY PROSE (`ArchetypeGroup.label`: "Draw Engine", "Graveyard
                     *  Matters"), so nothing here reaches for a raw tag. It is set narrow and
                     *  wrapping rather than rotated: rotated headers are unreadable on a phone and
                     *  a screen reader gets no help from the transform. */}
-                  <span className="block w-[4.5rem] text-xs leading-tight text-(--muted) text-left">
+                  {/* 5.5rem AND px-2 (look-and-feel review 2026-09-24): at 4.5rem with 4px between
+                    *  them, adjacent headers read as one word -- "SpellslingerGraveyard Matters". */}
+                  <span className="block w-[5.5rem] text-xs leading-tight text-(--muted) text-left">
                     {c.label}
                   </span>
                 </th>
@@ -134,7 +136,10 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
                   isPinned(r.name) ? "outline outline-1 outline-(--accent) outline-offset-[-1px]" : ""
                 }`}
               >
-                <th scope="row" className="text-left font-normal py-1 pr-3 sticky left-0 z-[1] bg-(--background) whitespace-nowrap">
+                {/* NAMES WRAP BELOW `sm` (look-and-feel review 2026-09-24): one long name set nowrap
+                  *  made the sticky column ~330px wide at 390, and every theme column fell off the
+                  *  edge. Capped at 9rem, a phone shows the name and two or three columns of marks. */}
+                <th scope="row" className="text-left font-normal py-1 pr-3 sticky left-0 z-[1] bg-(--background) max-w-[9rem] sm:max-w-none sm:whitespace-nowrap leading-snug">
                   <CardName name={r.name} />
                   {isPinned(r.name) ? <span className="sr-only">pinned</span> : null}
                 </th>
@@ -147,7 +152,7 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
                   *  defect `components.md`'s narrow-width defences name, and it hides from
                   *  screenshots. */}
                 {r.cells.map((cell, i) => (
-                  <td key={m.columns[i]!.category} className="relative py-1 px-1 text-center">
+                  <td key={m.columns[i]!.category} className="relative py-1 px-2 text-center">
                     {/* TWO MARKS, BECAUSE ONE DOT WAS MAKING TWO DIFFERENT CLAIMS (roadmap S17).
                       *  A FILLED dot is a card that does something the group is about; a HOLLOW
                       *  ring is a card whose supply of the event was synthesised -- it is present
@@ -203,10 +208,15 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
               data-testid="matrix-edge-fade"
               className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-(--background) to-transparent"
             />
-            <span className="sr-only">This table scrolls sideways; more groups are off the edge.</span>
           </>
         ) : null}
       </div>
+      {/* THE FADE WAS NOT ENOUGH OF A CUE ON A PHONE (look-and-feel review 2026-09-24): the phone
+        *  seat saw the name column and a header cut at "Spel", and "didn't see a way to swipe
+        *  sideways". Said in words, to everyone, only while there really is more to the right. */}
+      {clipped ? (
+        <p className="text-xs text-(--muted)">Scroll the table sideways for more themes &rarr;</p>
+      ) : null}
 
       {/* A ONE-WAY DOOR (roadmap T14). Owner: *"there is option to show more, but there is no option
         *  to go back to show less"*. `setExpanded(true)` could not be undone, and the control then
