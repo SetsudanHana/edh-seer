@@ -85,8 +85,8 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   const autoBoardMode = useBoardMode(data.graph?.nodes.length ?? 0);
   /** THE READER OVERRIDES THE GUESS (owner, 2026-09-06: option 3, "both"). The hook predicts which
    *  surface a device can use; a phone that got the whole-deck board could not reach the one-card
-   *  view, and the reverse. The switch sits above either surface below `sm`, and wherever the
-   *  guess was the ego view. Above the board, not inside its fullscreen shell: fullscreen is one
+   *  view, and the reverse. The switch sits above either surface at every width (until
+   *  2026-09-24 it showed only below `sm` and wherever the guess was the ego view). Above the board, not inside its fullscreen shell: fullscreen is one
    *  tap out, and a switch that changes the surface under a fullscreen element is a worse trade
    *  than that tap. Component state, same ceiling as `focusId`; NOT reset per deck on purpose -- it is
    *  a choice about this device, not about the deck. */
@@ -97,18 +97,32 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
    *  the report rather than leaving this view -- the same cost S7 paid to make Graph a route.
    *  Upgrade path is `/graph/:cardName`, which is also what a breadcrumb would need. */
   const [focusId, setFocusId] = useState<string | null>(null);
+  /** The commander's node, which "One card" opens on where the device guessed the whole-deck board
+   *  (owner, 2026-09-24: the one-card view on desktop). There the reader has already seen the
+   *  deck as a cloud; the list would be a step back, and the commander is the card a synergy deck
+   *  is about. Where the guess was the one-card view, the list stays its entry, as before. */
+  const commanderNodeId = useMemo(() => {
+    const names = new Set(data.report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
+    return data.graph?.nodes.find((n) => names.has(n.cardName ?? n.id))?.id ?? null;
+  }, [data.graph, data.report]);
+  // Shown at every width since 2026-09-24: on a dense deck (Jodah, 56 of 66 cards on the
+  // commander) the one-card view is the readable one on a desktop too.
   const modeSwitch = (
     <div
       role="group"
       aria-label="Graph surface"
-      className={`flex gap-1 ${autoBoardMode === "ego" ? "" : "sm:hidden"}`}
+      className="flex gap-1"
     >
       {([["board", "Whole deck"], ["ego", "One card"]] as const).map(([mode, label]) => (
         <button
           key={mode}
           type="button"
           aria-pressed={boardMode === mode}
-          onClick={() => { setBoardModeOverride(mode); if (mode === "board") setFocusId(null); }}
+          onClick={() => {
+            setBoardModeOverride(mode);
+            if (mode === "board") setFocusId(null);
+            else if (autoBoardMode === "board" && !focusId) setFocusId(commanderNodeId);
+          }}
           className={`eyebrow whitespace-nowrap rounded-(--radius) border px-2.5 py-2 ${
             boardMode === mode ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
           }`}

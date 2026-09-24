@@ -529,3 +529,19 @@ test("the phone can switch between the one-card list and the whole-deck board", 
   await user.click(screen.getByRole("button", { name: "One card" }));
   expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
 });
+
+/** THE ONE-CARD VIEW ON A DESKTOP (owner, 2026-09-24). On a dense deck -- Jodah, 56 of 66 cards on
+ *  the commander -- the whole-deck board is a hairball at any width, so the switch shows on a precise
+ *  pointer too, and there it opens on the commander rather than on the list a phone starts from. */
+test("a desktop can open the one-card view, and it opens on the commander", async () => {
+  stubPointer(false, true, 1440);
+  const user = await openGraph(phoneSizedDeck());
+  expect(screen.getByRole("button", { name: "Whole deck" })).toHaveAttribute("aria-pressed", "true");
+  await user.click(screen.getByRole("button", { name: "One card" }));
+  expect(await screen.findByRole(
+    "button", { name: /back to the card list/i }, { timeout: 4000 },
+  )).toBeInTheDocument();
+  expect(screen.getAllByText("Krenko, Mob Boss").length).toBeGreaterThan(0);
+  await user.click(screen.getByRole("button", { name: "Whole deck" }));
+  expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
+});

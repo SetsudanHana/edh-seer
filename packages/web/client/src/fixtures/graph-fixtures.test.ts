@@ -4,8 +4,9 @@ import inalla from "./inalla-graph.json";
 import fairdrazi from "./fairdrazi-graph.json";
 import changelings from "./changelings-graph.json";
 import braids from "./braids-graph.json";
+import jodah from "./jodah-graph.json";
 
-const FIXTURES = { sorin, inalla, fairdrazi, changelings, braids };
+const FIXTURES = { sorin, inalla, fairdrazi, changelings, braids, jodah };
 
 describe.each(Object.entries(FIXTURES))("%s fixture", (_name, fx) => {
   const g = (fx as { graph: { nodes: unknown[]; edges: unknown[] } }).graph;

@@ -109,9 +109,17 @@ const BOARD_GUTTER_PX = 24;
  *  which is the trade taken: a board you scroll 100px to finish beats one you cannot read. */
 const MIN_BOARD_PX = 660;
 
+/** Longest the board may spend settling before its first frame -- see the pre-settle in the layout
+ *  effect. Nine decks measured at ~0.5 ms a tick settle in ~350 ms; a slower device animates the
+ *  remainder instead of blocking longer. */
+const PRESETTLE_MS = 400;
+
 /** Board width the camera leaves free on the right when it frames a focused card: the inspector
  *  panel's `sm:w-72` (288px) plus its `right-2` gutter and a little air. */
 const INSPECTOR_INSET_PX = 312;
+
+/** How many of a focused card's strongest partners the camera frames with it. */
+const FOCUS_PARTNERS = 8;
 
 /** How many key cards the strip above the board names -- one row at 1440 with room to spare. */
 const KEY_CARDS = 6;
@@ -665,13 +673,15 @@ export function GraphView(
    *  panel. The key-card strip and the find box both land here, so "show me this card" is one
    *  gesture wherever it starts (owner, 2026-09-24). Framing claims the camera the way a user pan
    *  does, or the next settle fit would throw the frame away. */
+  /** The card and its STRONGEST partners -- what a focus frames. Every partner was right for a
+   *  card with a handful of them and wrong for a hub: Jodah touches 56 of 66 cards, so framing all
+   *  of them framed the whole deck and left the lit core too small to carry a single label. */
   const neighbourhood = useCallback((id: string): Set<string> => {
-    const near = new Set<string>([id]);
-    for (const e of graph.edges) {
-      if (e.from === id) near.add(e.to);
-      else if (e.to === id) near.add(e.from);
-    }
-    return near;
+    const touching = graph.edges
+      .filter((e) => e.from === id || e.to === id)
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, FOCUS_PARTNERS);
+    return new Set<string>([id, ...touching.map((e) => (e.from === id ? e.to : e.from))]);
   }, [graph]);
   const focusCard = useCallback((id: string) => {
     settleFocusRef.current = null;
@@ -701,12 +711,22 @@ export function GraphView(
    *  commander (else the top key card) selected: its flow lit and its partners listed. Once per
    *  graph, never over a selection the reader made, and not on the phone's own views. */
   const autoFocusedRef = useRef<CardGraph | null>(null);
+  // Read by the label pass inside the rAF loop -- refs, so a change repaints without re-running the
+  // layout effect (the same reason every other per-frame input here is a ref).
+  const guidedRef = useRef(guided);
+  guidedRef.current = guided;
+  const keyCardIdsRef = useRef<ReadonlySet<string>>(new Set());
+  keyCardIdsRef.current = new Set(keyCards.map((c) => c.id));
   useEffect(() => {
     if (!guided || bare || narrow || autoFocusedRef.current === graph) return;
     autoFocusedRef.current = graph;
     const first = [...commanders][0] ?? keyCards[0]?.id;
     if (!first) return;
-    settleFocusRef.current = { ids: neighbourhood(first), inset: INSPECTOR_INSET_PX };
+    const near = neighbourhood(first);
+    // Framed NOW when the board arrived pre-settled (the usual case -- the layout effect has already
+    // run and framed the whole deck), and by the settle fits otherwise.
+    settleFocusRef.current = { ids: near, inset: INSPECTOR_INSET_PX };
+    fitSubsetRef.current(near, INSPECTOR_INSET_PX);
     setSelectedIds((ids) => (ids.length > 0 ? ids : [first]));
   }, [guided, bare, narrow, graph, commanders, keyCards, neighbourhood]);
   // THE COMPANION IS NAMED AS ONE (owner, 2026-09-22): a player has to see whether a card is played
@@ -1653,6 +1673,19 @@ export function GraphView(
         // cull is exactly what would drop them, since it ranks by weighted degree and theirs is 0.
         cull: { weightedDegree, degreeQuantile: LABEL_DEGREE_QUANTILE },
       });
+      // THE REPORT'S BOARD NAMES WHAT THE READER IS LOOKING AT, NOT EVERYTHING THAT FITS (owner,
+      // 2026-09-24). On a deck like Jodah -- 56 of 66 cards touching the commander -- every name
+      // that won a slot still sat in a knot of other names, and the selected card's partners were
+      // competing for slots with dimmed cards that are not in its flow. So on the guided board:
+      // at rest, the commanders, the key cards, the hovered neighbourhood and search matches; with a
+      // card selected, that card's flow. Everything else stays a disc, one hover away from a name.
+      if (guidedRef.current && candidates.length > 0) {
+        const keep = new Set<string>([...alwaysLabelled(), ...hoveredSet, ...(matchesRef.current ?? [])]);
+        const focusFlow = flowRef.current;
+        if (focusFlow) { for (const id of focusFlow.nodes.keys()) keep.add(id); for (const id of focusFlow.roots) keep.add(id); }
+        else for (const id of keyCardIdsRef.current) keep.add(id);
+        for (let i = candidates.length - 1; i >= 0; i--) if (!keep.has(candidates[i]!.id)) candidates.splice(i, 1);
+      }
       if (candidates.length > 0) {
         // World-unit font size so it renders at a constant LABEL_PX screen px -- the formula the
         // deleted room labels also used (roomFontPx); the defect was never the formula, only that
@@ -1826,7 +1859,10 @@ export function GraphView(
     // the window listener rather than joining it as a second special case.
     const onResize = () => {
       dim = size();
-      if (cameraOwnedByUserRef.current !== graph) fitToView();
+      // settleFit, not fitToView: a board that opened on a card keeps that card framed through a
+      // resize -- including the FIRST one, when the canvas is measured after the pre-settle ran
+      // against a zero-size box and could not frame anything yet.
+      if (cameraOwnedByUserRef.current !== graph) settleFit();
     };
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(canvas);
@@ -1996,6 +2032,27 @@ export function GraphView(
     // immediately, so the fit ran against the no-op stub, marked itself done, and the camera never
     // moved -- the exact StrictMode symptom the "torn down and re-run" test pins, which is what
     // caught this. A comment that describes where code SHOULD be is not a guard.
+    //
+    // THE BOARD ARRIVES SETTLED (owner, 2026-09-24: "everything gets super clustered and jump
+    // around"). Measured headless over nine decks, the app's own tick loop: a fresh layout moved for
+    // 11.5 s, the camera framed it at ~5 s, and cards then travelled another 35px each on screen
+    // (122px on sorin) before parking -- the board visibly assembling itself, then jumping once.
+    // Ticking it here, before the first frame, removes all of that without touching a force: the
+    // layout the reader sees is the same one the animated path parks on. ~0.5 ms a tick, so a whole
+    // settle is ~350 ms; the budget caps a slow device, and whatever is left animates as before.
+    if (isFirstLayout && !fitted) {
+      const t0 = performance.now();
+      while (simulation.alpha() > PARK_ALPHA && performance.now() - t0 < PRESETTLE_MS) simulation.tick();
+      if (simulation.alpha() <= FIT_SETTLE_ALPHA) {
+        // The loop's two scheduled fits are reached BY ticks it will no longer take, so they run
+        // here: once framed, and marked re-framed too when the board has already parked.
+        settleFit();
+        fits++;
+        fitted = true;
+        fittedGraphRef.current = graph;
+        if (simulation.alpha() <= PARK_ALPHA) refitted = true;
+      }
+    }
     loop();
 
 

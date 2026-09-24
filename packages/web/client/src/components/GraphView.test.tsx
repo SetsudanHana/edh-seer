@@ -694,10 +694,14 @@ describe("fit to view", () => {
   // (found by an adversarial review, 2026-08-28: deleting the whole re-frame branch left all 108
   // tests in this file green). A count is what the behaviour IS; the geometry was a proxy for it,
   // and the proxy is at the mercy of every constant in board-force.ts.
+  // THE SLOW-DEVICE PATH. The board pre-settles before its first frame within PRESETTLE_MS; a clock
+  // that has already spent the budget skips that, and the animated schedule below is what remains.
   test("the board is framed twice: once mid-settle, once when it parks", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
+    let clock = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => (clock += 1000));
     const { canvas, tick } = frames(SAMPLE.graph);
     expect(canvas.__graphProbe!().fits).toBe(0);
     // Past FIT_SETTLE_ALPHA but not yet parked: exactly one frame taken.
@@ -708,6 +712,23 @@ describe("fit to view", () => {
     expect(canvas.__graphProbe!().fits).toBe(2);
     tick(400);
     expect(canvas.__graphProbe!().fits).toBe(2);
+  });
+
+  // THE BOARD ARRIVES SETTLED (owner, 2026-09-24: cards "jump around"). With time in the budget the
+  // layout is ticked to rest before the first frame and framed once, so nothing moves or re-frames
+  // on screen afterwards.
+  test("a fresh board is settled and framed before its first frame, and never re-framed after", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const { canvas, tick } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    expect(probe.fits).toBe(1);
+    const before = probe.map((n) => ({ id: n.id, x: n.x, y: n.y }));
+    tick(600);
+    const after = canvas.__graphProbe!();
+    expect(after.fits).toBe(1);
+    expect(after.map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
   });
 
   // A camera the reader moved is theirs. The re-frame must respect that the same way the one-time
@@ -1931,7 +1952,10 @@ describe("flow view", () => {
     now.mockReturnValue(5000);   // five seconds later
     calls.length = 0;
     tick();
-    expect(offsets()).toEqual(first);
+    // FROZEN MEANS NO NEW OFFSET. Since the board arrives pre-settled it is parked here, so a frozen
+    // crawl leaves nothing to repaint at all; if a frame does paint, it must repeat the old offset.
+    const second = offsets();
+    expect(second.length === 0 ? first : second).toEqual(first);
   });
 
   // THE SIGN IS THE WHOLE CLAIM. A crawl running the wrong way is a confident lie about which card
