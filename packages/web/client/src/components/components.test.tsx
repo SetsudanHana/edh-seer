@@ -690,22 +690,19 @@ test("Cards tab shows the top-partner reason under the card name", () => {
 test("the shell opens on the chapters and routes to the reference surfaces", async () => {
   render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
   expect(screen.getAllByText("Tokens").length).toBeGreaterThan(0); // chapter 1
-  // A group's label appears TWICE in chapter 3 -- once as a matrix column header and once on its
-  // own pair row -- so the assertion names which one it means rather than being loosened to
-  // `getAllByText`, which would pass on either alone.
-  expect(screen.getByRole("columnheader", { name: "Tokens Go Wide" })).toBeInTheDocument();
+  // Chapter 3's group row, named by its role so the assertion cannot pass on some other mention.
   expect(screen.getByRole("button", { name: /^Tokens Go Wide/ })).toBeInTheDocument();
 
   await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
   // Twice: the sticky header names the commander on every surface, and the table lists it.
   expect(screen.getAllByText("Krenko, Mob Boss").length).toBeGreaterThan(1); // CardList content
-  expect(screen.queryByRole("columnheader", { name: "Tokens Go Wide" })).toBeNull(); // the scroll is gone
+  expect(screen.queryByRole("button", { name: /^Tokens Go Wide/ })).toBeNull(); // the scroll is gone
 
   await userEvent.click(screen.getAllByRole("link", { name: /^Combos/ })[0]!);
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument(); // ComboList content
 
   await userEvent.click(screen.getByRole("link", { name: /Report/ }));
-  expect(screen.getByRole("columnheader", { name: "Tokens Go Wide" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Tokens Go Wide/ })).toBeInTheDocument();
 });
 
 // ART WARMS BEFORE THE GRAPH TAB IS EVER OPENED. `<GraphView>` is mounted by `active === "graph"`,
@@ -3184,4 +3181,14 @@ test("an archetype bar's length is its share of the deck, not its share of the l
   const { container } = render(<ArchetypeBoard archetypes={SAMPLE.report.archetypes} strategies={strategies} />);
   const widths = [...container.querySelectorAll<HTMLElement>(".bg-\\(--fill\\)")].map((el) => el.style.width);
   expect(widths.slice(0, 2)).toEqual(["17%", "12%"]);
+});
+
+/** THE CARD-BY-THEME GRID WENT (owner, 2026-09-24); ITS ONE ACTIONABLE FACT CAME HERE. Cards no theme
+ *  claims are named in the cut list, as a place to look -- not as cut candidates, which they are not. */
+test("the cut list names the cards no theme claims, without calling them dead", () => {
+  render(<CutList cutList={[]} slack={[]} offTheme={["Crib Swap", "Despark"]} />);
+  expect(screen.getByText(/Fits no theme:/)).toBeInTheDocument();
+  expect(screen.getByText("Crib Swap")).toBeInTheDocument();
+  expect(screen.getByText(/normal for\s+removal and protection/)).toBeInTheDocument();
+  expect(screen.queryByText("No card here is unconnected.")).toBeNull();
 });

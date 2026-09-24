@@ -9,7 +9,7 @@ import { CardName } from "./card-drawer.js";
  *  same way: a relation it cannot express looks exactly like a card doing nothing (see matcher's
  *  `cut-list.ts`). The caption is not decoration — it is the difference between a tool that helps
  *  and one that confidently deletes a player's best card. */
-export function CutList({ cutList, unjudged, coverage, slack, trim }:
+export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
   {
     cutList: DeckReport["cutList"];
     /** Cards the engine REFUSED to judge because it never read them. See `report.unjudged`. */
@@ -21,6 +21,8 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
     coverage?: DeckReport["coverage"];
     slack: DeckReport["slack"];
     trim?: DeckReport["trim"];
+    /** Read cards that no theme group claims and that are not already cut candidates. */
+    offTheme?: readonly string[];
   }) {
   // TRIM MODE is opt-in and client-side. The server ships the WHOLE ranked order, so changing N is
   // a slice and never a round trip; and it stays behind a click because a list that always has an
@@ -30,13 +32,14 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
   const hasCuts = !!cutList && cutList.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
   const hasSlack = !!slack && slack.length > 0;
-  if (!hasCuts && !hasSlack && !hasTrim && !hasUnjudged) return null;
+  const hasOffTheme = !!offTheme && offTheme.length > 0;
+  if (!hasCuts && !hasSlack && !hasTrim && !hasUnjudged && !hasOffTheme) return null;
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Possible cuts</h3>
       {hasCuts && (
         <>
-          <p className="text-sm text-(--muted)">
+          <p className="text-sm text-(--muted) max-w-[65ch]">
             Cards nothing else in your deck works with, that are off your main theme and don&apos;t fill a
             core role. Suggestions, not verdicts: a synergy we can&apos;t read looks exactly like one that
             isn&apos;t there.
@@ -58,6 +61,20 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
             ))}
           </ul>
         </>
+      )}
+      {/* OFF-THEME, NOT DEAD (owner, 2026-09-24). These connect to something or fill a role, so they
+        *  are not cut candidates -- but no theme uses them, which is the second place a player looks
+        *  for a slot. Said with the usual exception, because removal routinely lands here. */}
+      {hasOffTheme && (
+        <p className="text-sm text-(--muted) max-w-[65ch]">
+          <span className="text-(--foreground)">Fits no theme:</span>{" "}
+          {offTheme!.map((n, i) => (
+            <span key={n}>{i > 0 && ", "}<CardName name={n} /></span>
+          ))}
+          . None of your themes use {offTheme!.length === 1 ? "it" : "these"}. That&apos;s normal for
+          removal and protection, which do their job on their own; otherwise this is the next place to
+          look for a slot.
+        </p>
       )}
       {/* AN EMPTY CUT LIST IS AN ANSWER AND HAS TO SAY SO. It used to render nothing at all, which
         *  reads as a missing panel rather than as "nothing here is dead weight" — and once the

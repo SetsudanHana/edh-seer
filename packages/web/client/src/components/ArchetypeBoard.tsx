@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { DeckReport } from "../types.js";
 import { Explain } from "./Explain.js";
-import { ThemeMatrix } from "./ThemeMatrix.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardName } from "./card-drawer.js";
 import { themePct } from "../lib/theme-pct.js";
@@ -121,7 +120,7 @@ function GroupRow({ group, size }: { group: Group; size?: { earned: number; tota
 export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], coverage }: {
   strategies?: DeckReport["strategies"];
   archetypes: DeckReport["archetypes"];
-  /** Nonland card names, for the matrix's rows. Supplied by the caller because the land rule is
+  /** Nonland card names, for each group's earned count. Supplied by the caller because the land rule is
    *  `primaryType`'s and reads TYPES, which this component is never given -- one copy of that rule,
    *  the same one `DeckWaffle` uses. */
   nonlandNames?: readonly string[];
@@ -139,9 +138,8 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
     return <p className="text-(--muted) text-sm">No recognizable archetype patterns — try adding more synergy pieces.</p>;
   }
   const unread = coverage ? coverage.resolved - coverage.derived : 0;
-  // THE SAME SPLIT THE MATRIX DRAWS, asked once. `themeMatrix` is pure and its column stats are the
-  // only definition of "earned" on the page -- deriving a second one here is how two counts of one
-  // thing start disagreeing.
+  // `themeMatrix` is pure and its column stats are the only definition of "earned" on the page --
+  // deriving a second one here is how two counts of one thing start disagreeing.
   const groupSize = useMemo(() => {
     const m = themeMatrix(archetypes, nonlandNames);
     return new Map((m?.columns ?? []).map((c) => [c.category, { earned: c.earned, total: c.total }] as const));
@@ -203,17 +201,11 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
           <div className="flex flex-col max-w-3xl">{strategies!.map((s) => <StrategyRow key={s.name} s={s} />)}</div>
         </div>
       ) : null}
-      {/* THE MATRIX IS THE GROUPS' MEMBERSHIP, drawn per CARD (roadmap S6). It goes above the
-        *  group rows rather than replacing them: a group row's expanded PAIRS are the evidence for
-        *  a membership -- "Krenko + Impact Tremors, and the sentence why" -- and the matrix has
-        *  room for a dot and not for a reason. Same posture as the waffle over `MissingCards` and
-        *  the bracket band over its named list.
-        *
-        *  THE TOP-LEVEL ARCHETYPES TAB STAYS FOR NOW, though S6's line says the matrix absorbs it.
-        *  `strategies` above is not group data and the matrix does not carry it, and removing a tab
-        *  is a NAVIGATION change -- S7's, and it wants every chapter visible at once before
-        *  deciding. Same call as leaving `CoveragePanel` above the tabs in S3. */}
-      {hasGroups ? <ThemeMatrix archetypes={archetypes} nonlandNames={nonlandNames} /> : null}
+      {/* THE CARD-BY-THEME GRID IS GONE (owner, 2026-09-24: "as a player it is not useful"). Every
+        *  seat of the look-and-feel round read it as broken -- nearly every card carried a mark in
+        *  nearly every column -- and the questions it could answer are better answered elsewhere:
+        *  the key-card marks show what carries each theme, the Cards table ranks by synergy, and
+        *  its one actionable fact, the cards no theme claims, now sits in the cut list. */}
       {hasGroups ? (
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">The pairs behind each group</h3>

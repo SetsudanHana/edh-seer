@@ -22,6 +22,7 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { findings } from "../lib/findings.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
+import { themeMatrix } from "../lib/theme-matrix.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -118,6 +119,16 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
       .map((n) => n.cardName ?? n.id),
     [data.graph],
   );
+
+  /** CARDS NO THEME CLAIMS, the one fact the removed card-by-theme grid carried that a player acts
+   *  on (owner, 2026-09-24: "as a player it is not useful"). It goes to the cut list, minus the cards
+   *  that list already names and minus the unread, which fit no theme because nothing was read --
+   *  `CutList` names those separately, with the right sentence. */
+  const offTheme = useMemo(() => {
+    const none = themeMatrix(report.archetypes, nonlandNames)?.unaffiliated ?? [];
+    const skip = new Set([...(report.cutList ?? []).map((c) => c.name), ...unreadCardNames(report.cards)]);
+    return none.filter((n) => !skip.has(n));
+  }, [report.archetypes, report.cutList, report.cards, nonlandNames]);
 
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
 
@@ -280,6 +291,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               coverage={report.coverage}
               slack={report.slack}
               trim={report.trim}
+              offTheme={offTheme}
             />
           </Movement>
         </Chapter>
