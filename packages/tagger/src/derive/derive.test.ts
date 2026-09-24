@@ -1664,6 +1664,59 @@ test("a trigger carries its numeric threshold", () => {
   expect(abilities[0].amount).toBe("1,000");
 });
 
+/** THE SIZE OF THE TRIGGERING EVENT (2026-09-25). Ghyrson Starn fires on "exactly 1 damage", and
+ *  without the amount the engine joined every pinger to him -- Eidolon of the Great Revel's 2, Flame-
+ *  Kin War Scout's 4. The clause layer drops it (its trigger is `damage-dealt` by "another source you
+ *  control"), so it is read off the printed trigger head, as `threshold` is. The clause below is
+ *  Ghyrson's as `cardClauses` holds it. */
+test("a damage trigger carries the amount it requires, read off the printed trigger", () => {
+  const ghyrson = deriveAbilities(
+    [{
+      id: 2,
+      abilityType: "triggered",
+      trigger: { event: "damage-dealt", subject: "another source you control", control: "you" },
+      actions: [{ verb: "deal-damage", object: "that permanent or player", amount: "2" }],
+    }],
+    "Ghyrson Starn, Kelermorph",
+    { 2: "Whenever another source you control deals exactly 1 damage to a permanent or player, Ghyrson Starn deals 2 damage to that permanent or player." },
+  );
+  expect(ghyrson.abilities[0].trigger?.amount).toEqual({ op: "eq", value: 1 });
+  // The EFFECT's amount is a different fact and stays where it was.
+  expect(ghyrson.abilities[0].amount).toBe("2");
+
+  const dragonborn = deriveAbilities(
+    [{
+      id: 1,
+      abilityType: "triggered",
+      trigger: { event: "damage-dealt", subject: "a source you control", control: "you" },
+      actions: [{ verb: "draw", object: "a card", optional: true }],
+    }],
+    "Dragonborn Champion",
+    { 1: "Whenever a source you control deals 5 or more damage to a player, you may draw a card." },
+  );
+  expect(dragonborn.abilities[0].trigger?.amount).toEqual({ op: "gte", value: 5 });
+});
+
+test("a damage trigger that states no amount, or says \"one or more\" creatures, leaves it unset", () => {
+  for (const text of [
+    "Whenever a source you control deals damage to an opponent, draw a card.",
+    "Whenever one or more creatures you control deal combat damage to a player, draw a card.",
+  ]) {
+    const { abilities } = deriveAbilities(
+      [{
+        id: 1,
+        abilityType: "triggered",
+        trigger: { event: "damage-dealt", subject: "a source you control", control: "you" },
+        actions: [{ verb: "draw", object: "a card" }],
+      }],
+      "Some Card",
+      { 1: text },
+    );
+    expect(abilities[0].trigger).toBeDefined();
+    expect("amount" in abilities[0].trigger!).toBe(false);
+  }
+});
+
 test("a trigger with no threshold leaves the field unset", () => {
   // Welcoming Vampire: "Whenever one or more other creatures you control with power 2 or less
   // enter, draw a card." Exclusion 1 does the work here: "one or more" yields atLeast 1 and is
