@@ -150,7 +150,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               {/* "RESOLVED" IS A RULES WORD (T1): a spell resolves, and a player scanning
                 *  "Resolved 99/100" reads a simulation stat rather than how many names this tool
                 *  recognised. Nothing about the figure changed. */}
-              Recognized <span className="pip">{data.resolvedCount}/{data.totalCount}</span>
+              Card names matched <span className="pip">{data.resolvedCount}/{data.totalCount}</span>
             </p>
           )}
         </Chapter>
@@ -202,7 +202,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="mana" title={title("mana")}>
-          <Movement count="the evidence behind each mana finding in What's wrong, below">
+          <Movement count="the numbers behind the mana fixes below">
           <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
             {/* `showBenchmarks={false}`: the Roles chapter alone owns the category/parent block
               *  ("How the roles are spent", its group headers and leaf rows). Without this, that
@@ -250,7 +250,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="roles" title={title("roles")}>
-          <Movement count="the evidence behind each build finding in What's wrong, below">
+          <Movement count="the numbers behind the build fixes below">
             <BuildBenchmarks
               categories={report.buildCategories}
               parents={report.buildParents}

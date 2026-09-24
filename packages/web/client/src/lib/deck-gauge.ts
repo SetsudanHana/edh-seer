@@ -61,7 +61,7 @@ export function bandState(count: number, target: number): GaugeReading {
   // Both are true -- the model's resolution is ±LAND_BAND -- so the label names the distance and
   // the margin it falls inside, and only an exact hit is simply "on" the count.
   if (Math.abs(d) <= LAND_BAND) {
-    const label = d === 0 ? "on the modelled count" : `${Math.abs(d)} ${d > 0 ? "over" : "under"}, inside the model's ±${LAND_BAND}`;
+    const label = d === 0 ? "on the modelled count" : `${Math.abs(d)} ${d > 0 ? "over" : "under"}, within the normal ±${LAND_BAND}`;
     return { state: "on-band", label, tone: "success", position: 0 };
   }
   const dir = d > 0 ? "over" : "under";

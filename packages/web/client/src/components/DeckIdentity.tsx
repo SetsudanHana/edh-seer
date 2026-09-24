@@ -71,7 +71,7 @@ export function DeckIdentity({
   // longer exists. The `mdfc` prop went with it: `DeckWaffle` states the composition once, on the
   // line that prints the land count, and a second copy here would be the third wording of one fact.
   const share = cohesion.nonlandCount > 0
-    ? `${cohesion.onThemeCount} of ${cohesion.nonlandCount} nonlands work with it (${pct}%, ${cohesion.label})`
+    ? `${cohesion.onThemeCount} of ${cohesion.nonlandCount} nonland cards support it (${pct}%, ${cohesion.label})`
     : `${pct}% of nonlands (${cohesion.label})`;
   const focus = coverage ? `${share}, over the ${coverage.derived} cards read` : share;
   // The WIDER FAMILY, and only when it differs — the same rule the CLI settled on (A10). A specific
@@ -111,7 +111,7 @@ export function DeckIdentity({
         <span className="text-sm text-(--muted) tabular-nums">
           {cohesion.dominant === false ? `strongest: ${cohesion.theme} · ` : ""}
           {focus}
-          {family ? ` (wider family ${family})` : ""}
+          {family ? ` · related themes ${family}` : ""}
         </span>
         {colorIdentity && colorIdentity.length > 0 ? (
           // Only shown when the deck actually has a color identity (a resolved
@@ -175,7 +175,7 @@ export function DeckIdentity({
             *  report and the CLI still prints it -- this is a decision about THIS line, not about
             *  the data. */}
           <span className="block text-xs text-(--muted)">
-            owner-judged 95% precise on what it lists; it misses roughly one in six a player would count
+            hand-checked: 95% of what it lists is right, but it misses about one in six a player would count
           </span>
         </p>
       ) : null}
@@ -216,7 +216,7 @@ export function DeckIdentity({
               sentence, one of them updated. */}
           {commanderCast.some((c) => c.mana !== null) ? (
             <Explain label="what the range means">
-              simulated: the low end holds up two mana, the high end spends everything on ramp
+              Simulated. Low end: you hold up two mana. High end: you spend everything on ramp.
             </Explain>
           ) : null}
           {/* …AND THE ENGINE NOW KNOWS BY HOW MUCH, so the caveat names the better number instead of

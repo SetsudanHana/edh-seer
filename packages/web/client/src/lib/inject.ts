@@ -428,7 +428,7 @@ export function cardPageHtml(
     // and count the other.
     const href = searchHref(dir, g.event, kind === "commander" ? card.identity : undefined);
     const more = withheld > 0
-      ? `\n    <p><a href="${esc(href)}">${withheld.toLocaleString("en-US")} other cards ${verb} too</a>, equally specific. The ones shown are the best connected.</p>`
+      ? `\n    <p><a href="${esc(href)}">${withheld.toLocaleString("en-US")} other cards ${verb} too</a>. These are the ones with the most connections.</p>`
       : "";
     const { head, rows: cells } = factorLead(g.rows);
     const lead = head === "" ? "" : `    <p>${esc(head)}:</p>\n`;
@@ -444,7 +444,7 @@ export function cardPageHtml(
     : `    <p><a href="/cards/${esc(slug)}">What the engine reads on this card</a></p>\n`;
   const partners = card.partners.length === 0
     ? "    <p>No partners specific enough to list.</p>"
-    : `    <h2>Partners</h2>\n${rows}`;
+    : `    <h2>Works well with</h2>\n${rows}`;
   // WHAT THE ENGINE READ, so a reader can check a claim without leaving for Scryfall. Option 2 of
   // spec D2a, taken 2026-09-18: option 1 shipped with our derivation and nothing to check it
   // against, and "Produces: a card being drawn" is unfalsifiable on a page that never shows the

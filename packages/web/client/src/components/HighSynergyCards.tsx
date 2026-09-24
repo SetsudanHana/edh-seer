@@ -6,7 +6,7 @@ import { RATE_FAMILY_LABEL, rateLabel, type RateFamily } from "../lib/facets.js"
 
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
 /** What the badge means, said once where it is first used rather than left to be guessed. */
-const ANCHOR_GLOSS = "anchor — most of this deck's synergy runs through it";
+const ANCHOR_GLOSS = "key card: most of this deck's synergy runs through it";
 
 export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
   const ranked = cards
@@ -60,7 +60,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                         *  commander at the top of a synergy list, a bare "anchor" is read as
                         *  "this is your commander" -- a guessable-wrong meaning, which is worse
                         *  than an unknown one. */}
-                      anchor
+                      key card
                     </span>
                   ) : null}
                   {/* THE FIELD NAME ESCAPED INTO THE SENTENCE. This printed "pulls double duty

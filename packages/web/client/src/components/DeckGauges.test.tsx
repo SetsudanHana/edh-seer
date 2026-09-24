@@ -22,7 +22,7 @@ const DATA = {
 test("draws two groups, each with its lead dial and its inputs", () => {
   render(<DeckGauges data={DATA as never} />);
   for (const name of [
-    "Synergy", "Breadth", "Anchor",
+    "Synergy", "Focus", "Key card",
     "Build", "Consistency", "Ramp", "Interaction", "Board wipes", "Lands",
   ]) {
     // `getAllBy`, because S15 moved each score's gloss onto its own dial and those sentences name
@@ -58,8 +58,8 @@ test("a report with only buildScore renders only the Build group", () => {
   expect(screen.queryByRole("group", { name: "Synergy, and the two measures behind it" })).toBeNull();
   expect(screen.getByRole("group", { name: "Build, and the five measures behind it" })).toBeInTheDocument();
   // The Synergy group is absent, so its gloss is too -- nothing names Breadth or Anchor anywhere.
-  expect(screen.queryByText("Breadth")).toBeNull();
-  expect(screen.queryByText("Anchor")).toBeNull();
+  expect(screen.queryByText("Focus")).toBeNull();
+  expect(screen.queryByText("Key card")).toBeNull();
 });
 
 /** THE RATCHET FOR THE ONE CLAIM THIS WHOLE PANEL ARGUES FROM. `build.ts:520` is

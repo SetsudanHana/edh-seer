@@ -115,8 +115,8 @@ export function Findings({ report, diff }: {
               {f.impact !== undefined ? (
                 <p className="text-sm text-(--muted) tabular-nums">
                   {f.impact > 0
-                    ? <>worth <span className="text-(--foreground) stat-num">+{f.impact.toFixed(2)}</span> to Build or better</>
-                    : "does not move Build"}
+                    ? <><span className="text-(--foreground) stat-num">+{f.impact.toFixed(2)}</span> to Build, at least</>
+                    : "won't change your Build score"}
                 </p>
               ) : null}
               {f.action ? (
@@ -174,7 +174,7 @@ export function Findings({ report, diff }: {
             <path d="M2 5.5h9L8.5 3M14 10.5H5L7.5 13" />
           </svg>
           <p className="text-sm text-(--muted) max-w-[70ch] tabular-nums">
-            <span className="text-(--foreground) font-medium">Where the slots come from.</span> {trade}
+            <span className="text-(--foreground) font-medium">Where to find the slots.</span> {trade}
           </p>
         </div>
       ) : null}
@@ -184,7 +184,7 @@ export function Findings({ report, diff }: {
         *  -- it is at most two rows, and a fold over two rows is chrome. */}
       {unseen.length > 0 ? (
         <section className="flex flex-col gap-3 pt-2">
-          <h3 className="text-base font-bold tracking-[-0.01em]">What the build score cannot see</h3>
+          <h3 className="text-base font-bold tracking-[-0.01em]">Not counted in your Build score</h3>
           <ul className="flex flex-col border-t border-(--separator)">
             {unseen.map((f, i) => (
               // THE SAME GRID AS THE SCORED ROWS, so the number continues in the same column and,

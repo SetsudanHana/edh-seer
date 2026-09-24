@@ -61,8 +61,8 @@ test("a colour finding names the card and reads the deadline count", () => {
   expect(row.headline).toBe("Archmage's Charm and Mana Sculpt want three blue on turn 3.");
   expect(row.figure).toBe("35/37");
   // The deck HOLDS enough; they are not online that early, and the sentence has to say which.
-  expect(row.detail).toContain("35 of the deck's 39 blue sources");
-  expect(row.detail).toContain("timing problem rather than a colour one");
+  expect(row.detail).toContain("35 of your 39 blue sources");
+  expect(row.detail).toContain("it's a speed problem");
   expect(row.shortfall).toBeCloseTo(2 / 37);
 });
 
@@ -79,7 +79,7 @@ test("a colour finding past two cards names what it has and counts the rest", ()
   }));
   expect(row.headline).toBe("Bitterblossom, Dark Confidant and 3 other cards want two black on turn 2.");
   // Not a timing problem: the deck does not hold the sources at all.
-  expect(row.detail).not.toContain("timing problem");
+  expect(row.detail).not.toContain("speed problem");
 });
 
 /** Five thin classes are ONE finding, not five rows: the fix is one card that hits any permanent,
@@ -182,7 +182,7 @@ test("the slot trade names the category and never a card, and stays silent with 
   const trade = slotTrade(r, findings(r))!;
   expect(trade).toContain("Interaction sits at 15 against a target of 10");
   // The surplus must read as a SURPLUS. "5 of those slots are the ones you need" said the opposite.
-  expect(trade).toContain("5 more slots than it needs");
+  expect(trade).toContain("5 slots are spare");
   expect(trade).not.toContain("are the ones you need");
   expect(slotTrade(report({ slack: [{ category: "Interaction", count: 15, target: 10, over: 5 }] }), [])).toBeNull();
 });
@@ -261,7 +261,7 @@ test("the slot trade says so when the surplus is the category a finding asks for
   });
   const trade = slotTrade(withAnswers, findings(withAnswers))!;
   expect(trade).toContain("Interaction sits at 19 against a target of 10");
-  expect(trade).toContain("Swap inside Interaction, do not add to it");
+  expect(trade).toContain("Swap within Interaction rather than adding more");
 
   // AND STAYS QUIET WHEN THEY ARE DIFFERENT CATEGORIES, where "add" and "the room is elsewhere" do
   // not conflict and the extra clause would be noise.
@@ -330,7 +330,7 @@ test("the action line names the cut when the deck has slack", () => {
     suggestions: ["Consistency 6/14 — add ~8, typically 2–4 mana"],
     slack: [{ category: "ramp", count: 17, target: 10, over: 7 }],
   }));
-  expect(scored[0]!.action).toContain("cutting from ramp (17/10)");
+  expect(scored[0]!.action).toContain("Take the slots from ramp, where you have 17 against a target of 10.");
 });
 
 /** No surplus, no donor. Nothing is invented to fill the sentence. */

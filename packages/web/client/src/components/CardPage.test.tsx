@@ -62,7 +62,7 @@ test("the card name is the page's one h1, and the sections step down from it", a
   at("krenko-mob-boss", async () => KRENKO);
   await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-  expect(screen.getByRole("heading", { level: 2, name: "Partners" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 2, name: "Works well with" })).toBeInTheDocument();
 });
 
 /** 38% OF THE CORPUS IS UNREAD, so this is the ordinary case and not the error case. A missing
@@ -75,7 +75,7 @@ test("an unread card says so rather than rendering an empty page", async () => {
   expect(await screen.findByText(/no such page/i)).toBeInTheDocument();
   // De-slugged: a slug is not what anyone typed, and the heading is what they asked for.
   expect(screen.getByRole("heading", { name: /black lotus/ })).toBeInTheDocument();
-  expect(screen.getByText(/that name is wrong/i)).toBeInTheDocument();
+  expect(screen.getByText(/the name.s wrong/i)).toBeInTheDocument();
   // THE SEARCH IS SEEDED WITH WHAT WAS ASKED FOR, hyphens back to spaces: a truncated or
   // misremembered name is the likelier of the two cases, and this is the recovery from it.
   expect(screen.getByRole("link", { name: /Search for/ }))
@@ -180,7 +180,7 @@ test("a row whose effect the engine could not read says so", async () => {
     ...KRENKO,
     partners: [{ ...KRENKO.partners[0]!, reason: "When a Goblin enters, X triggers", unread: true as const }],
   }));
-  expect(await screen.findByText(/engine did not read what it does/)).toBeInTheDocument();
+  expect(await screen.findByText(/couldn.t read this card/)).toBeInTheDocument();
 });
 
 test("a row the engine did read carries no such marker", async () => {

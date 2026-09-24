@@ -178,8 +178,8 @@ type SortKey = "synergy" | "name" | "cost";
  *  same data with none of that language.
  *  → `specs/2026-08-20-report-usability-review.md` §3 F5 */
 const SCALE_NOTE =
-  "Rated against this deck's best synergy card, so a low number is a comparison and not a verdict — "
-  + "lands and cards whose job is a role (ramp, removal, protection) score low by design.";
+  "Scored against this deck's best synergy card, so a low number means \"less connected\", not \"bad\". "
+  + "Lands and pure ramp, removal or protection score low on purpose.";
 
 export function CardList({ cards, artByName, coverage }: {
   cards: DeckReport["cards"];
@@ -283,9 +283,8 @@ export function CardList({ cards, artByName, coverage }: {
       {shapes.shared.length > 0 ? (
         <div className="text-xs text-(--muted) max-w-[65ch] flex flex-col gap-0.5">
           <span>
-            Most of this deck connects in{" "}
-            {shapes.shared.length === 1 ? "one way" : `${shapes.shared.length} ways`}, said once here
-            instead of on every row:
+            Your {shapes.shared.length === 1 ? "most common link" : `${shapes.shared.length} most common links`},
+            shown once instead of on every row:
           </span>
           {shapes.shared.map((sh) => (
             <span key={sh.template}>
@@ -293,7 +292,7 @@ export function CardList({ cards, artByName, coverage }: {
               <span className="text-(--foreground)">{sh.sample}</span>
             </span>
           ))}
-          <span>A row with a sentence of its own is a card doing something else.</span>
+          <span>Rows with their own sentence are doing something different.</span>
         </div>
       ) : null}
       <div className="flex gap-2 flex-wrap items-center">

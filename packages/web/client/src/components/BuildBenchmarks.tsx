@@ -642,10 +642,9 @@ function DeckMathRows({
         ) : null}
         {answers.some((a) => a.required > a.count) ? (
           <Caveat label={'what "short" is measured against'}>
-            "Short" counts the cards this deck would have to add before it holds an answer of that
-            class more often than not by turn {turn}. The COUNT is this deck's own; that it should
-            hold one of every class is the template&rsquo;s convention, not measured — and nobody has
-            calibrated the floor for land or graveyard answers at all.
+            &ldquo;Short&rdquo; is how many more you would need to have that answer in hand more often
+            than not by turn {turn}. The count is real. Wanting an answer for every kind of permanent
+            is a rule of thumb, and the land and graveyard targets are untested.
           </Caveat>
         ) : null}
       </div>
@@ -751,7 +750,7 @@ function DeckMathRows({
             *  biggest first, the same call `cheatsIntoPlay` makes one paragraph down. */}
           {castability.refusedCards && castability.refusedCards.length > 0 ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
-              <span className="text-(--foreground)">Not priced:</span>{" "}
+              <span className="text-(--foreground)">Not checked:</span>{" "}
               {castability.refusedCards.map((c, i) => (
                 <span key={c.name}>
                   {i > 0 ? "; " : ""}<CardName name={c.name} /> — {c.reason}
@@ -766,7 +765,7 @@ function DeckMathRows({
               // as an unexplained blank on the card's own row. "Costs less than it prints" joined
               // them in S19 and is the most common of them on real decks -- 38 of the 71
               // calibration decks hold at least one.
-              ? `${plural(castability.refused, "card")} refused — X costs, delve, convoke, free casts and cards that cost less than they print are not priced rather than guessed. `
+              ? `${plural(castability.refused, "card")} skipped: we don't guess at X costs, delve, convoke, free spells or cost reducers. `
               : ""}
             {castability.biases}
             {/* ROADMAP I6. Putting a permanent onto the battlefield is not casting it, so it uses no
@@ -851,9 +850,9 @@ function DeckMathRows({
             ))}
           </p>
           <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
-            Concentration {wincons.focus.toFixed(2)} of 1.00, where 1.00 is a deck all-in on one plan
-            and {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is these {wincons.classes.length}{" "}
-            plans split evenly. Higher is better here, unlike every other figure on this panel.
+            Concentration {wincons.focus.toFixed(2)}: 1.00 is all-in on one plan,{" "}
+            {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is an even split across these{" "}
+            {wincons.classes.length}. Higher is better.
           </p>
         </div>
   ) : null;
@@ -1092,8 +1091,8 @@ function DeckMathRows({
             *  and the honest fix for a demand no 100-card deck can meet is usually the spell. */}
           {overcommitted ? (
             <p className="text-xs text-(--muted) max-w-[65ch]">
-              Together these rows want {totalRequired} sources from {landRoom} lands, which no deck
-              can hold — read them as what each card is asking for, not as a shortfall to fix.
+              Together these rows ask for {totalRequired} sources from {landRoom} lands. Read each row
+              as what that card is asking for, not as a to-do list.
             </p>
           ) : null}
           {colors.some((c) => c.worst) ? (
@@ -1135,8 +1134,8 @@ function DeckMathRows({
         // the card — so the wording has to be true of all three cases (a phase, combat, and a card
         // triggering itself). "Nothing has to supply it" is the component's own phrasing from the
         // comment above, and it covers every one.
-        ? `${sentence}, ${d.consumers} cards want it, and nothing has to supply it`
-        : `${sentence}, ${d.consumers} cards want it, ${d.suppliers} supply it`;
+        ? `${sentence}, ${d.consumers} cards need it, and it happens on its own`
+        : `${sentence}, ${d.consumers} cards need it, ${d.suppliers} make it happen`;
     return (
       <li key={d.key} className="flex items-center gap-3 text-sm" aria-label={label}>
         {/* The raw census key stays reachable on hover, because `bin/deck-availability.ts` prints
@@ -1144,8 +1143,8 @@ function DeckMathRows({
         <span className="flex-1 truncate" title={d.key}>{sentence}</span>
         <span className={`shrink-0 stat-num ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
           {d.available === null
-            ? `${d.consumers} want · nothing has to supply it`
-            : `${d.consumers} want · ${d.suppliers} supply`}
+            ? `${d.consumers} need · happens on its own`
+            : `${d.consumers} need · ${d.suppliers} enable`}
         </span>
       </li>
     );
@@ -1153,23 +1152,23 @@ function DeckMathRows({
   const unmet = demand.filter((d) => d.available !== null && d.suppliers === 0);
   const demandBlock = (
       <div className="flex flex-col gap-1.5">
-        <h4 className="eyebrow">Wants vs supplies</h4>
+        <h4 className="eyebrow">Needs and enablers</h4>
         {unmet.length > 0 ? (
           <>
             <p className="text-sm text-(--muted)">
-              {plural(unmet.length, "want")} with nothing in the deck supplying{" "}
-              {unmet.length === 1 ? "it" : "them"}.
+              {plural(unmet.length, "need")} with nothing in the deck to make{" "}
+              {unmet.length === 1 ? "it" : "them"} happen.
             </p>
             <ul className="flex flex-col gap-1">{unmet.map(demandRow)}</ul>
           </>
         ) : (
           <p className="text-sm text-(--muted)">
-            Every want in this deck has something supplying it.
+            Everything your cards are waiting for, something in the deck provides.
           </p>
         )}
         <details>
           <summary className="eyebrow cursor-pointer text-(--muted)">
-            all {demand.length} wants
+            all {demand.length} needs
           </summary>
           <ul className="flex flex-col gap-1 pt-1">{demand.map(demandRow)}</ul>
         </details>
@@ -1226,19 +1225,18 @@ function DeckMathRows({
         *  four things the model ignores are what they consult once and then stop needing. */}
       <div className="flex flex-col gap-1">
         <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
-          Everything below is priced at turn {turn} —{" "}
+          Everything below is checked at turn {turn}:{" "}
           {deckMath.turnSource === "corpus-median"
             ? "the median of the calibration decks, because this deck has no combat clock"
             : deckMath.turnSource === "override"
               ? "a fixed horizon"
-              : "this deck's own clock"}
-          , {seen} cards seen.
+              : "when this deck typically wins"}
+          , {seen} cards seen by then.
         </p>
         <Caveat>
-          Supply is unweighted — a repeatable outlet counts the same as a one-shot. No mulligans and
-          no opponent, and card draw is ignored: a deck five cards ahead of that reads about 11
-          points higher on a coverage figure, ten cards ahead about 20, so each one is conservative
-          for a deck that draws.
+          Assumes no mulligans, no opponents and no extra draws, and a repeatable effect counts the
+          same as a one-shot. Draw-heavy decks do better than shown: about 11 points higher with
+          five extra cards seen, about 20 with ten.
         </Caveat>
       </div>
 

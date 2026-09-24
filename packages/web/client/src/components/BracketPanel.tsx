@@ -72,11 +72,10 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
         *  so' and 'this website says so', which matters to me if I am going to repeat it at a
         *  table."* A link cannot answer that, because the answer is not on Wizards' page. */}
       <p className="text-xs text-(--muted) max-w-[65ch]">
-        Two kinds of thing move a deck up, and this report reads both off your list: cards on{" "}
-        <span className="text-(--foreground)">Wizards&rsquo; published Game Changer list</span>,
-        which is theirs, and{" "}
-        <span className="text-(--foreground)">combos this tool finds in the deck itself</span>,
-        which is ours.{" "}
+        Two things push a deck up the brackets, and we check both: cards on{" "}
+        <span className="text-(--foreground)">Wizards&rsquo; Game Changers list</span>, and{" "}
+        <span className="text-(--foreground)">combos we find in your list</span> (that part is our
+        call, not Wizards&rsquo;).{" "}
         <a
           className="text-(--accent) underline underline-offset-2"
           href="https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta"
@@ -173,9 +172,7 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
 
       {bracket.band === "1-2" ? (
         <p className="text-sm text-(--muted)">
-          This deck has neither of the two: no card from Wizards&rsquo; published list of the
-          strongest cards in Commander, and no pair of cards that combine to repeat something
-          forever.
+          No Game Changers and no two-card infinite combos here.
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -285,17 +282,15 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
         *  cannot do is split it finer. */}
       <p className="text-xs text-(--muted) max-w-[65ch]">
         {bracket.band === "3" ? (
-          <>Bracket 3 is a single number rather than a range, so there is nothing further to split.</>
+          <>Bracket 3 is a single bracket, so there is nothing further to split.</>
         ) : bracket.band === "1-2" ? (
           <>
-            This report gives a range rather than one number, because the choice inside it cannot be
-            made from a card list: telling 1 from 2 depends on how the deck was put together — a
-            preconstructed deck straight out of its box, or one you have changed.
+            Is it a 1 or a 2? A decklist can&rsquo;t tell us. It depends on whether this is a precon
+            straight out of the box or one you&rsquo;ve changed.
           </>
         ) : (
           <>
-            This report gives a range rather than one number, because the choice inside it cannot be
-            made from a card list: telling 4 from 5 depends on the table you take it to.
+            Is it a 4 or a 5? A decklist can&rsquo;t tell us. It depends on the table you take it to.
           </>
         )}
       </p>

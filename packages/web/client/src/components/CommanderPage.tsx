@@ -178,13 +178,13 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           </p>
         ) : (<>
         <p>
-          <span className="eyebrow text-(--muted)">its events point at </span>
+          <span className="eyebrow text-(--muted)">suggested theme </span>
           {themes.length === 0
-            ? <span className="text-(--muted)">no archetype; its events are the broad ones every deck runs</span>
+            ? <span className="text-(--muted)">none: what it does, every deck does anyway</span>
             : themes.join(" · ")}
         </p>
         <p>
-          <span className="eyebrow text-(--muted)">the other 99 have to bring </span>
+          <span className="eyebrow text-(--muted)">your 99 should provide </span>
           {gaps.length === 0
             ? <span className="text-(--muted)">nothing. It answers every event it watches</span>
             : gaps.map((w) => eventKeyClause(w)).join(" · ")}
@@ -262,11 +262,11 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
 
       <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">Partners</h2>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over the cards a deck led by {page.name}{pair ? ` and ${pair.name}` : ""} could
-            legally contain, not the whole corpus. The fewer cards can cause an event, the higher
-            the pairing ranks. Pick a card to look at it here; open it from there.
+            legally contain. The fewer cards can make a pairing, the higher it ranks. Pick a card to
+            preview it here.
             {fallback ? " The pair's own list was not built; showing each card's own." : ""}
           </p>
         </div>

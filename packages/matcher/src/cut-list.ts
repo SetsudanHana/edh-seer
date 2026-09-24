@@ -228,7 +228,7 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
         ? "no edge on your main theme"
         : "its edges point away from your main theme",
     );
-    reasons.push("fills none of the functional roles the deck is measured on");
+    reasons.push("doesn't fill a core role (ramp, draw, removal…)");
     for (const want of c.unmetConditions ?? []) {
       reasons.push(`its condition needs ${want}, and nothing in the deck provides that`);
     }
@@ -382,7 +382,7 @@ export function trimOrder(
         .join(", ");
       protections.push(room ? `fills ${c.roles.join(", ")} — ${room}, so there is room here` : `fills ${c.roles.join(", ")}`);
     }
-    if (c.roles.length === 0) reasons.push("fills none of the functional roles the deck is measured on");
+    if (c.roles.length === 0) reasons.push("doesn't fill a core role (ramp, draw, removal…)");
     // The sharpest row this list can print: not "nothing connects to it" but "the card's own text
     // asks for something you do not run".
     for (const want of c.unmetConditions ?? []) {

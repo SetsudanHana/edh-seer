@@ -422,13 +422,14 @@ export default function App() {
       {firstVisit && (
         <div className="flex flex-col gap-3">
           <h2 className="max-w-[22ch] text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-(--foreground)">
-            Paste a decklist to get an oracle-text synergy read.
+            Paste a decklist and see which cards work together.
           </h2>
           {/* 65ch, and the cap is the whole point: this ran the full width of the container, which
             *  above `xl` is the viewport — 1,376px at 1440, or 156 characters a line against the
             *  45–75 the type rules allow. `.intro p` already caps at 68ch; this one never did. */}
           <p className="max-w-[65ch] text-sm text-(--muted)">
-            Mana curve, land math, role spend, per-card roles, and combos. No account needed.
+            You also get your mana curve, land count, ramp, draw and removal counts, and combos. No
+            account needed.
           </p>
         </div>
       )}

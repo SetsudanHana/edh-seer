@@ -383,7 +383,7 @@ test("the how-it-works page is a page, not an app route", () => {
   expect(page).toContain('<link rel="canonical" href="' + canonical + 'how-it-works"');
   expect(page).toMatch(/<h1>How it works<\/h1>/);
   // It explains the thing it promises to explain, in its own words rather than by linking away.
-  for (const idea of ["clause", "edge", "refuses", "calibrated"]) {
+  for (const idea of ["clause", "edge", "pretend to know", "calibrated"]) {
     expect(page.toLowerCase()).toContain(idea);
   }
 });

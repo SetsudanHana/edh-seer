@@ -64,8 +64,8 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
           <span>
             {/* PAYOFF AND ENABLER ARE THE TABLE WORDS for this exact split, and the report was
               *  spelling both out as "something the card does". */}
-            <span className="stat-num text-(--foreground)">{m.earnedTotal}</span> are payoffs or
-            enablers for their theme.
+            <span className="stat-num text-(--foreground)">{m.earnedTotal}</span> card–theme marks are
+            payoffs or enablers.
           </span>
         </p>
         <p className="flex items-baseline gap-1.5">
@@ -74,8 +74,8 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
             {/* THE HONESTY SURVIVES AND THE ENGINE INTERNALS DO NOT. A reader has to know these
               *  dots are passive -- the implied half is the LARGER one on a real deck -- but not
               *  that "the engine counts every nonland as cast". */}
-            <span className="stat-num">{m.impliedTotal}</span> only qualify incidentally — any spell
-            counts as cast, any permanent as entering. Payoffs and enablers sort first.
+            <span className="stat-num">{m.impliedTotal}</span> only count on a technicality: every spell
+            is &ldquo;cast&rdquo; and every permanent &ldquo;enters&rdquo;. Payoffs and enablers sort first.
           </span>
         </p>
       </div>
@@ -228,7 +228,7 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
       {m.unaffiliated.length > 0 ? (
         <details className="text-sm">
           <summary className="cursor-pointer py-1">
-            <span className="text-(--warning)">{m.unaffiliated.length} cards are in no group at all</span>
+            <span className="text-(--warning)">{m.unaffiliated.length} cards don&rsquo;t fit any theme</span>
             {/* SAYS WHAT IT MEASURES, WHICH IS THEME MEMBERSHIP AND NOT EDGES. This read "nothing
               *  the engine can see connects them to the rest" — a claim about CONNECTIONS, made
               *  from `count === 0` over the theme columns above. The Fixes chapter's cut list,
@@ -238,7 +238,7 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
               *  appeared to deny they existed. Both panels were right; only this sentence was
               *  describing the wrong quantity. */}
             <span className="text-(--muted)">
-              {" "}— none of the themes above claim them
+              {" "}above
             </span>
           </summary>
           <p className="text-xs text-(--muted) leading-relaxed pt-2 max-w-[60ch]">
@@ -249,8 +249,8 @@ export function ThemeMatrix({ archetypes, nonlandNames }: {
             {/* THE COVERAGE CAVEAT BELONGS HERE MORE THAN ANYWHERE. An unread card cannot join a
               *  group, so it lands in this list for a reason that is about the ENGINE and not about
               *  the deck -- and this is the one list a reader would otherwise act on directly. */}
-            An unread card cannot join a group, so anything the engine could not read is here by
-            default rather than by evidence.
+            Cards we couldn&rsquo;t read always land here, so treat this as &ldquo;unknown&rdquo;, not
+            &ldquo;off-theme&rdquo;.
           </p>
         </details>
       ) : null}

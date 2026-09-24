@@ -33,13 +33,13 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
   if (!hasCuts && !hasSlack && !hasTrim && !hasUnjudged) return null;
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="eyebrow">Where the room is</h3>
+      <h3 className="eyebrow">Possible cuts</h3>
       {hasCuts && (
         <>
           <p className="text-sm text-(--muted)">
-            Cards nothing in the deck connects to, that sit off your main theme and fill no role the deck is
-            measured on. Candidates, not a verdict — a synergy the engine can&apos;t read looks the same as
-            one that isn&apos;t there.
+            Cards nothing else in your deck works with, that are off your main theme and don&apos;t fill a
+            core role. Suggestions, not verdicts: a synergy we can&apos;t read looks exactly like one that
+            isn&apos;t there.
           </p>
           <ul className="flex flex-col gap-2">
             {cutList!.map((c) => (
@@ -109,7 +109,7 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
       {hasTrim && (
         <>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-(--muted)">Over on cards? Trim</span>
+            <span className="text-sm text-(--muted)">Over 99? Trim</span>
             {[3, 5, 10].map((n) => (
               <button
                 key={n}
@@ -159,8 +159,8 @@ export function CutList({ cutList, unjudged, coverage, slack, trim }:
       {hasSlack && (
         <>
           <p className="text-sm text-(--muted)">
-            You carry more of these than the template asks for. The category, never a
-            card &mdash; nothing here ranks two ramp cards against each other.
+            You run more of these than the target. Which card goes is your call: we don&apos;t rank
+            one ramp card against another.
           </p>
           <ul className="flex flex-wrap gap-2">
             {slack!.map((s) => (

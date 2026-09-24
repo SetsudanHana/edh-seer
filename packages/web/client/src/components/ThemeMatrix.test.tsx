@@ -74,16 +74,16 @@ test("the legend counts both kinds, because the implied half can be the larger o
   show(["Skullclamp", "Grim Haruspex"]);
   // T1: "payoff" and "enabler" are the words a player uses for this split; the report was spelling
   // both out. The passive half keeps its honesty and loses the engine internals.
-  expect(screen.getByText(/are payoffs or\s+enablers for their theme/)).toBeInTheDocument();
-  expect(screen.getByText(/only qualify incidentally/)).toBeInTheDocument();
+  expect(screen.getByText(/card–theme marks are\s+payoffs or enablers/)).toBeInTheDocument();
+  expect(screen.getByText(/only count on a technicality/)).toBeInTheDocument();
 });
 
 /** THE CARDS IN NO GROUP ARE NAMED, not counted: this is the region a cut conversation starts from
  *  and a reader deciding what to cut needs to know which. Measured on the review deck: 25 of 82. */
 test("cards in no group are named, with the coverage caveat attached", () => {
   show(["Skullclamp", "Sol Ring", "Arcane Signet"]);
-  expect(screen.getByText(/2 cards are in no group at all/)).toBeInTheDocument();
-  expect(screen.getByText(/An unread card cannot join a group/)).toBeInTheDocument();
+  expect(screen.getByText(/2 cards don.t fit any theme/)).toBeInTheDocument();
+  expect(screen.getByText(/Cards we couldn.t read always land here/)).toBeInTheDocument();
 });
 
 // A DECK WHOSE CARDS ALL BELONG SAYS NOTHING, rather than printing a zero.

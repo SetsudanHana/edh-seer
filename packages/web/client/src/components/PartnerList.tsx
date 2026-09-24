@@ -125,7 +125,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                     // A PRODUCER ROW SAYS ITS DIRECTION AND NOTHING ELSE (2026-09-17): its sentence's
                     // tail is this page's own card, and its head is the group heading.
                     caption={p.unread || p.producer ? undefined : p.payoff ?? feederCaption(p, subject)}
-                    note={p.producer ? "causes it" : p.unread ? "engine did not read what it does" : undefined}
+                    note={p.producer ? "causes it" : p.unread ? "couldn't read this card" : undefined}
                   />
                 </li>
               ))}
@@ -157,10 +157,10 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                   * this card counts, so "ask for it" named the wrong direction under them. A feeder
                   * row is the one whose sentence opens on the row's card being controlled. */}
                 {dir === "causes"
-                  ? "other cards cause it too, equally specific. The ones shown are the best connected."
+                  ? "other cards cause it too. These are the ones with the most connections."
                   : dir === "feeds"
-                  ? "other cards feed it too, equally specific. The ones shown are the best connected."
-                  : "other cards ask for it too, equally specific. The ones shown are the best connected."}
+                  ? "other cards feed it too. These are the ones with the most connections."
+                  : "other cards ask for it too. These are the ones with the most connections."}
                 </Link>
               </p>
             )}

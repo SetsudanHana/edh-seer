@@ -76,7 +76,7 @@ function GroupRow({ group, size }: { group: Group; size?: { earned: number; tota
           *  is the same split the matrix above draws its dots from. */}
         <span className="stat-num text-xs text-(--muted) text-right ml-auto">
           {group.pairs.length} pair{group.pairs.length === 1 ? "" : "s"}
-          {size ? ` · ${size.earned} of ${size.total} cards earn it` : ` · ${group.cards.length} cards`}
+          {size ? ` · ${size.earned} of ${size.total} cards contribute` : ` · ${group.cards.length} cards`}
         </span>
       </button>
       {open ? null : (
@@ -176,8 +176,8 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
         *  it, and the sentence under it was the whole of T15 -- which is exactly the thing that must
         *  not sit behind a toggle a reader never opens. It is one visible line now. */}
       <p className="text-xs text-(--muted) max-w-[65ch]">
-        The theme at the top of the report is what this deck is. Nothing here competes with it —
-        these are two ways of showing which cards belong to which theme, and neither is ranked.
+        Your main theme is the one at the top of the report. Below are two views of which cards
+        feed which theme, and neither is a ranking.
       </p>
       {hasStrategies ? (
         <div className="flex flex-col gap-2">

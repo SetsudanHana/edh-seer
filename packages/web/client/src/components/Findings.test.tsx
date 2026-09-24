@@ -96,7 +96,7 @@ test("each scored row prints what fixing it is worth", () => {
   // paragraph's text rather than a single text node.
   const worth = [...container.querySelectorAll("p")].map((el) => el.textContent);
   // 0.635 prints as +0.64: two decimals, rounded, which is what the row shows.
-  expect(worth).toContain("worth +0.64 to Build or better");
+  expect(worth).toContain("+0.64 to Build, at least");
 });
 
 test("the heading says what the order is by", () => {
@@ -115,5 +115,5 @@ test("the second heading is absent when nothing is unscored", () => {
  *  error rather than as the claim it is. */
 test("a zero impact says so in words", () => {
   render(<Findings report={coveredButThin} />);
-  expect(screen.getByText("does not move Build")).toBeInTheDocument();
+  expect(screen.getByText("won't change your Build score")).toBeInTheDocument();
 });
