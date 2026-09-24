@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { eventKeysForDemand } from "./suggest-keys.js";
+import { axisEventKeys, eventKeysForDemand } from "./suggest-keys.js";
 
 const KEYS = ["enters|creature|goblin|t", "enters|creature|-|-", "enters|artifact|-|-", "dies|creature|-|-",
   "enters-graveyard|land|-|-", "attacks|-|-|-", "enters|-|goblin|-"];
@@ -34,4 +34,15 @@ test("a producer the engine accepts under another verb is collected", () => {
   expect(eventKeysForDemand("leaves:type:creature", keys)).toEqual(["dies|creature|-|-", "leaves|creature|-|-"]);
   expect(eventKeysForDemand("lose-life:any", keys)).toEqual(["non-combat-damage|-|-|-", "lose-life|-|-|-"]);
   expect(eventKeysForDemand("damaged:any", keys)).toEqual(["non-combat-damage|-|-|-", "combat-damage|-|-|-"]);
+});
+
+/** AN AXIS TAG (`zoneEventKey` form: `enters:goblin`, `lose-life:any`) names its subject bare, so it
+ *  may be a type or a subtype; both slots are tried. Same over-collecting filter, never a match. */
+test("an axis tag takes the keys of its word in either slot", () => {
+  expect(axisEventKeys("enters:goblin", KEYS)).toEqual(["enters|creature|goblin|t", "enters|-|goblin|-"]);
+  expect(axisEventKeys("enters:artifact", KEYS)).toEqual(["enters|artifact|-|-"]);
+  expect(axisEventKeys("attacks:any", KEYS)).toEqual(["attacks|-|-|-"]);
+  expect(axisEventKeys("static:cost", KEYS)).toEqual([]);
+  expect(axisEventKeys("static:pump", ["applies:pump|creature|-|-", "applies:pump|-|goblin|-", "applies:cost-reduction|creature|-|-"]))
+    .toEqual(["applies:pump|creature|-|-"]);
 });

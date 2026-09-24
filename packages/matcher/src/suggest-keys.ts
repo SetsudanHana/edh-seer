@@ -39,3 +39,23 @@ export function eventKeysForDemand(censusKey: string, eventKeys: readonly string
     return verbs.includes(parts[0]!) && (slot === null || want.includes(parts[slot]!));
   });
 }
+
+/** A STRATEGY-AXIS TAG (`zoneEventKey` form, `analyze.ts` axis: `enters:goblin`, `lose-life:any`),
+ *  as candidate event keys. The tag names its subject bare, so the word is tried as a type and as a
+ *  subtype. Used to HINT which pool candidates sit on the deck's plan before the engine runs; the
+ *  engine still decides every pair. */
+export function axisEventKeys(tag: string, eventKeys: readonly string[]): string[] {
+  const colon = tag.indexOf(":");
+  if (colon <= 0) return [];
+  const verb = tag.slice(0, colon);
+  const word = tag.slice(colon + 1);
+  // A STATIC'S TAG (`static:pump`) names its kind, not a subject; the index keys what it reaches as
+  // `applies:<kind>|type|subtype|token`. Type-level keys only: the subtype keys run to hundreds of
+  // shards, and a tribal anthem's tribe is its own axis tag.
+  if (verb === "static") return eventKeys.filter((k) => k.startsWith(`applies:${word}|`) && k.split("|")[2] === "-");
+  if (word === "any") return eventKeysForDemand(tag, eventKeys);
+  return [...new Set([
+    ...eventKeysForDemand(`${verb}:type:${word}`, eventKeys),
+    ...eventKeysForDemand(`${verb}:subtype:${word}`, eventKeys),
+  ])];
+}

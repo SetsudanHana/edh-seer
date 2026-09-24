@@ -175,3 +175,30 @@ test("a candidate the engine throws on is dropped, and the rest still arrive", a
   expect(s.plan.map((c) => c.name)).toContain("Impact Tremors");
   warn.mockRestore();
 });
+
+/** THE DECK'S AXIS ORDERS THE PLAN LIST (measured 2026-09-24: ranked by breadth alone, Prism Ring
+ *  led the plan list of 47 of 71 decks). A payoff on the deck's own theme outranks a card the pool
+ *  scores higher on a tag the deck is not built around. */
+test("the plan list is ordered by the deck's strategy axis, not by pool score", async () => {
+  const goblinPayoff: Spec = {
+    name: "Goblin Payoff", identity: ["R"], types: ["enchantment"],
+    abilities: [{ ...tremorsAbilities[0]!, trigger: { verbs: ["enters"], subject: { type: "creature", subtype: "goblin", control: "you", token: null } } }],
+  };
+  const specs = [...SPECS.slice(0, 7), goblinPayoff];   // position 7
+  const withPayoff = (f: Record<string, unknown>) => {
+    for (const [path, shard] of Object.entries(f)) {
+      if (!path.includes("/cards/")) continue;
+      for (const [k, e] of Object.entries(shard as Record<string, { card: { name: string }; pi?: [number, number][] }>)) {
+        if (e.pi) (shard as Record<string, unknown>)[k] = { ...e, pi: [...e.pi, [7, 0.05]] };
+      }
+    }
+    return f;
+  };
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const run = (axis: { tag: string; weight: number }[]) => suggestForDeck({
+    report: { ...report, axis } as DeckReport, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(withPayoff(files(specs))),
+  });
+  expect((await run([])).plan.map((c) => c.name)).toEqual(["Impact Tremors", "Goblin Payoff"]);
+  expect((await run([{ tag: "enters:goblin", weight: 1 }])).plan.map((c) => c.name)).toEqual(["Goblin Payoff", "Impact Tremors"]);
+  warn.mockRestore();
+});

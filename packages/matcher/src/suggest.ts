@@ -2,8 +2,9 @@
  *  roadmap AO3). The browser orchestrator (`suggest-static.ts`) feeds these from the static
  *  artifacts; nothing here fetches or reads the engine.
  *
- *  NO POPULARITY, NO QUALITY JUDGEMENT. Order is how many of THIS deck's cards connect to a
- *  candidate, then the sum of those edges' scores, then the cheaper card. Nothing here says one
+ *  NO POPULARITY, NO QUALITY JUDGEMENT. The shortlist is ordered by how many of THIS deck's cards
+ *  connect to a candidate, then the sum of those edges' scores, then the cheaper card; once the
+ *  engine has run, `byPlan` re-ranks it on the deck's own strategy axis. Nothing here says one
  *  removal spell is better than another; it says which one this deck is more connected to -- the
  *  same line `cut-list.ts` holds ("nothing here ranks two ramp cards against each other"). */
 
@@ -24,12 +25,23 @@ export interface DeckSide {
   names: ReadonlySet<string>;
   /** The commander identity, already the union for a partner pair. Empty = colourless. */
   identity: ReadonlySet<string>;
-  /** Nonland deck card -> its `pi`. A card with no `pi` is simply absent. */
-  pi: ReadonlyMap<string, readonly (readonly [number, number])[]>;
+  /** Nonland deck card -> its `pi` (`[position, score, ...reason tag codes]`). A card with no `pi`
+   *  is simply absent. */
+  pi: ReadonlyMap<string, readonly (readonly [number, number, ...number[]])[]>;
 }
 
-export interface Connection { deckCard: string; score: number }
-export interface Candidate { card: IndexCard; connections: Connection[]; score: number }
+export interface Connection {
+  deckCard: string; score: number;
+  /** The engine's reason tags for this pair, as codes into the name index's `pairTags`. */
+  tags?: readonly number[];
+}
+export interface Candidate {
+  card: IndexCard; connections: Connection[]; score: number;
+  /** BEFORE THE ENGINE RUNS: an estimate of its on-plan weight from `events/` membership -- for each
+   *  of the deck's strategy events, its axis weight times the deck cards on the OTHER side of it
+   *  (askers when this card causes it, causers when it asks). A hint for the shortlist, never a claim. */
+  hint?: number;
+}
 
 /** THE POOL: every card some deck card lists as a partner, minus lands, cards already in the deck
  *  and cards outside the commander's identity. Legality is the name index itself -- it ships no
@@ -37,13 +49,13 @@ export interface Candidate { card: IndexCard; connections: Connection[]; score: 
 export function candidatePool(deck: DeckSide, index: readonly IndexCard[]): Map<number, Candidate> {
   const pool = new Map<number, Candidate>();
   for (const [deckCard, ids] of deck.pi) {
-    for (const [pos, score] of ids) {
+    for (const [pos, score, ...tags] of ids) {
       const card = index[pos];
       if (!card || card.isLand || deck.names.has(card.name)) continue;
       if (!card.identity.every((c) => deck.identity.has(c))) continue;
       const c = pool.get(pos) ?? { card, connections: [], score: 0 };
       if (c.connections.some((x) => x.deckCard === deckCard)) continue;
-      c.connections.push({ deckCard, score });
+      c.connections.push({ deckCard, score, ...(tags.length > 0 ? { tags } : {}) });
       c.score += score;
       pool.set(pos, c);
     }
@@ -57,6 +69,19 @@ export function candidatePool(deck: DeckSide, index: readonly IndexCard[]): Map<
 export function byConnection(a: Candidate, b: Candidate): number {
   return b.connections.length - a.connections.length || b.score - a.score || a.card.mv - b.card.mv
     || a.card.name.localeCompare(b.card.name, "en");
+}
+
+/** THE SHORTLIST ORDER, BEFORE THE ENGINE RUNS: the axis hint, then `byConnection`. */
+export function byHint(a: Candidate, b: Candidate): number {
+  return (b.hint ?? 0) - (a.hint ?? 0) || byConnection(a, b);
+}
+
+/** AFTER THE ENGINE HAS RUN: on-plan weight (see `suggest-static.ts` `Verified`), then distinct
+ *  connections, then the pool's score, then the cheaper card, then the name. */
+export interface PlanRanked { onPlan: number; score: number; card: { connections: readonly string[]; mv: number; name: string } }
+export function byPlan(a: PlanRanked, b: PlanRanked): number {
+  return b.onPlan - a.onPlan || b.card.connections.length - a.card.connections.length || b.score - a.score
+    || a.card.mv - b.card.mv || a.card.name.localeCompare(b.card.name, "en");
 }
 
 /** "STRENGTHEN WHAT WORKS": two connections at least -- one is a pair, not a plan. */
@@ -162,4 +187,32 @@ export function pairReplacements(
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// ROUTES (owner, 2026-08-27, the Ghyrson case)
+
+/** A ROUTE THE CANDIDATE WOULD OPEN: deck cards that reach `to` only through it, and its worth --
+ *  the new sources times the target hop's weight. */
+export interface RouteGain { to: string; from: string[]; worth: number }
+
+/** THE TWO-HOP ROUTE A CANDIDATE OPENS, the way the client's `routesThrough` names one: sources that
+ *  feed the candidate, a target it feeds, and only the sources NOT already joined to that target
+ *  (a direct edge is not news). Its worth is the new sources times `weight(to)` -- the deck's axis
+ *  weight on the hop into the target, so a route into the plan (Ghyrson's damage) outranks one into
+ *  a side card; the best target wins, ties by more sources, then name. `feeds` and `fedBy` are deck
+ *  cards on each side of the engine's own reasons. */
+export function bestRoute(
+  feeds: readonly string[], fedBy: readonly string[], adjacent: (a: string, b: string) => boolean,
+  weight: (to: string) => number = () => 1,
+): RouteGain | null {
+  let best: RouteGain | null = null;
+  for (const to of [...feeds].sort((a, b) => a.localeCompare(b, "en"))) {
+    const from = fedBy.filter((s) => s !== to && !adjacent(s, to));
+    const worth = from.length * weight(to);
+    if (from.length > 0 && worth > 0 && (!best || worth > best.worth || (worth === best.worth && from.length > best.from.length))) {
+      best = { to, from, worth };
+    }
+  }
+  return best;
 }
