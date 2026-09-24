@@ -1,11 +1,12 @@
 import { MIN_INDEXABLE_PARTNERS } from "../partner-shard.js";
 import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories } from "../build.js";
 import { POOL_CLASSES } from "../answer-pool.js";
+import { directedReasons } from "../edges.js";
 import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "../types.js";
 import {
-  KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
+  KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, PI_KEEP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
   supplyForms, supplyKeysOf, themesOf, inIdentityOf, identityMask, splitKey, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf, effectOrder,
 } from "./partners-core.js";
@@ -1649,6 +1650,30 @@ test("a member list is positions in the artifact index, and it carries both dire
   expect(members.p.length).toBe(freq["enters|creature|-|-"]);
 });
 
+/** A DAMAGE CAUSER'S SIZE RIDES BESIDE ITS POSITION (2026-09-25). Ghyrson Starn asks for exactly 1
+ *  damage, and a list of every pinger in the corpus cannot say which ones deal 1 until each card is
+ *  fetched; `pd[i]` is the stated amounts of the card at `p[i]`, empty when none is a number, so a
+ *  deck can drop a 2-damage causer before it asks the engine. Damage keys only. */
+test("a damage key's causers carry their stated sizes, parallel to p", () => {
+  const pinger = (name: string, amount: string) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+    amount,
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  const ghyrson = base("Ghyrson Starn", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null }, amount: { op: "eq", value: 1 } },
+    effect: { kind: "damage" },
+  }] as unknown as CardTags["abilities"]);
+  const { events, index } = buildPartnerArtifact([pinger("Pings One", "1"), pinger("Pings Two", "2"), pinger("Pings X", "X"), ghyrson], H);
+  const m = events.get("non-combat-damage|-|-|-")!;
+  const sizeOf = Object.fromEntries(m.p.map((pos, i) => [index[pos]!.name, m.pd![i]]));
+  expect(sizeOf).toEqual({ "Pings One": [1], "Pings Two": [2], "Pings X": [] });
+  expect(events.get("enters|creature|-|-")?.pd).toBeUndefined();
+});
+
 test("the artifact counts the askers beside the causers", () => {
   const { consumers } = buildPartnerArtifact([krenko, impactTremors], H);
   expect(consumers["enters|creature|-|-"]).toBe(1);
@@ -1889,4 +1914,60 @@ test("partnerIds points at the SORTED index position of each partner, in partner
   const ids = partnerIds.get("Krenko, Mob Boss")!;
   expect(ids.map(([pos]) => index[pos]!.name)).toEqual(rec.partners.map((p) => p.name));
   expect(ids.map(([, s]) => s)).toEqual(rec.partners.map((p) => Math.round(p.score * 1000) / 1000));
+});
+
+/** EACH `pi` ENTRY CARRIES THE ENGINE'S REASON TAGS for the pair, as codes into `pairTagNames`, so
+ *  a deck weighs the pair on its own axis without asking the engine again. */
+test("a pi entry carries the reason tags the engine wrote for the pair", () => {
+  const { index, partnerIds, pairTagNames } = buildPartnerArtifact([krenko, impactTremors], H);
+  const entry = partnerIds.get("Krenko, Mob Boss")!.find(([pos]) => index[pos]!.name === "Impact Tremors")!;
+  const [, , ...codes] = entry;
+  const want = directedReasons(krenko, impactTremors, H, { tokensMediate: false }).map((r) => r.tag);
+  expect(codes.map((c) => pairTagNames[c])).toEqual(expect.arrayContaining([...new Set(want)]));
+  expect(codes.length).toBeGreaterThan(0);
+});
+
+/** A CARD SUPPLIES ITS OWN ENTRY (the engine's `producerEvents`), which no authored emit says: a
+ *  plain enchantment is what a constellation payoff wants. The page's candidate index reads authored
+ *  emits only, so the pair reaches `pi` through the pool pass -- and the page does not change
+ *  (A-vs-B 2026-09-24: Doomwake Giant sat in one of forty Braids enchantments' lists). */
+test("partnerIds carries a pair joined by a card's implied entry, and the page stays as it was", () => {
+  const asEnchantment = (d: ReturnType<typeof base>) =>
+    ({ ...d, tags: { ...d.tags, characteristics: { ...d.tags.characteristics, types: ["enchantment"] } } }) as typeof d;
+  const plain = asEnchantment(base("Plain Aura", [{
+    kind: "activated", cost: "{2}", effect: { kind: "draw-card" },
+    emits: [{ verb: "draw", subject: { control: "you" } }],
+  }] as unknown as CardTags["abilities"]));
+  const constellation = base("Constellation Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "enchantment", control: "you", token: null } },
+    effect: { kind: "deal-damage" },
+  }] as unknown as CardTags["abilities"]);
+  const { index, shards, partnerIds } = buildPartnerArtifact([plain, constellation], H);
+  const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  const names = (card: string) => (partnerIds.get(card) ?? []).map(([pos]) => index[pos]!.name);
+  expect(names("Plain Aura")).toContain("Constellation Payoff");
+  expect(names("Constellation Payoff")).toContain("Plain Aura");
+  expect(rec["plain-aura"]!.partners.map((r) => r.name)).not.toContain("Constellation Payoff");
+});
+
+/** THE POOL IS NOT THE PAGE (A-vs-B 2026-09-24: B's on-plan picks were mostly absent from a pool of
+ *  ~21 rows a card). A page shows `PER_EVENT_CAP` rows an event, the way EDHREC shows ten a section;
+ *  `pi` carries every verified partner behind that cut, up to `PI_KEEP`, in both directions. */
+test("partnerIds carries the verified partners the page's per-event cap hides, both ways", () => {
+  const makers = Array.from({ length: PER_EVENT_CAP + 2 }, (_, i) => base(`Maker ${i}`, krenko.tags.abilities, ["goblin"]));
+  const payoffs = Array.from({ length: PER_EVENT_CAP + 2 }, (_, i) => base(`Payoff ${i}`, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]));
+  const { index, shards, partnerIds } = buildPartnerArtifact([...makers, impactTremors, ...payoffs], H);
+  const rec = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  const names = (card: string) => partnerIds.get(card)!.map(([pos]) => index[pos]!.name);
+  // Producers mirrored onto a payoff: the page stops at the cap, the pool does not.
+  expect(rec["impact-tremors"]!.partners.length).toBeLessThanOrEqual(PER_EVENT_CAP);
+  expect(names("Impact Tremors")).toEqual(expect.arrayContaining(makers.map((m) => m.card.name)));
+  // A producer's own forward rows: same.
+  expect(names("Maker 0")).toEqual(expect.arrayContaining(payoffs.map((p) => p.card.name)));
+  expect(partnerIds.get("Maker 0")!.length).toBeLessThanOrEqual(PI_KEEP);
 });

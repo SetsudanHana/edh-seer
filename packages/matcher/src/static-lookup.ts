@@ -20,7 +20,8 @@ interface CardEntry {
   combos: ComboDoc[];
   /** Partner positions in the name index + scores (spec 2026-09-24 deck suggestions, §1). Absent on
    *  a card with none. */
-  pi?: [number, number][];
+  /** `PartnerId`s: `[position, score, ...reason tag codes into the name index's `pairTags`]`. */
+  pi?: [number, number, ...number[]][];
 }
 
 /** A shard file: every card name that hashes into it, keyed by name. */
@@ -66,7 +67,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *  always wins; this only answers what it does not. */
   private readonly byAlias = new Map<string, CardDoc>();
   private readonly byId = new Map<string, CardTags | null>();
-  private readonly piByName = new Map<string, readonly (readonly [number, number])[]>();
+  private readonly piByName = new Map<string, readonly (readonly [number, number, ...number[]])[]>();
   private readonly combos: ComboDoc[] = [];
   private manifestPromise: Promise<string> | null = null;
   private tokenTagsPromise: Promise<Record<string, CardTags>> | null = null;
@@ -203,7 +204,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
 
   /** THE REPORT'S CANDIDATE POOL, one card's worth: read from the shard `prefetch` already fetched,
    *  so the suggestions cost the report no request. Null = never prefetched, or no such card. */
-  partnerIds(normalized: string): readonly (readonly [number, number])[] | null {
+  partnerIds(normalized: string): readonly (readonly [number, number, ...number[]])[] | null {
     // Every name the card answers to, like `findByName`'s alias fallback -- a paste that named an
     // alternate printing must not drop the card from the pool when it is later read by its own name.
     if (!this.byName.get(normalized) && !this.byAlias.has(normalized)) return null;
@@ -298,7 +299,7 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *  guaranteed second download of a 4.3 MB file and a second parse of it, while `partners.ts`
    *  claimed one request per session. The rows and the tables come out of the same body because
    *  they ARE the same body. */
-  private nameIndexBody(): Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; keywords?: string[]; cards?: NameIndexEntry[] } | null> {
+  private nameIndexBody(): Promise<NameIndexEntry[] | { types?: string[]; subtypes?: string[]; keywords?: string[]; pairTags?: string[]; cards?: NameIndexEntry[] } | null> {
     return (this.nameIndexPromise ??= (async () => {
       const res = await this.fetchCached("/name-index.json");
       return res.ok ? await res.json() as NameIndexEntry[] | { cards?: NameIndexEntry[] } : null;
@@ -316,10 +317,10 @@ export class StaticLookup implements CardLookup, CardTagsLookup {
    *  after the first two and is missing from an artifact built between, which the same `?? []`
    *  covers: an absent table means no row has a `k`, so the keyword row matches nothing and offers
    *  nothing rather than offering words it cannot answer. */
-  async nameIndexVocabulary(): Promise<{ types: string[]; subtypes: string[]; keywords: string[] }> {
+  async nameIndexVocabulary(): Promise<{ types: string[]; subtypes: string[]; keywords: string[]; pairTags: string[] }> {
     const body = await this.nameIndexBody();
-    if (!body || Array.isArray(body)) return { types: [], subtypes: [], keywords: [] };
-    return { types: body.types ?? [], subtypes: body.subtypes ?? [], keywords: body.keywords ?? [] };
+    if (!body || Array.isArray(body)) return { types: [], subtypes: [], keywords: [], pairTags: [] };
+    return { types: body.types ?? [], subtypes: body.subtypes ?? [], keywords: body.keywords ?? [], pairTags: body.pairTags ?? [] };
   }
 
   /** ONE EVENT'S CARDS (roadmap AJ3), from the shard its key hashes into -- one fetch per event a
