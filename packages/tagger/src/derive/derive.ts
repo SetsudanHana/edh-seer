@@ -19,6 +19,7 @@ import { repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
+import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
 import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
 import { triggerHasCue } from "../clause-store.js";
@@ -150,7 +151,10 @@ import { emblemRecipient } from "../emblem.js";
 // 169: an EQUIPPED or FORTIFIED host's death repeats once a round, not once: the Equipment stays
 // (CR 301.5c) and re-equips for its paid cost. 168 read it once and dropped Skullclamp from 22nd to
 // 2,010th on the draw list; an Aura's host death stays once (CR 704.5m).
-export const DERIVE_VERSION = 169;
+// 170: a damage trigger records the size of the event it watches (`trigger.amount`, read off the
+// printed head): Ghyrson Starn's "exactly 1 damage", Dragonborn Champion's "5 or more". Seven corpus
+// cards; the engine had joined Ghyrson to every pinger whatever it dealt.
+export const DERIVE_VERSION = 170;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1675,6 +1679,11 @@ export function deriveAbilities(
           ...(arrivalTapped ? { entersTapped: true as const } : {}),
         } } };
       }
+      // THE SIZE OF THE EVENT A DAMAGE TRIGGER WATCHES ("exactly 1 damage", "5 or more damage"),
+      // read after every rewrite above so none of them drops it. See `event-amount.ts`.
+      const damageTrigger = abilities[i].trigger;
+      const eventAmount = damageTrigger?.verbs.some((v) => v.includes("damage")) ? eventAmountFor(text) : undefined;
+      if (damageTrigger && eventAmount) abilities[i] = { ...abilities[i], trigger: { ...damageTrigger, amount: eventAmount } };
     }
   }
   // AN OPPONENT'S GRAVEYARD, TAKEN ON THE WAY IN (recall v4 #28, 2026-09-09). Valgavoth, Terror

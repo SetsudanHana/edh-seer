@@ -57,7 +57,7 @@ test("the commander's cast odds are a RANGE, and a refused cost is an em dash an
   // renders a closed `<details>`'s children, so presence alone would pass either way: the assertion
   // that MATTERS is that the sentence has a `<details>` ancestor.
   expect(screen.getByText("what the range means")).toBeInTheDocument();
-  expect(screen.getByText(/holds up two mana/).closest("details")).not.toBeNull();
+  expect(screen.getByText(/hold up two mana/).closest("details")).not.toBeNull();
   // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
   expect(screen.queryByText(/Samut, the Driving Force: /)).not.toBeInTheDocument();
   rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
@@ -149,7 +149,7 @@ test("DeckIdentity keeps the archetype as context, not as a title", () => {
  *  panel over has its own "Focused" band, and the two scales are unrelated. */
 test("DeckIdentity prints the share with the two numbers it is a ratio of", () => {
   render(<DeckIdentity cohesion={cohesionDraw} strategies={undefined} />);
-  expect(screen.getByText("25 of 63 nonlands work with it (40%, concentrated)")).toBeInTheDocument();
+  expect(screen.getByText("25 of 63 nonland cards support it (40%, concentrated)")).toBeInTheDocument();
 });
 
 /** AND IT NO LONGER EXPLAINS A GAP THAT IS GONE (roadmap T3, 2026-09-03).
@@ -164,7 +164,7 @@ test("DeckIdentity prints the share with the two numbers it is a ratio of", () =
  *  ASSERTS THE ABSENCE, which is what makes this fail against the version it replaced. */
 test("the theme share states its denominator and nothing about modal DFCs", () => {
   render(<DeckIdentity cohesion={cohesionDraw} />);
-  expect(screen.getByText("25 of 63 nonlands work with it (40%, concentrated)")).toBeInTheDocument();
+  expect(screen.getByText("25 of 63 nonland cards support it (40%, concentrated)")).toBeInTheDocument();
   expect(screen.queryByText(/modal DFC/)).not.toBeInTheDocument();
 });
 
@@ -195,9 +195,9 @@ test("a colour row says which end of the fraction the deck is, and prints its tu
 test("DeckIdentity shows the wider family only when it differs from the primary", () => {
   const narrow = { ...cohesionDraw, score: 0.08, familyScore: 0.46 };
   const { rerender } = render(<DeckIdentity cohesion={narrow} />);
-  expect(screen.getByText(/wider family 0\.46/)).toBeInTheDocument();
+  expect(screen.getByText(/related themes 0\.46/)).toBeInTheDocument();
   rerender(<DeckIdentity cohesion={{ ...cohesionDraw, familyScore: cohesionDraw.score }} />);
-  expect(screen.queryByText(/wider family/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/related themes/)).not.toBeInTheDocument();
 });
 
 test("ComboList shows the combo result", () => {
@@ -448,7 +448,7 @@ test("the board states that the theme leads and nothing under it competes", () =
   // T1 removed the wrapping heading (it restated the chapter title) and moved the sentence out
   // from behind a disclosure -- which is stronger for T15, not weaker: the line a reader needs is
   // now the one they cannot miss.
-  expect(screen.getByText(/Nothing here competes with it/)).toBeInTheDocument();
+  expect(screen.getByText(/neither is a ranking/)).toBeInTheDocument();
   expect(screen.getByText("Archetypes")).toBeInTheDocument();
   expect(screen.getByText("Tokens")).toBeInTheDocument();
   expect(screen.getByText("74%")).toBeInTheDocument();
@@ -469,7 +469,7 @@ test("a group row splits the members that earn it from the ones merely played", 
   };
   render(<ArchetypeBoard strategies={[]} archetypes={[group] as any} nonlandNames={["A", "B"]} />);
   // Scoped through the size cell, because the matrix above renders the same label as a column head.
-  const size = screen.getByText(/1 of 2 cards earn it/);
+  const size = screen.getByText(/1 of 2 cards contribute/);
   expect(size).toBeInTheDocument();
   // NO BAR. A track scaled to the biggest group is a ranking, and it was read as one.
   expect(size.closest("button")!.querySelector(".rounded-full")).toBeNull();
@@ -690,22 +690,19 @@ test("Cards tab shows the top-partner reason under the card name", () => {
 test("the shell opens on the chapters and routes to the reference surfaces", async () => {
   render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
   expect(screen.getAllByText("Tokens").length).toBeGreaterThan(0); // chapter 1
-  // A group's label appears TWICE in chapter 3 -- once as a matrix column header and once on its
-  // own pair row -- so the assertion names which one it means rather than being loosened to
-  // `getAllByText`, which would pass on either alone.
-  expect(screen.getByRole("columnheader", { name: "Tokens Go Wide" })).toBeInTheDocument();
+  // Chapter 3's group row, named by its role so the assertion cannot pass on some other mention.
   expect(screen.getByRole("button", { name: /^Tokens Go Wide/ })).toBeInTheDocument();
 
   await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
   // Twice: the sticky header names the commander on every surface, and the table lists it.
   expect(screen.getAllByText("Krenko, Mob Boss").length).toBeGreaterThan(1); // CardList content
-  expect(screen.queryByRole("columnheader", { name: "Tokens Go Wide" })).toBeNull(); // the scroll is gone
+  expect(screen.queryByRole("button", { name: /^Tokens Go Wide/ })).toBeNull(); // the scroll is gone
 
   await userEvent.click(screen.getAllByRole("link", { name: /^Combos/ })[0]!);
   expect(screen.getByText(/Infinite loop/)).toBeInTheDocument(); // ComboList content
 
   await userEvent.click(screen.getByRole("link", { name: /Report/ }));
-  expect(screen.getByRole("columnheader", { name: "Tokens Go Wide" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Tokens Go Wide/ })).toBeInTheDocument();
 });
 
 // ART WARMS BEFORE THE GRAPH TAB IS EVER OPENED. `<GraphView>` is mounted by `active === "graph"`,
@@ -872,7 +869,7 @@ test("HighSynergyCards renders nothing when no card has a rating", () => {
 
 test("HighSynergyCards marks the top-authority anchor and double-duty cards", () => {
   render(<HighSynergyCards cards={SAMPLE.report.cards} />);
-  expect(screen.getAllByText(/anchor/i).length).toBeGreaterThan(0); // ⚡ anchor marker
+  expect(screen.getAllByText(/key card/i).length).toBeGreaterThan(0); // ⚡ anchor marker
   expect(screen.getByText(/pulls double duty/i)).toBeInTheDocument(); // double-duty badge (Impact Tremors)
 });
 
@@ -899,7 +896,7 @@ test("with no theme strong enough the ticks say they are the population's, and a
   const fallback = { ...SAMPLE, report: { ...SAMPLE.report, template: { population, targets: population } } };
   const { unmount } = render(<DeckGauges data={fallback} />);
   expect(screen.getAllByText("Archetype median 13").length).toBe(2); // Consistency and Interaction share it
-  expect(screen.getByText(/no archetype read strongly enough/)).toBeInTheDocument();
+  expect(screen.getByText(/no archetype is strong enough here/)).toBeInTheDocument();
   unmount();
   const { template: _t, ...withoutTemplate } = SAMPLE.report;
   render(<DeckGauges data={{ ...SAMPLE, report: withoutTemplate }} />);
@@ -915,9 +912,9 @@ test("under the floor, the tick line prints the theme's share and the floor it f
     strategies: [{ name: "enchantress" as const, label: "Enchantress", confidence: 0.249 }],
     template: { population, targets: population, leadFloor: 0.25 } } };
   render(<DeckGauges data={data} />);
-  expect(screen.getByText(/Enchantress reads 24\.9%, under the 25% an archetype needs to set its own row/)).toBeInTheDocument();
+  expect(screen.getByText(/Enchantress is only 24\.9% of this list, and it takes 25% to get targets of its own/)).toBeInTheDocument();
   expect(screen.queryByText(/Being over is fine/)).toBeNull();
-  expect(screen.getByText(/Over a tick is not a fault; Fixes says where that room is/)).toBeInTheDocument();
+  expect(screen.getByText(/Going over a tick is fine; Fixes says where the spare slots are/)).toBeInTheDocument();
 });
 
 /** AND THE BAR NEVER ROUNDS UP OVER IT: 0.249 printed "25%" beside that note. */
@@ -931,10 +928,10 @@ test("an archetype bar floors its percentage", () => {
  *  the same sentence as a claim -- and the deck's 5.0 anchor was one of them. */
 test("a reason that ends in \"triggers\" carries the unread mark; a real claim does not", () => {
   const { unmount } = render(<ReasonText text="When Arcane Signet is cast, Displacer Kitten triggers" />);
-  expect(screen.getByText(/engine did not read what it does/)).toBeInTheDocument();
+  expect(screen.getByText(/couldn.t read this card/)).toBeInTheDocument();
   unmount();
   render(<ReasonText text="When Arcane Signet is cast, Shark Typhoon makes a token" />);
-  expect(screen.queryByText(/engine did not read what it does/)).toBeNull();
+  expect(screen.queryByText(/couldn.t read this card/)).toBeNull();
 });
 
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two
@@ -953,7 +950,7 @@ test("the score dials name each score, its value and its band", () => {
   // capitalised it -- the word is the same one `scoreBand` gives both.
   expect(screen.getAllByText(/tuned|focused/i).length).toBeGreaterThan(0);
   // Breadth and anchor are the two inputs, printed as their own bullets under the Synergy dial.
-  expect(screen.getAllByText(/breadth/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/focus/i).length).toBeGreaterThan(0);
 });
 
 // THE BANDS WERE IN A `title` TOOLTIP, which does not exist on touch and is undiscoverable with a
@@ -1602,7 +1599,7 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // The census key is engine vocabulary; the row says what the key MEANS and keeps the key on
   // `title` for anyone matching a report against `bin/deck-availability.ts`.
-  expect(screen.getByLabelText(/anything dying, 2 cards want it, 2 supply it/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/anything dying, 2 cards need it, 2 make it happen/i)).toBeInTheDocument();
   // No availability column: it is derived from the two counts beside it and reads 100% on every
   // row that has a supplier, which is a column with no variance.
   expect(screen.queryByText("23%")).not.toBeInTheDocument();
@@ -1613,8 +1610,8 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // "the game supplies it" was true of a phase and false of a SELF trigger, which became
   // self-supplied on 2026-08-27. One wording now covers a phase, combat and a card that triggers
   // itself — and the row still must not be counted as an unmet want.
-  expect(screen.getByLabelText(/anything attacking, 3 cards want it, and nothing has to supply it/i)).toBeInTheDocument();
-  expect(screen.getByText(/3 want · nothing has to supply it/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/anything attacking, 3 cards need it, and it happens on its own/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 need · happens on its own/i)).toBeInTheDocument();
 });
 
 test("demandSentence says the true ugly thing rather than a plausible wrong one", () => {
@@ -1738,8 +1735,8 @@ test("BuildBenchmarks names the win plans with their counts, and says which dire
   expect(screen.getByText("12 cards")).toBeInTheDocument();
   // The concentration index has to say which DIRECTION is good, or a reader will assume more plans
   // is better -- it is the one number here scored the opposite way to the coverage above it.
-  expect(screen.getByText(/Concentration 0\.52 of 1\.00/)).toBeInTheDocument();
-  expect(screen.getByText(/Higher is better here/)).toBeInTheDocument();
+  expect(screen.getByText(/Concentration 0\.52: 1\.00 is all-in on one plan/)).toBeInTheDocument();
+  expect(screen.getByText(/Higher is better/)).toBeInTheDocument();
 });
 
 /** THE MANA ROWS WRAP RATHER THAN OVERFLOWING THE COLUMN THEY ARE GIVEN.
@@ -1877,7 +1874,7 @@ test("BuildBenchmarks says whether you can CAST it, and names colour when that i
   expect(screen.getByLabelText(/Ulamog/i).textContent).not.toMatch(/mana alone/i);
   // The refusals are a count, not a silence: a card the model will not price must not read as a
   // card it priced at zero.
-  expect(screen.getByText(/3 cards refused/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 cards skipped/i)).toBeInTheDocument();
   // THE DEADLINE IS ON SCREEN, not only in the aria-label. Four cards of equal mana value tie at
   // the same percentage by construction, and a bare "3%" repeated down the block was read as a
   // broken readout by three of four player reviews.
@@ -1898,7 +1895,9 @@ test("BuildBenchmarks never prints a range whose two ends are the same figure", 
   } as never;
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={math} />);
   expect(screen.getByText(/31% to cast by turn 1/i)).toBeInTheDocument();
-  expect(screen.getByText(/mana alone 91% — the colours are what is short/i)).toBeInTheDocument();
+  expect(screen.getByText(/^mana alone 91%$/i)).toBeInTheDocument();
+  // The meaning of the gap is said once, under the list, rather than on every row.
+  expect(screen.getByText(/the colours are what is short/i)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/(\d+)% – \1%/);
 });
 
@@ -1925,7 +1924,7 @@ test("BuildBenchmarks says where its turn came from, because it varies per deck"
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // "By turn 5" used to mean the same thing for every deck. Now it is this deck's own clock, and a
   // reader comparing two reports needs to know the horizon moved.
-  expect(screen.getByText(/this deck's own clock/i)).toBeInTheDocument();
+  expect(screen.getByText(/when this deck typically wins/i)).toBeInTheDocument();
 });
 
 test("a deck with no clock says its turn is the corpus median", () => {
@@ -1938,8 +1937,8 @@ test("BuildBenchmarks carries the caveat that makes the numbers readable", () =>
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // Unweighted supply and no-opponent are not footnotes to look up later: without them a reader
   // takes 41% as a fact about their deck rather than about a hypergeometric draw.
-  expect(screen.getByText(/unweighted/i)).toBeInTheDocument();
-  expect(screen.getByText(/12 cards seen/i)).toBeInTheDocument();
+  expect(screen.getByText(/repeatable effect counts the\s+same as a one-shot/i)).toBeInTheDocument();
+  expect(screen.getByText(/12 cards seen by then/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks renders without deck math at all", () => {
@@ -2055,8 +2054,8 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
   render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
 
-  expect(screen.getByText(/evidence behind each build finding/i)).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each mana finding/i)).toBeInTheDocument();
+  expect(screen.getByText(/numbers behind the build fixes/i)).toBeInTheDocument();
+  expect(screen.getByText(/numbers behind the mana fixes/i)).toBeInTheDocument();
 
   expect(screen.queryByText("What this deck plays")).toBeNull();
   expect(screen.queryByText("Whether the mana delivers it")).toBeNull();
@@ -2071,8 +2070,8 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
  *  the sub-tabs became chapters. In one scroll the honest word is a direction, not a tab name. */
 test("the evidence movements point at the chapter the findings actually live in", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
-  expect(screen.getByText(/evidence behind each build finding in What's wrong, below/)).toBeInTheDocument();
-  expect(screen.getByText(/evidence behind each mana finding in What's wrong, below/)).toBeInTheDocument();
+  expect(screen.getByText(/the numbers behind the build fixes below/)).toBeInTheDocument();
+  expect(screen.getByText(/the numbers behind the mana fixes below/)).toBeInTheDocument();
   expect(screen.queryByText(/on Fixes/)).toBeNull();
 });
 
@@ -2225,7 +2224,7 @@ test("the Fixes tab carries both the diagnosis and the prescription", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   // The diagnosis is the findings list; its heading restated the chapter title and went with T1, so
   // the pin is the count sentence that heading sat beside.
-  expect(screen.getByText(/by what fixing it is worth/i)).toBeInTheDocument();
+  expect(screen.getByText(/biggest payoff first/i)).toBeInTheDocument();
   expect(screen.getByText("What to change")).toBeInTheDocument();
 });
 
@@ -2337,7 +2336,7 @@ test("trim rows stay hidden until asked for, then show N with what keeps each ca
 
 test("trim renders even when the passive cut list is empty — the case it exists for", () => {
   render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
-  expect(screen.getByText(/Over on cards\?/)).toBeTruthy();
+  expect(screen.getByText(/Over 99\? Trim/)).toBeTruthy();
 });
 
 // F3: the slack chip printed the raw camelCase key ("targetedRemoval 14/10 (+4)") because this
@@ -2418,7 +2417,7 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   const { unmount } = render(
     <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={overcommitted} />,
   );
-  expect(screen.getByText(/want 64 sources from 34 lands, which no\s+deck can hold/)).toBeInTheDocument();
+  expect(screen.getByText(/ask for 64 sources from 34 lands/)).toBeInTheDocument();
   // THE ROW NAMES ITS UNIT NOW and drops the turn its left half already prints once -- the phone
   // judge's third run gave up on this row for want of a noun. Same element, same muted tone.
   expect(screen.getByText("12 sources, wants 22")).toHaveClass("text-(--muted)");
@@ -2453,8 +2452,8 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
 test("the model's caveats fold away while the horizon they qualify stays visible", async () => {
   const user = userEvent.setup();
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText(/Everything below is priced at turn 5/)).toBeInTheDocument();
-  const caveat = screen.getByText(/Supply is unweighted/).closest("details")!;
+  expect(screen.getByText(/Everything below is checked at turn 5/)).toBeInTheDocument();
+  const caveat = screen.getByText(/repeatable effect counts the\s+same as a one-shot/).closest("details")!;
   expect(caveat.open).toBe(false);
   await user.click(within(caveat).getByText("what this number ignores"));
   expect(caveat.open).toBe(true);
@@ -2471,18 +2470,18 @@ test("wants vs supplies leads with the unmet ones and folds the rest", () => {
     ],
   };
   const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={unmet} />);
-  expect(screen.getByText("1 want with nothing in the deck supplying it.")).toBeInTheDocument();
+  expect(screen.getByText("1 need with nothing in the deck to make it happen.")).toBeInTheDocument();
   // The unmet row leads OUTSIDE the expander, and the satisfied one appears only inside it.
-  const folded = screen.getByText("all 2 wants").closest("details")!;
+  const folded = screen.getByText("all 2 needs").closest("details")!;
   expect(folded.open).toBe(false);
-  expect(within(folded).getByText("20 want · 84 supply")).toBeInTheDocument();
-  expect(screen.getAllByText("4 want · 0 supply")[0]).toHaveClass("text-(--warning)");
-  expect(screen.queryAllByText("20 want · 84 supply")).toHaveLength(1);
+  expect(within(folded).getByText("20 need · 84 enable")).toBeInTheDocument();
+  expect(screen.getAllByText("4 need · 0 enable")[0]).toHaveClass("text-(--warning)");
+  expect(screen.queryAllByText("20 need · 84 enable")).toHaveLength(1);
   unmount();
 
   // A deck with nothing unmet says so in one line rather than listing rows that all agree.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText("Every want in this deck has something supplying it.")).toBeInTheDocument();
+  expect(screen.getByText("Everything your cards are waiting for, something in the deck provides.")).toBeInTheDocument();
 });
 
 // --- The Cards table (F5). ---
@@ -2492,8 +2491,8 @@ test("wants vs supplies leads with the unmet ones and folds the rest", () => {
 // sentence, a reader takes Sol Ring at 0.3 as a verdict.
 test("CardList says what the rating is measured against", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
-  expect(screen.getByText(/Rated against this deck's best synergy card/)).toBeInTheDocument();
-  expect(screen.getByText(/score low by design/)).toBeInTheDocument();
+  expect(screen.getByText(/Scored against this deck's best synergy card/)).toBeInTheDocument();
+  expect(screen.getByText(/score low on purpose/)).toBeInTheDocument();
 });
 
 test("CardList sorts by name and by cost, not only by rating", async () => {
@@ -2576,7 +2575,7 @@ test("CardList says a shared mechanism once and leaves the distinctive rows thei
   render(<CardList cards={cards} />);
   // The count and the sentence are separate text nodes (React splits `{count}` from the string),
   // so this matches the node that carries the words.
-  expect(screen.getByText(/said once here/)).toBeInTheDocument();
+  expect(screen.getByText(/shown once instead of on every row/)).toBeInTheDocument();
   // SEVEN, not six: "Odd One" leads with the shared reason too — what makes it distinctive is the
   // SECOND reason it carries, which is exactly the row the fold has to keep.
   expect(screen.getByText("7").parentElement?.textContent).toMatch(/^7 × Wiz 0 triggers on a wizard entering/);
@@ -2621,7 +2620,7 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   const two = render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
   // R2-F7: this is the screen a precon owner actually sees, and it named "Wizards' Game Changer
   // list" with no box on THIS screen defining it -- the definition only existed on the 4-5 layout.
-  expect(screen.getByText(/no card from Wizards’ published list of the\s+strongest cards in Commander/i)).toBeInTheDocument();
+  expect(screen.getByText(/No Game Changers and no two-card infinite combos here/i)).toBeInTheDocument();
   two.unmount();
 
   // An analysis with no bracket renders nothing at all, never a heading over an empty panel.
@@ -2651,7 +2650,7 @@ test("the bracket panel defines its own vocabulary", () => {
   expect(guide).toHaveAttribute("rel", expect.stringContaining("noopener"));
   // WHAT A LINK CANNOT ANSWER stays on the panel: which half of the input is Wizards' and which is
   // ours. The judging round that produced this sentence filed its absence as an overclaim.
-  expect(screen.getByText(/Two kinds of thing move a deck up/i)).toBeInTheDocument();
+  expect(screen.getByText(/Two things push a deck up the brackets/i)).toBeInTheDocument();
   // Capitalised and counted, with nothing saying what puts a card on the list.
   // "the format" was jargon the beginner could not decode -- named outright (S14 judge round, F2).
   expect(screen.getByText(/published list of the strongest cards in Commander/i)).toBeInTheDocument();
@@ -2661,7 +2660,7 @@ test("the bracket panel defines its own vocabulary", () => {
   // missing split is ABOUT, and the heading's promise is no longer declined in the last line.
   // The 4-5 deck gets the 4-vs-5 sentence ONLY. Printing both splits on every deck meant half the
   // paragraph was always about a range the reader is not in (R2-F5).
-  expect(screen.getByText(/telling 4 from 5 depends on the table you take it to/i)).toBeInTheDocument();
+  expect(screen.getByText(/depends on the table you take it to/i)).toBeInTheDocument();
   expect(screen.queryByText(/preconstructed/i)).toBeNull();
   expect(screen.queryByText(/is not something a card list can answer/i)).toBeNull();
 });
@@ -2691,18 +2690,18 @@ test("the footnote speaks about THIS band and no other", () => {
   // about a range the reader is not in -- "I read it three times looking for the part meant for
   // me". And bracket 3 is a single number: it was being told it had been given "a range".
   const two = render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
-  expect(screen.getByText(/telling 1 from 2 depends on how the deck was put together/i)).toBeInTheDocument();
-  expect(screen.queryByText(/telling 4 from 5/i)).toBeNull();
+  expect(screen.getByText(/Is it a 1 or a 2\?/i)).toBeInTheDocument();
+  expect(screen.queryByText(/Is it a 4 or a 5\?/i)).toBeNull();
   two.unmount();
 
   const three = render(<BracketPanel bracket={{ band: "3", gameChangers: ["Rhystic Study"], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
   // NOT "a range rather than one number", because 3 is one number.
   expect(screen.queryByText(/a range rather than one number/i)).toBeNull();
-  expect(screen.getByText(/single number rather than a range/i)).toBeInTheDocument();
+  expect(screen.getByText(/Bracket 3 is a single bracket/i)).toBeInTheDocument();
   three.unmount();
 
   render(<BracketPanel bracket={{ band: "4-5", gameChangers: [], infiniteCombos: 1, cheapCombos: [], reasons: [] }} />);
-  expect(screen.getByText(/telling 4 from 5 depends on the table you take it to/i)).toBeInTheDocument();
+  expect(screen.getByText(/depends on the table you take it to/i)).toBeInTheDocument();
   expect(screen.queryByText(/telling 1 from 2/i)).toBeNull();
 });
 
@@ -2913,7 +2912,7 @@ test("the legality panel reports and never gates, and says how many rules it che
   // and still never says "legal", which five rules cannot claim. The banned list is named as unchecked.
   const clean = render(<LegalityPanel legality={[]} />);
   expect(screen.getByText(/Checked against Commander.s deck rules/)).toBeInTheDocument();
-  expect(screen.getByText(/as of the card data/)).toBeInTheDocument();
+  expect(screen.getByText(/as of our card data/)).toBeInTheDocument();
   expect(clean.container.textContent).not.toMatch(/\blegal\b/i);
   expect(screen.queryByRole("heading")).toBeNull();
   clean.unmount();
@@ -3170,4 +3169,26 @@ test("CardName carries the padding-plus-negative-margin pair", () => {
   const btn = container.querySelector("button")!;
   expect(btn.className).toContain("py-1");
   expect(btn.className).toContain("-my-1");
+});
+
+/** AN ARCHETYPE BAR IS DRAWN AGAINST THE WHOLE DECK (look-and-feel review, 2026-09-24). Scaled to
+ *  the leader, a 17% archetype drew a full-width track and every seat read it as "all of it". */
+test("an archetype bar's length is its share of the deck, not its share of the leader", () => {
+  const strategies = [
+    { name: "tokens", label: "Tokens", confidence: 0.17 },
+    { name: "aristocrats", label: "Aristocrats", confidence: 0.12 },
+  ] as never;
+  const { container } = render(<ArchetypeBoard archetypes={SAMPLE.report.archetypes} strategies={strategies} />);
+  const widths = [...container.querySelectorAll<HTMLElement>(".bg-\\(--fill\\)")].map((el) => el.style.width);
+  expect(widths.slice(0, 2)).toEqual(["17%", "12%"]);
+});
+
+/** THE CARD-BY-THEME GRID WENT (owner, 2026-09-24); ITS ONE ACTIONABLE FACT CAME HERE. Cards no theme
+ *  claims are named in the cut list, as a place to look -- not as cut candidates, which they are not. */
+test("the cut list names the cards no theme claims, without calling them dead", () => {
+  render(<CutList cutList={[]} slack={[]} offTheme={["Crib Swap", "Despark"]} />);
+  expect(screen.getByText(/Fits no theme:/)).toBeInTheDocument();
+  expect(screen.getByText("Crib Swap")).toBeInTheDocument();
+  expect(screen.getByText(/normal for\s+removal and protection/)).toBeInTheDocument();
+  expect(screen.queryByText("No card here is unconnected.")).toBeNull();
 });

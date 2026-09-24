@@ -45,7 +45,7 @@ test("the lands dial names the direction", () => {
   expect(bandState(36, 36).label).toBe("on the modelled count");
   // INSIDE THE MARGIN, THE DISTANCE STILL SHOWS: "on the modelled count" beside "wants 36" at 34
   // read as a contradiction to a player (deck-build run, 2026-09-22).
-  expect(bandState(34, 36).label).toBe("2 under, inside the model's ±3");
+  expect(bandState(34, 36).label).toBe("2 under, within the normal ±3");
   expect(bandState(34, 36).state).toBe("on-band");
 });
 

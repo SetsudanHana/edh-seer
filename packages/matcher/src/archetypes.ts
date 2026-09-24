@@ -280,5 +280,8 @@ export function detectKindred(cardSignals: CardSignal[], nonlandCount: number): 
   }
   const confidence = nonlandCount > 0 ? weight / nonlandCount : 0;
   if (confidence < ARCHETYPE_FLOOR) return undefined;
-  return { name: "kindred", label: `${ARCHETYPE_LABELS.kindred}: ${titleCase(type)}`, confidence };
+  // "WARRIOR TYPAL", NOT "KINDRED: WARRIOR" (look-and-feel review 2026-09-24). Kindred is the card
+  // TYPE (CR 205.2a); a deck built around a creature type is "typal", which is also the word the
+  // report's own headline theme uses ("Cleric typal") -- one report printed both spellings.
+  return { name: "kindred", label: `${titleCase(type)} typal`, confidence };
 }

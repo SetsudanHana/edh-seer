@@ -557,10 +557,10 @@ test("a page without breadcrumbs adds no structured data", () => {
  *  reader will not find. Held to the word CardPage renders. */
 test("the prerendered partner heading is the word the page uses", () => {
   const block = cardPageHtml(KRENKO, "krenko-mob-boss", "card");
-  expect(block).toContain("<h2>Partners</h2>");
+  expect(block).toContain("<h2>Works well with</h2>");
   expect(block).not.toContain("Most specific");
   const page = readFileSync(join(import.meta.dirname, "..", "components", "CardPage.tsx"), "utf8");
-  expect(page).toContain(">Partners</h2>");
+  expect(page).toContain(">Works well with</h2>");
 });
 
 /** THE WITHHELD COUNT IS A LINK IN THE HTML TOO (roadmap AJ3). A crawler with JavaScript off and a

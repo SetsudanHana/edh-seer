@@ -22,6 +22,7 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { findings } from "../lib/findings.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
+import { themeMatrix } from "../lib/theme-matrix.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -119,6 +120,16 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
     [data.graph],
   );
 
+  /** CARDS NO THEME CLAIMS, the one fact the removed card-by-theme grid carried that a player acts
+   *  on (owner, 2026-09-24: "as a player it is not useful"). It goes to the cut list, minus the cards
+   *  that list already names and minus the unread, which fit no theme because nothing was read --
+   *  `CutList` names those separately, with the right sentence. */
+  const offTheme = useMemo(() => {
+    const none = themeMatrix(report.archetypes, nonlandNames)?.unaffiliated ?? [];
+    const skip = new Set([...(report.cutList ?? []).map((c) => c.name), ...unreadCardNames(report.cards)]);
+    return none.filter((n) => !skip.has(n));
+  }, [report.archetypes, report.cutList, report.cards, nonlandNames]);
+
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
 
   return (
@@ -150,7 +161,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               {/* "RESOLVED" IS A RULES WORD (T1): a spell resolves, and a player scanning
                 *  "Resolved 99/100" reads a simulation stat rather than how many names this tool
                 *  recognised. Nothing about the figure changed. */}
-              Recognized <span className="pip">{data.resolvedCount}/{data.totalCount}</span>
+              Card names matched <span className="pip">{data.resolvedCount}/{data.totalCount}</span>
             </p>
           )}
         </Chapter>
@@ -202,7 +213,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="mana" title={title("mana")}>
-          <Movement count="the evidence behind each mana finding in What's wrong, below">
+          <Movement count="the numbers behind the mana fixes below">
           <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
             {/* `showBenchmarks={false}`: the Roles chapter alone owns the category/parent block
               *  ("How the roles are spent", its group headers and leaf rows). Without this, that
@@ -250,7 +261,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="roles" title={title("roles")}>
-          <Movement count="the evidence behind each build finding in What's wrong, below">
+          <Movement count="the numbers behind the build fixes below">
             <BuildBenchmarks
               categories={report.buildCategories}
               parents={report.buildParents}
@@ -280,6 +291,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               coverage={report.coverage}
               slack={report.slack}
               trim={report.trim}
+              offTheme={offTheme}
             />
           </Movement>
         </Chapter>

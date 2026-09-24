@@ -24,8 +24,8 @@ test("a resolved finding renders once, struck through, and is not counted", () =
   // The count is `findings(report).length`, which no longer contains it -- a resolved finding is not
   // a finding, and the header's own count reads the same function. Asserted on the counting SENTENCE
   // rather than on the bare number, which also matches a row's ordinal.
-  expect(screen.getByText(/findings, by what fixing it is worth/).textContent)
-    .toBe(`${findings(report).length} findings, by what fixing it is worth`);
+  expect(screen.getByText(/fixes, biggest payoff first/).textContent)
+    .toBe(`${findings(report).length} fixes, biggest payoff first`);
 });
 
 /** It disappears by itself: the next run's diff no longer names it, so nothing tracks "shown once". */
@@ -96,12 +96,12 @@ test("each scored row prints what fixing it is worth", () => {
   // paragraph's text rather than a single text node.
   const worth = [...container.querySelectorAll("p")].map((el) => el.textContent);
   // 0.635 prints as +0.64: two decimals, rounded, which is what the row shows.
-  expect(worth).toContain("worth +0.64 to Build or better");
+  expect(worth).toContain("+0.64 to Build, at least");
 });
 
 test("the heading says what the order is by", () => {
   render(<Findings report={buildOnly} />);
-  expect(screen.getByText(/by what fixing it is worth/)).toBeInTheDocument();
+  expect(screen.getByText(/biggest payoff first/)).toBeInTheDocument();
 });
 
 /** The second heading is absent when there is nothing under it -- a heading over an empty list is
@@ -115,5 +115,5 @@ test("the second heading is absent when nothing is unscored", () => {
  *  error rather than as the claim it is. */
 test("a zero impact says so in words", () => {
   render(<Findings report={coveredButThin} />);
-  expect(screen.getByText("does not move Build")).toBeInTheDocument();
+  expect(screen.getByText("won't change your Build score")).toBeInTheDocument();
 });

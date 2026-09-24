@@ -36,7 +36,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="EDH Seer" />
     <meta property="og:title" content="EDH Seer — Commander Deck Synergy Analysis" />
-    <meta property="og:description" content="Why two cards work together, from the oracle text itself. Paste a decklist, get the synergy edges with a stated reason for each one." />
+    <meta property="og:description" content="Why two cards work together, from the oracle text itself. Paste a decklist, get every pairing with a stated reason for each one." />
     <meta property="og:url" content="https://edhseer.cards/" />
     <meta property="og:image" content="https://edhseer.cards/og-image.png" />
     <meta property="og:image:width" content="1200" />
@@ -94,7 +94,7 @@
           </svg>
           <span class="brand-word"><span class="brand-edh">edh</span><span class="brand-seer">seer</span></span>
         </a>
-        <span class="brand-tagline">Oracle-level deck reading</span>
+        <span class="brand-tagline">Commander synergy, explained</span>
       </p>
       <nav class="site-nav" aria-label="Site">
         <!-- THE SAME SIX ITEMS IN THE SAME ORDER ON BOTH PAGES, and `seo.test.ts` compares the two
@@ -133,7 +133,7 @@
           <div class="site-more-panel">
             <a href="/how-it-works">How it works</a>
             <a href="https://github.com/SetsudanHana/edh-seer" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report an edge</a>
+            <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Report a wrong pairing</a>
           </div>
         </details>
       </nav>
@@ -246,22 +246,22 @@
            it is the only place the static HTML says what the product does, for a crawler with
            JavaScript off, so it moves one tag down rather than going anywhere. `seo.test.ts` counts
            that readable text and checks it still says oracle text, Commander and synergy. -->
-      <h1 class="intro-thesis">Commander synergy, read from the oracle text</h1>
+      <h1 class="intro-thesis">See which cards in your Commander deck actually work together</h1>
       <p class="intro-thesis intro-thesis-body">
-        EDH Seer reads the oracle text of every card in a Commander decklist and reports which pairs
-        actually work together, with the reason printed next to each one.
+        Paste your list and EDH Seer reads the oracle text of every card, then shows you which pairs
+        have real synergy, with the reason written next to each one.
       </p>
 
       <!-- THE SCALE, IN THREE NUMBERS, and the same three the prose page shows -- one product, one
            set of claims. Sourcing for each is documented in `how-it-works/index.html`; if you change
            a number here, change it there. -->
       <dl class="figures">
-        <div><dt>34,433</dt><dd>cards in the corpus, 21,317 of them read in full</dd></div>
-        <div><dt>~495</dt><dd>synergy edges in an average Commander deck</dd></div>
-        <div><dt>0</dt><dd>model calls when you analyse a deck</dd></div>
+        <div><dt>28,416</dt><dd>cards read in full, of the 34,433 it knows</dd></div>
+        <div><dt>~495</dt><dd>pairs of cards it points out in an average Commander deck</dd></div>
+        <div><dt>0</dt><dd>AI calls when you analyse a deck, so the same list always gets the same report</dd></div>
       </dl>
 
-      <h2>What an edge is, and what it is not</h2>
+      <h2>What counts as a pairing, and what doesn&rsquo;t</h2>
       <!-- THE CONCEPT THE WHOLE TOOL RESTS ON, drawn rather than described. The matched row is the
            ordinary case; the refused row is a REAL defect this engine shipped and had reported from
            the board, which is why it is here rather than an invented counterexample. Copied from
@@ -285,7 +285,7 @@
             <span class="edge-side">cares about</span>
           </div>
           <p class="edge-verdict edge-ok">
-            Edge. <em>When a creature enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage.</em>
+            Pairing. <em>When a creature enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage.</em>
           </p>
         </div>
 
@@ -306,24 +306,23 @@
             <span class="edge-side">cares about</span>
           </div>
           <p class="edge-verdict edge-no">
-            No edge. It wants a <strong>creature</strong> entering, and a fetched land is not one.
+            No pairing. It wants a <strong>creature</strong> entering, and a fetched land is not one.
           </p>
         </div>
       </div>
 
-      <h2>What it refuses to claim</h2>
+      <h2>What it won&rsquo;t pretend to know</h2>
       <p>
-        Ramp, removal and card draw are <em>roles</em>, not synergies — they make a deck work
-        without pairing with anything, so they are counted as slots rather than drawn as edges. A
-        card that refers to itself ("this creature", "this spell") is read as itself and not as a
-        class. Where the rules cannot say something, the report says nothing: a missing claim is
-        better than a confident wrong one.
+        Ramp, removal and card draw are <em>jobs</em>, not synergies. They help every deck, so we
+        count them rather than pair them with everything. A card that says "this creature" means
+        itself, not every creature. And when the oracle text can&rsquo;t settle it, the report says
+        nothing: a missing claim is better than a confident wrong one.
       </p>
 
       <!-- ONE LINK, NOT TWO. The GitHub one went: the header nav and the footer both carry it, which
            made three copies of the same destination on one page. This one stays because it is not
            navigation — it is the next sentence of what the reader has just read. -->
-      <p class="intro-more"><a href="/how-it-works">Read how the engine decides &rarr;</a></p>
+      <p class="intro-more"><a href="/how-it-works">How it works &rarr;</a></p>
     </section>
 
     <!-- THE FOOTER IS STATIC NOW, AND IT IS LAST. It was a React component inside `main`, which put
@@ -351,10 +350,10 @@
            claim carries a stated reason, which is exactly what makes a WRONG one reportable: a
            reader can name the pair and quote the sentence. -->
       <p>
-        A wrong edge, a missing one, or a card read badly?
+        Spotted a wrong pairing, a missing one, or a card we misread?
         <a href="https://github.com/SetsudanHana/edh-seer/issues/new" target="_blank" rel="noopener noreferrer">Open an issue</a>
-        with the two card names and the sentence it printed. The engine is rule-based and open
-        source, so a bad claim is a fixable bug rather than an opinion.
+        with the two card names and the sentence we printed. The rules are open source, so a bad call
+        is a bug we can fix, not a matter of opinion.
       </p>
       <p>
         Card data, card images and mana symbols are provided by

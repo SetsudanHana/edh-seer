@@ -37,6 +37,18 @@ test("the trust figures on the page are the README's, digit for digit", () => {
   }
 });
 
+/** THE LANDING PAGE SAID 21,317 WHILE THIS PAGE SAID 28,416 (look-and-feel review, 2026-09-24) --
+ *  the same "read in full" figure, two values, one click apart. Both pages are held to the README. */
+test("the landing page's coverage figures are the README's too", () => {
+  const landing = readFileSync(join(CLIENT, "index.html"), "utf8");
+  const [corpus, derived] = pick(
+    /corpus is \*\*([\d,]+)\*\* cards, of which \*\*([\d,]+)\*\* carry derived tags/,
+    "corpus coverage",
+  );
+  expect(landing).toContain(`<dt>${derived}</dt>`);
+  expect(landing).toContain(`of the ${corpus} it knows`);
+});
+
 /** EVERY ENGINEERING LINK POINTS AT A FILE THAT EXISTS. The links table is the technical reader's
  *  whole route into the repository, and a renamed doc would otherwise 404 from the live site with
  *  nothing here going red. Paths are resolved against the checkout, not fetched. */

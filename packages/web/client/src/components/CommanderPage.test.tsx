@@ -87,7 +87,7 @@ test("a demand the commander does not answer itself is listed as one the deck mu
  *  the first cut of this matched those and failed for the wrong reason. */
 test("a self-supplied demand is not listed as a gap", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, demands: ["enters|creature|-|-"] }));
-  const heading = await screen.findByText(/the other 99 have to bring/i);
+  const heading = await screen.findByText(/your 99 should provide/i);
   const section = heading.parentElement!;
   expect(within(section).getByText(/answers every event it watches/i)).toBeInTheDocument();
   expect(within(section).queryByText(/entering the battlefield/)).toBeNull();

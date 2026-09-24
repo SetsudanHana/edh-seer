@@ -3424,6 +3424,46 @@ test("a damage emit's dealer satisfies a trigger that names the dealer", () => {
   expect(tags).toContain("non-combat-damage:any");
 });
 
+/** THE EVENT'S SIZE IS PART OF THE DEMAND (2026-09-25). Ghyrson Starn triggers on EXACTLY 1 damage:
+ *  Impact Tremors' 1 feeds him, Eidolon of the Great Revel's 2 and Flame-Kin War Scout's 4 never do,
+ *  and a producer whose size is unknown ("X") is refused rather than guessed. A trigger that prints
+ *  no size is untouched. */
+test("a damage trigger that requires a size meets only a producer of that size", () => {
+  const pinger = (name: string, amount: string | undefined) => base(name, [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+    ...(amount ? { amount } : {}),
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }],
+  }]);
+  const ghyrson = base("Ghyrson Starn", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null }, amount: { op: "eq", value: 1 } },
+    effect: { kind: "damage" },
+  }]);
+  const joins = (p: DeckCard, c: DeckCard): boolean => directedReasons(p, c, H).some((r) => r.tag.startsWith("non-combat-damage"));
+  expect(joins(pinger("Impact Tremors", "1"), ghyrson)).toBe(true);
+  expect(joins(pinger("Eidolon of the Great Revel", "2"), ghyrson)).toBe(false);
+  expect(joins(pinger("Fireball", "X"), ghyrson)).toBe(false);
+  expect(joins(pinger("Unsized Pinger", undefined), ghyrson)).toBe(false);
+  // "5 or more": 5 and 6 meet it, 4 does not.
+  const dragonborn = base("Dragonborn Champion", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null }, amount: { op: "gte", value: 5 } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(joins(pinger("Five", "5"), dragonborn)).toBe(true);
+  expect(joins(pinger("Six", "6"), dragonborn)).toBe(true);
+  expect(joins(pinger("Four", "4"), dragonborn)).toBe(false);
+  // A trigger with no size keeps every producer it had.
+  const anySize = base("Any Damage Payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null } },
+    effect: { kind: "draw-card" },
+  }]);
+  expect(joins(pinger("Eidolon of the Great Revel", "2"), anySize)).toBe(true);
+});
+
 /** The fix must be ADDITIVE. An implied combat emit carries no `dealer` — its subject IS the
  *  creature dealing the damage — so it falls back to exactly the comparison it made before. */
 test("an emit with no dealer still matches on its subject, as implied combat damage does", () => {
@@ -4028,7 +4068,7 @@ test("a graveyard fill that is not the card itself is worded about the cards it 
     emits: [{ verb: "mill", subject: { control: "any", token: null, scope: "each" } }],
   }]);
   expect(pairReasons(konrad, ascension, H).map((r) => r.text)).toEqual([
-    "When a card hits the graveyard thanks to Konrad, Ascension costs each opponent life",
+    "When a card hits the graveyard thanks to Konrad, Ascension makes each opponent lose life",
   ].map((t) => expect.stringContaining("When a card hits the graveyard thanks to Konrad")));
   const outlet = base("Outlet", [{
     kind: "activated", effect: { kind: "" },

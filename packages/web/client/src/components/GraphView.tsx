@@ -2642,8 +2642,8 @@ export function GraphView(
             </>
           ) : (
             <>
-              Drag to pan, scroll to zoom. Two cards sit close because they do something for each
-              other — position is synergy, and colour is what the cards are.
+              Drag to move, scroll to zoom. Cards that work together sit close to each other, and
+              colour shows what kind of card each one is.
             </>
           )}
         </p>

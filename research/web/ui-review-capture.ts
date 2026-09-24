@@ -486,6 +486,8 @@ async function settle(page: Page): Promise<void> {
 
 async function main(runPath: string): Promise<void> {
   const run: RunFile = JSON.parse(readFileSync(runPath, "utf8"));
+  // Point a round at a deployed site (e.g. https://edhseer.cards) without editing the run file.
+  if (process.env.REVIEW_BASE_URL) run.baseUrl = process.env.REVIEW_BASE_URL;
   const out = join("persona-shots", run.surface);
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
@@ -497,7 +499,7 @@ async function main(runPath: string): Promise<void> {
     console.log("      -- see .claude/agents/README.md, \"The honest ceiling of this technique\".");
   }
 
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(launchOptions());
   try {
   const manifest: Record<string, unknown>[] = [];
   const metrics: Record<string, unknown> = {};
@@ -703,6 +705,18 @@ function selfTest(): void {
   eq(isOffscreen({ x: 0, y: 5000, w: 10, h: 10 }, vp, 5000), true, "past the document bottom is not");
 
   console.log("self-test: ok");
+}
+
+/** A sandboxed session reaches the internet through an HTTPS proxy that re-signs TLS with its own CA,
+ *  which the bundled Chromium neither routes through nor trusts. REVIEW_CHROMIUM names a browser
+ *  binary; REVIEW_TRUST_SPKI pins the proxy CAs' SPKI hashes -- trust in exactly those, not a blanket
+ *  certificate bypass. Unset, this is a plain local launch. */
+function launchOptions(): Parameters<typeof chromium.launch>[0] {
+  const opts: Parameters<typeof chromium.launch>[0] = {};
+  if (process.env.REVIEW_CHROMIUM) opts.executablePath = process.env.REVIEW_CHROMIUM;
+  if (process.env.REVIEW_BASE_URL && process.env.HTTPS_PROXY) opts.proxy = { server: process.env.HTTPS_PROXY };
+  if (process.env.REVIEW_TRUST_SPKI) opts.args = [`--ignore-certificate-errors-spki-list=${process.env.REVIEW_TRUST_SPKI}`];
+  return opts;
 }
 
 const arg = process.argv[2];

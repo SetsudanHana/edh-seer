@@ -1278,7 +1278,7 @@ describe("the caption", () => {
   test("lives inside the fullscreen shell, not as a sibling fullscreen would hide", () => {
     render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
     const shell = screen.getByTestId("graph-fullscreen-shell");
-    const caption = screen.getByText(/Drag to pan, scroll to zoom/);
+    const caption = screen.getByText(/Drag to move, scroll to zoom/);
     expect(shell.contains(caption)).toBe(true);
   });
 });
@@ -2565,9 +2565,9 @@ describe("the cards the engine could not read", () => {
   test("the caption stops claiming position means synergy while they are the subject", async () => {
     makeContextSpy();
     render(<GraphView graph={unreadGraph()} report={reportWith(["Nest of Scarabs"])} />);
-    expect(screen.getByText(/position is synergy/)).toBeInTheDocument();
+    expect(screen.getByText(/work together sit close/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /^not read \(1\)/ }));
-    expect(screen.queryByText(/position is synergy/)).toBeNull();
+    expect(screen.queryByText(/work together sit close/)).toBeNull();
     expect(screen.getByText(/position means/)).toBeInTheDocument();
   });
 

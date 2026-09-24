@@ -26,9 +26,9 @@ test("a commander card shows both tabs, the current one marked", () => {
   expect(links[1]).not.toHaveAttribute("aria-current");
 });
 
-test("a card that cannot lead shows the card tab only", () => {
+test("a card that cannot lead shows no tab bar, since one tab is not a choice", () => {
   mount(false, "card");
-  expect(screen.getByRole("navigation", { name: "Surface" }).querySelectorAll("a")).toHaveLength(1);
+  expect(screen.queryByRole("navigation", { name: "Surface" })).toBeNull();
 });
 
 test("the header, the body and the rail are one shape on either surface", () => {
@@ -38,7 +38,7 @@ test("the header, the body and the rail are one shape on either surface", () => 
   expect(screen.getByRole("img", { name: /the card, including its rules text/ })).toBeTruthy();
   expect(screen.getByRole("navigation", { name: "Surface" }).querySelectorAll("a")[1]).toHaveAttribute("aria-current", "page");
   // The foot's way out, on both surfaces.
-  expect(screen.getByRole("link", { name: "How the engine decides" })).toBeTruthy();
+  expect(screen.getByRole("link", { name: "How it works" })).toBeTruthy();
 });
 
 /** THE ROWS TURN WITH THE PICTURE (owner, 2026-09-08: "we can flip the double faced card, but we see

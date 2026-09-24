@@ -133,3 +133,28 @@ test("the collapsed bar does not grow a second clear", () => {
   expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
   expect(screen.getByRole("button", { name: "Start over" })).toBeInTheDocument();
 });
+
+/** ON A PHONE THE ONE-TIME ACTIONS FOLD AWAY (look-and-feel review, 2026-09-24). Five buttons wrapped
+ *  to two rows at 390px; the ones a reader uses on every visit -- Edit, Re-analyse -- stay out, and
+ *  copy, copy, start over sit behind one disclosure that says whether it is open. */
+test("a narrow screen keeps Edit and Re-analyse out and folds the rest behind More", async () => {
+  const original = window.matchMedia;
+  window.matchMedia = ((q: string) => ({
+    matches: q.includes("max-width"), media: q, addEventListener: () => {}, removeEventListener: () => {},
+  })) as unknown as typeof window.matchMedia;
+  try {
+    render(<DeckInput {...props} value="1 Sol Ring" collapsed onEdit={() => {}} onStartOver={() => {}} shareLink="https://x/#deck=a" />);
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Re-analyse" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start over" })).toBeNull();
+    const more = screen.getByRole("button", { name: "More" });
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(more);
+    expect(screen.getByRole("button", { name: "Less" })).toHaveAttribute("aria-expanded", "true");
+    for (const name of ["Copy link", "Copy decklist", "Start over"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+  } finally {
+    window.matchMedia = original;
+  }
+});

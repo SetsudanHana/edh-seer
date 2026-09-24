@@ -23,9 +23,8 @@ export function NotFound({ slug, kind }: { slug: string; kind: "card" | "command
         <h2 className="text-4xl sm:text-5xl font-bold tracking-[-0.02em] break-words">“{typed}”</h2>
       </div>
       <p className="text-(--muted)">
-        Either that name is wrong, or the engine found nothing to say about the card
-        {kind === "commander" ? " — a commander page exists only for a legendary creature" : ""}
-        {kind === "commander" ? " whose oracle text produces an event some other card can answer." : ": a page exists only where the oracle text produces an event some other card can answer. A card that just adds mana, or draws you a card, forms no edges and gets no page."}
+        Either the name&rsquo;s wrong, or this card doesn&rsquo;t set up anything another card reacts to
+        {kind === "commander" ? ". Commander pages exist only for legendary creatures whose text other cards can build around." : ". Cards that just add mana or draw a card don't get a page."}
       </p>
       <p>
         <Link

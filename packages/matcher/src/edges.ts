@@ -347,7 +347,10 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
  *  the list and drifting from it. */
 function baseEvents(tags: CardTags): GameEvent[] {
   return [
-    ...tags.abilities.flatMap((a) => a.emits ?? []),
+    // A DAMAGE EMIT CARRIES ITS SIZE, the ability's own `amount`, so a trigger that requires one
+    // ("exactly 1 damage", Ghyrson Starn) can tell Impact Tremors from Eidolon of the Great Revel.
+    ...tags.abilities.flatMap((a) => (a.emits ?? []).map((e) =>
+      a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e)),
     ...impliedEvents(tags.characteristics),
   ].map(normalizeZoneEvent);
 }
@@ -831,6 +834,11 @@ function originMatches(producer: SubjectFilter, consumer: SubjectFilter): boolea
  *  would report holes the engine does not actually have. */
 export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierarchy): boolean {
   if (!verbSatisfies(producer, consumer)) return false;
+  // THE EVENT'S SIZE (2026-09-25): a trigger that requires one meets only a producer that states a
+  // size satisfying it. An unknown size ("X", or none recorded) is refused -- a missing edge, never
+  // a wrong one. Measured on the corpus: seven cards print such a trigger; Ghyrson Starn had been
+  // joined to every pinger (Eidolon of the Great Revel's 2, Flame-Kin War Scout's 4).
+  if (consumer.amountIs !== undefined && !sizeSatisfies(producer.amount, consumer.amountIs)) return false;
   // A TARGETING RESTRICTION IS A DEMAND NOTHING HERE CAN CHECK, so the trigger claims no producer.
   // `replacement.restricted` one layer over: keep the ability and its kind, claim no cards. Read on
   // the CONSUMER only — a producer's emit never states how a spell was targeted, so the field can
@@ -902,6 +910,20 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
   }
   return subjectMatches(producer.subject, consumer.subject, h);
 }
+
+/** The producer's stated size against the consumer's required one. Numbers only: "X" and anything
+ *  unparsed answer no.
+ *
+ *  CEILING: implied COMBAT damage carries no size -- it is the creature's power -- so Dragonborn
+ *  Champion's "5 or more damage to a player" refuses a 5-power attacker. Upgrade path: stamp
+ *  `amount` from printed power on the implied combat event (`implied.ts`). */
+function sizeSatisfies(amount: string | undefined, want: { op: "eq" | "gte"; value: number }): boolean {
+  if (amount === undefined || !/^\d+$/.test(amount.trim())) return false;
+  const n = Number(amount);
+  return want.op === "eq" ? n === want.value : n >= want.value;
+}
+
+const DAMAGE_VERBS: ReadonlySet<string> = new Set(["non-combat-damage", "combat-damage"]);
 
 /** A `damaged` trigger against a damage emit's VICTIM. A PLAYER AND A PERMANENT NEVER MEET: by the
  *  CR 120.3 convention above, an untyped victim ("each opponent", "any target") is a player, so it
@@ -1401,7 +1423,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       if (!a.trigger) continue;
       if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
-        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
+        const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject, ...(a.trigger.amount ? { amountIs: a.trigger.amount } : {}) });
         // `e` is `e0` when it matches as authored, or an untyped land put resolved against the
         // deck's lands to the subtype this trigger names (`landPutFor`); null is no match.
         const viaHost = auraHostLeaves(c.tags.characteristics, e0, t, h);

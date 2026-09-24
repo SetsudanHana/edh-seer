@@ -13,7 +13,10 @@ const PHRASES: Record<string, [(n: string) => string, string]> = {
   drain: [(n) => `drains for ${n}`, "drains each opponent"],
   lifegain: [(n) => `gains you ${n} life`, "gains you life"],
   damage: [(n) => `deals ${n} damage`, "deals damage"],
-  "player-life-loss": [(n) => `costs each opponent ${n} life`, "costs each opponent life"],
+  // MAGIC'S OWN VERB (review 2026-09-24): "costs" reads as a payment; the card says "loses".
+  // A NUMBER READS "lose 2 life"; A QUANTITY READS "lose life equal to Sarevok's power" -- "lose
+  // Sarevok's power life" is not English.
+  "player-life-loss": [(n) => (/^(\d+|X)$/.test(n) ? `makes each opponent lose ${n} life` : `makes each opponent lose life equal to ${n}`), "makes each opponent lose life"],
   "counter-placement": [(n) => (n === "1" ? "puts a counter on it" : `puts ${n} counters on it`), "puts counters on it"],
   "token-generation": [(n) => (n === "1" ? "makes a token" : `makes ${n} tokens`), "makes a token"],
   // CR 114.2's own verb. An emblem is not a token, and the row must not say it is.
