@@ -256,7 +256,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                           />
                         )
                         : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
-                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} stateControls={stateControls} />}
+                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} stateControls={stateControls} guided />}
                   </Suspense>
                 </Reference>
               }
