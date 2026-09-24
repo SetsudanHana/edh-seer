@@ -595,6 +595,13 @@ export interface GameEvent {
    *  stored doc changes meaning and no existing edge moves; an emit that does not set this falls
    *  back to `subject`, which is the dealer for the implied combat case. */
   dealer?: SubjectFilter;
+  /** HOW MUCH DAMAGE -- a damage producer's `Ability.amount` ("1", "2", "X"), stamped by the matcher
+   *  on an authored damage emit (`edges.ts` `baseEvents`). Never set by derive. Read only against a
+   *  consumer's `amountIs`. */
+  amount?: string;
+  /** HOW MUCH DAMAGE THE CONSUMER REQUIRES -- its trigger's `amount` ("exactly 1", "5 or more"),
+   *  carried onto the event the matcher builds from the trigger. A demand only: never on an emit. */
+  amountIs?: { op: "eq" | "gte"; value: number };
 }
 
 /** The closed set of recognized effect.kind labels. Extraction output is normalized to this
@@ -798,6 +805,12 @@ export interface Ability {
   trigger?: {
     verbs: Verb[];
     subject: SubjectFilter;
+    /** HOW BIG THE EVENT MUST BE: Ghyrson Starn's "deals exactly 1 damage" (`eq` 1), Dragonborn
+     *  Champion's "deals 5 or more damage" (`gte` 5). Damage triggers only, read off the printed
+     *  trigger head (`derive/event-amount.ts`). The matcher compares it with a damage producer's
+     *  `GameEvent.amount` and refuses a producer whose size is unknown. Absent on every trigger that
+     *  prints no size. */
+    amount?: { op: "eq" | "gte"; value: number };
   };
   /** A numeric condition on WHEN the ability is on — The Millennium Calendar's "when there are
    *  1,000 or more time counters", Chrome Steed's "as long as you control three or more artifacts",
