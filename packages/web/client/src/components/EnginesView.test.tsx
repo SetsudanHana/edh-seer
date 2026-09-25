@@ -43,3 +43,51 @@ test("a selected card lights its partners and fades the rest", () => {
   expect(within(helpers).getByRole("button", { name: "Reducer" }).className).toMatch(/opacity-30/);
   expect(within(clerics).getAllByRole("button", { name: "Payoff A" })[0]).toHaveAttribute("aria-pressed", "true");
 });
+
+test("a big group shows twelve chips and names the rest until asked for all", async () => {
+  const { report, graph } = engineDeck();
+  const edges = (report as unknown as { edges: unknown[] }).edges;
+  for (let i = 1; i <= 10; i++) {
+    const name = `Extra Cleric ${i}`;
+    (report.cards as unknown as { name: string }[]).push({ name, isCommander: false, score: 1 } as never);
+    (graph.nodes as unknown as { id: string }[]).push({ id: name, label: name, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [] } as never);
+    for (const p of ["Payoff A", "Payoff B"]) edges.push({ a: name, b: p, score: 1, reasons: [{ producer: name, consumer: p, tag: "scales:cleric", text: `While you control ${name}, ${p} counts it` }] });
+  }
+  render(<EnginesView report={report} graph={graph} selected={null} onSelect={vi.fn()} />);
+  const group = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
+  expect(within(group).queryByRole("button", { name: "Extra Cleric 9" })).toBeNull();
+  expect(within(group).getByText(/and 6 more:/)).toBeInTheDocument();
+  await userEvent.setup().click(within(group).getByRole("button", { name: "Show all 18" }));
+  expect(within(group).getByRole("button", { name: "Extra Cleric 9" })).toBeInTheDocument();
+});
+
+test("a group that repeats one above it names that group instead of listing the cards again", () => {
+  view();
+  const group = screen.getByRole("heading", { name: "Clerics attacking" }).closest("article")!;
+  expect(within(group).getByText(/Mostly the same cards as/)).toBeInTheDocument();
+  expect(within(group).queryByRole("button", { name: "Cleric 1" })).toBeNull();
+});
+
+test("card text shows the printed mana cost", () => {
+  view();
+  expect(screen.getAllByRole("img", { name: /1 generic|black/i }).length).toBeGreaterThan(0);
+});
+
+test("a card that only feeds others says so instead of offering a best reason", () => {
+  view();
+  const cleric = screen.getAllByRole("heading", { name: /^Cleric \d$/ })[0]!.closest("article")!;
+  expect(within(cleric).getByText(/Who uses it/)).toBeInTheDocument();
+  expect(within(cleric).getByText(/Payoff [AB] and Payoff [AB]\./)).toBeInTheDocument();
+  expect(within(cleric).getByText(/None of the links found here use its own abilities/)).toBeInTheDocument();
+  expect(within(cleric).queryByText(/Best reason to keep it/)).toBeNull();
+});
+
+test("the one-time count says how many of those links the groups show", () => {
+  view();
+  expect(screen.getByText(/work only once, and none of them are in the groups below/)).toBeInTheDocument();
+});
+
+test("a cut used by exactly the same cards as one above says so instead of listing them again", () => {
+  view();
+  expect(screen.getByText(/so here the two do the same job/)).toBeInTheDocument();
+});
