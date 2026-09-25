@@ -3,10 +3,11 @@
  *  Defaults to a DRY RUN: it prints how many cards need normalizing and what that costs, calls
  *  nothing and writes nothing. `--run` is the only thing that spends.
  *
- *  ONE CARD PER CALL. Not negotiable, and not a style preference: `bin/tag-batch-api.ts` puts 40
- *  cards in ONE PROMPT, and that prompt-stuffing is the documented cause of the old pipeline's
- *  dropped and duplicated clauses (32 clauses vs 39-41 for the same cards sent singly). Do not
- *  "optimise" this by putting several cards in a request.
+ *  ONE CARD PER CALL. Not negotiable, and not a style preference: the retired flat extractor
+ *  (`tag-batch-api.ts`, deleted 2026-09-25) put 40 cards in ONE PROMPT, and that prompt-stuffing
+ *  is the documented cause of the old pipeline's dropped and duplicated clauses (32 clauses vs
+ *  39-41 for the same cards sent singly). Do not "optimise" this by putting several cards in a
+ *  request.
  *
  *  THE ANTHROPIC BATCH API IS A DIFFERENT THING AND IS FINE, which is why `--batch` exists. It
  *  sends the SAME one-card request, byte-identical (`anthropicBody` is shared with the live path) --
@@ -378,11 +379,10 @@ if (!RUN) {
   process.exit(0);
 }
 
-// The .env is not auto-loaded by anything but grind.sh, so the default config is Ollama. Two ways
+// Nothing auto-loads the .env (source it, or pass `--env-file`), so the default config is Ollama. Two ways
 // that costs you: a run that returns `ERROR: fetch failed` for every card, or -- worse -- a local
 // model's output persisted as if it were the measured one. `needsNormalize` compares hash and
-// version, NOT model, so such a corpus would look fresh forever and never re-queue. Same shape of
-// fence as ALLOW_DEPRECATED_GRIND, for the same reason.
+// version, NOT model, so such a corpus would look fresh forever and never re-queue.
 if (cfg.provider !== "anthropic" && !process.argv.includes("--allow-provider")) {
   console.log(`
 REFUSING TO RUN: provider is "${cfg.provider}" (model ${cfg.model}), not anthropic.
