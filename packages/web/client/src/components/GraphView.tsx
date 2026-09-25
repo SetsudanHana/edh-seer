@@ -98,6 +98,9 @@ const FIT_MARGIN = 0.9;
  *  flush against the fold and the page foot is visibly there rather than hidden by one pixel. */
 const BOARD_GUTTER_PX = 24;
 
+/** The least board height a focus frame leaves for the legend overlay: two legend rows. */
+const LEGEND_RESERVE_PX = 48;
+
 /** THE SHORTEST BOARD WORTH DRAWING, and it is measured rather than chosen for looks.
  *
  *  "Take what the viewport has left" is right on a tall screen and not on a 1080 one, where the
@@ -329,6 +332,9 @@ export function GraphView(
    *  three), so any constant here is wrong for some deck at some width. `document` offset, not the
    *  live `rect.top`, so scrolling does not resize the board under the reader. */
   const boardBoxRef = useRef<HTMLDivElement>(null);
+  /** The legend when it overlays the board's top edge (from `sm` up); `frame` keeps cards out from
+   *  under it. Null on a phone, where the legend is under the board and covers nothing. */
+  const legendOverlayRef = useRef<HTMLDivElement>(null);
   const [boardH, setBoardH] = useState<number | null>(null);
   useEffect(() => {
     if (isFullscreen || bare || narrow) { setBoardH(null); return; }
@@ -2085,10 +2091,13 @@ export function GraphView(
       const cx = c ? c.x : (minX + maxX) / 2, cy = c ? c.y : (minY + maxY) / 2;
       const [zMin, zMax] = zoomBehavior.scaleExtent();
       const fw = Math.max(MIN_FIT_PX, dim.w - insetRight);
-      let bandTop = 0, bandH = dim.h;
+      // THE LEGEND OVERLAY'S BAND IS NOT BOARD (UI review 2026-09-25). At least two rows are
+      // reserved, because the flow rows join the legend on the render AFTER a focus frames.
+      const overlay = legendOverlayRef.current ? Math.max(legendOverlayRef.current.offsetHeight, LEGEND_RESERVE_PX) : 0;
+      let bandTop = overlay, bandH = dim.h - overlay;
       if (focus && typeof window !== "undefined") {
         const top = canvas.getBoundingClientRect().top;
-        const visTop = Math.max(0, -top);
+        const visTop = Math.max(overlay, -top);
         const visBottom = Math.min(dim.h, window.innerHeight - top);
         if (visBottom - visTop >= MIN_FIT_PX) { bandTop = visTop; bandH = visBottom - visTop; }
       }
@@ -2406,6 +2415,134 @@ export function GraphView(
     return { cards: nodes, edges: nodes.edges ?? [] };
   }, []);
 
+  /* The paint and flow legend, one element placed by width -- see its two call sites. */
+  const legendEl = (
+    <>
+    {/* What the colours mean. In the DOM rather than on the canvas: a canvas label's measured
+         *  box does not scale with zoom the way the board does, so which labels collided -- and
+         *  therefore where they got pushed -- was zoom-dependent.
+         *
+         *  AN OVERLAY AGAIN, AND THIS TIME A RESERVED ONE (UI review 2026-09-25). It first floated
+         *  over the top-left corner and covered whatever the force put there -- on the review deck,
+         *  four discs and their labels -- so it moved to a row above the board. That row and its
+         *  flow rows cost the board ~52px at 1440x900, where the board already ran under the fold.
+         *  Now it overlays the board's top edge and `frame` keeps that band out of every fit, so it
+         *  hides nothing the camera chose to show. `pointer-events-none` stays, because the canvas binds pointermove/wheel
+         *  directly on itself, so a sibling capturing pointer events puts a dead zone on it. No scroll cap: a paint mode's values are
+         *  bounded (8 types, 6 colours, 7 roles, 8 mana-value buckets), unlike the 40-80 rooms
+         *  the subtype preset could produce. */}
+        <div
+          ref={narrow ? undefined : legendOverlayRef}
+          data-testid="paint-legend"
+          role="group"
+          aria-label="Paint legend"
+          // UNDER THE BOARD ON A PHONE. Selecting a card adds the flow rows to this legend, and above
+          // the board that pushed the board ~155px down under the reader's thumb mid-tap.
+          className={`pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted) ${narrow
+            ? "order-1"
+            // THE OVERLAY (UI review 2026-09-25): a strip over the board's top edge on a translucent
+            // ground, clear of the inspector when one is open. `frame` reserves its height, so no
+            // card is framed underneath it -- the reason it was once moved off the canvas.
+            : `absolute top-0 left-0 z-10 px-3 py-2 bg-(--background)/85 rounded-br-(--radius) ${inspectingNode ? "right-[312px]" : "right-0"}`}`}
+        >
+          {/* THE SCOPE, NAMED. These rows use the same mechanism words as the chip row above and
+            *  count something different -- connections through ONE card rather than across the
+            *  deck. Every persona review asked what the numbers counted and none could tell:
+            *  "is 62 cards or 62 separate interactions?", "ten edges, ten other cards, or ten
+            *  reason sentences?". A count with no unit is not evidence, and two counts that share
+            *  a vocabulary without sharing a scope are worse than either alone. */}
+          {flowLegend && flowLegend.length > 0 ? (
+            <span className="eyebrow shrink-0">
+              {/* THE SCOPE CHANGES WITH THE SELECTION, so the sentence has to. "This card's flow"
+                *  was written when a click could only select one; with two lit it names a scope
+                *  half the size of what the numbers count. */}
+              {selectedIds.length > 1
+                ? `Card pairs in these ${selectedIds.length} cards' flow`
+                : "Card pairs in this card's flow"}
+              {/* The "N reached through it" note is gone with the second hop that made it
+                *  necessary: every pair in a flow now touches a selected card by construction, so
+                *  the number it reported is always zero and the reconciliation it existed to
+                *  provide -- between a row counting two-hop pairs and a panel listing direct edges
+                *  -- is one the reader no longer has to make. */}
+            </span>
+          ) : null}
+          {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
+            *  isolate: clicking an event dims the rest of the flow, which is the "and filter them"
+            *  half of the same complaint. Clicking it again clears. The paint rows stay inert, so
+            *  the group keeps `pointer-events-none` off only where a target exists. */}
+          {(flowLegend ?? []).map((row) => (
+            <button
+              key={`flow:${row.value}`}
+              type="button"
+              data-testid="paint-legend-row"
+              data-value={row.value}
+              aria-pressed={flowFocus === row.value}
+              onClick={() => setFlowFocus((v) => (v === row.value ? null : row.value))}
+              // THE CONTAINER STAYS `pointer-events-none` AND THE BUTTON OPTS BACK IN. The legend
+              // can overlay the canvas, and a group that swallows drags puts a dead zone on the
+              // board -- a standing constraint with its own test. Only the rows that have something
+              // to isolate become targets.
+              className={`pointer-events-auto flex items-center gap-1.5 ${
+                flowFocus === row.value ? "text-(--foreground)" : ""}`}
+            >
+              {/* A DASHED ARROW, NOT A DISC, AND THAT IS THE WHOLE SEPARATION FROM THE PAINT
+                *  LEGEND BESIDE IT. Both legends sit on one strip and both used a filled circle,
+                *  so a reader could not tell which dots named a LINE and which named a NODE. A
+                *  swatch that looks like the mark it labels needs no label to say so -- and this
+                *  one is the painted edge exactly: same dash, same arrowhead, same hue. */}
+              <svg aria-hidden="true" width="18" height="8" viewBox="0 0 18 8" className="shrink-0">
+                <path d="M0 4h11" stroke={row.hue} strokeWidth="2" strokeDasharray="3 2.5" />
+                <path d="M11 1.2 15.5 4 11 6.8z" fill={row.hue} />
+              </svg>
+              <span>{row.label}</span>
+              <span className="stat-num opacity-70">{row.count}</span>
+            </button>
+          ))}
+          {/* TWO LEGENDS, TWO LINES (2026-09-25 review). Line kinds and card kinds ran together as
+            *  one wrapped sentence, so a reader could not see where one list ended. The break and the
+            *  label only appear when both are on screen. The counts are the board's own, tokens and
+            *  second faces included, which is why they can run higher than the report's type line. */}
+          {flowLegend && flowLegend.length > 0 && legend.length > 0 ? (
+            <>
+              <span aria-hidden="true" className="basis-full h-0" />
+              <span className="eyebrow shrink-0">Cards on the board</span>
+            </>
+          ) : null}
+          {legend.map((row) => (
+            <div
+              key={row.value}
+              data-testid="paint-legend-row"
+              data-value={row.value}
+              className="pointer-events-none flex items-center gap-1.5"
+            >
+              {/* A graphic object next to text, so it carries the 3:1 floor the palette was
+               *  validated against. The text beside it is the page's normal foreground. */}
+              <span
+                aria-hidden="true"
+                style={{ background: row.hue }}
+                className="inline-block size-2.5 shrink-0 rounded-full"
+              />
+              {/* THE SAME ALPHABET AS THE REPORT'S TYPE LEGEND AND ITS ANSWERS LIST (AM5). Third
+                *  surface, one icon set -- which is the only thing this row buys: the words were
+                *  already there and already readable, so this is consistency, not new information.
+                *  ONLY THE TYPE PAINT HAS MARKS, and that falls out rather than being branched on:
+                *  `paint` also runs over identity, role and mana value, whose values ("R", "ramp",
+                *  "3") are not in `CardSymbol`'s `KNOWN`, and an unknown name returns null rather
+                *  than the empty box an unguarded class would paint.
+                *  WHAT THIS DOES NOT FIX: `graph-deuteranopia.png` shows creature / sorcery /
+                *  enchantment / instant as near-identical hues on the CANVAS NODES. That is
+                *  colour-only encoding on a canvas a font cannot reach; it needs shape or pattern
+                *  and belongs with AL1/AL2. */}
+              <CardSymbol name={row.value} className="text-xs shrink-0" />
+              <span className="whitespace-nowrap">{row.label}</span>
+              {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
+            </div>
+          ))}
+          {/* The two counting footnotes moved to the caption under the board (2026-09-25): here they
+            *  wrapped the legend onto a second line at 1440 and pushed the board down with it. */}
+        </div>
+    </>
+  );
   return (
     // `h-full` only when bare: the canvas wrapper takes `flex-1`, which needs an ancestor with a
     // height to divide. In page flow the board has its own fixed height and must NOT stretch.
@@ -2747,125 +2884,9 @@ export function GraphView(
         </div>
         )}
 
-        {bare ? null : (
-        <>
-        {/* What the colours mean. In the DOM rather than on the canvas: a canvas label's measured
-         *  box does not scale with zoom the way the board does, so which labels collided -- and
-         *  therefore where they got pushed -- was zoom-dependent.
-         *
-         *  A ROW ABOVE THE BOARD, NOT AN OVERLAY ON IT: it used to float over the top-left
-         *  corner and cover whatever the force put there — on the review deck, four discs and
-         *  their labels. Above the canvas it costs one line of height and hides nothing.
-         *  `pointer-events-none` stays anyway, because the canvas binds pointermove/wheel
-         *  directly on itself, so a sibling capturing pointer events puts a dead zone on it. No scroll cap: a paint mode's values are
-         *  bounded (8 types, 6 colours, 7 roles, 8 mana-value buckets), unlike the 40-80 rooms
-         *  the subtype preset could produce. */}
-        <div
-          data-testid="paint-legend"
-          role="group"
-          aria-label="Paint legend"
-          // UNDER THE BOARD ON A PHONE. Selecting a card adds the flow rows to this legend, and above
-          // the board that pushed the board ~155px down under the reader's thumb mid-tap.
-          className={`pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted) ${narrow ? "order-1" : ""}`}
-        >
-          {/* THE SCOPE, NAMED. These rows use the same mechanism words as the chip row above and
-            *  count something different -- connections through ONE card rather than across the
-            *  deck. Every persona review asked what the numbers counted and none could tell:
-            *  "is 62 cards or 62 separate interactions?", "ten edges, ten other cards, or ten
-            *  reason sentences?". A count with no unit is not evidence, and two counts that share
-            *  a vocabulary without sharing a scope are worse than either alone. */}
-          {flowLegend && flowLegend.length > 0 ? (
-            <span className="eyebrow shrink-0">
-              {/* THE SCOPE CHANGES WITH THE SELECTION, so the sentence has to. "This card's flow"
-                *  was written when a click could only select one; with two lit it names a scope
-                *  half the size of what the numbers count. */}
-              {selectedIds.length > 1
-                ? `Card pairs in these ${selectedIds.length} cards' flow`
-                : "Card pairs in this card's flow"}
-              {/* The "N reached through it" note is gone with the second hop that made it
-                *  necessary: every pair in a flow now touches a selected card by construction, so
-                *  the number it reported is always zero and the reconciliation it existed to
-                *  provide -- between a row counting two-hop pairs and a panel listing direct edges
-                *  -- is one the reader no longer has to make. */}
-            </span>
-          ) : null}
-          {/* A FLOW ROW IS A BUTTON AND A PAINT ROW IS NOT, because only the first has something to
-            *  isolate: clicking an event dims the rest of the flow, which is the "and filter them"
-            *  half of the same complaint. Clicking it again clears. The paint rows stay inert, so
-            *  the group keeps `pointer-events-none` off only where a target exists. */}
-          {(flowLegend ?? []).map((row) => (
-            <button
-              key={`flow:${row.value}`}
-              type="button"
-              data-testid="paint-legend-row"
-              data-value={row.value}
-              aria-pressed={flowFocus === row.value}
-              onClick={() => setFlowFocus((v) => (v === row.value ? null : row.value))}
-              // THE CONTAINER STAYS `pointer-events-none` AND THE BUTTON OPTS BACK IN. The legend
-              // can overlay the canvas, and a group that swallows drags puts a dead zone on the
-              // board -- a standing constraint with its own test. Only the rows that have something
-              // to isolate become targets.
-              className={`pointer-events-auto flex items-center gap-1.5 ${
-                flowFocus === row.value ? "text-(--foreground)" : ""}`}
-            >
-              {/* A DASHED ARROW, NOT A DISC, AND THAT IS THE WHOLE SEPARATION FROM THE PAINT
-                *  LEGEND BESIDE IT. Both legends sit on one strip and both used a filled circle,
-                *  so a reader could not tell which dots named a LINE and which named a NODE. A
-                *  swatch that looks like the mark it labels needs no label to say so -- and this
-                *  one is the painted edge exactly: same dash, same arrowhead, same hue. */}
-              <svg aria-hidden="true" width="18" height="8" viewBox="0 0 18 8" className="shrink-0">
-                <path d="M0 4h11" stroke={row.hue} strokeWidth="2" strokeDasharray="3 2.5" />
-                <path d="M11 1.2 15.5 4 11 6.8z" fill={row.hue} />
-              </svg>
-              <span>{row.label}</span>
-              <span className="stat-num opacity-70">{row.count}</span>
-            </button>
-          ))}
-          {/* TWO LEGENDS, TWO LINES (2026-09-25 review). Line kinds and card kinds ran together as
-            *  one wrapped sentence, so a reader could not see where one list ended. The break and the
-            *  label only appear when both are on screen. The counts are the board's own, tokens and
-            *  second faces included, which is why they can run higher than the report's type line. */}
-          {flowLegend && flowLegend.length > 0 && legend.length > 0 ? (
-            <>
-              <span aria-hidden="true" className="basis-full h-0" />
-              <span className="eyebrow shrink-0">Cards on the board</span>
-            </>
-          ) : null}
-          {legend.map((row) => (
-            <div
-              key={row.value}
-              data-testid="paint-legend-row"
-              data-value={row.value}
-              className="pointer-events-none flex items-center gap-1.5"
-            >
-              {/* A graphic object next to text, so it carries the 3:1 floor the palette was
-               *  validated against. The text beside it is the page's normal foreground. */}
-              <span
-                aria-hidden="true"
-                style={{ background: row.hue }}
-                className="inline-block size-2.5 shrink-0 rounded-full"
-              />
-              {/* THE SAME ALPHABET AS THE REPORT'S TYPE LEGEND AND ITS ANSWERS LIST (AM5). Third
-                *  surface, one icon set -- which is the only thing this row buys: the words were
-                *  already there and already readable, so this is consistency, not new information.
-                *  ONLY THE TYPE PAINT HAS MARKS, and that falls out rather than being branched on:
-                *  `paint` also runs over identity, role and mana value, whose values ("R", "ramp",
-                *  "3") are not in `CardSymbol`'s `KNOWN`, and an unknown name returns null rather
-                *  than the empty box an unguarded class would paint.
-                *  WHAT THIS DOES NOT FIX: `graph-deuteranopia.png` shows creature / sorcery /
-                *  enchantment / instant as near-identical hues on the CANVAS NODES. That is
-                *  colour-only encoding on a canvas a font cannot reach; it needs shape or pattern
-                *  and belongs with AL1/AL2. */}
-              <CardSymbol name={row.value} className="text-xs shrink-0" />
-              <span className="whitespace-nowrap">{row.label}</span>
-              {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
-            </div>
-          ))}
-          {/* The two counting footnotes moved to the caption under the board (2026-09-25): here they
-            *  wrapped the legend onto a second line at 1440 and pushed the board down with it. */}
-        </div>
-        </>
-        )}
+        {/* ON A PHONE THE LEGEND SITS UNDER THE BOARD (`order-1`); from `sm` up it is an overlay on
+          *  the board's top edge, rendered inside the board box below. */}
+        {bare || !narrow ? null : legendEl}
 
         <div
           ref={boardBoxRef}
@@ -2883,6 +2904,7 @@ export function GraphView(
             className="block w-full h-full cursor-grab touch-none"
             aria-label={`Deck graph: ${graph.nodes.length} cards, ${graph.edges.length} synergies`}
           />
+          {bare || narrow ? null : legendEl}
           {hover ? (
             <div
               className="pointer-events-none absolute rounded-(--radius) border border-(--separator) bg-(--background) px-2 py-1 text-xs whitespace-nowrap"
