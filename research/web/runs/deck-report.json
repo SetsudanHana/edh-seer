@@ -132,11 +132,11 @@
       "_note": "{{commander}} resolves per deck from the decklist. Round 1 hard-coded a card from a deck that had since been swapped out, so all three seats searched for something genuinely absent and reviewed the empty state by accident.",
       "acts": [
         {
-          "waitFor": "input[placeholder='Find a card\u2026']"
+          "waitFor": "input[placeholder='Find a card\u2026'], input[placeholder='Find in this deck\u2026']"
         },
         {
           "type": [
-            "input[placeholder='Find a card\u2026']",
+            "input[placeholder='Find a card\u2026'], input[placeholder='Find in this deck\u2026']",
             "{{commander}}"
           ]
         }

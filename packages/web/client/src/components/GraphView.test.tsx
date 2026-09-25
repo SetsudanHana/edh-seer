@@ -4,7 +4,7 @@ import { eventLabel } from "../lib/demand-sentence.js";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { EDIT_REHEAT_ALPHA, PARK_ALPHA } from "./board-force.js";
-import { ART_RADIUS, GraphView, edgeAlpha, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
+import { ART_RADIUS, GraphView, clampLabelX, edgeAlpha, nodeMatchesQuery, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
 import { CARD_H, CARD_W } from "./board-force.js";
 import { SAMPLE } from "../fixtures.js";
 import { CardDrawerProvider, usePinned } from "./card-drawer.js";
@@ -2229,7 +2229,7 @@ test("a search match outside the active flow still paints at full strength", () 
   const a = probe.find((n) => n.id === "A")!;
   act(() => { probe.endGesture({ type: "mouseup", clientX: a.x, clientY: a.y }); });
   // Now search for Z -- a MATCH that is simultaneously outside the flow, which is the exact case.
-  fireEvent.change(screen.getByPlaceholderText(/find a card/i), { target: { value: "Z" } });
+  fireEvent.change(screen.getByPlaceholderText(/find in this deck/i), { target: { value: "Z" } });
   calls.length = 0;
   tick(1);
 
@@ -2271,7 +2271,7 @@ describe("a match the board is hiding", () => {
 
   test("names the hidden match instead of reporting none, and revealing it makes it a real match", () => {
     frames(deck());
-    fireEvent.change(screen.getByPlaceholderText(/find a card/i), { target: { value: "forest" } });
+    fireEvent.change(screen.getByPlaceholderText(/find in this deck/i), { target: { value: "forest" } });
     // The drawn board has no Forest -- it is filtered out -- so the plain count says so...
     expect(screen.getByTestId("graph-search-count")).toHaveTextContent("no matches");
     // ...and the hint says the deck does have one, behind a filter.
@@ -2285,7 +2285,7 @@ describe("a match the board is hiding", () => {
 
   test("says nothing when every match is already on the board", () => {
     frames(deck());
-    fireEvent.change(screen.getByPlaceholderText(/find a card/i), { target: { value: "bitter" } });
+    fireEvent.change(screen.getByPlaceholderText(/find in this deck/i), { target: { value: "bitter" } });
     expect(screen.getByTestId("graph-search-count")).toHaveTextContent("1 match");
     expect(screen.queryByTestId("graph-search-hidden")).toBeNull();
   });
@@ -2638,7 +2638,7 @@ describe("bare chrome", () => {
   test("renders the canvas and none of the whole-deck controls", () => {
     const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} chrome="bare" />);
     expect(container.querySelector("canvas")).not.toBeNull();
-    expect(screen.queryByLabelText("Find a card")).toBeNull();
+    expect(screen.queryByLabelText("Find a card in this deck")).toBeNull();
     expect(screen.queryByText(/fullscreen/i)).toBeNull();
     expect(screen.queryByText(/Drag to pan/)).toBeNull();
     expect(screen.queryByTestId("paint-legend")).toBeNull();
@@ -2649,7 +2649,7 @@ describe("bare chrome", () => {
   test("the default is unchanged, so desktop keeps every control", () => {
     const { container } = render(<GraphView graph={SAMPLE.graph} report={SAMPLE.report} />);
     expect(container.querySelector("canvas")).not.toBeNull();
-    expect(screen.getByLabelText("Find a card")).toBeInTheDocument();
+    expect(screen.getByLabelText("Find a card in this deck")).toBeInTheDocument();
     expect(screen.getByTestId("paint-legend")).toBeInTheDocument();
   });
 
@@ -2810,7 +2810,7 @@ describe("the guided board", () => {
     framesWith(SAMPLE.graph, { guided: true });
     await userEvent.click(screen.getByRole("button", { name: /close/i }));
     expect(screen.queryByRole("button", { name: /close/i })).toBeNull();
-    await userEvent.type(screen.getByRole("searchbox", { name: "Find a card" }), "Impact{Enter}");
+    await userEvent.type(screen.getByRole("searchbox", { name: "Find a card in this deck" }), "Impact{Enter}");
     expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Impact Tremors 3\.3/ })).toHaveAttribute("aria-pressed", "true");
   });
@@ -2829,4 +2829,30 @@ describe("the guided board", () => {
     expect(screen.queryByRole("button", { name: /close/i })).toBeNull();
     expect(screen.queryByTestId("graph-key-cards")).toBeNull();
   });
+});
+
+// THE FIND BOX KNOWS CARD TYPES (2026-09-25 live review): "wizard" in a Wizard deck found one card,
+// the Wizard token, because only names were searched.
+describe("nodeMatchesQuery", () => {
+  const wizard = { label: "Naban, Dean of Iteration", types: ["creature"], subtypes: ["Human", "Wizard"] };
+  test("matches a name anywhere in it", () => {
+    expect(nodeMatchesQuery(wizard, "dean")).toBe(true);
+  });
+  test("matches the start of a type or subtype from three letters on", () => {
+    expect(nodeMatchesQuery(wizard, "wizard")).toBe(true);
+    expect(nodeMatchesQuery(wizard, "wiz")).toBe(true);
+    expect(nodeMatchesQuery(wizard, "creat")).toBe(true);
+  });
+  test("a short query or a mid-word fragment of a type does not", () => {
+    expect(nodeMatchesQuery(wizard, "wi")).toBe(false);
+    expect(nodeMatchesQuery(wizard, "zard")).toBe(false);
+  });
+});
+
+// A NAME NEAR THE EDGE STAYS ON THE CANVAS: at 390 the one-card view printed "ce Kuja, Fate Defied".
+describe("clampLabelX", () => {
+  test("leaves a box that fits alone", () => expect(clampLabelX(40, 100, 390)).toBe(40));
+  test("pulls a box back from the left edge", () => expect(clampLabelX(-30, 100, 390)).toBe(0));
+  test("pulls a box back from the right edge", () => expect(clampLabelX(350, 100, 390)).toBe(290));
+  test("starts a box wider than the canvas at 0", () => expect(clampLabelX(-10, 500, 390)).toBe(0));
 });
