@@ -1,7 +1,7 @@
 /** One-off: normalize the cards the compass gold pairs reference and commit the result as a test
  *  fixture, so the derivation gate runs forever with no API credits and no database.
  *
- *  Usage: TAGGER_PROVIDER=anthropic tsx src/bin/build-compass-fixture.ts */
+ *  Usage: set -a && source .env && set +a && tsx src/bin/build-compass-fixture.ts */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import { splitTypeLine } from "../characteristics.js";
