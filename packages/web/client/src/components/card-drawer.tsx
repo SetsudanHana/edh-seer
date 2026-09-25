@@ -252,7 +252,10 @@ export function ReasonText({ text, className }: { text: string; className?: stri
   return (
     <span className={className}>
       {unreadEffect(text) ? (
-        <span className="eyebrow text-(--muted) mr-2">couldn&rsquo;t read this card ·</span>
+        // WHAT WAS NOT READ IS THE EFFECT, and the mark says so (review 2026-09-25). "Couldn't read
+        // this card" on the deck's top-ranked key card read as the tool not understanding its own
+        // best pick, when the trigger -- the half the pairing rests on -- WAS read.
+        <span className="eyebrow text-(--muted) mr-2">effect not read yet ·</span>
       ) : null}
       {segments.map((seg, i) =>
         seg.kind === "card" ? <CardName key={i} name={seg.text} />

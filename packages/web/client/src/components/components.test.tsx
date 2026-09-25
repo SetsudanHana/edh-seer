@@ -928,10 +928,10 @@ test("an archetype bar floors its percentage", () => {
  *  the same sentence as a claim -- and the deck's 5.0 anchor was one of them. */
 test("a reason that ends in \"triggers\" carries the unread mark; a real claim does not", () => {
   const { unmount } = render(<ReasonText text="When Arcane Signet is cast, Displacer Kitten triggers" />);
-  expect(screen.getByText(/couldn.t read this card/)).toBeInTheDocument();
+  expect(screen.getByText(/effect not read yet/)).toBeInTheDocument();
   unmount();
   render(<ReasonText text="When Arcane Signet is cast, Shark Typhoon makes a token" />);
-  expect(screen.queryByText(/couldn.t read this card/)).toBeNull();
+  expect(screen.queryByText(/effect not read yet/)).toBeNull();
 });
 
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two
