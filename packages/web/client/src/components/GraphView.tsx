@@ -108,6 +108,21 @@ const BOARD_GUTTER_PX = 24;
  *  against 22.5 / 25.7 / 20.2 before. Below the fold by 68px on two decks and 165px on the precon,
  *  which is the trade taken: a board you scroll 100px to finish beats one you cannot read. */
 const MIN_BOARD_PX = 660;
+
+/** Longest the board may spend settling before its first frame -- see the pre-settle in the layout
+ *  effect. Nine decks measured at ~0.5 ms a tick settle in ~350 ms; a slower device animates the
+ *  remainder instead of blocking longer. */
+const PRESETTLE_MS = 400;
+
+/** Board width the camera leaves free on the right when it frames a focused card: the inspector
+ *  panel's `sm:w-72` (288px) plus its `right-2` gutter and a little air. */
+const INSPECTOR_INSET_PX = 312;
+
+/** How many of a focused card's strongest partners the camera frames with it. */
+const FOCUS_PARTNERS = 8;
+
+/** How many key cards the strip above the board names -- one row at 1440 with room to spare. */
+const KEY_CARDS = 6;
 /** How settled the board has to be before the one-time fit-to-view reads its bounding box. Close to
  *  a magic tick count: alpha decays at a fixed per-TICK rate regardless of frame rate, so this lands
  *  at the same physical amount of settling on a slow device as a fast one. UPDATED 2026-08-20 with
@@ -205,7 +220,7 @@ export function edgeAlpha(weight: number, maxWeight: number): number {
 }
 
 export function GraphView(
-  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap, emphasisId = null, stateControls }:
+  { graph: fullGraph, report, artLoader: injectedArtLoader, chrome = "full", onNodeTap, emphasisId = null, stateControls, guided = false }:
   {
     graph: CardGraph;
     report: DeckReport;
@@ -214,6 +229,10 @@ export function GraphView(
      *  on, because the shell's backdrop hides every sibling -- the report header included -- and
      *  the graph is where the dashed edges the state draws are. */
     stateControls?: ReactNode;
+    /** THE REPORT PAGE'S BOARD, as opposed to the component on its own: opens focused on the
+     *  commander and shows the key-card strip (owner, 2026-09-24). Off by default, so the board's
+     *  own behaviour -- nothing selected until a click -- stays what every other mount gets. */
+    guided?: boolean;
     /** "bare" draws the canvas and nothing else -- no paint chips, no facet chips, no search, no
      *  legend, no caption, no fullscreen. The phone surface (roadmap R1) needs the viewport, and
      *  measured at 390 the chrome above the board was 902px of an 844px one, so the first screenful
@@ -330,6 +349,7 @@ export function GraphView(
    *  apart one card at a time. Clicking empty board space still clears the whole set — the escape
    *  hatch has to stay one gesture. */
   const toggleSelected = useCallback((id: string | null) => {
+    settleFocusRef.current = null;
     setSelectedIds((ids) => (id === null ? [] : ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
   }, []);
   /** Which facet the board is PAINTED by. It moves no node: geometry is synergy and only synergy,
@@ -449,7 +469,12 @@ export function GraphView(
    *  throws them away: a judge counted SIX of ten with the chip beside it saying ten, and the other
    *  four were off the panel's edge. A stated number the picture under it cannot corroborate is the
    *  tool asserting a fact where showing one was the entire point. */
-  const fitSubsetRef = useRef<(ids: ReadonlySet<string>) => void>(() => {});
+  const fitSubsetRef = useRef<(ids: ReadonlySet<string>, insetRight?: number) => void>(() => {});
+  /** What the settle fits should frame INSTEAD of the whole deck, when the board opened on a card:
+   *  that card and its partners, left of the panel. The layout is still spreading when the board
+   *  opens, so framing then would be undone; the two scheduled fits are the frames that hold.
+   *  Cleared by any selection the reader makes. */
+  const settleFocusRef = useRef<{ ids: ReadonlySet<string>; inset: number } | null>(null);
   // The card id under the pointer, read by the label pass inside the rAF loop -- a ref rather than
   // `hover` (React state) for the same reason matchesRef/huesRef are refs: reading state there
   // would either be stale between renders or force the layout effect to re-run on every
@@ -643,6 +668,67 @@ export function GraphView(
   );
   const commandersRef = useRef<Set<string>>(new Set());
   commandersRef.current = commanders;
+
+  /** ONE CARD, IN FOCUS: selected (panel open, flow lit) and framed with its partners, left of the
+   *  panel. The key-card strip and the find box both land here, so "show me this card" is one
+   *  gesture wherever it starts (owner, 2026-09-24). Framing claims the camera the way a user pan
+   *  does, or the next settle fit would throw the frame away. */
+  /** The card and its STRONGEST partners -- what a focus frames. Every partner was right for a
+   *  card with a handful of them and wrong for a hub: Jodah touches 56 of 66 cards, so framing all
+   *  of them framed the whole deck and left the lit core too small to carry a single label. */
+  const neighbourhood = useCallback((id: string): Set<string> => {
+    const touching = graph.edges
+      .filter((e) => e.from === id || e.to === id)
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, FOCUS_PARTNERS);
+    return new Set<string>([id, ...touching.map((e) => (e.from === id ? e.to : e.from))]);
+  }, [graph]);
+  const focusCard = useCallback((id: string) => {
+    settleFocusRef.current = null;
+    setSelectedIds([id]);
+    const near = neighbourhood(id);
+    cameraOwnedByUserRef.current = graph;
+    fitSubsetRef.current(near, narrow ? 0 : INSPECTOR_INSET_PX);
+  }, [graph, narrow, neighbourhood]);
+
+  /** THE KEY CARDS, BY THE REPORT'S OWN RANKING -- `synergyRating`, the same order and the same
+   *  top as "High synergy cards" -- so "key card" means one thing on every surface. Mapped to board
+   *  ids by card name; a card with no node (a land hidden from the board) is skipped. */
+  const keyCards = useMemo(() => {
+    const byName = new Map(graph.nodes.filter((n) => n.face === undefined).map((n) => [n.cardName ?? n.id, n.id] as const));
+    return report.cards
+      .filter((c) => (c.synergyRating ?? 0) > 0)
+      .slice()
+      .sort((a, b) => (b.synergyRating ?? 0) - (a.synergyRating ?? 0) || a.name.localeCompare(b.name))
+      .map((c) => ({ id: byName.get(c.cardName ?? c.name), name: c.name, rating: c.synergyRating ?? 0 }))
+      .filter((c): c is { id: string; name: string; rating: number } => c.id !== undefined)
+      .slice(0, KEY_CARDS);
+  }, [graph, report]);
+
+  /** THE BOARD OPENS ON A CARD, NOT ON A TANGLE (owner, 2026-09-24). Every reviewer called the
+   *  board the best-looking screen and the least useful one, and none of them found the panel a
+   *  click opens -- the page never says a card can be clicked. So a first visit opens with the
+   *  commander (else the top key card) selected: its flow lit and its partners listed. Once per
+   *  graph, never over a selection the reader made, and not on the phone's own views. */
+  const autoFocusedRef = useRef<CardGraph | null>(null);
+  // Read by the label pass inside the rAF loop -- refs, so a change repaints without re-running the
+  // layout effect (the same reason every other per-frame input here is a ref).
+  const guidedRef = useRef(guided);
+  guidedRef.current = guided;
+  const keyCardIdsRef = useRef<ReadonlySet<string>>(new Set());
+  keyCardIdsRef.current = new Set(keyCards.map((c) => c.id));
+  useEffect(() => {
+    if (!guided || bare || narrow || autoFocusedRef.current === graph) return;
+    autoFocusedRef.current = graph;
+    const first = [...commanders][0] ?? keyCards[0]?.id;
+    if (!first) return;
+    const near = neighbourhood(first);
+    // Framed NOW when the board arrived pre-settled (the usual case -- the layout effect has already
+    // run and framed the whole deck), and by the settle fits otherwise.
+    settleFocusRef.current = { ids: near, inset: INSPECTOR_INSET_PX };
+    fitSubsetRef.current(near, INSPECTOR_INSET_PX);
+    setSelectedIds((ids) => (ids.length > 0 ? ids : [first]));
+  }, [guided, bare, narrow, graph, commanders, keyCards, neighbourhood]);
   // THE COMPANION IS NAMED AS ONE (owner, 2026-09-22): a player has to see whether a card is played
   // in the 99 or revealed as the companion, because the companion's condition then binds how the
   // rest of the deck is built. The node carries the flag (`buildWireGraph` sets it).
@@ -932,6 +1018,7 @@ export function GraphView(
     // effect only because alpha never satisfied the fit condition on the first synchronous call;
     // EDIT_REHEAT_ALPHA made it false and the StrictMode fit test caught it (roadmap H9).
     let fitToView = () => {};
+    let settleFit = () => {};
 
     const artLoader = artLoaderRef.current!;
 
@@ -1586,6 +1673,19 @@ export function GraphView(
         // cull is exactly what would drop them, since it ranks by weighted degree and theirs is 0.
         cull: { weightedDegree, degreeQuantile: LABEL_DEGREE_QUANTILE },
       });
+      // THE REPORT'S BOARD NAMES WHAT THE READER IS LOOKING AT, NOT EVERYTHING THAT FITS (owner,
+      // 2026-09-24). On a deck like Jodah -- 56 of 66 cards touching the commander -- every name
+      // that won a slot still sat in a knot of other names, and the selected card's partners were
+      // competing for slots with dimmed cards that are not in its flow. So on the guided board:
+      // at rest, the commanders, the key cards, the hovered neighbourhood and search matches; with a
+      // card selected, that card's flow. Everything else stays a disc, one hover away from a name.
+      if (guidedRef.current && candidates.length > 0) {
+        const keep = new Set<string>([...alwaysLabelled(), ...hoveredSet, ...(matchesRef.current ?? [])]);
+        const focusFlow = flowRef.current;
+        if (focusFlow) { for (const id of focusFlow.nodes.keys()) keep.add(id); for (const id of focusFlow.roots) keep.add(id); }
+        else for (const id of keyCardIdsRef.current) keep.add(id);
+        for (let i = candidates.length - 1; i >= 0; i--) if (!keep.has(candidates[i]!.id)) candidates.splice(i, 1);
+      }
       if (candidates.length > 0) {
         // World-unit font size so it renders at a constant LABEL_PX screen px -- the formula the
         // deleted room labels also used (roomFontPx); the defect was never the formula, only that
@@ -1718,7 +1818,7 @@ export function GraphView(
           fitted = true;
           fittedGraphRef.current = graph;
         } else if (!fitted && simulation.alpha() <= FIT_SETTLE_ALPHA) {
-          fitToView();
+          settleFit();
           fits++;
           fitted = true;
           fittedGraphRef.current = graph;
@@ -1732,7 +1832,7 @@ export function GraphView(
           // one camera move at the moment nothing else is moving, and is the frame that is
           // guaranteed to hold. Never against a camera the USER has claimed, which is the same
           // guard the one-time fit keeps.
-          fitToView();
+          settleFit();
           fits++;
           refitted = true;
         }
@@ -1759,7 +1859,10 @@ export function GraphView(
     // the window listener rather than joining it as a second special case.
     const onResize = () => {
       dim = size();
-      if (cameraOwnedByUserRef.current !== graph) fitToView();
+      // settleFit, not fitToView: a board that opened on a card keeps that card framed through a
+      // resize -- including the FIRST one, when the canvas is measured after the pre-settle ran
+      // against a zero-size box and could not frame anything yet.
+      if (cameraOwnedByUserRef.current !== graph) settleFit();
     };
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(canvas);
@@ -1858,7 +1961,9 @@ export function GraphView(
     // The framing itself, over whichever nodes it is handed. Split out so the unread spotlight
     // frames its own ten through the same padding, clamping and transform convention rather than a
     // second camera path that would drift from this one.
-    const frame = (framed: readonly typeof nodes[number][]) => {
+    // `insetRight` is board width the frame must leave free -- the inspector panel sits over the
+    // board's right edge, and a card framed underneath it is a card the reader cannot see.
+    const frame = (framed: readonly typeof nodes[number][], insetRight = 0) => {
       if (framed.length === 0) return;
       // A FIT AGAINST A CANVAS THE BROWSER HAS NOT LAID OUT YET IS NOT A FIT, IT IS A CLAMP.
       // `k` below is `min(dim.w/w, dim.h/h)` clamped to the scale extent, so a canvas of zero or
@@ -1883,11 +1988,12 @@ export function GraphView(
       const w = maxX - minX + ART_RADIUS * 2, h = maxY - minY + ART_RADIUS * 2;
       const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
       const [zMin, zMax] = zoomBehavior.scaleExtent();
-      const k = Math.max(zMin, Math.min(zMax, FIT_MARGIN * Math.min(dim.w / w, dim.h / h)));
+      const fw = Math.max(MIN_FIT_PX, dim.w - insetRight);
+      const k = Math.max(zMin, Math.min(zMax, FIT_MARGIN * Math.min(fw / w, dim.h / h)));
       // Same translate-then-scale convention as the initial seed and jumpZoomRef above: the result
       // transform's x/y/k land exactly on what's passed to .translate()/.scale(), so this centres
       // (cx, cy) on the canvas at zoom k directly, with no separate re-derivation of cam.x/y.
-      const t = zoomIdentity.translate(dim.w / 2 - cx * k, dim.h / 2 - cy * k).scale(k);
+      const t = zoomIdentity.translate(fw / 2 - cx * k, dim.h / 2 - cy * k).scale(k);
       selection.call(zoomBehavior.transform, t);
       gestureStart = t;
     };
@@ -1903,8 +2009,16 @@ export function GraphView(
       frame(connected.length > 0 ? connected : nodes);
     };
 
-    fitSubsetRef.current = (ids) => {
-      frame(nodes.filter((n) => ids.has(n.id)));
+    // THE SETTLE FITS FRAME THE OPENING CARD when the board opened on one (see settleFocusRef),
+    // and the whole connected deck otherwise.
+    settleFit = () => {
+      const focus = settleFocusRef.current;
+      if (focus) frame(nodes.filter((n) => focus.ids.has(n.id)), focus.inset);
+      else fitToView();
+    };
+
+    fitSubsetRef.current = (ids, insetRight) => {
+      frame(nodes.filter((n) => ids.has(n.id)), insetRight);
       // Through the SAME counter as the two settle fits: this is a frame, not a second camera path,
       // and `__graphProbe` is where that is observable. See the fits comment above.
       fits++;
@@ -1918,6 +2032,27 @@ export function GraphView(
     // immediately, so the fit ran against the no-op stub, marked itself done, and the camera never
     // moved -- the exact StrictMode symptom the "torn down and re-run" test pins, which is what
     // caught this. A comment that describes where code SHOULD be is not a guard.
+    //
+    // THE BOARD ARRIVES SETTLED (owner, 2026-09-24: "everything gets super clustered and jump
+    // around"). Measured headless over nine decks, the app's own tick loop: a fresh layout moved for
+    // 11.5 s, the camera framed it at ~5 s, and cards then travelled another 35px each on screen
+    // (122px on sorin) before parking -- the board visibly assembling itself, then jumping once.
+    // Ticking it here, before the first frame, removes all of that without touching a force: the
+    // layout the reader sees is the same one the animated path parks on. ~0.5 ms a tick, so a whole
+    // settle is ~350 ms; the budget caps a slow device, and whatever is left animates as before.
+    if (isFirstLayout && !fitted) {
+      const t0 = performance.now();
+      while (simulation.alpha() > PARK_ALPHA && performance.now() - t0 < PRESETTLE_MS) simulation.tick();
+      if (simulation.alpha() <= FIT_SETTLE_ALPHA) {
+        // The loop's two scheduled fits are reached BY ticks it will no longer take, so they run
+        // here: once framed, and marked re-framed too when the board has already parked.
+        settleFit();
+        fits++;
+        fitted = true;
+        fittedGraphRef.current = graph;
+        if (simulation.alpha() <= PARK_ALPHA) refitted = true;
+      }
+    }
     loop();
 
 
@@ -2160,49 +2295,153 @@ export function GraphView(
         data-testid="graph-fullscreen-shell"
         className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
       >
-        {bare || !narrow ? null : (
+        {/* THE BOARD FIRST (owner, 2026-09-24: "I click on graph and half of my screen is not graph").
+          *  Seven rows of chrome -- four paint tabs, fifteen mechanism chips over three rows, the
+          *  toggles, the find box, the legend -- stood ~370px above the board at 1440. What a reader
+          *  uses every visit stays on ONE row: find, colour by, filters, fullscreen. The mechanism
+          *  chips and the toggles fold behind Filters at every width, the fold the phone already had. */}
+        {bare ? null : (
         <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            role="searchbox"
+            aria-label="Find a card"
+            placeholder="Find a card…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            // ENTER OPENS WHAT WAS FOUND (owner, 2026-09-24). Typing only dimmed the rest of the
+            // board and left the reader to hunt the one lit card; one match now opens it, several
+            // are framed together.
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" || !matches || matches.size === 0) return;
+              e.preventDefault();
+              if (matches.size === 1) focusCard([...matches][0]!);
+              else { cameraOwnedByUserRef.current = graph; fitSubsetRef.current(matches, 0); }
+            }}
+            className="rounded-(--radius) border border-(--field-border) bg-transparent px-2.5 py-1 text-sm"
+          />
+          {matches ? (
+            <span data-testid="graph-search-count" className="eyebrow text-(--muted)">
+              {matches.size > 0 ? `${matches.size} match${matches.size === 1 ? "" : "es"}` : "no matches"}
+            </span>
+          ) : null}
+          {/* A MATCH THE BOARD IS HIDING IS STILL A MATCH. Reporting only what is drawn made the
+           *  count a false sentence about the deck; naming the count AND the filter holding it back
+           *  makes it a true one the reader can act on in a click. */}
+          {hiddenMatches ? (
+            <button
+              type="button"
+              data-testid="graph-search-hidden"
+              className="eyebrow text-(--accent)"
+              onClick={() => {
+                if (hiddenMatches.lands > 0) setShowLands(true);
+                if (hiddenMatches.tokens > 0) setShowLoneTokens(true);
+              }}
+            >
+              +{hiddenMatches.total} hidden — show
+            </button>
+          ) : null}
+          {narrow ? null : (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="eyebrow text-(--muted)">colour by</span>
+            {PAINT_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={m.id === paintId}
+                onClick={() => setPaintId(m.id)}
+                className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                  m.id === paintId ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          )}
           <button
             type="button"
             aria-expanded={chromeOpen}
             aria-controls={chromeId}
             onClick={() => setChromeOpen((v) => !v)}
-            className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-2"
+            className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+              hiddenVerbs.size > 0 || showLands || showLoneTokens || spotlightUnread
+                ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+            }`}
           >
-            {chromeOpen ? "hide filters" : "filters"}
+            {chromeOpen ? "hide filters" : hiddenVerbs.size > 0 ? `filters (${hiddenVerbs.size} off)` : "filters"}
           </button>
+          {selectedIds.length > 1 ? (
+            <button
+              type="button"
+              data-testid="graph-selection-clear"
+              onClick={() => setSelectedIds([])}
+              className="eyebrow rounded-(--radius) border border-(--accent) text-(--accent) px-2.5 py-1"
+            >
+              {selectedIds.length} cards lit — clear
+            </button>
+          ) : null}
+
+          {/* Only when the deck HAS one: a chip that can never change anything is worse than no
+            *  chip, and most decks make no unpartnered token at all. */}
+          {/* The one line that says a card CAN be tapped, which the board never said. In the top
+            *  row's own slack, so it costs no height. */}
+          <span className="hidden lg:inline text-xs text-(--muted) ml-auto">Tap any card to see what it works with.</span>
           {canFullscreen ? (
             <button
               type="button"
               onClick={toggleFullscreen}
               aria-pressed={isFullscreen}
-              className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-2 ml-auto"
+              className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-1 ml-auto lg:ml-0"
             >
               {isFullscreen ? "exit fullscreen" : "fullscreen"}
             </button>
           ) : null}
         </div>
         )}
-        {bare ? null : (
-        <div id={chromeId} className={`${narrow && !chromeOpen ? "hidden" : "flex"} flex-col gap-6`}>
-        {isFullscreen && stateControls ? <div className="px-2 pt-2">{stateControls}</div> : null}
-        <div className="flex flex-wrap gap-2">
-          {/* Which facet paints the board. Chips, not a <select>: this is the primary control on
-           *  this view and the one thing a reader changes on purpose. */}
-          {PAINT_MODES.map((m) => (
+        {/* THE KEY CARDS, ONE TAP FROM THE PANEL -- and the one line that says a card CAN be tapped,
+          *  which the board never said. One compact row, so it costs the board almost nothing. */}
+        {!guided || bare || keyCards.length === 0 ? null : (
+        <div data-testid="graph-key-cards" className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="eyebrow text-(--muted)">key cards</span>
+          {keyCards.map((c) => (
             <button
-              key={m.id}
+              key={c.id}
               type="button"
-              aria-pressed={m.id === paintId}
-              onClick={() => setPaintId(m.id)}
-              className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-                m.id === paintId ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+              aria-pressed={inspectingId === c.id}
+              onClick={() => focusCard(c.id)}
+              className={`rounded-(--radius) border px-2 py-0.5 ${
+                inspectingId === c.id ? "border-(--accent) text-(--foreground)" : "border-(--separator) text-(--muted) hover:text-(--foreground)"
               }`}
             >
-              {m.label}
+              {c.name} <span className="stat-num text-(--muted)">{c.rating.toFixed(1)}</span>
             </button>
           ))}
-
+        </div>
+        )}
+        {bare ? null : (
+        <div id={chromeId} className={`${chromeOpen ? "flex" : "hidden"} flex-col gap-3`}>
+        {isFullscreen && stateControls ? <div className="px-2 pt-2">{stateControls}</div> : null}
+        <div className="flex flex-wrap gap-2">
+          {/* On a phone the colour-by tabs live in here; from `sm` up they are on the top row --
+            *  rendered in one place or the other, never both, so each tab exists once. */}
+          {!narrow ? null : (
+          <div className="flex flex-wrap gap-2 basis-full">
+            {PAINT_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={m.id === paintId}
+                onClick={() => setPaintId(m.id)}
+                className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
+                  m.id === paintId ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          )}
           {/* Jumps the camera through zoomBehavior (jumpZoomRef, set by the layout effect) rather
            *  than through React state -- the paint loop reads cam.z every frame, so there is
            *  nothing for a re-render to do here, and going through zoomBehavior keeps its own
@@ -2301,19 +2540,6 @@ export function GraphView(
             *  panel names one card, the board is dimmed around several, and clicking empty space is
             *  not a gesture anyone guesses. One chip says how many and clears them. Absent at a
             *  single selection, where the panel's own close button already says it. */}
-          {selectedIds.length > 1 ? (
-            <button
-              type="button"
-              data-testid="graph-selection-clear"
-              onClick={() => setSelectedIds([])}
-              className="eyebrow rounded-(--radius) border border-(--accent) text-(--accent) px-2.5 py-1"
-            >
-              {selectedIds.length} cards lit — clear
-            </button>
-          ) : null}
-
-          {/* Only when the deck HAS one: a chip that can never change anything is worse than no
-            *  chip, and most decks make no unpartnered token at all. */}
           {landNodes.size > 0 ? (
             <button
               type="button"
@@ -2381,50 +2607,7 @@ export function GraphView(
             </button>
           ) : null}
 
-          {canFullscreen && !narrow ? (
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              aria-pressed={isFullscreen}
-              className="eyebrow rounded-(--radius) border border-(--separator) text-(--muted) px-2.5 py-1 ml-auto"
-            >
-              {isFullscreen ? "exit fullscreen" : "fullscreen"}
-            </button>
-          ) : null}
         </div>
-
-        {bare ? null : (
-        <div className="flex items-center gap-3">
-          <input
-            type="search"
-            role="searchbox"
-            aria-label="Find a card"
-            placeholder="Find a card…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="rounded-(--radius) border border-(--field-border) bg-transparent px-2.5 py-1 text-sm"
-          />
-          {matches ? (
-            <span data-testid="graph-search-count" className="eyebrow text-(--muted)">
-              {matches.size > 0 ? `${matches.size} match${matches.size === 1 ? "" : "es"}` : "no matches"}
-            </span>
-          ) : null}
-          {/* A MATCH THE BOARD IS HIDING IS STILL A MATCH. Reporting only what is drawn made the
-           *  count a false sentence about the deck; naming the count AND the filter holding it back
-           *  makes it a true one the reader can act on in a click. */}
-          {hiddenMatches ? (
-            <button
-              type="button"
-              data-testid="graph-search-hidden"
-              className="eyebrow text-(--accent)"
-              onClick={() => {
-                if (hiddenMatches.lands > 0) setShowLands(true);
-                if (hiddenMatches.tokens > 0) setShowLoneTokens(true);
-              }}
-            >
-              +{hiddenMatches.total} hidden — show
-            </button>
-          ) : null}
         </div>
         )}
 
@@ -2545,8 +2728,6 @@ export function GraphView(
           ) : null}
         </div>
         </>
-        )}
-        </div>
         )}
 
         <div

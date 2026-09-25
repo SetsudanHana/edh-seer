@@ -43,7 +43,7 @@ export function hubFreedom(nodes: readonly { id: string; kind?: string }[]): str
   return nodes.filter((n) => n.kind !== undefined).map((n) => n.id);
 }
 
-export const FIXTURES = ["sorin", "inalla", "fairdrazi", "changelings", "braids", "mdfc"];
+export const FIXTURES = ["sorin", "inalla", "fairdrazi", "changelings", "braids", "mdfc", "jodah"];
 
 /** One fixture's measured drawing quality. Wider than `Caps` on purpose: `hubFreedom` is measured
  *  but never capped -- a facet value appearing as a node is not a budget to spend down, it is the
@@ -185,6 +185,15 @@ export const QUALITY_CAPS: Record<string, Caps> = {
   // excess is edges almost exactly and the 130-vs-84 node count explains none of it. What the extra
   // nodes really cost is 130 discs and 130 LABELS, which no metric here measures.
   mdfc: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 65665, linkDistError: 75 },
+  // THE DENSE-HUB FIXTURE, added 2026-09-24 from the EDHREC Jodah, the Unifier list
+  // (`packages/cli/decks/edhrec/legends/jodah-the-unifier.real.txt`): 56 of its 66 nonland cards
+  // touch the commander, the shape the owner's own Jodah deck draws as a cluster that "jumps
+  // around". Captured through the STATIC pipeline (`analyzeDeckStatic` against the live
+  // edhseer.cards shards) rather than `capture.ts`, because that one needs the api and Mongo; the
+  // static path is the one the live site runs, so it is the shape readers actually get. It carries
+  // the node fields that pipeline ships (typeLine, oracleText, isToken) and the edges' `drawn` flag,
+  // which the older fixtures predate.
+  jodah: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 29207, linkDistError: 50 },
 };
 
 /** RE-CAPPED AGAIN, same day, for the de-drift ORDER fix (board-force.ts). `forceDeDrift` ran LAST

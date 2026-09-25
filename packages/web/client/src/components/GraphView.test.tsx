@@ -117,7 +117,7 @@ function frames(graph: CardGraph, calls?: string[], report = SAMPLE.report) {
 
 /** `frames` with props threaded through. Repeated rather than folded into `frames` so the 122 tests
  *  written against that helper keep the exact signature they were written against. */
-function framesWith(graph: CardGraph, props: { chrome?: "full" | "bare"; onNodeTap?: (id: string | null) => void }, report = SAMPLE.report) {
+function framesWith(graph: CardGraph, props: { chrome?: "full" | "bare"; onNodeTap?: (id: string | null) => void; guided?: boolean }, report = SAMPLE.report) {
   let nextFrame: FrameRequestCallback | null = null;
   vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { nextFrame = cb; return 0; });
   vi.stubGlobal("cancelAnimationFrame", () => {});
@@ -694,10 +694,14 @@ describe("fit to view", () => {
   // (found by an adversarial review, 2026-08-28: deleting the whole re-frame branch left all 108
   // tests in this file green). A count is what the behaviour IS; the geometry was a proxy for it,
   // and the proxy is at the mercy of every constant in board-force.ts.
+  // THE SLOW-DEVICE PATH. The board pre-settles before its first frame within PRESETTLE_MS; a clock
+  // that has already spent the budget skips that, and the animated schedule below is what remains.
   test("the board is framed twice: once mid-settle, once when it parks", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
       left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
     } as DOMRect);
+    let clock = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => (clock += 1000));
     const { canvas, tick } = frames(SAMPLE.graph);
     expect(canvas.__graphProbe!().fits).toBe(0);
     // Past FIT_SETTLE_ALPHA but not yet parked: exactly one frame taken.
@@ -708,6 +712,23 @@ describe("fit to view", () => {
     expect(canvas.__graphProbe!().fits).toBe(2);
     tick(400);
     expect(canvas.__graphProbe!().fits).toBe(2);
+  });
+
+  // THE BOARD ARRIVES SETTLED (owner, 2026-09-24: cards "jump around"). With time in the budget the
+  // layout is ticked to rest before the first frame and framed once, so nothing moves or re-frames
+  // on screen afterwards.
+  test("a fresh board is settled and framed before its first frame, and never re-framed after", () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getBoundingClientRect").mockReturnValue({
+      left: 0, top: 0, width: 1598, height: 894, right: 1598, bottom: 894, x: 0, y: 0, toJSON: () => ({}),
+    } as DOMRect);
+    const { canvas, tick } = frames(SAMPLE.graph);
+    const probe = canvas.__graphProbe!();
+    expect(probe.fits).toBe(1);
+    const before = probe.map((n) => ({ id: n.id, x: n.x, y: n.y }));
+    tick(600);
+    const after = canvas.__graphProbe!();
+    expect(after.fits).toBe(1);
+    expect(after.map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
   });
 
   // A camera the reader moved is theirs. The re-frame must respect that the same way the one-time
@@ -1931,7 +1952,10 @@ describe("flow view", () => {
     now.mockReturnValue(5000);   // five seconds later
     calls.length = 0;
     tick();
-    expect(offsets()).toEqual(first);
+    // FROZEN MEANS NO NEW OFFSET. Since the board arrives pre-settled it is parked here, so a frozen
+    // crawl leaves nothing to repaint at all; if a frame does paint, it must repeat the old offset.
+    const second = offsets();
+    expect(second.length === 0 ? first : second).toEqual(first);
   });
 
   // THE SIGN IS THE WHOLE CLAIM. A crawl running the wrong way is a confident lie about which card
@@ -2761,4 +2785,48 @@ test("the filters button folds the board's chrome on a phone", async () => {
   } finally {
     vi.unstubAllGlobals();
   }
+});
+
+/** THE REPORT PAGE'S BOARD IS GUIDED (owner, 2026-09-24): every reviewer found the board the best-
+ *  looking screen and the least useful one, and none found the panel a click opens. */
+describe("the guided board", () => {
+  test("opens with the commander selected and its panel open", () => {
+    framesWith(SAMPLE.graph, { guided: true });
+    expect(screen.getByText(/Krenko, Mob Boss → Impact Tremors/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
+  });
+
+  test("names the key cards by the report's ranking, and a key card opens its panel", async () => {
+    framesWith(SAMPLE.graph, { guided: true });
+    const strip = screen.getByTestId("graph-key-cards");
+    const tiles = [...strip.querySelectorAll("button")].map((b) => b.textContent);
+    // Krenko rates 5, Impact Tremors 3.3: the same order "High synergy cards" prints.
+    expect(tiles).toEqual(["Krenko, Mob Boss 5.0", "Impact Tremors 3.3"]);
+    await userEvent.click(screen.getByRole("button", { name: /^Impact Tremors 3\.3/ }));
+    expect(screen.getByRole("button", { name: /^Impact Tremors 3\.3/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("Enter in the find box opens a single match", async () => {
+    framesWith(SAMPLE.graph, { guided: true });
+    await userEvent.click(screen.getByRole("button", { name: /close/i }));
+    expect(screen.queryByRole("button", { name: /close/i })).toBeNull();
+    await userEvent.type(screen.getByRole("searchbox", { name: "Find a card" }), "Impact{Enter}");
+    expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Impact Tremors 3\.3/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("the mechanism filters start folded, behind one Filters button", async () => {
+    framesWith(SAMPLE.graph, { guided: true });
+    const toggle = screen.getByRole("button", { name: "filters" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(document.getElementById(toggle.getAttribute("aria-controls")!)!.className).toContain("hidden");
+    await userEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "hide filters" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("an unguided board still opens with nothing selected", () => {
+    framesWith(SAMPLE.graph, {});
+    expect(screen.queryByRole("button", { name: /close/i })).toBeNull();
+    expect(screen.queryByTestId("graph-key-cards")).toBeNull();
+  });
 });
