@@ -545,3 +545,15 @@ test("a desktop can open the one-card view, and it opens on the commander", asyn
   await user.click(screen.getByRole("button", { name: "Whole deck" }));
   expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
 });
+
+/** NO COMBOS, NO COMBOS TAB (UI review 2026-09-25). A deck with none got a tab that opened one
+ *  sentence on an empty screen; the route stays for a shared link, the link goes. */
+test("a deck with no combos gets no Combos link, and one with combos keeps it", () => {
+  const none = { ...SAMPLE, report: { ...SAMPLE.report, combos: [] } } as typeof SAMPLE;
+  const { unmount } = render(<MemoryRouter><ReportShell data={none} /></MemoryRouter>);
+  expect(screen.queryByRole("link", { name: /^Combos/ })).toBeNull();
+  expect(screen.getAllByRole("link", { name: /^Graph/ }).length).toBeGreaterThan(0);
+  unmount();
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  expect(screen.getAllByRole("link", { name: /^Combos/ }).length).toBeGreaterThan(0);
+});

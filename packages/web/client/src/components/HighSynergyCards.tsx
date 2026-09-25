@@ -45,7 +45,9 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
             <li key={c.name} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
               <span className="pip shrink-0">{(c.synergyRating ?? 0).toFixed(1)}</span>
               <span className="flex-1 min-w-0">
-                <span className="block truncate">
+                {/* `sm:truncate`: on a phone the tags ("pulls double duty (Ramp, Draw)") were cut
+                  *  to "pulls double d...", so there the line wraps (UI review 2026-09-25). */}
+                <span className="block sm:truncate">
                   <CardName name={c.name} />
                   {/* AN AUTHORED SVG, NEVER A GLYPH. `⚡` is an emoji, which `DESIGN.md` bans as an
                     *  icon outright ("draw a small SVG in one consistent stroke"), and it rendered

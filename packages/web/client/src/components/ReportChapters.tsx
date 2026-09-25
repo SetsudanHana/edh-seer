@@ -134,7 +134,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
 
   return (
     <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start">
-      <ChapterRail current={current} />
+      <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
         *  instead of widening it — the narrow-width defence this repo has already paid for twice. */}
       <div className="flex flex-col gap-16 lg:gap-20 min-w-0 flex-1 pt-6 lg:pt-0">
@@ -285,6 +285,9 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             *  half the row was reserved for nothing at every width above 1280px. A defect I
             *  introduced two commits ago and did not look at. */}
           <Movement title="What to change">
+            {/* 64rem, the width of the Fixes list above it: a cut's name and its "5 mana - 0.0"
+              *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
+            <div className="max-w-5xl">
             <CutList
               cutList={report.cutList}
               unjudged={report.unjudged}
@@ -293,6 +296,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               trim={report.trim}
               offTheme={offTheme}
             />
+            </div>
           </Movement>
         </Chapter>
       </div>

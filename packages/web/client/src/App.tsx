@@ -396,7 +396,7 @@ export default function App() {
     {/* THE SEARCH FIELD ON EVERY APP PAGE (spec 2026-09-08 part 1). Outside `<Routes>`, because it
       *  is the header's, not any page's; a portal, because the header is static HTML. */}
     <HeaderSearch />
-    <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
+    <main className="px-(--gutter) py-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
     <Suspense fallback={null}>
     <AppBooted />
     <Routes>

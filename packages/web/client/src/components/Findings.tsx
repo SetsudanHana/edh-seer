@@ -68,7 +68,9 @@ export function Findings({ report, diff }: {
   const shown = expanded ? all : all.slice(0, FINDING_CAP);
   const trade = slotTrade(report, all);
   return (
-    <section className="flex flex-col gap-3">
+    // 64rem: at 1920px a fix's headline and its figure ("10/13") sat 1,500px apart, and the figure
+    // is what the headline is about (UI review 2026-09-25).
+    <section className="flex flex-col gap-3 max-w-5xl">
       <div className="flex items-baseline gap-3 flex-wrap">
         {/* "What is wrong with this deck" under a chapter titled "Fixes" was the same heading
           *  twice (T1). The count beside it is what this line is actually for. */}

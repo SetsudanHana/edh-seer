@@ -674,7 +674,9 @@ export function CardSearch({
             </p>
             <p className="text-(--muted) max-w-[55ch]">
               {commanderMode
-                ? "commanders. Pick a colour, or type a name."
+                // The colour picker is one "Add a filter" away, not on screen, so the sentence
+                // names the control that is (UI review 2026-09-25).
+                ? "commanders. Type a name, or add a filter to pick colours."
                 : "cards. Type a name to start."}
             </p>
             <p className="eyebrow text-(--muted) mt-4">or ask, for example</p>
