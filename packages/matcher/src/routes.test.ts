@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Reason } from "@edh-seer/engine";
-import { findRoutes } from "./routes.js";
+import { extendRoutes, findRoutes, indexRoutes } from "./routes.js";
 
 const r = (producer: string, consumer: string, producerAbility: number | undefined, consumerAbility: number | undefined, extra: Partial<Reason> = {}): Reason => ({
   tag: `t:${producer}>${consumer}`, text: `${producer} feeds ${consumer}`, producer, consumer,
@@ -75,4 +75,16 @@ test("a route crosses a token the middle card made with the ability the chain re
   expect(findRoutes(reasons, "A", "B")[0]!.hops.map((h) => h.to)).toEqual(["X", "Goblin", "B"]);
   // Made by X's OTHER ability: A never reaches it.
   expect(findRoutes([reasons[0]!, r("X", "Goblin", 1, undefined, { consumerIsToken: true }), reasons[2]!], "A", "B")).toEqual([]);
+});
+
+/** ONE INDEX, MANY SEARCHES (final review of PR 2): the suggestion check asks for a route per source,
+ *  target and candidate, so the reasons are indexed by producer once and the index is extended. */
+test("a prebuilt index answers exactly what the reason list answers", () => {
+  const reasons = [r("A", "X", undefined, 0), r("X", "B", 0, 1), r("A", "Y", undefined, 0), r("Y", "B", 1, 0)];
+  const index = indexRoutes(reasons);
+  expect(findRoutes(index, "A", "B")).toEqual(findRoutes(reasons, "A", "B"));
+  const extended = extendRoutes(index, [r("Y", "B", 0, 0)]);
+  expect(findRoutes(extended, "A", "B")).toHaveLength(2);
+  // The base index is untouched by the extension.
+  expect(findRoutes(index, "A", "B")).toHaveLength(1);
 });

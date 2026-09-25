@@ -10,7 +10,8 @@
  *  only a stale artifact produces one, and a card with no reason under it is a claim with nothing
  *  behind it. Unmet-demand candidates, which come from an over-collecting key filter, are shown only
  *  when the engine finds a reason from them to a deck card. */
-import type { DeckReport } from "@edh-seer/engine";
+import type { DeckReport, Reason } from "@edh-seer/engine";
+import { extendRoutes, findRoutes, indexRoutes, type RouteHop } from "./routes.js";
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
@@ -23,7 +24,7 @@ import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
 import {
-  answerList, bestRoute, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements,
+  answerList, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements,
   type Candidate, type CutSide, type DeckSide, type GroupState, type IndexCard,
 } from "./suggest.js";
 import { demandForms, demandKeysOf, eventKey, splitKey, supplyForms, supplyKeysOf } from "./partners-core.js";
@@ -45,8 +46,9 @@ export interface SuggestedCard {
   reasons: SuggestedReason[];
   /** Also qualifies for "Strengthen what works", shown here instead (one card, one place). */
   alsoPlan?: true;
-  /** THE ROUTE IT OPENS (`routes` list): deck cards that reach `to` only through this card. */
-  route?: { to: string; from: string[] };
+  /** THE ROUTE IT OPENS (`routes` list): deck cards that reach `to` only through this card, and the
+   *  SHORTEST chain among them, one engine sentence per hop (ability routes, 2026-09-25). */
+  route?: { to: string; from: string[]; chain: RouteHop[] };
   /** The card's own rules text, so a reader can check the claim against the card (persona round
    *  2026-09-25: "I'd need each card's text next to the reason it gives"). */
   oracle?: string;
@@ -146,6 +148,9 @@ interface Verified {
   feeds: string[]; fedBy: string[];
   /** Per deck card this one feeds, the axis weight of that hop's reasons. */
   feedWeight: Map<string, number>;
+  /** The engine's raw reasons between this card and the deck, both directions, carrying the ability
+   *  indices `findRoutes` needs (ability routes, spec 2026-09-25). */
+  hops: Reason[];
 }
 type Verify = (candidate: IndexCard, against: readonly string[], producerOnly: boolean) => Promise<Verified | null>;
 
@@ -183,6 +188,7 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
       const byShape = new Map<string, { reason: SuggestedReason; first: string }>();
       const feeds: string[] = [];
       const fedBy: string[] = [];
+      const hops: Reason[] = [];
       const feedWeight = new Map<string, number>();
       let onPlan = 0;
       for (const name of against) {
@@ -198,6 +204,7 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
         }
         const found = [...out, ...into];
         if (found.length === 0) continue;
+        hops.push(...found);
         if (out.length > 0) { feeds.push(name); feedWeight.set(name, maxAxisWeight(out, axis)); }
         if (into.length > 0) fedBy.push(name);
         connections.push(name);
@@ -215,7 +222,7 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
       }
       if (connections.length === 0) return null;
       const oracle = y.card.oracleText;
-      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}) }, onPlan, score: 0, feeds, fedBy, feedWeight };
+      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}) }, onPlan, score: 0, feeds, fedBy, feedWeight, hops };
     } catch (err) {
       console.warn("[suggest] the engine could not read", candidate.name, err);
       return null;
@@ -464,8 +471,6 @@ export async function suggestForDeck(input: {
   // witness deck 2026-09-25). So its shortlist comes from the event index: a card that ASKS for one
   // of the deck's most-supplied events and CAUSES one the deck asks for, ordered by how many deck
   // cards supply what it asks. The engine then names the route.
-  const adj = new Set((report.edges ?? []).flatMap((e) => [`${e.a}\u0000${e.b}`, `${e.b}\u0000${e.a}`]));
-  const adjacent = (a: string, b: string): boolean => adj.has(`${a}\u0000${b}`);
   const commanders = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
   // AMONG EQUAL COUNTS THE NAMED KEY FIRST: every token maker supplies `enters|-|-|-`,
   // `enters|permanent|-|-` and `enters|creature|-|-` alike, and only the last is what Impact Tremors
@@ -550,10 +555,38 @@ export async function suggestForDeck(input: {
 
   await lookup.prefetch(routeRanked.map((c) => normalizeName(c.name)));
   const routes: { card: SuggestedCard; n: number }[] = [];
+  // EXACT ROUTES (spec 2026-09-25): a source reaches a target through this card only if a route
+  // exists WITH its reasons and none without -- continuous through the same ability at every hop.
+  // Deck reasons are the report's own edges. A direct edge is a route too, so it is never "opened".
+  // ONE INDEX FOR THE DECK, extended per candidate: many searches ask of one deck (final review).
+  const deckRoutes = indexRoutes((report.edges ?? []).flatMap((e) => e.reasons ?? []));
+  const reachesAlready = new Map<string, boolean>();
+  const already = (a: string, b: string): boolean => {
+    const k = `${a}\u0000${b}`;
+    if (!reachesAlready.has(k)) reachesAlready.set(k, findRoutes(deckRoutes, a, b).length > 0);
+    return reachesAlready.get(k)!;
+  };
   for (const c of routeRanked) {
     const v = await verify(c, nonland, false);
-    const r = v && bestRoute(v.feeds, v.fedBy, adjacent, (to) => v.feedWeight.get(to) ?? 0);
-    if (v && r) routes.push({ card: { ...v.card, route: { to: r.to, from: r.from } }, n: r.worth });
+    if (!v) continue;
+    const all = extendRoutes(deckRoutes, v.hops);
+    let best: { to: string; from: string[]; chain: RouteHop[]; worth: number } | null = null;
+    for (const to of [...v.feeds].sort((a, b) => a.localeCompare(b, "en"))) {
+      const from: string[] = [];
+      let chain: RouteHop[] | null = null;
+      for (const s of v.fedBy) {
+        if (s === to || already(s, to)) continue;
+        const found = findRoutes(all, s, to).find((r) => r.hops.some((h) => h.from === c.name || h.to === c.name));
+        if (!found) continue;
+        from.push(s);
+        if (!chain || found.hops.length < chain.length) chain = found.hops;
+      }
+      const worth = from.length * (v.feedWeight.get(to) ?? 0);
+      if (chain && worth > 0 && (!best || worth > best.worth || (worth === best.worth && from.length > best.from.length))) {
+        best = { to, from, chain, worth };
+      }
+    }
+    if (best) routes.push({ card: { ...v.card, route: { to: best.to, from: best.from, chain: best.chain } }, n: best.worth });
   }
 
 

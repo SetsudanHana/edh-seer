@@ -95,9 +95,10 @@ describe("eventVerbPhrase", () => {
   test("maps the damage and card-flow verbs, which a naive plural would mangle", () => {
     expect(eventVerbPhrase("combat-damage:creature")).toBe("deals combat damage");
     expect(eventVerbPhrase("non-combat-damage:any")).toBe("deals noncombat damage");
-    expect(eventVerbPhrase("draw:you")).toBe("draws a card");
-    expect(eventVerbPhrase("discard:any")).toBe("discards a card");
-    expect(eventVerbPhrase("mill:any")).toBe("mills a card");
+    // A player draws, discards and mills, never the card (2026-09-25, see "a card-flow event names the player").
+    expect(eventVerbPhrase("draw:you")).toBe("makes you draw a card");
+    expect(eventVerbPhrase("discard:any")).toBe("makes a player discard a card");
+    expect(eventVerbPhrase("mill:any")).toBe("makes a player mill a card");
     expect(eventVerbPhrase("land-play:any")).toBe("plays a land");
     expect(eventVerbPhrase("dice-rolled:any")).toBe("rolls a die");
   });
@@ -440,4 +441,16 @@ test("a non-creature death is put into a graveyard, never 'dies'", () => {
   expect(eventVerbPhrase("dies:any")).toBe("is put into a graveyard from the battlefield");
   expect(eventVerbPhrase("dies:creature")).toBe("dies");
   expect(eventVerbPhrase("dies:planeswalker")).toBe("dies");
+});
+
+/** A CARD NEVER DRAWS, A PLAYER DOES (persona round 2026-09-25, the Memory Worm route): "When Memory
+ *  Worm draws a card" contradicted the step before it, "Memory Worm makes a player draw 1 card", and
+ *  the skeptic seat stopped trusting the route. Draw, discard and mill name the player, as lose-life
+ *  already does. */
+test("a card-flow event names the player, never the card", () => {
+  expect(eventVerbPhrase("draw:you")).toBe("makes you draw a card");
+  expect(eventVerbPhrase("draw:opp")).toBe("makes an opponent draw a card");
+  expect(eventVerbPhrase("draw:any")).toBe("makes a player draw a card");
+  expect(eventVerbPhrase("discard:any")).toBe("makes a player discard a card");
+  expect(eventVerbPhrase("mill:you")).toBe("makes you mill a card");
 });

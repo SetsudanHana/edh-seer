@@ -314,6 +314,14 @@ export function eventVerbPhrase(key: string): string {
   if (verb === "dies" && subject !== undefined && subject !== "creature" && subject !== "planeswalker") {
     return "is put into a graveyard from the battlefield";
   }
+  // A CARD NEVER DRAWS, A PLAYER DOES (persona round 2026-09-25): "When Memory Worm draws a card"
+  // contradicted "Memory Worm makes a player draw" one step earlier. Draw, discard and mill name the
+  // player the subject half says, as lose-life already does.
+  const CARD_FLOW: Record<string, string> = { draw: "draw", discard: "discard", mill: "mill" };
+  if (CARD_FLOW[verb]) {
+    const who = subject === "you" ? "you" : subject === "opp" ? "an opponent" : "a player";
+    return `makes ${who} ${CARD_FLOW[verb]} a card`;
+  }
   return VERB_PHRASES[verb] ?? `${verb.replace(/-/g, " ")}s`;
 }
 

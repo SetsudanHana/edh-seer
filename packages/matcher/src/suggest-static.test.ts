@@ -266,9 +266,30 @@ const quietly = async <T>(run: () => Promise<T>): Promise<T> => {
 test("a route names the bridge card, the deck card it reaches and the cards that reach it", async () => {
   const { f, deck } = ghyrsonWitness();
   const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
-  expect(s.routes.map((c) => [c.name, c.route])).toEqual([
-    ["Impact Tremors", { to: "Ghyrson Starn", from: ["Maker One", "Maker Two", "Maker Three"] }],
+  expect(s.routes.map((c) => [c.name, c.route?.to, c.route?.from])).toEqual([
+    ["Impact Tremors", "Ghyrson Starn", ["Maker One", "Maker Two", "Maker Three"]],
   ]);
+  // THE WHOLE ROUTE (spec 2026-09-25): one engine sentence per hop, continuous through one ability.
+  const chain = s.routes[0]!.route!.chain;
+  expect(chain.map((h) => [h.from, h.to])).toEqual([["Maker One", "Impact Tremors"], ["Impact Tremors", "Ghyrson Starn"]]);
+  for (const h of chain) expect(h.text.length).toBeGreaterThan(0);
+});
+
+/** A ROUTE THE DECK ALREADY HAS IS NOT OPENED (Review Focus 5): with a deck card that already joins
+ *  the makers to Ghyrson, Impact Tremors adds no route from them. */
+test("a route the deck already has is not opened", async () => {
+  const { f, deck } = ghyrsonWitness();
+  const withBridge = {
+    ...deck,
+    // THROUGH A THIRD DECK CARD, no direct Maker One -- Ghyrson edge: only a route search can see it
+    // (the old adjacency test could not -- final review of PR 2).
+    edges: [
+      { a: "Maker One", b: "Deck Bridge", reasons: [{ tag: "enters:creature", text: "x", producer: "Maker One", consumer: "Deck Bridge", consumerAbility: 0 }] },
+      { a: "Deck Bridge", b: "Ghyrson Starn", reasons: [{ tag: "non-combat-damage:any", text: "y", producer: "Deck Bridge", consumer: "Ghyrson Starn", producerAbility: 0, consumerAbility: 0 }] },
+    ],
+  } as unknown as DeckReport;
+  const s = await quietly(() => suggestForDeck({ report: withBridge, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  expect(s.routes.find((c) => c.name === "Impact Tremors")?.route?.from ?? []).not.toContain("Maker One");
 });
 
 /** ONE CARD, ONE PLACE, THREE TIERS (spec §3, amended 2026-09-25): finding > route > plan. A card a
@@ -371,4 +392,24 @@ test("a card that cares about your commander connects to the deck's commander", 
   const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
   const card = s.build["Interaction"]!.find((c) => c.name === "Commander Payoff");
   expect(card?.connections).toEqual(["Krenko, Mob Boss"]);
+});
+
+/** THE CHAIN MUST HOLD AT THE CANDIDATE (final review of PR 2): a card whose FIRST ability is fed by
+ *  the makers and whose SECOND ability feeds Ghyrson opens no route -- the entering creature never
+ *  causes the damage. A card-level check would have claimed it. */
+test("a candidate fed on one ability and feeding on another opens no route", async () => {
+  const { f, deck } = ghyrsonWitness();
+  for (const [path, shard] of Object.entries(f)) {
+    if (!path.includes("/cards/")) continue;
+    for (const [k, e] of Object.entries(shard as Record<string, { card: { name: string }; tags: { abilities: unknown[] } }>)) {
+      if (e.card.name !== "Impact Tremors") continue;
+      (shard as Record<string, unknown>)[k] = { ...e, tags: { ...e.tags, abilities: [
+        { kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } },
+        { kind: "activated", cost: "{T}", effect: { kind: "damage" }, amount: "1",
+          emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }] },
+      ] } };
+    }
+  }
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  expect(s.routes.map((c) => c.name)).not.toContain("Impact Tremors");
 });
