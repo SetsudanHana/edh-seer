@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { useIsNarrow } from "../lib/use-narrow.js";
+import { createPortal } from "react-dom";
+import { SURFACE_ROW_SLOT_ID } from "../lib/surface-slot.js";
 import { drawnEdges, litUndrawn } from "./board-edges.js";
 import { select } from "d3-selection";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from "d3-zoom";
@@ -96,6 +98,12 @@ const FIT_MARGIN = 0.9;
 
 /** Breathing room under the board when it is sized to the viewport, so the last row of discs is not
  *  flush against the fold and the page foot is visibly there rather than hidden by one pixel. */
+/** A card's name up to its first comma, and a two-faced card's front face: "Animar, Soul of
+ *  Elements" is "Animar". For the key-card chips, where the full name is the tooltip. */
+export function shortCardName(name: string): string {
+  return name.split(" // ")[0]!.split(",")[0]!.trim();
+}
+
 const BOARD_GUTTER_PX = 24;
 
 /** The least board height a focus frame leaves for the legend overlay: two legend rows. */
@@ -332,6 +340,9 @@ export function GraphView(
    *  three), so any constant here is wrong for some deck at some width. `document` offset, not the
    *  live `rect.top`, so scrolling does not resize the board under the reader. */
   const boardBoxRef = useRef<HTMLDivElement>(null);
+  /** The report's surface-row slot, when this board sits under one; see `keyCardsEl`. */
+  const [surfaceSlot, setSurfaceSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setSurfaceSlot(document.getElementById(SURFACE_ROW_SLOT_ID)); }, []);
   /** The legend when it overlays the board's top edge (from `sm` up); `frame` keeps cards out from
    *  under it. Null on a phone, where the legend is under the board and covers nothing. */
   const legendOverlayRef = useRef<HTMLDivElement>(null);
@@ -2543,6 +2554,37 @@ export function GraphView(
         </div>
     </>
   );
+  /** THE KEY CARDS MOVE UP INTO THE SURFACE ROW (UI review 2026-09-25). Their own row above the
+   *  board was the last one that could go: at 1440x900 the board started at y=302 and runs under
+   *  the fold at its 660px floor. The surface row (Report / Graph / Cards, and the view switch) had
+   *  ~930px of slack, so the strip is portalled there, and falls back to its own row when rendered
+   *  outside a report (tests, the bare board). */
+  const keyCardsEl = (
+        <div data-testid="graph-key-cards" className="flex flex-wrap items-center gap-2 text-sm">
+          {/* THE NUMBER NAMES ITS SCALE (2026-09-25 review: "5.0" beside a card said nothing). The
+            *  same rating and the same caveat as the report's card table. */}
+          <span className="eyebrow text-(--muted)" title={KEY_CARD_SCALE_NOTE}>key cards · synergy of 5</span>
+          {keyCards.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              aria-pressed={inspectingId === c.id}
+              aria-label={`${c.name} ${c.rating.toFixed(1)}`}
+              title={`${c.name} · ${KEY_CARD_SCALE_NOTE}`}
+              onClick={() => focusCard(c.id)}
+              className={`rounded-(--radius) border px-2 py-0.5 ${
+                inspectingId === c.id ? "border-(--accent) text-(--foreground)" : "border-(--separator) text-(--muted) hover:text-(--foreground)"
+              }`}
+            >
+              {/* THE NAME BEFORE THE COMMA (UI review 2026-09-25): six full names ran ~1,170px and
+                *  needed a row of their own; "Animar" beside the board says which card. The full
+                *  name is the button's accessible name and its tooltip. */}
+              {shortCardName(c.name)} <span className="stat-num text-(--muted)">{c.rating.toFixed(1)}</span>
+            </button>
+          ))}
+        </div>
+  );
+
   return (
     // `h-full` only when bare: the canvas wrapper takes `flex-1`, which needs an ancestor with a
     // height to divide. In page flow the board has its own fixed height and must NOT stretch.
@@ -2666,26 +2708,9 @@ export function GraphView(
         )}
         {/* THE KEY CARDS, ONE TAP FROM THE PANEL -- and the one line that says a card CAN be tapped,
           *  which the board never said. One compact row, so it costs the board almost nothing. */}
-        {!guided || bare || keyCards.length === 0 ? null : (
-        <div data-testid="graph-key-cards" className="flex flex-wrap items-center gap-2 text-sm">
-          {/* THE NUMBER NAMES ITS SCALE (2026-09-25 review: "5.0" beside a card said nothing). The
-            *  same rating and the same caveat as the report's card table. */}
-          <span className="eyebrow text-(--muted)" title={KEY_CARD_SCALE_NOTE}>key cards · synergy of 5</span>
-          {keyCards.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              aria-pressed={inspectingId === c.id}
-              onClick={() => focusCard(c.id)}
-              className={`rounded-(--radius) border px-2 py-0.5 ${
-                inspectingId === c.id ? "border-(--accent) text-(--foreground)" : "border-(--separator) text-(--muted) hover:text-(--foreground)"
-              }`}
-            >
-              {c.name} <span className="stat-num text-(--muted)" title={KEY_CARD_SCALE_NOTE}>{c.rating.toFixed(1)}</span>
-            </button>
-          ))}
-        </div>
-        )}
+        {/* In the surface row when the report provides one (see `keyCardsEl`), else here. */}
+        {!guided || bare || keyCards.length === 0 || surfaceSlot ? null : keyCardsEl}
+        {!guided || bare || keyCards.length === 0 || !surfaceSlot ? null : createPortal(keyCardsEl, surfaceSlot)}
         {bare ? null : (
         <div id={chromeId} className={`${chromeOpen ? "flex" : "hidden"} flex-col gap-3`}>
         {isFullscreen && stateControls ? <div className="px-2 pt-2">{stateControls}</div> : null}

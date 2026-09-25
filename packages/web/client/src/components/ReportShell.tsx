@@ -33,6 +33,7 @@ import { useBoardMode } from "../lib/use-board-mode.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
+import { SURFACE_ROW_SLOT_ID } from "../lib/surface-slot.js";
 
 /** THE REPORT'S SHELL: the sticky header, the scroll, and the three reference surfaces that are
  *  NOT part of it.
@@ -324,6 +325,9 @@ function Reference({ children, aside, comboCount }: { children: React.ReactNode;
           </SurfaceLink>
         ))}
       </nav>
+      {/* A SLOT FOR THE SURFACE'S OWN SHORTCUTS (UI review 2026-09-25): the graph portals its key
+        *  cards here, so they share this row's slack instead of taking a row above the board. */}
+      <div id={SURFACE_ROW_SLOT_ID} className="flex flex-wrap items-center gap-2 min-w-0 empty:hidden" />
       {aside ? <div className="ml-auto">{aside}</div> : null}
       </div>
       {children}
