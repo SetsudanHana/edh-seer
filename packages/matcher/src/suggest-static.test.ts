@@ -3,6 +3,7 @@ import type { CardTags } from "@edh-seer/tagger";
 import type { DeckReport } from "@edh-seer/engine";
 import { normalizeName } from "@edh-seer/data/names";
 import { shardOf } from "./bin/build-static-core.js";
+import { eventShardOf } from "./bin/events-index-core.js";
 import { BUILD_CATEGORIES } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
 import { suggestForDeck } from "./suggest-static.js";
@@ -200,5 +201,51 @@ test("the plan list is ordered by the deck's strategy axis, not by pool score", 
   });
   expect((await run([])).plan.map((c) => c.name)).toEqual(["Impact Tremors", "Goblin Payoff"]);
   expect((await run([{ tag: "enters:goblin", weight: 1 }])).plan.map((c) => c.name)).toEqual(["Goblin Payoff", "Impact Tremors"]);
+  warn.mockRestore();
+});
+
+/** A ROUTE IS A BRIDGE THE DECK LACKS (2026-09-25, the Ghyrson witness): three token makers and a
+ *  commander that wants exactly 1 damage share no edge, and Impact Tremors joins them -- it asks for
+ *  what the makers cause and causes what the commander asks. Neither card is in any `pi`; the
+ *  shortlist comes from the event index. A 2-damage pinger of the same shape opens no route. */
+test("a route names the bridge card, the deck card it reaches and the cards that reach it", async () => {
+  const pinger = (amount: string) => [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" }, amount,
+    emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }],
+  }];
+  const specs: Spec[] = [
+    { name: "Ghyrson Starn", identity: ["R"], types: ["creature"], abilities: [{
+      kind: "triggered", effect: { kind: "damage" },
+      trigger: { verbs: ["non-combat-damage"], subject: { control: "you", token: null }, amount: { op: "eq", value: 1 } },
+    }] },                                                                                            // 0
+    { name: "Maker One", identity: ["R"], types: ["creature"], abilities: krenkoAbilities },           // 1
+    { name: "Maker Two", identity: ["R"], types: ["creature"], abilities: krenkoAbilities },           // 2
+    { name: "Maker Three", identity: ["R"], types: ["creature"], abilities: krenkoAbilities },         // 3
+    { name: "Impact Tremors", identity: ["R"], types: ["enchantment"], abilities: pinger("1") },      // 4
+    { name: "Two Damage Pinger", identity: ["R"], types: ["enchantment"], abilities: pinger("2") },   // 5
+  ];
+  const ENTERS = "enters|creature|-|-";
+  const DAMAGE = "non-combat-damage|-|-|-";
+  const members: Record<string, unknown> = {
+    [ENTERS]: { p: [1, 2, 3], c: [4, 5] },
+    [DAMAGE]: { p: [4, 5], c: [0], pd: [[1], [2]] },
+  };
+  const f = files(specs);
+  f[`/static/${VERSION}/event-frequency.json`] = { supply: { [ENTERS]: 3, [DAMAGE]: 2 }, consume: { [ENTERS]: 2, [DAMAGE]: 1 }, byIdentity: {} };
+  for (const [k, m] of Object.entries(members)) {
+    const path = `/static/${VERSION}/events/${eventShardOf(k)}.json`;
+    f[path] = { ...(f[path] as Record<string, unknown> ?? {}), [k]: m };
+  }
+  const deck = {
+    cards: specs.slice(0, 4).map((c, i) => ({ name: c.name, isCommander: i === 0 })),
+    buildParents: [], cutList: [], edges: [], axis: [{ tag: "non-combat-damage:any", weight: 1 }],
+  } as unknown as DeckReport;
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const s = await suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) });
+  expect(s.routes.map((c) => [c.name, c.route])).toEqual([
+    ["Impact Tremors", { to: "Ghyrson Starn", from: ["Maker One", "Maker Two", "Maker Three"] }],
+  ]);
   warn.mockRestore();
 });

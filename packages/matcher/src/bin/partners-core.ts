@@ -299,9 +299,10 @@ export interface EventMembers {
 
 const DAMAGE_KEY = /^(?:non-combat-damage|combat-damage)\|/;
 
-/** The numeric sizes a card's damage abilities state (`Ability.amount`), sorted, deduplicated. */
-const damageSizesOf = (d: DeckCard): number[] => [...new Set(abilitiesOf(d)
-  .filter((a) => (a.emits ?? []).some((e) => e.verb === "non-combat-damage" || e.verb === "combat-damage"))
+/** The numeric sizes a card's abilities emitting `verb` state (`Ability.amount`), sorted,
+ *  deduplicated. Per verb: a card's 3 combat damage is not a 3-damage ping. */
+const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(abilitiesOf(d)
+  .filter((a) => (a.emits ?? []).some((e) => e.verb === verb))
   .map((a) => (a.amount ?? "").trim())
   .filter((x) => /^\d+$/.test(x))
   .map(Number))].sort((a, b) => a - b);
@@ -2194,7 +2195,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   for (const k of new Set([...members.keys(), ...consumersOf.keys()])) {
     const p = byEffect(k, members.get(k) ?? []);
     events.set(k, { p, c: reindex(consumersOf.get(k) ?? []),
-      ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(byName.get(index[pos]!.name)!)) } : {}) });
+      ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(byName.get(index[pos]!.name)!, k.slice(0, k.indexOf("|")))) } : {}) });
   }
   const consumers: Record<string, number> = {};
   for (const [k, ids] of consumersOf) consumers[k] = ids.length;

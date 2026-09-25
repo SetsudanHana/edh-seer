@@ -14,7 +14,7 @@ import type { DeckReport } from "@edh-seer/engine";
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
-import { directedReasons, type ReasonOptions } from "./edges.js";
+import { directedReasons, sizeMeets, type ReasonOptions } from "./edges.js";
 import { faceDeckCards } from "./faces.js";
 import { deckLandTypes } from "./chosen-type.js";
 import { maxAxisWeight } from "./axis.js";
@@ -466,7 +466,7 @@ export async function suggestForDeck(input: {
     const wants = unsized.has(key) ? undefined : sized.get(key);
     (m?.p ?? []).forEach((p, j) => {
       const sizes = m?.pd?.[j];
-      if (wants && sizes && !wants.some((r) => sizes.some((n) => (r.op === "eq" ? n === r.value : n >= r.value)))) return;
+      if (wants && sizes && !wants.some((r) => sizes.some((n) => sizeMeets(n, r)))) return;
       if ((nearWeight.get(p) ?? 0) < w) nearWeight.set(p, w);
     });
   });

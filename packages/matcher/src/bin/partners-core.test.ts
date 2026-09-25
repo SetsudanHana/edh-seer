@@ -1674,6 +1674,25 @@ test("a damage key's causers carry their stated sizes, parallel to p", () => {
   expect(events.get("enters|creature|-|-")?.pd).toBeUndefined();
 });
 
+/** A SIZE IS THE SIZE OF ITS OWN VERB: a card dealing 3 combat damage and 1 non-combat damage is a
+ *  1-damage causer under `non-combat-damage` only, or a deck's "exactly 1" demand keeps it for the
+ *  wrong ability (review of 944bc8c5, 2026-09-25). */
+test("a damage causer's sizes are read per verb", () => {
+  const both = base("Deals Both", [
+    { kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+      effect: { kind: "damage" }, amount: "1",
+      emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }] },
+    { kind: "activated", cost: "{T}", effect: { kind: "damage" }, amount: "3",
+      emits: [{ verb: "combat-damage", subject: { control: "opp", token: null }, dealer: { control: "you", token: null } }] },
+  ] as unknown as CardTags["abilities"]);
+  const asks = (verb: string) => base(`Asks ${verb}`, [{
+    kind: "triggered", trigger: { verbs: [verb], subject: { control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  const { events } = buildPartnerArtifact([both, asks("non-combat-damage"), asks("combat-damage")], H);
+  expect(events.get("non-combat-damage|-|-|-")?.pd).toEqual([[1]]);
+  expect(events.get("combat-damage|-|-|-")?.pd).toEqual([[3]]);
+});
+
 test("the artifact counts the askers beside the causers", () => {
   const { consumers } = buildPartnerArtifact([krenko, impactTremors], H);
   expect(consumers["enters|creature|-|-"]).toBe(1);
