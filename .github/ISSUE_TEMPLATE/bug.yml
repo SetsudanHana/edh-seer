@@ -41,6 +41,6 @@ body:
     id: environment
     attributes:
       label: Browser or Node version
-      description: Only if it might matter. The project supports Node 22 and 24.
+      description: Only if it might matter. The project runs on Node 24 (see .nvmrc).
     validations:
       required: false

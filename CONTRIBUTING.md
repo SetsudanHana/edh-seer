@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for looking. The quickest start needs nothing but Node 22 or newer:
+Thanks for looking. The quickest start needs nothing but Node 24 (`nvm use` reads `.nvmrc`):
 
 ```bash
 npm install && npm test        # no database, no network, no API key
@@ -24,7 +24,7 @@ not paired. Those are harder to find and rarer to receive.
 
 ## Getting set up
 
-Node 22 or newer is enough for `npm test` and most engine work: the matcher is pure and its tests
+Node 24 is enough for `npm test` and most engine work: the matcher is pure and its tests
 carry their own fixtures. The bins and the measuring instruments also need MongoDB holding the card
 corpus — the [corpus figures](README.md#honest-limitations) are in the README — which is not in the
 repository:
@@ -144,7 +144,7 @@ frame is *out of date* no test can tell, which is why it is on the PR checklist.
 
 ## Pull requests
 
-Branch, open a PR, get both CI legs green (`test (node 22)` and `test (node 24)`), then squash-merge.
+Branch, open a PR, get the `test` check green, then squash-merge. The `next (node 26)` job is an early warning for the next Node and never blocks.
 Nobody pushes to `main`; branch protection is enforced for administrators too.
 
 A good PR body says what changed, what it was measured against, and what the number did. If a change

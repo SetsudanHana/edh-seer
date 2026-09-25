@@ -157,7 +157,7 @@ several ratchets, and a habit of recording the measurement beside every change.
 | `@edh-seer/web` | the site: a React/Vite app that analyses in the browser, the Pages Functions that prerender card pages, and a NestJS API kept for development |
 | `@edh-seer/import-worker` | the Cloudflare Worker that imports Moxfield and Archidekt decks |
 
-Node 22 or newer is all the test suite needs:
+Node 24 (`.nvmrc`; `nvm use` picks it up) is all the test suite needs:
 
 ```bash
 npm install
