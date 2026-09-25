@@ -4953,6 +4953,25 @@ test("a create-token reason names the ability that made the token", () => {
   expect(made.map((r) => r.producerAbility)).toEqual([1]);
 });
 
+/** THE PARTY IS ITS OWN SUBJECT, AND A BOARD COUNT IS STANDING (overview persona rounds 2026-09-25,
+ *  items 5 and 6c). Thwart the Grave counts "each creature in your party" -- a Cleric, Rogue, Warrior
+ *  and Wizard -- but the tag took the first listed type, so a Wizard read `scales:cleric`; and its
+ *  on-cast cost reduction fell through the repeatability ternary to `triggered` ("every time") for a
+ *  sorcery that applies it once. Live derived shape, read 2026-09-26. */
+test("a party count is tagged as the party, and a sorcery's count happens once", () => {
+  const thwart = base("Thwart the Grave", [{
+    kind: "on-cast",
+    effect: { kind: "cost-reduction", subject: { control: "any", token: null, type: "spell", self: true },
+      scaling: "per-creature",
+      scalingSubject: { type: "creature", subtype: ["cleric", "rogue", "warrior", "wizard"], zone: "battlefield", control: "you", token: null } },
+    repeats: "once",
+  }] as CardTags["abilities"]);
+  thwart.tags.characteristics.types = ["sorcery"];
+  const gatherer = base("Rumor Gatherer", [], ["elf", "wizard"]);
+  const scales = pairReasons(gatherer, thwart, H).filter((r) => r.tag.startsWith("scales:"));
+  expect(scales.map((r) => [r.tag, r.repeatability])).toEqual([["scales:party", "oneshot"]]);
+});
+
 /** A FETCH IS TAGGED WITH THE LAND TYPE THAT MATCHED (overview persona rounds 2026-09-25, item 7):
  *  "Scalding Tarn -> Blood Crypt | ramp-target:island" put a Swamp Mountain under "Fetching Islands".
  *  Tarn finds an Island OR a Mountain; Blood Crypt is the Mountain. */
