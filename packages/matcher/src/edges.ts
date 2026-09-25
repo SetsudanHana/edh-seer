@@ -26,6 +26,9 @@ import type { LandTypes } from "./chosen-type.js";
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
 
+/** The four creature types a party is made of (CR 700.8). */
+const PARTY = ["cleric", "rogue", "warrior", "wizard"];
+
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
 export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // A NEGATION outranks the list it resolves to. `type` holds the six types "noncreature spell"
@@ -48,7 +51,11 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // an Artifact -- as `cast:creature`, a wrong tag naming a class the card is not. It ranks BELOW
   // the negation, because "nonland permanent" is more precisely named by what it excludes, and that
   // is the key the panel's verdicts already carry.
-  return list(s.subtype)[0]
+  // THE PARTY IS ONE SUBJECT (overview persona rounds 2026-09-25, item 5): "each creature in your
+  // party" derives as the four party types, and the first of them keyed a Wizard as `scales:cleric`.
+  const subs = list(s.subtype);
+  if (subs.length === PARTY.length && PARTY.every((t) => subs.includes(t))) return "party";
+  return subs[0]
     ?? (negated.length ? `-${negated[0]}` : undefined)
     ?? s.umbrella
     ?? list(s.type)[0]
@@ -1857,7 +1864,10 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         tag: `scales:${themeSubjectKey(a.effect.scalingSubject)}`,
         text: graveyardFeedsScaling(p.card.name, c.card.name),
         effectKind: a.effect.kind,
-        repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+        // AN ON-CAST COUNT HAPPENS ONCE (overview item 6c): this ternary had no `on-cast` branch, so
+        // Thwart the Grave's cost reduction -- a sorcery's, applied as it is cast -- read `triggered`
+        // ("every time"). The other repeatability sites already map it to `oneshot`.
+        repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
         scaling: a.effect.scaling,
         consumer: c.card.name,
         producer: p.card.name,
@@ -1893,7 +1903,8 @@ function boardCountEdges({ p, c, h, reasons }: PairScope): void {
       tag: `scales:${themeSubjectKey(counted)}`,
       text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind),
       effectKind: a.effect.kind,
-      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+      // An on-cast count happens once (overview item 6c, see the sibling above).
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
       scaling: a.effect.scaling,
       consumer: c.card.name,
       producer: p.card.name,
