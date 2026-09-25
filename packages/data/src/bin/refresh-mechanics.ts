@@ -1,6 +1,7 @@
 import { writeFileSync, renameSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { buildSnapshot } from "../mechanics/build-snapshot.js";
+import { SCRYFALL_HEADERS } from "../scryfall.js";
 
 const CATALOGS = {
   abilities: "https://api.scryfall.com/catalog/keyword-abilities",
@@ -8,13 +9,8 @@ const CATALOGS = {
   words: "https://api.scryfall.com/catalog/ability-words",
 } as const;
 
-const HEADERS = {
-  "User-Agent": "edh-seer/0.0 (setsudan.hana@gmail.com)",
-  Accept: "application/json",
-};
-
 async function fetchCatalog(url: string): Promise<string[]> {
-  const res = await fetch(url, { headers: HEADERS });
+  const res = await fetch(url, { headers: SCRYFALL_HEADERS });
   if (!res.ok) throw new Error(`Scryfall ${url} -> ${res.status}`);
   const json = (await res.json()) as { data: string[] };
   return json.data;

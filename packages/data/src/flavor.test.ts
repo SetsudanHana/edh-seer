@@ -44,7 +44,11 @@ test("fetchFlavorNames follows pagination and concatenates all pages", async () 
   );
 });
 
-test("fetchFlavorNames throws on a non-ok response", async () => {
-  const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 503 } as unknown as Response);
-  await expect(fetchFlavorNames(fetchImpl as unknown as typeof fetch)).rejects.toThrow(/503/);
+/** A 503 is Scryfall asking us to back off, so it is retried (through the shared client) and only
+ *  fails once the attempts run out -- never by returning a partial list. */
+test("fetchFlavorNames retries a non-ok response, then throws naming it", async () => {
+  const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 503, headers: new Headers() } as unknown as Response);
+  await expect(fetchFlavorNames(fetchImpl as unknown as typeof fetch, { attempts: 3, sleep: async () => {} }))
+    .rejects.toThrow(/503/);
+  expect(fetchImpl).toHaveBeenCalledTimes(3);
 });

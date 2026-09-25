@@ -1,5 +1,5 @@
 import type { AnyBulkWriteOperation } from "mongodb";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig, scryfallSearch, scryfallSearchUrl } from "@edh-seer/data";
 import { loadDescriptorOtags, loadFunctionalOtags } from "../otags/functional.js";
 import { buildCardOtags } from "../otags/build.js";
 
@@ -9,47 +9,14 @@ interface CardOtagDoc {
   otags: string[];
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** All oracle_ids Scryfall assigns a given otag (oracle-level, printing-unioned, paper only). */
 async function fetchTagOracleIds(slug: string): Promise<string[]> {
   const ids: string[] = [];
-  let url =
-    `https://api.scryfall.com/cards/search?unique=cards&q=` +
-    encodeURIComponent(`otag:${slug} -is:alchemy`);
-  while (url) {
-    let ok = false;
-    for (let a = 0; a < 4 && !ok; a++) {
-      try {
-        const res = await fetch(url, {
-          headers: {
-            "User-Agent": "edh-seer/1.0 (otag ingest)",
-            "Accept": "application/json",
-          },
-        });
-        if (res.status === 404) return ids; // "no cards match" -> genuine empty tag
-        if (!res.ok) {
-          // 429 / 5xx -> transient, retry (respect Retry-After if present)
-          const ra = Number(res.headers.get("retry-after")) * 1000;
-          await sleep(Number.isFinite(ra) && ra > 0 ? ra : 500);
-          continue;
-        }
-        const j = (await res.json()) as {
-          data?: { oracle_id: string }[];
-          has_more?: boolean;
-          next_page?: string;
-          object?: string;
-        };
-        if (j.object === "error") return ids; // rare: 200 with an error body
-        for (const c of j.data ?? []) ids.push(c.oracle_id);
-        url = j.has_more && j.next_page ? j.next_page : "";
-        ok = true;
-      } catch {
-        await sleep(500);
-      }
-    }
-    if (!ok) throw new Error(`otag fetch for "${slug}" gave up after retries — aborting to avoid committing partial/mislabelled tag data`);
-    await sleep(120);
+  // Through the shared client, which throws rather than truncates: a partial tag would be committed
+  // as if it were the whole one, mislabelling every card it missed.
+  for await (const page of scryfallSearch<{ oracle_id: string }>(scryfallSearchUrl(`otag:${slug} -is:alchemy`, { unique: "cards" }))) {
+    for (const c of page) ids.push(c.oracle_id);
   }
   return ids;
 }

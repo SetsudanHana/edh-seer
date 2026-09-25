@@ -170,12 +170,79 @@ export function normalizeScryfallCard(raw: ScryfallCard): NormalizedCard | null 
 
 export type FetchFn = typeof fetch;
 
-const SCRYFALL_HEADERS = {
-  "User-Agent": "edh-seer/0.1",
+/** THE ONE SCRYFALL CLIENT (2026-09-25). Five modules each carried their own fetch loop, with three
+ *  different User-Agents, pacing between 100 and 130 ms, and retry logic in two of them -- the
+ *  token ingest threw on its first 429. Every Scryfall request in the repository now sends these
+ *  headers, and every paginated search goes through `scryfallSearch`. Scryfall asks for an accurate
+ *  User-Agent, an Accept header, and 50-100 ms between requests. */
+export const SCRYFALL_HEADERS: Readonly<Record<string, string>> = {
+  "User-Agent": "edh-seer/1.0 (+https://github.com/SetsudanHana/edh-seer)",
   Accept: "application/json",
 };
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const realSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+export interface ScryfallSearchOptions {
+  fetchImpl?: FetchFn;
+  /** Tries per page before giving up; a 429 or 5xx and a thrown fetch each use one. */
+  attempts?: number;
+  /** Between pages. Scryfall asks for 50-100 ms. */
+  pageDelayMs?: number;
+  /** Before a retry when the answer carries no `Retry-After`. */
+  retryDelayMs?: number;
+  /** Injectable so a test of the retry path does not wait out real delays. */
+  sleep?: (ms: number) => Promise<void>;
+}
+
+/** The `/cards/search` URL for a query, with Scryfall's own `unique` and `order` parameters. */
+export function scryfallSearchUrl(q: string, params: { unique?: "cards" | "prints" | "art"; order?: string } = {}): string {
+  const u = new URL("https://api.scryfall.com/cards/search");
+  if (params.unique) u.searchParams.set("unique", params.unique);
+  if (params.order) u.searchParams.set("order", params.order);
+  u.searchParams.set("q", q);
+  return u.toString();
+}
+
+/** EVERY CARD A SEARCH MATCHES, one page at a time, following `next_page`.
+ *
+ *  A 404 is Scryfall's "no cards match", so it ends the search empty rather than failing it, and a
+ *  200 carrying `object: "error"` does the same. A 429 or 5xx is Scryfall asking us to slow down: it
+ *  is retried after `Retry-After` when sent, else `retryDelayMs`. A page that still fails after
+ *  `attempts` THROWS, because a truncated result is worse than none -- it would silently half-fill a
+ *  collection (the digital-only filter, the oracle tags) with nothing to say so. */
+export async function* scryfallSearch<T = Record<string, unknown>>(
+  url: string, opts: ScryfallSearchOptions = {},
+): AsyncGenerator<T[]> {
+  const { fetchImpl = fetch, attempts = 10, pageDelayMs = 100, retryDelayMs = 2500, sleep = realSleep } = opts;
+  let next: string | undefined = url;
+  while (next) {
+    let page: { data?: T[]; has_more?: boolean; next_page?: string; object?: string } | undefined;
+    let last = "no response";
+    for (let attempt = 0; attempt < attempts && !page; attempt++) {
+      let res: Response;
+      try {
+        res = await fetchImpl(next, { headers: SCRYFALL_HEADERS });
+      } catch (e) {
+        last = e instanceof Error ? e.message : String(e);
+        await sleep(retryDelayMs);
+        continue;
+      }
+      if (res.status === 404) return;
+      if (!res.ok) {
+        last = `status ${res.status}`;
+        const ra = Number(res.headers.get("retry-after")) * 1000;
+        await sleep(Number.isFinite(ra) && ra > 0 ? ra : retryDelayMs);
+        continue;
+      }
+      page = await res.json() as typeof page;
+    }
+    if (!page) throw new Error(`Scryfall search gave up after ${attempts} attempts (${last}): ${next}`);
+    if (page.object === "error") return;
+    yield page.data ?? [];
+    next = page.has_more && page.next_page ? page.next_page : undefined;
+    if (next) await sleep(pageDelayMs);
+  }
+}
 
 /**
  * Oracle IDs of cards with no paper printing (Alchemy rebalances, Arena-only cards).
@@ -192,33 +259,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  */
 export async function fetchDigitalOnlyOracleIds(
   fetchImpl: FetchFn = fetch,
+  opts: Omit<ScryfallSearchOptions, "fetchImpl"> = {},
 ): Promise<Set<string>> {
   const out = new Set<string>();
-  let url = `https://api.scryfall.com/cards/search?unique=cards&q=${encodeURIComponent("-in:paper")}`;
-  while (url) {
-    let ok = false;
-    for (let attempt = 0; attempt < 10 && !ok; attempt++) {
-      const res = await fetchImpl(url, { headers: SCRYFALL_HEADERS });
-      if (res.status === 404) return out; // no matches
-      if (!res.ok) {
-        const ra = Number(res.headers.get("retry-after")) * 1000;
-        await sleep(Number.isFinite(ra) && ra > 0 ? ra : 2500);
-        continue;
-      }
-      const j = (await res.json()) as {
-        data?: Array<{ oracle_id?: string }>;
-        has_more?: boolean;
-        next_page?: string;
-        object?: string;
-      };
-      if (j.object === "error") return out;
-      for (const c of j.data ?? []) if (c.oracle_id) out.add(c.oracle_id);
-      url = j.has_more && j.next_page ? j.next_page : "";
-      ok = true;
-    }
-    // Truncation would silently readmit digital cards, so fail instead of half-filtering.
-    if (!ok) throw new Error("digital-only oracle_id fetch gave up after retries");
-    await sleep(130);
+  // Truncation would silently readmit digital cards, which is why `scryfallSearch` throws rather
+  // than returning a partial result.
+  for await (const page of scryfallSearch<{ oracle_id?: string }>(scryfallSearchUrl("-in:paper", { unique: "cards" }), { ...opts, fetchImpl })) {
+    for (const c of page) if (c.oracle_id) out.add(c.oracle_id);
   }
   return out;
 }
