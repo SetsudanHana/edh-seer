@@ -68,6 +68,12 @@ export interface CutRow {
   keepActs: boolean;
   /** Partners that use this card while its own text does nothing with them. */
   fed: number;
+  /** Their names, the least shared first: a feeder names who uses it, so two feeders never read the
+   *  same (round 8, where one sentence repeated on four cards and read as a verdict on them). */
+  fedBy: string[];
+  /** A cut above whose users are exactly these: the two are interchangeable here, and saying so
+   *  beats printing the same list twice. */
+  sameUsersAs?: string;
   jobs: string[];
 }
 
@@ -354,6 +360,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
   const rows: (CutRow & { options: Link[] })[] = deckCards.filter((c) => !c.isCommander && !c.isLand).map((card) => {
     const nb = partners.get(card.id) ?? new Map<string, Pair>();
     let real = 0, gives = 0, givesOnce = 0, once = 0, fed = 0;
+    const fedBy: EngineCard[] = [];
     const options: Link[] = [];
     for (const p of nb.values()) {
       const rep = p.links.filter((l) => l.repeat !== "oneshot");
@@ -367,7 +374,11 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
         continue;
       }
       real++;
-      if (!rep.some((l) => acts(card, l))) fed++;
+      if (!rep.some((l) => acts(card, l))) {
+        fed++;
+        const o = cards.get(p.a === card.id ? p.b : p.a);
+        if (o) fedBy.push(o);
+      }
       options.push(...rep.filter((l) => !isHelperTag(l.tag) && !unread(l)));
     }
     const other = (l: Link) => cards.get(l.from === card.id ? l.to : l.from);
@@ -386,7 +397,11 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
     else why = `Keeps working with only ${real} other card${s(real)}${gives ? `, helps ${gives} more in the background` : ""}${givesOnce ? `${gives ? "," : ""} and ${onceHelp}` : ""}.`;
     const jobs = [...new Set(card.roles.filter((r) => JOB_WORDS[r]).map((r) => JOB_WORDS[r]!))];
-    return { card, real, gives, givesOnce, once, fed, partners: nb.size, why, keep, keepActs: false, jobs, options };
+    // The users few other cards feed come first: they are what is particular about this card.
+    // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.
+    const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
+    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => c.name + (c.isToken ? " (token)" : ""));
+    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, partners: nb.size, why, keep, keepActs: false, jobs, options };
   }).sort((a, b) => (a.real + a.gives + a.givesOnce / 2) - (b.real + b.gives + b.givesOnce / 2) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
   const cuts = rows.filter((r) => !r.jobs.length).slice(0, 6);
   const named = new Set<string>();
@@ -399,6 +414,12 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     if (r.keep) named.add(other(r.keep));
   }
   for (const r of rows) r.keepActs = !!r.keep && acts(r.card, r.keep);
+  const usersKey = (r: CutRow) => [...r.fedBy].sort().join("\u0001");
+  for (const [i, r] of cuts.entries()) {
+    if (r.keepActs || !r.fedBy.length) continue;
+    const twin = cuts.slice(0, i).find((x) => !x.keepActs && !x.sameUsersAs && usersKey(x) === usersKey(r));
+    if (twin) r.sameUsersAs = twin.card.name;
+  }
   const byJob = new Map<string, typeof rows>();
   for (const r of rows) for (const j of r.jobs) { if (!byJob.has(j)) byJob.set(j, []); byJob.get(j)!.push(r); }
   return {

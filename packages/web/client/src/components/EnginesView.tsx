@@ -38,7 +38,13 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
         <p className="max-w-[70ch]">
           Your deck mostly does <b>{deckGroups.length} things</b>, listed below. Between them they explain{" "}
           <b>{pct}%</b> of the ways your {m.deckCards} cards work together.
-          {m.onceLinks ? <> <b>{m.onceLinks}</b> of those links work only once.</> : null}
+          {m.onceLinks ? (
+            <>
+              {" "}<b>{m.onceLinks}</b> of those links work only once
+              {/* The groups showed 14 of 103 and the skeptic could not find the rest (round 8). */}
+              {m.onceInGroups < m.onceLinks ? `, and ${m.onceInGroups ? `only ${m.onceInGroups} of them are` : "none of them are"} in the groups below` : ""}.
+            </>
+          ) : null}
         </p>
         <RepeatKey />
       </div>
@@ -79,12 +85,16 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
               {c.keep && c.keepActs ? (
                 <p className="text-(--muted)"><span className="eyebrow block">Best reason to keep it</span><Badge repeat={c.keep.repeat} /><ReasonText text={c.keep.text} /></p>
               ) : c.keep ? (
-                // A FEEDER SAYS IT FEEDS. The line other cards get from it is true of any card of
-                // its kind, and calling it the best reason to keep this one read as generic or
-                // wrong to three seats (round 7).
+                // A FEEDER NAMES WHO USES IT. The line other cards get from it is true of any card
+                // of its kind, so it is not "the best reason to keep" this one (round 7); and one
+                // fixed sentence on four cards, saying its own abilities do nothing, read as a false
+                // verdict beside text that plainly does something (round 8). What the engine knows
+                // is which cards use it and that none of its links found uses its own abilities.
                 <p className="text-(--muted)">
-                  <span className="eyebrow block">What it does here</span>
-                  Its links here are other cards reacting to it or counting it{c.fed > 1 ? ` (${c.fed} cards)` : ""}, not its own abilities doing something. For example:{" "}
+                  <span className="eyebrow block">Who uses it</span>
+                  {c.sameUsersAs ? <>The same {c.fedBy.length} card{c.fedBy.length === 1 ? "" : "s"} as <CardName name={c.sameUsersAs} />, so here the two do the same job.</>
+                    : <>{names(c.fedBy.slice(0, 3))}{c.fedBy.length > 3 ? ` and ${c.fedBy.length - 3} other${c.fedBy.length === 4 ? "" : "s"}` : ""}.</>}
+                  {" "}None of the links found here use its own abilities. For example:{" "}
                   <Badge repeat={c.keep.repeat} /><ReasonText text={c.keep.text} />
                 </p>
               ) : null}
@@ -255,7 +265,7 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
           <p className="text-sm text-(--muted)">
             and {rest.length} more{sel && restLit ? `, ${restLit} of them lit by ${selName}` : ""}:{" "}
             {rest.map((c, i) => (
-              <span key={c.id} className={on(c) ? "font-semibold text-(--foreground)" : sel ? "opacity-50" : ""}>
+              <span key={c.id} className={on(c) ? "font-semibold text-(--foreground) underline decoration-2 underline-offset-2" : sel ? "opacity-40" : ""}>
                 {i ? ", " : ""}{c.name.split(" // ")[0]}{c.isToken ? " (token)" : ""}
               </span>
             ))}.

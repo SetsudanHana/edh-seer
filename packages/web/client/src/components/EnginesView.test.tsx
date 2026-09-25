@@ -76,6 +76,18 @@ test("card text shows the printed mana cost", () => {
 test("a card that only feeds others says so instead of offering a best reason", () => {
   view();
   const cleric = screen.getAllByRole("heading", { name: /^Cleric \d$/ })[0]!.closest("article")!;
-  expect(within(cleric).getByText(/What it does here/)).toBeInTheDocument();
+  expect(within(cleric).getByText(/Who uses it/)).toBeInTheDocument();
+  expect(within(cleric).getByText(/Payoff [AB] and Payoff [AB]\./)).toBeInTheDocument();
+  expect(within(cleric).getByText(/None of the links found here use its own abilities/)).toBeInTheDocument();
   expect(within(cleric).queryByText(/Best reason to keep it/)).toBeNull();
+});
+
+test("the one-time count says how many of those links the groups show", () => {
+  view();
+  expect(screen.getByText(/work only once, and none of them are in the groups below/)).toBeInTheDocument();
+});
+
+test("a cut used by exactly the same cards as one above says so instead of listing them again", () => {
+  view();
+  expect(screen.getByText(/so here the two do the same job/)).toBeInTheDocument();
 });

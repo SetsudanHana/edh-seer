@@ -91,6 +91,10 @@ describe("buildEngineModel", () => {
     expect(side.keep?.text).toBe("When Cleric 3 gains you life, Sidekick grows");
     expect(side.keepActs).toBe(true);
     expect(m.cuts.find((c) => c.card.name.startsWith("Cleric"))!.keepActs).toBe(false);
+    // Clerics are used by the same two payoffs, so the second says so instead of listing them again.
+    const clerics = m.cuts.filter((c) => c.card.name.startsWith("Cleric") && !c.keepActs);
+    expect(clerics[0]!.sameUsersAs).toBeUndefined();
+    expect(clerics.slice(1).every((c) => c.sameUsersAs === clerics[0]!.card.name)).toBe(true);
   });
 
   test("a pair that helps both ways shows both directions, and no card fills the strip", () => {
