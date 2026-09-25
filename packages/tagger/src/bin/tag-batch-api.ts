@@ -54,7 +54,7 @@ async function tagBatch(batchFile: string, outFile: string): Promise<void> {
 
 // Usage: tag-batch-api [--dir DIR] [--batches N]
 /** This script is the only place the deprecated flat extractor spends money, so the guard lives
- *  here rather than in `dump-untagged` (which is free) or `grind.sh` (which just loops over this).
+ *  here rather than in `dump-untagged` (which is free) or in a loop that calls this.
  *
  *  Why it exists: a 46-card hand audit measured this extractor at 43% correct / 43% partial / 13%
  *  wrong, and two identical runs agreed on only 30% of cards — so re-grinding rewrites most of the
