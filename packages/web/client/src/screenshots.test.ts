@@ -19,7 +19,7 @@ const CLIENT = join(process.cwd(), "client");
 const DIR = join(CLIENT, "how-it-works");
 const page = readFileSync(join(DIR, "index.html"), "utf8");
 const readme = readFileSync(join(process.cwd(), "..", "..", "README.md"), "utf8");
-const script = readFileSync(join(process.cwd(), "scripts", "docs-screenshots.ts"), "utf8");
+const script = readFileSync(join(process.cwd(), "scripts", "docs-screenshots.mts"), "utf8");
 
 const onDisk = readdirSync(DIR).filter((f) => /^shot-.*\.webp$/.test(f)).sort();
 

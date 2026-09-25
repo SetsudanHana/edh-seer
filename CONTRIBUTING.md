@@ -123,9 +123,13 @@ npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
 npm run screenshots -w @edh-seer/web
 ```
 
-The script (`packages/web/scripts/docs-screenshots.ts`) analyses a fixed Krenko list, crops each
+The script (`packages/web/scripts/docs-screenshots.mts`) analyses a fixed Krenko list, crops each
 frame from its own heading, and writes the `.webp` files that both pages use. Your UI and
 production's card data, so no corpus is needed. Look at the four files before you commit them.
+
+The README banner and the GitHub social preview (`docs/images/`) are drawn by
+`npx tsx packages/web/scripts/brand-images.mts` in the site's own fonts and colours. They change only
+when the brand does; the social preview is uploaded by hand under Settings > General.
 
 `screenshots.test.ts` holds the parts a test can see: every frame comes from the script, the page
 and the README show the same set, and each file's size matches what the page declares. Whether a

@@ -10,7 +10,7 @@ measurable. Change a rule and you get a diff you can read, not a different mood.
 **This page is the tour.** Each stage has a page of its own with the shapes, the commands and the
 failure modes it has actually hit:
 
-| | |
+| document | what it covers |
 |---|---|
 | [Stage 1 — Segmentation](pipeline/1-segment.md) | oracle text into numbered clauses, free |
 | [Stage 2 — Normalization](pipeline/2-normalize.md) | the model, once per card. The only paid step |

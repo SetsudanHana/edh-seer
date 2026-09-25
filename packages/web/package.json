@@ -16,7 +16,7 @@
     "test:server": "vitest run --config server/vitest.config.ts",
     "test:client": "vitest run --config client/vitest.config.ts",
     "typecheck": "tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit && tsc -p functions/tsconfig.json --noEmit",
-    "screenshots": "tsx scripts/docs-screenshots.ts"
+    "screenshots": "tsx scripts/docs-screenshots.mts"
   },
   "dependencies": {
     "@edh-seer/data": "*",

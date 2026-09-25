@@ -15,7 +15,7 @@ diagrams and one real worked example carried the whole way through.
 Each page says what the stage reads, what it writes, what it costs, the command that runs it, and the
 failure modes it has actually hit.
 
-| | |
+| stage | what it covers |
 |---|---|
 | [Stage 1 — Segmentation](pipeline/1-segment.md) | oracle text into numbered clauses. Free, and deliberately not the model's job |
 | [Stage 2 — Normalization](pipeline/2-normalize.md) | the model, once per card, offline. The only paid step in the project |
@@ -24,7 +24,7 @@ failure modes it has actually hit.
 
 ## Reference
 
-| | |
+| document | what it covers |
 |---|---|
 | [Schema reference](reference/SCHEMA.md) | every closed vocabulary, version constant and schema field. **Generated** from the source and gated by a test |
 | [Runbook](RUNBOOK.md) | what to run, what it costs, how to measure a change, how to deploy |

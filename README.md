@@ -1,14 +1,29 @@
+<p align="center">
+  <a href="https://edhseer.cards"><img src="docs/images/banner.png" width="880" alt="edhseer: Commander synergy, explained. Every pairing in your deck, in a sentence you can check."></a>
+</p>
+
+<p align="center">
+  <a href="https://edhseer.cards"><strong>Analyse your deck</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://edhseer.cards/how-it-works">How it works</a>
+  &nbsp;·&nbsp;
+  <a href="docs/README.md">Documentation</a>
+  &nbsp;·&nbsp;
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/SetsudanHana/edh-seer/actions/workflows/ci.yml"><img src="https://github.com/SetsudanHana/edh-seer/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/SetsudanHana/edh-seer/actions/workflows/codeql.yml"><img src="https://github.com/SetsudanHana/edh-seer/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+  <a href="https://edhseer.cards"><img src="https://img.shields.io/website?url=https%3A%2F%2Fedhseer.cards&label=edhseer.cards" alt="edhseer.cards status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+</p>
+
 # EDH Seer
 
-[![CI](https://github.com/SetsudanHana/edh-seer/actions/workflows/ci.yml/badge.svg)](https://github.com/SetsudanHana/edh-seer/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-**Commander synergy, explained.** Paste a decklist and see which of your cards actually work
-together, with the sentence that says why.
-
-### [Analyse your deck at edhseer.cards](https://edhseer.cards)
-
-Free. No account. Nothing stored. Paste a list, or a Moxfield or Archidekt link.
+**Paste a Commander decklist and see which of your cards actually work together, with the sentence
+that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield or Archidekt link, at
+**[edhseer.cards](https://edhseer.cards)**.
 
 [![The synergy graph of a Krenko, Mob Boss deck, with Krenko's pairings drawn out and his card open beside the board](packages/web/client/how-it-works/shot-graph.webp)](https://edhseer.cards)
 
@@ -61,7 +76,7 @@ cannot verify is refused. A silent wrong answer is worse than a missing one.
 **And it is measured, not asserted.** Every change to the engine is scored against a frozen panel of
 card pairs a person has judged by hand:
 
-| | |
+| measure | result |
 |---|---|
 | synergy-claim precision | **98.7%** `[97.1, 99.5]` on 421 live claims |
 | retention of pairs judged real | **91.4%** — 383 held, 36 lost |
@@ -136,23 +151,29 @@ several ratchets, and a habit of recording the measurement beside every change.
 | `@edh-seer/cli` | terminal deck report |
 | `@edh-seer/web` | NestJS API + React/Vite UI, including the interactive synergy graph |
 
-Requires Node >= 22 and a MongoDB instance holding the card corpus.
+Node 22 or newer is all the test suite needs:
 
 ```bash
 npm install
-npm test                                    # 4,342 tests, green on 2026-09-25
-
-npx tsx packages/cli/src/main.ts <decklist.txt>
-
-cd packages/web && NODE_OPTIONS="--import tsx" npx nest start   # API  :3001
-cd packages/web && npx vite --config client/vite.config.ts      # UI   :5173
+npm test                  # 4,342 tests, green on 2026-09-25. No database, no network, no API key
 ```
+
+Running the engine on real decks needs MongoDB holding the card corpus:
+
+```bash
+npx tsx packages/cli/src/main.ts <decklist.txt>                  # a deck report in the terminal
+npx tsx packages/matcher/src/bin/build-static.ts                 # the card shards the site reads
+VITE_STATIC_DATA=1 npm run dev:client -w @edh-seer/web           # the site, as production runs it
+```
+
+How to get the corpus, and everything else about running it, is in the
+[runbook](docs/RUNBOOK.md#running-the-product).
 
 ### Documentation
 
 Start at **[docs/](docs/)**, or go straight to what you need:
 
-| | |
+| document | what it covers |
 |---|---|
 | [How it works](docs/HOW-IT-WORKS.md) | the tour: a printed card to a synergy graph, with diagrams and a worked example |
 | [edhseer.cards/how-it-works](https://edhseer.cards/how-it-works) | the same story on the site: a player's half, then an engineer's half, with the figures above held to this README by a test |
