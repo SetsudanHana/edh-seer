@@ -338,7 +338,7 @@ test("a missing counter prints no line rather than a guess", () => {
 
 test("a card with no partners says so rather than printing an empty list", () => {
   const html = cardPageHtml({ ...KRENKO, partners: [] }, "x", "card");
-  expect(html).toContain("No partners specific enough to list");
+  expect(html).toContain("No connections specific enough to list");
   expect(html).not.toContain("<ol>");
 });
 
@@ -632,7 +632,7 @@ test("the crawlable reading carries a static's reach, in the same words the app 
 });
 
 /** A STAPLE'S PAGE SAYS ITS JOB (review 2026-09-25). Sol Ring has no partners by design; its
- *  crawlable block used to say only "No partners specific enough to list". */
+ *  crawlable block used to say only "No connections specific enough to list". */
 test("a card with a job and no partners explains the job instead of an empty list", () => {
   const sol: InjectableCard = {
     name: "Sol Ring", typeLine: "Artifact", commander: false, emits: [], demands: [], partners: [],
@@ -642,8 +642,8 @@ test("a card with a job and no partners explains the job instead of an empty lis
   expect(html).toContain("<h2>What it does in a deck</h2>");
   expect(html).toContain("Sol Ring is ramp.");
   expect(html).toContain("toward your Ramp total");
-  expect(html).not.toContain("No partners specific enough to list.");
+  expect(html).not.toContain("No connections specific enough to list.");
   // A role the report does not count names no job.
   expect(cardPageHtml({ ...sol, roles: ["stax"] }, "sol-ring", "card"))
-    .toContain("No partners specific enough to list.");
+    .toContain("No connections specific enough to list.");
 });

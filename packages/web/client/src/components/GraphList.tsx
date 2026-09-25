@@ -148,7 +148,7 @@ export function GraphList({ graph, unread, onOpenBoard }: {
                 </span>
               ) : (
                 <span className="shrink-0 stat-num text-xs text-(--muted)">
-                  {r.partners} partner{r.partners === 1 ? "" : "s"}
+                  {r.partners} connection{r.partners === 1 ? "" : "s"}
                 </span>
               )}
             </span>

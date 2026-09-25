@@ -150,7 +150,7 @@ describe("CardInspector", () => {
   it("puts each direction's total in its heading and never repeats it as a bare number", () => {
     const flow = { truncated: new Map([["Bitterblossom", { down: { total: 32, shown: 6 } }]]) };
     render(<CardInspector node={node} edges={edges} flow={flow} onClose={() => {}} />);
-    expect(screen.getByText(/board draws the strongest 6/i)).toBeInTheDocument();
+    expect(screen.getByText(/graph draws the strongest 6/i)).toBeInTheDocument();
     // The old wording, which read as a competing total for the whole card.
     expect(screen.queryByText(/all 32 are listed here/i)).toBeNull();
     expect(screen.getByRole("heading", { name: /^Feeds \d+$/ })).toBeInTheDocument();

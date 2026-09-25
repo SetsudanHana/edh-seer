@@ -32,7 +32,7 @@ test("draws the focus card's own graph, not the whole deck", () => {
 
 test("names the focus card and how many partners it has", () => {
   render(<EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={() => {}} />);
-  expect(screen.getByText(/1 partner\b/)).toBeInTheDocument();
+  expect(screen.getByText(/1 connection\b/)).toBeInTheDocument();
 });
 
 // THE READER ARRIVED FROM A ROW SAYING "43 partners" AND THE VIEW DRAWS 7. That gap is real -- the
@@ -51,7 +51,7 @@ test("the visible line reconciles what is drawn with the total the list promised
   const graph = { nodes, edges, undirectedReasons: 0, offDeckReasons: 0 } as unknown as CardGraph;
   render(<EgoView graph={graph} report={SAMPLE.report} focusId={hub} onFocus={() => {}} onBack={() => {}} />);
   // 6 of 20: the fanout cap, against the count the list row shows for the same card.
-  expect(screen.getByText(/6 of 20 partners/)).toBeInTheDocument();
+  expect(screen.getByText(/6 of 20 connections/)).toBeInTheDocument();
   expect(screen.getByText(/strongest/)).toBeInTheDocument();
 });
 

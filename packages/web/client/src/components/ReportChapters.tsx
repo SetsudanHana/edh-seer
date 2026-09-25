@@ -215,7 +215,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="mana" title={title("mana")}>
-          <Movement count="the numbers behind the mana fixes below">
+          <Movement count="the numbers behind the mana suggestions below">
           <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
             {/* `showBenchmarks={false}`: the Roles chapter alone owns the category/parent block
               *  ("How the roles are spent", its group headers and leaf rows). Without this, that
@@ -263,7 +263,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="roles" title={title("roles")}>
-          <Movement count="the numbers behind the build fixes below">
+          <Movement count="the numbers behind the build suggestions below">
             <BuildBenchmarks
               categories={report.buildCategories}
               parents={report.buildParents}

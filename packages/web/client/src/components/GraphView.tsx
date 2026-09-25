@@ -2516,7 +2516,7 @@ export function GraphView(
           {flowLegend && flowLegend.length > 0 && legend.length > 0 ? (
             <>
               <span aria-hidden="true" className="basis-full h-0" />
-              <span className="eyebrow shrink-0">Cards on the board</span>
+              <span className="eyebrow shrink-0">Cards on the graph</span>
             </>
           ) : null}
           {legend.map((row) => (
@@ -2785,7 +2785,7 @@ export function GraphView(
                   *  cards, 90 card-pairs, or 90 written reasons decides whether a card with
                   *  'Being cast 10' is well-connected or just noisy". A chip counts card PAIRS
                   *  whose relationship includes that mechanism. */}
-                {hiddenFromBoard ? "Card pairs on the board" : "Card pairs across the deck"}
+                {hiddenFromBoard ? "Card pairs on the graph" : "Card pairs across the deck"}
               </span>
               {hiddenFromBoard ? (
                 <span data-testid="graph-hidden-note" className="eyebrow text-(--muted) opacity-70">
@@ -2942,7 +2942,7 @@ export function GraphView(
                 *  reader who has not learned the mark yet finds out what it means. */}
               <span className="text-(--muted) stat-num">
                 {hover.copies > 1 ? `×${hover.copies} · ` : ""}
-                {hover.unread ? "not read — no synergy measured" : `${hover.deg} partners`}
+                {hover.unread ? "not read — no synergy measured" : `${hover.deg} connection${hover.deg === 1 ? "" : "s"}`}
               </span>
               {hover.detail ? <span className="text-(--muted)"> · {hover.detail}</span> : null}
             </div>

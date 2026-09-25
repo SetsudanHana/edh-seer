@@ -255,7 +255,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                     * board and the whole-deck board are the same wait for the same chunk. */}
                   <Suspense fallback={
                     <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
-                      loading the board
+                      loading the graph
                     </div>
                   }>
                     {boardMode === "ego"

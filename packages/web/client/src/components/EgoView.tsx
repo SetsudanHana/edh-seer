@@ -212,8 +212,8 @@ export function EgoView(
         subtitle={reading ?? (partners === 0
           ? "No synergy edges — nothing else in the deck connects to this card."
           : partners < totalPartners
-            ? `${partners} of ${totalPartners} partners — the strongest. Tap one to read it.`
-            : `${partners} partner${partners === 1 ? "" : "s"}. Tap one to read it.`)}
+            ? `${partners} of ${totalPartners} connections — the strongest. Tap one to read it.`
+            : `${partners} connection${partners === 1 ? "" : "s"}. Tap one to read it.`)}
         onBack={onBack}
       >
         <CardInspector

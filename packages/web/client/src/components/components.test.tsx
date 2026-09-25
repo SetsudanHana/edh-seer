@@ -914,7 +914,7 @@ test("under the floor, the tick line prints the theme's share and the floor it f
   render(<DeckGauges data={data} />);
   expect(screen.getByText(/Enchantress is only 24\.9% of this list, and it takes 25% to get targets of its own/)).toBeInTheDocument();
   expect(screen.queryByText(/Being over is fine/)).toBeNull();
-  expect(screen.getByText(/Going over a tick is fine; Fixes says where the spare slots are/)).toBeInTheDocument();
+  expect(screen.getByText(/Going over a tick is fine; the suggestions below say where the spare slots are/)).toBeInTheDocument();
 });
 
 /** AND THE BAR NEVER ROUNDS UP OVER IT: 0.249 printed "25%" beside that note. */
@@ -2054,8 +2054,8 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
   render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
 
-  expect(screen.getByText(/numbers behind the build fixes/i)).toBeInTheDocument();
-  expect(screen.getByText(/numbers behind the mana fixes/i)).toBeInTheDocument();
+  expect(screen.getByText(/numbers behind the build suggestions/i)).toBeInTheDocument();
+  expect(screen.getByText(/numbers behind the mana suggestions/i)).toBeInTheDocument();
 
   expect(screen.queryByText("What this deck plays")).toBeNull();
   expect(screen.queryByText("Whether the mana delivers it")).toBeNull();
@@ -2070,9 +2070,9 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
  *  the sub-tabs became chapters. In one scroll the honest word is a direction, not a tab name. */
 test("the evidence movements point at the chapter the findings actually live in", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
-  expect(screen.getByText(/the numbers behind the build fixes below/)).toBeInTheDocument();
-  expect(screen.getByText(/the numbers behind the mana fixes below/)).toBeInTheDocument();
-  expect(screen.queryByText(/on Fixes/)).toBeNull();
+  expect(screen.getByText(/the numbers behind the build suggestions below/)).toBeInTheDocument();
+  expect(screen.getByText(/the numbers behind the mana suggestions below/)).toBeInTheDocument();
+  expect(screen.queryByText(/on Suggestions/)).toBeNull();
 });
 
 /** The outline must not skip or invert on any sub-tab (WCAG 1.3.1). Asserted as a PROPERTY of the
@@ -2117,7 +2117,7 @@ test("each chapter's own heading appears exactly once in the scroll", () => {
     "Scores and bracket",
     "Game plan",
     "Manabase",
-    "Fixes",
+    "How to improve it",
     "What to change",
   ]) {
     expect(screen.getAllByText(heading), heading).toHaveLength(1);

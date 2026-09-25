@@ -381,7 +381,7 @@ export function CardInspector({
              *  unreachable. If the author of a truncation note can misread it, so can a player. */}
             {cutDown ? (
               <p className="text-(--muted) text-xs">
-                The board draws the strongest {cutDown.shown} of them; every one is below.
+                The graph draws the strongest {cutDown.shown} of them; every one is below.
               </p>
             ) : null}
             {renderList(outgoing, true)}
@@ -394,7 +394,7 @@ export function CardInspector({
           <h4 className="eyebrow text-(--muted)">Fed by {incoming.length}</h4>
           {cutUp ? (
             <p className="text-(--muted) text-xs">
-              The board draws the strongest {cutUp.shown} of them; every one is below.
+              The graph draws the strongest {cutUp.shown} of them; every one is below.
             </p>
           ) : null}
           {renderList(incoming, false)}

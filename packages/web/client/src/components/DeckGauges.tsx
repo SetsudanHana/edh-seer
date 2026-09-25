@@ -263,8 +263,9 @@ export function DeckGauges({ data, diff }: {
                 <Explain label="what this measures">
                   How close your ramp, draw, removal and other counts are to what similar decks run:
                   the median of ten EDHREC decks per archetype. That is what they run, not what they
-                  need. It ignores how the cards work together and what your removal can hit; Fixes
-                  covers that, so a high Build score can sit beside a &ldquo;thin answers&rdquo; fix.
+                  need. It ignores how the cards work together and what your removal can hit;
+                  the suggestions below cover that, so a high Build score can sit beside a &ldquo;thin
+                  answers&rdquo; suggestion.
                 </Explain>
                 </>
               }
@@ -309,7 +310,7 @@ export function DeckGauges({ data, diff }: {
               *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
               *  over real decks, which is also why it is the one two-sided reading here. */}
             <p className="text-xs text-(--muted) max-w-[52ch]">
-              {tickSource}. Going over a tick is fine; Fixes says where the spare slots are
+              {tickSource}. Going over a tick is fine; the suggestions below say where the spare slots are
               {lands ? <>. The land tick is worked out from your own curve</> : null}.
             </p>
           </div>

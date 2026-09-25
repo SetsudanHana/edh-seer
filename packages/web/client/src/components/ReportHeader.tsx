@@ -166,7 +166,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
              * 24px WCAG 2.5.8 floor, and the horizontal padding gives it real width. */
             className="eyebrow text-(--accent) whitespace-nowrap min-h-[32px] px-2 -mx-1"
           >
-            {findingCount} {findingCount === 1 ? "fix" : "fixes"} &darr;
+            {findingCount} {findingCount === 1 ? "suggestion" : "suggestions"} &darr;
           </button>
         ) : null}
         {coverage ? (
