@@ -31,6 +31,10 @@ function Row({ c }: { c: SuggestedCard }) {
           <span className="eyebrow text-(--muted) border border-(--separator) rounded-full px-2 py-0.5">also fits your plan</span>
         ) : null}
       </div>
+      {/* WHAT IT COUNTS AS, BEFORE WHY IT FITS (persona round 2026-09-25): under "You are 10 short
+        *  on ramp" a row whose only lines were about other cards read as padding. */}
+      {c.fills ? <p className="text-sm font-medium">Counts as {c.fills.toLowerCase()}</p> : null}
+      {c.answers ? <p className="text-sm font-medium">Answers {c.answers}s</p> : null}
       {c.route ? (
         <>
           <p className="text-sm max-w-[70ch]">
@@ -58,6 +62,13 @@ function Row({ c }: { c: SuggestedCard }) {
           ) : null}
         </>
       )}
+      {/* THE EVIDENCE, one click away: the reader can check the claim against the card itself. */}
+      {c.oracle ? (
+        <details className="text-sm text-(--muted)">
+          <summary className="cursor-pointer min-h-6">card text</summary>
+          <p className="pt-1 max-w-[70ch] whitespace-pre-line">{c.oracle}</p>
+        </details>
+      ) : null}
     </li>
   );
 }

@@ -90,3 +90,24 @@ test("while computing, the section shows the wait once", () => {
   inRouter(<StrengthenLists routes={undefined} plan={undefined} />);
   expect(screen.getAllByRole("status")).toHaveLength(1);
 });
+
+/** THE CLAIM, THEN ITS EVIDENCE (persona round 2026-09-25): under "You are 10 short on ramp" the row
+ *  says the card counts as ramp before its connections argue for it, and the card's own text sits
+ *  one click away so the reader can check. */
+test("a card on a build list says what it counts as, first", () => {
+  inRouter(<SuggestedCards cards={[{ ...chaosWarp, fills: "Ramp" }]} empty="none" />);
+  const lines = [...screen.getByRole("listitem").querySelectorAll("p")].map((p) => p.textContent);
+  expect(lines[0]).toBe("Counts as ramp");
+});
+
+test("a card on an answers list says what it answers", () => {
+  inRouter(<SuggestedCards cards={[{ ...chaosWarp, answers: "enchantment" }]} empty="none" />);
+  expect(screen.getByText("Answers enchantments")).toBeInTheDocument();
+});
+
+test("the card's own text is one click away", () => {
+  inRouter(<SuggestedCards cards={[{ ...chaosWarp, oracle: "Target permanent's owner shuffles it into their library." }]} empty="none" />);
+  const details = screen.getByText("card text").closest("details")!;
+  expect(details.open).toBe(false);
+  expect(within(details).getByText("Target permanent's owner shuffles it into their library.")).toBeInTheDocument();
+});

@@ -43,6 +43,13 @@ export interface SuggestedCard {
   alsoPlan?: true;
   /** THE ROUTE IT OPENS (`routes` list): deck cards that reach `to` only through this card. */
   route?: { to: string; from: string[] };
+  /** The card's own rules text, so a reader can check the claim against the card (persona round
+   *  2026-09-25: "I'd need each card's text next to the reason it gives"). */
+  oracle?: string;
+  /** On a `build` list: the group it counts toward ("Ramp"), by the report's own rules. */
+  fills?: string;
+  /** On an `answers` list: the permanent class it answers ("enchantment"). */
+  answers?: string;
 }
 export interface SuggestedPair {
   cut: string;
@@ -184,7 +191,8 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
         for (const r of found) if (!reasons.includes(r.text)) reasons.push(r.text);
       }
       if (connections.length === 0) return null;
-      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons }, onPlan, score: 0, feeds, fedBy, feedWeight };
+      const oracle = y.card.oracleText;
+      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}) }, onPlan, score: 0, feeds, fedBy, feedWeight };
     } catch (err) {
       console.warn("[suggest] the engine could not read", candidate.name, err);
       return null;
@@ -390,8 +398,10 @@ export async function suggestForDeck(input: {
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
 
   const out: DeckSuggestions = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] };
-  for (const [name, list, limit, band] of buildRanked) out.build[name] = await verified(list, limit, verify, nonland, band);
-  for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = await verified(list, limit, verify, nonland, band);
+  // WHAT EACH CARD COUNTS AS, on the row: the finding names the group, and the row has to say this
+  // card is one of them before its connections argue it is the right one.
+  for (const [name, list, limit, band] of buildRanked) out.build[name] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, fills: name }));
+  for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, answers: cls }));
   for (const [key, list] of synergyRanked) {
     const cards: SuggestedCard[] = [];
     for (const c of list) {

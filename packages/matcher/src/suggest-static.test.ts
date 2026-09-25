@@ -28,10 +28,10 @@ const tremorsAbilities = [{
   effect: { kind: "deal-damage" },
 }];
 
-interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[] | null; tokenParts?: true; typeLine?: string }
+interface Spec { name: string; identity: string[]; types: string[]; abilities: unknown[] | null; tokenParts?: true; typeLine?: string; oracle?: string; r?: string[] }
 const entry = (s: Spec, pi?: [number, number][]) => ({
   card: {
-    _id: `id-${s.name}`, name: s.name, typeLine: s.typeLine ?? s.types.join(" "), oracleText: "", keywords: [], colors: s.identity,
+    _id: `id-${s.name}`, name: s.name, typeLine: s.typeLine ?? s.types.join(" "), oracleText: s.oracle ?? "", keywords: [], colors: s.identity,
     manaValue: 3, colorIdentity: s.identity, power: null, toughness: null, searchNames: [normalizeName(s.name)],
     ...(s.tokenParts ? { allParts: [{ component: "token", name: "Goblin", typeLine: "Token Creature — Goblin" }] } : {}),
   },
@@ -58,6 +58,7 @@ const SPECS: Spec[] = [
 const indexRow = (s: Spec) => ({
   slug: s.name.toLowerCase().replace(/[^a-z]+/g, "-"), name: s.name, identity: s.identity, commander: false,
   t: s.types.map((t) => TYPES.indexOf(t)), mv: 3,
+  ...(s.r ? { r: s.r.map((x) => BUILD_CATEGORIES.indexOf(x as (typeof BUILD_CATEGORIES)[number])) } : {}),
   ...(s.name === "Swords to Plowshares"
     ? { r: [BUILD_CATEGORIES.indexOf("targetedRemoval")], a: [POOL_CLASSES.indexOf("creature")] } : {}),
 });
@@ -318,4 +319,21 @@ test("a chosen-type card connects only to candidates of the deck's own type", as
   } as unknown as DeckReport;
   const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["U"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
   expect(s.synergy["enters:type:creature"]!.map((c) => c.name)).toEqual(["New Wizard"]);
+});
+
+/** THE CLAIM AND ITS EVIDENCE, ON THE ROW (persona round 2026-09-25, both seats at 2/7): a card under
+ *  "You are 10 short on ramp" whose only visible reasons were about Trading Post could not be told
+ *  apart from padding, and the reader asked for "each suggested card's text next to the reason". */
+test("a build finding's cards say which group they count toward, and carry their own card text", async () => {
+  const specs = SPECS.map((s) => s.name === "Impact Tremors"
+    ? { ...s, r: ["targetedRemoval"], oracle: "Whenever a creature you control enters, this enchantment deals 1 damage to each opponent." }
+    : s);
+  const deck = {
+    ...report,
+    buildParents: [{ name: "Interaction", count: 0, target: 1, leaves: ["targetedRemoval"] }],
+  } as unknown as DeckReport;
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files(specs)) }));
+  const tremors = s.build["Interaction"]!.find((c) => c.name === "Impact Tremors")!;
+  expect(tremors.fills).toBe("Interaction");
+  expect(tremors.oracle).toBe("Whenever a creature you control enters, this enchantment deals 1 damage to each opponent.");
 });
