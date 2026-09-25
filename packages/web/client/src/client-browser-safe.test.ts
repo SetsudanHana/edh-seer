@@ -13,16 +13,11 @@ import { expect, test } from "vitest";
  *  to catch the 2026-08-21 regression (a value import of `GRAVEYARD_HATE_SHARE` from
  *  `@edh-seer/matcher/src/answer-coverage.js`) — that one typechecked perfectly with or without
  *  node types and is a different rule about barrels, not about builtins. */
-/** IT LIVES IN THE SERVER SUITE, which is the only one in this package that runs in a NODE
- *  environment. Under the client's jsdom config `import.meta.url` is rewritten to an http URL and
- *  `fileURLToPath` throws — a guard that walks the filesystem cannot run inside the environment it
- *  is guarding.
- *
- *  `__dirname`, not `import.meta.url`, because the server tsconfig is `NodeNext` emitting CJS
- *  through plain `tsc` and rejects `import.meta` outright (TS1470). That this file uses the very name it
- *  forbids the client to use is the point: `__dirname` is correct in a CJS Node module and fatal in
- *  a browser bundle, which is the whole distinction being guarded. */
-const CLIENT_SRC = join(__dirname, "../../client/src");
+/** IT LIVED IN THE SERVER SUITE until the server was removed (2026-09-25), on the belief that only a
+ *  Node environment could walk the filesystem. `import.meta.dirname` works under the client's jsdom
+ *  config too (`csp.test.ts` and `inject.test.ts` read files the same way), so it now sits beside
+ *  the code it guards. It is a test file, so it is not in the walk below. */
+const CLIENT_SRC = import.meta.dirname;
 
 /** The same two entries `tsconfig.json` excludes, and for the same reason: node scripts that live
  *  under `src/` only so they can reach the modules they measure by relative path. A THIRD entry

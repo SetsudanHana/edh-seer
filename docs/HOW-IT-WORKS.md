@@ -245,46 +245,42 @@ Reasons feed everything downstream:
 
 ## A request, end to end
 
-This is the API path, which is kept as the known-good reference. **The live site does the same work
-in the browser:** it builds with `VITE_STATIC_DATA=1`, fetches each card's derived tags from
-`/static` shards instead of MongoDB, and runs the same pure `analyzeResolvedDeck` from
-`orchestrate.ts`. Token tags are loaded once when the server starts, not per request.
+Everything happens in the browser. The build publishes each card's derived tags as static JSON
+shards, and the page runs the same pure engine the tests run, through one function:
+`analyzeDecklist()` in `orchestrate.ts`.
 
 ```mermaid
 sequenceDiagram
     actor User
     participant UI as React client
-    participant API as NestJS API
-    participant DB as MongoDB
+    participant S as /static shards
     participant M as matcher (pure)
 
     User->>UI: paste decklist
-    UI->>API: POST /api/analyze
-    API->>API: parseDecklistSections()
-    API->>DB: resolveNames() — names → cards
-    DB-->>API: cards + combos + unresolved
-    API->>DB: derived tags for each card
-    DB-->>API: cardTagsDerived docs
+    UI->>UI: parseDecklistSections()
+    UI->>S: StaticLookup.prefetch(every name)
+    S-->>UI: cards, derived tags, token tags
+    UI->>M: resolveDeck() — names → cards, commander, colour identity
 
-    Note over API,M: every lookup is done BEFORE the engine runs —<br/>analyzeDeckStructured is pure and synchronous
-    API->>M: analyzeDeckStructured(deckCards, commanders, ...)
+    Note over UI,M: every lookup is done BEFORE the engine runs —<br/>analyzeDeckStructured is pure and synchronous
+    UI->>M: analyzeResolvedDeck(deckCards, commanders, ...)
 
     M->>M: resolveChosenTypes() — "choose a creature type" → the deck's actual tribe
     M->>M: faceDeckCards() — each printed face becomes its own node
     M->>M: collectTokenNodes() — every token the deck can make
     M->>M: pairReasons() over every pair
     M->>M: rate cards, detect archetypes, rank themes, mana math
-    M-->>API: DeckReport
+    M-->>UI: DeckReport
 
-    API->>M: projectDeckGraph(report)
-    M-->>API: nodes + edges
-    API-->>UI: report + graph
+    UI->>M: buildWireGraph(report)
+    M-->>UI: nodes + edges
     UI-->>User: report, and a canvas you can click
 ```
 
 The `Note` is the load-bearing part: **the engine performs no I/O.** Every lookup happens first and
-the result is handed in. That is what makes it testable without a database — and what would let the
-whole thing run in a browser against static JSON.
+the result is handed in. That is what makes it testable without a database, and what lets the whole
+thing run in a browser against static JSON. The fixture and research tools call the same
+`analyzeDecklist()` from Node, pointed at a `/static` URL.
 
 ---
 
@@ -406,6 +402,6 @@ tag), 18 re-attributed through a token, 8 rot (a card named by the verdict has l
 | derive | `@edh-seer/tagger` | `derive/derive.ts`, `bin/derive-corpus.ts` |
 | implied events | `@edh-seer/matcher` | `implied.ts` |
 | matching | `@edh-seer/matcher` | `edges.ts`, `subject.ts` |
-| orchestration | `@edh-seer/matcher` | `orchestrate.ts` (shared by the API and the static site), `analyze.ts` |
+| orchestration | `@edh-seer/matcher` | `orchestrate.ts` (`analyzeDecklist`, the one pipeline), `analyze.ts` |
 | graph | `@edh-seer/matcher` | `graph-projection.ts` |
 | scoring | `@edh-seer/engine` | `synergy.ts`, `impact.ts` |

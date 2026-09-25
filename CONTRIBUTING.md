@@ -120,7 +120,7 @@ longer true.
 **If your change alters what one of those frames shows, regenerate them in the same PR:**
 
 ```bash
-VITE_STATIC_DATA=1 npm run build:client -w @edh-seer/web
+npm run build:client -w @edh-seer/web
 npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
 npm run screenshots -w @edh-seer/web     # the four frames
 npm run demo-gif -w @edh-seer/web        # docs/images/demo.gif; --frames <dir> saves each frame to review

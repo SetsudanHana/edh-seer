@@ -6,7 +6,7 @@
  *  one of these frames shows re-runs this script in the same PR. This script is what makes that
  *  a one-line step rather than an afternoon of cropping.
  *
- *    VITE_STATIC_DATA=1 npm run build:client -w @edh-seer/web
+ *    npm run build:client -w @edh-seer/web
  *    npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
  *    npm run screenshots -w @edh-seer/web                    # writes the four .webp files
  *    npm run screenshots -w @edh-seer/web -- --base http://localhost:5173
@@ -14,10 +14,9 @@
  *  HERE AND NOT UNDER `research/`: it writes files the site ships, which is what a pipeline script
  *  is (CONTRIBUTING.md, "Where a script goes"), the same home as `assemble-deploy.mjs`.
  *
- *  THE BUILD MUST BE THE STATIC ONE (`VITE_STATIC_DATA=1`), which analyses in the browser from
- *  `/static` shards. Those shards need the corpus to build, so by default this script answers
- *  `/static/*` from the live site: the UI is this checkout's, the card data is production's. Pass
- *  `--local-data` when the preview serves its own shards.
+ *  The build analyses in the browser from `/static` shards. Those shards need the corpus to build,
+ *  so by default this script answers `/static/*` from the live site: the UI is this checkout's, the
+ *  card data is production's. Pass `--local-data` when the preview serves its own shards.
  *
  *  CROPS ARE ANCHORED TO ELEMENTS, NOT PIXELS: each chapter frame starts at its own heading, so a
  *  layout change moves the crop with it instead of slicing a sentence in half. Sizes are fixed so

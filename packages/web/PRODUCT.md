@@ -16,7 +16,7 @@ Flow: user pastes a decklist and commander name(s) into a text form → server r
 No accounts, no saved decks, no persistence yet — each analysis is a one-shot paste-and-read session.
 ## Capabilities and Constraints
 - Current shipped scope: synergy analysis only. Deck building, collection tracking, and paper/digital tracking are confirmed roadmap, not yet built — do not imply they exist in UI copy.
-- Monorepo (`npm` workspaces): `packages/data` (card corpus + resolution), `packages/tagger` (oracle-text mechanism tagging), `packages/matcher` (rule-based synergy matching), `packages/engine` (deck-level analysis), `packages/cli`, and this app, `packages/web` (NestJS + Fastify server, React 19 + Vite client, HeroUI3 + framer-motion).
+- Monorepo (`npm` workspaces): `packages/data` (card corpus + resolution), `packages/tagger` (oracle-text mechanism tagging), `packages/matcher` (rule-based synergy matching), `packages/engine` (deck-level analysis), `packages/cli`, and this app, `packages/web` (a React 19 + Vite client that analyses in the browser against static shards, and Cloudflare Pages Functions for the card pages).
 - Card corpus: ~20k cards tagged from oracle text (tagging grind complete).
 - Key terms used in-app and in data: commander, synergy edge, archetype, produces/cares (a card "produces" an effect another "cares about"), cohesion.
 ## Evidence on Hand

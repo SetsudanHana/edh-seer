@@ -1,13 +1,103 @@
-/** Live-corpus half of the calibration tool: sampling against the derived corpus, and writing the
- *  verdict plus the clause snapshot that lets the gate run offline.
+/** THE PAIR-JUDGING TOOL'S SERVER HALF: sampling a pair from the derived corpus for a human verdict,
+ *  and writing the verdict plus the clause snapshot that lets the calibration gate run offline.
  *
- *  Kept out of `data.module.ts` because that file is already the size of two modules, and this one
- *  has a concern of its own — it WRITES to the repository. */
+ *  LOCAL DEV TOOL. It writes into the repository, has no auth, and must never be exposed. Until
+ *  2026-09-25 it was three NestJS files behind `/api/calibrate/*`; the server is gone, and the Vite
+ *  dev server mounts `handleCalibrateRequest` at the same paths instead (`client/vite.config.ts`), so
+ *  the `#calibrate` panel is unchanged. Node only: it reads Mongo and writes files. */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Db } from "mongodb";
-import type * as matcherTypes from "@edh-seer/matcher";
-import type { CalibrateDeps, CalibratePair, CalibrateCard, VerdictRequest } from "./calibrate.service.js";
+import { connect, docToCard, loadConfig } from "@edh-seer/data";
+import { segment } from "@edh-seer/tagger";
+import * as matcher from "./index.js";
+import type { ClauseFixture, PairRecord, Stratum, TagDefect, Verdict } from "./index.js";
+
+/** One side of a pair, as the judge sees it. */
+export interface CalibrateCard {
+  name: string;
+  typeLine: string;
+  oracleText: string;
+  /** Derived tags in reader-facing lines ("triggers on a creature dying", "static: pump"). Half of
+   *  what this tool catches is a MISTAGGED card, which is invisible without them. */
+  tags: string[];
+}
+
+export interface CalibratePair {
+  a: CalibrateCard;
+  b: CalibrateCard;
+  stratum: Stratum;
+  /** What the engine currently says. The client holds this back until the judge asks, because
+   *  showing it first anchors the answer to what the engine already believes. */
+  engineReasons: string[];
+}
+
+export interface VerdictRequest {
+  a: string;
+  b: string;
+  verdict: Verdict;
+  stratum: Stratum;
+  tagDefects?: TagDefect[];
+  note?: string;
+}
+
+export interface CalibrateDeps {
+  samplePair(): Promise<CalibratePair | null>;
+  record(v: VerdictRequest): Promise<{ total: number; knownDefects: number }>;
+}
+
+/** Whether the tool answers at all.
+ *
+ *  IT IS A WRITE ENDPOINT ON THE PANEL'S OWN INPUTS. A verdict writes `pair-calibration`'s pairs
+ *  file AND its clause fixture, both of which back a RATCHET the test suite enforces
+ *  (`KNOWN_DEFECT_CAP`), and the panel those feed is owner-denominated end to end. Anyone who could
+ *  reach it could inject judged pairs into the instrument this project measures itself with.
+ *
+ *  DEFAULT OFF, AND THE OWNER OPTS IN PER RUN: `MTG_CALIBRATE=1 npm run dev:client`. There is no
+ *  auth to hang it on and inventing one for a single-user tool is the machinery this repo refuses.
+ *
+ *  EXACTLY "1", NOTHING ELSE. A gate that accepts "true", "yes" or any non-empty string is a gate
+ *  that opens on `MTG_CALIBRATE=false`, which is the classic way one of these fails open. */
+export function calibrateEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env.MTG_CALIBRATE === "1";
+}
+
+const VERDICTS = new Set(["synergy", "neutral", "anti-synergy"]);
+const STRATA = new Set(["linked", "shared-tag", "random"]);
+
+/** A request to `/api/calibrate/*`, answered: the routes, and the validation the Nest controller
+ *  did. Pure over `deps`, so the tests need neither Mongo nor a server. */
+export async function handleCalibrateRequest(
+  deps: CalibrateDeps, method: string, path: string, body: unknown,
+): Promise<{ status: number; json: unknown }> {
+  if (method === "GET" && path === "/api/calibrate/pair") {
+    const p = await deps.samplePair();
+    if (!p) return { status: 500, json: { message: "no sampleable pair: is the derived corpus empty?" } };
+    return { status: 200, json: p };
+  }
+  if (method === "POST" && path === "/api/calibrate/verdict") {
+    // Validated rather than trusted: a typo'd verdict would be written to a file the test suite
+    // reads, and a gate fed junk is worse than no gate.
+    const v = body as Partial<VerdictRequest> | null;
+    if (!v || typeof v.a !== "string" || typeof v.b !== "string" || v.a === v.b) {
+      return { status: 400, json: { message: "a and b must be two different card names" } };
+    }
+    if (!VERDICTS.has(v.verdict as string)) {
+      return { status: 400, json: { message: `verdict must be one of: ${[...VERDICTS].join(", ")}` } };
+    }
+    if (!STRATA.has(v.stratum as string)) {
+      return { status: 400, json: { message: `stratum must be one of: ${[...STRATA].join(", ")}` } };
+    }
+    return { status: 200, json: await deps.record(v as VerdictRequest) };
+  }
+  return { status: 404, json: { message: "not found" } };
+}
+
+/** The live tool: a Mongo connection and the sampling universe, built once. */
+export async function openCalibrationJudge(repoRoot: string): Promise<CalibrateDeps> {
+  const store = await connect(loadConfig());
+  return makeCalibrateDeps(store as never, repoRoot);
+}
 
 /** Where the judged data lives. Relative to the repo root, because the verdicts are source. */
 const PAIRS_FILE = "packages/matcher/src/calibration-pairs.json";
@@ -50,9 +140,7 @@ function renderTags(tags: { abilities?: unknown[] } | null): string[] {
   });
 }
 
-export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Promise<CalibrateDeps> {
-  const data = await import("@edh-seer/data");
-  const matcher = await import("@edh-seer/matcher");
+async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Promise<CalibrateDeps> {
   const hierarchy = matcher.loadHierarchy();
 
   /** Built once: the derived corpus is the sampling universe, and re-reading it per request would
@@ -74,7 +162,7 @@ export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Pr
   const names = [...tagsByName.keys()];
 
   const deckCard = (name: string): unknown => ({
-    card: data.docToCard(cardByName.get(name) as never),
+    card: docToCard(cardByName.get(name) as never),
     tags: tagsByName.get(name),
   });
   // ACROSS FACES, because that is what the engine ships. `pairReasons` reads whatever type line and
@@ -122,8 +210,8 @@ export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Pr
     async record(v: VerdictRequest) {
       const pairsPath = join(repoRoot, PAIRS_FILE);
       const fixturePath = join(repoRoot, FIXTURE_FILE);
-      const pairs = readJson<matcherTypes.PairRecord[]>(pairsPath, []);
-      const fixtures = readJson<matcherTypes.ClauseFixture[]>(fixturePath, []);
+      const pairs = readJson<PairRecord[]>(pairsPath, []);
+      const fixtures = readJson<ClauseFixture[]>(fixturePath, []);
 
       // The verdict is only half the record. Without the clause snapshot the gate would need a
       // database, and a gate that needs a database does not run in CI.
@@ -136,13 +224,12 @@ export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Pr
       // action when the clause names an actor the object does not carry ("its controller creates a
       // 3/3 Ape"). The gate has no database and so no oracle text to segment; without this the
       // fixture would derive different tags from the ones the judge was shown.
-      const tagger = await import("@edh-seer/tagger");
       const cardDocs = await store.db.collection("cards")
         .find({ name: { $in: [v.a, v.b] } }).toArray();
       const textsFor = (name: string): Record<number, string> => {
         const d = cardDocs.find((c) => c.name === name);
         const out: Record<number, string> = {};
-        for (const c of tagger.segment(d?.oracleText ?? "", d?.keywords ?? [], d?.typeLine ?? "")) {
+        for (const c of segment(d?.oracleText ?? "", d?.keywords ?? [], d?.typeLine ?? "")) {
           out[c.id] = c.text;
         }
         return out;
@@ -156,7 +243,7 @@ export async function makeCalibrateDeps(store: { db: Db }, repoRoot: string): Pr
       }));
 
       const engineLinks = reasonsFor(v.a, v.b).length > 0;
-      const next: matcherTypes.PairRecord = {
+      const next: PairRecord = {
         a: v.a, b: v.b, verdict: v.verdict, stratum: v.stratum,
         ...(v.tagDefects?.length ? { tagDefects: v.tagDefects } : {}),
         ...(v.note ? { note: v.note } : {}),

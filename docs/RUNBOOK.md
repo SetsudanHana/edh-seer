@@ -37,42 +37,32 @@ free.
 
 ## Running the product
 
-**What production runs** is the static site: the browser runs the matcher itself, against `/static`
-shards, and there is no API in the analysis path.
+The site analyses in the browser: it fetches each card's derived tags from `/static` shards and runs
+the matcher itself. There is no API in the analysis path, and since 2026-09-25 no API server at all.
 
 ```bash
 npx tsx packages/matcher/src/bin/build-static.ts                 # static-out/, from Mongo, ~70s
-VITE_STATIC_DATA=1 npm run dev:client -w @edh-seer/web           # UI on :5173, /static from static-out/
+npm run dev -w @edh-seer/web                                     # UI on :5173, /static from static-out/
+npx tsx packages/cli/src/main.ts <decklist.txt>                  # a deck report in the terminal
 ```
 
 The dev server serves `/static/*` straight out of `static-out/` (the `edh-seer-static-out` plugin in
-`client/vite.config.ts`), so the shards are never copied.
+`client/vite.config.ts`), so the shards are never copied. **Rebuild `static-out/` after a derivation
+change**, or the dev server shows the engine's old reading of every card.
 
-**The API path** is kept as the known-good reference to compare against:
-
-```bash
-npx tsx packages/cli/src/main.ts <decklist.txt>                  # analyse a deck in the terminal
-npm run dev -w @edh-seer/web                                     # API on :3001 + UI on :5173, /api proxied
-```
-
-Or the two halves separately:
+The pair-judging panel (`#calibrate`) is served by the same dev server, from
+`@edh-seer/matcher/calibration-judge`, and only when asked for: it writes the calibration ratchet's
+own files.
 
 ```bash
-npm run dev:server -w @edh-seer/web    # tsc --watch beside node --watch, API on :3001
-npm run dev:client -w @edh-seer/web    # UI on :5173
+MTG_CALIBRATE=1 npm run dev -w @edh-seer/web                     # then open /#calibrate; needs Mongo
 ```
 
-There is no Nest CLI in this project. TypeScript 7 ships the `tsc` executable only, without the
-programmatic compiler API the CLI drives, so `build:server` is plain `tsc -p server/tsconfig.json` —
-which is all `nest build` ever was. Decorators work because that tsconfig sets
-`experimentalDecorators` and `emitDecoratorMetadata`. Do not try to run the server through tsx
-instead: esbuild emits standard ES decorators and Nest needs the legacy ones, so it dies in
-`request-mapping.decorator.js` rather than failing in a way that points at the cause.
+Deck-link import goes to the import worker: run `npx wrangler dev --port 8788` in
+`packages/import-worker` and the dev server proxies `/api/import` to it.
 
-`start:server` runs the built `dist/`, so it is only as fresh as your last `build:server`.
-
-If the UI is serving code you know you changed, kill the old servers first — an `EADDRINUSE` in the
-log means the browser is measuring yesterday's build.
+If the UI is serving code you know you changed, kill the old dev server first -- an `EADDRINUSE` in
+the log means the browser is measuring yesterday's build.
 
 ## Buying corpus
 
