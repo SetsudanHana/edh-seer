@@ -27,12 +27,15 @@ afterEach(() => { decodeShouldFail = false; });
 // NODE'S BLOB, NOT JSDOM'S (jsdom 30, 2026-09-25). These fakes hand blobs to Node's own `Response`,
 // which reads a body through `.stream()`; jsdom 30's `Blob` has none, so every cache hit threw and
 // fell through to the network. A browser has one Blob, so this is the test environment's seam only.
-// `createObjectURL` is stubbed for the same reason: jsdom's expects its own Blob internals.
+// `createObjectURL` is stubbed for the same reason: whose implementation `URL` carries differs by
+// Node version, and jsdom's expects its own Blob internals.
 const blob = () => new NodeBlob(["x"], { type: "image/jpeg" }) as unknown as Blob;
-beforeAll(() => {
+// PER TEST, NOT ONCE: the shared setup's `afterEach` restores every mock, so a `beforeAll` stub
+// covered the first test only and the rest reached the real one -- which accepts Node's Blob on
+// Node 22 and throws on Node 24 (CI, 2026-09-25).
+beforeEach(() => {
   vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:test");
 });
-afterAll(() => vi.restoreAllMocks());
 
 const fakeCaches = (initial: Record<string, Blob> = {}) => {
   const store = new Map(Object.entries(initial));
