@@ -330,7 +330,52 @@ test("the action line names the cut when the deck has slack", () => {
     suggestions: ["Consistency 6/14 — add ~8, typically 2–4 mana"],
     slack: [{ category: "ramp", count: 17, target: 10, over: 7 }],
   }));
+  // ~8 to add against 7 spare: the donor covers 7 and the sentence says so, rather than promising
+  // slots that are not there.
+  expect(scored[0]!.action).toContain("Take 7 of them from ramp, where you have 17 against a target of 10");
+  expect(scored[0]!.action).toContain("the other 1");
+});
+
+test("the donor covers the whole add when its surplus is big enough", () => {
+  const { scored } = rankedFindings(report({
+    buildParents: [{ name: "Consistency", count: 11, target: 14, leaves: ["draw"], impact: 0.3 }],
+    suggestions: ["Consistency 11/14 — add ~3, typically 2–4 mana"],
+    slack: [{ category: "ramp", count: 17, target: 10, over: 7 }],
+  }));
   expect(scored[0]!.action).toContain("Take the slots from ramp, where you have 17 against a target of 10.");
+});
+
+/** ONE SURPLUS IS SPENT ONCE (review 2026-09-25, the Party Time precon). Every build finding named
+ *  `slack[0]` as its donor, so "Add ~3 … take the slots from Interaction (15 against 13)" and "Add
+ *  ~2 … take the slots from Interaction" asked for five cards out of two spare -- and the box under
+ *  them said "2 slots are spare". The surplus is now handed out in the order the findings are read. */
+test("two findings never spend the same spare slots twice", () => {
+  const { scored } = rankedFindings(report({
+    buildParents: [
+      { name: "Ramp", count: 9, target: 11, leaves: ["ramp"], impact: 0.26 },
+      { name: "Consistency", count: 10, target: 13, leaves: ["draw"], impact: 0.2 },
+    ],
+    suggestions: ["Ramp 9/11 — add ~3, typically 2–4 mana", "Consistency 10/13 — add ~3, typically 2–3 mana"],
+    slack: [{ category: "Interaction", count: 15, target: 13, over: 2 }],
+  }));
+  const [first, second] = scored.filter((f) => f.kind === "build");
+  expect(first!.figureLabel).toBe("Ramp");
+  expect(first!.action).toContain("Take 2 of them from Interaction, where you have 15 against a target of 13");
+  expect(first!.action).toContain("the other 1");
+  expect(second!.action).not.toContain("Take");
+  expect(second!.action).toContain("Interaction's spare slots already go to the suggestion above");
+});
+
+test("a second surplus is used before the reader is told to find the rest", () => {
+  const { scored } = rankedFindings(report({
+    buildParents: [{ name: "Ramp", count: 8, target: 11, leaves: ["ramp"], impact: 0.3 }],
+    suggestions: ["Ramp 8/11 — add ~3, typically 2–4 mana"],
+    slack: [
+      { category: "Interaction", count: 15, target: 13, over: 2 },
+      { category: "Consistency", count: 15, target: 14, over: 1 },
+    ],
+  }));
+  expect(scored[0]!.action).toContain("Take 2 of them from Interaction (15 against a target of 13) and 1 from Consistency (15 against a target of 14).");
 });
 
 /** No surplus, no donor. Nothing is invented to fill the sentence. */

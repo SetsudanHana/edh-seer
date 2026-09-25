@@ -73,6 +73,7 @@ const pct = (n: number): number => Math.round(n * 100);
 function buildFindings(report: DeckReport): Finding[] {
   const parents = report.buildParents ?? [];
   const suggestions = report.suggestions ?? [];
+  const cuts = donorSentences(parents, suggestions, report.slack ?? []);
   const out: Finding[] = [];
   for (const p of parents) {
     if (p.target <= 0 || p.count >= p.target) continue;
@@ -80,13 +81,7 @@ function buildFindings(report: DeckReport): Finding[] {
     // The engine's own sentence for this parent, if it wrote one. It carries the cost band
     // (`typically 2–4 mana`) that this module has no business recomputing.
     const suggestion = suggestions.find((s) => s.startsWith(`${p.name} `));
-    // THE DONOR, NAMED. A 100-card deck cannot add without cutting, so a bare "add ~8" is a move no
-    // reader can make. `report.slack` is the same surplus `slotTrade` reads for "where the slots come
-    // from", and a cut from a parent over its target costs the score NOTHING -- attainment is
-    // `min(count / target, 1)` and stays capped all the way down to the target. That is what makes
-    // the add side the whole delta, and what makes the impact figure true of a legal deck.
-    const donor = (report.slack ?? [])[0];
-    const cut = donor ? `. Take the slots from ${donor.category}, where you have ${donor.count} against a target of ${donor.target}.` : "";
+    const cut = cuts.get(p.name) ?? "";
     out.push({
       kind: "build",
       id: `build:${p.name}`,
@@ -109,6 +104,64 @@ function buildFindings(report: DeckReport): Finding[] {
       shortfall: missing / p.target,
       impact: p.impact,
     });
+  }
+  return out;
+}
+
+/** THE DONOR, NAMED. A 100-card deck cannot add without cutting, so a bare "add ~8" is a move no
+ *  reader can make. `report.slack` is the same surplus `slotTrade` reads for "where the slots come
+ *  from", and a cut from a parent over its target costs the score NOTHING -- attainment is
+ *  `min(count / target, 1)` and stays capped all the way down to the target. That is what makes the
+ *  add side the whole delta, and what makes the impact figure true of a legal deck.
+ *
+ *  ONE SURPLUS IS SPENT ONCE (review 2026-09-25). Every finding used to name `slack[0]`, so on the
+ *  Party Time precon "add ~3" and "add ~3" both took their slots from an Interaction surplus of 2,
+ *  and the box under them said "2 slots are spare". The surplus is now handed out in the order the
+ *  scored findings are READ (impact first, as `rankedFindings` sorts them), so "the suggestion
+ *  above" is true, and a finding the surplus cannot cover says how many are left to find.
+ *
+ *  The amount handed out is the "~N" the reader is told to add, falling back to the shortfall. */
+function donorSentences(
+  parents: NonNullable<DeckReport["buildParents"]>,
+  suggestions: readonly string[],
+  slack: NonNullable<DeckReport["slack"]>,
+): Map<string, string> {
+  const out = new Map<string, string>();
+  if (slack.length === 0) return out;
+  const left = slack.map((s) => ({ ...s, spare: s.count - s.target }));
+  const short = parents
+    .filter((p) => p.target > 0 && p.count < p.target)
+    .sort((a, b) => (b.impact ?? -1) - (a.impact ?? -1) || a.name.localeCompare(b.name));
+  for (const p of short) {
+    const said = suggestions.find((s) => s.startsWith(`${p.name} `))?.match(/~(\d+)/);
+    const want = said ? Number(said[1]) : p.target - p.count;
+    const taken: { category: string; count: number; target: number; n: number }[] = [];
+    let need = want;
+    for (const d of left) {
+      if (need === 0) break;
+      const n = Math.min(need, d.spare);
+      if (n <= 0) continue;
+      taken.push({ category: d.category, count: d.count, target: d.target, n });
+      d.spare -= n;
+      need -= n;
+    }
+    if (taken.length === 0) {
+      const names = slack.map((s) => s.category).join(" and ");
+      out.set(p.name, `. ${names}'s spare slots already go to the suggestion above, so these are yours to find.`);
+      continue;
+    }
+    const rest = need > 0 ? `; nothing else runs over its target, so the other ${need} ${need === 1 ? "is" : "are"} yours to find.` : ".";
+    if (taken.length === 1 && need === 0) {
+      const [d] = taken;
+      out.set(p.name, `. Take the slots from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}.`);
+    } else if (taken.length === 1) {
+      const [d] = taken;
+      out.set(p.name, `. Take ${d!.n} of them from ${d!.category}, where you have ${d!.count} against a target of ${d!.target}${rest}`);
+    } else {
+      const parts = taken.map((d) => `${d.n} from ${d.category} (${d.count} against a target of ${d.target})`);
+      parts[0] = parts[0]!.replace(/^(\d+) from/, "$1 of them from");
+      out.set(p.name, `. Take ${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}${rest}`);
+    }
   }
   return out;
 }

@@ -177,7 +177,7 @@ export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
         <>
           <p className="text-sm text-(--muted)">
             You run more of these than the target. Which card goes is your call: we don&apos;t rank
-            one ramp card against another.
+            the cards inside a role against each other.
           </p>
           <ul className="flex flex-wrap gap-2">
             {slack!.map((s) => (
