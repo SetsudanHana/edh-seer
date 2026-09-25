@@ -10,6 +10,9 @@ dist/
 *.pem
 *.key
 credentials.json
+# Wrangler's local secrets file, where `MOXFIELD_UA` lives for `wrangler dev`.
+.dev.vars
+.dev.vars.*
 secrets.json
 .npmrc
 .claude/settings.local.json
@@ -52,3 +55,10 @@ static-out/
 
 # Third-party SEO report drops (screenshots, exports). Local review material, never shipped.
 /seo-review/
+
+# The Comprehensive Rules as fetched by `fetch-comp-rules.ts`: about 1 MB of Wizards' text, which is
+# theirs to publish, not ours.
+.cr-cache/
+
+# Scratch scripts at the repository root (`.foo.mjs`). Nothing the project runs lives there.
+/.*.mjs

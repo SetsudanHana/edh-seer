@@ -24,6 +24,7 @@ import { effectPhrase } from "@edh-seer/matcher/sentence";
 import { MIN_INDEXABLE_PARTNERS, jobOf, jobSentence } from "@edh-seer/matcher/partner-shard";
 import { eventKeyAction, eventKeyClause, eventKeySentence } from "./demand-sentence.js";
 import { groupAnchor } from "./group-anchor.js";
+import { SECURITY_HEADERS } from "./csp.js";
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -76,8 +77,8 @@ export const jsonForScript = (value: unknown): string =>
 export function htmlHeaders(indexable = true): Record<string, string> {
   return {
     "content-type": "text/html; charset=utf-8",
-    "x-content-type-options": "nosniff",
-    "referrer-policy": "strict-origin-when-cross-origin",
+    // The same policy `public/_headers` gives static files, which never reaches a Function.
+    ...SECURITY_HEADERS,
     ...(indexable ? {} : { "x-robots-tag": "noindex" }),
   };
 }
