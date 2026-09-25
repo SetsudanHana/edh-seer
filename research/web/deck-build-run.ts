@@ -26,6 +26,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { slugOf } from "../../packages/matcher/src/slug.js";
 
 // ---------------------------------------------------------------------------------------------
 // The shapes the phases hand back
@@ -143,7 +144,8 @@ function detailSlug(url: string): string {
   return m ? slug(decodeURIComponent(m[1]!)) : "";
 }
 
-const slug = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+/** The site's own slug rule, so "Ajani's Chosen" compares as `ajanis-chosen` like its URL does. */
+const slug = slugOf;
 
 /** THE SAME PAGE, however the round trip spelled it. A trailing slash, a `?ref=`, a `#anchor` --
  *  all benign browser artefacts, and comparing raw strings made every one of them a ghost citation

@@ -2756,7 +2756,7 @@ export function pairReasonsAcrossFaces(a: DeckCard, b: DeckCard, h: Hierarchy, o
   for (const x of fa) {
     for (const y of fb) {
       for (const r of pairReasons(x, y, h, opts)) {
-        const key = `${r.tag} ${r.text}`;
+        const key = `${r.tag}\0${r.text}`;
         if (seen.has(key)) continue;
         seen.add(key);
         out.push(r);
