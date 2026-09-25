@@ -2,10 +2,12 @@
  *  its stratum, prints the per-stratum table with a Wilson 95% interval and the population-weighted
  *  pooled recall (`pooledRecall`, never raw pooling — spec §5). Free, read-only, no Mongo.
  *
- *    npx tsx research/instruments/recall-score.ts docs/measurements/2026-09-09-recall-v4 */
+ *    npx tsx packages/instruments/src/recall-score.ts <draw dir>
+ *
+ *  The second half of `recall-sample.ts`: that draws the blinded worksheet, this scores it. */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { pooledRecall, scoreRecall, type RecallJudgment, type Stratum } from "../../packages/instruments/src/recall-core.js";
+import { pooledRecall, scoreRecall, type RecallJudgment, type Stratum } from "./recall-core.js";
 
 const dir = process.argv[2];
 if (!dir) throw new Error("usage: recall-score.ts <draw dir>");
