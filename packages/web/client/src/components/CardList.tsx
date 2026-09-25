@@ -275,7 +275,7 @@ export function CardList({ cards, artByName, coverage }: {
       <Explain label="what the cost figures mean">
         The chance you can actually cast it — mana and colours together — simulated over 2,000
         shuffles. A range, low to high, and the range is how you play: the low end holds up two mana
-        before casting an accelerant, the high end spends everything on acceleration and is a ceiling
+        before casting a ramp piece, the high end spends everything on ramp and is a ceiling
         no real deck plays to. The turn is the card's own mana value — a 5-drop is priced at turn 5 —
         and a land or an unpriceable cost renders an em dash rather than 0%. No opponent is modelled
         and no cantrips are cast, so a draw-heavy deck reads low.

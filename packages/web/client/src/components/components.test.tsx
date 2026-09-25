@@ -1184,7 +1184,7 @@ test("every leaf still renders grouped under its own parent, in the parent's own
     expect.stringMatching(/^Card selection 2, 25% of Consistency/),
     expect.stringMatching(/^Tutors 0, 0% of Consistency/), // absent from SCRAMBLED_CATEGORIES entirely -- still renders, at 0
     expect.stringMatching(/^Removal 3, 75% of Interaction/),
-    expect.stringMatching(/^Stack interaction 0, 0% of Interaction/),
+    expect.stringMatching(/^Counterspells 0, 0% of Interaction/),
     expect.stringMatching(/^Graveyard hate 1, 25% of Interaction/),
     expect.stringMatching(/^Protection 0, 0% of Interaction/),
   ]);
@@ -1738,8 +1738,9 @@ test("BuildBenchmarks names the win plans with their counts, and says which dire
   expect(screen.getByText("12 cards")).toBeInTheDocument();
   // The concentration index has to say which DIRECTION is good, or a reader will assume more plans
   // is better -- it is the one number here scored the opposite way to the coverage above it.
-  expect(screen.getByText(/Concentration 0\.52: 1\.00 is all-in on one plan/)).toBeInTheDocument();
-  expect(screen.getByText(/Higher is better/)).toBeInTheDocument();
+  // In words (wording review 2026-09-25): 0.52 across two plans is close to an even split.
+  expect(screen.getByText("Spread about evenly across these 2.")).toBeInTheDocument();
+  expect(screen.queryByText(/Concentration/)).toBeNull();
 });
 
 /** THE MANA ROWS WRAP RATHER THAN OVERFLOWING THE COLUMN THEY ARE GIVEN.
@@ -2863,7 +2864,7 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   expect(screen.queryByText(/55% – 62%/)).not.toBeInTheDocument();
   expect(screen.getByText(/to make 6 mana by turn 6/)).toBeInTheDocument();
   // The range is named as the POLICY, not as uncertainty in general.
-  expect(screen.getByText(/play policy/i)).toBeInTheDocument();
+  expect(screen.getByText(/how you play them/i)).toBeInTheDocument();
   expect(screen.getByText(/ceiling no real deck plays to/i)).toBeInTheDocument();
   // AND THE WIDE DECK KEEPS BOTH ENDS. `iz-it-izzet` measures 30% - 67% at this cell, a 36pp spread
   // where the sequencing decides the answer and no single number can stand for it.

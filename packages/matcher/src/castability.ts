@@ -224,8 +224,8 @@ export function deckCastability(
       .map((r) => [r.name, { name: r.name, manaValue: r.manaValue, reason: r.refused! }])).values()]
       .sort((a, b) => b.manaValue - a.manaValue || a.name.localeCompare(b.name)),
     biases:
-      "A range, not a number, and the range is the PLAY POLICY: the low end holds up two mana before "
-      + "casting an accelerant, the high end spends everything on acceleration and is a ceiling no "
+      "A range, not a number, and the range is how you play: the low end holds up two mana before "
+      + "casting a ramp piece, the high end spends everything on ramp and is a ceiling no "
       + `real deck plays to. Simulated over ${REPORT_TRIALS.toLocaleString("en-US")} shuffles with `
       + "no opponent — nothing is countered, "
       + "killed or taxed — and with no cantrips cast, so a draw-heavy deck reads low. Colours are "

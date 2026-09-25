@@ -855,9 +855,15 @@ function DeckMathRows({
             ))}
           </p>
           <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
-            Concentration {wincons.focus.toFixed(2)}: 1.00 is all-in on one plan,{" "}
-            {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is an even split across these{" "}
-            {wincons.classes.length}. Higher is better.
+            {/* IN WORDS, NOT "CONCENTRATION 0.51" (wording review 2026-09-25): a two-decimal index
+              *  with its own scale explained beside it is a statistic, not a sentence a player
+              *  reads. Same number, three readings: near 1 is all-in, near an even split is
+              *  spread, and between is leaning. */}
+            {wincons.focus >= 0.8
+              ? "Nearly all-in on one plan."
+              : wincons.focus >= 1 / Math.max(1, wincons.classes.length) + 0.15
+              ? "Leaning on one plan."
+              : `Spread about evenly across these ${wincons.classes.length}.`}
           </p>
         </div>
   ) : null;

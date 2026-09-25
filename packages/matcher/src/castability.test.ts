@@ -161,7 +161,7 @@ test("the deck summary ranks the hardest casts first and counts what it refused"
   const names = out.cards.map((r) => r.name);
   expect(names.indexOf("Damnation")).toBeLessThan(names.indexOf("Duress"));
   // The caveat ships WITH the number or it should not ship.
-  expect(out.biases).toMatch(/play policy/i);
+  expect(out.biases).toMatch(/the range is how you play/i);
 });
 
 test("a card listed twice is one row", () => {

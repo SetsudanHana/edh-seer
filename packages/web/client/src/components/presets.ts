@@ -263,7 +263,7 @@ export const PAINT_MODES: PaintMode[] = [
     valueLabel: (v) => v,
   },
   {
-    id: "identity", label: "Identity",
+    id: "identity", label: "Colour identity",
     // A colourless card is `C`, not nothing -- otherwise every artifact and every basic-less land
     // silently drops out of the legend it is a real member of.
     values: (n) => (n.colors?.length ? n.colors : ["C"]),
