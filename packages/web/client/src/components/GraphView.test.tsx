@@ -4,7 +4,9 @@ import { eventLabel } from "../lib/demand-sentence.js";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { EDIT_REHEAT_ALPHA, PARK_ALPHA } from "./board-force.js";
-import { ART_RADIUS, GraphView, clampLabelX, edgeAlpha, nodeMatchesQuery, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan, shortCardName } from "./GraphView.js";
+import { ART_RADIUS, GraphView, nodeMatchesQuery, nodeRadius, traveledAsPan, shortCardName } from "./GraphView.js";
+import { jitterFromId, seedPosition } from "./board-model.js";
+import { clampLabelX, edgeAlpha, edgeWidth } from "./board-paint.js";
 import { CARD_H, CARD_W } from "./board-force.js";
 import { SAMPLE } from "../fixtures.js";
 import { CardDrawerProvider, usePinned } from "./card-drawer.js";
@@ -1569,13 +1571,13 @@ describe("flow view", () => {
   });
 
   // THE RESET AFTER THE LOOP, NOT JUST INSIDE IT. `ctx.setLineDash([]);` right after the edge loop
-  // (GraphView.tsx:444) is the only thing standing between a selected flow and every later stroke
-  // this frame reading as dashed -- card frames (`strokeRect`), rims and selection rings (`arc` +
-  // `stroke`) would all paint dashed for as long as a flow stayed selected, because canvas dash
-  // state is sticky on the context and `links` is drawn in `graph.edges` order, so whenever the
-  // LAST edge happens to be a flow edge nothing inside the loop ever clears it. A single-edge graph
-  // where that one edge IS the flow means the loop's own else-branch reset (line 437) never fires
-  // either, so this can only pass because of the reset AFTER the loop.
+  // (in `paintBoard`, board-paint.ts) is the only thing standing between a selected flow and every
+  // later stroke this frame reading as dashed -- card frames (`strokeRect`), rims and selection
+  // rings (`arc` + `stroke`) would all paint dashed for as long as a flow stayed selected, because
+  // canvas dash state is sticky on the context and `links` is drawn in `graph.edges` order, so
+  // whenever the LAST edge happens to be a flow edge nothing inside the loop ever clears it. A
+  // single-edge graph where that one edge IS the flow means the loop's own else-branch reset never
+  // fires either, so this can only pass because of the reset AFTER the loop.
   test("the dash pattern is cleared after the edge loop, not just inside it", () => {
     const calls: string[] = [];
     const graph = graphOf(
