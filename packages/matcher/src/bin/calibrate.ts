@@ -11,6 +11,7 @@ import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
 import { saltCardScores, spearman, meanSpearman, looCV, type SaltPayload, type ScoreDeck } from "./calibrate-core.js";
 import type { DeckCard } from "../types.js";
+import { csSlug } from "./cs-categories.js";
 
 const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
 const CONFIG = JSON.parse(
@@ -18,11 +19,10 @@ const CONFIG = JSON.parse(
 ) as { name: string; path: string; saltId: string }[];
 const ENGINE_JSON = fileURLToPath(new URL("../../../engine/src/impact-weights.json", import.meta.url));
 
-/** Slugify a card name to match CommanderSalt's synergy-list keys (lowercase, underscored):
- *  "Venser, Shaper Savant" -> "venser_shaper_savant". */
-function slug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-}
+/** CommanderSalt's own slug rule, shared with `cs-categories.ts` (2026-09-25). This file carried a
+ *  cruder copy that kept apostrophes and diacritics and trimmed trailing underscores, so every such
+ *  card dropped out of the correlation -- the defect `csSlug`'s comment warns about. */
+const slug = csSlug;
 
 async function fetchSalt(saltId: string): Promise<SaltPayload> {
   const res = await fetch(`https://api.commandersalt.com/decks?id=${encodeURIComponent(saltId)}`);

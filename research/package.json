@@ -5,7 +5,16 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@edh-seer/data": "*",
+    "@edh-seer/engine": "*",
+    "@edh-seer/tagger": "*",
+    "mongodb": "^7.6.0"
+  },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.2",
     "typescript": "^7.0.2"
   }
 }

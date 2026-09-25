@@ -9,7 +9,7 @@
  *
  *  Ranked by DECK COUNT, so a card isolated in 29 of 71 decks outranks one isolated once.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/isolated-cards.ts [--all] */
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/isolated-cards.ts [--all] */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";

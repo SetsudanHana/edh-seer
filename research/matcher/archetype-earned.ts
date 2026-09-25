@@ -30,7 +30,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *  Free: Mongo reads only, no API, no writes.
  *
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/archetype-earned.ts
+ *    npx tsx research/matcher/archetype-earned.ts
  */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 const MATRIX_PATH = join(process.cwd(), "packages", "web", "client", "src", "lib", "theme-matrix.ts");

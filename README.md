@@ -153,7 +153,9 @@ several ratchets, and a habit of recording the measurement beside every change.
 | `@edh-seer/matcher` | pairings, reasons, archetypes, mana math, build benchmarks, combos |
 | `@edh-seer/engine` | scoring, ratings, per-card impact |
 | `@edh-seer/cli` | terminal deck report |
-| `@edh-seer/web` | NestJS API + React/Vite UI, including the interactive synergy graph |
+| `@edh-seer/instruments` | the measuring tools: panel score, population diffs, recall samples |
+| `@edh-seer/web` | the site: a React/Vite app that analyses in the browser, the Pages Functions that prerender card pages, and a NestJS API kept for development |
+| `@edh-seer/import-worker` | the Cloudflare Worker that imports Moxfield and Archidekt decks |
 
 Node 22 or newer is all the test suite needs:
 

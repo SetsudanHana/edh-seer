@@ -23,10 +23,10 @@ import type { DeckCard } from "@edh-seer/matcher/types";
  *
  *  Free: Mongo reads only. Write a baseline before the change, diff after:
  *
- *    npx tsx packages/matcher/src/bin/build-population.ts > before.json
+ *    npx tsx packages/instruments/src/build-population.ts > before.json
  *    ...edit rules...
- *    npx tsx packages/matcher/src/bin/build-population.ts > after.json
- *    npx tsx packages/matcher/src/bin/build-population.ts --diff before.json after.json */
+ *    npx tsx packages/instruments/src/build-population.ts > after.json
+ *    npx tsx packages/instruments/src/build-population.ts --diff before.json after.json */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 
 type Snapshot = Record<string, Record<string, string[]>>;

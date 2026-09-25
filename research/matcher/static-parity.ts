@@ -8,7 +8,7 @@
  *
  *    set -a && source packages/tagger/.env && set +a
  *    npx tsx packages/matcher/src/bin/build-static.ts     # if static-out/ needs rebuilding
- *    npx tsx packages/matcher/src/bin/static-parity.ts */
+ *    npx tsx research/matcher/static-parity.ts */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Db } from "mongodb";

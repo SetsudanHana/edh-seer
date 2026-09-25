@@ -17,7 +17,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Run it on both sides of the change and diff the files:
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/archetype-token-kinds.ts /tmp/after.json
+ *    npx tsx research/matcher/archetype-token-kinds.ts /tmp/after.json
  *    git stash && npx tsx ... /tmp/before.json && git stash pop
  *
  *  Free: Mongo reads only, no API, no writes.

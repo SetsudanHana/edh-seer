@@ -3,7 +3,7 @@ import { expect, test, vi } from "vitest";
 import { fetchOracleCards } from "./scryfall.js";
 import { streamVariants } from "./spellbook.js";
 import { parseMoxfieldId, fetchMoxfieldDeck, moxfieldDeckToSections } from "./moxfield.js";
-import { DeckFetchError } from "./deck-source.js";
+import { DeckFetchError, MAX_DECK_BYTES, readDeckJson } from "./deck-source.js";
 import {
   parseArchidektId,
   fetchArchidektDeck,
@@ -11,7 +11,9 @@ import {
 } from "./archidekt.js";
 
 function jsonResponse(body: unknown, ok = true, status = 200): Response {
-  return { ok, status, json: async () => body } as unknown as Response;
+  return {
+    ok, status, headers: new Headers(), json: async () => body, text: async () => JSON.stringify(body),
+  } as unknown as Response;
 }
 
 function gzipResponse(jsonlBody: string, ok = true, status = 200): Response {
@@ -310,4 +312,15 @@ test("a non-ok status arrives as a DeckFetchError that says whether upstream is 
   const stop = await fetchArchidektDeck("1", limited as unknown as typeof fetch).catch((e) => e);
   expect(stop).toBeInstanceOf(DeckFetchError);
   expect(stop.isUpstreamDistress).toBe(true);
+});
+
+/** SECURITY REVIEW 2026-09-25: a deck site's answer is read whole, so it is capped. A declared size
+ *  over the cap is refused before reading; a body that lies about its size is refused after. */
+test("a deck body over the cap is a 413, by declared length or by real length", async () => {
+  const declared = new Response("{}", { headers: { "Content-Length": String(MAX_DECK_BYTES + 1) } });
+  await expect(readDeckJson(declared, "Moxfield")).rejects.toMatchObject({ status: 413, source: "Moxfield" });
+  const real = new Response(`{"x":"${"a".repeat(MAX_DECK_BYTES)}"}`);
+  await expect(readDeckJson(real, "Archidekt")).rejects.toMatchObject({ status: 413 });
+  await expect(readDeckJson(new Response('{"ok":1}'), "Archidekt")).resolves.toEqual({ ok: 1 });
+  expect(new DeckFetchError("Moxfield", 413).isUpstreamDistress).toBe(false);
 });

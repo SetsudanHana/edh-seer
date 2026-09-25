@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * TOKEN BUILD — a real, working reference implementation of workflows/token-build.md.
+ * TOKEN BUILD. `npm run tokens:build` runs it; CI rebuilds and fails on a diff.
  * Reads the DTCG tokens in tokens/*.json (source of truth), resolves every alias
  * (incl. cross-file {../colors.*} and the dark override map), and emits a single
  * CSS-variable theme: `:root { … }` + `:root[data-theme="dark"] { … }`.
@@ -15,8 +15,7 @@
  *   node scripts/build_tokens.mjs --out dist/tokens.css
  *   node scripts/build_tokens.mjs --in design-tokens.json --out src/theme.css
  *
- * --in takes a directory of DTCG files (default: tokens/) or a single self-contained
- * file, which is what a product repo scaffolded from templates/product-design/ has.
+ * --in takes a directory of DTCG files (default: tokens/) or a single self-contained file.
  */
 import { readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';

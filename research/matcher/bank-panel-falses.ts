@@ -6,7 +6,7 @@
  *  only when, after the fix, the two cards share no reason whatsoever -- a pair whose false tag is
  *  gone but which still links on a real tag stays in the panel alone, and is reported here.
  *
- *    npx tsx research/bank-panel-falses.ts <falses-before.jsonl> <falses-after.jsonl> [--write] */
+ *    npx tsx research/matcher/bank-panel-falses.ts <falses-before.jsonl> <falses-after.jsonl> [--write] */
 import { readFileSync, writeFileSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, resolveNames } from "@edh-seer/data";
 import { createTagsLookup, segment } from "@edh-seer/tagger";

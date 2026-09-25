@@ -1,5 +1,5 @@
 # Cloudflare Pages reads this file at deploy time and applies it to static asset responses. It is
-# parsed, not served. Max 100 rules; this uses four.
+# parsed, not served. Max 100 rules; `cache-headers.test.ts` counts them.
 
 # VITE'S OWN OUTPUT IS CONTENT-HASHED (`index-B_kCz-LY.js`), so its name changes whenever its bytes
 # do.
@@ -98,3 +98,15 @@
 # afternoon.
 /.well-known/security.txt
   Cache-Control: public, max-age=3600
+
+# THE SECURITY HEADERS, ON EVERYTHING (security review 2026-09-25). Last, so every rule above keeps
+# its own Cache-Control: Pages merges the headers of every matching rule. The values are
+# `client/src/lib/csp.ts`, which is also what a Pages Function sends -- `_headers` never reaches a
+# Function -- and `csp.test.ts` fails if the two differ. The script hashes are the two inline
+# scripts in `index.html` and `how-it-works/index.html`; edit one and the test says so.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-MMSegDRg2Xk7IZm9a0Jb9yM9fj1Dhfd/vUGnbdAp0cI=' 'sha256-ie8i0uGFgJjmI0/MAHs2apORlp5Cdou/KMObaQWmXRs=' https://static.cloudflareinsights.com; style-src 'self'; img-src 'self' https://cards.scryfall.io blob: data:; font-src 'self'; connect-src 'self' https://cards.scryfall.io https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()

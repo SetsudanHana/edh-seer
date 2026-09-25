@@ -12,7 +12,7 @@
  *
  *  The row to read is a finder with 0-2 targets: the card is a slot doing almost nothing.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/ramp-coverage.ts [deck.txt] */
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/ramp-coverage.ts [deck.txt] */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";

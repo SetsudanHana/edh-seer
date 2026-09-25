@@ -24,8 +24,8 @@ import { join } from "node:path";
  *  matching `verdicts-*.jsonl` BY PREFIX; these are a different claim type with a different key and
  *  would corrupt the pairwise cache. They live in `docs/measurements/thing/` as `thing-*.jsonl`.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/thing-sheet.ts --out /tmp/thing-draw
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/thing-sheet.ts --score /tmp/thing-draw.jsonl
+ *    npx tsx --env-file=packages/tagger/.env packages/instruments/src/thing-sheet.ts --out /tmp/thing-draw
+ *    npx tsx --env-file=packages/tagger/.env packages/instruments/src/thing-sheet.ts --score /tmp/thing-draw.jsonl
  */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";

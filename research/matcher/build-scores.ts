@@ -2,8 +2,8 @@
  *  count/target, the ranked strategies and (once it exists) the template blend. Free: Mongo reads
  *  and pure functions. Run before and after a template change and diff with `--diff a.jsonl b.jsonl`.
  *
- *  Usage: tsx research/build-scores.ts [--dir packages/cli/decks/calibration] > before.jsonl
- *         tsx research/build-scores.ts --diff before.jsonl after.jsonl */
+ *  Usage: tsx research/matcher/build-scores.ts [--dir packages/cli/decks/calibration] > before.jsonl
+ *         tsx research/matcher/build-scores.ts --diff before.jsonl after.jsonl */
 import { readFileSync, readdirSync } from "node:fs";
 
 const argv = process.argv;

@@ -16,7 +16,7 @@
  *  of 71 decks, take (a). FALSIFIER: if both sets fail hand-checking, the membership predicate is
  *  the real work and no probability should be printed at all.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/thing-set-diff.ts [--verbose] */
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/thing-set-diff.ts [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";

@@ -1,3 +1,4 @@
+import { Blob as NodeBlob } from "node:buffer";
 import { cachedImageLoad } from "./art-cache.js";
 
 // jsdom has no image codec: `new Image()` never fires either `onload` or `onerror` for any src --
@@ -23,7 +24,18 @@ beforeAll(() => { (globalThis as unknown as { Image: unknown }).Image = FakeImag
 afterAll(() => { (globalThis as unknown as { Image: unknown }).Image = RealImage; });
 afterEach(() => { decodeShouldFail = false; });
 
-const blob = () => new Blob(["x"], { type: "image/jpeg" });
+// NODE'S BLOB, NOT JSDOM'S (jsdom 30, 2026-09-25). These fakes hand blobs to Node's own `Response`,
+// which reads a body through `.stream()`; jsdom 30's `Blob` has none, so every cache hit threw and
+// fell through to the network. A browser has one Blob, so this is the test environment's seam only.
+// `createObjectURL` is stubbed for the same reason: whose implementation `URL` carries differs by
+// Node version, and jsdom's expects its own Blob internals.
+const blob = () => new NodeBlob(["x"], { type: "image/jpeg" }) as unknown as Blob;
+// PER TEST, NOT ONCE: the shared setup's `afterEach` restores every mock, so a `beforeAll` stub
+// covered the first test only and the rest reached the real one -- which accepts Node's Blob on
+// Node 22 and throws on Node 24 (CI, 2026-09-25).
+beforeEach(() => {
+  vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:test");
+});
 
 const fakeCaches = (initial: Record<string, Blob> = {}) => {
   const store = new Map(Object.entries(initial));

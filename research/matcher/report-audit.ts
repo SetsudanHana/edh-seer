@@ -19,7 +19,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Free: Mongo reads only. Run it after adding anything to the report.
  *
- *    npx tsx packages/matcher/src/bin/report-audit.ts [n-decks] */
+ *    npx tsx research/matcher/report-audit.ts [n-decks] */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 
 /** Is this value the shape of a field nobody filled in? */

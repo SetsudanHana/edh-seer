@@ -5,7 +5,7 @@
  *  decks carry the member as the TOP archetype, in the top three, or at all -- and what the top
  *  label was when it is not. A declared member (no signal) scores 0 by construction and says so.
  *
- *    npx tsx research/archetype-recall.ts [--dir packages/cli/decks/edhrec] [--verbose] */
+ *    npx tsx research/matcher/archetype-recall.ts [--dir packages/cli/decks/edhrec] [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
 import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";

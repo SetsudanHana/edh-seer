@@ -13,7 +13,7 @@
  *  is exactly the thing the fixture exists to prevent — so it exits non-zero and says which entry to
  *  re-author.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/tagger/src/bin/manual-clauses-check.ts */
+ *    npx tsx --env-file=packages/tagger/.env research/tagger/manual-clauses-check.ts */
 import { connect, loadConfig } from "@edh-seer/data";
 import { loadManualEntries } from "../../packages/tagger/src/manual-clauses.js";
 

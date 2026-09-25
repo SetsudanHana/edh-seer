@@ -195,7 +195,7 @@ export const TYPE_SEGMENT_HUE: Record<string, string> = {
  *  separation from EACH OTHER, and nothing in that search asked whether a number would be legible
  *  ON one of them — so the answer differs per hue, and a hand-written table of "white here, black
  *  there" would go stale the first time a hue is re-tuned, silently, in the direction of an
- *  unreadable label. WCAG 1.4.3 relative luminance, the same arithmetic `scripts/contrast.py` runs
+ *  unreadable label. WCAG 1.4.3 relative luminance, the same arithmetic `scripts/validate_contrast.py` runs
  *  over the token theme; measured on today's `TYPE_SEGMENT_HUE` it returns white for creature
  *  (5.9:1) and instant (6.0:1), and black for enchantment (5.5:1), artifact (4.9:1), planeswalker
  *  (6.7:1) and sorcery (5.1:1). Pure #ffffff/#000000 rather than a surface token because the

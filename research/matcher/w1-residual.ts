@@ -9,7 +9,7 @@
  *  true by construction. Not a defect family.
  *
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/w1-residual.ts */
+ *    npx tsx research/matcher/w1-residual.ts */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig } from "@edh-seer/data";

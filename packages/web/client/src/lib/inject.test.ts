@@ -68,6 +68,30 @@ test("every interpolated field is escaped", () => {
   expect(html).toContain("&amp; Co");
 });
 
+/** A `$` IN THE TEXT IS TEXT (security review 2026-09-25). The 404 page puts the URL's slug in the
+ *  title and canonical, and string replacements read `$'`, `` $` `` and `$&` as patterns: a
+ *  nine-character slug grew the page to 25 MB. The page must come out the size of the shell plus
+ *  what it was given, with the characters printed as written. */
+test("replacement patterns in page text are printed, not expanded", () => {
+  const plain = page({ title: "No page for “x” — EDH Seer", canonical: "https://edhseer.cards/cards/x" });
+  const slug = "x$'$'$`$&$'";
+  const html = page({
+    title: `No page for “${slug}” — EDH Seer`,
+    description: `desc ${slug}`,
+    canonical: `https://edhseer.cards/cards/${slug}`,
+    bodyHtml: `<p>${slug}</p>`,
+    breadcrumbs: [{ name: slug, url: "https://edhseer.cards/" }, { name: slug, url: `https://edhseer.cards/cards/${slug}` }],
+    image: `https://cards.scryfall.io/normal/${slug}.jpg`,
+    indexable: false,
+  });
+  expect(html.length).toBeLessThan(plain.length + 2_000);
+  expect(html.split("<title>")).toHaveLength(2);
+  const printed = slug.replace(/&/g, "&amp;");
+  expect(html).toContain(`<title>No page for “${printed}” — EDH Seer</title>`);
+  expect(html).toContain(`href="https://edhseer.cards/cards/${printed}"`);
+  expect(html.match(/<script type="module"/g)?.length ?? 0).toBe(plain.match(/<script type="module"/g)?.length ?? 0);
+});
+
 /** THE COUNT IS IN THE HTML TOO (2026-09-08). "793 cards can cause an artifact dying" is the one
  *  figure that makes a card page's static block that card's and not the template's; it had only
  *  ever been rendered by React. One sentence per event group, above that group's list, in the
