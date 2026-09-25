@@ -1,5 +1,5 @@
 import { LAND_BAND, LAND_FALLOFF } from "@edh-seer/matcher/build";
-import { scoreBand, type ScoreTone } from "./score-band.js";
+import { scoreBand, type ScoreTone, type ScoreKind } from "./score-band.js";
 
 export type GaugeTone = "danger" | "warning" | "success" | "neutral";
 
@@ -79,11 +79,11 @@ export function bandState(count: number, target: number): GaugeReading {
  *  `partial` is the rule `HeadlineScores` enforces: `synergyOverall` is edge-derived, so on a deck
  *  where the engine could not read half the cards a red 0.8/5 is the engine's blindness rendered as
  *  the player's failure. The NUMBER still shows -- refusing it would be a second wrong answer. */
-export function scoreState(score: number, partial?: boolean): GaugeReading {
+export function scoreState(score: number, partial?: boolean, kind: ScoreKind = "synergy"): GaugeReading {
   const position = Math.max(-1, Math.min(1, (score / 5) * 2 - 1));
   if (partial) {
     return { state: "unread", label: "too little of the deck read to call this", tone: "neutral", position };
   }
-  const band = scoreBand(score);
+  const band = scoreBand(score, kind);
   return { state: band.label.toLowerCase(), label: band.label.toLowerCase(), tone: TONE_OF_SCORE[band.tone], position };
 }

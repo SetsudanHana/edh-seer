@@ -1002,14 +1002,15 @@ test("the band scale is visible under each dial and is not repeated inside the d
   const { container } = render(<DeckGauges data={SAMPLE} />);
   // BY CONTAINER, NOT `getByText`. Each band is its own `whitespace-nowrap` span now, so no single
   // element holds the whole sentence -- the DOM-text-concatenation trap this suite has hit before.
-  const strips = [...container.querySelectorAll("p")].filter((el) => /unfocused/.test(el.textContent ?? ""));
+  // Synergy's scale and Build's own (wording review 2026-09-25: Build's bands are its own words).
+  const strips = [...container.querySelectorAll("p")].filter((el) => /unfocused|far off/.test(el.textContent ?? ""));
   // One per lead dial -- Synergy and Build each carry the scale their own needle is read against.
   expect(strips).toHaveLength(2);
   for (const strip of strips) {
     expect(strip.closest("details"), "the scale is still folded away").toBeNull();
   }
   for (const details of container.querySelectorAll("details")) {
-    expect(details.textContent, "the scale is said twice").not.toMatch(/unfocused ·/);
+    expect(details.textContent, "the scale is said twice").not.toMatch(/unfocused ·|far off ·/);
   }
 });
 
@@ -1021,11 +1022,13 @@ test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged b
   // ranges, the order and the separators are compared exactly.
   const printed = [...container.querySelectorAll("p")]
     .map((el) => (el.textContent ?? "").replace(/\s+/g, " ").trim())
-    .filter((text) => text.includes("unfocused"));
-  expect(printed.length).toBeGreaterThan(0);
-  for (const text of printed) {
-    expect(text).toBe("0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tuned");
-  }
+    .filter((text) => /^0–1\.5 /.test(text));
+  // One scale per dial, each in its own words: Build is not called "tuned", which a player reads as
+  // power level beside the bracket (wording review 2026-09-25).
+  expect(printed).toEqual([
+    "0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tight",
+    "0–1.5 far off · 1.5–3 short · 3–4 close · 4–5 on target",
+  ]);
 });
 
 // TASK 5 (2026-09-01): the parent's own count-against-target row (CONSISTENCY 15/14, RAMP 17/10,

@@ -2,7 +2,7 @@ import type { AnalyzeResponse } from "../types.js";
 import { Dial } from "./Dial.js";
 import { Bullet, TARGET_MARK } from "./Bullet.js";
 import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
-import { bandScale } from "../lib/score-band.js";
+import { bandScale, type ScoreKind } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { themePct1 } from "../lib/theme-pct.js";
@@ -68,7 +68,7 @@ export type GaugeTab = "build" | "mana" | "engine";
  *  avoid and cost about a quarter of the Overview's height when the panel last tried it. And it is
  *  DELETED from the disclosure rather than copied: an always-visible line and a disclosure's first
  *  line reading word-for-word the same is a defect this report has already filed against itself. */
-function BandScale() {
+function BandScale({ kind = "synergy" }: { kind?: ScoreKind }) {
   return (
     // INLINE, NOT FLEX, and one `whitespace-nowrap` span per band. As a single string this wrapped
     // at 390 INSIDE a band -- first between the range and its word, and then, once a non-breaking
@@ -77,7 +77,7 @@ function BandScale() {
     // that too, but flex drops the whitespace BETWEEN items, and the separators are real text here
     // so the strip reads as one sentence to a screen reader and to the byte-for-byte pin on it.
     <p className="eyebrow text-center text-(--muted) tabular-nums normal-case">
-      {bandScale().map((band, i) => (
+      {bandScale(kind).map((band, i) => (
         <span key={band}>
           {i > 0 ? " · " : null}
           <span className="whitespace-nowrap">{band}</span>
@@ -247,10 +247,10 @@ export function DeckGauges({ data, diff }: {
               /* `buildScore` counts ROLES off printed text and type lines, which an unread card still
                * has, so it keeps its band on a partly-read deck where synergy loses its own. The split
                * is the one the coverage gate already draws; no threshold is invented here. */
-              reading={scoreState(report.buildScore!)}
+              reading={scoreState(report.buildScore!, false, "build")}
               /* No `partial`, matching the live reading immediately above and for its reason. */
               previous={diff?.build
-                ? { value: diff.build.from.toFixed(1), reading: scoreState(diff.build.from) }
+                ? { value: diff.build.from.toFixed(1), reading: scoreState(diff.build.from, false, "build") }
                 : undefined}
               zones="score"
               size="lead"
@@ -259,7 +259,7 @@ export function DeckGauges({ data, diff }: {
                * single-scroll Overview two layouts ago. */
               explain={
                 <>
-                <BandScale />
+                <BandScale kind="build" />
                 <Explain label="what this measures">
                   How close your ramp, draw, removal and other counts are to what similar decks run:
                   the median of ten EDHREC decks per archetype. That is what they run, not what they
