@@ -27,7 +27,7 @@
   "dependencies": {
     "@edh-seer/engine": "*",
     "mongodb": "^7.6.0",
-    "stream-json": "^3.6.0"
+    "stream-json": "^3.7.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
