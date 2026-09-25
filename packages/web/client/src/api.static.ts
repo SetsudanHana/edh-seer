@@ -1,46 +1,26 @@
 import type { GameState } from "@edh-seer/engine";
-import { normalizeName } from "@edh-seer/data/names";
-import { parseDecklistSections } from "@edh-seer/data/sections";
-import { parseDecklistText } from "@edh-seer/data/decklist";
 import { StaticLookup } from "@edh-seer/matcher/static-lookup";
-import { resolveDeck, analyzeResolvedDeck, buildWireGraph, type AnalysisSources } from "@edh-seer/matcher/orchestrate";
+import { analyzeDecklist, type AnalysisSources } from "@edh-seer/matcher/orchestrate";
 import type { AnalyzeResponse } from "./types.js";
 
-/** Reproduces `AnalyzeService.analyze` exactly -- same ordering, same comments carried with it --
- *  against `StaticLookup` instead of Mongo. No server anywhere on this path. */
+/** A decklist analysed in the browser against the `/static` shards: `analyzeDecklist`, with the
+ *  cards read from `StaticLookup`. There is no server anywhere on this path (and since 2026-09-25,
+ *  no server at all). Node tools call it too, pointed at a `/static` URL -- `fixtures/capture.ts`. */
 export async function analyzeDeckStatic(
   decklist: string, commanders: string | undefined, baseUrl: string, fetchImpl: typeof fetch = fetch,
   state?: GameState,
 ): Promise<AnalyzeResponse> {
-  const sections = parseDecklistSections(decklist);
-  const commanderNames = commanders?.trim() ? parseDecklistText(commanders) : sections.commanders;
-
-  // `StaticLookup` binds `fetchImpl` itself now (see its constructor) -- the receiver-check defect
-  // this fixed lives at the one place every caller routes through, not at each call site.
-  const lookup = new StaticLookup(baseUrl, fetchImpl);
-  await lookup.prefetch([...commanderNames, ...sections.deck, ...sections.companions].map(normalizeName));
-
-  const sources: AnalysisSources = {
-    lookup, tagsLookup: lookup,
-    tokenTags: await lookup.tokenTags(),
-    tokenArt: (ids: string[]) => lookup.tokenArt(ids),
-  };
-  const { cards, combos, missing, commanderResolved, commanderColorIdentity, companionCards, companionMissing } =
-    await resolveDeck(commanderNames, sections.deck, lookup, sections.companions);
-  const report = await analyzeResolvedDeck(cards, combos, commanderResolved, sources, state, companionCards, companionMissing);
-  // KEYED ON THE PHYSICAL CARD (`cardName ?? name`), because `attachRolesAndArt` looks roles up
-  // under `normalize(n.cardName ?? n.id)`. `report.cards[].name` is a FACE name, so keying on it
-  // drops every multi-face card's roles — announced only by a console.warn nobody reads.
-  const rolesByName = new Map(
-    report.cards.filter((c) => c.roles?.length).map((c) => [c.cardName ?? c.name, c.roles!] as const),
-  );
-  // `cards` has one entry per COPY; the graph collapses them. Count before the multiplicity is lost.
-  const names = cards.map((c) => c.name);
-  const copiesByName = new Map<string, number>();
-  for (const n of names) copiesByName.set(n, (copiesByName.get(n) ?? 0) + 1);
-  // THE COMPANION IS A NODE (owner, 2026-09-22): its edges are in `report.edges`, so the board has
-  // to draw it. It is not in `names` above, which is the 100 the census counts.
-  const graph = await buildWireGraph([...names, ...(report.companions ?? [])], rolesByName, copiesByName, sources, report);
-  return { report, missing, resolvedCount: cards.length,
-    totalCount: commanderNames.length + sections.deck.length, commanderColorIdentity, graph };
+  return analyzeDecklist(decklist, commanders, async (names): Promise<AnalysisSources> => {
+    // `StaticLookup` binds `fetchImpl` itself (see its constructor) -- the receiver-check defect
+    // that fixed lives at the one place every caller routes through, not at each call site.
+    const lookup = new StaticLookup(baseUrl, fetchImpl);
+    // Every name the list mentions, fetched before anything resolves: a shard per name prefix,
+    // loaded once, rather than one round trip per card as resolution walks the list.
+    await lookup.prefetch(names);
+    return {
+      lookup, tagsLookup: lookup,
+      tokenTags: await lookup.tokenTags(),
+      tokenArt: (ids: string[]) => lookup.tokenArt(ids),
+    };
+  }, state);
 }

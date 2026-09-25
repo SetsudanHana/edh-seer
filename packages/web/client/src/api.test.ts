@@ -1,18 +1,18 @@
 import { expect, test, vi } from "vitest";
 import { analyzeDeck } from "./api.js";
+import { analyzeDeckStatic } from "./api.static.js";
 
-test("POSTs decklist to /api/analyze and returns parsed body", async () => {
-  const body = { report: { edges: [], combos: [], themes: [], roles: { ramp: 0, draw: 0, removal: 0 } }, missing: [], resolvedCount: 0, totalCount: 0 };
-  const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => body });
-  const out = await analyzeDeck("1 Sol Ring", undefined, fetchImpl as unknown as typeof fetch);
-  expect(fetchImpl).toHaveBeenCalledWith(
-    "/api/analyze",
-    expect.objectContaining({ method: "POST" }),
-  );
-  expect(out).toEqual(body);
-});
+vi.mock("./api.static.js", () => ({ analyzeDeckStatic: vi.fn() }));
 
-test("throws the server message on a non-ok response", async () => {
-  const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 503, json: async () => ({ message: "Cannot reach MongoDB..." }) });
-  await expect(analyzeDeck("x", undefined, fetchImpl as unknown as typeof fetch)).rejects.toThrow(/Cannot reach MongoDB/);
+/** ONE PATH, AND IT IS THE STATIC ONE (2026-09-25). This used to test a POST to `/api/analyze`, the
+ *  NestJS route that was removed; what is left to pin is that `analyzeDeck` hands everything to the
+ *  in-browser analysis, against `/static`, and passes the game state through. The analysis itself
+ *  is `api.static.test.ts`'s. */
+test("analyses in the browser against /static, with the state it was given", async () => {
+  const out = { report: {}, missing: [], resolvedCount: 0, totalCount: 0, commanderColorIdentity: [], graph: {} };
+  vi.mocked(analyzeDeckStatic).mockResolvedValue(out as never);
+  const fetchImpl = vi.fn() as unknown as typeof fetch;
+  const state = { speed: 4 } as never;
+  await expect(analyzeDeck("1 Sol Ring", "Krenko", fetchImpl, state)).resolves.toBe(out);
+  expect(analyzeDeckStatic).toHaveBeenCalledWith("1 Sol Ring", "Krenko", "/static", fetchImpl, state);
 });

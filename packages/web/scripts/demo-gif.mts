@@ -1,6 +1,6 @@
 /** THE README'S DEMO: paste a deck, read the report, open the graph. Recorded from the product.
  *
- *    VITE_STATIC_DATA=1 npm run build:client -w @edh-seer/web
+ *    npm run build:client -w @edh-seer/web
  *    npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
  *    npm run demo-gif -w @edh-seer/web                       # writes docs/images/demo.gif
  *

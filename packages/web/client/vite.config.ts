@@ -4,6 +4,52 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
+/** THE PAIR-JUDGING TOOL, MOUNTED ON THE DEV SERVER (2026-09-25). `#calibrate` posts to
+ *  `/api/calibrate/*`; that was a NestJS controller until the server was removed, and is now
+ *  `@edh-seer/matcher/calibration-judge`, loaded through Vite's own SSR loader so its TypeScript and
+ *  workspace imports resolve exactly as they do everywhere else. DEV-ONLY (`apply: "serve"`), and
+ *  off unless `MTG_CALIBRATE=1`: a verdict writes the files the calibration ratchet reads, so the
+ *  gate is `calibrateEnabled`, the tested one, not a second copy of it here. Off, every route
+ *  answers 404, which the panel already explains as "not enabled". The Mongo connection and the
+ *  sampling universe are built on the first request, not at startup, so a dev server that never
+ *  opens the panel never touches the database. */
+const calibrateApi = {
+  name: "edh-seer-calibrate-api",
+  apply: "serve" as const,
+  configureServer(server: {
+    ssrLoadModule(id: string): Promise<Record<string, unknown>>;
+    middlewares: { use(fn: (req: any, res: any, next: () => void) => void): void };
+  }) {
+    type Judge = typeof import("@edh-seer/matcher/calibration-judge");
+    let judge: Promise<{ mod: Judge; deps: Awaited<ReturnType<Judge["openCalibrationJudge"]>> | null }> | undefined;
+    const repoRoot = process.cwd().replace(/\/packages\/.*$/, "");
+    server.middlewares.use(async (req, res, next) => {
+      if (!req.url?.startsWith("/api/calibrate/")) return next();
+      const send = (status: number, json: unknown) => {
+        res.statusCode = status;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify(json));
+      };
+      try {
+        judge ??= (server.ssrLoadModule("@edh-seer/matcher/calibration-judge") as Promise<Judge>).then(async (mod) => ({
+          mod, deps: mod.calibrateEnabled(process.env) ? await mod.openCalibrationJudge(repoRoot) : null,
+        }));
+        const { mod, deps } = await judge;
+        if (!deps) return send(404, { message: "the calibration tool is off; start the dev server with MTG_CALIBRATE=1" });
+        let raw = "";
+        for await (const chunk of req) raw += chunk;
+        let body: unknown;
+        try { body = raw ? JSON.parse(raw) : undefined; } catch { return send(400, { message: "body is not JSON" }); }
+        const out = await mod.handleCalibrateRequest(deps, req.method ?? "GET", req.url.split("?")[0], body);
+        send(out.status, out.json);
+      } catch (e) {
+        judge = undefined; // a failed connect is retried on the next request, not cached
+        send(500, { message: e instanceof Error ? e.message : "calibration tool failed" });
+      }
+    });
+  },
+};
+
 /** DEV-ONLY, and `apply: "serve"` is what keeps it out of the production build — the built app
  *  fetches `/static` from wherever it is hosted, which is scope B's problem, not this file's.
  *  `static-out/` holds 35,713 files, so `publicDir` is the wrong tool: it copies. */
@@ -72,7 +118,7 @@ const stripHtmlComments = {
 
 export default defineConfig({
   root: "client",
-  plugins: [react(), tailwindcss(), staticOut, stripHtmlComments],
+  plugins: [react(), tailwindcss(), staticOut, calibrateApi, stripHtmlComments],
   build: {
     rollupOptions: {
       // TWO HTML ENTRIES. `how-it-works/` is prose, not an app route: listing it here makes Vite
@@ -90,14 +136,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    // `/api/import` FIRST, because vite matches proxy prefixes in insertion order and `/api` would
-    // otherwise swallow it. Nest has no import route -- the importer is a Cloudflare Worker with a
-    // Durable Object pacer -- so dev points at `wrangler dev` and exercises the real thing, pacing
-    // included. Without it running, an import fails with the "could not reach" message, which is the
-    // honest outcome rather than a stub that behaves better than production.
+    // The importer is a Cloudflare Worker with a Durable Object pacer, so dev points at
+    // `wrangler dev` and exercises the real thing, pacing included. Without it running, an import
+    // fails with the "could not reach" message, which is the honest outcome rather than a stub that
+    // behaves better than production. `/api/calibrate` is the plugin above; there is no other API.
     proxy: {
       "/api/import": "http://127.0.0.1:8788",
-      "/api": "http://localhost:3001",
     },
   },
 });

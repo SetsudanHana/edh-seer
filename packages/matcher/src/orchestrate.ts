@@ -1,4 +1,6 @@
 import { normalizeName } from "@edh-seer/data/names";
+import { parseDecklistSections } from "@edh-seer/data/sections";
+import { parseDecklistText } from "@edh-seer/data/decklist";
 import { resolveNames, type CardLookup } from "@edh-seer/data/resolve";
 import { detectCommanders } from "@edh-seer/data/commander";
 import { docToCard } from "@edh-seer/data/docs";
@@ -194,4 +196,58 @@ export async function buildWireGraph(
   const companions = new Set(report.companions ?? []);
   if (companions.size === 0) return wire;
   return { ...wire, nodes: wire.nodes.map((n) => companions.has(n.cardName ?? n.id) && !n.isToken ? { ...n, isCompanion: true } : n) };
+}
+
+/** WHAT ONE ANALYSIS RETURNS: the report, the deck as a card graph, and what did not resolve. The
+ *  graph is computed alongside the report rather than asked for separately, because the expensive
+ *  half -- resolving every card and its tags -- is already done here. */
+export interface DeckAnalysis {
+  report: DeckReport;
+  missing: string[];
+  resolvedCount: number;
+  totalCount: number;
+  commanderColorIdentity: string[];
+  graph: WireGraph;
+}
+
+/** A PASTED DECKLIST, ANALYSED: the whole pipeline from text to report and graph, ONCE.
+ *
+ *  This was two copies until 2026-09-25 -- the NestJS `AnalyzeService` and the browser's
+ *  `analyzeDeckStatic` ("reproduces AnalyzeService.analyze exactly"). The server is gone; the
+ *  browser and the Node tools (fixture capture, research) now call this, and differ only in where
+ *  the cards come from. `makeSources` gets every normalized name the list mentions first, so a
+ *  source that loads by name (the static shards) can fetch them before anything resolves; one that
+ *  queries on demand (Mongo) ignores them. */
+export async function analyzeDecklist(
+  decklist: string,
+  commanders: string | undefined,
+  makeSources: (names: string[]) => Promise<AnalysisSources>,
+  state?: GameState,
+): Promise<DeckAnalysis> {
+  const sections = parseDecklistSections(decklist);
+  const commanderNames = commanders?.trim() ? parseDecklistText(commanders) : sections.commanders;
+  const sources = await makeSources([...commanderNames, ...sections.deck, ...sections.companions].map(normalizeName));
+
+  const { cards, combos, missing, commanderResolved, commanderColorIdentity, companionCards, companionMissing } =
+    await resolveDeck(commanderNames, sections.deck, sources.lookup, sections.companions);
+  const report = await analyzeResolvedDeck(cards, combos, commanderResolved, sources, state, companionCards, companionMissing);
+  // KEYED ON THE PHYSICAL CARD (`cardName ?? name`), because `attachRolesAndArt` looks roles up
+  // under `normalize(n.cardName ?? n.id)`. `report.cards[].name` is a FACE name, so keying on it put
+  // every multi-face card's roles under a key no node asks for -- both faces lost their role chips,
+  // announced only by a console.warn (review fix, 2026-08-27). Both face rows carry the identical
+  // array, so collapsing them onto one key loses nothing.
+  const rolesByName = new Map(
+    report.cards.filter((c) => c.roles?.length).map((c) => [c.cardName ?? c.name, c.roles!] as const),
+  );
+  // `cards` has one entry per COPY; the graph collapses them. Count before the multiplicity is lost.
+  const names = cards.map((c) => c.name);
+  const copiesByName = new Map<string, number>();
+  for (const n of names) copiesByName.set(n, (copiesByName.get(n) ?? 0) + 1);
+  // THE COMPANION IS A NODE (owner, 2026-09-22): its edges are in `report.edges`, so the board has
+  // to draw it. It is not in `names`, which is the 100 the census counts.
+  const graph = await buildWireGraph([...names, ...(report.companions ?? [])], rolesByName, copiesByName, sources, report);
+  return {
+    report, missing, resolvedCount: cards.length,
+    totalCount: commanderNames.length + sections.deck.length, commanderColorIdentity, graph,
+  };
 }

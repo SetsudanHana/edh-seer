@@ -13,6 +13,7 @@
     "./deck-cards": "./src/deck-cards.ts",
     "./wire-graph": "./src/wire-graph.ts",
     "./orchestrate": "./src/orchestrate.ts",
+    "./calibration-judge": "./src/calibration-judge.ts",
     "./static-lookup": "./src/static-lookup.ts",
     "./suggest-static": "./src/suggest-static.ts",
     "./partner-shard": "./src/partner-shard.ts",

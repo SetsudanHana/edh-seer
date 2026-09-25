@@ -154,7 +154,7 @@ several ratchets, and a habit of recording the measurement beside every change.
 | `@edh-seer/engine` | scoring, ratings, per-card impact |
 | `@edh-seer/cli` | terminal deck report |
 | `@edh-seer/instruments` | the measuring tools: panel score, population diffs, recall samples |
-| `@edh-seer/web` | the site: a React/Vite app that analyses in the browser, the Pages Functions that prerender card pages, and a NestJS API kept for development |
+| `@edh-seer/web` | the site: a React/Vite app that analyses in the browser, and the Pages Functions that prerender card pages |
 | `@edh-seer/import-worker` | the Cloudflare Worker that imports Moxfield and Archidekt decks |
 
 Node 24 (`.nvmrc`; `nvm use` picks it up) is all the test suite needs:
@@ -169,7 +169,7 @@ Running the engine on real decks needs MongoDB holding the card corpus:
 ```bash
 npx tsx packages/cli/src/main.ts <decklist.txt>                  # a deck report in the terminal
 npx tsx packages/matcher/src/bin/build-static.ts                 # the card shards the site reads
-VITE_STATIC_DATA=1 npm run dev:client -w @edh-seer/web           # the site, as production runs it
+npm run dev -w @edh-seer/web                                     # the site, on :5173
 ```
 
 How to get the corpus, and everything else about running it, is in the

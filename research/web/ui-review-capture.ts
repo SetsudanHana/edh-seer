@@ -10,11 +10,11 @@
  *    npx tsx research/web/ui-review-capture.ts research/web/runs/deck-report.json
  *    npx tsx research/web/ui-review-capture.ts --self-test      # the pure maths, no browser
  *
- *  BOTH SERVERS HAVE TO BE UP (the run file's baseUrl is the vite one):
- *    npm run dev -w @edh-seer/web          # API :3001 + UI :5173, both watching
- *  and kill any stale ones first -- a dev server left from yesterday serves yesterday's code, which
- *  is indistinguishable from a fix that did not work. There is no `nest start` here; see
- *  `packages/web/server/tsconfig.json`.
+ *  THE DEV SERVER HAS TO BE UP (the run file's baseUrl is its URL), analysing against a built
+ *  `static-out/` the way production does:
+ *    npm run dev -w @edh-seer/web          # UI :5173, /static from static-out/
+ *  and kill any stale one first -- a dev server left from yesterday serves yesterday's code, which
+ *  is indistinguishable from a fix that did not work.
  *
  *  Output lands in `persona-shots/<surface>/`, already gitignored. */
 import { mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
