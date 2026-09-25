@@ -1,5 +1,9 @@
 # What this engine computes — a standing inventory
 
+> **Snapshot as of 2026-08-18, kept as written.** Line numbers and file references have drifted, the
+> documents it names as companions are no longer in the repository, and the site now runs the
+> analysis in the browser from static shards rather than on the web server.
+
 Written 2026-08-18 from a full read of the code, not from memory. Every claim carries `file:line`.
 Companion to `ROADMAP.md` (what is open) and `superpowers/specs/` (why each piece is shaped as it is).
 This document is descriptive: it states what exists today and what it costs, not what should change.

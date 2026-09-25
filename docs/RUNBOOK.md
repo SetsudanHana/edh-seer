@@ -15,18 +15,44 @@ Every bin and the web server need the environment sourced:
 set -a && source packages/tagger/.env && set +a
 ```
 
-The `.env` lives in `packages/tagger/`, **not** the repository root. It holds `ANTHROPIC_API_KEY` and
-`TAGGER_PROVIDER=anthropic`.
+The `.env` lives in `packages/tagger/`, **not** the repository root. A fresh clone has none. It
+holds:
 
-**The second line is not decoration.** Without it, any bin that spends falls back **silently** to a
-local Ollama — producing a corpus answered by the wrong model, with nothing on screen to say so. A
-fresh clone has no `.env` at all. The dry run prints a `provider:` line; read it before every `--run`.
+| variable | what it is | default |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | the key the paid normalization step spends | none |
+| `TAGGER_PROVIDER` | which model answers; set it to `anthropic` | Ollama |
+| `MONGO_URI` | the corpus database | `mongodb://localhost:27017` |
+| `MONGO_DB` | the database name | `mtg` |
+
+**`TAGGER_PROVIDER` is not decoration.** Without it the provider is a local Ollama. A spending bin
+used to fall back to it **silently** — a corpus answered by the wrong model, with nothing on screen
+to say so — and now refuses `--run` unless `--allow-provider` is passed. The dry run prints a
+`provider:` line; read it before every `--run`.
+
+A local MongoDB comes from `docker compose -f packages/data/docker-compose.yml up -d`, and
+`npm run ingest -w @edh-seer/data` downloads the Scryfall cards and the combo list into it. The
+normalized clauses are the paid step ([Stage 2](pipeline/2-normalize.md)) and cannot be rebuilt for
+free.
 
 ## Running the product
 
+**What production runs** is the static site: the browser runs the matcher itself, against `/static`
+shards, and there is no API in the analysis path.
+
 ```bash
-npx tsx packages/cli/src/main.ts <decklist.txt>                  # analyse a deck
-npm run dev -w @edh-seer/web                                     # API on :3001 + UI on :5173
+npx tsx packages/matcher/src/bin/build-static.ts                 # static-out/, from Mongo, ~70s
+VITE_STATIC_DATA=1 npm run dev:client -w @edh-seer/web           # UI on :5173, /static from static-out/
+```
+
+The dev server serves `/static/*` straight out of `static-out/` (the `edh-seer-static-out` plugin in
+`client/vite.config.ts`), so the shards are never copied.
+
+**The API path** is kept as the known-good reference to compare against:
+
+```bash
+npx tsx packages/cli/src/main.ts <decklist.txt>                  # analyse a deck in the terminal
+npm run dev -w @edh-seer/web                                     # API on :3001 + UI on :5173, /api proxied
 ```
 
 Or the two halves separately:
@@ -71,17 +97,18 @@ npx tsx packages/tagger/src/bin/derive-corpus.ts --force    # everything
 ## Measuring a change
 
 **Measure before and after, and say the number.** Every fix in this repo carries its measured effect
-in the commit message. All three of these are free and need no model.
+in the commit message. All three of these are free and need no model, but they read the MongoDB
+corpus, and `panel-score.ts` also reads the judged panel, which is local to the maintainer's checkout.
 
 ```bash
-npx tsx packages/instruments/src/panel-score.ts          # precision AND recall on the frozen panel
+npx tsx packages/instruments/src/panel-score.ts          # precision AND retention on the frozen panel
 npx tsx packages/instruments/src/population-compare.ts   # edges and reasons, before against after
 npx tsx packages/instruments/src/eval-pairs.ts           # the compass
 ```
 
 Three rules about what those numbers mean:
 
-**Never quote precision without recall.** Precision alone is not comparable across any change that
+**Never quote precision without retention.** Precision alone is not comparable across any change that
 shrinks the claim set, which every de-meshing ruling does — and a gate that deletes every claim it is
 unsure of scores 100%.
 
@@ -92,14 +119,15 @@ already made, so it cannot see an edge that was never claimed. The real recall f
 **A stale baseline is how a real failure gets excused.** Re-measure rather than comparing against a
 number written in a document, including this one.
 
-The panel is ratcheted by name: `docs/measurements/panel/known-lost-pairs.json` holds the accepted
+The panel is ratcheted by name: `docs/measurements/panel/known-lost-pairs.json` (local to the
+maintainer's checkout, not committed) holds the accepted
 losses, `--bank` records a new set, and **both** directions fail — a newly unjoined pair, and a
 recovered pair that was never banked. It needs Mongo, so it cannot run in CI; it guards where the
 change is made rather than where it merges.
 
 ## Adding a verb
 
-A new `VERB_VOCAB` member is not one edit. Five gates fire, across three packages:
+A new `VERB_VOCAB` member is not one edit. Six gates fire, across three packages:
 
 | gate | what it demands |
 |---|---|
@@ -108,9 +136,7 @@ A new `VERB_VOCAB` member is not one edit. Five gates fire, across three package
 | [`theme-stats-drift.test.ts`](../packages/matcher/src/theme-stats-drift.test.ts) | every canonical verb family appears in the committed `theme-stats` artifact |
 | [`effect-class.test.ts`](../packages/matcher/src/effect-class.test.ts) | kind-keyed collections name only real `EFFECT_KINDS` |
 | [`demand-sentence.test.ts`](../packages/web/client/src/lib/demand-sentence.test.ts) | the web client renders the mechanism as English, not as its own key |
-
-A sixth now fires too: [`gen-schema-docs.test.ts`](../packages/tagger/src/bin/gen-schema-docs.test.ts)
-fails until the [schema reference](reference/SCHEMA.md) is regenerated.
+| [`gen-schema-docs.test.ts`](../packages/tagger/src/bin/gen-schema-docs.test.ts) | the [schema reference](reference/SCHEMA.md) is regenerated |
 
 **`TRIGGER_CUES` in [`clause-store.ts`](../packages/tagger/src/clause-store.ts) has no gate at all.**
 It is a lookup keyed by trigger event, and a new event with no row there is silently treated as
@@ -154,7 +180,7 @@ compares it against the generator's output on every run.
 ```bash
 npm test                       # all workspaces, each with its own config
 npm test -w @edh-seer/matcher  # one workspace
-npm run typecheck --workspaces
+npm run typecheck              # every workspace; vitest does not typecheck
 npm run lint:bins              # where a script is allowed to live
 ```
 
@@ -183,6 +209,18 @@ happened, and the missing card was not noticed until a user asked.
 
 "Already rebuilt this session" is not the same as "rebuilt from the commit being deployed". A new
 record field ships absent and the feature is silently dead.
+
+**The deploy runs from the maintainer's machine**, with a logged-in `wrangler`; there is no deploy
+workflow in CI. The upload is capped at 20,000 files, the free tier's limit, which
+`assemble-deploy.mjs` checks. Two things deploy separately:
+
+```bash
+npm run deploy -w @edh-seer/import-worker   # the Moxfield / Archidekt import worker, /api/import/*
+npm run deploy:indexnow -w @edh-seer/web    # tell search engines which pages changed
+```
+
+After a UI change, regenerate the README and /how-it-works screenshots before the PR
+(`npm run screenshots -w @edh-seer/web`, see [CONTRIBUTING](../CONTRIBUTING.md#screenshots)).
 
 The custom domain lags the deployment alias by about a minute, so one stale read straight after
 "Deployment complete" is normal. Persisting is not.

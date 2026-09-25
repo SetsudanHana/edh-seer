@@ -10,7 +10,7 @@
  *  A theme flip is the loudest signal available — it means the two populations disagree about what
  *  the deck IS, which matters far more than a few edges either way.
  *
- *  Usage: tsx src/bin/population-compare.ts [--verbose] */
+ *  Usage: npx tsx packages/instruments/src/population-compare.ts [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
 import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,

@@ -67,7 +67,7 @@ Scryfall bulk data and MTGJSON are merged into one `cards` collection, keyed on 
 
 ```
 name:        "Siege-Gang Commander"
-typeLine:    "Creature — Goblin Warrior"
+typeLine:    "Creature — Goblin"
 manaCost:    "{3}{R}{R}"
 oracleText:  "When this creature enters, create three 1/1 red Goblin creature tokens.
               {1}{R}, Sacrifice a Goblin: This creature deals 2 damage to any target."
@@ -129,8 +129,8 @@ Three properties make this safe to depend on:
 
 ### Stage 3 — Derivation (`deriveAbilities()`, pure, free)
 
-Clauses become typed **abilities**: a trigger (what the card *watches for*) and emits (what the card
-*supplies*). Structured text becomes structured game events.
+Clauses become typed **abilities**: a trigger (what the card *cares about*) and emits (what the card
+*causes*). Structured text becomes structured game events.
 
 **Siege-Gang Commander**
 ```
@@ -155,7 +155,8 @@ kind=triggered  effect=draw-card
   emit:    draw  {control:"you"}
 ```
 
-This stage is **free and versioned** (`DERIVE_VERSION`, currently 85). Because it costs nothing, the
+This stage is **free and versioned** (`DERIVE_VERSION`; its current value is in
+[the schema reference](reference/SCHEMA.md#version-constants)). Because it costs nothing, the
 derivation rules have been changed and the whole corpus re-derived many times — which is exactly the
 property that makes the engine improvable.
 
@@ -171,6 +172,7 @@ Siege-Gang Commander's full supply list, as the matcher sees it:
 create-token       {control:"you", token:true, colors:["R"], type:"creature", subtype:"goblin"}
 enters             {control:"you", token:true, ..., subtype:"goblin", zone:"battlefield"}
 sacrifice          {control:"you", subtype:"goblin"}
+dies               {control:"you", subtype:"goblin", zone:"battlefield"}                                   ← the one that matters
 leaves             {control:"you", subtype:"goblin", zone:"battlefield"}
 non-combat-damage  {control:"any", scope:"target"}
 cast               {control:"you", type:"creature", subtype:"goblin", power:2, toughness:2, manaValue:5}   ← implied
@@ -180,13 +182,16 @@ combat-damage      {control:"you", type:"creature", subtype:"goblin", ...}      
 enters             {control:"you", subtype:"goblin", zone:"graveyard"}                                     ← a death fills a graveyard
 ```
 
-Rules the game states but no card prints are added here too — a Saga sacrifices itself after its
-final chapter (CR 704.5s), the legend rule kills a copy of a legendary permanent (CR 704.5j). No
-amount of text parsing can reach those, because they are not written anywhere.
+Rules the game states but no card prints are added too — a Saga sacrifices itself after its final
+chapter (CR 704.5s, `sagaEvents()` here), and the legend rule kills a copy of a legendary permanent
+(CR 704.5j, claimed by the matcher's copy pass). No amount of text parsing can reach those, because
+they are not written anywhere.
 
 ### Stage 5 — Matching (`eventMatches()`, pure, free)
 
-Every card's **supply** is compared against every other card's **demand**.
+Everything each card **causes** is compared against everything every other card **cares about**.
+The chart is the shape of the decision, simplified; the full order, with the size, graveyard,
+counter and damage cases, is in [Stage 4 — Matching](pipeline/4-match.md#the-order-the-gates-run-in).
 
 ```mermaid
 flowchart TD
@@ -194,13 +199,13 @@ flowchart TD
     V -->|no| N["no claim"]
     V -->|yes| R{"consumer subject<br/>restricted?"}
     R -->|"targets only ..."| N
-    R -->|no| O{"origin compatible?<br/>token / not-cast / enters-tapped"}
+    R -->|no| O{"origin compatible?<br/>the zone it came from"}
     O -->|no| N
     O -->|yes| G{"self-supplied?<br/>combat · cast · self-ETB"}
     G -->|"already supplies<br/>its own trigger"| N
     G -->|no| T{"subject types<br/>compatible?"}
     T -->|"goblin is a creature"| Y["Reason"]
-    T -->|no| N
+    T -->|"token · not-cast · enters-tapped<br/>checked here too"| N
 
     style Y fill:#14532d,color:#fff
     style N fill:#7f1d1d,color:#fff
@@ -210,8 +215,8 @@ For our pair:
 
 | | verb | subject |
 |---|---|---|
-| Siege-Gang **supplies** | `dies` | `{control: you, subtype: goblin}` |
-| Skullclamp **demands** | `dies` | `{control: you, type: creature}` |
+| Siege-Gang **causes** | `dies` | `{control: you, subtype: goblin}` |
+| Skullclamp **cares about** | `dies` | `{control: you, type: creature}` |
 
 Same verb. Same controller. A Goblin *is* a creature — resolved through a subtype→type hierarchy
 generated from MTGJSON, not hardcoded. So a claim forms:
@@ -240,6 +245,11 @@ Reasons feed everything downstream:
 
 ## A request, end to end
 
+This is the API path, which is kept as the known-good reference. **The live site does the same work
+in the browser:** it builds with `VITE_STATIC_DATA=1`, fetches each card's derived tags from
+`/static` shards instead of MongoDB, and runs the same pure `analyzeResolvedDeck` from
+`orchestrate.ts`. Token tags are loaded once when the server starts, not per request.
+
 ```mermaid
 sequenceDiagram
     actor User
@@ -255,8 +265,6 @@ sequenceDiagram
     DB-->>API: cards + combos + unresolved
     API->>DB: derived tags for each card
     DB-->>API: cardTagsDerived docs
-    API->>DB: loadTokenTags() — the whole tokens collection
-    DB-->>API: token tags
 
     Note over API,M: every lookup is done BEFORE the engine runs —<br/>analyzeDeckStructured is pure and synchronous
     API->>M: analyzeDeckStructured(deckCards, commanders, ...)
@@ -348,12 +356,12 @@ than a missing one.*
 | **Self-supplied triggers** — a creature's own attack satisfying "whenever a creature attacks" | the card would claim synergy with itself |
 | **Unknown trigger events** | surfaced as `unknownTriggers` rather than snapped to a near-miss verb |
 | **Unrepresentable restrictions** — "targets only", "non-Dragon", board states with no field | the ability keeps its kind and claims no cards |
-| **Deck roles** — cost reduction, tax | a pairwise edge would make the same claim beside every card |
-| **Bare-type tutors** — "search for a creature card" | true of the whole creature base, so it distinguishes nothing |
+| **Deck roles** — tax, extra turns and phases, an untyped "you win the game" | a pairwise edge would make the same claim beside every card |
+| **Whole-deck tutors** — "search for a card", "a creature card" | true of the whole deck or the whole creature base, so it distinguishes nothing |
 
-Some misses are permanent and documented as **ceilings**, not bugs: "my tutor can find you" and "my
-recursion could return you" are real synergies that a producer-event/consumer-trigger model cannot
-express at all.
+Tutors and recursion **are** claimed when they name a class, each in its own sentence: "Flamekin
+Harbinger can search up Smokebraider", "Farseek can fetch …", "X can bring back Y". A single type
+outside the whole board narrows too — Mystical Tutor finding the instant (owner ruling 2026-09-16).
 
 ---
 
@@ -398,6 +406,6 @@ tag), 18 re-attributed through a token, 8 rot (a card named by the verdict has l
 | derive | `@edh-seer/tagger` | `derive/derive.ts`, `bin/derive-corpus.ts` |
 | implied events | `@edh-seer/matcher` | `implied.ts` |
 | matching | `@edh-seer/matcher` | `edges.ts`, `subject.ts` |
-| orchestration | `@edh-seer/matcher` | `analyze.ts` |
+| orchestration | `@edh-seer/matcher` | `orchestrate.ts` (shared by the API and the static site), `analyze.ts` |
 | graph | `@edh-seer/matcher` | `graph-projection.ts` |
 | scoring | `@edh-seer/engine` | `synergy.ts`, `impact.ts` |

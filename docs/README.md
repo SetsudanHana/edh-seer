@@ -35,7 +35,8 @@ failure modes it has actually hit.
 what turned out to be wrong. Newest first. The specs argue; the log records what the argument was
 worth.
 
-Two older notes that predate the structure above and are kept as written:
+Three older notes that predate the structure above, kept as written. They are historical: paths and
+numbers in them may be out of date:
 [tagging strategy](tagging-strategy.md), [oTag crosswalk](otag-crosswalk.md), and
 [analytics](ANALYTICS.md).
 

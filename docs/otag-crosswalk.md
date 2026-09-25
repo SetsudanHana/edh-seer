@@ -1,7 +1,8 @@
 # Scryfall Oracle Tags → Structured Vocab Crosswalk
 
 **Date:** 2026-07-20
-**Status:** Reference / vocab-coverage audit
+**Status:** Historical audit (2026-07-20), kept as written. Figures and file references predate
+the current vocabulary; the live lists are in the [schema reference](reference/SCHEMA.md).
 **Source:** Scryfall Tagger functional tag list (offline HTML dump, `oracletag:` slugs only; artwork `art:` tags excluded).
 **Related:** `docs/tagging-strategy.md`, Stage 2 spec (`docs/superpowers/specs/2026-07-19-stage2-structured-matching-design.md`).
 

@@ -1,3 +1,6 @@
+> **Historical (2026-07-18), kept as written.** Informal notes from before the clause and derivation
+> pipeline existed. For how cards are read today, see [docs/pipeline/](pipeline/).
+
 Each MTG card produces tags which determines its characteristics and effects
 
 example we had with Inalla, Archmage Ritualist

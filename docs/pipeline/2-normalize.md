@@ -36,13 +36,13 @@ sends one card per request.
 
 ### A closed vocabulary
 
-`event` and `verb` must come from fixed lists: **95 verbs, 117 triggers, 7 zones**, all enumerated in
-the [schema reference](../reference/SCHEMA.md#the-normalization-vocabulary). An answer using a word
+`event` and `verb` must come from fixed lists: **99 verbs, 135 triggers, 7 zones** as of 2026-09-25, all
+enumerated in the [schema reference](../reference/SCHEMA.md#the-normalization-vocabulary). An answer using a word
 outside them is **refused and not persisted** — the card simply re-queues.
 
 The lists are sized against what the *game* can express, taken from the Comprehensive Rules, not
 against what the current decks happen to play. Normalization is a one-way ratchet: nobody re-runs
-36,000 cards to add a word, so a gap discovered after the corpus is bought is frozen in. The
+34,000 cards to add a word, so a gap discovered after the corpus is bought is frozen in. The
 consequence is that a member with zero consumers today is still correct to include —
 `becomes-blocked` reads 0 in the calibration decks and **164 corpus-wide**.
 
@@ -53,8 +53,10 @@ Eleven defect kinds are checked before anything is written, listed with their me
 duplicate ids, ability types that contradict the segmenter, unknown trigger events, a zone on a verb
 that cannot carry one.
 
-Ten of the eleven **reject**, which refuses the card so it re-queues. One warns and persists:
-`dropped-prefilled-action`, because the pre-fill table it compares against is only ~96.7% precise, so
+Most **reject**, which refuses the card so it re-queues. Two warn only in a stated case:
+`unexpected-trigger` on a spell or activated clause (a real delayed trigger; still fatal on a static
+one), and `zone-on-unzoned-verb` when the zone is merely redundant (`draw` from the library). One
+always warns and persists: `dropped-prefilled-action`, because the pre-fill table it compares against is only ~96.7% precise, so
 rejecting on it would fail ~3% of cards on *our* error and pay for them on every run, forever. Syr
 Konrad is the worked case — three comma-separated trigger limbs defeat the single-comma split, and
 the model is right where the table is wrong. It is still recorded, because a rising rate there is the
@@ -69,11 +71,11 @@ set -a && source packages/tagger/.env && set +a       # the .env is in packages/
 npx tsx packages/tagger/src/bin/normalize-corpus.ts    # DRY RUN — prints the bill and spends nothing
 ```
 
-**The dry run is the default and `--run` is the only thing that spends.** Read the printed
-`provider:` line before every `--run`. Without `TAGGER_PROVIDER=anthropic` in the environment, a
-spending bin falls back **silently** to Ollama — a corpus answered by the wrong model, with nothing
-to say so. That trap fired three separate times before the line existed, and a fresh clone has no
-`.env` at all.
+**The dry run is the default and `--run` is the only thing that spends.** Without
+`TAGGER_PROVIDER=anthropic` in the environment the provider is Ollama, and `--run` now **refuses** to
+spend on anything but anthropic unless `--allow-provider` is passed. The fence exists because the old
+silent fallback — a corpus answered by the wrong model, with nothing to say so — fired three separate
+times, and a fresh clone has no `.env` at all.
 
 Useful selectors, all of which narrow what gets bought:
 
@@ -85,7 +87,9 @@ Useful selectors, all of which narrow what gets bought:
 | `--refresh-other` | only cards that fell back to the `other` escape hatch |
 | `--commander-legal` | skips what cannot appear in an EDH deck |
 | `--max-rank N` | the top N cards by play rank |
-| `--batch` | the Batch API, at half price |
+| `--refresh-unless` | only cards whose "unless ... pays" clause was dropped |
+| `--batch` | the Batch API, at half price; collect the results later with `--collect <state>` |
+| `--allow-provider` | lets `--run` spend on a provider other than anthropic. Only on purpose |
 | `--concurrency N` | parallel requests, default 6 |
 
 ## What a re-buy costs

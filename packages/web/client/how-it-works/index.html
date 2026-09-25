@@ -469,13 +469,14 @@ text  = "When Siege-Gang Commander dies,
            `packages/matcher/src/edges.ts`. If that order changes, this list is wrong; the stage 4
            doc is the reference and this is its picture. -->
       <ol class="gates">
-        <li><strong>Same verb?</strong> <span>Including the rules bridges: a life-loss trigger accepts a damage emit.</span></li>
+        <li><strong>Same verb?</strong> <span>Including the rules bridges: a death is leaving the battlefield, and a life-loss trigger accepts non-combat damage.</span></li>
+        <li><strong>Big enough?</strong> <span>A trigger that names a size, like "5 or more damage", meets only a producer that states a size satisfying it.</span></li>
         <li><strong>Is the demand restricted?</strong> <span>"Targets only" and the like are refused. A targeting restriction is a demand nothing here can check.</span></li>
         <li><strong>Instant-speed relaxation.</strong> <span>A producer that acts at instant speed and picks its own victim can satisfy a combat-state demand it never names.</span></li>
-        <li><strong>Origin compatible?</strong> <span>Token, not-cast, enters-tapped.</span></li>
-        <li><strong>Self-supplied?</strong> <span>A card must not satisfy its own trigger: combat, cast, its own entry.</span></li>
-        <li><strong>Special-cased verbs.</strong> <span>A graveyard fill, a counter being added, and damage each route to their own comparison.</span></li>
-        <li><strong>Subjects compatible?</strong> <span>Through the type hierarchy. A Goblin is a creature; a land is not.</span></li>
+        <li><strong>Origin compatible?</strong> <span>The zone the object came from.</span></li>
+        <li><strong>Self-supplied?</strong> <span>A card must not satisfy its own trigger: combat, cast, its own entry, or doing something to itself.</span></li>
+        <li><strong>Special-cased verbs.</strong> <span>A graveyard fill, a counter added or removed, and damage each route to their own comparison.</span></li>
+        <li><strong>Subjects compatible?</strong> <span>Through the type hierarchy, with token, not-cast and enters-tapped. A Goblin is a creature; a land is not.</span></li>
       </ol>
 
       <h3>Read the rest</h3>
