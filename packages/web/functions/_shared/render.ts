@@ -1,4 +1,4 @@
-import { MIN_INDEXABLE_PARTNERS, partnerShardOf } from "@edh-seer/matcher/partner-shard";
+import { MIN_INDEXABLE_PARTNERS, isIndexableCard, jobOf, partnerShardOf } from "@edh-seer/matcher/partner-shard";
 import { cardImageUrl } from "../../client/src/components/card-node.js";
 import { cardPageHtml, htmlHeaders, injectPage, type InjectableCard } from "../../client/src/lib/inject.js";
 
@@ -86,8 +86,12 @@ export async function renderCardPage(
       // vocabulary -- "what the engine reads" -- which nobody types (review 2026-09-25).
       ? `${record.name} Commander: synergies and best cards — EDH Seer`
       : `${record.name} in Commander: synergies and combos — EDH Seer`;
+    // A CARD PAGE WITH A JOB AND NOTHING TO LIST explains the job, so its snippet should too.
+    const job = isCommanderPage ? null : jobOf(record.roles);
     const description = !usable
       ? `${record.name} cannot be a commander. The card itself has a page.`
+      : job && partners.length < MIN_INDEXABLE_PARTNERS
+      ? `${record.name} is ${job.noun} in Commander. See what it does in a deck and how it counts toward your ${job.tally} total.`
       : partners.length > 0
       ? `${partners.length} cards that work with ${record.name} in Commander, each with the reason written out.`
       : `What the engine reads on ${record.name}: the events it produces and the ones it cares about.`;
@@ -100,7 +104,14 @@ export async function renderCardPage(
     // ONE BINDING, READ TWICE: the `<meta name="robots">` tag and the `X-Robots-Tag` header say the
     // same thing about the same page, and writing the expression out at both call sites is how they
     // would come to disagree.
-    const indexable = usable && partners.length >= MIN_INDEXABLE_PARTNERS;
+    //
+    // A JOB COUNTS AS CONTENT ON A CARD PAGE (review 2026-09-25): Sol Ring has no partners by
+    // design, and its page now says why. `isIndexableCard` is the same rule the build writes into
+    // the sitemap, so the two stay in step. A commander page is about its partners and keeps the
+    // partner floor alone.
+    const indexable = usable && (isCommanderPage
+      ? partners.length >= MIN_INDEXABLE_PARTNERS
+      : isIndexableCard(partners.length, record.roles));
 
     return new Response(injectPage(shell, {
       title,

@@ -630,3 +630,20 @@ test("the crawlable reading carries a static's reach, in the same words the app 
   // An implied ability still has no quote above it, and still carries its events.
   expect(html).toContain("read off the card itself");
 });
+
+/** A STAPLE'S PAGE SAYS ITS JOB (review 2026-09-25). Sol Ring has no partners by design; its
+ *  crawlable block used to say only "No partners specific enough to list". */
+test("a card with a job and no partners explains the job instead of an empty list", () => {
+  const sol: InjectableCard = {
+    name: "Sol Ring", typeLine: "Artifact", commander: false, emits: [], demands: [], partners: [],
+    roles: ["ramp"],
+  };
+  const html = cardPageHtml(sol, "sol-ring", "card");
+  expect(html).toContain("<h2>What it does in a deck</h2>");
+  expect(html).toContain("Sol Ring is ramp.");
+  expect(html).toContain("toward your Ramp total");
+  expect(html).not.toContain("No partners specific enough to list.");
+  // A role the report does not count names no job.
+  expect(cardPageHtml({ ...sol, roles: ["stax"] }, "sol-ring", "card"))
+    .toContain("No partners specific enough to list.");
+});
