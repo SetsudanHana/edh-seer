@@ -431,6 +431,11 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // The temporary-token rider ("exile it at the beginning of the next end step") is the token
   // leaving, already recorded as `temporary` on the maker's own ability -- not an exile event.
   if (action.verb === "exile" && LEAVES_SAME_TURN.test(clauseText ?? "") && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim())) return [];
+  // A FLASH GRANT IS A PERMISSION, NOT A CAST (DERIVE 173, overview persona rounds): "you may cast
+  // spells as though they had flash" changes WHEN you may cast and causes no cast. As an authored cast
+  // emit it made High Fae Trickster -- a creature -- feed noncreature-only prowess, and Najal read as
+  // casting sorceries. 10 corpus clauses.
+  if (action.verb === "cast" && /\bas though (?:it|they) had flash\b/i.test(clauseText ?? "")) return [];
   // WHERE A COUNTER GOES (DERIVE 173, overview item 8): when the object is the COUNTER ("+1/+1",
   // "those counters"), the recipient is only in the sentence -- "put two +1/+1 counters on each other
   // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
