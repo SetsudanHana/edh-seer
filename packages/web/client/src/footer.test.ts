@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+/** The web package, found from this file rather than from the working directory, so the test runs
+ *  the same from `packages/web` and from the repository root (the root vitest config). */
+const WEB = join(import.meta.dirname, "..", "..");
 
 /** THE NOTICE IS A CONDITION OF SHOWING THE CARDS, so these are assertions about a legal obligation
  *  rather than about copy.
@@ -13,7 +16,7 @@ import { expect, test } from "vitest";
  *  own sentences, so the notice is as much a condition there as on the app. Running the same
  *  assertions over both files is what stops the two copies drifting. */
 const PAGES = ["index.html", "how-it-works/index.html"] as const;
-const read = (page: string) => readFileSync(join(process.cwd(), "client", page), "utf8");
+const read = (page: string) => readFileSync(join(WEB, "client", page), "utf8");
 const footerOf = (html: string) => html.slice(html.indexOf("<footer"), html.indexOf("</footer>"));
 const textOf = (html: string) => footerOf(html).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 

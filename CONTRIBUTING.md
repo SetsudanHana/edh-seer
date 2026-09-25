@@ -47,10 +47,12 @@ npm run typecheck               # vitest does NOT typecheck; run this too
 npm run lint:bins               # where a script is allowed to live
 ```
 
-**Never run `npx vitest run` from the repository root.** It ignores each package's own vitest config,
-so the web client's tests run without jsdom and die on `document is not defined`. That produced a
-"75 tests fail on a clean checkout" baseline that was quoted for weeks and was purely the wrong
-command.
+`npx vitest run` from the repository root runs every package's suite under that package's own
+config (the root `vitest.config.ts` lists them as `projects`), in one report; `npx vitest` watches
+them all. It used to ignore the per-package configs, so the web client's tests ran without jsdom and
+died on `document is not defined` -- a "75 tests fail on a clean checkout" baseline that was quoted
+for weeks and was purely the wrong command. That trap is closed; a new package is added to the
+root config's list.
 
 The suite is green on a clean checkout. There is no environmental exception — if something is red,
 it is the change.

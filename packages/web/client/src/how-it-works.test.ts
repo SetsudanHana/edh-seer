@@ -1,16 +1,19 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+/** The web package, found from this file rather than from the working directory, so the test runs
+ *  the same from `packages/web` and from the repository root (the root vitest config). */
+const WEB = join(import.meta.dirname, "..", "..");
 
 /** THE PROSE PAGE SAYS WHAT THE README SAYS, OR IT FAILS. The site carried "34,433 cards read from
  *  oracle text" for a week while the README said 21,317 of them were actually read -- two readers,
  *  two levels of honesty, and nothing between them. The README is the sourced document (every
  *  figure carries its command and its date), so the page is held to it rather than the other way
  *  round, and there is no third file for the two to drift from. */
-const CLIENT = join(process.cwd(), "client");
+const CLIENT = join(WEB, "client");
 const page = readFileSync(join(CLIENT, "how-it-works", "index.html"), "utf8");
-const readme = readFileSync(join(process.cwd(), "..", "..", "README.md"), "utf8");
-const repo = join(process.cwd(), "..", "..");
+const readme = readFileSync(join(WEB, "..", "..", "README.md"), "utf8");
+const repo = join(WEB, "..", "..");
 
 const pick = (re: RegExp, label: string): string[] => {
   const m = re.exec(readme);

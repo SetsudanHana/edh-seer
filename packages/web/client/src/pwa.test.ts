@@ -2,11 +2,14 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import { serviceWorkerSource } from "../../scripts/sw-template.mjs";
+/** The web package, found from this file rather than from the working directory, so the test runs
+ *  the same from `packages/web` and from the repository root (the root vitest config). */
+const WEB = join(import.meta.dirname, "..", "..");
 
 /** WHAT MAKES THIS APP INSTALLABLE, asserted rather than assumed. A manifest with a broken icon
  *  path, or an icon set with no maskable entry, fails silently: the browser simply does not offer
  *  to install, and nothing on screen says why. */
-const PUBLIC = join(process.cwd(), "client", "public");
+const PUBLIC = join(WEB, "client", "public");
 const manifest = JSON.parse(readFileSync(join(PUBLIC, "manifest.webmanifest"), "utf8"));
 
 test("the manifest carries what a browser needs before it will offer to install", () => {
@@ -44,7 +47,7 @@ test("the icon set includes a maskable purpose", () => {
 });
 
 test("index.html links the manifest and the iOS icon", () => {
-  const html = readFileSync(join(process.cwd(), "client", "index.html"), "utf8");
+  const html = readFileSync(join(WEB, "client", "index.html"), "utf8");
   expect(html).toContain('rel="manifest" href="/manifest.webmanifest"');
   // iOS has no manifest-driven install, so this is the only icon a home-screen launch there uses.
   expect(html).toContain('rel="apple-touch-icon" href="/apple-touch-icon.png"');

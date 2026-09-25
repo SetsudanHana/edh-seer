@@ -4,6 +4,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test } from "vitest";
 import { CardDrawerProvider, useCardDrawer, usePinned } from "./card-drawer.js";
+/** The web package, found from this file rather than from the working directory, so the test runs
+ *  the same from `packages/web` and from the repository root (the root vitest config). */
+const WEB = join(import.meta.dirname, "..", "..", "..");
 
 const graph = {
   nodes: [
@@ -157,10 +160,10 @@ test("opening the drawer tells the page to make room, and closing gives it back"
  *  that disagrees either leaves a strip of page under the panel or a gap beside it, and neither is
  *  visible in jsdom. Read off the source so the two cannot drift apart silently. */
 test("the reserve matches the drawer's width, at the breakpoint where there is room", () => {
-  const css = readFileSync(join(process.cwd(), "client", "src", "index.css"), "utf8");
+  const css = readFileSync(join(WEB, "client", "src", "index.css"), "utf8");
   const rule = /@media \(min-width: 80rem\) \{\s*body\.drawer-docked \{ padding-inline-end: (\d+)rem; \}/.exec(css);
   expect(rule, "body.drawer-docked rule at min-width: 80rem").not.toBeNull();
-  const source = readFileSync(join(process.cwd(), "client", "src", "components", "card-drawer.tsx"), "utf8");
+  const source = readFileSync(join(WEB, "client", "src", "components", "card-drawer.tsx"), "utf8");
   const width = /className="fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
   expect(width, "the fixed drawer container's width").not.toBeNull();
   // Tailwind's spacing scale is 0.25rem per step, so `w-80` is 20rem.
