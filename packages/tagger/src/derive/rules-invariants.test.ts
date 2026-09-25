@@ -23,6 +23,7 @@ const TESTED: Record<string, string> = {
   "702.177a": "repeats.test.ts — an Exhaust ability repeats once (Loot, the Pathfinder)",
   "700.11": "intervening-if.test.ts — 'you descended this turn' cares about permanents hitting your graveyard",
   "701.14a": "derive.test.ts — a fight's dealer is the fighting creature, not the spell",
+  "701.27a": "derive.test.ts — transforming turns over a permanent already there; 'enters transformed' is not an enters trigger (Corruption of Towashi)",
   "702.162": "characteristics.test.ts — a More Than Meets the Eye card is cast from either face",
   "113.8": "derive.test.ts — \"you\" in a granted ability is the recipient's controller (Hellish Rebuke)",
   "122.1b": "subject.test.ts — every keyword counter named by rule 122.1b is in the dictionary",

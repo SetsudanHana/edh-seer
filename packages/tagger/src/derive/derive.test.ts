@@ -580,6 +580,25 @@ test("a permanent arriving tapped emits no tap event", () => {
   expect(real.abilities.flatMap((a) => a.emits ?? []).some((e) => e.verb === "taps")).toBe(true);
 });
 
+test("a trigger on a permanent entering TRANSFORMED is not an enters trigger", () => {
+  // Corruption of Towashi: "Whenever a permanent you control transforms or a permanent you control
+  // enters transformed, you may draw a card." The normalizer kept "enters transformed" in the
+  // SUBJECT of an `enters` clause, and derive read it as every permanent entering -- 23 deck cards
+  // "reached Alandra through it" on the Ghyrson route list (2026-09-25). No engine event means
+  // "enters transformed" (CR 701.27a: transforming is turning over a permanent already there), so
+  // the trigger is refused; the card's `transform` clause still stands.
+  const { abilities, unknownTriggers } = deriveAbilities(
+    [
+      { id: 2, abilityType: "triggered", trigger: { event: "transform", subject: "a permanent you control", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1", optional: true }] },
+      { id: 3, abilityType: "triggered", trigger: { event: "enters", subject: "a permanent you control enters transformed", control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1", optional: true }] },
+    ],
+    "Corruption of Towashi",
+    { 2: "Whenever a permanent you control transforms or a permanent you control enters transformed, you may draw a card. Do this only once each turn." },
+  );
+  expect(abilities.flatMap((a) => a.trigger?.verbs ?? [])).toEqual(["transform"]);
+  expect(unknownTriggers).toContain("enters-transformed");
+});
+
 test("a trigger on tapping for mana is not a tap event any card can supply", () => {
   // Forsaken Monument ("Whenever you tap a permanent for {C}") and Wild Growth ("Whenever enchanted
   // land is tapped for mana"). Tapping a permanent FOR MANA is something the player does, and the
