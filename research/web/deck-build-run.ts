@@ -21,7 +21,7 @@
  *
  *  `--self-test` RATHER THAN A `*.test.ts`, and the reason is mechanical: a test file under
  *  `research/` is collected by NO vitest project, so its coverage would be silently missing from
- *  `npm test` -- which is the direction `scripts/check_bin_placement.py` fails a build over.
+ *  `npm test` -- which is the direction `scripts/check_bin_placement.mjs` fails a build over.
  *  `ui-review-capture.ts` set this convention; this follows it.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";

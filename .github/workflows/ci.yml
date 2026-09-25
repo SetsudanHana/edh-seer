@@ -71,7 +71,7 @@ jobs:
       # cards do" for good. No formatter and no style rules, on purpose -- see CONTRIBUTING.
       - run: npm run lint
       # The design system in tokens/ is EXTRACTED from the shipped packages/web/client/src/index.css,
-      # so it can drift from what actually renders. Three gates, all python3 stdlib (no pip step):
+      # so it can drift from what actually renders. Three gates, Node built-ins only (no install step):
       #   validate_tokens   - every tokens/*.json parses as DTCG and every alias resolves
       #   validate_contrast - the required WCAG 2.2 pairs still pass on the real hex values
       #   validate_theme_refs - no component reaches for a var() no token defines (a "floating token",
