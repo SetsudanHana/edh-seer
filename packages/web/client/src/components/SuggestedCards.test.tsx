@@ -101,8 +101,13 @@ test("a card on a build list says what it counts as, first", () => {
 });
 
 test("a card on an answers list says what it answers", () => {
-  inRouter(<SuggestedCards cards={[{ ...chaosWarp, answers: "enchantment" }]} empty="none" />);
+  inRouter(<SuggestedCards cards={[{ ...chaosWarp, answers: ["enchantment"] }]} empty="none" />);
   expect(screen.getByText("Answers enchantments")).toBeInTheDocument();
+});
+
+test("a card that answers two kinds names both", () => {
+  inRouter(<SuggestedCards cards={[{ ...chaosWarp, answers: ["enchantment", "artifact"] }]} empty="none" />);
+  expect(screen.getByText("Answers enchantments and artifacts")).toBeInTheDocument();
 });
 
 test("the card's own text is one click away", () => {

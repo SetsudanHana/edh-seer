@@ -49,8 +49,9 @@ export interface SuggestedCard {
   oracle?: string;
   /** On a `build` list: the group it counts toward ("Ramp"), by the report's own rules. */
   fills?: string;
-  /** On an `answers` list: the permanent class it answers ("enchantment"). */
-  answers?: string;
+  /** On an `answers` list: the permanent classes it answers ("enchantment"). A list, so a client
+   *  merging two class lists can name both. */
+  answers?: string[];
 }
 export interface SuggestedPair {
   cut: string;
@@ -408,7 +409,7 @@ export async function suggestForDeck(input: {
   // WHAT EACH CARD COUNTS AS, on the row: the finding names the group, and the row has to say this
   // card is one of them before its connections argue it is the right one.
   for (const [name, list, limit, band] of buildRanked) out.build[name] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, fills: name }));
-  for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, answers: cls }));
+  for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, answers: [cls] }));
   for (const [key, list] of synergyRanked) {
     const cards: SuggestedCard[] = [];
     for (const c of list) {

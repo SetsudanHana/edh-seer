@@ -26,6 +26,9 @@ test("an answers finding takes every short class's cards, each card once", () =>
     { class: "graveyard", count: 0, required: 5 },
   ] } } as unknown as DeckReport;
   expect(suggestionsFor(finding("answers"), s, report)?.map((c) => c.name)).toEqual(["Chaos Warp", "Abrade"]);
+  // A card on two class lists says both, not just the first it was found under (final review, AO4).
+  const both = { ...s, answers: { enchantment: [{ ...card("Chaos Warp"), answers: ["enchantment"] }], artifact: [{ ...card("Chaos Warp"), answers: ["artifact"] }] } };
+  expect(suggestionsFor(finding("answers"), both, report)?.[0]?.answers).toEqual(["enchantment", "artifact"]);
 });
 
 test("the synergy finding takes the cards for every unmet key, each card once", () => {
@@ -68,4 +71,24 @@ test("a failure is an error state, not a thrown render", async () => {
   await waitFor(() => expect(result.current.state).toBe("error"));
   expect(result.current.value).toBeNull();
   warn.mockRestore();
+});
+
+/** NOT EVEN ONE FRAME (final review of AO4, Review Focus 5): the effect that resets to "loading" runs
+ *  after paint, so the first render of a new report still showed the previous report's cards --
+ *  including a card the reader had just added. Every render is recorded, so one stale frame fails. */
+test("the first render of a new report never shows the previous report's cards", async () => {
+  suggestForDeck
+    .mockImplementationOnce(async () => ({ ...empty, plan: [card("Old")] }))
+    .mockImplementationOnce(() => new Promise(() => {}));
+  const first = { report: { cards: [] }, commanderColorIdentity: [] } as unknown as AnalyzeResponse;
+  const second = { report: { cards: [] }, commanderColorIdentity: [] } as unknown as AnalyzeResponse;
+  const seen: [AnalyzeResponse, string | undefined][] = [];
+  const { result, rerender } = renderHook(({ data }) => {
+    const s = useSuggestions(data);
+    seen.push([data, s.value?.plan[0]?.name]);
+    return s;
+  }, { initialProps: { data: first } });
+  await waitFor(() => expect(result.current.state).toBe("ready"));
+  rerender({ data: second });
+  expect(seen.filter(([d, name]) => d === second && name === "Old")).toEqual([]);
 });

@@ -3,6 +3,9 @@ import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { peekOnPlainClick, usePeek } from "./peek.js";
 
+/** "enchantments and artifacts" -- the platform's own list joining, British style. */
+const LIST = new Intl.ListFormat("en-GB", { type: "conjunction" });
+
 /** Reasons shown before the fold; the rest sit behind "and N more" (spec §2). */
 const OPEN_REASONS = 2;
 /** Deck cards named in the "connects to" line before it says "and N more". */
@@ -34,7 +37,7 @@ function Row({ c }: { c: SuggestedCard }) {
       {/* WHAT IT COUNTS AS, BEFORE WHY IT FITS (persona round 2026-09-25): under "You are 10 short
         *  on ramp" a row whose only lines were about other cards read as padding. */}
       {c.fills ? <p className="text-sm font-medium">Counts as {c.fills.toLowerCase()}</p> : null}
-      {c.answers ? <p className="text-sm font-medium">Answers {c.answers}s</p> : null}
+      {c.answers?.length ? <p className="text-sm font-medium">Answers {LIST.format(c.answers.map((x) => `${x}s`))}</p> : null}
       {c.route ? (
         <>
           <p className="text-sm max-w-[70ch]">

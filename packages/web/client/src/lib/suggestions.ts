@@ -25,7 +25,14 @@ export function suggestionsFor(f: Finding, s: DeckSuggestions | null, report: De
   if (f.kind === "build") return s.build[f.figureLabel] ?? [];
   if (f.kind === "answers") {
     const short = (report.deckMath?.answers ?? []).filter((a) => a.class !== "graveyard" && a.count < a.required);
-    return byName(short.map((a) => s.answers[a.class]));
+    // ONE ROW PER CARD, NAMING EVERY CLASS IT ANSWERS: a card on the enchantment and the artifact
+    // list says both, not only the first list it was found on (final review, AO4).
+    const merged = new Map<string, SuggestedCard>();
+    for (const c of short.flatMap((a) => s.answers[a.class] ?? [])) {
+      const had = merged.get(c.name);
+      merged.set(c.name, had ? { ...had, answers: [...new Set([...(had.answers ?? []), ...(c.answers ?? [])])] } : c);
+    }
+    return [...merged.values()];
   }
   return byName(Object.values(s.synergy));
 }
@@ -40,10 +47,11 @@ let engine: Promise<typeof import("@edh-seer/matcher/suggest-static")> | undefin
  *  dynamic import so the report's first paint does not wait on the suggestion code either. An edit
  *  re-runs the report; the `cancelled` flag drops the older run's answer if it arrives last. */
 export function useSuggestions(data: AnalyzeResponse): SuggestionsState {
-  const [out, setOut] = useState<SuggestionsState>({ state: "loading", value: null });
+  // KEYED TO THE REPORT IT WAS COMPUTED FOR: the effect runs after paint, so without the key the
+  // first render of an edited deck showed the previous deck's cards for a frame (final review, AO4).
+  const [out, setOut] = useState<SuggestionsState & { for: AnalyzeResponse | null }>({ state: "loading", value: null, for: null });
   useEffect(() => {
     let cancelled = false;
-    setOut({ state: "loading", value: null });
     (async () => {
       // A FAILED LOAD IS FORGOTTEN, so the next report tries again: a deploy that rotates the hashed
       // chunk under an open tab would otherwise fail every later report until a reload.
@@ -51,15 +59,15 @@ export function useSuggestions(data: AnalyzeResponse): SuggestionsState {
       const { suggestForDeck } = await engine;
       return suggestForDeck({ report: data.report, commanderColorIdentity: data.commanderColorIdentity, baseUrl: "/static" });
     })().then(
-      (value) => { if (!cancelled) setOut({ state: "ready", value }); },
+      (value) => { if (!cancelled) setOut({ state: "ready", value, for: data }); },
       (err: unknown) => {
         // A SUGGESTION RUN THAT FAILS LEAVES THE REPORT AS IT WAS: the findings still say what is
         // wrong, and a missing list is not a wrong one.
         console.warn("[suggest] failed", err);
-        if (!cancelled) setOut({ state: "error", value: null });
+        if (!cancelled) setOut({ state: "error", value: null, for: data });
       },
     );
     return () => { cancelled = true; };
   }, [data]);
-  return out;
+  return out.for === data ? { state: out.state, value: out.value } : { state: "loading", value: null };
 }
