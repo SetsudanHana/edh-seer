@@ -44,8 +44,8 @@ const headings = (prefix: string): { rule: string; term: string }[] =>
 const concepts700 = [...cr.matchAll(/^(700\.\d+)\. (.{20,400}?)(?:\.|$)/gm)]
   .map((m) => ({ rule: m[1], text: m[2] }))
   .map(({ rule, text }) => {
-    const t = text.match(/[Ss]ome cards refer to (?:whether a player has [“"])?([a-z' \[\]]+?)(?:[”"]|\.|,| this turn| permanents| creatures|$)/)
-      ?? text.match(/The term ([a-z\[\]]+)/)
+    const t = text.match(/[Ss]ome cards refer to (?:whether a player has [“"])?([a-z' [\]]+?)(?:[”"]|\.|,| this turn| permanents| creatures|$)/)
+      ?? text.match(/The term ([a-z[\]]+)/)
       ?? text.match(/A player'?s? ([a-z]+) (?:to|consists)/)
       ?? text.match(/Some abilities trigger [“"]Whenever you ([a-z]+)/);
     return { rule, term: t?.[1]?.trim() ?? "", text };

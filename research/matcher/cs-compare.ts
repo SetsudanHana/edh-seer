@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, docToCard, parseDecklistText } from "@edh-seer/data";
-import { loadOtagSemantics } from "@edh-seer/tagger";
 import type { CardTags } from "@edh-seer/tagger";
 import { cardThemeTags } from "../../packages/matcher/src/index.js";
 import { ARCHETYPE_SIGNATURE, type Archetype } from "../../packages/matcher/src/archetypes.js";
@@ -63,7 +62,6 @@ async function main(): Promise<void> {
   const lookup = mongoLookup(store);
   const cardTags = store.db.collection("cardTags");
   const cardOtags = store.db.collection("cardOtags");
-  const semantics = loadOtagSemantics();
 
   // Universe keyed by CS slug, so all three sources address the same cards.
   const csLabels = new Map<string, Set<string>>();      // csSlug -> CS categories

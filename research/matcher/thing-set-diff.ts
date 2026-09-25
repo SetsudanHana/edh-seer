@@ -23,7 +23,7 @@ import { createTagsLookup } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../../packages/matcher/src/index.js";
 import { cardThemeTags } from "../../packages/matcher/src/edges.js";
-import { themeMembership, themeCandidates } from "../../packages/matcher/src/themes.js";
+import { themeMembership } from "../../packages/matcher/src/themes.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
 import { foldThemeTag } from "../../packages/matcher/src/theme-fold.js";
 

@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { expect, test } from "vitest";
 import { DeckGauges } from "./DeckGauges.js";
 import { floorState } from "../lib/deck-gauge.js";
 

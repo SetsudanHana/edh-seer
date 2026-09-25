@@ -66,6 +66,10 @@ jobs:
       # Inside this job for the same reason as the token gates below: `test` is the only check
       # branch protection knows about.
       - run: npm run lint:bins
+      # BUGS, NOT STYLE: oxlint's correctness rules plus unused code (.oxlintrc.json). Its first run
+      # found a search state that was computed and never shown, so a stale link sat on "reading what
+      # cards do" for good. No formatter and no style rules, on purpose -- see CONTRIBUTING.
+      - run: npm run lint
       # The design system in tokens/ is EXTRACTED from the shipped packages/web/client/src/index.css,
       # so it can drift from what actually renders. Three gates, all python3 stdlib (no pip step):
       #   validate_tokens   - every tokens/*.json parses as DTCG and every alias resolves

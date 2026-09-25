@@ -1344,7 +1344,7 @@ export function deriveAbilities(
         // does not separate them. The EVENT does: a permanent leaving and undoing what it did is the
         // aura-drawback shape, while `dies` is the aristocrats shape. Only the sacrifice's own emits
         // are dropped; a leaves-trigger that makes tokens still supplies them.
-        .filter((e) => !(action.verb === "sacrifice" && selfLeavesTrigger))
+        .filter(() => !(action.verb === "sacrifice" && selfLeavesTrigger))
         // A multiplier performs nothing. Every emit of the clause goes, not only the one matching
         // the replaced event: Academy Manufactor's clause answers `create` three times and creates
         // a token on its own none of those times.

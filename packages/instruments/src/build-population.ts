@@ -2,7 +2,6 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
-import type { CardTags } from "@edh-seer/tagger";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, BUILD_PARENTS } from "@edh-seer/matcher/build";
 import { recommendedLands } from "@edh-seer/matcher/land-count";

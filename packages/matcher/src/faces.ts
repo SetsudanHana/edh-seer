@@ -27,7 +27,7 @@ export function printedFaces(card: Card): CardFace[] {
  *  already in play, never cast or played). So a face that is playable keeps its own single entry and
  *  a face that is not gets an EMPTY list, which is what makes `impliedEvents` give it no `cast` and
  *  no `enters` rather than falling back to the union. */
-function faceTags(tags: CardTags, i: number, face: CardFace): CardTags {
+function faceTags(tags: CardTags, i: number): CardTags {
   const chars = tags.characteristics;
   const playable = i < (chars.faces?.length ?? 1);
   const own = chars.faces?.[i];
@@ -62,6 +62,6 @@ export function faceDeckCards(dc: DeckCard): DeckCard[] {
       ...(f.manaCost !== undefined ? { manaCost: f.manaCost } : {}),
       colors: f.colors.length > 0 ? f.colors : f.colorIndicator ?? dc.card.colors,
     },
-    tags: dc.tags ? faceTags(dc.tags, i, f) : null,
+    tags: dc.tags ? faceTags(dc.tags, i) : null,
   }));
 }

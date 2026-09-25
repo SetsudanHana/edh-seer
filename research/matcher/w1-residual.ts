@@ -32,7 +32,7 @@ const h = loadHierarchy();
 const cause: Record<string, number> = {};
 const bump = (k: string) => { cause[k] = (cause[k] ?? 0) + 1; };
 const samples: Record<string, string[]> = {};
-const keep = (k: string, line: string) => { (samples[k] ??= []).length < 4 && samples[k]!.push(line); };
+const keep = (k: string, line: string) => { if ((samples[k] ??= []).length < 4) samples[k]!.push(line); };
 
 for (const f of readdirSync(join(outDir, versionDir, "partners"))) {
   const shard: Record<string, CardPageRecord> = JSON.parse(readFileSync(join(outDir, versionDir, "partners", f), "utf8"));

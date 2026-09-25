@@ -15,7 +15,7 @@ import {
   type CardSynergy,
   type Reason,
   type TagStats,
-  type ImpactWeights, type GameState, type Marker, type Card } from "@edh-seer/engine";
+  type ImpactWeights, type GameState, type Marker } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { faceDeckCards } from "./faces.js";

@@ -19,7 +19,6 @@ import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
 import type { RunDiff } from "../lib/run-diff.js";
-import { findings } from "../lib/findings.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";

@@ -17,7 +17,7 @@
  *  a pointer reads as a slideshow. It is an absolutely positioned SVG, moved between real targets. */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { chromium, type Page } from "@playwright/test";
+import { chromium } from "@playwright/test";
 import gifenc from "gifenc";
 
 const { GIFEncoder, quantize, applyPalette } = gifenc;

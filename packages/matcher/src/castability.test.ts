@@ -191,8 +191,6 @@ test("a card the model never priced is a refusal, never a zero", () => {
 describe("what 'cast for free' actually refuses (K5a)", () => {
   const c = (name: string, oracleText: string, manaCost = "{2}{B}", manaValue = 3): DeckCard =>
     ({ card: { name, typeLine: "Creature — Human", oracleText, manaCost, manaValue, keywords: [], colors: [] } as never, tags: null });
-  const lands = Array.from({ length: 40 }, (_, i) =>
-    ({ card: { name: `L${i}`, typeLine: "Basic Land — Swamp", oracleText: "", manaValue: 0, keywords: [], colors: [], producedMana: ["B"] } as never, tags: null }));
   const priced = (dc: DeckCard) => costRefusal(dc) === undefined;
 
   test("the phrase about ANOTHER card does not refuse this one", () => {
