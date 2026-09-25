@@ -18,6 +18,8 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
+import { StrengthenLists } from "./SuggestedCards.js";
+import { SuggestedPairs } from "./SuggestedPairs.js";
 import { useSuggestions } from "../lib/suggestions.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
@@ -300,8 +302,19 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               trim={report.trim}
               offTheme={offTheme}
             />
+            {/* A CUT BESIDE THE CARD THAT TAKES ITS SLOT, same job or none (spec §3). */}
+            <SuggestedPairs pairs={suggestions.value?.pairs.filter((p) => p.rule !== "cross-job") ?? []} />
             </div>
           </Movement>
+          {/* WHAT GROWS THE PLAN, last in the chapter: nothing is wrong here, so it follows the fixes.
+            *  A failed run drops the section rather than claiming the deck has nothing to add. */}
+          {suggestions.state !== "error" ? (
+            <Movement title="Strengthen what works">
+              <div className="max-w-5xl">
+                <StrengthenLists routes={suggestions.value?.routes} plan={suggestions.value?.plan} />
+              </div>
+            </Movement>
+          ) : null}
         </Chapter>
       </div>
     </div>

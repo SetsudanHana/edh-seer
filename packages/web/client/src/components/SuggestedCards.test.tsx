@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
-import { SuggestedCards } from "./SuggestedCards.js";
+import { StrengthenLists, SuggestedCards } from "./SuggestedCards.js";
 
 const chaosWarp: SuggestedCard = {
   name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3,
@@ -57,4 +57,36 @@ test("loading is a spinner at full strength that says what is happening", () => 
   const status = screen.getByRole("status");
   expect(status.textContent).toContain("Finding cards that fit");
   expect(status.className).not.toMatch(/opacity|disabled/);
+});
+
+/** "STRENGTHEN WHAT WORKS" HAS TWO PARTS (spec §3, amended 2026-09-25): route cards first, then the
+ *  plan list. A part with nothing in it is not drawn; both empty say one sentence. */
+const route: SuggestedCard = {
+  name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: ["x"],
+  route: { to: "Ghyrson Starn", from: ["Maker One", "Maker Two"] },
+};
+test("routes come first under their own label, then the plan list", () => {
+  inRouter(<StrengthenLists routes={[route]} plan={[chaosWarp]} />);
+  const labels = screen.getAllByText(/^(Opens a route|Connects to your plan)$/).map((e) => e.textContent);
+  expect(labels).toEqual(["Opens a route", "Connects to your plan"]);
+  const names = screen.getAllByRole("link").map((a) => a.textContent);
+  expect(names).toEqual(["Impact Tremors", "Chaos Warp"]);
+});
+
+test("an empty part draws no label", () => {
+  inRouter(<StrengthenLists routes={[]} plan={[chaosWarp]} />);
+  expect(screen.queryByText("Opens a route")).toBeNull();
+  expect(screen.getByText("Connects to your plan")).toBeInTheDocument();
+});
+
+test("both parts empty is one sentence and no labels", () => {
+  inRouter(<StrengthenLists routes={[]} plan={[]} />);
+  expect(screen.queryByText("Opens a route")).toBeNull();
+  expect(screen.queryByText("Connects to your plan")).toBeNull();
+  expect(screen.getByText(/Nothing outside the deck connects to two or more of its cards/)).toBeInTheDocument();
+});
+
+test("while computing, the section shows the wait once", () => {
+  inRouter(<StrengthenLists routes={undefined} plan={undefined} />);
+  expect(screen.getAllByRole("status")).toHaveLength(1);
 });

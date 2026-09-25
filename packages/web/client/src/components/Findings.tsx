@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { RunDiff } from "../lib/run-diff.js";
 import { suggestionsFor, takesCards, type SuggestionsState } from "../lib/suggestions.js";
 import { SuggestedCards } from "./SuggestedCards.js";
+import { SuggestedPairs } from "./SuggestedPairs.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's focal element, and the one structural change the
  *  2026-08-26 persona reviews asked for.
@@ -199,6 +200,9 @@ export function Findings({ report, diff, suggestions }: {
           </p>
         </div>
       ) : null}
+      {/* THE SWAPS THAT USE THAT ROOM: a card out of the surplus group, a card into the short one, and
+        *  only where the add connects to more of the deck than the cut (spec §3). */}
+      <SuggestedPairs pairs={suggestions?.value?.pairs.filter((p) => p.rule === "cross-job") ?? []} />
       {/* NOT A LESSER LIST. Colour is its own axis and synergy is `synergyOverall`; neither is a term
         *  in the number above, so neither can be priced in it, and inventing a conversion to
         *  interleave them is the constant `findings.ts` refuses. Rendered in full rather than capped

@@ -92,3 +92,23 @@ export function SuggestedCards({ cards, empty, label }: {
     </div>
   );
 }
+
+/** "STRENGTHEN WHAT WORKS" (spec §3, amended 2026-09-25): the cards that grow the deck's own plan,
+ *  in two parts. Routes lead because a bridge the deck lacks is the larger news -- it joins cards
+ *  that already sit in the deck -- then the cards that connect to the plan directly. A part with no
+ *  rows is not drawn; both empty is one sentence. */
+export function StrengthenLists({ routes, plan }: {
+  routes: readonly SuggestedCard[] | undefined;
+  plan: readonly SuggestedCard[] | undefined;
+}) {
+  if (routes === undefined || plan === undefined) return <SuggestedCards cards={undefined} empty="" />;
+  if (routes.length === 0 && plan.length === 0) {
+    return <p className="text-sm text-(--muted) max-w-[70ch]">Nothing outside the deck connects to two or more of its cards.</p>;
+  }
+  return (
+    <div className="flex flex-col gap-6">
+      {routes.length > 0 ? <SuggestedCards cards={routes} empty="" label="Opens a route" /> : null}
+      {plan.length > 0 ? <SuggestedCards cards={plan} empty="" label="Connects to your plan" /> : null}
+    </div>
+  );
+}
