@@ -361,7 +361,7 @@ describe("the paint mode", () => {
     const { canvas, tick } = frames(SAMPLE.graph);
     tick(50);
     const before = canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }));
-    fireEvent.click(screen.getByRole("button", { name: "Identity" }));
+    fireEvent.click(screen.getByRole("button", { name: "Colour identity" }));
     expect(canvas.__graphProbe!().map((n) => ({ id: n.id, x: n.x, y: n.y }))).toEqual(before);
   });
 
@@ -391,7 +391,7 @@ describe("the paint mode", () => {
     // Krenko is a legendary creature, Impact Tremors an enchantment.
     expect(rimHuesDrawn()).toEqual([TYPE_HUE.creature, TYPE_HUE.enchantment]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Identity" }));
+    fireEvent.click(screen.getByRole("button", { name: "Colour identity" }));
     calls.length = 0;
     tick();
     expect(rimHuesDrawn()).toEqual([IDENTITY_HUE.R, IDENTITY_HUE.R]);
@@ -444,7 +444,7 @@ describe("the paint legend", () => {
     const values = () => [...screen.getByTestId("paint-legend").querySelectorAll("[data-value]")]
       .map((el) => el.getAttribute("data-value"));
     expect(values()).toEqual(["creature", "enchantment"]);
-    fireEvent.click(screen.getByRole("button", { name: "Identity" }));
+    fireEvent.click(screen.getByRole("button", { name: "Colour identity" }));
     expect(values()).toEqual(["R"]);
   });
 

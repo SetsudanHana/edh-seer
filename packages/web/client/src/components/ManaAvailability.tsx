@@ -62,9 +62,9 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
         </span>
       </div>
       <p className="text-sm text-(--muted)">
-        {m.trials.toLocaleString()} simulated games, {m.accelerants} accelerants in the deck. The range is
-        the <strong>play policy</strong>: the low end holds up two mana, the high end spends everything
-        on acceleration and is a ceiling no real deck plays to.
+        {m.trials.toLocaleString()} simulated games, {m.accelerants} ramp pieces in the deck. The range
+        is <strong>how you play them</strong>: the low end holds up two mana, the high end spends
+        everything on ramp and is a ceiling no real deck plays to.
       </p>
 
       {/* THE TABLE WAS TWO SERIES OF NUMBERS AND ONE OF THEM WAS ALREADY DRAWN (roadmap T17).
@@ -138,7 +138,7 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
 
       <p className="text-xs text-(--muted)">
         The line is the median share of your nonlands this turn's mana can pay for, under the
-        spend-everything policy; the band is p25–p75. Colour is ignored
+        spend-everything play; the band covers the middle half of games. Colour is ignored
         entirely, so this is <strong>mana</strong> and never castability — a {"{3}{R}{G}{W}"} spell
         needs three specific colours nothing here checks.
       </p>

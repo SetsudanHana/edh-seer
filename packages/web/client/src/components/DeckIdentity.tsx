@@ -85,7 +85,7 @@ export function DeckIdentity({
   return (
     <div className="border border-(--separator) rounded-(--radius) p-5 bg-(--surface) flex flex-col gap-2">
       <div className="flex items-baseline gap-3 flex-wrap">
-        <span className="eyebrow shrink-0">Deck identity</span>
+        <span className="eyebrow shrink-0">Deck theme</span>
         {/* NAMING A DECK IS A CLAIM, AND IT CAN BE DECLINED (roadmap A15). Under the floor the
             headline is carried by one or two cards, so the title says so and the tag drops to the
             subtitle -- the same shape the CLI prints. The engine's own invariant is that a silent

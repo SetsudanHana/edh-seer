@@ -188,7 +188,7 @@ export function ManaTimeline({ curve, manaAvailability }: {
       ) : null}
 
       <p className="text-xs text-(--muted) max-w-[56ch]">
-        Above the line: mana by turn, median with the quarter-to-three-quarter band around it. Below
+        Above the line: mana by turn in a typical game, with the band covering the middle half of games. Below
         it: how many cards that much mana first pays for. A cost sits on the turn this deck actually
         covers it, not on the turn its number happens to match.
       </p>
