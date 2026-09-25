@@ -1572,12 +1572,12 @@ describe("flow view", () => {
 
   // THE RESET AFTER THE LOOP, NOT JUST INSIDE IT. `ctx.setLineDash([]);` right after the edge loop
   // (in `paintBoard`, board-paint.ts) is the only thing standing between a selected flow and every
-  // later stroke this frame reading as dashed -- card frames (`strokeRect`), rims and selection rings (`arc` +
-  // `stroke`) would all paint dashed for as long as a flow stayed selected, because canvas dash
-  // state is sticky on the context and `links` is drawn in `graph.edges` order, so whenever the
-  // LAST edge happens to be a flow edge nothing inside the loop ever clears it. A single-edge graph
-  // where that one edge IS the flow means the loop's own else-branch reset (line 437) never fires
-  // either, so this can only pass because of the reset AFTER the loop.
+  // later stroke this frame reading as dashed -- card frames (`strokeRect`), rims and selection
+  // rings (`arc` + `stroke`) would all paint dashed for as long as a flow stayed selected, because
+  // canvas dash state is sticky on the context and `links` is drawn in `graph.edges` order, so
+  // whenever the LAST edge happens to be a flow edge nothing inside the loop ever clears it. A
+  // single-edge graph where that one edge IS the flow means the loop's own else-branch reset never
+  // fires either, so this can only pass because of the reset AFTER the loop.
   test("the dash pattern is cleared after the edge loop, not just inside it", () => {
     const calls: string[] = [];
     const graph = graphOf(
