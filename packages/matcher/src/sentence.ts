@@ -553,7 +553,10 @@ export function doublesSentence(producer: string, consumer: string, verb: string
 
 /** The WHOSE axis: every trigger the consumer has, not one event's. */
 export function doublesClassSentence(producer: string, consumer: string): string {
-  return `${producer} doubles ${consumer}'s triggers`;
+  // Worded after the printed card ("that ability triggers an additional time"), so it says what
+  // happens and does not end on "triggers" -- the page's mark for an unread effect (overview
+  // persona rounds 2026-09-25, item 10: every seat asked why a read effect was marked unread).
+  return `${consumer}'s triggered abilities trigger an additional time thanks to ${producer}`;
 }
 
 /** The cost-reduction branch was already plain English and its text does not change — moved here

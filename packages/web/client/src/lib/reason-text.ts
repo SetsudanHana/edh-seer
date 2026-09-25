@@ -45,6 +45,10 @@ export function reasonSegments(
     if (m.index > last) out.push({ kind: "text", text: text.slice(last, m.index) });
     const name = m[0];
     if (cards.has(name)) out.push({ kind: "card", text: name });
+    // A CLASS WORD IS NOT THE TOKEN (overview persona rounds 2026-09-25, item 12): after an article
+    // or a quantifier -- "When a Wizard enters" -- the token's name names the class, and Transpose's
+    // Wizard token was credited on Inalla's line.
+    else if (/\b(?:an?|another|each|every|other)\s$/i.test(text.slice(0, m.index))) out.push({ kind: "text", text: name });
     else out.push({ kind: "token", text: name, maker: tokens.get(name) });
     last = m.index + name.length;
   }

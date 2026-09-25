@@ -57,3 +57,14 @@ test("a name with regex metacharacters is matched literally", () => {
   const segs = reasonSegments("Aether Vial (M) + friends", new Set(["Aether Vial (M) + friends"]));
   expect(segs).toEqual([{ kind: "card", text: "Aether Vial (M) + friends" }]);
 });
+
+/** A CLASS WORD IS NOT THE TOKEN (overview persona rounds 2026-09-25, item 12): Inalla's "When a Wizard
+ *  enters thanks to Inalla, ..." printed "(token from Transpose)" because Transpose makes a token named
+ *  Wizard. After an article or a quantifier the word names the class, not that token. */
+test("a token's name after 'a', 'another' or 'each' is the class, not the token", () => {
+  const tokens = new Map([["Wizard", "Transpose"]]);
+  const segs = reasonSegments("When a Wizard enters thanks to Inalla, Archmage Ritualist, Kindred Discovery draws you 1 card", new Set(["Inalla, Archmage Ritualist", "Kindred Discovery"]), tokens);
+  expect(segs.filter((s) => s.kind === "token")).toEqual([]);
+  // Named as the thing itself, it is still the token.
+  expect(reasonSegments("Transpose creates Wizard", new Set(["Transpose"]), tokens).filter((s) => s.kind === "token").map((s) => s.text)).toEqual(["Wizard"]);
+});
