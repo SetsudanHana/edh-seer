@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, type EngineCard, type EngineGroup, type EngineModel, type Link, type Repeat } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
@@ -37,7 +37,7 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
         <p className="max-w-[70ch]">
           Your deck mostly does <b>{deckGroups.length} things</b>, listed below. Between them they explain{" "}
           <b>{pct}%</b> of the ways your {m.deckCards} cards work together.
-          {m.onceLinks ? <> <b>{m.onceLinks}</b> of those work only once.</> : null}
+          {m.onceLinks ? <> <b>{m.onceLinks}</b> of those links work only once.</> : null}
         </p>
         <RepeatKey />
       </div>
@@ -160,9 +160,13 @@ function CardText({ card }: { card: EngineCard }) {
   );
 }
 
-const CHIP_CAP = 24;
+/** A group shows this many member chips until asked for all of them: at 390px a group of 54
+ *  was a wall of chips three screens tall (live round). The rest are named in a line, and a chip
+ *  the selection lights is always drawn, so selecting never hides a partner. */
+const CHIP_CAP = 12;
 
 function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: string | null; onSelect: (id: string | null) => void }) {
+  const [all, setAll] = useState(false);
   const lit = sel ? m.partners.get(sel) : undefined;
   const rank = (a: EngineCard, b: EngineCard) => Number(b.isCommander) - Number(a.isCommander) || b.score - a.score || (a.name < b.name ? -1 : 1);
   const hubs = g.hubs.map((id) => m.cards.get(id)!).sort(rank);
@@ -188,6 +192,8 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
       </button>
     );
   };
+  const shown = members.filter((c, i) => all || i < CHIP_CAP || c.id === sel || lit?.has(c.id));
+  const rest = members.filter((c) => !shown.includes(c));
   const hubWord = g.helper
     ? (hubs.length === 1 ? "This card…" : `These ${hubs.length} cards…`)
     : (hubs.length === 1 ? "This card does something extra…" : `These ${hubs.length} cards do something extra…`);
@@ -201,9 +207,14 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
       <div className="flex flex-col gap-1.5"><span className="eyebrow text-(--muted)">{hubWord}</span><div className="flex flex-wrap gap-1.5">{hubs.map((c) => chip(c, true))}</div></div>
       <div className="flex flex-col gap-1.5">
         <span className="eyebrow text-(--muted)">{memberWord}</span>
-        <div className="flex flex-wrap gap-1.5">{members.slice(0, CHIP_CAP).map((c) => chip(c, false))}</div>
-        {members.length > CHIP_CAP ? (
-          <p className="text-sm text-(--muted)">and {members.length - CHIP_CAP} more: {members.slice(CHIP_CAP).map((c) => c.name + (c.isToken ? " (token)" : "")).join(", ")}.</p>
+        <div className="flex flex-wrap gap-1.5">{shown.map((c) => chip(c, false))}</div>
+        {rest.length ? (
+          <p className="text-sm text-(--muted)">
+            and {rest.length} more: {rest.map((c) => c.name.split(" // ")[0] + (c.isToken ? " (token)" : "")).join(", ")}.{" "}
+            <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 text-(--foreground)" onClick={() => setAll(true)}>Show all {members.length}</button>
+          </p>
+        ) : all && members.length > CHIP_CAP ? (
+          <p><button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 text-sm" onClick={() => setAll(false)}>Show fewer</button></p>
         ) : null}
       </div>
       {g.example ? (
@@ -239,8 +250,8 @@ function SelectedPanel({ m, id, onClear, onOpenCard }: { m: EngineModel; id: str
       <Lines links={lines} />
       <CardText card={c} />
       <div className="flex flex-wrap gap-3">
-        {onOpenCard ? <button type="button" className="eyebrow text-(--accent)" onClick={() => onOpenCard(id)}>See it in the one-card view</button> : null}
-        <button type="button" className="eyebrow text-(--muted)" onClick={onClear}>Clear</button>
+        {onOpenCard ? <button type="button" className="min-h-11 rounded-(--radius) border border-(--accent) px-4 text-sm text-(--accent)" onClick={() => onOpenCard(id)}>See it in the one-card view</button> : null}
+        <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={onClear}>Clear selection</button>
       </div>
     </div>
   );

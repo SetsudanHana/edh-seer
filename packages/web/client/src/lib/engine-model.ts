@@ -51,6 +51,8 @@ export interface CutRow {
   real: number;
   /** Cards it helps in the background: made cheaper, given types, found or brought back. */
   gives: number;
+  /** Cards it helps once in the background: found or brought back a single time. Half weight. */
+  givesOnce: number;
   once: number; partners: number;
   why: string;
   keep?: Link;
@@ -247,7 +249,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
     onceInGroups: covered.filter((l) => l.repeat === "oneshot").length,
     deckCards: deckCards.length, tokens: [...cards.values()].filter((c) => c.isToken).length,
     strongest: strongestPairs(pairs, cards, groupByTag),
-    ...cutList(deckCards, partners, groupByTag),
+    ...cutList(deckCards, cards, partners, groupByTag),
   };
 }
 
@@ -285,44 +287,77 @@ function strongestPairs(pairs: Map<string, Pair>, cards: Map<string, EngineCard>
 
 const s = (n: number) => (n === 1 ? "" : "s");
 
+/** A reason whose effect half the engine has not read ends in "triggers" (the same test as
+ *  `unreadEffect` in card-drawer, kept here so this module stays free of components). It is true
+ *  but says nothing, so it is never offered as the reason to keep a card (live round, 2026-09-25). */
+const unread = (l: Link) => /\btriggers$/.test(l.text.trim());
+
 /** THE CARDS DOING THE LEAST, and removal and ramp judged by their job.
  *
  *  Every repeating link counts, trigger doublers included -- counting only the six headline groups
  *  put Naban, Dean of Iteration first in an Inalla deck (round 3). Background help counts too:
  *  Herald's Horn and Maskwood Nexus sat on the list while saying they help 30 and 50 cards
- *  (round 4). A card whose job is removal, ramp or protection is compared with its own kind,
- *  because a link count cannot judge it; hiding those cards instead hid the talismans a tuner
- *  weighs (round 3). */
-function cutList(deckCards: EngineCard[], partners: Map<string, Map<string, Pair>>, groups: Map<string, EngineGroup>): { cuts: CutRow[]; jobs: [string, CutRow[]][] } {
-  const rows: CutRow[] = deckCards.filter((c) => !c.isCommander && !c.isLand).map((card) => {
+ *  (round 4), and so does help that happens once, at half weight: Sevinne's Reclamation sat on the
+ *  list while its group said it brings back 54 cards (live round). A card whose job is removal,
+ *  ramp or protection is compared with its own kind, because a link count cannot judge it; hiding
+ *  those cards instead hid the talismans a tuner weighs (round 3).
+ *
+ *  The reason to keep a card is its own: a link with a partner other than the commander where it
+ *  can, in one of the deck's groups, with the most central partner -- and a partner no row above it
+ *  already named. Taking the first link gave every Inalla cut the same line about Inalla making a
+ *  token (live round); taking the most central partner alone gave them all Kindred Discovery. */
+function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partners: Map<string, Map<string, Pair>>, groups: Map<string, EngineGroup>): { cuts: CutRow[]; jobs: [string, CutRow[]][] } {
+  const rows: (CutRow & { options: Link[] })[] = deckCards.filter((c) => !c.isCommander && !c.isLand).map((card) => {
     const nb = partners.get(card.id) ?? new Map<string, Pair>();
-    let real = 0, gives = 0, once = 0, keep: Link | undefined;
+    let real = 0, gives = 0, givesOnce = 0, once = 0;
+    const options: Link[] = [];
     for (const p of nb.values()) {
       const rep = p.links.filter((l) => l.repeat !== "oneshot");
-      if (!rep.length) { once++; continue; }
+      if (!rep.length) {
+        if (p.links.some((l) => l.from === card.id && isHelperTag(l.tag))) givesOnce++;
+        else once++;
+        continue;
+      }
       if (rep.every((l) => isHelperTag(l.tag))) {
         if (rep.some((l) => l.from === card.id)) gives++;
         continue;
       }
       real++;
-      const cand = rep.find((l) => groups.has(l.tag) && !isHelperTag(l.tag)) ?? rep.find((l) => !isHelperTag(l.tag))!;
-      if (!keep || (groups.has(cand.tag) && !groups.has(keep.tag))) keep = cand;
+      options.push(...rep.filter((l) => !isHelperTag(l.tag) && !unread(l)));
     }
-    if (!keep && gives) {
-      for (const p of nb.values()) { const l = p.links.find((x) => x.from === card.id && isHelperTag(x.tag) && x.repeat !== "oneshot"); if (l) { keep = l; break; } }
+    const other = (l: Link) => cards.get(l.from === card.id ? l.to : l.from);
+    const worth = (l: Link) => {
+      const o = other(l);
+      return (o?.isCommander ? 0 : 4) + (groups.has(l.tag) ? 2 : 0) + (o?.score ?? 0) / 1000;
+    };
+    options.sort((a, b) => worth(b) - worth(a));
+    let keep: Link | undefined = options[0];
+    if (!keep && (gives || givesOnce)) {
+      const help = [...nb.values()].flatMap((p) => p.links).filter((x) => x.from === card.id && isHelperTag(x.tag) && !unread(x));
+      keep = help.find((x) => x.repeat !== "oneshot") ?? help[0];
     }
+    const onceHelp = givesOnce ? `helps ${givesOnce} more once, by finding them or bringing them back` : "";
     let why: string;
     if (!nb.size) why = "Works with nothing else in this deck.";
-    else if (!real && !gives) why = once ? `Everything it does with other cards happens only once (${once} card${s(once)}).` : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
-    else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back.`;
-    else why = `Keeps working with only ${real} other card${s(real)}${gives ? `, and helps ${gives} more in the background` : ""}.`;
+    else if (!real && !gives && !givesOnce) why = once ? `Everything it does with other cards happens only once (${once} card${s(once)}).` : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
+    else if (!real && !gives) why = `All it does here is help ${givesOnce} card${s(givesOnce)} once, by finding them or bringing them back.`;
+    else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
+    else why = `Keeps working with only ${real} other card${s(real)}${gives ? `, helps ${gives} more in the background` : ""}${givesOnce ? `${gives ? "," : ""} and ${onceHelp}` : ""}.`;
     const jobs = [...new Set(card.roles.filter((r) => JOB_WORDS[r]).map((r) => JOB_WORDS[r]!))];
-    return { card, real, gives, once, partners: nb.size, why, keep, jobs };
-  }).sort((a, b) => (a.real + a.gives) - (b.real + b.gives) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
-  const byJob = new Map<string, CutRow[]>();
+    return { card, real, gives, givesOnce, once, partners: nb.size, why, keep, jobs, options };
+  }).sort((a, b) => (a.real + a.gives + a.givesOnce / 2) - (b.real + b.gives + b.givesOnce / 2) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
+  const cuts = rows.filter((r) => !r.jobs.length).slice(0, 6);
+  const named = new Set<string>();
+  for (const r of cuts) {
+    const other = (l: Link) => (l.from === r.card.id ? l.to : l.from);
+    const fresh = r.options.find((l) => !named.has(other(l)));
+    if (fresh) r.keep = fresh;
+    if (r.keep) named.add(other(r.keep));
+  }
+  const byJob = new Map<string, typeof rows>();
   for (const r of rows) for (const j of r.jobs) { if (!byJob.has(j)) byJob.set(j, []); byJob.get(j)!.push(r); }
   return {
-    cuts: rows.filter((r) => !r.jobs.length).slice(0, 6),
-    jobs: [...byJob.entries()].sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1)),
+    cuts: cuts.map(({ options: _, ...r }) => r),
+    jobs: [...byJob.entries()].map(([j, rs]) => [j, rs.map(({ options: _, ...r }) => r)] as [string, CutRow[]]).sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1)),
   };
 }

@@ -43,3 +43,20 @@ test("a selected card lights its partners and fades the rest", () => {
   expect(within(helpers).getByRole("button", { name: "Reducer" }).className).toMatch(/opacity-30/);
   expect(within(clerics).getAllByRole("button", { name: "Payoff A" })[0]).toHaveAttribute("aria-pressed", "true");
 });
+
+test("a big group shows twelve chips and names the rest until asked for all", async () => {
+  const { report, graph } = engineDeck();
+  const edges = (report as unknown as { edges: unknown[] }).edges;
+  for (let i = 1; i <= 10; i++) {
+    const name = `Extra Cleric ${i}`;
+    (report.cards as unknown as { name: string }[]).push({ name, isCommander: false, score: 1 } as never);
+    (graph.nodes as unknown as { id: string }[]).push({ id: name, label: name, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [] } as never);
+    for (const p of ["Payoff A", "Payoff B"]) edges.push({ a: name, b: p, score: 1, reasons: [{ producer: name, consumer: p, tag: "scales:cleric", text: `While you control ${name}, ${p} counts it` }] });
+  }
+  render(<EnginesView report={report} graph={graph} selected={null} onSelect={vi.fn()} />);
+  const group = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
+  expect(within(group).queryByRole("button", { name: "Extra Cleric 9" })).toBeNull();
+  expect(within(group).getByText(/and 6 more:/)).toBeInTheDocument();
+  await userEvent.setup().click(within(group).getByRole("button", { name: "Show all 18" }));
+  expect(within(group).getByRole("button", { name: "Extra Cleric 9" })).toBeInTheDocument();
+});

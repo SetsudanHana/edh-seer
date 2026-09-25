@@ -48,10 +48,10 @@ describe("buildEngineModel", () => {
   });
 
   test("counts once-only links and places tokens on their own nodes", () => {
-    expect(m.onceLinks).toBe(1);
+    expect(m.onceLinks).toBe(4);
     expect(m.partners.get("token:Treasure")?.has("Payoff A")).toBe(true);
     expect(m.tokens).toBe(1);
-    expect(m.deckCards).toBe(15);
+    expect(m.deckCards).toBe(17);
   });
 
   test("a card that helps many in the background is not a cut candidate", () => {
@@ -65,8 +65,19 @@ describe("buildEngineModel", () => {
     expect(m.jobs).toEqual([["Removal", [expect.objectContaining({ card: expect.objectContaining({ name: "Doom Blade" }) })]]]);
   });
 
-  test("a card whose only link works once says so", () => {
-    expect(m.cuts.find((c) => c.card.name === "Raise Once")!.why).toMatch(/only once/);
+  test("a card whose only help works once says so, and counts it at half weight", () => {
+    const raise = m.cuts.find((c) => c.card.name === "Raise Once")!;
+    expect(raise.why).toBe("All it does here is help 1 card once, by finding them or bringing them back.");
+    expect(raise.keep?.text).toBe("Raise Once can bring back Cleric 1");
+    const digger = m.cuts.find((c) => c.card.name === "Digger")!;
+    expect(digger.givesOnce).toBe(3);
+    expect(m.cuts.indexOf(digger)).toBeGreaterThan(m.cuts.indexOf(raise));
+  });
+
+  test("the reason to keep a card is its own: not the commander's line, not an unread effect", () => {
+    const side = m.cuts.find((c) => c.card.name === "Sidekick")!;
+    expect(side.real).toBe(2);
+    expect(side.keep?.text).toBe("When Cleric 3 gains you life, Sidekick grows");
   });
 
   test("a pair that helps both ways shows both directions, and no card fills the strip", () => {
