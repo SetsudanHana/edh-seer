@@ -15,5 +15,5 @@ are in the main runbook, not here:
 This file used to describe a loop that had a model tag batches of 40 cards straight into
 `cardTags`. It was retired when the product switched to derived tags on 2026-08-06: that extractor
 measured 43% correct on a hand audit, and two identical runs agreed on 30% of cards.
-`tag-batch-api.ts` refuses to run without `ALLOW_DEPRECATED_GRIND=1`. The loop and its
-`grind.sh` wrapper are gone; git history has them.
+The loop's scripts (`tag-batch-api`, `upsert-batch`, `grind.sh`, and `dump-untagged`, `status`,
+`reconcile`, `audit` and `dump-suspects` under `research/tagger/`) are gone; git history has them.

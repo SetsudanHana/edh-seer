@@ -97,7 +97,7 @@ test("deriving is free, so it re-runs on any drift at all", () => {
 
 test("a derived doc never re-queues into the FLAT grind", () => {
   // deriveCardTags sets promptVersion 0, which needsRetag would read as permanently stale. The two
-  // never meet because derived docs live in their own collection and dump-untagged reads cardTags.
+  // never meet because derived docs live in their own collection, apart from the flat `cardTags`.
   expect(derivedDoc().promptVersion).toBe(0);
   expect(derivedDoc().model).toBe("derived");
 });

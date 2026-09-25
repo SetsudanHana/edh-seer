@@ -1764,8 +1764,8 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,
-    // WARNING: 0 will never equal PROMPT_VERSION (llm/prompt.ts), so `needsRetag`/`selectUntagged`
-    // will see any persisted derived doc as permanently stale and re-queue it for LLM tagging
+    // WARNING: 0 will never equal PROMPT_VERSION (llm/prompt.ts), so `needsRetag`
+    // would see any persisted derived doc as permanently stale and re-queue it for LLM tagging
     // forever. Fine while derivation is not yet wired into the persistence path -- revisit this
     // the moment it is.
     promptVersion: 0,

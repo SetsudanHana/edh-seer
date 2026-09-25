@@ -12,8 +12,7 @@ import { join } from "node:path";
  *
  *  `mkdtemp` is the usual answer and is WRONG HERE, because these paths are a handoff: the sampling
  *  bins write a draw that the scoring bins read back (precision-sample -> precision-score,
- *  normalize-experiment -> normalize-score, dump-suspects -> reconcile, schema-experiment ->
- *  experiment-compare). A random directory per run would break every one of those pairs.
+ *  normalize-experiment -> normalize-score, schema-experiment -> experiment-compare). A random directory per run would break every one of those pairs.
  *
  *  So the path stays STABLE and the exposure is removed instead: one parent directory per user id,
  *  created 0o700, with the well-known name underneath it. `mkdirSync` with an explicit mode is not
