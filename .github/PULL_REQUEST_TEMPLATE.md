@@ -23,3 +23,4 @@
 - [ ] `npm run typecheck` passes — vitest does not typecheck
 - [ ] `npm run lint:bins` passes, if a script was added or moved
 - [ ] `docs/reference/SCHEMA.md` regenerated, if the schema or a vocabulary changed
+- [ ] Screenshots regenerated (`npm run screenshots -w @edh-seer/web`), if the graph, game plan, suggestions or mana chart look different

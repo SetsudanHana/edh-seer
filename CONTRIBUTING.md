@@ -96,6 +96,29 @@ a real regression gets excused.
   a convention rather than a gate, so it is on review to catch. Use a real icon (lucide, inline SVG,
   `currentColor`) or plain words.
 
+## Screenshots
+
+The README and [edhseer.cards/how-it-works](https://edhseer.cards/how-it-works) show four frames of
+a real report: the graph, the game plan, the suggestions and the mana chart. They are the first
+picture of the product most people see, and a picture of last month's UI is a claim that is no
+longer true.
+
+**If your change alters what one of those frames shows, regenerate them in the same PR:**
+
+```bash
+VITE_STATIC_DATA=1 npm run build:client -w @edh-seer/web
+npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
+npm run screenshots -w @edh-seer/web
+```
+
+The script (`packages/web/scripts/docs-screenshots.ts`) analyses a fixed Krenko list, crops each
+frame from its own heading, and writes the `.webp` files that both pages use. Your UI and
+production's card data, so no corpus is needed. Look at the four files before you commit them.
+
+`screenshots.test.ts` holds the parts a test can see: every frame comes from the script, the page
+and the README show the same set, and each file's size matches what the page declares. Whether a
+frame is *out of date* no test can tell, which is why it is on the PR checklist.
+
 ## Pull requests
 
 Branch, open a PR, get both CI legs green (`test (node 22)` and `test (node 24)`), then squash-merge.
