@@ -281,3 +281,41 @@ test("a route card is not listed again in the plan list", async () => {
   expect(s.routes.map((c) => c.name)).toEqual(["Impact Tremors"]);
   expect(s.plan.map((c) => c.name)).not.toContain("Impact Tremors");
 });
+
+/** A CHOSEN TYPE IS THE DECK'S TYPE HERE, as in the report (`analyze.ts` resolveChosenTypes). The
+ *  2026-09-25 persona round: Inalla's Kindred Discovery "drew a card" for Poisonbelly Ogre, an Ogre in
+ *  a Wizard deck, because the suggestion check read "creature of the chosen type" unresolved. */
+test("a chosen-type card connects only to candidates of the deck's own type", async () => {
+  const chooser = [{
+    kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, chosenType: true } },
+    effect: { kind: "draw" },
+  }];
+  const specs: Spec[] = [
+    { name: "Kindred Chooser", identity: ["U"], types: ["enchantment"], abilities: chooser },                // 0 deck
+    { name: "Wizard Spell", identity: ["U"], types: ["instant"], abilities: [] },                              // 1 deck, the tribe
+    { name: "Wizard Two", identity: ["U"], types: ["instant"], abilities: [] },                                // 2 deck, the tribe
+    { name: "Stray Ogre", identity: ["U"], types: ["creature"], abilities: [] },                               // 3 candidate
+    { name: "New Wizard", identity: ["U"], types: ["creature"], abilities: [] },                               // 4 candidate
+  ];
+  const subtypes: Record<string, string[]> = { "Wizard Spell": ["wizard"], "Wizard Two": ["wizard"], "Stray Ogre": ["ogre"], "New Wizard": ["wizard"] };
+  const f = files(specs);
+  for (const [path, shard] of Object.entries(f)) {
+    if (!path.includes("/cards/")) continue;
+    for (const [k, e] of Object.entries(shard as Record<string, { card: { name: string }; tags: { characteristics: { subtypes: string[] } } }>)) {
+      e.tags.characteristics.subtypes = subtypes[e.card.name] ?? [];
+      if (e.card.name === "Kindred Chooser") (shard as Record<string, unknown>)[k] = { ...e, pi: [[3, 0.3], [4, 0.3]] };
+    }
+  }
+  const ENTERS = "enters|creature|-|-";
+  const path = `/static/${VERSION}/events/${eventShardOf(ENTERS)}.json`;
+  f[path] = { [ENTERS]: { p: [3, 4], c: [0] } };
+  f[`/static/${VERSION}/event-frequency.json`] = { supply: { [ENTERS]: 2 }, consume: { [ENTERS]: 1 }, byIdentity: {} };
+  const deck = {
+    cards: specs.slice(0, 3).map((c) => ({ name: c.name, isCommander: false })),
+    buildParents: [], cutList: [], edges: [], axis: [],
+    deckMath: { demand: [{ key: "enters:type:creature", available: 0, suppliers: 0, consumers: 1 }] },
+  } as unknown as DeckReport;
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["U"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  expect(s.synergy["enters:type:creature"]!.map((c) => c.name)).toEqual(["New Wizard"]);
+});

@@ -16,7 +16,7 @@ import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
 import { directedReasons, sizeMeets, type ReasonOptions } from "./edges.js";
 import { faceDeckCards } from "./faces.js";
-import { deckLandTypes } from "./chosen-type.js";
+import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { maxAxisWeight } from "./axis.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
@@ -262,8 +262,18 @@ export async function suggestForDeck(input: {
   for (const c of pool.values()) {
     c.hint = c.connections.reduce((sum, x) => sum + Math.max(0, ...(x.tags ?? []).map((t) => tagWeight[t] ?? 0)), 0);
   }
-  const dc = deckCards(lookup);
-  const deckDcs = (await Promise.all(physical.map(dc))).filter((x): x is DeckCard => x !== null);
+  const raw = deckCards(lookup);
+  const rawDeck = (await Promise.all(physical.map(raw))).filter((x): x is DeckCard => x !== null);
+  // A CHOSEN TYPE IS THIS DECK'S TYPE, resolved as the report resolves it (`analyze.ts`): read
+  // unresolved, Inalla's Kindred Discovery "drew a card" for every creature in the corpus and
+  // filled the plan list with Ogres (persona round 2026-09-25). A candidate resolves against the
+  // same deck counts, since the question is what it does in THIS deck.
+  const counts = deckSubtypeCounts(rawDeck);
+  const hierarchy = loadHierarchy();
+  const resolve = (d: DeckCard | null): DeckCard | null =>
+    d?.tags ? { ...d, tags: resolveChosenTypes(d.tags, counts, hierarchy) } : d;
+  const dc = async (name: string) => resolve(await raw(name));
+  const deckDcs = rawDeck.map((d) => resolve(d)!);
 
   // THE AXIS HINT, from the `events/` membership index -- no candidate card fetched. For each strategy
   // event a candidate that causes it is credited with the deck cards that ask for it, and the
