@@ -219,8 +219,9 @@ npm run deploy -w @edh-seer/import-worker   # the Moxfield / Archidekt import wo
 npm run deploy:indexnow -w @edh-seer/web    # tell search engines which pages changed
 ```
 
-After a UI change, regenerate the README and /how-it-works screenshots before the PR
-(`npm run screenshots -w @edh-seer/web`, see [CONTRIBUTING](../CONTRIBUTING.md#screenshots)).
+After a UI change, regenerate the README and /how-it-works screenshots and the README demo before
+the PR (`npm run screenshots -w @edh-seer/web`, `npm run demo-gif -w @edh-seer/web`, see
+[CONTRIBUTING](../CONTRIBUTING.md#screenshots)).
 
 The custom domain lags the deployment alias by about a minute, so one stale read straight after
 "Deployment complete" is normal. Persisting is not.

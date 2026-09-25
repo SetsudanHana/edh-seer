@@ -16,7 +16,8 @@
     "test:server": "vitest run --config server/vitest.config.ts",
     "test:client": "vitest run --config client/vitest.config.ts",
     "typecheck": "tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit && tsc -p functions/tsconfig.json --noEmit",
-    "screenshots": "tsx scripts/docs-screenshots.mts"
+    "screenshots": "tsx scripts/docs-screenshots.mts",
+    "demo-gif": "tsx scripts/demo-gif.mts"
   },
   "dependencies": {
     "@edh-seer/data": "*",
@@ -57,6 +58,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
+    "gifenc": "^1.0.3",
     "jsdom": "^25.0.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.23.13",

@@ -111,7 +111,8 @@ a real regression gets excused.
 ## Screenshots
 
 The README and [edhseer.cards/how-it-works](https://edhseer.cards/how-it-works) show four frames of
-a real report: the graph, the game plan, the suggestions and the mana chart. They are the first
+a real report (the graph, the game plan, the suggestions and the mana chart), and the README opens on
+a demo GIF of the whole flow: paste, analyse, read, open the graph. They are the first
 picture of the product most people see, and a picture of last month's UI is a claim that is no
 longer true.
 
@@ -120,7 +121,8 @@ longer true.
 ```bash
 VITE_STATIC_DATA=1 npm run build:client -w @edh-seer/web
 npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
-npm run screenshots -w @edh-seer/web
+npm run screenshots -w @edh-seer/web     # the four frames
+npm run demo-gif -w @edh-seer/web        # docs/images/demo.gif; --frames <dir> saves each frame to review
 ```
 
 The script (`packages/web/scripts/docs-screenshots.mts`) analyses a fixed Krenko list, crops each
@@ -130,6 +132,10 @@ production's card data, so no corpus is needed. Look at the four files before yo
 The README banner and the GitHub social preview (`docs/images/`) are drawn by
 `npx tsx packages/web/scripts/brand-images.mts` in the site's own fonts and colours. They change only
 when the brand does; the social preview is uploaded by hand under Settings > General.
+
+The demo is a storyboard of real clicks (`packages/web/scripts/demo-gif.mts`). If a control it clicks
+is renamed or moved, the script fails rather than recording the wrong thing; fix the storyboard in
+the same PR.
 
 `screenshots.test.ts` holds the parts a test can see: every frame comes from the script, the page
 and the README show the same set, and each file's size matches what the page declares. Whether a

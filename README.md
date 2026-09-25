@@ -25,7 +25,9 @@
 that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield or Archidekt link, at
 **[edhseer.cards](https://edhseer.cards)**.
 
-[![The synergy graph of a Krenko, Mob Boss deck, with Krenko's pairings drawn out and his card open beside the board](packages/web/client/how-it-works/shot-graph.webp)](https://edhseer.cards)
+<p align="center">
+  <a href="https://edhseer.cards"><img src="docs/images/demo.gif" width="880" alt="A Krenko, Mob Boss decklist is pasted and analysed. The report scrolls through the game plan and its pairs, then the suggestions. The synergy graph opens, a key card is picked, and the board goes fullscreen."></a>
+</p>
 
 ## What you get
 
@@ -47,9 +49,11 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 - **Bracket, roles and combos.** Where the deck sits, what each card is doing, and the combos it
   already holds, from [Commander Spellbook](https://commanderspellbook.com/).
 
-| Every pairing, grouped by theme | What to fix, biggest payoff first | Can you cast your cards |
-|---|---|---|
-| ![The game plan chapter: archetype bars and the pairs behind each theme](packages/web/client/how-it-works/shot-pairs.webp) | ![The suggestions chapter: short on card draw and interaction, with how many cards to add](packages/web/client/how-it-works/shot-improve.webp) | ![The manabase chart: mana by turn in a typical game, and how many cards become castable on each turn](packages/web/client/how-it-works/shot-mana.webp) |
+| A map of your deck | Every pairing, grouped by theme |
+|---|---|
+| ![The synergy graph of a Krenko, Mob Boss deck, with Krenko's pairings drawn out and his card open beside the board](packages/web/client/how-it-works/shot-graph.webp) | ![The game plan chapter: archetype bars and the pairs behind each theme](packages/web/client/how-it-works/shot-pairs.webp) |
+| **What to fix, biggest payoff first** | **Can you cast your cards** |
+| ![The suggestions chapter: short on card draw and interaction, with how many cards to add](packages/web/client/how-it-works/shot-improve.webp) | ![The manabase chart: mana by turn in a typical game, and how many cards become castable on each turn](packages/web/client/how-it-works/shot-mana.webp) |
 
 No deck handy? Every card and every commander has a page of its own that shows what works with it:
 [Skullclamp](https://edhseer.cards/cards/skullclamp) ·

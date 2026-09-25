@@ -60,3 +60,18 @@ test("each screenshot's declared size is its real size", () => {
   // Every image carried its size: the loop above saw them all.
   expect([...page.matchAll(/<img src="\.\/shot-[^"]+" width="\d+" height="\d+"/g)]).toHaveLength(onDisk.length);
 });
+
+/** THE DEMO GIF IS SCRIPTED AND STAYS SMALL ENOUGH TO LOAD. It is the first thing the README shows,
+ *  so it has to exist, come from `demo-gif.mts` like the frames do, and stay under a budget: GitHub
+ *  stops rendering images past 10 MB, and a reader on a phone should not wait for most of that.
+ *  The first recording was 2.8 MB at 880 px wide. */
+test("the README's demo is the scripted GIF, and under budget", () => {
+  const gif = join(process.cwd(), "..", "..", "docs", "images", "demo.gif");
+  expect(readme).toContain('src="docs/images/demo.gif"');
+  expect(existsSync(gif)).toBe(true);
+  const bytes = readFileSync(gif);
+  expect(bytes.toString("ascii", 0, 6)).toBe("GIF89a");
+  expect(bytes.length).toBeLessThan(5 * 1024 * 1024);
+  const demo = readFileSync(join(process.cwd(), "scripts", "demo-gif.mts"), "utf8");
+  expect(demo).toContain('"docs", "images", "demo.gif"');
+});
