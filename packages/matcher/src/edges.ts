@@ -372,6 +372,25 @@ export function producerEvents(tags: CardTags): GameEvent[] {
   return out;
 }
 
+/** WHICH ABILITY SUPPLIES EACH OF THE PRODUCER'S EVENTS (ability routes, spec 2026-09-25): the same
+ *  normalization `producerEvents` applies, one ability at a time. Key = `JSON.stringify(event)`,
+ *  value = the lowest ability index that emits it. Implied events (cast, enters, dies) and the
+ *  derived graveyard/counter events have no entry: nothing CAUSES them except the card existing.
+ *  CEILING: two abilities emitting one event keep the lower index, so a route through the other one
+ *  is not found. */
+export function producerEventOrigins(tags: CardTags): Map<string, number> {
+  const out = new Map<string, number>();
+  tags.abilities.forEach((a, i) => {
+    const own = (a.emits ?? []).map((e) =>
+      normalizeZoneEvent(a.amount !== undefined && DAMAGE_VERBS.has(e.verb) ? { ...e, amount: a.amount } : e));
+    for (const e of selfLeavesTypes(own, tags.characteristics)) {
+      const k = JSON.stringify(e);
+      if (!out.has(k)) out.set(k, i);
+    }
+  });
+  return out;
+}
+
 /** Does a combat consumer subject filter on anything beyond "is a creature" -- i.e. does it
  *  narrow which creature satisfies it, rather than accepting any of them? A bare subject, or one
  *  whose only type is `creature` (every attacker is one, so that narrows nothing), does not
@@ -963,7 +982,9 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
   const seen = new Set<string>();
   const out: Reason[] = [];
   for (const r of reasons) {
-    const k = JSON.stringify({ ...r, impliedProducer: undefined });
+    // The ability indices are routing facts, never a distinct claim: two reasons that differ only in
+    // which ability supplied them collapse exactly as before, and the first (lowest index) is kept.
+    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined });
     if (!seen.has(k)) { seen.add(k); out.push(r); }
   }
   return out;
@@ -1466,8 +1487,11 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
       if (!authored.has(k)) notAnOrigin.add(k);
     }
   }
+  // ABILITY ROUTES: which of the producer's abilities supplied each event (spec 2026-09-25).
+  const origins = producerEventOrigins(p.tags);
+  const realAbilities = c.tags.abilities.length;
   for (const e0 of pEvents) {
-    for (const a of cAbilities) {
+    for (const [ai, a] of cAbilities.entries()) {
       if (!a.trigger) continue;
       if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
@@ -1605,8 +1629,11 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
         // self grammar would say "it triggers", which is the wrong mechanism for the one thing this
         // demand exists to state. See `enterAsCopySentence`.
         const clonesOnEntry = a.effect.kind === "clone" && t.verb === "enters" && t.subject.self === true;
+        const origin = origins.get(JSON.stringify(e0));
         reasons.push({
           tag: key,
+          ...(origin !== undefined ? { producerAbility: origin } : {}),
+          ...(ai < realAbilities ? { consumerAbility: ai } : {}),
           text: viaHost ? auraHostSentence(p.card.name, c.card.name, (emitSubjectNoun(c.tags.characteristics.enchants) ?? "a permanent").replace(/^an? /, ""))
             : proliferateDemand ? proliferateSentence(p.card.name, c.card.name)
             : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)

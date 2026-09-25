@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@edh-seer/engine";
@@ -4906,4 +4906,35 @@ test("a doubler doubles your permanent's trigger even when the trigger watches a
     effect: { kind: "token-generation" },
   }]);
   expect(pairReasons(teysa, rot, H).some((r) => r.effectKind === "trigger-doubling")).toBe(true);
+});
+
+/** ABILITY ROUTES (spec 2026-09-25): an event reason names the ability that supplied it and the one
+ *  that consumed it, so a chain can prove it continues through the SAME ability. Fields only. */
+test("an event reason carries the producing and the consuming ability", () => {
+  const maker = base("Maker", [
+    { kind: "activated", effect: { kind: "draw-card" } },
+    { kind: "activated", effect: { kind: "token-generation" },
+      emits: [{ verb: "enters", subject: { type: "creature", control: "you", token: true } }] },
+  ] as CardTags["abilities"]);
+  const payoff = base("Payoff", [
+    { kind: "static", effect: { kind: "pump" } },
+    { kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
+      effect: { kind: "damage" } },
+  ] as CardTags["abilities"]);
+  const authored = directedReasons(maker, payoff, H).filter((r) => r.tag.startsWith("enters") && r.producerAbility !== undefined);
+  expect(authored.map((r) => [r.producerAbility, r.consumerAbility])).toEqual([[1, 1]]);
+});
+
+test("an event the card supplies by merely existing has no producing ability", () => {
+  const creature = base("Bear", []);
+  const payoff = base("Payoff", [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "damage" } }] as CardTags["abilities"]);
+  const r = directedReasons(creature, payoff, H).find((x) => x.tag.startsWith("enters"))!;
+  expect(r.producerAbility).toBeUndefined();
+  expect(r.consumerAbility).toBe(0);
+});
+
+test("ability indices never split a reason dedupeReasons used to collapse", () => {
+  const a = { tag: "enters:creature", text: "x", producer: "A", consumer: "B" };
+  expect(dedupeReasons([{ ...a, producerAbility: 0 }, { ...a, producerAbility: 1 }])).toHaveLength(1);
+  expect(dedupeReasons([{ ...a, producerAbility: 0 }, { ...a, producerAbility: 1 }])[0]!.producerAbility).toBe(0);
 });
