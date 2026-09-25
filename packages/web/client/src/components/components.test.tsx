@@ -1602,7 +1602,7 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // The census key is engine vocabulary; the row says what the key MEANS and keeps the key on
   // `title` for anyone matching a report against `bin/deck-availability.ts`.
-  expect(screen.getByLabelText(/anything dying, 2 cards need it, 2 make it happen/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/anything dying, 2 cards care about it, 2 cause it/i)).toBeInTheDocument();
   // No availability column: it is derived from the two counts beside it and reads 100% on every
   // row that has a supplier, which is a column with no variance.
   expect(screen.queryByText("23%")).not.toBeInTheDocument();
@@ -1613,8 +1613,8 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // "the game supplies it" was true of a phase and false of a SELF trigger, which became
   // self-supplied on 2026-08-27. One wording now covers a phase, combat and a card that triggers
   // itself — and the row still must not be counted as an unmet want.
-  expect(screen.getByLabelText(/anything attacking, 3 cards need it, and it happens on its own/i)).toBeInTheDocument();
-  expect(screen.getByText(/3 need · happens on its own/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/anything attacking, 3 cards care about it, and it happens on its own/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 care · happens on its own/i)).toBeInTheDocument();
 });
 
 test("demandSentence says the true ugly thing rather than a plausible wrong one", () => {
@@ -2473,18 +2473,18 @@ test("wants vs supplies leads with the unmet ones and folds the rest", () => {
     ],
   };
   const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={unmet} />);
-  expect(screen.getByText("1 need with nothing in the deck to make it happen.")).toBeInTheDocument();
+  expect(screen.getByText("1 thing your cards care about, and nothing in the deck causes it.")).toBeInTheDocument();
   // The unmet row leads OUTSIDE the expander, and the satisfied one appears only inside it.
-  const folded = screen.getByText("all 2 needs").closest("details")!;
+  const folded = screen.getByText("show all 2").closest("details")!;
   expect(folded.open).toBe(false);
-  expect(within(folded).getByText("20 need · 84 enable")).toBeInTheDocument();
-  expect(screen.getAllByText("4 need · 0 enable")[0]).toHaveClass("text-(--warning)");
-  expect(screen.queryAllByText("20 need · 84 enable")).toHaveLength(1);
+  expect(within(folded).getByText("20 care · 84 cause it")).toBeInTheDocument();
+  expect(screen.getAllByText("4 care · 0 cause it")[0]).toHaveClass("text-(--warning)");
+  expect(screen.queryAllByText("20 care · 84 cause it")).toHaveLength(1);
   unmount();
 
   // A deck with nothing unmet says so in one line rather than listing rows that all agree.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText("Everything your cards are waiting for, something in the deck provides.")).toBeInTheDocument();
+  expect(screen.getByText("Everything your cards care about, something in the deck causes.")).toBeInTheDocument();
 });
 
 // --- The Cards table (F5). ---

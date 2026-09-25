@@ -108,7 +108,7 @@ test("the page shows card metadata and the artifact carries no rules text to sho
 test("a capped event says how many candidates it is not showing, as candidates", async () => {
   at("krenko-mob-boss", async () => KRENKO);
   // The count sits under the event group it is about, not at the foot of the page.
-  const line = await screen.findByText(/other cards ask for it too/);
+  const line = await screen.findByText(/other cards care about it too/);
   expect(line.textContent).toMatch(/1,908/);
 });
 

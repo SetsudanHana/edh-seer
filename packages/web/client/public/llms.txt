@@ -20,7 +20,7 @@ What it refuses to claim, because these are the mistakes it exists to avoid:
 - Popularity is not synergy. Nothing here is derived from how many decks run a card.
 
 Limits worth carrying if you quote it: the card corpus is large but not complete, and a card the
-engine has never read forms no edges. Edges are binary — it says two cards interact, not how much.
+engine has never read forms no pairings. Pairings are binary — it says two cards interact, not how much.
 
 ## Pages
 
@@ -28,7 +28,7 @@ engine has never read forms no edges. Edges are binary — it says two cards int
   covers synergy pairs and their reasons, archetypes, the mana curve, land maths, castability,
   combos and legality.
 - [How it works](https://edhseer.cards/how-it-works): the method in full — how a clause is
-  segmented, how an edge forms, what the engine refuses to claim, how well it does (precision and
+  segmented, how a pairing forms, what the engine refuses to claim, how well it does (precision and
   retention, measured and dated), what it does not know, and the engineering documents behind it.
 
 ## Source

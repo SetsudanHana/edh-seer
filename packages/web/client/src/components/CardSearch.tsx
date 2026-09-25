@@ -83,7 +83,7 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   power: "Power",
   toughness: "Toughness",
   produce: "Causes",
-  consume: "Asks for",
+  consume: "Cares about",
 };
 
 export function CardSearch({
@@ -532,7 +532,7 @@ export function CardSearch({
       case "consume":
         return (
           <EventPicker
-            label="Asks for"
+            label="Cares about"
             hint={commanderMode ? "events this commander is built to be paid" : "events the card is waiting for"}
             options={consumeOptions}
             chosen={eventQuery.consume}

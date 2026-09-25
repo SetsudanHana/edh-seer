@@ -164,12 +164,12 @@
         </blockquote>
         <ol class="claim-notes">
           <li>
-            <span class="claim-k">supplies</span>
+            <span class="claim-k">causes</span>
             <span>Siege-Gang Commander is a creature, and its own ability lets you sacrifice a Goblin.
             Either way, something of yours dies.</span>
           </li>
           <li>
-            <span class="claim-k">watches for</span>
+            <span class="claim-k">cares about</span>
             <span>Skullclamp reads "Whenever equipped creature dies, draw two cards." Same event, and a
             Goblin is a creature.</span>
           </li>
@@ -210,10 +210,10 @@
 
       <h2>How a pair is found</h2>
       <p>
-        A pair is found when something one card <strong>produces</strong> is something another card
+        A pair is found when something one card <strong>causes</strong> is something another card
         <strong>cares about</strong>. Both sides carry details that all have to agree: what kind of
-        card it is, who controls it, whether it is a token. The tool calls a found pair an
-        <em>edge</em>, and that is the word the report uses.
+        card it is, who controls it, whether it is a token. The report calls a found pair a
+        <em>pairing</em>.
       </p>
       <!-- THE CONCEPT THE WHOLE TOOL RESTS ON, drawn once. The matched row is the ordinary case; the
            refused row is a REAL defect this engine shipped and had reported from the board, which is
@@ -222,7 +222,7 @@
         <div class="edge-row">
           <div class="edge-card">
             <span class="edge-name">Krenko, Mob Boss</span>
-            <span class="edge-side">produces</span>
+            <span class="edge-side">causes</span>
           </div>
           <div class="edge-link">
             <span class="edge-event">enters · creature · token</span>
@@ -236,14 +236,14 @@
             <span class="edge-side">cares about</span>
           </div>
           <p class="edge-verdict edge-ok">
-            Edge. <em>When a creature enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage.</em>
+            Pairing. <em>When a creature enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage.</em>
           </p>
         </div>
 
         <div class="edge-row edge-row-refused">
           <div class="edge-card">
             <span class="edge-name">Farseek</span>
-            <span class="edge-side">produces</span>
+            <span class="edge-side">causes</span>
           </div>
           <div class="edge-link">
             <span class="edge-event">enters · <strong>land</strong></span>
@@ -257,7 +257,7 @@
             <span class="edge-side">cares about</span>
           </div>
           <p class="edge-verdict edge-no">
-            No edge. It wants a <strong>creature</strong> entering, and a fetched land is not one.
+            No pairing. It cares about a <strong>creature</strong> entering, and a fetched land is not one.
           </p>
         </div>
       </div>
@@ -288,7 +288,7 @@
         <li>
           <strong>Playing Magic is not a pair.</strong>
           Something every card in every deck does cannot single any card out.
-          <span class="refusal-eg">"Whenever you cast a spell" forms no edge on its own.</span>
+          <span class="refusal-eg">"Whenever you cast a spell" forms no pairing on its own.</span>
         </li>
         <li>
           <strong>A card cannot feed its own trigger.</strong>
@@ -334,7 +334,7 @@
       <h2>What it cannot see</h2>
       <ul>
         <li>
-          <strong>A card it has not read.</strong> A card outside the 28,416 forms no edges, and the
+          <strong>A card it has not read.</strong> A card outside the 28,416 forms no pairings, and the
           report lists it as unread rather than pretending the deck is fully understood. Its mana
           cost, type and text still count everywhere else.
         </li>
@@ -383,7 +383,7 @@
         </li>
         <li>
           <h3><span class="stage-n">Stage 3</span> Derive <span class="stage-cost">free</span></h3>
-          <p>Clauses become typed game events: what the card watches for, and what it supplies. Events no card prints, like a creature being cast or dying, are added from its printed characteristics.</p>
+          <p>Clauses become typed game events: what the card cares about, and what it causes. Events no card prints, like a creature being cast or dying, are added from its printed characteristics.</p>
 <pre><code>Siege-Gang Commander
   emit:     dies  {control:"you", subtype:"goblin"}
 Skullclamp

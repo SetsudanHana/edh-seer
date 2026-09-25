@@ -76,8 +76,8 @@ test("a feeder group's withheld line says feed, a payoff group's says ask", () =
       ]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText(/other cards feed it too/)).toBeInTheDocument();
-  expect(screen.getByText(/other cards ask for it too/)).toBeInTheDocument();
+  expect(screen.getByText(/other cards use it too/)).toBeInTheDocument();
+  expect(screen.getByText(/other cards care about it too/)).toBeInTheDocument();
 });
 
 /** AN UNREAD ROW SHOWS THE LIMIT, NOT A PAYOFF. "triggers" over "engine did not read what it does"
@@ -185,7 +185,7 @@ const linkFor = (rows: typeof producerRows | typeof consumerRows, extra: Partial
       <PartnerList rows={rows} pool={{ [rows[0]!.event]: 40 }} rarity={{ [rows[0]!.event]: 589 }} empty="none" {...extra} />
     </MemoryRouter>,
   );
-  const anchor = screen.getByRole("link", { name: /cards (cause|ask for|feed) it too/i });
+  const anchor = screen.getByRole("link", { name: /cards (cause|care about|use) it too/i });
   return new URL(anchor.getAttribute("href")!, "https://edhseer.cards");
 };
 

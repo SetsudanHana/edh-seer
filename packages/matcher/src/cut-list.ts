@@ -225,8 +225,8 @@ export function cutCandidates(cards: readonly CutInput[], limit = 12): CutCandid
     reasons.push(connectionReason(c.partnerCount, median));
     reasons.push(
       c.axisWeight === 0
-        ? "no edge on your main theme"
-        : "its edges point away from your main theme",
+        ? "no pairing on your main theme"
+        : "its pairings point away from your main theme",
     );
     reasons.push("doesn't fill a core role (ramp, draw, removal…)");
     for (const want of c.unmetConditions ?? []) {
@@ -346,7 +346,7 @@ export function trimOrder(
     } else {
       reasons.push(connectionReason(c.partnerCount, median));
       if (c.axisWeight < CUT_AXIS_MAX) {
-        reasons.push(c.axisWeight === 0 ? "no edge on your main theme" : "its edges point away from your main theme");
+        reasons.push(c.axisWeight === 0 ? "no pairing on your main theme" : "its pairings point away from your main theme");
       } else {
         protections.push("its best edge is on your main theme");
       }

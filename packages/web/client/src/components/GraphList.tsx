@@ -114,8 +114,8 @@ export function GraphList({ graph, unread, onOpenBoard }: {
         {/* THE COUNT, BECAUSE A ROW-BY-ROW MARK CANNOT BE SURVEYED. The board says the same thing
           *  in a chip; this list has no chip row, and counting "not read" across 92 rows by
           *  scrolling is not counting. Silent on a deck the engine read whole. */}
-        {unreadCount > 0 ? `, ${unreadCount} not read` : ""}. Tap a card for what it feeds and
-        what feeds it{onOpenBoard ? ", or open its own graph" : ""}.
+        {unreadCount > 0 ? `, ${unreadCount} not read` : ""}. Tap a card to see what it works
+        with{onOpenBoard ? ", or open its own graph" : ""}.
         {/* THE OLD CLAUSE SAID THE BOARD "NEEDS A WIDER SCREEN" AND IT IS FALSE NOW (roadmap R1).
           *  It was also the silent-substitution complaint in the first place: this list arrived
           *  instead of the board with no way to reach one, which is why the feature read as broken
