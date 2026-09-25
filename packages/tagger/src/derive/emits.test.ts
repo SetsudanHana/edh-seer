@@ -162,6 +162,7 @@ test("a counter-added emit carries the kind of counter it adds", () => {
   expect(actionEmits({ verb: "add-counter", object: "target creature" }, "put a +1/+1 counter on target creature and a charge counter on this artifact.")[0]?.subject.counter).toBeUndefined();
   // "you get {E}{E}" is an energy counter on a player (CR 107.14), whatever verb the normalizer chose.
   expect(actionEmits({ verb: "add-mana", object: "{E}{E}" }, "you get {E}{E}.")).toMatchObject([{ verb: "counter-added", subject: { control: "you", counter: "energy" } }]);
+  expect(actionEmits({ verb: "add-mana", object: "{E} {E} {E}" }, "you get {E}{E}{E}.")).toMatchObject([{ verb: "counter-added", subject: { control: "you", counter: "energy" } }]);
   expect(actionEmits({ verb: "add-mana", object: "{G}" }, "add {G}.").some((e) => e.verb === "counter-added")).toBe(false);
   // DERIVE 158: the recipient-comma-kind object names its kind; several kinds stay unknown.
   expect(actionEmits({ verb: "remove-counter", object: "this, oil" })[0]?.subject.counter).toBe("oil");

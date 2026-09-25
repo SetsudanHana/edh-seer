@@ -29,6 +29,14 @@ export function mentionsSelf(text: string): boolean {
   return SELF_REFERENCE_ANYWHERE.test(text);
 }
 
+const ARTICLES = new Set(["the", "a", "an"]);
+
+/** A card name without its leading article: "The Sackville-Bagginses" -> "Sackville-Bagginses". */
+export function withoutArticle(name: string): string {
+  const [first, ...rest] = name.split(/\s+/);
+  return rest.length > 0 && ARTICLES.has((first ?? "").toLowerCase()) ? rest.join(" ") : name;
+}
+
 /** Does this TRIGGER subject name the card itself? "When THIS creature enters" watches one
  *  permanent -- its own -- while "whenever another creature you control enters" watches the deck,
  *  and `parseSubject` reduces both to {type: creature}. The clause text is the only place the
@@ -56,12 +64,16 @@ export function isSelfSubject(text: string, cardName?: string): boolean {
     // The model names the card either in full ("Urza, Lord High Artificer") or by the short name a
     // card's own text uses ("Urza"), which is everything before the first comma.
     if (t === face.trim() || t === face.split(",")[0].trim()) return true;
+    // "THE" IS NOT A NAME (DERIVE 172): "The Sackville-Bagginses" shortens itself by dropping the
+    // article, and its first word is the article -- which the fallback below would take as its name.
+    const bare = withoutArticle(face.trim());
+    if (bare !== face.trim() && t === bare) return true;
     // A card with no comma in its name still shortens itself: Imskir Iron-Eater's own text says
     // "Imskir". Accept the FIRST WORD — but never when that word is a creature type, because
     // "whenever a Goblin enters" on a card named Goblin Bombardment is a real typal payoff and
     // marking it self would delete the edges a Goblin deck is made of.
     const first = face.trim().split(/\s+/)[0];
-    if (t === first && !SUBTYPES.has(first)) return true;
+    if (t === first && !SUBTYPES.has(first) && !ARTICLES.has(first)) return true;
   }
   return false;
 }

@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -16,8 +16,8 @@
   ],
 
   "patterns": {
-    "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker)|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
-    "targetedRemoval": "destroy[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
+    "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b(?! created (?:with|by) )|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker(?! (?:they|that player) controls?\\b))|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
+    "targetedRemoval": "destroy[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))(?![^.]{0,80}?then return (?:it|that card|them|those cards) to the battlefield)|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
     "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
     "graveyardHate": "\\bexile[^.]*graveyard",
@@ -38,6 +38,9 @@
     "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileRemoval": "exile[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileReturnsToBattlefield": "return (?:it|that card) to the battlefield|returns to the battlefield",
+    "exileThenReturns": "then return (?:it|that card|them|those cards) to the battlefield",
+    "flickerTarget": "exile (?:another |any number of |up to (?:one|two) )?target (?![^.]{0,40}?(?:you don't control|an opponent controls))",
+    "flashKeyword": "(?:^|\\n)flash\\b(?!back)",
     "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
     "millOpponents": "(?:target opponent|each opponent|target player|each player)[^.]{0,40}?mills|mills? \\w+ cards?[^.]{0,40}?(?:target opponent|each opponent)",
     "altWin": "(?<!can['\u2019]t |cannot |would |don['\u2019]t |doesn['\u2019]t )(?:you win the game|wins? the game|loses? the game|lose the game)",
@@ -258,6 +261,17 @@
       "match": [{ "op": "oracle", "pattern": "protection" }],
       "not": [{ "op": "typeLine", "contains": "land" }, { "op": "protectionIsOwnKeyword" }],
       "why": "A CREATURE WITH HEXPROOF PROTECTS ITSELF, NOT THE BOARD (roadmap I1). Granted to other permanents (Lightning Greaves, Heroic Intervention) is Interaction; printed on the card's own body is a stat. Only the cases the printed KEYWORD list settles outright are refused -- see the op, and the 41-card residue it deliberately leaves alone."
+    },
+    {
+      "id": "protection.flicker",
+      "category": "protection",
+      "match": [
+        { "op": "oracle", "pattern": "flickerTarget" },
+        { "op": "oracle", "pattern": "exileReturnsToBattlefield" },
+        { "op": "anyOf", "clauses": [{ "op": "typeLine", "contains": "instant" }, { "op": "oracle", "pattern": "flashKeyword" }] }
+      ],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "A FLICKER IS PROTECTION (owner ruling 2026-09-25). Exiling your own permanent and returning it makes a new object (CR 400.7), so the removal aimed at it loses its target (CR 608.2b). Only at instant speed -- an instant, or a card with flash -- since protection has to answer a spell on the stack; Flicker (a sorcery), Flickerwisp and Brago cannot. A target an opponent controls is refused: that is a blink, not a shield."
     },
     {
       "id": "tutor.text",

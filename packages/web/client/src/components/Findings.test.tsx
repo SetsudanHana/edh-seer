@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 import { Findings } from "./Findings.js";
 import { findings } from "../lib/findings.js";
@@ -116,4 +117,46 @@ test("the second heading is absent when nothing is unscored", () => {
 test("a zero impact says so in words", () => {
   render(<Findings report={coveredButThin} />);
   expect(screen.getByText("won't change your Build score")).toBeInTheDocument();
+});
+
+/** EVERY FINDING A CARD CAN FIX NAMES THE CARDS (spec §3, AO4), directly under its own row; a mana
+ *  finding keeps its sentence and gets none, because lands are out of scope. */
+const chaosWarp = { name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3, connections: ["Krenko, Mob Boss"], reasons: [{ text: "Chaos Warp answers what Krenko cannot.", others: [] }] };
+const noCards = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] };
+const withLands = { ...report, deckMath: { ...report.deckMath, lands: { actual: 30, target: 37, avgManaValue: 3 } } } as typeof report;
+
+test("a build finding lists its cards under its own row", () => {
+  render(<MemoryRouter><Findings report={report} suggestions={{ state: "ready", value: { ...noCards, build: { Interaction: [chaosWarp] } } }} /></MemoryRouter>);
+  const row = screen.getByText(/short on interaction/).closest("li")!;
+  expect(within(row).getByRole("link", { name: "Chaos Warp" })).toBeInTheDocument();
+  expect(within(row).getByText("Cards that fit")).toBeInTheDocument();
+});
+
+test("a lands finding lists no cards, even while the rest are loading", () => {
+  render(<MemoryRouter><Findings report={withLands} suggestions={{ state: "loading", value: null }} /></MemoryRouter>);
+  const fold = screen.queryByRole("button", { name: /^Show \d+ smaller/ });
+  if (fold) fireEvent.click(fold);
+  const row = screen.getByText(/lands short/).closest("li")!;
+  expect(within(row).queryByRole("status")).toBeNull();
+  expect(within(row).queryByText("Cards that fit")).toBeNull();
+  // ...while a build row in the same list shows the wait.
+  expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
+});
+
+test("a failed suggestion run leaves the findings as they were", () => {
+  render(<MemoryRouter><Findings report={report} suggestions={{ state: "error", value: null }} /></MemoryRouter>);
+  expect(screen.queryByText("Cards that fit")).toBeNull();
+  expect(screen.queryByRole("status")).toBeNull();
+});
+
+/** A CROSS-JOB SWAP SITS WITH THE FINDINGS, under "where to find the slots"; a same-job swap is the
+ *  cut list's, one movement down (spec §3). */
+test("cross-job swaps render with the findings, same-job swaps do not", () => {
+  const pairs = [
+    { cut: "Mind Stone", add: chaosWarp, rule: "cross-job" as const, cutConnections: 1, counts: [{ group: "Ramp", from: 11, to: 10 }] },
+    { cut: "Murder", add: { ...chaosWarp, name: "Terminate", slug: "terminate" }, rule: "same-job" as const, cutConnections: 0, counts: [] },
+  ];
+  render(<MemoryRouter><Findings report={report} suggestions={{ state: "ready", value: { ...noCards, pairs } }} /></MemoryRouter>);
+  expect(screen.getByRole("link", { name: "Chaos Warp" }).closest("li")!.textContent).toMatch(/^Replace Mind Stone with Chaos Warp/);
+  expect(screen.queryByRole("link", { name: "Terminate" })).toBeNull();
 });

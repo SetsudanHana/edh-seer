@@ -16,7 +16,8 @@ import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
 import { directedReasons, sizeMeets, type ReasonOptions } from "./edges.js";
 import { faceDeckCards } from "./faces.js";
-import { deckLandTypes } from "./chosen-type.js";
+import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
+import { markCommander } from "./commander.js";
 import { maxAxisWeight } from "./axis.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
@@ -37,12 +38,29 @@ export interface SuggestedCard {
   mv: number;
   /** Deck cards the engine drew a reason with, strongest first. */
   connections: string[];
-  /** The engine's own sentences, deduplicated, in connection order. */
-  reasons: string[];
+  /** The engine's own sentences, in connection order, ONE PER SHAPE: a sentence that differs from
+   *  another only in which deck card it names is the same reason, so it is kept once and the other
+   *  deck cards are listed in `others` (owner 2026-09-25 -- Carnival of Souls read "and 101 more",
+   *  the same line once per Wizard). */
+  reasons: SuggestedReason[];
   /** Also qualifies for "Strengthen what works", shown here instead (one card, one place). */
   alsoPlan?: true;
   /** THE ROUTE IT OPENS (`routes` list): deck cards that reach `to` only through this card. */
   route?: { to: string; from: string[] };
+  /** The card's own rules text, so a reader can check the claim against the card (persona round
+   *  2026-09-25: "I'd need each card's text next to the reason it gives"). */
+  oracle?: string;
+  /** On a `build` list: the group it counts toward ("Ramp"), by the report's own rules. */
+  fills?: string;
+  /** On an `answers` list: the permanent classes it answers ("enchantment"). A list, so a client
+   *  merging two class lists can name both. */
+  answers?: string[];
+}
+export interface SuggestedReason {
+  /** The sentence, naming the first deck card it was found with. */
+  text: string;
+  /** The other deck cards the same sentence holds for, in connection order. */
+  others: string[];
 }
 export interface SuggestedPair {
   cut: string;
@@ -159,7 +177,10 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
       // the work, and one face's abilities are never read as live on the other.
       const yFaces = faceDeckCards(y);
       const connections: string[] = [];
-      const reasons: string[] = [];
+      const reasons: SuggestedReason[] = [];
+      // SHAPE KEY: the tag plus the sentence with the deck card's own name masked out, so "When a
+      // Wizard enters thanks to Inalla, ..." and the same line for Harmonic Prodigy are one reason.
+      const byShape = new Map<string, { reason: SuggestedReason; first: string }>();
       const feeds: string[] = [];
       const fedBy: string[] = [];
       const feedWeight = new Map<string, number>();
@@ -181,10 +202,20 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
         if (into.length > 0) fedBy.push(name);
         connections.push(name);
         onPlan += maxAxisWeight(found, axis);
-        for (const r of found) if (!reasons.includes(r.text)) reasons.push(r.text);
+        const names = [...new Set([name, ...faceDeckCards(x).map((f) => f.card.name)])].sort((a, b) => b.length - a.length);
+        for (const r of found) {
+          const key = `${r.tag}\u0000${names.reduce((t, n) => t.split(n).join("\u0001"), r.text)}`;
+          const had = byShape.get(key);
+          if (!had) {
+            const fresh: SuggestedReason = { text: r.text, others: [] };
+            byShape.set(key, { reason: fresh, first: name });
+            reasons.push(fresh);
+          } else if (had.first !== name && !had.reason.others.includes(name)) had.reason.others.push(name);
+        }
       }
       if (connections.length === 0) return null;
-      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons }, onPlan, score: 0, feeds, fedBy, feedWeight };
+      const oracle = y.card.oracleText;
+      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}) }, onPlan, score: 0, feeds, fedBy, feedWeight };
     } catch (err) {
       console.warn("[suggest] the engine could not read", candidate.name, err);
       return null;
@@ -262,8 +293,24 @@ export async function suggestForDeck(input: {
   for (const c of pool.values()) {
     c.hint = c.connections.reduce((sum, x) => sum + Math.max(0, ...(x.tags ?? []).map((t) => tagWeight[t] ?? 0)), 0);
   }
-  const dc = deckCards(lookup);
-  const deckDcs = (await Promise.all(physical.map(dc))).filter((x): x is DeckCard => x !== null);
+  const raw = deckCards(lookup);
+  const rawDeck = (await Promise.all(physical.map(raw))).filter((x): x is DeckCard => x !== null);
+  // A CHOSEN TYPE IS THIS DECK'S TYPE, resolved as the report resolves it (`analyze.ts`): read
+  // unresolved, Inalla's Kindred Discovery "drew a card" for every creature in the corpus and
+  // filled the plan list with Ogres (persona round 2026-09-25). A candidate resolves against the
+  // same deck counts, since the question is what it does in THIS deck.
+  const counts = deckSubtypeCounts(rawDeck);
+  const hierarchy = loadHierarchy();
+  // AND THE COMMANDER IS MARKED, the other half of the report's deck pass: without it a "whenever
+  // your commander ..." candidate joined nothing and dropped out of every list (final review, AO4).
+  const commanderNames = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
+  const resolve = (d: DeckCard | null): DeckCard | null => {
+    if (!d?.tags) return d;
+    const tags = resolveChosenTypes(d.tags, counts, hierarchy);
+    return { ...d, tags: commanderNames.has(d.card.name) ? markCommander(tags) : tags };
+  };
+  const dc = async (name: string) => resolve(await raw(name));
+  const deckDcs = rawDeck.map((d) => resolve(d)!);
 
   // THE AXIS HINT, from the `events/` membership index -- no candidate card fetched. For each strategy
   // event a candidate that causes it is credited with the deck cards that ask for it, and the
@@ -380,8 +427,10 @@ export async function suggestForDeck(input: {
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
 
   const out: DeckSuggestions = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] };
-  for (const [name, list, limit, band] of buildRanked) out.build[name] = await verified(list, limit, verify, nonland, band);
-  for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = await verified(list, limit, verify, nonland, band);
+  // WHAT EACH CARD COUNTS AS, on the row: the finding names the group, and the row has to say this
+  // card is one of them before its connections argue it is the right one.
+  for (const [name, list, limit, band] of buildRanked) out.build[name] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, fills: name }));
+  for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, answers: [cls] }));
   for (const [key, list] of synergyRanked) {
     const cards: SuggestedCard[] = [];
     for (const c of list) {
@@ -407,7 +456,7 @@ export async function suggestForDeck(input: {
   const planNames = new Set(plan.map((c) => c.name));
   for (const c of onFindings) if (planNames.has(c.name)) c.alsoPlan = true;
   const taken = new Set(onFindings.map((c) => c.name));
-  out.plan = plan.filter((c) => !taken.has(c.name)).slice(0, PLAN_LIMIT);
+  const planLeft = plan.filter((c) => !taken.has(c.name));
 
   // ROUTES: a bridge is rarely on the axis itself (Impact Tremors joins thirty token makers to
   // Ghyrson through "a creature enters", weight ~0) and rarely in `pi` -- its event is asked by two
@@ -508,7 +557,13 @@ export async function suggestForDeck(input: {
   }
 
 
-  out.routes = routes.sort((a, b) => b.n - a.n || a.card.mv - b.card.mv || a.card.name.localeCompare(b.card.name, "en"))
+  // ONE CARD, ONE PLACE, THREE TIERS (spec §3, amended 2026-09-25): finding > route > plan. A bridge
+  // a finding already names stays on the finding; a route card leaves the plan list, whose verified
+  // spares (it verifies twice PLAN_LIMIT) fill the room it leaves.
+  out.routes = routes.filter((r) => !taken.has(r.card.name))
+    .sort((a, b) => b.n - a.n || a.card.mv - b.card.mv || a.card.name.localeCompare(b.card.name, "en"))
     .slice(0, ROUTE_LIMIT).map((r) => r.card);
+  const onRoutes = new Set(out.routes.map((c) => c.name));
+  out.plan = planLeft.filter((c) => !onRoutes.has(c.name)).slice(0, PLAN_LIMIT);
   return out;
 }

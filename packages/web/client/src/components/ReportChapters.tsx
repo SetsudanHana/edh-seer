@@ -18,6 +18,9 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
+import { StrengthenLists } from "./SuggestedCards.js";
+import { SuggestedPairs } from "./SuggestedPairs.js";
+import { useSuggestions } from "../lib/suggestions.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
@@ -130,6 +133,8 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
   }, [report.archetypes, report.cutList, report.cards, nonlandNames]);
 
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
+  // ONE RUN PER REPORT, read by the findings (cards under each) and the lists below them (AO4).
+  const suggestions = useSuggestions(data);
 
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
@@ -276,7 +281,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="fix" title={title("fix")}>
-          <Findings report={report} diff={diff} />
+          <Findings report={report} diff={diff} suggestions={suggestions} />
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           {/* THE GRID HAD ONE CHILD AND STILL RESERVED TWO COLUMNS (roadmap T11). It was built to
@@ -297,8 +302,19 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               trim={report.trim}
               offTheme={offTheme}
             />
+            {/* A CUT BESIDE THE CARD THAT TAKES ITS SLOT, same job or none (spec §3). */}
+            <SuggestedPairs pairs={suggestions.value?.pairs.filter((p) => p.rule !== "cross-job") ?? []} />
             </div>
           </Movement>
+          {/* WHAT GROWS THE PLAN, last in the chapter: nothing is wrong here, so it follows the fixes.
+            *  A failed run drops the section rather than claiming the deck has nothing to add. */}
+          {suggestions.state !== "error" ? (
+            <Movement title="Strengthen what works">
+              <div className="max-w-5xl">
+                <StrengthenLists routes={suggestions.value?.routes} plan={suggestions.value?.plan} />
+              </div>
+            </Movement>
+          ) : null}
         </Chapter>
       </div>
     </div>

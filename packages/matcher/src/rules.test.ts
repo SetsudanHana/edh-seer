@@ -551,6 +551,10 @@ test("a board wipe is a mass effect on the battlefield, in any of its printed sh
     ["Mizzix's Mastery", "Exile target card that's an instant or sorcery from your graveyard. For each card exiled this way, copy it, and you may cast the copy without paying its mana cost. Exile Mizzix's Mastery.\nOverload {5}{R}{R}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")"],
     ["Coat of Arms", "Each creature gets +1/+1 for each other creature on the battlefield that shares at least one creature type with it."],
     ["Wisdom of Ages", "Return all instant and sorcery cards from your graveyard to your hand. You have no maximum hand size for the rest of the game."],
+    // PERSONA ROUND 2026-09-25, oracle text from Scryfall. A token-copier cleaning up ITS OWN tokens
+    // wipes nothing, and burn to each opponent and their planeswalkers touches no creature.
+    ["Arcane Artisan", "{2}{U}, {T}: Target player draws a card, then exiles a card from their hand. If a creature card is exiled this way, that player creates a token that's a copy of that card.\nWhen this creature leaves the battlefield, exile all tokens created with it at the beginning of the next end step."],
+    ["Cavalier of Flame", "{1}{R}: Creatures you control get +1/+0 and gain haste until end of turn.\nWhen this creature enters, discard any number of cards, then draw that many cards.\nWhen this creature dies, it deals X damage to each opponent and each planeswalker they control, where X is the number of land cards in your graveyard."],
   ];
   const m = detectBuildCategories([...wipes, ...notWipes].map(([n, t]) => mk(n, t, "Sorcery")));
   const found = m.get("boardWipe") ?? new Set<string>();
@@ -599,4 +603,46 @@ test("emits is tested per ability like effectKind: a removal ability is what emi
   const any: Rule = { id: "u", match: [{ op: "emits", verbs: ["dies"] }] };
   expect(ruleMatches(any, card([{ ...kill }]), set)).toBe(true);
   expect(ruleMatches(any, card([{ effect: { kind: "draw-card" } }]), set)).toBe(false);
+});
+
+/** AN IMMEDIATE FLICKER ANSWERS NOTHING, AND IT PROTECTS (owner ruling 2026-09-25). "Exile target X,
+ *  then return it to the battlefield" puts the permanent straight back, so it is not removal and not
+ *  an answer; the answer-modes spec's "answers the board for a turn" holds for a DELAYED return only,
+ *  which keeps its place. Cast at instant speed on your own permanent, a flicker makes a new object
+ *  (CR 400.7) and the removal aimed at it loses its target (CR 608.2b): protection. Oracle text from
+ *  Scryfall, 2026-09-25. */
+const FLICKERS: Record<string, [string, string]> = {
+  "Eldrazi Confluence": ["Instant", "Choose three. You may choose the same mode more than once.\n• Target creature gets +3/-3 until end of turn.\n• Exile target nonland permanent, then return it to the battlefield tapped under its owner's control.\n• Create a 1/1 colorless Eldrazi Scion creature token with \"Sacrifice this token: Add {C}.\""],
+  Flicker: ["Sorcery", "Exile target nontoken permanent, then return it to the battlefield under its owner's control."],
+  Ephemerate: ["Instant", "Exile target creature you control, then return it to the battlefield under its owner's control.\nRebound (If you cast this spell from your hand, exile it as it resolves. At the beginning of your next upkeep, you may cast this card from exile without paying its mana cost.)"],
+  Cloudshift: ["Instant", "Exile target creature you control, then return that card to the battlefield under your control."],
+  "Restoration Angel": ["Creature — Angel", "Flash\nFlying\nWhen this creature enters, you may exile target non-Angel creature you control, then return that card to the battlefield under your control."],
+  "Otherworldly Journey": ["Instant — Arcane", "Exile target creature. At the beginning of the next end step, return that card to the battlefield under its owner's control with a +1/+1 counter on it."],
+  Flickerwisp: ["Creature — Elemental", "Flying\nWhen this creature enters, exile another target permanent. Return that card to the battlefield under its owner's control at the beginning of the next end step."],
+  "Brago, King Eternal": ["Legendary Creature — Spirit Noble", "Flying\nWhenever Brago deals combat damage to a player, exile any number of target nonland permanents you control, then return those cards to the battlefield under their owner's control."],
+  "Swords to Plowshares": ["Instant", "Exile target creature. Its controller gains life equal to its power."],
+};
+const flick = (name: string) => mk(name, FLICKERS[name]![1], FLICKERS[name]![0]);
+
+test("an immediate-return flicker is not an answer; a delayed one still is", () => {
+  expect([...answerClassesOf(flick("Eldrazi Confluence")).keys()]).toEqual([]);
+  expect([...answerClassesOf(flick("Flicker")).keys()]).toEqual([]);
+  expect([...answerClassesOf(flick("Otherworldly Journey")).keys()]).toContain("creature");
+  expect([...answerClassesOf(flick("Flickerwisp")).keys()]).toContain("creature");
+  expect([...answerClassesOf(flick("Swords to Plowshares")).keys()]).toContain("creature");
+});
+
+test("an immediate-return flicker is not targeted removal", () => {
+  const m = detectBuildCategories(Object.keys(FLICKERS).map(flick));
+  const removal = m.get("targetedRemoval") ?? new Set<string>();
+  expect(removal.has("Eldrazi Confluence")).toBe(false);
+  expect(removal.has("Flicker")).toBe(false);
+  expect(removal.has("Swords to Plowshares")).toBe(true);
+  expect(removal.has("Otherworldly Journey")).toBe(true);
+});
+
+test("a flicker you can cast at instant speed on your own permanent is protection", () => {
+  const m = detectBuildCategories(Object.keys(FLICKERS).map(flick));
+  const protection = [...(m.get("protection") ?? new Set<string>())].sort();
+  expect(protection).toEqual(["Cloudshift", "Eldrazi Confluence", "Ephemerate", "Otherworldly Journey", "Restoration Angel"]);
 });

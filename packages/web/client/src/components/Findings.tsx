@@ -2,6 +2,9 @@ import type { DeckReport } from "../types.js";
 import { rankedFindings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
 import { useState } from "react";
 import type { RunDiff } from "../lib/run-diff.js";
+import { suggestionsFor, takesCards, type SuggestionsState } from "../lib/suggestions.js";
+import { SuggestedCards } from "./SuggestedCards.js";
+import { SuggestedPairs } from "./SuggestedPairs.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's focal element, and the one structural change the
  *  2026-08-26 persona reviews asked for.
@@ -30,6 +33,14 @@ import type { RunDiff } from "../lib/run-diff.js";
  *  measured, and this file's whole claim is that it introduces no constant beyond the row cap.
  */
 
+/** WHAT A FINDING'S LIST SAYS WHEN NOTHING QUALIFIES -- said, never padded with staples (spec,
+ *  "a silent wrong answer is worse than a missing one"). */
+const EMPTY: Partial<Record<Finding["kind"], string>> = {
+  build: "Nothing in your colours both fills this role and connects to this deck. Any card that fills the role fits the slot.",
+  answers: "Nothing in your colours both answers these and connects to this deck. Any answer that hits them fits the slot.",
+  synergy: "Nothing in your colours causes this and connects to this deck. Cutting the cards that wait on it frees their slots.",
+};
+
 /** The one number a row is proving, and the bar under it. Right-aligned tabular mono, so a column
  *  of figures reads as a column even when the rows differ in height. */
 function Figure({ f }: { f: Finding }) {
@@ -44,8 +55,11 @@ function Figure({ f }: { f: Finding }) {
   );
 }
 
-export function Findings({ report, diff }: {
+export function Findings({ report, diff, suggestions }: {
   report: DeckReport;
+  /** THE CARDS EACH FINDING CAN BE FIXED WITH (AO4), computed after the report paints. Absent, or a
+   *  failed run, leaves every row exactly as it was. */
+  suggestions?: SuggestionsState;
   /** WHAT THIS EDIT DID TO THE DIAGNOSIS (roadmap S9). Two marks, and only two: a finding that went
    *  away, and one that appeared. A figure that merely MOVED gets nothing -- the header line states
    *  the move, and a third statement of one fact is what this ranked list was built to remove. */
@@ -67,6 +81,11 @@ export function Findings({ report, diff }: {
   if (all.length === 0) return null;
   const shown = expanded ? all : all.slice(0, FINDING_CAP);
   const trade = slotTrade(report, all);
+  // EVERY FINDING A CARD CAN FIX NAMES THE CARDS, directly under its own row (spec §3).
+  const cardsFor = (f: Finding) => {
+    if (!suggestions || suggestions.state === "error" || !takesCards(f.kind)) return null;
+    return <SuggestedCards cards={suggestionsFor(f, suggestions.value, report)} empty={EMPTY[f.kind] ?? ""} label="Cards that fit" />;
+  };
   return (
     // 64rem: at 1920px a fix's headline and its figure ("10/13") sat 1,500px apart, and the figure
     // is what the headline is about (UI review 2026-09-25).
@@ -131,6 +150,7 @@ export function Findings({ report, diff }: {
                   {f.action}
                 </p>
               ) : null}
+              {cardsFor(f)}
             </div>
             <div className="order-1 sm:order-none"><Figure f={f} /></div>
           </li>
@@ -180,6 +200,9 @@ export function Findings({ report, diff }: {
           </p>
         </div>
       ) : null}
+      {/* THE SWAPS THAT USE THAT ROOM: a card out of the surplus group, a card into the short one, and
+        *  only where the add connects to more of the deck than the cut (spec §3). */}
+      <SuggestedPairs pairs={suggestions?.value?.pairs.filter((p) => p.rule === "cross-job") ?? []} />
       {/* NOT A LESSER LIST. Colour is its own axis and synergy is `synergyOverall`; neither is a term
         *  in the number above, so neither can be priced in it, and inventing a conversion to
         *  interleave them is the constant `findings.ts` refuses. Rendered in full rather than capped
@@ -197,6 +220,7 @@ export function Findings({ report, diff }: {
                 <h4 className="text-base font-semibold leading-tight">{f.headline}</h4>
                 <p className="text-sm text-(--muted) max-w-[62ch] tabular-nums">{f.detail}</p>
                 {f.action ? <p className="text-sm">{f.action}</p> : null}
+                {cardsFor(f)}
                 </div>
               </li>
             ))}
