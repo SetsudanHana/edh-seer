@@ -41,6 +41,16 @@ test("every inline script the pages run is allowed by hash, and nothing else inl
   expect([...hashes].sort()).toEqual(allowed.sort());
 });
 
+test("no shipped page carries an inline style the policy would refuse", () => {
+  // `style-src 'self'` refuses a `<style>` element and a `style=""` attribute alike. `404.html` had
+  // the first, and every 404 on the live site went out unstyled until this test existed.
+  const all = [...pages, readFileSync(join(CLIENT, "public", "404.html"), "utf8")];
+  for (const html of all) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    expect(doc.querySelectorAll("style, [style]").length).toBe(0);
+  }
+});
+
 test("_headers sends static files exactly the headers a Function sends", () => {
   expect(catchAllRule()).toEqual(SECURITY_HEADERS);
 });
