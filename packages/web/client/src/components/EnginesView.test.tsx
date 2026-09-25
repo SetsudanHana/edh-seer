@@ -60,3 +60,15 @@ test("a big group shows twelve chips and names the rest until asked for all", as
   await userEvent.setup().click(within(group).getByRole("button", { name: "Show all 18" }));
   expect(within(group).getByRole("button", { name: "Extra Cleric 9" })).toBeInTheDocument();
 });
+
+test("a group that repeats one above it names that group instead of listing the cards again", () => {
+  view();
+  const group = screen.getByRole("heading", { name: "Clerics attacking" }).closest("article")!;
+  expect(within(group).getByText(/Mostly the same cards as/)).toBeInTheDocument();
+  expect(within(group).queryByRole("button", { name: "Cleric 1" })).toBeNull();
+});
+
+test("card text shows the printed mana cost", () => {
+  view();
+  expect(screen.getAllByRole("img", { name: /1 generic|black/i }).length).toBeGreaterThan(0);
+});

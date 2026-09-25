@@ -25,6 +25,8 @@ export interface EngineCard {
   id: string; name: string; typeLine: string; text: string; art?: string;
   isToken: boolean; isCommander: boolean; isLand: boolean; isFace: boolean;
   roles: readonly string[]; score: number;
+  /** Printed mana cost from the report, so a cut can be weighed by what it costs (round 6). */
+  manaCost: string;
 }
 
 export interface EngineGroup {
@@ -43,6 +45,10 @@ export interface EngineGroup {
   onceOnly: ReadonlySet<string>;
   example?: Link;
   hue: string;
+  /** Set when most of this group's members already make up a group above it: four Inalla groups
+   *  listed the same 36 Wizards, and the phone seat stopped scrolling at the second (round 6). The
+   *  view names that group and draws only the difference. */
+  sameAs?: { name: string; extra: string[]; missing: number };
 }
 
 export interface CutRow {
@@ -159,6 +165,7 @@ const pairKey = (x: string, y: string) => (x < y ? `${x}\u0001${y}` : `${y}\u000
 
 export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineModel {
   const scoreByName = new Map(report.cards.map((c) => [c.name, c.score ?? 0]));
+  const costByName = new Map(report.cards.map((c) => [c.name, c.manaCost ?? ""]));
   const commanders = new Set(report.commanders);
   const cards = new Map<string, EngineCard>();
   for (const n of graph.nodes) {
@@ -167,6 +174,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       isToken: n.isToken === true, isCommander: commanders.has(n.cardName ?? n.id),
       isLand: (n.types ?? []).includes("land"), isFace: n.cardName !== undefined && n.cardName !== n.id,
       roles: n.roles ?? [], score: scoreByName.get(n.label) ?? 0,
+      manaCost: n.isToken ? "" : costByName.get(n.cardName ?? n.label) ?? "",
     });
   }
 
@@ -231,6 +239,16 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
     if (helper) helperN++; else deckN++;
   }
   groups.sort((x, y) => Number(x.helper) - Number(y.helper));
+  for (const [i, g] of groups.entries()) {
+    const mine = new Set(g.members);
+    const before = groups.slice(0, i).filter((h) => h.helper === g.helper && h.members.length >= 8)
+      .map((h) => ({ h, shared: h.members.filter((x) => mine.has(x)).length }))
+      .filter(({ h, shared }) => shared >= 0.8 * mine.size && shared >= 0.8 * h.members.length)
+      .sort((x, y) => y.shared - x.shared)[0];
+    if (!before) continue;
+    const theirs = new Set(before.h.members);
+    g.sameAs = { name: before.h.name, extra: g.members.filter((x) => !theirs.has(x)), missing: before.h.members.length - before.shared };
+  }
   const groupByTag = new Map(groups.map((g) => [g.tag, g]));
 
   const membership = new Map<string, EngineGroup[]>();
@@ -271,7 +289,11 @@ function strongestPairs(pairs: Map<string, Pair>, cards: Map<string, EngineCard>
     const ordered = [...rep].sort((x, y) => REPEAT_ORDER[x.repeat] - REPEAT_ORDER[y.repeat]);
     const first = ordered[0]!;
     const back = ordered.find((l) => l.from !== first.from);
-    const lines = [first, ...(back ? [back] : []), ...ordered.filter((l) => l !== first && l !== back)].slice(0, 3);
+    // One line per way after that, so "in 2 ways" never sits over three lines (round 6).
+    const way = (l: Link) => groups.get(l.tag)?.name ?? groupName(l.tag);
+    const shown = new Set([first, ...(back ? [back] : [])].map(way));
+    const more = ordered.filter((l) => l !== first && l !== back && !shown.has(way(l)) && shown.add(way(l)));
+    const lines = [first, ...(back ? [back] : []), ...more].slice(0, 3);
     return [{ pair, ways, both, lines, strength }];
   }).sort((x, y) => y.strength - x.strength || (x.pair.a < y.pair.a ? -1 : 1));
   const out: StrongPair[] = [];
@@ -292,6 +314,16 @@ const s = (n: number) => (n === 1 ? "" : "s");
  *  but says nothing, so it is never offered as the reason to keep a card (live round, 2026-09-25). */
 const unread = (l: Link) => /\btriggers$/.test(l.text.trim());
 
+/** Whether a card's own text does the work in a line: the sentence's main clause starts with its
+ *  name ("When a creature leaves ... thanks to Essence Flux, Dour Port-Mage draws a card"). Which
+ *  side of a link acts differs by tag -- a trigger's consumer acts, a grant's producer does -- so
+ *  the sentence is the one place that says it the same way every time. */
+function acts(card: EngineCard, l: Link): boolean {
+  const t = l.text.trim();
+  const main = /^(when|whenever|while|as long as)\b/i.test(t) && t.includes(", ") ? t.slice(t.indexOf(", ") + 2) : t;
+  return main.startsWith(card.name) || main.startsWith(card.name.split(" // ")[0]!) || main.startsWith(card.name.split(", ")[0]!);
+}
+
 /** THE CARDS DOING THE LEAST, and removal and ramp judged by their job.
  *
  *  Every repeating link counts, trigger doublers included -- counting only the six headline groups
@@ -302,10 +334,12 @@ const unread = (l: Link) => /\btriggers$/.test(l.text.trim());
  *  ramp or protection is compared with its own kind, because a link count cannot judge it; hiding
  *  those cards instead hid the talismans a tuner weighs (round 3).
  *
- *  The reason to keep a card is its own: a link with a partner other than the commander where it
- *  can, in one of the deck's groups, with the most central partner -- and a partner no row above it
- *  already named. Taking the first link gave every Inalla cut the same line about Inalla making a
- *  token (live round); taking the most central partner alone gave them all Kindred Discovery. */
+ *  The reason to keep a card is its own: a line where the card's own text does the work where it
+ *  can (see `acts`), then one in the deck's groups, then the most central partner; a
+ *  partner a row above already named only breaks ties. Taking the first link gave every Inalla cut
+ *  the same line about Inalla making a token (live round); avoiding the commander instead hid Dour
+ *  Port-Mage's real reason, and forcing a new partner on every row made the reasons generic --
+ *  "Kindred Discovery draws you a card" is true of any Wizard (round 6). */
 function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partners: Map<string, Map<string, Pair>>, groups: Map<string, EngineGroup>): { cuts: CutRow[]; jobs: [string, CutRow[]][] } {
   const rows: (CutRow & { options: Link[] })[] = deckCards.filter((c) => !c.isCommander && !c.isLand).map((card) => {
     const nb = partners.get(card.id) ?? new Map<string, Pair>();
@@ -326,10 +360,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
       options.push(...rep.filter((l) => !isHelperTag(l.tag) && !unread(l)));
     }
     const other = (l: Link) => cards.get(l.from === card.id ? l.to : l.from);
-    const worth = (l: Link) => {
-      const o = other(l);
-      return (o?.isCommander ? 0 : 4) + (groups.has(l.tag) ? 2 : 0) + (o?.score ?? 0) / 1000;
-    };
+    const worth = (l: Link) => (acts(card, l) ? 4 : 0) + (groups.has(l.tag) ? 2 : 0) + (other(l)?.score ?? 0) / 1000;
     options.sort((a, b) => worth(b) - worth(a));
     let keep: Link | undefined = options[0];
     if (!keep && (gives || givesOnce)) {
@@ -350,7 +381,9 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
   const named = new Set<string>();
   for (const r of cuts) {
     const other = (l: Link) => (l.from === r.card.id ? l.to : l.from);
-    const fresh = r.options.find((l) => !named.has(other(l)));
+    const tier = (l: Link) => (acts(r.card, l) ? 4 : 0) + (groups.has(l.tag) ? 2 : 0);
+    const best = r.options[0];
+    const fresh = best && r.options.find((l) => tier(l) === tier(best) && !named.has(other(l)));
     if (fresh) r.keep = fresh;
     if (r.keep) named.add(other(r.keep));
   }

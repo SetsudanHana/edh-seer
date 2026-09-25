@@ -40,6 +40,16 @@ describe("buildEngineModel", () => {
     expect(g.repeating).toBe(16);
   });
 
+  test("a group whose members repeat one above it says so", () => {
+    expect(m.groups.find((g) => g.tag === "attacks:cleric")!.sameAs).toEqual({ name: "Counts your Clerics", extra: [], missing: 0 });
+    expect(m.groups.find((g) => g.tag === "scales:cleric")!.sameAs).toBeUndefined();
+  });
+
+  test("carries the printed mana cost", () => {
+    expect(m.cards.get("Doom Blade")!.manaCost).toBe("{1}{B}");
+    expect(m.cards.get("token:Treasure")!.manaCost).toBe("");
+  });
+
   test("lists helpers after the deck's own groups", () => {
     const helperAt = m.groups.findIndex((g) => g.helper);
     expect(helperAt).toBeGreaterThan(-1);
@@ -74,7 +84,7 @@ describe("buildEngineModel", () => {
     expect(m.cuts.indexOf(digger)).toBeGreaterThan(m.cuts.indexOf(raise));
   });
 
-  test("the reason to keep a card is its own: not the commander's line, not an unread effect", () => {
+  test("the reason to keep a card is one where its own text acts, and never an unread effect", () => {
     const side = m.cuts.find((c) => c.card.name === "Sidekick")!;
     expect(side.real).toBe(2);
     expect(side.keep?.text).toBe("When Cleric 3 gains you life, Sidekick grows");
@@ -84,6 +94,7 @@ describe("buildEngineModel", () => {
     const top = m.strongest.find((p) => p.pair.a === "Payoff A" && p.pair.b === "Payoff B")!;
     expect(top.both).toBe(true);
     expect(new Set(top.lines.map((l) => l.from))).toEqual(new Set(["Payoff A", "Payoff B"]));
+    expect(top.lines.length).toBeLessThanOrEqual(Math.max(top.ways.length, 2));
     const count = new Map<string, number>();
     for (const p of m.strongest) for (const id of [p.pair.a, p.pair.b]) count.set(id, (count.get(id) ?? 0) + 1);
     expect(Math.max(...count.values())).toBeLessThanOrEqual(2);
