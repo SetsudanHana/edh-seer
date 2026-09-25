@@ -281,10 +281,12 @@ test("a route the deck already has is not opened", async () => {
   const { f, deck } = ghyrsonWitness();
   const withBridge = {
     ...deck,
-    edges: [{ a: "Maker One", b: "Ghyrson Starn", reasons: [
-      { tag: "enters:creature", text: "x", producer: "Maker One", consumer: "Deck Bridge", consumerAbility: 0 },
-      { tag: "non-combat-damage:any", text: "y", producer: "Deck Bridge", consumer: "Ghyrson Starn", producerAbility: 0, consumerAbility: 0 },
-    ] }],
+    // THROUGH A THIRD DECK CARD, no direct Maker One -- Ghyrson edge: only a route search can see it
+    // (the old adjacency test could not -- final review of PR 2).
+    edges: [
+      { a: "Maker One", b: "Deck Bridge", reasons: [{ tag: "enters:creature", text: "x", producer: "Maker One", consumer: "Deck Bridge", consumerAbility: 0 }] },
+      { a: "Deck Bridge", b: "Ghyrson Starn", reasons: [{ tag: "non-combat-damage:any", text: "y", producer: "Deck Bridge", consumer: "Ghyrson Starn", producerAbility: 0, consumerAbility: 0 }] },
+    ],
   } as unknown as DeckReport;
   const s = await quietly(() => suggestForDeck({ report: withBridge, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
   expect(s.routes.find((c) => c.name === "Impact Tremors")?.route?.from ?? []).not.toContain("Maker One");
@@ -390,4 +392,24 @@ test("a card that cares about your commander connects to the deck's commander", 
   const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
   const card = s.build["Interaction"]!.find((c) => c.name === "Commander Payoff");
   expect(card?.connections).toEqual(["Krenko, Mob Boss"]);
+});
+
+/** THE CHAIN MUST HOLD AT THE CANDIDATE (final review of PR 2): a card whose FIRST ability is fed by
+ *  the makers and whose SECOND ability feeds Ghyrson opens no route -- the entering creature never
+ *  causes the damage. A card-level check would have claimed it. */
+test("a candidate fed on one ability and feeding on another opens no route", async () => {
+  const { f, deck } = ghyrsonWitness();
+  for (const [path, shard] of Object.entries(f)) {
+    if (!path.includes("/cards/")) continue;
+    for (const [k, e] of Object.entries(shard as Record<string, { card: { name: string }; tags: { abilities: unknown[] } }>)) {
+      if (e.card.name !== "Impact Tremors") continue;
+      (shard as Record<string, unknown>)[k] = { ...e, tags: { ...e.tags, abilities: [
+        { kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } }, effect: { kind: "draw-card" } },
+        { kind: "activated", cost: "{T}", effect: { kind: "damage" }, amount: "1",
+          emits: [{ verb: "non-combat-damage", subject: { control: "opp", token: null, scope: "each" }, dealer: { control: "you", token: null } }] },
+      ] } };
+    }
+  }
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  expect(s.routes.map((c) => c.name)).not.toContain("Impact Tremors");
 });

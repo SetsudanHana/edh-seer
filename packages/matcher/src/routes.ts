@@ -5,6 +5,30 @@ export interface RouteHop { from: string; to: string; fromAbility?: number; toAb
 /** A card reaching another, hop by hop. */
 export interface Route { from: string; to: string; hops: RouteHop[] }
 
+/** THE REASONS A ROUTE CAN USE, by producer card: a search scans only the hops leaving the card it is
+ *  at. Built once and extended per candidate by the suggestion check, which asks many questions of
+ *  one deck (final review of ability routes, PR 2). */
+export type RouteIndex = ReadonlyMap<string, readonly Reason[]>;
+
+/** Keeps only reasons that can be a hop -- two different cards, landing on a real triggered ability
+ *  or on a token node -- grouped by producer. */
+export function indexRoutes(reasons: readonly Reason[]): RouteIndex {
+  return extendRoutes(new Map(), reasons);
+}
+
+const isRouteIndex = (x: readonly Reason[] | RouteIndex): x is RouteIndex => x instanceof Map;
+
+/** A new index: `base` plus `more`. `base` is never mutated. */
+export function extendRoutes(base: RouteIndex, more: readonly Reason[]): RouteIndex {
+  const out = new Map(base);
+  for (const r of more) {
+    if (r.producer === undefined || r.consumer === undefined || r.producer === r.consumer) continue;
+    if (r.consumerAbility === undefined && r.consumerIsToken !== true) continue;
+    out.set(r.producer, [...(out.get(r.producer) ?? []), r]);
+  }
+  return out;
+}
+
 /** A stop in the search: which card (a token node is its own stop), which face, and which ability
  *  the chain arrived at. `ability` is "made" when the hop created a token node: its implied events
  *  are what that hop caused. */
@@ -17,10 +41,9 @@ const stopKey = (s: Stop): string => `${s.token ? "t" : "c"}\u0000${s.card}\u000
  *  into a token node may be followed by the token's own implied events. Every hop but one into a
  *  token must land on a real triggered ability. A stop is visited once, so every route is a simple
  *  path -- loops are W16's, refused here by construction. Returns every shortest route. */
-export function findRoutes(reasons: readonly Reason[], from: string, to: string, opts: { maxHops?: number } = {}): Route[] {
+export function findRoutes(reasons: readonly Reason[] | RouteIndex, from: string, to: string, opts: { maxHops?: number } = {}): Route[] {
   const maxHops = opts.maxHops ?? 4;
-  const hops = reasons.filter((r) => r.producer !== undefined && r.consumer !== undefined && r.producer !== r.consumer)
-    .filter((r) => r.consumerAbility !== undefined || r.consumerIsToken === true);
+  const index = isRouteIndex(reasons) ? reasons : indexRoutes(reasons);
   const leaves = (s: Stop, r: Reason): boolean => {
     if (r.producer !== s.card || (r.producerIsToken === true) !== s.token) return false;
     if (s.ability === "any") return true;
@@ -35,7 +58,7 @@ export function findRoutes(reasons: readonly Reason[], from: string, to: string,
     const next: { stop: Stop; path: RouteHop[] }[] = [];
     const reachedThisDepth = new Set<string>();
     for (const { stop, path } of frontier) {
-      for (const r of hops) {
+      for (const r of index.get(stop.card) ?? []) {
         if (!leaves(stop, r)) continue;
         const hop: RouteHop = {
           from: r.producer!, to: r.consumer!, tag: r.tag, text: r.text,
