@@ -147,63 +147,68 @@ export const breadcrumbJsonLd = (crumbs: { name: string; url: string }[]): strin
     })),
   });
 
+/** EVERY REPLACEMENT IS A FUNCTION, NEVER A STRING (security review 2026-09-25). A string replacement
+ *  reads `$'`, `` $` `` and `$&` in its text as patterns -- "the rest of the document", "the start",
+ *  "the match" -- and `esc` does not escape `$`. The 404 page puts the URL's own slug into the title
+ *  and canonical, so `/cards/x$'$'$'$'`, nine characters, grew a 25 MB page by re-inserting the
+ *  document into itself at every rewrite. A function's return value is inserted as written. */
 export function injectPage(shell: string, page: InjectedPage): string {
   let out = shell
     // THE LANDING'S ARGUMENT STAYS ON THE LANDING. `.intro` is index.html's own pitch, and its
     // thesis is the landing's `h1`; on a served card, commander or browse page it was a second
     // answer to "what is this page" for every crawler, and hidden by CSS for every reader.
     .replace(/\n?\s*<section class="intro"[\s\S]*?<\/section>/, "")
-    .replace(/<title>[^<]*<\/title>/, `<title>${esc(page.title)}</title>`)
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${esc(page.title)}</title>`)
     .replace(/<meta name="description" content="[^"]*"\s*\/?>/,
-      `<meta name="description" content="${esc(page.description)}" />`)
+      () => `<meta name="description" content="${esc(page.description)}" />`)
     .replace(/<link rel="canonical" href="[^"]*"\s*\/?>/,
-      `<link rel="canonical" href="${esc(page.canonical)}" />`)
+      () => `<link rel="canonical" href="${esc(page.canonical)}" />`)
     .replace(/<meta property="og:title" content="[^"]*"\s*\/?>/,
-      `<meta property="og:title" content="${esc(page.title)}" />`)
+      () => `<meta property="og:title" content="${esc(page.title)}" />`)
     .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/,
-      `<meta property="og:description" content="${esc(page.description)}" />`)
+      () => `<meta property="og:description" content="${esc(page.description)}" />`)
     .replace(/<meta property="og:url" content="[^"]*"\s*\/?>/,
-      `<meta property="og:url" content="${esc(page.canonical)}" />`)
+      () => `<meta property="og:url" content="${esc(page.canonical)}" />`)
     // THE SAME PAGE, SAID TWICE. `og:` was per-page from the start and `twitter:` was not, so every
     // Discord and Twitter paste of any of 24,874 card, commander and browse pages previewed as the
     // home page. These two belong in the chain that always runs, not in the image branch below: a
     // browse page carries no image and still has a name of its own.
     .replace(/<meta name="twitter:title" content="[^"]*"\s*\/?>/,
-      `<meta name="twitter:title" content="${esc(page.title)}" />`)
+      () => `<meta name="twitter:title" content="${esc(page.title)}" />`)
     .replace(/<meta name="twitter:description" content="[^"]*"\s*\/?>/,
-      `<meta name="twitter:description" content="${esc(page.description)}" />`);
+      () => `<meta name="twitter:description" content="${esc(page.description)}" />`);
 
   if (page.breadcrumbs !== undefined && page.breadcrumbs.length >= 2) {
     out = out.replace("</head>",
-      `  <script type="application/ld+json">${breadcrumbJsonLd(page.breadcrumbs)}</script>\n  </head>`);
+      () => `  <script type="application/ld+json">${breadcrumbJsonLd(page.breadcrumbs)}</script>\n  </head>`);
   }
 
   if (page.image !== undefined) {
     const image = esc(page.image);
     out = out
       .replace(/<meta property="og:image" content="[^"]*"\s*\/?>/,
-        `<meta property="og:image" content="${image}" />`)
+        () => `<meta property="og:image" content="${image}" />`)
       // Scryfall's `normal` size, the one `cardImageUrl` asks for.
       .replace(/<meta property="og:image:width" content="[^"]*"\s*\/?>/,
-        '<meta property="og:image:width" content="488" />')
+        () => '<meta property="og:image:width" content="488" />')
       .replace(/<meta property="og:image:height" content="[^"]*"\s*\/?>/,
-        '<meta property="og:image:height" content="680" />')
+        () => '<meta property="og:image:height" content="680" />')
       .replace(/<meta property="og:image:alt" content="[^"]*"\s*\/?>/,
-        `<meta property="og:image:alt" content="${esc(page.title)}" />`)
+        () => `<meta property="og:image:alt" content="${esc(page.title)}" />`)
       // A card is portrait. `summary_large_image` crops a landscape band out of its middle;
       // `summary` shows the whole thing small, which is the card.
       .replace(/<meta name="twitter:card" content="[^"]*"\s*\/?>/,
-        '<meta name="twitter:card" content="summary" />')
+        () => '<meta name="twitter:card" content="summary" />')
       .replace(/<meta name="twitter:image" content="[^"]*"\s*\/?>/,
-        `<meta name="twitter:image" content="${image}" />`)
+        () => `<meta name="twitter:image" content="${image}" />`)
       .replace("</head>",
-        `  <link rel="preload" as="image" href="${image}" fetchpriority="high" />\n  </head>`);
+        () => `  <link rel="preload" as="image" href="${image}" fetchpriority="high" />\n  </head>`);
   }
 
   // A PAGE THAT PROMISES NOTHING DOES NOT ENTER THE INDEX. It still renders -- the reporting
   // surface wants every card reachable -- but a card with no partners has no content a search
   // result could honestly summarise.
-  if (!page.indexable) out = out.replace("</head>", '  <meta name="robots" content="noindex" />\n  </head>');
+  if (!page.indexable) out = out.replace("</head>", () => '  <meta name="robots" content="noindex" />\n  </head>');
 
   // KEYED BY SLUG, because a client-side navigation does not reload the document. Click a partner
   // link and this tag still describes the card you ARRIVED on; the reader compares the slug it
@@ -212,7 +217,7 @@ export function injectPage(shell: string, page: InjectedPage): string {
   const data = page.data === undefined ? "" : `\n    <script type="application/json" id="${CARD_PAGE_DATA_ID}"`
     + ` data-slug="${esc(page.data.slug)}">${jsonForScript(page.data.record)}</script>`;
 
-  return out.replace('<div id="root"></div>', `<div id="root"></div>\n${page.bodyHtml}${data}`);
+  return out.replace('<div id="root"></div>', () => `<div id="root"></div>\n${page.bodyHtml}${data}`);
 }
 
 /** As much of one artifact record as the static block prints. */

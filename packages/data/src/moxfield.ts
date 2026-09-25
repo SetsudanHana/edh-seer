@@ -1,4 +1,4 @@
-import { DeckFetchError } from "./deck-source.js";
+import { DeckFetchError, readDeckJson } from "./deck-source.js";
 
 export type { DeckSections, FetchFn } from "./deck-source.js";
 import type { DeckSections, FetchFn } from "./deck-source.js";
@@ -79,5 +79,5 @@ export async function fetchMoxfieldDeck(
     { headers: { "User-Agent": userAgent, Accept: "application/json" } },
   );
   if (!res.ok) throw new DeckFetchError("Moxfield", res.status);
-  return moxfieldDeckToSections(await res.json());
+  return moxfieldDeckToSections(await readDeckJson(res, "Moxfield"));
 }

@@ -34,3 +34,20 @@ export class DeckFetchError extends Error {
     return this.status === 429 || this.status >= 500;
   }
 }
+
+/** THE MOST A DECK SITE'S ANSWER MAY WEIGH, in bytes (security review 2026-09-25). A 100-card deck
+ *  with Moxfield's full card objects is a few hundred KB; a body many times that is not a deck, and
+ *  parsing it whole would spend the importer's memory on someone else's mistake or on a hostile
+ *  upstream. 8 MB is generous for a real list and a fraction of a Worker's 128 MB. */
+export const MAX_DECK_BYTES = 8 * 1024 * 1024;
+
+/** A deck site's JSON, refused with a 413 when it is larger than `MAX_DECK_BYTES`. The declared
+ *  length is checked before reading and the real length after, because a missing or false
+ *  `Content-Length` is exactly the case the cap is for. */
+export async function readDeckJson(res: Response, source: string): Promise<unknown> {
+  const declared = Number(res.headers.get("Content-Length") ?? "0");
+  if (declared > MAX_DECK_BYTES) throw new DeckFetchError(source, 413);
+  const text = await res.text();
+  if (text.length > MAX_DECK_BYTES) throw new DeckFetchError(source, 413);
+  return JSON.parse(text);
+}
