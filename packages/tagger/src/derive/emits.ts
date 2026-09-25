@@ -431,7 +431,14 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // The temporary-token rider ("exile it at the beginning of the next end step") is the token
   // leaving, already recorded as `temporary` on the maker's own ability -- not an exile event.
   if (action.verb === "exile" && LEAVES_SAME_TURN.test(clauseText ?? "") && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim())) return [];
-  const subject = parseSubject(action.object ?? "");
+  // WHERE A COUNTER GOES (DERIVE 173, overview item 8): when the object is the COUNTER ("+1/+1",
+  // "those counters"), the recipient is only in the sentence -- "put two +1/+1 counters on each other
+  // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
+  // itself stays with the self logic in derive.
+  const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined)
+    ? /\bcounters?\s+on\s+((?:each|all|target|another|up to \w+)\b[^.;,]*?)(?:\s+for each\b|[.;,]|$)/i.exec(clauseText ?? "")?.[1]
+    : undefined;
+  const subject = parseSubject(recipient ?? action.object ?? "");
   // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
   // model writes it out less often than not -- Swords to Plowshares, Path to Exile and Deadly
   // Rollick all record `exile target creature` with `toZone: null`, while Ephemerate happened to

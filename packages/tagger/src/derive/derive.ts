@@ -246,7 +246,16 @@ function counterOnSelf(verb: string | undefined, text: string, cardName?: string
   const onIt = re.onIt.test(text) && !OTHER_OBJECT.test(text)
     && (triggerIsSelf || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
   if (!onThis && !onIt) return false;
-  return !re.onOther.test(text);
+  // THE CARD'S OWN NAME IS NOT "THE OTHER ONE" (DERIVE 173, overview item 8): `onOther` reads "counters
+  // on THE Ozolith" as "on the <something>", so The Ozolith's own counters went kindless and fed The
+  // Earth Crystal's creature-only doubler. The own-name phrase is taken out before that test.
+  const rest = named
+    ? (cardName ?? "").split(" // ").reduce((t, face) => {
+        const short = face.split(",")[0]!.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return short === "" ? t : t.replace(new RegExp(`\\bcounters?\\s+${prep}\\s+${short}\\b`, "gi"), " ");
+      }, text)
+    : text;
+  return !re.onOther.test(rest);
 }
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
