@@ -18,6 +18,7 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
+import { useSuggestions } from "../lib/suggestions.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
@@ -130,6 +131,8 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
   }, [report.archetypes, report.cutList, report.cards, nonlandNames]);
 
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
+  // ONE RUN PER REPORT, read by the findings (cards under each) and the lists below them (AO4).
+  const suggestions = useSuggestions(data);
 
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
@@ -276,7 +279,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="fix" title={title("fix")}>
-          <Findings report={report} diff={diff} />
+          <Findings report={report} diff={diff} suggestions={suggestions} />
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           {/* THE GRID HAD ONE CHILD AND STILL RESERVED TWO COLUMNS (roadmap T11). It was built to
