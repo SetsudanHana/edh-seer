@@ -88,6 +88,9 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
         *  `recognition-identity` still wraps both, so every guard that reads "the identity" -- theme,
         *  commander, colours, coverage -- keeps reading one element. */}
       <div data-testid="recognition-identity" className="flex flex-col gap-1">
+        {/* NAMED AS WHAT IT IS (review 2026-09-25): "Blink" as a bare display line read as a heading
+          *  for a section, not as the report's verdict on the deck. */}
+        {theme ? <span className="eyebrow text-(--muted)">main theme</span> : null}
         <p
           data-testid="recognition-theme"
           className="text-2xl sm:text-3xl font-bold leading-tight tracking-[-0.02em] text-(--foreground)"

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
-import { DeckInput } from "./DeckInput.js";
+import { DeckInput, cardCount } from "./DeckInput.js";
 
 const props = {
   value: "",
@@ -157,4 +157,12 @@ test("a narrow screen keeps Edit and Re-analyse out and folds the rest behind Mo
   } finally {
     window.matchMedia = original;
   }
+});
+
+/** "90 lines · The Rani" beside a 100-card report (review 2026-09-25): the summary counts cards. */
+test("the collapsed summary counts cards, not lines", () => {
+  expect(cardCount("1 The Rani", "Deck\n10 Island\n1 Sol Ring (CMM) 1\n// note\n\nArcane Signet")).toBe(13);
+  // A commander pasted in both boxes is one card.
+  expect(cardCount("1 The Rani", "Commander\n1 The Rani\n1 Sol Ring")).toBe(2);
+  expect(cardCount("", "https://moxfield.com/decks/abc")).toBeNull();
 });

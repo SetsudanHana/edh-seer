@@ -295,6 +295,18 @@ export default function App() {
     return () => { delete root.dataset.report; };
   }, [data]);
 
+  /** THE TAB NAMES THE DECK (review 2026-09-25). Every report kept the landing's title, so two decks
+   *  open side by side, or a week of history, were indistinguishable. Restored when the report goes,
+   *  so the landing's title -- the one a crawler reads -- is never replaced for good. */
+  const reportCommander = (analysedRef.current?.commanders ?? commanders)
+    .split("\n")[0]?.replace(/^\d+\s+/, "").replace(/\s*\(.*$/, "").trim();
+  useEffect(() => {
+    if (!data || !reportCommander) return;
+    const before = document.title;
+    document.title = `${reportCommander} deck report — EDH Seer`;
+    return () => { document.title = before; };
+  }, [data, reportCommander]);
+
   /** BACK AND FORWARD, now that an analysis is a history entry.
    *
    *  Without this the entry exists and does nothing when you reach it: the URL would change and the
@@ -422,7 +434,7 @@ export default function App() {
       {firstVisit && (
         <div className="flex flex-col gap-3">
           <h2 className="max-w-[22ch] text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-(--foreground)">
-            Paste a decklist and see which cards work together.
+            Paste a Commander deck and see which cards work together.
           </h2>
           {/* 65ch, and the cap is the whole point: this ran the full width of the container, which
             *  above `xl` is the viewport — 1,376px at 1440, or 156 characters a line against the

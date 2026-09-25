@@ -261,11 +261,13 @@ export function ReasonText({ text, className }: { text: string; className?: stri
         seg.kind === "card" ? <CardName key={i} name={seg.text} />
           : seg.kind === "token" ? (
             <span key={i} className="whitespace-nowrap">
-              {seg.text}
+              {/* A REAL SPACE, not a margin: copied text and screen readers got "Mark of the
+                *  Rani(token from The Rani)" (review 2026-09-25). */}
+              {seg.text}{" "}
               {/* THE WORD, NOT A GLYPH: a coloured pill saying nothing is what the bracket pips
                 *  were before S2 gave them words. `title` is not enough -- it does not exist on
                 *  touch at all, which is the same reason `Explain` exists. */}
-              <span className="ml-1 text-[0.9em] text-(--muted)">
+              <span className="text-[0.9em] text-(--muted)">
                 (token{seg.maker ? <> from {seg.maker}</> : null})
               </span>
             </span>
