@@ -4952,3 +4952,20 @@ test("a create-token reason names the ability that made the token", () => {
   const made = createsReasons(maker, goblin, H);
   expect(made.map((r) => r.producerAbility)).toEqual([1]);
 });
+
+/** A FETCH IS TAGGED WITH THE LAND TYPE THAT MATCHED (overview persona rounds 2026-09-25, item 7):
+ *  "Scalding Tarn -> Blood Crypt | ramp-target:island" put a Swamp Mountain under "Fetching Islands".
+ *  Tarn finds an Island OR a Mountain; Blood Crypt is the Mountain. */
+test("a two-type fetch is tagged with the type the target land has", () => {
+  const tarn = base("Scalding Tarn", [{
+    kind: "activated", cost: "{T}, Pay 1 life, Sacrifice this land",
+    // The live derived subject, read 2026-09-26: no `type`, the two basic land types.
+    effect: { kind: "search", subject: { control: "you", token: null, subtype: ["island", "mountain"] } },
+  }] as CardTags["abilities"]);
+  tarn.tags.characteristics.types = ["land"];
+  const crypt = base("Blood Crypt", [], ["swamp", "mountain"]);
+  crypt.tags.characteristics.types = ["land"];
+  (crypt.card as { typeLine: string }).typeLine = "Land — Swamp Mountain";
+  const tags = pairReasons(tarn, crypt, H).map((r) => r.tag).filter((t) => t.startsWith("ramp-target"));
+  expect(tags).toEqual(["ramp-target:mountain"]);
+});
