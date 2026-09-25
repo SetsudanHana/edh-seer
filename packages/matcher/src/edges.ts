@@ -2468,8 +2468,12 @@ function tutorEdges({ p, c, h, reasons }: PairScope): void {
       // type" derives as a plain basic-land subject, which Wastes answers -- and two Wastes do not
       // (owner, 2026-09-06). Same predicate the mana model reads, see `fetch-land.ts`.
       if (SHARES_A_LAND_TYPE.test(p.card.oracleText ?? "") && !hasBasicLandType(c.card.typeLine)) continue;
+      // KEYED ON THE TYPE THAT MATCHED (overview persona rounds 2026-09-25, item 7): Scalding Tarn
+      // finds an Island OR a Mountain, and Blood Crypt is the Mountain -- `themeSubjectKey` takes the
+      // first listed type and filed a Swamp Mountain under "Fetching Islands".
+      const hit = subs.find((s) => list(found.subtype).includes(s));
       reasons.push({
-        tag: `ramp-target:${landSubtypes ? themeSubjectKey(a.effect.subject) : "basic"}`,
+        tag: `ramp-target:${landSubtypes ? (hit ?? themeSubjectKey(a.effect.subject)) : "basic"}`,
         text: fetchSentence(p.card.name, c.card.name),
         effectKind: a.effect.kind,
         repeatability:

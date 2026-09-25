@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 13,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -17,13 +17,13 @@
 
   "patterns": {
     "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b(?! created (?:with|by) )|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker(?! (?:they|that player) controls?\\b))|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
-    "targetedRemoval": "destroy[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))(?![^.]{0,80}?then return (?:it|that card|them|those cards) to the battlefield)|return target .*? to .*? hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
+    "targetedRemoval": "destroy[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))(?![^.]{0,80}?then return (?:it|that card|them|those cards) to the battlefield)|return target (?![^.]*\\bgraveyard\\b)[^.]*? to [^.]*?hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
     "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
     "graveyardHate": "\\bexile[^.]*graveyard",
     "graveyardHateRecurring": "if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead|cards? in [^.]{0,40}graveyards?[^.]{0,30}can'?t (?:enter|be cast|be played)|players can'?t cast[^.]{0,40}from[^.]{0,30}graveyards?|\\{[^}]{1,12}\\}[^.:]{0,40}:[^.]{0,80}?exile[^.]{0,60}?from (?:a|an opponent's|that|their)\\s+graveyard",
     "graveyardHatePositive": "exile[^.]{0,80}?(?:each |all |any number of |target )?(?:player|opponent)s?'s? graveyards?|exile all graveyards|exile[^.]{0,60}?cards?[^.]{0,40}?from (?:a|an opponent's|that) graveyard|exile[^.]{0,60}?target cards? from graveyards|opponent[^.]{0,90}?exiles?[^.]{0,60}?from their graveyard|if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead",
-    "stack": "(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for|return target (?:\\w+ )*spell(?:\\W+\\w+)*? to (?:its owner's|their|the owner's|owner's) hand",
+    "stack": "(?:counter|exile) target[^.]*?(?:spell|ability)|change the target of|choose new targets? for target (?:\\w+ )*(?:spell|ability)|return target (?:\\w+ )*spell(?:\\W+\\w+)*? to (?:its owner's|their|the owner's|owner's) hand",
     "protection": "hexproof|indestructible|protection from|can't be countered|shroud|phases? out",
     "tutor": "search your library for",
     "landFetch": "search your library for (a |an |up to \\w+ )?(basic )?(land|forest|island|swamp|mountain|plains)",
