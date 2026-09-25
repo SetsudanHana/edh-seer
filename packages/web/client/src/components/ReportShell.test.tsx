@@ -450,9 +450,19 @@ async function openGraph(data: typeof SAMPLE) {
   return user;
 }
 
-test("a coarse pointer gets the list with the board reachable from a row", async () => {
+/** THE GRAPH TAB OPENS ON THE OVERVIEW (graph evaluation 2026-09-25), on every device; the list,
+ *  the one-card view and the board are one tap away on the surface switch. */
+test("the graph tab opens on the Overview", async () => {
   stubPointer(true, false, 390);
   await openGraph(phoneSizedDeck());
+  expect(screen.getByRole("button", { name: "Overview" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
+});
+
+test("a coarse pointer gets the list with the board reachable from a row", async () => {
+  stubPointer(true, false, 390);
+  const user = await openGraph(phoneSizedDeck());
+  await user.click(screen.getByRole("button", { name: "One card" }));
   expect(screen.getByLabelText("Find a card")).toBeInTheDocument();
   // The sentence that said the board "needs a wider screen" is false as of this change.
   expect(screen.queryByText(/needs a wider screen/i)).toBeNull();
@@ -462,6 +472,7 @@ test("a coarse pointer gets the list with the board reachable from a row", async
 test("tapping a row opens that card's graph", async () => {
   stubPointer(true, false, 390);
   const user = await openGraph(phoneSizedDeck());
+  await user.click(screen.getByRole("button", { name: "One card" }));
   await user.click(screen.getAllByRole("button", { name: /see what it connects to/i })[0]!);
   // `find`, not `get`, AND NOT ON THE DEFAULT BUDGET. The comment here used to say the ego board
   // "arrives one microtask after the tap", which stopped being true at #142 (`cae07fe`): EgoView
@@ -483,7 +494,8 @@ test("tapping a row opens that card's graph", async () => {
 
 test("a precise pointer still gets the board", async () => {
   stubPointer(false, true, 1440);
-  await openGraph(phoneSizedDeck());
+  const user = await openGraph(phoneSizedDeck());
+  await user.click(screen.getByRole("button", { name: "Whole deck" }));
   expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
   expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
 });
@@ -522,6 +534,7 @@ test("a new deck goes home carrying search and hash; the same deck under a state
 test("the phone can switch between the one-card list and the whole-deck board", async () => {
   stubPointer(true, false, 390);
   const user = await openGraph(phoneSizedDeck());
+  await user.click(screen.getByRole("button", { name: "One card" }));
   expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
   await user.click(screen.getByRole("button", { name: "Whole deck" }));
   expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
@@ -536,6 +549,7 @@ test("the phone can switch between the one-card list and the whole-deck board", 
 test("a desktop can open the one-card view, and it opens on the commander", async () => {
   stubPointer(false, true, 1440);
   const user = await openGraph(phoneSizedDeck());
+  await user.click(screen.getByRole("button", { name: "Whole deck" }));
   expect(screen.getByRole("button", { name: "Whole deck" })).toHaveAttribute("aria-pressed", "true");
   await user.click(screen.getByRole("button", { name: "One card" }));
   expect(await screen.findByRole(

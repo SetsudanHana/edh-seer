@@ -29,6 +29,7 @@ const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.
  *  only, so both are lazy and `GraphView` becomes the chunk they share. */
 const EgoView = lazy(() => import("./EgoView.js").then((m) => ({ default: m.EgoView })));
 import { GraphList } from "./GraphList.js";
+import { EnginesView } from "./EnginesView.js";
 import { useBoardMode } from "../lib/use-board-mode.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
@@ -94,6 +95,23 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
    *  a choice about this device, not about the deck. */
   const [boardModeOverride, setBoardModeOverride] = useState<"board" | "ego" | null>(null);
   const boardMode = boardModeOverride ?? autoBoardMode;
+  /** WHICH GRAPH SURFACE IS SHOWING. The Overview (`EnginesView`) opens first on every device
+   *  (graph evaluation 2026-09-25: every persona seat opened it first in two blind rounds, and it
+   *  is the only surface that answers the cut question); the board and the one-card view keep the
+   *  device guess above for when the reader switches to them. */
+  const [surface, setSurface] = useState<"engines" | "graph">("engines");
+  /** THE CARD LIT IN THE OVERVIEW, IN THE URL (`?card=`), so a reload or a shared link keeps it and
+   *  the one-card view can later grow from the same route. Written through `navigate` with the hash
+   *  carried by hand: `setSearchParams` would drop `#deck=…`, which is the whole analysis. */
+  const cardLocation = useLocation();
+  const cardNavigate = useNavigate();
+  const selectedCard = new URLSearchParams(cardLocation.search).get("card");
+  const selectCard = (id: string | null) => {
+    const p = new URLSearchParams(cardLocation.search);
+    if (id) p.set("card", id); else p.delete("card");
+    const q = p.toString();
+    cardNavigate({ pathname: cardLocation.pathname, search: q ? `?${q}` : "", hash: cardLocation.hash }, { replace: true });
+  };
   /** The card whose local graph is open, or null for the list.
    *  CEILING: component state, so it does not survive a reload and the browser back button leaves
    *  the report rather than leaving this view -- the same cost S7 paid to make Graph a route.
@@ -115,23 +133,28 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
       aria-label="Graph surface"
       className="flex gap-1"
     >
-      {([["board", "Whole deck"], ["ego", "One card"]] as const).map(([mode, label]) => (
+      {([["engines", "Overview"], ["board", "Whole deck"], ["ego", "One card"]] as const).map(([mode, label]) => {
+        const on = mode === "engines" ? surface === "engines" : surface === "graph" && boardMode === mode;
+        return (
         <button
           key={mode}
           type="button"
-          aria-pressed={boardMode === mode}
+          aria-pressed={on}
           onClick={() => {
+            if (mode === "engines") { setSurface("engines"); return; }
+            setSurface("graph");
             setBoardModeOverride(mode);
             if (mode === "board") setFocusId(null);
-            else if (autoBoardMode === "board" && !focusId) setFocusId(commanderNodeId);
+            else if (autoBoardMode === "board" && !focusId) setFocusId(selectedCard ?? commanderNodeId);
           }}
           className={`eyebrow whitespace-nowrap rounded-(--radius) border px-2.5 py-2 ${
-            boardMode === mode ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+            on ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
           }`}
         >
           {label}
         </button>
-      ))}
+        );
+      })}
     </div>
   );
   // Which cards the synergy engine could not read. Computed once here because BOTH graph surfaces
@@ -192,8 +215,8 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   // A NEW ANALYSIS OPENS ON THE CHAPTERS. Without this a reader who left the graph open, edited
   // their list and re-analysed came back to the graph — the one surface that answers none of the
   // six questions a fresh report is for.
-  const navigate = useNavigate();
-  const { pathname, search, hash } = useLocation();
+  const navigate = cardNavigate;
+  const { pathname, search, hash } = cardLocation;
   // ONLY A NEW DECK GOES HOME (UX sweep 2026-09-06, D1). This effect also ran on mount, so a shared
   // link to a reference surface -- `/analysis/cards#deck=…` -- was redirected to `/` the moment it
   // loaded, and `navigate("/")` carried no hash: the address bar lost both the surface and the
@@ -258,7 +281,17 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                       loading the graph
                     </div>
                   }>
-                    {boardMode === "ego"
+                    {surface === "engines"
+                      ? (
+                        <EnginesView
+                          report={data.report}
+                          graph={data.graph}
+                          selected={selectedCard}
+                          onSelect={selectCard}
+                          onOpenCard={(id) => { setSurface("graph"); setBoardModeOverride("ego"); setFocusId(id); }}
+                        />
+                      )
+                      : boardMode === "ego"
                       ? (focusId
                         ? (
                           <EgoView
