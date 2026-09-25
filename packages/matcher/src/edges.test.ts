@@ -1119,9 +1119,10 @@ test("a dying artifact and a dying creature keep distinct tags even though the p
   const tags = reasons.map((r) => r.tag);
   expect(new Set(tags)).toEqual(new Set(["dies:creature", "dies:artifact"]));
   const texts = reasons.map((r) => r.text);
-  // The Capsule really can be the dying ARTIFACT, and really cannot be the dying CREATURE.
+  // The Capsule really can be the dying ARTIFACT, and really cannot be the dying CREATURE -- and an
+  // artifact is "put into a graveyard", never "dies" (CR 700.4; persona round 2026-09-25).
   expect(new Set(texts)).toEqual(new Set([
-    "When Executioner's Capsule dies, Scrap Trawler brings a card back",
+    "When Executioner's Capsule is put into a graveyard from the battlefield, Scrap Trawler brings a card back",
     "When a creature dies thanks to Executioner's Capsule, Scrap Trawler brings a card back",
   ]));
 });

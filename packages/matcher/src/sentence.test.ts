@@ -430,3 +430,14 @@ test("a referring amount attaches to its noun", () => {
   // the noun: "puts those counters counters on a permanent" was on 6 rows of the 71 decks.
   expect(effectPhrase("counter-placement", "those counters", "a permanent")).toBe("puts those counters on a permanent");
 });
+
+/** "DIES" IS FOR A CREATURE OR A PLANESWALKER (CR 700.4, glossary). The 2026-09-25 persona round read
+ *  "When Coercive Portal dies" -- an artifact -- as the engine not knowing the rules. The EVENT is
+ *  right (`dies:artifact`, and a death meets a `leaves` demand); only the word was wrong. */
+test("a non-creature death is put into a graveyard, never 'dies'", () => {
+  expect(eventVerbPhrase("dies:artifact")).toBe("is put into a graveyard from the battlefield");
+  expect(eventVerbPhrase("dies:enchantment")).toBe("is put into a graveyard from the battlefield");
+  expect(eventVerbPhrase("dies:any")).toBe("is put into a graveyard from the battlefield");
+  expect(eventVerbPhrase("dies:creature")).toBe("dies");
+  expect(eventVerbPhrase("dies:planeswalker")).toBe("dies");
+});

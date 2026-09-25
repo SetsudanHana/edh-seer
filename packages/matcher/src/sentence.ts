@@ -307,7 +307,13 @@ export const VERB_PHRASES: Record<string, string> = {
  *  satisfies `dies:creature`). CEILING: a verb this map has never seen gets `verb + "s"`, which is
  *  wrong for the noun-shaped verbs above but is why they are all listed explicitly instead. */
 export function eventVerbPhrase(key: string): string {
-  const verb = key.split(":")[0] ?? key;
+  const [verb = key, subject] = key.split(":");
+  // "DIES" IS A CREATURE'S OR A PLANESWALKER'S WORD (CR 700.4). Any other subject -- an artifact, an
+  // enchantment, "any" permanent -- takes the rules' own long form, which is true of every death, so
+  // it is never wrong even when the producer turns out to be a creature.
+  if (verb === "dies" && subject !== undefined && subject !== "creature" && subject !== "planeswalker") {
+    return "is put into a graveyard from the battlefield";
+  }
   return VERB_PHRASES[verb] ?? `${verb.replace(/-/g, " ")}s`;
 }
 
