@@ -15,6 +15,8 @@ not one before the report is made public.
 
 - **The deployed site**, [edhseer.cards](https://edhseer.cards) — its Cloudflare Functions, its
   static assets, and the headers they are served with.
+- **The deck-import worker** (`/api/import/*`, `packages/import-worker`), which fetches public
+  decklists from Moxfield and Archidekt by ID.
 - **This repository** — the packages, the build, and the CI workflows.
 
 The site takes no accounts, no payment, and stores nothing a visitor types. A pasted decklist is
@@ -25,7 +27,7 @@ should not, or a dependency with a known advisory.
 ## What is not a vulnerability
 
 - **A wrong synergy claim.** That is a correctness defect and a welcome one —
-  [report the edge](https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml)
+  [report the pairing](https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml)
   in the open.
 - **Missing hardening with no exploit path.** A recommendation is fine as a normal issue; it is not
   an advisory.
@@ -33,6 +35,6 @@ should not, or a dependency with a known advisory.
 
 ## Dependencies
 
-Dependabot is enabled, and CodeQL runs on every pull request and on `main`. If you are reporting a
+Dependabot is enabled, and CodeQL runs on every pull request, on `main`, and weekly. If you are reporting a
 known advisory in a dependency, please say whether the vulnerable path is actually reachable from
 this code — that is the part that decides how fast it moves.

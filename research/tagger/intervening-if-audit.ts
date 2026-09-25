@@ -8,7 +8,7 @@
  *  have NOTHING in the derived doc representing it. `--fixture <path>` writes the unrepresented rows
  *  for `intervening-if-ratchet.test.ts`.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/tagger/src/bin/intervening-if-audit.ts */
+ *    npx tsx --env-file=packages/tagger/.env research/tagger/intervening-if-audit.ts */
 import { writeFileSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import { CLAUSES_COLLECTION, DERIVED_COLLECTION, type CardClausesDoc } from "../../packages/tagger/src/clause-store.js";

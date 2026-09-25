@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
@@ -21,6 +21,9 @@ import type { CardPageData } from "../lib/partners.js";
  *  at speed, short enough that a pause reads as the list answering. A CEILING rather than a token:
  *  it is input latency, not motion, so `tokens/motion.json` has no say in it. */
 export const QUERY_SETTLE_MS = 250;
+
+/** Tiles on the unasked page: two rows at the widest grid (six across), four on a phone. */
+const BROWSE_COUNT = 12;
 
 /** WHAT THIS PAGE CAN ANSWER, AS THREE QUESTIONS A READER CAN CLICK (owner, 2026-09-17: the landing
  *  was a wall of chips and a count). Asked in the engine's own events since AJ3, so the empty state
@@ -80,7 +83,7 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   power: "Power",
   toughness: "Toughness",
   produce: "Causes",
-  consume: "Asks for",
+  consume: "Cares about",
 };
 
 export function CardSearch({
@@ -529,7 +532,7 @@ export function CardSearch({
       case "consume":
         return (
           <EventPicker
-            label="Asks for"
+            label="Cares about"
             hint={commanderMode ? "events this commander is built to be paid" : "events the card is waiting for"}
             options={consumeOptions}
             chosen={eventQuery.consume}
@@ -668,13 +671,15 @@ export function CardSearch({
         // and waits. A bare box with nothing under it reads as a page that failed to load.
         // AN EMPTY QUERY OWNS THE SPACE IT IS IN rather than leaving a bare box above a screen of
         // nothing. It says what is here, in the figure that makes the claim concrete.
-        ? <div className="min-h-[30svh] flex flex-col justify-center gap-2">
+        ? <div className="flex flex-col gap-2 pt-6">
             <p className="text-3xl font-bold tracking-[-0.01em] tabular-nums">
               {(commanderMode ? index.filter((e) => e.commander).length : index.length).toLocaleString("en-US")}
             </p>
             <p className="text-(--muted) max-w-[55ch]">
               {commanderMode
-                ? "commanders. Pick a colour, or type a name."
+                // The colour picker is one "Add a filter" away, not on screen, so the sentence
+                // names the control that is (UI review 2026-09-25).
+                ? "commanders. Type a name, or add a filter to pick colours."
                 : "cards. Type a name to start."}
             </p>
             <p className="eyebrow text-(--muted) mt-4">or ask, for example</p>
@@ -685,7 +690,27 @@ export function CardSearch({
                 </li>
               ))}
             </ul>
+            {/* SOMETHING TO BROWSE BEFORE ANYTHING IS ASKED (UI review 2026-09-25). The prompt above
+              * filled the left 500px of a 1920px screen and left the rest black, and a reader with no
+              * name in mind had nowhere to start. The index ships ordered by partner count (#368),
+              * so its head IS the most connected cards; no ranking is invented here. */}
+            <h2 className="eyebrow text-(--muted) mt-8">
+              {commanderMode ? "Most connected commanders" : "Most connected cards"}
+            </h2>
+            <ul aria-label={commanderMode ? "Most connected commanders" : "Most connected cards"} className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-4 list-none p-0 m-0">
+              {(commanderMode ? index.filter((e) => e.commander) : index).slice(0, BROWSE_COUNT).map((e) => (
+                <li key={e.slug} className="min-w-0">
+                  <CardTile
+                    slug={e.slug} name={e.name} art={e.art} identity={e.identity}
+                    to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
+                    note={!commanderMode && e.commander ? "commander" : undefined}
+                  />
+                </li>
+              ))}
+            </ul>
           </div>
+        : unanswerable
+        ? <p role="status" className="text-(--muted)">This site's card data can't answer one of those events. Remove it to search again.</p>
         : matches === null
         ? <p className="eyebrow text-(--muted)">reading what cards do</p>
         : (

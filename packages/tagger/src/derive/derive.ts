@@ -1354,7 +1354,7 @@ export function deriveAbilities(
         // does not separate them. The EVENT does: a permanent leaving and undoing what it did is the
         // aura-drawback shape, while `dies` is the aristocrats shape. Only the sacrifice's own emits
         // are dropped; a leaves-trigger that makes tokens still supplies them.
-        .filter((e) => !(action.verb === "sacrifice" && selfLeavesTrigger))
+        .filter(() => !(action.verb === "sacrifice" && selfLeavesTrigger))
         // A multiplier performs nothing. Every emit of the clause goes, not only the one matching
         // the replaced event: Academy Manufactor's clause answers `create` three times and creates
         // a token on its own none of those times.
@@ -1774,8 +1774,8 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,
-    // WARNING: 0 will never equal PROMPT_VERSION (llm/prompt.ts), so `needsRetag`/`selectUntagged`
-    // will see any persisted derived doc as permanently stale and re-queue it for LLM tagging
+    // WARNING: 0 will never equal PROMPT_VERSION (llm/prompt.ts), so `needsRetag`
+    // would see any persisted derived doc as permanently stale and re-queue it for LLM tagging
     // forever. Fine while derivation is not yet wired into the persistence path -- revisit this
     // the moment it is.
     promptVersion: 0,

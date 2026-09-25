@@ -1,3 +1,4 @@
+import { BASIC_LAND_TYPES } from "./typeline.js";
 /** A CARD THAT PUTS A LAND ONTO THE BATTLEFIELD FROM THE LIBRARY, and what colours that reaches.
  *
  *  Split out of `goldfish.ts` (2026-09-04) because two models read the same cards and only one of
@@ -65,7 +66,6 @@ export const fetchedLandEntersTapped = (oracleText: string, otherLands: number):
 
 /** The lands in THIS deck a fetch can actually find. Hand it the LIBRARY: a commander is not in it
  *  (CR 903.6) and cannot be fetched. */
-const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
 
 /** "SEARCH FOR UP TO TWO BASIC LAND CARDS THAT SHARE A LAND TYPE" -- Myriad Landscape and Hiveheart
  *  Shaman, the two corpus cards that print it. A land with no land type shares none, and WASTES IS
@@ -79,7 +79,7 @@ export const SHARES_A_LAND_TYPE = /share a land type/i;
  *  name promises exactly what it tests. */
 export const hasBasicLandType = (typeLine: string): boolean => {
   const line = typeLine.toLowerCase();
-  return line.includes("basic") && BASIC_TYPES.some((t) => line.includes(t));
+  return line.includes("basic") && BASIC_LAND_TYPES.some((t) => line.includes(t));
 };
 
 export function fetchableLands<T extends { typeLine: string }>(
@@ -87,7 +87,7 @@ export function fetchableLands<T extends { typeLine: string }>(
   deck: readonly T[],
 ): T[] {
   const text = oracleText.toLowerCase();
-  const named = BASIC_TYPES.filter((t) => text.includes(t));
+  const named = BASIC_LAND_TYPES.filter((t) => text.includes(t));
   const sharesType = SHARES_A_LAND_TYPE.test(text);
   // NAMING A TYPE IS NOT DEMANDING A BASIC, and the two are independent (owner, 2026-08-25).
   // Scalding Tarn searches for "an Island or Mountain CARD", so it finds Steam Vents -- a
@@ -128,7 +128,7 @@ export function fetchDemand<T extends { typeLine: string }>(
   const targets = fetchableLands(oracleText, library);
   const sharedType = SHARES_A_LAND_TYPE.test(line);
   const found = sharedType
-    ? Math.max(0, ...BASIC_TYPES.map((t) => targets.filter((c) => c.typeLine.toLowerCase().includes(t)).length))
+    ? Math.max(0, ...BASIC_LAND_TYPES.map((t) => targets.filter((c) => c.typeLine.toLowerCase().includes(t)).length))
     : targets.length;
   return { wants, found, sharedType };
 }

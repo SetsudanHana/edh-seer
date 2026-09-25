@@ -1,12 +1,15 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+/** The web package, found from this file rather than from the working directory, so the test runs
+ *  the same from `packages/web` and from the repository root (the root vitest config). */
+const WEB = join(import.meta.dirname, "..", "..");
 
 /** WHAT A CRAWLER AND A CHAT WINDOW SEE, asserted rather than assumed. Every failure mode here is
  *  silent: a missing description means the search result quotes whatever text the page happens to
  *  start with, a broken `og:image` path means a shared link renders as a grey box, and a mismatched
  *  canonical means two URLs compete for the same page. None of it shows up in the app. */
-const CLIENT = join(process.cwd(), "client");
+const CLIENT = join(WEB, "client");
 const html = readFileSync(join(CLIENT, "index.html"), "utf8");
 const robots = readFileSync(join(CLIENT, "public", "robots.txt"), "utf8");
 /** THE SITEMAP IS BUILT, NOT CHECKED IN (Task 10). `assemble-deploy.mjs` writes it from

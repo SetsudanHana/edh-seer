@@ -19,7 +19,6 @@ import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
 import type { RunDiff } from "../lib/run-diff.js";
-import { findings } from "../lib/findings.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
@@ -133,8 +132,10 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
 
   return (
-    <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start">
-      <ChapterRail current={current} />
+    // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
+    // into that row (2026-09-25) the first heading sat flush against the row's rule.
+    <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
+      <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
         *  instead of widening it — the narrow-width defence this repo has already paid for twice. */}
       <div className="flex flex-col gap-16 lg:gap-20 min-w-0 flex-1 pt-6 lg:pt-0">
@@ -213,7 +214,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="mana" title={title("mana")}>
-          <Movement count="the numbers behind the mana fixes below">
+          <Movement count="the numbers behind the mana suggestions below">
           <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
             {/* `showBenchmarks={false}`: the Roles chapter alone owns the category/parent block
               *  ("How the roles are spent", its group headers and leaf rows). Without this, that
@@ -261,7 +262,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="roles" title={title("roles")}>
-          <Movement count="the numbers behind the build fixes below">
+          <Movement count="the numbers behind the build suggestions below">
             <BuildBenchmarks
               categories={report.buildCategories}
               parents={report.buildParents}
@@ -285,6 +286,9 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             *  half the row was reserved for nothing at every width above 1280px. A defect I
             *  introduced two commits ago and did not look at. */}
           <Movement title="What to change">
+            {/* 64rem, the width of the Fixes list above it: a cut's name and its "5 mana - 0.0"
+              *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
+            <div className="max-w-5xl">
             <CutList
               cutList={report.cutList}
               unjudged={report.unjudged}
@@ -293,6 +297,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
               trim={report.trim}
               offTheme={offTheme}
             />
+            </div>
           </Movement>
         </Chapter>
       </div>

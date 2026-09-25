@@ -219,7 +219,6 @@ export function scorePanel(
   // WHICH PAIRS THE ENGINE STILL JOINS, under any tag. This is the whole difference between a retag
   // and a loss, and the panel could not tell them apart before because it only ever compared triples.
   const pairKey = (producer: string, consumer: string): string => `${producer}|${consumer}`;
-  const joined = new Set(current.map((c) => pairKey(c.producer, c.consumer)));
   const family = (t: string): string => t.split(":")[0];
   /** Which tag FAMILIES the engine still joins each pair on. */
   const joinedFamilies = new Map<string, Set<string>>();

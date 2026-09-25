@@ -62,9 +62,9 @@ Two things the model is deliberately not consulted about:
 reminder text* — the printed keyword carries no rules text of its own, so segmenting them as inert
 made both mechanics invisible for months.
 
-Where a keyword's reminder **is** the ability, it is handled separately at match time rather than
-through the model:
-[`augmentKeywordAbilities()`](../../packages/tagger/src/keyword-augment.ts).
+Where a keyword's reminder **is** the ability, the matcher's keyword table supplies it at match time
+rather than the model:
+[`keywordEvents()` and `keywordAbilities()`](../../packages/matcher/src/implied.ts).
 
 The general lesson is worth stating, because it applies to every future keyword: *inert* means "the
 printed words add nothing the type line does not already say". It does not mean "short".
@@ -72,12 +72,12 @@ printed words add nothing the type line does not already say". It does not mean 
 ## Running it
 
 Segmentation is not a stage you run on its own — it happens inside
-[normalization](2-normalize.md) and inside `derive-corpus`. To see what it does to one card, the
-clause list is printed by the normalize dry run, which is the default:
+[normalization](2-normalize.md) and inside `derive-corpus`. To see what it does to one card, call it
+directly. It is pure, so this needs no database and no `.env`:
 
 ```bash
-set -a && source packages/tagger/.env && set +a
-npx tsx packages/tagger/src/bin/normalize-corpus.ts --card "Skullclamp"
+npx tsx -e 'import { segment } from "./packages/tagger/src/segment.ts";
+console.log(segment("Equipped creature gets +1/-1.\nWhenever equipped creature dies, draw two cards.\nEquip {1}", ["Equip"], "Artifact — Equipment"))'
 ```
 
 ## A worked example

@@ -7,11 +7,26 @@ export const SCORE_BREAKS = [1.5, 3, 4] as const;
 
 /** Map a 0–5 deck-quality score to a band label + semantic tone. Thresholds are tunable
  *  starting points; tone maps to a color token in the component, not here. */
-export function scoreBand(score: number): { label: string; tone: ScoreTone } {
-  if (score >= SCORE_BREAKS[2]) return { label: "Tuned", tone: "high" };
-  if (score >= SCORE_BREAKS[1]) return { label: "Focused", tone: "good" };
-  if (score >= SCORE_BREAKS[0]) return { label: "Developing", tone: "mid" };
-  return { label: "Unfocused", tone: "low" };
+/** WHICH SCORE A BAND NAMES, BECAUSE THE TWO SCORES MEASURE DIFFERENT THINGS (wording review
+ *  2026-09-25). Synergy (and its Focus and Key card halves) is how tightly the cards work together;
+ *  Build is how close the role counts sit to similar decks. One word set for both put "tuned" on a
+ *  Build 4.7 beside "Bracket 1-2", and "tuned" is power-level talk at a Commander table
+ *  (precon / tuned / cEDH), so the two read as a contradiction. Synergy's top band is "tight", the
+ *  way players say it; Build's words are the ones its own tiles already print ("3 short",
+ *  "on target"). Same thresholds and tones for both: only the words differ. */
+export type ScoreKind = "synergy" | "build";
+
+const BAND_WORDS: Record<ScoreKind, readonly [string, string, string, string]> = {
+  synergy: ["Unfocused", "Developing", "Focused", "Tight"],
+  build: ["Far off", "Short", "Close", "On target"],
+};
+
+export function scoreBand(score: number, kind: ScoreKind = "synergy"): { label: string; tone: ScoreTone } {
+  const [low, mid, good, high] = BAND_WORDS[kind];
+  if (score >= SCORE_BREAKS[2]) return { label: high, tone: "high" };
+  if (score >= SCORE_BREAKS[1]) return { label: good, tone: "good" };
+  if (score >= SCORE_BREAKS[0]) return { label: mid, tone: "mid" };
+  return { label: low, tone: "low" };
 }
 
 /** THE FOUR BANDS AS A SENTENCE, printed rather than hidden in a `title` — a tooltip does not exist
@@ -22,12 +37,12 @@ export function scoreBand(score: number): { label: string; tone: ScoreTone } {
  *  as data — exactly the drift risk `Dial.tsx`'s `SCORE_ZONES` comment names for the arc. It lives
  *  beside the thresholds now (it was in `HeadlineScores`, which S15 retired into the dials), so a
  *  moved break shows up in the printed scale with no second edit. */
-export const bandScale = (): string[] => {
+export const bandScale = (kind: ScoreKind = "synergy"): string[] => {
   const edges = [0, ...SCORE_BREAKS, 5];
   return edges
     .slice(0, -1)
-    .map((from, i) => `${from}–${edges[i + 1]} ${scoreBand(from).label.toLowerCase()}`);
+    .map((from, i) => `${from}–${edges[i + 1]} ${scoreBand(from, kind).label.toLowerCase()}`);
 };
 
 /** The same four bands as one string, for anywhere that wants a sentence rather than a strip. */
-export const bandLegend = (): string => bandScale().join(" · ");
+export const bandLegend = (kind: ScoreKind = "synergy"): string => bandScale(kind).join(" · ");

@@ -11,7 +11,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
 
 /** Prints one deck's demand shapes against how likely you are to have anything answering them.
  *
- *  Free to run -- Mongo reads only, no model. `npx tsx packages/matcher/src/bin/deck-availability.ts
+ *  Free to run -- Mongo reads only, no model. `npx tsx research/matcher/deck-availability.ts
  *  packages/cli/decks/inalla.txt [turn]`.
  *
  *  The row to read is a big `consumers` next to a small `avail`: many cards waiting on something

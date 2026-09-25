@@ -33,7 +33,7 @@ const page = (over: Partial<Parameters<typeof injectPage>[1]> = {}) => injectPag
 test("the injected head replaces the shell's title, description, canonical and og tags", () => {
   const out = page();
   expect(out).toContain("<title>Krenko, Mob Boss — EDH Seer</title>");
-  expect(out).not.toContain("<title>EDH Seer — Commander Deck Synergy Analysis</title>");
+  expect(out).not.toContain("<title>EDH Seer — Commander deck synergy, mana and bracket checker</title>");
   expect(out).toContain('<link rel="canonical" href="https://edhseer.cards/cards/krenko-mob-boss" />');
   expect(out).toContain('<meta property="og:url" content="https://edhseer.cards/cards/krenko-mob-boss" />');
   expect(out).toContain('<meta property="og:title" content="Krenko, Mob Boss — EDH Seer" />');
@@ -66,6 +66,30 @@ test("every interpolated field is escaped", () => {
   expect(html).not.toContain("<script>");
   expect(html).toContain("&lt;script&gt;");
   expect(html).toContain("&amp; Co");
+});
+
+/** A `$` IN THE TEXT IS TEXT (security review 2026-09-25). The 404 page puts the URL's slug in the
+ *  title and canonical, and string replacements read `$'`, `` $` `` and `$&` as patterns: a
+ *  nine-character slug grew the page to 25 MB. The page must come out the size of the shell plus
+ *  what it was given, with the characters printed as written. */
+test("replacement patterns in page text are printed, not expanded", () => {
+  const plain = page({ title: "No page for “x” — EDH Seer", canonical: "https://edhseer.cards/cards/x" });
+  const slug = "x$'$'$`$&$'";
+  const html = page({
+    title: `No page for “${slug}” — EDH Seer`,
+    description: `desc ${slug}`,
+    canonical: `https://edhseer.cards/cards/${slug}`,
+    bodyHtml: `<p>${slug}</p>`,
+    breadcrumbs: [{ name: slug, url: "https://edhseer.cards/" }, { name: slug, url: `https://edhseer.cards/cards/${slug}` }],
+    image: `https://cards.scryfall.io/normal/${slug}.jpg`,
+    indexable: false,
+  });
+  expect(html.length).toBeLessThan(plain.length + 2_000);
+  expect(html.split("<title>")).toHaveLength(2);
+  const printed = slug.replace(/&/g, "&amp;");
+  expect(html).toContain(`<title>No page for “${printed}” — EDH Seer</title>`);
+  expect(html).toContain(`href="https://edhseer.cards/cards/${printed}"`);
+  expect(html.match(/<script type="module"/g)?.length ?? 0).toBe(plain.match(/<script type="module"/g)?.length ?? 0);
 });
 
 /** THE COUNT IS IN THE HTML TOO (2026-09-08). "793 cards can cause an artifact dying" is the one
@@ -110,7 +134,7 @@ test("the static block prints the withheld count per group, and groups by key", 
   ];
   const html = cardPageHtml({ ...KRENKO, partners: rows, pool: { "enters|creature|-|t": 1906, "dies|creature|-|-": 1 } }, "krenko-mob-boss", "card");
   expect(html.match(/<ol>/g)).toHaveLength(2);
-  expect(html).toContain("1,904 other cards ask for it too");
+  expect(html).toContain("1,904 other cards care about it too");
   expect(html).not.toContain("0 other cards");
   // Tremors sits in Purphoros's list, not in a third one.
   expect(html.indexOf("impact-tremors")).toBeLessThan(html.indexOf("skullclamp"));
@@ -205,7 +229,7 @@ test("the block reads down the card, clause by clause, in printed order", () => 
   // Printed order, which is the order a player reads the card in.
   expect(html.indexOf("When Kogla")).toBeLessThan(html.indexOf("{2}{R}{G}"));
   // It is evidence for the derivation, so it sits above the derivation it explains.
-  expect(html.indexOf("How the engine reads this card")).toBeLessThan(html.indexOf("Produces:"));
+  expect(html.indexOf("How the engine reads this card")).toBeLessThan(html.indexOf("Causes:"));
 });
 
 test("a card with no rules text and no abilities gets no section at all", () => {
@@ -295,7 +319,7 @@ test("a consumer group still counts the cards that ASK, which was always right",
     rarity: { "discard|-|-|-": 1609 },
     pool: { "discard|-|-|-": 67 },
   }, "x", "card");
-  expect(html).toContain("66 other cards ask for it too");
+  expect(html).toContain("66 other cards care about it too");
   expect(html).not.toContain("1,608 other cards");
 });
 
@@ -312,7 +336,7 @@ test("a feeder group counts from rarity and keeps its own verb", () => {
     rarity: { "counts|-|shrine|-": 22 },
     pool: { "counts|-|shrine|-": 21 },
   }, "x", "card");
-  expect(html).toContain("21 other cards feed it too");
+  expect(html).toContain("21 other cards use it too");
 });
 
 test("the direction is read off the rows, three ways", () => {
@@ -338,7 +362,7 @@ test("a missing counter prints no line rather than a guess", () => {
 
 test("a card with no partners says so rather than printing an empty list", () => {
   const html = cardPageHtml({ ...KRENKO, partners: [] }, "x", "card");
-  expect(html).toContain("No partners specific enough to list");
+  expect(html).toContain("No connections specific enough to list");
   expect(html).not.toContain("<ol>");
 });
 
@@ -515,7 +539,7 @@ test("the share card's title and description are the page's, not the shell's", (
   expect(out).toContain('<meta name="twitter:title" content="Krenko, Mob Boss — EDH Seer" />');
   expect(out).toContain(
     '<meta name="twitter:description" content="What the engine reads on Krenko, Mob Boss." />');
-  expect(out).not.toContain('content="EDH Seer — Commander Deck Synergy Analysis" />\n    <meta name="twitter:description"');
+  expect(out).not.toContain('content="EDH Seer — Commander deck synergy, mana and bracket checker" />\n    <meta name="twitter:description"');
   expect(out).not.toContain("Why two cards work together, from the oracle text itself.");
 });
 
@@ -629,4 +653,21 @@ test("the crawlable reading carries a static's reach, in the same words the app 
   expect(html).not.toContain("wants <a href=\"#event-lose-life\">life is lost</a>");
   // An implied ability still has no quote above it, and still carries its events.
   expect(html).toContain("read off the card itself");
+});
+
+/** A STAPLE'S PAGE SAYS ITS JOB (review 2026-09-25). Sol Ring has no partners by design; its
+ *  crawlable block used to say only "No connections specific enough to list". */
+test("a card with a job and no partners explains the job instead of an empty list", () => {
+  const sol: InjectableCard = {
+    name: "Sol Ring", typeLine: "Artifact", commander: false, emits: [], demands: [], partners: [],
+    roles: ["ramp"],
+  };
+  const html = cardPageHtml(sol, "sol-ring", "card");
+  expect(html).toContain("<h2>What it does in a deck</h2>");
+  expect(html).toContain("Sol Ring is ramp.");
+  expect(html).toContain("toward your Ramp total");
+  expect(html).not.toContain("No connections specific enough to list.");
+  // A role the report does not count names no job.
+  expect(cardPageHtml({ ...sol, roles: ["stax"] }, "sol-ring", "card"))
+    .toContain("No connections specific enough to list.");
 });

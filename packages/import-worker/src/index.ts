@@ -34,8 +34,26 @@ function json(body: unknown, status: number, cacheControl = "no-store"): Respons
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": cacheControl,
+      // The worker is outside Pages, so neither `_headers` nor `htmlHeaders` reaches it.
+      "X-Content-Type-Options": "nosniff",
     },
   });
+}
+
+/** THE RATE-LIMIT KEY FOR A CONNECTING ADDRESS (security review 2026-09-25). An IPv4 address is one
+ *  caller. An IPv6 address is not: a home connection is handed a whole /64, so keying on the full
+ *  address let one caller rotate through keys and keep the pacer's queue full for everyone. The /64
+ *  is the unit an ISP assigns, so that is the key. An IPv4-mapped address is its IPv4 part. */
+export function rateLimitKey(ip: string | null): string {
+  if (!ip) return "unknown";
+  if (!ip.includes(":")) return ip;
+  const mapped = ip.match(/(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (mapped) return mapped[1]!;
+  const [head, tail] = ip.split("::");
+  const left = head ? head.split(":") : [];
+  const right = tail !== undefined && tail !== "" ? tail.split(":") : [];
+  const groups = tail === undefined ? left : [...left, ...Array(8 - left.length - right.length).fill("0"), ...right];
+  return groups.slice(0, 4).map((g) => g.toLowerCase().replace(/^0+(?=.)/, "")).join(":") + "::/64";
 }
 
 export default {
@@ -49,7 +67,14 @@ export default {
     const [, source, rawId] = m;
     const pattern = ID_PATTERN[source];
     if (!pattern) return json({ error: "unknown deck site" }, 404);
-    const id = decodeURIComponent(rawId);
+    // A MALFORMED ESCAPE IS A BAD ID, NOT A CRASH. `decodeURIComponent` throws on `%C0%AF`, and the
+    // uncaught throw answered 500 (Cloudflare 1101) where every other bad id answers 400.
+    let id: string;
+    try {
+      id = decodeURIComponent(rawId);
+    } catch {
+      return json({ error: "malformed deck id" }, 400);
+    }
     if (!pattern.test(id)) return json({ error: "malformed deck id" }, 400);
 
     // Canonical key, so `/moxfield/AbC/` and `/moxfield/AbC` are one cache entry rather than two
@@ -67,7 +92,7 @@ export default {
     // queue behind the pacer. Keyed on the connecting IP, and an absent header keys everyone together
     // rather than exempting them -- failing closed on the anonymous case is the safer direction.
     if (env.RATE_LIMITER) {
-      const key = request.headers.get("CF-Connecting-IP") ?? "unknown";
+      const key = rateLimitKey(request.headers.get("CF-Connecting-IP"));
       const { success } = await env.RATE_LIMITER.limit({ key });
       // Same 429 the pacer's own queue cap returns, so the client already has copy for it.
       // NO IP IN THE LOG LINE. The key is the connecting address and it is what we throttle on, but

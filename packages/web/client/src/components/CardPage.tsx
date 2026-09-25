@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
+import { MIN_INDEXABLE_PARTNERS, jobOf, jobSentence } from "@edh-seer/matcher/partner-shard";
 import { loadCardPage, type CardPageData } from "../lib/partners.js";
 import { CardShell } from "./CardShell.js";
 import { EngineReading } from "./EngineReading.js";
@@ -36,6 +37,10 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
   // WHICH EVENTS HAVE A GROUP ON THIS PAGE, so a clause's event row links only where the anchor
   // exists (spec C5). The partner list below groups by exactly this key.
   const grouped = new Set(page.partners.map((r) => r.event));
+  // A STAPLE'S JOB (review 2026-09-25). Sol Ring has no partners by design -- ramp is counted, not
+  // paired -- and "No standout pairings" under "Works well with" read as the tool failing on the
+  // most searched card in the format. The job is the answer, so the page leads with it.
+  const job = page.partners.length < MIN_INDEXABLE_PARTNERS ? jobOf(page.roles) : null;
 
   // THE MEASURE IS PER SECTION, NOT PER PAGE. Prose gets a reading width so hairlines stop running
   // a third of the viewport past the text they belong to; the TABLE does not, because a table is
@@ -62,7 +67,16 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         </div>
       </details>
 
-      <section className="flex flex-col gap-5">
+      {job && (
+        <section className="flex flex-col gap-2 max-w-[68ch]">
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">What it does in a deck</h2>
+          <p className="text-(--muted) max-w-[65ch]">
+            {jobSentence(page.name, job)} <Link to="/" className="text-(--accent) hover:underline">Analyse a deck</Link>
+          </p>
+        </section>
+      )}
+
+      {!(job && page.partners.length === 0) && <section className="flex flex-col gap-5">
         <div className="flex flex-col gap-2 max-w-[68ch]">
           <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
@@ -78,7 +92,7 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           rarity={page.rarity}
           empty="No standout pairings. Whatever this card helps, hundreds of other cards help just as well, or none of the possible pairings held up."
         />
-      </section>
+      </section>}
     </CardShell>
   );
 }

@@ -21,8 +21,10 @@ import { cardImageUrl } from "../components/card-node.js";
 // it; `tsc -p client` did not, because the client config is the one that HAS those types.
 // `sentence.ts` imports nothing at all.
 import { effectPhrase } from "@edh-seer/matcher/sentence";
+import { MIN_INDEXABLE_PARTNERS, jobOf, jobSentence } from "@edh-seer/matcher/partner-shard";
 import { eventKeyAction, eventKeyClause, eventKeySentence } from "./demand-sentence.js";
 import { groupAnchor } from "./group-anchor.js";
+import { SECURITY_HEADERS } from "./csp.js";
 
 const esc = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -75,8 +77,8 @@ export const jsonForScript = (value: unknown): string =>
 export function htmlHeaders(indexable = true): Record<string, string> {
   return {
     "content-type": "text/html; charset=utf-8",
-    "x-content-type-options": "nosniff",
-    "referrer-policy": "strict-origin-when-cross-origin",
+    // The same policy `public/_headers` gives static files, which never reaches a Function.
+    ...SECURITY_HEADERS,
     ...(indexable ? {} : { "x-robots-tag": "noindex" }),
   };
 }
@@ -146,63 +148,69 @@ export const breadcrumbJsonLd = (crumbs: { name: string; url: string }[]): strin
     })),
   });
 
+/** EVERY REPLACEMENT IS A FUNCTION, NEVER A STRING (security review 2026-09-25). A string replacement
+ *  reads `$'`, `` $` `` and `$&` in its text as patterns -- "the rest of the document", "the start",
+ *  "the match" -- and `esc` does not escape `$`. The 404 page puts the URL's own slug into the title
+ *  and canonical, so `/cards/x$'$'$'$'`, nine characters, grew a 25 MB page by re-inserting the
+ *  document into itself at every rewrite. A function's return value is inserted as written. */
 export function injectPage(shell: string, page: InjectedPage): string {
   let out = shell
     // THE LANDING'S ARGUMENT STAYS ON THE LANDING. `.intro` is index.html's own pitch, and its
     // thesis is the landing's `h1`; on a served card, commander or browse page it was a second
     // answer to "what is this page" for every crawler, and hidden by CSS for every reader.
     .replace(/\n?\s*<section class="intro"[\s\S]*?<\/section>/, "")
-    .replace(/<title>[^<]*<\/title>/, `<title>${esc(page.title)}</title>`)
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${esc(page.title)}</title>`)
     .replace(/<meta name="description" content="[^"]*"\s*\/?>/,
-      `<meta name="description" content="${esc(page.description)}" />`)
+      () => `<meta name="description" content="${esc(page.description)}" />`)
     .replace(/<link rel="canonical" href="[^"]*"\s*\/?>/,
-      `<link rel="canonical" href="${esc(page.canonical)}" />`)
+      () => `<link rel="canonical" href="${esc(page.canonical)}" />`)
     .replace(/<meta property="og:title" content="[^"]*"\s*\/?>/,
-      `<meta property="og:title" content="${esc(page.title)}" />`)
+      () => `<meta property="og:title" content="${esc(page.title)}" />`)
     .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/,
-      `<meta property="og:description" content="${esc(page.description)}" />`)
+      () => `<meta property="og:description" content="${esc(page.description)}" />`)
     .replace(/<meta property="og:url" content="[^"]*"\s*\/?>/,
-      `<meta property="og:url" content="${esc(page.canonical)}" />`)
+      () => `<meta property="og:url" content="${esc(page.canonical)}" />`)
     // THE SAME PAGE, SAID TWICE. `og:` was per-page from the start and `twitter:` was not, so every
     // Discord and Twitter paste of any of 24,874 card, commander and browse pages previewed as the
     // home page. These two belong in the chain that always runs, not in the image branch below: a
     // browse page carries no image and still has a name of its own.
     .replace(/<meta name="twitter:title" content="[^"]*"\s*\/?>/,
-      `<meta name="twitter:title" content="${esc(page.title)}" />`)
+      () => `<meta name="twitter:title" content="${esc(page.title)}" />`)
     .replace(/<meta name="twitter:description" content="[^"]*"\s*\/?>/,
-      `<meta name="twitter:description" content="${esc(page.description)}" />`);
+      () => `<meta name="twitter:description" content="${esc(page.description)}" />`);
 
-  if (page.breadcrumbs !== undefined && page.breadcrumbs.length >= 2) {
+  const crumbs = page.breadcrumbs;
+  if (crumbs !== undefined && crumbs.length >= 2) {
     out = out.replace("</head>",
-      `  <script type="application/ld+json">${breadcrumbJsonLd(page.breadcrumbs)}</script>\n  </head>`);
+      () => `  <script type="application/ld+json">${breadcrumbJsonLd(crumbs)}</script>\n  </head>`);
   }
 
   if (page.image !== undefined) {
     const image = esc(page.image);
     out = out
       .replace(/<meta property="og:image" content="[^"]*"\s*\/?>/,
-        `<meta property="og:image" content="${image}" />`)
+        () => `<meta property="og:image" content="${image}" />`)
       // Scryfall's `normal` size, the one `cardImageUrl` asks for.
       .replace(/<meta property="og:image:width" content="[^"]*"\s*\/?>/,
-        '<meta property="og:image:width" content="488" />')
+        () => '<meta property="og:image:width" content="488" />')
       .replace(/<meta property="og:image:height" content="[^"]*"\s*\/?>/,
-        '<meta property="og:image:height" content="680" />')
+        () => '<meta property="og:image:height" content="680" />')
       .replace(/<meta property="og:image:alt" content="[^"]*"\s*\/?>/,
-        `<meta property="og:image:alt" content="${esc(page.title)}" />`)
+        () => `<meta property="og:image:alt" content="${esc(page.title)}" />`)
       // A card is portrait. `summary_large_image` crops a landscape band out of its middle;
       // `summary` shows the whole thing small, which is the card.
       .replace(/<meta name="twitter:card" content="[^"]*"\s*\/?>/,
-        '<meta name="twitter:card" content="summary" />')
+        () => '<meta name="twitter:card" content="summary" />')
       .replace(/<meta name="twitter:image" content="[^"]*"\s*\/?>/,
-        `<meta name="twitter:image" content="${image}" />`)
+        () => `<meta name="twitter:image" content="${image}" />`)
       .replace("</head>",
-        `  <link rel="preload" as="image" href="${image}" fetchpriority="high" />\n  </head>`);
+        () => `  <link rel="preload" as="image" href="${image}" fetchpriority="high" />\n  </head>`);
   }
 
   // A PAGE THAT PROMISES NOTHING DOES NOT ENTER THE INDEX. It still renders -- the reporting
   // surface wants every card reachable -- but a card with no partners has no content a search
   // result could honestly summarise.
-  if (!page.indexable) out = out.replace("</head>", '  <meta name="robots" content="noindex" />\n  </head>');
+  if (!page.indexable) out = out.replace("</head>", () => '  <meta name="robots" content="noindex" />\n  </head>');
 
   // KEYED BY SLUG, because a client-side navigation does not reload the document. Click a partner
   // link and this tag still describes the card you ARRIVED on; the reader compares the slug it
@@ -211,7 +219,7 @@ export function injectPage(shell: string, page: InjectedPage): string {
   const data = page.data === undefined ? "" : `\n    <script type="application/json" id="${CARD_PAGE_DATA_ID}"`
     + ` data-slug="${esc(page.data.slug)}">${jsonForScript(page.data.record)}</script>`;
 
-  return out.replace('<div id="root"></div>', `<div id="root"></div>\n${page.bodyHtml}${data}`);
+  return out.replace('<div id="root"></div>', () => `<div id="root"></div>\n${page.bodyHtml}${data}`);
 }
 
 /** As much of one artifact record as the static block prints. */
@@ -245,6 +253,8 @@ export interface InjectableCard {
   /** THE DERIVED ABILITY ROWS, each stamped with the clause that printed it (roadmap AJ4). Rides
    *  in on the record spread; declared here because the crawlable block renders them now. */
   abilities?: { kind: string; cost?: string; effect: string; amount?: string; when: string[]; emits: string[]; applies?: string[]; clause?: number; self?: true; selfEmits?: string[] }[];
+  /** THE CARD'S BUILD ROLES, which name its job (`jobOf`) on a page with too few partners to list. */
+  roles?: string[];
 }
 
 /** WHICH WAY A PARTNER GROUP RUNS. The three cases the copy already named -- "cause it", "feed it",
@@ -422,7 +432,7 @@ export function cardPageHtml(
     // card's, and the app has printed it under every group since the list was grouped.
     const dir = dirHere;
     const withheld = withheldFrom(dir, g.event, g.rows.length, card.rarity, card.pool);
-    const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "feed it" : "ask for it";
+    const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "use it" : "care about it";
     // AND THE CRAWLER GETS THE SAME LINK THE APP DRAWS (roadmap AJ3), from the same builder: two
     // readers printing one sentence is exactly how AJ1's withheld count came to say one direction
     // and count the other.
@@ -442,9 +452,13 @@ export function cardPageHtml(
       ? `    <p><a href="/commanders/${esc(slug)}">What a deck led by this card wants</a></p>\n`
       : "")
     : `    <p><a href="/cards/${esc(slug)}">What the engine reads on this card</a></p>\n`;
+  // A STAPLE'S JOB, where it has too few partners to be about them (review 2026-09-25). Card pages
+  // only: a commander page is about the deck it leads.
+  const job = kind === "card" && card.partners.length < MIN_INDEXABLE_PARTNERS ? jobOf(card.roles) : null;
+  const jobBlock = job ? `    <h2>What it does in a deck</h2>\n    <p>${esc(jobSentence(card.name, job))}</p>\n` : "";
   const partners = card.partners.length === 0
-    ? "    <p>No partners specific enough to list.</p>"
-    : `    <h2>Works well with</h2>\n${rows}`;
+    ? jobBlock || "    <p>No connections specific enough to list.</p>"
+    : `${jobBlock}    <h2>Works well with</h2>\n${rows}`;
   // WHAT THE ENGINE READ, so a reader can check a claim without leaving for Scryfall. Option 2 of
   // spec D2a, taken 2026-09-18: option 1 shipped with our derivation and nothing to check it
   // against, and "Produces: a card being drawn" is unfalsifiable on a page that never shows the
@@ -504,7 +518,7 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
 ${art}    <p>${esc(card.typeLine)}</p>
-${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
+${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Causes: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeyClause(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;
@@ -535,8 +549,12 @@ const browseNav = (kind: "cards" | "commanders", current?: string): string =>
  *  corpus hung off the sitemap alone. */
 export function browseIndexHtml(kind: "cards" | "commanders", total: number): string {
   const what = kind === "commanders" ? "commanders" : "cards";
+  // THE HEADING NAMES THE LIST, IN THE WORDS A PLAYER SEARCHES. It used to interpolate the plural
+  // after "Every" and shipped "Every cards the engine has read" as the page's one h1 (review
+  // 2026-09-25).
+  const heading = kind === "commanders" ? "Every commander, A to Z" : "Commander cards, A to Z";
   return `    <section class="prerendered">
-    <h1>Every ${what} the engine has read</h1>
+    <h1>${heading}</h1>
     <p>${total.toLocaleString("en")} ${what}, by first letter.</p>
 ${browseNav(kind)}
     </section>`;

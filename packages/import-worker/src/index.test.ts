@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from "vitest";
-import worker, { type Env } from "./index.js";
+import worker, { rateLimitKey, type Env } from "./index.js";
 
 /** The router is the trust boundary: it decides what reaches the pacer at all. These tests stand in
  *  for the Workers runtime with the two globals it touches. */
@@ -187,4 +187,45 @@ test("no limiter binding means unthrottled, so dev and tests still run", async (
   const res = await worker.fetch(get("/api/import/archidekt/26039486"), env, ctx);
   expect(res.status).toBe(200);
   expect(stubFetch).toHaveBeenCalledTimes(1);
+});
+
+/** SECURITY REVIEW 2026-09-25. A malformed percent-escape answered 500 (Cloudflare 1101) from an
+ *  uncaught `URIError`; every other bad id answers 400, and so must this one. */
+test("a malformed percent-escape is a 400, not a crash", async () => {
+  const { env, stubFetch } = envWith(DECK);
+  for (const bad of ["/api/import/moxfield/%C0%AF", "/api/import/moxfield/%E0%A4%A"]) {
+    const res = await worker.fetch(get(bad), env, ctx);
+    expect(res.status).toBe(400);
+  }
+  expect(stubFetch).not.toHaveBeenCalled();
+});
+
+test("every response says nosniff, since no Pages header reaches the worker", async () => {
+  const { env } = envWith(DECK);
+  for (const path of ["/api/import/moxfield/abc", "/api/import/nope/abc", "/api/import/archidekt/x"]) {
+    const res = await worker.fetch(get(path), env, ctx);
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+  }
+});
+
+/** One IPv6 caller holds a whole /64, so the full address let them rotate keys at will. */
+test("the rate-limit key is the IPv4 address, or the IPv6 /64", () => {
+  expect(rateLimitKey("203.0.113.7")).toBe("203.0.113.7");
+  expect(rateLimitKey(null)).toBe("unknown");
+  expect(rateLimitKey("2001:db8:85a3:1:aaaa:bbbb:cccc:dddd")).toBe("2001:db8:85a3:1::/64");
+  expect(rateLimitKey("2001:db8:85a3:1::7")).toBe("2001:db8:85a3:1::/64");
+  expect(rateLimitKey("2001:0DB8::1")).toBe("2001:db8:0:0::/64");
+  expect(rateLimitKey("2001:db8:85a3:1:ffff::")).toBe("2001:db8:85a3:1::/64");
+  expect(rateLimitKey("::ffff:198.51.100.4")).toBe("198.51.100.4");
+});
+
+test("two addresses in one /64 share a limit", async () => {
+  const keys: string[] = [];
+  const rl = { limit: vi.fn(async ({ key }: { key: string }) => { keys.push(key); return { success: true }; }) };
+  const { env } = envWith(DECK);
+  for (const ip of ["2001:db8:1:2::a", "2001:db8:1:2:ffff:ffff:ffff:ffff"]) {
+    await worker.fetch(new Request("https://edhseer.cards/api/import/moxfield/abc" + ip.length, { headers: { "CF-Connecting-IP": ip } }),
+      { ...env, RATE_LIMITER: rl } as unknown as Env, ctx);
+  }
+  expect(new Set(keys).size).toBe(1);
 });

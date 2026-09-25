@@ -23,18 +23,18 @@
  *  A reason exists only where an edge formed, so a shape with no supply at all is ABSENT here
  *  rather than zero — that is an availability question and `deckAvailability` answers it.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/supply-demand.ts [--verbose] [deck.txt]
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/supply-demand.ts [--verbose] [deck.txt]
  */
 import { readFileSync, readdirSync, writeFileSync, readFileSync as readJson } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../../packages/matcher/src/index.js";
 import { countInversions, diffInversions, ratingsFor, type InversionReport } from "../../packages/matcher/src/rank-inversions.js";
 import { buildSupplyDemand, ratio, type SupplyDemandRow } from "../../packages/matcher/src/supply-demand.js";
 
-const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DIR = CALIBRATION_DECKS;
 const args = process.argv.slice(2);
 const VERBOSE = args.includes("--verbose");
 const flag = (name: string): string | undefined => {

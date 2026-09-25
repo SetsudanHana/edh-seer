@@ -20,10 +20,10 @@ const renderList = (props: { onOpenBoard?: (id: string) => void } = {}) =>
 test("GraphList ranks cards by how many partners they have, name breaking the tie", () => {
   renderList();
   const rows = screen.getAllByRole("listitem");
-  expect(rows.map((r) => r.textContent?.split("1 partner")[0])).toEqual([
+  expect(rows.map((r) => r.textContent?.split("1 connection")[0])).toEqual([
     "Impact Tremors", "Krenko, Mob Boss",
   ]);
-  expect(rows[0]!.textContent).toContain("1 partner");
+  expect(rows[0]!.textContent).toContain("1 connection");
   // The strongest edge's sentence rides on the row, so a list row still says WHY.
   expect(rows[0]!.textContent).toContain("pays off tokens");
 });
@@ -137,10 +137,10 @@ test("GraphList says an unread card was not read, instead of counting its partne
   // so `includes` would pick whichever row it reached first.
   const unreadRow = rows.find((r) => r.textContent?.startsWith("Impact Tremors"))!;
   expect(unreadRow.textContent).toContain("not read");
-  expect(unreadRow.textContent).not.toContain("partner");
+  expect(unreadRow.textContent).not.toContain("connection");
   expect(within(unreadRow).getByTestId("unread-hatch")).toBeInTheDocument();
   const readRow = rows.find((r) => r.textContent?.startsWith("Krenko"))!;
-  expect(readRow.textContent).toContain("partner");
+  expect(readRow.textContent).toContain("connection");
   expect(within(readRow).queryByTestId("unread-hatch")).toBeNull();
 });
 

@@ -1,8 +1,8 @@
 # Stage 3 — Derivation and implied events
 
 **Input:** the `cardClauses` documents bought in [Stage 2](2-normalize.md).
-**Output:** one `cardTagsDerived` document per card — typed abilities, with what each one watches for
-and what it supplies.
+**Output:** one `cardTagsDerived` document per card — typed abilities, with what each one cares about
+and what it causes.
 **Cost:** free. Pure functions, no model, no network.
 **Code:** [`deriveAbilities()`](../../packages/tagger/src/derive/derive.ts),
 [`impliedEvents()`](../../packages/matcher/src/implied.ts)
@@ -13,8 +13,9 @@ and what it supplies.
 
 This is the stage where the pipeline's shape pays off. Derivation reads clauses that are already
 bought and turns them into game events, so **the rules can be changed and the whole corpus re-derived
-as often as anyone likes.** `DERIVE_VERSION` has been bumped to 114; every one of those bumps was a
-semantic change re-run over the corpus for nothing.
+as often as anyone likes.** `DERIVE_VERSION` has been bumped well over a hundred times (its current value
+is in [the schema reference](../reference/SCHEMA.md#version-constants)); every bump was a semantic
+change re-run over the corpus for nothing.
 
 That is the property that makes the engine improvable rather than merely built. A wrong claim is
 fixable, not permanent.
@@ -26,7 +27,7 @@ npx tsx packages/tagger/src/bin/derive-corpus.ts --force    # re-derives everyth
 
 ## From a clause to an ability
 
-An ability carries a **trigger** — what the card watches for — and **emits** — what it supplies.
+An ability carries a **trigger** — what the card cares about — and **emits** — what it causes.
 Every field is in the [schema reference](../reference/SCHEMA.md#types); the shape reads like this:
 
 **Siege-Gang Commander**
@@ -57,17 +58,18 @@ Note what derivation added that the printed text never said: sacrificing a Gobli
 
 ## Implied events: what no card prints
 
-A card supplies events nobody wrote on it. A creature can be cast, can enter, can attack, can deal
+A card causes events nobody wrote on it. A creature can be cast, can enter, can attack, can deal
 combat damage — none of which its text mentions.
 [`impliedEvents()`](../../packages/matcher/src/implied.ts) adds these, stamped with the card's own
 printed characteristics.
 
-Siege-Gang Commander's full supply list, as the matcher sees it:
+Everything Siege-Gang Commander causes, as the matcher sees it:
 
 ```
 create-token       {control:"you", token:true, colors:["R"], type:"creature", subtype:"goblin"}
 enters             {control:"you", token:true, ..., subtype:"goblin", zone:"battlefield"}
 sacrifice          {control:"you", subtype:"goblin"}
+dies               {control:"you", subtype:"goblin", zone:"battlefield"}             <- the one that matters
 leaves             {control:"you", subtype:"goblin", zone:"battlefield"}
 non-combat-damage  {control:"any", scope:"target"}
 cast               {control:"you", type:"creature", subtype:"goblin", power:2, ...}   <- implied
@@ -77,9 +79,10 @@ combat-damage      {control:"you", type:"creature", subtype:"goblin", ...}      
 enters             {control:"you", subtype:"goblin", zone:"graveyard"}                <- a death fills a graveyard
 ```
 
-Rules the game states but no card prints are added here too: a Saga sacrifices itself after its final
-chapter (CR 704.5s), the legend rule kills a copy of a legendary permanent (CR 704.5j). No amount of
-text parsing reaches those, because they are not written anywhere.
+Rules the game states but no card prints are added too: a Saga sacrifices itself after its final
+chapter (CR 704.5s, `sagaEvents()` below), and the legend rule kills a copy of a legendary permanent
+(CR 704.5j, claimed by the matcher's copy pass in `edges.ts`). No amount of text parsing reaches
+those, because they are not written anywhere.
 
 The neighbouring functions do the rest of that job:
 [`keywordEvents()`](../../packages/matcher/src/implied.ts) for what a printed keyword implies,
@@ -103,15 +106,15 @@ missing one.**
 
 ## A number worth reading correctly
 
-Two populations get confused constantly, and confusing them understates a case by two orders of
-magnitude:
+Three populations get confused, and confusing them misstates a case badly:
 
-- the **derived corpus** — the cards derived from the 71 calibration decks, 2,541 as of 2026-08-15
-- the **corpus** — roughly 34,000 cards
+- the **calibration decks** — the cards in the 71 real decks the thresholds are tuned against
+- the **derived corpus** — every card with a `cardTagsDerived` document, **28,416** as of 2026-09-09
+- the **corpus** — **34,433** cards
 
-A verb that reads "0 in the derived corpus" may be hundreds of cards corpus-wide. Say which
+A verb that reads "0 in the calibration decks" may be hundreds of cards corpus-wide. Say which
 population a count came from, every time.
 
 ---
 
-Next: **[Stage 4 — Matching](4-match.md)**, where supply meets demand.
+Next: **[Stage 4 — Matching](4-match.md)**, where what one card causes meets what another cares about.

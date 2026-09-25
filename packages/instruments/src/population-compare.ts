@@ -10,17 +10,15 @@
  *  A theme flip is the loudest signal available — it means the two populations disagree about what
  *  the deck IS, which matters far more than a few edges either way.
  *
- *  Usage: tsx src/bin/population-compare.ts [--verbose] */
+ *  Usage: npx tsx packages/instruments/src/population-compare.ts [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
-import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
 import { meshReport, type MeshGroup } from "@edh-seer/matcher/mesh";
 
-const DIR = process.argv[2]?.startsWith("--") ? "packages/cli/decks/calibration" : (process.argv[2] ?? "packages/cli/decks/calibration");
+const DIR = process.argv[2]?.startsWith("--") ? CALIBRATION_DECKS : (process.argv[2] ?? CALIBRATION_DECKS);
 const VERBOSE = process.argv.includes("--verbose");
 
 const store = await connect(loadConfig());

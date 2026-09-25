@@ -75,7 +75,7 @@ export function EngineReading({ clauses, abilities: allAbilities, rarity, groupe
       {headless !== true && (
         <div className="flex flex-col gap-1">
           <h2 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h2>
-          <p className="text-(--muted) text-sm">The card&rsquo;s own lines, and what each one produces or waits for.</p>
+          <p className="text-(--muted) text-sm">The card&rsquo;s own lines, and what each one causes or cares about.</p>
         </div>
       )}
       {faceNote}
@@ -138,16 +138,16 @@ function AbilityLines({ row, rarity, grouped }: { row: AbilityRow; rarity?: Reco
         * have to be a thing. "wants life being lost" reads; "wants life is lost" does not. The
         * static rows already read this way because their label form is a noun phrase. */}
       {row.when.map((key) => (
-        <EventRow key={`w${key}`} label="wants" text={eventKeySentence(key, row.self ? "this card" : undefined, row.whenColors)}
+        <EventRow key={`w${key}`} label="cares about" text={eventKeySentence(key, row.self ? "this card" : undefined, row.whenColors)}
           event={key} count={rarity?.[key]} grouped={grouped} />
       ))}
       {/* A STATIC DEMANDS BY REACH, not by trigger: the anthem wants the creatures it boosts. */}
       {(row.applies ?? []).map((key) => (
-        <EventRow key={`a${key}`} label="wants" text={eventKeySentence(key)}
+        <EventRow key={`a${key}`} label="cares about" text={eventKeySentence(key)}
           event={key} count={rarity?.[key]} grouped={grouped} />
       ))}
       {row.emits.map((key) => (
-        <EventRow key={`e${key}`} label="makes" text={emitPhrase(key, row.selfEmits?.includes(key))}
+        <EventRow key={`e${key}`} label="causes" text={emitPhrase(key, row.selfEmits?.includes(key))}
           event={key} count={rarity?.[key]} grouped={grouped} />
       ))}
     </div>

@@ -1,4 +1,4 @@
-import { DeckFetchError } from "./deck-source.js";
+import { DeckFetchError, readDeckJson } from "./deck-source.js";
 import type { DeckSections, FetchFn } from "./deck-source.js";
 
 /** Archidekt asks for no key and no whitelisted agent, but it does ask for one request a second,
@@ -92,5 +92,5 @@ export async function fetchArchidektDeck(
     headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
   });
   if (!res.ok) throw new DeckFetchError("Archidekt", res.status);
-  return archidektDeckToSections(await res.json());
+  return archidektDeckToSections(await readDeckJson(res, "Archidekt"));
 }

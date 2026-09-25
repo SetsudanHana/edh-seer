@@ -29,10 +29,10 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
   }} />);
   // T7: the count moved into the share line above, which has the denominator this one lacked.
   // What is left here is the half a share cannot say -- whether you will have drawn them in time.
-  expect(screen.getByText(/96% to have 2 of them by turn 3/)).toBeInTheDocument();
+  expect(screen.getByText(/96% chance to draw 2 of your 39 Tokens cards by turn 3/)).toBeInTheDocument();
   // A command-zone member is available every game, so it is named beside the count and never
   // folded into a draw probability.
-  expect(screen.getByText(/plus Samut, the Driving Force every game/)).toBeInTheDocument();
+  expect(screen.getByText(/and Samut, the Driving Force is in the command zone every game/)).toBeInTheDocument();
 });
 
 // A CAVEAT THAT OUTLIVED THE DEFECT IT DESCRIBED. This panel printed "land-fetch ramp like Cultivate
@@ -149,7 +149,7 @@ test("DeckIdentity keeps the archetype as context, not as a title", () => {
  *  panel over has its own "Focused" band, and the two scales are unrelated. */
 test("DeckIdentity prints the share with the two numbers it is a ratio of", () => {
   render(<DeckIdentity cohesion={cohesionDraw} strategies={undefined} />);
-  expect(screen.getByText("25 of 63 nonland cards support it (40%, concentrated)")).toBeInTheDocument();
+  expect(screen.getByText("25 of 63 nonland cards support Card draw (40%, concentrated)")).toBeInTheDocument();
 });
 
 /** AND IT NO LONGER EXPLAINS A GAP THAT IS GONE (roadmap T3, 2026-09-03).
@@ -164,7 +164,7 @@ test("DeckIdentity prints the share with the two numbers it is a ratio of", () =
  *  ASSERTS THE ABSENCE, which is what makes this fail against the version it replaced. */
 test("the theme share states its denominator and nothing about modal DFCs", () => {
   render(<DeckIdentity cohesion={cohesionDraw} />);
-  expect(screen.getByText("25 of 63 nonland cards support it (40%, concentrated)")).toBeInTheDocument();
+  expect(screen.getByText("25 of 63 nonland cards support Card draw (40%, concentrated)")).toBeInTheDocument();
   expect(screen.queryByText(/modal DFC/)).not.toBeInTheDocument();
 });
 
@@ -914,7 +914,7 @@ test("under the floor, the tick line prints the theme's share and the floor it f
   render(<DeckGauges data={data} />);
   expect(screen.getByText(/Enchantress is only 24\.9% of this list, and it takes 25% to get targets of its own/)).toBeInTheDocument();
   expect(screen.queryByText(/Being over is fine/)).toBeNull();
-  expect(screen.getByText(/Going over a tick is fine; Fixes says where the spare slots are/)).toBeInTheDocument();
+  expect(screen.getByText(/Going over a tick is fine; the suggestions below say where the spare slots are/)).toBeInTheDocument();
 });
 
 /** AND THE BAR NEVER ROUNDS UP OVER IT: 0.249 printed "25%" beside that note. */
@@ -928,10 +928,10 @@ test("an archetype bar floors its percentage", () => {
  *  the same sentence as a claim -- and the deck's 5.0 anchor was one of them. */
 test("a reason that ends in \"triggers\" carries the unread mark; a real claim does not", () => {
   const { unmount } = render(<ReasonText text="When Arcane Signet is cast, Displacer Kitten triggers" />);
-  expect(screen.getByText(/couldn.t read this card/)).toBeInTheDocument();
+  expect(screen.getByText(/effect not read yet/)).toBeInTheDocument();
   unmount();
   render(<ReasonText text="When Arcane Signet is cast, Shark Typhoon makes a token" />);
-  expect(screen.queryByText(/couldn.t read this card/)).toBeNull();
+  expect(screen.queryByText(/effect not read yet/)).toBeNull();
 });
 
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two
@@ -1002,14 +1002,15 @@ test("the band scale is visible under each dial and is not repeated inside the d
   const { container } = render(<DeckGauges data={SAMPLE} />);
   // BY CONTAINER, NOT `getByText`. Each band is its own `whitespace-nowrap` span now, so no single
   // element holds the whole sentence -- the DOM-text-concatenation trap this suite has hit before.
-  const strips = [...container.querySelectorAll("p")].filter((el) => /unfocused/.test(el.textContent ?? ""));
+  // Synergy's scale and Build's own (wording review 2026-09-25: Build's bands are its own words).
+  const strips = [...container.querySelectorAll("p")].filter((el) => /unfocused|far off/.test(el.textContent ?? ""));
   // One per lead dial -- Synergy and Build each carry the scale their own needle is read against.
   expect(strips).toHaveLength(2);
   for (const strip of strips) {
     expect(strip.closest("details"), "the scale is still folded away").toBeNull();
   }
   for (const details of container.querySelectorAll("details")) {
-    expect(details.textContent, "the scale is said twice").not.toMatch(/unfocused ·/);
+    expect(details.textContent, "the scale is said twice").not.toMatch(/unfocused ·|far off ·/);
   }
 });
 
@@ -1021,11 +1022,13 @@ test("the printed band scale is exactly the four SCORE_BREAKS bands, unchanged b
   // ranges, the order and the separators are compared exactly.
   const printed = [...container.querySelectorAll("p")]
     .map((el) => (el.textContent ?? "").replace(/\s+/g, " ").trim())
-    .filter((text) => text.includes("unfocused"));
-  expect(printed.length).toBeGreaterThan(0);
-  for (const text of printed) {
-    expect(text).toBe("0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tuned");
-  }
+    .filter((text) => /^0–1\.5 /.test(text));
+  // One scale per dial, each in its own words: Build is not called "tuned", which a player reads as
+  // power level beside the bracket (wording review 2026-09-25).
+  expect(printed).toEqual([
+    "0–1.5 unfocused · 1.5–3 developing · 3–4 focused · 4–5 tight",
+    "0–1.5 far off · 1.5–3 short · 3–4 close · 4–5 on target",
+  ]);
 });
 
 // TASK 5 (2026-09-01): the parent's own count-against-target row (CONSISTENCY 15/14, RAMP 17/10,
@@ -1181,7 +1184,7 @@ test("every leaf still renders grouped under its own parent, in the parent's own
     expect.stringMatching(/^Card selection 2, 25% of Consistency/),
     expect.stringMatching(/^Tutors 0, 0% of Consistency/), // absent from SCRAMBLED_CATEGORIES entirely -- still renders, at 0
     expect.stringMatching(/^Removal 3, 75% of Interaction/),
-    expect.stringMatching(/^Stack interaction 0, 0% of Interaction/),
+    expect.stringMatching(/^Counterspells 0, 0% of Interaction/),
     expect.stringMatching(/^Graveyard hate 1, 25% of Interaction/),
     expect.stringMatching(/^Protection 0, 0% of Interaction/),
   ]);
@@ -1599,7 +1602,7 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // The census key is engine vocabulary; the row says what the key MEANS and keeps the key on
   // `title` for anyone matching a report against `bin/deck-availability.ts`.
-  expect(screen.getByLabelText(/anything dying, 2 cards need it, 2 make it happen/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/anything dying, 2 cards care about it, 2 cause it/i)).toBeInTheDocument();
   // No availability column: it is derived from the two counts beside it and reads 100% on every
   // row that has a supplier, which is a column with no variance.
   expect(screen.queryByText("23%")).not.toBeInTheDocument();
@@ -1610,8 +1613,8 @@ test("BuildBenchmarks shows demand against supply, and refuses a number where no
   // "the game supplies it" was true of a phase and false of a SELF trigger, which became
   // self-supplied on 2026-08-27. One wording now covers a phase, combat and a card that triggers
   // itself — and the row still must not be counted as an unmet want.
-  expect(screen.getByLabelText(/anything attacking, 3 cards need it, and it happens on its own/i)).toBeInTheDocument();
-  expect(screen.getByText(/3 need · happens on its own/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/anything attacking, 3 cards care about it, and it happens on its own/i)).toBeInTheDocument();
+  expect(screen.getByText(/3 care · happens on its own/i)).toBeInTheDocument();
 });
 
 test("demandSentence says the true ugly thing rather than a plausible wrong one", () => {
@@ -1735,8 +1738,9 @@ test("BuildBenchmarks names the win plans with their counts, and says which dire
   expect(screen.getByText("12 cards")).toBeInTheDocument();
   // The concentration index has to say which DIRECTION is good, or a reader will assume more plans
   // is better -- it is the one number here scored the opposite way to the coverage above it.
-  expect(screen.getByText(/Concentration 0\.52: 1\.00 is all-in on one plan/)).toBeInTheDocument();
-  expect(screen.getByText(/Higher is better/)).toBeInTheDocument();
+  // In words (wording review 2026-09-25): 0.52 across two plans is close to an even split.
+  expect(screen.getByText("Spread about evenly across these 2.")).toBeInTheDocument();
+  expect(screen.queryByText(/Concentration/)).toBeNull();
 });
 
 /** THE MANA ROWS WRAP RATHER THAN OVERFLOWING THE COLUMN THEY ARE GIVEN.
@@ -1977,7 +1981,6 @@ test("a single-leaf-parents deck with deckMath present still hides the role-spen
 // off Summary onto Fixes -- see the Fixes-tab tests below. (S10, 2026-09-02: the Suggestions panel
 // itself is gone; the findings' figures stayed.)
 test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
-  const user = userEvent.setup();
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   // S10 (2026-09-02): the `Suggestions` assertion that stood here went with the panel. Every
   // suggestion it could show is already a finding's action line -- which is what its own comment
@@ -2054,8 +2057,8 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
   render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
 
-  expect(screen.getByText(/numbers behind the build fixes/i)).toBeInTheDocument();
-  expect(screen.getByText(/numbers behind the mana fixes/i)).toBeInTheDocument();
+  expect(screen.getByText(/numbers behind the build suggestions/i)).toBeInTheDocument();
+  expect(screen.getByText(/numbers behind the mana suggestions/i)).toBeInTheDocument();
 
   expect(screen.queryByText("What this deck plays")).toBeNull();
   expect(screen.queryByText("Whether the mana delivers it")).toBeNull();
@@ -2070,9 +2073,9 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
  *  the sub-tabs became chapters. In one scroll the honest word is a direction, not a tab name. */
 test("the evidence movements point at the chapter the findings actually live in", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
-  expect(screen.getByText(/the numbers behind the build fixes below/)).toBeInTheDocument();
-  expect(screen.getByText(/the numbers behind the mana fixes below/)).toBeInTheDocument();
-  expect(screen.queryByText(/on Fixes/)).toBeNull();
+  expect(screen.getByText(/the numbers behind the build suggestions below/)).toBeInTheDocument();
+  expect(screen.getByText(/the numbers behind the mana suggestions below/)).toBeInTheDocument();
+  expect(screen.queryByText(/on Suggestions/)).toBeNull();
 });
 
 /** The outline must not skip or invert on any sub-tab (WCAG 1.3.1). Asserted as a PROPERTY of the
@@ -2117,7 +2120,7 @@ test("each chapter's own heading appears exactly once in the scroll", () => {
     "Scores and bracket",
     "Game plan",
     "Manabase",
-    "Fixes",
+    "How to improve it",
     "What to change",
   ]) {
     expect(screen.getAllByText(heading), heading).toHaveLength(1);
@@ -2470,18 +2473,18 @@ test("wants vs supplies leads with the unmet ones and folds the rest", () => {
     ],
   };
   const { unmount } = render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={unmet} />);
-  expect(screen.getByText("1 need with nothing in the deck to make it happen.")).toBeInTheDocument();
+  expect(screen.getByText("1 thing your cards care about, and nothing in the deck causes it.")).toBeInTheDocument();
   // The unmet row leads OUTSIDE the expander, and the satisfied one appears only inside it.
-  const folded = screen.getByText("all 2 needs").closest("details")!;
+  const folded = screen.getByText("show all 2").closest("details")!;
   expect(folded.open).toBe(false);
-  expect(within(folded).getByText("20 need · 84 enable")).toBeInTheDocument();
-  expect(screen.getAllByText("4 need · 0 enable")[0]).toHaveClass("text-(--warning)");
-  expect(screen.queryAllByText("20 need · 84 enable")).toHaveLength(1);
+  expect(within(folded).getByText("20 care · 84 cause it")).toBeInTheDocument();
+  expect(screen.getAllByText("4 care · 0 cause it")[0]).toHaveClass("text-(--warning)");
+  expect(screen.queryAllByText("20 care · 84 cause it")).toHaveLength(1);
   unmount();
 
   // A deck with nothing unmet says so in one line rather than listing rows that all agree.
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText("Everything your cards are waiting for, something in the deck provides.")).toBeInTheDocument();
+  expect(screen.getByText("Everything your cards care about, something in the deck causes.")).toBeInTheDocument();
 });
 
 // --- The Cards table (F5). ---
@@ -2860,7 +2863,7 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   expect(screen.queryByText(/55% – 62%/)).not.toBeInTheDocument();
   expect(screen.getByText(/to make 6 mana by turn 6/)).toBeInTheDocument();
   // The range is named as the POLICY, not as uncertainty in general.
-  expect(screen.getByText(/play policy/i)).toBeInTheDocument();
+  expect(screen.getByText(/how you play them/i)).toBeInTheDocument();
   expect(screen.getByText(/ceiling no real deck plays to/i)).toBeInTheDocument();
   // AND THE WIDE DECK KEEPS BOTH ENDS. `iz-it-izzet` measures 30% - 67% at this cell, a 36pp spread
   // where the sequencing decides the answer and no single number can stand for it.

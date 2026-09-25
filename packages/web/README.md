@@ -1,37 +1,39 @@
 # @edh-seer/web
 
-Local test UI for the MTG synergy engine. Paste a decklist, get a synergy report.
+The site at [edhseer.cards](https://edhseer.cards): paste a decklist, or a Moxfield or Archidekt link,
+and get the synergy report.
 
-- `server/` — NestJS (Fastify) API. `POST /api/analyze { decklist }` → `{ report, missing, resolvedCount, totalCount }`.
-- `client/` — Vite + React 19 + HeroUI 3 (Tailwind 4) frontend.
+- `client/` — Vite + React 19 + Tailwind 4. **It analyses in the browser**: it reads each card's
+  derived tags from `/static` shards and runs the matcher itself, through `analyzeDecklist` in
+  `@edh-seer/matcher/orchestrate`. Also holds the static How it works page and the card and
+  commander page templates.
+- `functions/` — Cloudflare Pages Functions that prerender the card, commander and browse pages.
+- `scripts/` — the deploy assembler, IndexNow, and the README and How it works screenshots and demo.
+
+There is no API server. There was a NestJS one, kept as a reference path for the browser analysis;
+it was removed on 2026-09-25, and the one thing only it did -- the `#calibrate` pair-judging panel --
+is served by the Vite dev server (`client/vite.config.ts`). Deck links are imported by a separate
+Worker, [`packages/import-worker`](../import-worker), at `/api/import/*`.
 
 ## Run
 
 ```bash
-docker compose -f packages/data/docker-compose.yml up -d   # MongoDB (or: docker run -d -p 27017:27017 mongo:7)
-npm run ingest -w @edh-seer/data                                # once, populates Mongo
-npm run dev -w @edh-seer/web                                    # Nest :3001 + Vite :5173 together
+npx tsx packages/matcher/src/bin/build-static.ts     # static-out/, from MongoDB, ~70s
+npm run dev -w @edh-seer/web                         # http://localhost:5173, /static from static-out/
+MTG_CALIBRATE=1 npm run dev -w @edh-seer/web         # the same, with /#calibrate answering
 ```
 
-Open http://localhost:5173, paste a decklist (plain text, `1 Card Name` per line — e.g. a
-Moxfield **text export**), click Analyze. The Vite dev server proxies `/api` to Nest.
-
-Moxfield URLs are not supported (Moxfield blocks server-side API access); use the text export.
+The [runbook](../../docs/RUNBOOK.md#running-the-product) has the rest, including the deploy.
 
 ## Notes on the stack
 
-- The server is CommonJS (NestJS, decorator metadata via `tsc`), but `@edh-seer/engine`/`@edh-seer/data`
-  are ESM TypeScript-source packages. So the server loads them via dynamic `import()` and runs
-  under tsx's loader (`start:server` = `node --import tsx dist/main.js`,
-  `dev:server` = `NODE_OPTIONS="--import tsx" nest start --watch`). A future "build the libraries
-  to JS" cleanup would remove the tsx-loader runtime dependency.
-- HeroUI 3 has no `HeroUIProvider`; components render directly. `@edh-seer/web` uses `vitest` 4
-  (Vite 8 requirement) while the other packages use `vitest` 1 — isolated per package.
+- The package is ESM like every other one (`"type": "module"`), which it could not be while the
+  NestJS server needed CommonJS and legacy decorators.
+- Security headers (CSP, frame and permissions policy) are defined once in `client/src/lib/csp.ts`,
+  sent by the Functions and mirrored in `client/public/_headers`; `csp.test.ts` holds them together.
 
 ## Test
 
 ```bash
-npm run test:server -w @edh-seer/web                                          # unit + e2e (Mongo suites skip)
-npm run test:client -w @edh-seer/web                                          # component + integration tests
-MONGO_TEST_URI=mongodb://localhost:27017 npm run test:server -w @edh-seer/web # + Mongo integration
+npm test -w @edh-seer/web          # component, integration and page tests
 ```

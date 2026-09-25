@@ -10,13 +10,13 @@
  *
  *  Usage: tsx src/bin/template-derive.ts [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { minCopies } from "@edh-seer/engine";
 import { minSources } from "../../packages/matcher/src/mulligan.js";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../../packages/matcher/src/index.js";
 
-const DIR = process.argv.includes("--dir") ? process.argv[process.argv.indexOf("--dir") + 1]! : "packages/cli/decks/calibration";
+const DIR = process.argv.includes("--dir") ? process.argv[process.argv.indexOf("--dir") + 1]! : CALIBRATION_DECKS;
 const VERBOSE = process.argv.includes("--verbose");
 /** Decks are read from `DIR` and, one level down, from each subdirectory: `--dir packages/cli/decks/edhrec`
  *  groups the rows by the archetype directory `edhrec-population.ts` wrote them under, so a per-theme

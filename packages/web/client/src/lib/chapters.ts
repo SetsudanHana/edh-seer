@@ -43,7 +43,7 @@ export const CHAPTERS: readonly { id: ChapterId; rail: string; title: string }[]
   { id: "plan", rail: "Plan", title: "Game plan" },
   { id: "mana", rail: "Mana", title: "Manabase" },
   { id: "roles", rail: "Roles", title: "Roles" },
-  { id: "fix", rail: "Fix", title: "Fixes" },
+  { id: "fix", rail: "Improve", title: "How to improve it" },
 ];
 
 /** WHERE A DIAL SENDS YOU. `DeckGauges` used to name a sub-tab (`build`/`mana`/`engine`); the

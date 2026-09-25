@@ -2,6 +2,7 @@ import { tagFamily } from "@edh-seer/engine";
 import { SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import { ALL_CARD_TYPES } from "./hierarchy.js";
 import type { Hierarchy } from "./types.js";
+import { SUPERTYPES } from "./typeline.js";
 
 /** THE THEME FOLD — a deck's identity is the family, not its largest fragment.
  *
@@ -29,7 +30,7 @@ import type { Hierarchy } from "./types.js";
 const NEVER_FOLD: ReadonlySet<string> = new Set(["tribe", "tribe-nontoken", "static", "counter"]);
 
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. */
-const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
+
 
 /** Card types, in the order a multi-type subtype resolves. Only the six spell subtypes (adventure,
  *  arcane, chorus, lesson, omen, trap) are genuinely multi-type under `SUBTYPE_TYPES`; the order

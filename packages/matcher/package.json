@@ -13,10 +13,11 @@
     "./deck-cards": "./src/deck-cards.ts",
     "./wire-graph": "./src/wire-graph.ts",
     "./orchestrate": "./src/orchestrate.ts",
+    "./calibration-judge": "./src/calibration-judge.ts",
     "./static-lookup": "./src/static-lookup.ts",
     "./suggest-static": "./src/suggest-static.ts",
     "./partner-shard": "./src/partner-shard.ts",
-    "./partners-core": "./src/bin/partners-core.ts",
+    "./partners-core": "./src/partners-core.ts",
     "./sentence": "./src/sentence.ts",
     "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",
@@ -49,7 +50,7 @@
     "mongodb": "^7.6.0"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
+    "@types/node": "^24.13.6",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",

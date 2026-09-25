@@ -16,7 +16,7 @@
  *    npx tsx packages/instruments/src/magnitude-sample.ts [--n 20] [--seed 20260909] [--out DIR] */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex, impactEdgeWeight, loadImpactWeights, type Reason } from "@edh-seer/engine";
 import { createTagsLookup, type CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
@@ -25,7 +25,7 @@ import { AXIS_BOOST, edgeTerms, narrowestWidth, productEdgeWeight, type Width } 
 import { renderMagnitudeSheet, type MagnitudeRow } from "./magnitude-sheet-html.js";
 import type { SheetCard } from "./rejudge-sheet-html.js";
 
-const DIR = "packages/cli/decks/calibration";
+const DIR = CALIBRATION_DECKS;
 const arg = (flag: string, fallback: string): string => { const i = process.argv.indexOf(flag); return i > 0 ? process.argv[i + 1]! : fallback; };
 const N = Number(arg("--n", "20"));
 const SEED = Number(arg("--seed", "20260909"));

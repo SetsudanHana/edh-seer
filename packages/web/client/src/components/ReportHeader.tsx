@@ -11,6 +11,8 @@ import { SurfaceLink } from "./ReportShell.js";
 import { identityKey } from "../lib/color-identity.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { RunDiffLine, signed } from "./RunDiffLine.js";
+import { useDeckActions } from "../lib/deck-actions.js";
+import type { ScoreKind } from "../lib/score-band.js";
 
 /** THE REPORT'S SUMMARY, ON EVERY SURFACE — sticky above the chapters AND above the graph, the
  *  (NOT ON A PHONE: below `sm` it is `static`. Measured at 390 on 2026-09-08, the pinned stack was
@@ -72,6 +74,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
   // ordered for; the returning tuner stops paying for it. `findings` is pure and cheap, and
   // `Findings` calls it too, so the count here and the list there cannot disagree.
   const findingCount = findings(report).length;
+  const deckActions = useDeckActions();
   const { pinned, clearPins } = usePinned();
   const pipCost = identityKey(data.commanderColorIdentity ?? [])
     .split("")
@@ -106,7 +109,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
           // `buildScore` counts roles off printed text, which an unread card still has, so it keeps
           // its band where synergy loses its own. The split is the gate's, not a new one.
           <HeaderScore
-            name="Build" value={report.buildScore}
+            name="Build" value={report.buildScore} kind="build"
             delta={diff?.build ? signed(diff.build.from, diff.build.to) : undefined}
           />
         ) : null}
@@ -164,7 +167,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
              * 24px WCAG 2.5.8 floor, and the horizontal padding gives it real width. */
             className="eyebrow text-(--accent) whitespace-nowrap min-h-[32px] px-2 -mx-1"
           >
-            {findingCount} {findingCount === 1 ? "fix" : "fixes"} &darr;
+            {findingCount} {findingCount === 1 ? "suggestion" : "suggestions"} &darr;
           </button>
         ) : null}
         {coverage ? (
@@ -183,6 +186,10 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
             </span>
           </span>
         ) : null}
+        {/* THE DECK'S ACTIONS END THE ROW (UI review 2026-09-25), replacing the 70px deck bar that
+          *  sat above it on every surface. `ml-auto` pins them right while the row has room and
+          *  lets them take their own line when it does not. */}
+        {deckActions ? <div className="ml-auto">{deckActions}</div> : null}
       </div>
       {/* WHAT YOUR EDIT DID, ON EVERY SURFACE (roadmap S9). Its own line rather than a seventh item
         *  in the row above: that row already wraps at 390px, and an item of variable length would
@@ -199,15 +206,17 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
 /** One score, one line: the name, the number and the word `scoreState` gives it. The tone colour is
  *  `Dial`'s own `TONE_TEXT` map rather than a second table, so the header and the dial two screens
  *  down cannot come to disagree about what 3.4 is called. */
-function HeaderScore({ name, value, partial, delta }: {
+function HeaderScore({ name, value, partial, delta, kind }: {
   name: string;
+  /** Which band words the reading uses; see `ScoreKind`. */
+  kind?: ScoreKind;
   value: number;
   partial?: boolean;
   /** ALREADY FORMATTED, by `RunDiffLine`'s `signed` -- one formatter, so the header and the line
    *  under it cannot come to print the same move two ways. */
   delta?: string;
 }) {
-  const reading = scoreState(value, partial);
+  const reading = scoreState(value, partial, kind);
   return (
     <span className="flex items-baseline gap-1.5 whitespace-nowrap">
       <span className="eyebrow text-(--muted)">{name}</span>

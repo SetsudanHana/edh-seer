@@ -1,6 +1,6 @@
 {
  "version": 1,
- "source": "packages/cli/decks/edhrec, 2126 decks over 214 themes, regenerated 2026-09-06 by research/template-fit.ts",
+ "source": "packages/cli/decks/edhrec, 2126 decks over 214 themes, regenerated 2026-09-06 by research/matcher/template-fit.ts",
  "population": {
   "consistency": 13,
   "ramp": 11,

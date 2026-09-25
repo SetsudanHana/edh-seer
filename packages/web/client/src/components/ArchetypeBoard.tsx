@@ -81,7 +81,9 @@ function GroupRow({ group, size }: { group: Group; size?: { earned: number; tota
       {open ? null : (
         <ul className="flex flex-col pl-6 text-xs text-(--muted)">
           {preview.map((pair, i) => (
-            <li key={`${pair.a}-${pair.b}-${i}`} className="truncate">
+            // `sm:truncate`: on a phone the cut fell inside the reason, which is the part a reader
+            // checks, so there it wraps (UI review 2026-09-25).
+            <li key={`${pair.a}-${pair.b}-${i}`} className="sm:truncate">
               {/* THE NAMES OPEN THE CARDS (roadmap S8). This list is the evidence behind a group --
                 *  the one surface naming the pair a membership rests on -- and it was the one
                 *  surface you could not open a card from, because it printed raw text. */}
@@ -217,7 +219,10 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
             says how far a group reaches, never how much the deck is about it; the earned figure is
             the members that do something about it.
           </Explain>
-          <div className="flex flex-col">
+          {/* 64rem, like the archetype bars above at 48rem: at 1920px the row spread its name and
+            *  its figures 1,700px apart (UI review 2026-09-25). Wide enough that the two preview
+            *  pairs, the longest line in the row, still fit on one line. */}
+          <div className="flex flex-col max-w-5xl">
             {archetypes!.map((g) => (
               <GroupRow key={g.category} group={g} size={groupSize.get(g.category)} />
             ))}

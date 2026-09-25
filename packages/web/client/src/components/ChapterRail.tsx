@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { stickyPx } from "../lib/sticky-px.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
-import { REFERENCE_SURFACES, SurfaceLink } from "./ReportShell.js";
+import { REFERENCE_SURFACES, surfacesFor, SurfaceLink } from "./ReportShell.js";
 
 /** THE TABLE OF CONTENTS, NOT A SECOND TAB BAR — and the difference is that every chapter is on the
  *  page at once, so a link here moves the reader rather than swapping what exists.
@@ -42,7 +42,8 @@ import { REFERENCE_SURFACES, SurfaceLink } from "./ReportShell.js";
 const SCROLL_TWITCH = 8;
 const RAIL_PINNED_ABOVE = 120;
 
-export function ChapterRail({ current }: { current: ChapterId | null }) {
+/** `comboCount` decides whether Combos gets a link (see `surfacesFor`); left out, every surface does. */
+export function ChapterRail({ current, comboCount }: { current: ChapterId | null; comboCount?: number }) {
   const nav = useRef<HTMLElement>(null);
   // Below `lg` the rail is pinned under the header and anything scrolled to has to clear BOTH.
   // At `lg` it is beside the column, so it costs no vertical space and the variable is 0.
@@ -101,7 +102,7 @@ export function ChapterRail({ current }: { current: ChapterId | null }) {
    *  you to the offset you left from. They are also the ONLY route to their pages, which is why
    *  they hold their space at every width while the chapters -- reachable by scrolling the page
    *  itself -- are the ones that fold into a control. */
-  const surfaces = REFERENCE_SURFACES.map((s) => (
+  const surfaces = (comboCount === undefined ? REFERENCE_SURFACES : surfacesFor(comboCount)).map((s) => (
     <SurfaceLink
       key={s.path}
       to={s.path}

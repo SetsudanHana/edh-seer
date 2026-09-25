@@ -117,11 +117,11 @@ test("the header carries the finding count, and reaches chapter 6 from a referen
   const expected = findings(SAMPLE.report).length;
   render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
 
-  screen.getByRole("button", { name: new RegExp(`^${expected} fix`) });
+  screen.getByRole("button", { name: new RegExp(`^${expected} suggestion`) });
   await userEvent.click(screen.getAllByRole("link", { name: /^Cards/ })[0]!);
   expect(document.getElementById("fix")).toBeNull(); // the chapters are not mounted here
 
-  await userEvent.click(screen.getByRole("button", { name: new RegExp(`^${expected} fix`) }));
+  await userEvent.click(screen.getByRole("button", { name: new RegExp(`^${expected} suggestion`) }));
   await vi.waitFor(() => expect(document.getElementById("fix")).not.toBeNull());
   // ON THE SECTION ITSELF, not on whatever happened to be scrolled. Measured on the live page:
   // scrolling one frame after the navigation ran before React had committed the chapters, so the
@@ -544,4 +544,16 @@ test("a desktop can open the one-card view, and it opens on the commander", asyn
   expect(screen.getAllByText("Krenko, Mob Boss").length).toBeGreaterThan(0);
   await user.click(screen.getByRole("button", { name: "Whole deck" }));
   expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
+});
+
+/** NO COMBOS, NO COMBOS TAB (UI review 2026-09-25). A deck with none got a tab that opened one
+ *  sentence on an empty screen; the route stays for a shared link, the link goes. */
+test("a deck with no combos gets no Combos link, and one with combos keeps it", () => {
+  const none = { ...SAMPLE, report: { ...SAMPLE.report, combos: [] } } as typeof SAMPLE;
+  const { unmount } = render(<MemoryRouter><ReportShell data={none} /></MemoryRouter>);
+  expect(screen.queryByRole("link", { name: /^Combos/ })).toBeNull();
+  expect(screen.getAllByRole("link", { name: /^Graph/ }).length).toBeGreaterThan(0);
+  unmount();
+  render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
+  expect(screen.getAllByRole("link", { name: /^Combos/ }).length).toBeGreaterThan(0);
 });

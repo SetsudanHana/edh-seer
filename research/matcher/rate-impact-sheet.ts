@@ -9,7 +9,7 @@
  *  Usage: tsx research/matcher/rate-impact-sheet.ts before.json after.json static-out/<version> */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { slugOf } from "../../packages/matcher/src/bin/partners-core.js";
+import { slugOf } from "../../packages/matcher/src/partners-core.js";
 import { bestPerFamily, bestRates, type Rate, type RateFamily, type RateSpan } from "../../packages/matcher/src/rate.js";
 
 interface Sheet { r: Partial<Record<RateFamily, RateSpan>>; z?: string }

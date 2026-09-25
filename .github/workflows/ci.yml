@@ -15,53 +15,90 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ONE NODE, THE ONE IN .nvmrc (2026-09-25). The project ran 22 and 24 side by side to cover an
+  # `engines` floor of 22 that nobody deploys on; it now pins the current LTS in .nvmrc, and CI,
+  # contributors and the deploy machine all read that one file. `test` is the required check in
+  # branch protection -- rename this job and that list has to change with it, because a required
+  # check that never reports blocks every PR forever.
+  # History: Node 20 dropped 2026-09-07 (EOL April 2026); Node 22 dropped 2026-09-25.
   test:
-    name: test (node ${{ matrix.node }})
+    name: test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        # The FLOOR declared in package.json engines, and the current LTS. Both legs are
-        # required checks in branch protection, so changing this list means changing that list
-        # too -- a leg that stops running never reports, and a required check that never reports
-        # blocks every PR forever.
-        # Node 20 (Iron) was dropped 2026-09-07: it went EOL in April 2026, its last release was
-        # v20.20.2 on 2026-03-24, and @testing-library/jest-dom 7 already declares a floor of 22.
-        node: [22, 24]
+    # A THROWAWAY MONGO, so the suites that need one run here too (2026-09-25). `db.test.ts`,
+    # `ingest.test.ts` and `flavor.integration.test.ts` skip without MONGO_TEST_URI, and until now
+    # nothing set it: the database layer's own tests had never run in CI. Each suite creates and
+    # empties its own database (mtg_test_db, mtg_ingest_test, mtg_flavor_test) from fixtures -- no
+    # corpus, no network. The version matches packages/data/docker-compose.yml.
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # Nothing here pushes, so the token is not left in .git/config for later steps.
         with:
-          node-version: ${{ matrix.node }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       # BEFORE the suite, because a green suite is NOT a compiling one -- `vitest` transpiles per
       # file and never typechecks, so the matcher once carried two type errors 2,706 passing tests
-      # could not see. Run on both legs even though tsc is Node-agnostic: it is one line and it
-      # keeps the two required status checks the only ones branch protection has to know about.
+      # could not see.
       - run: npm run typecheck
-      # The suite is pure: no MongoDB, no network, no API key. Anything needing a live corpus lives
-      # in a bin rather than a test, and the one test backed by a gitignored cache skips itself with
-      # a reason instead of failing a clean checkout.
+      # No network and no API key. The database suites get the service above, empty; anything
+      # needing the live CORPUS lives in a bin rather than a test, and the one test backed by a
+      # gitignored cache skips itself with a reason instead of failing a clean checkout.
       - run: npm test
+        env:
+          MONGO_TEST_URI: mongodb://localhost:27017
       # A script's HOME is part of the design, and without a gate it drifts back: `src/bin` went
       # 110 files to 53 when the one-shot measurements moved to research/, and a new census dropped
       # into packages/matcher/src/bin would merge green. Two directions, and the second is the one
       # that has actually bitten -- a test under research/ is collected by NO vitest project, so it
       # reads as covered while its coverage is simply absent from the run above. Runs its own
       # self-test first, because a gate nobody has watched fail is decoration.
-      # Inside this job for the same reason as the token gates below: `test (node 22|24)` are the
-      # only two checks branch protection knows about.
+      # Inside this job for the same reason as the token gates below: `test` is the only check
+      # branch protection knows about.
       - run: npm run lint:bins
+      # BUGS, NOT STYLE: oxlint's correctness rules plus unused code (.oxlintrc.json). Its first run
+      # found a search state that was computed and never shown, so a stale link sat on "reading what
+      # cards do" for good. No formatter and no style rules, on purpose -- see CONTRIBUTING.
+      - run: npm run lint
       # The design system in tokens/ is EXTRACTED from the shipped packages/web/client/src/index.css,
-      # so it can drift from what actually renders. Three gates, all python3 stdlib (no pip step):
+      # so it can drift from what actually renders. Three gates, Node built-ins only (no install step):
       #   validate_tokens   - every tokens/*.json parses as DTCG and every alias resolves
       #   validate_contrast - the required WCAG 2.2 pairs still pass on the real hex values
       #   validate_theme_refs - no component reaches for a var() no token defines (a "floating token",
       #                         the defect css-tokens.test.ts was written for)
-      # Inside the existing job, not a new one: `test (node 22|24)` are the only two checks branch
-      # protection knows about, and a separate job would gate nothing until someone adds it there.
+      # Inside the existing job, not a new one: `test` is the only check branch protection knows
+      # about, and a separate job would gate nothing until someone adds it there.
       - run: npm run tokens:check
       # tokens/theme.css is GENERATED. Editing tokens/*.json without rebuilding it is the drift the
       # gates above cannot see, because they would both read the same stale pair.
       - run: npm run tokens:build && git diff --exit-code -- tokens/theme.css
+
+  # THE NEXT NODE, AS AN EARLY WARNING AND NOT A GATE. Node 26 becomes LTS in late October 2026; this
+  # leg shows what moving .nvmrc to it would break before anyone has to, the way a Node 24 leg
+  # caught a jsdom 30 test seam on 2026-09-25. `continue-on-error` and absent from branch
+  # protection, so a red here informs and never blocks. When .nvmrc moves to 26, point this at 28.
+  next:
+    name: next (node 26)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test

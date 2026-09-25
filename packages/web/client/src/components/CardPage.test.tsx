@@ -108,7 +108,7 @@ test("the page shows card metadata and the artifact carries no rules text to sho
 test("a capped event says how many candidates it is not showing, as candidates", async () => {
   at("krenko-mob-boss", async () => KRENKO);
   // The count sits under the event group it is about, not at the foot of the page.
-  const line = await screen.findByText(/other cards ask for it too/);
+  const line = await screen.findByText(/other cards care about it too/);
   expect(line.textContent).toMatch(/1,908/);
 });
 
@@ -180,7 +180,7 @@ test("a row whose effect the engine could not read says so", async () => {
     ...KRENKO,
     partners: [{ ...KRENKO.partners[0]!, reason: "When a Goblin enters, X triggers", unread: true as const }],
   }));
-  expect(await screen.findByText(/couldn.t read this card/)).toBeInTheDocument();
+  expect(await screen.findByText(/effect not read yet/)).toBeInTheDocument();
 });
 
 test("a row the engine did read carries no such marker", async () => {

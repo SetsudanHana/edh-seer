@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { findings, rankedFindings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
+import { rankedFindings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
 import { useState } from "react";
 import type { RunDiff } from "../lib/run-diff.js";
 
@@ -68,7 +68,9 @@ export function Findings({ report, diff }: {
   const shown = expanded ? all : all.slice(0, FINDING_CAP);
   const trade = slotTrade(report, all);
   return (
-    <section className="flex flex-col gap-3">
+    // 64rem: at 1920px a fix's headline and its figure ("10/13") sat 1,500px apart, and the figure
+    // is what the headline is about (UI review 2026-09-25).
+    <section className="flex flex-col gap-3 max-w-5xl">
       <div className="flex items-baseline gap-3 flex-wrap">
         {/* "What is wrong with this deck" under a chapter titled "Fixes" was the same heading
           *  twice (T1). The count beside it is what this line is actually for. */}
@@ -80,7 +82,7 @@ export function Findings({ report, diff }: {
           *  the unseen rows below carry the numbers that follow on. */}
         <span className="text-xs text-(--muted)">
           <span className="tabular-nums">{all.length + unseen.length}</span>{" "}
-          {all.length + unseen.length === 1 ? "fix" : "fixes"}, biggest payoff first
+          {all.length + unseen.length === 1 ? "suggestion" : "suggestions"}, biggest payoff first
         </span>
       </div>
       <ul className="flex flex-col border-t border-(--separator)">

@@ -166,14 +166,14 @@ function answerFinding(report: DeckReport): Finding | null {
     id: "answers",
     headline,
     detail: `${short.map((a) => `${a.count} for ${a.class}s`).join(", ")}`
-      + `, against the ${worst.required} copies it takes to call an answer reliable`
+      + `, against the ${worst.required} cards it takes to call an answer reliable`
       + `${turn ? ` — the thinnest is ${worst.class}, about a ${pct(worst.available)}% chance of holding one by turn ${turn}` : ""}.`
       + " Graveyard hate is counted separately: it is hate rather than removal, and a Naturalize does not answer it.",
     action: "Swap in two or three answers that can hit any kind of permanent.",
     figure: `${permanent.length - short.length}/${permanent.length}`,
     // "COVERED" MEANS FIVE COPIES, AND THE LABEL SAYS SO (UX sweep 2026-09-06, D5): "0/5 permanent
     // answer types covered" beside "4 for creatures, 3 for artifacts …" read as zero types answered.
-    figureLabel: `answer types at ${worst.required}+ copies`,
+    figureLabel: `answer types with ${worst.required}+ cards`,
     filled: (permanent.length - short.length) / permanent.length,
     shortfall,
     impact: report.answersImpact,

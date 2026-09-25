@@ -1,7 +1,7 @@
 /**
  * Run `fn` over `items` with at most `concurrency` in flight at once, preserving
- * input order in the results. Used to parallelize slow per-card LLM extraction —
- * Ollama serves concurrent requests, so this is a straight throughput multiplier.
+ * input order in the results. Used to parallelize slow per-card LLM extraction, where
+ * requests are independent, so this is a straight throughput multiplier.
  */
 export async function mapPool<T, R>(
   items: readonly T[],

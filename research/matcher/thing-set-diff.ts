@@ -16,18 +16,18 @@
  *  of 71 decks, take (a). FALSIFIER: if both sets fail hand-checking, the membership predicate is
  *  the real work and no probability should be printed at all.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/thing-set-diff.ts [--verbose] */
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/thing-set-diff.ts [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../../packages/matcher/src/index.js";
 import { cardThemeTags } from "../../packages/matcher/src/edges.js";
-import { themeMembership, themeCandidates } from "../../packages/matcher/src/themes.js";
+import { themeMembership } from "../../packages/matcher/src/themes.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
 import { foldThemeTag } from "../../packages/matcher/src/theme-fold.js";
 
-const DIR = "packages/cli/decks/calibration";
+const DIR = CALIBRATION_DECKS;
 const VERBOSE = process.argv.includes("--verbose");
 const AGREEMENT_FLOOR = 0.8;
 

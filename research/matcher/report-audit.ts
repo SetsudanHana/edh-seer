@@ -1,9 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import type { CardTags } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured } from "../../packages/matcher/src/analyze.js";
@@ -19,8 +17,8 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Free: Mongo reads only. Run it after adding anything to the report.
  *
- *    npx tsx packages/matcher/src/bin/report-audit.ts [n-decks] */
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+ *    npx tsx research/matcher/report-audit.ts [n-decks] */
+const DECK_DIR = CALIBRATION_DECKS;
 
 /** Is this value the shape of a field nobody filled in? */
 function emptiness(value: unknown): string | null {

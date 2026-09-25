@@ -1,9 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { detectBuildRules } from "../../packages/matcher/src/build.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
@@ -27,8 +25,8 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Free: Mongo reads only.
  *
- *    npx tsx packages/matcher/src/bin/ramp-shape.ts */
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+ *    npx tsx research/matcher/ramp-shape.ts */
+const DECK_DIR = CALIBRATION_DECKS;
 
 /** THE FRAGILITY ORDER IS MEASURED, NOT ASSERTED -- `answer-pool.json`, the same generated artifact
  *  the Interaction coverage axis scores against, counts how many cards in the format answer each

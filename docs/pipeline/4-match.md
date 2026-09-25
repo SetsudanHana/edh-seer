@@ -1,6 +1,6 @@
 # Stage 4 — Matching
 
-**Input:** every card's supply and demand, from [Stage 3](3-derive.md).
+**Input:** what every card causes and what it cares about, from [Stage 3](3-derive.md).
 **Output:** `Reason[]` — one printable sentence per claim.
 **Cost:** free. Pure functions, no I/O of any kind.
 **Code:** [`eventMatches()`](../../packages/matcher/src/edges.ts),
@@ -21,8 +21,8 @@ cards and the mechanism, so it can be held against the card and disagreed with.
 
 | | verb | subject |
 |---|---|---|
-| Siege-Gang **supplies** | `dies` | `{control: you, subtype: goblin}` |
-| Skullclamp **demands** | `dies` | `{control: you, type: creature}` |
+| Siege-Gang **causes** | `dies` | `{control: you, subtype: goblin}` |
+| Skullclamp **cares about** | `dies` | `{control: you, type: creature}` |
 
 Same verb, same controller, and a Goblin *is* a creature — resolved through a subtype-to-type
 hierarchy generated from MTGJSON rather than hardcoded
@@ -39,18 +39,25 @@ text       = "When Siege-Gang Commander dies, Skullclamp draws you 2 cards"
 [`eventMatches()`](../../packages/matcher/src/edges.ts) is the whole decision, and the order is
 deliberate — each gate assumes the ones above it have passed.
 
-1. **Same verb?** `verbSatisfies`, which also carries the rules bridges (CR 120.3 lets a life-loss
-   trigger accept a damage emit).
-2. **Is the consumer's subject `restricted`?** Refuse. A targeting restriction is a demand nothing
+1. **Same verb?** `verbSatisfies`, which also carries the rules bridges: a death is a creature
+   leaving the battlefield, non-combat damage makes a player lose life (CR 120.3), and damage
+   satisfies "is dealt damage".
+2. **Big enough?** A trigger that names a size ("exactly 1 damage", "5 or more") meets only a
+   producer that states a size satisfying it. An unknown size is refused (Ghyrson Starn).
+3. **Is the consumer's subject `restricted`?** Refuse. A targeting restriction is a demand nothing
    here can check.
-3. **Instant-speed relaxation.** A producer that acts at instant speed and picks its own victim can
+4. **Instant-speed relaxation.** A producer that acts at instant speed and picks its own victim can
    satisfy a combat-state demand it never names — your sac outlet eating your own attacker.
-4. **Origin compatible?** `originMatches` — token, not-cast, enters-tapped.
-5. **Self-supplied?** `combatSelfSupplied`, `castSelfSupplied`, `selfEtbSelfSupplied`. A card must not
+5. **Origin compatible?** `originMatches` — the zone the object came from. Token, not-cast and
+   enters-tapped are checked later, inside `subjectMatches`.
+6. **Self-supplied?** `combatSelfSupplied`, `castSelfSupplied`, `selfEtbSelfSupplied`. A card must not
    satisfy its own trigger.
-6. **Special-cased verbs.** A graveyard fill, a counter being added, and damage each route to their
-   own comparison.
-7. **Subjects compatible?** `subjectMatches`, through the hierarchy.
+7. **A graveyard fill** routes to its own comparison, `graveyardFillMatches`.
+8. **Self on both sides?** A card doing something to itself never satisfies another card's "when
+   THIS does it".
+9. **A counter added or removed, and damage,** each route to their own comparison — damage compares
+   a dealer against a dealer, except for life loss and "is dealt damage".
+10. **Subjects compatible?** `subjectMatches`, through the hierarchy.
 
 Two of those deserve their own note.
 
@@ -75,13 +82,14 @@ follows: *a silent wrong answer is worse than a missing one.*
 | **Self-supplied triggers** — a creature's own attack satisfying "whenever a creature attacks" | the card would claim synergy with itself |
 | **Unknown trigger events** | surfaced as `unknownTriggers` rather than snapped to a near-miss verb |
 | **Unrepresentable restrictions** — "targets only", board states with no field | the ability keeps its kind and claims no cards |
-| **Deck roles** — `tax`, `win-game`, `extra-turn`, `extra-phase`, and cost reduction | a pairwise edge would make the same claim beside every card in the deck |
-| **Bare-type tutors** — "search for a creature card" | true of the whole creature base, so it distinguishes nothing |
+| **Deck roles** — `tax`, `win-game`, `extra-turn`, `extra-phase` | a pairwise edge would make the same claim beside every card in the deck. A `win-game` gated on a typed count (Revel in Riches' ten Treasures) is claimed through the threshold pass, and cost reduction left this list on 2026-08-18: it is claimed against the cards it discounts |
+| **Whole-deck tutors** — "search for a card", "a creature card" | true of the whole deck or the whole creature base, so it distinguishes nothing |
 
 The tutor line is the one most often misread, so state it precisely. Of 115 corpus search actions:
 
-- **a bare type does not narrow.** Demonic Tutor reaches all 99 other cards; Worldly Tutor reaches the
-  whole creature base. No claim.
+- **a whole-deck type does not narrow.** Demonic Tutor reaches all 99 other cards; Worldly Tutor
+  reaches the whole creature base. No claim. A single type outside the whole board does — Mystical
+  Tutor finding the instant, a search for "an artifact card" (owner ruling 2026-09-16).
 - **a subtype, a stat predicate or a name does.** Flamekin Harbinger searching for an Elemental card
   genuinely relates to every Elemental in the deck. So does Imperial Recruiter's "power 2 or less",
   and The First Doctor searching for a card *named* TARDIS narrows hardest of all.
@@ -89,9 +97,9 @@ The tutor line is the one most often misread, so state it precisely. Of 115 corp
   Farseek relates to the duals it can actually fetch, which is what lets a report say "your ramp finds
   4 targets for this colour and 11 for that one".
 
-Some misses are permanent and documented as **ceilings** rather than bugs: "my tutor can find you"
-and "my recursion could return you" are real synergies a producer-event/consumer-trigger model cannot
-express at all.
+These relations are claimed, each in its own sentence: "Flamekin Harbinger can search up
+Smokebraider", "Farseek can fetch …", "X can bring back Y". Recursion follows the same bar as tutors:
+"target creature card" is the whole creature base and forms nothing.
 
 ## After the claim
 
@@ -105,10 +113,11 @@ the payoff, rather than the maker claiming a relation it only has through an obj
 
 ## Checking it
 
-Every one of these is free to run and none of them needs the network:
+Every one of these is free to run: no model, no network, but they read the MongoDB corpus, and
+`panel-score.ts` also reads the judged panel, which lives only on the maintainer's machine.
 
 ```bash
-npx tsx packages/instruments/src/panel-score.ts          # precision AND recall on the frozen panel
+npx tsx packages/instruments/src/panel-score.ts          # precision AND retention on the frozen panel
 npx tsx packages/instruments/src/population-compare.ts   # edges and reasons, before against after
 npx tsx packages/instruments/src/eval-pairs.ts           # the compass
 ```

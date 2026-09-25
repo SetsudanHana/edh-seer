@@ -14,14 +14,13 @@
  *  Usage: tsx src/bin/precision-sample.ts [--n 150] [--seed 20260805] [--out /tmp/precision] */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@edh-seer/matcher";
 import { blind, claimFor, sample, seededRng, type SampledReason, type Source } from "./precision-core.js";
 
-const DIR = "packages/cli/decks/calibration";
+const DIR = CALIBRATION_DECKS;
 const arg = (flag: string, fallback: string): string => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : fallback;

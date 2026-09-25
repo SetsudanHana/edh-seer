@@ -1,10 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
-import type { CardTags } from "@edh-seer/tagger";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { detectAnswerClasses, detectBuildCategories, BUILD_CATEGORIES, BUILD_PARENTS } from "@edh-seer/matcher/build";
 import { recommendedLands } from "@edh-seer/matcher/land-count";
@@ -23,11 +20,11 @@ import type { DeckCard } from "@edh-seer/matcher/types";
  *
  *  Free: Mongo reads only. Write a baseline before the change, diff after:
  *
- *    npx tsx packages/matcher/src/bin/build-population.ts > before.json
+ *    npx tsx packages/instruments/src/build-population.ts > before.json
  *    ...edit rules...
- *    npx tsx packages/matcher/src/bin/build-population.ts > after.json
- *    npx tsx packages/matcher/src/bin/build-population.ts --diff before.json after.json */
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+ *    npx tsx packages/instruments/src/build-population.ts > after.json
+ *    npx tsx packages/instruments/src/build-population.ts --diff before.json after.json */
+const DECK_DIR = CALIBRATION_DECKS;
 
 type Snapshot = Record<string, Record<string, string[]>>;
 

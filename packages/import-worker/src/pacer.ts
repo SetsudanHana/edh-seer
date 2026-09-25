@@ -68,6 +68,9 @@ export class Pacer {
           : await fetchArchidektDeck(id, paced);
       return { kind: "deck", sections };
     } catch (err) {
+      if (err instanceof DeckFetchError && err.status === 413) {
+        return { kind: "rejected", status: 413, message: "deck too large to import" };
+      }
       if (err instanceof DeckFetchError && !err.isUpstreamDistress) {
         return { kind: "rejected", status: 404, message: "deck not found, or not public" };
       }

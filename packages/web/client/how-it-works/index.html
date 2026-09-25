@@ -128,10 +128,22 @@
     <article class="prose">
       <h1>How it works</h1>
       <p class="prose-lead">
-        EDH Seer claims that two cards work together only when it can print the sentence that says
-        why. The first half of this page is for the player reading a report, in plain words. The
-        second half, <a href="#under-the-hood">under the hood</a>, is for anyone who wants to dig
-        into the code. Feel free to stop before it.
+        Paste a Commander decklist and EDH Seer shows you which of your cards work together, with
+        the sentence that says why. It only claims a pairing it can put into words, so you can check
+        every one of them against the cards themselves.
+      </p>
+      <!-- THE PAGE SELLS BEFORE IT EXPLAINS (docs refresh, 2026-09-25). A reader who arrives here
+           from a search or a shared link had no way into the product above the fold except the
+           header, and the page ended on a bug-report link. The primary action is the one the
+           header's first item already names; the secondary is the one that needs no decklist. -->
+      <p class="hiw-actions">
+        <a class="btn-primary" href="/">Analyse your deck</a>
+        <a class="btn-secondary" href="/commanders">Browse commanders</a>
+      </p>
+      <p>
+        The first half of this page is for the player reading a report, in plain words. The second
+        half, <a href="#under-the-hood">under the hood</a>, is for anyone who wants to dig into the
+        code. Feel free to stop before it.
       </p>
 
       <!-- THE SCALE, IN THREE NUMBERS, and the first one is a FRACTION on purpose. This page said
@@ -139,7 +151,7 @@
            structured reading -- two readers, two levels of honesty. The corpus and the derived count
            come from the build (`README.md` carries the command and the date, and
            `how-it-works.test.ts` holds this page to it); the edge figure from
-           `npx tsx packages/matcher/src/bin/population-compare.ts`, 35,165 edges across the 71
+           `npx tsx packages/instruments/src/population-compare.ts`, 35,165 edges across the 71
            calibration decks, so ~495 a deck, written with a tilde because it is an average.
            The third number is the one that matters and is not a size at all. -->
       <dl class="figures">
@@ -164,12 +176,12 @@
         </blockquote>
         <ol class="claim-notes">
           <li>
-            <span class="claim-k">supplies</span>
+            <span class="claim-k">causes</span>
             <span>Siege-Gang Commander is a creature, and its own ability lets you sacrifice a Goblin.
             Either way, something of yours dies.</span>
           </li>
           <li>
-            <span class="claim-k">watches for</span>
+            <span class="claim-k">cares about</span>
             <span>Skullclamp reads "Whenever equipped creature dies, draw two cards." Same event, and a
             Goblin is a creature.</span>
           </li>
@@ -180,6 +192,42 @@
           </li>
         </ol>
       </figure>
+
+      <h2>What the report looks like</h2>
+      <p>
+        That sentence is one of a few hundred in a typical deck. Around them, the report maps the
+        pairings, names what to fix first, and works out whether your mana can cast what you drew.
+        This is a real Krenko, Mob Boss list.
+      </p>
+      <!-- REAL SCREENSHOTS, NOT MOCKUPS, written by `npm run screenshots -w @edh-seer/web`
+           (`packages/web/scripts/docs-screenshots.mts`) from Krenko's EDHREC tokens list at 1440
+           wide. A change that alters one of these frames regenerates them in the same PR
+           (CONTRIBUTING.md, "Screenshots"); `screenshots.test.ts` holds the sizes below to the files.
+           Relative `src` so Vite content-hashes them into `/assets/`, where `_headers` already
+           caches for a year; `README.md` shows the same four files, so there is one copy of each.
+           Width and height are set so the page does not shift as they arrive. -->
+      <div class="shots">
+        <figure class="shot shot-hero">
+          <img src="./shot-graph.webp" width="1440" height="830" loading="lazy" decoding="async"
+               alt="The synergy graph of a Krenko, Mob Boss deck. Krenko's pairings are drawn out across the board and his card is open beside it." />
+          <figcaption><strong>A map of your deck.</strong> Every pairing on one board. Click a card to see what it works with.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="./shot-pairs.webp" width="1040" height="640" loading="lazy" decoding="async"
+               alt="The game plan chapter: bars for Goblin typal, combo, anthems, tokens and aristocrats, and the pairs behind each theme." />
+          <figcaption><strong>Your game plan.</strong> The themes your deck leans on, and the pairs behind each.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="./shot-improve.webp" width="1040" height="640" loading="lazy" decoding="async"
+               alt="The suggestions chapter: short on card draw and on interaction, with the target and how many cards to add." />
+          <figcaption><strong>What to fix first.</strong> Gaps stated in cards, biggest payoff at the top.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="./shot-mana.webp" width="640" height="394" loading="lazy" decoding="async"
+               alt="The manabase chart: mana by turn in a typical game, and how many cards first become castable on each turn." />
+          <figcaption><strong>Can you cast it.</strong> Mana by turn, and the turn most of your cards become castable.</figcaption>
+        </figure>
+      </div>
 
       <h2>How it decides</h2>
       <p>
@@ -198,7 +246,7 @@
         <li><span class="pipeline-step">Segment</span><span class="pipeline-note">one sentence at a time</span></li>
         <li class="pipeline-paid"><span class="pipeline-step">Normalize</span><span class="pipeline-note">the model, once per card</span></li>
         <li><span class="pipeline-step">Derive</span><span class="pipeline-note">clauses become events</span></li>
-        <li><span class="pipeline-step">Match</span><span class="pipeline-note">supply meets demand</span></li>
+        <li><span class="pipeline-step">Match</span><span class="pipeline-note">causes meets cares about</span></li>
         <li><span class="pipeline-step">Report</span><span class="pipeline-note">a sentence per claim</span></li>
       </ol>
       <p class="pipeline-key">
@@ -210,10 +258,10 @@
 
       <h2>How a pair is found</h2>
       <p>
-        A pair is found when something one card <strong>produces</strong> is something another card
+        A pair is found when something one card <strong>causes</strong> is something another card
         <strong>cares about</strong>. Both sides carry details that all have to agree: what kind of
-        card it is, who controls it, whether it is a token. The tool calls a found pair an
-        <em>edge</em>, and that is the word the report uses.
+        card it is, who controls it, whether it is a token. The report calls a found pair a
+        <em>pairing</em>.
       </p>
       <!-- THE CONCEPT THE WHOLE TOOL RESTS ON, drawn once. The matched row is the ordinary case; the
            refused row is a REAL defect this engine shipped and had reported from the board, which is
@@ -222,7 +270,7 @@
         <div class="edge-row">
           <div class="edge-card">
             <span class="edge-name">Krenko, Mob Boss</span>
-            <span class="edge-side">produces</span>
+            <span class="edge-side">causes</span>
           </div>
           <div class="edge-link">
             <span class="edge-event">enters · creature · token</span>
@@ -236,14 +284,14 @@
             <span class="edge-side">cares about</span>
           </div>
           <p class="edge-verdict edge-ok">
-            Edge. <em>When a creature enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage.</em>
+            Pairing. <em>When a creature enters thanks to Krenko, Mob Boss, Impact Tremors deals 1 damage.</em>
           </p>
         </div>
 
         <div class="edge-row edge-row-refused">
           <div class="edge-card">
             <span class="edge-name">Farseek</span>
-            <span class="edge-side">produces</span>
+            <span class="edge-side">causes</span>
           </div>
           <div class="edge-link">
             <span class="edge-event">enters · <strong>land</strong></span>
@@ -257,7 +305,7 @@
             <span class="edge-side">cares about</span>
           </div>
           <p class="edge-verdict edge-no">
-            No edge. It wants a <strong>creature</strong> entering, and a fetched land is not one.
+            No pairing. It cares about a <strong>creature</strong> entering, and a fetched land is not one.
           </p>
         </div>
       </div>
@@ -275,7 +323,7 @@
       <ul class="refusals">
         <li>
           <strong>A job is not a pair.</strong>
-          Mana rocks, removal, card draw: cards every deck needs, that do their job with no partner.
+          Mana rocks, removal, card draw: cards every deck needs, that do their job on their own.
           They are counted, not paired.
           <span class="refusal-eg">Sol Ring gets no sentence with every spell it helps you cast. The report counts it as one of your mana sources.</span>
         </li>
@@ -288,7 +336,7 @@
         <li>
           <strong>Playing Magic is not a pair.</strong>
           Something every card in every deck does cannot single any card out.
-          <span class="refusal-eg">"Whenever you cast a spell" forms no edge on its own.</span>
+          <span class="refusal-eg">"Whenever you cast a spell" forms no pairing on its own.</span>
         </li>
         <li>
           <strong>A card cannot feed its own trigger.</strong>
@@ -334,7 +382,7 @@
       <h2>What it cannot see</h2>
       <ul>
         <li>
-          <strong>A card it has not read.</strong> A card outside the 28,416 forms no edges, and the
+          <strong>A card it has not read.</strong> A card outside the 28,416 forms no pairings, and the
           report lists it as unread rather than pretending the deck is fully understood. Its mana
           cost, type and text still count everywhere else.
         </li>
@@ -343,11 +391,22 @@
           Tremors a token every turn and a lone creature entering once are the same pair.
         </li>
         <li>
-          <strong>Some pairs it cannot put into words.</strong> A card that searches your library
-          for another, a spell that returns one from the graveyard. Real synergies, and the way this
-          tool reads cards cannot state them. They are known limits, not undiscovered bugs.
+          <strong>A search for anything.</strong> A tutor or a recursion spell pairs when it names a
+          kind of card: "search your library for a Goblin" pairs with your Goblins, "return an
+          artifact card" with your artifacts. "A card" or "a creature card" names most of a deck, so
+          it pairs with nothing rather than with everything.
         </li>
       </ul>
+
+      <!-- THE END OF THE PLAYER'S HALF IS A DOOR, not a wall of engineering. Most readers stop
+           here, as the lead invites them to, so the action is repeated where they stop. -->
+      <div class="hiw-try">
+        <p><strong>Try it on your own deck.</strong> Paste a list, or a Moxfield or Archidekt link. Free, no account, and nothing is stored.</p>
+        <p class="hiw-actions">
+          <a class="btn-primary" href="/">Analyse your deck</a>
+          <a class="btn-secondary" href="/cards">Look up a card</a>
+        </p>
+      </div>
 
       <h2 id="under-the-hood">Under the hood</h2>
       <p>
@@ -383,7 +442,7 @@
         </li>
         <li>
           <h3><span class="stage-n">Stage 3</span> Derive <span class="stage-cost">free</span></h3>
-          <p>Clauses become typed game events: what the card watches for, and what it supplies. Events no card prints, like a creature being cast or dying, are added from its printed characteristics.</p>
+          <p>Clauses become typed game events: what the card cares about, and what it causes. Events no card prints, like a creature being cast or dying, are added from its printed characteristics.</p>
 <pre><code>Siege-Gang Commander
   emit:     dies  {control:"you", subtype:"goblin"}
 Skullclamp
@@ -410,13 +469,14 @@ text  = "When Siege-Gang Commander dies,
            `packages/matcher/src/edges.ts`. If that order changes, this list is wrong; the stage 4
            doc is the reference and this is its picture. -->
       <ol class="gates">
-        <li><strong>Same verb?</strong> <span>Including the rules bridges: a life-loss trigger accepts a damage emit.</span></li>
+        <li><strong>Same verb?</strong> <span>Including the rules bridges: a death is leaving the battlefield, and a life-loss trigger accepts non-combat damage.</span></li>
+        <li><strong>Big enough?</strong> <span>A trigger that names a size, like "5 or more damage", meets only a producer that states a size satisfying it.</span></li>
         <li><strong>Is the demand restricted?</strong> <span>"Targets only" and the like are refused. A targeting restriction is a demand nothing here can check.</span></li>
         <li><strong>Instant-speed relaxation.</strong> <span>A producer that acts at instant speed and picks its own victim can satisfy a combat-state demand it never names.</span></li>
-        <li><strong>Origin compatible?</strong> <span>Token, not-cast, enters-tapped.</span></li>
-        <li><strong>Self-supplied?</strong> <span>A card must not satisfy its own trigger: combat, cast, its own entry.</span></li>
-        <li><strong>Special-cased verbs.</strong> <span>A graveyard fill, a counter being added, and damage each route to their own comparison.</span></li>
-        <li><strong>Subjects compatible?</strong> <span>Through the type hierarchy. A Goblin is a creature; a land is not.</span></li>
+        <li><strong>Origin compatible?</strong> <span>The zone the object came from.</span></li>
+        <li><strong>Self-supplied?</strong> <span>A card must not satisfy its own trigger: combat, cast, its own entry, or doing something to itself.</span></li>
+        <li><strong>Special-cased verbs.</strong> <span>A graveyard fill, a counter added or removed, and damage each route to their own comparison.</span></li>
+        <li><strong>Subjects compatible?</strong> <span>Through the type hierarchy, with token, not-cast and enters-tapped. A Goblin is a creature; a land is not.</span></li>
       </ol>
 
       <h3>Read the rest</h3>

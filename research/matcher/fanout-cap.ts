@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { parseDecklistSections } from "@edh-seer/data";
+import { parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
+import { analyzeDeckStatic } from "../../packages/web/client/src/api.static.js";
 
 /** WHAT DOES `FLOW_FANOUT_CAP` ACTUALLY HIDE? (owner question, 2026-09-03.)
  *
@@ -27,17 +28,18 @@ import { parseDecklistSections } from "@edh-seer/data";
  *  column is what a bigger cap COSTS, and it is nothing below the 90th percentile -- p50 5 and p90
  *  11 at every cap, because raising it changes hubs only.
  *
- *  THROUGH THE RUNNING SERVER on purpose. The directed graph is the wire-graph projection, several
- *  steps past `analyzeDeckStructured`'s undirected `edges`, and rebuilding that chain here would be
- *  a second definition of the thing being measured.
+ *  THROUGH THE APP'S OWN ANALYSIS on purpose -- `analyzeDeckStatic`, the function the browser runs.
+ *  The directed graph is the wire-graph projection, several steps past `analyzeDeckStructured`'s
+ *  undirected `edges`, and rebuilding that chain here would be a second definition of the thing
+ *  being measured. (It went through the NestJS API until that was removed, 2026-09-25.)
  *
- *  Free: reads only, no API spend, no writes. Needs the web server up.
+ *  Free: reads only, no API spend, no writes. Reads the live site's `/static` shards, or a local
+ *  build's with STATIC=http://localhost:5173/static.
  *
- *    cd packages/web && NODE_OPTIONS="--import tsx" npx nest start
- *    npx tsx packages/matcher/src/bin/fanout-cap.ts
+ *    npx tsx research/matcher/fanout-cap.ts
  */
-const API = process.env.API ?? "http://localhost:3001";
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const STATIC = process.env.STATIC ?? "https://edhseer.cards/static";
+const DECK_DIR = CALIBRATION_DECKS;
 const CAPS = [6, 7, 10, 15, 20];
 
 function pct(xs: number[], p: number): number {
@@ -59,16 +61,12 @@ async function main(): Promise<void> {
 
   for (const file of readdirSync(DECK_DIR).filter((f) => f.endsWith(".txt")).sort()) {
     const sections = parseDecklistSections(readFileSync(join(DECK_DIR, file), "utf8"));
-    // THROUGH THE RUNNING SERVER, not a local re-derivation. The directed graph is the wire-graph
-    // PROJECTION, several steps past `analyzeDeckStructured`'s undirected `edges`, and rebuilding
-    // that chain here would be a second definition of the thing being measured.
-    const res = await fetch(`${API}/api/analyze`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ decklist: sections.deck.join("\n"), commanders: sections.commanders.join("\n") }),
-    });
-    if (!res.ok) { console.error(`skip ${file}: ${res.status}`); continue; }
-    const r = await res.json() as { graph?: { edges: { from: string; to: string }[] } };
-    const edges = r.graph?.edges ?? [];
+    // THE APP'S OWN ANALYSIS, not a local re-derivation: see the header.
+    let r: Awaited<ReturnType<typeof analyzeDeckStatic>>;
+    try {
+      r = await analyzeDeckStatic(sections.deck.join("\n"), sections.commanders.join("\n"), STATIC, fetch);
+    } catch (e) { console.error(`skip ${file}: ${e instanceof Error ? e.message : e}`); continue; }
+    const edges = r.graph.edges;
     if (edges.length === 0) continue;
     decks++;
 

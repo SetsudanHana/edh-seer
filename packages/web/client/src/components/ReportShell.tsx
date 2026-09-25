@@ -33,6 +33,7 @@ import { useBoardMode } from "../lib/use-board-mode.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
+import { SURFACE_ROW_SLOT_ID } from "../lib/surface-slot.js";
 
 /** THE REPORT'S SHELL: the sticky header, the scroll, and the three reference surfaces that are
  *  NOT part of it.
@@ -83,6 +84,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   // Graph surface is the LIST, and the board is one tap from a row -- one card's local graph
   // owning the viewport, rather than the whole-deck cloud at 14.7px a disc.
   const autoBoardMode = useBoardMode(data.graph?.nodes.length ?? 0);
+  const comboCount = data.report.combos?.length ?? 0;
   /** THE READER OVERRIDES THE GUESS (owner, 2026-09-06: option 3, "both"). The hook predicts which
    *  surface a device can use; a phone that got the whole-deck board could not reach the one-card
    *  view, and the reverse. The switch sits above either surface at every width (until
@@ -244,7 +246,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route
               path="graph"
               element={
-                <Reference>
+                <Reference aside={modeSwitch} comboCount={comboCount}>
                   {/* A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
                     * fallback shorter than what replaces it is a layout shift on arrival -- the exact
                     * defect the `#root` reserve one file over exists to remove. The message says what
@@ -253,10 +255,9 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                     * board and the whole-deck board are the same wait for the same chunk. */}
                   <Suspense fallback={
                     <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
-                      loading the board
+                      loading the graph
                     </div>
                   }>
-                    {modeSwitch}
                     {boardMode === "ego"
                       ? (focusId
                         ? (
@@ -267,6 +268,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                             onFocus={setFocusId}
                             onBack={() => setFocusId(null)}
                             artLoader={artLoaderRef.current}
+                            inline={autoBoardMode === "board"}
                           />
                         )
                         : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
@@ -278,12 +280,12 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route
               path="cards"
               element={
-                <Reference>
+                <Reference comboCount={comboCount}>
                   <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
                 </Reference>
               }
             />
-            <Route path="combos" element={<Reference><ComboList combos={data.report.combos} /></Reference>} />
+            <Route path="combos" element={<Reference comboCount={comboCount}><ComboList combos={data.report.combos} /></Reference>} />
             {/* A path this app does not have is the REPORT, not an error page: the deck is in the
               *  hash and the chapters are what it is for. */}
             <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
@@ -300,15 +302,22 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
  *  The browser's own back button is the primary route home — that is why these are routes at all —
  *  but a reader who arrived by pressing `Graph` in the rail can be several surfaces deep, and a
  *  visible way back costs one line. */
-function Reference({ children }: { children: React.ReactNode }) {
+/** `aside` sits at the right end of the surface tabs. The graph puts its Whole deck / One card
+ *  switch there: on its own row it cost the board ~60px at every width (2026-09-25 live review,
+ *  where the board started at y=438 on a 900px laptop). */
+function Reference({ children, aside, comboCount }: { children: React.ReactNode; aside?: React.ReactNode; comboCount: number }) {
   const { pathname } = useLocation();
   return (
-    <div className="flex flex-col gap-6 pt-6">
+    // gap-2/pt-2, not 4 (UI review 2026-09-25): the 16px above and below this row were two of the
+    // last 28px keeping the 660px graph board from fitting a 1440x900 screen.
+    <div className="flex flex-col gap-2 pt-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <nav aria-label="Report surfaces" className="flex gap-4 items-baseline">
         <SurfaceLink to="/" className="eyebrow text-(--accent)">
           &larr; Report
         </SurfaceLink>
-        {REFERENCE_SURFACES.map((s) => (
+        {/* The current surface always gets its tab, even Combos on a deck without any. */}
+        {(pathname === "/analysis/combos" ? REFERENCE_SURFACES : surfacesFor(comboCount)).map((s) => (
           <SurfaceLink
             key={s.path}
             to={s.path}
@@ -318,6 +327,11 @@ function Reference({ children }: { children: React.ReactNode }) {
           </SurfaceLink>
         ))}
       </nav>
+      {/* A SLOT FOR THE SURFACE'S OWN SHORTCUTS (UI review 2026-09-25): the graph portals its key
+        *  cards here, so they share this row's slack instead of taking a row above the board. */}
+      <div id={SURFACE_ROW_SLOT_ID} className="flex flex-wrap items-center gap-2 min-w-0 empty:hidden" />
+      {aside ? <div className="ml-auto">{aside}</div> : null}
+      </div>
       {children}
     </div>
   );
@@ -370,6 +384,14 @@ export const REFERENCE_SURFACES: readonly { path: string; label: string }[] = [
   { path: "/analysis/cards", label: "Cards" },
   { path: "/analysis/combos", label: "Combos" },
 ];
+
+/** The surfaces worth a link for this deck. COMBOS ONLY WHEN THERE ARE SOME (UI review 2026-09-25):
+ *  a deck with none got a tab that opened a page holding one sentence, and the report already
+ *  says so in the bracket panel. The route itself stays, so a shared `/analysis/combos` link
+ *  still opens and says there are none. */
+export function surfacesFor(comboCount: number): readonly { path: string; label: string }[] {
+  return comboCount > 0 ? REFERENCE_SURFACES : REFERENCE_SURFACES.filter((s) => s.path !== "/analysis/combos");
+}
 
 /** BACK RETURNS YOU TO WHERE YOU WERE IN THE SCROLL — the one thing routes were chosen FOR, and the
  *  one thing they do not do on their own. React Router changes the DOM without touching scroll, and

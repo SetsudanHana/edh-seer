@@ -1,9 +1,7 @@
 /** FREE, throwaway. Live false claims of one cause, with FULL oracle text on both sides.
  *  Written because judging on truncated text produced 12 wrong verdicts in one family. */
 import { existsSync, readFileSync } from "node:fs";
-import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "@edh-seer/matcher";
@@ -16,7 +14,7 @@ const TAG = WANT.startsWith("tag:") ? WANT.slice(4) : undefined;
 const FROM = Number(process.argv[3] ?? 0);
 const N = Number(process.argv[4] ?? 12);
 const PANEL = "docs/measurements/panel";
-const DECKS = "packages/cli/decks/calibration";
+const DECKS = CALIBRATION_DECKS;
 const pairs = (JSON.parse(readFileSync(`${PANEL}/pairs.json`, "utf8")) as { pairs: { producer: string; consumer: string; deck: string }[] }).pairs;
 const cache = new Map(readFileSync(`${PANEL}/verdicts.jsonl`, "utf8").split("\n").filter((l) => l.trim())
   .map((l) => JSON.parse(l) as PanelVerdict).map((v) => [`${v.producer}|${v.consumer}|${v.tag}`, v]));

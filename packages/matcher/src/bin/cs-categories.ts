@@ -1,5 +1,5 @@
 import type { SaltPayload } from "./calibrate-core.js";
-import { ARCHETYPE_SIGNATURE, type Archetype } from "../archetypes.js";
+import type { Archetype } from "../archetypes.js";
 
 /** Slugify a card name to CommanderSalt's key format (lowercase, underscored):
  *  "Venser, Shaper Savant" -> "venser_shaper_savant".

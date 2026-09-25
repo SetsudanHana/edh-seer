@@ -45,7 +45,9 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
             <li key={c.name} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
               <span className="pip shrink-0">{(c.synergyRating ?? 0).toFixed(1)}</span>
               <span className="flex-1 min-w-0">
-                <span className="block truncate">
+                {/* `sm:truncate`: on a phone the tags ("pulls double duty (Ramp, Draw)") were cut
+                  *  to "pulls double d...", so there the line wraps (UI review 2026-09-25). */}
+                <span className="block sm:truncate">
                   <CardName name={c.name} />
                   {/* AN AUTHORED SVG, NEVER A GLYPH. `⚡` is an emoji, which `DESIGN.md` bans as an
                     *  icon outright ("draw a small SVG in one consistent stroke"), and it rendered
@@ -101,11 +103,15 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                 {/* THE CARD'S BEST RATE (roadmap Y9): what it charges for what it does, and where
                   *  that sits among every card that does the same thing. Per family, so a draw
                   *  rate is compared with draw rates and never with damage. */}
-                {c.rate ? (
+                {/* ONLY WHEN IT SAYS SOMETHING (review 2026-09-25). "0+ damage / 4 mana · top 60% of
+                  *  damage rates" was true of any card and read as praise for a below-median rate.
+                  *  A rate whose floor is 0 names no yield, and a percentile outside the top
+                  *  quarter is not a standout, so the line is left off rather than printed. */}
+                {c.rate && showsRate(c.rate) ? (
                   <span className="block text-xs text-(--muted)">
-                    {rateLabel(c.rate.span, c.rate.family as RateFamily, c.rate.size)} · top{" "}
-                    <span className="stat-num">{Math.max(1, Math.round((1 - c.rate.percentile) * 100))}%</span> of{" "}
-                    {RATE_FAMILY_LABEL[c.rate.family as RateFamily] ?? c.rate.family} rates
+                    {rateLabel(c.rate.span, c.rate.family as RateFamily, c.rate.size)} · among the top{" "}
+                    <span className="stat-num">{topShare(c.rate.percentile)}%</span> of{" "}
+                    {RATE_FAMILY_LABEL[c.rate.family as RateFamily] ?? c.rate.family} cards for its cost
                   </span>
                 ) : null}
               </span>
@@ -115,4 +121,11 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
       </ul>
     </div>
   );
+}
+
+const topShare = (percentile: number): number => Math.max(1, Math.round((1 - percentile) * 100));
+
+/** A rate line earns its place with a real yield and a top-quarter standing. */
+export function showsRate(rate: { span: readonly unknown[]; percentile: number }): boolean {
+  return Number(rate.span[0]) > 0 && topShare(rate.percentile) <= 25;
 }

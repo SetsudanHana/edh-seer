@@ -502,7 +502,9 @@ function DeckMathRows({
             could supply every class.
           </p>
         ) : null}
-        <ul className="flex flex-col gap-1">
+        {/* 32rem: the class, its count and its shortfall are one reading, and at 1920px they sat
+          *  800px apart (UI review 2026-09-25). */}
+        <ul className="flex flex-col gap-1 max-w-lg">
           {answers.map((a) => {
             const none = a.count === 0;
             // How many short of the doctrine's confidence, DERIVED rather than a template: the
@@ -581,11 +583,13 @@ function DeckMathRows({
                   </span>
                   {a.class}
                 </span>
-                <span className="flex-1 text-right stat-num flex items-baseline justify-end gap-1.5">
-                  <span className={none ? "text-(--warning)" : "text-(--muted)"}>
+                {/* NOWRAP PER PIECE, WRAP BETWEEN THEM: at 390px "2 cards 1 recurring" broke inside
+                  *  "2 cards", printing the number over its noun. Now the mode drops whole. */}
+                <span className="flex-1 text-right stat-num flex flex-wrap items-baseline justify-end gap-x-1.5">
+                  <span className={`whitespace-nowrap ${none ? "text-(--warning)" : "text-(--muted)"}`}>
                     {none ? "none" : plural(a.count, "card")}
                   </span>
-                  <span className={`text-xs ${mode.startsWith("none") ? "text-(--warning)" : "text-(--muted)"}`}>{mode}</span>
+                  <span className={`whitespace-nowrap text-xs ${mode.startsWith("none") ? "text-(--warning)" : "text-(--muted)"}`}>{mode}</span>
                 </span>
                 {/* The one prescriptive figure on the panel, and now the only number in its row
                   *  besides the count it is measured from. Narrower at 390px, where the label needs
@@ -851,9 +855,15 @@ function DeckMathRows({
             ))}
           </p>
           <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
-            Concentration {wincons.focus.toFixed(2)}: 1.00 is all-in on one plan,{" "}
-            {(1 / Math.max(1, wincons.classes.length)).toFixed(2)} is an even split across these{" "}
-            {wincons.classes.length}. Higher is better.
+            {/* IN WORDS, NOT "CONCENTRATION 0.51" (wording review 2026-09-25): a two-decimal index
+              *  with its own scale explained beside it is a statistic, not a sentence a player
+              *  reads. Same number, three readings: near 1 is all-in, near an even split is
+              *  spread, and between is leaning. */}
+            {wincons.focus >= 0.8
+              ? "Nearly all-in on one plan."
+              : wincons.focus >= 1 / Math.max(1, wincons.classes.length) + 0.15
+              ? "Leaning on one plan."
+              : `Spread about evenly across these ${wincons.classes.length}.`}
           </p>
         </div>
   ) : null;
@@ -1135,8 +1145,8 @@ function DeckMathRows({
         // the card — so the wording has to be true of all three cases (a phase, combat, and a card
         // triggering itself). "Nothing has to supply it" is the component's own phrasing from the
         // comment above, and it covers every one.
-        ? `${sentence}, ${d.consumers} cards need it, and it happens on its own`
-        : `${sentence}, ${d.consumers} cards need it, ${d.suppliers} make it happen`;
+        ? `${sentence}, ${d.consumers} cards care about it, and it happens on its own`
+        : `${sentence}, ${d.consumers} cards care about it, ${d.suppliers} cause it`;
     return (
       <li key={d.key} className="flex items-center gap-3 text-sm" aria-label={label}>
         {/* The raw census key stays reachable on hover, because `bin/deck-availability.ts` prints
@@ -1144,8 +1154,8 @@ function DeckMathRows({
         <span className="flex-1 truncate" title={d.key}>{sentence}</span>
         <span className={`shrink-0 stat-num ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
           {d.available === null
-            ? `${d.consumers} need · happens on its own`
-            : `${d.consumers} need · ${d.suppliers} enable`}
+            ? `${d.consumers} care · happens on its own`
+            : `${d.consumers} care · ${d.suppliers} cause it`}
         </span>
       </li>
     );
@@ -1153,23 +1163,23 @@ function DeckMathRows({
   const unmet = demand.filter((d) => d.available !== null && d.suppliers === 0);
   const demandBlock = (
       <div className="flex flex-col gap-1.5">
-        <h4 className="eyebrow">Needs and enablers</h4>
+        <h4 className="eyebrow">What they care about, and what causes it</h4>
         {unmet.length > 0 ? (
           <>
             <p className="text-sm text-(--muted)">
-              {plural(unmet.length, "need")} with nothing in the deck to make{" "}
-              {unmet.length === 1 ? "it" : "them"} happen.
+              {plural(unmet.length, "thing")} your cards care about, and nothing in the deck
+              causes {unmet.length === 1 ? "it" : "them"}.
             </p>
             <ul className="flex flex-col gap-1">{unmet.map(demandRow)}</ul>
           </>
         ) : (
           <p className="text-sm text-(--muted)">
-            Everything your cards are waiting for, something in the deck provides.
+            Everything your cards care about, something in the deck causes.
           </p>
         )}
         <details>
           <summary className="eyebrow cursor-pointer text-(--muted)">
-            all {demand.length} needs
+            show all {demand.length}
           </summary>
           <ul className="flex flex-col gap-1 pt-1">{demand.map(demandRow)}</ul>
         </details>

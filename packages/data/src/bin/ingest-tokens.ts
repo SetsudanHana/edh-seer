@@ -19,7 +19,7 @@
  *  Usage: tsx src/bin/ingest-tokens.ts [--dry-run]
  */
 import { fileURLToPath } from "node:url";
-import { connect, loadConfig } from "@edh-seer/data";
+import { connect, loadConfig, scryfallSearch, scryfallSearchUrl } from "@edh-seer/data";
 import { mergeTokenDocs, tokenDoc, tokenKey, type ScryfallToken } from "./ingest-tokens-core.js";
 
 /** TWO SEARCHES, ONE COLLECTION. `is:token` does not return layout `emblem` (checked live
@@ -30,25 +30,16 @@ import { mergeTokenDocs, tokenDoc, tokenKey, type ScryfallToken } from "./ingest
  *  emblem was already here through the double-faced-token search; the merge keys on oracle id, so
  *  it stays one row. */
 const SEARCHES = [
-  "https://api.scryfall.com/cards/search?q=is%3Atoken&unique=prints&order=name",
-  "https://api.scryfall.com/cards/search?q=t%3Aemblem&unique=prints&order=name",
+  scryfallSearchUrl("is:token", { unique: "prints", order: "name" }),
+  scryfallSearchUrl("t:emblem", { unique: "prints", order: "name" }),
 ];
-const HEADERS = { "User-Agent": "edh-seer/0.1", Accept: "application/json" };
-const sleep = (ms: number): Promise<void> => new Promise((r) => { setTimeout(r, ms); });
 
+/** Through the shared client: paging, pacing and back-off. Until 2026-09-25 this loop threw on the
+ *  first 429, so a busy afternoon at Scryfall failed the whole ingest. */
 async function fetchAll(): Promise<ScryfallToken[]> {
   const out: ScryfallToken[] = [];
   for (const search of SEARCHES) {
-    let url: string | undefined = search;
-    while (url) {
-      const res = await fetch(url, { headers: HEADERS });
-      if (!res.ok) throw new Error(`Scryfall search failed: ${res.status}`);
-      const page = await res.json() as { data: ScryfallToken[]; has_more?: boolean; next_page?: string };
-      out.push(...page.data);
-      url = page.has_more ? page.next_page : undefined;
-      // Scryfall asks for 50-100ms between requests.
-      await sleep(100);
-    }
+    for await (const page of scryfallSearch<ScryfallToken>(search)) out.push(...page);
   }
   return out;
 }

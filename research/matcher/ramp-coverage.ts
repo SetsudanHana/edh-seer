@@ -12,16 +12,16 @@
  *
  *  The row to read is a finder with 0-2 targets: the card is a slot doing almost nothing.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/ramp-coverage.ts [deck.txt] */
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/ramp-coverage.ts [deck.txt] */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import type { CardTags } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured } from "../../packages/matcher/src/index.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
-const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DIR = CALIBRATION_DECKS;
 const only = process.argv[2];
 const THIN = 2;
 

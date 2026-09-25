@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
-import { DeckInput } from "./DeckInput.js";
+import { DeckInput, cardCount } from "./DeckInput.js";
 
 const props = {
   value: "",
@@ -118,7 +118,7 @@ test("Clear calls its handler and never the analysis", async () => {
 /** NEUTRAL, NOT DESTRUCTIVE, AND NOT A SECOND PRIMARY (tokens-and-color.md). One affirmative action
  *  per screen wears the accent fill; a red Clear would put the loudest mark on the landing page on
  *  the action nobody arrived to take. The class carries the whole rule, so the class is the
- *  assertion -- and `validate_contrast.py` holds the border it uses to 3:1. */
+ *  assertion -- and `validate_contrast.mjs` holds the border it uses to 3:1. */
 test("Clear is the neutral variant and Analyze keeps the accent", () => {
   render(<DeckInput {...props} value="1 Sol Ring" />);
   expect(screen.getByRole("button", { name: "Clear" }).className).toContain("btn-secondary");
@@ -157,4 +157,12 @@ test("a narrow screen keeps Edit and Re-analyse out and folds the rest behind Mo
   } finally {
     window.matchMedia = original;
   }
+});
+
+/** "90 lines · The Rani" beside a 100-card report (review 2026-09-25): the summary counts cards. */
+test("the collapsed summary counts cards, not lines", () => {
+  expect(cardCount("1 The Rani", "Deck\n10 Island\n1 Sol Ring (CMM) 1\n// note\n\nArcane Signet")).toBe(13);
+  // A commander pasted in both boxes is one card.
+  expect(cardCount("1 The Rani", "Commander\n1 The Rani\n1 Sol Ring")).toBe(2);
+  expect(cardCount("", "https://moxfield.com/decks/abc")).toBeNull();
 });

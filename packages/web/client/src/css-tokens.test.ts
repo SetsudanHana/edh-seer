@@ -1,6 +1,9 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+/** The web package, found from this file rather than from the working directory, so the test runs
+ *  the same from `packages/web` and from the repository root (the root vitest config). */
+const WEB = join(import.meta.dirname, "..", "..");
 
 /** DOES EVERY TOKEN A COMPONENT NAMES ACTUALLY EXIST?
  *
@@ -16,10 +19,9 @@ import { expect, test } from "vitest";
  *  only thing that catches it is asking the question in this direction: every `var(--x)` a
  *  component names, against the definitions in `index.css`.
  */
-// `process.cwd()` rather than `import.meta.url`: the client's vitest runs in jsdom, where the
-// module URL is an http:// one and `fileURLToPath` refuses it. The config sets the cwd to the web
-// package.
-const CLIENT_SRC = join(process.cwd(), "client", "src");
+// `import.meta.dirname`, not `fileURLToPath(import.meta.url)`: the client's vitest runs in jsdom,
+// where the module URL is an http:// one and `fileURLToPath` refuses it.
+const CLIENT_SRC = join(WEB, "client", "src");
 const INDEX_CSS = join(CLIENT_SRC, "index.css");
 
 /** Set by the framework, not by us. `--heroui-*` comes from `@heroui/styles`, and Tailwind v4

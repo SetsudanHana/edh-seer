@@ -69,8 +69,12 @@ export function CardTile({ slug, name, art, identity, to, caption, note }: {
             {name}
           </div>
         )}
-        <p className="flex items-baseline gap-x-2 min-w-0">
-          <span className="font-semibold leading-tight text-(--foreground) group-hover:text-(--accent) group-hover:underline underline-offset-2 line-clamp-2 min-w-0 [overflow-wrap:anywhere]">{name}</span>
+        {/* BREAK BETWEEN WORDS, AND LET THE PIPS WRAP (UI review 2026-09-25). `overflow-wrap:
+          *  anywhere` let the name shrink below its longest word, so at 390px a three-across tile
+          *  printed "Mendic / ant..." to make room for the pips. Now a word breaks only if it alone
+          *  is wider than the tile, and the pips drop under the name when both do not fit. */}
+        <p className="flex flex-wrap items-baseline gap-x-2 min-w-0">
+          <span className="font-semibold leading-tight text-(--foreground) group-hover:text-(--accent) group-hover:underline underline-offset-2 line-clamp-2 min-w-0 break-words">{name}</span>
           <span className="text-xs shrink-0 ml-auto"><ManaSymbols cost={pips} /></span>
         </p>
       </Link>

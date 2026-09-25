@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
-import { DeckInput } from "./components/DeckInput.js";
+import { DeckActions, DeckInput } from "./components/DeckInput.js";
+import { DeckActionsProvider } from "./lib/deck-actions.js";
 import { PageFoot } from "./components/PageFoot.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
@@ -49,8 +50,12 @@ function AppBooted() {
  *  would strand a reader who pressed Edit and then walked to the board. `ReportHeader` stays too --
  *  "the summary on every surface" is a decision with a test on it (`ReportShell.test.tsx`), and this
  *  is not the change that reverses it. */
-export function DeckBar(props: ComponentProps<typeof DeckInput>) {
-  return useLocation().pathname === "/analysis/graph" && props.collapsed ? null : <DeckInput {...props} />;
+export function DeckBar({ hasReport, ...props }: ComponentProps<typeof DeckInput> & { hasReport?: boolean }) {
+  const onGraph = useLocation().pathname === "/analysis/graph";
+  // AND NOWHERE ONCE A REPORT IS UP (UI review 2026-09-25): its actions sit at the end of the
+  // report's summary row instead (`DeckActions`, handed down through `lib/deck-actions.ts`), so the
+  // collapsed box only shows while there is no report to carry them -- a first run in flight.
+  return props.collapsed && (onGraph || hasReport) ? null : <DeckInput {...props} />;
 }
 
 export default function App() {
@@ -295,6 +300,18 @@ export default function App() {
     return () => { delete root.dataset.report; };
   }, [data]);
 
+  /** THE TAB NAMES THE DECK (review 2026-09-25). Every report kept the landing's title, so two decks
+   *  open side by side, or a week of history, were indistinguishable. Restored when the report goes,
+   *  so the landing's title -- the one a crawler reads -- is never replaced for good. */
+  const reportCommander = (analysedRef.current?.commanders ?? commanders)
+    .split("\n")[0]?.replace(/^\d+\s+/, "").replace(/\s*\(.*$/, "").trim();
+  useEffect(() => {
+    if (!data || !reportCommander) return;
+    const before = document.title;
+    document.title = `${reportCommander} deck report — EDH Seer`;
+    return () => { document.title = before; };
+  }, [data, reportCommander]);
+
   /** BACK AND FORWARD, now that an analysis is a history entry.
    *
    *  Without this the entry exists and does nothing when you reach it: the URL would change and the
@@ -384,7 +401,7 @@ export default function App() {
     {/* THE SEARCH FIELD ON EVERY APP PAGE (spec 2026-09-08 part 1). Outside `<Routes>`, because it
       *  is the header's, not any page's; a portal, because the header is static HTML. */}
     <HeaderSearch />
-    <main className="p-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
+    <main className="px-(--gutter) py-8 w-full max-w-5xl xl:max-w-none mx-auto flex flex-col gap-8">
     <Suspense fallback={null}>
     <AppBooted />
     <Routes>
@@ -422,7 +439,7 @@ export default function App() {
       {firstVisit && (
         <div className="flex flex-col gap-3">
           <h2 className="max-w-[22ch] text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-(--foreground)">
-            Paste a decklist and see which cards work together.
+            Paste a Commander deck and see which cards work together.
           </h2>
           {/* 65ch, and the cap is the whole point: this ran the full width of the container, which
             *  above `xl` is the viewport — 1,376px at 1440, or 156 characters a line against the
@@ -488,6 +505,7 @@ export default function App() {
         onClear={() => { clearLastRun(); setCommanders(""); setDecklist(""); }}
         onExample={firstVisit ? () => { setCommanders(EXAMPLE_DECK.commanders); setDecklist(EXAMPLE_DECK.decklist); } : undefined}
         shareLink={link}
+        hasReport={!!data}
       />
       {error && (
         <div className="text-danger border border-danger rounded-(--radius) p-3 text-sm font-mono">{error}</div>
@@ -501,7 +519,20 @@ export default function App() {
           {/* ITS OWN BOUNDARY: suspending in the routes' one would blank the deck bar above it too.
             *  The report's code is a lazy chunk, so the skeleton covers that fetch as well. */}
           <Suspense fallback={<ReportLoading commander={loadingCommander} lines={loadingLines} />}>
+            {/* Absent while the editor is open: its own buttons are on screen then. */}
+            <DeckActionsProvider value={editing ? null : (
+              <DeckActions
+                commanders={commanders}
+                value={decklist}
+                onAnalyze={onAnalyze}
+                loading={loading}
+                onEdit={() => setEditing(true)}
+                onStartOver={() => { clearLastRun(); window.location.assign("/"); }}
+                shareLink={link}
+              />
+            )}>
             <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
+            </DeckActionsProvider>
             {/* THE REPORT ENDS ON PURPOSE. It used to stop at its last panel, and the only route from
               *  a finished report to "how was any of this decided" was the header's More menu; the
               *  card and commander pages have carried this foot since they were built. Inside the

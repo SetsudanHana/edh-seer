@@ -22,10 +22,10 @@ import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
 import {
-  answerList, bestRoute, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements, planList,
+  answerList, bestRoute, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements,
   type Candidate, type CutSide, type DeckSide, type GroupState, type IndexCard,
 } from "./suggest.js";
-import { demandForms, demandKeysOf, eventKey, splitKey, supplyForms, supplyKeysOf } from "./bin/partners-core.js";
+import { demandForms, demandKeysOf, eventKey, splitKey, supplyForms, supplyKeysOf } from "./partners-core.js";
 import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import { axisEventKeys, eventKeysForDemand } from "./suggest-keys.js";
 import type { DeckCard } from "./types.js";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { deckExportText } from "../lib/deck-export.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 
@@ -59,7 +59,7 @@ export function DeckInput({
   }
 
   if (collapsed) {
-    const count = value.split("\n").filter((l) => l.trim()).length;
+    const count = cardCount(commanders, value);
     const cmdName = commanders.split("\n")[0]?.replace(/^\d+\s+/, "").trim();
     // IT WRAPS, AND AT 390px IT HAS TO. Four controls plus the summary ran 409px wide inside a
     // 390px viewport -- measured `document.body.scrollWidth` 466 against a 390 client width, so 76px
@@ -71,7 +71,7 @@ export function DeckInput({
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border border-(--separator) rounded-(--radius) p-3 bg-(--surface) text-sm">
         <span className="text-(--muted) truncate">
-          <span className="stat-num text-(--foreground)">{count}</span> lines
+          {count === null ? "Deck link" : <><span className="stat-num text-(--foreground)">{count}</span> {count === 1 ? "card" : "cards"}</>}
           {cmdName ? <> · {cmdName}</> : null}
         </span>
         <div className="flex flex-wrap gap-2">
@@ -150,11 +150,16 @@ export function DeckInput({
         <label className="eyebrow" htmlFor="commanders-input">
           Commander
         </label>
+        {/* THE HINTS ARE TEXT, NOT PLACEHOLDER (review 2026-09-25). A placeholder is dim and gone on
+          *  the first keystroke; "optional" and "a deck link works" are facts a reader needs while
+          *  the box is full too. */}
+        <p id="commanders-hint" className="text-xs text-(--muted)">Leave empty if your list has a Commander section.</p>
         <textarea
           id="commanders-input"
           className="field"
           aria-label="Commander(s)"
-          placeholder={"1 Krenko, Mob Boss  (optional — or use a 'Commander' section in the decklist)"}
+          aria-describedby="commanders-hint"
+          placeholder={"1 Krenko, Mob Boss"}
           rows={2}
           value={commanders}
           onChange={(e) => onCommandersChange(e.target.value)}
@@ -164,10 +169,12 @@ export function DeckInput({
         <label className="eyebrow" htmlFor="decklist-input">
           Decklist
         </label>
+        <p id="decklist-hint" className="text-xs text-(--muted)">Paste a list, or a Moxfield or Archidekt deck link.</p>
         <textarea
           id="decklist-input"
           className="field font-mono"
           aria-label="Decklist"
+          aria-describedby="decklist-hint"
           // A LINK WORKS HERE TOO, and the placeholder is where that gets discovered: it is visible
           // exactly when the box is empty, which is the moment a reader has something on their
           // clipboard. A feature nobody knows about has not shipped.
@@ -221,6 +228,110 @@ export function DeckInput({
           {loading ? "Analysing…" : "Analyse deck"}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** CARDS, NOT LINES (review 2026-09-25). The summary read "90 lines · The Rani" beside a report
+ *  that says 100 cards everywhere else: a player counts cards, and "4 Island" is four of them.
+ *  A line with a leading quantity counts that many, a section header ("Commander", "Deck") counts
+ *  none, any other line counts one, and the commander field counts too. A pasted deck link has no
+ *  count to give, so it returns null and the summary says what it is instead. */
+export function cardCount(commanders: string, decklist: string): number | null {
+  if (/^\s*https?:\/\//i.test(decklist.trim())) return null;
+  const HEADER = /^(commanders?|deck|main(board)?|sideboard|companion|maybeboard|considering)\s*:?\s*(\(\d+\))?$/i;
+  const rows = (text: string) => text.split("\n").map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("//") && !l.startsWith("#") && !HEADER.test(l))
+    .map((l) => {
+      const m = /^(\d+)\s*x?\s+(.+)$/i.exec(l);
+      // The name without a set code or collector number, to spot a commander listed twice.
+      const name = (m ? m[2]! : l).replace(/\s*\(.*$/, "").toLowerCase();
+      return { qty: m ? Number(m[1]) : 1, name };
+    });
+  const deck = rows(decklist);
+  const listed = new Set(deck.map((r) => r.name));
+  // A commander pasted in both boxes is one card, not two.
+  const extra = rows(commanders).filter((r) => !listed.has(r.name));
+  return [...deck, ...extra].reduce((n, r) => n + r.qty, 0);
+}
+
+/** THE DECK'S ACTIONS AS ONE COMPACT GROUP, for the report's summary row (UI review 2026-09-25).
+ *  The same five actions as the collapsed bar above, and the same handlers, minus the box and the
+ *  card count: Copy link, Edit and Re-analyse stay visible, and the two taken once -- Copy decklist
+ *  and Start over -- sit in a More menu. 36px tall rather than the bar's 44: this row is sticky,
+ *  and it is a toolbar beside the scores rather than the page's primary action. On a phone the
+ *  link joins the menu too, so the group fits beside the scores or on one line of its own. */
+export function DeckActions({
+  commanders, value, onAnalyze, loading, onEdit, onStartOver, shareLink,
+}: {
+  commanders: string;
+  value: string;
+  onAnalyze: () => void;
+  loading: boolean;
+  onEdit?: () => void;
+  onStartOver?: () => void;
+  shareLink?: string | null;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+  const narrow = useIsNarrow();
+  const box = useRef<HTMLDivElement>(null);
+  // A MENU CLOSES THE WAYS A READER EXPECTS: Escape, and a press anywhere outside it.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onDown = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    return () => { document.removeEventListener("keydown", onKey); document.removeEventListener("pointerdown", onDown); };
+  }, [open]);
+
+  async function onCopy() {
+    await navigator.clipboard.writeText(deckExportText(commanders, value));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+  async function copyLink() {
+    if (!shareLink) return;
+    await navigator.clipboard.writeText(shareLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 1500);
+  }
+  const small = "min-h-9 px-3 text-sm";
+  const item = "block w-full text-left px-3 py-2 text-sm rounded-(--radius) hover:bg-(--surface-secondary) min-h-9";
+  const link = shareLink ? (linkCopied ? "Link copied" : "Copy link") : null;
+  return (
+    <div ref={box} role="group" aria-label="Deck" className="relative flex items-center gap-2">
+      {link && !narrow ? (
+        <button type="button" onClick={() => void copyLink()} className={`btn-secondary ${small}`}>{link}</button>
+      ) : null}
+      <button type="button" onClick={onEdit} className={`btn-secondary ${small}`}>Edit</button>
+      <button
+        type="button"
+        className={`btn-secondary ${small}`}
+        aria-expanded={open}
+        aria-controls="deck-actions-more"
+        onClick={() => setOpen((v) => !v)}
+      >
+        More
+      </button>
+      {/* In flight is not disabled, as on the bar: it keeps its strength and says so. */}
+      <button type="button" className={`btn-primary ${small}`} disabled={loading} aria-busy={loading} onClick={onAnalyze}>
+        {loading ? "Analysing…" : "Re-analyse"}
+      </button>
+      {open ? (
+        <div
+          id="deck-actions-more"
+          className="absolute right-0 top-full mt-1 z-30 min-w-48 flex flex-col gap-0.5 p-1 rounded-(--radius) border border-(--separator) bg-(--surface) shadow-lg"
+        >
+          {link && narrow ? (
+            <button type="button" className={item} onClick={() => void copyLink()}>{link}</button>
+          ) : null}
+          <button type="button" className={item} onClick={() => void onCopy()}>{copied ? "Copied" : "Copy decklist"}</button>
+          <button type="button" className={item} onClick={() => { setOpen(false); onStartOver?.(); }}>Start over</button>
+        </div>
+      ) : null}
     </div>
   );
 }

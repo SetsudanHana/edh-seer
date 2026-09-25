@@ -1,9 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { detectBuildCategories, gatedLandsTarget } from "../../packages/matcher/src/build.js";
 import { landInputs, recommendedLands } from "../../packages/matcher/src/land-count.js";
@@ -24,8 +22,8 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Free: Mongo reads only, no derive, no spend.
  *
- *    npx tsx packages/matcher/src/bin/land-formulas.ts */
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+ *    npx tsx research/matcher/land-formulas.ts */
+const DECK_DIR = CALIBRATION_DECKS;
 
 const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");
 const producesMana = (dc: DeckCard): boolean => (dc.card.producedMana ?? []).length > 0;

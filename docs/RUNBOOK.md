@@ -15,38 +15,55 @@ Every bin and the web server need the environment sourced:
 set -a && source packages/tagger/.env && set +a
 ```
 
-The `.env` lives in `packages/tagger/`, **not** the repository root. It holds `ANTHROPIC_API_KEY` and
-`TAGGER_PROVIDER=anthropic`.
+The `.env` lives in `packages/tagger/`, **not** the repository root. A fresh clone has none. It
+holds:
 
-**The second line is not decoration.** Without it, any bin that spends falls back **silently** to a
-local Ollama — producing a corpus answered by the wrong model, with nothing on screen to say so. A
-fresh clone has no `.env` at all. The dry run prints a `provider:` line; read it before every `--run`.
+| variable | what it is | default |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | the key the paid normalization step spends | none |
+| `ANTHROPIC_MODEL` | which model answers; leave it unset | `claude-haiku-4-5` |
+| `MONGO_URI` | the corpus database | `mongodb://localhost:27017` |
+| `MONGO_DB` | the database name | `mtg` |
+
+**A spending bin refuses `--run` without the key, and on any model but `claude-haiku-4-5` unless
+`--allow-model` is passed.** Every measurement was taken on that model, and staleness never compares
+the model, so another model's corpus would look fresh forever. The dry run prints a `model:` line;
+read it before every `--run`. (A local Ollama provider used to be the default when the `.env` was
+missing, and a silent fallback to it fired three times. It was removed on 2026-09-25.)
+
+A local MongoDB comes from `docker compose -f packages/data/docker-compose.yml up -d`, and
+`npm run ingest -w @edh-seer/data` downloads the Scryfall cards and the combo list into it. The
+normalized clauses are the paid step ([Stage 2](pipeline/2-normalize.md)) and cannot be rebuilt for
+free.
 
 ## Running the product
 
-```bash
-npx tsx packages/cli/src/main.ts <decklist.txt>                  # analyse a deck
-npm run dev -w @edh-seer/web                                     # API on :3001 + UI on :5173
-```
-
-Or the two halves separately:
+The site analyses in the browser: it fetches each card's derived tags from `/static` shards and runs
+the matcher itself. There is no API in the analysis path, and since 2026-09-25 no API server at all.
 
 ```bash
-npm run dev:server -w @edh-seer/web    # tsc --watch beside node --watch, API on :3001
-npm run dev:client -w @edh-seer/web    # UI on :5173
+npx tsx packages/matcher/src/bin/build-static.ts                 # static-out/, from Mongo, ~70s
+npm run dev -w @edh-seer/web                                     # UI on :5173, /static from static-out/
+npx tsx packages/cli/src/main.ts <decklist.txt>                  # a deck report in the terminal
 ```
 
-There is no Nest CLI in this project. TypeScript 7 ships the `tsc` executable only, without the
-programmatic compiler API the CLI drives, so `build:server` is plain `tsc -p server/tsconfig.json` —
-which is all `nest build` ever was. Decorators work because that tsconfig sets
-`experimentalDecorators` and `emitDecoratorMetadata`. Do not try to run the server through tsx
-instead: esbuild emits standard ES decorators and Nest needs the legacy ones, so it dies in
-`request-mapping.decorator.js` rather than failing in a way that points at the cause.
+The dev server serves `/static/*` straight out of `static-out/` (the `edh-seer-static-out` plugin in
+`client/vite.config.ts`), so the shards are never copied. **Rebuild `static-out/` after a derivation
+change**, or the dev server shows the engine's old reading of every card.
 
-`start:server` runs the built `dist/`, so it is only as fresh as your last `build:server`.
+The pair-judging panel (`#calibrate`) is served by the same dev server, from
+`@edh-seer/matcher/calibration-judge`, and only when asked for: it writes the calibration ratchet's
+own files.
 
-If the UI is serving code you know you changed, kill the old servers first — an `EADDRINUSE` in the
-log means the browser is measuring yesterday's build.
+```bash
+MTG_CALIBRATE=1 npm run dev -w @edh-seer/web                     # then open /#calibrate; needs Mongo
+```
+
+Deck-link import goes to the import worker: run `npx wrangler dev --port 8788` in
+`packages/import-worker` and the dev server proxies `/api/import` to it.
+
+If the UI is serving code you know you changed, kill the old dev server first -- an `EADDRINUSE` in
+the log means the browser is measuring yesterday's build.
 
 ## Buying corpus
 
@@ -71,35 +88,38 @@ npx tsx packages/tagger/src/bin/derive-corpus.ts --force    # everything
 ## Measuring a change
 
 **Measure before and after, and say the number.** Every fix in this repo carries its measured effect
-in the commit message. All three of these are free and need no model.
+in the commit message. All three of these are free and need no model, but they read the MongoDB
+corpus, and `panel-score.ts` also reads the judged panel, which is local to the maintainer's checkout.
 
 ```bash
-npx tsx packages/instruments/src/panel-score.ts          # precision AND recall on the frozen panel
+npx tsx packages/instruments/src/panel-score.ts          # precision AND retention on the frozen panel
 npx tsx packages/instruments/src/population-compare.ts   # edges and reasons, before against after
 npx tsx packages/instruments/src/eval-pairs.ts           # the compass
 ```
 
 Three rules about what those numbers mean:
 
-**Never quote precision without recall.** Precision alone is not comparable across any change that
+**Never quote precision without retention.** Precision alone is not comparable across any change that
 shrinks the claim set, which every de-meshing ruling does — and a gate that deletes every claim it is
 unsure of scores 100%.
 
 **The panel's second number is retention, not recall.** The panel was built from claims this engine
 already made, so it cannot see an edge that was never claimed. The real recall figure comes from
-`recall-sample.ts`, drawn separately.
+`recall-sample.ts`, drawn separately and judged blind, then scored by `recall-score.ts` (both in
+`packages/instruments/src/`).
 
 **A stale baseline is how a real failure gets excused.** Re-measure rather than comparing against a
 number written in a document, including this one.
 
-The panel is ratcheted by name: `docs/measurements/panel/known-lost-pairs.json` holds the accepted
+The panel is ratcheted by name: `docs/measurements/panel/known-lost-pairs.json` (local to the
+maintainer's checkout, not committed) holds the accepted
 losses, `--bank` records a new set, and **both** directions fail — a newly unjoined pair, and a
 recovered pair that was never banked. It needs Mongo, so it cannot run in CI; it guards where the
 change is made rather than where it merges.
 
 ## Adding a verb
 
-A new `VERB_VOCAB` member is not one edit. Five gates fire, across three packages:
+A new `VERB_VOCAB` member is not one edit. Six gates fire, across three packages:
 
 | gate | what it demands |
 |---|---|
@@ -108,9 +128,7 @@ A new `VERB_VOCAB` member is not one edit. Five gates fire, across three package
 | [`theme-stats-drift.test.ts`](../packages/matcher/src/theme-stats-drift.test.ts) | every canonical verb family appears in the committed `theme-stats` artifact |
 | [`effect-class.test.ts`](../packages/matcher/src/effect-class.test.ts) | kind-keyed collections name only real `EFFECT_KINDS` |
 | [`demand-sentence.test.ts`](../packages/web/client/src/lib/demand-sentence.test.ts) | the web client renders the mechanism as English, not as its own key |
-
-A sixth now fires too: [`gen-schema-docs.test.ts`](../packages/tagger/src/bin/gen-schema-docs.test.ts)
-fails until the [schema reference](reference/SCHEMA.md) is regenerated.
+| [`gen-schema-docs.test.ts`](../packages/tagger/src/bin/gen-schema-docs.test.ts) | the [schema reference](reference/SCHEMA.md) is regenerated |
 
 **`TRIGGER_CUES` in [`clause-store.ts`](../packages/tagger/src/clause-store.ts) has no gate at all.**
 It is a lookup keyed by trigger event, and a new event with no row there is silently treated as
@@ -154,13 +172,13 @@ compares it against the generator's output on every run.
 ```bash
 npm test                       # all workspaces, each with its own config
 npm test -w @edh-seer/matcher  # one workspace
-npm run typecheck --workspaces
+npm run typecheck              # every workspace; vitest does not typecheck
 npm run lint:bins              # where a script is allowed to live
 ```
 
-**Never run `npx vitest run` from the repository root.** It ignores every package's own vitest config,
-so the web client's tests run without jsdom and die on `document is not defined`. `npm test` runs
-`npm run test --workspaces`, which gives each package its config.
+`npx vitest run` from the repository root is the same set of suites in one process: the root
+`vitest.config.ts` lists each package as a project under its own config. `npm test` runs them per
+workspace, which is what CI does.
 
 The suite is green on a clean checkout. There is no environmental exception; any red is yours.
 `vitest` does not typecheck, so a green suite is not proof the branch compiles — run `typecheck` too.
@@ -183,6 +201,19 @@ happened, and the missing card was not noticed until a user asked.
 
 "Already rebuilt this session" is not the same as "rebuilt from the commit being deployed". A new
 record field ships absent and the feature is silently dead.
+
+**The deploy runs from the maintainer's machine**, with a logged-in `wrangler`; there is no deploy
+workflow in CI. The upload is capped at 20,000 files, the free tier's limit, which
+`assemble-deploy.mjs` checks. Two things deploy separately:
+
+```bash
+npm run deploy -w @edh-seer/import-worker   # the Moxfield / Archidekt import worker, /api/import/*
+npm run deploy:indexnow -w @edh-seer/web    # tell search engines which pages changed
+```
+
+After a UI change, regenerate the README and /how-it-works screenshots and the README demo before
+the PR (`npm run screenshots -w @edh-seer/web`, `npm run demo-gif -w @edh-seer/web`, see
+[CONTRIBUTING](../CONTRIBUTING.md#screenshots)).
 
 The custom domain lags the deployment alias by about a minute, so one stale read straight after
 "Deployment complete" is normal. Persisting is not.

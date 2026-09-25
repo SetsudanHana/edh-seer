@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   const failures: string[] = [];
   const debug: DebugEntry[] = [];
 
-  console.log(`scoring ${gold.length} gold cards at concurrency ${cfg.concurrency} (${cfg.provider} ${cfg.model})...`);
+  console.log(`scoring ${gold.length} gold cards at concurrency ${cfg.concurrency} (${cfg.model})...`);
   const progress = startProgress(gold.length);
   await mapPool(gold, cfg.concurrency, async (g) => {
     try {
@@ -43,8 +43,8 @@ async function main(): Promise<void> {
   });
 
   // Dump predicted-vs-gold ability keys for diagnosis (gitignored), one file per run so
-  // model/preset comparisons don't clobber each other. e.g. score-debug-qwen2.5-14b-qwen2.5.json
-  const slug = [cfg.model, cfg.ollamaPreset].filter(Boolean).join("-").replace(/[^A-Za-z0-9.]+/g, "-");
+  // model comparisons don't clobber each other. e.g. score-debug-claude-haiku-4-5.json
+  const slug = cfg.model.replace(/[^A-Za-z0-9.]+/g, "-");
   const debugPath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", `score-debug-${slug}.json`);
   writeFileSync(debugPath, JSON.stringify(debug, null, 2) + "\n");
   console.log(`wrote per-card key diff to ${debugPath}`);

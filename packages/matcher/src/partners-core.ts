@@ -1,0 +1,2214 @@
+import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
+// THE SUBPATH, NOT THE PACKAGE ROOT. `static-lookup.ts` pulls this module into the BROWSER, and
+// tagger's barrel reaches `otags/functional.ts`, which `readFileSync`s a JSON file at import
+// time -- a value import of the root took every client test down with "The URL must be of
+// scheme file". `segment.ts` closes over `./subtypes` and `./emblem` only, both already public,
+// and does nothing but read strings.
+import { segment } from "@edh-seer/tagger/segment";
+import type { Card } from "@edh-seer/engine";
+import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
+import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { keywordAbilities } from "./implied.js";
+import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
+import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
+import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } from "./rate.js";
+/** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
+ *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
+ *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
+export { effectPhrase } from "./sentence.js";
+import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import type { DeckCard, Hierarchy } from "./types.js";
+
+/** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
+ *  decidable lives here, for the reason `build-static-core.ts` was split out of its own bin --
+ *  importing a bin RUNS it, and the browser needs the slug and shard rules too. No `node:fs`, no
+ *  Mongo, no top-level side effects in this file. */
+
+// THE SLUG RULE LIVES IN A LEAF (`../slug.ts`) so the browser's search field can import it without
+// pulling this whole module -- and, through `themesOf`, the archetype table -- into the entry chunk.
+import { slugOf } from "./slug.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "./build.js";
+import { POOL_CLASSES } from "./answer-pool.js";
+import { BASIC_LAND_TYPE_SET } from "./typeline.js";
+export { slugOf };
+
+/** TWO CARDS CAN SLUG THE SAME AND ONE URL CANNOT SERVE BOTH.
+ *
+ *  Resolved by SORTED NAME rather than by input order, because the build reads Mongo and a rebuild
+ *  that returned the same cards in a different order would otherwise swap two cards' URLs --
+ *  silently, and only for the pair that collided. The first name by sort keeps the bare slug; the
+ *  rest are suffixed `-2`, `-3`.
+ *
+ *  The map is written into the artifact, so the BUILD is the authority on every slug and the client
+ *  never recomputes one it might disagree about. */
+export function resolveSlugs(names: string[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const taken = new Map<string, number>();
+  for (const name of [...names].sort()) {
+    // AN EMPTY SLUG IS NOT MERELY UGLY, IT IS A DIFFERENT PAGE. `/cards/` with nothing after it is
+    // the card SEARCH route, so a card whose name slugs to "" would claim the collection's own URL.
+    // MEASURED, not hypothetical: two cards in the corpus do it -- `_____` and `______`, whose names
+    // are entirely underscores -- and uniqueness alone would have handed one of them "" and the
+    // other "-2". Both are wrong URLs; this gives `card` and `card-2`.
+    const base = slugOf(name) || "card";
+    const n = (taken.get(base) ?? 0) + 1;
+    taken.set(base, n);
+    out.set(name, n === 1 ? base : `${base}-${n}`);
+  }
+  return out;
+}
+
+/** THE UNIT SPECIFICITY IS COUNTED OVER: verb, subject type, subject subtype.
+ *
+ *  It is the coarsest key that still separates `enters|creature|goblin` (41 cards corpus-wide) from
+ *  `enters|creature|-` (1,909), which is the whole basis of the ranking.
+ *
+ *  IT IS A COUNTING KEY, NOT A MATCHING ONE. Whether a supply actually satisfies a demand is
+ *  `directedReasons`' answer and nothing else's -- this string decides only who is worth asking
+ *  about. A key that decided edges would be a second matcher, drifting from the first, which is the
+ *  failure `graph-events.ts` names when it says a graph that computed its own edges would drift.
+ *
+ *  `type` and `subtype` are `string | string[]` in the schema, so an array is sorted before joining:
+ *  ["instant","sorcery"] and ["sorcery","instant"] are one event, not two. */
+export function eventKey(e: GameEvent): string {
+  const s = e.subject ?? {};
+  const one = (v: string | string[] | undefined): string =>
+    v === undefined ? "-" : Array.isArray(v) ? [...v].sort().join(",") : v;
+  return `${zonedVerb(e.verb, s)}|${one(s.type)}|${one(s.subtype)}|${tokenOf(s.token)}`;
+}
+
+/** ONE TYPE AND ONE SUBTYPE PER EVENT (roadmap AK5, owner ruling 2026-09-19).
+ *
+ *  A clause that says "whenever you cast an instant or sorcery" is TWO events the card cares
+ *  about, and it triggers on either; Weftstalker Ardent's "another creature or artifact you
+ *  control enters" is likewise two. The key used to carry the disjunction as a comma list, which
+ *  made one event out of two and produced names no reader could use -- Krenko's page showed "an
+ *  artifact or creature enters the battlefield" above "an artifact, creature or enchantment enters
+ *  the battlefield", two groups that say the same thing, and the worst name in the corpus ran to
+ *  128 characters.
+ *
+ *  SPLITTING IS WHAT MAKES THE NAME SHORT, at the source: no key holds a list, so no sentence has
+ *  one to render.
+ *
+ *  IT IS A CROSS PRODUCT, because both slots can hold a list: a static reaching four subtypes
+ *  across seven types reaches each of the 28 pairs. Measured over the shipped artifact: 274 of the
+ *  1,188 keys fan out at all, and the key count goes 1,188 -> 1,497. The vocabulary grows by a
+ *  quarter and every member of it is a thing a card can actually be. */
+export function splitKey(key: string): string[] {
+  const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
+  if (!type.includes(",") && !subtype.includes(",")) return [key];
+  const out: string[] = [];
+  for (const t of type.split(",")) for (const st of subtype.split(",")) out.push(`${verb}|${t}|${st}|${token}`);
+  return [...new Set(out)];
+}
+
+/** A GRAVEYARD LEAVE IS NOT A BATTLEFIELD LEAVE (roadmap AK6; CR 400.1 -- they are different
+ *  zones and different events).
+ *
+ *  `zones.ts` has mapped this correctly for the flat tag path since it was written
+ *  (`leaves@graveyard -> leaves-graveyard:`), and the KEY builder dropped the zone, so the two
+ *  layers disagreed -- the same split AK1 fixed between `effect-kind` and `emits`. Measured on the
+ *  real corpus before the fix: 2,350 cards emitted a graveyard leave keyed as a BATTLEFIELD one,
+ *  so every reanimation spell (Patriarch's Bidding, Gravedig, Shepherd of the Clouds) was claimed
+ *  as a supplier for blink payoffs; and 36 cards asked for it from the other side, so Tormod and
+ *  Quintorius were joined to every bounce and flicker in the format. False in both directions.
+ *
+ *  THE TWO FIELDS SAY DIFFERENT THINGS, and the schema is explicit about it: `zone` is where the
+ *  subject LIVES (a trigger's "cards leave your graveyard") and `fromZone` is where a move came
+ *  FROM (an emit's "return it from your graveyard"). A leave reads either. An ENTER reads only
+ *  `zone`: a reanimation emits `enters` with `fromZone: graveyard` and that is a battlefield
+ *  arrival, which is the whole point of it. */
+function zonedVerb(verb: string, s: GameEvent["subject"] & {}): string {
+  if (verb === "leaves" && (s.zone === "graveyard" || s.fromZone === "graveyard")) return "leaves-graveyard";
+  if (verb === "enters" && s.zone === "graveyard") return "enters-graveyard";
+  return verb;
+}
+
+/** WHETHER THE EVENT IS ABOUT A TOKEN: `t` yes, `n` no, `-` not stated.
+ *
+ *  MEASURED 2026-09-04 and it is why this is a dimension rather than a footnote: 59 corpus cards
+ *  trigger specifically on a TOKEN entering (Xorn, Mirkwood Bats, Caretaker's Talent) and 206
+ *  triggers demand a NONTOKEN one. Without the flag both keyed as plain `enters|creature|-`, so a
+ *  token maker's page ranked "whenever a token enters" level with "whenever a creature enters" --
+ *  the payoff built for exactly this card, priced as though it were generic -- while the nontoken
+ *  payoffs it can never satisfy sat in its candidate list until the engine threw them out one by
+ *  one. */
+const tokenOf = (v: boolean | null | undefined): string => v === true ? "t" : v === false ? "n" : "-";
+
+export type EventFrequency = Record<string, number>;
+
+/** HOW MUCH ONE MATCHED EVENT IS WORTH.
+ *
+ *  Inverse log of how many cards in the corpus touch that event, so `enters|creature|goblin` (41
+ *  cards) outranks `enters|creature|-` (1,909) without any appeal to how often either card is
+ *  PLAYED. Popularity is not synergy, and it is not consulted HERE: the score is specificity alone.
+ *
+ *  IT BREAKS TIES, AND ONLY TIES. ~2,000 cards demand `enters|creature|-` and score identically;
+ *  which of them reached a page was corpus iteration order, and the page said so in a sentence
+ *  about being unable to choose. From 2026-09-16 the tie broke on `cards.edhrecRank`; on
+ *  2026-09-17 the owner refused that field ("edhrec rank changes daily, so I would not use that" --
+ *  the corpus copy is as old as its last ingest) and ruled for the engine's own number: among
+ *  equally specific partners, the better-connected card first, `degreeOf` reading the candidate
+ *  partner count `buildPartnerArtifact` computes for every card. Specificity still decides which
+ *  EVENT leads; the count only decides which of its equal members are printed.
+ *
+ *  WHAT THIS DOES AND DOES NOT CLAIM. It ranks how PRECISELY two cards interact, not how good
+ *  either one is. A rare event can belong to a bad card, and the pages say so in those words rather
+ *  than presenting the list as a recommendation.
+ *
+ *  AN UNSEEN KEY SCORES AS EXACTLY ONE MEMBER. `gen-theme-stats` recorded the alternative as a real
+ *  defect: an absent tag scored `log(N+1)`, the maximum, so every tag the derived layer invented
+ *  after the artifact was built looked maximally rare and dominated its axis -- `lose-life:opp` was
+ *  absent, and an orzhov-spellslinger deck themed as "lose life". One member is the floor here, not
+ *  the ceiling. */
+export function specificity(key: string, freq: EventFrequency): number {
+  return 1 / Math.log((freq[key] ?? 1) + 1);
+}
+
+/** THE FORMS AN EMIT CAN SATISFY. A type or subtype LIST is a disjunction, so it splits; then each
+ *  split form also stands for its coarser shapes, because a goblin creature entering satisfies a
+ *  demand for a creature entering, for a goblin entering, and for anything entering. */
+export function supplyForms(key: string): string[] {
+  const out = new Set<string>();
+  for (const [verb, type, subtype, token] of splitList(key)) {
+    const suffixes = token === "t" ? ["t", "-"] : ["n", "-"];
+    // THE VERBS THE ENGINE LETS THIS SUPPLY SATISFY, mirrored from `verbSatisfies` in edges.ts,
+    // because the page proposes a pair by key BEFORE the engine verifies it: a bridge that lives
+    // only in the engine is a pair the page never asks about. A death is one kind of leave
+    // (CR 700.4); damage aimed at a player -- no type, no subtype -- is life loss (CR 120.3).
+    // Lightning Bolt's page listed three damage payoffs and no life-loss one (2026-09-05).
+    // And any damage emit is a supply for the RECEIVING side (`damaged`, AF7d 2026-09-16): the
+    // engine judges the victim's shape (`damagedMatches`), the page only has to ask.
+    const verbs = [verb,
+      ...(verb === "dies" ? ["leaves"] : []),
+      // A MILL IS A CARD PUT INTO A GRAVEYARD FROM THE LIBRARY (CR 701.17a), so it satisfies a
+      // payoff that asks for the general event as well as one that asks to mill (roadmap AK1).
+      // Without this the retag in DERIVE 163 would have MOVED 211 abilities off
+      // `enters-graveyard` rather than added them to `mill`, and the 248 suppliers of
+      // `enters-graveyard|-|-|-` would have lost the payoffs that ask for it by type -- 15 that
+      // want a creature there, 12 a land, 8 an artifact. Same shape as the death/leave bridge
+      // above: specific supplies general, never the other way round.
+      ...(verb === "mill" ? ["enters-graveyard"] : []),
+      ...(verb === "non-combat-damage" && type === "-" && subtype === "-" ? ["lose-life"] : []),
+      ...(verb === "non-combat-damage" || verb === "combat-damage" ? ["damaged"] : [])];
+    for (const v of verbs) for (const tk of suffixes) {
+      out.add(`${v}|${type}|${subtype}|${tk}`);
+      out.add(`${v}|${type}|-|${tk}`);
+      out.add(`${v}|-|${subtype}|${tk}`);
+      out.add(`${v}|-|-|${tk}`);
+    }
+    // A GRAVEYARD FILL, whatever verb put the card there (`impliedGraveyardEvents` in the engine):
+    // a nontoken death carries its type, a mill / discard / surveil / direct put is untyped. A
+    // token's death fills nothing (CR 704.5d). The token flag is dropped: a graveyard demand never
+    // asks it.
+    if (FILL_VERBS.has(verb) && token !== "t") {
+      const [t, st] = verb === "dies" ? [type, subtype] : ["-", "-"];
+      out.add(`fills|${t}|${st}|-`);
+      out.add(`fills|${t}|-|-`);
+      out.add(`fills|-|${st}|-`);
+      out.add(`fills|-|-|-`);
+    }
+  }
+  return [...out];
+}
+
+/** The emit verbs that put a card into a graveyard -- the engine's `impliedGraveyardEvents` list
+ *  plus the direct put (`enters-graveyard`, Entomb). */
+const FILL_VERBS: ReadonlySet<string> = new Set(["dies", "mill", "discard", "surveil", "enters-graveyard"]);
+
+/** Every fill this card emits is its OWN card going to the graveyard (a fetchland's sacrifice, a
+ *  cycling, a bauble): one card, once. Used only to order equal feeders, never to refuse one. */
+export const fillsOnlyItself = (d: DeckCard): boolean => {
+  const fills = abilitiesOf(d).flatMap((a) => (a.emits ?? []).filter((e) => FILL_VERBS.has(e.verb) && e.subject.token !== true));
+  return fills.length > 0 && fills.every((e) => e.subject.self === true);
+};
+
+/** THE FORMS A DEMAND ACCEPTS -- the list split, and NOTHING ELSE.
+ *
+ *  A demand is NEVER generalised upward. `enters|-|goblin` means a goblin entering; widening it to
+ *  `enters|-|-` would count every permanent in the game as satisfying it, which is precisely the
+ *  bug this file was rewritten to remove. */
+export function demandForms(key: string): string[] {
+  // THE TOKEN FLAG NEVER WIDENS EITHER. A trigger that says "a nontoken creature" is asking a
+  // narrower question than one that says "a creature", and answering it with a token is the wrong
+  // answer rather than a generous one -- 206 triggers in the corpus say exactly that, and every one
+  // of them used to sit in a token maker's candidate list waiting for the engine to refuse it.
+  return [...new Set(splitList(key).map(([v, t, st, tk]) => `${v}|${t}|${st}|${tk}`))];
+}
+
+const splitList = (key: string): [string, string, string, string][] => {
+  const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
+  const out: [string, string, string, string][] = [];
+  for (const t of type.split(",")) for (const st of subtype.split(",")) out.push([verb, t, st, token]);
+  return out;
+};
+
+/** THE FIVE COLOURS AS A BITMASK, so "could this deck legally contain that card" is one AND rather
+ *  than a subset walk over strings -- the test runs once per supplier per demand key on a 25,000
+ *  card corpus. Thirty-two identities exist, and a card is legal under `mask` when
+ *  `(own & ~mask) === 0`. */
+const COLOUR_BIT: Record<string, number> = { W: 1, U: 2, B: 4, R: 8, G: 16 };
+const IDENTITIES = 32;
+
+/** EXPORTED FOR THE SEARCH PAGE (roadmap AJ3). The picker scopes a count to the chosen colours in
+ *  the browser, and a second hand-written WUBRG bit table is how the two stop agreeing. */
+export const identityMask = (colors: readonly string[]): number =>
+  colors.reduce((m, c) => m | (COLOUR_BIT[c] ?? 0), 0);
+
+/** HOW MANY CARDS IN THE CORPUS CAN ACTUALLY SATISFY EACH DEMAND.
+ *
+ *  THIS REPLACED A COUNT OF IDENTICAL KEY STRINGS, WHICH WAS MEASURABLY WRONG. Key-string rarity is
+ *  an artifact of how a demand was WRITTEN, not of how narrow it is:
+ *  `enters|battle,creature,enchantment,land,planeswalker|-` fires on essentially any permanent, yet
+ *  that exact string appears almost nowhere, so it scored maximally and won the #1 slot for 1,402
+ *  cards. `counter-added|enchantment|incarnation` won for 1,995. Measured over the real corpus
+ *  2026-09-04, which is the only reason it was caught.
+ *
+ *  Counting SUPPLIERS fixes both, and fixes a third thing for free: every permanent implicitly emits
+ *  "I enter", so a "when a permanent enters" demand is satisfied by nearly the whole corpus, scores
+ *  near zero, and stops crowding out real interactions -- without a special case. That is the
+ *  engine's own "playing Magic is not a synergy" rule falling out of the arithmetic.
+ *
+ *  SPLIT BY THE COLOUR IDENTITY EACH SUPPLIER SITS IN, because a commander page was printing this
+ *  count over cards its deck can never play (roadmap AJ5, measured 2026-09-19). `rankedFor` has
+ *  always filtered the candidates and recomputed `pool` over the legal set, but `rarity` came
+ *  straight off the one corpus-wide map, so `commanderRarity` was byte-identical to `rarity` --
+ *  Samut, the Driving Force (R/G/W) showed ONE Cleric-granting partner above "588 other cards
+ *  cause it too". Thirty-two slots per key, indexed by `identityMask`, are the whole fix: a
+ *  corpus count is every slot, a scoped one is the slots that sit inside the commander's identity.
+ *
+ *  THE UNION IS RETAINED AS IDS SINCE AJ3, AND ONLY AS IDS. One demand's supplier set holds fifteen
+ *  thousand cards on the real corpus; keeping the CARDS per key is hundreds of megabytes, which is
+ *  why this used to bucket and drop each one. A sorted `number[]` of index positions is a different
+ *  order of cost -- 1.2M ids, ~10 MB -- and it is what lets the search page list the cards a count
+ *  counted instead of approximating them from a second index.
+ *
+ *  THE SCORE DOES NOT READ THE SPLIT. `specificity` stays corpus-wide by design -- "how rare is
+ *  this event in Magic", not "in your colours" -- and only the DISPLAYED count is scoped. */
+export interface EventMembers {
+  /** Positions in the artifact index of the cards that can CAUSE this event. */
+  p: number[];
+  /** Positions of the cards that ASK for it. */
+  c: number[];
+  /** DAMAGE KEYS ONLY: the stated sizes of the card at `p[i]`'s damage abilities, numbers only, empty
+   *  when none is one ("X", "that much"). What lets a deck drop a 2-damage causer for a trigger that
+   *  wants exactly 1 (Ghyrson Starn) before it fetches the card (2026-09-25). A hint: the engine's
+   *  `trigger.amount` gate still decides. */
+  pd?: number[][];
+}
+
+const DAMAGE_KEY = /^(?:non-combat-damage|combat-damage)\|/;
+
+/** The numeric sizes a card's abilities emitting `verb` state (`Ability.amount`), sorted,
+ *  deduplicated. Per verb: a card's 3 combat damage is not a 3-damage ping. */
+const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(abilitiesOf(d)
+  .filter((a) => (a.emits ?? []).some((e) => e.verb === verb))
+  .map((a) => (a.amount ?? "").trim())
+  .filter((x) => /^\d+$/.test(x))
+  .map(Number))].sort((a, b) => a - b);
+
+/** THE COUNTS FILE, as `event-frequency.json` ships it (roadmap AJ3). `supply` is how many cards
+ *  can CAUSE each event and `consume` how many ask for it; `byIdentity` is `supply` split into the
+ *  32 colour identities, read with `inIdentityOf`. Declared here beside `EventMembers` so the
+ *  shipped shapes have ONE home and the web client needs no second entry in the export map. */
+export interface EventFrequencyFile {
+  supply: Record<string, number>;
+  consume: Record<string, number>;
+  byIdentity: Record<string, number[]>;
+}
+
+export function supplyBuckets(
+  rows: readonly { emits: string[]; demands: string[]; identity: readonly string[] }[],
+): { buckets: Map<string, Int32Array>; members: Map<string, number[]> } {
+  const suppliersOf = new Map<string, Set<number>>();
+  rows.forEach((r, i) => {
+    for (const form of new Set(r.emits.flatMap(supplyForms))) {
+      const set = suppliersOf.get(form);
+      if (set) set.add(i); else suppliersOf.set(form, new Set([i]));
+    }
+  });
+  const masks = rows.map((r) => identityMask(r.identity));
+  const out = new Map<string, Int32Array>();
+  const members = new Map<string, number[]>();
+  for (const demand of new Set(rows.flatMap((r) => r.demands))) {
+    const union = new Set<number>();
+    for (const form of demandForms(demand)) {
+      for (const i of suppliersOf.get(form) ?? []) union.add(i);
+    }
+    const bucket = new Int32Array(IDENTITIES);
+    for (const i of union) {
+      const m = masks[i]!;
+      bucket[m] = (bucket[m] ?? 0) + 1;
+    }
+    out.set(demand, bucket);
+    // KEPT, WHERE THE UNION USED TO BE DROPPED (roadmap AJ3). The search page needs the cards this
+    // count counted, and taking them from the same pass is the whole reason a chip saying 389 can
+    // link to a page listing 389. A SET OF OBJECTS per key was never affordable; a sorted number[]
+    // is: 1,184,624 ids over the real corpus, about 10 MB of plain arrays.
+    members.set(demand, [...union].sort((a, b) => a - b));
+  }
+  return { buckets: out, members };
+}
+
+/** THE WHOLE CORPUS, WHICH IS EVERY SLOT. What `specificity` is taken on. */
+export const totalOf = (bucket: Int32Array): number => bucket.reduce((a, x) => a + x, 0);
+
+/** THE SLICE ONE DECK COULD LEGALLY CONTAIN: the slots whose identity sits inside `mask`. A card is
+ *  legal under an identity when its own identity is a subset of it -- the same rule `legality.ts`
+ *  reports a violation against, as one bitwise test. */
+const inIdentity = (bucket: Int32Array, mask: number): number => {
+  let n = 0;
+  for (let v = 0; v < IDENTITIES; v++) if ((v & ~mask) === 0) n += bucket[v]!;
+  return n;
+};
+
+/** THE SAME SLICE, OVER THE SLOTS AS JSON SHIPS THEM. `inIdentity` reads the Int32Array the build
+ *  holds; a browser reads a plain array out of `event-frequency.json` and needs the identical test,
+ *  or a picker row and a commander page disagree about the same number. */
+export function inIdentityOf(slots: readonly number[], mask: number): number {
+  let n = 0;
+  for (let v = 0; v < IDENTITIES; v++) if ((v & ~mask) === 0) n += slots[v] ?? 0;
+  return n;
+}
+
+/** ONE CARD'S OWN EVENTS, ONTO THE DECK-LEVEL ARCHETYPE NAMES.
+ *
+ *  `detectArchetypes` cannot answer this. It is deck-level and density-based -- `ARCHETYPE_FLOOR` is
+ *  0.08 of the nonlands -- and a single card has no density to measure. This is the same taxonomy
+ *  read at the only resolution a card page has.
+ *
+ *  KEYED ON THE VERB, AND ON THE TYPE ONLY WHERE THE SIGNATURE ALREADY DOES. `ARCHETYPE_SIGNATURE`
+ *  spells its tags as `verb:subject` while an event key is `verb|type|subtype`, and the two subject
+ *  halves are not the same string -- `create-token:any` against `create-token|creature|goblin`. The
+ *  verb is what actually carries the archetype in every row but two, and Landfall and Spellslinger
+ *  are the two, so they keep their type.
+ *
+ *  ARISTOCRATS IS DEMAND-DEFINED, honoured here rather than re-decided: an aristocrats deck is its
+ *  PAYOFFS, not the removal spell that emits `sacrifice:creature`. Measured over the 71 decks, 815
+ *  of 974 matches were supply-only and Aristocrats topped four decks the owner calls Control.
+ *
+ *  RETURNS EVERY LABEL THAT FITS, which is a deliberate deviation from the plan's `string | null`.
+ *  A commander that makes tokens AND puts counters on things is both; picking one would need a
+ *  priority order nothing here has measured, and inventing one is the guess this layer exists to
+ *  refuse. An empty array is "no signature", which is a real answer and the common one. */
+const SUPPLY_THEMES: [prefix: string, archetype: Archetype][] = [
+  ["create-token|", "tokens"],
+  ["gain-life|", "lifegain"],
+  ["enters|land|", "landfall"],
+  ["cast|instant", "spellslinger"],
+  ["cast|sorcery", "spellslinger"],
+  ["counter-added|", "counters"],
+  ["proliferate|", "counters"],
+];
+const DEMAND_THEMES: [prefix: string, archetype: Archetype][] = [
+  ["dies|", "aristocrats"],
+  ["sacrifice|", "aristocrats"],
+];
+
+export function themesOf(emits: string[], demands: string[]): string[] {
+  const hit = new Set<Archetype>();
+  for (const [prefix, archetype] of SUPPLY_THEMES) {
+    if (emits.some((e) => e.startsWith(prefix))) hit.add(archetype);
+  }
+  for (const [prefix, archetype] of DEMAND_THEMES) {
+    if (demands.some((d) => d.startsWith(prefix))) hit.add(archetype);
+  }
+  // Signature order, not insertion order: two cards with the same pair of labels must print them
+  // the same way round.
+  const order = [...SUPPLY_THEMES, ...DEMAND_THEMES].map(([, a]) => a);
+  return [...hit].sort((a, b) => order.indexOf(a) - order.indexOf(b)).map((a) => ARCHETYPE_LABELS[a]);
+}
+
+/** THE DEMANDS THE CARD DOES NOT ANSWER ITSELF -- what a deck built around it has to bring.
+ *
+ *  A commander that watches creatures die and kills none is stating a requirement. One that does
+ *  both is self-sufficient on that event, and listing it as a gap would be a page telling a reader
+ *  to go find something they already have.
+ *
+ *  THE SAME SUPPLY/DEMAND PREDICATE `partnersFor` RANKS WITH, so the two cannot disagree about what
+ *  satisfies what: a goblin token entering really is a creature entering. */
+export function unmetDemands(emits: string[], demands: string[]): string[] {
+  const supplied = new Set(emits.flatMap(supplyForms));
+  return demands.filter((d) => !demandForms(d).some((f) => supplied.has(f)));
+}
+
+export interface PartnerRow {
+  name: string;
+  slug: string;
+  score: number;
+  /** The event key that earned the score -- what the page prints beside the row. */
+  event: string;
+  /** The ENGINE'S sentence, naming both cards. Not composed here. */
+  reason: string;
+  /** THE HALF OF THE SENTENCE THE HEADING DOES NOT ALREADY SAY.
+   *
+   *  Every row under one group opened with the same 60 characters -- "When a Goblin enters thanks to
+   *  Krenko, Mob Boss," ten times over -- because the group heading states the event and then each
+   *  sentence restates it. A design review measured roughly 60% of the section as repetition, with
+   *  the only new information, the payoff, pushed to the end of every line.
+   *
+   *  COMPUTED FROM THE ENGINE'S OWN SENTENCE, never composed: the tail after ", <partner name> " is
+   *  what that card does, in the words the engine already chose. `reason` is kept in full because
+   *  the deck report prints it and because a reader who wants the whole claim should still be able
+   *  to get it.
+   *
+   *  ABSENT ON A FEEDER ROW. Those run the other way -- "While you control Taster of Wares, Krenko
+   *  counts it and makes more tokens" -- so the tail describes the SUBJECT, not the row's card, and
+   *  collapsing it would put Krenko's behaviour under Taster of Wares' name. */
+  payoff?: string;
+  /** THE ENGINE DID NOT READ WHAT THIS CARD DOES, so its sentence ends at "triggers".
+   *
+   *  MEASURED 2026-09-04: 3,453 consumer abilities in the corpus carry no effect kind at all. Their
+   *  rows used to be indistinguishable from the informative ones -- same typeface, same shape, no
+   *  marker -- which a skeptic called a refusal that reads as a hole. A limit the page states is
+   *  honest; a limit it hides is not. */
+  unread?: true;
+  /** THE ROW'S OWN CARD, AS A TILE (2026-09-17). The partner list rendered as two columns of names
+   *  and sentences -- a wall of text -- because a row carried nothing a reader could scan. The
+   *  Scryfall PRINTING id is 36 characters and every art URL in the corpus embeds it (745 of 745
+   *  sampled), so the row carries the id and the client rebuilds the crop URL; absent when the card
+   *  has no art, so the tile shows the name on a plain surface instead of a broken image. */
+  art?: string;
+  /** Colour identity, WUBRG order, for the mana pips beside the name. Empty is colourless. */
+  identity?: string[];
+  /** THE ROW RUNS TOWARD THE PAGE'S CARD (owner 2026-09-17): this card CAUSES the event the page's
+   *  card asks for. It is the forward phase's own verified pair seen from the payoff's side -- the
+   *  same sentence, event and score the producer's page carries -- so a payoff page lists what
+   *  feeds it without a second engine call. No `payoff`: the sentence's tail is the payoff's
+   *  behaviour, which is the page's own card. */
+  producer?: true;
+}
+
+/** The Scryfall printing id inside an art URL: `.../art_crop/front/5/7/<id>.jpg?<ts>`. The path's two
+ *  hex directories are the id's first two characters, and the `?ts` cache-buster is optional, so the
+ *  id alone rebuilds the URL. */
+export function printingIdOf(artCrop: string | null | undefined): string | undefined {
+  return artCrop?.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(?:jpg|png)/i)?.[1];
+}
+
+/** THE FRONT FACE IS THE FALLBACK: Scryfall puts `image_uris` on each FACE for transform and
+ *  modal_dfc and omits the top-level one (491 corpus cards, every one with `faces[0].artCrop`). */
+const artCropOf = (d: DeckCard): string | null =>
+  (d.card as { artCrop?: string }).artCrop
+  ?? (d.card as { faces?: { artCrop?: string }[] }).faces?.[0]?.artCrop ?? null;
+
+/** What a partner row needs to draw itself as a tile. */
+const tileOf = (d: DeckCard): Pick<PartnerRow, "art" | "identity"> => {
+  const art = printingIdOf(artCropOf(d));
+  return { identity: d.card.colorIdentity ?? [], ...(art ? { art } : {}) };
+};
+
+/** HOW MANY CANDIDATES ARE WORTH RUNNING THE ENGINE OVER.
+ *
+ *  A card emitting `enters|creature|-` has 1,909 candidates, and calling `directedReasons` on all of
+ *  them for each of the ~14,900 substantive cards is the build that never finishes. Candidates are
+ *  ranked by the cheap score first and only the top `VERIFY_LIMIT` are verified.
+ *
+ *  CEILING: a genuinely specific partner sitting below rank 200 on a very common event is lost.
+ *  Upgrade path: raise the limit, or bucket candidates by event key and verify per bucket so a rare
+ *  key cannot be crowded out by a common one. */
+export const VERIFY_LIMIT = 200;
+
+/** How many rows a page shows. 24 until 2026-09-16, "a readability choice, not a measured one";
+ *  raised to 60 with the owner's SEO ruling: 14,280 of 25,081 pages had over 100 verified-eligible
+ *  candidates behind a 24-row cut, and a 3-row page carried ~60 unique words against ~390 of
+ *  boilerplate, which is one template printed twenty thousand times. */
+export const KEEP = 60;
+
+/** HOW MANY PARTNERS `pi` (the report's suggestion pool) MAY CARRY. The page is a reading choice --
+ *  `PER_EVENT_CAP` an event, `KEEP` in all, the way EDHREC shows ten a section -- and the pool is
+ *  not: every partner the engine verified behind those cuts, both directions, up to the number of
+ *  candidates a card was ever verified against (`VERIFY_LIMIT`). A-vs-B 2026-09-24 measured the
+ *  page-sized pool (~21 rows a card) missing most of what the full search ranks on the deck's axis. */
+export const PI_KEEP = VERIFY_LIMIT;
+
+/** HOW MANY ASKERS OF ONE SUPPLIED EVENT THE POOL PASS VERIFIES PER CARD (`poolPartnersFor`),
+ *  best-connected first. */
+export const POOL_PER_EVENT = 16;
+
+/** A POOL PAIR: engine-confirmed, keyed on the event that proposed it, never printed on a page. */
+export interface PoolRow { name: string; score: number; event: string; tags?: readonly number[] }
+
+/** THE SUGGESTION POOL'S OWN PASS, beside the page's and never feeding it (spec 2026-09-24 deck
+ *  suggestions; A-vs-B the same day). Two things the page's ranking cannot see:
+ *
+ *  - WHAT A CARD SUPPLIES BY BEING WHAT IT IS. The engine's producer side is `producerEvents`:
+ *    authored emits plus the card's own implied cast and enter. `supplyKeysOf` reads authored emits
+ *    only, so a plain enchantment was never a candidate for a constellation payoff the engine joins
+ *    it to -- Doomwake Giant sat in one of forty Braids enchantments' lists.
+ *  - A COMMON EVENT'S ASKERS. `VERIFY_LIMIT` takes the rarest events first, so an event thousands of
+ *    cards ask for is crowded out of every list. Here each supplied key gets its own
+ *    `POOL_PER_EVENT` slots, best-connected first (`ranked` holds each key's askers in that order).
+ *
+ *  THE ENGINE STILL DECIDES: a pair is kept only when `directedReasons` draws it. */
+export function poolPartnersFor(
+  subject: DeckCard, ranked: ReadonlyMap<string, readonly DeckCard[]>, freq: EventFrequency, h: Hierarchy,
+  skip: ReadonlySet<string>, code: (tags: readonly { tag: string }[]) => number[] = () => [],
+): PoolRow[] {
+  const implied = subject.tags ? producerEvents(subject.tags).flatMap((e) => splitKey(eventKey(e))) : [];
+  const keys = [...new Set([...supplyKeysOf(subject), ...implied].flatMap(supplyForms))];
+  const seen = new Set<string>([subject.card.name, ...skip]);
+  const out: PoolRow[] = [];
+  for (const key of keys) {
+    let taken = 0;
+    for (const c of ranked.get(key) ?? []) {
+      if (taken >= POOL_PER_EVENT) break;
+      if (seen.has(c.card.name)) continue;
+      seen.add(c.card.name);
+      taken++;
+      const reasons = directedReasons(subject, c, h, { tokensMediate: false });
+      if (reasons.length === 0) continue;
+      out.push({ name: c.card.name, score: specificity(key, freq), event: key, tags: code(reasons) });
+    }
+  }
+  return out;
+}
+
+/** HOW MANY ROWS ONE EVENT MAY OCCUPY.
+ *
+ *  MEASURED, 2026-09-04: ~2,000 cards demand `enters|creature|-`. They score IDENTICALLY, because
+ *  they are identically specific, so which of them reached a page was decided by corpus iteration
+ *  order -- Impact Tremors lost a slot to Diregraf Horde for no reason a reader could name.
+ *
+ *  Capping is the fix rather than a tie-break, because there is no honest tie-break available: the
+ *  cards really are equally specific, and the only orderings that would separate them are quality
+ *  or popularity. Twenty rows that all say "triggers when a creature enters" are ONE fact printed
+ *  twenty times; a few of them plus a count says the same thing and leaves room for the card's
+ *  other interactions. `pool` carries the count. Three until 2026-09-16, eight since: the tie is
+ *  broken by partner count (`degreeOf`), so the eight are the eight best connected, and a page that
+ *  shows them reads as the corpus's own top cards rather than a random sample. */
+export const PER_EVENT_CAP = 8;
+
+/** HOW CONNECTED A CARD IS, for tie-breaking only (see `specificity`): its candidate partner count
+ *  from the map `buildPartnerArtifact` hands in, the same population the pages' "N cards can cause
+ *  this" counts. A card the map does not know sorts last. */
+export const degreeOf = (degree: ReadonlyMap<string, number> | undefined, d: DeckCard): number =>
+  degree?.get(d.card.name) ?? -1;
+
+/** THE PARTNER LIST FOR ONE CARD: rank by specificity, then verify with the engine.
+ *
+ *  TWO PHASES, AND THE SPLIT IS THE POINT. `eventKey` decides who is worth ASKING about;
+ *  `directedReasons` decides whether there is an edge and supplies the sentence. A key match is
+ *  necessary and NOT sufficient -- Krenko's emit and a trigger wanting a creature an OPPONENT
+ *  controls share `enters|creature|-` and form no edge -- so every row here survived the same
+ *  function the deck report and the compass regression run on.
+ *
+ *  Computing the join here instead would be a SECOND matcher, drifting from the first. That is the
+ *  failure `graph-events.ts` names when it says a graph that computed its own edges would drift,
+ *  and this artifact would drift the same way for the same reason. */
+export interface PartnerResult {
+  rows: PartnerRow[];
+  /** EVERY PAIR THE ENGINE CONFIRMED in the forward and static phases, including the ones the
+   *  per-event cap kept off this page. The engine had already been asked; throwing the answer away
+   *  was the only reason a payoff's page could not list its producers. Feeder rows are not here --
+   *  they already run the other way. */
+  verified: PartnerRow[];
+  /** EVERY REASON TAG THE ENGINE WROTE for each confirmed pair, by partner name. Not on the page: the
+   *  suggestion pool carries them (`pi`) so a deck can weigh a pair on its own axis before it asks
+   *  the engine again. */
+  tags: Map<string, string[]>;
+  /** Per event key, how many cards in the corpus demand something this card supplies. The rows are
+   *  capped; this is what the page says instead of padding -- "and 1,974 more trigger on a creature
+   *  entering". A CANDIDATE count, not a verified-edge count, and the page must word it that way. */
+  pool: Record<string, number>;
+  /** Per event key, how many cards in the corpus can CAUSE it -- which is the number the ranking is
+   *  computed from, and a different population from `pool`.
+   *
+   *  THE PAGE WAS SHOWING ONE NUMBER AND RANKING ON THE OTHER. A skeptic reconstructed the order
+   *  from the only figure on screen and found it non-monotonic -- 2, 263, 1, 3, 1863, 15 -- and
+   *  concluded the ranking was broken. It was not: in THIS number the same groups read 72, 264,
+   *  2159, 2159, 2879, 2963, descending exactly as claimed. The reasoning was sound and the evidence
+   *  was missing, which is the page's fault and not the reader's. */
+  rarity: Record<string, number>;
+}
+
+/** The tail of the engine's sentence after ", <name> " -- what the row's own card does. Returns
+ *  nothing when the sentence does not have that shape, which is the honest failure: a row with no
+ *  payoff keeps the full sentence rather than showing a guess at half of it. */
+const payoffOf = (reason: string, name: string): { payoff?: string } => {
+  const at = reason.indexOf(`, ${name} `);
+  if (at < 0) return {};
+  return { payoff: reason.slice(at + name.length + 3) };
+};
+
+export function partnersFor(
+  subject: DeckCard,
+  candidates: DeckCard[],
+  feeders: DeckCard[],
+  freq: EventFrequency,
+  slugs: Map<string, string>,
+  h: Hierarchy,
+  /** The card this one melds with, when it is in the pool -- the one candidate no key can find. */
+  meldWith?: DeckCard,
+  /** Candidate partner count by card name, the tie-break (`degreeOf`); absent keeps corpus order. */
+  degree?: ReadonlyMap<string, number>,
+): PartnerResult {
+  const deg = (d: DeckCard): number => degreeOf(degree, d);
+  const tags = new Map<string, string[]>();
+  const note = (name: string, rs: readonly { tag: string }[]): void => {
+    tags.set(name, [...new Set([...(tags.get(name) ?? []), ...rs.map((x) => x.tag)])]);
+  };
+  // EVERY DEMAND SHAPE THIS CARD'S EMITS CAN SATISFY. `supplyForms` splits type lists and adds the
+  // coarser shapes, so a goblin-token emit is found by a demand for a creature entering.
+  // WHAT THE SUBJECT SUPPLIES, WHICH INCLUDES WHAT IT IS. A Goblin body supplies "a Goblin you
+  // control" by being one, so a payoff that counts Goblins is a candidate for it -- the relation
+  // `edges.ts` draws and no event can express.
+  const subjectEmits = new Set(supplyKeysOf(subject).flatMap(supplyForms));
+
+  const ranked = candidates
+    // A CARD IS NEVER ITS OWN PARTNER. `directedReasons(x, x)` can return reasons, and
+    // self-reference is the largest defect family this engine has had -- 74% of all false edges --
+    // so the exclusion is explicit rather than left to the reason layer.
+    .filter((c) => c.card.name !== subject.card.name)
+    .map((c) => {
+      // EVERY EVENT THE PAIR COULD CONNECT THROUGH, not just the best one. The best RANKS the
+      // candidate; which one PRICES the row is decided after the engine has spoken, because a pair
+      // usually shares several demand keys and the engine confirms some and refuses others.
+      const events = new Map<string, { score: number; tags: Set<string> }>();
+      for (const a of abilitiesOf(c)) {
+        for (const verb of a.trigger?.verbs ?? []) {
+          // ONE EVENT PER TYPE (roadmap AK5): a trigger naming two types proposes two, and the
+          // candidate keeps whichever scores best -- so a partner is still listed once, under the
+          // half that is actually rare.
+          for (const key of splitKey(eventKey({ verb, subject: a.trigger!.subject } as GameEvent))) {
+          // THE DEMAND ONLY SPLITS, IT NEVER WIDENS -- the same asymmetry `supplyCounts` relies on.
+          // Widening it here would admit every permanent as a candidate for a goblin demand, and the
+          // score is taken on the demand's own key, so a widened match would also be mispriced.
+          if (!demandForms(key).some((f) => subjectEmits.has(f))) continue;
+          // THE ENGINE'S OWN TAG FOR THIS DEMAND, built from the same trigger by the same two
+          // functions `directedReasons` uses, so "did the engine confirm THIS event" is string
+          // equality against what the engine wrote. Comparing verbs instead was a near miss twice
+          // over: `zoneEventKey` renames a graveyard entry and a battlefield departure while
+          // `eventKey` drops the zone, and a verb-only test cannot tell `enters:goblin` from
+          // `enters:creature`, so a generic sentence would be priced at the rare demand's rate.
+          const t = normalizeZoneEvent({ verb, subject: a.trigger!.subject } as GameEvent);
+          const tag = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+          const e = events.get(key) ?? { score: specificity(key, freq), tags: new Set<string>() };
+          e.tags.add(tag);
+          events.set(key, e);
+          }
+        }
+      }
+      // A GRAVEYARD FILL THE CANDIDATE WANTS (the `fills|` bridge): a reanimator, a delve spell, a
+      // per-graveyard payoff, a graveyard count. No trigger names it, so the loop above never saw
+      // it and Animate Dead's page listed no mill (measured 2026-09-16). Same gate, same shape.
+      for (const { key, tags } of fillDemandsOf(c)) {
+        if (events.has(key) || !demandForms(key).some((f) => subjectEmits.has(f))) continue;
+        events.set(key, { score: specificity(key, freq), tags: new Set(tags) });
+      }
+      const byScore = [...events].sort((a, b) => b[1].score - a[1].score);
+      // The count is read ONCE here, not in the comparator: two map lookups per comparison over
+      // a 25,000-card candidate list took the build from 80 s to 388 s (measured 2026-09-17).
+      return { card: c, events: byScore, score: byScore[0]?.[1].score ?? 0, deg: deg(c) };
+    })
+    .filter((r) => r.score > 0)
+    // EQUAL SCORES BREAK ON PARTNER COUNT (see `specificity`), and the tie-break has to sit HERE
+    // and not only at the cut: `VERIFY_LIMIT` takes the top of this order, so a well-connected card
+    // below rank 200 in corpus order was never even asked about.
+    .sort((a, b) => b.score - a.score || b.deg - a.deg);
+
+  // COUNTED BEFORE THE CUT, so the page can say how many it is not showing. Counted over EVERY
+  // event a candidate matched rather than only its best, because any of them can end up pricing a
+  // row -- a pool keyed on the best alone would leave a row's own event uncounted.
+  const pool: Record<string, number> = {};
+  for (const r of ranked) for (const [key] of r.events) pool[key] = (pool[key] ?? 0) + 1;
+
+  const rows: PartnerRow[] = [];
+  const verified: PartnerRow[] = [];
+  const shown: Record<string, number> = {};
+  for (const r of ranked.slice(0, VERIFY_LIMIT)) {
+    // NO TOKEN NODE EXISTS ON A CARD PAGE, so the engine's token suppression would trade this
+    // card's real supply for a second hop that is never built. See `ReasonOptions.tokensMediate`.
+    const reasons = directedReasons(subject, r.card, h, { tokensMediate: false });
+    if (reasons.length === 0) continue;
+    // THE ROW IS PRICED ON AN EVENT THE ENGINE ACTUALLY CONFIRMED.
+    //
+    // MEASURED, 2026-09-04: verifying the PAIR while scoring the EVENT let an event that formed no
+    // edge set the price and the label. 10,411 of 88,768 rows (11.7%) carried no sentence for their
+    // own event at all -- the pair connects, but through some other channel, so the number beside
+    // the row was earned by a relation the engine had refused. The candidate's events are tried
+    // highest-specificity first and the first one the reasons support wins; a candidate none of
+    // them support is dropped rather than priced on a refusal.
+    const hit = r.events.map(([event, { score, tags }]) => ({ event, score, on: reasons.filter((x) => tags.has(x.tag)) }))
+      .find((e) => e.on.length > 0);
+    if (!hit) continue;
+    note(r.card.card.name, reasons);
+    const chosen = pickReason(hit.on);
+    const row: PartnerRow = {
+      name: r.card.card.name,
+      slug: slugs.get(r.card.card.name)!,
+      score: hit.score,
+      event: hit.event,
+      reason: chosen.text,
+      ...payoffOf(chosen.text, r.card.card.name),
+      ...(chosen.effectKind ? {} : { unread: true as const }),
+      ...tileOf(r.card),
+    };
+    // RECORDED BEFORE THE CAP: the cap decides this page, not whether the pair exists.
+    verified.push(row);
+    if ((shown[hit.event] ?? 0) >= PER_EVENT_CAP) continue;
+    shown[hit.event] = (shown[hit.event] ?? 0) + 1;
+    rows.push(row);
+    if (rows.length === KEEP) break;
+  }
+  // THE ROWS THAT RUN THE OTHER WAY. Everything above is "this card supplies, that card consumes".
+  // A BOARD COUNT IS THE REVERSE: Krenko, Mob Boss counts Goblins, so the Goblins feed HIM and the
+  // pair is verified `feeder -> subject`. Without this phase the engine drew the edge and the page
+  // never asked about it -- the ranking proposes candidates by event key, and a board count has an
+  // event on neither side.
+  //
+  // ONE LIST, NOT TWO SECTIONS: the engine's own sentence names both cards and says which way it
+  // runs ("While Goblin Assassin is on the battlefield, Krenko, Mob Boss counts it and gets
+  // bigger"), so the row itself tells a reader the direction.
+  for (const { key, tag, tags } of feederDemandsOf(subject)) {
+    if (key in pool) continue;
+    const score = specificity(key, freq);
+    const accepts = new Set(tags ?? [tag]);
+    // A FEEDER SITS UNDER THE KEY IT SUPPLIES. A party count has four keys and the engine confirms
+    // a Rogue under any of them (an array subtype is OR), so without this every feeder landed under
+    // the first key and the page said "a Cleric you control" over a Rogue.
+    // A FEEDER SUPPLIES THE KEY OR A FORM OF IT: a Goblin supplies `counts|-|goblin|-` exactly, a
+    // creature's death supplies `fills|creature|-|-` and so `fills|-|-|-` (the untyped count). Equal
+    // suppliers in partner-count order, the same tie-break the forward phase uses.
+    // A CARD THAT ONLY PUTS ITSELF THERE SORTS LAST. Measured on the first 60-row build: every
+    // untyped graveyard count opened with Evolving Wilds, Terramorphic Expanse, Myriad Landscape,
+    // Mind Stone and Polluted Delta -- the most-played cards whose death is their own, one card
+    // each, ahead of every mill engine. True rows, but the same five on two thousand pages, and
+    // the fill a threshold deck is built around is the repeatable one.
+    const usable = feeders
+      .filter((f) => f.card.name !== subject.card.name && supplyKeysOf(f).flatMap(supplyForms).includes(key))
+      .map((f) => ({ f, self: Number(fillsOnlyItself(f)), deg: deg(f) }))
+      .sort((a, b) => a.self - b.self || b.deg - a.deg)
+      .map((x) => x.f);
+    for (const f of usable) {
+      if ((shown[key] ?? 0) >= PER_EVENT_CAP || rows.length >= KEEP) break;
+      const slug = slugs.get(f.card.name)!;
+      if (rows.some((r) => r.slug === slug)) continue;
+      // VERIFIED THE WAY EVERY OTHER ROW IS, just in the other direction: the engine decides whether
+      // the relation exists and writes the sentence.
+      const on = directedReasons(f, subject, h, { tokensMediate: false })
+        .filter((r) => accepts.has(r.tag));
+      if (on.length === 0) continue;
+      note(f.card.name, on);
+      shown[key] = (shown[key] ?? 0) + 1;
+      const chosen = pickReason(on);
+      rows.push({
+        name: f.card.name, slug, score, event: key, reason: chosen.text,
+        ...(chosen.effectKind ? {} : { unread: true as const }),
+        ...tileOf(f),
+      });
+    }
+    // COUNTED BEFORE THE CUT, like every other pool: how many cards in the corpus are one of these.
+    pool[key] = usable.length;
+  }
+
+  // THE ROWS A STATIC REACHES. Neither direction above can find them: a static emits nothing and
+  // counts nothing. Candidates are what the key names (`staticReaches`), ranked by HOW MANY of the
+  // subject's statics land on them so the card both statics reach is asked about first, and then
+  // verified exactly as every other row is -- the engine's static pass decides, on the tag it
+  // writes, and a candidate it refuses (a land under a discount, a `{U}` spell under a generic one)
+  // is counted in the pool and dropped from the rows.
+  const staticKeys = staticKeysOf(subject);
+  if (staticKeys.length > 0) {
+    const hits = candidates
+      .filter((c) => c.card.name !== subject.card.name)
+      .map((c) => ({ c, matched: staticKeys.filter((k) => staticReaches(k, c)), deg: deg(c) }))
+      .filter((x) => x.matched.length > 0)
+      // Among cards the same statics reach, partner count breaks the tie (see `specificity`). A
+      // discount on every noncreature spell reaches five thousand cards and the page shows eight;
+      // on 2026-09-05 corpus order put Lattice Library ahead of Raise the Alarm.
+      .sort((a, b) => b.matched.length - a.matched.length || b.deg - a.deg);
+    for (const key of staticKeys) pool[key] = hits.filter((x) => x.matched.includes(key)).length;
+    for (const { c, matched } of hits.slice(0, VERIFY_LIMIT)) {
+      if (rows.length >= KEEP) break;
+      const slug = slugs.get(c.card.name)!;
+      if (rows.some((r) => r.slug === slug)) continue;
+      const reasons = directedReasons(subject, c, h, { tokensMediate: false });
+      for (const key of matched) {
+        const on = reasons.filter((r) => r.tag === `static:${splitStaticKey(key).kind}`);
+        if (on.length === 0) continue;
+        note(c.card.name, reasons);
+        const chosen = pickReason(on);
+        const row: PartnerRow = {
+          name: c.card.name, slug, score: specificity(key, freq), event: key, reason: chosen.text,
+          ...payoffOf(chosen.text, c.card.name),
+          ...(chosen.effectKind ? {} : { unread: true as const }),
+          ...tileOf(c),
+        };
+        verified.push(row);
+        if ((shown[key] ?? 0) >= PER_EVENT_CAP) continue;
+        shown[key] = (shown[key] ?? 0) + 1;
+        rows.push(row);
+        break;
+      }
+    }
+  }
+
+  // THE OTHER HALF OF A MELD PAIR. One candidate, named on the card, verified exactly as every
+  // other row is: the engine's `meldReason` decides, on the `meld` tag it writes.
+  // NOT BEHIND `KEEP`: a rarity of one sorts it to the top below, so a card that already has 24
+  // rows would otherwise drop its one meld silently.
+  if (meldWith) {
+    const key = "meld|-|-|-";
+    pool[key] = 1;
+    // `meldReason` lives beside `directedReasons` in `pairReasons`, not inside it: a meld is
+    // symmetric and stated once per pair, so it is asked for by name here. NEVER `unread`: the
+    // reason carries no effect kind BY DESIGN (melding is not a payoff kind), and the sentence is
+    // the whole of what the engine read.
+    const on = meldReason(subject, meldWith);
+    if (on.length > 0) {
+      note(meldWith.card.name, on);
+      rows.push({
+        name: meldWith.card.name, slug: slugs.get(meldWith.card.name)!,
+        score: specificity(key, freq), event: key, reason: pickReason(on).text,
+        ...tileOf(meldWith),
+      });
+    }
+  }
+
+  // A ROW CAN NOW BE PRICED BELOW THE SCORE THAT RANKED IT, so the order the loop produced is no
+  // longer the order the page wants. Sorting here rather than re-ranking keeps the CEILING above
+  // honest: `VERIFY_LIMIT` still cuts on the best-possible score, which is the only score known
+  // before the engine runs.
+  rows.sort((a, b) => b.score - a.score);
+  // THE RANKING BASIS, FOR THE EVENTS THAT ACTUALLY EARNED A ROW.
+  const rarity: Record<string, number> = {};
+  for (const row of rows) rarity[row.event] = freq[row.event] ?? 1;
+  return { rows, verified, tags, pool, rarity };
+}
+
+/** WHICH OF THE ENGINE'S SENTENCES TO STORE.
+ *
+ *  MEASURED, 2026-09-04: Krenko's row read "When Krenko, Mob Boss enters, Quest for the Goblin Lord
+ *  puts counters on it" -- Krenko entering ONCE, as a body. His actual engine, tapping to make
+ *  goblins repeatedly, satisfies the same trigger and is the half worth printing. `reasons[0]` was
+ *  simply whichever the engine emitted first.
+ *
+ *  IT IS HANDED ONLY THE SENTENCES FOR THE ROW'S OWN EVENT, because preferring
+ *  repeatability across all of them was measurably wrong: **11,928 of 88,768 rows (13.4%) printed
+ *  an event key beside a sentence about a different channel** -- a row labelled `dies|-|-` reading
+ *  "When Wild Magic Surge is cast, Sedgemoor Witch makes a token". Both halves can be true and the
+ *  page still contradicts itself, because `event` is what earned the score and the sentence is what
+ *  the reader checks it against.
+ *
+ *  A REPEATABLE REASON BEATS A ONE-SHOT, and nothing else is reordered: this picks between
+ *  sentences the engine already wrote, it never composes one and never promotes a pair the engine
+ *  refused. */
+function pickReason<T extends { text: string; repeatability?: string; impliedProducer?: boolean }>(
+  reasons: T[],
+): T {
+  // AN AUTHORED SUPPLY OUTRANKS THE BASELINE ONE, and it outranks repeatability too. Krenko is a
+  // Goblin AND he taps to make Goblins, so he satisfies `enters:goblin` twice; both sentences carry
+  // the consumer's own repeatability, so that rule cannot separate them and the body's -- "When
+  // Krenko, Mob Boss enters" -- won on emission order. `impliedProducer` marks the baseline the
+  // matcher synthesises for a card merely existing; the authored emit is the engine the reader came
+  // to the page for. MEASURED 2026-09-04: 6,407 rows on 1,714 cards printed the body's sentence.
+  const rank = (r: { repeatability?: string; impliedProducer?: boolean }) =>
+    (r.impliedProducer === true ? 2 : 0) + (r.repeatability && r.repeatability !== "oneshot" ? 0 : 1);
+  // RETURNS THE REASON, NOT ITS TEXT. The row needs to say whether the engine read the effect behind
+  // the sentence it printed, and that is a property of the CHOSEN reason -- asking whether every
+  // candidate lacked a kind marked 27 rows where roughly fifteen thousand qualified.
+  return reasons.reduce((best, r) => (rank(r) < rank(best) ? r : best));
+}
+
+
+/** Re-exported so every existing importer keeps working; the definition moved to its own file
+ *  because the Pages Function needs the shard rule without `edges.ts` behind it. */
+export { PARTNER_SHARD_COUNT, partnerShardOf };
+
+/** THE CARD'S CLAUSES, verbatim, in printed order, from the SAME deterministic `segment()` the
+ *  clause docs were built from and `derive-corpus.ts` recomputes with. Recomputed rather than
+ *  stored for the same reason it is there: it is pure, it is free, and a second code path that has
+ *  to agree with the first is how the page comes to quote a clause the engine never read.
+ *
+ *  A CARD WITH NO RULES TEXT GETS NO LIST, not an empty one -- a vanilla creature has nothing to
+ *  quote and a heading over nothing is worse than no heading. */
+const clauseTextsOf = (d: DeckCard): { id: number; text: string; face?: number }[] => {
+  const c = d.card as { oracleText?: string; keywords?: string[]; typeLine?: string };
+  // THE ID TRAVELS WITH THE TEXT (roadmap AJ4). `segment` numbers clauses from 1 and derive stamps
+  // that number onto every ability the clause produces, so the page joins the two by ID. It must
+  // not join them by POSITION: this list drops empty segments, and one dropped clause shifts every
+  // row after it -- the same silent misattribution the spec refuses the positional zip for.
+  // AND THE FACE IT IS PRINTED ON, because the page turns with the picture: a back-face clause
+  // shown beside the front face's abilities would render bare and read as "derives nothing", which
+  // is a lie about a line the reader cannot even see.
+  return segment(c.oracleText ?? "", c.keywords ?? [], c.typeLine ?? "")
+    .map((x) => ({ id: x.id, text: x.text.trim(), ...(x.face !== undefined ? { face: x.face } : {}) }))
+    .filter((x) => x.text.length > 0);
+};
+
+/** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
+ *  appear on the card -- so the table reads down the card the way a player does. */
+export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
+  abilitiesOf(d).map((a) => {
+    const counted = a.effect?.scalingSubject;
+    // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
+    const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
+    const selfEmits = (a.emits ?? []).filter((e) => e.subject.self === true).map(eventKey);
+    return {
+      kind: a.kind,
+      ...(a.clause !== undefined ? { clause: a.clause } : {}),
+      ...(a.cost ? { cost: a.cost } : {}),
+      when: (a.trigger?.verbs ?? []).flatMap((v) =>
+        splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent))),
+      // THE TRIGGER IS THE CARD ITSELF: the key cannot carry it, so the row says it beside the key.
+      ...(a.trigger?.subject?.self === true ? { self: true as const } : {}),
+      ...(a.trigger?.subject?.colors?.length ? { whenColors: [...a.trigger.subject.colors] } : {}),
+      ...(a.effect?.subject?.self === true ? { effectSelf: true as const } : {}),
+      ...(a.face !== undefined ? { face: a.face } : {}),
+      // A GAME-STATE REQUIREMENT the deck report honours only under a state (roadmap W18).
+      ...(a.requires ? { requires: a.requires } : {}),
+      effect: a.effect?.kind ?? "",
+      ...(a.amount ? { amount: a.amount } : {}),
+      ...(a.effect?.subject?.control && a.effect.subject.control !== "you" ? { recipient: a.effect.subject.control } : {}),
+      ...(a.effect?.scaling ? { scaling: a.effect.scaling } : {}),
+      ...(subtype ? { counts: subtype } : {}),
+      emits: (a.emits ?? []).flatMap((e) => splitKey(eventKey(e))),
+      // A STATIC'S DEMAND IS ITS REACH, not a trigger: without this the page's clause-led reading
+      // showed no event under an anthem or a cost-reducer at all (roadmap AJ4).
+      ...(() => { const k = staticKeysOfAbility(a); return k.length > 0 ? { applies: k } : {}; })(),
+      ...(selfEmits.length > 0 ? { selfEmits } : {}),
+    };
+  });
+
+/** EVERY ABILITY THE ENGINE READS ON THE CARD: the derived ones and the ones its printed keywords
+ *  give it (`keywordAbilities` -- prowess, extort, Start your engines!). Edge formation has always
+ *  merged the two; the page read the stored list alone, so Samut, the Driving Force showed two
+ *  statics and no reason for a drain card to be near her (roadmap W9, 2026-09-05). */
+export const abilitiesOf = (d: DeckCard): CardTags["abilities"] =>
+  d.tags ? [...d.tags.abilities, ...keywordAbilities(d.tags.characteristics)] : [];
+
+export const emitKeysOf = (d: DeckCard): string[] =>
+  abilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e))));
+
+export const demandKeysOf = (d: DeckCard): string[] => [
+  // A CARD'S OWN TRIGGER IS NOT A DEMAND ON THE OTHER 99. Burakos, Party Leader fires when HE
+  // attacks (`self: true`, derived correctly); keyed as `attacks|-|-|-` the page filed it as a gap
+  // the deck must cover and ranked attackers as his partners (owner, 2026-09-05). The deck report
+  // already gates self triggers; the page now does the same.
+  ...abilitiesOf(d).flatMap((a) =>
+    a.trigger?.subject?.self === true ? []
+      : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
+  // ALL THREE FEEDER SHAPES ARE DEMANDS. Listing only board counts here left Strionic Resonator --
+  // no trigger, no emit, one copy-ability -- with no demand at all, so `isSubstantive` dropped it
+  // from the pool and its page had no rows, feeder pass or not (found on the first rebuild).
+  ...feederKeysOf(d),
+];
+
+/** THE FIVE BASIC LAND TYPES, which a board count may name and which never form a row -- the same
+ *  refusal `edges.ts` makes for the same reason: a mono-black deck runs thirty Swamps, and thirty
+ *  rows into one payoff is a mesh, not a synergy. */
+
+/** WHAT A CARD COUNTS ON THE BOARD, as a demand key.
+ *
+ *  Krenko, Mob Boss makes a Goblin token per Goblin you control. That is a demand on the other 99
+ *  cards and it fires nothing -- no trigger, no emit -- so until this existed his record's
+ *  `demands` was EMPTY and his page could not answer the question his deck is built around.
+ *
+ *  A SUBTYPE, OR A NON-WHOLE-DECK CARD TYPE, AND NEVER A BASIC LAND TYPE. `edges.ts` admits a bare
+ *  artifact, enchantment or planeswalker count since the owner's 2026-09-09 ruling and still
+ *  refuses creature, permanent and land ("creatures you control" is every creature in the deck;
+ *  lands are the mana base) -- `WHOLE_DECK_TYPES` is that list, shared so a key the matcher would
+ *  refuse is never a row the page offers. The two gates state the same rule and are tested
+ *  against each other. */
+export const boardCountKeysOf = (d: DeckCard): string[] => [...new Set(boardCountsOf(d).map((b) => b.key))];
+
+/** THE THREE FEEDER SHAPES, one list. A board count (Krenko wants Goblins), a copier (Strionic
+ *  Resonator wants triggered abilities, AC12) and a sacrifice outlet (Goblin Engineer wants artifacts
+ *  to eat, the fodder pass) are all "this card wants what the other card IS", verified feeder ->
+ *  subject on the engine's own tag. The two-gate trap this closes: `edges.ts` grew the `copies:`
+ *  and `fodder:` passes on 2026-09-09 and this artifact had a twin only for board counts, so the
+ *  deck report claimed relations the commander page could not offer (roadmap, token-supply family). */
+/** WHAT A CARD WANTS IN A GRAVEYARD, as a demand key: `fills|<type>|<subtype>|-`, the class the
+ *  consumer reads there, matched by what a fill emit supplies (`supplyForms`). FOUR ENGINE PASSES,
+ *  ONE KEY -- none of them is a trigger, so until 2026-09-16 no page could ask about any of them
+ *  and Animate Dead listed no mill, Cabal Ritual and Dig Through Time had no page at all:
+ *   - a recursion reads a class from a graveyard (`graveyard-recursion:<subject>`);
+ *   - a per-graveyard payoff scales on a class there (`scales:<subject>`, typed only, as the engine
+ *     refuses the untyped count);
+ *   - a graveyard count gates an ability (`threshold:<subject>`, AF7c);
+ *   - delve pays from your graveyard, tagged by the fill's own verb.
+ *  Each carries the tag(s) the engine writes, so the row is verified on string equality with the
+ *  same sentence the deck report prints -- a key proposes, the engine decides. */
+export const fillDemandsOf = (d: DeckCard): { key: string; tag: string; tags: string[] }[] => {
+  const keyOf = (s: SubjectFilter): string => {
+    const one = (v: string | string[] | undefined): string =>
+      v === undefined ? "-" : Array.isArray(v) ? [...v].sort().join(",") : v;
+    return `fills|${one(s.type)}|${one(s.subtype)}|-`;
+  };
+  const out: { key: string; tag: string; tags: string[] }[] = [];
+  // ONE ROW PER TYPE (roadmap AK5). A reanimator that wants "an artifact or creature card in a
+  // graveyard" wants each of them, and the tags it carries are the same either way.
+  const push = (key: string, tags: string[]): void => {
+    for (const k of splitKey(key)) {
+      if (!out.some((o) => o.key === k && o.tags.join() === tags.join())) out.push({ key: k, tag: tags[0]!, tags });
+    }
+  };
+  for (const a of abilitiesOf(d)) {
+    const s = a.effect?.subject;
+    if (a.effect?.kind === "graveyard-recursion" && s?.zone === "graveyard" && s.self !== true) {
+      push(keyOf(s), [`graveyard-recursion:${themeSubjectKey(s)}`]);
+    }
+    const scaled = a.effect?.scalingSubject;
+    if (a.effect?.scaling === "per-graveyard" && scaled && (asList(scaled.type).length > 0 || asList(scaled.subtype).length > 0)) {
+      push(keyOf(scaled), [`scales:${themeSubjectKey(scaled)}`]);
+    }
+    const gated = a.thresholdSubject;
+    if (gated?.zone === "graveyard" && a.threshold) push(keyOf(gated), [`threshold:${themeSubjectKey(gated)}`]);
+  }
+  if ((d.tags?.characteristics.keywords ?? []).some((k) => String(k).toLowerCase().trim() === "delve")) {
+    push("fills|-|-|-", ["mill:any", "discard:any", "dies:any", "enters-graveyard:any"]);
+  }
+  return out;
+};
+
+export const feederDemandsOf = (d: DeckCard): { key: string; tag: string; tags?: string[] }[] => [
+  ...boardCountsOf(d), ...copyDemandsOf(d), ...fodderDemandsOf(d), ...fillDemandsOf(d),
+];
+export const feederKeysOf = (d: DeckCard): string[] => [...new Set(feederDemandsOf(d).map((b) => b.key))];
+
+const ABILITY_OBJECT_KINDS = ["activated", "triggered", "loyalty", "mana"] as const;
+/** `copies|-|<kind>|-`: what a copy-ability card wants the other card to HAVE (CR 113.3). An `opp`
+ *  copier demands nothing of THIS deck -- see the same gate in the engine's copy-ability pass. */
+export const copyDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
+  abilitiesOf(d).flatMap((a) => a.effect?.kind !== "copy-ability" || a.effect.subject?.control === "opp" ? []
+    : (a.effect.subject?.abilityKind ?? ["activated", "triggered"]).map((k) => ({ key: `copies|-|${k}|-`, tag: `copies:${k}` })));
+/** `fodder|-|<noun>|-`: what a sacrifice outlet eats -- the emit's subject, subtype first, else its
+ *  single type. Edicts (control any) and self-sacrifices demand nothing, as in the engine. */
+export const fodderDemandsOf = (d: DeckCard): { key: string; tag: string }[] =>
+  abilitiesOf(d).flatMap((a) => {
+    const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.control === "you" && e.subject.self !== true);
+    if (!eats) return [];
+    const { zone: _z, scope: _s, ...wanted } = eats.subject;
+    const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
+    const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
+    const noun = subtype ?? (types.length === 1 ? types[0] : undefined);
+    return noun ? [{ key: `fodder|-|${noun}|-`, tag: `fodder:${themeSubjectKey(wanted)}` }] : [];
+  });
+
+/** EVERY SUBTYPE A BOARD COUNT NAMES IS ITS OWN KEY, each carrying the tag the engine writes for
+ *  the ability. A party count (CR 700.8) names Cleric, Rogue, Warrior and Wizard; keyed on the
+ *  first alone, Burakos's page asked only for Clerics (owner, 2026-09-05). The engine's tag takes
+ *  the first subtype (`themeSubjectKey`), so a Rogue feeder is verified under `scales:cleric` --
+ *  the tag is carried beside the key rather than rebuilt from it. */
+export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
+  abilitiesOf(d).flatMap((a) => {
+    // Two counts, one demand: the count a payoff GROWS with (`scalingSubject`, stamped with the
+    // battlefield zone by derive) and the count it is GATED on (`thresholdSubject`, a board count by
+    // construction -- see `thresholdSubjectFor`). Same keys, each carrying the tag the engine writes.
+    const counts: { counted: SubjectFilter; tag: string }[] = [];
+    const scaled = a.effect?.scalingSubject;
+    if (scaled && scaled.zone === "battlefield") counts.push({ counted: scaled, tag: `scales:${themeSubjectKey(scaled)}` });
+    const gated = a.thresholdSubject;
+    if (gated && a.threshold) counts.push({ counted: gated, tag: `${a.effect?.kind === "win-game" ? "wincon" : "threshold"}:${themeSubjectKey(gated)}` });
+    return counts.flatMap(({ counted, tag }) => {
+      if (counted.control === "opp") return [];
+      const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
+        .filter((st) => !BASIC_LAND_TYPE_SET.has(st));
+      if (subtypes.length > 0) return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
+      // A bare type count (Storm-Kiln Artist's artifacts), keyed on the type itself.
+      const types = Array.isArray(counted.type) ? counted.type : counted.type === undefined ? [] : [counted.type];
+      return types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!) ? [{ key: `counts|-|${types[0]}|-`, tag }] : [];
+    });
+  });
+
+/** WHAT A CARD IS, as a supply key -- its own printed subtypes.
+ *
+ *  A Goblin body supplies "a Goblin you control" simply by being one, which is what lets the
+ *  existing candidate index and frequency table price a board count with no new machinery: the
+ *  rarity of `counts|-|goblin|-` is the number of Goblins in the corpus, exactly as the rarity of
+ *  an event is the number of cards that can cause it.
+ *
+ *  KEPT OUT OF THE RECORD'S `emits`. This is a supply the RANKING uses, not a claim the page should
+ *  print: "what it produces" would fill with a restatement of the card's own type line on all
+ *  15,350 records. */
+export const supplyKeysOf = (d: DeckCard): string[] => [
+  ...emitKeysOf(d),
+  ...(d.tags?.characteristics.subtypes ?? [])
+    .filter((t) => !BASIC_LAND_TYPE_SET.has(t))
+    .map((t) => `counts|-|${t}|-`),
+  // An artifact supplies "an artifact you control" the way a Goblin supplies a Goblin (2026-09-09).
+  ...(d.tags?.characteristics.types ?? [])
+    .filter((t) => !WHOLE_DECK_TYPES.has(t))
+    .map((t) => `counts|-|${t}|-`),
+  // WHAT A COPIER CAN COPY: the kinds of ability this card HAS (AC12; `abilityIsKind` is the
+  // engine's own reading, mana excluded from "activated").
+  ...ABILITY_OBJECT_KINDS.filter((k) => abilitiesOf(d).some((a) => abilityIsKind(a, k))).map((k) => `copies|-|${k}|-`),
+  // WHAT AN OUTLET CAN EAT. A real card is fodder by its subtypes and by a non-whole-deck type; a
+  // TOKEN MAKER is fodder by what it makes, creature tokens included -- the engine's maker path
+  // under `tokensMediate: false`. A plain creature card never supplies `fodder|-|creature|-`.
+  ...fodderSupplyKeysOf(d),
+];
+
+const fodderSupplyKeysOf = (d: DeckCard): string[] => {
+  const nouns = new Set<string>();
+  for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPE_SET.has(t)) nouns.add(t);
+  for (const t of d.tags?.characteristics.types ?? []) if (!WHOLE_DECK_TYPES.has(t)) nouns.add(t);
+  for (const a of abilitiesOf(d)) for (const e of a.emits ?? []) {
+    if (e.verb !== "create-token" || e.subject.token !== true) continue;
+    for (const t of asList(e.subject.type)) nouns.add(t);
+    for (const t of asList(e.subject.subtype)) nouns.add(t);
+  }
+  return [...nouns].map((n) => `fodder|-|${n}|-`);
+};
+
+/** HOW MUCH A CARD DOES, the order an event's causers ship in (owner 2026-09-23, roadmap AN3/AK3):
+ *  "for all the effects you have to account the cost and impact ... focus on how much this card
+ *  does". The partner count ranked "sacrifices a creature" with Boneshard Slasher 5th and Ashnod's
+ *  Altar 242nd, because breadth is not impact.
+ *
+ *  THREE KEYS, IN ORDER, and no constant between them -- trading frequency against yield needs a
+ *  game length, the exchange rate that killed edge magnitude three times (log 2026-08-16):
+ *
+ *  1. HOW OFTEN. At will AND FREE (no mana, no other price: Ashnod's Altar), an unbounded trigger
+ *     or static (Midnight Reaper), once per turn of every player, once per round (a tap, a phase
+ *     trigger, a loyalty ability -- CR 606.3 -- and a PAID at-will activation, which your mana caps
+ *     at about one real use a round: Jade Mage beside Krenko, not above him), once. An ability `repeats.ts` refused to label
+ *     ranks with `once`: promoting an unknown is a silent wrong answer.
+ *  2. WHAT EACH TIME YIELDS PER MANA, where the event has a rate family (`compareRates`, the X2
+ *     interval): draw three for three before draw two for three.
+ *  3. WHAT IT COSTS BESIDES MANA, unless that cost IS the asked event -- Greater Good pays a creature
+ *     for its draw; Ashnod's sacrifice is the outlet -- then the mana: the activation's for an
+ *     activated ability (the cast amortises, as the rate's does), the card's otherwise.
+ *
+ *  Only an ability whose own emit satisfies the key counts, and never one that acts on the card
+ *  ITSELF: sacrificing itself is not an outlet however often it happens. A card that supplies the
+ *  key by being something (a Goblin supplies "a Goblin you control") has no ability to rank and
+ *  sits with the unbounded ones -- it is one all game. Returns 0 on a tie; the caller breaks it.
+ *
+ *  CEILING: the yield in (2) is the card's best rate in the family, not the matching ability's own
+ *  (a `Rate` names no ability); the upgrade path is an ability id on the rate. */
+const FAMILY_OF_VERB: Record<string, RateFamily> = {
+  draw: "cards", "non-combat-damage": "damage", "combat-damage": "damage", "gain-life": "life",
+  "lose-life": "life-loss", mill: "mill", "create-token": "tokens", "counter-added": "counters",
+  search: "search", untaps: "untap", copy: "copies",
+};
+const PRICE_VERBS: readonly (readonly [RegExp, string])[] = [
+  [/\bsacrifice\b/i, "sacrifice"], [/\bdiscard\b/i, "discard"], [/\bpay\b[^,]*\blife\b/i, "lose-life"],
+  [/\bexile\b/i, "exiled"], [/\btap\b[^,]*\buntapped\b/i, "taps"], [/\bremove\b[^,]*\bcounters?\b/i, "counter-removed"],
+  [/\breturn\b/i, "leaves"],
+];
+interface Doing { often: number; span?: ReturnType<typeof bestRates>[RateFamily]; extra: number; mana: number }
+/** ONE RATE READING PER CARD across every key: the build orders ~1,200 keys over 1.2M memberships. */
+const ratesCache = new WeakMap<DeckCard, ReturnType<typeof bestRates>>();
+const bestRatesOf = (d: DeckCard): ReturnType<typeof bestRates> => {
+  let r = ratesCache.get(d);
+  if (!r) { r = bestRates(ratesOf(d)); ratesCache.set(d, r); }
+  return r;
+};
+export function effectOrder(key: string): (a: DeckCard, b: DeckCard) => number {
+  const asked = key.split("|")[0]!;
+  const family = FAMILY_OF_VERB[asked];
+  const forms = new Set(demandForms(key));
+  const cache = new Map<DeckCard, Doing>();
+  const doing = (d: DeckCard): Doing => {
+    const hit = cache.get(d);
+    if (hit) return hit;
+    let best: Doing | undefined;
+    let supplies = false;
+    for (const a of abilitiesOf(d)) {
+      const emits = (a.emits ?? []).filter((e) => splitKey(eventKey(e)).flatMap(supplyForms).some((f) => forms.has(f)));
+      if (emits.length === 0) continue;
+      supplies = true;
+      if (emits.every((e) => e.subject.self === true)) continue;
+      const activated = a.kind === "activated";
+      const cost = activated ? a.cost ?? "" : "";
+      const words = cost.replace(/\{[^{}]+\}/g, "");
+      const extra = PRICE_VERBS.some(([re, verb]) => verb !== asked && re.test(words)) ? 1 : 0;
+      // AN X COST IS PRICED ON ITS FIXED PIPS, the way the rate prices a slope: {X}{B} is one mana
+      // and more buys more. Pricing it at Infinity sank every X outlet below its fixed siblings.
+      const mana = activated ? (/\{[^{}]+\}/.test(cost) ? manaOf(cost.replace(/\{X\}/gi, "")) ?? 0 : 0) : (d.card.manaValue ?? 0);
+      // AT WILL MEANS FREE (owner 2026-09-23). A paid activation is capped by the mana you have --
+      // about one real use a round -- so it ranks with the once-a-round ones, and price decides.
+      const free = mana === 0 && extra === 0;
+      const often = a.repeats === "repeatable" && activated ? (free ? 0 : 3)
+        : a.repeats === "repeatable" || a.repeats === "continuous" ? 1
+        : a.repeats === "per-turn" ? 2 : a.repeats === "per-cycle" ? 3 : 4;
+      const t: Doing = { often, extra, mana };
+      if (!best || compareDoing(t, best) < 0) best = t;
+    }
+    // Supplies the key by what it IS, or only through its own self-acting abilities.
+    const out: Doing = best ?? (supplies ? { often: 4, extra: 1, mana: Infinity } : { often: 1, extra: 0, mana: 0 });
+    if (family) { const span = bestRatesOf(d)[family]; if (span) out.span = span; }
+    cache.set(d, out);
+    return out;
+  };
+  return (a, b) => compareDoing(doing(a), doing(b));
+}
+function compareDoing(a: Doing, b: Doing): number {
+  return a.often - b.often
+    || (a.span && b.span ? compareRates(a.span, b.span) : a.span ? -1 : b.span ? 1 : 0)
+    || a.extra - b.extra || a.mana - b.mana;
+}
+
+/** SUBSTANTIVE = at least one emit or one trigger.
+ *
+ *  This one predicate decides three things at once: which cards get a partner record, which get an
+ *  indexable page, and what the sitemap promises. A card with abilities but neither an emit nor a
+ *  trigger -- a static, a keyword-only body -- forms no edge, so its page makes no promise to a
+ *  crawler even though it still renders. */
+export const isSubstantive = (d: DeckCard): boolean =>
+  emitKeysOf(d).length > 0 || demandKeysOf(d).length > 0 || staticKeysOf(d).length > 0
+  || meldKeysOf(d).length > 0
+  // EVERY LEGAL COMMANDER, ABILITIES OR NOT. Clara Oswald derives one trigger-doubler with no
+  // subject, so no key above ever admitted her and a Doctor's page offered a companion with
+  // nowhere to link (real build, 2026-09-05). A commander the engine read NOTHING on needs a page
+  // more than most: an empty ability table is where a wrong "no ability" can be seen at all
+  // (roadmap W10) -- 117 derived commanders carried zero abilities and 373 were never bought.
+  || isCommander(d)
+  // A CARD THAT STATES A RATE (roadmap X2). Sol Ring emits nothing the edge layer reads -- mana is
+  // not a synergy -- so the first mana family (2026-09-17) rated 449 cards and Sol Ring, Arcane
+  // Signet and Llanowar Elves had no row for "adds mana" to sort. Its page is thin (no partners),
+  // the rate is its content, and the search can find it by name at all.
+  || ratesOf(d).length > 0;
+
+/** MELD, as a demand key. `meld|-|-|-` when the card names its other half; the candidate is that
+ *  one card, found by name, and the row is verified on the engine's own `meld` tag. A card-NAME
+ *  relation: it emits nothing and counts nothing, so neither ranking phase could ever propose it,
+ *  and the deck report drew the edge while the page never asked (2026-09-05). */
+export const meldKeysOf = (d: DeckCard): string[] =>
+  (d.card as { meldPartner?: string }).meldPartner ? ["meld|-|-|-"] : [];
+
+const WUBRG = ["W", "U", "B", "R", "G"] as const;
+/** WUBRG order, deduped; "C" for colourless. The client's `identityKey` sorts the same way; both
+ *  sides must agree because this string is the lookup key on the page. */
+export function identityKeyOf(colors: readonly string[]): string {
+  const set = new Set(colors);
+  return WUBRG.filter((c) => set.has(c)).join("") || "C";
+}
+
+/** WHAT A STATIC REACHES, as a demand key: `applies:<kind>|<types>|<subtypes>|-`.
+ *
+ *  A STATIC IS THE THIRD KIND OF RELATION THIS FILE KNOWS. The forward phase ranks on what a card
+ *  EMITS, the feeder phase on what it COUNTS; a static emits nothing and counts nothing, it
+ *  APPLIES to a class of cards. Samut, the Driving Force prints an anthem and a discount and
+ *  nothing else, so on 2026-09-05 she had no page and no `/commanders` row while the deck report
+ *  drew eleven edges from her. MEASURED that day: 970 corpus cards carry a static this key can
+ *  name, 71 of them commanders the index was refusing.
+ *
+ *  THE SAME REFUSALS `edges.ts`'s static pass makes, so a key never proposes a pair the engine
+ *  will not verify: a role (`ROLE_NOT_SYNERGY`: tax and friends), a debuff (a negative modifier
+ *  improves nothing), a self-reference (the largest defect family this engine has had). A pseudo-
+ *  type is spelled out to its members here so the candidate index below is keyed on printed types
+ *  only. CEILING: a subject with neither type nor subtype ("permanents you control") makes no key
+ *  -- measured at 0 of 1,117 static subjects, so the branch is not worth its line yet. */
+const kindNotARelation = (kind: string): boolean => ROLE_NOT_SYNERGY.has(kind) || kind === "debuff" || kind === "ability-loss";
+const asList = (v: string | string[] | undefined): string[] => v === undefined ? [] : Array.isArray(v) ? v : [v];
+const concreteTypes = (types: string[]): string[] => [...new Set(types.flatMap((raw) => {
+  const t = raw.toLowerCase();
+  return (ALL_CARD_TYPES as readonly string[]).includes(t) ? [t] : PSEUDO_TYPE_SETS[t] ?? [];
+}))];
+/** THE STATIC KEYS ONE ABILITY REACHES. Split out of `staticKeysOf` so the PAGE ROW can name them
+ *  too (roadmap AJ4): a static's demand is this key, never a trigger, so a clause-led reading that
+ *  showed only `when` left every anthem and every cost-reducer with no event row at all -- which
+ *  on Samut is three of his four lines. */
+export const staticKeysOfAbility = (a: CardTags["abilities"][number]): string[] => {
+  const s = a.effect?.subject;
+  if (a.kind !== "static" || !s || s.self === true || kindNotARelation(a.effect.kind)) return [];
+  // A ZONE-SCOPED subject reaches no printed card -- `subjectMatches` refuses any zone the card's
+  // characteristics do not sit in, so `staticClaim` never verifies one. Lurrus's graveyard recursion
+  // (DERIVE 166 keeps the subject) otherwise named every nonland type as a whole-board reach.
+  if (s.zone !== undefined) return [];
+  const types = concreteTypes(asList(s.type));
+  const subtypes = asList(s.subtype).map((x) => x.toLowerCase());
+  if (types.length === 0 && subtypes.length === 0) return [];
+  // ONE TYPE AND ONE SUBTYPE PER KEY (roadmap AK5): a static reaching four subtypes across
+  // seven types reaches each of the 28 pairs, and naming them in one key produced the 128
+  // character sentence the owner reported.
+  return splitKey(`applies:${a.effect.kind}|${types.join(",") || "-"}|${subtypes.join(",") || "-"}|-`);
+};
+
+export const staticKeysOf = (d: DeckCard): string[] =>
+  [...new Set(abilitiesOf(d).flatMap(staticKeysOfAbility))];
+
+/** WHAT A CARD IS FOR A STATIC'S PURPOSES: its printed types and subtypes, AND those of the tokens
+ *  it makes. A noncreature spell that makes creature bodies is what a Samut deck is built from --
+ *  the discount and the anthem both land on it -- and the ranking has to see that before the
+ *  engine is asked, because the engine is asked about at most `VERIFY_LIMIT` candidates. The anthem
+ *  ROW is still never claimed on the maker: no token node exists on a page to carry it. */
+const reachOf = (c: DeckCard): { types: Set<string>; subtypes: Set<string> } => {
+  const types = new Set(c.tags?.characteristics.types.map((t) => t.toLowerCase()) ?? []);
+  const subtypes = new Set(c.tags?.characteristics.subtypes.map((t) => t.toLowerCase()) ?? []);
+  for (const a of abilitiesOf(c)) {
+    for (const e of a.emits ?? []) {
+      if (e.subject.token !== true) continue;
+      for (const t of asList(e.subject.type)) types.add(t.toLowerCase());
+      for (const t of asList(e.subject.subtype)) subtypes.add(t.toLowerCase());
+    }
+  }
+  return { types, subtypes };
+};
+const splitStaticKey = (key: string): { kind: string; types: string[]; subtypes: string[] } => {
+  const [verb = "", type = "-", subtype = "-"] = key.split("|");
+  const dash = (v: string) => v === "-" ? [] : v.split(",");
+  return { kind: verb.slice("applies:".length), types: dash(type), subtypes: dash(subtype) };
+};
+export const staticReaches = (key: string, c: DeckCard): boolean => {
+  const { types, subtypes } = splitStaticKey(key);
+  const reach = reachOf(c);
+  return (types.length === 0 || types.some((t) => reach.types.has(t)))
+    && (subtypes.length === 0 || subtypes.some((t) => reach.subtypes.has(t)));
+};
+
+/** NO CARD RULES TEXT (spec D2, reversed 2026-09-04). Name, type line and mana cost are card
+ *  METADATA and the page is unusable without them; the RULES text is absent entirely.
+ *
+ *  The evidence a reader checks a claim against is `PartnerRow.reason` -- the engine's own sentence,
+ *  naming both cards -- not the card's printed text. Quoting the card would add nothing to that
+ *  argument and would only make the page resemble a card database, which is what Scryfall's
+ *  "may not simply repackage, republish, or proxy" clause is about. */
+/** ONE DERIVED ABILITY, PROJECTED DOWN TO WHAT A PAGE CAN SHOW.
+ *
+ *  "HOW THE ENGINE READS THIS CARD" IS THE PAGE'S REAL ARGUMENT, and until now the pages printed
+ *  only the union of a card's events -- two flat lines standing in for three abilities. A reader
+ *  checking a claim needs to see WHICH ability produced it: the tap ability that makes the tokens is
+ *  a different fact from the body that happens to be a Goblin.
+ *
+ *  THIS IS OUR DERIVATION AND NOT WIZARDS' TEXT, which is the whole reason it may be published where
+ *  the oracle text may not (spec D2, reversed). The card's own words are on the card image beside it.
+ *
+ *  PROJECTED, NOT COPIED. A derived ability carries clause ids, subject filters, recipients and
+ *  scaling internals; a page can show none of that without becoming a debugger. Each field here
+ *  earns its bytes across 15,384 records. */
+export interface AbilityRow {
+  /** `triggered`, `activated`, `static`, `on-cast` -- what makes this ability happen at all. */
+  kind: string;
+  /** The activation cost, where there is one: `{T}`, `{2}, {T}`. */
+  cost?: string;
+  /** The events that set it off, as event keys, so the page renders them with the same sentence
+   *  function every other event on the site uses. */
+  when: string[];
+  /** The trigger is the card itself ("whenever this creature attacks"); the page reads `when` as
+   *  "this card …" rather than "anything …". */
+  self?: true;
+  /** THE TRIGGER'S COLOUR FILTER, Scryfall letters, when it has one: Chandra, Fire of Kaladesh
+   *  untaps on a RED spell, and the four-field key has no colour slot, so the page printed "a spell
+   *  being cast" while the matcher joined on red (owner, 2026-09-08). */
+  whenColors?: string[];
+  /** THE EFFECT'S SUBJECT IS THE CARD ITSELF ("untap Chandra"), so the page says "untaps itself"
+   *  rather than "untaps a permanent". Same job `self` does for the trigger. */
+  effectSelf?: true;
+  /** WHICH PRINTED FACE this ability sits on, 1 or more for a back face, absent on the front and on
+   *  a single-face card -- the same convention `Ability.face` uses. The page flips the art; without
+   *  this it could not flip the rows with it, and a reader looking at Chandra, Fire of Kaladesh saw
+   *  Chandra, Roaring Flame's loyalty abilities under her (owner, 2026-09-08). */
+  face?: number;
+  /** "Max speed —": the player's speed this ability needs (CR 702.179), shown on the row. */
+  requires?: { marker: string; min: number };
+  /** The effect's kind (`token-generation`, `draw-card`). Humanised at the edge, never here. */
+  effect: string;
+  amount?: string;
+  /** Who a draw or a life change goes to, when it is not the card's controller (`opp`, `any`). */
+  recipient?: string;
+  /** The basis a magnitude counts on (`per-permanent`), and what it counts, where both are known. */
+  scaling?: string;
+  counts?: string;
+  /** The events it puts into the game. */
+  emits: string[];
+  /** THE EMITS WHOSE SUBJECT IS THE CARD ITSELF, as keys, so the page reads "this card untapping"
+   *  rather than "anything untapping" (owner, 2026-09-08, Chandra, Fire of Kaladesh: "the untap
+   *  should say this card untapping"). The key cannot carry the self flag; `self` above does the
+   *  same job for the trigger. Absent when no emit is self-referential. */
+  selfEmits?: string[];
+  /** THE CLASSES A STATIC REACHES, as event keys. A static demands by REACH rather than by
+   *  trigger, so a reading that showed only `when` left every anthem and cost-reducer bare. */
+  applies?: string[];
+  /** WHICH PRINTED CLAUSE DERIVED THIS ROW (roadmap AJ4, spec C2), as an index into the record's
+   *  own `clauses`. The card page reads down the card: each clause carries the abilities it
+   *  derived and the events those produce or consume.
+   *
+   *  ABSENT ON AN IMPLIED ROW -- one read off characteristics rather than rules text, which
+   *  `abilitiesOf` synthesises from the keyword list and which has no printed line to attribute to.
+   *  Those rows go at the END of the page's list with no quote above them (spec C4). */
+  clause?: number;
+}
+
+export interface CardPageRecord {
+  name: string;
+  typeLine: string;
+  manaCost: string | null;
+  /** THE CARD'S OWN PICTURE, as Scryfall's `art_crop` URL -- the client rewrites the path segment
+   *  to `/normal/` for the whole card, which is what `cardImageUrl` already does for the graph.
+   *
+   *  THE FULL CARD, NEVER THE CROP, and that is a licence line rather than a taste one: an art crop
+   *  has to credit the artist and this corpus HAS NO ARTIST FIELD (measured 2026-09-04: 0 of 34,433
+   *  cards). The whole card prints the credit itself, bottom-left, which is the branch spec D2a
+   *  offers and the only one available here.
+   *
+   *  Present on 33,942 of 34,433 corpus cards; `null` where Scryfall has no image, and the pages
+   *  render without one rather than reserving a hole for it. */
+  artCrop: string | null;
+  /** THE OTHER SIDE, and only for a card that physically has one.
+   *
+   *  IT IS A FIELD RATHER THAN AN INFERENCE, and the corpus is why. `name.includes(" // ")` would
+   *  have been the cheap test and it is WRONG: a split, adventure or flip card prints two names on
+   *  ONE physical face and has no back image at all. Measured 2026-09-08: exactly 491 cards carry
+   *  `faces[1].artCrop`, and they are exactly the 491 with no card-level `artCrop` -- the
+   *  transform and modal_dfc layouts, disjoint from every one-faced card, with no third face
+   *  anywhere in the corpus. So this is non-null precisely when there is a side to flip to.
+   *
+   *  359 of the 491 are substantive and have a page. */
+  backArtCrop: string | null;
+  /** THE CARD'S KEYWORD ABILITIES, for the page's keyword row (owner, 2026-09-20). Straight off
+   *  `characteristics.keywords`, which is Scryfall's list and therefore includes ability WORDS
+   *  ("probing telepathy") beside real keyword abilities ("flash") -- the row prints both, because
+   *  both are things the card announces about itself.
+   *
+   *  OMITTED WHEN EMPTY, like `clauses` and `rates` below, so a vanilla card costs the record
+   *  nothing. The client must render without it: an artifact built before this field existed has
+   *  no `keywords` on any card, and a row that assumed one would be a crash rather than an
+   *  absence. */
+  keywords?: string[];
+  /** How the engine read the card, one row per derived ability -- the page's real argument, and the
+   *  half of it that was missing while the record carried only the UNION of a card's events. */
+  abilities: AbilityRow[];
+  /** THE CLAUSES THE ENGINE READ, with the id every derived ability is stamped with, verbatim and
+   *  in printed order -- spec D2a option 2, taken
+   *  2026-09-18 after option 1 shipped with nothing on the page a reader could check a claim
+   *  against.
+   *
+   *  UNATTRIBUTED, AND THAT IS THE WHOLE POINT. The original D2 wanted each edge to cite the clause
+   *  it came from and that CANNOT be built: `Ability` carries no clause id and the mapping is not
+   *  1:1 -- Kogla and Yidaro's one activated line yields four abilities, so the citation would name
+   *  the same paragraph four times while looking precise. A guessed attribution is the
+   *  silent-wrong-answer failure this engine exists to avoid, so the clauses are offered as the
+   *  card's text and the reader does the matching.
+   *
+   *  `segment()`, NOT THE RAW ORACLE TEXT, and not a second code path. It is deterministic over the
+   *  same three inputs the clause docs were built from, so these are exactly the clauses the model
+   *  was asked about -- `derive-corpus.ts` recomputes them the same way for the same reason. It also
+   *  strips reminder text, which is ours to strip and is why this is the engine's reading rather
+   *  than a reprint. Absent on a card with no rules text. */
+  clauses?: { id: number; text: string; face?: number }[];
+  /** THE COST-TO-EFFECT RATES the card's abilities state (`rate.ts`; owner 2026-09-17), one per
+   *  ability a family reads: cards per mana, damage per mana, each a floor and a ceiling. Absent
+   *  when no ability states a number the axis can read. Recorded on the page, never on an edge. */
+  rates?: Rate[];
+  identity: string[];
+  commander: boolean;
+  /** A Background: a commander that never leads alone (CR 702.124k). The page says so. */
+  pairingOnly?: true;
+  /** THE CARDS THIS COMMANDER MAY LEAD WITH (CR 702.124), from `pairingLicense` -- the same
+   *  function the legality report uses, so the page can never offer a pair the report would flag.
+   *  Only substantive cards, because a row must link to a page. Commander records only. */
+  pairsWith?: { slug: string; name: string; identity: string[]; licence: string; choosesColour?: true }[];
+  /** CR 903.4b: choose its colour before the game; the page offers five. */
+  choosesColour?: true;
+  /** THE SAME LIST, RE-RANKED PER IDENTITY A PAIRING CAN REACH, keyed by `identityKeyOf`. A picked
+   *  partner widens the deck's identity, and the list is ranked over the legal pool, so it has to be
+   *  ranked again per identity the pair can reach. Keyed by colour set and not by partner card,
+   *  because the legal pool depends on identity alone: two mono-black Backgrounds give one list.
+   *  Absent for the own identity (that is `commanderPartners`). A colour chooser gets one per colour,
+   *  and one per colour-plus-partner when it pairs as well (Clara Oswald beside a Doctor). */
+  commanderPartnersBy?: Record<string, { partners: PartnerRow[]; pool: Record<string, number>; rarity: Record<string, number> }>;
+  emits: string[];
+  demands: string[];
+  partners: PartnerRow[];
+  /** Per event key, how many cards demand something this card supplies -- what the page says in
+   *  place of the rows `PER_EVENT_CAP` withheld. */
+  pool: Record<string, number>;
+  /** Per event key, how many cards in the corpus can CAUSE it -- the number the ranking is computed
+   *  from, and a DIFFERENT population from `pool`. Shipped because the page was showing one and
+   *  ranking on the other, and a reader who reconstructed the order from the visible figure
+   *  correctly concluded it was broken. */
+  rarity: Record<string, number>;
+  /** THE SAME LIST OVER THE CARDS THIS COMMANDER'S DECK COULD LEGALLY CONTAIN, on commander records
+   *  only. A deck led by a mono-red card can never play a Simic payoff, so a partner list that
+   *  ignores colour identity is a list of cards that will never be in the same deck.
+   *
+   *  RANKED OVER THE LEGAL POOL, NOT FILTERED AFTER RANKING. Filtering afterwards leaves a mono-red
+   *  commander showing eight of its twenty-four rows with nothing to fill the rest; re-ranking
+   *  fills them with legal cards, which is also what makes `/commanders/:slug` differ in SUBSTANCE
+   *  from `/cards/:slug` rather than being a thinner view of it (spec D5, duplicate content).
+   *
+   *  ABSENT ON EVERY OTHER RECORD: 12,927 of the 15,350 cards can never lead a deck, and every
+   *  record pays the bytes of every field it carries. */
+  commanderPartners?: PartnerRow[];
+  commanderPool?: Record<string, number>;
+  commanderRarity?: Record<string, number>;
+  /** THE CARD'S BUILD ROLES (ramp, draw, removal...), from the same detectors the report counts
+   *  with -- the index's `r` field, by name. A card page with no partners explains its job from
+   *  these (`jobOf`), and a card with a job is indexable. Absent on a card with no role. */
+  roles?: BuildCategory[];
+}
+
+export interface NameIndexEntry {
+  slug: string;
+  name: string;
+  identity: string[];
+  commander: boolean;
+  /** Candidate partner count -- how connected the card is in the corpus (owner 2026-09-17). The
+   *  index is sorted on it; absent on an index built before the field existed. */
+  partners?: number;
+  /** NO PARTNERS TO SHOW, WHICH IS THE EXACT CONDITION THE EDGE SERVES `noindex` ON (spec D5).
+   *
+   *  It rides in the index because the SITEMAP is built from the index and the noindex decision is
+   *  made from the SHARD, and nothing reconciled the two: measured 2026-09-08 on the deployed
+   *  artifact, 1,779 card URLs and 1,044 commander URLs -- 2,823 of 20,161, 14% of the sitemap --
+   *  were submitted to Google and then answered with `<meta name="robots" content="noindex">`.
+   *  That is a Search Console error per URL ("Submitted URL marked 'noindex'"), and it is the
+   *  sitemap's own promise-keeping rule one step further: a sitemap may not name a page the site
+   *  refuses to have indexed, any more than one that 404s.
+   *
+   *  SPARSE AND OPTIONAL because the client downloads this file to search by name: the flags are
+   *  absent on the cards above the floor, so the browse index barely moves.
+   *
+   *  `thin`, NOT `noPartners`: since 2026-09-08 the floor is `MIN_INDEXABLE_PARTNERS`, not zero, so
+   *  a flag named for emptiness would fire on a page with two partners and lie about it. */
+  thin?: true;
+  /** The Scryfall printing id, so a search result can be a tile (see `PartnerRow.art`). */
+  art?: string;
+  /** The same fact for `/commanders/<slug>`, which ranks a different list. Commander records only. */
+  thinCommander?: true;
+  /** WHAT THE CARD IS, so the list can be asked for it (owner, 2026-09-21: slivers, and "mill
+   *  instants which are blue and cost less than 3 mana").
+   *
+   *  A TYPE IS NOT AN EVENT, which is why these could not be reached by widening the facet
+   *  vocabulary. The 2026-09-19 ruling that deleted the `DOES` chips was against a second SEMANTIC
+   *  vocabulary competing with events; a printed type line is not that, and `identity` above is
+   *  already a characteristic sitting beside the event facets.
+   *
+   *  INDICES INTO `NameIndexFile.types` / `.subtypes`, NOT NAMES. Measured over the corpus: spelled
+   *  out they add 1.51 MB to a 3.74 MB file the client downloads; as indices, 0.89 MB with 5 KB of
+   *  tables. 13 distinct types, 474 distinct subtypes in the shipped artifact (measured
+   *  2026-09-22) -- the tables carry only the 25,582 indexed cards, not the full derived corpus,
+   *  which is where the larger figures this comment used to claim came from. */
+  t?: number[];
+  s?: number[];
+  /** Mana value, absent when 0 -- which is most lands, and the most common value in the corpus. */
+  mv?: number;
+  /** PRINTED KEYWORD ABILITIES, as indices into `NameIndexFile.keywords` (owner, 2026-09-21: "we
+   *  should add all filter types that make sense"). 811 distinct over 16,302 of the 32,334 derived
+   *  cards -- flying 3,261, trample 1,021, vigilance 745. Same integer-table shape as `s`. */
+  k?: number[];
+  /** POWER AND TOUGHNESS AS PRINTED, and ABSENT IS NOT ZERO. Omitted for anything that prints no
+   *  power and for the 242 cards printing `*`, `1+*` or `X` -- they cannot answer a numeric range,
+   *  and recording them as 0 would put Tarmogoyf in the answer to "power 0".
+   *
+   *  PRINTED, NOT "CREATURE": a Vehicle prints power and toughness without being a creature until
+   *  it crews (CR 301.7a), and Smuggler's Copter answers "power 3" here. That matches Scryfall's
+   *  `pow>=` and it is deliberate -- a reader asking for a 3-power threat wants the Copter in the
+   *  answer. Pair the row with Type line: creature if they do not. */
+  pow?: number;
+  tou?: number;
+  /** BUILD ROLES, as indices into `BUILD_CATEGORIES` (spec 2026-09-24 deck suggestions): what
+   *  `detectBuildCategories` says this card fills, so a suggestion's role equals the role it would
+   *  have in a report. Absent when it fills none. The ORDER of `BUILD_CATEGORIES` is therefore a
+   *  wire format -- append only. */
+  r?: number[];
+  /** ANSWER CLASSES, as indices into `POOL_CLASSES`: what `detectAnswerClasses` says this card
+   *  answers. Absent when none. Same wire-format rule for `POOL_CLASSES`' order. */
+  a?: number[];
+  /** THE CARD'S OWN COLOURS AS A WUBRG BITMASK, absent when colourless. NOT `identity` above: that
+   *  says what deck the card is legal in, this says what it IS, and 1,751 of 32,334 cards answer
+   *  the two differently. A mask rather than an array of letters because this file is downloaded
+   *  whole by every visitor -- `"c":6` against `"c":["U","B"]` over 25,582 rows. */
+  c?: number;
+}
+
+/** THE INDEX AS SHIPPED: the rows plus the tables their `t`/`s` point into.
+ *
+ *  A FILE SHAPE, NOT AN ARRAY, SINCE 2026-09-21. The old file WAS the array, so a reader that has
+ *  not been updated would read the new object as zero cards rather than as a changed format --
+ *  which is why `loadNameIndex` accepts both and is the only place that knows. */
+export interface NameIndexFile {
+  types: string[];
+  subtypes: string[];
+  keywords: string[];
+  cards: NameIndexEntry[];
+}
+
+/** ONE ROW OF A BROWSE PAGE: the least that makes a link. Deliberately not `NameIndexEntry` -- the
+ *  browse slices exist so a page can be built WITHOUT the 1.6 MB index, and carrying fields no
+ *  listing renders would give that size back. */
+export interface BrowseEntry {
+  slug: string;
+  name: string;
+  commander: boolean;
+}
+
+/** WHICH BROWSE PAGE A NAME BELONGS ON, taken from the SLUG rather than from the name.
+ *
+ *  `slugOf` ALREADY DOES THE FOLDING, and reusing it is not only the shorter answer -- it is the
+ *  correct one. It maps `Æ` explicitly (NFD does not decompose a ligature, so a first pass at this
+ *  filed `Ætherling` under `#`), strips apostrophes, and folds diacritics. Keying the letter off its
+ *  output means the page a card is filed under always matches the first character of the URL it is
+ *  filed at: `Æther Vial` is on A and lives at `/cards/aether-vial`.
+ *
+ *  `#` collects everything left with no leading a-z -- a name that is all punctuation, or one that
+ *  starts with a digit. One card in the corpus today, and the page exists so that walking the
+ *  alphabet reaches every card rather than almost every card. */
+/** The 27 keys, in the order a reader expects: A-Z, then the one for names with no leading letter.
+ *  Mirrored by `BROWSE_LETTERS` in the client's `inject.ts`, which is what the nav renders from --
+ *  the two are asserted equal by `inject.test.ts` rather than merely intended to match. */
+export const BROWSE_LETTER_KEYS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"];
+
+export function browseLetterOf(name: string): string {
+  const c = slugOf(name)[0]?.toUpperCase() ?? "#";
+  return c >= "A" && c <= "Z" ? c : "#";
+}
+
+/** THE INDEX CUT INTO ONE FILE PER LETTER, so a browse page costs one small fetch at the edge.
+ *
+ *  THE ALTERNATIVE WAS READING `name-index.json` PER REQUEST, and it is 1.6 MB: parsing that in a
+ *  Worker to render 640 links is the kind of cost that only shows up under the crawl it exists to
+ *  attract. Sorted by name here rather than in the Function, because the order is a property of the
+ *  page and not of the request. */
+export function browseSlices(index: NameIndexEntry[]): Map<string, BrowseEntry[]> {
+  // EVERY LETTER GETS A SLICE, EMPTY ONES INCLUDED, so the alphabet a browse page prints and the
+  // files behind it cannot disagree. Keying the letter off `slugOf` emptied `#` -- the one card
+  // that starts with no letter slugs to `card` -- and with slices written only for letters that had
+  // rows, the nav went on linking to `/browse/cards/0` and the Function fell through to a bare
+  // shell. An empty page that says so is a fine page; a link into nothing is not.
+  const out = new Map<string, BrowseEntry[]>(BROWSE_LETTER_KEYS.map((l) => [l, []]));
+  for (const e of index) {
+    const key = browseLetterOf(e.name);
+    const rows = out.get(key) ?? [];
+    rows.push({ slug: e.slug, name: e.name, commander: e.commander });
+    out.set(key, rows);
+  }
+  for (const rows of out.values()) rows.sort((a, b) => a.name.localeCompare(b.name, "en"));
+  return out;
+}
+
+export interface PartnerArtifact {
+  shards: Map<string, Record<string, CardPageRecord>>;
+  freq: EventFrequency;
+  /** HOW MANY CARDS ASK for each event -- the mirror of `freq`, which counts who can cause it. */
+  consumers: Record<string, number>;
+  /** WHO causes and WHO asks, as positions in `index`. `freq` is the size of `p`, and the two come
+   *  from one pass so a page cannot print a count over a different set (roadmap AJ3). */
+  events: Map<string, EventMembers>;
+  /** `freq`, split into the 32 colour identities (AJ5's buckets), so a count can be scoped to the
+   *  colours a reader chose. Read with `inIdentityOf`. */
+  freqByIdentity: Record<string, number[]>;
+  index: NameIndexEntry[];
+  /** The tables `NameIndexEntry.t` / `.s` / `.k` are positions in. Shipped beside the rows. */
+  typeNames: string[];
+  subtypeNames: string[];
+  keywordNames: string[];
+  /** THE REPORT'S CANDIDATE POOL (spec 2026-09-24 deck suggestions, §1): each card's `partners`
+   *  list as `[position in the SORTED index, score to 3 decimals, ...reason tag codes]` (`PartnerId`). Written into
+   *  the `cards/` shards as `pi`, which the report already downloads -- the `partners/` shards it
+   *  never fetches would have cost about 9 MB a report. */
+  partnerIds: Map<string, PartnerId[]>;
+  /** The table a `pi` entry's tag codes index into, shipped in `name-index.json` as `pairTags`. */
+  pairTagNames: string[];
+}
+
+/** A `pi` ENTRY: `[position in the sorted index, score, ...codes into pairTagNames]` -- the reason
+ *  tags the engine wrote for the pair, both directions, so a deck weighs it on its own axis. */
+export type PartnerId = [number, number, ...number[]];
+
+/** A COMMANDER, for `/commanders`: CR 903.3 exactly as `legality.ts` reads it -- legendary creature,
+ *  Vehicle or Spacecraft with printed power, a card that says it can be your commander, a
+ *  Background -- and commander-legal. This file used to say "Legendary Creature" and call the rest a
+ *  larger question; the answer was already three files away, and the gap was 40 Vehicles, 5
+ *  Spacecraft and 21 planeswalkers (measured 2026-09-05). */
+const isCommander = (d: DeckCard): boolean =>
+  isLegalCommander(d.card as Card)
+  && (d.card as { legalities?: Record<string, string> }).legalities?.commander === "legal";
+
+/** A Background is a commander only opposite a card that prints "Choose a Background" -- the same
+ *  test `pairingLicense` makes, so the record and the licence can never disagree. */
+const isBackground = (d: DeckCard): boolean => isBackgroundCard(d.card as Card);
+
+/** THE WHOLE ARTIFACT, PURELY. Mongo reads and fs writes stay in `build-static.ts`; everything
+ *  decidable is here so it can be tested without either. */
+export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArtifact {
+  // ONE PAGE PER NAME. Every join below is by card name and `resolveSlugs` keys by it, so two
+  // documents with one name (Red Herring: a 2021 playtest card and the 2024 Clue Fish) got ONE
+  // slug between them and the alphabet walk found 25,203 pages for 25,204 entries (roadmap X4).
+  // The first by input order keeps the name; the build filters the illegal one out before this.
+  const seen = new Set<string>();
+  const substantive = all.filter(isSubstantive).filter((d) => !seen.has(d.card.name) && (seen.add(d.card.name), true));
+  const slugs = resolveSlugs(substantive.map((d) => d.card.name));
+  // ONE PASS, TWO READINGS: the corpus count every score is taken on, and the same count split by
+  // colour identity so a commander page can say how many of the causes its own deck could play.
+  const { buckets, members } = supplyBuckets(substantive.map((d) => ({
+    emits: supplyKeysOf(d), demands: demandKeysOf(d), identity: d.card.colorIdentity ?? [],
+  })));
+  const freq: EventFrequency = {};
+  for (const [k, b] of buckets) freq[k] = totalOf(b);
+  // A CARD'S POSITION IS ITS ID EVERYWHERE BELOW. `index` is written from `substantive` in this
+  // order, so a member list is read by the browser as an offset into the name index it already has.
+  const atName = new Map(substantive.map((d, i) => [d.card.name, i] as const));
+
+  // CANDIDATES BY DEMAND KEY, INCLUDING THE COARSER FORMS. Without this index every card would be
+  // compared against all ~14,900 and the build is quadratic before `partnersFor` can bound it. A
+  // card is filed under every variant of every demand it has, so a subject emitting the specific
+  // form finds it and so does one emitting the general form.
+  const byDemand = new Map<string, DeckCard[]>();
+  for (const d of substantive) {
+    for (const k of new Set(demandKeysOf(d).flatMap(demandForms))) {
+      const b = byDemand.get(k);
+      if (b) b.push(d); else byDemand.set(k, [d]);
+    }
+  }
+  // THE MIRROR INDEX, AND ONLY FOR THE FEEDER SHAPES. A card that COUNTS Goblins needs the Goblins,
+  // a copier needs cards WITH abilities, an outlet needs what it EATS -- all found by what a card IS
+  // rather than by what it demands. Restricted to the `counts|`, `copies|` and `fodder|` keys:
+  // indexing every card by every event it supplies would be the quadratic build this file avoids.
+  const bySubtype = new Map<string, DeckCard[]>();
+  for (const d of substantive) {
+    const supplies = supplyKeysOf(d);
+    // A fill is a FORM of an emit (`supplyForms`), never a raw key: a death supplies `fills|creature|-|-`.
+    for (const k of new Set([...supplies, ...supplies.flatMap(supplyForms).filter((f) => f.startsWith("fills|"))])) {
+      if (!k.startsWith("counts|") && !k.startsWith("copies|") && !k.startsWith("fodder|") && !k.startsWith("fills|")) continue;
+      const b = bySubtype.get(k);
+      if (b) b.push(d); else bySubtype.set(k, [d]);
+    }
+  }
+
+  // THE INDEX A STATIC ASKS: cards by what they ARE, printed types and the types of their tokens.
+  // Only ever read through `staticKeysOf`, so a card with no static pays nothing for it. The
+  // frequency a static key is priced on is the size of the class it reaches -- a discount on every
+  // noncreature spell is as common a relation as there are noncreature spells, which is what puts
+  // it below a rare trigger on the page, exactly as the deck report's own mesh census treats it.
+  const byType = new Map<string, DeckCard[]>();
+  for (const d of substantive) {
+    for (const t of reachOf(d).types) {
+      const b = byType.get(t);
+      if (b) b.push(d); else byType.set(t, [d]);
+    }
+  }
+  const staticCandidates = (d: DeckCard): DeckCard[] => [...new Set(staticKeysOf(d).flatMap((k) => {
+    const { types, subtypes } = splitStaticKey(k);
+    const pool = types.length > 0
+      ? types.flatMap((t) => byType.get(t) ?? [])
+      : subtypes.flatMap((st) => bySubtype.get(`counts|-|${st}|-`) ?? []);
+    return pool.filter((c) => staticReaches(k, c));
+  }))];
+  for (const d of substantive) {
+    for (const k of staticKeysOf(d)) {
+      if (freq[k] !== undefined) continue;
+      const reached = staticCandidates(d).filter((c) => staticReaches(k, c));
+      freq[k] = reached.length;
+      // The static branch counts a DIFFERENT set from `supplyBuckets` -- what the static REACHES,
+      // not what emits it -- so its members are recorded here or they are recorded nowhere.
+      members.set(k, reached.map((c) => atName.get(c.card.name)!).sort((a, b) => a - b));
+      // Split like every other key, so a commander page scopes a static's count too.
+      const bucket = new Int32Array(IDENTITIES);
+      for (const c of reached) {
+        const m = identityMask(c.card.colorIdentity ?? []);
+        bucket[m] = (bucket[m] ?? 0) + 1;
+      }
+      buckets.set(k, bucket);
+    }
+  }
+
+  // THE ONE CANDIDATE A NAME FINDS. A meld card names its other half; nothing else here is keyed
+  // on a card name, and one card can cause the relation, so the key is priced as a rarity of one.
+  const byName = new Map(substantive.map((d) => [d.card.name, d] as const));
+  freq["meld|-|-|-"] = 1;
+
+  // THE COUNT A PAGE PRINTS BESIDE A GROUP, and the ONLY thing AJ5 scopes. A card page keeps the
+  // corpus figure -- there is no deck there, so there are no colours to filter by -- and a
+  // commander page counts what that deck could legally contain. A key with no split (`meld` is the
+  // only one) falls back to the corpus figure rather than to a guess.
+  const corpusRarity = (key: string): number => freq[key] ?? 1;
+  const rarityIn = (mask: number) => (key: string): number => {
+    const bucket = buckets.get(key);
+    return bucket ? inIdentity(bucket, mask) : (freq[key] ?? 1);
+  };
+
+  // EVERY COMMANDER, ONCE, for the pairing scan below. CEILING: `pairsWith` is O(commanders^2)
+  // regex pairs -- a full scan per commander, 3,444 x 3,443 = 11.9 M cheap tests on the 2026-09-05
+  // corpus, inside a build that went 66 s -> 80 s. The upgrade path is to bucket by licence form
+  // first (bare Partner, label, Background, Doctor) so each card is compared only with its own form.
+  const commanders = substantive.filter(isCommander);
+
+  // CANDIDATES COME FROM WHAT THE CARD SUPPLIES, WHICH INCLUDES WHAT IT IS. `emits` is what the
+  // record PRINTS; `supplyKeysOf` is what the ranking may ask about, and the difference is the
+  // card's own subtypes -- a Goblin body is a candidate for every payoff that counts Goblins.
+  const triggerCandidatesOf = (d: DeckCard): DeckCard[] =>
+    [...new Set(supplyKeysOf(d).flatMap(supplyForms).flatMap((k) => byDemand.get(k) ?? []))];
+  const feedersOf = (d: DeckCard): DeckCard[] => [...new Set(feederKeysOf(d).flatMap((k) => bySubtype.get(k) ?? []))];
+  const meldOf = (d: DeckCard): DeckCard | undefined => byName.get((d.card as { meldPartner?: string }).meldPartner ?? "");
+
+  // THE PARTNER COUNT, BEFORE ANY LIST IS RANKED (owner 2026-09-17). It is the tie-break inside
+  // `partnersFor`, so it cannot be read off the lists it orders: it is the size of the candidate
+  // set -- trigger candidates, feeders and the meld half, minus the card itself -- which the
+  // indexes above make cheap and which no ordering touches. The verified list would not do: it
+  // is capped at `KEEP` and cut at `VERIFY_LIMIT` in the very order this breaks.
+  // NEVER A STATIC'S CLASS. A static reaches everything of a type -- a discount on every red
+  // spell, play from the graveyard -- and counting that put Yawgmoth's Agenda (25,156), Ugin and
+  // the Fire Crystal at the top of the corpus on the first build (2026-09-17). That is the size
+  // of a class, not a connection, which is why a static is priced last on the pages too.
+  // Kept for the main loop, so `staticCandidates` -- the one lookup that runs a predicate over
+  // its pool -- is paid once per card and not twice.
+  // SYMMETRIC (owner 2026-09-17, "lets start with 1"). A payoff's candidates are the cards that
+  // ask for what it produces, so a pure payoff -- Impact Tremors, rank 14,260 on the first build --
+  // counted none of the thousands of token makers that feed it. The count is the size of the
+  // card's neighbourhood in the undirected candidate graph: a pair counts for both ends, once.
+  // A bitset because the exact count needs a dedupe over ~50 M ordered pairs, and a name Set per
+  // card is a gigabyte where n^2/8 bytes (79 MB on 25,189 cards) is not.
+  const candidateSets = new Map<string, { triggers: DeckCard[]; candidates: DeckCard[]; feeders: DeckCard[] }>();
+  const at = new Map(substantive.map((d, i) => [d.card.name, i] as const));
+  const n = substantive.length;
+  const stride = (n + 7) >> 3;
+  const bits = new Uint8Array(n * stride);
+  const link = (a: number, b: number): void => {
+    bits[a * stride + (b >> 3)]! |= 1 << (b & 7);
+    bits[b * stride + (a >> 3)]! |= 1 << (a & 7);
+  };
+  for (const [i, d] of substantive.entries()) {
+    const triggers = triggerCandidatesOf(d);
+    const sets = { triggers, candidates: [...new Set([...triggers, ...staticCandidates(d)])], feeders: feedersOf(d) };
+    candidateSets.set(d.card.name, sets);
+    const meld = meldOf(d);
+    for (const c of meld ? [...triggers, ...sets.feeders, meld] : [...triggers, ...sets.feeders]) {
+      const j = at.get(c.card.name);
+      if (j !== undefined && j !== i) link(i, j);
+    }
+  }
+  const degree = new Map<string, number>();
+  for (const [i, d] of substantive.entries()) {
+    let count = 0;
+    for (let b = i * stride, end = b + stride; b < end; b++) {
+      let v = bits[b]!;
+      while (v) { v &= v - 1; count++; }
+    }
+    degree.set(d.card.name, count);
+  }
+
+  const shards = new Map<string, Record<string, CardPageRecord>>();
+  const index: NameIndexEntry[] = [];
+  // ROLES AND ANSWER CLASSES, FROM THE SAME DETECTORS THE REPORT RUNS (spec 2026-09-24 deck
+  // suggestions, §1), so a suggested card's role is the role it would have in a report. Indices,
+  // like `t`/`s`/`k`.
+  const listOf = (m: Map<string, number[]>, n: string): number[] => m.get(n) ?? (m.set(n, []), m.get(n)!);
+  const cats = detectBuildCategories(substantive);
+  const rolesOf = new Map<string, number[]>();
+  BUILD_CATEGORIES.forEach((c, i) => { for (const n of cats.get(c) ?? []) listOf(rolesOf, n).push(i); });
+  const classes = detectAnswerClasses(substantive);
+  const answersOf = new Map<string, number[]>();
+  POOL_CLASSES.forEach((c, i) => { for (const n of classes.get(c)?.cards ?? []) listOf(answersOf, n).push(i); });
+  const partnersByName = new Map<string, PartnerRow[]>();
+  // THE TABLES THE ROWS POINT INTO. Collected from the corpus rather than from a written-down list,
+  // so a set that introduces a type cannot leave the index describing cards with a word it has no
+  // code for. Sorted, so the file is stable across builds that changed nothing.
+  const typeNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.types ?? []).map((x) => x.toLowerCase())))].sort();
+  const subtypeNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.subtypes ?? []).map((x) => x.toLowerCase())))].sort();
+  const keywordNames = [...new Set(substantive.flatMap((d) => (d.tags?.characteristics.keywords ?? []).map((x) => x.toLowerCase())))].sort();
+  // LINEAR SCANS BECAME MAPS HERE. `indexOf` over 811 keywords for every keyword on every one of
+  // 25,582 cards is the same per-card scan `compileCharacteristics` was fixed for on the reader
+  // side, and this runs on every build rather than every keystroke -- but it is the same mistake.
+  const codeOf = (names: string[]): ((x: string) => number) => {
+    const at = new Map(names.map((n, i) => [n, i] as const));
+    return (x) => at.get(x) ?? -1;
+  };
+  const typeCode = codeOf(typeNames);
+  const subtypeCode = codeOf(subtypeNames);
+  const keywordCode = codeOf(keywordNames);
+  // THE MIRROR: every pair the forward phase verified, filed under the card it points AT, so the
+  // second pass can hand each payoff the producers whose pages already list it.
+  const producers = new Map<string, PartnerRow[]>();
+  // THE POOL PASS'S PAIRS, both ways: forward under the subject, mirrored under the candidate. Read
+  // only by `partnerIds`, so no page changes.
+  const poolRows = new Map<string, PoolRow[]>();
+  const poolRow = (name: string, row: PoolRow): void => {
+    const l = poolRows.get(name);
+    if (l) l.push(row); else poolRows.set(name, [row]);
+  };
+  // EACH DEMAND KEY'S ASKERS, BEST-CONNECTED FIRST, sorted once for every card's pool pass.
+  // EACH CONFIRMED PAIR'S REASON TAGS, for `pi`: interned codes held BY THE ROW that already
+  // exists for the pair (a `WeakMap` over page and verified rows, an array on a pool row), and one
+  // array shared by a row and its mirror. A per-pair index of tag sets ran the build out of its 4 GB
+  // heap (2026-09-24, ~7.5 M pairs).
+  const pairTagNames: string[] = [];
+  const tagCode = new Map<string, number>();
+  const code = (rs: readonly { tag: string }[]): number[] => [...new Set(rs.map((r) => {
+    let c = tagCode.get(r.tag);
+    if (c === undefined) { c = pairTagNames.length; pairTagNames.push(r.tag); tagCode.set(r.tag, c); }
+    return c;
+  }))].sort((a, b) => a - b);
+  const rowTags = new WeakMap<object, number[]>();
+  const rankedByDemand = new Map<string, DeckCard[]>();
+  for (const [k, cards] of byDemand) {
+    rankedByDemand.set(k, [...cards].sort((a, b) => (degree.get(b.card.name) ?? 0) - (degree.get(a.card.name) ?? 0)
+      || a.card.name.localeCompare(b.card.name, "en")));
+  }
+  // EVERY FORWARD PAIR THE ENGINE VERIFIED, before the page's caps: the pool `pi` is drawn from.
+  const verifiedByName = new Map<string, PartnerRow[]>();
+
+  for (const d of substantive) {
+    const slug = slugs.get(d.card.name)!;
+    const emits = emitKeysOf(d);
+    const { candidates, feeders } = candidateSets.get(d.card.name)!;
+    const commander = isCommander(d);
+    const meldWith = meldOf(d);
+
+    const shardName = partnerShardOf(slug);
+    const shard = shards.get(shardName) ?? {};
+    shard[slug] = {
+      name: d.card.name,
+      typeLine: d.card.typeLine ?? "",
+      manaCost: (d.card as { manaCost?: string }).manaCost ?? null,
+      // THE FRONT FACE IS THE FALLBACK, because a genuinely two-faced card has no card-level art:
+      // Scryfall puts `image_uris` on each FACE for transform and modal_dfc and omits the top-level
+      // one. 491 corpus cards carry no `artCrop` and every one of them has `faces[0].artCrop`, so
+      // this line is the difference between 359 card pages showing the card and showing nothing --
+      // and the image is the ONLY place these pages print rules text (spec D2a), so a DFC page was
+      // the name, the type line and no card at all. Same chain `graph.ts` and `wire-graph.ts`
+      // already use; this was the last reader that did not.
+      artCrop: artCropOf(d),
+      backArtCrop: (d.card as { faces?: { artCrop?: string }[] }).faces?.[1]?.artCrop ?? null,
+      abilities: abilityRowsOf(d),
+      ...(() => { const k = d.tags?.characteristics?.keywords ?? []; return k.length > 0 ? { keywords: [...k] } : {}; })(),
+      ...(() => { const c = clauseTextsOf(d); return c.length > 0 ? { clauses: c } : {}; })(),
+      ...(() => { const rates = ratesOf(d); return rates.length > 0 ? { rates } : {}; })(),
+      identity: d.card.colorIdentity ?? [],
+      commander,
+      ...(rolesOf.has(d.card.name) ? { roles: rolesOf.get(d.card.name)!.map((i) => BUILD_CATEGORIES[i]!) } : {}),
+      ...(commander && isBackground(d) ? { pairingOnly: true as const } : {}),
+      emits: [...new Set(emits)],
+      demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d), ...meldKeysOf(d)])],
+      ...(() => {
+        const { rows, verified, tags, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith, degree);
+        verifiedByName.set(d.card.name, verified);
+        for (const r of [...rows, ...verified]) {
+          const t = tags.get(r.name);
+          if (t) rowTags.set(r, code(t.map((tag) => ({ tag }))));
+        }
+        for (const r of poolPartnersFor(d, rankedByDemand, freq, h, new Set(verified.map((v) => v.name)), code)) {
+          poolRow(d.card.name, r);
+          poolRow(r.name, { name: d.card.name, score: r.score, event: r.event, ...(r.tags ? { tags: r.tags } : {}) });
+        }
+        for (const v of verified) {
+          const mirrored: PartnerRow = { name: d.card.name, slug, score: v.score, event: v.event, reason: v.reason, producer: true, ...tileOf(d) };
+          const t = rowTags.get(v);
+          if (t) rowTags.set(mirrored, t);
+          const list = producers.get(v.slug);
+          if (list) list.push(mirrored); else producers.set(v.slug, [mirrored]);
+        }
+        return { partners: rows, pool, rarity };
+      })(),
+      // A CARD IS LEGAL IN A DECK WHEN ITS WHOLE IDENTITY SITS INSIDE THE COMMANDER'S -- the same
+      // rule `legality.ts` reports a violation against. An empty identity is inside every one,
+      // which is why a colourless card belongs in every deck and `every` over `[]` says so.
+      ...(commander ? (() => {
+        const pairsWith = commanders
+          .filter((o) => o.card.name !== d.card.name)
+          .map((o) => ({ o, licence: pairingLicense(d.card as Card, o.card as Card) }))
+          .filter((x): x is { o: DeckCard; licence: string } => x.licence !== undefined)
+          .map(({ o, licence }) => ({
+            slug: slugs.get(o.card.name)!, name: o.card.name,
+            identity: o.card.colorIdentity ?? [], licence,
+            // THE PARTNER MAY BE THE ONE WHO CHOOSES: Clara beside a Doctor makes the pair three
+            // colours, and the Doctor's page has to offer her colour.
+            ...(choosesColour(o.card as Card) ? { choosesColour: true as const } : {}),
+          }))
+          .sort((a, b) => a.licence.localeCompare(b.licence) || a.name.localeCompare(b.name));
+        const rankedFor = (identity: Set<string>) => {
+          const legal = candidates.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
+          const legalFeeders = feeders.filter((c) => (c.card.colorIdentity ?? []).every((x) => identity.has(x)));
+          // The other half is in the same deck by construction, so it needs no identity check.
+          const { rows, pool } = partnersFor(d, legal, legalFeeders, freq, slugs, h, meldWith, degree);
+          // THE ROWS ARE SCOPED, SO THE COUNT BESIDE THEM IS (AJ5). `partnersFor` prices them on
+          // the corpus map and returns the corpus rarity with them; that is the right number for a
+          // card page and the wrong one here, so it is recomputed rather than passed in -- the
+          // SCORE must stay corpus-wide and reading one map for both would move it.
+          const scoped = rarityIn(identityMask([...identity]));
+          const rarity: Record<string, number> = {};
+          for (const r of rows) rarity[r.event] = scoped(r.event);
+          return { partners: rows, pool, rarity };
+        };
+        const own = d.card.colorIdentity ?? [];
+        const { partners, pool, rarity } = rankedFor(new Set(own));
+        // EVERY IDENTITY A PAIRING CAN REACH, minus the own one. Sizing measured 2026-09-05: bare
+        // Partner 495 variant lists over 55 cards, Backgrounds 129 over 32, Doctors 76 over 24,
+        // labels 56 over 18 -- about 900 extra rankings on a 66 s build.
+        const reach = new Set<string>();
+        const self = choosesColour(d.card as Card);
+        if (self) for (const c of WUBRG) reach.add(identityKeyOf([...own, c]));
+        for (const p of pairsWith) {
+          // Either half may choose; the colour joins the pair's identity from whichever side.
+          if (self || p.choosesColour) for (const c of WUBRG) reach.add(identityKeyOf([...own, c, ...p.identity]));
+          else reach.add(identityKeyOf([...own, ...p.identity]));
+        }
+        reach.delete(identityKeyOf(own));
+        const commanderPartnersBy = Object.fromEntries(
+          [...reach].map((key) => [key, rankedFor(new Set(key === "C" ? [] : key.split("")))]),
+        );
+        return {
+          commanderPartners: partners, commanderPool: pool, commanderRarity: rarity,
+          ...(pairsWith.length > 0 ? { pairsWith } : {}),
+          ...(choosesColour(d.card as Card) ? { choosesColour: true as const } : {}),
+          ...(reach.size > 0 ? { commanderPartnersBy } : {}),
+        };
+      })() : {}),
+    };
+    shards.set(shardName, shard);
+  }
+
+  // THE SECOND PASS: producers onto every page that asks for them, then the index. Capped and
+  // counted like every other group (`PER_EVENT_CAP` per event, `KEEP` in all, the pool counted
+  // first), best connected first among equal scores, and filtered by identity on a commander's
+  // lists exactly as its candidates were. Merged into the one list: the row says which way it
+  // runs, as a feeder row does.
+  const attach = (list: PartnerRow[], pool: Record<string, number>, rarity: Record<string, number>, all: PartnerRow[], legal: (r: PartnerRow) => boolean, rarityOf: (key: string) => number): PartnerRow[] => {
+    const usable = all.filter(legal)
+      .sort((a, b) => b.score - a.score || (degree.get(b.name) ?? 0) - (degree.get(a.name) ?? 0) || a.name.localeCompare(b.name, "en"));
+    const shown: Record<string, number> = {};
+    const kept: PartnerRow[] = [];
+    // ONE ROW PER CARD PER LIST, the rule `partnersFor` keeps: a mutual pair -- each supplies what
+    // the other asks -- is already on this page as an asker and does not land twice.
+    const onPage = new Set(list.map((r) => r.slug));
+    for (const r of usable) {
+      pool[r.event] = (pool[r.event] ?? 0) + 1;
+      if (onPage.has(r.slug)) continue;
+      if ((shown[r.event] ?? 0) >= PER_EVENT_CAP || kept.length >= KEEP) continue;
+      onPage.add(r.slug);
+      shown[r.event] = (shown[r.event] ?? 0) + 1;
+      kept.push(r);
+      rarity[r.event] = rarityOf(r.event);
+    }
+    return [...list, ...kept].sort((a, b) => b.score - a.score);
+  };
+  const within = (identity: Set<string>) => (r: PartnerRow): boolean => (r.identity ?? []).every((c) => identity.has(c));
+  for (const d of substantive) {
+    const slug = slugs.get(d.card.name)!;
+    const rec = shards.get(partnerShardOf(slug))![slug]!;
+    const mine = producers.get(slug) ?? [];
+    if (mine.length > 0) {
+      const own = d.card.colorIdentity ?? [];
+      rec.partners = attach(rec.partners, rec.pool, rec.rarity, mine, within(new Set(own)), corpusRarity);
+      if (rec.commanderPartners) {
+        rec.commanderPartners = attach(rec.commanderPartners, rec.commanderPool!, rec.commanderRarity!, mine, within(new Set(own)), rarityIn(identityMask(own)));
+      }
+      for (const [key, v] of Object.entries(rec.commanderPartnersBy ?? {})) {
+        const identity = key === "C" ? [] : key.split("");
+        v.partners = attach(v.partners, v.pool, v.rarity, mine, within(new Set(identity)), rarityIn(identityMask(identity)));
+      }
+    }
+    // READ BACK OFF THE RECORD JUST WRITTEN, so the index can never disagree with the shard the
+    // edge reads its `indexable` decision from -- the two lists are the same two lists.
+    const written = rec as CardPageRecord & { commanderPartners?: PartnerRow[] };
+    partnersByName.set(d.card.name, written.partners);
+    const art = printingIdOf(artCropOf(d));
+    const commander = isCommander(d);
+    const chars = d.tags?.characteristics;
+    const tIdx = (chars?.types ?? []).map((x) => typeCode(x.toLowerCase())).filter((n) => n >= 0);
+    const sIdx = (chars?.subtypes ?? []).map((x) => subtypeCode(x.toLowerCase())).filter((n) => n >= 0);
+    const kIdx = (chars?.keywords ?? []).map((x) => keywordCode(x.toLowerCase())).filter((n) => n >= 0);
+    const mv = chars?.cmc ?? 0;
+    // A NUMBER OR NOTHING. `power` is `string | null` because Magic prints `*`, `1+*` and `X`; a
+    // card whose power is not a number cannot answer "power 2 to 4", so it carries no field and
+    // the reader excludes it rather than guessing a value for it.
+    const stat = (raw: string | null | undefined): number | undefined =>
+      (raw !== null && raw !== undefined && /^\d+$/.test(raw.trim()) ? Number(raw.trim()) : undefined);
+    const pow = stat(chars?.power);
+    const tou = stat(chars?.toughness);
+    const colourMask = identityMask(chars?.colors ?? []);
+    index.push({
+      slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
+      partners: degree.get(d.card.name) ?? 0,
+      ...(art ? { art } : {}),
+      ...(tIdx.length > 0 ? { t: tIdx } : {}),
+      ...(sIdx.length > 0 ? { s: sIdx } : {}),
+      ...(kIdx.length > 0 ? { k: kIdx } : {}),
+      ...(rolesOf.has(d.card.name) ? { r: rolesOf.get(d.card.name)! } : {}),
+      ...(answersOf.has(d.card.name) ? { a: answersOf.get(d.card.name)! } : {}),
+      ...(mv > 0 ? { mv } : {}),
+      ...(pow !== undefined ? { pow } : {}),
+      ...(tou !== undefined ? { tou } : {}),
+      ...(colourMask > 0 ? { c: colourMask } : {}),
+      ...(!isIndexableCard(written.partners.length, written.roles) ? { thin: true as const } : {}),
+      ...(commander && (written.commanderPartners ?? []).length < MIN_INDEXABLE_PARTNERS
+        ? { thinCommander: true as const } : {}),
+    });
+  }
+
+  // THE INDEX IS IN PARTNER-COUNT ORDER (owner 2026-09-17), best connected first, then by name.
+  // The header field, the search page and the facet index all read it in its own order, so the
+  // first answer to a name is the card the corpus connects most -- without any of them ranking,
+  // and without the play-rate field the owner refused as stale.
+  index.sort((a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.name.localeCompare(b.name, "en"));
+
+  // ---------------------------------------------------------------------------------------------
+  // THE MEMBERSHIP INDEX (roadmap AJ3): who causes each event, who asks for it, by INDEX position.
+  //
+  // THE IDS ARE REMAPPED HERE AND NOT EARLIER, because `index` is sorted just above -- by partner
+  // count, then by name -- while `members` was collected in `substantive` order. Shipping the
+  // collection order would have pointed every id at the wrong card, and silently: the lists would
+  // still be the right LENGTH, so the count would have agreed with a set of unrelated cards.
+  const positionOf = new Map(index.map((e, i) => [e.name, i] as const));
+  // POSITIONS TAKEN AFTER THE SORT, for the same reason `reindex` below remaps: collection order
+  // would point every id at the wrong card with every length still right.
+  // THE PAGE'S ROWS FIRST, in page order, then what its caps hid -- the forward pairs past
+  // `PER_EVENT_CAP`/`KEEP`, every producer mirrored onto it (UNFILTERED by the card's own identity;
+  // the report filters by the deck's) and the pool pass's pairs both ways -- ROUND-ROBIN ACROSS
+  // EVENTS, each event best score first, then partner count, then name. By score alone the cap would
+  // crowd out the common events again, one step later.
+  const partnerIds = new Map<string, PartnerId[]>();
+  for (const [name, rows] of partnersByName) {
+    const seen = new Set(rows.map((r) => r.name));
+    const hidden = new Map<string, PoolRow>();
+    for (const r of [...(verifiedByName.get(name) ?? []), ...(producers.get(slugs.get(name)!) ?? []), ...(poolRows.get(name) ?? [])]) {
+      if (seen.has(r.name) || r.name === name) continue;
+      const had = hidden.get(r.name);
+      if (!had || r.score > had.score) hidden.set(r.name, r);
+    }
+    const byEvent = new Map<string, PoolRow[]>();
+    for (const r of hidden.values()) {
+      const l = byEvent.get(r.event);
+      if (l) l.push(r); else byEvent.set(r.event, [r]);
+    }
+    const order = (a: PoolRow, b: PoolRow): number =>
+      b.score - a.score || (degree.get(b.name) ?? 0) - (degree.get(a.name) ?? 0) || a.name.localeCompare(b.name, "en");
+    const queues = [...byEvent.values()].map((l) => l.sort(order)).sort((a, b) => order(a[0]!, b[0]!));
+    const extra: PoolRow[] = [];
+    for (let i = 0; extra.length < hidden.size; i++) for (const q of queues) if (q[i]) extra.push(q[i]!);
+    const ids: PartnerId[] = [];
+    for (const p of [...rows, ...extra]) {
+      if (ids.length >= PI_KEEP) break;
+      const pos = positionOf.get(p.name);
+      const codes = rowTags.get(p) ?? (p as PoolRow).tags ?? [];
+      if (pos !== undefined) ids.push([pos, Math.round(p.score * 1000) / 1000, ...codes]);
+    }
+    partnerIds.set(name, ids);
+  }
+  const reindex = (ids: readonly number[]): number[] => ids
+    .map((i) => positionOf.get(substantive[i]!.card.name))
+    .filter((x): x is number => x !== undefined)
+    .sort((a, b) => a - b);
+
+  // THE CAUSERS SHIP IN "HOW MUCH IT DOES" ORDER (`effectOrder`, AN3), the partner count only
+  // breaking a tie -- same ids, same bytes, so the page reads the order off the list and nothing
+  // new ships. Nothing reads `p` as sorted: the page intersects it as a set.
+  const byEffect = (k: string, ids: readonly number[]): number[] => {
+    const cmp = effectOrder(k);
+    return ids
+      .map((i) => ({ d: substantive[i]!, at: positionOf.get(substantive[i]!.card.name) }))
+      .filter((r): r is { d: DeckCard; at: number } => r.at !== undefined)
+      .sort((x, y) => cmp(x.d, y.d) || x.at - y.at)
+      .map((r) => r.at);
+  };
+
+  // WHO ASKS, BESIDE WHO CAUSES. 11,988 memberships over the real corpus against 1,184,624 on the
+  // supply side (measured 2026-09-19): a card asks for 0.4 events on average and at most 6.
+  const consumersOf = new Map<string, number[]>();
+  substantive.forEach((d, i) => {
+    for (const k of new Set([...demandKeysOf(d), ...staticKeysOf(d)])) {
+      const b = consumersOf.get(k);
+      if (b) b.push(i); else consumersOf.set(k, [i]);
+    }
+  });
+  const events = new Map<string, EventMembers>();
+  for (const k of new Set([...members.keys(), ...consumersOf.keys()])) {
+    const p = byEffect(k, members.get(k) ?? []);
+    events.set(k, { p, c: reindex(consumersOf.get(k) ?? []),
+      ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(byName.get(index[pos]!.name)!, k.slice(0, k.indexOf("|")))) } : {}) });
+  }
+  const consumers: Record<string, number> = {};
+  for (const [k, ids] of consumersOf) consumers[k] = ids.length;
+  // THE SPLIT AJ5 ALREADY COMPUTES, SHIPPED. A picker row prints a count beside an event while the
+  // list under it is identity-filtered; printing the corpus figure there is the defect AJ5 was
+  // opened for, one surface along.
+  const freqByIdentity: Record<string, number[]> = {};
+  for (const [k, b] of buckets) freqByIdentity[k] = [...b];
+
+  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames, keywordNames, partnerIds, pairTagNames };
+}

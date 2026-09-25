@@ -2,9 +2,10 @@
  *  count/target, the ranked strategies and (once it exists) the template blend. Free: Mongo reads
  *  and pure functions. Run before and after a template change and diff with `--diff a.jsonl b.jsonl`.
  *
- *  Usage: tsx research/build-scores.ts [--dir packages/cli/decks/calibration] > before.jsonl
- *         tsx research/build-scores.ts --diff before.jsonl after.jsonl */
+ *  Usage: tsx research/matcher/build-scores.ts [--dir packages/cli/decks/calibration] > before.jsonl
+ *         tsx research/matcher/build-scores.ts --diff before.jsonl after.jsonl */
 import { readFileSync, readdirSync } from "node:fs";
+import { CALIBRATION_DECKS } from "@edh-seer/data";
 
 const argv = process.argv;
 const arg = (k: string) => (argv.includes(k) ? argv[argv.indexOf(k) + 1] : undefined);
@@ -41,7 +42,7 @@ const { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } 
 const { createTagsLookup } = await import("@edh-seer/tagger");
 const { analyzeDeckStructured, buildDeckCards, loadTokenTags } = await import("../../packages/matcher/src/index.js");
 
-const DIR = arg("--dir") ?? "packages/cli/decks/calibration";
+const DIR = arg("--dir") ?? CALIBRATION_DECKS;
 function deckFiles(): { file: string; group: string }[] {
   const out: { file: string; group: string }[] = [];
   for (const e of readdirSync(DIR, { withFileTypes: true })) {

@@ -17,7 +17,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="EDH Seer" />
-    <title>EDH Seer — Commander Deck Synergy Analysis</title>
+    <title>EDH Seer — Commander deck synergy, mana and bracket checker</title>
     <!-- THE CANONICAL ORIGIN. Open Graph needs absolute URLs, so it has to be written down
          somewhere; this tag is where, and it is the one every test reads.
 
@@ -32,10 +32,10 @@
     <!-- Changed from edhseer.pages.dev on 2026-08-31. Keep the pages.dev origin alive and 301 it:
          analysis share links carry the origin they were copied from. -->
     <link rel="canonical" href="https://edhseer.cards/" />
-    <meta name="description" content="Paste a Commander decklist for an oracle-text synergy read: which pairs work together, and the reason for each one." />
+    <meta name="description" content="Paste a Commander decklist or a Moxfield or Archidekt link. See which cards work together and why, from the oracle text, plus mana, bracket and combos." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="EDH Seer" />
-    <meta property="og:title" content="EDH Seer — Commander Deck Synergy Analysis" />
+    <meta property="og:title" content="EDH Seer — Commander deck synergy, mana and bracket checker" />
     <meta property="og:description" content="Why two cards work together, from the oracle text itself. Paste a decklist, get every pairing with a stated reason for each one." />
     <meta property="og:url" content="https://edhseer.cards/" />
     <meta property="og:image" content="https://edhseer.cards/og-image.png" />
@@ -45,7 +45,7 @@
     <!-- `summary_large_image` and not `summary`: the card is 1200x630 and a `summary` crop would
          take a square out of the middle of it, cutting the wordmark off its own image. -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="EDH Seer — Commander Deck Synergy Analysis" />
+    <meta name="twitter:title" content="EDH Seer — Commander deck synergy, mana and bracket checker" />
     <meta name="twitter:description" content="Why two cards work together, from the oracle text itself." />
     <meta name="twitter:image" content="https://edhseer.cards/og-image.png" />
     <!-- WHAT THIS ACTUALLY IS, in the vocabulary a crawler reads. Kept to facts the product can
@@ -246,7 +246,7 @@
            it is the only place the static HTML says what the product does, for a crawler with
            JavaScript off, so it moves one tag down rather than going anywhere. `seo.test.ts` counts
            that readable text and checks it still says oracle text, Commander and synergy. -->
-      <h1 class="intro-thesis">See which cards in your Commander deck actually work together</h1>
+      <h1 class="intro-thesis">How EDH Seer decides two cards in your Commander deck work together</h1>
       <p class="intro-thesis intro-thesis-body">
         Paste your list and EDH Seer reads the oracle text of every card, then shows you which pairs
         have real synergy, with the reason written next to each one.
@@ -271,7 +271,7 @@
         <div class="edge-row">
           <div class="edge-card">
             <span class="edge-name">Krenko, Mob Boss</span>
-            <span class="edge-side">produces</span>
+            <span class="edge-side">causes</span>
           </div>
           <div class="edge-link">
             <span class="edge-event">enters · creature · token</span>
@@ -292,7 +292,7 @@
         <div class="edge-row edge-row-refused">
           <div class="edge-card">
             <span class="edge-name">Farseek</span>
-            <span class="edge-side">produces</span>
+            <span class="edge-side">causes</span>
           </div>
           <div class="edge-link">
             <span class="edge-event">enters · <strong>land</strong></span>

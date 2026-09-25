@@ -11,7 +11,7 @@ import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
  *  own); the card <-> event-key incidence this reads is ~7*10^4 rows, and card-to-card edges are
  *  a join through it. Deck analysis is that join restricted to 100 cards.
  *
- *  Usage: npx tsx packages/matcher/src/bin/event-census.ts [--top N] */
+ *  Usage: npx tsx research/matcher/event-census.ts [--top N] */
 const TOP = Number(process.argv[process.argv.indexOf("--top") + 1]) || 15;
 
 const table = (title: string, rows: CensusRow[], selfLabel: string, otherLabel: string): void => {

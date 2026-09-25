@@ -5,24 +5,24 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard, DECKS_DIR } from "@edh-seer/data";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, COMMANDER_BOOST, type ImpactWeights } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
 import { saltCardScores, spearman, meanSpearman, looCV, type SaltPayload, type ScoreDeck } from "./calibrate-core.js";
 import type { DeckCard } from "../types.js";
+import { csSlug } from "./cs-categories.js";
 
-const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
+const DECK_DIR = DECKS_DIR;
 const CONFIG = JSON.parse(
   readFileSync(new URL("../calibration-decks.json", import.meta.url), "utf8"),
 ) as { name: string; path: string; saltId: string }[];
 const ENGINE_JSON = fileURLToPath(new URL("../../../engine/src/impact-weights.json", import.meta.url));
 
-/** Slugify a card name to match CommanderSalt's synergy-list keys (lowercase, underscored):
- *  "Venser, Shaper Savant" -> "venser_shaper_savant". */
-function slug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-}
+/** CommanderSalt's own slug rule, shared with `cs-categories.ts` (2026-09-25). This file carried a
+ *  cruder copy that kept apostrophes and diacritics and trimmed trailing underscores, so every such
+ *  card dropped out of the correlation -- the defect `csSlug`'s comment warns about. */
+const slug = csSlug;
 
 async function fetchSalt(saltId: string): Promise<SaltPayload> {
   const res = await fetch(`https://api.commandersalt.com/decks?id=${encodeURIComponent(saltId)}`);

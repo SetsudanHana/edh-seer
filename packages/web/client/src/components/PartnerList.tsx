@@ -125,7 +125,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                     // A PRODUCER ROW SAYS ITS DIRECTION AND NOTHING ELSE (2026-09-17): its sentence's
                     // tail is this page's own card, and its head is the group heading.
                     caption={p.unread || p.producer ? undefined : p.payoff ?? feederCaption(p, subject)}
-                    note={p.producer ? "causes it" : p.unread ? "couldn't read this card" : undefined}
+                    note={p.producer ? "causes it" : p.unread ? "effect not read yet" : undefined}
                   />
                 </li>
               ))}
@@ -159,8 +159,8 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 {dir === "causes"
                   ? "other cards cause it too. These are the ones with the most connections."
                   : dir === "feeds"
-                  ? "other cards feed it too. These are the ones with the most connections."
-                  : "other cards ask for it too. These are the ones with the most connections."}
+                  ? "other cards use it too. These are the ones with the most connections."
+                  : "other cards care about it too. These are the ones with the most connections."}
                 </Link>
               </p>
             )}

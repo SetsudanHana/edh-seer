@@ -24,8 +24,8 @@ test("a resolved finding renders once, struck through, and is not counted", () =
   // The count is `findings(report).length`, which no longer contains it -- a resolved finding is not
   // a finding, and the header's own count reads the same function. Asserted on the counting SENTENCE
   // rather than on the bare number, which also matches a row's ordinal.
-  expect(screen.getByText(/fixes, biggest payoff first/).textContent)
-    .toBe(`${findings(report).length} fixes, biggest payoff first`);
+  expect(screen.getByText(/suggestions, biggest payoff first/).textContent)
+    .toBe(`${findings(report).length} suggestions, biggest payoff first`);
 });
 
 /** It disappears by itself: the next run's diff no longer names it, so nothing tracks "shown once". */

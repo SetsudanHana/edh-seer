@@ -60,7 +60,14 @@ test("the score dial uses the product's own four bands", () => {
   expect(scoreState(2).tone).toBe("warning");
   expect(scoreState(3.4).state).toBe("focused");
   expect(scoreState(3.4).tone).toBe("success");
-  expect(scoreState(4.5).state).toBe("tuned");
+  expect(scoreState(4.5).state).toBe("tight");
+});
+
+test("Build reads its own band words over the same thresholds and tones", () => {
+  expect(scoreState(4.7, false, "build")).toMatchObject({ state: "on target", tone: scoreState(4.7).tone });
+  expect(scoreState(3.4, false, "build").state).toBe("close");
+  expect(scoreState(2, false, "build").state).toBe("short");
+  expect(scoreState(0.8, false, "build").state).toBe("far off");
 });
 
 test("a partly-read score keeps its number and loses its verdict", () => {

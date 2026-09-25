@@ -1,32 +1,42 @@
 # Contributing
 
-Thanks for looking. This project has a few habits that are not obvious from the code, and every one
-of them exists because skipping it cost something measurable.
+Thanks for looking. The quickest start needs nothing but Node 24 (`nvm use` reads `.nvmrc`):
+
+```bash
+npm install && npm test        # no database, no network, no API key
+```
+
+New to the engine? Read [How it works](docs/HOW-IT-WORKS.md) first. The rest of this page is the
+project's habits: a few that are not obvious from the code, each of which exists because skipping it
+cost something measurable.
 
 ## The most useful contribution
 
-**A wrong synergy claim.** The engine prints a sentence for every edge it draws, which means every
-edge can be disagreed with. If one is wrong, that is a defect with a witness attached, and it is
-worth more than most patches.
+**A wrong pairing.** The site prints a sentence for every pairing it finds, which means every
+pairing can be checked against the cards and disagreed with. If one is wrong, that is a defect with
+a witness attached, and it is worth more than most patches.
 
-[Report an edge](https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml) with
-both card names and the sentence the site printed.
+[Report a wrong pairing](https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml)
+with both card names and the sentence the site printed.
 
-The same goes for an edge that is **missing** — two cards that obviously work together and got no
-claim. Those are harder to find and rarer to receive.
+The same goes for a pairing that is **missing** — two cards that obviously work together and were
+not paired. Those are harder to find and rarer to receive.
 
 ## Getting set up
 
-Node >= 22, and a MongoDB instance holding the card corpus.
+Node 24 is enough for `npm test` and most engine work: the matcher is pure and its tests
+carry their own fixtures. The bins and the measuring instruments also need MongoDB holding the card
+corpus — the [corpus figures](README.md#honest-limitations) are in the README — which is not in the
+repository:
 
 ```bash
-npm install
-npm test
+docker compose -f packages/data/docker-compose.yml up -d
+npm run ingest -w @edh-seer/data      # Scryfall cards and the combo list
 ```
 
-The corpus itself is not in the repository — it is roughly 34,000 Scryfall cards plus 21,000
-normalized clause documents. Ingestion bins live in `packages/data/src/bin/`. Most engine work does
-not need it: the matcher is pure and its tests carry their own fixtures.
+The normalized clauses come from the one paid step ([Stage 2](docs/pipeline/2-normalize.md)) and
+cannot be rebuilt for free. How to run the site locally, the way production runs it, is in
+[the runbook](docs/RUNBOOK.md#running-the-product).
 
 ## Running the suite
 
@@ -34,13 +44,28 @@ not need it: the matcher is pure and its tests carry their own fixtures.
 npm test                        # every workspace, each with its own config
 npm test -w @edh-seer/matcher   # one workspace
 npm run typecheck               # vitest does NOT typecheck; run this too
+npm run lint                    # oxlint: bugs and unused code, not style
 npm run lint:bins               # where a script is allowed to live
 ```
 
-**Never run `npx vitest run` from the repository root.** It ignores each package's own vitest config,
-so the web client's tests run without jsdom and die on `document is not defined`. That produced a
-"75 tests fail on a clean checkout" baseline that was quoted for weeks and was purely the wrong
-command.
+The linter is for **bugs, not style**. `.oxlintrc.json` turns on oxlint's correctness rules and
+unused imports, variables and parameters (prefix one with `_` when it is unused on purpose), and
+turns off the handful of rules that only restate working code in another idiom. There is no
+formatter: the code has one consistent hand style, and a mass reformat would bury every `git blame`
+line for no reader. CI fails on any finding. An unused value is worth a second look before you
+delete it; the first run found a message that was computed and never rendered.
+
+Three suites in `@edh-seer/data` (the database layer, ingest, flavor names) need a MongoDB and skip
+without one. CI runs them against a throwaway `mongo:7`; locally, point them at yours:
+`MONGO_TEST_URI=mongodb://localhost:27017 npm test -w @edh-seer/data`. They create and empty their
+own test databases, never the corpus.
+
+`npx vitest run` from the repository root runs every package's suite under that package's own
+config (the root `vitest.config.ts` lists them as `projects`), in one report; `npx vitest` watches
+them all. It used to ignore the per-package configs, so the web client's tests ran without jsdom and
+died on `document is not defined` -- a "75 tests fail on a clean checkout" baseline that was quoted
+for weeks and was purely the wrong command. That trap is closed; a new package is added to the
+root config's list.
 
 The suite is green on a clean checkout. There is no environmental exception — if something is red,
 it is the change.
@@ -59,16 +84,23 @@ Three homes, and the test is what the script is **for**, not what it is named:
 a `*.test.ts` under `research/` is collected by no vitest project, so it reads as covered while its
 coverage is silently missing.
 
-Research scripts import package source by **relative path**, never by package name. Importing by name
-would force dozens of modules into the public export maps purely to relocate a script.
+A script that takes flags reads them with `parseArgs` from `node:util`, which rejects a mistyped flag
+instead of silently ignoring it. The older scripts slice `process.argv` by hand; convert one when
+you are changing it anyway, not in a sweep.
+
+Research scripts import what a package **exports** by its name (`@edh-seer/data`), and reach a module
+outside its export map by **relative path**. Adding an export only so a script can be relocated would
+grow the public surface for no reader; `research/package.json` declares the packages it imports.
 
 ## Measure before and after, and say the number
 
-Every fix here carries its measured effect in the commit message. Three instruments are free to run,
-need no model, and are the ones reviewers will ask about:
+Every fix here carries its measured effect in the commit message. Three instruments are free to run
+(no model, no API key) and are the ones reviewers will ask about. They read the MongoDB corpus, and
+`panel-score.ts` also reads the judged panel, which lives only on the maintainer's machine; if you
+cannot run them, say so in the PR and the maintainer will:
 
 ```bash
-npx tsx packages/instruments/src/panel-score.ts          # precision AND recall on the frozen panel
+npx tsx packages/instruments/src/panel-score.ts          # precision AND retention on the frozen panel
 npx tsx packages/instruments/src/population-compare.ts   # edges and reasons, before against after
 npx tsx packages/instruments/src/eval-pairs.ts           # the compass
 ```
@@ -96,9 +128,42 @@ a real regression gets excused.
   a convention rather than a gate, so it is on review to catch. Use a real icon (lucide, inline SVG,
   `currentColor`) or plain words.
 
+## Screenshots
+
+The README and [edhseer.cards/how-it-works](https://edhseer.cards/how-it-works) show four frames of
+a real report (the graph, the game plan, the suggestions and the mana chart), and the README opens on
+a demo GIF of the whole flow: paste, analyse, read, open the graph. They are the first
+picture of the product most people see, and a picture of last month's UI is a claim that is no
+longer true.
+
+**If your change alters what one of those frames shows, regenerate them in the same PR:**
+
+```bash
+npm run build:client -w @edh-seer/web
+npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
+npm run screenshots -w @edh-seer/web     # the four frames
+npm run demo-gif -w @edh-seer/web        # docs/images/demo.gif; --frames <dir> saves each frame to review
+```
+
+The script (`packages/web/scripts/docs-screenshots.mts`) analyses a fixed Krenko list, crops each
+frame from its own heading, and writes the `.webp` files that both pages use. Your UI and
+production's card data, so no corpus is needed. Look at the four files before you commit them.
+
+The README banner and the GitHub social preview (`docs/images/`) are drawn by
+`npx tsx packages/web/scripts/brand-images.mts` in the site's own fonts and colours. They change only
+when the brand does; the social preview is uploaded by hand under Settings > General.
+
+The demo is a storyboard of real clicks (`packages/web/scripts/demo-gif.mts`). If a control it clicks
+is renamed or moved, the script fails rather than recording the wrong thing; fix the storyboard in
+the same PR.
+
+`screenshots.test.ts` holds the parts a test can see: every frame comes from the script, the page
+and the README show the same set, and each file's size matches what the page declares. Whether a
+frame is *out of date* no test can tell, which is why it is on the PR checklist.
+
 ## Pull requests
 
-Branch, open a PR, get both CI legs green (`test (node 22)` and `test (node 24)`), then squash-merge.
+Branch, open a PR, get the `test` check green, then squash-merge. The `next (node 26)` job is an early warning for the next Node and never blocks.
 Nobody pushes to `main`; branch protection is enforced for administrators too.
 
 A good PR body says what changed, what it was measured against, and what the number did. If a change

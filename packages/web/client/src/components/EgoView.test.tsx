@@ -32,7 +32,7 @@ test("draws the focus card's own graph, not the whole deck", () => {
 
 test("names the focus card and how many partners it has", () => {
   render(<EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={() => {}} />);
-  expect(screen.getByText(/1 partner\b/)).toBeInTheDocument();
+  expect(screen.getByText(/1 connection\b/)).toBeInTheDocument();
 });
 
 // THE READER ARRIVED FROM A ROW SAYING "43 partners" AND THE VIEW DRAWS 7. That gap is real -- the
@@ -51,7 +51,7 @@ test("the visible line reconciles what is drawn with the total the list promised
   const graph = { nodes, edges, undirectedReasons: 0, offDeckReasons: 0 } as unknown as CardGraph;
   render(<EgoView graph={graph} report={SAMPLE.report} focusId={hub} onFocus={() => {}} onBack={() => {}} />);
   // 6 of 20: the fanout cap, against the count the list row shows for the same card.
-  expect(screen.getByText(/6 of 20 partners/)).toBeInTheDocument();
+  expect(screen.getByText(/6 of 20 connections/)).toBeInTheDocument();
   expect(screen.getByText(/strongest/)).toBeInTheDocument();
 });
 
@@ -150,4 +150,32 @@ test("back leaves the view", async () => {
   render(<EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={onBack} />);
   await user.click(screen.getByRole("button", { name: /back to the card list/i }));
   expect(onBack).toHaveBeenCalledOnce();
+});
+
+// THE DESKTOP'S ONE-CARD VIEW STAYS IN THE PAGE (2026-09-25 live review). As an overlay it hid the
+// header and the Whole deck / One card switch, and Escape did nothing.
+test("inline, it renders in the page instead of over it", () => {
+  const { container } = render(
+    <EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={() => {}} inline />,
+  );
+  const root = screen.getByTestId("ego-view");
+  expect(container.contains(root)).toBe(true);
+  expect(root.className).not.toMatch(/\bfixed\b/);
+});
+
+test("Escape leaves the view, but not while typing in a field", async () => {
+  const onBack = vi.fn();
+  render(
+    <>
+      <input aria-label="elsewhere" />
+      <EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={onBack} inline />
+    </>,
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByLabelText("elsewhere"));
+  await user.keyboard("{Escape}");
+  expect(onBack).not.toHaveBeenCalled();
+  (document.activeElement as HTMLElement).blur();
+  await user.keyboard("{Escape}");
+  expect(onBack).toHaveBeenCalledTimes(1);
 });

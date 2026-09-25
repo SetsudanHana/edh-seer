@@ -8,17 +8,17 @@
  *
  *    set -a && source packages/tagger/.env && set +a
  *    npx tsx packages/matcher/src/bin/build-static.ts     # if static-out/ needs rebuilding
- *    npx tsx packages/matcher/src/bin/static-parity.ts */
+ *    npx tsx research/matcher/static-parity.ts */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import type { Db } from "mongodb";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { StaticLookup } from "../../packages/matcher/src/static-lookup.js";
 import { loadTokenTags } from "../../packages/matcher/src/token-tags.js";
 import { analyzeResolvedDeck, buildWireGraph, resolveDeck, type AnalysisSources } from "../../packages/matcher/src/orchestrate.js";
 
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DECK_DIR = CALIBRATION_DECKS;
 const outDir = "static-out";
 
 // A NODE `fetch` SHIM OVER THE BUILT DIRECTORY, so the parity run needs no HTTP server. It is the

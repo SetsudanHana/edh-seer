@@ -173,7 +173,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         {unread ? (
           <p className="text-(--muted) max-w-[65ch]">
             The engine read nothing on this card: no ability it could derive, so no events, no
-            gaps and no partners to rank. Either the card prints only keywords, or its text is one
+            gaps and no connections to rank. Either the card prints only keywords, or its text is one
             the engine cannot yet read. The card page shows which.
           </p>
         ) : (<>
@@ -184,7 +184,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
             : themes.join(" · ")}
         </p>
         <p>
-          <span className="eyebrow text-(--muted)">your 99 should provide </span>
+          <span className="eyebrow text-(--muted)">it cares about </span>
           {gaps.length === 0
             ? <span className="text-(--muted)">nothing. It answers every event it watches</span>
             : gaps.map((w) => eventKeyClause(w)).join(" · ")}
