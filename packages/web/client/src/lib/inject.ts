@@ -179,9 +179,10 @@ export function injectPage(shell: string, page: InjectedPage): string {
     .replace(/<meta name="twitter:description" content="[^"]*"\s*\/?>/,
       () => `<meta name="twitter:description" content="${esc(page.description)}" />`);
 
-  if (page.breadcrumbs !== undefined && page.breadcrumbs.length >= 2) {
+  const crumbs = page.breadcrumbs;
+  if (crumbs !== undefined && crumbs.length >= 2) {
     out = out.replace("</head>",
-      () => `  <script type="application/ld+json">${breadcrumbJsonLd(page.breadcrumbs)}</script>\n  </head>`);
+      () => `  <script type="application/ld+json">${breadcrumbJsonLd(crumbs)}</script>\n  </head>`);
   }
 
   if (page.image !== undefined) {
