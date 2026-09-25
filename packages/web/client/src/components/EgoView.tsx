@@ -67,7 +67,7 @@ export function edgeLine(
  *  three expansions deep cannot step back one. Upgrade path is a focus stack in the caller, which is
  *  the same change that would put the focus in the URL (`/graph/:cardName`). */
 export function EgoView(
-  { graph, report, focusId, onFocus, onBack, artLoader }:
+  { graph, report, focusId, onFocus, onBack, artLoader, inline = false }:
   {
     graph: CardGraph;
     report: DeckReport;
@@ -75,6 +75,12 @@ export function EgoView(
     onFocus: (id: string) => void;
     onBack: () => void;
     artLoader?: ArtLoader;
+    /** IN THE PAGE, NOT OVER IT -- the desktop's one-card view (2026-09-25 live review). Owning the
+     *  viewport is right on a phone, where the chrome above the board was taller than the screen.
+     *  On a desktop the same takeover hid the site header, the Whole deck / One card switch and the
+     *  deck's own name, and Escape did nothing, so the one way out was "Back to the card list" --
+     *  a list the reader never came from. Inline, the switch stays one click away. */
+    inline?: boolean;
   },
 ) {
   const ego = useMemo(() => egoGraph(graph, focusId), [graph, focusId]);
@@ -102,6 +108,18 @@ export function EgoView(
    *  moves, because an edge to the card you just left is not a fact about the card you are on. */
   const [selectedPartner, setSelectedPartner] = useState<string | null>(null);
   useEffect(() => setSelectedPartner(null), [focusId]);
+  // ESCAPE LEAVES, as it does every other layer this app opens over the page. Ignored while a
+  // field has focus, where Escape belongs to the field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      onBack();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onBack]);
 
   const node = ego.nodes[0];
   // A focus that does not resolve draws nothing rather than an invented card -- a silent wrong
@@ -153,14 +171,20 @@ export function EgoView(
   // Measured before the portal: the fixed root resolved to 326x114 -- its transformed ancestor's own
   // box -- the canvas collapsed to 1px tall, the fit clamped to its 0.15 floor, and the discs drew
   // at 4.2px. A class name alone could not have caught it, which is why the test asserts the parent.
-  return createPortal(
+  const view = (
     // FIXED, NOT `h-[100svh]` IN PAGE FLOW. The height was honoured and bought nothing: measured at
     // 390, the view still began 451px down, under the shell's header, deck-input card and route
     // tabs, so the canvas ran 452->1199 on an 844px screen and the page was 1856px tall. A surface
     // whose whole justification is owning the viewport has to leave the flow to own it -- and doing
     // so is also what makes the canvas's `touch-action: none` correct rather than a scroll trap,
     // since there is no longer a page behind it that the reader was trying to scroll.
-    <div data-testid="ego-view" className="fixed inset-0 z-40 bg-(--background) flex flex-col">
+    <div
+      data-testid="ego-view"
+      className={inline
+        // A height the page can hold beside its header, and never so short the discs shrink.
+        ? "relative flex flex-col h-[min(70svh,760px)] min-h-[480px] rounded-(--radius) border border-(--separator) overflow-hidden bg-(--background)"
+        : "fixed inset-0 z-40 bg-(--background) flex flex-col"}
+    >
       <div className="flex-1 min-h-0">
         <GraphView
           graph={ego}
@@ -168,7 +192,10 @@ export function EgoView(
           artLoader={artLoader}
           chrome="bare"
           // Touch has no hover, so the tap is what tells the board which edge the strip is reading.
-          emphasisId={selectedPartner}
+          // WITH NOTHING TAPPED, THE FOCUS ITSELF: its edges then draw in the flow's direction hues
+          // with arrows, the way the whole-deck board draws a selected card. Plain grey lines said
+          // which cards touch it and nothing about which way anything runs.
+          emphasisId={selectedPartner ?? focusId}
           // Empty board space is not a re-root: `null` leaves the focus where it is, so a missed tap
           // costs nothing -- which matters when the thing being aimed at used to be 14.7px. Tapping
           // the focus itself is a no-op for the same reason.
@@ -203,7 +230,7 @@ export function EgoView(
           onTogglePin={() => togglePin(node.cardName ?? node.label)}
         />
       </CardSheet>
-    </div>,
-    document.body,
+    </div>
   );
+  return inline ? view : createPortal(view, document.body);
 }

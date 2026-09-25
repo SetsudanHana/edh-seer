@@ -244,7 +244,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route
               path="graph"
               element={
-                <Reference>
+                <Reference aside={modeSwitch}>
                   {/* A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
                     * fallback shorter than what replaces it is a layout shift on arrival -- the exact
                     * defect the `#root` reserve one file over exists to remove. The message says what
@@ -256,7 +256,6 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                       loading the board
                     </div>
                   }>
-                    {modeSwitch}
                     {boardMode === "ego"
                       ? (focusId
                         ? (
@@ -267,6 +266,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                             onFocus={setFocusId}
                             onBack={() => setFocusId(null)}
                             artLoader={artLoaderRef.current}
+                            inline={autoBoardMode === "board"}
                           />
                         )
                         : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
@@ -300,10 +300,14 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
  *  The browser's own back button is the primary route home — that is why these are routes at all —
  *  but a reader who arrived by pressing `Graph` in the rail can be several surfaces deep, and a
  *  visible way back costs one line. */
-function Reference({ children }: { children: React.ReactNode }) {
+/** `aside` sits at the right end of the surface tabs. The graph puts its Whole deck / One card
+ *  switch there: on its own row it cost the board ~60px at every width (2026-09-25 live review,
+ *  where the board started at y=438 on a 900px laptop). */
+function Reference({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
   const { pathname } = useLocation();
   return (
-    <div className="flex flex-col gap-6 pt-6">
+    <div className="flex flex-col gap-4 pt-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <nav aria-label="Report surfaces" className="flex gap-4 items-baseline">
         <SurfaceLink to="/" className="eyebrow text-(--accent)">
           &larr; Report
@@ -318,6 +322,8 @@ function Reference({ children }: { children: React.ReactNode }) {
           </SurfaceLink>
         ))}
       </nav>
+      {aside ? <div className="ml-auto">{aside}</div> : null}
+      </div>
       {children}
     </div>
   );

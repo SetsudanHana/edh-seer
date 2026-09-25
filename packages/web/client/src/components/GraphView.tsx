@@ -120,6 +120,9 @@ const INSPECTOR_INSET_PX = 312;
 
 /** How many of a focused card's strongest partners the camera frames with it. */
 const FOCUS_PARTNERS = 8;
+/** How many search matches are framed as you type, and how long typing has to pause first. */
+const SEARCH_FRAME_MAX = 12;
+const SEARCH_FRAME_DELAY_MS = 350;
 
 /** How many key cards the strip above the board names -- one row at 1440 with room to spare. */
 const KEY_CARDS = 6;
@@ -217,6 +220,25 @@ export function edgeAlpha(weight: number, maxWeight: number): number {
   if (maxWeight <= 0) return EDGE_A_MIN;
   const t = Math.min(1, Math.max(0, weight / maxWeight));
   return EDGE_A_MIN + t * (EDGE_A_MAX - EDGE_A_MIN);
+}
+
+/** Does a card answer the board's find box? Its name contains the query, or -- from three letters
+ *  on -- one of its types starts with it. Names alone found ONE card for "wizard" in a Wizard deck
+ *  (the Wizard token), and a type is how a player looks for a group of cards (2026-09-25 review).
+ *  `q` is already trimmed and lower-cased. */
+export function nodeMatchesQuery(
+  n: { label: string; types?: readonly string[]; subtypes?: readonly string[] },
+  q: string,
+): boolean {
+  if (n.label.toLowerCase().includes(q)) return true;
+  if (q.length < 3) return false;
+  return [...(n.types ?? []), ...(n.subtypes ?? [])].some((t) => t.toLowerCase().startsWith(q));
+}
+
+/** A label box's left edge, moved just enough to keep the whole box on a canvas `canvasW` wide. A
+ *  box wider than the canvas starts at 0. */
+export function clampLabelX(x: number, w: number, canvasW: number): number {
+  return Math.max(0, Math.min(x, canvasW - w));
 }
 
 export function GraphView(
@@ -469,17 +491,21 @@ export function GraphView(
    *  throws them away: a judge counted SIX of ten with the chip beside it saying ten, and the other
    *  four were off the panel's edge. A stated number the picture under it cannot corroborate is the
    *  tool asserting a fact where showing one was the entire point. */
-  const fitSubsetRef = useRef<(ids: ReadonlySet<string>, insetRight?: number) => void>(() => {});
+  const fitSubsetRef = useRef<(ids: ReadonlySet<string>, insetRight?: number, centreId?: string) => void>(() => {});
   /** What the settle fits should frame INSTEAD of the whole deck, when the board opened on a card:
    *  that card and its partners, left of the panel. The layout is still spreading when the board
    *  opens, so framing then would be undone; the two scheduled fits are the frames that hold.
    *  Cleared by any selection the reader makes. */
-  const settleFocusRef = useRef<{ ids: ReadonlySet<string>; inset: number } | null>(null);
+  const settleFocusRef = useRef<{ ids: ReadonlySet<string>; inset: number; centreId: string } | null>(null);
   // The card id under the pointer, read by the label pass inside the rAF loop -- a ref rather than
   // `hover` (React state) for the same reason matchesRef/huesRef are refs: reading state there
   // would either be stale between renders or force the layout effect to re-run on every
   // pointermove, reheating the whole simulation as the user just moves the mouse.
   const hoveredIdRef = useRef<string | null>(null);
+  /** What a pointer leaving a card falls back to: the emphasis the caller asked for. On the desktop's
+   *  one-card view a mouse passing over a disc used to wipe the focus's lit edges for good. */
+  const emphasisRef = useRef<string | null>(null);
+  emphasisRef.current = chrome === "bare" ? emphasisId : null;
   /** THE TAP-DRIVEN EMPHASIS, written into the same ref the pointer path uses. `dirtyRef` rather
    *  than a re-render: the simulation lives in a ref, so this repaints the next frame without
    *  re-throwing the layout -- the same reason the paint mode is a ref read and not state. */
@@ -601,7 +627,7 @@ export function GraphView(
   const hiddenFromBoard = useMemo(() => {
     const parts: string[] = [];
     if (!showLands && landNodes.size > 0) parts.push(`${landSlots} lands`);
-    if (!showLoneTokens && loneTokens.size > 0) parts.push(`${loneTokens.size} lone tokens`);
+    if (!showLoneTokens && loneTokens.size > 0) parts.push(`${loneTokens.size} lone token${loneTokens.size === 1 ? "" : "s"}`);
     return parts.length > 0 ? parts.join(" and ") : null;
   }, [showLands, landNodes, landSlots, showLoneTokens, loneTokens]);
 
@@ -688,7 +714,7 @@ export function GraphView(
     setSelectedIds([id]);
     const near = neighbourhood(id);
     cameraOwnedByUserRef.current = graph;
-    fitSubsetRef.current(near, narrow ? 0 : INSPECTOR_INSET_PX);
+    fitSubsetRef.current(near, narrow ? 0 : INSPECTOR_INSET_PX, id);
   }, [graph, narrow, neighbourhood]);
 
   /** THE KEY CARDS, BY THE REPORT'S OWN RANKING -- `synergyRating`, the same order and the same
@@ -725,8 +751,8 @@ export function GraphView(
     const near = neighbourhood(first);
     // Framed NOW when the board arrived pre-settled (the usual case -- the layout effect has already
     // run and framed the whole deck), and by the settle fits otherwise.
-    settleFocusRef.current = { ids: near, inset: INSPECTOR_INSET_PX };
-    fitSubsetRef.current(near, INSPECTOR_INSET_PX);
+    settleFocusRef.current = { ids: near, inset: INSPECTOR_INSET_PX, centreId: first };
+    fitSubsetRef.current(near, INSPECTOR_INSET_PX, first);
     setSelectedIds((ids) => (ids.length > 0 ? ids : [first]));
   }, [guided, bare, narrow, graph, commanders, keyCards, neighbourhood]);
   // THE COMPANION IS NAMED AS ONE (owner, 2026-09-22): a player has to see whether a card is played
@@ -777,7 +803,7 @@ export function GraphView(
     // nothing.
     if (!q) return spotlightUnread ? unread : null;
     const hit = new Set<string>();
-    for (const n of graph.nodes) if (n.label.toLowerCase().includes(q)) hit.add(n.id);
+    for (const n of graph.nodes) if (nodeMatchesQuery(n, q)) hit.add(n.id);
     return hit;
   }, [graph, query, spotlightUnread, unread]);
 
@@ -792,7 +818,7 @@ export function GraphView(
     const drawn = new Set(graph.nodes.map((n) => n.id));
     let lands = 0, tokens = 0;
     for (const n of fullGraph.nodes) {
-      if (drawn.has(n.id) || !n.label.toLowerCase().includes(q)) continue;
+      if (drawn.has(n.id) || !nodeMatchesQuery(n, q)) continue;
       if (landNodes.has(n.id)) lands++; else tokens++;
     }
     return lands + tokens > 0 ? { lands, tokens, total: lands + tokens } : null;
@@ -806,6 +832,24 @@ export function GraphView(
   spotlightRef.current = spotlightUnread;
   const matchesRef = useRef<Set<string> | null>(null);
   matchesRef.current = matches;
+  /** THE MATCHES COME INTO VIEW AS YOU TYPE (2026-09-25 review). Typing only dimmed the board, and
+   *  "sol" said "1 match" over a board where the match was nowhere on screen. Once the typing
+   *  pauses, a handful of matches is framed -- without selecting anything, which is still Enter's
+   *  job. A long list of matches is left where it is: framing forty cards is framing the deck. */
+  useEffect(() => {
+    if (bare || !query.trim() || !matches || matches.size === 0 || matches.size > SEARCH_FRAME_MAX) return;
+    const t = window.setTimeout(() => {
+      cameraOwnedByUserRef.current = graph;
+      const inset = !narrow && inspectingId !== null ? INSPECTOR_INSET_PX : 0;
+      // ONE MATCH IS FRAMED WITH ITS PARTNERS, the way Enter frames it: a lone card's box is a
+      // single point, and fitting it zoomed the board all the way in to card mode.
+      const only = matches.size === 1 ? [...matches][0]! : undefined;
+      fitSubsetRef.current(only === undefined ? matches : neighbourhood(only), inset, only);
+    }, SEARCH_FRAME_DELAY_MS);
+    return () => window.clearTimeout(t);
+    // `inspectingId` is read, not a trigger: opening a panel is not a reason to move the camera.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, query, bare, narrow, graph, neighbourhood]);
   /** The event predicate, read by the paint loop. Assigned in the COMPONENT BODY like every other
    *  ref here, which is exactly what the catch-all invalidation effect above relies on: changing it
    *  implies a render, and that effect wakes the parked rAF so the board repaints. */
@@ -881,10 +925,14 @@ export function GraphView(
     const toLink = (e: { from: string; to: string; weight: number; enabledBy?: readonly string[] }) =>
       ({ source: byId.get(e.from), target: byId.get(e.to), weight: e.weight, ...(e.enabledBy ? { enabledBy: e.enabledBy } : {}) });
     const isLink = (l: ReturnType<typeof toLink>): l is SimLink => Boolean(l.source && l.target);
-    const links: SimLink[] = drawnEdges(graph.edges).map(toLink).filter(isLink);
+    // THE ONE-CARD VIEW DRAWS EVERY EDGE IT HAS. The top-k budget exists to thin a 90-card mesh; on
+    // a focus and its handful of partners it only cut the links that hold some partners in place,
+    // so repulsion flung them far off the canvas and the fit (connected cards only) framed the rest.
+    // Harmonic Prodigy's view said "9 of 70 partners" and showed six (2026-09-25 live review).
+    const links: SimLink[] = (bare ? graph.edges : drawnEdges(graph.edges)).map(toLink).filter(isLink);
     // What the budget did NOT draw, kept aside for the paint loop only: a hovered or selected card
     // paints these too (see `litUndrawn`). Never a simulation link -- the layout is the budget's.
-    const undrawnLinks: SimLink[] = graph.edges.filter((e) => e.drawn === false).map(toLink).filter(isLink);
+    const undrawnLinks: SimLink[] = bare ? [] : graph.edges.filter((e) => e.drawn === false).map(toLink).filter(isLink);
     // WHICH TAGS EACH DRAWN EDGE CARRIES, keyed the way `flowEdgeByPair` already keys. `SimLink`
     // deliberately does not carry them: it is the SIMULATION's type and the force layout has no
     // business knowing what a mechanism is. Graph-scoped, so it is rebuilt when the board's edges
@@ -1652,7 +1700,18 @@ export function GraphView(
       // art prints that name larger and better. Above the ceiling only the cards with NO art drawn
       // keep a label: a placeholder is a blank coloured rectangle, and suppressing its name would
       // leave nothing on screen identifying it. Paint only — no candidate set has ever fed layout.
-      const candidates = labelCandidates(nodes, cam.z, {
+      // THE ONE-CARD VIEW NAMES EVERY CARD IT DRAWS. It holds ten discs at most, so neither the
+      // zoom floor nor the degree cull has anything to protect: on it they only ever removed names
+      // -- the bottom partner of Inalla's view drew unnamed, and one pinch on the phone dropped two
+      // more (2026-09-25 live review).
+      const candidates = bare
+        ? labelCandidates(nodes, cam.z, {
+          zoomFloor: 0,
+          cardModeZoom: CARD_MODE_Z,
+          eligibleBelowFloor: new Set(),
+          placeholders: placeholderIds,
+        })
+        : labelCandidates(nodes, cam.z, {
         zoomFloor: LABEL_ZOOM_FLOOR,
         cardModeZoom: CARD_MODE_Z,
         // THE SPOTLIGHT'S OWN MATCHES ARE ALWAYS ELIGIBLE. Without this the state that exists to
@@ -1711,7 +1770,9 @@ export function GraphView(
           const sx = n.x * cam.z + cam.x, sy = n.y * cam.z + cam.y;
           const common = {
             id,
-            x: sx - wScreen / 2 - LABEL_GAP,
+            // KEPT ON THE CANVAS. A card near the edge used to print half its name off it
+            // ("ce Kuja, Fate Defied" at 390); the drawn text reads this same box back below.
+            x: clampLabelX(sx - wScreen / 2 - LABEL_GAP, wScreen + LABEL_GAP * 2, dim.w),
             w: wScreen + LABEL_GAP * 2,
             h: LABEL_PX + LABEL_GAP * 2,
           };
@@ -1757,9 +1818,19 @@ export function GraphView(
           // Slot 1 is the below-the-node fallback: the text baseline sits under the node rather
           // than over it, so the drawn position is the one placeLabels actually reserved.
           const halfWorld = mode === "card" ? cardH / 2 : nodeRadius();
-          ctx.fillText(n.label, n.x, slot === 0
+          const wScreen = ctx.measureText(n.label).width * cam.z;
+          const boxX = clampLabelX(n.x * cam.z + cam.x - wScreen / 2 - LABEL_GAP, wScreen + LABEL_GAP * 2, dim.w);
+          const textX = (boxX + LABEL_GAP + wScreen / 2 - cam.x) / cam.z;
+          const textY = slot === 0
             ? n.y - halfWorld - 4 / cam.z
-            : n.y + halfWorld + (LABEL_PX + 2) / cam.z);
+            : n.y + halfWorld + (LABEL_PX + 2) / cam.z;
+          // A HALO IN THE BOARD'S OWN BACKGROUND, so an edge passing under a name no longer reads
+          // as a strike-through ("Kefka, Ruler of Ruin" on the 2026-09-25 review).
+          ctx.lineJoin = "round";
+          ctx.lineWidth = 3 / cam.z;
+          ctx.strokeStyle = paintColors.bg;
+          ctx.strokeText(n.label, textX, textY);
+          ctx.fillText(n.label, textX, textY);
         }
         // Canvas state is global and persistent (draw()'s own reset a few lines up already makes
         // this mistake impossible for the node pass) -- a search left dimming on here would leak
@@ -1963,7 +2034,20 @@ export function GraphView(
     // second camera path that would drift from this one.
     // `insetRight` is board width the frame must leave free -- the inspector panel sits over the
     // board's right edge, and a card framed underneath it is a card the reader cannot see.
-    const frame = (framed: readonly typeof nodes[number][], insetRight = 0) => {
+    // `focus` is a FOCUS FRAME -- a key card, a search, the card the board opens on -- rather than a
+    // survey of the deck, and it changes two things (2026-09-25 live review, where every focus landed
+    // flush against the board's top edge with its partners running off the bottom):
+    //  - `centre`: the focused card sits in the middle of the frame, not wherever the middle of its
+    //    partners' box happens to fall. A card whose strongest partners all lie on one side used to
+    //    be pushed to the far edge.
+    //  - only the part of the canvas ON SCREEN counts. The board is at least MIN_BOARD_PX tall, so on
+    //    a 900px laptop its lower third is under the fold; a frame centred on the whole canvas put
+    //    half of what it framed where nobody was looking.
+    const frame = (
+      framed: readonly typeof nodes[number][],
+      insetRight = 0,
+      focus?: { centre?: typeof nodes[number] },
+    ) => {
       if (framed.length === 0) return;
       // A FIT AGAINST A CANVAS THE BROWSER HAS NOT LAID OUT YET IS NOT A FIT, IT IS A CLAMP.
       // `k` below is `min(dim.w/w, dim.h/h)` clamped to the scale extent, so a canvas of zero or
@@ -1985,15 +2069,27 @@ export function GraphView(
       }
       // Pad by a card radius on every side -- the bbox above is CENTRES, and an unpadded fit would
       // crop the outermost cards' own art in half.
-      const w = maxX - minX + ART_RADIUS * 2, h = maxY - minY + ART_RADIUS * 2;
-      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const c = focus?.centre;
+      // Centred on the focus: the box grows to be symmetric about it, so every framed partner still
+      // fits once the focus is in the middle. LABEL_PX of headroom so a name above the top card
+      // stays on the canvas.
+      const w = (c ? 2 * Math.max(c.x - minX, maxX - c.x) : maxX - minX) + ART_RADIUS * 2;
+      const h = (c ? 2 * Math.max(c.y - minY, maxY - c.y) : maxY - minY) + ART_RADIUS * 2 + (focus ? LABEL_PX * 2 : 0);
+      const cx = c ? c.x : (minX + maxX) / 2, cy = c ? c.y : (minY + maxY) / 2;
       const [zMin, zMax] = zoomBehavior.scaleExtent();
       const fw = Math.max(MIN_FIT_PX, dim.w - insetRight);
-      const k = Math.max(zMin, Math.min(zMax, FIT_MARGIN * Math.min(fw / w, dim.h / h)));
+      let bandTop = 0, bandH = dim.h;
+      if (focus && typeof window !== "undefined") {
+        const top = canvas.getBoundingClientRect().top;
+        const visTop = Math.max(0, -top);
+        const visBottom = Math.min(dim.h, window.innerHeight - top);
+        if (visBottom - visTop >= MIN_FIT_PX) { bandTop = visTop; bandH = visBottom - visTop; }
+      }
+      const k = Math.max(zMin, Math.min(zMax, FIT_MARGIN * Math.min(fw / w, bandH / h)));
       // Same translate-then-scale convention as the initial seed and jumpZoomRef above: the result
       // transform's x/y/k land exactly on what's passed to .translate()/.scale(), so this centres
       // (cx, cy) on the canvas at zoom k directly, with no separate re-derivation of cam.x/y.
-      const t = zoomIdentity.translate(fw / 2 - cx * k, dim.h / 2 - cy * k).scale(k);
+      const t = zoomIdentity.translate(fw / 2 - cx * k, bandTop + bandH / 2 - cy * k).scale(k);
       selection.call(zoomBehavior.transform, t);
       gestureStart = t;
     };
@@ -2013,12 +2109,12 @@ export function GraphView(
     // and the whole connected deck otherwise.
     settleFit = () => {
       const focus = settleFocusRef.current;
-      if (focus) frame(nodes.filter((n) => focus.ids.has(n.id)), focus.inset);
+      if (focus) frame(nodes.filter((n) => focus.ids.has(n.id)), focus.inset, { centre: nodes.find((n) => n.id === focus.centreId) });
       else fitToView();
     };
 
-    fitSubsetRef.current = (ids, insetRight) => {
-      frame(nodes.filter((n) => ids.has(n.id)), insetRight);
+    fitSubsetRef.current = (ids, insetRight, centreId) => {
+      frame(nodes.filter((n) => ids.has(n.id)), insetRight, { centre: centreId === undefined ? undefined : nodes.find((n) => n.id === centreId) });
       // Through the SAME counter as the two settle fits: this is a frame, not a second camera path,
       // and `__graphProbe` is where that is observable. See the fits comment above.
       fits++;
@@ -2098,7 +2194,23 @@ export function GraphView(
       // THE TAP MEANS SOMETHING DIFFERENT ON THE EGO VIEW: there it re-roots the graph on the card
       // rather than opening a panel over a board only 324px wide.
       if (onNodeTapRef.current) onNodeTapRef.current(hit?.id ?? null);
-      else toggleSelected(hit?.id ?? null);
+      else {
+        toggleSelected(hit?.id ?? null);
+        // ON A PHONE THE PANEL RISES OVER THE BOARD'S LOWER HALF, and it rose over the very card
+        // that was tapped (2026-09-25 review): the reader got the card's partners listed and lost
+        // the card and its lit edges. So a tapped card in the lower part of a narrow board slides up
+        // into the part the panel leaves clear. Zoom is untouched; only the height moves.
+        if (hit && dim.w >= MIN_FIT_PX && dim.w < 640) {
+          const cam = camRef.current;
+          const sy = hit.y * cam.z + cam.y;
+          if (sy > dim.h * 0.4) {
+            cameraOwnedByUserRef.current = graph;
+            const t = zoomIdentity.translate(cam.x, dim.h * 0.25 - hit.y * cam.z).scale(cam.z);
+            selection.call(zoomBehavior.transform, t);
+            gestureStart = t;
+          }
+        }
+      }
     });
 
     const onMove = (e: PointerEvent) => {
@@ -2108,8 +2220,8 @@ export function GraphView(
       // A card's roles, translated to plain language -- the detailed build-category vocabulary the
       // canvas itself no longer shows.
       const detail = n ? (n.roles ?? []).map(subcategoryLabel).join(" · ") : "";
-      if (hoveredIdRef.current !== (n?.id ?? null)) invalidate();
-      hoveredIdRef.current = n?.id ?? null;
+      if (hoveredIdRef.current !== (n?.id ?? emphasisRef.current)) invalidate();
+      hoveredIdRef.current = n?.id ?? emphasisRef.current;
       // Fetch the full card for the one being APPROACHED, so crossing CARD_MODE_Z draws an image
       // that has already landed instead of starting the request that card mode then waits on.
       // Only the hovered card, and only once zoomed in past `PREFETCH_Z` — see card-node.ts for why
@@ -2137,8 +2249,8 @@ export function GraphView(
     // fire pointerleave after pointerup and after pointercancel for a direct-manipulation device, so
     // this one listener covers the finger lifting as well as the mouse crossing the edge.
     const onLeave = () => {
-      if (hoveredIdRef.current !== null) invalidate();
-      hoveredIdRef.current = null;
+      if (hoveredIdRef.current !== emphasisRef.current) invalidate();
+      hoveredIdRef.current = emphasisRef.current;
       setHover(null);
     };
 
@@ -2293,7 +2405,8 @@ export function GraphView(
       <div
         ref={shellRef}
         data-testid="graph-fullscreen-shell"
-        className={`flex flex-col gap-6 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
+        // gap-3, not gap-6: four rows sit above the board, and 12px each was ~50px of it on a laptop.
+        className={`flex flex-col gap-3 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
       >
         {/* THE BOARD FIRST (owner, 2026-09-24: "I click on graph and half of my screen is not graph").
           *  Seven rows of chrome -- four paint tabs, fifteen mechanism chips over three rows, the
@@ -2305,8 +2418,11 @@ export function GraphView(
           <input
             type="search"
             role="searchbox"
-            aria-label="Find a card"
-            placeholder="Find a card…"
+            // NAMED FOR ITS SCOPE: the site header has a "Find a card" box too, which searches every
+            // card there is. Two boxes with one name read as a duplicate to the eye and are one
+            // ambiguous name to a screen reader.
+            aria-label="Find a card in this deck"
+            placeholder="Find in this deck…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             // ENTER OPENS WHAT WAS FOUND (owner, 2026-09-24). Typing only dimmed the rest of the
@@ -2321,7 +2437,7 @@ export function GraphView(
             className="rounded-(--radius) border border-(--field-border) bg-transparent px-2.5 py-1 text-sm"
           />
           {matches ? (
-            <span data-testid="graph-search-count" className="eyebrow text-(--muted)">
+            <span data-testid="graph-search-count" className="eyebrow text-(--muted) mr-3">
               {matches.size > 0 ? `${matches.size} match${matches.size === 1 ? "" : "es"}` : "no matches"}
             </span>
           ) : null}
@@ -2386,7 +2502,7 @@ export function GraphView(
             *  chip, and most decks make no unpartnered token at all. */}
           {/* The one line that says a card CAN be tapped, which the board never said. In the top
             *  row's own slack, so it costs no height. */}
-          <span className="hidden lg:inline text-xs text-(--muted) ml-auto">Tap any card to see what it works with.</span>
+          <span className="hidden lg:inline text-xs text-(--muted) ml-auto">Click any card to see what it works with.</span>
           {canFullscreen ? (
             <button
               type="button"
@@ -2628,7 +2744,9 @@ export function GraphView(
           data-testid="paint-legend"
           role="group"
           aria-label="Paint legend"
-          className="pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted)"
+          // UNDER THE BOARD ON A PHONE. Selecting a card adds the flow rows to this legend, and above
+          // the board that pushed the board ~155px down under the reader's thumb mid-tap.
+          className={`pointer-events-none flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--muted) ${narrow ? "order-1" : ""}`}
         >
           {/* THE SCOPE, NAMED. These rows use the same mechanism words as the chip row above and
             *  count something different -- connections through ONE card rather than across the
@@ -2713,19 +2831,8 @@ export function GraphView(
               {row.count !== undefined ? <span className="stat-num text-(--muted)">{row.count}</span> : null}
             </div>
           ))}
-          {mechanismOvercounts ? (
-            <span data-testid="mechanism-overcount" className="opacity-70">
-              a pair doing two things is counted in both
-            </span>
-          ) : null}
-          {legendOvercounts ? (
-            <span data-testid="paint-legend-overcount" className="opacity-70">
-              {/* "a card in TWO ROWS" was unreadable to a beginner -- "I don't know what 'rows'
-                *  means here; there are two rows of coloured labels on screen and also rows of
-                *  buttons". The fact is about TYPES, so the sentence names types. */}
-              a card with two types is counted in both
-            </span>
-          ) : null}
+          {/* The two counting footnotes moved to the caption under the board (2026-09-25): here they
+            *  wrapped the legend onto a second line at 1440 and pushed the board down with it. */}
         </div>
         </>
         )}
@@ -2736,7 +2843,9 @@ export function GraphView(
           // is 70svh in flow by the R1 ruling; `boardH` overrides it at `sm` and up once measured.
           style={boardH === null ? undefined : { height: `${boardH}px` }}
           className={`relative rounded-(--radius) border border-(--separator) overflow-hidden ${
-            isFullscreen || bare ? "flex-1 min-h-0" : "h-[70svh] sm:h-[520px]"
+            // No taller than the width allows on a phone: the deck is a round cloud, so on a 390px
+            // screen a 70svh (590px) board framed it with ~150px of empty board above and below.
+            isFullscreen || bare ? "flex-1 min-h-0" : "h-[min(70svh,120vw)] sm:h-[520px]"
           }`}
         >
           <canvas
@@ -2827,6 +2936,12 @@ export function GraphView(
               colour shows what kind of card each one is.
             </>
           )}
+          {mechanismOvercounts ? (
+            <span data-testid="mechanism-overcount"> In the counts, a pair doing two things is counted in both.</span>
+          ) : null}
+          {legendOvercounts ? (
+            <span data-testid="paint-legend-overcount"> A card with two types is counted in both.</span>
+          ) : null}
         </p>
         )}
       </div>

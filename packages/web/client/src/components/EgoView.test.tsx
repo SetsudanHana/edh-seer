@@ -151,3 +151,31 @@ test("back leaves the view", async () => {
   await user.click(screen.getByRole("button", { name: /back to the card list/i }));
   expect(onBack).toHaveBeenCalledOnce();
 });
+
+// THE DESKTOP'S ONE-CARD VIEW STAYS IN THE PAGE (2026-09-25 live review). As an overlay it hid the
+// header and the Whole deck / One card switch, and Escape did nothing.
+test("inline, it renders in the page instead of over it", () => {
+  const { container } = render(
+    <EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={() => {}} inline />,
+  );
+  const root = screen.getByTestId("ego-view");
+  expect(container.contains(root)).toBe(true);
+  expect(root.className).not.toMatch(/\bfixed\b/);
+});
+
+test("Escape leaves the view, but not while typing in a field", async () => {
+  const onBack = vi.fn();
+  render(
+    <>
+      <input aria-label="elsewhere" />
+      <EgoView graph={SAMPLE.graph} report={SAMPLE.report} focusId="Krenko, Mob Boss" onFocus={() => {}} onBack={onBack} inline />
+    </>,
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByLabelText("elsewhere"));
+  await user.keyboard("{Escape}");
+  expect(onBack).not.toHaveBeenCalled();
+  (document.activeElement as HTMLElement).blur();
+  await user.keyboard("{Escape}");
+  expect(onBack).toHaveBeenCalledTimes(1);
+});
