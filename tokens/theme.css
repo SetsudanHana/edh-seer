@@ -122,6 +122,11 @@
      self-contained, and a layout offset that resolves to nothing puts content under the header. */
   --report-header-h: 0px;
 
+  /* The page's side gutter (index.css defines it and widens it to 2rem from 40rem). Declared here
+     for the same reason as the offsets above: the theme has to be self-contained, and a gutter
+     that resolves to nothing puts text against the edge of the screen. */
+  --gutter: 1rem;
+
   /* The chapter rail's own measured height, written the same way and by the same rule -- it is a
      SECOND pinned bar below `lg`, and 0px above it, where the rail sits beside the column. A
      chapter anchor has to clear both or it parks its own heading behind one of them. */
