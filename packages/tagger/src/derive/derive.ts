@@ -154,7 +154,10 @@ import { emblemRecipient } from "../emblem.js";
 // 170: a damage trigger records the size of the event it watches (`trigger.amount`, read off the
 // printed head): Ghyrson Starn's "exactly 1 damage", Dragonborn Champion's "5 or more". Seven corpus
 // cards; the engine had joined Ghyrson to every pinger whatever it dealt.
-export const DERIVE_VERSION = 170;
+// 171: an `enters` trigger whose subject says "enters transformed" is refused (`enters-transformed`),
+// not read as every permanent entering. One corpus card, Corruption of Towashi: 23 deck cards had
+// "reached Alandra through it" on the Ghyrson route list.
+export const DERIVE_VERSION = 171;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -956,6 +959,11 @@ const TAPPED_FOR_MANA = /\btapp?(?:ed|s|ing)?\b[^.]{0,30}?\bfor\s+(?:mana|\{)/i;
  *  THIS trigger. */
 const COUNTER_REMOVED = /\bremoved?\b/i;
 
+/** An `enters` trigger whose SUBJECT says the permanent enters TRANSFORMED (Corruption of Towashi,
+ *  the one corpus card, 2026-09-25). Not an enters event any permanent supplies, and no engine
+ *  verb names it (CR 701.27a), so it is refused like `taps-for-mana`. */
+const ENTERS_TRANSFORMED = /\benters?\s+(?:the\s+battlefield\s+)?transformed\b/i;
+
 /** THE TEXT THIS CLAUSE WAS WRITTEN FROM, when the normalizer's clause id is not one the segmenter
  *  produced.
  *
@@ -1160,6 +1168,8 @@ export function deriveAbilities(
         : mapped;
       if (verb === "taps" && TAPPED_FOR_MANA.test(text)) {
         unknownTriggers.push("taps-for-mana");
+      } else if (verb === "enters" && ENTERS_TRANSFORMED.test(clause.trigger.subject ?? "")) {
+        unknownTriggers.push("enters-transformed");
       } else if (clause.trigger.event === "damage-dealt") {
         // DIRECTION IS NOT IN THE EVENT NAME. `damage-dealt` covers both "deals combat damage to a
         // player" and "is dealt damage", which are opposite facts, so the clause TEXT decides —
