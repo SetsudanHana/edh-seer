@@ -11,7 +11,7 @@
  *  behind it. Unmet-demand candidates, which come from an over-collecting key filter, are shown only
  *  when the engine finds a reason from them to a deck card. */
 import type { DeckReport, Reason } from "@edh-seer/engine";
-import { findRoutes, type RouteHop } from "./routes.js";
+import { extendRoutes, findRoutes, indexRoutes, type RouteHop } from "./routes.js";
 import { docToCard } from "@edh-seer/data/docs";
 import { normalizeName } from "@edh-seer/data/names";
 import { StaticLookup } from "./static-lookup.js";
@@ -47,7 +47,7 @@ export interface SuggestedCard {
   /** Also qualifies for "Strengthen what works", shown here instead (one card, one place). */
   alsoPlan?: true;
   /** THE ROUTE IT OPENS (`routes` list): deck cards that reach `to` only through this card, and the
-   *  whole chain from the first of them, one engine sentence per hop (ability routes, 2026-09-25). */
+   *  SHORTEST chain among them, one engine sentence per hop (ability routes, 2026-09-25). */
   route?: { to: string; from: string[]; chain: RouteHop[] };
   /** The card's own rules text, so a reader can check the claim against the card (persona round
    *  2026-09-25: "I'd need each card's text next to the reason it gives"). */
@@ -558,17 +558,18 @@ export async function suggestForDeck(input: {
   // EXACT ROUTES (spec 2026-09-25): a source reaches a target through this card only if a route
   // exists WITH its reasons and none without -- continuous through the same ability at every hop.
   // Deck reasons are the report's own edges. A direct edge is a route too, so it is never "opened".
-  const deckReasons = (report.edges ?? []).flatMap((e) => e.reasons ?? []);
+  // ONE INDEX FOR THE DECK, extended per candidate: many searches ask of one deck (final review).
+  const deckRoutes = indexRoutes((report.edges ?? []).flatMap((e) => e.reasons ?? []));
   const reachesAlready = new Map<string, boolean>();
   const already = (a: string, b: string): boolean => {
     const k = `${a}\u0000${b}`;
-    if (!reachesAlready.has(k)) reachesAlready.set(k, findRoutes(deckReasons, a, b).length > 0);
+    if (!reachesAlready.has(k)) reachesAlready.set(k, findRoutes(deckRoutes, a, b).length > 0);
     return reachesAlready.get(k)!;
   };
   for (const c of routeRanked) {
     const v = await verify(c, nonland, false);
     if (!v) continue;
-    const all = [...deckReasons, ...v.hops];
+    const all = extendRoutes(deckRoutes, v.hops);
     let best: { to: string; from: string[]; chain: RouteHop[]; worth: number } | null = null;
     for (const to of [...v.feeds].sort((a, b) => a.localeCompare(b, "en"))) {
       const from: string[] = [];
