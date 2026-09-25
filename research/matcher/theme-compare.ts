@@ -13,7 +13,7 @@
  *  Prints the label spread (how many decks share a headline) because THAT is the failure mode this
  *  family keeps producing: a theme true of every deck carries no information. */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { SUBTYPE_TYPES } from "@edh-seer/tagger";
@@ -39,7 +39,7 @@ interface DeckTheme {
 
 const args = process.argv.slice(2);
 const flag = (n: string): string | undefined => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
-const DIR = args.find((a) => !a.startsWith("--") && a.endsWith("calibration")) ?? "packages/cli/decks/calibration";
+const DIR = args.find((a) => !a.startsWith("--") && a.endsWith("calibration")) ?? CALIBRATION_DECKS;
 const SAVE = flag("--save");
 const AGAINST = flag("--against");
 

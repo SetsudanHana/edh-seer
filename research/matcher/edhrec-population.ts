@@ -14,8 +14,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ARCHETYPE_VOCABULARY } from "../../packages/matcher/src/archetype-vocabulary.js";
+import { EDHREC_DECKS } from "@edh-seer/data";
 
-const OUT = process.argv.includes("--out") ? process.argv[process.argv.indexOf("--out") + 1]! : "packages/cli/decks/edhrec";
+const OUT = process.argv.includes("--out") ? process.argv[process.argv.indexOf("--out") + 1]! : EDHREC_DECKS;
 const CACHE = process.env.EDHREC_CACHE ?? ".edhrec-cache";
 const PER_THEME = 5;
 

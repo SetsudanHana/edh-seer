@@ -1,8 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { manaAudit } from "../../packages/matcher/src/mana-audit.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
@@ -19,7 +17,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *    npx tsx research/matcher/mana-audit-deadline.ts              # the 71-deck sweep
  *    npx tsx research/matcher/mana-audit-deadline.ts enchanting-rani   # one deck, every row
  */
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DECK_DIR = CALIBRATION_DECKS;
 
 async function main(): Promise<void> {
   const store = await connect(loadConfig());

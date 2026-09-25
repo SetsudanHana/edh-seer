@@ -28,7 +28,7 @@ import { join } from "node:path";
  *    npx tsx --env-file=packages/tagger/.env packages/instruments/src/thing-sheet.ts --score /tmp/thing-draw.jsonl
  */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
@@ -38,7 +38,7 @@ const arg = (f: string): string | undefined => {
   const i = process.argv.indexOf(f);
   return i > 0 ? process.argv[i + 1] : undefined;
 };
-const DECKS = "packages/cli/decks/calibration";
+const DECKS = CALIBRATION_DECKS;
 const OUT = arg("--out") ?? scratchDir("thing-draw");
 const SCORE = arg("--score");
 const SEED = Number(arg("--seed") ?? 20260822);

@@ -2,7 +2,15 @@ import { joinMultiWordSubtypes } from "@edh-seer/tagger/subtypes";
 
 /** Card supertypes, per the comprehensive rules (plus the un-set `host`/`elite`). Everything else
  *  left of the em dash is a card type. */
-const SUPERTYPES = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
+/** Every supertype a type line can print. ONE COPY: `edges.ts` and `theme-fold.ts` each
+ *  carried their own until 2026-09-25. */
+export const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
+
+/** The five basic land types, in WUBRG order -- the lowercase subtype, not the card name.
+ *  ONE COPY: five modules carried their own until 2026-09-25. */
+export const BASIC_LAND_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
+/** The same five, for membership tests. */
+export const BASIC_LAND_TYPE_SET: ReadonlySet<string> = new Set(BASIC_LAND_TYPES);
 
 export interface ParsedTypeLine {
   supertypes: string[];

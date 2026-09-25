@@ -1,8 +1,6 @@
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured } from "../../packages/matcher/src/analyze.js";
@@ -22,7 +20,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Free: Mongo reads only, no API, no writes.
  */
-const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DIR = CALIBRATION_DECKS;
 
 async function main(): Promise<void> {
   const out = process.argv[2];

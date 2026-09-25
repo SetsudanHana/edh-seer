@@ -15,13 +15,14 @@
  */
 import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { parseDecklistSections } from "../../packages/data/src/index.js";
+import { join } from "node:path";
+import { CALIBRATION_DECKS, DECKS_DIR, parseDecklistSections } from "../../packages/data/src/index.js";
 import { encodeShare } from "../../packages/web/client/src/lib/share-link.js";
 
 const decks = [
-  "packages/cli/decks/precon-party-time.txt",
-  "packages/cli/decks/calibration/inalla.txt",
-  "packages/cli/decks/calibration/yuna-grand-summoner.txt",
+  join(DECKS_DIR, "precon-party-time.txt"),
+  join(CALIBRATION_DECKS, "inalla.txt"),
+  join(CALIBRATION_DECKS, "yuna-grand-summoner.txt"),
 ];
 async function main() {
 const b = await chromium.launch();

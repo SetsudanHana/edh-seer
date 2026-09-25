@@ -30,6 +30,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 import { slugOf } from "./slug.js";
 import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
+import { BASIC_LAND_TYPE_SET } from "./typeline.js";
 export { slugOf };
 
 /** TWO CARDS CAN SLUG THE SAME AND ONE URL CANNOT SERVE BOTH.
@@ -998,7 +999,6 @@ export const demandKeysOf = (d: DeckCard): string[] => [
 /** THE FIVE BASIC LAND TYPES, which a board count may name and which never form a row -- the same
  *  refusal `edges.ts` makes for the same reason: a mono-black deck runs thirty Swamps, and thirty
  *  rows into one payoff is a mesh, not a synergy. */
-const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
 
 /** WHAT A CARD COUNTS ON THE BOARD, as a demand key.
  *
@@ -1105,7 +1105,7 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
     return counts.flatMap(({ counted, tag }) => {
       if (counted.control === "opp") return [];
       const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
-        .filter((st) => !BASIC_LAND_TYPES.has(st));
+        .filter((st) => !BASIC_LAND_TYPE_SET.has(st));
       if (subtypes.length > 0) return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
       // A bare type count (Storm-Kiln Artist's artifacts), keyed on the type itself.
       const types = Array.isArray(counted.type) ? counted.type : counted.type === undefined ? [] : [counted.type];
@@ -1126,7 +1126,7 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
 export const supplyKeysOf = (d: DeckCard): string[] => [
   ...emitKeysOf(d),
   ...(d.tags?.characteristics.subtypes ?? [])
-    .filter((t) => !BASIC_LAND_TYPES.has(t))
+    .filter((t) => !BASIC_LAND_TYPE_SET.has(t))
     .map((t) => `counts|-|${t}|-`),
   // An artifact supplies "an artifact you control" the way a Goblin supplies a Goblin (2026-09-09).
   ...(d.tags?.characteristics.types ?? [])
@@ -1143,7 +1143,7 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
 
 const fodderSupplyKeysOf = (d: DeckCard): string[] => {
   const nouns = new Set<string>();
-  for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPES.has(t)) nouns.add(t);
+  for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPE_SET.has(t)) nouns.add(t);
   for (const t of d.tags?.characteristics.types ?? []) if (!WHOLE_DECK_TYPES.has(t)) nouns.add(t);
   for (const a of abilitiesOf(d)) for (const e of a.emits ?? []) {
     if (e.verb !== "create-token" || e.subject.token !== true) continue;

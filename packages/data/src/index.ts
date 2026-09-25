@@ -32,3 +32,4 @@ export {
   type FlavorCounts,
 } from "./flavor.js";
 export { scratchDir } from "./scratch.js";
+export { CALIBRATION_DECKS, DECKS_DIR, EDHREC_DECKS } from "./deck-paths.js";

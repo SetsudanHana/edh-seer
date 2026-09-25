@@ -4,6 +4,7 @@ import { minSources } from "./mulligan.js";
 import { classifyLand, entersTapped } from "./land-conditions.js";
 import { fetchableLands, fetchedLandEntersTapped, isLandFetch } from "./fetch-land.js";
 import type { DeckCard } from "./types.js";
+import { BASIC_LAND_TYPES } from "./typeline.js";
 
 /** The five colours, in WUBRG order. Colourless is deliberately absent HERE, and the reason the old
  *  one gave was false as a statement of the rules: "every deck can pay generic and colourless costs
@@ -23,7 +24,6 @@ export type Color = (typeof COLORS)[number];
 export const SOURCE_CONFIDENCE = 0.9;
 
 /** The five basic land types, lowercased, as `classifyLand` reports them in `subtypes`. */
-const BASIC_LAND_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
 const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
 
 const produces = (card: { producedMana?: readonly string[] }, color: Color): boolean =>

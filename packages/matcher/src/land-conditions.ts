@@ -1,5 +1,6 @@
 import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 import type { Card } from "@edh-seer/engine";
+import { BASIC_LAND_TYPES } from "./typeline.js";
 
 /** WHAT A CONDITIONAL LAND DEMANDS, read off printed text. Free — no derivation, no clause layer,
  *  no spend, the `sagaEvents` shape (a printed cue the matcher reads directly).
@@ -209,7 +210,6 @@ export function entersTapped(cond: LandCondition, board: LandBoard): boolean {
 }
 
 /** The five basic land types, as printed. The G family and every `check`/`verge` cue name one. */
-const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const;
 
 /** THE SAME DEMAND PRINTED ON A CARD THAT IS NOT A LAND (roadmap I9, family G): Summit Apes has
  *  *"as long as you control a Mountain"*, Kird Ape *"as long as you control a Forest"*. Twenty-two
@@ -222,7 +222,7 @@ const BASIC_TYPES = ["plains", "island", "swamp", "mountain", "forest"] as const
  *  is the only instrument that can see it — the same standing as `SubjectFilter.named`'s 13 cards. */
 export function basicTypeDemand(card: Pick<Card, "oracleText">): string[] {
   const m = new RegExp(
-    `as long as you control (?:a|an|another)\\s+(${BASIC_TYPES.join("|")})\\b`, "i",
+    `as long as you control (?:a|an|another)\\s+(${BASIC_LAND_TYPES.join("|")})\\b`, "i",
   ).exec(card.oracleText ?? "");
   return m ? [m[1].toLowerCase()] : [];
 }
@@ -265,7 +265,7 @@ export function unmetLandConditions(
   let basics = 0;
   for (const c of cards) {
     const line = c.typeLine ?? "";
-    for (const t of BASIC_TYPES) if (new RegExp(`\\b${t}\\b`, "i").test(line)) subtypes.add(t);
+    for (const t of BASIC_LAND_TYPES) if (new RegExp(`\\b${t}\\b`, "i").test(line)) subtypes.add(t);
     if (/\bbasic\b/i.test(line) && /\bland\b/i.test(line)) basics++;
   }
 

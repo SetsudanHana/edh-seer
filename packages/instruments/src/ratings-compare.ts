@@ -30,9 +30,7 @@
  *  With no arguments it prints the current aggregate and nothing else, which is how you check the
  *  instrument runs before trusting a delta from it. */
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
-import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
-} from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
@@ -43,7 +41,7 @@ const flag = (name: string): string | undefined => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : undefined;
 };
-const DIR = args.find((a) => !a.startsWith("--") && a.endsWith("calibration")) ?? "packages/cli/decks/calibration";
+const DIR = args.find((a) => !a.startsWith("--") && a.endsWith("calibration")) ?? CALIBRATION_DECKS;
 const SAVE = flag("--save");
 const AGAINST = flag("--against");
 const TOKENS_OFF = args.includes("--tokens-off");

@@ -14,13 +14,13 @@
  *  `.real` decks -- the share within ±2 of the theme row, against the same share for the population
  *  row and for the old flat floors (14/10/10/3). */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames, EDHREC_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { buildDeckCards } from "../../packages/matcher/src/index.js";
 import { computeBuild } from "../../packages/matcher/src/build.js";
 
 const argv = process.argv;
-const DIR = argv.includes("--dir") ? argv[argv.indexOf("--dir") + 1]! : "packages/cli/decks/edhrec";
+const DIR = argv.includes("--dir") ? argv[argv.indexOf("--dir") + 1]! : EDHREC_DECKS;
 const FIT = argv.includes("--fit");
 const PARENTS = { Consistency: "consistency", Ramp: "ramp", Interaction: "interaction", "Board wipes": "boardWipes" } as const;
 type Key = (typeof PARENTS)[keyof typeof PARENTS];

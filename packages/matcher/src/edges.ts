@@ -3,7 +3,6 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
 /** The closed six, per CR 205.4a plus the un-set `host`/`elite`. A supertype is not a card type and
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
-const SUPERTYPES: ReadonlySet<string> = new Set(["basic", "legendary", "ongoing", "snow", "world", "host", "elite"]);
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
 import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
@@ -20,7 +19,7 @@ import {
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
-import { parseTypeLineAllFaces } from "./typeline.js";
+import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
 import { faceDeckCards } from "./faces.js";
 import type { LandTypes } from "./chosen-type.js";
 
@@ -1303,7 +1302,6 @@ function landPutFor(e: GameEvent, t: GameEvent, landTypes: LandTypes | undefined
 
 /** The five basic land types, which a board count may name and which never form an edge -- see the
  *  board-count channel for why. */
-const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
 /** A board count over one of these is a count of the deck itself. See the board-count edge. */
 export const WHOLE_DECK_TYPES: ReadonlySet<string> = new Set(["creature", "permanent", "card", "spell", "land"]);
 
@@ -1346,7 +1344,7 @@ export function boardCountNarrows(counted: SubjectFilter): boolean {
   const typedCount = subtype === undefined && types.length > 0 && types.every((ty) => !WHOLE_DECK_TYPES.has(ty));
   const keywordCount = subtype === undefined && (counted.keyword?.length ?? 0) > 0;
   if (subtype === undefined && !typedCount && !keywordCount) return false;
-  if (subtype !== undefined && BASIC_LAND_TYPES.has(subtype)) return false;
+  if (subtype !== undefined && BASIC_LAND_TYPE_SET.has(subtype)) return false;
   return counted.control !== "opp";
 }
 

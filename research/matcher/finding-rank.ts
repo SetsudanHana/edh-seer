@@ -1,8 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured } from "../../packages/matcher/src/analyze.js";
@@ -46,7 +44,7 @@ const FINDINGS_PATH = join(process.cwd(), "packages", "web", "client", "src", "l
  *    set -a && source packages/tagger/.env && set +a
  *    npx tsx research/matcher/finding-rank.ts
  */
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DECK_DIR = CALIBRATION_DECKS;
 
 interface Row {
   deck: string;

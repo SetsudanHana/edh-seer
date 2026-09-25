@@ -23,7 +23,7 @@ import { join } from "node:path";
  *      --out /tmp/cost-reduction-rejudge
  */
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "@edh-seer/matcher";
@@ -41,7 +41,7 @@ const TAG = arg("--tag");
 const WANT = arg("--verdict") ?? "false";
 const OUT = arg("--out") ?? scratchDir("rejudge-sheet");
 const PANEL = "docs/measurements/panel";
-const DECKS = "packages/cli/decks/calibration";
+const DECKS = CALIBRATION_DECKS;
 
 interface Cached { producer: string; consumer: string; tag: string; verdict: string; cause?: string; note?: string }
 const cache = new Map<string, Cached>();

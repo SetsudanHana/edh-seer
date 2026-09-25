@@ -12,13 +12,13 @@
  *    npx tsx --env-file=packages/tagger/.env research/matcher/isolated-cards.ts [--all] */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import type { CardTags } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured, loadTokenTags } from "../../packages/matcher/src/index.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
-const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DIR = CALIBRATION_DECKS;
 const SHOW_ALL = process.argv.includes("--all");
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
