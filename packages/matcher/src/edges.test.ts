@@ -4707,7 +4707,7 @@ test("a doubler naming WHOSE triggers it doubles pairs with a class member that 
     effect: { kind: "graveyard-recursion" },
   }], ["elemental", "knight"]);
   const doubled = pairReasons(twinflame, cavalier, H);
-  expect(doubled.find((r) => r.tag === "doubles:elemental")?.text).toBe("Twinflame Travelers doubles Cavalier of Thorns's triggers");
+  expect(doubled.find((r) => r.tag === "doubles:elemental")?.text).toBe("Cavalier of Thorns's triggered abilities trigger an additional time thanks to Twinflame Travelers");
   // Not an Elemental: nothing, however many triggers it has.
   const solemn = base("Solemn Simulacrum", [{
     kind: "triggered",
