@@ -46,20 +46,30 @@ only thing in the engine a human can check against printed text.
 
 ### How a claim forms
 
-`directedReasons(p, c)` (`edges.ts:473`) runs **seven passes** in one direction; `pairReasons`
-(`edges.ts:941`) unions both directions plus meld.
+`directedReasons(p, c)` in `edges.ts` runs **sixteen channels** in one direction, each a named
+function it calls in order; `pairReasons` unions both directions plus meld. The order matters:
+`dedupeReasons` keeps the first of two identical claims.
 
-| # | pass | tag shape | file:line |
+| # | channel | what it relates | tag shape |
 |---|---|---|---|
-| 1 | event edges (trigger ⟷ emit) | `enters:x`, `dies:x`, `cast:x`, … | `edges.ts:483` |
-| 2 | reanimator (graveyard fill → recursion) | `graveyard-recursion:x` | `edges.ts:556` |
-| 3 | graveyard scaling (a payoff that only gets bigger) | `scales:x` | `edges.ts:612` |
-| 4 | wincon threshold | `wincon:x` | `edges.ts:655` |
-| 5 | static / clone | `static:kind` | `edges.ts:684` |
-| 6 | tutor / ramp-target | `tutor:x`, `ramp-target:x` | `edges.ts:742` |
-| 7 | counter presence | `counter-added:x` | `edges.ts:822` |
+| 1 | `eventEdges` | a producer event ⟷ a consumer trigger | `enters:x`, `dies:x`, `cast:x`, … |
+| 2 | `reanimatorEdges` | a graveyard fill → a recursion effect | `graveyard-recursion:x` |
+| 3 | `exileProcessingEdges` | exiling an opponent's card → a processor | `exile-processing:x` |
+| 4 | `graveyardScalingEdges` | a graveyard fill → a per-graveyard payoff | `scales:x` |
+| 5 | `boardCountEdges` | the producer is one of the things counted | `scales:x` |
+| 6 | `countGateEdges` | the producer helps meet a count an ability is gated on | `threshold:x`, `wincon:x` |
+| 7 | `staticEdges` | a lord or cost reducer whose subject the consumer fits | `static:kind`, `kind:x` |
+| 8 | `triggerDoublingEdges` | the producer makes a trigger fire twice | `doubles:x` |
+| 9 | `copyAbilityEdges` | the producer copies the consumer's ability | `copies:kind` |
+| 10 | `fodderEdges` | the producer is what a sacrifice eats | `fodder:x` |
+| 11 | `delveEdges` | the producer fills the graveyard delve eats | `mill:any`, `discard:any`, … |
+| 12 | `tutorEdges` | the producer can search up the consumer | `tutor:x`, `ramp-target:x` |
+| 13 | `typedRecursionEdges` | typed recursion → the cards of its class | `recursion-target:x` |
+| 14 | `counterPresenceEdges` | a counter the consumer's ability looks for | `counter-added:x` |
+| 15 | `copyFamilyEdges` | a copy re-fires the copied card's entry trigger, and the legend rule its death trigger | `enters:x`, `dies:x` |
+| 16 | `landConditionEdges` | the producer carries the land type a condition asks for | `land-condition:x` |
 
-Plus `createsReasons` (`edges.ts:919`) for a token maker → its token, joined on **printing id**,
+Plus `createsReasons` in `edges.ts` for a token maker → its token, joined on **printing id**,
 never on name (`analyze.ts:171-177`).
 
 `subjectMatches` (`subject.ts:11`) compares 18 `SubjectFilter` fields — type, subtype, colors,

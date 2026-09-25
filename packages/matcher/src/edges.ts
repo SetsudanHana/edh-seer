@@ -1374,8 +1374,53 @@ function silencedBy(p: DeckCard, c: DeckCard, h: Hierarchy): boolean {
 export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: ReasonOptions = {}): Reason[] {
   if (!p.tags || !c.tags) return [];
   if (silencedBy(p, c, h)) return [];
-  const reasons: Reason[] = [];
-  const pEvents = producerEvents(p.tags);
+  // Both sides carry tags from here on, which is what `TaggedCard` records for the channels.
+  const s: PairScope = { p: p as TaggedCard, c: c as TaggedCard, h, opts, pEvents: producerEvents(p.tags), reasons: [] };
+  // THE ORDER IS PART OF THE OUTPUT. Each channel appends to one list, and `dedupeReasons` keeps the
+  // first of two identical claims, so reordering these calls can change which one survives.
+  eventEdges(s);
+  reanimatorEdges(s);
+  exileProcessingEdges(s);
+  graveyardScalingEdges(s);
+  boardCountEdges(s);
+  countGateEdges(s);
+  staticEdges(s);
+  triggerDoublingEdges(s);
+  copyAbilityEdges(s);
+  fodderEdges(s);
+  delveEdges(s);
+  // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
+  // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its
+  // panel claims FALSE on 2026-09-09: "the edge should be just reanimation -- sure it can die again,
+  // but that is the point of reanimation in the first place." A death trigger firing after a
+  // reanimation is what reanimating a creature IS, not a second relation between the two cards, so
+  // the recursion channel (`graveyard-recursion:*`, the entry gate above) carries the whole claim.
+  tutorEdges(s);
+  typedRecursionEdges(s);
+  counterPresenceEdges(s);
+  copyFamilyEdges(s);
+  landConditionEdges(s);
+  return dedupeReasons(s.reasons.map((r) => stampSides(r, p, c)));
+}
+
+/** A card whose tags are known. `directedReasons` checks both sides before any channel runs. */
+type TaggedCard = DeckCard & { tags: CardTags };
+
+/** What every channel reads: the directed pair, the type hierarchy, the options, the producer's
+ *  events (built once, read by most channels), and the one list every channel appends its claims
+ *  to. Each channel below is one relation between the two cards, in the order they run. */
+interface PairScope {
+  p: TaggedCard;
+  c: TaggedCard;
+  h: Hierarchy;
+  opts: ReasonOptions;
+  pEvents: GameEvent[];
+  reasons: Reason[];
+}
+
+// EVENT EDGES: a producer event against a consumer trigger. The main channel; every other
+// channel below is a relation this one cannot express.
+function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
   // The producer's own implied events, for `landPutFor`; built only where a deck is known.
   const ownEvents: ReadonlySet<string> = opts.landTypes
     ? new Set(impliedEvents(p.tags.characteristics).map((x) => JSON.stringify(normalizeZoneEvent(x))))
@@ -1613,8 +1658,10 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       }
     }
   }
+}
 
-  // Reanimator-consumer edge: a producer graveyard fill enables C's graveyard-recursion effect.
+// Reanimator-consumer edge: a producer graveyard fill enables C's graveyard-recursion effect.
+function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   for (const e of pEvents) {
     if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
     for (const a of c.tags.abilities) {
@@ -1694,19 +1741,16 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       });
     }
   }
+}
 
-  // Scaling edge: a producer graveyard fill makes C's per-graveyard payoff BIGGER. Not a trigger —
-  // nothing fires — which is why the channel had no edge despite `effect.scaling` being derived,
-  // copied onto every Reason and read by impact.ts, buckets.ts and wincon.ts. Bonehoard is a 0/0
-  // Germ until something dies.
-  //
-  // A PROCESSOR EATS WHAT YOU EXILED OF THEIRS (AF7b, 2026-09-16; recall v5 #160 Oblivion Sower ->
-  // Ulamog's Nullifier). The same shape as the recursion pass one zone over: an `exiled` emit
-  // aimed at an opponent's cards -- a removal, their top cards, their graveyard -- is the supply,
-  // and `exile-processing` (a from-exile move whose object names an opponent as owner) is the
-  // demand. Your OWN exiles (an impulse draw, a self-exile cost, a flicker) feed nothing here:
-  // the processor wants a card an opponent owns. `any` is kept -- "exile target card from a
-  // graveyard" reaches theirs as readily as yours.
+// A PROCESSOR EATS WHAT YOU EXILED OF THEIRS (AF7b, 2026-09-16; recall v5 #160 Oblivion Sower ->
+// Ulamog's Nullifier). The same shape as the recursion pass one zone over: an `exiled` emit
+// aimed at an opponent's cards -- a removal, their top cards, their graveyard -- is the supply,
+// and `exile-processing` (a from-exile move whose object names an opponent as owner) is the
+// demand. Your OWN exiles (an impulse draw, a self-exile cost, a flicker) feed nothing here:
+// the processor wants a card an opponent owns. `any` is kept -- "exile target card from a
+// graveyard" reaches theirs as readily as yours.
+function exileProcessingEdges({ p, c, pEvents, reasons }: PairScope): void {
   for (const e of pEvents) {
     if (e.verb !== "exiled" || e.subject.control === "you" || e.subject.self === true) continue;
     for (const a of c.tags.abilities) {
@@ -1721,13 +1765,20 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       });
     }
   }
+}
 
-  // GATED ON WHAT IS COUNTED, never on the basis alone. `per-graveyard` covers Cavalier of Flame's
-  // LAND cards, Glamdring's instants and sorceries and Bonehoard's creatures alike, and the basis
-  // would claim all three are fed by milling anything — 676 candidate pairs across the 71 decks.
-  // `effect.scalingSubject` carries the counted type and whose graveyard, so the fill goes through
-  // `graveyardFillMatches` exactly as a reanimator demand does. A payoff whose count derived no
-  // subject forms nothing rather than everything.
+// Scaling edge: a producer graveyard fill makes C's per-graveyard payoff BIGGER. Not a trigger —
+// nothing fires — which is why the channel had no edge despite `effect.scaling` being derived,
+// copied onto every Reason and read by impact.ts, buckets.ts and wincon.ts. Bonehoard is a 0/0
+// Germ until something dies.
+//
+// GATED ON WHAT IS COUNTED, never on the basis alone. `per-graveyard` covers Cavalier of Flame's
+// LAND cards, Glamdring's instants and sorceries and Bonehoard's creatures alike, and the basis
+// would claim all three are fed by milling anything — 676 candidate pairs across the 71 decks.
+// `effect.scalingSubject` carries the counted type and whose graveyard, so the fill goes through
+// `graveyardFillMatches` exactly as a reanimator demand does. A payoff whose count derived no
+// subject forms nothing rather than everything.
+function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   for (const e of pEvents) {
     if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
     for (const a of c.tags.abilities) {
@@ -1783,17 +1834,19 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       });
     }
   }
+}
 
-  // BOARD-COUNT EDGE: the producer IS one of the things the consumer counts. Krenko, Mob Boss makes
-  // a Goblin token per Goblin you control, so every other Goblin in the deck makes him bigger --
-  // and no event says so. Nothing fires, nothing enters, nothing dies; the relation is that the
-  // producer's PRINTED CHARACTERISTICS are inside the consumer's count. Owner-reported 2026-09-04
-  // as the fourth case a Krenko page should answer, after goblin-entering, token-entering and
-  // creature-entering, and the only one with no channel at all.
-  //
-  // THE SAME SHAPE AS THE GRAVEYARD SCALING EDGE ABOVE, one zone over: same `effect.scaling`, same
-  // `scalingSubject`, same `ROLE_NOT_SYNERGY` gate. What differs is what it compares the count
-  // against -- a fill there, a type line here.
+// BOARD-COUNT EDGE: the producer IS one of the things the consumer counts. Krenko, Mob Boss makes
+// a Goblin token per Goblin you control, so every other Goblin in the deck makes him bigger --
+// and no event says so. Nothing fires, nothing enters, nothing dies; the relation is that the
+// producer's PRINTED CHARACTERISTICS are inside the consumer's count. Owner-reported 2026-09-04
+// as the fourth case a Krenko page should answer, after goblin-entering, token-entering and
+// creature-entering, and the only one with no channel at all.
+//
+// THE SAME SHAPE AS THE GRAVEYARD SCALING EDGE ABOVE, one zone over: same `effect.scaling`, same
+// `scalingSubject`, same `ROLE_NOT_SYNERGY` gate. What differs is what it compares the count
+// against -- a fill there, a type line here.
+function boardCountEdges({ p, c, h, reasons }: PairScope): void {
   for (const a of c.tags.abilities) {
     const counted = a.effect.scalingSubject;
     if (!counted || counted.zone !== "battlefield") continue;
@@ -1816,23 +1869,25 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       producer: p.card.name,
     });
   }
+}
 
-  // A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION, one step before scaling: the producer is
-  // one of the things the consumer counts, and below the count the consumer does nothing at all.
-  // Started as the win-condition pass -- `win-game` sits in ROLE_NOT_SYNERGY because "this card
-  // wins the game" says the identical thing next to every card, true of Laboratory Maniac and false
-  // of Revel in Riches, which wins on ten TREASURES and is therefore a claim about Treasure
-  // producers -- and the same argument holds for every kind (2026-09-16, recall v6 #77 Gadrak, v7
-  // #79 Urza's Workshop): Gadrak "can't attack unless you control four or more artifacts" is a
-  // claim about artifacts, whatever `cant` maps to, so `ROLE_NOT_SYNERGY` is deliberately NOT
-  // consulted here. The board-count gate is: a whole-deck type, a basic land type or an opponent's
-  // board forms nothing, as above. An untyped count stays a role, exactly as before.
-  //
-  // ONE COUNT PER CARD, HOWEVER MANY ABILITIES STATE IT. Inventors' Fair prints "three or more
-  // artifacts" on its upkeep trigger AND on its activated ability, and the activation derives two
-  // abilities -- so every artifact in its deck earned the same sentence three times (195 rows for
-  // 65 artifacts in the-capitoline-triad, measured 2026-09-16). The relation is between two cards,
-  // not between a card and each of the other's abilities.
+// A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION, one step before scaling: the producer is
+// one of the things the consumer counts, and below the count the consumer does nothing at all.
+// Started as the win-condition pass -- `win-game` sits in ROLE_NOT_SYNERGY because "this card
+// wins the game" says the identical thing next to every card, true of Laboratory Maniac and false
+// of Revel in Riches, which wins on ten TREASURES and is therefore a claim about Treasure
+// producers -- and the same argument holds for every kind (2026-09-16, recall v6 #77 Gadrak, v7
+// #79 Urza's Workshop): Gadrak "can't attack unless you control four or more artifacts" is a
+// claim about artifacts, whatever `cant` maps to, so `ROLE_NOT_SYNERGY` is deliberately NOT
+// consulted here. The board-count gate is: a whole-deck type, a basic land type or an opponent's
+// board forms nothing, as above. An untyped count stays a role, exactly as before.
+//
+// ONE COUNT PER CARD, HOWEVER MANY ABILITIES STATE IT. Inventors' Fair prints "three or more
+// artifacts" on its upkeep trigger AND on its activated ability, and the activation derives two
+// abilities -- so every artifact in its deck earned the same sentence three times (195 rows for
+// 65 artifacts in the-capitoline-triad, measured 2026-09-16). The relation is between two cards,
+// not between a card and each of the other's abilities.
+function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   const countsSeen = new Set<string>();
   // A GRAVEYARD COUNT IS A FILL DEMAND (AF7c, 2026-09-16; recall v5 #154 In Garruk's Wake -> See
   // Double): "seven or more cards in your graveyard" is fed by what puts YOUR cards there, "an
@@ -1894,47 +1949,49 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       producer: p.card.name,
     });
   }
+}
 
-  // Static edges: P is a lord whose effect subject C's characteristics satisfy. (UNCHANGED)
-  //
-  // Plus one non-static kind. A `clone` states WHICH permanent becomes the copy — "target
-  // Shapeshifter becomes a copy of target creature" — and derive keeps that subject only when it
-  // names a SUBTYPE, so the shape is typal by construction and cannot mesh the way an untyped lord
-  // does. Shapesharer is an ACTIVATED ability, so this pass never saw it and Universal Automaton, a
-  // Shapeshifter in the same deck, got no edge. Nothing else is widened: `token-generation` and the
-  // other 500-odd non-static subjects with a subtype name what the card MAKES, not what it applies
-  // to, and they are already carried by their emit.
-  //
-  // The subtype test lives HERE and not only in derive because both tag sources reach this pass:
-  // measured, admitting every clone subject added 7,622 derived edges, a `clone:any` mesh 99 cards
-  // wide on Mizzix's Mastery and Lithoform Engine. "Copy target instant" names no permanent it
-  // applies to, and an untyped subject matches the whole deck.
-  // ONE CLAIM PER PHYSICAL CARD, AND THE FIRST FACE THAT SATISFIES KEEPS IT. A permanent shows one
-  // face at a time (CR 712.8d-f), so a card-wide static relates to it ONCE -- but faces-as-nodes
-  // (2026-08-27) pairs the producer with each printed face separately, and `stampSides` rewrites
-  // both rows back to the same physical name. Measured on the 71 decks: 217 duplicate rows
-  // (cost-reduction 154, pump 60, type-grant 3), and MESHED 287 -> 332 sat ENTIRELY inside five
-  // (deck, producer, tag) groups whose FAN-OUT never moved -- the extra rows were one claim said
-  // twice, not a wider claim.
-  //
-  // NEITHER ROW IS FALSE, which is why this is a collapse and not a refusal: each is true of the
-  // face it names. What is wrong is counting them as two claims about one card.
-  //
-  // KEPT ON THE FIRST SATISFYING FACE, never on face 0 unconditionally -- a modal DFC with a
-  // Sorcery front and a Creature back is reached only by its back face, and anchoring on the front
-  // would DELETE that claim rather than collapse it.
-  //
-  // THE CONSUMER SIDE ONLY. Two producer faces printing their own statics are two distinct printed
-  // abilities, and collapsing those would be an under-claim of a different kind. Measured after this
-  // fix, that residue is 75 rows, ALL `static:cost-reduction` and ALL one card (Serah Farron //
-  // Crystallized Serah, which prints a reducer on each face) -- and cost-reduction is exempt from
-  // the mesh census, so it moves no gate. Left alone deliberately.
-  //
-  // CEILING: re-splits the parent per claim rather than caching the faces. Only runs for a
-  // multi-face consumer past face 0 that already formed a claim, which is 217 rows in 45,246.
-  // The parameter SHADOWS the pair's own `c` on purpose: every guard below must judge the FACE it
-  // is asked about, and a body that reached past it to the pair's consumer would answer the
-  // sibling-face question with the original face's answer.
+// Static edges: P is a lord whose effect subject C's characteristics satisfy. (UNCHANGED)
+//
+// Plus one non-static kind. A `clone` states WHICH permanent becomes the copy — "target
+// Shapeshifter becomes a copy of target creature" — and derive keeps that subject only when it
+// names a SUBTYPE, so the shape is typal by construction and cannot mesh the way an untyped lord
+// does. Shapesharer is an ACTIVATED ability, so this pass never saw it and Universal Automaton, a
+// Shapeshifter in the same deck, got no edge. Nothing else is widened: `token-generation` and the
+// other 500-odd non-static subjects with a subtype name what the card MAKES, not what it applies
+// to, and they are already carried by their emit.
+//
+// The subtype test lives HERE and not only in derive because both tag sources reach this pass:
+// measured, admitting every clone subject added 7,622 derived edges, a `clone:any` mesh 99 cards
+// wide on Mizzix's Mastery and Lithoform Engine. "Copy target instant" names no permanent it
+// applies to, and an untyped subject matches the whole deck.
+// ONE CLAIM PER PHYSICAL CARD, AND THE FIRST FACE THAT SATISFIES KEEPS IT. A permanent shows one
+// face at a time (CR 712.8d-f), so a card-wide static relates to it ONCE -- but faces-as-nodes
+// (2026-08-27) pairs the producer with each printed face separately, and `stampSides` rewrites
+// both rows back to the same physical name. Measured on the 71 decks: 217 duplicate rows
+// (cost-reduction 154, pump 60, type-grant 3), and MESHED 287 -> 332 sat ENTIRELY inside five
+// (deck, producer, tag) groups whose FAN-OUT never moved -- the extra rows were one claim said
+// twice, not a wider claim.
+//
+// NEITHER ROW IS FALSE, which is why this is a collapse and not a refusal: each is true of the
+// face it names. What is wrong is counting them as two claims about one card.
+//
+// KEPT ON THE FIRST SATISFYING FACE, never on face 0 unconditionally -- a modal DFC with a
+// Sorcery front and a Creature back is reached only by its back face, and anchoring on the front
+// would DELETE that claim rather than collapse it.
+//
+// THE CONSUMER SIDE ONLY. Two producer faces printing their own statics are two distinct printed
+// abilities, and collapsing those would be an under-claim of a different kind. Measured after this
+// fix, that residue is 75 rows, ALL `static:cost-reduction` and ALL one card (Serah Farron //
+// Crystallized Serah, which prints a reducer on each face) -- and cost-reduction is exempt from
+// the mesh census, so it moves no gate. Left alone deliberately.
+//
+// CEILING: re-splits the parent per claim rather than caching the faces. Only runs for a
+// multi-face consumer past face 0 that already formed a claim, which is 217 rows in 45,246.
+// The parameter SHADOWS the pair's own `c` on purpose: every guard below must judge the FACE it
+// is asked about, and a body that reached past it to the pair's consumer would answer the
+// sibling-face question with the original face's answer.
+function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
     if (!c.tags) return undefined;
 
@@ -2080,27 +2137,29 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     if (earlier.some((f) => staticClaim(f, a))) continue;
     reasons.push(claim);
   }
+}
 
-  // TRIGGER-DOUBLING edges: P makes C's triggered ability fire twice. Panharmonicon + Solemn
-  // Simulacrum is the relation; Panharmonicon + a vanilla creature is not.
-  //
-  // THIS IS A TRIGGER-TO-TRIGGER PASS AND IT IS THE FIRST ONE. Every other pass here runs a
-  // producer's EVENT against a consumer's TRIGGER. A doubler emits no event -- it modifies an
-  // ability -- so the consumer side is matched on what it TRIGGERS ON, and nothing is synthesized on
-  // the producer side. (Fable's review, 2026-08-22, refuted the two obvious alternatives: applying
-  // the CR 614 precedent mechanically would synthesize `trigger: enters` and pair Panharmonicon with
-  // every artifact's and creature's IMPLIED ENTRY -- every vanilla body in the deck; and pairing with
-  // a TOKEN MAKER is a three-card claim, since tokens entering fire nothing unless some third card
-  // carries the ability, which is the shape B3 refused for the tax interaction.)
-  //
-  // `a.doubles` IS READ, NEVER `a.effect.subject` -- a subject stamped for this family would flow
-  // into the static applies-to pass above, which matches against TYPE LINES, and claim
-  // "Panharmonicon's static applies to Arcane Signet" about every vanilla artifact in the deck.
-  //
-  // A SELF TRIGGER COUNTS, and it is the headline case: Solemn Simulacrum's own ETB is exactly what
-  // Panharmonicon doubles. This pass therefore does NOT apply the self-reference gates the event
-  // passes need -- there is no class-vs-self ambiguity when the consumer's own printed trigger is
-  // the thing being doubled.
+// TRIGGER-DOUBLING edges: P makes C's triggered ability fire twice. Panharmonicon + Solemn
+// Simulacrum is the relation; Panharmonicon + a vanilla creature is not.
+//
+// THIS IS A TRIGGER-TO-TRIGGER PASS AND IT IS THE FIRST ONE. Every other pass here runs a
+// producer's EVENT against a consumer's TRIGGER. A doubler emits no event -- it modifies an
+// ability -- so the consumer side is matched on what it TRIGGERS ON, and nothing is synthesized on
+// the producer side. (Fable's review, 2026-08-22, refuted the two obvious alternatives: applying
+// the CR 614 precedent mechanically would synthesize `trigger: enters` and pair Panharmonicon with
+// every artifact's and creature's IMPLIED ENTRY -- every vanilla body in the deck; and pairing with
+// a TOKEN MAKER is a three-card claim, since tokens entering fire nothing unless some third card
+// carries the ability, which is the shape B3 refused for the tax interaction.)
+//
+// `a.doubles` IS READ, NEVER `a.effect.subject` -- a subject stamped for this family would flow
+// into the static applies-to pass above, which matches against TYPE LINES, and claim
+// "Panharmonicon's static applies to Arcane Signet" about every vanilla artifact in the deck.
+//
+// A SELF TRIGGER COUNTS, and it is the headline case: Solemn Simulacrum's own ETB is exactly what
+// Panharmonicon doubles. This pass therefore does NOT apply the self-reference gates the event
+// passes need -- there is no class-vs-self ambiguity when the consumer's own printed trigger is
+// the thing being doubled.
+function triggerDoublingEdges({ p, c, h, reasons }: PairScope): void {
   for (const a of p.tags?.abilities ?? []) {
     if (a.effect?.kind !== "trigger-doubling") continue;
     // THE WHOSE AXIS (recall v5 #196, 2026-09-10): "a triggered ability of another Elemental you
@@ -2150,28 +2209,31 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       break; // one claim per consumer ability, not one per matching verb
     }
   }
-  // COPY-ABILITY edges: P copies C's ABILITY (roadmap AC12, 2026-09-09). A trigger-to-ability pass
-  // in the `doubles` shape above: the copier emits no event, and the consumer side is matched on
-  // what the other card HAS -- an authored ability of the kind the copier names (CR 113.3), read
-  // straight off `abilities[].kind`. Gogo and Strionic Resonator say "activated or triggered
-  // ability you control"; Rings of Brighthearth says "an ability, if it isn't a mana ability";
-  // Tawnos says "from an artifact source", which `subject.type` carries and the other card's
-  // characteristics answer.
-  //
-  // "activated" EXCLUDES MANA ABILITIES, as the cards mean it: a mana ability does not use the
-  // stack (CR 605.3b) and cannot be targeted, so "copy target activated ability" never reaches
-  // one; `mana` must be named. A LOYALTY ability is an activated ability whose cost is a loyalty
-  // symbol. IMPLIED events are not abilities and never count. No self-gates: the other card's own
-  // printed ability is exactly the thing copied, and P never copies itself (Gogo prints "this
-  // ability can't be copied").
-  //
-  // WIDE BY NATURE, AND SAID SO: Strionic Resonator really does relate to every triggered ability
-  // in the deck. The spec's ruling is that specificity is the matcher's problem and not a reason to
-  // refuse the subject; the width is measured, not hidden.
-  // THE COPIER IS THE CONSUMER, like the outlet in the fodder pass and the counter in the
-  // board-count pass: P has the ability, C copies it. Written copier-as-producer at first; the
-  // deck report computes both directions and never noticed, the commander page verifies feeder ->
-  // subject and Strionic Resonator's page had no rows until this was turned round.
+}
+
+// COPY-ABILITY edges: P copies C's ABILITY (roadmap AC12, 2026-09-09). A trigger-to-ability pass
+// in the `doubles` shape above: the copier emits no event, and the consumer side is matched on
+// what the other card HAS -- an authored ability of the kind the copier names (CR 113.3), read
+// straight off `abilities[].kind`. Gogo and Strionic Resonator say "activated or triggered
+// ability you control"; Rings of Brighthearth says "an ability, if it isn't a mana ability";
+// Tawnos says "from an artifact source", which `subject.type` carries and the other card's
+// characteristics answer.
+//
+// "activated" EXCLUDES MANA ABILITIES, as the cards mean it: a mana ability does not use the
+// stack (CR 605.3b) and cannot be targeted, so "copy target activated ability" never reaches
+// one; `mana` must be named. A LOYALTY ability is an activated ability whose cost is a loyalty
+// symbol. IMPLIED events are not abilities and never count. No self-gates: the other card's own
+// printed ability is exactly the thing copied, and P never copies itself (Gogo prints "this
+// ability can't be copied").
+//
+// WIDE BY NATURE, AND SAID SO: Strionic Resonator really does relate to every triggered ability
+// in the deck. The spec's ruling is that specificity is the matcher's problem and not a reason to
+// refuse the subject; the width is measured, not hidden.
+// THE COPIER IS THE CONSUMER, like the outlet in the fodder pass and the counter in the
+// board-count pass: P has the ability, C copies it. Written copier-as-producer at first; the
+// deck report computes both directions and never noticed, the commander page verifies feeder ->
+// subject and Strionic Resonator's page had no rows until this was turned round.
+function copyAbilityEdges({ p, c, h, reasons }: PairScope): void {
   for (const a of c.tags?.abilities ?? []) {
     if (a.effect?.kind !== "copy-ability" || p === c) continue;
     // WHOSE ABILITY. `subject.control` is the seat the copied ability sits in, and the deck being
@@ -2195,22 +2257,25 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       producer: p.card.name,
     });
   }
-  // FODDER edges: P is what C's sacrifice EATS (recall v4 token family, 2026-09-09). A sacrifice
-  // outlet -- "{R}, {T}, Sacrifice an artifact" (Goblin Engineer), "you may sacrifice a creature"
-  // (Disciple of Freyalise) -- derives a `sacrifice` emit whose subject is what it eats, and until
-  // now that emit was only ever a SUPPLY of dies events for aristocrats payoffs; nothing said that
-  // the outlet WANTS something to feed it. Read off the emit rather than the cost string: an
-  // effect sacrifice of your own permanent is the same demand, and a self-sacrifice is not. A
-  // SYMMETRIC edict ("each player sacrifices", control any) IS one since 2026-09-16: the owner's
-  // answer to recall v6 #30 was that Bitterbloom Bearer's Faerie is what Fleshbag Marauder eats on
-  // your side, and the printed cue `EACH_PLAYER_SACRIFICES` keeps the targeted and opponents-only
-  // shapes out, which derive the same `any`.
-  //
-  // A TOKEN IS FODDER WHATEVER ITS TYPE: a Construct, a Saproling, a Treasure is a free body, which
-  // is the whole aristocrats shape. A real card is fodder only when the outlet names a non-whole-
-  // deck type ("sacrifice an artifact" reaches Solemn; "sacrifice a creature" does NOT reach every
-  // creature in the deck -- that is the whole board, and waits for magnitude like the creature
-  // board count). The type-count ruling of the same day is the precedent.
+}
+
+// FODDER edges: P is what C's sacrifice EATS (recall v4 token family, 2026-09-09). A sacrifice
+// outlet -- "{R}, {T}, Sacrifice an artifact" (Goblin Engineer), "you may sacrifice a creature"
+// (Disciple of Freyalise) -- derives a `sacrifice` emit whose subject is what it eats, and until
+// now that emit was only ever a SUPPLY of dies events for aristocrats payoffs; nothing said that
+// the outlet WANTS something to feed it. Read off the emit rather than the cost string: an
+// effect sacrifice of your own permanent is the same demand, and a self-sacrifice is not. A
+// SYMMETRIC edict ("each player sacrifices", control any) IS one since 2026-09-16: the owner's
+// answer to recall v6 #30 was that Bitterbloom Bearer's Faerie is what Fleshbag Marauder eats on
+// your side, and the printed cue `EACH_PLAYER_SACRIFICES` keeps the targeted and opponents-only
+// shapes out, which derive the same `any`.
+//
+// A TOKEN IS FODDER WHATEVER ITS TYPE: a Construct, a Saproling, a Treasure is a free body, which
+// is the whole aristocrats shape. A real card is fodder only when the outlet names a non-whole-
+// deck type ("sacrifice an artifact" reaches Solemn; "sacrifice a creature" does NOT reach every
+// creature in the deck -- that is the whole board, and waits for magnitude like the creature
+// board count). The type-count ruling of the same day is the precedent.
+function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
   for (const a of c.tags?.abilities ?? []) {
     if (p === c) break;
     const eats = (a.emits ?? []).find((e) => e.verb === "sacrifice" && e.subject.self !== true
@@ -2253,14 +2318,17 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
     });
     break; // one fodder claim per pair
   }
-  // DELVE edges: P fills the graveyard C delves from (owner ruling 2026-09-16, recall v7 #114:
-  // "delve is an edge, fill feeds the delve spell"). CR 702.66: each card exiled from YOUR
-  // graveyard pays {1}, so a self-mill, a discard, a death or a direct put into your graveyard is
-  // the mana. An opponent's fill lands in their graveyard and pays nothing; a TOKEN's death pays
-  // nothing either (CR 704.5d, it ceases to exist there), so a token node and a token-only emit
-  // are refused. One claim per pair, keyed on the fill's own verb so it sits on the aristocrats /
-  // mill / discard axis the theme layer already speaks (the four cares tags `keywordAbilities`
-  // gives the same keyword). 30 commander-legal delve cards; 3 of the 71 decks run one.
+}
+
+// DELVE edges: P fills the graveyard C delves from (owner ruling 2026-09-16, recall v7 #114:
+// "delve is an edge, fill feeds the delve spell"). CR 702.66: each card exiled from YOUR
+// graveyard pays {1}, so a self-mill, a discard, a death or a direct put into your graveyard is
+// the mana. An opponent's fill lands in their graveyard and pays nothing; a TOKEN's death pays
+// nothing either (CR 704.5d, it ceases to exist there), so a token node and a token-only emit
+// are refused. One claim per pair, keyed on the fill's own verb so it sits on the aristocrats /
+// mill / discard axis the theme layer already speaks (the four cares tags `keywordAbilities`
+// gives the same keyword). 30 commander-legal delve cards; 3 of the 71 decks run one.
+function delveEdges({ p, c, pEvents, reasons }: PairScope): void {
   if (!p.isToken && (c.tags.characteristics.keywords ?? []).some((k) => String(k).toLowerCase().trim() === "delve")) {
     for (const e of pEvents) {
       const s = e.subject;
@@ -2288,34 +2356,31 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       break;
     }
   }
-  // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
-  // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its
-  // panel claims FALSE on 2026-09-09: "the edge should be just reanimation -- sure it can die again,
-  // but that is the point of reanimation in the first place." A death trigger firing after a
-  // reanimation is what reanimating a creature IS, not a second relation between the two cards, so
-  // the recursion channel (`graveyard-recursion:*`, the entry gate above) carries the whole claim.
-  // TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
-  // consumer-trigger relation, which is why the recall measurement filed the family as
-  // `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an
-  // Elemental card genuinely relates to every Elemental in the deck.
-  //
-  // GATED ON A CLASS, for exactly the reason the clone gate is. Of 115 corpus search actions,
-  // "a card" (Demonic Tutor, Grim Tutor, Gamble) reaches all 99 others and "a creature card" (Worldly
-  // Tutor) the whole creature base. A SUBTYPE narrows, and since 2026-09-16 so does a lone type
-  // outside the whole board -- "an artifact card" (Fabricate), "an instant or sorcery card"
-  // (Mystical Tutor) -- see `loneTypeNarrows` for the ruling and the measured fan-out.
-  //
-  // LAND subtypes are excluded on top of that: a fetchland naming Swamp is the MANA BASE, and the
-  // cost-reduction and tax rulings already settled that a deck property is not a pairwise synergy.
-  // 60 of the 115 search actions are land fetches, and every one would edge to every dual.
-  //
-  // THE GATE READS `search` DIRECTLY SINCE 2026-09-07. It used to read `top-manipulation` — which
-  // also meant scry, surveil, mill and the top-set rows — and lean on the subject-narrowing test
-  // below to keep those out "without needing to know the verb". That was an APPROXIMATION: a scry or
-  // a mill carrying a narrowing subject was reported as a tutor, and nothing in those four kinds
-  // finds a card. CR 701.23a is the whole justification — only a search looks through a zone for a
-  // card that matches a description.
-  // A PRINTED KEYWORD CAN SEARCH TOO: typecycling (`keywordAbilities`, recall v7 #199).
+}
+
+// TUTOR edges: P can SEARCH UP C. "My search can find you" is not a producer-event to
+// consumer-trigger relation, which is why the recall measurement filed the family as
+// `miss-inexpressible` — wrongly, Commander Salt models it. Flamekin Harbinger searching for an
+// Elemental card genuinely relates to every Elemental in the deck.
+//
+// GATED ON A CLASS, for exactly the reason the clone gate is. Of 115 corpus search actions,
+// "a card" (Demonic Tutor, Grim Tutor, Gamble) reaches all 99 others and "a creature card" (Worldly
+// Tutor) the whole creature base. A SUBTYPE narrows, and since 2026-09-16 so does a lone type
+// outside the whole board -- "an artifact card" (Fabricate), "an instant or sorcery card"
+// (Mystical Tutor) -- see `loneTypeNarrows` for the ruling and the measured fan-out.
+//
+// LAND subtypes are excluded on top of that: a fetchland naming Swamp is the MANA BASE, and the
+// cost-reduction and tax rulings already settled that a deck property is not a pairwise synergy.
+// 60 of the 115 search actions are land fetches, and every one would edge to every dual.
+//
+// THE GATE READS `search` DIRECTLY SINCE 2026-09-07. It used to read `top-manipulation` — which
+// also meant scry, surveil, mill and the top-set rows — and lean on the subject-narrowing test
+// below to keep those out "without needing to know the verb". That was an APPROXIMATION: a scry or
+// a mill carrying a narrowing subject was reported as a tutor, and nothing in those four kinds
+// finds a card. CR 701.23a is the whole justification — only a search looks through a zone for a
+// card that matches a description.
+// A PRINTED KEYWORD CAN SEARCH TOO: typecycling (`keywordAbilities`, recall v7 #199).
+function tutorEdges({ p, c, h, reasons }: PairScope): void {
   for (const a of [...p.tags.abilities, ...keywordAbilities(p.tags.characteristics)]) {
     if (a.effect.kind !== "search" || !a.effect.subject) continue;
     // A TOKEN IS NEVER IN A LIBRARY. It exists only on the battlefield (CR 111.7), so no search can
@@ -2390,22 +2455,24 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       producer: p.card.name,
     });
   }
+}
 
-  // TYPED RECURSION -> THE CARDS OF ITS CLASS (owner ruling 2026-09-10; recall v5 #140, #166). A
-  // tutor limited to a type is a real edge to every card of that type (2026-09-07), and the owner
-  // extended that to recursion: Bloodline Necromancer relates to each Vampire and Wizard in the
-  // deck, Lara Croft to each legendary artifact and land. Same shape as the tutor pass above: the
-  // recursion is the producer, the card it can return the consumer, matched on printed
-  // characteristics. The FILL side is untouched -- the entry gate above still refuses a fill that
-  // cannot promise the class, so a creature edict does not become a Vampire supplier.
-  //
-  // WHAT NARROWS, and what does not. A subtype (in the subject or an `anyOf` branch), a stats
-  // predicate, a legendary supertype, a conjunction of types, or a lone type outside the whole
-  // board. "Target creature card" (835 corpus recursions) is every creature in the deck -- the
-  // ordinary-card claim -- and so is a lone artifact, instant or land in a deck built of them
-  // (`recursionClassNarrows` records the measurement). An opponent's graveyard names cards that
-  // are not in this deck; a self recursion names one card, handled by the entry gate. Corpus,
-  // admitted shapes: subtype 119, stats 124, legendary 8, allTypes 6.
+// TYPED RECURSION -> THE CARDS OF ITS CLASS (owner ruling 2026-09-10; recall v5 #140, #166). A
+// tutor limited to a type is a real edge to every card of that type (2026-09-07), and the owner
+// extended that to recursion: Bloodline Necromancer relates to each Vampire and Wizard in the
+// deck, Lara Croft to each legendary artifact and land. Same shape as the tutor pass above: the
+// recursion is the producer, the card it can return the consumer, matched on printed
+// characteristics. The FILL side is untouched -- the entry gate above still refuses a fill that
+// cannot promise the class, so a creature edict does not become a Vampire supplier.
+//
+// WHAT NARROWS, and what does not. A subtype (in the subject or an `anyOf` branch), a stats
+// predicate, a legendary supertype, a conjunction of types, or a lone type outside the whole
+// board. "Target creature card" (835 corpus recursions) is every creature in the deck -- the
+// ordinary-card claim -- and so is a lone artifact, instant or land in a deck built of them
+// (`recursionClassNarrows` records the measurement). An opponent's graveyard names cards that
+// are not in this deck; a self recursion names one card, handled by the entry gate. Corpus,
+// admitted shapes: subtype 119, stats 124, legendary 8, allTypes 6.
+function typedRecursionEdges({ p, c, h, reasons }: PairScope): void {
   for (const a of p.tags.abilities) {
     if (a.effect.kind !== "graveyard-recursion" || !a.effect.subject) continue;
     // NOR IN A GRAVEYARD. A token that leaves the battlefield ceases to exist and cannot come back
@@ -2430,19 +2497,21 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       producer: p.card.name,
     });
   }
+}
 
-  // Counter-presence edges: C has an ability whose effect subject is filtered on a counter kind
-  // ("creatures you control WITH a +1/+1 counter"), which is a cares-signal with no emit behind
-  // it — the card benefits from a board state rather than reacting to an event. P supplies that
-  // state. Tagged into the existing counter-added family so the tag pays off where it's actually
-  // read: buildAxis/maxAxisWeight (axis.ts) do exact-tag lookup against the deck's axis, so a
-  // `counter-added:*` Reason here counts on-axis alongside the event-edge ones. It does NOT
-  // change deckFreq/themes/rankThemes/cohesion — those come from cardThemeTags (analyze.ts),
-  // which reads triggers/emits/static kinds and never sees a Reason tag.
-  //
-  // Walks producerEvents(p.tags), not raw pa.emits: producerEvents adds proliferate-derived
-  // counter events on top of authored ones, and its dedup means two abilities that emit the
-  // identical event don't each spawn their own (byte-identical) Reason here.
+// Counter-presence edges: C has an ability whose effect subject is filtered on a counter kind
+// ("creatures you control WITH a +1/+1 counter"), which is a cares-signal with no emit behind
+// it — the card benefits from a board state rather than reacting to an event. P supplies that
+// state. Tagged into the existing counter-added family so the tag pays off where it's actually
+// read: buildAxis/maxAxisWeight (axis.ts) do exact-tag lookup against the deck's axis, so a
+// `counter-added:*` Reason here counts on-axis alongside the event-edge ones. It does NOT
+// change deckFreq/themes/rankThemes/cohesion — those come from cardThemeTags (analyze.ts),
+// which reads triggers/emits/static kinds and never sees a Reason tag.
+//
+// Walks producerEvents(p.tags), not raw pa.emits: producerEvents adds proliferate-derived
+// counter events on top of authored ones, and its dedup means two abilities that emit the
+// identical event don't each spawn their own (byte-identical) Reason here.
+function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   for (const emit of pEvents) {
     if (emit.verb !== "counter-added" || !emit.subject.counter) continue;
     for (const ca of c.tags.abilities) {
@@ -2463,24 +2532,26 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       });
     }
   }
+}
 
-  // THE COPY FAMILY, AND THE RULE NOBODY PRINTS (CR 707.2 + CR 704.5j).
-  //
-  // A copy effect puts a second Hidetsugu and Kairi onto the battlefield. Two facts follow, and the
-  // engine could state neither. The copy has the copied card's abilities (CR 707.2), so the copied
-  // card's OWN entry trigger fires again -- and if it is LEGENDARY, CR 704.5j immediately puts one
-  // of the two into its owner's graveyard, firing its own death trigger. The legend rule is a
-  // STATE-BASED ACTION printed on no card, so no clause layer can ever reach it: the same shape as
-  // a Saga's own sacrifice (`sagaEvents` in implied.ts), except a Saga at least prints a reminder.
-  //
-  // Measured on `hidetsugu-and-kairi-like-to-multiply`, the deck built to abuse exactly this: 28
-  // cards carry a permanent-copy cue and 18 of them had degree <= 1, their only edge a medallion.
-  //
-  // WHY THE PRINTED CUE AND NOT AN EFFECT KIND. The derived kinds do not separate the family. Rite
-  // of Replication derives `token-generation` byte-identically to a 1/1 Soldier maker, and the one
-  // structural marker (`scope: "target"` with `token: true`) reads 38 corpus cards of which 4 are
-  // Role/Aura tokens ATTACHED to a target, not copies of it. The three templates are printed and
-  // nothing else uses them.
+// THE COPY FAMILY, AND THE RULE NOBODY PRINTS (CR 707.2 + CR 704.5j).
+//
+// A copy effect puts a second Hidetsugu and Kairi onto the battlefield. Two facts follow, and the
+// engine could state neither. The copy has the copied card's abilities (CR 707.2), so the copied
+// card's OWN entry trigger fires again -- and if it is LEGENDARY, CR 704.5j immediately puts one
+// of the two into its owner's graveyard, firing its own death trigger. The legend rule is a
+// STATE-BASED ACTION printed on no card, so no clause layer can ever reach it: the same shape as
+// a Saga's own sacrifice (`sagaEvents` in implied.ts), except a Saga at least prints a reminder.
+//
+// Measured on `hidetsugu-and-kairi-like-to-multiply`, the deck built to abuse exactly this: 28
+// cards carry a permanent-copy cue and 18 of them had degree <= 1, their only edge a medallion.
+//
+// WHY THE PRINTED CUE AND NOT AN EFFECT KIND. The derived kinds do not separate the family. Rite
+// of Replication derives `token-generation` byte-identically to a 1/1 Soldier maker, and the one
+// structural marker (`scope: "target"` with `token: true`) reads 38 corpus cards of which 4 are
+// Role/Aura tokens ATTACHED to a target, not copies of it. The three templates are printed and
+// nothing else uses them.
+function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
   const copy = copySubject(p);
   if (copy && !c.isToken) {
     const legendary = c.tags.characteristics.types.includes("legendary");
@@ -2521,23 +2592,25 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       }
     }
   }
+}
 
-  // A CONDITIONAL LAND IS A DEPENDENCY ON YOUR MANA BASE'S SHAPE (roadmap I9, owner's ruling
-  // 2026-08-22: "Cinder Glade will never come in untapped if you do not have any basics in the
-  // deck"). Rootbound Crag enters untapped only while you control a Mountain or a Forest, and
-  // Thornspire Verge's second mana ability is switched off without one. That is a pairwise relation
-  // the engine had no channel for, and it is PRINTED — so it is read here rather than derived,
-  // free, the `sagaEvents` shape.
-  //
-  // THE CONSUMER IS THE LAND. It demands; the card carrying the type supplies. Reading it the other
-  // way round would say a Mountain "does something" to the Crag, which is backwards — the Crag is
-  // the card whose value moves.
-  //
-  // ONLY `check` AND `verge`, both of which name a basic land SUBTYPE. `bfz` demands the SUPERTYPE
-  // `basic` as a COUNT ("two or more basic lands"), so every basic contributes equally and it names
-  // no member — the registered "a claim that applies to a card merely for being an ordinary card is
-  // false". It is a deck-level fact, the `deckSlack` shape, and forms nothing here. Everything the
-  // classifier could not read is `unclassified` and forms nothing either.
+// A CONDITIONAL LAND IS A DEPENDENCY ON YOUR MANA BASE'S SHAPE (roadmap I9, owner's ruling
+// 2026-08-22: "Cinder Glade will never come in untapped if you do not have any basics in the
+// deck"). Rootbound Crag enters untapped only while you control a Mountain or a Forest, and
+// Thornspire Verge's second mana ability is switched off without one. That is a pairwise relation
+// the engine had no channel for, and it is PRINTED — so it is read here rather than derived,
+// free, the `sagaEvents` shape.
+//
+// THE CONSUMER IS THE LAND. It demands; the card carrying the type supplies. Reading it the other
+// way round would say a Mountain "does something" to the Crag, which is backwards — the Crag is
+// the card whose value moves.
+//
+// ONLY `check` AND `verge`, both of which name a basic land SUBTYPE. `bfz` demands the SUPERTYPE
+// `basic` as a COUNT ("two or more basic lands"), so every basic contributes equally and it names
+// no member — the registered "a claim that applies to a card merely for being an ordinary card is
+// false". It is a deck-level fact, the `deckSlack` shape, and forms nothing here. Everything the
+// classifier could not read is `unclassified` and forms nothing either.
+function landConditionEdges({ p, c, reasons }: PairScope): void {
   const landCond = classifyLand(c.card);
   // THE G FAMILY IS THE SAME DEMAND ON A CARD THAT IS NOT A LAND (roadmap I9): Summit Apes wants a
   // Mountain exactly as Rootbound Crag does, so it takes the same SUBTYPE edge. A land's own
@@ -2562,8 +2635,6 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
       });
     }
   }
-
-  return dedupeReasons(reasons.map((r) => stampSides(r, p, c)));
 }
 
 /** All reasons for the unordered pair {a,b}: union of a→b and b→a directional reasons, deduped
