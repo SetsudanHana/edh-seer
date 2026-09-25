@@ -387,6 +387,12 @@ export function reasonSentence(input: {
     : input.subjectNoun
     ? `When ${input.subjectNoun} ${verb} thanks to ${input.producer}`
     : `When ${input.producer} ${verb}`;
+  // THE CAST CARD IS WHAT ARRIVES WITH COUNTERS (overview persona rounds 2026-09-25, item 2a): Yuna's
+  // "that creature enters with two additional +1/+1 counters" puts them on the spell just cast, so
+  // the consumer is the cause, not the subject.
+  if (input.effectKind === "enters-with-counters" && input.eventKey.split(":")[0] === "cast" && !input.subjectNoun) {
+    return `${cause}, it arrives with counters thanks to ${input.consumer}`;
+  }
   return phrase ? `${cause}, ${input.consumer} ${phrase}` : `${cause}, ${input.consumer} triggers`;
 }
 
