@@ -4,7 +4,7 @@ import { eventLabel } from "../lib/demand-sentence.js";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { EDIT_REHEAT_ALPHA, PARK_ALPHA } from "./board-force.js";
-import { ART_RADIUS, GraphView, clampLabelX, edgeAlpha, nodeMatchesQuery, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan } from "./GraphView.js";
+import { ART_RADIUS, GraphView, clampLabelX, edgeAlpha, nodeMatchesQuery, edgeWidth, jitterFromId, nodeRadius, seedPosition, traveledAsPan, shortCardName } from "./GraphView.js";
 import { CARD_H, CARD_W } from "./board-force.js";
 import { SAMPLE } from "../fixtures.js";
 import { CardDrawerProvider, usePinned } from "./card-drawer.js";
@@ -2812,7 +2812,9 @@ describe("the guided board", () => {
     const strip = screen.getByTestId("graph-key-cards");
     const tiles = [...strip.querySelectorAll("button")].map((b) => b.textContent);
     // Krenko rates 5, Impact Tremors 3.3: the same order "High synergy cards" prints.
-    expect(tiles).toEqual(["Krenko, Mob Boss 5.0", "Impact Tremors 3.3"]);
+    // The chip prints the name before the comma; the full name is its accessible name.
+    expect(tiles).toEqual(["Krenko 5.0", "Impact Tremors 3.3"]);
+    expect(screen.getByRole("button", { name: "Krenko, Mob Boss 5.0" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /^Impact Tremors 3\.3/ }));
     expect(screen.getByRole("button", { name: /^Impact Tremors 3\.3/ })).toHaveAttribute("aria-pressed", "true");
   });
@@ -2866,4 +2868,12 @@ describe("clampLabelX", () => {
   test("pulls a box back from the left edge", () => expect(clampLabelX(-30, 100, 390)).toBe(0));
   test("pulls a box back from the right edge", () => expect(clampLabelX(350, 100, 390)).toBe(290));
   test("starts a box wider than the canvas at 0", () => expect(clampLabelX(-10, 500, 390)).toBe(0));
+});
+
+describe("shortCardName", () => {
+  it("keeps the name before the comma, and a two-faced card's front face", () => {
+    expect(shortCardName("Animar, Soul of Elements")).toBe("Animar");
+    expect(shortCardName("Lotus Cobra")).toBe("Lotus Cobra");
+    expect(shortCardName("Sorin of House Markov // Sorin, Ravenous Neonate")).toBe("Sorin of House Markov");
+  });
 });
