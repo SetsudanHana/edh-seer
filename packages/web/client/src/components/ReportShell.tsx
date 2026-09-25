@@ -308,7 +308,9 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
 function Reference({ children, aside, comboCount }: { children: React.ReactNode; aside?: React.ReactNode; comboCount: number }) {
   const { pathname } = useLocation();
   return (
-    <div className="flex flex-col gap-4 pt-4">
+    // gap-2/pt-2, not 4 (UI review 2026-09-25): the 16px above and below this row were two of the
+    // last 28px keeping the 660px graph board from fitting a 1440x900 screen.
+    <div className="flex flex-col gap-2 pt-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <nav aria-label="Report surfaces" className="flex gap-4 items-baseline">
         <SurfaceLink to="/" className="eyebrow text-(--accent)">

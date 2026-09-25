@@ -1817,5 +1817,10 @@ html[data-app-booted][data-route="search"] .site-search { display: none; }
    Block, with the row's padding inside the link, so the whole line answers a thumb. */
 .browse-list li a { display: block; padding-block: 0.3rem; }
 
+/* A REPORT'S PAGE STARTS 8px HIGHER (UI review 2026-09-25). Its sticky summary row is the first
+   thing under the site header, and with the board's 660px floor at 1440x900 every pixel above the
+   graph is one of its cards under the fold. The home page keeps its breathing room. */
+html[data-report] #root main { padding-top: 1.5rem; }
+
 /* The gutter's wide value; see `--gutter` in :root. */
 @media (min-width: 40rem) { :root { --gutter: 2rem; } }

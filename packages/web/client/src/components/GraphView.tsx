@@ -2596,8 +2596,9 @@ export function GraphView(
       <div
         ref={shellRef}
         data-testid="graph-fullscreen-shell"
-        // gap-3, not gap-6: four rows sit above the board, and 12px each was ~50px of it on a laptop.
-        className={`flex flex-col gap-3 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
+        // gap-2, not gap-6: rows sit above the board, and every 4px of gap is 4px of board under the
+        // fold on a 900px laptop (UI review 2026-09-25 took it from 3 to 2).
+        className={`flex flex-col gap-2 ${isFullscreen ? "h-screen bg-(--background)" : ""} ${bare ? "h-full" : ""}`}
       >
         {/* THE BOARD FIRST (owner, 2026-09-24: "I click on graph and half of my screen is not graph").
           *  Seven rows of chrome -- four paint tabs, fifteen mechanism chips over three rows, the
