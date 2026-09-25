@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildHierarchy, impliesType, expandTypes, PSEUDO_TYPE_SETS, ALL_CARD_TYPES } from "./hierarchy.js";
+import { buildHierarchy, impliesType, expandTypes, PSEUDO_TYPE_SETS, ALL_CARD_TYPES, loadHierarchy } from "./hierarchy.js";
 import { CARD_TYPES, UMBRELLA_TYPES } from "@edh-seer/tagger";
 
 test("buildHierarchy maps each subtype after the dash to its card types", () => {
@@ -87,4 +87,22 @@ test("the card-type sets tagger derives against are the same ones matcher expand
   expect([...CARD_TYPES]).toEqual([...ALL_CARD_TYPES]);
   expect(UMBRELLA_TYPES.permanent).toEqual(PSEUDO_TYPE_SETS.permanent);
   expect(UMBRELLA_TYPES.spell).toEqual(PSEUDO_TYPE_SETS.spell);
+});
+
+/** A DOUBLE-FACED TYPE LINE IS TWO TYPE LINES (overview persona rounds 2026-09-25, item 1). Split on the
+ *  em dash alone, "Creature — Human // Enchantment Creature — Human Vampire" kept "Human // Enchantment
+ *  Creature" as the subtype half, and every word of it -- "enchantment", "creature", "//" -- became a
+ *  fake SUBTYPE of the front face's types. `h.enchantment` then read [enchantment, creature, ...], and
+ *  Weaver of Harmony's "from an enchantment source" accepted every creature and artifact. */
+test("each face of a double-faced type line is read on its own", () => {
+  const h = buildHierarchy(["Creature — Human // Enchantment Creature — Human Vampire"]);
+  expect(h.human?.sort()).toEqual(["creature", "enchantment"]);
+  expect(h.vampire?.sort()).toEqual(["creature", "enchantment"]);
+  for (const bogus of ["enchantment", "creature", "//"]) expect(h[bogus]).toBeUndefined();
+});
+
+test("no card type word is ever a subtype key in the shipped hierarchy", () => {
+  const shipped = loadHierarchy();
+  const leaked = ["creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "land", "battle", "//"].filter((w) => w in shipped);
+  expect(leaked).toEqual([]);
 });
