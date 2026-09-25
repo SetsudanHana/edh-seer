@@ -1,5 +1,10 @@
 # Documentation
 
+**Just want to use it?** Paste a decklist at **[edhseer.cards](https://edhseer.cards)**. The
+player's explanation, with screenshots of a real report, is
+**[edhseer.cards/how-it-works](https://edhseer.cards/how-it-works)**. These pages are for anyone who
+wants the engine itself.
+
 ## Start here
 
 **[How it works](HOW-IT-WORKS.md)** — the tour. A printed Magic card to a synergy graph, with
@@ -15,7 +20,7 @@ failure modes it has actually hit.
 | [Stage 1 — Segmentation](pipeline/1-segment.md) | oracle text into numbered clauses. Free, and deliberately not the model's job |
 | [Stage 2 — Normalization](pipeline/2-normalize.md) | the model, once per card, offline. The only paid step in the project |
 | [Stage 3 — Derivation](pipeline/3-derive.md) | clauses into game events, plus the events no card prints |
-| [Stage 4 — Matching](pipeline/4-match.md) | supply against demand, and every reason a claim is refused |
+| [Stage 4 — Matching](pipeline/4-match.md) | what one card causes against what another cares about, and every reason a claim is refused |
 
 ## Reference
 

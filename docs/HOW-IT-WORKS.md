@@ -1,6 +1,7 @@
 # How EDH Seer works
 
-From a printed Magic card to a synergy graph, step by step.
+From a printed Magic card to a synergy graph, step by step. For the player's version, with
+screenshots of a real report, see [edhseer.cards/how-it-works](https://edhseer.cards/how-it-works).
 
 The thesis in one sentence: **a language model reads oracle text exactly once, offline, and turns it
 into structured data — everything after that is deterministic code.** That is what makes the engine
@@ -32,7 +33,7 @@ flowchart TD
     F["your decklist"] -->|resolve names| G["DeckCard[]"]
     E --> G
     B --> G
-    G -->|"impliedEvents()"| H["every event each card<br/>SUPPLIES and WATCHES FOR"]
+    G -->|"impliedEvents()"| H["every event each card<br/>CAUSES and CARES ABOUT"]
     H -->|"eventMatches()<br/>pure, free"| I["Reason[]<br/>a sentence per claim"]
     I --> J["scoring · archetypes · mana math"]
     J --> K["deck report"]

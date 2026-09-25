@@ -723,6 +723,7 @@ h1.intro-thesis { margin-block-end: 0; }
 .prose > .pipeline,
 .prose > .edge-demo,
 .prose > .refusals,
+.prose > .shots,
 .prose > .stages {
   width: min(65rem, calc(100vw - 2 * var(--gutter)));
   margin-inline: calc((100% - min(65rem, calc(100vw - 2 * var(--gutter)))) / 2);
@@ -1505,6 +1506,59 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 /* TWO FIGURES, NOT THREE. The trust pair (precision, retention) is two numbers by rule -- a third
    would be a size again -- and two items in the three-column grid leave a hole on the right. */
 .figures-2 { grid-template-columns: repeat(2, 1fr); }
+
+/* THE PAGE'S TWO DOORS INTO THE PRODUCT (how-it-works, docs refresh 2026-09-25). The buttons are
+   the app's own `.btn-primary` / `.btn-secondary`; this only undoes what `.prose a` does to every
+   link in the column -- the underline and the foreground colour -- which on a filled pill read as a
+   link drawn on a button. */
+.hiw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+.prose .hiw-actions a { text-decoration: none; }
+.prose .hiw-actions a.btn-primary,
+.prose .hiw-actions a.btn-primary:hover { color: var(--background); }
+.prose .hiw-actions a.btn-secondary:hover { color: var(--foreground); }
+
+/* The close of the player's half: the same pair of actions, in a panel so it reads as an ending
+   rather than as one more paragraph. */
+.hiw-try {
+  margin: 3rem 0 0;
+  padding: 1.25rem 1.25rem 0.25rem;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.hiw-try p:first-child { color: var(--foreground); }
+
+/* REAL SCREENSHOTS OF THE REPORT. The graph leads full width; the three chapters sit under it in a
+   row on a wide screen and stack on a phone, where a 1440 frame at a third of 390px would be a
+   thumbnail nobody can read. */
+.shots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem 1rem;
+  margin-block: 1.5rem 0.5rem;
+}
+.shot { margin: 0; min-width: 0; }
+.shot-hero { grid-column: 1 / -1; }
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius);
+}
+.shot figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+@media (max-width: 40rem) {
+  .shots { grid-template-columns: 1fr; }
+}
 
 /* THE CLAIM, ANNOTATED (how-it-works). The one sentence the report prints, set large, and the three
    things it rests on numbered under it. Stays inside the prose measure: it is a sentence, not a
