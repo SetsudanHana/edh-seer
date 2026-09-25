@@ -71,11 +71,11 @@ set -a && source packages/tagger/.env && set +a       # the .env is in packages/
 npx tsx packages/tagger/src/bin/normalize-corpus.ts    # DRY RUN — prints the bill and spends nothing
 ```
 
-**The dry run is the default and `--run` is the only thing that spends.** Without
-`TAGGER_PROVIDER=anthropic` in the environment the provider is Ollama, and `--run` now **refuses** to
-spend on anything but anthropic unless `--allow-provider` is passed. The fence exists because the old
-silent fallback — a corpus answered by the wrong model, with nothing to say so — fired three separate
-times, and a fresh clone has no `.env` at all.
+**The dry run is the default and `--run` is the only thing that spends.** `--run` **refuses** without
+`ANTHROPIC_API_KEY`, and on any model but `claude-haiku-4-5` unless `--allow-model` is passed. The
+fence exists because a corpus answered by the wrong model looks fresh forever (staleness never
+compares the model), and the old silent fallback to a local Ollama fired three separate times before
+that provider was removed.
 
 Useful selectors, all of which narrow what gets bought:
 
@@ -89,7 +89,7 @@ Useful selectors, all of which narrow what gets bought:
 | `--max-rank N` | the top N cards by play rank |
 | `--refresh-unless` | only cards whose "unless ... pays" clause was dropped |
 | `--batch` | the Batch API, at half price; collect the results later with `--collect <state>` |
-| `--allow-provider` | lets `--run` spend on a provider other than anthropic. Only on purpose |
+| `--allow-model` | lets `--run` spend on a model other than `claude-haiku-4-5`. Only on purpose |
 | `--concurrency N` | parallel requests, default 6 |
 
 ## What a re-buy costs

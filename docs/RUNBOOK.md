@@ -21,14 +21,15 @@ holds:
 | variable | what it is | default |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | the key the paid normalization step spends | none |
-| `TAGGER_PROVIDER` | which model answers; set it to `anthropic` | Ollama |
+| `ANTHROPIC_MODEL` | which model answers; leave it unset | `claude-haiku-4-5` |
 | `MONGO_URI` | the corpus database | `mongodb://localhost:27017` |
 | `MONGO_DB` | the database name | `mtg` |
 
-**`TAGGER_PROVIDER` is not decoration.** Without it the provider is a local Ollama. A spending bin
-used to fall back to it **silently** — a corpus answered by the wrong model, with nothing on screen
-to say so — and now refuses `--run` unless `--allow-provider` is passed. The dry run prints a
-`provider:` line; read it before every `--run`.
+**A spending bin refuses `--run` without the key, and on any model but `claude-haiku-4-5` unless
+`--allow-model` is passed.** Every measurement was taken on that model, and staleness never compares
+the model, so another model's corpus would look fresh forever. The dry run prints a `model:` line;
+read it before every `--run`. (A local Ollama provider used to be the default when the `.env` was
+missing, and a silent fallback to it fired three times. It was removed on 2026-09-25.)
 
 A local MongoDB comes from `docker compose -f packages/data/docker-compose.yml up -d`, and
 `npm run ingest -w @edh-seer/data` downloads the Scryfall cards and the combo list into it. The

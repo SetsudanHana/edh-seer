@@ -21,10 +21,9 @@
  *    tsx src/bin/normalize-tokens.ts --run              # spends
  *    tsx src/bin/normalize-tokens.ts --run --limit 3    # smallest useful end-to-end check
  *
- *  Needs `set -a && source .env && set +a` and TAGGER_PROVIDER=anthropic, or it silently falls back
- *  to Ollama and every token returns `ERROR: fetch failed`. */
+ *  Needs `set -a && source .env && set +a` for ANTHROPIC_API_KEY; `--run` refuses without it. */
 import { connect, loadConfig } from "@edh-seer/data";
-import { loadTaggerConfig } from "../config.js";
+import { loadTaggerConfig, MEASURED_MODEL } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, normalizeCard } from "../normalize-card.js";
 import { NORMALIZE_VERSION, NORMALIZE_MIN_COMPATIBLE } from "../normalize-prompt.js";
@@ -149,30 +148,36 @@ if (unresolved.length) {
 console.log(`  of the resolved tokens, with non-empty oracleText: ${tokens.length}`);
 console.log(`  tokens needing normalization: ${jobs.length}${LIMIT ? ` (limited to ${LIMIT})` : ""}`);
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
-console.log(`  model: ${cfg.model} | provider: ${cfg.provider}`);
+console.log(`  model: ${cfg.model}`);
 console.log(`  est. input ${inputTokens.toLocaleString()} tok, output ~${outputTokens.toLocaleString()} tok`);
 console.log(`  ESTIMATED COST: $${usd.toFixed(2)} (priced at claude-haiku-4-5 list rates)`);
 
 if (!RUN) {
   console.log(`\nDRY RUN — nothing called, nothing written. Re-run with --run to spend.`);
-  if (cfg.provider !== "anthropic") {
-    console.log(`NOTE: provider is "${cfg.provider}"; --run would refuse until you source .env.`);
-  }
+  if (!cfg.anthropicApiKey) console.log(`NOTE: no ANTHROPIC_API_KEY; --run would refuse until you source .env.`);
   await store.close();
   process.exit(0);
 }
 
-if (cfg.provider !== "anthropic" && !process.argv.includes("--allow-provider")) {
+// TWO WAYS A RUN GOES WRONG WITHOUT ANYONE MEANING IT. With no key, every call fails. With another
+// model, its output is persisted as if it were the measured one: every measurement backing this
+// pipeline was taken on MEASURED_MODEL, and staleness compares segmentHash and NORMALIZE_VERSION,
+// never the model, so such a corpus would look fresh forever and never re-queue.
+if (!cfg.anthropicApiKey) {
   console.log(`
-REFUSING TO RUN: provider is "${cfg.provider}" (model ${cfg.model}), not anthropic.
+REFUSING TO RUN: no ANTHROPIC_API_KEY.
 
-Every measurement backing this pipeline was taken on claude-haiku-4-5. Persisting another model's
-output would look identical to a fresh corpus -- staleness compares segmentHash and
-NORMALIZE_VERSION, never the model -- so it would never re-queue and the mistake would be permanent.
+  set -a && source .env && set +a && npx tsx src/bin/normalize-tokens.ts --run`);
+  await store.close();
+  process.exit(1);
+}
+if (cfg.model !== MEASURED_MODEL && !process.argv.includes("--allow-model")) {
+  console.log(`
+REFUSING TO RUN: model is ${cfg.model}, not ${MEASURED_MODEL}.
 
-  set -a && source .env && set +a && TAGGER_PROVIDER=anthropic npx tsx src/bin/normalize-tokens.ts --run
-
-Pass --allow-provider only if you genuinely mean to normalize with ${cfg.model}.`);
+Persisting another model's output would look identical to a fresh corpus, so it would never
+re-queue and the mistake would be permanent. Unset ANTHROPIC_MODEL, or pass --allow-model only if
+you genuinely mean to normalize with ${cfg.model}.`);
   await store.close();
   process.exit(1);
 }

@@ -32,12 +32,11 @@
  *    tsx src/bin/normalize-corpus.ts --card "Isshin, Two Heavens as One" --run
  *                                                       # pull one named card into the corpus
  *
- *  Needs `set -a && source .env && set +a` and TAGGER_PROVIDER=anthropic, or it silently falls back
- *  to Ollama and every card returns `ERROR: fetch failed`. */
+ *  Needs `set -a && source .env && set +a` for ANTHROPIC_API_KEY; `--run` refuses without it. */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText } from "@edh-seer/data";
-import { loadTaggerConfig } from "../config.js";
+import { loadTaggerConfig, MEASURED_MODEL } from "../config.js";
 import { createProvider } from "../llm/factory.js";
 import { buildRequest, codeAnsweredCard, manualCard, needsModel, normalizeCard, parseNormalizedCard, type NormalizedCard } from "../normalize-card.js";
 import { loadManualEntries } from "../manual-clauses.js";
@@ -364,7 +363,7 @@ console.log(`  cards needing normalization: ${jobs.length}${LIMIT ? ` (limited t
 console.log(`  of those, answered in code (no model call): ${freeCards}`);
 if (manualCount) console.log(`  of those, hand-authored in manual-clauses.json: ${manualCount}`);
 if (unresolved.length) console.log(`  unresolved names: ${unresolved.length} (${unresolved.slice(0, 3).join(", ")}...)`);
-console.log(`  model: ${cfg.model} | provider: ${cfg.provider}`);
+console.log(`  model: ${cfg.model}`);
 console.log(`  est. input ${inputTokens.toLocaleString()} tok, output ~${outputTokens.toLocaleString()} tok`);
 console.log(`  ESTIMATED COST: $${usd.toFixed(2)} (priced at claude-haiku-4-5 list rates)`);
 // The Batch API is half price for a byte-identical request; the trade is up to 24h of latency.
@@ -372,28 +371,30 @@ if (BATCH) console.log(`  VIA --batch: $${(usd / 2).toFixed(2)} (Batch API, 50% 
 
 if (!RUN) {
   console.log(`\nDRY RUN — nothing called, nothing written. Re-run with --run${BATCH ? " --batch" : ""} to spend.`);
-  if (cfg.provider !== "anthropic") {
-    console.log(`NOTE: provider is "${cfg.provider}"; --run would refuse until you source .env.`);
-  }
+  if (!cfg.anthropicApiKey) console.log(`NOTE: no ANTHROPIC_API_KEY; --run would refuse until you source .env.`);
   await store.close();
   process.exit(0);
 }
 
-// Nothing auto-loads the .env (source it, or pass `--env-file`), so the default config is Ollama. Two ways
-// that costs you: a run that returns `ERROR: fetch failed` for every card, or -- worse -- a local
-// model's output persisted as if it were the measured one. `needsNormalize` compares hash and
-// version, NOT model, so such a corpus would look fresh forever and never re-queue.
-if (cfg.provider !== "anthropic" && !process.argv.includes("--allow-provider")) {
+// TWO WAYS A RUN GOES WRONG WITHOUT ANYONE MEANING IT. With no key, every call fails. With another
+// model, its output is persisted as if it were the measured one: every measurement backing this
+// pipeline was taken on MEASURED_MODEL, and staleness compares segmentHash and NORMALIZE_VERSION,
+// never the model, so such a corpus would look fresh forever and never re-queue.
+if (!cfg.anthropicApiKey) {
   console.log(`
-REFUSING TO RUN: provider is "${cfg.provider}" (model ${cfg.model}), not anthropic.
+REFUSING TO RUN: no ANTHROPIC_API_KEY.
 
-Every measurement backing this pipeline was taken on claude-haiku-4-5. Persisting another model's
-output would look identical to a fresh corpus -- staleness compares segmentHash and
-NORMALIZE_VERSION, never the model -- so it would never re-queue and the mistake would be permanent.
+  set -a && source .env && set +a && npx tsx src/bin/normalize-corpus.ts --run`);
+  await store.close();
+  process.exit(1);
+}
+if (cfg.model !== MEASURED_MODEL && !process.argv.includes("--allow-model")) {
+  console.log(`
+REFUSING TO RUN: model is ${cfg.model}, not ${MEASURED_MODEL}.
 
-  set -a && source .env && set +a && TAGGER_PROVIDER=anthropic npx tsx src/bin/normalize-corpus.ts --run
-
-Pass --allow-provider only if you genuinely mean to normalize with ${cfg.model}.`);
+Persisting another model's output would look identical to a fresh corpus, so it would never
+re-queue and the mistake would be permanent. Unset ANTHROPIC_MODEL, or pass --allow-model only if
+you genuinely mean to normalize with ${cfg.model}.`);
   await store.close();
   process.exit(1);
 }

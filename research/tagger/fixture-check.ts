@@ -14,8 +14,7 @@
  *  Writes NOTHING. It is a measurement, so it can be re-run after the structured-outputs change and
  *  compared directly.
  *
- *  Usage: set -a && source .env && set +a && TAGGER_PROVIDER=anthropic \
- *           npx tsx src/bin/fixture-check.ts */
+ *  Usage: set -a && source packages/tagger/.env && set +a && npx tsx research/tagger/fixture-check.ts */
 import { readFileSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import { canonicalSignature, type ClauseRecord } from "../../packages/tagger/src/canonicalize.js";
@@ -28,8 +27,8 @@ const FIXTURE = JSON.parse(readFileSync(
 )) as { name: string; clauses: ClauseRecord[] }[];
 
 const cfg = loadTaggerConfig();
-if (cfg.provider !== "anthropic") {
-  console.error(`provider is "${cfg.provider}" (${cfg.model}); source .env and set TAGGER_PROVIDER=anthropic`);
+if (!cfg.anthropicApiKey) {
+  console.error("no ANTHROPIC_API_KEY; source packages/tagger/.env first");
   process.exit(1);
 }
 
