@@ -29,6 +29,7 @@ const TESTED: Record<string, string> = {
   "903.4b": "legality.test.ts — 903.4b a card that chooses its colour",
   "702.124": "partners.test.ts — 702.124a/c",
   "614.1c": "edges.test.ts — an UNTYPED enters emit does not reach a clone (a clone replaces its own entry)",
+  "702.108a": "edges.test.ts — prowess reads as the creature getting +1/+1, and only a noncreature spell feeds it",
   "118.12a": "rate.test.ts — the payment that stops an effect is the rate's fallback, floor 0 (Rhystic Study)",
   "606.5": "rate.test.ts — a loyalty cost is not mana; the ability has no rate (Teferi, Temporal Pilgrim)",
   "714.3": "edges.test.ts — a Saga carries lore counters, so it can satisfy a counter-presence condition (AL4)",

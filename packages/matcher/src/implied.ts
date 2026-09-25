@@ -299,12 +299,14 @@ const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
  *  Subjects are parsed from the printed reminder wording with the SAME `parseSubject` the clause
  *  layer uses, so a keyword-supplied trigger and an authored one are the same shape — and, for
  *  prowess, so that "noncreature spell" resolves to the type list `castConsumerNarrows` reads. */
-const KEYWORD_TRIGGERS: Record<string, { verbs: GameEvent["verb"][]; subject: string; kind: string }> = {
+const KEYWORD_TRIGGERS: Record<string, { verbs: GameEvent["verb"][]; subject: string; kind: string; amount?: string; self?: true }> = {
   // "Extort (Whenever you cast a spell, you may pay {W/B}. If you do, each opponent loses 1 life and
   // you gain that much life.)"
   extort: { verbs: ["cast"], subject: "a spell", kind: "drain" },
   // "Prowess (Whenever you cast a noncreature spell, this creature gets +1/+1 until end of turn.)"
-  prowess: { verbs: ["cast"], subject: "a noncreature spell", kind: "pump" },
+  // The creature pumps ITSELF by +1/+1 (CR 702.108a). Without the amount and the self subject the
+  // sentence fell back to "makes your creatures bigger" (overview persona rounds 2026-09-25, item 3).
+  prowess: { verbs: ["cast"], subject: "a noncreature spell", kind: "pump", amount: "+1/+1", self: true },
   // "If you have no speed, it starts at 1. It increases once on each of your turns when an opponent
   // loses life. Max speed is 4." (CR 702.179). The whole mechanic hangs off an opponent losing life,
   // so that is the trigger, and every speed payoff is fed by whatever makes it happen. 40
@@ -364,7 +366,8 @@ export function keywordAbilities(chars: Characteristics): Ability[] {
       // lifegain's subject is you; the sentence and the page read the recipient off this.
       effect: spec.kind === "speed"
         ? { kind: "speed", subject: { control: "you", token: null } }
-        : { kind: spec.kind as Ability["effect"]["kind"] },
+        : { kind: spec.kind as Ability["effect"]["kind"], ...(spec.self ? { subject: { control: "you", token: null, self: true } } : {}) },
+      ...(spec.amount ? { amount: spec.amount } : {}),
     });
   }
   return out;

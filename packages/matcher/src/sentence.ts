@@ -165,6 +165,8 @@ export function effectPhrase(
   // THE CARD DOES IT TO ITSELF. "Untap Chandra" is not "untaps a permanent" (owner, 2026-09-08);
   // the two kinds a card routinely does to itself get the reflexive phrase, the rest keep theirs.
   if (target === "itself" && SELF_PHRASES[kind]) return SELF_PHRASES[kind]!;
+  // A PUMP ON ITSELF "gets" its amount -- prowess's +1/+1 -- rather than "gives" it to a class.
+  if (target === "itself" && kind === "pump") return amount && amount.includes("/") ? `gets ${amount}` : "gets bigger";
   // THE ONE KIND WHOSE PHRASE NAMES A TARGET, and the one that was naming the wrong one.
   if (kind === "counter-placement" && target) {
     // A QUANTITY THAT REFERS TO A COUNT ELSEWHERE IN THE SENTENCE NEEDS "of" TO ATTACH TO ITS NOUN.

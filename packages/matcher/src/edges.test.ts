@@ -4969,3 +4969,17 @@ test("a two-type fetch is tagged with the type the target land has", () => {
   const tags = pairReasons(tarn, crypt, H).map((r) => r.tag).filter((t) => t.startsWith("ramp-target"));
   expect(tags).toEqual(["ramp-target:mountain"]);
 });
+
+/** PROWESS PUMPS ITSELF BY +1/+1 (CR 702.108a; overview persona rounds 2026-09-25, item 3): "When
+ *  Kindred Discovery is cast, Harmonic Prodigy makes your creatures bigger" -- the synthetic keyword
+ *  ability carried no amount and no subject, so the sentence fell back to the class-wide phrase. A
+ *  creature spell never feeds it. */
+test("prowess reads as the creature getting +1/+1, and only a noncreature spell feeds it", () => {
+  const prodigy = base("Harmonic Prodigy", [], ["human", "wizard"]);
+  prodigy.tags.characteristics.keywords = ["Prowess"];
+  const instant = base("Rakdos Charm", []);
+  instant.tags.characteristics.types = ["instant"];
+  const fed = directedReasons(instant, prodigy, H).filter((r) => r.tag.startsWith("cast:"));
+  expect(fed.map((r) => r.text)).toEqual(["When Rakdos Charm is cast, Harmonic Prodigy gets +1/+1"]);
+  expect(directedReasons(base("High Fae Trickster", []), prodigy, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+});
