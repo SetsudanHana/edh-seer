@@ -83,6 +83,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   // Graph surface is the LIST, and the board is one tap from a row -- one card's local graph
   // owning the viewport, rather than the whole-deck cloud at 14.7px a disc.
   const autoBoardMode = useBoardMode(data.graph?.nodes.length ?? 0);
+  const comboCount = data.report.combos?.length ?? 0;
   /** THE READER OVERRIDES THE GUESS (owner, 2026-09-06: option 3, "both"). The hook predicts which
    *  surface a device can use; a phone that got the whole-deck board could not reach the one-card
    *  view, and the reverse. The switch sits above either surface at every width (until
@@ -244,7 +245,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route
               path="graph"
               element={
-                <Reference aside={modeSwitch}>
+                <Reference aside={modeSwitch} comboCount={comboCount}>
                   {/* A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
                     * fallback shorter than what replaces it is a layout shift on arrival -- the exact
                     * defect the `#root` reserve one file over exists to remove. The message says what
@@ -278,12 +279,12 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route
               path="cards"
               element={
-                <Reference>
+                <Reference comboCount={comboCount}>
                   <CardList cards={data.report.cards} artByName={artByName} coverage={data.report.coverage} />
                 </Reference>
               }
             />
-            <Route path="combos" element={<Reference><ComboList combos={data.report.combos} /></Reference>} />
+            <Route path="combos" element={<Reference comboCount={comboCount}><ComboList combos={data.report.combos} /></Reference>} />
             {/* A path this app does not have is the REPORT, not an error page: the deck is in the
               *  hash and the chapters are what it is for. */}
             <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
@@ -303,7 +304,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
 /** `aside` sits at the right end of the surface tabs. The graph puts its Whole deck / One card
  *  switch there: on its own row it cost the board ~60px at every width (2026-09-25 live review,
  *  where the board started at y=438 on a 900px laptop). */
-function Reference({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
+function Reference({ children, aside, comboCount }: { children: React.ReactNode; aside?: React.ReactNode; comboCount: number }) {
   const { pathname } = useLocation();
   return (
     <div className="flex flex-col gap-4 pt-4">
@@ -312,7 +313,8 @@ function Reference({ children, aside }: { children: React.ReactNode; aside?: Rea
         <SurfaceLink to="/" className="eyebrow text-(--accent)">
           &larr; Report
         </SurfaceLink>
-        {REFERENCE_SURFACES.map((s) => (
+        {/* The current surface always gets its tab, even Combos on a deck without any. */}
+        {(pathname === "/analysis/combos" ? REFERENCE_SURFACES : surfacesFor(comboCount)).map((s) => (
           <SurfaceLink
             key={s.path}
             to={s.path}
@@ -376,6 +378,14 @@ export const REFERENCE_SURFACES: readonly { path: string; label: string }[] = [
   { path: "/analysis/cards", label: "Cards" },
   { path: "/analysis/combos", label: "Combos" },
 ];
+
+/** The surfaces worth a link for this deck. COMBOS ONLY WHEN THERE ARE SOME (UI review 2026-09-25):
+ *  a deck with none got a tab that opened a page holding one sentence, and the report already
+ *  says so in the bracket panel. The route itself stays, so a shared `/analysis/combos` link
+ *  still opens and says there are none. */
+export function surfacesFor(comboCount: number): readonly { path: string; label: string }[] {
+  return comboCount > 0 ? REFERENCE_SURFACES : REFERENCE_SURFACES.filter((s) => s.path !== "/analysis/combos");
+}
 
 /** BACK RETURNS YOU TO WHERE YOU WERE IN THE SCROLL — the one thing routes were chosen FOR, and the
  *  one thing they do not do on their own. React Router changes the DOM without touching scroll, and

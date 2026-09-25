@@ -269,14 +269,15 @@ export function DeckGauges({ data, diff }: {
                 </>
               }
             />
-            {/* Two columns narrow, three from `sm` (640px), five from `xl` (1280px) -- one clean
-              * row of five at wide widths, with nothing stranded (measured: `xl:grid-cols-5` needs
-              * 938px for five 144px-capped dials plus gaps, and even the `sm`/`lg` band's 1376px
-              * content width at 1440px clears that easily). `.build-inputs-grid` (index.css) spans
-              * a lone last dial across the row only at the 2-column tier, where 5 items give 2+2+1
-              * -- the 3-column tier gives 3+2 and the 5-column tier is a single row, neither of
-              * which strands anything. */}
-            <div className="build-inputs-grid grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 w-full">
+            {/* `.build-inputs-grid` (index.css) spans a lone last tile across the row at the 2-column tier,
+              * where 5 items give 2+2+1; 3+2 and one row of five strand nothing. */}
+            {/* COLUMNS BY THE GROUP'S OWN WIDTH, NOT THE VIEWPORT'S (UI review 2026-09-25). From
+              * `lg` this group shares its row with Synergy, so at 1440px `xl:grid-cols-5` put five
+              * tiles in ~620px and cut three names ("Consis...", "Interac...", "Board w..."). A tile
+              * needs ~150px for "Consistency" and its count: three columns from 480px of group
+              * width, five from 800px. */}
+            <div className="@container w-full">
+            <div className="build-inputs-grid grid grid-cols-2 @min-[480px]:grid-cols-3 @min-[800px]:grid-cols-5 gap-3 w-full">
               {parents.map((p) => (
                 <Bullet
                   key={p.name}
@@ -297,6 +298,7 @@ export function DeckGauges({ data, diff }: {
                   mark={lands.target > 0 ? TARGET_MARK : undefined}
                 />
               ) : null}
+            </div>
             </div>
             {/* WHOSE FLOOR IT IS, SAID WHERE THE FLOOR IS DRAWN (roadmap S4). Every tick above is
               *  the Command Zone template's number, and the panel now marks a deck against it on

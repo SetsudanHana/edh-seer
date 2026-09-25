@@ -502,7 +502,9 @@ function DeckMathRows({
             could supply every class.
           </p>
         ) : null}
-        <ul className="flex flex-col gap-1">
+        {/* 32rem: the class, its count and its shortfall are one reading, and at 1920px they sat
+          *  800px apart (UI review 2026-09-25). */}
+        <ul className="flex flex-col gap-1 max-w-lg">
           {answers.map((a) => {
             const none = a.count === 0;
             // How many short of the doctrine's confidence, DERIVED rather than a template: the
@@ -581,11 +583,13 @@ function DeckMathRows({
                   </span>
                   {a.class}
                 </span>
-                <span className="flex-1 text-right stat-num flex items-baseline justify-end gap-1.5">
-                  <span className={none ? "text-(--warning)" : "text-(--muted)"}>
+                {/* NOWRAP PER PIECE, WRAP BETWEEN THEM: at 390px "2 cards 1 recurring" broke inside
+                  *  "2 cards", printing the number over its noun. Now the mode drops whole. */}
+                <span className="flex-1 text-right stat-num flex flex-wrap items-baseline justify-end gap-x-1.5">
+                  <span className={`whitespace-nowrap ${none ? "text-(--warning)" : "text-(--muted)"}`}>
                     {none ? "none" : plural(a.count, "card")}
                   </span>
-                  <span className={`text-xs ${mode.startsWith("none") ? "text-(--warning)" : "text-(--muted)"}`}>{mode}</span>
+                  <span className={`whitespace-nowrap text-xs ${mode.startsWith("none") ? "text-(--warning)" : "text-(--muted)"}`}>{mode}</span>
                 </span>
                 {/* The one prescriptive figure on the panel, and now the only number in its row
                   *  besides the count it is measured from. Narrower at 390px, where the label needs

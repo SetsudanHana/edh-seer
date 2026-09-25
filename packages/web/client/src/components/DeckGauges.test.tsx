@@ -165,8 +165,11 @@ test("the input grids carry the classes the measured layout table above depends 
   expect(synergyGrid.className).toMatch(/\bgrid\b/);
   expect(synergyGrid.className).toMatch(/\bgrid-cols-2\b/);
   expect(buildGrid.className).toMatch(/\bgrid-cols-2\b/);
-  expect(buildGrid.className).toMatch(/\bsm:grid-cols-3\b/);
-  expect(buildGrid.className).toMatch(/\bxl:grid-cols-5\b/);
+  // Tiers by the group's own width (UI review 2026-09-25): at 1440px the group is half the row,
+  // and the viewport tier put five tiles in ~620px and cut their names.
+  expect(buildGrid.className).toMatch(/@min-\[480px\]:grid-cols-3/);
+  expect(buildGrid.className).toMatch(/@min-\[800px\]:grid-cols-5/);
+  expect(buildGrid.parentElement!.className).toMatch(/@container/);
   // No stray flex-wrap row survives from the reverted attempt.
   expect(container.querySelector(".flex-wrap")).toBeNull();
 });

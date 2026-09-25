@@ -87,7 +87,10 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
       </p>
       {/* The text form stays, at label size rather than display size: it is what a screen reader
         *  reads and what a reader copies into a pod chat, and the band above cannot be either. */}
-      <div className="flex flex-col gap-1.5">
+      {/* 28rem, THE WIDTH OF A READOUT (UI review 2026-09-25). Stretched to 1,740px under a 480px
+        *  paragraph, three hairline-divided cells with one filled read as a toolbar across the page
+        *  -- the tab strip the comment below works to avoid -- however the cells were drawn. */}
+      <div className="flex flex-col gap-1.5 max-w-md">
         {/* ONE TRACK, SEGMENTED -- not three pills. Three separately bordered, separately rounded
           *  cells with one filled are built exactly like this app's own tab strip, and a judge said
           *  so: "I can't tell whether the panel is reporting a result or offering me a choice, and

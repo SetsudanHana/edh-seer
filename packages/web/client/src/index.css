@@ -92,6 +92,11 @@
      and nothing sticky under the header, so nothing there reads this. */
   --site-header-h: 0px;
 
+  /* THE PAGE'S SIDE GUTTER, one value for the app, the header, the footer and the prose page
+     (UI review 2026-09-25). It was a flat 2rem, which on a 390px phone spent 64px -- 16% of the
+     screen -- on margins; DESIGN.md asks for 16px there. 2rem from `sm` up, as before. */
+  --gutter: 1rem;
+
   /* The chapter rail's own height, written by `ChapterRail` on the same terms: below `lg` it is a
      SECOND pinned bar under the header, and 0 above it, where the rail sits beside the column.
      Anything scrolled to has to clear both -- an offset that counted only the header left each
@@ -566,7 +571,7 @@ summary {
 .intro {
   max-width: 64rem;
   margin: 0 auto;
-  padding: 0 2rem 3rem;
+  padding: 0 var(--gutter) 3rem;
   color: var(--muted);
   font-family: var(--font-sans);
   font-size: 0.875rem;
@@ -679,7 +684,7 @@ h1.intro-thesis { margin-block-end: 0; }
 .prose {
   max-width: 68ch;
   margin: 0 auto;
-  padding: 3rem 2rem 5rem;
+  padding: 3rem var(--gutter) 5rem;
   color: var(--muted);
   font-family: var(--font-sans);
   font-size: 0.9375rem;
@@ -705,8 +710,8 @@ h1.intro-thesis { margin-block-end: 0; }
 .prose > .edge-demo,
 .prose > .refusals,
 .prose > .stages {
-  width: min(65rem, calc(100vw - 4rem));
-  margin-inline: calc((100% - min(65rem, calc(100vw - 4rem))) / 2);
+  width: min(65rem, calc(100vw - 2 * var(--gutter)));
+  margin-inline: calc((100% - min(65rem, calc(100vw - 2 * var(--gutter)))) / 2);
 }
 
 /* The one h1 on the page, and the only place this app sets display-sized type. */
@@ -781,7 +786,7 @@ h1.intro-thesis { margin-block-end: 0; }
 .site-footer {
   max-width: 64rem;
   margin: 0 auto;
-  padding: 2rem 2rem 3rem;
+  padding: 2rem var(--gutter) 3rem;
   border-top: 1px solid var(--separator);
   display: grid;
   gap: 1.5rem 3rem;
@@ -827,7 +832,7 @@ h1.intro-thesis { margin-block-end: 0; }
   background: var(--background);
   max-width: 64rem;
   margin: 0 auto;
-  padding: 0.75rem 2rem 0;
+  padding: 0.75rem var(--gutter) 0;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -1720,15 +1725,17 @@ a.brand:hover .brand-edh { color: var(--foreground); }
    `.synergy-inputs-grid` is always 2 columns (Breadth, Anchor -- two items that never strand at
    two columns) but is spanned anyway for the near-impossible case of only one of the two existing.
 
-   `.build-inputs-grid` is 2 columns narrow, 3 from `sm` (640px), 5 from `xl` (1280px). Five items
+   `.build-inputs-grid` is 2 columns narrow, 3 from 480px and 5 from 800px of the GROUP's width
+   (a container query since 2026-09-25; it was `sm`/`xl` of the viewport). Five items
    give 2+2+1 at the 2-column tier (needs the span), 3+2 at the 3-column tier (fine, no span), and
    one row at the 5-column tier (fine). Only the 2-column tier's rule is written and it resets at
-   `sm`, because the item counts this panel actually renders (0-5 parents plus lands) never orphan
+   the 3-column tier, because the item counts this panel actually renders (0-5 parents plus lands) never orphan
    at 3 or 5 columns; if that changes, extend this the way the original seven-dial rule did -- one
    `nth-child(Cn+1)` per column count, each reset before the next takes over. */
 .synergy-inputs-grid > :last-child:nth-child(2n+1) { grid-column: 1 / -1; }
 .build-inputs-grid > :last-child:nth-child(2n+1) { grid-column: 1 / -1; }
-@media (min-width: 40rem) {
+/* The tiers follow the group's own width since 2026-09-25 (DeckGauges.tsx), so the reset does too. */
+@container (min-width: 480px) {
   .build-inputs-grid > :last-child:nth-child(2n+1) { grid-column: auto; }
 }
 
@@ -1795,3 +1802,6 @@ html[data-app-booted][data-route="search"] .site-search { display: none; }
 /* A ROW IS THE TARGET (cohesion sweep 2026-09-08, finding 7): 995 links at 19px on a letter page.
    Block, with the row's padding inside the link, so the whole line answers a thumb. */
 .browse-list li a { display: block; padding-block: 0.3rem; }
+
+/* The gutter's wide value; see `--gutter` in :root. */
+@media (min-width: 40rem) { :root { --gutter: 2rem; } }
