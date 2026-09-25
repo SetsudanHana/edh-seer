@@ -2504,6 +2504,17 @@ describe("trace-event filter", () => {
     expect(enters).toHaveAttribute("aria-pressed", "false");
   });
 
+  // ON HAS TO LOOK ON (2026-09-25 review): every chip starts on, and in one shared outline fifteen
+  // of them read as decoration. An on chip carries a tick; switching it off takes the tick away.
+  test("an on chip shows a tick and an off chip does not", async () => {
+    const user = userEvent.setup();
+    render(<GraphView graph={twoVerbGraph()} report={SAMPLE.report} />);
+    const [dies] = eventChips();
+    expect(dies!.textContent).toContain("✓");
+    await user.click(dies!);
+    expect(dies!.textContent).not.toContain("✓");
+  });
+
   test("a chip switches its event back on, and All restores every one of them", async () => {
     const user = userEvent.setup();
     render(<GraphView graph={twoVerbGraph()} report={SAMPLE.report} />);

@@ -120,6 +120,7 @@ const INSPECTOR_INSET_PX = 312;
 
 /** How many of a focused card's strongest partners the camera frames with it. */
 const FOCUS_PARTNERS = 8;
+const KEY_CARD_SCALE_NOTE = "Synergy score out of 5, against this deck's best-connected card.";
 /** How many search matches are framed as you type, and how long typing has to pause first. */
 const SEARCH_FRAME_MAX = 12;
 const SEARCH_FRAME_DELAY_MS = 350;
@@ -1461,7 +1462,13 @@ export function GraphView(
           // paint hue, so a deck whose art has not landed is still readable by facet.
           // URGENT in card mode: only a handful of cards are on screen there and one of them is the
           // card the user zoomed in to read, so it must not queue behind the other 90 discs.
-          if (src) artLoader.request(src, mode === "card");
+          // AND URGENT FOR A LIT CARD ON SCREEN. The disc queue runs in node order at Scryfall's
+          // spacing, ~7 s for a deck, so the commander and partners the board opens framed on could
+          // be the last discs to get art (2026-09-25 review: flat discs a second in, some still flat
+          // at five). The flow is a handful of cards, so jumping it ahead costs the rest little.
+          const litHere = activeFlow !== null && (activeFlow.nodes.has(n.id) || activeFlow.roots.has(n.id))
+            && isOnScreen(n, cam, dim, ART_RADIUS * cam.z);
+          if (src) artLoader.request(src, mode === "card" || litHere);
           placeholderIds.add(n.id);
           ctx.fillStyle = hues[0] ?? paintColors.muted;
           if (mode === "card") {
@@ -2219,7 +2226,12 @@ export function GraphView(
       const r = canvas.getBoundingClientRect();
       // A card's roles, translated to plain language -- the detailed build-category vocabulary the
       // canvas itself no longer shows.
-      const detail = n ? (n.roles ?? []).map(subcategoryLabel).join(" · ") : "";
+      // THE WIDE DASHED RING, NAMED where a reader asks about it (2026-09-25 review found it
+      // unexplained). The ruling keeps it out of the legend; the tooltip is the one place that costs
+      // nothing. A token's ring already carries its own word under the disc.
+      const detail = n
+        ? [...(n.cardName !== undefined ? ["one face of a two-faced card"] : []), ...(n.roles ?? []).map(subcategoryLabel)].join(" · ")
+        : "";
       if (hoveredIdRef.current !== (n?.id ?? emphasisRef.current)) invalidate();
       hoveredIdRef.current = n?.id ?? emphasisRef.current;
       // Fetch the full card for the one being APPROACHED, so crossing CARD_MODE_Z draws an image
@@ -2519,7 +2531,9 @@ export function GraphView(
           *  which the board never said. One compact row, so it costs the board almost nothing. */}
         {!guided || bare || keyCards.length === 0 ? null : (
         <div data-testid="graph-key-cards" className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="eyebrow text-(--muted)">key cards</span>
+          {/* THE NUMBER NAMES ITS SCALE (2026-09-25 review: "5.0" beside a card said nothing). The
+            *  same rating and the same caveat as the report's card table. */}
+          <span className="eyebrow text-(--muted)" title={KEY_CARD_SCALE_NOTE}>key cards · synergy of 5</span>
           {keyCards.map((c) => (
             <button
               key={c.id}
@@ -2530,7 +2544,7 @@ export function GraphView(
                 inspectingId === c.id ? "border-(--accent) text-(--foreground)" : "border-(--separator) text-(--muted) hover:text-(--foreground)"
               }`}
             >
-              {c.name} <span className="stat-num text-(--muted)">{c.rating.toFixed(1)}</span>
+              {c.name} <span className="stat-num text-(--muted)" title={KEY_CARD_SCALE_NOTE}>{c.rating.toFixed(1)}</span>
             </button>
           ))}
         </div>
@@ -2623,8 +2637,10 @@ export function GraphView(
                 type="button"
                 aria-pressed={hiddenVerbs.size === 0}
                 onClick={() => setHiddenVerbs(new Set())}
-                className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
-                  hiddenVerbs.size === 0 ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
+                // AN ACTION, NOT ONE OF THE SWITCHES, so it is drawn as a text button: in the same
+                // outline as the chips it read as a sixteenth mechanism.
+                className={`eyebrow px-1 py-1 underline-offset-4 ${
+                  hiddenVerbs.size === 0 ? "text-(--muted)" : "text-(--accent) underline"
                 }`}
               >
                 All
@@ -2640,12 +2656,16 @@ export function GraphView(
                   // still available -- it is just switching the others off rather than a mode.
                   aria-pressed={!hiddenVerbs.has(verb)}
                   onClick={() => toggleVerb(verb)}
+                  // ON READS AS ON: a filled chip with a tick. Every chip starts on, and with the
+                  // same outline as the All button beside it fifteen of them read as one decoration
+                  // rather than fifteen switches (2026-09-25 live review).
                   className={`eyebrow rounded-(--radius) border px-2.5 py-1 ${
                     hiddenVerbs.has(verb)
                       ? "border-(--separator) text-(--muted) line-through opacity-60"
-                      : "border-(--accent) text-(--accent)"
+                      : "border-(--accent) bg-(--surface-secondary) text-(--foreground)"
                   }`}
                 >
+                  {hiddenVerbs.has(verb) ? null : <span aria-hidden="true" className="text-(--accent)">✓ </span>}
                   {eventLabel(verb)} <span className="opacity-60">{count}</span>
                 </button>
               ))}
@@ -2801,6 +2821,16 @@ export function GraphView(
               <span className="stat-num opacity-70">{row.count}</span>
             </button>
           ))}
+          {/* TWO LEGENDS, TWO LINES (2026-09-25 review). Line kinds and card kinds ran together as
+            *  one wrapped sentence, so a reader could not see where one list ended. The break and the
+            *  label only appear when both are on screen. The counts are the board's own, tokens and
+            *  second faces included, which is why they can run higher than the report's type line. */}
+          {flowLegend && flowLegend.length > 0 && legend.length > 0 ? (
+            <>
+              <span aria-hidden="true" className="basis-full h-0" />
+              <span className="eyebrow shrink-0">Cards on the board</span>
+            </>
+          ) : null}
           {legend.map((row) => (
             <div
               key={row.value}
