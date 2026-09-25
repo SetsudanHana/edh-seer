@@ -29,7 +29,7 @@ const ROOT = join(import.meta.dirname, "..", "..", "..");
 const OUT = join(ROOT, "packages", "web", "client", "how-it-works");
 /** Krenko's EDHREC tokens list: a real deck, every card read, and the commander the page's worked
  *  pair (Krenko -> Impact Tremors) already names. */
-const DECK = join(ROOT, "packages", "cli", "decks", "edhrec", "tokens", "krenko-mob-boss.real.txt");
+const DECK = join(ROOT, "packages", "cli", "decks", "krenko-mob-boss.txt");
 
 const args = process.argv.slice(2);
 const base = args.includes("--base") ? args[args.indexOf("--base") + 1]! : "http://localhost:5180";

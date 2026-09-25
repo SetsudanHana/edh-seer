@@ -20,6 +20,8 @@ secrets.json
 # generated / downloaded caches, all re-fetchable on demand
 .cs-cache/
 .edhrec-cache/
+# the EDHREC deck population -- see EDHREC_DECKS in packages/data/src/deck-paths.ts
+packages/cli/decks/edhrec/
 packages/data/.mtgjson-cache/
 
 # scratch output

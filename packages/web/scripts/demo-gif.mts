@@ -23,7 +23,7 @@ import gifenc from "gifenc";
 const { GIFEncoder, quantize, applyPalette } = gifenc;
 const ROOT = join(import.meta.dirname, "..", "..", "..");
 const OUT = join(ROOT, "docs", "images", "demo.gif");
-const DECK = join(ROOT, "packages", "cli", "decks", "edhrec", "tokens", "krenko-mob-boss.real.txt");
+const DECK = join(ROOT, "packages", "cli", "decks", "krenko-mob-boss.txt");
 
 const args = process.argv.slice(2);
 const base = args.includes("--base") ? args[args.indexOf("--base") + 1]! : "http://localhost:5180";
