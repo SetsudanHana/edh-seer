@@ -714,7 +714,11 @@ function selfTest(): void {
 function launchOptions(): Parameters<typeof chromium.launch>[0] {
   const opts: Parameters<typeof chromium.launch>[0] = {};
   if (process.env.REVIEW_CHROMIUM) opts.executablePath = process.env.REVIEW_CHROMIUM;
-  if (process.env.REVIEW_BASE_URL && process.env.HTTPS_PROXY) opts.proxy = { server: process.env.HTTPS_PROXY };
+  // Loopback bypasses the proxy: a local build served on this machine (with the live card data behind
+  // it) is a round too, and the proxy cannot reach localhost.
+  if (process.env.REVIEW_BASE_URL && process.env.HTTPS_PROXY) {
+    opts.proxy = { server: process.env.HTTPS_PROXY, bypass: "localhost,127.0.0.1" };
+  }
   if (process.env.REVIEW_TRUST_SPKI) opts.args = [`--ignore-certificate-errors-spki-list=${process.env.REVIEW_TRUST_SPKI}`];
   return opts;
 }
