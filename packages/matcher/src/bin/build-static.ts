@@ -16,7 +16,7 @@ import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
-import { browseSlices, buildPartnerArtifact } from "./partners-core.js";
+import { browseSlices, buildPartnerArtifact, type PartnerId } from "./partners-core.js";
 import { eventShards } from "./events-index-core.js";
 import { loadHierarchy } from "../hierarchy.js";
 
@@ -53,7 +53,7 @@ const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c
 // BELOW the pre-collision name count. Tracked here rather than guessed: `occurrences` counts every
 // (card, name) pair written, and any name written more than once is a real collision, resolved
 // below.
-type CardEntry = { card: (typeof cards)[number]; tags: CardTags | null; combos: StaticCombo[]; pi?: [number, number][] };
+type CardEntry = { card: (typeof cards)[number]; tags: CardTags | null; combos: StaticCombo[]; pi?: PartnerId[] };
 const entryOf = (card: (typeof cards)[number]): CardEntry => ({
   card,
   tags: tagsByOracle.get(card._id) ?? null,
@@ -199,6 +199,7 @@ writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify({
 // otherwise report a corpus of zero cards rather than a changed format.
 writeFileSync(join(stagingDir, "name-index.json"), JSON.stringify({
   types: partners.typeNames, subtypes: partners.subtypeNames, keywords: partners.keywordNames,
+  pairTags: partners.pairTagNames,
   cards: partners.index,
 }));
 // THE EVENT INDEX (roadmap AJ3): who causes each event and who asks for it, as positions in the

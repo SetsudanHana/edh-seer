@@ -8,7 +8,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
-import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, themeSubjectKey } from "../edges.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "../edges.js";
 import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
@@ -290,7 +290,22 @@ export interface EventMembers {
   p: number[];
   /** Positions of the cards that ASK for it. */
   c: number[];
+  /** DAMAGE KEYS ONLY: the stated sizes of the card at `p[i]`'s damage abilities, numbers only, empty
+   *  when none is one ("X", "that much"). What lets a deck drop a 2-damage causer for a trigger that
+   *  wants exactly 1 (Ghyrson Starn) before it fetches the card (2026-09-25). A hint: the engine's
+   *  `trigger.amount` gate still decides. */
+  pd?: number[][];
 }
+
+const DAMAGE_KEY = /^(?:non-combat-damage|combat-damage)\|/;
+
+/** The numeric sizes a card's abilities emitting `verb` state (`Ability.amount`), sorted,
+ *  deduplicated. Per verb: a card's 3 combat damage is not a 3-damage ping. */
+const damageSizesOf = (d: DeckCard, verb: string): number[] => [...new Set(abilitiesOf(d)
+  .filter((a) => (a.emits ?? []).some((e) => e.verb === verb))
+  .map((a) => (a.amount ?? "").trim())
+  .filter((x) => /^\d+$/.test(x))
+  .map(Number))].sort((a, b) => a - b);
 
 /** THE COUNTS FILE, as `event-frequency.json` ships it (roadmap AJ3). `supply` is how many cards
  *  can CAUSE each event and `consume` how many ask for it; `byIdentity` is `supply` split into the
@@ -500,6 +515,55 @@ export const VERIFY_LIMIT = 200;
  *  boilerplate, which is one template printed twenty thousand times. */
 export const KEEP = 60;
 
+/** HOW MANY PARTNERS `pi` (the report's suggestion pool) MAY CARRY. The page is a reading choice --
+ *  `PER_EVENT_CAP` an event, `KEEP` in all, the way EDHREC shows ten a section -- and the pool is
+ *  not: every partner the engine verified behind those cuts, both directions, up to the number of
+ *  candidates a card was ever verified against (`VERIFY_LIMIT`). A-vs-B 2026-09-24 measured the
+ *  page-sized pool (~21 rows a card) missing most of what the full search ranks on the deck's axis. */
+export const PI_KEEP = VERIFY_LIMIT;
+
+/** HOW MANY ASKERS OF ONE SUPPLIED EVENT THE POOL PASS VERIFIES PER CARD (`poolPartnersFor`),
+ *  best-connected first. */
+export const POOL_PER_EVENT = 16;
+
+/** A POOL PAIR: engine-confirmed, keyed on the event that proposed it, never printed on a page. */
+export interface PoolRow { name: string; score: number; event: string; tags?: readonly number[] }
+
+/** THE SUGGESTION POOL'S OWN PASS, beside the page's and never feeding it (spec 2026-09-24 deck
+ *  suggestions; A-vs-B the same day). Two things the page's ranking cannot see:
+ *
+ *  - WHAT A CARD SUPPLIES BY BEING WHAT IT IS. The engine's producer side is `producerEvents`:
+ *    authored emits plus the card's own implied cast and enter. `supplyKeysOf` reads authored emits
+ *    only, so a plain enchantment was never a candidate for a constellation payoff the engine joins
+ *    it to -- Doomwake Giant sat in one of forty Braids enchantments' lists.
+ *  - A COMMON EVENT'S ASKERS. `VERIFY_LIMIT` takes the rarest events first, so an event thousands of
+ *    cards ask for is crowded out of every list. Here each supplied key gets its own
+ *    `POOL_PER_EVENT` slots, best-connected first (`ranked` holds each key's askers in that order).
+ *
+ *  THE ENGINE STILL DECIDES: a pair is kept only when `directedReasons` draws it. */
+export function poolPartnersFor(
+  subject: DeckCard, ranked: ReadonlyMap<string, readonly DeckCard[]>, freq: EventFrequency, h: Hierarchy,
+  skip: ReadonlySet<string>, code: (tags: readonly { tag: string }[]) => number[] = () => [],
+): PoolRow[] {
+  const implied = subject.tags ? producerEvents(subject.tags).flatMap((e) => splitKey(eventKey(e))) : [];
+  const keys = [...new Set([...supplyKeysOf(subject), ...implied].flatMap(supplyForms))];
+  const seen = new Set<string>([subject.card.name, ...skip]);
+  const out: PoolRow[] = [];
+  for (const key of keys) {
+    let taken = 0;
+    for (const c of ranked.get(key) ?? []) {
+      if (taken >= POOL_PER_EVENT) break;
+      if (seen.has(c.card.name)) continue;
+      seen.add(c.card.name);
+      taken++;
+      const reasons = directedReasons(subject, c, h, { tokensMediate: false });
+      if (reasons.length === 0) continue;
+      out.push({ name: c.card.name, score: specificity(key, freq), event: key, tags: code(reasons) });
+    }
+  }
+  return out;
+}
+
 /** HOW MANY ROWS ONE EVENT MAY OCCUPY.
  *
  *  MEASURED, 2026-09-04: ~2,000 cards demand `enters|creature|-`. They score IDENTICALLY, because
@@ -539,6 +603,10 @@ export interface PartnerResult {
    *  was the only reason a payoff's page could not list its producers. Feeder rows are not here --
    *  they already run the other way. */
   verified: PartnerRow[];
+  /** EVERY REASON TAG THE ENGINE WROTE for each confirmed pair, by partner name. Not on the page: the
+   *  suggestion pool carries them (`pi`) so a deck can weigh a pair on its own axis before it asks
+   *  the engine again. */
+  tags: Map<string, string[]>;
   /** Per event key, how many cards in the corpus demand something this card supplies. The rows are
    *  capped; this is what the page says instead of padding -- "and 1,974 more trigger on a creature
    *  entering". A CANDIDATE count, not a verified-edge count, and the page must word it that way. */
@@ -576,6 +644,10 @@ export function partnersFor(
   degree?: ReadonlyMap<string, number>,
 ): PartnerResult {
   const deg = (d: DeckCard): number => degreeOf(degree, d);
+  const tags = new Map<string, string[]>();
+  const note = (name: string, rs: readonly { tag: string }[]): void => {
+    tags.set(name, [...new Set([...(tags.get(name) ?? []), ...rs.map((x) => x.tag)])]);
+  };
   // EVERY DEMAND SHAPE THIS CARD'S EMITS CAN SATISFY. `supplyForms` splits type lists and adds the
   // coarser shapes, so a goblin-token emit is found by a demand for a creature entering.
   // WHAT THE SUBJECT SUPPLIES, WHICH INCLUDES WHAT IT IS. A Goblin body supplies "a Goblin you
@@ -660,6 +732,7 @@ export function partnersFor(
     const hit = r.events.map(([event, { score, tags }]) => ({ event, score, on: reasons.filter((x) => tags.has(x.tag)) }))
       .find((e) => e.on.length > 0);
     if (!hit) continue;
+    note(r.card.card.name, reasons);
     const chosen = pickReason(hit.on);
     const row: PartnerRow = {
       name: r.card.card.name,
@@ -716,6 +789,7 @@ export function partnersFor(
       const on = directedReasons(f, subject, h, { tokensMediate: false })
         .filter((r) => accepts.has(r.tag));
       if (on.length === 0) continue;
+      note(f.card.name, on);
       shown[key] = (shown[key] ?? 0) + 1;
       const chosen = pickReason(on);
       rows.push({
@@ -753,6 +827,7 @@ export function partnersFor(
       for (const key of matched) {
         const on = reasons.filter((r) => r.tag === `static:${splitStaticKey(key).kind}`);
         if (on.length === 0) continue;
+        note(c.card.name, reasons);
         const chosen = pickReason(on);
         const row: PartnerRow = {
           name: c.card.name, slug, score: specificity(key, freq), event: key, reason: chosen.text,
@@ -782,6 +857,7 @@ export function partnersFor(
     // the whole of what the engine read.
     const on = meldReason(subject, meldWith);
     if (on.length > 0) {
+      note(meldWith.card.name, on);
       rows.push({
         name: meldWith.card.name, slug: slugs.get(meldWith.card.name)!,
         score: specificity(key, freq), event: key, reason: pickReason(on).text,
@@ -798,7 +874,7 @@ export function partnersFor(
   // THE RANKING BASIS, FOR THE EVENTS THAT ACTUALLY EARNED A ROW.
   const rarity: Record<string, number> = {};
   for (const row of rows) rarity[row.event] = freq[row.event] ?? 1;
-  return { rows, verified, pool, rarity };
+  return { rows, verified, tags, pool, rarity };
 }
 
 /** WHICH OF THE ENGINE'S SENTENCES TO STORE.
@@ -1609,11 +1685,17 @@ export interface PartnerArtifact {
   subtypeNames: string[];
   keywordNames: string[];
   /** THE REPORT'S CANDIDATE POOL (spec 2026-09-24 deck suggestions, §1): each card's `partners`
-   *  list as `[position in the SORTED index, score to 3 decimals]`, in partner order. Written into
+   *  list as `[position in the SORTED index, score to 3 decimals, ...reason tag codes]` (`PartnerId`). Written into
    *  the `cards/` shards as `pi`, which the report already downloads -- the `partners/` shards it
    *  never fetches would have cost about 9 MB a report. */
-  partnerIds: Map<string, [number, number][]>;
+  partnerIds: Map<string, PartnerId[]>;
+  /** The table a `pi` entry's tag codes index into, shipped in `name-index.json` as `pairTags`. */
+  pairTagNames: string[];
 }
+
+/** A `pi` ENTRY: `[position in the sorted index, score, ...codes into pairTagNames]` -- the reason
+ *  tags the engine wrote for the pair, both directions, so a deck weighs it on its own axis. */
+export type PartnerId = [number, number, ...number[]];
 
 /** A COMMANDER, for `/commanders`: CR 903.3 exactly as `legality.ts` reads it -- legendary creature,
  *  Vehicle or Spacecraft with printed power, a card that says it can be your commander, a
@@ -1819,6 +1901,33 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // THE MIRROR: every pair the forward phase verified, filed under the card it points AT, so the
   // second pass can hand each payoff the producers whose pages already list it.
   const producers = new Map<string, PartnerRow[]>();
+  // THE POOL PASS'S PAIRS, both ways: forward under the subject, mirrored under the candidate. Read
+  // only by `partnerIds`, so no page changes.
+  const poolRows = new Map<string, PoolRow[]>();
+  const poolRow = (name: string, row: PoolRow): void => {
+    const l = poolRows.get(name);
+    if (l) l.push(row); else poolRows.set(name, [row]);
+  };
+  // EACH DEMAND KEY'S ASKERS, BEST-CONNECTED FIRST, sorted once for every card's pool pass.
+  // EACH CONFIRMED PAIR'S REASON TAGS, for `pi`: interned codes held BY THE ROW that already
+  // exists for the pair (a `WeakMap` over page and verified rows, an array on a pool row), and one
+  // array shared by a row and its mirror. A per-pair index of tag sets ran the build out of its 4 GB
+  // heap (2026-09-24, ~7.5 M pairs).
+  const pairTagNames: string[] = [];
+  const tagCode = new Map<string, number>();
+  const code = (rs: readonly { tag: string }[]): number[] => [...new Set(rs.map((r) => {
+    let c = tagCode.get(r.tag);
+    if (c === undefined) { c = pairTagNames.length; pairTagNames.push(r.tag); tagCode.set(r.tag, c); }
+    return c;
+  }))].sort((a, b) => a - b);
+  const rowTags = new WeakMap<object, number[]>();
+  const rankedByDemand = new Map<string, DeckCard[]>();
+  for (const [k, cards] of byDemand) {
+    rankedByDemand.set(k, [...cards].sort((a, b) => (degree.get(b.card.name) ?? 0) - (degree.get(a.card.name) ?? 0)
+      || a.card.name.localeCompare(b.card.name, "en")));
+  }
+  // EVERY FORWARD PAIR THE ENGINE VERIFIED, before the page's caps: the pool `pi` is drawn from.
+  const verifiedByName = new Map<string, PartnerRow[]>();
 
   for (const d of substantive) {
     const slug = slugs.get(d.card.name)!;
@@ -1852,9 +1961,20 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       emits: [...new Set(emits)],
       demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d), ...meldKeysOf(d)])],
       ...(() => {
-        const { rows, verified, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith, degree);
+        const { rows, verified, tags, pool, rarity } = partnersFor(d, candidates, feeders, freq, slugs, h, meldWith, degree);
+        verifiedByName.set(d.card.name, verified);
+        for (const r of [...rows, ...verified]) {
+          const t = tags.get(r.name);
+          if (t) rowTags.set(r, code(t.map((tag) => ({ tag }))));
+        }
+        for (const r of poolPartnersFor(d, rankedByDemand, freq, h, new Set(verified.map((v) => v.name)), code)) {
+          poolRow(d.card.name, r);
+          poolRow(r.name, { name: d.card.name, score: r.score, event: r.event, ...(r.tags ? { tags: r.tags } : {}) });
+        }
         for (const v of verified) {
           const mirrored: PartnerRow = { name: d.card.name, slug, score: v.score, event: v.event, reason: v.reason, producer: true, ...tileOf(d) };
+          const t = rowTags.get(v);
+          if (t) rowTags.set(mirrored, t);
           const list = producers.get(v.slug);
           if (list) list.push(mirrored); else producers.set(v.slug, [mirrored]);
         }
@@ -2012,12 +2132,36 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const positionOf = new Map(index.map((e, i) => [e.name, i] as const));
   // POSITIONS TAKEN AFTER THE SORT, for the same reason `reindex` below remaps: collection order
   // would point every id at the wrong card with every length still right.
-  const partnerIds = new Map<string, [number, number][]>();
+  // THE PAGE'S ROWS FIRST, in page order, then what its caps hid -- the forward pairs past
+  // `PER_EVENT_CAP`/`KEEP`, every producer mirrored onto it (UNFILTERED by the card's own identity;
+  // the report filters by the deck's) and the pool pass's pairs both ways -- ROUND-ROBIN ACROSS
+  // EVENTS, each event best score first, then partner count, then name. By score alone the cap would
+  // crowd out the common events again, one step later.
+  const partnerIds = new Map<string, PartnerId[]>();
   for (const [name, rows] of partnersByName) {
-    const ids: [number, number][] = [];
-    for (const p of rows) {
+    const seen = new Set(rows.map((r) => r.name));
+    const hidden = new Map<string, PoolRow>();
+    for (const r of [...(verifiedByName.get(name) ?? []), ...(producers.get(slugs.get(name)!) ?? []), ...(poolRows.get(name) ?? [])]) {
+      if (seen.has(r.name) || r.name === name) continue;
+      const had = hidden.get(r.name);
+      if (!had || r.score > had.score) hidden.set(r.name, r);
+    }
+    const byEvent = new Map<string, PoolRow[]>();
+    for (const r of hidden.values()) {
+      const l = byEvent.get(r.event);
+      if (l) l.push(r); else byEvent.set(r.event, [r]);
+    }
+    const order = (a: PoolRow, b: PoolRow): number =>
+      b.score - a.score || (degree.get(b.name) ?? 0) - (degree.get(a.name) ?? 0) || a.name.localeCompare(b.name, "en");
+    const queues = [...byEvent.values()].map((l) => l.sort(order)).sort((a, b) => order(a[0]!, b[0]!));
+    const extra: PoolRow[] = [];
+    for (let i = 0; extra.length < hidden.size; i++) for (const q of queues) if (q[i]) extra.push(q[i]!);
+    const ids: PartnerId[] = [];
+    for (const p of [...rows, ...extra]) {
+      if (ids.length >= PI_KEEP) break;
       const pos = positionOf.get(p.name);
-      if (pos !== undefined) ids.push([pos, Math.round(p.score * 1000) / 1000]);
+      const codes = rowTags.get(p) ?? (p as PoolRow).tags ?? [];
+      if (pos !== undefined) ids.push([pos, Math.round(p.score * 1000) / 1000, ...codes]);
     }
     partnerIds.set(name, ids);
   }
@@ -2049,7 +2193,9 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   });
   const events = new Map<string, EventMembers>();
   for (const k of new Set([...members.keys(), ...consumersOf.keys()])) {
-    events.set(k, { p: byEffect(k, members.get(k) ?? []), c: reindex(consumersOf.get(k) ?? []) });
+    const p = byEffect(k, members.get(k) ?? []);
+    events.set(k, { p, c: reindex(consumersOf.get(k) ?? []),
+      ...(DAMAGE_KEY.test(k) ? { pd: p.map((pos) => damageSizesOf(byName.get(index[pos]!.name)!, k.slice(0, k.indexOf("|")))) } : {}) });
   }
   const consumers: Record<string, number> = {};
   for (const [k, ids] of consumersOf) consumers[k] = ids.length;
@@ -2059,5 +2205,5 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const freqByIdentity: Record<string, number[]> = {};
   for (const [k, b] of buckets) freqByIdentity[k] = [...b];
 
-  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames, keywordNames, partnerIds };
+  return { shards, freq, consumers, events, freqByIdentity, index, typeNames, subtypeNames, keywordNames, partnerIds, pairTagNames };
 }

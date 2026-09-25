@@ -919,7 +919,12 @@ export function eventMatches(producer: GameEvent, consumer: GameEvent, h: Hierar
  *  `amount` from printed power on the implied combat event (`implied.ts`). */
 function sizeSatisfies(amount: string | undefined, want: { op: "eq" | "gte"; value: number }): boolean {
   if (amount === undefined || !/^\d+$/.test(amount.trim())) return false;
-  const n = Number(amount);
+  return sizeMeets(Number(amount), want);
+}
+
+/** A stated size against a trigger's required one. Exported so the suggestion shortlist
+ *  (`suggest-static.ts`) filters on the same comparison the engine gates on. */
+export function sizeMeets(n: number, want: { op: "eq" | "gte"; value: number }): boolean {
   return want.op === "eq" ? n === want.value : n >= want.value;
 }
 
