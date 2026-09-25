@@ -1550,7 +1550,14 @@ export function deriveAbilities(
       // The token this ability makes leaves at the next end step. Read off the clause text because
       // the clause layer records the exile as a bare `exile: "it"` action whose object cannot say
       // WHEN — the timing is only in the sentence.
-      if (effectKind === "token-generation" && (LEAVES_SAME_TURN.test(text) || DECAYED.test(text))) ability.temporary = true;
+      if (effectKind === "token-generation" && (LEAVES_SAME_TURN.test(text) || DECAYED.test(text))) {
+        ability.temporary = true;
+        // AND THE TOKEN LEAVES, ON THIS SAME ABILITY (DERIVE 173, overview persona rounds 2026-09-25,
+        // item 4): Dour Port-Mage never heard of Inalla's copy leaving. An emit here, never a second
+        // ability -- that doubled every trigger reason (+187 rows, 2026-09-16). Exiled tokens LEAVE;
+        // sacrificed ones (end of combat, decayed) DIE, CR 700.4.
+        // (The emit is added below, once this ability's emits are attached.)
+      }
       if (effectKind === "trigger-doubling") {
         const doubles = doubledVerbs(text);
         if (doubles.length) ability.doubles = doubles;
@@ -1568,6 +1575,11 @@ export function deriveAbilities(
         : kind === "on-cast" && castAtInstantSpeed === true;
       if (instantSpeed) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
+      const made = ability.temporary ? emits.find((e) => e.verb === "create-token") : undefined;
+      if (made) {
+        const dies = DECAYED.test(text) || /\bsacrifice\b/i.test(LEAVES_SAME_TURN.exec(text)?.[0] ?? "");
+        ability.emits = [...emits, { verb: dies ? "dies" : "leaves", subject: { ...made.subject } }];
+      }
       if (face) ability.face = face;
       abilities.push(ability);
       // A SELF-OR-CLASS TRIGGER IS TWO TRIGGERS (recall v4 #144, 2026-09-09). "Whenever this
