@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
-import { DeckInput } from "./components/DeckInput.js";
+import { DeckActions, DeckInput } from "./components/DeckInput.js";
+import { DeckActionsProvider } from "./lib/deck-actions.js";
 import { PageFoot } from "./components/PageFoot.js";
 import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
@@ -49,8 +50,12 @@ function AppBooted() {
  *  would strand a reader who pressed Edit and then walked to the board. `ReportHeader` stays too --
  *  "the summary on every surface" is a decision with a test on it (`ReportShell.test.tsx`), and this
  *  is not the change that reverses it. */
-export function DeckBar(props: ComponentProps<typeof DeckInput>) {
-  return useLocation().pathname === "/analysis/graph" && props.collapsed ? null : <DeckInput {...props} />;
+export function DeckBar({ hasReport, ...props }: ComponentProps<typeof DeckInput> & { hasReport?: boolean }) {
+  const onGraph = useLocation().pathname === "/analysis/graph";
+  // AND NOWHERE ONCE A REPORT IS UP (UI review 2026-09-25): its actions sit at the end of the
+  // report's summary row instead (`DeckActions`, handed down through `lib/deck-actions.ts`), so the
+  // collapsed box only shows while there is no report to carry them -- a first run in flight.
+  return props.collapsed && (onGraph || hasReport) ? null : <DeckInput {...props} />;
 }
 
 export default function App() {
@@ -500,6 +505,7 @@ export default function App() {
         onClear={() => { clearLastRun(); setCommanders(""); setDecklist(""); }}
         onExample={firstVisit ? () => { setCommanders(EXAMPLE_DECK.commanders); setDecklist(EXAMPLE_DECK.decklist); } : undefined}
         shareLink={link}
+        hasReport={!!data}
       />
       {error && (
         <div className="text-danger border border-danger rounded-(--radius) p-3 text-sm font-mono">{error}</div>
@@ -513,7 +519,20 @@ export default function App() {
           {/* ITS OWN BOUNDARY: suspending in the routes' one would blank the deck bar above it too.
             *  The report's code is a lazy chunk, so the skeleton covers that fetch as well. */}
           <Suspense fallback={<ReportLoading commander={loadingCommander} lines={loadingLines} />}>
+            {/* Absent while the editor is open: its own buttons are on screen then. */}
+            <DeckActionsProvider value={editing ? null : (
+              <DeckActions
+                commanders={commanders}
+                value={decklist}
+                onAnalyze={onAnalyze}
+                loading={loading}
+                onEdit={() => setEditing(true)}
+                onStartOver={() => { clearLastRun(); window.location.assign("/"); }}
+                shareLink={link}
+              />
+            )}>
             <ReportView data={data} diff={diff} state={state} onState={onState} stateBusy={stateBusy} />
+            </DeckActionsProvider>
             {/* THE REPORT ENDS ON PURPOSE. It used to stop at its last panel, and the only route from
               *  a finished report to "how was any of this decided" was the header's More menu; the
               *  card and commander pages have carried this foot since they were built. Inside the

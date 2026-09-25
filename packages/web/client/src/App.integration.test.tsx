@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import App from "./App.js";
@@ -62,7 +62,10 @@ test("input collapses to a summary after a successful analysis", async () => {
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: "1 Sol Ring" } });
   fireEvent.click(screen.getByRole("button", { name: /analyse/i }));
-  expect(await screen.findByRole("button", { name: /edit/i })).toBeInTheDocument();
+  // With a report up, the deck's actions end its summary row rather than sitting in a bar above it
+  // (UI review 2026-09-25), so Edit is looked for there.
+  const summary = await screen.findByRole("region", { name: "Deck summary" }, { timeout: 4000 });
+  expect(within(summary).getByRole("button", { name: /edit/i })).toBeInTheDocument();
   // the large textarea is no longer visible
   expect(screen.queryByLabelText("Decklist")).not.toBeInTheDocument();
 });
@@ -192,7 +195,8 @@ test("text that resolved no cards never becomes a URL or a share link", async ()
   render(<App />);
   fireEvent.change(screen.getByLabelText("Decklist"), { target: { value: NOT_A_DECK } });
   fireEvent.click(screen.getByRole("button", { name: /analyse/i }));
-  expect(await screen.findByRole("button", { name: /edit/i })).toBeInTheDocument();
+  const summary = await screen.findByRole("region", { name: "Deck summary" }, { timeout: 4000 });
+  expect(within(summary).getByRole("button", { name: /edit/i })).toBeInTheDocument();
 
   // NOT `hash === ""`: an earlier test in this file has an analysis still in flight whose own hash
   // write lands here. What is asserted is that no hash on the bar is OURS.

@@ -133,7 +133,9 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
 
   return (
-    <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start">
+    // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
+    // into that row (2026-09-25) the first heading sat flush against the row's rule.
+    <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
       <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
         *  instead of widening it — the narrow-width defence this repo has already paid for twice. */}

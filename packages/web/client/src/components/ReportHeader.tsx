@@ -11,6 +11,7 @@ import { SurfaceLink } from "./ReportShell.js";
 import { identityKey } from "../lib/color-identity.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { RunDiffLine, signed } from "./RunDiffLine.js";
+import { useDeckActions } from "../lib/deck-actions.js";
 
 /** THE REPORT'S SUMMARY, ON EVERY SURFACE — sticky above the chapters AND above the graph, the
  *  (NOT ON A PHONE: below `sm` it is `static`. Measured at 390 on 2026-09-08, the pinned stack was
@@ -72,6 +73,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
   // ordered for; the returning tuner stops paying for it. `findings` is pure and cheap, and
   // `Findings` calls it too, so the count here and the list there cannot disagree.
   const findingCount = findings(report).length;
+  const deckActions = useDeckActions();
   const { pinned, clearPins } = usePinned();
   const pipCost = identityKey(data.commanderColorIdentity ?? [])
     .split("")
@@ -183,6 +185,10 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
             </span>
           </span>
         ) : null}
+        {/* THE DECK'S ACTIONS END THE ROW (UI review 2026-09-25), replacing the 70px deck bar that
+          *  sat above it on every surface. `ml-auto` pins them right while the row has room and
+          *  lets them take their own line when it does not. */}
+        {deckActions ? <div className="ml-auto">{deckActions}</div> : null}
       </div>
       {/* WHAT YOUR EDIT DID, ON EVERY SURFACE (roadmap S9). Its own line rather than a seventh item
         *  in the row above: that row already wraps at 390px, and an item of variable length would

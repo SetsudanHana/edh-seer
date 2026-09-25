@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { deckExportText } from "../lib/deck-export.js";
 import { useIsNarrow } from "../lib/use-narrow.js";
 
@@ -253,4 +253,85 @@ export function cardCount(commanders: string, decklist: string): number | null {
   // A commander pasted in both boxes is one card, not two.
   const extra = rows(commanders).filter((r) => !listed.has(r.name));
   return [...deck, ...extra].reduce((n, r) => n + r.qty, 0);
+}
+
+/** THE DECK'S ACTIONS AS ONE COMPACT GROUP, for the report's summary row (UI review 2026-09-25).
+ *  The same five actions as the collapsed bar above, and the same handlers, minus the box and the
+ *  card count: Copy link, Edit and Re-analyse stay visible, and the two taken once -- Copy decklist
+ *  and Start over -- sit in a More menu. 36px tall rather than the bar's 44: this row is sticky,
+ *  and it is a toolbar beside the scores rather than the page's primary action. On a phone the
+ *  link joins the menu too, so the group fits beside the scores or on one line of its own. */
+export function DeckActions({
+  commanders, value, onAnalyze, loading, onEdit, onStartOver, shareLink,
+}: {
+  commanders: string;
+  value: string;
+  onAnalyze: () => void;
+  loading: boolean;
+  onEdit?: () => void;
+  onStartOver?: () => void;
+  shareLink?: string | null;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+  const narrow = useIsNarrow();
+  const box = useRef<HTMLDivElement>(null);
+  // A MENU CLOSES THE WAYS A READER EXPECTS: Escape, and a press anywhere outside it.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onDown = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    return () => { document.removeEventListener("keydown", onKey); document.removeEventListener("pointerdown", onDown); };
+  }, [open]);
+
+  async function onCopy() {
+    await navigator.clipboard.writeText(deckExportText(commanders, value));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+  async function copyLink() {
+    if (!shareLink) return;
+    await navigator.clipboard.writeText(shareLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 1500);
+  }
+  const small = "min-h-9 px-3 text-sm";
+  const item = "block w-full text-left px-3 py-2 text-sm rounded-(--radius) hover:bg-(--surface-secondary) min-h-9";
+  const link = shareLink ? (linkCopied ? "Link copied" : "Copy link") : null;
+  return (
+    <div ref={box} role="group" aria-label="Deck" className="relative flex items-center gap-2">
+      {link && !narrow ? (
+        <button type="button" onClick={() => void copyLink()} className={`btn-secondary ${small}`}>{link}</button>
+      ) : null}
+      <button type="button" onClick={onEdit} className={`btn-secondary ${small}`}>Edit</button>
+      <button
+        type="button"
+        className={`btn-secondary ${small}`}
+        aria-expanded={open}
+        aria-controls="deck-actions-more"
+        onClick={() => setOpen((v) => !v)}
+      >
+        More
+      </button>
+      {/* In flight is not disabled, as on the bar: it keeps its strength and says so. */}
+      <button type="button" className={`btn-primary ${small}`} disabled={loading} aria-busy={loading} onClick={onAnalyze}>
+        {loading ? "Analysing…" : "Re-analyse"}
+      </button>
+      {open ? (
+        <div
+          id="deck-actions-more"
+          className="absolute right-0 top-full mt-1 z-30 min-w-48 flex flex-col gap-0.5 p-1 rounded-(--radius) border border-(--separator) bg-(--surface) shadow-lg"
+        >
+          {link && narrow ? (
+            <button type="button" className={item} onClick={() => void copyLink()}>{link}</button>
+          ) : null}
+          <button type="button" className={item} onClick={() => void onCopy()}>{copied ? "Copied" : "Copy decklist"}</button>
+          <button type="button" className={item} onClick={() => { setOpen(false); onStartOver?.(); }}>Start over</button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
