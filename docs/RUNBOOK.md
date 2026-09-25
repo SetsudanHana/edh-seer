@@ -104,7 +104,8 @@ unsure of scores 100%.
 
 **The panel's second number is retention, not recall.** The panel was built from claims this engine
 already made, so it cannot see an edge that was never claimed. The real recall figure comes from
-`recall-sample.ts`, drawn separately.
+`recall-sample.ts`, drawn separately and judged blind, then scored by `recall-score.ts` (both in
+`packages/instruments/src/`).
 
 **A stale baseline is how a real failure gets excused.** Re-measure rather than comparing against a
 number written in a document, including this one.
