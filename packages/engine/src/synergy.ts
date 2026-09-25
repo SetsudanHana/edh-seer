@@ -52,13 +52,14 @@ export interface Reason {
   producerFace?: number;
   /** The consuming side's face. See `producerFace`. */
   consumerFace?: number;
-  /** WHICH ABILITY of the producing card supplied this relation's event: an index into its
-   *  `tags.abilities`. Absent when the card supplies the event by merely existing (cast, enters,
+  /** WHICH ABILITY of the producing card supplied this relation's event: an index into THAT FACE's
+   *  abilities (`faceTags` filters `tags.abilities` per face, so on a multi-face card read it with
+   *  `producerFace`, never against the whole card's list). Absent when the card supplies the event by merely existing (cast, enters,
    *  dies) or through a channel other than events. Read by `findRoutes` (spec 2026-09-25): a chain
    *  continues only through the ability the previous hop triggered. Never part of the tag. */
   producerAbility?: number;
-  /** WHICH ABILITY of the consuming card this relation's event triggers: an index into its
-   *  `tags.abilities`. Absent for the synthetic keyword / proliferate / copy abilities. */
+  /** WHICH ABILITY of the consuming card this relation's event triggers: an index into THAT FACE's
+   *  abilities (read with `consumerFace`). Absent for the synthetic keyword / proliferate / copy abilities. */
   consumerAbility?: number;
   /** True when the producer side of this reason was a SYNTHESISED baseline event — the card
    *  supplying it does so merely by existing (any nonland is cast; any permanent enters), not by

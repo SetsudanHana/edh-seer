@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons } from "./edges.js";
+import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, themeSubjectKey, claimCount, cardCaresTags, ETB_REFIRE, eventMatches, dedupeReasons, createsReasons } from "./edges.js";
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@edh-seer/engine";
@@ -4937,4 +4937,18 @@ test("ability indices never split a reason dedupeReasons used to collapse", () =
   const a = { tag: "enters:creature", text: "x", producer: "A", consumer: "B" };
   expect(dedupeReasons([{ ...a, producerAbility: 0 }, { ...a, producerAbility: 1 }])).toHaveLength(1);
   expect(dedupeReasons([{ ...a, producerAbility: 0 }, { ...a, producerAbility: 1 }])[0]!.producerAbility).toBe(0);
+});
+
+/** A TOKEN MADE MID-CHAIN (final review of ability routes, PR 1): the "makes a token" reason names the
+ *  ability that made it, or a route could only ever cross a token at its very start. */
+test("a create-token reason names the ability that made the token", () => {
+  const maker = base("Maker", [
+    { kind: "triggered", trigger: { verbs: ["cast"], subject: { control: "you" } }, effect: { kind: "draw-card" } },
+    { kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you" } }, effect: { kind: "token-generation" },
+      emits: [{ verb: "create-token", subject: { control: "you", token: true, type: "creature", subtype: "goblin" } }] },
+  ] as CardTags["abilities"]);
+  const goblin = base("Goblin", [], ["goblin"]);
+  goblin.tags!.characteristics = { ...goblin.tags!.characteristics, token: true };
+  const made = createsReasons(maker, goblin, H);
+  expect(made.map((r) => r.producerAbility)).toEqual([1]);
 });

@@ -984,6 +984,9 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
   for (const r of reasons) {
     // The ability indices are routing facts, never a distinct claim: two reasons that differ only in
     // which ability supplied them collapse exactly as before, and the first (lowest index) is kept.
+    // CEILING: on the CONSUMER side too -- one event firing the consumer's abilities 0 and 2 keeps 0,
+    // so a route continuing through ability 2 is not found. Split per ability only with a measured
+    // before/after, since it would change the reason list the panel reads.
     const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined });
     if (!seen.has(k)) { seen.add(k); out.push(r); }
   }
@@ -2773,12 +2776,15 @@ export function createsReasons(p: DeckCard, c: DeckCard, h: Hierarchy): Reason[]
   if (c.tags.characteristics.token !== true) return [];
   const consumerSubject = characteristicsSubject(c.tags, c.card.name);
   const reasons: Reason[] = [];
-  for (const pa of p.tags.abilities) {
+  for (const [pi, pa] of p.tags.abilities.entries()) {
     for (const e of pa.emits ?? []) {
       if (e.verb !== "create-token") continue;
       if (!subjectMatches(consumerSubject, e.subject, h)) continue;
       reasons.push({
         tag: `creates:${themeSubjectKey(e.subject)}`,
+        // THE ABILITY THAT MADE IT (ability routes): a route crosses a token made mid-chain only when
+        // this hop leaves the ability the previous hop triggered.
+        producerAbility: pi,
         text: createsSentence(p.card.name, c.card.name),
         effectKind: "token-generation",
         repeatability:

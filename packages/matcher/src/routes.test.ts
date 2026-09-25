@@ -63,3 +63,16 @@ test("a token node and a card with the same name are different stops", () => {
 test("no indices, no route", () => {
   expect(findRoutes([{ tag: "static:pump", text: "A pumps B", producer: "A", consumer: "B" }], "A", "B")).toEqual([]);
 });
+
+/** A TOKEN MADE MID-CHAIN (final review, PR 1): A triggers X's ability 0, which makes a Goblin, which
+ *  enters and triggers B. The token hop must leave the ability A triggered. */
+test("a route crosses a token the middle card made with the ability the chain reached", () => {
+  const reasons = [
+    r("A", "X", undefined, 0),
+    r("X", "Goblin", 0, undefined, { consumerIsToken: true }),
+    r("Goblin", "B", undefined, 0, { producerIsToken: true }),
+  ];
+  expect(findRoutes(reasons, "A", "B")[0]!.hops.map((h) => h.to)).toEqual(["X", "Goblin", "B"]);
+  // Made by X's OTHER ability: A never reaches it.
+  expect(findRoutes([reasons[0]!, r("X", "Goblin", 1, undefined, { consumerIsToken: true }), reasons[2]!], "A", "B")).toEqual([]);
+});
