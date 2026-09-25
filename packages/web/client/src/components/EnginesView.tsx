@@ -76,8 +76,17 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
                 <Art card={c.card} size={36} />
                 <div><h3 className="font-semibold text-base"><CardName name={c.card.name} /></h3><p>{c.why}</p></div>
               </div>
-              {c.keep ? (
+              {c.keep && c.keepActs ? (
                 <p className="text-(--muted)"><span className="eyebrow block">Best reason to keep it</span><Badge repeat={c.keep.repeat} /><ReasonText text={c.keep.text} /></p>
+              ) : c.keep ? (
+                // A FEEDER SAYS IT FEEDS. The line other cards get from it is true of any card of
+                // its kind, and calling it the best reason to keep this one read as generic or
+                // wrong to three seats (round 7).
+                <p className="text-(--muted)">
+                  <span className="eyebrow block">What it does here</span>
+                  Its links here are other cards reacting to it or counting it{c.fed > 1 ? ` (${c.fed} cards)` : ""}, not its own abilities doing something. For example:{" "}
+                  <Badge repeat={c.keep.repeat} /><ReasonText text={c.keep.text} />
+                </p>
               ) : null}
               <CardText card={c.card} />
             </article>
@@ -165,6 +174,14 @@ function CardText({ card }: { card: EngineCard }) {
   );
 }
 
+/** "A, B and C", or the first eight and a count, for names a sentence has to carry. */
+function names(list: string[]): string {
+  const short = list.map((n) => n.split(" // ")[0]!);
+  const head = short.slice(0, 8);
+  const tail = short.length > 8 ? ` and ${short.length - 8} more` : "";
+  return head.length > 1 && !tail ? `${head.slice(0, -1).join(", ")} and ${head.at(-1)}` : head.join(", ") + tail;
+}
+
 /** A group shows this many member chips until asked for all of them: at 390px a group of 54
  *  was a wall of chips three screens tall (live round). The rest are named in a line. A selection
  *  moves the cards it lights to the front and says how many of the rest it lights: drawing every lit
@@ -229,7 +246,7 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
         {g.sameAs && !all ? (
           <p className="text-sm">
             Mostly the same cards as <b>{g.sameAs.name}</b>
-            {g.sameAs.missing ? `, without ${g.sameAs.missing} of them` : ""}
+            {g.sameAs.missing.length ? `, without ${names(g.sameAs.missing.map((id) => { const c = m.cards.get(id); return c ? c.name + (c.isToken ? " (token)" : "") : id; }))}` : ""}
             {members.length ? `, plus these ${members.length}:` : "."}
           </p>
         ) : null}

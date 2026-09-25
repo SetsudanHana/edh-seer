@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { nodeId as matcherNodeId } from "@edh-seer/matcher/graph-projection";
 import { engineDeck } from "./engine-model.fixture.js";
 import { buildEngineModel, groupName, nodeId, plural } from "./engine-model.js";
+import type { CardGraph, DeckReport } from "../types.js";
 
 describe("nodeId", () => {
   test("matches the projection's node identity, so reasons land on the board's nodes", () => {
@@ -41,7 +42,7 @@ describe("buildEngineModel", () => {
   });
 
   test("a group whose members repeat one above it says so", () => {
-    expect(m.groups.find((g) => g.tag === "attacks:cleric")!.sameAs).toEqual({ name: "Counts your Clerics", extra: [], missing: 0 });
+    expect(m.groups.find((g) => g.tag === "attacks:cleric")!.sameAs).toEqual({ name: "Counts your Clerics", extra: [], missing: [] });
     expect(m.groups.find((g) => g.tag === "scales:cleric")!.sameAs).toBeUndefined();
   });
 
@@ -88,6 +89,8 @@ describe("buildEngineModel", () => {
     const side = m.cuts.find((c) => c.card.name === "Sidekick")!;
     expect(side.real).toBe(2);
     expect(side.keep?.text).toBe("When Cleric 3 gains you life, Sidekick grows");
+    expect(side.keepActs).toBe(true);
+    expect(m.cuts.find((c) => c.card.name.startsWith("Cleric"))!.keepActs).toBe(false);
   });
 
   test("a pair that helps both ways shows both directions, and no card fills the strip", () => {
@@ -99,4 +102,22 @@ describe("buildEngineModel", () => {
     for (const p of m.strongest) for (const id of [p.pair.a, p.pair.b]) count.set(id, (count.get(id) ?? 0) + 1);
     expect(Math.max(...count.values())).toBeLessThanOrEqual(2);
   });
+});
+
+test("a pair helps both ways only when each card acts in a line, whichever side produced the link", () => {
+  // A recursion link's producer is the card in the graveyard: B -> A, yet A does the work.
+  const reasons = [
+    { producer: "B", consumer: "A", tag: "graveyard-recursion:creature", text: "When B is in the graveyard, A can bring it back" },
+    { producer: "A", consumer: "B", tag: "static:keyword-grant", text: "A gives B an extra ability", repeatability: "static" },
+  ];
+  const report = {
+    commanders: [], cards: ["A", "B"].map((name) => ({ name, score: 1 })),
+    edges: reasons.map((r) => ({ a: r.producer, b: r.consumer, score: 1, reasons: [r] })),
+  } as unknown as DeckReport;
+  const graph = {
+    nodes: ["A", "B"].map((n) => ({ id: n, label: n, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [] })),
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  } as unknown as CardGraph;
+  const [pair] = buildEngineModel(report, graph).strongest;
+  expect(pair!.both).toBe(false);
 });

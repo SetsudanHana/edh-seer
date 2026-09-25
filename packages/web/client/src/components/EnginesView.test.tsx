@@ -72,3 +72,10 @@ test("card text shows the printed mana cost", () => {
   view();
   expect(screen.getAllByRole("img", { name: /1 generic|black/i }).length).toBeGreaterThan(0);
 });
+
+test("a card that only feeds others says so instead of offering a best reason", () => {
+  view();
+  const cleric = screen.getAllByRole("heading", { name: /^Cleric \d$/ })[0]!.closest("article")!;
+  expect(within(cleric).getByText(/What it does here/)).toBeInTheDocument();
+  expect(within(cleric).queryByText(/Best reason to keep it/)).toBeNull();
+});
