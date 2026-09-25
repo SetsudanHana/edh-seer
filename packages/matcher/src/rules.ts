@@ -361,6 +361,13 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // return clause, which is real removal and a pre-existing count member; excluding it here
         // would drop a card the gate says can never leave a class).
         if (rule.mode === "exile" && /\byou own\b/.test(phrase)) continue;
+        // AN IMMEDIATE FLICKER ANSWERS NOTHING (owner ruling 2026-09-25): "exile target X, then
+        // return it to the battlefield" puts it straight back, so the clause is skipped -- per
+        // CLAUSE, not per card, so a modal card's real removal mode still counts. A DELAYED return
+        // ("At the beginning of the next end step, return ...") is its own sentence and keeps its
+        // place in `count`, as the answer-modes spec rules: it answers the board for a turn.
+        const sentence = (dc.card.oracleText ?? "").slice(m.index ?? 0).split(/[.\n]/)[0] ?? "";
+        if (new RegExp(set.patterns.exileThenReturns, "i").test(sentence)) continue;
         for (const word of Object.keys(KNOWN_CLASSES)) {
           if (!new RegExp(`\\b${word}\\b`).test(phrase)) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
