@@ -142,3 +142,12 @@ test("a reason shared by several deck cards names the others once", () => {
   expect(row.textContent).toContain("also Harmonic Prodigy, Mysidian Elder and 2 more of your cards");
   expect(screen.queryByText(/^and \d+ more$/)).toBeNull();
 });
+
+test("one source reads 'reaches', several read 'reach'", () => {
+  const one: SuggestedCard = {
+    name: "Memory Worm", slug: "memory-worm", identity: ["R"], mv: 4, connections: ["Urabrask"], reasons: [],
+    route: { to: "Razorkin Needlehead", from: ["Urabrask // The Great Work"], chain: [] },
+  };
+  inRouter(<SuggestedCards cards={[one]} empty="none" />);
+  expect(screen.getAllByRole("listitem")[0]!.textContent).toContain("1 of your cards reaches Razorkin Needlehead through it");
+});
