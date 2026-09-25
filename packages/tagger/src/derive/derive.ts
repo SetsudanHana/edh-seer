@@ -161,7 +161,12 @@ import { emblemRecipient } from "../emblem.js";
 // ramp (Chthonian Nightmare, Bristling Hydra, ...). And a leading article is not a name: "The
 // Sackville-Bagginses" is self as "Sackville-Bagginses" (its ETB had joined Kindred Discovery), and
 // stripCardName no longer deletes every "the" from a "The ..." card's clause text.
-export const DERIVE_VERSION = 172;
+// 173: overview persona rounds 2026-09-25. A temporary token LEAVES (exile) or DIES (sacrifice) on
+// the ability that made it (item 4: Inalla -> Dour Port-Mage). Counters put on the card by its own
+// name are on itself, and a quantified recipient ("on each other Moogle you control") types a
+// counter emit (item 8: The Earth Crystal fed by The Ozolith and Mog). A flash grant ("cast spells
+// as though they had flash") is a permission, not a cast (Najal, High Fae Trickster).
+export const DERIVE_VERSION = 173;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
