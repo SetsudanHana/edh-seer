@@ -2449,7 +2449,7 @@ test("\"enchanted permanent\" is bounded by the card's own Enchant line", () => 
 });
 
 test("the Enchant bound: a permanent line is a no-op, reminder text is dropped, and a two-face card reads its own face", () => {
-  const ghost = (text: string, extra?: Parameters<typeof deriveAbilities>) => deriveAbilities(
+  const ghost = (text: string) => deriveAbilities(
     [{ id: 2, abilityType: "triggered" as const, trigger: { event: "dies", subject: "enchanted permanent", control: "you" },
       actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }] }],
     "Aura", { 2: text }, undefined, text,

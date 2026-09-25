@@ -1,5 +1,5 @@
 import type { DeckReport } from "../types.js";
-import { findings, rankedFindings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
+import { rankedFindings, slotTrade, FINDING_CAP, type Finding } from "../lib/findings.js";
 import { useState } from "react";
 import type { RunDiff } from "../lib/run-diff.js";
 

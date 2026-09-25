@@ -11,7 +11,7 @@
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { identityMask, inIdentityOf, type EventFrequencyFile, type EventMembers } from "../../packages/matcher/src/bin/partners-core.js";
+import { identityMask, inIdentityOf, type EventFrequencyFile, type EventMembers } from "../../packages/matcher/src/partners-core.js";
 import { eventShardOf } from "../../packages/matcher/src/bin/events-index-core.js";
 
 const out = process.argv[2] ?? "static-out";

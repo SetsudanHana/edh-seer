@@ -10,8 +10,9 @@ import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
 import { createTagsLookup } from "../../packages/tagger/src/index.js";
 import { ComboIndex } from "../../packages/engine/src/index.js";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "../../packages/matcher/src/index.js";
+import { CALIBRATION_DECKS } from "@edh-seer/data";
 
-const DIR = process.argv[2] ?? "packages/cli/decks/calibration";
+const DIR = process.argv[2] ?? CALIBRATION_DECKS;
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
 const tags: CardTagsLookup = createTagsLookup(store.db, "derived");

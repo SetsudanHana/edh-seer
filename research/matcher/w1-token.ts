@@ -21,7 +21,7 @@ import { connect, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { directedReasons } from "../../packages/matcher/src/edges.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
-import { demandForms, eventKey, supplyForms, type CardPageRecord } from "../../packages/matcher/src/bin/partners-core.js";
+import { demandForms, eventKey, supplyForms, type CardPageRecord } from "../../packages/matcher/src/partners-core.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
 const outDir = "static-out";

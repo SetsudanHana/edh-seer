@@ -6,19 +6,19 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 // and does nothing but read strings.
 import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
-import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
-import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "../partner-shard.js";
-import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "../edges.js";
-import { keywordAbilities } from "../implied.js";
-import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
-import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
-import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } from "../rate.js";
+import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
+import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { keywordAbilities } from "./implied.js";
+import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
+import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
+import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } from "./rate.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
-export { effectPhrase } from "../sentence.js";
-import { normalizeZoneEvent, zoneEventKey } from "../zones.js";
-import type { DeckCard, Hierarchy } from "../types.js";
+export { effectPhrase } from "./sentence.js";
+import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import type { DeckCard, Hierarchy } from "./types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
  *  decidable lives here, for the reason `build-static-core.ts` was split out of its own bin --
@@ -27,9 +27,10 @@ import type { DeckCard, Hierarchy } from "../types.js";
 
 // THE SLUG RULE LIVES IN A LEAF (`../slug.ts`) so the browser's search field can import it without
 // pulling this whole module -- and, through `themesOf`, the archetype table -- into the entry chunk.
-import { slugOf } from "../slug.js";
-import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "../build.js";
-import { POOL_CLASSES } from "../answer-pool.js";
+import { slugOf } from "./slug.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "./build.js";
+import { POOL_CLASSES } from "./answer-pool.js";
+import { BASIC_LAND_TYPE_SET } from "./typeline.js";
 export { slugOf };
 
 /** TWO CARDS CAN SLUG THE SAME AND ONE URL CANNOT SERVE BOTH.
@@ -998,7 +999,6 @@ export const demandKeysOf = (d: DeckCard): string[] => [
 /** THE FIVE BASIC LAND TYPES, which a board count may name and which never form a row -- the same
  *  refusal `edges.ts` makes for the same reason: a mono-black deck runs thirty Swamps, and thirty
  *  rows into one payoff is a mesh, not a synergy. */
-const BASIC_LAND_TYPES = new Set(["plains", "island", "swamp", "mountain", "forest"]);
 
 /** WHAT A CARD COUNTS ON THE BOARD, as a demand key.
  *
@@ -1105,7 +1105,7 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
     return counts.flatMap(({ counted, tag }) => {
       if (counted.control === "opp") return [];
       const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
-        .filter((st) => !BASIC_LAND_TYPES.has(st));
+        .filter((st) => !BASIC_LAND_TYPE_SET.has(st));
       if (subtypes.length > 0) return subtypes.map((st) => ({ key: `counts|-|${st}|-`, tag }));
       // A bare type count (Storm-Kiln Artist's artifacts), keyed on the type itself.
       const types = Array.isArray(counted.type) ? counted.type : counted.type === undefined ? [] : [counted.type];
@@ -1126,7 +1126,7 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
 export const supplyKeysOf = (d: DeckCard): string[] => [
   ...emitKeysOf(d),
   ...(d.tags?.characteristics.subtypes ?? [])
-    .filter((t) => !BASIC_LAND_TYPES.has(t))
+    .filter((t) => !BASIC_LAND_TYPE_SET.has(t))
     .map((t) => `counts|-|${t}|-`),
   // An artifact supplies "an artifact you control" the way a Goblin supplies a Goblin (2026-09-09).
   ...(d.tags?.characteristics.types ?? [])
@@ -1143,7 +1143,7 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
 
 const fodderSupplyKeysOf = (d: DeckCard): string[] => {
   const nouns = new Set<string>();
-  for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPES.has(t)) nouns.add(t);
+  for (const t of d.tags?.characteristics.subtypes ?? []) if (!BASIC_LAND_TYPE_SET.has(t)) nouns.add(t);
   for (const t of d.tags?.characteristics.types ?? []) if (!WHOLE_DECK_TYPES.has(t)) nouns.add(t);
   for (const a of abilitiesOf(d)) for (const e of a.emits ?? []) {
     if (e.verb !== "create-token" || e.subject.token !== true) continue;

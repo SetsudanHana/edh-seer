@@ -1981,7 +1981,6 @@ test("a single-leaf-parents deck with deckMath present still hides the role-spen
 // off Summary onto Fixes -- see the Fixes-tab tests below. (S10, 2026-09-02: the Suggestions panel
 // itself is gone; the findings' figures stayed.)
 test("OverviewTab shows the health dashboard, across its sub-tabs", async () => {
-  const user = userEvent.setup();
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
   // S10 (2026-09-02): the `Suggestions` assertion that stood here went with the panel. Every
   // suggestion it could show is already a finding's action line -- which is what its own comment

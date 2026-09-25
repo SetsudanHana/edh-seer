@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard, DECKS_DIR } from "@edh-seer/data";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights, impactEdgeWeight, dampByAlpha, COMMANDER_BOOST, type ImpactWeights } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
@@ -13,7 +13,7 @@ import { saltCardScores, spearman, meanSpearman, looCV, type SaltPayload, type S
 import type { DeckCard } from "../types.js";
 import { csSlug } from "./cs-categories.js";
 
-const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
+const DECK_DIR = DECKS_DIR;
 const CONFIG = JSON.parse(
   readFileSync(new URL("../calibration-decks.json", import.meta.url), "utf8"),
 ) as { name: string; path: string; saltId: string }[];

@@ -1,6 +1,9 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+/** The web package, found from this file rather than from the working directory, so the test runs
+ *  the same from `packages/web` and from the repository root (the root vitest config). */
+const WEB = join(import.meta.dirname, "..", "..");
 
 /** THE PRODUCT SCREENSHOTS ARE REPRODUCIBLE, OR THEY FAIL HERE (docs refresh, 2026-09-25).
  *
@@ -15,11 +18,11 @@ import { expect, test } from "vitest";
  *   - the page and the README show the same set, so the two cannot drift apart;
  *   - the `width`/`height` the page declares are the file's real size, so a regenerated frame of a
  *     different size shifts nothing on load. */
-const CLIENT = join(process.cwd(), "client");
+const CLIENT = join(WEB, "client");
 const DIR = join(CLIENT, "how-it-works");
 const page = readFileSync(join(DIR, "index.html"), "utf8");
-const readme = readFileSync(join(process.cwd(), "..", "..", "README.md"), "utf8");
-const script = readFileSync(join(process.cwd(), "scripts", "docs-screenshots.mts"), "utf8");
+const readme = readFileSync(join(WEB, "..", "..", "README.md"), "utf8");
+const script = readFileSync(join(WEB, "scripts", "docs-screenshots.mts"), "utf8");
 
 const onDisk = readdirSync(DIR).filter((f) => /^shot-.*\.webp$/.test(f)).sort();
 
@@ -66,12 +69,12 @@ test("each screenshot's declared size is its real size", () => {
  *  stops rendering images past 10 MB, and a reader on a phone should not wait for most of that.
  *  The first recording was 2.8 MB at 880 px wide. */
 test("the README's demo is the scripted GIF, and under budget", () => {
-  const gif = join(process.cwd(), "..", "..", "docs", "images", "demo.gif");
+  const gif = join(WEB, "..", "..", "docs", "images", "demo.gif");
   expect(readme).toContain('src="docs/images/demo.gif"');
   expect(existsSync(gif)).toBe(true);
   const bytes = readFileSync(gif);
   expect(bytes.toString("ascii", 0, 6)).toBe("GIF89a");
   expect(bytes.length).toBeLessThan(5 * 1024 * 1024);
-  const demo = readFileSync(join(process.cwd(), "scripts", "demo-gif.mts"), "utf8");
+  const demo = readFileSync(join(WEB, "scripts", "demo-gif.mts"), "utf8");
   expect(demo).toContain('"docs", "images", "demo.gif"');
 });

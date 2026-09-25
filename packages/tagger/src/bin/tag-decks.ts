@@ -1,13 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect,
-  loadConfig,
-  mongoLookup,
-  normalizeName,
-  parseDecklistText,
-  docToCard,
-} from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard, DECKS_DIR } from "@edh-seer/data";
 import type { Card } from "@edh-seer/engine";
 import { createProvider } from "../llm/factory.js";
 import { extractCardTags } from "../extract.js";
@@ -19,7 +12,7 @@ import { mapPool } from "../pool.js";
 import { startProgress } from "../progress.js";
 
 const DECKS = ["inalla", "chandra", "gisa", "gogo", "hidetsugu", "samut"];
-const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
+const DECK_DIR = DECKS_DIR;
 
 async function main(): Promise<void> {
   const cfg = loadTaggerConfig();

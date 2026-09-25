@@ -27,7 +27,7 @@
  *    commander-ramp.ts --criteria      R1-R4, the registered criteria that need the corpus */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS, DECKS_DIR } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { detectBuildCategories } from "../../packages/matcher/src/build.js";
 import { costRefusal } from "../../packages/matcher/src/castability.js";
@@ -35,8 +35,8 @@ import { quantiles, simulate, type SimulateResult } from "../../packages/matcher
 import { castTurnStats, castTurns, silenceRamp, type CastTurn } from "../../packages/matcher/src/bin/commander-ramp-core.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
-const DECK_DIR_ALT = join(process.cwd(), "packages", "cli", "decks");
+const DECK_DIR = CALIBRATION_DECKS;
+const DECK_DIR_ALT = DECKS_DIR;
 const arg = (flag: string): string | undefined => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : undefined;

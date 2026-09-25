@@ -23,7 +23,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { docToCard } from "@edh-seer/data/docs";
-import { normalizeName, parseDecklistSections } from "@edh-seer/data";
+import { normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import type { CardDoc } from "@edh-seer/data";
 import type { CardTags } from "@edh-seer/tagger";
 import type { DeckReport } from "@edh-seer/engine";
@@ -37,7 +37,7 @@ import { candidatePool } from "../../packages/matcher/src/suggest.js";
 import { maxAxisWeight } from "../../packages/matcher/src/axis.js";
 import type { Reason } from "@edh-seer/engine";
 import { eventKeysForDemand } from "../../packages/matcher/src/suggest-keys.js";
-import { demandForms, demandKeysOf, supplyForms, supplyKeysOf } from "../../packages/matcher/src/bin/partners-core.js";
+import { demandForms, demandKeysOf, supplyForms, supplyKeysOf } from "../../packages/matcher/src/partners-core.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "../../packages/matcher/src/build.js";
 import { POOL_CLASSES } from "../../packages/matcher/src/answer-pool.js";
 import { directedReasons } from "../../packages/matcher/src/edges.js";
@@ -46,7 +46,7 @@ import { faceDeckCards } from "../../packages/matcher/src/faces.js";
 import { deckLandTypes } from "../../packages/matcher/src/chosen-type.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
-const DECK_DIR = process.env.DECK_DIR ?? join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DECK_DIR = process.env.DECK_DIR ?? CALIBRATION_DECKS;
 const OUT = "static-out";
 const TOP = 10;
 const PASS = 8;

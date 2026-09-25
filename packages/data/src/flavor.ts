@@ -2,15 +2,11 @@ import type { Collection } from "mongodb";
 import { normalizeName } from "./names.js";
 import type { CardDoc } from "./docs.js";
 
+import { scryfallSearch, scryfallSearchUrl, type ScryfallSearchOptions } from "./scryfall.js";
+
 export type FetchFn = typeof fetch;
 
-const SCRYFALL_HEADERS = {
-  "User-Agent": "edh-seer/0.1",
-  Accept: "application/json",
-};
-
-const FLAVOR_SEARCH_URL =
-  "https://api.scryfall.com/cards/search?q=has%3Aflavorname&unique=prints";
+const FLAVOR_SEARCH_URL = scryfallSearchUrl("has:flavorname", { unique: "prints" });
 
 export interface FlavorPair {
   oracleId: string;
@@ -39,15 +35,11 @@ export function extractFlavorPairs(page: ScryfallSearchPage): FlavorPair[] {
 
 export async function fetchFlavorNames(
   fetchImpl: FetchFn = fetch,
+  opts: Omit<ScryfallSearchOptions, "fetchImpl"> = {},
 ): Promise<FlavorPair[]> {
   const pairs: FlavorPair[] = [];
-  let url: string | undefined = FLAVOR_SEARCH_URL;
-  while (url) {
-    const res = await fetchImpl(url, { headers: SCRYFALL_HEADERS });
-    if (!res.ok) throw new Error(`Scryfall flavor-name search failed: ${res.status}`);
-    const page = (await res.json()) as ScryfallSearchPage;
-    pairs.push(...extractFlavorPairs(page));
-    url = page.has_more ? page.next_page : undefined;
+  for await (const data of scryfallSearch<ScryfallSearchCard>(FLAVOR_SEARCH_URL, { ...opts, fetchImpl })) {
+    pairs.push(...extractFlavorPairs({ data }));
   }
   return pairs;
 }

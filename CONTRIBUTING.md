@@ -44,13 +44,28 @@ cannot be rebuilt for free. How to run the site locally, the way production runs
 npm test                        # every workspace, each with its own config
 npm test -w @edh-seer/matcher   # one workspace
 npm run typecheck               # vitest does NOT typecheck; run this too
+npm run lint                    # oxlint: bugs and unused code, not style
 npm run lint:bins               # where a script is allowed to live
 ```
 
-**Never run `npx vitest run` from the repository root.** It ignores each package's own vitest config,
-so the web client's tests run without jsdom and die on `document is not defined`. That produced a
-"75 tests fail on a clean checkout" baseline that was quoted for weeks and was purely the wrong
-command.
+The linter is for **bugs, not style**. `.oxlintrc.json` turns on oxlint's correctness rules and
+unused imports, variables and parameters (prefix one with `_` when it is unused on purpose), and
+turns off the handful of rules that only restate working code in another idiom. There is no
+formatter: the code has one consistent hand style, and a mass reformat would bury every `git blame`
+line for no reader. CI fails on any finding. An unused value is worth a second look before you
+delete it; the first run found a message that was computed and never rendered.
+
+Three suites in `@edh-seer/data` (the database layer, ingest, flavor names) need a MongoDB and skip
+without one. CI runs them against a throwaway `mongo:7`; locally, point them at yours:
+`MONGO_TEST_URI=mongodb://localhost:27017 npm test -w @edh-seer/data`. They create and empty their
+own test databases, never the corpus.
+
+`npx vitest run` from the repository root runs every package's suite under that package's own
+config (the root `vitest.config.ts` lists them as `projects`), in one report; `npx vitest` watches
+them all. It used to ignore the per-package configs, so the web client's tests ran without jsdom and
+died on `document is not defined` -- a "75 tests fail on a clean checkout" baseline that was quoted
+for weeks and was purely the wrong command. That trap is closed; a new package is added to the
+root config's list.
 
 The suite is green on a clean checkout. There is no environmental exception — if something is red,
 it is the change.
@@ -68,6 +83,10 @@ Three homes, and the test is what the script is **for**, not what it is named:
 `npm run lint:bins` enforces this in both directions, and the direction that bites is the second one:
 a `*.test.ts` under `research/` is collected by no vitest project, so it reads as covered while its
 coverage is silently missing.
+
+A script that takes flags reads them with `parseArgs` from `node:util`, which rejects a mistyped flag
+instead of silently ignoring it. The older scripts slice `process.argv` by hand; convert one when
+you are changing it anyway, not in a sweep.
 
 Research scripts import what a package **exports** by its name (`@edh-seer/data`), and reach a module
 outside its export map by **relative path**. Adding an export only so a script can be relocated would

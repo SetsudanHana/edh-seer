@@ -1,8 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { ComboIndex } from "@edh-seer/engine";
 import { analyzeDeckStructured } from "../../packages/matcher/src/analyze.js";
@@ -21,7 +19,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *    set -a && source packages/tagger/.env && set +a
  *    npx tsx research/matcher/theme-name-coverage.ts
  */
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DECK_DIR = CALIBRATION_DECKS;
 
 async function main(): Promise<void> {
   const store = await connect(loadConfig());

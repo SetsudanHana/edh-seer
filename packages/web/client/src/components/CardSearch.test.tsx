@@ -409,9 +409,13 @@ test("produce and consume are different questions about the same event", async (
 
 /** A MISSING LIST IS NOT AN EMPTY ONE. A shard that does not carry the key means the page cannot
  *  answer; rendering "no cards" there would be a claim, and a wrong one. */
-test("an event the artifact does not carry says nothing rather than no cards", async () => {
+/** It used to sit on "reading what cards do" for good: `unanswerable` was computed and never read,
+ *  which the linter found (2026-09-25). An old link naming a key the shards no longer hold is
+ *  answered with what is wrong, still without claiming that no card matches. */
+test("an event the artifact does not carry says so, rather than no cards or loading forever", async () => {
   atUrl("/cards?produce=enters%7Cland%7C-%7C-");
-  await waitFor(() => expect(screen.queryByText(/reading/i)).not.toBeNull());
+  expect((await screen.findByRole("status")).textContent).toMatch(/can't answer one of those events/);
+  expect(screen.queryByText(/reading what cards do/i)).toBeNull();
   expect(screen.queryByRole("list", { name: "Results" })).toBeNull();
   expect(screen.queryByText(/No card matches/)).toBeNull();
 });
@@ -807,3 +811,4 @@ test("with no cause asked there is nothing to measure, so the order is not offer
   await screen.findByRole("link", { name: /Fathom Mage/ });
   expect(within(screen.getByLabelText("Order")).queryByRole("option", { name: "How much it does" })).toBeNull();
 });
+

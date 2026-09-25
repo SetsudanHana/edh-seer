@@ -8,11 +8,11 @@
  *
  *  Usage: tsx src/bin/line-report.ts */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { buildDeckCards, detectLines, loadHierarchy, type CardTagsLookup } from "../../packages/matcher/src/index.js";
 
-const DIR = "packages/cli/decks/calibration";
+const DIR = CALIBRATION_DECKS;
 
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);

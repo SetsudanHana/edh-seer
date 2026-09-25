@@ -4,14 +4,14 @@
  *  The IDF floor this replaces was trusted for exactly that reason (2.2 and 2.5 were identical)
  *  and was still overfit, so also print the per-deck answers for eyeballing. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, resolveNames, parseDecklistSections, normalizeName } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, resolveNames, parseDecklistSections, normalizeName, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, type CardTagsLookup } from "../index.js";
 import { themeMembership, themeCandidates } from "../themes.js";
 
 const CAPS = [0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7];
-const dir = process.argv[2] ?? "packages/cli/decks/calibration";
+const dir = process.argv[2] ?? CALIBRATION_DECKS;
 
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);

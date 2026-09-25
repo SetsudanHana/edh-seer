@@ -17,15 +17,13 @@
  *  and get one from the command zone, which for a voltron deck is the whole plan. */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections,
-} from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import type { CardTags } from "@edh-seer/tagger";
 import { computeDeckMath } from "../../packages/matcher/src/deck-math.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
-const DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DIR = CALIBRATION_DECKS;
 const WITH_COMMANDERS = !process.argv.includes("--blind");
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);

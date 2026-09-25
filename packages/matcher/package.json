@@ -17,7 +17,7 @@
     "./static-lookup": "./src/static-lookup.ts",
     "./suggest-static": "./src/suggest-static.ts",
     "./partner-shard": "./src/partner-shard.ts",
-    "./partners-core": "./src/bin/partners-core.ts",
+    "./partners-core": "./src/partners-core.ts",
     "./sentence": "./src/sentence.ts",
     "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
@@ -709,6 +709,8 @@ export function CardSearch({
               ))}
             </ul>
           </div>
+        : unanswerable
+        ? <p role="status" className="text-(--muted)">This site's card data can't answer one of those events. Remove it to search again.</p>
         : matches === null
         ? <p className="eyebrow text-(--muted)">reading what cards do</p>
         : (

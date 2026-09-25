@@ -7,13 +7,13 @@
  *
  *    npx tsx research/matcher/archetype-recall.ts [--dir packages/cli/decks/edhrec] [--verbose] */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, parseDecklistSections, resolveNames, EDHREC_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../../packages/matcher/src/index.js";
 import { DETECTABLE } from "../../packages/matcher/src/archetype-vocabulary.js";
 
-const DIR = process.argv.includes("--dir") ? process.argv[process.argv.indexOf("--dir") + 1]! : "packages/cli/decks/edhrec";
+const DIR = process.argv.includes("--dir") ? process.argv[process.argv.indexOf("--dir") + 1]! : EDHREC_DECKS;
 const VERBOSE = process.argv.includes("--verbose");
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);

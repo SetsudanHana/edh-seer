@@ -83,11 +83,11 @@ test("every class the component can name exists in the shipped mana CSS", async 
   // URL is not a file: URL at all ("The URL must be of scheme file"), and a fixed depth also breaks
   // the moment vitest is rooted somewhere else.
   const find = (name: string): string => {
-    for (let dir = process.cwd(); dir !== dirname(dir); dir = dirname(dir)) {
+    for (let dir = import.meta.dirname; dir !== dirname(dir); dir = dirname(dir)) {
       const hit = join(dir, name);
       if (existsSync(hit)) return hit;
     }
-    throw new Error(`not found walking up from ${process.cwd()}: ${name}`);
+    throw new Error(`not found walking up from ${import.meta.dirname}: ${name}`);
   };
   const css = readFileSync(find("node_modules/mana-font/css/mana.min.css"), "utf8").replace(/^\ufeff/, "");
   const real = new Set([...css.matchAll(/\.ms-([a-z0-9-]+)::before/g)].map((m) => m[1]!));

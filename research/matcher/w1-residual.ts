@@ -16,7 +16,7 @@ import { connect, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { directedReasons } from "../../packages/matcher/src/edges.js";
 import { loadHierarchy } from "../../packages/matcher/src/hierarchy.js";
-import { demandForms, eventKey, supplyForms, type CardPageRecord } from "../../packages/matcher/src/bin/partners-core.js";
+import { demandForms, eventKey, supplyForms, type CardPageRecord } from "../../packages/matcher/src/partners-core.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
 const outDir = "static-out";
@@ -32,7 +32,7 @@ const h = loadHierarchy();
 const cause: Record<string, number> = {};
 const bump = (k: string) => { cause[k] = (cause[k] ?? 0) + 1; };
 const samples: Record<string, string[]> = {};
-const keep = (k: string, line: string) => { (samples[k] ??= []).length < 4 && samples[k]!.push(line); };
+const keep = (k: string, line: string) => { if ((samples[k] ??= []).length < 4) samples[k]!.push(line); };
 
 for (const f of readdirSync(join(outDir, versionDir, "partners"))) {
   const shard: Record<string, CardPageRecord> = JSON.parse(readFileSync(join(outDir, versionDir, "partners", f), "utf8"));

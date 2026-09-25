@@ -16,7 +16,7 @@ import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVED_COLLECTION, type CardTags } from "@edh-seer/tagger";
 import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
-import { browseSlices, buildPartnerArtifact, type PartnerId } from "./partners-core.js";
+import { browseSlices, buildPartnerArtifact, type PartnerId } from "../partners-core.js";
 import { eventShards } from "./events-index-core.js";
 import { loadHierarchy } from "../hierarchy.js";
 

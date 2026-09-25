@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig, scratchDir } from "@edh-seer/data";
-import { needsRetag, type TagCollection } from "../../packages/tagger/src/store.js";
+import { needsRetag } from "../../packages/tagger/src/store.js";
 import { SCHEMA_VERSION } from "../../packages/tagger/src/schema.js";
 import { PROMPT_VERSION } from "../../packages/tagger/src/llm/prompt.js";
 import { missingOracleIds } from "../../packages/tagger/src/bin/corpus-core.js";

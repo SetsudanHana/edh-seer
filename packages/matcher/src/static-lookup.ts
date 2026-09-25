@@ -4,7 +4,7 @@ import type { CardLookup } from "@edh-seer/data/resolve";
 import type { CardTagsLookup } from "./deck-cards.js";
 import type { AnalysisSources } from "./orchestrate.js";
 import { shardOf } from "./bin/build-static-core.js";
-import { partnerShardOf, type CardPageRecord, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "./bin/partners-core.js";
+import { partnerShardOf, type CardPageRecord, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "./partners-core.js";
 import { eventShardOf } from "./bin/events-index-core.js";
 
 /** Re-exported so a consumer of this module can address a shard the way it does -- the client's

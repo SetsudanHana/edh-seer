@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { EVENT_SHARD_COUNT, eventShardOf, eventShards } from "./events-index-core.js";
-import type { EventMembers } from "./partners-core.js";
+import type { EventMembers } from "../partners-core.js";
 
 /** THE EVENT INDEX (roadmap AJ3): one file per shard, one entry per key, and the browser finds a
  *  key by running the build's own hash. */

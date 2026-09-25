@@ -174,9 +174,9 @@ npm run typecheck              # every workspace; vitest does not typecheck
 npm run lint:bins              # where a script is allowed to live
 ```
 
-**Never run `npx vitest run` from the repository root.** It ignores every package's own vitest config,
-so the web client's tests run without jsdom and die on `document is not defined`. `npm test` runs
-`npm run test --workspaces`, which gives each package its config.
+`npx vitest run` from the repository root is the same set of suites in one process: the root
+`vitest.config.ts` lists each package as a project under its own config. `npm test` runs them per
+workspace, which is what CI does.
 
 The suite is green on a clean checkout. There is no environmental exception; any red is yours.
 `vitest` does not typecheck, so a green suite is not proof the branch compiles — run `typecheck` too.

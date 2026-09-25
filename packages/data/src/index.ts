@@ -23,6 +23,7 @@ export {
 export { normalizeName } from "./names.js";
 export { toCardDoc, docToCard, type CardDoc, type ComboDoc } from "./docs.js";
 export { normalizeScryfallCard, NON_GAMEPLAY_LAYOUTS, type ScryfallCard, type NormalizedCard, type CardFace, type RelatedPart } from "./scryfall.js";
+export { SCRYFALL_HEADERS, scryfallSearch, scryfallSearchUrl, type ScryfallSearchOptions } from "./scryfall.js";
 export { ingestCards, ingestCombos, runIngest, type IngestCounts } from "./ingest.js";
 export {
   fetchFlavorNames,
@@ -32,3 +33,4 @@ export {
   type FlavorCounts,
 } from "./flavor.js";
 export { scratchDir } from "./scratch.js";
+export { CALIBRATION_DECKS, DECKS_DIR, EDHREC_DECKS } from "./deck-paths.js";

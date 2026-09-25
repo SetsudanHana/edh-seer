@@ -13,15 +13,15 @@
  *  in `goldfish.ts` before quoting any number here. */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections } from "@edh-seer/data";
+import { connect, docToCard, loadConfig, mongoLookup, normalizeName, parseDecklistSections, CALIBRATION_DECKS, DECKS_DIR } from "@edh-seer/data";
 import { classifyAccelerant, pAtLeastMana, quantiles, simulate } from "../../packages/matcher/src/goldfish.js";
 import type { DeckCard } from "../../packages/matcher/src/types.js";
 
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DECK_DIR = CALIBRATION_DECKS;
 /** §5's headline deck (`samut.txt`) lives one directory up, outside the calibration set. `--deck`
  *  falls back to it so criterion R — the shipped bin must reproduce the spec's own tables — is
  *  actually reachable rather than a claim about a probe that no longer exists. */
-const DECK_DIR_ALT = join(process.cwd(), "packages", "cli", "decks");
+const DECK_DIR_ALT = DECKS_DIR;
 const arg = (flag: string): string | undefined => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : undefined;

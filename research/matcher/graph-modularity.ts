@@ -19,7 +19,7 @@
  *  the standard first answer to "does this graph split". Q is the usual scale: below ~0.3 the
  *  structure is weak, 0.3-0.7 is a genuinely modular graph. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex, loadImpactWeights } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, collectTokenNodes, faceDeckCards, loadTokenTags } from "../../packages/matcher/src/index.js";
@@ -99,7 +99,7 @@ function communities(nodeIds: string[], edges: Edge[]): { q: number; sizes: numb
   return { q, sizes: [...byComm.values()].map((g) => g.length).sort((x, y) => y - x) };
 }
 
-const DIR = process.argv[2] ?? "packages/cli/decks/calibration";
+const DIR = process.argv[2] ?? CALIBRATION_DECKS;
 const store = await connect(loadConfig());
 const lookup = mongoLookup(store);
 const tags = createTagsLookup(store.db);

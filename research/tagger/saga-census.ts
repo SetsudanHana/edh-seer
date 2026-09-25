@@ -4,7 +4,7 @@
  *
  *  "Count the consumers, not the printed cards" — the keyword sweep's lesson, 2026-08-14. */
 import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
 import { DERIVED_COLLECTION } from "../../packages/tagger/src/clause-store.js";
 import type { Ability, SubjectFilter } from "../../packages/tagger/src/schema.js";
 
@@ -71,7 +71,7 @@ for (const [k, n] of [...byType].sort((a, b) => b[1] - a[1])) {
 console.log(`\nof those, an ENCHANTMENT death could satisfy roughly: ${enchOk}`);
 
 // --- Per deck: do a Saga and a death-watcher share a deck?
-const DIR = "packages/cli/decks/calibration";
+const DIR = CALIBRATION_DECKS;
 const lookup = mongoLookup(store);
 const deathConsumerIds = new Set(derived.filter((d) => (d.abilities ?? []).some((ab) =>
   (ab.trigger?.verbs ?? []).some((v) => DEATH_VERBS.has(v)) && !ab.trigger?.subject?.self &&

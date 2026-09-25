@@ -4,7 +4,7 @@
  *  Run from the repo root: `npx tsx research/matcher/facet-questions.ts`. */
 import { readFileSync } from "node:fs";
 import { ARCHETYPE_LABELS } from "../../packages/matcher/src/archetype-vocabulary.js";
-import { identityKeyOf } from "../../packages/matcher/src/bin/partners-core.js";
+import { identityKeyOf } from "../../packages/matcher/src/partners-core.js";
 
 interface Row { s: string; i: string; c: 0 | 1; e: string[]; t: string[]; d: string[] }
 const v = (JSON.parse(readFileSync("static-out/manifest.json", "utf8")) as { version: string }).version;

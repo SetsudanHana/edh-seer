@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistText, docToCard, DECKS_DIR } from "@edh-seer/data";
 import { analyzeDeck } from "@edh-seer/engine";
 import type { CardTags } from "@edh-seer/tagger";
 import { analyzeDeckStructured } from "../analyze.js";
@@ -9,7 +9,7 @@ import { rankTable } from "../compare-core.js";
 import type { DeckCard } from "../types.js";
 
 const DECKS = ["inalla", "chandra", "gisa", "gogo", "hidetsugu", "samut"];
-const DECK_DIR = join(process.cwd(), "..", "cli", "decks");
+const DECK_DIR = DECKS_DIR;
 
 async function main(): Promise<void> {
   const store = await connect(loadConfig());

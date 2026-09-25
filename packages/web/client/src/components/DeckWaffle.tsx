@@ -1,4 +1,3 @@
-import type { DeckReport } from "../types.js";
 import { TYPE_ORDER } from "../lib/deck-shape.js";
 import { hatchImage } from "../lib/unread.js";
 import { CardSymbol } from "./CardSymbol.js";

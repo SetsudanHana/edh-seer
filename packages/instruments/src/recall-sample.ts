@@ -16,15 +16,14 @@
  *  Usage: tsx src/bin/recall-sample.ts [--n 60] [--seed 20260806] [--out /tmp/recall] */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir } from "@edh-seer/data";
+import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, scratchDir, CALIBRATION_DECKS } from "@edh-seer/data";
 import { ComboIndex } from "@edh-seer/engine";
 import { createTagsLookup } from "@edh-seer/tagger";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
 import { sample, seededRng } from "./precision-core.js";
 import { blindRecall, stratumOf, type SilentPair, type Stratum } from "./recall-core.js";
 
-const DIR = "packages/cli/decks/calibration";
+const DIR = CALIBRATION_DECKS;
 const arg = (flag: string, fallback: string): string => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : fallback;

@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { parseDecklistSections } from "@edh-seer/data";
+import { parseDecklistSections, CALIBRATION_DECKS } from "@edh-seer/data";
 import { analyzeDeckStatic } from "../../packages/web/client/src/api.static.js";
 
 /** WHAT DOES `FLOW_FANOUT_CAP` ACTUALLY HIDE? (owner question, 2026-09-03.)
@@ -39,7 +39,7 @@ import { analyzeDeckStatic } from "../../packages/web/client/src/api.static.js";
  *    npx tsx research/matcher/fanout-cap.ts
  */
 const STATIC = process.env.STATIC ?? "https://edhseer.cards/static";
-const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
+const DECK_DIR = CALIBRATION_DECKS;
 const CAPS = [6, 7, 10, 15, 20];
 
 function pct(xs: number[], p: number): number {
