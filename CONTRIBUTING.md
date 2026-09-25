@@ -47,6 +47,11 @@ npm run typecheck               # vitest does NOT typecheck; run this too
 npm run lint:bins               # where a script is allowed to live
 ```
 
+Three suites in `@edh-seer/data` (the database layer, ingest, flavor names) need a MongoDB and skip
+without one. CI runs them against a throwaway `mongo:7`; locally, point them at yours:
+`MONGO_TEST_URI=mongodb://localhost:27017 npm test -w @edh-seer/data`. They create and empty their
+own test databases, never the corpus.
+
 `npx vitest run` from the repository root runs every package's suite under that package's own
 config (the root `vitest.config.ts` lists them as `projects`), in one report; `npx vitest` watches
 them all. It used to ignore the per-package configs, so the web client's tests ran without jsdom and

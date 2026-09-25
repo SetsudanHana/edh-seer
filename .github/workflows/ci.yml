@@ -24,6 +24,19 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    # A THROWAWAY MONGO, so the suites that need one run here too (2026-09-25). `db.test.ts`,
+    # `ingest.test.ts` and `flavor.integration.test.ts` skip without MONGO_TEST_URI, and until now
+    # nothing set it: the database layer's own tests had never run in CI. Each suite creates and
+    # empties its own database (mtg_test_db, mtg_ingest_test, mtg_flavor_test) from fixtures -- no
+    # corpus, no network. The version matches packages/data/docker-compose.yml.
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         # Nothing here pushes, so the token is not left in .git/config for later steps.
@@ -38,10 +51,12 @@ jobs:
       # file and never typechecks, so the matcher once carried two type errors 2,706 passing tests
       # could not see.
       - run: npm run typecheck
-      # The suite is pure: no MongoDB, no network, no API key. Anything needing a live corpus lives
-      # in a bin rather than a test, and the one test backed by a gitignored cache skips itself with
-      # a reason instead of failing a clean checkout.
+      # No network and no API key. The database suites get the service above, empty; anything
+      # needing the live CORPUS lives in a bin rather than a test, and the one test backed by a
+      # gitignored cache skips itself with a reason instead of failing a clean checkout.
       - run: npm test
+        env:
+          MONGO_TEST_URI: mongodb://localhost:27017
       # A script's HOME is part of the design, and without a gate it drifts back: `src/bin` went
       # 110 files to 53 when the one-shot measurements moved to research/, and a new census dropped
       # into packages/matcher/src/bin would merge green. Two directions, and the second is the one
