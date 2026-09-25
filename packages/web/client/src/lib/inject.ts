@@ -535,8 +535,12 @@ const browseNav = (kind: "cards" | "commanders", current?: string): string =>
  *  corpus hung off the sitemap alone. */
 export function browseIndexHtml(kind: "cards" | "commanders", total: number): string {
   const what = kind === "commanders" ? "commanders" : "cards";
+  // THE HEADING NAMES THE LIST, IN THE WORDS A PLAYER SEARCHES. It used to interpolate the plural
+  // after "Every" and shipped "Every cards the engine has read" as the page's one h1 (review
+  // 2026-09-25).
+  const heading = kind === "commanders" ? "Every commander, A to Z" : "Commander cards, A to Z";
   return `    <section class="prerendered">
-    <h1>Every ${what} the engine has read</h1>
+    <h1>${heading}</h1>
     <p>${total.toLocaleString("en")} ${what}, by first letter.</p>
 ${browseNav(kind)}
     </section>`;

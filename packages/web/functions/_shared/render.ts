@@ -81,12 +81,15 @@ export async function renderCardPage(
     const title = !usable
       ? `${record.name} cannot lead a deck — EDH Seer`
       : isCommanderPage
-      ? `${record.name} — what a deck led by it wants — EDH Seer`
-      : `${record.name} — synergies and what the engine reads — EDH Seer`;
+      // THE CARD'S NAME, THEN THE WORDS A PLAYER SEARCHES WITH IT ("krenko commander", "impact
+      // tremors synergy"). The old titles spent the space after the name on the engine's own
+      // vocabulary -- "what the engine reads" -- which nobody types (review 2026-09-25).
+      ? `${record.name} Commander: synergies and best cards — EDH Seer`
+      : `${record.name} in Commander: synergies and combos — EDH Seer`;
     const description = !usable
       ? `${record.name} cannot be a commander. The card itself has a page.`
       : partners.length > 0
-      ? `${partners.length} cards ${record.name} interacts with, each with the reason the engine drew the edge.`
+      ? `${partners.length} cards that work with ${record.name} in Commander, each with the reason written out.`
       : `What the engine reads on ${record.name}: the events it produces and the ones it cares about.`;
 
     // TOO LITTLE TO SAY, NOTHING TO INDEX. A page below the partner floor is real and reachable

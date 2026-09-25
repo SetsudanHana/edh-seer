@@ -35,8 +35,8 @@ export async function renderBrowseIndex(
     const what = kind === "commanders" ? "commanders" : "cards";
     return new Response(injectPage(html, {
       title: kind === "commanders"
-        ? "Every commander the engine has read — EDH Seer"
-        : "Every card the engine has read — EDH Seer",
+        ? "Every commander, A to Z — EDH Seer"
+        : "Commander cards, A to Z — EDH Seer",
       description: `${total.toLocaleString("en")} ${what} the engine has read, `
         + `each with the events it produces, the ones it cares about, and who it pairs with.`,
       canonical: `${origin}/${kind}`,
