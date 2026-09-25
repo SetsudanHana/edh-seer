@@ -450,7 +450,7 @@ export function cardPageHtml(
   const job = kind === "card" && card.partners.length < MIN_INDEXABLE_PARTNERS ? jobOf(card.roles) : null;
   const jobBlock = job ? `    <h2>What it does in a deck</h2>\n    <p>${esc(jobSentence(card.name, job))}</p>\n` : "";
   const partners = card.partners.length === 0
-    ? jobBlock || "    <p>No partners specific enough to list.</p>"
+    ? jobBlock || "    <p>No connections specific enough to list.</p>"
     : `${jobBlock}    <h2>Works well with</h2>\n${rows}`;
   // WHAT THE ENGINE READ, so a reader can check a claim without leaving for Scryfall. Option 2 of
   // spec D2a, taken 2026-09-18: option 1 shipped with our derivation and nothing to check it

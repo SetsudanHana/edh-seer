@@ -1088,7 +1088,7 @@ describe("hover", () => {
     const node = canvas.__graphProbe!().find((n) => n.id === "Krenko, Mob Boss")!;
     fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x, clientY: node.y, bubbles: true }));
     expect(screen.getByText(/Krenko, Mob Boss/)).toBeInTheDocument();
-    expect(screen.getByText(/1 partners/)).toBeInTheDocument();
+    expect(screen.getByText(/1 connection\b/)).toBeInTheDocument();
   });
 
   test("clears when the pointer is over empty board space", () => {
@@ -1717,7 +1717,7 @@ describe("flow view", () => {
     );
     frames(graph, calls);
     // Lands off by default: the row must not claim the deck, and must say what is missing.
-    expect(document.body.textContent).toContain("Card pairs on the board");
+    expect(document.body.textContent).toContain("Card pairs on the graph");
     expect(document.body.textContent).not.toContain("Card pairs across the deck");
     // SLOTS, not nodes -- one Mountain node, three copies.
     expect(screen.getByTestId("graph-hidden-note").textContent).toContain("3 lands");
@@ -2747,13 +2747,13 @@ describe("bare chrome", () => {
     const { canvas } = framesWith(SAMPLE.graph, { chrome: "bare" });
     const node = canvas.__graphProbe!()[0];
     fireEvent(canvas, new MouseEvent("pointermove", { clientX: node.x, clientY: node.y, bubbles: true }));
-    expect(screen.queryByText(/partners/)).toBeNull();
+    expect(screen.queryByText(/connection/)).toBeNull();
     cleanup();
     // The whole-deck board keeps its tooltip, unchanged.
     const full = frames(SAMPLE.graph);
     const n2 = full.canvas.__graphProbe!().find((n) => n.id === "Krenko, Mob Boss")!;
     fireEvent(full.canvas, new MouseEvent("pointermove", { clientX: n2.x, clientY: n2.y, bubbles: true }));
-    expect(screen.getByText(/partners/)).toBeInTheDocument();
+    expect(screen.getByText(/connection/)).toBeInTheDocument();
   });
 
   test("onNodeTap replaces selection, so a tap can re-root instead of opening a panel", () => {
