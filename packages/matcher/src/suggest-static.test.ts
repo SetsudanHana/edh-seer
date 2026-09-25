@@ -337,3 +337,25 @@ test("a build finding's cards say which group they count toward, and carry their
   expect(tremors.fills).toBe("Interaction");
   expect(tremors.oracle).toBe("Whenever a creature you control enters, this enchantment deals 1 damage to each opponent.");
 });
+
+/** THE COMMANDER IS MARKED HERE, as in the report (`analyze.ts` markCommander; final review of AO4):
+ *  a "whenever your commander enters" card joins the deck's commander and nothing else, and without
+ *  the mark it joined nothing at all and dropped out of every list. */
+test("a card that cares about your commander connects to the deck's commander", async () => {
+  const payoff: Spec = {
+    name: "Commander Payoff", identity: ["R"], types: ["enchantment"], r: ["targetedRemoval"],
+    abilities: [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, commander: true } }, effect: { kind: "draw" } }],
+  };
+  const specs = [...SPECS.slice(0, 7), payoff];   // position 7
+  const f = files(specs);
+  for (const [path, shard] of Object.entries(f)) {
+    if (!path.includes("/cards/")) continue;
+    for (const [k, e] of Object.entries(shard as Record<string, { card: { name: string }; pi?: [number, number][] }>)) {
+      if (e.card.name === "Krenko, Mob Boss") (shard as Record<string, unknown>)[k] = { ...e, pi: [[7, 0.4]] };
+    }
+  }
+  const deck = { ...report, buildParents: [{ name: "Interaction", count: 0, target: 1, leaves: ["targetedRemoval"] }] } as unknown as DeckReport;
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  const card = s.build["Interaction"]!.find((c) => c.name === "Commander Payoff");
+  expect(card?.connections).toEqual(["Krenko, Mob Boss"]);
+});
