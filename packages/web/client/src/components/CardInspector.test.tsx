@@ -77,8 +77,8 @@ describe("CardInspector", () => {
     render(<CardInspector node={node} edges={both} onClose={() => {}} />);
     // Both headings existing is not enough -- a mis-split that put both partners under ONE heading
     // would still pass that assertion. Each partner must appear under its OWN heading's section.
-    const feedsSection = screen.getByText(/^Feeds \d+$/).closest("div");
-    const fedBySection = screen.getByText(/^Fed by \d+$/).closest("div");
+    const feedsSection = screen.getByText(/^What it causes · \d+$/).closest("div");
+    const fedBySection = screen.getByText(/^What it cares about · \d+$/).closest("div");
     expect(feedsSection?.textContent).toContain("Zulaport Cutthroat");
     expect(feedsSection?.textContent).not.toContain("Intangible Virtue");
     expect(fedBySection?.textContent).toContain("Intangible Virtue");
@@ -89,7 +89,7 @@ describe("CardInspector", () => {
   // card with only outgoing edges left "Fed by" printed with nothing beneath it.
   it("says 'None' rather than nothing under a heading with no edges in that direction", () => {
     render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
-    const fedBySection = screen.getByText(/^Fed by \d+$/).closest("div");
+    const fedBySection = screen.getByText(/^What it cares about · \d+$/).closest("div");
     expect(fedBySection?.textContent).toMatch(/none/i);
   });
 
@@ -153,7 +153,7 @@ describe("CardInspector", () => {
     expect(screen.getByText(/graph draws the strongest 6/i)).toBeInTheDocument();
     // The old wording, which read as a competing total for the whole card.
     expect(screen.queryByText(/all 32 are listed here/i)).toBeNull();
-    expect(screen.getByRole("heading", { name: /^Feeds \d+$/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^What it causes · \d+$/ })).toBeInTheDocument();
   });
 
   // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE -- keying by id alone let the upstream walk's
@@ -168,12 +168,12 @@ describe("CardInspector", () => {
       { from: "Intangible Virtue", to: "Bitterblossom", weight: 1, tags: [], reasonTexts: ["fed by"] },
     ];
     render(<CardInspector node={node} edges={both} flow={flow} onClose={() => {}} />);
-    const feedsSection = screen.getByText(/^Feeds \d+$/).closest("div");
-    const fedBySection = screen.getByText(/^Fed by \d+$/).closest("div");
+    const feedsSection = screen.getByText(/^What it causes · \d+$/).closest("div");
+    const fedBySection = screen.getByText(/^What it cares about · \d+$/).closest("div");
     // Each heading counts the rows ITS OWN section lists, and each sentence names only what the
     // board drew of them. The keying bug this test was written for is unchanged.
-    expect(feedsSection?.textContent).toMatch(/^Feeds 1(?!\d)/);
-    expect(fedBySection?.textContent).toMatch(/^Fed by 1(?!\d)/);
+    expect(feedsSection?.textContent).toMatch(/^What it causes · 1(?!\d)/);
+    expect(fedBySection?.textContent).toMatch(/^What it cares about · 1(?!\d)/);
     expect(feedsSection?.textContent).toMatch(/strongest 6/i);
     expect(fedBySection?.textContent).toMatch(/strongest 6/i);
   });

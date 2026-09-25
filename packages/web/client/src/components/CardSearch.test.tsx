@@ -686,7 +686,7 @@ test("the menu offers every dimension the corpus can answer", async () => {
   atUrl("/cards");
   await userEvent.click(await screen.findByText("Add a filter"));
   const offered = screen.getAllByRole("button").map((b) => b.textContent?.trim());
-  for (const label of ["Colour identity", "Colour", "Type line", "Keywords", "Mana value", "Power", "Toughness", "Causes", "Asks for"]) {
+  for (const label of ["Colour identity", "Colour", "Type line", "Keywords", "Mana value", "Power", "Toughness", "Causes", "Cares about"]) {
     expect(offered).toContain(label);
   }
 });

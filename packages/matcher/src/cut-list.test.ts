@@ -20,7 +20,7 @@ test("a dead card is a candidate and its reasons name every condition", () => {
   expect(row.name).toBe("Dead Weight");
   expect(row.reasons).toEqual([
     "nothing in the deck connects to it",
-    "no edge on your main theme",
+    "no pairing on your main theme",
     "doesn't fill a core role (ramp, draw, removal…)",
   ]);
 });
@@ -80,7 +80,7 @@ test("the rating and axis gates are boundaries, not ranges", () => {
 test("an on-theme edge is stated as pointing away, not as absent", () => {
   const [row] = cutCandidates([card({ name: "Off Axis", axisWeight: 0.1, partnerCount: 1 })]);
   expect(row.reasons[0]).toBe("only 1 card connects to it");
-  expect(row.reasons[1]).toBe("its edges point away from your main theme");
+  expect(row.reasons[1]).toBe("its pairings point away from your main theme");
 });
 
 test("weakest first, ties broken by fewest partners then name, and the list is capped", () => {

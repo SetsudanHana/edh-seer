@@ -29,14 +29,14 @@ function stateSummary(edges: readonly StateEdge[], state: GameState): string | n
   const label = stateLabel(state);
   if (!label) return null;
   const enabled = edges.filter((e) => e.enabledBy && e.enabledBy.length > 0);
-  if (enabled.length === 0) return `${label}: no edge in this deck depends on it`;
+  if (enabled.length === 0) return `${label}: no pairing in this deck depends on it`;
   const gained = new Map<string, number>();
   for (const e of enabled) for (const n of [e.a, e.b]) gained.set(n, (gained.get(n) ?? 0) + 1);
   const movers = [...gained.entries()].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0])).slice(0, 3)
     // "+N PARTNERS": an edge is counted once in the total and once per endpoint here, so the movers
     // can add up to more than the total, and the word says why.
     .map(([n, k]) => `${n} +${k} ${k === 1 ? "connection" : "connections"}`).join(" · ");
-  return `${label}: ${enabled.length} ${enabled.length === 1 ? "edge exists" : "edges exist"} because of it · ${movers}`;
+  return `${label}: ${enabled.length} ${enabled.length === 1 ? "pairing exists" : "pairings exist"} because of it · ${movers}`;
 }
 
 /** A GAME STATE THE OWNER SETS (roadmap W18). Speed is the PLAYER's (CR 702.179), one number for
@@ -90,7 +90,7 @@ export function StateControls({ markers, state = {}, onState, edges, busy = fals
         {busy
           ? `re-reading the deck under ${stateLabel(state) || "no state"}…`
           : any
-            ? (edges ? stateSummary(edges, state) : "dashed edges exist because of this state")
+            ? (edges ? stateSummary(edges, state) : "dashed pairings exist because of this state")
             // SAYS WHAT THE CHIPS ARE FOR (review 2026-09-25). "Nothing toggled" was the first
             // sentence of the report on a deck that plays the initiative, and a new reader could
             // not tell these were optional switches or why the report asked.

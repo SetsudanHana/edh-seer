@@ -110,7 +110,7 @@ test("the static block prints the withheld count per group, and groups by key", 
   ];
   const html = cardPageHtml({ ...KRENKO, partners: rows, pool: { "enters|creature|-|t": 1906, "dies|creature|-|-": 1 } }, "krenko-mob-boss", "card");
   expect(html.match(/<ol>/g)).toHaveLength(2);
-  expect(html).toContain("1,904 other cards ask for it too");
+  expect(html).toContain("1,904 other cards care about it too");
   expect(html).not.toContain("0 other cards");
   // Tremors sits in Purphoros's list, not in a third one.
   expect(html.indexOf("impact-tremors")).toBeLessThan(html.indexOf("skullclamp"));
@@ -205,7 +205,7 @@ test("the block reads down the card, clause by clause, in printed order", () => 
   // Printed order, which is the order a player reads the card in.
   expect(html.indexOf("When Kogla")).toBeLessThan(html.indexOf("{2}{R}{G}"));
   // It is evidence for the derivation, so it sits above the derivation it explains.
-  expect(html.indexOf("How the engine reads this card")).toBeLessThan(html.indexOf("Produces:"));
+  expect(html.indexOf("How the engine reads this card")).toBeLessThan(html.indexOf("Causes:"));
 });
 
 test("a card with no rules text and no abilities gets no section at all", () => {
@@ -295,7 +295,7 @@ test("a consumer group still counts the cards that ASK, which was always right",
     rarity: { "discard|-|-|-": 1609 },
     pool: { "discard|-|-|-": 67 },
   }, "x", "card");
-  expect(html).toContain("66 other cards ask for it too");
+  expect(html).toContain("66 other cards care about it too");
   expect(html).not.toContain("1,608 other cards");
 });
 
@@ -312,7 +312,7 @@ test("a feeder group counts from rarity and keeps its own verb", () => {
     rarity: { "counts|-|shrine|-": 22 },
     pool: { "counts|-|shrine|-": 21 },
   }, "x", "card");
-  expect(html).toContain("21 other cards feed it too");
+  expect(html).toContain("21 other cards use it too");
 });
 
 test("the direction is read off the rows, three ways", () => {

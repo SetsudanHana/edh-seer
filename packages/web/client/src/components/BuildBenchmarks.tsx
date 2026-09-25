@@ -1139,8 +1139,8 @@ function DeckMathRows({
         // the card — so the wording has to be true of all three cases (a phase, combat, and a card
         // triggering itself). "Nothing has to supply it" is the component's own phrasing from the
         // comment above, and it covers every one.
-        ? `${sentence}, ${d.consumers} cards need it, and it happens on its own`
-        : `${sentence}, ${d.consumers} cards need it, ${d.suppliers} make it happen`;
+        ? `${sentence}, ${d.consumers} cards care about it, and it happens on its own`
+        : `${sentence}, ${d.consumers} cards care about it, ${d.suppliers} cause it`;
     return (
       <li key={d.key} className="flex items-center gap-3 text-sm" aria-label={label}>
         {/* The raw census key stays reachable on hover, because `bin/deck-availability.ts` prints
@@ -1148,8 +1148,8 @@ function DeckMathRows({
         <span className="flex-1 truncate" title={d.key}>{sentence}</span>
         <span className={`shrink-0 stat-num ${d.available !== null && d.suppliers === 0 ? "text-(--warning)" : "text-(--muted)"}`}>
           {d.available === null
-            ? `${d.consumers} need · happens on its own`
-            : `${d.consumers} need · ${d.suppliers} enable`}
+            ? `${d.consumers} care · happens on its own`
+            : `${d.consumers} care · ${d.suppliers} cause it`}
         </span>
       </li>
     );
@@ -1157,23 +1157,23 @@ function DeckMathRows({
   const unmet = demand.filter((d) => d.available !== null && d.suppliers === 0);
   const demandBlock = (
       <div className="flex flex-col gap-1.5">
-        <h4 className="eyebrow">Needs and enablers</h4>
+        <h4 className="eyebrow">What they care about, and what causes it</h4>
         {unmet.length > 0 ? (
           <>
             <p className="text-sm text-(--muted)">
-              {plural(unmet.length, "need")} with nothing in the deck to make{" "}
-              {unmet.length === 1 ? "it" : "them"} happen.
+              {plural(unmet.length, "thing")} your cards care about, and nothing in the deck
+              causes {unmet.length === 1 ? "it" : "them"}.
             </p>
             <ul className="flex flex-col gap-1">{unmet.map(demandRow)}</ul>
           </>
         ) : (
           <p className="text-sm text-(--muted)">
-            Everything your cards are waiting for, something in the deck provides.
+            Everything your cards care about, something in the deck causes.
           </p>
         )}
         <details>
           <summary className="eyebrow cursor-pointer text-(--muted)">
-            all {demand.length} needs
+            show all {demand.length}
           </summary>
           <ul className="flex flex-col gap-1 pt-1">{demand.map(demandRow)}</ul>
         </details>

@@ -425,7 +425,7 @@ export function cardPageHtml(
     // card's, and the app has printed it under every group since the list was grouped.
     const dir = dirHere;
     const withheld = withheldFrom(dir, g.event, g.rows.length, card.rarity, card.pool);
-    const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "feed it" : "ask for it";
+    const verb = dir === "causes" ? "cause it" : dir === "feeds" ? "use it" : "care about it";
     // AND THE CRAWLER GETS THE SAME LINK THE APP DRAWS (roadmap AJ3), from the same builder: two
     // readers printing one sentence is exactly how AJ1's withheld count came to say one direction
     // and count the other.
@@ -511,7 +511,7 @@ export function cardPageHtml(
   return `    <section class="prerendered">
     <h1>${esc(card.name)}</h1>
 ${art}    <p>${esc(card.typeLine)}</p>
-${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Produces: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
+${card.manaCost ? `    <p>Mana cost: ${esc(card.manaCost)}</p>\n` : ""}${read}${crossLink}    <p>Causes: ${card.emits.map((e) => esc(eventKeyAction(e) ?? eventKeyClause(e))).join(", ") || "nothing"}.</p>
     <p>Cares about: ${card.demands.map((d) => esc(eventKeyClause(d))).join(", ") || "nothing"}.</p>
 ${partners}
     </section>`;

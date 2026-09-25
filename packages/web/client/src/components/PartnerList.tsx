@@ -159,8 +159,8 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 {dir === "causes"
                   ? "other cards cause it too. These are the ones with the most connections."
                   : dir === "feeds"
-                  ? "other cards feed it too. These are the ones with the most connections."
-                  : "other cards ask for it too. These are the ones with the most connections."}
+                  ? "other cards use it too. These are the ones with the most connections."
+                  : "other cards care about it too. These are the ones with the most connections."}
                 </Link>
               </p>
             )}
