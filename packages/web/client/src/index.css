@@ -666,6 +666,20 @@ h1.intro-thesis { margin-block-end: 0; }
   .intro { max-width: none; }
 }
 
+/* THE HOME PAGE IS A READING PAGE, SO FROM `xl` IT IS A CENTRED COLUMN (UI review 2026-09-25).
+   At 1920 the pitch, the paste form and this section ran from the left edge and left the right
+   half of the screen empty -- 95% of the ink in the left 43% -- while `how-it-works` already sets
+   the same kind of content in a centred column. 72rem holds the form's buttons on one row and the
+   intro's 65rem devices whole. The REPORT is not a reading page and keeps the full width the owner
+   chose for it (2026-09-03), which is why this keys on no report being up. */
+@media (min-width: 80rem) {
+  html[data-route="home"]:not([data-report]) #root main,
+  html[data-route="home"]:not([data-report]) .intro {
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+}
+
 /* THE DEVICES USE THE WIDTH; THE PROSE KEEPS ITS MEASURE. `.intro`'s block children are otherwise
    unconstrained -- only `.intro p` is capped, at 68ch -- so without this rule the stat row and the
    worked edges would run the full 1376px band at 1440. This caps them at 65rem (1040px) instead,
