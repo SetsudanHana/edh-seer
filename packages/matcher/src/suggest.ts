@@ -188,31 +188,3 @@ export function pairReplacements(
   }
   return out;
 }
-
-// ---------------------------------------------------------------------------------------------
-// ROUTES (owner, 2026-08-27, the Ghyrson case)
-
-/** A ROUTE THE CANDIDATE WOULD OPEN: deck cards that reach `to` only through it, and its worth --
- *  the new sources times the target hop's weight. */
-export interface RouteGain { to: string; from: string[]; worth: number }
-
-/** THE TWO-HOP ROUTE A CANDIDATE OPENS, the way the client's `routesThrough` names one: sources that
- *  feed the candidate, a target it feeds, and only the sources NOT already joined to that target
- *  (a direct edge is not news). Its worth is the new sources times `weight(to)` -- the deck's axis
- *  weight on the hop into the target, so a route into the plan (Ghyrson's damage) outranks one into
- *  a side card; the best target wins, ties by more sources, then name. `feeds` and `fedBy` are deck
- *  cards on each side of the engine's own reasons. */
-export function bestRoute(
-  feeds: readonly string[], fedBy: readonly string[], adjacent: (a: string, b: string) => boolean,
-  weight: (to: string) => number = () => 1,
-): RouteGain | null {
-  let best: RouteGain | null = null;
-  for (const to of [...feeds].sort((a, b) => a.localeCompare(b, "en"))) {
-    const from = fedBy.filter((s) => s !== to && !adjacent(s, to));
-    const worth = from.length * weight(to);
-    if (from.length > 0 && worth > 0 && (!best || worth > best.worth || (worth === best.worth && from.length > best.from.length))) {
-      best = { to, from, worth };
-    }
-  }
-  return best;
-}

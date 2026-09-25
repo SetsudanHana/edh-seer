@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import {
-  bestRoute, candidatePool, planList, gapList, answerList, pairReplacements,
+  candidatePool, planList, gapList, answerList, pairReplacements,
   type Candidate, type DeckSide, type GroupState, type IndexCard,
 } from "./suggest.js";
 
@@ -139,21 +139,3 @@ test("cross-job targets the group furthest under by fraction of its target", () 
   expect(out[0]!.add.card.name).toBe("Blasphemous Act");
 });
 
-/** THE GHYRSON CASE (owner, 2026-08-27): token makers do not reach Ghyrson; Impact Tremors, fed by
- *  every one of them and feeding Ghyrson, opens a route from each. A source already joined to the
- *  target directly is not news (`routesThrough`, client), and the best target is the one the most
- *  new sources reach. */
-test("a route counts the sources that reach a target only through the candidate", () => {
-  const edges = new Set(["Maker A|Other Payoff"]);
-  const adjacent = (a: string, b: string): boolean => edges.has(`${a}|${b}`) || edges.has(`${b}|${a}`);
-  const r = bestRoute(["Ghyrson", "Other Payoff"], ["Maker A", "Maker B", "Maker C"], adjacent);
-  expect(r).toEqual({ to: "Ghyrson", from: ["Maker A", "Maker B", "Maker C"], worth: 3 });
-  // A candidate nothing feeds, or that feeds nothing, opens no route.
-  expect(bestRoute([], ["Maker A"], adjacent)).toBeNull();
-  expect(bestRoute(["Ghyrson"], [], adjacent)).toBeNull();
-  // The hop into the deck's plan outweighs more sources into a side card.
-  expect(bestRoute(["Alpha", "Ghyrson"], ["Maker B", "Maker C"], (a, b) => a === "Maker C" && b === "Ghyrson",
-    (to) => (to === "Ghyrson" ? 1 : 0.1))).toEqual({ to: "Ghyrson", from: ["Maker B"], worth: 1 });
-  // A target that is also a source is not reached through the candidate.
-  expect(bestRoute(["Ghyrson"], ["Ghyrson"], adjacent)).toBeNull();
-});

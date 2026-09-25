@@ -266,9 +266,28 @@ const quietly = async <T>(run: () => Promise<T>): Promise<T> => {
 test("a route names the bridge card, the deck card it reaches and the cards that reach it", async () => {
   const { f, deck } = ghyrsonWitness();
   const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
-  expect(s.routes.map((c) => [c.name, c.route])).toEqual([
-    ["Impact Tremors", { to: "Ghyrson Starn", from: ["Maker One", "Maker Two", "Maker Three"] }],
+  expect(s.routes.map((c) => [c.name, c.route?.to, c.route?.from])).toEqual([
+    ["Impact Tremors", "Ghyrson Starn", ["Maker One", "Maker Two", "Maker Three"]],
   ]);
+  // THE WHOLE ROUTE (spec 2026-09-25): one engine sentence per hop, continuous through one ability.
+  const chain = s.routes[0]!.route!.chain;
+  expect(chain.map((h) => [h.from, h.to])).toEqual([["Maker One", "Impact Tremors"], ["Impact Tremors", "Ghyrson Starn"]]);
+  for (const h of chain) expect(h.text.length).toBeGreaterThan(0);
+});
+
+/** A ROUTE THE DECK ALREADY HAS IS NOT OPENED (Review Focus 5): with a deck card that already joins
+ *  the makers to Ghyrson, Impact Tremors adds no route from them. */
+test("a route the deck already has is not opened", async () => {
+  const { f, deck } = ghyrsonWitness();
+  const withBridge = {
+    ...deck,
+    edges: [{ a: "Maker One", b: "Ghyrson Starn", reasons: [
+      { tag: "enters:creature", text: "x", producer: "Maker One", consumer: "Deck Bridge", consumerAbility: 0 },
+      { tag: "non-combat-damage:any", text: "y", producer: "Deck Bridge", consumer: "Ghyrson Starn", producerAbility: 0, consumerAbility: 0 },
+    ] }],
+  } as unknown as DeckReport;
+  const s = await quietly(() => suggestForDeck({ report: withBridge, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  expect(s.routes.find((c) => c.name === "Impact Tremors")?.route?.from ?? []).not.toContain("Maker One");
 });
 
 /** ONE CARD, ONE PLACE, THREE TIERS (spec §3, amended 2026-09-25): finding > route > plan. A card a
