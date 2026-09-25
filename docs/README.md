@@ -29,6 +29,12 @@ failure modes it has actually hit.
 | [Schema reference](reference/SCHEMA.md) | every closed vocabulary, version constant and schema field. **Generated** from the source and gated by a test |
 | [Runbook](RUNBOOK.md) | what to run, what it costs, how to measure a change, how to deploy |
 
+## Open work
+
+**[Engine fixes from the Overview rounds](engine-fixes-from-overview-rounds.md)**: the wrong claims,
+tags and repeatability the persona rounds on the graph tab's Overview found, each with the exact edge,
+where it likely comes from, and when it counts as fixed. Remove items as they land.
+
 ## History
 
 **[Engineering log](engineering-log/)** — one file per date: what was measured, what it cost, and
