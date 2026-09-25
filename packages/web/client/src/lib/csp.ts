@@ -16,8 +16,10 @@
  *   - images: card art comes from Scryfall's CDN, and the graph paints decoded art from `blob:` URLs.
  *   - connect: `/static` shards and `/api/import` are same-origin; `art-cache.ts` fetches art from
  *     Scryfall; the beacon reports to Cloudflare.
- *   - styles: the one stylesheet Vite builds. No `<style>` element or `style=""` attribute ships in
- *     the HTML; React's `style` prop writes through the CSSOM, which a CSP does not govern.
+ *   - styles: the one stylesheet Vite builds, and `404.css`. No `<style>` element or `style=""`
+ *     attribute ships in the HTML, and `csp.test.ts` holds every shipped page to that: `404.html`
+ *     carried one and every 404 went out unstyled. React's `style` prop writes through the CSSOM,
+ *     which a CSP does not govern.
  *   - nothing may frame the site, no plugin may load, and `<base>` may not move the document. */
 export const CSP = [
   "default-src 'self'",

@@ -16,6 +16,10 @@
 /404.html
   Cache-Control: public, max-age=0, must-revalidate
 
+# Its stylesheet. Not content-hashed, so revalidated like the page: a restyle reaches the next 404.
+/404.css
+  Cache-Control: public, max-age=0, must-revalidate
+
 # THE ONE FILE THAT IS NOT CONTENT-ADDRESSED, and therefore the only one that has to stay fresh:
 # it names the version directory everything else hangs off. A minute of caching keeps a burst of
 # analyses off the origin without letting a corpus rebuild take an hour to reach anyone.
