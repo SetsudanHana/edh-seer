@@ -4989,6 +4989,23 @@ test("a two-type fetch is tagged with the type the target land has", () => {
   expect(tags).toEqual(["ramp-target:mountain"]);
 });
 
+/** A ONE-SHOT PRODUCER MAKES A ONE-SHOT LINK (overview persona rounds 2026-09-25, item 6a):
+ *  "Farseek -> Hedge Maze | enters:land | triggered" read EVERY TIME for a sorcery, and so did a
+ *  fetchland that sacrifices itself -- the repeatability looked only at the consumer's trigger. */
+test("a sorcery or a self-sacrificing fetch feeds a typed trigger once; a repeatable source still repeats", () => {
+  const putsLand = { verb: "enters", subject: { type: "land", control: "you", token: null } };
+  const landfall = base("Landfall Payoff", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "land", control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as CardTags["abilities"]);
+  const farseek = base("Farseek", [{ kind: "on-cast", effect: { kind: "search" }, emits: [putsLand] }] as CardTags["abilities"]);
+  farseek.tags.characteristics.types = ["sorcery"];
+  const fetch = base("Misty Rainforest", [{ kind: "activated", cost: "{T}, Pay 1 life, Sacrifice this land", effect: { kind: "search" }, emits: [putsLand] }] as CardTags["abilities"]);
+  fetch.tags.characteristics.types = ["land"];
+  const walker = base("Land Walker", [{ kind: "activated", cost: "{T}", effect: { kind: "search" }, emits: [putsLand] }] as CardTags["abilities"]);
+  const rep = (p: ReturnType<typeof base>) => directedReasons(p, landfall, H).find((r) => r.tag === "enters:land")?.repeatability;
+  expect([rep(farseek), rep(fetch), rep(walker)]).toEqual(["oneshot", "oneshot", "triggered"]);
+});
+
 /** PROWESS PUMPS ITSELF BY +1/+1 (CR 702.108a; overview persona rounds 2026-09-25, item 3): "When
  *  Kindred Discovery is cast, Harmonic Prodigy makes your creatures bigger" -- the synthetic keyword
  *  ability carried no amount and no subject, so the sentence fell back to the class-wide phrase. A
