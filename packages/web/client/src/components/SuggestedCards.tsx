@@ -59,12 +59,12 @@ function Row({ c }: { c: SuggestedCard }) {
       {c.route ? (
         <>
           <p className="text-sm max-w-[70ch]">
-            <span className="tabular-nums">{c.route.from.length}</span> of your cards reach {c.route.to} through it.
+            <span className="tabular-nums">{c.route.from.length}</span> of your cards {c.route.from.length === 1 ? "reaches" : "reach"} {c.route.to} through it.
           </p>
           {c.route.chain.length > 0 ? (
             // THE WHOLE ROUTE (spec 2026-09-25): one engine sentence per hop, the card itself in bold,
             // so a reader can check each step instead of trusting a count.
-            <ol aria-label="How it gets there" className="flex flex-col gap-1 border-l border-(--separator) pl-3 text-sm max-w-[70ch]">
+            <ol aria-label="How it gets there" className="flex flex-col gap-1 border-l border-(--separator) pl-8 list-decimal marker:text-(--muted) text-sm max-w-[70ch]">
               {c.route.chain.map((h, i) => (
                 <li key={`${i}-${h.tag}`} className="[overflow-wrap:anywhere]">
                   {h.text.split(c.name).flatMap((part, j) => (j === 0 ? [part] : [<strong key={j}>{c.name}</strong>, part]))}
