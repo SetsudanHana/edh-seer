@@ -2358,6 +2358,15 @@ test("the slack chip names its category in words, not the raw camelCase key", ()
   expect(screen.queryByText(/targetedRemoval/)).not.toBeInTheDocument();
 });
 
+// THE TRIM NOTE NAMES NO ROLE (review 2026-09-25). It said "we don't rank one ramp card against
+// another" whatever the chips under it were -- Interaction and Consistency on both review decks,
+// while the same report called ramp SHORT. Three seats read it as an instruction about ramp.
+test("the trim note under the slack chips does not name a role the chips are not", () => {
+  render(<CutList cutList={[]} slack={[{ category: "Interaction", count: 17, target: 13, over: 4 }]} trim={[]} />);
+  expect(screen.getByText(/we don.t rank the cards inside a role against each other/)).toBeInTheDocument();
+  expect(screen.queryByText(/ramp card/)).not.toBeInTheDocument();
+});
+
 // --- The card drawer (F8): the inspector, reachable from any card name in the report. ---
 
 
