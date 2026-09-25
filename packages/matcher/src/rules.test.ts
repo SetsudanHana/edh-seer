@@ -646,3 +646,19 @@ test("a flicker you can cast at instant speed on your own permanent is protectio
   const protection = [...(m.get("protection") ?? new Set<string>())].sort();
   expect(protection).toEqual(["Cloudshift", "Eldrazi Confluence", "Ephemerate", "Otherworldly Journey", "Restoration Angel"]);
 });
+
+/** TWO ROLE PATTERNS THAT READ A PHRASE, NOT A MOVE (overview persona rounds 2026-09-25, item 9).
+ *  "Return target ... to your hand" from a GRAVEYARD is recursion, not removal (Archaeomancer, and 383
+ *  corpus cards with it); "choose new targets for the COPY" retargets your own copy, not an opponent's
+ *  spell (Weaver of Harmony, Twincast, and 257 with it). Oracle text from Scryfall, 2026-09-26. */
+test("a graveyard return is not removal, and retargeting your own copy is not stack interaction", () => {
+  const m = detectBuildCategories([
+    mk("Archaeomancer", "When this creature enters, return target instant or sorcery card from your graveyard to your hand.", "Creature — Human Wizard"),
+    mk("Weaver of Harmony", "Other enchantment creatures you control get +1/+1.\n{G}, {T}: Copy target activated or triggered ability you control from an enchantment source. You may choose new targets for the copy. (Mana abilities can't be targeted.)", "Enchantment Creature — Snake Druid"),
+    mk("Twincast", "Copy target instant or sorcery spell. You may choose new targets for the copy."),
+    mk("Unsummon", "Return target creature to its owner's hand."),
+    mk("Redirect", "You may choose new targets for target spell."),
+  ]);
+  expect([...(m.get("targetedRemoval") ?? [])].sort()).toEqual(["Unsummon"]);
+  expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Redirect"]);
+});
