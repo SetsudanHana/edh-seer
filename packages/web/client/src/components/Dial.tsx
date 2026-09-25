@@ -66,8 +66,8 @@ function scorePosition(score: number): number {
   return (score / 5) * 2 - 1;
 }
 
-/** `SCORE_BREAKS` cuts [0, 5] into four bands (Unfocused/Developing/Focused/Tuned). Mapped to
- *  needle-space that is four spans; `Focused` and `Tuned` both carry `success` (`TONE_OF_SCORE`),
+/** `SCORE_BREAKS` cuts [0, 5] into four bands (Unfocused/Developing/Focused/Tight for synergy, Far off/Short/Close/On target for Build). Mapped to
+ *  needle-space that is four spans; the top two bands both carry `success` (`TONE_OF_SCORE`),
  *  so drawn as four arcs the dial would show an invisible boundary -- one band pretending to be
  *  two. Adjacent spans sharing a tone are merged here, which is what makes the score dial draw
  *  three zones for four bands. */
