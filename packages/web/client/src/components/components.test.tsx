@@ -29,10 +29,10 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
   }} />);
   // T7: the count moved into the share line above, which has the denominator this one lacked.
   // What is left here is the half a share cannot say -- whether you will have drawn them in time.
-  expect(screen.getByText(/96% to have 2 of them by turn 3/)).toBeInTheDocument();
+  expect(screen.getByText(/96% chance to draw 2 of your 39 Tokens cards by turn 3/)).toBeInTheDocument();
   // A command-zone member is available every game, so it is named beside the count and never
   // folded into a draw probability.
-  expect(screen.getByText(/plus Samut, the Driving Force every game/)).toBeInTheDocument();
+  expect(screen.getByText(/and Samut, the Driving Force is in the command zone every game/)).toBeInTheDocument();
 });
 
 // A CAVEAT THAT OUTLIVED THE DEFECT IT DESCRIBED. This panel printed "land-fetch ramp like Cultivate
@@ -149,7 +149,7 @@ test("DeckIdentity keeps the archetype as context, not as a title", () => {
  *  panel over has its own "Focused" band, and the two scales are unrelated. */
 test("DeckIdentity prints the share with the two numbers it is a ratio of", () => {
   render(<DeckIdentity cohesion={cohesionDraw} strategies={undefined} />);
-  expect(screen.getByText("25 of 63 nonland cards support it (40%, concentrated)")).toBeInTheDocument();
+  expect(screen.getByText("25 of 63 nonland cards support Card draw (40%, concentrated)")).toBeInTheDocument();
 });
 
 /** AND IT NO LONGER EXPLAINS A GAP THAT IS GONE (roadmap T3, 2026-09-03).
@@ -164,7 +164,7 @@ test("DeckIdentity prints the share with the two numbers it is a ratio of", () =
  *  ASSERTS THE ABSENCE, which is what makes this fail against the version it replaced. */
 test("the theme share states its denominator and nothing about modal DFCs", () => {
   render(<DeckIdentity cohesion={cohesionDraw} />);
-  expect(screen.getByText("25 of 63 nonland cards support it (40%, concentrated)")).toBeInTheDocument();
+  expect(screen.getByText("25 of 63 nonland cards support Card draw (40%, concentrated)")).toBeInTheDocument();
   expect(screen.queryByText(/modal DFC/)).not.toBeInTheDocument();
 });
 
@@ -928,10 +928,10 @@ test("an archetype bar floors its percentage", () => {
  *  the same sentence as a claim -- and the deck's 5.0 anchor was one of them. */
 test("a reason that ends in \"triggers\" carries the unread mark; a real claim does not", () => {
   const { unmount } = render(<ReasonText text="When Arcane Signet is cast, Displacer Kitten triggers" />);
-  expect(screen.getByText(/couldn.t read this card/)).toBeInTheDocument();
+  expect(screen.getByText(/effect not read yet/)).toBeInTheDocument();
   unmount();
   render(<ReasonText text="When Arcane Signet is cast, Shark Typhoon makes a token" />);
-  expect(screen.queryByText(/couldn.t read this card/)).toBeNull();
+  expect(screen.queryByText(/effect not read yet/)).toBeNull();
 });
 
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two

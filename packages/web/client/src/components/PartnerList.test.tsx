@@ -92,7 +92,7 @@ test("an unread row's caption is the limit alone", () => {
       }]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText(/couldn.t read this card/)).toBeInTheDocument();
+  expect(screen.getByText(/effect not read yet/)).toBeInTheDocument();
   expect(screen.queryByText("triggers")).toBeNull();
 });
 

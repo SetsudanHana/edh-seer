@@ -21,6 +21,7 @@ import { cardImageUrl } from "../components/card-node.js";
 // it; `tsc -p client` did not, because the client config is the one that HAS those types.
 // `sentence.ts` imports nothing at all.
 import { effectPhrase } from "@edh-seer/matcher/sentence";
+import { MIN_INDEXABLE_PARTNERS, jobOf, jobSentence } from "@edh-seer/matcher/partner-shard";
 import { eventKeyAction, eventKeyClause, eventKeySentence } from "./demand-sentence.js";
 import { groupAnchor } from "./group-anchor.js";
 
@@ -245,6 +246,8 @@ export interface InjectableCard {
   /** THE DERIVED ABILITY ROWS, each stamped with the clause that printed it (roadmap AJ4). Rides
    *  in on the record spread; declared here because the crawlable block renders them now. */
   abilities?: { kind: string; cost?: string; effect: string; amount?: string; when: string[]; emits: string[]; applies?: string[]; clause?: number; self?: true; selfEmits?: string[] }[];
+  /** THE CARD'S BUILD ROLES, which name its job (`jobOf`) on a page with too few partners to list. */
+  roles?: string[];
 }
 
 /** WHICH WAY A PARTNER GROUP RUNS. The three cases the copy already named -- "cause it", "feed it",
@@ -442,9 +445,13 @@ export function cardPageHtml(
       ? `    <p><a href="/commanders/${esc(slug)}">What a deck led by this card wants</a></p>\n`
       : "")
     : `    <p><a href="/cards/${esc(slug)}">What the engine reads on this card</a></p>\n`;
+  // A STAPLE'S JOB, where it has too few partners to be about them (review 2026-09-25). Card pages
+  // only: a commander page is about the deck it leads.
+  const job = kind === "card" && card.partners.length < MIN_INDEXABLE_PARTNERS ? jobOf(card.roles) : null;
+  const jobBlock = job ? `    <h2>What it does in a deck</h2>\n    <p>${esc(jobSentence(card.name, job))}</p>\n` : "";
   const partners = card.partners.length === 0
-    ? "    <p>No partners specific enough to list.</p>"
-    : `    <h2>Works well with</h2>\n${rows}`;
+    ? jobBlock || "    <p>No partners specific enough to list.</p>"
+    : `${jobBlock}    <h2>Works well with</h2>\n${rows}`;
   // WHAT THE ENGINE READ, so a reader can check a claim without leaving for Scryfall. Option 2 of
   // spec D2a, taken 2026-09-18: option 1 shipped with our derivation and nothing to check it
   // against, and "Produces: a card being drawn" is unfalsifiable on a page that never shows the
@@ -535,8 +542,12 @@ const browseNav = (kind: "cards" | "commanders", current?: string): string =>
  *  corpus hung off the sitemap alone. */
 export function browseIndexHtml(kind: "cards" | "commanders", total: number): string {
   const what = kind === "commanders" ? "commanders" : "cards";
+  // THE HEADING NAMES THE LIST, IN THE WORDS A PLAYER SEARCHES. It used to interpolate the plural
+  // after "Every" and shipped "Every cards the engine has read" as the page's one h1 (review
+  // 2026-09-25).
+  const heading = kind === "commanders" ? "Every commander, A to Z" : "Commander cards, A to Z";
   return `    <section class="prerendered">
-    <h1>Every ${what} the engine has read</h1>
+    <h1>${heading}</h1>
     <p>${total.toLocaleString("en")} ${what}, by first letter.</p>
 ${browseNav(kind)}
     </section>`;

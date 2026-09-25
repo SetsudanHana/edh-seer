@@ -180,7 +180,7 @@ test("a row whose effect the engine could not read says so", async () => {
     ...KRENKO,
     partners: [{ ...KRENKO.partners[0]!, reason: "When a Goblin enters, X triggers", unread: true as const }],
   }));
-  expect(await screen.findByText(/couldn.t read this card/)).toBeInTheDocument();
+  expect(await screen.findByText(/effect not read yet/)).toBeInTheDocument();
 });
 
 test("a row the engine did read carries no such marker", async () => {

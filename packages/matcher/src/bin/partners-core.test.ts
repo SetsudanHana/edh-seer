@@ -392,7 +392,7 @@ test("a page record carries metadata, derivation, and the clauses the engine rea
   const rec = all.find(([slug]) => slug === "spoken-card")![1];
   expect(Object.keys(rec).sort()).toEqual(
     ["abilities", "artCrop", "backArtCrop", "clauses", "commander", "demands", "emits", "identity",
-      "manaCost", "name", "partners", "pool", "rarity", "typeLine"],
+      "manaCost", "name", "partners", "pool", "rarity", "roles", "typeLine"],
   );
   // THE ID TRAVELS WITH THE TEXT since AJ4: every derived ability is stamped with the clause that
   // printed it, and the page joins the two by ID -- never by position, which this list's own

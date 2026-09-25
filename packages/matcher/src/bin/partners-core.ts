@@ -7,7 +7,7 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
-import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, partnerShardOf } from "../partner-shard.js";
+import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "../partner-shard.js";
 import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "../edges.js";
 import { keywordAbilities } from "../implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
@@ -28,7 +28,7 @@ import type { DeckCard, Hierarchy } from "../types.js";
 // THE SLUG RULE LIVES IN A LEAF (`../slug.ts`) so the browser's search field can import it without
 // pulling this whole module -- and, through `themesOf`, the archetype table -- into the entry chunk.
 import { slugOf } from "../slug.js";
-import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories } from "../build.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "../build.js";
 import { POOL_CLASSES } from "../answer-pool.js";
 export { slugOf };
 
@@ -1527,6 +1527,10 @@ export interface CardPageRecord {
   commanderPartners?: PartnerRow[];
   commanderPool?: Record<string, number>;
   commanderRarity?: Record<string, number>;
+  /** THE CARD'S BUILD ROLES (ramp, draw, removal...), from the same detectors the report counts
+   *  with -- the index's `r` field, by name. A card page with no partners explains its job from
+   *  these (`jobOf`), and a card with a job is indexable. Absent on a card with no role. */
+  roles?: BuildCategory[];
 }
 
 export interface NameIndexEntry {
@@ -1957,6 +1961,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(() => { const rates = ratesOf(d); return rates.length > 0 ? { rates } : {}; })(),
       identity: d.card.colorIdentity ?? [],
       commander,
+      ...(rolesOf.has(d.card.name) ? { roles: rolesOf.get(d.card.name)!.map((i) => BUILD_CATEGORIES[i]!) } : {}),
       ...(commander && isBackground(d) ? { pairingOnly: true as const } : {}),
       emits: [...new Set(emits)],
       demands: [...new Set([...demandKeysOf(d), ...staticKeysOf(d), ...meldKeysOf(d)])],
@@ -2110,7 +2115,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(pow !== undefined ? { pow } : {}),
       ...(tou !== undefined ? { tou } : {}),
       ...(colourMask > 0 ? { c: colourMask } : {}),
-      ...(written.partners.length < MIN_INDEXABLE_PARTNERS ? { thin: true as const } : {}),
+      ...(!isIndexableCard(written.partners.length, written.roles) ? { thin: true as const } : {}),
       ...(commander && (written.commanderPartners ?? []).length < MIN_INDEXABLE_PARTNERS
         ? { thinCommander: true as const } : {}),
     });

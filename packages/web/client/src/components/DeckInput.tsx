@@ -59,7 +59,7 @@ export function DeckInput({
   }
 
   if (collapsed) {
-    const count = value.split("\n").filter((l) => l.trim()).length;
+    const count = cardCount(commanders, value);
     const cmdName = commanders.split("\n")[0]?.replace(/^\d+\s+/, "").trim();
     // IT WRAPS, AND AT 390px IT HAS TO. Four controls plus the summary ran 409px wide inside a
     // 390px viewport -- measured `document.body.scrollWidth` 466 against a 390 client width, so 76px
@@ -71,7 +71,7 @@ export function DeckInput({
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 border border-(--separator) rounded-(--radius) p-3 bg-(--surface) text-sm">
         <span className="text-(--muted) truncate">
-          <span className="stat-num text-(--foreground)">{count}</span> lines
+          {count === null ? "Deck link" : <><span className="stat-num text-(--foreground)">{count}</span> {count === 1 ? "card" : "cards"}</>}
           {cmdName ? <> · {cmdName}</> : null}
         </span>
         <div className="flex flex-wrap gap-2">
@@ -150,11 +150,16 @@ export function DeckInput({
         <label className="eyebrow" htmlFor="commanders-input">
           Commander
         </label>
+        {/* THE HINTS ARE TEXT, NOT PLACEHOLDER (review 2026-09-25). A placeholder is dim and gone on
+          *  the first keystroke; "optional" and "a deck link works" are facts a reader needs while
+          *  the box is full too. */}
+        <p id="commanders-hint" className="text-xs text-(--muted)">Leave empty if your list has a Commander section.</p>
         <textarea
           id="commanders-input"
           className="field"
           aria-label="Commander(s)"
-          placeholder={"1 Krenko, Mob Boss  (optional — or use a 'Commander' section in the decklist)"}
+          aria-describedby="commanders-hint"
+          placeholder={"1 Krenko, Mob Boss"}
           rows={2}
           value={commanders}
           onChange={(e) => onCommandersChange(e.target.value)}
@@ -164,10 +169,12 @@ export function DeckInput({
         <label className="eyebrow" htmlFor="decklist-input">
           Decklist
         </label>
+        <p id="decklist-hint" className="text-xs text-(--muted)">Paste a list, or a Moxfield or Archidekt deck link.</p>
         <textarea
           id="decklist-input"
           className="field font-mono"
           aria-label="Decklist"
+          aria-describedby="decklist-hint"
           // A LINK WORKS HERE TOO, and the placeholder is where that gets discovered: it is visible
           // exactly when the box is empty, which is the moment a reader has something on their
           // clipboard. A feature nobody knows about has not shipped.
@@ -223,4 +230,27 @@ export function DeckInput({
       </div>
     </div>
   );
+}
+
+/** CARDS, NOT LINES (review 2026-09-25). The summary read "90 lines · The Rani" beside a report
+ *  that says 100 cards everywhere else: a player counts cards, and "4 Island" is four of them.
+ *  A line with a leading quantity counts that many, a section header ("Commander", "Deck") counts
+ *  none, any other line counts one, and the commander field counts too. A pasted deck link has no
+ *  count to give, so it returns null and the summary says what it is instead. */
+export function cardCount(commanders: string, decklist: string): number | null {
+  if (/^\s*https?:\/\//i.test(decklist.trim())) return null;
+  const HEADER = /^(commanders?|deck|main(board)?|sideboard|companion|maybeboard|considering)\s*:?\s*(\(\d+\))?$/i;
+  const rows = (text: string) => text.split("\n").map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("//") && !l.startsWith("#") && !HEADER.test(l))
+    .map((l) => {
+      const m = /^(\d+)\s*x?\s+(.+)$/i.exec(l);
+      // The name without a set code or collector number, to spot a commander listed twice.
+      const name = (m ? m[2]! : l).replace(/\s*\(.*$/, "").toLowerCase();
+      return { qty: m ? Number(m[1]) : 1, name };
+    });
+  const deck = rows(decklist);
+  const listed = new Set(deck.map((r) => r.name));
+  // A commander pasted in both boxes is one card, not two.
+  const extra = rows(commanders).filter((r) => !listed.has(r.name));
+  return [...deck, ...extra].reduce((n, r) => n + r.qty, 0);
 }

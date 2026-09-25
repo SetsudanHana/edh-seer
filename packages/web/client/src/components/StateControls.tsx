@@ -91,7 +91,10 @@ export function StateControls({ markers, state = {}, onState, edges, busy = fals
           ? `re-reading the deck under ${stateLabel(state) || "no state"}…`
           : any
             ? (edges ? stateSummary(edges, state) : "dashed edges exist because of this state")
-            : "Nothing toggled: cards that need these aren't counted"}
+            // SAYS WHAT THE CHIPS ARE FOR (review 2026-09-25). "Nothing toggled" was the first
+            // sentence of the report on a deck that plays the initiative, and a new reader could
+            // not tell these were optional switches or why the report asked.
+            : "Does your deck usually get these? Turn them on to count the cards that need them."}
       </span>
     </div>
   );
