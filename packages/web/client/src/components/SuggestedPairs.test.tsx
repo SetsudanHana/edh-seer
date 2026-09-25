@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { SuggestedPairs } from "./SuggestedPairs.js";
 
-const chaosWarp = { name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3, connections: ["A", "B", "C", "D"], reasons: ["Chaos Warp answers what the deck cannot."] };
+const chaosWarp = { name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3, connections: ["A", "B", "C", "D"], reasons: [{ text: "Chaos Warp answers what the deck cannot.", others: [] }] };
 const crossJob: SuggestedPair = {
   cut: "Mind Stone", add: chaosWarp, rule: "cross-job", cutConnections: 1,
   counts: [{ group: "Ramp", from: 13, to: 12 }, { group: "Interaction", from: 7, to: 8 }],

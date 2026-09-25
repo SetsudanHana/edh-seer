@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
+import type { SuggestedCard, SuggestedReason } from "@edh-seer/matcher/suggest-static";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { peekOnPlainClick, usePeek } from "./peek.js";
 
@@ -10,6 +10,24 @@ const LIST = new Intl.ListFormat("en-GB", { type: "conjunction" });
 const OPEN_REASONS = 2;
 /** Deck cards named in the "connects to" line before it says "and N more". */
 const NAMED_CONNECTIONS = 3;
+
+/** Deck cards named beside a shared reason before it says "and N more". */
+const NAMED_OTHERS = 2;
+
+/** ONE SENTENCE PER SHAPE (owner 2026-09-25): the reason once, then the other deck cards it also
+ *  holds for, instead of the same line repeated once per deck card. */
+function ReasonLine({ r, className }: { r: SuggestedReason; className?: string }) {
+  const n = r.others.length;
+  const also = n === 0 ? "" : n <= NAMED_OTHERS
+    ? `also ${LIST.format(r.others)}`
+    : `also ${r.others.slice(0, NAMED_OTHERS).join(", ")} and ${n - NAMED_OTHERS} more of your cards`;
+  return (
+    <p className={className}>
+      {r.text}
+      {also ? <span className="text-(--muted)"> · {also}</span> : null}
+    </p>
+  );
+}
 
 /** WHY IT IS HERE, IN THE ENGINE'S OWN WORDS. A route card's reason is the route itself -- "26 of
  *  your cards reach Ghyrson Starn through it" -- because that sentence IS the claim (the Ghyrson
@@ -54,12 +72,12 @@ function Row({ c }: { c: SuggestedCard }) {
             connects to <span className="tabular-nums">{c.connections.length}</span> of your cards: {named}
             {more > 0 ? ` and ${more} more` : ""}
           </p>
-          {c.reasons.slice(0, OPEN_REASONS).map((r) => <p key={r} className="text-sm max-w-[70ch]">{r}</p>)}
+          {c.reasons.slice(0, OPEN_REASONS).map((r) => <ReasonLine key={r.text} r={r} className="text-sm max-w-[70ch]" />)}
           {c.reasons.length > OPEN_REASONS ? (
             <details className="text-sm">
               <summary className="cursor-pointer text-(--muted) min-h-6">and {c.reasons.length - OPEN_REASONS} more</summary>
               <div className="flex flex-col gap-1.5 pt-1">
-                {c.reasons.slice(OPEN_REASONS).map((r) => <p key={r} className="max-w-[70ch]">{r}</p>)}
+                {c.reasons.slice(OPEN_REASONS).map((r) => <ReasonLine key={r.text} r={r} className="max-w-[70ch]" />)}
               </div>
             </details>
           ) : null}

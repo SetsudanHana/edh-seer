@@ -121,7 +121,7 @@ test("a zero impact says so in words", () => {
 
 /** EVERY FINDING A CARD CAN FIX NAMES THE CARDS (spec §3, AO4), directly under its own row; a mana
  *  finding keeps its sentence and gets none, because lands are out of scope. */
-const chaosWarp = { name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3, connections: ["Krenko, Mob Boss"], reasons: ["Chaos Warp answers what Krenko cannot."] };
+const chaosWarp = { name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3, connections: ["Krenko, Mob Boss"], reasons: [{ text: "Chaos Warp answers what Krenko cannot.", others: [] }] };
 const noCards = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] };
 const withLands = { ...report, deckMath: { ...report.deckMath, lands: { actual: 30, target: 37, avgManaValue: 3 } } } as typeof report;
 

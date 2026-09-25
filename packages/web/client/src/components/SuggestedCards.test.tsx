@@ -7,7 +7,7 @@ import { StrengthenLists, SuggestedCards } from "./SuggestedCards.js";
 const chaosWarp: SuggestedCard = {
   name: "Chaos Warp", slug: "chaos-warp", identity: ["R"], mv: 3,
   connections: ["Krenko, Mob Boss", "Goblin Chieftain", "Skirk Prospector"],
-  reasons: ["First reason.", "Second reason.", "Third reason.", "Fourth reason."],
+  reasons: [{ text: "First reason.", others: [] }, { text: "Second reason.", others: [] }, { text: "Third reason.", others: [] }, { text: "Fourth reason.", others: [] }],
 };
 const inRouter = (ui: React.ReactNode) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
@@ -42,7 +42,7 @@ test("a card that also fits the plan says so", () => {
 
 test("a route card's reason is the route, and the cards that reach it are listed", () => {
   const tremors: SuggestedCard = {
-    name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: ["x"],
+    name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: [{ text: "x", others: [] }],
     route: { to: "Ghyrson Starn", from: ["Maker One", "Maker Two", "Maker Three"] },
   };
   inRouter(<SuggestedCards cards={[tremors]} empty="none" />);
@@ -62,7 +62,7 @@ test("loading is a spinner at full strength that says what is happening", () => 
 /** "STRENGTHEN WHAT WORKS" HAS TWO PARTS (spec §3, amended 2026-09-25): route cards first, then the
  *  plan list. A part with nothing in it is not drawn; both empty say one sentence. */
 const route: SuggestedCard = {
-  name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: ["x"],
+  name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: [{ text: "x", others: [] }],
   route: { to: "Ghyrson Starn", from: ["Maker One", "Maker Two"] },
 };
 test("routes come first under their own label, then the plan list", () => {
@@ -115,4 +115,18 @@ test("the card's own text is one click away", () => {
   const details = screen.getByText("card text").closest("details")!;
   expect(details.open).toBe(false);
   expect(within(details).getByText("Target permanent's owner shuffles it into their library.")).toBeInTheDocument();
+});
+
+/** ONE SENTENCE PER SHAPE (owner 2026-09-25): the other deck cards the same sentence holds for are
+ *  named beside it, not repeated as a line each behind "and 101 more". */
+test("a reason shared by several deck cards names the others once", () => {
+  const shared: SuggestedCard = {
+    ...chaosWarp,
+    reasons: [{ text: "When a Wizard enters thanks to Inalla, Carnival of Souls adds 1 mana", others: ["Harmonic Prodigy", "Mysidian Elder", "Naban", "Sai"] }],
+  };
+  inRouter(<SuggestedCards cards={[shared]} empty="none" />);
+  const row = screen.getByRole("listitem");
+  expect(row.textContent).toContain("When a Wizard enters thanks to Inalla, Carnival of Souls adds 1 mana");
+  expect(row.textContent).toContain("also Harmonic Prodigy, Mysidian Elder and 2 more of your cards");
+  expect(screen.queryByText(/^and \d+ more$/)).toBeNull();
 });

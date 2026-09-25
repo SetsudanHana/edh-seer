@@ -108,9 +108,22 @@ test("plan cards come from the deck's partner lists, verified live, with the eng
   expect(s.plan.map((c) => c.name)).toEqual(["Impact Tremors", "Black Tremors"]);
   const tremors = s.plan[0]!;
   expect(tremors.connections).toEqual(["Krenko, Mob Boss", "Goblin Maker"]);
-  expect(tremors.reasons[0]).toContain("Krenko, Mob Boss");
-  expect(tremors.reasons[0]).toContain("Impact Tremors");
+  expect(tremors.reasons[0]!.text).toContain("Krenko, Mob Boss");
+  expect(tremors.reasons[0]!.text).toContain("Impact Tremors");
   warn.mockRestore();
+});
+
+/** ONE SENTENCE PER SHAPE, NOT PER DECK CARD (owner 2026-09-25, both persona seats): Carnival of
+ *  Souls showed "and 101 more" -- the same line once per Wizard. Reasons that differ only in which
+ *  deck card they name collapse into one sentence, with the other deck cards listed beside it. */
+test("a reason repeated for several deck cards is one sentence naming the others", async () => {
+  const s = await quietly(() => suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files()) }));
+  const tremors = s.plan.find((c) => c.name === "Impact Tremors")!;
+  // Krenko and Goblin Maker share one shape (same abilities): one group, the second deck card beside it.
+  const shared = tremors.reasons.filter((r) => r.text.includes("Krenko, Mob Boss"));
+  expect(shared.length).toBeGreaterThan(0);
+  for (const r of shared) expect(r.others).toEqual(["Goblin Maker"]);
+  expect(tremors.reasons.some((r) => r.text.includes("Goblin Maker"))).toBe(false);
 });
 
 test("lands, off-colour cards and pairs the live engine does not draw are nowhere", async () => {
@@ -164,8 +177,8 @@ test("a double-faced candidate is verified per face, and its reason names the fa
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   const s = await suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(withPi(files(specs))) });
   const card = s.plan.find((c) => c.name === "Tremor Front // Quiet Back");
-  expect(card?.reasons[0]).toContain("Tremor Front");
-  expect(card?.reasons[0]).not.toContain("//");
+  expect(card?.reasons[0]?.text).toContain("Tremor Front");
+  expect(card?.reasons[0]?.text).not.toContain("//");
   warn.mockRestore();
 });
 

@@ -52,7 +52,7 @@ function Row({ p }: { p: SuggestedPair }) {
           </>
         ) : null}
       </p>
-      {p.add.reasons[0] ? <p className="text-sm max-w-[70ch]">{p.add.reasons[0]}</p> : null}
+      {p.add.reasons[0] ? <p className="text-sm max-w-[70ch]">{p.add.reasons[0].text}</p> : null}
     </li>
   );
 }

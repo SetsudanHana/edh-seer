@@ -38,8 +38,11 @@ export interface SuggestedCard {
   mv: number;
   /** Deck cards the engine drew a reason with, strongest first. */
   connections: string[];
-  /** The engine's own sentences, deduplicated, in connection order. */
-  reasons: string[];
+  /** The engine's own sentences, in connection order, ONE PER SHAPE: a sentence that differs from
+   *  another only in which deck card it names is the same reason, so it is kept once and the other
+   *  deck cards are listed in `others` (owner 2026-09-25 -- Carnival of Souls read "and 101 more",
+   *  the same line once per Wizard). */
+  reasons: SuggestedReason[];
   /** Also qualifies for "Strengthen what works", shown here instead (one card, one place). */
   alsoPlan?: true;
   /** THE ROUTE IT OPENS (`routes` list): deck cards that reach `to` only through this card. */
@@ -52,6 +55,12 @@ export interface SuggestedCard {
   /** On an `answers` list: the permanent classes it answers ("enchantment"). A list, so a client
    *  merging two class lists can name both. */
   answers?: string[];
+}
+export interface SuggestedReason {
+  /** The sentence, naming the first deck card it was found with. */
+  text: string;
+  /** The other deck cards the same sentence holds for, in connection order. */
+  others: string[];
 }
 export interface SuggestedPair {
   cut: string;
@@ -168,7 +177,10 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
       // the work, and one face's abilities are never read as live on the other.
       const yFaces = faceDeckCards(y);
       const connections: string[] = [];
-      const reasons: string[] = [];
+      const reasons: SuggestedReason[] = [];
+      // SHAPE KEY: the tag plus the sentence with the deck card's own name masked out, so "When a
+      // Wizard enters thanks to Inalla, ..." and the same line for Harmonic Prodigy are one reason.
+      const byShape = new Map<string, { reason: SuggestedReason; first: string }>();
       const feeds: string[] = [];
       const fedBy: string[] = [];
       const feedWeight = new Map<string, number>();
@@ -190,7 +202,16 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
         if (into.length > 0) fedBy.push(name);
         connections.push(name);
         onPlan += maxAxisWeight(found, axis);
-        for (const r of found) if (!reasons.includes(r.text)) reasons.push(r.text);
+        const names = [...new Set([name, ...faceDeckCards(x).map((f) => f.card.name)])].sort((a, b) => b.length - a.length);
+        for (const r of found) {
+          const key = `${r.tag}\u0000${names.reduce((t, n) => t.split(n).join("\u0001"), r.text)}`;
+          const had = byShape.get(key);
+          if (!had) {
+            const fresh: SuggestedReason = { text: r.text, others: [] };
+            byShape.set(key, { reason: fresh, first: name });
+            reasons.push(fresh);
+          } else if (had.first !== name && !had.reason.others.includes(name)) had.reason.others.push(name);
+        }
       }
       if (connections.length === 0) return null;
       const oracle = y.card.oracleText;
