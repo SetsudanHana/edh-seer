@@ -970,6 +970,18 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
   return bare ? "oneshot" : "triggered";
 }
 
+/** A PRODUCER THAT SUPPLIES ITS EVENT ONCE (overview persona rounds 2026-09-25, item 6a): an instant
+ *  or a sorcery, or the ability that supplied it is a cast trigger or sacrifices its own card (a
+ *  fetchland). "Farseek -> Hedge Maze" read EVERY TIME because only the consumer was asked. */
+function oneShotProducer(p: DeckCard, ability: number | undefined): boolean {
+  const types = p.tags?.characteristics.types ?? [];
+  if (types.length > 0 && types.every((t) => t === "instant" || t === "sorcery")) return true;
+  const a = ability === undefined ? undefined : p.tags?.abilities[ability];
+  if (!a) return false;
+  if (a.kind === "on-cast") return true;
+  return /\bsacrifice (?:this|~)\b/i.test(a.cost ?? "") || (a.cost ?? "").toLowerCase().includes(`sacrifice ${p.card.name.toLowerCase()}`);
+}
+
 /** Drop reasons identical in every field a reader or a score can see. `impliedProducer` is excluded
  *  from the key because it is provenance rather than content — two reasons that say the same thing
  *  are one reason whether or not one of them came from an implied event.
@@ -1678,7 +1690,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             subjectNoun: fillNoun(e) ?? (producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
           }),
           effectKind: a.effect.kind,
-          repeatability: triggerRepeatability(t.subject),
+          repeatability: oneShotProducer(p, origin) ? "oneshot" : triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
           consumer: c.card.name,
