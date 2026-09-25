@@ -15,19 +15,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ONE NODE, THE ONE IN .nvmrc (2026-09-25). The project ran 22 and 24 side by side to cover an
+  # `engines` floor of 22 that nobody deploys on; it now pins the current LTS in .nvmrc, and CI,
+  # contributors and the deploy machine all read that one file. `test` is the required check in
+  # branch protection -- rename this job and that list has to change with it, because a required
+  # check that never reports blocks every PR forever.
+  # History: Node 20 dropped 2026-09-07 (EOL April 2026); Node 22 dropped 2026-09-25.
   test:
-    name: test (node ${{ matrix.node }})
+    name: test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        # The FLOOR declared in package.json engines, and the current LTS. Both legs are
-        # required checks in branch protection, so changing this list means changing that list
-        # too -- a leg that stops running never reports, and a required check that never reports
-        # blocks every PR forever.
-        # Node 20 (Iron) was dropped 2026-09-07: it went EOL in April 2026, its last release was
-        # v20.20.2 on 2026-03-24, and @testing-library/jest-dom 7 already declares a floor of 22.
-        node: [22, 24]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         # Nothing here pushes, so the token is not left in .git/config for later steps.
@@ -35,13 +31,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: ${{ matrix.node }}
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       # BEFORE the suite, because a green suite is NOT a compiling one -- `vitest` transpiles per
       # file and never typechecks, so the matcher once carried two type errors 2,706 passing tests
-      # could not see. Run on both legs even though tsc is Node-agnostic: it is one line and it
-      # keeps the two required status checks the only ones branch protection has to know about.
+      # could not see.
       - run: npm run typecheck
       # The suite is pure: no MongoDB, no network, no API key. Anything needing a live corpus lives
       # in a bin rather than a test, and the one test backed by a gitignored cache skips itself with
@@ -53,8 +48,8 @@ jobs:
       # that has actually bitten -- a test under research/ is collected by NO vitest project, so it
       # reads as covered while its coverage is simply absent from the run above. Runs its own
       # self-test first, because a gate nobody has watched fail is decoration.
-      # Inside this job for the same reason as the token gates below: `test (node 22|24)` are the
-      # only two checks branch protection knows about.
+      # Inside this job for the same reason as the token gates below: `test` is the only check
+      # branch protection knows about.
       - run: npm run lint:bins
       # The design system in tokens/ is EXTRACTED from the shipped packages/web/client/src/index.css,
       # so it can drift from what actually renders. Three gates, all python3 stdlib (no pip step):
@@ -62,9 +57,29 @@ jobs:
       #   validate_contrast - the required WCAG 2.2 pairs still pass on the real hex values
       #   validate_theme_refs - no component reaches for a var() no token defines (a "floating token",
       #                         the defect css-tokens.test.ts was written for)
-      # Inside the existing job, not a new one: `test (node 22|24)` are the only two checks branch
-      # protection knows about, and a separate job would gate nothing until someone adds it there.
+      # Inside the existing job, not a new one: `test` is the only check branch protection knows
+      # about, and a separate job would gate nothing until someone adds it there.
       - run: npm run tokens:check
       # tokens/theme.css is GENERATED. Editing tokens/*.json without rebuilding it is the drift the
       # gates above cannot see, because they would both read the same stale pair.
       - run: npm run tokens:build && git diff --exit-code -- tokens/theme.css
+
+  # THE NEXT NODE, AS AN EARLY WARNING AND NOT A GATE. Node 26 becomes LTS in late October 2026; this
+  # leg shows what moving .nvmrc to it would break before anyone has to, the way a Node 24 leg
+  # caught a jsdom 30 test seam on 2026-09-25. `continue-on-error` and absent from branch
+  # protection, so a red here informs and never blocks. When .nvmrc moves to 26, point this at 28.
+  next:
+    name: next (node 26)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
