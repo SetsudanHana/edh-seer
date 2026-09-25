@@ -40,14 +40,26 @@ test("a card that also fits the plan says so", () => {
   expect(screen.getByText("also fits your plan")).toBeInTheDocument();
 });
 
-test("a route card's reason is the route, and the cards that reach it are listed", () => {
+test("a route card shows the route as numbered steps, the card itself in bold", () => {
   const tremors: SuggestedCard = {
-    name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: [{ text: "x", others: [] }],
-    route: { to: "Ghyrson Starn", from: ["Maker One", "Maker Two", "Maker Three"] },
+    name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: [],
+    route: {
+      to: "Ghyrson Starn", from: ["Maker One", "Maker Two", "Maker Three"],
+      chain: [
+        { from: "Maker One", to: "Impact Tremors", toAbility: 0, tag: "enters:creature", text: "When a creature enters thanks to Maker One, Impact Tremors deals 1 damage" },
+        { from: "Impact Tremors", to: "Ghyrson Starn", fromAbility: 0, toAbility: 0, tag: "non-combat-damage:any", text: "When Impact Tremors deals damage, Ghyrson Starn triggers" },
+      ],
+    },
   };
   inRouter(<SuggestedCards cards={[tremors]} empty="none" />);
-  const row = screen.getByRole("listitem");
+  const row = screen.getAllByRole("listitem")[0]!;
   expect(row.textContent).toContain("3 of your cards reach Ghyrson Starn through it");
+  const steps = within(screen.getByRole("list", { name: "How it gets there" })).getAllByRole("listitem");
+  expect(steps.map((li) => li.textContent)).toEqual([
+    "When a creature enters thanks to Maker One, Impact Tremors deals 1 damage",
+    "When Impact Tremors deals damage, Ghyrson Starn triggers",
+  ]);
+  expect(within(steps[0]!).getByText("Impact Tremors").tagName).toBe("STRONG");
   const details = within(row).getByText("which cards").closest("details")!;
   expect(within(details).getByText(/Maker One, Maker Two, Maker Three/)).toBeInTheDocument();
 });
@@ -63,7 +75,7 @@ test("loading is a spinner at full strength that says what is happening", () => 
  *  plan list. A part with nothing in it is not drawn; both empty say one sentence. */
 const route: SuggestedCard = {
   name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: [{ text: "x", others: [] }],
-  route: { to: "Ghyrson Starn", from: ["Maker One", "Maker Two"] },
+  route: { to: "Ghyrson Starn", from: ["Maker One", "Maker Two"], chain: [] },
 };
 test("routes come first under their own label, then the plan list", () => {
   inRouter(<StrengthenLists routes={[route]} plan={[chaosWarp]} />);
