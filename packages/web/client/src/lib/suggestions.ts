@@ -45,7 +45,9 @@ export function useSuggestions(data: AnalyzeResponse): SuggestionsState {
     let cancelled = false;
     setOut({ state: "loading", value: null });
     (async () => {
-      engine ??= import("@edh-seer/matcher/suggest-static");
+      // A FAILED LOAD IS FORGOTTEN, so the next report tries again: a deploy that rotates the hashed
+      // chunk under an open tab would otherwise fail every later report until a reload.
+      engine ??= import("@edh-seer/matcher/suggest-static").catch((err: unknown) => { engine = undefined; throw err; });
       const { suggestForDeck } = await engine;
       return suggestForDeck({ report: data.report, commanderColorIdentity: data.commanderColorIdentity, baseUrl: "/static" });
     })().then(
