@@ -4,7 +4,7 @@
  *  misreading — it just answers, and the wrong answers look like the right ones. This prints the
  *  residual and dumps every card in it, so the bucket is auditable rather than merely reported.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/land-conditions-census.ts */
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/land-conditions-census.ts */
 import { connect, loadConfig } from "@edh-seer/data";
 import { classifyLand, type LandTemplate } from "../../packages/matcher/src/land-conditions.js";
 

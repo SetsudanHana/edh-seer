@@ -16,8 +16,8 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *  Free: Mongo reads only, no API, no writes.
  *
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/mana-audit-deadline.ts              # the 71-deck sweep
- *    npx tsx packages/matcher/src/bin/mana-audit-deadline.ts enchanting-rani   # one deck, every row
+ *    npx tsx research/matcher/mana-audit-deadline.ts              # the 71-deck sweep
+ *    npx tsx research/matcher/mana-audit-deadline.ts enchanting-rani   # one deck, every row
  */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 

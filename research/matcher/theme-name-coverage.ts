@@ -19,7 +19,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *  Free: Mongo reads only, no API, no writes.
  *
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/theme-name-coverage.ts
+ *    npx tsx research/matcher/theme-name-coverage.ts
  */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 

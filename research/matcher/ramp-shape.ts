@@ -27,7 +27,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Free: Mongo reads only.
  *
- *    npx tsx packages/matcher/src/bin/ramp-shape.ts */
+ *    npx tsx research/matcher/ramp-shape.ts */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 
 /** THE FRAGILITY ORDER IS MEASURED, NOT ASSERTED -- `answer-pool.json`, the same generated artifact

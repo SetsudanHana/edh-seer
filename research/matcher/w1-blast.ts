@@ -14,7 +14,7 @@
  *  that was corrected. For the same reason it asks the engine with the option the BUILD uses.
  *
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/w1-blast.ts [--out static-out] */
+ *    npx tsx research/matcher/w1-blast.ts [--out static-out] */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig } from "@edh-seer/data";

@@ -18,7 +18,7 @@ import { conditionFamily, interveningIfOf } from "./intervening-if.js";
  *  The direction a fix moves the count is DOWN: give derivation a way to represent a condition and
  *  the audit stops listing it. Lower the cap when that happens; raise it only with a written reason.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/tagger/src/bin/intervening-if-audit.ts \
+ *    npx tsx --env-file=packages/tagger/.env research/tagger/intervening-if-audit.ts \
  *      --fixture packages/tagger/src/derive/intervening-if-unrepresented.json */
 const FIXTURE = new URL("intervening-if-unrepresented.json", import.meta.url);
 

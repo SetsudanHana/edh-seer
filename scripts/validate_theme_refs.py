@@ -5,16 +5,14 @@ This is the precision gate: a component that uses var(--color-foo) which the the
 defines renders wrong (a "floating token" = drift = inconsistency across pages). It also
 proves theme + components stay in lock-step.
 
-Usage:
-  python3 scripts/validate_theme_refs.py                         # defaults to examples/golden
-  python3 scripts/validate_theme_refs.py path/to/theme.css src/  # your theme + your code
+Usage (`npm run tokens:check` passes these):
+  python3 scripts/validate_theme_refs.py tokens/theme.css packages/web/client/src
 Exit 0 = every referenced var is defined; 1 = a component references an undefined token.
 """
 import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
 DEF = re.compile(r"(--[A-Za-z0-9_-]+)\s*:")            # --x: value  (a definition)
 REF = re.compile(r"var\(\s*(--[A-Za-z0-9_-]+)\s*(?:,[^)]*)?\)")  # var(--x) or var(--x, fallback)
 CODE_EXT = {".css", ".scss", ".tsx", ".jsx", ".ts", ".js", ".vue", ".svelte", ".html", ".astro"}
@@ -49,12 +47,11 @@ def iter_files(paths):
 
 
 def main(argv):
-    if len(argv) >= 2:
-        theme_paths = [argv[0]]
-        code_paths = argv[1:]
-    else:
-        theme_paths = [ROOT / "examples" / "golden" / "theme.css"]
-        code_paths = [ROOT / "examples" / "golden"]
+    if len(argv) < 2:
+        print("usage: validate_theme_refs.py THEME.css CODE_DIR [CODE_DIR ...]", file=sys.stderr)
+        return 2
+    theme_paths = [argv[0]]
+    code_paths = argv[1:]
 
     defined = collect_defs(theme_paths)
     # a theme can reference its own vars (aliases) — those are fine; we add them as defined too

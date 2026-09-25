@@ -8,7 +8,7 @@
  *
  *  Free: Mongo reads plus `computeBuild` per deck, no analysis run. Writes JSON to stdout:
  *
- *    tsx research/template-fit.ts --dir packages/cli/decks/edhrec > packages/matcher/src/template-targets.json
+ *    tsx research/matcher/template-fit.ts --dir packages/cli/decks/edhrec > packages/matcher/src/template-targets.json
  *
  *  `--fit` is the out-of-sample check (spec §4.1): rows from the `.avg` decks only, scored on the
  *  `.real` decks -- the share within ±2 of the theme row, against the same share for the population
@@ -93,6 +93,6 @@ for (const [theme, decks] of counts) {
 }
 console.log(JSON.stringify({
   version: 1,
-  source: `${DIR}, ${all.length} decks over ${counts.size} themes, regenerated ${new Date().toISOString().slice(0, 10)} by research/template-fit.ts`,
+  source: `${DIR}, ${all.length} decks over ${counts.size} themes, regenerated ${new Date().toISOString().slice(0, 10)} by research/matcher/template-fit.ts`,
   population, range, themes,
 }, null, 1));

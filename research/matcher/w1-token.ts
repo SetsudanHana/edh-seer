@@ -14,7 +14,7 @@
  *  floor on the loss, not an estimate of it. Upgrade path: drop the cap and wait longer.
  *
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/w1-token.ts */
+ *    npx tsx research/matcher/w1-token.ts */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, loadConfig } from "@edh-seer/data";

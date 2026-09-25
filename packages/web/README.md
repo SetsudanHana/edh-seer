@@ -1,37 +1,52 @@
 # @edh-seer/web
 
-Local test UI for the MTG synergy engine. Paste a decklist, get a synergy report.
+The site at [edhseer.cards](https://edhseer.cards): paste a decklist, or a Moxfield or Archidekt link,
+and get the synergy report.
 
-- `server/` — NestJS (Fastify) API. `POST /api/analyze { decklist }` → `{ report, missing, resolvedCount, totalCount }`.
-- `client/` — Vite + React 19 + HeroUI 3 (Tailwind 4) frontend.
+- `client/` — Vite + React 19 + Tailwind 4. **In production it analyses in the browser**: built with
+  `VITE_STATIC_DATA=1`, it reads each card's derived tags from `/static` shards and runs the matcher
+  itself. Also holds the static How it works page and the card and commander page templates.
+- `functions/` — Cloudflare Pages Functions that prerender the card, commander and browse pages.
+- `server/` — a NestJS (Fastify) API that runs the same analysis against MongoDB. Development only:
+  it is the known-good reference to compare the static path against, and the backend for the
+  calibration panel. It is never deployed.
+- `scripts/` — the deploy assembler, IndexNow, and the README and How it works screenshots and demo.
+
+Deck links are imported by a separate Worker, [`packages/import-worker`](../import-worker), at
+`/api/import/*`.
 
 ## Run
 
+The site as production runs it (needs `static-out/`, built from MongoDB):
+
 ```bash
-docker compose -f packages/data/docker-compose.yml up -d   # MongoDB (or: docker run -d -p 27017:27017 mongo:7)
-npm run ingest -w @edh-seer/data                                # once, populates Mongo
-npm run dev -w @edh-seer/web                                    # Nest :3001 + Vite :5173 together
+npx tsx packages/matcher/src/bin/build-static.ts
+VITE_STATIC_DATA=1 npm run dev:client -w @edh-seer/web     # http://localhost:5173
 ```
 
-Open http://localhost:5173, paste a decklist (plain text, `1 Card Name` per line — e.g. a
-Moxfield **text export**), click Analyze. The Vite dev server proxies `/api` to Nest.
+The API path, against MongoDB directly:
 
-Moxfield URLs are not supported (Moxfield blocks server-side API access); use the text export.
+```bash
+docker compose -f packages/data/docker-compose.yml up -d   # MongoDB, loopback only
+npm run ingest -w @edh-seer/data                            # once, populates Mongo
+npm run dev -w @edh-seer/web                                # API :3001 + UI :5173, /api proxied
+```
+
+The [runbook](../../docs/RUNBOOK.md#running-the-product) has the rest, including the deploy.
 
 ## Notes on the stack
 
-- The server is CommonJS (NestJS, decorator metadata via `tsc`), but `@edh-seer/engine`/`@edh-seer/data`
-  are ESM TypeScript-source packages. So the server loads them via dynamic `import()` and runs
-  under tsx's loader (`start:server` = `node --import tsx dist/main.js`,
-  `dev:server` = `NODE_OPTIONS="--import tsx" nest start --watch`). A future "build the libraries
-  to JS" cleanup would remove the tsx-loader runtime dependency.
-- HeroUI 3 has no `HeroUIProvider`; components render directly. `@edh-seer/web` uses `vitest` 4
-  (Vite 8 requirement) while the other packages use `vitest` 1 — isolated per package.
+- The server is CommonJS (NestJS needs legacy decorator metadata, compiled by plain `tsc`; there is
+  no Nest CLI). `@edh-seer/*` are ESM TypeScript-source packages, so the server loads them through
+  tsx's loader (`start:server` = `node --import tsx dist/main.js`). It is the one CommonJS corner of
+  the repository.
+- Security headers (CSP, frame and permissions policy) are defined once in `client/src/lib/csp.ts`,
+  sent by the Functions and mirrored in `client/public/_headers`; `csp.test.ts` holds them together.
 
 ## Test
 
 ```bash
-npm run test:server -w @edh-seer/web                                          # unit + e2e (Mongo suites skip)
 npm run test:client -w @edh-seer/web                                          # component + integration tests
+npm run test:server -w @edh-seer/web                                          # unit + e2e (Mongo suites skip)
 MONGO_TEST_URI=mongodb://localhost:27017 npm run test:server -w @edh-seer/web # + Mongo integration
 ```

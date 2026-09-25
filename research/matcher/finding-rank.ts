@@ -44,7 +44,7 @@ const FINDINGS_PATH = join(process.cwd(), "packages", "web", "client", "src", "l
  *  Free: Mongo reads only, no API, no writes.
  *
  *    set -a && source packages/tagger/.env && set +a
- *    npx tsx packages/matcher/src/bin/finding-rank.ts
+ *    npx tsx research/matcher/finding-rank.ts
  */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 

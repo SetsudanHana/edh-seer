@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Every script lives in the home that matches what it is FOR.
 
-Settled 2026-09-07 (roadmap Z3/Z4, PRs #221 and #223) and documented in CLAUDE.md:
+Settled 2026-09-07 (roadmap Z3/Z4, PRs #221 and #223) and documented in CONTRIBUTING.md:
 
     packages/*/src/bin/     pipeline   - writes Mongo or a tracked artifact the product ships,
                                          or is a module with a test
@@ -32,6 +32,7 @@ from __future__ import annotations
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -125,6 +126,38 @@ def broken_runtime_paths() -> list[str]:
     return bad
 
 
+WRITTEN_PATH = re.compile(r"(?<![\w./-])((?:packages|research|scripts)/[A-Za-z0-9_./-]+\.(?:ts|tsx|mts|mjs|py))\b")
+
+
+def broken_written_paths() -> list[str]:
+    """Script paths written out in prose -- a run instruction, a docstring, a cited command -- that
+    point at nothing.
+
+    THE SAME MOVE, THE OTHER HALF. `broken_runtime_paths` catches the strings a script reads; the
+    2026-09-07 reorg also left 47 run instructions pointing at `packages/*/src/bin/` paths the files
+    had moved out of, one of them quoted on the live How it works page (found 2026-09-25). A path
+    counts as resolved from the repository root, from its own package, or from its own directory,
+    which is how these are written. The engineering log is history and keeps the paths it had.
+    """
+    tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split("\n")
+    bad: list[str] = []
+    for rel in tracked:
+        # This file's own self-test names a path that must not exist.
+        if not rel or rel.startswith("docs/engineering-log/") or rel in {"package-lock.json", "scripts/check_bin_placement.py"}:
+            continue
+        f = ROOT / rel
+        if f.suffix not in {".ts", ".tsx", ".mts", ".mjs", ".js", ".py", ".md", ".html", ".json", ".yml", ".txt"}:
+            continue
+        pkg = ROOT / "/".join(rel.split("/")[:2]) if rel.startswith("packages/") else None
+        for n, line in enumerate(f.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+            for m in WRITTEN_PATH.finditer(line):
+                target = m.group(1)
+                if (ROOT / target).exists() or (f.parent / target).exists() or (pkg and (pkg / target).exists()):
+                    continue
+                bad.append(f"{rel}:{n}: {target}")
+    return bad
+
+
 def orphaned_research_tests() -> list[str]:
     """Test files under `research/`, which no vitest project collects."""
     research = ROOT / "research"
@@ -143,6 +176,8 @@ def self_test() -> None:
     assert not WRITES.search("const outDir = argv[i + 1];"), "naming an out dir is not writing"
     assert RUNTIME_PATH.search('readFileSync(new URL("../x.json", import.meta.url))'), "must see a runtime path"
     assert not RUNTIME_PATH.search('from "../x.js"'), "an import specifier is not a runtime path"
+    assert WRITTEN_PATH.search("npx tsx packages/matcher/src/bin/x.ts"), "must see a written script path"
+    assert not WRITTEN_PATH.search("my-packages/x.ts"), "a path inside a longer word is not one"
     print("self-test: both directions fire")
 
 
@@ -151,12 +186,13 @@ def main() -> int:
         self_test()
         return 0
     bad, orphans, paths = misplaced_bins(), orphaned_research_tests(), broken_runtime_paths()
+    written = broken_written_paths()
     for f in bad:
         pkg = f.split("/")[1]
         print(
             f"{f}: nothing imports it, no package.json script runs it, it has no test and it "
             f"writes nothing -- that is a one-shot measurement. Move it to research/{pkg}/ "
-            f"(see CLAUDE.md, 'Where a script lives'), or give it the test or the write that "
+            f"(see CONTRIBUTING.md, 'Where a script goes'), or give it the test or the write that "
             f"makes it pipeline.",
         )
     for f in orphans:
@@ -168,8 +204,11 @@ def main() -> int:
     for f in paths:
         print(f"{f} -- a relative runtime path that no longer resolves. Moving a file rewrites its "
               f"imports but NOT the strings inside `new URL(...)`, and nothing else can see them.")
-    if bad or orphans or paths:
-        print(f"\n{len(bad) + len(orphans) + len(paths)} problem(s).")
+    for f in written:
+        print(f"{f} -- a written script path that no longer exists. A move rewrites imports, not the "
+              f"run instructions and citations that name the file; point this at where it lives now.")
+    if bad or orphans or paths or written:
+        print(f"\n{len(bad) + len(orphans) + len(paths) + len(written)} problem(s).")
         return 1
     print("bin placement: ok")
     return 0

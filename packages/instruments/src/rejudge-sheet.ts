@@ -19,7 +19,7 @@ import { join } from "node:path";
  *  the cache. Fill it first, then rename it to `verdicts-<name>.jsonl` and rebuild. The sheet ships
  *  under `docs/measurements/` without the prefix for exactly that reason.
  *
- *    npx tsx packages/matcher/src/bin/rejudge-sheet.ts --tag static:cost-reduction --verdict false \
+ *    npx tsx packages/instruments/src/rejudge-sheet.ts --tag static:cost-reduction --verdict false \
  *      --out /tmp/cost-reduction-rejudge
  */
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";

@@ -15,9 +15,9 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *  tries the thing that convinces them the graph is useless.
  *
  *  Usage:
- *    npx tsx packages/matcher/src/bin/graph-export.ts --subtype wizard [--limit 500] [--out f.html]
- *    npx tsx packages/matcher/src/bin/graph-export.ts --deck packages/cli/decks/inalla.txt
- *    npx tsx packages/matcher/src/bin/graph-export.ts --identity R --limit 300
+ *    npx tsx research/matcher/graph-export.ts --subtype wizard [--limit 500] [--out f.html]
+ *    npx tsx research/matcher/graph-export.ts --deck packages/cli/decks/inalla.txt
+ *    npx tsx research/matcher/graph-export.ts --identity R --limit 300
  *
  *  Add --events to overlay the matcher's synergy edges as reified `event:` nodes (stage 2). Stage 1
  *  on its own shows what cards SHARE; only the event edges show why they work together. */

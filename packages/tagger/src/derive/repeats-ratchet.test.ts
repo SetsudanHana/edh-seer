@@ -28,7 +28,7 @@ import { repeatsFor } from "./repeats.js";
  *  `KNOWN_DEFECT_CAP`, which is checked against a live count every run. A code change that makes
  *  MORE abilities refuse today will not fail this test -- it will only show up once someone reruns:
  *
- *    npx tsx --env-file=packages/tagger/.env packages/tagger/src/bin/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json
+ *    npx tsx --env-file=packages/tagger/.env research/tagger/repeats-report.ts --refused packages/tagger/src/derive/repeats-refused.json
  *
  *  and notices the row count moved past REFUSED_CAP. Also note: every row in this fixture carries
  *  `cost: ""` structurally -- rules 1-2 (`repeats.ts`) run against `cost` BEFORE the trigger branch,

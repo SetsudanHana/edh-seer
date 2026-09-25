@@ -69,8 +69,9 @@ Three homes, and the test is what the script is **for**, not what it is named:
 a `*.test.ts` under `research/` is collected by no vitest project, so it reads as covered while its
 coverage is silently missing.
 
-Research scripts import package source by **relative path**, never by package name. Importing by name
-would force dozens of modules into the public export maps purely to relocate a script.
+Research scripts import what a package **exports** by its name (`@edh-seer/data`), and reach a module
+outside its export map by **relative path**. Adding an export only so a script can be relocated would
+grow the public surface for no reader; `research/package.json` declares the packages it imports.
 
 ## Measure before and after, and say the number
 

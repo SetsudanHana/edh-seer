@@ -4,7 +4,7 @@
  *  newly built deck near half derived, half flat — so an all-or-nothing collection switch would
  *  blank every card outside the purchased scope. Composition, not switching.
  *
- *  Mixing was measured before this was built (`packages/matcher/src/bin/mixed-population.ts`): over
+ *  Mixing was measured before this was built (`packages/instruments/src/mixed-population.ts`): over
  *  the 55 verified gold pairs, every pair passing in both pure arms also passes in both mixed arms.
  *  No edge is lost to the two populations disagreeing, in either direction.
  *

@@ -24,7 +24,7 @@ import type { DeckCard } from "../../packages/matcher/src/types.js";
  *
  *  Free: Mongo reads only, no derive, no spend.
  *
- *    npx tsx packages/matcher/src/bin/land-formulas.ts */
+ *    npx tsx research/matcher/land-formulas.ts */
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");
 
 const isLand = (dc: DeckCard): boolean => dc.card.typeLine.toLowerCase().includes("land");

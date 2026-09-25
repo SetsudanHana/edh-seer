@@ -34,7 +34,7 @@ import { parseDecklistSections } from "@edh-seer/data";
  *  Free: reads only, no API spend, no writes. Needs the web server up.
  *
  *    cd packages/web && NODE_OPTIONS="--import tsx" npx nest start
- *    npx tsx packages/matcher/src/bin/fanout-cap.ts
+ *    npx tsx research/matcher/fanout-cap.ts
  */
 const API = process.env.API ?? "http://localhost:3001";
 const DECK_DIR = join(process.cwd(), "packages", "cli", "decks", "calibration");

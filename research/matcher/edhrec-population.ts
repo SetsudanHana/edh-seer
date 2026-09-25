@@ -10,7 +10,7 @@
  *  Terms: EDHREC states none for these endpoints. One request per second, a browser UA, raw bodies
  *  cached on disk so a re-run costs nothing, and NEVER at runtime -- this is a one-off pull.
  *
- *    npx tsx research/edhrec-population.ts [--out packages/cli/decks/edhrec] [--themes a,b | --all] */
+ *    npx tsx research/matcher/edhrec-population.ts [--out packages/cli/decks/edhrec] [--themes a,b | --all] */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ARCHETYPE_VOCABULARY } from "../../packages/matcher/src/archetype-vocabulary.js";

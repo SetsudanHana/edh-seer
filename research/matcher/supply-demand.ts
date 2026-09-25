@@ -23,7 +23,7 @@
  *  A reason exists only where an edge formed, so a shape with no supply at all is ABSENT here
  *  rather than zero — that is an availability question and `deckAvailability` answers it.
  *
- *    npx tsx --env-file=packages/tagger/.env packages/matcher/src/bin/supply-demand.ts [--verbose] [deck.txt]
+ *    npx tsx --env-file=packages/tagger/.env research/matcher/supply-demand.ts [--verbose] [deck.txt]
  */
 import { readFileSync, readdirSync, writeFileSync, readFileSync as readJson } from "node:fs";
 import { isAbsolute, join } from "node:path";

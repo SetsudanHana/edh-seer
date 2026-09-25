@@ -18,8 +18,8 @@ import { expect, test } from "vitest";
  *  `fileURLToPath` throws — a guard that walks the filesystem cannot run inside the environment it
  *  is guarding.
  *
- *  `__dirname`, not `import.meta.url`, because the server tsconfig is `NodeNext` emitting CJS for
- *  `nest build` and rejects `import.meta` outright (TS1470). That this file uses the very name it
+ *  `__dirname`, not `import.meta.url`, because the server tsconfig is `NodeNext` emitting CJS
+ *  through plain `tsc` and rejects `import.meta` outright (TS1470). That this file uses the very name it
  *  forbids the client to use is the point: `__dirname` is correct in a CJS Node module and fatal in
  *  a browser bundle, which is the whole distinction being guarded. */
 const CLIENT_SRC = join(__dirname, "../../client/src");
