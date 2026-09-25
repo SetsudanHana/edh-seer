@@ -6,19 +6,19 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 // and does nothing but read strings.
 import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
-import { ARCHETYPE_LABELS, type Archetype } from "../archetypes.js";
-import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "../partner-shard.js";
-import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "../edges.js";
-import { keywordAbilities } from "../implied.js";
-import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "../hierarchy.js";
-import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "../legality.js";
-import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } from "../rate.js";
+import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
+import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { keywordAbilities } from "./implied.js";
+import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
+import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
+import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } from "./rate.js";
 /** Re-exported for the card pages' ability table: an effect kind is engine vocabulary
  *  (`token-generation`) and `effectPhrase` is where this repo already turned every one of them into
  *  English. A second map in the client is how two surfaces start disagreeing about what a kind means. */
-export { effectPhrase } from "../sentence.js";
-import { normalizeZoneEvent, zoneEventKey } from "../zones.js";
-import type { DeckCard, Hierarchy } from "../types.js";
+export { effectPhrase } from "./sentence.js";
+import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import type { DeckCard, Hierarchy } from "./types.js";
 
 /** PURE, AND IT HAS TO STAY THAT WAY. `build-partners.ts` is the Mongo and fs wiring; everything
  *  decidable lives here, for the reason `build-static-core.ts` was split out of its own bin --
@@ -27,9 +27,9 @@ import type { DeckCard, Hierarchy } from "../types.js";
 
 // THE SLUG RULE LIVES IN A LEAF (`../slug.ts`) so the browser's search field can import it without
 // pulling this whole module -- and, through `themesOf`, the archetype table -- into the entry chunk.
-import { slugOf } from "../slug.js";
-import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "../build.js";
-import { POOL_CLASSES } from "../answer-pool.js";
+import { slugOf } from "./slug.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "./build.js";
+import { POOL_CLASSES } from "./answer-pool.js";
 export { slugOf };
 
 /** TWO CARDS CAN SLUG THE SAME AND ONE URL CANNOT SERVE BOTH.

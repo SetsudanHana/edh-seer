@@ -25,7 +25,7 @@ import {
   answerList, bestRoute, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements, planList,
   type Candidate, type CutSide, type DeckSide, type GroupState, type IndexCard,
 } from "./suggest.js";
-import { demandForms, demandKeysOf, eventKey, splitKey, supplyForms, supplyKeysOf } from "./bin/partners-core.js";
+import { demandForms, demandKeysOf, eventKey, splitKey, supplyForms, supplyKeysOf } from "./partners-core.js";
 import type { CardTags, GameEvent } from "@edh-seer/tagger";
 import { axisEventKeys, eventKeysForDemand } from "./suggest-keys.js";
 import type { DeckCard } from "./types.js";

@@ -1,4 +1,4 @@
-import type { EventMembers } from "./partners-core.js";
+import type { EventMembers } from "../partners-core.js";
 
 /** THE EVENT INDEX (roadmap AJ3): the cards behind every event count, cut into files a reader can
  *  fetch one of.

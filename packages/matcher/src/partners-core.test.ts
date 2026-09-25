@@ -1,10 +1,10 @@
-import { MIN_INDEXABLE_PARTNERS } from "../partner-shard.js";
-import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories } from "../build.js";
-import { POOL_CLASSES } from "../answer-pool.js";
-import { directedReasons } from "../edges.js";
+import { MIN_INDEXABLE_PARTNERS } from "./partner-shard.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories } from "./build.js";
+import { POOL_CLASSES } from "./answer-pool.js";
+import { directedReasons } from "./edges.js";
 import { expect, test, vi } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
-import type { DeckCard, Hierarchy } from "../types.js";
+import type { DeckCard, Hierarchy } from "./types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, PI_KEEP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
@@ -421,7 +421,7 @@ test("the artifact wires the partner list through the engine", () => {
  *  Driven through `partnersFor` rather than by exporting the helper: the behaviour under test is
  *  which sentence reaches the artifact, not the shape of a private function. */
 test("a repeatable reason is preferred over a one-shot", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "enters:creature", text: "ONE SHOT", repeatability: "oneshot" },
     { tag: "enters:creature", text: "REPEATABLE", repeatability: "triggered" },
@@ -433,7 +433,7 @@ test("a repeatable reason is preferred over a one-shot", async () => {
 });
 
 test("with only a one-shot on offer, that is what is stored", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "enters:creature", text: "ONLY ONE SHOT", repeatability: "oneshot" },
   ] as never);
@@ -448,7 +448,7 @@ test("with only a one-shot on offer, that is what is stored", async () => {
  *  which sentence repeated. The row is scored on ONE event and the reader checks it against ONE
  *  sentence; they have to be the same event. */
 test("the sentence for the row's own event wins over a repeatable one for another", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
     { tag: "enters:creature", text: "ON EVENT", repeatability: "oneshot" },
@@ -463,7 +463,7 @@ test("the sentence for the row's own event wins over a repeatable one for anothe
 /** WITHIN THE ROW'S EVENT, REPEATABILITY STILL DECIDES -- the two rules compose rather than one
  *  replacing the other. */
 test("among sentences for the row's event, the repeatable one is still preferred", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "enters:creature", text: "ON EVENT, ONE SHOT", repeatability: "oneshot" },
     { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
@@ -480,7 +480,7 @@ test("among sentences for the row's event, the repeatable one is still preferred
  *  the `enters` demand that ranked and priced the candidate, so the row would print a number earned
  *  by a relation the engine refused. Dropped, in the direction this repo always fails. */
 test("a candidate whose reasons are all about other events is dropped", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "graveyard-recursion:creature", text: "OTHER CHANNEL", repeatability: "triggered" },
   ] as never);
@@ -504,7 +504,7 @@ test("a row carries the confirmed event, not the best-scoring one", async () => 
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
   const slugs = resolveSlugs(["Two Demands"]);
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   // Only the untyped `enters` relation is confirmed; nothing here is about goblins.
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "enters:creature", text: "CREATURES ENTER", repeatability: "triggered" },
@@ -536,7 +536,7 @@ test("a zone-renamed tag matches the demand key that kept the raw verb", async (
     effect: { kind: "draw-card" },
   }] as unknown as CardTags["abilities"]);
   const slugs = resolveSlugs(["Graveyard-Leave Payoff"]);
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "cast:creature", text: "OFF EVENT, REPEATABLE", repeatability: "triggered" },
     { tag: "leaves-graveyard:creature", text: "ON EVENT", repeatability: "oneshot" },
@@ -553,7 +553,7 @@ test("a zone-renamed tag matches the demand key that kept the raw verb", async (
  *  Goblins, so he satisfies `enters:goblin` twice and both sentences carry the CONSUMER'S
  *  repeatability -- the older rule cannot separate them, and emission order decided it. */
 test("an authored sentence outranks the synthesised baseline one", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "enters:creature", text: "BODY", repeatability: "triggered", impliedProducer: true },
     { tag: "enters:creature", text: "AUTHORED", repeatability: "triggered" },
@@ -568,7 +568,7 @@ test("an authored sentence outranks the synthesised baseline one", async () => {
  *  engine beats a repeatable one about it merely existing; the baseline is what the matcher
  *  synthesises for ANY card, so it can never be the more informative half. */
 test("an authored one-shot still outranks a repeatable baseline", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons").mockReturnValue([
     { tag: "enters:creature", text: "BODY", repeatability: "triggered", impliedProducer: true },
     { tag: "enters:creature", text: "AUTHORED", repeatability: "oneshot" },
@@ -584,7 +584,7 @@ test("an authored one-shot still outranks a repeatable baseline", async () => {
  *  output, because the option's effect is the engine's to test and this file's job is only to pass
  *  it. */
 test("the engine is asked with token mediation off", async () => {
-  const edges = await import("../edges.js");
+  const edges = await import("./edges.js");
   const spy = vi.spyOn(edges, "directedReasons");
   try {
     partnersFor(krenko, [impactTremors], [], FREQ, SLUGS, H);

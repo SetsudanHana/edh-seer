@@ -37,7 +37,7 @@ import { candidatePool } from "../../packages/matcher/src/suggest.js";
 import { maxAxisWeight } from "../../packages/matcher/src/axis.js";
 import type { Reason } from "@edh-seer/engine";
 import { eventKeysForDemand } from "../../packages/matcher/src/suggest-keys.js";
-import { demandForms, demandKeysOf, supplyForms, supplyKeysOf } from "../../packages/matcher/src/bin/partners-core.js";
+import { demandForms, demandKeysOf, supplyForms, supplyKeysOf } from "../../packages/matcher/src/partners-core.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "../../packages/matcher/src/build.js";
 import { POOL_CLASSES } from "../../packages/matcher/src/answer-pool.js";
 import { directedReasons } from "../../packages/matcher/src/edges.js";
