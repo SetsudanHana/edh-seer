@@ -118,7 +118,7 @@ test("Clear calls its handler and never the analysis", async () => {
 /** NEUTRAL, NOT DESTRUCTIVE, AND NOT A SECOND PRIMARY (tokens-and-color.md). One affirmative action
  *  per screen wears the accent fill; a red Clear would put the loudest mark on the landing page on
  *  the action nobody arrived to take. The class carries the whole rule, so the class is the
- *  assertion -- and `validate_contrast.py` holds the border it uses to 3:1. */
+ *  assertion -- and `validate_contrast.mjs` holds the border it uses to 3:1. */
 test("Clear is the neutral variant and Analyze keeps the accent", () => {
   render(<DeckInput {...props} value="1 Sol Ring" />);
   expect(screen.getByRole("button", { name: "Clear" }).className).toContain("btn-secondary");

@@ -620,7 +620,7 @@ async function main(runPath: string): Promise<void> {
       await cvd.close();
     }
 
-    // axe, once per key screen. Its value here is COMPOSITED contrast: validate_contrast.py checks
+    // axe, once per key screen. Its value here is COMPOSITED contrast: validate_contrast.mjs checks
     // token PAIRS and can never see what actually lands on screen. Ceiling: axe catches roughly a
     // third of WCAG issues and will never find the "measures perfectly, still unfindable" class.
     const ax = await browser.newContext({ ...DESKTOP, reducedMotion: "reduce" });
@@ -660,7 +660,7 @@ async function main(runPath: string): Promise<void> {
 // ---------------------------------------------------------------------------------------------
 //
 // `research/` is collected by NO vitest project, so a `*.test.ts` here would read as covered while
-// contributing nothing -- the exact trap `scripts/check_bin_placement.py` exists to catch. A
+// contributing nothing -- the exact trap `scripts/check_bin_placement.mjs` exists to catch. A
 // self-test flag is the right shape, and it is the convention that script already sets.
 
 function selfTest(): void {

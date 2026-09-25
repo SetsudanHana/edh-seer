@@ -359,7 +359,7 @@ summary {
    *  loudest thing on the landing page on the action nobody came to take.
    *
    *  `--field-border` AND NOT `--separator`. This is a control boundary, so WCAG 1.4.11 wants 3:1 --
-   *  the separator is the decorative hairline at 1.15:1 and `validate_contrast.py` enforces the
+   *  the separator is the decorative hairline at 1.15:1 and `validate_contrast.mjs` enforces the
    *  difference. The same token the paste fields' own boundary would use.
    *
    *  IT SHARES `.btn-primary`'S BOX -- same min height, radius, type -- because the two sit on one

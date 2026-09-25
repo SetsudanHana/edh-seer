@@ -52,7 +52,7 @@
      node scripts/build_tokens.mjs --out tokens/theme.css && cat tokens/app-surface.css >> tokens/theme.css
 
    Verify with:
-     python3 scripts/validate_theme_refs.py tokens/theme.css packages/web/client/src
+     node scripts/validate_theme_refs.mjs tokens/theme.css packages/web/client/src
    which fails if the app reaches for a variable no token backs. */
 :root {
   --background: var(--color-surface-page);

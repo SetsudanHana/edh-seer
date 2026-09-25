@@ -12,9 +12,9 @@
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "oxlint --deny-warnings packages research scripts",
-    "lint:bins": "python3 scripts/check_bin_placement.py --self-test && python3 scripts/check_bin_placement.py",
+    "lint:bins": "node scripts/check_bin_placement.mjs --self-test && node scripts/check_bin_placement.mjs",
     "tokens:build": "node scripts/build_tokens.mjs --out tokens/theme.css && cat tokens/app-surface.css >> tokens/theme.css",
-    "tokens:check": "python3 scripts/validate_tokens.py && python3 scripts/validate_contrast.py && python3 scripts/validate_theme_refs.py tokens/theme.css packages/web/client/src"
+    "tokens:check": "node scripts/validate_tokens.mjs && node scripts/validate_contrast.mjs && node scripts/validate_theme_refs.mjs tokens/theme.css packages/web/client/src"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
