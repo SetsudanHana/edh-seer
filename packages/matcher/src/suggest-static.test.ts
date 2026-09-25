@@ -208,7 +208,7 @@ test("the plan list is ordered by the deck's strategy axis, not by pool score", 
  *  commander that wants exactly 1 damage share no edge, and Impact Tremors joins them -- it asks for
  *  what the makers cause and causes what the commander asks. Neither card is in any `pi`; the
  *  shortlist comes from the event index. A 2-damage pinger of the same shape opens no route. */
-test("a route names the bridge card, the deck card it reaches and the cards that reach it", async () => {
+function ghyrsonWitness() {
   const pinger = (amount: string) => [{
     kind: "triggered",
     trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null } },
@@ -242,10 +242,42 @@ test("a route names the bridge card, the deck card it reaches and the cards that
     cards: specs.slice(0, 4).map((c, i) => ({ name: c.name, isCommander: i === 0 })),
     buildParents: [], cutList: [], edges: [], axis: [{ tag: "non-combat-damage:any", weight: 1 }],
   } as unknown as DeckReport;
+  return { f, deck };
+}
+const quietly = async <T>(run: () => Promise<T>): Promise<T> => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-  const s = await suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) });
+  try { return await run(); } finally { warn.mockRestore(); }
+};
+
+test("a route names the bridge card, the deck card it reaches and the cards that reach it", async () => {
+  const { f, deck } = ghyrsonWitness();
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
   expect(s.routes.map((c) => [c.name, c.route])).toEqual([
     ["Impact Tremors", { to: "Ghyrson Starn", from: ["Maker One", "Maker Two", "Maker Three"] }],
   ]);
-  warn.mockRestore();
+});
+
+/** ONE CARD, ONE PLACE, THREE TIERS (spec §3, amended 2026-09-25): finding > route > plan. A card a
+ *  finding names is shown there and nowhere else; a route card leaves the plan list. */
+test("a card a finding names is not listed again as a route", async () => {
+  const { f, deck } = ghyrsonWitness();
+  // Ghyrson waits on 1 damage and nothing in the deck causes it: the synergy finding's card IS the bridge.
+  const withFinding = { ...deck, deckMath: { demand: [{ key: "non-combat-damage:any", available: 0, suppliers: 0, consumers: 1 }] } } as unknown as DeckReport;
+  const s = await quietly(() => suggestForDeck({ report: withFinding, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  expect(s.synergy["non-combat-damage:any"]!.map((c) => c.name)).toEqual(["Impact Tremors"]);
+  expect(s.routes.map((c) => c.name)).toEqual([]);
+});
+
+test("a route card is not listed again in the plan list", async () => {
+  const { f, deck } = ghyrsonWitness();
+  // Every maker's partner list names Impact Tremors (position 4), so it is a plan candidate as well.
+  for (const [path, shard] of Object.entries(f)) {
+    if (!path.includes("/cards/")) continue;
+    for (const [k, e] of Object.entries(shard as Record<string, { card: { name: string } }>)) {
+      if (e.card.name.startsWith("Maker")) (shard as Record<string, unknown>)[k] = { ...e, pi: [[4, 0.3]] };
+    }
+  }
+  const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
+  expect(s.routes.map((c) => c.name)).toEqual(["Impact Tremors"]);
+  expect(s.plan.map((c) => c.name)).not.toContain("Impact Tremors");
 });

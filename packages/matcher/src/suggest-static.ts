@@ -407,7 +407,7 @@ export async function suggestForDeck(input: {
   const planNames = new Set(plan.map((c) => c.name));
   for (const c of onFindings) if (planNames.has(c.name)) c.alsoPlan = true;
   const taken = new Set(onFindings.map((c) => c.name));
-  out.plan = plan.filter((c) => !taken.has(c.name)).slice(0, PLAN_LIMIT);
+  const planLeft = plan.filter((c) => !taken.has(c.name));
 
   // ROUTES: a bridge is rarely on the axis itself (Impact Tremors joins thirty token makers to
   // Ghyrson through "a creature enters", weight ~0) and rarely in `pi` -- its event is asked by two
@@ -508,7 +508,13 @@ export async function suggestForDeck(input: {
   }
 
 
-  out.routes = routes.sort((a, b) => b.n - a.n || a.card.mv - b.card.mv || a.card.name.localeCompare(b.card.name, "en"))
+  // ONE CARD, ONE PLACE, THREE TIERS (spec §3, amended 2026-09-25): finding > route > plan. A bridge
+  // a finding already names stays on the finding; a route card leaves the plan list, whose verified
+  // spares (it verifies twice PLAN_LIMIT) fill the room it leaves.
+  out.routes = routes.filter((r) => !taken.has(r.card.name))
+    .sort((a, b) => b.n - a.n || a.card.mv - b.card.mv || a.card.name.localeCompare(b.card.name, "en"))
     .slice(0, ROUTE_LIMIT).map((r) => r.card);
+  const onRoutes = new Set(out.routes.map((c) => c.name));
+  out.plan = planLeft.filter((c) => !onRoutes.has(c.name)).slice(0, PLAN_LIMIT);
   return out;
 }
