@@ -4970,6 +4970,8 @@ test("a party count is tagged as the party, and a sorcery's count happens once",
   const gatherer = base("Rumor Gatherer", [], ["elf", "wizard"]);
   const scales = pairReasons(gatherer, thwart, H).filter((r) => r.tag.startsWith("scales:"));
   expect(scales.map((r) => [r.tag, r.repeatability])).toEqual([["scales:party", "oneshot"]]);
+});
+
 /** A FETCH IS TAGGED WITH THE LAND TYPE THAT MATCHED (overview persona rounds 2026-09-25, item 7):
  *  "Scalding Tarn -> Blood Crypt | ramp-target:island" put a Swamp Mountain under "Fetching Islands".
  *  Tarn finds an Island OR a Mountain; Blood Crypt is the Mountain. */
