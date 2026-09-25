@@ -11,7 +11,10 @@ const CARD_TYPES = [
  *  The part after the em dash lists subtypes; the part before lists card types they belong to. */
 export function buildHierarchy(typeLines: string[]): Hierarchy {
   const h: Hierarchy = {};
-  for (const line of typeLines) {
+  // A DOUBLE-FACED CARD'S TYPE LINE IS TWO TYPE LINES ("Creature — Human // Enchantment — Saga"):
+  // read each face on its own, or the back face's type words become fake subtypes of the front's
+  // types (overview persona rounds 2026-09-25: `enchantment` read as a subtype of creature).
+  for (const line of typeLines.flatMap((l) => l.split(" // "))) {
     const [left, right] = line.split(/\s[—–-]\s/); // em dash, en dash, or hyphen with spaces
     if (!right) continue;
     const types = left.toLowerCase().split(/\s+/).filter((w) => CARD_TYPES.includes(w));

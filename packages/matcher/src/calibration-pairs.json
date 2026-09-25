@@ -37,6 +37,7 @@
   "b": "Marrow-Gnawer",
   "verdict": "neutral",
   "stratum": "shared-tag",
+  "knownDefect": true,
   "judgedAt": "2026-08-05T23:14:19.123Z"
  },
  {
