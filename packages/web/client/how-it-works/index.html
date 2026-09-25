@@ -128,10 +128,22 @@
     <article class="prose">
       <h1>How it works</h1>
       <p class="prose-lead">
-        EDH Seer claims that two cards work together only when it can print the sentence that says
-        why. The first half of this page is for the player reading a report, in plain words. The
-        second half, <a href="#under-the-hood">under the hood</a>, is for anyone who wants to dig
-        into the code. Feel free to stop before it.
+        Paste a Commander decklist and EDH Seer shows you which of your cards work together, with
+        the sentence that says why. It only claims a pairing it can put into words, so you can check
+        every one of them against the cards themselves.
+      </p>
+      <!-- THE PAGE SELLS BEFORE IT EXPLAINS (docs refresh, 2026-09-25). A reader who arrives here
+           from a search or a shared link had no way into the product above the fold except the
+           header, and the page ended on a bug-report link. The primary action is the one the
+           header's first item already names; the secondary is the one that needs no decklist. -->
+      <p class="hiw-actions">
+        <a class="btn-primary" href="/">Analyse your deck</a>
+        <a class="btn-secondary" href="/commanders">Browse commanders</a>
+      </p>
+      <p>
+        The first half of this page is for the player reading a report, in plain words. The second
+        half, <a href="#under-the-hood">under the hood</a>, is for anyone who wants to dig into the
+        code. Feel free to stop before it.
       </p>
 
       <!-- THE SCALE, IN THREE NUMBERS, and the first one is a FRACTION on purpose. This page said
@@ -181,6 +193,42 @@
         </ol>
       </figure>
 
+      <h2>What the report looks like</h2>
+      <p>
+        That sentence is one of a few hundred in a typical deck. Around them, the report maps the
+        pairings, names what to fix first, and works out whether your mana can cast what you drew.
+        This is a real Krenko, Mob Boss list.
+      </p>
+      <!-- REAL SCREENSHOTS, NOT MOCKUPS, written by `npm run screenshots -w @edh-seer/web`
+           (`packages/web/scripts/docs-screenshots.mts`) from Krenko's EDHREC tokens list at 1440
+           wide. A change that alters one of these frames regenerates them in the same PR
+           (CONTRIBUTING.md, "Screenshots"); `screenshots.test.ts` holds the sizes below to the files.
+           Relative `src` so Vite content-hashes them into `/assets/`, where `_headers` already
+           caches for a year; `README.md` shows the same four files, so there is one copy of each.
+           Width and height are set so the page does not shift as they arrive. -->
+      <div class="shots">
+        <figure class="shot shot-hero">
+          <img src="./shot-graph.webp" width="1440" height="830" loading="lazy" decoding="async"
+               alt="The synergy graph of a Krenko, Mob Boss deck. Krenko's pairings are drawn out across the board and his card is open beside it." />
+          <figcaption><strong>A map of your deck.</strong> Every pairing on one board. Click a card to see what it works with.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="./shot-pairs.webp" width="1040" height="640" loading="lazy" decoding="async"
+               alt="The game plan chapter: bars for Goblin typal, combo, anthems, tokens and aristocrats, and the pairs behind each theme." />
+          <figcaption><strong>Your game plan.</strong> The themes your deck leans on, and the pairs behind each.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="./shot-improve.webp" width="1040" height="640" loading="lazy" decoding="async"
+               alt="The suggestions chapter: short on card draw and on interaction, with the target and how many cards to add." />
+          <figcaption><strong>What to fix first.</strong> Gaps stated in cards, biggest payoff at the top.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="./shot-mana.webp" width="640" height="394" loading="lazy" decoding="async"
+               alt="The manabase chart: mana by turn in a typical game, and how many cards first become castable on each turn." />
+          <figcaption><strong>Can you cast it.</strong> Mana by turn, and the turn most of your cards become castable.</figcaption>
+        </figure>
+      </div>
+
       <h2>How it decides</h2>
       <p>
         Long before you paste anything, every card's printed text is read once and turned into two
@@ -198,7 +246,7 @@
         <li><span class="pipeline-step">Segment</span><span class="pipeline-note">one sentence at a time</span></li>
         <li class="pipeline-paid"><span class="pipeline-step">Normalize</span><span class="pipeline-note">the model, once per card</span></li>
         <li><span class="pipeline-step">Derive</span><span class="pipeline-note">clauses become events</span></li>
-        <li><span class="pipeline-step">Match</span><span class="pipeline-note">supply meets demand</span></li>
+        <li><span class="pipeline-step">Match</span><span class="pipeline-note">causes meets cares about</span></li>
         <li><span class="pipeline-step">Report</span><span class="pipeline-note">a sentence per claim</span></li>
       </ol>
       <p class="pipeline-key">
@@ -343,11 +391,22 @@
           Tremors a token every turn and a lone creature entering once are the same pair.
         </li>
         <li>
-          <strong>Some pairs it cannot put into words.</strong> A card that searches your library
-          for another, a spell that returns one from the graveyard. Real synergies, and the way this
-          tool reads cards cannot state them. They are known limits, not undiscovered bugs.
+          <strong>A search for anything.</strong> A tutor or a recursion spell pairs when it names a
+          kind of card: "search your library for a Goblin" pairs with your Goblins, "return an
+          artifact card" with your artifacts. "A card" or "a creature card" names most of a deck, so
+          it pairs with nothing rather than with everything.
         </li>
       </ul>
+
+      <!-- THE END OF THE PLAYER'S HALF IS A DOOR, not a wall of engineering. Most readers stop
+           here, as the lead invites them to, so the action is repeated where they stop. -->
+      <div class="hiw-try">
+        <p><strong>Try it on your own deck.</strong> Paste a list, or a Moxfield or Archidekt link. Free, no account, and nothing is stored.</p>
+        <p class="hiw-actions">
+          <a class="btn-primary" href="/">Analyse your deck</a>
+          <a class="btn-secondary" href="/cards">Look up a card</a>
+        </p>
+      </div>
 
       <h2 id="under-the-hood">Under the hood</h2>
       <p>
@@ -410,13 +469,14 @@ text  = "When Siege-Gang Commander dies,
            `packages/matcher/src/edges.ts`. If that order changes, this list is wrong; the stage 4
            doc is the reference and this is its picture. -->
       <ol class="gates">
-        <li><strong>Same verb?</strong> <span>Including the rules bridges: a life-loss trigger accepts a damage emit.</span></li>
+        <li><strong>Same verb?</strong> <span>Including the rules bridges: a death is leaving the battlefield, and a life-loss trigger accepts non-combat damage.</span></li>
+        <li><strong>Big enough?</strong> <span>A trigger that names a size, like "5 or more damage", meets only a producer that states a size satisfying it.</span></li>
         <li><strong>Is the demand restricted?</strong> <span>"Targets only" and the like are refused. A targeting restriction is a demand nothing here can check.</span></li>
         <li><strong>Instant-speed relaxation.</strong> <span>A producer that acts at instant speed and picks its own victim can satisfy a combat-state demand it never names.</span></li>
-        <li><strong>Origin compatible?</strong> <span>Token, not-cast, enters-tapped.</span></li>
-        <li><strong>Self-supplied?</strong> <span>A card must not satisfy its own trigger: combat, cast, its own entry.</span></li>
-        <li><strong>Special-cased verbs.</strong> <span>A graveyard fill, a counter being added, and damage each route to their own comparison.</span></li>
-        <li><strong>Subjects compatible?</strong> <span>Through the type hierarchy. A Goblin is a creature; a land is not.</span></li>
+        <li><strong>Origin compatible?</strong> <span>The zone the object came from.</span></li>
+        <li><strong>Self-supplied?</strong> <span>A card must not satisfy its own trigger: combat, cast, its own entry, or doing something to itself.</span></li>
+        <li><strong>Special-cased verbs.</strong> <span>A graveyard fill, a counter added or removed, and damage each route to their own comparison.</span></li>
+        <li><strong>Subjects compatible?</strong> <span>Through the type hierarchy, with token, not-cast and enters-tapped. A Goblin is a creature; a land is not.</span></li>
       </ol>
 
       <h3>Read the rest</h3>

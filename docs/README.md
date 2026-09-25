@@ -1,5 +1,10 @@
 # Documentation
 
+**Just want to use it?** Paste a decklist at **[edhseer.cards](https://edhseer.cards)**. The
+player's explanation, with screenshots of a real report, is
+**[edhseer.cards/how-it-works](https://edhseer.cards/how-it-works)**. These pages are for anyone who
+wants the engine itself.
+
 ## Start here
 
 **[How it works](HOW-IT-WORKS.md)** — the tour. A printed Magic card to a synergy graph, with
@@ -10,16 +15,16 @@ diagrams and one real worked example carried the whole way through.
 Each page says what the stage reads, what it writes, what it costs, the command that runs it, and the
 failure modes it has actually hit.
 
-| | |
+| stage | what it covers |
 |---|---|
 | [Stage 1 — Segmentation](pipeline/1-segment.md) | oracle text into numbered clauses. Free, and deliberately not the model's job |
 | [Stage 2 — Normalization](pipeline/2-normalize.md) | the model, once per card, offline. The only paid step in the project |
 | [Stage 3 — Derivation](pipeline/3-derive.md) | clauses into game events, plus the events no card prints |
-| [Stage 4 — Matching](pipeline/4-match.md) | supply against demand, and every reason a claim is refused |
+| [Stage 4 — Matching](pipeline/4-match.md) | what one card causes against what another cares about, and every reason a claim is refused |
 
 ## Reference
 
-| | |
+| document | what it covers |
 |---|---|
 | [Schema reference](reference/SCHEMA.md) | every closed vocabulary, version constant and schema field. **Generated** from the source and gated by a test |
 | [Runbook](RUNBOOK.md) | what to run, what it costs, how to measure a change, how to deploy |
@@ -30,7 +35,8 @@ failure modes it has actually hit.
 what turned out to be wrong. Newest first. The specs argue; the log records what the argument was
 worth.
 
-Two older notes that predate the structure above and are kept as written:
+Three older notes that predate the structure above, kept as written. They are historical: paths and
+numbers in them may be out of date:
 [tagging strategy](tagging-strategy.md), [oTag crosswalk](otag-crosswalk.md), and
 [analytics](ANALYTICS.md).
 

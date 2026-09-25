@@ -1,32 +1,42 @@
 # Contributing
 
-Thanks for looking. This project has a few habits that are not obvious from the code, and every one
-of them exists because skipping it cost something measurable.
+Thanks for looking. The quickest start needs nothing but Node 22 or newer:
+
+```bash
+npm install && npm test        # no database, no network, no API key
+```
+
+New to the engine? Read [How it works](docs/HOW-IT-WORKS.md) first. The rest of this page is the
+project's habits: a few that are not obvious from the code, each of which exists because skipping it
+cost something measurable.
 
 ## The most useful contribution
 
-**A wrong synergy claim.** The engine prints a sentence for every edge it draws, which means every
-edge can be disagreed with. If one is wrong, that is a defect with a witness attached, and it is
-worth more than most patches.
+**A wrong pairing.** The site prints a sentence for every pairing it finds, which means every
+pairing can be checked against the cards and disagreed with. If one is wrong, that is a defect with
+a witness attached, and it is worth more than most patches.
 
-[Report an edge](https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml) with
-both card names and the sentence the site printed.
+[Report a wrong pairing](https://github.com/SetsudanHana/edh-seer/issues/new?template=wrong-edge.yml)
+with both card names and the sentence the site printed.
 
-The same goes for an edge that is **missing** — two cards that obviously work together and got no
-claim. Those are harder to find and rarer to receive.
+The same goes for a pairing that is **missing** — two cards that obviously work together and were
+not paired. Those are harder to find and rarer to receive.
 
 ## Getting set up
 
-Node >= 22, and a MongoDB instance holding the card corpus.
+Node 22 or newer is enough for `npm test` and most engine work: the matcher is pure and its tests
+carry their own fixtures. The bins and the measuring instruments also need MongoDB holding the card
+corpus — the [corpus figures](README.md#honest-limitations) are in the README — which is not in the
+repository:
 
 ```bash
-npm install
-npm test
+docker compose -f packages/data/docker-compose.yml up -d
+npm run ingest -w @edh-seer/data      # Scryfall cards and the combo list
 ```
 
-The corpus itself is not in the repository — it is roughly 34,000 Scryfall cards plus 21,000
-normalized clause documents. Ingestion bins live in `packages/data/src/bin/`. Most engine work does
-not need it: the matcher is pure and its tests carry their own fixtures.
+The normalized clauses come from the one paid step ([Stage 2](docs/pipeline/2-normalize.md)) and
+cannot be rebuilt for free. How to run the site locally, the way production runs it, is in
+[the runbook](docs/RUNBOOK.md#running-the-product).
 
 ## Running the suite
 
@@ -64,11 +74,13 @@ would force dozens of modules into the public export maps purely to relocate a s
 
 ## Measure before and after, and say the number
 
-Every fix here carries its measured effect in the commit message. Three instruments are free to run,
-need no model, and are the ones reviewers will ask about:
+Every fix here carries its measured effect in the commit message. Three instruments are free to run
+(no model, no API key) and are the ones reviewers will ask about. They read the MongoDB corpus, and
+`panel-score.ts` also reads the judged panel, which lives only on the maintainer's machine; if you
+cannot run them, say so in the PR and the maintainer will:
 
 ```bash
-npx tsx packages/instruments/src/panel-score.ts          # precision AND recall on the frozen panel
+npx tsx packages/instruments/src/panel-score.ts          # precision AND retention on the frozen panel
 npx tsx packages/instruments/src/population-compare.ts   # edges and reasons, before against after
 npx tsx packages/instruments/src/eval-pairs.ts           # the compass
 ```
@@ -95,6 +107,39 @@ a real regression gets excused.
 - **No emoji anywhere** — not in the UI, code, JSON, copy, comments or commit messages. This one is
   a convention rather than a gate, so it is on review to catch. Use a real icon (lucide, inline SVG,
   `currentColor`) or plain words.
+
+## Screenshots
+
+The README and [edhseer.cards/how-it-works](https://edhseer.cards/how-it-works) show four frames of
+a real report (the graph, the game plan, the suggestions and the mana chart), and the README opens on
+a demo GIF of the whole flow: paste, analyse, read, open the graph. They are the first
+picture of the product most people see, and a picture of last month's UI is a claim that is no
+longer true.
+
+**If your change alters what one of those frames shows, regenerate them in the same PR:**
+
+```bash
+VITE_STATIC_DATA=1 npm run build:client -w @edh-seer/web
+npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
+npm run screenshots -w @edh-seer/web     # the four frames
+npm run demo-gif -w @edh-seer/web        # docs/images/demo.gif; --frames <dir> saves each frame to review
+```
+
+The script (`packages/web/scripts/docs-screenshots.mts`) analyses a fixed Krenko list, crops each
+frame from its own heading, and writes the `.webp` files that both pages use. Your UI and
+production's card data, so no corpus is needed. Look at the four files before you commit them.
+
+The README banner and the GitHub social preview (`docs/images/`) are drawn by
+`npx tsx packages/web/scripts/brand-images.mts` in the site's own fonts and colours. They change only
+when the brand does; the social preview is uploaded by hand under Settings > General.
+
+The demo is a storyboard of real clicks (`packages/web/scripts/demo-gif.mts`). If a control it clicks
+is renamed or moved, the script fails rather than recording the wrong thing; fix the storyboard in
+the same PR.
+
+`screenshots.test.ts` holds the parts a test can see: every frame comes from the script, the page
+and the README show the same set, and each file's size matches what the page declares. Whether a
+frame is *out of date* no test can tell, which is why it is on the PR checklist.
 
 ## Pull requests
 

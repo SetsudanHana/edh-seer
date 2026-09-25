@@ -1,6 +1,7 @@
 /** FREE. Re-scores the frozen panel against the CURRENT engine. Run after every change.
  *
- *  Spec: `docs/superpowers/specs/2026-08-05-edge-precision-measurement-design.md` §23-24.
+ *  Spec: `docs/superpowers/specs/2026-08-05-edge-precision-measurement-design.md` §23-24 (not in this
+ *  repository; the maintainer's design notes).
  *
  *  This is the paired replacement for fresh sampling. The pairs never change, so a difference between
  *  two runs is the ENGINE, not a new draw of the dice — which is what three consecutive "no
@@ -11,7 +12,7 @@
  *  new claims count as owed rather than as real, and the precision figure is explicitly conditional
  *  on the debt being small.
  *
- *  Usage: tsx src/bin/panel-score.ts [--worksheet out.jsonl] */
+ *  Usage: npx tsx packages/instruments/src/panel-score.ts [--worksheet out.jsonl] */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import {
   connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames,
