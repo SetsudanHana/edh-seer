@@ -113,8 +113,10 @@ const ON_TOP = /on top of (?:your|their|its owner's|a|the) librar/i;
  *  around two optional braces, so a long run of spaces that does not match backtracks quadratically
  *  (`js/polynomial-redos`, high). Stripping the braces and trimming asks the same question in one
  *  linear pass, and reads as what it means. */
-const isEnergyObject = (object: string): boolean =>
-  /^e+$/.test(object.replaceAll("{", "").replaceAll("}", "").trim().toLowerCase());
+export const isEnergyObject = (object: string): boolean =>
+  // Braces AND spaces go (DERIVE 172): the clause layer also writes "E E E", and trimming the ends
+  // only left "e e e", which read as mana on 9 cards (Chthonian Nightmare, Bristling Hydra, ...).
+  /^e+$/.test(object.replace(/[{}\s]/g, "").toLowerCase());
 
 const SIMPLE: Record<string, EffectKind> = {
   create: "token-generation",

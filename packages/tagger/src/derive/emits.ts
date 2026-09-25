@@ -6,6 +6,7 @@ import type { GameEvent, SubjectFilter, Verb } from "../schema.js";
 import { counterKindOf, parseCounter, parseSubject, COUNT_PHRASE } from "./subject.js";
 import { LAND_SUBTYPES } from "./subtypes.js";
 import { tokenTypeFor } from "./token-types.js";
+import { isEnergyObject } from "./effect-kind.js";
 
 /** Action verb -> the events it makes available, in order. Verbs absent from this table emit
  *  nothing; a guessed event is worse than silence because it forms edges that are not real. */
@@ -371,8 +372,6 @@ const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
  *  opponent" -- none of them describes a card, so none should become a typed subject. */
 const PLAYER_OBJECT = /\b(?:controllers?|owners?|players?|opponents?)\b|^\s*you\s*$/i;
 
-/** Only the energy symbol, one or more times: "{E}", "{E}{E}{E}". */
-const ENERGY_ONLY = /^(?:\{e\})+$/i;
 
 /** The one counter kind a sentence names, or undefined when it names none or several. */
 function soleCounterKind(text: string): string | undefined {
@@ -389,7 +388,8 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // counter). The normalizer wrote 57 of these as `add-mana`; the EFFECT KIND stays refused
   // (effect-kind.ts, 2026-09-04 -- nothing downstream can spend energy) but the EVENT is real, and
   // "whenever you get one or more {E}" (Territorial Gorger) waits for exactly it (DERIVE 157).
-  if (action.verb === "add-mana" && ENERGY_ONLY.test((action.object ?? "").trim())) {
+  // ONE ENERGY TEST, shared with the effect kind, so the two cannot disagree on "{E} {E}" (DERIVE 172).
+  if (action.verb === "add-mana" && isEnergyObject(action.object ?? "")) {
     return [{ verb: "counter-added", subject: { control: "you", token: null, counter: "energy" } }];
   }
   // CR 701.22b AND 701.25c, both stated outright in the rules: "If a player is instructed to scry 0,

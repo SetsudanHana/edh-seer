@@ -658,6 +658,9 @@ test("a sentence about this spell's own cost is never a tax", () => {
 test("an energy action is not a mana action, and claims nothing instead", () => {
   expect(actionEffectKind({ verb: "add-mana", object: "E", amount: "1" } as never, "")).toBeNull();
   expect(actionEffectKind({ verb: "add-mana", object: "{E}" } as never, "")).toBeNull();
+  // DERIVE 172: the clause layer also writes it SPACED, "E E E" (Chthonian Nightmare and 8 more read
+  // as ramp in the 2026-09-25 persona round).
+  expect(actionEffectKind({ verb: "add-mana", object: "E E E" } as never, "")).toBeNull();
   // The other 2,228 add-mana actions are real mana and must be untouched.
   expect(actionEffectKind({ verb: "add-mana", object: "{G}{G}" } as never, "")).toBe("mana-generation");
   expect(actionEffectKind({ verb: "add-mana", object: "one mana of any color" } as never, ""))

@@ -21,7 +21,7 @@ import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { eventAmountFor } from "./event-amount.js";
 import { SUBTYPES } from "./subtypes.js";
-import { isSelfSubject, SELF_REFERENCE } from "./self-reference.js";
+import { isSelfSubject, SELF_REFERENCE, withoutArticle } from "./self-reference.js";
 import { triggerHasCue } from "../clause-store.js";
 import { emblemRecipient } from "../emblem.js";
 
@@ -157,7 +157,11 @@ import { emblemRecipient } from "../emblem.js";
 // 171: an `enters` trigger whose subject says "enters transformed" is refused (`enters-transformed`),
 // not read as every permanent entering. One corpus card, Corruption of Towashi: 23 deck cards had
 // "reached Alandra through it" on the Ghyrson route list.
-export const DERIVE_VERSION = 171;
+// 172: energy the clause layer spells with spaces ("E E E") is energy, not mana -- 9 cards read as
+// ramp (Chthonian Nightmare, Bristling Hydra, ...). And a leading article is not a name: "The
+// Sackville-Bagginses" is self as "Sackville-Bagginses" (its ETB had joined Kindred Discovery), and
+// stripCardName no longer deletes every "the" from a "The ..." card's clause text.
+export const DERIVE_VERSION = 172;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -465,8 +469,11 @@ function stripCardName(text: string, cardName?: string): string {
     // A card with no comma still shortens itself ("Imskir Iron-Eater" says "Imskir"), but never when
     // that first word is a real creature type: Goblin Bombardment watching Goblins is a typal payoff,
     // and stripping the word would delete the deck it is built for.
+    // AN ARTICLE IS NOT A NAME (DERIVE 172): "The Sackville-Bagginses" shortens by dropping "The",
+    // and taking "The" as the short form deleted every "the" in the card's clause text.
+    forms.add(withoutArticle(face));
     const first = face.split(/\s+/)[0];
-    if (!SUBTYPES.has(first.toLowerCase())) forms.add(first);
+    if (!SUBTYPES.has(first.toLowerCase()) && withoutArticle(face) === face) forms.add(first);
   }
   let out = text;
   for (const f of [...forms].filter((f) => f !== "").sort((a, b) => b.length - a.length)) {

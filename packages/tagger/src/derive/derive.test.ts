@@ -3100,3 +3100,22 @@ test("an Aura on any creature keeps the reading it had (the open One with the Ka
   });
   expect(tags.abilities.find((a) => a.trigger)!.trigger!.subject.control).not.toBe("opp");
 });
+
+/** "THE" IS NOT A NAME (DERIVE 172, persona round 2026-09-25). A card named "The Sackville-Bagginses"
+ *  shortened itself to the first word of its name, which is the article, so the clause subject
+ *  "Sackville-Bagginses" was never self: the ETB read as "whenever a permanent you control enters"
+ *  and joined Kindred Discovery. And the same fallback made stripCardName delete EVERY "the" from a
+ *  "The ..." card's clause text. */
+test("a name that starts with 'The' is self without the article, and the article is not a name", () => {
+  const enters = (subject: string, name: string, text: string) => deriveAbilities(
+    [{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject, control: "you" }, actions: [{ verb: "draw", object: "a card", amount: "1" }] }],
+    name, { 1: text },
+  ).abilities[0]?.trigger?.subject;
+  const oracle = "When The Sackville-Bagginses enter, you may sacrifice another creature or artifact.";
+  expect(enters("Sackville-Bagginses", "The Sackville-Bagginses", oracle)).toMatchObject({ self: true });
+  expect(enters("The Sackville-Bagginses", "The Sackville-Bagginses", oracle)).toMatchObject({ self: true });
+  // "the" alone never names the card.
+  expect(enters("the", "The Sackville-Bagginses", "When the creature enters, draw a card.")?.self).toBeUndefined();
+  // A typal subject on a "The ..." card stays typal: the article is not stripped out of it.
+  expect(enters("a creature", "The Ur-Dragon", "Whenever a creature you control enters, draw a card.")?.self).toBeUndefined();
+});
