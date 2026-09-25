@@ -41,7 +41,7 @@ function hasStaticStats(abilities: Ability[], want: StatPredicate[]): boolean {
  *  somewhere in the card's abilities — either an emit verb (`ensureEmits`) or a static ability
  *  carrying a stats marker (`ensureStaticStats`) — adding one synthetic static ability per missing
  *  effect. Idempotent and non-mutating: a card that already satisfies a rule's effect is returned
- *  unchanged for that rule (safe to re-run, including by the `augment-existing.ts` migration script). */
+ *  unchanged for that rule, so it is safe to re-run. */
 export function augmentKeywordAbilities(oracleText: string, abilities: Ability[]): Ability[] {
   const present = new Set<string>();
   for (const a of abilities) for (const e of a.emits ?? []) present.add(e.verb);

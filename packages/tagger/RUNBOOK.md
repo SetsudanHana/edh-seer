@@ -16,4 +16,5 @@ This file used to describe a loop that had a model tag batches of 40 cards strai
 `cardTags`. It was retired when the product switched to derived tags on 2026-08-06: that extractor
 measured 43% correct on a hand audit, and two identical runs agreed on 30% of cards.
 The loop's scripts (`tag-batch-api`, `upsert-batch`, `grind.sh`, and `dump-untagged`, `status`,
-`reconcile`, `audit` and `dump-suspects` under `research/tagger/`) are gone; git history has them.
+`reconcile`, `audit` and `dump-suspects` under `research/tagger/`) are gone, and so are the other
+two bins that wrote flat `cardTags` (`tag-decks`, `augment-existing`); git history has them.
