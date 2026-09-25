@@ -186,7 +186,8 @@ export const QUALITY_CAPS: Record<string, Caps> = {
   // nodes really cost is 130 discs and 130 LABELS, which no metric here measures.
   mdfc: { nodeOverlaps: 0, cardOverlaps: 0, edgeCrossings: 65665, linkDistError: 75 },
   // THE DENSE-HUB FIXTURE, added 2026-09-24 from the EDHREC Jodah, the Unifier list
-  // (`packages/cli/decks/edhrec/legends/jodah-the-unifier.real.txt`): 56 of its 66 nonland cards
+  // (`packages/cli/decks/edhrec/legends/jodah-the-unifier.real.txt`, in git history up to dfe8d138;
+  // the population is no longer tracked, see `EDHREC_DECKS`): 56 of its 66 nonland cards
   // touch the commander, the shape the owner's own Jodah deck draws as a cluster that "jumps
   // around". Captured through the STATIC pipeline (`analyzeDeckStatic` against the live
   // edhseer.cards shards) rather than `capture.ts`, because that one needs the api and Mongo; the
