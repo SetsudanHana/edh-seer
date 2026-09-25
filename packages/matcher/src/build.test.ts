@@ -865,15 +865,15 @@ test("removal facets: an ability that emits dies/leaves and repeats is an engine
     mk("Ravenous Chupacabra", "When this creature enters, destroy target creature an opponent controls.", "Creature", kill("once", "triggered")),
     mk("Chaos Warp", "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.", "Instant"),
     mk("Mystery Kill", "Destroy target creature.", "Enchantment", kill(undefined, "triggered")),
-    // The regex calls this removal (recursion reads as a bounce); its only dies emit is its OWN
-    // sacrifice, under `you`, so it is neither an engine nor refused -- it is unread.
+    // RECURSION, NOT REMOVAL (RULES 13, overview persona rounds 2026-09-25, item 9): the regex used
+    // to call this removal because a graveyard return read as a bounce. It is no longer a member.
     mk("Trading Post", "{1}, {T}, Sacrifice a creature: Return target artifact card from your graveyard to your hand.", "Artifact",
       [{ kind: "activated", effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "you", token: null, type: "creature" } }], repeats: "per-cycle" } as never]),
   ];
   const members = detectBuildCategories(cards).get("targetedRemoval")!;
   const facets = detectBuildFacets(cards).get("targetedRemoval")!;
   const inCat = (s: Set<string> | undefined) => [...(s ?? [])].filter((n) => members.has(n)).sort();
-  expect([...members].sort()).toEqual(["Chaos Warp", "Mystery Kill", "Ravenous Chupacabra", "Royal Assassin", "Swords to Plowshares", "Trading Post"]);
+  expect([...members].sort()).toEqual(["Chaos Warp", "Mystery Kill", "Ravenous Chupacabra", "Royal Assassin", "Swords to Plowshares"]);
   expect(inCat(facets.get("engines"))).toEqual(["Royal Assassin"]);
-  expect(inCat(facets.get("unlabelled"))).toEqual(["Chaos Warp", "Mystery Kill", "Trading Post"]);
+  expect(inCat(facets.get("unlabelled"))).toEqual(["Chaos Warp", "Mystery Kill"]);
 });
