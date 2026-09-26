@@ -989,6 +989,15 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
  *  the cast side for a card that recasts ITSELF (`recastsItself`). An ACTIVATED ability carrying a
  *  trigger (Chandra, the Firebrand's "−2: When you next cast...") fires when paid for -- once, if
  *  paying spends the card itself (Thunderclap Drake: "Sacrifice this creature"). */
+/** A TRIGGER THAT SACRIFICES ITS OWN SOURCE FIRES ONCE (issue #530): Mogg Bombers' "When another
+ *  creature enters, sacrifice this creature and it deals 3 damage" is gone after the first creature.
+ *  Derive splits the clause into a sacrifice-self ability and the effect, so the check reads every
+ *  ability of the same clause, not only the one the link came through. */
+function sacrificesItself(c: DeckCard, a: CardTags["abilities"][number]): boolean {
+  const siblings = a.clause === undefined ? [a] : (c.tags?.abilities ?? []).filter((b) => b.clause === a.clause && b.kind === a.kind);
+  return siblings.some((b) => (b.emits ?? []).some((e) => e.verb === "sacrifice" && e.subject.self === true));
+}
+
 /** A card whose own printing lets it be cast again: escape, retrace, or "you may cast <this card>
  *  from your graveyard" (Gravecrawler). Its single implied cast is really a repeatable one. */
 function recastsItself(p: DeckCard): boolean {
@@ -1730,7 +1739,8 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"
             : a.delayedBy !== undefined || a.kind === "activated" ? (a.repeats === "once" ? "oneshot" : "activated")
-            : oneShotProducer(p, origin) || (e.implied === true && t.verb === "cast" && !recastsItself(p)) ? "oneshot"
+            : oneShotProducer(p, origin) || (e.implied === true && t.verb === "cast" && !recastsItself(p))
+              || sacrificesItself(c, a) ? "oneshot"
             : triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
