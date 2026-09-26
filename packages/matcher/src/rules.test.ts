@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
-import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION, type Rule } from "./rules.js";
+import { answerClassesOf, loadRules, ownText, ruleMatches, RULES_VERSION, tokenQuotes, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
@@ -144,11 +144,35 @@ test("damage and bounce answer what they aim at", () => {
     mk("Bedevil", "Bedevil deals 3 damage to target creature or planeswalker."),
     mk("Boomerang", "Return target permanent to its owner's hand."),
   ]);
-  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt"]);
+  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt", "Lightning Bolt"]);
   expect(classes.get("planeswalker")?.cards.has("Bedevil")).toBe(true);
-  // "any target" is burn aimed at a player, not removal, and it names no class.
-  expect(classes.get("creature")?.cards.has("Lightning Bolt")).toBe(false);
+  // "Any target" is a creature or a planeswalker as much as a player (owner, 2026-09-26, issue #581:
+  // the Krenko deck's creature answers left out its Lightning Bolt). It was ruled burn-only before,
+  // which made every red deck's cheapest answer answer nothing. Not an artifact or a land.
+  expect(classes.get("planeswalker")?.cards.has("Lightning Bolt")).toBe(true);
+  expect(classes.get("artifact")?.cards.has("Lightning Bolt") ?? false).toBe(false);
   expect([...(classes.get("enchantment")?.cards ?? [])]).toEqual(["Boomerang"]);
+});
+
+/** Issue #581: naming each answer row's cards showed what the classes missed and what they
+ *  over-counted. Each case is one a real deck carried. */
+test("tucks, shrinks and plural objects answer; colour hosers and exile costs do not", () => {
+  const classes = detectAnswerClasses([
+    mk("Chaos Warp", "The owner of target permanent shuffles it into their library, then reveals the top card of their library."),
+    mk("Condemn", "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness."),
+    mk("Nowhere to Run", "When Nowhere to Run enters, target creature an opponent controls gets -3/-3 until end of turn."),
+    mk("Yawgmoth", "Pay 1 life, Sacrifice another creature: Put a -1/-1 counter on up to one target creature and draw a card."),
+    mk("Curtains' Call", "Destroy two target creatures."),
+    mk("Pyroblast", "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue."),
+    mk("Plaza of Heroes", "{3}, {T}, Exile Plaza of Heroes: Target legendary creature gains hexproof and indestructible until end of turn."),
+    mk("Shrinker", "Target creature gets -2/-0 until end of turn."),
+    mk("Pinger", "{T}: Pinger deals 1 damage to any target."),
+  ]);
+  const creature = classes.get("creature")?.cards ?? new Set();
+  for (const n of ["Chaos Warp", "Condemn", "Nowhere to Run", "Yawgmoth", "Curtains' Call"]) expect(creature.has(n), n).toBe(true);
+  expect(classes.get("land")?.cards.has("Chaos Warp")).toBe(true);
+  for (const n of ["Pyroblast", "Plaza of Heroes", "Shrinker", "Pinger"]) expect(creature.has(n), n).toBe(false);
+  expect(classes.get("enchantment")?.cards.has("Pyroblast") ?? false).toBe(false);
 });
 
 test("a blink is not an answer, however much it reads like removal", () => {
@@ -663,6 +687,34 @@ test("a graveyard return is not removal, and retargeting your own copy is not st
   ]);
   expect([...(m.get("targetedRemoval") ?? [])].sort()).toEqual(["Unsummon"]);
   expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Redirect"]);
+});
+
+/** Owner ruling 2026-09-27 (issue #513): Saw in Half is NOT removal -- its controller gets two copies
+ *  back, and it is played on your own creatures to win or combo. Fractured Identity gives the copies
+ *  to everyone else and stays removal; Grim Hireling keeps both its roles. */
+test("a destroy whose controller gets copies back is neither removal nor an answer", () => {
+  const saw = mk("Saw in Half", "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.", "Instant");
+  const fractured = mk("Fractured Identity", "Exile target nonland permanent. Each player other than its controller creates a token that's a copy of it.", "Sorcery");
+  const hireling = mk("Grim Hireling", "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.\n{B}, Sacrifice X Treasures: Target creature gets -X/-X until end of turn. Activate only as a sorcery.", "Creature — Tiefling Rogue");
+  const cats = detectBuildCategories([saw, fractured, hireling]);
+  expect(cats.get("targetedRemoval")?.has("Saw in Half") ?? false).toBe(false);
+  expect(cats.get("targetedRemoval")?.has("Fractured Identity")).toBe(true);
+  expect(cats.get("targetedRemoval")?.has("Grim Hireling")).toBe(true);
+  expect(cats.get("ramp")?.has("Grim Hireling")).toBe(true);
+  expect(detectAnswerClasses([saw]).get("creature")?.cards.has("Saw in Half") ?? false).toBe(false);
+});
+
+/** Owner ruling 2026-09-27 (issue #533): an ability quoted in a token-creating sentence is the TOKEN'S.
+ *  Mage's Attendant loses Counterspells; its Wizard token carries it. A quoted grant to your own
+ *  permanents is not a token and stays the card's. */
+test("an ability quoted for a token is the token's, not the maker's", () => {
+  const attendant = "When this creature enters, create a 1/1 blue Wizard creature token with \"{1}, Sacrifice this token: Counter target noncreature spell unless its controller pays {1}.\"";
+  const cats = detectBuildCategories([mk("Mage's Attendant", attendant, "Creature — Cat Rogue")]);
+  expect(cats.get("stackInteraction")?.has("Mage's Attendant") ?? false).toBe(false);
+  expect(tokenQuotes({ oracleText: attendant }, "Wizard")).toContain("Counter target noncreature spell");
+  expect(tokenQuotes({ oracleText: attendant }, "Goblin")).toBe("");
+  const rite = "Creatures you control have \"{T}: Add one mana of any color.\"";
+  expect(ownText({ oracleText: rite })).toBe(rite);
 });
 
 /** Owner ruling 2026-09-27 (issue #512): putting a land card onto the battlefield is ramp, from hand

@@ -64,3 +64,15 @@ test("each shelf carries its target: a one-role group on the shelf, a several-ro
   expect(head).toHaveTextContent(/Interaction4 cards · aim for 10 \(6 short\)/);
   expect(screen.getAllByTestId(/^shelf-group-/).map((e) => e.dataset.testid)).toEqual(["shelf-group-Consistency", "shelf-group-Interaction"]);
 });
+
+/** Owner ruling 2026-09-27 (#533): Mage's Attendant's counterspell is its Wizard TOKEN's role. The
+ *  token sits on the shelf named by its maker, and no count or target includes it. */
+test("a token with a role sits on the shelf by its maker's name, outside the count", () => {
+  const { report, graph } = deck();
+  const withToken = { ...report, tokenNodes: [{ name: "Wizard", hasPartner: false, roles: ["stackInteraction"], madeBy: ["Mage's Attendant"] }] } as unknown as DeckReport;
+  const shelf = roleShelves(withToken, graph).find((s) => s.category === "stackInteraction")!;
+  expect(shelf.cards).toEqual([]);
+  expect(shelf.tokens.map((t) => [t.card.name, t.madeBy])).toEqual([["Wizard", ["Mage's Attendant"]]]);
+  render(<RoleShelves report={withToken} graph={graph} />);
+  expect(screen.getByText("Wizard token from Mage's Attendant")).toBeTruthy();
+});

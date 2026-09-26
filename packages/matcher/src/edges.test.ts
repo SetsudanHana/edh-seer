@@ -5168,9 +5168,10 @@ test("prowess reads as the creature getting +1/+1, and only a noncreature spell 
   prodigy.tags.characteristics.keywords = ["Prowess"];
   const instant = base("Rakdos Charm", []);
   instant.tags.characteristics.types = ["instant"];
-  const fed = directedReasons(instant, prodigy, H).filter((r) => r.tag.startsWith("cast:"));
+  // Tagged `prowess:` since #517 -- a helper the page folds -- with the sentence unchanged.
+  const fed = directedReasons(instant, prodigy, H).filter((r) => r.tag.startsWith("prowess:"));
   expect(fed.map((r) => r.text)).toEqual(["When Rakdos Charm is cast, Harmonic Prodigy gets +1/+1"]);
-  expect(directedReasons(base("High Fae Trickster", []), prodigy, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+  expect(directedReasons(base("High Fae Trickster", []), prodigy, H).some((r) => /^(cast|prowess):/.test(r.tag))).toBe(false);
 });
 
 /** "DO THIS ONLY ONCE EACH TURN" IS NOT EVERY TIME (issue #518): Terrasymbiosis derives
@@ -5284,4 +5285,42 @@ test("a remove-a-counter cost links to counter makers and to a Saga", () => {
   expect(texts(champion)).toEqual(["O'aka, Traveling Merchant removes a counter from Setessan Champion and draws you 1 card"]);
   expect(texts(fenrir)).toEqual(["O'aka, Traveling Merchant removes a counter from Summon: Fenrir and draws you 1 card"]);
   expect(texts(land)).toEqual([]);
+});
+
+/** A CREATURE THAT COMES BACK IS FODDER (owner ruling 2026-09-27, issue #509): Gleeful Arsonist's
+ *  undying returns it once, so it feeds Ruthless Technomancer's "sacrifice another creature" -- a
+ *  whole-board outlet a plain creature of its mana value never feeds. Live shapes, read 2026-09-27. */
+test("an undying creature is fodder for a whole-board outlet, and the sentence says it comes back once", () => {
+  const techno = base("Ruthless Technomancer", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } }, effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, other: true, type: "creature" } }],
+  }] as CardTags["abilities"]);
+  const arsonist = base("Gleeful Arsonist", [], ["human", "wizard"]);
+  arsonist.tags.characteristics.types = ["creature"];
+  arsonist.tags.characteristics.keywords = ["Undying"];
+  (arsonist.card as { manaValue: number }).manaValue = 3;
+  const plain = base("Plain Three-Drop", [], ["human", "wizard"]);
+  plain.tags.characteristics.types = ["creature"];
+  (plain.card as { manaValue: number }).manaValue = 3;
+  const fodder = (p: ReturnType<typeof base>) => directedReasons(p, techno, H).filter((r) => r.tag.startsWith("fodder:")).map((r) => r.text);
+  expect(fodder(arsonist)).toEqual(["Gleeful Arsonist is fodder for Ruthless Technomancer, and undying brings it back once"]);
+  expect(fodder(plain)).toEqual([]);
+});
+
+/** A PROWESS-SHAPED TRIGGER IS A HELPER (owner ruling 2026-09-27, issue #517): Arcane Signet cast into
+ *  Harmonic Prodigy's prowess keeps its link, tagged `prowess:` so the page folds it; a noncreature-cast
+ *  payoff that does more than pump itself (Young Pyromancer's token) keeps `cast:`. */
+test("a self-pump on a noncreature cast is tagged prowess; a real cast payoff keeps cast", () => {
+  const nonCreatureCast = { verbs: ["cast"], subject: { control: "you", token: null, notType: ["creature"], type: ["artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle"] } };
+  const prodigy = base("Harmonic Prodigy", [{
+    kind: "triggered", trigger: nonCreatureCast, amount: "+1/+1", effect: { kind: "pump", subject: { control: "you", token: null, self: true } },
+  }] as CardTags["abilities"]);
+  const pyro = base("Young Pyromancer", [{
+    kind: "triggered", trigger: nonCreatureCast, effect: { kind: "token-generation", subject: { control: "you", token: true, type: "creature", subtype: "elemental" } },
+  }] as CardTags["abilities"]);
+  const signet = base("Arcane Signet", []);
+  signet.tags.characteristics.types = ["artifact"];
+  const tags = (c: ReturnType<typeof base>) => directedReasons(signet, c, H).map((r) => r.tag).filter((t) => /^(cast|prowess):/.test(t));
+  expect(tags(prodigy)).toEqual(["prowess:-creature"]);
+  expect(tags(pyro)).toEqual(["cast:-creature"]);
 });

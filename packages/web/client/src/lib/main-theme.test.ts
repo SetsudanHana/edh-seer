@@ -22,3 +22,8 @@ test("the second theme is matched after the main one", () => {
   expect(whichTheme({ tag: "scales:cleric", helper: false }, both)).toEqual({ theme: "main", name: "Cleric typal", match: "part" });
   expect(whichTheme({ tag: "dies:goblin", helper: false }, both)).toBeNull();
 });
+
+/** #543: the page folds instant and sorcery groups, so the deck's `cast:instant` theme still names it. */
+test("a spellslinger theme still matches its folded group", () => {
+  expect(themeMatch({ tag: "cast:instant-sorcery", helper: false }, { tag: "cast:instant" })).toBe("same");
+});

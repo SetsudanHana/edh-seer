@@ -5,6 +5,7 @@ import { CardSymbol } from "./CardSymbol.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName, usePinned } from "./card-drawer.js";
+import { WinPlans } from "./WinPlans.js";
 import { policyBand } from "@edh-seer/engine/percent";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
@@ -438,13 +439,10 @@ function DeckMathRows({
 }) {
   const { isPinned } = usePinned();
   const { turn, seen, demand } = deckMath;
-  // WORST FIRST, in both ranked blocks. The doctrine's order (creature, artifact, enchantment,
-  // planeswalker, land, graveyard) is a fixed list, so the rows a reader can act on landed wherever
-  // that list happened to put them -- on this deck, at the bottom -- and the bars zigzagged, which
-  // is the one thing a shared axis is for. Sorting by shortfall makes the column monotonic and puts
-  // the deck's real holes under the heading.
+  // WORST FIRST: least likely to be in hand by the turn, a commander's own answer last (it is there
+  // every game). The doctrine's fixed order put the rows a reader can act on wherever it happened to.
   const answers = [...deckMath.answers].sort(
-    (a, b) => (b.required - b.count) - (a.required - a.count) || a.available - b.available,
+    (a, b) => Number(a.fromCommandZone) - Number(b.fromCommandZone) || a.available - b.available || a.count - b.count,
   );
   // WORST FIRST, AGAINST THE NUMBER THE ROW ITSELF PRINTS. This sorted on `supplied` while the row
   // below it printed `available`, so a colour could sort above another and then show the smaller
@@ -502,115 +500,72 @@ function DeckMathRows({
             could supply every class.
           </p>
         ) : null}
-        {/* 32rem: the class, its count and its shortfall are one reading, and at 1920px they sat
-          *  800px apart (UI review 2026-09-25). */}
-        <ul className="flex flex-col gap-1 max-w-lg">
+        {/* WHICH CARDS, AND HOW OFTEN YOU HOLD ONE (owner, 2026-09-26: "ugly and useless ... having 5
+          *  answers for each type is something no deck can provide"). Each row was a count against
+          *  a "short" target, the copies it takes to hold an answer more often than not by the
+          *  clock turn, which asked nearly every deck for about five of every kind and so told
+          *  every deck it was short. What a player can act on is which of their cards answer what,
+          *  and how often one is in hand: the count, the chance, and the names. */}
+        <p className="text-sm text-(--muted) max-w-[65ch]">
+          The cards that can remove each kind of permanent, and how often at least one is in your
+          hand by turn {turn}. A card that hits several kinds is under each.
+        </p>
+        <ul className="flex flex-col gap-2.5 max-w-3xl">
           {answers.map((a) => {
             const none = a.count === 0;
-            // How many short of the doctrine's confidence, DERIVED rather than a template: the
-            // count moves with the deck's own clock, so a fast deck is asked for more than a slow
-            // one. (This row used to flag only zero, on the reasoning that any other threshold
-            // would be invented. It no longer is -- that is what step C bought.)
-            const short = Math.max(0, a.required - a.count);
-            const shortfall = short > 0 ? `, ${short} short of ${a.required}` : "";
-            // The mode sub-counts (design §7). A zero is the finding on a row that HAS answers --
-            // 4 creature answers of which none exiles means a reanimator undoes all four -- so a
-            // zero is rendered in warning colour rather than omitted. On a row with no answers at
-            // all the count already says everything, and a mode suffix would be noise.
-            //
-            // SPELLED OUT, not abbreviated. `0 ex` and `0 rec` were the two most-misread strings on
-            // this panel -- four player reviews, four failures to decode, including the reader who
-            // correctly guessed "exile" and still called it broken because every row read `0 ex`.
-            // It is also the row's only independent fact: see below.
-            // A ZERO ROW'S OWN "MODE" SLOT IS WHERE THE POOL SHOWS ON SCREEN, not only in the
-            // aria-label below -- otherwise the finding this whole annotation exists for is
-            // readable to a screen reader and invisible to everyone else.
+            // The mode sub-counts (design §7): a zero is the finding on a row that HAS answers --
+            // four creature answers of which none exiles means a reanimator undoes all four. Spelled
+            // out: `0 ex` was the most-misread string on this panel. Said once for the whole deck
+            // (below) when every row agrees.
             const mode = none
-              ? (a.pool !== undefined ? `your colours offer ${a.pool}` : "")
-              : a.class === "graveyard"
-                ? noneRecurring ? "" : a.recurring > 0 ? `${a.recurring} recurring` : "none recurring"
-                : noneExile ? "" : a.exiling > 0 ? `${a.exiling} exile` : "none exile";
-            const modeLabel = none
               ? ""
               : a.class === "graveyard"
-                ? a.recurring > 0 ? `, ${a.recurring} recurring` : ", none recurring"
-                : a.exiling > 0 ? `, ${a.exiling} of them exile` : ", none of them exile";
+                ? noneRecurring ? "" : a.recurring > 0 ? `${a.recurring} keep working` : "none keep working"
+                : noneExile ? "" : a.exiling > 0 ? `${a.exiling} exile` : "none exile";
             // A ZERO IS ONLY A FINDING WHEN THE POOL IS NOT. Measured: of the 60 zero rows across
             // the 71 calibration decks, 17 are artifact and their MEDIAN pool is 56 -- the
             // mono-black number. Printing the pool is what separates the colour pie from a gap.
-            const label = none
-              ? `${a.class}, no answers${shortfall}${a.pool !== undefined ? ` — your colours offer ${a.pool}` : ""}`
+            const odds = none
+              ? a.pool !== undefined ? `your colours have ${a.pool} cards that could` : ""
               : a.fromCommandZone
-                ? `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}, always (commander)`
-                : `${a.class}, ${a.count} card${a.count === 1 ? "" : "s"}${modeLabel}${shortfall}`;
+                ? "your commander, so every game"
+                : `in hand by turn ${turn} in ${pct(a.available)} of games`;
+            // The screen reader hears the mode on every row, even when the screen says it once below.
+            const said = none
+              ? ""
+              : a.class === "graveyard"
+                ? a.recurring > 0 ? `${a.recurring} keep working` : "none keep working"
+                : a.exiling > 0 ? `${a.exiling} of them exile` : "none of them exile";
+            const label = `${a.class}, ${none ? "no answers" : plural(a.count, "card")}${odds ? `, ${odds}` : ""}${said ? `, ${said}` : ""}`;
             return (
-              // THE ROW HAD ONE NUMBER IN FOUR DRESSES. The bar painted `available`; the percentage
-              // at the end printed the same `available` in digits; `available` is itself a pure
-              // function of `count` at a fixed library and turn; and the shortfall is `required -
-              // count` against a fixed threshold. Only the count and the mode were independent
-              // facts, and only the shortfall said what to do -- so those three stay and the two
-              // restatements of likelihood are gone. Ranking the rows worst-first (above) is what
-              // the bar was really buying, and that survives.
-              <li key={a.class} className="flex items-center gap-3 text-sm" aria-label={label}>
-                {/* `planeswalker` and `enchantment` both overrun 80px and clipped mid-word with no
-                  *  ellipsis, at every viewport -- the longest class name has to fit, because a
-                  *  truncated row label is a row the reader cannot identify. */}
-                {/* THE SAME ALPHABET AS THE WAFFLE LEGEND (AM3), which is the point of shipping the
-                  *  two together: one icon set taught once and repeated, rather than two. One word
-                  *  per row with vertical space is the cleanest layout a glyph can ask for.
-                  *  `graveyard` GETS NONE AND THAT IS CORRECT -- it is a zone, not a card type, so
-                  *  it is absent from `KNOWN` and `CardSymbol` returns null. The partial is the
-                  *  designed behaviour, not a hole to fill.
-                  *  `aria-hidden` by default: the `<li>` above already carries an `aria-label` that
-                  *  names the class, so a labelled mark here would announce it twice. */}
-                {/* `w-32`, NOT `w-24`, AND THE ICON IS WHY. The 96px was sized to exactly fit
-                  *  "planeswalker" and "enchantment" with nothing to spare -- see the note above,
-                  *  which is emphatic that this label may never truncate. Adding a 16px mark and a
-                  *  6px gap INSIDE that same box put content at 106-107px against a 96px client
-                  *  width and clipped both of the longest labels at every viewport, measured.
-                  *  128px leaves ~21px of headroom, which is the margin `.claude/rules/ui.md` asks
-                  *  for against per-platform font metrics rather than a fit that works on one
-                  *  machine. */}
-                <span className="w-32 shrink-0 capitalize inline-flex items-center gap-1.5">
-                  {/* THE SLOT IS ALWAYS THERE, EVEN WHEN THE MARK IS NOT. `graveyard` is a zone and
-                    *  gets no glyph by design -- but rendering nothing pulled its word to the left
-                    *  while the other five sat indented by the icon, so the one correct absence
-                    *  read as a broken row. Caught on a frame, not by a test: no assertion here
-                    *  measures x-position. A fixed slot keeps every word on one left edge and the
-                    *  partial reads as deliberate. */}
-                  <span aria-hidden className="w-4 shrink-0 inline-flex justify-center">
-                    <CardSymbol name={a.class} className="text-(--muted) text-xs" />
+              <li key={a.class} className="flex flex-col gap-0.5" aria-label={label} data-testid="answer-row">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm">
+                  {/* THE SAME ALPHABET AS THE WAFFLE LEGEND (AM3). `graveyard` is a zone, not a card
+                    *  type, and gets no glyph; the fixed slot keeps every word on one left edge. */}
+                  <span className="w-32 shrink-0 capitalize inline-flex items-center gap-1.5">
+                    <span aria-hidden className="w-4 shrink-0 inline-flex justify-center">
+                      <CardSymbol name={a.class} className="text-(--muted) text-xs" />
+                    </span>
+                    {a.class}
                   </span>
-                  {a.class}
-                </span>
-                {/* NOWRAP PER PIECE, WRAP BETWEEN THEM: at 390px "2 cards 1 recurring" broke inside
-                  *  "2 cards", printing the number over its noun. Now the mode drops whole. */}
-                <span className="flex-1 text-right stat-num flex flex-wrap items-baseline justify-end gap-x-1.5">
-                  <span className={`whitespace-nowrap ${none ? "text-(--warning)" : "text-(--muted)"}`}>
+                  <span className={`whitespace-nowrap stat-num ${none ? "text-(--warning)" : ""}`}>
                     {none ? "none" : plural(a.count, "card")}
                   </span>
-                  <span className={`whitespace-nowrap text-xs ${mode.startsWith("none") ? "text-(--warning)" : "text-(--muted)"}`}>{mode}</span>
-                </span>
-                {/* The one prescriptive figure on the panel, and now the only number in its row
-                  *  besides the count it is measured from. Narrower at 390px, where the label needs
-                  *  96px for "planeswalker" and the count group was wrapping onto two lines. */}
-                {/* MUTED, NOT AMBER, and this is a ruling rather than a style choice. A count of
-                  *  ZERO is a fact about the deck — it cannot answer that class at all — and keeps
-                  *  the warning colour above. "3 short of 5" is a CONVENTION's opinion about how
-                  *  many you should hold, over classes (land, graveyard) whose floor nobody here
-                  *  has calibrated; `BASE_TARGETS` is recorded as uncalibrated doctrine. Painting
-                  *  five of six rows amber on a deck this engine rates 4.9/5 teaches the reader
-                  *  that amber means nothing, and the one row that earns it loses with them. */}
-                <span className="w-16 sm:w-24 shrink-0 text-right stat-num text-(--muted)">
-                  {a.fromCommandZone ? "" : short > 0 ? `${short} short` : ""}
-                </span>
+                  <span className="text-xs text-(--muted)">
+                    {odds}
+                    {mode && odds ? " · " : null}
+                    {mode ? <span className={mode.startsWith("none") ? "text-(--warning)" : ""}>{mode}</span> : null}
+                  </span>
+                </div>
+                {a.cards?.length ? (
+                  <span className="text-xs sm:pl-[9.75rem]">
+                    {a.cards.map((n, i) => <span key={n}>{i > 0 ? <span className="text-(--muted)"> · </span> : null}<CardName name={n} /></span>)}
+                  </span>
+                ) : null}
               </li>
             );
           })}
         </ul>
-        {/* The shortfall column is meaningless without the confidence it is measured against, and
-          *  that confidence is a stated doctrine rather than a fact about the deck. Say it out loud
-          *  next to the numbers it produces, the way the pricing turn is. */}
         {/* THE TWO FINDINGS THIS PANEL WAS BURYING. Both were per-row suffixes repeated down the
           *  column; both are single facts about the whole deck, and both are the kind of thing a
           *  player changes a decklist over. */}
@@ -644,13 +599,6 @@ function DeckMathRows({
                 : `has no ${unansweredHate[0]} removal`}
             .
           </p>
-        ) : null}
-        {answers.some((a) => a.required > a.count) ? (
-          <Caveat label={'what "short" is measured against'}>
-            &ldquo;Short&rdquo; is how many more you would need to have that answer in hand more often
-            than not by turn {turn}. The count is real. Wanting an answer for every kind of permanent
-            is a rule of thumb, and the land and graveyard targets are untested.
-          </Caveat>
         ) : null}
       </div>
   );
@@ -834,39 +782,10 @@ function DeckMathRows({
         </div>
   ) : null;
 
-  // WIN PLANS, FOLDED INTO A SENTENCE. Three bars carried three shares, and a share is the one
-  // thing a bar says worst here: the counts are what distinguish "46% of a three-card plan" from
-  // "46% of a thirteen-card one", and the concentration figure needed a footnote apologising that
-  // its direction is inverted against every other number on the panel. Said in words, the direction
-  // is in the sentence and the apology is unnecessary.
-  const winBlock = wincons && wincons.classes.length > 0 ? (
-        <div className="flex flex-col gap-1">
-          <h4 className="eyebrow">Win plans</h4>
-          <p
-            className="text-sm"
-            aria-label={`win plans: ${wincons.classes.map((w) => `${w.class} ${w.count} cards`).join(", ")}, focus ${wincons.focus.toFixed(2)} of 1.00`}
-          >
-            <span className="text-(--muted)">Mostly </span>
-            {wincons.classes.map((w, i) => (
-              <span key={w.class}>
-                {i > 0 ? <span className="text-(--muted)"> · </span> : null}
-                {w.class} <span className="tabular-nums text-(--muted)">{plural(w.count, "card")}</span>
-              </span>
-            ))}
-          </p>
-          <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
-            {/* IN WORDS, NOT "CONCENTRATION 0.51" (wording review 2026-09-25): a two-decimal index
-              *  with its own scale explained beside it is a statistic, not a sentence a player
-              *  reads. Same number, three readings: near 1 is all-in, near an even split is
-              *  spread, and between is leaning. */}
-            {wincons.focus >= 0.8
-              ? "Nearly all-in on one plan."
-              : wincons.focus >= 1 / Math.max(1, wincons.classes.length) + 0.15
-              ? "Leaning on one plan."
-              : `Spread about evenly across these ${wincons.classes.length}.`}
-          </p>
-        </div>
-  ) : null;
+  // WIN PLANS, WITH THEIR CARDS (2026-09-26). This was one sentence of counts, "Mostly go-wide 8
+  // cards · voltron 7 cards", which folded three bars into words; `WinPlans` keeps the words and
+  // names the cards on each plan, which is what the baseline round's plan seat could not do.
+  const winBlock = wincons && wincons.classes.length > 0 ? <WinPlans wincons={wincons} /> : null;
 
   // THE DELTA MUST SAY SO TOO (fix F1, controller review 2026-08-21) -- a landfall deck's target is
   // the gate's answer PLUS `ARCHETYPE_TARGET_DELTAS.landfall`, and staying silent about the `+4` is
@@ -1213,8 +1132,7 @@ function DeckMathRows({
       id: "answers",
       title: "Can you deal with theirs",
       // FLAG WHAT IS PAINTED. A class with NO answers is a fact about the deck, and so are the two
-      // findings below it; "3 short of 5" is a convention's opinion and is rendered muted, so it no
-      // longer decides which section a reader meets first either.
+      // findings below it.
       flagged: answers.some((a) => a.count === 0) || noneExile || noneRecurring,
       blocks: [answersBlock],
     },

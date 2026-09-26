@@ -188,6 +188,8 @@ export interface DeckMath {
   answers: {
     class: string;
     count: number;
+    /** The cards counted; a card that hits several classes is under each. */
+    cards?: string[];
     /** How many of them EXILE -- the only answers a recursive commander or a reanimator cannot
      *  undo (design §2.1). A sub-count of `count`, never a separate class. */
     exiling: number;
@@ -229,7 +231,8 @@ export interface DeckMath {
    *  Scored the OPPOSITE way to `answers`: coverage wants breadth, focus wants concentration. A
    *  deck all-in on one plan beats a deck with three half-plans, so a low focus is the finding. */
   wincons: {
-    classes: { class: string; count: number; share: number; cards?: string[] }[];
+    /** The cards on each plan; `payoffs` on go-wide only, the cards that turn the board into a win. */
+    classes: { class: string; count: number; share: number; cards?: string[]; payoffs?: string[] }[];
     /** Herfindahl over the class shares: 1 is single-minded, 1/n is n plans split evenly. */
     focus: number;
     primary?: string;
@@ -418,7 +421,10 @@ export interface DeckReport {
    *  it. The DEFAULT view shows only those with a partner; the toggle reveals the rest. A token with
    *  no partner is a real signal — "this deck makes Clues and nothing cares" — which is why the data
    *  carries it even when the view hides it. */
-  tokenNodes?: { name: string; hasPartner: boolean }[];
+  /** `roles` are the token's own (owner ruling 2026-09-27, #533: Mage's Attendant's counterspell is
+   *  its Wizard token's), read off the ability its makers quote for it; `madeBy` names those makers.
+   *  A token is never drawn, so its roles are shown, never counted toward a deck's slot targets. */
+  tokenNodes?: { name: string; hasPartner: boolean; roles?: string[]; madeBy?: string[] }[];
   /** The state this report was computed under, echoed so a view can say "at speed 4". */
   state?: GameState;
   /** The markers this deck can reach at all -- `speed` when a card prints Start your engines! --

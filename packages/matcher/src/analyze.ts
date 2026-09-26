@@ -38,6 +38,7 @@ import { magnitudeMultipliers } from "./magnitude.js";
 import { buildSupplyDemand } from "./supply-demand.js";
 import { detectArchetypes } from "./archetypes.js";
 import { computeBuild, detectBuildCategories, rolesByCard, doubleDutyRating } from "./build.js";
+import { tokenQuotes } from "./rules.js";
 import { cutCandidates, deckSlack, trimOrder, unjudgedCandidates } from "./cut-list.js";
 import { computeDeckMath } from "./deck-math.js";
 import { recommendedLands } from "./land-count.js";
@@ -374,10 +375,25 @@ export function analyzeDeckStructured(
     const bOracle = tokenOracleByName.get(edge.b);
     if (bOracle && !tokenCreators.get(bOracle)?.has(edge.a)) partneredOracles.add(bOracle);
   }
-  const tokenNodesReport = tokenNodes.map((dc) => ({
-    name: dc.card.name,
-    hasPartner: partneredOracles.has(dc.tags!.oracleId),
-  }));
+  // A TOKEN'S OWN ROLES (owner ruling 2026-09-27, #533): read off the ability its makers quote for it,
+  // since a token node carries no printed text. Shown on the Roles shelves, never counted -- a token is
+  // never drawn, which is why it stays out of `detectBuildCategories(resolved)` above.
+  const madeBy = (dc: DeckCard): string[] => [...(tokenCreators.get(dc.tags!.oracleId) ?? [])].sort();
+  const tokenRoles = rolesByCard(detectBuildCategories(tokenNodes.map((dc) => ({
+    ...dc,
+    card: { ...dc.card, oracleText: madeBy(dc).map((m) => tokenQuotes(uniqueByName.get(m)?.card ?? {}, dc.card.name)).filter(Boolean).join("\n") },
+  }))));
+  const tokenNodesReport = tokenNodes.map((dc) => {
+    const roles = tokenRoles.get(dc.card.name);
+    return {
+      name: dc.card.name,
+      hasPartner: partneredOracles.has(dc.tags!.oracleId),
+      // EVERY token names its makers (owner ruling 2026-09-27, #519): a Bird token as Summon:
+      // Fenrir's landfall partner is rules-true, but the page must say whose Bird it is.
+      madeBy: madeBy(dc),
+      ...(roles?.length ? { roles } : {}),
+    };
+  });
 
   // Deck-local frequency of theme tags (cards whose abilities carry the tag).
   const deckFreq = new Map<string, number>();

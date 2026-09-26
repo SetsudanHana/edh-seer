@@ -219,10 +219,44 @@ function manaAdded(oracle: string): number | undefined {
   return best;
 }
 
+/** THE CARD'S OWN TEXT: an ability quoted inside a sentence that creates a token is the TOKEN'S
+ *  (owner ruling 2026-09-27, #533). Mage's Attendant "create[s] a 1/1 blue Wizard creature token with
+ *  "{1}, Sacrifice this token: Counter target noncreature spell ..."" -- the counterspell is the
+ *  token's role, and the Attendant sat on the Counterspells shelf for it. A quoted GRANT to your own
+ *  permanents ("creatures you control have "{T}: Add {G}"") stays: that sentence creates no token.
+ *  Cached, because every rule reads it. */
+const ownTextCache = new WeakMap<object, string>();
+export function ownText(card: { oracleText?: string }): string {
+  const cached = ownTextCache.get(card);
+  if (cached !== undefined) return cached;
+  const text = card.oracleText ?? "";
+  const out = text.replace(/"[^"]*"/g, (quote, at: number) => {
+    const start = Math.max(text.lastIndexOf(".", at), text.lastIndexOf("\n", at)) + 1;
+    const head = text.slice(start, at).toLowerCase();
+    return head.includes("create") && head.includes("token") ? '""' : quote;
+  });
+  ownTextCache.set(card, out);
+  return out;
+}
+
+/** ...and the other half: the quoted abilities a card's create sentences give the token NAMED
+ *  `tokenName`, which are that token's own text for role purposes (a token node carries none). */
+export function tokenQuotes(card: { oracleText?: string }, tokenName: string): string {
+  const text = card.oracleText ?? "";
+  const want = tokenName.toLowerCase();
+  const out: string[] = [];
+  for (const sentence of text.split(/(?<=[.])\s+|\n/)) {
+    const head = sentence.slice(0, Math.max(0, sentence.indexOf('"'))).toLowerCase();
+    if (!head.includes("create") || !head.includes("token") || !head.includes(want)) continue;
+    for (const m of sentence.matchAll(/"([^"]*)"/g)) out.push(m[1]!);
+  }
+  return out.join("\n");
+}
+
 function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
   switch (clause.op) {
     case "oracle":
-      return pattern(set, clause.pattern).test(dc.card.oracleText ?? "");
+      return pattern(set, clause.pattern).test(ownText(dc.card));
     case "typeLine":
       return (dc.card.typeLine ?? "").toLowerCase().includes(clause.contains);
     case "effectKind":
@@ -253,7 +287,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       // union alone cut both, which is the `isLand` mistake one card layout over.
       if (!/\b(instant|sorcery)\b/.test(line)) return true;
       if (/\b(creature|artifact|enchantment|land|planeswalker|battle)\b/.test(line)) return true;
-      const added = manaAdded(dc.card.oracleText ?? "");
+      const added = manaAdded(ownText(dc.card));
       // Unreadable means the card does not state a fixed number — "Add {R} for each card in target
       // opponent's hand" (Jeska's Will, Rousing Refrain, Path of the Pyromancer). Those are the most
       // explosive rituals in the format, so a missing answer must keep the card rather than cut it.
@@ -261,7 +295,7 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
       return added - (dc.card.manaValue ?? 0) >= clause.atLeast;
     }
     case "protectionIsOwnKeyword": {
-      const txt = dc.card.oracleText ?? "";
+      const txt = ownText(dc.card);
       // A GRANT WINS, always: a card can print a keyword AND hand it out, and handing it out is the
       // Interaction fact. Checked first so the keyword list can never overrule it.
       // THE GRANT TEST READS THE SAME TEXT THE WORD COUNT DOES. Shadowspear's "Permanents your
@@ -303,7 +337,15 @@ export function ruleMatches(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()
  *  enchantment removal. */
 const KNOWN_CLASSES: Record<string, true> = {
   creature: true, permanent: true, artifact: true, enchantment: true, planeswalker: true, land: true,
+  // Lightning Bolt's object: a creature or a planeswalker (issue #581), expanded by the aliases.
+  "any target": true,
 };
+
+/** A COLOUR HOSER ANSWERS ONE COLOUR, NOT A KIND OF PERMANENT (issue #581). Pyroblast's "destroy
+ *  target permanent if it's blue" read as an answer to every land, enchantment and planeswalker in
+ *  the format; it answers only blue ones, which is a sideboard card's job, not a class this deck
+ *  covers. "Nonblack" is not caught: Doom Blade answers nearly every creature. */
+const COLOUR_HOSER = /\bif it'?s (?:white|blue|black|red|green)\b|^(?:white|blue|black|red|green)\b/;
 
 /** What a matched rule says about the KIND of answer it contributes, per class.
  *
@@ -341,7 +383,7 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
       // Global sweep, not a single test: "destroy target artifact or enchantment" and cards with
       // two removal sentences each cover several classes, and one match would keep only the first.
       const re = new RegExp(set.patterns[rule.answerClassFrom], "gi");
-      for (const m of (dc.card.oracleText ?? "").matchAll(re)) {
+      for (const m of ownText(dc.card).matchAll(re)) {
         // The capture is the whole OBJECT PHRASE after "target", not one type word: "destroy
         // target artifact or enchantment" answers two classes, and a single-word capture keeps
         // whichever came first. Every class named anywhere in the phrase counts.
@@ -365,10 +407,18 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // CLAUSE, not per card, so a modal card's real removal mode still counts. A DELAYED return
         // ("At the beginning of the next end step, return ...") is its own sentence and keeps its
         // place in `count`, as the answer-modes spec rules: it answers the board for a turn.
-        const sentence = (dc.card.oracleText ?? "").slice(m.index ?? 0).split(/[.\n]/)[0] ?? "";
+        const sentence = ownText(dc.card).slice(m.index ?? 0).split(/[.\n]/)[0] ?? "";
         if (new RegExp(set.patterns.exileThenReturns, "i").test(sentence)) continue;
+        // ...and a destroy whose CONTROLLER gets copies back answers nothing either (owner ruling
+        // 2026-09-27, #513): Saw in Half is played on your own creature. The copies are the next
+        // sentence, so the card's text is asked, not the clause. Fractured Identity hands the copies
+        // to everyone ELSE and stays an answer.
+        if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
+        if (COLOUR_HOSER.test(phrase)) continue;
         for (const word of Object.keys(KNOWN_CLASSES)) {
-          if (!new RegExp(`\\b${word}\\b`).test(phrase)) continue;
+          // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
+          // permanents" (Ulamog) read as no answer at all when only the singular matched (issue #581).
+          if (!new RegExp(`\\b${word}s?\\b`).test(phrase)) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
             // "nonland permanent" answers everything except a land, and `permanent` alone expands
             // to all five. Without this a Pongify reads as land interaction.
