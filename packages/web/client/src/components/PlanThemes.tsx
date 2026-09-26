@@ -199,7 +199,7 @@ function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onO
       ) : null}
       {g.example ? (
         <details className="text-sm">
-          <summary className="cursor-pointer text-(--muted)">For example: <Badge repeat={g.example.repeat} /><ReasonText text={g.example.text} /></summary>
+          <summary className="cursor-pointer text-(--muted)">For example: <Badge repeat={g.example.repeat} perTurn={g.example.perTurn} /><ReasonText text={g.example.text} /></summary>
           <div className="mt-2 flex items-start gap-3">
             <span className="flex shrink-0">
               <CardFace card={m.cards.get(g.example.from)!} className="w-16 sm:w-20" />

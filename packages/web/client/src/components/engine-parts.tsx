@@ -9,11 +9,13 @@ import { cardImageUrl } from "./card-node.js";
 export const REPEAT_WORD: Record<Repeat, string> = { static: "always on", triggered: "every time", activated: "on demand", oneshot: "once" };
 export const REPEAT_MEANS: Record<Repeat, string> = { static: "while both are out", triggered: "each time it happens", activated: "when you pay for it", oneshot: "happens once" };
 
-export function Badge({ repeat }: { repeat: Repeat }) {
+/** A repeating link whose payoff caps itself ("Do this only once each turn", issue #518) is not
+ *  "every time"; the score still counts it as repeating. */
+export function Badge({ repeat, perTurn }: { repeat: Repeat; perTurn?: boolean }) {
   return (
     <span className={`eyebrow mr-2 inline-block whitespace-nowrap rounded-[4px] border px-1.5 py-0.5 align-[1px] ${
       repeat === "oneshot" ? "border-dashed border-(--muted) text-(--muted)" : "border-(--separator) bg-(--surface-secondary) text-(--foreground)"
-    }`}>{REPEAT_WORD[repeat]}</span>
+    }`}>{perTurn && repeat === "triggered" ? "once a turn" : REPEAT_WORD[repeat]}</span>
   );
 }
 
@@ -28,7 +30,7 @@ export function RepeatKey() {
 export function Lines({ links }: { links: readonly Link[] }) {
   return (
     <ul className="flex flex-col gap-1.5">
-      {links.map((l) => <li key={`${l.from}|${l.to}|${l.tag}|${l.text}`}><Badge repeat={l.repeat} /><ReasonText text={l.text} /></li>)}
+      {links.map((l) => <li key={`${l.from}|${l.to}|${l.tag}|${l.text}`}><Badge repeat={l.repeat} perTurn={l.perTurn} /><ReasonText text={l.text} /></li>)}
     </ul>
   );
 }

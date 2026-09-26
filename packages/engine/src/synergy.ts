@@ -15,6 +15,10 @@ export interface Reason {
   enabledBy?: Marker[];
   /** Repeatability class: "triggered" | "activated" | "static" | "oneshot". Set by the structured matcher. */
   repeatability?: string;
+  /** THE CONSUMER FIRES AT MOST ONCE A TURN ("Do this only once each turn", Terrasymbiosis; issue
+   *  #518). A display fact, read only when `repeatability` is "triggered"; the repeatability stays
+   *  what it was, so scoring does not move. */
+  perTurn?: boolean;
   /** Payoff scaling basis (tagger SCALING_BASES). Set by the structured matcher; unset → "fixed". */
   scaling?: string;
   /** True iff the matched subject filter carried a non-empty `stats` predicate array. Lets

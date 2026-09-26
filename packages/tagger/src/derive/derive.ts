@@ -172,7 +172,9 @@ import { emblemRecipient } from "../emblem.js";
 // 175: a next-end-step cleanup clause ("sacrifice those tokens") is the previous clause's token
 // maker going temporary, not a sacrifice outlet; a "for each X, create" preamble is the create's
 // board count (issue #502: Redoubled Stormsinger, fodder for every Treasure, fed by no token maker).
-export const DERIVE_VERSION = 175;
+// 176: an ordinal excluded by "other than the" is no per-turn cap (issue #518): Curse of Shaken Faith
+// fires on every spell after the first. Two corpus cards.
+export const DERIVE_VERSION = 176;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the

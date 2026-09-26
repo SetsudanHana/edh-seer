@@ -16,7 +16,7 @@ import type { CardGraph, DeckReport } from "../types.js";
 export type Repeat = "static" | "triggered" | "activated" | "oneshot";
 
 /** One reason, directed: `from` supplies it, `to` benefits. Ids are graph node ids. */
-export interface Link { from: string; to: string; tag: string; text: string; repeat: Repeat }
+export interface Link { from: string; to: string; tag: string; text: string; repeat: Repeat; perTurn?: boolean }
 
 /** Every reason between two cards, in both directions. `a < b`. */
 export interface Pair { a: string; b: string; links: Link[]; once: boolean }
@@ -218,7 +218,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       const k = `${from}\u0001${to}\u0001${r.tag}\u0001${r.text}`;
       if (seen.has(k)) continue;
       seen.add(k);
-      links.push({ from, to, tag: r.tag, text: r.text, repeat: asRepeat(r.repeatability) });
+      links.push({ from, to, tag: r.tag, text: r.text, repeat: asRepeat(r.repeatability), perTurn: r.perTurn || undefined });
     }
   }
 

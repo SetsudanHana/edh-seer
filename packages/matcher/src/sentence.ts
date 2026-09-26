@@ -175,6 +175,12 @@ export function effectPhrase(
     // determiner and already attaches, so only the noun form takes the preposition.
     // THE KIND, when the trigger names it (issue #503): The Earth Crystal doubles +1/+1 counters only.
     const kindWord = counterKind ? `${counterKind} ` : "";
+    // A REPLACEMENT THAT ADDS ONE (issue #518): Hardened Scales' amount arrives as "N+1", "that many
+    // plus one" or "X plus one", and "N" was never defined on the page. What it adds is one more.
+    const more = amount?.match(/^(?:N|X|that many)\s*(?:\+|plus)\s*(one|\d+)$/i)?.[1];
+    if (more !== undefined) {
+      return more === "one" || more === "1" ? `puts one more ${kindWord}counter on ${target}` : `puts ${more} more ${kindWord}counters on ${target}`;
+    }
     const n = amount === undefined ? `${kindWord}counters`
       : amount === "1" ? `a ${kindWord}counter`
       // THE AMOUNT IS ALREADY THE NOUN. Resourceful Defense moves "those counters" themselves, not a
