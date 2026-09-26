@@ -5019,6 +5019,16 @@ test("a party count is tagged as the party, and a sorcery's count happens once",
   const gatherer = base("Rumor Gatherer", [], ["elf", "wizard"]);
   const scales = pairReasons(gatherer, thwart, H).filter((r) => r.tag.startsWith("scales:"));
   expect(scales.map((r) => [r.tag, r.repeatability])).toEqual([["scales:party", "oneshot"]]);
+  // ...and says so (issue #506): "While you control" described a standing relation beside ONCE.
+  expect(scales[0]?.text).toBe("When you cast Thwart the Grave, it counts Rumor Gatherer and costs less");
+  // A permanent's standing count keeps its sentence and is static.
+  const archpriest = base("Archpriest of Iona", [{
+    kind: "static",
+    effect: { kind: "pump", scaling: "per-creature",
+      scalingSubject: { type: "creature", subtype: ["cleric", "rogue", "warrior", "wizard"], zone: "battlefield", control: "you", token: null } },
+  }] as CardTags["abilities"]);
+  const standing = pairReasons(gatherer, archpriest, H).filter((r) => r.tag.startsWith("scales:"));
+  expect(standing.map((r) => [r.repeatability, r.text])).toEqual([["static", "While you control Rumor Gatherer, Archpriest of Iona counts it and gets bigger"]]);
 });
 
 /** A FETCH IS TAGGED WITH THE LAND TYPE THAT MATCHED (overview persona rounds 2026-09-25, item 7):

@@ -1971,12 +1971,16 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
     const makes = counted.token === true && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
       && subjectMatches((({ zone: _ez, scope: _sc, ...s }) => s)(e.subject) as SubjectFilter, printed, h));
     if (!makes && !subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
+    // A SPELL COUNTS AS IT IS CAST (issue #506): an on-cast count, or any count on an instant or a
+    // sorcery, happens once -- Thwart the Grave's "costs {1} less for each creature in your party".
+    const cTypes = c.tags.characteristics.types ?? [];
+    const whenCast = a.kind === "on-cast" || (cTypes.length > 0 && cTypes.every((t) => t === "instant" || t === "sorcery"));
     reasons.push({
       tag: `scales:${themeSubjectKey(counted)}`,
-      text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)),
+      text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h), whenCast),
       effectKind: a.effect.kind,
       // An on-cast count happens once (overview item 6c, see the sibling above).
-      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+      repeatability: whenCast ? "oneshot" : a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
       scaling: a.effect.scaling,
       consumer: c.card.name,
       producer: p.card.name,

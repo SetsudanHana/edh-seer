@@ -462,7 +462,7 @@ const COUNT_GROWS: Record<string, string> = {
 };
 
 export function boardCountFeedsScaling(
-  producer: string, consumer: string, effectKind?: string, makesTheCounted = false,
+  producer: string, consumer: string, effectKind?: string, makesTheCounted = false, countsWhenCast = false,
 ): string {
   // "GETS BIGGER" WAS A WRONG CLAIM ON MOST OF THIS CHANNEL, reported by the precon reviewer against
   // the card printed beside it: Krenko's X counts Goblins to decide HOW MANY TOKENS he makes, and he
@@ -480,6 +480,9 @@ export function boardCountFeedsScaling(
   // A MAKER IS NOT COUNTED, ITS TOKENS ARE (issue #502): "While you control Inalla, Redoubled
   // Stormsinger counts it" named the wrong object -- Inalla is a commander, her copies are counted.
   if (makesTheCounted) return `${producer} makes the tokens ${consumer} counts, so ${consumer} ${grows}`;
+  // A SPELL COUNTS ONCE, AS IT IS CAST (issue #506): "While you control Rumor Gatherer, Thwart the
+  // Grave counts it" described an ongoing relation next to a ONCE badge.
+  if (countsWhenCast) return `When you cast ${consumer}, it counts ${producer} and ${grows}`;
   return `While you control ${producer}, ${consumer} counts it and ${grows}`;
 }
 
