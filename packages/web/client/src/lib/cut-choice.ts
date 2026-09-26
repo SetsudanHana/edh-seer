@@ -44,6 +44,16 @@ const GATES = [/^fills /, /^half of a combo/, /^does its work without forming ed
   // Inalla, Ghostly Flicker (30 cards) made the list as an argument rather than a gate.
   /^connects to \d+ cards, more than half this deck/];
 const UNMET = /^its condition needs /;
+
+/** THE ENGINE'S ARGUMENTS, IN A PLAYER'S WORDS (appeal review 2026-09-26). "Rates 1.3 of 5" read as
+ *  a low mark offered as a reason to keep, because it never said what 5 was; "best edge" is the
+ *  graph's word, used nowhere else on the page. */
+export function keepWords(p: string): string {
+  const rate = /^rates (\d+(?:\.\d+)?) of 5 in this deck$/.exec(p);
+  if (rate) return `it scores ${rate[1]} for synergy, where 5 is this deck's best card`;
+  if (p === "its best edge is on your main theme") return "its strongest link is to your main theme";
+  return p;
+}
 /** True of every row once role-fillers are gone, so it says nothing. */
 const SAYS_NOTHING = /^doesn't fill a core role/;
 
@@ -85,7 +95,7 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
     if (twin) { twin.twins.push(displayName(row!.card)); continue; }
     out.push({
       name: t.name, manaValue: t.manaValue, card: frontOf.get(t.name) ?? row?.card, row,
-      keeps: t.protections,
+      keeps: t.protections.map(keepWords),
       unmet: t.reasons.filter((r) => UNMET.test(r)),
       reasons: t.reasons.filter((r) => !UNMET.test(r) && !SAYS_NOTHING.test(r)),
       twins: [],

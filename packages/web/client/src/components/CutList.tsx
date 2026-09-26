@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
-import type { CutChoice } from "../lib/cut-choice.js";
+import { keepWords, type CutChoice } from "../lib/cut-choice.js";
 import { listNames, type EngineCard } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
 import { Badge, CardFace, ReadCards } from "./engine-parts.js";
@@ -216,13 +216,13 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surpl
                     </div>
                     <p className="text-xs text-(--muted)">{t.reasons.filter((r) => !/^doesn't fill a core role/.test(r)).join(" \u00b7 ")}</p>
                     {/* THE KEEP SIDE IS NOT FINE PRINT. A row that says "fills none of the roles"
-                      *  above "its best edge is on your main theme" is arguing with itself, and the
+                      *  above "its strongest link is to your main theme" is arguing with itself, and the
                       *  second line is the one that decides — so it reads at the page's normal
                       *  weight with a success-toned label, not as a footnote to the cut. */}
                     <p className="text-xs">
                       <span className="font-medium text-(--success)">keeps it:</span>{" "}
                       <span className={t.protections.length > 0 ? "text-(--foreground)" : "text-(--muted)"}>
-                        {t.protections.length > 0 ? t.protections.join(" \u00b7 ") : "\u2014 nothing"}
+                        {t.protections.length > 0 ? t.protections.map(keepWords).join(" \u00b7 ") : "\u2014 nothing"}
                       </span>
                     </p>
                   </li>
