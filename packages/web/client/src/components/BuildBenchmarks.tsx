@@ -5,6 +5,7 @@ import { CardSymbol } from "./CardSymbol.js";
 import { Explain } from "./Explain.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName, usePinned } from "./card-drawer.js";
+import { WinPlans } from "./WinPlans.js";
 import { policyBand } from "@edh-seer/engine/percent";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
@@ -834,39 +835,10 @@ function DeckMathRows({
         </div>
   ) : null;
 
-  // WIN PLANS, FOLDED INTO A SENTENCE. Three bars carried three shares, and a share is the one
-  // thing a bar says worst here: the counts are what distinguish "46% of a three-card plan" from
-  // "46% of a thirteen-card one", and the concentration figure needed a footnote apologising that
-  // its direction is inverted against every other number on the panel. Said in words, the direction
-  // is in the sentence and the apology is unnecessary.
-  const winBlock = wincons && wincons.classes.length > 0 ? (
-        <div className="flex flex-col gap-1">
-          <h4 className="eyebrow">Win plans</h4>
-          <p
-            className="text-sm"
-            aria-label={`win plans: ${wincons.classes.map((w) => `${w.class} ${w.count} cards`).join(", ")}, focus ${wincons.focus.toFixed(2)} of 1.00`}
-          >
-            <span className="text-(--muted)">Mostly </span>
-            {wincons.classes.map((w, i) => (
-              <span key={w.class}>
-                {i > 0 ? <span className="text-(--muted)"> · </span> : null}
-                {w.class} <span className="tabular-nums text-(--muted)">{plural(w.count, "card")}</span>
-              </span>
-            ))}
-          </p>
-          <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
-            {/* IN WORDS, NOT "CONCENTRATION 0.51" (wording review 2026-09-25): a two-decimal index
-              *  with its own scale explained beside it is a statistic, not a sentence a player
-              *  reads. Same number, three readings: near 1 is all-in, near an even split is
-              *  spread, and between is leaning. */}
-            {wincons.focus >= 0.8
-              ? "Nearly all-in on one plan."
-              : wincons.focus >= 1 / Math.max(1, wincons.classes.length) + 0.15
-              ? "Leaning on one plan."
-              : `Spread about evenly across these ${wincons.classes.length}.`}
-          </p>
-        </div>
-  ) : null;
+  // WIN PLANS, WITH THEIR CARDS (2026-09-26). This was one sentence of counts, "Mostly go-wide 8
+  // cards · voltron 7 cards", which folded three bars into words; `WinPlans` keeps the words and
+  // names the cards on each plan, which is what the baseline round's plan seat could not do.
+  const winBlock = wincons && wincons.classes.length > 0 ? <WinPlans wincons={wincons} /> : null;
 
   // THE DELTA MUST SAY SO TOO (fix F1, controller review 2026-08-21) -- a landfall deck's target is
   // the gate's answer PLUS `ARCHETYPE_TARGET_DELTAS.landfall`, and staying silent about the `+4` is

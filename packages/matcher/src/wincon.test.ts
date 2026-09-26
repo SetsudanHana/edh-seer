@@ -164,6 +164,20 @@ test("the report ranks classes by size and carries the focus index", () => {
   expect(report.primary).toBe("go-wide");
 });
 
+/** "Pick a way" is r/EDH's first advice to a deck that stalls, and a count cannot be picked from:
+ *  every plan names its cards, and go-wide also names what turns the board into a win. */
+test("every plan names its cards, and go-wide names its payoffs", () => {
+  const deck = [
+    ...Array.from({ length: 3 }, (_, i) => mk(`Maker-${i}`, { kinds: ["token-generation"] })),
+    mk("Intangible Virtue", { kinds: ["pump"], typeLine: "Enchantment", anthem: true }),
+    ...Array.from({ length: 2 }, (_, i) => mk(`Bolt-${i}`, { kinds: ["player-damage"], typeLine: "Instant" })),
+  ];
+  const [wide, burn] = winconReport(deck).classes;
+  expect(wide).toMatchObject({ class: "go-wide", cards: ["Maker-0", "Maker-1", "Maker-2"], payoffs: ["Intangible Virtue"] });
+  expect(burn).toMatchObject({ class: "burn", cards: ["Bolt-0", "Bolt-1"] });
+  expect(burn!.payoffs).toBeUndefined();
+});
+
 test("two stray cards are not a win plan, but one alt-win is", () => {
   const deck = [
     ...Array.from({ length: 20 }, (_, i) => mk(`Maker-${i}`, { kinds: ["token-generation"] })),

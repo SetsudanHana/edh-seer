@@ -95,41 +95,44 @@ export function focusIndex(counts: ReadonlyMap<string, number>): number {
 /** A payoff that turns a board of tokens into a win: an anthem, or anything whose amount scales
  *  with how many creatures or permanents you have.
  *
- *  DECK-LEVEL, and therefore code rather than a rules row (design §13.1 tier 3): "go-wide = token
- *  producers PLUS count-matters consumers" is a signature over the whole deck, and no per-card
- *  predicate can express the second half.
+ *  The GATE is deck-level, and therefore code rather than a rules row (design §13.1 tier 3):
+ *  "go-wide = token producers PLUS count-matters consumers" is a signature over the whole deck, and
+ *  no per-card rule can express the second half. This is the per-card half; `winconReport` asks
+ *  whether any card in the deck passes it, and names the ones that do.
  *
  *  It is not optional detail. Without it every deck in the calibration set read as go-wide -- 71 of
  *  71, and the primary plan of 52 -- because almost every EDH deck makes a token somewhere. A token
  *  maker with nothing to pay it off is not a win plan, it is a body. */
-function hasWidePayoff(deck: readonly DeckCard[]): boolean {
-  return deck.some((dc) =>
-    (dc.tags?.abilities ?? []).some((a) => {
-      // Count-matters: an effect whose SIZE is the board. Craterhoof, Shamanic Revelation, an
-      // Impact Tremors that scales. This half needs no anthem at all.
-      // `per-permanent` is deliberately NOT here: it passes on Brass's Bounty, which makes a
-      // Treasure per land and is ramp. Only "scales with creatures" is a go-wide payoff.
-      if (a.effect.scaling === "per-creature") return true;
-      // An anthem is a STATIC pump aimed at a CLASS. `pump` alone is every combat trick in Magic
-      // and made this gate vacuous -- it passed all 71 calibration decks, changing nothing.
-      // Equipment is excluded by the same test: its static pump names the equipped creature
-      // (`self`), not a type.
-      if (a.kind !== "static" || a.effect.kind !== "pump") return false;
-      const subject = a.effect.subject;
-      if (!subject || subject.self) return false;
-      const types = Array.isArray(subject.type) ? subject.type : subject.type ? [subject.type] : [];
-      return types.some((t) => ["creature", "permanent"].includes(t.toLowerCase()));
-    }),
-  );
+function isWidePayoff(dc: DeckCard): boolean {
+  return (dc.tags?.abilities ?? []).some((a) => {
+    // Count-matters: an effect whose SIZE is the board. Craterhoof, Shamanic Revelation, an
+    // Impact Tremors that scales. This half needs no anthem at all.
+    // `per-permanent` is deliberately NOT here: it passes on Brass's Bounty, which makes a
+    // Treasure per land and is ramp. Only "scales with creatures" is a go-wide payoff.
+    if (a.effect.scaling === "per-creature") return true;
+    // An anthem is a STATIC pump aimed at a CLASS. `pump` alone is every combat trick in Magic
+    // and made this gate vacuous -- it passed all 71 calibration decks, changing nothing.
+    // Equipment is excluded by the same test: its static pump names the equipped creature
+    // (`self`), not a type.
+    if (a.kind !== "static" || a.effect.kind !== "pump") return false;
+    const subject = a.effect.subject;
+    if (!subject || subject.self) return false;
+    const types = Array.isArray(subject.type) ? subject.type : subject.type ? [subject.type] : [];
+    return types.some((t) => ["creature", "permanent"].includes(t.toLowerCase()));
+  });
 }
 
 export interface WinconReport {
-  /** `cards` is carried for BINARY classes only (`combo`, `alt-win`) and nowhere else. The deck
-   *  sentence NAMES an alternate win condition — "wins by an alternate win condition (Thassa's
-   *  Oracle)" — because naming it is what lets a reader catch a wrong detection, where "an alternate
-   *  win condition" hides one. The other classes hold up to 30 names and a sentence never says
-   *  them, so shipping the list would be wire weight nothing reads. */
-  classes: { class: string; count: number; share: number; cards?: string[] }[];
+  /** EVERY CLASS NAMES ITS CARDS (owner, 2026-09-26: "we should be able to determine how the deck
+   *  can win"). This was carried for `combo` and `alt-win` only, on the grounds that nothing read
+   *  the longer lists. The baseline round's plan seat read "go-wide 8 · voltron 7 · burn 6" and could
+   *  not say which cards win, which is r/EDH's first piece of advice ("pick a way"). A count a reader
+   *  cannot check is also a detection they cannot catch when it is wrong.
+   *
+   *  `payoffs` is go-wide's second half: the cards that turn the board into a win (anthems and
+   *  anything that scales with creatures). They gate the class but are not counted in it, so they
+   *  were the one part of the plan the report checked and never named. */
+  classes: { class: string; count: number; share: number; cards?: string[]; payoffs?: string[] }[];
   /** Herfindahl over the shares. */
   focus: number;
   /** The largest class, absent when the deck names no wincon. */
@@ -147,7 +150,8 @@ export function winconReport(
   opts: { comboCards?: readonly string[] } = {},
 ): WinconReport {
   const members = detectWincons(deck);
-  if (!hasWidePayoff(deck)) members.delete("go-wide");
+  const payoffs = [...new Set(deck.filter(isWidePayoff).map((dc) => dc.card.name))].sort();
+  if (payoffs.length === 0) members.delete("go-wide");
   const combo = (opts.comboCards ?? []).filter((n) => deck.some((dc) => dc.card.name === n));
   if (combo.length > 0) members.set("combo", new Set(combo));
 
@@ -168,7 +172,8 @@ export function winconReport(
   const classes = [...counts]
     .map(([cls, count]) => ({
       class: cls, count, share: total > 0 ? count / total : 0,
-      ...(BINARY.has(cls) ? { cards: [...(members.get(cls) ?? [])].sort() } : {}),
+      cards: [...(members.get(cls) ?? [])].sort(),
+      ...(cls === "go-wide" ? { payoffs } : {}),
     }))
     .sort((a, b) => b.count - a.count || a.class.localeCompare(b.class));
 

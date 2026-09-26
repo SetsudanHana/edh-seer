@@ -1,9 +1,5 @@
 import type { DeckReport } from "../types.js";
 import { fastestRoute, speedRoutes, type SpeedRoute } from "../lib/speed.js";
-import { CardName } from "./card-drawer.js";
-
-/** Cards named on a route before "and N more": the list is evidence, not the point. */
-const NAMED = 5;
 
 /** HOW FAST IT CAN WIN, ONE LINE PER ROUTE. See `lib/speed.ts` for what each line measures. */
 export function SpeedPanel({ report, manaValueOf }: { report: DeckReport; manaValueOf: (name: string) => number | undefined }) {
@@ -17,7 +13,8 @@ export function SpeedPanel({ report, manaValueOf }: { report: DeckReport; manaVa
         {fastest
           ? <>Fastest route: {fastest.label}, around <b>turn {fastest.turn}</b>{fastest.kind === "combo" ? " at the earliest" : ""}.</>
           : <>None of this deck&rsquo;s routes to a win can be timed from the list.</>}
-        {" "}Every way it can win is below, with what each number counts.
+        {" "}Every way it can win is below, with what each number counts; the cards on each plan are
+        under Win plans.
       </p>
       <ul className="flex flex-col gap-2">
         {routes.map((r) => <Route key={r.kind} r={r} />)}
@@ -40,12 +37,6 @@ function Route({ r }: { r: SpeedRoute }) {
         </span>
       </div>
       <span className="text-xs text-(--muted)">{r.caveat.charAt(0).toUpperCase() + r.caveat.slice(1)}.</span>
-      {r.cards.length && r.kind !== "combo" ? (
-        <span className="text-xs text-(--muted)">
-          {r.cards.slice(0, NAMED).map((n, i) => <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>)}
-          {r.cards.length > NAMED ? ` and ${r.cards.length - NAMED} more` : ""}
-        </span>
-      ) : null}
     </li>
   );
 }

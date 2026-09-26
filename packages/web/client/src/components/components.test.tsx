@@ -1271,8 +1271,8 @@ const DECK_MATH = {
   clock: { turn: 8, powerAtFive: 6.4 },
   wincons: {
     classes: [
-      { class: "go-wide", count: 12, share: 0.6 },
-      { class: "burn", count: 8, share: 0.4 },
+      { class: "go-wide", count: 12, share: 0.6, cards: Array.from({ length: 12 }, (_, i) => `Token Maker ${i + 1}`), payoffs: ["Intangible Virtue"] },
+      { class: "burn", count: 8, share: 0.4, cards: ["Impact Tremors", "Lightning Bolt"] },
     ],
     focus: 0.52,
     primary: "go-wide",
@@ -1754,18 +1754,24 @@ test("a deck with no combat clock says so rather than naming a turn", () => {
   expect(screen.getByLabelText(/no combat clock/i)).toBeInTheDocument();
 });
 
-// THE BARS ARE A SENTENCE NOW. A share is what a bar says worst here -- the COUNTS are what
-// separate "46% of a three-card plan" from "46% of a thirteen-card one" -- and the concentration
-// figure needed a footnote apologising that its direction runs opposite to everything above it.
-test("BuildBenchmarks names the win plans with their counts, and says which direction is good", () => {
+// THE PLANS NAME THEIR CARDS (owner, 2026-09-26: "determine how the deck can win"). The counts
+// alone were what the baseline round's plan seat could not act on: "pick a way" needs the cards.
+test("BuildBenchmarks names each win plan's cards, what put them there, and go-wide's payoffs", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/win plans: go-wide 12 cards, burn 8 cards, focus 0\.52 of 1\.00/i)).toBeInTheDocument();
-  expect(screen.getByText(/go-wide/)).toBeInTheDocument();
-  expect(screen.getByText("12 cards")).toBeInTheDocument();
-  // The concentration index has to say which DIRECTION is good, or a reader will assume more plans
-  // is better -- it is the one number here scored the opposite way to the coverage above it.
   // In words (wording review 2026-09-25): 0.52 across two plans is close to an even split.
-  expect(screen.getByText("Spread about evenly across these 2.")).toBeInTheDocument();
+  expect(screen.getByTestId("win-plans-headline")).toHaveTextContent(
+    "Spread about evenly across 2 plans (attacking with a wide board and damage or drain), so no one plan has most of the deck's win cards.",
+  );
+  const [wide, burn] = screen.getAllByTestId("win-plan");
+  expect(wide).toHaveTextContent("Attacking with a wide board12 cards");
+  expect(wide).toHaveTextContent(/Cards that make creature tokens/);
+  expect(wide).toHaveTextContent("Makes the board: Token Maker 1 · Token Maker 2");
+  expect(wide).toHaveTextContent("Turns it into a win: Intangible Virtue");
+  expect(burn).toHaveTextContent("Impact Tremors · Lightning Bolt");
+  // Eight names, then the rest on request.
+  expect(wide).not.toHaveTextContent("Token Maker 9");
+  fireEvent.click(within(wide!).getByRole("button", { name: "Show all 12" }));
+  expect(wide).toHaveTextContent("Token Maker 12");
   expect(screen.queryByText(/Concentration/)).toBeNull();
 });
 
