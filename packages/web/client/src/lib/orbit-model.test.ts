@@ -7,7 +7,9 @@ const model = () => { const { report, graph } = engineDeck(); return buildEngine
 
 test("the cards a card works with sit in sectors by group, the biggest group first", () => {
   const o = buildOrbit(model(), "Payoff A")!;
-  expect(o.direct).toBe(11);
+  // Ten deck cards and the Treasure token, counted apart.
+  expect(o.direct).toBe(10);
+  expect(o.directTokens).toBe(1);
   expect(o.sectors[0]!.partners.map((p) => p.card.id)).toContain("Cleric 1");
   expect(o.sectors.flatMap((s) => s.partners).length).toBe(11);
 });

@@ -30,7 +30,11 @@ export interface OrbitSector {
 export interface OrbitModel {
   focus: EngineCard;
   sectors: OrbitSector[];
+  /** Deck cards it works with: a card's two faces count once, and tokens are counted apart. At
+   *  Kindred Discovery the totals came to 103 for a 100-card deck (orbit round 3). */
   direct: number;
+  /** Tokens among the partners. */
+  directTokens: number;
   /** Deck cards one step out, each with the direct partners that link it in. */
   near: { card: EngineCard; via: EngineCard[] }[];
   /** The same cards, grouped by the one partner each goes through: "31 cards through Harmonic
@@ -46,7 +50,9 @@ export interface OrbitModel {
 export const OTHER_HUE = "#6b5f7d";
 /** Colours for sectors the deck's own groups don't colour: helpers all share one grey in the
  *  Overview, and four grey rows on one card could not be told apart (orbit round 2). */
-const EXTRA_HUES = ["#1c8db7", "#b08e1d", "#5b40f6", "#21a28f", "#277310", "#6b89f9", "#b5577a", "#c0703a", "#8a8f3a", "#4f7fa0", "#9a6bc0"];
+/** The colours unlike the Overview's group colours come first: a helper coloured teal next to a
+ *  blue group read as the same group (orbit round 3). */
+const EXTRA_HUES = ["#c0703a", "#b5577a", "#8a8f3a", "#9a6bc0", "#b08e1d", "#5b40f6", "#277310", "#6b89f9", "#1c8db7", "#21a28f", "#4f7fa0"];
 
 /** A card that belongs in a ring list: tokens are made by cards, not in the deck, and a land that
  *  reaches nothing is doing a land's job. */
@@ -84,20 +90,39 @@ export function buildOrbit(m: EngineModel, focusId: string): OrbitModel | null {
   for (const s of ordered) if (s.group && !s.group.helper && !used.has(s.hue)) used.add(s.hue); else s.hue = "";
   for (const s of ordered) if (!s.hue) { s.hue = EXTRA_HUES.find((h) => !used.has(h)) ?? OTHER_HUE; used.add(s.hue); }
 
+  // One entry per card, not per face: a back face whose card is already counted is left out, and
+  // a card counts where it is closest (partner, then one step out, then not reached).
+  const keyOf = (c: EngineCard) => c.faceOf ?? c.name;
+  const counted = new Set<string>([keyOf(focus)]);
+  let direct = 0, directTokens = 0;
+  for (const id of nb.keys()) {
+    const c = m.cards.get(id);
+    if (!c) continue;
+    if (c.isToken) directTokens++;
+    else if (!counted.has(keyOf(c))) { counted.add(keyOf(c)); direct++; }
+  }
   const near: OrbitModel["near"] = [];
-  const far: EngineCard[] = [];
-  let farLands = 0;
+  const rest: EngineCard[] = [];
   for (const c of m.cards.values()) {
     if (c.id === focusId || nb.has(c.id) || !deckCard(c)) continue;
     const via = [...(m.partners.get(c.id)?.keys() ?? [])].filter((x) => nb.has(x)).map((x) => m.cards.get(x)!)
       .sort((a, b) => b.score - a.score);
     if (via.length) near.push({ card: c, via });
-    else if (!c.isLand) far.push(c);
-    else farLands++;
+    else rest.push(c);
+  }
+  const nearKept = near.filter((n) => !counted.has(keyOf(n.card)) && counted.add(keyOf(n.card)));
+  near.length = 0;
+  near.push(...nearKept);
+  const far: EngineCard[] = [];
+  let farLands = 0;
+  for (const c of rest) {
+    if (counted.has(keyOf(c))) continue;
+    counted.add(keyOf(c));
+    if (c.isLand) farLands++; else far.push(c);
   }
   near.sort((a, b) => b.via.length - a.via.length || a.card.name.localeCompare(b.card.name));
   far.sort((a, b) => a.name.localeCompare(b.name));
-  return { focus, sectors: ordered, direct: nb.size, near, through: groupThrough(m, near), far, farLands };
+  return { focus, sectors: ordered, direct, directTokens, near, through: groupThrough(m, near), far, farLands };
 }
 
 /** Which partners get a disc when there is room for `cap`: each sector keeps a share by its size,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, displayName, type EngineCard } from "../lib/engine-model.js";
 import { buildOrbit, visiblePartners, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
@@ -138,7 +138,7 @@ function Orbit({ o, narrow, sel, sector, onTap, onSector }: {
   const lit = (card: string, s: OrbitSector) => (sel ? sel === card : sector !== null ? sectorKey(s) === sector : true);
   const dimming = sel !== null || sector !== null;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${displayName(o.focus)} and the ${o.direct} cards it works with`}
+    <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${displayName(o.focus)} and the ${o.direct + o.directTokens} cards it works with`}
       className="w-full shrink-0 select-none lg:w-[min(880px,62%)]" style={{ maxWidth: W }}>
       <defs><clipPath id={clip} clipPathUnits="objectBoundingBox"><circle cx={0.5} cy={0.5} r={0.5} /></clipPath></defs>
       <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--separator)" />
@@ -156,7 +156,7 @@ function Orbit({ o, narrow, sel, sector, onTap, onSector }: {
             <g key={`m-${sl.s.name}`} transform={`translate(${x},${y})`} role="button" tabIndex={0} className={DISC}
               aria-label={`${sl.n} more: ${sl.s.name}${sl.once ? `, ${sl.once} of them only once` : ""}`} aria-pressed={on} opacity={dimming && !on ? 0.45 : 1}
               onClick={() => onSector(sl.s)} onKeyDown={key(() => onSector(sl.s))}>
-              <circle r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={on ? 4 : 2} strokeDasharray={sl.once ? "4 3" : undefined} />
+              <circle r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={on ? 4 : 2} />
               <text textAnchor="middle" dy={5} fontSize={narrow ? 13 : 14} fill="var(--foreground)">+{sl.n}</text>
             </g>
           );
@@ -279,20 +279,24 @@ function Through({ t, onCentre }: { t: OrbitModel["through"][number]; onCentre: 
         <button type="button" className="min-h-9 shrink-0 rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(t.via.id)}>Put it in the middle</button>
       </span>
       {t.example && !card ? <span className="text-xs text-(--muted)"><Badge repeat={t.example.repeat} /><ReasonText text={t.example.text} /></span> : null}
+      {/* The answer opens right under the name tapped: below the whole list it landed ~460px from
+        * the thumb on a phone (orbit round 3). A full-width box breaks the wrapped line there. */}
       <span className="flex flex-wrap gap-x-2 gap-y-0.5">
         {t.cards.map((c, i) => (
-          <button key={c.id} type="button" aria-expanded={open === c.id} className={`min-h-8 text-left hover:underline ${open === c.id ? "font-semibold text-(--accent)" : ""}`} onClick={() => setOpen(open === c.id ? null : c.id)}>
-            {displayName(c)}{i < t.cards.length - 1 ? "," : ""}
-          </button>
+          <Fragment key={c.id}>
+            <button type="button" aria-expanded={open === c.id} className={`min-h-9 text-left hover:underline ${open === c.id ? "font-semibold text-(--accent)" : ""}`} onClick={() => setOpen(open === c.id ? null : c.id)}>
+              {displayName(c)}{i < t.cards.length - 1 ? "," : ""}
+            </button>
+            {card && open === c.id ? (
+              <div className="my-1 flex w-full flex-col gap-1.5 rounded-(--radius) border border-(--separator) bg-(--background) p-2">
+                <Lines links={lines} />
+                <ReadCards cards={[t.via, card]} />
+                <button type="button" className="min-h-9 self-start rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(card.id)}>Put {firstPart(card)} in the middle</button>
+              </div>
+            ) : null}
+          </Fragment>
         ))}
       </span>
-      {card ? (
-        <div className="mt-1 flex flex-col gap-1.5 rounded-(--radius) border border-(--separator) bg-(--background) p-2">
-          <Lines links={lines} />
-          <ReadCards cards={[t.via, card]} />
-          <button type="button" className="min-h-9 self-start rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(card.id)}>Put {firstPart(card)} in the middle</button>
-        </div>
-      ) : null}
     </li>
   );
 }
@@ -307,9 +311,9 @@ function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: Orbit
         <div className="flex flex-col gap-1">
           <h3 className="font-semibold text-base">{name}</h3>
           <p className="text-(--muted)">
-            {o.direct === 0
+            {o.direct + o.directTokens === 0
               ? "Nothing else in the deck works with this card."
-              : <>Works with <b className="text-(--foreground)">{o.direct} card{o.direct === 1 ? "" : "s"}</b>. Tap one to read how; tap it again to put it in the middle.</>}
+              : <>Works with <b className="text-(--foreground)">{o.direct} card{o.direct === 1 ? "" : "s"}</b>{o.directTokens ? <> and {o.directTokens} token{o.directTokens === 1 ? "" : "s"}</> : null}. Tap one to read how; tap it again to put it in the middle.</>}
           </p>
         </div>
       </div>
@@ -326,7 +330,7 @@ function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: Orbit
           ))}
         </ul>
       ) : null}
-      <p className="text-xs text-(--muted)">A solid line keeps working; a dashed line works only once. A dashed ring is a token.</p>
+      <p className="text-xs text-(--muted)">A solid line keeps working; a dashed line works only once. A dashed ring is a token. A "+" disc holds the rest of its group: tap it for the list.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>

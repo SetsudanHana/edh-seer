@@ -17,7 +17,7 @@ test("draws the card in the middle and names every disc around it", () => {
   view();
   expect(screen.getByRole("group", { name: "Payoff A and the 11 cards it works with" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Treasure (token)" })).toBeInTheDocument();
-  expect(screen.getByText(/Works with/)).toBeInTheDocument();
+  expect(screen.getByText(/Works with/).textContent).toMatch(/Works with 10 cards and 1 token\./);
 });
 
 test("a first tap reads the pair, a second puts the card in the middle", async () => {
