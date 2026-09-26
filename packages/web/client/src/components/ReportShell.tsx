@@ -7,7 +7,7 @@ import { cachedImageLoad } from "./art-cache.js";
 import { cardImageUrl } from "./card-node.js";
 import { ReportChapters } from "./ReportChapters.js";
 import { ReportHeader } from "./ReportHeader.js";
-import { StateControls } from "./StateControls.js";
+import { StateControls, stateLabel } from "./StateControls.js";
 import { CardList } from "./CardList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ComboList } from "./ComboList.js";
@@ -122,12 +122,6 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
           *  `HeadlineScores` lived inside one tab and the coverage gate above the strip is what
           *  this resolves. */}
         <ReportHeader data={data} diff={diff} />
-        {/* A GAME STATE THE OWNER SETS, only where the deck can reach it (roadmap W18). */}
-        {onState && data.report.markers && data.report.markers.length > 0 && (
-          <div className="px-4 py-3 border-b border-(--separator)">
-            {stateControls}
-          </div>
-        )}
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not
           *  a property of any one chapter — the report simply does not contain those cards — and it
           *  is the one failure the reader can fix by editing their paste. It stayed visible across
@@ -142,7 +136,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
           *  /analysis surface is still the chapters. */}
         <Routes>
           <Route path="/analysis">
-            <Route index element={<ReportChapters data={data} diff={diff} />} />
+            <Route index element={<ReportChapters data={data} diff={diff} assumptions={stateControls} assumptionsSet={state ? stateLabel(state) || undefined : undefined} />} />
             {/* THE GRAPH PAGE IS RETIRED (owner, 2026-09-26): its pieces live in the chapters, so a
               *  saved or shared link to it opens the report, with the deck and state it carried. */}
             <Route path="graph" element={<Navigate to={{ pathname: "/", search, hash }} replace />} />
@@ -157,9 +151,9 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route path="combos" element={<Reference comboCount={comboCount}><ComboList combos={data.report.combos} /></Reference>} />
             {/* A path this app does not have is the REPORT, not an error page: the deck is in the
               *  hash and the chapters are what it is for. */}
-            <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
+            <Route path="*" element={<ReportChapters data={data} diff={diff} assumptions={stateControls} assumptionsSet={state ? stateLabel(state) || undefined : undefined} />} />
           </Route>
-          <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
+          <Route path="*" element={<ReportChapters data={data} diff={diff} assumptions={stateControls} assumptionsSet={state ? stateLabel(state) || undefined : undefined} />} />
         </Routes>
       </div>
     </CardDrawerProvider>

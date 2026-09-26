@@ -13,7 +13,7 @@ const SWITCHES: { marker: Exclude<Marker, "speed">; label: string }[] = [
 ];
 
 /** The state in words: "speed 4", "the monarch + speed 2". */
-function stateLabel(state: GameState): string {
+export function stateLabel(state: GameState): string {
   const parts: string[] = [];
   if (state.speed) parts.push(`speed ${state.speed}`);
   for (const s of SWITCHES) if (state[s.marker]) parts.push(s.label);

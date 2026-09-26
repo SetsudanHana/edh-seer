@@ -110,8 +110,11 @@ function Chapter({ id, title, children }: {
  *
  *  Chapter membership lives in `lib/chapters.ts` so the rail and the sections cannot disagree about
  *  what exists. */
-export function ReportChapters({ data, diff }: {
+export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   data: AnalyzeResponse; diff?: RunDiff | null;
+  /** The game-state controls, shown folded in the Glance hero. */
+  assumptions?: React.ReactNode;
+  assumptionsSet?: string;
 }) {
   const { report } = data;
   const current = useCurrentChapter();
@@ -205,10 +208,13 @@ export function ReportChapters({ data, diff }: {
           {/* A deck the format would not let you play is not a deck this report can diagnose. It
             *  renders nothing when the deck is clean, which is every one of the 71 calibration
             *  decks. */}
-          <LegalityPanel legality={report.legality} companions={report.companions} />
-          {/* THE HERO: what this deck IS, before anything judges it — and the waffle inside it is
-            *  where a reader checks the engine's work card by card. */}
-          <RecognitionPanel data={data} />
+          {/* A BROKEN RULE LEADS; A CLEAN DECK SAYS SO IN ONE LINE UNDER THE HERO (appeal review
+            *  2026-09-26: a paragraph about deck-rule checks was the first thing on the page). */}
+          {report.legality?.length ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
+          {/* THE HERO: what this deck IS, the commander's face, and whether it is any good -- and the
+            *  waffle inside it is where a reader checks the engine's work card by card. */}
+          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} />
+          {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
             *  every surface and the caveat, the names and the hatch legend live here, in the chapter

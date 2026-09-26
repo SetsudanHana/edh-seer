@@ -27,11 +27,22 @@ export function LegalityPanel({ legality, companions = [] }: {
   // "legal": that is a claim five rules cannot make, which is what the old silence was protecting.
   if (legality.length === 0) {
     return (
-      <p className="text-xs text-(--muted) max-w-[65ch]">
-        Checked against Commander&rsquo;s deck rules, and nothing breaks them: 100 cards, singleton,
-        colour identity, who can lead, partner pairing and the banned list{companionClause}. The
-        banned list is as of our card data, so it can lag a fresh announcement.
-      </p>
+      // ONE LINE, THE DETAIL ONE TAP AWAY (appeal review 2026-09-26): the full sentence was the
+      // first paragraph on the page, and a clean deck needs only the word.
+      <details className="text-xs text-(--muted) max-w-[65ch]">
+        <summary className="cursor-pointer min-h-6 inline-flex items-center gap-1.5">
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-(--success) shrink-0">
+            <path d="M2 6.5l2.5 2.5L10 3.5" />
+          </svg>
+          {/* Never "legal": the banned list is as of the card data (owner, 2026-09-22). */}
+          Deck rules checked: nothing breaks them
+        </summary>
+        <p className="pt-1">
+          Checked against Commander&rsquo;s deck rules, and nothing breaks them: 100 cards, singleton,
+          colour identity, who can lead, partner pairing and the banned list{companionClause}. The
+          banned list is as of our card data, so it can lag a fresh announcement.
+        </p>
+      </details>
     );
   }
   return (
