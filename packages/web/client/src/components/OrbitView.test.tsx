@@ -127,30 +127,46 @@ test("with reduced motion nothing animates, and arrows carry the direction", () 
   window.matchMedia = ((q: string) => ({ matches: q.includes("reduced-motion"), media: q, addEventListener() {}, removeEventListener() {} })) as never;
   try {
     const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
-    expect(container.querySelector("animateMotion")).toBeNull();
+    expect(container.querySelector("animate")).toBeNull();
     expect(container.querySelectorAll("[data-testid=orbit-arrows]").length).toBeGreaterThan(0);
     expect(screen.getByText(/Arrows point from the card that gives/)).toBeInTheDocument();
   } finally { window.matchMedia = mm; }
 });
 
-test("at rest the ring is still after its arrival wave; dots run on the card pointed at", async () => {
+/** THE LINE MOVES, NOT A DOT ON IT (owner, 2026-09-26): each spoke grows from the card that gives
+ *  to the card that gains, and then the ring is still until a card is pointed at. */
+test("lines grow in the way they work on arrival, then run only on the card pointed at", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   try {
     const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
-    // One wave as the ring arrives, then nothing moves on its own.
-    expect(container.querySelectorAll("[data-testid=orbit-flow] animateMotion[repeatCount='1']").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll("[data-testid=orbit-grow] animate[attributeName='x2']").length).toBeGreaterThan(0);
+    expect(container.querySelector("animateMotion")).toBeNull();
     await act(async () => { vi.advanceTimersByTime(3000); });
-    expect(container.querySelectorAll("animateMotion").length).toBe(0);
+    expect(container.querySelectorAll("[data-testid=orbit-grow], [data-testid=orbit-flow]").length).toBe(0);
     await act(async () => { fireEvent.mouseEnter(screen.getByRole("button", { name: "Payoff B" })); });
-    expect(container.querySelectorAll("animateMotion[repeatCount='indefinite']").length).toBeGreaterThan(0);
+    // Payoff B and Payoff A feed each other: one running line each way.
+    expect(container.querySelectorAll("[data-testid=orbit-flow] animate[attributeName='stroke-dashoffset'][repeatCount='indefinite']").length).toBe(2);
   } finally { vi.useRealTimers(); }
 });
 
-test("the dots can be paused, and then arrows carry the direction", async () => {
+test("a line that gains from the middle grows from the middle out", () => {
   const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
-  await userEvent.setup().click(screen.getByRole("button", { name: "Pause the dots" }));
-  expect(container.querySelector("animateMotion")).toBeNull();
+  // Cleric 1 feeds Payoff A: its line starts at the Cleric and grows toward the middle.
+  const grow = [...container.querySelectorAll("[data-testid=orbit-grow]")];
+  expect(grow.length).toBeGreaterThan(0);
+  for (const g of grow) {
+    for (const l of g.querySelectorAll("line")) {
+      // Every segment starts at zero length: nothing is drawn before its turn to grow.
+      expect(l.getAttribute("x1")).toBe(l.getAttribute("x2"));
+    }
+  }
+});
+
+test("the motion can be paused, and then arrows carry the direction", async () => {
+  const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
+  await userEvent.setup().click(screen.getByRole("button", { name: "Pause the motion" }));
+  expect(container.querySelector("animate")).toBeNull();
   expect(container.querySelectorAll("[data-testid=orbit-arrows]").length).toBeGreaterThan(0);
-  expect(screen.getByRole("button", { name: "Play the dots" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Play the motion" })).toHaveAttribute("aria-pressed", "true");
   try { localStorage.removeItem("orbit-paused"); } catch { /* none */ }
 });

@@ -151,7 +151,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
 const sectorKey = (s: OrbitSector) => s.key;
 
 /** "Inalla" for "Inalla, Archmage Ritualist"; a back face keeps whose back it is. */
-/** The reader's pause switch for the moving dots, remembered on this device when storage allows.
+/** The reader's pause switch for the moving lines, remembered on this device when storage allows.
  *  Moving content that runs on its own needs a way to stop it (WCAG 2.2.2). */
 function usePaused(): [boolean, (v: boolean) => void] {
   const [paused, setPausedState] = useState(() => {
@@ -220,7 +220,7 @@ function Orbit({ o, L, narrow, sel, sector, arrival, moveFrom, still, paused, ho
   moveFrom: ReadonlyMap<string, { dx: number; dy: number }> | null;
   /** The reader asked for reduced motion: nothing moves, and arrows carry the direction. */
   still: boolean;
-  /** The reader paused the dots: arrows carry the direction, as with reduced motion. */
+  /** The reader paused the motion: arrows carry the direction, as with reduced motion. */
   paused: boolean;
   hover: string | null; onHover: (id: string | null) => void;
   onTap: (id: string) => void; onSector: (s: OrbitSector) => void;
@@ -233,7 +233,7 @@ function Orbit({ o, L, narrow, sel, sector, arrival, moveFrom, still, paused, ho
   const dimming = sel !== null || sector !== null;
   // FAST, THEN STILL (appeal review 2026-09-26): the whole ring is out in about 0.6s, a new middle
   // settles in about 0.45s, and cards already on the ring travel rather than reappear. At rest
-  // nothing moves: dots run on the card being pointed at or tapped, plus one wave on arrival so
+  // nothing moves: the line runs on the card being pointed at or tapped, and every line grows in on arrival so
   // the ring reads as live. The idle stream on every line read as decoration to all five seats.
   const step = Math.min(14, 220 / Math.max(1, slots.length));
   const enter = (x: number, y: number, i: number, id?: string) => {
@@ -257,13 +257,14 @@ function Orbit({ o, L, narrow, sel, sector, arrival, moveFrom, still, paused, ho
         const dir = flowOf(sl.p, o.focus.id);
         return (
           <g key={`l-${sl.p.card.id}`} className="orbit-fade" style={{ "--orbit-d": `${60 + i * step}ms` } as React.CSSProperties}>
-            <line x1={cx} y1={cy} x2={sl.x} y2={sl.y} stroke={sl.s.hue}
-              strokeWidth={sel === sl.p.card.id ? 4 : sl.p.once ? 1.5 : 2.5} strokeDasharray={sl.p.once ? "5 5" : undefined} strokeOpacity={dimming && !on ? 0.2 : 0.75} />
+            <Spoke x={sl.x} y={sl.y} cx={cx} cy={cy} dir={dir} hue={sl.s.hue}
+              width={sel === sl.p.card.id ? 4 : sl.p.once ? 1.5 : 2.5} dash={sl.p.once ? "5 5" : undefined} opacity={dimming && !on ? 0.2 : 0.75}
+              grow={wave && !dimming && !arrows ? 0.25 + i * 0.03 : undefined} />
             {arrows
               ? <Arrows x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} hue={sl.s.hue} faint={dimming && !on} />
               : flowing(sl.p.card.id, on)
-                ? <Flow x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} hue={sl.s.hue} seed={i} strong={sel === sl.p.card.id} dot={narrow ? 3.8 : 4.4} />
-                : wave && !dimming ? <Flow x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} hue={sl.s.hue} seed={i} strong={false} dot={narrow ? 3.8 : 4.4} once={0.35 + i * 0.03} /> : null}
+                ? <Flow x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} strong={sel === sl.p.card.id} />
+                : null}
           </g>
         );
       })}
@@ -329,49 +330,73 @@ export function flowOf(p: OrbitPartner, focus: string): { in: boolean; out: bool
   return { in: p.links.some((l) => l.to === focus), out: p.links.some((l) => l.from === focus), repeat };
 }
 
-/** How often a dot sets off, by how often the link works: a steady stream for always on, a beat for
- *  every time, a slower one for on demand, and a lone dot now and then for once. */
-const PERIOD: Record<Repeat, number> = { static: 1, triggered: 1.9, activated: 2.6, oneshot: 6 };
-const SPEED = 110;
+type Pt = { x: number; y: number };
+type Dir = ReturnType<typeof flowOf>;
 
-/** THE EVENTS, MOVING (owner, 2026-09-26: "I really liked the animations of events flowing out or
- *  in"). Dots travel along the spoke from the card that gives to the card that gains, the way the
- *  board's dashes crawled. SMIL, not a frame loop: the browser runs it, and a ring of twenty spokes
- *  costs no script. */
-function Flow({ x, y, cx, cy, r, fr, dir, hue, seed, strong, dot, once }: {
-  x: number; y: number; cx: number; cy: number; r: number; fr: number;
-  dir: ReturnType<typeof flowOf>; hue: string; seed: number; strong: boolean; dot: number;
-  /** A single pass starting this many seconds in: the wave when the ring arrives. */
-  once?: number;
+/** Each way a spoke runs, as a segment drawn FROM the card that gives TO the card that gains. Both
+ *  ways is two segments; `apart` sets them side by side so each can move on its own. */
+function segments(outer: Pt, inner: Pt, dir: Dir, apart: number): [Pt, Pt][] {
+  const len = Math.hypot(inner.x - outer.x, inner.y - outer.y) || 1;
+  const nx = -(inner.y - outer.y) / len, ny = (inner.x - outer.x) / len;
+  const shift = (p: Pt, k: number): Pt => ({ x: p.x + nx * k, y: p.y + ny * k });
+  if (dir.in && dir.out) return [[shift(outer, apart), shift(inner, apart)], [shift(inner, -apart), shift(outer, -apart)]];
+  return dir.out ? [[inner, outer]] : [[outer, inner]];
+}
+
+/** THE SPOKE, DRAWN IN THE DIRECTION IT WORKS (owner, 2026-09-26: "why not animate the line going
+ *  either in or out like in the original graph"). On arrival each line grows from the card that
+ *  gives to the card that gains, so the ring says which way every link runs as it appears; a line
+ *  that runs both ways grows from both ends and meets in the middle. After that it is a plain line.
+ *  `grow` is the delay in seconds; absent, the line is simply there. */
+function Spoke({ x, y, cx, cy, dir, hue, width, dash, opacity, grow }: {
+  x: number; y: number; cx: number; cy: number; dir: Dir; hue: string; width: number; dash?: string; opacity: number; grow?: number;
+}) {
+  const paint = { stroke: hue, strokeWidth: width, strokeDasharray: dash, strokeOpacity: opacity };
+  if (grow === undefined) return <line x1={cx} y1={cy} x2={x} y2={y} {...paint} />;
+  const mid = { x: (x + cx) / 2, y: (y + cy) / 2 };
+  const disc = { x, y }, centre = { x: cx, y: cy };
+  const segs: [Pt, Pt][] = dir.in && dir.out ? [[disc, mid], [centre, mid]] : dir.out ? [[centre, disc]] : [[disc, centre]];
+  const dur = dir.in && dir.out ? "0.3s" : "0.5s";
+  return (
+    <g data-testid="orbit-grow">
+      {segs.map(([a, b], k) => (
+        <line key={k} x1={a.x} y1={a.y} x2={a.x} y2={a.y} {...paint}>
+          <animate attributeName="x2" from={a.x} to={b.x} dur={dur} begin={`${grow}s`} fill="freeze" calcMode="spline" keySplines="0.3 0.7 0.2 1" keyTimes="0;1" />
+          <animate attributeName="y2" from={a.y} to={b.y} dur={dur} begin={`${grow}s`} fill="freeze" calcMode="spline" keySplines="0.3 0.7 0.2 1" keyTimes="0;1" />
+        </line>
+      ))}
+    </g>
+  );
+}
+
+/** How fast the ticks run, by how often the link works: quick for always on, slower for every
+ *  time, slower again for on demand, slowest for once. Viewbox units per second. */
+const SPEED: Record<Repeat, number> = { static: 70, triggered: 50, activated: 38, oneshot: 26 };
+/** A short bright tick and a long gap: it reads as movement along the line, not as a dashed line,
+ *  which already means "works only once". */
+const TICK = { on: 4, off: 12 };
+
+/** THE LINE MOVES, NOT A DOT ON IT (owner, 2026-09-26). On the card pointed at or tapped, bright
+ *  ticks run along its spoke from the card that gives to the card that gains, as the first board's
+ *  dashes crawled. The dot that replaced them sometimes read as going in and sometimes out. SMIL,
+ *  not a frame loop: the browser runs it, and a ring of twenty spokes costs no script. */
+function Flow({ x, y, cx, cy, r, fr, dir, strong }: {
+  x: number; y: number; cx: number; cy: number; r: number; fr: number; dir: Dir; strong: boolean;
 }) {
   const len = Math.hypot(x - cx, y - cy);
   const ux = (x - cx) / len, uy = (y - cy) / len;
-  const inner = { x: cx + ux * (fr + 6), y: cy + uy * (fr + 6) }, outer = { x: x - ux * (r + 5), y: y - uy * (r + 5) };
-  const travel = Math.hypot(outer.x - inner.x, outer.y - inner.y) / (strong ? SPEED * 1.3 : SPEED);
-  const period = once !== undefined ? travel : Math.max(travel, travel * PERIOD[dir.repeat] * (strong ? 0.7 : 1));
-  const f = travel / period;
-  const dots: { path: string; begin: number }[] = [];
-  const add = (a: typeof inner, b: typeof inner, offset: number) => {
-    const n = once !== undefined ? 1 : dir.repeat === "static" ? 2 : 1;
-    for (let k = 0; k < n; k++) {
-      const begin = once !== undefined ? once + offset * travel : -(((seed * 0.53 + offset) % 1) * period + (k * period) / n);
-      dots.push({ path: `M${a.x},${a.y} L${b.x},${b.y}`, begin });
-    }
-  };
-  if (dir.in) add(outer, inner, 0);
-  if (dir.out) add(inner, outer, 0.5);
-  const repeat = once !== undefined ? "1" : "indefinite";
-  // A dot and a short fading trail, so the direction reads at a glance: a lone 3px dot was a speck
-  // no seat could follow, least of all on a phone (appeal review 2026-09-26).
-  const trail = [{ lag: 0, k: 1, a: 1 }, { lag: 0.06, k: 0.7, a: 0.55 }, { lag: 0.12, k: 0.45, a: 0.3 }];
+  const inner = { x: cx + ux * (fr + 4), y: cy + uy * (fr + 4) }, outer = { x: x - ux * (r + 3), y: y - uy * (r + 3) };
+  const period = TICK.on + TICK.off;
+  const dur = `${(period / (SPEED[dir.repeat] * (strong ? 1.3 : 1))).toFixed(3)}s`;
   return (
     <g pointerEvents="none" data-testid="orbit-flow">
-      {dots.flatMap((d, i) => trail.map((t, j) => (
-        <circle key={`${i}-${j}`} r={(strong ? dot * 1.25 : dot) * t.k} fill={hue} stroke={j ? "none" : "var(--background)"} strokeWidth={1} opacity={0}>
-          <animateMotion path={d.path} dur={`${period}s`} begin={`${d.begin + t.lag}s`} repeatCount={repeat} keyPoints="0;1;1" keyTimes={`0;${f};1`} calcMode="linear" />
-          <animate attributeName="opacity" values={`0;${t.a};${t.a};0;0`} keyTimes={`0;${f * 0.1};${f * 0.85};${f};1`} dur={`${period}s`} begin={`${d.begin + t.lag}s`} repeatCount={repeat} />
-        </circle>
-      )))}
+      {segments(outer, inner, dir, 2.5).map(([a, b], k) => (
+        // Drawn from giver to gainer, so an offset running down to zero carries the ticks forward.
+        <line key={k} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--foreground)" strokeOpacity={0.85}
+          strokeWidth={strong ? 2.5 : 2} strokeLinecap="round" strokeDasharray={`${TICK.on} ${TICK.off}`}>
+          <animate attributeName="stroke-dashoffset" from={period} to={0} dur={dur} repeatCount="indefinite" />
+        </line>
+      ))}
     </g>
   );
 }
@@ -560,10 +585,10 @@ function Summary({ o, still, paused, onPause, onSector, onCentre }: { o: OrbitMo
       <p className="text-xs text-(--muted)">
         {onPause ? (
           <button type="button" className="float-right ml-2 rounded-(--radius) border border-(--separator) px-2 py-1 text-xs hover:border-(--foreground)" aria-pressed={paused} onClick={onPause}>
-            {paused ? "Play the dots" : "Pause the dots"}
+            {paused ? "Play the motion" : "Pause the motion"}
           </button>
         ) : null}
-        {still ? "Arrows point" : "Point at or tap a card and dots travel along its line,"} from the card that gives to the card that gains. A solid line keeps working; a dashed line works only once. A dashed ring is a token. A "+" disc holds the rest of its group: tap it for the list.</p>
+        {still ? "Arrows point" : "Lines grow, and when you point at or tap a card its line runs,"} from the card that gives to the card that gains. A solid line keeps working; a dashed line works only once. A dashed ring is a token. A "+" disc holds the rest of its group: tap it for the list.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>
