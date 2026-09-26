@@ -273,3 +273,28 @@ test("no longer carries the role bars", () => {
   expect(screen.queryByTestId("role-row-Consistency")).toBeNull();
   expect(screen.queryByTestId("role-row-Interaction")).toBeNull();
 });
+
+/** THE HERO (appeal review 2026-09-26): the commander's face, a verdict that says which score is
+ *  which, the way to the suggestions, and the game-state controls folded rather than first. */
+const HERO = {
+  ...DATA,
+  graph: {
+    ...DATA.graph,
+    nodes: [...DATA.graph!.nodes, { id: "Nalia", label: "Nalia", copies: 1, types: ["creature"], subtypes: [], supertypes: [], artCrop: "https://cards.scryfall.io/art_crop/front/a/b/nalia.jpg" }],
+  },
+  report: { ...DATA.report, synergyOverall: 2.9, buildScore: 4.5, cards: [{ name: "Nalia", isCommander: true }] },
+} as unknown as Parameters<typeof RecognitionPanel>[0]["data"];
+
+test("the hero shows the commander's card and says whether the deck is good, in words", () => {
+  const { container } = render(<RecognitionPanel data={HERO} />);
+  expect(container.querySelector("img[src='https://cards.scryfall.io/normal/front/a/b/nalia.jpg']")).not.toBeNull();
+  expect(screen.getByTestId("recognition-verdict").textContent).toMatch(/^Well built: .*which is what the synergy score measures\.$/);
+});
+
+test("the game-state controls sit folded under the hero, open only when a state is set", () => {
+  const { rerender } = render(<RecognitionPanel data={HERO} assumptions={<p>speed controls</p>} />);
+  const fold = screen.getByText("Game assumptions: none set").closest("details")!;
+  expect(fold.open).toBe(false);
+  rerender(<RecognitionPanel data={HERO} assumptions={<p>speed controls</p>} assumptionsSet="speed 3" />);
+  expect(screen.getByText("Game assumptions: speed 3").closest("details")!.open).toBe(true);
+});

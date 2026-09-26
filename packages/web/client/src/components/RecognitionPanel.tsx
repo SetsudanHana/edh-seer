@@ -4,6 +4,10 @@ import { DeckWaffle } from "./DeckWaffle.js";
 import { waffleSquares } from "../lib/waffle.js";
 import { identityKey, identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { cardImageUrl } from "./card-node.js";
+import { useCardDrawer } from "./card-drawer.js";
+import { verdict } from "../lib/verdict.js";
+import { findings } from "../lib/findings.js";
 
 /** DID IT READ THE DECK I BUILT?
  *
@@ -16,7 +20,15 @@ import { ManaSymbols } from "./ManaSymbols.js";
  *
  *  NO SCORE AND NO TARGET LIVES HERE. A tool that grades a deck before showing it understood it
  *  has not earned the criticism. Everything on this panel is a description. */
-export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
+export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
+  data: AnalyzeResponse;
+  /** The game-state controls (speed, the monarch…), folded here rather than above everything:
+   *  "the initiative" was the first thing a beginner met, before any answer (appeal review
+   *  2026-09-26). */
+  assumptions?: React.ReactNode;
+  /** The state in words when one is set ("speed 3"), so the fold says so without opening. */
+  assumptionsSet?: string;
+}) {
   const { report } = data;
   const nodes = data.graph?.nodes ?? [];
   const slices = typeSlices(nodes);
@@ -74,6 +86,17 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
    *  `deckMath` was not computed — a deck this page could not price is still named by its theme and
    *  colours. */
   const commanders = (report.deckMath?.castability.commanders ?? []).map((c) => c.name);
+  const { open, known } = useCardDrawer();
+  // THE COMMANDER'S FACE LEADS (appeal review 2026-09-26: the top of the report was text only, and
+  // the one card every player knows their deck by was a name in a grey line).
+  const commanderNames = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
+  const faces = nodes
+    .filter((n) => !n.isToken && !n.face && commanderNames.has(n.cardName ?? n.id))
+    .map((n) => ({ name: n.label, src: cardImageUrl(n.artCrop ?? n.faces?.[0]?.artCrop ?? "") }))
+    .filter((f): f is { name: string; src: string } => !!f.src);
+  const said = verdict(report);
+  const suggestions = findings(report).length;
+  const toSuggestions = () => document.getElementById("fix")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
     <section className="flex flex-col gap-4">
@@ -87,46 +110,80 @@ export function RecognitionPanel({ data }: { data: AnalyzeResponse }) {
         *  beneath it. The metadata that qualifies the theme stays where it was, small, below.
         *  `recognition-identity` still wraps both, so every guard that reads "the identity" -- theme,
         *  commander, colours, coverage -- keeps reading one element. */}
-      <div data-testid="recognition-identity" className="flex flex-col gap-1">
-        {/* NAMED AS WHAT IT IS (review 2026-09-25): "Blink" as a bare display line read as a heading
-          *  for a section, not as the report's verdict on the deck. */}
-        {theme ? <span className="eyebrow text-(--muted)">main theme</span> : null}
-        <p
-          data-testid="recognition-theme"
-          className="text-2xl sm:text-3xl font-bold leading-tight tracking-[-0.02em] text-(--foreground)"
-        >
-          {theme ?? noThemeLabel}
-        </p>
-
-        <p className="text-sm text-(--muted)">
-          {strongestTheme ? <>strongest: {strongestTheme} · </> : null}
-          {commanders.length > 0 ? <>{commanders.join(" / ")} · </> : null}
-          {colours ? (
-            <>
-              {/* The word beside them already says "Grixis", so the pips are decoration to a screen
-                *  reader -- hidden rather than read out a second time as "one blue mana, one black
-                *  mana, one red mana". */}
-              <span aria-hidden="true" className="inline-flex items-center align-[-0.15em]">
-                <ManaSymbols cost={pipCost} />
-              </span>{" "}
-              {colours} ·{" "}
-            </>
-          ) : null}
-          {/* CARDS READ, NOT LINES RESOLVED (C2, whole-branch review, 2026-09-01). `resolvedCount`/
-          *  `totalCount` are NAME RESOLUTION -- how many CARD SLOTS matched a name, one entry per
-          *  copy, so a `3 Plains` line counts three (S12) -- and on a partly-read deck they can
-          *  both read 100/100 while the gate strip above this panel
-          *  (`CoveragePanel`) truthfully says "52 of 100 cards read". Those are two different
-          *  denominators; `report.coverage.derived`/`.resolved` is the SAME figure `CoveragePanel`
-          *  shows, so the two counters at the top of the page agree instead of contradicting each
-          *  other. Falls back to the resolution counts only when `coverage` is absent (a fully-read
-          *  deck, where the engine never computed it and the two figures would coincide anyway). */}
-          <span data-testid="recognition-coverage">
-            read {report.coverage?.derived ?? data.resolvedCount} of {report.coverage?.resolved ?? data.totalCount} cards
+      <div className="flex items-start gap-4 sm:gap-6">
+        {faces.length ? (
+          <span className="flex shrink-0">
+            {faces.map((f, i) => {
+              const img = <img src={f.src} alt={known.has(f.name) ? "" : f.name} width={488} height={680} decoding="async"
+                className="block aspect-[488/680] h-auto w-full rounded-[4.5%/3.3%] shadow-lg shadow-black/40" />;
+              const cls = `block w-28 sm:w-40 ${i > 0 ? "-ml-14 sm:-ml-20 mt-4" : ""}`;
+              return known.has(f.name)
+                ? <button key={f.name} type="button" className={`${cls} transition-transform hover:-translate-y-0.5`} onClick={() => open(f.name)} aria-label={`Open ${f.name}`}>{img}</button>
+                : <span key={f.name} className={cls}>{img}</span>;
+            })}
           </span>
-        </p>
+        ) : null}
+        <div className="flex min-w-0 flex-col gap-3">
+      <div data-testid="recognition-identity" className="flex flex-col gap-1">
+          {/* NAMED AS WHAT IT IS (review 2026-09-25): "Blink" as a bare display line read as a heading
+            *  for a section, not as the report's verdict on the deck. */}
+          {theme ? <span className="eyebrow text-(--muted)">main theme</span> : null}
+          <p
+            data-testid="recognition-theme"
+            className="text-2xl sm:text-3xl font-bold leading-tight tracking-[-0.02em] text-(--foreground)"
+          >
+            {theme ?? noThemeLabel}
+          </p>
+  
+          <p className="text-sm text-(--muted)">
+            {strongestTheme ? <>strongest: {strongestTheme} · </> : null}
+            {commanders.length > 0 ? <>{commanders.join(" / ")} · </> : null}
+            {colours ? (
+              <>
+                {/* The word beside them already says "Grixis", so the pips are decoration to a screen
+                  *  reader -- hidden rather than read out a second time as "one blue mana, one black
+                  *  mana, one red mana". */}
+                <span aria-hidden="true" className="inline-flex items-center align-[-0.15em]">
+                  <ManaSymbols cost={pipCost} />
+                </span>{" "}
+                {colours} ·{" "}
+              </>
+            ) : null}
+            {/* CARDS READ, NOT LINES RESOLVED (C2, whole-branch review, 2026-09-01). `resolvedCount`/
+            *  `totalCount` are NAME RESOLUTION -- how many CARD SLOTS matched a name, one entry per
+            *  copy, so a `3 Plains` line counts three (S12) -- and on a partly-read deck they can
+            *  both read 100/100 while the gate strip above this panel
+            *  (`CoveragePanel`) truthfully says "52 of 100 cards read". Those are two different
+            *  denominators; `report.coverage.derived`/`.resolved` is the SAME figure `CoveragePanel`
+            *  shows, so the two counters at the top of the page agree instead of contradicting each
+            *  other. Falls back to the resolution counts only when `coverage` is absent (a fully-read
+            *  deck, where the engine never computed it and the two figures would coincide anyway). */}
+            <span data-testid="recognition-coverage">
+              read {report.coverage?.derived ?? data.resolvedCount} of {report.coverage?.resolved ?? data.totalCount} cards
+            </span>
+          </p>
+        </div>
+  
+            {/* THE ANSWER TO "IS MY DECK GOOD?", in words that say which score is which. */}
+          {said ? <p data-testid="recognition-verdict" className="max-w-[60ch] text-base sm:text-lg">{said}</p> : null}
+          {suggestions > 0 ? (
+            <p>
+              <button type="button" onClick={toSuggestions}
+                className="min-h-11 rounded-(--radius) border border-(--accent) px-4 text-sm font-medium text-(--accent) hover:bg-(--accent) hover:text-(--background)">
+                See the {suggestions === 1 ? "suggestion" : `${suggestions} suggestions`} &darr;
+              </button>
+            </p>
+          ) : null}
+        </div>
       </div>
-
+      {assumptions ? (
+        <details className="text-sm" open={!!assumptionsSet}>
+          <summary className="cursor-pointer min-h-11 flex items-center text-(--muted)">
+            Game assumptions{assumptionsSet ? `: ${assumptionsSet}` : ": none set"}
+          </summary>
+          <div className="pt-2">{assumptions}</div>
+        </details>
+      ) : null}
       {/* COMPUTED FROM THE NODES, NOT READ OFF `report.landCount` (Critical finding, whole-branch
         *  review, 2026-09-01, and the defect diagnosed in `docs/engineering-log/2026-08-31.md`):
         *  both halves of a census that claims "nonland + land == the deck" have to come from ONE
