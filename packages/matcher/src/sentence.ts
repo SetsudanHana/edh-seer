@@ -150,6 +150,14 @@ const SELF_PHRASES: Record<string, string> = {
 
 const PROSE_AMOUNT = /\bfor each\b|\bequal to\b|\bwhere\b|\bthe number of\b/i;
 
+/** A COST THAT SPENDS A COUNTER (issue #511): "O'aka removes a counter from Summon: Fenrir and draws
+ *  you 1 card". `onItself` is whether the producer's counters sit on the producer; otherwise they are
+ *  on some permanent it put them on, and the sentence says so. */
+export function counterCostSentence(producer: string, consumer: string, onItself: boolean, phrase: string | null): string {
+  const from = onItself ? producer : `a permanent ${producer} put counters on`;
+  return `${consumer} removes a counter from ${from}${phrase ? ` and ${phrase}` : ""}`;
+}
+
 export function effectPhrase(
   kind: string | undefined, amount: string | undefined, target?: string, recipient?: string, counterKind?: string,
 ): string | null {

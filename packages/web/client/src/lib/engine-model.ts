@@ -173,6 +173,8 @@ export function groupName(tag: string): string {
     case "creates": return "Making tokens";
     case "lose-life": return "Losing life";
     case "threshold": return "A full graveyard";
+    // Issue #511: a cost that removes a counter (O'aka) spends what the counter makers put down.
+    case "counter-removed": return "Spending counters";
     default: return capital(tag.replace(/[:-]/g, " "));
   }
 }
