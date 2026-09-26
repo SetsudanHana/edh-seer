@@ -120,7 +120,9 @@ const MAX_HELPER_GROUPS = 4;
 /** A mechanism smaller than this is a pair or two, not something the deck does. */
 const MIN_GROUP_LINKS = 6;
 
-const HELPER_TAG = /^(static:cost-reduction|static:type-grant|recursion-target|tutor|ramp-target)/;
+// `prowess`: a self-pump on every noncreature spell is background, not a reason the spell is in the
+// deck (owner ruling 2026-09-27, #517).
+const HELPER_TAG = /^(static:cost-reduction|static:type-grant|recursion-target|tutor|ramp-target|prowess)/;
 export const isHelperTag = (tag: string): boolean => HELPER_TAG.test(tag);
 
 const CARD_TYPES = new Set(["creature", "land", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "permanent", "spell", "battle"]);
@@ -173,6 +175,7 @@ export function groupName(tag: string): string {
     case "creates": return "Making tokens";
     case "lose-life": return "Losing life";
     case "threshold": return "A full graveyard";
+    case "prowess": return `Casting ${p} pumps a creature`;
     // Issue #514: a card switched on by a creature type (Multiclass Baldric, Gravecrawler).
     case "condition": return sub === "party" ? "Switched on by your party" : `Switched on by your ${p}`;
     // Issue #510: a flash grant gives a temporary token (Inalla's copy) a whole turn.

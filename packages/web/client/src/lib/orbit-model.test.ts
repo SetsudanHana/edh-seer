@@ -55,3 +55,15 @@ test("a sector with one-time links keeps one on the ring when the rest are folde
   const v = visiblePartners(o, o.sectors.length * 2).find((x) => x.sector === withOnce)!;
   expect(v.shown.some((p) => p.once)).toBe(true);
 });
+
+/** Owner ruling 2026-09-27 (#517): a pair held only by a prowess pump is no route. Vanilla is not
+ *  reached; a prowess link to Cleric 1 must not make it "one step out", while a real link does. */
+test("a prowess-only link is no route one step out; a real link is", () => {
+  const withLink = (tag: string) => {
+    const { report, graph } = engineDeck();
+    const edges = [...report.edges, { a: "Cleric 1", b: "Vanilla", score: 1, reasons: [{ producer: "Vanilla", consumer: "Cleric 1", tag, text: "When Vanilla is cast, Cleric 1 gets +1/+1" }] }];
+    return buildOrbit(buildEngineModel({ ...report, edges } as typeof report, graph), "Payoff A")!;
+  };
+  expect(withLink("prowess:-creature").far.map((c) => c.id)).toContain("Vanilla");
+  expect(withLink("cast:-creature").near.map((n) => n.card.id)).toContain("Vanilla");
+});
