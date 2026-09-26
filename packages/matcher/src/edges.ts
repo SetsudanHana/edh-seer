@@ -11,13 +11,13 @@ import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
-  enterAsCopySentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase,
+  enterAsCopySentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, creatureConditionSentence,
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
-import { basicTypeDemand, classifyLand } from "./land-conditions.js";
+import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
 import { faceDeckCards } from "./faces.js";
@@ -1483,6 +1483,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   counterCostEdges(s);
   copyFamilyEdges(s);
   landConditionEdges(s);
+  creatureConditionEdges(s);
   return dedupeReasons(s.reasons.map((r) => stampSides(r, p, c)));
 }
 
@@ -2834,6 +2835,27 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
 // no member — the registered "a claim that applies to a card merely for being an ordinary card is
 // false". It is a deck-level fact, the `deckSlack` shape, and forms nothing here. Everything the
 // classifier could not read is `unclassified` and forms nothing either.
+// A CARD SWITCHED ON BY A CREATURE TYPE IS FED BY THAT TYPE (issue #514). Multiclass Baldric grants
+// lifelink "if you control a Cleric", deathtouch for a Rogue, haste for a Warrior, flying for a Wizard,
+// and had one link in a party deck. Read off the printed text as the land-type demand is: derive splits
+// the clause into four keyword grants and keeps none of the conditions. A list naming the whole party
+// keys as `party` (themeSubjectKey), so the Baldric joins the party group.
+function creatureConditionEdges({ p, c, reasons }: PairScope): void {
+  if (p.card.name === c.card.name) return;
+  const wanted = creatureTypeDemand(c.card);
+  if (wanted.length === 0) return;
+  const supplied = new Set(parseTypeLineAllFaces(p.card.typeLine).subtypes);
+  const match = wanted.find((t) => supplied.has(t));
+  if (match === undefined) return;
+  reasons.push({
+    tag: `condition:${themeSubjectKey({ subtype: wanted }) === "party" ? "party" : match}`,
+    text: creatureConditionSentence(p.card.name, c.card.name, match),
+    repeatability: "static",
+    consumer: c.card.name,
+    producer: p.card.name,
+  });
+}
+
 function landConditionEdges({ p, c, reasons }: PairScope): void {
   const landCond = classifyLand(c.card);
   // THE G FAMILY IS THE SAME DEMAND ON A CARD THAT IS NOT A LAND (roadmap I9): Summit Apes wants a
