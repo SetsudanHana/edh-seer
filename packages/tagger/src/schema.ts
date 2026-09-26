@@ -851,6 +851,13 @@ export interface Ability {
    *  The distinction is load-bearing — it is the difference between a free sacrifice outlet and a
    *  static ability. */
   cost?: string;
+  /** WHAT CREATED THIS DELAYED TRIGGER ("when you next cast ... this turn", CR 603.7):
+   *  "chapter" (Summon: Fenrir's II), "spell" (Doublecast), or the activation cost that makes it --
+   *  Yuna, Grand Summoner's "{T}". Present only on such a trigger (`delayedTriggerRepeats`). It
+   *  fires once per creation, so the edge reads "once" for a chapter or a spell and "when you pay
+   *  for it" for an activation, never "every time". Kept apart from `cost`, whose absence means
+   *  "not an activated ability". */
+  delayedBy?: string;
   /** WHICH TRIGGERS THIS ABILITY DOUBLES. Present only on `trigger-doubling`.
    *
    *  Panharmonicon prints "If an artifact or creature ENTERING causes a triggered ability of a
