@@ -113,6 +113,14 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
    *  the report rather than leaving this view -- the same cost S7 paid to make Graph a route.
    *  Upgrade path is `/graph/:cardName`, which is also what a breadcrumb would need. */
   const [focusId, setFocusId] = useState<string | null>(null);
+  /** A card tapped in the report opens in the Graph tab's one-card view, centred on it. */
+  const openInOrbit = (id: string) => {
+    setSurface("graph");
+    setBoardModeOverride("ego");
+    setFocusId(id);
+    cardNavigate({ pathname: "/analysis/graph", search: "", hash: cardLocation.hash });
+    window.scrollTo?.(0, 0);
+  };
   /** The commander's node, which "One card" opens on where the device guessed the whole-deck board
    *  (owner, 2026-09-24: the one-card view on desktop). There the reader has already seen the
    *  deck as a cloud; the list would be a step back, and the commander is the card a synergy deck
@@ -262,7 +270,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
           *  /analysis surface is still the chapters. */}
         <Routes>
           <Route path="/analysis">
-            <Route index element={<ReportChapters data={data} diff={diff} />} />
+            <Route index element={<ReportChapters data={data} diff={diff} onOpenCard={openInOrbit} />} />
             <Route
               path="graph"
               element={
@@ -316,9 +324,9 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route path="combos" element={<Reference comboCount={comboCount}><ComboList combos={data.report.combos} /></Reference>} />
             {/* A path this app does not have is the REPORT, not an error page: the deck is in the
               *  hash and the chapters are what it is for. */}
-            <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
+            <Route path="*" element={<ReportChapters data={data} diff={diff} onOpenCard={openInOrbit} />} />
           </Route>
-          <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
+          <Route path="*" element={<ReportChapters data={data} diff={diff} onOpenCard={openInOrbit} />} />
         </Routes>
       </div>
     </CardDrawerProvider>

@@ -1,5 +1,4 @@
 import { render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { engineDeck } from "../lib/engine-model.fixture.js";
 import { EnginesView } from "./EnginesView.js";
@@ -11,14 +10,13 @@ function view(selected: string | null = null) {
   return onSelect;
 }
 
-test("says what the deck does, then the best pairs, the cut candidates and the groups", () => {
+test("the Overview keeps the cut candidates and the jobs, and points to Game plan for the rest", () => {
   view();
-  expect(screen.getByText(/Your deck mostly does/)).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "The pairs that work best together" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Payoff A + Payoff B" })).toBeInTheDocument();
+  expect(screen.getByText(/are in the report’s/)).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Cards doing the least here" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Vanilla" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Counts your Clerics" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "The pairs that work best together" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "What your deck does" })).toBeNull();
 });
 
 test("removal is compared with its own kind, not listed as a cut", () => {
@@ -28,48 +26,6 @@ test("removal is compared with its own kind, not listed as a cut", () => {
   const shelf = screen.getByRole("list", { name: "Removal" });
   expect(within(shelf).getByText("Doom Blade")).toBeInTheDocument();
   expect(within(shelf).getByTitle(/^Works with \d+ other cards?$/)).toBeInTheDocument();
-});
-
-test("tapping a card selects it", async () => {
-  const onSelect = view();
-  const group = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
-  await userEvent.setup().click(within(group).getByRole("button", { name: "Cleric 3" }));
-  expect(onSelect).toHaveBeenCalledWith("Cleric 3");
-});
-
-test("a selected card lights its partners and fades the rest", async () => {
-  view("Payoff A");
-  await userEvent.setup().click(screen.getByRole("button", { name: /^Show them:/ }));
-  expect(screen.getByText(/each group below now shows only those/)).toBeInTheDocument();
-  const clerics = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
-  expect(within(clerics).getByRole("button", { name: "Cleric 1" }).className).not.toMatch(/opacity-30/);
-  const helpers = screen.getByRole("heading", { name: "Make cards cheaper" }).closest("article")!;
-  expect(within(helpers).getByRole("button", { name: "Reducer" }).className).toMatch(/opacity-30/);
-  expect(within(clerics).getAllByRole("button", { name: "Payoff A" })[0]).toHaveAttribute("aria-pressed", "true");
-});
-
-test("a big group shows twelve chips and names the rest until asked for all", async () => {
-  const { report, graph } = engineDeck();
-  const edges = (report as unknown as { edges: unknown[] }).edges;
-  for (let i = 1; i <= 10; i++) {
-    const name = `Extra Cleric ${i}`;
-    (report.cards as unknown as { name: string }[]).push({ name, isCommander: false, score: 1 } as never);
-    (graph.nodes as unknown as { id: string }[]).push({ id: name, label: name, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [] } as never);
-    for (const p of ["Payoff A", "Payoff B"]) edges.push({ a: name, b: p, score: 1, reasons: [{ producer: name, consumer: p, tag: "scales:cleric", text: `While you control ${name}, ${p} counts it` }] });
-  }
-  render(<EnginesView report={report} graph={graph} selected={null} onSelect={vi.fn()} />);
-  const group = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
-  expect(within(group).queryByRole("button", { name: "Extra Cleric 9" })).toBeNull();
-  expect(within(group).getByText(/and 6 more:/)).toBeInTheDocument();
-  await userEvent.setup().click(within(group).getByRole("button", { name: "Show all 18" }));
-  expect(within(group).getByRole("button", { name: "Extra Cleric 9" })).toBeInTheDocument();
-});
-
-test("a group that repeats one above it names that group instead of listing the cards again", () => {
-  view();
-  const group = screen.getByRole("heading", { name: "Clerics attacking" }).closest("article")!;
-  expect(within(group).getByText(/Mostly the same cards as/)).toBeInTheDocument();
-  expect(within(group).queryByRole("button", { name: "Cleric 1" })).toBeNull();
 });
 
 test("a job's shelf shows its cards, not a line of names and mana symbols", () => {
@@ -87,35 +43,8 @@ test("a card that only feeds others says so instead of offering a best reason", 
   expect(within(cleric).queryByText(/Best reason to keep it/)).toBeNull();
 });
 
-test("the one-time count says how many of those links the groups show", () => {
-  view();
-  expect(screen.getByText(/work only once, most of them between cards outside the groups below/)).toBeInTheDocument();
-});
-
 test("a cut used by exactly the same cards as one above says so instead of listing them again", () => {
   view();
   expect(screen.getByText(/can stand in for another: cutting one leaves the rest doing the same job/)).toBeInTheDocument();
 });
 
-test("helper groups are folded until asked for", async () => {
-  view();
-  expect(screen.queryByRole("heading", { name: "Make cards cheaper" })).toBeNull();
-  await userEvent.setup().click(screen.getByRole("button", { name: /^Show them: make cards cheaper/ }));
-  expect(screen.getByRole("heading", { name: "Make cards cheaper" })).toBeInTheDocument();
-});
-
-test("a tap shows only the cards it lights, and says how many of the group that is", async () => {
-  view("Cleric 1");
-  const clerics = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
-  // The tapped card is shown but not counted among the cards it works with.
-  expect(within(clerics).getByText("None of the other 7 work with Cleric 1.")).toBeInTheDocument();
-  expect(within(clerics).queryByRole("button", { name: "Cleric 2" })).toBeNull();
-  await userEvent.setup().click(within(clerics).getByRole("button", { name: "Show all 8" }));
-  expect(within(clerics).getByRole("button", { name: "Cleric 2" }).className).toMatch(/opacity-30/);
-});
-
-test("the selected-card panel can be closed from its top", async () => {
-  const onSelect = view("Payoff A");
-  await userEvent.setup().click(screen.getByRole("button", { name: "Close" }));
-  expect(onSelect).toHaveBeenCalledWith(null);
-});
