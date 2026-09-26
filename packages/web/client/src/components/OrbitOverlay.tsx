@@ -45,16 +45,23 @@ export function OrbitOverlay({ report, graph, model, focusId, onClose }: {
   const name = model?.cards.get(focus)?.name ?? focus;
   return createPortal(
     <div ref={box} role="dialog" aria-modal="true" aria-label={`What ${name} works with`} onKeyDown={onKey}
-      className="fixed inset-0 z-[27] overflow-y-auto overscroll-contain bg-(--background)">
-      <div className="mx-auto flex max-w-[110rem] flex-col gap-1 px-4 pb-6 pt-3 sm:px-6">
-        <div className="flex items-center justify-between gap-3">
+      className="fixed inset-0 z-[27] flex flex-col bg-(--background)">
+      {/* Close stays on screen: on a phone the ring and its panel are three screens tall, and
+        * Close scrolled away with the first (appeal review 2026-09-26). The bar sits above the
+        * scrolling part rather than pinned inside it. */}
+      <div className="shrink-0 border-b border-(--separator)">
+        <div className="mx-auto flex max-w-[110rem] items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <p className="eyebrow text-(--muted)">What it works with</p>
           <button ref={close} type="button" onClick={onClose}
             className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm hover:border-(--foreground)">
             Close
           </button>
         </div>
-        <OrbitView report={report} graph={graph} model={model} focusId={focus} onFocus={setFocus} sticky={false} />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto max-w-[110rem] px-4 pb-6 sm:px-6">
+          <OrbitView report={report} graph={graph} model={model} focusId={focus} onFocus={setFocus} sticky={false} />
+        </div>
       </div>
     </div>,
     document.body,

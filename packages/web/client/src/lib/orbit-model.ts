@@ -1,4 +1,4 @@
-import type { EngineCard, EngineGroup, EngineModel, Link } from "./engine-model.js";
+import { groupName, type EngineCard, type EngineGroup, type EngineModel, type Link } from "./engine-model.js";
 
 /** ONE CARD'S WORLD, IN RINGS (graph evaluation 2026-09-25, design B).
  *
@@ -22,6 +22,8 @@ export interface OrbitPartner {
 export interface OrbitSector {
   /** The group the partners' first repeating line belongs to; none for a tag with no group. */
   group?: EngineGroup;
+  /** The group's tag, or for a sector with no group the tag its partners share; "" for the rest. */
+  key: string;
   name: string;
   hue: string;
   partners: OrbitPartner[];
@@ -48,6 +50,9 @@ export interface OrbitModel {
 }
 
 export const OTHER_HUE = "#6b5f7d";
+const OTHER_NAME = "Other links";
+/** Sectors on one ring, "Other links" included. */
+const MAX_SECTORS = 7;
 /** Colours for sectors the deck's own groups don't colour: helpers all share one grey in the
  *  Overview, and four grey rows on one card could not be told apart (orbit round 2). */
 /** The colours unlike the Overview's group colours come first: a helper coloured teal next to a
@@ -75,12 +80,31 @@ export function buildOrbit(m: EngineModel, focusId: string): OrbitModel | null {
     const grouped = links.filter((l) => groupByTag.has(l.tag))
       .sort((a, b) => Number(a.repeat === "oneshot") - Number(b.repeat === "oneshot") || rank.get(a.tag)! - rank.get(b.tag)!);
     const group = grouped[0] ? groupByTag.get(grouped[0].tag) : undefined;
-    const key = group?.tag ?? "";
-    if (!sectors.has(key)) sectors.set(key, { group, name: group?.name ?? "Other links", hue: group?.hue ?? OTHER_HUE, partners: [] });
+    // A partner no group claims sits under the name of its own strongest line, not one grey
+    // "Other links" holding most of the ring: on Rani it held 18 of 24 cards (appeal review
+    // 2026-09-26).
+    const key = group?.tag ?? links[0]?.tag ?? "";
+    if (!sectors.has(key)) sectors.set(key, { group, key, name: group?.name ?? (key ? groupName(key) : OTHER_NAME), hue: group?.hue ?? OTHER_HUE, partners: [] });
     sectors.get(key)!.partners.push({ card, links, once: pair.once });
   }
-  const ordered = [...sectors.values()].sort((a, b) =>
-    (a.group ? rank.get(a.group.tag)! : 1e6) - (b.group ? rank.get(b.group.tag)! : 1e6));
+  // Groups first in the deck's order, then the unclaimed lines biggest first. Past MAX_SECTORS, and
+  // for a line only one card shares, the unclaimed fold into "Other links": a ring cut into a dozen
+  // one-card slices has no sectors to read.
+  const byRank = (a: OrbitSector, b: OrbitSector) =>
+    (a.group ? rank.get(a.group.tag)! : 1e6) - (b.group ? rank.get(b.group.tag)! : 1e6) || b.partners.length - a.partners.length;
+  const all = [...sectors.values()].sort(byRank);
+  const ordered: OrbitSector[] = [];
+  let other: OrbitSector | undefined;
+  for (const s of all) {
+    if (s.group || (s.partners.length > 1 && ordered.length < MAX_SECTORS - 1)) { ordered.push(s); continue; }
+    other ??= { key: "", name: OTHER_NAME, hue: OTHER_HUE, partners: [] };
+    other.partners.push(...s.partners);
+  }
+  if (other) {
+    // Folded into one sector, a lone line still reads as itself.
+    if (other.partners.length === 1 && other.partners[0]!.links[0]) { other.key = other.partners[0]!.links[0].tag; other.name = groupName(other.key); }
+    ordered.push(other);
+  }
   for (const s of ordered) {
     s.partners.sort((a, b) => Number(a.once) - Number(b.once) || b.card.score - a.card.score || a.card.name.localeCompare(b.card.name));
   }

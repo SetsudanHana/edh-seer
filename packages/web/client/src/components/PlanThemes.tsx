@@ -115,7 +115,7 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
 
 /** How many themes show before "Show N more": the Overview's six ran to ten phone screens. */
 const THEME_CAP = 3;
-/** Key cards shown as images before the row scrolls; cards that set them off shown as chips. */
+/** Key cards shown as images, wrapped so the last one and its "See links" are never clipped; cards that set them off shown as chips. */
 const MEMBER_CAP = 10;
 
 const byWeight = (a: EngineCard, b: EngineCard) => Number(b.isCommander) - Number(a.isCommander) || b.score - a.score || (a.name < b.name ? -1 : 1);
@@ -163,9 +163,9 @@ function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onO
       </div>
       <div className="flex flex-col gap-1.5">
         <span className="text-sm text-(--muted)">{hubWord}…</span>
-        <ul className="flex gap-2 overflow-x-auto pb-1 snap-x" aria-label={`${name}: key cards`}>
+        <ul className="flex flex-wrap gap-2 pb-1" aria-label={`${name}: key cards`}>
           {hubs.map((c) => (
-            <li key={c.id} className="flex w-[84px] shrink-0 snap-start flex-col items-center gap-1 sm:w-[96px]">
+            <li key={c.id} className="flex w-[78px] shrink-0 flex-col items-center gap-1 sm:w-[96px]">
               <CardFace card={c} className="w-full" />
               {onOpenCard ? (
                 <button type="button" className="min-h-8 w-full truncate rounded-(--radius) px-1 text-xs text-(--muted) hover:text-(--foreground)" onClick={() => open(c)} aria-label={`See what ${c.name} works with`}>
