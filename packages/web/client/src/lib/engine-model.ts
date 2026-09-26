@@ -30,6 +30,8 @@ export interface EngineCard {
   /** For a card's other face, the name its front goes by: "Trance Kuja" and "Kuja, Genome
    *  Sorcerer" read as two different cards (round 12). */
   faceOf?: string;
+  /** The physical card this node is a face of, or its own name: what a player cuts. */
+  physical: string;
 }
 
 export interface EngineGroup {
@@ -95,6 +97,8 @@ export interface EngineModel {
   deckCards: number; tokens: number;
   strongest: StrongPair[];
   cuts: CutRow[];
+  /** Every card the cut ranking weighed, weakest first: the report's cut list reads its wording. */
+  cutRows: CutRow[];
   jobs: [string, CutRow[]][];
 }
 
@@ -196,6 +200,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       isLand: (n.types ?? []).includes("land"), isFace: n.cardName !== undefined && n.cardName !== n.id,
       roles: n.roles ?? [], score: scoreByName.get(n.label) ?? 0,
       manaCost: n.isToken ? "" : costByName.get(n.cardName ?? n.label) ?? "",
+      physical: n.cardName ?? n.id,
       faceOf: n.cardName && n.cardName !== n.id && n.cardName.split(" // ")[0] !== n.label ? n.cardName.split(" // ")[0] : undefined,
     });
   }
@@ -387,7 +392,7 @@ export const displayName = (c: EngineCard): string => (c.faceOf ? `${c.name} (ba
  *  once at half, and a link that happens once at a quarter -- counting those at nothing put Ghostly
  *  Flicker, with 26 of them, at the top of Inalla's cuts above cards with six (round 9). A card
  *  something can bring back counts its one-time links in full, since they happen again. */
-const weight = (r: CutRow) => r.real + r.gives + r.givesOnce / 2 + r.once * (r.broughtBackBy ? 1 : 0.25);
+export const cutWeight = (r: CutRow): number => r.real + r.gives + r.givesOnce / 2 + r.once * (r.broughtBackBy ? 1 : 0.25);
 
 /** "A, B and C" or "A, B, C and 7 others"; semicolons when a name carries its own comma, so
  *  "Falco Spara, Pactweaver" does not read as two cards (round 9). */
@@ -399,7 +404,7 @@ export function listNames(list: string[], max = 8): string {
   return head.length > 1 ? `${head.slice(0, -1).join(sep)} and ${head.at(-1)}` : (head[0] ?? "");
 }
 
-function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partners: Map<string, Map<string, Pair>>, groups: Map<string, EngineGroup>): { cuts: CutRow[]; jobs: [string, CutRow[]][] } {
+function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partners: Map<string, Map<string, Pair>>, groups: Map<string, EngineGroup>): { cuts: CutRow[]; cutRows: CutRow[]; jobs: [string, CutRow[]][] } {
   const rows: (CutRow & { options: Link[] })[] = deckCards.filter((c) => !c.isCommander && !c.isLand).map((card) => {
     const nb = partners.get(card.id) ?? new Map<string, Pair>();
     let real = 0, gives = 0, givesOnce = 0, once = 0, fed = 0;
@@ -453,7 +458,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
     const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? " (token)" : ""));
     return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options };
-  }).sort((a, b) => weight(a) - weight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
+  }).sort((a, b) => cutWeight(a) - cutWeight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
   // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"
   // named it among the cards doing something extra (round 10), and a helper's hub -- the cost
   // reducer, Herald's Horn -- helps a whole group in the background (round 4).
@@ -478,11 +483,12 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
   for (const r of rows) r.keepActs = !!r.keep && acts(r.card, r.keep);
   // Shown in the order of the number each row prints, the ranking's other terms breaking ties:
   // "only 6, 7, 10" above "8, 9, 13" read as a broken ranking to two seats (round 11).
-  cuts.sort((a, b) => a.real - b.real || weight(a) - weight(b));
+  cuts.sort((a, b) => a.real - b.real || cutWeight(a) - cutWeight(b));
   const byJob = new Map<string, typeof rows>();
   for (const r of rows) for (const j of r.jobs) { if (!byJob.has(j)) byJob.set(j, []); byJob.get(j)!.push(r); }
   return {
     cuts: cuts.map(({ options: _, ...r }) => r),
+    cutRows: rows.map(({ options: _, ...r }) => r),
     // Each job runs least to most connected, by the number it prints (round 12: the cut ranking's
     // order broke the box's own rule).
     jobs: [...byJob.entries()].map(([j, rs]) => [j, rs.map(({ options: _, ...r }) => r).sort((x, y) => x.partners - y.partners || (x.card.name < y.card.name ? -1 : 1))] as [string, CutRow[]]).sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1)),

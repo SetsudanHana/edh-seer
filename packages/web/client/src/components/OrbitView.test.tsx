@@ -62,7 +62,7 @@ test("a count says how many cards and how many of them work once", () => {
 });
 
 test("a name wraps to two lines, keeps whose back it is, and uses the full name when first parts clash", () => {
-  const card = (name: string, extra: object = {}) => ({ id: name, name, typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: [], score: 0, manaCost: "", ...extra });
+  const card = (name: string, extra: object = {}) => ({ id: name, name, typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: [], score: 0, manaCost: "", physical: name, ...extra });
   expect(nameLines(card("Trance Kuja, Fate Defied", { faceOf: "Kuja, Genome Sorcerer" }), false, 16)).toEqual(["Trance Kuja", "(back of Kuja)"]);
   expect(nameLines(card("Yuna, Hope of Spira"), true, 16)).toEqual(["Yuna, Hope of", "Spira"]);
   expect(nameLines(card("Yuna, Hope of Spira"), false, 16)).toEqual(["Yuna"]);

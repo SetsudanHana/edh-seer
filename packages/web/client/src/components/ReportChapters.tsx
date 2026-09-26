@@ -18,6 +18,7 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
 import { RoleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
+import { chooseCuts } from "../lib/cut-choice.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
@@ -140,11 +141,12 @@ export function ReportChapters({ data, diff, onOpenCard }: {
    *  on (owner, 2026-09-24: "as a player it is not useful"). It goes to the cut list, minus the cards
    *  that list already names and minus the unread, which fit no theme because nothing was read --
    *  `CutList` names those separately, with the right sentence. */
+  const cuts = useMemo(() => chooseCuts(report, themes), [report, themes]);
   const offTheme = useMemo(() => {
     const none = themeMatrix(report.archetypes, nonlandNames)?.unaffiliated ?? [];
-    const skip = new Set([...(report.cutList ?? []).map((c) => c.name), ...unreadCardNames(report.cards)]);
+    const skip = new Set([...cuts.map((c) => c.name), ...unreadCardNames(report.cards)]);
     return none.filter((n) => !skip.has(n));
-  }, [report.archetypes, report.cutList, report.cards, nonlandNames]);
+  }, [report.archetypes, cuts, report.cards, nonlandNames]);
 
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
   // ONE RUN PER REPORT, read by the findings (cards under each) and the lists below them (AO4).
@@ -322,7 +324,7 @@ export function ReportChapters({ data, diff, onOpenCard }: {
               *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
             <div className="max-w-5xl">
             <CutList
-              cutList={report.cutList}
+              cuts={cuts}
               unjudged={report.unjudged}
               coverage={report.coverage}
               slack={report.slack}

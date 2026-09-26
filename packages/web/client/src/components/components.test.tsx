@@ -2299,8 +2299,8 @@ test("the strategy list says why the deck's own theme need not appear in it", as
 });
 
 test("the cut list's empty state says what the trim control ranks by instead", () => {
-  render(<CutList cutList={[]} slack={[]} trim={[{ category: "Interaction", card: "Murder", reason: "over target" }] as never} />);
-  expect(screen.getByText("No card here is unconnected.")).toBeInTheDocument();
+  render(<CutList cuts={[]} slack={[]} trim={[{ category: "Interaction", card: "Murder", reason: "over target" }] as never} />);
+  expect(screen.getByText("Nothing here is an easy cut.")).toBeInTheDocument();
   // The pair a tuner and a beginner both stopped on: "nothing is dead weight" over a Trim control.
   // They rank different things, and the panel now says which.
   expect(screen.getByText(/ranks by which category is/)).toBeInTheDocument();
@@ -2345,7 +2345,7 @@ const TRIM = [
 ];
 
 test("trim rows stay hidden until asked for, then show N with what keeps each card", async () => {
-  render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
+  render(<CutList cuts={[]} slack={[]} trim={TRIM} />);
   expect(screen.queryByText("Dead Weight")).toBeNull();
 
   await userEvent.click(screen.getByRole("button", { name: "3" }));
@@ -2362,7 +2362,7 @@ test("trim rows stay hidden until asked for, then show N with what keeps each ca
 });
 
 test("trim renders even when the passive cut list is empty — the case it exists for", () => {
-  render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
+  render(<CutList cuts={[]} slack={[]} trim={TRIM} />);
   expect(screen.getByText(/Over 99\? Trim/)).toBeTruthy();
 });
 
@@ -2373,7 +2373,7 @@ test("trim renders even when the passive cut list is empty — the case it exist
 test("the slack chip names its category in words, not the raw camelCase key", () => {
   render(
     <CutList
-      cutList={[]}
+      cuts={[]}
       slack={[{ category: "targetedRemoval", count: 14, target: 10, over: 4 }]}
       trim={[]}
     />,
@@ -2386,7 +2386,7 @@ test("the slack chip names its category in words, not the raw camelCase key", ()
 // another" whatever the chips under it were -- Interaction and Consistency on both review decks,
 // while the same report called ramp SHORT. Three seats read it as an instruction about ramp.
 test("the trim note under the slack chips does not name a role the chips are not", () => {
-  render(<CutList cutList={[]} slack={[{ category: "Interaction", count: 17, target: 13, over: 4 }]} trim={[]} />);
+  render(<CutList cuts={[]} slack={[{ category: "Interaction", count: 17, target: 13, over: 4 }]} trim={[]} />);
   expect(screen.getByText(/we don.t rank the cards inside a role against each other/)).toBeInTheDocument();
   expect(screen.queryByText(/ramp card/)).not.toBeInTheDocument();
 });
@@ -3035,7 +3035,7 @@ test("the card filter chips announce which one is active", async () => {
 });
 
 test("the trim buttons announce which count is open", async () => {
-  render(<CutList cutList={[]} slack={[]} trim={TRIM} />);
+  render(<CutList cuts={[]} slack={[]} trim={TRIM} />);
   const three = screen.getByRole("button", { name: "3" });
   expect(three).toHaveAttribute("aria-pressed", "false");
 
@@ -3222,9 +3222,9 @@ test("an archetype bar's length is its share of the deck, not its share of the l
 /** THE CARD-BY-THEME GRID WENT (owner, 2026-09-24); ITS ONE ACTIONABLE FACT CAME HERE. Cards no theme
  *  claims are named in the cut list, as a place to look -- not as cut candidates, which they are not. */
 test("the cut list names the cards no theme claims, without calling them dead", () => {
-  render(<CutList cutList={[]} slack={[]} offTheme={["Crib Swap", "Despark"]} />);
+  render(<CutList cuts={[]} slack={[]} offTheme={["Crib Swap", "Despark"]} />);
   expect(screen.getByText(/Fits no theme:/)).toBeInTheDocument();
   expect(screen.getByText("Crib Swap")).toBeInTheDocument();
   expect(screen.getByText(/normal for\s+removal and protection/)).toBeInTheDocument();
-  expect(screen.queryByText("No card here is unconnected.")).toBeNull();
+  expect(screen.queryByText("Nothing here is an easy cut.")).toBeNull();
 });
