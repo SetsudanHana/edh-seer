@@ -1901,14 +1901,35 @@ html[data-report] #root main { padding-top: 1.5rem; }
   }
 }
 .orbit-fly {
-  animation: orbit-fly 560ms cubic-bezier(0.2, 0.8, 0.25, 1.1) backwards;
+  animation: orbit-fly 380ms cubic-bezier(0.2, 0.8, 0.25, 1.05) backwards;
   animation-delay: var(--orbit-d);
 }
 .orbit-arrive {
-  animation-duration: 480ms;
+  animation-duration: 340ms;
+}
+/* A card already on the ring travels to its new place when the middle changes. */
+@keyframes orbit-move {
+  from {
+    transform: translate(var(--orbit-fx), var(--orbit-fy));
+  }
+}
+.orbit-move {
+  animation: orbit-move 420ms cubic-bezier(0.3, 0.7, 0.2, 1) backwards;
+  animation-delay: var(--orbit-d);
+}
+/* A card new to the ring fades in where it lands. */
+@keyframes orbit-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+.orbit-appear {
+  animation: orbit-appear 300ms ease-out backwards;
+  animation-delay: var(--orbit-d);
 }
 .orbit-fade {
-  animation: orbit-fade 480ms ease-out backwards;
+  animation: orbit-fade 320ms ease-out backwards;
   animation-delay: var(--orbit-d);
 }
 .orbit-body {
@@ -1922,6 +1943,8 @@ html[data-report] #root main { padding-top: 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .orbit-fly,
+  .orbit-move,
+  .orbit-appear,
   .orbit-fade,
   .orbit-panel-in {
     animation: none;

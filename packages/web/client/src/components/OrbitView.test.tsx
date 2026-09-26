@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { engineDeck } from "../lib/engine-model.fixture.js";
@@ -133,7 +133,24 @@ test("with reduced motion nothing animates, and arrows carry the direction", () 
   } finally { window.matchMedia = mm; }
 });
 
-test("with motion on, the spokes carry moving dots", () => {
+test("at rest the ring is still after its arrival wave; dots run on the card pointed at", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
+    // One wave as the ring arrives, then nothing moves on its own.
+    expect(container.querySelectorAll("[data-testid=orbit-flow] animateMotion[repeatCount='1']").length).toBeGreaterThan(0);
+    await act(async () => { vi.advanceTimersByTime(3000); });
+    expect(container.querySelectorAll("animateMotion").length).toBe(0);
+    await act(async () => { fireEvent.mouseEnter(screen.getByRole("button", { name: "Payoff B" })); });
+    expect(container.querySelectorAll("animateMotion[repeatCount='indefinite']").length).toBeGreaterThan(0);
+  } finally { vi.useRealTimers(); }
+});
+
+test("the dots can be paused, and then arrows carry the direction", async () => {
   const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
-  expect(container.querySelectorAll("animateMotion").length).toBeGreaterThan(0);
+  await userEvent.setup().click(screen.getByRole("button", { name: "Pause the dots" }));
+  expect(container.querySelector("animateMotion")).toBeNull();
+  expect(container.querySelectorAll("[data-testid=orbit-arrows]").length).toBeGreaterThan(0);
+  expect(screen.getByRole("button", { name: "Play the dots" })).toHaveAttribute("aria-pressed", "true");
+  try { localStorage.removeItem("orbit-paused"); } catch { /* none */ }
 });
