@@ -144,11 +144,35 @@ test("damage and bounce answer what they aim at", () => {
     mk("Bedevil", "Bedevil deals 3 damage to target creature or planeswalker."),
     mk("Boomerang", "Return target permanent to its owner's hand."),
   ]);
-  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt"]);
+  expect([...(classes.get("creature")?.cards ?? [])].sort()).toEqual(["Bedevil", "Boomerang", "Fire Bolt", "Lightning Bolt"]);
   expect(classes.get("planeswalker")?.cards.has("Bedevil")).toBe(true);
-  // "any target" is burn aimed at a player, not removal, and it names no class.
-  expect(classes.get("creature")?.cards.has("Lightning Bolt")).toBe(false);
+  // "Any target" is a creature or a planeswalker as much as a player (owner, 2026-09-26, issue #581:
+  // the Krenko deck's creature answers left out its Lightning Bolt). It was ruled burn-only before,
+  // which made every red deck's cheapest answer answer nothing. Not an artifact or a land.
+  expect(classes.get("planeswalker")?.cards.has("Lightning Bolt")).toBe(true);
+  expect(classes.get("artifact")?.cards.has("Lightning Bolt") ?? false).toBe(false);
   expect([...(classes.get("enchantment")?.cards ?? [])]).toEqual(["Boomerang"]);
+});
+
+/** Issue #581: naming each answer row's cards showed what the classes missed and what they
+ *  over-counted. Each case is one a real deck carried. */
+test("tucks, shrinks and plural objects answer; colour hosers and exile costs do not", () => {
+  const classes = detectAnswerClasses([
+    mk("Chaos Warp", "The owner of target permanent shuffles it into their library, then reveals the top card of their library."),
+    mk("Condemn", "Put target attacking creature on the bottom of its owner's library. Its controller gains life equal to its toughness."),
+    mk("Nowhere to Run", "When Nowhere to Run enters, target creature an opponent controls gets -3/-3 until end of turn."),
+    mk("Yawgmoth", "Pay 1 life, Sacrifice another creature: Put a -1/-1 counter on up to one target creature and draw a card."),
+    mk("Curtains' Call", "Destroy two target creatures."),
+    mk("Pyroblast", "Choose one —\n• Counter target spell if it's blue.\n• Destroy target permanent if it's blue."),
+    mk("Plaza of Heroes", "{3}, {T}, Exile Plaza of Heroes: Target legendary creature gains hexproof and indestructible until end of turn."),
+    mk("Shrinker", "Target creature gets -2/-0 until end of turn."),
+    mk("Pinger", "{T}: Pinger deals 1 damage to any target."),
+  ]);
+  const creature = classes.get("creature")?.cards ?? new Set();
+  for (const n of ["Chaos Warp", "Condemn", "Nowhere to Run", "Yawgmoth", "Curtains' Call"]) expect(creature.has(n), n).toBe(true);
+  expect(classes.get("land")?.cards.has("Chaos Warp")).toBe(true);
+  for (const n of ["Pyroblast", "Plaza of Heroes", "Shrinker", "Pinger"]) expect(creature.has(n), n).toBe(false);
+  expect(classes.get("enchantment")?.cards.has("Pyroblast") ?? false).toBe(false);
 });
 
 test("a blink is not an answer, however much it reads like removal", () => {

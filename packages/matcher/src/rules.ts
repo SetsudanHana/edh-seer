@@ -337,7 +337,15 @@ export function ruleMatches(rule: Rule, dc: DeckCard, set: RuleSet = loadRules()
  *  enchantment removal. */
 const KNOWN_CLASSES: Record<string, true> = {
   creature: true, permanent: true, artifact: true, enchantment: true, planeswalker: true, land: true,
+  // Lightning Bolt's object: a creature or a planeswalker (issue #581), expanded by the aliases.
+  "any target": true,
 };
+
+/** A COLOUR HOSER ANSWERS ONE COLOUR, NOT A KIND OF PERMANENT (issue #581). Pyroblast's "destroy
+ *  target permanent if it's blue" read as an answer to every land, enchantment and planeswalker in
+ *  the format; it answers only blue ones, which is a sideboard card's job, not a class this deck
+ *  covers. "Nonblack" is not caught: Doom Blade answers nearly every creature. */
+const COLOUR_HOSER = /\bif it'?s (?:white|blue|black|red|green)\b|^(?:white|blue|black|red|green)\b/;
 
 /** What a matched rule says about the KIND of answer it contributes, per class.
  *
@@ -406,8 +414,11 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // sentence, so the card's text is asked, not the clause. Fractured Identity hands the copies
         // to everyone ELSE and stays an answer.
         if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
+        if (COLOUR_HOSER.test(phrase)) continue;
         for (const word of Object.keys(KNOWN_CLASSES)) {
-          if (!new RegExp(`\\b${word}\\b`).test(phrase)) continue;
+          // Plural too: "destroy two target creatures" (Curtains' Call) and "exile two target
+          // permanents" (Ulamog) read as no answer at all when only the singular matched (issue #581).
+          if (!new RegExp(`\\b${word}s?\\b`).test(phrase)) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
             // "nonland permanent" answers everything except a land, and `permanent` alone expands
             // to all five. Without this a Pongify reads as land interaction.

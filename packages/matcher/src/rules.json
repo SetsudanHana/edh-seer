@@ -17,8 +17,12 @@
 
   "patterns": {
     "boardWipe": "(?:destroy|exile) (?:all|each) (?!(?:other )?cards?\\b|graveyards?\\b|(?:target )?(?:player|opponent))(?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?|lands?|tokens?|\\w+s)\\b(?! created (?:with|by) )|each player sacrifices (?:all|each|every|any number|x\\b|\\w+teen|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)|(?:each player|each opponent|opponents|players)[^.]{0,120}?sacrifices? all (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|lands?)|(?:all|each|every) (?:[\\w'-]+ ){0,2}?(?:creatures?|permanents?|artifacts?|enchantments?|planeswalkers?) (?:gets?|get) [-−]|deals? (?:\\d+|x) damage to [^.]{0,60}?each (?:[\\w'-]+ ){0,2}?(?:creature|permanent|planeswalker(?! (?:they|that player) controls?\\b))|return (?:all|each) (?:[\\w'-]+ ){0,3}?(?:creatures?|permanents?|artifacts?|enchantments?)|-1/-1 counters? on each (?:[\\w'-]+ ){0,2}?creature|(?=[\\s\\S]*\\boverload\\b)(?:destroy|exile|return|deals? (?:\\d+|x) damage to|gets? [-−]\\d)[^.]{0,20}?target (?:[\\w'-]+ ){0,3}?(?:creature|permanent|artifact|enchantment|planeswalker)\\b",
-    "targetedRemoval": "destroy[^.]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))(?![^.]{0,80}?then return (?:it|that card|them|those cards) to the battlefield)|return target (?![^.]*\\bgraveyard\\b)[^.]*? to [^.]*?hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
+    "targetedRemoval": "destroy[^.:]{0,25}?target[^.]{0,25}?(?:creature|permanent|artifact|enchantment|planeswalker|land)|exile[^.:]{0,25}?target[^.]{0,25}?\\b(?:creature|permanent|artifact|enchantment|planeswalker|land)s?\\b(?!\\s+you\\s+(?:control|own))(?![^.]{0,80}?then return (?:it|that card|them|those cards) to the battlefield)|return target (?![^.]*\\bgraveyard\\b)[^.]*? to [^.]*?hand|target creature[^.]{0,30}?gets [-−]|-1/-1 counters?[^.]{0,30}?target creature|target creature[^.]{0,30}?-1/-1 counter|target player sacrifices|target permanent shuffles it into",
     "damageRemoval": "deals? \\d+ damage to target[^.]{0,25}?(?<class>creature(?: or planeswalker)?)",
+    "damageRemovalAny": "deals? (?:[2-9]|\\d{2,}|x) damage to (?<class>any (?:other )?target)",
+    "tuckRemoval": "(?:the owner of |put )target\\s+(?<class>[^.;:]{0,60}?)\\s+(?:shuffles it into|on (?:the )?(?:top|bottom) of|into) (?:its owner's|their) library",
+    "shrinkRemoval": "target\\s+(?<class>creature[^.;:]{0,40}?)\\s+gets?\\s+[-−](?:\\d+|x)/[-−](?:[1-9]\\d*|x)",
+    "counterShrinkRemoval": "-1/-1 counters? on (?:up to one |another )?target\\s+(?<class>creature)",
     "burn": "deals? \\d+ damage to (?:any target|target player|target opponent|each opponent|each player)|(?:each opponent|each player|target player|target opponent) loses (?:\\d+|x) life",
     "graveyardHate": "\\bexile[^.]*graveyard",
     "graveyardHateRecurring": "if a card[^.]{0,60}?would be put into (?:a|an opponent's|their) graveyard from anywhere[^.]{0,40}?exile it instead|cards? in [^.]{0,40}graveyards?[^.]{0,30}can'?t (?:enter|be cast|be played)|players can'?t cast[^.]{0,40}from[^.]{0,30}graveyards?|\\{[^}]{1,12}\\}[^.:]{0,40}:[^.]{0,80}?exile[^.]{0,60}?from (?:a|an opponent's|that|their)\\s+graveyard",
@@ -35,8 +39,8 @@
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
     "impulseDraw": "exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
-    "typedRemoval": "(?:destroy|exile)[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
-    "exileRemoval": "exile[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
+    "typedRemoval": "(?:destroy|exile)[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
+    "exileRemoval": "exile[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileReturnsToBattlefield": "return (?:it|that card) to the battlefield|returns to the battlefield",
     "exileThenReturns": "then return (?:it|that card|them|those cards) to the battlefield",
     "controllerGetsCopies": "its controller creates [^.]{0,40}tokens? that (?:are|is a) cop(?:y|ies) of",
@@ -55,7 +59,8 @@
     "any permanent answers all of them, so it expands."
   ],
   "answerClassAliases": {
-    "permanent": ["creature", "artifact", "enchantment", "planeswalker", "land"]
+    "permanent": ["creature", "artifact", "enchantment", "planeswalker", "land"],
+    "any target": ["creature", "planeswalker"]
   },
 
   "rules": [
@@ -348,6 +353,30 @@
       "answerClassFrom": "damageRemoval",
       "match": [{ "op": "oracle", "pattern": "damageRemoval" }],
       "why": "Lightning Bolt answers a creature. Counting only destroy/exile made a deck with 14 removal spells read as having 3 creature answers, which is the kind of gap that makes a reader stop believing the panel."
+    },
+    {
+      "id": "answers.damage.any",
+      "answerClassFrom": "damageRemovalAny",
+      "match": [{ "op": "oracle", "pattern": "damageRemovalAny" }],
+      "why": "Lightning Bolt says 'any target', which is a creature or a planeswalker (or a player). `damageRemoval` read only 'target creature', so the one-mana answer every red deck plays answered nothing (issue #581). Two damage or more (or X): a 1-damage ping from Goblin Bombardment or Niv-Mizzet kills an x/1 and is not what a player means by an answer. A separate pattern rather than a wider `damageRemoval`, which also feeds the build categories."
+    },
+    {
+      "id": "answers.tuck",
+      "answerClassFrom": "tuckRemoval",
+      "match": [{ "op": "oracle", "pattern": "tuckRemoval" }],
+      "why": "Chaos Warp shuffles any permanent into its owner's library and Condemn puts a creature on the bottom. `targetedRemoval` counted them as removal while no answer class did, so Chaos Warp, in 19 of the first 43 decks measured, answered nothing (issue #581)."
+    },
+    {
+      "id": "answers.shrink",
+      "answerClassFrom": "shrinkRemoval",
+      "match": [{ "op": "oracle", "pattern": "shrinkRemoval" }],
+      "why": "'Target creature gets -3/-3' kills most creatures and is removal to `targetedRemoval`; Nowhere to Run, Tragic Slip and Vilis answered nothing (issue #581). The toughness half must be non-zero: -2/-0 shrinks an attacker and kills nothing."
+    },
+    {
+      "id": "answers.counterShrink",
+      "answerClassFrom": "counterShrinkRemoval",
+      "match": [{ "op": "oracle", "pattern": "counterShrinkRemoval" }],
+      "why": "A -1/-1 counter on a target creature, repeated (Yawgmoth), is creature removal to `targetedRemoval` and was none here (issue #581)."
     },
     {
       "id": "answers.bounce",
