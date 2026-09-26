@@ -10,6 +10,23 @@
 - What is left here is **engine / matcher / tagger** work. Most seats' scores are now capped by these claims, not by the page.
 - Two things the seats flagged turned out to be right, so they are **not** here: Mana Sculpt as a counterspell, and Hedge Maze surveilling when fetched.
 
+**Status (2026-09-26).** Engine PRs that landed after this list was written, going by their titles. Confirm each on its calibration deck before deleting the item:
+
+| item | status |
+|---|---|
+| 1. Weaver copies from non-enchantments | partly: #488 reads a double-faced card as two type lines (Crystal Fragments, Dion, Jill); the enchantment-source filter itself is still open |
+| 2. "arrives with counters" names the wrong card | (a) landed in #495; (b) and (c), the repeatability, are still open |
+| 3. Prowess wording | landed in #492 |
+| 4. Inalla's exile to "leaves the battlefield" payoffs | open |
+| 5. The party as one subject | landed in #490 |
+| 6. One-shot effects tagged "every time" | landed in #493 (a one-shot producer) and #490 (an on-cast board count happens once) |
+| 7. Fetch tags name the matched type | landed in #489 |
+| 8. The Earth Crystal doubles any counter | open |
+| 9. Role mis-tags | landed in #491 (Archaeomancer, Weaver) |
+| 10. "Effect not read yet" on read doublers | landed in #494 |
+| 11. Multiclass Baldric | check after #490 |
+| 12. Class word credited as a token | landed in #494 |
+
 **How to reproduce any item:**
 - Analyse the named deck (`packages/cli/decks/...`) and read `report.edges[].reasons[]`.
 - Or run the card through the matcher's pair tests.
