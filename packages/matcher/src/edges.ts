@@ -1403,7 +1403,10 @@ export const WHOLE_DECK_TYPES: ReadonlySet<string> = new Set(["creature", "perma
 export function boardCountNarrows(counted: SubjectFilter): boolean {
   const subtype = Array.isArray(counted.subtype) ? counted.subtype[0] : counted.subtype;
   const types = Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : [];
-  const typedCount = subtype === undefined && types.length > 0 && types.every((ty) => !WHOLE_DECK_TYPES.has(ty));
+  // A TOKEN count narrows even a whole-deck type (issue #502): "creature tokens you control" is fed
+  // by what MAKES creature tokens, not by every creature in the deck.
+  const typedCount = subtype === undefined && types.length > 0
+    && (counted.token === true || types.every((ty) => !WHOLE_DECK_TYPES.has(ty)));
   const keywordCount = subtype === undefined && (counted.keyword?.length ?? 0) > 0;
   if (subtype === undefined && !typedCount && !keywordCount) return false;
   if (subtype !== undefined && BASIC_LAND_TYPE_SET.has(subtype)) return false;
@@ -1920,7 +1923,7 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // THE SAME SHAPE AS THE GRAVEYARD SCALING EDGE ABOVE, one zone over: same `effect.scaling`, same
 // `scalingSubject`, same `ROLE_NOT_SYNERGY` gate. What differs is what it compares the count
 // against -- a fill there, a type line here.
-function boardCountEdges({ p, c, h, reasons }: PairScope): void {
+function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   for (const a of c.tags.abilities) {
     const counted = a.effect.scalingSubject;
     if (!counted || counted.zone !== "battlefield") continue;
@@ -1932,10 +1935,17 @@ function boardCountEdges({ p, c, h, reasons }: PairScope): void {
     // fails it against a producer that states one, so stripping it made every board count match
     // nothing at all and the channel silently produced zero edges.
     const { zone: _z, ...printed } = counted;
-    if (!subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
+    // A TOKEN COUNT IS FED BY WHAT MAKES THE TOKENS (issue #502), not only by a token node's type
+    // line: Inalla's copies are Scryfall's typeless "Copy" placeholder, so Redoubled Stormsinger's
+    // "for each creature token you control" never heard of her. Her own create-token emit is typed.
+    // Refused where the copy's types are rewritten (Espers to Magicite: "loses all other card types"),
+    // the same cue `copySubject` refuses: the emit then names what was copied, not what was made.
+    const makes = counted.token === true && !COPY_REPLACES_TYPE_CUE.test(p.card.oracleText ?? "") && pEvents.some((e) => e.verb === "create-token" && e.subject.token === true
+      && subjectMatches((({ zone: _ez, scope: _sc, ...s }) => s)(e.subject) as SubjectFilter, printed, h));
+    if (!makes && !subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)) continue;
     reasons.push({
       tag: `scales:${themeSubjectKey(counted)}`,
-      text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind),
+      text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind, makes && !subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h)),
       effectKind: a.effect.kind,
       // An on-cast count happens once (overview item 6c, see the sibling above).
       repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",

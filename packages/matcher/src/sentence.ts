@@ -458,7 +458,7 @@ const COUNT_GROWS: Record<string, string> = {
 };
 
 export function boardCountFeedsScaling(
-  producer: string, consumer: string, effectKind?: string,
+  producer: string, consumer: string, effectKind?: string, makesTheCounted = false,
 ): string {
   // "GETS BIGGER" WAS A WRONG CLAIM ON MOST OF THIS CHANNEL, reported by the precon reviewer against
   // the card printed beside it: Krenko's X counts Goblins to decide HOW MANY TOKENS he makes, and he
@@ -473,6 +473,9 @@ export function boardCountFeedsScaling(
   // the battlefield and counts for nothing. The engine's gate is control-aware already (the count's
   // `control` is kept when it is matched against a card's printed characteristics); only the prose
   // was stating the weaker condition.
+  // A MAKER IS NOT COUNTED, ITS TOKENS ARE (issue #502): "While you control Inalla, Redoubled
+  // Stormsinger counts it" named the wrong object -- Inalla is a commander, her copies are counted.
+  if (makesTheCounted) return `${producer} makes the tokens ${consumer} counts, so ${consumer} ${grows}`;
   return `While you control ${producer}, ${consumer} counts it and ${grows}`;
 }
 

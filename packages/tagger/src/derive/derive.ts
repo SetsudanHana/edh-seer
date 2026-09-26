@@ -169,7 +169,10 @@ import { emblemRecipient } from "../emblem.js";
 // 174: a delayed trigger ("When you next cast a creature spell this turn") fires as often as what
 // made it -- a chapter or a spell once, an activation at its cost's rate, recorded as `delayedBy`
 // (issue #500: Summon: Fenrir's chapter II and Yuna, Grand Summoner's {T} read EVERY TIME).
-export const DERIVE_VERSION = 174;
+// 175: a next-end-step cleanup clause ("sacrifice those tokens") is the previous clause's token
+// maker going temporary, not a sacrifice outlet; a "for each X, create" preamble is the create's
+// board count (issue #502: Redoubled Stormsinger, fodder for every Treasure, fed by no token maker).
+export const DERIVE_VERSION = 175;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -387,6 +390,8 @@ const CLAUSE_TRIGGER_TO_VERB: Record<string, Verb> = {
  *  side, stored under `damage-dealt` before the clause word `damaged` existed. 20 of the 180
  *  `damage-dealt` clauses; the engine verb is `damaged` since 2026-09-16. */
 const DAMAGE_RECEIVED = /\b(?:is|are|becomes?) dealt\b/i;
+/** "At the beginning of the next end step, sacrifice those tokens." as a clause of its own. */
+const NEXT_END_STEP_CLEANUP = /^at the beginning of the next end step, (sacrifice|exile) (?:those tokens|them|it|that token|the tokens?|those copies|the cop(?:y|ies)|that copy)\.?$/i;
 /** A token that LEAVES THE SAME TURN IT ARRIVED — see `Ability.temporary`. Three printed shapes,
  *  and the third is only reachable by NAME.
  *
@@ -1104,6 +1109,25 @@ export function deriveAbilities(
       (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
     const text = clauseText;
     const cost = clauseCosts?.[clause.id] ?? "";
+    // A CLEANUP OF THE TOKENS THE PREVIOUS CLAUSE MADE is that maker's own temporary departure, not
+    // a sacrifice outlet (issue #502). `segment()` splits Redoubled Stormsinger's "At the beginning
+    // of the next end step, sacrifice those tokens." into a clause of its own, so the same-clause
+    // rider above never saw it and every token in the deck read as its fodder. Only when the clause
+    // before made tokens; "sacrifice it" after a reanimation stays what it was.
+    const cleanup = text ? NEXT_END_STEP_CLEANUP.exec(text.trim()) : null;
+    const prior = cleanup ? abilities.filter((a) => a.clause === clause.id - 1) : [];
+    // A clause that ALSO puts a nontoken onto the battlefield gives "sacrifice it" two antecedents;
+    // refused rather than guessed.
+    const ambiguous = prior.some((a) => (a.emits ?? []).some((e) => e.verb === "enters" && e.subject.token !== true));
+    const maker = ambiguous ? undefined : prior.find((a) => a.effect.kind === "token-generation");
+    if (cleanup && maker) {
+      const made = (maker.emits ?? []).find((e) => e.verb === "create-token");
+      maker.temporary = true;
+      if (made && !(maker.emits ?? []).some((e) => e.verb === "leaves" || e.verb === "dies")) {
+        maker.emits = [...(maker.emits ?? []), { verb: /^sacrifice$/i.test(cleanup[1]) ? "dies" : "leaves", subject: { ...made.subject } }];
+      }
+      continue;
+    }
     // A fetch is two actions: `search "your library for a Swamp or Mountain card"`, then
     // `put "that card" onto the battlefield`. The EMIT comes from the put, whose object is a
     // pronoun, so the enters event carried no type at all -- and an untyped producer subject is a

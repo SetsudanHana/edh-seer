@@ -72,9 +72,19 @@ const isBareX = (action: Action): boolean => /^x$/i.test((action.amount ?? "").t
  *  action; a clause defining X twice (none in the corpus on 2026-09-05, but the templating exists)
  *  would give its second action the first definition, silently. The upgrade path is to take the
  *  definition that FOLLOWS the action's own sentence rather than the clause's first. */
+/** "FOR EACH X, CREATE ..." PUTS THE COUNT IN FRONT OF THE VERB (issue #502): Redoubled
+ *  Stormsinger's "for each creature token you control that entered this turn, create a ... copy",
+ *  Hollowhenge Overlord's Wolves, Crescent Island Temple's Shrines. The clause layer records the
+ *  create with amount "1", so the count was only in the sentence. A `create` only, in a clause with
+ *  a single create: 71 corpus lines print it before a create. */
+const PREAMBLE_COUNT = /(?:^|[,.]\s*)for each ([^,.]{1,70}),\s*create\b/i;
 const countedText = (action: Action, clauseText?: string): string => {
   const own = `${action.amount ?? ""} ${action.object ?? ""}`;
   if (COUNTED.test(own)) return own;
+  // ONE create per clause, or the preamble cannot say which create it counts for.
+  const preamble = action.verb === "create" && clauseText && (clauseText.match(/\bcreate\b/gi) ?? []).length === 1
+    ? PREAMBLE_COUNT.exec(clauseText)?.[1] : undefined;
+  if (preamble) return `for each ${preamble}`;
   const defined = clauseText && isBareX(action) ? DEFINES_X.exec(clauseText)?.[1] : undefined;
   return defined ? `number of ${defined}` : own;
 };

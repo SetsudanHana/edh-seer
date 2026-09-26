@@ -2902,6 +2902,26 @@ test("copy: a temporary copy fires the copied card's own leave or death ability"
   expect(departures(rite)).toEqual([]);
 });
 
+/** A TOKEN COUNT IS FED BY WHAT MAKES THE TOKENS (issue #502): Redoubled Stormsinger counts creature
+ *  tokens you control, Inalla makes typed ones (her token node is the typeless "Copy" placeholder), a
+ *  Treasure maker makes none, and a copy whose types are rewritten names the wrong thing. */
+test("a creature-token count is fed by a creature-token maker, never a Treasure maker", () => {
+  const stormsinger = base("Redoubled Stormsinger", [{ kind: "triggered", trigger: { verbs: ["attacks"], subject: { control: "you", token: null, type: "creature", self: true } },
+    effect: { kind: "token-generation", scaling: "per-creature", scalingSubject: { type: "creature", token: true, zone: "battlefield", control: "you" } } }] as CardTags["abilities"]);
+  const makes = (name: string, subject: Record<string, unknown>, oracle = "") => {
+    const m = base(name, [{ kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: false, subtype: "wizard", other: true } },
+      effect: { kind: "token-generation" }, emits: [{ verb: "create-token", subject: { control: "you", token: true, ...subject } }] }] as CardTags["abilities"]);
+    m.card.oracleText = oracle;
+    m.tags.characteristics.types = ["legendary", "creature"];
+    return m;
+  };
+  const scales = (p: ReturnType<typeof base>) => directedReasons(p, stormsinger, H).filter((r) => r.tag.startsWith("scales:")).map((r) => r.text);
+  expect(scales(makes("Inalla, Archmage Ritualist", { type: "creature", subtype: "wizard" })))
+    .toEqual(["Inalla, Archmage Ritualist makes the tokens Redoubled Stormsinger counts, so Redoubled Stormsinger makes more tokens"]);
+  expect(scales(makes("Treasure Maker", { type: "artifact", subtype: "treasure" }))).toEqual([]);
+  expect(scales(makes("Espers to Magicite", { type: "creature" }, "Create a token that's a copy of that card, except it's an artifact and it loses all other card types."))).toEqual([]);
+});
+
 test("copy: 'a copy of that creature' takes its class from the trigger, and a stat-only exception is still a copy", () => {
   const shepherd = copyFixture("Nightmare Shepherd", "Whenever another nontoken creature you control dies, you may exile it. If you do, create a token that's a copy of that creature, except it's 1/1 and it's a Nightmare in addition to its other types.",
     { control: "you", token: true, type: "creature", subtype: "nightmare", stats: [{ metric: "power", op: "eq", value: 1 }] });
