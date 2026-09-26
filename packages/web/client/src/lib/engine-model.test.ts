@@ -173,12 +173,19 @@ test("one-time links are named, count a little, and a card that can be brought b
   const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
   expect(flicker.why).toMatch(/happens only once: with A, B and C\. Digger can bring it back to do it again\./);
   expect(flicker.broughtBackBy).toBe("Digger");
-  // Three one-time links a card can repeat outweigh one repeating link.
-  expect(m.cuts.findIndex((c) => c.card.name === "Lone")).toBeLessThan(m.cuts.indexOf(flicker));
+  // Rows show in the order of the number they print: no repeating link comes before one.
+  expect(m.cuts.indexOf(flicker)).toBeLessThan(m.cuts.findIndex((c) => c.card.name === "Lone"));
 });
 
 test("names with commas are separated so they cannot be misread", () => {
   expect(listNames(["Falco Spara, Pactweaver", "Sol Ring"])).toBe("Falco Spara, Pactweaver and Sol Ring");
   expect(listNames(["Falco Spara, Pactweaver", "Sol Ring", "Mox"])).toBe("Falco Spara, Pactweaver; Sol Ring and Mox");
   expect(listNames(["A", "B", "C", "D"], 2)).toBe("A, B and 2 others");
+});
+
+test("an effect the engine has not read does not rank a pair", () => {
+  const m = tiny(["A", "B"], [
+    { producer: "A", consumer: "B", tag: "counter-added:creature", text: "When A gets a counter, B triggers" },
+  ]);
+  expect(m.strongest).toHaveLength(0);
 });

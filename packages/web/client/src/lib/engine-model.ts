@@ -298,7 +298,9 @@ function strongestPairs(pairs: Map<string, Pair>, cards: Map<string, EngineCard>
   const rows = [...pairs.values()].flatMap((pair) => {
     const a = cards.get(pair.a)!, b = cards.get(pair.b)!;
     if (a.isToken || b.isToken) return [];
-    const rep = pair.links.filter((l) => l.repeat !== "oneshot" && !isHelperTag(l.tag));
+    // An effect the engine has not read does not rank a pair: two Rikku pairs sat in the top three
+    // on lines that said "effect not read yet" (round 11).
+    const rep = pair.links.filter((l) => l.repeat !== "oneshot" && !isHelperTag(l.tag) && !unread(l));
     if (!rep.length) return [];
     const ways = [...new Set(rep.map((l) => groups.get(l.tag)?.name ?? groupName(l.tag)))];
     const actor = helper;
@@ -467,6 +469,9 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     if (r.keep) named.add(other(r.keep));
   }
   for (const r of rows) r.keepActs = !!r.keep && acts(r.card, r.keep);
+  // Shown in the order of the number each row prints, the ranking's other terms breaking ties:
+  // "only 6, 7, 10" above "8, 9, 13" read as a broken ranking to two seats (round 11).
+  cuts.sort((a, b) => a.real - b.real || weight(a) - weight(b));
   const byJob = new Map<string, typeof rows>();
   for (const r of rows) for (const j of r.jobs) { if (!byJob.has(j)) byJob.set(j, []); byJob.get(j)!.push(r); }
   return {

@@ -61,7 +61,9 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
               {/* The groups showed 14 of 103 and the skeptic could not find the rest (round 8); "and
                 * only 257 of them are in the groups below" then read as a second, unexplained count
                 * to three seats (round 9). */}
-              {shownOnce < m.onceLinks ? (shownOnce ? `; the groups shown below include ${shownOnce} of them` : "; the groups shown below include none of them") : ""}.
+              {/* Most one-time links are between cards in no group, so a count of the few shown
+                * explained nothing (round 11); say where the rest are. */}
+              {shownOnce < m.onceLinks / 2 ? ", most of them between cards outside the groups below" : shownOnce < m.onceLinks ? `; the groups below include ${shownOnce} of them` : ""}.
             </>
           ) : null}
         </p>
@@ -120,7 +122,9 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
               {c.twins.length ? (
                 <p className="text-(--muted)">
                   <span className="eyebrow block">Used by exactly the same cards</span>
-                  {names(c.twins)}: here {c.twins.length === 1 ? "it is" : "they are"} interchangeable with {c.card.name.split(" // ")[0]}, so whatever you decide about one goes for {c.twins.length === 1 ? "both" : "all of them"}.
+                  {/* "Whatever you decide about one goes for all of them" read as "cut all seven"
+                    * (round 11). They stand in for each other; they are not a package. */}
+                  {names(c.twins)} {c.twins.length === 1 ? "is" : "are"} used by the same cards as {c.card.name.split(" // ")[0]}, so here {c.twins.length === 1 ? "either can" : "any of them can"} stand in for another: cutting one leaves the rest doing the same job.
                 </p>
               ) : null}
               <ReadCards cards={[c.card]} />
@@ -301,6 +305,10 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
   // partners among 44 (round 10). "Show all" brings the whole group back, faded.
   const filtering = !!sel && !all;
   const litIds = g.members.filter((id) => { const c = m.cards.get(id); return !!c && on(c); });
+  // The tapped card is shown but not counted: "4 of these 36 work with Kindred Discovery" included
+  // Kindred Discovery (round 11).
+  const selIn = !!sel && g.members.includes(sel);
+  const litOthers = litIds.length - (selIn ? 1 : 0);
   const listed = filtering ? litIds : g.sameAs && !all ? g.sameAs.extra : g.members;
   const members = listed.map((id) => m.cards.get(id)!)
     .sort((a, b) => Number(on(b)) - Number(on(a)) || Number(g.onceOnly.has(a.id)) - Number(g.onceOnly.has(b.id)) || rank(a, b));
@@ -342,7 +350,7 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
       <div className="flex flex-col gap-1.5">
         <span className="eyebrow text-(--muted)">{memberWord}</span>
         {filtering ? (
-          <p className="text-sm">{litIds.length ? `${litIds.length} of these ${n} work with ${selName}:` : `None of these ${n} work with ${selName}.`}</p>
+          <p className="text-sm">{litOthers ? `${litOthers} of ${selIn ? `the other ${n - 1}` : `these ${n}`} work with ${selName}:` : `None of ${selIn ? `the other ${n - 1}` : `these ${n}`} work with ${selName}.`}</p>
         ) : null}
         {g.sameAs && !all && !filtering ? (
           <p className="text-sm">
@@ -387,12 +395,19 @@ function SelectedPanel({ m, id, onClear, onOpenCard }: { m: EngineModel; id: str
   const c = m.cards.get(id)!;
   const nb = m.partners.get(id);
   const groups = m.membership.get(id) ?? [];
-  const lines = [...(nb?.values() ?? [])].flatMap((p) => p.links)
-    .sort((a, b) => Number(a.repeat === "oneshot") - Number(b.repeat === "oneshot") || m.cards.get(b.to === id ? b.from : b.to)!.score - m.cards.get(a.to === id ? a.from : a.to)!.score)
-    .slice(0, 5);
+  const partnerOf = (l: Link) => (l.to === id ? l.from : l.to);
+  const ranked = [...(nb?.values() ?? [])].flatMap((p) => p.links)
+    .sort((a, b) => Number(a.repeat === "oneshot") - Number(b.repeat === "oneshot") || m.cards.get(partnerOf(b))!.score - m.cards.get(partnerOf(a))!.score);
+  // ONE LINE PER PARTNER FIRST: "Works with 54 cards" over five lines that were all Rumor Gatherer
+  // read as a contradiction (round 11). A second line for a partner only fills a short list.
+  const seen = new Set<string>();
+  const firsts = ranked.filter((l) => !seen.has(partnerOf(l)) && seen.add(partnerOf(l)));
+  const lines = [...firsts, ...ranked.filter((l) => !firsts.includes(l))].slice(0, 5);
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 flex max-h-[55vh] flex-col gap-2 overflow-y-auto rounded-t-(--radius) border border-(--foreground) bg-(--surface) p-3 text-sm shadow-[0_-8px_24px_rgb(0_0_0/0.5)] sm:static sm:z-auto sm:mb-1 sm:max-h-none sm:overflow-visible sm:rounded-(--radius) sm:shadow-none" aria-live="polite">
-      <div className="flex items-start gap-3">
+      {/* On a phone the way out stays in reach at the top of the sheet: the buttons at its foot
+        * sat below the edge of the screen (round 11). */}
+      <div className="sticky -top-3 z-10 -mx-3 -mt-3 flex items-start gap-3 bg-(--surface) px-3 pt-3 pb-1 sm:static sm:m-0 sm:p-0">
         <CardFace card={c} className="w-20 sm:w-24" />
         <div className="flex-1">
           <h3 className="font-semibold text-base"><CardName name={c.name} />{c.isToken ? <span className="text-(--muted) font-normal"> (token)</span> : null}</h3>
@@ -401,6 +416,7 @@ function SelectedPanel({ m, id, onClear, onOpenCard }: { m: EngineModel; id: str
             {groups.length ? <> Part of: {groups.map((g) => g.name.toLowerCase()).join("; ")}.</> : null}
           </p>
         </div>
+        <button type="button" aria-label="Close" className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-(--radius) border border-(--separator) text-lg sm:hidden" onClick={onClear}>✕</button>
       </div>
       <Lines links={lines} />
       <ReadCards cards={[c]} />

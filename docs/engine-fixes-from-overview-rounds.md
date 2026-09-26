@@ -194,6 +194,19 @@
 - **High Fae Trickster's flash:** casting a Wizard at an opponent's end step gives Inalla's copy a whole turn.
 - Lower priority than item 4, but both are why the tuner overrules the cut list.
 
+## Found in round 11
+
+### 19. More of Inalla's copy-then-exile loop (extends item 4)
+- **Redoubled Stormsinger:** "Whenever this creature attacks, for each creature token you control that entered this turn, create a tapped and attacking token that's a copy of that token." Inalla's hasty Wizard copies are exactly those tokens, yet its users are listed as "Copy (token), Treasure (token) and Bird (token)", and the cut list says none of its links use its own abilities.
+- Fixing item 4's exile event, plus an `enters:token` link from token makers to Stormsinger, should cover Dour Port-Mage, Watcher for Tomorrow and Stormsinger together. Those are the three cards the tuner overrules every round.
+
+### 20. O'aka's counter removal is unlinked (Yuna)
+- **Oracle:** "{T}, Remove a counter from a nonland permanent you control: Draw a card." The deck is built on counters: Sagas' lore counters and +1/+1 counters.
+- **Emitted:** no link that uses it, so O'aka reads "None of the links found here use its own abilities".
+
+### 21. Land-fetching spells without the ramp role (Yuna)
+- Growth Spiral and Planar Genesis put lands onto the battlefield, yet they are judged by links and land on the cut list. Farseek, Nature's Lore and Three Visits carry the `ramp` role and sit in the jobs box. The skeptic read this as two rules for the same kind of card.
+
 ## Housekeeping
 - **The skeptic seat's calibration claim has decayed.**
   - `.claude/agents/README.md` seeds the Yuna deck with `Misty Rainforest -> Yuna, Grand Summoner | dies:permanent`, judged FALSE.
