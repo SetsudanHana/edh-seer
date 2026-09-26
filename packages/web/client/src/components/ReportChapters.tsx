@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
@@ -16,6 +16,8 @@ import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
+import { OrbitView } from "./OrbitView.js";
+import { OrbitOverlay } from "./OrbitOverlay.js";
 import { RoleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { chooseCuts } from "../lib/cut-choice.js";
@@ -107,10 +109,8 @@ function Chapter({ id, title, children }: {
  *
  *  Chapter membership lives in `lib/chapters.ts` so the rail and the sections cannot disagree about
  *  what exists. */
-export function ReportChapters({ data, diff, onOpenCard }: {
+export function ReportChapters({ data, diff }: {
   data: AnalyzeResponse; diff?: RunDiff | null;
-  /** Opens a card in the Graph tab's one-card view. */
-  onOpenCard?: (id: string) => void;
 }) {
   const { report } = data;
   const current = useCurrentChapter();
@@ -121,6 +121,17 @@ export function ReportChapters({ data, diff, onOpenCard }: {
     const m = buildEngineModel(report, data.graph);
     return m.totalLinks ? m : null;
   }, [report, data.graph]);
+  /** THE GRAPH PAGE'S LAST PIECE, IN THE REPORT (owner, 2026-09-26: retire the Graph page and reach
+   *  its pieces from here). The commander's orbit sits in Game plan, re-centred in place; "See
+   *  links" on any card opens that card's orbit over the report, and Close returns to the line
+   *  the reader left. */
+  const commanderId = useMemo(() => {
+    if (!themes) return null;
+    const names = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
+    return data.graph?.nodes.find((n) => !n.face && names.has(n.cardName ?? n.id) && themes.partners.has(n.id))?.id ?? null;
+  }, [themes, report.cards, data.graph]);
+  const [centre, setCentre] = useState<string | null>(null);
+  const [overlay, setOverlay] = useState<string | null>(null);
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD — the single fact all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight. A two-faced commander rates one row per face and both carry the same `derived` flag, so
@@ -160,6 +171,9 @@ export function ReportChapters({ data, diff, onOpenCard }: {
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
         *  instead of widening it — the narrow-width defence this repo has already paid for twice. */}
       <div className="flex flex-col gap-16 lg:gap-20 min-w-0 flex-1 pt-6 lg:pt-0">
+        {overlay && themes ? (
+          <OrbitOverlay report={report} graph={data.graph!} model={themes} focusId={overlay} onClose={() => setOverlay(null)} />
+        ) : null}
         <Chapter id="read" title={title("read")}>
           {/* A deck the format would not let you play is not a deck this report can diagnose. It
             *  renders nothing when the deck is clean, which is every one of the 71 calibration
@@ -220,7 +234,12 @@ export function ReportChapters({ data, diff, onOpenCard }: {
             *  is. They stand in for ArchetypeBoard's unranked pair groups, which said the same
             *  pairs again without an order. The archetype bars stay: a named-archetype reading the
             *  themes do not give. */}
-          {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={onOpenCard} /> : null}
+          {themes && commanderId ? (
+            <Movement title="What your commander works with" count="tap a card to see how, tap it again to put it in the middle">
+              <OrbitView report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
+            </Movement>
+          ) : null}
+          {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={setOverlay} /> : null}
           {/* THE ONE FIGURE THAT SAID NOTHING (S13). `cardSignals` in `matcher/src/analyze.ts`
             *  filters on `dc.tags`, so strategies, the groups and the membership matrix are all
             *  derived-only -- and this was the only coverage-limited surface on the page with

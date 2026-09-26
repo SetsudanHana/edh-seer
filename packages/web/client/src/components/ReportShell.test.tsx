@@ -23,7 +23,6 @@ afterEach(() => {
  *  the report. */
 test("the reference surfaces live under /analysis", () => {
   expect(REFERENCE_SURFACES.map((s) => s.path)).toEqual([
-    "/analysis/graph",
     "/analysis/cards",
     "/analysis/combos",
   ]);
@@ -206,9 +205,9 @@ test("below lg the chapters are a select naming the current one, and the surface
   for (const c of CHAPTERS) expect(within(rail).queryByRole("button", { name: c.rail })).toBeNull();
   expect(within(rail).queryByTestId("rail-edge-fade")).toBeNull();
 
-  // The three that are the ONLY route to their surfaces stay visible, which is why they were
+  // The links that are the ONLY route to their surfaces stay visible, which is why they were
   // pinned in the first place.
-  for (const label of ["Graph", "Cards", "Combos"]) {
+  for (const label of ["Cards", "Combos"]) {
     expect(within(rail).getByRole("link", { name: new RegExp(label) })).toBeInTheDocument();
   }
 });
@@ -409,100 +408,6 @@ test("a seed within the cap pins the added cards", () => {
   expect(screen.getByText("1 pinned")).toBeInTheDocument();
 });
 
-/** Both media conditions `useBoardMode` reads, stubbed together -- `matchMedia` is the only input,
- *  and stubbing one query without the other silently answers `false` for the missing one. */
-function stubPointer(coarse: boolean, anyFine: boolean, width: number) {
-  vi.stubGlobal("matchMedia", (q: string) => ({
-    matches: q.includes("any-pointer: fine") ? anyFine : q.includes("pointer: coarse") ? coarse : false,
-    media: q, onchange: null,
-    addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
-    dispatchEvent: () => false,
-  }));
-  vi.stubGlobal("innerWidth", width);
-  vi.stubGlobal("innerHeight", 844);
-}
-
-/** SAMPLE.graph is two nodes, which clears the disc floor on any screen -- the whole point of the
- *  constraint is that a small graph keeps the board. A phone test needs a graph big enough to fail
- *  it, so the nodes are padded out; the EDGES stay as they are, so Krenko is still the one card
- *  with a partner and therefore the one row that offers to open a board. */
-function phoneSizedDeck() {
-  const filler = Array.from({ length: 80 }, (_, i) => ({
-    id: `Filler ${i}`, label: `Filler ${i}`, copies: 1,
-    types: ["creature"], subtypes: [], supertypes: [], colors: ["R"], cmc: 2,
-  }));
-  return {
-    ...SAMPLE,
-    graph: { ...SAMPLE.graph, nodes: [...SAMPLE.graph.nodes, ...filler] },
-  } as typeof SAMPLE;
-}
-
-// R1: on a thumb the Graph surface is the list, and the BOARD is one tap from a row -- not absent,
-// which is what it has been since this surface was built. The phone judge tapped GRAPH, got a
-// screen of chips, and read "board" as jargon for the card list.
-/** NAVIGATED BY CLICKING, NOT BY `initialEntries`: the shell sends a fresh analysis to the chapters
- *  on mount, deliberately, so a route handed in at render time is navigated away from before a test
- *  can assert on it. Every other test in this file reaches a surface the same way. */
-async function openGraph(data: typeof SAMPLE) {
-  const user = userEvent.setup();
-  render(<MemoryRouter><ReportShell data={data} /></MemoryRouter>);
-  await user.click(screen.getAllByRole("link", { name: /^Graph/ })[0]!);
-  return user;
-}
-
-/** THE GRAPH TAB OPENS ON THE OVERVIEW (graph evaluation 2026-09-25), on every device; the list,
- *  the one-card view and the board are one tap away on the surface switch. */
-test("the graph tab opens on the Overview", async () => {
-  stubPointer(true, false, 390);
-  await openGraph(phoneSizedDeck());
-  expect(screen.getByRole("button", { name: "Overview" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
-});
-
-test("a coarse pointer opens the orbit on the commander, with the card list one tap back", async () => {
-  stubPointer(true, false, 390);
-  const user = await openGraph(phoneSizedDeck());
-  await user.click(screen.getByRole("button", { name: "One card" }));
-  expect(screen.getByRole("group", { name: /^Krenko, Mob Boss and the \d+ cards? it works with$/ })).toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: /back to the card list/i }));
-  expect(screen.getByLabelText("Find a card")).toBeInTheDocument();
-  // The sentence that said the board "needs a wider screen" is false as of this change.
-  expect(screen.queryByText(/needs a wider screen/i)).toBeNull();
-  expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
-});
-
-test("tapping a row opens that card's graph", async () => {
-  stubPointer(true, false, 390);
-  const user = await openGraph(phoneSizedDeck());
-  await user.click(screen.getByRole("button", { name: "One card" }));
-  await user.click(screen.getByRole("button", { name: /back to the card list/i }));
-  await user.click(screen.getAllByRole("button", { name: /see what it connects to/i })[0]!);
-  // `find`, not `get`, AND NOT ON THE DEFAULT BUDGET. The comment here used to say the ego board
-  // "arrives one microtask after the tap", which stopped being true at #142 (`cae07fe`): EgoView
-  // became a DYNAMIC IMPORT, so this waits on a module load, not on a microtask.
-  //
-  // `findByRole` allows 1000ms by default and a cold CI runner can miss it -- measured on PR #150,
-  // where `test (node 20)` failed here alone, `test (node 22)` passed on the same commit, and a
-  // rerun with no code change passed. That is the signature of a budget, not of a defect.
-  //
-  // 4000ms rather than a round 5000: vitest's own `testTimeout` default is 5000 and is not
-  // configured in this package, so an assertion allowed the whole budget would race its own test
-  // and report the timeout against the wrong thing. This is the ONLY test that reaches the board
-  // through the router -- EgoView.test, GraphView.test and components.test import the views
-  // directly and never cross the lazy boundary, so this is one site, not a pattern to sweep.
-  expect(await screen.findByRole(
-    "button", { name: /back to the card list/i }, { timeout: 4000 },
-  )).toBeInTheDocument();
-});
-
-test("a precise pointer still gets the board", async () => {
-  stubPointer(false, true, 1440);
-  const user = await openGraph(phoneSizedDeck());
-  await user.click(screen.getByRole("button", { name: "Whole deck" }));
-  expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
-  expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
-});
-
 /** A SHARED LINK TO A REFERENCE SURFACE STAYS ON IT (UX sweep 2026-09-06, D1). The "new report
  *  routes back to the chapters" effect also fired on the FIRST report, so `/analysis/combos#deck=…`
  *  opened, redirected to `/`, and dropped the hash on the way: a reload after that had no deck.
@@ -532,47 +437,32 @@ test("a new deck goes home carrying search and hash; the same deck under a state
   expect(screen.getByTestId("loc").textContent).toBe("/?speed=4#deck=abc");
 });
 
-/** THE READER OVERRIDES THE GUESS (owner, 2026-09-06, "I would go route with both"). A phone that
- *  the hook sends to the list can ask for the whole-deck board, and back. */
-test("the phone can switch between the one-card view and the whole-deck board", async () => {
-  stubPointer(true, false, 390);
-  const user = await openGraph(phoneSizedDeck());
-  const orbit = () => screen.queryByRole("group", { name: /it works with$/ });
-  await user.click(screen.getByRole("button", { name: "One card" }));
-  expect(orbit()).not.toBeNull();
-  await user.click(screen.getByRole("button", { name: "Whole deck" }));
-  expect(orbit()).toBeNull();
-  expect(screen.getByRole("button", { name: "Whole deck" })).toHaveAttribute("aria-pressed", "true");
-  await user.click(screen.getByRole("button", { name: "One card" }));
-  expect(orbit()).not.toBeNull();
-});
-
-/** THE ONE-CARD VIEW ON A DESKTOP (owner, 2026-09-24). On a dense deck -- Jodah, 56 of 66 cards on
- *  the commander -- the whole-deck board is a hairball at any width, so the switch shows on a precise
- *  pointer too, and there it opens on the commander rather than on the list a phone starts from. */
-test("a desktop can open the one-card view, and it opens on the commander", async () => {
-  stubPointer(false, true, 1440);
-  const user = await openGraph(phoneSizedDeck());
-  await user.click(screen.getByRole("button", { name: "Whole deck" }));
-  expect(screen.getByRole("button", { name: "Whole deck" })).toHaveAttribute("aria-pressed", "true");
-  await user.click(screen.getByRole("button", { name: "One card" }));
-  // The orbit, centred on the commander. On a desktop there is no card list to go back to.
-  expect(await screen.findByRole(
-    "group", { name: /^Krenko, Mob Boss and the \d+ cards? it works with$/ }, { timeout: 4000 },
-  )).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
-  await user.click(screen.getByRole("button", { name: "Whole deck" }));
-  expect(screen.queryByRole("group", { name: /it works with$/ })).toBeNull();
-});
-
 /** NO COMBOS, NO COMBOS TAB (UI review 2026-09-25). A deck with none got a tab that opened one
  *  sentence on an empty screen; the route stays for a shared link, the link goes. */
 test("a deck with no combos gets no Combos link, and one with combos keeps it", () => {
   const none = { ...SAMPLE, report: { ...SAMPLE.report, combos: [] } } as typeof SAMPLE;
   const { unmount } = render(<MemoryRouter><ReportShell data={none} /></MemoryRouter>);
   expect(screen.queryByRole("link", { name: /^Combos/ })).toBeNull();
-  expect(screen.getAllByRole("link", { name: /^Graph/ }).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("link", { name: /^Cards/ }).length).toBeGreaterThan(0);
   unmount();
   render(<MemoryRouter><ReportShell data={SAMPLE} /></MemoryRouter>);
   expect(screen.getAllByRole("link", { name: /^Combos/ }).length).toBeGreaterThan(0);
+});
+
+/** THE GRAPH PAGE IS RETIRED (owner, 2026-09-26): its pieces live in the chapters. A saved link to
+ *  it opens the report with the deck and the state it carried, and nothing links to it any more. */
+test("an old link to the Graph page opens the report, keeping the deck and state", () => {
+  render(<MemoryRouter initialEntries={["/analysis/graph?speed=4#deck=abc"]}><ReportShell data={SAMPLE} /><LocationProbe /></MemoryRouter>);
+  expect(screen.getByTestId("loc").textContent).toBe("/?speed=4#deck=abc");
+  expect(screen.queryByRole("link", { name: /^Graph/ })).toBeNull();
+});
+
+test("Game plan opens on the commander's orbit", () => {
+  const edges = [{ a: "Krenko, Mob Boss", b: "Impact Tremors", score: 1, reasons: [
+    { producer: "Krenko, Mob Boss", consumer: "Impact Tremors", tag: "enters:goblin", text: "Whenever Krenko, Mob Boss makes a Goblin, Impact Tremors deals 1 damage" },
+  ] }];
+  const linked = { ...SAMPLE, report: { ...SAMPLE.report, edges } } as unknown as typeof SAMPLE;
+  render(<MemoryRouter><ReportShell data={linked} /></MemoryRouter>);
+  expect(screen.getByRole("heading", { name: "What your commander works with" })).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: /^Krenko, Mob Boss and the \d+ cards? it works with$/ })).toBeInTheDocument();
 });

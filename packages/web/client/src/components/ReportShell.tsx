@@ -1,6 +1,6 @@
 import type { GameState } from "@edh-seer/engine";
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Route, Routes, useLocation, useNavigate } from "react-router";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types.js";
 import { createArtLoader, type ArtLoader } from "./art-loader.js";
 import { cachedImageLoad } from "./art-cache.js";
@@ -11,33 +11,16 @@ import { StateControls } from "./StateControls.js";
 import { CardList } from "./CardList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ComboList } from "./ComboList.js";
-/** THE BOARD IS A ROUTE, SO IT LOADS LIKE ONE. `GraphView` is the largest module in the client --
- *  145kB of source on its own, plus `board-force.ts` and d3-selection, d3-transition and d3-zoom
- *  behind it, about 250kB of the 2.4MB the build's sourcemap maps -- and it mounts ONLY on `/graph`.
- *  Every reader who never opened the board was still paying for it in the first byte of the report.
- *
- *  `GraphList` stays eager, and NOT because the board is unreachable on a phone -- it is, since the
- *  surface switch below (#214) lets the reader override `useBoardMode`'s guess in either direction.
- *  It stays eager because it is where the ego branch LANDS: on a coarse pointer with no fine one,
- *  `GraphList` is the first thing `/graph` paints, and lazy-loading the surface a reader arrives on
- *  trades a bundle saving for a spinner in the one place it is guaranteed to be seen. `GraphView`,
- *  one tap further in, is the one worth splitting; `OrbitView` is plain SVG and small. */
-const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.GraphView })));
-import { GraphList } from "./GraphList.js";
-import { EnginesView } from "./EnginesView.js";
-import { OrbitView } from "./OrbitView.js";
-import { useBoardMode } from "../lib/use-board-mode.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
-import { unreadCardNames } from "../lib/unread.js";
-import { SURFACE_ROW_SLOT_ID } from "../lib/surface-slot.js";
 
-/** THE REPORT'S SHELL: the sticky header, the scroll, and the three reference surfaces that are
- *  NOT part of it.
+/** THE REPORT'S SHELL: the sticky header, the scroll, and the reference surfaces that are NOT part
+ *  of it.
  *
- *  Graph, Cards and Combos stop being tabs and become routes. They are surfaces a reader EXPLORES
- *  rather than reads in order — the graph in particular wants the whole viewport — and as tabs they
- *  cost the browser's own back button: pressing back from the graph left the report entirely.
+ *  Cards and Combos stop being tabs and become routes. They are surfaces a reader EXPLORES rather
+ *  than reads in order, and as tabs they cost the browser's own back button. The Graph surface was
+ *  the third, until its pieces moved into the report's chapters (owner, 2026-09-26): its themes,
+ *  roles and cuts are chapters now, and a card's links open over the report.
  *
  *  THE PATHS CARRY THE SURFACE, NOT A REPORT ID. `docs/ANALYZER-JOURNEY.md` and roadmap S7 both
  *  write `/report/:id/graph`, and that id does not exist: an analysis is client state, the only URL
@@ -59,126 +42,22 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   /** A re-run under a new state is in flight (W18c): said on the controls, not by the deck bar. */
   stateBusy?: boolean;
 }) {
-  // ONE ELEMENT, TWO HOMES: the header row here, and the fullscreen graph's shell (W18c owner
-  // finding 2: "the fullscreen graph has no way to change the state, and the graph is where the
-  // dashed edges are").
   const stateControls = onState && data.report.markers && data.report.markers.length > 0
     ? <StateControls markers={data.report.markers} state={state} onState={onState} edges={data.report.edges} busy={stateBusy} />
     : null;
-  // ONLY ONE COPY IS LIVE AT A TIME (review): while the graph is fullscreen its shell renders the
-  // controls, and the header copy -- painted behind the backdrop but still in the DOM and the
-  // accessibility tree -- is not rendered at all.
-  const [fullscreen, setFullscreen] = useState(false);
-  useEffect(() => {
-    const onChange = () => setFullscreen(document.fullscreenElement !== null);
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
-  }, []);
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
   const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
-  // WHICH GRAPH SURFACE THIS DEVICE GETS (roadmap R1). Not a width: see `use-board-mode.ts` for why
-  // the pointer term is load-bearing and why 639px was a lucky guess. On a coarse pointer the
-  // Graph surface is the LIST, and the board is one tap from a row -- one card's local graph
-  // owning the viewport, rather than the whole-deck cloud at 14.7px a disc.
-  const autoBoardMode = useBoardMode(data.graph?.nodes.length ?? 0);
   const comboCount = data.report.combos?.length ?? 0;
-  /** THE READER OVERRIDES THE GUESS (owner, 2026-09-06: option 3, "both"). The hook predicts which
-   *  surface a device can use; a phone that got the whole-deck board could not reach the one-card
-   *  view, and the reverse. The switch sits above either surface at every width (until
-   *  2026-09-24 it showed only below `sm` and wherever the guess was the ego view). Above the board, not inside its fullscreen shell: fullscreen is one
-   *  tap out, and a switch that changes the surface under a fullscreen element is a worse trade
-   *  than that tap. Component state, same ceiling as `focusId`; NOT reset per deck on purpose -- it is
-   *  a choice about this device, not about the deck. */
-  const [boardModeOverride, setBoardModeOverride] = useState<"board" | "ego" | null>(null);
-  const boardMode = boardModeOverride ?? autoBoardMode;
-  /** WHICH GRAPH SURFACE IS SHOWING. The Overview (`EnginesView`) opens first on every device
-   *  (graph evaluation 2026-09-25: every persona seat opened it first in two blind rounds, and it
-   *  is the only surface that answers the cut question); the board and the one-card view keep the
-   *  device guess above for when the reader switches to them. */
-  const [surface, setSurface] = useState<"engines" | "graph">("engines");
-  /** THE CARD LIT IN THE OVERVIEW, IN THE URL (`?card=`), so a reload or a shared link keeps it and
-   *  the one-card view can later grow from the same route. Written through `navigate` with the hash
-   *  carried by hand: `setSearchParams` would drop `#deck=…`, which is the whole analysis. */
-  const cardLocation = useLocation();
-  const cardNavigate = useNavigate();
-  const selectedCard = new URLSearchParams(cardLocation.search).get("card");
-  const selectCard = (id: string | null) => {
-    const p = new URLSearchParams(cardLocation.search);
-    if (id) p.set("card", id); else p.delete("card");
-    const q = p.toString();
-    cardNavigate({ pathname: cardLocation.pathname, search: q ? `?${q}` : "", hash: cardLocation.hash }, { replace: true });
-  };
-  /** The card whose local graph is open, or null for the list.
-   *  CEILING: component state, so it does not survive a reload and the browser back button leaves
-   *  the report rather than leaving this view -- the same cost S7 paid to make Graph a route.
-   *  Upgrade path is `/graph/:cardName`, which is also what a breadcrumb would need. */
-  const [focusId, setFocusId] = useState<string | null>(null);
-  /** A card tapped in the report opens in the Graph tab's one-card view, centred on it. */
-  const openInOrbit = (id: string) => {
-    setSurface("graph");
-    setBoardModeOverride("ego");
-    setFocusId(id);
-    cardNavigate({ pathname: "/analysis/graph", search: "", hash: cardLocation.hash });
-    window.scrollTo?.(0, 0);
-  };
-  /** The commander's node, which "One card" opens on where the device guessed the whole-deck board
-   *  (owner, 2026-09-24: the one-card view on desktop). There the reader has already seen the
-   *  deck as a cloud; the list would be a step back, and the commander is the card a synergy deck
-   *  is about. Since the orbit (2026-09-26) the same holds on a phone: the orbit lists the rest of
-   *  the deck itself, and the card list is one "Back" away. */
-  const commanderNodeId = useMemo(() => {
-    const names = new Set(data.report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
-    return data.graph?.nodes.find((n) => names.has(n.cardName ?? n.id))?.id ?? null;
-  }, [data.graph, data.report]);
-  // Shown at every width since 2026-09-24: on a dense deck (Jodah, 56 of 66 cards on the
-  // commander) the one-card view is the readable one on a desktop too.
-  const modeSwitch = (
-    <div
-      role="group"
-      aria-label="Graph surface"
-      className="flex gap-1"
-    >
-      {([["engines", "Overview"], ["board", "Whole deck"], ["ego", "One card"]] as const).map(([mode, label]) => {
-        const on = mode === "engines" ? surface === "engines" : surface === "graph" && boardMode === mode;
-        return (
-        <button
-          key={mode}
-          type="button"
-          aria-pressed={on}
-          onClick={() => {
-            if (mode === "engines") { setSurface("engines"); return; }
-            setSurface("graph");
-            setBoardModeOverride(mode);
-            if (mode === "board") setFocusId(null);
-            else if (!focusId) setFocusId(selectedCard ?? commanderNodeId);
-          }}
-          className={`eyebrow whitespace-nowrap rounded-(--radius) border px-2.5 py-2 ${
-            on ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
-          }`}
-        >
-          {label}
-        </button>
-        );
-      })}
-    </div>
-  );
-  // Which cards the synergy engine could not read. Computed once here because BOTH graph surfaces
-  // want it and only one of them (`GraphView`) is handed the report — see `lib/unread.ts` for why
-  // the rule lives in one place.
-  const unread = useMemo(() => unreadCardNames(data.report.cards), [data.report]);
-  // THE ART LOADER OUTLIVES THE GRAPH SURFACE, and that is the whole point of it living here.
-  //
-  // `<GraphView>` mounts only on `/graph`, so nothing requested a single image until the user
-  // opened it — and then all ~95 discs queued at once, 75ms apart, while they waited. Every
-  // `artCrop` URL arrives with the analyze response, and the user is reading the chapters for
-  // seconds before they ever reach the board: that time was thrown away.
+  // THE ART IS WARMED WHILE THE READER READS. Every `artCrop` URL arrives with the analyze
+  // response, and the chapters' card faces, role shelves and orbit discs are all further down the
+  // page than the first screen: the seconds spent reading the top are spent fetching them.
   //
   // Owned here rather than made a module singleton so its lifetime is the REPORT's. A singleton
   // would accumulate decoded images for every deck analysed in a session, with nothing to say when
   // they stop mattering.
-  // CARD NAME TO ART, for every surface that is not the board. The URLs already arrive with the
-  // analyze response (`graph.nodes[].artCrop`) and the loader above is already warming them, so a
-  // table thumbnail and a grid card cost no request the board was not going to make anyway.
+  // CARD NAME TO ART, for the Cards table. The URLs already arrive with the analyze response
+  // (`graph.nodes[].artCrop`) and the loader below is already warming them, so a table thumbnail
+  // costs no request the chapters were not going to make anyway.
   //
   // A TOKEN NEVER WINS A NAME COLLISION — 92 of 661 distinct token names are also a real card, and
   // every consumer of this map is naming a card from the DECK. Same rule `CardDrawerProvider`
@@ -193,21 +72,15 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   useEffect(() => {
     const loader = artLoaderRef.current!;
     const nodes = data.graph?.nodes ?? [];
-    // Non-urgent by construction: this is background warming, and anything the user is actually
-    // looking at (a hovered card, a card-mode card) jumps this queue via `request(url, true)`.
+    // Background warming: the orbit's discs draw the `/art_crop/` files.
     for (const n of nodes) if (n.artCrop) loader.request(n.artCrop);
 
-    // THEN the full card images, which are a DIFFERENT file from the disc art — card mode draws
-    // `/normal/`, the discs are `/art_crop/`. Warming only the discs is why "zoom in and wait"
-    // survived the first attempt at this: the board was warm and the card image had never been
-    // requested at all. Queueing them AFTER means they never delay anything visible — the queue is
-    // FIFO, so every disc is already ahead of them, and the viewport/hover prefetch promotes
-    // whichever one the user actually approaches.
+    // THEN the full card images, a DIFFERENT file (`/normal/`), which every card face in the
+    // chapters draws. Queued after the discs, FIFO, so they never delay a disc.
     //
     // Costs roughly 1.5x the disc bytes again (~7.5MB on a 100-card deck), spent while the user
     // reads the chapters rather than while they wait for anything. Skipped on a metered or
-    // explicitly data-saving connection, where speculative megabytes are not ours to spend: the
-    // prefetch path still covers the card being zoomed into, it just pays for it on arrival.
+    // explicitly data-saving connection, where speculative megabytes are not ours to spend.
     const conn = (navigator as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
     if (conn?.saveData || /^(slow-)?2g$/.test(conn?.effectiveType ?? "")) return;
     for (const n of nodes) {
@@ -217,11 +90,10 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   }, [data]);
 
   useScrollMemory();
-  // A NEW ANALYSIS OPENS ON THE CHAPTERS. Without this a reader who left the graph open, edited
-  // their list and re-analysed came back to the graph — the one surface that answers none of the
-  // six questions a fresh report is for.
-  const navigate = cardNavigate;
-  const { pathname, search, hash } = cardLocation;
+  // A NEW ANALYSIS OPENS ON THE CHAPTERS. Without this a reader who left the Cards table open,
+  // edited their list and re-analysed came back to the table rather than to the report.
+  const navigate = useNavigate();
+  const { pathname, search, hash } = useLocation();
   // ONLY A NEW DECK GOES HOME (UX sweep 2026-09-06, D1). This effect also ran on mount, so a shared
   // link to a reference surface -- `/analysis/cards#deck=…` -- was redirected to `/` the moment it
   // loaded, and `navigate("/")` carried no hash: the address bar lost both the surface and the
@@ -253,7 +125,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
         {/* A GAME STATE THE OWNER SETS, only where the deck can reach it (roadmap W18). */}
         {onState && data.report.markers && data.report.markers.length > 0 && (
           <div className="px-4 py-3 border-b border-(--separator)">
-            {fullscreen ? null : stateControls}
+            {stateControls}
           </div>
         )}
         {/* OUTSIDE THE CHAPTERS, ON EVERY SURFACE. A line the engine never matched to a card is not
@@ -270,49 +142,10 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
           *  /analysis surface is still the chapters. */}
         <Routes>
           <Route path="/analysis">
-            <Route index element={<ReportChapters data={data} diff={diff} onOpenCard={openInOrbit} />} />
-            <Route
-              path="graph"
-              element={
-                <Reference aside={modeSwitch} comboCount={comboCount}>
-                  {/* A HEIGHT, NOT A SPINNER. The board is the tallest thing this app draws, and a
-                    * fallback shorter than what replaces it is a layout shift on arrival -- the exact
-                    * defect the `#root` reserve one file over exists to remove. The message says what
-                    * is happening, because a blank box of this size reads as a failure.
-                    * One boundary over both branches: `GraphList` suspends on nothing, and the ego
-                    * board and the whole-deck board are the same wait for the same chunk. */}
-                  <Suspense fallback={
-                    <div className="flex items-center justify-center min-h-[70svh] text-(--muted) eyebrow">
-                      loading the graph
-                    </div>
-                  }>
-                    {surface === "engines"
-                      ? (
-                        <EnginesView
-                          report={data.report}
-                          graph={data.graph}
-                          selected={selectedCard}
-                          onSelect={selectCard}
-                          onOpenCard={(id) => { setSurface("graph"); setBoardModeOverride("ego"); setFocusId(id); }}
-                        />
-                      )
-                      : boardMode === "ego"
-                      ? (focusId
-                        ? (
-                          <OrbitView
-                            graph={data.graph}
-                            report={data.report}
-                            focusId={focusId}
-                            onFocus={setFocusId}
-                            onBack={autoBoardMode === "board" ? undefined : () => setFocusId(null)}
-                          />
-                        )
-                        : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)
-                      : <GraphView graph={data.graph} report={data.report} artLoader={artLoaderRef.current} stateControls={stateControls} guided />}
-                  </Suspense>
-                </Reference>
-              }
-            />
+            <Route index element={<ReportChapters data={data} diff={diff} />} />
+            {/* THE GRAPH PAGE IS RETIRED (owner, 2026-09-26): its pieces live in the chapters, so a
+              *  saved or shared link to it opens the report, with the deck and state it carried. */}
+            <Route path="graph" element={<Navigate to={{ pathname: "/", search, hash }} replace />} />
             <Route
               path="cards"
               element={
@@ -324,9 +157,9 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             <Route path="combos" element={<Reference comboCount={comboCount}><ComboList combos={data.report.combos} /></Reference>} />
             {/* A path this app does not have is the REPORT, not an error page: the deck is in the
               *  hash and the chapters are what it is for. */}
-            <Route path="*" element={<ReportChapters data={data} diff={diff} onOpenCard={openInOrbit} />} />
+            <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
           </Route>
-          <Route path="*" element={<ReportChapters data={data} diff={diff} onOpenCard={openInOrbit} />} />
+          <Route path="*" element={<ReportChapters data={data} diff={diff} />} />
         </Routes>
       </div>
     </CardDrawerProvider>
@@ -336,16 +169,11 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
 /** A reference surface, with the way back on it.
  *
  *  The browser's own back button is the primary route home — that is why these are routes at all —
- *  but a reader who arrived by pressing `Graph` in the rail can be several surfaces deep, and a
+ *  but a reader who arrived by pressing `Cards` in the rail can be several surfaces deep, and a
  *  visible way back costs one line. */
-/** `aside` sits at the right end of the surface tabs. The graph puts its Whole deck / One card
- *  switch there: on its own row it cost the board ~60px at every width (2026-09-25 live review,
- *  where the board started at y=438 on a 900px laptop). */
-function Reference({ children, aside, comboCount }: { children: React.ReactNode; aside?: React.ReactNode; comboCount: number }) {
+function Reference({ children, comboCount }: { children: React.ReactNode; comboCount: number }) {
   const { pathname } = useLocation();
   return (
-    // gap-2/pt-2, not 4 (UI review 2026-09-25): the 16px above and below this row were two of the
-    // last 28px keeping the 660px graph board from fitting a 1440x900 screen.
     <div className="flex flex-col gap-2 pt-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <nav aria-label="Report surfaces" className="flex gap-4 items-baseline">
@@ -363,10 +191,6 @@ function Reference({ children, aside, comboCount }: { children: React.ReactNode;
           </SurfaceLink>
         ))}
       </nav>
-      {/* A SLOT FOR THE SURFACE'S OWN SHORTCUTS (UI review 2026-09-25): the graph portals its key
-        *  cards here, so they share this row's slack instead of taking a row above the board. */}
-      <div id={SURFACE_ROW_SLOT_ID} className="flex flex-wrap items-center gap-2 min-w-0 empty:hidden" />
-      {aside ? <div className="ml-auto">{aside}</div> : null}
       </div>
       {children}
     </div>
@@ -416,7 +240,6 @@ export function SurfaceLink({ to, className, children }: {
  *  with a `#deck=` hash and replaces to the matching surface here. The hash never reaches the
  *  server, so that check cannot live in a Cloudflare redirect. */
 export const REFERENCE_SURFACES: readonly { path: string; label: string }[] = [
-  { path: "/analysis/graph", label: "Graph" },
   { path: "/analysis/cards", label: "Cards" },
   { path: "/analysis/combos", label: "Combos" },
 ];

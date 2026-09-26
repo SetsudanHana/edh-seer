@@ -111,23 +111,22 @@ test("no router warning is logged on a page the legacy block does not match", as
  *  floor `disc-fit.ts` names). The collapsed bar is ~128px of that, and every control on it is one
  *  tab away on the report. It stays everywhere else, and the EXPANDED editor stays everywhere --
  *  hiding that would strand a reader who pressed Edit. */
-test("the collapsed deck bar stands down on the board, and nowhere else", () => {
+test("the collapsed deck bar stands down once a report is up, and the editor never does", () => {
   const props = {
     commanders: "", onCommandersChange: () => {}, value: "1 Sol Ring", onChange: () => {},
     onAnalyze: () => {}, loading: false, onEdit: () => {}, onStartOver: () => {},
   };
-  const at = (path: string, collapsed: boolean) => {
+  const at = (collapsed: boolean, hasReport: boolean) => {
     const { unmount } = render(
-      <MemoryRouter initialEntries={[path]}><DeckBar {...props} collapsed={collapsed} /></MemoryRouter>,
+      <MemoryRouter initialEntries={["/analysis"]}><DeckBar {...props} collapsed={collapsed} hasReport={hasReport} /></MemoryRouter>,
     );
     const present = screen.queryByRole("button", { name: "Copy decklist" }) !== null
       || screen.queryByRole("button", { name: /analyse/i }) !== null;
     unmount();
     return present;
   };
-  expect(at("/analysis/graph", true)).toBe(false);
-  expect(at("/analysis/cards", true)).toBe(true);
-  expect(at("/analysis", true)).toBe(true);
-  // The editor is not furniture: a reader who pressed Edit keeps it on every surface.
-  expect(at("/analysis/graph", false)).toBe(true);
+  expect(at(true, true)).toBe(false);
+  expect(at(true, false)).toBe(true);
+  // The editor is not furniture: a reader who pressed Edit keeps it.
+  expect(at(false, true)).toBe(true);
 });

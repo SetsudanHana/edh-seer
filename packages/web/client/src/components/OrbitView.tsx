@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, displayName, type EngineCard, type Repeat } from "../lib/engine-model.js";
+import { buildEngineModel, displayName, type EngineCard, type EngineModel, type Repeat } from "../lib/engine-model.js";
 import { buildOrbit, visiblePartners, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 import { ReasonText } from "./card-drawer.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
@@ -16,14 +16,17 @@ import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./
  *  A TAP READS, A SECOND TAP MOVES: the rule `EgoView` settled on, so a mis-aimed tap never throws
  *  the reader somewhere else. Where they have been is a trail above the picture, and the card they
  *  came from is a button at the top of the panel. */
-export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
+export function OrbitView({ report, graph, focusId, onFocus, model, sticky = true }: {
   report: DeckReport; graph: CardGraph;
   focusId: string;
   onFocus: (id: string) => void;
-  /** Leaves the view, where there is somewhere to go back to (the card list on a phone). */
-  onBack?: () => void;
+  /** The engine model, when the caller already built it. */
+  model?: EngineModel;
+  /** The panel keeps its place beside the ring while the page scrolls. Off inside the overlay,
+   *  which is one screen tall and scrolls on its own. */
+  sticky?: boolean;
 }) {
-  const m = useMemo(() => buildEngineModel(report, graph), [report, graph]);
+  const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);
   const o = useMemo(() => buildOrbit(m, focusId), [m, focusId]);
   const narrow = useNarrow();
   const [sel, setSel] = useState<string | null>(null);
@@ -56,17 +59,6 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
     drawn.current = { focus: o.focus.id, pos };
   }, [L, o]);
   useEffect(() => { setSel(null); setSector(null); setHover(null); }, [focusId]);
-  useEffect(() => {
-    if (!onBack) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented) return;
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      onBack();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onBack]);
   if (!o || !L) return null;
 
   const centre = (id: string) => {
@@ -98,22 +90,24 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
   return (
     <div className="flex flex-col gap-3 py-2">
       <nav aria-label="Cards you have centred" className="flex flex-wrap items-center gap-1 text-sm text-(--muted)">
-        {onBack ? <button type="button" className="mr-2 min-h-11 rounded-(--radius) border border-(--separator) px-3" onClick={onBack}>Back to the card list</button> : null}
         <b className="text-(--foreground)" aria-current="page">{focusName}</b>
       </nav>
       {/* ON A WIDE SCREEN THE PICTURE TAKES THE ROOM: at 1920 the ring stopped at 880px and the
         * panel at 440px, leaving a third of the screen empty (owner, 2026-09-26). The ring fills
-        * its column up to the screen's height, and the panel stays in view beside it. */}
+        * what the panel leaves of its container, up to the screen's height, so the same view fits
+        * a report chapter and a full-screen overlay; the panel stays in view beside it. */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-center lg:gap-8">
-        {/* The ring's width follows the screen's height (the box is 880 by 720), so the whole ring
-          * and its names stay on screen; the ring and panel sit together, centred. */}
-        <div className="min-w-0 lg:w-[min(calc(100vw-38rem),calc((100svh-17rem)*1.2222))] lg:shrink-0">
+        {/* The ring's width is capped by the screen's height (the box is 880 by 720), so the whole
+          * ring and its names stay on screen; the ring and panel sit together, centred. */}
+        <div className="min-w-0 lg:flex-1 lg:max-w-[calc((100svh-17rem)*1.2222)]">
           {/* Keyed by the card in the middle, so a new centre replays the ring flying out. */}
           <Orbit key={`${o.focus.id}|${narrow}`} o={o} L={L} narrow={narrow} sel={sel} sector={openSector ? sector : null} arrival={arrival}
             moveFrom={moveFrom} still={still} paused={paused} hover={hover} onHover={setHover} onTap={tap}
             onSector={(s) => { setSector(sectorKey(s)); setSel(null); }} />
         </div>
-        <div key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className="orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)] lg:w-[min(34rem,40vw)] lg:shrink-0 lg:overflow-y-auto" aria-live="polite">
+        <div key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky
+          ? "lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)]"
+          : "lg:max-h-[calc(100svh-7rem)]"}`} aria-live="polite">
           {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
             * word in the trail above the picture, which one seat never found and another called
             * "one word high" (orbit round 1). */}

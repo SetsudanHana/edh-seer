@@ -32,13 +32,14 @@ const DIM_BY_DEFAULT: NodeKind[] = ["layout", "cmc", "mana", "color"];
  *  The two render DIFFERENT GRAPHS. This one is `buildGraph`'s printed-characteristics graph — cards
  *  joined through their type, subtype, keyword, mana, cmc and layout nodes, plus reified `event:`
  *  nodes under `--events` — around 330 nodes for one deck, aimed at Cytoscape/Gephi-style
- *  exploration of what cards SHARE. The app's board (`projectDeckGraph` + `board-force.ts`) draws
- *  ~84 nodes: the cards themselves and the synergy edges between them.
+ *  exploration of what cards SHARE. The app's deck board (`projectDeckGraph` + `board-force.ts`,
+ *  retired 2026-09-26 for the one-card orbit in the report) drew ~84 nodes: the cards themselves
+ *  and the synergy edges between them.
  *
  *  So the physics differing is not a divergence between two views of one thing. This loop is
  *  inverse-SQUARE repulsion (`900/d²`, rest 70, damping 0.86, gravity 0.0016) against d3's
  *  inverse-LINEAR `forceManyBody`, and unifying them was considered and refused: there is nothing to
- *  match, `d3-force` is a dependency of `@edh-seer/web` rather than this package, and the kind checkboxes
+ *  match, `d3-force` was a dependency of `@edh-seer/web` rather than this package, and the kind checkboxes
  *  below deliberately RE-SETTLE the layout (`alpha = 0.5`), so a pre-settled static export would be
  *  a behaviour change rather than a simplification.
  *

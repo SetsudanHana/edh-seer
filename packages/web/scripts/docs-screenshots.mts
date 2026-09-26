@@ -38,7 +38,7 @@ const localData = args.includes("--local-data");
 /** One frame: where it goes, how it is found, and its fixed size in CSS pixels at 1440 wide. */
 type Frame = { file: string; width: number; height: number; quality: number };
 const FRAMES = {
-  graph: { file: "shot-graph.webp", width: 1440, height: 830, quality: 0.82 },
+  orbit: { file: "shot-orbit.webp", width: 1280, height: 740, quality: 0.82 },
   pairs: { file: "shot-pairs.webp", width: 1040, height: 640, quality: 0.85 },
   improve: { file: "shot-improve.webp", width: 1040, height: 640, quality: 0.85 },
   mana: { file: "shot-mana.webp", width: 640, height: 394, quality: 0.85 },
@@ -60,8 +60,8 @@ async function toWebp(page: Page, png: Buffer, quality: number): Promise<Buffer>
   return Buffer.from(url.split(",")[1]!, "base64");
 }
 
-async function save(page: Page, frame: Frame, clip: { x: number; y: number }): Promise<void> {
-  const png = await page.screenshot({ fullPage: true, clip: { ...clip, width: frame.width, height: frame.height } });
+async function save(page: Page, frame: Frame, clip: { x: number; y: number }, fullPage = true): Promise<void> {
+  const png = await page.screenshot({ fullPage, clip: { ...clip, width: frame.width, height: frame.height } });
   const webp = await toWebp(page, png, frame.quality);
   writeFileSync(join(OUT, frame.file), webp);
   console.log(`${frame.file}  ${frame.width}x${frame.height}  ${(webp.length / 1024).toFixed(0)} KB`);
@@ -100,9 +100,17 @@ await page.waitForSelector("h2:has-text('Deck at a glance')", { timeout: 90_000 
 // Art and mana symbols arrive after the report; a frame taken before them is a frame of spinners.
 await page.waitForLoadState("networkidle");
 
-// The game plan frame opens at the archetype bars rather than the chapter title, so the frame has
-// room for the pairs under them -- the sentences are what it is there to show.
-const plan = await origin(page, "summary:has-text('What the percentages count')");
+// The game plan frame opens at the deck's themes, each led by its key cards: what the deck does,
+// in the cards a player knows it by.
+// Its card images load lazily, so the frame is scrolled to and waited out before it is taken.
+await page.locator("h3:text-is('What your deck does')").first().scrollIntoViewIfNeeded();
+await page.waitForFunction(() => {
+  // The frame holds the first theme: its key cards, and the chips under them. `complete` is also
+  // true of an image that failed, so a missing picture cannot stall the capture.
+  const first = document.querySelector("section[aria-labelledby='plan-themes'] article");
+  return !!first && [...first.querySelectorAll("img")].every((i) => i.complete);
+}, undefined, { timeout: 30_000 });
+const plan = await origin(page, "h3:text-is('What your deck does')");
 await save(page, FRAMES.pairs, { x: plan.x - 12, y: plan.y - 8 });
 // The improve frame starts at its own heading, so it carries its title.
 const improve = await origin(page, "h2:text-is('How to improve it')");
@@ -111,13 +119,22 @@ await save(page, FRAMES.improve, { x: improve.x - 12, y: improve.y - 12 });
 const chart = await origin(page, "text=What it asks for, and what it will have");
 await save(page, FRAMES.mana, { x: chart.x - 8, y: chart.y - 10 });
 
-// The graph opens focused on the commander with its card open beside the board. Wait out the
-// pre-settle and the art, then take the viewport below the site header.
-await page.click("a[href^='/analysis/graph']");
-await page.waitForTimeout(6000);
-await page.evaluate(() => scrollTo(0, 0));
-const header = await page.locator(".site-header").evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
-await save(page, FRAMES.graph, { x: 0, y: header + 1 });
+// The commander's orbit, in the Game plan chapter: every card Krenko works with, grouped by what
+// the link is. TAKEN FROM THE VIEWPORT, NOT THE FULL PAGE: a full-page capture resizes the page,
+// which replays the ring's entrance and caught it mid-flight. Scrolled so the heading sits under
+// the two sticky headers, then the entrance and the art are waited out.
+await page.locator("h3:text-is('What your commander works with')").first().evaluate((el) => {
+  const top = el.getBoundingClientRect().top + scrollY;
+  const headers = document.querySelector(".site-header")!.getBoundingClientRect().height
+    + parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--report-header-h") || "0");
+  scrollTo(0, top - headers - 12);
+});
+await page.waitForTimeout(4000);
+const orbitBox = await page.locator("h3:text-is('What your commander works with')").first().evaluate((el) => {
+  const r = el.getBoundingClientRect();
+  return { x: Math.round(r.left), y: Math.round(r.top) };
+});
+await save(page, FRAMES.orbit, { x: orbitBox.x - 16, y: orbitBox.y - 12 }, false);
 
 await ctx.unrouteAll({ behavior: "ignoreErrors" });
 await browser.close();
