@@ -153,6 +153,9 @@ export function computeDeckMath(
     return {
       class: cls,
       count: members.size,
+      // NAMED, so a player can see which cards the count is (owner, 2026-09-26: the answers table
+      // was counts against a target no deck meets). One flexible card sits under every class it hits.
+      cards: [...members].sort(),
       // Counted over the same membership as `count`, commanders included -- a commander that
       // exiles is still an exiling answer, and the pair only reads correctly if both sides of it
       // count the same cards.
