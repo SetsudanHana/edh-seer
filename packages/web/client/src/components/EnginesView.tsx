@@ -3,14 +3,18 @@ import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, type EngineCard, type EngineGroup, type EngineModel, type Link, type Repeat } from "../lib/engine-model.js";
 import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
+import { cardImageUrl } from "./card-node.js";
 
 /** THE GRAPH TAB'S LANDING VIEW: what the deck does, in groups of named cards (graph evaluation
  *  2026-09-25, four blind persona rounds). Every seat opened it first in rounds 3 and 4, and it is
  *  the only surface that answered the cut question at all. The whole-deck board and the one-card
  *  view stay one tap away.
  *
- *  THE CARD TEXT SITS BESIDE EVERY CLAIM, because that is what turned the skeptic's distrust into
- *  checking: with both cards printed next to a pairing, it caught engine errors on its own. */
+ *  THE CARDS LEAD, AND THEIR TEXT IS ONE TAP AWAY. A player knows a card by its face, and a page of
+ *  printed rules text read as a wall (owner, 2026-09-26). But the text beside a claim is what turned
+ *  the skeptic's distrust into checking -- with both cards to hand it caught engine errors on its
+ *  own -- so every claim keeps its cards' text under "Read the cards", in the page and not behind
+ *  a fetch. */
 export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
   report: DeckReport; graph: CardGraph;
   /** The card whose partners are lit, from the URL. */
@@ -56,16 +60,19 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
           {m.strongest.map(({ pair, ways, both, lines }) => {
             const a = m.cards.get(pair.a)!, b = m.cards.get(pair.b)!;
             return (
-              <article key={`${pair.a}|${pair.b}`} className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-                <div className="flex items-center gap-3">
-                  <span className="flex shrink-0"><Art card={a} size={40} /><span className="-ml-3"><Art card={b} size={40} /></span></span>
-                  <div>
+              <article key={`${pair.a}|${pair.b}`} className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
+                <div className="flex items-start gap-4">
+                  <span className="flex shrink-0 pt-1 pl-1">
+                    <CardFace card={a} className="w-20 sm:w-28 -rotate-3" />
+                    <CardFace card={b} className="w-20 sm:w-28 -ml-6 sm:-ml-8 mt-3 rotate-3" />
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-1">
                     <h3 className="font-semibold text-base"><CardName name={a.name} /> + <CardName name={b.name} /></h3>
                     <p className="text-(--muted)">{both ? "Each helps the other" : "One helps the other"}, {ways.length === 1 ? "in one way" : `in ${ways.length} ways`}: {ways.map((w) => w.toLowerCase()).join("; ")}.</p>
                   </div>
                 </div>
                 <Lines links={lines} />
-                <div className="grid gap-2 sm:grid-cols-2"><CardText card={a} /><CardText card={b} /></div>
+                <ReadCards cards={[a, b]} />
               </article>
             );
           })}
@@ -75,13 +82,12 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
       <section aria-labelledby="eng-cuts" className="flex flex-col gap-3">
         <h2 id="eng-cuts" className="text-lg font-semibold">Cards doing the least here</h2>
         <p className="text-sm text-(--muted) max-w-[70ch]">Cut candidates: the cards that keep working with the fewest others. Every link that repeats counts, including cards that double or copy triggers, and so does helping other cards in the background.</p>
-        <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))]">
+        <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
           {m.cuts.map((c) => (
-            <article key={c.card.id} className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-              <div className="flex items-center gap-3">
-                <Art card={c.card} size={36} />
-                <div><h3 className="font-semibold text-base"><CardName name={c.card.name} /></h3><p>{c.why}</p></div>
-              </div>
+            <article key={c.card.id} className="flex items-start gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
+              <CardFace card={c.card} className="w-24 sm:w-28" />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div><h3 className="font-semibold text-base"><CardName name={c.card.name} /></h3><p>{c.why}</p></div>
               {c.keep && c.keepActs ? (
                 <p className="text-(--muted)"><span className="eyebrow block">Best reason to keep it</span><Badge repeat={c.keep.repeat} /><ReasonText text={c.keep.text} /></p>
               ) : c.keep ? (
@@ -94,11 +100,11 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
                   <span className="eyebrow block">Who uses it</span>
                   {c.sameUsersAs ? <>The same {c.fedBy.length} card{c.fedBy.length === 1 ? "" : "s"} as <CardName name={c.sameUsersAs} />, so here the two do the same job.</>
                     : <>{names(c.fedBy.slice(0, 3))}{c.fedBy.length > 3 ? ` and ${c.fedBy.length - 3} other${c.fedBy.length === 4 ? "" : "s"}` : ""}.</>}
-                  {" "}None of the links found here use its own abilities. For example:{" "}
-                  <Badge repeat={c.keep.repeat} /><ReasonText text={c.keep.text} />
+                  {" "}None of the links found here use its own abilities.
                 </p>
               ) : null}
-              <CardText card={c.card} />
+              <ReadCards cards={[c.card]} />
+              </div>
             </article>
           ))}
         </div>
@@ -168,6 +174,31 @@ function Art({ card, size }: { card: EngineCard; size: number }) {
   return card.art
     ? <img src={card.art} alt="" loading="lazy" width={size} height={size} className="shrink-0 rounded-full object-cover border-2 border-(--background)" style={{ width: size, height: size }} />
     : <span aria-hidden="true" className="shrink-0 rounded-full bg-(--surface-secondary) border-2 border-(--background)" style={{ width: size, height: size }} />;
+}
+
+/** THE CARD AS A PLAYER KNOWS IT: the whole printed card, never the art crop -- the full card
+ *  carries its own artist credit and the corpus has none to print (see `CardArt`). Tapping it opens
+ *  the card, like its name does. A card with no image (a token the corpus has no art for) falls back
+ *  to a plain frame with its name, so a pair never shows a hole. */
+function CardFace({ card, className }: { card: EngineCard; className: string }) {
+  const { open, known } = useCardDrawer();
+  const src = card.art ? cardImageUrl(card.art) : null;
+  const face = src
+    ? <img src={src} alt={card.name} loading="lazy" decoding="async" width={488} height={680} className="block aspect-[488/680] h-auto w-full rounded-[4.5%/3.3%] shadow-md shadow-black/40" />
+    : <span className="flex aspect-[488/680] w-full items-end rounded-[6%/4.4%] border border-(--separator) bg-(--surface-secondary) p-1.5 text-[10px] leading-tight">{card.name}</span>;
+  return known.has(card.name)
+    ? <button type="button" onClick={() => open(card.name)} aria-label={`Open ${card.name}`} className={`shrink-0 transition-transform hover:-translate-y-0.5 ${className}`}>{face}</button>
+    : <span className={`shrink-0 ${className}`}>{face}</span>;
+}
+
+/** THE TEXT, ONE TAP AWAY: kept in the page, so checking a claim never waits on a fetch. */
+function ReadCards({ cards }: { cards: EngineCard[] }) {
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer py-1.5 text-(--muted) hover:text-(--foreground)">{cards.length === 1 ? "Read the card" : "Read both cards"}</summary>
+      <div className="mt-1 grid gap-2 sm:grid-cols-2">{cards.map((c) => <CardText key={c.id} card={c} />)}</div>
+    </details>
+  );
 }
 
 /** THE PRINTED CARD, in words, beside the claim about it. */
@@ -278,8 +309,14 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
       {g.example ? (
         <details open className="text-sm">
           <summary className="eyebrow text-(--muted)">For example</summary>
-          <p className="my-2"><Badge repeat={g.example.repeat} /><ReasonText text={g.example.text} /></p>
-          <div className="grid gap-2 sm:grid-cols-2"><CardText card={m.cards.get(g.example.from)!} /><CardText card={m.cards.get(g.example.to)!} /></div>
+          <div className="my-2 flex items-start gap-3">
+            <span className="flex shrink-0">
+              <CardFace card={m.cards.get(g.example.from)!} className="w-16 sm:w-20" />
+              <CardFace card={m.cards.get(g.example.to)!} className="w-16 sm:w-20 -ml-4 mt-2" />
+            </span>
+            <p><Badge repeat={g.example.repeat} /><ReasonText text={g.example.text} /></p>
+          </div>
+          <ReadCards cards={[m.cards.get(g.example.from)!, m.cards.get(g.example.to)!]} />
         </details>
       ) : null}
     </article>
@@ -295,8 +332,8 @@ function SelectedPanel({ m, id, onClear, onOpenCard }: { m: EngineModel; id: str
     .slice(0, 5);
   return (
     <div className="mb-1 flex flex-col gap-2 rounded-(--radius) border border-(--foreground) bg-(--surface) p-3 text-sm" aria-live="polite">
-      <div className="flex items-center gap-3">
-        <Art card={c} size={44} />
+      <div className="flex items-start gap-3">
+        <CardFace card={c} className="w-20 sm:w-24" />
         <div className="flex-1">
           <h3 className="font-semibold text-base"><CardName name={c.name} />{c.isToken ? <span className="text-(--muted) font-normal"> (token)</span> : null}</h3>
           <p className="text-(--muted)">
@@ -306,7 +343,7 @@ function SelectedPanel({ m, id, onClear, onOpenCard }: { m: EngineModel; id: str
         </div>
       </div>
       <Lines links={lines} />
-      <CardText card={c} />
+      <ReadCards cards={[c]} />
       <div className="flex flex-wrap gap-3">
         {onOpenCard ? <button type="button" className="min-h-11 rounded-(--radius) border border-(--accent) px-4 text-sm text-(--accent)" onClick={() => onOpenCard(id)}>See it in the one-card view</button> : null}
         <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={onClear}>Clear selection</button>
