@@ -419,7 +419,10 @@ export interface DeckReport {
    *  it. The DEFAULT view shows only those with a partner; the toggle reveals the rest. A token with
    *  no partner is a real signal — "this deck makes Clues and nothing cares" — which is why the data
    *  carries it even when the view hides it. */
-  tokenNodes?: { name: string; hasPartner: boolean }[];
+  /** `roles` are the token's own (owner ruling 2026-09-27, #533: Mage's Attendant's counterspell is
+   *  its Wizard token's), read off the ability its makers quote for it; `madeBy` names those makers.
+   *  A token is never drawn, so its roles are shown, never counted toward a deck's slot targets. */
+  tokenNodes?: { name: string; hasPartner: boolean; roles?: string[]; madeBy?: string[] }[];
   /** The state this report was computed under, echoed so a view can say "at speed 4". */
   state?: GameState;
   /** The markers this deck can reach at all -- `speed` when a card prints Start your engines! --
