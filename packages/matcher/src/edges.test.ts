@@ -5071,6 +5071,30 @@ test("an instant-or-sorcery tutor and recursion are tagged with the type the tar
   expect(tag(bolt, snipe, "cast:")).toEqual(["cast:instant"]);
 });
 
+/** A TRIGGER THAT SACRIFICES ITS OWN SOURCE FIRES ONCE (issue #530): Mogg Bombers read EVERY TIME.
+ *  The live derived shape, read 2026-09-26: the clause splits into a sacrifice-self ability and the
+ *  effect, both `clause: 1`, and the link comes through the effect. */
+test("a trigger that sacrifices its own source links once; Impact Tremors still repeats", () => {
+  const another = { verbs: ["enters"], subject: { control: "any", token: null, type: "creature" } };
+  const bombers = base("Mogg Bombers", [
+    { kind: "triggered", clause: 1, trigger: another, effect: { kind: "" },
+      emits: [{ verb: "sacrifice", subject: { control: "any", token: null, type: "creature", self: true } }] },
+    { kind: "triggered", clause: 1, trigger: another, effect: { kind: "damage", subject: { control: "any", token: null, type: "planeswalker", scope: "target" } } },
+  ] as CardTags["abilities"]);
+  const tremors = base("Impact Tremors", [
+    { kind: "triggered", clause: 1, trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "creature" } },
+      effect: { kind: "damage", subject: { control: "opp", token: null, scope: "each" } } },
+  ] as CardTags["abilities"]);
+  const maker = base("Creature Maker", [{
+    kind: "activated", cost: "{2}", effect: { kind: "token-generation" },
+    emits: [{ verb: "enters", subject: { control: "you", token: true, type: "creature" } }],
+  }] as CardTags["abilities"]);
+  const rep = (c: ReturnType<typeof base>) => directedReasons(maker, c, H).filter((r) => r.tag === "enters:creature").map((r) => r.repeatability);
+  expect(new Set(rep(bombers))).toEqual(new Set(["oneshot"]));
+  expect(rep(tremors).length).toBeGreaterThan(0);
+  expect(rep(tremors).every((r) => r === "triggered")).toBe(true);
+});
+
 /** A ONE-SHOT PRODUCER MAKES A ONE-SHOT LINK (overview persona rounds 2026-09-25, item 6a):
  *  "Farseek -> Hedge Maze | enters:land | triggered" read EVERY TIME for a sorcery, and so did a
  *  fetchland that sacrifices itself -- the repeatability looked only at the consumer's trigger. */
