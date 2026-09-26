@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { EngineCard, Link, Repeat } from "../lib/engine-model.js";
+import { tokenLabel, type EngineCard, type Link, type Repeat } from "../lib/engine-model.js";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { cardImageUrl } from "./card-node.js";
@@ -71,7 +71,7 @@ export function CardText({ card }: { card: EngineCard }) {
   return (
     <div className="flex flex-col gap-0.5 rounded-(--radius) border border-(--separator) bg-(--background) px-2.5 py-2 text-xs leading-relaxed">
       <span className="flex items-baseline justify-between gap-2">
-        <b className="text-sm">{card.name}{card.isToken ? <span className="text-(--muted) font-normal"> (token)</span> : null}</b>
+        <b className="text-sm">{card.name}{card.isToken ? <span className="text-(--muted) font-normal"> {tokenLabel(card)}</span> : null}</b>
         {card.manaCost ? <ManaSymbols cost={card.manaCost} /> : null}
       </span>
       {card.typeLine ? <span className="text-(--muted)">{card.typeLine}</span> : null}

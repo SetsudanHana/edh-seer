@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, displayName, type EngineCard, type EngineModel, type Repeat } from "../lib/engine-model.js";
+import { buildEngineModel, displayName, tokenLabel, type EngineCard, type EngineModel, type Repeat } from "../lib/engine-model.js";
 import { mainTheme } from "../lib/main-theme.js";
 import { buildOrbit, visiblePartners, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 import { ReasonText } from "./card-drawer.js";
@@ -197,7 +197,7 @@ export function nameLines(c: EngineCard, clash: boolean, max: number): string[] 
   const base = clash ? c.name : c.name.split(",")[0]!;
   const cut = (t: string) => (t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t);
   // What the card IS never gets cut: a wrapped "Coruscation Mage (token)" lost its "(token)".
-  const extra = c.isToken ? "(token)" : c.faceOf ? `(back of ${c.faceOf.split(",")[0]})` : "";
+  const extra = c.isToken ? tokenLabel(c) : c.faceOf ? `(back of ${c.faceOf.split(",")[0]})` : "";
   if (extra) return [cut(base), cut(extra)];
   const lines: string[] = [];
   let cur = "";
@@ -295,7 +295,7 @@ function Orbit({ o, L, narrow, sel, sector, arrival, moveFrom, still, paused, ho
         const on = lit(card.id, sl.s);
         return (
           <g key={card.id} transform={`translate(${x},${y})`} role="button" tabIndex={0} className={DISC}
-            aria-label={`${displayName(card)}${card.isToken ? " (token)" : ""}`} aria-pressed={sel === card.id}
+            aria-label={`${displayName(card)}${card.isToken ? ` ${tokenLabel(card)}` : ""}`} aria-pressed={sel === card.id}
             opacity={dimming && !on ? 0.45 : 1} onClick={() => onTap(card.id)} onKeyDown={key(() => onTap(card.id))}
             onMouseEnter={() => onHover(card.id)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(card.id)} onBlur={() => onHover(null)}>
             <g className={`orbit-body ${enter(x, y, i, card.id).cls}`} style={enter(x, y, i, card.id).style}>
@@ -645,7 +645,7 @@ function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: Eng
             <span className="flex flex-wrap gap-x-2 gap-y-1">
               {row.cards.map((p) => (
                 <button key={p.card.id} type="button" className="flex min-h-9 items-center gap-1.5 rounded-(--radius) px-1 text-left hover:bg-(--surface-secondary)" onClick={() => onPick(p.card.id)}>
-                  <Art card={p.card} size={24} />{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> (token)</span> : null}
+                  <Art card={p.card} size={24} />{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> {tokenLabel(p.card)}</span> : null}
                 </button>
               ))}
             </span>
@@ -657,7 +657,7 @@ function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: Eng
               <button type="button" className="flex min-h-11 w-full items-start gap-2 rounded-(--radius) px-1 py-1 text-left hover:bg-(--surface-secondary)" onClick={() => onPick(p.card.id)}>
                 <Art card={p.card} size={32} />
                 <span className="flex flex-1 flex-col">
-                  <span>{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> (token)</span> : null}</span>
+                  <span>{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> {tokenLabel(p.card)}</span> : null}</span>
                   {l ? <span className="text-xs text-(--muted)"><Badge repeat={l.repeat} perTurn={l.perTurn} /><ReasonText text={l.text} /></span> : null}
                 </span>
               </button>
@@ -690,7 +690,7 @@ function PartnerPanel({ focus, p, onCentre, onClose }: { focus: EngineCard; p: O
         <CardFace card={p.card} className="w-20" />
         <button type="button" aria-label="Close" className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-(--radius) border border-(--separator) text-lg" onClick={onClose}>✕</button>
       </div>
-      <h3 className="font-semibold text-base">{displayName(focus)} and {displayName(p.card)}{p.card.isToken ? <span className="text-(--muted) font-normal"> (token)</span> : null}</h3>
+      <h3 className="font-semibold text-base">{displayName(focus)} and {displayName(p.card)}{p.card.isToken ? <span className="text-(--muted) font-normal"> {tokenLabel(p.card)}</span> : null}</h3>
       <Lines links={p.links.slice(0, 6)} />
       {p.links.length > 6 ? <p className="text-(--muted)">…and {p.links.length - 6} more lines between them.</p> : null}
       <ReadCards cards={[focus, p.card]} />

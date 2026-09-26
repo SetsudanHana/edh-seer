@@ -32,6 +32,8 @@ export interface EngineCard {
   faceOf?: string;
   /** The physical card this node is a face of, or its own name: what a player cuts. */
   physical: string;
+  /** For a token, the deck cards that make it (#519): "Bird (token from Summon: Fat Chocobo)". */
+  madeBy?: readonly string[];
 }
 
 export interface EngineGroup {
@@ -132,6 +134,13 @@ const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  *  unknown card, Mizzix's Mastery's copies -- on the first of "instant or sorcery". Either way a
  *  spellslinger deck's two halves are one plan, so the client folds both into one tag, once, where
  *  links are built; every group, orbit and theme lookup then sees the same key. */
+/** What a token is, said wherever its name is: "(token from Summon: Fat Chocobo)", or "(token)" when
+ *  nothing in the deck is known to make it (owner ruling 2026-09-27, #519). Empty for a real card. */
+export function tokenLabel(c: Pick<EngineCard, "isToken" | "madeBy">): string {
+  if (!c.isToken) return "";
+  return c.madeBy?.length ? `(token from ${c.madeBy.join(", ")})` : "(token)";
+}
+
 export function foldSpellTag(tag: string): string {
   return tag.replace(/:(?:instant|sorcery)$/, ":instant-sorcery");
 }
@@ -209,6 +218,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
   const costByName = new Map(report.cards.map((c) => [c.name, c.manaCost ?? ""]));
   const commanders = new Set(report.commanders);
   const cards = new Map<string, EngineCard>();
+  const makers = new Map((report.tokenNodes ?? []).map((t) => [t.name, t.madeBy ?? []]));
   for (const n of graph.nodes) {
     cards.set(n.id, {
       id: n.id, name: n.label, typeLine: n.typeLine ?? "", text: n.oracleText ?? "", art: n.artCrop,
@@ -217,6 +227,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       roles: n.roles ?? [], score: scoreByName.get(n.label) ?? 0,
       manaCost: n.isToken ? "" : costByName.get(n.cardName ?? n.label) ?? "",
       physical: n.cardName ?? n.id,
+      ...(n.isToken && makers.get(n.label)?.length ? { madeBy: makers.get(n.label) } : {}),
       faceOf: n.cardName && n.cardName !== n.id && n.cardName.split(" // ")[0] !== n.label ? n.cardName.split(" // ")[0] : undefined,
     });
   }
@@ -472,7 +483,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     // The users few other cards feed come first: they are what is particular about this card.
     // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.
     const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
-    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? " (token)" : ""));
+    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? ` ${tokenLabel(c)}` : ""));
     return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options };
   }).sort((a, b) => cutWeight(a) - cutWeight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
   // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"
