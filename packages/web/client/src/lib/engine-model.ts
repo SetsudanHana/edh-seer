@@ -127,8 +127,18 @@ const CARD_TYPES = new Set(["creature", "land", "artifact", "enchantment", "inst
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** A subject as the plural a player says: "creatures", "Clerics", "noncreature spells". */
+/** INSTANTS AND SORCERIES ARE ONE GROUP ON THE PAGE (owner ruling 2026-09-27, #543). The engine keys a
+ *  reason on the type that matched (#507), and where nothing could be matched -- a discard of an
+ *  unknown card, Mizzix's Mastery's copies -- on the first of "instant or sorcery". Either way a
+ *  spellslinger deck's two halves are one plan, so the client folds both into one tag, once, where
+ *  links are built; every group, orbit and theme lookup then sees the same key. */
+export function foldSpellTag(tag: string): string {
+  return tag.replace(/:(?:instant|sorcery)$/, ":instant-sorcery");
+}
+
 export function plural(subject: string): string {
   if (!subject || subject === "any") return "cards";
+  if (subject === "instant-sorcery") return "instants and sorceries";
   if (subject.startsWith("-")) return `non${subject.slice(1)} ${subject === "-land" ? "cards" : "spells"}`;
   // THE PARTY IS NOT A TYPE: `scales:party` (#490) counts up to one each of Cleric, Rogue, Warrior
   // and Wizard, and "Counts your Parties" read as a card type that does not exist.
@@ -224,7 +234,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       const k = `${from}\u0001${to}\u0001${r.tag}\u0001${r.text}`;
       if (seen.has(k)) continue;
       seen.add(k);
-      links.push({ from, to, tag: r.tag, text: r.text, repeat: asRepeat(r.repeatability), perTurn: r.perTurn || undefined });
+      links.push({ from, to, tag: foldSpellTag(r.tag), text: r.text, repeat: asRepeat(r.repeatability), perTurn: r.perTurn || undefined });
     }
   }
 
