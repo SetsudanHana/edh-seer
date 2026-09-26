@@ -35,8 +35,8 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     const main = mainTheme(report);
     if (built && main) {
       for (const s of built.sectors) {
-        if (s.group?.tag === main.tag) s.name = main.name;
-        else if (main.second && s.group?.tag === main.second.tag) s.name = main.second.name;
+        if (s.key === main.tag) s.name = main.name;
+        else if (main.second && s.key === main.second.tag) s.name = main.second.name;
       }
     }
     return built;
@@ -72,6 +72,14 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     drawn.current = { focus: o.focus.id, pos };
   }, [L, o]);
   useEffect(() => { setSel(null); setSector(null); setHover(null); }, [focusId]);
+  // ON A PHONE THE PANEL IS UNDER THE RING, a screen down: a tapped card changed a panel nobody
+  // could see, and two phone seats tapped again thinking the tap was lost (appeal review
+  // 2026-09-26). The panel comes up to meet the tap.
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!narrow || (sel === null && sector === null)) return;
+    panel.current?.scrollIntoView?.({ block: "nearest", behavior: still ? "auto" : "smooth" });
+  }, [sel, sector, narrow, still]);
   if (!o || !L) return null;
 
   const centre = (id: string) => {
@@ -118,9 +126,9 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
             moveFrom={moveFrom} still={still} paused={paused} hover={hover} onHover={setHover} onTap={tap}
             onSector={(s) => { setSector(sectorKey(s)); setSel(null); }} />
         </div>
-        <div key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky
-          ? "lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)]"
-          : "lg:max-h-[calc(100svh-7rem)]"}`} aria-live="polite">
+        <div ref={panel} key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky
+          ? "scroll-mt-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)]"
+          : "scroll-mt-4 lg:max-h-[calc(100svh-7rem)]"}`} aria-live="polite">
           {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
             * word in the trail above the picture, which one seat never found and another called
             * "one word high" (orbit round 1). */}
@@ -140,7 +148,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   );
 }
 
-const sectorKey = (s: OrbitSector) => s.group?.tag ?? "";
+const sectorKey = (s: OrbitSector) => s.key;
 
 /** "Inalla" for "Inalla, Archmage Ritualist"; a back face keeps whose back it is. */
 /** The reader's pause switch for the moving dots, remembered on this device when storage allows.
@@ -426,12 +434,24 @@ export function layoutOrbit(o: OrbitModel, narrow: boolean) {
   const firsts = new Map<string, number>();
   for (const sl of raw) if (sl.kind === "card") { const f = sl.p.card.name.split(",")[0]!; firsts.set(f, (firsts.get(f) ?? 0) + 1); }
   if (firsts.has(o.focus.name.split(",")[0]!)) firsts.set(o.focus.name.split(",")[0]!, 2);
-  const boxes: { x0: number; x1: number; y0: number; y1: number }[] = [];
-  const hit = (b: (typeof boxes)[number]) => boxes.some((o2) => b.x0 < o2.x1 && b.x1 > o2.x0 && b.y0 < o2.y1 && b.y1 > o2.y0);
+  type Box = { x0: number; x1: number; y0: number; y1: number };
+  const boxes: Box[] = [];
+  const angle = (i: number) => -Math.PI / 2 + (2 * Math.PI * i) / Math.max(1, raw.length);
+  // THE DISCS ARE OBSTACLES TOO (appeal review 2026-09-26: "Goblin War Strike" printed over
+  // "Pashalik Mons"'s disc). A name was only kept off names placed before it, so one could land
+  // on a neighbour's disc, and the neighbour's name then on top of it.
+  const discs: (Box & { i: number })[] = raw.flatMap((sl, i) => {
+    if (sl.kind === "gap") return [];
+    const x = cx + R * Math.cos(angle(i)), y = cy + R * Math.sin(angle(i));
+    return [{ i, x0: x - r - 2, x1: x + r + 2, y0: y - r - 2, y1: y + r + 2 }];
+  });
+  const overlaps = (b: Box, o2: Box) => b.x0 < o2.x1 && b.x1 > o2.x0 && b.y0 < o2.y1 && b.y1 > o2.y0;
+  const hitFor = (i: number) => (b: Box) => boxes.some((o2) => overlaps(b, o2)) || discs.some((d) => d.i !== i && overlaps(b, d));
   const slots: Slot[] = [];
   raw.forEach((sl, i) => {
     if (sl.kind === "gap") return;
-    const a = -Math.PI / 2 + (2 * Math.PI * i) / Math.max(1, raw.length);
+    const hit = hitFor(i);
+    const a = angle(i);
     const ca = Math.cos(a), sa = Math.sin(a);
     const x = cx + R * ca, y = cy + R * sa;
     if (sl.kind === "more") { slots.push({ ...sl, x, y, a }); return; }
@@ -449,8 +469,8 @@ export function layoutOrbit(o: OrbitModel, narrow: boolean) {
       const x0 = anchor === "start" ? ax : anchor === "end" ? ax - w : ax - w / 2;
       return { x0, x1: x0 + w, y0: ay - lineH + 3, y1: ay - lineH + 3 + h };
     };
-    for (let k = 0; k < 4 && hit(box()); k++) {
-      if (vertical) ly += Math.sign(sa) * lineH; else { lx += ca * 10; ly += sa * lineH; }
+    for (let k = 0; k < 6 && hit(box()); k++) {
+      if (vertical) ly += Math.sign(sa) * lineH; else { lx += ca * 12; ly += sa * lineH; }
     }
     // Inside the box: at 390px a left-hand name printed as "chaeoman…".
     { const b = box(); if (b.x0 < 2) lx += 2 - b.x0; else if (b.x1 > W - 2) lx -= b.x1 - (W - 2); }

@@ -15,7 +15,8 @@ import { CardFace } from "./engine-parts.js";
  *
  *  Ordered by mana value, then name: these are the cards a player weighs against each other for
  *  the same slot, and cost is the first thing that weighing looks at. Lands have their own chapter.
- *  A wide screen wraps a shelf so every card shows; a phone scrolls it, one row per role. */
+ *  Every card shows, wrapped: a phone scrolled each shelf sideways, and the phone seat never found
+ *  the cards past the fourth (appeal review 2026-09-26). */
 export function RoleShelves({ report, graph }: { report: DeckReport; graph?: CardGraph }) {
   const shelves = useMemo(() => roleShelves(report, graph), [report, graph]);
   if (!shelves.length) return null;
@@ -29,9 +30,9 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
               <b className="block">{label}</b>
               <span className="text-(--muted)">{cards.length} card{cards.length === 1 ? "" : "s"}</span>
             </span>
-            <ul className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 snap-x sm:flex-wrap sm:overflow-visible" aria-label={`${label}: ${cards.length} card${cards.length === 1 ? "" : "s"}`}>
+            <ul className="flex min-w-0 flex-1 flex-wrap gap-2 pb-1" aria-label={`${label}: ${cards.length} card${cards.length === 1 ? "" : "s"}`}>
               {cards.map((c) => (
-                <li key={c.id} className="flex w-[76px] shrink-0 snap-start flex-col gap-1 sm:w-[88px]">
+                <li key={c.id} className="flex w-[76px] shrink-0 flex-col gap-1 sm:w-[88px]">
                   <CardFace card={c} className="w-full" />
                   {/* A card with no art already prints its name in the frame. */}
                   {c.art ? <span className="line-clamp-2 text-xs leading-tight text-(--muted)">{c.name}</span> : null}
