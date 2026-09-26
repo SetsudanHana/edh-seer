@@ -189,3 +189,21 @@ test("an effect the engine has not read does not rank a pair", () => {
   ]);
   expect(m.strongest).toHaveLength(0);
 });
+
+test("a card's back face says whose back it is", () => {
+  const report = {
+    commanders: [], cards: [{ name: "Front // Back", score: 1 }, { name: "Payoff", score: 1 }],
+    edges: [{ a: "Back", b: "Payoff", score: 1, reasons: [{ producer: "Front // Back", producerFace: 1, consumer: "Payoff", tag: "enters:creature", text: "When Back enters, Payoff draws you 1 card" }] }],
+  } as unknown as DeckReport;
+  const graph = {
+    nodes: [
+      { id: "Front // Back", label: "Front", cardName: "Front // Back", copies: 1, types: ["creature"], roles: [] },
+      { id: "face:1:Front // Back", label: "Back", cardName: "Front // Back", copies: 1, types: ["creature"], roles: [] },
+      { id: "Payoff", label: "Payoff", copies: 1, types: ["creature"], roles: [] },
+    ],
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  } as unknown as CardGraph;
+  const m = buildEngineModel(report, graph);
+  expect(m.cards.get("face:1:Front // Back")!.faceOf).toBe("Front");
+  expect(m.cards.get("Front // Back")!.faceOf).toBeUndefined();
+});

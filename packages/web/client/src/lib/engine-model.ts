@@ -27,6 +27,9 @@ export interface EngineCard {
   roles: readonly string[]; score: number;
   /** Printed mana cost from the report, so a cut can be weighed by what it costs (round 6). */
   manaCost: string;
+  /** For a card's other face, the name its front goes by: "Trance Kuja" and "Kuja, Genome
+   *  Sorcerer" read as two different cards (round 12). */
+  faceOf?: string;
 }
 
 export interface EngineGroup {
@@ -193,6 +196,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       isLand: (n.types ?? []).includes("land"), isFace: n.cardName !== undefined && n.cardName !== n.id,
       roles: n.roles ?? [], score: scoreByName.get(n.label) ?? 0,
       manaCost: n.isToken ? "" : costByName.get(n.cardName ?? n.label) ?? "",
+      faceOf: n.cardName && n.cardName !== n.id && n.cardName.split(" // ")[0] !== n.label ? n.cardName.split(" // ")[0] : undefined,
     });
   }
 
@@ -376,6 +380,9 @@ function acts(card: EngineCard, l: Link): boolean {
  *  the same line about Inalla making a token (live round); avoiding the commander instead hid Dour
  *  Port-Mage's real reason, and forcing a new partner on every row made the reasons generic --
  *  "Kindred Discovery draws you a card" is true of any Wizard (round 6). */
+/** A card's name as a list prints it: a back face says whose back it is. */
+export const displayName = (c: EngineCard): string => (c.faceOf ? `${c.name} (back of ${c.faceOf})` : c.name);
+
 /** How much a card does here, for ranking cuts: every repeating link in full, help that happens
  *  once at half, and a link that happens once at a quarter -- counting those at nothing put Ghostly
  *  Flicker, with 26 of them, at the top of Inalla's cuts above cards with six (round 9). A card
@@ -429,7 +436,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
       keep = help.find((x) => x.repeat !== "oneshot") ?? help[0];
     }
     const byScore = (x: EngineCard, y: EngineCard) => y.score - x.score || (x.name < y.name ? -1 : 1);
-    const onceNames = onceWith.sort(byScore).map((c) => c.name);
+    const onceNames = onceWith.sort(byScore).map(displayName);
     const back = backBy.sort(byScore)[0];
     const onceHelp = givesOnce ? `helps ${givesOnce} more once, by finding them or bringing them back` : "";
     let why: string;
@@ -444,7 +451,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     // The users few other cards feed come first: they are what is particular about this card.
     // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.
     const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
-    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => c.name + (c.isToken ? " (token)" : ""));
+    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? " (token)" : ""));
     return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options };
   }).sort((a, b) => weight(a) - weight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
   // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"
@@ -456,7 +463,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
   for (const r of rows) {
     if (r.jobs.length || drivers.has(r.card.id)) continue;
     const twin = !r.keepActs && r.fedBy.length ? cuts.find((x) => !x.keepActs && usersKey(x) === usersKey(r)) : undefined;
-    if (twin) twin.twins.push(r.card.name);
+    if (twin) twin.twins.push(displayName(r.card));
     else if (cuts.length < 6) cuts.push(r);
   }
   const named = new Set<string>();
@@ -476,6 +483,8 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
   for (const r of rows) for (const j of r.jobs) { if (!byJob.has(j)) byJob.set(j, []); byJob.get(j)!.push(r); }
   return {
     cuts: cuts.map(({ options: _, ...r }) => r),
-    jobs: [...byJob.entries()].map(([j, rs]) => [j, rs.map(({ options: _, ...r }) => r)] as [string, CutRow[]]).sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1)),
+    // Each job runs least to most connected, by the number it prints (round 12: the cut ranking's
+    // order broke the box's own rule).
+    jobs: [...byJob.entries()].map(([j, rs]) => [j, rs.map(({ options: _, ...r }) => r).sort((x, y) => x.partners - y.partners || (x.card.name < y.card.name ? -1 : 1))] as [string, CutRow[]]).sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1)),
   };
 }

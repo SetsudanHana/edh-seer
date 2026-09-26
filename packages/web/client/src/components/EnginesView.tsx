@@ -53,7 +53,8 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
     <div className="flex flex-col gap-8 py-2">
       <div className="flex flex-col gap-3">
         <p className="max-w-[70ch]">
-          Your deck mostly does <b>{deckGroups.length} things</b>, listed below. Between them they explain{" "}
+          {/* "6 things, listed below" over three shown read as a miscount (round 12). */}
+          Your deck mostly does <b>{deckGroups.length} things</b>{moreGroups.length ? <>; the {shownGroups.length === deckGroups.length ? "" : `${shownGroups.length} biggest `}are below</> : ", listed below"}. Between them they explain{" "}
           <b>{pct}%</b> of the ways your {m.deckCards} cards work together.
           {m.onceLinks ? (
             <>
@@ -134,7 +135,9 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
         </div>
         {m.jobs.length ? (
           <div className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-            <h3 className="font-semibold text-base">Removal, extra mana and protection</h3>
+            {/* Named from the jobs this deck has: "…and protection" over a deck with none read as
+              * a promise the box did not keep (round 12). */}
+            <h3 className="font-semibold text-base">{listNames(m.jobs.map(([j]) => j.toLowerCase()), 3).replace(/^./, (x) => x.toUpperCase())}</h3>
             <p className="text-(--muted)">These cards are judged by their job, not by links, so compare them with each other. Each group runs from least to most connected; the number is how many other cards in this deck each one works with.</p>
             <ul className="flex flex-col gap-1.5">
               {m.jobs.map(([job, rows]) => (
@@ -183,7 +186,7 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
         </section>
       ) : null}
       {/* Room to scroll the last group out from under the phone sheet. */}
-      {sel ? <div aria-hidden="true" className="h-[55vh] sm:hidden" /> : null}
+      {sel ? <div aria-hidden="true" className="h-[40vh] sm:hidden" /> : null}
     </div>
   );
 }
@@ -404,7 +407,7 @@ function SelectedPanel({ m, id, onClear, onOpenCard }: { m: EngineModel; id: str
   const firsts = ranked.filter((l) => !seen.has(partnerOf(l)) && seen.add(partnerOf(l)));
   const lines = [...firsts, ...ranked.filter((l) => !firsts.includes(l))].slice(0, 5);
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 flex max-h-[55vh] flex-col gap-2 overflow-y-auto rounded-t-(--radius) border border-(--foreground) bg-(--surface) p-3 text-sm shadow-[0_-8px_24px_rgb(0_0_0/0.5)] sm:static sm:z-auto sm:mb-1 sm:max-h-none sm:overflow-visible sm:rounded-(--radius) sm:shadow-none" aria-live="polite">
+    <div className="fixed inset-x-0 bottom-0 z-40 flex max-h-[40vh] flex-col gap-2 overflow-y-auto rounded-t-(--radius) border border-(--foreground) bg-(--surface) p-3 text-sm shadow-[0_-8px_24px_rgb(0_0_0/0.5)] sm:static sm:z-auto sm:mb-1 sm:max-h-none sm:overflow-visible sm:rounded-(--radius) sm:shadow-none" aria-live="polite">
       {/* On a phone the way out stays in reach at the top of the sheet: the buttons at its foot
         * sat below the edge of the screen (round 11). */}
       <div className="sticky -top-3 z-10 -mx-3 -mt-3 flex items-start gap-3 bg-(--surface) px-3 pt-3 pb-1 sm:static sm:m-0 sm:p-0">
