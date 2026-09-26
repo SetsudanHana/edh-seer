@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, displayName, type EngineCard } from "../lib/engine-model.js";
+import { buildEngineModel, displayName, type EngineCard, type Repeat } from "../lib/engine-model.js";
 import { buildOrbit, visiblePartners, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 import { ReasonText } from "./card-drawer.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
@@ -29,6 +29,9 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
   const [sel, setSel] = useState<string | null>(null);
   const [sector, setSector] = useState<string | null>(null);
   const [trail, setTrail] = useState<string[]>([]);
+  const [arrival, setArrival] = useState<{ dx: number; dy: number } | null>(null);
+  const still = useReducedMotion();
+  const L = useMemo(() => (o ? layoutOrbit(o, narrow) : null), [o, narrow]);
   useEffect(() => { setSel(null); setSector(null); }, [focusId]);
   useEffect(() => {
     if (!onBack) return;
@@ -41,16 +44,24 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onBack]);
-  if (!o) return null;
+  if (!o || !L) return null;
 
   const centre = (id: string) => {
     if (id === focusId) return;
+    const from = L.slots.find((x) => x.kind === "card" && x.p.card.id === id);
+    setArrival(from ? { dx: from.x - L.cx, dy: from.y - L.cy } : null);
     setTrail((t) => [...t.filter((x) => x !== id), focusId].slice(-6));
     onFocus(id);
   };
   // One way back, a step at a time: a trail of names above the picture beside this button and
   // "Back to the card list" made three routes on one phone screen (orbit round 2).
-  const back = (i: number) => { const id = trail[i]!; setTrail(trail.slice(0, i)); onFocus(id); };
+  const back = (i: number) => {
+    const id = trail[i]!;
+    const from = L.slots.find((x) => x.kind === "card" && x.p.card.id === id);
+    setArrival(from ? { dx: from.x - L.cx, dy: from.y - L.cy } : null);
+    setTrail(trail.slice(0, i));
+    onFocus(id);
+  };
   const tap = (id: string) => {
     if (id === focusId) { setSel(null); setSector(null); return; }
     if (sel === id) centre(id);
@@ -67,10 +78,18 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
         {onBack ? <button type="button" className="mr-2 min-h-11 rounded-(--radius) border border-(--separator) px-3" onClick={onBack}>Back to the card list</button> : null}
         <b className="text-(--foreground)" aria-current="page">{focusName}</b>
       </nav>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <Orbit o={o} narrow={narrow} sel={sel} sector={openSector ? sector : null} onTap={tap}
-          onSector={(s) => { setSector(sectorKey(s)); setSel(null); }} />
-        <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:max-w-[440px]" aria-live="polite">
+      {/* ON A WIDE SCREEN THE PICTURE TAKES THE ROOM: at 1920 the ring stopped at 880px and the
+        * panel at 440px, leaving a third of the screen empty (owner, 2026-09-26). The ring fills
+        * its column up to the screen's height, and the panel stays in view beside it. */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-center lg:gap-8">
+        {/* The ring's width follows the screen's height (the box is 880 by 720), so the whole ring
+          * and its names stay on screen; the ring and panel sit together, centred. */}
+        <div className="min-w-0 lg:w-[min(calc(100vw-38rem),calc((100svh-17rem)*1.2222))] lg:shrink-0">
+          {/* Keyed by the card in the middle, so a new centre replays the ring flying out. */}
+          <Orbit key={`${o.focus.id}|${narrow}`} o={o} L={L} narrow={narrow} sel={sel} sector={openSector ? sector : null} arrival={arrival} still={still} onTap={tap}
+            onSector={(s) => { setSector(sectorKey(s)); setSel(null); }} />
+        </div>
+        <div key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className="orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:sticky lg:top-36 lg:max-h-[calc(100svh-10rem)] lg:w-[min(34rem,40vw)] lg:shrink-0 lg:overflow-y-auto" aria-live="polite">
           {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
             * word in the trail above the picture, which one seat never found and another called
             * "one word high" (orbit round 1). */}
@@ -83,7 +102,7 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
             ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => setSel(null)} />
             : openSector
               ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => setSel(id)} onClose={() => setSector(null)} />
-              : <Summary o={o} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
+              : <Summary o={o} still={still} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
         </div>
       </div>
     </div>
@@ -93,6 +112,20 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
 const sectorKey = (s: OrbitSector) => s.group?.tag ?? "";
 
 /** "Inalla" for "Inalla, Archmage Ritualist"; a back face keeps whose back it is. */
+/** Whether the reader asked for less motion, following changes. */
+function useReducedMotion(): boolean {
+  const query = "(prefers-reduced-motion: reduce)";
+  const [still, setStill] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return;
+    const on = () => setStill(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return still;
+}
+
 function firstPart(c: EngineCard): string {
   const front = c.name.split(",")[0]!;
   return c.faceOf ? `${front} (back of ${c.faceOf.split(",")[0]})` : front;
@@ -127,28 +160,50 @@ export function nameLines(c: EngineCard, clash: boolean, max: number): string[] 
   return out;
 }
 
-function Orbit({ o, narrow, sel, sector, onTap, onSector }: {
-  o: OrbitModel; narrow: boolean; sel: string | null; sector: string | null;
+function Orbit({ o, L, narrow, sel, sector, arrival, still, onTap, onSector }: {
+  o: OrbitModel; L: ReturnType<typeof layoutOrbit>; narrow: boolean; sel: string | null; sector: string | null;
+  /** Where the card now in the middle was on the ring before, so it glides in from there. */
+  arrival: { dx: number; dy: number } | null;
+  /** The reader asked for reduced motion: nothing moves, and arrows carry the direction. */
+  still: boolean;
   onTap: (id: string) => void; onSector: (s: OrbitSector) => void;
 }) {
-  const { W, H, cx, cy, R, r, fr, lineH, slots } = layoutOrbit(o, narrow);
+  const { W, H, cx, cy, R, r, fr, lineH, slots } = L;
   const clip = `orbit-clip-${narrow ? "n" : "w"}`;
   // What is lit: the tapped card, or every card of the tapped "+N" group (round 1: tapping "+14"
   // changed the panel and nothing on the picture).
   const lit = (card: string, s: OrbitSector) => (sel ? sel === card : sector !== null ? sectorKey(s) === sector : true);
   const dimming = sel !== null || sector !== null;
+  // The discs fly out from the middle one after another, the whole ring in about half a second.
+  const step = Math.min(24, 480 / Math.max(1, slots.length));
+  const fly = (x: number, y: number, i: number) => ({ "--fx": `${cx - x}px`, "--fy": `${cy - y}px`, "--d": `${120 + i * step}ms` }) as React.CSSProperties;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${displayName(o.focus)} and the ${o.direct + o.directTokens} cards it works with`}
-      className="w-full shrink-0 select-none lg:w-[min(880px,62%)]" style={{ maxWidth: W }}>
+      className="block h-auto w-full select-none">
       <defs><clipPath id={clip} clipPathUnits="objectBoundingBox"><circle cx={0.5} cy={0.5} r={0.5} /></clipPath></defs>
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--separator)" />
-      {slots.map((sl) => {
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--separator)" className="orbit-fade" />
+      {slots.map((sl, i) => {
         if (sl.kind !== "card") return null;
         const on = lit(sl.p.card.id, sl.s);
-        return <line key={`l-${sl.p.card.id}`} x1={cx} y1={cy} x2={sl.x} y2={sl.y} stroke={sl.s.hue}
-          strokeWidth={sel === sl.p.card.id ? 4 : sl.p.once ? 1.5 : 2.5} strokeDasharray={sl.p.once ? "5 5" : undefined} strokeOpacity={dimming && !on ? 0.2 : 0.9} />;
+        const dir = flowOf(sl.p, o.focus.id);
+        return (
+          <g key={`l-${sl.p.card.id}`} className="orbit-fade" style={{ "--d": `${60 + i * step}ms` } as React.CSSProperties}>
+            <line x1={cx} y1={cy} x2={sl.x} y2={sl.y} stroke={sl.s.hue}
+              strokeWidth={sel === sl.p.card.id ? 4 : sl.p.once ? 1.5 : 2.5} strokeDasharray={sl.p.once ? "5 5" : undefined} strokeOpacity={dimming && !on ? 0.2 : 0.75} />
+            {still
+              ? <Arrows x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} hue={sl.s.hue} faint={dimming && !on} />
+              : on ? <Flow x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} hue={sl.s.hue} seed={i} strong={sel === sl.p.card.id} dot={narrow ? 2.6 : 3.2} /> : null}
+          </g>
+        );
       })}
-      {slots.map((sl) => {
+      {!still ? (
+        // The middle breathes: a slow ring, so the picture reads as live before anything is tapped.
+        <circle cx={cx} cy={cy} r={fr + 4} fill="none" stroke="var(--foreground)" strokeWidth={1.5} opacity={0} pointerEvents="none">
+          <animate attributeName="r" values={`${fr + 4};${fr + 26}`} dur="3.2s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.35;0" dur="3.2s" repeatCount="indefinite" />
+        </circle>
+      ) : null}
+      {slots.map((sl, i) => {
         const { x, y } = sl;
         if (sl.kind === "more") {
           const on = sector === sectorKey(sl.s);
@@ -156,8 +211,10 @@ function Orbit({ o, narrow, sel, sector, onTap, onSector }: {
             <g key={`m-${sl.s.name}`} transform={`translate(${x},${y})`} role="button" tabIndex={0} className={DISC}
               aria-label={`${sl.n} more: ${sl.s.name}${sl.once ? `, ${sl.once} of them only once` : ""}`} aria-pressed={on} opacity={dimming && !on ? 0.45 : 1}
               onClick={() => onSector(sl.s)} onKeyDown={key(() => onSector(sl.s))}>
-              <circle r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={on ? 4 : 2} />
-              <text textAnchor="middle" dy={5} fontSize={narrow ? 13 : 14} fill="var(--foreground)">+{sl.n}</text>
+              <g className="orbit-body orbit-fly" style={fly(x, y, i)}>
+                <circle className="orbit-ring" r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={on ? 4 : 2} />
+                <text textAnchor="middle" dy={5} fontSize={narrow ? 13 : 14} fill="var(--foreground)">+{sl.n}</text>
+              </g>
             </g>
           );
         }
@@ -167,29 +224,99 @@ function Orbit({ o, narrow, sel, sector, onTap, onSector }: {
           <g key={card.id} transform={`translate(${x},${y})`} role="button" tabIndex={0} className={DISC}
             aria-label={`${displayName(card)}${card.isToken ? " (token)" : ""}`} aria-pressed={sel === card.id}
             opacity={dimming && !on ? 0.45 : 1} onClick={() => onTap(card.id)} onKeyDown={key(() => onTap(card.id))}>
-            <circle r={r + 2} fill="var(--background)" stroke={sl.s.hue} strokeWidth={sel === card.id || (sector !== null && on) ? 4 : 2} strokeDasharray={card.isToken ? "3 3" : undefined} />
-            {card.art ? <image href={card.art} x={-r} y={-r} width={2 * r} height={2 * r} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" /> : null}
-            <text x={sl.lx} y={sl.ly} textAnchor={sl.anchor} fontSize={narrow ? 13 : 12} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={4} strokeLinejoin="round">
-              {sl.lines.map((l, i) => <tspan key={i} x={sl.lx} dy={i ? lineH : 0}>{l}</tspan>)}
-            </text>
+            <g className="orbit-body orbit-fly" style={fly(x, y, i)}>
+              <circle className="orbit-ring" r={r + 2} fill="var(--background)" stroke={sl.s.hue} strokeWidth={sel === card.id || (sector !== null && on) ? 4 : 2} strokeDasharray={card.isToken ? "3 3" : undefined} />
+              {card.art ? <image href={card.art} x={-r} y={-r} width={2 * r} height={2 * r} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" /> : null}
+              <text x={sl.lx} y={sl.ly} textAnchor={sl.anchor} fontSize={narrow ? 13 : 12} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={4} strokeLinejoin="round">
+                {sl.lines.map((l, j) => <tspan key={j} x={sl.lx} dy={j ? lineH : 0}>{l}</tspan>)}
+              </text>
+            </g>
           </g>
         );
       })}
       <g transform={`translate(${cx},${cy})`} role="button" tabIndex={0} className={DISC} aria-label={`${displayName(o.focus)}, in the middle`}
         onClick={() => onTap(o.focus.id)} onKeyDown={key(() => onTap(o.focus.id))}>
-        <circle r={fr + 3} fill="var(--background)" stroke="var(--foreground)" strokeWidth={3} />
-        {o.focus.art ? <image href={o.focus.art} x={-fr} y={-fr} width={2 * fr} height={2 * fr} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" /> : null}
-        <text y={fr + 20} textAnchor="middle" fontSize={narrow ? 13 : 15} fontWeight={600} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={5} strokeLinejoin="round">
-          {firstPart(o.focus)}
-        </text>
+        {/* A centred card glides in from where its disc was on the ring. */}
+        <g className="orbit-fly orbit-arrive" style={{ "--fx": `${arrival?.dx ?? 0}px`, "--fy": `${arrival?.dy ?? 0}px`, "--d": "0ms" } as React.CSSProperties}>
+          <circle className="orbit-ring" r={fr + 3} fill="var(--background)" stroke="var(--foreground)" strokeWidth={3} />
+          {o.focus.art ? <image href={o.focus.art} x={-fr} y={-fr} width={2 * fr} height={2 * fr} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" /> : null}
+          <text y={fr + 20} textAnchor="middle" fontSize={narrow ? 13 : 15} fontWeight={600} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={5} strokeLinejoin="round">
+            {firstPart(o.focus)}
+          </text>
+        </g>
       </g>
     </svg>
   );
 }
 
+/** Which way a partner's lines run: into the middle (it feeds the focus), out of it, or both. */
+export function flowOf(p: OrbitPartner, focus: string): { in: boolean; out: boolean; repeat: Repeat } {
+  const rank: Record<Repeat, number> = { static: 0, triggered: 1, activated: 2, oneshot: 3 };
+  const repeat = p.links.map((l) => l.repeat).sort((a, b) => rank[a] - rank[b])[0] ?? "triggered";
+  return { in: p.links.some((l) => l.to === focus), out: p.links.some((l) => l.from === focus), repeat };
+}
+
+/** How often a dot sets off, by how often the link works: a steady stream for always on, a beat for
+ *  every time, a slower one for on demand, and a lone dot now and then for once. */
+const PERIOD: Record<Repeat, number> = { static: 1, triggered: 1.9, activated: 2.6, oneshot: 6 };
+const SPEED = 110;
+
+/** THE EVENTS, MOVING (owner, 2026-09-26: "I really liked the animations of events flowing out or
+ *  in"). Dots travel along the spoke from the card that gives to the card that gains, the way the
+ *  board's dashes crawled. SMIL, not a frame loop: the browser runs it, and a ring of twenty spokes
+ *  costs no script. */
+function Flow({ x, y, cx, cy, r, fr, dir, hue, seed, strong, dot }: {
+  x: number; y: number; cx: number; cy: number; r: number; fr: number;
+  dir: ReturnType<typeof flowOf>; hue: string; seed: number; strong: boolean; dot: number;
+}) {
+  const len = Math.hypot(x - cx, y - cy);
+  const ux = (x - cx) / len, uy = (y - cy) / len;
+  const inner = { x: cx + ux * (fr + 6), y: cy + uy * (fr + 6) }, outer = { x: x - ux * (r + 5), y: y - uy * (r + 5) };
+  const travel = Math.hypot(outer.x - inner.x, outer.y - inner.y) / (strong ? SPEED * 1.4 : SPEED);
+  const period = Math.max(travel, travel * PERIOD[dir.repeat] * (strong ? 0.6 : 1));
+  const f = travel / period;
+  const dots: { path: string; begin: number }[] = [];
+  const add = (a: typeof inner, b: typeof inner, offset: number) => {
+    const n = dir.repeat === "static" ? 2 : 1;
+    for (let k = 0; k < n; k++) dots.push({ path: `M${a.x},${a.y} L${b.x},${b.y}`, begin: -(((seed * 0.53 + offset) % 1) * period + (k * period) / n) });
+  };
+  if (dir.in) add(outer, inner, 0);
+  if (dir.out) add(inner, outer, 0.5);
+  return (
+    <g pointerEvents="none">
+      {dots.map((d, k) => (
+        <circle key={k} r={strong ? dot * 1.4 : dot} fill={hue} stroke="var(--background)" strokeWidth={1} opacity={0}>
+          <animateMotion path={d.path} dur={`${period}s`} begin={`${d.begin}s`} repeatCount="indefinite" keyPoints="0;1;1" keyTimes={`0;${f};1`} calcMode="linear" />
+          <animate attributeName="opacity" values="0;1;1;0;0" keyTimes={`0;${f * 0.12};${f * 0.85};${f};1`} dur={`${period}s`} begin={`${d.begin}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </g>
+  );
+}
+
+/** With motion off, the direction is an arrowhead partway along the spoke. */
+function Arrows({ x, y, cx, cy, r, fr, dir, hue, faint }: {
+  x: number; y: number; cx: number; cy: number; r: number; fr: number; dir: ReturnType<typeof flowOf>; hue: string; faint: boolean;
+}) {
+  const len = Math.hypot(x - cx, y - cy);
+  const ux = (x - cx) / len, uy = (y - cy) / len;
+  const at = (t: number, towardCentre: boolean) => {
+    const d = fr + (len - fr - r) * t;
+    const px = cx + ux * d, py = cy + uy * d;
+    const deg = (Math.atan2(uy, ux) * 180) / Math.PI + (towardCentre ? 180 : 0);
+    return <path key={`${t}${towardCentre}`} d="M5,0 L-4,-4 L-4,4 Z" fill={hue} opacity={faint ? 0.3 : 0.95} transform={`translate(${px},${py}) rotate(${deg})`} />;
+  };
+  return (
+    <g pointerEvents="none" data-testid="orbit-arrows">
+      {dir.in ? at(dir.out ? 0.4 : 0.5, true) : null}
+      {dir.out ? at(dir.in ? 0.62 : 0.5, false) : null}
+    </g>
+  );
+}
+
 /** No browser outline on a disc: SVG draws it as a box around the name. A keyboard focus
  *  thickens the disc's own ring instead. */
-const DISC = "group cursor-pointer outline-none [&>circle]:group-focus-visible:stroke-(--accent) [&>circle]:group-focus-visible:[stroke-width:5]";
+const DISC = "orbit-disc group cursor-pointer outline-none [&_.orbit-ring]:group-focus-visible:stroke-(--accent) [&_.orbit-ring]:group-focus-visible:[stroke-width:5]";
 
 type Slot = { x: number; y: number; a: number } & (
   | { kind: "card"; p: OrbitPartner; s: OrbitSector; lines: string[]; lx: number; ly: number; anchor: "start" | "middle" | "end" }
@@ -301,7 +428,7 @@ function Through({ t, onCentre }: { t: OrbitModel["through"][number]; onCentre: 
   );
 }
 
-function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void }) {
+function Summary({ o, still, onSector, onCentre }: { o: OrbitModel; still: boolean; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void }) {
   const name = displayName(o.focus);
   const first = firstPart(o.focus);
   return (
@@ -330,7 +457,7 @@ function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: Orbit
           ))}
         </ul>
       ) : null}
-      <p className="text-xs text-(--muted)">A solid line keeps working; a dashed line works only once. A dashed ring is a token. A "+" disc holds the rest of its group: tap it for the list.</p>
+      <p className="text-xs text-(--muted)">{still ? "Arrows point" : "Dots travel"} from the card that gives to the card that gains. A solid line keeps working; a dashed line works only once. A dashed ring is a token. A "+" disc holds the rest of its group: tap it for the list.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>

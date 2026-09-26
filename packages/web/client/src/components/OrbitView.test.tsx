@@ -111,3 +111,29 @@ test("a name in a Through list opens its own line and both cards' text", async (
   expect(screen.getByRole("button", { name: "Put Reducer in the middle" })).toBeInTheDocument();
   expect(screen.getAllByText("Read both cards").length).toBeGreaterThan(0);
 });
+
+test("dots run from the card that gives to the card that gains", async () => {
+  const { flowOf } = await import("./OrbitView.js");
+  const { report, graph } = engineDeck();
+  const o = buildOrbit(buildEngineModel(report, graph), "Payoff A")!;
+  const all = o.sectors.flatMap((s) => s.partners);
+  // A Cleric feeds Payoff A: in only. Payoff B and Payoff A feed each other: both ways.
+  expect(flowOf(all.find((p) => p.card.id === "Cleric 1")!, "Payoff A")).toMatchObject({ in: true, out: false });
+  expect(flowOf(all.find((p) => p.card.id === "Payoff B")!, "Payoff A")).toMatchObject({ in: true, out: true });
+});
+
+test("with reduced motion nothing animates, and arrows carry the direction", () => {
+  const mm = window.matchMedia;
+  window.matchMedia = ((q: string) => ({ matches: q.includes("reduced-motion"), media: q, addEventListener() {}, removeEventListener() {} })) as never;
+  try {
+    const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
+    expect(container.querySelector("animateMotion")).toBeNull();
+    expect(container.querySelectorAll("[data-testid=orbit-arrows]").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Arrows point from the card that gives/)).toBeInTheDocument();
+  } finally { window.matchMedia = mm; }
+});
+
+test("with motion on, the spokes carry moving dots", () => {
+  const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
+  expect(container.querySelectorAll("animateMotion").length).toBeGreaterThan(0);
+});

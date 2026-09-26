@@ -1878,3 +1878,52 @@ html[data-report] #root main { padding-top: 1.5rem; }
 
 /* The gutter's wide value; see `--gutter` in :root. */
 @media (min-width: 40rem) { :root { --gutter: 2rem; } }
+
+/* THE ORBIT, ALIVE (owner, 2026-09-26: "the orbit page feels static"). The ring flies out from the
+ * middle, a centred card glides in from where its disc was, discs lift under the pointer and the
+ * panel slides in when it changes. The flowing dots are SMIL in the SVG itself. `backwards`, not
+ * `both`: after the entrance the element keeps no animated transform, so the hover lift works. */
+@keyframes orbit-fly {
+  from {
+    opacity: 0;
+    transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(0.35);
+  }
+}
+@keyframes orbit-fade {
+  from {
+    opacity: 0;
+  }
+}
+.orbit-fly {
+  animation: orbit-fly 560ms cubic-bezier(0.2, 0.8, 0.25, 1.1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+.orbit-arrive {
+  animation-duration: 480ms;
+}
+.orbit-fade {
+  animation: orbit-fade 480ms ease-out backwards;
+  animation-delay: var(--d, 0ms);
+}
+.orbit-body {
+  transition: transform 160ms ease-out;
+}
+.orbit-disc:hover > .orbit-body {
+  transform: scale(1.1);
+}
+.orbit-panel-in {
+  animation: reveal-up 240ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-fly,
+  .orbit-fade,
+  .orbit-panel-in {
+    animation: none;
+  }
+  .orbit-body {
+    transition: none;
+  }
+  .orbit-disc:hover > .orbit-body {
+    transform: none;
+  }
+}
