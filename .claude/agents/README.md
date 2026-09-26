@@ -97,6 +97,11 @@ the browser, so that cross-check is what keeps the classification honest.
    disclosure", and that distinction decides what to fix. Same for `Trim 3/5/10`, whose
    output exists only after a click and which therefore BLOCKED the cut task for two
    seats.
+1b'. **Open the report's folds, not the site's.** The 2026-09-26 round opened every `<details>` on
+   the page, which included the site header's MORE menu; it then covered the top right of every
+   expanded slice. Open only the folds inside the report, and capture click-only lists ("Show 2
+   more", "Show all N", "Trim 3/5/10") after clicking them: first-cuts could not reach 8 cuts
+   because two sat behind a closed "Show 2 more".
 1c. **Do not down-scale.** The Cards tab is a tall page; captured whole and shrunk ~2.5x
    it sits at the edge of legibility, and three seats had to hedge every reading from it.
    Capture long tabs in viewport-sized slices instead, as the phone seat already gets.
