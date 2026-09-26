@@ -33,6 +33,10 @@ export interface OrbitModel {
   direct: number;
   /** Deck cards one step out, each with the direct partners that link it in. */
   near: { card: EngineCard; via: EngineCard[] }[];
+  /** The same cards, grouped by the one partner each goes through: "31 cards through Harmonic
+   *  Prodigy; … and 21 others", thirty rows deep, read as a wall on every seat (orbit round 1).
+   *  Each card sits under the partner that links the most of them, so the fewest groups cover all. */
+  through: { via: EngineCard; cards: EngineCard[]; example?: Link }[];
   /** Deck cards, lands aside, that don't reach the focus in two steps. */
   far: EngineCard[];
 }
@@ -81,7 +85,7 @@ export function buildOrbit(m: EngineModel, focusId: string): OrbitModel | null {
   }
   near.sort((a, b) => b.via.length - a.via.length || a.card.name.localeCompare(b.card.name));
   far.sort((a, b) => a.name.localeCompare(b.name));
-  return { focus, sectors: ordered, direct: nb.size, near, far };
+  return { focus, sectors: ordered, direct: nb.size, near, through: groupThrough(m, near), far };
 }
 
 /** Which partners get a disc when there is room for `cap`: each sector keeps a share by its size,
@@ -100,4 +104,24 @@ export function visiblePartners(o: OrbitModel, cap: number): { sector: OrbitSect
     const n = Math.min(s.partners.length, quota[i]!);
     return { sector: s, shown: s.partners.slice(0, n), hidden: s.partners.length - n };
   });
+}
+
+/** Greedy cover: the partner linking the most remaining cards takes them, then the next. */
+function groupThrough(m: EngineModel, near: OrbitModel["near"]): OrbitModel["through"] {
+  const left = new Map(near.map((n) => [n.card.id, n]));
+  const out: OrbitModel["through"] = [];
+  while (left.size) {
+    const count = new Map<string, number>();
+    for (const n of left.values()) for (const v of n.via) count.set(v.id, (count.get(v.id) ?? 0) + 1);
+    const [best] = [...count.entries()].sort((a, b) => b[1] - a[1] || (m.cards.get(b[0])!.score - m.cards.get(a[0])!.score) || a[0].localeCompare(b[0]));
+    if (!best) break;
+    const via = m.cards.get(best[0])!;
+    const cards = [...left.values()].filter((n) => n.via.some((v) => v.id === via.id)).map((n) => n.card);
+    for (const c of cards) left.delete(c.id);
+    // One sentence to check the group by: a repeating one, from the best-known card in it.
+    const links = cards.flatMap((c) => m.partners.get(c.id)?.get(via.id)?.links ?? []);
+    const example = links.find((l) => l.repeat !== "oneshot") ?? links[0];
+    out.push({ via, cards: cards.sort((a, b) => a.name.localeCompare(b.name)), example });
+  }
+  return out;
 }

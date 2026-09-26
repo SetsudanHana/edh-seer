@@ -31,3 +31,11 @@ test("when the ring is full every sector keeps a disc, and the rest are counted"
   expect(vis.reduce((t, v) => t + v.shown.length + v.hidden, 0)).toBe(11);
   expect(vis.reduce((t, v) => t + v.shown.length, 0)).toBeLessThanOrEqual(Math.max(4, o.sectors.length));
 });
+
+test("the cards one step out are grouped under the fewest partners that cover them", () => {
+  const o = buildOrbit(model(), "Payoff A")!;
+  expect(o.through.reduce((t, g) => t + g.cards.length, 0)).toBe(o.near.length);
+  const ids = o.through.flatMap((g) => g.cards.map((c) => c.id));
+  expect(new Set(ids).size).toBe(ids.length);
+  expect(o.through.every((g) => g.example)).toBe(true);
+});

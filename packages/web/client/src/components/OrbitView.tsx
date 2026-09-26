@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, displayName, listNames, type EngineCard } from "../lib/engine-model.js";
-import { buildOrbit, visiblePartners, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
-import { Art, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
+import { buildEngineModel, displayName, type EngineCard } from "../lib/engine-model.js";
+import { buildOrbit, visiblePartners, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
+import { ReasonText } from "./card-drawer.js";
+import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
 
 /** THE ONE-CARD VIEW AS AN ORBIT (graph evaluation 2026-09-25, design B; replaces `EgoView`).
  *
@@ -13,7 +14,8 @@ import { Art, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-
  *  cards one step further out and the ones that don't reach the focus at all.
  *
  *  A TAP READS, A SECOND TAP MOVES: the rule `EgoView` settled on, so a mis-aimed tap never throws
- *  the reader somewhere else. Where they have been is a trail above the picture. */
+ *  the reader somewhere else. Where they have been is a trail above the picture, and the card they
+ *  came from is a button at the top of the panel. */
 export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
   report: DeckReport; graph: CardGraph;
   focusId: string;
@@ -54,7 +56,8 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
   };
   const focusName = displayName(o.focus);
   const selected = sel ? o.sectors.flatMap((s) => s.partners).find((p) => p.card.id === sel) : undefined;
-  const openSector = sector !== null ? o.sectors.find((s) => (s.group?.tag ?? "") === sector) : undefined;
+  const openSector = sector !== null ? o.sectors.find((s) => sectorKey(s) === sector) : undefined;
+  const prev = trail.length ? m.cards.get(trail[trail.length - 1]!) : undefined;
 
   return (
     <div className="flex flex-col gap-3 py-2">
@@ -62,39 +65,82 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
         {onBack ? <button type="button" className="mr-2 min-h-11 rounded-(--radius) border border-(--separator) px-3" onClick={onBack}>Back to the card list</button> : null}
         {trail.map((id, i) => (
           <span key={id} className="flex items-center gap-1">
-            <button type="button" className="min-h-11 underline decoration-dotted underline-offset-4 hover:text-(--foreground)" onClick={() => back(i)}>{short(m.cards.get(id)!, 24)}</button>
+            <button type="button" className="min-h-11 underline decoration-dotted underline-offset-4 hover:text-(--foreground)" onClick={() => back(i)}>{firstPart(m.cards.get(id)!)}</button>
             <span aria-hidden="true">›</span>
           </span>
         ))}
         <b className="text-(--foreground)" aria-current="page">{focusName}</b>
       </nav>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <Orbit o={o} narrow={narrow} sel={sel} onTap={tap} onSector={(s) => { setSector(s.group?.tag ?? ""); setSel(null); }} />
+        <Orbit o={o} narrow={narrow} sel={sel} sector={openSector ? sector : null} onTap={tap}
+          onSector={(s) => { setSector(sectorKey(s)); setSel(null); }} />
         <div className="flex min-w-0 flex-1 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:max-w-[440px]" aria-live="polite">
+          {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
+            * word in the trail above the picture, which one seat never found and another called
+            * "one word high" (orbit round 1). */}
+          {prev && !selected && !openSector ? (
+            <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={() => back(trail.length - 1)}>
+              ← Back to {displayName(prev)}
+            </button>
+          ) : null}
           {selected
             ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => setSel(null)} />
             : openSector
-              ? <SectorPanel s={openSector} focusName={focusName} onPick={(id) => setSel(id)} onClose={() => setSector(null)} />
-              : <Summary o={o} onSector={(s) => setSector(s.group?.tag ?? "")} onCentre={centre} />}
+              ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => setSel(id)} onClose={() => setSector(null)} />
+              : <Summary o={o} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
         </div>
       </div>
     </div>
   );
 }
 
-/** Before the comma, then cut to fit: "Inalla" for "Inalla, Archmage Ritualist". */
-function short(c: EngineCard, max: number): string {
-  const n = displayName(c).split(",")[0]!;
-  return n.length > max ? `${n.slice(0, max - 1).trimEnd()}…` : n;
+const sectorKey = (s: OrbitSector) => s.group?.tag ?? "";
+
+/** "Inalla" for "Inalla, Archmage Ritualist"; a back face keeps whose back it is. */
+function firstPart(c: EngineCard): string {
+  const front = c.name.split(",")[0]!;
+  return c.faceOf ? `${front} (back of ${c.faceOf.split(",")[0]})` : front;
 }
 
-function Orbit({ o, narrow, sel, onTap, onSector }: {
-  o: NonNullable<ReturnType<typeof buildOrbit>>; narrow: boolean; sel: string | null;
+/** "5 cards, 1 of them only once": "5, 1 only once" read as two numbers (orbit round 1). */
+export function countText(n: number, once: number): string {
+  const cards = `${n} card${n === 1 ? "" : "s"}`;
+  if (!once) return cards;
+  if (once === n) return n === 1 ? `${cards}, only once` : n === 2 ? `${cards}, both only once` : `${cards}, all only once`;
+  return `${cards}, ${once} of them only once`;
+}
+
+/** A disc's name on at most two lines, cut only when it still doesn't fit. Before the comma, unless
+ *  another card on the ring shares that part: two discs both read "Yuna" (orbit round 1). */
+export function nameLines(c: EngineCard, clash: boolean, max: number): string[] {
+  const base = clash ? c.name : c.name.split(",")[0]!;
+  const cut = (t: string) => (t.length > max ? `${t.slice(0, max - 1).trimEnd()}…` : t);
+  // What the card IS never gets cut: a wrapped "Coruscation Mage (token)" lost its "(token)".
+  const extra = c.isToken ? "(token)" : c.faceOf ? `(back of ${c.faceOf.split(",")[0]})` : "";
+  if (extra) return [cut(base), cut(extra)];
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of base.split(/\s+/)) {
+    if (!cur) cur = w;
+    else if (`${cur} ${w}`.length <= max) cur = `${cur} ${w}`;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  const out = lines.slice(0, 2).map(cut);
+  if (lines.length > 2) out[1] = `${out[1]!.slice(0, max - 1).trimEnd()}…`;
+  return out;
+}
+
+function Orbit({ o, narrow, sel, sector, onTap, onSector }: {
+  o: OrbitModel; narrow: boolean; sel: string | null; sector: string | null;
   onTap: (id: string) => void; onSector: (s: OrbitSector) => void;
 }) {
-  const L = layoutOrbit(o, narrow);
-  const { W, H, cx, cy, R, r, fr, slots } = L;
+  const { W, H, cx, cy, R, r, fr, lineH, slots } = layoutOrbit(o, narrow);
   const clip = `orbit-clip-${narrow ? "n" : "w"}`;
+  // What is lit: the tapped card, or every card of the tapped "+N" group (round 1: tapping "+14"
+  // changed the panel and nothing on the picture).
+  const lit = (card: string, s: OrbitSector) => (sel ? sel === card : sector !== null ? sectorKey(s) === sector : true);
+  const dimming = sel !== null || sector !== null;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${displayName(o.focus)} and the ${o.direct} cards it works with`}
       className="w-full shrink-0 select-none lg:w-[min(880px,62%)]" style={{ maxWidth: W }}>
@@ -102,31 +148,33 @@ function Orbit({ o, narrow, sel, onTap, onSector }: {
       <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--separator)" />
       {slots.map((sl) => {
         if (sl.kind !== "card") return null;
-        const lit = sel === sl.p.card.id;
+        const on = lit(sl.p.card.id, sl.s);
         return <line key={`l-${sl.p.card.id}`} x1={cx} y1={cy} x2={sl.x} y2={sl.y} stroke={sl.s.hue}
-          strokeWidth={lit ? 4 : sl.p.once ? 1.5 : 2.5} strokeDasharray={sl.p.once ? "5 5" : undefined} strokeOpacity={sel && !lit ? 0.25 : 0.9} />;
+          strokeWidth={sel === sl.p.card.id ? 4 : sl.p.once ? 1.5 : 2.5} strokeDasharray={sl.p.once ? "5 5" : undefined} strokeOpacity={dimming && !on ? 0.2 : 0.9} />;
       })}
       {slots.map((sl) => {
         const { x, y } = sl;
         if (sl.kind === "more") {
+          const on = sector === sectorKey(sl.s);
           return (
             <g key={`m-${sl.s.name}`} transform={`translate(${x},${y})`} role="button" tabIndex={0} className={DISC}
-              aria-label={`${sl.n} more: ${sl.s.name}`} onClick={() => onSector(sl.s)} onKeyDown={key(() => onSector(sl.s))}>
-              <circle r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={2} />
-              <text textAnchor="middle" dy={5} fontSize={narrow ? 12 : 14} fill="var(--foreground)">+{sl.n}</text>
+              aria-label={`${sl.n} more: ${sl.s.name}`} aria-pressed={on} opacity={dimming && !on ? 0.45 : 1}
+              onClick={() => onSector(sl.s)} onKeyDown={key(() => onSector(sl.s))}>
+              <circle r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={on ? 4 : 2} />
+              <text textAnchor="middle" dy={5} fontSize={narrow ? 13 : 14} fill="var(--foreground)">+{sl.n}</text>
             </g>
           );
         }
         const { card } = sl.p;
-        const lit = sel === card.id;
+        const on = lit(card.id, sl.s);
         return (
           <g key={card.id} transform={`translate(${x},${y})`} role="button" tabIndex={0} className={DISC}
-            aria-label={`${displayName(card)}${card.isToken ? " (token)" : ""}`} aria-pressed={lit}
-            opacity={sel && !lit ? 0.45 : 1} onClick={() => onTap(card.id)} onKeyDown={key(() => onTap(card.id))}>
-            <circle r={r + 2} fill="var(--background)" stroke={sl.s.hue} strokeWidth={lit ? 4 : 2} strokeDasharray={card.isToken ? "3 3" : undefined} />
+            aria-label={`${displayName(card)}${card.isToken ? " (token)" : ""}`} aria-pressed={sel === card.id}
+            opacity={dimming && !on ? 0.45 : 1} onClick={() => onTap(card.id)} onKeyDown={key(() => onTap(card.id))}>
+            <circle r={r + 2} fill="var(--background)" stroke={sl.s.hue} strokeWidth={sel === card.id || (sector !== null && on) ? 4 : 2} strokeDasharray={card.isToken ? "3 3" : undefined} />
             {card.art ? <image href={card.art} x={-r} y={-r} width={2 * r} height={2 * r} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" /> : null}
-            <text x={sl.lx} y={sl.ly} dy={4} textAnchor={sl.anchor} fontSize={narrow ? 13 : 12} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={4} strokeLinejoin="round">
-              {sl.label}
+            <text x={sl.lx} y={sl.ly} textAnchor={sl.anchor} fontSize={narrow ? 13 : 12} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={4} strokeLinejoin="round">
+              {sl.lines.map((l, i) => <tspan key={i} x={sl.lx} dy={i ? lineH : 0}>{l}</tspan>)}
             </text>
           </g>
         );
@@ -136,7 +184,7 @@ function Orbit({ o, narrow, sel, onTap, onSector }: {
         <circle r={fr + 3} fill="var(--background)" stroke="var(--foreground)" strokeWidth={3} />
         {o.focus.art ? <image href={o.focus.art} x={-fr} y={-fr} width={2 * fr} height={2 * fr} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" /> : null}
         <text y={fr + 20} textAnchor="middle" fontSize={narrow ? 13 : 15} fontWeight={600} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={5} strokeLinejoin="round">
-          {short(o.focus, narrow ? 16 : 24)}
+          {firstPart(o.focus)}
         </text>
       </g>
     </svg>
@@ -148,21 +196,25 @@ function Orbit({ o, narrow, sel, onTap, onSector }: {
 const DISC = "group cursor-pointer outline-none [&>circle]:group-focus-visible:stroke-(--accent) [&>circle]:group-focus-visible:[stroke-width:5]";
 
 type Slot = { x: number; y: number; a: number } & (
-  | { kind: "card"; p: OrbitPartner; s: OrbitSector; label: string; lx: number; ly: number; anchor: "start" | "middle" | "end" }
+  | { kind: "card"; p: OrbitPartner; s: OrbitSector; lines: string[]; lx: number; ly: number; anchor: "start" | "middle" | "end" }
   | { kind: "more"; n: number; s: OrbitSector }
 );
 
 /** WHERE EVERYTHING GOES, the same every time for the same card. The ring holds as many discs as
  *  fit with a gap between them; the rest are counted on each sector's "+N". Names go outside
- *  their disc, and a name that would overlap one already placed moves a line further out. */
-export function layoutOrbit(o: NonNullable<ReturnType<typeof buildOrbit>>, narrow: boolean) {
+ *  their disc on up to two lines, and a name that would overlap one already placed moves a line
+ *  further out. */
+export function layoutOrbit(o: OrbitModel, narrow: boolean) {
   // One geometry per width rather than one scaled down: at 390px a 720 box drew 6px names.
-  const W = narrow ? 440 : 880, H = narrow ? 430 : 720;
+  const W = narrow ? 440 : 880, H = narrow ? 470 : 720;
   const cx = W / 2, cy = H / 2;
   const R = narrow ? 128 : 228, r = narrow ? 17 : 25, fr = narrow ? 36 : 58;
-  const labelMax = narrow ? 10 : 17, charW = narrow ? 7.2 : 6.6, lineH = narrow ? 15 : 14;
-  const room = Math.floor((2 * Math.PI * R) / (2 * r + 10));
-  const gaps = o.sectors.length > 1 ? o.sectors.length : 0;
+  // A phone gets more room between discs: at 390px twenty discs touched (orbit round 1).
+  const lineMax = narrow ? 11 : 16, charW = narrow ? 8 : 7, lineH = narrow ? 15 : 14, pitch = 2 * r + (narrow ? 20 : 10);
+  const room = Math.floor((2 * Math.PI * R) / pitch);
+  // No empty slot between sectors on a phone: there the gaps left five discs of fourteen slots,
+  // and the colours already tell the groups apart.
+  const gaps = !narrow && o.sectors.length > 1 ? o.sectors.length : 0;
   let cap = room - gaps;
   let vis = visiblePartners(o, cap);
   for (let used = count(vis, gaps); used > room && cap > 1; used = count(vis, gaps)) vis = visiblePartners(o, --cap);
@@ -174,6 +226,9 @@ export function layoutOrbit(o: NonNullable<ReturnType<typeof buildOrbit>>, narro
     if (v.hidden) raw.push({ kind: "more", n: v.hidden, s: v.sector });
   }
   if (gaps) raw.push({ kind: "gap" });
+  const firsts = new Map<string, number>();
+  for (const sl of raw) if (sl.kind === "card") { const f = sl.p.card.name.split(",")[0]!; firsts.set(f, (firsts.get(f) ?? 0) + 1); }
+  if (firsts.has(o.focus.name.split(",")[0]!)) firsts.set(o.focus.name.split(",")[0]!, 2);
   const boxes: { x0: number; x1: number; y0: number; y1: number }[] = [];
   const hit = (b: (typeof boxes)[number]) => boxes.some((o2) => b.x0 < o2.x1 && b.x1 > o2.x0 && b.y0 < o2.y1 && b.y1 > o2.y0);
   const slots: Slot[] = [];
@@ -183,24 +238,29 @@ export function layoutOrbit(o: NonNullable<ReturnType<typeof buildOrbit>>, narro
     const ca = Math.cos(a), sa = Math.sin(a);
     const x = cx + R * ca, y = cy + R * sa;
     if (sl.kind === "more") { slots.push({ ...sl, x, y, a }); return; }
-    const label = `${short(sl.p.card, labelMax)}${sl.p.card.isToken ? " (token)" : ""}`;
-    const w = label.length * charW;
+    const lines = nameLines(sl.p.card, (firsts.get(sl.p.card.name.split(",")[0]!) ?? 0) > 1, lineMax);
+    const w = Math.max(...lines.map((l) => l.length)) * charW;
+    const h = lines.length * lineH;
     // Near the top and bottom a name sits above or below its disc; at the sides, beside it.
     const vertical = Math.abs(ca) <= 0.5;
     const anchor = vertical ? "middle" : ca > 0 ? "start" : "end";
-    let lx = vertical ? 0 : (r + 6) * ca, ly = vertical ? (sa > 0 ? r + 18 : -(r + 8)) : (r + 6) * sa;
+    // `ly` is the first line's baseline.
+    let lx = vertical ? 0 : (r + 6) * ca;
+    let ly = vertical ? (sa > 0 ? r + 16 : -(r + 8) - (lines.length - 1) * lineH) : (r + 6) * sa + 4 - ((lines.length - 1) * lineH) / 2;
     const box = () => {
       const ax = x + lx, ay = y + ly;
       const x0 = anchor === "start" ? ax : anchor === "end" ? ax - w : ax - w / 2;
-      return { x0, x1: x0 + w, y0: ay - lineH + 4, y1: ay + 4 };
+      return { x0, x1: x0 + w, y0: ay - lineH + 3, y1: ay - lineH + 3 + h };
     };
     for (let k = 0; k < 4 && hit(box()); k++) {
       if (vertical) ly += Math.sign(sa) * lineH; else { lx += ca * 10; ly += sa * lineH; }
     }
+    // Inside the box: at 390px a left-hand name printed as "chaeoman…".
+    { const b = box(); if (b.x0 < 2) lx += 2 - b.x0; else if (b.x1 > W - 2) lx -= b.x1 - (W - 2); }
     boxes.push(box());
-    slots.push({ ...sl, x, y, a, label, lx, ly, anchor });
+    slots.push({ ...sl, x, y, a, lines, lx, ly, anchor });
   });
-  return { W, H, cx, cy, R, r, fr, slots };
+  return { W, H, cx, cy, R, r, fr, lineH, slots };
 }
 
 function count(vis: ReturnType<typeof visiblePartners>, gaps: number): number {
@@ -209,10 +269,9 @@ function count(vis: ReturnType<typeof visiblePartners>, gaps: number): number {
 
 const key = (f: () => void) => (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); f(); } };
 
-function Summary({ o, onSector, onCentre }: {
-  o: NonNullable<ReturnType<typeof buildOrbit>>; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void;
-}) {
+function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void }) {
   const name = displayName(o.focus);
+  const first = firstPart(o.focus);
   return (
     <>
       <div className="flex items-start gap-3">
@@ -228,33 +287,40 @@ function Summary({ o, onSector, onCentre }: {
       </div>
       {o.sectors.length ? (
         <ul className="flex flex-col gap-1">
-          {o.sectors.map((s) => {
-            const once = s.partners.filter((p) => p.once).length;
-            return (
-              <li key={s.name}>
-                <button type="button" className="flex min-h-11 w-full items-center gap-2 rounded-(--radius) px-1 text-left hover:bg-(--surface-secondary)" onClick={() => onSector(s)}>
-                  <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ background: s.hue }} />
-                  <span className="flex-1">{s.name}</span>
-                  <span className="text-(--muted) whitespace-nowrap">{s.partners.length}{once ? `, ${once} only once` : ""}</span>
-                </button>
-              </li>
-            );
-          })}
+          {o.sectors.map((s) => (
+            <li key={s.name}>
+              <button type="button" className="flex min-h-11 w-full items-center gap-2 rounded-(--radius) px-1 text-left hover:bg-(--surface-secondary)" onClick={() => onSector(s)}>
+                <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ background: s.hue }} />
+                <span className="flex-1">{s.name}</span>
+                <span className="text-(--muted) whitespace-nowrap">{countText(s.partners.length, s.partners.filter((p) => p.once).length)}</span>
+              </button>
+            </li>
+          ))}
         </ul>
       ) : null}
       <p className="text-xs text-(--muted)">A solid line keeps working; a dashed line works only once. A dashed ring is a token.</p>
       <ReadCards cards={[o.focus]} />
-      {o.near.length ? (
+      {o.through.length ? (
         <details>
           <summary className="cursor-pointer py-1.5">
-            <b>{o.near.length} more card{o.near.length === 1 ? "" : "s"}</b> work with one of these, but not with {short(o.focus, 24)} itself
+            <b>{o.near.length} more card{o.near.length === 1 ? "" : "s"}</b> work with a card around {first}, but not with {first} itself
           </summary>
-          <ul className="mt-1 flex flex-col gap-0.5">
-            {o.near.map(({ card, via }) => (
-              <li key={card.id}>
-                <button type="button" className="min-h-9 text-left hover:underline" onClick={() => onCentre(card.id)}>
-                  <b>{displayName(card)}</b> <span className="text-(--muted)">through {listNames(via.map(displayName), 3)}</span>
-                </button>
+          <ul className="mt-2 flex flex-col gap-3">
+            {o.through.map(({ via, cards, example }) => (
+              <li key={via.id} className="flex flex-col gap-1">
+                <span className="flex items-center gap-2">
+                  <Art card={via} size={28} />
+                  <span className="flex-1">Through <b>{displayName(via)}</b> <span className="text-(--muted)">({cards.length})</span></span>
+                  <button type="button" className="min-h-9 shrink-0 rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(via.id)}>Put it in the middle</button>
+                </span>
+                {example ? <span className="text-xs text-(--muted)"><Badge repeat={example.repeat} /><ReasonText text={example.text} /></span> : null}
+                <span className="flex flex-wrap gap-x-2 gap-y-0.5">
+                  {cards.map((c, i) => (
+                    <button key={c.id} type="button" className="min-h-8 text-left hover:underline" onClick={() => onCentre(c.id)}>
+                      {displayName(c)}{i < cards.length - 1 ? "," : ""}
+                    </button>
+                  ))}
+                </span>
               </li>
             ))}
           </ul>
@@ -263,7 +329,7 @@ function Summary({ o, onSector, onCentre }: {
       {o.far.length ? (
         <details>
           <summary className="cursor-pointer py-1.5">
-            <b>{o.far.length} card{o.far.length === 1 ? "" : "s"}</b> don't connect to {short(o.focus, 24)}, even through another card
+            <b>{o.far.length} card{o.far.length === 1 ? "" : "s"}</b> don't connect to {first}, even through another card
           </summary>
           <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {o.far.map((card) => (
@@ -271,12 +337,16 @@ function Summary({ o, onSector, onCentre }: {
             ))}
           </ul>
         </details>
-      ) : null}
+      ) : (
+        // An empty list said nothing, and a missing list read as a hole (orbit round 1).
+        <p className="text-(--muted)">Every other nonland card in the deck connects to {first}, directly or through a card around it.</p>
+      )}
     </>
   );
 }
 
-function SectorPanel({ s, focusName, onPick, onClose }: { s: OrbitSector; focusName: string; onPick: (id: string) => void; onClose: () => void }) {
+function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: EngineCard; onPick: (id: string) => void; onClose: () => void }) {
+  const partnerOf = (l: OrbitPartner["links"][number]) => (l.from === focus.id ? l.to : l.from);
   return (
     <>
       <div className="flex items-center gap-2">
@@ -284,17 +354,23 @@ function SectorPanel({ s, focusName, onPick, onClose }: { s: OrbitSector; focusN
         <h3 className="flex-1 font-semibold text-base">{s.name}</h3>
         <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3" onClick={onClose}>Back</button>
       </div>
-      <p className="text-(--muted)">The {s.partners.length} card{s.partners.length === 1 ? "" : "s"} here that work with {focusName}. Tap one to read how.</p>
+      <p className="text-(--muted)">The {countText(s.partners.length, s.partners.filter((p) => p.once).length)} here that work with {displayName(focus)}. Tap one for every line and both cards' text.</p>
       <ul className="flex flex-col gap-1">
-        {s.partners.map((p) => (
-          <li key={p.card.id}>
-            <button type="button" className="flex min-h-11 w-full items-center gap-2 rounded-(--radius) px-1 text-left hover:bg-(--surface-secondary)" onClick={() => onPick(p.card.id)}>
-              <Art card={p.card} size={32} />
-              <span className="flex-1">{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> (token)</span> : null}</span>
-              {p.once ? <span className="text-xs text-(--muted)">only once</span> : null}
-            </button>
-          </li>
-        ))}
+        {s.partners.map((p) => {
+          // Each card with its first line, so the list compares cards without a tap each (round 1).
+          const l = p.links.find((x) => partnerOf(x) === p.card.id) ?? p.links[0];
+          return (
+            <li key={p.card.id}>
+              <button type="button" className="flex min-h-11 w-full items-start gap-2 rounded-(--radius) px-1 py-1 text-left hover:bg-(--surface-secondary)" onClick={() => onPick(p.card.id)}>
+                <Art card={p.card} size={32} />
+                <span className="flex flex-1 flex-col">
+                  <span>{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> (token)</span> : null}</span>
+                  {l ? <span className="text-xs text-(--muted)"><Badge repeat={l.repeat} /><ReasonText text={l.text} /></span> : null}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </>
   );
@@ -313,7 +389,7 @@ function PartnerPanel({ focus, p, onCentre, onClose }: { focus: EngineCard; p: O
       {p.links.length > 6 ? <p className="text-(--muted)">…and {p.links.length - 6} more lines between them.</p> : null}
       <ReadCards cards={[focus, p.card]} />
       <details className="text-xs text-(--muted)"><summary className="cursor-pointer">What the labels mean</summary><div className="mt-1"><RepeatKey /></div></details>
-      <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--accent) px-4 text-(--accent)" onClick={onCentre}>Put {short(p.card, 24)} in the middle</button>
+      <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--accent) px-4 text-(--accent)" onClick={onCentre}>Put {firstPart(p.card)} in the middle</button>
     </>
   );
 }
