@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import { analyzeDeckStructured, collectTokenNodes } from "./analyze.js";
+import { analyzeDeckStructured, collectTokenNodes, provisionalRatings } from "./analyze.js";
 import { faceDeckCards } from "./faces.js";
 import { SEED_IMPACT_WEIGHTS, loadImpactWeights } from "@edh-seer/engine";
 import type { TagStats } from "@edh-seer/engine";
@@ -1780,4 +1780,15 @@ test("a companion joins no theme membership and no archetype", () => {
   expect(withC.archetypes).toEqual(without.archetypes);
   // And it IS related -- the census excludes a card that has edges, not one that has none.
   expect(withC.edges.some((e) => [e.a, e.b].includes("Comp"))).toBe(true);
+});
+
+/** Issue #532: Rikku's links are mostly "… Rikku triggers" -- it is the payoff and its effect is
+ *  unread -- so its rating is provisional. A card with one unread link among read ones is not. */
+test("a rating is provisional when most reasons touching the card are its own unread payoffs", () => {
+  const r = (producer: string, consumer: string, effectKind: string) => ({ tag: "t", text: "x", producer, consumer, effectKind });
+  const set = provisionalRatings([
+    { reasons: [r("Yuna", "Rikku", ""), r("Fenrir", "Rikku", ""), r("Rikku", "Ozolith", "counter-placement")] },
+    { reasons: [r("Yuna", "Ozolith", ""), r("Fenrir", "Ozolith", "counter-placement"), r("Mog", "Ozolith", "counter-placement")] },
+  ]);
+  expect([...set]).toEqual(["Rikku"]);
 });

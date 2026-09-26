@@ -82,6 +82,10 @@ export interface CardSynergy {
   /** 0–5 deck-relative, axis-weighted synergy rating. Set only by @edh-seer/matcher's
    *  analyzeDeckStructured (needs structured theme tags); undefined on the flat engine. */
   synergyRating?: number;
+  /** THE RATING RESTS ON EFFECTS NOBODY READ (issue #532): more than half the reasons touching this
+   *  card are ones where it is the payoff and its effect is unread ("… Rikku triggers"). The rating
+   *  is unchanged -- a report shows it as provisional rather than as a verdict. */
+  ratingProvisional?: true;
   /** Directional authority: the card's payoff support (√ of the summed weight of edges that FEED
    *  it). A well-fed anchor scores high; a pure feeder ~0. Set only by analyzeDeckStructured. */
   authority?: number;
