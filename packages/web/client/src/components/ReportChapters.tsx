@@ -16,6 +16,7 @@ import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
+import { RoleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
@@ -288,6 +289,11 @@ export function ReportChapters({ data, diff, onOpenCard }: {
         </Chapter>
 
         <Chapter id="roles" title={title("roles")}>
+          {/* THE CARDS LEAD, the counts follow (2026-09-26): the Graph tab's "Cards judged by their
+            *  job" moved here, so a role's number and the cards it counts sit in one chapter. */}
+          <Movement title="Your cards, by the job they do" count="cards that do two jobs sit on both shelves">
+            <RoleShelves report={report} graph={data.graph} />
+          </Movement>
           <Movement count="the numbers behind the build suggestions below">
             <BuildBenchmarks
               categories={report.buildCategories}

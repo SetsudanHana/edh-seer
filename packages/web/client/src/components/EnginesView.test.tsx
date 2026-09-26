@@ -10,28 +10,19 @@ function view(selected: string | null = null) {
   return onSelect;
 }
 
-test("the Overview keeps the cut candidates and the jobs, and points to Game plan for the rest", () => {
+test("the Overview keeps the cut candidates, and points to Game plan and Roles for the rest", () => {
   view();
   expect(screen.getByText(/are in the report’s/)).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Cards doing the least here" })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Vanilla" })).toBeInTheDocument();
   expect(screen.queryByRole("heading", { name: "The pairs that work best together" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "What your deck does" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Cards judged by their job" })).toBeNull();
 });
 
-test("removal is compared with its own kind, not listed as a cut", () => {
+test("removal is compared with its own kind in Roles, not listed as a cut", () => {
   view();
   expect(screen.queryByRole("heading", { name: "Doom Blade" })).toBeNull();
-  // On its job's shelf, as a card with the number of cards it works with under it.
-  const shelf = screen.getByRole("list", { name: "Removal" });
-  expect(within(shelf).getByText("Doom Blade")).toBeInTheDocument();
-  expect(within(shelf).getByTitle(/^Works with \d+ other cards?$/)).toBeInTheDocument();
-});
-
-test("a job's shelf shows its cards, not a line of names and mana symbols", () => {
-  view();
-  expect(screen.getByRole("heading", { name: "Cards judged by their job" })).toBeInTheDocument();
-  expect(screen.queryByText(/Removal · 1/)).toBeNull();
 });
 
 test("a card that only feeds others says so instead of offering a best reason", () => {
