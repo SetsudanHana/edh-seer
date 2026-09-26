@@ -2873,6 +2873,35 @@ test("copy: a token whose card types are REWRITTEN copies something else entirel
 // exceptions. Shepherd's 1/1 Nightmare token is still a copy of the creature that died, so Baleful
 // Strix's entry fires again; Ratadrabik copies legendary creatures only; a stat-only "except it's
 // 1/1" is not a type rewrite, "3/3 Dragon" still is.
+/** A TEMPORARY COPY LEAVES AGAIN (issue #501): Inalla exiles the copy at end step, so the copied
+ *  Watcher for Tomorrow's own leave ability fires; Kiki-Jiki sacrifices it, so a death ability does
+ *  too. A permanent copy (Rite of Replication) never leaves by itself and claims neither. */
+test("copy: a temporary copy fires the copied card's own leave or death ability", () => {
+  const watcher = {
+    card: { name: "Watcher for Tomorrow", typeLine: "Creature — Human Wizard", oracleText: "", keywords: [], colors: [], manaValue: 2 } as never,
+    tags: {
+      oracleId: "w", schemaVersion: 1, promptVersion: 1, model: "t",
+      characteristics: { types: ["creature"], subtypes: ["human", "wizard"], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
+      abilities: [
+        { kind: "triggered", trigger: { verbs: ["leaves"], subject: { control: "you", token: null, type: "creature", self: true } }, effect: { kind: "" } },
+        { kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature", self: true } }, effect: { kind: "draw-card" } },
+      ],
+    } as unknown as CardTags,
+  };
+  const wizard = { control: "you", token: true, subtype: "wizard", type: "creature" };
+  const inalla = copyFixture("Inalla, Archmage Ritualist", "Whenever another nontoken Wizard you control enters, you may pay {1}. If you do, create a token that's a copy of that Wizard. The token gains haste. Exile it at the beginning of the next end step.", wizard);
+  inalla.tags.abilities = [{ kind: "triggered", temporary: true, repeats: "repeatable", effect: { kind: "token-generation", subject: wizard },
+    emits: [{ verb: "create-token", subject: wizard }, { verb: "enters", subject: wizard }, { verb: "leaves", subject: wizard }] }] as never;
+  const kiki = copyFixture("Kiki-Jiki, Mirror Breaker", "{T}: Create a token that's a copy of target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step.");
+  kiki.tags.abilities = [{ kind: "activated", cost: "{T}", temporary: true, effect: { kind: "token-generation", subject: { type: "creature", token: true, scope: "target" } },
+    emits: [{ verb: "dies", subject: { type: "creature", token: true } }] }] as never;
+  const rite = copyFixture("Rite of Replication", "Create a token that's a copy of target creature.");
+  const departures = (p: typeof inalla) => directedReasons(p, watcher, H).filter((r) => /at end of turn/.test(r.text)).map((r) => `${r.tag}|${r.repeatability}|${r.text}`);
+  expect(departures(inalla)).toEqual(["leaves:creature|triggered|Inalla, Archmage Ritualist's copy of Watcher for Tomorrow is exiled at end of turn, and the copy's own leave ability triggers"]);
+  expect(departures(kiki).map((d) => d.split("|").slice(0, 2).join("|")).sort()).toEqual(["dies:creature|activated", "leaves:creature|activated"]);
+  expect(departures(rite)).toEqual([]);
+});
+
 test("copy: 'a copy of that creature' takes its class from the trigger, and a stat-only exception is still a copy", () => {
   const shepherd = copyFixture("Nightmare Shepherd", "Whenever another nontoken creature you control dies, you may exile it. If you do, create a token that's a copy of that creature, except it's 1/1 and it's a Nightmare in addition to its other types.",
     { control: "you", token: true, type: "creature", subtype: "nightmare", stats: [{ metric: "power", op: "eq", value: 1 }] });
