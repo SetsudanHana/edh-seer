@@ -8,7 +8,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
@@ -683,7 +683,7 @@ export function partnersFor(
           // `eventKey` drops the zone, and a verb-only test cannot tell `enters:goblin` from
           // `enters:creature`, so a generic sentence would be priced at the rare demand's rate.
           const t = normalizeZoneEvent({ verb, subject: a.trigger!.subject } as GameEvent);
-          const tag = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+          const tag = eventReasonTag(zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject)), t.verb, a);
           const e = events.get(key) ?? { score: specificity(key, freq), tags: new Set<string>() };
           e.tags.add(tag);
           events.set(key, e);

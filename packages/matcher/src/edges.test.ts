@@ -5168,9 +5168,10 @@ test("prowess reads as the creature getting +1/+1, and only a noncreature spell 
   prodigy.tags.characteristics.keywords = ["Prowess"];
   const instant = base("Rakdos Charm", []);
   instant.tags.characteristics.types = ["instant"];
-  const fed = directedReasons(instant, prodigy, H).filter((r) => r.tag.startsWith("cast:"));
+  // Tagged `prowess:` since #517 -- a helper the page folds -- with the sentence unchanged.
+  const fed = directedReasons(instant, prodigy, H).filter((r) => r.tag.startsWith("prowess:"));
   expect(fed.map((r) => r.text)).toEqual(["When Rakdos Charm is cast, Harmonic Prodigy gets +1/+1"]);
-  expect(directedReasons(base("High Fae Trickster", []), prodigy, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
+  expect(directedReasons(base("High Fae Trickster", []), prodigy, H).some((r) => /^(cast|prowess):/.test(r.tag))).toBe(false);
 });
 
 /** "DO THIS ONLY ONCE EACH TURN" IS NOT EVERY TIME (issue #518): Terrasymbiosis derives
@@ -5304,4 +5305,22 @@ test("an undying creature is fodder for a whole-board outlet, and the sentence s
   const fodder = (p: ReturnType<typeof base>) => directedReasons(p, techno, H).filter((r) => r.tag.startsWith("fodder:")).map((r) => r.text);
   expect(fodder(arsonist)).toEqual(["Gleeful Arsonist is fodder for Ruthless Technomancer, and undying brings it back once"]);
   expect(fodder(plain)).toEqual([]);
+});
+
+/** A PROWESS-SHAPED TRIGGER IS A HELPER (owner ruling 2026-09-27, issue #517): Arcane Signet cast into
+ *  Harmonic Prodigy's prowess keeps its link, tagged `prowess:` so the page folds it; a noncreature-cast
+ *  payoff that does more than pump itself (Young Pyromancer's token) keeps `cast:`. */
+test("a self-pump on a noncreature cast is tagged prowess; a real cast payoff keeps cast", () => {
+  const nonCreatureCast = { verbs: ["cast"], subject: { control: "you", token: null, notType: ["creature"], type: ["artifact", "enchantment", "instant", "sorcery", "planeswalker", "battle"] } };
+  const prodigy = base("Harmonic Prodigy", [{
+    kind: "triggered", trigger: nonCreatureCast, amount: "+1/+1", effect: { kind: "pump", subject: { control: "you", token: null, self: true } },
+  }] as CardTags["abilities"]);
+  const pyro = base("Young Pyromancer", [{
+    kind: "triggered", trigger: nonCreatureCast, effect: { kind: "token-generation", subject: { control: "you", token: true, type: "creature", subtype: "elemental" } },
+  }] as CardTags["abilities"]);
+  const signet = base("Arcane Signet", []);
+  signet.tags.characteristics.types = ["artifact"];
+  const tags = (c: ReturnType<typeof base>) => directedReasons(signet, c, H).map((r) => r.tag).filter((t) => /^(cast|prowess):/.test(t));
+  expect(tags(prodigy)).toEqual(["prowess:-creature"]);
+  expect(tags(pyro)).toEqual(["cast:-creature"]);
 });
