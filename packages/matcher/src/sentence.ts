@@ -709,6 +709,12 @@ export function createsSentence(producer: string, consumer: string): string {
  *  "thanks to <producer>" hides the copy, which is the one fact that makes the claim checkable, so
  *  this site keeps its own wording. The `dies` string is byte-identical to the one it replaced; the
  *  `enters` half is turned cause-first like every other self trigger (see `reasonSentence`). */
+/** A temporary copy's departure (issue #501): "Inalla's copy of Watcher for Tomorrow is exiled at
+ *  end of turn, so the copy's leave ability triggers". */
+export function temporaryCopySentence(producer: string, consumer: string, how: "exiled" | "sacrificed", ability: "leave" | "death"): string {
+  return `${producer}'s copy of ${consumer} is ${how} at end of turn, and the copy's own ${ability} ability triggers`;
+}
+
 export function copySentence(producer: string, consumer: string, eventKey: string, dies: boolean): string {
   return dies
     ? `${producer} copies ${consumer}; the legend rule puts one of them into the graveyard, triggering its death ability`

@@ -15,7 +15,7 @@ import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
 import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject, parseCounter } from "./subject.js";
-import { repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
+import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
@@ -166,7 +166,10 @@ import { emblemRecipient } from "../emblem.js";
 // name are on itself, and a quantified recipient ("on each other Moogle you control") types a
 // counter emit (item 8: The Earth Crystal fed by The Ozolith and Mog). A flash grant ("cast spells
 // as though they had flash") is a permission, not a cast (Najal, High Fae Trickster).
-export const DERIVE_VERSION = 173;
+// 174: a delayed trigger ("When you next cast a creature spell this turn") fires as often as what
+// made it -- a chapter or a spell once, an activation at its cost's rate, recorded as `delayedBy`
+// (issue #500: Summon: Fenrir's chapter II and Yuna, Grand Summoner's {T} read EVERY TIME).
+export const DERIVE_VERSION = 174;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1683,6 +1686,7 @@ export function deriveAbilities(
     // EXHAUST IS ONCE PER GAME (CR 702.177a). The segmenter strips "Exhaust —" as an ability
     // word, so the clause text cannot say it; the printed line that starts with it and this
     // ability's own cost can. Loot, the Pathfinder amortised a once-per-game draw (2026-09-17).
+    const delayed = kind === "triggered" ? delayedTriggerRepeats(text ?? "", cardText) : undefined;
     const exhaust = cost !== "" && new RegExp(`^Exhaust — ${cost.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:`, "m").test(cardText);
     for (let i = before; i < abilities.length; i++) {
       // WHICH CLAUSE PRINTED IT (roadmap AJ4, spec C2). Stamped in the same one place as the rest,
@@ -1691,8 +1695,9 @@ export function deriveAbilities(
       // which is wrong on every row of any card whose first clause derives nothing (Samut: 4
       // clauses, 3 abilities, every zipped row a lie).
       abilities[i] = { ...abilities[i], clause: clause.id };
-      const repeats = exhaust ? "once" : repeatsFor(abilities[i], text, cost, rawTrigger);
+      const repeats = exhaust ? "once" : delayed?.repeats ?? repeatsFor(abilities[i], text, cost, rawTrigger);
       if (repeats) abilities[i] = { ...abilities[i], repeats };
+      if (delayed && abilities[i].trigger) abilities[i] = { ...abilities[i], delayedBy: delayed.delayedBy };
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };

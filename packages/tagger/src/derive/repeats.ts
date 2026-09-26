@@ -111,6 +111,32 @@ const RAW_PHASE_EVENTS: ReadonlySet<string> = new Set([
   "end-step", "cleanup", "untap-step",
 ]);
 
+/** A DELAYED TRIGGER FIRES AS OFTEN AS WHAT MADE IT. CR 603.7a: it is created by resolving a spell
+ *  or an ability; CR 603.7b: "next" makes it trigger only once. "When you next cast a creature spell
+ *  this turn" read `repeatable` off its class subject, so Yuna, Grand Summoner's {T} bonus and
+ *  Summon: Fenrir's chapter II were badged EVERY TIME (issue #500). Its creator is what the printed line says before
+ *  it: a chapter -> once; nothing (the spell itself: Doublecast) -> once; an activation cost ->
+ *  that cost's rate. `delayedBy` names the creator -- "chapter", "spell", or the activation cost --
+ *  so the edge can say "once" or "when you pay for it".
+ *  A trigger creator on the same line ("Whenever Najal attacks, ... when you next") is not this
+ *  shape: its clause starts with the creator's own trigger, which `repeatsFor` already reads.
+ *  42 corpus cards print "when you next". */
+export function delayedTriggerRepeats(clauseText: string, cardText: string): { repeats: Repeats; delayedBy: string } | undefined {
+  const body = withoutAbilityWord(clauseText);
+  if (!/^when you next\b/i.test(body)) return undefined;
+  const probe = body.slice(0, 60);
+  const line = cardText.split("\n").find((l) => l.includes(probe));
+  if (line === undefined) return undefined;
+  const before = line.slice(0, line.indexOf(probe)).trim();
+  if (before === "") return { repeats: "once", delayedBy: "spell" };
+  if (/^[IVX]+(?:,\s*[IVX]+)*\s+—/.test(before)) return { repeats: "once", delayedBy: "chapter" };
+  const colon = before.indexOf(":");
+  if (colon < 0) return undefined;
+  const cost = withoutAbilityWord(before.slice(0, colon));
+  const repeats = repeatsFor({ kind: "activated", effect: { kind: "" } } as Ability, "", cost);
+  return repeats === undefined ? undefined : { repeats, delayedBy: cost };
+}
+
 export function repeatsFor(ability: Ability, clauseText: string, cost = "", raw?: RawTrigger): Repeats | undefined {
   const text = clauseText ?? "";
 

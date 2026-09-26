@@ -45,6 +45,8 @@ const TESTED: Record<string, string> = {
   "301.5c": "repeats.test.ts — an Equipment outlives its host, so equipped-dies repeats once a round (Skullclamp)",
   "704.5m": "matcher edges.test.ts — a producer removing what an Aura enchants supplies the Aura's own dies trigger",
   "120.1": "derive.test.ts — the receiving side of damage is its own verb `damaged`, never the dealing one",
+  "603.7a": "delayed-trigger.test.ts — a delayed trigger's rate is its creator's: a chapter, a spell, an activation",
+  "603.7b": "delayed-trigger.test.ts — \"when you next\" fires once per creation, so a chapter's or a spell's is once",
 };
 /** A reading in a comment, no fixture. Each carries where the reading lives. */
 const PROSE: Record<string, string> = {
@@ -56,6 +58,7 @@ const PROSE: Record<string, string> = {
   "400.1": "ZONES lists the seven", "400.7": "zone changes: the enters/leaves family", "406.2": "exile is a public zone",
   "500": "phase words", "500.7": "extra turn: NOT AN EVENT", "506.4": "removed from combat", "602": "activate, a word with no producer",
   "603.4": "intervening-if (ratcheted in intervening-if-ratchet.test.ts)", "603.6c": "leaves-the-battlefield reads its zone off the text",
+  "603.7": "schema: `delayedBy` names what created a delayed trigger",
   "606": "loyalty abilities", "606.3": "loyalty cost is a counter change", "608": "resolves, a word", "609.7": "damage from a source",
   "611": "continuous effects: NOT AN EVENT verbs", "613": "layers: OPEN", "613.1f": "P/T layer", "614.17": "cant: NOT AN EVENT",
   "615": "prevent: OPEN", "615.13": "prevented, a word", "700.11": "descended", "700.12": "outlaw", "700.13": "crime", "700.14": "expend",
