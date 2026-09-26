@@ -57,7 +57,9 @@ const ONCE_EACH_TURN = /\bonce each turn\b/i;
  *  (Spirit of the Labyrinth's "one card each turn") is deliberately NOT matched -- that is a
  *  continuous restriction, not a per-turn trigger, and would already be routed to `continuous` by
  *  the static check regardless. */
-const ORDINAL_EACH_TURN = /\b(?:first|second|third|fourth|fifth)\b(?:(?!\.).){0,60}\beach turn\b/i;
+/** ...unless the ordinal is EXCLUDED: "a spell other than the first spell they cast each turn" (Curse of
+ *  Shaken Faith, Ichneumon Druid) fires on every spell after it, the opposite of a cap (issue #518). */
+const ORDINAL_EACH_TURN = /(?<!other than the )\b(?:first|second|third|fourth|fifth)\b(?:(?!\.).){0,60}\beach turn\b/i;
 
 /** Phases that happen on somebody's turn, so `control` says whose. "draw-step" was in the original
  *  brief but is not a member of the `Verb` union in `schema.ts` -- a draw-step trigger normalizes to

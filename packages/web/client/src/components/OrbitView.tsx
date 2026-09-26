@@ -499,7 +499,7 @@ function Through({ t, onCentre }: { t: OrbitModel["through"][number]; onCentre: 
         <span className="flex-1">Through <b>{displayName(t.via)}</b> <span className="text-(--muted)">({t.cards.length})</span></span>
         <button type="button" className="min-h-9 shrink-0 rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(t.via.id)}>Put it in the middle</button>
       </span>
-      {t.example && !card ? <span className="text-xs text-(--muted)"><Badge repeat={t.example.repeat} /><ReasonText text={t.example.text} /></span> : null}
+      {t.example && !card ? <span className="text-xs text-(--muted)"><Badge repeat={t.example.repeat} perTurn={t.example.perTurn} /><ReasonText text={t.example.text} /></span> : null}
       {/* The answer opens right under the name tapped: below the whole list it landed ~460px from
         * the thumb on a phone (orbit round 3). A full-width box breaks the wrapped line there. */}
       <span className="flex flex-wrap gap-x-2 gap-y-0.5">
@@ -616,7 +616,7 @@ function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: Eng
           // ONE SENTENCE, MANY NAMES: fifteen rows of "When X enters because Inalla copies it…"
           // with only the name changing read as a wall (orbit round 2).
           <li key={row.key} className="flex flex-col gap-1 rounded-(--radius) border border-(--separator) p-2">
-            <span className="text-xs text-(--muted)"><Badge repeat={row.repeat} />{row.sentence}</span>
+            <span className="text-xs text-(--muted)"><Badge repeat={row.repeat} perTurn={row.perTurn} />{row.sentence}</span>
             <span className="flex flex-wrap gap-x-2 gap-y-1">
               {row.cards.map((p) => (
                 <button key={p.card.id} type="button" className="flex min-h-9 items-center gap-1.5 rounded-(--radius) px-1 text-left hover:bg-(--surface-secondary)" onClick={() => onPick(p.card.id)}>
@@ -633,7 +633,7 @@ function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: Eng
                 <Art card={p.card} size={32} />
                 <span className="flex flex-1 flex-col">
                   <span>{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> (token)</span> : null}</span>
-                  {l ? <span className="text-xs text-(--muted)"><Badge repeat={l.repeat} /><ReasonText text={l.text} /></span> : null}
+                  {l ? <span className="text-xs text-(--muted)"><Badge repeat={l.repeat} perTurn={l.perTurn} /><ReasonText text={l.text} /></span> : null}
                 </span>
               </button>
             </li>
@@ -647,11 +647,11 @@ function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: Eng
 /** Partners whose first line is the same sentence with only their own name changed, grouped. The
  *  sentence keeps its shape with the name swapped for "one of these". */
 export function sameLine(partners: OrbitPartner[], partnerOf: (l: OrbitPartner["links"][number]) => string) {
-  const rows = new Map<string, { key: string; sentence: string; repeat: OrbitPartner["links"][number]["repeat"]; cards: OrbitPartner[] }>();
+  const rows = new Map<string, { key: string; sentence: string; repeat: OrbitPartner["links"][number]["repeat"]; perTurn?: boolean; cards: OrbitPartner[] }>();
   for (const p of partners) {
     const l = p.links.find((x) => partnerOf(x) === p.card.id) ?? p.links[0];
     const shape = l ? `${l.repeat}|${l.text.split(p.card.name).join("\u0000")}` : `solo|${p.card.id}`;
-    if (!rows.has(shape)) rows.set(shape, { key: shape, sentence: l ? l.text.split(p.card.name).join("one of these") : "", repeat: l?.repeat ?? "triggered", cards: [] });
+    if (!rows.has(shape)) rows.set(shape, { key: shape, sentence: l ? l.text.split(p.card.name).join("one of these") : "", repeat: l?.repeat ?? "triggered", perTurn: l?.perTurn, cards: [] });
     rows.get(shape)!.cards.push(p);
   }
   return [...rows.values()];

@@ -5138,3 +5138,25 @@ test("prowess reads as the creature getting +1/+1, and only a noncreature spell 
   expect(fed.map((r) => r.text)).toEqual(["When Rakdos Charm is cast, Harmonic Prodigy gets +1/+1"]);
   expect(directedReasons(base("High Fae Trickster", []), prodigy, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });
+
+/** "DO THIS ONLY ONCE EACH TURN" IS NOT EVERY TIME (issue #518): Terrasymbiosis derives
+ *  `repeats: "per-turn"` (live shape, read 2026-09-26) and its link read EVERY TIME. The link keeps its
+ *  repeatability -- the score does not move -- and carries the mark the badge reads. */
+test("a once-each-turn trigger is marked per turn; an uncapped one is not", () => {
+  const counterOnCreature = { verbs: ["counter-added"], subject: { control: "you", token: null, type: "creature", counter: "+1/+1" } };
+  const terra = base("Terrasymbiosis", [{
+    kind: "triggered", clause: 1, repeats: "per-turn", trigger: counterOnCreature,
+    effect: { kind: "draw-card", subject: { control: "you", token: null } },
+  }] as CardTags["abilities"]);
+  const ascendancy = base("Uncapped Payoff", [{
+    kind: "triggered", clause: 1, repeats: "repeatable", trigger: counterOnCreature, effect: { kind: "draw-card" },
+  }] as CardTags["abilities"]);
+  const placer = base("Counter Placer", [{
+    kind: "activated", cost: "{2}", effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter: "+1/+1", scope: "target" } }],
+  }] as CardTags["abilities"]);
+  const marks = (c: ReturnType<typeof base>) => directedReasons(placer, c, H).filter((r) => r.tag.startsWith("counter-added")).map((r) => r.perTurn === true);
+  expect(marks(terra).length).toBeGreaterThan(0);
+  expect(marks(terra).every(Boolean)).toBe(true);
+  expect(marks(ascendancy).some(Boolean)).toBe(false);
+});

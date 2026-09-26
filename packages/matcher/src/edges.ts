@@ -1742,6 +1742,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             : oneShotProducer(p, origin) || (e.implied === true && t.verb === "cast" && !recastsItself(p)) ? "oneshot"
             : triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
+          // "Do this only once each turn" (Terrasymbiosis; issue #518). A display mark read only on a
+          // repeating link; the repeatability, and so the score, is unchanged.
+          perTurn: a.repeats === "per-turn" || undefined,
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
           consumer: c.card.name,
           producer: p.card.name,

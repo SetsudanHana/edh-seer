@@ -454,3 +454,14 @@ test("a card-flow event names the player, never the card", () => {
   expect(eventVerbPhrase("discard:any")).toBe("makes a player discard a card");
   expect(eventVerbPhrase("mill:you")).toBe("makes you mill a card");
 });
+
+/** A REPLACEMENT THAT ADDS ONE says "one more", not the normalizer's variable (issue #518): Hardened
+ *  Scales read "puts N+1 +1/+1 counters on it", and "N" was never defined on the page. The corpus
+ *  spells the same amount three ways. */
+test("a plus-one counter replacement reads as one more counter", () => {
+  for (const amount of ["N+1", "that many plus one", "X plus one"]) {
+    expect(effectPhrase("counter-placement", amount, "it", undefined, "+1/+1")).toBe("puts one more +1/+1 counter on it");
+  }
+  expect(effectPhrase("counter-placement", "N+2", "it", undefined, "+1/+1")).toBe("puts 2 more +1/+1 counters on it");
+  expect(effectPhrase("counter-placement", "that many", "it", undefined, "+1/+1")).toBe("puts that many +1/+1 counters on it");
+});

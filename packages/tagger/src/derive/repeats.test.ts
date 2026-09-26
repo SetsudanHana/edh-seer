@@ -237,3 +237,10 @@ test("rule 7b: an equipped or fortified host's death is once a round; an enchant
   expect(repeatsFor(dies, "Whenever fortified land is put into a graveyard, draw a card.")).toBe("per-cycle");
   expect(repeatsFor(dies, "When enchanted creature dies, draw a card.")).toBe("once");
 });
+
+test("an ordinal EXCLUDED by 'other than the' is no cap (issue #518)", () => {
+  // Curse of Shaken Faith fires on every spell after the first, which is the opposite of once a turn;
+  // the ordinal regex read "first ... each turn" and capped it. Ichneumon Druid is the other corpus card.
+  expect(repeatsFor(triggered(["cast"], { control: "opp" }),
+    "Whenever enchanted player casts a spell other than the first spell they cast each turn or copies a spell, this Aura deals 2 damage to them.")).toBe("repeatable");
+});

@@ -272,7 +272,7 @@ function CutCard({ c }: { c: CutChoice }) {
           {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
         </div>
         {r?.keep && r.keepActs ? (
-          <p className="text-(--muted)"><span className="eyebrow block">Its strongest link</span><Badge repeat={r.keep.repeat} /><ReasonText text={r.keep.text} /></p>
+          <p className="text-(--muted)"><span className="eyebrow block">Its strongest link</span><Badge repeat={r.keep.repeat} perTurn={r.keep.perTurn} /><ReasonText text={r.keep.text} /></p>
         ) : r?.keep && r.fedBy.length ? (
           // A FEEDER NAMES WHO USES IT: the line other cards get from it is true of any card of its
           // kind, so it is not this card's strongest link (Overview round 7).
