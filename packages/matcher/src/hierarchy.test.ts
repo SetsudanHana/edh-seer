@@ -106,3 +106,16 @@ test("no card type word is ever a subtype key in the shipped hierarchy", () => {
   const leaked = ["creature", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "land", "battle", "//"].filter((w) => w in shipped);
   expect(leaked).toEqual([]);
 });
+
+test("expandTypes: a NONCREATURE subtype denotes its CR type only, not every type it was printed beside (#508)", () => {
+  // The shipped hierarchy records treasure -> [artifact, creature] because some creature once wore
+  // the subtype, so "a Treasure dies" satisfied Zulaport Cutthroat's "another creature you control
+  // dies". A Treasure is an artifact (CR 205.3g). Creature subtypes keep the co-occurrence list: a
+  // Thopter or a Myr is an artifact creature far more often than not.
+  const shipped = loadHierarchy();
+  expect([...expandTypes([], ["treasure"], shipped)]).toEqual(["artifact"]);
+  expect(expandTypes([], ["clue"], shipped).has("creature")).toBe(false);
+  expect(expandTypes([], ["forest"], shipped).has("creature")).toBe(false);
+  expect(expandTypes([], ["thopter"], shipped).has("artifact")).toBe(true);
+  expect(expandTypes([], ["thopter"], shipped).has("creature")).toBe(true);
+});
