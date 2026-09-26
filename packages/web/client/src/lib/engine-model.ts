@@ -71,9 +71,10 @@ export interface CutRow {
   /** Their names, the least shared first: a feeder names who uses it, so two feeders never read the
    *  same (round 8, where one sentence repeated on four cards and read as a verdict on them). */
   fedBy: string[];
-  /** A cut above whose users are exactly these: the two are interchangeable here, and saying so
-   *  beats printing the same list twice. */
-  sameUsersAs?: string;
+  /** Cards used by exactly the same cards as this one, folded into its row: they are
+   *  interchangeable here, and three tiles repeating "the same 7 cards as Calculating Lich" read as
+   *  padding (round 10). */
+  twins: string[];
   /** A card in the deck that can bring this one back, so its one-time links happen again. */
   broughtBackBy?: string;
   jobs: string[];
@@ -442,9 +443,20 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.
     const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
     const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => c.name + (c.isToken ? " (token)" : ""));
-    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: false, jobs, options };
+    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options };
   }).sort((a, b) => weight(a) - weight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
-  const cuts = rows.filter((r) => !r.jobs.length).slice(0, 6);
+  // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"
+  // named it among the cards doing something extra (round 10), and a helper's hub -- the cost
+  // reducer, Herald's Horn -- helps a whole group in the background (round 4).
+  const drivers = new Set([...groups.values()].flatMap((g) => g.hubs));
+  const usersKey = (r: CutRow) => [...r.fedBy].sort().join("\u0001");
+  const cuts: typeof rows = [];
+  for (const r of rows) {
+    if (r.jobs.length || drivers.has(r.card.id)) continue;
+    const twin = !r.keepActs && r.fedBy.length ? cuts.find((x) => !x.keepActs && usersKey(x) === usersKey(r)) : undefined;
+    if (twin) twin.twins.push(r.card.name);
+    else if (cuts.length < 6) cuts.push(r);
+  }
   const named = new Set<string>();
   for (const r of cuts) {
     const other = (l: Link) => (l.from === r.card.id ? l.to : l.from);
@@ -455,12 +467,6 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     if (r.keep) named.add(other(r.keep));
   }
   for (const r of rows) r.keepActs = !!r.keep && acts(r.card, r.keep);
-  const usersKey = (r: CutRow) => [...r.fedBy].sort().join("\u0001");
-  for (const [i, r] of cuts.entries()) {
-    if (r.keepActs || !r.fedBy.length) continue;
-    const twin = cuts.slice(0, i).find((x) => !x.keepActs && !x.sameUsersAs && usersKey(x) === usersKey(r));
-    if (twin) r.sameUsersAs = twin.card.name;
-  }
   const byJob = new Map<string, typeof rows>();
   for (const r of rows) for (const j of r.jobs) { if (!byJob.has(j)) byJob.set(j, []); byJob.get(j)!.push(r); }
   return {

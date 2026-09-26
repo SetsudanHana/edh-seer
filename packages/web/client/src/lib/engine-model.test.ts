@@ -67,6 +67,11 @@ describe("buildEngineModel", () => {
     expect(m.deckCards).toBe(17);
   });
 
+  test("a card that drives one of the deck's groups is not a cut candidate", () => {
+    expect(m.cuts.map((c) => c.card.name)).not.toContain("Payoff A");
+    expect(m.cuts.map((c) => c.card.name)).not.toContain("Payoff B");
+  });
+
   test("a card that helps many in the background is not a cut candidate", () => {
     expect(m.cuts.map((c) => c.card.name)).not.toContain("Reducer");
   });
@@ -93,10 +98,11 @@ describe("buildEngineModel", () => {
     expect(side.keep?.text).toBe("When Cleric 3 gains you life, Sidekick grows");
     expect(side.keepActs).toBe(true);
     expect(m.cuts.find((c) => c.card.name.startsWith("Cleric"))!.keepActs).toBe(false);
-    // Clerics are used by the same two payoffs, so the second says so instead of listing them again.
+    // Clerics used by exactly the same cards fold into one row instead of repeating it.
     const clerics = m.cuts.filter((c) => c.card.name.startsWith("Cleric") && !c.keepActs);
-    expect(clerics[0]!.sameUsersAs).toBeUndefined();
-    expect(clerics.slice(1).every((c) => c.sameUsersAs === clerics[0]!.card.name)).toBe(true);
+    expect(clerics).toHaveLength(1);
+    expect(clerics[0]!.twins.length).toBeGreaterThan(0);
+    expect(clerics[0]!.twins.every((n) => n.startsWith("Cleric"))).toBe(true);
   });
 
   test("a pair that helps both ways shows both directions, and no card fills the strip", () => {

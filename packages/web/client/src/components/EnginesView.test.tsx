@@ -37,7 +37,7 @@ test("tapping a card selects it", async () => {
 test("a selected card lights its partners and fades the rest", async () => {
   view("Payoff A");
   await userEvent.setup().click(screen.getByRole("button", { name: /^Show them:/ }));
-  expect(screen.getByText(/lit below; everything else is faded/)).toBeInTheDocument();
+  expect(screen.getByText(/each group below now shows only those/)).toBeInTheDocument();
   const clerics = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
   expect(within(clerics).getByRole("button", { name: "Cleric 1" }).className).not.toMatch(/opacity-30/);
   const helpers = screen.getByRole("heading", { name: "Make cards cheaper" }).closest("article")!;
@@ -85,12 +85,12 @@ test("a card that only feeds others says so instead of offering a best reason", 
 
 test("the one-time count says how many of those links the groups show", () => {
   view();
-  expect(screen.getByText(/work only once; the groups below show none of them/)).toBeInTheDocument();
+  expect(screen.getByText(/work only once; the groups shown below include none of them/)).toBeInTheDocument();
 });
 
 test("a cut used by exactly the same cards as one above says so instead of listing them again", () => {
   view();
-  expect(screen.getByText(/so here the two do the same job/)).toBeInTheDocument();
+  expect(screen.getByText(/interchangeable with/)).toBeInTheDocument();
 });
 
 test("helper groups are folded until asked for", async () => {
@@ -98,4 +98,13 @@ test("helper groups are folded until asked for", async () => {
   expect(screen.queryByRole("heading", { name: "Make cards cheaper" })).toBeNull();
   await userEvent.setup().click(screen.getByRole("button", { name: /^Show them: make cards cheaper/ }));
   expect(screen.getByRole("heading", { name: "Make cards cheaper" })).toBeInTheDocument();
+});
+
+test("a tap shows only the cards it lights, and says how many of the group that is", async () => {
+  view("Cleric 1");
+  const clerics = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
+  expect(within(clerics).getByText("1 of these 8 work with Cleric 1:")).toBeInTheDocument();
+  expect(within(clerics).queryByRole("button", { name: "Cleric 2" })).toBeNull();
+  await userEvent.setup().click(within(clerics).getByRole("button", { name: "Show all 8" }));
+  expect(within(clerics).getByRole("button", { name: "Cleric 2" }).className).toMatch(/opacity-30/);
 });

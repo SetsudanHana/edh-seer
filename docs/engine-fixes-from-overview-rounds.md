@@ -182,6 +182,18 @@
 - **A Treasure under "Creatures dying"** (Party Time): "When a Treasure dies thanks to Grim Hireling, Zulaport Cutthroat…". Zulaport cares about creatures.
 - **Still open from above:** 2b/c (Fenrir's chapter II "EVERY TIME"), 4 (Inalla's exile), 8 (The Earth Crystal), 11 (Multiclass Baldric).
 
+## Found in round 10
+
+### 17. A single cast tagged EVERY TIME (Inalla)
+- **Emitted:** "EVERY TIME — When Kindred Discovery is cast, Harmonic Prodigy gets +1/+1". Prowess does trigger on every noncreature spell, but this link's producer is one card, cast once.
+- **Also:** Mog XII's chapter-limited token copies (Yuna): "EVERY TIME — When The Earth Crystal is cast, Summon: Good King Mog XII makes a token", while Mog's text limits it to chapters II–III and needs a non-Saga token.
+- **Needed:** the same rule as #493 applied to cast events. Casting a permanent spell is a one-time event for that card, and a Saga chapter's window is too.
+
+### 18. Abilities the tuner reads and the engine does not (Inalla)
+- **Gleeful Arsonist's undying** as sacrifice fodder: Ruthless Technomancer sacrifices it, and Grim Haruspex draws.
+- **High Fae Trickster's flash:** casting a Wizard at an opponent's end step gives Inalla's copy a whole turn.
+- Lower priority than item 4, but both are why the tuner overrules the cut list.
+
 ## Housekeeping
 - **The skeptic seat's calibration claim has decayed.**
   - `.claude/agents/README.md` seeds the Yuna deck with `Misty Rainforest -> Yuna, Grand Summoner | dies:permanent`, judged FALSE.
