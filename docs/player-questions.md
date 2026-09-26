@@ -199,6 +199,31 @@ crossroads]] deck designed to win on turn 3 … Every single one of those websit
 bracket 2." (5). A good rule-zero line is "a 3, but only because of cards X and Y". About 30 of 41
 titles were on topic; "what bracket is my deck" posts score near zero but draw 13–64 comments.
 
+### What r/EDH says about deck tools
+
+- "I've tried 3 different online tools now and had 3 different results!" (0, 13) https://www.reddit.com/r/EDH/comments/1ozp7iw/
+- "Moxfield says bracket 2 but I don't believe it" (0, 19) https://www.reddit.com/r/EDH/comments/1qovimi/
+- "Is there a tool I could use that takes my deck, compares it against cards I'm considering, and
+  makes recommendations of what to switch out for those considered cards?" (0, 29) https://www.reddit.com/r/EDH/comments/1sawjpy/
+- "Looking for some kind of visualiser tool for my decks to help me track synergies." https://www.reddit.com/r/EDH/comments/1p1chxw/
+- "Giving and receiving deck feedback is insanely labor intensive and involves jumping around to
+  like 6 different tabs" (827, 419) https://www.reddit.com/r/EDH/comments/1uqynon/
+- "Do not use AI to make deck suggestions or clarify rules. It's wrong most of the time." https://www.reddit.com/r/EDH/comments/1q0epg2/
+
+**What earns trust, and what loses it** (the same pattern as the forum research, now with Reddit's
+wording):
+- Counts people can check are accepted: "Beyond counting game changers and reviewing combos, it's
+  pretty vibes based" (12). Judgments are not, above all when tools disagree.
+- Missing the plan loses trust fastest: "the sites have a lot of trouble with synergy … I have a deck
+  that is trying to summon a bunch of small fliers, and none of them seem to identify that as a win
+  condition"; a tool that "kept wanting to cut all the 4-mana rocks … despite being the most core
+  part of the deck's game plan"; one that "noticed the … combo … However, it failed to see that this
+  combo wins the game".
+- Stated wishes: "I wish there was a better way to explicitly tell the power tuning feature what the
+  deck's game plan is." and a way "to signal which playstyle is the deck".
+- A verdict is welcome as "a starting spot" for a rule-zero description, not as gospel.
+- Strong anti-AI feeling ("Keep AI away from Magic", 12); "not vibe coded" is used as praise.
+
 ## What they think of the tools they already use
 
 - **EDHREC**: a solid starting point, but it shows what is popular, not why a card fits this deck,
