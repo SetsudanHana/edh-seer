@@ -188,6 +188,8 @@ export interface DeckMath {
   answers: {
     class: string;
     count: number;
+    /** The cards counted; a card that hits several classes is under each. */
+    cards?: string[];
     /** How many of them EXILE -- the only answers a recursive commander or a reanimator cannot
      *  undo (design §2.1). A sub-count of `count`, never a separate class. */
     exiling: number;

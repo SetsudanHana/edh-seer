@@ -1389,9 +1389,9 @@ test("BuildBenchmarks shows answer coverage, including the classes the deck cann
   expect(screen.getByText(/answers by turn 5/i)).toBeInTheDocument();
   // A class with zero answers is the finding, so it must be a visible row rather than an omission.
   expect(screen.getByLabelText(/artifact, no answers/i)).toBeInTheDocument();
-  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/creature, 4 cards, in hand by turn 5 in 41% of games, 1 of them exile/i)).toBeInTheDocument();
   // A commander answer is available every game, and says why rather than just reading 100%.
-  expect(screen.getByLabelText(/graveyard, 1 card, none recurring, always \(commander\)/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/graveyard, 1 card, your commander, so every game, none keep working/i)).toBeInTheDocument();
 });
 
 test("an answer row says how many of its answers exile, and flags a graveyard row that never recurs", () => {
@@ -1400,7 +1400,7 @@ test("an answer row says how many of its answers exile, and flags a graveyard ro
   expect(screen.getByLabelText(/creature, 4 cards.*1 of them exile/i)).toBeInTheDocument();
   // The graveyard row's finding is the ZERO: it has hate, and none of it answers an engine. The row
   // still SAYS so to a screen reader; on screen it is promoted to a sentence, below.
-  expect(screen.getByLabelText(/graveyard.*none recurring/i)).toBeInTheDocument();
+  expect(screen.getByLabelText(/graveyard.*none keep working/i)).toBeInTheDocument();
   // A class with nothing to say says nothing -- no "0 of them exile" noise on an empty row.
   expect(screen.queryByLabelText(/artifact, no answers.*exile/i)).not.toBeInTheDocument();
   // Spelled out on screen, not abbreviated: `0 ex` / `0 rec` were the two most-misread strings on
@@ -1434,18 +1434,18 @@ test("per-row modes survive when the rows disagree", () => {
   expect(screen.queryByText(/Nothing this deck kills is exiled/)).not.toBeInTheDocument();
 });
 
-test("BuildBenchmarks says how many answers short a class is, not just how likely it is", () => {
-  // Step C. "41% by turn 5" tells you the odds and not what to do about them; the derived count
-  // does. It is derived, not a template -- it moves with the deck's own clock.
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByLabelText(/creature, 4 cards, 1 of them exile, 2 short of 6/i)).toBeInTheDocument();
-  // The probability it was derived from is NOT printed beside it: `available` is a pure function
-  // of the count at a fixed library and turn, so the row would be saying one thing three times.
-  expect(screen.queryByText("41%")).not.toBeInTheDocument();
-  expect(screen.getByLabelText(/artifact, no answers, 6 short of 6/i)).toBeInTheDocument();
-  // A commander answers every game, so a draw-probability shortfall would be a lie.
-  expect(screen.getByLabelText(/graveyard, 1 card, none recurring, always \(commander\)/i)).toBeInTheDocument();
-  expect(screen.queryByLabelText(/graveyard.*short/i)).not.toBeInTheDocument();
+// NO "SHORT" TARGET (owner, 2026-09-26: "having 5 answers for each type is something no deck can
+// provide"). The row says how often one is in hand and which cards they are, not how many short of a
+// convention the deck is.
+test("an answer row says how often one is in hand and names its cards, with no shortfall", () => {
+  const named = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, cards: ["Beast Within", "Swords to Plowshares"] } : a)) };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={named} />);
+  expect(screen.getByText(/^in hand by turn 5 in 41% of games/)).toBeInTheDocument();
+  const creature = screen.getByLabelText(/^creature,/i);
+  expect(creature).toHaveTextContent("Beast Within · Swords to Plowshares");
+  for (const row of screen.getAllByTestId("answer-row")) expect(row).not.toHaveTextContent(/\bshort\b/i);
+  // A commander answers every game, so a draw probability would be a lie.
+  expect(screen.getByText(/your commander, so every game/)).toBeInTheDocument();
 });
 
 // Task 6: the coefficient discounts a colourless-pool zero on purpose; the panel is where that
@@ -1456,7 +1456,7 @@ test("BuildBenchmarks names the colour pool on a zero row, so the pie is not rea
     answers: DECK_MATH.answers.map((a) => (a.class === "artifact" ? { ...a, pool: 56 } : a)),
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withPool} />);
-  expect(screen.getByText(/your colours offer 56/i)).toBeInTheDocument();
+  expect(screen.getByText(/your colours have 56 cards that could/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says nothing about a colour's pool when it was never resolved", () => {
@@ -1955,7 +1955,8 @@ test("the land row names how many lands are MDFCs, and says nothing when there i
   // `mdfc` to it -- which is what this row printed until the ruling -- counts them twice.
   // DECK_MATH.lands.actual is 37.
   expect(screen.getByText(/\(4 MDFC\)/)).toBeInTheDocument();
-  expect(screen.queryByText(/41/)).not.toBeInTheDocument();
+  // Not 41 lands (the answers row's "41%" is a different figure).
+  expect(screen.queryByText(/\b41\b(?!%)/)).not.toBeInTheDocument();
 });
 
 test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {
@@ -2037,13 +2038,11 @@ test("OverviewTab shows the health dashboard, across its sub-tabs", async () => 
  *  per tab) and the pin was "not on the other tab". In one scroll a reader meets every copy, so the
  *  pin is EXACTLY ONCE in the whole report, which is a strictly stronger statement than the pair of
  *  absence assertions it replaces. */
-test("the role-spend block renders exactly once in the whole scroll", () => {
+// The Roles chapter's shelves print each role's count against its target; the bars that drew the
+// same counts again under them are gone (owner, 2026-09-26: "duplicate of the previous information").
+test("the role counts are not drawn a second time under the shelves", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
-  expect(screen.getAllByText(/How the roles are spent/i)).toHaveLength(1);
-  // A multi-leaf parent's group header (`h4`) -- present with the heading, not just it. By ROLE,
-  // because the parent's NAME also appears as a `DeckGauges` bullet in chapter 2, which is the
-  // dial the group is the detail behind and not a second copy of the group.
-  expect(screen.getAllByRole("heading", { level: 4, name: "Consistency" })).toHaveLength(1);
+  expect(screen.queryByText(/How the roles are spent/i)).toBeNull();
 });
 
 /** FINDING 2 (fix round 1): the deck-math sections `BuildBenchmarks` routes to the Build sub-tab
@@ -2095,7 +2094,7 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
   render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
 
-  expect(screen.getByText(/numbers behind the build suggestions/i)).toBeInTheDocument();
+  expect(screen.getByText(/which of your cards remove their permanents/i)).toBeInTheDocument();
   expect(screen.getByText(/numbers behind the mana suggestions/i)).toBeInTheDocument();
 
   expect(screen.queryByText("What this deck plays")).toBeNull();
@@ -2111,7 +2110,6 @@ test("the Mana and Roles chapters say what they are evidence for, without restat
  *  the sub-tabs became chapters. In one scroll the honest word is a direction, not a tab name. */
 test("the evidence movements point at the chapter the findings actually live in", () => {
   render(<MemoryRouter><ReportChapters data={SAMPLE as never} /></MemoryRouter>);
-  expect(screen.getByText(/the numbers behind the build suggestions below/)).toBeInTheDocument();
   expect(screen.getByText(/the numbers behind the mana suggestions below/)).toBeInTheDocument();
   expect(screen.queryByText(/on Suggestions/)).toBeNull();
 });
