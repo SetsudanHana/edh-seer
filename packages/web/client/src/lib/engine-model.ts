@@ -27,6 +27,9 @@ export interface EngineCard {
   roles: readonly string[]; score: number;
   /** Printed mana cost from the report, so a cut can be weighed by what it costs (round 6). */
   manaCost: string;
+  /** For a card's other face, the name its front goes by: "Trance Kuja" and "Kuja, Genome
+   *  Sorcerer" read as two different cards (round 12). */
+  faceOf?: string;
 }
 
 export interface EngineGroup {
@@ -71,9 +74,12 @@ export interface CutRow {
   /** Their names, the least shared first: a feeder names who uses it, so two feeders never read the
    *  same (round 8, where one sentence repeated on four cards and read as a verdict on them). */
   fedBy: string[];
-  /** A cut above whose users are exactly these: the two are interchangeable here, and saying so
-   *  beats printing the same list twice. */
-  sameUsersAs?: string;
+  /** Cards used by exactly the same cards as this one, folded into its row: they are
+   *  interchangeable here, and three tiles repeating "the same 7 cards as Calculating Lich" read as
+   *  padding (round 10). */
+  twins: string[];
+  /** A card in the deck that can bring this one back, so its one-time links happen again. */
+  broughtBackBy?: string;
   jobs: string[];
 }
 
@@ -190,6 +196,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       isLand: (n.types ?? []).includes("land"), isFace: n.cardName !== undefined && n.cardName !== n.id,
       roles: n.roles ?? [], score: scoreByName.get(n.label) ?? 0,
       manaCost: n.isToken ? "" : costByName.get(n.cardName ?? n.label) ?? "",
+      faceOf: n.cardName && n.cardName !== n.id && n.cardName.split(" // ")[0] !== n.label ? n.cardName.split(" // ")[0] : undefined,
     });
   }
 
@@ -295,13 +302,12 @@ function strongestPairs(pairs: Map<string, Pair>, cards: Map<string, EngineCard>
   const rows = [...pairs.values()].flatMap((pair) => {
     const a = cards.get(pair.a)!, b = cards.get(pair.b)!;
     if (a.isToken || b.isToken) return [];
-    const rep = pair.links.filter((l) => l.repeat !== "oneshot" && !isHelperTag(l.tag));
+    // An effect the engine has not read does not rank a pair: two Rikku pairs sat in the top three
+    // on lines that said "effect not read yet" (round 11).
+    const rep = pair.links.filter((l) => l.repeat !== "oneshot" && !isHelperTag(l.tag) && !unread(l));
     if (!rep.length) return [];
     const ways = [...new Set(rep.map((l) => groups.get(l.tag)?.name ?? groupName(l.tag)))];
-    // WHO HELPS WHOM is the card that acts in the sentence, not the link's producer: a recursion
-    // link's producer is the card in the graveyard, so "Yuna, Hope of Spira can bring it back" and
-    // "Yuna gives Fat Chocobo an extra ability" read as each helping the other (round 7).
-    const actor = (l: Link) => (acts(a, l) ? a.id : acts(b, l) ? b.id : l.to);
+    const actor = helper;
     const both = new Set(rep.map(actor)).size > 1;
     const strength = ways.length + (both ? 1.5 : 0) + (a.isCommander || b.isCommander ? 1 : 0) + (3 * (a.score + b.score)) / (2 * smax);
     // Both directions on screen when it goes both ways, so "each helps the other" is visible.
@@ -333,11 +339,26 @@ const s = (n: number) => (n === 1 ? "" : "s");
  *  but says nothing, so it is never offered as the reason to keep a card (live round, 2026-09-25). */
 const unread = (l: Link) => /\btriggers$/.test(l.text.trim());
 
+/** WHO HELPS WHOM in a link: the producer -- the card whose event another card's ability uses --
+ *  except where the engine names them the other way round. A recursion link's producer is the card
+ *  in the graveyard ("When Fat Chocobo is in the graveyard, Yuna can bring it back": Yuna helps,
+ *  round 7), and a copy link's producer is the card whose ability gets copied (Weaver of Harmony
+ *  helps Sythis by copying it, round 9). Not "the card that acts": in "When Weaver is cast, Sythis
+ *  gains you life" Sythis acts and Weaver helped, which read as each helping the other. */
+function helper(l: Link): string {
+  return /^(graveyard-recursion|copies):/.test(l.tag) ? l.to : l.from;
+}
+
 /** Whether a card's own text does the work in a line: the sentence's main clause starts with its
  *  name ("When a creature leaves ... thanks to Essence Flux, Dour Port-Mage draws a card"). Which
  *  side of a link acts differs by tag -- a trigger's consumer acts, a grant's producer does -- so
  *  the sentence is the one place that says it the same way every time. */
 function acts(card: EngineCard, l: Link): boolean {
+  // A doubler or a copier is what acts, whichever name the sentence leads with: "Pollywog Prodigy's
+  // triggered abilities trigger an additional time thanks to Harmonic Prodigy" was every Inalla
+  // creature cut's best reason to keep it (round 9).
+  if (/^doubles:/.test(l.tag)) return l.from === card.id;
+  if (/^copies:/.test(l.tag)) return l.to === card.id;
   const t = l.text.trim();
   const main = /^(when|whenever|while|as long as)\b/i.test(t) && t.includes(", ") ? t.slice(t.indexOf(", ") + 2) : t;
   return main.startsWith(card.name) || main.startsWith(card.name.split(" // ")[0]!) || main.startsWith(card.name.split(", ")[0]!);
@@ -359,17 +380,40 @@ function acts(card: EngineCard, l: Link): boolean {
  *  the same line about Inalla making a token (live round); avoiding the commander instead hid Dour
  *  Port-Mage's real reason, and forcing a new partner on every row made the reasons generic --
  *  "Kindred Discovery draws you a card" is true of any Wizard (round 6). */
+/** A card's name as a list prints it: a back face says whose back it is. */
+export const displayName = (c: EngineCard): string => (c.faceOf ? `${c.name} (back of ${c.faceOf})` : c.name);
+
+/** How much a card does here, for ranking cuts: every repeating link in full, help that happens
+ *  once at half, and a link that happens once at a quarter -- counting those at nothing put Ghostly
+ *  Flicker, with 26 of them, at the top of Inalla's cuts above cards with six (round 9). A card
+ *  something can bring back counts its one-time links in full, since they happen again. */
+const weight = (r: CutRow) => r.real + r.gives + r.givesOnce / 2 + r.once * (r.broughtBackBy ? 1 : 0.25);
+
+/** "A, B and C" or "A, B, C and 7 others"; semicolons when a name carries its own comma, so
+ *  "Falco Spara, Pactweaver" does not read as two cards (round 9). */
+export function listNames(list: string[], max = 8): string {
+  const short = list.map((n) => n.split(" // ")[0]!);
+  const sep = short.some((n) => n.includes(",")) ? "; " : ", ";
+  const head = short.slice(0, max), rest = short.length - head.length;
+  if (rest > 0) return `${head.join(sep)} and ${rest} other${rest === 1 ? "" : "s"}`;
+  return head.length > 1 ? `${head.slice(0, -1).join(sep)} and ${head.at(-1)}` : (head[0] ?? "");
+}
+
 function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partners: Map<string, Map<string, Pair>>, groups: Map<string, EngineGroup>): { cuts: CutRow[]; jobs: [string, CutRow[]][] } {
   const rows: (CutRow & { options: Link[] })[] = deckCards.filter((c) => !c.isCommander && !c.isLand).map((card) => {
     const nb = partners.get(card.id) ?? new Map<string, Pair>();
     let real = 0, gives = 0, givesOnce = 0, once = 0, fed = 0;
-    const fedBy: EngineCard[] = [];
+    const fedBy: EngineCard[] = [], onceWith: EngineCard[] = [], backBy: EngineCard[] = [];
     const options: Link[] = [];
     for (const p of nb.values()) {
+      const o = cards.get(p.a === card.id ? p.b : p.a);
+      // Something in the deck that can bring this card back, again and again: a one-shot spell that
+      // Archaeomancer returns is not a card that works only once (round 9).
+      if (o && p.links.some((l) => l.repeat !== "oneshot" && ((/^recursion-target/.test(l.tag) && l.to === card.id) || (/^graveyard-recursion/.test(l.tag) && l.from === card.id)))) backBy.push(o);
       const rep = p.links.filter((l) => l.repeat !== "oneshot");
       if (!rep.length) {
         if (p.links.some((l) => l.from === card.id && isHelperTag(l.tag))) givesOnce++;
-        else once++;
+        else { once++; if (o) onceWith.push(o); }
         continue;
       }
       if (rep.every((l) => isHelperTag(l.tag))) {
@@ -379,7 +423,6 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
       real++;
       if (!rep.some((l) => acts(card, l))) {
         fed++;
-        const o = cards.get(p.a === card.id ? p.b : p.a);
         if (o) fedBy.push(o);
       }
       options.push(...rep.filter((l) => !isHelperTag(l.tag) && !unread(l)));
@@ -392,10 +435,15 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
       const help = [...nb.values()].flatMap((p) => p.links).filter((x) => x.from === card.id && isHelperTag(x.tag) && !unread(x));
       keep = help.find((x) => x.repeat !== "oneshot") ?? help[0];
     }
+    const byScore = (x: EngineCard, y: EngineCard) => y.score - x.score || (x.name < y.name ? -1 : 1);
+    const onceNames = onceWith.sort(byScore).map(displayName);
+    const back = backBy.sort(byScore)[0];
     const onceHelp = givesOnce ? `helps ${givesOnce} more once, by finding them or bringing them back` : "";
     let why: string;
     if (!nb.size) why = "Works with nothing else in this deck.";
-    else if (!real && !gives && !givesOnce) why = once ? `Everything it does with other cards happens only once (${once} card${s(once)}).` : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
+    else if (!real && !gives && !givesOnce) why = once
+      ? `Everything it does with other cards happens only once: with ${listNames(onceNames, 3)}.${back ? ` ${back.name} can bring it back to do it again.` : ""}`
+      : `Its only links come from cards that make others cheaper, or easier to find or bring back.`;
     else if (!real && !gives) why = `All it does here is help ${givesOnce} card${s(givesOnce)} once, by finding them or bringing them back.`;
     else if (!real) why = `All it does here is help ${gives} card${s(gives)} in the background, by making them cheaper, giving them types, or letting you find or bring them back${givesOnce ? `; it also ${onceHelp}` : ""}.`;
     else why = `Keeps working with only ${real} other card${s(real)}${gives ? `, helps ${gives} more in the background` : ""}${givesOnce ? `${gives ? "," : ""} and ${onceHelp}` : ""}.`;
@@ -403,10 +451,21 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     // The users few other cards feed come first: they are what is particular about this card.
     // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.
     const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
-    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => c.name + (c.isToken ? " (token)" : ""));
-    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, partners: nb.size, why, keep, keepActs: false, jobs, options };
-  }).sort((a, b) => (a.real + a.gives + a.givesOnce / 2) - (b.real + b.gives + b.givesOnce / 2) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
-  const cuts = rows.filter((r) => !r.jobs.length).slice(0, 6);
+    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? " (token)" : ""));
+    return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options };
+  }).sort((a, b) => weight(a) - weight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
+  // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"
+  // named it among the cards doing something extra (round 10), and a helper's hub -- the cost
+  // reducer, Herald's Horn -- helps a whole group in the background (round 4).
+  const drivers = new Set([...groups.values()].flatMap((g) => g.hubs));
+  const usersKey = (r: CutRow) => [...r.fedBy].sort().join("\u0001");
+  const cuts: typeof rows = [];
+  for (const r of rows) {
+    if (r.jobs.length || drivers.has(r.card.id)) continue;
+    const twin = !r.keepActs && r.fedBy.length ? cuts.find((x) => !x.keepActs && usersKey(x) === usersKey(r)) : undefined;
+    if (twin) twin.twins.push(displayName(r.card));
+    else if (cuts.length < 6) cuts.push(r);
+  }
   const named = new Set<string>();
   for (const r of cuts) {
     const other = (l: Link) => (l.from === r.card.id ? l.to : l.from);
@@ -417,16 +476,15 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     if (r.keep) named.add(other(r.keep));
   }
   for (const r of rows) r.keepActs = !!r.keep && acts(r.card, r.keep);
-  const usersKey = (r: CutRow) => [...r.fedBy].sort().join("\u0001");
-  for (const [i, r] of cuts.entries()) {
-    if (r.keepActs || !r.fedBy.length) continue;
-    const twin = cuts.slice(0, i).find((x) => !x.keepActs && !x.sameUsersAs && usersKey(x) === usersKey(r));
-    if (twin) r.sameUsersAs = twin.card.name;
-  }
+  // Shown in the order of the number each row prints, the ranking's other terms breaking ties:
+  // "only 6, 7, 10" above "8, 9, 13" read as a broken ranking to two seats (round 11).
+  cuts.sort((a, b) => a.real - b.real || weight(a) - weight(b));
   const byJob = new Map<string, typeof rows>();
   for (const r of rows) for (const j of r.jobs) { if (!byJob.has(j)) byJob.set(j, []); byJob.get(j)!.push(r); }
   return {
     cuts: cuts.map(({ options: _, ...r }) => r),
-    jobs: [...byJob.entries()].map(([j, rs]) => [j, rs.map(({ options: _, ...r }) => r)] as [string, CutRow[]]).sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1)),
+    // Each job runs least to most connected, by the number it prints (round 12: the cut ranking's
+    // order broke the box's own rule).
+    jobs: [...byJob.entries()].map(([j, rs]) => [j, rs.map(({ options: _, ...r }) => r).sort((x, y) => x.partners - y.partners || (x.card.name < y.card.name ? -1 : 1))] as [string, CutRow[]]).sort((a, b) => b[1].length - a[1].length || (a[0] < b[0] ? -1 : 1)),
   };
 }

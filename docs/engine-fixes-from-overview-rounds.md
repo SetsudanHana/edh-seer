@@ -161,6 +161,52 @@
 
 ---
 
+## Found in round 9 (after #488–#497 landed)
+
+### 13. Flicker and reanimation are not linked to "Wizards entering" (Inalla)
+- **Emitted:** in `calibration/inalla`, Ghostly Flicker, Essence Flux, Reanimate and Waterbender's Restoration are left out of the `enters:wizard` group ("Mostly the same cards as Creatures entering, without Reanimate, Essence Flux, Waterbender's Restoration, Ghostly Flicker…").
+- **Oracle:** Inalla triggers on "another nontoken Wizard you control enters". Flickering or reanimating a nontoken Wizard does exactly that, and it is why those spells are in the deck.
+- **Effect on the page:** they sit on the cut list, and the tuner overruled it.
+- **Accept when:** a flicker or reanimation spell has an `enters:wizard` link to Inalla (and Kindred Discovery) wherever the deck has Wizards it can return.
+
+### 14. Summoner's Grimoire's granted trigger is unlinked (Yuna)
+- **Oracle:** "Equipped creature … has 'Whenever this creature attacks, you may put a creature card from your hand onto the battlefield. If that card is an enchantment card, it enters tapped and attacking.'"
+- **Emitted:** its only real partner is Summon: Good King Mog XII, so it reads "keeps working with only 1 other card". The Summons (enchantment creatures) should be its partners.
+
+### 15. "While you control X, Y counts it" tagged ONCE (Party Time)
+- **Emitted:** `Rumor Gatherer -> Thwart the Grave | scales:party | oneshot` renders "ONCE — While you control Rumor Gatherer, Thwart the Grave counts it and costs less".
+- The tag is plausible, since Thwart is a spell counted as it is cast, but the sentence still says "While you control". For a spell, the sentence should read as a count at cast ("When you cast Thwart the Grave, it counts Rumor Gatherer").
+
+### 16. Smaller ones
+- **Reanimate under "Bringing back instants"** and "Searching for instants": it is a sorcery. The group is named from the tag, so the tag probably says `instant` for an instant-or-sorcery subject.
+- **A Treasure under "Creatures dying"** (Party Time): "When a Treasure dies thanks to Grim Hireling, Zulaport Cutthroat…". Zulaport cares about creatures.
+- **Still open from above:** 2b/c (Fenrir's chapter II "EVERY TIME"), 4 (Inalla's exile), 8 (The Earth Crystal), 11 (Multiclass Baldric).
+
+## Found in round 10
+
+### 17. A single cast tagged EVERY TIME (Inalla)
+- **Emitted:** "EVERY TIME — When Kindred Discovery is cast, Harmonic Prodigy gets +1/+1". Prowess does trigger on every noncreature spell, but this link's producer is one card, cast once.
+- **Also:** Mog XII's chapter-limited token copies (Yuna): "EVERY TIME — When The Earth Crystal is cast, Summon: Good King Mog XII makes a token", while Mog's text limits it to chapters II–III and needs a non-Saga token.
+- **Needed:** the same rule as #493 applied to cast events. Casting a permanent spell is a one-time event for that card, and a Saga chapter's window is too.
+
+### 18. Abilities the tuner reads and the engine does not (Inalla)
+- **Gleeful Arsonist's undying** as sacrifice fodder: Ruthless Technomancer sacrifices it, and Grim Haruspex draws.
+- **High Fae Trickster's flash:** casting a Wizard at an opponent's end step gives Inalla's copy a whole turn.
+- Lower priority than item 4, but both are why the tuner overrules the cut list.
+
+## Found in round 11
+
+### 19. More of Inalla's copy-then-exile loop (extends item 4)
+- **Redoubled Stormsinger:** "Whenever this creature attacks, for each creature token you control that entered this turn, create a tapped and attacking token that's a copy of that token." Inalla's hasty Wizard copies are exactly those tokens, yet its users are listed as "Copy (token), Treasure (token) and Bird (token)", and the cut list says none of its links use its own abilities.
+- Fixing item 4's exile event, plus an `enters:token` link from token makers to Stormsinger, should cover Dour Port-Mage, Watcher for Tomorrow and Stormsinger together. Those are the three cards the tuner overrules every round.
+
+### 20. O'aka's counter removal is unlinked (Yuna)
+- **Oracle:** "{T}, Remove a counter from a nonland permanent you control: Draw a card." The deck is built on counters: Sagas' lore counters and +1/+1 counters.
+- **Emitted:** no link that uses it, so O'aka reads "None of the links found here use its own abilities".
+
+### 21. Land-fetching spells without the ramp role (Yuna)
+- Growth Spiral and Planar Genesis put lands onto the battlefield, yet they are judged by links and land on the cut list. Farseek, Nature's Lore and Three Visits carry the `ramp` role and sit in the jobs box. The skeptic read this as two rules for the same kind of card.
+
 ## Housekeeping
 - **The skeptic seat's calibration claim has decayed.**
   - `.claude/agents/README.md` seeds the Yuna deck with `Misty Rainforest -> Yuna, Grand Summoner | dies:permanent`, judged FALSE.

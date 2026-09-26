@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, type EngineCard, type EngineGroup, type EngineModel, type Link, type Repeat } from "../lib/engine-model.js";
+import { buildEngineModel, listNames, type EngineCard, type EngineGroup, type EngineModel, type Link, type Repeat } from "../lib/engine-model.js";
 import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { cardImageUrl } from "./card-node.js";
@@ -26,12 +27,24 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
   const m = useMemo(() => buildEngineModel(report, graph), [report, graph]);
   const panelRef = useRef<HTMLDivElement>(null);
   const sel = selected && m.cards.has(selected) ? selected : null;
+  const narrow = useNarrow();
+  // On a phone the panel is a sheet over the bottom of the screen, so the reader stays by the chip
+  // they tapped; scrolling up to the panel lost their place several screens away (round 10).
   useEffect(() => {
-    if (sel) panelRef.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    if (sel && window.matchMedia?.("(min-width: 640px)").matches) panelRef.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [sel]);
   const pct = m.totalLinks ? Math.round((100 * m.coveredLinks) / m.totalLinks) : 0;
-  const deckGroups = m.groups.filter((g) => !g.helper);
+  // A group that mostly repeats another goes after the ones that do not, so the few shown first
+  // are the deck's different things (round 9: four Inalla groups in a row were the same Wizards).
+  const deckGroups = m.groups.filter((g) => !g.helper).sort((x, y) => Number(!!x.sameAs) - Number(!!y.sameAs));
   const helpers = m.groups.filter((g) => g.helper);
+  const [allGroups, setAllGroups] = useState(false);
+  const [showHelpers, setShowHelpers] = useState(false);
+  const shownGroups = allGroups ? deckGroups : deckGroups.slice(0, GROUP_CAP);
+  const moreGroups = deckGroups.slice(GROUP_CAP);
+  // Counted from the groups on screen: with some folded, a total over all of them could not be
+  // added up from the page (round 10).
+  const shownOnce = [...shownGroups, ...(showHelpers ? helpers : [])].reduce((t, g) => t + g.once, 0);
 
   if (!m.totalLinks) {
     return <p className="text-(--muted) py-8">The engine found no cards in this deck that work with each other, so there is nothing to group yet.</p>;
@@ -40,13 +53,18 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
     <div className="flex flex-col gap-8 py-2">
       <div className="flex flex-col gap-3">
         <p className="max-w-[70ch]">
-          Your deck mostly does <b>{deckGroups.length} things</b>, listed below. Between them they explain{" "}
+          {/* "6 things, listed below" over three shown read as a miscount (round 12). */}
+          Your deck mostly does <b>{deckGroups.length} things</b>{moreGroups.length ? <>; the {shownGroups.length === deckGroups.length ? "" : `${shownGroups.length} biggest `}are below</> : ", listed below"}. Between them they explain{" "}
           <b>{pct}%</b> of the ways your {m.deckCards} cards work together.
           {m.onceLinks ? (
             <>
               {" "}<b>{m.onceLinks}</b> of those links work only once
-              {/* The groups showed 14 of 103 and the skeptic could not find the rest (round 8). */}
-              {m.onceInGroups < m.onceLinks ? `, and ${m.onceInGroups ? `only ${m.onceInGroups} of them are` : "none of them are"} in the groups below` : ""}.
+              {/* The groups showed 14 of 103 and the skeptic could not find the rest (round 8); "and
+                * only 257 of them are in the groups below" then read as a second, unexplained count
+                * to three seats (round 9). */}
+              {/* Most one-time links are between cards in no group, so a count of the few shown
+                * explained nothing (round 11); say where the rest are. */}
+              {shownOnce < m.onceLinks / 2 ? ", most of them between cards outside the groups below" : shownOnce < m.onceLinks ? `; the groups below include ${shownOnce} of them` : ""}.
             </>
           ) : null}
         </p>
@@ -98,9 +116,16 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
                 // is which cards use it and that none of its links found uses its own abilities.
                 <p className="text-(--muted)">
                   <span className="eyebrow block">Who uses it</span>
-                  {c.sameUsersAs ? <>The same {c.fedBy.length} card{c.fedBy.length === 1 ? "" : "s"} as <CardName name={c.sameUsersAs} />, so here the two do the same job.</>
-                    : <>{names(c.fedBy.slice(0, 3))}{c.fedBy.length > 3 ? ` and ${c.fedBy.length - 3} other${c.fedBy.length === 4 ? "" : "s"}` : ""}.</>}
+                  {names(c.fedBy.slice(0, 3))}{c.fedBy.length > 3 ? ` and ${c.fedBy.length - 3} other${c.fedBy.length === 4 ? "" : "s"}` : ""}.
                   {" "}None of the links found here use its own abilities.
+                </p>
+              ) : null}
+              {c.twins.length ? (
+                <p className="text-(--muted)">
+                  <span className="eyebrow block">Used by exactly the same cards</span>
+                  {/* "Whatever you decide about one goes for all of them" read as "cut all seven"
+                    * (round 11). They stand in for each other; they are not a package. */}
+                  {names(c.twins)} {c.twins.length === 1 ? "is" : "are"} used by the same cards as {c.card.name.split(" // ")[0]}, so here {c.twins.length === 1 ? "either can" : "any of them can"} stand in for another: cutting one leaves the rest doing the same job.
                 </p>
               ) : null}
               <ReadCards cards={[c.card]} />
@@ -110,7 +135,9 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
         </div>
         {m.jobs.length ? (
           <div className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-            <h3 className="font-semibold text-base">Removal, extra mana and protection</h3>
+            {/* Named from the jobs this deck has: "…and protection" over a deck with none read as
+              * a promise the box did not keep (round 12). */}
+            <h3 className="font-semibold text-base">{listNames(m.jobs.map(([j]) => j.toLowerCase()), 3).replace(/^./, (x) => x.toUpperCase())}</h3>
             <p className="text-(--muted)">These cards are judged by their job, not by links, so compare them with each other. Each group runs from least to most connected; the number is how many other cards in this deck each one works with.</p>
             <ul className="flex flex-col gap-1.5">
               {m.jobs.map(([job, rows]) => (
@@ -126,19 +153,40 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
 
       <section aria-labelledby="eng-groups" className="flex flex-col gap-3">
         <h2 id="eng-groups" className="text-lg font-semibold">What your deck does</h2>
-        <p className="text-sm text-(--muted)">Tap any card to light up the cards it works with.</p>
+        <p className="text-sm text-(--muted)">Tap any card to see the cards it works with. A card with a dashed outline works with its group only once.</p>
         {/* Clear of the sticky site and deck bars, which hid the panel's title (round 6). */}
-        <div ref={panelRef} className="scroll-mt-40">{sel ? <SelectedPanel m={m} id={sel} onClear={() => onSelect(null)} onOpenCard={onOpenCard} /> : null}</div>
-        {deckGroups.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />)}
+        <div ref={panelRef} className="scroll-mt-40">
+          {sel ? (narrow
+            // Into the body: an ancestor of the report pins `fixed` to itself, and the sheet
+            // landed at the bottom of the tab instead of the screen (round 11 capture).
+            ? createPortal(<SelectedPanel m={m} id={sel} onClear={() => onSelect(null)} onOpenCard={onOpenCard} />, document.body)
+            : <SelectedPanel m={m} id={sel} onClear={() => onSelect(null)} onOpenCard={onOpenCard} />) : null}
+        </div>
+        {shownGroups.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />)}
+        {moreGroups.length ? (
+          <p>
+            <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setAllGroups(!allGroups)}>
+              {allGroups ? "Show fewer" : `Show ${moreGroups.length} more: ${listNames(moreGroups.map((g) => g.name.toLowerCase()), 4)}`}
+            </button>
+          </p>
+        ) : null}
       </section>
 
       {helpers.length ? (
         <section aria-labelledby="eng-helpers" className="flex flex-col gap-3">
           <h2 id="eng-helpers" className="text-lg font-semibold">Cards that make many others easier to use</h2>
           <p className="text-sm text-(--muted) max-w-[70ch]">They make other cards cheaper, give them types, or let you find or bring them back. Useful, but not a plan on their own.</p>
-          {helpers.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />)}
+          {/* Folded by default: every seat stopped scrolling above them (round 9). */}
+          {showHelpers ? helpers.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />) : null}
+          <p>
+            <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setShowHelpers(!showHelpers)}>
+              {showHelpers ? "Hide these" : `Show them: ${listNames(helpers.map((g) => g.name.toLowerCase()), 4)}`}
+            </button>
+          </p>
         </section>
       ) : null}
+      {/* Room to scroll the last group out from under the phone sheet. */}
+      {sel ? <div aria-hidden="true" className="h-[40vh] sm:hidden" /> : null}
     </div>
   );
 }
@@ -215,13 +263,25 @@ function CardText({ card }: { card: EngineCard }) {
   );
 }
 
-/** "A, B and C", or the first eight and a count, for names a sentence has to carry. */
-function names(list: string[]): string {
-  const short = list.map((n) => n.split(" // ")[0]!);
-  const head = short.slice(0, 8);
-  const tail = short.length > 8 ? ` and ${short.length - 8} more` : "";
-  return head.length > 1 && !tail ? `${head.slice(0, -1).join(", ")} and ${head.at(-1)}` : head.join(", ") + tail;
+/** Whether the screen is phone-width, following resizes. */
+function useNarrow(): boolean {
+  const query = "(max-width: 639px)";
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return;
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return narrow;
 }
+
+/** How many of the deck's groups show before "Show N more": the six ran to ten phone screens,
+ *  and every seat stopped reading partway through them (round 9). */
+const GROUP_CAP = 3;
+
+const names = (list: string[]) => listNames(list);
 
 /** A group shows this many member chips until asked for all of them: at 390px a group of 54
  *  was a wall of chips three screens tall (live round). The rest are named in a line. A selection
@@ -243,7 +303,16 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
   const rank = (a: EngineCard, b: EngineCard) => Number(b.isCommander) - Number(a.isCommander) || b.score - a.score || (a.name < b.name ? -1 : 1);
   const hubs = g.hubs.map((id) => m.cards.get(id)!).sort(rank);
   const on = (c: EngineCard) => c.id === sel || !!lit?.has(c.id);
-  const listed = g.sameAs && !all ? g.sameAs.extra : g.members;
+  const selName = sel ? m.cards.get(sel)?.name.split(" // ")[0] : undefined;
+  // A TAP SHOWS ONLY WHAT IT LIGHTS: fading the rest changed nothing visible for a card with 36
+  // partners among 44 (round 10). "Show all" brings the whole group back, faded.
+  const filtering = !!sel && !all;
+  const litIds = g.members.filter((id) => { const c = m.cards.get(id); return !!c && on(c); });
+  // The tapped card is shown but not counted: "4 of these 36 work with Kindred Discovery" included
+  // Kindred Discovery (round 11).
+  const selIn = !!sel && g.members.includes(sel);
+  const litOthers = litIds.length - (selIn ? 1 : 0);
+  const listed = filtering ? litIds : g.sameAs && !all ? g.sameAs.extra : g.members;
   const members = listed.map((id) => m.cards.get(id)!)
     .sort((a, b) => Number(on(b)) - Number(on(a)) || Number(g.onceOnly.has(a.id)) - Number(g.onceOnly.has(b.id)) || rank(a, b));
   const chip = (c: EngineCard, strong: boolean) => {
@@ -269,7 +338,6 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
   const shown = all ? members : members.slice(0, CHIP_CAP);
   const rest = members.slice(shown.length);
   const restLit = rest.filter(on).length;
-  const selName = sel ? m.cards.get(sel)?.name.split(" // ")[0] : undefined;
   const hubWord = g.helper
     ? (hubs.length === 1 ? "This card…" : `These ${hubs.length} cards…`)
     : (hubs.length === 1 ? "This card does something extra…" : `These ${hubs.length} cards do something extra…`);
@@ -284,25 +352,28 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
       <div className="flex flex-col gap-1.5"><span className="eyebrow text-(--muted)">{hubWord}</span><div className="flex flex-wrap gap-1.5">{hubs.map((c) => chip(c, true))}</div></div>
       <div className="flex flex-col gap-1.5">
         <span className="eyebrow text-(--muted)">{memberWord}</span>
-        {g.sameAs && !all ? (
+        {filtering ? (
+          <p className="text-sm">{litOthers ? `${litOthers} of ${selIn ? `the other ${n - 1}` : `these ${n}`} work with ${selName}:` : `None of ${selIn ? `the other ${n - 1}` : `these ${n}`} work with ${selName}.`}</p>
+        ) : null}
+        {g.sameAs && !all && !filtering ? (
           <p className="text-sm">
             Mostly the same cards as <b>{g.sameAs.name}</b>
-            {g.sameAs.missing.length ? `, without ${names(g.sameAs.missing.map((id) => { const c = m.cards.get(id); return c ? c.name + (c.isToken ? " (token)" : "") : id; }))}` : ""}
+            {g.sameAs.missing.length ? `, without ${g.sameAs.missing.length} of them (${names(g.sameAs.missing.map((id) => { const c = m.cards.get(id); return c ? c.name + (c.isToken ? " (token)" : "") : id; }))})` : ""}
             {members.length ? `, plus these ${members.length}:` : "."}
           </p>
         ) : null}
         {shown.length ? <div className="flex flex-wrap gap-1.5">{shown.map((c) => chip(c, false))}</div> : null}
         {rest.length ? (
           <p className="text-sm text-(--muted)">
-            and {rest.length} more{sel && restLit ? `, ${restLit} of them lit by ${selName}` : ""}:{" "}
+            and {rest.length} more{sel && !filtering && restLit ? `, ${restLit} of them lit by ${selName}` : ""}:{" "}
             {rest.map((c, i) => (
-              <span key={c.id} className={on(c) ? "font-semibold text-(--foreground) underline decoration-2 underline-offset-2" : sel ? "opacity-40" : ""}>
+              <span key={c.id} className={filtering ? "text-(--foreground)" : on(c) ? "font-semibold text-(--foreground) underline decoration-2 underline-offset-2" : sel ? "opacity-40" : ""}>
                 {i ? ", " : ""}{c.name.split(" // ")[0]}{c.isToken ? " (token)" : ""}
               </span>
             ))}.
           </p>
         ) : null}
-        {rest.length || g.sameAs ? (
+        {rest.length || g.sameAs || (filtering && litIds.length < n) ? (
           <p><button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-3 text-sm" onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${n}`}</button></p>
         ) : null}
       </div>
@@ -327,20 +398,28 @@ function SelectedPanel({ m, id, onClear, onOpenCard }: { m: EngineModel; id: str
   const c = m.cards.get(id)!;
   const nb = m.partners.get(id);
   const groups = m.membership.get(id) ?? [];
-  const lines = [...(nb?.values() ?? [])].flatMap((p) => p.links)
-    .sort((a, b) => Number(a.repeat === "oneshot") - Number(b.repeat === "oneshot") || m.cards.get(b.to === id ? b.from : b.to)!.score - m.cards.get(a.to === id ? a.from : a.to)!.score)
-    .slice(0, 5);
+  const partnerOf = (l: Link) => (l.to === id ? l.from : l.to);
+  const ranked = [...(nb?.values() ?? [])].flatMap((p) => p.links)
+    .sort((a, b) => Number(a.repeat === "oneshot") - Number(b.repeat === "oneshot") || m.cards.get(partnerOf(b))!.score - m.cards.get(partnerOf(a))!.score);
+  // ONE LINE PER PARTNER FIRST: "Works with 54 cards" over five lines that were all Rumor Gatherer
+  // read as a contradiction (round 11). A second line for a partner only fills a short list.
+  const seen = new Set<string>();
+  const firsts = ranked.filter((l) => !seen.has(partnerOf(l)) && seen.add(partnerOf(l)));
+  const lines = [...firsts, ...ranked.filter((l) => !firsts.includes(l))].slice(0, 5);
   return (
-    <div className="mb-1 flex flex-col gap-2 rounded-(--radius) border border-(--foreground) bg-(--surface) p-3 text-sm" aria-live="polite">
-      <div className="flex items-start gap-3">
+    <div className="fixed inset-x-0 bottom-0 z-40 flex max-h-[40vh] flex-col gap-2 overflow-y-auto rounded-t-(--radius) border border-(--foreground) bg-(--surface) p-3 text-sm shadow-[0_-8px_24px_rgb(0_0_0/0.5)] sm:static sm:z-auto sm:mb-1 sm:max-h-none sm:overflow-visible sm:rounded-(--radius) sm:shadow-none" aria-live="polite">
+      {/* On a phone the way out stays in reach at the top of the sheet: the buttons at its foot
+        * sat below the edge of the screen (round 11). */}
+      <div className="sticky -top-3 z-10 -mx-3 -mt-3 flex items-start gap-3 bg-(--surface) px-3 pt-3 pb-1 sm:static sm:m-0 sm:p-0">
         <CardFace card={c} className="w-20 sm:w-24" />
         <div className="flex-1">
           <h3 className="font-semibold text-base"><CardName name={c.name} />{c.isToken ? <span className="text-(--muted) font-normal"> (token)</span> : null}</h3>
           <p className="text-(--muted)">
-            Works with {nb?.size ?? 0} card{nb?.size === 1 ? "" : "s"}, lit below; everything else is faded.
+            Works with {nb?.size ?? 0} card{nb?.size === 1 ? "" : "s"}; each group below now shows only those.
             {groups.length ? <> Part of: {groups.map((g) => g.name.toLowerCase()).join("; ")}.</> : null}
           </p>
         </div>
+        <button type="button" aria-label="Close" className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-(--radius) border border-(--separator) text-lg sm:hidden" onClick={onClear}>✕</button>
       </div>
       <Lines links={lines} />
       <ReadCards cards={[c]} />

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { nodeId as matcherNodeId } from "@edh-seer/matcher/graph-projection";
 import { engineDeck } from "./engine-model.fixture.js";
-import { buildEngineModel, groupName, nodeId, plural } from "./engine-model.js";
+import { buildEngineModel, groupName, listNames, nodeId, plural } from "./engine-model.js";
 import type { CardGraph, DeckReport } from "../types.js";
 
 describe("nodeId", () => {
@@ -67,6 +67,11 @@ describe("buildEngineModel", () => {
     expect(m.deckCards).toBe(17);
   });
 
+  test("a card that drives one of the deck's groups is not a cut candidate", () => {
+    expect(m.cuts.map((c) => c.card.name)).not.toContain("Payoff A");
+    expect(m.cuts.map((c) => c.card.name)).not.toContain("Payoff B");
+  });
+
   test("a card that helps many in the background is not a cut candidate", () => {
     expect(m.cuts.map((c) => c.card.name)).not.toContain("Reducer");
   });
@@ -93,10 +98,11 @@ describe("buildEngineModel", () => {
     expect(side.keep?.text).toBe("When Cleric 3 gains you life, Sidekick grows");
     expect(side.keepActs).toBe(true);
     expect(m.cuts.find((c) => c.card.name.startsWith("Cleric"))!.keepActs).toBe(false);
-    // Clerics are used by the same two payoffs, so the second says so instead of listing them again.
+    // Clerics used by exactly the same cards fold into one row instead of repeating it.
     const clerics = m.cuts.filter((c) => c.card.name.startsWith("Cleric") && !c.keepActs);
-    expect(clerics[0]!.sameUsersAs).toBeUndefined();
-    expect(clerics.slice(1).every((c) => c.sameUsersAs === clerics[0]!.card.name)).toBe(true);
+    expect(clerics).toHaveLength(1);
+    expect(clerics[0]!.twins.length).toBeGreaterThan(0);
+    expect(clerics[0]!.twins.every((n) => n.startsWith("Cleric"))).toBe(true);
   });
 
   test("a pair that helps both ways shows both directions, and no card fills the strip", () => {
@@ -126,4 +132,78 @@ test("a pair helps both ways only when each card acts in a line, whichever side 
   } as unknown as CardGraph;
   const [pair] = buildEngineModel(report, graph).strongest;
   expect(pair!.both).toBe(false);
+});
+
+function tiny(names: string[], reasons: { producer: string; consumer: string; tag: string; text: string; repeatability?: string }[]) {
+  const report = {
+    commanders: [], cards: names.map((name) => ({ name, score: 1 })),
+    edges: reasons.map((r) => ({ a: r.producer, b: r.consumer, score: 1, reasons: [r] })),
+  } as unknown as DeckReport;
+  const graph = {
+    nodes: names.map((n) => ({ id: n, label: n, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [] })),
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  } as unknown as CardGraph;
+  return buildEngineModel(report, graph);
+}
+
+test("a copy link is the copier helping, so a pair whose every line runs one way is one-way", () => {
+  // Sythis acts in the cast line, but Weaver helped; Weaver copying Sythis helps Sythis too.
+  const [pair] = tiny(["Sythis", "Weaver"], [
+    { producer: "Weaver", consumer: "Sythis", tag: "cast:enchantment", text: "When Weaver is cast, Sythis gains you life" },
+    { producer: "Sythis", consumer: "Weaver", tag: "copies:triggered", text: "Weaver copies Sythis's triggered ability", repeatability: "activated" },
+  ]).strongest;
+  expect(pair!.both).toBe(false);
+});
+
+test("a doubled card is not what acts in the doubler's line", () => {
+  const m = tiny(["Doubler", "Wizard", "Payoff"], [
+    { producer: "Doubler", consumer: "Wizard", tag: "doubles:shaman", text: "Wizard's triggered abilities trigger an additional time thanks to Doubler", repeatability: "static" },
+    { producer: "Wizard", consumer: "Payoff", tag: "enters:wizard", text: "When Wizard enters, Payoff draws you 1 card" },
+  ]);
+  const wizard = m.cuts.find((c) => c.card.name === "Wizard")!;
+  expect(wizard.keepActs).toBe(false);
+});
+
+test("one-time links are named, count a little, and a card that can be brought back says so", () => {
+  const m = tiny(["Flicker", "A", "B", "C", "Lone", "Digger"], [
+    ...["A", "B", "C"].map((x) => ({ producer: "Flicker", consumer: x, tag: "enters:creature", text: `When ${x} enters thanks to Flicker, ${x} triggers again`, repeatability: "oneshot" })),
+    { producer: "Digger", consumer: "Flicker", tag: "recursion-target:instant", text: "Digger can bring back Flicker" },
+    { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
+  ]);
+  const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
+  expect(flicker.why).toMatch(/happens only once: with A, B and C\. Digger can bring it back to do it again\./);
+  expect(flicker.broughtBackBy).toBe("Digger");
+  // Rows show in the order of the number they print: no repeating link comes before one.
+  expect(m.cuts.indexOf(flicker)).toBeLessThan(m.cuts.findIndex((c) => c.card.name === "Lone"));
+});
+
+test("names with commas are separated so they cannot be misread", () => {
+  expect(listNames(["Falco Spara, Pactweaver", "Sol Ring"])).toBe("Falco Spara, Pactweaver and Sol Ring");
+  expect(listNames(["Falco Spara, Pactweaver", "Sol Ring", "Mox"])).toBe("Falco Spara, Pactweaver; Sol Ring and Mox");
+  expect(listNames(["A", "B", "C", "D"], 2)).toBe("A, B and 2 others");
+});
+
+test("an effect the engine has not read does not rank a pair", () => {
+  const m = tiny(["A", "B"], [
+    { producer: "A", consumer: "B", tag: "counter-added:creature", text: "When A gets a counter, B triggers" },
+  ]);
+  expect(m.strongest).toHaveLength(0);
+});
+
+test("a card's back face says whose back it is", () => {
+  const report = {
+    commanders: [], cards: [{ name: "Front // Back", score: 1 }, { name: "Payoff", score: 1 }],
+    edges: [{ a: "Back", b: "Payoff", score: 1, reasons: [{ producer: "Front // Back", producerFace: 1, consumer: "Payoff", tag: "enters:creature", text: "When Back enters, Payoff draws you 1 card" }] }],
+  } as unknown as DeckReport;
+  const graph = {
+    nodes: [
+      { id: "Front // Back", label: "Front", cardName: "Front // Back", copies: 1, types: ["creature"], roles: [] },
+      { id: "face:1:Front // Back", label: "Back", cardName: "Front // Back", copies: 1, types: ["creature"], roles: [] },
+      { id: "Payoff", label: "Payoff", copies: 1, types: ["creature"], roles: [] },
+    ],
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  } as unknown as CardGraph;
+  const m = buildEngineModel(report, graph);
+  expect(m.cards.get("face:1:Front // Back")!.faceOf).toBe("Front");
+  expect(m.cards.get("Front // Back")!.faceOf).toBeUndefined();
 });
