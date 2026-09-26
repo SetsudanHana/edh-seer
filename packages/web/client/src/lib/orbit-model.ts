@@ -129,7 +129,12 @@ export function buildOrbit(m: EngineModel, focusId: string): OrbitModel | null {
   const rest: EngineCard[] = [];
   for (const c of m.cards.values()) {
     if (c.id === focusId || nb.has(c.id) || !deckCard(c)) continue;
-    const via = [...(m.partners.get(c.id)?.keys() ?? [])].filter((x) => nb.has(x)).map((x) => m.cards.get(x)!)
+    // A PROWESS PUMP IS NO ROUTE (owner ruling 2026-09-27, #517): a pair held only by `prowess:` links
+    // is a spell being cast near a creature, and Harmonic Prodigy's prowess made it the route for 29
+    // of Inalla's 31 cards one step out. Other helpers (a typed tutor) are real relations and still route.
+    const theirs = m.partners.get(c.id);
+    const via = [...(theirs?.keys() ?? [])].filter((x) => nb.has(x) && theirs!.get(x)!.links.some((l) => !l.tag.startsWith("prowess:")))
+      .map((x) => m.cards.get(x)!)
       .sort((a, b) => b.score - a.score);
     if (via.length) near.push({ card: c, via });
     else rest.push(c);

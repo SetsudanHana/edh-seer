@@ -379,7 +379,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           <Movement title="Your cards, by the job they do" count="cards that do two jobs sit on both shelves">
             <RoleShelves report={report} graph={data.graph} />
           </Movement>
-          <Movement count="the numbers behind the build suggestions below">
+          {/* THE SHELVES ARE THE ROLE COUNTS (owner, 2026-09-26: "first you have whole card by card
+            *  breakdown and then this one which is duplicate"). "How the roles are spent" drew the
+            *  same counts again as bars under the shelves, which already print each count against
+            *  its target, so only the answers stay here. */}
+          <Movement count="which of your cards remove their permanents">
             <BuildBenchmarks
               categories={report.buildCategories}
               parents={report.buildParents}
@@ -388,6 +392,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               // Answers stay: they break down the interaction role. How it wins and what the cards
               // wait for moved to Game plan.
               sections={["answers"]}
+              showBenchmarks={false}
             />
           </Movement>
         </Chapter>

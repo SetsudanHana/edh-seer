@@ -388,7 +388,10 @@ export function analyzeDeckStructured(
     return {
       name: dc.card.name,
       hasPartner: partneredOracles.has(dc.tags!.oracleId),
-      ...(roles?.length ? { roles, madeBy: madeBy(dc) } : {}),
+      // EVERY token names its makers (owner ruling 2026-09-27, #519): a Bird token as Summon:
+      // Fenrir's landfall partner is rules-true, but the page must say whose Bird it is.
+      madeBy: madeBy(dc),
+      ...(roles?.length ? { roles } : {}),
     };
   });
 

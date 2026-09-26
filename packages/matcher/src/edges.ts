@@ -1005,6 +1005,17 @@ function sacrificesItself(c: DeckCard, a: CardTags["abilities"][number]): boolea
   return siblings.some((b) => (b.emits ?? []).some((e) => e.verb === "sacrifice" && e.subject.self === true));
 }
 
+/** A PROWESS-SHAPED TRIGGER IS A HELPER, NOT A SYNERGY (owner ruling 2026-09-27, #517): "whenever you
+ *  cast a noncreature spell, this creature gets +1/+1 until end of turn" is not a reason Sol Ring or
+ *  a Talisman is in the deck, yet it linked every one of them to Harmonic Prodigy and made it the hub
+ *  of 29 of Inalla's 31 orbit routes. The link is kept -- the trigger is real -- under `prowess:`,
+ *  which the page folds as a helper. Shared with `partners-core`, which confirms a demand by matching
+ *  the engine's tag exactly. */
+export function eventReasonTag(key: string, verb: string, a: Pick<CardTags["abilities"][number], "effect">): string {
+  return verb === "cast" && a.effect.kind === "pump" && a.effect.subject?.self === true && key.startsWith("cast:")
+    ? `prowess:${key.slice("cast:".length)}` : key;
+}
+
 /** A card whose own printing lets it be cast again: escape, retrace, or "you may cast <this card>
  *  from your graveyard" (Gravecrawler). Its single implied cast is really a repeatable one. */
 function recastsItself(p: DeckCard): boolean {
@@ -1697,7 +1708,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
         const clonesOnEntry = a.effect.kind === "clone" && t.verb === "enters" && t.subject.self === true;
         const origin = origins.get(JSON.stringify(e0));
         reasons.push({
-          tag: key,
+          tag: eventReasonTag(key, t.verb, a),
           ...(origin !== undefined ? { producerAbility: origin } : {}),
           ...(ai < realAbilities ? { consumerAbility: ai } : {}),
           text: viaHost ? auraHostSentence(p.card.name, c.card.name, (emitSubjectNoun(c.tags.characteristics.enchants) ?? "a permanent").replace(/^an? /, ""))
@@ -2429,14 +2440,24 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // fodder reasons on the 71 decks were real cards, 956 of them above mana value 2.
     // CEILING: "cheap" is a mana-value line, set at 2 on those four verdicts; a rate model (Y9 /
     // AE4) would compare the card against what the outlet pays out instead.
-    const expendable = isToken || (p.card.manaValue <= EXPENDABLE_MV
+    // A CREATURE THAT COMES BACK IS FODDER TOO (owner ruling 2026-09-27, #509): "creatures that can
+    // come back can be considered fodder, you just have to remember how many times they can come
+    // back." Undying and persist each return it once, so it is fodder even for a whole-board
+    // "sacrifice a creature" outlet, and the sentence says how often. Another card returning it
+    // (Daretti) still does not make it fodder -- the property is the card's own.
+    // CEILING: the two keywords only; a printed "return this card to the battlefield" (Reassembling
+    // Skeleton) is not read yet.
+    const comesBack = (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
+    const expendable = isToken || comesBack !== undefined || (p.card.manaValue <= EXPENDABLE_MV
       && !p.tags.characteristics.types.some((t) => t.toLowerCase() === "legendary"));
-    const is = expendable && (isToken || subtype !== undefined || narrowType)
+    const is = expendable && (isToken || comesBack !== undefined || subtype !== undefined || narrowType)
       && subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h);
     if (!is && !makes) continue;
     reasons.push({
       tag: `fodder:${themeSubjectKey(wanted)}`,
-      text: is ? `${p.card.name} is fodder for ${c.card.name}` : `${p.card.name} makes fodder for ${c.card.name}`,
+      text: !is ? `${p.card.name} makes fodder for ${c.card.name}`
+        : comesBack && !isToken ? `${p.card.name} is fodder for ${c.card.name}, and ${comesBack} brings it back once`
+        : `${p.card.name} is fodder for ${c.card.name}`,
       effectKind: a.effect.kind || "sacrifice",
       repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : "static",
       consumer: c.card.name,

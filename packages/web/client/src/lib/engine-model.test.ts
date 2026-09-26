@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { nodeId as matcherNodeId } from "@edh-seer/matcher/graph-projection";
 import { engineDeck } from "./engine-model.fixture.js";
-import { buildEngineModel, groupName, listNames, nodeId, plural } from "./engine-model.js";
+import { buildEngineModel, foldSpellTag, groupName, listNames, nodeId, plural, tokenLabel } from "./engine-model.js";
 import type { CardGraph, DeckReport } from "../types.js";
 
 describe("nodeId", () => {
@@ -206,4 +206,24 @@ test("a card's back face says whose back it is", () => {
   const m = buildEngineModel(report, graph);
   expect(m.cards.get("face:1:Front // Back")!.faceOf).toBe("Front");
   expect(m.cards.get("Front // Back")!.faceOf).toBeUndefined();
+});
+
+/** Owner ruling 2026-09-27 (#543): instants and sorceries are one group on the page, labelled as both. */
+test("instant and sorcery tags fold into one group labelled for both", () => {
+  expect(foldSpellTag("cast:instant")).toBe("cast:instant-sorcery");
+  expect(foldSpellTag("graveyard-recursion:sorcery")).toBe("graveyard-recursion:instant-sorcery");
+  expect(foldSpellTag("cast:creature")).toBe("cast:creature");
+  expect(groupName("cast:instant-sorcery")).toBe("Casting instants and sorceries");
+  expect(groupName("graveyard-recursion:instant-sorcery")).toBe("Instants and sorceries coming back");
+});
+
+/** Owner ruling 2026-09-27 (#519): a token stays a node, and wherever it is named the page says whose. */
+test("a token names the cards that make it", () => {
+  const { report, graph } = engineDeck();
+  const token = graph.nodes.find((n) => n.isToken)!;
+  const m = buildEngineModel({ ...report, tokenNodes: [{ name: token.label, hasPartner: true, madeBy: ["Commander"] }] }, graph);
+  const card = m.cards.get(token.id)!;
+  expect(tokenLabel(card)).toBe("(token from Commander)");
+  expect(tokenLabel({ isToken: true })).toBe("(token)");
+  expect(tokenLabel({ isToken: false })).toBe("");
 });

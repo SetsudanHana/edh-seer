@@ -32,6 +32,8 @@ export interface EngineCard {
   faceOf?: string;
   /** The physical card this node is a face of, or its own name: what a player cuts. */
   physical: string;
+  /** For a token, the deck cards that make it (#519): "Bird (token from Summon: Fat Chocobo)". */
+  madeBy?: readonly string[];
 }
 
 export interface EngineGroup {
@@ -120,15 +122,34 @@ const MAX_HELPER_GROUPS = 4;
 /** A mechanism smaller than this is a pair or two, not something the deck does. */
 const MIN_GROUP_LINKS = 6;
 
-const HELPER_TAG = /^(static:cost-reduction|static:type-grant|recursion-target|tutor|ramp-target)/;
+// `prowess`: a self-pump on every noncreature spell is background, not a reason the spell is in the
+// deck (owner ruling 2026-09-27, #517).
+const HELPER_TAG = /^(static:cost-reduction|static:type-grant|recursion-target|tutor|ramp-target|prowess)/;
 export const isHelperTag = (tag: string): boolean => HELPER_TAG.test(tag);
 
 const CARD_TYPES = new Set(["creature", "land", "artifact", "enchantment", "instant", "sorcery", "planeswalker", "permanent", "spell", "battle"]);
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** A subject as the plural a player says: "creatures", "Clerics", "noncreature spells". */
+/** INSTANTS AND SORCERIES ARE ONE GROUP ON THE PAGE (owner ruling 2026-09-27, #543). The engine keys a
+ *  reason on the type that matched (#507), and where nothing could be matched -- a discard of an
+ *  unknown card, Mizzix's Mastery's copies -- on the first of "instant or sorcery". Either way a
+ *  spellslinger deck's two halves are one plan, so the client folds both into one tag, once, where
+ *  links are built; every group, orbit and theme lookup then sees the same key. */
+/** What a token is, said wherever its name is: "(token from Summon: Fat Chocobo)", or "(token)" when
+ *  nothing in the deck is known to make it (owner ruling 2026-09-27, #519). Empty for a real card. */
+export function tokenLabel(c: Pick<EngineCard, "isToken" | "madeBy">): string {
+  if (!c.isToken) return "";
+  return c.madeBy?.length ? `(token from ${c.madeBy.join(", ")})` : "(token)";
+}
+
+export function foldSpellTag(tag: string): string {
+  return tag.replace(/:(?:instant|sorcery)$/, ":instant-sorcery");
+}
+
 export function plural(subject: string): string {
   if (!subject || subject === "any") return "cards";
+  if (subject === "instant-sorcery") return "instants and sorceries";
   if (subject.startsWith("-")) return `non${subject.slice(1)} ${subject === "-land" ? "cards" : "spells"}`;
   // THE PARTY IS NOT A TYPE: `scales:party` (#490) counts up to one each of Cleric, Rogue, Warrior
   // and Wizard, and "Counts your Parties" read as a card type that does not exist.
@@ -173,6 +194,7 @@ export function groupName(tag: string): string {
     case "creates": return "Making tokens";
     case "lose-life": return "Losing life";
     case "threshold": return "A full graveyard";
+    case "prowess": return `Casting ${p} pumps a creature`;
     // Issue #505: a cheat puts a creature from hand onto the battlefield (Summoner's Grimoire).
     case "cheat": return `Cheating ${p} into play`;
     // Issue #514: a card switched on by a creature type (Multiclass Baldric, Gravecrawler).
@@ -201,6 +223,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
   const costByName = new Map(report.cards.map((c) => [c.name, c.manaCost ?? ""]));
   const commanders = new Set(report.commanders);
   const cards = new Map<string, EngineCard>();
+  const makers = new Map((report.tokenNodes ?? []).map((t) => [t.name, t.madeBy ?? []]));
   for (const n of graph.nodes) {
     cards.set(n.id, {
       id: n.id, name: n.label, typeLine: n.typeLine ?? "", text: n.oracleText ?? "", art: n.artCrop,
@@ -209,6 +232,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       roles: n.roles ?? [], score: scoreByName.get(n.label) ?? 0,
       manaCost: n.isToken ? "" : costByName.get(n.cardName ?? n.label) ?? "",
       physical: n.cardName ?? n.id,
+      ...(n.isToken && makers.get(n.label)?.length ? { madeBy: makers.get(n.label) } : {}),
       faceOf: n.cardName && n.cardName !== n.id && n.cardName.split(" // ")[0] !== n.label ? n.cardName.split(" // ")[0] : undefined,
     });
   }
@@ -226,7 +250,7 @@ export function buildEngineModel(report: DeckReport, graph: CardGraph): EngineMo
       const k = `${from}\u0001${to}\u0001${r.tag}\u0001${r.text}`;
       if (seen.has(k)) continue;
       seen.add(k);
-      links.push({ from, to, tag: r.tag, text: r.text, repeat: asRepeat(r.repeatability), perTurn: r.perTurn || undefined });
+      links.push({ from, to, tag: foldSpellTag(r.tag), text: r.text, repeat: asRepeat(r.repeatability), perTurn: r.perTurn || undefined });
     }
   }
 
@@ -464,7 +488,7 @@ function cutList(deckCards: EngineCard[], cards: Map<string, EngineCard>, partne
     // The users few other cards feed come first: they are what is particular about this card.
     // Most central first put "Kindred Discovery, Inalla, Harmonic Prodigy" on every Wizard.
     const reach = (c: EngineCard) => partners.get(c.id)?.size ?? 0;
-    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? " (token)" : ""));
+    const fedNames = fedBy.sort((x, y) => reach(x) - reach(y) || y.score - x.score || (x.name < y.name ? -1 : 1)).map((c) => displayName(c) + (c.isToken ? ` ${tokenLabel(c)}` : ""));
     return { card, real, gives, givesOnce, once, fed, fedBy: fedNames, broughtBackBy: back?.name, partners: nb.size, why, keep, keepActs: !!keep && acts(card, keep), twins: [], jobs, options };
   }).sort((a, b) => cutWeight(a) - cutWeight(b) || a.partners - b.partners || a.card.score - b.card.score || (a.card.name < b.card.name ? -1 : 1));
   // A CARD THAT DRIVES A GROUP IS NOT A CUT: Skullclamp sat on the list while "Creatures dying"

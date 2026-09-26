@@ -968,7 +968,7 @@ test("a token nothing but its maker relates to is reported unpartnered", () => {
   const withPayoff = analyzeDeckStructured(
     [maker, payoff], ["Inalla"], H, undefined, undefined, undefined, lookup,
   );
-  expect(withPayoff.tokenNodes).toEqual([{ name: "Wizard", hasPartner: true }]);
+  expect(withPayoff.tokenNodes).toEqual([{ name: "Wizard", hasPartner: true, madeBy: ["Inalla"] }]);
   // Every reason touching the token says WHICH SIDE it is, so the graph can key it apart from a
   // real card of the same name -- 92 corpus token names are also a card.
   const tokenReasons = withPayoff.edges
@@ -982,7 +982,8 @@ test("a token nothing but its maker relates to is reported unpartnered", () => {
   const alone = analyzeDeckStructured(
     [maker, dc("Bear", [])], ["Inalla"], H, undefined, undefined, undefined, lookup,
   );
-  expect(alone.tokenNodes).toEqual([{ name: "Wizard", hasPartner: false }]);
+  // Every token names its maker (#519).
+  expect(alone.tokenNodes).toEqual([{ name: "Wizard", hasPartner: false, madeBy: ["Inalla"] }]);
 });
 
 // THE RATINGS PASS WALKS THE TWO HOPS (2026-08-18). Task 7's mediation moved a maker's relation to

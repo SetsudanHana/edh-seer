@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, listNames, type EngineCard, type EngineGroup, type EngineModel } from "../lib/engine-model.js";
+import { buildEngineModel, listNames, tokenLabel, type EngineCard, type EngineGroup, type EngineModel } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey } from "./engine-parts.js";
 import { whichTheme, type MainTheme } from "../lib/main-theme.js";
@@ -185,7 +185,7 @@ function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onO
                 className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-sm ${g.onceOnly.has(c.id) ? "border-dashed text-(--muted)" : "border-(--separator)"} enabled:hover:border-(--foreground)`}
                 title={g.onceOnly.has(c.id) ? "Works with this theme only once" : undefined}>
                 <Art card={c} size={24} />
-                {c.name.split(" // ")[0]}{c.isToken ? <span className="font-normal text-(--muted)"> (token)</span> : null}
+                {c.name.split(" // ")[0]}{c.isToken ? <span className="font-normal text-(--muted)"> {tokenLabel(c)}</span> : null}
               </button>
             ))}
             {members.length > MEMBER_CAP ? (
