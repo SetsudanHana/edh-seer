@@ -10,7 +10,7 @@ import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
-  copySentence, costReductionSentence, counterPresenceSentence, createsSentence,
+  copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
   enterAsCopySentence, fetchSentence, proliferateSentence,
   boardCountFeedsScaling,
   effectTargetNoun,
@@ -2630,8 +2630,15 @@ function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // structural marker (`scope: "target"` with `token: true`) reads 38 corpus cards of which 4 are
 // Role/Aura tokens ATTACHED to a target, not copies of it. The three templates are printed and
 // nothing else uses them.
+//
+// A TEMPORARY COPY LEAVES AGAIN (issue #501). Inalla, Archmage Ritualist and Mirror March exile the
+// copy at the next end step, Kiki-Jiki sacrifices it: the copy has the copied card's own "leaves"
+// or "dies" ability, so Watcher for Tomorrow's copy returns its hideaway card. Read off the copying
+// ability's own `temporary` departure (DERIVE 173), not guessed; it repeats as that ability does.
 function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
   const copy = copySubject(p);
+  const temp = (p.tags?.abilities ?? []).find((a) => a.temporary === true && a.effect.kind === "token-generation");
+  const exits = new Set((temp?.emits ?? []).map((e) => e.verb).filter((v) => v === "leaves" || v === "dies"));
   if (copy && !c.isToken) {
     const legendary = c.tags.characteristics.types.includes("legendary");
     // A copy ability that prints "nonlegendary" cannot ever copy a legendary consumer, by ANY verb
@@ -2643,7 +2650,10 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
           // The RAW verb, not the normalized one: `normalizeZoneEvent` rewrites `dies` to
           // `leaves`@battlefield, which a plain "when this leaves the battlefield" trigger also
           // becomes -- and a bounce is not a death the legend rule causes.
-          if (rawVerb !== "enters" && rawVerb !== "dies") continue;
+          if (rawVerb !== "enters" && rawVerb !== "dies" && rawVerb !== "leaves") continue;
+          // A dying copy leaves the battlefield too, so either departure fires a "leaves" trigger.
+          const departs = rawVerb === "leaves" ? exits.size > 0 : rawVerb === "dies" && exits.has("dies");
+          if (rawVerb === "leaves" && !departs) continue;
           // ENTERS is claimed only by the cues that put a NEW object onto the battlefield. "Becomes
           // a copy" (Sakashima's Will) rewrites a permanent already in play -- no entry, still two
           // legends. DIES needs the legend rule, so it needs a legendary consumer and nothing else.
@@ -2654,15 +2664,20 @@ function copyFamilyEdges({ p, c, h, reasons }: PairScope): void {
           // not fire it. Phantasmal Image -> Kelpie, owner-judged FALSE, came back through this
           // pass the day the twin existed.
           if (rawVerb === "enters" && a.trigger.subject.fromZone !== undefined) continue;
-          if (rawVerb === "dies" && !legendary) continue;
+          if (rawVerb === "dies" && !legendary && !departs) continue;
           const t = normalizeZoneEvent({ verb: rawVerb, subject: a.trigger.subject });
+          const byLegendRule = rawVerb === "dies" && legendary;
           if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), copy.subject, h)) continue;
           const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
           reasons.push({
             tag: key,
-            text: copySentence(p.card.name, c.card.name, key, rawVerb === "dies"),
+            text: departs && !byLegendRule
+              ? temporaryCopySentence(p.card.name, c.card.name, rawVerb === "dies" || !exits.has("leaves") ? "sacrificed" : "exiled", rawVerb === "dies" ? "death" : "leave")
+              : copySentence(p.card.name, c.card.name, key, byLegendRule),
             effectKind: a.effect.kind,
-            repeatability: triggerRepeatability(t.subject),
+            repeatability: departs && !byLegendRule
+              ? (temp?.kind === "activated" ? "activated" : temp?.repeats === "once" ? "oneshot" : "triggered")
+              : triggerRepeatability(t.subject),
             scaling: a.effect.scaling,
             consumer: c.card.name,
             producer: p.card.name,
