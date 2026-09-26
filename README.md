@@ -26,7 +26,7 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 **[edhseer.cards](https://edhseer.cards)**.
 
 <p align="center">
-  <a href="https://edhseer.cards"><img src="docs/images/demo.gif" width="880" alt="A Krenko, Mob Boss decklist is pasted and analysed. The report scrolls through the game plan and its pairs, then the suggestions. The synergy graph opens, a key card is picked, and the board goes fullscreen."></a>
+  <a href="https://edhseer.cards"><img src="docs/images/demo.gif" width="880" alt="A Krenko, Mob Boss decklist is pasted and analysed. The report scrolls to what Krenko works with: a ring of Goblins around him. Goblin Warchief is tapped, its links read, and it is put in the middle. Then the deck's themes, led by their key cards, and the suggestions."></a>
 </p>
 
 ## What you get
@@ -38,8 +38,9 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 
   Open both cards. If the printed text does not say this, the claim is wrong, and a wrong claim is
   a bug you can report with two card names.
-- **A map of your deck.** An interactive graph of every pairing. Click a card to see what it works
-  with, and which cards are doing the heavy lifting.
+- **What your commander works with.** Your commander in the middle and every card it works with
+  around it, grouped by what the link is. Tap a card to read how, or put any card in the middle and
+  follow its links from there.
 - **What to fix, biggest payoff first.** Card draw, interaction and answers counted against
   benchmarks, with the gap stated in cards: *"You are 2 short on interaction. Add ~2; most cost 2–4
   mana."*
@@ -49,9 +50,9 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 - **Bracket, roles and combos.** Where the deck sits, what each card is doing, and the combos it
   already holds, from [Commander Spellbook](https://commanderspellbook.com/).
 
-| A map of your deck | Every pairing, grouped by theme |
+| What your commander works with | What your deck does |
 |---|---|
-| ![The synergy graph of a Krenko, Mob Boss deck, with Krenko's pairings drawn out and his card open beside the board](packages/web/client/how-it-works/shot-graph.webp) | ![The game plan chapter: archetype bars and the pairs behind each theme](packages/web/client/how-it-works/shot-pairs.webp) |
+| ![Krenko, Mob Boss in the middle and the Goblins around him, grouped by what each link is](packages/web/client/how-it-works/shot-orbit.webp) | ![The game plan chapter: the deck's biggest theme, led by its key cards](packages/web/client/how-it-works/shot-pairs.webp) |
 | **What to fix, biggest payoff first** | **Can you cast your cards** |
 | ![The suggestions chapter: short on card draw and interaction, with how many cards to add](packages/web/client/how-it-works/shot-improve.webp) | ![The manabase chart: mana by turn in a typical game, and how many cards become castable on each turn](packages/web/client/how-it-works/shot-mana.webp) |
 

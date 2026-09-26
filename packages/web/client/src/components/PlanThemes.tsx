@@ -10,13 +10,14 @@ import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey } from "./engine-part
  *
  *  THE CARDS LEAD (appeal review 2026-09-26). The designer's words for the Overview's groups were
  *  "a wall of chips and text"; each theme now leads with its key cards as card images, and the
- *  rest of its cards sit behind "Show all". A card opens in the Graph tab's one-card view, where
- *  its links can be followed; the card's name opens the card itself, as everywhere in the report. */
+ *  rest of its cards sit behind "Show all". "See links" opens the card's orbit over the report,
+ *  where its links can be followed; the card's image opens the card itself, as everywhere in the
+ *  report. */
 export function PlanThemes({ report, graph, model, onOpenCard }: {
   report: DeckReport; graph: CardGraph;
   /** The engine model, when the caller already built it to decide whether to show this at all. */
   model?: EngineModel;
-  /** Opens a card in the one-card view. */
+  /** Opens a card's orbit over the report. */
   onOpenCard?: (id: string) => void;
 }) {
   const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);

@@ -1,4 +1,5 @@
-/** THE README'S DEMO: paste a deck, read the report, open the graph. Recorded from the product.
+/** THE README'S DEMO: paste a deck, read the report, follow the commander's links. Recorded from
+ *  the product.
  *
  *    npm run build:client -w @edh-seer/web
  *    npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
@@ -94,10 +95,7 @@ async function drawCursor(ring = false): Promise<void> {
       el.style.cssText = "position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;width:28px;height:28px";
       el.innerHTML = `<svg width="28" height="28" viewBox="0 0 28 28"><circle class="ring" cx="4" cy="4" r="12" fill="none" stroke="#c64bc6" stroke-width="2.5" opacity="0"/><path d="M4 3 L4 22 L9 17 L12.5 25 L15.5 23.7 L12 16 L19 16 Z" fill="#fff" stroke="#0d0912" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
     }
-    // Fullscreen puts one element on the top layer, above everything in the body, so the cursor
-    // follows it there or disappears for the last shot.
-    const host = document.fullscreenElement ?? document.body;
-    if (el.parentElement !== host) host.appendChild(el);
+    if (el.parentElement !== document.body) document.body.appendChild(el);
     el.style.transform = `translate(${x - 4}px, ${y - 3}px)`;
     (el.querySelector(".ring") as SVGElement).setAttribute("opacity", ring ? "0.9" : "0");
   }, [cursor.x, cursor.y, ring] as const);
@@ -157,31 +155,29 @@ await page.waitForLoadState("networkidle");
 await drawCursor();
 await hold(1600);
 
-// The report: the scores, then the pairs behind each theme, then what to fix.
+// The report: the scores, then what the commander works with, a card in it read and then put in
+// the middle, then the deck's themes and what to fix.
 await scroll(420, 6);
 await hold(1400);
-const plan = await page.locator("summary:has-text('What the percentages count')").first().evaluate((el) => el.getBoundingClientRect().top);
-await scroll(plan - 90, 8);
-await hold(2200);
-const improve = await page.locator("h2:text-is('How to improve it')").first().evaluate((el) => el.getBoundingClientRect().top);
-await scroll(improve - 150, 8);
-await hold(2200);
-
-// The graph, opened from the rail (it stays in view while the report scrolls), then a key card
-// picked from the strip, then the board on its own: the graph page is fixed to the viewport, and
-// at 800px tall the board starts halfway down it, so Fullscreen is how the board gets the frame.
-await click("a[href^='/analysis/graph']");
-await page.waitForTimeout(6000);
-await drawCursor();
-await hold(1500);
-await click("[data-testid='graph-key-cards'] button >> nth=1");
-await page.waitForTimeout(2500);
+const top = (sel: string) => page.locator(sel).first().evaluate((el) => el.getBoundingClientRect().top);
+await scroll((await top("h3:text-is('What your commander works with')")) - 130, 10);
+// The ring's entrance plays as it arrives, and the dots run along its lines.
+await page.waitForTimeout(1200);
+await hold(2400);
+// The disc's own circle: the group's box takes in its name too, and its centre can be empty ring.
+const disc = "svg[role='group'] g[role='button'][aria-label='Goblin Warchief'] circle";
+await click(disc);
+await page.waitForTimeout(400);
 await drawCursor();
 await hold(2000);
-await click("button:has-text('Fullscreen')");
-await page.waitForTimeout(2500);
+await click("button:has-text('Put Goblin Warchief in the middle')");
+await page.waitForTimeout(1400);
 await drawCursor();
-await hold(2800);
+await hold(2600);
+await scroll((await top("h3:text-is('What your deck does')")) - 130, 8);
+await hold(2200);
+await scroll((await top("h2:text-is('How to improve it')")) - 150, 10);
+await hold(2400);
 
 await ctx.unrouteAll({ behavior: "ignoreErrors" });
 await browser.close();

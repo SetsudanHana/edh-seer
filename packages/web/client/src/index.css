@@ -841,9 +841,10 @@ h1.intro-thesis { margin-block-end: 0; }
    (owner, 2026-09-04). Three things it needs that a bare `position: sticky` does not give:
    AN OPAQUE BACKGROUND. Without one the report scrolls THROUGH the header -- the block had no
    background of its own, because until now nothing ever passed behind it.
-   A PLACE IN THE STACK. The app's layers were already ordered: fullscreen graph 40, card drawer 30,
-   report header 20, chapter rail 10, table head 5. 25 is the gap that puts this above the report's
-   own sticky summary and below the two things meant to cover the whole page.
+   A PLACE IN THE STACK. The app's layers were already ordered: card drawer 30, report header 20,
+   chapter rail 10, table head 5. 25 is the gap that puts this above the report's own sticky
+   summary and below the drawer, which is meant to cover the whole page. The orbit overlay sits
+   at 27, over this header and under the drawer its card faces open.
    LESS HEIGHT ONCE IT NEVER LEAVES. The 2rem above the wordmark was the top of the page breathing;
    in a bar that is now permanent it is dead space on every screen. */
 .site-header {
@@ -1539,7 +1540,7 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 }
 .hiw-try p:first-child { color: var(--foreground); }
 
-/* REAL SCREENSHOTS OF THE REPORT. The graph leads full width; the three chapters sit under it in a
+/* REAL SCREENSHOTS OF THE REPORT. The commander orbit leads full width; the three chapters sit under it in a
    row on a wide screen and stack on a phone, where a 1440 frame at a third of 390px would be a
    thumbnail nobody can read. */
 .shots {

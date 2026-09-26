@@ -8,7 +8,7 @@ import { InstallButton } from "./components/InstallButton.js";
 import { LegacyDeckRedirect } from "./components/LegacyDeckRedirect.js";
 import { RouteMarker } from "./components/RouteMarker.js";
 import { HeaderSearch } from "./components/HeaderSearch.js";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import { BrowserRouter, Route, Routes } from "react-router";
 import { EXAMPLE_DECK } from "./lib/example-deck.js";
 import { clearLastRun, loadLastDeck, loadLastRun, saveLastDeck, saveLastRun } from "./lib/run-store.js";
 import type { RunDiff } from "./lib/run-diff.js";
@@ -37,25 +37,12 @@ function AppBooted() {
 }
 
 
-/** THE DECK BAR IS REPORT FURNITURE, AND THE BOARD IS THE ONE SURFACE SHORT OF HEIGHT (AL2).
- *
- *  Measured at 1920x1080: 560px of chrome sits above the canvas, so it gets 518px -- a 3.6:1
- *  letterbox framing a board that paints 660x661, which means `fitToView`'s `min(w/boxW, h/boxH)`
- *  is bound by the HEIGHT every time and the discs pay for it: 20.2 to 25.7px diameter on the three
- *  review decks, two of them under the 24px floor `disc-fit.ts` names. The collapsed bar is ~128px
- *  of that 560, and every control on it -- Copy link, Copy decklist, Edit, Start over, Re-analyse --
- *  is one tab away on the report.
- *
- *  ONLY THE COLLAPSED BAR, AND ONLY THERE. The EXPANDED editor stays on every surface: hiding that
- *  would strand a reader who pressed Edit and then walked to the board. `ReportHeader` stays too --
- *  "the summary on every surface" is a decision with a test on it (`ReportShell.test.tsx`), and this
- *  is not the change that reverses it. */
+/** THE DECK BAR, WHILE THERE IS NO REPORT. Once a report is up its actions sit at the end of the
+ *  report's summary row instead (`DeckActions`, handed down through `lib/deck-actions.ts`), so the
+ *  collapsed box only shows while there is no report to carry them -- a first run in flight. The
+ *  EXPANDED editor stays on every surface: hiding that would strand a reader who pressed Edit. */
 export function DeckBar({ hasReport, ...props }: ComponentProps<typeof DeckInput> & { hasReport?: boolean }) {
-  const onGraph = useLocation().pathname === "/analysis/graph";
-  // AND NOWHERE ONCE A REPORT IS UP (UI review 2026-09-25): its actions sit at the end of the
-  // report's summary row instead (`DeckActions`, handed down through `lib/deck-actions.ts`), so the
-  // collapsed box only shows while there is no report to carry them -- a first run in flight.
-  return props.collapsed && (onGraph || hasReport) ? null : <DeckInput {...props} />;
+  return props.collapsed && hasReport ? null : <DeckInput {...props} />;
 }
 
 export default function App() {
@@ -349,7 +336,8 @@ export default function App() {
   }, []);
 
   return (
-    /* THE REPORT IS ROUTED (S7): `/graph`, `/cards` and `/combos` are its three reference surfaces,
+    /* THE REPORT IS ROUTED (S7): `/cards` and `/combos` are its reference surfaces (`/graph` was the
+     * third until its pieces moved into the chapters),
      * so the browser's back button returns a reader to the scroll offset they left instead of
      * leaving the report. The router wraps the whole app rather than the report alone so a reader
      * who backs out to the paste box and analyses again does not re-mount it under a stale path.
@@ -379,7 +367,8 @@ export default function App() {
       * redirect itself. A path that is a real page cannot also be a bare redirect above the app --
       * the redirect has to be part of what the page does on arrival. */}
     <Routes>
-      <Route path="/graph" element={<LegacyDeckRedirect to="/analysis/graph" />} />
+      {/* The Graph page is retired (2026-09-26): an old link to it opens the report. */}
+      <Route path="/graph" element={<LegacyDeckRedirect to="/" />} />
       <Route path="/combos" element={<LegacyDeckRedirect to="/analysis/combos" />} />
       {/* THIS BLOCK MATCHES TWO PATHS AND THE APP HAS MANY, so without a catch-all React Router
         * warns `No routes matched location` on every OTHER page -- console noise on every card
