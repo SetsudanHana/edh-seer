@@ -173,6 +173,8 @@ export function groupName(tag: string): string {
     case "creates": return "Making tokens";
     case "lose-life": return "Losing life";
     case "threshold": return "A full graveyard";
+    // Issue #514: a card switched on by a creature type (Multiclass Baldric, Gravecrawler).
+    case "condition": return sub === "party" ? "Switched on by your party" : `Switched on by your ${p}`;
     // Issue #510: a flash grant gives a temporary token (Inalla's copy) a whole turn.
     case "flash": return "Casting at instant speed";
     default: return capital(tag.replace(/[:-]/g, " "));

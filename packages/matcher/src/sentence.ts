@@ -667,6 +667,12 @@ export function delveSentence(producer: string, consumer: string): string {
  *  carries the basic land type it names. Two templates, two different sentences — a check land is
  *  about ENTERING, a verge land is about ACTIVATING, and saying "enters untapped" about a verge is a
  *  wrong sentence. */
+/** "Multiclass Baldric is switched on while you control Rumor Gatherer, a Wizard" (issue #514). */
+export function creatureConditionSentence(producer: string, consumer: string, subtype: string): string {
+  const noun = subtype.charAt(0).toUpperCase() + subtype.slice(1);
+  return `${consumer} is switched on while you control ${producer}, ${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
+}
+
 export function landConditionSentence(
   producer: string,
   consumer: string,
