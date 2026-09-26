@@ -304,6 +304,19 @@ const GRAVEYARD_MOVE_VERBS: ReadonlySet<string> = new Set(["return", "put", "exi
 /** "Return target creature to its owner's hand" with the destination left out of the action. */
 const RETURNS_TO_HAND = /\bto (?:its|their|that card's|the) owners?'s? hands?\b|\bto your hand\b/i;
 
+/** "... counters on each other Moogle you control for each ..." -> "each other Moogle you control".
+ *  The regex matches only the head; the tail is cut with string ops, because a lazy run ahead of
+ *  `\s+for each` was polynomial ReDoS (CodeQL js/polynomial-redos, PR #498). */
+function counterRecipient(clauseText: string): string | undefined {
+  const head = /\bcounters?\s+on\s+(?=(?:each|all|target|another|up to \w+)\b)/i.exec(clauseText);
+  if (!head) return undefined;
+  let tail = clauseText.slice(head.index + head[0].length);
+  const stop = tail.search(/[.;,]/);
+  if (stop >= 0) tail = tail.slice(0, stop);
+  const forEach = tail.search(/\sfor each\b/i);
+  return forEach >= 0 ? tail.slice(0, forEach).trimEnd() : tail;
+}
+
 /** Did this action move something OFF THE BATTLEFIELD? A stated battlefield origin says so; an
  *  unstated one says so only for a permanent-shaped object. See the `exile` row above. */
 function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
@@ -441,7 +454,7 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
   // itself stays with the self logic in derive.
   const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined)
-    ? /\bcounters?\s+on\s+((?:each|all|target|another|up to \w+)\b[^.;,]*?)(?:\s+for each\b|[.;,]|$)/i.exec(clauseText ?? "")?.[1]
+    ? counterRecipient(clauseText ?? "")
     : undefined;
   const subject = parseSubject(recipient ?? action.object ?? "");
   // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
