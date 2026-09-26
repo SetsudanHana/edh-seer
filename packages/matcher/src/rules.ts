@@ -355,12 +355,11 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         if (/\byou control\b/.test(phrase)) continue;
         // "You own" is the same claim in different words -- a permanent can be controlled by
         // someone else while still owned by you, and a planeswalker's own-permanent blink says it
-        // that way (Venser, the Sojourner's +2; Slip On the Ring). Scoped to the EXILE mode only,
-        // not to every rule sharing this sweep: `answers.typed`'s count must not move (measured --
-        // "target permanent you own" also reaches Staff of Compleation, a plain self-destroy with no
-        // return clause, which is real removal and a pre-existing count member; excluding it here
-        // would drop a card the gate says can never leave a class).
-        if (rule.mode === "exile" && /\byou own\b/.test(phrase)) continue;
+        // that way (Venser, the Sojourner's +2; Slip On the Ring). EVERY mode, not only exile (owner
+        // ruling 2026-09-27, issue #531): Staff of Compleation's "destroy target permanent you own"
+        // answers nothing an opponent has -- it is played to recur your own permanents. It used to be
+        // kept as a "real self-destroy" in every class, which put it on the "Answers lands" shelf.
+        if (/\byou own\b/.test(phrase)) continue;
         // AN IMMEDIATE FLICKER ANSWERS NOTHING (owner ruling 2026-09-25): "exile target X, then
         // return it to the battlefield" puts it straight back, so the clause is skipped -- per
         // CLAUSE, not per card, so a modal card's real removal mode still counts. A DELAYED return

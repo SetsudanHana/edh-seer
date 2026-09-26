@@ -348,12 +348,14 @@ test("a card that blinks its own and kills theirs is still removal", () => {
   expect(cats.get("targetedRemoval")?.has("Both Ways")).toBe(true);
 });
 
-test("a self-destroy with no return clause keeps its count, even though it says 'you own'", () => {
+/** Owner ruling 2026-09-27 (issue #531): a destroy limited to permanents YOU OWN answers nothing.
+ *  Staff of Compleation sat on the "Answers lands" shelf; this test used to hold it in every class. */
+test("a destroy limited to permanents you own is in no answer class", () => {
   const classes = detectAnswerClasses([
     mk("Staff of Compleation", "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.", "Artifact"),
   ]);
   for (const cls of ["creature", "artifact", "enchantment", "planeswalker", "land"]) {
-    expect(classes.get(cls)?.cards.has("Staff of Compleation"), cls).toBe(true);
+    expect(classes.get(cls)?.cards.has("Staff of Compleation") ?? false, cls).toBe(false);
   }
 });
 
