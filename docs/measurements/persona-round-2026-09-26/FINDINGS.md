@@ -70,7 +70,7 @@ Every seat hit a claim it could not check because the cards it counts are not li
 - "15 ramp pieces", "8 cheap ramp/draw", "46 red sources" with nothing tying them to cards
   (clunky-deck).
 
-### 3. One quantity, several numbers (4 seats)
+### 3. One quantity, several numbers (5 seats)
 
 - lands: "36 in deck … wants 36" beside "this curve's own regression asks for 41" in the same box
   (clunky-deck: "I couldn't tell which number the site actually stands behind");
