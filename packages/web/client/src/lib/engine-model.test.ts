@@ -25,6 +25,8 @@ describe("groupName", () => {
     expect(plural("elf")).toBe("Elves");
     expect(plural("fairy")).toBe("Fairies");
     expect(plural("-land")).toBe("nonland cards");
+    expect(plural("party")).toBe("party members");
+    expect(groupName("scales:party")).toBe("Counts your party members");
   });
 });
 

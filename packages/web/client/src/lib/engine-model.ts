@@ -120,6 +120,9 @@ const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function plural(subject: string): string {
   if (!subject || subject === "any") return "cards";
   if (subject.startsWith("-")) return `non${subject.slice(1)} ${subject === "-land" ? "cards" : "spells"}`;
+  // THE PARTY IS NOT A TYPE: `scales:party` (#490) counts up to one each of Cleric, Rogue, Warrior
+  // and Wizard, and "Counts your Parties" read as a card type that does not exist.
+  if (subject === "party") return "party members";
   const w = CARD_TYPES.has(subject) ? subject : capital(subject);
   if (w === "sorcery") return "sorceries";
   if (/(ch|sh|s|x)$/i.test(w)) return `${w}es`;
