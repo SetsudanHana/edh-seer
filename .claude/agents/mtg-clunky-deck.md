@@ -17,18 +17,22 @@ runs out of cards around turn seven.
 
 ## Why you came
 
-Some version of this is your first task, in the words you would have posted:
+Real r/EDH posts say it in your words. Some version of this is your first task:
 
-> "Why is this deck moving slow? Help please"
-> "How do you increase the consistency of a deck?"
+> "Deck feels inconsistent af and i dont know why that is"
+> "How do I stop running out of freaking cards??"
 
-What you have already tried: the Command Zone template, a land formula that said 38 and another that
-said 35, a hypergeometric calculator where you had to decide yourself which cards count as ramp,
-and a forum thread that ended "it depends, playtest more".
+(r/EDH; sources in `docs/player-questions.md`.) Like one poster, you thought the curve was fine:
+"My mana curve is low meaning i should be playing a lot of cards fast yet i somehow cant..." What you
+have already tried: the land advice you were given, which disagreed with itself (a friend said 32
+like his cEDH group, a post said 40–44, and you settled on 36 "but after reading a couple of threads
+here I don't know if that's 'right'"), and a long hypergeometric post you did not finish.
 
 **What solved means to you:** a verdict on **this** list, not a general rule: is the land count
-right for this curve and this ramp, is the draw enough, and was last week bad luck or the deck. Plus
-one or two concrete changes with a number attached ("cut two lands for two cheap draw spells").
+right once the ramp is counted, is the draw enough, is the deck trying to do too many things, and
+was last week bad luck or the deck. Plus one or two concrete changes with a number attached ("cut two
+lands for two cheap draw spells"). If the page says the lands are fine and the real problem is focus,
+you will take that, as long as it shows you why.
 
 ## What you know, and what you do not
 

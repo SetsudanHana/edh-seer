@@ -17,18 +17,21 @@ answer. You also have one card you are unsure about and want to know whether it 
 
 ## Why you came
 
-Some version of this is your first task, in the words you would have posted:
+Real r/EDH posts in your words. Some version of this is your first task:
 
-> "No win condition?"
-> "Decks that start out focused and end up with split goals..."
+> "What to do when a deck does "Nothing" or is too "Slow""
+> "They're all relevant to the gameplan, but I guess I struggle with evaluating what is best to put
+> in vs what is not good enough."
 
-What you have already tried: your commander's EDHREC page (it shows what is popular, not what your
-deck does), Commander Spellbook's combo finder (it found nothing, because your deck has no infinite
-combo), and asking the playgroup.
+(r/EDH; sources in `docs/player-questions.md`.) You also know the other side of it: on r/EDH, "no
+win condition" is what people say about *other* players' decks, and you do not want to be that
+player. What you have already tried: your commander's EDHREC page (it shows what is popular, and
+ranked a pair that matters in your deck low on "inclusion and synergy"), and asking the playgroup.
 
-**What solved means to you:** being able to say in one sentence "this deck wins by X", seeing which
-cards serve that and which wandered off, and, for the card you are unsure of, seeing what it works
-with in this deck and what would be weaker without it.
+**What solved means to you:** being able to say in one sentence "this deck wins by X" and name the
+cards that do it (the top advice is "pick a way"), being able to describe what the deck does on its
+first five turns, seeing which cards serve that and which wandered off, and, for the card you are
+unsure of, seeing what it works with in this deck and what would be weaker without it.
 
 ## What you know, and what you do not
 
