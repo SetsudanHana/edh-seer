@@ -5038,6 +5038,39 @@ test("a two-type fetch is tagged with the type the target land has", () => {
   expect(tags).toEqual(["ramp-target:mountain"]);
 });
 
+/** AN "INSTANT OR SORCERY" TUTOR OR RECURSION IS TAGGED WITH THE TYPE THE CARD HAS (issue #507):
+ *  "Spellseeker -> Reanimate | tutor:instant" put a sorcery under "Searching for instants", and
+ *  Archaeomancer did the same under "Bringing back instants". The fetch fix above, one rung up. */
+test("an instant-or-sorcery tutor and recursion are tagged with the type the target card has", () => {
+  const spells = { control: "you", token: null, type: ["instant", "sorcery"] };
+  // The live derived subjects, read 2026-09-26.
+  const seeker = base("Spellseeker", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "search", subject: { ...spells, stats: [{ metric: "mana-value", op: "lte", value: 2 }] } },
+  }] as CardTags["abilities"]);
+  const archaeo = base("Archaeomancer", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "graveyard-recursion", subject: { ...spells, fromZone: "graveyard", scope: "target", zone: "graveyard" } },
+  }] as CardTags["abilities"]);
+  const reanimate = base("Reanimate", []);
+  reanimate.tags.characteristics.types = ["sorcery"];
+  reanimate.tags.characteristics.cmc = 1;
+  const bolt = base("Lightning Bolt", []);
+  bolt.tags.characteristics.types = ["instant"];
+  bolt.tags.characteristics.cmc = 1;
+  const tag = (p: ReturnType<typeof base>, c: ReturnType<typeof base>, fam: string) =>
+    pairReasons(p, c, H).map((r) => r.tag).filter((t) => t.startsWith(fam));
+  expect(tag(seeker, reanimate, "tutor:")).toEqual(["tutor:sorcery"]);
+  expect(tag(seeker, bolt, "tutor:")).toEqual(["tutor:instant"]);
+  expect(tag(archaeo, reanimate, "recursion-target:")).toEqual(["recursion-target:sorcery"]);
+  // And the cast trigger: casting a sorcery into "whenever you cast an instant or sorcery spell".
+  const snipe = base("Guttersnipe", [{
+    kind: "triggered", trigger: { verbs: ["cast"], subject: spells }, effect: { kind: "damage" },
+  }] as CardTags["abilities"]);
+  expect(tag(reanimate, snipe, "cast:")).toEqual(["cast:sorcery"]);
+  expect(tag(bolt, snipe, "cast:")).toEqual(["cast:instant"]);
+});
+
 /** A ONE-SHOT PRODUCER MAKES A ONE-SHOT LINK (overview persona rounds 2026-09-25, item 6a):
  *  "Farseek -> Hedge Maze | enters:land | triggered" read EVERY TIME for a sorcery, and so did a
  *  fetchland that sacrifices itself -- the repeatability looked only at the consumer's trigger. */
