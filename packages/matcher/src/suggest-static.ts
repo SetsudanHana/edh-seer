@@ -57,6 +57,10 @@ export interface SuggestedCard {
   /** On an `answers` list: the permanent classes it answers ("enchantment"). A list, so a client
    *  merging two class lists can name both. */
   answers?: string[];
+  /** The card's art crop, or its front face's for a two-faced card, so a client can show the card
+   *  itself rather than a line of text (appeal review 2026-09-26: "Cards that fit" ran 22 screens of
+   *  text). */
+  art?: string;
 }
 export interface SuggestedReason {
   /** The sentence, naming the first deck card it was found with. */
@@ -222,7 +226,11 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
       }
       if (connections.length === 0) return null;
       const oracle = y.card.oracleText;
-      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}) }, onPlan, score: 0, feeds, fedBy, feedWeight, hops };
+      // `card` is the corpus document spread under the engine card (`deckCards` above), so its art
+      // is on it: card-level for most cards, per face for a transform or modal two-faced card.
+      const doc = y.card as { artCrop?: string; faces?: { artCrop?: string }[] };
+      const art = doc.artCrop ?? doc.faces?.find((f) => f.artCrop)?.artCrop;
+      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}), ...(art ? { art } : {}) }, onPlan, score: 0, feeds, fedBy, feedWeight, hops };
     } catch (err) {
       console.warn("[suggest] the engine could not read", candidate.name, err);
       return null;

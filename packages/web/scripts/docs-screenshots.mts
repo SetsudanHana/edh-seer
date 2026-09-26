@@ -112,7 +112,13 @@ await page.waitForFunction(() => {
 }, undefined, { timeout: 30_000 });
 const plan = await origin(page, "h3:text-is('What your deck does')");
 await save(page, FRAMES.pairs, { x: plan.x - 12, y: plan.y - 8 });
-// The improve frame starts at its own heading, so it carries its title.
+// The improve frame starts at its own heading, so it carries its title. Its cards are computed after
+// the report paints and their images load lazily, so both are waited out before the frame is taken.
+await page.waitForFunction(() => !document.body.innerText.includes("Finding cards that fit"), undefined, { timeout: 120_000 });
+await page.locator("h2:text-is('How to improve it')").first().scrollIntoViewIfNeeded();
+await page.waitForTimeout(500);
+await page.waitForFunction(() => [...document.querySelectorAll("#fix img")]
+  .filter((i) => i.getBoundingClientRect().top < innerHeight).every((i) => (i as HTMLImageElement).complete), undefined, { timeout: 30_000 });
 const improve = await origin(page, "h2:text-is('How to improve it')");
 await save(page, FRAMES.improve, { x: improve.x - 12, y: improve.y - 12 });
 // The mana frame is the "asks for / will have" chart alone: the one picture in that chapter.
