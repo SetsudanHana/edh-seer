@@ -1740,10 +1740,12 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             //
             // A COUNTER THE PRODUCER PUTS IS ON ITSELF ONLY WHEN THE EMIT SAYS SO (issue #503): "When
             // Sphere Grid gets a counter" -- Sphere Grid puts a +1/+1 counter on the creature that
-            // connected. An untyped counter emit names what gets it, or "a permanent".
+            // connected. An untyped counter emit names what gets it, or "a permanent". A LIST names the
+            // member the trigger watches: Yuna's Decision puts "a creature card and/or a land card"
+            // onto the battlefield, and a landfall trigger heard "When a creature enters".
             subjectNoun: fillNoun(e)
               ?? (t.verb === "counter-added" && e.subject.self !== true ? emitSubjectNoun(e.subject) ?? "a permanent"
-              : producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
+              : producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(keyedOn(e.subject, t.subject))),
           }),
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"

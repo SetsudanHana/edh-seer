@@ -5194,3 +5194,20 @@ test("a once-each-turn trigger is marked per turn; an uncapped one is not", () =
   expect(marks(terra).every(Boolean)).toBe(true);
   expect(marks(ascendancy).some(Boolean)).toBe(false);
 });
+
+/** A TYPE-LIST EMIT IS NAMED BY THE MEMBER THE TRIGGER WATCHES: Yuna's Decision puts "a creature card
+ *  and/or a land card" onto the battlefield (live shape, read 2026-09-26), and a landfall payoff read
+ *  "When a creature enters thanks to Yuna's Decision". Found reading issue #519's deck. */
+test("a creature-or-land put reads as a land entering to a landfall trigger", () => {
+  const decision = base("Yuna's Decision", [{
+    kind: "on-cast", effect: { kind: "" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, type: ["creature", "land"], fromZone: "hand" } }],
+  }] as CardTags["abilities"]);
+  decision.tags.characteristics.types = ["sorcery"];
+  const landfall = base("Landfall Payoff", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "land" } }, effect: { kind: "draw-card" },
+  }] as CardTags["abilities"]);
+  const texts = directedReasons(decision, landfall, H).filter((r) => r.tag === "enters:land").map((r) => r.text);
+  expect(texts.length).toBeGreaterThan(0);
+  expect(texts.every((t) => t.startsWith("When a land enters thanks to Yuna's Decision"))).toBe(true);
+});
