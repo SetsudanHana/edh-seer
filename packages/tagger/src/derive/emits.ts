@@ -304,6 +304,19 @@ const GRAVEYARD_MOVE_VERBS: ReadonlySet<string> = new Set(["return", "put", "exi
 /** "Return target creature to its owner's hand" with the destination left out of the action. */
 const RETURNS_TO_HAND = /\bto (?:its|their|that card's|the) owners?'s? hands?\b|\bto your hand\b/i;
 
+/** "... counters on each other Moogle you control for each ..." -> "each other Moogle you control".
+ *  The regex matches only the head; the tail is cut with string ops, because a lazy run ahead of
+ *  `\s+for each` was polynomial ReDoS (CodeQL js/polynomial-redos, PR #498). */
+function counterRecipient(clauseText: string): string | undefined {
+  const head = /\bcounters?\s+on\s+(?=(?:each|all|target|another|up to \w+)\b)/i.exec(clauseText);
+  if (!head) return undefined;
+  let tail = clauseText.slice(head.index + head[0].length);
+  const stop = tail.search(/[.;,]/);
+  if (stop >= 0) tail = tail.slice(0, stop);
+  const forEach = tail.search(/\sfor each\b/i);
+  return forEach >= 0 ? tail.slice(0, forEach).trimEnd() : tail;
+}
+
 /** Did this action move something OFF THE BATTLEFIELD? A stated battlefield origin says so; an
  *  unstated one says so only for a permanent-shaped object. See the `exile` row above. */
 function leftTheBattlefield(a: Action, s: SubjectFilter, self: boolean): boolean {
@@ -431,7 +444,19 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
   // The temporary-token rider ("exile it at the beginning of the next end step") is the token
   // leaving, already recorded as `temporary` on the maker's own ability -- not an exile event.
   if (action.verb === "exile" && LEAVES_SAME_TURN.test(clauseText ?? "") && TEMPORARY_TOKEN_REF.test((action.object ?? "").trim())) return [];
-  const subject = parseSubject(action.object ?? "");
+  // A FLASH GRANT IS A PERMISSION, NOT A CAST (DERIVE 173, overview persona rounds): "you may cast
+  // spells as though they had flash" changes WHEN you may cast and causes no cast. As an authored cast
+  // emit it made High Fae Trickster -- a creature -- feed noncreature-only prowess, and Najal read as
+  // casting sorceries. 10 corpus clauses.
+  if (action.verb === "cast" && /\bas though (?:it|they) had flash\b/i.test(clauseText ?? "")) return [];
+  // WHERE A COUNTER GOES (DERIVE 173, overview item 8): when the object is the COUNTER ("+1/+1",
+  // "those counters"), the recipient is only in the sentence -- "put two +1/+1 counters on each other
+  // Moogle you control". Parsed from there so the emit says what gets them; a pronoun or the card
+  // itself stays with the self logic in derive.
+  const recipient = (action.verb === "add-counter" && counterKindOf(action.object ?? "") !== undefined)
+    ? counterRecipient(clauseText ?? "")
+    : undefined;
+  const subject = parseSubject(recipient ?? action.object ?? "");
   // EXILE'S DESTINATION IS IN THE VERB (CR 406.2: "exile" means put into the exile zone), and the
   // model writes it out less often than not -- Swords to Plowshares, Path to Exile and Deadly
   // Rollick all record `exile target creature` with `toZone: null`, while Ephemerate happened to

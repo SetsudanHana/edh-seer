@@ -161,7 +161,12 @@ import { emblemRecipient } from "../emblem.js";
 // ramp (Chthonian Nightmare, Bristling Hydra, ...). And a leading article is not a name: "The
 // Sackville-Bagginses" is self as "Sackville-Bagginses" (its ETB had joined Kindred Discovery), and
 // stripCardName no longer deletes every "the" from a "The ..." card's clause text.
-export const DERIVE_VERSION = 172;
+// 173: overview persona rounds 2026-09-25. A temporary token LEAVES (exile) or DIES (sacrifice) on
+// the ability that made it (item 4: Inalla -> Dour Port-Mage). Counters put on the card by its own
+// name are on itself, and a quantified recipient ("on each other Moogle you control") types a
+// counter emit (item 8: The Earth Crystal fed by The Ozolith and Mog). A flash grant ("cast spells
+// as though they had flash") is a permission, not a cast (Najal, High Fae Trickster).
+export const DERIVE_VERSION = 173;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -246,7 +251,16 @@ function counterOnSelf(verb: string | undefined, text: string, cardName?: string
   const onIt = re.onIt.test(text) && !OTHER_OBJECT.test(text)
     && (triggerIsSelf || /^this (?:creature|permanent|artifact|enchantment|land|planeswalker|vehicle)\b/i.test(text));
   if (!onThis && !onIt) return false;
-  return !re.onOther.test(text);
+  // THE CARD'S OWN NAME IS NOT "THE OTHER ONE" (DERIVE 173, overview item 8): `onOther` reads "counters
+  // on THE Ozolith" as "on the <something>", so The Ozolith's own counters went kindless and fed The
+  // Earth Crystal's creature-only doubler. The own-name phrase is taken out before that test.
+  const rest = named
+    ? (cardName ?? "").split(" // ").reduce((t, face) => {
+        const short = face.split(",")[0]!.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return short === "" ? t : t.replace(new RegExp(`\\bcounters?\\s+${prep}\\s+${short}\\b`, "gi"), " ");
+      }, text)
+    : text;
+  return !re.onOther.test(rest);
 }
 
 /** A permanent that ENTERS under a controller named only by REFERENCE — "the owner of target
@@ -1550,7 +1564,14 @@ export function deriveAbilities(
       // The token this ability makes leaves at the next end step. Read off the clause text because
       // the clause layer records the exile as a bare `exile: "it"` action whose object cannot say
       // WHEN — the timing is only in the sentence.
-      if (effectKind === "token-generation" && (LEAVES_SAME_TURN.test(text) || DECAYED.test(text))) ability.temporary = true;
+      if (effectKind === "token-generation" && (LEAVES_SAME_TURN.test(text) || DECAYED.test(text))) {
+        ability.temporary = true;
+        // AND THE TOKEN LEAVES, ON THIS SAME ABILITY (DERIVE 173, overview persona rounds 2026-09-25,
+        // item 4): Dour Port-Mage never heard of Inalla's copy leaving. An emit here, never a second
+        // ability -- that doubled every trigger reason (+187 rows, 2026-09-16). Exiled tokens LEAVE;
+        // sacrificed ones (end of combat, decayed) DIE, CR 700.4.
+        // (The emit is added below, once this ability's emits are attached.)
+      }
       if (effectKind === "trigger-doubling") {
         const doubles = doubledVerbs(text);
         if (doubles.length) ability.doubles = doubles;
@@ -1568,6 +1589,11 @@ export function deriveAbilities(
         : kind === "on-cast" && castAtInstantSpeed === true;
       if (instantSpeed) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
+      const made = ability.temporary ? emits.find((e) => e.verb === "create-token") : undefined;
+      if (made) {
+        const dies = DECAYED.test(text) || /\bsacrifice\b/i.test(LEAVES_SAME_TURN.exec(text)?.[0] ?? "");
+        ability.emits = [...emits, { verb: dies ? "dies" : "leaves", subject: { ...made.subject } }];
+      }
       if (face) ability.face = face;
       abilities.push(ability);
       // A SELF-OR-CLASS TRIGGER IS TWO TRIGGERS (recall v4 #144, 2026-09-09). "Whenever this
