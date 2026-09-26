@@ -3,6 +3,7 @@ import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, listNames, type EngineCard, type EngineGroup, type EngineModel } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey } from "./engine-parts.js";
+import { whichTheme, type MainTheme } from "../lib/main-theme.js";
 
 /** WHAT THE DECK DOES, IN THE GAME PLAN CHAPTER (owner, 2026-09-26: "it does not make any sense to
  *  have 2 times the same report"). The Graph tab's Overview grew into a second report beside this
@@ -13,17 +14,26 @@ import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey } from "./engine-part
  *  rest of its cards sit behind "Show all". "See links" opens the card's orbit over the report,
  *  where its links can be followed; the card's image opens the card itself, as everywhere in the
  *  report. */
-export function PlanThemes({ report, graph, model, onOpenCard }: {
+export function PlanThemes({ report, graph, model, onOpenCard, main }: {
   report: DeckReport; graph: CardGraph;
+  /** The deck's main theme (Glance and Scores name it), so the theme that IS it carries its name. */
+  main?: MainTheme | null;
   /** The engine model, when the caller already built it to decide whether to show this at all. */
   model?: EngineModel;
   /** Opens a card's orbit over the report. */
   onOpenCard?: (id: string) => void;
 }) {
   const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);
-  // A group that mostly repeats another goes after the ones that do not, so the few shown first are
-  // the deck's different things (Overview round 9: four Inalla groups in a row were the same Wizards).
-  const themes = m.groups.filter((g) => !g.helper).sort((x, y) => Number(!!x.sameAs) - Number(!!y.sameAs));
+  // The main theme leads, under its own name; after it, a group that mostly repeats another goes
+  // after the ones that do not, so the few shown first are the deck's different things (Overview
+  // round 9: four Inalla groups in a row were the same Wizards).
+  // Only the main theme's own group moves: every other theme keeps its place by size, so "the
+  // biggest" stays true of the rest.
+  const leads = (g: EngineGroup) => { const w = main ? whichTheme(g, main) : null; return w?.theme === "main" && w.match === "same"; };
+  const rank = (g: EngineGroup) => (leads(g) ? 0 : 1);
+  const themes = m.groups.filter((g) => !g.helper).sort((x, y) => rank(x) - rank(y) || Number(!!x.sameAs) - Number(!!y.sameAs));
+  const matched = main ? themes.some((g) => whichTheme(g, main)?.theme === "main") : true;
+  const promoted = themes.length > 0 && leads(themes[0]!);
   const helpers = m.groups.filter((g) => g.helper);
   const [allThemes, setAllThemes] = useState(false);
   const [showHelpers, setShowHelpers] = useState(false);
@@ -34,14 +44,21 @@ export function PlanThemes({ report, graph, model, onOpenCard }: {
     <div className="flex flex-col gap-8">
       <section aria-labelledby="plan-themes" className="flex flex-col gap-3">
         <h3 id="plan-themes" className="text-lg font-semibold">What your deck does</h3>
+        {/* NO GROUP IS THE MAIN THEME: said, not left as two unrelated names on two chapters. */}
+        {main && !matched ? (
+          <p className="max-w-[70ch] text-sm">
+            Your main theme, by what your cards&rsquo; own text is about, is <b>{main.name}</b> ({main.count} of {main.nonland} nonland
+            cards). By how your cards work with each other, the deck does these:
+          </p>
+        ) : null}
         <p className="max-w-[70ch] text-sm text-(--muted)">
           {/* "6 things, listed below" over three shown read as a miscount (Overview round 12). */}
           It mostly does <b className="text-(--foreground)">{themes.length} thing{themes.length === 1 ? "" : "s"}</b>
-          {more.length ? <>; the {allThemes ? "" : `${shown.length} biggest `}are below</> : ""}. Each shows the cards
+          {more.length ? <>; {allThemes ? "they" : promoted ? `your main theme and the ${shown.length - 1} biggest others` : `the ${shown.length} biggest`} are below</> : ""}. Each shows the cards
           that do something extra, then the cards that set them off. Tap a card to see everything it works with.
         </p>
         <div className="flex flex-col gap-3">
-          {shown.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} />)}
+          {shown.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} main={main} />)}
         </div>
         {more.length ? (
           <p>
@@ -105,7 +122,12 @@ const byWeight = (a: EngineCard, b: EngineCard) => Number(b.isCommander) - Numbe
 
 /** One theme as a hero row: its name and size, the key cards as images, the cards that set them
  *  off as chips behind "Show all", and one example line to check it by. */
-function Theme({ g, m, onOpenCard }: { g: EngineGroup; m: EngineModel; onOpenCard?: (id: string) => void }) {
+function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onOpenCard?: (id: string) => void; main?: MainTheme | null }) {
+  const which = main ? whichTheme(g, main) : null;
+  const match = which?.theme === "main" ? which.match : null;
+  // A named theme's own group takes the name Glance and Scores give it, so the deck is called one
+  // thing on every chapter.
+  const name = which?.match === "same" ? which.name : g.name;
   const [all, setAll] = useState(false);
   const hubs = g.hubs.map((id) => m.cards.get(id)!).sort(byWeight);
   const hubSet = new Set(g.hubs);
@@ -123,14 +145,25 @@ function Theme({ g, m, onOpenCard }: { g: EngineGroup; m: EngineModel; onOpenCar
     <article className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-4" aria-labelledby={`theme-${g.tag}`}>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span aria-hidden="true" className="h-3 w-3 shrink-0 self-center rounded-full" style={{ background: g.hue }} />
-        <h4 id={`theme-${g.tag}`} className="text-base font-semibold">{g.name}</h4>
+        <h4 id={`theme-${g.tag}`} className="text-base font-semibold">{name}</h4>
+        {which ? (
+          <span className={`eyebrow rounded-full border px-2 py-0.5 ${which.theme === "main" ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"}`}>
+            {which.match === "same"
+              ? (which.theme === "main" ? "Your main theme" : "Your second theme")
+              : `Part of your ${which.theme === "main" ? "main" : "second"} theme, ${which.name}`}
+          </span>
+        ) : null}
+        {/* WHAT THE COUNT COUNTS (appeal review 2026-09-26): "32 cards" here beside "15 of 63 support"
+          *  on Glance read as the page contradicting itself. These are the cards linked in this theme;
+          *  the main theme's own count is how many cards' text is about it, and both are named. */}
         <span className="text-sm text-(--muted)">
-          {new Set([...g.hubs, ...g.members]).size} cards · {g.repeating} pair{g.repeating === 1 ? "" : "s"} that keep working{g.once ? `, ${g.once} once` : ""}
+          {new Set([...g.hubs, ...g.members]).size} cards linked here · {g.repeating} pair{g.repeating === 1 ? "" : "s"} that keep working{g.once ? `, ${g.once} once` : ""}
+          {match === "same" ? ` · ${main!.count} of your ${main!.nonland} nonland cards are built for it` : ""}
         </span>
       </div>
       <div className="flex flex-col gap-1.5">
         <span className="text-sm text-(--muted)">{hubWord}…</span>
-        <ul className="flex gap-2 overflow-x-auto pb-1 snap-x" aria-label={`${g.name}: key cards`}>
+        <ul className="flex gap-2 overflow-x-auto pb-1 snap-x" aria-label={`${name}: key cards`}>
           {hubs.map((c) => (
             <li key={c.id} className="flex w-[84px] shrink-0 snap-start flex-col items-center gap-1 sm:w-[96px]">
               <CardFace card={c} className="w-full" />
@@ -145,7 +178,7 @@ function Theme({ g, m, onOpenCard }: { g: EngineGroup; m: EngineModel; onOpenCar
       </div>
       {members.length ? (
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm text-(--muted)">…{memberWord}: {members.length} card{members.length === 1 ? "" : "s"}{g.sameAs ? <>, mostly the same as <b className="text-(--foreground)">{g.sameAs.name}</b></> : null}</span>
+          <span className="text-sm text-(--muted)">…{memberWord}: {members.length} card{members.length === 1 ? "" : "s"}{g.sameAs ? <>, mostly the same as <b className="text-(--foreground)">{shownName(g.sameAs.name, m, main)}</b></> : null}</span>
           <div className="flex flex-wrap gap-1.5">
             {shownMembers.map((c) => (
               <button key={c.id} type="button" onClick={() => open(c)} disabled={!onOpenCard}
@@ -178,4 +211,11 @@ function Theme({ g, m, onOpenCard }: { g: EngineGroup; m: EngineModel; onOpenCar
       ) : null}
     </article>
   );
+}
+
+/** A group's name as this chapter shows it: a named theme's own group goes by the theme's name. */
+function shownName(groupName: string, m: EngineModel, main?: MainTheme | null): string {
+  const g = m.groups.find((x) => x.name === groupName);
+  const w = g && main ? whichTheme(g, main) : null;
+  return w?.match === "same" ? w.name : groupName;
 }

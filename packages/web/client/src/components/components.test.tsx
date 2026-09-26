@@ -29,7 +29,8 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
   }} />);
   // T7: the count moved into the share line above, which has the denominator this one lacked.
   // What is left here is the half a share cannot say -- whether you will have drawn them in time.
-  expect(screen.getByText(/96% chance to draw 2 of your 39 Tokens cards by turn 3/)).toBeInTheDocument();
+  // "In your library": this count leaves the commander out, and the share above does not.
+  expect(screen.getByText(/96% chance to draw 2 of the 39 Tokens cards in your library by turn 3/)).toBeInTheDocument();
   // A command-zone member is available every game, so it is named beside the count and never
   // folded into a draw probability.
   expect(screen.getByText(/and Samut, the Driving Force is in the command zone every game/)).toBeInTheDocument();
@@ -98,9 +99,10 @@ test("DeckIdentity's sentence does not repeat the heading's own theme", () => {
 });
 
 test("DeckIdentity declines to name a deck whose theme is not dominant", () => {
-  render(<DeckIdentity cohesion={{ ...SAMPLE.report.cohesion!, dominant: false, theme: "proliferate", score: 0.02 }} />);
+  render(<DeckIdentity cohesion={{ ...SAMPLE.report.cohesion!, dominant: false, theme: "proliferate", name: "Proliferate", score: 0.02 }} />);
   expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("No dominant theme");
-  expect(screen.getByText(/strongest: proliferate/)).toBeTruthy();
+  // The player name, as everywhere else the theme is named.
+  expect(screen.getByText(/strongest: Proliferate/)).toBeTruthy();
 });
 
 // MOVED, NOT DELETED (I4, whole-branch review, 2026-09-01). "DeckIdentity names the deck when
@@ -128,19 +130,13 @@ const cohesionDraw = {
   label: "concentrated",
 } as NonNullable<typeof SAMPLE.report.cohesion>;
 
-// THE HEADLINE FLIPPED, 2026-08-20: `strategies[0]` led from 8de3c72 (2026-08-01) because a
-// cohesion theme was then routinely a bare functional role -- `UNIFORM_STATS` collapsed the theme
-// ranking to raw frequency and seven of eight decks themed "draw" -- and on a wizard deck the
-// headline printed "Tokens" while cohesion.theme read "wizards entering". THE HEADLINE ITSELF, and
-// the regression guard for that defect, moved to `RecognitionPanel.test.tsx` ("names the cohesion
-// theme, never the top archetype") now that RecognitionPanel owns the theme headline. What is left
-// here is DeckIdentity's own surviving behaviour: the archetype still prints as CONTEXT under the
-// cohesion figures, never as a title.
-test("DeckIdentity keeps the archetype as context, not as a title", () => {
-  render(
-    <DeckIdentity cohesion={cohesionDraw} strategies={[{ name: "tokens", label: "Tokens", confidence: 0.4 }]} />,
-  );
-  expect(screen.getByText(/themes Tokens 40%/)).toBeInTheDocument();
+// THE ARCHETYPE SHARES LEFT THIS PANEL (appeal review 2026-09-26): "themes Tokens 40%" beside the
+// cohesion share was a third name for the deck with a third number. The runner-up theme stays, by
+// its player name.
+test("DeckIdentity names the runner-up theme by its player name, and no archetype shares", () => {
+  render(<DeckIdentity cohesion={{ ...cohesionDraw, secondary: "tokens entering", secondaryName: "Tokens" }} />);
+  expect(screen.getByText("also cares about Tokens")).toBeInTheDocument();
+  expect(screen.queryByText(/themes Tokens/)).toBeNull();
 });
 
 /** T4: "focused · 0.47" was a bucket label beside a bare ratio, and the owner asked what it meant.
@@ -148,7 +144,7 @@ test("DeckIdentity keeps the archetype as context, not as a title", () => {
  *  against their own decklist. The word is no longer "focused" either -- the 0-5 deck score one
  *  panel over has its own "Focused" band, and the two scales are unrelated. */
 test("DeckIdentity prints the share with the two numbers it is a ratio of", () => {
-  render(<DeckIdentity cohesion={cohesionDraw} strategies={undefined} />);
+  render(<DeckIdentity cohesion={cohesionDraw} />);
   expect(screen.getByText("25 of 63 nonland cards support Card draw (40%, concentrated)")).toBeInTheDocument();
 });
 
