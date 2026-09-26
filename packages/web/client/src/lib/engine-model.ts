@@ -173,6 +173,8 @@ export function groupName(tag: string): string {
     case "creates": return "Making tokens";
     case "lose-life": return "Losing life";
     case "threshold": return "A full graveyard";
+    // Issue #505: a cheat puts a creature from hand onto the battlefield (Summoner's Grimoire).
+    case "cheat": return `Cheating ${p} into play`;
     // Issue #514: a card switched on by a creature type (Multiclass Baldric, Gravecrawler).
     case "condition": return sub === "party" ? "Switched on by your party" : `Switched on by your ${p}`;
     // Issue #510: a flash grant gives a temporary token (Inalla's copy) a whole turn.
