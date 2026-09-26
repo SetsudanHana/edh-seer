@@ -171,8 +171,9 @@ Ground-truth answers are for the harness operator, never for the agent.
 5. Is one of your favourite cards on the cut list? Would you cut it after reading why?
 
 ### precon-upgrader
-3. What would you buy with $50, and what does each replace? *(truth: nothing prices a card
-   yet; a seat that names prices from the page is over-claiming)*
+3. What would you add, and what does each replace? *(truth: the paired swaps and the role
+   shelves. Prices are out of scope by owner decision, 2026-09-26: the site never prices a card, and
+   a seat that fails it for that is judging a non-goal)*
 4. After those changes, would you keep up with your friends' upgraded decks? *(truth: not
    answered; report whether the page says so or pretends to)*
 5. Is there anything on this page you would show a friend?

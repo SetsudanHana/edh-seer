@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { DeckReport } from "../types.js";
+import { bracketWhy, infiniteCombos } from "../lib/bracket-why.js";
 import { CardName } from "./card-drawer.js";
 
 /** WHICH TABLE THIS DECK IS FOR — WotC's official Commander Brackets, read off two published lists
@@ -27,8 +29,22 @@ const BANDS = ["1-2", "3", "4-5"] as const;
  *  things: one is a range a reader sees, the other is a key the client joins on. */
 const CELL_LABEL: Record<(typeof BANDS)[number], string> = { "1-2": "1–2", "3": "3", "4-5": "4–5" };
 
-export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
+/** Rows of combos shown before "Show all": a deck with eleven would push the rest of the chapter a
+ *  screen down, and the first few are the cheapest, which are the ones that decide the band. */
+const COMBO_ROWS = 4;
+
+export function BracketPanel({ bracket, combos, manaValueOf }: {
+  bracket: DeckReport["bracket"];
+  /** The report's full combo list: named here, not only counted. */
+  combos?: DeckReport["combos"];
+  manaValueOf?: (name: string) => number | undefined;
+}) {
+  const [allCombos, setAllCombos] = useState(false);
   if (!bracket) return null;
+  // Without the full list (an older saved report), the cheap combos the bracket carries stand in.
+  const listed = combos ? infiniteCombos(combos, manaValueOf ?? (() => undefined)) : bracket.cheapCombos.map((c) => ({ ...c, cheap: true }));
+  const why = bracketWhy(bracket, combos ? listed : []);
+  const shownCombos = allCombos ? listed : listed.slice(0, COMBO_ROWS);
   // ONE PIP PER PIECE OF EVIDENCE THE LIST BELOW NAMES, so the eye goes band -> why without
   // reading. Counted, never summed from `reasons`: that field is a second rendering of these same
   // facts and the panel already prints the more checkable one (named cards, per-combo rows).
@@ -167,17 +183,16 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
           *  has not gone; it has moved behind a toggle"*, and that toggle is the dimmest text on the
           *  panel. So the ORIENTING half -- five tiers, which end is which -- is always on screen,
           *  and the disclosure keeps the rest. */}
+        {/* WHY, IN ONE SENTENCE A PLAYER CAN SAY AT THE TABLE (baseline round 2026-09-26): the
+          *  phone seat had the band and could not answer "which combo?". */}
+        <p data-testid="bracket-why" className="text-sm max-w-[65ch]">{why}</p>
         <p className="text-xs text-(--muted) max-w-[65ch]">
           Wizards&rsquo; five tiers for matching decks: 1 is the most casual table, 5 the most
           competitive — by what the deck contains, not how good it is.
         </p>
       </div>
 
-      {bracket.band === "1-2" ? (
-        <p className="text-sm text-(--muted)">
-          No Game Changers and no two-card infinite combos here.
-        </p>
-      ) : (
+      {bracket.band === "1-2" ? null : (
         <ul className="flex flex-col gap-2">
           {bracket.gameChangers.length > 0 && (
             <li className="rounded-lg border border-(--separator) px-3 py-2">
@@ -220,6 +235,36 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
                 natural limit — mana, damage, cards drawn. Having even one is why this deck is not
                 in brackets 1–2.
               </p>
+              {combos && listed.length ? (
+                <ul className="mt-2 flex flex-col gap-1.5" aria-label="The infinite combos in this deck">
+                  {shownCombos.map((c) => (
+                    <li key={c.cards.join("|")} data-testid="bracket-combo" className="flex flex-col gap-0.5 border-t border-(--separator) pt-1.5">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+                        <span className="text-sm">
+                          {c.cards.map((n, i) => (
+                            <span key={n}>{i > 0 ? " + " : ""}<CardName name={n} /></span>
+                          ))}
+                        </span>
+                        <span className="text-xs stat-num text-(--muted) whitespace-nowrap">
+                          {c.manaValue} mana for {c.cards.length === 2 ? "the pair" : `the ${c.cards.length} cards`}
+                        </span>
+                      </div>
+                      {/* What it repeats, in Commander Spellbook's words: "infinite" alone did not
+                        *  say whether it wins the game. */}
+                      <span className="text-xs text-(--muted)">
+                        {c.result}{c.cheap ? <span className="text-(--foreground)"> · cheap enough to come together early, which bracket 3 does not allow</span> : null}
+                      </span>
+                    </li>
+                  ))}
+                  {listed.length > COMBO_ROWS ? (
+                    <li>
+                      <button type="button" className="min-h-9 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAllCombos(!allCombos)}>
+                        {allCombos ? "Show fewer" : `Show all ${listed.length}`}
+                      </button>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : null}
             </li>
           )}
           {/* THE REASON IS SAID ONCE, OVER THE ROWS IT APPLIES TO. Every cheap combo carried its own
@@ -236,14 +281,14 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
               More Game Changers than bracket 3 allows is what puts this deck in 4–5.
             </li>
           )}
-          {bracket.cheapCombos.length > 0 && (
+          {!combos && bracket.cheapCombos.length > 0 && (
             <li className="text-xs text-(--muted) max-w-[65ch]">
               Below: pairs of two cards that together go infinite, for a low enough total cost that
               bracket 3 does not allow them — which is what puts this deck in 4–5. The figure beside
               each pair is the two cards&rsquo; mana costs added together.
             </li>
           )}
-          {bracket.cheapCombos.map((c) => (
+          {(combos ? [] : bracket.cheapCombos).map((c) => (
             <li key={c.cards.join("|")} className="rounded-lg border border-(--separator) px-3 py-2">
               {/* F6: THE FIGURE SAT BESIDE HALF A PAIR ON A PHONE. "Dualcaster Mage + Essence Flux"
                 *  wraps to two lines at 390 while `4 mana for the pair` stays level with the first,
@@ -283,6 +328,13 @@ export function BracketPanel({ bracket }: { bracket: DeckReport["bracket"] }) {
         *  the question a precon owner arrives with; the old last line answered it with "neither of
         *  those is something a card list can answer". The band IS the answer -- what the report
         *  cannot do is split it finer. */}
+      {/* WHAT WAS LOOKED AT, AND WHAT WAS NOT (baseline round 2026-09-26): "none found" and "never
+        *  looked" read the same, and the bracket seat could not tell them apart. */}
+      <p data-testid="bracket-checked" className="text-xs text-(--muted) max-w-[65ch]">
+        Checked: every card against Wizards&rsquo; Game Changers list, and every combo Commander
+        Spellbook knows whose pieces are all in this deck. Not checked: mass land destruction, chained
+        extra turns, or how fast the deck can win.
+      </p>
       <p className="text-xs text-(--muted) max-w-[65ch]">
         {bracket.band === "3" ? (
           <>Bracket 3 is a single bracket, so there is nothing further to split.</>

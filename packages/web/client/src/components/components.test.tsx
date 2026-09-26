@@ -2649,9 +2649,10 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   }} />);
   // The EN DASH: this line prints `CELL_LABEL[band]`, not the wire key, so it matches the cells
   // above it. It was rendering "Bracket 4-5" beside a cell reading "4–5" (S14).
-  expect(screen.getByText(/Bracket 4–5/)).toBeInTheDocument();
+  expect(screen.getByText(/^Bracket 4–5$/)).toBeInTheDocument();
   expect(screen.getByText(/by what the deck contains, not how good it is/i)).toBeInTheDocument();
-  expect(screen.getByText(/Rhystic Study/)).toBeInTheDocument();
+  // Named twice on purpose: in the one-sentence reason and in the Game Changers box.
+  expect(screen.getAllByText(/Rhystic Study/).length).toBeGreaterThan(0);
   expect(screen.getAllByText(/2 infinite combos/).length).toBeGreaterThan(0);
   // S14: the figure carries what it is the total OF. "4 mana total" floated with no label and a
   // beginner read it as a quantity of something unnamed.
@@ -2662,7 +2663,10 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   const two = render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
   // R2-F7: this is the screen a precon owner actually sees, and it named "Wizards' Game Changer
   // list" with no box on THIS screen defining it -- the definition only existed on the 4-5 layout.
-  expect(screen.getByText(/No Game Changers and no two-card infinite combos here/i)).toBeInTheDocument();
+  // Baseline round 2026-09-26: "none found" now says what was looked at, so it cannot read as
+  // "never looked".
+  expect(screen.getByTestId("bracket-why")).toHaveTextContent(/none of its cards is on Wizards' Game Changers list, and no infinite combo Commander Spellbook knows is complete/i);
+  expect(screen.getByTestId("bracket-checked")).toHaveTextContent(/Not checked: mass land destruction, chained extra turns/);
   two.unmount();
 
   // An analysis with no bracket renders nothing at all, never a heading over an empty panel.
@@ -3233,4 +3237,51 @@ test("the cut list names the cards no theme claims, without calling them dead", 
   expect(screen.getByText("Crib Swap")).toBeInTheDocument();
   expect(screen.getByText(/normal for\s+removal and protection/)).toBeInTheDocument();
   expect(screen.queryByText("Nothing here is an easy cut.")).toBeNull();
+});
+
+
+// THE BRACKET WITH ITS WORKING SHOWN (owner, 2026-09-26). The baseline round's phone seat had
+// "Bracket 3 · 1 infinite combo" and could not answer "which combo?"; the first-cuts seat saw 2 of
+// "11 infinite combos" and wanted the rest so it would not cut half of one.
+test("the bracket panel names every infinite combo, what it does, and says why in one sentence", () => {
+  const mv: Record<string, number> = { "Dualcaster Mage": 3, "Ghostly Flicker": 3, "Essence Flux": 1, "Kiki-Jiki, Mirror Breaker": 5, "Zealous Conscripts": 5 };
+  render(<BracketPanel
+    bracket={{ band: "4-5", gameChangers: ["Jeska's Will"], infiniteCombos: 3,
+      cheapCombos: [{ cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB", manaValue: 4 }], reasons: [] }}
+    combos={[
+      { cards: ["Kiki-Jiki, Mirror Breaker", "Zealous Conscripts"], result: "Infinite hasty tokens" },
+      { cards: ["Dualcaster Mage", "Essence Flux"], result: "Infinite ETB, Infinite storm count" },
+      { cards: ["Dualcaster Mage", "Ghostly Flicker"], result: "Infinite ETB" },
+      { cards: ["Sol Ring", "Arcane Signet"], result: "Mana" },
+    ]}
+    manaValueOf={(n) => mv[n]}
+  />);
+  expect(screen.getByTestId("bracket-why")).toHaveTextContent(
+    "Bracket 4–5 because of Jeska's Will (a Game Changer) and 2 two-card infinite combos cheap enough to come together early (the cheapest Dualcaster Mage + Essence Flux, 4 mana).");
+  const rows = screen.getAllByTestId("bracket-combo");
+  // Only the infinite ones, cheapest and bracket-deciding first; the finite "Mana" pair is not one.
+  expect(rows).toHaveLength(3);
+  expect(rows[0]).toHaveTextContent(/Dualcaster Mage \+ Essence Flux/);
+  expect(rows[0]).toHaveTextContent(/Infinite ETB, Infinite storm count · cheap enough to come together early, which bracket 3 does not allow/);
+  expect(rows[2]).toHaveTextContent(/Kiki-Jiki, Mirror Breaker \+ Zealous Conscripts/);
+  expect(rows[2]).toHaveTextContent("10 mana for the pair");
+  expect(rows[2]).not.toHaveTextContent(/bracket 3 does not allow/);
+});
+
+test("a bracket 3 deck says which Game Changers it holds and that its combos are too costly to rule 3 out", () => {
+  render(<BracketPanel
+    bracket={{ band: "3", gameChangers: ["Rhystic Study", "Smothering Tithe"], infiniteCombos: 1, cheapCombos: [], reasons: [] }}
+    combos={[{ cards: ["Kiki-Jiki, Mirror Breaker", "Zealous Conscripts"], result: "Infinite hasty tokens" }]}
+    manaValueOf={() => 5}
+  />);
+  expect(screen.getByTestId("bracket-why")).toHaveTextContent(
+    "Bracket 3 because of 2 Game Changers (Rhystic Study and Smothering Tithe) and Kiki-Jiki, Mirror Breaker + Zealous Conscripts (an infinite combo bracket 3 still allows: at 10 mana it comes together late).");
+});
+
+test("more than four combos fold behind Show all", () => {
+  const combos = Array.from({ length: 6 }, (_, i) => ({ cards: [`A${i}`, `B${i}`], result: "Infinite mana" }));
+  render(<BracketPanel bracket={{ band: "4-5", gameChangers: [], infiniteCombos: 6, cheapCombos: [], reasons: [] }} combos={combos} manaValueOf={() => 5} />);
+  expect(screen.getAllByTestId("bracket-combo")).toHaveLength(4);
+  fireEvent.click(screen.getByRole("button", { name: "Show all 6" }));
+  expect(screen.getAllByTestId("bracket-combo")).toHaveLength(6);
 });

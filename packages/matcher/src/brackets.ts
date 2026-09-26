@@ -13,7 +13,7 @@ import type { Card, Combo } from "@edh-seer/engine";
 export const CHEAP_COMBO_MV = 6;
 
 /** The Game Changer ceiling bracket 3 allows. WotC's number, not ours. */
-const BRACKET_3_GAME_CHANGERS = 3;
+export const BRACKET_3_GAME_CHANGERS = 3;
 
 /** Which combos this reads as INFINITE. Commander Spellbook states the loop in its RESULT text and
  *  nowhere else — `ComboDoc` is `{cards, result}` and carries no flag — so the word is the fact.
@@ -23,6 +23,10 @@ const BRACKET_3_GAME_CHANGERS = 3;
  *  the split is what matters and it is real: of the 29 calibration decks holding a combo, 27 hold an
  *  infinite one, and `codie` and `orzhov-spellslinger` hold combos with none. */
 const INFINITE = /\binfinite\b/i;
+
+/** The same test, for a renderer listing the combos by name: one rule for what counts, so the list
+ *  and the band can never disagree. */
+export const isInfiniteCombo = (result: string | undefined): boolean => INFINITE.test(result ?? "");
 
 export interface BracketCombo {
   cards: string[];

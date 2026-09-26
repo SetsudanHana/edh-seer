@@ -23,6 +23,7 @@
     "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",
     "./archetypes": "./src/archetypes.ts",
+    "./brackets": "./src/brackets.ts",
     "./edges": "./src/edges.ts",
     "./goldfish": "./src/goldfish.ts",
     "./land-count": "./src/land-count.ts",

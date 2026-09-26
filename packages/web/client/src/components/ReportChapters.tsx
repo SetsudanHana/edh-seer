@@ -120,6 +120,12 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   const current = useCurrentChapter();
   /** The ranked themes, or null where the engine found nothing to rank; the unranked groups then
    *  keep the chapter from saying nothing. */
+  // Mana value by card name, face or physical, for the bracket panel's combo costs.
+  const manaValueOf = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of report.cards) { if (r.manaValue !== undefined) { m.set(r.name, r.manaValue); if (r.cardName) m.set(r.cardName, r.manaValue); } }
+    return (n: string) => m.get(n);
+  }, [report.cards]);
   const themes = useMemo(() => {
     if (!data.graph) return null;
     const m = buildEngineModel(report, data.graph);
@@ -256,7 +262,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  for. The tiles were the only place either score said what it MEASURES, so those two
             *  `Explain` blocks moved onto the dials themselves and the component retired. */}
           <DeckGauges data={data} diff={diff} />
-          <BracketPanel bracket={report.bracket} />
+          <BracketPanel bracket={report.bracket} combos={report.combos} manaValueOf={manaValueOf} />
         </Chapter>
 
         <Chapter id="plan" title={title("plan")}>

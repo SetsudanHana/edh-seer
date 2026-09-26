@@ -29,10 +29,11 @@ Like one poster, you have "a difficult time deciding what would go well in it an
 be removed from the deck." Your friends have also been buying singles, and the one who keeps
 winning started from a precon too.
 
-**What solved means to you:** a short list, five to ten, of cards to buy, each paired with the card
-it replaces, that you can afford (about $50, and your group is fine with a few proxies), that keep
-the deck doing what the box said it does. And some sense of whether that would be enough to keep up
-with your friends.
+**What solved means to you:** a short list, five to ten, of cards to add, each paired with the card
+it replaces, that keep the deck doing what the box said it does. And some sense of whether that
+would be enough to keep up with your friends. You have about $50, and your group is fine with a few
+proxies, so you will look up prices yourself afterwards; you do not expect a deck site to price
+cards, and a page with no prices is not a failure for you.
 
 ## What you know, and what you do not
 

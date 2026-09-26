@@ -249,10 +249,23 @@ My reading of the product as of #539, to be tested by the round, not taken as it
 | Problem | Answered today | Where | Missing |
 |---|---|---|---|
 | 1. Cut to 100 | Mostly | "What to change": the cut list with reasons and "why you might keep it"; Trim 3/5/10 | a pet-card guard is not obvious; the count "you are 8 over" is not the first thing a 108-card deck sees |
-| 2. Precon upgrade | Partly | suggestions ("Strengthen what works"), swaps beside cuts | **no prices or budget**, **no "cards I own"**; nothing says whether this deck would beat the friends' decks |
+| 2. Precon upgrade | Partly | suggestions ("Strengthen what works"), swaps beside cuts | adds paired with cuts; nothing says whether this deck would beat the friends' decks. Prices are out of scope (decision 2 below) |
 | 3. Slow / screwed | Mostly | Mana chapter (lands vs target, colour sources, cast odds by turn), Roles with targets, "you will run out of cards" | "is this bad luck or my deck?" is never said in those words; the answer is spread across two chapters |
 | 4. How it wins / is X worth it | Mostly — the core | Game plan: commander ring, themes, "How you win" (win plans, clock), combos, "See links" per card | a named finisher when the deck has none; comparison with the usual build for this commander |
 | 5. Bracket and pod | Partly | bracket readout with Game Changers and two-card combos named | tutor quality, a one-line rule-zero summary to share, swaps that move the bracket, "why am I the target" |
+
+### Owner's decisions on the six problems (2026-09-26)
+
+After the baseline round (`docs/measurements/persona-round-2026-09-26/BASELINE.md`):
+
+1. **Cuts: yes.** The report should suggest cuts, enough to reach the deck's own overage.
+2. **Prices: never.** edhseer does not know card prices and never will. It suggests additions;
+   whether a player buys them or prints proxies is not the site's concern. A seat that fails the
+   site for showing no prices is judging a non-goal.
+3. **Speed and mana: yes.** The report should assess how fast the deck is and the mana it needs.
+4. **How it wins: yes.** The report should determine how the deck wins.
+5. **Bracket: yes, and the first to fix.** The report should assess the bracket and show why.
+6. **The phone and one-line answer: a UX problem,** to be addressed.
 
 The two things that set it apart, if the round confirms them, are the ones the research says nobody
 else does: **why** cards work together, with their text on screen, and cuts with reasons tied to this
