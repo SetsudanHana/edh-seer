@@ -7,7 +7,8 @@ import { Badge, CardFace, ReadCards, RepeatKey } from "./engine-parts.js";
 /** THE GRAPH TAB'S LANDING VIEW, SHRINKING INTO THE REPORT (2026-09-26). It was what the deck does,
  *  in groups of named cards (graph evaluation 2026-09-25); the owner's ruling was that a second
  *  report beside the first makes no sense, so its parts move into the report's chapters one step at
- *  a time. The themes and best pairs are in Game plan; the cut list and the jobs are still here.
+ *  a time. The themes and best pairs are in Game plan, the cards by their job in Roles; the cut list
+ *  is still here.
  *
  *  THE CARDS LEAD, AND THEIR TEXT IS ONE TAP AWAY. A player knows a card by its face, and a page of
  *  printed rules text read as a wall (owner, 2026-09-26). But the text beside a claim is what turned
@@ -17,7 +18,7 @@ import { Badge, CardFace, ReadCards, RepeatKey } from "./engine-parts.js";
 export function EnginesView({ report, graph }: {
   report: DeckReport; graph: CardGraph;
   /** No longer read here: the themes that tapped cards moved to the report's Game plan chapter.
-   *  Kept so the shell's props do not change until the Overview's last two parts move too. */
+   *  Kept so the shell's props do not change until the Overview's last part moves too. */
   selected?: string | null;
   onSelect?: (id: string | null) => void;
   onOpenCard?: (id: string) => void;
@@ -31,8 +32,8 @@ export function EnginesView({ report, graph }: {
     <div className="flex flex-col gap-8 py-2">
       <div className="flex flex-col gap-3">
         {/* THE THEMES AND BEST PAIRS MOVED to the report's Game plan chapter (2026-09-26): the same
-          * report twice made no sense. The cut list and the jobs follow in the next two steps. */}
-        <p className="max-w-[70ch]">Your deck&rsquo;s themes and the pairs that work best together are in the report&rsquo;s <b>Game plan</b> chapter. Here: the cards doing the least, and the cards judged by their job.</p>
+          * report twice made no sense. The cards by their job moved to Roles; the cut list follows. */}
+        <p className="max-w-[70ch]">Your deck&rsquo;s themes and the pairs that work best together are in the report&rsquo;s <b>Game plan</b> chapter, and its cards by the job they do in <b>Roles</b>. Here: the cards doing the least.</p>
         <RepeatKey />
       </div>
 
@@ -72,35 +73,6 @@ export function EnginesView({ report, graph }: {
             </article>
           ))}
         </div>
-        {m.jobs.length ? (
-          // SHELVES OF CARDS, NOT A PARAGRAPH (owner, 2026-09-26, on a Rani deck: a line per job of
-          // names, mana symbols and bracketed numbers read as a wall). Each job is a row of the
-          // cards themselves, least connected first, with the count under each.
-          <div className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-            <div className="flex flex-col gap-1">
-              <h3 className="font-semibold text-base">Cards judged by their job</h3>
-              <p className="text-(--muted)">Removal, ramp and the like are compared with their own kind, not by links. Each row starts with the card that works with the fewest others; the number under a card is how many it works with.</p>
-            </div>
-            <ul className="flex flex-col gap-3">
-              {m.jobs.map(([job, rows]) => (
-                <li key={job} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-4">
-                  <span className="shrink-0 sm:w-36 sm:pt-2">
-                    <b className="block">{job}</b>
-                    <span className="text-(--muted)">{rows.length} card{rows.length === 1 ? "" : "s"}</span>
-                  </span>
-                  <ul className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 snap-x" aria-label={job}>
-                    {rows.map((r) => (
-                      <li key={r.card.id} className="flex w-[76px] shrink-0 snap-start flex-col items-center gap-0.5 sm:w-[84px]">
-                        <CardFace card={r.card} className="w-full" />
-                        <span className="text-xs text-(--muted)" title={`Works with ${r.partners} other card${r.partners === 1 ? "" : "s"}`}>{r.partners}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
       </section>
     </div>
   );
