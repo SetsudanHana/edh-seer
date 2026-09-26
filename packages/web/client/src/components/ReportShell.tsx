@@ -20,16 +20,12 @@ import { ComboList } from "./ComboList.js";
  *  surface switch below (#214) lets the reader override `useBoardMode`'s guess in either direction.
  *  It stays eager because it is where the ego branch LANDS: on a coarse pointer with no fine one,
  *  `GraphList` is the first thing `/graph` paints, and lazy-loading the surface a reader arrives on
- *  trades a bundle saving for a spinner in the one place it is guaranteed to be seen. `EgoView` and
- *  `GraphView`, both one tap further in, are the ones worth splitting. */
+ *  trades a bundle saving for a spinner in the one place it is guaranteed to be seen. `GraphView`,
+ *  one tap further in, is the one worth splitting; `OrbitView` is plain SVG and small. */
 const GraphView = lazy(() => import("./GraphView.js").then((m) => ({ default: m.GraphView })));
-/** `EgoView` IMPORTS `GraphView` STATICALLY, so it has to load the same way or the split above is a
- *  no-op: a static importer anywhere in the eager graph pulls the module back into the entry chunk,
- *  which is exactly what vite's INEFFECTIVE_DYNAMIC_IMPORT warning was saying. Both are `/graph`
- *  only, so both are lazy and `GraphView` becomes the chunk they share. */
-const EgoView = lazy(() => import("./EgoView.js").then((m) => ({ default: m.EgoView })));
 import { GraphList } from "./GraphList.js";
 import { EnginesView } from "./EnginesView.js";
+import { OrbitView } from "./OrbitView.js";
 import { useBoardMode } from "../lib/use-board-mode.js";
 import { CardDrawerProvider } from "./card-drawer.js";
 import type { RunDiff } from "../lib/run-diff.js";
@@ -120,7 +116,8 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
   /** The commander's node, which "One card" opens on where the device guessed the whole-deck board
    *  (owner, 2026-09-24: the one-card view on desktop). There the reader has already seen the
    *  deck as a cloud; the list would be a step back, and the commander is the card a synergy deck
-   *  is about. Where the guess was the one-card view, the list stays its entry, as before. */
+   *  is about. Since the orbit (2026-09-26) the same holds on a phone: the orbit lists the rest of
+   *  the deck itself, and the card list is one "Back" away. */
   const commanderNodeId = useMemo(() => {
     const names = new Set(data.report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
     return data.graph?.nodes.find((n) => names.has(n.cardName ?? n.id))?.id ?? null;
@@ -145,7 +142,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
             setSurface("graph");
             setBoardModeOverride(mode);
             if (mode === "board") setFocusId(null);
-            else if (autoBoardMode === "board" && !focusId) setFocusId(selectedCard ?? commanderNodeId);
+            else if (!focusId) setFocusId(selectedCard ?? commanderNodeId);
           }}
           className={`eyebrow whitespace-nowrap rounded-(--radius) border px-2.5 py-2 ${
             on ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"
@@ -294,14 +291,12 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
                       : boardMode === "ego"
                       ? (focusId
                         ? (
-                          <EgoView
+                          <OrbitView
                             graph={data.graph}
                             report={data.report}
                             focusId={focusId}
                             onFocus={setFocusId}
-                            onBack={() => setFocusId(null)}
-                            artLoader={artLoaderRef.current}
-                            inline={autoBoardMode === "board"}
+                            onBack={autoBoardMode === "board" ? undefined : () => setFocusId(null)}
                           />
                         )
                         : <GraphList graph={data.graph} unread={unread} onOpenBoard={setFocusId} />)

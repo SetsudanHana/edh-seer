@@ -459,10 +459,12 @@ test("the graph tab opens on the Overview", async () => {
   expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
 });
 
-test("a coarse pointer gets the list with the board reachable from a row", async () => {
+test("a coarse pointer opens the orbit on the commander, with the card list one tap back", async () => {
   stubPointer(true, false, 390);
   const user = await openGraph(phoneSizedDeck());
   await user.click(screen.getByRole("button", { name: "One card" }));
+  expect(screen.getByRole("group", { name: /^Krenko, Mob Boss and the \d+ cards? it works with$/ })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: /back to the card list/i }));
   expect(screen.getByLabelText("Find a card")).toBeInTheDocument();
   // The sentence that said the board "needs a wider screen" is false as of this change.
   expect(screen.queryByText(/needs a wider screen/i)).toBeNull();
@@ -473,6 +475,7 @@ test("tapping a row opens that card's graph", async () => {
   stubPointer(true, false, 390);
   const user = await openGraph(phoneSizedDeck());
   await user.click(screen.getByRole("button", { name: "One card" }));
+  await user.click(screen.getByRole("button", { name: /back to the card list/i }));
   await user.click(screen.getAllByRole("button", { name: /see what it connects to/i })[0]!);
   // `find`, not `get`, AND NOT ON THE DEFAULT BUDGET. The comment here used to say the ego board
   // "arrives one microtask after the tap", which stopped being true at #142 (`cae07fe`): EgoView
@@ -531,16 +534,17 @@ test("a new deck goes home carrying search and hash; the same deck under a state
 
 /** THE READER OVERRIDES THE GUESS (owner, 2026-09-06, "I would go route with both"). A phone that
  *  the hook sends to the list can ask for the whole-deck board, and back. */
-test("the phone can switch between the one-card list and the whole-deck board", async () => {
+test("the phone can switch between the one-card view and the whole-deck board", async () => {
   stubPointer(true, false, 390);
   const user = await openGraph(phoneSizedDeck());
+  const orbit = () => screen.queryByRole("group", { name: /it works with$/ });
   await user.click(screen.getByRole("button", { name: "One card" }));
-  expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
+  expect(orbit()).not.toBeNull();
   await user.click(screen.getByRole("button", { name: "Whole deck" }));
-  expect(screen.queryByRole("button", { name: /see what it connects to/i })).toBeNull();
+  expect(orbit()).toBeNull();
   expect(screen.getByRole("button", { name: "Whole deck" })).toHaveAttribute("aria-pressed", "true");
   await user.click(screen.getByRole("button", { name: "One card" }));
-  expect(screen.getAllByRole("button", { name: /see what it connects to/i }).length).toBeGreaterThan(0);
+  expect(orbit()).not.toBeNull();
 });
 
 /** THE ONE-CARD VIEW ON A DESKTOP (owner, 2026-09-24). On a dense deck -- Jodah, 56 of 66 cards on
@@ -552,12 +556,13 @@ test("a desktop can open the one-card view, and it opens on the commander", asyn
   await user.click(screen.getByRole("button", { name: "Whole deck" }));
   expect(screen.getByRole("button", { name: "Whole deck" })).toHaveAttribute("aria-pressed", "true");
   await user.click(screen.getByRole("button", { name: "One card" }));
+  // The orbit, centred on the commander. On a desktop there is no card list to go back to.
   expect(await screen.findByRole(
-    "button", { name: /back to the card list/i }, { timeout: 4000 },
+    "group", { name: /^Krenko, Mob Boss and the \d+ cards? it works with$/ }, { timeout: 4000 },
   )).toBeInTheDocument();
-  expect(screen.getAllByText("Krenko, Mob Boss").length).toBeGreaterThan(0);
-  await user.click(screen.getByRole("button", { name: "Whole deck" }));
   expect(screen.queryByRole("button", { name: /back to the card list/i })).toBeNull();
+  await user.click(screen.getByRole("button", { name: "Whole deck" }));
+  expect(screen.queryByRole("group", { name: /it works with$/ })).toBeNull();
 });
 
 /** NO COMBOS, NO COMBOS TAB (UI review 2026-09-25). A deck with none got a tab that opened one
