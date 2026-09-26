@@ -47,18 +47,21 @@ the reason you are here is that the card text is small or absent.
 ## Why you came
 
 You are at a game store, about to sit down with three strangers, and one of them asks what your deck
-is like. Some version of this is your first task, in words players post:
+is like. Real r/EDH posts put the moment in words:
 
-> "How would you describe the power level of these decks?"
-> "Commander bracket recommendation"
+> "The rule zero discussion is much harder to have in store or event settings when you are meeting
+> players for the first time and have a limited deck selection."
+> "I've got a really nasty 2 built up" … "My deck is a 3 but only because I just cracked cards X and Y"
 
-(Real thread titles; see `docs/player-questions.md`, problem 5.) What you have already tried: saying
-"it's about a 7", which means nothing, and reading out a bracket number a site gave you, which a
-stranger once disputed and you could not defend.
+(r/EDH; sources in `docs/player-questions.md`.) What you have already tried: saying "it's about a
+7", which r/EDH jokes everyone says, and reading out a bracket number a site gave you, which a
+stranger once disputed and you could not defend. You have also seen the other failure called out:
+someone who "downplayed its strength during the pre-game talk".
 
 **What solved means to you:** within about fifteen seconds, one or two sentences you could say out
-loud to the table (what the deck does, how strong it is, anything that might upset people), and the
-reason behind the strength if someone asks.
+loud to the table: the bracket, the cards or combo that put it there, roughly how fast it wins, and
+anything that might upset people. Honest in both directions, and with the reason ready if someone
+asks.
 
 ## Your deck
 
