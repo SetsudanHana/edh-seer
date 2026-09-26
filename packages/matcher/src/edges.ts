@@ -2428,14 +2428,24 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     // fodder reasons on the 71 decks were real cards, 956 of them above mana value 2.
     // CEILING: "cheap" is a mana-value line, set at 2 on those four verdicts; a rate model (Y9 /
     // AE4) would compare the card against what the outlet pays out instead.
-    const expendable = isToken || (p.card.manaValue <= EXPENDABLE_MV
+    // A CREATURE THAT COMES BACK IS FODDER TOO (owner ruling 2026-09-27, #509): "creatures that can
+    // come back can be considered fodder, you just have to remember how many times they can come
+    // back." Undying and persist each return it once, so it is fodder even for a whole-board
+    // "sacrifice a creature" outlet, and the sentence says how often. Another card returning it
+    // (Daretti) still does not make it fodder -- the property is the card's own.
+    // CEILING: the two keywords only; a printed "return this card to the battlefield" (Reassembling
+    // Skeleton) is not read yet.
+    const comesBack = (p.tags.characteristics.keywords ?? []).find((k) => /^(?:undying|persist)$/i.test(k))?.toLowerCase();
+    const expendable = isToken || comesBack !== undefined || (p.card.manaValue <= EXPENDABLE_MV
       && !p.tags.characteristics.types.some((t) => t.toLowerCase() === "legendary"));
-    const is = expendable && (isToken || subtype !== undefined || narrowType)
+    const is = expendable && (isToken || comesBack !== undefined || subtype !== undefined || narrowType)
       && subjectMatches(characteristicsSubject(p.tags, p.card.name), { ...wanted, token: null }, h);
     if (!is && !makes) continue;
     reasons.push({
       tag: `fodder:${themeSubjectKey(wanted)}`,
-      text: is ? `${p.card.name} is fodder for ${c.card.name}` : `${p.card.name} makes fodder for ${c.card.name}`,
+      text: !is ? `${p.card.name} makes fodder for ${c.card.name}`
+        : comesBack && !isToken ? `${p.card.name} is fodder for ${c.card.name}, and ${comesBack} brings it back once`
+        : `${p.card.name} is fodder for ${c.card.name}`,
       effectKind: a.effect.kind || "sacrifice",
       repeatability: a.kind === "activated" ? "activated" : a.kind === "triggered" ? "triggered" : "static",
       consumer: c.card.name,

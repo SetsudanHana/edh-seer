@@ -5285,3 +5285,23 @@ test("a remove-a-counter cost links to counter makers and to a Saga", () => {
   expect(texts(fenrir)).toEqual(["O'aka, Traveling Merchant removes a counter from Summon: Fenrir and draws you 1 card"]);
   expect(texts(land)).toEqual([]);
 });
+
+/** A CREATURE THAT COMES BACK IS FODDER (owner ruling 2026-09-27, issue #509): Gleeful Arsonist's
+ *  undying returns it once, so it feeds Ruthless Technomancer's "sacrifice another creature" -- a
+ *  whole-board outlet a plain creature of its mana value never feeds. Live shapes, read 2026-09-27. */
+test("an undying creature is fodder for a whole-board outlet, and the sentence says it comes back once", () => {
+  const techno = base("Ruthless Technomancer", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } }, effect: { kind: "" },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, other: true, type: "creature" } }],
+  }] as CardTags["abilities"]);
+  const arsonist = base("Gleeful Arsonist", [], ["human", "wizard"]);
+  arsonist.tags.characteristics.types = ["creature"];
+  arsonist.tags.characteristics.keywords = ["Undying"];
+  (arsonist.card as { manaValue: number }).manaValue = 3;
+  const plain = base("Plain Three-Drop", [], ["human", "wizard"]);
+  plain.tags.characteristics.types = ["creature"];
+  (plain.card as { manaValue: number }).manaValue = 3;
+  const fodder = (p: ReturnType<typeof base>) => directedReasons(p, techno, H).filter((r) => r.tag.startsWith("fodder:")).map((r) => r.text);
+  expect(fodder(arsonist)).toEqual(["Gleeful Arsonist is fodder for Ruthless Technomancer, and undying brings it back once"]);
+  expect(fodder(plain)).toEqual([]);
+});
