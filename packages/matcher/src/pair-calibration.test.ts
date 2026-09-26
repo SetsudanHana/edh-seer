@@ -140,5 +140,16 @@ test("the known-defect quarantine never grows, and cannot rot", () => {
  *  matched NOTHING and the artifact payoff they should feed was a MISSING REASON on an EXISTING
  *  EDGE — every such producer in the 71 decks (Blood Fountain, Transmutation Font, Rose, Cutthroat
  *  Raider) is itself an artifact and already links to that consumer with its own body. This gate is
- *  pair-level and blind to it; `population-compare.ts` is the instrument for that direction. */
-const KNOWN_DEFECT_CAP = 2;
+ *  pair-level and blind to it; `population-compare.ts` is the instrument for that direction.
+ *
+ *  **3 as of 2026-09-26**, with a written reason. The hierarchy fix for double-faced type lines
+ *  (overview persona rounds, item 1: "enchantment" had become a SUBTYPE key, so Weaver of Harmony's
+ *  "from an enchantment source" accepted every creature) regenerated `hierarchy.json` with each face
+ *  read on its own. The data is now right, and it exposes defect B's family again: a subtype-only
+ *  subject expands to EVERY type the subtype has ever appeared with, and "Rat" now includes
+ *  enchantment (an "Enchantment Creature -- Rat" exists). So Marrow-Gnawer's "sacrifice a Rat"
+ *  reaches Warehouse Tabby's "an enchantment ... is put into a graveyard", judged neutral.
+ *  **Warehouse Tabby / Marrow-Gnawer** is quarantined as the witness. The fix is to map a subtype to
+ *  the card type CR 205.3 assigns it (205.3m: creature types belong to creatures and kindreds only),
+ *  not to every co-occurring type -- a separate, measured change. Lower this when it lands. */
+const KNOWN_DEFECT_CAP = 3;

@@ -4707,7 +4707,7 @@ test("a doubler naming WHOSE triggers it doubles pairs with a class member that 
     effect: { kind: "graveyard-recursion" },
   }], ["elemental", "knight"]);
   const doubled = pairReasons(twinflame, cavalier, H);
-  expect(doubled.find((r) => r.tag === "doubles:elemental")?.text).toBe("Twinflame Travelers doubles Cavalier of Thorns's triggers");
+  expect(doubled.find((r) => r.tag === "doubles:elemental")?.text).toBe("Cavalier of Thorns's triggered abilities trigger an additional time thanks to Twinflame Travelers");
   // Not an Elemental: nothing, however many triggers it has.
   const solemn = base("Solemn Simulacrum", [{
     kind: "triggered",
@@ -4951,4 +4951,71 @@ test("a create-token reason names the ability that made the token", () => {
   goblin.tags!.characteristics = { ...goblin.tags!.characteristics, token: true };
   const made = createsReasons(maker, goblin, H);
   expect(made.map((r) => r.producerAbility)).toEqual([1]);
+});
+
+/** THE PARTY IS ITS OWN SUBJECT, AND A BOARD COUNT IS STANDING (overview persona rounds 2026-09-25,
+ *  items 5 and 6c). Thwart the Grave counts "each creature in your party" -- a Cleric, Rogue, Warrior
+ *  and Wizard -- but the tag took the first listed type, so a Wizard read `scales:cleric`; and its
+ *  on-cast cost reduction fell through the repeatability ternary to `triggered` ("every time") for a
+ *  sorcery that applies it once. Live derived shape, read 2026-09-26. */
+test("a party count is tagged as the party, and a sorcery's count happens once", () => {
+  const thwart = base("Thwart the Grave", [{
+    kind: "on-cast",
+    effect: { kind: "cost-reduction", subject: { control: "any", token: null, type: "spell", self: true },
+      scaling: "per-creature",
+      scalingSubject: { type: "creature", subtype: ["cleric", "rogue", "warrior", "wizard"], zone: "battlefield", control: "you", token: null } },
+    repeats: "once",
+  }] as CardTags["abilities"]);
+  thwart.tags.characteristics.types = ["sorcery"];
+  const gatherer = base("Rumor Gatherer", [], ["elf", "wizard"]);
+  const scales = pairReasons(gatherer, thwart, H).filter((r) => r.tag.startsWith("scales:"));
+  expect(scales.map((r) => [r.tag, r.repeatability])).toEqual([["scales:party", "oneshot"]]);
+});
+
+/** A FETCH IS TAGGED WITH THE LAND TYPE THAT MATCHED (overview persona rounds 2026-09-25, item 7):
+ *  "Scalding Tarn -> Blood Crypt | ramp-target:island" put a Swamp Mountain under "Fetching Islands".
+ *  Tarn finds an Island OR a Mountain; Blood Crypt is the Mountain. */
+test("a two-type fetch is tagged with the type the target land has", () => {
+  const tarn = base("Scalding Tarn", [{
+    kind: "activated", cost: "{T}, Pay 1 life, Sacrifice this land",
+    // The live derived subject, read 2026-09-26: no `type`, the two basic land types.
+    effect: { kind: "search", subject: { control: "you", token: null, subtype: ["island", "mountain"] } },
+  }] as CardTags["abilities"]);
+  tarn.tags.characteristics.types = ["land"];
+  const crypt = base("Blood Crypt", [], ["swamp", "mountain"]);
+  crypt.tags.characteristics.types = ["land"];
+  (crypt.card as { typeLine: string }).typeLine = "Land — Swamp Mountain";
+  const tags = pairReasons(tarn, crypt, H).map((r) => r.tag).filter((t) => t.startsWith("ramp-target"));
+  expect(tags).toEqual(["ramp-target:mountain"]);
+});
+
+/** A ONE-SHOT PRODUCER MAKES A ONE-SHOT LINK (overview persona rounds 2026-09-25, item 6a):
+ *  "Farseek -> Hedge Maze | enters:land | triggered" read EVERY TIME for a sorcery, and so did a
+ *  fetchland that sacrifices itself -- the repeatability looked only at the consumer's trigger. */
+test("a sorcery or a self-sacrificing fetch feeds a typed trigger once; a repeatable source still repeats", () => {
+  const putsLand = { verb: "enters", subject: { type: "land", control: "you", token: null } };
+  const landfall = base("Landfall Payoff", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "land", control: "you", token: null } }, effect: { kind: "draw-card" },
+  }] as CardTags["abilities"]);
+  const farseek = base("Farseek", [{ kind: "on-cast", effect: { kind: "search" }, emits: [putsLand] }] as CardTags["abilities"]);
+  farseek.tags.characteristics.types = ["sorcery"];
+  const fetch = base("Misty Rainforest", [{ kind: "activated", cost: "{T}, Pay 1 life, Sacrifice this land", effect: { kind: "search" }, emits: [putsLand] }] as CardTags["abilities"]);
+  fetch.tags.characteristics.types = ["land"];
+  const walker = base("Land Walker", [{ kind: "activated", cost: "{T}", effect: { kind: "search" }, emits: [putsLand] }] as CardTags["abilities"]);
+  const rep = (p: ReturnType<typeof base>) => directedReasons(p, landfall, H).find((r) => r.tag === "enters:land")?.repeatability;
+  expect([rep(farseek), rep(fetch), rep(walker)]).toEqual(["oneshot", "oneshot", "triggered"]);
+});
+
+/** PROWESS PUMPS ITSELF BY +1/+1 (CR 702.108a; overview persona rounds 2026-09-25, item 3): "When
+ *  Kindred Discovery is cast, Harmonic Prodigy makes your creatures bigger" -- the synthetic keyword
+ *  ability carried no amount and no subject, so the sentence fell back to the class-wide phrase. A
+ *  creature spell never feeds it. */
+test("prowess reads as the creature getting +1/+1, and only a noncreature spell feeds it", () => {
+  const prodigy = base("Harmonic Prodigy", [], ["human", "wizard"]);
+  prodigy.tags.characteristics.keywords = ["Prowess"];
+  const instant = base("Rakdos Charm", []);
+  instant.tags.characteristics.types = ["instant"];
+  const fed = directedReasons(instant, prodigy, H).filter((r) => r.tag.startsWith("cast:"));
+  expect(fed.map((r) => r.text)).toEqual(["When Rakdos Charm is cast, Harmonic Prodigy gets +1/+1"]);
+  expect(directedReasons(base("High Fae Trickster", []), prodigy, H).some((r) => r.tag.startsWith("cast:"))).toBe(false);
 });

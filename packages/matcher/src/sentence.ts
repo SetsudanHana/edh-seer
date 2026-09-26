@@ -165,6 +165,8 @@ export function effectPhrase(
   // THE CARD DOES IT TO ITSELF. "Untap Chandra" is not "untaps a permanent" (owner, 2026-09-08);
   // the two kinds a card routinely does to itself get the reflexive phrase, the rest keep theirs.
   if (target === "itself" && SELF_PHRASES[kind]) return SELF_PHRASES[kind]!;
+  // A PUMP ON ITSELF "gets" its amount -- prowess's +1/+1 -- rather than "gives" it to a class.
+  if (target === "itself" && kind === "pump") return amount && amount.includes("/") ? `gets ${amount}` : "gets bigger";
   // THE ONE KIND WHOSE PHRASE NAMES A TARGET, and the one that was naming the wrong one.
   if (kind === "counter-placement" && target) {
     // A QUANTITY THAT REFERS TO A COUNT ELSEWHERE IN THE SENTENCE NEEDS "of" TO ATTACH TO ITS NOUN.
@@ -385,6 +387,12 @@ export function reasonSentence(input: {
     : input.subjectNoun
     ? `When ${input.subjectNoun} ${verb} thanks to ${input.producer}`
     : `When ${input.producer} ${verb}`;
+  // THE CAST CARD IS WHAT ARRIVES WITH COUNTERS (overview persona rounds 2026-09-25, item 2a): Yuna's
+  // "that creature enters with two additional +1/+1 counters" puts them on the spell just cast, so
+  // the consumer is the cause, not the subject.
+  if (input.effectKind === "enters-with-counters" && input.eventKey.split(":")[0] === "cast" && !input.subjectNoun) {
+    return `${cause}, it arrives with counters thanks to ${input.consumer}`;
+  }
   return phrase ? `${cause}, ${input.consumer} ${phrase}` : `${cause}, ${input.consumer} triggers`;
 }
 
@@ -551,7 +559,10 @@ export function doublesSentence(producer: string, consumer: string, verb: string
 
 /** The WHOSE axis: every trigger the consumer has, not one event's. */
 export function doublesClassSentence(producer: string, consumer: string): string {
-  return `${producer} doubles ${consumer}'s triggers`;
+  // Worded after the printed card ("that ability triggers an additional time"), so it says what
+  // happens and does not end on "triggers" -- the page's mark for an unread effect (overview
+  // persona rounds 2026-09-25, item 10: every seat asked why a read effect was marked unread).
+  return `${consumer}'s triggered abilities trigger an additional time thanks to ${producer}`;
 }
 
 /** The cost-reduction branch was already plain English and its text does not change — moved here

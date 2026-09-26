@@ -26,6 +26,9 @@ import type { LandTypes } from "./chosen-type.js";
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
 
+/** The four creature types a party is made of (CR 700.8). */
+const PARTY = ["cleric", "rogue", "warrior", "wizard"];
+
 /** A short human/grouping key for a subject: its subtype, else its type, else "any". */
 export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // A NEGATION outranks the list it resolves to. `type` holds the six types "noncreature spell"
@@ -48,7 +51,11 @@ export function themeSubjectKey(s: Partial<SubjectFilter>): string {
   // an Artifact -- as `cast:creature`, a wrong tag naming a class the card is not. It ranks BELOW
   // the negation, because "nonland permanent" is more precisely named by what it excludes, and that
   // is the key the panel's verdicts already carry.
-  return list(s.subtype)[0]
+  // THE PARTY IS ONE SUBJECT (overview persona rounds 2026-09-25, item 5): "each creature in your
+  // party" derives as the four party types, and the first of them keyed a Wizard as `scales:cleric`.
+  const subs = list(s.subtype);
+  if (subs.length === PARTY.length && PARTY.every((t) => subs.includes(t))) return "party";
+  return subs[0]
     ?? (negated.length ? `-${negated[0]}` : undefined)
     ?? s.umbrella
     ?? list(s.type)[0]
@@ -970,6 +977,18 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
   return bare ? "oneshot" : "triggered";
 }
 
+/** A PRODUCER THAT SUPPLIES ITS EVENT ONCE (overview persona rounds 2026-09-25, item 6a): an instant
+ *  or a sorcery, or the ability that supplied it is a cast trigger or sacrifices its own card (a
+ *  fetchland). "Farseek -> Hedge Maze" read EVERY TIME because only the consumer was asked. */
+function oneShotProducer(p: DeckCard, ability: number | undefined): boolean {
+  const types = p.tags?.characteristics.types ?? [];
+  if (types.length > 0 && types.every((t) => t === "instant" || t === "sorcery")) return true;
+  const a = ability === undefined ? undefined : p.tags?.abilities[ability];
+  if (!a) return false;
+  if (a.kind === "on-cast") return true;
+  return /\bsacrifice (?:this|~)\b/i.test(a.cost ?? "") || (a.cost ?? "").toLowerCase().includes(`sacrifice ${p.card.name.toLowerCase()}`);
+}
+
 /** Drop reasons identical in every field a reader or a score can see. `impliedProducer` is excluded
  *  from the key because it is provenance rather than content — two reasons that say the same thing
  *  are one reason whether or not one of them came from an implied event.
@@ -1678,7 +1697,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             subjectNoun: fillNoun(e) ?? (producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
           }),
           effectKind: a.effect.kind,
-          repeatability: triggerRepeatability(t.subject),
+          repeatability: oneShotProducer(p, origin) ? "oneshot" : triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
           consumer: c.card.name,
@@ -1857,7 +1876,10 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         tag: `scales:${themeSubjectKey(a.effect.scalingSubject)}`,
         text: graveyardFeedsScaling(p.card.name, c.card.name),
         effectKind: a.effect.kind,
-        repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+        // AN ON-CAST COUNT HAPPENS ONCE (overview item 6c): this ternary had no `on-cast` branch, so
+        // Thwart the Grave's cost reduction -- a sorcery's, applied as it is cast -- read `triggered`
+        // ("every time"). The other repeatability sites already map it to `oneshot`.
+        repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
         scaling: a.effect.scaling,
         consumer: c.card.name,
         producer: p.card.name,
@@ -1893,7 +1915,8 @@ function boardCountEdges({ p, c, h, reasons }: PairScope): void {
       tag: `scales:${themeSubjectKey(counted)}`,
       text: boardCountFeedsScaling(p.card.name, c.card.name, a.effect.kind),
       effectKind: a.effect.kind,
-      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : "triggered",
+      // An on-cast count happens once (overview item 6c, see the sibling above).
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
       scaling: a.effect.scaling,
       consumer: c.card.name,
       producer: p.card.name,
@@ -2457,8 +2480,12 @@ function tutorEdges({ p, c, h, reasons }: PairScope): void {
       // type" derives as a plain basic-land subject, which Wastes answers -- and two Wastes do not
       // (owner, 2026-09-06). Same predicate the mana model reads, see `fetch-land.ts`.
       if (SHARES_A_LAND_TYPE.test(p.card.oracleText ?? "") && !hasBasicLandType(c.card.typeLine)) continue;
+      // KEYED ON THE TYPE THAT MATCHED (overview persona rounds 2026-09-25, item 7): Scalding Tarn
+      // finds an Island OR a Mountain, and Blood Crypt is the Mountain -- `themeSubjectKey` takes the
+      // first listed type and filed a Swamp Mountain under "Fetching Islands".
+      const hit = subs.find((s) => list(found.subtype).includes(s));
       reasons.push({
-        tag: `ramp-target:${landSubtypes ? themeSubjectKey(a.effect.subject) : "basic"}`,
+        tag: `ramp-target:${landSubtypes ? (hit ?? themeSubjectKey(a.effect.subject)) : "basic"}`,
         text: fetchSentence(p.card.name, c.card.name),
         effectKind: a.effect.kind,
         repeatability:
