@@ -1,6 +1,6 @@
 # Player-persona reviewers — how to run them, and what makes a run valid
 
-Four reviewer agents that look at this tool the way four different players would. They
+Reviewer agents that look at this tool the way real players with real problems would. They
 exist because analysis of our own UI keeps passing while the UI is unusable: measured
 twice (2026-08-04 on the deck board, 2026-08-11 on the deck math layer), the personas
 found defects every automated gate and every self-review had missed.
@@ -8,23 +8,33 @@ found defects every automated gate and every self-review had missed.
 **Do not put ground truth in the agent files.** Task answers, fixture reasoning and the
 canary terms live here. A persona that can read the answers is not a reviewer.
 
-## The roster, and why it is these four
+## The roster: one seat per problem players actually bring (2026-09-26)
 
-| agent | ceiling it holds | the hole it covers that no other seat can reach |
-|---|---|---|
-| `mtg-precon-player` | knows almost no Magic vocabulary | the jargon wall; also the bad-deck kindness case, since a precon scores badly on every axis we measure |
-| `mtg-deck-tuner` | knows Magic, not our vocabulary | whether the numbers are ACTIONABLE for a real tuning job |
-| `mtg-skeptic` | knows Magic, trusts nothing | whether a claim can be CHECKED, and whether our refusals read as honesty or as holes |
-| `mtg-phone-player` | knows Magic, has no pointer | everything reachable only by hover, width or gesture |
+Until 2026-09-26 the seats were defined by HOW MUCH MAGIC A READER KNOWS (beginner, tuner,
+skeptic, phone). They told us whether a screen could be read; they could not tell us whether
+anyone would come to it. The owner's call: build the seats from the questions players post, and
+ask each whether the site solved its problem. The questions, with sources, are in
+`docs/player-questions.md`; each seat's own wording is quoted in its file.
 
-**Replaces the old 2×2** (cEDH / chill Saturday / returning / new+precon). The
-power↔fun axis never earned its seats: across two validated rounds, no recorded finding
-required the cEDH-vs-chill-vs-returning distinction, and round 2's strongest findings
-were convergent across all four. What discriminated findings was the KNOWLEDGE CEILING
-— the new player's "11 of 15 filter chips are words I don't know" is the one clearly
-persona-specific finding in the record. So the three expert-ish seats merge into the
-tuner, and the freed seats buy two axes the old roster had none of: adversarial trust,
-and modality.
+| agent | the problem it brings | ceiling | inherits from |
+|---|---|---|---|
+| `mtg-first-cuts` | "I'm at 108, help me cut to 100" | knows EDHREC words, not this tool's | the tuner's cut task |
+| `mtg-precon-upgrader` | "upgrade my precon on $50; I keep losing to friends" | almost no Magic vocabulary | the precon seat: jargon wall and bad-deck kindness |
+| `mtg-clunky-deck` | "my deck feels slow, runs out of cards, got mana screwed" | knows Magic, not this tool | the tuner's mana tasks |
+| `mtg-plan-seeker` | "my deck has no win condition; is card X worth a slot?" | knows Magic thoroughly | new: tests the product's core claim |
+| `mtg-pod-fit` | "which bracket is this really, and does it fit my pod?" | knows Magic and brackets, trusts nothing | the skeptic: verify-first, seeded FALSE claim |
+| `mtg-phone-player` | "what do I tell the table about my deck?" at a store | knows Magic, has no pointer | unchanged modality seat, now with a job |
+
+**Every seat now answers "did it solve my problem?"** (`solved` / `partly` / `not solved`, and
+what it would do next). That is the round's headline number, and it is the one the old roster
+could not produce.
+
+**The skeptic's question is now every seat's.** Every seat must say, for each claim it acts on,
+whether it could check it from the screen (`CANNOT-BE-CHECKED`). The research found trust is the
+deciding factor between paste-a-list tools, so it is not one seat's job any more.
+
+**Retired 2026-09-26**: `mtg-precon-player`, `mtg-deck-tuner`, `mtg-skeptic`. Their ceilings
+live on in the seats above; their files are in git history.
 
 **Deliberately not personas:**
 
@@ -39,9 +49,9 @@ and modality.
 - **Budget player, rule-zero conversation.** Each yields one finding once ("no prices",
   "no share link"). Product notes, not reviewers.
 
-## The deck-build agent is not one of these four
+## The deck-build agent is not one of these seats
 
-`mtg-deck-builder` is a different instrument and must not be run like a persona round. The four
+`mtg-deck-builder` is a different instrument and must not be run like a persona round. The seats
 above are READERS: handed screenshots of a finished report and asked what they make of it. None of
 them ever has to DO anything with the product, which is why none can answer the two questions the
 builder exists for -- **can the site be built FROM**, and **are our findings ACTIONABLE**.
@@ -95,7 +105,7 @@ the browser, so that cross-check is what keeps the classification honest.
 3. **Give each persona its task list** (below). Tasks, not "have a look" — round 1's
    best finding was that 4/4 could not name a single multi-role card, which only
    surfaced because they were asked to.
-4. **Run all four in parallel, in separate agents, none seeing another's output.**
+4. **Run every seat in parallel, in separate agents, none seeing another's output.**
    Independence is what makes agreement mean anything.
 5. **Score the round** (below) and file the findings with the run date.
 
@@ -103,69 +113,85 @@ the browser, so that cross-check is what keeps the classification honest.
 
 | persona | deck | why this one |
 |---|---|---|
-| precon | `packages/cli/decks/precon-party-time.txt` — the Baldur's Gate "Party Time" precon (Nalia de'Arnise), supplied by the owner | exercises the arbitrary-pasted-deck path nothing else does: partial derived-corpus coverage, flat-export commander detection (no header, no blank line — the 2026-08-18 alphabetical-order rule fires on it), and the unsatisfiable-condition case CLAUDE.md says is "far commoner on an arbitrary pasted deck". It also IS the bad-deck case: theme "shapeshifters entering / creatures dying", cohesion **0.11 unfocused**, top card **2.29** |
-| tuner | `packages/cli/decks/calibration/inalla.txt` | tuned, so a false alarm is the strong signal (usability review §8) — and the F-series review used this same deck, so findings stay comparable across rounds |
-| skeptic | `packages/cli/decks/calibration/yuna-grand-summoner.txt` | **re-verified 2026-09-20**: carries exactly one live claim whose latest verdict in `verdicts.jsonl` is FALSE — `Misty Rainforest -> Yuna, Grand Summoner`, tag `dies:permanent`, rendered as "When Misty Rainforest dies, Yuna, Grand Summoner puts that number counters on a permanent". Yuna only triggers on a permanent that **had a counter on it**, which a cracked fetchland never does, so the defect is catchable from the two cards' oracle text alone — the right difficulty for this seat. **It replaced `sarevok-lord-of-pain`**, whose cell this was until 2026-09-20: both claims that row named (`Ayara, First of Locthwain -> Death Tyrant`, `dies:creature` and `graveyard-recursion:any`) were judged **REAL** by the owner in rounds 3 and 4, and a full cross-reference found **zero** live FALSE claims left in that deck. That is the second consecutive round this cell has decayed. Re-run the cross-reference every round: only 4 of 96 decks scanned still carry one, and each carries exactly one. |
-| phone | `inalla.txt` captured at 390px | same deck as the tuner, so modality is the only variable between those two seats |
+| first-cuts | `packages/cli/decks/first-deck-108.txt` | the Krenko list plus eight popular goblins a first-time builder adds (Beetleback Chief, Legion Warboss, Goblin Rabblemaster, Siege-Gang Commander, Goblin Instigator, Mogg War Marshal, Lightning Bolt, Hellrider), so the job is real: 108 cards, cut 8. The eight are plausible adds, not planted bad cards; a good cut list may keep some of them |
+| precon-upgrader | `packages/cli/decks/precon-party-time.txt` — the Baldur's Gate "Party Time" precon (Nalia de'Arnise) | unchanged from the precon seat: partial coverage, flat-export commander detection, and the bad-deck case (a theme the engine calls unfocused) |
+| clunky-deck | **chosen per round**: a deck whose report carries a draw or land finding (ran out of cards, lands short, a colour short) | the seat tests whether a real problem reads as a verdict on this list. Re-check each round that the finding is still there; a fixed deck calibrates nothing |
+| plan-seeker | `packages/cli/decks/calibration/enchanting-rani.txt`; the "unsure card" is the first card in its "Weak here, but something argues for them" cut group | four win plans "spread about evenly", a blink theme earlier rounds missed, and a card with arguments both ways |
+| pod-fit | `packages/cli/decks/calibration/yuna-grand-summoner.txt` | the skeptic's fixture, carried over: one live claim judged FALSE (see below). Re-verify every round |
+| phone | `inalla.txt` captured at 390px | same as before, so modality stays the only variable against earlier rounds |
 
-**How the skeptic's fixture was chosen, because the method matters more than the pick.** 523 claims in
-`docs/measurements/panel/` have a latest verdict of FALSE, but most have since been fixed — six of
-eight candidates tested were **gone** from a live analysis. Re-verify before each round: a seeded
-defect the engine no longer makes calibrates nothing.
+**The pod-fit seat's seeded claim** (carried from the skeptic seat, **re-verified 2026-09-20**):
+`Misty Rainforest -> Yuna, Grand Summoner`, tag `dies:permanent`, rendered as "When Misty
+Rainforest dies, Yuna, Grand Summoner puts that number counters on a permanent". Yuna only
+triggers on a permanent that **had a counter on it**, which a cracked fetchland never does, so the
+defect is catchable from the two cards' oracle text alone. It replaced `sarevok-lord-of-pain`,
+whose claims were judged REAL in rounds 3 and 4.
 
-**The skeptic's seeded defect is the instrument's own check.** The panel holds 25
-hand-judged FALSE claims. Put one in the skeptic's deck and do not tell it which. A run
-where the skeptic questions nothing about a claim we know to be false means the
-instrument has gone soft — the same role the pre-known encoding defect played in round
-1, made permanent.
+**How that fixture was chosen, because the method matters more than the pick.** 523 claims in
+the panel have a latest verdict of FALSE, but most have since been fixed — six of eight
+candidates tested were **gone** from a live analysis. Re-verify before each round: a seeded
+defect the engine no longer makes calibrates nothing. A run where pod-fit questions nothing
+about a claim we know to be false means the instrument has gone soft.
 
 ## Task lists
 
 Keep these versioned with the product. **When a fix ships, keep the old task**, so a
-re-run banks the improvement and fires on a regression — the ratchet shape this repo
-uses everywhere else, applied to UX.
+re-run banks the improvement and fires on a regression.
 
 Ground-truth answers are for the harness operator, never for the agent.
 
-### Every persona (comparability across ceilings)
-1. What is this deck trying to do? *(truth: the headline theme + cohesion label)*
+### Every persona
+0. **Your own question** — the first quote under "Why you came" in your file, as the task.
+   *(truth: the "Does edhseer answer these today?" table in `docs/player-questions.md`; a seat
+   reporting a gap the table lists as missing is the correct outcome, not a failure)*
+1. What is this deck trying to do? *(truth: the headline theme; comparability with every
+   earlier round)*
 2. Name the two cards on this page that work together most strongly, and say why.
-   *(round-1's killer task, and H2's edge-visibility test)*
-3. Name three cards you would cut. *(truth: `report.trim` order; `cutCandidates` is
-   empty on 18 of 71 decks, so an empty cut list is a legitimate answer to check for)*
-4. Is this deck short of lands? *(truth: the lands row + `DeckMath.lands.mdfc`; the
-   known trap is two correct numbers answering different questions — a "COLOURS short
-   13/12/11" block beside "37 run · wants 37" was refused by 4/4 in round 2)*
-5. What does the biggest number on this page mean? *(truth: SYNERGY /5)*
+   *(round 1's killer task; kept for comparability)*
 
-### precon only
-6. Should you buy anything to make this deck better? What?
-7. Is there anything on this page you would show a friend?
+### first-cuts
+3. You are 8 over. Which eight come out, and what does the page say for each?
+   *(truth: the cut list; the page should also say the deck is 108)*
+4. Would cutting those break anything the deck does? *(truth: the "keep" arguments and roles)*
+5. Is one of your favourite cards on the cut list? Would you cut it after reading why?
 
-### tuner only
-6. You are five cards over. Which five, and what does the page say argues each stays?
-8. Which colour is your mana base worst at? *(truth: the castability range rows — a
-   range, deliberately, not a single figure)*
-9. What would you add? *(truth: nothing on the page answers this yet — F14 is open. A
-   persona confidently answering it is over-claiming; a persona reporting the gap is
-   the correct outcome)*
+### precon-upgrader
+3. What would you buy with $50, and what does each replace? *(truth: nothing prices a card
+   yet; a seat that names prices from the page is over-claiming)*
+4. After those changes, would you keep up with your friends' upgraded decks? *(truth: not
+   answered; report whether the page says so or pretends to)*
+5. Is there anything on this page you would show a friend?
 
-### skeptic only
-6. Pick the claim you most distrust and try to verify it from the screen alone.
-7. Find somewhere the tool declines to answer. Does the gap read as deliberate or broken?
-8. Is there anything here you could not have worked out yourself in two minutes?
+### clunky-deck
+3. Is this deck short of lands, or running too many? *(truth: the lands row; the known trap is
+   two correct numbers answering different questions)*
+4. Why does it run out of cards, if it does? *(truth: the draw target and any "run out" finding)*
+5. Last week you kept two lands and never drew a third. Bad luck or the deck?
+   *(truth: the land odds by turn; the page does not say "luck" in those words)*
 
-### phone only
-6. Do task 2 without hovering. *(H8 shipped hover as the primary way to read the board;
-   this seat is the only one that can see what that costs on touch)*
-9. Find the explanation for any /5 score. *(F7 shipped Explain glosses; F16 records
-   tooltip-only explanations as still open — this is the re-run that banks or fires)*
+### plan-seeker
+3. Finish the sentence "this deck wins by …" from the page.
+4. Which cards wandered off the plan? *(truth: the off-theme cut group)*
+5. Is the card named in your brief worth its slot? What would be weaker without it?
+   *(truth: its "See links" and its cut-list entry)*
+
+### pod-fit
+3. What bracket is this deck, and which cards decide it? *(truth: the bracket readout, its Game
+   Changers and two-card combos)*
+4. Pick the claim you most distrust and try to verify it from the screen alone.
+5. Find somewhere the tool declines to answer. Deliberate limit or hole?
+6. If your pod finds it too strong, what would you swap? *(truth: not answered yet)*
+
+### phone
+3. What would you say to the table, in one breath? *(truth: the hero verdict and bracket)*
+4. Do task 2 without hovering.
+5. Find the explanation for any /5 score.
 
 ## Scoring a round
 
-- **Convergence is the severity meter — but only ACROSS ceilings.** Precon + tuner
-  failing to decode the same readout means the tool is wrong. Four experts agreeing
-  means one reading taken four times with correlated error. Weight the first, discount
+- **Convergence is the severity meter — but only ACROSS ceilings.** Precon-upgrader + plan-seeker
+  failing to decode the same readout means the tool is wrong. Expert seats agreeing
+  means one reading taken several times with correlated error. Weight the first, discount
   the second.
 - **Match findings by their quoted anchor**, not by interpretation. Every finding must
   quote the exact on-screen text; that makes matching mechanical.
@@ -177,13 +203,17 @@ Ground-truth answers are for the harness operator, never for the agent.
 - **Unique findings are each seat's rent.** Track, per persona per round, how many
   findings no other persona produced. **Two consecutive rounds at zero uniques makes
   that persona a cut candidate.**
-- **Canary check.** If the precon player uses any term from its do-not-know list as
+- **The solved rate is the headline.** Count `solved` / `partly` / `not solved` across seats,
+  and for each `not solved` record what the seat said it would do next. A seat that would "go to
+  another site" names our competitor for that problem; a seat that would "check it on a forum
+  first" means we answered but were not trusted.
+- **Canary check.** If the precon upgrader uses any term from its do-not-know list as
   though it understands it, the run is invalid — that is roleplay drift, not review.
 
 ## The honest ceiling of this technique
 
-All four personas are the same underlying model wearing four hats, so 4/4 agreement can
-be one model's blind spot rather than four readers' shared experience. Mitigations in
+All the personas are the same underlying model wearing different hats, so full agreement can
+be one model's blind spot rather than several readers' shared experience. Mitigations in
 use: different decks and different task lists per persona (decorrelates inputs),
 weighting cross-ceiling agreement over within-ceiling agreement, and optionally varying
 the model per persona. The real check is periodic and human: the owner looks at the same
