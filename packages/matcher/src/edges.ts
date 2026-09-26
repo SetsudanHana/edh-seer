@@ -438,15 +438,22 @@ function loneTypeNarrows(s: SubjectFilter): boolean {
   return types.length > 0 && types.every((t) => !WHOLE_DECK_TYPES.has(t));
 }
 
-/** The member of a subtype LIST that the found card actually carries, for the tag key. "An
+/** The member of a subtype or type LIST that the found card actually carries, for the tag key. "An
  *  Elemental, Island, or Mountain card" (Eclipsed Flamekin) reaching Smoldering Marsh is
  *  `tutor:mountain`; `themeSubjectKey` alone takes the first of the list and reported the Marsh
  *  as an Elemental -- the same wrong-class key the negation and `anyOf` cases already guard. */
 function keyedOn(subject: SubjectFilter, found: SubjectFilter): SubjectFilter {
   const subs = list(subject.subtype);
-  if (subs.length < 2) return subject;
-  const hit = subs.find((s) => list(found.subtype).includes(s));
-  return hit === undefined ? subject : { ...subject, subtype: hit };
+  if (subs.length >= 2) {
+    const hit = subs.find((s) => list(found.subtype).includes(s));
+    return hit === undefined ? subject : { ...subject, subtype: hit };
+  }
+  // And one rung up, the TYPE list (issue #507): "an instant or sorcery card" reaching Reanimate is
+  // `tutor:sorcery`, where the first of the list filed it under "Searching for instants".
+  const types = list(subject.type);
+  if (subs.length > 0 || types.length < 2) return subject;
+  const hit = types.find((t) => list(found.type).includes(t));
+  return hit === undefined ? subject : { ...subject, type: hit };
 }
 
 /** Does this combat consumer narrow via its type line -- a non-creature type, or any subtype?
@@ -1672,7 +1679,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
         if (objectLeftTheBattlefield && (a.conditionCares ?? []).some((tag) => tag.startsWith("counter-added:"))
           && fillNoun(e) === undefined && producerCanBeSubject(p, e.subject, h)
           && p.tags && !canCarryCounters(p.tags)) continue;
-        const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(t.subject));
+        // Keyed on the type the producer's event HAS (issue #507): "an instant or sorcery spell" cast
+        // as Mizzix's Mastery is `cast:sorcery`, not the first of the list.
+        const key = zoneEventKey(t.verb, t.subject.zone, themeSubjectKey(keyedOn(t.subject, e.subject)));
         // A PROLIFERATE DEMAND NEEDS ITS OWN PROSE. The generic grammar below would render this as
         // "When <producer> gets a counter, <consumer> triggers" — the producer does not get the
         // counter, it MAKES one, and a sorcery that proliferates never triggers. See
@@ -1824,7 +1833,7 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       const repeatability =
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
       reasons.push({
-        tag: `graveyard-recursion:${themeSubjectKey(a.effect.subject)}`,
+        tag: `graveyard-recursion:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`,
         text: graveyardEnablesRecursion(p.card.name, c.card.name),
         effectKind: a.effect.kind,
         repeatability,
@@ -1917,7 +1926,7 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
       if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h)) continue;
       reasons.push({
-        tag: `scales:${themeSubjectKey(a.effect.scalingSubject)}`,
+        tag: `scales:${themeSubjectKey(keyedOn(a.effect.scalingSubject, e.subject))}`,
         text: graveyardFeedsScaling(p.card.name, c.card.name),
         effectKind: a.effect.kind,
         // AN ON-CAST COUNT HAPPENS ONCE (overview item 6c): this ternary had no `on-cast` branch, so
