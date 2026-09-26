@@ -92,6 +92,12 @@
      and nothing sticky under the header, so nothing there reads this. */
   --site-header-h: 0px;
 
+  /* The Orbit's entrance, set per disc from the component: where it flies in from (the middle,
+     relative to the disc) and how long it waits. Zero here, so an element without them just fades. */
+  --orbit-fx: 0px;
+  --orbit-fy: 0px;
+  --orbit-d: 0ms;
+
   /* THE PAGE'S SIDE GUTTER, one value for the app, the header, the footer and the prose page
      (UI review 2026-09-25). It was a flat 2rem, which on a 390px phone spent 64px -- 16% of the
      screen -- on margins; DESIGN.md asks for 16px there. 2rem from `sm` up, as before. */
@@ -1878,3 +1884,75 @@ html[data-report] #root main { padding-top: 1.5rem; }
 
 /* The gutter's wide value; see `--gutter` in :root. */
 @media (min-width: 40rem) { :root { --gutter: 2rem; } }
+
+/* THE ORBIT, ALIVE (owner, 2026-09-26: "the orbit page feels static"). The ring flies out from the
+ * middle, a centred card glides in from where its disc was, discs lift under the pointer and the
+ * panel slides in when it changes. The flowing dots are SMIL in the SVG itself. `backwards`, not
+ * `both`: after the entrance the element keeps no animated transform, so the hover lift works. */
+@keyframes orbit-fly {
+  from {
+    opacity: 0;
+    transform: translate(var(--orbit-fx), var(--orbit-fy)) scale(0.35);
+  }
+}
+@keyframes orbit-fade {
+  from {
+    opacity: 0;
+  }
+}
+.orbit-fly {
+  animation: orbit-fly 380ms cubic-bezier(0.2, 0.8, 0.25, 1.05) backwards;
+  animation-delay: var(--orbit-d);
+}
+.orbit-arrive {
+  animation-duration: 340ms;
+}
+/* A card already on the ring travels to its new place when the middle changes. */
+@keyframes orbit-move {
+  from {
+    transform: translate(var(--orbit-fx), var(--orbit-fy));
+  }
+}
+.orbit-move {
+  animation: orbit-move 420ms cubic-bezier(0.3, 0.7, 0.2, 1) backwards;
+  animation-delay: var(--orbit-d);
+}
+/* A card new to the ring fades in where it lands. */
+@keyframes orbit-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+.orbit-appear {
+  animation: orbit-appear 300ms ease-out backwards;
+  animation-delay: var(--orbit-d);
+}
+.orbit-fade {
+  animation: orbit-fade 320ms ease-out backwards;
+  animation-delay: var(--orbit-d);
+}
+.orbit-body {
+  transition: transform 160ms ease-out;
+}
+.orbit-disc:hover > .orbit-body {
+  transform: scale(1.1);
+}
+.orbit-panel-in {
+  animation: reveal-up 240ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-fly,
+  .orbit-move,
+  .orbit-appear,
+  .orbit-fade,
+  .orbit-panel-in {
+    animation: none;
+  }
+  .orbit-body {
+    transition: none;
+  }
+  .orbit-disc:hover > .orbit-body {
+    transform: none;
+  }
+}

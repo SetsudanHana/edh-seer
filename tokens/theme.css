@@ -127,6 +127,13 @@
      that resolves to nothing puts text against the edge of the screen. */
   --gutter: 1rem;
 
+  /* The Orbit's entrance, set per disc from OrbitView: where a disc flies in from (the middle,
+     relative to the disc) and how long it waits. Declared here on the same terms: the theme is
+     self-contained, and zero means an element without them just fades in. */
+  --orbit-fx: 0px;
+  --orbit-fy: 0px;
+  --orbit-d: 0ms;
+
   /* The chapter rail's own measured height, written the same way and by the same rule -- it is a
      SECOND pinned bar below `lg`, and 0px above it, where the rail sits beside the column. A
      chapter anchor has to clear both or it parks its own heading behind one of them. */

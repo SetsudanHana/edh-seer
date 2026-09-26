@@ -24,7 +24,10 @@ test("says what the deck does, then the best pairs, the cut candidates and the g
 test("removal is compared with its own kind, not listed as a cut", () => {
   view();
   expect(screen.queryByRole("heading", { name: "Doom Blade" })).toBeNull();
-  expect(screen.getByText(/Removal · 1/)).toBeInTheDocument();
+  // On its job's shelf, as a card with the number of cards it works with under it.
+  const shelf = screen.getByRole("list", { name: "Removal" });
+  expect(within(shelf).getByText("Doom Blade")).toBeInTheDocument();
+  expect(within(shelf).getByTitle(/^Works with \d+ other cards?$/)).toBeInTheDocument();
 });
 
 test("tapping a card selects it", async () => {
@@ -69,9 +72,10 @@ test("a group that repeats one above it names that group instead of listing the 
   expect(within(group).queryByRole("button", { name: "Cleric 1" })).toBeNull();
 });
 
-test("card text shows the printed mana cost", () => {
+test("a job's shelf shows its cards, not a line of names and mana symbols", () => {
   view();
-  expect(screen.getAllByRole("img", { name: /1 generic|black/i }).length).toBeGreaterThan(0);
+  expect(screen.getByRole("heading", { name: "Cards judged by their job" })).toBeInTheDocument();
+  expect(screen.queryByText(/Removal · 1/)).toBeNull();
 });
 
 test("a card that only feeds others says so instead of offering a best reason", () => {
