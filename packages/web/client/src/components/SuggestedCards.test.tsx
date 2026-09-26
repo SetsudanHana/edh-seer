@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { expect, test } from "vitest";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
@@ -11,22 +12,24 @@ const chaosWarp: SuggestedCard = {
 };
 const inRouter = (ui: React.ReactNode) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
-test("a row names the card as a link to its page, how many deck cards it connects to, and why", () => {
+test("a card shows as its face, linked to its page, with its name and its best link", () => {
   inRouter(<SuggestedCards cards={[chaosWarp]} empty="none" />);
   const row = screen.getByRole("listitem");
   expect(within(row).getByRole("link", { name: "Chaos Warp" }).getAttribute("href")).toBe("/cards/chaos-warp");
-  expect(row.textContent).toContain("connects to 3 of your cards");
-  expect(row.textContent).toContain("Krenko, Mob Boss");
-  expect(within(row).getByText("First reason.")).toBeVisible();
-  expect(within(row).getByText("Second reason.")).toBeVisible();
+  // The name under the card, and in the frame where there is no art.
+  expect(within(row).getAllByText("Chaos Warp").length).toBeGreaterThan(0);
+  expect(within(row).getByText("First reason.")).toBeInTheDocument();
+  // One line of why, not the whole case (appeal review 2026-09-26): the rest is in the peek.
+  expect(row.textContent).not.toContain("Second reason.");
+  expect(row.textContent).not.toContain("connects to");
 });
 
-test("reasons past the second are folded behind 'and N more'", () => {
-  inRouter(<SuggestedCards cards={[chaosWarp]} empty="none" />);
-  const details = screen.getByText("and 2 more").closest("details")!;
-  expect(details.open).toBe(false);
-  expect(within(details).getByText("Third reason.")).toBeInTheDocument();
-  expect(within(details).getByText("Fourth reason.")).toBeInTheDocument();
+test("four cards show, and the rest behind 'Show all'", async () => {
+  const cards = Array.from({ length: 6 }, (_, i) => ({ ...chaosWarp, name: `Card ${i + 1}`, slug: `card-${i + 1}` }));
+  inRouter(<SuggestedCards cards={cards} empty="none" />);
+  expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  await userEvent.click(screen.getByRole("button", { name: "Show all 6" }));
+  expect(screen.getAllByRole("listitem")).toHaveLength(6);
 });
 
 test("an empty list says so in the given words and draws no list", () => {
@@ -37,10 +40,10 @@ test("an empty list says so in the given words and draws no list", () => {
 
 test("a card that also fits the plan says so", () => {
   inRouter(<SuggestedCards cards={[{ ...chaosWarp, alsoPlan: true }]} empty="none" />);
-  expect(screen.getByText("also fits your plan")).toBeInTheDocument();
+  expect(screen.getByText("Also fits your plan")).toBeInTheDocument();
 });
 
-test("a route card shows the route as numbered steps, the card itself in bold", () => {
+test("a route card says how many of your cards reach what through it, with the steps folded", () => {
   const tremors: SuggestedCard = {
     name: "Impact Tremors", slug: "impact-tremors", identity: ["R"], mv: 2, connections: ["Maker One"], reasons: [],
     route: {
@@ -54,14 +57,12 @@ test("a route card shows the route as numbered steps, the card itself in bold", 
   inRouter(<SuggestedCards cards={[tremors]} empty="none" />);
   const row = screen.getAllByRole("listitem")[0]!;
   expect(row.textContent).toContain("3 of your cards reach Ghyrson Starn through it");
-  const steps = within(screen.getByRole("list", { name: "How it gets there" })).getAllByRole("listitem");
-  expect(steps.map((li) => li.textContent)).toEqual([
+  const how = within(row).getByText("How").closest("details")!;
+  expect(how.open).toBe(false);
+  expect([...how.querySelectorAll("li")].map((li) => li.textContent)).toEqual([
     "When a creature enters thanks to Maker One, Impact Tremors deals 1 damage",
     "When Impact Tremors deals damage, Ghyrson Starn triggers",
   ]);
-  expect(within(steps[0]!).getByText("Impact Tremors").tagName).toBe("STRONG");
-  const details = within(row).getByText("which cards").closest("details")!;
-  expect(within(details).getByText(/Maker One, Maker Two, Maker Three/)).toBeInTheDocument();
 });
 
 test("loading is a spinner at full strength that says what is happening", () => {
@@ -106,10 +107,9 @@ test("while computing, the section shows the wait once", () => {
 /** THE CLAIM, THEN ITS EVIDENCE (persona round 2026-09-25): under "You are 10 short on ramp" the row
  *  says the card counts as ramp before its connections argue for it, and the card's own text sits
  *  one click away so the reader can check. */
-test("a card on a build list says what it counts as, first", () => {
+test("a card on a build list says what it counts as", () => {
   inRouter(<SuggestedCards cards={[{ ...chaosWarp, fills: "Ramp" }]} empty="none" />);
-  const lines = [...screen.getByRole("listitem").querySelectorAll("p")].map((p) => p.textContent);
-  expect(lines[0]).toBe("Counts as ramp");
+  expect(screen.getByText("Counts as ramp")).toBeInTheDocument();
 });
 
 test("a card on an answers list says what it answers", () => {
@@ -122,25 +122,10 @@ test("a card that answers two kinds names both", () => {
   expect(screen.getByText("Answers enchantments and artifacts")).toBeInTheDocument();
 });
 
-test("the card's own text is one click away", () => {
-  inRouter(<SuggestedCards cards={[{ ...chaosWarp, oracle: "Target permanent's owner shuffles it into their library." }]} empty="none" />);
-  const details = screen.getByText("card text").closest("details")!;
-  expect(details.open).toBe(false);
-  expect(within(details).getByText("Target permanent's owner shuffles it into their library.")).toBeInTheDocument();
-});
-
-/** ONE SENTENCE PER SHAPE (owner 2026-09-25): the other deck cards the same sentence holds for are
- *  named beside it, not repeated as a line each behind "and 101 more". */
-test("a reason shared by several deck cards names the others once", () => {
-  const shared: SuggestedCard = {
-    ...chaosWarp,
-    reasons: [{ text: "When a Wizard enters thanks to Inalla, Carnival of Souls adds 1 mana", others: ["Harmonic Prodigy", "Mysidian Elder", "Naban", "Sai"] }],
-  };
-  inRouter(<SuggestedCards cards={[shared]} empty="none" />);
-  const row = screen.getByRole("listitem");
-  expect(row.textContent).toContain("When a Wizard enters thanks to Inalla, Carnival of Souls adds 1 mana");
-  expect(row.textContent).toContain("also Harmonic Prodigy, Mysidian Elder and 2 more of your cards");
-  expect(screen.queryByText(/^and \d+ more$/)).toBeNull();
+test("a card with art shows the card image, not a name frame", () => {
+  inRouter(<SuggestedCards cards={[{ ...chaosWarp, art: "https://cards.scryfall.io/art_crop/front/a/b/ab.jpg" }]} empty="none" />);
+  const img = screen.getByRole("link", { name: "Chaos Warp" }).querySelector("img")!;
+  expect(img.getAttribute("src")).toBe("https://cards.scryfall.io/normal/front/a/b/ab.jpg");
 });
 
 test("one source reads 'reaches', several read 'reach'", () => {

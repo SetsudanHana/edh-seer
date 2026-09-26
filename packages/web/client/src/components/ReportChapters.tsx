@@ -4,7 +4,7 @@ import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
 import { DeckIdentity } from "./DeckIdentity.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
-import { CutList } from "./CutList.js";
+import { CutList, type Surplus } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { RecognitionPanel } from "./RecognitionPanel.js";
@@ -18,7 +18,7 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
 import { OrbitView } from "./OrbitView.js";
 import { OrbitOverlay } from "./OrbitOverlay.js";
-import { RoleShelves } from "./RoleShelves.js";
+import { RoleShelves, roleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { chooseCuts } from "../lib/cut-choice.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
@@ -153,6 +153,31 @@ export function ReportChapters({ data, diff }: {
    *  that list already names and minus the unread, which fit no theme because nothing was read --
    *  `CutList` names those separately, with the right sentence. */
   const cuts = useMemo(() => chooseCuts(report, themes), [report, themes]);
+  /** The over-target role groups, each with its cards: the rest of a trim, shown as the cards to
+   *  pick from rather than as a count (appeal review 2026-09-26). */
+  const surplus = useMemo((): Surplus[] => {
+    const shelves = roleShelves(report, data.graph);
+    return (report.slack ?? []).map((s) => {
+      const leaves = report.buildParents?.find((p) => p.name === s.category)?.leaves ?? [s.category];
+      const seen = new Set<string>();
+      const cards = shelves.filter((sh) => leaves.includes(sh.category)).flatMap((sh) => sh.cards)
+        // The commander fills roles too, and is never a cut.
+        .filter((c) => !c.isCommander && !seen.has(c.id) && !!seen.add(c.id));
+      return { name: s.category, count: s.count, target: s.target, over: s.over, cards };
+    }).filter((g) => g.cards.length > 0);
+  }, [report, data.graph]);
+  /** A deck card's art by name, front face first, for the card a swap takes out. */
+  const artOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of data.graph?.nodes ?? []) {
+      if (n.isToken || n.face) continue;
+      const art = n.artCrop ?? n.faces?.[0]?.artCrop;
+      if (!art) continue;
+      if (!m.has(n.label)) m.set(n.label, art);
+      if (n.cardName && !m.has(n.cardName)) m.set(n.cardName, art);
+    }
+    return (name: string) => m.get(name);
+  }, [data.graph]);
   const offTheme = useMemo(() => {
     const none = themeMatrix(report.archetypes, nonlandNames)?.unaffiliated ?? [];
     const skip = new Set([...cuts.map((c) => c.name), ...unreadCardNames(report.cards)]);
@@ -162,6 +187,7 @@ export function ReportChapters({ data, diff }: {
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
   // ONE RUN PER REPORT, read by the findings (cards under each) and the lists below them (AO4).
   const suggestions = useSuggestions(data);
+  const swaps = suggestions.value?.pairs.filter((p) => p.rule !== "cross-job") ?? [];
 
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
@@ -329,7 +355,7 @@ export function ReportChapters({ data, diff }: {
         </Chapter>
 
         <Chapter id="fix" title={title("fix")}>
-          <Findings report={report} diff={diff} suggestions={suggestions} />
+          <Findings report={report} diff={diff} suggestions={suggestions} artOf={artOf} />
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           {/* THE GRID HAD ONE CHILD AND STILL RESERVED TWO COLUMNS (roadmap T11). It was built to
@@ -349,9 +375,11 @@ export function ReportChapters({ data, diff }: {
               slack={report.slack}
               trim={report.trim}
               offTheme={offTheme}
+              surplus={surplus}
+              // A CUT BESIDE THE CARD THAT TAKES ITS SLOT, same job or none (spec §3).
+              swaps={swaps.length ? <SuggestedPairs pairs={swaps} artOf={artOf} /> : null}
             />
-            {/* A CUT BESIDE THE CARD THAT TAKES ITS SLOT, same job or none (spec §3). */}
-            <SuggestedPairs pairs={suggestions.value?.pairs.filter((p) => p.rule !== "cross-job") ?? []} />
+
             </div>
           </Movement>
           {/* WHAT GROWS THE PLAN, last in the chapter: nothing is wrong here, so it follows the fixes.

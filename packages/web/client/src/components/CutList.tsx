@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import type { CutChoice } from "../lib/cut-choice.js";
-import { listNames } from "../lib/engine-model.js";
+import { listNames, type EngineCard } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
 import { Badge, CardFace, ReadCards } from "./engine-parts.js";
 
@@ -12,7 +12,10 @@ import { Badge, CardFace, ReadCards } from "./engine-parts.js";
  *  same way: a relation it cannot express looks exactly like a card doing nothing (see matcher's
  *  `cut-list.ts`). The caption is not decoration — it is the difference between a tool that helps
  *  and one that confidently deletes a player's best card. */
-export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme }:
+/** A role group over its target, with the cards in it: where the rest of a trim comes from. */
+export interface Surplus { name: string; count: number; target: number; over: number; cards: EngineCard[] }
+
+export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surplus, swaps }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -27,12 +30,22 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme }:
     trim?: DeckReport["trim"];
     /** Read cards that no theme group claims and that are not already cut candidates. */
     offTheme?: readonly string[];
+    /** The over-target role groups with their cards. Replaces the bare slack chips where present. */
+    surplus?: readonly Surplus[];
+    /** A cut beside the card that takes its slot, rendered right under the cuts it refers to. */
+    swaps?: React.ReactNode;
   }) {
   // TRIM MODE is opt-in and client-side. The server ships the WHOLE ranked order, so changing N is
   // a slice and never a round trip; and it stays behind a click because a list that always has an
   // answer reads as a verdict when nobody asked for it.
   const [trimN, setTrimN] = useState(0);
-  const [cutN, setCutN] = useState(CUT_STEP);
+  const [maybeN, setMaybeN] = useState(MAYBE_STEP);
+  // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
+  // first row carried a green "Keeps it:" read as the list arguing with itself on three seats. A
+  // card nothing argues for is a cut; a card with a reason to stay is a trade-off, and says so.
+  const clear = cuts.filter((c) => c.keeps.length === 0);
+  const maybe = cuts.filter((c) => c.keeps.length > 0);
+  const hasSurplus = !!surplus && surplus.length > 0;
   const hasTrim = !!trim && trim.length > 0;
   const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
@@ -45,21 +58,68 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme }:
       {hasCuts && (
         <>
           <p className="text-sm text-(--muted) max-w-[65ch]">
-            The cards doing the least here, weakest first: they keep working with the fewest others.
-            A card that fills a role, is a theme&apos;s key card or is half of a combo is never listed.
-            Suggestions, not verdicts: a synergy we can&apos;t read looks exactly like one that isn&apos;t there.
+            The cards doing the least here: they keep working with the fewest others. A card that fills
+            a role, is a theme&apos;s key card or is half of a combo is never listed. Suggestions, not
+            verdicts: a synergy we can&apos;t read looks exactly like one that isn&apos;t there.
           </p>
-          <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-            {cuts.slice(0, cutN).map((c) => <CutCard key={c.name} c={c} />)}
-          </ul>
-          {cuts.length > cutN ? (
-            <p>
-              <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setCutN(cutN + CUT_STEP)}>
-                Show {Math.min(CUT_STEP, cuts.length - cutN)} more
-              </button>
-            </p>
+          {clear.length ? (
+            <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
+              <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
+              <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+                {clear.map((c) => <CutCard key={c.name} c={c} />)}
+              </ul>
+            </section>
+          ) : null}
+          {maybe.length ? (
+            <section aria-labelledby="cuts-maybe" className="flex flex-col gap-2">
+              <h4 id="cuts-maybe" className="text-base font-semibold">{clear.length ? "Weak here, but something argues for them" : "The weakest here, though something argues for each"}</h4>
+              <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} />)}
+              </ul>
+              {maybe.length > maybeN ? (
+                <p>
+                  <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setMaybeN(maybeN + MAYBE_STEP)}>
+                    Show {Math.min(MAYBE_STEP, maybe.length - maybeN)} more
+                  </button>
+                </p>
+              ) : null}
+            </section>
           ) : null}
         </>
+      )}
+      {/* THE SWAP UNDER THE CUT IT NAMES (appeal review 2026-09-26): below "Over 99? Trim" it read
+        *  as a third, unrelated instruction. */}
+      {swaps ? (
+        <section aria-labelledby="cuts-swaps" className="flex flex-col gap-1 pt-2">
+          <h4 id="cuts-swaps" className="text-base font-semibold">A card that could take the slot</h4>
+          {swaps}
+        </section>
+      ) : null}
+      {/* THE REST OF THE TRIM, WITH ITS CARDS (appeal review 2026-09-26). The tuner asked for five
+        *  cuts and got two, then "Consistency 16/13 (+3)" and "which card goes is your call" -- the
+        *  count without the cards. The engine still does not rank two draw spells against each other,
+        *  so it does not pick; it shows the cards to pick from, cheapest first within each role. */}
+      {hasSurplus && (
+        <section aria-labelledby="cuts-surplus" className="flex flex-col gap-3 pt-2">
+          <h4 id="cuts-surplus" className="text-base font-semibold">Room in your roles</h4>
+          {surplus!.map((g) => (
+            <div key={g.name} className="flex flex-col gap-2">
+              <p className="text-sm max-w-[70ch]">
+                <b>{BUILD_CATEGORY_LABEL[g.name] ?? g.name}</b> is <span className="tabular-nums">{g.over}</span> over
+                its target (<span className="tabular-nums">{g.count}</span> against <span className="tabular-nums">{g.target}</span>),
+                so up to {g.over} of these can go. Which ones is your call: we don&apos;t rank the cards inside a role against each other.
+              </p>
+              <ul className="flex flex-wrap gap-2" aria-label={`${BUILD_CATEGORY_LABEL[g.name] ?? g.name}: ${g.cards.length} cards`}>
+                {g.cards.map((c) => (
+                  <li key={c.id} className="flex w-[72px] flex-col gap-1 sm:w-[84px]">
+                    <CardFace card={c} className="w-full" />
+                    {c.art ? <span className="line-clamp-2 text-xs leading-tight text-(--muted)">{c.name}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
       )}
       {/* OFF-THEME, NOT DEAD (owner, 2026-09-24). These connect to something or fill a role, so they
         *  are not cut candidates -- but no theme uses them, which is the second place a player looks
@@ -172,7 +232,7 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme }:
           )}
         </>
       )}
-      {hasSlack && (
+      {hasSlack && !hasSurplus && (
         <>
           <p className="text-sm text-(--muted)">
             You run more of these than the target. Which card goes is your call: we don&apos;t rank
@@ -192,8 +252,8 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme }:
   );
 }
 
-/** Rows shown before "Show N more": the Overview's six, which every seat read to the end. */
-const CUT_STEP = 6;
+/** Trade-off rows shown before "Show N more"; the clear cuts always show in full. */
+const MAYBE_STEP = 4;
 
 /** One cut: the card, why it is here, what argues it stays, and its text one tap away. */
 function CutCard({ c }: { c: CutChoice }) {
@@ -222,7 +282,7 @@ function CutCard({ c }: { c: CutChoice }) {
           </p>
         ) : null}
         {c.keeps.length ? (
-          <p><span className="font-medium text-(--success)">Keeps it:</span> {c.keeps.join(" · ")}</p>
+          <p><span className="font-medium text-(--success)">Why you might keep it:</span> {c.keeps.join(" · ")}</p>
         ) : null}
         {c.twins.length ? (
           <p className="text-(--muted)">

@@ -54,7 +54,7 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 |---|---|
 | ![Krenko, Mob Boss in the middle and the Goblins around him, grouped by what each link is](packages/web/client/how-it-works/shot-orbit.webp) | ![The game plan chapter: the deck's biggest theme, led by its key cards](packages/web/client/how-it-works/shot-pairs.webp) |
 | **What to fix, biggest payoff first** | **Can you cast your cards** |
-| ![The suggestions chapter: short on card draw and interaction, with how many cards to add](packages/web/client/how-it-works/shot-improve.webp) | ![The manabase chart: mana by turn in a typical game, and how many cards become castable on each turn](packages/web/client/how-it-works/shot-mana.webp) |
+| ![The suggestions chapter: short on card draw, with four cards that fit shown as card images](packages/web/client/how-it-works/shot-improve.webp) | ![The manabase chart: mana by turn in a typical game, and how many cards become castable on each turn](packages/web/client/how-it-works/shot-mana.webp) |
 
 No deck handy? Every card and every commander has a page of its own that shows what works with it:
 [Skullclamp](https://edhseer.cards/cards/skullclamp) ·

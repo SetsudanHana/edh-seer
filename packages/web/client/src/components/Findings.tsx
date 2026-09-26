@@ -3,6 +3,7 @@ import { rankedFindings, slotTrade, FINDING_CAP, type Finding } from "../lib/fin
 import { useState } from "react";
 import type { RunDiff } from "../lib/run-diff.js";
 import { suggestionsFor, takesCards, type SuggestionsState } from "../lib/suggestions.js";
+import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { SuggestedCards } from "./SuggestedCards.js";
 import { SuggestedPairs } from "./SuggestedPairs.js";
 
@@ -55,8 +56,10 @@ function Figure({ f }: { f: Finding }) {
   );
 }
 
-export function Findings({ report, diff, suggestions }: {
+export function Findings({ report, diff, suggestions, artOf }: {
   report: DeckReport;
+  /** A deck card's art by name, for the card a swap takes out. */
+  artOf?: (name: string) => string | undefined;
   /** THE CARDS EACH FINDING CAN BE FIXED WITH (AO4), computed after the report paints. Absent, or a
    *  failed run, leaves every row exactly as it was. */
   suggestions?: SuggestionsState;
@@ -82,9 +85,23 @@ export function Findings({ report, diff, suggestions }: {
   const shown = expanded ? all : all.slice(0, FINDING_CAP);
   const trade = slotTrade(report, all);
   // EVERY FINDING A CARD CAN FIX NAMES THE CARDS, directly under its own row (spec §3).
+  // ONE CARD, ONE PLACE (appeal review 2026-09-26): the same card under two findings read as the
+  // list padding itself. A card goes under the first finding, in rank order, that names it.
+  const listed = new Map<string, readonly SuggestedCard[] | undefined>();
+  if (suggestions && suggestions.state !== "error") {
+    const seen = new Set<string>();
+    for (const f of [...all, ...unseen]) {
+      if (!takesCards(f.kind)) continue;
+      const cards = suggestionsFor(f, suggestions.value, report);
+      if (!cards) { listed.set(f.id, undefined); continue; }
+      const fresh = cards.filter((c) => !seen.has(c.name));
+      for (const c of fresh) seen.add(c.name);
+      listed.set(f.id, fresh);
+    }
+  }
   const cardsFor = (f: Finding) => {
-    if (!suggestions || suggestions.state === "error" || !takesCards(f.kind)) return null;
-    return <SuggestedCards cards={suggestionsFor(f, suggestions.value, report)} empty={EMPTY[f.kind] ?? ""} label="Cards that fit" />;
+    if (!listed.has(f.id)) return null;
+    return <SuggestedCards cards={listed.get(f.id)} empty={EMPTY[f.kind] ?? ""} label="Cards that fit" />;
   };
   return (
     // 64rem: at 1920px a fix's headline and its figure ("10/13") sat 1,500px apart, and the figure
@@ -202,7 +219,7 @@ export function Findings({ report, diff, suggestions }: {
       ) : null}
       {/* THE SWAPS THAT USE THAT ROOM: a card out of the surplus group, a card into the short one, and
         *  only where the add connects to more of the deck than the cut (spec §3). */}
-      <SuggestedPairs pairs={suggestions?.value?.pairs.filter((p) => p.rule === "cross-job") ?? []} />
+      <SuggestedPairs pairs={suggestions?.value?.pairs.filter((p) => p.rule === "cross-job") ?? []} artOf={artOf} />
       {/* NOT A LESSER LIST. Colour is its own axis and synergy is `synergyOverall`; neither is a term
         *  in the number above, so neither can be priced in it, and inventing a conversion to
         *  interleave them is the constant `findings.ts` refuses. Rendered in full rather than capped
