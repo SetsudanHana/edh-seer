@@ -664,3 +664,14 @@ test("a graveyard return is not removal, and retargeting your own copy is not st
   expect([...(m.get("targetedRemoval") ?? [])].sort()).toEqual(["Unsummon"]);
   expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Redirect"]);
 });
+
+/** Owner ruling 2026-09-27 (issue #512): putting a land card onto the battlefield is ramp, from hand
+ *  (Growth Spiral) or from among the cards looked at (Planar Genesis). */
+test("putting a land card onto the battlefield is ramp", () => {
+  const cats = detectBuildCategories([
+    mk("Growth Spiral", "Draw a card. You may put a land card from your hand onto the battlefield.", "Instant"),
+    mk("Planar Genesis", "Look at the top four cards of your library. You may put a land card from among them onto the battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on the bottom of your library in a random order.", "Instant"),
+  ]);
+  expect(cats.get("ramp")?.has("Growth Spiral")).toBe(true);
+  expect(cats.get("ramp")?.has("Planar Genesis")).toBe(true);
+});
