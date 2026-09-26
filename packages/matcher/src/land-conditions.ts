@@ -1,4 +1,4 @@
-import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
+import { LAND_SUBTYPES, SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import type { Card } from "@edh-seer/engine";
 import { BASIC_LAND_TYPES } from "./typeline.js";
 
@@ -225,6 +225,19 @@ export function basicTypeDemand(card: Pick<Card, "oracleText">): string[] {
     `as long as you control (?:a|an|another)\\s+(${BASIC_LAND_TYPES.join("|")})\\b`, "i",
   ).exec(card.oracleText ?? "");
   return m ? [m[1].toLowerCase()] : [];
+}
+
+/** THE SAME DEMAND ONE TYPE OVER (issue #514): "lifelink if you control a Cleric, deathtouch if you
+ *  control a Rogue ..." (Multiclass Baldric), "costs {2} less if you control a Wizard" (Wizard's
+ *  Lightning). The CREATURE subtypes a card's printed text is conditioned on, in printed order; land
+ *  types stay with `basicTypeDemand`. */
+export function creatureTypeDemand(card: Pick<Card, "oracleText">): string[] {
+  const out: string[] = [];
+  for (const m of (card.oracleText ?? "").matchAll(/\b(?:if|as long as) you control (?:a|an|another) ([A-Za-z-]+)\b/g)) {
+    const t = m[1]!.toLowerCase();
+    if ((SUBTYPE_TYPES[t] ?? []).includes("creature") && !out.includes(t)) out.push(t);
+  }
+  return out;
 }
 
 /** A card in this deck whose printed land condition this deck cannot meet, in the reader's words. */

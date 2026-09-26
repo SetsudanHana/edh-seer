@@ -5235,3 +5235,27 @@ test("a flash grant links to a payoff that makes a temporary token off a creatur
   expect(flash(floodcaller)).toEqual([]);
   expect(flash(ownFlash)).toEqual([]);
 });
+
+/** A CARD SWITCHED ON BY A CREATURE TYPE IS FED BY THAT TYPE (issue #514). Multiclass Baldric's four
+ *  conditions name the whole party, so it keys as `party`; Gravecrawler's one Zombie keys as itself.
+ *  A land type stays with the land-condition channel. */
+test("a printed 'if you control a <creature type>' condition links to cards of that type", () => {
+  const withText = (name: string, oracleText: string, types: string[] = []) => {
+    const card = base(name, []);
+    (card.card as { oracleText: string }).oracleText = oracleText;
+    (card.card as { typeLine: string }).typeLine = types.length ? `Creature — ${types.join(" ")}` : "Artifact";
+    return card;
+  };
+  const baldric = withText("Multiclass Baldric", "Equipped creature has lifelink if you control a Cleric, deathtouch if you control a Rogue, haste if you control a Warrior, and flying if you control a Wizard.");
+  const crawler = withText("Gravecrawler", "Gravecrawler can't block.\nYou may cast this card from your graveyard as long as you control a Zombie.");
+  const nacatl = withText("Wild Nacatl", "This creature gets +1/+1 as long as you control a Mountain.");
+  const gatherer = withText("Rumor Gatherer", "", ["Elf", "Wizard"]);
+  const zombie = withText("Diregraf Ghoul", "", ["Zombie"]);
+  const mountainMan = withText("Some Mountain Creature", "", ["Mountain"]);
+  const cond = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) =>
+    directedReasons(p, c, H).filter((r) => r.tag.startsWith("condition:")).map((r) => [r.tag, r.text]);
+  expect(cond(gatherer, baldric)).toEqual([["condition:party", "Multiclass Baldric is switched on while you control Rumor Gatherer, a Wizard"]]);
+  expect(cond(zombie, crawler)).toEqual([["condition:zombie", "Gravecrawler is switched on while you control Diregraf Ghoul, a Zombie"]]);
+  expect(cond(zombie, baldric)).toEqual([]);
+  expect(cond(mountainMan, nacatl)).toEqual([]);
+});
