@@ -3,7 +3,6 @@ import { identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { percent, policyBand } from "@edh-seer/engine/percent";
-import { themePct } from "../lib/theme-pct.js";
 
 /** WHAT IS THIS DECK — answered by the instrument built to answer it.
  *
@@ -28,7 +27,6 @@ import { themePct } from "../lib/theme-pct.js";
 export function DeckIdentity({
   cohesion,
   colorIdentity,
-  strategies,
   identity,
   thing,
   commanderCast,
@@ -37,7 +35,6 @@ export function DeckIdentity({
 }: {
   cohesion: DeckReport["cohesion"];
   colorIdentity?: string[];
-  strategies?: DeckReport["strategies"];
   identity?: DeckReport["identity"];
   thing?: DeckReport["thing"];
   commanderCast?: NonNullable<DeckReport["deckMath"]>["castability"]["commanders"];
@@ -81,7 +78,6 @@ export function DeckIdentity({
     cohesion.familyScore !== undefined && cohesion.familyScore.toFixed(2) !== cohesion.score.toFixed(2)
       ? cohesion.familyScore.toFixed(2)
       : null;
-  const top = (strategies ?? []).slice(0, 3);
   return (
     <div className="border border-(--separator) rounded-(--radius) p-5 bg-(--surface) flex flex-col gap-2">
       <div className="flex items-baseline gap-3 flex-wrap">
@@ -109,7 +105,8 @@ export function DeckIdentity({
           null
         )}
         <span className="text-sm text-(--muted) tabular-nums">
-          {cohesion.dominant === false ? `strongest: ${cohesion.theme} · ` : ""}
+          {/* The player name, as everywhere else the theme is named (appeal review 2026-09-26). */}
+          {cohesion.dominant === false ? `strongest: ${cohesion.name} · ` : ""}
           {focus}
           {family ? ` · related themes ${family}` : ""}
         </span>
@@ -167,7 +164,10 @@ export function DeckIdentity({
             *  have drawn enough of them in time. */}
           {/* THE COUNT NAMED AGAIN (review 2026-09-25): "2 of them" had no antecedent on the line
             *  a reader lands on. */}
-          {percent(thing.probability)} chance to draw {thing.k} of your {thing.count} {cohesion.name} cards by turn {thing.turn}
+          {/* "IN YOUR LIBRARY", because this count leaves the commander out and the share above does
+            *  not: 15 there and 14 here read as two answers to one question (appeal review
+            *  2026-09-26). The command-zone clause says where the fifteenth is. */}
+          {percent(thing.probability)} chance to draw {thing.k} of the {thing.count} {cohesion.name} cards in your library by turn {thing.turn}
           {thing.fromCommandZone.length > 0 ? `, and ${thing.fromCommandZone.join(", ")} ${thing.fromCommandZone.length > 1 ? "are" : "is"} in the command zone every game` : ""}
           {/* THE COMMANDER-TAX SENTENCE IS GONE FROM HERE (roadmap T6). It read *"free the first
             *  time only — each recast from the command zone costs {2} more (CR 903.8), and nothing
@@ -237,28 +237,12 @@ export function DeckIdentity({
             ) : null}
         </div>
       ) : null}
-      {/* The second theme and the archetype shares, on one muted line. A percentage is printed for
-        *  each strategy because the list is ranked and the gaps matter — "Tokens 22% · Aristocrats
-        *  14%" says something a bare ordered list does not. */}
-      {cohesion.secondary || top.length > 0 ? (
-        <p className="text-sm text-(--muted) tabular-nums">
-          {cohesion.secondary ? <span>also cares about {cohesion.secondary}</span> : null}
-          {cohesion.secondary && top.length > 0 ? <span> · </span> : null}
-          {top.length > 0 ? (
-            <span>
-              {/* "signals Tokens 42%" (T1). The verb is the engine's, and the bare percentage reads
-                *  as confidence -- "42% sure it is tokens" -- rather than as a share of the deck,
-                *  which is what it is. `ArchetypeBoard`'s disclosure carries the denominator.
-                *
-                *  FLOORED VIA `themePct`, NOT ROUNDED. This line used `Math.round` while
-                *  `ArchetypeBoard` floored the same field, so Glance and the Plan bars printed
-                *  different percentages for the same theme two screens apart -- caught by three
-                *  persona seats on three decks, 2026-09-18. The rule and its reason are in
-                *  `lib/theme-pct.ts`. */}
-              themes {top.map((s) => `${s.label} ${themePct(s.confidence)}%`).join(" · ")}
-            </span>
-          ) : null}
-        </p>
+      {/* THE SECOND THEME, BY ITS PLAYER NAME. The archetype shares that sat beside it ("themes Tokens
+        *  22% · Aristocrats 14%") were a third vocabulary for the same deck -- a fixed list of named
+        *  archetypes, not the deck's own themes -- and four review seats stopped on the mismatch
+        *  (2026-09-26). Game plan names what the deck does; this names the one runner-up. */}
+      {cohesion.secondary ? (
+        <p className="text-sm text-(--muted)">also cares about {cohesion.secondaryName ?? cohesion.secondary}</p>
       ) : null}
     </div>
   );

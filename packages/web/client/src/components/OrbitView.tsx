@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, displayName, type EngineCard, type EngineModel, type Repeat } from "../lib/engine-model.js";
+import { mainTheme } from "../lib/main-theme.js";
 import { buildOrbit, visiblePartners, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 import { ReasonText } from "./card-drawer.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
@@ -27,7 +28,19 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   sticky?: boolean;
 }) {
   const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);
-  const o = useMemo(() => buildOrbit(m, focusId), [m, focusId]);
+  const o = useMemo(() => {
+    const built = buildOrbit(m, focusId);
+    // THE NAMED THEMES BY ONE NAME (appeal review 2026-09-26): their groups take the names Glance
+    // and Scores give them.
+    const main = mainTheme(report);
+    if (built && main) {
+      for (const s of built.sectors) {
+        if (s.group?.tag === main.tag) s.name = main.name;
+        else if (main.second && s.group?.tag === main.second.tag) s.name = main.second.name;
+      }
+    }
+    return built;
+  }, [m, focusId, report]);
   const narrow = useNarrow();
   const [sel, setSel] = useState<string | null>(null);
   const [sector, setSector] = useState<string | null>(null);
@@ -506,6 +519,11 @@ function Summary({ o, still, paused, onPause, onSector, onCentre }: { o: OrbitMo
         </div>
       </div>
       {o.sectors.length ? (
+        // WHAT THESE COUNTS COUNT (appeal review 2026-09-26): "Wizards entering 18 cards" here beside
+        // "Wizards entering 37 cards" in the themes read as a contradiction. These are the cards that
+        // work with THIS card, split by what links them.
+        <>
+        <p className="text-xs text-(--muted)">Those cards, by what links them to {first}:</p>
         <ul className="flex flex-col gap-1">
           {o.sectors.map((s) => (
             <li key={s.name}>
@@ -517,6 +535,7 @@ function Summary({ o, still, paused, onPause, onSector, onCentre }: { o: OrbitMo
             </li>
           ))}
         </ul>
+        </>
       ) : null}
       <p className="text-xs text-(--muted)">
         {onPause ? (

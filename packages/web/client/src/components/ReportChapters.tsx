@@ -21,6 +21,7 @@ import { OrbitOverlay } from "./OrbitOverlay.js";
 import { RoleShelves, roleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { chooseCuts } from "../lib/cut-choice.js";
+import { mainTheme } from "../lib/main-theme.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
@@ -237,7 +238,6 @@ export function ReportChapters({ data, diff }: {
           <DeckIdentity
             cohesion={report.cohesion}
             colorIdentity={data.commanderColorIdentity}
-            strategies={report.strategies}
             identity={report.identity}
             thing={report.thing}
             commanderCast={report.deckMath?.castability.commanders}
@@ -265,19 +265,24 @@ export function ReportChapters({ data, diff }: {
               <OrbitView report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
             </Movement>
           ) : null}
-          {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={setOverlay} /> : null}
+          {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={setOverlay} main={mainTheme(report)} /> : null}
           {/* THE ONE FIGURE THAT SAID NOTHING (S13). `cardSignals` in `matcher/src/analyze.ts`
             *  filters on `dc.tags`, so strategies, the groups and the membership matrix are all
             *  derived-only -- and this was the only coverage-limited surface on the page with
             *  neither a worded caveat nor the hatch. It gets `coverage` for the same reason
             *  `CutList` has it. */}
-          <ArchetypeBoard
-            strategies={report.strategies}
-            archetypes={report.archetypes}
-            nonlandNames={nonlandNames}
-            coverage={report.coverage}
-            showGroups={!themes}
-          />
+          {/* THE ARCHETYPE BARS ONLY WHERE THERE ARE NO THEMES (appeal review 2026-09-26). A fixed
+            *  list of named archetypes ("Tokens 22%") beside the deck's own themes was a third name
+            *  for the same deck, with a third number. With links to rank, the themes above say what
+            *  the deck does; without them, the bars and the unranked groups still do. */}
+          {themes ? null : (
+            <ArchetypeBoard
+              strategies={report.strategies}
+              archetypes={report.archetypes}
+              nonlandNames={nonlandNames}
+              coverage={report.coverage}
+            />
+          )}
           {/* WHICH CARDS CARRY THE PLAN, IN THE CHAPTER THAT ASKS WHAT THE PLAN IS (roadmap T21).
             *  It used to sit in chapter 6, "What's wrong, and what do I do?", beside the cut list --
             *  and the owner's note was the whole argument: *"why high synergy table is in the fix
