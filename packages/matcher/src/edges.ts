@@ -1684,8 +1684,11 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             // WHERE THE COUNTERS GO. "puts counters on it" had two live antecedents in every row --
             // the entering creature the sentence opens with, and the enchantment the counters
             // actually land on. The consumer's own effect subject knows which.
-            effectTarget: effectTargetNoun(a.effect.subject),
+            // A multiplier with no effect subject of its own puts its counters where the event put
+            // them: "it", not "something" (issue #503, The Earth Crystal).
+            effectTarget: a.effect.subject === undefined && t.verb === "counter-added" ? "it" : effectTargetNoun(a.effect.subject),
             effectRecipient: a.effect.subject?.control,
+            counterKind: a.effect.subject === undefined && t.verb === "counter-added" ? t.subject.counter : undefined,
             // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and
             // naming the class unconditionally was the wrong answer to it.
             //
@@ -1713,7 +1716,13 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             // graveyard" -- a sentence about the wrong card, seen live on Bloodchief Ascension's
             // whole producer list (owner, 2026-09-05). The producer is the SOURCE of a fill; the
             // thing filled is a card of the emitted type, or just "a card" when the type is unknown.
-            subjectNoun: fillNoun(e) ?? (producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
+            //
+            // A COUNTER THE PRODUCER PUTS IS ON ITSELF ONLY WHEN THE EMIT SAYS SO (issue #503): "When
+            // Sphere Grid gets a counter" -- Sphere Grid puts a +1/+1 counter on the creature that
+            // connected. An untyped counter emit names what gets it, or "a permanent".
+            subjectNoun: fillNoun(e)
+              ?? (t.verb === "counter-added" && e.subject.self !== true ? emitSubjectNoun(e.subject) ?? "a permanent"
+              : producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
           }),
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"

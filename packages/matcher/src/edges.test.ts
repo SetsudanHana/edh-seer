@@ -5052,6 +5052,26 @@ test("a card's own cast, a chapter's delayed trigger and a paid one are not ever
     .toEqual(["oneshot", "activated", "oneshot", "triggered", "triggered", "activated"]);
 });
 
+/** WHO GETS THE COUNTER (issue #503): Sphere Grid puts a +1/+1 counter on the creature that
+ *  connected, so "When Sphere Grid gets a counter" named the wrong object; and The Earth Crystal
+ *  doubles +1/+1 counters on that creature, not "counters on something". */
+test("a counter a producer puts elsewhere is not on the producer; a doubler names the kind and 'it'", () => {
+  const crystal = base("The Earth Crystal", [{ kind: "static", trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, type: "creature", counter: "+1/+1" } },
+    effect: { kind: "counter-placement" }, amount: "twice that many" }] as CardTags["abilities"]);
+  const grid = base("Sphere Grid", [{ kind: "triggered", effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter: "+1/+1" } }] }] as CardTags["abilities"]);
+  grid.tags.characteristics.types = ["enchantment"];
+  const mover = base("Goldberry, River-Daughter", [{ kind: "activated", cost: "{T}", effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null } }] }] as CardTags["abilities"]);
+  const text = (p: ReturnType<typeof base>) => directedReasons(p, crystal, H).find((r) => r.tag.startsWith("counter-added"))?.text;
+  expect(text(grid)).toBe("When a creature gets a counter thanks to Sphere Grid, The Earth Crystal puts twice that many +1/+1 counters on it");
+  expect(text(mover)).toBe("When a permanent gets a counter thanks to Goldberry, River-Daughter, The Earth Crystal puts twice that many +1/+1 counters on it");
+  // A KEYWORD'S counter lands on the card itself (undying, evolve), so the card is named.
+  const endless = base("Young Wolf", []);
+  endless.tags.characteristics.keywords = ["Undying"];
+  expect(text(endless)).toBe("When Young Wolf gets a counter, The Earth Crystal puts twice that many +1/+1 counters on it");
+});
+
 /** PROWESS PUMPS ITSELF BY +1/+1 (CR 702.108a; overview persona rounds 2026-09-25, item 3): "When
  *  Kindred Discovery is cast, Harmonic Prodigy makes your creatures bigger" -- the synthetic keyword
  *  ability carried no amount and no subject, so the sentence fell back to the class-wide phrase. A

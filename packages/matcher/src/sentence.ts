@@ -151,7 +151,7 @@ const SELF_PHRASES: Record<string, string> = {
 const PROSE_AMOUNT = /\bfor each\b|\bequal to\b|\bwhere\b|\bthe number of\b/i;
 
 export function effectPhrase(
-  kind: string | undefined, amount: string | undefined, target?: string, recipient?: string,
+  kind: string | undefined, amount: string | undefined, target?: string, recipient?: string, counterKind?: string,
 ): string | null {
   if (!kind) return null;
   // PROSE IS NOT AN AMOUNT. Hateful Eidolon's draw carries `amount: "for each Aura you controlled
@@ -173,13 +173,15 @@ export function effectPhrase(
     // Yuna, Grand Summoner puts "that number" of counters -- the count the dying permanent had --
     // and the template read "puts that number counters on a permanent" (AL4). "that many" is a
     // determiner and already attaches, so only the noun form takes the preposition.
-    const n = amount === undefined ? "counters"
-      : amount === "1" ? "a counter"
+    // THE KIND, when the trigger names it (issue #503): The Earth Crystal doubles +1/+1 counters only.
+    const kindWord = counterKind ? `${counterKind} ` : "";
+    const n = amount === undefined ? `${kindWord}counters`
+      : amount === "1" ? `a ${kindWord}counter`
       // THE AMOUNT IS ALREADY THE NOUN. Resourceful Defense moves "those counters" themselves, not a
       // count of them, and the template doubled the word.
       : /\bcounters?$/i.test(amount) ? amount
-      : /\bnumber$/i.test(amount) ? `${amount} of counters`
-      : `${amount} counters`;
+      : /\bnumber$/i.test(amount) ? `${amount} of ${kindWord}counters`
+      : `${amount} ${kindWord}counters`;
     return `puts ${n} on ${target}`;
   }
   const entry = PHRASES[kind];
@@ -346,6 +348,8 @@ export function reasonSentence(input: {
   effectTarget?: string;
   /** Who a draw or a life change goes to (`effect.subject.control`) -- see `RECIPIENT_PHRASES`. */
   effectRecipient?: string;
+  /** The counter KIND a counter-placing effect puts, when the trigger names it ("+1/+1"). */
+  counterKind?: string;
   /** WHAT THE EVENT HAPPENS TO, when it does not happen to the producer.
    *
    *  **A SORCERY CANNOT DIE.** Austere Command emits four `dies` events whose subjects are CLASSES
@@ -365,7 +369,7 @@ export function reasonSentence(input: {
   subjectNoun?: string;
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
-  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient);
+  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind);
   if (input.self) {
     const effect = phrase ? `it ${phrase}` : "it triggers";
     return `When ${input.consumer} ${verb} thanks to ${input.producer}, ${effect}`;
