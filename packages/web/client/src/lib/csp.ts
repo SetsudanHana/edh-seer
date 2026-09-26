@@ -9,7 +9,8 @@
  *  WHAT EACH LINE ALLOWS, AND WHY:
  *   - scripts: our own bundle, the two inline scripts in `index.html` (boot recovery and the header
  *     menu, the second shared with `how-it-works`) by hash, and Cloudflare's analytics beacon, which
- *     the zone injects into every HTML response. `csp.test.ts` recomputes the hashes from the HTML,
+ *     every HTML shell loads itself (`index.html`, `how-it-works`, `404.html`): the zone's automatic
+ *     injection never reached a Pages custom domain, so it counted nothing (2026-09-26). `csp.test.ts` recomputes the hashes from the HTML,
  *     so editing an inline script without updating this list fails the build instead of the site.
  *     JSON-LD and the `application/json` card block are data blocks the browser never runs, and a
  *     CSP does not apply to them.

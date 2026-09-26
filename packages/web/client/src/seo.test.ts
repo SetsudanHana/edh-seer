@@ -377,10 +377,13 @@ test("the how-it-works page is a page, not an app route", () => {
   // the property rather than the proxy: nothing with a `src`, and no inline script but that one.
   // Asked of the parsed document rather than the source text, for the reason above.
   const parsed = new DOMParser().parseFromString(page, "text/html");
-  expect(parsed.querySelectorAll("script[src]")).toHaveLength(0);
+  // The one `src` allowed is Cloudflare's analytics beacon (2026-09-26): the zone was meant to inject
+  // it into every page and never reached this domain, so the page loads it itself. It is not a bundle.
+  const srcs = [...parsed.querySelectorAll("script[src]")].map((el) => el.getAttribute("src"));
+  expect(srcs).toEqual(["https://static.cloudflareinsights.com/beacon.min.js"]);
   // A JSON-LD block is data the browser never runs, not a script in the sense this test guards.
   const inline = [...parsed.querySelectorAll("script")]
-    .filter((el) => el.getAttribute("type") !== "application/ld+json")
+    .filter((el) => el.getAttribute("type") !== "application/ld+json" && !el.hasAttribute("src"))
     .map((el) => el.textContent ?? "");
   expect(inline.filter((body) => !body.includes(".site-more[open]"))).toEqual([]);
   expect(page).toContain('<link rel="canonical" href="' + canonical + 'how-it-works"');
