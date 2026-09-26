@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { BUILD_PARENTS, detectAnswerClasses, detectBuildCategories } from "./build.js";
 import { detectWincons } from "./wincon.js";
-import { answerClassesOf, loadRules, ruleMatches, RULES_VERSION, type Rule } from "./rules.js";
+import { answerClassesOf, loadRules, ownText, ruleMatches, RULES_VERSION, tokenQuotes, type Rule } from "./rules.js";
 import type { DeckCard } from "./types.js";
 
 const mk = (name: string, oracleText: string, typeLine = "Instant"): DeckCard => ({
@@ -678,4 +678,17 @@ test("a destroy whose controller gets copies back is neither removal nor an answ
   expect(cats.get("targetedRemoval")?.has("Grim Hireling")).toBe(true);
   expect(cats.get("ramp")?.has("Grim Hireling")).toBe(true);
   expect(detectAnswerClasses([saw]).get("creature")?.cards.has("Saw in Half") ?? false).toBe(false);
+});
+
+/** Owner ruling 2026-09-27 (issue #533): an ability quoted in a token-creating sentence is the TOKEN'S.
+ *  Mage's Attendant loses Counterspells; its Wizard token carries it. A quoted grant to your own
+ *  permanents is not a token and stays the card's. */
+test("an ability quoted for a token is the token's, not the maker's", () => {
+  const attendant = "When this creature enters, create a 1/1 blue Wizard creature token with \"{1}, Sacrifice this token: Counter target noncreature spell unless its controller pays {1}.\"";
+  const cats = detectBuildCategories([mk("Mage's Attendant", attendant, "Creature — Cat Rogue")]);
+  expect(cats.get("stackInteraction")?.has("Mage's Attendant") ?? false).toBe(false);
+  expect(tokenQuotes({ oracleText: attendant }, "Wizard")).toContain("Counter target noncreature spell");
+  expect(tokenQuotes({ oracleText: attendant }, "Goblin")).toBe("");
+  const rite = "Creatures you control have \"{T}: Add one mana of any color.\"";
+  expect(ownText({ oracleText: rite })).toBe(rite);
 });

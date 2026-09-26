@@ -30,7 +30,7 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
   const headed = new Set<string>();
   return (
     <ul className="flex flex-col gap-4 text-sm">
-      {shelves.map(({ category, cards }) => {
+      {shelves.map(({ category, cards, tokens }) => {
         const label = BUILD_CATEGORY_LABEL[category] ?? category;
         const p = parentOf.get(category);
         const group = p && p.leaves.length > 1 ? p : undefined;
@@ -62,6 +62,12 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
                     {c.art ? <span className="line-clamp-2 text-xs leading-tight text-(--muted)">{c.name}</span> : null}
                   </li>
                 ))}
+                {tokens.map(({ card: t, madeBy }) => (
+                  <li key={`token:${t.id}`} className="flex w-[76px] shrink-0 flex-col gap-1 sm:w-[88px]">
+                    <CardFace card={t} className="w-full" />
+                    <span className="line-clamp-3 text-xs leading-tight text-(--muted)">{t.name} token{madeBy.length ? ` from ${madeBy.join(", ")}` : ""}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </li>
@@ -83,7 +89,7 @@ function Against({ count, target }: { count: number; target: number }) {
 
 /** The shelves, in the chapter's order: each role group's leaves as the engine lists them, then the
  *  roles in no group. Empty roles and lands are left out. */
-export function roleShelves(report: DeckReport, graph?: CardGraph): { category: string; cards: EngineCard[] }[] {
+export function roleShelves(report: DeckReport, graph?: CardGraph): { category: string; cards: EngineCard[]; tokens: { card: EngineCard; madeBy: string[] }[] }[] {
   // By what the board prints: a two-faced card's front node is keyed by the whole card's name.
   const nodes = new Map((graph?.nodes ?? []).filter((n) => !n.isToken && !n.face).map((n) => [n.label, n]));
   const commanders = new Set(report.commanders ?? []);
@@ -110,12 +116,31 @@ export function roleShelves(report: DeckReport, graph?: CardGraph): { category: 
       list.push({ card, mv });
     }
   }
+  // A TOKEN'S ROLE SITS ON THE TOKEN (owner ruling 2026-09-27, #533): Mage's Attendant makes the
+  // Wizard that counters, so the Wizard is on the Counterspells shelf, named by its maker. Kept apart
+  // from `cards` so no count or target includes a token, which is never drawn.
+  const tokenNodes = new Map((graph?.nodes ?? []).filter((n) => n.isToken).map((n) => [n.label, n]));
+  const tokensByRole = new Map<string, { card: EngineCard; madeBy: string[] }[]>();
+  for (const t of report.tokenNodes ?? []) {
+    if (!t.roles?.length) continue;
+    const n = tokenNodes.get(t.name);
+    const card: EngineCard = {
+      id: t.name, name: t.name, typeLine: n?.typeLine ?? "", text: n?.oracleText ?? "", art: n?.artCrop,
+      isToken: true, isCommander: false, isLand: false, isFace: false, roles: t.roles, score: 0, manaCost: "", physical: t.name,
+    };
+    for (const role of t.roles) {
+      let list = tokensByRole.get(role);
+      if (!list) tokensByRole.set(role, (list = []));
+      list.push({ card, madeBy: t.madeBy ?? [] });
+    }
+  }
   const order: string[] = [];
   for (const p of report.buildParents ?? []) for (const l of p.leaves) if (!order.includes(l)) order.push(l);
   for (const c of report.buildCategories ?? []) if (!order.includes(c.category)) order.push(c.category);
-  for (const r of byRole.keys()) if (!order.includes(r)) order.push(r);
-  return order.filter((r) => byRole.has(r)).map((category) => ({
+  for (const r of [...byRole.keys(), ...tokensByRole.keys()]) if (!order.includes(r)) order.push(r);
+  return order.filter((r) => byRole.has(r) || tokensByRole.has(r)).map((category) => ({
     category,
-    cards: byRole.get(category)!.sort((a, b) => a.mv - b.mv || a.card.name.localeCompare(b.card.name)).map((x) => x.card),
+    cards: (byRole.get(category) ?? []).sort((a, b) => a.mv - b.mv || a.card.name.localeCompare(b.card.name)).map((x) => x.card),
+    tokens: tokensByRole.get(category) ?? [],
   }));
 }
