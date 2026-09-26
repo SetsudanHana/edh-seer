@@ -9,14 +9,17 @@ is something that can solve people's problems."*
 
 - Five researchers, one per problem area, about 130 web searches in total, each keeping only titles
   that appeared **verbatim** in results, with their URL.
-- **Reddit is not in this data.** The research environment's network policy blocks `reddit.com`
-  and its archive APIs, and search with a Reddit filter returned nothing. The titles come from
+- **The first pass had no Reddit**: the network blocked it, so the titles in the five problem
+  sections below come from
   TappedOut, MTG Salvation, the Archidekt forum, Moxfield's feedback board (`moxfield.nolt.io`),
   Deckstats, Quora and Facebook groups. Several MTG Salvation threads are years old, so the
   phrasing can be older than today's Reddit.
 - Only **titles and search snippets** were read, never whole threads. Who asks and what "solved"
   means for them are inferred from those, and marked as such below.
-- Rerun with `reddit.com` allowed before treating the frequencies here as real.
+- **Reddit, added the same day:** once `*.reddit.com` was allowed, r/EDH was searched through a
+  real browser (its JSON endpoints ask anonymous clients to log in). Six searches per problem, the
+  16 threads each problem's searches hit most often read in full, with their top comments. See
+  "What r/EDH says" below; usernames were not kept.
 
 ## The five problems people bring
 
@@ -116,6 +119,85 @@ commanders. Tried: Moxfield and Archidekt auto-estimates and at least ten calcul
 Their complaints (seen): estimators count Game Changers but miss two-card combos, ignore tutor
 quality, label strong decks "Bracket 2", and give a number without reasons. Solved when: a
 bracket they can defend at the table, the specific cards that decide it, and swaps that move it.
+
+## What r/EDH says (2026-09-26)
+
+About 190 thread titles and 80 full threads with their top comments, from r/EDH. Scores are
+upvotes and comments at the time of the scrape. Where Reddit changed a seat, the seat says so.
+
+### 1. Cut to 100
+
+- "I'm pretty new to magic, and I'm trying to get into deckbuilding, but I've ended up with a couple
+  lists at ~120 ish cards after I've already trimmed a decent bit, and idk where to keep cutting."
+  (17 points, 52 comments) https://www.reddit.com/r/EDH/comments/1uofemj/how_do_you_cut_cards/
+- "How does one go about cutting down to 99?" (16, 45) https://www.reddit.com/r/EDH/comments/1nkk7pv/how_does_one_go_about_cutting_down_to_99/
+- "Edit: I cut 25 cards but I still need 18 cuts and im stuck any direct recommendations?"
+  https://www.reddit.com/r/EDH/comments/1t3xqa3/how_do_you_decide_what_gets_cut_during_deck/
+- Most liked approach: "Tip for when every card feels to good to cut" (296, 95): start over from
+  zero and add only the cards you are sure of.
+  https://www.reddit.com/r/EDH/comments/1tqv6er/tip_for_when_every_card_feels_to_good_to_cut/
+
+**What solved looks like:** a test tied to the plan, "Does it advance my win? Does it stop theirs?
+Does it do a critical role of ramp/draw/remove?" (22), concrete categories (win-more, expensive,
+redundant ramp), and a provisional cut: "Do not touch it again until you've played a couple of
+games." (61). Posters are usually 20–40 over, not 8. About 21 of 29 titles were on topic.
+
+### 2. Precon on a budget, losing to friends
+
+- "my one friend in particular seems to win 80% of the time." … "We all play precons so i figured it
+  would be fair." (98, 111) https://www.reddit.com/r/EDH/comments/1tq7ws4/friends_deck_too_strong/
+- "For Commander pre cons, what upgrades are the most meaningful first? Lands? Low end? high end?
+  Removing 'bad' cards?" (88, 108) https://www.reddit.com/r/EDH/comments/1s5eo9w/for_commander_pre_cons_what_upgrades_are_the_most/
+- "Is there such thing as a $50 deck that's good and can compete with other decks that have meta
+  cards?" (117, 229) https://www.reddit.com/r/EDH/comments/1twmjcb/
+- Budgets named: $50, $100 NZD including the precon, "proxy cards that are worth more than $30".
+
+**What solved looks like:** "Most precons are trying to do like 2 or 3 things. Remove one and replace
+with cards that focus the remaining synergies" (322 points); fix the lands; lower the curve; "10-15
+cards that go in a different direction than the face commander". Replies almost never name cards
+to buy. Beginners here use "bracket" as a word their friends say ("keep the deck a bracket 3").
+
+### 3. Slow, inconsistent, runs out of cards
+
+- "Deck feels inconsistent af and i dont know why that is" https://www.reddit.com/r/EDH/comments/1ooc3xa/
+- "How do I stop running out of freaking cards??" https://www.reddit.com/r/EDH/comments/1lrby58/
+- "My mana curve is low meaning i should be playing a lot of cards fast yet i somehow cant..."
+  (2, 33) https://www.reddit.com/r/EDH/comments/1vnuigq/
+- Land-count threads draw the most heat: "You suck at math: how many lands to run" (509, 512),
+  "A deep dive into land counts" (142, 302).
+
+**What solved looks like:** counting, with the ramp included: "Cutting down to 30 or less lands
+without any other Mana sources is the problem. Not necessarily the count by itself." (190);
+"Proper deck building mitigates mana screw." (22); "the magic number for things you want to see
+every game … is 8" (34); and focus: "You're going in too many directions" (10). No reply settles
+bad luck against construction. Readers of the long maths post asked for "a TLDR at the bottom" (234).
+
+### 4. No plan, no win condition
+
+- "What to do when a deck does "Nothing" or is too "Slow"" (100, 39) https://www.reddit.com/r/EDH/comments/1q15li3/
+- "How does drawing my entire deck actually win me the game?" (0, 84) https://www.reddit.com/r/EDH/comments/1wi4jt6/
+- On r/EDH, "no win condition" is mostly said *about other people's decks*: "People who play decks
+  that have no win condition/aren't trying to win, why?" (150, 362), top reply "Some people are just
+  bad deckbuilders." (277). The persona's opening quote changed because of this.
+
+**What solved looks like:** "pick a way" (name the cards that end the game), and "can you describe
+your first five turns?". EDHREC's per-commander numbers can miss a pair that matters in one deck.
+About 9 of 41 titles were on topic; the rest were commander picks and favourite win-cons.
+
+### 5. Bracket and pod fit
+
+- "It got 4 on Brackcheck, 2 on EDHpowerlevel and 3 on deckcheck." (0, 13) https://www.reddit.com/r/EDH/comments/1ozp7iw/
+- "If people are consistently telling you that your deck is too strong: you're the problem, not
+  everybody else, not the bracket system" (689, 532) https://www.reddit.com/r/EDH/comments/1p393va/
+- "Getting Targeted Every Game by 1 Person in my Playgroup" (153, 274) https://www.reddit.com/r/EDH/comments/1ssvjk1/
+- "The rule zero discussion is much harder to have in store or event settings when you are meeting
+  players for the first time" (0, 13) https://www.reddit.com/r/EDH/comments/1gidbfo/
+
+**What solved looks like:** Game Changers and two-card combos are the only facts people agree on;
+speed decides the rest. "I asked multiple of those to analyze a Bracket 4 [[Aang, at the
+crossroads]] deck designed to win on turn 3 … Every single one of those websites thought it was
+bracket 2." (5). A good rule-zero line is "a 3, but only because of cards X and Y". About 30 of 41
+titles were on topic; "what bracket is my deck" posts score near zero but draw 13–64 comments.
 
 ## What they think of the tools they already use
 
