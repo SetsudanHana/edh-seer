@@ -367,6 +367,11 @@ export function answerClassesOf(dc: DeckCard, set: RuleSet = loadRules()): Map<s
         // place in `count`, as the answer-modes spec rules: it answers the board for a turn.
         const sentence = (dc.card.oracleText ?? "").slice(m.index ?? 0).split(/[.\n]/)[0] ?? "";
         if (new RegExp(set.patterns.exileThenReturns, "i").test(sentence)) continue;
+        // ...and a destroy whose CONTROLLER gets copies back answers nothing either (owner ruling
+        // 2026-09-27, #513): Saw in Half is played on your own creature. The copies are the next
+        // sentence, so the card's text is asked, not the clause. Fractured Identity hands the copies
+        // to everyone ELSE and stays an answer.
+        if (new RegExp(set.patterns.controllerGetsCopies, "i").test(dc.card.oracleText ?? "")) continue;
         for (const word of Object.keys(KNOWN_CLASSES)) {
           if (!new RegExp(`\\b${word}\\b`).test(phrase)) continue;
           for (const cls of set.answerClassAliases[word] ?? [word]) {
