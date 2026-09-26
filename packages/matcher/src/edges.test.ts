@@ -5259,3 +5259,29 @@ test("a printed 'if you control a <creature type>' condition links to cards of t
   expect(cond(zombie, baldric)).toEqual([]);
   expect(cond(mountainMan, nacatl)).toEqual([]);
 });
+
+/** A COST THAT REMOVES A COUNTER IS FED BY WHAT PUTS COUNTERS ON YOUR PERMANENTS (issue #511). O'aka's
+ *  live shape, read 2026-09-26: the cost's `counter-removed` emit and the draw sit on two abilities of
+ *  one clause. A Saga's own lore counter feeds it (CR 714.3a); a land's counter cannot. */
+test("a remove-a-counter cost links to counter makers and to a Saga", () => {
+  const cost = "{T}, Remove a counter from a nonland permanent you control";
+  const nonland = { control: "you", token: null, type: ["creature", "artifact", "enchantment", "planeswalker", "battle"], notType: ["land"] };
+  const oaka = base("O'aka, Traveling Merchant", [
+    { kind: "activated", cost, clause: 1, effect: { kind: "" }, emits: [{ verb: "counter-removed", subject: nonland }] },
+    { kind: "activated", cost, clause: 1, amount: "1", effect: { kind: "draw-card", subject: { control: "you", token: null } } },
+  ] as CardTags["abilities"]);
+  const champion = base("Setessan Champion", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "enchantment" } },
+    effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter: "+1/+1", self: true } }],
+  }] as CardTags["abilities"]);
+  champion.tags.characteristics.types = ["creature"];
+  const fenrir = base("Summon: Fenrir", [], ["saga", "wolf"]);
+  fenrir.tags.characteristics.types = ["enchantment", "creature"];
+  const land = base("Lore Land", [], ["saga"]);
+  land.tags.characteristics.types = ["land"];
+  const texts = (p: ReturnType<typeof base>) => directedReasons(p, oaka, H).filter((r) => r.tag.startsWith("counter-removed:")).map((r) => r.text);
+  expect(texts(champion)).toEqual(["O'aka, Traveling Merchant removes a counter from Setessan Champion and draws you 1 card"]);
+  expect(texts(fenrir)).toEqual(["O'aka, Traveling Merchant removes a counter from Summon: Fenrir and draws you 1 card"]);
+  expect(texts(land)).toEqual([]);
+});

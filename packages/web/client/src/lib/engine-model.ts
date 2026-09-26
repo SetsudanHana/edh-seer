@@ -177,6 +177,8 @@ export function groupName(tag: string): string {
     case "condition": return sub === "party" ? "Switched on by your party" : `Switched on by your ${p}`;
     // Issue #510: a flash grant gives a temporary token (Inalla's copy) a whole turn.
     case "flash": return "Casting at instant speed";
+    // Issue #511: a cost that removes a counter (O'aka) spends what the counter makers put down.
+    case "counter-removed": return "Spending counters";
     default: return capital(tag.replace(/[:-]/g, " "));
   }
 }

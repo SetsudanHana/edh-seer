@@ -11,7 +11,7 @@ import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
 import {
   copySentence, costReductionSentence, temporaryCopySentence, counterPresenceSentence, createsSentence,
-  enterAsCopySentence, fetchSentence, proliferateSentence, creatureConditionSentence,
+  enterAsCopySentence, fetchSentence, proliferateSentence, counterCostSentence, effectPhrase, creatureConditionSentence,
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
@@ -1480,6 +1480,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   tutorEdges(s);
   typedRecursionEdges(s);
   counterPresenceEdges(s);
+  counterCostEdges(s);
   copyFamilyEdges(s);
   landConditionEdges(s);
   creatureConditionEdges(s);
@@ -2705,6 +2706,41 @@ function counterPresenceEdges({ p, c, h, pEvents, reasons }: PairScope): void {
         producer: p.card.name,
       });
     }
+  }
+}
+
+// A COST THAT REMOVES A COUNTER FROM YOUR PERMANENT IS FED BY WHAT PUTS COUNTERS THERE (issue #511).
+// O'aka, Traveling Merchant: "{T}, Remove a counter from a nonland permanent you control: Draw a
+// card." In a deck of Sagas and +1/+1 counters it had no link using its ability. The cost derives as a
+// `counter-removed` emit; the supply is any counter-added event on a permanent it can reach, plus a
+// Saga's own lore counter (CR 714.3a: it enters with one), which no ability states.
+// Only a COST: "remove a counter" as an effect aimed at an opponent is interaction, not a demand.
+function counterCostEdges({ p, c, h, pEvents, reasons }: PairScope): void {
+  if (p === c) return;
+  for (const ca of c.tags.abilities) {
+    const cost = (ca.cost ?? "").toLowerCase();
+    if (ca.kind !== "activated" || !cost.includes("remove ") || !cost.includes(" from ") || !/\bcounters?\b/.test(cost)) continue;
+    const removal = (ca.emits ?? []).find((e) => e.verb === "counter-removed" && e.subject.control === "you");
+    if (!removal) continue;
+    const { self: _s, ...want } = removal.subject;
+    if (removal.subject.self === true) continue; // removes from ITSELF: nothing else can feed it
+    const saga = p.tags.characteristics.subtypes.some((t) => t.toLowerCase() === "saga");
+    const lore = saga && subjectMatches(characteristicsSubject(p.tags, p.card.name), want, h);
+    const supply = lore ? undefined : pEvents.find((e) => e.verb === "counter-added" && e.subject.control !== "opp"
+      && counterAddMatches({ ...e.subject, self: undefined }, want, h));
+    if (!lore && !supply) continue;
+    // The effect the cost pays for sits on a sibling ability of the same clause when derive split it.
+    const paid = ca.effect.kind ? ca : c.tags.abilities.find((b) => b.clause === ca.clause && b.kind === ca.kind && b.effect.kind);
+    reasons.push({
+      tag: `counter-removed:${themeSubjectKey(want)}`,
+      text: counterCostSentence(p.card.name, c.card.name, lore || supply?.subject.self === true,
+        paid ? effectPhrase(paid.effect.kind, paid.amount) : null),
+      effectKind: paid?.effect.kind ?? "",
+      repeatability: "activated",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return; // one claim per pair
   }
 }
 
