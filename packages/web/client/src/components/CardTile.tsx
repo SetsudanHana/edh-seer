@@ -79,7 +79,7 @@ export function CardTile({ slug, name, art, identity, to, caption, note }: {
         </p>
       </Link>
       {caption && <p className="text-(--muted) text-sm leading-snug line-clamp-2">{caption}</p>}
-      {note && <p className="eyebrow text-(--muted)">{note}</p>}
+      {note && <p className="text-xs text-(--muted)">{note}</p>}
     </div>
   );
 }

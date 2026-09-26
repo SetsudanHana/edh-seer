@@ -191,9 +191,9 @@ test("a colour row says which end of the fraction the deck is, and prints its tu
 test("DeckIdentity shows the wider family only when it differs from the primary", () => {
   const narrow = { ...cohesionDraw, score: 0.08, familyScore: 0.46 };
   const { rerender } = render(<DeckIdentity cohesion={narrow} />);
-  expect(screen.getByText(/related themes 0\.46/)).toBeInTheDocument();
+  expect(screen.getByText(/\(46%\) counting related themes/)).toBeInTheDocument();
   rerender(<DeckIdentity cohesion={{ ...cohesionDraw, familyScore: cohesionDraw.score }} />);
-  expect(screen.queryByText(/related themes/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/counting related themes/)).not.toBeInTheDocument();
 });
 
 test("ComboList shows the combo result", () => {
@@ -948,10 +948,10 @@ test("an archetype bar floors its percentage", () => {
  *  the same sentence as a claim -- and the deck's 5.0 anchor was one of them. */
 test("a reason that ends in \"triggers\" carries the unread mark; a real claim does not", () => {
   const { unmount } = render(<ReasonText text="When Arcane Signet is cast, Displacer Kitten triggers" />);
-  expect(screen.getByText(/effect not read yet/)).toBeInTheDocument();
+  expect(screen.getByText(/what it does isn't read yet/)).toBeInTheDocument();
   unmount();
   render(<ReasonText text="When Arcane Signet is cast, Shark Typhoon makes a token" />);
-  expect(screen.queryByText(/effect not read yet/)).toBeNull();
+  expect(screen.queryByText(/what it does isn't read yet/)).toBeNull();
 });
 
 /** THE TWO SCORES ARE THE DIALS NOW (roadmap S15). `HeadlineScores`' tiles printed the same two
@@ -2036,25 +2036,29 @@ test("the role-spend block renders exactly once in the whole scroll", () => {
  *  (`sections={["answers", "win"]}`) need their own presence/absence pins -- nothing previously
  *  asserted Build's OWN content, which is exactly the gap that let Finding 1 through unnoticed. */
 
-test("the Roles chapter's deck-math sections (answers, win) render exactly once", () => {
+test("answers render once in Roles, and how the deck wins once in Game plan", () => {
   // Needs `deckMath` -- see the comment on the Mana test below for why it's layered on locally.
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
-  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
   expect(screen.getAllByText("Can you deal with theirs")).toHaveLength(1);
+  expect(within(container.querySelector("section#roles") as HTMLElement).getByText("Can you deal with theirs")).toBeInTheDocument();
+  // Moved out of Roles (appeal review 2026-09-26): how the deck wins is its plan.
   expect(screen.getAllByText("How you win")).toHaveLength(1);
+  expect(within(container.querySelector("section#plan") as HTMLElement).getByText("How you win")).toBeInTheDocument();
 });
 
 /** MINOR 9 (whole-branch review, 2026-09-01). `sections={["waiting"]}` is the ENTIRE deck-math
  *  contribution of the Engine sub-tab, and nothing asserted it: dropping the prop, or changing it
  *  to `["cast"]`, failed no test. Build and Mana each already had this pin; Engine did not. */
 
-/** `waiting` CAME OFF THE DISSOLVED ENGINE TAB and landed in Roles, the one chapter whose question
- *  it answers. Nothing else may pick it up, and it may not be dropped on the way: without this pin,
+/** `waiting` CAME OFF THE DISSOLVED ENGINE TAB, landed in Roles, and moved on to Game plan with
+ *  "How you win" (appeal review 2026-09-26): what the cards wait for is the deck's plan. Nothing else may pick it up, and it may not be dropped on the way: without this pin,
  *  deleting the section from the `sections` array fails no test. */
-test("the waiting section rides the Roles chapter, exactly once", () => {
+test("the waiting section rides the Game plan chapter, exactly once", () => {
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
-  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
   expect(screen.getAllByText("What your cards are waiting for")).toHaveLength(1);
+  expect(within(container.querySelector("section#plan") as HTMLElement).getByText("What your cards are waiting for")).toBeInTheDocument();
 });
 
 /** I3 (whole-branch review, 2026-09-01): Build and Mana shipped with no title element at all, so

@@ -260,12 +260,14 @@ export function ReasonText({ text, className }: { text: string; className?: stri
         // WHAT WAS NOT READ IS THE EFFECT, and the mark says so (review 2026-09-25). "Couldn't read
         // this card" on the deck's top-ranked key card read as the tool not understanding its own
         // best pick, when the trigger -- the half the pairing rests on -- WAS read.
-        <span className="eyebrow text-(--muted) mr-2">effect not read yet ·</span>
+        <span className="text-xs text-(--muted) mr-2">what it does isn't read yet ·</span>
       ) : null}
       {segments.map((seg, i) =>
         seg.kind === "card" ? <CardName key={i} name={seg.text} />
           : seg.kind === "token" ? (
-            <span key={i} className="whitespace-nowrap">
+            // WRAPS, INSIDE ITS MAKER'S NAME IF IT HAS TO: kept on one line, "Zombie (token from
+            // Aphemia, the Cacophony)" ran off a phone screen (appeal review 2026-09-26).
+            <span key={i}>
               {/* A REAL SPACE, not a margin: copied text and screen readers got "Mark of the
                 *  Rani(token from The Rani)" (review 2026-09-25). */}
               {seg.text}{" "}

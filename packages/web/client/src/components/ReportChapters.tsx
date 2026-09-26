@@ -295,6 +295,25 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  chapter? It does not make any sense"*. A list of what is WORKING is not a repair. It
             *  is the other half of what `ArchetypeBoard` above says in aggregate: the groups say
             *  which mechanisms the deck runs, this says which cards are doing the running. */}
+          {/* HOW THE DECK WINS, AND WHAT ITS CARDS WAIT FOR, IN THE CHAPTER ABOUT ITS PLAN (appeal
+            *  review 2026-09-26). They sat at the end of Roles, a chapter about counting jobs, where
+            *  every seat read them as a grey tail after the card shelves. */}
+          {report.deckMath ? (
+            // No title of its own: its sections are headed "How you win" and "What your cards are
+            // waiting for" already, and a third heading over them said the first one twice.
+            <Movement count="how fast it wins, and what its cards need from each other">
+              <div className="max-w-5xl">
+                <BuildBenchmarks
+                  categories={report.buildCategories}
+                  parents={report.buildParents}
+                  deckMath={report.deckMath}
+                  answerCoverage={report.answerCoverage}
+                  sections={["win", "waiting"]}
+                  showBenchmarks={false}
+                />
+              </div>
+            </Movement>
+          ) : null}
           <HighSynergyCards cards={report.cards} />
         </Chapter>
 
@@ -358,9 +377,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               parents={report.buildParents}
               deckMath={report.deckMath}
               answerCoverage={report.answerCoverage}
-              // `waiting` came off the dissolved Engine tab: it is a count of roles the deck plays,
-              // which is this chapter's question and no other chapter's.
-              sections={["answers", "win", "waiting"]}
+              // Answers stay: they break down the interaction role. How it wins and what the cards
+              // wait for moved to Game plan.
+              sections={["answers"]}
             />
           </Movement>
         </Chapter>

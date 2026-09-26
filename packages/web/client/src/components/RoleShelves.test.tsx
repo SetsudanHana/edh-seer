@@ -53,3 +53,14 @@ test("each shelf is a list of cards with their names, labelled in a player's wor
   expect(within(removal).queryByText("Fell Mire")).toBeNull();
   expect(screen.getByRole("list", { name: "Draw: 1 card" })).toBeInTheDocument();
 });
+
+test("each shelf carries its target: a one-role group on the shelf, a several-role group over its shelves", () => {
+  const { report, graph } = deck();
+  render(<RoleShelves report={report} graph={graph} />);
+  // Ramp is a group of one role: its target sits on the shelf.
+  expect(screen.getByText(/2 cards · aim for 10/)).toBeInTheDocument();
+  // Interaction holds removal and counterspells: one header, with the group's own count.
+  const head = screen.getByTestId("shelf-group-Interaction");
+  expect(head).toHaveTextContent(/Interaction4 cards · aim for 10 \(6 short\)/);
+  expect(screen.getAllByTestId(/^shelf-group-/).map((e) => e.dataset.testid)).toEqual(["shelf-group-Consistency", "shelf-group-Interaction"]);
+});

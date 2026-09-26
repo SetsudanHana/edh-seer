@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { DeckReport } from "../types.js";
 import { buildEngineModel } from "./engine-model.js";
 import { engineDeck } from "./engine-model.fixture.js";
-import { chooseCuts } from "./cut-choice.js";
+import { chooseCuts, keepWords } from "./cut-choice.js";
 
 const CORE = "doesn't fill a core role (ramp, draw, removal…)";
 
@@ -32,7 +32,7 @@ test("the main theme argues for a card instead of hiding it, and sorts it after 
   const { report, model } = withTrim();
   const cuts = chooseCuts(report, model);
   expect(cuts.map((c) => c.name)).toEqual(["Vanilla", "Raise Once", "Sidekick"]);
-  expect(cuts[2]!.keeps).toEqual(["its best edge is on your main theme"]);
+  expect(cuts[2]!.keeps).toEqual(["its strongest link is to your main theme"]);
 });
 
 test("each row reads the Overview's wording and keeps the report's unmet condition, without the clause every row shared", () => {
@@ -56,4 +56,9 @@ test("a saved report from before trim mode falls back to its passive cut list", 
   const { report } = engineDeck();
   const old = { ...report, cutList: [{ name: "Vanilla", rating: 0, partners: 0, manaValue: 5, reasons: ["nothing in the deck connects to it", CORE] }] } as DeckReport;
   expect(chooseCuts(old, null)).toEqual([expect.objectContaining({ name: "Vanilla", reasons: ["nothing in the deck connects to it"] })]);
+});
+
+test("the engine's arguments read in a player's words", () => {
+  expect(keepWords("rates 1.3 of 5 in this deck")).toBe("it scores 1.3 for synergy, where 5 is this deck's best card");
+  expect(keepWords("fills targetedRemoval")).toBe("fills targetedRemoval");
 });

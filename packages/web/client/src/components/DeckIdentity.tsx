@@ -74,9 +74,14 @@ export function DeckIdentity({
   // The WIDER FAMILY, and only when it differs — the same rule the CLI settled on (A10). A specific
   // primary measures itself, so "daleks entering · 0.08" is true and reads as a broken deck until
   // you are also told the family it sits inside is 0.46.
+  // IN CARDS, LIKE THE SHARE BESIDE IT (appeal review 2026-09-26): "related themes 0.78" was the
+  // one bare ratio left on the chapter, and the beginner seat listed it among the words it could not
+  // read. The count comes off the same denominator, so the two figures read as one fraction.
   const family =
     cohesion.familyScore !== undefined && cohesion.familyScore.toFixed(2) !== cohesion.score.toFixed(2)
-      ? cohesion.familyScore.toFixed(2)
+      ? cohesion.nonlandCount > 0
+        ? `${Math.round(cohesion.familyScore * cohesion.nonlandCount)} (${Math.round(cohesion.familyScore * 100)}%) counting related themes`
+        : `${Math.round(cohesion.familyScore * 100)}% counting related themes`
       : null;
   return (
     <div className="border border-(--separator) rounded-(--radius) p-5 bg-(--surface) flex flex-col gap-2">
@@ -108,7 +113,7 @@ export function DeckIdentity({
           {/* The player name, as everywhere else the theme is named (appeal review 2026-09-26). */}
           {cohesion.dominant === false ? `strongest: ${cohesion.name} · ` : ""}
           {focus}
-          {family ? ` · related themes ${family}` : ""}
+          {family ? ` · ${family}` : ""}
         </span>
         {colorIdentity && colorIdentity.length > 0 ? (
           // Only shown when the deck actually has a color identity (a resolved
