@@ -21,3 +21,19 @@ export function landHandProbabilities(landCount: number, deckSize: number, handS
   }
   return probs;
 }
+
+/** THE TWO-LAND KEEP, AS ODDS (baseline round 2026-09-26). The slow-deck seat kept two lands, never
+ *  drew a third, and asked whether that was bad luck or the deck; the page gave opening-hand odds
+ *  only, and r/EDH's answers never settle it either. The honest answer is a number: how often a
+ *  two-land keep finds its third land in time, with this land count and with two more.
+ *
+ *  Lands only: cheap ramp that fetches a land helps a little more, and the page says so. `draws` is
+ *  how many cards are drawn before the land drop in question (2 by the turn-3 drop on the play, 3 on
+ *  the draw). */
+export function nextLandChance(landCount: number, deckSize: number, draws: number, keptLands = 2, handSize = 7): number {
+  const library = deckSize - handSize;
+  const lands = landCount - keptLands;
+  if (lands <= 0 || library <= 0) return 0;
+  if (draws >= library) return 1;
+  return 1 - combinations(library - lands, draws) / combinations(library, draws);
+}
