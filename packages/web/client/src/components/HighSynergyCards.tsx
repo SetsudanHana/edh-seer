@@ -69,6 +69,11 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                     *  (ramp, targetedRemoval)" — the brief's own "single clearest nobody-read-this-
                     *  out-loud tell" — while the human label for the same value was rendering
                     *  "Removal" in the Cards table on the same screen. One map, one file over. */}
+                  {/* THE SCORE RESTS ON EFFECTS THE ENGINE HAS NOT READ (issue #532): "The warning
+                    *  itself is honest; the score next to it is not." Said beside the name, in words. */}
+                  {c.ratingProvisional ? (
+                    <span className="ml-2 text-xs text-(--muted)">provisional: most of its effect not read yet</span>
+                  ) : null}
                   {c.doubleDuty ? (
                     <span className="ml-2 text-xs text-(--success)">
                       pulls double duty{c.doubleDutyRoles?.length

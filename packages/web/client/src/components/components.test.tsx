@@ -776,6 +776,12 @@ test("HighSynergyCards lists the top cards by rating, highest first", () => {
   expect(rows[0]).toContain("Krenko, Mob Boss");
 });
 
+test("HighSynergyCards says when a rating rests on effects not read yet (issue #532)", () => {
+  const cards = SAMPLE.report.cards.map((c, i) => (i === 0 ? { ...c, ratingProvisional: true as const } : c));
+  render(<HighSynergyCards cards={cards} />);
+  expect(screen.getAllByText("provisional: most of its effect not read yet")).toHaveLength(1);
+});
+
 test("HighSynergyCards shows the card's top reason text", () => {
   render(<HighSynergyCards cards={SAMPLE.report.cards} />);
   expect(screen.getAllByText("Krenko makes tokens; Impact Tremors pays off tokens.").length).toBeGreaterThan(0);

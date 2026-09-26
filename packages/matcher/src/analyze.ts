@@ -726,6 +726,8 @@ export function analyzeDeckStructured(
   // headline: a resolved card carrying no derived tags. It rides on every rated row and on the cut
   // list, so a surface can tell "reads zero" apart from "was never opened".
   const derivedByName = new Map(lookupPool.map((dc) => [dc.card.name, dc.tags !== null && dc.tags !== undefined]));
+  const provisionalSet = provisionalRatings(edges);
+  const provisional = (name: string): boolean => provisionalSet.has(name);
   const ratedCards: CardSynergy[] = cards.map((c) => {
     // `c.name` is a FACE name (from `cards`, built off `dir`); `buildRoles`/`printedCost`/
     // `castByName`/`derivedByName` are all keyed by the PHYSICAL card (built from `resolved`).
@@ -773,6 +775,7 @@ export function analyzeDeckStructured(
       derived: derivedByName.get(physical) ?? true,
       ...(physical !== c.name ? { cardName: physical } : {}),
       ...(faceIdx ? { face: faceIdx } : {}),
+      ...(provisional(c.name) ? { ratingProvisional: true as const } : {}),
     };
     return doubleDuty
       ? { ...c, ...cost, synergyRating: doubleDutyRating(base), payoffRating, feederRating, axisWeight, doubleDuty: true, doubleDutyRoles: roles, roles }
@@ -1113,4 +1116,18 @@ export function analyzeDeckStructured(
     ),
     themeMembership: membership,
   };
+}
+
+/** A RATING BUILT ON UNREAD EFFECTS IS PROVISIONAL (issue #532): the cards where more than half the
+ *  reasons touching them are ones where they are the payoff and their effect is unread. Rikku's
+ *  "can't be blocked" has no effect kind by design (effect-kind.ts: evasion), yet those links rated
+ *  it 4.9 and made it a key card. */
+export function provisionalRatings(edges: readonly { reasons: readonly Reason[] }[]): Set<string> {
+  const touching = new Map<string, number>();
+  const unreadPayoff = new Map<string, number>();
+  for (const e of edges) for (const r of e.reasons) {
+    for (const n of new Set([r.producer, r.consumer])) if (n) touching.set(n, (touching.get(n) ?? 0) + 1);
+    if (r.consumer && !r.effectKind) unreadPayoff.set(r.consumer, (unreadPayoff.get(r.consumer) ?? 0) + 1);
+  }
+  return new Set([...unreadPayoff].filter(([n, k]) => 2 * k > (touching.get(n) ?? 0)).map(([n]) => n));
 }
