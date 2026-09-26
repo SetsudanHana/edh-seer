@@ -1329,6 +1329,9 @@ export interface ReasonOptions {
   tokensMediate?: boolean;
   /** The deck's land subtypes, for `landPutFor`. Absent on a card page and in the compass. */
   landTypes?: LandTypes;
+  /** The deck's TYPED "whenever a <type> enters" triggers, for `reuseEdges` (#571): which card
+   *  watches what entering. Absent on a card page and in the compass. */
+  enterWatchers?: { name: string; subject: SubjectFilter }[];
 }
 
 /** AN AURA DIES WITH ITS HOST (CR 704.5m; recall v6 #57, Chime of Night <- Dockside Chef). "When
@@ -1480,6 +1483,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   triggerDoublingEdges(s);
   copyAbilityEdges(s);
   fodderEdges(s);
+  reuseEdges(s);
   flashTimingEdges(s);
   delveEdges(s);
   // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
@@ -2505,6 +2509,38 @@ function flashTimingEdges({ p, c, reasons }: PairScope): void {
       text: `${p.card.name} lets you cast at an opponent's end step, so ${c.card.name}'s temporary token stays a full turn`,
       effectKind: a.effect.kind || "token-generation",
       repeatability: "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return; // one claim per pair
+  }
+}
+
+// A CREATURE A SPELL CAN RE-USE SCORES FOR IT (owner ruling 2026-09-27, #504 -> #571). Ghostly
+// Flicker and Reanimate are not tribal pieces, so they get no edge to Inalla; what they do is let
+// the deck put its Wizards onto the battlefield AGAIN, where Inalla copies them. So the edge is the
+// spell -> the Wizard, named by the card that watches it enter. Only a TYPED watcher counts: "a
+// creature enters" (Impact Tremors) would make every creature re-usable.
+// CEILING: the watcher must be a trigger naming a subtype (a resolved chosen type counts); a
+// class-wide enters payoff is left to the ordinary enters edge.
+function reuseEdges({ p, c, h, opts, reasons }: PairScope): void {
+  const watchers = opts.enterWatchers ?? [];
+  if (p === c || c.isToken || watchers.length === 0 || !c.tags.characteristics.types.includes("creature")) return;
+  const printed = characteristicsSubject(c.tags, c.card.name);
+  for (const a of p.tags.abilities) {
+    const back = (a.emits ?? []).find((e) => e.verb === "enters" && (e.subject.fromZone === "exile" || e.subject.fromZone === "graveyard")
+      && e.subject.self !== true && list(e.subject.type).includes("creature"));
+    if (!back) continue;
+    const { zone: _z, fromZone: _f, scope: _s, entersTapped: _t, ...returns } = back.subject;
+    if (!subjectMatches(printed, { ...returns, type: "creature", token: null }, h)) continue;
+    const w = watchers.find((x) => x.name !== c.card.name && x.name !== p.card.name
+      && subjectMatches(printed, (({ zone: _wz, scope: _ws, other: _wo, ...rest }) => rest)(x.subject) as SubjectFilter, h));
+    if (!w) continue;
+    reasons.push({
+      tag: `reuse:${themeSubjectKey(w.subject)}`,
+      text: `${p.card.name} can put ${c.card.name} onto the battlefield again, and ${w.name} sees it enter`,
+      effectKind: a.effect.kind || "flicker",
+      repeatability: a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : a.kind === "static" ? "static" : "triggered",
       consumer: c.card.name,
       producer: p.card.name,
     });

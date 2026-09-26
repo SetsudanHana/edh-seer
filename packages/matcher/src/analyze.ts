@@ -248,7 +248,12 @@ export function analyzeDeckStructured(
   });
   // The third deck fact, read at match time rather than written into the tags: what land types an
   // untyped land put can put, given the lands this deck runs. See `landPutFor` in edges.ts.
-  const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved) };
+  // The fourth: which cards watch a TYPED creature entering, for `reuseEdges` (#571).
+  const enterWatchers = resolved.flatMap((dc) => (dc.tags?.abilities ?? [])
+    .filter((a) => a.trigger?.verbs.includes("enters") && a.trigger.subject.self !== true
+      && (Array.isArray(a.trigger.subject.subtype) ? a.trigger.subject.subtype.length > 0 : a.trigger.subject.subtype !== undefined))
+    .map((a) => ({ name: dc.card.name, subject: a.trigger!.subject })));
+  const reasonOpts: ReasonOptions = { landTypes: deckLandTypes(resolved), enterWatchers };
   // THE COMPANION, READ LIKE A DECK CARD FOR ITS RELATIONS AND COUNTED NOWHERE. A companion that is
   // also in the deck is a 903.11a violation legality reports; here it is simply not added twice.
   const deckNameSet = new Set(resolved.map((dc) => dc.card.name));
