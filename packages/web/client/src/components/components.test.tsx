@@ -2666,7 +2666,7 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   // Baseline round 2026-09-26: "none found" now says what was looked at, so it cannot read as
   // "never looked".
   expect(screen.getByTestId("bracket-why")).toHaveTextContent(/none of its cards is on Wizards' Game Changers list, and no infinite combo Commander Spellbook knows is complete/i);
-  expect(screen.getByTestId("bracket-checked")).toHaveTextContent(/Not checked: mass land destruction, chained extra turns/);
+  expect(screen.getByTestId("bracket-checked")).toHaveTextContent(/Not checked: mass land destruction or chained extra turns/);
   two.unmount();
 
   // An analysis with no bracket renders nothing at all, never a heading over an empty panel.

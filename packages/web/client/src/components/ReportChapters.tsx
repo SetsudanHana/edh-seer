@@ -6,6 +6,7 @@ import { DeckIdentity } from "./DeckIdentity.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { CutList, type Surplus } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
+import { SpeedPanel } from "./SpeedPanel.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { RecognitionPanel } from "./RecognitionPanel.js";
 import { DeckGauges } from "./DeckGauges.js";
@@ -308,7 +309,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             // No title of its own: its sections are headed "How you win" and "What your cards are
             // waiting for" already, and a third heading over them said the first one twice.
             <Movement count="how fast it wins, and what its cards need from each other">
-              <div className="max-w-5xl">
+              <div className="max-w-5xl flex flex-col gap-8">
+                <SpeedPanel report={report} manaValueOf={manaValueOf} />
                 <BuildBenchmarks
                   categories={report.buildCategories}
                   parents={report.buildParents}
