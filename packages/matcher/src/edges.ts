@@ -1469,6 +1469,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   triggerDoublingEdges(s);
   copyAbilityEdges(s);
   fodderEdges(s);
+  flashTimingEdges(s);
   delveEdges(s);
   // NO "RECURSION RE-FIRES A DEATH TRIGGER" PASS. One existed for a day (PR #295, recall v4 #145:
   // Sheoldred returning Vindictive Lich "so it can die again") and the owner judged all three of its
@@ -2440,6 +2441,52 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
       producer: p.card.name,
     });
     break; // one fodder claim per pair
+  }
+}
+
+/** The class words of "you may cast [class] spells as though they had flash" ("" for all spells), or
+ *  undefined. A card's own flash ("cast THIS spell as though it had flash") grants the deck nothing
+ *  and says "it had", so it never matches. String operations, not a regex: a repeated word group
+ *  before a literal is the polynomial shape CodeQL fails the required check on. */
+function flashGrantClass(oracle: string | undefined): string | undefined {
+  const text = (oracle ?? "").toLowerCase();
+  const at = text.indexOf(" as though they had flash");
+  if (at < 0) return undefined;
+  const head = text.slice(Math.max(0, at - 80), at).replace(/ this turn$/, "");
+  const from = head.lastIndexOf("may cast ");
+  if (from < 0 || !head.endsWith("spells")) return undefined;
+  return head.slice(from + "may cast ".length, head.length - "spells".length).trim();
+}
+
+// FLASH GIVES A TEMPORARY TOKEN A FULL TURN (issue #510). Inalla's copy is exiled "at the beginning
+// of the next end step": cast the Wizard at an opponent's end step, with High Fae Trickster's "you may
+// cast spells as though they had flash", and the copy lives through your whole turn -- the tuner's
+// reason to keep the Trickster, which had no link at all (DERIVE 173 made a flash grant a permission,
+// not a cast). Narrow on purpose: the payoff must make a TEMPORARY token off a creature entering or
+// being cast, and the grant must reach that creature ("spells", "creature spells", or its subtype).
+function flashTimingEdges({ p, c, reasons }: PairScope): void {
+  if (p === c) return;
+  const words = flashGrantClass(p.card.oracleText);
+  if (words === undefined) return;
+  const named = words.split(/[ ,]+/);
+  for (const a of c.tags.abilities) {
+    if (a.kind !== "triggered" || a.temporary !== true || !a.trigger) continue;
+    if (!a.trigger.verbs.some((v) => v === "enters" || v === "cast")) continue;
+    const subject = a.trigger.subject;
+    const subs = list(subject.subtype).map((x) => x.toLowerCase());
+    const creature = list(subject.type).some((t) => t === "creature") || subs.length > 0;
+    if (!creature) continue;
+    const reaches = words === "" || named.includes("creature") || subs.some((x) => named.includes(x));
+    if (!reaches) continue;
+    reasons.push({
+      tag: `flash:${themeSubjectKey(subject)}`,
+      text: `${p.card.name} lets you cast at an opponent's end step, so ${c.card.name}'s temporary token stays a full turn`,
+      effectKind: a.effect.kind || "token-generation",
+      repeatability: "static",
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return; // one claim per pair
   }
 }
 

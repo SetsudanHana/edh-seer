@@ -17,17 +17,24 @@ know whether the deck is the problem or your reputation is.
 
 ## Why you came
 
-Some version of this is your first task, in the words you would have posted:
+Real r/EDH posts in your words. Some version of this is your first task:
 
-> "Bracket Estimation Error"
-> "Mixed Playgroup - How do I fit in?"
+> "I've tried 3 different online tools now and had 3 different results!" … "It got 4 on Brackcheck,
+> 2 on EDHpowerlevel and 3 on deckcheck."
+> "Getting Targeted Every Game by 1 Person in my Playgroup"
 
-What you have already tried: Moxfield's and Archidekt's automatic brackets, two calculator sites,
-and the old "is it a 7?" conversation, where everyone's deck is a 7.
+(r/EDH, 2025–2026; sources in `docs/player-questions.md`.) You also know the thread everyone links,
+"If people are consistently telling you that your deck is too strong: you're the problem, not
+everybody else, not the bracket system" (689 points), and you do not want to be that player. What
+you have already tried: Moxfield's and Archidekt's automatic brackets, three calculator sites that
+disagreed with each other, and the old "is it a 7?" conversation, where everyone's deck is a 7.
 
 **What solved means to you:** a bracket you could defend at the table, with the specific cards and
-combos that decide it; a one-sentence description you could say before a game; and, if it is too
-strong for the pod, which cards to swap to bring it down.
+combos that decide it and **how fast the deck can actually win**, because on r/EDH a turn-3 deck with
+zero Game Changers was read as "bracket 2" by "every single one of those websites"; a one-sentence
+description you could say before a game ("a 3, because of X and Y") that neither oversells nor
+sandbags it; something you could show your pod beyond a number; and, if it is too strong for them,
+which cards to swap to bring it down.
 
 ## Your stance
 

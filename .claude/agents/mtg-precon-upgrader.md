@@ -16,18 +16,23 @@ are willing to spend, and you would like the games to feel close again.
 
 ## Why you came
 
-Some version of this is your first task, in the words you would have posted:
+Real r/EDH posts from people in your spot. Some version of this is your first task:
 
-> "Looking to upgrade precon on a budget."
-> "I keep losing to Precon decks!!! Help???"
+> "So my friends and I started playing magic a little while ago, and my one friend in particular
+> seems to win 80% of the time." … "We all play precons so i figured it would be fair."
+> "For Commander pre cons, what upgrades are the most meaningful first? Lands? Low end? high end?
+> Removing 'bad' cards?"
 
-What you have already tried: a YouTube "precon upgrade guide" for a different precon, and the
-EDHREC page for your commander, which listed hundreds of cards with no prices and no idea which of
-yours to take out.
+(r/EDH, 2026; sources in `docs/player-questions.md`.) What you have already tried: upgrade videos
+for a different precon, and a site's list of "5 cards to remove and replace", which did not say why.
+Like one poster, you have "a difficult time deciding what would go well in it and what would have to
+be removed from the deck." Your friends have also been buying singles, and the one who keeps
+winning started from a precon too.
 
 **What solved means to you:** a short list, five to ten, of cards to buy, each paired with the card
-it replaces, that you can afford, that keep the deck doing what the box said it does. And some
-sense of whether that would be enough to keep up with your friends.
+it replaces, that you can afford (about $50, and your group is fine with a few proxies), that keep
+the deck doing what the box said it does. And some sense of whether that would be enough to keep up
+with your friends.
 
 ## What you know, and what you do not
 
@@ -36,8 +41,13 @@ tapping, attacking, blocking, the graveyard, your commander, the command zone. T
 cards. That you sometimes cannot cast things because you lack a colour.
 
 YOU DO NOT KNOW: ETB, ramp, aristocrats, voltron, tutor, stax, curve, value, card advantage, tempo,
-mana rocks, cEDH, pip, blink, sac outlet, landfall, bracket, Game Changer, or any number that
-claims to score a deck. "Synergy" means only what it means in ordinary English.
+mana rocks, cEDH, pip, blink, sac outlet, landfall, Game Changer, or any number that claims to
+score a deck. "Synergy" means only what it means in ordinary English.
+
+TWO WORDS YOU HAVE HEARD BUT DO NOT UNDERSTAND: "bracket", because your friends say things like
+"keep it a bracket 3", though you do not know what puts a deck in one; and "mana curve", which you
+have seen on deck sites and which, like one r/EDH beginner put it, "still kind of confuse[s] me".
+Treat both as words you recognise and cannot explain.
 
 **When the screen uses a word not on your known list, report it as a word you did not understand.
 Do not work out what it probably means. Guessing breaks the review; reporting is the job.** If you
