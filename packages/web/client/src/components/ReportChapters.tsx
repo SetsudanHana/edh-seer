@@ -15,6 +15,8 @@ import { ManaCurveChart } from "./ManaCurveChart.js";
 import { ManaTimeline } from "./ManaTimeline.js";
 import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
+import { PlanThemes } from "./PlanThemes.js";
+import { buildEngineModel } from "../lib/engine-model.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
@@ -103,9 +105,20 @@ function Chapter({ id, title, children }: {
  *
  *  Chapter membership lives in `lib/chapters.ts` so the rail and the sections cannot disagree about
  *  what exists. */
-export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: RunDiff | null }) {
+export function ReportChapters({ data, diff, onOpenCard }: {
+  data: AnalyzeResponse; diff?: RunDiff | null;
+  /** Opens a card in the Graph tab's one-card view. */
+  onOpenCard?: (id: string) => void;
+}) {
   const { report } = data;
   const current = useCurrentChapter();
+  /** The ranked themes, or null where the engine found nothing to rank; the unranked groups then
+   *  keep the chapter from saying nothing. */
+  const themes = useMemo(() => {
+    if (!data.graph) return null;
+    const m = buildEngineModel(report, data.graph);
+    return m.totalLinks ? m : null;
+  }, [report, data.graph]);
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD — the single fact all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight. A two-faced commander rates one row per face and both carry the same `derived` flag, so
@@ -198,6 +211,13 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
         </Chapter>
 
         <Chapter id="plan" title={title("plan")}>
+          {/* THE DECK'S THEMES AND BEST PAIRS, RANKED, WITH THEIR CARDS (2026-09-26). They were the
+            *  Graph tab's Overview, a second report beside this one; the owner's ruling was that the
+            *  same report twice makes no sense, so they live in the chapter that asks what the plan
+            *  is. They stand in for ArchetypeBoard's unranked pair groups, which said the same
+            *  pairs again without an order. The archetype bars stay: a named-archetype reading the
+            *  themes do not give. */}
+          {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={onOpenCard} /> : null}
           {/* THE ONE FIGURE THAT SAID NOTHING (S13). `cardSignals` in `matcher/src/analyze.ts`
             *  filters on `dc.tags`, so strategies, the groups and the membership matrix are all
             *  derived-only -- and this was the only coverage-limited surface on the page with
@@ -208,6 +228,7 @@ export function ReportChapters({ data, diff }: { data: AnalyzeResponse; diff?: R
             archetypes={report.archetypes}
             nonlandNames={nonlandNames}
             coverage={report.coverage}
+            showGroups={!themes}
           />
           {/* WHICH CARDS CARRY THE PLAN, IN THE CHAPTER THAT ASKS WHAT THE PLAN IS (roadmap T21).
             *  It used to sit in chapter 6, "What's wrong, and what do I do?", beside the cut list --

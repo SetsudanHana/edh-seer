@@ -119,7 +119,7 @@ function GroupRow({ group, size }: { group: Group; size?: { earned: number; tota
   );
 }
 
-export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], coverage }: {
+export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], coverage, showGroups = true }: {
   strategies?: DeckReport["strategies"];
   archetypes: DeckReport["archetypes"];
   /** Nonland card names, for each group's earned count. Supplied by the caller because the land rule is
@@ -133,9 +133,14 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
    *  to call this", `CutList` names the unjudged, the graph hatches its nodes, and the board said
    *  nothing. Absent on a fully-read deck, like every other coverage-keyed line. */
   coverage?: DeckReport["coverage"];
+  /** The unranked pair groups. Off where the ranked themes with their cards stand in for them
+   *  (Game plan, 2026-09-26): the same pairs twice, once ranked and once not, read as two reports. */
+  showGroups?: boolean;
 }) {
   const hasStrategies = !!strategies && strategies.length > 0;
-  const hasGroups = !!archetypes && archetypes.length > 0;
+  const hasGroups = showGroups && !!archetypes && archetypes.length > 0;
+  // With the groups shown elsewhere, no archetypes is nothing to say rather than "no patterns".
+  if (!hasStrategies && !showGroups) return null;
   if (!hasStrategies && !hasGroups) {
     return <p className="text-(--muted) text-sm">No recognizable archetype patterns — try adding more synergy pieces.</p>;
   }
@@ -175,10 +180,12 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
       {/* NOT A HEADING AND NOT A DISCLOSURE (T1). The h3 restated the chapter title one line above
         *  it, and the sentence under it was the whole of T15 -- which is exactly the thing that must
         *  not sit behind a toggle a reader never opens. It is one visible line now. */}
-      <p className="text-xs text-(--muted) max-w-[65ch]">
-        Your main theme is the one at the top of the report. Below are two views of which cards
-        feed which theme, and neither is a ranking.
-      </p>
+      {showGroups ? (
+        <p className="text-xs text-(--muted) max-w-[65ch]">
+          Your main theme is the one at the top of the report. Below are two views of which cards
+          feed which theme, and neither is a ranking.
+        </p>
+      ) : null}
       {hasStrategies ? (
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">Archetypes</h3>
