@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, listNames, type EngineCard, type EngineGroup, type EngineModel, type Link, type Repeat } from "../lib/engine-model.js";
 import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
@@ -26,6 +27,7 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
   const m = useMemo(() => buildEngineModel(report, graph), [report, graph]);
   const panelRef = useRef<HTMLDivElement>(null);
   const sel = selected && m.cards.has(selected) ? selected : null;
+  const narrow = useNarrow();
   // On a phone the panel is a sheet over the bottom of the screen, so the reader stays by the chip
   // they tapped; scrolling up to the panel lost their place several screens away (round 10).
   useEffect(() => {
@@ -146,7 +148,13 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
         <h2 id="eng-groups" className="text-lg font-semibold">What your deck does</h2>
         <p className="text-sm text-(--muted)">Tap any card to see the cards it works with. A card with a dashed outline works with its group only once.</p>
         {/* Clear of the sticky site and deck bars, which hid the panel's title (round 6). */}
-        <div ref={panelRef} className="scroll-mt-40">{sel ? <SelectedPanel m={m} id={sel} onClear={() => onSelect(null)} onOpenCard={onOpenCard} /> : null}</div>
+        <div ref={panelRef} className="scroll-mt-40">
+          {sel ? (narrow
+            // Into the body: an ancestor of the report pins `fixed` to itself, and the sheet
+            // landed at the bottom of the tab instead of the screen (round 11 capture).
+            ? createPortal(<SelectedPanel m={m} id={sel} onClear={() => onSelect(null)} onOpenCard={onOpenCard} />, document.body)
+            : <SelectedPanel m={m} id={sel} onClear={() => onSelect(null)} onOpenCard={onOpenCard} />) : null}
+        </div>
         {shownGroups.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />)}
         {moreGroups.length ? (
           <p>
@@ -248,6 +256,20 @@ function CardText({ card }: { card: EngineCard }) {
   );
 }
 
+/** Whether the screen is phone-width, following resizes. */
+function useNarrow(): boolean {
+  const query = "(max-width: 639px)";
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return;
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return narrow;
+}
+
 /** How many of the deck's groups show before "Show N more": the six ran to ten phone screens,
  *  and every seat stopped reading partway through them (round 9). */
 const GROUP_CAP = 3;
@@ -332,9 +354,9 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
         {shown.length ? <div className="flex flex-wrap gap-1.5">{shown.map((c) => chip(c, false))}</div> : null}
         {rest.length ? (
           <p className="text-sm text-(--muted)">
-            and {rest.length} more{sel && restLit ? `, ${restLit} of them lit by ${selName}` : ""}:{" "}
+            and {rest.length} more{sel && !filtering && restLit ? `, ${restLit} of them lit by ${selName}` : ""}:{" "}
             {rest.map((c, i) => (
-              <span key={c.id} className={on(c) ? "font-semibold text-(--foreground) underline decoration-2 underline-offset-2" : sel ? "opacity-40" : ""}>
+              <span key={c.id} className={filtering ? "text-(--foreground)" : on(c) ? "font-semibold text-(--foreground) underline decoration-2 underline-offset-2" : sel ? "opacity-40" : ""}>
                 {i ? ", " : ""}{c.name.split(" // ")[0]}{c.isToken ? " (token)" : ""}
               </span>
             ))}.
