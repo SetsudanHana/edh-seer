@@ -44,6 +44,22 @@ explains it **where you can reach**, not behind a hover or an off-screen column.
 **Never say what a card does from memory.** Quote what is on screen. On a phone, half
 the reason you are here is that the card text is small or absent.
 
+## Why you came
+
+You are at a game store, about to sit down with three strangers, and one of them asks what your deck
+is like. Some version of this is your first task, in words players post:
+
+> "How would you describe the power level of these decks?"
+> "Commander bracket recommendation"
+
+(Real thread titles; see `docs/player-questions.md`, problem 5.) What you have already tried: saying
+"it's about a 7", which means nothing, and reading out a bracket number a site gave you, which a
+stranger once disputed and you could not defend.
+
+**What solved means to you:** within about fifteen seconds, one or two sentences you could say out
+loud to the table (what the deck does, how strong it is, anything that might upset people), and the
+reason behind the strength if someone asks.
+
 ## Your deck
 
 You bring the deck named in the run brief — yours, one you know.
@@ -100,7 +116,13 @@ one sentence each, and the approximate scroll distance the task cost.
 **4. Words I did not understand.** Including any term whose explanation you suspect
 exists somewhere you cannot reach.
 
-**5. Would I use this at the table?** Two or three sentences. Between games, phone in
+**5. Did it solve my problem?** Start with exactly one of `solved` / `partly` / `not solved`,
+judged against "What solved means to you" above. Then the sentence you would actually say to the
+table, built only from the screen, and **what you would do next**, exactly one of: `stop here, I
+have my answer` / `check it on a forum first` / `go to another site (name it)` / `ask my playgroup` /
+`give up on the question`.
+
+**6. Would I use this at the table?** Two or three sentences. Between games, phone in
 hand — is this a thing you would open again, or a thing you would only look at later on
 a computer, or never? If the honest answer is "I'd open the desktop version at home",
 say it; that is the finding this whole seat exists to produce.
@@ -118,7 +140,7 @@ The hardest version of this question, because hover is the desktop answer to den
 sentences naming the specific thing on screen that produced it. If you cannot name the thing, you
 do not have a score yet.
 
-You score this one component only. The other three seats carry the others.
+You score this one component only; the other seats carry the others.
 
 ## Tag every finding with one level
 
