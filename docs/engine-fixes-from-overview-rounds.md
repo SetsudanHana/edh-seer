@@ -10,22 +10,22 @@
 - What is left here is **engine / matcher / tagger** work. Most seats' scores are now capped by these claims, not by the page.
 - Two things the seats flagged turned out to be right, so they are **not** here: Mana Sculpt as a counterspell, and Hedge Maze surveilling when fetched.
 
-**Status (2026-09-26).** Engine PRs that landed after this list was written, going by their titles. Confirm each on its calibration deck before deleting the item:
+**Status (2026-09-26).** Engine PRs that landed after this list was written. The rows marked *live* were confirmed on edhseer.cards after the deploy of #496; confirm the rest on their calibration decks before deleting an item:
 
 | item | status |
 |---|---|
-| 1. Weaver copies from non-enchantments | partly: #488 reads a double-faced card as two type lines (Crystal Fragments, Dion, Jill); the enchantment-source filter itself is still open |
-| 2. "arrives with counters" names the wrong card | (a) landed in #495; (b) and (c), the repeatability, are still open |
-| 3. Prowess wording | landed in #492 |
+| 1. Weaver copies from non-enchantments | fixed, *live*: in the Yuna deck Weaver's only copy line is from Sythis, an enchantment; Yuna and Crystal Fragments are gone (#488 plus the copy-source filter) |
+| 2. "arrives with counters" names the wrong card | (a) fixed, *live*: "When Rikku is cast, it arrives with counters thanks to Yuna"; (b) and (c), the repeatability, still open: these lines still read EVERY TIME |
+| 3. Prowess wording | fixed, *live*: "Harmonic Prodigy gets +1/+1" |
 | 4. Inalla's exile to "leaves the battlefield" payoffs | open |
-| 5. The party as one subject | landed in #490 |
+| 5. The party as one subject | fixed, *live*: the top group is the party (the Overview names it "Counts your party members" from the next client release) |
 | 6. One-shot effects tagged "every time" | landed in #493 (a one-shot producer) and #490 (an on-cast board count happens once) |
-| 7. Fetch tags name the matched type | landed in #489 |
+| 7. Fetch tags name the matched type | fixed, *live*: no "Fetching Islands" group in Inalla |
 | 8. The Earth Crystal doubles any counter | open |
-| 9. Role mis-tags | landed in #491 (Archaeomancer, Weaver) |
-| 10. "Effect not read yet" on read doublers | landed in #494 |
+| 9. Role mis-tags | fixed, *live*: neither Archaeomancer nor Weaver is filed under removal or counterspells |
+| 10. "Effect not read yet" on read doublers | fixed, *live*: no "effect not read yet" in Inalla |
 | 11. Multiclass Baldric | check after #490 |
-| 12. Class word credited as a token | landed in #494 |
+| 12. Class word credited as a token | fixed, *live*: no "(token from Transpose)" in Inalla |
 
 **How to reproduce any item:**
 - Analyse the named deck (`packages/cli/decks/...`) and read `report.edges[].reasons[]`.
