@@ -229,7 +229,8 @@ export interface DeckMath {
    *  Scored the OPPOSITE way to `answers`: coverage wants breadth, focus wants concentration. A
    *  deck all-in on one plan beats a deck with three half-plans, so a low focus is the finding. */
   wincons: {
-    classes: { class: string; count: number; share: number; cards?: string[] }[];
+    /** The cards on each plan; `payoffs` on go-wide only, the cards that turn the board into a win. */
+    classes: { class: string; count: number; share: number; cards?: string[]; payoffs?: string[] }[];
     /** Herfindahl over the class shares: 1 is single-minded, 1/n is n plans split evenly. */
     focus: number;
     primary?: string;

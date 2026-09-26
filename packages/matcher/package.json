@@ -20,6 +20,7 @@
     "./partner-shard": "./src/partner-shard.ts",
     "./partners-core": "./src/partners-core.ts",
     "./sentence": "./src/sentence.ts",
+    "./deck-sentence": "./src/deck-sentence.ts",
     "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",
     "./archetypes": "./src/archetypes.ts",

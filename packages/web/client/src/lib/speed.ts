@@ -84,8 +84,8 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
   }
 
   for (const [kind, label] of [["burn", "damage or drain"], ["mill", "milling them out"]] as const) {
-    // By the win plan itself, not its card list: the report does not always name a class's cards,
-    // and Chandra, "mostly burn, 21 cards", had no burn line when this keyed on the list.
+    // By the win plan itself, not its card list: until 2026-09-26 the report named only combo and
+    // alt-win cards, and Chandra, "mostly burn, 21 cards", had no burn line when this keyed on the list.
     if (has(kind)) routes.push({ kind, label, cards: cardsOf(kind), caveat: "nothing in the report models how fast this route kills, so it has no turn" });
   }
   return routes;

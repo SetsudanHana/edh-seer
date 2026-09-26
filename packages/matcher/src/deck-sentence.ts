@@ -26,7 +26,7 @@ export interface DeckSentence {
 /** English for a wincon class. `burn` is deliberately "damage or drain" and not "burn": the class
  *  holds a Zulaport Cutthroat and a Lightning Bolt alike (roadmap A14 measured it primary in 27 of
  *  71 decks), and naming it "burn" would assert the narrower of the two on most of them. */
-const WIN_PHRASE: Record<string, string> = {
+export const WIN_PHRASE: Record<string, string> = {
   burn: "damage or drain",
   "go-wide": "attacking with a wide board",
   voltron: "one big creature",
