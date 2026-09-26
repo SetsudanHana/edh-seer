@@ -39,6 +39,7 @@
     "exileRemoval": "exile[^.]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileReturnsToBattlefield": "return (?:it|that card) to the battlefield|returns to the battlefield",
     "exileThenReturns": "then return (?:it|that card|them|those cards) to the battlefield",
+    "controllerGetsCopies": "its controller creates [^.]{0,40}tokens? that (?:are|is a) cop(?:y|ies) of",
     "flickerTarget": "exile (?:another |any number of |up to (?:one|two) )?target (?![^.]{0,40}?(?:you don't control|an opponent controls))",
     "flashKeyword": "(?:^|\\n)flash\\b(?!back)",
     "bounceRemoval": "return target\\s+(?<class>[^.;:]{0,60}?)\\s+to (?:its owner's|their|the owner's|owner's) hand",
@@ -251,9 +252,10 @@
       "not": [
         { "op": "typeLine", "contains": "land" },
         { "op": "oracle", "pattern": "graveyardHate" },
-        { "op": "oracle", "pattern": "boardWipe" }
+        { "op": "oracle", "pattern": "boardWipe" },
+        { "op": "oracle", "pattern": "controllerGetsCopies" }
       ],
-      "why": "A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here."
+      "why": "A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here. A destroy whose controller gets copies back is not removal (owner ruling 2026-09-27, #513: Saw in Half is played on your own creatures to win or combo)."
     },
     {
       "id": "protection.text",

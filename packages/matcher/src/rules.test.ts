@@ -662,3 +662,18 @@ test("a graveyard return is not removal, and retargeting your own copy is not st
   expect([...(m.get("targetedRemoval") ?? [])].sort()).toEqual(["Unsummon"]);
   expect([...(m.get("stackInteraction") ?? [])].sort()).toEqual(["Redirect"]);
 });
+
+/** Owner ruling 2026-09-27 (issue #513): Saw in Half is NOT removal -- its controller gets two copies
+ *  back, and it is played on your own creatures to win or combo. Fractured Identity gives the copies
+ *  to everyone else and stays removal; Grim Hireling keeps both its roles. */
+test("a destroy whose controller gets copies back is neither removal nor an answer", () => {
+  const saw = mk("Saw in Half", "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.", "Instant");
+  const fractured = mk("Fractured Identity", "Exile target nonland permanent. Each player other than its controller creates a token that's a copy of it.", "Sorcery");
+  const hireling = mk("Grim Hireling", "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.\n{B}, Sacrifice X Treasures: Target creature gets -X/-X until end of turn. Activate only as a sorcery.", "Creature — Tiefling Rogue");
+  const cats = detectBuildCategories([saw, fractured, hireling]);
+  expect(cats.get("targetedRemoval")?.has("Saw in Half") ?? false).toBe(false);
+  expect(cats.get("targetedRemoval")?.has("Fractured Identity")).toBe(true);
+  expect(cats.get("targetedRemoval")?.has("Grim Hireling")).toBe(true);
+  expect(cats.get("ramp")?.has("Grim Hireling")).toBe(true);
+  expect(detectAnswerClasses([saw]).get("creature")?.cards.has("Saw in Half") ?? false).toBe(false);
+});
