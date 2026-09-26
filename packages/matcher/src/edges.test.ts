@@ -5211,3 +5211,27 @@ test("a creature-or-land put reads as a land entering to a landfall trigger", ()
   expect(texts.length).toBeGreaterThan(0);
   expect(texts.every((t) => t.startsWith("When a land enters thanks to Yuna's Decision"))).toBe(true);
 });
+
+/** FLASH GIVES A TEMPORARY TOKEN A FULL TURN (issue #510). Inalla's copy is exiled at the next end
+ *  step; cast the Wizard at an opponent's end step with High Fae Trickster and it stays a whole turn.
+ *  Live shapes, read 2026-09-26. A noncreature grant and a card's own flash grant nothing here. */
+test("a flash grant links to a payoff that makes a temporary token off a creature entering", () => {
+  const inalla = base("Inalla, Archmage Ritualist", [{
+    kind: "triggered", temporary: true,
+    trigger: { verbs: ["enters"], subject: { control: "you", token: false, other: true, subtype: "wizard" } },
+    effect: { kind: "token-generation", subject: { control: "you", token: true, subtype: "wizard" } },
+  }] as CardTags["abilities"]);
+  const withText = (name: string, oracleText: string) => {
+    const card = base(name, []);
+    (card.card as { oracleText: string }).oracleText = oracleText;
+    return card;
+  };
+  const trickster = withText("High Fae Trickster", "Flash\nFlying\nYou may cast spells as though they had flash.");
+  const floodcaller = withText("Valley Floodcaller", "Flash\nYou may cast noncreature spells as though they had flash.");
+  const ownFlash = withText("Spider Climb", "You may cast this spell as though it had flash if you pay {2} more to cast it.");
+  const flash = (p: ReturnType<typeof base>) => directedReasons(p, inalla, H).filter((r) => r.tag.startsWith("flash:"));
+  expect(flash(trickster).map((r) => [r.tag, r.text])).toEqual([["flash:wizard",
+    "High Fae Trickster lets you cast at an opponent's end step, so Inalla, Archmage Ritualist's temporary token stays a full turn"]]);
+  expect(flash(floodcaller)).toEqual([]);
+  expect(flash(ownFlash)).toEqual([]);
+});
