@@ -332,8 +332,8 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
         *  looked" read the same, and the bracket seat could not tell them apart. */}
       <p data-testid="bracket-checked" className="text-xs text-(--muted) max-w-[65ch]">
         Checked: every card against Wizards&rsquo; Game Changers list, and every combo Commander
-        Spellbook knows whose pieces are all in this deck. Not checked: mass land destruction, chained
-        extra turns, or how fast the deck can win.
+        Spellbook knows whose pieces are all in this deck. Not checked: mass land destruction or chained
+        extra turns. How fast it can win, by every route, is in the Game plan chapter.
       </p>
       <p className="text-xs text-(--muted) max-w-[65ch]">
         {bracket.band === "3" ? (
