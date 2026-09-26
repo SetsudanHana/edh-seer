@@ -39,3 +39,17 @@ test("the cards one step out are grouped under the fewest partners that cover th
   expect(new Set(ids).size).toBe(ids.length);
   expect(o.through.every((g) => g.example)).toBe(true);
 });
+
+test("every sector on a card gets its own colour", () => {
+  const o = buildOrbit(model(), "Payoff A")!;
+  expect(new Set(o.sectors.map((s) => s.hue)).size).toBe(o.sectors.length);
+});
+
+test("a sector with one-time links keeps one on the ring when the rest are folded", () => {
+  const m = model();
+  const o = buildOrbit(m, "Cleric 1")!;
+  const withOnce = o.sectors.find((s) => s.partners.some((p) => p.once) && s.partners.length > 2);
+  if (!withOnce) return;
+  const v = visiblePartners(o, o.sectors.length * 2).find((x) => x.sector === withOnce)!;
+  expect(v.shown.some((p) => p.once)).toBe(true);
+});

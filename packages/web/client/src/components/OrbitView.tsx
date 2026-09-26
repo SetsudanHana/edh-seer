@@ -48,6 +48,8 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
     setTrail((t) => [...t.filter((x) => x !== id), focusId].slice(-6));
     onFocus(id);
   };
+  // One way back, a step at a time: a trail of names above the picture beside this button and
+  // "Back to the card list" made three routes on one phone screen (orbit round 2).
   const back = (i: number) => { const id = trail[i]!; setTrail(trail.slice(0, i)); onFocus(id); };
   const tap = (id: string) => {
     if (id === focusId) { setSel(null); setSector(null); return; }
@@ -63,12 +65,6 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
     <div className="flex flex-col gap-3 py-2">
       <nav aria-label="Cards you have centred" className="flex flex-wrap items-center gap-1 text-sm text-(--muted)">
         {onBack ? <button type="button" className="mr-2 min-h-11 rounded-(--radius) border border-(--separator) px-3" onClick={onBack}>Back to the card list</button> : null}
-        {trail.map((id, i) => (
-          <span key={id} className="flex items-center gap-1">
-            <button type="button" className="min-h-11 underline decoration-dotted underline-offset-4 hover:text-(--foreground)" onClick={() => back(i)}>{firstPart(m.cards.get(id)!)}</button>
-            <span aria-hidden="true">›</span>
-          </span>
-        ))}
         <b className="text-(--foreground)" aria-current="page">{focusName}</b>
       </nav>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -158,9 +154,9 @@ function Orbit({ o, narrow, sel, sector, onTap, onSector }: {
           const on = sector === sectorKey(sl.s);
           return (
             <g key={`m-${sl.s.name}`} transform={`translate(${x},${y})`} role="button" tabIndex={0} className={DISC}
-              aria-label={`${sl.n} more: ${sl.s.name}`} aria-pressed={on} opacity={dimming && !on ? 0.45 : 1}
+              aria-label={`${sl.n} more: ${sl.s.name}${sl.once ? `, ${sl.once} of them only once` : ""}`} aria-pressed={on} opacity={dimming && !on ? 0.45 : 1}
               onClick={() => onSector(sl.s)} onKeyDown={key(() => onSector(sl.s))}>
-              <circle r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={on ? 4 : 2} />
+              <circle r={r} fill="var(--surface-secondary)" stroke={sl.s.hue} strokeWidth={on ? 4 : 2} strokeDasharray={sl.once ? "4 3" : undefined} />
               <text textAnchor="middle" dy={5} fontSize={narrow ? 13 : 14} fill="var(--foreground)">+{sl.n}</text>
             </g>
           );
@@ -197,7 +193,7 @@ const DISC = "group cursor-pointer outline-none [&>circle]:group-focus-visible:s
 
 type Slot = { x: number; y: number; a: number } & (
   | { kind: "card"; p: OrbitPartner; s: OrbitSector; lines: string[]; lx: number; ly: number; anchor: "start" | "middle" | "end" }
-  | { kind: "more"; n: number; s: OrbitSector }
+  | { kind: "more"; n: number; s: OrbitSector; once: number }
 );
 
 /** WHERE EVERYTHING GOES, the same every time for the same card. The ring holds as many discs as
@@ -206,11 +202,11 @@ type Slot = { x: number; y: number; a: number } & (
  *  further out. */
 export function layoutOrbit(o: OrbitModel, narrow: boolean) {
   // One geometry per width rather than one scaled down: at 390px a 720 box drew 6px names.
-  const W = narrow ? 440 : 880, H = narrow ? 470 : 720;
+  const W = narrow ? 452 : 880, H = narrow ? 470 : 720;
   const cx = W / 2, cy = H / 2;
-  const R = narrow ? 128 : 228, r = narrow ? 17 : 25, fr = narrow ? 36 : 58;
+  const R = narrow ? 112 : 228, r = narrow ? 17 : 25, fr = narrow ? 34 : 58;
   // A phone gets more room between discs: at 390px twenty discs touched (orbit round 1).
-  const lineMax = narrow ? 11 : 16, charW = narrow ? 8 : 7, lineH = narrow ? 15 : 14, pitch = 2 * r + (narrow ? 20 : 10);
+  const lineMax = narrow ? 12 : 16, charW = narrow ? 8 : 7, lineH = narrow ? 15 : 14, pitch = 2 * r + (narrow ? 20 : 10);
   const room = Math.floor((2 * Math.PI * R) / pitch);
   // No empty slot between sectors on a phone: there the gaps left five discs of fourteen slots,
   // and the colours already tell the groups apart.
@@ -218,12 +214,12 @@ export function layoutOrbit(o: OrbitModel, narrow: boolean) {
   let cap = room - gaps;
   let vis = visiblePartners(o, cap);
   for (let used = count(vis, gaps); used > room && cap > 1; used = count(vis, gaps)) vis = visiblePartners(o, --cap);
-  type Raw = { kind: "gap" } | { kind: "card"; p: OrbitPartner; s: OrbitSector } | { kind: "more"; n: number; s: OrbitSector };
+  type Raw = { kind: "gap" } | { kind: "card"; p: OrbitPartner; s: OrbitSector } | { kind: "more"; n: number; s: OrbitSector; once: number };
   const raw: Raw[] = [];
   for (const v of vis) {
     if (raw.length && gaps) raw.push({ kind: "gap" });
     for (const p of v.shown) raw.push({ kind: "card", p, s: v.sector });
-    if (v.hidden) raw.push({ kind: "more", n: v.hidden, s: v.sector });
+    if (v.hidden) raw.push({ kind: "more", n: v.hidden, s: v.sector, once: v.hiddenOnce });
   }
   if (gaps) raw.push({ kind: "gap" });
   const firsts = new Map<string, number>();
@@ -269,6 +265,38 @@ function count(vis: ReturnType<typeof visiblePartners>, gaps: number): number {
 
 const key = (f: () => void) => (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); f(); } };
 
+/** One "Through X" group. Each name opens its own line and both cards' text: one example sentence
+ *  over 25 names could not be checked (orbit round 2). */
+function Through({ t, onCentre }: { t: OrbitModel["through"][number]; onCentre: (id: string) => void }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const card = open ? t.cards.find((c) => c.id === open) : undefined;
+  const lines = card ? (t.lines.get(card.id) ?? []) : [];
+  return (
+    <li className="flex flex-col gap-1">
+      <span className="flex items-center gap-2">
+        <Art card={t.via} size={28} />
+        <span className="flex-1">Through <b>{displayName(t.via)}</b> <span className="text-(--muted)">({t.cards.length})</span></span>
+        <button type="button" className="min-h-9 shrink-0 rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(t.via.id)}>Put it in the middle</button>
+      </span>
+      {t.example && !card ? <span className="text-xs text-(--muted)"><Badge repeat={t.example.repeat} /><ReasonText text={t.example.text} /></span> : null}
+      <span className="flex flex-wrap gap-x-2 gap-y-0.5">
+        {t.cards.map((c, i) => (
+          <button key={c.id} type="button" aria-expanded={open === c.id} className={`min-h-8 text-left hover:underline ${open === c.id ? "font-semibold text-(--accent)" : ""}`} onClick={() => setOpen(open === c.id ? null : c.id)}>
+            {displayName(c)}{i < t.cards.length - 1 ? "," : ""}
+          </button>
+        ))}
+      </span>
+      {card ? (
+        <div className="mt-1 flex flex-col gap-1.5 rounded-(--radius) border border-(--separator) bg-(--background) p-2">
+          <Lines links={lines} />
+          <ReadCards cards={[t.via, card]} />
+          <button type="button" className="min-h-9 self-start rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(card.id)}>Put {firstPart(card)} in the middle</button>
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
 function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void }) {
   const name = displayName(o.focus);
   const first = firstPart(o.focus);
@@ -306,23 +334,7 @@ function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: Orbit
             <b>{o.near.length} more card{o.near.length === 1 ? "" : "s"}</b> work with a card around {first}, but not with {first} itself
           </summary>
           <ul className="mt-2 flex flex-col gap-3">
-            {o.through.map(({ via, cards, example }) => (
-              <li key={via.id} className="flex flex-col gap-1">
-                <span className="flex items-center gap-2">
-                  <Art card={via} size={28} />
-                  <span className="flex-1">Through <b>{displayName(via)}</b> <span className="text-(--muted)">({cards.length})</span></span>
-                  <button type="button" className="min-h-9 shrink-0 rounded-(--radius) border border-(--separator) px-2 text-xs" onClick={() => onCentre(via.id)}>Put it in the middle</button>
-                </span>
-                {example ? <span className="text-xs text-(--muted)"><Badge repeat={example.repeat} /><ReasonText text={example.text} /></span> : null}
-                <span className="flex flex-wrap gap-x-2 gap-y-0.5">
-                  {cards.map((c, i) => (
-                    <button key={c.id} type="button" className="min-h-8 text-left hover:underline" onClick={() => onCentre(c.id)}>
-                      {displayName(c)}{i < cards.length - 1 ? "," : ""}
-                    </button>
-                  ))}
-                </span>
-              </li>
-            ))}
+            {o.through.map((t) => <Through key={t.via.id} t={t} onCentre={onCentre} />)}
           </ul>
         </details>
       ) : null}
@@ -338,9 +350,16 @@ function Summary({ o, onSector, onCentre }: { o: OrbitModel; onSector: (s: Orbit
           </ul>
         </details>
       ) : (
-        // An empty list said nothing, and a missing list read as a hole (orbit round 1).
-        <p className="text-(--muted)">Every other nonland card in the deck connects to {first}, directly or through a card around it.</p>
+        // An empty list said nothing, and a missing list read as a hole (orbit round 1). Lands are
+        // counted apart: "every other nonland card" beside lists full of lands read as a
+        // contradiction (round 2).
+        <p className="text-(--muted)">
+          {o.farLands
+            ? <>Every other card in the deck connects to {first}, directly or through a card around it, except {o.farLands} land{o.farLands === 1 ? "" : "s"}.</>
+            : <>Every other card in the deck connects to {first}, directly or through a card around it.</>}
+        </p>
       )}
+      {o.far.length && o.farLands ? <p className="text-xs text-(--muted)">{o.farLands} land{o.farLands === 1 ? " doesn't" : "s don't"} connect either, which is normal for a land.</p> : null}
     </>
   );
 }
@@ -356,8 +375,20 @@ function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: Eng
       </div>
       <p className="text-(--muted)">The {countText(s.partners.length, s.partners.filter((p) => p.once).length)} here that work with {displayName(focus)}. Tap one for every line and both cards' text.</p>
       <ul className="flex flex-col gap-1">
-        {s.partners.map((p) => {
-          // Each card with its first line, so the list compares cards without a tap each (round 1).
+        {sameLine(s.partners, partnerOf).map((row) => row.cards.length > 2 ? (
+          // ONE SENTENCE, MANY NAMES: fifteen rows of "When X enters because Inalla copies it…"
+          // with only the name changing read as a wall (orbit round 2).
+          <li key={row.key} className="flex flex-col gap-1 rounded-(--radius) border border-(--separator) p-2">
+            <span className="text-xs text-(--muted)"><Badge repeat={row.repeat} />{row.sentence}</span>
+            <span className="flex flex-wrap gap-x-2 gap-y-1">
+              {row.cards.map((p) => (
+                <button key={p.card.id} type="button" className="flex min-h-9 items-center gap-1.5 rounded-(--radius) px-1 text-left hover:bg-(--surface-secondary)" onClick={() => onPick(p.card.id)}>
+                  <Art card={p.card} size={24} />{displayName(p.card)}{p.card.isToken ? <span className="text-(--muted)"> (token)</span> : null}
+                </button>
+              ))}
+            </span>
+          </li>
+        ) : row.cards.map((p) => {
           const l = p.links.find((x) => partnerOf(x) === p.card.id) ?? p.links[0];
           return (
             <li key={p.card.id}>
@@ -370,10 +401,23 @@ function SectorPanel({ s, focus, onPick, onClose }: { s: OrbitSector; focus: Eng
               </button>
             </li>
           );
-        })}
+        }))}
       </ul>
     </>
   );
+}
+
+/** Partners whose first line is the same sentence with only their own name changed, grouped. The
+ *  sentence keeps its shape with the name swapped for "one of these". */
+export function sameLine(partners: OrbitPartner[], partnerOf: (l: OrbitPartner["links"][number]) => string) {
+  const rows = new Map<string, { key: string; sentence: string; repeat: OrbitPartner["links"][number]["repeat"]; cards: OrbitPartner[] }>();
+  for (const p of partners) {
+    const l = p.links.find((x) => partnerOf(x) === p.card.id) ?? p.links[0];
+    const shape = l ? `${l.repeat}|${l.text.split(p.card.name).join("\u0000")}` : `solo|${p.card.id}`;
+    if (!rows.has(shape)) rows.set(shape, { key: shape, sentence: l ? l.text.split(p.card.name).join("one of these") : "", repeat: l?.repeat ?? "triggered", cards: [] });
+    rows.get(shape)!.cards.push(p);
+  }
+  return [...rows.values()];
 }
 
 function PartnerPanel({ focus, p, onCentre, onClose }: { focus: EngineCard; p: OrbitPartner; onCentre: () => void; onClose: () => void }) {

@@ -207,6 +207,23 @@
 ### 21. Land-fetching spells without the ramp role (Yuna)
 - Growth Spiral and Planar Genesis put lands onto the battlefield, yet they are judged by links and land on the cut list. Farseek, Nature's Lore and Three Visits carry the `ramp` role and sit in the jobs box. The skeptic read this as two rules for the same kind of card.
 
+## Found by the Orbit rounds (2026-09-26)
+
+Each is also a GitHub issue, so it can be picked up on its own.
+
+### 22. Prowess links every noncreature spell to the prowess creature (Inalla): SetsudanHana/edh-seer#517
+- "EVERY TIME When Arcane Signet is cast, Harmonic Prodigy gets +1/+1", and the same for every rock, removal spell and counterspell.
+- In the Orbit, 29 of the 31 cards one step out from Inalla route through Harmonic Prodigy.
+- A self-pump until end of turn is a background effect, not a synergy.
+
+### 23. Counter replacement effects and once-a-turn triggers (Yuna): SetsudanHana/edh-seer#518
+- "Hardened Scales puts N+1 counters on something" and "Ozolith… puts that many plus one counters on something". These are replacement effects on the same creature.
+- Terrasymbiosis ("triggers only once each turn") is tagged EVERY TIME.
+
+### 24. A Bird token is a landfall partner (Yuna): SetsudanHana/edh-seer#519
+- With Summon: Fenrir in the middle, "Bird (token)" is its "Lands entering" partner.
+- The landfall trigger belongs to the card that makes the Bird.
+
 ## Housekeeping
 - **The skeptic seat's calibration claim has decayed.**
   - `.claude/agents/README.md` seeds the Yuna deck with `Misty Rainforest -> Yuna, Grand Summoner | dies:permanent`, judged FALSE.

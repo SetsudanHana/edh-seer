@@ -36,12 +36,17 @@ export interface OrbitModel {
   /** The same cards, grouped by the one partner each goes through: "31 cards through Harmonic
    *  Prodigy; … and 21 others", thirty rows deep, read as a wall on every seat (orbit round 1).
    *  Each card sits under the partner that links the most of them, so the fewest groups cover all. */
-  through: { via: EngineCard; cards: EngineCard[]; example?: Link }[];
+  through: { via: EngineCard; cards: EngineCard[]; example?: Link; lines: ReadonlyMap<string, Link[]> }[];
   /** Deck cards, lands aside, that don't reach the focus in two steps. */
   far: EngineCard[];
+  /** Lands that don't reach it either, counted so "every other card connects" stays true. */
+  farLands: number;
 }
 
 export const OTHER_HUE = "#6b5f7d";
+/** Colours for sectors the deck's own groups don't colour: helpers all share one grey in the
+ *  Overview, and four grey rows on one card could not be told apart (orbit round 2). */
+const EXTRA_HUES = ["#1c8db7", "#b08e1d", "#5b40f6", "#21a28f", "#277310", "#6b89f9", "#b5577a", "#c0703a", "#8a8f3a", "#4f7fa0", "#9a6bc0"];
 
 /** A card that belongs in a ring list: tokens are made by cards, not in the deck, and a land that
  *  reaches nothing is doing a land's job. */
@@ -73,27 +78,34 @@ export function buildOrbit(m: EngineModel, focusId: string): OrbitModel | null {
   for (const s of ordered) {
     s.partners.sort((a, b) => Number(a.once) - Number(b.once) || b.card.score - a.card.score || a.card.name.localeCompare(b.card.name));
   }
+  // One colour per sector on this card: a deck group keeps the Overview's, the rest take the next
+  // one not used here.
+  const used = new Set<string>();
+  for (const s of ordered) if (s.group && !s.group.helper && !used.has(s.hue)) used.add(s.hue); else s.hue = "";
+  for (const s of ordered) if (!s.hue) { s.hue = EXTRA_HUES.find((h) => !used.has(h)) ?? OTHER_HUE; used.add(s.hue); }
 
   const near: OrbitModel["near"] = [];
   const far: EngineCard[] = [];
+  let farLands = 0;
   for (const c of m.cards.values()) {
     if (c.id === focusId || nb.has(c.id) || !deckCard(c)) continue;
     const via = [...(m.partners.get(c.id)?.keys() ?? [])].filter((x) => nb.has(x)).map((x) => m.cards.get(x)!)
       .sort((a, b) => b.score - a.score);
     if (via.length) near.push({ card: c, via });
     else if (!c.isLand) far.push(c);
+    else farLands++;
   }
   near.sort((a, b) => b.via.length - a.via.length || a.card.name.localeCompare(b.card.name));
   far.sort((a, b) => a.name.localeCompare(b.name));
-  return { focus, sectors: ordered, direct: nb.size, near, through: groupThrough(m, near), far };
+  return { focus, sectors: ordered, direct: nb.size, near, through: groupThrough(m, near), far, farLands };
 }
 
 /** Which partners get a disc when there is room for `cap`: each sector keeps a share by its size,
  *  at least one, so a small group is never dropped for a big one. The rest are counted on the
  *  sector's "+N" and listed in full in the panel. */
-export function visiblePartners(o: OrbitModel, cap: number): { sector: OrbitSector; shown: OrbitPartner[]; hidden: number }[] {
+export function visiblePartners(o: OrbitModel, cap: number): { sector: OrbitSector; shown: OrbitPartner[]; hidden: number; hiddenOnce: number }[] {
   const total = o.sectors.reduce((t, s) => t + s.partners.length, 0);
-  if (total <= cap) return o.sectors.map((s) => ({ sector: s, shown: s.partners, hidden: 0 }));
+  if (total <= cap) return o.sectors.map((s) => ({ sector: s, shown: s.partners, hidden: 0, hiddenOnce: 0 }));
   // Largest remainder over the sectors, one disc each first.
   const room = Math.max(0, cap - o.sectors.length);
   const quota = o.sectors.map((s) => 1 + Math.floor((room * (s.partners.length - 1)) / Math.max(1, total - o.sectors.length)));
@@ -102,7 +114,12 @@ export function visiblePartners(o: OrbitModel, cap: number): { sector: OrbitSect
   for (const i of order) { if (left <= 0) break; if (quota[i]! < o.sectors[i]!.partners.length) { quota[i]!++; left--; } }
   return o.sectors.map((s, i) => {
     const n = Math.min(s.partners.length, quota[i]!);
-    return { sector: s, shown: s.partners.slice(0, n), hidden: s.partners.length - n };
+    const shown = s.partners.slice(0, n);
+    // A sector with one-time links shows one, so the dashed line the key promises is on the ring:
+    // repeating partners sort first, and every one-time partner hid behind "+N" (orbit round 2).
+    const firstOnce = s.partners.find((p) => p.once);
+    if (firstOnce && !shown.includes(firstOnce) && n >= 2) shown[n - 1] = firstOnce;
+    return { sector: s, shown, hidden: s.partners.length - n, hiddenOnce: s.partners.filter((p) => p.once && !shown.includes(p)).length };
   });
 }
 
@@ -121,7 +138,8 @@ function groupThrough(m: EngineModel, near: OrbitModel["near"]): OrbitModel["thr
     // One sentence to check the group by: a repeating one, from the best-known card in it.
     const links = cards.flatMap((c) => m.partners.get(c.id)?.get(via.id)?.links ?? []);
     const example = links.find((l) => l.repeat !== "oneshot") ?? links[0];
-    out.push({ via, cards: cards.sort((a, b) => a.name.localeCompare(b.name)), example });
+    const lines = new Map(cards.map((c) => [c.id, m.partners.get(c.id)?.get(via.id)?.links ?? []]));
+    out.push({ via, cards: cards.sort((a, b) => a.name.localeCompare(b.name)), example, lines });
   }
   return out;
 }

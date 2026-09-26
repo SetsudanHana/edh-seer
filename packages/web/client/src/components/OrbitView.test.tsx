@@ -92,5 +92,22 @@ test("when every card connects, the panel says so instead of leaving the list ou
   const g = { ...graph, nodes: graph.nodes.filter((n) => n.id !== "Doom Blade" && n.id !== "Vanilla") };
   render(<OrbitView report={report} graph={g} focusId="Payoff A" onFocus={() => {}} />);
   expect(screen.queryByText(/don't connect/)).toBeNull();
-  expect(screen.getByText(/Every other nonland card in the deck connects to Payoff A/)).toBeInTheDocument();
+  expect(screen.getByText(/Every other card in the deck connects to Payoff A, directly or through a card around it\./)).toBeInTheDocument();
+});
+
+test("a group's cards that share one sentence are listed under it once", async () => {
+  view();
+  await userEvent.setup().click(screen.getByRole("button", { name: /^Counts your Clerics/ }));
+  expect(screen.getByText("While you control one of these, Payoff A counts it")).toBeInTheDocument();
+  // Once on the ring, once under the sentence.
+  expect(screen.getAllByRole("button", { name: "Cleric 1" }).length).toBe(2);
+});
+
+test("a name in a Through list opens its own line and both cards' text", async () => {
+  view();
+  const user = userEvent.setup();
+  await user.click(screen.getByText(/work with a card around Payoff A/));
+  await user.click(screen.getByRole("button", { name: /^Reducer,?$/ }));
+  expect(screen.getByRole("button", { name: "Put Reducer in the middle" })).toBeInTheDocument();
+  expect(screen.getAllByText("Read both cards").length).toBeGreaterThan(0);
 });
