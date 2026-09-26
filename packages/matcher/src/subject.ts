@@ -129,8 +129,9 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
     // (Scryfall gives it none), while a filter saying "colorless spell" parses to ["C"]. An
     // intersection of those is empty, so Echoes of Eternity's "whenever you cast a colorless spell"
     // matched nothing at all. C is satisfied by having NO colour, and by nothing else. 83 corpus
-    // subjects demand it.
-    const satisfied = (wanted.includes("C") && has.size === 0)
+    // subjects demand it. A producer parsed from a filter ("target colorless creature", Ruins of
+    // Oran-Rief) spells it ["C"] as well, and that is colourless too.
+    const satisfied = (wanted.includes("C") && (has.size === 0 || has.has("C")))
       || wanted.some((c) => c !== "C" && has.has(c));
     if (!satisfied) return false;
   }

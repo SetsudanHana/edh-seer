@@ -244,6 +244,15 @@ test("a colourless producer satisfies a colorless filter", () => {
   expect(subjectMatches(blue, consumer, {})).toBe(false);
 });
 
+// ...and a producer PARSED from a filter spells it ["C"] too. Ruins of Oran-Rief puts a counter on
+// "target colorless creature" and stopped feeding Omarthis, Ghostfire Initiate the day DERIVE 173 read
+// that recipient into the emit (overview item 8).
+test("a producer parsed from a colorless filter satisfies a colorless filter", () => {
+  const consumer = { control: "you" as const, token: null, colors: ["C"] };
+  expect(subjectMatches({ control: "any" as const, token: null, colors: ["C"] }, consumer, {})).toBe(true);
+  expect(subjectMatches({ control: "any" as const, token: null, colors: ["C", "U"] }, { ...consumer, colors: ["U"] }, {})).toBe(true);
+});
+
 // ...and a coloured filter is not satisfied by a colourless card, which is the existing behaviour
 // and must stay.
 test("a colourless producer does not satisfy a coloured filter", () => {
