@@ -64,7 +64,7 @@ export function roleShelves(report: DeckReport, graph?: CardGraph): { category: 
       id: row.name, name: row.name, typeLine: n?.typeLine ?? "", text: n?.oracleText ?? "", art: n?.artCrop ?? n?.faces?.[0]?.artCrop,
       isToken: false, isCommander: row.isCommander || commanders.has(physical),
       isLand: (n?.types ?? []).includes("land"), isFace: false,
-      roles: row.roles, score: row.score ?? 0, manaCost: row.manaCost ?? "",
+      roles: row.roles, score: row.score ?? 0, manaCost: row.manaCost ?? "", physical,
     };
     const mv = row.manaValue ?? n?.cmc ?? 0;
     for (const role of row.roles) {

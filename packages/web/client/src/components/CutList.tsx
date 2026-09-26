@@ -1,7 +1,10 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
-import { CardName } from "./card-drawer.js";
+import type { CutChoice } from "../lib/cut-choice.js";
+import { listNames } from "../lib/engine-model.js";
+import { CardName, ReasonText } from "./card-drawer.js";
+import { Badge, CardFace, ReadCards } from "./engine-parts.js";
 
 /** THE CUT LIST — "which cards is the deck not using?" — and the deck-level slack beside it.
  *
@@ -9,9 +12,10 @@ import { CardName } from "./card-drawer.js";
  *  same way: a relation it cannot express looks exactly like a card doing nothing (see matcher's
  *  `cut-list.ts`). The caption is not decoration — it is the difference between a tool that helps
  *  and one that confidently deletes a player's best card. */
-export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
+export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme }:
   {
-    cutList: DeckReport["cutList"];
+    /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
+    cuts: readonly CutChoice[];
     /** Cards the engine REFUSED to judge because it never read them. See `report.unjudged`. */
     unjudged?: DeckReport["unjudged"];
     /** Only to say "12 OF THE 48". The tuner persona asked outright why twelve, when the gate at the
@@ -28,8 +32,9 @@ export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
   // a slice and never a round trip; and it stays behind a click because a list that always has an
   // answer reads as a verdict when nobody asked for it.
   const [trimN, setTrimN] = useState(0);
+  const [cutN, setCutN] = useState(CUT_STEP);
   const hasTrim = !!trim && trim.length > 0;
-  const hasCuts = !!cutList && cutList.length > 0;
+  const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
   const hasSlack = !!slack && slack.length > 0;
   const hasOffTheme = !!offTheme && offTheme.length > 0;
@@ -40,26 +45,20 @@ export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
       {hasCuts && (
         <>
           <p className="text-sm text-(--muted) max-w-[65ch]">
-            Cards nothing else in your deck works with, that are off your main theme and don&apos;t fill a
-            core role. Suggestions, not verdicts: a synergy we can&apos;t read looks exactly like one that
-            isn&apos;t there.
+            The cards doing the least here, weakest first: they keep working with the fewest others.
+            A card that fills a role, is a theme&apos;s key card or is half of a combo is never listed.
+            Suggestions, not verdicts: a synergy we can&apos;t read looks exactly like one that isn&apos;t there.
           </p>
-          <ul className="flex flex-col gap-2">
-            {cutList!.map((c) => (
-              <li key={c.name} className="rounded-lg border border-(--separator) px-3 py-2">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm"><CardName name={c.name} /></span>
-                  {/* Cost beside the rating, because two cards nothing connects to are different
-                    *  cut candidates when one costs 9 and the other 1. It breaks ties in the
-                    *  ordering and is never a reason a card appears here at all. */}
-                  <span className="text-xs stat-num text-(--muted)">
-                    {c.manaValue} mana · {c.rating.toFixed(1)}
-                  </span>
-                </div>
-                <p className="text-xs text-(--muted)">{c.reasons.join(" · ")}</p>
-              </li>
-            ))}
+          <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+            {cuts.slice(0, cutN).map((c) => <CutCard key={c.name} c={c} />)}
           </ul>
+          {cuts.length > cutN ? (
+            <p>
+              <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setCutN(cutN + CUT_STEP)}>
+                Show {Math.min(CUT_STEP, cuts.length - cutN)} more
+              </button>
+            </p>
+          ) : null}
         </>
       )}
       {/* OFF-THEME, NOT DEAD (owner, 2026-09-24). These connect to something or fill a role, so they
@@ -81,9 +80,9 @@ export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
         *  underived gate landed this became the COMMON case on a partly-read deck. */}
       {!hasCuts && (hasUnjudged || hasTrim) ? (
         <div className="rounded-(--radius) border border-dashed border-(--separator) px-4 py-5 text-center">
-          <p className="text-sm">No card here is unconnected.</p>
+          <p className="text-sm">Nothing here is an easy cut.</p>
           <p className="text-xs text-(--muted) mt-1">
-            Every card the engine could read has at least one connection or fills a role it is measured on
+            Every card the engine could read fills a role, is a theme&apos;s key card or is half of a combo
             {/* AND THE TRIM CONTROL BELOW IS NOT A CONTRADICTION OF THAT (S16, 2026-09-02). The
               *  panel used to say "Nothing here is safe to call dead weight" directly above a
               *  `Trim 3 5 10` control and three over-quota chips; both a tuner and a beginner
@@ -155,7 +154,7 @@ export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
                         {t.manaValue} mana &middot; {t.rating.toFixed(1)}
                       </span>
                     </div>
-                    <p className="text-xs text-(--muted)">{t.reasons.join(" \u00b7 ")}</p>
+                    <p className="text-xs text-(--muted)">{t.reasons.filter((r) => !/^doesn't fill a core role/.test(r)).join(" \u00b7 ")}</p>
                     {/* THE KEEP SIDE IS NOT FINE PRINT. A row that says "fills none of the roles"
                       *  above "its best edge is on your main theme" is arguing with itself, and the
                       *  second line is the one that decides — so it reads at the page's normal
@@ -192,3 +191,49 @@ export function CutList({ cutList, unjudged, coverage, slack, trim, offTheme }:
     </div>
   );
 }
+
+/** Rows shown before "Show N more": the Overview's six, which every seat read to the end. */
+const CUT_STEP = 6;
+
+/** One cut: the card, why it is here, what argues it stays, and its text one tap away. */
+function CutCard({ c }: { c: CutChoice }) {
+  const r = c.row;
+  const short = c.name.split(" // ")[0]!;
+  return (
+    <li className="flex items-start gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
+      {c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div>
+          <h4 className="flex items-baseline justify-between gap-3 text-base font-semibold">
+            <CardName name={c.name} />
+            <span className="shrink-0 text-xs font-normal stat-num text-(--muted)">{c.manaValue} mana</span>
+          </h4>
+          <p>{r ? r.why : `${capitalFirst(c.reasons.join("; "))}.`}</p>
+          {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
+        </div>
+        {r?.keep && r.keepActs ? (
+          <p className="text-(--muted)"><span className="eyebrow block">Its strongest link</span><Badge repeat={r.keep.repeat} /><ReasonText text={r.keep.text} /></p>
+        ) : r?.keep && r.fedBy.length ? (
+          // A FEEDER NAMES WHO USES IT: the line other cards get from it is true of any card of its
+          // kind, so it is not this card's strongest link (Overview round 7).
+          <p className="text-(--muted)">
+            <span className="eyebrow block">Who uses it</span>
+            {listNames(r.fedBy, 3)}. None of the links found here use its own abilities.
+          </p>
+        ) : null}
+        {c.keeps.length ? (
+          <p><span className="font-medium text-(--success)">Keeps it:</span> {c.keeps.join(" · ")}</p>
+        ) : null}
+        {c.twins.length ? (
+          <p className="text-(--muted)">
+            <span className="eyebrow block">Used by exactly the same cards</span>
+            {listNames(c.twins)} {c.twins.length === 1 ? "is" : "are"} used by the same cards as {short}, so here {c.twins.length === 1 ? "either can" : "any of them can"} stand in for another: cutting one leaves the rest doing the same job.
+          </p>
+        ) : null}
+        {c.card ? <ReadCards cards={[c.card]} /> : null}
+      </div>
+    </li>
+  );
+}
+
+const capitalFirst = (t: string) => (t ? t[0]!.toUpperCase() + t.slice(1) : t);
