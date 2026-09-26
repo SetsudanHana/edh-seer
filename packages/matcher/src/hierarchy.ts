@@ -1,5 +1,5 @@
 import hierarchy from "../hierarchy.json" with { type: "json" };
-import { joinMultiWordSubtypes } from "@edh-seer/tagger/subtypes";
+import { joinMultiWordSubtypes, SUBTYPE_TYPES } from "@edh-seer/tagger/subtypes";
 import type { Hierarchy } from "./types.js";
 
 const CARD_TYPES = [
@@ -74,8 +74,13 @@ export function expandTypes(tokens: string[], subtypes: string[], h: Hierarchy):
     else for (const m of PSEUDO_TYPE_SETS[t] ?? []) out.add(m);
   }
   if (out.size > 0) return out;
+  // A NONCREATURE SUBTYPE MEANS ITS CR TYPE (#508). `h` records every type a subtype was printed
+  // beside, so one Treasure creature made "a Treasure dies" feed every "a creature dies" payoff. For
+  // a creature subtype the co-types are real (a Thopter is usually an artifact creature) and stay.
   for (const raw of subtypes) {
-    for (const t of h[raw.toLowerCase()] ?? []) out.add(t);
+    const sub = raw.toLowerCase();
+    const cr = SUBTYPE_TYPES[sub];
+    for (const t of cr && !cr.includes("creature") ? cr : h[sub] ?? []) out.add(t);
   }
   return out;
 }
