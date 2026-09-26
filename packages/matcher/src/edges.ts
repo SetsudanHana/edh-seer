@@ -980,6 +980,25 @@ function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
 /** A PRODUCER THAT SUPPLIES ITS EVENT ONCE (overview persona rounds 2026-09-25, item 6a): an instant
  *  or a sorcery, or the ability that supplied it is a cast trigger or sacrifices its own card (a
  *  fetchland). "Farseek -> Hedge Maze" read EVERY TIME because only the consumer was asked. */
+/*  Beside it at the call site (issue #500): a card's OWN cast (the implied baseline event) happens
+ *  once -- "When Kindred Discovery is cast, Harmonic Prodigy gets +1/+1" is one spell, not an
+ *  engine. A delayed trigger (`delayedBy`) fires once per creation: a chapter's or a spell's is
+ *  one-shot whatever feeds it, and one an activation creates is paid for, not free. NOT the
+ *  consumer's `repeats: once` in general: Gray Merchant's self-ETB is once per ENTRY, and a
+ *  repeatable flicker re-supplies the entry, so that link really is every time. The same holds on
+ *  the cast side for a card that recasts ITSELF (`recastsItself`). An ACTIVATED ability carrying a
+ *  trigger (Chandra, the Firebrand's "−2: When you next cast...") fires when paid for -- once, if
+ *  paying spends the card itself (Thunderclap Drake: "Sacrifice this creature"). */
+/** A card whose own printing lets it be cast again: escape, retrace, or "you may cast <this card>
+ *  from your graveyard" (Gravecrawler). Its single implied cast is really a repeatable one. */
+function recastsItself(p: DeckCard): boolean {
+  if ((p.tags?.characteristics.keywords ?? []).some((k) => /^(?:escape|retrace)$/i.test(k))) return true;
+  const text = (p.card.oracleText ?? "").toLowerCase();
+  const name = p.card.name.toLowerCase().split(" // ")[0];
+  return text.includes("cast this card from your graveyard") || text.includes(`cast ${name} from your graveyard`)
+    || text.includes(`cast ${name.split(",")[0]} from your graveyard`);
+}
+
 function oneShotProducer(p: DeckCard, ability: number | undefined): boolean {
   const types = p.tags?.characteristics.types ?? [];
   if (types.length > 0 && types.every((t) => t === "instant" || t === "sorcery")) return true;
@@ -1697,7 +1716,10 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             subjectNoun: fillNoun(e) ?? (producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(e.subject)),
           }),
           effectKind: a.effect.kind,
-          repeatability: oneShotProducer(p, origin) ? "oneshot" : triggerRepeatability(t.subject),
+          repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"
+            : a.delayedBy !== undefined || a.kind === "activated" ? (a.repeats === "once" ? "oneshot" : "activated")
+            : oneShotProducer(p, origin) || (e.implied === true && t.verb === "cast" && !recastsItself(p)) ? "oneshot"
+            : triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
           hasStatPredicate: (t.subject.stats?.length ?? 0) > 0 || undefined,
           consumer: c.card.name,

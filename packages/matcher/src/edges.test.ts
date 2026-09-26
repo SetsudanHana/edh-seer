@@ -5006,6 +5006,23 @@ test("a sorcery or a self-sacrificing fetch feeds a typed trigger once; a repeat
   expect([rep(farseek), rep(fetch), rep(walker)]).toEqual(["oneshot", "oneshot", "triggered"]);
 });
 
+/** ONCE IS NOT EVERY TIME (issue #500): a card's own cast happens once, a delayed trigger a chapter
+ *  makes fires once, and one an activation makes is paid for. All three read EVERY TIME before. */
+test("a card's own cast, a chapter's delayed trigger and a paid one are not every time", () => {
+  const castsCreature = { verbs: ["cast"], subject: { type: "creature", control: "you", token: null } };
+  const fenrir = base("Summon: Fenrir", [{ kind: "triggered", trigger: castsCreature, effect: { kind: "enters-with-counters" }, repeats: "once", delayedBy: "chapter" }] as CardTags["abilities"]);
+  const yuna = base("Yuna, Grand Summoner", [{ kind: "triggered", trigger: castsCreature, effect: { kind: "enters-with-counters" }, repeats: "per-cycle", delayedBy: "{T}" }] as CardTags["abilities"]);
+  const engine = base("Creature Caster", [{ kind: "triggered", trigger: castsCreature, effect: { kind: "draw-card" }, repeats: "repeatable" }] as CardTags["abilities"]);
+  const bear = base("Grizzly Bears", []);
+  const recast = base("Creature Recaster", [{ kind: "activated", cost: "{2}", effect: { kind: "" }, emits: [{ verb: "cast", subject: { type: "creature", control: "you", token: null } }] }] as CardTags["abilities"]);
+  const escaper = base("Escape Creature", []);
+  escaper.tags.characteristics.keywords = ["Escape"];
+  const chandra = base("Chandra, the Firebrand", [{ kind: "activated", cost: "−2", trigger: castsCreature, effect: { kind: "copy-spell" } }] as CardTags["abilities"]);
+  const rep = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).find((r) => r.tag.startsWith("cast:"))?.repeatability;
+  expect([rep(bear, fenrir), rep(bear, yuna), rep(bear, engine), rep(recast, engine), rep(escaper, engine), rep(bear, chandra)])
+    .toEqual(["oneshot", "activated", "oneshot", "triggered", "triggered", "activated"]);
+});
+
 /** PROWESS PUMPS ITSELF BY +1/+1 (CR 702.108a; overview persona rounds 2026-09-25, item 3): "When
  *  Kindred Discovery is cast, Harmonic Prodigy makes your creatures bigger" -- the synthetic keyword
  *  ability carried no amount and no subject, so the sentence fell back to the class-wide phrase. A
