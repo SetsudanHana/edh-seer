@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { landHandProbabilities } from "./land-math.js";
+import { landHandProbabilities, nextLandChance } from "./land-math.js";
 
 test("returns handSize+1 entries", () => {
   expect(landHandProbabilities(38, 99)).toHaveLength(8);
@@ -28,4 +28,14 @@ test("a deck smaller than the hand size returns all zeros, not NaN", () => {
   const probs = landHandProbabilities(2, 5, 7);
   expect(probs).toHaveLength(8);
   expect(probs.every((p) => p === 0)).toBe(true);
+});
+
+test("a two-land keep finds its third land at the hypergeometric odds, and more lands raise them", () => {
+  // 36 lands in 99: after a 2-land 7, 34 lands in the 92-card library. Two draws on the play.
+  const onPlay = nextLandChance(36, 99, 2);
+  expect(onPlay).toBeCloseTo(1 - (58 / 92) * (57 / 91), 10);
+  expect(nextLandChance(36, 99, 3)).toBeGreaterThan(onPlay);
+  expect(nextLandChance(38, 99, 2)).toBeGreaterThan(onPlay);
+  // A deck with no lands left to draw cannot find one.
+  expect(nextLandChance(2, 99, 3)).toBe(0);
 });

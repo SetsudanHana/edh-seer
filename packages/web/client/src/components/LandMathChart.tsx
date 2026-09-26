@@ -1,4 +1,4 @@
-import { landHandProbabilities } from "../lib/land-math.js";
+import { landHandProbabilities, nextLandChance } from "../lib/land-math.js";
 import { BarChart } from "./BarChart.js";
 
 /** THE OPENING HAND, AS A SENTENCE. The full distribution is a function of the land count and the
@@ -12,6 +12,11 @@ export function LandMathChart({ landCount, deckSize }: { landCount: number; deck
   const probs = landHandProbabilities(landCount, deckSize);
   const threePlus = probs.slice(3).reduce((a, b) => a + b, 0);
   const oneOrNone = probs[0]! + probs[1]!;
+  const pct = (p: number) => Math.round(p * 100);
+  const onPlay = nextLandChance(landCount, deckSize, 2);
+  const onDraw = nextLandChance(landCount, deckSize, 3);
+  const withMore = nextLandChance(landCount + 2, deckSize, 2);
+  const missTenths = Math.round((1 - onPlay) * 10);
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Lands in your opening 7</h3>
@@ -28,6 +33,15 @@ export function LandMathChart({ landCount, deckSize }: { landCount: number; deck
         *  reads it as one of the report's more important figures, and a figure a reader has to know
         *  to look for is a figure most readers never see. The SENTENCE still leads, because one
         *  number is what a player acts on; the eight bars are what they check it against. */}
+      {/* BAD LUCK OR THE DECK, ANSWERED WITH ITS ODDS (baseline round 2026-09-26). */}
+      <p className="text-sm text-(--muted)" data-testid="two-land-keep">
+        <span className="text-(--foreground)">Kept two lands?</span> You find a third by your turn-3
+        land drop in <span className="text-(--foreground) tabular-nums">{pct(onPlay)}%</span> of games
+        on the play and <span className="text-(--foreground) tabular-nums">{pct(onDraw)}%</span> on the
+        draw. So about {missTenths} in 10 two-land keeps on the play still miss it: those are this
+        deck&rsquo;s odds, not bad luck. With {landCount + 2} lands it would be {pct(withMore)}%.
+        Counts lands only; cheap ramp that finds a land helps a little more.
+      </p>
       <div className="pt-1">
           <BarChart
             heading=""

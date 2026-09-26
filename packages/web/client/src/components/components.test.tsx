@@ -1808,8 +1808,8 @@ test("BuildBenchmarks shows the land count the deck's own curve asks for", () =>
   // The regression's author is implementation, not a label: the reader is asking how many lands
   // to run, not whose formula answered.
   expect(screen.queryByText(/karsten/i)).not.toBeInTheDocument();
-  expect(screen.getByText(/avg mana value 2\.7/i)).toBeInTheDocument();
-  expect(screen.getByText(/12 cheap ramp/i)).toBeInTheDocument();
+  expect(screen.getByText(/average mana value 2\.7/i)).toBeInTheDocument();
+  expect(screen.getByText(/12 cheap mana makers \(2 mana or less\)/i)).toBeInTheDocument();
   expect(screen.getByText(/2 fast mana/i)).toBeInTheDocument();
   // A number scored on the derived target says nothing about "flat convention" -- that wording is
   // reserved for a fallback (next test), and its presence here would be the silent-swap defect.
@@ -1827,9 +1827,11 @@ test("BuildBenchmarks says so when the land target falls back to the flat conven
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={fallback} />);
   expect(
-    screen.getByLabelText(/37 lands in the deck, this curve wants 36 — the flat convention, because this curve's own regression asks for 50, outside the tested range/i),
+    screen.getByLabelText(/37 lands in the deck, this curve wants 36 — the usual Commander count; the formula that fits lands to a curve would ask for 50, outside the range it was tested on/i),
   ).toBeInTheDocument();
-  expect(screen.getByText(/flat convention — this curve's own regression asks for 50, outside the tested range/i)).toBeInTheDocument();
+  // Baseline round 2026-09-26: one number checked against, and the other one explained, so the
+  // box no longer reads as the site disagreeing with itself.
+  expect(screen.getByText(/36 is the usual Commander count, and it is the one checked here: the formula that fits lands to a curve would ask for 50 with this one, but it was only tested on lower curves/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks says so when an archetype delta is folded into the land target (fix F1, task 9)", () => {

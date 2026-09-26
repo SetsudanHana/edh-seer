@@ -62,7 +62,9 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
         </span>
       </div>
       <p className="text-sm text-(--muted)">
-        {m.trials.toLocaleString()} simulated games, {m.accelerants} ramp pieces in the deck. The range
+        {m.trials.toLocaleString()} simulated games, playing {m.accelerants} of your cards as extra mana
+        (cards whose printed text makes mana or puts a land into play; the Ramp role in the Roles
+        chapter is counted from each card&rsquo;s role instead, so its number can differ). The range
         is <strong>how you play them</strong>: the low end holds up two mana, the high end spends
         everything on ramp and is a ceiling no real deck plays to.
       </p>

@@ -920,7 +920,7 @@ function DeckMathRows({
               lands.mdfc > 0 ? `, ${lands.mdfc} of them modal DFCs with a land back` : ""
             }, this curve wants ${lands.target}${
               lands.targetSource === "flat"
-                ? ` — the flat convention, because this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
+                ? ` — the usual Commander count; the formula that fits lands to a curve would ask for ${lands.rawTarget}, outside the range it was tested on`
                 : ""
             }${landsAriaDelta}`}
           >
@@ -954,12 +954,16 @@ function DeckMathRows({
               *  wrapped layout and the screen-reader order are the same order, with no `order-*`
               *  class pulling them apart. */}
             <span className="min-w-0 flex-1 basis-64 text-xs text-(--muted) tabular-nums">
-              avg mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap ramp/draw · {lands.fastMana} fast mana
+              {/* ONE LAND NUMBER, WITH THE OTHER ONE EXPLAINED (baseline round 2026-09-26): "wants 36"
+                *  beside "asks for 41" read as the site disagreeing with itself, and the slow-deck seat
+                *  came for one number it could trust. The ramp here is named by what it counts:
+                *  cheap mana makers (2 mana or less), which is what lowers the land count. */}
+              average mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap mana makers (2 mana or less) · {lands.fastMana} fast mana
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as lands, at full weight and with no discount to the target`
                 : ""}
               {lands.targetSource === "flat"
-                ? ` · flat convention — this curve's own regression asks for ${lands.rawTarget}, outside the tested range`
+                ? ` · ${lands.target} is the usual Commander count, and it is the one checked here: the formula that fits lands to a curve would ask for ${lands.rawTarget} with this one, but it was only tested on lower curves, so it is not trusted this far out`
                 : ""}
               {landsVisibleDelta}
             </span>
