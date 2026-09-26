@@ -205,20 +205,22 @@ const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
   // "defending player sacrifices two permanents of their choice."
   annihilator: [{ verb: "sacrifice", control: "opp" }],
   // "you may sacrifice any number of creatures. It enters with three times that many +1/+1 counters"
-  devour: [{ verb: "sacrifice" }, { verb: "counter-added", counter: "+1/+1" }],
+  devour: [{ verb: "sacrifice" }, { verb: "counter-added", counter: "+1/+1", self: true }],
   // "exile a nonland card that costs less. You may cast it without paying its mana cost."
   cascade: [{ verb: "cast" }],
-  // Every one of these says +1/+1 in its own reminder.
+  // Every one of these says +1/+1 in its own reminder. `self` where the counter lands on THIS card
+  // (issue #503 review: undying read "a permanent gets a counter thanks to Endless One"); modular,
+  // mentor, graft and amass put theirs on another creature.
   modular: [{ verb: "counter-added", counter: "+1/+1" }],
-  evolve: [{ verb: "counter-added", counter: "+1/+1" }],
+  evolve: [{ verb: "counter-added", counter: "+1/+1", self: true }],
   mentor: [{ verb: "counter-added", counter: "+1/+1" }],
-  training: [{ verb: "counter-added", counter: "+1/+1" }],
+  training: [{ verb: "counter-added", counter: "+1/+1", self: true }],
   graft: [{ verb: "counter-added", counter: "+1/+1" }],
-  riot: [{ verb: "counter-added", counter: "+1/+1" }],
-  bloodthirst: [{ verb: "counter-added", counter: "+1/+1" }],
-  undying: [{ verb: "counter-added", counter: "+1/+1" }],
+  riot: [{ verb: "counter-added", counter: "+1/+1", self: true }],
+  bloodthirst: [{ verb: "counter-added", counter: "+1/+1", self: true }],
+  undying: [{ verb: "counter-added", counter: "+1/+1", self: true }],
   // "return it to the battlefield ... with a -1/-1 counter on it."
-  persist: [{ verb: "counter-added", counter: "-1/-1" }],
+  persist: [{ verb: "counter-added", counter: "-1/-1", self: true }],
   // "damage to creatures in the form of -1/-1 counters and to players in the form of poison counters"
   infect: [{ verb: "counter-added", counter: "-1/-1" }, { verb: "counter-added", counter: "poison" }],
   // "Players dealt combat damage by this creature also get three poison counters."
@@ -227,7 +229,7 @@ const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
   amass: [{ verb: "counter-added", counter: "+1/+1" }, { verb: "create-token", token: true },
           { verb: "enters", token: true }],
   // "put two +1/+1 counters on it OR create two 1/1 colorless Servo artifact creature tokens."
-  fabricate: [{ verb: "counter-added", counter: "+1/+1" }, { verb: "create-token", token: true },
+  fabricate: [{ verb: "counter-added", counter: "+1/+1", self: true }, { verb: "create-token", token: true },
               { verb: "enters", token: true }],
   // "Create a token that's a copy of it, except it's a white Zombie ... with no mana cost."
   embalm: [{ verb: "create-token", token: true }, { verb: "enters", token: true }],
