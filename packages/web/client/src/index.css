@@ -92,6 +92,12 @@
      and nothing sticky under the header, so nothing there reads this. */
   --site-header-h: 0px;
 
+  /* The Orbit's entrance, set per disc from the component: where it flies in from (the middle,
+     relative to the disc) and how long it waits. Zero here, so an element without them just fades. */
+  --orbit-fx: 0px;
+  --orbit-fy: 0px;
+  --orbit-d: 0ms;
+
   /* THE PAGE'S SIDE GUTTER, one value for the app, the header, the footer and the prose page
      (UI review 2026-09-25). It was a flat 2rem, which on a 390px phone spent 64px -- 16% of the
      screen -- on margins; DESIGN.md asks for 16px there. 2rem from `sm` up, as before. */
@@ -1886,7 +1892,7 @@ html[data-report] #root main { padding-top: 1.5rem; }
 @keyframes orbit-fly {
   from {
     opacity: 0;
-    transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(0.35);
+    transform: translate(var(--orbit-fx), var(--orbit-fy)) scale(0.35);
   }
 }
 @keyframes orbit-fade {
@@ -1896,14 +1902,14 @@ html[data-report] #root main { padding-top: 1.5rem; }
 }
 .orbit-fly {
   animation: orbit-fly 560ms cubic-bezier(0.2, 0.8, 0.25, 1.1) backwards;
-  animation-delay: var(--d, 0ms);
+  animation-delay: var(--orbit-d);
 }
 .orbit-arrive {
   animation-duration: 480ms;
 }
 .orbit-fade {
   animation: orbit-fade 480ms ease-out backwards;
-  animation-delay: var(--d, 0ms);
+  animation-delay: var(--orbit-d);
 }
 .orbit-body {
   transition: transform 160ms ease-out;

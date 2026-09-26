@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, listNames, type EngineCard, type EngineGroup, type EngineModel, type Link } from "../lib/engine-model.js";
 import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
-import { ManaSymbols } from "./ManaSymbols.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
 
 /** THE GRAPH TAB'S LANDING VIEW: what the deck does, in groups of named cards (graph evaluation
@@ -134,16 +133,29 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
           ))}
         </div>
         {m.jobs.length ? (
-          <div className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-            {/* Named from the jobs this deck has: "…and protection" over a deck with none read as
-              * a promise the box did not keep (round 12). */}
-            <h3 className="font-semibold text-base">{listNames(m.jobs.map(([j]) => j.toLowerCase()), 3).replace(/^./, (x) => x.toUpperCase())}</h3>
-            <p className="text-(--muted)">These cards are judged by their job, not by links, so compare them with each other. Each group runs from least to most connected; the number is how many other cards in this deck each one works with.</p>
-            <ul className="flex flex-col gap-1.5">
+          // SHELVES OF CARDS, NOT A PARAGRAPH (owner, 2026-09-26, on a Rani deck: a line per job of
+          // names, mana symbols and bracketed numbers read as a wall). Each job is a row of the
+          // cards themselves, least connected first, with the count under each.
+          <div className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
+            <div className="flex flex-col gap-1">
+              <h3 className="font-semibold text-base">Cards judged by their job</h3>
+              <p className="text-(--muted)">Removal, ramp and the like are compared with their own kind, not by links. Each row starts with the card that works with the fewest others; the number under a card is how many it works with.</p>
+            </div>
+            <ul className="flex flex-col gap-3">
               {m.jobs.map(([job, rows]) => (
-                <li key={job}>
-                  <b>{job} · {rows.length}</b>{" "}
-                  <span className="text-(--muted)">{rows.map((r, i) => <span key={r.card.id}>{i ? ", " : ""}<CardName name={r.card.name} />{r.card.manaCost ? <> <ManaSymbols cost={r.card.manaCost} /></> : null} ({r.partners})</span>)}</span>
+                <li key={job} className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-4">
+                  <span className="shrink-0 sm:w-36 sm:pt-2">
+                    <b className="block">{job}</b>
+                    <span className="text-(--muted)">{rows.length} card{rows.length === 1 ? "" : "s"}</span>
+                  </span>
+                  <ul className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 snap-x" aria-label={job}>
+                    {rows.map((r) => (
+                      <li key={r.card.id} className="flex w-[76px] shrink-0 snap-start flex-col items-center gap-0.5 sm:w-[84px]">
+                        <CardFace card={r.card} className="w-full" />
+                        <span className="text-xs text-(--muted)" title={`Works with ${r.partners} other card${r.partners === 1 ? "" : "s"}`}>{r.partners}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>

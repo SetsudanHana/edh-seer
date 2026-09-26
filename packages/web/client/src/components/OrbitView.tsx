@@ -89,7 +89,7 @@ export function OrbitView({ report, graph, focusId, onFocus, onBack }: {
           <Orbit key={`${o.focus.id}|${narrow}`} o={o} L={L} narrow={narrow} sel={sel} sector={openSector ? sector : null} arrival={arrival} still={still} onTap={tap}
             onSector={(s) => { setSector(sectorKey(s)); setSel(null); }} />
         </div>
-        <div key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className="orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:sticky lg:top-36 lg:max-h-[calc(100svh-10rem)] lg:w-[min(34rem,40vw)] lg:shrink-0 lg:overflow-y-auto" aria-live="polite">
+        <div key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className="orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)] lg:w-[min(34rem,40vw)] lg:shrink-0 lg:overflow-y-auto" aria-live="polite">
           {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
             * word in the trail above the picture, which one seat never found and another called
             * "one word high" (orbit round 1). */}
@@ -176,7 +176,7 @@ function Orbit({ o, L, narrow, sel, sector, arrival, still, onTap, onSector }: {
   const dimming = sel !== null || sector !== null;
   // The discs fly out from the middle one after another, the whole ring in about half a second.
   const step = Math.min(24, 480 / Math.max(1, slots.length));
-  const fly = (x: number, y: number, i: number) => ({ "--fx": `${cx - x}px`, "--fy": `${cy - y}px`, "--d": `${120 + i * step}ms` }) as React.CSSProperties;
+  const fly = (x: number, y: number, i: number) => ({ "--orbit-fx": `${cx - x}px`, "--orbit-fy": `${cy - y}px`, "--orbit-d": `${120 + i * step}ms` }) as React.CSSProperties;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${displayName(o.focus)} and the ${o.direct + o.directTokens} cards it works with`}
       className="block h-auto w-full select-none">
@@ -187,7 +187,7 @@ function Orbit({ o, L, narrow, sel, sector, arrival, still, onTap, onSector }: {
         const on = lit(sl.p.card.id, sl.s);
         const dir = flowOf(sl.p, o.focus.id);
         return (
-          <g key={`l-${sl.p.card.id}`} className="orbit-fade" style={{ "--d": `${60 + i * step}ms` } as React.CSSProperties}>
+          <g key={`l-${sl.p.card.id}`} className="orbit-fade" style={{ "--orbit-d": `${60 + i * step}ms` } as React.CSSProperties}>
             <line x1={cx} y1={cy} x2={sl.x} y2={sl.y} stroke={sl.s.hue}
               strokeWidth={sel === sl.p.card.id ? 4 : sl.p.once ? 1.5 : 2.5} strokeDasharray={sl.p.once ? "5 5" : undefined} strokeOpacity={dimming && !on ? 0.2 : 0.75} />
             {still
@@ -237,7 +237,7 @@ function Orbit({ o, L, narrow, sel, sector, arrival, still, onTap, onSector }: {
       <g transform={`translate(${cx},${cy})`} role="button" tabIndex={0} className={DISC} aria-label={`${displayName(o.focus)}, in the middle`}
         onClick={() => onTap(o.focus.id)} onKeyDown={key(() => onTap(o.focus.id))}>
         {/* A centred card glides in from where its disc was on the ring. */}
-        <g className="orbit-fly orbit-arrive" style={{ "--fx": `${arrival?.dx ?? 0}px`, "--fy": `${arrival?.dy ?? 0}px`, "--d": "0ms" } as React.CSSProperties}>
+        <g className="orbit-fly orbit-arrive" style={{ "--orbit-fx": `${arrival?.dx ?? 0}px`, "--orbit-fy": `${arrival?.dy ?? 0}px`, "--orbit-d": "0ms" } as React.CSSProperties}>
           <circle className="orbit-ring" r={fr + 3} fill="var(--background)" stroke="var(--foreground)" strokeWidth={3} />
           {o.focus.art ? <image href={o.focus.art} x={-fr} y={-fr} width={2 * fr} height={2 * fr} clipPath={`url(#${clip})`} preserveAspectRatio="xMidYMid slice" /> : null}
           <text y={fr + 20} textAnchor="middle" fontSize={narrow ? 13 : 15} fontWeight={600} fill="var(--foreground)" paintOrder="stroke" stroke="var(--background)" strokeWidth={5} strokeLinejoin="round">
