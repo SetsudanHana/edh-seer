@@ -34,8 +34,9 @@ test("tapping a card selects it", async () => {
   expect(onSelect).toHaveBeenCalledWith("Cleric 3");
 });
 
-test("a selected card lights its partners and fades the rest", () => {
+test("a selected card lights its partners and fades the rest", async () => {
   view("Payoff A");
+  await userEvent.setup().click(screen.getByRole("button", { name: /^Show them:/ }));
   expect(screen.getByText(/lit below; everything else is faded/)).toBeInTheDocument();
   const clerics = screen.getByRole("heading", { name: "Counts your Clerics" }).closest("article")!;
   expect(within(clerics).getByRole("button", { name: "Cleric 1" }).className).not.toMatch(/opacity-30/);
@@ -84,10 +85,17 @@ test("a card that only feeds others says so instead of offering a best reason", 
 
 test("the one-time count says how many of those links the groups show", () => {
   view();
-  expect(screen.getByText(/work only once, and none of them are in the groups below/)).toBeInTheDocument();
+  expect(screen.getByText(/work only once; the groups below show none of them/)).toBeInTheDocument();
 });
 
 test("a cut used by exactly the same cards as one above says so instead of listing them again", () => {
   view();
   expect(screen.getByText(/so here the two do the same job/)).toBeInTheDocument();
+});
+
+test("helper groups are folded until asked for", async () => {
+  view();
+  expect(screen.queryByRole("heading", { name: "Make cards cheaper" })).toBeNull();
+  await userEvent.setup().click(screen.getByRole("button", { name: /^Show them: make cards cheaper/ }));
+  expect(screen.getByRole("heading", { name: "Make cards cheaper" })).toBeInTheDocument();
 });

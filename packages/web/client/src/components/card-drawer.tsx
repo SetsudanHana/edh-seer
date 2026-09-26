@@ -93,7 +93,12 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
     const byId = new Map((graph?.nodes ?? []).map((n) => [n.id, n]));
     const m = new Map<string, string | undefined>();
     for (const n of graph?.nodes ?? []) if (n.isToken) m.set(n.label, undefined);
-    for (const e of graph?.edges ?? []) {
+    // A CREATE EDGE FIRST: any edge into a token was taken as its maker, so a landfall link
+    // credited Summon: Fat Chocobo's Bird to Flooded Strand (overview round 9). Other edges only
+    // name a maker when no card is known to create the token.
+    const creates = (e: { tags?: readonly string[] }) => (e.tags ?? []).some((t) => t.startsWith("creates:"));
+    const edges = [...(graph?.edges ?? [])].sort((x, y) => Number(creates(y)) - Number(creates(x)));
+    for (const e of edges) {
       const to = byId.get(e.to);
       if (!to?.isToken || m.get(to.label) !== undefined) continue;
       const from = byId.get(e.from);

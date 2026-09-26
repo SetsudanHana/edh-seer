@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, type EngineCard, type EngineGroup, type EngineModel, type Link, type Repeat } from "../lib/engine-model.js";
+import { buildEngineModel, listNames, type EngineCard, type EngineGroup, type EngineModel, type Link, type Repeat } from "../lib/engine-model.js";
 import { CardName, ReasonText, useCardDrawer } from "./card-drawer.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { cardImageUrl } from "./card-node.js";
@@ -30,8 +30,14 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
     if (sel) panelRef.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [sel]);
   const pct = m.totalLinks ? Math.round((100 * m.coveredLinks) / m.totalLinks) : 0;
-  const deckGroups = m.groups.filter((g) => !g.helper);
+  // A group that mostly repeats another goes after the ones that do not, so the few shown first
+  // are the deck's different things (round 9: four Inalla groups in a row were the same Wizards).
+  const deckGroups = m.groups.filter((g) => !g.helper).sort((x, y) => Number(!!x.sameAs) - Number(!!y.sameAs));
   const helpers = m.groups.filter((g) => g.helper);
+  const [allGroups, setAllGroups] = useState(false);
+  const [showHelpers, setShowHelpers] = useState(false);
+  const shownGroups = allGroups ? deckGroups : deckGroups.slice(0, GROUP_CAP);
+  const moreGroups = deckGroups.slice(GROUP_CAP);
 
   if (!m.totalLinks) {
     return <p className="text-(--muted) py-8">The engine found no cards in this deck that work with each other, so there is nothing to group yet.</p>;
@@ -45,8 +51,10 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
           {m.onceLinks ? (
             <>
               {" "}<b>{m.onceLinks}</b> of those links work only once
-              {/* The groups showed 14 of 103 and the skeptic could not find the rest (round 8). */}
-              {m.onceInGroups < m.onceLinks ? `, and ${m.onceInGroups ? `only ${m.onceInGroups} of them are` : "none of them are"} in the groups below` : ""}.
+              {/* The groups showed 14 of 103 and the skeptic could not find the rest (round 8); "and
+                * only 257 of them are in the groups below" then read as a second, unexplained count
+                * to three seats (round 9). */}
+              {m.onceInGroups < m.onceLinks ? (m.onceInGroups ? `; the groups below show ${m.onceInGroups} of them` : "; the groups below show none of them") : ""}.
             </>
           ) : null}
         </p>
@@ -129,14 +137,27 @@ export function EnginesView({ report, graph, selected, onSelect, onOpenCard }: {
         <p className="text-sm text-(--muted)">Tap any card to light up the cards it works with.</p>
         {/* Clear of the sticky site and deck bars, which hid the panel's title (round 6). */}
         <div ref={panelRef} className="scroll-mt-40">{sel ? <SelectedPanel m={m} id={sel} onClear={() => onSelect(null)} onOpenCard={onOpenCard} /> : null}</div>
-        {deckGroups.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />)}
+        {shownGroups.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />)}
+        {moreGroups.length ? (
+          <p>
+            <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setAllGroups(!allGroups)}>
+              {allGroups ? "Show fewer" : `Show ${moreGroups.length} more: ${listNames(moreGroups.map((g) => g.name.toLowerCase()), 4)}`}
+            </button>
+          </p>
+        ) : null}
       </section>
 
       {helpers.length ? (
         <section aria-labelledby="eng-helpers" className="flex flex-col gap-3">
           <h2 id="eng-helpers" className="text-lg font-semibold">Cards that make many others easier to use</h2>
           <p className="text-sm text-(--muted) max-w-[70ch]">They make other cards cheaper, give them types, or let you find or bring them back. Useful, but not a plan on their own.</p>
-          {helpers.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />)}
+          {/* Folded by default: every seat stopped scrolling above them (round 9). */}
+          {showHelpers ? helpers.map((g) => <Group key={g.tag} g={g} m={m} sel={sel} onSelect={onSelect} />) : null}
+          <p>
+            <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setShowHelpers(!showHelpers)}>
+              {showHelpers ? "Hide these" : `Show them: ${listNames(helpers.map((g) => g.name.toLowerCase()), 4)}`}
+            </button>
+          </p>
         </section>
       ) : null}
     </div>
@@ -215,13 +236,11 @@ function CardText({ card }: { card: EngineCard }) {
   );
 }
 
-/** "A, B and C", or the first eight and a count, for names a sentence has to carry. */
-function names(list: string[]): string {
-  const short = list.map((n) => n.split(" // ")[0]!);
-  const head = short.slice(0, 8);
-  const tail = short.length > 8 ? ` and ${short.length - 8} more` : "";
-  return head.length > 1 && !tail ? `${head.slice(0, -1).join(", ")} and ${head.at(-1)}` : head.join(", ") + tail;
-}
+/** How many of the deck's groups show before "Show N more": the six ran to ten phone screens,
+ *  and every seat stopped reading partway through them (round 9). */
+const GROUP_CAP = 3;
+
+const names = (list: string[]) => listNames(list);
 
 /** A group shows this many member chips until asked for all of them: at 390px a group of 54
  *  was a wall of chips three screens tall (live round). The rest are named in a line. A selection
@@ -287,7 +306,7 @@ function Group({ g, m, sel, onSelect }: { g: EngineGroup; m: EngineModel; sel: s
         {g.sameAs && !all ? (
           <p className="text-sm">
             Mostly the same cards as <b>{g.sameAs.name}</b>
-            {g.sameAs.missing.length ? `, without ${names(g.sameAs.missing.map((id) => { const c = m.cards.get(id); return c ? c.name + (c.isToken ? " (token)" : "") : id; }))}` : ""}
+            {g.sameAs.missing.length ? `, without ${g.sameAs.missing.length} of them (${names(g.sameAs.missing.map((id) => { const c = m.cards.get(id); return c ? c.name + (c.isToken ? " (token)" : "") : id; }))})` : ""}
             {members.length ? `, plus these ${members.length}:` : "."}
           </p>
         ) : null}

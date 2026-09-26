@@ -827,6 +827,30 @@ test("a token named in a reason says it is one, and whose", () => {
   expect(screen.getByText(/\(token from Krenko, Mob Boss\)/)).toBeInTheDocument();
 });
 
+/** A CREATE EDGE NAMES THE MAKER, not the first edge into the token: a landfall link credited
+ *  Summon: Fat Chocobo's Bird to Flooded Strand (overview round 9). */
+test("a token's maker is the card that creates it, even when another card links to it first", () => {
+  const other = (SAMPLE.graph.nodes as { id: string; isToken?: boolean }[]).find((n) => !n.isToken && n.id !== "Krenko, Mob Boss")!.id;
+  const graph = {
+    ...SAMPLE.graph,
+    nodes: [...SAMPLE.graph.nodes, { id: "token:Goblin", label: "Goblin", isToken: true, kind: "token" }],
+    edges: [
+      ...SAMPLE.graph.edges,
+      { from: other, to: "token:Goblin", weight: 1, tags: ["enters:land"], reasonTexts: [] },
+      { from: "Krenko, Mob Boss", to: "token:Goblin", weight: 1, tags: ["creates:creature"], reasonTexts: [] },
+    ],
+  } as never;
+  render(
+    <CardDrawerProvider graph={graph}>
+      <HighSynergyCards cards={[{
+        name: "Impact Tremors", isCommander: false, score: 1, synergyRating: 4, partnerCount: 3,
+        topPartners: [{ name: "Krenko, Mob Boss", score: 1, reasons: [{ tag: "t", text: "When Goblin enters, Impact Tremors triggers" }] }],
+      }] as never} />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByText(/\(token from Krenko, Mob Boss\)/)).toBeInTheDocument();
+});
+
 /** THREE IDENTICAL SENTENCES, THREE DIFFERENT NUMBERS was the tuner's other stop. The score is not
  *  computed from the printed sentence -- it aggregates every partner -- and the row never said so.
  *  The count is NOT offered as the explanation, because it is not one: on the example deck those

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { nodeId as matcherNodeId } from "@edh-seer/matcher/graph-projection";
 import { engineDeck } from "./engine-model.fixture.js";
-import { buildEngineModel, groupName, nodeId, plural } from "./engine-model.js";
+import { buildEngineModel, groupName, listNames, nodeId, plural } from "./engine-model.js";
 import type { CardGraph, DeckReport } from "../types.js";
 
 describe("nodeId", () => {
@@ -126,4 +126,53 @@ test("a pair helps both ways only when each card acts in a line, whichever side 
   } as unknown as CardGraph;
   const [pair] = buildEngineModel(report, graph).strongest;
   expect(pair!.both).toBe(false);
+});
+
+function tiny(names: string[], reasons: { producer: string; consumer: string; tag: string; text: string; repeatability?: string }[]) {
+  const report = {
+    commanders: [], cards: names.map((name) => ({ name, score: 1 })),
+    edges: reasons.map((r) => ({ a: r.producer, b: r.consumer, score: 1, reasons: [r] })),
+  } as unknown as DeckReport;
+  const graph = {
+    nodes: names.map((n) => ({ id: n, label: n, copies: 1, types: ["creature"], subtypes: [], supertypes: [], colors: [], cmc: 2, roles: [] })),
+    edges: [], undirectedReasons: 0, offDeckReasons: 0,
+  } as unknown as CardGraph;
+  return buildEngineModel(report, graph);
+}
+
+test("a copy link is the copier helping, so a pair whose every line runs one way is one-way", () => {
+  // Sythis acts in the cast line, but Weaver helped; Weaver copying Sythis helps Sythis too.
+  const [pair] = tiny(["Sythis", "Weaver"], [
+    { producer: "Weaver", consumer: "Sythis", tag: "cast:enchantment", text: "When Weaver is cast, Sythis gains you life" },
+    { producer: "Sythis", consumer: "Weaver", tag: "copies:triggered", text: "Weaver copies Sythis's triggered ability", repeatability: "activated" },
+  ]).strongest;
+  expect(pair!.both).toBe(false);
+});
+
+test("a doubled card is not what acts in the doubler's line", () => {
+  const m = tiny(["Doubler", "Wizard", "Payoff"], [
+    { producer: "Doubler", consumer: "Wizard", tag: "doubles:shaman", text: "Wizard's triggered abilities trigger an additional time thanks to Doubler", repeatability: "static" },
+    { producer: "Wizard", consumer: "Payoff", tag: "enters:wizard", text: "When Wizard enters, Payoff draws you 1 card" },
+  ]);
+  const wizard = m.cuts.find((c) => c.card.name === "Wizard")!;
+  expect(wizard.keepActs).toBe(false);
+});
+
+test("one-time links are named, count a little, and a card that can be brought back says so", () => {
+  const m = tiny(["Flicker", "A", "B", "C", "Lone", "Digger"], [
+    ...["A", "B", "C"].map((x) => ({ producer: "Flicker", consumer: x, tag: "enters:creature", text: `When ${x} enters thanks to Flicker, ${x} triggers again`, repeatability: "oneshot" })),
+    { producer: "Digger", consumer: "Flicker", tag: "recursion-target:instant", text: "Digger can bring back Flicker" },
+    { producer: "Lone", consumer: "A", tag: "attacks:any", text: "When Lone attacks, A grows" },
+  ]);
+  const flicker = m.cuts.find((c) => c.card.name === "Flicker")!;
+  expect(flicker.why).toMatch(/happens only once: with A, B and C\. Digger can bring it back to do it again\./);
+  expect(flicker.broughtBackBy).toBe("Digger");
+  // Three one-time links a card can repeat outweigh one repeating link.
+  expect(m.cuts.findIndex((c) => c.card.name === "Lone")).toBeLessThan(m.cuts.indexOf(flicker));
+});
+
+test("names with commas are separated so they cannot be misread", () => {
+  expect(listNames(["Falco Spara, Pactweaver", "Sol Ring"])).toBe("Falco Spara, Pactweaver and Sol Ring");
+  expect(listNames(["Falco Spara, Pactweaver", "Sol Ring", "Mox"])).toBe("Falco Spara, Pactweaver; Sol Ring and Mox");
+  expect(listNames(["A", "B", "C", "D"], 2)).toBe("A, B and 2 others");
 });
