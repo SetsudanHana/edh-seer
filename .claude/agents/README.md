@@ -122,15 +122,25 @@ the browser, so that cross-check is what keeps the classification honest.
 | precon-upgrader | `packages/cli/decks/precon-party-time.txt` — the Baldur's Gate "Party Time" precon (Nalia de'Arnise) | unchanged from the precon seat: partial coverage, flat-export commander detection, and the bad-deck case (a theme the engine calls unfocused) |
 | clunky-deck | **chosen per round**: a deck whose report carries a draw or land finding (ran out of cards, lands short, a colour short) | the seat tests whether a real problem reads as a verdict on this list. Re-check each round that the finding is still there; a fixed deck calibrates nothing |
 | plan-seeker | `packages/cli/decks/calibration/enchanting-rani.txt`; the "unsure card" is the first card in its "Weak here, but something argues for them" cut group | four win plans "spread about evenly", a blink theme earlier rounds missed, and a card with arguments both ways |
-| pod-fit | `packages/cli/decks/calibration/yuna-grand-summoner.txt` | the skeptic's fixture, carried over: one live claim judged FALSE (see below). Re-verify every round |
+| pod-fit | `packages/cli/decks/calibration/mari-takes-control.txt` | one live claim the owner judged FALSE (see below); `research/web/seed-check.ts` fails when it disappears. Moved from Yuna on 2026-09-26, whose plant the engine stopped emitting |
 | phone | `inalla.txt` captured at 390px | same as before, so modality stays the only variable against earlier rounds |
 
-**The pod-fit seat's seeded claim** (carried from the skeptic seat, **re-verified 2026-09-20**):
-`Misty Rainforest -> Yuna, Grand Summoner`, tag `dies:permanent`, rendered as "When Misty
-Rainforest dies, Yuna, Grand Summoner puts that number counters on a permanent". Yuna only
-triggers on a permanent that **had a counter on it**, which a cracked fetchland never does, so the
-defect is catchable from the two cards' oracle text alone. It replaced `sarevok-lord-of-pain`,
-whose claims were judged REAL in rounds 3 and 4.
+**The pod-fit seat's seeded claim** (**verified 2026-09-26**, issue #515):
+`Lively Dirge -> Tinybones, the Pickpocket`, tag `graveyard-recursion:-land`, in
+`calibration/mari-takes-control`, rendered as "When Lively Dirge is in the graveyard, Tinybones, the
+Pickpocket can bring it back". The owner judged it FALSE (subject mismatch): Lively Dirge fills and
+returns from YOUR graveyard, while Tinybones casts from the graveyard of the OPPONENT it damaged, so
+the defect is catchable from the two cards' oracle text alone.
+
+It replaced `Misty Rainforest -> Yuna, Grand Summoner` (`dies:permanent`), which the engine stopped
+emitting between 2026-09-20 and 2026-09-26, so the seat moved decks with it. On that day only two
+owner-FALSE claims were still live anywhere in the 71 decks; the other, `Transcendent Dragon ->
+Alchemist's Talent`, the owner noted works when Treasure mana is spent, so it is conditional.
+
+**Run the check before every round** -- it exits 1 when the plant is gone, and a round run without
+a plant calibrates nothing:
+
+    npx tsx research/web/seed-check.ts
 
 **How that fixture was chosen, because the method matters more than the pick.** 523 claims in
 the panel have a latest verdict of FALSE, but most have since been fixed — six of eight
