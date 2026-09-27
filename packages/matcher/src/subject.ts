@@ -57,6 +57,8 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // CR 700.12. An outlaw is five creature types wearing one noun, so this reads off the type line
   // exactly as `historic` does — `isOutlaw` in implied.ts stamps the producer side.
   if (consumer.outlaw === true && producer.outlaw !== true) return false;
+  // CR 722.3d: "whenever you cast a prepared spell" is satisfied only by a prepare spell's copy.
+  if (consumer.prepared === true && producer.prepared !== true) return false;
   // CR 700.9. A BOARD STATE, so the only producer that can state it is one whose printed text says
   // it arrives modified — a permanent that enters with counters on itself. Everything else fails,
   // which UNDER-claims deliberately: "whenever a modified creature you control deals combat damage"

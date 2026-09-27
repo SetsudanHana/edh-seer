@@ -5481,3 +5481,42 @@ test("an outlaw's own implied attack names the outlaw, not its type (#647)", () 
   expect(texts).toContain("When Nalia attacks, Frontline Medic grants a keyword");
   expect(texts.join("\n")).not.toMatch(/thanks to Nalia/);
 });
+
+describe("Prepared (CR 722.3; owner ruling 2026-09-27)", () => {
+  // Shapes as derived at DERIVE 183: Adventurous Eater // Have a Bite, Biblioplex Tomekeeper,
+  // Codie, Ravenous Codex, Ghostly Flicker.
+  const prepareCard = (name: string, spellType: string, entersPrepared: boolean): DeckCard => {
+    const c = base(name, entersPrepared ? [{
+      kind: "triggered", repeats: "once",
+      trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+      effect: { kind: "" }, emits: [{ verb: "prepared", subject: { control: "you", token: null, self: true } }],
+    }] : [], ["human"]);
+    Object.assign(c.tags!.characteristics, { types: ["creature", spellType], layout: "prepare",
+      faces: [{ types: ["creature"], subtypes: ["human"] }, { types: [spellType], subtypes: [] }] });
+    return c;
+  };
+  const preparer = base("Biblioplex Tomekeeper", [{ kind: "triggered", effect: { kind: "" },
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } },
+    emits: [{ verb: "prepared", subject: { control: "any", token: null, type: "creature", scope: "target" } }] }]);
+  const codie = base("Codie", [{ kind: "triggered", effect: { kind: "copy-spell" },
+    trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: "spell", prepared: true } } }]);
+  const flicker = base("Ghostly Flicker", [{ kind: "on-cast", effect: { kind: "flicker" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, type: "creature", fromZone: "exile" } }] }]);
+  const eater = prepareCard("Adventurous Eater", "sorcery", true);
+  const vanilla = base("Grizzly Bears", []);
+
+  test("a preparer joins a card with a prepare spell, and never one without", () => {
+    expect(directedReasons(preparer, eater, H).map((r) => r.text)).toContain("When Adventurous Eater becomes prepared thanks to Biblioplex Tomekeeper, it can cast its prepare spell");
+    expect(directedReasons(preparer, vanilla, H)).toEqual([]);
+  });
+  test("a blink joins a creature that enters prepared", () => {
+    expect(directedReasons(flicker, eater, H).map((r) => r.text)).toContain("When Adventurous Eater enters thanks to Ghostly Flicker, it becomes prepared");
+  });
+  test("a prepare spell joins a 'cast a prepared spell' payoff; an ordinary spell does not", () => {
+    const spellFace = faceDeckCards(eater).find((f) => f.tags!.characteristics.types.includes("sorcery"))!;
+    expect(directedReasons(spellFace, codie, H).length).toBeGreaterThan(0);
+    const bolt = base("Lightning Bolt", []);
+    Object.assign(bolt.tags!.characteristics, { types: ["instant"] });
+    expect(directedReasons(bolt, codie, H)).toEqual([]);
+  });
+});

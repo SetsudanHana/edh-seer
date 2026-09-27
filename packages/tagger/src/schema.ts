@@ -147,6 +147,11 @@ export interface SubjectFilter {
    *  haste" (Vihaan, Hellspur Posse Boss) would anthem every creature the way Favorable Winds did
    *  before `keyword` existed. */
   outlaw?: true;
+  /** CR 722.3d: a spell cast as a PREPARE SPELL -- the copy a prepared permanent lets you cast. Codie,
+   *  Ravenous Codex watches "whenever you cast a prepared spell"; its only producer is a card's own
+   *  implied prepare ability (matcher implied.ts). Asymmetric like `commander`: a consumer that does
+   *  not ask is unaffected. */
+  prepared?: true;
   /** The subject demands a MODIFIED permanent — CR 700.9: it has a counter on it, is equipped, or is
    *  enchanted by an Aura its controller controls.
    *
@@ -436,7 +441,11 @@ export type Verb =
   | "monarch"
   | "initiative"
   | "city-blessing"
-  | "ring-tempts";
+  | "ring-tempts"
+  /** CR 722.3a, Reality Fracture (owner ruling 2026-09-27): a permanent with a prepare spell gains
+   *  the prepared designation -- "enters prepared", "becomes prepared". Its consumers are the card's
+   *  own implied self-trigger (a preparer joins every prepare card) and nothing else; see implied.ts. */
+  | "prepared";
 
 export const VERB_VOCAB: readonly Verb[] = [
   "enters",
@@ -535,6 +544,7 @@ export const VERB_VOCAB: readonly Verb[] = [
   "initiative",
   "city-blessing",
   "ring-tempts",
+  "prepared",
 ];
 
 /** Common near-miss verb spellings the LLM emits, mapped to the canonical VERB_VOCAB member. */

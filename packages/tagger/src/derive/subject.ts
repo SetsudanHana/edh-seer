@@ -388,6 +388,7 @@ const HISTORIC = /\bhistoric\b/i;
  *  Anchored on the whole word: "outlaws" appears in reminder text listing the five types, and
  *  `modified` must not match "unmodified" or the "modifications" of a reminder line. */
 const OUTLAW = /\boutlaws?\b/i;
+const PREPARED_SPELL = /\bprepared spells?\b/i;
 const NOT_OUTLAW = /\bnon-?outlaws?\b/i;
 const MODIFIED = /\bmodified\b/i;
 /** A combat state, CR 506.4/509.1. "attacking" and "blocking" are participles of the state, never
@@ -620,6 +621,9 @@ export function parseSubject(text: string): SubjectFilter {
   if (counter) out.counter = counter;
   if (HISTORIC.test(t) && !NOT_HISTORIC.test(t)) out.historic = true;
   if (OUTLAW.test(t) && !NOT_OUTLAW.test(t)) out.outlaw = true;
+  // "a prepared spell" (Codie, Ravenous Codex). Only the SPELL: "a prepared creature" is the
+  // permanent's designation, which no card watches yet.
+  if (PREPARED_SPELL.test(t)) out.prepared = true;
   if (MODIFIED.test(t) && !NOT_MODIFIED.test(t)) out.modified = true;
   if (ATTACKING.test(t)) out.combat = "attacking";
   else if (BLOCKING.test(t)) out.combat = "blocking";

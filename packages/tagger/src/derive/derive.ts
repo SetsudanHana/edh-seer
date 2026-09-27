@@ -188,7 +188,10 @@ import { emblemRecipient } from "../emblem.js";
 // 181: Reality Fracture. `empower-jace` is amass's shape (kind `counter-placement`); `prepare` /
 // `unprepare` are words with no engine verb yet; CR 205.3's artifact types union into SUBTYPES
 // (Heartwood, Lander, Mutagen, Vibranium were unread), and a CR 111.10 token keeps its rule's type.
-export const DERIVE_VERSION = 181;
+// 182: Prepared forms edges (owner ruling 2026-09-27): `prepare` emits `prepared`, and "enters
+// prepared" is a self-entry trigger.
+// 183: a `grant-ability` whose clause "becomes prepared" is a prepare (Codie, Ravenous Codex).
+export const DERIVE_VERSION = 183;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1063,6 +1066,9 @@ export function textForClause(
   return hits.length === 1 ? hits[0] : "";
 }
 
+const ENTERS_PREPARED = /\benters prepared\b/i;
+const BECOMES_PREPARED = /\bbecomes? prepared\b/i;
+
 export function deriveAbilities(
   clauses: ClauseRecord[],
   cardName?: string,
@@ -1099,7 +1105,7 @@ export function deriveAbilities(
    *  See `rawTrigger` below. */
   let inheritedRaw: RawTrigger | undefined;
 
-  for (const clause of clauses) {
+  for (let clause of clauses) {
     // The whole clause goes, not just its trigger. What is quoted on a created token is a complete
     // ability -- Vivi's Persistence's Wizard both watches the cast AND deals the damage -- so
     // keeping the effect and dropping the trigger would leave the card claiming to do a thing it
@@ -1130,6 +1136,13 @@ export function deriveAbilities(
     // cue localises the actor to a VERB, not to an action, so a clause with two actions of that verb
     // is ambiguous and is left alone -- a missing answer beats a wrong one.
     const clauseText = textForClause(clause, clauseTexts);
+    // "EACH CREATURE YOU CONTROL BECOMES PREPARED" IS A PREPARE, NOT A GRANT (CR 722.3a). Codie,
+    // Ravenous Codex's activated ability came back from the model as `grant-ability` even with
+    // `prepare` in the vocabulary, so the one card that prepares a whole board prepared nothing.
+    // Read off the clause text, narrowly: only a grant whose clause says the thing becomes prepared.
+    if ((clause.actions ?? []).some((a) => a.verb === "grant-ability") && BECOMES_PREPARED.test(clauseText)) {
+      clause = { ...clause, actions: (clause.actions ?? []).map((a) => a.verb === "grant-ability" ? { ...a, verb: "prepare" } : a) };
+    }
     const actors = clauseText ? actionRecipients(clauseText) : {};
     const actorFor = (verb?: string): Control | undefined =>
       (clause.actions ?? []).filter((a) => a.verb === verb).length === 1 ? actors[verb ?? ""] : undefined;
@@ -1813,6 +1826,16 @@ export function deriveAbilities(
       kind: "static", repeats: "continuous",
       effect: { kind: "graveyard-recursion", subject: { control: "opp", token: null, zone: "graveyard" } },
     });
+  }
+  // "THIS CREATURE ENTERS PREPARED" IS ITS OWN ENTRY PREPARING IT (CR 722.3a; owner ruling 2026-09-27:
+  // "blink synergizes with creatures that enter prepared"). The clause is static and emits `prepared`
+  // on the card itself; read as a self-entry trigger, a flicker re-entering it joins through the same
+  // self-ETB path every other ETB creature uses, and nothing else changes.
+  for (let i = 0; i < abilities.length; i++) {
+    const a = abilities[i]!;
+    if (a.trigger || a.clause === undefined || !ENTERS_PREPARED.test(clauseTexts?.[a.clause] ?? "")) continue;
+    if (!(a.emits ?? []).some((e) => e.verb === "prepared" && e.subject.self === true)) continue;
+    abilities[i] = { ...a, kind: "triggered", repeats: "once", trigger: { verbs: ["enters"], subject: { control: "you", token: null, self: true } } };
   }
   return { abilities, unclaimed, unknownTriggers };
 }

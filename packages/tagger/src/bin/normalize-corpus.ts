@@ -30,6 +30,7 @@
  *    tsx src/bin/normalize-corpus.ts --run --batch      # submit to the Batch API at HALF PRICE
  *    tsx src/bin/normalize-corpus.ts --collect <file>   # poll + persist a submitted batch
  *    tsx src/bin/normalize-corpus.ts --card "Isshin, Two Heavens as One" --run
+ *    tsx src/bin/normalize-corpus.ts --commander-legal --refresh-term "prepare|empower jace"   # re-ask cards printing a newly added word
  *                                                       # pull one named card into the corpus
  *
  *  Needs `set -a && source .env && set +a` for ANTHROPIC_API_KEY; `--run` refuses without it. */
@@ -88,6 +89,15 @@ const REFRESH_OTHER = process.argv.includes("--refresh-other");
  *  older doc with ANY lingering defect, and the owner authorised this refresh at its own size:
  *  ~550 commander-legal cards (census 2026-09-17), not the treadmill. */
 const REFRESH_UNLESS = process.argv.includes("--refresh-unless");
+/** ONLY the cards whose text prints a word the vocabulary gained after their doc was answered:
+ *  `--refresh-term "prepare"` (2026-09-27, Reality Fracture). The 46 prepare cards bought before
+ *  `prepare` existed recorded its lines as near-misses -- `tap:this` on five, `add-counter:prepared`
+ *  on four -- and none says `other`, so `--refresh-other` cannot find them. Gated on the TEXT and on
+ *  an older prompt, never on a version number alone: the treadmill lesson. */
+const REFRESH_TERM = (() => {
+  const i = process.argv.indexOf("--refresh-term");
+  return i >= 0 && process.argv[i + 1] ? new RegExp(process.argv[i + 1]!, "i") : null;
+})();
 /** Re-ask every doc answered under a prompt older than N. NOT `NORMALIZE_MIN_COMPATIBLE`, which is a
  *  claim that older answers are INVALID and re-buys the whole corpus the moment it moves -- this is
  *  a refresh you can point at part of the corpus and stop. Measured 2026-08-21: 1,985 of the 2,756
@@ -323,7 +333,8 @@ for await (const doc of scopeDocs()) {
       || carriesOtherTrigger(existing, TRIGGERS, TRIGGER_VOCAB_VERSION));
   const stale = BELOW_VERSION > 0 && existing !== null && existing.normalizeVersion < BELOW_VERSION;
   const unless = REFRESH_UNLESS && worthReasking(existing, NORMALIZE_VERSION) && dropsUnlessPayment(existing, doc.oracleText ?? "");
-  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable && !stale && !unless) continue;
+  const term = REFRESH_TERM !== null && worthReasking(existing, NORMALIZE_VERSION) && REFRESH_TERM.test(doc.oracleText ?? "");
+  if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable && !stale && !unless && !term) continue;
   // Tested AFTER `needsModel`, never before it: an all-inert card costs nothing, so excluding it
   // would buy no money back and would leave it reading as unread. An UNRANKED card is out — EDHREC
   // has no record of the format playing it, which is the same claim the cutoff makes.
