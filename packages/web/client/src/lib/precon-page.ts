@@ -36,6 +36,8 @@ export interface PreconPage {
   gaps: { group: string; have: number; target: number }[];
   /** The list by type, lands last: names only. */
   decklist: { group: string; cards: { name: string; count: number }[] }[];
+  /** The report's own link for this list (`/#deck=…`), when the list fits in one. */
+  report?: string;
 }
 export interface PreconCard { name: string; slug: string; art?: string }
 

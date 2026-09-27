@@ -21,6 +21,8 @@ import { ReportLoading } from "./components/ReportLoading.js";
 const CardPage = lazy(() => import("./components/CardPage.js").then((m) => ({ default: m.CardPage })));
 const CardSearch = lazy(() => import("./components/CardSearch.js").then((m) => ({ default: m.CardSearch })));
 const CommanderPage = lazy(() => import("./components/CommanderPage.js").then((m) => ({ default: m.CommanderPage })));
+const PreconPage = lazy(() => import("./components/PreconPage.js").then((m) => ({ default: m.PreconPage })));
+const PreconIndex = lazy(() => import("./components/PreconIndex.js").then((m) => ({ default: m.PreconIndex })));
 const ReportView = lazy(() => import("./components/ReportView.js").then((m) => ({ default: m.ReportView })));
 
 /** THE BOOT FLAG, SET WHEN THE PAGE HAS RENDERED -- NOT WHEN THE BUNDLE HAS RUN.
@@ -398,6 +400,8 @@ export default function App() {
       <Route path="/cards/:slug" element={<CardPage />} />
       <Route path="/commanders" element={<CardSearch mode="commanders" />} />
       <Route path="/commanders/:slug" element={<CommanderPage />} />
+      <Route path="/precons" element={<PreconIndex />} />
+      <Route path="/precons/:slug" element={<PreconPage />} />
       {/* THE BROWSE PAGES RENDER NOTHING HERE, AND THAT IS THE DESIGN. Their content is the
         * prerendered block the Function injected, which on these routes stays visible after boot --
         * a list of links needs no JavaScript, so React re-rendering it would put the same data in

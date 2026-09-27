@@ -22,6 +22,8 @@ const APP_ROUTES: RegExp[] = [
   // since 2026-09-08 so are these two -- they carry the A-Z block that makes the corpus walkable.
   /^\/cards$/,
   /^\/commanders$/,
+  // The precon list; `/precons/:slug` has its own Function, as a card page does.
+  /^\/precons$/,
   // THE BROWSE PAGES ARE SERVER-RENDERED AND REACT OWNS NOTHING ON THEM. They are here so the shell
   // is served rather than 404'd if their own Function ever misses; the content is the prerendered
   // block, which on these routes is NOT hidden when the app boots.

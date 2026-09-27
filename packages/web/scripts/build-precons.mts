@@ -18,6 +18,7 @@ import { analyzeDeckStatic } from "../client/src/api.static.ts";
 import { buildEngineModel } from "../client/src/lib/engine-model.ts";
 import { chooseCuts, swapCandidates } from "../client/src/lib/cut-choice.ts";
 import { preconPage, type PreconPage } from "../client/src/lib/precon-page.ts";
+import { encodeShare, shareUrl } from "../client/src/lib/share-link.ts";
 
 const arg = (name: string, fallback?: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : fallback; };
 const repo = resolve(import.meta.dirname, "..", "..", "..");
@@ -56,6 +57,9 @@ for (const p of precons) {
       cuts: [...cuts.map((c) => c.name), ...swapCandidates(data.report, cuts)],
     });
     const page = preconPage({ slug, name: p.name, setCode: p.setCode, setName: p.setName, releaseDate: p.releaseDate, commanders: p.commanders }, data, suggestions);
+    // THE FULL REPORT IS ONE LINK AWAY, the same link "Copy link" makes, so it opens the list ready to edit.
+    const payload = await encodeShare({ commanders: p.commanders.join("\n"), decklist: p.cards.map((c) => `${c.count} ${c.name}`).join("\n") });
+    if (payload) page.report = shareUrl("", "/", payload);
     writeFileSync(join(outDir, `${slug}.json`), JSON.stringify(page));
     index.push({ slug, name: p.name, setCode: p.setCode, setName: p.setName, releaseDate: p.releaseDate, commanders: p.commanders, identity: page.identity, theme: page.theme });
     console.log(`${slug}: ${page.swaps.length} swaps, synergy ${page.synergy?.score.toFixed(1) ?? "-"}`);
