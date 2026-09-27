@@ -61,13 +61,6 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
           to make {m.headline.mana} mana by turn {m.headline.turn}
         </span>
       </div>
-      <p className="text-sm text-(--muted)">
-        {m.trials.toLocaleString()} simulated games, playing {m.accelerants} of your cards as extra mana
-        (cards whose printed text makes mana or puts a land into play; the Ramp role in the Roles
-        chapter is counted from each card&rsquo;s role instead, so its number can differ). The range
-        is <strong>how you play them</strong>: the low end holds up two mana, the high end spends
-        everything on ramp and is a ceiling no real deck plays to.
-      </p>
 
       {/* THE TABLE WAS TWO SERIES OF NUMBERS AND ONE OF THEM WAS ALREADY DRAWN (roadmap T17).
         *  Owner: *"mana availability is just a table with numbers, it can be presented better"*.
@@ -138,12 +131,6 @@ export function ManaAvailability({ manaAvailability }: { manaAvailability: DeckR
         </p>
       ) : null}
 
-      <p className="text-xs text-(--muted)">
-        The line is the median share of your nonlands this turn's mana can pay for, under the
-        spend-everything play; the band covers the middle half of games. Colour is ignored
-        entirely, so this is <strong>mana</strong> and never castability — a {"{3}{R}{G}{W}"} spell
-        needs three specific colours nothing here checks.
-      </p>
     </div>
   );
 }

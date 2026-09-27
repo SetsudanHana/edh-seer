@@ -15,8 +15,6 @@ export function LandMathChart({ landCount, deckSize }: { landCount: number; deck
   const pct = (p: number) => Math.round(p * 100);
   const onPlay = nextLandChance(landCount, deckSize, 2);
   const onDraw = nextLandChance(landCount, deckSize, 3);
-  const withMore = nextLandChance(landCount + 2, deckSize, 2);
-  const missTenths = Math.round((1 - onPlay) * 10);
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Lands in your opening 7</h3>
@@ -34,13 +32,11 @@ export function LandMathChart({ landCount, deckSize }: { landCount: number; deck
         *  to look for is a figure most readers never see. The SENTENCE still leads, because one
         *  number is what a player acts on; the eight bars are what they check it against. */}
       {/* BAD LUCK OR THE DECK, ANSWERED WITH ITS ODDS (baseline round 2026-09-26). */}
+      {/* ONE LINE (owner, 2026-09-27: "less is more"). */}
       <p className="text-sm text-(--muted)" data-testid="two-land-keep">
-        <span className="text-(--foreground)">Kept two lands?</span> You find a third by your turn-3
-        land drop in <span className="text-(--foreground) tabular-nums">{pct(onPlay)}%</span> of games
-        on the play and <span className="text-(--foreground) tabular-nums">{pct(onDraw)}%</span> on the
-        draw. So about {missTenths} in 10 two-land keeps on the play still miss it: those are this
-        deck&rsquo;s odds, not bad luck. With {landCount + 2} lands it would be {pct(withMore)}%.
-        Counts lands only; cheap ramp that finds a land helps a little more.
+        <span className="text-(--foreground)">Kept two lands?</span> A third by turn 3 in{" "}
+        <span className="text-(--foreground) tabular-nums">{pct(onPlay)}%</span> of games on the play,{" "}
+        <span className="text-(--foreground) tabular-nums">{pct(onDraw)}%</span> on the draw.
       </p>
       <div className="pt-1">
           <BarChart

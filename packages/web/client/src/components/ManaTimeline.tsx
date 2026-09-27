@@ -187,11 +187,6 @@ export function ManaTimeline({ curve, manaAvailability }: {
         </p>
       ) : null}
 
-      <p className="text-xs text-(--muted) max-w-[56ch]">
-        Above the line: mana by turn in a typical game, with the band covering the middle half of games. Below
-        it: how many cards that much mana first pays for. A cost sits on the turn this deck actually
-        covers it, not on the turn its number happens to match.
-      </p>
 
       {/* THE ONE GENERATED SENTENCE, and it is the WORST intersection rather than a summary.
         *  Stranded cards outrank a busy turn: a turn where a lot arrives is a deck working, while a
@@ -206,10 +201,6 @@ export function ManaTimeline({ curve, manaAvailability }: {
           <span className="text-(--muted)">
             {" "}— half your games reach less than that.
           </span>
-        </p>
-      ) : t.peak && t.peak.count >= 10 ? (
-        <p className="text-sm text-(--muted)">
-          Turn {t.peak.turn} is where the most arrives: {t.peak.count} cards become payable at once.
         </p>
       ) : null}
     </div>

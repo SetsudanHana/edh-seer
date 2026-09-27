@@ -506,10 +506,6 @@ function DeckMathRows({
           *  clock turn, which asked nearly every deck for about five of every kind and so told
           *  every deck it was short. What a player can act on is which of their cards answer what,
           *  and how often one is in hand: the count, the chance, and the names. */}
-        <p className="text-sm text-(--muted) max-w-[65ch]">
-          The cards that can remove each kind of permanent, and how often at least one is in your
-          hand by turn {turn}. A card that hits several kinds is under each.
-        </p>
         <ul className="flex flex-col gap-2.5 max-w-3xl">
           {answers.map((a) => {
             const none = a.count === 0;
@@ -551,9 +547,20 @@ function DeckMathRows({
                   <span className={`whitespace-nowrap stat-num ${none ? "text-(--warning)" : ""}`}>
                     {none ? "none" : plural(a.count, "card")}
                   </span>
+                  {/* THE CHANCE AS A BAR (owner, 2026-09-27: "rely more on data visualisation than the
+                    *  text"): "in hand by turn 7 in 26% of games" on every row became the bar and its
+                    *  figure; the sentence stays in the row's label for a screen reader. */}
+                  {!none && !a.fromCommandZone ? (
+                    <span className="inline-flex items-center gap-2" aria-hidden="true">
+                      <span className="h-1.5 w-28 rounded-full bg-(--surface-secondary)">
+                        <span className="block h-full rounded-full bg-(--accent)" style={{ width: `${Math.round(a.available * 100)}%` }} />
+                      </span>
+                      <span className="stat-num text-xs text-(--muted)">{pct(a.available)}</span>
+                    </span>
+                  ) : null}
                   <span className="text-xs text-(--muted)">
-                    {odds}
-                    {mode && odds ? " · " : null}
+                    {none || a.fromCommandZone ? odds : null}
+                    {mode && (none || a.fromCommandZone) && odds ? " · " : null}
                     {mode ? <span className={mode.startsWith("none") ? "text-(--warning)" : ""}>{mode}</span> : null}
                   </span>
                 </div>
@@ -689,12 +696,6 @@ function DeckMathRows({
               );
             })}
           </ul>
-          {castability.cards.some((c) => c.mana.high - c.castable.high >= COLOUR_GAP) ? (
-            <p className="text-xs text-(--muted) max-w-[65ch]">
-              &ldquo;Mana alone&rdquo; is the same chance with colour ignored. Where it is well above
-              the row&rsquo;s figure, the colours are what is short, not the mana.
-            </p>
-          ) : null}
           {/* WHICH CARDS WERE REFUSED, NOT JUST HOW MANY (S19). A refused card leaves the list
             *  above entirely, so before this the only trace of it was a count inside a collapsed
             *  caveat -- measured on the example deck, `Blasphemous Act` stopped being called a
@@ -712,28 +713,6 @@ function DeckMathRows({
               .
             </p>
           ) : null}
-          <Caveat label="how these are priced">
-            {castability.refused > 0
-              // The list names every refusal kind `castability.ts` carries; a kind missing here reads
-              // as an unexplained blank on the card's own row. "Costs less than it prints" joined
-              // them in S19 and is the most common of them on real decks -- 38 of the 71
-              // calibration decks hold at least one.
-              ? `${plural(castability.refused, "card")} skipped: we don't guess at X costs, delve, convoke, free spells or cost reducers. `
-              : ""}
-            {castability.biases}
-            {/* ROADMAP I6. Putting a permanent onto the battlefield is not casting it, so it uses no
-              *  stack, dodges countermagic and never pays the printed cost — and every percentage
-              *  above prices casting. Named cards and no rate: how often the deck actually does it
-              *  needs the enabler drawn, alive and holding a target, which is a play model this
-              *  layer does not have. */}
-            {castability.cheatsIntoPlay && castability.cheatsIntoPlay.length > 0 ? (
-              <>
-                {" "}And {castability.cheatsIntoPlay.join(", ")} can put a permanent onto the
-                battlefield straight from your hand, which is not casting it — nothing above prices
-                that, and the cost on whatever it cheats in is never paid.
-              </>
-            ) : null}
-          </Caveat>
         </div>
   ) : null;
 
@@ -1023,33 +1002,6 @@ function DeckMathRows({
             *  base is broken" and then discarded the whole block for contradicting the row above.
             *  It does not contradict it: a land count and a pip deadline are different questions,
             *  and the honest fix for a demand no 100-card deck can meet is usually the spell. */}
-          {overcommitted ? (
-            <p className="text-xs text-(--muted) max-w-[65ch]">
-              Together these rows ask for {totalRequired} sources from {landRoom} lands. Read each row
-              as what that card is asking for, not as a to-do list.
-            </p>
-          ) : null}
-          {colors.some((c) => c.worst) ? (
-            <Caveat label="what each row is measured against">
-              Each row is the demand that misses by the most in that colour, at 90% confidence — the
-              card whose pips the deck is least likely to have on time, which is not always a double
-              pip and is never the deck's land count, judged above. Cutting or delaying that card
-              answers a gap as well as adding lands does
-              {overcommitted ? ", and here it is the only thing that can" : ""}.{" "}
-              {/* BOTH MODELS, IN ONE SENTENCE. The figure prices the free mulligan; the keep band it
-                *  uses reads a hand's LAND count, so applied to one colour it over-states the help
-                *  exactly as ignoring the mulligan under-states it. Showing the pair is what stops
-                *  the row claiming a precision neither model has — and until 2026-08-25 only the
-                *  raw end shipped, which told most decks they were short. */}
-              The counts price the free mulligan; without it the same rows would ask for{" "}
-              {/* DEDUPED: a five-colour deck whose rows all sit at the same pip and turn produced
-                *  "20, 20, 20, 20, 20", which is noise rather than five facts. Found in a live
-                *  browser on `fairdrazi-5-color-less`. */}
-              {[...new Set(colors.filter((c) => c.worst).map((c) => c.worst!.requiredRaw))].join(", ")} instead, and
-              the truth sits between — the mulligan is judged on a hand's land count, not on its
-              sources of one colour.
-            </Caveat>
-          ) : null}
         </div>
   ) : null;
 
@@ -1156,22 +1108,8 @@ function DeckMathRows({
       {/* THE HORIZON STAYS VISIBLE and its caveats fold: every probability below is priced at this
         *  turn, so a reader who does not know the number cannot read the panel at all — while the
         *  four things the model ignores are what they consult once and then stop needing. */}
-      <div className="flex flex-col gap-1">
-        <p className="text-xs text-(--muted) max-w-[65ch] tabular-nums">
-          Everything below is checked at turn {turn}:{" "}
-          {deckMath.turnSource === "corpus-median"
-            ? "the median of the calibration decks, because this deck has no combat clock"
-            : deckMath.turnSource === "override"
-              ? "a fixed horizon"
-              : "when this deck typically wins"}
-          , {seen} cards seen by then.
-        </p>
-        <Caveat>
-          Assumes no mulligans, no opponents and no extra draws, and a repeatable effect counts the
-          same as a one-shot. Draw-heavy decks do better than shown: about 11 points higher with
-          five extra cards seen, about 20 with ten.
-        </Caveat>
-      </div>
+      {/* ONE LINE (owner, 2026-09-27: "less is more"): the turn every figure below is priced at. */}
+      <p className="text-xs text-(--muted) tabular-nums">Checked at turn {turn}, {seen} cards seen.</p>
 
       {[...shown]
         .sort((a, b) => Number(b.flagged) - Number(a.flagged))
