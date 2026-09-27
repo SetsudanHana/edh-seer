@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
@@ -22,7 +22,6 @@ import { LandMathChart } from "./LandMathChart.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { PlanThemes } from "./PlanThemes.js";
 import { OrbitView } from "./OrbitView.js";
-import { OrbitOverlay } from "./OrbitOverlay.js";
 import { RoleShelves, roleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { chooseCuts, swapCandidates } from "../lib/cut-choice.js";
@@ -36,7 +35,7 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
-import { CardLinksContext } from "./card-menu.js";
+import { useCardDrawer } from "./card-drawer.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -163,26 +162,33 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [themes]);
   const unmetDemand = (report.deckMath?.demand ?? []).some((d) => d.available !== null && d.suppliers === 0);
   const [centre, setCentre] = useState<string | null>(null);
-  const [overlay, setOverlay] = useState<string | null>(null);
   // A NEW REPORT STARTS FROM ITS COMMANDER (owner, 2026-09-27: "with Rani deck I managed somehow to
   // get Essence Flux as my starting point"). This component stays mounted from one deck to the next,
   // so the card walked to on the last deck stayed the middle whenever the new deck also played it.
-  // The walk, its trail and any open overlay belong to the report they were made on.
+  // The walk and its trail belong to the report they were made on.
   const [shownReport, setShownReport] = useState(report);
   const [walkGen, setWalkGen] = useState(0);
   if (shownReport !== report) {
     setShownReport(report);
     setCentre(null);
-    setOverlay(null);
     setWalkGen((g) => g + 1);
   }
-  /** "See how it connects" in any card's ⋯ menu opens that card's orbit over the report. */
-  const links = useMemo(() => {
-    if (!themes) return null;
-    const byName = new Map<string, string>();
-    for (const c of themes.cards.values()) if (!c.isToken && !c.faceOf && !byName.has(c.physical)) byName.set(c.physical, c.id);
-    return { idOf: (name: string) => byName.get(name), show: setOverlay };
-  }, [themes]);
+  /** ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27). The card drawer draws the card's own
+   *  links and offers the walk; walking re-centres the commander's map on Glance and scrolls to it,
+   *  where a full-screen second map used to open over the report. */
+  const drawer = useCardDrawer();
+  const { setExtras } = drawer;
+  useEffect(() => {
+    if (!themes) { setExtras(null); return; }
+    setExtras({
+      model: themes,
+      walk: (id) => {
+        setCentre(id);
+        document.getElementById("commander-map")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      },
+    });
+    return () => setExtras(null);
+  }, [themes, setExtras]);
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD — the single fact all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight. A two-faced commander rates one row per face and both carry the same `derived` flag, so
@@ -235,15 +241,12 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
-    <CardLinksContext.Provider value={links}>
+    <>
     <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
       <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
         *  instead of widening it — the narrow-width defence this repo has already paid for twice. */}
       <div className="flex flex-col gap-16 lg:gap-20 min-w-0 flex-1 pt-6 lg:pt-0">
-        {overlay && themes ? (
-          <OrbitOverlay report={report} graph={data.graph!} model={themes} focusId={overlay} onClose={() => setOverlay(null)} />
-        ) : null}
         <Chapter id="read" title={title("read")}>
           {/* A deck the format would not let you play is not a deck this report can diagnose. It
             *  renders nothing when the deck is clean, which is every one of the 71 calibration
@@ -262,6 +265,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  was the Game plan chapter's opening, a chapter away from the deck it pictures. */}
           {themes && commanderId ? (
             <Movement title="What your commander works with" count="tap a card to read how, tap again to walk to it">
+              <div id="commander-map" className="scroll-mt-40" />
               <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
             </Movement>
           ) : null}
@@ -314,7 +318,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  is. They stand in for ArchetypeBoard's unranked pair groups, which said the same
             *  pairs again without an order. The archetype bars stay: a named-archetype reading the
             *  themes do not give. */}
-          {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={setOverlay} main={mainTheme(report)} /> : null}
+          {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={(id) => drawer.open(themes.cards.get(id)?.name ?? id)} main={mainTheme(report)} /> : null}
           {/* THE ONE FIGURE THAT SAID NOTHING (S13). `cardSignals` in `matcher/src/analyze.ts`
             *  filters on `dc.tags`, so strategies, the groups and the membership matrix are all
             *  derived-only -- and this was the only coverage-limited surface on the page with
@@ -494,6 +498,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
       </div>
     </div>
-    </CardLinksContext.Provider>
+    </>
   );
 }

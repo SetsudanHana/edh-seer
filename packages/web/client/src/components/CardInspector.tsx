@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { CardGraph, GraphNode } from "../types.js";
 import { tagLabel } from "../lib/demand-sentence.js";
 import { cardImageUrl } from "./card-node.js";
@@ -20,8 +20,11 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin, phone = "sheet",
+  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin, phone = "sheet", extra,
 }: {
+  /** What the report adds about this card, above its links: in the report's drawer, the card's own
+   *  small map and a way to walk the commander's map from it. */
+  extra?: ReactNode;
   node: GraphNode;
   /** HOW THE PANEL SITS BELOW `sm`. "sheet" fills its container, which is right for the Cards
    *  drawer (nothing behind it the reader needs). "half" hugs the bottom at no more than half the
@@ -338,6 +341,8 @@ export function CardInspector({
           </button>
         ) : null}
       </div>
+
+      {extra}
 
       {node.roles && node.roles.length > 0 ? (
         <div className="flex flex-wrap gap-1">

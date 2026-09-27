@@ -1,32 +1,31 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { engineDeck } from "../lib/engine-model.fixture.js";
 import { CardDrawerProvider } from "./card-drawer.js";
-import { CardLinksContext, CardMenuButton } from "./card-menu.js";
+import { CardMenuButton } from "./card-menu.js";
 
-function list(name: string, show = vi.fn()) {
+function list(name: string) {
   const { graph } = engineDeck();
   render(
     <CardDrawerProvider graph={graph}>
-      <CardLinksContext.Provider value={{ idOf: (n) => (n === "Payoff B" ? "Payoff B" : undefined), show }}>
-        <CardMenuButton name={name} />
-      </CardLinksContext.Provider>
+      <CardMenuButton name={name} />
     </CardDrawerProvider>,
   );
-  return show;
 }
 
 test("the ⋯ beside a card in a list offers what a player can do with it", async () => {
-  const show = list("Payoff B");
+  list("Payoff B");
   const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: "More for Payoff B" }));
   const menu = screen.getByRole("menu", { name: "Payoff B" });
+  // ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): "See how it connects" opened a second,
+  // full-screen map; the card's links are now drawn in the drawer "Read the card" opens.
   expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual([
-    "See how it connects", "Read the card", "Pin it in the report", "Open its card page↗", "Copy the name",
+    "Read the card", "Pin it in the report", "Open its card page↗", "Copy the name",
   ]);
-  await user.click(within(menu).getByRole("menuitem", { name: "See how it connects" }));
-  expect(show).toHaveBeenCalledWith("Payoff B");
+  await user.click(within(menu).getByRole("menuitem", { name: "Read the card" }));
+  expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
   expect(screen.queryByRole("menu")).toBeNull();
 });
 
@@ -36,8 +35,8 @@ test("Escape closes the menu and gives focus back to its button; the pin sticks"
   const button = screen.getByRole("button", { name: "More for Payoff B" });
   await user.click(button);
   expect(button).toHaveAttribute("aria-expanded", "true");
-  await user.keyboard("{ArrowDown}{Enter}");
-  // The second line, "Read the card", opened the drawer and closed the menu.
+  await user.keyboard("{ArrowDown}{ArrowUp}{Enter}");
+  // The first line, "Read the card", opened the drawer and closed the menu.
   expect(screen.queryByRole("menu")).toBeNull();
   await user.click(button);
   await user.click(screen.getByRole("menuitem", { name: "Pin it in the report" }));

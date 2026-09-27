@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { useCardDrawer } from "./card-drawer.js";
@@ -6,24 +6,18 @@ import { useCardDrawer } from "./card-drawer.js";
 /** ONE MENU FOR A CARD, WHEREVER THE CARD IS LISTED (owner, 2026-09-27: the map's right-click menu,
  *  then "add the ⋯ menu to the other card lists too"). A list row is plain page, where taking over
  *  the browser's own right-click would get in the way, so a list offers the same lines behind a
- *  small "⋯" button: read the card, see how it connects, pin it, open its page, copy its name. */
+ *  small "⋯" button: read the card (its links drawn in the drawer), pin it, open its page, copy its name. */
 
 /** One line of a menu: an action, or a link that opens in a new tab. */
 export interface MenuItem { label: string; run?: () => void; href?: string }
 
-/** THE CARD'S LINKS, OVER THE REPORT: the chapters own the orbit overlay, so they say how to open
- *  it. Absent (the Cards page), the line is left off rather than offered and dead. */
-export const CardLinksContext = createContext<{ idOf: (name: string) => string | undefined; show: (id: string) => void } | null>(null);
 
 /** The lines every card list offers for a card, by its physical name. Only lines that can work for
  *  this card: a name the report does not carry gets its page and its name, nothing else. */
 export function useCardMenu(): (name: string) => MenuItem[] {
   const { open, known, isPinned, togglePin } = useCardDrawer();
-  const links = useContext(CardLinksContext);
   return (name) => {
     const items: MenuItem[] = [];
-    const id = links?.idOf(name);
-    if (id && links) items.push({ label: "See how it connects", run: () => links.show(id) });
     if (known.has(name)) {
       items.push({ label: "Read the card", run: () => open(name) });
       items.push({ label: isPinned(name) ? "Unpin it in the report" : "Pin it in the report", run: () => togglePin(name) });
