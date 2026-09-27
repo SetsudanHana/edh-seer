@@ -3,6 +3,8 @@ import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, listNames, tokenLabel, type EngineCard, type EngineGroup, type EngineModel } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
+import { DeckSky } from "./DeckSky.js";
+import { linksWithin } from "../lib/deck-sky.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey } from "./engine-parts.js";
 import { whichTheme, type MainTheme } from "../lib/main-theme.js";
 
@@ -144,38 +146,48 @@ function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onO
   const memberWord = g.helper ? "the cards they help" : "when one of these is involved";
   return (
     <article className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-4" aria-labelledby={`theme-${g.tag}`}>
+      {/* WHERE THE THEME SITS IN THE DECK (owner, 2026-09-27: the sky in every chapter): a small
+        * copy of Glance's sky with this theme's cards lit and their links in gold. A helper theme
+        * lights stars across other themes' constellations, which is what a helper is. */}
+      <div className="flex items-start gap-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span aria-hidden="true" className="h-3 w-3 shrink-0 self-center rounded-full" style={{ background: g.hue }} />
-        <h4 id={`theme-${g.tag}`} className="text-base font-semibold">{name}</h4>
-        {which ? (
-          <span className={`eyebrow rounded-full border px-2 py-0.5 ${which.theme === "main" ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"}`}>
-            {which.match === "same"
-              ? (which.theme === "main" ? "Your main theme" : "Your second theme")
-              : `Part of your ${which.theme === "main" ? "main" : "second"} theme, ${which.name}`}
+          <span aria-hidden="true" className="h-3 w-3 shrink-0 self-center rounded-full" style={{ background: g.hue }} />
+          <h4 id={`theme-${g.tag}`} className="text-base font-semibold">{name}</h4>
+          {which ? (
+            <span className={`eyebrow rounded-full border px-2 py-0.5 ${which.theme === "main" ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"}`}>
+              {which.match === "same"
+                ? (which.theme === "main" ? "Your main theme" : "Your second theme")
+                : `Part of your ${which.theme === "main" ? "main" : "second"} theme, ${which.name}`}
+            </span>
+          ) : null}
+          {/* WHAT THE COUNT COUNTS (appeal review 2026-09-26): "32 cards" here beside "15 of 63 support"
+            *  on Glance read as the page contradicting itself. These are the cards linked in this theme;
+            *  the main theme's own count is how many cards' text is about it, and both are named. */}
+          <span className="text-sm text-(--muted)">
+            {new Set([...g.hubs, ...g.members]).size} cards linked here · {g.repeating} pair{g.repeating === 1 ? "" : "s"} that keep working{g.once ? `, ${g.once} once` : ""}
+            {match === "same" ? ` · ${main!.count} of your ${main!.nonland} nonland cards are built for it` : ""}
           </span>
-        ) : null}
-        {/* WHAT THE COUNT COUNTS (appeal review 2026-09-26): "32 cards" here beside "15 of 63 support"
-          *  on Glance read as the page contradicting itself. These are the cards linked in this theme;
-          *  the main theme's own count is how many cards' text is about it, and both are named. */}
-        <span className="text-sm text-(--muted)">
-          {new Set([...g.hubs, ...g.members]).size} cards linked here · {g.repeating} pair{g.repeating === 1 ? "" : "s"} that keep working{g.once ? `, ${g.once} once` : ""}
-          {match === "same" ? ` · ${main!.count} of your ${main!.nonland} nonland cards are built for it` : ""}
-        </span>
+        </div>
+      </div>
+      <DeckSky model={m} compact className="w-20 shrink-0 sm:w-28" lit={{ ids: new Set([...g.hubs, ...g.members]), lines: linksWithin(m, new Set([...g.hubs, ...g.members])), label: `${name}: its cards on the deck's sky` }} />
       </div>
       <div className="flex flex-col gap-1.5">
         <span className="text-sm text-(--muted)">{hubWord}…</span>
         <ul className="flex flex-wrap gap-2 pb-1" aria-label={`${name}: key cards`}>
           {hubs.map((c) => (
             <li key={c.id} className="flex w-[78px] shrink-0 flex-col items-center gap-1 sm:w-[96px]">
-              <CardFace card={c} className="w-full" />
-              <span className="flex w-full items-center">
-                {onOpenCard ? (
-                  <button type="button" className="min-h-8 min-w-0 flex-1 truncate rounded-(--radius) px-1 text-xs text-(--muted) hover:text-(--foreground)" onClick={() => open(c)} aria-label={`See what ${c.name} works with`}>
-                    See links
-                  </button>
-                ) : null}
-                {c.isToken ? null : <CardMenuButton name={c.physical} className={onOpenCard ? "" : "ml-auto"} />}
+              {/* ON THE CARD'S FOOT, over its frame: beside "See links" it cut the words to "See ..."
+                * at 78px, and at the top it hid the mana cost. */}
+              <span className="relative block w-full">
+                <CardFace card={c} className="w-full" />
+                {c.isToken ? null : <CardMenuButton name={c.physical} className="absolute bottom-0.5 right-0.5 min-h-7 min-w-7 border border-(--separator) bg-(--background)/85 backdrop-blur-[2px]" />}
               </span>
+              {onOpenCard ? (
+                <button type="button" className="min-h-8 w-full truncate rounded-(--radius) px-1 text-xs text-(--muted) hover:text-(--foreground)" onClick={() => open(c)} aria-label={`See what ${c.name} works with`}>
+                  See links
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
