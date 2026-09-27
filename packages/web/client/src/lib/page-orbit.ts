@@ -31,8 +31,13 @@ export interface PageMap {
   groups: { event: string; name: string; hue: string }[];
 }
 
-/** The page's map. `rows` are the partners to draw (the page's own list, or a commander's). */
-export function pageMap(page: CardPageData, slug: string, rows: readonly PartnerRow[] = page.partners): PageMap {
+/** The pair's own colour: the route's gold, which no event group uses. */
+export const PAIR_HUE = "#D4A63A";
+
+/** The page's map. `rows` are the partners to draw (the page's own list, or a commander's). A
+ *  commander's picked partner leads the map in its own group, outside the list's colours. */
+export function pageMap(page: CardPageData, slug: string, rows: readonly PartnerRow[] = page.partners,
+  pair?: { slug: string; name: string; artCrop: string | null }): PageMap {
   const focus = cardOf(slug, page.name, undefined, page.typeLine);
   focus.image = page.artCrop ? cardImage(page.artCrop) : undefined;
   const cards = new Map<string, EngineCard>([[slug, focus]]);
@@ -54,6 +59,13 @@ export function pageMap(page: CardPageData, slug: string, rows: readonly Partner
     const had = s.partners.find((p) => p.card.id === row.slug);
     if (had) had.links.push(link);
     else s.partners.push({ card, links: [link], once: false });
+  }
+  if (pair && pair.slug !== slug) {
+    const card = cardOf(pair.slug, pair.name, undefined);
+    card.image = pair.artCrop ? cardImage(pair.artCrop) : undefined;
+    cards.set(pair.slug, card);
+    const links = [slug, pair.slug].map((from) => ({ from, to: from === slug ? pair.slug : slug, tag: "pair", text: `${page.name} and ${pair.name} lead the deck together`, repeat: "static" as const }));
+    sectors.unshift({ key: "pair", name: `Leads beside ${page.name}`, hue: PAIR_HUE, partners: [{ card, links, once: false }] });
   }
   const direct = new Set(sectors.flatMap((s) => s.partners.map((p) => p.card.id))).size;
   const orbit = { focus, sectors, direct, directTokens: 0, near: [], through: [], far: [], farLands: 0 } as unknown as OrbitModel;
