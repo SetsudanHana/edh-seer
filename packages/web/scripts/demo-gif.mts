@@ -25,6 +25,8 @@ const { GIFEncoder, quantize, applyPalette } = gifenc;
 const ROOT = join(import.meta.dirname, "..", "..", "..");
 const OUT = join(ROOT, "docs", "images", "demo.gif");
 const DECK = join(ROOT, "packages", "cli", "decks", "krenko-mob-boss.txt");
+/** The card walked to from Goblin Warchief's map. */
+const SECOND = "Goblin King";
 
 const args = process.argv.slice(2);
 const base = args.includes("--base") ? args[args.indexOf("--base") + 1]! : "http://localhost:5180";
@@ -101,8 +103,9 @@ async function drawCursor(ring = false): Promise<void> {
   }, [cursor.x, cursor.y, ring] as const);
 }
 
-/** Glide to the centre of a target, a frame per step, as a hand would. */
-async function moveTo(selector: string, steps = 7): Promise<void> {
+/** Glide to the centre of a target, a frame per step, as a hand would. Slow enough to follow: the
+ *  first cut, 7 steps of 40ms, read as "very fast and loose" (owner, 2026-09-27). */
+async function moveTo(selector: string, steps = 14): Promise<void> {
   const box = (await page.locator(selector).first().boundingBox())!;
   const to = { x: box.x + Math.min(box.width / 2, 60), y: box.y + box.height / 2 };
   const from = { ...cursor };
@@ -111,24 +114,31 @@ async function moveTo(selector: string, steps = 7): Promise<void> {
     const e = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
     cursor = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e };
     await drawCursor();
-    await frame(40);
+    await frame(50);
   }
 }
 
 async function click(selector: string): Promise<void> {
   await moveTo(selector);
+  await hold(350);
   await drawCursor(true);
-  await frame(180);
+  await frame(300);
   await drawCursor(false);
   await page.locator(selector).first().click();
 }
 
-/** Scroll the report in small steps so the eye can follow it. */
-async function scroll(by: number, steps: number): Promise<void> {
-  for (let i = 0; i < steps; i++) {
-    await page.evaluate((dy) => scrollBy(0, dy), by / steps);
+/** THE MAP MOVES, SO A HOLD ON IT IS FILMED, not frozen: frames are taken as fast as the browser
+ *  gives them and each is shown for as long as it really took, so the GIF plays the map's own
+ *  motion at its own speed. */
+async function film(ms: number): Promise<void> {
+  const end = Date.now() + ms;
+  let t = Date.now();
+  while (Date.now() < end) {
     await drawCursor();
-    await frame(70);
+    await frame(0);
+    const now = Date.now();
+    frames.at(-1)!.delay += now - t;
+    t = now;
   }
 }
 
@@ -136,7 +146,7 @@ async function scroll(by: number, steps: number): Promise<void> {
 
 await page.goto(base + "/", { waitUntil: "networkidle" });
 await drawCursor();
-await hold(900);
+await hold(1200);
 
 // Paste the list: a few lines at a time, so it reads as a paste landing, then the whole list.
 const deck = readFileSync(DECK, "utf8");
@@ -144,50 +154,62 @@ const lines = deck.split("\n");
 await moveTo("textarea[aria-label='Decklist']");
 for (const n of [6, 18, 40]) {
   await page.fill("textarea[aria-label='Decklist']", lines.slice(0, n).join("\n"));
-  await frame(90);
+  await frame(160);
 }
 await page.fill("textarea[aria-label='Decklist']", deck);
-await hold(700);
+await hold(1000);
 
 await click("button:has-text('Analyse deck')");
 await page.waitForSelector("h2:has-text('Deck at a glance')", { timeout: 90_000 });
 await page.waitForLoadState("networkidle");
-await drawCursor();
-await hold(1600);
 
-// The report: the scores, then what the commander works with, a card in it read and then put in
-// the middle, then the deck's themes and what to fix.
-await scroll(420, 6);
-await hold(1400);
-const top = (sel: string) => page.locator(sel).first().evaluate((el) => el.getBoundingClientRect().top);
-await scroll((await top("h3:text-is('What your commander works with')")) - 130, 10);
-// The ring's entrance plays as it arrives, and the dots run along its lines.
-await page.waitForTimeout(1200);
-await hold(2400);
-// The disc's own circle: the group's box takes in its name too, and its centre can be empty ring.
-const disc = "svg[role='group'] g[role='button'][aria-label='Goblin Warchief'] circle";
-await click(disc);
-await page.waitForTimeout(400);
-await drawCursor();
-await hold(2000);
-await click("button:has-text('Put Goblin Warchief in the middle')");
-await page.waitForTimeout(1400);
-await drawCursor();
-await hold(2600);
-await scroll((await top("h3:text-is('What your deck does')")) - 130, 8);
-await hold(2200);
-await scroll((await top("h2:text-is('How to improve it')")) - 150, 10);
-await hold(2400);
+// THE STORY IS THE COMMANDER'S MAP (owner, 2026-09-27: "showcase our constellation properly"). It is
+// the report's first screen: the ring comes in, its links run, the key names what links them.
+cursor = { x: VIEW.width * 0.42, y: VIEW.height * 0.55 };
+await film(4500);
+
+// A card's links light as the pointer rests on it; a tap opens it in the drawer, with its links.
+const disc = (name: string) => `svg[role='group'] g[role='button'][aria-label='${name}'] circle`;
+await moveTo(disc("Goblin Warchief"));
+await page.locator(disc("Goblin Warchief")).first().hover();
+await film(2200);
+await click(disc("Goblin Warchief"));
+await film(3800);
+
+// Walk the map from it: Warchief in the middle, its own ring, the path back beside it.
+await click("button:has-text('Walk the map from here')");
+await film(4200);
+
+// One step further, then back to the start along the path.
+await click(disc(SECOND));
+await film(3200);
+await click("button:has-text('Walk the map from here')");
+await film(4000);
+await click("nav[aria-label='Your path'] button:has-text('Krenko')");
+await film(4000);
 
 await ctx.unrouteAll({ behavior: "ignoreErrors" });
 await browser.close();
 
 // --- encode ------------------------------------------------------------------------------------
 
+/** ONE PALETTE, AND ONLY WHAT CHANGED IS STORED. The map moves while the page around it holds
+ *  still; with one palette for the whole GIF a still pixel keeps its exact index, so it is written
+ *  as transparent over the frame before (dispose 1 keeps it) without any tolerance to leave ghosts.
+ *  Filming the map's motion at its own speed cost 10.9 MB with a palette per frame. */
+const sample: number[] = [];
+for (const f of frames) for (let p = 0; p < f.rgba.length; p += 4 * 61) sample.push(f.rgba[p]!, f.rgba[p + 1]!, f.rgba[p + 2]!, 255);
+const palette = quantize(new Uint8Array(sample), 255);
+while (palette.length < 256) palette.push([0, 0, 0]);
+const CLEAR = 255;
 const gif = GIFEncoder();
+let shown: Uint8Array | undefined;
 for (const f of frames) {
-  const palette = quantize(f.rgba, 256);
-  gif.writeFrame(applyPalette(f.rgba, palette), OUT_W, OUT_H, { palette, delay: f.delay });
+  const index = applyPalette(f.rgba, palette);
+  const next = index.slice();
+  if (shown) for (let i = 0; i < index.length; i++) if (index[i] === shown[i]) index[i] = CLEAR;
+  gif.writeFrame(index, OUT_W, OUT_H, { palette, delay: f.delay, transparent: shown !== undefined, transparentIndex: CLEAR, dispose: 1 });
+  shown = next;
 }
 gif.finish();
 mkdirSync(join(ROOT, "docs", "images"), { recursive: true });

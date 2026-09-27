@@ -55,6 +55,15 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   // box beside it said less; it stays for "How it works with…" and a card picked from a group.
   const [pair, setPair] = useState<string | null>(null);
   const [trail, setTrail] = useState<string[]>([]);
+  // THE PATH FOLLOWS THE MIDDLE, WHOEVER MOVED IT (demo recording, 2026-09-27): the drawer's "Walk
+  // the map from here" sets the middle from outside, and the path stayed empty after it. A card
+  // already on the path is a step back to it; any other is a step on.
+  const [seen, setSeen] = useState(focusId);
+  if (seen !== focusId) {
+    setSeen(focusId);
+    const i = trail.indexOf(focusId);
+    setTrail(i >= 0 ? trail.slice(0, i) : [...trail, seen].slice(-6));
+  }
   const still = useReducedMotion();
   const [paused, setPaused] = usePaused();
   const [hover, setHover] = useState<string | null>(null);
@@ -75,15 +84,12 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     // The drawer showed the card now in the middle; it closes as the map moves, as its own
     // "Walk the map from here" does.
     drawer.close();
-    setTrail((t) => [...t.filter((x) => x !== id), focusId].slice(-6));
     onFocus(id);
   };
   // One way back, a step at a time: a trail of names above the picture beside this button and
   // "Back to the card list" made three routes on one phone screen (orbit round 2).
   const back = (i: number) => {
-    const id = trail[i]!;
-    setTrail(trail.slice(0, i));
-    onFocus(id);
+    onFocus(trail[i]!);
   };
   const tap = (id: string) => {
     if (id === focusId) { setSel(null); setPair(null); setSector(null); return; }

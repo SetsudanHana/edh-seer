@@ -81,6 +81,17 @@ test("after centring a card, the way back is a button and the path is drawn abov
   expect(path.textContent).toBe("Payoff A›Payoff B");
 });
 
+test("a middle set from outside the map, as the drawer's walk does, still draws the path", () => {
+  const { report, graph } = engineDeck();
+  const { rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
+  rerender(<OrbitView report={report} graph={graph} focusId="Payoff B" onFocus={() => {}} />);
+  rerender(<OrbitView report={report} graph={graph} focusId="Cleric 1" onFocus={() => {}} />);
+  expect(screen.getByRole("navigation", { name: "Your path" }).textContent).toBe("Payoff A›Payoff B›Cleric 1");
+  // Back to a card on the path shortens it to there.
+  rerender(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
+  expect(screen.queryByRole("navigation", { name: "Your path" })).toBeNull();
+});
+
 // LESS IS MORE (owner, 2026-09-27): "every other card connects" was an all-is-well line; the panel
 // now says only what does not connect.
 test("when every card connects, the panel lists nothing and says nothing", () => {
