@@ -28,7 +28,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 // THE SLUG RULE LIVES IN A LEAF (`../slug.ts`) so the browser's search field can import it without
 // pulling this whole module -- and, through `themesOf`, the archetype table -- into the entry chunk.
 import { slugOf } from "./slug.js";
-import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, type BuildCategory } from "./build.js";
+import { BUILD_CATEGORIES, detectAnswerClasses, detectBuildCategories, rampGrade, type BuildCategory } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
 import { BASIC_LAND_TYPE_SET } from "./typeline.js";
 export { slugOf };
@@ -1597,6 +1597,10 @@ export interface NameIndexEntry {
    *  have in a report. Absent when it fills none. The ORDER of `BUILD_CATEGORIES` is therefore a
    *  wire format -- append only. */
   r?: number[];
+  /** STAPLE-GRADE RAMP, `rampGrade` (#534): how much a player would take this as ramp with nothing
+   *  in the deck arguing for it, so a short ramp list can offer a Signet that joins no deck card.
+   *  Absent when 0 -- about 1 card in 60 carries it. */
+  g?: number;
   /** ANSWER CLASSES, as indices into `POOL_CLASSES`: what `detectAnswerClasses` says this card
    *  answers. Absent when none. Same wire-format rule for `POOL_CLASSES`' order. */
   a?: number[];
@@ -2102,6 +2106,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
     const pow = stat(chars?.power);
     const tou = stat(chars?.toughness);
     const colourMask = identityMask(chars?.colors ?? []);
+    const grade = rampGrade(d);
     index.push({
       slug, name: d.card.name, identity: d.card.colorIdentity ?? [], commander,
       partners: degree.get(d.card.name) ?? 0,
@@ -2111,6 +2116,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(kIdx.length > 0 ? { k: kIdx } : {}),
       ...(rolesOf.has(d.card.name) ? { r: rolesOf.get(d.card.name)! } : {}),
       ...(answersOf.has(d.card.name) ? { a: answersOf.get(d.card.name)! } : {}),
+      ...(grade > 0 ? { g: grade } : {}),
       ...(mv > 0 ? { mv } : {}),
       ...(pow !== undefined ? { pow } : {}),
       ...(tou !== undefined ? { tou } : {}),

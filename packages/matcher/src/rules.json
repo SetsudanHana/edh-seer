@@ -36,6 +36,10 @@
     "rampLand": "sacrifice\\b[\\s\\S]*?search your library for (?:up to two|two|a \\w+ and an? \\w+)[\\s\\S]*?onto the battlefield",
     "bigManaLand": "(?:^|[.;\\n(])\\s*\\{t\\}\\s*:\\s*add\\s+(?:(?:\\{[wubrgcs\\d/]+\\}\\s*){2,}|two|three|four)",
     "entersTapped": "enters(?: the battlefield)? tapped(?!\\s+unless)",
+    "spendOnly": "spend this mana only|can't be spent|this mana can't",
+    "entersTappedEver": "enters(?: the battlefield)? tapped",
+    "activateOnlyIf": "activate only if",
+    "colouredMana": "\\{[WUBRG]\\}|any colou?r|chosen colou?r|any combination of colou?rs|color identity",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
     "impulseDraw": "exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
@@ -220,7 +224,7 @@
       "category": "ramp",
       "match": [{ "op": "oracle", "pattern": "manaToken" }],
       "not": [{ "op": "typeLine", "contains": "land" }],
-      "why": "Treasure/Gold and Eldrazi Spawn/Scion are acceleration."
+      "why": "Treasure/Gold and Eldrazi Spawn/Scion are acceleration. ONE TREASURE BOUGHT BY A SACRIFICE STILL COUNTS (owner ruling 2026-09-27, #534): The Sackville-Bagginses and Ruthless Technomancer, the only two of 419 matching cards whose Treasure waits on sacrificing another permanent, stay ramp -- the Treasure is mana you did not have. Not staple-grade (`rampGrade` 0): a suggestion list offers it only through a synergy."
     },
     {
       "id": "cardSelection.text",
