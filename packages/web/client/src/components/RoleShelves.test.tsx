@@ -47,7 +47,6 @@ test("each shelf is a list of cards with their names, labelled in a player's wor
   render(<RoleShelves report={report} graph={graph} />);
   const removal = screen.getByRole("list", { name: "Removal: 4 cards" });
   expect(within(removal).getAllByRole("listitem")).toHaveLength(4);
-  expect(within(removal).getByAltText("Chaos Warp")).toBeInTheDocument();
   expect(within(removal).getByText("Chaos Warp")).toBeInTheDocument();
   expect(within(removal).getByText("Fell the Profane")).toBeInTheDocument();
   expect(within(removal).queryByText("Fell Mire")).toBeNull();

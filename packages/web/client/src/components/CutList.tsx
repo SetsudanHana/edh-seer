@@ -150,23 +150,17 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
       {hasSurplus && (
         <section aria-labelledby="cuts-surplus" className="flex flex-col gap-3 pt-2">
           <h4 id="cuts-surplus" className="text-base font-semibold">Room in your roles</h4>
-          {surplus!.map((g) => (
-            <div key={g.name} className="flex flex-col gap-2">
-              <p className="text-sm max-w-[70ch]">
-                <b>{BUILD_CATEGORY_LABEL[g.name] ?? g.name}</b> is <span className="tabular-nums">{g.over}</span> over
-                its target (<span className="tabular-nums">{g.count}</span> against <span className="tabular-nums">{g.target}</span>),
-                so up to {g.over} of these can go. Which ones is your call: we don&apos;t rank the cards inside a role against each other.
-              </p>
-              <ul className="flex flex-wrap gap-2" aria-label={`${BUILD_CATEGORY_LABEL[g.name] ?? g.name}: ${g.cards.length} cards`}>
-                {g.cards.map((c) => (
-                  <li key={c.id} className="flex w-[72px] flex-col gap-1 sm:w-[84px]">
-                    <CardFace card={c} className="w-full" />
-                    {c.art ? <span className="line-clamp-2 text-xs leading-tight text-(--muted)">{c.name}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* ONE LINE PER ROLE (owner, 2026-09-27: one place per fact). The cards are on the Roles
+            *  shelves, which now say how many are over; they were repeated here as card images. */}
+          <ul className="flex flex-col gap-1 text-sm">
+            {surplus!.map((g) => (
+              <li key={g.name}>
+                <b>{BUILD_CATEGORY_LABEL[g.name] ?? g.name}</b>{" "}
+                <span className="tabular-nums text-(--muted)">{g.count} against {g.target}: up to {g.over} can go.</span>{" "}
+                <a href="#roles" className="text-(--accent) underline underline-offset-2">Pick them on the shelf</a>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       {/* OFF-THEME, NOT DEAD (owner, 2026-09-24). These connect to something or fill a role, so they
