@@ -150,7 +150,7 @@ export function Findings({ report, diff, suggestions }: {
               {f.impact !== undefined ? (
                 <p className="text-sm text-(--muted) tabular-nums">
                   {f.impact > 0
-                    ? <><span className="text-(--foreground) stat-num">+{f.impact.toFixed(2)}</span> to Build, at least</>
+                    ? <>Raises your Build score by at least <span className="text-(--foreground) stat-num">{f.impact.toFixed(2)}</span></>
                     : "won't change your Build score"}
                 </p>
               ) : null}

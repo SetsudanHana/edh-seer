@@ -30,8 +30,8 @@ test("each plan's tile carries the turn its route can win by, and the fastest le
   expect(screen.getByTestId("win-plans-headline")).toHaveTextContent("Fastest: attacking with a wide board, around turn 7. Spread about evenly across 2 plans.");
   const [wide, burn] = screen.getAllByTestId("win-plan");
   expect(wide).toHaveTextContent("Attacking with a wide boardturn 73 cards");
-  expect(burn).toHaveTextContent("Damage or drainnot timed2 cards");
-  expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 7; 10.7 power on board by turn 5.");
+  expect(burn).toHaveTextContent("Damage or drainno turn estimate2 cards");
+  expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 7; about 11 power of creatures in play by turn 5.");
   fireEvent.click(burn!);
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("No turn: nothing in the report models how fast this route kills");
 });

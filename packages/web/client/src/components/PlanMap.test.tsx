@@ -16,7 +16,7 @@ test("draws the finishers in the middle, the plan's cards around, and dashes a c
   expect(ring.map((n) => n.getAttribute("aria-label"))).toEqual(["Open Cleric 1", "Open Cleric 2", "Open Vanilla"]);
   expect(ring.filter((n) => n.hasAttribute("data-alone")).map((n) => n.getAttribute("aria-label"))).toEqual(["Open Vanilla"]);
   expect(screen.getByTestId("plan-map").querySelectorAll("line")).toHaveLength(2);
-  expect(screen.getByText(/links to nothing here/)).toBeInTheDocument();
+  expect(screen.getByText(/works with none of these/)).toBeInTheDocument();
 });
 
 test("hovering a card fades what it does not touch", () => {

@@ -99,7 +99,7 @@ export function PlanMap({ model, middle, around }: { model: EngineModel; middle:
       <figcaption className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-(--muted)">
         <span><Dot ring="var(--accent)" /> {middle.length && byName.get(middle[0]!)?.isCommander ? "your commander" : "finishes it"}</span>
         <span><span aria-hidden="true" className="inline-block align-middle w-4 border-t-2 border-(--accent) opacity-60" /> works with it</span>
-        {[...shown, ...mids].some((c) => !joined.has(c.id)) ? <span><Dot ring="var(--warning)" dashed /> links to nothing here</span> : null}
+        {[...shown, ...mids].some((c) => !joined.has(c.id)) ? <span><Dot ring="var(--warning)" dashed /> works with none of these</span> : null}
         {hidden > 0 ? <span className="tabular-nums">+{hidden} more on this plan</span> : null}
       </figcaption>
     </figure>
