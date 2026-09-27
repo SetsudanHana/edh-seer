@@ -1,8 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { engineDeck } from "../lib/engine-model.fixture.js";
-import { buildEngineModel } from "../lib/engine-model.js";
-import { SkyContext } from "./DeckSky.js";
 import { WinPlans } from "./WinPlans.js";
 
 const WINCONS = {
@@ -13,18 +10,13 @@ const WINCONS = {
   ],
 } as never;
 
-/** THE PLAN ON THE DECK'S SKY (owner, 2026-09-27): pick a plan, and its cards light. */
-test("each win plan is a tile, the first picked to start with, and its cards light the sky", () => {
-  const { report, graph } = engineDeck();
-  render(<SkyContext.Provider value={buildEngineModel(report, graph)}><WinPlans wincons={WINCONS} /></SkyContext.Provider>);
+test("each win plan is a tile, the first picked to start with, and its cards read one plan at a time", () => {
+  render(<WinPlans wincons={WINCONS} />);
   const plans = screen.getAllByTestId("win-plan");
   expect(plans[0]).toHaveAttribute("aria-pressed", "true");
-  // The plan's cards, then its finisher, counted apart as the plan lists them.
-  expect(screen.getByText(/: its 2 cards and 1 finisher lit/)).toBeInTheDocument();
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Turns it into a win");
   fireEvent.click(plans[1]!);
   expect(plans[1]).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByText(/: its 2 cards lit/)).toBeInTheDocument();
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Damage or drain · 2 cards");
 });
 
@@ -42,10 +34,4 @@ test("each plan's tile carries the turn its route can win by, and the fastest le
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Can win around turn 7; 10.7 power on board by turn 5.");
   fireEvent.click(burn!);
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("No turn: nothing in the report models how fast this route kills");
-});
-
-test("outside a report there is no sky, and the plans are plain", () => {
-  render(<WinPlans wincons={WINCONS} />);
-  expect(screen.getAllByTestId("win-plan")).toHaveLength(2);
-  expect(screen.queryByRole("img", { name: /as a sky/ })).toBeNull();
 });
