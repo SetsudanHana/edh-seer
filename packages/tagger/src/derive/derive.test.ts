@@ -2752,6 +2752,19 @@ test("a damage multiplier watches the source that deals, not the thing dealt to"
   expect(dmg?.dealer).toEqual({ control: "you", token: null, type: "creature" });
 });
 
+// ISSUE #562: Brash Taunter. "This creature fights another target creature" names the card first,
+// but the fight's emit is the OTHER creature being dealt damage -- so it is not the card itself, and
+// a deck's "a creature is dealt damage" payoffs have a supplier.
+test("a fight naming the card itself first damages the other creature, not self", () => {
+  const { abilities } = deriveAbilities([{
+    id: 1, abilityType: "activated",
+    actions: [{ verb: "fight", object: "this creature and another target creature" }],
+  }], "Brash Taunter", { 1: "{2}{R}, {T}: This creature fights another target creature." });
+  const dmg = abilities.flatMap((x) => x.emits ?? []).find((e) => e.verb === "non-combat-damage");
+  expect(dmg?.subject).toMatchObject({ type: "creature", scope: "target" });
+  expect(dmg?.subject.self).toBeUndefined();
+});
+
 // RECALL v4 #28 (2026-09-09): Hellish Rebuke -> Valgavoth, Terror Eater. An edict granted to
 // OPPONENTS' permanents fills THEIR graveyard, and Valgavoth plays what would land there.
 test("a granted trigger on opponents' permanents makes THEIR permanent die, not the instant", () => {

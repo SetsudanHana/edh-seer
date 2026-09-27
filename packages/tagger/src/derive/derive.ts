@@ -174,7 +174,10 @@ import { emblemRecipient } from "../emblem.js";
 // board count (issue #502: Redoubled Stormsinger, fodder for every Treasure, fed by no token maker).
 // 176: an ordinal excluded by "other than the" is no per-turn cap (issue #518): Curse of Shaken Faith
 // fires on every spell after the first. Two corpus cards.
-export const DERIVE_VERSION = 176;
+// 177: a fight that names the card first ("this creature fights another target creature") damages
+// the other creature, not the card itself (issue #562: Brash Taunter supplied no damaged payoff).
+// 17 corpus cards; on the 71 decks edges 45,023 -> 45,044, panel and compass unchanged.
+export const DERIVE_VERSION = 177;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1364,7 +1367,12 @@ export function deriveAbilities(
       // entry of the card ITSELF. The emit is kept -- a Skeleton returning is a real creature
       // entering for anything watching creatures -- but it is marked, because a card's own re-entry
       // can never be some OTHER card's ETB, and an untyped subject would satisfy every one of them.
-      const emitsSelf = SELF_REFERENCE.test((action.object ?? "").trim())
+      //
+      // NEVER A FIGHT (issue #562). "This creature fights another target creature" names the card
+      // FIRST, as the fighter, and the prefix test above would read the whole pair as self. But the
+      // fight's emit is the OTHER creature being dealt damage (emits.ts, CR 701.14a) -- Brash Taunter
+      // supplied no "a creature is dealt damage" payoff. 17 corpus cards.
+      const emitsSelf = action.verb !== "fight" && (SELF_REFERENCE.test((action.object ?? "").trim())
         || /^this$/i.test((action.object ?? "").trim())
         || isSelfSubject(action.object ?? "", cardName)
         // A COUNTER PUT ON THE CARD ITSELF (owner-reported 2026-09-17, Primal Amulet -> Exemplar of
@@ -1377,7 +1385,7 @@ export function deriveAbilities(
         // A pronoun standing in for the card itself. Tested on the RESOLVED antecedent, because the
         // raw object is "it" and matches none of the spellings above.
         || (PRONOUN_OBJECT.test((action.object ?? "").trim())
-          && antecedentIsSelf((clause.actions ?? []).indexOf(action)));
+          && antecedentIsSelf((clause.actions ?? []).indexOf(action))));
       // CR 614: a MULTIPLIER modifies occurrences of an event and is not a source of it. The clause
       // layer records the verb the sentence uses and nothing about the "would ... instead" frame, so
       // Hardened Scales answered `add-counter` and advertised a counter it never places. The kind
