@@ -36,11 +36,8 @@ export interface SkyLight {
 
 const R: Record<Star["kind"], number> = { commander: 26, hub: 6.5, member: 4, rest: 3, land: 2 };
 
-export function DeckSky({ model, lit, caption, className = "", compact = false }: {
+export function DeckSky({ model, lit, caption, className = "" }: {
   model: EngineModel;
-  /** A thumbnail: the stars and the lit lines only, no names, no caption, nothing to tap. Where a
-   *  panel says "where this sits in your deck" beside its own words. */
-  compact?: boolean;
   lit?: SkyLight;
   /** The sentence under the sky when nothing is picked. */
   caption?: string;
@@ -78,9 +75,17 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
     ...(lit && lit.ids.size <= 16 ? lit.ids : []),
     ...(star ? [star] : []), ...(hover ? [hover] : []),
   ]);
+  // A THUMB COVERS SEVERAL STARS (persona round, 2026-09-27: in the big cluster they sit 4px
+  // apart on a phone). A tap names the star it hit and lists the others under the thumb, so the
+  // right one is one more tap away.
+  const [near, setNear] = useState<string[]>([]);
   const tapStar = (id: string) => {
-    if (star === id && links?.idOf(sky.byId.get(id)!.name)) links.show(links.idOf(sky.byId.get(id)!.name)!);
-    else setStar(id);
+    if (star === id && links?.idOf(sky.byId.get(id)!.name)) { links.show(links.idOf(sky.byId.get(id)!.name)!); return; }
+    setStar(id);
+    const s0 = sky.byId.get(id)!;
+    const reach = (22 * sky.box.w) / Math.max(1, shown || 480);
+    setNear(sky.stars.filter((s) => s.id !== id && s.kind !== "commander" && Math.hypot(s.x - s0.x, s.y - s0.y) <= reach)
+      .sort((a, b) => Math.hypot(a.x - s0.x, a.y - s0.y) - Math.hypot(b.x - s0.x, b.y - s0.y)).slice(0, 6).map((s) => s.id));
   };
   const picked1 = star ? sky.byId.get(star) : undefined;
   const cluster = picked1 && picked1.cluster >= 0 ? sky.clusters[picked1.cluster] : undefined;
@@ -160,27 +165,6 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
     : [];
   const themes = sky.clusters.length;
 
-  if (compact) {
-    const { x: bx, y: by, w: bw, h: bh } = sky.box;
-    return (
-      <svg viewBox={`${bx} ${by} ${bw} ${bh}`} role="img" aria-label={lit?.label ?? "The deck's sky"}
-        className={`deck-sky block h-auto select-none rounded-(--radius) ${className}`} style={{ background: "radial-gradient(circle, #1d1530, #0b0810 70%)" }}>
-        {sky.lines.map(([a, b], i) => {
-          const A = sky.byId.get(a)!, B = sky.byId.get(b)!;
-          return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={B.hue.startsWith("var") ? A.hue : B.hue} strokeWidth={3} opacity={0.12} />;
-        })}
-        {lit?.lines?.map(([a, b], i) => {
-          const A = sky.byId.get(a), B = sky.byId.get(b);
-          return A && B ? <line key={`l${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="var(--accent)" strokeWidth={4} opacity={0.8} /> : null;
-        })}
-        {sky.stars.map((s) => {
-          const bright = !lit || lit.ids.has(s.id);
-          return <circle key={s.id} cx={s.x} cy={s.y} r={s.kind === "commander" ? 22 : bright ? 11 : 6}
-            fill={s.kind === "commander" ? "#f3eefc" : bright ? s.hue.startsWith("var") ? "#f3eefc" : s.hue : "#8a8494"} opacity={bright ? 1 : 0.25} />;
-        })}
-      </svg>
-    );
-  }
   return (
     <figure className={`m-0 flex flex-col gap-2 ${className}`}>
       <svg ref={svgRef} viewBox={`${x} ${y} ${w} ${h}`} role="img" className="deck-sky block h-auto w-full select-none rounded-(--radius)"
@@ -285,6 +269,16 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
             {links?.idOf(picked1.name) ? (
               <button type="button" className="ml-2 rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs text-(--foreground) hover:border-(--foreground)"
                 onClick={() => links.show(links.idOf(picked1.name)!)}>See how it connects</button>
+            ) : null}
+            {near.length ? (
+              <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                <span>Near it:</span>
+                {near.map((id) => (
+                  <button key={id} type="button" className="min-h-9 rounded-full border border-(--separator) px-2.5 text-xs text-(--foreground) hover:border-(--foreground)" onClick={() => tapStar(id)}>
+                    {sky.byId.get(id)!.name.split(" // ")[0]}
+                  </button>
+                ))}
+              </span>
             ) : null}
           </>
         ) : theme !== null ? (

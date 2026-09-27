@@ -79,3 +79,30 @@ test("every lit card is named, on the sky or under it", () => {
     expect(onSky.has(name) || under.includes(name)).toBe(true);
   }
 });
+
+/** A THUMB COVERS SEVERAL STARS (persona round, 2026-09-27): a tap names the star it hit and lists
+ *  the ones next to it, one more tap away. */
+test("a tap in a crowded constellation names the star and offers the ones near it", () => {
+  // Drawn small, as on a phone: a thumb then covers several of the fixture's stars.
+  const RO = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class {
+    cb: ResizeObserverCallback;
+    constructor(cb: ResizeObserverCallback) { this.cb = cb; }
+    observe() { this.cb([{ contentRect: { width: 120 } } as ResizeObserverEntry], this as never); }
+    unobserve() {}
+    disconnect() {}
+  } as never;
+  try {
+    const m = model();
+    const { container } = render(<DeckSky model={m} />);
+    const cap = () => container.querySelector("figcaption")!.textContent!;
+    const first = m.groups.find((g) => !g.helper)!;
+    fireEvent.click(container.querySelector(`[data-star='${first.hubs[0]}']`)!);
+    expect(cap()).toContain(m.cards.get(first.hubs[0]!)!.name);
+    expect(cap()).toContain("Near it:");
+    const choice = screen.getByText("Near it:").parentElement!.querySelector("button")!;
+    const name = choice.textContent!;
+    fireEvent.click(choice);
+    expect(cap().startsWith(name)).toBe(true);
+  } finally { globalThis.ResizeObserver = RO; }
+});
