@@ -5367,3 +5367,37 @@ test("a flicker links to a creature a typed watcher sees enter, and names the wa
     "Ghostly Flicker can put Gleeful Arsonist onto the battlefield again, and Inalla, Archmage Ritualist sees it enter"]]);
   expect(reuse([])).toEqual([]);
 });
+
+// #558: a fill of OTHER cards never says the producer is in the graveyard, and a producer that fills
+// with itself AND with other cards still gives one reason per tag (the old sentence collapsed them).
+test("a recursion link names what actually reaches the graveyard, once per tag (#558)", () => {
+  const recursion: CardTags = {
+    oracleId: "c", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{
+      kind: "activated",
+      effect: { kind: "graveyard-recursion", subject: { control: "you", token: null, type: "creature", zone: "graveyard" } },
+    }],
+  };
+  const producer = (abilities: CardTags["abilities"]): CardTags => ({
+    oracleId: "p", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 2,
+      power: "1", toughness: "1", token: false, keywords: [] },
+    abilities,
+  });
+  const reasons = (p: CardTags) => directedReasons(
+    { card: { name: "Looter" } as DeckCard["card"], tags: p },
+    { card: { name: "Reanimate" } as DeckCard["card"], tags: recursion }, H,
+  ).filter((r) => r.tag.startsWith("graveyard-recursion:"));
+
+  const discard: CardTags["abilities"][number] = { kind: "activated", effect: { kind: "" }, emits: [{ verb: "discard", subject: { control: "you", token: null } }] };
+  const others = reasons(producer([discard]));
+  expect(others.map((r) => r.text)).toEqual(["Looter puts cards into the graveyard that Reanimate can bring back"]);
+
+  // It dies (implied, itself a creature) AND discards: one reason for the tag, not two.
+  const both = reasons(producer([discard, { kind: "static", effect: { kind: "" }, emits: [{ verb: "dies", subject: { control: "you", token: null, self: true } }] }]));
+  expect(new Set(both.map((r) => r.tag)).size).toBe(both.length);
+  // And the card's own fill is the one that speaks: it is the more specific fact.
+  expect(both.map((r) => r.text)).toContain("When Looter is in the graveyard, Reanimate can bring it back");
+});

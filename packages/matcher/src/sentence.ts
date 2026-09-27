@@ -146,6 +146,9 @@ const RECIPIENT_PHRASES: Record<string, Record<string, [(n: string) => string, s
 const SELF_PHRASES: Record<string, string> = {
   untap: "untaps itself",
   flicker: "blinks itself",
+  // "When Chandra is cast, Jaya's Phoenix brings a card back" read as the Phoenix returning Chandra;
+  // it returns itself (issue #558).
+  "graveyard-recursion": "returns itself from the graveyard",
 };
 
 const PROSE_AMOUNT = /\bfor each\b|\bequal to\b|\bwhere\b|\bthe number of\b/i;
@@ -444,14 +447,24 @@ export function emitSubjectNoun(subject: {
  *  an enabling fact rather than a cause-and-effect firing, and it is one of the three phrases the
  *  design named for outright removal: "fills the graveyard, enabling X's recursion" was on both the
  *  precon player's and the deck tuner's unknown-word lists (2026-08-20). */
-export function graveyardEnablesRecursion(producer: string, consumer: string): string {
-  return `When ${producer} is in the graveyard, ${consumer} can bring it back`;
+export function graveyardEnablesRecursion(
+  producer: string, consumer: string, fill: { producerItself: boolean; returnsItself: boolean },
+): string {
+  if (fill.producerItself) return `When ${producer} is in the graveyard, ${consumer} can bring it back`;
+  // A FILL OF OTHER CARDS -- a discard, a mill, a sacrifice of something else -- never puts the
+  // producer there, and "When Chandra's Regulator is in the graveyard, Chandra, Acolyte of Flame can
+  // bring it back" claimed an artifact comes back through an instant-and-sorcery recursion (#558).
+  if (fill.returnsItself) return `${producer} can put ${consumer} into the graveyard, and it returns itself`;
+  return `${producer} puts cards into the graveyard that ${consumer} can bring back`;
 }
 
 /** The same enabling shape, for a payoff that merely gets BIGGER per card in the graveyard rather
  *  than returning one (Bonehoard). Not a trigger either — `effect.scaling` fires nothing. */
-export function graveyardFeedsScaling(producer: string, consumer: string): string {
-  return `When ${producer} is in the graveyard, ${consumer} gets bigger`;
+export function graveyardFeedsScaling(producer: string, consumer: string, producerItself: boolean): string {
+  // Ruin Crab mills; it is never the card in the graveyard (#558, the recursion sentence's twin).
+  return producerItself
+    ? `When ${producer} is in the graveyard, ${consumer} gets bigger`
+    : `${producer} puts cards into the graveyard, and ${consumer} gets bigger`;
 }
 
 /** THE SAME SHAPE ONE ZONE OVER: a payoff that counts what you have ON THE BOARD, and a card that

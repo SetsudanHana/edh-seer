@@ -445,8 +445,10 @@ export function eventLabel(verb: string): string {
  *    - `creates`             `createsSentence`            "P creates C"
  *    - `ramp-target`         `fetchSentence`              "P can fetch C"
  *    - `tutor`               `tutorSentence`              "P can search up C"
- *    - `graveyard-recursion` `graveyardEnablesRecursion`  "When P is in the graveyard, C can bring it back"
- *    - `scales`              `graveyardFeedsScaling`      "When P is in the graveyard, C gets bigger"
+ *    - `graveyard-recursion` `graveyardEnablesRecursion`  "When P is in the graveyard, C can bring it back",
+ *                            or "P puts cards into the graveyard that C can bring back" (#558)
+ *    - `scales`              `graveyardFeedsScaling`      "When P is in the graveyard, C gets bigger",
+ *                            or "P puts cards into the graveyard, and C gets bigger"
  *    - `doubles`             `doublesSentence`            "P doubles C's <verb> trigger"
  *    - `wincon`              `winconSentence`             "P is what C counts toward winning"
  *    - `meld`                `meldSentence`               "A and B meld together"
