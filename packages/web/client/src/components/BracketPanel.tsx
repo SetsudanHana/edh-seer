@@ -2,6 +2,9 @@ import { useMemo, useState } from "react";
 import type { DeckReport } from "../types.js";
 import { bracketWhy, infiniteCombos } from "../lib/bracket-why.js";
 import { CardName } from "./card-drawer.js";
+import { ComboLoop } from "./ComboLoop.js";
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 /** WHICH TABLE THIS DECK IS FOR — WotC's official Commander Brackets, read off two published lists
  *  the engine already carries (roadmap L3).
@@ -33,11 +36,13 @@ const CELL_LABEL: Record<(typeof BANDS)[number], string> = { "1-2": "1–2", "3"
  *  screen down, and the first few are the cheapest, which are the ones that decide the band. */
 const COMBO_ROWS = 4;
 
-export function BracketPanel({ bracket, combos, manaValueOf }: {
+export function BracketPanel({ bracket, combos, manaValueOf, artOf }: {
   bracket: DeckReport["bracket"];
   /** The report's full combo list: named here, not only counted. */
   combos?: DeckReport["combos"];
   manaValueOf?: (name: string) => number | undefined;
+  /** A card's art, for the combo loops; without it the pieces are plain discs. */
+  artOf?: (name: string) => string | undefined;
 }) {
   const [allCombos, setAllCombos] = useState(false);
   // Without the full list (an older saved report), the cheap combos the bracket carries stand in.
@@ -57,67 +62,22 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
    *  found six, and could not reconcile it: *"eleven dots are painted, so the count is deliberate;
    *  nothing names the other five."* The count was simply wrong. */
   const pips = bracket.gameChangers.length + bracket.infiniteCombos;
+  const split = bracket.band === "3" ? null : bracket.band === "1-2"
+    ? "1 or 2 depends on whether this is a precon straight out of the box or one you've changed."
+    : "4 or 5 depends on the table you take it to.";
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3" data-testid="bracket-panel">
       <h3 className="eyebrow">Which table this is for</h3>
-      {/* THE WORD THAT NEEDED EXPLAINING WAS "BRACKET" (S14, filed from S2's judging round). S2
-        *  fixed the panel's FORM and the beginner persona confirmed it -- the band no longer reads
-        *  as a score -- and then could not use the panel at all, because every term in it was
-        *  undefined: *"I don't know what a bracket is in this game"*, `Game Changer` capitalised and
-        *  counted with no statement of what puts a card on the list, `infinite combo` as a named
-        *  category (*"I know 'combo' only as ordinary English for a combination"*).
-        *
-        *  THAT EXPLANATION NOW LIVES AT WIZARDS (T10, below). What stays is read off `brackets.ts`
-        *  -- five official tiers, a rule about contents rather than a judgement of quality -- so
-        *  nothing is asserted from memory about the game. */}
-      {/* R2-F3: THIS OPENED WITH THE SENTENCE ALREADY ON SCREEN. The always-visible line below the
-        *  band carries "Wizards' five tiers … 1 is the most casual table, 5 the most competitive"
-        *  -- added in round 1 so the panel orients a reader who never opens this -- and the
-        *  disclosure still led with the same words, four lines apart. The judge: *"my first thought
-        *  was that I'd opened the wrong thing."* The disclosure now starts where the visible line
-        *  stops. */}
-      {/* WHAT A BRACKET IS BELONGS TO WIZARDS, AND SO DOES ITS DEFINITION (roadmap T10, owner call
-        *  2026-09-03): *"what bracket is and anything about brackets should just link to wizards
-        *  brackets guide"*. This panel used to carry the definition itself, grown over two judging
-        *  rounds; keeping our own copy of someone else's spec means maintaining it, and the brackets
-        *  are still in beta and still moving.
-        *
-        *  ONE SENTENCE STAYS AND IT IS NOT ABOUT BRACKETS. Which half of the input is Wizards' and
-        *  which half is ours is a disclosure about THIS TOOL, and the judging round that produced it
-        *  filed the missing version as an overclaim -- *"it is the difference between 'Wizards says
-        *  so' and 'this website says so', which matters to me if I am going to repeat it at a
-        *  table."* A link cannot answer that, because the answer is not on Wizards' page. */}
-      <p className="text-xs text-(--muted) max-w-[65ch]">
-        Two things push a deck up the brackets, and we check both: cards on{" "}
-        <span className="text-(--foreground)">Wizards&rsquo; Game Changers list</span>, and{" "}
-        <span className="text-(--foreground)">combos we find in your list</span> (that part is our
-        call, not Wizards&rsquo;).{" "}
-        <a
-          className="text-(--accent) underline underline-offset-2"
-          href="https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          Wizards&rsquo; bracket guide
-        </a>
-      </p>
-      {/* The text form stays, at label size rather than display size: it is what a screen reader
-        *  reads and what a reader copies into a pod chat, and the band above cannot be either. */}
-      {/* 28rem, THE WIDTH OF A READOUT (UI review 2026-09-25). Stretched to 1,740px under a 480px
-        *  paragraph, three hairline-divided cells with one filled read as a toolbar across the page
-        *  -- the tab strip the comment below works to avoid -- however the cells were drawn. */}
+      {/* LESS IS MORE (owner, 2026-09-27: "we should rely more on data visualisation than the
+        *  text"). The panel carried a definition per box, a paragraph on where each list comes from
+        *  and a footnote per band. The band now names its own ends, the combos are drawn as loops,
+        *  and the rest is one line at the foot. */}
       <div className="flex flex-col gap-1.5 max-w-md">
-        {/* ONE TRACK, SEGMENTED -- not three pills. Three separately bordered, separately rounded
-          *  cells with one filled are built exactly like this app's own tab strip, and a judge said
-          *  so: "I can't tell whether the panel is reporting a result or offering me a choice, and
-          *  pressing one might change my deck's answer". A band REPORTS; a tab strip INVITES, and
-          *  the difference has to be visible before the copy is read. The outer border and radius
-          *  belong to the whole track, the cells are divided by hairlines, and nothing here has a
-          *  pill's shape. */}
+        {/* ONE TRACK, SEGMENTED -- not three pills: a band REPORTS, a tab strip INVITES. */}
         <div
           className="flex overflow-hidden rounded-(--radius) border border-(--separator)"
           role="img"
-          aria-label={`Bracket ${bracket.band} of WotC's five Commander brackets`}
+          aria-label={`Bracket ${bracket.band} of WotC's five Commander brackets, from 1, the most casual table, to 5, the most competitive`}
         >
           {BANDS.map((b, i) => {
             const here = b === bracket.band;
@@ -126,15 +86,9 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
                 key={b}
                 data-testid="bracket-cell"
                 data-here={here ? "1" : undefined}
-                className={`flex-1 text-center stat-num text-sm py-1.5 ${
-                  i > 0 ? "border-l border-(--separator)" : ""
-                } ${
-                  here
-                    // --fill, NOT --accent: index.css is explicit that a large filled area takes the
-                    // ladder's mid-violet and reads as substrate, while the accent is meant to be
-                    // scarce. A bracket is not an alert.
-                    ? "bg-(--fill) text-(--foreground)"
-                    : "text-(--muted)"
+                className={`flex-1 text-center stat-num text-sm py-1.5 ${i > 0 ? "border-l border-(--separator)" : ""} ${
+                  // --fill, NOT --accent: a bracket is not an alert.
+                  here ? "bg-(--fill) text-(--foreground)" : "text-(--muted)"
                 }`}
               >
                 {CELL_LABEL[b]}
@@ -142,15 +96,13 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
             );
           })}
         </div>
+        {/* WHICH END IS WHICH, on the track itself rather than in a sentence under it. */}
+        <div className="flex justify-between text-xs text-(--muted)" aria-hidden="true">
+          <span>casual</span><span>competitive</span>
+        </div>
         <div className="flex items-baseline gap-2 flex-wrap">
-          {/* The EN DASH, same as the cells above it. `band` is the wire key, a hyphen, and this
-            *  line was printing the key: "Bracket 4-5" beside a cell reading "4–5". */}
           <span className="text-sm">Bracket {CELL_LABEL[bracket.band]}</span>
-          {/* THE PIPS CARRY A WORD, because bare ones carried nothing. A judge did not see them at
-            *  all until asked and then could not decode them: "two marks, no legend, no text, I'd
-            *  have to guess what they count". The count is what the row is FOR -- a deck with eight
-            *  Game Changers and one with one are different situations, and the list below says so
-            *  only after it is read. */}
+          {/* THE PIPS CARRY A WORD, and the word does the addition out loud. */}
           {pips > 0 ? (
             <span className="flex items-baseline gap-1.5 text-xs text-(--muted)">
               <span className="flex items-center gap-1" aria-hidden="true">
@@ -158,196 +110,55 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
                   <span key={i} data-testid="bracket-pip" className="h-1.5 w-1.5 rounded-full bg-(--fill)" />
                 ))}
               </span>
-              {/* AN ABSTRACT COUNT IS NOT ACCOUNTABLE, and this line has now failed two judges in
-                *  two different ways. Round 1: "6 things put it here" claimed all six forced the
-                *  band while the boxes below said only some did. Round 2, after that fix: "6 things
-                *  the brackets look at" against two visible boxes -- *"that leaves at least three,
-                *  maybe four, of the six never named anywhere on the panel"*, filed as BLOCKED. The
-                *  six ARE named: they are 1 + 5, and the reader has to add two box HEADINGS to see
-                *  it. So the line does the addition out loud and the dots stop needing a key. */}
               {[
-                bracket.gameChangers.length > 0
-                  ? `${bracket.gameChangers.length} Game Changer${bracket.gameChangers.length === 1 ? "" : "s"}`
-                  : null,
-                bracket.infiniteCombos > 0
-                  ? `${bracket.infiniteCombos} infinite combo${bracket.infiniteCombos === 1 ? "" : "s"}`
-                  : null,
+                bracket.gameChangers.length > 0 ? plural(bracket.gameChangers.length, "Game Changer") : null,
+                bracket.infiniteCombos > 0 ? plural(bracket.infiniteCombos, "infinite combo") : null,
               ].filter(Boolean).join(", ")}
             </span>
           ) : null}
         </div>
-        {/* F1, AND IT IS THIS ITEM'S OWN DEFECT: the definition went behind a closed disclosure and
-          *  everything under it was written assuming the reader had opened it. The beginner read the
-          *  whole panel closed, could not tell which end of the strip was which, and reached the
-          *  footnote's "Telling 1 from 2 ..." with 1, 2, 4 and 5 still undefined -- *"the old problem
-          *  has not gone; it has moved behind a toggle"*, and that toggle is the dimmest text on the
-          *  panel. So the ORIENTING half -- five tiers, which end is which -- is always on screen,
-          *  and the disclosure keeps the rest. */}
-        {/* WHY, IN ONE SENTENCE A PLAYER CAN SAY AT THE TABLE (baseline round 2026-09-26): the
-          *  phone seat had the band and could not answer "which combo?". */}
+        {/* WHY, IN ONE SENTENCE A PLAYER CAN SAY AT THE TABLE. */}
         <p data-testid="bracket-why" className="text-sm max-w-[65ch]">{why}</p>
-        <p className="text-xs text-(--muted) max-w-[65ch]">
-          Wizards&rsquo; five tiers for matching decks: 1 is the most casual table, 5 the most
-          competitive — by what the deck contains, not how good it is.
-        </p>
       </div>
 
-      {bracket.band === "1-2" ? null : (
-        <ul className="flex flex-col gap-2">
-          {bracket.gameChangers.length > 0 && (
-            <li className="rounded-lg border border-(--separator) px-3 py-2">
-              <div className="eyebrow">
-                {bracket.gameChangers.length} Game Changer{bracket.gameChangers.length === 1 ? "" : "s"}
-              </div>
-              {/* WHAT PUTS A CARD ON THE LIST, which the panel counted and capitalised and never
-                *  said. It is a LIST Wizards publishes, not a judgement this engine makes, and that
-                *  is the one fact that makes the count checkable rather than an opinion. The
-                *  ceiling bracket 3 allows lives in `brackets.ts` as a constant and is deliberately
-                *  not restated here -- a number copied into copy is a number that drifts. */}
-              <p className="text-xs text-(--muted)">
-                {/* F2: "the strongest cards in the format" -- *"the strongest cards in what,
-                  *  exactly"*. And "above the bottom brackets" made the reader derive that the
-                  *  bottom is 1-2 from a sentence elsewhere. Both named outright. */}
-                Cards Wizards names on a published list of the strongest cards in Commander.
-                Playing any of them puts a deck above brackets 1&ndash;2.
-              </p>
-              {/* Named, not counted: the list is WotC's and a reader deciding whether to swap one
-                *  out needs to know which card it is. */}
-              <p className="text-xs text-(--muted)">
-                {bracket.gameChangers.map((n, i) => (
-                  <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>
-                ))}
-              </p>
-            </li>
-          )}
-          {bracket.infiniteCombos > 0 && (
-            <li className="rounded-lg border border-(--separator) px-3 py-2">
-              <div className="eyebrow">
-                {bracket.infiniteCombos} infinite combo{bracket.infiniteCombos === 1 ? "" : "s"}
-              </div>
-              {/* "COMBO" IS ORDINARY ENGLISH TO A BEGINNER and "infinite" was doing all the work
-                *  unexplained. Said in terms of what the cards DO. The engine reads a combo as
-                *  infinite when Commander Spellbook's result text says so (`brackets.ts`), so the
-                *  claim is "repeats without limit" and not "wins the game" -- which the result text
-                *  does not always say and this panel must not invent. */}
-              <p className="text-xs text-(--muted)">
-                Cards that, once you have them together, repeat something over and over with no
-                natural limit — mana, damage, cards drawn. Having even one is why this deck is not
-                in brackets 1–2.
-              </p>
-              {combos && listed.length ? (
-                <ul className="mt-2 flex flex-col gap-1.5" aria-label="The infinite combos in this deck">
-                  {shownCombos.map((c) => (
-                    <li key={c.cards.join("|")} data-testid="bracket-combo" className="flex flex-col gap-0.5 border-t border-(--separator) pt-1.5">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-                        <span className="text-sm">
-                          {c.cards.map((n, i) => (
-                            <span key={n}>{i > 0 ? " + " : ""}<CardName name={n} /></span>
-                          ))}
-                        </span>
-                        <span className="text-xs stat-num text-(--muted) whitespace-nowrap">
-                          {c.manaValue} mana for {c.cards.length === 2 ? "the pair" : `the ${c.cards.length} cards`}
-                        </span>
-                      </div>
-                      {/* What it repeats, in Commander Spellbook's words: "infinite" alone did not
-                        *  say whether it wins the game. */}
-                      <span className="text-xs text-(--muted)">
-                        {c.result}{c.cheap ? <span className="text-(--foreground)"> · cheap enough to come together early, which bracket 3 does not allow</span> : null}
-                      </span>
-                    </li>
-                  ))}
-                  {listed.length > COMBO_ROWS ? (
-                    <li>
-                      <button type="button" className="min-h-9 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAllCombos(!allCombos)}>
-                        {allCombos ? "Show fewer" : `Show all ${listed.length}`}
-                      </button>
-                    </li>
-                  ) : null}
-                </ul>
-              ) : null}
-            </li>
-          )}
-          {/* THE REASON IS SAID ONCE, OVER THE ROWS IT APPLIES TO. Every cheap combo carried its own
-            *  copy of the same sentence, so a deck with five of them printed the identical
-            *  explanation five times -- and once the sentence grew from a fragment to a full one
-            *  (S14, saying what "cheap" and "infinite" mean), five copies was most of the panel.
-            *  The rows differ only in cards and cost, which is exactly what a row should carry. */}
-          {/* A 4-5 DECK WITH NO CHEAP COMBO HAD NOTHING SAYING WHY. `brackets.ts` lands on 4-5 when
-            *  cheap combos exist OR when the Game Changer count is over what bracket 3 allows, and
-            *  only the first had a sentence. Derived from the band and the list rather than from the
-            *  ceiling constant, which lives in the matcher and is deliberately not copied here. */}
-          {bracket.band === "4-5" && bracket.cheapCombos.length === 0 && (
-            <li className="text-xs text-(--muted) max-w-[65ch]">
-              More Game Changers than bracket 3 allows is what puts this deck in 4–5.
-            </li>
-          )}
-          {!combos && bracket.cheapCombos.length > 0 && (
-            <li className="text-xs text-(--muted) max-w-[65ch]">
-              Below: pairs of two cards that together go infinite, for a low enough total cost that
-              bracket 3 does not allow them — which is what puts this deck in 4–5. The figure beside
-              each pair is the two cards&rsquo; mana costs added together.
-            </li>
-          )}
-          {(combos ? [] : bracket.cheapCombos).map((c) => (
-            <li key={c.cards.join("|")} className="rounded-lg border border-(--separator) px-3 py-2">
-              {/* F6: THE FIGURE SAT BESIDE HALF A PAIR ON A PHONE. "Dualcaster Mage + Essence Flux"
-                *  wraps to two lines at 390 while `4 mana for the pair` stays level with the first,
-                *  so it read for a moment as the cost of the FIRST CARD. It stacks below `sm` and
-                *  keeps the desktop row above it. */}
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-                <span className="text-sm">
-                  {c.cards.map((n, i) => (
-                    <span key={n}>{i > 0 ? " + " : ""}<CardName name={n} /></span>
-                  ))}
-                </span>
-                {/* A FIGURE WITH NO LABEL IS NOT A FIGURE: *"I know what mana is, but not what
-                  *  that figure is the total of"*. It is both cards' costs added together, which is
-                  *  the whole reason the pair counts as cheap. */}
-                <span className="text-xs stat-num text-(--muted) whitespace-nowrap">
-                  {c.manaValue} mana for the pair
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {bracket.gameChangers.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="eyebrow text-(--muted)">{plural(bracket.gameChangers.length, "Game Changer")} · on Wizards&rsquo; list</span>
+          <span className="flex flex-wrap gap-1">
+            {bracket.gameChangers.map((n) => <span key={n} className="rounded-full border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>)}
+          </span>
+        </div>
       )}
-
-      {/* THE FOOTNOTE WAS THE SHARPEST FINDING AND IT WAS ONE SENTENCE LONG. *"It explains why
-        *  there are ranges instead of single numbers, which only helps if I already knew what 1, 2,
-        *  4 and 5 were … the explanation is written in the word that needed explaining."* It now
-        *  says what the missing distinction is ABOUT, in things a reader can picture.
-        *
-        *  AND IT IS PER BAND, WHICH ROUND 2 CAUGHT AND ROUND 1 DID NOT. One paragraph covering both
-        *  splits printed on every deck, so half of it was always about a range the reader is not in
-        *  -- *"'the two choices inside it' against a band with one choice inside it … I read it
-        *  three times looking for the part meant for me"*. Worse, and nobody filed it: bracket 3 is
-        *  a SINGLE NUMBER, and this told a bracket-3 deck it had been given "a range rather than
-        *  one number".
-        *
-        *  THE HEADING'S PROMISE IS ALSO NOT DECLINED HERE any more. "Which table this is for" is
-        *  the question a precon owner arrives with; the old last line answered it with "neither of
-        *  those is something a card list can answer". The band IS the answer -- what the report
-        *  cannot do is split it finer. */}
-      {/* WHAT WAS LOOKED AT, AND WHAT WAS NOT (baseline round 2026-09-26): "none found" and "never
-        *  looked" read the same, and the bracket seat could not tell them apart. */}
+      {listed.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
+          <ul className="grid gap-2 lg:grid-cols-2 max-w-4xl" aria-label="The infinite combos in this deck">
+            {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} />)}
+          </ul>
+          {listed.length > COMBO_ROWS ? (
+            <button type="button" className="self-start min-h-9 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAllCombos(!allCombos)}>
+              {allCombos ? "Show fewer" : `Show all ${listed.length}`}
+            </button>
+          ) : null}
+        </div>
+      )}
+      {/* A 4-5 DECK WITH NO CHEAP COMBO: the Game Changer count is what put it there. */}
+      {bracket.band === "4-5" && bracket.cheapCombos.length === 0 && (
+        <p className="text-xs text-(--muted) max-w-[65ch]">More Game Changers than bracket 3 allows is what puts this deck in 4–5.</p>
+      )}
+      {/* WHAT WAS LOOKED AT, WHOSE CALL EACH HALF IS, AND WHAT A LIST CANNOT SPLIT: one line. */}
       <p data-testid="bracket-checked" className="text-xs text-(--muted) max-w-[65ch]">
-        Checked: every card against Wizards&rsquo; Game Changers list, and every combo Commander
-        Spellbook knows whose pieces are all in this deck. Not checked: mass land destruction or chained
-        extra turns. How fast it can win, by every route, is in the Game plan chapter.
-      </p>
-      <p className="text-xs text-(--muted) max-w-[65ch]">
-        {bracket.band === "3" ? (
-          <>Bracket 3 is a single bracket, so there is nothing further to split.</>
-        ) : bracket.band === "1-2" ? (
-          <>
-            Is it a 1 or a 2? A decklist can&rsquo;t tell us. It depends on whether this is a precon
-            straight out of the box or one you&rsquo;ve changed.
-          </>
-        ) : (
-          <>
-            Is it a 4 or a 5? A decklist can&rsquo;t tell us. It depends on the table you take it to.
-          </>
-        )}
+        {split ? <>{split} </> : null}
+        Game Changers are Wizards&rsquo; list; the combos are Commander Spellbook&rsquo;s, and counting them is our call.
+        Not checked: mass land destruction or chained extra turns.{" "}
+        <a
+          className="text-(--accent) underline underline-offset-2"
+          href="https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Wizards&rsquo; bracket guide
+        </a>
       </p>
     </div>
   );

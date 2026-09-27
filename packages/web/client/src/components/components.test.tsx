@@ -2462,13 +2462,14 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   // The EN DASH: this line prints `CELL_LABEL[band]`, not the wire key, so it matches the cells
   // above it. It was rendering "Bracket 4-5" beside a cell reading "4–5" (S14).
   expect(screen.getByText(/^Bracket 4–5$/)).toBeInTheDocument();
-  expect(screen.getByText(/by what the deck contains, not how good it is/i)).toBeInTheDocument();
+  expect(screen.getByText("casual")).toBeInTheDocument();
+  expect(screen.getByText("competitive")).toBeInTheDocument();
   // Named twice on purpose: in the one-sentence reason and in the Game Changers box.
   expect(screen.getAllByText(/Rhystic Study/).length).toBeGreaterThan(0);
   expect(screen.getAllByText(/2 infinite combos/).length).toBeGreaterThan(0);
   // S14: the figure carries what it is the total OF. "4 mana total" floated with no label and a
   // beginner read it as a quantity of something unnamed.
-  expect(screen.getByText(/4 mana for the pair/)).toBeInTheDocument();
+  expect(screen.getByText(/4 mana together/)).toBeInTheDocument();
   unmount();
 
   // 1-2 states the absence rather than rendering an empty list.
@@ -2502,43 +2503,26 @@ test("the bracket panel defines its own vocabulary", () => {
   // wizards brackets guide"*. The definition is Wizards' to maintain and the brackets are still in
   // beta, so the panel points at the source instead of carrying a copy of it. The always-visible
   // orienting line stays -- a reader who never follows a link still has to know which end is which.
-  expect(screen.getByText(/five tiers for matching decks/i)).toBeInTheDocument();
+  // LESS IS MORE (owner, 2026-09-27): the definitions went; what stays is whose list is whose,
+  // one line, and the link to Wizards for the rest.
   const guide = screen.getByRole("link", { name: /bracket guide/i });
   expect(guide).toHaveAttribute("href", "https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta");
   expect(guide).toHaveAttribute("rel", expect.stringContaining("noopener"));
-  // WHAT A LINK CANNOT ANSWER stays on the panel: which half of the input is Wizards' and which is
-  // ours. The judging round that produced this sentence filed its absence as an overclaim.
-  expect(screen.getByText(/Two things push a deck up the brackets/i)).toBeInTheDocument();
-  // Capitalised and counted, with nothing saying what puts a card on the list.
-  // "the format" was jargon the beginner could not decode -- named outright (S14 judge round, F2).
-  expect(screen.getByText(/published list of the strongest cards in Commander/i)).toBeInTheDocument();
-  // "I know 'combo' only as ordinary English for a combination."
-  expect(screen.getByText(/repeat something over and over with no/i)).toBeInTheDocument();
-  // THE FOOTNOTE, which the judge read three times: the ranges are now explained by what the
-  // missing split is ABOUT, and the heading's promise is no longer declined in the last line.
-  // The 4-5 deck gets the 4-vs-5 sentence ONLY. Printing both splits on every deck meant half the
-  // paragraph was always about a range the reader is not in (R2-F5).
+  expect(screen.getByTestId("bracket-checked")).toHaveTextContent(/Game Changers are Wizards’ list; the combos are Commander Spellbook’s, and counting them is our call/);
+  expect(screen.getByText(/on Wizards’ list/)).toBeInTheDocument();
+  expect(screen.getByText(/each repeats without limit/)).toBeInTheDocument();
+  // The 4-5 deck gets the 4-vs-5 line only.
   expect(screen.getByText(/depends on the table you take it to/i)).toBeInTheDocument();
-  expect(screen.queryByText(/preconstructed/i)).toBeNull();
-  expect(screen.queryByText(/is not something a card list can answer/i)).toBeNull();
+  expect(screen.queryByText(/precon/i)).toBeNull();
 });
 
 // S14 JUDGE ROUND. The rewrite met its objective and the beginner filed eight findings against it,
 // two of them defects the rewrite itself introduced. These pin the two that blocked or misled.
-test("the panel orients the reader with the disclosure still CLOSED", () => {
-  // F1, and it was this item's own defect: the definition went behind a dim, closed toggle and
-  // every word under it assumed the reader had opened it. Read closed, the strip is three number
-  // pairs with no end named, and the footnote's "Telling 1 from 2" lands on undefined terms --
-  // "the old problem has not gone; it has moved behind a toggle". `Explain` renders its body in a
-  // closed `<details>`, so this asserts on the paragraph OUTSIDE it.
+test("the band names its own ends, so a reader knows which end is which without reading", () => {
   render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
-  // Both the disclosure body and this line say "five tiers"; the one that matters is the one NOT
-  // inside a <details>, because that is the only one a reader meets without acting.
-  const outside = screen.getAllByText(/five tiers for matching decks/i)
-    .filter((el) => el.closest("details") === null);
-  expect(outside).toHaveLength(1);
-  expect(outside[0].textContent).toMatch(/1 is the most casual table, 5 the most/);
-  expect(outside[0].textContent).toMatch(/not how good it is/);
+  expect(screen.getByRole("img", { name: /from 1, the most casual table, to 5, the most competitive/ })).toBeInTheDocument();
+  expect(screen.getByText("casual")).toBeInTheDocument();
+  expect(screen.getByText("competitive")).toBeInTheDocument();
 });
 
 // SECOND BEGINNER PASS on the shipped panel (2026-09-02). The first pass's fixes introduced their
@@ -2548,14 +2532,14 @@ test("the footnote speaks about THIS band and no other", () => {
   // about a range the reader is not in -- "I read it three times looking for the part meant for
   // me". And bracket 3 is a single number: it was being told it had been given "a range".
   const two = render(<BracketPanel bracket={{ band: "1-2", gameChangers: [], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
-  expect(screen.getByText(/Is it a 1 or a 2\?/i)).toBeInTheDocument();
-  expect(screen.queryByText(/Is it a 4 or a 5\?/i)).toBeNull();
+  expect(screen.getByTestId("bracket-checked")).toHaveTextContent(/1 or 2 depends on whether this is a precon/);
+  expect(screen.queryByText(/4 or 5 depends/i)).toBeNull();
   two.unmount();
 
   const three = render(<BracketPanel bracket={{ band: "3", gameChangers: ["Rhystic Study"], infiniteCombos: 0, cheapCombos: [], reasons: [] }} />);
   // NOT "a range rather than one number", because 3 is one number.
   expect(screen.queryByText(/a range rather than one number/i)).toBeNull();
-  expect(screen.getByText(/Bracket 3 is a single bracket/i)).toBeInTheDocument();
+  expect(screen.getByTestId("bracket-checked")).not.toHaveTextContent(/depends on/);
   three.unmount();
 
   render(<BracketPanel bracket={{ band: "4-5", gameChangers: [], infiniteCombos: 1, cheapCombos: [], reasons: [] }} />);
@@ -2589,8 +2573,8 @@ test("the mana figure says what it is the total of, without restating the matche
     cheapCombos: [{ cards: ["Dualcaster Mage", "Ghostly Flicker"], result: "Infinite", manaValue: 6 }],
     reasons: [],
   }} />);
-  expect(screen.getByText(/the two cards’ mana costs added together/i)).toBeInTheDocument();
-  expect(screen.getByText(/for a low enough total cost that\s+bracket 3 does not allow them/i)).toBeInTheDocument();
+  expect(screen.getByTestId("bracket-combo")).toHaveTextContent("6 mana together");
+  expect(screen.getByTestId("bracket-combo")).toHaveTextContent("early enough to rule out bracket 3");
 });
 
 test("a 4-5 deck with no cheap combo still says what put it there", () => {
@@ -2688,7 +2672,7 @@ test("the band carries one pip per piece of evidence that put the deck there", (
   expect(screen.getAllByTestId("bracket-pip")).toHaveLength(1);
   // Two nodes carry it -- the summary beside the dots and the box heading. Both are correct;
   // the summary is the one being pinned, so the count is what is asserted.
-  expect(screen.getAllByText(/^1 Game Changer$/)).toHaveLength(2);
+  expect(screen.getAllByText(/^1 Game Changer$/)).toHaveLength(1);
   one.unmount();
 
   // A MARK THAT IS ALWAYS PRESENT MARKS NOTHING -- the same rule `DerivedMark` and the unread hatch
@@ -3047,10 +3031,11 @@ test("the bracket panel names every infinite combo, what it does, and says why i
   // Only the infinite ones, cheapest and bracket-deciding first; the finite "Mana" pair is not one.
   expect(rows).toHaveLength(3);
   expect(rows[0]).toHaveTextContent(/Dualcaster Mage \+ Essence Flux/);
-  expect(rows[0]).toHaveTextContent(/Infinite ETB, Infinite storm count · cheap enough to come together early, which bracket 3 does not allow/);
+  expect(rows[0]).toHaveTextContent(/Infinite ETB · Infinite storm count/);
+  expect(rows[0]).toHaveTextContent("early enough to rule out bracket 3");
   expect(rows[2]).toHaveTextContent(/Kiki-Jiki, Mirror Breaker \+ Zealous Conscripts/);
-  expect(rows[2]).toHaveTextContent("10 mana for the pair");
-  expect(rows[2]).not.toHaveTextContent(/bracket 3 does not allow/);
+  expect(rows[2]).toHaveTextContent("10 mana together");
+  expect(rows[2]).not.toHaveTextContent(/rule out bracket 3/);
 });
 
 test("a bracket 3 deck says which Game Changers it holds and that its combos are too costly to rule 3 out", () => {
