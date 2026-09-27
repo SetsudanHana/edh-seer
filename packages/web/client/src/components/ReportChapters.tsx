@@ -7,6 +7,8 @@ import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { CutList, type Surplus } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { SpeedPanel } from "./SpeedPanel.js";
+import { FirstTurns } from "./FirstTurns.js";
+import { firstTurns } from "../lib/first-turns.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { RecognitionPanel } from "./RecognitionPanel.js";
 import { DeckGauges } from "./DeckGauges.js";
@@ -127,6 +129,16 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     for (const r of report.cards) { if (r.manaValue !== undefined) { m.set(r.name, r.manaValue); if (r.cardName) m.set(r.cardName, r.manaValue); } }
     return (n: string) => m.get(n);
   }, [report.cards]);
+  // WHAT THE DECK DOES ON TURNS 1-5, read off the report (lib/first-turns.ts). Lands by the graph's
+  // type line, front face only: a basic has no role on the report, and an MDFC with a land back is
+  // still a spell.
+  const turns = useMemo(() => {
+    const lands = new Set<string>();
+    for (const n of data.graph?.nodes ?? []) {
+      if (/\bland\b/i.test((n.typeLine ?? "").split("//")[0]!)) lands.add(n.cardName ?? n.id);
+    }
+    return firstTurns(report, (name) => lands.has(name));
+  }, [report, data.graph]);
   const themes = useMemo(() => {
     if (!data.graph) return null;
     const m = buildEngineModel(report, data.graph);
@@ -308,8 +320,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           {report.deckMath ? (
             // No title of its own: its sections are headed "How you win" and "What your cards are
             // waiting for" already, and a third heading over them said the first one twice.
-            <Movement count="how fast it wins, and what its cards need from each other">
+            <Movement count="its first turns, how fast it wins, and what its cards need from each other">
               <div className="max-w-5xl flex flex-col gap-8">
+                {turns ? <FirstTurns model={turns} /> : null}
                 <SpeedPanel report={report} manaValueOf={manaValueOf} />
                 <BuildBenchmarks
                   categories={report.buildCategories}
