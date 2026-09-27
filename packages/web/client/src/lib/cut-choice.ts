@@ -1,3 +1,4 @@
+import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { DeckReport } from "../types.js";
 import { cutWeight, displayName, type CutRow, type EngineCard, type EngineModel } from "./engine-model.js";
 
@@ -85,6 +86,16 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
     .sort((a, b) => a.t.protections.length - b.t.protections.length
       || (rowOf.has(a.t.name) && rowOf.has(b.t.name) ? cutWeight(rowOf.get(a.t.name)!) - cutWeight(rowOf.get(b.t.name)!) : 0)
       || a.i - b.i);
+  // A CUT THAT IS ALSO A WIN PLAN'S CARD SAYS SO (persona round, 2026-09-27: three of four cuts
+  // sat on the win plans two chapters up, and nothing on either said it). An argument to keep, not
+  // a gate: the plan counts it by what its text says, not by how much it does here.
+  const plansOf = new Map<string, string[]>();
+  for (const c of report.deckMath?.wincons.classes ?? []) {
+    for (const n of [...(c.cards ?? []), ...(c.payoffs ?? [])]) {
+      const phrase = WIN_PHRASE[c.class] ?? c.class;
+      if (!(plansOf.get(n) ?? []).includes(phrase)) plansOf.set(n, [...(plansOf.get(n) ?? []), phrase]);
+    }
+  }
   const out: CutChoice[] = [];
   // Twins: a card that only feeds others, fed by exactly the same cards as one already listed.
   const usersKey = (r: CutRow) => [...r.fedBy].sort().join("\u0001");
@@ -95,7 +106,7 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
     if (twin) { twin.twins.push(displayName(row!.card)); continue; }
     out.push({
       name: t.name, manaValue: t.manaValue, card: frontOf.get(t.name) ?? row?.card, row,
-      keeps: t.protections.map(keepWords),
+      keeps: [...t.protections.map(keepWords), ...(plansOf.get(t.name) ?? []).map((p) => `it is one of the cards your win plan of ${p} counts`)],
       unmet: t.reasons.filter((r) => UNMET.test(r)),
       reasons: t.reasons.filter((r) => !UNMET.test(r) && !SAYS_NOTHING.test(r)),
       twins: [],
