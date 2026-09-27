@@ -46,7 +46,10 @@ let engine: Promise<typeof import("@edh-seer/matcher/suggest-static")> | undefin
 /** THE CARDS, COMPUTED AFTER THE REPORT HAS PAINTED and never blocking it (spec §3). The module is a
  *  dynamic import so the report's first paint does not wait on the suggestion code either. An edit
  *  re-runs the report; the `cancelled` flag drops the older run's answer if it arrives last. */
-export function useSuggestions(data: AnalyzeResponse): SuggestionsState {
+export function useSuggestions(data: AnalyzeResponse, cuts?: readonly string[]): SuggestionsState {
+  // The page's own cut list, by name (see `suggestForDeck`'s `cuts`); a string so the effect below
+  // re-runs when the list changes and not on every render's new array.
+  const cutKey = cuts?.join("\u0001");
   // KEYED TO THE REPORT IT WAS COMPUTED FOR: the effect runs after paint, so without the key the
   // first render of an edited deck showed the previous deck's cards for a frame (final review, AO4).
   const [out, setOut] = useState<SuggestionsState & { for: AnalyzeResponse | null }>({ state: "loading", value: null, for: null });
@@ -57,7 +60,10 @@ export function useSuggestions(data: AnalyzeResponse): SuggestionsState {
       // chunk under an open tab would otherwise fail every later report until a reload.
       engine ??= import("@edh-seer/matcher/suggest-static").catch((err: unknown) => { engine = undefined; throw err; });
       const { suggestForDeck } = await engine;
-      return suggestForDeck({ report: data.report, commanderColorIdentity: data.commanderColorIdentity, baseUrl: "/static" });
+      return suggestForDeck({
+        report: data.report, commanderColorIdentity: data.commanderColorIdentity, baseUrl: "/static",
+        ...(cutKey !== undefined ? { cuts: cutKey ? cutKey.split("\u0001") : [] } : {}),
+      });
     })().then(
       (value) => { if (!cancelled) setOut({ state: "ready", value, for: data }); },
       (err: unknown) => {
@@ -68,6 +74,6 @@ export function useSuggestions(data: AnalyzeResponse): SuggestionsState {
       },
     );
     return () => { cancelled = true; };
-  }, [data]);
+  }, [data, cutKey]);
   return out.for === data ? { state: out.state, value: out.value } : { state: "loading", value: null };
 }

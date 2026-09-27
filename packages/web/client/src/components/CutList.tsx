@@ -1,10 +1,12 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
-import { keepWords, type CutChoice } from "../lib/cut-choice.js";
+import type { CutChoice } from "../lib/cut-choice.js";
 import { listNames, type EngineCard } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
 import { Badge, CardFace, ReadCards } from "./engine-parts.js";
+import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
+import { SwapLine } from "./SuggestedPairs.js";
 
 /** THE CUT LIST — "which cards is the deck not using?" — and the deck-level slack beside it.
  *
@@ -15,7 +17,7 @@ import { Badge, CardFace, ReadCards } from "./engine-parts.js";
 /** A role group over its target, with the cards in it: where the rest of a trim comes from. */
 export interface Surplus { name: string; count: number; target: number; over: number; cards: EngineCard[] }
 
-export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surplus, swaps }:
+export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -27,46 +29,78 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surpl
      *  number without its denominator invites exactly that question. */
     coverage?: DeckReport["coverage"];
     slack: DeckReport["slack"];
-    trim?: DeckReport["trim"];
     /** Read cards that no theme group claims and that are not already cut candidates. */
     offTheme?: readonly string[];
     /** The over-target role groups with their cards. Replaces the bare slack chips where present. */
     surplus?: readonly Surplus[];
-    /** A cut beside the card that takes its slot, rendered right under the cuts it refers to. */
-    swaps?: React.ReactNode;
+    /** The card that could take each cut's slot, by cut name. Shown on the cut's own card. */
+    pairs?: readonly SuggestedPair[];
+    /** Cards in the list, commander included and companion not: over 100, the cuts reach 100. */
+    deckSize?: number;
   }) {
-  // TRIM MODE is opt-in and client-side. The server ships the WHOLE ranked order, so changing N is
-  // a slice and never a round trip; and it stays behind a click because a list that always has an
-  // answer reads as a verdict when nobody asked for it.
-  const [trimN, setTrimN] = useState(0);
   const [maybeN, setMaybeN] = useState(MAYBE_STEP);
   // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
   // first row carried a green "Keeps it:" read as the list arguing with itself on three seats. A
   // card nothing argues for is a cut; a card with a reason to stay is a trade-off, and says so.
   const clear = cuts.filter((c) => c.keeps.length === 0);
   const maybe = cuts.filter((c) => c.keeps.length > 0);
+  // OVER 100, THE CUTS ARE THE PLAN (baseline round 2026-09-26). The first-deck seat, 8 over, got 7
+  // names, 2 more behind a button, and "Trim 3 5 10", which skips 8. Now the list leads with exactly
+  // as many cuts as the deck is over, weakest first (nothing-argues-for-it first, then trade-offs),
+  // and says how many are still to find when the list runs short. The trim order is not used for
+  // this: it ranks every card, and on that deck its fifth and eighth were Sol Ring and Arcane Signet.
+  const over = deckSize !== undefined ? Math.max(0, deckSize - 100) : 0;
+  const ordered = [...clear, ...maybe];
+  const toCut = over ? ordered.slice(0, over) : [];
+  const spare = over ? ordered.slice(over) : [];
+  const pairOf = new Map((pairs ?? []).map((p) => [p.cut, p] as const));
+  // A deck that is over needs cards out, not swaps; the swaps are for a deck at its size.
+  const swapFor = (c: CutChoice) => (over ? undefined : pairOf.get(c.name));
   const hasSurplus = !!surplus && surplus.length > 0;
-  const hasTrim = !!trim && trim.length > 0;
   const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
   const hasSlack = !!slack && slack.length > 0;
   const hasOffTheme = !!offTheme && offTheme.length > 0;
-  if (!hasCuts && !hasSlack && !hasTrim && !hasUnjudged && !hasOffTheme) return null;
+  if (!hasCuts && !hasSlack && !hasUnjudged && !hasOffTheme && !over) return null;
   return (
     <div className="flex flex-col gap-2">
       <h3 className="eyebrow">Possible cuts</h3>
-      {hasCuts && (
+      {over ? (
+        <section aria-labelledby="cuts-over" className="flex flex-col gap-2">
+          <p id="cuts-over" className="text-sm max-w-[65ch]" data-testid="cuts-over">
+            Your list has <b className="tabular-nums">{deckSize}</b> cards, <b className="tabular-nums">{over}</b> over 100.{" "}
+            {toCut.length === over
+              ? <>These {over} are doing the least here, weakest first: take them out and it is 100.</>
+              : toCut.length
+                ? <>These {toCut.length} are doing the least here. The other {over - toCut.length} have to come from a role you run more of than you need, below, or from the cards you like least.</>
+                : <>Every card here fills a role or works with your themes, so the {over} have to come from a role you run more of than you need, below, or from the cards you like least.</>}
+          </p>
+          {toCut.length ? (
+            <ol className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+              {toCut.map((c) => <CutCard key={c.name} c={c} />)}
+            </ol>
+          ) : null}
+          {spare.length ? (
+            <p className="text-sm text-(--muted) max-w-[65ch]">
+              <span className="text-(--foreground)">If you would rather keep one of these,</span> the next weakest{" "}
+              {spare.length === 1 ? "is" : "are"}{" "}
+              {spare.map((c, i) => <span key={c.name}>{i > 0 ? ", " : ""}<CardName name={c.name} /></span>)}.
+            </p>
+          ) : null}
+        </section>
+      ) : hasCuts && (
         <>
           <p className="text-sm text-(--muted) max-w-[65ch]">
             The cards doing the least here: they keep working with the fewest others. A card that fills
             a role, is a theme&apos;s key card or is half of a combo is never listed. Suggestions, not
             verdicts: a synergy we can&apos;t read looks exactly like one that isn&apos;t there.
+            {pairOf.size ? " Where a card from outside the deck connects to more of it, the cut comes with that card to put in its place." : ""}
           </p>
           {clear.length ? (
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-                {clear.map((c) => <CutCard key={c.name} c={c} />)}
+                {clear.map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
             </section>
           ) : null}
@@ -74,7 +108,7 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surpl
             <section aria-labelledby="cuts-maybe" className="flex flex-col gap-2">
               <h4 id="cuts-maybe" className="text-base font-semibold">{clear.length ? "Weak here, but something argues for them" : "The weakest here, though something argues for each"}</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} />)}
+                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
               {maybe.length > maybeN ? (
                 <p>
@@ -87,14 +121,6 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surpl
           ) : null}
         </>
       )}
-      {/* THE SWAP UNDER THE CUT IT NAMES (appeal review 2026-09-26): below "Over 99? Trim" it read
-        *  as a third, unrelated instruction. */}
-      {swaps ? (
-        <section aria-labelledby="cuts-swaps" className="flex flex-col gap-1 pt-2">
-          <h4 id="cuts-swaps" className="text-base font-semibold">A card that could take the slot</h4>
-          {swaps}
-        </section>
-      ) : null}
       {/* THE REST OF THE TRIM, WITH ITS CARDS (appeal review 2026-09-26). The tuner asked for five
         *  cuts and got two, then "Consistency 16/13 (+3)" and "which card goes is your call" -- the
         *  count without the cards. The engine still does not rank two draw spells against each other,
@@ -138,19 +164,11 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surpl
       {/* AN EMPTY CUT LIST IS AN ANSWER AND HAS TO SAY SO. It used to render nothing at all, which
         *  reads as a missing panel rather than as "nothing here is dead weight" — and once the
         *  underived gate landed this became the COMMON case on a partly-read deck. */}
-      {!hasCuts && (hasUnjudged || hasTrim) ? (
+      {!hasCuts && !over && hasUnjudged ? (
         <div className="rounded-(--radius) border border-dashed border-(--separator) px-4 py-5 text-center">
           <p className="text-sm">Nothing here is an easy cut.</p>
           <p className="text-xs text-(--muted) mt-1">
-            Every card the engine could read fills a role, is a theme&apos;s key card or is half of a combo
-            {/* AND THE TRIM CONTROL BELOW IS NOT A CONTRADICTION OF THAT (S16, 2026-09-02). The
-              *  panel used to say "Nothing here is safe to call dead weight" directly above a
-              *  `Trim 3 5 10` control and three over-quota chips; both a tuner and a beginner
-              *  stopped on the pair, and it was the tuner's whole job ("stopped my job"). They
-              *  answer DIFFERENT questions -- this list ranks by CONNECTION, trim ranks by
-              *  category SURPLUS -- and saying so is the whole fix. */}
-            {hasTrim ? <> — so the trim list below ranks by which category is
-              <span className="text-(--foreground)"> over its target</span>, not by which card is weak</> : null}.
+            Every card the engine could read fills a role, is a theme&apos;s key card or is half of a combo.
           </p>
         </div>
       ) : null}
@@ -182,56 +200,6 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surpl
           </p>
         </div>
       )}
-      {hasTrim && (
-        <>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-(--muted)">Over 99? Trim</span>
-            {[3, 5, 10].map((n) => (
-              <button
-                key={n}
-                type="button"
-                aria-pressed={trimN === n}
-                onClick={() => setTrimN(trimN === n ? 0 : n)}
-                className={`text-xs rounded-full border px-3 py-1 ${
-                  trimN === n ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"}`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-          {trimN > 0 && (
-            <>
-              <p className="text-sm text-(--muted)">
-                Weakest first, with what argues each one STAYS. Rows tied on every measured axis are ordered by
-                name &mdash; nothing here ranks two ramp cards against each other.
-              </p>
-              <ul className="flex flex-col gap-2">
-                {trim!.slice(0, trimN).map((t) => (
-                  <li key={t.name} className="rounded-lg border border-(--separator) px-3 py-2">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-sm"><CardName name={t.name} /></span>
-                      <span className="text-xs stat-num text-(--muted)">
-                        {t.manaValue} mana &middot; {t.rating.toFixed(1)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-(--muted)">{t.reasons.filter((r) => !/^doesn't fill a core role/.test(r)).join(" \u00b7 ")}</p>
-                    {/* THE KEEP SIDE IS NOT FINE PRINT. A row that says "fills none of the roles"
-                      *  above "its strongest link is to your main theme" is arguing with itself, and the
-                      *  second line is the one that decides — so it reads at the page's normal
-                      *  weight with a success-toned label, not as a footnote to the cut. */}
-                    <p className="text-xs">
-                      <span className="font-medium text-(--success)">keeps it:</span>{" "}
-                      <span className={t.protections.length > 0 ? "text-(--foreground)" : "text-(--muted)"}>
-                        {t.protections.length > 0 ? t.protections.map(keepWords).join(" \u00b7 ") : "\u2014 nothing"}
-                      </span>
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </>
-      )}
       {hasSlack && !hasSurplus && (
         <>
           <p className="text-sm text-(--muted)">
@@ -256,7 +224,7 @@ export function CutList({ cuts, unjudged, coverage, slack, trim, offTheme, surpl
 const MAYBE_STEP = 4;
 
 /** One cut: the card, why it is here, what argues it stays, and its text one tap away. */
-function CutCard({ c }: { c: CutChoice }) {
+function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
   const r = c.row;
   const short = c.name.split(" // ")[0]!;
   return (
@@ -291,6 +259,7 @@ function CutCard({ c }: { c: CutChoice }) {
           </p>
         ) : null}
         {c.card ? <ReadCards cards={[c.card]} /> : null}
+        {swap ? <SwapLine p={swap} /> : null}
       </div>
     </li>
   );

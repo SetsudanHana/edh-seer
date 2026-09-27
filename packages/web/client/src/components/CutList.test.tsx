@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import userEvent from "@testing-library/user-event";
 import { expect, test } from "vitest";
 import type { CutChoice } from "../lib/cut-choice.js";
@@ -41,7 +42,7 @@ test("trade-offs show four at a time; clear cuts always show in full", async () 
  *  from, not only "Consistency 16/13 (+3)". */
 test("a role over its target shows its cards and how many can go, instead of a bare count", () => {
   const card = (name: string) => ({ id: name, name, typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: ["draw"], score: 0, manaCost: "", physical: name });
-  render(<CutList cuts={[]} trim={[]} slack={[{ category: "Consistency", count: 16, target: 13, over: 3 }]}
+  render(<CutList cuts={[]} slack={[{ category: "Consistency", count: 16, target: 13, over: 3 }]}
     surplus={[{ name: "Consistency", count: 16, target: 13, over: 3, cards: [card("Brainstorm"), card("Ponder")] }]} />);
   expect(screen.getByText(/over its target/).textContent).toMatch(/Consistency is 3 over its target \(16 against 13\), so up to 3 of these can go/);
   expect(within(screen.getByRole("list", { name: "Consistency: 2 cards" })).getAllByRole("listitem")).toHaveLength(2);
@@ -49,14 +50,34 @@ test("a role over its target shows its cards and how many can go, instead of a b
   expect(screen.queryByText("16/13 (+3)")).toBeNull();
 });
 
-test("a swap sits right under the cuts it names, before the roles with room", () => {
-  const card = { id: "Brainstorm", name: "Brainstorm", typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: ["draw"], score: 0, manaCost: "", physical: "Brainstorm" };
-  render(<CutList cuts={[cut("Multiclass Baldric")]} slack={[]} swaps={<p>Multiclass Baldric to Pious Evangel</p>}
-    surplus={[{ name: "Consistency", count: 14, target: 13, over: 1, cards: [card] }]} />);
-  const swaps = screen.getByRole("region", { name: "A card that could take the slot" });
-  expect(within(swaps).getByText("Multiclass Baldric to Pious Evangel")).toBeInTheDocument();
-  const clear = screen.getByRole("region", { name: "Nothing argues for keeping these" });
-  const room = screen.getByRole("region", { name: "Room in your roles" });
-  expect(clear.compareDocumentPosition(swaps) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(swaps.compareDocumentPosition(room) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+const add = (name: string) => ({ name, slug: name.toLowerCase().replace(/\W+/g, "-"), identity: [], mv: 2, connections: ["A", "B", "C"], reasons: [{ text: `${name} works with A.`, others: [] }] });
+
+/** ONE PLAN (baseline round 2026-09-26: "cuts and adds are not one plan"). The card that could take
+ *  a cut's slot sits on that cut's own card, not in a list of its own. */
+test("a cut at deck size carries the card that could take its slot", () => {
+  render(<MemoryRouter><CutList cuts={[cut("Multiclass Baldric"), cut("Other")]} slack={[]} deckSize={100}
+    pairs={[{ cut: "Multiclass Baldric", add: add("Pious Evangel"), rule: "no-role", counts: [], cutConnections: 1 }]} /></MemoryRouter>);
+  const row = screen.getByRole("heading", { name: /Multiclass Baldric/ }).closest("li")!;
+  expect(within(row).getByTestId("swap")).toHaveTextContent("Swap it for Pious Evangel");
+  expect(within(row).getByTestId("swap")).toHaveTextContent("works with 3 of your cards");
+  expect(within(row).getByTestId("swap")).toHaveTextContent("Pious Evangel works with A.");
+  expect(within(screen.getByRole("heading", { name: /^Other/ }).closest("li")!).queryByTestId("swap")).toBeNull();
+  expect(screen.queryByRole("region", { name: "A card that could take the slot" })).toBeNull();
+});
+
+/** OVER 100, THE CUTS REACH 100: the first-deck seat, 8 over, got 7 names and "Trim 3 5 10". */
+test("over 100, the list leads with exactly as many cuts as the deck is over, weakest first", () => {
+  const cuts = [cut("Maybe 1", { keeps: ["rates 1.5 of 5 in this deck"] }), cut("Clear 1"), cut("Clear 2"), cut("Maybe 2", { keeps: ["rates 1.5 of 5 in this deck"] })];
+  render(<MemoryRouter><CutList cuts={cuts} slack={[]} deckSize={103}
+    pairs={[{ cut: "Clear 1", add: add("Swap In"), rule: "no-role", counts: [], cutConnections: 0 }]} /></MemoryRouter>);
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("Your list has 103 cards, 3 over 100. These 3 are doing the least here, weakest first: take them out and it is 100.");
+  expect(screen.getAllByRole("heading", { level: 4 }).map((h) => h.textContent?.replace(/2 mana$/, ""))).toEqual(["Clear 1", "Clear 2", "Maybe 1"]);
+  expect(screen.getByText(/If you would rather keep one of these,/).parentElement).toHaveTextContent("the next weakest is Maybe 2.");
+  // A deck over its size needs cards out, not swaps.
+  expect(screen.queryByTestId("swap")).toBeNull();
+});
+
+test("over 100 with too few cuts, the list says how many are still to find and where", () => {
+  render(<CutList cuts={[cut("Only One")]} slack={[]} deckSize={108} />);
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 1 are doing the least here. The other 7 have to come from a role you run more of than you need, below, or from the cards you like least.");
 });

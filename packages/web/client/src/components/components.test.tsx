@@ -2310,13 +2310,9 @@ test("the strategy list says why the deck's own theme need not appear in it", as
   expect(screen.getByText(/will often not be one of these names/)).toBeInTheDocument();
 });
 
-test("the cut list's empty state says what the trim control ranks by instead", () => {
-  render(<CutList cuts={[]} slack={[]} trim={[{ category: "Interaction", card: "Murder", reason: "over target" }] as never} />);
+test("the cut list's empty state says so when unread cards are the only candidates", () => {
+  render(<CutList cuts={[]} slack={[]} unjudged={["Murder"]} />);
   expect(screen.getByText("Nothing here is an easy cut.")).toBeInTheDocument();
-  // The pair a tuner and a beginner both stopped on: "nothing is dead weight" over a Trim control.
-  // They rank different things, and the panel now says which.
-  expect(screen.getByText(/ranks by which category is/)).toBeInTheDocument();
-  expect(screen.getByText(/over its target/)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks states what a random card off the library is worth, and stays silent without one", () => {
@@ -2346,38 +2342,6 @@ test("BuildBenchmarks states what a random card off the library is worth, and st
   expect(screen.queryByText(/off the top/i)).not.toBeInTheDocument();
 });
 
-// TRIM MODE is opt-in and client-side: the server ships the whole ranked order and N is a slice, so
-// changing it must not need a round trip. It stays behind a click because a list that ALWAYS has an
-// answer reads as a verdict when nobody asked for one.
-const TRIM = [
-  { name: "Dead Weight", rating: 0, partners: 0, manaValue: 2, reasons: ["nothing in the deck connects to it"], protections: [] },
-  { name: "Sol Ring", rating: 0, partners: 0, manaValue: 1, reasons: ["nothing in the deck connects to it"],
-    protections: ["fills ramp — ramp is at 16 against a target of 10, so there is room here"] },
-  { name: "Third Card", rating: 0.4, partners: 1, manaValue: 3, reasons: ["only 1 card connects to it"], protections: ["fills draw"] },
-];
-
-test("trim rows stay hidden until asked for, then show N with what keeps each card", async () => {
-  render(<CutList cuts={[]} slack={[]} trim={TRIM} />);
-  expect(screen.queryByText("Dead Weight")).toBeNull();
-
-  await userEvent.click(screen.getByRole("button", { name: "3" }));
-  expect(screen.getByText("Dead Weight")).toBeTruthy();
-  expect(screen.getByText("Third Card")).toBeTruthy();
-  // The protection is rendered, not just the weakness — that is the whole difference from the cut
-  // list, and it is what stops "cut Sol Ring" reading as a verdict.
-  expect(screen.getByText(/ramp is at 16 against a target of 10/)).toBeTruthy();
-  expect(screen.getByText(/nothing here ranks two ramp cards against each other/)).toBeTruthy();
-
-  // Clicking the active count closes it again.
-  await userEvent.click(screen.getByRole("button", { name: "3" }));
-  expect(screen.queryByText("Dead Weight")).toBeNull();
-});
-
-test("trim renders even when the passive cut list is empty — the case it exists for", () => {
-  render(<CutList cuts={[]} slack={[]} trim={TRIM} />);
-  expect(screen.getByText(/Over 99\? Trim/)).toBeTruthy();
-});
-
 // F3: the slack chip printed the raw camelCase key ("targetedRemoval 14/10 (+4)") because this
 // file had no label map at all -- BuildBenchmarks' fix for the identical bug (CONFLICT 9,
 // `graveyardHate`) could not reach here, since its map was a local `const`. Both now import the
@@ -2387,7 +2351,6 @@ test("the slack chip names its category in words, not the raw camelCase key", ()
     <CutList
       cuts={[]}
       slack={[{ category: "targetedRemoval", count: 14, target: 10, over: 4 }]}
-      trim={[]}
     />,
   );
   expect(screen.getByText(/Removal/)).toBeInTheDocument();
@@ -2398,7 +2361,7 @@ test("the slack chip names its category in words, not the raw camelCase key", ()
 // another" whatever the chips under it were -- Interaction and Consistency on both review decks,
 // while the same report called ramp SHORT. Three seats read it as an instruction about ramp.
 test("the trim note under the slack chips does not name a role the chips are not", () => {
-  render(<CutList cuts={[]} slack={[{ category: "Interaction", count: 17, target: 13, over: 4 }]} trim={[]} />);
+  render(<CutList cuts={[]} slack={[{ category: "Interaction", count: 17, target: 13, over: 4 }]} />);
   expect(screen.getByText(/we don.t rank the cards inside a role against each other/)).toBeInTheDocument();
   expect(screen.queryByText(/ramp card/)).not.toBeInTheDocument();
 });
@@ -3050,18 +3013,6 @@ test("the card filter chips announce which one is active", async () => {
   expect(all).toHaveAttribute("aria-pressed", "false");
 });
 
-test("the trim buttons announce which count is open", async () => {
-  render(<CutList cuts={[]} slack={[]} trim={TRIM} />);
-  const three = screen.getByRole("button", { name: "3" });
-  expect(three).toHaveAttribute("aria-pressed", "false");
-
-  await userEvent.click(three);
-  expect(three).toHaveAttribute("aria-pressed", "true");
-
-  // Clicking the open count closes it, so the state goes back down.
-  await userEvent.click(three);
-  expect(three).toHaveAttribute("aria-pressed", "false");
-});
 
 /** T19 (owner call 2026-09-02): *"LANDS IN YOUR OPENING 7 is right now hidden and to be honest this
  *  is important from the data point of view"*. The distribution was behind a `<details>`, so the

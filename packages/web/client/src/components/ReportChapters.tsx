@@ -29,7 +29,6 @@ import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
 import { StrengthenLists } from "./SuggestedCards.js";
-import { SuggestedPairs } from "./SuggestedPairs.js";
 import { useSuggestions } from "../lib/suggestions.js";
 import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
@@ -189,18 +188,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
       return { name: s.category, count: s.count, target: s.target, over: s.over, cards };
     }).filter((g) => g.cards.length > 0);
   }, [report, data.graph]);
-  /** A deck card's art by name, front face first, for the card a swap takes out. */
-  const artOf = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const n of data.graph?.nodes ?? []) {
-      if (n.isToken || n.face) continue;
-      const art = n.artCrop ?? n.faces?.[0]?.artCrop;
-      if (!art) continue;
-      if (!m.has(n.label)) m.set(n.label, art);
-      if (n.cardName && !m.has(n.cardName)) m.set(n.cardName, art);
-    }
-    return (name: string) => m.get(name);
-  }, [data.graph]);
   const offTheme = useMemo(() => {
     const none = themeMatrix(report.archetypes, nonlandNames)?.unaffiliated ?? [];
     const skip = new Set([...cuts.map((c) => c.name), ...unreadCardNames(report.cards)]);
@@ -209,8 +196,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
 
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
   // ONE RUN PER REPORT, read by the findings (cards under each) and the lists below them (AO4).
-  const suggestions = useSuggestions(data);
-  const swaps = suggestions.value?.pairs.filter((p) => p.rule !== "cross-job") ?? [];
+  // PAIRED AGAINST THE PAGE'S CUT LIST (a folded twin stands in for its cut, it is not one), so every cut
+  // shown can carry the card that takes its slot (baseline round 2026-09-26: "cuts and adds are not
+  // one plan").
+  const cutNames = useMemo(() => cuts.map((c) => c.name), [cuts]);
+  const suggestions = useSuggestions(data, cutNames);
 
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
@@ -411,7 +401,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
 
         <Chapter id="fix" title={title("fix")}>
-          <Findings report={report} diff={diff} suggestions={suggestions} artOf={artOf} />
+          <Findings report={report} diff={diff} suggestions={suggestions} />
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           {/* THE GRID HAD ONE CHILD AND STILL RESERVED TWO COLUMNS (roadmap T11). It was built to
@@ -429,11 +419,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               unjudged={report.unjudged}
               coverage={report.coverage}
               slack={report.slack}
-              trim={report.trim}
               offTheme={offTheme}
               surplus={surplus}
-              // A CUT BESIDE THE CARD THAT TAKES ITS SLOT, same job or none (spec §3).
-              swaps={swaps.length ? <SuggestedPairs pairs={swaps} artOf={artOf} /> : null}
+              // EACH CUT CARRIES THE CARD THAT TAKES ITS SLOT, whatever the job (spec §3).
+              pairs={suggestions.value?.pairs}
+              deckSize={data.totalCount}
             />
 
             </div>
