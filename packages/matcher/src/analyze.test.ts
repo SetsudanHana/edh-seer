@@ -622,7 +622,9 @@ test("every card carries its functional roles, not just double-duty cards", () =
 });
 
 test("directedReasons is a pure one-way feed: maker -> payoff only, not payoff -> maker", () => {
-  const payoff = dc("Impact Tremors", impactTremorsAbility);
+  // Impact Tremors is an ENCHANTMENT: a creature payoff would now attack into the maker's attack
+  // trigger (#561), a real link, and not the one-way shape this test is about.
+  const payoff = dc("Impact Tremors", impactTremorsAbility, [], "Enchantment");
   const maker = dc("Maker 1", tokenMakerAbility, ["goblin"]);
   expect(directedReasons(maker, payoff, H).length).toBeGreaterThanOrEqual(1);
   expect(directedReasons(payoff, maker, H).length).toBe(0);
@@ -631,8 +633,11 @@ test("directedReasons is a pure one-way feed: maker -> payoff only, not payoff -
 test("directional scoring: a payoff fed by many makers outranks each maker (anchor rises)", () => {
   // One payoff + several makers that all feed it. The payoff should be the top synergy card;
   // each maker should sit clearly below (slight lift), not tie the payoff (the old flattening).
-  const payoff = dc("Impact Tremors", impactTremorsAbility);      // triggers on a creature ETB → damage
-  const makers = [1, 2, 3, 4, 5].map((i) => dc(`Maker ${i}`, tokenMakerAbility, ["goblin"]));
+  const payoff = dc("Impact Tremors", impactTremorsAbility, [], "Enchantment"); // a creature ETB → damage
+  // ACTIVATED makers: `tokenMakerAbility` is an attack trigger, and since #561 five such creatures
+  // feed each other through their attacks -- real links, and not the pure-maker shape tested here.
+  const activatedMaker: CardTags["abilities"] = [{ ...tokenMakerAbility[0]!, kind: "activated", trigger: undefined, cost: "{2}" }];
+  const makers = [1, 2, 3, 4, 5].map((i) => dc(`Maker ${i}`, activatedMaker, ["goblin"]));
   const report = analyzeDeckStructured([payoff, ...makers], undefined, H);
   const byName = new Map(report.cards.map((c) => [c.name, c] as const));
   const pf = byName.get("Impact Tremors")!;

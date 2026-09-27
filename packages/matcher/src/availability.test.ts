@@ -111,11 +111,12 @@ test("a shape nothing supplies reads zero, not undefined", () => {
 test("a self-supplied trigger reports no probability at all, rather than a misleading one", () => {
   const attacker = deckCard("attacker", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { control: "any", token: null } },
+    // On combat damage since #561: attacks no longer self-supply (owner ruling 2026-09-27).
+    trigger: { verbs: ["combat-damage"], subject: { control: "any", token: null } },
     effect: { kind: "draw-card" },
   }]);
   const rows = deckAvailability(fillTo(100, [attacker]), H, { turn: 5 });
-  const row = rows.find((r) => r.key.startsWith("attacks"))!;
+  const row = rows.find((r) => r.key.startsWith("combat-damage"))!;
   expect(row.selfSupplied).toBe(true);
   expect(row.available).toBeNull();
 });

@@ -88,48 +88,50 @@ test("member order does not split a row", () => {
 /** A subtype-derived key and a type-derived key must never collide: a tagger mis-extraction with
  *  `subtype: "creature"` used to roll up into the same row as `type: "creature"` shapes and drag
  *  correctly self-supplied listeners into the SATURATED table. */
+// On combat damage since #561: attacks no longer self-supply (owner ruling 2026-09-27).
 test("a subtype-derived key and a type-derived key of the same name do not collide", () => {
   const bySubtype = card("bySubtype", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { subtype: "creature", control: "you", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { subtype: "creature", control: "you", token: null } },
     effect: { kind: "pump" },
   }]);
   const byType = card("byType", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: null } },
     effect: { kind: "pump" },
   }]);
   const c = buildCensus([bySubtype, byType], H);
-  expect(row(c.consumers, "attacks:subtype:creature")).toMatchObject({ cards: 1, selfSupplied: false });
-  expect(row(c.consumers, "attacks:type:creature")).toMatchObject({ cards: 1, selfSupplied: true });
+  expect(row(c.consumers, "combat-damage:subtype:creature")).toMatchObject({ cards: 1, selfSupplied: false });
+  expect(row(c.consumers, "combat-damage:type:creature")).toMatchObject({ cards: 1, selfSupplied: true });
 });
 
 /** Attacking is a normal game action. A typal attack payoff gets real edges from the creatures
  *  that satisfy it; a generic "whenever a creature you control attacks" must NOT be supplied from
  *  every creature in the corpus, or the graph gains a mesh with no information in it. */
+// On combat damage since #561: attacks no longer self-supply (owner ruling 2026-09-27).
 test("implied combat supplies a typal attack payoff but not a generic one", () => {
   const samurai = card("samurai", [], ["creature"], ["samurai"]);
   const typalPayoff = card("typal", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { subtype: ["samurai"], control: "you", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { subtype: ["samurai"], control: "you", token: null } },
     effect: { kind: "pump" },
   }]);
   const genericPayoff = card("generic", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { control: "you", token: null } },
     effect: { kind: "pump" },
   }]);
   const vacuousPayoff = card("vacuous", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: null } },
     effect: { kind: "pump" },
   }]);
 
   const c = buildCensus([samurai, typalPayoff, genericPayoff, vacuousPayoff], { ...H, samurai: ["creature"] });
-  expect(row(c.consumers, "attacks:subtype:samurai")).toMatchObject({ counterpart: 1, selfSupplied: false });
+  expect(row(c.consumers, "combat-damage:subtype:samurai")).toMatchObject({ counterpart: 1, selfSupplied: false });
   // `type: creature` narrows nothing on an attack trigger — only creatures attack.
-  expect(row(c.consumers, "attacks:any")).toMatchObject({ counterpart: 0, selfSupplied: true });
-  expect(row(c.consumers, "attacks:type:creature")).toMatchObject({ counterpart: 0, selfSupplied: true });
+  expect(row(c.consumers, "combat-damage:any")).toMatchObject({ counterpart: 0, selfSupplied: true });
+  expect(row(c.consumers, "combat-damage:type:creature")).toMatchObject({ counterpart: 0, selfSupplied: true });
 });
 
 /** Fix 2a: a combat consumer that narrows via stats, counter, chosenType, colors, or a non-
@@ -149,8 +151,8 @@ test("a stats-narrowed combat trigger (power 4+) receives supply, unlike the bar
     effect: { kind: "pump" },
   }]);
   const c = buildCensus([bigAttacker, smallAttacker, statsPayoff], H);
-  // Narrowed off the type line, so it gets its own row rather than merging with bare combat rows.
-  const r = row(c.consumers, "attacks:type:creature (narrowed)")!;
+  // No "(narrowed)" split on attacks since #561: nothing on that verb self-supplies any more.
+  const r = row(c.consumers, "attacks:type:creature")!;
   expect(r).toMatchObject({ selfSupplied: false });
   // Exactly the 5-power creature supplies it; the 1-power one does not.
   expect(r.counterpart).toBe(1);
@@ -158,21 +160,22 @@ test("a stats-narrowed combat trigger (power 4+) receives supply, unlike the bar
 
 /** Fix 2b: an AUTHORED attacks emit (goad, Mage Slayer, Saskia) is real information for a generic
  *  combat consumer -- unlike the implied "any creature can attack" event, it must form an edge. */
+// On combat damage since #561: attacks no longer self-supply (owner ruling 2026-09-27).
 test("an authored attacks emit supplies a generic combat consumer even though an implied one would not", () => {
   const goader = card("goader", [{
     kind: "activated", cost: "{1}",
     effect: { kind: "forced-sacrifice" },
-    emits: [{ verb: "attacks", subject: { control: "opp", token: null } }],
+    emits: [{ verb: "combat-damage", subject: { control: "opp", token: null } }],
   }]);
   const genericPayoff2 = card("genericPayoff2", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { control: "any", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { control: "any", token: null } },
     effect: { kind: "pump" },
   }]);
   const c = buildCensus([goader, genericPayoff2], H);
   // The row is still (by design) one an implied producer alone could satisfy -- selfSupplied
   // reflects that hypothetical, independent of the authored supply this producer also provides.
-  expect(row(c.consumers, "attacks:any")).toMatchObject({ counterpart: 1, selfSupplied: true });
+  expect(row(c.consumers, "combat-damage:any")).toMatchObject({ counterpart: 1, selfSupplied: true });
 });
 
 test("producer rows report dead emissions — an emit no trigger in the corpus matches", () => {
@@ -219,22 +222,23 @@ test("zone-transition aliases are normalized on both sides", () => {
  *  AND-merged by rollUp, so ONE narrowed shape flipped the whole row -- which on the live corpus
  *  emptied the SELF-SUPPLIED table, reporting 1463 correctly self-supplied `attacks:any` listeners
  *  as a dense low-information edge class. The narrowed shape must get its own row. */
+// On combat damage since #561: attacks no longer self-supply (owner ruling 2026-09-27).
 test("a narrowed combat trigger does not drag its bare siblings out of SELF-SUPPLIED", () => {
   const bare = card("bare", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { control: "you", token: null } },
     effect: { kind: "pump" },
   }]);
   const alsoBare = card("alsoBare", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    trigger: { verbs: ["combat-damage"], subject: { control: "you", token: null } },
     effect: { kind: "draw-card" },
   }]);
   // Garruk's Uprising: same type/subtype shape as the bare ones, but power 4+ is a real condition.
   const narrowed = card("narrowed", [{
     kind: "triggered",
     trigger: {
-      verbs: ["attacks"],
+      verbs: ["combat-damage"],
       subject: { control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 4 }] },
     },
     effect: { kind: "draw-card" },
@@ -242,8 +246,8 @@ test("a narrowed combat trigger does not drag its bare siblings out of SELF-SUPP
   const attacker = card("attacker", [], ["creature"], [], "5");
 
   const c = buildCensus([bare, alsoBare, narrowed, attacker], H);
-  expect(row(c.consumers, "attacks:any")).toMatchObject({ cards: 2, selfSupplied: true, counterpart: 0 });
-  const narrowedRow = row(c.consumers, "attacks:any (narrowed)")!;
+  expect(row(c.consumers, "combat-damage:any")).toMatchObject({ cards: 2, selfSupplied: true, counterpart: 0 });
+  const narrowedRow = row(c.consumers, "combat-damage:any (narrowed)")!;
   expect(narrowedRow).toMatchObject({ cards: 1, selfSupplied: false });
   expect(narrowedRow.counterpart).toBeGreaterThan(0);
 });
@@ -264,24 +268,25 @@ test("non-combat consumer keys carry no narrowed marker", () => {
  *  condition and must not pull implied edges from the whole creature pool. `token: true` is real:
  *  every implied event carries `token: false` (selfSubject stamps it), so a token-demanding consumer
  *  correctly gets no implied supply and shows up as a genuine hole. */
+// On combat damage since #561: attacks no longer self-supply (owner ruling 2026-09-27).
 test("token:false is not a narrowing condition, token:true is", () => {
   const attacker = card("attacker", [], ["creature"], [], "2");
   const nontokenPayoff = card("nontokenPayoff", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: false } },
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: false } },
     effect: { kind: "pump" },
   }]);
   const tokenPayoff = card("tokenPayoff", [{
     kind: "triggered",
-    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: true } },
+    trigger: { verbs: ["combat-damage"], subject: { type: "creature", control: "you", token: true } },
     effect: { kind: "pump" },
   }]);
 
   const c = buildCensus([attacker, nontokenPayoff, tokenPayoff], H);
   // Nontoken: the game supplies it, so it merges into the bare row and draws no implied edges.
-  expect(row(c.consumers, "attacks:type:creature")).toMatchObject({ selfSupplied: true, counterpart: 0 });
+  expect(row(c.consumers, "combat-damage:type:creature")).toMatchObject({ selfSupplied: true, counterpart: 0 });
   // Token-demanding: a real condition, own row, and unsupplied because we don't model tokens attacking.
-  expect(row(c.consumers, "attacks:type:creature (narrowed)")).toMatchObject({ selfSupplied: false, counterpart: 0 });
+  expect(row(c.consumers, "combat-damage:type:creature (narrowed)")).toMatchObject({ selfSupplied: false, counterpart: 0 });
 });
 
 /** ISSUE #562: a fight supplies "a creature is dealt damage". The engine's matcher accepts a damage
@@ -301,4 +306,18 @@ test("a damage emit supplies a creature-is-dealt-damage trigger across verbs", (
   const c = buildCensus([fighter, payoff], H);
   expect(row(c.consumers, "damaged:type:creature")).toMatchObject({ cards: 1, counterpart: 1 });
   expect(c.producers.find((r) => r.key.startsWith("non-combat-damage"))!.counterpart).toBe(1);
+});
+
+/** OWNER RULING 2026-09-27 (#561): every creature attacking supplies an attack payoff, so a generic
+ *  attack trigger is no longer self-supplied and counts its suppliers. */
+test("a generic attack payoff counts every creature as a supplier (#561)", () => {
+  const bear = card("bear", []);
+  const hellrider = card("hellrider", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null } },
+    effect: { kind: "damage" },
+  }]);
+  const c = buildCensus([bear, hellrider], H);
+  expect(row(c.consumers, "attacks:type:creature")).toMatchObject({ selfSupplied: false });
+  expect(row(c.consumers, "attacks:type:creature")!.counterpart).toBeGreaterThan(0);
 });

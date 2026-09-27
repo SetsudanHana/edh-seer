@@ -42,12 +42,14 @@ const censusKey = (e: GameEvent): string => zoneEventKey(e.verb, e.subject.zone,
  *  `attacks:any` reported 1463 correctly self-supplied listeners as a dense low-information edge
  *  class instead.
  *
- *  Marking the key splits them into two homogeneous rows -- `attacks:any` (the game supplies it) and
- *  `attacks:any (narrowed)` (Garruk's Uprising and friends, which need real creatures). Applied to
+ *  Marking the key splits them into two homogeneous rows -- `combat-damage:any` (the game supplies
+ *  it) and `combat-damage:any (narrowed)` (payoffs that need real creatures). `attacks` no longer
+ *  splits: since #561 every creature supplies it, so nothing on that verb is self-supplied. Applied to
  *  consumer rows only: producers are never self-supplied, so their keys never split. */
 function consumerKey(e: GameEvent, selfSupplied: boolean): string {
+  // `attacks` never self-supplies since #561 (owner ruling 2026-09-27), so it has no split to mark.
   const marked =
-    COMBAT_VERBS.has(e.verb) && !selfSupplied && !combatNarrowsByType(e.subject);
+    COMBAT_VERBS.has(e.verb) && e.verb !== "attacks" && !selfSupplied && !combatNarrowsByType(e.subject);
   return censusKey(e) + (marked ? " (narrowed)" : "");
 }
 
