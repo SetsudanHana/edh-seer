@@ -6,6 +6,7 @@ import type { Ability, SubjectFilter } from "@edh-seer/tagger";
 import { BUILD_CATEGORIES, detectBuildCategories, type BuildCategory } from "./build.js";
 import { bestPerFamily, ratesOf, spanOf, type RateFamily, type RateSpan } from "./rate.js";
 import { ratePercentile } from "./rate-stats.js";
+import type { RoleWeights } from "./quality-fit.js";
 import type { DeckCard } from "./types.js";
 
 export type Role = Exclude<BuildCategory, "lands">;
@@ -142,4 +143,13 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
     }
   }
   return out;
+}
+
+/** THE RAW SCORE: the fitted weights over the ingredients present. `null` without mana value or
+ *  timing -- the two every role reads -- so no card is ranked on a guess. A fallback role reads only
+ *  those two. */
+export function qualityScore(ing: Ingredients, w: RoleWeights): number | null {
+  if (ing.manaValue === undefined || ing.timing === undefined) return null;
+  const keys = (w.fallback ? ["manaValue", "timing"] : Object.keys(w.weights)) as Ingredient[];
+  return keys.reduce((s, k) => s + (ing[k] !== undefined ? (w.weights[k] ?? 0) * ing[k]! : 0), 0);
 }
