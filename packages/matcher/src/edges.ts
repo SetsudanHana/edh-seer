@@ -1765,6 +1765,9 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             : reasonSentence({
             producer: p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+            // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
+            // Kitten's return is its own ability, and without it the flicker read as an exile.
+            ...(a.effect.kind ? {} : { emits: c.tags.abilities.filter((x) => x === a || (a.clause !== undefined && x.clause === a.clause && x.face === a.face)).flatMap((x) => x.emits ?? []) }),
             // WHERE THE COUNTERS GO. "puts counters on it" had two live antecedents in every row --
             // the entering creature the sentence opens with, and the enchantment the counters
             // actually land on. The consumer's own effect subject knows which.
