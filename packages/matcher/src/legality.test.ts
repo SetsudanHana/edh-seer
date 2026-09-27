@@ -178,6 +178,10 @@ test("Doctor's companion needs the Doctor: a Time Lord Doctor and nothing else",
   expect(pairs("Legendary Creature — Time Lord Doctor Human")).toBe(false);
   expect(pairs("Creature — Time Lord Doctor")).toBe(false);
   expect(pairs("Legendary Artifact — Doctor")).toBe(false);
+  // A long run of spaces does not stall the read (CodeQL: polynomial regex on library input).
+  const t0 = Date.now();
+  expect(pairs(`Legendary Creature${" ".repeat(50_000)}x`)).toBe(false);
+  expect(Date.now() - t0).toBeLessThan(500);
 });
 
 test("three commanders is never legal, whatever they print", () => {

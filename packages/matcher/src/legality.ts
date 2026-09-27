@@ -102,10 +102,16 @@ export function pairingLicense(a: Card, b: Card): string | undefined {
   // creature card that has no other creature types". Not any Doctor (owner, 2026-09-27): reading
   // "Doctor" anywhere in the type line paired companions with legendary creatures that are Doctors
   // by another type -- a Human Doctor is not the Doctor. Read per face, as a type line prints them.
+  // The dash is found by position, not a regex: `\s+[—-]\s+` backtracks on a long run of spaces
+  // (CodeQL, polynomial regex on library input).
   const isDoctor = (c: Card): boolean => (c.typeLine ?? "").split(" // ").some((face) => {
-    const [types = "", subtypes = ""] = face.toLowerCase().split(/\s+[—–-]\s+/);
+    const lower = face.toLowerCase();
+    const dash = ["—", "–", " - "].map((d) => lower.indexOf(d)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+    if (dash === undefined) return false;
+    const types = lower.slice(0, dash);
+    const subtypes = lower.slice(dash + 1).replace("-", "").split(" ").filter(Boolean);
     return types.includes("legendary") && types.includes("creature")
-      && subtypes.trim().split(/\s+/).sort().join(" ") === "doctor lord time";
+      && subtypes.sort().join(" ") === "doctor lord time";
   });
   if ((DOCTORS_COMPANION.test(ta) && isDoctor(b)) || (DOCTORS_COMPANION.test(tb) && isDoctor(a))) return "doctor's companion";
   return undefined;
