@@ -1,8 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import userEvent from "@testing-library/user-event";
 import { DeckWaffle } from "./DeckWaffle.js";
-import { CardDrawerProvider, usePinned } from "./card-drawer.js";
+import { CardDrawerProvider } from "./card-drawer.js";
 import { TYPE_ORDER } from "../lib/deck-shape.js";
 import type { WaffleSquare } from "../lib/waffle.js";
 
@@ -253,28 +252,22 @@ test("a waffle square is a named control, not a tooltip", () => {
   expect(cell).not.toHaveAttribute("title");
 });
 
-/** THE COMMANDER ALREADY WORE A RING, and one square cannot carry two inset outlines. Pinned wins;
+/** THE COMMANDER ALREADY WORE A RING, and one square cannot carry two inset outlines. "New" wins;
  *  no fact is lost, because the panel's byline three lines above already names the commander --
  *  which is exactly why its identity pips were deleted when that ring shipped. */
-test("a pinned square rings in the accent, and a pinned commander shows only that ring", async () => {
+test("a card this run added rings in the accent, and a new commander shows only that ring", () => {
   const graph = {
     nodes: [{ id: "Krenko, Mob Boss", label: "Krenko, Mob Boss", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 4 }],
     edges: [],
   } as never;
-  function Pinner() {
-    const { togglePin } = usePinned();
-    return <button onClick={() => togglePin("Krenko, Mob Boss")}>pin it</button>;
-  }
   render(
-    <CardDrawerProvider graph={graph}>
+    <CardDrawerProvider graph={graph} added={["Krenko, Mob Boss"]}>
       <DeckWaffle squares={withUnread([sq({ name: "Krenko, Mob Boss", isCommander: true }), sq({})])} slices={SLICES} />
-      <Pinner />
     </CardDrawerProvider>,
   );
-  await userEvent.click(screen.getByText("pin it"));
-  const cell = document.querySelector('[data-testid="waffle-square"][data-pinned="1"]')!;
+  const cell = document.querySelector('[data-testid="waffle-square"][data-new="1"]')!;
   expect(cell.className).toContain("outline-(--accent)");
   expect(cell.className).not.toContain("outline-(--foreground)");
   // The mark is never the only carrier.
-  expect(cell.getAttribute("aria-label")).toContain("pinned");
+  expect(cell.getAttribute("aria-label")).toContain("new");
 });

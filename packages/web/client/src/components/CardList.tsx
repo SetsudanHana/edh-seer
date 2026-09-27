@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
-import { CardName, useCardDrawer, usePinned } from "./card-drawer.js";
+import { CardName, useCardDrawer, useAdded } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
@@ -194,7 +194,7 @@ export function CardList({ cards, artByName, coverage }: {
    *  entirely when it read everything, so a fully covered paste sees exactly one table. */
   coverage?: DeckReport["coverage"];
 }) {
-  const { isPinned } = usePinned();
+  const { isAdded } = useAdded();
   const [filter, setFilter] = useState<Category | "all">("all");
   const [sort, setSort] = useState<SortKey>("synergy");
   const [query, setQuery] = useState("");
@@ -455,9 +455,9 @@ export function CardList({ cards, artByName, coverage }: {
               return (
                 <tr
                   key={c.name}
-                  data-pinned={isPinned(c.cardName ?? c.name) ? "1" : undefined}
+                  data-new={isAdded(c.cardName ?? c.name) ? "1" : undefined}
                   className={`border-b border-(--separator) align-top ${
-                    isPinned(c.cardName ?? c.name)
+                    isAdded(c.cardName ?? c.name)
                       ? "outline outline-1 outline-(--accent) outline-offset-[-1px]"
                       : ""
                   }`}
@@ -470,7 +470,7 @@ export function CardList({ cards, artByName, coverage }: {
                         <CardName name={c.name} className="block truncate max-w-full" />
                         {/* A MARK IS NEVER THE ONLY CARRIER: a ring says nothing to a screen
                           *  reader, and this table is the surface the header's count travels to. */}
-                        {isPinned(c.cardName ?? c.name) ? <span className="sr-only">pinned</span> : null}
+                        {isAdded(c.cardName ?? c.name) ? <span className="eyebrow text-(--accent)">new</span> : null}
                         {reason ? <span className="block text-xs text-(--muted) truncate">{reason}</span> : null}
                         {/* WHERE THE COLUMN IS NOT (R2). Each of these appears exactly where its own
                           *  `<td>` does not: the cost below `sm`, the roles below `lg`. */}

@@ -20,7 +20,7 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, pinned, onTogglePin, phone = "sheet", extra,
+  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra,
 }: {
   /** What the report adds about this card, above its links: in the report's drawer, the card's own
    *  small map and a way to walk the commander's map from it. */
@@ -33,14 +33,6 @@ export function CardInspector({
    *  picture it must not hide, the same reason the ego view reads its edge in a strip. At `sm`
    *  and up both are the right-hand panel they always were. */
   phone?: "sheet" | "half";
-  /** Whether the card this panel is showing is in the reader's pinned set (roadmap S8).
-   *
-   *  PASSED, NOT READ FROM THE CONTEXT, and that is an import cycle rather than a preference:
-   *  `card-drawer.tsx` imports THIS module to render the drawer, so importing `usePinned` back
-   *  would close the loop. The panel stays presentational, as it already was. Both props absent on
-   *  the graph board's own inspector, where there is nothing to pin into. */
-  pinned?: boolean;
-  onTogglePin?: () => void;
   edges: readonly Edge[];
   /** The PARTNER's printed text, by node id. Every sentence in this panel is a claim about a card
    *  whose text the panel did not show, and a skeptic review put the consequence plainly: "a right
@@ -324,21 +316,6 @@ export function CardInspector({
               {face?.oracleText ?? node.oracleText}
             </p>
           )
-        ) : null}
-        {/* THE PIN LIVES HERE, NOT ON THE NAME (roadmap S8). Click already opens this drawer and
-          *  S18 made that gesture load-bearing -- it is how a reader checks a claim against the
-          *  card's own text -- so pinning is a control inside the thing the click opened rather
-          *  than a second gesture competing with it. `aria-pressed` carries the state, because a
-          *  screen reader gets no ring. */}
-        {onTogglePin ? (
-          <button
-            type="button"
-            aria-pressed={pinned === true}
-            onClick={onTogglePin}
-            className="eyebrow mt-2 self-start px-2 py-1 rounded-(--radius) border border-(--separator) text-(--muted) hover:text-(--accent) hover:border-(--accent) min-h-[24px]"
-          >
-            {pinned ? "Unpin across the report" : "Pin across the report"}
-          </button>
         ) : null}
       </div>
 

@@ -170,7 +170,7 @@ test("a right click on a card opens its menu: read how, walk to it, and Escape c
   const menu = screen.getByRole("menu", { name: "Payoff B" });
   expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual([
     // No "Read the card" here: outside a report there is no card drawer to open it in.
-    "How it works with Payoff A", "Put Payoff B in the middle", "Pin it in the report", "Open its card page↗", "Copy the name",
+    "How it works with Payoff A", "Put Payoff B in the middle", "Open its card page↗", "Copy the name",
   ]);
   expect(within(menu).getByRole("menuitem", { name: /Open its card page/ })).toHaveAttribute("href", "/cards/payoff-b");
   // The first line takes focus, so the keyboard can go straight on.
@@ -185,17 +185,16 @@ test("a right click on a card opens its menu: read how, walk to it, and Escape c
   expect(onFocus).toHaveBeenCalledWith("Payoff B");
 });
 
-test("pinning from the menu pins the card in the report, and the map wears the pin", async () => {
+/** THE CARDS THIS RUN ADDED WEAR THE "NEW" MARK ON THE MAP TOO (roadmap S9); the menu no longer
+ *  offers a hand-made pin (owner, 2026-09-27). */
+test("a card this run added wears the new mark on the map, and the menu offers no pin", async () => {
   const { report, graph } = engineDeck();
-  const user = userEvent.setup();
-  const { container } = render(<CardDrawerProvider graph={graph}><OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} /></CardDrawerProvider>);
-  fireEvent.contextMenu(screen.getByRole("button", { name: "Payoff B" }), { clientX: 40, clientY: 40 });
-  expect(screen.getByRole("menuitem", { name: "Read the card" })).toBeInTheDocument();
-  await user.click(screen.getByRole("menuitem", { name: "Pin it in the report" }));
+  const { container } = render(<CardDrawerProvider graph={graph} added={["Payoff B"]}><OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} /></CardDrawerProvider>);
   await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
   expect(container.querySelector("[data-id='Payoff B'] path")).toHaveAttribute("opacity", "1");
   fireEvent.contextMenu(screen.getByRole("button", { name: "Payoff B" }), { clientX: 40, clientY: 40 });
-  expect(screen.getByRole("menuitem", { name: "Unpin it in the report" })).toBeInTheDocument();
+  expect(screen.getByRole("menuitem", { name: "Read the card" })).toBeInTheDocument();
+  expect(screen.queryByRole("menuitem", { name: /pin/i })).toBeNull();
 });
 
 test("a right click on the map itself offers the view and the motion", async () => {

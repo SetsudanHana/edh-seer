@@ -22,14 +22,14 @@ test("the ⋯ beside a card in a list offers what a player can do with it", asyn
   // ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): "See how it connects" opened a second,
   // full-screen map; the card's links are now drawn in the drawer "Read the card" opens.
   expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual([
-    "Read the card", "Pin it in the report", "Open its card page↗", "Copy the name",
+    "Read the card", "Open its card page↗", "Copy the name",
   ]);
   await user.click(within(menu).getByRole("menuitem", { name: "Read the card" }));
   expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
   expect(screen.queryByRole("menu")).toBeNull();
 });
 
-test("Escape closes the menu and gives focus back to its button; the pin sticks", async () => {
+test("Escape closes the menu and gives focus back to its button", async () => {
   list("Payoff B");
   const user = userEvent.setup();
   const button = screen.getByRole("button", { name: "More for Payoff B" });
@@ -39,9 +39,7 @@ test("Escape closes the menu and gives focus back to its button; the pin sticks"
   // The first line, "Read the card", opened the drawer and closed the menu.
   expect(screen.queryByRole("menu")).toBeNull();
   await user.click(button);
-  await user.click(screen.getByRole("menuitem", { name: "Pin it in the report" }));
-  await user.click(button);
-  expect(screen.getByRole("menuitem", { name: "Unpin it in the report" })).toBeInTheDocument();
+  expect(screen.getByRole("menu")).toBeInTheDocument();
   await user.keyboard("{Escape}");
   expect(screen.queryByRole("menu")).toBeNull();
   expect(button).toHaveFocus();

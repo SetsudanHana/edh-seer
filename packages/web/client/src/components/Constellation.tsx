@@ -87,7 +87,7 @@ class Sky {
   drag = { on: false, moved: false, sx: 0, sy: 0, cx: 0, cy: 0 };
   /** A long press on a touch screen, which has no right button: it opens the same menu. */
   press = { timer: 0, x: 0, y: 0, fired: false };
-  pinned: (id: string) => boolean = () => false;
+  added: (id: string) => boolean = () => false;
   constructor(public svg: SVGSVGElement, public layers: Record<"edges" | "ticks" | "nodes" | "labels" | "route", SVGGElement>,
     public card: (id: string) => EngineCard | undefined, public tap: (id: string) => void, public hover: (id: string | null) => void,
     public menu: (id: string | null, x: number, y: number) => void) {}
@@ -108,7 +108,7 @@ class Sky {
     else if (card.image) make("image", { href: card.image, x: -70, y: -64, width: 140, height: 195, "clip-path": "url(#constellation-disc-u)", preserveAspectRatio: "xMidYMid meet" }, g);
     const rim = make("circle", { class: "constellation-rim", r: 50, fill: "none", stroke: "var(--muted)", "stroke-width": 4 }, g);
     const pip = make("circle", { r: 9, cx: 36, cy: -36, fill: GOLD, stroke: "var(--background)", "stroke-width": 4, opacity: 0 }, g);
-    // Pinned in the report: the same pin lights here, on the disc's other shoulder.
+    // New in this run: marked on the disc's other shoulder, as it is "new" across the report.
     const pin = make("path", { d: "M-36,-50 L-24,-38 L-36,-26 L-48,-38 Z", fill: "var(--accent)", stroke: "var(--background)", "stroke-width": 4, opacity: 0 }, g);
     const label = make("text", { class: "constellation-label", "text-anchor": "middle" }, this.layers.labels);
     label.textContent = shortName(card);
@@ -312,7 +312,7 @@ class Sky {
       n.halo.setAttribute("r", String(isF && !this.still ? 60 + 6 * Math.sin(this.clock * 1.4) : 58));
       n.halo.setAttribute("opacity", n.glow.toFixed(3));
       n.pip.setAttribute("opacity", this.visited.includes(n.id) && !isF ? "1" : "0");
-      n.pin.setAttribute("opacity", this.pinned(n.id) ? "1" : "0");
+      n.pin.setAttribute("opacity", this.added(n.id) ? "1" : "0");
       n.label.setAttribute("class", `constellation-label${isF ? " constellation-label-focus" : ""}`);
       n.label.setAttribute("x", n.x.toFixed(1));
       n.label.setAttribute("y", (n.y + n.r + (isF ? 24 : 16) * px).toFixed(1));
@@ -422,7 +422,7 @@ class Sky {
 
 export type { MenuItem };
 
-export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, menuFor, isPinned, pick = mapPartners, label }: {
+export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, menuFor, isAdded, pick = mapPartners, label }: {
   /** Every card the map may draw, by id: a deck's engine model, or the cards a card page names. */
   model: Pick<EngineModel, "cards">; orbit: OrbitModel;
   /** The cards put in the middle before this one, oldest first. */
@@ -437,8 +437,8 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   /** What the menu offers on a card (right click, a long press, or the menu key), or on the map
    *  itself when `id` is null. The map adds its own view lines to the latter. */
   menuFor?: (id: string | null) => MenuItem[];
-  /** Cards pinned in the report, which wear the pin here too. */
-  isPinned?: (id: string) => boolean;
+  /** Cards this run added, marked "new" across the report and here too. */
+  isAdded?: (id: string) => boolean;
   /** Which partners the map draws, at most `cap`: the strongest links by default. */
   pick?: (o: OrbitModel, cap: number) => { p: OrbitPartner; hue: string }[];
   /** The picture's accessible name, when "X and the N cards it works with" is not it. */
@@ -448,15 +448,15 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   const layers = useRef<Record<string, SVGGElement | null>>({});
   const sky = useRef<Sky | null>(null);
   const [menu, setMenu] = useState<{ id: string | null; x: number; y: number } | null>(null);
-  const handlers = useRef({ onTap, onHover, isPinned });
-  handlers.current = { onTap, onHover, isPinned };
+  const handlers = useRef({ onTap, onHover, isAdded });
+  handlers.current = { onTap, onHover, isAdded };
 
   useEffect(() => {
     const L = layers.current;
     // THE LAYERS AS THEY ARE NOW, not the ref object React empties on unmount.
     const s = new Sky(svg.current!, { ...L } as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id),
       (id, x, y) => setMenu({ id, x, y }));
-    s.pinned = (id) => handlers.current.isPinned?.(id) ?? false;
+    s.added = (id) => handlers.current.isAdded?.(id) ?? false;
     sky.current = s;
     const unbind = s.bindDrag();
     s.start();

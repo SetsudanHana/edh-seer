@@ -101,7 +101,6 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     if (id !== focusId && partner) items.push({ label: `How it works with ${firstPart(o.focus)}`, run: () => { setSel(id); setSector(null); } });
     if (id !== focusId) items.push({ label: `Put ${first} in the middle`, run: () => centre(id) });
     if (readable) items.push({ label: "Read the card", run: () => drawer.open(drawer.known.has(c.name) ? c.name : c.physical) });
-    if (!c.isToken) items.push({ label: drawer.isPinned(c.physical) ? "Unpin it in the report" : "Pin it in the report", run: () => drawer.togglePin(c.physical) });
     if (!c.isToken) items.push({ label: "Open its card page", href: `/cards/${slugOf(c.physical)}` });
     items.push({ label: "Copy the name", run: () => { void navigator.clipboard?.writeText(c.isToken ? c.name : c.physical).catch(() => {}); } });
     return items;
@@ -125,7 +124,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
           * stays on screen; the map and panel sit together, centred. */}
         <div className="min-w-0 lg:flex-1 lg:max-w-[calc((100svh-17rem)*1.2222)]">
           <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover}
-            menuFor={menuFor} isPinned={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isPinned(c.physical); }} />
+            menuFor={menuFor} isAdded={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isAdded(c.physical); }} />
         </div>
         <div ref={panel} key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky
           ? "scroll-mt-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)]"

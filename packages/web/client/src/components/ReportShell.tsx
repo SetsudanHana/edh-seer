@@ -46,7 +46,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
     ? <StateControls markers={data.report.markers} state={state} onState={onState} edges={data.report.edges} busy={stateBusy} />
     : null;
   // THE CARDS THIS EDIT ADDED, LIT IN EVERY CHAPTER without the reader hunting for them.
-  const seedPins = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
+  const added = diff && diff.added.length > 0 && diff.added.length <= SEED_CAP ? diff.added : undefined;
   const comboCount = data.report.combos?.length ?? 0;
   // THE ART IS WARMED WHILE THE READER READS. Every `artCrop` URL arrives with the analyze
   // response, and the chapters' card faces, role shelves and orbit discs are all further down the
@@ -116,7 +116,7 @@ export function ReportShell({ data, diff, state, onState, stateBusy = false }: {
 
   return (
     // Every card name under here can open the inspector; the graph keeps its own in-canvas one.
-    <CardDrawerProvider graph={data.graph} seedPins={seedPins}>
+    <CardDrawerProvider graph={data.graph} added={added}>
       <div className="flex flex-col">
         {/* THE SUMMARY ON EVERY SURFACE, chapters and reference alike — the split where
           *  `HeadlineScores` lived inside one tab and the coverage gate above the strip is what

@@ -15,12 +15,11 @@ export interface MenuItem { label: string; run?: () => void; href?: string }
 /** The lines every card list offers for a card, by its physical name. Only lines that can work for
  *  this card: a name the report does not carry gets its page and its name, nothing else. */
 export function useCardMenu(): (name: string) => MenuItem[] {
-  const { open, known, isPinned, togglePin } = useCardDrawer();
+  const { open, known } = useCardDrawer();
   return (name) => {
     const items: MenuItem[] = [];
     if (known.has(name)) {
       items.push({ label: "Read the card", run: () => open(name) });
-      items.push({ label: isPinned(name) ? "Unpin it in the report" : "Pin it in the report", run: () => togglePin(name) });
     }
     items.push({ label: "Open its card page", href: `/cards/${slugOf(name)}` });
     items.push({ label: "Copy the name", run: () => { void navigator.clipboard?.writeText(name).catch(() => {}); } });
