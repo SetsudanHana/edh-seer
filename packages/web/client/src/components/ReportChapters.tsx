@@ -343,7 +343,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               <div className="max-w-5xl flex flex-col gap-8">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
                 {turns ? <FirstTurns model={turns} /> : null}
-                <HowYouWin report={report} manaValueOf={manaValueOf} />
+                <HowYouWin report={report} manaValueOf={manaValueOf} model={themes} />
                 {/* WHAT YOUR CARDS ARE WAITING FOR, ONLY WHEN SOMETHING IS (owner, 2026-09-27: "less is
                   *  more"). With every demand met it said "everything your cards care about, something in
                   *  the deck causes" under a second copy of the turn-7 line: nothing to act on. */}

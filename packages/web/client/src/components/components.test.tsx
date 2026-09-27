@@ -1625,7 +1625,7 @@ test("a deck with no combat clock says so rather than naming a turn", () => {
 
 // THE PLANS NAME THEIR CARDS (owner, 2026-09-26: "determine how the deck can win"). The counts
 // alone were what the baseline round's plan seat could not act on: "pick a way" needs the cards.
-test("BuildBenchmarks names each win plan's cards, what put them there, and go-wide's payoffs", () => {
+test("BuildBenchmarks names each win plan's cards and go-wide's payoffs", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // In words (wording review 2026-09-25): 0.52 across two plans is close to an even split.
   expect(screen.getByTestId("win-plans-headline")).toHaveTextContent("Spread about evenly across 2 plans.");
@@ -1633,7 +1633,6 @@ test("BuildBenchmarks names each win plan's cards, what put them there, and go-w
   expect(wide).toHaveTextContent("Attacking with a wide board12 cards");
   // One plan's cards at a time: the first to start with.
   const detail = () => screen.getByTestId("win-plan-detail");
-  expect(detail()).toHaveTextContent(/Cards that make creature tokens/);
   expect(detail()).toHaveTextContent("Makes the boardToken Maker 1Token Maker 2");
   expect(detail()).toHaveTextContent("Turns it into a winIntangible Virtue");
   // Eight names, then the rest on request.

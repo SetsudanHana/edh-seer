@@ -1,5 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { speedRoutes } from "../lib/speed.js";
+import type { EngineModel } from "../lib/engine-model.js";
 import { WinPlans } from "./WinPlans.js";
 
 /** HOW YOU WIN, AND HOW FAST, AS ONE SECTION (owner, 2026-09-27: "How fast it can win and How you
@@ -7,7 +8,7 @@ import { WinPlans } from "./WinPlans.js";
  *  screen apart: "How fast it can win" one card per route with its caveat, then "How you win" a
  *  combat-pressure row, its modelling paragraph and a card list per plan. Now each plan is one tile
  *  carrying its own turn, and one plan's cards are read at a time (`WinPlans`). */
-export function HowYouWin({ report, manaValueOf }: { report: DeckReport; manaValueOf: (name: string) => number | undefined }) {
+export function HowYouWin({ report, manaValueOf, model }: { report: DeckReport; manaValueOf: (name: string) => number | undefined; model?: EngineModel | null }) {
   const deckMath = report.deckMath;
   const wincons = deckMath?.wincons;
   if (!deckMath || !wincons?.classes.length) return null;
@@ -15,7 +16,7 @@ export function HowYouWin({ report, manaValueOf }: { report: DeckReport; manaVal
   return (
     <section className="flex flex-col gap-3" aria-labelledby="how-you-win">
       <h3 id="how-you-win" className="eyebrow text-(--foreground)">How you win</h3>
-      <WinPlans wincons={wincons} routes={routes} pressure={deckMath.clock.turn !== undefined ? deckMath.clock.powerAtFive : undefined} />
+      <WinPlans wincons={wincons} routes={routes} pressure={deckMath.clock.turn !== undefined ? deckMath.clock.powerAtFive : undefined} model={model} />
       {deckMath.topdeck.length ? (
         // Off the top: what a card that plays from the library gets from it, one line each.
         <ul className="flex flex-col gap-1 text-xs text-(--muted) max-w-[65ch]">
