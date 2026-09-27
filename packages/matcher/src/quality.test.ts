@@ -36,3 +36,25 @@ test("a modal spell // land reads mana value and timing off the role ability's o
 test("a role the card does not fill has no ingredients", () => {
   expect(ingredients(dc("Counterspell"), "ramp")).toEqual({});
 });
+
+test("breadth: any permanent or spell 3 > several types or nonland 2 > one type 1 > restricted 0", () => {
+  expect(ingredients(dc("Beast Within"), "targetedRemoval").breadth).toBe(3);
+  expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").breadth).toBe(1);
+  expect(ingredients(dc("Counterspell"), "stackInteraction").breadth).toBe(3); // any spell
+  expect(ingredients(dc("Cyclonic Rift"), "boardWipe").breadth).toBe(2); // nonland permanent; the build rules file Rift as a wipe
+});
+
+test("permanence: exile 3 > destroy/sacrifice 2 > bounce 1", () => {
+  expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").permanence).toBe(3);
+  expect(ingredients(dc("Beast Within"), "targetedRemoval").permanence).toBe(2);
+  expect(ingredients(dc("Cyclonic Rift"), "boardWipe").permanence).toBe(1);
+});
+
+test("oneSided: Wrath hits everyone; a wipe of only opponents' creatures is one-sided", () => {
+  expect(ingredients(dc("Wrath of God"), "boardWipe").oneSided).toBe(0);
+  // Cyclonic Rift's overload is not derived (only the targeted bounce), so it cannot prove this; a
+  // synthetic Wrath whose dies subject is the opponents' creatures stands in.
+  const wrath = dc("Wrath of God");
+  const oneSided = { ...wrath, tags: { ...wrath.tags!, abilities: wrath.tags!.abilities.map((a) => ({ ...a, emits: (a.emits ?? []).map((e) => ({ ...e, subject: { ...e.subject, control: "opp" as const } })) })) } };
+  expect(ingredients(oneSided, "boardWipe").oneSided).toBe(1);
+});

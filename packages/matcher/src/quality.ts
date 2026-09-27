@@ -2,7 +2,7 @@
  *  owner 2026-09-27): how well a card does ONE job -- Swords to Plowshares as removal, never "Swords"
  *  overall. Ingredients are read off data derive already wrote; one that cannot be read is MISSING
  *  (absent), never 0, because a silent wrong answer is worse than a missing one. */
-import type { Ability } from "@edh-seer/tagger";
+import type { Ability, SubjectFilter } from "@edh-seer/tagger";
 import { BUILD_CATEGORIES, detectBuildCategories, type BuildCategory } from "./build.js";
 import type { DeckCard } from "./types.js";
 
@@ -63,6 +63,27 @@ function timingOf(d: DeckCard, a: Ability): number | undefined {
   return undefined;
 }
 
+const ANSWERS: ReadonlySet<Role> = new Set(["targetedRemoval", "stackInteraction", "boardWipe"]);
+const list = (v: string | string[] | undefined): string[] => (Array.isArray(v) ? v : v ? [v] : []).map((x) => x.toLowerCase());
+
+/** How much the subject admits. Restrictions (a stat, a colour, a named subtype) narrow it. */
+function breadthOf(s: SubjectFilter): number {
+  const restricted = (s.stats?.length ?? 0) > 0 || s.colors !== undefined || s.subtype !== undefined;
+  const types = list(s.type);
+  if (types.length === 0 || types.includes("permanent") || types.includes("spell")) return restricted ? 2 : 3;
+  if (types.length > 1 || list(s.notType).includes("land")) return restricted ? 1 : 2;
+  return restricted ? 0 : 1;
+}
+
+/** Exile 3 > dies (destroy / sacrifice) 2 > leaves to hand 1. */
+function permanenceOf(a: Ability): number | undefined {
+  const verbs = (a.emits ?? []).map((e) => e.verb);
+  if (verbs.includes("exiled")) return 3;
+  if (verbs.includes("dies")) return 2;
+  if (verbs.includes("leaves")) return 1;
+  return undefined;
+}
+
 export function ingredients(d: DeckCard, role: Role): Ingredients {
   const abilities = roleAbilities(d, role);
   if (abilities.length === 0) return {};
@@ -76,5 +97,17 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   const timings = abilities.map((a) => timingOf(d, a)).filter((t): t is number => t !== undefined);
   if (timings.length > 0) out.timing = Math.max(...timings);
   out.frequency = Math.max(...abilities.map(frequencyOf));
+  if (ANSWERS.has(role)) {
+    const subjects = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.subject.control !== "you").map((e) => e.subject));
+    if (subjects.length > 0) out.breadth = Math.max(...subjects.map(breadthOf));
+    const perm = abilities.map(permanenceOf).filter((p): p is number => p !== undefined);
+    if (perm.length > 0 && role !== "stackInteraction") out.permanence = Math.max(...perm);
+    // CEILING: an overloaded or otherwise alternate one-sided mode (Cyclonic Rift) is not derived, so
+    // such a card reads as its targeted half; upgrade path: derive the overload as its own ability.
+    if (role === "boardWipe") {
+      const all = abilities.flatMap((a) => a.emits ?? []).filter((e) => e.subject.scope === "all");
+      if (all.length > 0) out.oneSided = all.every((e) => e.subject.control === "opp") ? 1 : 0;
+    }
+  }
   return out;
 }
