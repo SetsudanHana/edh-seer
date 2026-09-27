@@ -244,3 +244,24 @@ test("a split card is not offered a flip either, despite the // in its name", as
   await screen.findByRole("img", { name: /Fire, the card/ });
   expect(screen.queryByRole("button", { name: /flip/i })).toBeNull();
 });
+
+/** THE MAP ON A CARD PAGE (owner, 2026-09-27): drawn from the same rows as the list, which stays. */
+test("with enough partners the page draws them as a map above the list; a second tap goes to the card's page", async () => {
+  const rows = ["impact-tremors", "goblin-bombardment", "skullclamp", "purphoros"].map((slug, i) => ({
+    name: slug, slug, score: 0.1, event: i % 2 ? "dies|creature|-|-" : "enters|creature|-|-", reason: `${slug} does it`,
+  }));
+  at("krenko-mob-boss", async () => ({ ...KRENKO, partners: rows }));
+  const map = await screen.findByRole("group", { name: /Krenko, Mob Boss and 4 of the cards it works well with/ });
+  const node = map.querySelector("[data-id='skullclamp']")!;
+  fireEvent.click(node);
+  fireEvent.click(node);
+  expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+  // The list is still there, every row of it.
+  expect(screen.getAllByRole("link", { name: /impact-tremors/ }).length).toBeGreaterThan(0);
+});
+
+test("a card with too few partners for a picture keeps just the list", async () => {
+  at("krenko-mob-boss", async () => KRENKO);
+  await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
+  expect(screen.queryByRole("group", { name: /works well with/ })).toBeNull();
+});

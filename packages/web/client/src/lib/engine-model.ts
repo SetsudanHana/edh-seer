@@ -23,6 +23,9 @@ export interface Pair { a: string; b: string; links: Link[]; once: boolean }
 
 export interface EngineCard {
   id: string; name: string; typeLine: string; text: string; art?: string;
+  /** The WHOLE card's image, where only that may be shown (a card page's partners): drawn with its
+   *  art panel in the disc. */
+  image?: string;
   isToken: boolean; isCommander: boolean; isLand: boolean; isFace: boolean;
   roles: readonly string[]; score: number;
   /** Printed mana cost from the report, so a cut can be weighed by what it costs (round 6). */

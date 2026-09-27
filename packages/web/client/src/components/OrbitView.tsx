@@ -154,7 +154,7 @@ const sectorKey = (s: OrbitSector) => s.key;
 /** "Inalla" for "Inalla, Archmage Ritualist"; a back face keeps whose back it is. */
 /** The reader's pause switch for the moving lines, remembered on this device when storage allows.
  *  Moving content that runs on its own needs a way to stop it (WCAG 2.2.2). */
-function usePaused(): [boolean, (v: boolean) => void] {
+export function usePaused(): [boolean, (v: boolean) => void] {
   const [paused, setPausedState] = useState(() => {
     try { return typeof localStorage !== "undefined" && localStorage.getItem("orbit-paused") === "1"; } catch { return false; }
   });
@@ -166,7 +166,7 @@ function usePaused(): [boolean, (v: boolean) => void] {
 }
 
 /** Whether the reader asked for less motion, following changes. */
-function useReducedMotion(): boolean {
+export function useReducedMotion(): boolean {
   const query = "(prefers-reduced-motion: reduce)";
   const [still, setStill] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(query).matches);
   useEffect(() => {

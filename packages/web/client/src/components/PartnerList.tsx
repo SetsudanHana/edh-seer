@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { Link } from "react-router";
 import { groupAnchor } from "../lib/group-anchor.js";
+import { hueOf } from "../lib/page-orbit.js";
 import { causeCountTail, groupDirection, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
@@ -74,7 +75,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
   // viewport, is the shape EDHREC readers already know.
   return (
     <div className="flex flex-col gap-8">
-      {groups.map((group) => {
+      {groups.map((group, gi) => {
         // THE SAME DIRECTION DECIDES THE COUNTER AND THE VERB (2026-09-19). This read `pool` for
         // every group and then printed "cause it" under producer rows -- the sentence named one
         // direction and the number came from the other. `withheldFrom` is shared with the
@@ -90,7 +91,9 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 * the cards DO this -- "sacrifice a creature" -- and under an asker group they are
                 * waiting for it -- "a creature dies". The direction is already read off the rows
                 * for the withheld line; saying it two ways from one fact is how AJ1 happened. */}
-              <h3 className="text-lg font-semibold tracking-[-0.01em]">
+              <h3 className="flex items-center gap-2 text-lg font-semibold tracking-[-0.01em]">
+                {/* THE MAP'S COLOUR FOR THIS GROUP, so the picture above has its key here. */}
+                <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ background: hueOf(gi) }} />
                 {dir === "asks" ? eventKeyClause(group.event) : eventKeyAction(group.event) ?? eventKeyClause(group.event)}
               </h3>
               {/* THE NUMBER THE ORDER IS ACTUALLY COMPUTED FROM. The page showed only the count of

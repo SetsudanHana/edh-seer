@@ -103,6 +103,9 @@ class Sky {
     const halo = make("circle", { r: 58, fill: "var(--accent)", opacity: 0, filter: "url(#constellation-glow)" }, g);
     make("circle", { r: 50, fill: "var(--surface-secondary)" }, g);
     if (card.art) make("image", { href: card.art, x: -50, y: -50, width: 100, height: 100, "clip-path": "url(#constellation-disc)", preserveAspectRatio: "xMidYMid slice" }, g);
+    // A WHOLE CARD, SCALED SO ITS ART PANEL FILLS THE DISC: the panel is about 84% of the card's
+    // width and centred a third of the way down.
+    else if (card.image) make("image", { href: card.image, x: -70, y: -64, width: 140, height: 195, "clip-path": "url(#constellation-disc-u)", preserveAspectRatio: "xMidYMid meet" }, g);
     const rim = make("circle", { class: "constellation-rim", r: 50, fill: "none", stroke: "var(--muted)", "stroke-width": 4 }, g);
     const pip = make("circle", { r: 9, cx: 36, cy: -36, fill: GOLD, stroke: "var(--background)", "stroke-width": 4, opacity: 0 }, g);
     // Pinned in the report: the same pin lights here, on the disc's other shoulder.
@@ -406,8 +409,9 @@ class Sky {
 
 export type { MenuItem };
 
-export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, menuFor, isPinned }: {
-  model: EngineModel; orbit: OrbitModel;
+export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, menuFor, isPinned, pick = mapPartners, label }: {
+  /** Every card the map may draw, by id: a deck's engine model, or the cards a card page names. */
+  model: Pick<EngineModel, "cards">; orbit: OrbitModel;
   /** The cards put in the middle before this one, oldest first. */
   trail: readonly string[];
   /** The card pointed at or picked: its lines brighten and the rest dim. */
@@ -422,6 +426,10 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   menuFor?: (id: string | null) => MenuItem[];
   /** Cards pinned in the report, which wear the pin here too. */
   isPinned?: (id: string) => boolean;
+  /** Which partners the map draws, at most `cap`: the strongest links by default. */
+  pick?: (o: OrbitModel, cap: number) => { p: OrbitPartner; hue: string }[];
+  /** The picture's accessible name, when "X and the N cards it works with" is not it. */
+  label?: string;
 }) {
   const svg = useRef<SVGSVGElement>(null);
   const layers = useRef<Record<string, SVGGElement | null>>({});
@@ -447,7 +455,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   useEffect(() => {
     const s = sky.current;
     if (!s) return;
-    s.walk(orbit.focus.id, trail.at(-1), mapPartners(orbit, s.geo.cap), [...trail]);
+    s.walk(orbit.focus.id, trail.at(-1), pick(orbit, s.geo.cap), [...trail]);
     // `orbit` changes with its focus, and `trail` with it; both are read here, once per step.
   }, [orbit, trail, narrow]);
 
@@ -460,7 +468,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
     ...(menuFor?.(menu.id) ?? []),
     ...(menu.id === null ? [
       ...(trail.length ? [{ label: "See my path", run: () => sky.current?.fitPath() }] : []),
-      { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...mapPartners(orbit, (narrow ? NARROW : WIDE).cap).map(({ p }) => p.card.id)], 1.15) },
+      { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...pick(orbit, (narrow ? NARROW : WIDE).cap).map(({ p }) => p.card.id)], 1.15) },
     ] : []),
   ];
   const close = (back: boolean) => {
@@ -471,10 +479,11 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   };
   return (
     <div className="relative">
-      <svg ref={svg} role="group" aria-label={`${name} and the ${orbit.direct + orbit.directTokens} cards it works with`}
+      <svg ref={svg} role="group" aria-label={label ?? `${name} and the ${orbit.direct + orbit.directTokens} cards it works with`}
         viewBox="-450 -368 900 736" className={`block h-auto w-full select-none touch-pan-y ${narrow ? "aspect-[20/23]" : "aspect-[880/720]"}`}>
         <defs>
           <clipPath id="constellation-disc" clipPathUnits="objectBoundingBox"><circle cx={0.5} cy={0.5} r={0.5} /></clipPath>
+          <clipPath id="constellation-disc-u" clipPathUnits="userSpaceOnUse"><circle r={50} /></clipPath>
           <filter id="constellation-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9" /></filter>
           <filter id="constellation-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" /></filter>
         </defs>
