@@ -13,7 +13,7 @@ import { printingImageUrl } from "../components/card-node.js";
  *  twice: the rows are the list below the map, drawn. */
 
 /** One colour per event, in the page's order. The report's theme colours, then round again. */
-const HUES = ["#1c8db7", "#c0703a", "#21a28f", "#b5577a", "#9a6bc0", "#8a8f3a", "#6b89f9", "#b08e1d", "#4f7fa0", "#277310", "#5b40f6"];
+const HUES = ["#1c8db7", "#c0703a", "#21a28f", "#b5577a", "#9a6bc0", "#8a8f3a", "#6b89f9", "#7ab648", "#4f7fa0", "#277310", "#5b40f6"];
 export const hueOf = (i: number) => HUES[i % HUES.length]!;
 
 function cardOf(slug: string, name: string, art: string | undefined, typeLine = ""): EngineCard {
@@ -31,8 +31,8 @@ export interface PageMap {
   groups: { event: string; name: string; hue: string }[];
 }
 
-/** The pair's own colour: the route's gold, which no event group uses. */
-export const PAIR_HUE = "#D4A63A";
+/** The pair's own colour: the page's accent, which no event group uses (gold is the walked route). */
+export const PAIR_HUE = "var(--accent)";
 
 /** The page's map. `rows` are the partners to draw (the page's own list, or a commander's). A
  *  commander's picked partner leads the map in its own group, outside the list's colours. */

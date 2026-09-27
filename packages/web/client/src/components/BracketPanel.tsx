@@ -43,7 +43,7 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
 }) {
   const [allCombos, setAllCombos] = useState(false);
   // THE BRACKET ON THE DECK'S SKY (owner, 2026-09-27): what put the deck here, lit -- its Game
-  // Changers, and each infinite combo drawn as a closed loop in gold, the shape a combo is. A combo
+  // Changers, and each infinite combo drawn as a closed dashed loop, the shape a combo is. A combo
   // row picks that one combo out.
   const model = useContext(SkyContext);
   const [pick, setPick] = useState<number | null>(null);
@@ -64,10 +64,10 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
     // run through one card, which the sky drew as one knot). Combos sharing a card are said to.
     const shared = loops.length > 1 ? loops[0]!.cards.filter((n) => loops.every((c) => c.cards.includes(n))) : [];
     const what = pick !== null
-      ? `${listed[pick]!.cards.join(" + ")}, drawn as its loop in gold`
+      ? `${listed[pick]!.cards.join(" + ")}, drawn as its loop, dashed`
       : [gcs.length ? `the ${gcs.length} Game Changer${gcs.length === 1 ? "" : "s"}` : "",
-        loops.length ? `the ${loops.length} infinite combo${loops.length === 1 ? "" : "s"} in gold${shared.length ? `, all through ${shared.join(" and ")}, so they overlap: pick one above to see it alone` : loops.length > 1 ? ", each a loop" : ""}` : ""].filter(Boolean).join(" and ");
-    return { ids, lines, label: `What puts it in bracket ${CELL_LABEL[bracket.band]}: ${what}.` };
+        loops.length ? `the ${loops.length} infinite combo${loops.length === 1 ? "" : "s"}, dashed${shared.length ? `, all through ${shared.join(" and ")}, so they overlap: pick one above to see it alone` : loops.length > 1 ? ", each a loop" : ""}` : ""].filter(Boolean).join(" and ");
+    return { ids, lines, dashed: true, label: `What puts it in bracket ${CELL_LABEL[bracket.band]}: ${what}.` };
   }, [model, bracket, listed, pick]);
   if (!bracket) return null;
   const why = bracketWhy(bracket, combos ? listed : []);

@@ -57,7 +57,7 @@ const MAX_SECTORS = 7;
  *  Overview, and four grey rows on one card could not be told apart (orbit round 2). */
 /** The colours unlike the Overview's group colours come first: a helper coloured teal next to a
  *  blue group read as the same group (orbit round 3). */
-const EXTRA_HUES = ["#c0703a", "#b5577a", "#8a8f3a", "#9a6bc0", "#b08e1d", "#5b40f6", "#277310", "#6b89f9", "#1c8db7", "#21a28f", "#4f7fa0"];
+const EXTRA_HUES = ["#c0703a", "#b5577a", "#8a8f3a", "#9a6bc0", "#7ab648", "#5b40f6", "#277310", "#6b89f9", "#1c8db7", "#21a28f", "#4f7fa0"];
 
 /** A card that belongs in a ring list: tokens are made by cards, not in the deck, and a land that
  *  reaches nothing is doing a land's job. */

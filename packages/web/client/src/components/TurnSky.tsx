@@ -38,7 +38,7 @@ export function TurnSky({ model, turns }: { model: EngineModel; turns: FirstTurn
     // the sky says what "castable" means here.
     return {
       ids, lines,
-      label: `Turn ${turn}${step ? `, with ${step.mana} mana in a typical game` : ""}: ${n} spell${n === 1 ? "" : "s"} cheap enough to cast by now${commander.length ? ", and your commander" : ""}, lit (by cost, not by what is in your hand), and ${lines.length ? `${lines.length} link${lines.length === 1 ? "" : "s"} between them, in gold` : "no links between them yet"}.`,
+      label: `Turn ${turn}${step ? `, with ${step.mana} mana in a typical game` : ""}: ${n} spell${n === 1 ? "" : "s"} cheap enough to cast by now${commander.length ? ", and your commander" : ""}, lit (by cost, not by what is in your hand), and ${lines.length ? `${lines.length} link${lines.length === 1 ? "" : "s"} between them, in pink` : "no links between them yet"}.`,
     };
   }, [model, turns, turn]);
 

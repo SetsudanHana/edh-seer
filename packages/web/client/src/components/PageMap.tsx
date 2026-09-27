@@ -93,7 +93,7 @@ export function PageMap({ page, slug, rows, base, pair, hrefOf }: {
           label={`${page.name} and ${shown} of the cards it works well with, coloured by the groups below`} />
       </div>
       <figcaption className="max-w-[65ch] text-sm text-(--muted)">
-        {pair ? <>{pair.name} is in gold. </> : null}Each colour is one of the groups below, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards, a few from each`}.
+        {pair ? <>{pair.name} is in pink. </> : null}Each colour is one of the groups below, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards, a few from each`}.
         {" "}{still || paused ? "Arrows point" : "Ticks run"} from the card that makes it happen to the card that uses it. Tap a card to see it; tap it again to go to its page{walks ? ", and the map comes with you: the cards you walked through stay on it, joined by a gold line" : ""}.
         {still ? null : (
           <button type="button" className="ml-2 rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs hover:border-(--foreground)" aria-pressed={paused} onClick={() => setPaused(!paused)}>

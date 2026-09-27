@@ -10,7 +10,7 @@ import { useReducedMotion } from "./OrbitView.js";
  *  middle; what no theme claims, and the lands, make the faint band at the edge.
  *
  *  ONE PICTURE, MANY READINGS. A chapter passes `lit`: its cards shine and are named, the rest of
- *  the sky dims, and `lit.lines` are drawn over it in gold. With nothing lit the sky shows the
+ *  the sky dims, and `lit.lines` are drawn over it in the accent pink. With nothing lit the sky shows the
  *  deck's shape; a theme's name lights that theme.
  *
  *  A TAP ON A STAR NAMES IT, and a second opens how it connects (the orbit over the report). The
@@ -24,10 +24,13 @@ export const SkyThemeContext = createContext<MainTheme | null>(null);
 
 export interface SkyLight {
   ids: ReadonlySet<string>;
-  /** Lines to draw between lit cards, in gold: a route, a combo's loop, a swap. */
+  /** Lines to draw between lit cards, in the accent pink: a plan's links, a combo's loop. GOLD IS
+   *  THE WALKED ROUTE ONLY (persona round, 2026-09-27: gold meant four things across the site). */
   lines?: readonly [string, string][];
   /** What the lit stars are, said under the sky ("The 12 cards this plan wins with"). */
   label?: string;
+  /** Draw the lines dashed: a combo's loop. */
+  dashed?: boolean;
 }
 
 const R: Record<Star["kind"], number> = { commander: 26, hub: 6.5, member: 4, rest: 3, land: 2 };
@@ -65,7 +68,7 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
   // What shines: a chapter's light, or the theme picked here, or everything.
   const picked = theme !== null ? new Set(sky.clusters[theme]!.ids) : null;
   const on = lit?.ids ?? picked;
-  // MANY GOLD LINES ARE A WEB, NOT A ROUTE: past thirty they thin, so the stars stay the subject.
+  // MANY LIT LINES ARE A WEB, NOT A ROUTE: past thirty they thin, so the stars stay the subject.
   const heavy = (lit?.lines?.length ?? 0) > 30;
   // The far end of a lit line is half lit: the card a thread runs to.
   const touched = new Set(lit?.lines?.flat() ?? []);
@@ -164,7 +167,7 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
         })}
         {lit?.lines?.map(([a, b], i) => {
           const A = sky.byId.get(a), B = sky.byId.get(b);
-          return A && B ? <line key={`l${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="#D4A63A" strokeWidth={4} opacity={0.75} /> : null;
+          return A && B ? <line key={`l${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="var(--accent)" strokeWidth={4} opacity={0.8} /> : null;
         })}
         {sky.stars.map((s) => {
           const bright = !lit || lit.ids.has(s.id);
@@ -198,12 +201,13 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
               x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={hue} strokeWidth={1.3} opacity={bright ? (lit ? 0.3 : 0.55) : 0.08} />;
           })}
         </g>
-        {/* A chapter's own lines, in gold, over everything but the stars. */}
+        {/* A chapter's own lines, in the accent pink, over everything but the stars; dashed for a
+          * combo, which is a loop and not a link. */}
         {lit?.lines?.length ? (
           <g strokeLinecap="round" data-testid="sky-lit-lines">
             {lit.lines.map(([a, b], i) => {
               const A = sky.byId.get(a), B = sky.byId.get(b);
-              return A && B ? <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="#D4A63A" strokeWidth={heavy ? 1.1 : 2.2} opacity={heavy ? 0.45 : 0.9} /> : null;
+              return A && B ? <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="var(--accent)" strokeWidth={heavy ? 1.1 : 2.2} opacity={heavy ? 0.5 : 0.95} strokeDasharray={lit.dashed ? "6 5" : undefined} /> : null;
             })}
           </g>
         ) : null}

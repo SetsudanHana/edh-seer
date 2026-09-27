@@ -36,7 +36,7 @@ const listWords = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(
 export function WinPlans({ wincons }: { wincons: Wincons }) {
   const { classes, focus } = wincons;
   // THE PLAN ON THE DECK'S SKY (owner, 2026-09-27): the picked plan's cards lit, its finishers
-  // named, and the links between them in gold -- a plan whose cards work together draws a shape,
+  // named, and the links between them in pink -- a plan whose cards work together draws a shape,
   // one whose cards do not is a scatter of stars.
   const model = useContext(SkyContext);
   const [picked, setPicked] = useState(classes[0]?.class ?? "");
@@ -53,7 +53,7 @@ export function WinPlans({ wincons }: { wincons: Wincons }) {
     const name = phrase(plan.class);
     const missing = plan.count - cards.size;
     const what = `${plural(cards.size, "card")}${payoffs.size ? ` and ${plural(payoffs.size, "finisher")}` : ""}`;
-    return { ids, lines, label: `${name.charAt(0).toUpperCase()}${name.slice(1)}: its ${what} lit${missing > 0 ? ` (${missing} of its ${plural(plan.count, "card")} ${missing === 1 ? "is a token or a card" : "are tokens or cards"} the sky does not draw)` : ""}${lines.length ? `, and the ${plural(lines.length, "link")} between them in gold` : ", with no links between them"}.` };
+    return { ids, lines, label: `${name.charAt(0).toUpperCase()}${name.slice(1)}: its ${what} lit${missing > 0 ? ` (${missing} of its ${plural(plan.count, "card")} ${missing === 1 ? "is a token or a card" : "are tokens or cards"} the sky does not draw)` : ""}${lines.length ? `, and the ${plural(lines.length, "link")} between them in pink` : ", with no links between them"}.` };
   }, [model, plan]);
   if (!classes.length || !plan) return null;
   const [first, ...rest] = classes;
