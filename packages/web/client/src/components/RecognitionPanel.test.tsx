@@ -285,10 +285,20 @@ const HERO = {
   report: { ...DATA.report, synergyOverall: 2.9, buildScore: 4.5, cards: [{ name: "Nalia", isCommander: true }] },
 } as unknown as Parameters<typeof RecognitionPanel>[0]["data"];
 
-test("the hero shows the commander's card and says whether the deck is good, in words", () => {
+test("the hero says whether the deck is good, in words; the commander's face is the map's middle, not a second image", () => {
   const { container } = render(<RecognitionPanel data={HERO} />);
-  expect(container.querySelector("img[src='https://cards.scryfall.io/normal/front/a/b/nalia.jpg']")).not.toBeNull();
+  expect(container.querySelector("img")).toBeNull();
   expect(screen.getByTestId("recognition-verdict").textContent).toMatch(/^Well built: .*which is what the synergy score measures\.$/);
+});
+
+test("the first screen splits the hero: the theme beside the map, the verdict after it", () => {
+  const { unmount } = render(<RecognitionPanel data={HERO} part="identity" />);
+  expect(screen.getByTestId("recognition-identity")).toBeInTheDocument();
+  expect(screen.queryByTestId("recognition-verdict")).toBeNull();
+  unmount();
+  render(<RecognitionPanel data={HERO} part="rest" />);
+  expect(screen.queryByTestId("recognition-identity")).toBeNull();
+  expect(screen.getByTestId("recognition-verdict")).toBeInTheDocument();
 });
 
 test("the game-state controls sit folded under the hero, open only when a state is set", () => {

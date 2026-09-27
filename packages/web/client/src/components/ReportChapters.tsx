@@ -254,21 +254,20 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           {/* A BROKEN RULE LEADS; A CLEAN DECK SAYS SO IN ONE LINE UNDER THE HERO (appeal review
             *  2026-09-26: a paragraph about deck-rule checks was the first thing on the page). */}
           {report.legality?.length ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
-          {/* THE HERO: what this deck IS, the commander's face, and whether it is any good -- and the
-            *  waffle inside it is where a reader checks the engine's work card by card. */}
-          {/* THE ONE LINE FOR THE TABLE, FIRST (owner, 2026-09-26: "the phone and one-line answer ... to
-            *  be addressed"). The phone seat built it from four screens; under the hero it started 760px
-            *  down a 844px phone, cut off, so it leads the chapter. */}
-          {talk ? <TableTalkLine talk={talk} /> : null}
-          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} />
-          {/* THE COMMANDER'S MAP, ON THE FIRST SCREEN (owner, 2026-09-27: the report's one picture). It
-            *  was the Game plan chapter's opening, a chapter away from the deck it pictures. */}
+          {/* THE FIRST SCREEN IS THE MOCKUP'S (owner, 2026-09-27: "the top of the report is different
+            *  from the screens you mocked up"): the theme and the map's key on the left, the
+            *  commander's map on the right. The line for the table, the verdict and the card counts
+            *  follow it; the commander's face is the middle of the map. */}
           {themes && commanderId ? (
-            <Movement title="What your commander works with" count="tap a card to read how, tap again to walk to it">
+            <section aria-labelledby="commander-map-title" className="flex flex-col">
+              <h3 id="commander-map-title" className="sr-only">What your commander works with</h3>
               <div id="commander-map" className="scroll-mt-40" />
-              <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
-            </Movement>
-          ) : null}
+              <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre}
+                lead={<RecognitionPanel data={data} part="identity" />} />
+            </section>
+          ) : <RecognitionPanel data={data} part="identity" />}
+          {talk ? <TableTalkLine talk={talk} /> : null}
+          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
