@@ -33,3 +33,18 @@ test("Play steps through every turn once, on request", async () => {
     expect(screen.getByRole("button", { name: "Play turns 1 to 5" })).toBeInTheDocument();
   } finally { vi.useRealTimers(); }
 });
+
+/** ONLY WHAT THIS TURN ADDS (persona round, 2026-09-27: 281 lines by turn 5 were a hairball). */
+test("each turn draws only the links it adds", () => {
+  const { report, graph } = engineDeck();
+  const m = buildEngineModel(report, graph);
+  const { container } = render(<TurnSky model={m} turns={TURNS} />);
+  const count = () => container.querySelectorAll("[data-testid=sky-lit-lines] line").length;
+  fireEvent.click(screen.getByRole("button", { name: "T4" }));
+  const t4 = count();
+  fireEvent.click(screen.getByRole("button", { name: "T5" }));
+  // Turn 5 adds no card, so it adds no link.
+  expect(count()).toBe(0);
+  expect(screen.getByText(/no new links between them this turn/)).toBeInTheDocument();
+  expect(t4).toBeGreaterThan(0);
+});

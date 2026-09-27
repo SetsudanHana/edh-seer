@@ -65,3 +65,17 @@ test("a constellation that is the deck's named theme takes that name", async () 
   expect(screen.getByRole("button", { name: "CLERICS MATTER" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: g.name.toUpperCase() })).toBeNull();
 });
+
+/** EVERY LIT CARD IS NAMED (persona round, 2026-09-27): on the sky, or under it when the sky has
+ *  no clear place for the name. */
+test("every lit card is named, on the sky or under it", () => {
+  const m = model();
+  const ids = [...m.cards.values()].filter((c) => !c.isToken && !c.isFace && !c.isCommander).slice(0, 10).map((c) => c.id);
+  const { container } = render(<DeckSky model={m} lit={{ ids: new Set(ids), label: "Ten cards" }} />);
+  const onSky = new Set([...container.querySelectorAll("text.sky-name")].map((t) => t.textContent));
+  const under = screen.queryByText(/^Also lit:/)?.textContent ?? "";
+  for (const id of ids) {
+    const name = m.cards.get(id)!.name.split(" // ")[0]!;
+    expect(onSky.has(name) || under.includes(name)).toBe(true);
+  }
+});
