@@ -217,14 +217,16 @@ test("without a pick, only the commander's card is shown", async () => {
   expect(screen.queryByRole("img", { name: /^Haunted One/ })).not.toBeInTheDocument();
 });
 
-/** THE MAP ON A COMMANDER PAGE (owner, 2026-09-27): the commander's own ranked list, drawn; a
- *  second tap opens the partner's CARD page, since the partners are cards, not commanders. */
-test("a commander page draws its deck's partners as a map; a second tap opens the card's page", async () => {
+/** THE MAP ON A COMMANDER PAGE WALKS IN PLACE (owner, 2026-09-27: "on the /commander page when I
+ *  double click the card it does not go through the constellation it jumps to /cards page"). A second
+ *  tap loads the card's own partners and the map walks to it; the list below stays the commander's. */
+test("a second tap on a commander page's map walks to the card on the map, and Back returns", async () => {
   const rows = [row("A One", "a-one"), row("B Two", "b-two", "dies|creature|-|-"), row("C Three", "c-three")];
+  const bTwo = { ...KRENKO, name: "B Two", partners: [row("D Four", "d-four"), row("E Five", "e-five"), row("F Six", "f-six")], commanderPartners: undefined };
   render(
     <MemoryRouter initialEntries={["/commanders/krenko-mob-boss"]}>
       <Routes>
-        <Route path="/commanders/:slug" element={<CommanderPage load={async () => ({ ...KRENKO, commanderPartners: rows })} />} />
+        <Route path="/commanders/:slug" element={<CommanderPage load={async (s) => (s === "b-two" ? bTwo : { ...KRENKO, commanderPartners: rows })} />} />
         <Route path="/cards/:slug" element={<p>card page</p>} />
       </Routes>
     </MemoryRouter>,
@@ -234,5 +236,10 @@ test("a commander page draws its deck's partners as a map; a second tap opens th
   // The first tap picks it (the map marks it pressed on its next frame); only then is a second a walk.
   await waitFor(() => expect(map.querySelector("[data-id='b-two']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
   fireEvent.click(map.querySelector("[data-id='b-two']")!);
-  expect(await screen.findByText("card page", {}, { timeout: 3000 })).toBeInTheDocument();
+  expect(await screen.findByRole("group", { name: /^B Two and 3 of the cards it works well with/ }, { timeout: 3000 })).toBeInTheDocument();
+  expect(screen.queryByText("card page")).toBeNull();
+  // The list below is still the commander's.
+  expect(screen.getByRole("heading", { name: "Works well with" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" }));
+  expect(await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ })).toBeInTheDocument();
 });

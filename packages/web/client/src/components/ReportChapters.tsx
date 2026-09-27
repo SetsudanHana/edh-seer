@@ -159,6 +159,18 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [themes, report.cards, data.graph]);
   const [centre, setCentre] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<string | null>(null);
+  // A NEW REPORT STARTS FROM ITS COMMANDER (owner, 2026-09-27: "with Rani deck I managed somehow to
+  // get Essence Flux as my starting point"). This component stays mounted from one deck to the next,
+  // so the card walked to on the last deck stayed the middle whenever the new deck also played it.
+  // The walk, its trail and any open overlay belong to the report they were made on.
+  const [shownReport, setShownReport] = useState(report);
+  const [walkGen, setWalkGen] = useState(0);
+  if (shownReport !== report) {
+    setShownReport(report);
+    setCentre(null);
+    setOverlay(null);
+    setWalkGen((g) => g + 1);
+  }
   /** "See how it connects" in any card's ⋯ menu opens that card's orbit over the report. */
   const links = useMemo(() => {
     if (!themes) return null;
@@ -295,7 +307,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  themes do not give. */}
           {themes && commanderId ? (
             <Movement title="What your commander works with" count="tap a card to see how, tap it again to put it in the middle">
-              <OrbitView report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
+              <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
             </Movement>
           ) : null}
           {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={setOverlay} main={mainTheme(report)} /> : null}
