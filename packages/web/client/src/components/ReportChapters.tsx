@@ -256,7 +256,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  down a 844px phone, cut off, so it leads the chapter. */}
           {talk ? <TableTalkLine talk={talk} /> : null}
           <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet}
-            sky={themes ? <DeckSky model={themes} className="mx-auto w-full max-w-[30rem]" caption="Every card is a star. Each theme is a constellation, named in its colour; tap a name to light it, or a star to name it. The faint band at the edge is what no theme claims, and the lands." /> : undefined} />
+            sky={themes ? <DeckSky model={themes} className="mx-auto w-full max-w-[30rem]" caption="Every card is a star. Each theme is a constellation, named in its colour; tap a name to light it, or a star to name it. “No theme” holds the cards no theme claims, the place to look if the deck drifts; the faint band at the edge is the lands." /> : undefined} />
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on

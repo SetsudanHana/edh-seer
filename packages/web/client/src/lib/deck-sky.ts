@@ -48,7 +48,9 @@ function hash01(s: string): number {
   return ((h >>> 0) % 10007) / 10007;
 }
 
-export const REST_HUE = "#8a8494";
+export const REST_HUE = "#a39cb0";
+/** The tag of the constellation of cards no theme claims. */
+export const NO_THEME = "no-theme";
 
 export function deckSky(m: EngineModel): Sky {
   const cards = [...m.cards.values()].filter((c) => !c.isToken && !c.isFace);
@@ -65,8 +67,17 @@ export function deckSky(m: EngineModel): Sky {
     const gi = all.findIndex((g) => g.hubs.includes(c.id) || g.members.includes(c.id));
     if (gi >= 0) first.set(c.id, gi);
   }
-  const groups = all.filter((_, gi) => [...first.values()].includes(gi));
-  const home = new Map([...first].map(([id, gi]) => [id, groups.indexOf(all[gi]!)] as const));
+  const themed = all.filter((_, gi) => [...first.values()].includes(gi));
+  const home = new Map([...first].map(([id, gi]) => [id, themed.indexOf(all[gi]!)] as const));
+  // WHAT NO THEME CLAIMS IS A CONSTELLATION OF ITS OWN (persona round, 2026-09-27: mixed into the
+  // edge band with the lands, the cards that drifted could not be counted or named). The lands stay
+  // the band; a nonland card no theme claims joins "No theme", named and countable like the rest.
+  const drift = cards.filter((c) => !c.isCommander && !c.isLand && !home.has(c.id));
+  const groups: { tag: string; name: string; hue: string; hubs: readonly string[] }[] = [
+    ...themed,
+    ...(drift.length ? [{ tag: NO_THEME, name: "No theme", hue: REST_HUE, hubs: [] as string[] }] : []),
+  ];
+  for (const c of drift) home.set(c.id, groups.length - 1);
 
   const stars: Star[] = [];
   const clusters: Cluster[] = [];
@@ -136,7 +147,7 @@ export function deckSky(m: EngineModel): Sky {
 
   // THE BAND AT THE EDGE: what no theme claims, and the lands, fainter still.
   const outer = Math.max(ring, ...clusters.map((c) => Math.hypot(c.x, c.y) + c.r)) + 45;
-  const rest = cards.filter((c) => !c.isCommander && !home.has(c.id));
+  const rest = cards.filter((c) => !c.isCommander && !home.has(c.id)); // the lands
   rest.sort((x, y) => Number(x.isLand) - Number(y.isLand) || (x.id < y.id ? -1 : 1));
   rest.forEach((c, i) => {
     const t = -Math.PI / 2 + (2 * Math.PI * (i + hash01(c.id) * 0.6)) / Math.max(1, rest.length);
