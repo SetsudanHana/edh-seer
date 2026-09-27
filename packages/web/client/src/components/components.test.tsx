@@ -2069,11 +2069,20 @@ test("answers render once in Roles, and how the deck wins once in Game plan", ()
 /** `waiting` CAME OFF THE DISSOLVED ENGINE TAB, landed in Roles, and moved on to Game plan with
  *  "How you win" (appeal review 2026-09-26): what the cards wait for is the deck's plan. Nothing else may pick it up, and it may not be dropped on the way: without this pin,
  *  deleting the section from the `sections` array fails no test. */
-test("the waiting section rides the Game plan chapter, exactly once", () => {
-  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+test("the waiting section rides the Game plan chapter, exactly once, when something is unmet", () => {
+  const unmet = { ...DECK_MATH, demand: [...DECK_MATH.demand, { key: "sacrifice:artifact", consumers: 2, suppliers: 0, available: 0, fromCommandZone: false }] };
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: unmet } };
   const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
   expect(screen.getAllByText("What your cards are waiting for")).toHaveLength(1);
   expect(within(container.querySelector("section#plan") as HTMLElement).getByText("What your cards are waiting for")).toBeInTheDocument();
+});
+
+/** LESS IS MORE (owner, 2026-09-27): with every demand met the section said only that, under a
+ *  second copy of the turn-7 line. */
+test("with nothing unmet, the waiting section is not drawn", () => {
+  const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
+  render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
+  expect(screen.queryByText("What your cards are waiting for")).toBeNull();
 });
 
 /** I3 (whole-branch review, 2026-09-01): Build and Mana shipped with no title element at all, so
