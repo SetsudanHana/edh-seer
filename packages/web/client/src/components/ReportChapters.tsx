@@ -26,6 +26,7 @@ import { RoleShelves, roleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { chooseCuts, swapCandidates } from "../lib/cut-choice.js";
 import { mainTheme } from "../lib/main-theme.js";
+import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
 import { Findings } from "./Findings.js";
@@ -178,17 +179,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
    *  where a full-screen second map used to open over the report. */
   const drawer = useCardDrawer();
   const { setExtras } = drawer;
-  useEffect(() => {
-    if (!themes) { setExtras(null); return; }
-    setExtras({
-      model: themes,
-      walk: (id) => {
-        setCentre(id);
-        document.getElementById("commander-map")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      },
-    });
-    return () => setExtras(null);
-  }, [themes, setExtras]);
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD — the single fact all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight. A two-faced commander rates one row per face and both carry the same `derived` flag, so
@@ -210,6 +200,30 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
    *  that list already names and minus the unread, which fit no theme because nothing was read --
    *  `CutList` names those separately, with the right sentence. */
   const cuts = useMemo(() => chooseCuts(report, themes), [report, themes]);
+  useEffect(() => {
+    if (!themes) { setExtras(null); return; }
+    // WHERE THE REPORT ALREADY NAMES A CARD (Drawer mockup, 2026-09-27: "In this report: …").
+    const classes = report.deckMath?.wincons.classes ?? [];
+    const cutSet = new Set(cuts.map((c) => c.name));
+    const main = mainTheme(report);
+    const inCombo = (name: string) => (report.combos ?? []).some((c) => c.cards.includes(name));
+    setExtras({
+      model: themes,
+      walk: (id) => {
+        setCentre(id);
+        document.getElementById("commander-map")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      },
+      where: (name) => [
+        // A combo piece is said once, as one: "helps a combo" beside it says it again.
+        ...classes.filter((c) => !(c.class === "combo" && inCombo(name))).flatMap((c) => c.payoffs?.includes(name) ? [`finisher for ${WIN_PHRASE[c.class] ?? c.class}`]
+          : c.cards?.includes(name) ? [`helps ${WIN_PHRASE[c.class] ?? c.class}`] : []),
+        ...(inCombo(name) ? ["a piece of a combo"] : []),
+        ...(cutSet.has(name) ? ["on the cut list"] : []),
+      ],
+      groupName: (key, name) => key === main?.tag ? main.name : key === main?.second?.tag ? main.second.name : name,
+    });
+    return () => setExtras(null);
+  }, [themes, setExtras, report, cuts]);
   /** The over-target role groups, each with its cards: the rest of a trim, shown as the cards to
    *  pick from rather than as a count (appeal review 2026-09-26). */
   const surplus = useMemo((): Surplus[] => {

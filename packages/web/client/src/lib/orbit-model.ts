@@ -197,3 +197,11 @@ function groupThrough(m: EngineModel, near: OrbitModel["near"]): OrbitModel["thr
   }
   return out;
 }
+
+/** "5 cards, 1 of them only once": "5, 1 only once" read as two numbers (orbit round 1). */
+export function countText(n: number, once: number): string {
+  const cards = `${n} card${n === 1 ? "" : "s"}`;
+  if (!once) return cards;
+  if (once === n) return n === 1 ? `${cards}, only once` : n === 2 ? `${cards}, both only once` : `${cards}, all only once`;
+  return `${cards}, ${once} of them only once`;
+}

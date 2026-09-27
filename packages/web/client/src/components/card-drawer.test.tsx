@@ -153,3 +153,24 @@ test("the drawer walks the commander's map from the card, then closes", async ()
   expect(walk).toHaveBeenCalledWith("Reducer");
   expect(screen.queryByTestId("card-inspector")).toBeNull();
 });
+
+/** THE DRAWER MOCKUP (2026-09-27): what the card does in this deck leads, in the map's groups and
+ *  the report's own words; the engine's link lists are one tap away, folded. */
+test("the drawer says what the card works with and where the report names it", async () => {
+  const { report, graph: deckGraph } = engineDeck();
+  const m = buildEngineModel(report, deckGraph);
+  function Register() {
+    const { setExtras, open } = useCardDrawer();
+    useEffect(() => {
+      setExtras({ model: m, walk: () => {}, where: (n) => (n === "Payoff A" ? ["on the cut list"] : []), groupName: (_k, n) => `${n}!` });
+      open("Payoff A");
+    }, [setExtras, open]);
+    return null;
+  }
+  render(<CardDrawerProvider graph={deckGraph}><Register /></CardDrawerProvider>);
+  const drawer = await screen.findByTestId("card-inspector");
+  const summary = within(drawer).getByTestId("drawer-summary");
+  expect(summary.textContent).toMatch(/Works with \d+ cards?/);
+  expect(summary.textContent).toContain("In this report: on the cut list");
+  expect(summary.textContent).toMatch(/! · \d+/);
+});

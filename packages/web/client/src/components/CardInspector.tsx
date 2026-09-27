@@ -334,15 +334,20 @@ export function CardInspector({
         </div>
       ) : null}
 
+      {/* THE ENGINE'S OWN LISTS, FOLDED (Drawer mockup, 2026-09-27): tags such as "ENTERING THE
+        *  BATTLEFIELD · CREATURE" and a score per line opened the drawer in the engine's words. The
+        *  summary above says what a player reads; every link is still one tap away. */}
+      {sorted.length === 0 ? (
+        <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
+          <h4 className="eyebrow text-(--muted)">Synergy edges</h4>
+          <p className="text-(--muted)">No synergy edges — nothing else in the deck connects to this card.</p>
+        </div>
+      ) : (
+        <details className="border-t border-(--separator) pt-2" data-testid="inspector-links">
+          <summary className="cursor-pointer min-h-9 flex items-center text-(--muted)">Every link, in the engine&rsquo;s words · {sorted.length}</summary>
+          <div className="flex flex-col gap-2 pt-1">
       <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
-        {/* An empty edge list is the orphan diagnostic and has to read as a finding, not a blank
-         *  panel that leaves a reader wondering whether the click even worked. */}
-        {sorted.length === 0 ? (
-          <>
-            <h4 className="eyebrow text-(--muted)">Synergy edges</h4>
-            <p className="text-(--muted)">No synergy edges — nothing else in the deck connects to this card.</p>
-          </>
-        ) : (
+        {sorted.length === 0 ? null : (
           <>
             {/* THE TOTAL LIVES IN THE HEADING, ONCE (roadmap R1, phone judge 2026-09-03). This
               *  panel used to print "all 42 are listed here" under a surface line reading "7 of 43
@@ -415,6 +420,9 @@ export function CardInspector({
           </ul>
         </div>
       ) : null}
+          </div>
+        </details>
+      )}
     </div>
   );
 }
