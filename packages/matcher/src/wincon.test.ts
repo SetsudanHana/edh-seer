@@ -202,3 +202,18 @@ test("a known combo becomes the combo class, and it is not inferred from the gra
   // plans and both are true.
   expect(report.classes.find((c) => c.class === "alt-win")!.count).toBe(1);
 });
+
+/** #574, #647: Blasphemous Act's per-creature scaling is its COST, and it read as the one card that
+ *  turns a wide board into a win. The effect that scales has to be one that can win. */
+test("a cost or mana that scales with creatures is not a go-wide payoff; a drain that does is", () => {
+  const makers = Array.from({ length: 6 }, (_, i) => mk(`Maker-${i}`, { kinds: ["token-generation"] }));
+  const scaling = (name: string, kind: string): DeckCard => {
+    const c = mk(name, { kinds: [kind], typeLine: "Sorcery" });
+    (c.tags!.abilities[0].effect as { scaling?: string }).scaling = "per-creature";
+    return c;
+  };
+  const wide = (extra: DeckCard) => winconReport([...makers, extra]).classes.find((c) => c.class === "go-wide");
+  expect(wide(scaling("Blasphemous Act", "cost-reduction"))).toBeUndefined();
+  expect(wide(scaling("Axebane Guardian", "mana-generation"))).toBeUndefined();
+  expect(wide(scaling("Malakir Blood-Priest", ""))?.payoffs).toEqual(["Malakir Blood-Priest"]);
+});

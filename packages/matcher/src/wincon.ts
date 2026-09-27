@@ -103,13 +103,19 @@ export function focusIndex(counts: ReadonlyMap<string, number>): number {
  *  It is not optional detail. Without it every deck in the calibration set read as go-wide -- 71 of
  *  71, and the primary plan of 52 -- because almost every EDH deck makes a token somewhere. A token
  *  maker with nothing to pay it off is not a win plan, it is a body. */
+const NOT_A_WIN = new Set(["cost-reduction", "mana-generation"]);
 function isWidePayoff(dc: DeckCard): boolean {
   return (dc.tags?.abilities ?? []).some((a) => {
     // Count-matters: an effect whose SIZE is the board. Craterhoof, Shamanic Revelation, an
     // Impact Tremors that scales. This half needs no anthem at all.
     // `per-permanent` is deliberately NOT here: it passes on Brass's Bounty, which makes a
     // Treasure per land and is ramp. Only "scales with creatures" is a go-wide payoff.
-    if (a.effect.scaling === "per-creature") return true;
+    // A COST OR MANA THAT SCALES IS NOT A WIN (#574, #647): Blasphemous Act costs {1} less per
+    // creature and read as the one card that "turns it into a win" on a wide-board Rani deck; Axebane
+    // Guardian's mana per defender is Brass's Bounty again. A denylist, not an allowlist of damage,
+    // pump and drain: measured 2026-09-27, the allowlist dropped go-wide from 14 of the 71 decks and
+    // took Malakir Blood-Priest's drain and Kindred Charge with it -- their effect kind is blank.
+    if (a.effect.scaling === "per-creature" && !NOT_A_WIN.has(a.effect.kind)) return true;
     // An anthem is a STATIC pump aimed at a CLASS. `pump` alone is every combat trick in Magic
     // and made this gate vacuous -- it passed all 71 calibration decks, changing nothing.
     // Equipment is excluded by the same test: its static pump names the equipped creature
