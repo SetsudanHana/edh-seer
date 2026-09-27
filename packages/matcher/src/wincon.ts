@@ -107,6 +107,7 @@ export function focusIndex(counts: ReadonlyMap<string, number>): number {
  *  71, and the primary plan of 52 -- because almost every EDH deck makes a token somewhere. A token
  *  maker with nothing to pay it off is not a win plan, it is a body. */
 const NOT_A_WIN = new Set(["cost-reduction", "mana-generation"]);
+const COUNTS_CARDS = /\b(?:number of|for each) creature cards?\b/i;
 function isWidePayoff(dc: DeckCard): boolean {
   return (dc.tags?.abilities ?? []).some((a) => {
     // Count-matters: an effect whose SIZE is the board. Craterhoof, Shamanic Revelation, an
@@ -118,7 +119,11 @@ function isWidePayoff(dc: DeckCard): boolean {
     // Guardian's mana per defender is Brass's Bounty again. A denylist, not an allowlist of damage,
     // pump and drain: measured 2026-09-27, the allowlist dropped go-wide from 14 of the 71 decks and
     // took Malakir Blood-Priest's drain and Kindred Charge with it -- their effect kind is blank.
-    if (a.effect.scaling === "per-creature" && !NOT_A_WIN.has(a.effect.kind)) return true;
+    // AND WHAT IT COUNTS IS THE BOARD: "the number of creature CARDS in target player's graveyard"
+    // (Corpse Augur) is per-creature too, and read as a go-wide payoff on Party Time (#574). A card is
+    // a creature off the battlefield -- all 38 corpus scalers printing it count a graveyard, a hand,
+    // a library or what was exiled or milled; derive leaves most of their scaling zones blank.
+    if (a.effect.scaling === "per-creature" && !NOT_A_WIN.has(a.effect.kind) && !COUNTS_CARDS.test(dc.card.oracleText ?? "")) return true;
     // An anthem is a STATIC pump aimed at a CLASS. `pump` alone is every combat trick in Magic
     // and made this gate vacuous -- it passed all 71 calibration decks, changing nothing.
     // Equipment is excluded by the same test: its static pump names the equipped creature

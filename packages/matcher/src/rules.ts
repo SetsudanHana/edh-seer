@@ -14,7 +14,7 @@ export type RuleClause =
    *  sac outlet is not a draw engine. `null` names an ability `repeats.ts` refused to label. Owner,
    *  2026-09-05: "we count the one-off instant that draws 1 card the same way as Rhystic Study".
    *  `Ability.repeats` had sat on every derived ability since 2026-08-11 with no count reading it. */
-  | { op: "effectKind"; in: string[]; repeats?: (string | null)[] }
+  | { op: "effectKind"; in: string[]; repeats?: (string | null)[]; control?: string[] }
   /** WHAT AN ABILITY EMITS, for the one family that has no effect kind by design: removal.
    *  `destroy`/`exile`/`bounce` derive as kindless abilities whose EMIT is `dies` or `leaves`
    *  (emits.ts: "`destroy` has no payoff kind in the engine's vocabulary, but without its `dies`
@@ -262,7 +262,10 @@ function clauseHolds(clause: RuleClause, dc: DeckCard, set: RuleSet): boolean {
     case "effectKind":
       return (dc.tags?.abilities ?? []).some((a) =>
         clause.in.includes(a.effect.kind)
-        && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null)));
+        && (clause.repeats === undefined || clause.repeats.includes(a.repeats ?? null))
+        // WHO IT HAPPENS TO, when the effect names one (#574): The Chain Veil's "you lose 2 life" is
+        // `player-life-loss` too. An effect with no subject is not refused -- nothing says who.
+        && (clause.control === undefined || a.effect.subject?.control === undefined || clause.control.includes(a.effect.subject.control)));
     case "emits":
       return (dc.tags?.abilities ?? []).some((a) =>
         (a.emits ?? []).some((e) =>

@@ -239,3 +239,26 @@ test("a token an opponent gets is not a go-wide card", () => {
   expect(detectWincons([giver]).get("go-wide")?.has("Beast Within") ?? false).toBe(false);
   expect(detectWincons([mk("Krenko", { kinds: ["token-generation"] })]).get("go-wide")?.has("Krenko")).toBe(true);
 });
+
+/** #574's smaller cases: The Chain Veil's "you lose 2 life" read as a burn plan, and Corpse Augur's
+ *  count of creature CARDS in a graveyard as a go-wide payoff. */
+test("life you lose is not burn, and a count of creature cards is not the board", () => {
+  const loss = (name: string, control: string): DeckCard => {
+    const c = mk(name, { kinds: ["player-life-loss"], typeLine: "Artifact" });
+    (c.tags!.abilities[0].effect as { subject?: object }).subject = { control, token: null };
+    return c;
+  };
+  const burn = (cards: DeckCard[]) => detectWincons(cards).get("burn") ?? new Set();
+  expect(burn([loss("The Chain Veil", "you")]).has("The Chain Veil")).toBe(false);
+  expect(burn([loss("Suspended Sentence", "opp")]).has("Suspended Sentence")).toBe(true);
+
+  const makers = Array.from({ length: 6 }, (_, i) => mk(`Maker-${i}`, { kinds: ["token-generation"] }));
+  const scaler = (name: string, oracleText: string): DeckCard => {
+    const c = mk(name, { kinds: ["draw-card"], oracleText });
+    (c.tags!.abilities[0].effect as { scaling?: string }).scaling = "per-creature";
+    return c;
+  };
+  const payoffs = (extra: DeckCard) => winconReport([...makers, extra]).classes.find((c) => c.class === "go-wide")?.payoffs ?? [];
+  expect(payoffs(scaler("Corpse Augur", "When this creature dies, you draw X cards and you lose X life, where X is the number of creature cards in target player's graveyard."))).toEqual([]);
+  expect(payoffs(scaler("Shamanic Revelation", "Draw a card for each creature you control."))).toEqual(["Shamanic Revelation"]);
+});
