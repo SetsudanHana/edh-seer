@@ -727,3 +727,22 @@ test("putting a land card onto the battlefield is ramp", () => {
   expect(cats.get("ramp")?.has("Growth Spiral")).toBe(true);
   expect(cats.get("ramp")?.has("Planar Genesis")).toBe(true);
 });
+
+// ISSUE #566: "exile the top card of your library ... you may play" is impulse draw (Count on Luck);
+// the pattern demanded a count word ("top two cards").
+test("an upkeep exile-the-top-card-and-play is impulse draw", () => {
+  const luck = mk("Count on Luck", "At the beginning of your upkeep, exile the top card of your library. You may play that card this turn.", "Enchantment");
+  expect(detectBuildCategories([luck]).get("impulseDraw")?.has("Count on Luck")).toBe(true);
+});
+
+// ISSUE #566: an Aura that strips a permanent is removal, answering what its Enchant line names.
+test("a neutralising Aura is targeted removal for the classes it can enchant", () => {
+  const moon = mk("Imprisoned in the Moon", "Enchant creature, land, or planeswalker\nEnchanted creature, land, or planeswalker is a colorless land with \"{T}: Add {C}\" and loses all other card types and abilities.", "Enchantment — Aura");
+  const frog = mk("Frogify", "Enchant creature\nEnchanted creature loses all abilities and is a blue Frog creature with base power and toughness 1/1.", "Enchantment — Aura");
+  const cats = detectBuildCategories([moon, frog]);
+  expect(cats.get("targetedRemoval")).toEqual(new Set(["Imprisoned in the Moon", "Frogify"]));
+  expect([...answerClassesOf(moon).keys()].sort()).toEqual(["creature", "land", "planeswalker"]);
+  expect([...answerClassesOf(frog).keys()]).toEqual(["creature"]);
+  // A plain Aura on its own creature is not removal.
+  expect(detectBuildCategories([mk("Pump Aura", "Enchant creature\nEnchanted creature gets +2/+2.", "Enchantment — Aura")]).get("targetedRemoval")).toBeUndefined();
+});
