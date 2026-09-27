@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import type { AnalyzeResponse } from "../types.js";
 import { CHAPTERS, type ChapterId } from "../lib/chapters.js";
 import { ChapterRail, useCurrentChapter } from "./ChapterRail.js";
-import { DeckIdentity } from "./DeckIdentity.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { CutList, type Surplus } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
@@ -14,7 +13,7 @@ import { FirstTurns } from "./FirstTurns.js";
 import { firstTurns } from "../lib/first-turns.js";
 import { LegalityPanel } from "./LegalityPanel.js";
 import { RecognitionPanel } from "./RecognitionPanel.js";
-import { DeckGauges } from "./DeckGauges.js";
+import { DeckGauges, RoleBars } from "./DeckGauges.js";
 import { UnmetConditions } from "./UnmetConditions.js";
 import { ManaAvailability } from "./ManaAvailability.js";
 import { ManaCurveChart } from "./ManaCurveChart.js";
@@ -283,21 +282,16 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           *  qualified it too. Every figure that IS limited now says so in its own words next to
           *  itself, which is what the three unmarked ones were already doing. */}
         <Chapter id="stand" title={title("stand")}>
-          <DeckIdentity
-            cohesion={report.cohesion}
-            colorIdentity={data.commanderColorIdentity}
-            identity={report.identity}
-            thing={report.thing}
-            commanderCast={report.deckMath?.castability.commanders}
-            manaAvailability={report.manaAvailability}
-            coverage={report.coverage}
-          />
+          {/* THE DECK THEME STRIP IS GONE (owner, 2026-09-27: one place per fact, "less is more"). Every
+            *  line of it was said again elsewhere: the theme's share in Game plan, the win plan in How
+            *  you win, the interaction count on the Roles shelves, the commander's turn in First turns
+            *  (with a second, different number). */}
           {/* THE TWO SCORES, ONCE (roadmap S15, owner call 2026-09-02). `HeadlineScores`' tiles
             *  used to sit directly under these dials printing the same two figures a third time,
             *  counting the sticky header — S7 made that visible and this is the call it was made
             *  for. The tiles were the only place either score said what it MEASURES, so those two
             *  `Explain` blocks moved onto the dials themselves and the component retired. */}
-          <DeckGauges data={data} diff={diff} />
+          <DeckGauges data={data} diff={diff} bars={false} />
           <BracketPanel bracket={report.bracket} combos={report.combos} manaValueOf={manaValueOf} />
         </Chapter>
 
@@ -427,6 +421,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
 
         <Chapter id="roles" title={title("roles")}>
+          {/* THE FIVE ROLES AS BARS, FIRST (owner, 2026-09-27): the Build score's inputs, moved here from
+            *  under its dial, where they counted the same cards a chapter before these shelves. */}
+          <div className="max-w-5xl"><RoleBars data={data} /></div>
           {/* THE CARDS LEAD, the counts follow (2026-09-26): the Graph tab's "Cards judged by their
             *  job" moved here, so a role's number and the cards it counts sit in one chapter. */}
           <Movement title="Your cards, by the job they do" count="cards that do two jobs sit on both shelves">
