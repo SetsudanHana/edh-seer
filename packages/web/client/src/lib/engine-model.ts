@@ -168,48 +168,66 @@ export function plural(subject: string): string {
 }
 
 /** A group's name in a player's words. Taken from what the tag's sentences say, not from the tag's
- *  spelling: `scales:cleric` is "counts it and does more", which is counting Clerics, whatever the
- *  inspector's label says about graveyards. */
+ *  spelling: `scales:cleric` is "counts it and does more", which is a Cleric tribal deck, whatever
+ *  the inspector's label says about graveyards.
+ *
+ *  THE TABLE'S OWN WORDS (owner, 2026-09-27: "no magic player uses phrasing like 'Creatures
+ *  Entering', 'Wizard typal'"). A theme is named the way a player names it in a deck tech: tribal,
+ *  ETBs, landfall, aristocrats, spellslinger, anthems, sac fodder. Every tag still gets a name of
+ *  its own, so two themes never share one. */
 export function groupName(tag: string): string {
   const exact: Record<string, string> = {
-    "static:pump": "Lords: bigger stats", "static:keyword-grant": "Grants abilities", "static:type-grant": "Grants creature types",
-    "static:cost-reduction": "Make cards cheaper", "static:speed-increase": "Grants haste",
+    "static:pump": "Anthems", "static:keyword-grant": "Keyword granting", "static:type-grant": "Adds creature types",
+    "static:cost-reduction": "Cost reducers", "static:speed-increase": "Haste enablers",
+    "static:damage-multiplier": "Damage doublers", "static:tax": "Taxes", "static:copy-spell": "Spell copiers",
+    "enters:land": "Landfall", "enters:enchantment": "Enchantress", "cast:instant-sorcery": "Spellslinger",
+    "dies:creature": "Aristocrats", "graveyard-recursion:creature": "Reanimator", "non-combat-damage:any": "Burn",
+    "lose-life:opp": "Drain", "doubles:enters": "ETB doublers", "copies:triggered": "Trigger copiers",
+    "copies:activated": "Ability copiers", "creates:treasure": "Treasure makers", "creates:emblem": "Emblems",
+    "scales:creature": "Go wide", "scales:land": "Lands matter", "scales:party": "Party",
+    "condition:party": "Party synergy",
   };
   if (exact[tag]) return exact[tag];
   const i = tag.indexOf(":");
   const kind = i < 0 ? tag : tag.slice(0, i);
   const sub = i < 0 ? "" : tag.slice(i + 1);
   const p = plural(sub), P = capital(p);
+  const none = !sub || sub === "any";
+  // A creature type ("wizard"), as against a card type, a "non-" class, a token or "any".
+  const tribe = !none && !CARD_TYPES.has(sub) && !sub.startsWith("-") && !["party", "token", "basic", "instant-sorcery"].includes(sub);
+  const T = capital(sub);
+  // A class's short name: "Artifact", "Noncreature", "Instant and sorcery".
+  const S = sub === "instant-sorcery" ? "Instant and sorcery" : sub.startsWith("-") ? `Non${sub.slice(1)}` : T;
   switch (kind) {
-    case "scales": return `Counts your ${p}`;
-    case "enters": return `${P} entering`;
-    case "cast": return `Casting ${p}`;
-    case "dies": return `${P} dying`;
-    case "attacks": return `${P} attacking`;
-    case "combat-damage": return `${P} dealing combat damage`;
-    case "non-combat-damage": return "Dealing damage";
-    case "counter-added": return `Counters on ${p}`;
-    case "graveyard-recursion": return `${P} coming back`;
-    case "recursion-target": return `Bringing back ${p}`;
-    case "ramp-target": return `Fetching ${P}`;
-    case "tutor": return `Searching for ${p}`;
-    case "fodder": return `${P} to sacrifice`;
-    case "copies": return sub && sub !== "any" ? `Copying ${sub} abilities` : "Copying abilities";
-    case "doubles": return `Doubling ${sub && sub !== "any" ? `${capital(sub)} ` : ""}triggers`;
-    case "creates": return "Making tokens";
-    case "lose-life": return "Losing life";
-    case "threshold": return "A full graveyard";
+    case "scales": return tribe ? `${T} tribal` : none ? "Cards matter" : `${P} matter`;
+    case "enters": return none ? "ETB triggers" : `${S} ETBs`;
+    case "cast": return none || sub === "spell" ? "Cast triggers" : `${S} spells`;
+    case "dies": return none ? "Death triggers" : `${S} deaths`;
+    case "attacks": return none || sub === "creature" ? "Attack triggers" : `${S} attacks`;
+    case "combat-damage": return none || sub === "creature" ? "Combat damage triggers" : `${S} combat damage`;
+    case "non-combat-damage": return "Burn";
+    case "counter-added": return none ? "Counters matter" : `Counters on ${p}`;
+    case "graveyard-recursion": return none ? "Recursion" : tribe ? `${T} reanimation` : `${S} recursion`;
+    case "recursion-target": return none ? "Recursion targets" : `${S} recursion targets`;
+    case "ramp-target": return none || sub === "land" || sub === "basic" ? "Land ramp" : `${T} ramp`;
+    case "tutor": return none ? "Tutors" : `${S} tutors`;
+    case "fodder": return none || sub === "creature" ? "Sac fodder" : `${S} fodder`;
+    case "copies": return "Copy effects";
+    case "doubles": return none ? "Trigger doublers" : `${S} trigger doublers`;
+    case "creates": return none || sub === "token" || sub === "creature" ? "Token makers" : `${S} token makers`;
+    case "lose-life": return "Life loss";
+    case "threshold": return none ? "Graveyard matters" : `${P} in the graveyard`;
     // #571: a flicker or reanimation puts a creature a typed payoff watches onto the battlefield again.
-    case "reuse": return `Re-using your ${p}`;
-    case "prowess": return `Casting ${p} pumps a creature`;
+    case "reuse": return none ? "Blink" : `${S} blink`;
+    case "prowess": return "Prowess";
     // Issue #505: a cheat puts a creature from hand onto the battlefield (Summoner's Grimoire).
-    case "cheat": return `Cheating ${p} into play`;
+    case "cheat": return none ? "Cheat into play" : `Cheat ${p} into play`;
     // Issue #514: a card switched on by a creature type (Multiclass Baldric, Gravecrawler).
-    case "condition": return sub === "party" ? "Switched on by your party" : `Switched on by your ${p}`;
+    case "condition": return none ? "Conditional cards" : `${S} synergy`;
     // Issue #510: a flash grant gives a temporary token (Inalla's copy) a whole turn.
-    case "flash": return "Casting at instant speed";
+    case "flash": return "Flash";
     // Issue #511: a cost that removes a counter (O'aka) spends what the counter makers put down.
-    case "counter-removed": return "Spending counters";
+    case "counter-removed": return "Removing counters";
     default: return capital(tag.replace(/[:-]/g, " "));
   }
 }

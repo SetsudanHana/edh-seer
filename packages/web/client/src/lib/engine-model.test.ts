@@ -14,11 +14,11 @@ describe("nodeId", () => {
 
 describe("groupName", () => {
   test("says what the sentences say, in a player's words", () => {
-    expect(groupName("scales:cleric")).toBe("Counts your Clerics");
-    expect(groupName("cast:-creature")).toBe("Casting noncreature spells");
-    expect(groupName("fodder:goblin")).toBe("Goblins to sacrifice");
-    expect(groupName("static:pump")).toBe("Lords: bigger stats");
-    expect(groupName("enters:any")).toBe("Cards entering");
+    expect(groupName("scales:cleric")).toBe("Cleric tribal");
+    expect(groupName("cast:-creature")).toBe("Noncreature spells");
+    expect(groupName("fodder:goblin")).toBe("Goblin fodder");
+    expect(groupName("static:pump")).toBe("Anthems");
+    expect(groupName("enters:any")).toBe("ETB triggers");
   });
   test("plurals", () => {
     expect(plural("sorcery")).toBe("sorceries");
@@ -26,7 +26,7 @@ describe("groupName", () => {
     expect(plural("fairy")).toBe("Fairies");
     expect(plural("-land")).toBe("nonland cards");
     expect(plural("party")).toBe("party members");
-    expect(groupName("scales:party")).toBe("Counts your party members");
+    expect(groupName("scales:party")).toBe("Party");
   });
 });
 
@@ -36,7 +36,7 @@ describe("buildEngineModel", () => {
 
   test("draws a many-to-few block once, with the few as the cards that do something extra", () => {
     const g = m.groups.find((x) => x.tag === "scales:cleric")!;
-    expect(g.name).toBe("Counts your Clerics");
+    expect(g.name).toBe("Cleric tribal");
     expect(g.hubsConsume).toBe(true);
     expect(g.hubs.sort()).toEqual(["Payoff A", "Payoff B"]);
     expect(g.members).toHaveLength(8);
@@ -44,7 +44,7 @@ describe("buildEngineModel", () => {
   });
 
   test("a group whose members repeat one above it says so", () => {
-    expect(m.groups.find((g) => g.tag === "attacks:cleric")!.sameAs).toEqual({ name: "Counts your Clerics", extra: [], missing: [] });
+    expect(m.groups.find((g) => g.tag === "attacks:cleric")!.sameAs).toEqual({ name: "Cleric tribal", extra: [], missing: [] });
     expect(m.groups.find((g) => g.tag === "scales:cleric")!.sameAs).toBeUndefined();
   });
 
@@ -213,8 +213,8 @@ test("instant and sorcery tags fold into one group labelled for both", () => {
   expect(foldSpellTag("cast:instant")).toBe("cast:instant-sorcery");
   expect(foldSpellTag("graveyard-recursion:sorcery")).toBe("graveyard-recursion:instant-sorcery");
   expect(foldSpellTag("cast:creature")).toBe("cast:creature");
-  expect(groupName("cast:instant-sorcery")).toBe("Casting instants and sorceries");
-  expect(groupName("graveyard-recursion:instant-sorcery")).toBe("Instants and sorceries coming back");
+  expect(groupName("cast:instant-sorcery")).toBe("Spellslinger");
+  expect(groupName("graveyard-recursion:instant-sorcery")).toBe("Instant and sorcery recursion");
 });
 
 /** Owner ruling 2026-09-27 (#519): a token stays a node, and wherever it is named the page says whose. */

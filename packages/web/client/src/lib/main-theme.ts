@@ -9,7 +9,7 @@ import { foldSpellTag, type EngineGroup } from "./engine-model.js";
  *  The main theme is the engine's `cohesion`: the tag most of the deck's own cards are about, named
  *  by `themeName`. Game plan's themes are groups of LINKS keyed by the same `verb:subject` tag
  *  vocabulary, so the two meet on the tag. A group with the main theme's own tag IS the main theme
- *  and takes its name; a group about the same subject ("Counts your Clerics" beside "Cleric typal")
+ *  and takes its name; a group about the same subject ("Cleric ETBs" beside "Cleric tribal")
  *  is part of it. Where no group meets it, the page says so rather than showing two unrelated
  *  names. */
 export interface MainTheme {
@@ -30,7 +30,7 @@ export function mainTheme(report: DeckReport): MainTheme | null {
   return { name: c.name, tag: c.tag, count: c.onThemeCount, nonland: c.nonlandCount, ...(second ? { second } : {}) };
 }
 
-/** Subjects too broad to join two themes on: "creatures entering" is not part of "Cleric typal". */
+/** Subjects too broad to join two themes on: "Creature ETBs" is not part of "Cleric tribal". */
 const BROAD = new Set(["creature", "creatures", "permanent", "permanents", "any", "nontoken", "card", "spell"]);
 
 const subject = (tag: string): string | null => {
