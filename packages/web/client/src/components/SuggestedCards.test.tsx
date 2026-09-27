@@ -24,10 +24,10 @@ test("a card shows as its face, linked to its page, with its name and its best l
   expect(row.textContent).not.toContain("connects to");
 });
 
-test("four cards show, and the rest behind 'Show all'", async () => {
+test("three cards show, and the rest behind 'Show all'", async () => {
   const cards = Array.from({ length: 6 }, (_, i) => ({ ...chaosWarp, name: `Card ${i + 1}`, slug: `card-${i + 1}` }));
   inRouter(<SuggestedCards cards={cards} empty="none" />);
-  expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  expect(screen.getAllByRole("listitem")).toHaveLength(3);
   await userEvent.click(screen.getByRole("button", { name: "Show all 6" }));
   expect(screen.getAllByRole("listitem")).toHaveLength(6);
 });

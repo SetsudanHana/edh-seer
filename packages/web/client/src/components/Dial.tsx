@@ -134,8 +134,10 @@ export function Dial({
    *  157px track each, and a 144px-capped arc plus this shell's own `p-4` (32px) and 1px border
    *  each side needs 178px -- wider than the track, which would force the SAME track-vs-content
    *  fight the narrow-width defences in `components.md` name. 112px plus that same 34px of
-   *  chrome is 146px, comfortably under 157px, so two sit side by side with room left over. The
-   *  lead dial is untouched -- it never shares a row with another dial. */
+   *  chrome is 146px, comfortably under 157px, so two sit side by side with room left over.
+   *
+   *  `lead` is 160px below `sm` and 224px from `sm` up (phone pass, 2026-09-27): at 224px each
+   *  lead dial was a quarter of the phone's screen, twice over, for one figure. */
   size?: "lead" | "input";
   /** WHAT THIS FIGURE MEASURES, as a disclosure under the dial (roadmap S15, owner call
    *  2026-09-02). It used to be a second copy of the same score — `HeadlineScores`' tile, which
@@ -163,7 +165,7 @@ export function Dial({
   const ghostAngle = previous ? angle(previous.reading.position) : null;
   const body = (
     <>
-      <svg viewBox="0 0 100 56" aria-hidden="true" className={`w-full ${size === "lead" ? "max-w-56" : "max-w-28 sm:max-w-[9rem]"}`}>
+      <svg viewBox="0 0 100 56" aria-hidden="true" className={`w-full ${size === "lead" ? "max-w-40 sm:max-w-56" : "max-w-28 sm:max-w-[9rem]"}`}>
         {ZONES[zones].map((z) => (
           <path
             key={`${z.from}`}
