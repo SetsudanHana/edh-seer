@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { BUILD_CATEGORIES } from "@edh-seer/matcher/build";
 import { loadQualityWeights } from "@edh-seer/matcher/quality";
+import { loadStaples } from "@edh-seer/matcher/staples";
 import { consensusCutAgreement } from "./quality-score-core.js";
 
 const arg = (name: string, fallback?: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : fallback; };
@@ -24,6 +25,8 @@ const pct = (x: number) => `${(100 * x).toFixed(1).padStart(5)}%`;
 const w = loadQualityWeights();
 let failed = false;
 console.log(`quality weights fitted at DERIVE ${w.deriveVersion}, RULES ${w.rulesVersion}`);
+const staples = loadStaples();
+console.log(`staples snapshot ${staples.fetchedAt}, ${Object.keys(staples.cards).length} cards ranked above every other card in their roles (${staples.source})`);
 for (const [role, r] of Object.entries(w.roles)) {
   console.log(`  ${role.padEnd(17)} pairs ${String(r.pairs).padStart(5)}  fit ${pct(r.heldOutAccuracy)}  mana value ${pct(r.baselineAccuracy)}  fallback ${pct(r.fallbackAccuracy)}  ${r.fallback ? "ships FALLBACK" : "ships FIT"}`);
   if (!r.fallback && r.heldOutAccuracy <= r.baselineAccuracy) failed = true;
