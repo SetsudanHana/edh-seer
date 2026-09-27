@@ -24,7 +24,7 @@ import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
 import {
-  answerList, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements,
+  answerList, byConnection, byHint, byPlan, candidatePool, gapList, pairReplacements, stapleList,
   type Candidate, type CutSide, type DeckSide, type GroupState, type IndexCard,
 } from "./suggest.js";
 import { demandForms, demandKeysOf, eventKey, splitKey, supplyForms, supplyKeysOf } from "./partners-core.js";
@@ -123,6 +123,7 @@ async function decodeIndex(lookup: StaticLookup): Promise<IndexCard[]> {
     isLand: land >= 0 && (row.t ?? []).includes(land),
     roles: (row.r ?? []).map((i) => BUILD_CATEGORIES[i]!).filter(Boolean),
     answers: (row.a ?? []).map((i) => POOL_CLASSES[i]!).filter(Boolean),
+    ...(row.g ? { grade: row.g } : {}),
   }));
 }
 
@@ -227,17 +228,22 @@ function verifier(dc: (name: string) => Promise<DeckCard | null>, landTypes: Rea
         }
       }
       if (connections.length === 0) return null;
-      const oracle = y.card.oracleText;
-      // `card` is the corpus document spread under the engine card (`deckCards` above), so its art
-      // is on it: card-level for most cards, per face for a transform or modal two-faced card.
-      const doc = y.card as { artCrop?: string; faces?: { artCrop?: string }[] };
-      const art = doc.artCrop ?? doc.faces?.find((f) => f.artCrop)?.artCrop;
-      return { card: { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}), ...(art ? { art } : {}) }, onPlan, score: 0, feeds, fedBy, feedWeight, hops };
+      return { card: suggestedCard(candidate, y, connections, reasons), onPlan, score: 0, feeds, fedBy, feedWeight, hops };
     } catch (err) {
       console.warn("[suggest] the engine could not read", candidate.name, err);
       return null;
     }
   }
+}
+
+/** The card as a list shows it, with the engine's findings when it has any. */
+function suggestedCard(candidate: IndexCard, y: DeckCard, connections: string[], reasons: SuggestedReason[]): SuggestedCard {
+  const oracle = y.card.oracleText;
+  // `card` is the corpus document spread under the engine card (`deckCards` above), so its art
+  // is on it: card-level for most cards, per face for a transform or modal two-faced card.
+  const doc = y.card as { artCrop?: string; faces?: { artCrop?: string }[] };
+  const art = doc.artCrop ?? doc.faces?.find((f) => f.artCrop)?.artCrop;
+  return { name: candidate.name, slug: candidate.slug, identity: candidate.identity, mv: candidate.mv, connections, reasons, ...(oracle ? { oracle } : {}), ...(art ? { art } : {}) };
 }
 
 /** Verify a shortlist against EVERY nonland deck card, re-rank what the engine agrees with on the
@@ -413,7 +419,10 @@ export async function suggestForDeck(input: {
 
   const buildRanked = groups
     .filter((g) => g.target > 0 && g.count < g.target)
-    .map((g) => [g.name, shortlist(gapList(pool, g.leaves, g.costBand, Infinity), (g.target - g.count + SPARES) * SHORTLIST, g.costBand), g.target - g.count + SPARES, g.costBand] as const);
+    .map((g) => {
+      const n = g.target - g.count + SPARES;
+      return [g.name, shortlist(gapList(pool, g.leaves, g.costBand, Infinity), n * SHORTLIST, g.costBand), n, g.costBand, stapleList(index, g.leaves, g.costBand, n, admissible)] as const;
+    });
   const answersRanked = (report.deckMath?.answers ?? [])
     // ONLY A CLASS WITH NO ANSWER AT ALL, the one the page's finding names (owner, 2026-09-26: the
     // five-per-kind target asked every deck for answers). One card fills it; the spares give a choice.
@@ -449,7 +458,7 @@ export async function suggestForDeck(input: {
   const shown = unique([
     ...planRanked, ...buildRanked.flatMap(([, l]) => l), ...answersRanked.flatMap(([, l]) => l),
     ...synergyRanked.flatMap(([, l]) => l), ...pairsRanked.map((p) => p.add),
-  ].map((c) => c.card.name));
+  ].map((c) => c.card.name).concat(buildRanked.flatMap(([, , , , st]) => st.map((c) => c.name))));
   await lookup.prefetch(shown.map(normalizeName));
   const verify = verifier(dc, deckLandTypes(deckDcs), axis);
   const nonland = physical.filter((n) => !atName.get(n)?.isLand);
@@ -457,7 +466,30 @@ export async function suggestForDeck(input: {
   const out: DeckSuggestions = { build: {}, answers: {}, synergy: {}, plan: [], pairs: [], routes: [] };
   // WHAT EACH CARD COUNTS AS, on the row: the finding names the group, and the row has to say this
   // card is one of them before its connections argue it is the right one.
-  for (const [name, list, limit, band] of buildRanked) out.build[name] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, fills: name }));
+  //
+  // A STAPLE LEADS THE LIST (owner ruling 2026-09-27, #534): the tuner offered Carnival of Souls, The
+  // Sackville-Bagginses, Starting Column and Howlsquad Heavy would take none of them and "go find
+  // 2-mana rocks myself". Staple-grade cards the engine joins come first with their reasons, then
+  // the staples it does not, then the synergy-only picks.
+  const isStaple = (c: SuggestedCard): boolean => (atName.get(c.name)?.grade ?? 0) > 0;
+  for (const [name, list, limit, band, staples] of buildRanked) {
+    const joined = await verified(list, limit, verify, nonland, band);
+    const plain: SuggestedCard[] = [];
+    for (const st of staples) {
+      if (joined.some((c) => c.name === st.name)) continue;
+      // ONE CARD'S UNREADABLE DATA DROPS THAT CARD, as in `verifier`: a throw here would reject every list.
+      try {
+        const y = await dc(st.name);
+        if (y) plain.push(suggestedCard(st, y, [], []));
+      } catch (err) {
+        console.warn("[suggest] the engine could not read", st.name, err);
+      }
+    }
+    // NO STAPLES, NO REORDER: only a ramp group gets any, and a graded card on another list is there
+    // for that list's job.
+    const ordered = staples.length > 0 ? [...joined.filter(isStaple), ...plain, ...joined.filter((c) => !isStaple(c))] : joined;
+    out.build[name] = ordered.slice(0, limit).map((c) => ({ ...c, fills: name }));
+  }
   for (const [cls, list, limit, band] of answersRanked) out.answers[cls] = (await verified(list, limit, verify, nonland, band)).map((c) => ({ ...c, answers: [cls] }));
   for (const [key, list] of synergyRanked) {
     const cards: SuggestedCard[] = [];

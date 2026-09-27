@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import {
-  candidatePool, planList, gapList, answerList, pairReplacements,
+  candidatePool, planList, gapList, answerList, pairReplacements, stapleList,
   type Candidate, type DeckSide, type GroupState, type IndexCard,
 } from "./suggest.js";
 
@@ -149,3 +149,21 @@ test("cross-job targets the group furthest under by fraction of its target", () 
   expect(out[0]!.add.card.name).toBe("Blasphemous Act");
 });
 
+
+test("stapleList: graded cards filling the leaf, best grade then cheaper, never above the band (#534)", () => {
+  const idx = [
+    card(0, "Rakdos Signet", { identity: ["B", "R"], roles: ["ramp"], mv: 2, grade: 16 }),
+    card(1, "Sol Ring", { identity: [], roles: ["ramp"], mv: 1, grade: 15 }),
+    card(2, "Worn Powerstone", { identity: [], roles: ["ramp"], mv: 3, grade: 11 }),
+    card(3, "Gilded Lotus", { identity: [], roles: ["ramp"], mv: 5, grade: 16 }),
+    card(4, "Cabal Ritual", { identity: ["B"], roles: ["ramp"], mv: 2 }),
+    card(5, "Birds of Paradise", { identity: ["G"], roles: ["ramp"], mv: 1, grade: 12 }),
+    card(6, "Talisman of Dominance", { identity: ["U", "B"], roles: ["ramp"], mv: 2, grade: 16 }),
+    card(7, "Mox Amber", { identity: [], roles: ["ramp"], mv: 0, grade: 16 }),
+  ];
+  const grixis = (c: IndexCard) => c.identity.every((x) => ["U", "B", "R"].includes(x));
+  expect(stapleList(idx, ["ramp"], [2, 3], 3, grixis).map((c) => c.name)).toEqual(["Rakdos Signet", "Talisman of Dominance", "Worn Powerstone"]);
+  expect(stapleList(idx, ["draw"], [2, 3], 3, grixis)).toEqual([]);
+  const powder = card(8, "Serum Powder", { identity: [], roles: ["ramp", "boardWipe"], mv: 3, grade: 16 });
+  expect(stapleList([powder], ["boardWipe"], [3, 5], 3, grixis)).toEqual([]);
+});

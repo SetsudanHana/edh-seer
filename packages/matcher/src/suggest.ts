@@ -18,6 +18,8 @@ export interface IndexCard {
   mv: number;
   roles: string[];
   answers: string[];
+  /** `rampGrade`; absent or 0 when the card is not staple-grade ramp. */
+  grade?: number;
 }
 
 export interface DeckSide {
@@ -102,6 +104,31 @@ export function gapList(
   return [...pool.values()]
     .filter((c) => !exclude.has(c.card.pos) && c.card.roles.some((r) => leaves.includes(r)))
     .sort(bandFirst(costBand)).slice(0, limit);
+}
+
+/** STAPLE-GRADE CARDS FOR A SHORT BUILD GROUP (owner ruling 2026-09-27, #534): the index's cards
+ *  that fill one of its leaves and carry a `grade`, best grade first, then cheaper. The partner pool
+ *  cannot hold them -- a Signet joins no deck card -- so a gap list drawn only from it offered
+ *  Inalla four off-plan cards. Nothing above the group's cost band, and THE BAND FIRST: cheapest-first
+ *  filled Inalla's list with Mox Amber, Mox Diamond and Mox Jasper, whose conditions the grade cannot
+ *  read (measured on the scratch build 2026-09-27).
+ *
+ *  CEILING: only ramp carries a grade (`rampGrade`), so only a short ramp group gets staples.
+ *  CEILING: MV 3 IS NAME ORDER. At grade 16, MV 2 is 28 of 33 EDHREC top-list cards and MV 3 is 26
+ *  of 148 -- nothing derived tells Commander's Sphere from a Bobblehead. Kept by owner ruling
+ *  2026-09-27 (MV 3 after MV 2, the list stays full); the upgrade is an MV-3 feature measured
+ *  against the same label (`research/matcher/ramp-staples.ts`). */
+export function stapleList(
+  index: readonly IndexCard[], leaves: readonly string[], costBand: readonly [number, number], limit: number,
+  admissible: (c: IndexCard) => boolean,
+): IndexCard[] {
+  return index
+    // THE GRADE IS A RAMP GRADE: Serum Powder taps for {C} and also files as a board wipe, and a
+    // leaf test alone put it on the Board wipes list (scratch build 2026-09-27).
+    .filter((c) => (c.grade ?? 0) > 0 && leaves.includes("ramp") && c.roles.includes("ramp") && c.mv <= costBand[1] && admissible(c))
+    .sort((a, b) => Number(inBand({ card: b } as Candidate, costBand)) - Number(inBand({ card: a } as Candidate, costBand))
+      || b.grade! - a.grade! || a.mv - b.mv || a.name.localeCompare(b.name, "en"))
+    .slice(0, limit);
 }
 
 /** A MISSING ANSWER CLASS'S CARDS: those that answer it, ranked as a gap. */

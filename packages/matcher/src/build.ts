@@ -606,6 +606,51 @@ export function rampResilience(cards: DeckCard[]): RampResilience {
   return total > 0 ? { ...out, landShare: out.land / total } : out;
 }
 
+/** A tap cost, alone or after generic mana: "{T}" and a Signet's "{1}, {T}". */
+const TAP_COST = /^(?:\{(\d+)\},\s*)?\{T\}$/;
+
+/** HOW MUCH A PLAYER WOULD TAKE THIS AS RAMP WITH NO SYNERGY TO ARGUE FOR IT, 0 = not staple-grade
+ *  (owner ruling 2026-09-27, #534). A short-on-ramp list drawn only from the partner pool offered
+ *  Inalla four cards no Wizards player would take: a plain rock joins nothing, so it never entered.
+ *
+ *  STAPLE-GRADE is an activated mana ability paid for by tapping -- plus generic mana it more than
+ *  returns -- usable every turn cycle. That keeps 19 of the 22 EDHREC top-list ramp cards at MV 2 in
+ *  Grixis and drops 139 of the 215 (`research/matcher/ramp-staples.ts`): Ashnod's Altar (a sacrifice
+ *  cost), Carnival of Souls (triggered), Akki Rockspeaker (once), Bog Witch (a discard), and any
+ *  "activate only if" (Flywheel Racer, Mox Jasper) or granted in quotes (Cryptolith Rite).
+ *
+ *  THE GRADE ORDERS THE SURVIVORS, each feature worth more than all after it: unrestricted mana,
+ *  untapped on entry, not a creature (`rampResilience`'s reason), coloured. Measured on Grixis MV
+ *  2-3: 8 of the top 10 are top-list staples. EDHREC is the LABEL, never an input (owner: derive it).
+ *
+ *  CEILING: a land-fetch spell (Cultivate), a ritual and a Treasure maker score 0. They are ramp,
+ *  and staples in green, but "taps for mana" cannot see them; a grade for them is its own tier. */
+export function rampGrade(dc: DeckCard): number {
+  if (/\bland\b/i.test(dc.card.typeLine)) return 0;
+  const tapRamp = (dc.tags?.abilities ?? []).some((a) => {
+    if (a.kind !== "activated" || a.effect?.kind !== "mana-generation" || a.repeats !== "per-cycle") return false;
+    const m = TAP_COST.exec(String(a.cost ?? ""));
+    return m !== null && Number(a.amount ?? 0) > Number(m[1] ?? 0);
+  });
+  if (!tapRamp) return 0;
+  const { patterns } = loadRules();
+  const o = dc.card.oracleText ?? "";
+  const has = (p: string, text = o) => new RegExp(patterns[p]!, "i").test(text);
+  // A CONDITION ON THE ABILITY is not a rock: Flywheel Racer taps only while crewed, Mox Jasper only
+  // beside a Dragon. The tags carry no condition on an activated ability, so the printed text does.
+  if (has("activateOnlyIf")) return 0;
+  // A GRANTED ABILITY IS ANOTHER PERMANENT'S: Cryptolith Rite's creatures and Lithoform Blight's land
+  // tap for the mana, and the deriver files the quoted ability on the card that grants it. The rock
+  // has to print its own "{T}: Add" outside quotes.
+  if (!/\{T\}[^.:"]*:\s*add\b/i.test(o.replace(/"[^"]*"/g, ""))) return 0;
+  const addLines = o.split("\n").filter((l) => /\badd\b/i.test(l)).join("\n");
+  // `spendOnly` is goldfish.ts's RESTRICTED as data (Powerstone: "This mana can't be spent ...").
+  // `entersTappedEver`, not the land rules' `entersTapped`: that one forgives "tapped unless", and
+  // Star Compass sometimes enters tapped, which is worse than a rock that never does.
+  return 1 + 8 * Number(!has("spendOnly")) + 4 * Number(!has("entersTappedEver"))
+    + 2 * Number(!/\bcreature\b/i.test(dc.card.typeLine)) + Number(has("colouredMana", addLines));
+}
+
 export interface BuildResult {
   /** 0–5: weighted mean of per-PARENT attainment (a parent with target 0 would be excluded; none
    *  is, today) plus lands, scored on its own band. */

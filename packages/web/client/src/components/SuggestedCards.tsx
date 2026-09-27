@@ -55,7 +55,8 @@ function Candidate({ c }: { c: SuggestedCard }) {
 
 /** THE CARDS UNDER A FINDING, OR IN "STRENGTHEN WHAT WORKS" (spec §3, AO4). `cards === undefined`
  *  is the wait: the list computes after the report paints, and the wait is said at full strength --
- *  loading is not disabled. An empty list says so rather than padding with staples. */
+ *  loading is not disabled. An empty list says so. A short ramp list does lead with staple-grade
+ *  cards (`rampGrade`, #534), and those carry no engine sentence: "Counts as ramp" is their why. */
 export function SuggestedCards({ cards, empty, label }: {
   cards: readonly SuggestedCard[] | undefined;
   empty: string;
