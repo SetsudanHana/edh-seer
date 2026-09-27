@@ -1,14 +1,14 @@
 /** THE SCREENSHOTS IN THE README AND ON /how-it-works, REGENERATED FROM THE PRODUCT.
  *
- *  Those four images are the first thing a new reader sees, and a picture of last month's UI is a
+ *  Those six images are the first thing a new reader sees, and a picture of last month's UI is a
  *  claim about the product that is no longer true -- the same failure the figures on those pages
  *  are tested against. So the rule (CONTRIBUTING.md, "Screenshots") is: a change that alters what
  *  one of these frames shows re-runs this script in the same PR. This script is what makes that
  *  a one-line step rather than an afternoon of cropping.
  *
  *    npm run build:client -w @edh-seer/web
- *    npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
- *    npm run screenshots -w @edh-seer/web                    # writes the four .webp files
+ *    (cd packages/web && npx vite preview --config client/vite.config.ts --port 5180) &
+ *    npm run screenshots -w @edh-seer/web                    # writes the six .webp files
  *    npm run screenshots -w @edh-seer/web -- --base http://localhost:5173
  *
  *  HERE AND NOT UNDER `research/`: it writes files the site ships, which is what a pipeline script
@@ -39,12 +39,20 @@ const localData = args.includes("--local-data");
 type Frame = { file: string; width: number; height: number; quality: number };
 const FRAMES = {
   orbit: { file: "shot-orbit.webp", width: 1280, height: 740, quality: 0.82 },
-  pairs: { file: "shot-pairs.webp", width: 1040, height: 640, quality: 0.85 },
+  pairs: { file: "shot-pairs.webp", width: 1040, height: 356, quality: 0.85 },
   improve: { file: "shot-improve.webp", width: 1040, height: 640, quality: 0.85 },
-  mana: { file: "shot-mana.webp", width: 640, height: 394, quality: 0.85 },
+  mana: { file: "shot-mana.webp", width: 1296, height: 240, quality: 0.85 },
+  // The pages beyond the report, taken at a taller viewport so each fits in one frame.
+  commander: { file: "shot-commander.webp", width: 1408, height: 1290, quality: 0.8 },
+  precon: { file: "shot-precon.webp", width: 1408, height: 900, quality: 0.8 },
 } satisfies Record<string, Frame>;
 
-/** PNG from Playwright, WebP from the browser's own encoder: no image library in the repo for four
+/** Krenko again for the commander page, so the README's pictures follow one commander; and the
+ *  newest precon for the precon page. */
+const COMMANDER = "/commanders/krenko-mob-boss";
+const PRECON = "/precons/multiverse-reforged-reality-fracture-commander";
+
+/** PNG from Playwright, WebP from the browser's own encoder: no image library in the repo for six
  *  files a quarter. */
 async function toWebp(page: Page, png: Buffer, quality: number): Promise<Buffer> {
   const url = await page.evaluate(async ([data, q]) => {
@@ -104,11 +112,14 @@ await page.waitForLoadState("networkidle");
 // in the cards a player knows it by.
 // Its card images load lazily, so the frame is scrolled to and waited out before it is taken.
 await page.locator("h3:text-is('What your deck does')").first().scrollIntoViewIfNeeded();
+// One row per theme since the game plan was folded (2026-09-27); the first, biggest theme is opened
+// so the frame shows the cards behind it as well as the bars.
+await page.locator("section[aria-labelledby='plan-themes'] [data-testid='theme-row']").first().click();
+await page.waitForTimeout(500);
 await page.waitForFunction(() => {
-  // The frame holds the first theme: its key cards, and the chips under them. `complete` is also
-  // true of an image that failed, so a missing picture cannot stall the capture.
-  const first = document.querySelector("section[aria-labelledby='plan-themes'] article");
-  return !!first && [...first.querySelectorAll("img")].every((i) => i.complete);
+  // `complete` is also true of an image that failed, so a missing picture cannot stall the capture.
+  const s = document.querySelector("section[aria-labelledby='plan-themes']");
+  return !!s && [...s.querySelectorAll("img")].filter((i) => i.getBoundingClientRect().top < innerHeight).every((i) => i.complete);
 }, undefined, { timeout: 30_000 });
 const plan = await origin(page, "h3:text-is('What your deck does')");
 await save(page, FRAMES.pairs, { x: plan.x - 12, y: plan.y - 8 });
@@ -121,9 +132,10 @@ await page.waitForFunction(() => [...document.querySelectorAll("#fix img")]
   .filter((i) => i.getBoundingClientRect().top < innerHeight).every((i) => (i as HTMLImageElement).complete), undefined, { timeout: 30_000 });
 const improve = await origin(page, "h2:text-is('How to improve it')");
 await save(page, FRAMES.improve, { x: improve.x - 12, y: improve.y - 12 });
-// The mana frame is the "asks for / will have" chart alone: the one picture in that chapter.
-const chart = await origin(page, "text=What it asks for, and what it will have");
-await save(page, FRAMES.mana, { x: chart.x - 8, y: chart.y - 10 });
+// The mana frame is the chapter's lead: its heading and the five answers (owner, 2026-09-27: the
+// panels fold behind "Show the numbers", so the chart that used to be this frame is no longer seen).
+const mana = await origin(page, "section#mana h2");
+await save(page, FRAMES.mana, { x: mana.x - 12, y: mana.y - 12 });
 
 // The commander's orbit, in the Game plan chapter: every card Krenko works with, grouped by what
 // the link is. TAKEN FROM THE VIEWPORT, NOT THE FULL PAGE: a full-page capture resizes the page,
@@ -141,6 +153,22 @@ const orbitBox = await page.locator("h3:text-is('What your commander works with'
   return { x: Math.round(r.left), y: Math.round(r.top) };
 });
 await save(page, FRAMES.orbit, { x: orbitBox.x - 16, y: orbitBox.y - 12 }, false);
+
+// THE PAGES BEYOND THE REPORT: every commander and every precon has one. Both hold an orbit, so
+// both are taken from the viewport after its entrance, like the frame above, at a viewport tall
+// enough to hold the frame under the site header.
+await page.setViewportSize({ width: 1440, height: 1440 });
+async function pageFrame(path: string, ready: string, frame: Frame): Promise<void> {
+  await page.goto(base + path, { waitUntil: "networkidle" });
+  await page.waitForSelector(ready, { timeout: 60_000 });
+  await page.waitForFunction(() => [...document.querySelectorAll("#root img")]
+    .filter((i) => i.getBoundingClientRect().top < innerHeight).every((i) => (i as HTMLImageElement).complete), undefined, { timeout: 30_000 });
+  await page.waitForTimeout(4000);
+  const below = await page.locator(".site-header").first().evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+  await save(page, frame, { x: 16, y: below + 8 }, false);
+}
+await pageFrame(COMMANDER, "h2:text-is('Works well with')", FRAMES.commander);
+await pageFrame(PRECON, "h2:has-text('swaps')", FRAMES.precon);
 
 await ctx.unrouteAll({ behavior: "ignoreErrors" });
 await browser.close();

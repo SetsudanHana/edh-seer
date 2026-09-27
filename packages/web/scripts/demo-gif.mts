@@ -2,8 +2,9 @@
  *  the product.
  *
  *    npm run build:client -w @edh-seer/web
- *    npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
+ *    (cd packages/web && npx vite preview --config client/vite.config.ts --port 5180) &
  *    npm run demo-gif -w @edh-seer/web                       # writes docs/images/demo.gif
+ *    npm run demo-gif -w @edh-seer/web -- --story browse     # writes docs/images/browse.gif
  *
  *  The same setup as `docs-screenshots.mts`, and the same rule (CONTRIBUTING.md, "Screenshots"): a
  *  change that alters what the demo shows re-records it in the same PR. Card data comes from the
@@ -23,7 +24,9 @@ import gifenc from "gifenc";
 
 const { GIFEncoder, quantize, applyPalette } = gifenc;
 const ROOT = join(import.meta.dirname, "..", "..", "..");
-const OUT = join(ROOT, "docs", "images", "demo.gif");
+/** `--story browse` records the second GIF: the pages beyond the report. */
+const STORY = process.argv.includes("--story") ? process.argv[process.argv.indexOf("--story") + 1]! : "deck";
+const OUT = STORY === "browse" ? join(ROOT, "docs", "images", "browse.gif") : join(ROOT, "docs", "images", "demo.gif");
 const DECK = join(ROOT, "packages", "cli", "decks", "krenko-mob-boss.txt");
 
 const args = process.argv.slice(2);
@@ -132,8 +135,11 @@ async function scroll(by: number, steps: number): Promise<void> {
   }
 }
 
-// --- the storyboard ----------------------------------------------------------------------------
+const top = (sel: string) => page.locator(sel).first().evaluate((el) => el.getBoundingClientRect().top);
 
+// --- the storyboards ---------------------------------------------------------------------------
+
+async function deckStory(): Promise<void> {
 await page.goto(base + "/", { waitUntil: "networkidle" });
 await drawCursor();
 await hold(900);
@@ -159,7 +165,6 @@ await hold(1600);
 // the middle, then the deck's themes and what to fix.
 await scroll(420, 6);
 await hold(1400);
-const top = (sel: string) => page.locator(sel).first().evaluate((el) => el.getBoundingClientRect().top);
 await scroll((await top("h3:text-is('What your commander works with')")) - 130, 10);
 // The ring's entrance plays as it arrives, and the dots run along its lines.
 await page.waitForTimeout(1200);
@@ -167,17 +172,69 @@ await hold(2400);
 // The disc's own circle: the group's box takes in its name too, and its centre can be empty ring.
 const disc = "svg[role='group'] g[role='button'][aria-label='Goblin Warchief'] circle";
 await click(disc);
+await page.waitForTimeout(600);
+await drawCursor();
+await hold(2800);
+// The tap opened the card in the drawer: its text, what it works with, and where the report names
+// it. Closed again before the scroll moves on.
+await page.keyboard.press("Escape");
 await page.waitForTimeout(400);
 await drawCursor();
-await hold(2000);
-await click("button:has-text('Put Goblin Warchief in the middle')");
-await page.waitForTimeout(1400);
+await hold(900);
+await scroll((await top("h3:text-is('What your deck does')")) - 130, 8);
+await hold(1200);
+// One row per theme; the biggest opens on the cards that make it work.
+await click("section[aria-labelledby='plan-themes'] [data-testid='theme-row']");
+await page.waitForTimeout(600);
 await drawCursor();
 await hold(2600);
-await scroll((await top("h3:text-is('What your deck does')")) - 130, 8);
-await hold(2200);
 await scroll((await top("h2:text-is('How to improve it')")) - 150, 10);
 await hold(2400);
+}
+
+/** THE PAGES BEYOND THE REPORT: the precons, one precon's swaps, then the site search to a
+ *  commander's page and the cards that work with it. No deck is pasted. */
+async function browseStory(): Promise<void> {
+  await page.goto(base + "/precons/", { waitUntil: "networkidle" });
+  await page.waitForSelector("a[href='/precons/multiverse-reforged-reality-fracture-commander']", { timeout: 60_000 });
+  await drawCursor();
+  await hold(1400);
+  await click("a[href='/precons/multiverse-reforged-reality-fracture-commander']");
+  await page.waitForSelector("h2:has-text('swaps')", { timeout: 60_000 });
+  await page.waitForLoadState("networkidle");
+  // The orbit's entrance plays as the page arrives.
+  await page.waitForTimeout(1200);
+  await drawCursor();
+  await hold(2600);
+  await scroll((await top("h2:has-text('swaps')")) - 110, 10);
+  await hold(3000);
+
+  // The site search: a few letters, the suggestions, and the commander picked from them.
+  await click("input[aria-label='Find a card']");
+  for (const ch of "Krenko") {
+    await page.keyboard.type(ch);
+    await page.waitForTimeout(120);
+    await frame(110);
+  }
+  await page.waitForSelector("#site-search-list [role='option']", { timeout: 30_000 });
+  await page.waitForTimeout(300);
+  await hold(1200);
+  await click("#site-search-list [role='option']:has-text('Krenko, Mob Boss')");
+  await page.waitForSelector("nav[aria-label='Surface']", { timeout: 60_000 });
+  await page.waitForLoadState("networkidle");
+  await drawCursor();
+  await hold(1800);
+  await click("nav[aria-label='Surface'] a:has-text('As a commander')");
+  await page.waitForSelector("h2:text-is('Works well with')", { timeout: 60_000 });
+  await page.waitForLoadState("networkidle");
+  await drawCursor();
+  await hold(1200);
+  await scroll((await top("h2:text-is('Works well with')")) - 110, 8);
+  await page.waitForTimeout(1500);
+  await hold(3200);
+}
+
+await (STORY === "browse" ? browseStory() : deckStory());
 
 await ctx.unrouteAll({ behavior: "ignoreErrors" });
 await browser.close();
@@ -193,4 +250,4 @@ gif.finish();
 mkdirSync(join(ROOT, "docs", "images"), { recursive: true });
 writeFileSync(OUT, gif.bytes());
 const total = frames.reduce((s, f) => s + f.delay, 0);
-console.log(`demo.gif  ${OUT_W}x${OUT_H}  ${frames.length} frames  ${(total / 1000).toFixed(1)}s  ${(gif.bytes().length / 1024 / 1024).toFixed(2)} MB`);
+console.log(`${STORY === "browse" ? "browse.gif" : "demo.gif"}  ${OUT_W}x${OUT_H}  ${frames.length} frames  ${(total / 1000).toFixed(1)}s  ${(gif.bytes().length / 1024 / 1024).toFixed(2)} MB`);
