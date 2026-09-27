@@ -2,7 +2,6 @@ import { render, screen, fireEvent, within, cleanup } from "@testing-library/rea
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { CardDrawerProvider, CardName, ReasonText, usePinned } from "./card-drawer.js";
-import { DeckIdentity } from "./DeckIdentity.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ReportChapters } from "./ReportChapters.js";
@@ -23,19 +22,6 @@ import { HighSynergyCards } from "./HighSynergyCards.js";
 import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
 import { SAMPLE } from "../fixtures.js";
 
-test("DeckIdentity counts the deck's thing under the heading that names it", () => {
-  render(<DeckIdentity cohesion={SAMPLE.report.cohesion} thing={{
-    theme: "creatures entering", tag: "enters:creature", count: 39, cards: [],
-    fromCommandZone: ["Samut, the Driving Force"], turn: 3, k: 2, probability: 0.96,
-  }} />);
-  // T7: the count moved into the share line above, which has the denominator this one lacked.
-  // What is left here is the half a share cannot say -- whether you will have drawn them in time.
-  // "In your library": this count leaves the commander out, and the share above does not.
-  expect(screen.getByText(/96% chance to draw 2 of the 39 Tokens cards in your library by turn 3/)).toBeInTheDocument();
-  // A command-zone member is available every game, so it is named beside the count and never
-  // folded into a draw probability.
-  expect(screen.getByText(/and Samut, the Driving Force is in the command zone every game/)).toBeInTheDocument();
-});
 
 // A CAVEAT THAT OUTLIVED THE DEFECT IT DESCRIBED. This panel printed "land-fetch ramp like Cultivate
 // is not counted, so this reads low" -- deleted from the CLI when L4a made the figure a SIMULATION
@@ -45,125 +31,7 @@ test("DeckIdentity counts the deck's thing under the heading that names it", () 
 // N6: ONE RENDERER ACROSS THE SURFACES. The range reads "55% – 62%" here exactly as it does in the
 // CLI and in `CardList` -- this panel used to print its own compact "55–62%", which is how a
 // measured zero came to read "1%" in one surface and "0%" in another.
-test("the commander's cast odds are a RANGE, and a refused cost is an em dash and never 0%", () => {
-  const { rerender } = render(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
-    { name: "Samut, the Driving Force", turn: 6, castable: { low: 0.55, high: 0.62 }, mana: { low: 0.56, high: 0.63 } },
-  ]} />);
-  // SEVEN POINTS APART IS THE POLICY BARELY MATTERING, so one number (owner's call, 2026-08-26) --
-  // and the CLI reads the same, which is what the shared renderer is for.
-  expect(screen.getByText(/55% by turn 6/)).toBeInTheDocument();
-  expect(screen.queryByText(/55% – 62%/)).not.toBeInTheDocument();
-  expect(screen.queryByText(/is not counted/)).not.toBeInTheDocument();
-  // T8: THE PLAY POLICY IS ONE CLICK AWAY, NOT BODY PROSE -- and `Explain` is a `<details>`, so it
-  // survives on touch, which is the reason a `title` was refused here in the first place. jsdom
-  // renders a closed `<details>`'s children, so presence alone would pass either way: the assertion
-  // that MATTERS is that the sentence has a `<details>` ancestor.
-  expect(screen.getByText("what the range means")).toBeInTheDocument();
-  expect(screen.getByText(/hold up two mana/).closest("details")).not.toBeNull();
-  // ONE commander needs no name prefix; a partner pair does, or the two rows cannot be told apart.
-  expect(screen.queryByText(/Samut, the Driving Force: /)).not.toBeInTheDocument();
-  rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
-    { name: "Omarthis", turn: 2, castable: null, mana: null, refused: "X cost — the mana value on the card is not what you pay" },
-  ]} />);
-  expect(screen.getByText(/— \(X cost/)).toBeInTheDocument();
-  expect(screen.queryByText(/\b0%/)).not.toBeInTheDocument();
 
-  // A REFUSAL IS AN EM DASH; A MEASURED ZERO IS 0%. 20,000 trials of no, on a cost the model CAN
-  // price, is a measurement -- printing "1%" would claim the cast is possible (roadmap N6).
-  rerender(<DeckIdentity cohesion={SAMPLE.report.cohesion} commanderCast={[
-    { name: "Kozilek", turn: 10, castable: { low: 0, high: 0 }, mana: { low: 0.4, high: 0.5 } },
-  ]} />);
-  expect(screen.getByText(/0% by turn 10/)).toBeInTheDocument();
-});
-
-// DELETED: "DeckIdentity shows the headline theme" asserted only that DeckIdentity renders
-// cohesion.theme as its own <h2>. That contract moved to RecognitionPanel (round 2 of the
-// Overview reorder) so the page names the deck once, not twice; DeckIdentity no longer prints
-// the theme at all, so the assertion had nothing left to trim down to.
-
-// A NAMING LAYER MAY DECLINE (roadmap A15). Under `THEME_NAME_FLOOR` the headline is carried by one
-// or two cards -- `venser` reads 0.02 across the calibration corpus -- so the title says so and the
-// tag drops to the subtitle rather than vanishing: it IS the deck's best-supported theme.
-// THE HEADING IS THE ENGINE SLOT, so the sentence beneath it must not restate it -- a live browser
-// showed "creatures dying" as the heading and "fueled by creatures dying (46% of nonlands)" one line
-// below. Win route and means are what the heading does NOT already say.
-test("DeckIdentity's sentence does not repeat the heading's own theme", () => {
-  render(
-    <DeckIdentity
-      cohesion={SAMPLE.report.cohesion}
-      identity={{ win: "wins by damage or drain (20 cards)", engine: "fueled by Tokens (46% of nonlands)", means: "18 interaction cards against a target of 10" }}
-    />,
-  );
-  expect(screen.getByText(/wins by damage or drain/)).toBeTruthy();
-  expect(screen.getByText(/18 interaction cards/)).toBeTruthy();
-  expect(screen.queryByText(/fueled by/)).toBeNull();
-});
-
-test("DeckIdentity declines to name a deck whose theme is not dominant", () => {
-  render(<DeckIdentity cohesion={{ ...SAMPLE.report.cohesion!, dominant: false, theme: "proliferate", name: "Proliferate", score: 0.02 }} />);
-  expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("No dominant theme");
-  // The player name, as everywhere else the theme is named.
-  expect(screen.getByText(/strongest: Proliferate/)).toBeTruthy();
-});
-
-// MOVED, NOT DELETED (I4, whole-branch review, 2026-09-01). "DeckIdentity names the deck when
-// dominant is absent" pinned a real TRI-STATE -- an ABSENT `dominant` field means a caller written
-// before the field existed, never a negative opinion -- and the behaviour is alive at
-// `RecognitionPanel.tsx` (`cohesion.dominant !== false`), which is exactly what a future
-// `!cohesion.dominant` "simplification" would break. The assertion now lives in
-// `RecognitionPanel.test.tsx`, with the headline it follows.
-
-test("DeckIdentity renders nothing when there's no cohesion", () => {
-  const { container } = render(<DeckIdentity cohesion={null} />);
-  expect(container).toBeEmptyDOMElement();
-});
-
-const cohesionDraw = {
-  theme: "Draw", // a functional role, deliberately NOT an archetype
-  name: "Card draw",
-  tag: "draw",
-  secondary: null,
-  secondaryName: null,
-  secondaryTag: null,
-  score: 0.4,
-  onThemeCount: 25,
-  nonlandCount: 63,
-  label: "concentrated",
-} as NonNullable<typeof SAMPLE.report.cohesion>;
-
-// THE ARCHETYPE SHARES LEFT THIS PANEL (appeal review 2026-09-26): "themes Tokens 40%" beside the
-// cohesion share was a third name for the deck with a third number. The runner-up theme stays, by
-// its player name.
-test("DeckIdentity names the runner-up theme by its player name, and no archetype shares", () => {
-  render(<DeckIdentity cohesion={{ ...cohesionDraw, secondary: "tokens entering", secondaryName: "Tokens" }} />);
-  expect(screen.getByText("also cares about Tokens")).toBeInTheDocument();
-  expect(screen.queryByText(/themes Tokens/)).toBeNull();
-});
-
-/** T4: "focused · 0.47" was a bucket label beside a bare ratio, and the owner asked what it meant.
- *  It is a SHARE, so both numbers it is the ratio of are printed and a reader can check the fraction
- *  against their own decklist. The word is no longer "focused" either -- the 0-5 deck score one
- *  panel over has its own "Focused" band, and the two scales are unrelated. */
-test("DeckIdentity prints the share with the two numbers it is a ratio of", () => {
-  render(<DeckIdentity cohesion={cohesionDraw} />);
-  expect(screen.getByText("25 of 63 nonland cards support Card draw (40%, concentrated)")).toBeInTheDocument();
-});
-
-/** AND IT NO LONGER EXPLAINS A GAP THAT IS GONE (roadmap T3, 2026-09-03).
- *
- *  This line carried "(4 modal DFCs count as lands)" because the census above it counted FRONT
- *  faces, where a modal DFC is a spell (66 on the example deck), while `cohesion.nonlandCount`
- *  applies the 2026-08-31 ruling that an MDFC is a land (62). `landCount`/`typeSlices` now apply
- *  the same ruling, so the census says 62 too -- and an explanation of a difference the reader can
- *  no longer see is a third wording of one fact. The composition is stated ONCE, by `DeckWaffle`,
- *  on the line that prints the land count.
- *
- *  ASSERTS THE ABSENCE, which is what makes this fail against the version it replaced. */
-test("the theme share states its denominator and nothing about modal DFCs", () => {
-  render(<DeckIdentity cohesion={cohesionDraw} />);
-  expect(screen.getByText("25 of 63 nonland cards support Card draw (40%, concentrated)")).toBeInTheDocument();
-  expect(screen.queryByText(/modal DFC/)).not.toBeInTheDocument();
-});
 
 /** A COLOUR ROW NAMES ITS UNIT, AND STATES ITS TURN ONCE.
  *
@@ -189,13 +57,7 @@ test("a colour row says which end of the fraction the deck is, and prints its tu
 
 // A10's rule: a SPECIFIC primary measures itself, so the family share is the difference between
 // "this deck is broken" and "five Daleks inside a creature deck".
-test("DeckIdentity shows the wider family only when it differs from the primary", () => {
-  const narrow = { ...cohesionDraw, score: 0.08, familyScore: 0.46 };
-  const { rerender } = render(<DeckIdentity cohesion={narrow} />);
-  expect(screen.getByText(/\(46%\) counting related themes/)).toBeInTheDocument();
-  rerender(<DeckIdentity cohesion={{ ...cohesionDraw, familyScore: cohesionDraw.score }} />);
-  expect(screen.queryByText(/counting related themes/)).not.toBeInTheDocument();
-});
+
 
 test("ComboList shows the combo result", () => {
   render(<ComboList combos={SAMPLE.report.combos} />);
@@ -909,7 +771,7 @@ test("each role tick names the theme rows it was blended from, and the source li
   render(<DeckGauges data={SAMPLE} />);
   expect(screen.getByText("Tokens 8 · Aristocrats 13")).toBeInTheDocument();        // Consistency, blends to the tick's 10
   expect(screen.getByText("Tokens 11 · Aristocrats 8.5")).toBeInTheDocument();      // Interaction
-  expect(screen.getByText(/Ticks blend the Tokens \(60%\) and Aristocrats \(40%\) archetype medians/)).toBeInTheDocument();
+  expect(screen.getByText(/Ticks: what Tokens \(60%\) and Aristocrats \(40%\) decks run/)).toBeInTheDocument();
   expect(screen.queryByText(/Command Zone/)).toBeNull();
   // EDHREC is the sample the thesis was checked on, not the claim (owner, 2026-09-06): named once,
   // in the gloss only, never on a tick or the source line.
@@ -923,7 +785,7 @@ test("with no theme strong enough the ticks say they are the population's, and a
   const fallback = { ...SAMPLE, report: { ...SAMPLE.report, template: { population, targets: population } } };
   const { unmount } = render(<DeckGauges data={fallback} />);
   expect(screen.getAllByText("Archetype median 13").length).toBe(2); // Consistency and Interaction share it
-  expect(screen.getByText(/no archetype is strong enough here/)).toBeInTheDocument();
+  expect(screen.getByText(/Ticks: what the median Commander deck runs/)).toBeInTheDocument();
   unmount();
   const { template: _t, ...withoutTemplate } = SAMPLE.report;
   render(<DeckGauges data={{ ...SAMPLE, report: withoutTemplate }} />);
@@ -933,15 +795,16 @@ test("with no theme strong enough the ticks say they are the population's, and a
 /** THE SHARE AND THE FLOOR, NOT A VERDICT (UX sweep 2026-09-06, D4). "Enchantress" as the headline,
  *  "Enchantress 25%" on the bar, and "no archetype read strongly enough" under the ticks were three
  *  readings of 0.249 against a 0.25 floor. The line now prints both numbers. */
-test("under the floor, the tick line prints the theme's share and the floor it fell under", () => {
+// ONE LINE SINCE 2026-09-27 (owner: "less is more"): the line says what a tick is, and no longer
+// argues why the theme did or did not earn targets of its own.
+test("under the floor, the tick line says the ticks are the median deck's, in one line", () => {
   const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
   const data = { ...SAMPLE, report: { ...SAMPLE.report,
     strategies: [{ name: "enchantress" as const, label: "Enchantress", confidence: 0.249 }],
     template: { population, targets: population, leadFloor: 0.25 } } };
   render(<DeckGauges data={data} />);
-  expect(screen.getByText(/Enchantress is only 24\.9% of this list, and it takes 25% to get targets of its own/)).toBeInTheDocument();
-  expect(screen.queryByText(/Being over is fine/)).toBeNull();
-  expect(screen.getByText(/Going over a tick is fine; the suggestions below say where the spare slots are/)).toBeInTheDocument();
+  expect(screen.getByText(/Ticks: what the median Commander deck runs/)).toBeInTheDocument();
+  expect(screen.queryByText(/Being over is fine|Going over a tick is fine/)).toBeNull();
 });
 
 /** AND THE BAR NEVER ROUNDS UP OVER IT: 0.249 printed "25%" beside that note. */
@@ -3074,7 +2937,7 @@ test("the mana-cost disclosure sits outside the multi-column, so opening it cann
  *  describes are first drawn, and everywhere else shortens to a pointer that still says where the
  *  number came from ("the template asks for 3"). This is the ratchet against it creeping back:
  *  a reader meets the long form once or the page is padding again. */
-test("the convention disclaimer is stated once, and the provenance survives everywhere else", () => {
+test("the tick line is said once, in one line, and the long disclaimers are gone", () => {
   const data = { ...SAMPLE, report: { ...SAMPLE.report, deckMath: DECK_MATH } };
   const { container } = render(<MemoryRouter><ReportChapters data={data} /></MemoryRouter>);
   const text = (container.textContent ?? "").replace(/\s+/g, " ");
@@ -3083,7 +2946,8 @@ test("the convention disclaimer is stated once, and the provenance survives ever
   // what THAT number is ("what the themes run, not what they need"); the Command Zone wording
   // survives only for a report with no `template` at all. Either way: exactly one long form.
   const long = text.match(/a convention, not measured from real decks|what the archetypes? runs?, not what (?:it|they) needs?/g) ?? [];
-  expect(long).toHaveLength(1);
+  expect(long).toHaveLength(0);
+  expect(text.match(/Ticks: /g) ?? []).toHaveLength(1);
 
   // And the phrasing it replaced is gone entirely -- "someone typed" was the tell.
   expect(text).not.toMatch(/someone typed/);
@@ -3143,17 +3007,6 @@ test("a role leaf draws its share, at the width it prints", () => {
   expect(withBar).toBeGreaterThan(0);
 });
 
-/** T5 and T18a (owner call 2026-09-03: mana pips everywhere). Three surfaces spelled a colour where
- *  Magic prints a symbol: the identity swatch was a two-tone GRADIENT, the colour rows led with a
- *  bare letter, and the hardest-to-cast rows named a card without ever saying what it costs. */
-test("the colour identity is pips, not a gradient", () => {
-  const { container } = render(
-    <DeckIdentity cohesion={cohesionDraw} colorIdentity={["U", "B", "R"]} />,
-  );
-  // The gradient swatch is gone; no element paints a linear-gradient background any more.
-  expect(container.querySelector('[style*="gradient"]')).toBeNull();
-  expect(container.querySelectorAll('[role="img"][aria-label*="mana"]').length).toBeGreaterThan(0);
-});
 
 test("a hardest-to-cast row shows what the card costs", () => {
   const deckMath = {

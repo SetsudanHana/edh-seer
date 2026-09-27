@@ -5,7 +5,6 @@ import { floorState, bandState, scoreState } from "../lib/deck-gauge.js";
 import { bandScale, type ScoreKind } from "../lib/score-band.js";
 import { Explain } from "./Explain.js";
 import type { RunDiff } from "../lib/run-diff.js";
-import { themePct1 } from "../lib/theme-pct.js";
 
 /** A COUNT AGAINST ITS REFERENCE, AS A FRACTION OF THE TRACK. The target parks at `TARGET_MARK`,
  *  so the bar runs past it when the count clears it and stops short when it does not -- and every
@@ -93,12 +92,15 @@ function BandScale({ kind = "synergy" }: { kind?: ScoreKind }) {
  *  chapter they summarise; the rail one column over already does exactly that, so every one of
  *  these is a figure and only a figure. `Dial` and `Bullet` keep their optional button shape for
  *  any other caller; this panel passes no `onOpen`. */
-export function DeckGauges({ data, diff }: {
+export function DeckGauges({ data, diff, bars = true }: {
   data: AnalyzeResponse;
   /** WHERE THESE TWO NUMBERS WERE LAST RUN (roadmap S9). Only the two LEAD dials take a tick: the
    *  run snapshot carries `synergyOverall` and `buildScore` and nothing else, and giving the input
    *  dials one would mean new snapshot fields for a comparison nobody asked for. */
   diff?: RunDiff | null;
+  /** The Build score's five role bars under its dial. Off in the report, where they open the Roles
+   *  chapter instead (owner, 2026-09-27: one place per fact). */
+  bars?: boolean;
 }) {
   const { report } = data;
   // WHICH CARD THE ANCHOR IS. The figure is computed from the single best-fed card's authority, and
@@ -117,31 +119,6 @@ export function DeckGauges({ data, diff }: {
   // checking our thesis"). The thesis is that an archetype has its own template; the decks the
   // medians were measured on are the sample, and they are named ONCE, in the gloss, never on the
   // tick. An older report without `template` keeps the pre-ruling sentence rather than guessing.
-  const template = report.template;
-  const tickNote = (key?: string): string | undefined => {
-    if (!template || !key) return undefined;
-    const { primary: p, secondary: s } = template;
-    if (!p) return `Archetype median ${template.population[key]}`;
-    if (!s) return `${p.label} median ${p.row[key]}`;
-    return `${p.label} ${p.row[key]} · ${s.label} ${s.row[key]}`;
-  };
-  const share = (w: number) => `${Math.round(w * 100)}%`;
-  // THE NUMBER AND THE FLOOR, NOT A VERDICT (UX sweep 2026-09-06, D4). The headline said
-  // "Enchantress", the bar said "Enchantress 25%", and this line said "no archetype read strongly
-  // enough" -- because 0.249 rounds to 25 and the floor is 0.25 strict. Four reviewers hit it. The
-  // line now prints the share to a decimal and the floor it fell under, so the three agree.
-  const lead = report.strategies?.[0];
-  const underFloor = lead && template?.leadFloor !== undefined
-    // Floored to a decimal, not rounded: 0.2499 must not print as "25.0%, under the 25%".
-    ? `${lead.label} is only ${themePct1(lead.confidence)}% of this list, and it takes ${Math.round(template.leadFloor * 100)}% to get targets of its own`
-    : "no archetype is strong enough here to get targets of its own";
-  const tickSource = !template
-    ? "Ticks are the Command Zone template\u2019s minimums \u2014 a convention, not measured from real decks"
-    : !template.primary
-      ? `Ticks show the median Commander deck: ${underFloor}`
-      : !template.secondary
-        ? `Ticks are the ${template.primary.label} archetype\u2019s median \u2014 what the archetype runs, not what it needs`
-        : `Ticks blend the ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) archetype medians \u2014 what the archetypes run, not what they need`;
   const hasSynergy = report.synergyOverall !== undefined;
   const hasBuild = report.buildScore !== undefined;
   if (parents.length === 0 && !lands && !hasSynergy && !hasBuild) return null;
@@ -277,45 +254,77 @@ export function DeckGauges({ data, diff }: {
               * tiles in ~620px and cut three names ("Consis...", "Interac...", "Board w..."). A tile
               * needs ~150px for "Consistency" and its count: three columns from 480px of group
               * width, five from 800px. */}
-            <div className="@container w-full">
-            <div className="build-inputs-grid grid grid-cols-2 @min-[480px]:grid-cols-3 @min-[800px]:grid-cols-5 gap-3 w-full">
-              {parents.map((p) => (
-                <Bullet
-                  key={p.name}
-                  name={p.name}
-                  value={String(p.count)}
-                  reading={floorState(p.count, p.target)}
-                  fill={countFill(p.count, p.target)}
-                  mark={p.target > 0 ? TARGET_MARK : undefined}
-                  note={tickNote(p.key)}
-                />
-              ))}
-              {lands ? (
-                <Bullet
-                  name="Lands"
-                  value={String(lands.actual)}
-                  reading={bandState(lands.actual, lands.target)}
-                  fill={countFill(lands.actual, lands.target)}
-                  mark={lands.target > 0 ? TARGET_MARK : undefined}
-                />
-              ) : null}
-            </div>
-            </div>
-            {/* WHOSE FLOOR IT IS, SAID WHERE THE FLOOR IS DRAWN (roadmap S4). Every tick above is
-              *  the Command Zone template's number, and the panel now marks a deck against it on
-              *  the report's first screen -- so the one thing a reader needs before acting on a
-              *  "3 short" is that nobody measured it. The sentence already existed twice on this
-              *  site (`CutList`'s slack section, `BuildBenchmarks`'s hate classes) and in neither
-              *  place did it sit beside the mark it qualifies. `Lands` is excepted IN THE WORDS
-              *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
-              *  over real decks, which is also why it is the one two-sided reading here. */}
-            <p className="text-xs text-(--muted) max-w-[52ch]">
-              {tickSource}. Going over a tick is fine; the suggestions below say where the spare slots are
-              {lands ? <>. The land tick is worked out from your own curve</> : null}.
-            </p>
+            {bars ? <RoleBars data={data} /> : (
+              <a href="#roles" className="text-sm text-(--muted) underline underline-offset-2 hover:text-(--foreground)">The five roles behind it are in the Roles chapter</a>
+            )}
           </div>
         ) : null}
       </div>
     </section>
+  );
+}
+
+/** THE FIVE ROLES BEHIND THE BUILD SCORE, as bars against their ticks: the chart that opens the Roles
+ *  chapter (owner, 2026-09-27: "rely more on data visualisation than the text"; one place per fact).
+ *  They sat under the Build dial too, a chapter above the shelves that count the same cards. */
+export function RoleBars({ data }: { data: AnalyzeResponse }) {
+  const { report } = data;
+  const parents = report.buildParents ?? [];
+  const lands = report.deckMath?.lands;
+  const template = report.template;
+  const tickNote = (key?: string): string | undefined => {
+    if (!template || !key) return undefined;
+    const { primary: p, secondary: s } = template;
+    if (!p) return `Archetype median ${template.population[key]}`;
+    if (!s) return `${p.label} median ${p.row[key]}`;
+    return `${p.label} ${p.row[key]} · ${s.label} ${s.row[key]}`;
+  };
+  const share = (w: number) => `${Math.round(w * 100)}%`;
+  // ONE LINE, SAYING WHAT A TICK IS (owner, 2026-09-27: "less is more"). It was four lines on why
+  // the archetype did or did not earn its own targets.
+  const tickSource = !template
+    ? "Ticks: the Command Zone template\u2019s minimums"
+    : !template.primary
+      ? "Ticks: what the median Commander deck runs"
+      : !template.secondary
+        ? `Ticks: what the median ${template.primary.label} deck runs`
+        : `Ticks: what ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) decks run`;
+  if (parents.length === 0 && !lands) return null;
+  return (
+    <div className="flex flex-col gap-3 w-full">
+      <div className="@container w-full">
+      <div className="build-inputs-grid grid grid-cols-2 @min-[480px]:grid-cols-3 @min-[800px]:grid-cols-5 gap-3 w-full">
+        {parents.map((p) => (
+          <Bullet
+            key={p.name}
+            name={p.name}
+            value={String(p.count)}
+            reading={floorState(p.count, p.target)}
+            fill={countFill(p.count, p.target)}
+            mark={p.target > 0 ? TARGET_MARK : undefined}
+            note={tickNote(p.key)}
+          />
+        ))}
+        {lands ? (
+          <Bullet
+            name="Lands"
+            value={String(lands.actual)}
+            reading={bandState(lands.actual, lands.target)}
+            fill={countFill(lands.actual, lands.target)}
+            mark={lands.target > 0 ? TARGET_MARK : undefined}
+          />
+        ) : null}
+      </div>
+      </div>
+      {/* WHOSE FLOOR IT IS, SAID WHERE THE FLOOR IS DRAWN (roadmap S4). Every tick above is
+        *  the Command Zone template's number, and the panel now marks a deck against it on
+        *  the report's first screen -- so the one thing a reader needs before acting on a
+        *  "3 short" is that nobody measured it. The sentence already existed twice on this
+        *  site (`CutList`'s slack section, `BuildBenchmarks`'s hate classes) and in neither
+        *  place did it sit beside the mark it qualifies. `Lands` is excepted IN THE WORDS
+        *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
+        *  over real decks, which is also why it is the one two-sided reading here. */}
+      <p className="text-xs text-(--muted)">{tickSource}{lands ? "; the land tick is from your own curve" : ""}.</p>
+    </div>
   );
 }
