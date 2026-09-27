@@ -1759,19 +1759,20 @@ test("a deck with no combat clock says so rather than naming a turn", () => {
 test("BuildBenchmarks names each win plan's cards, what put them there, and go-wide's payoffs", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // In words (wording review 2026-09-25): 0.52 across two plans is close to an even split.
-  expect(screen.getByTestId("win-plans-headline")).toHaveTextContent(
-    "Spread about evenly across 2 plans (attacking with a wide board and damage or drain), so no one plan has most of the deck's win cards.",
-  );
+  expect(screen.getByTestId("win-plans-headline")).toHaveTextContent("Spread about evenly across 2 plans.");
   const [wide, burn] = screen.getAllByTestId("win-plan");
   expect(wide).toHaveTextContent("Attacking with a wide board12 cards");
-  expect(wide).toHaveTextContent(/Cards that make creature tokens/);
-  expect(wide).toHaveTextContent("Makes the board: Token Maker 1 · Token Maker 2");
-  expect(wide).toHaveTextContent("Turns it into a win: Intangible Virtue");
-  expect(burn).toHaveTextContent("Impact Tremors · Lightning Bolt");
+  // One plan's cards at a time: the first to start with.
+  const detail = () => screen.getByTestId("win-plan-detail");
+  expect(detail()).toHaveTextContent(/Cards that make creature tokens/);
+  expect(detail()).toHaveTextContent("Makes the boardToken Maker 1Token Maker 2");
+  expect(detail()).toHaveTextContent("Turns it into a winIntangible Virtue");
   // Eight names, then the rest on request.
-  expect(wide).not.toHaveTextContent("Token Maker 9");
-  fireEvent.click(within(wide!).getByRole("button", { name: "Show all 12" }));
-  expect(wide).toHaveTextContent("Token Maker 12");
+  expect(detail()).not.toHaveTextContent("Token Maker 9");
+  fireEvent.click(within(detail()).getByRole("button", { name: "Show all 12" }));
+  expect(detail()).toHaveTextContent("Token Maker 12");
+  fireEvent.click(burn!);
+  expect(detail()).toHaveTextContent("Impact TremorsLightning Bolt");
   expect(screen.queryByText(/Concentration/)).toBeNull();
 });
 
