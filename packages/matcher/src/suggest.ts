@@ -20,6 +20,8 @@ export interface IndexCard {
   answers: string[];
   /** `rampGrade`; absent or 0 when the card is not staple-grade ramp. */
   grade?: number;
+  /** Quality percentile per role (name index `q`); only roles that scored. */
+  quality?: Record<string, number>;
 }
 
 export interface DeckSide {

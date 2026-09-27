@@ -148,6 +148,7 @@ async function decodeIndex(lookup: StaticLookup): Promise<IndexCard[]> {
     pos, name: row.name, slug: row.slug, identity: row.identity, mv: row.mv ?? 0,
     isLand: land >= 0 && (row.t ?? []).includes(land),
     roles: (row.r ?? []).map((i) => BUILD_CATEGORIES[i]!).filter(Boolean),
+    ...(row.q ? { quality: Object.fromEntries((row.r ?? []).map((i, j) => [BUILD_CATEGORIES[i]!, row.q![j]!] as const).filter(([role, v]) => role && v >= 0)) } : {}),
     answers: (row.a ?? []).map((i) => POOL_CLASSES[i]!).filter(Boolean),
     ...(row.g ? { grade: row.g } : {}),
   }));
