@@ -5,17 +5,20 @@ import { buildEngineModel } from "../lib/engine-model.js";
 import type { FirstTurns } from "../lib/first-turns.js";
 import { TurnSky } from "./TurnSky.js";
 
-const step = (turn: number, names: string[]) => ({ turn, mana: turn, low: turn, high: turn + 1, castable: names.length, jobs: [{ job: "engine" as never, cards: names.map((name) => ({ name, manaValue: turn })) }] });
-const TURNS: FirstTurns = { nonland: 10, steps: [step(1, ["Cleric 1"]), step(2, ["Cleric 2", "Reducer"]), step(3, ["Payoff A"]), step(4, ["Payoff B"]), step(5, [])] };
+// `castable` counts every spell cheap enough by then, as `firstTurns` does: earlier turns included.
+const step = (turn: number, names: string[], castable: number) => ({ turn, mana: turn, low: turn, high: turn + 1, castable, jobs: [{ job: "engine" as never, cards: names.map((name) => ({ name, manaValue: turn })) }] });
+const TURNS: FirstTurns = { nonland: 10, steps: [step(1, ["Cleric 1"], 1), step(2, ["Cleric 2", "Reducer"], 3), step(3, ["Payoff A"], 4), step(4, ["Payoff B"], 5), step(5, [], 5)] };
 
 test("the sky lights the cards castable by the turn picked, counting earlier turns", () => {
   const { report, graph } = engineDeck();
   render(<TurnSky model={buildEngineModel(report, graph)} turns={TURNS} />);
   // Turn 3 to start: the four cards castable by then.
   expect(screen.getByRole("button", { name: "T3" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByText(/^Turn 3, with 3 mana in a typical game: 4 cards castable by now/)).toBeInTheDocument();
+  // The list's own count (`castable`), and what "castable" means here.
+  expect(screen.getByText(/^Turn 3, with 3 mana in a typical game: 4 spells cheap enough to cast by now, lit \(by cost, not by what is in your hand\)/)).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /Lit: Turn 3/ })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "T1" }));
-  expect(screen.getByText(/^Turn 1, with 1 mana in a typical game: 1 card castable by now/)).toBeInTheDocument();
+  expect(screen.getByText(/^Turn 1, with 1 mana in a typical game: 1 spell cheap enough to cast by now/)).toBeInTheDocument();
 });
 
 test("Play steps through every turn once, on request", async () => {

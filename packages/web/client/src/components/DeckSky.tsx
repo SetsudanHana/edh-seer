@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { deckSky, type Sky, type Star } from "../lib/deck-sky.js";
 import { displayName, type EngineModel } from "../lib/engine-model.js";
+import { whichTheme, type MainTheme } from "../lib/main-theme.js";
 import { CardLinksContext } from "./card-menu.js";
 import { useReducedMotion } from "./OrbitView.js";
 
@@ -18,6 +19,8 @@ import { useReducedMotion } from "./OrbitView.js";
  *  build panel): the chapters provide the deck's engine model, and a panel that finds none draws
  *  no sky. */
 export const SkyContext = createContext<EngineModel | null>(null);
+/** The deck's named themes, so the sky calls a theme what the rest of the report calls it. */
+export const SkyThemeContext = createContext<MainTheme | null>(null);
 
 export interface SkyLight {
   ids: ReadonlySet<string>;
@@ -39,7 +42,20 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
   caption?: string;
   className?: string;
 }) {
-  const sky = useMemo(() => deckSky(model), [model]);
+  // ONE NAME PER THEME ACROSS THE REPORT (persona round, 2026-09-27: the sky said "Enchantments
+  // entering" where the Game plan said "Enchantress" for the same cards). A constellation that IS
+  // the deck's main or second theme takes the name Glance and Game plan give it, by the rule
+  // `PlanThemes` already uses.
+  const main = useContext(SkyThemeContext);
+  const sky = useMemo(() => {
+    const s = deckSky(model);
+    if (main) for (const c of s.clusters) {
+      const g = model.groups.find((x) => x.tag === c.tag);
+      const which = g ? whichTheme(g, main) : null;
+      if (which?.match === "same") c.name = which.name;
+    }
+    return s;
+  }, [model, main]);
   const still = useReducedMotion();
   const links = useContext(CardLinksContext);
   const [theme, setTheme] = useState<number | null>(null);

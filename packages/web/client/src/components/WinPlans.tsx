@@ -43,11 +43,17 @@ export function WinPlans({ wincons }: { wincons: Wincons }) {
   const plan = classes.find((c) => c.class === picked) ?? classes[0];
   const light = useMemo(() => {
     if (!model || !plan) return null;
-    const ids = idsOf(model, [...(plan.cards ?? []), ...(plan.payoffs ?? [])]);
+    // THE PLAN'S OWN COUNT, THEN ITS FINISHERS (persona round, 2026-09-27: "8 cards" over the plan
+    // and "its 9 cards lit" under the sky). The finishers are counted apart, as the plan lists them.
+    const cards = idsOf(model, plan.cards ?? []);
+    const payoffs = new Set([...idsOf(model, plan.payoffs ?? [])].filter((id) => !cards.has(id)));
+    const ids = new Set([...cards, ...payoffs]);
     if (!ids.size) return null;
     const lines = linksWithin(model, ids);
     const name = phrase(plan.class);
-    return { ids, lines, label: `${name.charAt(0).toUpperCase()}${name.slice(1)}: its ${plural(ids.size, "card")} lit${lines.length ? `, and the ${plural(lines.length, "link")} between them in gold` : ", with no links between them"}.` };
+    const missing = plan.count - cards.size;
+    const what = `${plural(cards.size, "card")}${payoffs.size ? ` and ${plural(payoffs.size, "finisher")}` : ""}`;
+    return { ids, lines, label: `${name.charAt(0).toUpperCase()}${name.slice(1)}: its ${what} lit${missing > 0 ? ` (${missing} of its ${plural(plan.count, "card")} ${missing === 1 ? "is a token or a card" : "are tokens or cards"} the sky does not draw)` : ""}${lines.length ? `, and the ${plural(lines.length, "link")} between them in gold` : ", with no links between them"}.` };
   }, [model, plan]);
   if (!classes.length || !plan) return null;
   const [first, ...rest] = classes;

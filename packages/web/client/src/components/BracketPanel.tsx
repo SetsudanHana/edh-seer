@@ -60,9 +60,13 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
       const ring = [...idsOf(model, c.cards)];
       if (ring.length > 1) ring.forEach((id, i) => { const next = ring[(i + 1) % ring.length]!; if (ring.length > 2 || i === 0) lines.push([id, next]); });
     }
+    // SAY WHAT IS DRAWN (persona round, 2026-09-27: "each a loop in gold" over five combos that all
+    // run through one card, which the sky drew as one knot). Combos sharing a card are said to.
+    const shared = loops.length > 1 ? loops[0]!.cards.filter((n) => loops.every((c) => c.cards.includes(n))) : [];
     const what = pick !== null
       ? `${listed[pick]!.cards.join(" + ")}, drawn as its loop in gold`
-      : [gcs.length ? `the ${gcs.length} Game Changer${gcs.length === 1 ? "" : "s"}` : "", loops.length ? `the ${loops.length} infinite combo${loops.length === 1 ? "" : "s"}, each a loop in gold` : ""].filter(Boolean).join(" and ");
+      : [gcs.length ? `the ${gcs.length} Game Changer${gcs.length === 1 ? "" : "s"}` : "",
+        loops.length ? `the ${loops.length} infinite combo${loops.length === 1 ? "" : "s"} in gold${shared.length ? `, all through ${shared.join(" and ")}, so they overlap: pick one above to see it alone` : loops.length > 1 ? ", each a loop" : ""}` : ""].filter(Boolean).join(" and ");
     return { ids, lines, label: `What puts it in bracket ${CELL_LABEL[bracket.band]}: ${what}.` };
   }, [model, bracket, listed, pick]);
   if (!bracket) return null;
