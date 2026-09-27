@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import type { EngineModel } from "../lib/engine-model.js";
 import { FIRST_TURNS, JOB_LABEL, type FirstTurns as Model, type TurnStep } from "../lib/first-turns.js";
 import { CardName } from "./card-drawer.js";
 import { useReducedMotion } from "./OrbitView.js";
-import { TurnSky } from "./TurnSky.js";
 
 /** Names shown per job before "+N": enough to see what the turn is for. */
 const NAMED = 6;
@@ -11,9 +9,8 @@ const NAMED = 6;
 /** THE FIRST FIVE TURNS, AS FIVE TILES AND ONE TURN AT A TIME (owner, 2026-09-27: "Your first 5
  *  turns is wall of text, no one is going to read it"). Five turns of card lists, one under the
  *  other, were 770px of names. The tiles give the shape at a glance: the mana each turn, how many
- *  spells it opens up, the turn the commander lands. The cards are read for the one turn picked,
- *  beside the sky lighting them. See `lib/first-turns.ts` for what every number counts. */
-export function FirstTurns({ model, sky }: { model: Model; sky?: EngineModel }) {
+ *  spells it opens up, the turn the commander lands. The cards are read for the one turn picked. See `lib/first-turns.ts` for what every number counts. */
+export function FirstTurns({ model }: { model: Model }) {
   const { steps, nonland, commander } = model;
   const last = steps.length;
   const [turn, setTurn] = useState(Math.min(3, last));
@@ -55,12 +52,7 @@ export function FirstTurns({ model, sky }: { model: Model; sky?: EngineModel }) 
           )}
         </div>
       </div>
-      <div className="@container">
-        <div className="flex flex-col gap-4 @min-[44rem]:grid @min-[44rem]:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] @min-[44rem]:items-start">
-          <TurnCards step={step} commanderHere={commander?.turn === step.turn ? commander.name : undefined} />
-          {sky ? <TurnSky model={sky} turns={model} turn={turn} /> : null}
-        </div>
-      </div>
+      <TurnCards step={step} commanderHere={commander?.turn === step.turn ? commander.name : undefined} />
     </div>
   );
 }

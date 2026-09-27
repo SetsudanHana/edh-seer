@@ -38,8 +38,6 @@ import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardLinksContext } from "./card-menu.js";
-import { DeckSky, SkyContext, SkyThemeContext, type SkyLight } from "./DeckSky.js";
-import { linksFrom } from "../lib/deck-sky.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -161,7 +159,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [themes, report.cards, data.graph]);
   const [centre, setCentre] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<string | null>(null);
-  const namedThemes = useMemo(() => mainTheme(report), [report]);
   /** "See how it connects" in any card's ⋯ menu opens that card's orbit over the report. */
   const links = useMemo(() => {
     if (!themes) return null;
@@ -215,16 +212,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   // shown can carry the card that takes its slot (baseline round 2026-09-26: "cuts and adds are not
   // one plan").
   // ...and the role cards a better card could replace in the same job (`swapCandidates`).
-  const cutSky = useMemo((): SkyLight | null => {
-    if (!themes) return null;
-    const ids = new Set(cuts.map((c) => c.card?.id).filter((id): id is string => !!id && themes.cards.has(id)));
-    if (!ids.size) return null;
-    const lines = linksFrom(themes, ids);
-    return {
-      ids, lines,
-      label: `The ${ids.size} possible cut${ids.size === 1 ? "" : "s"}, lit. ${lines.length ? `Each pink line is one card it works with: the fewer a cut has, the less the deck loses without it. A cut can sit inside a busy theme and still have few lines of its own.` : "Nothing ties them to the rest of the deck."}`,
-    };
-  }, [themes, cuts]);
   const cutNames = useMemo(() => [...cuts.map((c) => c.name), ...swapCandidates(report, cuts)], [report, cuts]);
   const suggestions = useSuggestions(data, cutNames);
 
@@ -232,8 +219,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
     <CardLinksContext.Provider value={links}>
-    <SkyContext.Provider value={themes}>
-    <SkyThemeContext.Provider value={namedThemes}>
     <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
       <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
@@ -255,8 +240,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  be addressed"). The phone seat built it from four screens; under the hero it started 760px
             *  down a 844px phone, cut off, so it leads the chapter. */}
           {talk ? <TableTalkLine talk={talk} /> : null}
-          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet}
-            sky={themes ? <DeckSky model={themes} className="mx-auto w-full max-w-[30rem]" caption="Every card is a star. Each theme is a constellation, named in its colour; tap a name to light it, or a star to name it. “No theme” holds the cards no theme claims, the place to look if the deck drifts; the faint band at the edge is the lands." /> : undefined} />
+          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} />
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
@@ -346,8 +330,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             // "What your cards are waiting for" already.
             <Movement count="its first turns, how fast it wins, and what its cards need from each other">
               <div className="max-w-5xl flex flex-col gap-8">
-                {/* THE TURNS AS TILES, AND ONE TURN'S CARDS BESIDE THE SKY LIGHTING THEM. */}
-                {turns ? <FirstTurns model={turns} sky={themes ?? undefined} /> : null}
+                {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
+                {turns ? <FirstTurns model={turns} /> : null}
                 <HowYouWin report={report} manaValueOf={manaValueOf} />
                 <BuildBenchmarks
                   categories={report.buildCategories}
@@ -459,31 +443,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           <Movement title="What to change">
             {/* 64rem, the width of the Fixes list above it: a cut's name and its "5 mana - 0.0"
               *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
-            {/* THE CUTS ON THE DECK'S SKY (owner, 2026-09-27: the sky in every chapter): the cards
-              *  doing the least, lit, with every link they have in pink -- a few thin threads into
-              *  the deck is the case for cutting them, drawn. Beside the list on a wide screen,
-              *  where it stays while the list scrolls; above it on a phone. */}
-            <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,64rem)_minmax(0,22rem)] xl:items-start xl:gap-8">
-            {cutSky ? (
-              <div className="flex w-full max-w-[26rem] flex-col gap-2 xl:order-2 xl:sticky xl:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)]">
-                <DeckSky model={themes!} lit={cutSky} className="w-full" />
-                {/* WHY EACH IS A CUT, BESIDE THE PICTURE (persona round, 2026-09-27: "nothing on the
-                  *  sky says why any of them is a cut", and many lines read as "important"). Each
-                  *  cut's links counted, and a win plan it is on named. */}
-                <ul className="flex flex-col gap-1 text-sm" aria-label="The possible cuts on the sky">
-                  {cuts.filter((c) => c.card && cutSky.ids.has(c.card.id)).map((c) => {
-                    const n = cutSky.lines!.filter(([a]) => a === c.card!.id).length;
-                    const plans = c.keeps.filter((k) => k.startsWith("it is one of the cards your win plan")).map((k) => k.replace(/^it is one of the cards your win plan of (.+) counts$/, "$1"));
-                    return (
-                      <li key={c.name}>
-                        <b>{c.name.split(" // ")[0]}</b>
-                        <span className="text-(--muted)"> · {n === 0 ? "works with nothing else here" : `works with ${n} card${n === 1 ? "" : "s"}, counting the ones only once`}{plans.length ? ` · also on the win plan: ${plans.join(", ")}` : ""}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : null}
             <div className="max-w-5xl min-w-0">
             <CutList
               cuts={cuts}
@@ -496,8 +455,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               pairs={suggestions.value?.pairs}
               deckSize={data.totalCount}
             />
-
-            </div>
             </div>
           </Movement>
           {/* WHAT GROWS THE PLAN, last in the chapter: nothing is wrong here, so it follows the fixes.
@@ -512,8 +469,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
       </div>
     </div>
-    </SkyThemeContext.Provider>
-    </SkyContext.Provider>
     </CardLinksContext.Provider>
   );
 }
