@@ -9,7 +9,7 @@ import { CHAPTERS } from "../lib/chapters.js";
 import { findings } from "../lib/findings.js";
 import { SAMPLE } from "../fixtures.js";
 import type { RunDiff } from "../lib/run-diff.js";
-import { CardDrawerProvider, usePinned } from "./card-drawer.js";
+import { CardDrawerProvider } from "./card-drawer.js";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -332,32 +332,31 @@ test("the rail marks the topmost visible chapter, in document order", () => {
   expect(screen.getByRole("button", { name: "Roles" })).toHaveAttribute("aria-current", "true");
 });
 
-/** S8. A set the reader builds up over a 3,000px scroll is invisible unless something says how big
- *  it is, and the header is the one bar present in all six chapters. Absent at zero, because a mark
- *  that is always present marks nothing. The count travels to /cards -- a separate SURFACE, not a
- *  chapter anchor -- which is the one place a pinned card is lit AND named. */
-test("the header says how many cards are pinned, and only when some are", async () => {
-  function Pinner() {
-    const { togglePin } = usePinned();
-    return <button onClick={() => togglePin(SAMPLE.graph.nodes[0]!.label)}>pin it</button>;
-  }
-  render(
+/** THE CARDS THIS RUN ADDED, COUNTED (roadmap S9), in the one bar present in every chapter. Absent
+ *  at zero, because a mark that is always present marks nothing. The count travels to /cards, the
+ *  one place each new card is named with its mark. There is nothing to clear: the reader no longer
+ *  builds the set by hand (owner, 2026-09-27). */
+test("the header says how many cards are new, and only when some are", () => {
+  const { unmount } = render(
     <MemoryRouter>
       <CardDrawerProvider graph={SAMPLE.graph}>
         <ReportHeader data={SAMPLE} />
-        <Pinner />
       </CardDrawerProvider>
     </MemoryRouter>,
   );
-  expect(screen.queryByText(/pinned/)).toBeNull();
-
-  await userEvent.click(screen.getByText("pin it"));
-  const link = screen.getByRole("link", { name: /1 pinned/ });
+  expect(screen.queryByText(/\bnew$/)).toBeNull();
+  unmount();
+  render(
+    <MemoryRouter>
+      <CardDrawerProvider graph={SAMPLE.graph} added={[SAMPLE.graph.nodes[0]!.label]}>
+        <ReportHeader data={SAMPLE} />
+      </CardDrawerProvider>
+    </MemoryRouter>,
+  );
+  const link = screen.getByRole("link", { name: "1 new" });
   // The deck lives in the hash and a plain `<Link>` drops it; `SurfaceLink` is what carries it.
   expect(link.getAttribute("href")).toContain("/cards");
-
-  await userEvent.click(screen.getByRole("button", { name: /clear pinned/i }));
-  expect(screen.queryByText(/pinned/)).toBeNull();
+  expect(screen.queryByRole("button", { name: /clear/i })).toBeNull();
 });
 
 /** THE SECOND RUN IS THE REAL PRODUCT (roadmap S9). `SAMPLE.report` carries synergy 4 and build 3.7,
@@ -394,18 +393,18 @@ test("run one prints no delta and no diff line", () => {
 /** A 50%-overlap swap is still "the same deck" to `diffRuns`, so a 40-card edit would light most of
  *  the report -- and a mark that is always present marks nothing, the rule this header already
  *  follows in two places. */
-test("a seed over the cap pins nothing", () => {
+test("added cards over the cap mark nothing", () => {
   const many = Array.from({ length: SEED_CAP + 1 }, (_, i) => `Card ${i}`);
   render(<MemoryRouter><ReportShell data={SAMPLE} diff={{ ...runDiff, added: many }} /></MemoryRouter>);
-  expect(screen.queryByText(/pinned/)).toBeNull();
+  expect(screen.queryByRole("link", { name: /\d+ new$/ })).toBeNull();
 });
 
-test("a seed within the cap pins the added cards", () => {
+test("added cards within the cap are marked new", () => {
   render(<MemoryRouter><ReportShell data={SAMPLE} diff={runDiff} /></MemoryRouter>);
   // `physicalName` falls back to the name itself for a card the graph does not carry, so the count
   // is 1 whether or not the fixture's graph knows "Rhystic Study" -- which is the point: a seeded
   // name is a stable key, never a crash.
-  expect(screen.getByText("1 pinned")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "1 new" })).toBeInTheDocument();
 });
 
 /** A SHARED LINK TO A REFERENCE SURFACE STAYS ON IT (UX sweep 2026-09-06, D1). The "new report

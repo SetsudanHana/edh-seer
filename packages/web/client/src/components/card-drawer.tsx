@@ -34,34 +34,32 @@ interface CardDrawerApi {
    *  card, when several do). A token is NOT in `known` -- the drawer indexes card nodes only, and
    *  deliberately so -- but a reason sentence naming one has to be able to say what it is. */
   tokens: ReadonlyMap<string, string | undefined>;
-  /** Physical card names the reader has pinned (roadmap S8). Session-only: a shared analysis link
-   *  carries the deck, and a second axis of state in that hash is scope this does not need -- the
-   *  same call `ReportChapters` recorded for `focus`. */
-  pinned: ReadonlySet<string>;
+  /** THE CARDS THIS RUN ADDED (roadmap S9), by physical name: marked "new" wherever the report
+   *  shows them. Set by the analysis, never by the reader (owner, 2026-09-27: the hand-made pin
+   *  went; "pin across the report" lit too little to be worth a control). */
+  added: ReadonlySet<string>;
   /** Accepts a face OR a physical name and answers about the PHYSICAL card, so no panel needs to
    *  know which kind it holds -- the matrix's rows are faces, the waffle's squares are physical. */
-  isPinned: (name: string) => boolean;
-  togglePin: (name: string) => void;
-  clearPins: () => void;
+  isAdded: (name: string) => boolean;
   /** The report registers what it adds to the drawer; null when it unmounts. */
   setExtras: (extras: DrawerExtras | null) => void;
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
   open: () => {}, known: new Set(), tokens: new Map(),
-  pinned: new Set(), isPinned: () => false, togglePin: () => {}, clearPins: () => {}, setExtras: () => {},
+  added: new Set(), isAdded: () => false, setExtras: () => {},
 });
 
 export function useCardDrawer(): CardDrawerApi {
   return useContext(CardDrawerContext);
 }
 
-export function CardDrawerProvider({ graph, seedPins, children }: {
+export function CardDrawerProvider({ graph, added: addedNames, children }: {
   graph?: CardGraph;
-  /** THE CARDS THIS RUN ADDED (roadmap S9), pinned on arrival so they light in every chapter without
-   *  the reader hunting for them. Resolved through `physicalName` exactly as a hand-made pin is, so
-   *  a two-faced addition pins the physical card. The CALLER caps the list -- see `ReportShell`. */
-  seedPins?: readonly string[];
+  /** THE CARDS THIS RUN ADDED (roadmap S9), marked "new" in every chapter without the reader
+   *  hunting for them. Resolved through `physicalName`, so a two-faced addition marks the physical
+   *  card. The CALLER caps the list -- see `ReportShell`. */
+  added?: readonly string[];
   children: ReactNode;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -134,39 +132,16 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
     return node?.cardName ?? node?.label ?? name;
   }, [byName, graph]);
 
-  const [pinned, setPinned] = useState<ReadonlySet<string>>(() => new Set());
-
-  /** THE SET DIES WITH THE ANALYSIS, AND IS BORN WITH IT. `graph` is a new object per analyze, so
-   *  this runs exactly when the deck under the report changes -- without it a pin made on deck A
-   *  survives into deck B, where the name either lights nothing or lights a different card.
-   *
-   *  The S9 seed rides the same effect rather than a second one, which is what keeps that
-   *  guarantee: there is no frame in which yesterday's pins and today's seed are both in the set.
-   *
-   *  Keyed on `graph` ALONE on purpose. `seedPins` is derived from the same analysis, so it changes
-   *  with `graph`; listing it would only add a re-seed on an unrelated re-render, which would undo
-   *  the reader's own unpinning. */
+  /** THE SET IS BORN WITH THE ANALYSIS. `graph` is a new object per analyze, so this is rebuilt
+   *  exactly when the deck under the report changes; keyed on `graph` alone because `added` comes
+   *  from the same analysis. */
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { setPinned(new Set((seedPins ?? []).map(physicalName))); }, [graph]);
-
-  const togglePin = useCallback((name: string) => {
-    const key = physicalName(name);
-    setPinned((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
-  }, [physicalName]);
-
-  const isPinned = useCallback(
-    (name: string) => pinned.has(physicalName(name)),
-    [pinned, physicalName],
-  );
-  const clearPins = useCallback(() => setPinned(new Set()), []);
+  const added = useMemo<ReadonlySet<string>>(() => new Set((addedNames ?? []).map(physicalName)), [graph]);
+  const isAdded = useCallback((name: string) => added.has(physicalName(name)), [added, physicalName]);
 
   const api = useMemo<CardDrawerApi>(
-    () => ({ open, known: new Set(byName.keys()), tokens, pinned, isPinned, togglePin, clearPins, setExtras }),
-    [open, byName, tokens, pinned, isPinned, togglePin, clearPins],
+    () => ({ open, known: new Set(byName.keys()), tokens, added, isAdded, setExtras }),
+    [open, byName, tokens, added, isAdded],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
@@ -228,8 +203,6 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
                 edges={edges}
                 onClose={() => setOpenId(null)}
                 nameOf={nameOf}
-                pinned={pinned.has(node.cardName ?? node.label)}
-                onTogglePin={() => togglePin(node.cardName ?? node.label)}
                 extra={extras?.model.cards.get(node.id) ? (
                   // ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): its links drawn here,
                   // and the walk on the commander's map one tap away, instead of a second full-screen
@@ -251,12 +224,11 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
   );
 }
 
-/** THE ONE WAY A PANEL ASKS ABOUT PINS (roadmap S8). Every surface imports this and nothing else,
- *  so the face/physical rule stays in `physicalName` above rather than spreading across six
- *  components -- which is how eleven join sites drifted apart in the first place. */
-export function usePinned(): Pick<CardDrawerApi, "pinned" | "isPinned" | "togglePin" | "clearPins"> {
-  const { pinned, isPinned, togglePin, clearPins } = useCardDrawer();
-  return { pinned, isPinned, togglePin, clearPins };
+/** THE ONE WAY A PANEL ASKS WHICH CARDS ARE NEW (roadmap S9). Every surface imports this and
+ *  nothing else, so the face/physical rule stays in `physicalName` above. */
+export function useAdded(): Pick<CardDrawerApi, "added" | "isAdded"> {
+  const { added, isAdded } = useCardDrawer();
+  return { added, isAdded };
 }
 
 /** A REASON SENTENCE WITH ITS NOUNS MADE CHECKABLE (roadmap S18). Every card it names opens that

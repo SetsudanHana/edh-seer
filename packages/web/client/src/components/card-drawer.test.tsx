@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test } from "vitest";
-import { CardDrawerProvider, useCardDrawer, usePinned } from "./card-drawer.js";
+import { CardDrawerProvider, useAdded, useCardDrawer } from "./card-drawer.js";
 /** The web package, found from this file rather than from the working directory, so the test runs
  *  the same from `packages/web` and from the repository root (the root vitest config). */
 const WEB = join(import.meta.dirname, "..", "..", "..");
@@ -22,88 +22,20 @@ const graph = {
 } as never;
 
 function Probe({ name }: { name: string }) {
-  const { pinned, isPinned, togglePin, clearPins } = usePinned();
+  const { added, isAdded } = useAdded();
   return (
     <>
-      <button onClick={() => togglePin(name)}>toggle</button>
-      <button onClick={clearPins}>clear</button>
-      <span data-testid="lit">{isPinned(name) ? "yes" : "no"}</span>
-      <span data-testid="size">{pinned.size}</span>
+      <span data-testid="lit">{isAdded(name) ? "yes" : "no"}</span>
+      <span data-testid="size">{added.size}</span>
     </>
   );
 }
 
-test("pinning is a toggle, and re-pinning the same card does not grow the set", async () => {
-  render(<CardDrawerProvider graph={graph}><Probe name="Sol Ring" /></CardDrawerProvider>);
-  expect(screen.getByTestId("lit")).toHaveTextContent("no");
-  await userEvent.click(screen.getByText("toggle"));
-  expect(screen.getByTestId("lit")).toHaveTextContent("yes");
-  expect(screen.getByTestId("size")).toHaveTextContent("1");
-  await userEvent.click(screen.getByText("toggle"));
-  expect(screen.getByTestId("lit")).toHaveTextContent("no");
-});
-
-/** A PIN IS THE PHYSICAL CARD. The theme matrix's rows are FACE names and the waffle's squares are
- *  PHYSICAL names, so the same card reaches this API under two spellings -- and the eleven join
- *  sites the 2026-08-27 wave fixed, plus the twelfth S17 found, are all this one mistake. */
-test("a face name and its physical name are the same pin", async () => {
+/** THE CARDS THIS RUN ADDED ARE MARKED "NEW" (roadmap S9); the reader no longer builds the set by
+ *  hand (owner, 2026-09-27). */
+test("the cards this run added are new, and nothing else is", () => {
   render(
-    <CardDrawerProvider graph={graph}>
-      <Probe name="Fable of the Mirror-Breaker" />
-    </CardDrawerProvider>,
-  );
-  await userEvent.click(screen.getByText("toggle"));
-  expect(screen.getByTestId("size")).toHaveTextContent("1");
-  expect(screen.getByTestId("lit")).toHaveTextContent("yes");
-});
-
-/** THE OTHER DIRECTION, and it is the one the matrix needs: pinned by the PHYSICAL name, asked
- *  about by the FACE name. Without the resolver this reads "no" and the matrix row never lights. */
-test("pinning the physical card lights its face name", async () => {
-  function Both() {
-    const { isPinned, togglePin } = usePinned();
-    return (
-      <>
-        <button onClick={() => togglePin("Fable of the Mirror-Breaker // Reflection of Kiki-Jiki")}>pin physical</button>
-        <span data-testid="face">{isPinned("Fable of the Mirror-Breaker") ? "yes" : "no"}</span>
-      </>
-    );
-  }
-  render(<CardDrawerProvider graph={graph}><Both /></CardDrawerProvider>);
-  await userEvent.click(screen.getByText("pin physical"));
-  expect(screen.getByTestId("face")).toHaveTextContent("yes");
-});
-
-test("clearing empties the set", async () => {
-  render(<CardDrawerProvider graph={graph}><Probe name="Sol Ring" /></CardDrawerProvider>);
-  await userEvent.click(screen.getByText("toggle"));
-  await userEvent.click(screen.getByText("clear"));
-  expect(screen.getByTestId("size")).toHaveTextContent("0");
-});
-
-/** SESSION STATE OUTLIVES A SECOND ANALYZE. Without this a pin made on deck A survives into deck B,
- *  where the name either lights nothing or lights a different copy of the same card -- a claim
- *  nobody made. */
-test("the set clears when a new analysis arrives", async () => {
-  const { rerender } = render(
-    <CardDrawerProvider graph={graph}><Probe name="Sol Ring" /></CardDrawerProvider>,
-  );
-  await userEvent.click(screen.getByText("toggle"));
-  expect(screen.getByTestId("size")).toHaveTextContent("1");
-  const otherGraph = {
-    nodes: [{ id: "Sol Ring", label: "Sol Ring", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 1 }],
-    edges: [],
-  } as never;
-  rerender(<CardDrawerProvider graph={otherGraph}><Probe name="Sol Ring" /></CardDrawerProvider>);
-  expect(screen.getByTestId("size")).toHaveTextContent("0");
-});
-
-/** THE CARDS YOU CHANGED ARE PRE-PINNED (roadmap S9). The seed rides the effect that already clears
- *  the set on a new deck, so a seeded pin cannot outlive its analysis any more than a hand-made one
- *  can. */
-test("seeded names arrive pinned", () => {
-  render(
-    <CardDrawerProvider graph={graph} seedPins={["Sol Ring"]}>
+    <CardDrawerProvider graph={graph} added={["Sol Ring"]}>
       <Probe name="Sol Ring" />
     </CardDrawerProvider>,
   );
@@ -111,16 +43,45 @@ test("seeded names arrive pinned", () => {
   expect(screen.getByTestId("size")).toHaveTextContent("1");
 });
 
-/** A PIN IS THE PHYSICAL CARD, NEVER A FACE (the S8 identity rule). A seeded front-face name has to
- *  light the matrix's face row and the waffle's physical square alike, which it does only if the
- *  seed resolves through the same `physicalName` a hand-made pin does. */
-test("a seeded face name pins the physical card", () => {
+test("with nothing added, nothing is new", () => {
+  render(<CardDrawerProvider graph={graph}><Probe name="Sol Ring" /></CardDrawerProvider>);
+  expect(screen.getByTestId("lit")).toHaveTextContent("no");
+  expect(screen.getByTestId("size")).toHaveTextContent("0");
+});
+
+/** A NEW CARD IS THE PHYSICAL CARD, NEVER A FACE (the S8 identity rule). The same card reaches this
+ *  API as a face name and as a physical name, and both have to answer alike. */
+test("an added face name marks the physical card, and the face answers too", () => {
   render(
-    <CardDrawerProvider graph={graph} seedPins={["Fable of the Mirror-Breaker"]}>
+    <CardDrawerProvider graph={graph} added={["Fable of the Mirror-Breaker"]}>
       <Probe name="Fable of the Mirror-Breaker // Reflection of Kiki-Jiki" />
+      <span data-testid="sep" />
     </CardDrawerProvider>,
   );
   expect(screen.getByTestId("lit")).toHaveTextContent("yes");
+});
+
+test("an added physical name answers for its face name", () => {
+  render(
+    <CardDrawerProvider graph={graph} added={["Fable of the Mirror-Breaker // Reflection of Kiki-Jiki"]}>
+      <Probe name="Fable of the Mirror-Breaker" />
+    </CardDrawerProvider>,
+  );
+  expect(screen.getByTestId("lit")).toHaveTextContent("yes");
+});
+
+/** THE SET BELONGS TO ITS ANALYSIS: a new deck brings its own added cards, or none. */
+test("the set is rebuilt when a new analysis arrives", () => {
+  const { rerender } = render(
+    <CardDrawerProvider graph={graph} added={["Sol Ring"]}><Probe name="Sol Ring" /></CardDrawerProvider>,
+  );
+  expect(screen.getByTestId("size")).toHaveTextContent("1");
+  const otherGraph = {
+    nodes: [{ id: "Sol Ring", label: "Sol Ring", copies: 1, types: [], subtypes: [], supertypes: [], colors: [], cmc: 1 }],
+    edges: [],
+  } as never;
+  rerender(<CardDrawerProvider graph={otherGraph}><Probe name="Sol Ring" /></CardDrawerProvider>);
+  expect(screen.getByTestId("size")).toHaveTextContent("0");
 });
 
 /** Nothing seeded is the ordinary case -- run one, and every run whose diff is null. */

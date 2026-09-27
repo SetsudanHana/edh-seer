@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { CardDrawerProvider, CardName, ReasonText, usePinned } from "./card-drawer.js";
+import { CardDrawerProvider, CardName, ReasonText } from "./card-drawer.js";
 import { ComboList } from "./ComboList.js";
 import { MissingCards } from "./MissingCards.js";
 import { ReportChapters } from "./ReportChapters.js";
@@ -448,28 +448,19 @@ test("Cards tab shows what a card costs and when you can cast it, beside the rat
 /** The precon persona listed "{3}{B}{B} and the rest of the cost symbols" among words it could not
  *  understand. Brace notation must not survive anywhere in this table -- widened past a single
  *  colour letter, since a generic-mana token like "{3}" carries no letter at all. */
-/** S8. The ring is `--accent` because every OTHER mark on this page is engine-derived and uses
- *  --fill or --muted; the accent is reserved as scarce, and a pinned set is the one thing on screen
- *  the READER made. Measured: --accent 4.9:1 against the page ground, over the 3:1 a graphical
- *  object owes -- --fill is 2.12:1 and must not carry it, which is the defect S17 had to fix. */
-test("a pinned card's row is ringed and says so to a screen reader", async () => {
+/** S9. The ring is `--accent`: measured 4.9:1 against the page ground, over the 3:1 a graphical
+ *  object owes -- --fill is 2.12:1 and must not carry it, which is the defect S17 had to fix. And
+ *  the row says "new" in words, so the mark is never colour-only. */
+test("a card this run added has its row ringed and marked new", () => {
   const name = SAMPLE.graph.nodes[0]!.label;
-  function Pinner() {
-    const { togglePin } = usePinned();
-    return <button onClick={() => togglePin(name)}>pin it</button>;
-  }
-  render(
-    <CardDrawerProvider graph={SAMPLE.graph}>
-      <CardList cards={SAMPLE.report.cards} />
-      <Pinner />
-    </CardDrawerProvider>,
-  );
-  expect(document.querySelector('tr[data-pinned="1"]')).toBeNull();
-  await userEvent.click(screen.getByText("pin it"));
-  const row = document.querySelector('tr[data-pinned="1"]');
+  const { unmount } = render(<CardDrawerProvider graph={SAMPLE.graph}><CardList cards={SAMPLE.report.cards} /></CardDrawerProvider>);
+  expect(document.querySelector('tr[data-new="1"]')).toBeNull();
+  unmount();
+  render(<CardDrawerProvider graph={SAMPLE.graph} added={[name]}><CardList cards={SAMPLE.report.cards} /></CardDrawerProvider>);
+  const row = document.querySelector('tr[data-new="1"]');
   expect(row).not.toBeNull();
   expect(row!.textContent).toContain(name);
-  expect(row!.textContent).toContain("pinned");
+  expect(row!.textContent).toContain("new");
 });
 
 test("the Cards table renders costs as symbols, not as brace notation", () => {
@@ -1165,26 +1156,19 @@ const DECK_MATH = {
   ],
 };
 
-/** S8. The castability rows are already one per card, so this is the same accent outline the Cards
- *  table and the matrix carry. `DECK_MATH.castability.cards` holds Ulamog and Damnation. */
-test("a pinned card's castability row is ringed and says so", async () => {
-  function Pinner() {
-    const { togglePin } = usePinned();
-    return <button onClick={() => togglePin("Ulamog")}>pin it</button>;
-  }
+/** S9. The castability rows are already one per card, so this is the same accent outline the Cards
+ *  table carries. `DECK_MATH.castability.cards` holds Ulamog and Damnation. */
+test("a card this run added has its castability row ringed and says so", () => {
   render(
-    <CardDrawerProvider graph={SAMPLE.graph}>
+    <CardDrawerProvider graph={SAMPLE.graph} added={["Ulamog"]}>
       <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />
-      <Pinner />
     </CardDrawerProvider>,
   );
-  expect(document.querySelector('li[data-pinned="1"]')).toBeNull();
-  await userEvent.click(screen.getByText("pin it"));
-  const row = document.querySelector('li[data-pinned="1"]')!;
+  const row = document.querySelector('li[data-new="1"]')!;
   expect(row).not.toBeNull();
-  // The row already carries a full aria-label, so "pinned" joins that sentence.
+  // The row already carries a full aria-label, so "new" joins that sentence.
   expect(row.getAttribute("aria-label")).toContain("Ulamog");
-  expect(row.getAttribute("aria-label")).toContain("pinned");
+  expect(row.getAttribute("aria-label")).toContain(", new");
 });
 
 test("deck-math blocks are grouped under the question they answer, worst section first", () => {

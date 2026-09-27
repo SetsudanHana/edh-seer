@@ -3,7 +3,7 @@ import { hatchImage } from "../lib/unread.js";
 import { CardSymbol } from "./CardSymbol.js";
 import { TYPE_SEGMENT_HUE } from "./presets.js";
 import type { WaffleSquare } from "../lib/waffle.js";
-import { useCardDrawer, usePinned } from "./card-drawer.js";
+import { useCardDrawer, useAdded } from "./card-drawer.js";
 
 /** WHAT THE DECK IS MADE OF, AND HOW MUCH OF IT THE ENGINE COULD READ, as one picture the reader
  *  can COUNT (roadmap S3, journey chapter 1).
@@ -34,8 +34,8 @@ const LAND_FILL = "var(--surface-tertiary)";
 function Square({ sq }: { sq: WaffleSquare }) {
   const fill = sq.state === "unresolved" ? "transparent" : sq.type ? TYPE_SEGMENT_HUE[sq.type]! : LAND_FILL;
   const { open } = useCardDrawer();
-  const { isPinned } = usePinned();
-  const pinned = isPinned(sq.name);
+  const { isAdded } = useAdded();
+  const added = isAdded(sq.name);
   return (
     /* A CONTROL, NOT A TOOLTIP (roadmap S8). This carried `title={sq.name}` and nothing else, and a
      * `title` does not exist on touch at all -- so on a phone the grid was a hundred unlabelled
@@ -49,9 +49,9 @@ function Square({ sq }: { sq: WaffleSquare }) {
       data-state={sq.state}
       data-type={sq.type ?? "land"}
       data-commander={sq.isCommander ? "1" : undefined}
-      data-pinned={pinned ? "1" : undefined}
+      data-new={added ? "1" : undefined}
       onClick={() => open(sq.name)}
-      aria-label={`${sq.name}${sq.isCommander ? ", commander" : ""}${pinned ? ", pinned" : ""}`}
+      aria-label={`${sq.name}${sq.isCommander ? ", commander" : ""}${added ? ", new" : ""}`}
       className={`w-full aspect-square rounded-[2px] ${
         // ONE CARD, ONE CELL, AND THE COMMANDER IS NOT AN EXCEPTION. It shipped as a 2x2 span, and
         // a tuner counting the grid to check the deck's size got 103 for a hundred-card deck: one
@@ -62,7 +62,7 @@ function Square({ sq }: { sq: WaffleSquare }) {
         // PINNED WINS THE OUTLINE (S8). One square cannot carry two inset rings, and no fact is
         // lost: the commander is already named in the panel's byline three lines above -- which is
         // exactly why its identity pips were deleted when this ring shipped.
-        pinned ? "outline outline-2 outline-(--accent) outline-offset-[-2px] "
+        added ? "outline outline-2 outline-(--accent) outline-offset-[-2px] "
           : sq.isCommander ? "outline outline-2 outline-(--foreground) outline-offset-[-2px] " : ""
       }${
         // A HOLLOW SQUARE IS A DASHED OUTLINE, not a faint fill: "we never found this card" has to

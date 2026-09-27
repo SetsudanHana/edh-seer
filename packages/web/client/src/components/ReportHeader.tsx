@@ -6,7 +6,7 @@ import { scoreState } from "../lib/deck-gauge.js";
 import { TONE_TEXT } from "./Dial.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { findings } from "../lib/findings.js";
-import { usePinned } from "./card-drawer.js";
+import { useAdded } from "./card-drawer.js";
 import { SurfaceLink } from "./ReportShell.js";
 import { identityKey } from "../lib/color-identity.js";
 import type { RunDiff } from "../lib/run-diff.js";
@@ -75,7 +75,7 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
   // `Findings` calls it too, so the count here and the list there cannot disagree.
   const findingCount = findings(report).length;
   const deckActions = useDeckActions();
-  const { pinned, clearPins } = usePinned();
+  const { added } = useAdded();
   const pipCost = identityKey(data.commanderColorIdentity ?? [])
     .split("")
     .map((c) => `{${c}}`)
@@ -113,31 +113,13 @@ export function ReportHeader({ data, diff }: { data: AnalyzeResponse; diff?: Run
             delta={diff?.build ? signed(diff.build.from, diff.build.to) : undefined}
           />
         ) : null}
-        {/* THE PINNED SET SAYS HOW BIG IT IS (roadmap S8), in the one bar on screen in all six
-          *  chapters. A set the reader builds up over a 3,000px scroll is otherwise invisible.
-          *
-          *  ABSENT AT ZERO: a mark that is always present marks nothing -- the rule the coverage
-          *  gate and the bracket pips already follow.
-          *
-          *  IT TRAVELS TO /cards RATHER THAN SCROLLING, because the Cards table is a separate
-          *  SURFACE and not a chapter anchor -- and it is the one place a pinned card is lit AND
-          *  named. `SurfaceLink` is what keeps the deck in the URL across that navigation; a plain
-          *  link drops it, which is a measured defect one component over. No second roster is built
-          *  here: S15 fought this header down to 73px and a list of names would grow it unbounded. */}
-        {pinned.size > 0 ? (
-          <span className="flex items-center gap-1.5">
-            <SurfaceLink to="/analysis/cards" className="eyebrow text-(--accent) hover:underline underline-offset-2">
-              {pinned.size} pinned
-            </SurfaceLink>
-            <button
-              type="button"
-              aria-label="Clear pinned cards"
-              onClick={clearPins}
-              className="eyebrow text-(--muted) hover:text-(--accent) min-h-[24px] px-1"
-            >
-              clear
-            </button>
-          </span>
+        {/* THE CARDS THIS RUN ADDED, COUNTED (roadmap S9), in the one bar on screen in every
+          *  chapter; it travels to /cards, the one place each is named with its "new" mark.
+          *  `SurfaceLink` keeps the deck in the URL across that navigation. Absent at zero. */}
+        {added.size > 0 ? (
+          <SurfaceLink to="/analysis/cards" className="eyebrow text-(--accent) hover:underline underline-offset-2">
+            {added.size} new
+          </SurfaceLink>
         ) : null}
         {findingCount > 0 ? (
           <button
