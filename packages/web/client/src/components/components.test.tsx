@@ -1317,6 +1317,22 @@ test("an answer row says how often one is in hand and names its cards, with no s
   expect(screen.getByText(/your commander, so every game/)).toBeInTheDocument();
 });
 
+// ON A PHONE, A ROW'S CARDS SHOW ON A TAP (owner, 2026-09-27): six rows of names read as a block of
+// text at 390px. The names stay in the row (hidden below `sm`, always shown from `sm` up).
+test("on a phone an answer row's cards are hidden until its chevron is tapped", () => {
+  const named = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, cards: ["Beast Within", "Swords to Plowshares"] } : a)) };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={named} />);
+  const creature = screen.getByLabelText(/^creature,/i);
+  const cards = within(creature).getByTestId("answer-cards");
+  expect(cards.className).toMatch(/(^|\s)hidden(\s|$)/);
+  expect(cards.className).toMatch(/sm:block/);
+  const which = within(creature).getByRole("button", { name: "Which cards" });
+  expect(which).toHaveAttribute("aria-expanded", "false");
+  fireEvent.click(which);
+  expect(within(creature).getByRole("button", { name: "Hide the cards" })).toHaveAttribute("aria-expanded", "true");
+  expect(cards.className).not.toMatch(/(^|\s)hidden(\s|$)/);
+});
+
 // Task 6: the coefficient discounts a colourless-pool zero on purpose; the panel is where that
 // finding has to survive in words, since the score itself just reads as a smaller number.
 test("BuildBenchmarks names the colour pool on a zero row, so the pie is not read as a mistake", () => {
