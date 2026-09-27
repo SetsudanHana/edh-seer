@@ -28,6 +28,25 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
   const rank = (g: EngineGroup) => (leads(g) ? 0 : 1);
   const themes = m.groups.filter((g) => !g.helper).sort((x, y) => rank(x) - rank(y) || Number(!!x.sameAs) - Number(!!y.sameAs));
   const matched = main ? themes.some((g) => whichTheme(g, main)?.theme === "main") : true;
+  // A THEME MADE OF THE SAME CARDS AS ONE ABOVE IT FOLDS UNDER IT (option B, 2026-09-27): follow
+  // `sameAs` to the row it repeats. The main theme never folds -- it is the deck's name.
+  const byName = new Map(themes.map((g) => [g.name, g]));
+  const rootOf = (g: EngineGroup): EngineGroup => {
+    let r = g;
+    for (let i = 0; i < themes.length && r.sameAs && !leads(r); i++) {
+      const next = byName.get(r.sameAs.name);
+      if (!next || next === r) break;
+      r = next;
+    }
+    return r;
+  };
+  const folded = new Map<string, EngineGroup[]>();
+  const roots: EngineGroup[] = [];
+  for (const g of themes) {
+    const r = leads(g) ? g : rootOf(g);
+    if (r === g) roots.push(g);
+    else folded.set(r.tag, [...(folded.get(r.tag) ?? []), g]);
+  }
   const helpers = m.groups.filter((g) => g.helper);
   const [showHelpers, setShowHelpers] = useState(false);
   // THE BARS SHARE ONE SCALE: the biggest theme's card count.
@@ -45,7 +64,7 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
         *  the text"). Each theme was a card of images, chips and sentences, three of them 1,800px
         *  tall; now a bar and its key cards, and the rest on a tap. */}
       <ul className="flex flex-col" aria-label="Themes">
-        {themes.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} main={main} top={top} />)}
+        {roots.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} main={main} top={top} also={folded.get(g.tag) ?? []} />)}
       </ul>
       {helpers.length ? (
         <div className="flex flex-col gap-1">
@@ -71,20 +90,23 @@ const MEMBER_CAP = 12;
 const byWeight = (a: EngineCard, b: EngineCard) => Number(b.isCommander) - Number(a.isCommander) || b.score - a.score || (a.name < b.name ? -1 : 1);
 
 /** One theme as a row: its colour (the map's), name, a bar for how many cards it links, and its key
- *  cards as art. Open, it lists its cards and one example link. */
-function Theme({ g, m, onOpenCard, main, top }: { g: EngineGroup; m: EngineModel; onOpenCard?: (id: string) => void; main?: MainTheme | null; top: number }) {
+ *  cards as art. Open, it lists its cards and one example link.
+ *
+ *  AND THE THEMES MADE OF THE SAME CARDS SIT UNDER IT AS CHIPS (owner, 2026-09-27: option B, "only
+ *  if we are able to click and jump to see the cards"). On Party Time five of six rows read 45-53
+ *  of 63 -- Nalia's party, attack triggers, go wide, keyword granting, ETBs -- because each counted
+ *  the same creatures; the engine already knew (`sameAs`). One row per set of cards; each chip opens
+ *  its own theme's cards in place, and a card there opens in the drawer like everywhere else. */
+function Theme({ g, m, onOpenCard, main, top, also = [] }: { g: EngineGroup; m: EngineModel; onOpenCard?: (id: string) => void; main?: MainTheme | null; top: number; also?: EngineGroup[] }) {
   const which = main ? whichTheme(g, main) : null;
   // A named theme's own group takes the name Glance gives it, so the deck is called one thing.
   const name = which?.match === "same" ? which.name : g.name;
   const [open, setOpen] = useState(false);
-  const [all, setAll] = useState(false);
+  const [kid, setKid] = useState<string | null>(null);
   const hubs = g.hubs.map((id) => m.cards.get(id)!).sort(byWeight);
-  const hubSet = new Set(g.hubs);
-  const members = g.members.filter((id) => !hubSet.has(id)).map((id) => m.cards.get(id)!)
-    .sort((a, b) => Number(g.onceOnly.has(a.id)) - Number(g.onceOnly.has(b.id)) || byWeight(a, b));
   const cards = new Set([...g.hubs, ...g.members]).size;
-  const cardsShown = all ? [...hubs, ...members] : [...hubs, ...members].slice(0, MEMBER_CAP);
   const tag = which ? (which.match === "same" ? (which.theme === "main" ? "main theme" : "second theme") : null) : null;
+  const shownKid = also.find((k) => k.tag === kid);
   return (
     <li className="border-b border-(--separator)">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="theme-row"
@@ -105,27 +127,60 @@ function Theme({ g, m, onOpenCard, main, top }: { g: EngineGroup; m: EngineModel
           {hubs.length > ROW_ART ? <span className="ml-1 text-xs text-(--muted)">+{hubs.length - ROW_ART}</span> : null}
         </span>
       </button>
-      {open ? (
-        <div className="flex flex-col gap-2 pb-3 pl-5">
-          <div className="flex flex-wrap gap-1.5" aria-label={`${name}: its cards`}>
-            {cardsShown.map((c) => (
-              <button key={c.id} type="button" onClick={() => onOpenCard?.(c.id)} disabled={!onOpenCard}
-                className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-sm ${hubSet.has(c.id) ? "border-(--foreground)" : g.onceOnly.has(c.id) ? "border-dashed text-(--muted)" : "border-(--separator)"} enabled:hover:border-(--accent)`}>
-                <Art card={c} size={24} />
-                {c.name.split(" // ")[0]}{c.isToken ? <span className="font-normal text-(--muted)"> {tokenLabel(c)}</span> : null}
-              </button>
-            ))}
-            {cards > MEMBER_CAP ? (
-              <button type="button" className="min-h-9 rounded-full border border-(--separator) px-3 text-sm" onClick={() => setAll(!all)}>
-                {all ? "Show fewer" : `Show all ${cards}`}
-              </button>
-            ) : null}
+      {open ? <ThemeCards g={g} m={m} name={name} onOpenCard={onOpenCard} /> : null}
+      {also.length ? (
+        <div className="flex flex-col gap-2 pb-2.5 pl-5" data-testid="theme-also">
+          <div className="flex flex-wrap items-center gap-1.5 text-sm">
+            <span className="text-(--muted)">The same cards also:</span>
+            {also.map((k) => {
+              const lead = k.hubs.map((id) => m.cards.get(id)!).sort(byWeight)[0];
+              const n = k.hubs.length;
+              return (
+                <button key={k.tag} type="button" aria-expanded={kid === k.tag} onClick={() => setKid(kid === k.tag ? null : k.tag)}
+                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 ${kid === k.tag ? "border-(--accent)" : "border-(--separator)"} hover:border-(--accent)`}>
+                  {lead ? <Art card={lead} size={24} /> : <span aria-hidden="true" className="ml-1.5 h-2.5 w-2.5 rounded-full" style={{ background: k.hue }} />}
+                  {k.name.toLowerCase()}
+                  <span className="text-(--muted)">· {n} {k.hubsConsume ? (n === 1 ? "payoff" : "payoffs") : (n === 1 ? "enabler" : "enablers")}</span>
+                </button>
+              );
+            })}
           </div>
-          {g.example ? (
-            <p className="text-sm text-(--muted)"><Badge repeat={g.example.repeat} perTurn={g.example.perTurn} /><ReasonText text={g.example.text} /></p>
-          ) : null}
+          {shownKid ? <ThemeCards g={shownKid} m={m} name={shownKid.name} onOpenCard={onOpenCard} /> : null}
         </div>
       ) : null}
     </li>
+  );
+}
+
+/** A theme's cards, key cards first and none twice, and one example link: what an open row shows,
+ *  and what a folded theme's chip shows. */
+function ThemeCards({ g, m, name, onOpenCard }: { g: EngineGroup; m: EngineModel; name: string; onOpenCard?: (id: string) => void }) {
+  const [all, setAll] = useState(false);
+  const hubs = g.hubs.map((id) => m.cards.get(id)!).sort(byWeight);
+  const hubSet = new Set(g.hubs);
+  const members = g.members.filter((id) => !hubSet.has(id)).map((id) => m.cards.get(id)!)
+    .sort((a, b) => Number(g.onceOnly.has(a.id)) - Number(g.onceOnly.has(b.id)) || byWeight(a, b));
+  const cards = new Set([...g.hubs, ...g.members]).size;
+  const cardsShown = all ? [...hubs, ...members] : [...hubs, ...members].slice(0, MEMBER_CAP);
+  return (
+    <div className="flex flex-col gap-2 pb-3 pl-5">
+      <div className="flex flex-wrap gap-1.5" aria-label={`${name}: its cards`}>
+        {cardsShown.map((c) => (
+          <button key={c.id} type="button" onClick={() => onOpenCard?.(c.id)} disabled={!onOpenCard}
+            className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-sm ${hubSet.has(c.id) ? "border-(--foreground)" : g.onceOnly.has(c.id) ? "border-dashed text-(--muted)" : "border-(--separator)"} enabled:hover:border-(--accent)`}>
+            <Art card={c} size={24} />
+            {c.name.split(" // ")[0]}{c.isToken ? <span className="font-normal text-(--muted)"> {tokenLabel(c)}</span> : null}
+          </button>
+        ))}
+        {cards > MEMBER_CAP ? (
+          <button type="button" className="min-h-9 rounded-full border border-(--separator) px-3 text-sm" onClick={() => setAll(!all)}>
+            {all ? "Show fewer" : `Show all ${cards}`}
+          </button>
+        ) : null}
+      </div>
+      {g.example ? (
+        <p className="text-sm text-(--muted)"><Badge repeat={g.example.repeat} perTurn={g.example.perTurn} /><ReasonText text={g.example.text} /></p>
+      ) : null}
+    </div>
   );
 }

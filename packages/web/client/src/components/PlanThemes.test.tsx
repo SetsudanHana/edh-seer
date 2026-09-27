@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { engineDeck } from "../lib/engine-model.fixture.js";
+import { buildEngineModel } from "../lib/engine-model.js";
 import { PlanThemes } from "./PlanThemes.js";
 
 function view() {
@@ -18,7 +19,9 @@ const row = (name: string) => screen.getByRole("heading", { name }).closest("li"
 test("says what the deck does as one row per theme, each with one count", () => {
   view();
   expect(screen.getByRole("heading", { name: "What your deck does" })).toBeInTheDocument();
-  expect(screen.getAllByTestId("theme-row").length).toBeGreaterThan(1);
+  // A theme made of the same cards as a row above it is a chip under that row (option B).
+  const folded = screen.queryAllByTestId("theme-also").flatMap((a) => within(a).getAllByRole("button"));
+  expect(screen.getAllByTestId("theme-row").length + folded.length).toBeGreaterThan(1);
   expect(row("Cleric tribal").textContent).toMatch(/\d+ cards/);
   // The pairs are no longer a section here: the best cards lead "Cards that carry it".
   expect(screen.queryByRole("heading", { name: "The pairs that work best together" })).toBeNull();
@@ -89,4 +92,39 @@ test("the second theme's own group takes its name and says it is the second them
   const { report, graph } = engineDeck();
   render(<PlanThemes report={report} graph={graph} main={{ name: "Blink", tag: "etb-refire", count: 12, nonland: 60, second: { name: "Cleric tribal", tag: "scales:cleric" } }} />);
   expect(within(row("Cleric tribal")).getByText("second theme")).toBeInTheDocument();
+});
+
+/** OPTION B (owner, 2026-09-27: "only if we are able to click and jump to see the cards"): a theme
+ *  made of the same cards as one above it folds under that row as a chip; the chip opens its own
+ *  cards in place, and a card there opens like any other. */
+test("a theme made of the same cards folds under the row it repeats, and its chip opens its cards", async () => {
+  const { report, graph } = engineDeck();
+  const model = buildEngineModel(report, graph);
+  const themes = model.groups.filter((g) => !g.helper);
+  expect(themes.length).toBeGreaterThan(1);
+  const [first, second] = themes as [typeof themes[0], typeof themes[0]];
+  second.sameAs = { name: first.name, extra: [], missing: [] };
+  const onOpenCard = vi.fn();
+  render(<PlanThemes report={report} graph={graph} model={model} onOpenCard={onOpenCard} />);
+  expect(screen.queryByRole("heading", { name: second.name })).toBeNull();
+  const also = within(row(first.name)).getByTestId("theme-also");
+  const chip = within(also).getByRole("button", { name: new RegExp(second.name, "i") });
+  expect(chip).toHaveAttribute("aria-expanded", "false");
+  await userEvent.click(chip);
+  expect(chip).toHaveAttribute("aria-expanded", "true");
+  const list = within(also).getByLabelText(`${second.name}: its cards`);
+  const first_card = within(list).getAllByRole("button")[0]!;
+  await userEvent.click(first_card);
+  expect(onOpenCard).toHaveBeenCalled();
+});
+
+test("the main theme never folds under another row", () => {
+  const { report, graph } = engineDeck();
+  const model = buildEngineModel(report, graph);
+  const themes = model.groups.filter((g) => !g.helper);
+  const cleric = themes.find((g) => g.tag === "scales:cleric")!;
+  const other = themes.find((g) => g !== cleric)!;
+  cleric.sameAs = { name: other.name, extra: [], missing: [] };
+  render(<PlanThemes report={report} graph={graph} model={model} main={{ name: "Clerics", tag: "scales:cleric", count: 9, nonland: 16 }} />);
+  expect(screen.getByRole("heading", { name: "Clerics" })).toBeInTheDocument();
 });
