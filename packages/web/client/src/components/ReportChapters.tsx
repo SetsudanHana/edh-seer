@@ -38,6 +38,7 @@ import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardLinksContext } from "./card-menu.js";
 import { DeckSky, SkyContext, type SkyLight } from "./DeckSky.js";
+import { TurnSky } from "./TurnSky.js";
 import { linksFrom } from "../lib/deck-sky.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
@@ -343,7 +344,16 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             // waiting for" already, and a third heading over them said the first one twice.
             <Movement count="its first turns, how fast it wins, and what its cards need from each other">
               <div className="max-w-5xl flex flex-col gap-8">
-                {turns ? <FirstTurns model={turns} /> : null}
+                {/* THE TURNS, AND BESIDE THEM THE SKY LIGHTING UP TURN BY TURN, where the panel is wide
+                  *  enough for both; under them where it is not. */}
+                {turns ? (
+                  <div className="@container">
+                    <div className="flex flex-col gap-6 @min-[52rem]:grid @min-[52rem]:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] @min-[52rem]:items-start">
+                      <FirstTurns model={turns} />
+                      {themes ? <TurnSky model={themes} turns={turns} /> : null}
+                    </div>
+                  </div>
+                ) : null}
                 <SpeedPanel report={report} manaValueOf={manaValueOf} />
                 <BuildBenchmarks
                   categories={report.buildCategories}

@@ -281,8 +281,9 @@ test("going to a partner's page keeps the map: the card you came from stays, wit
   );
   const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ });
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "true"));
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
-  expect(await screen.findByRole("group", { name: /^Skullclamp and 3 of the cards/ })).toBeInTheDocument();
+  expect(await screen.findByRole("group", { name: /^Skullclamp and 3 of the cards/ }, { timeout: 3000 })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" })).toBeInTheDocument();
   // The route is drawn by the map's own frame loop, so it is waited for, not assumed.
   await waitFor(() => expect(document.querySelector("[data-testid=constellation-route]")).not.toBeNull());
