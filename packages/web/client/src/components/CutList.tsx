@@ -6,7 +6,7 @@ import { listNames, type EngineCard, type EngineModel } from "../lib/engine-mode
 import { CardName } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
 import { CardFace } from "./engine-parts.js";
-import { CutMap } from "./CutMap.js";
+import { CardMap } from "./CardMap.js";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { SwapLine } from "./SuggestedPairs.js";
 
@@ -237,7 +237,7 @@ function CutCard({ c, swap, model }: { c: CutChoice; swap?: SuggestedPair; model
   return (
     <li className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-        {c.card && model ? <CutMap model={model} card={c.card} /> : c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
+        {c.card && model ? <CardMap model={model} card={c.card} tone="cut" /> : c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
         <div className="flex min-w-0 flex-1 flex-col gap-2 self-stretch">
           <div>
             <div className="flex items-center gap-1">

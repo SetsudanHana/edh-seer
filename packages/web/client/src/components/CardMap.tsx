@@ -13,10 +13,12 @@ const short = (name: string) => {
   return s.length > 16 ? `${s.slice(0, 15).trimEnd()}…` : s;
 };
 
-/** WHY A CUT IS A CUT, DRAWN (report cohesion audit, 2026-09-27: "rely more on data visualisation
- *  than the text"). The card sits in the middle of its own few links; a thin constellation is the
- *  case for cutting it. A card with no links at all is a lone disc in a dashed ring. */
-export function CutMap({ model, card }: { model: EngineModel; card: EngineCard }) {
+/** ONE CARD IN THE MIDDLE OF ITS OWN LINKS (report cohesion audit, 2026-09-27: "rely more on data
+ *  visualisation than the text"). On a cut it is the case for cutting it, drawn: a thin
+ *  constellation. In the card drawer it is what the card works with, at a glance. A card with no
+ *  links at all is a lone disc in a dashed ring. `tone` colours the middle card's ring: amber on a
+ *  cut, the accent anywhere else. */
+export function CardMap({ model, card, tone = "card" }: { model: EngineModel; card: EngineCard; tone?: "cut" | "card" }) {
   const { open } = useCardDrawer();
   const clip = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   // The partners that keep working first: they are the ones the "keeps working with" line counts.
@@ -41,14 +43,14 @@ export function CutMap({ model, card }: { model: EngineModel; card: EngineCard }
     </g>
   );
   return (
-    <figure className="m-0 flex shrink-0 flex-col items-center" data-testid="cut-map">
+    <figure className="m-0 flex shrink-0 flex-col items-center" data-testid="card-map">
       <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img"
         aria-label={total ? `${card.name} and the cards it works with` : `${card.name} works with no other card`}>
         {!partners.length ? <circle cx={CX} cy={CY} r={R * 0.7} fill="none" stroke="var(--warning)" strokeWidth={1.5} strokeDasharray="4 4" /> : null}
         {at.map((p, i) => <line key={i} x1={CX} y1={CY} x2={p.x} y2={p.y} stroke="var(--accent)" strokeWidth={1.5} opacity={0.7}
           strokeDasharray={shown[i]!.once ? "3 3" : undefined} data-once={shown[i]!.once || undefined} />)}
         {partners.map((c, i) => disc(c, at[i]!.x, at[i]!.y, PART, `p${i}`, "var(--foreground)"))}
-        {disc(card, CX, CY, MID, "mid", "var(--warning)")}
+        {disc(card, CX, CY, MID, "mid", tone === "cut" ? "var(--warning)" : "var(--accent)")}
         {partners.map((c, i) => (
           // Above the top half's discs, below the bottom half's, so no name runs into the middle card.
           <text key={`t${i}`} x={at[i]!.x} y={at[i]!.y < CY - 1 ? at[i]!.y - PART - 4 : at[i]!.y + PART + 10} textAnchor="middle" fontSize={9.5} fill="var(--muted)"

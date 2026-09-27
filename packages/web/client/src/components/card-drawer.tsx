@@ -4,6 +4,12 @@ import { createPortal } from "react-dom";
 import type { CardGraph } from "../types.js";
 import { reasonSegments } from "../lib/reason-text.js";
 import { CardInspector } from "./CardInspector.js";
+import type { EngineModel } from "../lib/engine-model.js";
+import { CardMap } from "./CardMap.js";
+
+/** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, for the card's own small map, and a way to
+ *  walk the commander's map from the card. The report registers them; the drawer sits above it. */
+export interface DrawerExtras { model: EngineModel; walk: (id: string) => void }
 
 /** THE INSPECTOR, REACHABLE FROM ANY CARD NAME IN THE REPORT.
  *
@@ -37,11 +43,13 @@ interface CardDrawerApi {
   isPinned: (name: string) => boolean;
   togglePin: (name: string) => void;
   clearPins: () => void;
+  /** The report registers what it adds to the drawer; null when it unmounts. */
+  setExtras: (extras: DrawerExtras | null) => void;
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
   open: () => {}, known: new Set(), tokens: new Map(),
-  pinned: new Set(), isPinned: () => false, togglePin: () => {}, clearPins: () => {},
+  pinned: new Set(), isPinned: () => false, togglePin: () => {}, clearPins: () => {}, setExtras: () => {},
 });
 
 export function useCardDrawer(): CardDrawerApi {
@@ -57,6 +65,7 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
   children: ReactNode;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [extras, setExtras] = useState<DrawerExtras | null>(null);
   // A TOKEN NEVER WINS A NAME COLLISION HERE. `nodeId` gives a token its own id precisely because
   // 92 of 661 distinct token names collide with a real card's, and every caller of this drawer is
   // naming a card from the DECK — so index the card nodes and let a token be reached by clicking
@@ -156,7 +165,7 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
   const clearPins = useCallback(() => setPinned(new Set()), []);
 
   const api = useMemo<CardDrawerApi>(
-    () => ({ open, known: new Set(byName.keys()), tokens, pinned, isPinned, togglePin, clearPins }),
+    () => ({ open, known: new Set(byName.keys()), tokens, pinned, isPinned, togglePin, clearPins, setExtras }),
     [open, byName, tokens, pinned, isPinned, togglePin, clearPins],
   );
 
@@ -221,6 +230,18 @@ export function CardDrawerProvider({ graph, seedPins, children }: {
                 nameOf={nameOf}
                 pinned={pinned.has(node.cardName ?? node.label)}
                 onTogglePin={() => togglePin(node.cardName ?? node.label)}
+                extra={extras?.model.cards.get(node.id) ? (
+                  // ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): its links drawn here,
+                  // and the walk on the commander's map one tap away, instead of a second full-screen
+                  // map over the report.
+                  <div className="flex flex-col items-center gap-2 border-t border-(--separator) pt-2">
+                    <CardMap model={extras.model} card={extras.model.cards.get(node.id)!} />
+                    <button type="button" onClick={() => { extras.walk(node.id); setOpenId(null); }}
+                      className="min-h-9 self-stretch rounded-(--radius) border border-(--separator) px-3 text-sm hover:border-(--accent) hover:text-(--accent)">
+                      Walk the map from here
+                    </button>
+                  </div>
+                ) : undefined}
               />
             </div>,
             document.body,
