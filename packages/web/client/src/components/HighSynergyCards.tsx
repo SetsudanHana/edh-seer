@@ -1,5 +1,6 @@
 import type { DeckReport } from "../types.js";
 import { CardName, ReasonText } from "./card-drawer.js";
+import { CardMenuButton } from "./card-menu.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 import { CATEGORY_LABELS } from "./CardList.js";
 import { RATE_FAMILY_LABEL, rateLabel, type RateFamily } from "../lib/facets.js";
@@ -120,6 +121,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                   </span>
                 ) : null}
               </span>
+              <CardMenuButton name={c.cardName ?? c.name} />
             </li>
           );
         })}

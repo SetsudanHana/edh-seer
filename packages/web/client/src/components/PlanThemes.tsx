@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, listNames, tokenLabel, type EngineCard, type EngineGroup, type EngineModel } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
+import { CardMenuButton } from "./card-menu.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey } from "./engine-parts.js";
 import { whichTheme, type MainTheme } from "../lib/main-theme.js";
 
@@ -167,11 +168,14 @@ function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onO
           {hubs.map((c) => (
             <li key={c.id} className="flex w-[78px] shrink-0 flex-col items-center gap-1 sm:w-[96px]">
               <CardFace card={c} className="w-full" />
-              {onOpenCard ? (
-                <button type="button" className="min-h-8 w-full truncate rounded-(--radius) px-1 text-xs text-(--muted) hover:text-(--foreground)" onClick={() => open(c)} aria-label={`See what ${c.name} works with`}>
-                  See links
-                </button>
-              ) : null}
+              <span className="flex w-full items-center">
+                {onOpenCard ? (
+                  <button type="button" className="min-h-8 min-w-0 flex-1 truncate rounded-(--radius) px-1 text-xs text-(--muted) hover:text-(--foreground)" onClick={() => open(c)} aria-label={`See what ${c.name} works with`}>
+                    See links
+                  </button>
+                ) : null}
+                {c.isToken ? null : <CardMenuButton name={c.physical} className={onOpenCard ? "" : "ml-auto"} />}
+              </span>
             </li>
           ))}
         </ul>

@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { displayName, tokenLabel, type EngineCard, type EngineModel, type Repeat } from "../lib/engine-model.js";
 import type { OrbitModel, OrbitPartner } from "../lib/orbit-model.js";
+import { PopMenu, type MenuItem } from "./card-menu.js";
 
 /** THE DECK AS A MAP YOU WALK (owner, 2026-09-27: "go with constellation", after the orbit lab).
  *
@@ -403,8 +404,7 @@ class Sky {
   }
 }
 
-/** One line of the map's menu: an action, or a link that opens in a new tab. */
-export interface MenuItem { label: string; run?: () => void; href?: string }
+export type { MenuItem };
 
 export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, menuFor, isPinned }: {
   model: EngineModel; orbit: OrbitModel;
@@ -424,7 +424,6 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   isPinned?: (id: string) => boolean;
 }) {
   const svg = useRef<SVGSVGElement>(null);
-  const frame = useRef<HTMLDivElement>(null);
   const layers = useRef<Record<string, SVGGElement | null>>({});
   const sky = useRef<Sky | null>(null);
   const [menu, setMenu] = useState<{ id: string | null; x: number; y: number } | null>(null);
@@ -434,10 +433,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   useEffect(() => {
     const L = layers.current;
     const s = new Sky(svg.current!, L as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id),
-      (id, x, y) => {
-        const r = frame.current?.getBoundingClientRect();
-        setMenu({ id, x: x - (r?.left ?? 0), y: y - (r?.top ?? 0) });
-      });
+      (id, x, y) => setMenu({ id, x, y }));
     s.pinned = (id) => handlers.current.isPinned?.(id) ?? false;
     sky.current = s;
     const unbind = s.bindDrag();
@@ -467,14 +463,14 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
       { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...mapPartners(orbit, (narrow ? NARROW : WIDE).cap).map(({ p }) => p.card.id)], 1.15) },
     ] : []),
   ];
-  const close = (back = true) => {
+  const close = (back: boolean) => {
     const id = menu?.id;
     setMenu(null);
     // Focus goes back where the menu came from, so the keyboard does not lose its place.
     if (back && id) (svg.current?.querySelector(`[data-id="${CSS.escape(id)}"]`) as SVGGElement | null)?.focus();
   };
   return (
-    <div ref={frame} className="relative">
+    <div className="relative">
       <svg ref={svg} role="group" aria-label={`${name} and the ${orbit.direct + orbit.directTokens} cards it works with`}
         viewBox="-450 -368 900 736" className={`block h-auto w-full select-none touch-pan-y ${narrow ? "aspect-[20/23]" : "aspect-[880/720]"}`}>
         <defs>
@@ -489,7 +485,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
         <g ref={(el) => { layers.current.labels = el; }} />
       </svg>
       {menu && items.length ? (
-        <MapMenu x={menu.x} y={menu.y} title={menu.id ? displayName(model.cards.get(menu.id) ?? orbit.focus) : "The map"} items={items} onClose={close} />
+        <PopMenu x={menu.x} y={menu.y} title={menu.id ? displayName(model.cards.get(menu.id) ?? orbit.focus) : "The map"} items={items} onClose={close} />
       ) : null}
       <div className="absolute bottom-2 right-2 flex gap-1.5">
         {trail.length ? (
@@ -504,48 +500,3 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   );
 }
 
-/** THE MAP'S MENU (owner, 2026-09-27: "leverag[e] that canvas allows us to add right-click"). What
- *  a player can do with a card without hunting for it elsewhere in the report. A menu in the WAI
- *  pattern: the first line takes focus, arrows move, Escape or a click outside closes. */
-function MapMenu({ x, y, title, items, onClose }: { x: number; y: number; title: string; items: MenuItem[]; onClose: (back?: boolean) => void }) {
-  const box = useRef<HTMLDivElement>(null);
-  const [at, setAt] = useState({ x, y });
-  // Inside the map: a menu opened near the right or bottom edge flips to the pointer's other side.
-  useLayoutEffect(() => {
-    const el = box.current, parent = el?.parentElement;
-    if (!el || !parent) return;
-    const W = parent.clientWidth, H = parent.clientHeight, w = el.offsetWidth, h = el.offsetHeight;
-    setAt({ x: Math.max(4, x + w > W - 4 ? x - w : x), y: Math.max(4, y + h > H - 4 ? y - h : y) });
-    el.querySelector<HTMLElement>("[role=menuitem]")?.focus();
-  }, [x, y]);
-  useEffect(() => {
-    const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as globalThis.Node)) onClose(false); };
-    document.addEventListener("pointerdown", away, true);
-    return () => document.removeEventListener("pointerdown", away, true);
-  }, [onClose]);
-  const key = (e: React.KeyboardEvent) => {
-    const all = [...(box.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])];
-    const i = all.indexOf(document.activeElement as HTMLElement);
-    const go = (j: number) => { e.preventDefault(); all[(j + all.length) % all.length]?.focus(); };
-    if (e.key === "ArrowDown") go(i + 1);
-    else if (e.key === "ArrowUp") go(i - 1);
-    else if (e.key === "Home") go(0);
-    else if (e.key === "End") go(all.length - 1);
-    else if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); onClose(); }
-  };
-  const cls = "flex min-h-10 w-full items-center rounded-[calc(var(--radius)-2px)] px-3 text-left text-sm hover:bg-(--surface-secondary) focus-visible:bg-(--surface-secondary) outline-none";
-  return (
-    <div ref={box} role="menu" aria-label={title} onKeyDown={key} onContextMenu={(e) => e.preventDefault()}
-      className="map-menu absolute z-10 flex min-w-56 max-w-[calc(100%-8px)] flex-col rounded-(--radius) border border-(--separator) bg-(--surface) p-1 shadow-lg"
-      style={{ left: at.x, top: at.y }}>
-      <p aria-hidden="true" className="truncate px-3 pb-1 pt-1.5 text-xs font-semibold text-(--muted)">{title}</p>
-      {items.map((it) => it.href ? (
-        <a key={it.label} role="menuitem" href={it.href} target="_blank" rel="noopener" className={cls} onClick={() => onClose(false)}>
-          {it.label}<span aria-hidden="true" className="ml-auto pl-3 text-(--muted)">↗</span>
-        </a>
-      ) : (
-        <button key={it.label} type="button" role="menuitem" className={cls} onClick={() => { onClose(); it.run?.(); }}>{it.label}</button>
-      ))}
-    </div>
-  );
-}

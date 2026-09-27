@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { cardImageUrl } from "./card-node.js";
 import { peekOnPlainClick, usePeek } from "./peek.js";
+import { CardMenuButton } from "./card-menu.js";
 
 /** A card's face at swap size, or its name in a frame where the art is unknown. */
 function Face({ name, art, className }: { name: string; art?: string; className: string }) {
@@ -63,6 +64,7 @@ export function SwapLine({ p }: { p: SuggestedPair }) {
         </p>
         {p.add.reasons[0] ? <p className="text-xs max-w-[65ch]">{p.add.reasons[0].text}</p> : null}
       </div>
+      <CardMenuButton name={p.add.name} className="ml-auto" />
     </div>
   );
 }
