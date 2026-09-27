@@ -15,14 +15,16 @@
     "./deck-source": "./src/deck-source.ts",
     "./deck-url": "./src/deck-url.ts",
     "./moxfield": "./src/moxfield.ts",
-    "./archidekt": "./src/archidekt.ts"
+    "./archidekt": "./src/archidekt.ts",
+    "./precons": "./src/precons.ts"
   },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "ingest": "tsx src/bin/ingest.ts",
     "refresh-mechanics": "tsx src/bin/refresh-mechanics.ts",
-    "mechanic-coverage": "tsx src/bin/mechanic-coverage.ts"
+    "mechanic-coverage": "tsx src/bin/mechanic-coverage.ts",
+    "ingest-precons": "tsx src/bin/ingest-precons.ts"
   },
   "dependencies": {
     "@edh-seer/engine": "*",
