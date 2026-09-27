@@ -35,3 +35,23 @@ test("each plan's tile carries the turn its route can win by, and the fastest le
   fireEvent.click(burn!);
   expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("No turn: nothing in the report models how fast this route kills");
 });
+
+/** AN ALTERNATE WIN IS TIMED BY ITS CAST, NOT ITS WIN (persona round 2026-09-27: "An alternate win
+ *  condition · turn 1" read as a turn-1 win beside "Fastest … around turn 9"). */
+test("an alternate win's tile says when its card can be cast, not a bare turn", () => {
+  const wincons = { focus: 0.5, primary: "go-wide", classes: [
+    { class: "go-wide", count: 3, share: 0.5, cards: ["A"] },
+    { class: "alt-win", count: 2, share: 0.5, cards: ["Revel in Riches"] },
+  ] } as never;
+  const routes = [
+    { kind: "combat", label: "attacking with a wide board", turn: 9, cards: [], caveat: "x" },
+    { kind: "alt-win", label: "an alternate win: Revel in Riches", turn: 1, cards: ["Revel in Riches"], caveat: "when it can be cast; its own win condition still has to be met after that" },
+  ] as never;
+  render(<WinPlans wincons={wincons} routes={routes} />);
+  const [, alt] = screen.getAllByTestId("win-plan");
+  expect(alt).toHaveTextContent("cast by turn 1");
+  expect(alt).not.toHaveTextContent(/^.*\bturn 1\b.*turn 1/);
+  fireEvent.click(alt!);
+  expect(screen.getByTestId("win-plan-detail")).toHaveTextContent("Its cheapest card can be cast around turn 1; its own win condition still has to be met after that.");
+  expect(screen.getByTestId("win-plan-detail")).not.toHaveTextContent("Can win around");
+});

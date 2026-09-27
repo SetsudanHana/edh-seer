@@ -79,9 +79,12 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
             Your list has <b className="tabular-nums">{deckSize}</b> cards, <b className="tabular-nums">{over}</b> over 100.{" "}
             {toCut.length === over
               ? <>These {over} are doing the least here, weakest first: take them out and it is 100.</>
+              // "A ROLE YOU RUN MORE OF THAN YOU NEED" ONLY WHEN ONE IS (persona round 2026-09-27: the
+              // first-cuts seat looked below for a role over its target and every role was short or
+              // on target, a dead end).
               : toCut.length
-                ? <>These {toCut.length} are doing the least here. The other {over - toCut.length} have to come from a role you run more of than you need, below, or from the cards you like least.</>
-                : <>Every card here fills a role or works with your themes, so the {over} have to come from a role you run more of than you need, below, or from the cards you like least.</>}
+                ? <>These {toCut.length} are doing the least here. The other {over - toCut.length} have to come from {hasSurplus ? "a role you run more of than you need, below, or from " : ""}the cards you like least.</>
+                : <>Every card here fills a role or works with your themes, so the {over} have to come from {hasSurplus ? "a role you run more of than you need, below, or from " : ""}the cards you like least.</>}
           </p>
           {toCut.length ? (
             <ol className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">

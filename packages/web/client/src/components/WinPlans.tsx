@@ -69,7 +69,12 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
     <>
       <span className="text-sm leading-snug">{label}</span>
       {route !== undefined ? (
-        <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">not timed</span>}</span>
+        // AN ALTERNATE WIN IS TIMED BY WHEN ITS CARD CAN BE CAST, NOT WHEN IT WINS (persona round
+        // 2026-09-27: "An alternate win condition · turn 1" read as a turn-1 win beside "Fastest …
+        // around turn 9"). It says so, small, as an untimed tile does.
+        route?.kind === "alt-win" && route.turn !== undefined
+          ? <span className="text-xs text-(--muted)">cast by turn {route.turn}</span>
+          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">not timed</span>}</span>
       ) : null}
       <span className="text-xs stat-num text-(--muted)">{plural(plan.count, "card")}</span>
     </>
@@ -93,7 +98,9 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
   return (
     <div className="flex flex-col gap-2" data-testid="win-plan-detail">
       <p className="text-sm"><b>{cap(phrase(plan.class))}</b> · {plural(plan.count, "card")}</p>
-      {route?.turn !== undefined ? (
+      {route?.kind === "alt-win" && route.turn !== undefined ? (
+        <p className="text-sm">Its cheapest card can be cast around <b>turn {route.turn}</b>; its own win condition still has to be met after that.</p>
+      ) : route?.turn !== undefined ? (
         <p className="text-sm">
           Can win around <b>turn {route.turn}</b>{spread}
           {route.kind === "combo" ? <>, with {route.cards.join(" + ")}</> : null}

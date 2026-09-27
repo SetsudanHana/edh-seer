@@ -2479,7 +2479,11 @@ test("the bracket panel names what put the deck there, and never reads as a grad
   // Baseline round 2026-09-26: "none found" now says what was looked at, so it cannot read as
   // "never looked".
   expect(screen.getByTestId("bracket-why")).toHaveTextContent(/none of its cards is on Wizards' Game Changers list, and no infinite combo Commander Spellbook knows is complete/i);
-  expect(screen.getByTestId("bracket-checked")).toHaveTextContent(/Not checked: mass land destruction or chained extra turns/);
+  // The band does not count these; the table line says whether any card does them (persona round
+  // 2026-09-27: "Not checked" read as the opposite of the table line's "nothing takes extra turns").
+  expect(screen.getByTestId("bracket-checked")).toHaveTextContent(/The band does not count mass land destruction or chained extra turns/);
+  // ZEROS ARE SAID: "none found" must not read as "never looked".
+  expect(screen.getByTestId("bracket-counts")).toHaveTextContent("no Game Changers, no infinite combos");
   two.unmount();
 
   // An analysis with no bracket renders nothing at all, never a heading over an empty panel.
@@ -2672,7 +2676,7 @@ test("the band carries one pip per piece of evidence that put the deck there", (
   expect(screen.getAllByTestId("bracket-pip")).toHaveLength(1);
   // Two nodes carry it -- the summary beside the dots and the box heading. Both are correct;
   // the summary is the one being pinned, so the count is what is asserted.
-  expect(screen.getAllByText(/^1 Game Changer$/)).toHaveLength(1);
+  expect(screen.getByTestId("bracket-counts")).toHaveTextContent("1 Game Changer, no infinite combos");
   one.unmount();
 
   // A MARK THAT IS ALWAYS PRESENT MARKS NOTHING -- the same rule `DerivedMark` and the unread hatch

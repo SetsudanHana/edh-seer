@@ -102,20 +102,19 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf }: {
         </div>
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-sm">Bracket {CELL_LABEL[bracket.band]}</span>
-          {/* THE PIPS CARRY A WORD, and the word does the addition out loud. */}
-          {pips > 0 ? (
-            <span className="flex items-baseline gap-1.5 text-xs text-(--muted)">
+          {/* THE PIPS CARRY A WORD, and the word does the addition out loud. BOTH COUNTS, ZEROS
+            *  INCLUDED (persona round 2026-09-27: a deck with no combo or no Game Changer said
+            *  nothing, and "none found" read as "never looked"). */}
+          <span className="flex items-baseline gap-1.5 text-xs text-(--muted)" data-testid="bracket-counts">
+            {pips > 0 ? (
               <span className="flex items-center gap-1" aria-hidden="true">
                 {Array.from({ length: pips }, (_, i) => (
                   <span key={i} data-testid="bracket-pip" className="h-1.5 w-1.5 rounded-full bg-(--fill)" />
                 ))}
               </span>
-              {[
-                bracket.gameChangers.length > 0 ? plural(bracket.gameChangers.length, "Game Changer") : null,
-                bracket.infiniteCombos > 0 ? plural(bracket.infiniteCombos, "infinite combo") : null,
-              ].filter(Boolean).join(", ")}
-            </span>
-          ) : null}
+            ) : null}
+            {`${bracket.gameChangers.length ? plural(bracket.gameChangers.length, "Game Changer") : "no Game Changers"}, ${bracket.infiniteCombos ? plural(bracket.infiniteCombos, "infinite combo") : "no infinite combos"}`}
+          </span>
         </div>
         {/* WHY, IN ONE SENTENCE A PLAYER CAN SAY AT THE TABLE. */}
         <p data-testid="bracket-why" className="text-sm max-w-[65ch]">{why}</p>
@@ -150,7 +149,7 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf }: {
       <p data-testid="bracket-checked" className="text-xs text-(--muted) max-w-[65ch]">
         {split ? <>{split} </> : null}
         Game Changers are Wizards&rsquo; list; the combos are Commander Spellbook&rsquo;s, and counting them is our call.
-        Not checked: mass land destruction or chained extra turns.{" "}
+        The band does not count mass land destruction or chained extra turns; &ldquo;Say this at the table&rdquo; says whether any card does them.{" "}
         <a
           className="text-(--accent) underline underline-offset-2"
           href="https://magic.wizards.com/en/news/announcements/introducing-commander-brackets-beta"
