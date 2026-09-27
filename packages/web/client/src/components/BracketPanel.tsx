@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useContext, useMemo, useState } from "react";
+import { idsOf } from "../lib/deck-sky.js";
+import { DeckSky, SkyContext, type SkyLight } from "./DeckSky.js";
 import type { DeckReport } from "../types.js";
 import { bracketWhy, infiniteCombos } from "../lib/bracket-why.js";
 import { CardName } from "./card-drawer.js";
@@ -40,9 +42,30 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
   manaValueOf?: (name: string) => number | undefined;
 }) {
   const [allCombos, setAllCombos] = useState(false);
-  if (!bracket) return null;
+  // THE BRACKET ON THE DECK'S SKY (owner, 2026-09-27): what put the deck here, lit -- its Game
+  // Changers, and each infinite combo drawn as a closed loop in gold, the shape a combo is. A combo
+  // row picks that one combo out.
+  const model = useContext(SkyContext);
+  const [pick, setPick] = useState<number | null>(null);
   // Without the full list (an older saved report), the cheap combos the bracket carries stand in.
-  const listed = combos ? infiniteCombos(combos, manaValueOf ?? (() => undefined)) : bracket.cheapCombos.map((c) => ({ ...c, cheap: true }));
+  const listed = useMemo(() => !bracket ? [] : combos ? infiniteCombos(combos, manaValueOf ?? (() => undefined)) : bracket.cheapCombos.map((c) => ({ ...c, cheap: true })), [bracket, combos, manaValueOf]);
+  const light = useMemo((): SkyLight | null => {
+    if (!model || !bracket || bracket.band === "1-2") return null;
+    const loops = pick !== null && listed[pick] ? [listed[pick]!] : listed;
+    const gcs = pick !== null ? [] : bracket.gameChangers;
+    const ids = idsOf(model, [...gcs, ...loops.flatMap((c) => c.cards)]);
+    if (!ids.size) return null;
+    const lines: [string, string][] = [];
+    for (const c of loops) {
+      const ring = [...idsOf(model, c.cards)];
+      if (ring.length > 1) ring.forEach((id, i) => { const next = ring[(i + 1) % ring.length]!; if (ring.length > 2 || i === 0) lines.push([id, next]); });
+    }
+    const what = pick !== null
+      ? `${listed[pick]!.cards.join(" + ")}, drawn as its loop in gold`
+      : [gcs.length ? `the ${gcs.length} Game Changer${gcs.length === 1 ? "" : "s"}` : "", loops.length ? `the ${loops.length} infinite combo${loops.length === 1 ? "" : "s"}, each a loop in gold` : ""].filter(Boolean).join(" and ");
+    return { ids, lines, label: `What puts it in bracket ${CELL_LABEL[bracket.band]}: ${what}.` };
+  }, [model, bracket, listed, pick]);
+  if (!bracket) return null;
   const why = bracketWhy(bracket, combos ? listed : []);
   const shownCombos = allCombos ? listed : listed.slice(0, COMBO_ROWS);
   // ONE PIP PER PIECE OF EVIDENCE THE LIST BELOW NAMES, so the eye goes band -> why without
@@ -237,8 +260,14 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
               </p>
               {combos && listed.length ? (
                 <ul className="mt-2 flex flex-col gap-1.5" aria-label="The infinite combos in this deck">
-                  {shownCombos.map((c) => (
+                  {shownCombos.map((c, ci) => (
                     <li key={c.cards.join("|")} data-testid="bracket-combo" className="flex flex-col gap-0.5 border-t border-(--separator) pt-1.5">
+                      {light ? (
+                        <button type="button" aria-pressed={pick === ci} onClick={() => setPick(pick === ci ? null : ci)}
+                          className={`self-start text-xs ${pick === ci ? "text-(--accent)" : "text-(--muted) hover:text-(--foreground)"}`}>
+                          {pick === ci ? "On the sky below · show all again" : "Show this one on the sky"}
+                        </button>
+                      ) : null}
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
                         <span className="text-sm">
                           {c.cards.map((n, i) => (
@@ -349,6 +378,7 @@ export function BracketPanel({ bracket, combos, manaValueOf }: {
           </>
         )}
       </p>
+      {light && model ? <DeckSky model={model} lit={light} className="w-full max-w-[26rem]" /> : null}
     </div>
   );
 }
