@@ -180,7 +180,10 @@ import { emblemRecipient } from "../emblem.js";
 // 178: "a spell that shares a creature type with this creature" names the host's creature types, and
 // a grant to commander creatures names the COMMANDER'S (`sharesTypeWith`, issue #559: Folk Hero drew
 // "when Nalia de'Arnise is cast").
-export const DERIVE_VERSION = 178;
+// 179: a Background's "Commander creatures you own have '...'" makes every "this creature"/"it" in
+// the grant the commander, and "share a creature type with it" the commander's types (issue #625:
+// 26 Backgrounds read their granted text as the Background itself; Haunted One never fired).
+export const DERIVE_VERSION = 179;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1863,6 +1866,42 @@ export function deriveCardTags(input: DeriveInput): CardTags {
       ? { ...a, trigger: { ...a.trigger, subject: { ...a.trigger.subject, control: "opp" as const } } }
       : a;
   });
+  // A BACKGROUND'S GRANT IS THE COMMANDER'S ABILITY (DERIVE 179, #625). "Commander creatures you own
+  // have '...'" hands every clause after the grant to your commander, so each "this creature" / "it"
+  // in them is the commander -- 26 Backgrounds read it as the Background itself, and Haunted One's
+  // "whenever this creature becomes tapped" waited on an enchantment that never taps. And "other
+  // creatures you control that share a creature type with it" is the commander's types (#559's
+  // mechanism, on an effect this time). CEILING: card-scoped, which holds because a Background's
+  // only text outside the quotes is the grant sentence itself.
+  // ENFORCED, not assumed: all 26 corpus matches are Backgrounds with nothing outside the quotes
+  // (measured 2026-09-27), and the subtype check keeps a future card that is not from rewriting its
+  // own self-references.
+  const grantsToCommander = GRANTED_TO_COMMANDER.test(input.oracleText ?? "")
+    && chars.subtypes.some((x) => x.toLowerCase() === "background");
+  const COMMANDER: SubjectFilter = { control: "you", token: null, type: "creature", commander: true };
+  const toCommander = (sub: SubjectFilter): SubjectFilter => {
+    if (sub.self !== true) return sub;
+    const { self: _self, ...rest } = sub;
+    return { ...rest, ...COMMANDER };
+  };
+  const hosted = !grantsToCommander ? abilities : abilities.map((a) => {
+    const clause = a.clause !== undefined ? clauseById.get(a.clause) : undefined;
+    const text = clause ? textForClause(clause, input.clauseTexts) : "";
+    const sharesWithIt = /\bshares? a creature type with it\b/i.test(text);
+    const effectSubject = a.effect.subject
+      // The printed class is "other creatures YOU CONTROL that share a creature type with it"; a subject
+      // the parser left broad (Haunted One's undying grant: `control: any`, no type) gets that floor.
+      ? (sharesWithIt && a.effect.subject.self !== true
+        ? { ...a.effect.subject, type: a.effect.subject.type ?? "creature", control: a.effect.subject.control === "any" ? "you" as const : a.effect.subject.control, sharesTypeWith: "commander" as const }
+        : toCommander(a.effect.subject))
+      : undefined;
+    return {
+      ...a,
+      ...(a.trigger ? { trigger: { ...a.trigger, subject: toCommander(a.trigger.subject) } } : {}),
+      effect: effectSubject ? { ...a.effect, subject: effectSubject } : a.effect,
+      ...(a.emits ? { emits: a.emits.map((e) => ({ ...e, subject: toCommander(e.subject) })) } : {}),
+    };
+  });
   // THE CARD'S OWN CREATURE TYPES, pinned here where the characteristics are known (#559). A card
   // with none keeps the marker, which matches nothing: silence over "any creature".
   // CREATURE FACES ONLY: `subtypes` is the union over every face, and a creature // land's land type
@@ -1870,7 +1909,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
   const creatureFaces = (chars.faces ?? [{ types: chars.types, subtypes: chars.subtypes }])
     .filter((f) => f.types.some((t) => t.toLowerCase() === "creature"));
   const own = [...new Set(creatureFaces.flatMap((f) => f.subtypes.map((x) => x.toLowerCase())))];
-  const pinned = own.length === 0 ? abilities : abilities.map((a) => a.trigger?.subject.sharesTypeWith !== "self" ? a : {
+  const pinned = own.length === 0 ? hosted : hosted.map((a) => a.trigger?.subject.sharesTypeWith !== "self" ? a : {
     ...a,
     trigger: { ...a.trigger, subject: (({ sharesTypeWith: _s, ...rest }) => ({ ...rest, subtype: own }))(a.trigger.subject) },
   });

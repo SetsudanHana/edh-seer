@@ -3159,3 +3159,30 @@ test("a shared-type trigger on the card itself is pinned to the card's own creat
   expect(s?.subtype).toEqual(["elf", "druid"]);
   expect(s?.sharesTypeWith).toBeUndefined();
 });
+
+// ISSUE #625: Haunted One. A Background's grant is the commander's ability, so "this creature" and
+// "it" are the commander, and "share a creature type with it" is the commander's types.
+test("a Background's granted text is about the commander, not the Background (#625)", () => {
+  const oracle = "Commander creatures you own have \"Whenever this creature becomes tapped, it and other creatures you control that share a creature type with it each get +2/+0 and gain undying until end of turn.\"";
+  const granted = "Whenever this creature becomes tapped, it and other creatures you control that share a creature type with it each get +2/+0 and gain undying until end of turn.";
+  const tags = deriveCardTags({
+    oracleId: "h", name: "Haunted One", oracleText: oracle,
+    characteristics: { types: ["legendary", "enchantment"], subtypes: ["Background"], colors: ["B"], identity: ["B"], cmc: 3, power: null, toughness: null, token: false, keywords: [] },
+    clauses: [
+      // The stored clauses, verbatim (cardClauses, 2026-09-27).
+      { id: 1, abilityType: "static" },
+      { id: 2, abilityType: "triggered", trigger: { event: "taps", subject: "this creature", control: "you" },
+        actions: [{ verb: "modify-pt", object: "it", amount: "+2/+0" },
+          { verb: "modify-pt", object: "other creatures you control that share a creature type with it", amount: "+2/+0" },
+          { verb: "grant-ability", object: "it and other creatures you control that share a creature type with it gain undying" }] },
+    ],
+    clauseTexts: { 1: "Commander creatures you own have", 2: granted },
+  } as never);
+  expect(JSON.stringify(tags.abilities)).not.toContain('"self":true');
+  const trig = tags.abilities.find((a) => a.trigger)?.trigger;
+  expect(trig?.subject).toMatchObject({ commander: true, type: "creature" });
+  const shared = tags.abilities.filter((a) => a.effect.subject?.sharesTypeWith === "commander");
+  expect(shared.length).toBeGreaterThan(0);
+  // Never broader than "creatures you control" (review: the undying grant parsed as `control: any`).
+  for (const a of shared) expect(a.effect.subject).toMatchObject({ type: "creature", control: "you" });
+});
