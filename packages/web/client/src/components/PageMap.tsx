@@ -87,11 +87,14 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
     void loadPage(id).then((p) => {
       // Only the last card asked for, and only one that has a page to walk to.
       if (pending.current !== id) return;
-      if (p) setAway({ slug: id, page: p }); else leave(id);
+      // THE CARD IN THE MIDDLE IS THE ONE BESIDE THE LIST (owner, 2026-09-27: after a walk the
+      // panel still read the commander's text, with no way to read the card you walked to).
+      if (p) { setAway({ slug: id, page: p }); peek?.push(id); } else leave(id);
     });
   };
   const tap = (id: string) => {
-    if (id === slug) { setSel(null); return; }
+    // The middle card: shown beside the list again when the walk has left the page's own card.
+    if (id === slug) { setSel(null); if (away && peek && peek.stack.at(-1) !== id) peek.push(id); return; }
     if (sel === id) go(id);
     else { setSel(id); peek?.push(id); }
   };

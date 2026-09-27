@@ -232,6 +232,8 @@ test("a second tap on a commander page's map walks to the card on the map, and B
     </MemoryRouter>,
   );
   const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards it works well with/ });
+  // The nodes are drawn by the map's own effect after the group mounts, so they are waited for.
+  await waitFor(() => expect(map.querySelector("[data-id='b-two']")).not.toBeNull(), { timeout: 3000 });
   fireEvent.click(map.querySelector("[data-id='b-two']")!);
   // The first tap picks it (the map marks it pressed on its next frame); only then is a second a walk.
   await waitFor(() => expect(map.querySelector("[data-id='b-two']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
@@ -240,6 +242,11 @@ test("a second tap on a commander page's map walks to the card on the map, and B
   expect(screen.queryByText("card page")).toBeNull();
   // The list below is still the commander's.
   expect(screen.getByRole("heading", { name: "Works well with" })).toBeInTheDocument();
+  // THE CARD WALKED TO IS THE ONE BESIDE THE LIST (owner, 2026-09-27): the preview stays open on it,
+  // where it used to close and leave the commander's text.
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" }));
   expect(await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ })).toBeInTheDocument();
+  // Back on the commander, the page's own card is the one beside the list again.
+  expect(screen.queryByRole("dialog")).toBeNull();
 });
