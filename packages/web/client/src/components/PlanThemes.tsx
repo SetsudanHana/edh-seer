@@ -147,7 +147,7 @@ function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onO
   return (
     <article className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-4" aria-labelledby={`theme-${g.tag}`}>
       {/* WHERE THE THEME SITS IN THE DECK (owner, 2026-09-27: the sky in every chapter): a small
-        * copy of Glance's sky with this theme's cards lit and their links in gold. A helper theme
+        * copy of Glance's sky with this theme's cards lit and their links in pink. A helper theme
         * lights stars across other themes' constellations, which is what a helper is. */}
       <div className="flex items-start gap-3">
       <div className="flex min-w-0 flex-1 flex-col gap-3">

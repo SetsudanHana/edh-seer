@@ -222,7 +222,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     const lines = linksFrom(themes, ids);
     return {
       ids, lines,
-      label: `The ${ids.size} possible cut${ids.size === 1 ? "" : "s"}, lit, and ${lines.length ? `every link ${ids.size === 1 ? "it has" : "they have"} to the rest of the deck, in gold: ${lines.length}` : "nothing ties them to the rest of the deck"}.`,
+      label: `The ${ids.size} possible cut${ids.size === 1 ? "" : "s"}, lit, and ${lines.length ? `every link ${ids.size === 1 ? "it has" : "they have"} to the rest of the deck, in pink: ${lines.length}` : "nothing ties them to the rest of the deck"}.`,
     };
   }, [themes, cuts]);
   const cutNames = useMemo(() => [...cuts.map((c) => c.name), ...swapCandidates(report, cuts)], [report, cuts]);
@@ -457,7 +457,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             {/* 64rem, the width of the Fixes list above it: a cut's name and its "5 mana - 0.0"
               *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
             {/* THE CUTS ON THE DECK'S SKY (owner, 2026-09-27: the sky in every chapter): the cards
-              *  doing the least, lit, with every link they have in gold -- a few thin threads into
+              *  doing the least, lit, with every link they have in pink -- a few thin threads into
               *  the deck is the case for cutting them, drawn. Beside the list on a wide screen,
               *  where it stays while the list scrolls; above it on a phone. */}
             <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,64rem)_minmax(0,22rem)] xl:items-start xl:gap-8">
