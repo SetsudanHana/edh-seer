@@ -4,6 +4,8 @@ import type { CardTags, GameEvent, SubjectFilter } from "@edh-seer/tagger";
 // time -- a value import of the root took every client test down with "The URL must be of
 // scheme file". `segment.ts` closes over `./subtypes` and `./emblem` only, both already public,
 // and does nothing but read strings.
+import { qualityTable } from "./quality-percentiles.js";
+import type { Role } from "./quality.js";
 import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
@@ -1596,6 +1598,9 @@ export interface NameIndexEntry {
    *  `detectBuildCategories` says this card fills, so a suggestion's role equals the role it would
    *  have in a report. Absent when it fills none. The ORDER of `BUILD_CATEGORIES` is therefore a
    *  wire format -- append only. */
+  /** Quality percentile per role, aligned index-for-index with `r`; -1 = that role scored nothing
+   *  (spec 2026-09-27-card-quality-per-role). Nothing reads it until the owner judges the sheet. */
+  q?: number[];
   r?: number[];
   /** STAPLE-GRADE RAMP, `rampGrade` (#534): how much a player would take this as ramp with nothing
    *  in the deck arguing for it, so a short ramp list can offer a Signet that joins no deck card.
@@ -1889,6 +1894,8 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const classes = detectAnswerClasses(substantive);
   const answersOf = new Map<string, number[]>();
   POOL_CLASSES.forEach((c, i) => { for (const n of classes.get(c)?.cards ?? []) listOf(answersOf, n).push(i); });
+  // QUALITY PER ROLE (spec 2026-09-27): a percentile within each role, aligned with `r`.
+  const quality = qualityTable(substantive);
   const partnersByName = new Map<string, PartnerRow[]>();
   // THE TABLES THE ROWS POINT INTO. Collected from the corpus rather than from a written-down list,
   // so a set that introduces a type cannot leave the index describing cards with a word it has no
@@ -2115,6 +2122,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
       ...(sIdx.length > 0 ? { s: sIdx } : {}),
       ...(kIdx.length > 0 ? { k: kIdx } : {}),
       ...(rolesOf.has(d.card.name) ? { r: rolesOf.get(d.card.name)! } : {}),
+      ...(rolesOf.has(d.card.name) ? { q: rolesOf.get(d.card.name)!.map((code) => quality.get(d.card.name)?.get(BUILD_CATEGORIES[code] as Role) ?? -1) } : {}),
       ...(answersOf.has(d.card.name) ? { a: answersOf.get(d.card.name)! } : {}),
       ...(grade > 0 ? { g: grade } : {}),
       ...(mv > 0 ? { mv } : {}),

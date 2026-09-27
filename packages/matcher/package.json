@@ -23,6 +23,7 @@
     "./deck-sentence": "./src/deck-sentence.ts",
     "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",
+    "./quality": "./src/quality.ts",
     "./archetypes": "./src/archetypes.ts",
     "./brackets": "./src/brackets.ts",
     "./edges": "./src/edges.ts",
@@ -39,6 +40,7 @@
     "./eval-pairs-core": "./src/eval-pairs-core.ts"
   },
   "scripts": {
+    "gen:quality-weights": "tsx src/bin/gen-quality-weights.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "gen:hierarchy": "tsx src/bin/gen-hierarchy.ts",
