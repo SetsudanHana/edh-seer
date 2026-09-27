@@ -1,5 +1,5 @@
 {
-  "version": 15,
+  "version": 16,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -359,11 +359,11 @@
       "winconClass": "burn",
       "match": [
         { "op": "anyOf", "clauses": [
-          { "op": "effectKind", "in": ["drain", "player-damage", "player-life-loss", "non-combat-damage", "noncombat-damage"] },
+          { "op": "effectKind", "in": ["drain", "player-damage", "player-life-loss", "non-combat-damage", "noncombat-damage"], "control": ["opp", "any"] },
           { "op": "oracle", "pattern": "burn" }
         ] }
       ],
-      "why": "Same signal the `burn` build category uses. Damage aimed at a creature is removal and has its own rules; this is the half aimed at players."
+      "why": "Same signal the `burn` build category uses. Damage aimed at a creature is removal and has its own rules; this is the half aimed at players. The effect must be aimed at an opponent or any player (#574): The Chain Veil's 'you lose 2 life' is `player-life-loss` too, and read as a burn plan on Chandra."
     },
     {
       "id": "wincon.mill",
