@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **181** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **183** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -68,11 +68,11 @@ Derivation maps the model's words onto these. The two lists are **not** the same
 be: the clause vocabulary describes what a sentence says, the engine vocabulary describes what the
 matcher can join on.
 
-### VERB_VOCAB — 74 members
+### VERB_VOCAB — 75 members
 
 The events a card can supply or watch for. Defined in [`VERB_VOCAB`](../../packages/tagger/src/schema.ts).
 
-`enters`, `enters-graveyard`, `dies`, `leaves`, `cast`, `attacks`, `taps`, `non-combat-damage`, `combat-damage`, `damaged`, `exiled`, `draw`, `discard`, `mill`, `gain-life`, `lose-life`, `sacrifice`, `create-token`, `counter-added`, `land-play`, `untaps`, `proliferate`, `unlock`, `upkeep`, `begin-combat`, `end-step`, `dice-rolled`, `scry`, `surveil`, `search`, `counter-spell`, `counter-removed`, `loses-game`, `shuffle`, `transform`, `turned-face-up`, `copy`, `reveal`, `attached`, `unattached`, `gains-control`, `phases-out`, `regenerate`, `prevented`, `exchange`, `double`, `triple`, `goad`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `convert`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `airbend`, `waterbend`, `foretell`, `flip-coin`, `monarch`, `initiative`, `city-blessing`, `ring-tempts`
+`enters`, `enters-graveyard`, `dies`, `leaves`, `cast`, `attacks`, `taps`, `non-combat-damage`, `combat-damage`, `damaged`, `exiled`, `draw`, `discard`, `mill`, `gain-life`, `lose-life`, `sacrifice`, `create-token`, `counter-added`, `land-play`, `untaps`, `proliferate`, `unlock`, `upkeep`, `begin-combat`, `end-step`, `dice-rolled`, `scry`, `surveil`, `search`, `counter-spell`, `counter-removed`, `loses-game`, `shuffle`, `transform`, `turned-face-up`, `copy`, `reveal`, `attached`, `unattached`, `gains-control`, `phases-out`, `regenerate`, `prevented`, `exchange`, `double`, `triple`, `goad`, `exert`, `detain`, `suspect`, `harness`, `vote`, `clash`, `fateseal`, `behold`, `heal`, `convert`, `explore`, `endure`, `learn`, `forage`, `time-travel`, `collect-evidence`, `venture-into-the-dungeon`, `face-a-villainous-choice`, `airbend`, `waterbend`, `foretell`, `flip-coin`, `monarch`, `initiative`, `city-blessing`, `ring-tempts`, `prepared`
 
 
 ### EFFECT_KINDS — 44 members
@@ -132,6 +132,7 @@ Defined in [`SubjectFilter`](../../packages/tagger/src/schema.ts).
 | `notCommander` | `true` | optional | Not a designated commander: the resolved shared-type class above excludes the commander's own spell, since the ability sits on the commander on the battlefield (#559). |
 | `historic` | `true` | optional | "Historic" — artifact, legendary, or Saga. A printed fact, not a judgment, and the only way the engine can hear Jhoira, Basim Ibn Ishaq, Glóin, Rona and The Sixth Doctor narrow their cast trigger. Without it their subject is the bare umbrella `spell` and every card in the deck satisfies it. Set on a CONSUMER by `parseSubject`, and on a PRODUCER by the matcher, which reads it off the printed type line. |
 | `outlaw` | `true` | optional | The subject demands an OUTLAW — CR 700.12, an object with the Assassin, Mercenary, Pirate, Rogue and/or Warlock creature type. A printed fact read off the type line, exactly like `historic`, and set on BOTH sides for the reason 09ce98d records: a consumer demand a producer cannot state is a demand nothing satisfies. |
+| `prepared` | `true` | optional | CR 722.3d: a spell cast as a PREPARE SPELL -- the copy a prepared permanent lets you cast. Codie, Ravenous Codex watches "whenever you cast a prepared spell"; its only producer is a card's own implied prepare ability (matcher implied.ts). Asymmetric like `commander`: a consumer that does not ask is unaffected. |
 | `modified` | `true` | optional | The subject demands a MODIFIED permanent — CR 700.9: it has a counter on it, is equipped, or is enchanted by an Aura its controller controls. |
 | `combat` | `"attacking" \| "blocking"` | optional | The subject demands a COMBAT STATE — an attacking or a blocking creature. A board state like `modified`, so it is set on a CONSUMER by `parseSubject` ("whenever an attacking creature dies", Kardur, Doomscourge) and on a PRODUCER only where the printed text names it ("exile all attacking creatures", Settle the Wreckage). Without it Kardur derived a bare `dies:creature` and Blasphemous Edict at sorcery speed fed it (owner, 2026-09-05). |
 | `withoutDying` | `true` | optional | A `leaves` demand that REFUSES a death. "Whenever one or more other creatures you control leave the battlefield without dying" (Dour Port-Mage) and Taeko's "if it didn't die" are `leaves` minus `dies` (CR 700.4). Demand only -- read by `eventMatches`, never stamped on a producer, so a consumer that does not ask is unaffected. 5 corpus cards. |

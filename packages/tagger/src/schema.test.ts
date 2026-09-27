@@ -41,7 +41,10 @@ test("VERB_VOCAB is a closed, unique verb list", () => {
   // so Stuffy Doll and every enrage Dinosaur derived no trigger at all. Consumer-only by design.
   // 73 -> 74 on 2026-09-16 for `exiled` (AF7b; recall v5 #160): a card put into exile is an event
   // 39 corpus triggers watch and the processors demand, and no exile action emitted it.
-  expect(VERB_VOCAB).toHaveLength(74);
+  // 74 -> 75 on 2026-09-27 for `prepared` (CR 722.3a, Reality Fracture): the owner ruled that a
+  // preparer joins every card with a prepare spell, and a blink joins every creature that enters
+  // prepared. The emit was OPEN in verb-accounting since #668, awaiting that ruling.
+  expect(VERB_VOCAB).toHaveLength(75);
   expect(VERB_VOCAB).toContain("damaged");
   expect(VERB_VOCAB).toContain("exiled");
   for (const v of ["monarch", "initiative", "ring-tempts", "flip-coin"]) expect(VERB_VOCAB).toContain(v);

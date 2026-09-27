@@ -286,6 +286,8 @@ export const VERB_PHRASES: Record<string, string> = {
   initiative: "gives you the initiative",
   "city-blessing": "gives you the city's blessing",
   "ring-tempts": "has the Ring tempt you",
+  // CR 722.3a, Reality Fracture.
+  prepared: "becomes prepared",
   "loses-game": "makes a player lose the game",
   "gain-life": "gains life",
   "lose-life": "makes a player lose life",
@@ -395,6 +397,11 @@ export function emitPhrase(emits: readonly EmitLike[]): string | null {
   const put = emits.find((e) => e.verb === "enters" && e.subject.token !== true && ["hand", "graveyard", "library"].includes(e.subject.fromZone ?? ""));
   if (put) return `${put.subject.fromZone === "graveyard" ? "returns" : "puts"} ${noun(put, false)} onto the battlefield`;
   if (has("draw") && has("discard")) return "draws and discards";
+  // CR 722.3a: "enters prepared" / "target creature becomes prepared".
+  const prep = has("prepared");
+  if (prep) return prep.subject.self === true ? "becomes prepared" : `prepares ${noun(prep)}`;
+  // The implied prepare ability (implied.ts `preparedAbilities`): being prepared lets it cast its spell.
+  if (emits.some((e) => e.verb === "cast" && (e.subject as { prepared?: boolean }).prepared === true)) return "can cast its prepare spell";
   const discard = has("discard");
   if (discard && discard.subject.control === "opp") return "makes an opponent discard a card";
   const lose = has("lose-life");

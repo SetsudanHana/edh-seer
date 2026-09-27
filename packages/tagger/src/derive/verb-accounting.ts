@@ -41,7 +41,6 @@ export const OPEN: Record<string, { cards: number; note: string }> = {
   "empower-jace": { cards: 0, note: "CR 701.71, Reality Fracture (31 cards); amass's shape and amass's row: kind `counter-placement`, emits nothing — the Jace token is created only if you have none, and a conditional outcome is omitted" },
   // --- CR 722.3 Prepared, Reality Fracture (67 corpus cards). An event (722.3a gains the designation,
   // 722.3b loses it) with no engine verb yet: its edges wait on the owner's ruling of 2026-09-27.
-  prepare: { cards: 0, note: "CR 722.3a; 'enters prepared' / 'becomes prepared'. The engine verb and its edges (preparers -> prepare creatures, blink -> enters prepared, cast-a-prepared-spell payoffs) await a ruling" },
   unprepare: { cards: 0, note: "CR 722.3b; losing the designation. Same queue as `prepare`" },
   // --- CR 701 keyword actions the rules give no primitive — CLOSED 2026-09-09 (AC11 batch 3).
   // --- CR 705 / 725-731 designations — CLOSED 2026-09-09 (AC11 batch 4).
@@ -91,6 +90,7 @@ export const ENGINE_TO_TRIGGER: Record<string, string> = {
   initiative: "initiative",
   "city-blessing": "city-blessing",
   "ring-tempts": "ring-tempts",
+  prepared: "prepared",
 };
 
 /** TRIGGERS words that map to NO engine verb, each with the reason, so `unknownTriggers` at runtime
@@ -102,7 +102,7 @@ const TEXT_SPLIT = ["damage-dealt"];
 /** After the four AC11 batches of 2026-09-09, two remain: `play` (a card played from exile has no
  *  event; a land played maps to land-play at the trigger site) and `dungeon-completed` (a state
  *  reached after several ventures, which no single action performs). */
-const AWAITING_EMIT = ["play", "dungeon-completed", "prepared", "unprepared"];
+const AWAITING_EMIT = ["play", "dungeon-completed", "unprepared"];
 /** Keyword actions whose PRIMITIVE is emitted (connive emits draw+discard) while the word itself
  *  waits for an emit row named after the action, so "whenever a creature connives" can join. */
 const PRIMITIVE_EMITTED = ["connive", "recruit", "bolster", "support", "adapt", "monstrosity", "blight", "investigate",

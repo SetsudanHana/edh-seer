@@ -68,7 +68,7 @@ const PROSE: Record<string, string> = {
   "701.23": "search", "701.23a": "search means a search HAPPENED", "701.25": "surveil", "701.25a": "surveil's graveyard half is any number",
   "701.3": "attach: OPEN", "701.30": "clash", "701.40a": "manifest is a card, not a token", "701.16": "investigate names no object; the rule supplies the Clue", "701.45a": "assemble excluded (Unstable)",
   "701.50": "connive", "701.54": "the Ring tempts", "701.7": "create", "701.68": "blight", "701.47": "amass: counter-placement, emits nothing", "701.71": "empower Jace: amass's shape, counter-placement, emits nothing",
-  "722.3": "prepared: a designation, OPEN", "722.3a": "becomes prepared, a word", "722.3b": "becomes unprepared, a word",
+  "722.3": "prepared: a designation, OPEN", "722.3a": "becomes prepared, a word", "722.3b": "becomes unprepared, a word", "722.3d": "a prepare spell's cast is a prepared spell (SubjectFilter.prepared)",
   "701.46": "adapt puts its counters on the card itself (a self counter emit)", "701.37": "monstrosity puts its counters on the card itself",
   "702.100": "evolve, a trigger word", "702.110": "exploit, a word", "702.122": "becomes-crewed", "702.131": "city-blessing",
   "702.143": "foretell", "702.147": "decayed: a temporary token", "702.179": "speed", "702.189b": "firebend",

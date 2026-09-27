@@ -346,7 +346,7 @@ const TRIGGER_CUES: Record<string, RegExp> = {
   foretell: /\bforetell/i,
   // AC11 batch 4.
   "flip-coin": /\bflip|\bcoin\b/i, monarch: /\bmonarch/i, initiative: /\binitiative/i,
-  "city-blessing": /city's blessing|\bascend\b/i, "ring-tempts": /\bring tempts|ring-bearer/i,
+  "city-blessing": /city's blessing|\bascend\b/i, "ring-tempts": /\bring tempts|ring-bearer/i, prepared: /\bbecomes? prepared\b|\benters prepared\b/i,
 };
 
 /** Did the model INVENT a trigger the card does not have?

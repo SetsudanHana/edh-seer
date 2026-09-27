@@ -96,6 +96,9 @@ const EMITS: Record<string, Verb[]> = {
   // AC11 batch 4: the designations and the coin, each its own name.
   "flip-coin": ["flip-coin"],
   monarch: ["monarch"],
+  // CR 722.3a: "becomes prepared" / "enters prepared". The subject is the object -- the card itself or
+  // "target creature" -- and only a permanent with a prepare spell can take it (implied.ts).
+  prepare: ["prepared"],
   initiative: ["initiative"],
   "city-blessing": ["city-blessing"],
   "ring-tempts": ["ring-tempts"],

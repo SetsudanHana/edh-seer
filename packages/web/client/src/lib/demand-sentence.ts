@@ -54,6 +54,8 @@ export const DEMAND_VERB: Record<string, string> = {
   "create-token": "being created",
   "counter-added": "getting a counter",
   "counter-removed": "losing a counter",
+  // CR 722.3a, Reality Fracture (2026-09-27).
+  prepared: "becoming prepared",
   // AC11 batch 2, the object events (2026-09-09).
   transform: "transforming",
   "turned-face-up": "being turned face up",
@@ -175,6 +177,7 @@ export const CLAUSE_VERB: Record<string, string> = {
   "create-token": "is created",
   "counter-added": "gets a counter",
   "counter-removed": "loses a counter",
+  prepared: "becomes prepared",
   transform: "transforms",
   "turned-face-up": "is turned face up",
   copy: "is copied",
@@ -280,6 +283,7 @@ export const ACTION_VERB: Record<string, string> = {
   "gains-control": "take control of",
   "counter-added": "put a counter on",
   "counter-removed": "remove a counter from",
+  prepared: "prepare",
   damaged: "deal damage to",
   enters: "put ONTO the battlefield",
   "enters-graveyard": "put INTO a graveyard",

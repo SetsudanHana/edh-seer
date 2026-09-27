@@ -110,7 +110,12 @@ export function impliedEvents(chars: Characteristics): GameEvent[] {
     // half still reports the creature's mana value. That is a known imprecision, unchanged from
     // when both faces shared one merged subject.
     const stats = types.includes("creature") ? {} : { power: null, toughness: null };
-    const subject = selfSubject({ ...chars, ...face, ...stats });
+    // A PREPARATION CARD'S INSET SPELL IS ONLY EVER CAST AS A PREPARE SPELL (CR 722.3, 722.3d): its
+    // cast is what "whenever you cast a prepared spell" (Codie, Ravenous Codex) watches. Read off what
+    // the face IS, not its index: the deck report gives each face its own node (`faceDeckCards`), so
+    // the spell face arrives alone.
+    const prepared = chars.layout === "prepare" && !isPermanent ? { prepared: true as const } : {};
+    const subject = { ...selfSubject({ ...chars, ...face, ...stats }), ...prepared };
     const push = (verb: GameEvent["verb"]): void => {
       const key = verb + JSON.stringify(subject);
       // Wear // Tear is Instant // Instant: two faces, one event.
@@ -650,6 +655,26 @@ export function impliedCounterEvents(emits: GameEvent[]): GameEvent[] {
  *  CEILING, the same one `keywordAbilities` carries: only edge formation reads this. Theme,
  *  archetype and mechanism detection read `tags.abilities` directly, so a proliferate card still
  *  does not count as a counter payoff for `cardCaresTags`. */
+/** A CARD WITH A PREPARE SPELL WANTS TO BECOME PREPARED (CR 722.3a; owner ruling 2026-09-27: "things
+ *  that prepare should form edge with cards that can leverage prepared"). The card prints no trigger
+ *  for it -- being prepared is what lets it cast the copy -- so this is the synthetic consumer, the
+ *  `proliferateAbilities` shape: a self-trigger on `prepared`. A preparer's emit ("target creature
+ *  becomes prepared", Biblioplex Tomekeeper) joins it through the self-trigger path, and a card with
+ *  no prepare spell has no such ability, so no preparer joins it (722.3a: it cannot gain the
+ *  designation). The emit is only for the sentence; supply of the prepared cast is `impliedEvents`.
+ *
+ *  CEILING, the same one `keywordAbilities` carries: only edge formation reads this. */
+export function preparedAbilities(chars: Characteristics): Ability[] {
+  // The PERMANENT face only: the spell face's own node (`faceDeckCards`) is never on the battlefield.
+  if (chars.layout !== "prepare" || !chars.types.some((t) => PERMANENT_TYPES.has(t.toLowerCase()))) return [];
+  return [{
+    kind: "triggered",
+    trigger: { verbs: ["prepared"], subject: { control: "you", token: null, self: true } },
+    effect: { kind: "" },
+    emits: [{ verb: "cast", subject: { control: "you", token: null, prepared: true } }],
+  } as Ability];
+}
+
 export function proliferateAbilities(tags: CardTags): Ability[] {
   const proliferates = tags.abilities.some((a) => (a.emits ?? []).some((e) => e.verb === "proliferate"));
   if (!proliferates) return [];

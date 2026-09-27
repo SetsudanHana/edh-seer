@@ -5,7 +5,7 @@ import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
+import { enterAsCopyAbilities, impliedEvents, preparedAbilities, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
@@ -795,6 +795,8 @@ function castConsumerNarrows(subject: SubjectFilter): boolean {
   if (subject.subtype !== undefined || subject.colors !== undefined) return true;
   if (subject.stats !== undefined || subject.chosenType === true) return true;
   if (subject.historic === true) return true;
+  // "a prepared spell" (Codie, Ravenous Codex) names which spell: only a prepare spell's cast meets it (CR 722.3d).
+  if (subject.prepared === true) return true;
   if (subject.token !== null && subject.token !== undefined) return true;
   const types = Array.isArray(subject.type) ? subject.type : subject.type ? [subject.type] : [];
   return types.length > 0 && !(types.length === 1 && types[0] === "spell");
@@ -1347,7 +1349,9 @@ function producerCanBeSubject(p: DeckCard, subject: SubjectFilter, h: Hierarchy)
   // "Sacrifice two OTHER creatures": the emit says so itself. Priest of Forgotten Gods is a creature
   // and would otherwise read as the one dying (2026-09-09).
   if (subject.other === true) return false;
-  const { zone: _z, counter: _c, entersTapped: _t, self: _s, other: _o, ...printed } = subject;
+  // `prepared` describes how the spell was CAST (CR 722.3d), not what the card is: a prepare face is
+  // still its own subject ("When Have a Bite is cast", not "When a sorcery is cast thanks to it").
+  const { zone: _z, counter: _c, entersTapped: _t, self: _s, other: _o, prepared: _p, ...printed } = subject;
   return subjectMatches(characteristicsSubject(p.tags, p.card.name), printed, h);
 }
 
@@ -1586,6 +1590,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
     ...keywordAbilities(c.tags.characteristics),
     ...proliferateAbilities(c.tags),
     ...enterAsCopyAbilities(c.card.oracleText, c.tags.characteristics),
+    ...preparedAbilities(c.tags.characteristics),
   ];
   // A PROLIFERATE MULTIPLIES A COUNTER THAT IS ALREADY THERE (CR 701.34); IT CANNOT BE THE ORIGIN OF
   // ONE. Without this, the producer's own proliferate-implied counter-added satisfies the consumer's
@@ -1767,7 +1772,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
             // Kitten's return is its own ability, and without it the flicker read as an exile.
-            ...(a.effect.kind ? {} : { emits: c.tags.abilities.filter((x) => x === a || (a.clause !== undefined && x.clause === a.clause && x.face === a.face)).flatMap((x) => x.emits ?? []) }),
+            ...(a.effect.kind ? {} : { emits: [a, ...c.tags.abilities.filter((x) => x !== a && a.clause !== undefined && x.clause === a.clause && x.face === a.face)].flatMap((x) => x.emits ?? []) }),
             // WHERE THE COUNTERS GO. "puts counters on it" had two live antecedents in every row --
             // the entering creature the sentence opens with, and the enchantment the counters
             // actually land on. The consumer's own effect subject knows which.
