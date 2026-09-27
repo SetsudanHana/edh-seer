@@ -118,7 +118,16 @@ export function answerList(
 // REPLACEMENT PAIRS (spec §3)
 
 /** A cut-list row, as the pairing needs it: its build leaves and how many deck cards it connects to. */
-export interface CutSide { name: string; roles: readonly string[]; connections: number }
+export interface CutSide {
+  name: string; roles: readonly string[]; connections: number;
+  /** Its mana value, when known: a same-job add may cost at most one more (see below). */
+  manaValue?: number;
+}
+
+/** A SAME-JOB SWAP IS NOT A SLOWER CARD (2026-09-27). With role cards now offered for swaps, "cut
+ *  Crib Swap for a six-mana removal spell that connects to more" is a worse deck, whatever the
+ *  connection count says. One mana of headroom, no more. */
+const SAME_JOB_EXTRA_MANA = 1;
 /** A build group (`buildParents` row) with its cost band. */
 export interface GroupState {
   name: string;
@@ -174,7 +183,11 @@ export function pairReplacements(
       }
     }
     if (!pick && g) {
-      const add = firstBetter(gapList(pool, g.leaves, g.costBand, Infinity), cut.connections);
+      const cap = cut.manaValue === undefined ? Infinity : cut.manaValue + SAME_JOB_EXTRA_MANA;
+      // THE CUT'S OWN ROLE, NOT ONLY ITS GROUP: Despark (removal) for Spirit Bonds (protection) is
+      // "Interaction for Interaction" and a different job (Party Time, 2026-09-27).
+      const own = g.leaves.filter((l) => cut.roles.includes(l));
+      const add = firstBetter(gapList(pool, own, g.costBand, Infinity).filter((c) => c.card.mv <= cap), cut.connections);
       if (add) pick = { cut: cut.name, add, rule: "same-job", counts: [] };
     }
     if (!pick && !g) {

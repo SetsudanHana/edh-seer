@@ -103,3 +103,26 @@ export function chooseCuts(report: DeckReport, model?: EngineModel | null): CutC
   }
   return out;
 }
+
+/** Role cards offered for a swap, beyond the cut list, at most this many. */
+export const SWAP_CANDIDATES = 10;
+
+/** ROLE CARDS THAT COULD BE SWAPPED FOR A BETTER CARD IN THE SAME ROLE (owner, 2026-09-26: "we can
+ *  suggest additions"; the precon seat wanted five to ten swaps and got three). The cut list never
+ *  offers a card that fills a role, which is right for a CUT: the role still needs filling. A SWAP
+ *  keeps the role filled, so a role card is fair game as long as the card taking its slot does the
+ *  same job and works with more of the deck; `pairReplacements` checks both.
+ *
+ *  Only cards whose sole protection is a role (a combo half, a theme's key card or an unread card is
+ *  never offered), weakest first in the report's trim order, and never cheap ramp: a one- or
+ *  two-mana rock is the one role card every list keeps, and trading Sol Ring for a card with more
+ *  connections is advice no player would take. */
+export function swapCandidates(report: DeckReport, cuts: readonly CutChoice[]): string[] {
+  const taken = new Set(cuts.flatMap((c) => [c.name, ...c.twins]));
+  const rolesOf = new Map(report.cards.map((c) => [c.cardName ?? c.name, c.roles ?? []] as const));
+  return (report.trim ?? [])
+    .filter((t) => !taken.has(t.name) && t.protections.length > 0 && t.protections.every((p) => /^fills /.test(p)))
+    .filter((t) => !(t.manaValue <= 2 && (rolesOf.get(t.name) ?? []).includes("ramp")))
+    .slice(0, SWAP_CANDIDATES)
+    .map((t) => t.name);
+}

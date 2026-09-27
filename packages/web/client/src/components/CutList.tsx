@@ -56,6 +56,10 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   const pairOf = new Map((pairs ?? []).map((p) => [p.cut, p] as const));
   // A deck that is over needs cards out, not swaps; the swaps are for a deck at its size.
   const swapFor = (c: CutChoice) => (over ? undefined : pairOf.get(c.name));
+  // SWAPS FOR ROLE CARDS, which the cut list never offers (see `swapCandidates`): the role stays
+  // filled, by a card that works with more of the deck.
+  const listed = new Set(cuts.map((c) => c.name));
+  const roleSwaps = over ? [] : (pairs ?? []).filter((p) => !listed.has(p.cut));
   const hasSurplus = !!surplus && surplus.length > 0;
   const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
@@ -121,6 +125,23 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           ) : null}
         </>
       )}
+      {roleSwaps.length ? (
+        <section aria-labelledby="cuts-role-swaps" className="flex flex-col gap-2 pt-2">
+          <h4 id="cuts-role-swaps" className="text-base font-semibold">Better cards for the same job</h4>
+          <p className="text-sm text-(--muted) max-w-[65ch]">
+            These fill a role, so they are not cuts. Each card beside them does the same job, or one the
+            deck is short of, and works with more of your deck.
+          </p>
+          <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
+            {roleSwaps.map((p) => (
+              <li key={p.cut} className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm" data-testid="role-swap">
+                <p><span className="text-(--muted)">Out: </span><CardName name={p.cut} /></p>
+                <SwapLine p={p} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {/* THE REST OF THE TRIM, WITH ITS CARDS (appeal review 2026-09-26). The tuner asked for five
         *  cuts and got two, then "Consistency 16/13 (+3)" and "which card goes is your call" -- the
         *  count without the cards. The engine still does not rank two draw spells against each other,

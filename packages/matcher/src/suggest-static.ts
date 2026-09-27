@@ -432,11 +432,12 @@ export async function suggestForDeck(input: {
   }
   // A CUT'S CONNECTIONS come from the ranked trim order, which rows every cuttable card; the
   // report's `cutList` rows only the ones nothing argues for.
-  const partnersOf = new Map([...(report.trim ?? []), ...(report.cutList ?? [])].map((r) => [r.name, r.partners] as const));
+  const rowOf = new Map([...(report.trim ?? []), ...(report.cutList ?? [])].map((r) => [r.name, r] as const));
   const cuts: CutSide[] = (input.cuts ?? (report.cutList ?? []).map((r) => r.name)).map((name) => ({
     name,
     roles: report.cards.find((c) => (c.cardName ?? c.name) === name)?.roles ?? [],
-    connections: partnersOf.get(name) ?? 0,
+    connections: rowOf.get(name)?.partners ?? 0,
+    manaValue: rowOf.get(name)?.manaValue,
   }));
   const pairsRanked = pairReplacements(cuts, groups, pool, planRanked);
 
