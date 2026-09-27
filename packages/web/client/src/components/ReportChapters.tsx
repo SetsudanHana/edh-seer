@@ -37,7 +37,7 @@ import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardLinksContext } from "./card-menu.js";
-import { DeckSky, type SkyLight } from "./DeckSky.js";
+import { DeckSky, SkyContext, type SkyLight } from "./DeckSky.js";
 import { linksFrom } from "../lib/deck-sky.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
@@ -230,6 +230,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
     <CardLinksContext.Provider value={links}>
+    <SkyContext.Provider value={themes}>
     <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
       <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
@@ -479,6 +480,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
       </div>
     </div>
+    </SkyContext.Provider>
     </CardLinksContext.Provider>
   );
 }

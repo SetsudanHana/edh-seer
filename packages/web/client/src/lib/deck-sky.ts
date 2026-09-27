@@ -173,3 +173,15 @@ export function linksFrom(m: EngineModel, ids: Iterable<string>): [string, strin
 export function linksWithin(m: EngineModel, ids: ReadonlySet<string>): [string, string][] {
   return linksFrom(m, ids).filter(([, b]) => ids.has(b));
 }
+
+/** The stars for cards the report names by their printed name: its cut list, its win plans, its
+ *  bracket. A name the sky does not draw (a token, a card the graph lacks) is left out. */
+export function idsOf(m: EngineModel, names: Iterable<string>): Set<string> {
+  const byName = new Map<string, string>();
+  for (const c of m.cards.values()) {
+    if (c.isToken || c.isFace) continue;
+    if (!byName.has(c.physical)) byName.set(c.physical, c.id);
+    if (!byName.has(c.name)) byName.set(c.name, c.id);
+  }
+  return new Set([...names].map((n) => byName.get(n)).filter((id): id is string => !!id));
+}
