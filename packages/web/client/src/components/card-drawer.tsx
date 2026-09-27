@@ -6,6 +6,8 @@ import { reasonSegments } from "../lib/reason-text.js";
 import { CardInspector } from "./CardInspector.js";
 import type { EngineModel } from "../lib/engine-model.js";
 import { buildOrbit, countText } from "../lib/orbit-model.js";
+import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
+import { SuggestionPanel } from "./SuggestionPanel.js";
 
 /** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
  *  map, and a way to walk that map from the card. The report registers them; the drawer sits above it. */
@@ -36,6 +38,11 @@ interface CardDrawerApi {
   open: (name: string) => void;
   /** Close it, as a walk on the map does: the card it showed is now the map's middle. */
   close: () => void;
+  /** Open a SUGGESTED card, one not in the deck (`SuggestionPanel`); `replaces` names the cut whose
+   *  slot it can take. */
+  openSuggestion: (card: SuggestedCard, replaces?: string) => void;
+  /** False outside a provider, where a card link keeps navigating as it always did. */
+  live: boolean;
   /** Names the graph carries, so a caller can ask BEFORE rendering an affordance. */
   known: ReadonlySet<string>;
   /** Token names this deck's cards make, each mapped to the card that makes it (the first such
@@ -54,7 +61,7 @@ interface CardDrawerApi {
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
-  open: () => {}, close: () => {}, known: new Set(), tokens: new Map(),
+  open: () => {}, close: () => {}, openSuggestion: () => {}, live: false, known: new Set(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
 });
 
@@ -70,7 +77,11 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   added?: readonly string[];
   children: ReactNode;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenIdRaw] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<{ card: SuggestedCard; replaces?: string } | null>(null);
+  // ONE THING IN THE DRAWER AT A TIME: a deck card or a suggestion, and closing clears both.
+  const setOpenId = useCallback((id: string | null) => { setOpenIdRaw(id); setSuggestion(null); }, []);
+  const shown = openId ?? (suggestion ? `suggestion:${suggestion.card.name}` : null);
   const [extras, setExtras] = useState<DrawerExtras | null>(null);
   // A TOKEN NEVER WINS A NAME COLLISION HERE. `nodeId` gives a token its own id precisely because
   // 92 of 661 distinct token names collide with a real card's, and every caller of this drawer is
@@ -101,8 +112,11 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
       const id = byName.get(name);
       if (id) { setOpenId(id); opened.current = true; }
     },
-    [byName],
+    [byName, setOpenId],
   );
+  const openSuggestion = useCallback((card: SuggestedCard, replaces?: string) => {
+    setOpenIdRaw(null); setSuggestion({ card, replaces }); opened.current = true;
+  }, []);
   /** WHICH CARD MAKES EACH TOKEN, read off the graph's own create edges (`The Rani creates Mark of
    *  the Rani`). A token name in a reason sentence was dead text saying nothing -- see
    *  `reason-text.ts` -- and "the token your commander makes" is the whole answer a reader needed
@@ -151,18 +165,18 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   const isAdded = useCallback((name: string) => added.has(physicalName(name)), [added, physicalName]);
 
   const api = useMemo<CardDrawerApi>(
-    () => ({ open, close: () => setOpenId(null), known: new Set(byName.keys()), tokens, added, isAdded, setExtras }),
-    [open, byName, tokens, added, isAdded],
+    () => ({ open, close: () => setOpenId(null), openSuggestion, live: true, known: new Set(byName.keys()), tokens, added, isAdded, setExtras }),
+    [open, openSuggestion, setOpenId, byName, tokens, added, isAdded],
   );
 
   // Escape closes it. The panel has a close button of its own, but this drawer floats over a
   // ~3,000px report and the button can be off screen after the reader scrolls.
   useEffect(() => {
-    if (openId === null) return;
+    if (shown === null) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenId(null); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openId]);
+  }, [shown, setOpenId]);
 
   /** A CLICK AWAY FROM THE DRAWER CLOSES IT (owner, 2026-09-27: "with overlay … if we click outside
    *  the overlay closes"). Below 1600px it lies over the page, and at every width it closes the same
@@ -171,7 +185,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
    *  neither is a scroll, which never makes a click. */
   const panel = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (openId === null) return;
+    if (shown === null) return;
     let from = { x: 0, y: 0 };
     const down = (e: PointerEvent) => { from = { x: e.clientX, y: e.clientY }; opened.current = false; };
     const click = (e: MouseEvent) => {
@@ -183,7 +197,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     document.addEventListener("pointerdown", down, true);
     document.addEventListener("click", click);
     return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("click", click); };
-  }, [openId]);
+  }, [shown, setOpenId]);
 
   /** THE DRAWER IS DOCKED FROM 1600px, NOT LAID OVER THE PAGE (owner's call, 2026-09-03; from `xl`
    *  until 2026-09-27, when the owner moved it up -- see `index.css`).
@@ -207,10 +221,10 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
    *  would render the docked tree in every screenshot that is supposed to show the overlay.
    *  `index.css` carries the `@media (min-width: 100rem)` and the transition; this only says WHEN. */
   useEffect(() => {
-    if (openId === null) return;
+    if (shown === null) return;
     document.body.classList.add("drawer-docked");
     return () => document.body.classList.remove("drawer-docked");
-  }, [openId]);
+  }, [shown]);
 
   const node = openId ? graph?.nodes.find((n) => n.id === openId) ?? null : null;
   const edges = useMemo(
@@ -252,7 +266,14 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
             </div>,
             document.body,
           )
-        : null}
+        : suggestion
+          ? createPortal(
+              <div ref={panel} className="fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]">
+                <SuggestionPanel key={suggestion.card.name} card={suggestion.card} replaces={suggestion.replaces} onClose={() => setOpenId(null)} />
+              </div>,
+              document.body,
+            )
+          : null}
     </CardDrawerContext.Provider>
   );
 }

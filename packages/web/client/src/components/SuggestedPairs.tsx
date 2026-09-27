@@ -3,6 +3,8 @@ import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { cardImageUrl } from "./card-node.js";
 import { peekOnPlainClick, usePeek } from "./peek.js";
 import { CardMenuButton } from "./card-menu.js";
+import { useCardDrawer } from "./card-drawer.js";
+import { openSuggestedCard } from "./SuggestionPanel.js";
 
 /** A card's face at swap size, or its name in a frame where the art is unknown. */
 function Face({ name, art, className }: { name: string; art?: string; className: string }) {
@@ -34,6 +36,7 @@ function Move({ from, to }: { from: number; to: number }) {
  *  deck than the cut (spec §3), and a cross-job swap moves two groups' counts. */
 export function SwapLine({ p }: { p: SuggestedPair }) {
   const peek = usePeek();
+  const drawer = useCardDrawer();
   return (
     <div className="relative flex items-start gap-3 border-t border-(--separator) pt-2 min-w-0" data-testid="swap">
       <Face name={p.add.name} art={p.add.art} className="w-12 sm:w-14" />
@@ -42,7 +45,7 @@ export function SwapLine({ p }: { p: SuggestedPair }) {
           <span className="text-(--muted)">Swap it for</span>{" "}
           <Link
             to={`/cards/${p.add.slug}`}
-            onClick={(ev) => { peekOnPlainClick(peek, p.add.slug, ev); }}
+            onClick={(ev) => { openSuggestedCard(drawer, (e) => peekOnPlainClick(peek, p.add.slug, e), p.add, ev, p.cut); }}
             className="font-semibold min-h-11 sm:min-h-0 inline-flex items-center hover:text-(--accent) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent) rounded-(--radius)"
           >
             {p.add.name}
