@@ -66,15 +66,15 @@ test("the helpers are folded until asked for", async () => {
  *  it; and where no group meets it, the page says so in words. */
 test("the main theme's own group takes its name, leads and says so, with both counts named", () => {
   const { report, graph } = engineDeck();
-  render(<PlanThemes report={report} graph={graph} main={{ name: "Cleric tribal", tag: "scales:cleric", count: 9, nonland: 16 }} />);
+  render(<PlanThemes report={report} graph={graph} main={{ name: "Clerics", tag: "scales:cleric", count: 9, nonland: 16 }} />);
   const themes = screen.getAllByRole("heading", { level: 4 }).filter((h) => h.id.startsWith("theme-"));
-  expect(themes[0]!.textContent).toBe("Cleric tribal");
+  expect(themes[0]!.textContent).toBe("Clerics");
   const card = themes[0]!.closest("article")!;
   expect(within(card).getByText("Your main theme")).toBeInTheDocument();
   expect(card.textContent).toMatch(/\d+ cards linked here/);
   expect(card.textContent).toContain("9 of your 16 nonland cards are built for it");
   expect(screen.queryByRole("heading", { name: "Cleric tribal" })).toBeNull();
-  expect(screen.getByText("Part of your main theme, Cleric tribal")).toBeInTheDocument();
+  expect(screen.getByText("Part of your main theme, Clerics")).toBeInTheDocument();
 });
 
 test("a main theme no group meets is named in words above the themes", () => {
