@@ -81,3 +81,14 @@ test("over 100 with too few cuts, the list says how many are still to find and w
   render(<CutList cuts={[cut("Only One")]} slack={[]} deckSize={108} />);
   expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 1 are doing the least here. The other 7 have to come from a role you run more of than you need, below, or from the cards you like least.");
 });
+
+test("at deck size, a swap for a role card sits under the cuts; over 100 it does not", () => {
+  const pairs = [{ cut: "Despark", add: add("Better Removal"), rule: "same-job" as const, counts: [], cutConnections: 1 }];
+  const { unmount } = render(<MemoryRouter><CutList cuts={[cut("Listed")]} slack={[]} deckSize={100} pairs={pairs} /></MemoryRouter>);
+  const row = within(screen.getByRole("region", { name: "Better cards for the same job" })).getByTestId("role-swap");
+  expect(row).toHaveTextContent("Out: Despark");
+  expect(row).toHaveTextContent("Swap it for Better Removal");
+  unmount();
+  render(<MemoryRouter><CutList cuts={[cut("Listed")]} slack={[]} deckSize={101} pairs={pairs} /></MemoryRouter>);
+  expect(screen.queryByRole("region", { name: "Better cards for the same job" })).toBeNull();
+});

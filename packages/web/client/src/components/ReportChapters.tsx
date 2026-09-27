@@ -23,7 +23,7 @@ import { OrbitView } from "./OrbitView.js";
 import { OrbitOverlay } from "./OrbitOverlay.js";
 import { RoleShelves, roleShelves } from "./RoleShelves.js";
 import { buildEngineModel } from "../lib/engine-model.js";
-import { chooseCuts } from "../lib/cut-choice.js";
+import { chooseCuts, swapCandidates } from "../lib/cut-choice.js";
 import { mainTheme } from "../lib/main-theme.js";
 import { ArchetypeBoard } from "./ArchetypeBoard.js";
 import { CoveragePanel } from "./CoveragePanel.js";
@@ -199,7 +199,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   // PAIRED AGAINST THE PAGE'S CUT LIST (a folded twin stands in for its cut, it is not one), so every cut
   // shown can carry the card that takes its slot (baseline round 2026-09-26: "cuts and adds are not
   // one plan").
-  const cutNames = useMemo(() => cuts.map((c) => c.name), [cuts]);
+  // ...and the role cards a better card could replace in the same job (`swapCandidates`).
+  const cutNames = useMemo(() => [...cuts.map((c) => c.name), ...swapCandidates(report, cuts)], [report, cuts]);
   const suggestions = useSuggestions(data, cutNames);
 
   return (

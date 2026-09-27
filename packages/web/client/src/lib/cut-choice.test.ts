@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { DeckReport } from "../types.js";
 import { buildEngineModel } from "./engine-model.js";
 import { engineDeck } from "./engine-model.fixture.js";
-import { chooseCuts, keepWords } from "./cut-choice.js";
+import { chooseCuts, keepWords, swapCandidates } from "./cut-choice.js";
 
 const CORE = "doesn't fill a core role (ramp, draw, removal…)";
 
@@ -61,4 +61,21 @@ test("a saved report from before trim mode falls back to its passive cut list", 
 test("the engine's arguments read in a player's words", () => {
   expect(keepWords("rates 1.3 of 5 in this deck")).toBe("it scores 1.3 for synergy, where 5 is this deck's best card");
   expect(keepWords("fills targetedRemoval")).toBe("fills targetedRemoval");
+});
+
+/** ROLE CARDS, FOR SWAPS ONLY (2026-09-27): a card whose only protection is its role can be swapped
+ *  for a better card in the same role; a combo half, a listed cut or cheap ramp cannot. */
+test("swap candidates are role-only cards, weakest first, never cheap ramp or a listed cut", () => {
+  const report = {
+    cards: [{ name: "Sol Ring", roles: ["ramp"] }, { name: "Cultivate", roles: ["ramp"] }, { name: "Despark", roles: ["targetedRemoval"] }, { name: "Combo Piece", roles: ["draw"] }, { name: "Listed", roles: [] }],
+    trim: [
+      { name: "Listed", rating: 0, partners: 0, manaValue: 2, reasons: [], protections: [] },
+      { name: "Sol Ring", rating: 0, partners: 0, manaValue: 1, reasons: [], protections: ["fills ramp"] },
+      { name: "Despark", rating: 0, partners: 1, manaValue: 2, reasons: [], protections: ["fills targetedRemoval — Interaction is at 14 against a target of 13, so there is room here"] },
+      { name: "Combo Piece", rating: 0.2, partners: 3, manaValue: 3, reasons: [], protections: ["fills draw", "half of a combo"] },
+      { name: "Cultivate", rating: 0.4, partners: 2, manaValue: 3, reasons: [], protections: ["fills ramp"] },
+    ],
+  } as unknown as DeckReport;
+  const cuts = [{ name: "Listed", manaValue: 2, keeps: [], unmet: [], reasons: [], twins: [] }];
+  expect(swapCandidates(report, cuts)).toEqual(["Despark", "Cultivate"]);
 });

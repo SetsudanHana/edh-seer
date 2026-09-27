@@ -98,6 +98,16 @@ test("without a surplus the swap stays inside the job", () => {
   expect(out.map((r) => [r.add.card.name, r.rule])).toEqual([["Cultivate", "same-job"]]);
 });
 
+/** A SAME-JOB SWAP KEEPS THE JOB AND THE SPEED (2026-09-27): the cut's own role, not only its group
+ *  (Despark for Spirit Bonds was removal for protection), and at most one more mana. */
+test("a same-job swap shares the cut's own role and costs at most one more mana", () => {
+  const two = (g: GroupState[]) => g.map((x) => x.name === "Interaction" ? { ...x, leaves: ["targetedRemoval", "protection"] } : x);
+  const slow = { ...cand(1, "Slow Removal", ["targetedRemoval"], 9), card: { ...cand(1, "Slow Removal", ["targetedRemoval"], 9).card, mv: 6 } };
+  const pool = new Map([[1, slow], [2, cand(2, "Spirit Bonds", ["protection"], 8)], [3, cand(3, "Quick Removal", ["targetedRemoval"], 4)]]);
+  const out = pairReplacements([{ name: "Despark", roles: ["targetedRemoval"], connections: 1, manaValue: 2 }], two(groups([10, 10], [10, 10])), pool, []);
+  expect(out.map((r) => [r.add.card.name, r.rule])).toEqual([["Quick Removal", "same-job"]]);
+});
+
 test("an add that does not out-connect the cut is never offered", () => {
   const pool = new Map([[2, cand(2, "Cultivate", ["ramp"], 1)]]);
   expect(pairReplacements([{ name: "Mind Stone", roles: ["ramp"], connections: 1 }], groups([10, 10], [10, 10]), pool, [])).toEqual([]);
