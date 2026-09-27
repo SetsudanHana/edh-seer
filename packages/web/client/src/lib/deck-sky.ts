@@ -150,3 +150,26 @@ export function deckSky(m: EngineModel): Sky {
   const y0 = Math.min(...ys, ...clusters.map((c) => c.ly)) - pad, y1 = Math.max(...ys, ...clusters.map((c) => c.ly)) + pad;
   return { stars, byId: new Map(stars.map((s) => [s.id, s])), clusters, lines, box: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } };
 }
+
+/** Every link from `ids` to another card on the sky, once each: the lines a chapter draws to show
+ *  how a set of cards is tied into the deck. Tokens are not stars, so a link to one is left off. */
+export function linksFrom(m: EngineModel, ids: Iterable<string>): [string, string][] {
+  const out: [string, string][] = [];
+  const seen = new Set<string>();
+  for (const id of ids) {
+    for (const other of m.partners.get(id)?.keys() ?? []) {
+      const c = m.cards.get(other);
+      if (!c || c.isToken || c.isFace) continue;
+      const k = id < other ? `${id}|${other}` : `${other}|${id}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push([id, other]);
+    }
+  }
+  return out;
+}
+
+/** The links inside a set of cards: a plan's own shape, a combo's loop. */
+export function linksWithin(m: EngineModel, ids: ReadonlySet<string>): [string, string][] {
+  return linksFrom(m, ids).filter(([, b]) => ids.has(b));
+}

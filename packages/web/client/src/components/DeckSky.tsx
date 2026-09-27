@@ -41,6 +41,8 @@ export function DeckSky({ model, lit, caption, className = "" }: {
   // What shines: a chapter's light, or the theme picked here, or everything.
   const picked = theme !== null ? new Set(sky.clusters[theme]!.ids) : null;
   const on = lit?.ids ?? picked;
+  // The far end of a lit line is half lit: the card a thread runs to.
+  const touched = new Set(lit?.lines?.flat() ?? []);
   const shines = (id: string) => !on || on.has(id) || sky.byId.get(id)?.kind === "commander";
   const named = new Set<string>([
     ...(lit && lit.ids.size <= 16 ? lit.ids : []),
@@ -75,7 +77,7 @@ export function DeckSky({ model, lit, caption, className = "" }: {
     const boxes: { x0: number; x1: number; y0: number; y1: number }[] = sky.stars.filter((s) => s.kind === "commander")
       .map((s) => ({ x0: s.x - R.commander - 6, x1: s.x + R.commander + 6, y0: s.y - R.commander - 6, y1: s.y + R.commander + 6 }));
     const hit = (b: typeof boxes[number]) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
-    return sky.clusters.map((c) => {
+    const ys = sky.clusters.map((c) => {
       const half = (c.name.length * charW) / 2;
       const at = (ly: number) => ({ x0: c.lx - half, x1: c.lx + half, y0: ly - font, y1: ly + font * 0.3 });
       const above = c.ly < c.y;
@@ -86,7 +88,37 @@ export function DeckSky({ model, lit, caption, className = "" }: {
       boxes.push(at(ly));
       return ly;
     });
+    return { ys, boxes };
   }, [sky, font, charW]);
+  // CARD NAMES TOO: the picked and pointed-at card first, then a chapter's lit cards, each above
+  // its star, else below, else beside it; a lit name with no clear place is left to the tap.
+  const nameAt = (() => {
+    const taken = [...place.boxes];
+    const hit = (b: typeof taken[number]) => taken.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+    const f = font * 0.95, cw = f * 0.58;
+    const out = new Map<string, { x: number; y: number; anchor: "start" | "middle" | "end" }>();
+    const order = [...named].sort((a, b) => Number(b === star || b === hover) - Number(a === star || a === hover));
+    for (const id of order) {
+      const s = sky.byId.get(id);
+      if (!s || s.kind === "commander") continue;
+      const text = s.name.split(" // ")[0]!, wd = text.length * cw, r = R[s.kind];
+      const tries = [
+        { x: s.x, y: s.y - r - f * 0.45, anchor: "middle" as const },
+        { x: s.x, y: s.y + r + f * 1.05, anchor: "middle" as const },
+        { x: s.x + r + 4, y: s.y + f * 0.35, anchor: "start" as const },
+        { x: s.x - r - 4, y: s.y + f * 0.35, anchor: "end" as const },
+      ];
+      const box = (t: typeof tries[number]) => {
+        const x0 = t.anchor === "middle" ? t.x - wd / 2 : t.anchor === "start" ? t.x : t.x - wd;
+        return { x0, x1: x0 + wd, y0: t.y - f, y1: t.y + f * 0.25 };
+      };
+      const ok = tries.find((t) => !hit(box(t))) ?? (id === star || id === hover ? tries[0]! : null);
+      if (!ok) continue;
+      taken.push(box(ok));
+      out.set(id, ok);
+    }
+    return out;
+  })();
   const themes = sky.clusters.length;
 
   return (
@@ -137,7 +169,7 @@ export function DeckSky({ model, lit, caption, className = "" }: {
               );
             }
             return (
-              <g key={s.id} data-star={s.id} transform={`translate(${s.x.toFixed(1)} ${s.y.toFixed(1)})`} opacity={bright ? 1 : 0.18}
+              <g key={s.id} data-star={s.id} transform={`translate(${s.x.toFixed(1)} ${s.y.toFixed(1)})`} opacity={bright ? 1 : touched.has(s.id) ? 0.6 : 0.18}
                 className="cursor-pointer" onClick={(e) => { e.stopPropagation(); tapStar(s.id); }}
                 onPointerEnter={(e) => { if (e.pointerType === "mouse") setHover(s.id); }} onPointerLeave={() => setHover(null)}>
                 {/* A generous invisible target: a 4px star is not something a thumb can hit. */}
@@ -154,7 +186,7 @@ export function DeckSky({ model, lit, caption, className = "" }: {
         {/* THE THEMES' NAMES, as a star chart names its constellations: each is a button. */}
         <g>
           {sky.clusters.map((c, i) => (
-            <text key={c.tag} x={c.lx} y={place[i]} textAnchor={c.anchor} role="button" tabIndex={0} aria-pressed={theme === i}
+            <text key={c.tag} x={c.lx} y={place.ys[i]} textAnchor={c.anchor} role="button" tabIndex={0} aria-pressed={theme === i}
               // LIFTED TOWARD WHITE for the words: the darkest theme colours are drawn for a light
               // chip and read poorly as small letters on the night.
               className="sky-theme cursor-pointer" style={{ fill: `color-mix(in oklab, ${c.hue} 62%, #f3eefc)` }} fill={c.hue} fontSize={font} opacity={on && theme !== i && !c.ids.some((id) => on.has(id)) ? 0.35 : 1}
@@ -165,11 +197,9 @@ export function DeckSky({ model, lit, caption, className = "" }: {
           ))}
         </g>
         <g pointerEvents="none">
-          {[...named].map((id) => {
-            const s = sky.byId.get(id);
-            if (!s || s.kind === "commander") return null;
-            return <text key={id} x={s.x} y={s.y - R[s.kind] - font * 0.5} textAnchor="middle" className="sky-name" fontSize={font * 0.95}>{s.name.split(" // ")[0]}</text>;
-          })}
+          {[...nameAt].map(([id, at]) => (
+            <text key={id} x={at.x} y={at.y} textAnchor={at.anchor} className="sky-name" fontSize={font * 0.95}>{sky.byId.get(id)!.name.split(" // ")[0]}</text>
+          ))}
         </g>
       </svg>
       <figcaption className="text-sm text-(--muted)" aria-live="polite">
