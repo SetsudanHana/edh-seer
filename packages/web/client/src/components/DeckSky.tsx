@@ -29,8 +29,11 @@ export interface SkyLight {
 
 const R: Record<Star["kind"], number> = { commander: 26, hub: 6.5, member: 4, rest: 3, land: 2 };
 
-export function DeckSky({ model, lit, caption, className = "" }: {
+export function DeckSky({ model, lit, caption, className = "", compact = false }: {
   model: EngineModel;
+  /** A thumbnail: the stars and the lit lines only, no names, no caption, nothing to tap. Where a
+   *  panel says "where this sits in your deck" beside its own words. */
+  compact?: boolean;
   lit?: SkyLight;
   /** The sentence under the sky when nothing is picked. */
   caption?: string;
@@ -128,6 +131,27 @@ export function DeckSky({ model, lit, caption, className = "" }: {
   })();
   const themes = sky.clusters.length;
 
+  if (compact) {
+    const { x: bx, y: by, w: bw, h: bh } = sky.box;
+    return (
+      <svg viewBox={`${bx} ${by} ${bw} ${bh}`} role="img" aria-label={lit?.label ?? "The deck's sky"}
+        className={`deck-sky block h-auto select-none rounded-(--radius) ${className}`} style={{ background: "radial-gradient(circle, #1d1530, #0b0810 70%)" }}>
+        {sky.lines.map(([a, b], i) => {
+          const A = sky.byId.get(a)!, B = sky.byId.get(b)!;
+          return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={B.hue.startsWith("var") ? A.hue : B.hue} strokeWidth={3} opacity={0.12} />;
+        })}
+        {lit?.lines?.map(([a, b], i) => {
+          const A = sky.byId.get(a), B = sky.byId.get(b);
+          return A && B ? <line key={`l${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="#D4A63A" strokeWidth={4} opacity={0.75} /> : null;
+        })}
+        {sky.stars.map((s) => {
+          const bright = !lit || lit.ids.has(s.id);
+          return <circle key={s.id} cx={s.x} cy={s.y} r={s.kind === "commander" ? 22 : bright ? 11 : 6}
+            fill={s.kind === "commander" ? "#f3eefc" : bright ? s.hue.startsWith("var") ? "#f3eefc" : s.hue : "#8a8494"} opacity={bright ? 1 : 0.25} />;
+        })}
+      </svg>
+    );
+  }
   return (
     <figure className={`m-0 flex flex-col gap-2 ${className}`}>
       <svg ref={svgRef} viewBox={`${x} ${y} ${w} ${h}`} role="img" className="deck-sky block h-auto w-full select-none rounded-(--radius)"
