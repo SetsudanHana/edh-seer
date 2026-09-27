@@ -979,6 +979,13 @@ function damagedMatches(victim: SubjectFilter, consumer: SubjectFilter, h: Hiera
 /** Repeatability of a triggered CONSUMER: a bare self-ETB (trigger names neither a type nor a
  *  subtype — "when this enters") is only satisfied by its own single entry, so it is one-time; any
  *  typed/subtyped trigger fires each time such a permanent recurs, so it is a repeatable engine. */
+/** A counter-placing ability whose every counter goes on its own source: its self emit, else undefined. */
+function ownCounters(a: CardTags["abilities"][number]): GameEvent | undefined {
+  if (a.effect.kind !== "counter-placement") return undefined;
+  const counters = (a.emits ?? []).filter((e) => e.verb === "counter-added");
+  return counters.length > 0 && counters.every((e) => e.subject.self === true) ? counters[0] : undefined;
+}
+
 function triggerRepeatability(subject: SubjectFilter): "triggered" | "oneshot" {
   const bare = list(subject.type).length === 0 && list(subject.subtype).length === 0;
   return bare ? "oneshot" : "triggered";
@@ -1046,14 +1053,28 @@ function oneShotProducer(p: DeckCard, ability: number | undefined): boolean {
 export function dedupeReasons(reasons: Reason[]): Reason[] {
   const seen = new Set<string>();
   const out: Reason[] = [];
+  // SAME CLAIM, TWO REPEAT TAGS: a card whose own entry is implied (once, #560) and ALSO authored by
+  // its own text ("return this card to the battlefield") says one thing twice. The repeatable one
+  // wins -- the text re-supplies the entry -- and the claim stays one row, as before the split.
+  const byClaim = new Map<string, number>();
   for (const r of reasons) {
+    const claim = JSON.stringify({ ...r, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined });
+    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined });
+    const at = byClaim.get(claim);
+    // Only a ONCE against a repeatable tag is this split; two repeatable tags (triggered and
+    // activated) were two rows before and stay two. The merged row's key is recorded, so a later
+    // exact duplicate of it (another ability index) still collapses.
+    if (at !== undefined && (out[at]!.repeatability === "oneshot") !== (r.repeatability === "oneshot")) {
+      if (r.repeatability !== "oneshot") out[at] = { ...out[at]!, repeatability: r.repeatability };
+      seen.add(k);
+      continue;
+    }
     // The ability indices are routing facts, never a distinct claim: two reasons that differ only in
     // which ability supplied them collapse exactly as before, and the first (lowest index) is kept.
     // CEILING: on the CONSUMER side too -- one event firing the consumer's abilities 0 and 2 keeps 0,
     // so a route continuing through ability 2 is not found. Split per ability only with a measured
     // before/after, since it would change the reason list the panel reads.
-    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined });
-    if (!seen.has(k)) { seen.add(k); out.push(r); }
+    if (!seen.has(k)) { seen.add(k); byClaim.set(claim, out.length); out.push(r); }
   }
   return out;
 }
@@ -1726,9 +1747,15 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             // actually land on. The consumer's own effect subject knows which.
             // A multiplier with no effect subject of its own puts its counters where the event put
             // them: "it", not "something" (issue #503, The Earth Crystal).
-            effectTarget: a.effect.subject === undefined && t.verb === "counter-added" ? "it" : effectTargetNoun(a.effect.subject),
+            // COUNTERS ON ITS OWN SOURCE SAY SO (issue #560): Simic Ascendancy puts "that many growth
+            // counters on this enchantment", and its emit knows it -- the effect subject did not, so the
+            // page read "puts that many counters on a permanent". The kind is the emit's, not the
+            // trigger's: the +1/+1 counters it heard are not the growth counters it adds.
+            effectTarget: ownCounters(a) ? "itself"
+              : a.effect.subject === undefined && t.verb === "counter-added" ? "it" : effectTargetNoun(a.effect.subject),
             effectRecipient: a.effect.subject?.control,
-            counterKind: a.effect.subject === undefined && t.verb === "counter-added" ? t.subject.counter : undefined,
+            counterKind: ownCounters(a)?.subject.counter
+              ?? (a.effect.subject === undefined && t.verb === "counter-added" ? t.subject.counter : undefined),
             // CAN THE PRODUCER BE THE THING THIS HAPPENS TO? That is the whole question, and
             // naming the class unconditionally was the wrong answer to it.
             //
@@ -1772,7 +1799,13 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"
             : a.delayedBy !== undefined || a.kind === "activated" ? (a.repeats === "once" ? "oneshot" : "activated")
-            : oneShotProducer(p, origin) || (e.implied === true && t.verb === "cast" && !recastsItself(p))
+            // A CARD'S OWN ENTRY HAPPENS ONCE, like its own cast (issue #560): "When Simic Ascendancy
+            // enters, Setessan Champion puts a counter" read EVERY TIME. What re-supplies the entry
+            // -- a flicker, a reanimation -- is its own producer with its own link, and stays repeatable.
+            // NOT A TOKEN NODE'S: a maker re-supplies its tokens (Krenko, Bitterblossom), so the token
+            // "entering" is every time the maker makes one.
+            : oneShotProducer(p, origin) || (e.implied === true && !recastsItself(p)
+              && (t.verb === "cast" || (t.verb === "enters" && p.tags?.characteristics.token !== true)))
               || sacrificesItself(c, a) ? "oneshot"
             : triggerRepeatability(t.subject),
           scaling: a.effect.scaling,
