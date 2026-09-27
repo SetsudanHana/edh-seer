@@ -18,13 +18,14 @@ const byName = (lists: readonly (readonly SuggestedCard[] | undefined)[]): Sugge
 };
 
 /** A FINDING'S OWN CARDS. `build` is keyed by the group name the finding prints as its figure label
- *  (`findings.ts` sets `figureLabel: p.name`); `answers` is every class the deck is short on, read
+ *  (`findings.ts` sets `figureLabel: p.name`); `answers` is every class the deck has no answer for, read
  *  the way `suggest-static` read it; `synergy` is one finding over every unmet key. */
 export function suggestionsFor(f: Finding, s: DeckSuggestions | null, report: DeckReport): readonly SuggestedCard[] | undefined {
   if (!s || !takesCards(f.kind)) return undefined;
   if (f.kind === "build") return s.build[f.figureLabel] ?? [];
   if (f.kind === "answers") {
-    const short = (report.deckMath?.answers ?? []).filter((a) => a.class !== "graveyard" && a.count < a.required);
+    // THE CLASSES THE FINDING NAMES: the ones with no answer at all (see `answerFinding`).
+    const short = (report.deckMath?.answers ?? []).filter((a) => a.class !== "graveyard" && a.class !== "land" && a.count === 0 && !a.fromCommandZone);
     // ONE ROW PER CARD, NAMING EVERY CLASS IT ANSWERS: a card on the enchantment and the artifact
     // list says both, not only the first list it was found on (final review, AO4).
     const merged = new Map<string, SuggestedCard>();

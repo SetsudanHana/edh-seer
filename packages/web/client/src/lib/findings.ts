@@ -64,7 +64,6 @@ export interface Finding {
   impact?: number;
 }
 
-const pct = (n: number): number => Math.round(n * 100);
 
 /** A build parent under its target. The largest single source of findings, and the one the
  *  suggestions list already speaks to — so the action is taken from `report.suggestions` when it
@@ -175,60 +174,48 @@ function answerFinding(report: DeckReport): Finding | null {
   const answers = report.deckMath?.answers ?? [];
   // The classes a permanent-agnostic answer would cover at once. `graveyard` is excluded: it is
   // hate rather than removal, and a Naturalize does not answer it.
-  const permanent = answers.filter((a) => a.class !== "graveyard");
-  // AND THE FIGURE SAYS SO (S16, 2026-09-02). `0/5 answer types covered` sat beside a Roles table
-  // listing SIX rows, graveyard among them at `none · 5 short` — so the skeptic found the thinnest
-  // class on the page excluded from the finding that calls land the thinnest, and read the pair as
-  // an off-by-one: *"either graveyard is an answer type or it is not, and the page takes both
-  // positions on the same scroll."* The exclusion is deliberate and defensible; what was missing is
-  // that it was never said where the figure is read.
+  // LANDS ARE LEFT OUT TOO (2026-09-27): most Commander decks run no land removal on purpose, and
+  // with them in, 9 of the 19 calibration decks this fired on read "no answer at all for lands" and
+  // nothing else. The Roles chapter still lists land answers.
+  const permanent = answers.filter((a) => a.class !== "graveyard" && a.class !== "land");
   if (permanent.length === 0) return null;
-  const short = permanent.filter((a) => a.count < a.required);
-  if (short.length === 0) return null;
-  // The worst class carries the figure; the shortfall is the mean across the short ones, so a deck
-  // missing one class does not outrank a deck missing four.
-  const worst = short.reduce((a, b) => (a.available <= b.available ? a : b));
-  const shortfall = short.reduce((sum, a) => sum + (a.required - a.count) / a.required, 0) / permanent.length;
-  const turn = report.deckMath?.turn;
-  // THIN IS NOT NONE, AND THE FIRST VERSION OF THIS HEADLINE CONFLATED THEM. It printed
-  // "Your removal only answers creatures" whenever four of five classes sat under target — on a
-  // deck holding 2 artifact, 2 enchantment, 2 planeswalker and 1 land answer, which its OWN next
-  // line then listed. Both expert personas caught it on 2026-08-27 as the page's focal element
-  // contradicting itself one line down.
-  //
-  // "ONLY" IS A CLAIM ABOUT ZERO, so it is now spelled from the counts rather than from how many
-  // classes happen to be under a threshold. The same shape as `connectionReason` in the matcher's
-  // cut list, which learned this on 2,955 rows saying "only N cards connect to it" about
-  // well-connected cards.
-  const absent = short.filter((a) => a.count === 0);
-  const names = (rows: readonly typeof short[number][]) =>
+  // A KIND OF PERMANENT THE DECK CANNOT ANSWER AT ALL, NOT ONE UNDER A TARGET (owner, 2026-09-26:
+  // "having 5 answers for each type is something no deck can provide"). This fired whenever a class
+  // was under `required`, the copies it takes to hold one more often than not by the clock turn --
+  // about five of every kind, so nearly every deck got "Your answers outside creatures are thin",
+  // with "0/5 answer types with 5+ cards" as its figure. A zero is a fact about the list; a count
+  // under five was a convention's opinion. A zero the deck's colours cannot fill is the colour pie,
+  // not a gap (`pool` 0), and says nothing.
+  const absent = permanent.filter((a) => a.count === 0 && !a.fromCommandZone && a.pool !== 0);
+  if (absent.length === 0) return null;
+  const answered = permanent.filter((a) => a.count > 0 || a.fromCommandZone);
+  const names = (rows: readonly typeof permanent[number][]) =>
     rows.map((a) => `${a.class}s`).join(", ").replace(/, ([^,]*)$/, " and $1");
-  const headline = absent.length === short.length && short.length >= permanent.length - 1
+  // "ONLY" IS A CLAIM ABOUT ZERO, and here every absent class is one.
+  // Lands count here: "only creatures" is false of a deck that also answers lands.
+  const onlyCreatures = answers.filter((a) => a.class !== "graveyard" && (a.count > 0 || a.fromCommandZone)).every((a) => a.class === "creature");
+  const headline = answered.length === 1 && answered[0]!.class === "creature" && onlyCreatures
     ? "Your removal only answers creatures."
-    : absent.length > 0
-      ? `You have no answer at all for ${names(absent)}.`
-      : `Your answers outside creatures are thin.`;
-  // THE HEADLINE, THE FIGURE AND THE DETAIL MUST MEASURE THE SAME THING. The figure was
-  // `worst.available` — the single worst class, LAND at 13% — under a headline about four classes
-  // whose other three read 25%, and a detail that switched subject mid-sentence ("2 for artifacts …
-  // about a 13% chance of holding the LAND answer"). A reader cannot check a claim whose number is
-  // about a different quantity from its sentence, which is the one thing this surface owes them.
-  // The figure now counts the classes the headline is about.
+    : `You have no answer at all for ${names(absent)}.`;
+  const turn = report.deckMath?.turn;
+  const pools = absent.filter((a) => a.pool !== undefined);
   return {
     kind: "answers",
     id: "answers",
     headline,
-    detail: `${short.map((a) => `${a.count} for ${a.class}s`).join(", ")}`
-      + `, against the ${worst.required} cards it takes to call an answer reliable`
-      + `${turn ? ` — the thinnest is ${worst.class}, about a ${pct(worst.available)}% chance of holding one by turn ${turn}` : ""}.`
-      + " Graveyard hate is counted separately: it is hate rather than removal, and a Naturalize does not answer it.",
-    action: "Swap in two or three answers that can hit any kind of permanent.",
-    figure: `${permanent.length - short.length}/${permanent.length}`,
-    // "COVERED" MEANS FIVE COPIES, AND THE LABEL SAYS SO (UX sweep 2026-09-06, D5): "0/5 permanent
-    // answer types covered" beside "4 for creatures, 3 for artifacts …" read as zero types answered.
-    figureLabel: `answer types with ${worst.required}+ cards`,
-    filled: (permanent.length - short.length) / permanent.length,
-    shortfall,
+    detail: (answered.length
+      ? `You do answer ${answered.map((a) => `${a.class}s (${a.fromCommandZone ? "your commander" : `${a.count} card${a.count === 1 ? "" : "s"}`})`).join(", ").replace(/, ([^,]*)$/, " and $1")}`
+        + `${turn ? `; the Roles chapter says how often one is in hand by turn ${turn}` : ""}. `
+      : "")
+      + (pools.length ? `Your colours have ${pools.map((a) => `${a.pool} for ${a.class}s`).join(", ")}. ` : "")
+      + "Lands and graveyards are left out: most decks run no land removal, and graveyard hate is hate rather than removal.",
+    action: absent.length > 1
+      ? "One card that can hit any kind of permanent covers all of these at once."
+      : `One ${absent[0]!.class} answer is enough to stop a single one from beating you.`,
+    figure: `${answered.length}/${permanent.length}`,
+    figureLabel: "kinds of permanent you can answer",
+    filled: answered.length / permanent.length,
+    shortfall: absent.length / permanent.length,
     impact: report.answersImpact,
   };
 }
