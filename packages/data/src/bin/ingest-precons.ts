@@ -9,9 +9,9 @@
  *
  *  Usage: tsx src/bin/ingest-precons.ts [--limit N] */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { commanderDecks, preconOf, type MtgjsonDeck, type MtgjsonDeckListEntry, type MtgjsonSetEntry, type Precon } from "../precons.js";
+import { SAFE_FILE_NAME, commanderDecks, preconOf, type MtgjsonDeck, type MtgjsonDeckListEntry, type MtgjsonSetEntry, type Precon } from "../precons.js";
 
 const API = "https://mtgjson.com/api/v5";
 const here = dirname(fileURLToPath(import.meta.url));
@@ -21,7 +21,9 @@ const outPath = join(here, "..", "..", "precons.json");
 /** A cached GET: the file on disk when there is one, the network otherwise. `fresh` re-fetches the
  *  two list files, which grow with every set; a deck file never changes. */
 async function cached<T>(path: string, rel: string, fresh = false): Promise<T> {
-  const file = join(cacheDir, rel);
+  // THE CACHE STAYS IN ITS FOLDER: `rel` carries a name read from MTGJSON's list.
+  const file = resolve(cacheDir, rel);
+  if (!file.startsWith(resolve(cacheDir) + sep)) throw new Error(`refusing a cache path outside ${cacheDir}: ${rel}`);
   if (fresh || !existsSync(file)) {
     const res = await fetch(`${API}/${path}`);
     if (!res.ok) throw new Error(`MTGJSON ${path}: ${res.status}`);
@@ -40,7 +42,8 @@ async function main(): Promise<void> {
   let skipped = 0;
   for (const entry of list) {
     // One at a time: MTGJSON is a free host, and the cache makes every later run near-instant.
-    const deck = await cached<MtgjsonDeck>(`decks/${entry.fileName}.json`, `decks/${entry.fileName}.json`);
+    if (!SAFE_FILE_NAME.test(entry.fileName)) continue; // `commanderDecks` already drops these; checked again where it is used
+    const deck = await cached<MtgjsonDeck>(`decks/${encodeURIComponent(entry.fileName)}.json`, `decks/${entry.fileName}.json`);
     const p = preconOf(entry, deck, sets);
     if (p) out.push(p); else skipped++;
   }

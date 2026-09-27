@@ -31,12 +31,16 @@ export interface Precon {
   cards: { name: string; count: number }[];
 }
 
+/** A deck file name MTGJSON publishes (`PartyTime_CLB`): letters, digits, `_` and `-`. Anything
+ *  else from the list is not used, because the name becomes both a URL and a file on disk. */
+export const SAFE_FILE_NAME = /^[A-Za-z0-9_-]{1,120}$/;
+
 /** MTGJSON's own deck type for a Commander precon. */
 export const COMMANDER_DECK = "Commander Deck";
 
 /** The Commander precons in a deck list, oldest first, ties by name. */
 export function commanderDecks(list: readonly MtgjsonDeckListEntry[]): MtgjsonDeckListEntry[] {
-  return list.filter((d) => d.type === COMMANDER_DECK)
+  return list.filter((d) => d.type === COMMANDER_DECK && SAFE_FILE_NAME.test(d.fileName))
     .sort((a, b) => (a.releaseDate ?? "").localeCompare(b.releaseDate ?? "") || a.name.localeCompare(b.name));
 }
 

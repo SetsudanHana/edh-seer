@@ -11,6 +11,11 @@ test("only Commander decks, oldest first", () => {
   expect(commanderDecks(list).map((d) => d.name)).toEqual(["Evasive Maneuvers", "Party Time"]);
 });
 
+test("a deck whose file name could leave the cache folder is never used", () => {
+  const bad = { code: "X", fileName: "../../etc/passwd", name: "Bad", releaseDate: null, type: "Commander Deck" };
+  expect(commanderDecks([...list, bad]).map((d) => d.name)).not.toContain("Bad");
+});
+
 test("a deck file becomes a precon: commanders apart, printings of one card added up, the set named", () => {
   const p = preconOf(list[0]!, {
     code: "CLB", name: "Party Time", releaseDate: "2022-06-10", type: "Commander Deck",
