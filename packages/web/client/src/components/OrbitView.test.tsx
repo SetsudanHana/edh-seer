@@ -22,12 +22,12 @@ test("draws the card in the middle and names every disc around it", () => {
   expect(screen.getByText(/Works with/).textContent).toMatch(/Works with 10 cards and 1 token\./);
 });
 
-test("a first tap reads the pair, a second puts the card in the middle", async () => {
+test("a first tap picks the card without the pair box, a second puts it in the middle", async () => {
   const onFocus = view();
   const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: "Payoff B" }));
-  expect(screen.getByText("When Payoff A enters, Payoff B draws")).toBeInTheDocument();
-  expect(screen.getByText("Read both cards")).toBeInTheDocument();
+  // The card opens in the drawer (owner, 2026-09-27); the pair box no longer opens beside it.
+  expect(screen.queryByText("Read both cards")).toBeNull();
   expect(onFocus).not.toHaveBeenCalled();
   await user.click(screen.getByRole("button", { name: "Payoff B" }));
   expect(onFocus).toHaveBeenCalledWith("Payoff B");
@@ -69,14 +69,16 @@ test("the cards one step out are grouped by the card they go through, each with 
   expect(screen.getAllByRole("button", { name: "Put it in the middle" }).length).toBeGreaterThan(0);
 });
 
-test("after centring a card, the way back is a button at the top of the panel", async () => {
+test("after centring a card, the way back is a button and the path is drawn above it", async () => {
   const { report, graph } = engineDeck();
   const user = userEvent.setup();
   const { rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
   await user.click(screen.getByRole("button", { name: "Payoff B" }));
-  await user.click(screen.getByRole("button", { name: "Put Payoff B in the middle" }));
+  await user.click(screen.getByRole("button", { name: "Payoff B" }));
   rerender(<OrbitView report={report} graph={graph} focusId="Payoff B" onFocus={() => {}} />);
   expect(screen.getByRole("button", { name: "← Back to Payoff A" })).toBeInTheDocument();
+  const path = screen.getByRole("navigation", { name: "Your path" });
+  expect(path.textContent).toBe("Payoff A›Payoff B");
 });
 
 // LESS IS MORE (owner, 2026-09-27): "every other card connects" was an all-is-well line; the panel
