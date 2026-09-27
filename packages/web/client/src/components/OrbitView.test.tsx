@@ -4,7 +4,8 @@ import { expect, test, vi } from "vitest";
 import { engineDeck } from "../lib/engine-model.fixture.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { buildOrbit } from "../lib/orbit-model.js";
-import { OrbitView, countText, layoutOrbit, nameLines } from "./OrbitView.js";
+import { MAP_CAP, mapPartners } from "./Constellation.js";
+import { OrbitView, countText } from "./OrbitView.js";
 
 function view(focusId = "Payoff A") {
   const { report, graph } = engineDeck();
@@ -37,21 +38,16 @@ test("the cards it doesn't reach are listed by name", () => {
   expect(screen.getByRole("button", { name: "Vanilla" })).toBeInTheDocument();
 });
 
-test("the layout is the same every time, and no two names overlap", () => {
+test("the map draws the partners that work with the card most, in their groups' order", () => {
   const { report, graph } = engineDeck();
   const o = buildOrbit(buildEngineModel(report, graph), "Payoff A")!;
-  for (const narrow of [false, true]) {
-    const a = layoutOrbit(o, narrow), b = layoutOrbit(o, narrow);
-    expect(a.slots.map((s) => [s.x, s.y])).toEqual(b.slots.map((s) => [s.x, s.y]));
-    const lineH = narrow ? 15 : 14, charW = narrow ? 8 : 7;
-    const boxes = a.slots.flatMap((s) => (s.kind === "card" ? [{ x: s.x + s.lx, y: s.y + s.ly, w: Math.max(...s.lines.map((l) => l.length)) * charW, h: s.lines.length * lineH, anchor: s.anchor }] : []))
-      .map(({ x, y, w, h, anchor }) => { const x0 = anchor === "start" ? x : anchor === "end" ? x - w : x - w / 2; return { x0, x1: x0 + w, y0: y - lineH + 3, y1: y - lineH + 3 + h }; });
-    for (const b of boxes) expect(b.x0 >= 0 && b.x1 <= a.W).toBe(true);
-    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
-      const p = boxes[i]!, q = boxes[j]!;
-      expect(p.x0 < q.x1 && p.x1 > q.x0 && p.y0 < q.y1 && p.y1 > q.y0).toBe(false);
-    }
-  }
+  const all = o.sectors.flatMap((s) => s.partners);
+  expect(mapPartners(o).map((x) => x.p)).toEqual(all.slice(0, MAP_CAP));
+  const big = { ...o, sectors: [{ ...o.sectors[0]!, partners: Array.from({ length: 20 }, (_, i) => ({ ...all[0]!, card: { ...all[0]!.card, id: `c${i}` }, links: [{ ...all[0]!.links[0]!, repeat: i === 19 ? "static" as const : "oneshot" as const }] })) }] };
+  const drawn = mapPartners(big).map((x) => x.p.card.id);
+  expect(drawn.length).toBe(MAP_CAP);
+  // The one that always works makes the cut, though it comes last.
+  expect(drawn).toContain("c19");
 });
 
 test("a count says how many cards and how many of them work once", () => {
@@ -59,14 +55,6 @@ test("a count says how many cards and how many of them work once", () => {
   expect(countText(5, 1)).toBe("5 cards, 1 of them only once");
   expect(countText(2, 2)).toBe("2 cards, both only once");
   expect(countText(1, 1)).toBe("1 card, only once");
-});
-
-test("a name wraps to two lines, keeps whose back it is, and uses the full name when first parts clash", () => {
-  const card = (name: string, extra: object = {}) => ({ id: name, name, typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: [], score: 0, manaCost: "", physical: name, ...extra });
-  expect(nameLines(card("Trance Kuja, Fate Defied", { faceOf: "Kuja, Genome Sorcerer" }), false, 16)).toEqual(["Trance Kuja", "(back of Kuja)"]);
-  expect(nameLines(card("Yuna, Hope of Spira"), true, 16)).toEqual(["Yuna, Hope of", "Spira"]);
-  expect(nameLines(card("Yuna, Hope of Spira"), false, 16)).toEqual(["Yuna"]);
-  expect(nameLines(card("Coruscation Mage", { isToken: true }), false, 11)).toEqual(["Coruscatio…", "(token)"]);
 });
 
 test("the cards one step out are grouped by the card they go through, each with a sentence", async () => {
@@ -112,61 +100,62 @@ test("a name in a Through list opens its own line and both cards' text", async (
   expect(screen.getAllByText("Read both cards").length).toBeGreaterThan(0);
 });
 
-test("dots run from the card that gives to the card that gains", async () => {
-  const { flowOf } = await import("./OrbitView.js");
-  const { report, graph } = engineDeck();
-  const o = buildOrbit(buildEngineModel(report, graph), "Payoff A")!;
-  const all = o.sectors.flatMap((s) => s.partners);
-  // A Cleric feeds Payoff A: in only. Payoff B and Payoff A feed each other: both ways.
-  expect(flowOf(all.find((p) => p.card.id === "Cleric 1")!, "Payoff A")).toMatchObject({ in: true, out: false });
-  expect(flowOf(all.find((p) => p.card.id === "Payoff B")!, "Payoff A")).toMatchObject({ in: true, out: true });
+test("the ticks run from the card that gives to the card that gains, both ways when both give", () => {
+  const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
+  // A Cleric feeds Payoff A. Payoff B and Payoff A feed each other: a tick each way.
+  const ticks = [...container.querySelectorAll("[data-testid=constellation-tick]")].map((t) => `${t.getAttribute("data-from")}>${t.getAttribute("data-to")}`);
+  expect(ticks).toContain("Cleric 1>Payoff A");
+  expect(ticks).toContain("Payoff A>Payoff B");
+  expect(ticks).toContain("Payoff B>Payoff A");
 });
 
-test("with reduced motion nothing animates, and arrows carry the direction", () => {
+test("walking to a card keeps the one you came from on the map, joined by the route", async () => {
+  const { report, graph } = engineDeck();
+  const onFocus = vi.fn();
+  const user = userEvent.setup();
+  const { container, rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={onFocus} />);
+  expect(container.querySelector("[data-testid=constellation-route]")).toBeNull();
+  expect(screen.queryByRole("button", { name: "See my path" })).toBeNull();
+  await user.click(screen.getByRole("button", { name: "Payoff B" }));
+  await user.click(screen.getByRole("button", { name: "Payoff B" }));
+  rerender(<OrbitView report={report} graph={graph} focusId="Payoff B" onFocus={onFocus} />);
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  expect(container.querySelector("[data-testid=constellation-route]")).not.toBeNull();
+  expect(screen.getByRole("button", { name: "See my path" })).toBeInTheDocument();
+  // Payoff A is still a card on the map, and walking back to it works as any walk does.
+  onFocus.mockClear();
+  await user.click(container.querySelector("[data-id='Payoff A']")!);
+  await user.click(container.querySelector("[data-id='Payoff A']")!);
+  expect(onFocus).toHaveBeenCalledWith("Payoff A");
+});
+
+test("with reduced motion nothing runs, and arrows carry the direction", async () => {
   const mm = window.matchMedia;
   window.matchMedia = ((q: string) => ({ matches: q.includes("reduced-motion"), media: q, addEventListener() {}, removeEventListener() {} })) as never;
   try {
     const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
-    expect(container.querySelector("animate")).toBeNull();
-    expect(container.querySelectorAll("[data-testid=orbit-arrows]").length).toBeGreaterThan(0);
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    const shown = (id: string) => [...container.querySelectorAll(`[data-testid=${id}]`)].filter((e) => (e as SVGElement).style.display !== "none");
+    expect(shown("constellation-tick").length).toBe(0);
+    expect(shown("constellation-arrow").length).toBeGreaterThan(0);
     expect(screen.getByText(/Arrows point from the card that gives/)).toBeInTheDocument();
   } finally { window.matchMedia = mm; }
 });
 
-/** THE LINE MOVES, NOT A DOT ON IT (owner, 2026-09-26): each spoke grows from the card that gives
- *  to the card that gains, and then the ring is still until a card is pointed at. */
-test("lines grow in the way they work on arrival, then run only on the card pointed at", async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true });
-  try {
-    const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
-    expect(container.querySelectorAll("[data-testid=orbit-grow] animate[attributeName='x2']").length).toBeGreaterThan(0);
-    expect(container.querySelector("animateMotion")).toBeNull();
-    await act(async () => { vi.advanceTimersByTime(3000); });
-    expect(container.querySelectorAll("[data-testid=orbit-grow], [data-testid=orbit-flow]").length).toBe(0);
-    await act(async () => { fireEvent.mouseEnter(screen.getByRole("button", { name: "Payoff B" })); });
-    // Payoff B and Payoff A feed each other: one running line each way.
-    expect(container.querySelectorAll("[data-testid=orbit-flow] animate[attributeName='stroke-dashoffset'][repeatCount='indefinite']").length).toBe(2);
-  } finally { vi.useRealTimers(); }
-});
-
-test("a line that gains from the middle grows from the middle out", () => {
+test("pointing at a card brightens its lines", async () => {
   const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
-  // Cleric 1 feeds Payoff A: its line starts at the Cleric and grows toward the middle.
-  const grow = [...container.querySelectorAll("[data-testid=orbit-grow]")];
-  expect(grow.length).toBeGreaterThan(0);
-  for (const g of grow) {
-    for (const l of g.querySelectorAll("line")) {
-      // Every segment starts at zero length: nothing is drawn before its turn to grow.
-      expect(l.getAttribute("x1")).toBe(l.getAttribute("x2"));
-    }
-  }
+  await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Payoff B" })); });
+  expect(container.querySelector("[data-id='Payoff B']")).toHaveAttribute("aria-pressed", "true");
+  expect(container.querySelector("[data-id='Cleric 1']")).toHaveAttribute("aria-pressed", "false");
 });
 
 test("the motion can be paused, and then arrows carry the direction", async () => {
   const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
   await userEvent.setup().click(screen.getByRole("button", { name: "Pause the motion" }));
-  expect(container.querySelector("animate")).toBeNull();
-  expect(container.querySelectorAll("[data-testid=orbit-arrows]").length).toBeGreaterThan(0);
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  const shown = (id: string) => [...container.querySelectorAll(`[data-testid=${id}]`)].filter((e) => (e as SVGElement).style.display !== "none");
+  expect(shown("constellation-tick").length).toBe(0);
+  expect(shown("constellation-arrow").length).toBeGreaterThan(0);
   expect(screen.getByRole("button", { name: "Play the motion" })).toHaveAttribute("aria-pressed", "true");
   try { localStorage.removeItem("orbit-paused"); } catch { /* none */ }
 });
