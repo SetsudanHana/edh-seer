@@ -20,8 +20,11 @@ import { findings } from "../lib/findings.js";
  *
  *  NO SCORE AND NO TARGET LIVES HERE. A tool that grades a deck before showing it understood it
  *  has not earned the criticism. Everything on this panel is a description. */
-export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
+export function RecognitionPanel({ data, assumptions, assumptionsSet, sky }: {
   data: AnalyzeResponse;
+  /** The deck's sky, beside the answer on a wide screen and under it on a phone: the right half of
+   *  the hero was empty at 1440 and wider. */
+  sky?: React.ReactNode;
   /** The game-state controls (speed, the monarch…), folded here rather than above everything:
    *  "the initiative" was the first thing a beginner met, before any answer (appeal review
    *  2026-09-26). */
@@ -110,6 +113,7 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
         *  beneath it. The metadata that qualifies the theme stays where it was, small, below.
         *  `recognition-identity` still wraps both, so every guard that reads "the identity" -- theme,
         *  commander, colours, coverage -- keeps reading one element. */}
+      <div className={sky ? "flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] xl:items-start xl:gap-8" : "contents"}>
       <div className="flex items-start gap-4 sm:gap-6">
         {faces.length ? (
           <span className="flex shrink-0">
@@ -175,6 +179,8 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
             </p>
           ) : null}
         </div>
+      </div>
+      {sky}
       </div>
       {assumptions ? (
         <details className="text-sm" open={!!assumptionsSet}>

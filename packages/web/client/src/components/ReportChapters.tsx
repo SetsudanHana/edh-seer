@@ -37,6 +37,7 @@ import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardLinksContext } from "./card-menu.js";
+import { DeckSky } from "./DeckSky.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -239,7 +240,8 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  be addressed"). The phone seat built it from four screens; under the hero it started 760px
             *  down a 844px phone, cut off, so it leads the chapter. */}
           {talk ? <TableTalkLine talk={talk} /> : null}
-          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} />
+          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet}
+            sky={themes ? <DeckSky model={themes} className="mx-auto w-full max-w-[30rem]" caption="Every card is a star. Each theme is a constellation, named in its colour; tap a name to light it, or a star to name it. The faint band at the edge is what no theme claims, and the lands." /> : undefined} />
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
