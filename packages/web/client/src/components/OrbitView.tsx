@@ -2,7 +2,8 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, displayName, tokenLabel, type EngineCard, type EngineModel } from "../lib/engine-model.js";
 import { mainTheme } from "../lib/main-theme.js";
-import { buildOrbit, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
+import { buildOrbit, countText, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
+export { countText };
 import { slugOf } from "@edh-seer/matcher/slug";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
 import { allPartners, Constellation, type MenuItem } from "./Constellation.js";
@@ -234,14 +235,6 @@ export function useReducedMotion(): boolean {
 function firstPart(c: EngineCard): string {
   const front = c.name.split(",")[0]!;
   return c.faceOf ? `${front} (back of ${c.faceOf.split(",")[0]})` : front;
-}
-
-/** "5 cards, 1 of them only once": "5, 1 only once" read as two numbers (orbit round 1). */
-export function countText(n: number, once: number): string {
-  const cards = `${n} card${n === 1 ? "" : "s"}`;
-  if (!once) return cards;
-  if (once === n) return n === 1 ? `${cards}, only once` : n === 2 ? `${cards}, both only once` : `${cards}, all only once`;
-  return `${cards}, ${once} of them only once`;
 }
 
 /** One "Through X" group. Each name opens its own line and both cards' text: one example sentence

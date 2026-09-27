@@ -156,6 +156,15 @@ describe("CardInspector", () => {
     expect(screen.getByRole("heading", { name: /^What it causes · \d+$/ })).toBeInTheDocument();
   });
 
+  // THE DRAWER MOCKUP (2026-09-27): the engine's own lists sit behind one fold, closed.
+  it("folds every link list behind one closed summary", () => {
+    render(<CardInspector node={node} edges={edges} onClose={() => {}} />);
+    const fold = screen.getByTestId("inspector-links") as HTMLDetailsElement;
+    expect(fold.open).toBe(false);
+    expect(fold).toContainElement(screen.getByRole("heading", { name: /^What it causes · \d+$/ }));
+    expect(fold.querySelector("summary")!.textContent).toMatch(/^Every link, in the engine’s words · \d+$/);
+  });
+
   // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE -- keying by id alone let the upstream walk's
   // entry silently overwrite the downstream walk's, so a card feeding 10 (shown 6) and fed by 8
   // (shown 6) printed "8 in total" under "Feeds". Each heading must read its OWN direction's entry.

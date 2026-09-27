@@ -5,10 +5,17 @@ import type { CardGraph } from "../types.js";
 import { reasonSegments } from "../lib/reason-text.js";
 import { CardInspector } from "./CardInspector.js";
 import type { EngineModel } from "../lib/engine-model.js";
+import { buildOrbit, countText } from "../lib/orbit-model.js";
 
 /** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
  *  map, and a way to walk that map from the card. The report registers them; the drawer sits above it. */
-export interface DrawerExtras { model: EngineModel; walk: (id: string) => void }
+export interface DrawerExtras {
+  model: EngineModel; walk: (id: string) => void;
+  /** Where the report already names this card ("on the cut list"), by the card's physical name. */
+  where?: (name: string) => string[];
+  /** A link group's name as the report says it (the main theme by its name on Glance). */
+  groupName?: (key: string, name: string) => string;
+}
 
 /** THE INSPECTOR, REACHABLE FROM ANY CARD NAME IN THE REPORT.
  *
@@ -207,6 +214,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                   // card's links that sat above it went (owner, same day: "not very useful … for fresh
                   // players it will be completely useless"); the links are listed below.
                   <div className="flex flex-col gap-2 border-t border-(--separator) pt-2">
+                    <DrawerSummary extras={extras} id={node.id} name={node.cardName ?? node.label} />
                     <button type="button" onClick={() => { extras.walk(node.id); setOpenId(null); }}
                       className="min-h-9 self-stretch rounded-(--radius) border border-(--separator) px-3 text-sm hover:border-(--accent) hover:text-(--accent)">
                       Walk the map from here
@@ -219,6 +227,34 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
           )
         : null}
     </CardDrawerContext.Provider>
+  );
+}
+
+/** WHAT THE CARD DOES IN THIS DECK, AS THE DRAWER MOCKUP SAYS IT (2026-09-27): how many cards it
+ *  works with, split by what links them, in the map's colours, and where the report names it. */
+function DrawerSummary({ extras, id, name }: { extras: DrawerExtras; id: string; name: string }) {
+  const o = useMemo(() => buildOrbit(extras.model, id), [extras.model, id]);
+  const where = extras.where?.(name) ?? [];
+  if (!o) return null;
+  const n = o.direct + o.directTokens;
+  // Counted as the map's panel counts them: cards, then tokens apart.
+  const once = o.sectors.flatMap((x) => x.partners).filter((p) => p.once && !p.card.isToken).length;
+  const tokens = o.directTokens ? ` and ${o.directTokens} token${o.directTokens === 1 ? "" : "s"}` : "";
+  return (
+    <div data-testid="drawer-summary" className="flex flex-col gap-2 text-sm">
+      <p className="text-(--muted)">{n === 0 ? "Nothing else in the deck works with this card." : `Works with ${countText(o.direct, once)}${tokens}.`}</p>
+      {o.sectors.length ? (
+        <span className="flex flex-wrap gap-1">
+          {o.sectors.map((x) => (
+            <span key={x.key} className="inline-flex items-center gap-1.5 rounded-full border border-(--separator) px-2 py-0.5 text-xs">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: x.hue }} />
+              {extras.groupName?.(x.key, x.name) ?? x.name} · {x.partners.length}
+            </span>
+          ))}
+        </span>
+      ) : null}
+      {where.length ? <p className="text-xs text-(--muted)">In this report: {where.join(" · ")}</p> : null}
+    </div>
   );
 }
 
