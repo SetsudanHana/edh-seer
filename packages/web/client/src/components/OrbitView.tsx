@@ -269,7 +269,7 @@ function Summary({ o, cap, still, paused, onPause, onSector, onCentre }: { o: Or
             {paused ? "Play the motion" : "Pause the motion"}
           </button>
         ) : null}
-        {still ? "Arrows point" : "The ticks on each line run"} from the card that gives to the card that gains{still ? "" : "; point at or tap a card to brighten its lines"}. A solid line keeps working; a dashed line works only once. {o.sectors.reduce((t, s) => t + s.partners.length, 0) > cap ? `The map shows the ${cap} that work with it most; the groups above list them all. ` : ""}Cards you put in the middle stay on the map, joined by a gold line. Right-click a card, or press and hold it, for more you can do with it.</p>
+        {still ? "Arrows point" : "The moving dashes on each line run"} from the card that gives to the card that gains{still ? "" : "; point at or tap a card to brighten its lines"}. A solid line keeps working; a dashed line works only once. {o.sectors.reduce((t, s) => t + s.partners.length, 0) > cap ? `The map shows the ${cap} that work with it most; the groups above list them all. ` : ""}Cards you put in the middle stay on the map, joined by a gold line. Right-click a card, or press and hold it, for more you can do with it.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>

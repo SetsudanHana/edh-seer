@@ -22,13 +22,15 @@ import { usePeek } from "./peek.js";
  *  too: the card you went to moves to the middle, its partners grow out around it, the one you left
  *  stays where it was with a gold route through every card you walked, and Back walks the route
  *  backwards. One map of the whole card pool, a page at a time. */
-export function PageMap({ page, slug, rows, base, pair, hrefOf }: {
+export function PageMap({ page, slug, rows, base, pair, hrefOf, countNote }: {
   page: CardPageData; slug: string; rows?: readonly PartnerRow[]; base: string;
   /** A commander's picked partner, drawn in its own group at the head of the map. */
   pair?: { slug: string; name: string; artCrop: string | null };
   /** Where a card's page is, when not `${base}/<id>`: a commander page's partners are cards, and
    *  going to one leaves this page, and the walk, behind. */
   hrefOf?: (id: string) => string;
+  /** What the total counts, where it differs from the card's own page ("a Krenko deck can play"). */
+  countNote?: string;
 }) {
   // KEYED ON WHAT THE ROWS SAY, not on the array: a commander page merges its list afresh on every
   // render, and a new map object each time would restart the picture.
@@ -76,7 +78,9 @@ export function PageMap({ page, slug, rows, base, pair, hrefOf }: {
       { label: "Copy the name", run: () => { void navigator.clipboard?.writeText(c.name).catch(() => {}); } },
     ];
   };
-  const shown = pickRoundRobin(map.orbit, mapCap(narrow)).length;
+  const picked = pickRoundRobin(map.orbit, mapCap(narrow));
+  const shown = picked.length;
+  const drawnGroups = new Set(map.orbit.sectors.filter((s) => s.partners.some((p) => picked.some((x) => x.p === p))).map((s) => s.key));
   // A thin page still shows the map once there is a route on it: it is where the walk is.
   if (shown < 3 && !trail.length) return null;
   const prev = trail.length ? world.current.cards.get(trail.at(-1)!) : undefined;
@@ -92,9 +96,19 @@ export function PageMap({ page, slug, rows, base, pair, hrefOf }: {
           onTap={tap} onHover={setHover} menuFor={menuFor} pick={pickRoundRobin}
           label={`${page.name} and ${shown} of the cards it works well with, coloured by the groups below`} />
       </div>
+      {/* THE COLOURS' KEY, WHERE THE MAP IS (persona round, 2026-09-27: "each colour is one of the
+        *  groups below" pointed at groups a screen away). Each chip is a group drawn on the map. */}
+      <ul className="flex flex-wrap gap-1.5" aria-label="What the colours are">
+        {map.groups.filter((g) => drawnGroups.has(g.event)).map((g) => (
+          <li key={g.event} className="flex min-h-8 items-center gap-1.5 rounded-full border border-(--separator) px-2.5 text-xs">
+            <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: g.hue }} />
+            {g.name}
+          </li>
+        ))}
+      </ul>
       <figcaption className="max-w-[65ch] text-sm text-(--muted)">
-        {pair ? <>{pair.name} is in pink. </> : null}Each colour is one of the groups below, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards, a few from each`}.
-        {" "}{still || paused ? "Arrows point" : "Ticks run"} from the card that makes it happen to the card that uses it. Tap a card to see it; tap it again to go to its page{walks ? ", and the map comes with you: the cards you walked through stay on it, joined by a gold line" : ""}.
+        {pair ? <>{pair.name} is in pink. </> : null}Each colour is a group, named just above and again in the list below, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards${countNote ? ` ${countNote}` : ""}, a few from each`}.
+        {" "}{still || paused ? "Arrows point" : "Moving dashes run along each line"} from the card that makes it happen to the card that uses it. Tap a card to see it; tap it again to go to its page{walks ? ", and the map comes with you: the cards you walked through stay on it, joined by a gold line" : ""}.
         {still ? null : (
           <button type="button" className="ml-2 rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs hover:border-(--foreground)" aria-pressed={paused} onClick={() => setPaused(!paused)}>
             {paused ? "Play the motion" : "Pause the motion"}

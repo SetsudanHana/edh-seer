@@ -112,6 +112,16 @@ class Sky {
     const pin = make("path", { d: "M-36,-50 L-24,-38 L-36,-26 L-48,-38 Z", fill: "var(--accent)", stroke: "var(--background)", "stroke-width": 4, opacity: 0 }, g);
     const label = make("text", { class: "constellation-label", "text-anchor": "middle" }, this.layers.labels);
     label.textContent = shortName(card);
+    // TWO CARDS, ONE SHORT NAME (persona round, 2026-09-27: "Krenko" beside "Krenko, Mob Boss" on
+    // Krenko's page was Krenko, Tin Street Kingpin). Where a short name is taken, both say their
+    // whole name.
+    for (const other of this.nodes.values()) {
+      const before = (c: EngineCard) => displayName(c).split(" // ")[0]!.split(",")[0];
+      if (before(other.card) === before(card)) {
+        other.label.textContent = displayName(other.card);
+        label.textContent = displayName(card);
+      }
+    }
     g.addEventListener("pointerenter", (e) => { if ((e as PointerEvent).pointerType === "mouse" && !this.drag.on) this.hover(id); });
     g.addEventListener("pointerleave", (e) => { if ((e as PointerEvent).pointerType === "mouse") this.hover(null); });
     g.addEventListener("click", (e) => {
