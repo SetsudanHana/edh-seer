@@ -78,7 +78,10 @@ export function Findings({ report, diff, suggestions }: {
   // Every shortfall is computed; the cap is what SHOWS. The rest are reachable rather than dropped
   // — a diagnosis that silently truncates is the same failure as one that never ranked.
   const [expanded, setExpanded] = useState(false);
-  if (all.length === 0) return null;
+  // THE HEADER COUNTS BOTH GROUPS, SO BOTH KEEP THE SECTION (deck-build round, 2026-09-27): an
+  // Inalla list whose only suggestion was a colour one read "1 SUGGESTION ↓" over a chapter that
+  // showed none, because this returned when the SCORED group alone was empty.
+  if (all.length === 0 && unseen.length === 0) return null;
   const shown = expanded ? all : all.slice(0, FINDING_CAP);
   const trade = slotTrade(report, all);
   // EVERY FINDING A CARD CAN FIX NAMES THE CARDS, directly under its own row (spec §3).
@@ -118,7 +121,7 @@ export function Findings({ report, diff, suggestions }: {
           {all.length + unseen.length === 1 ? "suggestion" : "suggestions"}, biggest payoff first
         </span>
       </div>
-      <ul className="flex flex-col border-t border-(--separator)">
+      {all.length > 0 ? <ul className="flex flex-col border-t border-(--separator)">
         {shown.map((f, i) => (
           <li
             key={f.id}
@@ -169,7 +172,7 @@ export function Findings({ report, diff, suggestions }: {
             <div className="order-1 sm:order-none"><Figure f={f} /></div>
           </li>
         ))}
-      </ul>
+      </ul> : null}
       {/* GONE, SAID ONCE. Below the live rows because it is not one of them: it answers "did my edit
         *  work", which is a different question from "what is wrong now". */}
       {resolved.length > 0 ? (
