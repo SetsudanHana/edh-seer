@@ -18,3 +18,19 @@ test("a card is scored only in the roles it fills", () => {
   expect(t.get("Counterspell")?.has("ramp") ?? false).toBe(false);
   expect(t.get("Counterspell")?.has("stackInteraction")).toBe(true);
 });
+
+// THE STAPLES SNAPSHOT (owner, 2026-09-27): EDHTop16 play rate is quality for the cards it covers.
+const oracle = (name: string) => (cards.find((c) => c.card.name === name)!.tags as { oracleId: string }).oracleId;
+
+test("a staple outranks every non-staple in its role, whatever the ingredients say", () => {
+  const staples = { fetchedAt: "t", source: "s", cards: { [oracle("Crib Swap")]: 0.5 } };
+  const t = qualityTable(cards, staples);
+  expect(t.get("Crib Swap")!.get("targetedRemoval")!).toBeGreaterThan(t.get("Swords to Plowshares")!.get("targetedRemoval")!);
+});
+
+test("among staples, play rate orders the role, even against the ingredients", () => {
+  // the ingredients put Path above Crib Swap; a higher play rate must win
+  const staples = { fetchedAt: "t", source: "s", cards: { [oracle("Crib Swap")]: 0.8, [oracle("Path to Exile")]: 0.2 } };
+  const t = qualityTable(cards, staples);
+  expect(t.get("Crib Swap")!.get("targetedRemoval")!).toBeGreaterThan(t.get("Path to Exile")!.get("targetedRemoval")!);
+});

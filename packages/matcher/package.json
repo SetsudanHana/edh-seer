@@ -24,6 +24,7 @@
     "./slug": "./src/slug.ts",
     "./rate": "./src/rate.ts",
     "./quality": "./src/quality.ts",
+    "./staples": "./src/staples.ts",
     "./archetypes": "./src/archetypes.ts",
     "./brackets": "./src/brackets.ts",
     "./edges": "./src/edges.ts",
@@ -41,6 +42,7 @@
   },
   "scripts": {
     "gen:quality-weights": "tsx src/bin/gen-quality-weights.ts",
+    "gen:staples-snapshot": "tsx src/bin/gen-staples-snapshot.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "gen:hierarchy": "tsx src/bin/gen-hierarchy.ts",
