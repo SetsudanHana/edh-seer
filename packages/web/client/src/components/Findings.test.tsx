@@ -81,8 +81,9 @@ const coveredButThin = {
   answersImpact: 0,
   deckMath: {
     turn: 6,
+    // One kind with no answer at all: the finding fires, and the score does not move.
     answers: ["creature", "artifact", "enchantment", "planeswalker", "land"].map((cls) => ({
-      class: cls, count: 2, required: 5, available: 0.25, exiling: 0, recurring: 0,
+      class: cls, count: cls === "artifact" ? 0 : 2, required: 5, available: 0.25, exiling: 0, recurring: 0,
       fromCommandZone: false, pool: 1,
     })),
   },

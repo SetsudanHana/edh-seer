@@ -84,39 +84,43 @@ test("a colour finding past two cards names what it has and counts the rest", ()
 
 /** Five thin classes are ONE finding, not five rows: the fix is one card that hits any permanent,
  *  and five near-identical rows is the wall of equal panels this list exists to replace. */
-test("thin answer classes collapse into a single finding", () => {
+test("classes with no answer at all collapse into a single finding, and a thin class is not one", () => {
   const rows = findings(report({
     deckMath: {
       turn: 6,
       answers: [
         { class: "creature", count: 5, required: 5, available: 0.51, exiling: 2, recurring: 0, fromCommandZone: false, pool: 1 },
-        { class: "artifact", count: 2, required: 5, available: 0.25, exiling: 1, recurring: 0, fromCommandZone: false, pool: 1 },
-        { class: "enchantment", count: 2, required: 5, available: 0.25, exiling: 1, recurring: 0, fromCommandZone: false, pool: 1 },
+        { class: "artifact", count: 0, required: 5, available: 0, exiling: 0, recurring: 0, fromCommandZone: false, pool: 56 },
+        { class: "enchantment", count: 0, required: 5, available: 0, exiling: 0, recurring: 0, fromCommandZone: false, pool: 40 },
         { class: "planeswalker", count: 2, required: 5, available: 0.25, exiling: 1, recurring: 0, fromCommandZone: false, pool: 1 },
         { class: "land", count: 1, required: 5, available: 0.13, exiling: 1, recurring: 0, fromCommandZone: false, pool: 1 },
         // Hate, not removal — a Naturalize does not answer it, so it must not join the count.
-        { class: "graveyard", count: 1, required: 5, available: 0.13, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
+        { class: "graveyard", count: 0, required: 5, available: 0, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
       ],
     } as DeckReport["deckMath"],
   }));
   expect(rows).toHaveLength(1);
   expect(rows[0].kind).toBe("answers");
-  // THE FIGURE MUST MEASURE WHAT THE HEADLINE IS ABOUT. It used to be the single worst class's
-  // availability (LAND, 13%) under a headline about four classes — a number a reader cannot check
-  // against the sentence above it. It counts the classes covered now.
-  expect(rows[0].figure).toBe("1/5");
-  // AND THE FIGURE SAYS WHAT IT COUNTS (S16). `0/5 answer types covered` sat beside a Roles table
-  // of SIX rows including graveyard, so a judge read the pair as an off-by-one and could not tell
-  // whether graveyard is an answer type. The exclusion is right; it just was not stated.
-  // "covered" means the required copies, and the label says the number (UX sweep 2026-09-06, D5).
-  expect(rows[0].figureLabel).toMatch(/^answer types with \d+\+ cards$/);
-  // Graveyard is still out of the COUNTS -- it is hate, not removal -- and the detail now says so
-  // rather than leaving its absence to be discovered.
-  expect(rows[0].detail).not.toContain("1 for graveyards");
-  expect(rows[0].detail).toContain("Graveyard hate is counted separately");
-  // The thinnest class is still named, but as the DETAIL's own clause rather than as the headline
-  // figure, so the two cannot disagree.
-  expect(rows[0].detail).toContain("the thinnest is land");
+  expect(rows[0].headline).toBe("You have no answer at all for artifacts and enchantments.");
+  // The figure counts the kinds the deck CAN answer, and says so; no target in it (owner,
+  // 2026-09-26: "having 5 answers for each type is something no deck can provide").
+  expect(rows[0].figure).toBe("2/4");
+  expect(rows[0].figureLabel).toBe("kinds of permanent you can answer");
+  expect(rows[0].detail).toContain("You do answer creatures (5 cards) and planeswalkers (2 cards)");
+  expect(rows[0].detail).toContain("Your colours have 56 for artifacts, 40 for enchantments");
+  expect(rows[0].detail).not.toMatch(/reliable|short/);
+  expect(rows[0].detail).toContain("Lands and graveyards are left out");
+  expect(rows[0].action).toMatch(/any kind of permanent/);
+});
+
+test("a deck with an answer for every kind has no answers finding, however thin, and lands alone do not count", () => {
+  expect(findings(report({ deckMath: answers({ creature: 1, artifact: 1, enchantment: 1, planeswalker: 1, land: 0 }) })).filter((f) => f.kind === "answers")).toEqual([]);
+});
+
+test("a zero the colours cannot fill is the colour pie, not a finding", () => {
+  const d = answers({ creature: 4, artifact: 1, enchantment: 0 });
+  d!.answers[2]!.pool = 0;
+  expect(findings(report({ deckMath: d })).filter((f) => f.kind === "answers")).toEqual([]);
 });
 
 /** THE DEFECT THE 2026-08-27 PERSONA RUN FOUND ON THE PAGE'S FOCAL ELEMENT, pinned in both
@@ -131,14 +135,14 @@ const answers = (counts: Record<string, number>) => ({
   })),
 }) as DeckReport["deckMath"];
 
-test("THIN is not NONE: a deck with two of each does not read as creature-only", () => {
-  const [f] = findings(report({
-    deckMath: answers({ creature: 5, artifact: 2, enchantment: 2, planeswalker: 2, land: 1 }),
-  }));
-  expect(f.headline).not.toContain("only answers creatures");
-  expect(f.headline).toBe("Your answers outside creatures are thin.");
-  // The detail must still list what it DOES have, and the headline must not contradict it.
-  expect(f.detail).toContain("2 for artifacts");
+test("ONLY is a claim about zero: creature-only when every other kind is zero", () => {
+  const [f] = findings(report({ deckMath: answers({ creature: 5, artifact: 0, enchantment: 0, planeswalker: 0, land: 0 }) }));
+  expect(f.headline).toBe("Your removal only answers creatures.");
+  const [h] = findings(report({ deckMath: answers({ creature: 5, artifact: 0, enchantment: 0, planeswalker: 0, land: 1 }) }));
+  expect(h.headline).toBe("You have no answer at all for artifacts, enchantments and planeswalkers.");
+  const [g] = findings(report({ deckMath: answers({ creature: 5, artifact: 2, enchantment: 0, planeswalker: 0, land: 0 }) }));
+  // No land answer is not a finding: most decks run none on purpose.
+  expect(g.headline).toBe("You have no answer at all for enchantments and planeswalkers.");
 });
 
 test("ONLY is earned when every other class is genuinely zero", () => {
@@ -146,6 +150,8 @@ test("ONLY is earned when every other class is genuinely zero", () => {
     deckMath: answers({ creature: 5, artifact: 0, enchantment: 0, planeswalker: 0, land: 0 }),
   }));
   expect(f.headline).toBe("Your removal only answers creatures.");
+  const [h] = findings(report({ deckMath: answers({ creature: 5, artifact: 0, enchantment: 0, planeswalker: 0, land: 1 }) }));
+  expect(h.headline).toBe("You have no answer at all for artifacts, enchantments and planeswalkers.");
 });
 
 test("a partial hole is named as a hole, not generalised", () => {
@@ -255,7 +261,7 @@ test("the slot trade says so when the surplus is the category a finding asks for
       turn: 8,
       answers: [
         { class: "creature", count: 4, required: 5, available: 0.5, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
-        { class: "artifact", count: 3, required: 5, available: 0.4, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
+        { class: "artifact", count: 0, required: 5, available: 0, exiling: 0, recurring: 0, fromCommandZone: false, pool: 1 },
       ],
     } as DeckReport["deckMath"],
   });
@@ -313,7 +319,7 @@ test("colour and synergy findings never enter the scored group", () => {
  *  the scored group mean "findings that happen to score well". */
 test("a zero impact stays in the scored group", () => {
   const { scored } = rankedFindings(report({
-    deckMath: answers({ creature: 2, artifact: 2, enchantment: 2, planeswalker: 2, land: 2 }),
+    deckMath: answers({ creature: 2, artifact: 0, enchantment: 2, planeswalker: 2, land: 2 }),
     answersImpact: 0,
   }));
   const f = scored.find((x) => x.kind === "answers");

@@ -105,6 +105,8 @@ const ROUTE_KEYS = 8;
 const HINT_MIN = 0.25;
 /** Extra slots on a finding's list, per spec §2 ("the missing slots plus 2"). */
 const SPARES = 2;
+/** Answers offered for a kind of permanent the deck cannot answer at all, before the spares. */
+const ANSWER_ADDS = 1;
 /** Unmet-demand candidates taken to verification per key. */
 const SYNERGY_LIMIT = 10;
 /** A band no card falls outside, for a group `BUILD_PARENTS` does not know. */
@@ -413,8 +415,10 @@ export async function suggestForDeck(input: {
     .filter((g) => g.target > 0 && g.count < g.target)
     .map((g) => [g.name, shortlist(gapList(pool, g.leaves, g.costBand, Infinity), (g.target - g.count + SPARES) * SHORTLIST, g.costBand), g.target - g.count + SPARES, g.costBand] as const);
   const answersRanked = (report.deckMath?.answers ?? [])
-    .filter((a) => a.class !== "graveyard" && a.count < a.required)
-    .map((a) => [a.class, shortlist(answerList(pool, a.class, interactionBand, Infinity), (a.required - a.count + SPARES) * SHORTLIST, interactionBand), a.required - a.count + SPARES, interactionBand] as const);
+    // ONLY A CLASS WITH NO ANSWER AT ALL, the one the page's finding names (owner, 2026-09-26: the
+    // five-per-kind target asked every deck for answers). One card fills it; the spares give a choice.
+    .filter((a) => a.class !== "graveyard" && a.class !== "land" && a.count === 0 && !a.fromCommandZone)
+    .map((a) => [a.class, shortlist(answerList(pool, a.class, interactionBand, Infinity), (ANSWER_ADDS + SPARES) * SHORTLIST, interactionBand), ANSWER_ADDS + SPARES, interactionBand] as const);
   const unmet = (report.deckMath?.demand ?? [])
     .filter((d) => d.available !== null && d.suppliers === 0 && d.consumers > 0);
   const synergyRanked: (readonly [string, Candidate[]])[] = [];

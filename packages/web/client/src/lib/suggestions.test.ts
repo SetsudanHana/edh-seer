@@ -17,11 +17,11 @@ test("a build finding takes its group's cards, by the group name it prints", () 
   expect(suggestionsFor(finding("build", "Interaction"), s, {} as DeckReport)?.map((c) => c.name)).toEqual(["Chaos Warp"]);
 });
 
-test("an answers finding takes every short class's cards, each card once", () => {
+test("an answers finding takes the cards of every class with no answer, each card once", () => {
   const s = { ...empty, answers: { enchantment: [card("Chaos Warp"), card("Abrade")], artifact: [card("Chaos Warp")], creature: [card("Lightning Bolt")] } };
   const report = { deckMath: { answers: [
-    { class: "enchantment", count: 1, required: 5 },
-    { class: "artifact", count: 2, required: 5 },
+    { class: "enchantment", count: 0, required: 5 },
+    { class: "artifact", count: 0, required: 5 },
     { class: "creature", count: 9, required: 5 },
     { class: "graveyard", count: 0, required: 5 },
   ] } } as unknown as DeckReport;
