@@ -665,8 +665,11 @@ export function CardSearch({
               {commanderMode
                 // The colour picker is one "Add a filter" away, not on screen, so the sentence
                 // names the control that is (UI review 2026-09-25).
-                ? "commanders. Type a name, or add a filter to pick colours."
-                : "cards. Type a name to start."}
+                // "WITH A PAGE HERE" (review round 4, #14): the home page says 28,416 cards read of
+                // 34,433, this page counted 25,837, the sitemap another -- each right for its own
+                // definition, and a reader saw the tool disagree with itself. This one is the index.
+                ? "commanders with a page here. Type a name, or add a filter to pick colours."
+                : "cards with a page here. Type a name to start."}
             </p>
             <p className="eyebrow text-(--muted) mt-4">or ask, for example</p>
             <ul className="flex flex-wrap gap-2 list-none p-0 m-0" aria-label="Example questions">

@@ -98,12 +98,15 @@ export function pairingLicense(a: Card, b: Card): string | undefined {
   // A Background is the SECOND commander, so the licence is on the other card. Checked both ways
   // round because a decklist states no order.
   if ((CHOOSE_BACKGROUND.test(ta) && isBackground(b)) || (CHOOSE_BACKGROUND.test(tb) && isBackground(a))) return "choose a background";
-  // 702.124's Doctor's companion wants the OTHER to be the Doctor — a legendary creature whose type
-  // line says Doctor. 17 corpus cards qualify.
-  const isDoctor = (c: Card): boolean => {
-    const l = (c.typeLine ?? "").toLowerCase();
-    return l.includes("legendary") && l.includes("doctor");
-  };
+  // CR 702.124m: Doctor's companion lets the OTHER commander be "a legendary Time Lord Doctor
+  // creature card that has no other creature types". Not any Doctor (owner, 2026-09-27): reading
+  // "Doctor" anywhere in the type line paired companions with legendary creatures that are Doctors
+  // by another type -- a Human Doctor is not the Doctor. Read per face, as a type line prints them.
+  const isDoctor = (c: Card): boolean => (c.typeLine ?? "").split(" // ").some((face) => {
+    const [types = "", subtypes = ""] = face.toLowerCase().split(/\s+[—–-]\s+/);
+    return types.includes("legendary") && types.includes("creature")
+      && subtypes.trim().split(/\s+/).sort().join(" ") === "doctor lord time";
+  });
   if ((DOCTORS_COMPANION.test(ta) && isDoctor(b)) || (DOCTORS_COMPANION.test(tb) && isDoctor(a))) return "doctor's companion";
   return undefined;
 }

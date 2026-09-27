@@ -166,6 +166,20 @@ test("Doctor's companion needs the other to BE a Doctor", () => {
     .map((f) => f.rule)).toContain("pairing");
 });
 
+/** CR 702.124m: "a legendary Time Lord Doctor creature card that has NO OTHER creature types"
+ *  (owner, 2026-09-27: a companion was offered a creature that is only typed Doctor). */
+test("Doctor's companion needs the Doctor: a Time Lord Doctor and nothing else", () => {
+  const donna = partner("Donna Noble", "Doctor's companion (You can have two commanders if the other is the Doctor.)");
+  const pairs = (typeLine: string) => deckLegality({
+    cards: [donna, partner("X", "", typeLine), ...filler(98)], commanders: [donna, partner("X", "", typeLine)],
+  }).every((f) => f.rule !== "pairing");
+  expect(pairs("Legendary Creature — Time Lord Doctor")).toBe(true);
+  expect(pairs("Legendary Creature — Human Doctor")).toBe(false);
+  expect(pairs("Legendary Creature — Time Lord Doctor Human")).toBe(false);
+  expect(pairs("Creature — Time Lord Doctor")).toBe(false);
+  expect(pairs("Legendary Artifact — Doctor")).toBe(false);
+});
+
 test("three commanders is never legal, whatever they print", () => {
   const p = (n: string): Card => partner(n, "Partner (You can have two commanders if both have partner.)");
   const [a, b, c3] = [p("A"), p("B"), p("C")];
