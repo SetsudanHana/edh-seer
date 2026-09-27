@@ -183,7 +183,9 @@ import { emblemRecipient } from "../emblem.js";
 // 179: a Background's "Commander creatures you own have '...'" makes every "this creature"/"it" in
 // the grant the commander, and "share a creature type with it" the commander's types (issue #625:
 // 26 Backgrounds read their granted text as the Background itself; Haunted One never fired).
-export const DERIVE_VERSION = 179;
+// 180: "whenever an enchanted/equipped creature ..." is a `modified` creature (issue #565: Hateful
+// Eidolon drew for every death). 3 corpus cards.
+export const DERIVE_VERSION = 180;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1354,6 +1356,13 @@ export function deriveAbilities(
         // subject kept only "creature", so Folk Hero's draw heard every creature spell -- the
         // commander's own cast included. The class is the host's creature types: this card's own,
         // or, for a grant to commander creatures, the commander's (resolved per deck).
+        // "WHENEVER AN ENCHANTED / EQUIPPED CREATURE DIES" (DERIVE 180, #565) watches a creature
+        // wearing an Aura or Equipment -- CR 700.9's `modified`, which the clause subject dropped:
+        // Hateful Eidolon heard every death, so Doomwake Giant's -1/-1 "drew" it cards. The ARTICLE
+        // is the tell: "an enchanted creature" is a class; an Aura's "enchanted creature" is its
+        // own host, and is not touched. 3 corpus cards (Hateful Eidolon, Stone Haven Outfitter,
+        // Rhuk, Hexgold Nabber).
+        if (/^an? (?:enchanted|equipped) (?:creature|permanent)\b/i.test((clause.trigger.subject ?? "").trim())) subject.modified = true;
         if (sharesTypeWithHost(clause.trigger.subject ?? "", cardName)) {
           subject.sharesTypeWith = GRANTED_TO_COMMANDER.test(cardText) ? "commander" : "self";
         }

@@ -3186,3 +3186,15 @@ test("a Background's granted text is about the commander, not the Background (#6
   // Never broader than "creatures you control" (review: the undying grant parsed as `control: any`).
   for (const a of shared) expect(a.effect.subject).toMatchObject({ type: "creature", control: "you" });
 });
+
+// ISSUE #565: "Whenever AN enchanted creature dies" (Hateful Eidolon) watches a creature wearing an
+// Aura -- CR 700.9 modified -- not every death. An Aura's own "enchanted creature" is its host, untouched.
+test("an enchanted- or equipped-creature trigger is a modified creature", () => {
+  const trig = (subject: string, name: string) => deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "dies", subject, control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }],
+  }], name, { 1: `Whenever ${subject} dies, draw a card.` }).abilities.find((a) => a.trigger)?.trigger?.subject;
+  expect(trig("an enchanted creature", "Hateful Eidolon")?.modified).toBe(true);
+  expect(trig("an equipped creature you control", "Stone Haven Outfitter")?.modified).toBe(true);
+  expect(trig("enchanted creature", "Some Aura")?.modified).toBeUndefined();
+});
