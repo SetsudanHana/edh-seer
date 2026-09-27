@@ -72,6 +72,9 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
 
   const centre = (id: string) => {
     if (id === focusId) return;
+    // The drawer showed the card now in the middle; it closes as the map moves, as its own
+    // "Walk the map from here" does.
+    drawer.close();
     setTrail((t) => [...t.filter((x) => x !== id), focusId].slice(-6));
     onFocus(id);
   };

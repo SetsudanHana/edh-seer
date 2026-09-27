@@ -205,12 +205,15 @@ body {
    the app's own toolbar underneath the panel -- seen in a 1920 screenshot. Everything the drawer can
    cover is inside `body`, so `body` is where the reserve belongs.
 
-   20rem IS THE DRAWER'S OWN BOX: `w-80` on the fixed container in `card-drawer.tsx`. Below `xl` the
-   viewport has no width to give and the overlay is the honest shape -- that is what a phone drawer
-   IS -- so this rule starts where the room does. The transition keeps the reflow from reading as a
+   20rem IS THE DRAWER'S OWN BOX: `w-80` on the fixed container in `card-drawer.tsx`. Below 100rem
+   the viewport has no width to give and the overlay is the honest shape -- that is what a phone
+   drawer IS -- so this rule starts where the room does. IT STARTED AT 80rem until 2026-09-27: at
+   1280 the reserve squeezed the report to 960px, wrapped the header and shrank the commander's map
+   under the reader's tap (owner's call: overlay below 1600, docked from 1600, where the map is
+   capped by the screen's height and loses nothing). The transition keeps the reflow from reading as a
    jump, and the reduced-motion block below turns it off -- that block covered `.reveal` only, so
    the transition had to be added to it rather than assumed into it. */
-@media (min-width: 80rem) {
+@media (min-width: 100rem) {
   body.drawer-docked { padding-inline-end: 20rem; }
 }
 body { transition: padding-inline-end 200ms ease-out; }

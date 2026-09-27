@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { engineDeck } from "../lib/engine-model.fixture.js";
-import { CardDrawerProvider, useAdded, useCardDrawer } from "./card-drawer.js";
+import { CardDrawerProvider, CardName, useAdded, useCardDrawer } from "./card-drawer.js";
 /** The web package, found from this file rather than from the working directory, so the test runs
  *  the same from `packages/web` and from the repository root (the root vitest config). */
 const WEB = join(import.meta.dirname, "..", "..", "..");
@@ -125,8 +125,8 @@ test("opening the drawer tells the page to make room, and closing gives it back"
  *  visible in jsdom. Read off the source so the two cannot drift apart silently. */
 test("the reserve matches the drawer's width, at the breakpoint where there is room", () => {
   const css = readFileSync(join(WEB, "client", "src", "index.css"), "utf8");
-  const rule = /@media \(min-width: 80rem\) \{\s*body\.drawer-docked \{ padding-inline-end: (\d+)rem; \}/.exec(css);
-  expect(rule, "body.drawer-docked rule at min-width: 80rem").not.toBeNull();
+  const rule = /@media \(min-width: 100rem\) \{\s*body\.drawer-docked \{ padding-inline-end: (\d+)rem; \}/.exec(css);
+  expect(rule, "body.drawer-docked rule at min-width: 100rem").not.toBeNull();
   const source = readFileSync(join(WEB, "client", "src", "components", "card-drawer.tsx"), "utf8");
   const width = /className="fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
   expect(width, "the fixed drawer container's width").not.toBeNull();
@@ -173,4 +173,26 @@ test("the drawer says what the card works with and where the report names it", a
   expect(summary.textContent).toMatch(/Works with \d+ cards?/);
   expect(summary.textContent).toContain("In this report: on the cut list");
   expect(summary.textContent).toMatch(/! · \d+/);
+});
+
+/** OVERLAY BELOW 1600px, SO A CLICK AWAY CLOSES IT (owner, 2026-09-27); a click on another card
+ *  switches to it, and a click inside the drawer keeps it. */
+test("a click away closes the drawer, a click on another card switches it, a click inside keeps it", async () => {
+  const user = userEvent.setup();
+  render(
+    <CardDrawerProvider graph={graph}>
+      <Opener id="Sol Ring" />
+      <p>empty page</p>
+      <CardName name="Sol Ring" />
+    </CardDrawerProvider>,
+  );
+  await user.click(screen.getByText("open it"));
+  const drawer = screen.getByTestId("card-inspector");
+  await user.click(within(drawer).getAllByText(/Sol Ring/)[0]!);
+  expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
+  await user.click(screen.getByText("empty page"));
+  expect(screen.queryByTestId("card-inspector")).toBeNull();
+  // A card name opens it again, and the same click does not close what it opened.
+  await user.click(screen.getByRole("button", { name: "Sol Ring" }));
+  expect(screen.getByTestId("card-inspector")).toBeInTheDocument();
 });

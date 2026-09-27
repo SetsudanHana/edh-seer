@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { CardGraph } from "../types.js";
@@ -34,6 +34,8 @@ interface CardDrawerApi {
   /** Open the drawer on a card. A name the graph does not carry is a no-op — see `<CardName>`,
    *  which is what callers should use so an unopenable name never renders as a button. */
   open: (name: string) => void;
+  /** Close it, as a walk on the map does: the card it showed is now the map's middle. */
+  close: () => void;
   /** Names the graph carries, so a caller can ask BEFORE rendering an affordance. */
   known: ReadonlySet<string>;
   /** Token names this deck's cards make, each mapped to the card that makes it (the first such
@@ -52,7 +54,7 @@ interface CardDrawerApi {
 }
 
 const CardDrawerContext = createContext<CardDrawerApi>({
-  open: () => {}, known: new Set(), tokens: new Map(),
+  open: () => {}, close: () => {}, known: new Set(), tokens: new Map(),
   added: new Set(), isAdded: () => false, setExtras: () => {},
 });
 
@@ -91,10 +93,13 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     }
     return m;
   }, [graph]);
+  // Set by `open`, read by the outside-click rule below: a click that opened (or switched to) a card
+  // is not a click away from the drawer.
+  const opened = useRef(false);
   const open = useCallback(
     (name: string) => {
       const id = byName.get(name);
-      if (id) setOpenId(id);
+      if (id) { setOpenId(id); opened.current = true; }
     },
     [byName],
   );
@@ -146,7 +151,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   const isAdded = useCallback((name: string) => added.has(physicalName(name)), [added, physicalName]);
 
   const api = useMemo<CardDrawerApi>(
-    () => ({ open, known: new Set(byName.keys()), tokens, added, isAdded, setExtras }),
+    () => ({ open, close: () => setOpenId(null), known: new Set(byName.keys()), tokens, added, isAdded, setExtras }),
     [open, byName, tokens, added, isAdded],
   );
 
@@ -159,7 +164,29 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
     return () => window.removeEventListener("keydown", onKey);
   }, [openId]);
 
-  /** THE DRAWER IS DOCKED FROM `xl`, NOT LAID OVER THE PAGE (owner's call, 2026-09-03).
+  /** A CLICK AWAY FROM THE DRAWER CLOSES IT (owner, 2026-09-27: "with overlay … if we click outside
+   *  the overlay closes"). Below 1600px it lies over the page, and at every width it closes the same
+   *  way. A click that opens another card switches to it instead: the card's own handler calls
+   *  `open` before this document listener runs. A drag (the map pans) is not a click away, and
+   *  neither is a scroll, which never makes a click. */
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (openId === null) return;
+    let from = { x: 0, y: 0 };
+    const down = (e: PointerEvent) => { from = { x: e.clientX, y: e.clientY }; opened.current = false; };
+    const click = (e: MouseEvent) => {
+      if (opened.current) { opened.current = false; return; }
+      if (panel.current?.contains(e.target as Node)) return;
+      if (Math.hypot(e.clientX - from.x, e.clientY - from.y) > 5) return;
+      setOpenId(null);
+    };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("click", click);
+    return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("click", click); };
+  }, [openId]);
+
+  /** THE DRAWER IS DOCKED FROM 1600px, NOT LAID OVER THE PAGE (owner's call, 2026-09-03; from `xl`
+   *  until 2026-09-27, when the owner moved it up -- see `index.css`).
    *
    *  IT IS THE ANSWER TO A GAP, NOT A NEW IDEA. At 1920 the Cards panel capped at 88rem and
    *  left-aligned, so 448px of the page sat empty on the right -- measured -- while the drawer
@@ -178,7 +205,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
    *  A CLASS AND A STYLESHEET RULE, because the breakpoint has to be CSS. `matchMedia` in a JS
    *  branch reads false in this repo's own harness (`playwright-max-width-matchmedia-false`), which
    *  would render the docked tree in every screenshot that is supposed to show the overlay.
-   *  `index.css` carries the `@media (min-width: 80rem)` and the transition; this only says WHEN. */
+   *  `index.css` carries the `@media (min-width: 100rem)` and the transition; this only says WHEN. */
   useEffect(() => {
     if (openId === null) return;
     document.body.classList.add("drawer-docked");
@@ -203,7 +230,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
         // avoid. Nothing in jsdom sees this; only the browser did.
         ? createPortal(
             // The inspector positions itself `absolute inset-y-2 right-2` against this element.
-            <div className="fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]">
+            <div ref={panel} className="fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]">
               <CardInspector
                 node={node}
                 edges={edges}
