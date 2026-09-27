@@ -75,13 +75,15 @@ test("after centring a card, the way back is a button at the top of the panel", 
   expect(screen.getByRole("button", { name: "← Back to Payoff A" })).toBeInTheDocument();
 });
 
-test("when every card connects, the panel says so instead of leaving the list out", () => {
+// LESS IS MORE (owner, 2026-09-27): "every other card connects" was an all-is-well line; the panel
+// now says only what does not connect.
+test("when every card connects, the panel lists nothing and says nothing", () => {
   const { report, graph } = engineDeck();
   // Doom Blade and Vanilla link to nothing; without them every card reaches Payoff A.
   const g = { ...graph, nodes: graph.nodes.filter((n) => n.id !== "Doom Blade" && n.id !== "Vanilla") };
   render(<OrbitView report={report} graph={g} focusId="Payoff A" onFocus={() => {}} />);
   expect(screen.queryByText(/don't connect/)).toBeNull();
-  expect(screen.getByText(/Every other card in the deck connects to Payoff A, directly or through a card around it\./)).toBeInTheDocument();
+  expect(screen.queryByText(/Every other card in the deck connects/)).toBeNull();
 });
 
 test("a group's cards that share one sentence are listed under it once", async () => {
@@ -139,7 +141,7 @@ test("with reduced motion nothing runs, and arrows carry the direction", async (
     const shown = (id: string) => [...container.querySelectorAll(`[data-testid=${id}]`)].filter((e) => (e as SVGElement).style.display !== "none");
     expect(shown("constellation-tick").length).toBe(0);
     expect(shown("constellation-arrow").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Arrows point from the card that gives/)).toBeInTheDocument();
+    expect(screen.getByText(/A solid line keeps working; a dashed line works once\./)).toBeInTheDocument();
   } finally { window.matchMedia = mm; }
 });
 

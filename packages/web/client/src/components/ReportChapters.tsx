@@ -253,6 +253,13 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  down a 844px phone, cut off, so it leads the chapter. */}
           {talk ? <TableTalkLine talk={talk} /> : null}
           <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} />
+          {/* THE COMMANDER'S MAP, ON THE FIRST SCREEN (owner, 2026-09-27: the report's one picture). It
+            *  was the Game plan chapter's opening, a chapter away from the deck it pictures. */}
+          {themes && commanderId ? (
+            <Movement title="What your commander works with" count="tap a card to read how, tap again to walk to it">
+              <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
+            </Movement>
+          ) : null}
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
@@ -302,11 +309,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  is. They stand in for ArchetypeBoard's unranked pair groups, which said the same
             *  pairs again without an order. The archetype bars stay: a named-archetype reading the
             *  themes do not give. */}
-          {themes && commanderId ? (
-            <Movement title="What your commander works with" count="tap a card to see how, tap it again to put it in the middle">
-              <OrbitView key={walkGen} report={report} graph={data.graph!} model={themes} focusId={centre && themes.cards.has(centre) ? centre : commanderId} onFocus={setCentre} />
-            </Movement>
-          ) : null}
           {themes ? <PlanThemes report={report} graph={data.graph!} model={themes} onOpenCard={setOverlay} main={mainTheme(report)} /> : null}
           {/* THE ONE FIGURE THAT SAID NOTHING (S13). `cardSignals` in `matcher/src/analyze.ts`
             *  filters on `dc.tags`, so strategies, the groups and the membership matrix are all

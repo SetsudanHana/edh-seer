@@ -5,7 +5,7 @@ import { mainTheme } from "../lib/main-theme.js";
 import { buildOrbit, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
-import { Constellation, mapCap, type MenuItem } from "./Constellation.js";
+import { Constellation, type MenuItem } from "./Constellation.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
 
 /** THE ONE-CARD VIEW AS AN ORBIT (graph evaluation 2026-09-25, design B; replaces `EgoView`).
@@ -142,7 +142,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
             ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => setSel(null)} />
             : openSector
               ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => setSel(id)} onClose={() => setSector(null)} />
-              : <Summary o={o} cap={mapCap(narrow)} still={still || paused} paused={paused} onPause={still ? undefined : () => setPaused(!paused)} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
+              : <Summary o={o} paused={paused} onPause={still ? undefined : () => setPaused(!paused)} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
         </div>
       </div>
     </div>
@@ -228,19 +228,21 @@ function Through({ t, onCentre }: { t: OrbitModel["through"][number]; onCentre: 
   );
 }
 
-function Summary({ o, cap, still, paused, onPause, onSector, onCentre }: { o: OrbitModel; cap: number; still: boolean; paused: boolean; onPause?: () => void; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void }) {
+function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; paused: boolean; onPause?: () => void; onSector: (s: OrbitSector) => void; onCentre: (id: string) => void }) {
   const name = displayName(o.focus);
   const first = firstPart(o.focus);
   return (
     <>
+      {/* THE COMMANDER'S FACE AND NAME ARE THE HERO'S, just above the map (owner, 2026-09-27: "less
+        *  is more"); a card walked to shows its own. The tap hint is the map's heading. */}
       <div className="flex items-start gap-3">
-        <CardFace card={o.focus} className="w-24" />
+        {o.focus.isCommander ? null : <CardFace card={o.focus} className="w-24" />}
         <div className="flex flex-col gap-1">
-          <h3 className="font-semibold text-base">{name}</h3>
+          {o.focus.isCommander ? null : <h3 className="font-semibold text-base">{name}</h3>}
           <p className="text-(--muted)">
             {o.direct + o.directTokens === 0
               ? "Nothing else in the deck works with this card."
-              : <>Works with <b className="text-(--foreground)">{o.direct} card{o.direct === 1 ? "" : "s"}</b>{o.directTokens ? <> and {o.directTokens} token{o.directTokens === 1 ? "" : "s"}</> : null}. Tap one to read how; tap it again to put it in the middle.</>}
+              : <>Works with <b className="text-(--foreground)">{o.direct} card{o.direct === 1 ? "" : "s"}</b>{o.directTokens ? <> and {o.directTokens} token{o.directTokens === 1 ? "" : "s"}</> : null}.</>}
           </p>
         </div>
       </div>
@@ -269,7 +271,9 @@ function Summary({ o, cap, still, paused, onPause, onSector, onCentre }: { o: Or
             {paused ? "Play the motion" : "Pause the motion"}
           </button>
         ) : null}
-        {still ? "Arrows point" : "The moving dashes on each line run"} from the card that gives to the card that gains{still ? "" : "; point at or tap a card to brighten its lines"}. A solid line keeps working; a dashed line works only once. {o.sectors.reduce((t, s) => t + s.partners.length, 0) > cap ? `The map shows the ${cap} that work with it most; the groups above list them all. ` : ""}Cards you put in the middle stay on the map, joined by a gold line. Right-click a card, or press and hold it, for more you can do with it.</p>
+        {/* ONE LINE (owner, 2026-09-27: "less is more"): it was a paragraph on dashes, the gold line
+          *  and right-click, which the map shows by doing them. */}
+        A solid line keeps working; a dashed line works once.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>
@@ -292,17 +296,7 @@ function Summary({ o, cap, still, paused, onPause, onSector, onCentre }: { o: Or
             ))}
           </ul>
         </details>
-      ) : (
-        // An empty list said nothing, and a missing list read as a hole (orbit round 1). Lands are
-        // counted apart: "every other nonland card" beside lists full of lands read as a
-        // contradiction (round 2).
-        <p className="text-(--muted)">
-          {o.farLands
-            ? <>Every other card in the deck connects to {first}, directly or through a card around it, except {o.farLands} land{o.farLands === 1 ? "" : "s"}.</>
-            : <>Every other card in the deck connects to {first}, directly or through a card around it.</>}
-        </p>
-      )}
-      {o.far.length && o.farLands ? <p className="text-xs text-(--muted)">{o.farLands} land{o.farLands === 1 ? " doesn't" : "s don't"} connect either, which is normal for a land.</p> : null}
+      ) : null}
     </>
   );
 }
