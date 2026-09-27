@@ -3,7 +3,7 @@ import { pairReasons, pairReasonsAcrossFaces, directedReasons, cardThemeTags, th
 import { normalizeZoneEvent } from "./zones.js";
 import { faceDeckCards } from "./faces.js";
 import type { Reason } from "@edh-seer/engine";
-import type { CardTags } from "@edh-seer/tagger";
+import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
 import type { DeckCard, Hierarchy } from "./types.js";
 
 const H: Hierarchy = { wizard: ["creature"], zombie: ["creature"] };
@@ -5348,4 +5348,22 @@ test("a cheat links to each creature it can put down, with a second reason for t
     "Summoner's Grimoire puts Summon: Shiva onto the battlefield tapped and attacking, because it is an enchantment",
   ]);
   expect(cheat(ring)).toEqual([]);
+});
+
+/** A CREATURE A SPELL CAN RE-USE SCORES FOR IT (owner ruling 2026-09-27, #571): Ghostly Flicker returns
+ *  a Wizard that Inalla watches entering, so the Wizard -- not Inalla -- gets the link, naming Inalla.
+ *  With no typed watcher in the deck there is nothing to re-use it for. Live flicker shape, 2026-09-27. */
+test("a flicker links to a creature a typed watcher sees enter, and names the watcher", () => {
+  const flicker = base("Ghostly Flicker", [{
+    kind: "on-cast", effect: { kind: "flicker", subject: { control: "any", token: null } },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, type: ["creature", "artifact", "land"], scope: "target", fromZone: "exile" } }],
+  }] as CardTags["abilities"]);
+  const wizard = base("Gleeful Arsonist", [], ["human", "wizard"]);
+  wizard.tags.characteristics.types = ["creature"];
+  const inallaWatch = { name: "Inalla, Archmage Ritualist", subject: { control: "you", token: false, other: true, subtype: "wizard" } } as const;
+  const reuse = (watchers: { name: string; subject: SubjectFilter }[]) =>
+    directedReasons(flicker, wizard, H, { enterWatchers: watchers }).filter((r) => r.tag.startsWith("reuse:")).map((r) => [r.tag, r.text]);
+  expect(reuse([inallaWatch as unknown as { name: string; subject: SubjectFilter }])).toEqual([["reuse:wizard",
+    "Ghostly Flicker can put Gleeful Arsonist onto the battlefield again, and Inalla, Archmage Ritualist sees it enter"]]);
+  expect(reuse([])).toEqual([]);
 });

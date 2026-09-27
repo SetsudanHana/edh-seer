@@ -32,6 +32,7 @@
     "tutor": "search your library for",
     "landFetch": "search your library for (a |an |up to \\w+ )?(basic )?(land|forest|island|swamp|mountain|plains)",
     "ontoBattlefield": "onto the battlefield",
+    "landPut": "put (?:a|an|up to (?:one|two|three)|any number of) (?:basic )?land cards? [^.]{0,40}?onto the battlefield",
     "rampLand": "sacrifice\\b[\\s\\S]*?search your library for (?:up to two|two|a \\w+ and an? \\w+)[\\s\\S]*?onto the battlefield",
     "bigManaLand": "(?:^|[.;\\n(])\\s*\\{t\\}\\s*:\\s*add\\s+(?:(?:\\{[wubrgcs\\d/]+\\}\\s*){2,}|two|three|four)",
     "entersTapped": "enters(?: the battlefield)? tapped(?!\\s+unless)",
@@ -206,6 +207,13 @@
       ],
       "not": [{ "op": "typeLine", "contains": "land" }],
       "why": "Cultivate/Farseek net +1 land. Fetch-to-hand only is card advantage, not ramp."
+    },
+    {
+      "id": "ramp.landPut",
+      "category": "ramp",
+      "match": [{ "op": "oracle", "pattern": "landPut" }],
+      "not": [{ "op": "typeLine", "contains": "land" }],
+      "why": "Putting a land card onto the battlefield from hand (Growth Spiral), from among cards looked at (Planar Genesis) or from a graveyard is an extra land drop, which is ramp (owner ruling 2026-09-27, #512)."
     },
     {
       "id": "ramp.manaToken",

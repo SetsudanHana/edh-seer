@@ -194,6 +194,8 @@ export function groupName(tag: string): string {
     case "creates": return "Making tokens";
     case "lose-life": return "Losing life";
     case "threshold": return "A full graveyard";
+    // #571: a flicker or reanimation puts a creature a typed payoff watches onto the battlefield again.
+    case "reuse": return `Re-using your ${p}`;
     case "prowess": return `Casting ${p} pumps a creature`;
     // Issue #505: a cheat puts a creature from hand onto the battlefield (Summoner's Grimoire).
     case "cheat": return `Cheating ${p} into play`;
