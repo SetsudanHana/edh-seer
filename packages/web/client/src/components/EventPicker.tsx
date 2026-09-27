@@ -92,7 +92,7 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, say,
     // browser clamps scrollTop to the new height and the page appears to jump. Out of flow, the
     // document height never moves while you type, which is also what every other combobox does.
     <div
-      className="relative flex flex-col gap-2 w-full max-w-2xl"
+      className="relative flex flex-col gap-2 w-full max-w-4xl"
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}
     >
       <p className="eyebrow text-(--muted)" id={`${id}-label`}>{label}</p>
@@ -155,7 +155,10 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, say,
                 // THE ACTIVE ROW READS AS THE HEADER SEARCH'S DOES (`index.css:1045`,
                 // `.site-search-row[aria-selected]`): same surface, same accent, so two comboboxes
                 // on one site do not signal the same state two ways.
-                className={`min-h-11 flex items-center justify-between gap-3 px-2 py-1 cursor-pointer ${i === active ? "bg-(--surface-secondary) text-(--accent)" : ""}`}
+                // SHRINK-0: in a height-capped flex column a row may otherwise shrink below its own text, and
+                // a wrapped sentence then paints over the next row (owner's screenshot, 2026-09-27).
+                // The rule between rows says where one event ends and the next begins.
+                className={`shrink-0 min-h-11 flex items-center justify-between gap-3 px-3 py-2 cursor-pointer border-b border-(--separator) last:border-b-0 ${i === active ? "bg-(--surface-secondary) text-(--accent)" : ""}`}
               >
                 <span className="flex items-baseline gap-2">
                   {/* A TICK, NOT A CHARACTER. lucide `check`, `currentColor`, and it keeps its box
@@ -169,9 +172,9 @@ export function EventPicker({ label, hint, options, chosen, counts, demand, say,
               </li>
             );
           })}
-          {rows.length === 0 && <li className="px-2 py-2 text-(--muted) text-sm">No event matches that.</li>}
+          {rows.length === 0 && <li className="shrink-0 px-3 py-2 text-(--muted) text-sm">No event matches that.</li>}
           {all.length > rows.length && (
-            <li className="px-2 py-2 text-(--muted) text-sm">
+            <li className="shrink-0 px-3 py-2 text-(--muted) text-sm">
               {(all.length - rows.length).toLocaleString("en-US")} more. Type to narrow them.
             </li>
           )}

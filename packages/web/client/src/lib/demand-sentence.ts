@@ -886,8 +886,15 @@ const PLAYER_TERMS: Record<string, string[]> = {
   cantrip: ["draw"],
   "self mill": ["mill"],
   selfmill: ["mill"],
-  reanimate: ["fills", "enters-graveyard"],
-  reanimator: ["fills"],
+  // BACK OUT OF THE YARD (owner's friend, 2026-09-27: a reanimator deck searching "leaves the
+  // graveyard" and "return from graveyard" found nothing). A card that returns or exiles a card
+  // from a graveyard causes `leaves-graveyard`; "return" also finds a bounce, which leaves play.
+  reanimate: ["fills", "enters-graveyard", "leaves-graveyard"],
+  reanimator: ["fills", "leaves-graveyard"],
+  return: ["leaves-graveyard", "leaves"],
+  recursion: ["leaves-graveyard"],
+  exile: ["leaves-graveyard"],
+  "graveyard hate": ["leaves-graveyard"],
   graveyard: ["fills", "enters-graveyard"],
   yard: ["fills", "enters-graveyard"],
   counters: ["counter-added"],
@@ -906,10 +913,15 @@ const STEM_PAIRS: Record<string, string> = { dies: "die", dying: "die", died: "d
 const stem = (word: string): string =>
   STEM_PAIRS[word] ?? word.replace(/(ing|ed|es|s)$/, "").replace(/([^aeiou])\1$/, "$1");
 
+/** WORDS A PLAYER TYPES THAT NAME NO EVENT: "leaves THE graveyard" missed "leaves A graveyard",
+ *  and "gain 1 life" missed "gain life", because every typed word had to hit. They still count in
+ *  the whole-phrase test below. */
+const FILLER = new Set(["the", "a", "an", "of", "from", "to", "into", "onto", "my", "your", "their", "its", "any", "one"]);
+
 /** Does this event answer what the reader typed? Every typed word must hit SOMETHING -- the label,
  *  the clause, the action or a synonym -- so extra words narrow rather than widen. */
 export function eventMatches(key: string, query: string): boolean {
-  const typed = query.toLowerCase().split(/\s+/).filter((w) => w.length > 0);
+  const typed = query.toLowerCase().split(/\s+/).filter((w) => w.length > 0 && !FILLER.has(w) && !/^\d+$/.test(w));
   if (typed.length === 0) return true;
   const verb = key.split("|")[0] ?? "";
   const synonyms = Object.entries(PLAYER_TERMS)

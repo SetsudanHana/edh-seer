@@ -315,6 +315,26 @@ test("the words a player uses reach the event the engine names", () => {
   expect(eventMatches("draw|-|-|-", "wheel")).toBe(false);
 });
 
+/** A REANIMATOR DECK'S SEARCHES (owner's friend, 2026-09-27): the small words a player types do
+ *  not have to be in the event's name, and bringing a card back is leaving the graveyard. */
+test("small words and numbers do not stop a match", () => {
+  expect(eventMatches("leaves-graveyard|-|-|-", "leaves the graveyard")).toBe(true);
+  expect(eventMatches("leaves-graveyard|creature|-|-", "creature leaves the graveyard")).toBe(true);
+  expect(eventMatches("gain-life|-|-|-", "gain 1 life")).toBe(true);
+  expect(eventMatches("draw|-|-|-", "draw a card")).toBe(true);
+  expect(eventMatches("leaves-graveyard|artifact|-|-", "the")).toBe(true);
+  expect(eventMatches("gain-life|-|-|-", "leaves the graveyard")).toBe(false);
+});
+
+test("returning or exiling a card from a graveyard finds it leaving the graveyard", () => {
+  expect(eventMatches("leaves-graveyard|creature|-|-", "return creature from graveyard")).toBe(true);
+  expect(eventMatches("leaves-graveyard|-|-|-", "reanimate")).toBe(true);
+  expect(eventMatches("leaves-graveyard|-|-|-", "exile from graveyard")).toBe(true);
+  expect(eventMatches("leaves-graveyard|-|-|-", "graveyard hate")).toBe(true);
+  expect(eventMatches("leaves|-|-|-", "return")).toBe(true);
+  expect(eventMatches("fills|creature|-|-", "return from graveyard")).toBe(false);
+});
+
 
 /** A FODDER KEY IS A DEMAND, SO ITS CAUSING SIDE FEEDS THE OUTLET (owner-reported 2026-09-19).
  *  Searching Causes for "sacrifice a land" returned eight cards -- Staff of Titania, Awaken the

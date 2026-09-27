@@ -609,7 +609,9 @@ export function CardSearch({
           <ul className="flex flex-col gap-4 list-none p-0 m-0">
             {shownKinds.map((kind) => (
               <li key={kind} className="flex flex-wrap items-end gap-x-3 gap-y-2">
-                <div className="min-w-0">{filterRow(kind)}</div>
+                {/* AN EVENT ROW TAKES THE ROW'S WIDTH (owner, 2026-09-27: the picker sat in under half
+                  * the screen and wrapped every sentence onto two or three lines). */}
+                <div className={kind === "produce" || kind === "consume" ? "min-w-0 flex-1 basis-80 max-w-4xl" : "min-w-0"}>{filterRow(kind)}</div>
                 {/* THE ONLY WAY BACK TO "NOT ASKED" for a row, so it is a real control and not a
                   * hover affordance: this page is used on a phone, where hover does not exist. */}
                 <button
