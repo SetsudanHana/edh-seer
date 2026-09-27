@@ -13,6 +13,7 @@ import type { CastCurve } from "./goldfish.js";
 import type { DeckCard, Hierarchy } from "./types.js";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { topdeckPayoffs } from "./topdeck.js";
+import { loadRules, ownText } from "./rules.js";
 
 /** The classes the doctrine says every deck should be able to answer (design §12.3), in the order
  *  they are reported. Derived from `POOL_CLASSES` (whole-branch review MINOR 2) rather than a
@@ -101,6 +102,20 @@ export function computeDeckMath(
   const commanders = new Set(commanderNames);
   const library = deck.length - deck.filter((dc) => commanders.has(dc.card.name)).length;
   const classes = detectAnswerClasses([...deck]);
+  // A COMMANDER THAT EXILES WHAT DIES MAKES EVERY KILL AN EXILE (#647): Mari, the Killing Quill exiles
+  // each opponent's creature that dies, so her deck's Go for the Throat is as recursion-proof as a
+  // Swords -- and the panel said "Nothing this deck kills is exiled". A commander only: it is always
+  // there, while one Stone of Erech in the 99 would have turned all thirteen of Fandaniel's creature
+  // answers into exiles (measured 2026-09-27, 17 decks). Kalitas-style text covers creatures; Rest in
+  // Peace / Leyline / Dauthi text every card. Graveyard hate is not a kill, so its class is left alone.
+  const { patterns } = loadRules();
+  const says = (key: string): boolean =>
+    deck.some((dc) => commanders.has(dc.card.name) && new RegExp(patterns[key]!, "i").test(ownText(dc.card)));
+  const exilesAll = says("deathsExiledAll");
+  const exilesCreatures = exilesAll || says("deathsExiledCreature");
+  for (const [cls, e] of classes) {
+    if (cls !== "graveyard" && (exilesAll || (exilesCreatures && cls === "creature"))) e.exiling = new Set(e.cards);
+  }
 
   // THE DECK'S OWN CLOCK SETS THE HORIZON everything else is priced against (project owner's call,
   // and the payoff design §12.8 promised for this step). "Do I have an artifact answer in time"

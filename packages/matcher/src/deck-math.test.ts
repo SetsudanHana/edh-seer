@@ -181,3 +181,15 @@ test("answer rows carry their colour pool -- says how many answers of the class 
   expect(artifact.pool).toBeGreaterThan(0);
   expect(artifact.pool).toBeLessThan(100);
 });
+
+test("a commander that exiles what dies makes every creature answer an exile (#647)", () => {
+  const mari = answer("Mari, the Killing Quill", "Whenever a creature an opponent controls dies, exile it with a hit counter on it.", "Legendary Creature — Human Assassin");
+  const deck = fillTo(100, [mari, answer("Murder", "Destroy target creature."), answer("Go for the Throat", "Destroy target nonartifact creature.")]);
+  const creature = (commanders: string[]) => computeDeckMath(deck, H, commanders).answers.find((a) => a.class === "creature")!;
+  expect(creature(["Mari, the Killing Quill"]).exiling).toBe(2);
+  // The same card in the 99 is not always there, so it vouches for nothing.
+  expect(creature([]).exiling).toBe(0);
+  // A one-turn rider is not a standing replacement.
+  const eclipse = fillTo(100, [answer("Malicious Eclipse", "All creatures get -2/-2 until end of turn. If a creature an opponent controls would die this turn, exile it instead.", "Sorcery"), answer("Murder", "Destroy target creature.")]);
+  expect(computeDeckMath(eclipse, H, ["Malicious Eclipse"]).answers.find((a) => a.class === "creature")!.exiling).toBe(0);
+});
