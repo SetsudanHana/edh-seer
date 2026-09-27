@@ -74,7 +74,7 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
         // around turn 9"). It says so, small, as an untimed tile does.
         route?.kind === "alt-win" && route.turn !== undefined
           ? <span className="text-xs text-(--muted)">cast by turn {route.turn}</span>
-          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">not timed</span>}</span>
+          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">no turn estimate</span>}</span>
       ) : null}
       <span className="text-xs stat-num text-(--muted)">{plural(plan.count, "card")}</span>
     </>
@@ -104,7 +104,7 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
         <p className="text-sm">
           Can win around <b>turn {route.turn}</b>{spread}
           {route.kind === "combo" ? <>, with {route.cards.join(" + ")}</> : null}
-          {pressure !== undefined ? <span className="text-(--muted)">; {pressure} power on board by turn 5</span> : null}.
+          {pressure !== undefined ? <span className="text-(--muted)">; about {Math.round(pressure)} power of creatures in play by turn 5</span> : null}.
         </p>
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}
       {map ?? (

@@ -50,10 +50,10 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
       {helpers.length ? (
         <div className="flex flex-col gap-1">
           <button type="button" aria-expanded={showHelpers} className="self-start min-h-11 text-sm text-(--muted) hover:text-(--foreground)" onClick={() => setShowHelpers(!showHelpers)}>
-            {showHelpers ? "Hide the helpers" : `Helpers · ${helpers.length}`}
+            {showHelpers ? "Hide the supporting groups" : `Supporting groups · ${helpers.length}`}
           </button>
           {showHelpers ? (
-            <ul className="flex flex-col" aria-label="Helpers">
+            <ul className="flex flex-col" aria-label="Supporting groups">
               {helpers.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} top={top} />)}
             </ul>
           ) : null}

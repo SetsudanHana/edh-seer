@@ -7,6 +7,7 @@ import { CATEGORY_LABELS } from "./CardList.js";
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
 /** What the badge means, said once where it is first used rather than left to be guessed. */
 const ANCHOR_GLOSS = "key card: most of this deck's synergy runs through it";
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
   const ranked = cards
@@ -27,7 +28,11 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
       {/* THE GLOSS IS PRINTED, NOT HOVERED (T1). A `title` does not exist on touch at all, and this
         *  badge is guessable-WRONG unglossed: beside the commander at the top of a synergy list,
         *  "anchor" reads as "this is your commander". Shown only when a row actually carries one. */}
-      {anyAnchor ? <p className="text-xs text-(--muted) max-w-[65ch]">{ANCHOR_GLOSS}</p> : null}
+      {/* THE CIRCLED NUMBER, SAID ONCE (persona round 2026-09-27: three seats met "5.0" with no
+        *  scale here, and found it explained only in the cut list). */}
+      <p className="text-xs text-(--muted) max-w-[65ch]">
+        The number is each card&rsquo;s synergy score, where 5 is this deck&rsquo;s best-connected card.{anyAnchor ? ` ${cap(ANCHOR_GLOSS)}.` : ""}
+      </p>
       {/* TWO ACROSS AT xl (roadmap T11). Measured at 1960px: the ink stopped at 567px of a 1782px
         *  row. The rows are short by nature -- a score, a name, one reason -- so the fix is to place
         *  more of them per row rather than to stretch any of them. */}
@@ -37,7 +42,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
           const isAnchor = maxAuthority > 0 && (c.authority ?? 0) >= ANCHOR_SHARE * maxAuthority;
           return (
             <li key={c.name} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
-              <span className="pip shrink-0">{(c.synergyRating ?? 0).toFixed(1)}</span>
+              <span className="pip shrink-0" aria-label={`synergy ${(c.synergyRating ?? 0).toFixed(1)} of 5`}>{(c.synergyRating ?? 0).toFixed(1)}</span>
               <span className="flex-1 min-w-0">
                 {/* `sm:truncate`: on a phone the tags ("pulls double duty (Ramp, Draw)") were cut
                   *  to "pulls double d...", so there the line wraps (UI review 2026-09-25). */}
@@ -70,9 +75,11 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                   ) : null}
                   {c.doubleDuty ? (
                     <span className="ml-2 text-xs text-(--success)">
-                      pulls double duty{c.doubleDutyRoles?.length
-                        ? ` (${c.doubleDutyRoles.map((r) => CATEGORY_LABELS[r as keyof typeof CATEGORY_LABELS] ?? r).join(", ")})`
-                        : ""}
+                      {/* PLAIN WORDS FOR "DOUBLE DUTY" (persona round 2026-09-27: five of six seats
+                        *  could not say what "pulls double duty" meant). It also fills a role. */}
+                      {c.doubleDutyRoles?.length
+                        ? `also ${c.doubleDutyRoles.map((r) => (CATEGORY_LABELS[r as keyof typeof CATEGORY_LABELS] ?? r).toLowerCase()).join(" and ")}`
+                        : "also fills a role"}
                     </span>
                   ) : null}
                 </span>

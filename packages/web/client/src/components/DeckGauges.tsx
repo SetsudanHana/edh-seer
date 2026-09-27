@@ -275,8 +275,9 @@ export function RoleBars({ data }: { data: AnalyzeResponse }) {
   const tickNote = (key?: string): string | undefined => {
     if (!template || !key) return undefined;
     const { primary: p, secondary: s } = template;
-    if (!p) return `Archetype median ${template.population[key]}`;
-    if (!s) return `${p.label} median ${p.row[key]}`;
+    // "TYPICAL", NOT "MEDIAN" (persona round 2026-09-27: "Archetype median 13", median of what?).
+    if (!p) return `Typical deck: ${template.population[key]}`;
+    if (!s) return `Typical ${p.label} deck: ${p.row[key]}`;
     return `${p.label} ${p.row[key]} · ${s.label} ${s.row[key]}`;
   };
   const share = (w: number) => `${Math.round(w * 100)}%`;
@@ -285,9 +286,9 @@ export function RoleBars({ data }: { data: AnalyzeResponse }) {
   const tickSource = !template
     ? "Ticks: the Command Zone template\u2019s minimums"
     : !template.primary
-      ? "Ticks: what the median Commander deck runs"
+      ? "Ticks: what a typical Commander deck runs"
       : !template.secondary
-        ? `Ticks: what the median ${template.primary.label} deck runs`
+        ? `Ticks: what a typical ${template.primary.label} deck runs`
         : `Ticks: what ${template.primary.label} (${share(template.primary.weight)}) and ${template.secondary.label} (${share(template.secondary.weight)}) decks run`;
   if (parents.length === 0 && !lands) return null;
   return (

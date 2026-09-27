@@ -98,7 +98,7 @@ test("each scored row prints what fixing it is worth", () => {
   // paragraph's text rather than a single text node.
   const worth = [...container.querySelectorAll("p")].map((el) => el.textContent);
   // 0.635 prints as +0.64: two decimals, rounded, which is what the row shows.
-  expect(worth).toContain("+0.64 to Build, at least");
+  expect(worth).toContain("Raises your Build score by at least 0.64");
 });
 
 test("the heading says what the order is by", () => {

@@ -754,7 +754,7 @@ test("HighSynergyCards renders nothing when no card has a rating", () => {
 test("HighSynergyCards marks the top-authority anchor and double-duty cards", () => {
   render(<HighSynergyCards cards={SAMPLE.report.cards} />);
   expect(screen.getAllByText(/key card/i).length).toBeGreaterThan(0); // ⚡ anchor marker
-  expect(screen.getByText(/pulls double duty/i)).toBeInTheDocument(); // double-duty badge (Impact Tremors)
+  expect(screen.getByText(/^also /)).toBeInTheDocument(); // double-duty mark (Impact Tremors), in plain words
 });
 
 
@@ -779,8 +779,8 @@ test("with no theme strong enough the ticks say they are the population's, and a
   const population = { consistency: 13, ramp: 11, interaction: 13, boardWipes: 2 };
   const fallback = { ...SAMPLE, report: { ...SAMPLE.report, template: { population, targets: population } } };
   const { unmount } = render(<DeckGauges data={fallback} />);
-  expect(screen.getAllByText("Archetype median 13").length).toBe(2); // Consistency and Interaction share it
-  expect(screen.getByText(/Ticks: what the median Commander deck runs/)).toBeInTheDocument();
+  expect(screen.getAllByText("Typical deck: 13").length).toBe(2); // Consistency and Interaction share it
+  expect(screen.getByText(/Ticks: what a typical Commander deck runs/)).toBeInTheDocument();
   unmount();
   const { template: _t, ...withoutTemplate } = SAMPLE.report;
   render(<DeckGauges data={{ ...SAMPLE, report: withoutTemplate }} />);
@@ -798,7 +798,7 @@ test("under the floor, the tick line says the ticks are the median deck's, in on
     strategies: [{ name: "enchantress" as const, label: "Enchantress", confidence: 0.249 }],
     template: { population, targets: population, leadFloor: 0.25 } } };
   render(<DeckGauges data={data} />);
-  expect(screen.getByText(/Ticks: what the median Commander deck runs/)).toBeInTheDocument();
+  expect(screen.getByText(/Ticks: what a typical Commander deck runs/)).toBeInTheDocument();
   expect(screen.queryByText(/Being over is fine|Going over a tick is fine/)).toBeNull();
 });
 

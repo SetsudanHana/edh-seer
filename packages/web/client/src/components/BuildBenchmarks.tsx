@@ -765,7 +765,7 @@ function DeckMathRows({
             <span className="flex-1 text-xs text-(--muted) tabular-nums">
               {clock.turn === undefined
                 ? "nothing here kills through combat — a mill or alt-win deck has no combat clock"
-                : `${clock.powerAtFive} expected power on board by turn 5, on the way there`}
+                : `about ${Math.round(clock.powerAtFive)} power of creatures in play by turn 5, on the way there`}
             </span>
           </div>
           {/* A turn number that does not say how it was made reads as a prediction. It is a RATE:

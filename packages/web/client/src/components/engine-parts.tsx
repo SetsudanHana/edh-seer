@@ -6,14 +6,16 @@ import { cardImageUrl } from "./card-node.js";
 
 /** The pieces the Overview and the Orbit draw a card and a claim with, so the two read alike. */
 
-export const REPEAT_WORD: Record<Repeat, string> = { static: "always on", triggered: "every time", activated: "on demand", oneshot: "once" };
+/** PLAIN WORDS (persona round 2026-09-27: "ON DEMAND" and the rest, in spaced capitals, read as
+ *  labels to decode). Lower case, and "on demand" says what it asks of you. */
+export const REPEAT_WORD: Record<Repeat, string> = { static: "always on", triggered: "each time", activated: "when you pay", oneshot: "only once" };
 export const REPEAT_MEANS: Record<Repeat, string> = { static: "while both are out", triggered: "each time it happens", activated: "when you pay for it", oneshot: "happens once" };
 
 /** A repeating link whose payoff caps itself ("Do this only once each turn", issue #518) is not
  *  "every time"; the score still counts it as repeating. */
 export function Badge({ repeat, perTurn }: { repeat: Repeat; perTurn?: boolean }) {
   return (
-    <span className={`eyebrow mr-2 inline-block whitespace-nowrap rounded-[4px] border px-1.5 py-0.5 align-[1px] ${
+    <span className={`mr-2 inline-block text-xs whitespace-nowrap rounded-[4px] border px-1.5 py-0.5 align-[1px] ${
       repeat === "oneshot" ? "border-dashed border-(--muted) text-(--muted)" : "border-(--separator) bg-(--surface-secondary) text-(--foreground)"
     }`}>{perTurn && repeat === "triggered" ? "once a turn" : REPEAT_WORD[repeat]}</span>
   );

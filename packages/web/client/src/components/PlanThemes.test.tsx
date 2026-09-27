@@ -60,10 +60,10 @@ test("a big theme shows its first cards and the rest behind Show all", async () 
   expect(within(theme).getByRole("button", { name: /Extra Cleric 9/ })).toBeInTheDocument();
 });
 
-test("the helpers are folded until asked for", async () => {
+test("the supporting groups are folded until asked for", async () => {
   view();
   expect(screen.queryByRole("heading", { name: "Cost reducers" })).toBeNull();
-  await userEvent.setup().click(screen.getByRole("button", { name: /^Helpers · \d+$/ }));
+  await userEvent.setup().click(screen.getByRole("button", { name: /^Supporting groups · \d+$/ }));
   expect(screen.getByRole("heading", { name: "Cost reducers" })).toBeInTheDocument();
 });
 
