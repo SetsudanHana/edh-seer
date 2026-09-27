@@ -23214,8 +23214,8 @@
   "setName": "Secret Lair Drop",
   "releaseDate": "2022-04-22",
   "commanders": [
-   "Zndrsplt, Eye of Wisdom // Zndrsplt, Eye of Wisdom",
-   "Okaun, Eye of Chaos // Okaun, Eye of Chaos"
+   "Zndrsplt, Eye of Wisdom",
+   "Okaun, Eye of Chaos"
   ],
   "cards": [
    {
@@ -23359,7 +23359,7 @@
     "count": 1
    },
    {
-    "name": "Krark's Thumb // Krark's Thumb",
+    "name": "Krark's Thumb",
     "count": 1
    },
    {
@@ -23419,7 +23419,7 @@
     "count": 1
    },
    {
-    "name": "Propaganda // Propaganda",
+    "name": "Propaganda",
     "count": 1
    },
    {
@@ -23483,7 +23483,7 @@
     "count": 1
    },
    {
-    "name": "Stitch in Time // Stitch in Time",
+    "name": "Stitch in Time",
     "count": 1
    },
    {
@@ -35131,11 +35131,11 @@
     "count": 1
    },
    {
-    "name": "Lórien Revealed",
+    "name": "Lothlórien Blade",
     "count": 1
    },
    {
-    "name": "Lothlórien Blade",
+    "name": "Lórien Revealed",
     "count": 1
    },
    {
@@ -37744,7 +37744,7 @@
   "setName": "Secret Lair Drop",
   "releaseDate": "2023-08-14",
   "commanders": [
-   "Gisela, the Broken Blade // Brisela, Voice of Nightmares"
+   "Gisela, the Broken Blade"
   ],
   "cards": [
    {
@@ -37816,7 +37816,7 @@
     "count": 1
    },
    {
-    "name": "Bruna, the Fading Light // Brisela, Voice of Nightmares",
+    "name": "Bruna, the Fading Light",
     "count": 1
    },
    {
@@ -41575,7 +41575,7 @@
   "setName": "Secret Lair Drop",
   "releaseDate": "2024-01-22",
   "commanders": [
-   "Rin and Seri, Inseparable // Rin and Seri, Inseparable"
+   "Rin and Seri, Inseparable"
   ],
   "cards": [
    {
@@ -41587,7 +41587,7 @@
     "count": 1
    },
    {
-    "name": "Anointed Procession // Anointed Procession",
+    "name": "Anointed Procession",
     "count": 1
    },
    {
@@ -41703,7 +41703,7 @@
     "count": 1
    },
    {
-    "name": "Jetmir, Nexus of Revels // Jetmir, Nexus of Revels",
+    "name": "Jetmir, Nexus of Revels",
     "count": 1
    },
    {
@@ -41711,7 +41711,7 @@
     "count": 1
    },
    {
-    "name": "Jinnie Fay, Jetmir's Second // Jinnie Fay, Jetmir's Second",
+    "name": "Jinnie Fay, Jetmir's Second",
     "count": 1
    },
    {
@@ -41851,7 +41851,7 @@
     "count": 1
    },
    {
-    "name": "Sol Ring // Sol Ring",
+    "name": "Sol Ring",
     "count": 1
    },
    {

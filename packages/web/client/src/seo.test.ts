@@ -111,8 +111,13 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
   const indexXml = readFileSync(builtSitemap, "utf8");
   expect(indexXml).toContain("<sitemapindex");
   const childUrls = [...indexXml.matchAll(/<sitemap><loc>([^<]+)<\/loc>/g)].map((m) => m[1]!);
+  // THE PRECON PAGES, when `build-precons` wrote them (2026-09-27): a fourth child, second in order.
+  const preconVersion = JSON.parse(readFileSync(join(DIST, "static", "manifest.json"), "utf8")).version as string;
+  const preconIndex = join(DIST, "static", preconVersion, "precons", "index.json");
+  const precons = existsSync(preconIndex) ? (JSON.parse(readFileSync(preconIndex, "utf8")) as { slug: string }[]) : [];
   expect(childUrls).toEqual([
     `${canonical}sitemap-core.xml`,
+    ...(precons.length ? [`${canonical}sitemap-precons.xml`] : []),
     `${canonical}sitemap-commanders.xml`,
     `${canonical}sitemap-cards.xml`,
   ]);
@@ -149,7 +154,7 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
 
   const fixed = [canonical, `${canonical}how-it-works`, `${canonical}cards`, `${canonical}commanders`];
   expect(locs).toHaveLength(fixed.length + browseCards.length + browseCommanders.length
-    + cards.length + commanders.length);
+    + cards.length + commanders.length + (precons.length ? precons.length + 1 : 0));
   expect(locs.slice(0, 4)).toEqual(fixed);
   expect(locs.slice(4, 4 + browseCards.length)).toEqual(browseCards);
   // Every URL is on the canonical origin -- a sitemap that names another host is a sitemap for
@@ -160,8 +165,10 @@ test.skipIf(!existsSync(builtSitemap))("the sitemap lists every indexable card a
   const indexableCards = new Set(cards.map((e) => e.slug));
   const indexableCommanders = new Set(commanders.map((e) => e.slug));
   const browseUrls = new Set([...browseCards, ...browseCommanders]);
+  // Every precon page the build wrote is indexable (a whole deck, read card by card), and the list.
+  const preconUrls = new Set(precons.length ? [`${canonical}precons`, ...precons.map((p) => `${canonical}precons/${p.slug}`)] : []);
   for (const loc of locs.slice(fixed.length)) {
-    if (browseUrls.has(loc)) continue;
+    if (browseUrls.has(loc) || preconUrls.has(loc)) continue;
     const slug = loc.slice(loc.lastIndexOf("/") + 1);
     const set = loc.includes("/commanders/") ? indexableCommanders : indexableCards;
     expect(set.has(slug), `${loc} is a page the site will let be indexed`).toBe(true);
