@@ -230,3 +230,12 @@ test("an Aura is voltron when it helps the creature it enchants, not when it tak
   expect(voltron(aura("Utter Insignificance", "Flash\nEnchant creature\nEnchanted creature loses all abilities and has base power and toughness 1/1."))).toBe(false);
   expect(voltron(aura("Shiny Impetus", "Enchant creature\nEnchanted creature gets +2/+2 and is goaded."))).toBe(false);
 });
+
+/** #574: Beast Within, Generous Gift and Stroke of Midnight were 3 of Yuna's 7 go-wide cards. The
+ *  token they make is the opponent's. */
+test("a token an opponent gets is not a go-wide card", () => {
+  const giver = mk("Beast Within", { kinds: ["token-generation"], typeLine: "Instant" });
+  (giver.tags!.abilities[0].effect.subject as { control: string }).control = "opp";
+  expect(detectWincons([giver]).get("go-wide")?.has("Beast Within") ?? false).toBe(false);
+  expect(detectWincons([mk("Krenko", { kinds: ["token-generation"] })]).get("go-wide")?.has("Krenko")).toBe(true);
+});
