@@ -58,3 +58,24 @@ test("oneSided: Wrath hits everyone; a wipe of only opponents' creatures is one-
   const oneSided = { ...wrath, tags: { ...wrath.tags!, abilities: wrath.tags!.abilities.map((a) => ({ ...a, emits: (a.emits ?? []).map((e) => ({ ...e, subject: { ...e.subject, control: "opp" as const } })) })) } };
   expect(ingredients(oneSided, "boardWipe").oneSided).toBe(1);
 });
+
+test("rate percentiles for the yield roles: Arcane Signet out-rates Wayfarer's Bauble as ramp", () => {
+  const signet = ingredients(dc("Arcane Signet"), "ramp");
+  const bauble = ingredients(dc("Wayfarer's Bauble"), "ramp");
+  expect(signet.rateFloor).toBeTypeOf("number");
+  expect(signet.rateFloor!).toBeGreaterThan(bauble.rateFloor ?? -1);
+});
+
+test("drawback: a gift to the opponent (a token, life, a land) or a cost to you", () => {
+  expect(ingredients(dc("Beast Within"), "targetedRemoval").drawback).toBe(1);
+  // Swords' victim gains life equal to its power: a gift, read off the fixture, not from memory.
+  expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").drawback).toBe(1);
+  expect(ingredients(dc("Wrath of God"), "boardWipe").drawback).toBe(0);
+});
+
+test("extraValue: a body, or a second ability with its own effect", () => {
+  expect(ingredients(dc("Llanowar Elves"), "ramp").extraValue).toBe(1);    // a creature
+  expect(ingredients(dc("Mind Stone"), "ramp").extraValue).toBe(1);        // cashes in for a card
+  expect(ingredients(dc("Arcane Signet"), "ramp").extraValue).toBe(0);
+  expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").extraValue).toBe(0); // the lifegain is the victim's
+});

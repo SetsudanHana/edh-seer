@@ -4,6 +4,8 @@
  *  (absent), never 0, because a silent wrong answer is worse than a missing one. */
 import type { Ability, SubjectFilter } from "@edh-seer/tagger";
 import { BUILD_CATEGORIES, detectBuildCategories, type BuildCategory } from "./build.js";
+import { bestPerFamily, ratesOf, spanOf, type RateFamily, type RateSpan } from "./rate.js";
+import { ratePercentile } from "./rate-stats.js";
 import type { DeckCard } from "./types.js";
 
 export type Role = Exclude<BuildCategory, "lands">;
@@ -84,6 +86,20 @@ function permanenceOf(a: Ability): number | undefined {
   return undefined;
 }
 
+/** The yield roles and the rate families that measure them (rate.ts). */
+const YIELD: Partial<Record<Role, readonly RateFamily[]>> = {
+  ramp: ["mana", "search"], draw: ["cards"], tutor: ["search"], burn: ["damage"],
+};
+/** The same rate read at its ceiling: a trigger's floor is 0 by the interval ruling, its ceiling is what it can do. */
+const ceilingSpan = (s: RateSpan): RateSpan => [s[2] ?? s[0], s[3], s[2] ?? s[0], s[3]];
+
+/** A GIFT TO THE OPPONENT or a cost to you: the victim's token (Beast Within), life (Swords), land
+ *  (Path), or your own life. */
+function isDrawback(e: { verb: string; subject: { control?: string } }): boolean {
+  if (e.subject.control === "opp") return e.verb === "create-token" || e.verb === "gain-life" || e.verb === "search";
+  return e.verb === "lose-life" && e.subject.control === "you";
+}
+
 export function ingredients(d: DeckCard, role: Role): Ingredients {
   const abilities = roleAbilities(d, role);
   if (abilities.length === 0) return {};
@@ -97,6 +113,22 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   const timings = abilities.map((a) => timingOf(d, a)).filter((t): t is number => t !== undefined);
   if (timings.length > 0) out.timing = Math.max(...timings);
   out.frequency = Math.max(...abilities.map(frequencyOf));
+  const families = YIELD[role];
+  if (families) {
+    const best = bestPerFamily(ratesOf(d)).filter((r) => families.includes(r.family));
+    const floors = best.map((r) => ratePercentile(spanOf(r), r.family)).filter((p): p is number => p !== undefined);
+    const ceilings = best.map((r) => ratePercentile(ceilingSpan(spanOf(r)), r.family)).filter((p): p is number => p !== undefined);
+    if (floors.length > 0) out.rateFloor = Math.round(100 * Math.max(...floors));
+    if (ceilings.length > 0) out.rateCeiling = Math.round(100 * Math.max(...ceilings));
+  }
+  const all = d.tags?.abilities ?? [];
+  out.drawback = all.some((a) => (a.emits ?? []).some(isDrawback)) ? 1 : 0;
+  // A SECOND ABILITY WITH ITS OWN EFFECT, not a gift to the opponent (Swords' lifegain is the victim's).
+  const others = all.filter((a) => !abilities.includes(a) && a.effect.kind !== ""
+    && !(a.emits ?? []).some((e) => e.subject.control === "opp"));
+  const types = (d.tags?.characteristics.types ?? []).map((t) => t.toLowerCase());
+  out.extraValue = (types.includes("creature") ? 1 : 0) + (others.length > 0 ? 1 : 0);
+  if (role === "ramp") out.restriction = /can.t be spent|spend this mana only/i.test(d.card.oracleText ?? "") ? 1 : 0;
   if (ANSWERS.has(role)) {
     const subjects = abilities.flatMap((a) => (a.emits ?? []).filter((e) => e.subject.control !== "you").map((e) => e.subject));
     if (subjects.length > 0) out.breadth = Math.max(...subjects.map(breadthOf));

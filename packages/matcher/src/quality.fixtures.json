@@ -12,7 +12,8 @@
    "colorIdentity": [
     "W"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{W}"
   },
   "tags": {
    "oracleId": "b1544f21-7e98-461b-aed5-e748b0168c52",
@@ -105,7 +106,8 @@
    "colorIdentity": [
     "W"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{W}"
   },
   "tags": {
    "oracleId": "d683d985-9888-4d21-8b5f-69e69ce4a03b",
@@ -218,7 +220,8 @@
    "colorIdentity": [
     "W"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{2}{W}"
   },
   "tags": {
    "oracleId": "2987c385-011a-4032-a516-a46d1e9dc9e8",
@@ -733,7 +736,8 @@
    "colorIdentity": [
     "G"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{2}{G}"
   },
   "tags": {
    "oracleId": "7735eeba-693b-47e2-bd51-414379cf1016",
@@ -875,7 +879,8 @@
    "colorIdentity": [
     "W"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{2}{W}{W}"
   },
   "tags": {
    "oracleId": "34515b16-c9a4-4f98-8c77-416a7a523407",
@@ -935,7 +940,8 @@
    "colorIdentity": [
     "U"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{1}{U}"
   },
   "tags": {
    "oracleId": "d75b9c82-1b49-4c3e-a1b5-aeef57d6644b",
@@ -1007,7 +1013,8 @@
    "colorIdentity": [
     "U"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{U}{U}"
   },
   "tags": {
    "oracleId": "cc187110-1148-4090-bbb8-e205694a39f5",
@@ -1066,7 +1073,8 @@
    "colorIdentity": [
     "U"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{1}{U}{U}"
   },
   "tags": {
    "oracleId": "7d00fb28-ea6c-49a9-b4af-ffb38860a9a7",
@@ -1121,7 +1129,8 @@
    "keywords": [],
    "colors": [],
    "colorIdentity": [],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{2}"
   },
   "tags": {
    "oracleId": "0bc7f093-bef0-4f1a-852c-4b75ebf54838",
@@ -1167,7 +1176,8 @@
    "keywords": [],
    "colors": [],
    "colorIdentity": [],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{2}"
   },
   "tags": {
    "oracleId": "c97361b5-af16-4a7b-af85-a429dbaf4ad2",
@@ -1272,7 +1282,8 @@
    "colorIdentity": [
     "G"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{2}{G}"
   },
   "tags": {
    "oracleId": "8b755881-a72d-4e21-a369-d2924eb4585a",
@@ -1373,7 +1384,8 @@
    "keywords": [],
    "colors": [],
    "colorIdentity": [],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{1}"
   },
   "tags": {
    "oracleId": "31f15274-301b-47c5-ba19-0ced04520878",
@@ -1512,7 +1524,8 @@
    "colorIdentity": [
     "G"
    ],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{G}"
   },
   "tags": {
    "oracleId": "68954295-54e3-4303-a6bc-fc4547a4e3a3",
@@ -1566,7 +1579,8 @@
    ],
    "colors": [],
    "colorIdentity": [],
-   "layout": "normal"
+   "layout": "normal",
+   "manaCost": "{2}"
   },
   "tags": {
    "oracleId": "ca204b66-8d0c-431a-8d34-282f7c2d17da",
@@ -1621,7 +1635,8 @@
    "colorIdentity": [
     "U"
    ],
-   "layout": "modal_dfc"
+   "layout": "modal_dfc",
+   "manaCost": null
   },
   "tags": {
    "oracleId": "bcc6eece-75ea-494c-b33a-d4477d504e0b",
