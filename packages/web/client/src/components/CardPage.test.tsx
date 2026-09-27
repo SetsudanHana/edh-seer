@@ -315,3 +315,18 @@ test("two cards on the map whose names start the same both show their whole name
   // The colours' key is at the map.
   expect(screen.getByRole("list", { name: "What the colours are" })).toBeInTheDocument();
 });
+
+/** A TAP ON THE MAP'S EMPTY SPACE CLEARS THE PICK (owner, 2026-09-27: "you just stay on what you
+ *  have chosen"). */
+test("a tap on the map's empty space clears the picked card", async () => {
+  const rows = ["impact-tremors", "goblin-bombardment", "skullclamp", "purphoros"].map((slug, i) => ({
+    name: slug, slug, score: 0.1, event: i % 2 ? "dies|creature|-|-" : "enters|creature|-|-", reason: `${slug} does it`,
+  }));
+  at("krenko-mob-boss", async () => ({ ...KRENKO, partners: rows }));
+  const map = await screen.findByRole("group", { name: /Krenko, Mob Boss and 4 of the cards it works well with/ });
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).not.toBeNull(), { timeout: 3000 });
+  fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
+  fireEvent.click(map);
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "false"), { timeout: 3000 });
+});

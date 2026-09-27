@@ -57,9 +57,9 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   // 2026-09-26). The panel comes up to meet the tap.
   const panel = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!narrow || (sel === null && sector === null)) return;
+    if (!narrow || sector === null) return;
     panel.current?.scrollIntoView?.({ block: "nearest", behavior: still ? "auto" : "smooth" });
-  }, [sel, sector, narrow, still]);
+  }, [sector, narrow, still]);
   if (!o) return null;
 
   const centre = (id: string) => {
@@ -79,8 +79,16 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     // A card on the map that doesn't work with this one (one you walked through, or a partner of
     // an earlier middle) has nothing to read here: a tap walks to it.
     if (sel === id || !o.sectors.some((s) => s.partners.some((p) => p.card.id === id))) centre(id);
-    else { setSel(id); setSector(null); }
+    else {
+      setSel(id); setSector(null);
+      // THE CARD OPENS IN THE DRAWER (owner, 2026-09-27: the panel's box "is not very informative").
+      // The drawer has its text, its links and "Walk the map from here"; a second tap still walks.
+      const c = m.cards.get(id);
+      if (c && !c.isToken) drawer.open(drawer.known.has(c.name) ? c.name : c.physical);
+    }
   };
+  // A TAP ON EMPTY SPACE CLEARS THE PICK (owner, 2026-09-27: "you just stay on what you have chosen").
+  const blank = () => { setSel(null); setSector(null); };
   /** WHAT A PLAYER CAN DO WITH A CARD ON THE MAP, in one place (owner, 2026-09-27): read how it
    *  works with the middle card, walk to it, read its text, pin it across the report, open its
    *  own page, copy its name. On the map itself: back to where the walk began, and the motion. */
@@ -123,7 +131,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
         {/* The map's width is capped by the screen's height (the box is 880 by 720), so all of it
           * stays on screen; the map and panel sit together, centred. */}
         <div className="min-w-0 lg:flex-1 lg:max-w-[calc((100svh-17rem)*1.2222)]">
-          <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover}
+          <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover} onBlank={blank}
             menuFor={menuFor} isAdded={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isAdded(c.physical); }} />
         </div>
         <div ref={panel} key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky

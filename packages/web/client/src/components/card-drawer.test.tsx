@@ -1,8 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { useEffect } from "react";
 import userEvent from "@testing-library/user-event";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
+import { buildEngineModel } from "../lib/engine-model.js";
+import { engineDeck } from "../lib/engine-model.fixture.js";
 import { CardDrawerProvider, useAdded, useCardDrawer } from "./card-drawer.js";
 /** The web package, found from this file rather than from the working directory, so the test runs
  *  the same from `packages/web` and from the repository root (the root vitest config). */
@@ -129,4 +132,24 @@ test("the reserve matches the drawer's width, at the breakpoint where there is r
   expect(width, "the fixed drawer container's width").not.toBeNull();
   // Tailwind's spacing scale is 0.25rem per step, so `w-80` is 20rem.
   expect(Number(rule![1]) * 4).toBe(Number(width![1]));
+});
+
+/** ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): with the report's extras registered,
+ *  the drawer walks the commander's map from the card, then closes. */
+test("the drawer walks the commander's map from the card, then closes", async () => {
+  const { report, graph: deckGraph } = engineDeck();
+  const m = buildEngineModel(report, deckGraph);
+  const walk = vi.fn();
+  function Register() {
+    const { setExtras, open } = useCardDrawer();
+    useEffect(() => { setExtras({ model: m, walk }); open("Reducer"); }, [setExtras, open]);
+    return null;
+  }
+  render(<CardDrawerProvider graph={deckGraph}><Register /></CardDrawerProvider>);
+  const drawer = await screen.findByTestId("card-inspector");
+  // The small map of the card's own links went (owner, 2026-09-27): the links are listed instead.
+  expect(within(drawer).queryByTestId("card-map")).toBeNull();
+  fireEvent.click(within(drawer).getByRole("button", { name: "Walk the map from here" }));
+  expect(walk).toHaveBeenCalledWith("Reducer");
+  expect(screen.queryByTestId("card-inspector")).toBeNull();
 });

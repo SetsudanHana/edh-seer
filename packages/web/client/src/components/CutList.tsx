@@ -2,11 +2,10 @@ import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import type { CutChoice } from "../lib/cut-choice.js";
-import { listNames, type EngineCard, type EngineModel } from "../lib/engine-model.js";
+import { listNames, type EngineCard } from "../lib/engine-model.js";
 import { CardName } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
 import { CardFace } from "./engine-parts.js";
-import { CardMap } from "./CardMap.js";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { SwapLine } from "./SuggestedPairs.js";
 
@@ -19,7 +18,7 @@ import { SwapLine } from "./SuggestedPairs.js";
 /** A role group over its target, with the cards in it: where the rest of a trim comes from. */
 export interface Surplus { name: string; count: number; target: number; over: number; cards: EngineCard[] }
 
-export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize, model }:
+export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -39,8 +38,6 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
     pairs?: readonly SuggestedPair[];
     /** Cards in the list, commander included and companion not: over 100, the cuts reach 100. */
     deckSize?: number;
-    /** The deck's links: with them, each cut is drawn in the middle of its own few links. */
-    model?: EngineModel | null;
   }) {
   const [maybeN, setMaybeN] = useState(MAYBE_STEP);
   // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
@@ -88,7 +85,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           </p>
           {toCut.length ? (
             <ol className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-              {toCut.map((c) => <CutCard key={c.name} c={c} model={model} />)}
+              {toCut.map((c) => <CutCard key={c.name} c={c} />)}
             </ol>
           ) : null}
           {spare.length ? (
@@ -109,7 +106,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-                {clear.map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} model={model} />)}
+                {clear.map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
             </section>
           ) : null}
@@ -117,7 +114,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
             <section aria-labelledby="cuts-maybe" className="flex flex-col gap-2">
               <h4 id="cuts-maybe" className="text-base font-semibold">{clear.length ? "Weak here, but something argues for them" : "The weakest here, though something argues for each"}</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} model={model} />)}
+                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
               </ul>
               {maybe.length > maybeN ? (
                 <p>
@@ -234,14 +231,14 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
 /** Trade-off rows shown before "Show N more"; the clear cuts always show in full. */
 const MAYBE_STEP = 4;
 
-/** One cut: its few links drawn, why it is here, and what argues it stays. */
-function CutCard({ c, swap, model }: { c: CutChoice; swap?: SuggestedPair; model?: EngineModel | null }) {
+/** One cut: the card, why it is here, and what argues it stays. */
+function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
   const r = c.row;
   return (
     <li className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-      <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-        {c.card && model ? <CardMap model={model} card={c.card} tone="cut" /> : c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
-        <div className="flex min-w-0 flex-1 flex-col gap-2 self-stretch">
+      <div className="flex items-start gap-3">
+        {c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div>
             <div className="flex items-center gap-1">
               <h4 className="flex flex-1 items-baseline justify-between gap-3 text-base font-semibold">

@@ -88,6 +88,8 @@ class Sky {
   /** A long press on a touch screen, which has no right button: it opens the same menu. */
   press = { timer: 0, x: 0, y: 0, fired: false };
   added: (id: string) => boolean = () => false;
+  /** A tap on the map's empty space: the view clears its selection (owner, 2026-09-27). */
+  blank: () => void = () => {};
   constructor(public svg: SVGSVGElement, public layers: Record<"edges" | "ticks" | "nodes" | "labels" | "route", SVGGElement>,
     public card: (id: string) => EngineCard | undefined, public tap: (id: string) => void, public hover: (id: string | null) => void,
     public menu: (id: string | null, x: number, y: number) => void) {}
@@ -419,17 +421,20 @@ class Sky {
     };
     const up = () => { if (!this.drag.on) return; this.drag.on = false; svg.classList.remove("cursor-grabbing"); setTimeout(() => { this.drag.moved = false; }, 0); };
     const menu = (e: MouseEvent) => { e.preventDefault(); const at = this.anchor(e, svg); this.menu(null, at.x, at.y); };
+    // A card's own click stops here, so this is a tap on empty space; the end of a drag is not.
+    const blank = () => { if (!this.drag.moved) this.blank(); };
+    svg.addEventListener("click", blank);
     svg.addEventListener("contextmenu", menu);
     svg.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
-    return () => { svg.removeEventListener("contextmenu", menu); svg.removeEventListener("pointerdown", down); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    return () => { svg.removeEventListener("click", blank); svg.removeEventListener("contextmenu", menu); svg.removeEventListener("pointerdown", down); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
   }
 }
 
 export type { MenuItem };
 
-export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, menuFor, isAdded, pick = mapPartners, label }: {
+export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, onBlank, menuFor, isAdded, pick = mapPartners, label }: {
   /** Every card the map may draw, by id: a deck's engine model, or the cards a card page names. */
   model: Pick<EngineModel, "cards">; orbit: OrbitModel;
   /** The cards put in the middle before this one, oldest first. */
@@ -440,6 +445,8 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   still: boolean;
   narrow: boolean;
   onTap: (id: string) => void;
+  /** A tap on the map's empty space. */
+  onBlank?: () => void;
   onHover: (id: string | null) => void;
   /** What the menu offers on a card (right click, a long press, or the menu key), or on the map
    *  itself when `id` is null. The map adds its own view lines to the latter. */
@@ -455,8 +462,8 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   const layers = useRef<Record<string, SVGGElement | null>>({});
   const sky = useRef<Sky | null>(null);
   const [menu, setMenu] = useState<{ id: string | null; x: number; y: number } | null>(null);
-  const handlers = useRef({ onTap, onHover, isAdded });
-  handlers.current = { onTap, onHover, isAdded };
+  const handlers = useRef({ onTap, onHover, onBlank, isAdded });
+  handlers.current = { onTap, onHover, onBlank, isAdded };
 
   useEffect(() => {
     const L = layers.current;
@@ -464,6 +471,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
     const s = new Sky(svg.current!, { ...L } as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id),
       (id, x, y) => setMenu({ id, x, y }));
     s.added = (id) => handlers.current.isAdded?.(id) ?? false;
+    s.blank = () => handlers.current.onBlank?.();
     sky.current = s;
     const unbind = s.bindDrag();
     s.start();

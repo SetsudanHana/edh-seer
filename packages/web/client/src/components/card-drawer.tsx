@@ -5,10 +5,9 @@ import type { CardGraph } from "../types.js";
 import { reasonSegments } from "../lib/reason-text.js";
 import { CardInspector } from "./CardInspector.js";
 import type { EngineModel } from "../lib/engine-model.js";
-import { CardMap } from "./CardMap.js";
 
-/** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, for the card's own small map, and a way to
- *  walk the commander's map from the card. The report registers them; the drawer sits above it. */
+/** WHAT A REPORT ADDS TO THE DRAWER: the deck's links, to know which cards are on the commander's
+ *  map, and a way to walk that map from the card. The report registers them; the drawer sits above it. */
 export interface DrawerExtras { model: EngineModel; walk: (id: string) => void }
 
 /** THE INSPECTOR, REACHABLE FROM ANY CARD NAME IN THE REPORT.
@@ -204,11 +203,10 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                 onClose={() => setOpenId(null)}
                 nameOf={nameOf}
                 extra={extras?.model.cards.get(node.id) ? (
-                  // ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): its links drawn here,
-                  // and the walk on the commander's map one tap away, instead of a second full-screen
-                  // map over the report.
-                  <div className="flex flex-col items-center gap-2 border-t border-(--separator) pt-2">
-                    <CardMap model={extras.model} card={extras.model.cards.get(node.id)!} />
+                  // THE WALK, ONE TAP AWAY (report cohesion audit, 2026-09-27). The small map of the
+                  // card's links that sat above it went (owner, same day: "not very useful … for fresh
+                  // players it will be completely useless"); the links are listed below.
+                  <div className="flex flex-col gap-2 border-t border-(--separator) pt-2">
                     <button type="button" onClick={() => { extras.walk(node.id); setOpenId(null); }}
                       className="min-h-9 self-stretch rounded-(--radius) border border-(--separator) px-3 text-sm hover:border-(--accent) hover:text-(--accent)">
                       Walk the map from here
