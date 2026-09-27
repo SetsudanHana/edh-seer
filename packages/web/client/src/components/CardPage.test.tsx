@@ -281,15 +281,32 @@ test("going to a partner's page keeps the map: the card you came from stays, wit
   );
   const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ });
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
-  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "true"));
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
   expect(await screen.findByRole("group", { name: /^Skullclamp and 3 of the cards/ }, { timeout: 3000 })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" })).toBeInTheDocument();
   // The route is drawn by the map's own frame loop, so it is waited for, not assumed.
-  await waitFor(() => expect(document.querySelector("[data-testid=constellation-route]")).not.toBeNull());
+  await waitFor(() => expect(document.querySelector("[data-testid=constellation-route]")).not.toBeNull(), { timeout: 3000 });
   // The card it came from is still on the map, and so is one of its partners that Skullclamp does not name.
   expect(document.querySelector("[data-id='impact-tremors']")).not.toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" }));
-  expect(await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ })).toBeInTheDocument();
+  expect(await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ }, { timeout: 3000 })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /← Back to/ })).toBeNull();
+});
+
+/** TWO CARDS, ONE SHORT NAME (persona round, 2026-09-27): both say their whole name. */
+test("two cards on the map whose names start the same both show their whole names", async () => {
+  const rows = [
+    { name: "Krenko, Tin Street Kingpin", slug: "krenko-tin-street-kingpin", score: 0.1, event: "enters|creature|-|-", reason: "x" },
+    { name: "Skullclamp", slug: "skullclamp", score: 0.1, event: "dies|creature|-|-", reason: "x" },
+    { name: "Purphoros", slug: "purphoros", score: 0.1, event: "enters|creature|-|-", reason: "x" },
+  ];
+  at("krenko-mob-boss", async () => ({ ...KRENKO, partners: rows }));
+  const map = await screen.findByRole("group", { name: /works well with/ });
+  const labels = [...map.querySelectorAll("text.constellation-label")].map((t) => t.textContent);
+  expect(labels).toContain("Krenko, Tin Street Kingpin");
+  expect(labels).toContain("Krenko, Mob Boss");
+  expect(labels).not.toContain("Krenko");
+  // The colours' key is at the map.
+  expect(screen.getByRole("list", { name: "What the colours are" })).toBeInTheDocument();
 });

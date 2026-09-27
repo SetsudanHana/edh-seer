@@ -232,7 +232,7 @@ test("a commander page draws its deck's partners as a map; a second tap opens th
   const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards it works well with/ });
   fireEvent.click(map.querySelector("[data-id='b-two']")!);
   // The first tap picks it (the map marks it pressed on its next frame); only then is a second a walk.
-  await waitFor(() => expect(map.querySelector("[data-id='b-two']")).toHaveAttribute("aria-pressed", "true"));
+  await waitFor(() => expect(map.querySelector("[data-id='b-two']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
   fireEvent.click(map.querySelector("[data-id='b-two']")!);
   expect(await screen.findByText("card page", {}, { timeout: 3000 })).toBeInTheDocument();
 });

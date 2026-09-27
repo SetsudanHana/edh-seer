@@ -275,7 +275,10 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           *  that kept the last list's cards drew them as faint leftovers. */}
         <PageMap key={`${withSlug ?? ""}|${pair ? "pair" : ""}|${colour ?? ""}`} page={page} slug={slug} rows={ranked.partners} base="/commanders"
           pair={pair && withSlug ? { slug: withSlug, name: pair.name, artCrop: pair.artCrop } : undefined}
-          hrefOf={(id) => (id === withSlug ? `/commanders/${id}` : `/cards/${id}`)} />
+          hrefOf={(id) => (id === withSlug ? `/commanders/${id}` : `/cards/${id}`)}
+          // THE COUNT SAYS WHAT IT COUNTS (persona round, 2026-09-27: 34 on the card page, 30 here,
+          // for the same card, read as the site disagreeing with itself).
+          countNote={`that a deck led by ${page.name.split(",")[0]}${pair ? ` and ${pair.name.split(",")[0]}` : ""} can play`} />
         <PartnerList
           subject={page.name}
           // THE SCOPE THE COUNTS WERE TAKEN AT (AJ5), handed to the link under them: `key` is the
