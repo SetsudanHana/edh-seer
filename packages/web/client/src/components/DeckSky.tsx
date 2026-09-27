@@ -46,6 +46,8 @@ export function DeckSky({ model, lit, caption, className = "" }: {
   // What shines: a chapter's light, or the theme picked here, or everything.
   const picked = theme !== null ? new Set(sky.clusters[theme]!.ids) : null;
   const on = lit?.ids ?? picked;
+  // MANY GOLD LINES ARE A WEB, NOT A ROUTE: past thirty they thin, so the stars stay the subject.
+  const heavy = (lit?.lines?.length ?? 0) > 30;
   // The far end of a lit line is half lit: the card a thread runs to.
   const touched = new Set(lit?.lines?.flat() ?? []);
   const shines = (id: string) => !on || on.has(id) || sky.byId.get(id)?.kind === "commander";
@@ -155,7 +157,7 @@ export function DeckSky({ model, lit, caption, className = "" }: {
           <g strokeLinecap="round" data-testid="sky-lit-lines">
             {lit.lines.map(([a, b], i) => {
               const A = sky.byId.get(a), B = sky.byId.get(b);
-              return A && B ? <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="#D4A63A" strokeWidth={2.2} opacity={0.9} /> : null;
+              return A && B ? <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="#D4A63A" strokeWidth={heavy ? 1.1 : 2.2} opacity={heavy ? 0.45 : 0.9} /> : null;
             })}
           </g>
         ) : null}
