@@ -7,9 +7,9 @@ import { peekOnPlainClick, usePeek } from "./peek.js";
 /** "enchantments and artifacts" -- the platform's own list joining, British style. */
 const LIST = new Intl.ListFormat("en-GB", { type: "conjunction" });
 
-/** Cards shown before "Show all": a finding asks for "~3" or "~2", and four is a row at every width
- *  from a phone's two columns up (appeal review 2026-09-26). */
-export const CARD_CAP = 4;
+/** Cards shown before "Show all": a finding asks for "~3" or "~2", and three is one full row on a
+ *  phone's three columns (phone pass, 2026-09-27; it was four for two columns). */
+export const CARD_CAP = 3;
 
 /** THE CARD, THEN ONE LINE OF WHY (appeal review 2026-09-26). Each row used to print the card's
  *  name, "connects to N of your cards: …", two engine sentences behind "and N more", and the card
@@ -36,7 +36,7 @@ function Candidate({ c }: { c: SuggestedCard }) {
           ? <img src={src} alt="" loading="lazy" decoding="async" width={488} height={680} className="block aspect-[488/680] h-auto w-full rounded-[4.5%/3.3%] shadow-md shadow-black/40" />
           : <span className="flex aspect-[488/680] w-full items-end rounded-[6%/4.4%] border border-(--separator) bg-(--surface-secondary) p-2 text-xs leading-tight">{c.name}</span>}
       </Link>
-      <span className="text-sm font-semibold leading-tight">{c.name.split(" // ")[0]}</span>
+      <span className="text-xs font-semibold leading-tight sm:text-sm">{c.name.split(" // ")[0]}</span>
       {counts ? <span className="text-xs font-medium">{counts}</span> : null}
       {c.alsoPlan ? <span className="text-xs text-(--muted)">Also fits your plan</span> : null}
       {why ? <span className="line-clamp-3 text-xs text-(--muted)" title={why}>{why}</span> : null}
@@ -87,7 +87,9 @@ function CandidateGrid({ cards, empty, label }: { cards: readonly SuggestedCard[
       {cards.length === 0
         ? <p className="text-sm text-(--muted) max-w-[70ch]">{empty}</p>
         : (
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,11rem))]" aria-label={label}>
+          // THREE ACROSS ON A PHONE (phone pass, 2026-09-27): two full card images a row made each
+          // list of four about 700px tall.
+          <ul className="grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-x-3 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,11rem))]" aria-label={label}>
             {shown.map((c) => <Candidate key={c.name} c={c} />)}
           </ul>
         )}
