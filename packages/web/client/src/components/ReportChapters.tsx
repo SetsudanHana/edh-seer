@@ -156,6 +156,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     const names = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
     return data.graph?.nodes.find((n) => !n.face && names.has(n.cardName ?? n.id) && themes.partners.has(n.id))?.id ?? null;
   }, [themes, report.cards, data.graph]);
+  const artOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of themes?.cards.values() ?? []) if (c.art && !c.isFace && !c.isToken && !m.has(c.name)) m.set(c.name, c.art);
+    return (n: string) => m.get(n);
+  }, [themes]);
   const unmetDemand = (report.deckMath?.demand ?? []).some((d) => d.available !== null && d.suppliers === 0);
   const [centre, setCentre] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<string | null>(null);
@@ -299,7 +304,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  for. The tiles were the only place either score said what it MEASURES, so those two
             *  `Explain` blocks moved onto the dials themselves and the component retired. */}
           <DeckGauges data={data} diff={diff} bars={false} />
-          <BracketPanel bracket={report.bracket} combos={report.combos} manaValueOf={manaValueOf} />
+          <BracketPanel bracket={report.bracket} combos={report.combos} manaValueOf={manaValueOf} artOf={artOf} />
         </Chapter>
 
         <Chapter id="plan" title={title("plan")}>
