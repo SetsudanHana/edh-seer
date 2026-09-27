@@ -67,6 +67,9 @@ function makesCreatureTokens(dc: DeckCard): boolean {
     // Token doubling has no subject of its own -- it doubles whatever you were already making, so
     // it is a go-wide payoff on any board.
     if (!subject) return a.effect.kind === "token-doubling";
+    // A TOKEN AN OPPONENT GETS IS THEIR BOARD (#574): Beast Within, Generous Gift, Crib Swap and
+    // Stroke of Midnight are removal that pays the victim a token, and were 3 of Yuna's 7 go-wide cards.
+    if (subject.control === "opp") return false;
     const subtypes = (Array.isArray(subject.subtype) ? subject.subtype : subject.subtype ? [subject.subtype] : [])
       .map((s) => s.toLowerCase());
     if (subtypes.some((s) => RESOURCE_TOKENS.has(s))) return false;
