@@ -4,7 +4,7 @@
  *  (absent), never 0, because a silent wrong answer is worse than a missing one. */
 import type { Ability, SubjectFilter } from "@edh-seer/tagger";
 import { BUILD_CATEGORIES, detectBuildCategories, type BuildCategory } from "./build.js";
-import { bestPerFamily, ratesOf, spanOf, type RateFamily, type RateSpan } from "./rate.js";
+import { bestPerFamily, manaOf, ratesOf, spanOf, type RateFamily, type RateSpan } from "./rate.js";
 import { ratePercentile } from "./rate-stats.js";
 import type { QualityWeights, RoleWeights } from "./quality-fit.js";
 import weightsJson from "../quality-weights.json" with { type: "json" };
@@ -27,22 +27,28 @@ const ROLE_KINDS: Record<Role, { kinds?: readonly string[]; verbs?: readonly str
   draw: { kinds: ["draw-card"] },
   cardSelection: { verbs: ["scry", "surveil"], kinds: ["top-set"] },
   impulseDraw: { kinds: ["impulse-draw"], verbs: ["exiled"] },
-  targetedRemoval: { verbs: ["dies", "exiled", "leaves"] },
+  targetedRemoval: { verbs: ["dies", "exiled", "leaves", "shuffle"] },
   stackInteraction: { verbs: ["counter-spell"] },
   boardWipe: { verbs: ["dies", "exiled", "leaves"] },
   burn: { kinds: ["damage"], verbs: ["non-combat-damage"] },
   stax: { kinds: ["tax", "cant"] },
-  protection: { kinds: ["keyword-grant"] },
+  protection: { kinds: ["keyword-grant"], verbs: ["phases-out"] },
   tutor: { kinds: ["search"] },
   graveyardHate: { verbs: ["exiled"] },
 };
+
+/** Mana you make as a token (the `ramp.manaToken` rule): Smothering Tithe, Big Score. */
+const MANA_TOKENS = new Set(["treasure", "gold", "powerstone", "heartwood"]);
 
 export function roleAbilities(d: DeckCard, role: Role): Ability[] {
   if (!rolesOfCard(d).includes(role)) return [];
   const want = ROLE_KINDS[role];
   return (d.tags?.abilities ?? []).filter((a) =>
     (want.kinds?.includes(a.effect.kind) ?? false)
-    || (a.emits ?? []).some((e) => want.verbs?.includes(e.verb) ?? false));
+    // A TUCK IS REMOVAL ONLY WHEN IT TARGETS (Chaos Warp); Path's own library shuffle is not.
+    || (a.emits ?? []).some((e) => (want.verbs?.includes(e.verb) ?? false) && (e.verb !== "shuffle" || e.subject.scope === "target"))
+    || (role === "ramp" && a.effect.kind === "token-generation"
+      && [a.effect.subject?.subtype].flat().some((s) => MANA_TOKENS.has(String(s ?? "").toLowerCase()))));
 }
 
 /** Once 0 < per cycle 1 < per turn 2 < unbounded trigger 3 < at will 4 (owner ladder, 2026-09-23). */
@@ -79,12 +85,13 @@ function breadthOf(s: SubjectFilter): number {
   return restricted ? 0 : 1;
 }
 
-/** Exile 3 > dies (destroy / sacrifice) 2 > leaves to hand 1. */
+/** Exile 3 > dies (destroy / sacrifice) 2 > leaves to hand 1 > tuck 0 (the spec's ladder). */
 function permanenceOf(a: Ability): number | undefined {
   const verbs = (a.emits ?? []).map((e) => e.verb);
   if (verbs.includes("exiled")) return 3;
   if (verbs.includes("dies")) return 2;
   if (verbs.includes("leaves")) return 1;
+  if (verbs.includes("shuffle")) return 0;
   return undefined;
 }
 
@@ -105,13 +112,25 @@ function isDrawback(e: { verb: string; subject: { control?: string } }): boolean
 export function ingredients(d: DeckCard, role: Role): Ingredients {
   const abilities = roleAbilities(d, role);
   if (abilities.length === 0) return {};
+  // A WIPE IS SCORED ON ITS MASS MODE OR NOT AT ALL: Cyclonic Rift's overload and Vandalblast's are not
+  // derived, and scoring their cheap targeted half put both at the top of the wipes (final review).
+  if (role === "boardWipe" && !abilities.some((a) => (a.emits ?? []).some((e) => e.subject.scope === "all" || e.subject.scope === "each"))) return {};
   const out: Ingredients = {};
-  // THE ROLE ABILITY'S OWN FACE decides: a modal spell // land is a spell for its role, and the land
-  // back must not erase its mana value.
+  // THE ROLE ABILITY'S OWN FACE decides, else the first face: a modal spell // land is a spell for its
+  // role, and a land (legendary or snow included, Boseiju) has no mana value to compare.
+  // CEILING: faces carry types but no mana value, so an adventure's cheaper half (Petty Theft) reads the
+  // card's; upgrade path: a per-face mana value on Characteristics.
+  const chars = d.tags?.characteristics;
   const face = abilities.find((a) => a.face !== undefined)?.face;
-  const faceTypes = (face !== undefined ? d.tags?.characteristics.faces?.[face]?.types : d.tags?.characteristics.types) ?? [];
-  const mv = d.tags?.characteristics.cmc ?? d.card.manaValue;
-  if (typeof mv === "number" && !faceTypes.map((t) => t.toLowerCase()).every((t) => t === "land")) out.manaValue = mv;
+  const faceTypes = ((face !== undefined ? chars?.faces?.[face]?.types : chars?.faces?.[0]?.types ?? chars?.types) ?? []).map((t) => t.toLowerCase());
+  const cmc = chars?.cmc ?? d.card.manaValue;
+  // AN X IS NOT ZERO: Walking Ballista and Fireball read as free and took the top of burn.
+  const hasX = /\{X\}/.test((d.card as { manaCost?: string }).manaCost ?? "");
+  if (typeof cmc === "number" && !hasX && !faceTypes.includes("land")) {
+    // CAST PLUS ACTIVATION (the 09-17 ruling): an activated role ability costs its activation on top.
+    const activations = abilities.every((a) => a.kind === "activated") ? abilities.map((a) => manaOf(a.cost)).filter((m): m is number => m !== null) : [];
+    out.manaValue = cmc + (activations.length > 0 ? Math.min(...activations) : 0);
+  }
   const timings = abilities.map((a) => timingOf(d, a)).filter((t): t is number => t !== undefined);
   if (timings.length > 0) out.timing = Math.max(...timings);
   out.frequency = Math.max(...abilities.map(frequencyOf));

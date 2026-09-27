@@ -16,7 +16,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
 import { DERIVE_VERSION, type CardTags } from "@edh-seer/tagger";
-import { fitAll, type Pair } from "../quality-fit.js";
+import { fitAll, usablePair, type Pair } from "../quality-fit.js";
 import { ingredients, rolesOfCard } from "../quality.js";
 import { RULES_VERSION } from "../rules.js";
 import type { DeckCard } from "../types.js";
@@ -92,7 +92,7 @@ async function main(): Promise<void> {
   if (dumpAt >= 0 && process.argv[dumpAt + 1]) writeFileSync(process.argv[dumpAt + 1]!, JSON.stringify(pairs));
   const weights = fitAll(pairs, { deriveVersion: DERIVE_VERSION, rulesVersion: RULES_VERSION });
   const json = `${JSON.stringify(weights, null, 2)}\n`;
-  console.log(`${pages} EDHREC precon pages, ${guideFiles} guide files -> ${pairs.length} pairs; ${dropped} dropped (card not in the corpus)`);
+  console.log(`${pages} EDHREC precon pages, ${guideFiles} guide files -> ${pairs.length} pairs, ${pairs.filter(usablePair).length} usable; ${dropped} cut x add combinations dropped (a card not in the corpus or with no derived tags)`);
   for (const [role, w] of Object.entries(weights.roles)) {
     console.log(`  ${role.padEnd(17)} pairs ${String(w.pairs).padStart(5)}  held-out ${(100 * w.heldOutAccuracy).toFixed(1).padStart(5)}%  mana-value baseline ${(100 * w.baselineAccuracy).toFixed(1).padStart(5)}%  fallback ${(100 * w.fallbackAccuracy).toFixed(1).padStart(5)}%${w.fallback ? "  FALLBACK" : `  ${JSON.stringify(w.weights)}`}`);
   }

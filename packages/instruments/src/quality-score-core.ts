@@ -15,9 +15,13 @@ export function consensusCutAgreement(deck: {
       const mine = deck.pct.get(cut)?.get(role);
       if (mine === undefined) continue;
       const all = [...deck.pct.values()].map((m) => m.get(role)).filter((v): v is number => v !== undefined).sort((a, b) => a - b);
+      // THE ONLY SCORED CARD IN ITS ROLE cannot sit below itself: no comparison, not a disagreement.
+      if (all.length < 2) continue;
       const median = all[Math.floor(all.length / 2)]!;
       total++;
+      // A TIE COUNTS HALF, as in pairAccuracy (final review: 426 of 1,248 cuts tied the median).
       if (mine < median) agree++;
+      else if (mine === median) agree += 0.5;
     }
   }
   return { agree, total };

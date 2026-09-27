@@ -1718,5 +1718,808 @@
     "keywords": []
    }
   }
+ },
+ "Smothering Tithe": {
+  "card": {
+   "name": "Smothering Tithe",
+   "typeLine": "Enchantment",
+   "manaValue": 4,
+   "manaCost": "{3}{W}",
+   "oracleText": "Whenever an opponent draws a card, that player may pay {2}. If the player doesn't, you create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "153376c9-dffd-458c-8ce3-a4c8269bc4e9",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "treasure"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "draw"
+      ],
+      "subject": {
+       "control": "opp",
+       "token": null
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "subtype": "treasure",
+        "type": "artifact"
+       }
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "subtype": "treasure",
+        "type": "artifact"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "repeatable"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "enchantment"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "treasure"
+    ]
+   }
+  }
+ },
+ "Big Score": {
+  "card": {
+   "name": "Big Score",
+   "typeLine": "Instant",
+   "manaValue": 4,
+   "manaCost": "{3}{R}",
+   "oracleText": "As an additional cost to cast this spell, discard a card.\nDraw two cards and create two Treasure tokens. (They're artifacts with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+   "keywords": [
+    "Treasure"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "a5cbd257-c836-493e-bb1a-76242619dea2",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "draw-card",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "draw",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "treasure"
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "subtype": "treasure",
+        "type": "artifact"
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "subtype": "treasure",
+        "type": "artifact"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 4,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "treasure"
+    ]
+   }
+  }
+ },
+ "Chaos Warp": {
+  "card": {
+   "name": "Chaos Warp",
+   "typeLine": "Instant",
+   "manaValue": 3,
+   "manaCost": "{2}{R}",
+   "oracleText": "The owner of target permanent shuffles it into their library, then reveals the top card of their library. If it's a permanent card, they put it onto the battlefield.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "07a0cba9-8768-4fd9-a3d5-b0f83b4bf8e8",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "type": "permanent",
+        "scope": "target",
+        "fromZone": "battlefield"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   }
+  }
+ },
+ "Teferi's Protection": {
+  "card": {
+   "name": "Teferi's Protection",
+   "typeLine": "Instant",
+   "manaValue": 3,
+   "manaCost": "{2}{W}",
+   "oracleText": "Until your next turn, your life total can't change and you gain protection from everything. All permanents you control phase out. (While they're phased out, they're treated as though they don't exist. They phase in before you untap during your untap step.)\nExile Teferi's Protection.",
+   "keywords": [],
+   "colors": [
+    "W"
+   ],
+   "colorIdentity": [
+    "W"
+   ],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "0d4ecdb1-ec90-497f-a7a4-1c68092b8757",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "lifegain",
+      "subject": {
+       "control": "you",
+       "token": null
+      }
+     },
+     "emits": [
+      {
+       "verb": "gain-life",
+       "subject": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "phases-out",
+       "subject": {
+        "control": "you",
+        "token": null,
+        "type": "permanent",
+        "scope": "all"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "emits": [
+      {
+       "verb": "exiled",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "self": true
+       },
+       "instantSpeed": true
+      },
+      {
+       "verb": "leaves",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "instant"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "W"
+    ],
+    "identity": [
+     "W"
+    ],
+    "cmc": 3,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   }
+  }
+ },
+ "Boseiju, Who Endures": {
+  "card": {
+   "name": "Boseiju, Who Endures",
+   "typeLine": "Legendary Land",
+   "manaValue": 0,
+   "manaCost": "",
+   "oracleText": "{T}: Add {G}.\nChannel — {1}{G}, Discard this card: Destroy target artifact, enchantment, or nonbasic land an opponent controls. That player may search their library for a land card with a basic land type, put it onto the battlefield, then shuffle. This ability costs {1} less to activate for each legendary creature you control.",
+   "keywords": [
+    "Channel"
+   ],
+   "colors": [],
+   "colorIdentity": [
+    "G"
+   ],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "bf1341dd-41a3-49f6-87ec-63170dde4324",
+   "abilities": [
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "mana-generation",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{T}",
+     "amount": "1",
+     "clause": 1,
+     "repeats": "per-cycle"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{1}{G}, Discard this card",
+     "emits": [
+      {
+       "verb": "discard",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{1}{G}, Discard this card",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": [
+         "artifact",
+         "enchantment",
+         "land"
+        ],
+        "scope": "target"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "search",
+      "subject": {
+       "control": "opp",
+       "token": null,
+       "type": "land"
+      }
+     },
+     "cost": "{1}{G}, Discard this card",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "search",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "land",
+        "fromZone": "library"
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "{1}{G}, Discard this card",
+     "emits": [
+      {
+       "verb": "shuffle",
+       "subject": {
+        "control": "any",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "legendary",
+     "land"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [
+     "G"
+    ],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "channel"
+    ]
+   }
+  }
+ },
+ "Walking Ballista": {
+  "card": {
+   "name": "Walking Ballista",
+   "typeLine": "Artifact Creature — Construct",
+   "manaValue": 0,
+   "manaCost": "{X}{X}",
+   "oracleText": "This creature enters with X +1/+1 counters on it.\n{4}: Put a +1/+1 counter on this creature.\nRemove a +1/+1 counter from this creature: It deals 1 damage to any target.",
+   "keywords": [],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "4b515bb0-f275-4400-8032-3173b799ab40",
+   "abilities": [
+    {
+     "kind": "static",
+     "effect": {
+      "kind": "enters-with-counters",
+      "scaling": "x-cost"
+     },
+     "amount": "X",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "+1/+1",
+        "self": true
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "continuous"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "counter-placement",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "cost": "{4}",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-added",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "+1/+1",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 2,
+     "repeats": "repeatable"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": ""
+     },
+     "cost": "Remove a +1/+1 counter from this creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "counter-removed",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "counter": "+1/+1",
+        "self": true
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "repeatable"
+    },
+    {
+     "kind": "activated",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "any",
+       "token": null,
+       "scope": "target"
+      }
+     },
+     "cost": "Remove a +1/+1 counter from this creature",
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "any",
+        "token": null,
+        "scope": "target"
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       },
+       "instantSpeed": true
+      }
+     ],
+     "clause": 3,
+     "repeats": "repeatable"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "artifact",
+     "creature"
+    ],
+    "subtypes": [
+     "construct"
+    ],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": "0",
+    "toughness": "0",
+    "token": false,
+    "keywords": []
+   }
+  }
+ },
+ "Fireball": {
+  "card": {
+   "name": "Fireball",
+   "typeLine": "Sorcery",
+   "manaValue": 1,
+   "manaCost": "{X}{R}",
+   "oracleText": "This spell costs {1} more to cast for each target beyond the first.\nFireball deals X damage divided evenly, rounded down, among any number of targets.",
+   "keywords": [],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "aa7714b0-2bfb-458a-8ebf-37ec2c53383e",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "tax",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": "damage",
+      "subject": {
+       "control": "any",
+       "token": null
+      }
+     },
+     "amount": "X divided evenly, rounded down",
+     "emits": [
+      {
+       "verb": "non-combat-damage",
+       "subject": {
+        "control": "any",
+        "token": null
+       },
+       "dealer": {
+        "control": "you",
+        "token": null
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": []
+   }
+  }
+ },
+ "Vandalblast": {
+  "card": {
+   "name": "Vandalblast",
+   "typeLine": "Sorcery",
+   "manaValue": 1,
+   "manaCost": "{R}",
+   "oracleText": "Destroy target artifact you don't control.\nOverload {4}{R} (You may cast this spell for its overload cost. If you do, change \"target\" in its text to \"each.\")",
+   "keywords": [
+    "Overload"
+   ],
+   "colors": [
+    "R"
+   ],
+   "colorIdentity": [
+    "R"
+   ],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "3567c3c8-b3c7-45b7-935b-b1fdbc973720",
+   "abilities": [
+    {
+     "kind": "on-cast",
+     "effect": {
+      "kind": ""
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": "artifact",
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "sorcery"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [
+     "R"
+    ],
+    "identity": [
+     "R"
+    ],
+    "cmc": 1,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "overload"
+    ]
+   }
+  }
  }
 }

@@ -86,10 +86,16 @@ export function splitBySet(pairs: Pair[], seed: number, heldOutShare: number): {
   return { train: pairs.filter((p) => !held(p.set)), test: pairs.filter((p) => held(p.set)) };
 }
 
+/** A PAIR IS USABLE only when both sides carry the two ingredients every role reads: a side the locator
+ *  found nothing on is no comparison, and counting it inflated the pair counts (ramp read 526 of which
+ *  219 had an empty side, final review). */
+export const usablePair = (p: Pair): boolean =>
+  p.cut.manaValue !== undefined && p.cut.timing !== undefined && p.add.manaValue !== undefined && p.add.timing !== undefined;
+
 export function fitAll(pairs: Pair[], versions: { deriveVersion: number; rulesVersion: number }): QualityWeights {
   const roles = {} as Record<Role, RoleWeights>;
   for (const role of ROLES) {
-    const mine = pairs.filter((p) => p.role === role);
+    const mine = pairs.filter((p) => p.role === role && usablePair(p));
     const { train, test } = splitBySet(mine, SEED, 0.2);
     const weights = fitRole(train);
     const heldOutAccuracy = pairAccuracy(test, weights);

@@ -57,3 +57,10 @@ test("the fallback's own held-out accuracy is recorded beside the fit's", () => 
   const w = fitAll(pairs, { deriveVersion: 1, rulesVersion: 1 });
   expect(w.roles.targetedRemoval.fallbackAccuracy).toBeTypeOf("number");
 });
+
+test("a pair with an empty side is not a pair: it neither counts toward the minimum nor scores as a tie", () => {
+  const empty: Pair = { role: "targetedRemoval", set: "a", cut: {}, add: { manaValue: 2, timing: 2 }, weight: 1 };
+  const w = fitAll([...Array.from({ length: 149 }, (_, i) => pair(`s${i % 10}`, 4, 2)), empty, empty], { deriveVersion: 1, rulesVersion: 1 });
+  expect(w.roles.targetedRemoval.pairs).toBe(149);
+  expect(w.roles.targetedRemoval.fallback).toBe(true); // 149 usable pairs, under 150
+});

@@ -7,10 +7,10 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 526,
-      "heldOutAccuracy": 0.5444853507653331,
-      "baselineAccuracy": 0.5688641020608753,
-      "fallbackAccuracy": 0.5019143656669627,
+      "pairs": 432,
+      "heldOutAccuracy": 0.5377391549229829,
+      "baselineAccuracy": 0.6046422372184616,
+      "fallbackAccuracy": 0.5357110294997949,
       "fallback": true
     },
     "draw": {
@@ -18,10 +18,10 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 1240,
-      "heldOutAccuracy": 0.48692130991536203,
-      "baselineAccuracy": 0.5386723479130432,
-      "fallbackAccuracy": 0.543318756569298,
+      "pairs": 1164,
+      "heldOutAccuracy": 0.5057396978411246,
+      "baselineAccuracy": 0.575896431782283,
+      "fallbackAccuracy": 0.6169678435920096,
       "fallback": true
     },
     "cardSelection": {
@@ -29,10 +29,10 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 84,
-      "heldOutAccuracy": 0.42258031896412634,
-      "baselineAccuracy": 0.4130945414219203,
-      "fallbackAccuracy": 0.40920141875156313,
+      "pairs": 28,
+      "heldOutAccuracy": 0.23248558874285333,
+      "baselineAccuracy": 0.08289710329283756,
+      "fallbackAccuracy": 0.06421205439474806,
       "fallback": true
     },
     "impulseDraw": {
@@ -40,7 +40,7 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 9,
+      "pairs": 6,
       "heldOutAccuracy": 0,
       "baselineAccuracy": 0,
       "fallbackAccuracy": 0,
@@ -48,21 +48,26 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -1,
-        "timing": 0.5
+        "manaValue": -0.2248184497944442,
+        "frequency": 0.13877901434576498,
+        "timing": 0.9965826203629025,
+        "breadth": 0.04978711928125533,
+        "permanence": 0.017250725216810134,
+        "drawback": -0.04837525095360154,
+        "extraValue": 0.9437028239445976
       },
-      "pairs": 264,
-      "heldOutAccuracy": 0.6619214179308197,
-      "baselineAccuracy": 0.6739309741733032,
-      "fallbackAccuracy": 0.7628485728581285,
-      "fallback": true
+      "pairs": 210,
+      "heldOutAccuracy": 0.7627258638199035,
+      "baselineAccuracy": 0.6898039812438088,
+      "fallbackAccuracy": 0.7970824022178888,
+      "fallback": false
     },
     "stackInteraction": {
       "weights": {
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 18,
+      "pairs": 7,
       "heldOutAccuracy": 1,
       "baselineAccuracy": 1,
       "fallbackAccuracy": 1,
@@ -73,10 +78,10 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 71,
-      "heldOutAccuracy": 0.5914550046518132,
-      "baselineAccuracy": 0.5914550046518132,
-      "fallbackAccuracy": 0.5914550046518132,
+      "pairs": 20,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 0,
+      "fallbackAccuracy": 0,
       "fallback": true
     },
     "burn": {
@@ -84,10 +89,10 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 102,
-      "heldOutAccuracy": 0.42610604075495345,
-      "baselineAccuracy": 0.5738939592450466,
-      "fallbackAccuracy": 0.5738939592450466,
+      "pairs": 24,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 1,
+      "fallbackAccuracy": 1,
       "fallback": true
     },
     "stax": {
@@ -95,7 +100,7 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 1,
+      "pairs": 0,
       "heldOutAccuracy": 0,
       "baselineAccuracy": 0,
       "fallbackAccuracy": 0,
@@ -106,10 +111,10 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 50,
-      "heldOutAccuracy": 0.578721536176581,
-      "baselineAccuracy": 0.3536081726815044,
-      "fallbackAccuracy": 0.578721536176581,
+      "pairs": 34,
+      "heldOutAccuracy": 0.605949443134544,
+      "baselineAccuracy": 0.302974721567272,
+      "fallbackAccuracy": 0.605949443134544,
       "fallback": true
     },
     "tutor": {
@@ -128,7 +133,7 @@
         "manaValue": -1,
         "timing": 0.5
       },
-      "pairs": 4,
+      "pairs": 2,
       "heldOutAccuracy": 0,
       "baselineAccuracy": 0,
       "fallbackAccuracy": 0,

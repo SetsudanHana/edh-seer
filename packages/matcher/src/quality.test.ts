@@ -27,7 +27,7 @@ test("manaValue, timing and frequency", () => {
   expect(ingredients(dc("Mind Stone"), "ramp").frequency).toBeGreaterThan(0); // a repeatable mana ability
 });
 
-test("a modal spell // land reads mana value and timing off the role ability's own face", () => {
+test("a modal spell // land keeps its mana value and instant timing (its removal ability carries no face index: CEILING)", () => {
   const sink = ingredients(dc("Sink into Stupor // Soporific Springs"), "targetedRemoval");
   expect(sink.manaValue).toBeTypeOf("number");   // the land back face must not erase it
   expect(sink.timing).toBe(2);                    // the spell face is an instant
@@ -41,13 +41,13 @@ test("breadth: any permanent or spell 3 > several types or nonland 2 > one type 
   expect(ingredients(dc("Beast Within"), "targetedRemoval").breadth).toBe(3);
   expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").breadth).toBe(1);
   expect(ingredients(dc("Counterspell"), "stackInteraction").breadth).toBe(3); // any spell
-  expect(ingredients(dc("Cyclonic Rift"), "boardWipe").breadth).toBe(2); // nonland permanent; the build rules file Rift as a wipe
+  expect(ingredients(dc("Sink into Stupor // Soporific Springs"), "targetedRemoval").breadth).toBe(2); // nonland permanent
 });
 
 test("permanence: exile 3 > destroy/sacrifice 2 > bounce 1", () => {
   expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").permanence).toBe(3);
   expect(ingredients(dc("Beast Within"), "targetedRemoval").permanence).toBe(2);
-  expect(ingredients(dc("Cyclonic Rift"), "boardWipe").permanence).toBe(1);
+  expect(ingredients(dc("Sink into Stupor // Soporific Springs"), "targetedRemoval").permanence).toBe(1);
 });
 
 test("oneSided: Wrath hits everyone; a wipe of only opponents' creatures is one-sided", () => {
@@ -78,4 +78,31 @@ test("extraValue: a body, or a second ability with its own effect", () => {
   expect(ingredients(dc("Mind Stone"), "ramp").extraValue).toBe(1);        // cashes in for a card
   expect(ingredients(dc("Arcane Signet"), "ramp").extraValue).toBe(0);
   expect(ingredients(dc("Swords to Plowshares"), "targetedRemoval").extraValue).toBe(0); // the lifegain is the victim's
+});
+
+// ---- the final review's fix pass (2026-09-27) ----
+
+test("the locator finds the role ability the build rules saw: Treasure ramp, a tuck, a phase-out", () => {
+  expect(roleAbilities(dc("Smothering Tithe"), "ramp").length).toBeGreaterThan(0);
+  expect(roleAbilities(dc("Chaos Warp"), "targetedRemoval").length).toBeGreaterThan(0);
+  expect(roleAbilities(dc("Teferi's Protection"), "protection").length).toBeGreaterThan(0);
+});
+
+test("a legendary or snow land has no mana value in its role", () => {
+  expect(ingredients(dc("Boseiju, Who Endures"), "targetedRemoval").manaValue).toBeUndefined();
+});
+
+test("an X in the cost is a missing mana value, never X = 0", () => {
+  expect(ingredients(dc("Walking Ballista"), "burn").manaValue).toBeUndefined();
+  expect(ingredients(dc("Fireball"), "burn").manaValue).toBeUndefined();
+});
+
+test("an activated role ability costs the cast plus the activation (the 09-17 ruling)", () => {
+  expect(ingredients(dc("Mind Stone"), "draw").manaValue).toBe(3); // {2} to cast, {1} to cash in
+});
+
+test("a wipe whose one-sided or mass mode is not derived is not scored as its cheap targeted mode", () => {
+  expect(ingredients(dc("Cyclonic Rift"), "boardWipe")).toEqual({});
+  expect(ingredients(dc("Vandalblast"), "boardWipe")).toEqual({});
+  expect(ingredients(dc("Wrath of God"), "boardWipe").manaValue).toBe(4);
 });
