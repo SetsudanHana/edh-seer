@@ -1798,3 +1798,30 @@ test("a rating is provisional when most reasons touching the card are its own un
   ]);
   expect([...set]).toEqual(["Rikku"]);
 });
+
+// ISSUE #564: Scryfall prints Roles as one double-faced token object ("Wicked // Cursed"). Each maker
+// gets the face its own text names, as its own node: two roles, two nodes, named as the card says.
+test("a double-faced Role token becomes the role each maker names", () => {
+  const allParts = [{ component: "token", name: "Wicked // Cursed", typeLine: "Token Enchantment — Aura Role // Token Enchantment — Aura Role", printingId: "role-printing" }];
+  const maker = (name: string, oracleText: string): DeckCard => ({
+    card: { name, typeLine: "Sorcery", oracleText, keywords: [], colors: [], manaValue: 3, allParts } as never, tags: null,
+  });
+  const roleTags: CardTags = {
+    oracleId: "role-oracle", schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types: ["token", "enchantment"], subtypes: ["aura", "role"], colors: [], identity: [], cmc: 0, power: null, toughness: null, token: true, keywords: [] },
+    abilities: [],
+  };
+  const { nodes, tokenCreators } = collectTokenNodes(
+    [maker("Asinine Antics", "create a Cursed Role token attached to that creature."), maker("Charming Scoundrel", "create a Wicked Role token attached to target creature you control.")],
+    (ref) => (ref.printingId === "role-printing" ? roleTags : null),
+  );
+  expect(nodes.map((n) => n.card.name).sort()).toEqual(["Cursed Role", "Wicked Role"]);
+  expect(tokenCreators.get("role-oracle#Cursed")).toEqual(new Set(["Asinine Antics"]));
+  expect(tokenCreators.get("role-oracle#Wicked")).toEqual(new Set(["Charming Scoundrel"]));
+  expect(nodes.every((n) => !n.card.typeLine.includes("//"))).toBe(true);
+
+  // A maker naming BOTH roles keeps the whole token (review 2026-09-27).
+  const both = collectTokenNodes([maker("Either", "create a Wicked Role or a Cursed Role token attached to it.")],
+    (ref) => (ref.printingId === "role-printing" ? roleTags : null));
+  expect(both.nodes.map((n) => n.card.name)).toEqual(["Wicked // Cursed"]);
+});
