@@ -4,7 +4,7 @@ import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
   boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence,
-  thresholdSentence, countedNounPlural } from "./sentence.js";
+  thresholdSentence, countedNounPlural, emitPhrase } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
   // effectKind is absent on 8.9% of reasons and `amount` on more than half of abilities, so the
@@ -484,4 +484,27 @@ test("a plus-one counter replacement reads as one more counter", () => {
 test("a recursion that returns ITSELF says so (#558)", () => {
   expect(reasonSentence({ producer: "Chandra, Flame's Catalyst", consumer: "Jaya's Phoenix", eventKey: "cast:planeswalker", effectKind: "graveyard-recursion", effectTarget: "itself" }))
     .toBe("When Chandra, Flame's Catalyst is cast, Jaya's Phoenix returns itself from the graveyard");
+});
+
+// #647 item 5: a blank effect kind is read off the ability's emits (shapes from `cardTagsDerived`).
+test("a blank effect is phrased from its emits, and only where the emit reads one way", () => {
+  const e = (verb: string, subject: object) => ({ verb, subject: { token: null, ...subject } });
+  // Fear of Sleep Paralysis.
+  expect(emitPhrase([e("taps", { control: "any", type: "creature", scope: "target" })])).toBe("taps a creature");
+  // Mari, the Killing Quill.
+  expect(emitPhrase([e("exiled", { control: "opp", type: "creature" }), e("leaves", { control: "opp", type: "creature" })])).toBe("exiles a creature an opponent controls");
+  // Displacer Kitten: the return is a sibling ability of the same clause, and makes it a flicker.
+  const kitten = { control: "you", type: ["creature", "artifact"], scope: "target" };
+  expect(emitPhrase([e("exiled", { ...kitten, fromZone: "battlefield" }), e("enters", { ...kitten, fromZone: "exile" })])).toBe("flickers a creature you control");
+  // Necropotence and Gonti exile from a zone, not from the board.
+  expect(emitPhrase([e("exiled", { control: "any", fromZone: "graveyard" })])).toBe("exiles a card from a graveyard");
+  expect(emitPhrase([e("exiled", { control: "opp", fromZone: "library" })])).toBe("exiles a card from an opponent's library");
+  // Agent of Erebos: untyped, no zone -- not phrased.
+  expect(emitPhrase([e("exiled", { control: "opp", scope: "target" })])).toBeNull();
+  // Kodama of the East Tree.
+  expect(emitPhrase([e("enters", { control: "you", type: "permanent", fromZone: "hand" })])).toBe("puts a permanent onto the battlefield");
+  // A lone discard is a loot's second half as often as not.
+  expect(emitPhrase([e("discard", { control: "you" })])).toBeNull();
+  // Misleading Signpost: "gains control" of your own creature is a misread.
+  expect(emitPhrase([e("gains-control", { control: "you", type: "creature" })])).toBeNull();
 });

@@ -346,6 +346,66 @@ export function eventVerbPhrase(key: string): string {
   return VERB_PHRASES[verb] ?? `${verb.replace(/-/g, " ")}s`;
 }
 
+interface EmitLike { verb: string; subject: { self?: boolean; control?: string; token?: boolean | null; subtype?: string | string[]; type?: string | string[]; fromZone?: string } }
+
+/** THE EFFECT READ OFF WHAT THE ABILITY DOES, when derive left its kind blank (#647 item 5). 5,480
+ *  of 67,734 reasons on the 71 decks ended "<card> triggers" and wore "what it does isn't read yet"
+ *  -- on Mari's exile, Fear of Sleep Paralysis's tap, Kodama's put -- while the emits said exactly
+ *  what happens. Only verbs that read one way are phrased; a lone `discard` is a loot's second half
+ *  as often as an opponent's discard, `shuffle`, `transform` and `attached` say nothing a player
+ *  wants, and they keep the fallback. A FLICKER is an exile whose clause returns the card (Displacer
+ *  Kitten's return is a sibling ability of the same clause), never "exiles a permanent you control". */
+export function emitPhrase(emits: readonly EmitLike[]): string | null {
+  const has = (v: string) => emits.find((e) => e.verb === v);
+  const noun = (e: EmitLike, own = true): string => {
+    if (e.subject.self === true) return "itself";
+    const n = emitSubjectNoun(e.subject) ?? "a permanent";
+    if (!own) return n;
+    return e.subject.control === "you" ? `${n} you control` : e.subject.control === "opp" ? `${n} an opponent controls` : n;
+  };
+  const who = (e: EmitLike): string | null => e.subject.control === "you" ? "you" : e.subject.control === "opp" ? "an opponent" : null;
+  const exiled = has("exiled");
+  if (exiled && emits.some((e) => e.verb === "enters" && e.subject.fromZone === "exile")) return `flickers ${noun(exiled)}`;
+  const sac = has("sacrifice");
+  if (sac) {
+    if (sac.subject.self === true || sac.subject.control === "you") return `sacrifices ${noun(sac, false)}`;
+    return `makes ${sac.subject.control === "opp" ? "an opponent" : "a player"} sacrifice ${noun(sac, false)}`;
+  }
+  // AN EXILE SAYS WHERE FROM: Necropotence exiles from a graveyard, Gonti and Valakut Exploration from
+  // a library, and "exiles a permanent" was a claim about the board. Untyped with no zone (Agent of
+  // Erebos's "target player's graveyard") is not phrased.
+  if (exiled) {
+    const zone = exiled.subject.fromZone;
+    const owner = who(exiled) === "you" ? "your" : who(exiled) === "an opponent" ? "an opponent's" : "a";
+    if (zone === "graveyard") return `exiles a card from ${owner} graveyard`;
+    if (zone === "library") return `exiles a card from ${owner} library`;
+    if (zone === "battlefield" || (zone === undefined && (exiled.subject.type !== undefined || exiled.subject.subtype !== undefined || exiled.subject.self === true))) {
+      return `exiles ${noun(exiled)}`;
+    }
+  }
+  const dies = has("dies");
+  if (dies && dies.subject.self !== true) return `kills ${noun(dies)}`;
+  for (const [verb, phrase] of [["taps", "taps"], ["untaps", "untaps"], ["gains-control", "gains control of"]] as const) {
+    const e = has(verb);
+    // Taking control of what you already control is a misread (Misleading Signpost redirects an attack).
+    if (e && !(verb === "gains-control" && e.subject.control === "you")) return `${phrase} ${noun(e)}`;
+  }
+  const counter = has("counter-added");
+  if (counter) return `puts a counter on ${noun(counter)}`;
+  const put = emits.find((e) => e.verb === "enters" && e.subject.token !== true && ["hand", "graveyard", "library"].includes(e.subject.fromZone ?? ""));
+  if (put) return `${put.subject.fromZone === "graveyard" ? "returns" : "puts"} ${noun(put, false)} onto the battlefield`;
+  if (has("draw") && has("discard")) return "draws and discards";
+  const discard = has("discard");
+  if (discard && discard.subject.control === "opp") return "makes an opponent discard a card";
+  const lose = has("lose-life");
+  if (lose && who(lose)) return `makes ${who(lose)} lose life`;
+  if (has("non-combat-damage")) return "deals damage";
+  for (const v of ["counter-spell", "monarch", "initiative", "ring-tempts", "city-blessing", "proliferate", "scry", "surveil", "dice-rolled", "flip-coin"]) {
+    if (has(v)) return VERB_PHRASES[v]!;
+  }
+  return null;
+}
+
 /** Cause first: what happens, then what it does for you.
  *
  *  `self` means the CONSUMER watches its own event and the producer is what makes that event
@@ -367,6 +427,8 @@ export function reasonSentence(input: {
   effectRecipient?: string;
   /** The counter KIND a counter-placing effect puts, when the trigger names it ("+1/+1"). */
   counterKind?: string;
+  /** The consumer ability's emits, and its clause siblings', for `emitPhrase` when `effectKind` is blank. */
+  emits?: readonly EmitLike[];
   /** WHAT THE EVENT HAPPENS TO, when it does not happen to the producer.
    *
    *  **A SORCERY CANNOT DIE.** Austere Command emits four `dies` events whose subjects are CLASSES
@@ -386,7 +448,8 @@ export function reasonSentence(input: {
   subjectNoun?: string;
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
-  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind);
+  const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind)
+    ?? emitPhrase(input.emits ?? []);
   if (input.self) {
     const effect = phrase ? `it ${phrase}` : "it triggers";
     return `When ${input.consumer} ${verb} thanks to ${input.producer}, ${effect}`;
