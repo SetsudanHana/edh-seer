@@ -79,3 +79,14 @@ test("swap candidates are role-only cards, weakest first, never cheap ramp or a 
   const cuts = [{ name: "Listed", manaValue: 2, keeps: [], unmet: [], reasons: [], twins: [] }];
   expect(swapCandidates(report, cuts)).toEqual(["Despark", "Cultivate"]);
 });
+
+/** A CUT ON A WIN PLAN SAYS SO (persona round, 2026-09-27: three of four cuts sat on the win plans
+ *  two chapters up, and neither place said it). An argument to keep, not a gate. */
+test("a cut that a win plan counts says so, and is still a cut", () => {
+  const { report, model } = withTrim();
+  const r = { ...report, deckMath: { ...report.deckMath, wincons: { focus: 1, primary: "go-wide", classes: [{ class: "go-wide", count: 1, share: 1, cards: ["Raise Once"] }] } } } as DeckReport;
+  const cuts = chooseCuts(r, model);
+  const raise = cuts.find((c) => c.name === "Raise Once")!;
+  expect(raise.keeps).toEqual(["it is one of the cards your win plan of attacking with a wide board counts"]);
+  expect(cuts.map((c) => c.name)).toEqual(["Vanilla", "Raise Once", "Sidekick"]);
+});

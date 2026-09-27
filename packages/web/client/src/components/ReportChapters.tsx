@@ -222,7 +222,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     const lines = linksFrom(themes, ids);
     return {
       ids, lines,
-      label: `The ${ids.size} possible cut${ids.size === 1 ? "" : "s"}, lit, and ${lines.length ? `every link ${ids.size === 1 ? "it has" : "they have"} to the rest of the deck, in pink: ${lines.length}` : "nothing ties them to the rest of the deck"}.`,
+      label: `The ${ids.size} possible cut${ids.size === 1 ? "" : "s"}, lit. ${lines.length ? `Each pink line is one card it works with: the fewer a cut has, the less the deck loses without it. A cut can sit inside a busy theme and still have few lines of its own.` : "Nothing ties them to the rest of the deck."}`,
     };
   }, [themes, cuts]);
   const cutNames = useMemo(() => [...cuts.map((c) => c.name), ...swapCandidates(report, cuts)], [report, cuts]);
@@ -462,7 +462,24 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               *  where it stays while the list scrolls; above it on a phone. */}
             <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,64rem)_minmax(0,22rem)] xl:items-start xl:gap-8">
             {cutSky ? (
-              <DeckSky model={themes!} lit={cutSky} className="w-full max-w-[26rem] xl:order-2 xl:sticky xl:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)]" />
+              <div className="flex w-full max-w-[26rem] flex-col gap-2 xl:order-2 xl:sticky xl:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)]">
+                <DeckSky model={themes!} lit={cutSky} className="w-full" />
+                {/* WHY EACH IS A CUT, BESIDE THE PICTURE (persona round, 2026-09-27: "nothing on the
+                  *  sky says why any of them is a cut", and many lines read as "important"). Each
+                  *  cut's links counted, and a win plan it is on named. */}
+                <ul className="flex flex-col gap-1 text-sm" aria-label="The possible cuts on the sky">
+                  {cuts.filter((c) => c.card && cutSky.ids.has(c.card.id)).map((c) => {
+                    const n = cutSky.lines!.filter(([a]) => a === c.card!.id).length;
+                    const plans = c.keeps.filter((k) => k.startsWith("it is one of the cards your win plan")).map((k) => k.replace(/^it is one of the cards your win plan of (.+) counts$/, "$1"));
+                    return (
+                      <li key={c.name}>
+                        <b>{c.name.split(" // ")[0]}</b>
+                        <span className="text-(--muted)"> · {n === 0 ? "works with nothing else here" : `works with ${n} card${n === 1 ? "" : "s"}, counting the ones only once`}{plans.length ? ` · also on the win plan: ${plans.join(", ")}` : ""}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             ) : null}
             <div className="max-w-5xl min-w-0">
             <CutList
