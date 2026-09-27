@@ -61,7 +61,8 @@ function PreconView({ page: p, siblings }: { page: Page; siblings: PreconRecord[
             {p.bracket ? <Fact label="Bracket" value={p.bracket.band.replace("-", "–")} note={p.bracket.gameChangers ? `${p.bracket.gameChangers} Game Changer${p.bracket.gameChangers === 1 ? "" : "s"}` : "no Game Changers"} /> : null}
           </div>
           <p className="max-w-[60ch] text-lg">
-            {p.commanders[0]} works with {p.commanderLinks} of its cards.
+            {/* SAID AS WHAT IT IS: an engine that reads no link is not a deck with none (Yidris, Zedruu). */}
+            {p.commanderLinks > 0 ? `${p.commanders[0]} works with ${p.commanderLinks} of its cards.` : `No card in it links to ${p.commanders[0]} in a way the engine reads yet.`}
             {p.swaps.length ? ` ${spell(p.swaps.length)} swaps below give its loosest cards a job in its plan.` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -180,7 +181,8 @@ function MapOf({ data, commanders }: { data: AnalyzeResponse; commanders: string
   const narrow = useNarrow();
   const [lit, setLit] = useState<string | null>(null);
   const model = useMemo(() => buildEngineModel(data.report, data.graph!), [data]);
-  const id = data.graph!.nodes.find((n) => !n.face && !n.isToken && commanders.includes(n.cardName ?? n.label))?.id;
+  const wanted = new Set(commanders.flatMap((c) => [c, c.split(" // ")[0]!]));
+  const id = data.graph!.nodes.find((n) => !n.face && !n.isToken && (wanted.has(n.cardName ?? n.label) || wanted.has(n.label)))?.id;
   const orbit = useMemo(() => (id ? buildOrbit(model, id) : null), [model, id]);
   if (!orbit) return null;
   return (

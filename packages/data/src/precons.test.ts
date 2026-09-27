@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { commanderDecks, preconDecklist, preconOf, type MtgjsonDeckListEntry, cardName } from "./precons.js";
+import { cardName, commanderDecks, preconDecklist, preconOf, type MtgjsonDeckListEntry } from "./precons.js";
 
 const list: MtgjsonDeckListEntry[] = [
   { code: "CLB", fileName: "PartyTime_CLB", name: "Party Time", releaseDate: "2022-06-10", type: "Commander Deck" },
@@ -34,9 +34,10 @@ test("a deck with no commander is not a precon page", () => {
   expect(preconOf(list[0]!, { code: "CLB", name: "x", releaseDate: null, type: "Commander Deck", mainBoard: [] }, new Map())).toBeNull();
 });
 
-test("a meld card and a reversible printing take their own name; a two-faced card keeps its whole one", () => {
-  expect(cardName({ name: "Gisela, the Broken Blade // Brisela, Voice of Nightmares", count: 1, layout: "meld", faceName: "Gisela, the Broken Blade" })).toBe("Gisela, the Broken Blade");
-  expect(cardName({ name: "Sol Ring // Sol Ring", count: 1, layout: "reversible_card" })).toBe("Sol Ring");
-  expect(cardName({ name: "Propaganda // Propaganda", count: 1 })).toBe("Propaganda");
-  expect(cardName({ name: "Delver of Secrets // Insectile Aberration", count: 1, layout: "transform" })).toBe("Delver of Secrets // Insectile Aberration");
+test("a reversible card listed twice over is one card; a two-faced card keeps its name", () => {
+  expect(cardName("Sol Ring // Sol Ring")).toBe("Sol Ring");
+  expect(cardName("Archangel Avacyn // Avacyn, the Purifier")).toBe("Archangel Avacyn // Avacyn, the Purifier");
+  expect(cardName("Plains")).toBe("Plains");
+  // A meld card is its own face; the melded back is no card's name.
+  expect(cardName("Gisela, the Broken Blade // Brisela, Voice of Nightmares", { layout: "meld", faceName: "Gisela, the Broken Blade" })).toBe("Gisela, the Broken Blade");
 });

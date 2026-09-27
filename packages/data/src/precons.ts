@@ -11,7 +11,7 @@ export interface MtgjsonDeckListEntry { code: string; fileName: string; name: st
 /** One entry of MTGJSON's `SetList.json` `data`, the fields read here. */
 export interface MtgjsonSetEntry { code: string; name: string }
 /** A card in a deck file (`CardDeck`), the fields read here. */
-export interface MtgjsonDeckCard { name: string; count: number; layout?: string; faceName?: string }
+export interface MtgjsonDeckCard { name: string; count: number; faceName?: string; layout?: string }
 /** A deck file's `data`, the fields read here. */
 export interface MtgjsonDeck {
   code: string; name: string; releaseDate: string | null; type: string;
@@ -35,6 +35,16 @@ export interface Precon {
  *  else from the list is not used, because the name becomes both a URL and a file on disk. */
 export const SAFE_FILE_NAME = /^[A-Za-z0-9_-]{1,120}$/;
 
+/** THE NAME A DECK PRINTS THE CARD UNDER. A Secret Lair reversible card is listed as
+ *  "Sol Ring // Sol Ring" (one card, one name), and a meld card with its melded back
+ *  ("Gisela, the Broken Blade // Brisela, Voice of Nightmares"), which no card is called: its own
+ *  face is the card. Real two-faced names ("Archangel Avacyn // Avacyn, the Purifier") stay. */
+export function cardName(name: string, card?: Pick<MtgjsonDeckCard, "faceName" | "layout">): string {
+  if (card?.layout === "meld" && card.faceName) return card.faceName;
+  const [a, b] = name.split(" // ");
+  return b !== undefined && a === b ? a! : name;
+}
+
 /** MTGJSON's own deck type for a Commander precon. */
 export const COMMANDER_DECK = "Commander Deck";
 
@@ -46,24 +56,12 @@ export function commanderDecks(list: readonly MtgjsonDeckListEntry[]): MtgjsonDe
 
 /** A deck file as a `Precon`, or null when it has no commander (a deck we cannot page). Counts of
  *  the same name add up: MTGJSON lists a foil and a non-foil printing of a card apart. */
-/** THE CARD'S OWN NAME, as the corpus (Scryfall) knows it. MTGJSON writes two shapes a lookup
- *  cannot resolve (owner, 2026-09-27: the Angels Secret Lair deck had no commander): a MELD card
- *  carries its melded result -- "Gisela, the Broken Blade // Brisela, Voice of Nightmares", where
- *  Brisela is no face of Gisela -- and a Secret Lair REVERSIBLE printing repeats itself, "Sol Ring //
- *  Sol Ring". Measured over the 197 decks: 12 names, 3 decks. A real two-faced card ("Delver of
- *  Secrets // Insectile Aberration") keeps its whole name, which is the corpus's name for it. */
-export function cardName(c: MtgjsonDeckCard): string {
-  const halves = c.name.split(" // ");
-  if (c.layout === "meld" || c.layout === "reversible_card") return c.faceName ?? halves[0]!;
-  return halves.length === 2 && halves[0] === halves[1] ? halves[0]! : c.name;
-}
-
 export function preconOf(entry: MtgjsonDeckListEntry, deck: MtgjsonDeck, sets: ReadonlyMap<string, string>): Precon | null {
-  const commanders = [...new Set((deck.commander ?? []).map(cardName))];
+  const commanders = [...new Set((deck.commander ?? []).map((c) => cardName(c.name, c)))];
   if (commanders.length === 0) return null;
   const counts = new Map<string, number>();
   for (const c of deck.mainBoard ?? []) {
-    const name = cardName(c);
+    const name = cardName(c.name, c);
     if (commanders.includes(name)) continue;
     counts.set(name, (counts.get(name) ?? 0) + c.count);
   }
