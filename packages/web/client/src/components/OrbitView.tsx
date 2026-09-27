@@ -5,7 +5,7 @@ import { mainTheme } from "../lib/main-theme.js";
 import { buildOrbit, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 import { slugOf } from "@edh-seer/matcher/slug";
 import { ReasonText, useCardDrawer } from "./card-drawer.js";
-import { Constellation, type MenuItem } from "./Constellation.js";
+import { allPartners, Constellation, type MenuItem } from "./Constellation.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
 
 /** THE ONE-CARD VIEW AS AN ORBIT (graph evaluation 2026-09-25, design B; replaces `EgoView`).
@@ -124,7 +124,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
 
   const map = (
     <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover} onBlank={blank}
-      menuFor={menuFor} isAdded={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isAdded(c.physical); }} />
+      pick={lead !== undefined ? allPartners : undefined} menuFor={menuFor} isAdded={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isAdded(c.physical); }} />
   );
   const panelBody = (
     <>

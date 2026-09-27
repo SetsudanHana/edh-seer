@@ -5,7 +5,7 @@ import { engineDeck } from "../lib/engine-model.fixture.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { buildOrbit } from "../lib/orbit-model.js";
 import { CardDrawerProvider } from "./card-drawer.js";
-import { MAP_CAP, mapPartners } from "./Constellation.js";
+import { allPartners, MAP_CAP, mapPartners } from "./Constellation.js";
 import { OrbitView, countText } from "./OrbitView.js";
 
 function view(focusId = "Payoff A") {
@@ -49,6 +49,10 @@ test("the map draws the partners that work with the card most, in their groups' 
   expect(drawn.length).toBe(MAP_CAP);
   // The one that always works makes the cut, though it comes last.
   expect(drawn).toContain("c19");
+  // THE COMMANDER'S MAP DRAWS THEM ALL (Glance mockup): the same strongest are named, the rest small.
+  const every = allPartners(big);
+  expect(every).toHaveLength(20);
+  expect(every.filter((x) => !x.minor).map((x) => x.p.card.id)).toEqual(drawn);
 });
 
 test("a count says how many cards and how many of them work once", () => {
