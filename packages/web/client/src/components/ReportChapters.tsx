@@ -37,7 +37,8 @@ import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardLinksContext } from "./card-menu.js";
-import { DeckSky } from "./DeckSky.js";
+import { DeckSky, type SkyLight } from "./DeckSky.js";
+import { linksFrom } from "../lib/deck-sky.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -212,6 +213,16 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   // shown can carry the card that takes its slot (baseline round 2026-09-26: "cuts and adds are not
   // one plan").
   // ...and the role cards a better card could replace in the same job (`swapCandidates`).
+  const cutSky = useMemo((): SkyLight | null => {
+    if (!themes) return null;
+    const ids = new Set(cuts.map((c) => c.card?.id).filter((id): id is string => !!id && themes.cards.has(id)));
+    if (!ids.size) return null;
+    const lines = linksFrom(themes, ids);
+    return {
+      ids, lines,
+      label: `The ${ids.size} possible cut${ids.size === 1 ? "" : "s"}, lit, and ${lines.length ? `every link ${ids.size === 1 ? "it has" : "they have"} to the rest of the deck, in gold: ${lines.length}` : "nothing ties them to the rest of the deck"}.`,
+    };
+  }, [themes, cuts]);
   const cutNames = useMemo(() => [...cuts.map((c) => c.name), ...swapCandidates(report, cuts)], [report, cuts]);
   const suggestions = useSuggestions(data, cutNames);
 
@@ -432,7 +443,15 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           <Movement title="What to change">
             {/* 64rem, the width of the Fixes list above it: a cut's name and its "5 mana - 0.0"
               *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
-            <div className="max-w-5xl">
+            {/* THE CUTS ON THE DECK'S SKY (owner, 2026-09-27: the sky in every chapter): the cards
+              *  doing the least, lit, with every link they have in gold -- a few thin threads into
+              *  the deck is the case for cutting them, drawn. Beside the list on a wide screen,
+              *  where it stays while the list scrolls; above it on a phone. */}
+            <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,64rem)_minmax(0,22rem)] xl:items-start xl:gap-8">
+            {cutSky ? (
+              <DeckSky model={themes!} lit={cutSky} className="w-full max-w-[26rem] xl:order-2 xl:sticky xl:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)]" />
+            ) : null}
+            <div className="max-w-5xl min-w-0">
             <CutList
               cuts={cuts}
               unjudged={report.unjudged}
@@ -445,6 +464,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               deckSize={data.totalCount}
             />
 
+            </div>
             </div>
           </Movement>
           {/* WHAT GROWS THE PLAN, last in the chapter: nothing is wrong here, so it follows the fixes.
