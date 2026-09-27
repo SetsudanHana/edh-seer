@@ -880,7 +880,6 @@ const PLAYER_TERMS: Record<string, string[]> = {
   // and these two only find it.
   destroy: ["dies"],
   kill: ["dies"],
-  landfall: ["enters"],
   tutor: ["search"],
   "card draw": ["draw"],
   cantrip: ["draw"],
@@ -891,6 +890,7 @@ const PLAYER_TERMS: Record<string, string[]> = {
   // from a graveyard causes `leaves-graveyard`; "return" also finds a bounce, which leaves play.
   reanimate: ["fills", "enters-graveyard", "leaves-graveyard"],
   reanimator: ["fills", "leaves-graveyard"],
+  reanimation: ["fills", "enters-graveyard", "leaves-graveyard"],
   return: ["leaves-graveyard", "leaves"],
   recursion: ["leaves-graveyard"],
   exile: ["leaves-graveyard"],
@@ -903,25 +903,45 @@ const PLAYER_TERMS: Record<string, string[]> = {
   drain: ["lose-life"],
   ping: ["non-combat-damage"],
   "combat trigger": ["attacks"],
+  // THE SEARCH SWEEP (2026-09-27): words players type for a whole strategy, each onto the event
+  // that strategy is made of. Madness is cast-from-discard; the spell words are all "a spell is cast".
+  madness: ["discard"],
+  spellslinger: ["cast"],
+  prowess: ["cast"],
+  magecraft: ["cast", "copy"],
+  storm: ["cast"],
+  counterspell: ["counter-spell"],
+  "go wide": ["create-token"],
   aristocrats: ["fodder", "dies"],
 };
 
 /** A CRUDE STEM, and deliberately crude: it has to make "dies" find "dying" and "draw" find
  *  "drawn" without a stemmer library, over a vocabulary of about sixty verbs. Trailing inflections
  *  come off, and three irregular pairs the maps actually contain are named. */
-const STEM_PAIRS: Record<string, string> = { dies: "die", dying: "die", died: "die", drawn: "draw", cast: "cast", milled: "mill", milling: "mill" };
+const STEM_PAIRS: Record<string, string> = { dies: "die", dying: "die", died: "die", drawn: "draw", cast: "cast", milled: "mill", milling: "mill", lost: "lose", loses: "lose", loss: "lose" };
 const stem = (word: string): string =>
   STEM_PAIRS[word] ?? word.replace(/(ing|ed|es|s)$/, "").replace(/([^aeiou])\1$/, "$1");
 
 /** WORDS A PLAYER TYPES THAT NAME NO EVENT: "leaves THE graveyard" missed "leaves A graveyard",
  *  and "gain 1 life" missed "gain life", because every typed word had to hit. They still count in
  *  the whole-phrase test below. */
-const FILLER = new Set(["the", "a", "an", "of", "from", "to", "into", "onto", "my", "your", "their", "its", "any", "one"]);
+const FILLER = new Set([
+  "the", "a", "an", "of", "from", "to", "into", "onto", "my", "your", "their", "its", "any", "one",
+  // HOW A PLAYER FRAMES THE ASK, not the event (search sweep, 2026-09-27): "cares about artifacts",
+  // "artifacts matter", "whenever you gain life", "opponent loses life" all found nothing.
+  "whenever", "when", "you", "cares", "care", "about", "matter", "matters", "opponent", "opponents", "player", "players", "each",
+]);
+
+/** A WORD THAT NAMES A NARROWER QUESTION THAN ANY ONE EVENT VERB: landfall is a LAND entering, not
+ *  anything entering (it found all 104 enters events); an enchantress casts enchantments. The word
+ *  is read as the words it stands for. */
+const ALIASES: Record<string, string[]> = { landfall: ["land", "enters"], enchantress: ["enchantment", "cast"] };
 
 /** Does this event answer what the reader typed? Every typed word must hit SOMETHING -- the label,
  *  the clause, the action or a synonym -- so extra words narrow rather than widen. */
 export function eventMatches(key: string, query: string): boolean {
-  const typed = query.toLowerCase().split(/\s+/).filter((w) => w.length > 0 && !FILLER.has(w) && !/^\d+$/.test(w));
+  const typed = query.toLowerCase().split(/\s+/).flatMap((w) => ALIASES[w] ?? [w])
+    .filter((w) => w.length > 0 && !FILLER.has(w) && !/^\d+$/.test(w));
   if (typed.length === 0) return true;
   const verb = key.split("|")[0] ?? "";
   const synonyms = Object.entries(PLAYER_TERMS)
@@ -936,8 +956,11 @@ export function eventMatches(key: string, query: string): boolean {
   // outlet"): applying it to every word made "token" match "nontoken", which is the opposite
   // event, and rank it above the row the reader meant.
   const odd = (w: string): boolean => /[^a-z]/.test(w);
+  // THE WHOLE PHRASE, AT WORD EDGES: a bare substring made "elf" find "self mill", "tap" find
+  // "untap" and "combat damage" rank "noncombat damage" first (search sweep, 2026-09-27).
+  const phrase = query.toLowerCase().trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return typed.every((w) => words.has(stem(w)) || (odd(w) && whole.includes(w)))
-    || whole.includes(query.toLowerCase().trim());
+    || (phrase.length > 0 && new RegExp(`(^|[^a-z])${phrase}($|[^a-z])`).test(whole));
 }
 
 /** "artifact, creature or enchantment" -- the same joining `demandSentence` does inline, kept here
