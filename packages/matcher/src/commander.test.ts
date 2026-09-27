@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 import type { CardTags, SubjectFilter } from "@edh-seer/tagger";
-import { commanderMatches, markCommander } from "./commander.js";
+import { commanderMatches, commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
+import { graveyardFillMatches, subjectMatches } from "./subject.js";
+import { loadHierarchy } from "./hierarchy.js";
 
 const sub = (o: Partial<SubjectFilter> = {}): SubjectFilter => ({ control: "you", token: null, ...o });
 
@@ -41,4 +43,31 @@ test("an emit describing some OTHER object is not stamped", () => {
   // 158 of the 71 decks' 164 commander emits are this shape; only 6 name the commander itself.
   const out = markCommander(tagsWith(sub({ type: "creature" })));
   expect(out.abilities[0].emits?.[0].subject.commander).toBeUndefined();
+});
+
+// ISSUE #559: Folk Hero's granted "whenever you cast a spell that shares a creature type with this
+// creature" is the commander's types, and never the commander's own spell.
+test("a shared type resolves to the commanders' types and refuses the commander itself (#559)", () => {
+  const h = loadHierarchy();
+  const folkHero = {
+    oracleId: "f", schemaVersion: 1, promptVersion: 0, model: "t",
+    characteristics: { types: ["enchantment"], subtypes: ["background"], colors: [], identity: [], cmc: 2, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "triggered", effect: { kind: "draw-card" }, trigger: { verbs: ["cast"], subject: { control: "you", token: null, type: "creature", sharesTypeWith: "commander" } } }],
+  } as CardTags;
+  const nalia = { characteristics: { subtypes: ["Human", "Rogue"] } } as CardTags;
+  const rogue: SubjectFilter = { control: "you", token: null, type: "creature", subtype: ["rogue"] };
+  const elf: SubjectFilter = { control: "you", token: null, type: "creature", subtype: ["elf"] };
+
+  // Unresolved (a card page, no commander): nothing, not "any creature".
+  const raw = folkHero.abilities[0]!.trigger!.subject;
+  expect(subjectMatches(rogue, raw, h)).toBe(false);
+  // And the untyped fast path, which skips subjectMatches (an untyped mill or dies).
+  expect(graveyardFillMatches({ control: "you", token: null, zone: "graveyard" }, { ...raw, zone: "graveyard" }, h)).toBe(false);
+
+  const t = resolveSharedTypes(folkHero, commanderSubtypes([nalia])).abilities[0]!.trigger!.subject;
+  expect(t.sharesTypeWith).toBeUndefined();
+  expect(subjectMatches(rogue, t, h)).toBe(true);
+  expect(subjectMatches(elf, t, h)).toBe(false);
+  // Nalia's own cast is a Rogue spell too, and still not one Folk Hero's ability can hear.
+  expect(subjectMatches({ ...rogue, commander: true }, t, h)).toBe(false);
 });

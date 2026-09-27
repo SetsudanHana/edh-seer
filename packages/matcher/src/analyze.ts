@@ -27,7 +27,7 @@ import { pairReasons, cardThemeTags, cardCaresTags, directedReasons, createsReas
 import { createdTokenRefs, type TokenRef } from "./tokens.js";
 import { GETS_AN_EMBLEM } from "@edh-seer/tagger/emblem";
 import { flipPerspective } from "./perspective.js";
-import { markCommander } from "./commander.js";
+import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
 import { computeCardBuckets } from "./buckets.js";
 import { groupEdgesByArchetype } from "./mechanisms.js";
@@ -241,9 +241,10 @@ export function analyzeDeckStructured(
   // deck actually runs; the commander stamp marks WHICH cards the list designated, which is the only
   // way `SubjectFilter.commander` can ever be satisfied — see commander.ts.
   const counts = deckSubtypeCounts(inputs);
+  const sharedWith = commanderSubtypes(inputs.filter((dc) => commanderSet.has(dc.card.name)).map((dc) => dc.tags));
   const resolved: DeckCard[] = inputs.map((dc) => {
     if (!dc.tags) return dc;
-    const tags = resolveChosenTypes(dc.tags, counts, hierarchy);
+    const tags = resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy), sharedWith);
     return { card: dc.card, tags: commanderSet.has(dc.card.name) ? markCommander(tags) : tags };
   });
   // The third deck fact, read at match time rather than written into the tags: what land types an
@@ -259,7 +260,7 @@ export function analyzeDeckStructured(
   const deckNameSet = new Set(resolved.map((dc) => dc.card.name));
   const companionResolved: DeckCard[] = companions
     .filter((dc) => !deckNameSet.has(dc.card.name))
-    .map((dc) => (dc.tags ? { card: dc.card, tags: resolveChosenTypes(dc.tags, counts, hierarchy) } : dc));
+    .map((dc) => (dc.tags ? { card: dc.card, tags: resolveSharedTypes(resolveChosenTypes(dc.tags, counts, hierarchy), sharedWith) } : dc));
   const companionSet = new Set(companionResolved.map((dc) => dc.card.name));
   // Lookups by name (tags, cost, derivation, land-ness) must find the companion's row; the COUNTS
   // built off `resolved` must not see it. This is the array for the first kind only.

@@ -73,6 +73,9 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // commander. Kediss, Emberclaw Familiar is why: its "a commander you control" derived untyped and
   // matched anything its controller had.
   if (consumer.commander === true && producer.commander !== true) return false;
+  // A SHARED TYPE THE DECK NEVER RESOLVED MATCHES NOTHING (#559): on a card page there is no
+  // commander to share a type with, and "any creature" was the wrong answer it used to give.
+  if (sharedTypeRefuses(producer, consumer)) return false;
   // And the second supertype. This one matters most where the emit is the FILTER (the authored-emit
   // identity check in edges.ts): "search for a basic land card" was satisfied by every nonbasic land.
   if (consumer.basic === true && producer.basic !== true) return false;
@@ -216,9 +219,15 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
  *  trigger, or a graveyard-recursion effect subject). Like subjectMatches, but an UNTYPED fill
  *  (a generic mill/discard with no type and no subtype) is a wildcard on type/subtype because the
  *  filled cards' types are unknown; control/token/zone stay strict. */
+/** The #559 guards, shared by `subjectMatches` and the two untyped fast paths below, which skip it. */
+function sharedTypeRefuses(producer: SubjectFilter, consumer: SubjectFilter): boolean {
+  return consumer.sharesTypeWith !== undefined || (consumer.notCommander === true && producer.commander === true);
+}
+
 export function graveyardFillMatches(producer: SubjectFilter, consumer: SubjectFilter, h: Hierarchy): boolean {
   const untyped = arr(producer.type).length === 0 && arr(producer.subtype).length === 0;
   if (!untyped) return subjectMatches(producer, consumer, h);
+  if (sharedTypeRefuses(producer, consumer)) return false;
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
   if (consumer.zone !== undefined && consumer.zone !== producer.zone) return false;
@@ -255,6 +264,7 @@ export function counterAddMatches(producer: SubjectFilter, consumer: SubjectFilt
   // against a producer that recorded no kind read as a mismatch and Shelinda, Yevon Acolyte
   // stopped feeding Simic Ascendancy. The kind is compared only when BOTH sides state one (above).
   if (!untyped) return subjectMatches(producer, producer.counter === undefined ? { ...consumer, counter: undefined } : consumer, h);
+  if (sharedTypeRefuses(producer, consumer)) return false;
   if (consumer.control !== "any" && producer.control !== "any" && consumer.control !== producer.control) return false;
   if (consumer.token !== null && producer.token !== null && consumer.token !== producer.token) return false;
   return true;

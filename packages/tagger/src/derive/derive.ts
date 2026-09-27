@@ -177,7 +177,10 @@ import { emblemRecipient } from "../emblem.js";
 // 177: a fight that names the card first ("this creature fights another target creature") damages
 // the other creature, not the card itself (issue #562: Brash Taunter supplied no damaged payoff).
 // 17 corpus cards; on the 71 decks edges 45,023 -> 45,044, panel and compass unchanged.
-export const DERIVE_VERSION = 177;
+// 178: "a spell that shares a creature type with this creature" names the host's creature types, and
+// a grant to commander creatures names the COMMANDER'S (`sharesTypeWith`, issue #559: Folk Hero drew
+// "when Nalia de'Arnise is cast").
+export const DERIVE_VERSION = 178;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -689,6 +692,16 @@ function recipientBefore(clauseText: string, re: RegExp): string | undefined {
  *  dies, ..."`: the clause AFTER the quote is the granted ability, and the words BEFORE `gains "`
  *  on the same sentence name its recipient. Only a creature-shaped recipient is returned; a token
  *  or an emblem recipient is handled elsewhere (`grantedToOwnToken`, the emblem row). */
+/** "…shares a creature type with this creature" / "…with <card name>": the class is the host's types. */
+function sharesTypeWithHost(subjectText: string, cardName?: string): boolean {
+  const m = /\bshares? a creature type with (.+)$/i.exec(subjectText);
+  if (!m) return false;
+  const who = m[1]!.trim().toLowerCase();
+  return who === "this creature" || (cardName !== undefined && who === cardName.toLowerCase());
+}
+/** A Background's grant: "Commander creatures you own have '…'" (Folk Hero). */
+const GRANTED_TO_COMMANDER = /\bcommander creatures? you (?:own|control) (?:have|has|gains?) "/i;
+
 function grantedRecipientOf(cardText: string, clauseText: string): string | undefined {
   const head = clauseText.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   // "gains" for a one-shot grant, "has"/"have" for a static one: Danny Pink's "Creatures you control
@@ -1334,6 +1347,13 @@ export function deriveAbilities(
         // leave minus `dies`. Both are read off the TEXT because the trigger subject dropped them.
         if (verb === "leaves" && LEAVES_GRAVEYARD.test(text)) subject.zone = "graveyard";
         if (verb === "leaves" && WITHOUT_DYING.test(text)) subject.withoutDying = true;
+        // "A SPELL THAT SHARES A CREATURE TYPE WITH THIS CREATURE" (DERIVE 178, #559): the clause
+        // subject kept only "creature", so Folk Hero's draw heard every creature spell -- the
+        // commander's own cast included. The class is the host's creature types: this card's own,
+        // or, for a grant to commander creatures, the commander's (resolved per deck).
+        if (sharesTypeWithHost(clause.trigger.subject ?? "", cardName)) {
+          subject.sharesTypeWith = GRANTED_TO_COMMANDER.test(cardText) ? "commander" : "self";
+        }
         selfLeavesTrigger = subject.self === true && verb === "leaves";
         trigger = { verbs: [verb], subject };
       } else {
@@ -1843,6 +1863,17 @@ export function deriveCardTags(input: DeriveInput): CardTags {
       ? { ...a, trigger: { ...a.trigger, subject: { ...a.trigger.subject, control: "opp" as const } } }
       : a;
   });
+  // THE CARD'S OWN CREATURE TYPES, pinned here where the characteristics are known (#559). A card
+  // with none keeps the marker, which matches nothing: silence over "any creature".
+  // CREATURE FACES ONLY: `subtypes` is the union over every face, and a creature // land's land type
+  // is not a creature type the card can share.
+  const creatureFaces = (chars.faces ?? [{ types: chars.types, subtypes: chars.subtypes }])
+    .filter((f) => f.types.some((t) => t.toLowerCase() === "creature"));
+  const own = [...new Set(creatureFaces.flatMap((f) => f.subtypes.map((x) => x.toLowerCase())))];
+  const pinned = own.length === 0 ? abilities : abilities.map((a) => a.trigger?.subject.sharesTypeWith !== "self" ? a : {
+    ...a,
+    trigger: { ...a.trigger, subject: (({ sharesTypeWith: _s, ...rest }) => ({ ...rest, subtype: own }))(a.trigger.subject) },
+  });
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,
@@ -1853,7 +1884,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     promptVersion: 0,
     model: "derived",
     characteristics: input.characteristics,
-    abilities,
+    abilities: pinned,
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),
   };

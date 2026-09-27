@@ -3132,3 +3132,30 @@ test("a name that starts with 'The' is self without the article, and the article
   // A typal subject on a "The ..." card stays typal: the article is not stripped out of it.
   expect(enters("a creature", "The Ur-Dragon", "Whenever a creature you control enters, draw a card.")?.self).toBeUndefined();
 });
+
+// ISSUE #559: Folk Hero. "Commander creatures you own have 'Whenever you cast a spell that shares a
+// creature type with this creature, draw a card.'" The class is the COMMANDER'S types, a deck fact,
+// so the derive marks it; the subject used to read as any creature spell.
+test("a shared-type trigger granted to commander creatures is marked for the commander", () => {
+  const card = "Commander creatures you own have \"Whenever you cast a spell that shares a creature type with this creature, draw a card. This ability triggers only once each turn.\"";
+  const { abilities } = deriveAbilities([
+    { id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "that ability" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "cast", subject: "a spell that shares a creature type with this creature", control: "you" },
+      actions: [{ verb: "draw", object: "a card", amount: "1" }] },
+  ], "Folk Hero", { 1: "Commander creatures you own have", 2: "Whenever you cast a spell that shares a creature type with this creature, draw a card." }, undefined, card);
+  expect(abilities.find((a) => a.trigger)?.trigger?.subject.sharesTypeWith).toBe("commander");
+});
+
+test("a shared-type trigger on the card itself is pinned to the card's own creature types (#559)", () => {
+  const tags = deriveCardTags({
+    oracleId: "x", name: "Kin Keeper",
+    characteristics: { types: ["creature"], subtypes: ["Elf", "Druid"], colors: [], identity: [], cmc: 2, power: "1", toughness: "1", token: false, keywords: [] },
+    clauses: [{ id: 1, abilityType: "triggered", trigger: { event: "cast", subject: "a spell that shares a creature type with this creature", control: "you" },
+      actions: [{ verb: "draw", object: "a card", amount: "1" }] }],
+    clauseTexts: { 1: "Whenever you cast a spell that shares a creature type with this creature, draw a card." },
+    oracleText: "Whenever you cast a spell that shares a creature type with this creature, draw a card.",
+  } as never);
+  const s = tags.abilities.find((a) => a.trigger)?.trigger?.subject;
+  expect(s?.subtype).toEqual(["elf", "druid"]);
+  expect(s?.sharesTypeWith).toBeUndefined();
+});

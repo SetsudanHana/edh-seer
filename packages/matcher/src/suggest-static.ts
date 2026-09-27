@@ -18,7 +18,7 @@ import { StaticLookup } from "./static-lookup.js";
 import { directedReasons, sizeMeets, type ReasonOptions } from "./edges.js";
 import { faceDeckCards } from "./faces.js";
 import { deckLandTypes, deckSubtypeCounts, resolveChosenTypes } from "./chosen-type.js";
-import { markCommander } from "./commander.js";
+import { commanderSubtypes, markCommander, resolveSharedTypes } from "./commander.js";
 import { maxAxisWeight } from "./axis.js";
 import { loadHierarchy } from "./hierarchy.js";
 import { BUILD_CATEGORIES, BUILD_PARENTS } from "./build.js";
@@ -332,9 +332,11 @@ export async function suggestForDeck(input: {
   // AND THE COMMANDER IS MARKED, the other half of the report's deck pass: without it a "whenever
   // your commander ..." candidate joined nothing and dropped out of every list (final review, AO4).
   const commanderNames = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
+  // And a shared type resolves to the commanders' types, as the report resolves it (#559).
+  const sharedWith = commanderSubtypes(rawDeck.filter((d) => commanderNames.has(d.card.name)).map((d) => d.tags));
   const resolve = (d: DeckCard | null): DeckCard | null => {
     if (!d?.tags) return d;
-    const tags = resolveChosenTypes(d.tags, counts, hierarchy);
+    const tags = resolveSharedTypes(resolveChosenTypes(d.tags, counts, hierarchy), sharedWith);
     return { ...d, tags: commanderNames.has(d.card.name) ? markCommander(tags) : tags };
   };
   const dc = async (name: string) => resolve(await raw(name));

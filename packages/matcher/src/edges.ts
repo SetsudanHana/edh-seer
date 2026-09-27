@@ -1764,7 +1764,10 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
             // onto the battlefield, and a landfall trigger heard "When a creature enters".
             subjectNoun: fillNoun(e)
               ?? (t.verb === "counter-added" && e.subject.self !== true ? emitSubjectNoun(e.subject) ?? "a permanent"
-              : producerCanBeSubject(p, e.subject, h) ? undefined : emitSubjectNoun(keyedOn(e.subject, t.subject))),
+              // A COMMANDER IS NEVER WHAT A `notCommander` TRIGGER HEARD (#559): Nalia is a Rogue, but
+              // the Rogue Folk Hero's commander ability draws for is one Nalia lets you cast.
+              : producerCanBeSubject(p, e.subject, h) && !(t.subject.notCommander === true && p.tags?.characteristics.commander === true)
+                ? undefined : emitSubjectNoun(keyedOn(e.subject, t.subject))),
           }),
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"
