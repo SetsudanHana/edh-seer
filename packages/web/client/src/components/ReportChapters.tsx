@@ -157,6 +157,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     const names = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
     return data.graph?.nodes.find((n) => !n.face && names.has(n.cardName ?? n.id) && themes.partners.has(n.id))?.id ?? null;
   }, [themes, report.cards, data.graph]);
+  const unmetDemand = (report.deckMath?.demand ?? []).some((d) => d.available !== null && d.suppliers === 0);
   const [centre, setCentre] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<string | null>(null);
   // A NEW REPORT STARTS FROM ITS COMMANDER (owner, 2026-09-27: "with Rani deck I managed somehow to
@@ -264,7 +265,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             total={data.totalCount}
             commanderUnread={commanderUnread}
           />
-          {report.coverage ? null : (
+          {/* ONLY WHEN A NAME WAS MISSED (owner, 2026-09-27: "less is more"): "100/100" repeated
+            *  the hero's own "read 100 of 100 cards". */}
+          {report.coverage || data.resolvedCount >= data.totalCount ? null : (
             <p className="eyebrow">
               {/* "RESOLVED" IS A RULES WORD (T1): a spell resolves, and a player scanning
                 *  "Resolved 99/100" reads a simulation stat rather than how many names this tool
@@ -340,19 +343,24 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           {report.deckMath ? (
             // No title of its own: its sections are headed "Your first 5 turns", "How you win" and
             // "What your cards are waiting for" already.
-            <Movement count="its first turns, how fast it wins, and what its cards need from each other">
+            <Movement count={unmetDemand ? "its first turns, how it wins, and what its cards are still waiting for" : "its first turns, and how it wins"}>
               <div className="max-w-5xl flex flex-col gap-8">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
                 {turns ? <FirstTurns model={turns} /> : null}
                 <HowYouWin report={report} manaValueOf={manaValueOf} />
-                <BuildBenchmarks
-                  categories={report.buildCategories}
-                  parents={report.buildParents}
-                  deckMath={report.deckMath}
-                  answerCoverage={report.answerCoverage}
-                  sections={["waiting"]}
-                  showBenchmarks={false}
-                />
+                {/* WHAT YOUR CARDS ARE WAITING FOR, ONLY WHEN SOMETHING IS (owner, 2026-09-27: "less is
+                  *  more"). With every demand met it said "everything your cards care about, something in
+                  *  the deck causes" under a second copy of the turn-7 line: nothing to act on. */}
+                {unmetDemand ? (
+                  <BuildBenchmarks
+                    categories={report.buildCategories}
+                    parents={report.buildParents}
+                    deckMath={report.deckMath}
+                    answerCoverage={report.answerCoverage}
+                    sections={["waiting"]}
+                    showBenchmarks={false}
+                  />
+                ) : null}
               </div>
             </Movement>
           ) : null}
