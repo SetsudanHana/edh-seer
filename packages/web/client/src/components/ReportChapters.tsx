@@ -307,7 +307,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  for. The tiles were the only place either score said what it MEASURES, so those two
             *  `Explain` blocks moved onto the dials themselves and the component retired. */}
           <DeckGauges data={data} diff={diff} bars={false} />
-          <BracketPanel bracket={report.bracket} combos={report.combos} manaValueOf={manaValueOf} artOf={artOf} />
+          <BracketPanel bracket={report.bracket} combos={report.combos} manaValueOf={manaValueOf} artOf={artOf} model={themes} />
         </Chapter>
 
         <Chapter id="plan" title={title("plan")}>
