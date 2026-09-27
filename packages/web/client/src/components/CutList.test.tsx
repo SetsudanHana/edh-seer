@@ -38,14 +38,16 @@ test("trade-offs show four at a time; clear cuts always show in full", async () 
   expect(screen.getAllByRole("heading", { name: /^Maybe \d/ })).toHaveLength(6);
 });
 
-/** THE REST OF THE TRIM (appeal review 2026-09-26): a role over its target shows its cards to pick
- *  from, not only "Consistency 16/13 (+3)". */
-test("a role over its target shows its cards and how many can go, instead of a bare count", () => {
+/** THE REST OF THE TRIM (appeal review 2026-09-26): a role over its target says how many can go.
+ *  ONE LINE, POINTING AT THE SHELF (owner, 2026-09-27: one place per fact): the cards to pick from
+ *  are on the Roles shelves, which were repeated here as card images. */
+test("a role over its target says how many can go and points at its shelf, instead of a bare count", () => {
   const card = (name: string) => ({ id: name, name, typeLine: "", text: "", isToken: false, isCommander: false, isLand: false, isFace: false, roles: ["draw"], score: 0, manaCost: "", physical: name });
   render(<CutList cuts={[]} slack={[{ category: "Consistency", count: 16, target: 13, over: 3 }]}
     surplus={[{ name: "Consistency", count: 16, target: 13, over: 3, cards: [card("Brainstorm"), card("Ponder")] }]} />);
-  expect(screen.getByText(/over its target/).textContent).toMatch(/Consistency is 3 over its target \(16 against 13\), so up to 3 of these can go/);
-  expect(within(screen.getByRole("list", { name: "Consistency: 2 cards" })).getAllByRole("listitem")).toHaveLength(2);
+  expect(screen.getByText(/16 against 13: up to 3 can go\./)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Pick them on the shelf" })).toHaveAttribute("href", "#roles");
+  expect(screen.queryByRole("list", { name: "Consistency: 2 cards" })).toBeNull();
   // The bare chip is gone where the cards are shown.
   expect(screen.queryByText("16/13 (+3)")).toBeNull();
 });

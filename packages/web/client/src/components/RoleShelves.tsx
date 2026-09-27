@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import type { EngineCard } from "../lib/engine-model.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
-import { CardFace } from "./engine-parts.js";
+import { Art } from "./engine-parts.js";
+import { CardName } from "./card-drawer.js";
 
 /** THE CARDS IN EACH ROLE, IN THE ROLES CHAPTER (owner, 2026-09-26: "it does not make any sense to
  *  have 2 times the same report"). The Graph tab's Overview had a "Cards judged by their job" box;
@@ -54,18 +55,19 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
                   ? <Against count={cards.length} target={target} />
                   : <span className="text-(--muted) tabular-nums">{cards.length} card{cards.length === 1 ? "" : "s"}</span>}
               </span>
-              <ul className="flex min-w-0 flex-1 flex-wrap gap-2 pb-1" aria-label={`${label}: ${cards.length} card${cards.length === 1 ? "" : "s"}`}>
+              {/* CHIPS, NOT CARD IMAGES (owner, 2026-09-27: "less is more"). Full cards ran the shelves to
+                *  2,400px; a chip carries the art and the name, and opens the card. */}
+              <ul className="flex min-w-0 flex-1 flex-wrap gap-1.5 pb-1" aria-label={`${label}: ${cards.length} card${cards.length === 1 ? "" : "s"}`}>
                 {cards.map((c) => (
-                  <li key={c.id} className="flex w-[76px] shrink-0 flex-col gap-1 sm:w-[88px]">
-                    <CardFace card={c} className="w-full" />
-                    {/* A card with no art already prints its name in the frame. */}
-                    {c.art ? <span className="line-clamp-2 text-xs leading-tight text-(--muted)">{c.name}</span> : null}
+                  <li key={c.id} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-(--separator) py-0.5 pl-0.5 pr-2.5">
+                    <Art card={c} size={24} />
+                    <CardName name={c.name} />
                   </li>
                 ))}
                 {tokens.map(({ card: t, madeBy }) => (
-                  <li key={`token:${t.id}`} className="flex w-[76px] shrink-0 flex-col gap-1 sm:w-[88px]">
-                    <CardFace card={t} className="w-full" />
-                    <span className="line-clamp-3 text-xs leading-tight text-(--muted)">{t.name} token{madeBy.length ? ` from ${madeBy.join(", ")}` : ""}</span>
+                  <li key={`token:${t.id}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-dashed border-(--separator) py-0.5 pl-0.5 pr-2.5 text-(--muted)">
+                    <Art card={t} size={24} />
+                    {t.name} token{madeBy.length ? ` from ${madeBy.join(", ")}` : ""}
                   </li>
                 ))}
               </ul>
@@ -83,6 +85,7 @@ function Against({ count, target }: { count: number; target: number }) {
     <span className="text-(--muted) tabular-nums">
       {count} card{count === 1 ? "" : "s"} · aim for {target}
       {count < target ? <span className="text-(--warning)">{` (${target - count} short)`}</span> : null}
+      {count > target ? ` (${count - target} over: room to cut)` : null}
     </span>
   );
 }
