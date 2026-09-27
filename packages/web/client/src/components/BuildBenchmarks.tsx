@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL as LABEL } from "../lib/build-category-labels.js";
 import { CardSymbol } from "./CardSymbol.js";
@@ -438,6 +438,14 @@ function DeckMathRows({
   coverageWeightedName?: string;
 }) {
   const { isPinned } = usePinned();
+  // ON A PHONE, A ROW'S CARDS SHOW ON A TAP (owner, 2026-09-27): six rows of names under their bars
+  // read as a block of text at 390px. From `sm` up there is room, and they always show.
+  const [shownOn, setShownOn] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleShown = (cls: string) => setShownOn((prev) => {
+    const next = new Set(prev);
+    if (!next.delete(cls)) next.add(cls);
+    return next;
+  });
   const { turn, seen, demand } = deckMath;
   // WORST FIRST: least likely to be in hand by the turn, a commander's own answer last (it is there
   // every game). The doctrine's fixed order put the rows a reader can act on wherever it happened to.
@@ -535,10 +543,10 @@ function DeckMathRows({
             const label = `${a.class}, ${none ? "no answers" : plural(a.count, "card")}${odds ? `, ${odds}` : ""}${said ? `, ${said}` : ""}`;
             return (
               <li key={a.class} className="flex flex-col gap-0.5" aria-label={label} data-testid="answer-row">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm sm:gap-x-3">
                   {/* THE SAME ALPHABET AS THE WAFFLE LEGEND (AM3). `graveyard` is a zone, not a card
                     *  type, and gets no glyph; the fixed slot keeps every word on one left edge. */}
-                  <span className="w-32 shrink-0 capitalize inline-flex items-center gap-1.5">
+                  <span className="w-28 shrink-0 capitalize inline-flex items-center gap-1.5 sm:w-32">
                     <span aria-hidden className="w-4 shrink-0 inline-flex justify-center">
                       <CardSymbol name={a.class} className="text-(--muted) text-xs" />
                     </span>
@@ -552,7 +560,7 @@ function DeckMathRows({
                     *  figure; the sentence stays in the row's label for a screen reader. */}
                   {!none && !a.fromCommandZone ? (
                     <span className="inline-flex items-center gap-2" aria-hidden="true">
-                      <span className="h-1.5 w-28 rounded-full bg-(--surface-secondary)">
+                      <span className="h-1.5 w-20 rounded-full bg-(--surface-secondary) sm:w-28">
                         <span className="block h-full rounded-full bg-(--accent)" style={{ width: `${Math.round(a.available * 100)}%` }} />
                       </span>
                       <span className="stat-num text-xs text-(--muted)">{pct(a.available)}</span>
@@ -563,9 +571,18 @@ function DeckMathRows({
                     {mode && (none || a.fromCommandZone) && odds ? " · " : null}
                     {mode ? <span className={mode.startsWith("none") ? "text-(--warning)" : ""}>{mode}</span> : null}
                   </span>
+                  {a.cards?.length ? (
+                    <button type="button" className="sm:hidden -my-1 inline-flex size-7 items-center justify-center self-center rounded-(--radius) text-(--accent) hover:bg-(--surface-secondary)"
+                      aria-expanded={shownOn.has(a.class)} aria-controls={`answer-cards-${a.class}`} onClick={() => toggleShown(a.class)}
+                      aria-label={shownOn.has(a.class) ? "Hide the cards" : "Which cards"}>
+                      <svg aria-hidden="true" viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"
+                        className={shownOn.has(a.class) ? "rotate-180" : ""}><path d="M2.5 4.5 6 8l3.5-3.5" /></svg>
+                    </button>
+                  ) : null}
                 </div>
                 {a.cards?.length ? (
-                  <span className="text-xs sm:pl-[9.75rem]">
+                  <span id={`answer-cards-${a.class}`} data-testid="answer-cards"
+                    className={`text-xs sm:block sm:pl-[9.75rem] ${shownOn.has(a.class) ? "block" : "hidden"}`}>
                     {a.cards.map((n, i) => <span key={n}>{i > 0 ? <span className="text-(--muted)"> · </span> : null}<CardName name={n} /></span>)}
                   </span>
                 ) : null}
