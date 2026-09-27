@@ -1483,6 +1483,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   triggerDoublingEdges(s);
   copyAbilityEdges(s);
   fodderEdges(s);
+  cheatEdges(s);
   reuseEdges(s);
   flashTimingEdges(s);
   delveEdges(s);
@@ -2513,6 +2514,55 @@ function flashTimingEdges({ p, c, reasons }: PairScope): void {
       producer: p.card.name,
     });
     return; // one claim per pair
+  }
+}
+
+/** "If that card is an enchantment card, it enters tapped and attacking" (Summoner's Grimoire): the
+ *  type a cheat rewards beyond putting the card down. String search, no regex over the text. */
+function cheatBonusType(oracle: string | undefined): string | undefined {
+  const text = (oracle ?? "").toLowerCase();
+  const at = text.indexOf(" card, it enters tapped and attacking");
+  if (at < 0) return undefined;
+  const head = text.slice(Math.max(0, at - 40), at);
+  const m = head.match(/is an? ([a-z]+)$/);
+  return m?.[1];
+}
+
+// A CHEAT INTO PLAY LINKS TO THE CREATURES IT CAN PUT DOWN (owner ruling 2026-09-27, #505): "Summoner's
+// Grimoire has an edge with creatures cause you can cheat them into play, but it has a stronger edge
+// with enchantment creatures cause they come in tapped and attacking." Any ability that puts a
+// creature card from your hand onto the battlefield (Sneak Attack, Quicksilver Amulet, Kaalia) joins
+// each creature card its subject admits; a printed bonus for a type is a second reason, which is what
+// "stronger" means to the score. A token is never in a hand.
+function cheatEdges({ p, c, h, reasons }: PairScope): void {
+  if (p === c || c.isToken || !c.tags.characteristics.types.includes("creature")) return;
+  for (const a of p.tags.abilities) {
+    const put = (a.emits ?? []).find((e) => e.verb === "enters" && e.subject.fromZone === "hand" && e.subject.self !== true
+      && (list(e.subject.type).includes("creature") || (list(e.subject.type).length === 0 && list(e.subject.subtype).length > 0)));
+    if (!put) continue;
+    const { zone: _z, fromZone: _f, scope: _s, entersTapped: _t, ...wanted } = put.subject;
+    if (!subjectMatches(characteristicsSubject(c.tags, c.card.name), { ...wanted, type: "creature", token: null }, h)) continue;
+    const repeatability = a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
+    reasons.push({
+      tag: `cheat:${themeSubjectKey({ ...wanted, type: "creature" })}`,
+      text: `${p.card.name} can put ${c.card.name} onto the battlefield from your hand`,
+      effectKind: a.effect.kind || "cheat",
+      repeatability,
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    const bonus = cheatBonusType(p.card.oracleText);
+    if (bonus && c.tags.characteristics.types.includes(bonus)) {
+      reasons.push({
+        tag: `cheat:${bonus}`,
+        text: `${p.card.name} puts ${c.card.name} onto the battlefield tapped and attacking, because it is ${/^[aeiou]/.test(bonus) ? "an" : "a"} ${bonus}`,
+        effectKind: a.effect.kind || "cheat",
+        repeatability,
+        consumer: c.card.name,
+        producer: p.card.name,
+      });
+    }
+    return; // one cheat per pair
   }
 }
 

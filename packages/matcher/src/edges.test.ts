@@ -5325,6 +5325,31 @@ test("a self-pump on a noncreature cast is tagged prowess; a real cast payoff ke
   expect(tags(pyro)).toEqual(["cast:-creature"]);
 });
 
+/** A CHEAT INTO PLAY LINKS TO THE CREATURES IT CAN PUT DOWN, AND MORE STRONGLY TO THE TYPE IT REWARDS
+ *  (owner ruling 2026-09-27, issue #505). Summoner's Grimoire's live shape, read 2026-09-27: an attack
+ *  trigger emitting a creature entering from hand; its printed bonus makes an enchantment creature
+ *  enter tapped and attacking, which is a second reason. A noncreature card is not cheated. */
+test("a cheat links to each creature it can put down, with a second reason for the rewarded type", () => {
+  const grimoire = base("Summoner's Grimoire", [{
+    kind: "triggered", trigger: { verbs: ["attacks"], subject: { self: true, control: "you", token: null, type: "creature" } }, effect: { kind: "" },
+    emits: [{ verb: "enters", subject: { control: "you", token: null, fromZone: "hand", type: "creature", entersTapped: true } }],
+  }] as CardTags["abilities"]);
+  (grimoire.card as { oracleText: string }).oracleText = "Equipped creature is a Shaman in addition to its other types and has \"Whenever this creature attacks, you may put a creature card from your hand onto the battlefield. If that card is an enchantment card, it enters tapped and attacking.\"";
+  const shiva = base("Summon: Shiva", [], ["saga"]);
+  shiva.tags.characteristics.types = ["enchantment", "creature"];
+  const bear = base("Grizzly Bears", [], ["bear"]);
+  bear.tags.characteristics.types = ["creature"];
+  const ring = base("Sol Ring", []);
+  ring.tags.characteristics.types = ["artifact"];
+  const cheat = (c: ReturnType<typeof base>) => directedReasons(grimoire, c, H).filter((r) => r.tag.startsWith("cheat:")).map((r) => r.text);
+  expect(cheat(bear)).toEqual(["Summoner's Grimoire can put Grizzly Bears onto the battlefield from your hand"]);
+  expect(cheat(shiva)).toEqual([
+    "Summoner's Grimoire can put Summon: Shiva onto the battlefield from your hand",
+    "Summoner's Grimoire puts Summon: Shiva onto the battlefield tapped and attacking, because it is an enchantment",
+  ]);
+  expect(cheat(ring)).toEqual([]);
+});
+
 /** A CREATURE A SPELL CAN RE-USE SCORES FOR IT (owner ruling 2026-09-27, #571): Ghostly Flicker returns
  *  a Wizard that Inalla watches entering, so the Wizard -- not Inalla -- gets the link, naming Inalla.
  *  With no typed watcher in the deck there is nothing to re-use it for. Live flicker shape, 2026-09-27. */
