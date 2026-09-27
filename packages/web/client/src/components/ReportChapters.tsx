@@ -7,6 +7,8 @@ import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { CutList, type Surplus } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { SpeedPanel } from "./SpeedPanel.js";
+import { TableTalkLine } from "./TableTalk.js";
+import { tableTalk } from "../lib/table-talk.js";
 import { FirstTurns } from "./FirstTurns.js";
 import { firstTurns } from "../lib/first-turns.js";
 import { LegalityPanel } from "./LegalityPanel.js";
@@ -138,6 +140,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     }
     return firstTurns(report, (name) => lands.has(name));
   }, [report, data.graph]);
+  const talk = useMemo(() => tableTalk(report, data.graph, manaValueOf), [report, data.graph, manaValueOf]);
   const themes = useMemo(() => {
     if (!data.graph) return null;
     const m = buildEngineModel(report, data.graph);
@@ -223,6 +226,10 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           {report.legality?.length ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE HERO: what this deck IS, the commander's face, and whether it is any good -- and the
             *  waffle inside it is where a reader checks the engine's work card by card. */}
+          {/* THE ONE LINE FOR THE TABLE, FIRST (owner, 2026-09-26: "the phone and one-line answer ... to
+            *  be addressed"). The phone seat built it from four screens; under the hero it started 760px
+            *  down a 844px phone, cut off, so it leads the chapter. */}
+          {talk ? <TableTalkLine talk={talk} /> : null}
           <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} />
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
