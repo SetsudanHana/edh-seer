@@ -9,6 +9,7 @@ import { CardShell } from "./CardShell.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { EngineReading } from "./EngineReading.js";
 import { NotFound } from "./NotFound.js";
+import { PageMap } from "./PageMap.js";
 import { PartnerList } from "./PartnerList.js";
 
 type Ranked = { partners: PartnerRow[]; pool: Record<string, number>; rarity: Record<string, number> };
@@ -265,11 +266,16 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
           <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
             Ranked over the cards a deck led by {page.name}{pair ? ` and ${pair.name}` : ""} could
-            legally contain. The fewer cards can make a pairing, the higher it ranks. Pick a card to
-            preview it here.
+            legally contain. The fewer cards can make a pairing, the higher it ranks. Pick a card, on
+            the map or in the list, to preview it here.
             {fallback ? " The pair's own list was not built; showing each card's own." : ""}
           </p>
         </div>
+        {/* A NEW PICTURE PER LIST: the pair and the colour change which list this is, and a map
+          *  that kept the last list's cards drew them as faint leftovers. */}
+        <PageMap key={`${withSlug ?? ""}|${pair ? "pair" : ""}|${colour ?? ""}`} page={page} slug={slug} rows={ranked.partners} base="/commanders"
+          pair={pair && withSlug ? { slug: withSlug, name: pair.name, artCrop: pair.artCrop } : undefined}
+          hrefOf={(id) => (id === withSlug ? `/commanders/${id}` : `/cards/${id}`)} />
         <PartnerList
           subject={page.name}
           // THE SCOPE THE COUNTS WERE TAKEN AT (AJ5), handed to the link under them: `key` is the

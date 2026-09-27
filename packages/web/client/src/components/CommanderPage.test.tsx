@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { expect, test } from "vitest";
 import { CommanderPage } from "./CommanderPage.js";
@@ -215,4 +215,23 @@ test("without a pick, only the commander's card is shown", async () => {
   atUrl("/commanders/wilson-refined-grizzly");
   expect(await screen.findByRole("img", { name: /^Wilson, Refined Grizzly/ })).toBeInTheDocument();
   expect(screen.queryByRole("img", { name: /^Haunted One/ })).not.toBeInTheDocument();
+});
+
+/** THE MAP ON A COMMANDER PAGE (owner, 2026-09-27): the commander's own ranked list, drawn; a
+ *  second tap opens the partner's CARD page, since the partners are cards, not commanders. */
+test("a commander page draws its deck's partners as a map; a second tap opens the card's page", async () => {
+  const rows = [row("A One", "a-one"), row("B Two", "b-two", "dies|creature|-|-"), row("C Three", "c-three")];
+  render(
+    <MemoryRouter initialEntries={["/commanders/krenko-mob-boss"]}>
+      <Routes>
+        <Route path="/commanders/:slug" element={<CommanderPage load={async () => ({ ...KRENKO, commanderPartners: rows })} />} />
+        <Route path="/cards/:slug" element={<p>card page</p>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards it works well with/ });
+  const node = map.querySelector("[data-id='b-two']")!;
+  fireEvent.click(node);
+  fireEvent.click(node);
+  expect(await screen.findByText("card page")).toBeInTheDocument();
 });

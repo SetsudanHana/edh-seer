@@ -22,8 +22,23 @@ import { usePeek } from "./peek.js";
  *  too: the card you went to moves to the middle, its partners grow out around it, the one you left
  *  stays where it was with a gold route through every card you walked, and Back walks the route
  *  backwards. One map of the whole card pool, a page at a time. */
-export function PageMap({ page, slug, rows, base }: { page: CardPageData; slug: string; rows?: readonly PartnerRow[]; base: string }) {
-  const map = useMemo(() => pageMap(page, slug, rows), [page, slug, rows]);
+export function PageMap({ page, slug, rows, base, pair, hrefOf }: {
+  page: CardPageData; slug: string; rows?: readonly PartnerRow[]; base: string;
+  /** A commander's picked partner, drawn in its own group at the head of the map. */
+  pair?: { slug: string; name: string; artCrop: string | null };
+  /** Where a card's page is, when not `${base}/<id>`: a commander page's partners are cards, and
+   *  going to one leaves this page, and the walk, behind. */
+  hrefOf?: (id: string) => string;
+}) {
+  // KEYED ON WHAT THE ROWS SAY, not on the array: a commander page merges its list afresh on every
+  // render, and a new map object each time would restart the picture.
+  const rowsKey = rows?.map((r) => `${r.slug}|${r.event}|${r.producer ? 1 : 0}`).join("\n") ?? "";
+  const pairKey = pair ? `${pair.slug}|${pair.artCrop ?? ""}` : "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const map = useMemo(() => pageMap(page, slug, rows, pair), [page, slug, rowsKey, pairKey]);
+  const href = (id: string) => hrefOf?.(id) ?? `${base}/${id}`;
+  // The walk is the map staying on screen while its card changes: on this surface's own pages.
+  const walks = !hrefOf;
   // EVERY CARD SEEN ON THIS WALK, in one object that keeps its identity: the map is rebuilt when
   // this object changes, and it must not change mid-walk.
   const world = useRef<{ cards: Map<string, EngineCard> }>({ cards: new Map() });
@@ -45,7 +60,7 @@ export function PageMap({ page, slug, rows, base }: { page: CardPageData; slug: 
   const navigate = useNavigate();
   useEffect(() => { setSel(null); setHover(null); }, [slug]);
   // The preview was of the card you are now going to: its page replaces it.
-  const go = (id: string) => { peek?.close(); void navigate(`${base}/${id}`); };
+  const go = (id: string) => { peek?.close(); void navigate(href(id)); };
   const tap = (id: string) => {
     if (id === slug) { setSel(null); return; }
     if (sel === id) go(id);
@@ -78,8 +93,8 @@ export function PageMap({ page, slug, rows, base }: { page: CardPageData; slug: 
           label={`${page.name} and ${shown} of the cards it works well with, coloured by the groups below`} />
       </div>
       <figcaption className="max-w-[65ch] text-sm text-(--muted)">
-        Each colour is one of the groups below, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards, a few from each`}.
-        {" "}{still || paused ? "Arrows point" : "Ticks run"} from the card that makes it happen to the card that uses it. Tap a card to see it; tap it again to go to its page, and the map comes with you: the cards you walked through stay on it, joined by a gold line.
+        {pair ? <>{pair.name} is in gold. </> : null}Each colour is one of the groups below, and {shown === map.orbit.direct ? "every card in them is here" : `the map shows ${shown} of their ${map.orbit.direct} cards, a few from each`}.
+        {" "}{still || paused ? "Arrows point" : "Ticks run"} from the card that makes it happen to the card that uses it. Tap a card to see it; tap it again to go to its page{walks ? ", and the map comes with you: the cards you walked through stay on it, joined by a gold line" : ""}.
         {still ? null : (
           <button type="button" className="ml-2 rounded-(--radius) border border-(--separator) px-2 py-0.5 text-xs hover:border-(--foreground)" aria-pressed={paused} onClick={() => setPaused(!paused)}>
             {paused ? "Play the motion" : "Pause the motion"}

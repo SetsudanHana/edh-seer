@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { expect, test } from "vitest";
 import { CardPage } from "./CardPage.js";
@@ -284,8 +284,8 @@ test("going to a partner's page keeps the map: the card you came from stays, wit
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
   expect(await screen.findByRole("group", { name: /^Skullclamp and 3 of the cards/ })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" })).toBeInTheDocument();
-  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
-  expect(document.querySelector("[data-testid=constellation-route]")).not.toBeNull();
+  // The route is drawn by the map's own frame loop, so it is waited for, not assumed.
+  await waitFor(() => expect(document.querySelector("[data-testid=constellation-route]")).not.toBeNull());
   // The card it came from is still on the map, and so is one of its partners that Skullclamp does not name.
   expect(document.querySelector("[data-id='impact-tremors']")).not.toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" }));

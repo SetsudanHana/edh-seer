@@ -256,13 +256,16 @@ class Sky {
   fitPath() { this.fit([...this.visited, this.focus, ...[...this.edges.values()].filter((e) => e.to >= 1).flatMap((e) => [e.a, e.b])], 1.1); }
   zoom(f: number) { this.camTo(this.cam.x, this.cam.y, Math.min(6000, Math.max(this.geo.minW * 0.6, this.cam.w * f))); }
 
+  dead = false;
   start() {
-    const loop = (t: number) => { this.draw(t); this.raf = requestAnimationFrame(loop); };
+    const loop = (t: number) => { if (this.dead) return; this.draw(t); this.raf = requestAnimationFrame(loop); };
     this.raf = requestAnimationFrame(loop);
   }
-  stop() { cancelAnimationFrame(this.raf); }
+  stop() { this.dead = true; cancelAnimationFrame(this.raf); }
 
   draw(t: number) {
+    // A map taken off the page (a remount, a route change) draws nothing: its layers are gone.
+    if (this.dead || !this.layers.labels) return;
     const dt = this.last ? Math.min(0.05, (t - this.last) / 1000) : 0;
     this.last = t; this.clock += dt;
     const kf = this.still ? 1 : 1 - Math.exp(-dt * 10);
@@ -440,7 +443,8 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
 
   useEffect(() => {
     const L = layers.current;
-    const s = new Sky(svg.current!, L as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id),
+    // THE LAYERS AS THEY ARE NOW, not the ref object React empties on unmount.
+    const s = new Sky(svg.current!, { ...L } as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id),
       (id, x, y) => setMenu({ id, x, y }));
     s.pinned = (id) => handlers.current.isPinned?.(id) ?? false;
     sky.current = s;
