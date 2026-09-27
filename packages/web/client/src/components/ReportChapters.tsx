@@ -6,7 +6,7 @@ import { DeckIdentity } from "./DeckIdentity.js";
 import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { CutList, type Surplus } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
-import { SpeedPanel } from "./SpeedPanel.js";
+import { HowYouWin } from "./HowYouWin.js";
 import { TableTalkLine } from "./TableTalk.js";
 import { tableTalk } from "../lib/table-talk.js";
 import { FirstTurns } from "./FirstTurns.js";
@@ -341,19 +341,19 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  review 2026-09-26). They sat at the end of Roles, a chapter about counting jobs, where
             *  every seat read them as a grey tail after the card shelves. */}
           {report.deckMath ? (
-            // No title of its own: its sections are headed "How you win" and "What your cards are
-            // waiting for" already, and a third heading over them said the first one twice.
+            // No title of its own: its sections are headed "Your first 5 turns", "How you win" and
+            // "What your cards are waiting for" already.
             <Movement count="its first turns, how fast it wins, and what its cards need from each other">
               <div className="max-w-5xl flex flex-col gap-8">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS BESIDE THE SKY LIGHTING THEM. */}
                 {turns ? <FirstTurns model={turns} sky={themes ?? undefined} /> : null}
-                <SpeedPanel report={report} manaValueOf={manaValueOf} />
+                <HowYouWin report={report} manaValueOf={manaValueOf} />
                 <BuildBenchmarks
                   categories={report.buildCategories}
                   parents={report.buildParents}
                   deckMath={report.deckMath}
                   answerCoverage={report.answerCoverage}
-                  sections={["win", "waiting"]}
+                  sections={["waiting"]}
                   showBenchmarks={false}
                 />
               </div>
