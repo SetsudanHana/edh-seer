@@ -53,8 +53,15 @@ export function tableTalk(report: DeckReport, graph: CardGraph | undefined, mana
   const primary = classes[0];
   const second = classes[1];
   const fastest = fastestRoute(speedRoutes(report, manaValueOf));
+  // "MOSTLY" ONLY WHEN THE DECK LEANS (persona round 2026-09-27: "It wins mostly by …" beside How
+  // you win's "Spread about evenly across 4 plans"). The lean test is the one `WinPlans` prints.
+  const focus = report.deckMath?.wincons.focus ?? 1;
+  const leans = classes.length <= 1 || focus >= 1 / classes.length + 0.15;
+  const phrase = (c: { class: string }) => WIN_PHRASE[c.class] ?? c.class;
   const plan = primary
-    ? `It wins mostly by ${WIN_PHRASE[primary.class] ?? primary.class}${second ? `, or ${WIN_PHRASE[second.class] ?? second.class}` : ""}`
+    ? (leans
+      ? `It wins mostly by ${phrase(primary)}${second ? `, or ${phrase(second)}` : ""}`
+      : `It spreads its wins across ${classes.length} plans: ${list([...classes.slice(0, 3).map(phrase), ...(classes.length > 3 ? [`${classes.length - 3} more`] : [])])}`)
       + (fastest?.turn === undefined ? ""
         : fastest.kind === "combo" ? `, and can combo as early as turn ${fastest.turn}`
         : `, and its creatures can kill one opponent around turn ${fastest.turn}`)
