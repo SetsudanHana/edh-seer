@@ -17,6 +17,7 @@ import { ManaAvailability } from "./ManaAvailability.js";
 import { REFERENCE_SURFACES, ReportShell } from "./ReportShell.js";
 import { DeckGauges } from "./DeckGauges.js";
 import { MemoryRouter } from "react-router";
+import { engineDeck } from "../lib/engine-model.fixture.js";
 import { CHAPTERS } from "../lib/chapters.js";
 import { HighSynergyCards } from "./HighSynergyCards.js";
 import { BuildBenchmarks, demandSentence } from "./BuildBenchmarks.js";
@@ -3242,4 +3243,23 @@ test("more than four combos fold behind Show all", () => {
   expect(screen.getAllByTestId("bracket-combo")).toHaveLength(4);
   fireEvent.click(screen.getByRole("button", { name: "Show all 6" }));
   expect(screen.getAllByTestId("bracket-combo")).toHaveLength(6);
+});
+
+/** A NEW REPORT STARTS FROM ITS COMMANDER (owner, 2026-09-27: "with Rani deck I managed somehow to
+ *  get Essence Flux as my starting point"). The chapters stay mounted from one deck to the next, so
+ *  a card walked to on the last deck stayed the middle whenever the next deck also played it. */
+test("the commander's orbit starts from the commander on a new report, whatever was walked to on the last", async () => {
+  const { report, graph } = engineDeck();
+  const data = (r: typeof report) => ({ ...SAMPLE, report: { ...SAMPLE.report, ...r }, graph }) as never;
+  const user = userEvent.setup();
+  const { rerender } = render(<MemoryRouter><ReportChapters data={data(report)} /></MemoryRouter>);
+  const orbit = () => screen.getByRole("group", { name: / and the \d+ cards? it works with$/ });
+  expect(orbit()).toHaveAccessibleName(/^Commander and/);
+  // A first tap reads the pair, a second puts the card in the middle.
+  await user.click(within(orbit()).getByRole("button", { name: "Payoff A" }));
+  await user.click(within(orbit()).getByRole("button", { name: "Payoff A" }));
+  expect(orbit()).toHaveAccessibleName(/^Payoff A and/);
+  // The next deck also plays Payoff A.
+  rerender(<MemoryRouter><ReportChapters data={data({ ...report })} /></MemoryRouter>);
+  expect(orbit()).toHaveAccessibleName(/^Commander and/);
 });

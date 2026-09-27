@@ -276,6 +276,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         <PageMap key={`${withSlug ?? ""}|${pair ? "pair" : ""}|${colour ?? ""}`} page={page} slug={slug} rows={ranked.partners} base="/commanders"
           pair={pair && withSlug ? { slug: withSlug, name: pair.name, artCrop: pair.artCrop } : undefined}
           hrefOf={(id) => (id === withSlug ? `/commanders/${id}` : `/cards/${id}`)}
+          loadPage={loader}
           // THE COUNT SAYS WHAT IT COUNTS (persona round, 2026-09-27: 34 on the card page, 30 here,
           // for the same card, read as the site disagreeing with itself).
           countNote={`that a deck led by ${page.name.split(",")[0]}${pair ? ` and ${pair.name.split(",")[0]}` : ""} can play`} />
