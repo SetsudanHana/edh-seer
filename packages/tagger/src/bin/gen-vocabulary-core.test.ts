@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildVocabulary, renderSubtypesModule } from "./gen-vocabulary-core.js";
+import { buildVocabulary, renderSubtypesModule, withCr } from "./gen-vocabulary-core.js";
 
 const types = {
   data: {
@@ -105,4 +105,11 @@ test("land subtypes are emitted separately as well as pooled", () => {
 test("the rendered module exports the land subtypes too", () => {
   const src = renderSubtypesModule(buildVocabulary(types, enums));
   expect(src).toContain("export const LAND_SUBTYPES: ReadonlySet<string> = new Set([");
+});
+
+test("the rules' own artifact types are unioned in where MTGJSON lags (2026-09-27: Heartwood)", () => {
+  const unioned = withCr({ data: { artifact: { subTypes: ["Treasure"], superTypes: [] } } });
+  expect(unioned.data.artifact!.subTypes).toContain("Treasure");
+  expect(unioned.data.artifact!.subTypes).toContain("Heartwood");
+  expect(unioned.data.land!.subTypes).toContain("Urza's");
 });

@@ -51,6 +51,7 @@ const TRIGGER_ALIASES_701: Record<string, string> = {
   "collect evidence": "collect-evidence",
   "manifest dread": "manifest-dread",
   "face a villainous choice": "face-a-villainous-choice",
+  "empower jace": "empower-jace",
 };
 /** `activate` is excluded as a VERB (a card never instructs it) and is a real TRIGGER (CR 602,
  *  "whenever you activate an ability" — 36 corpus cards). */
@@ -154,6 +155,8 @@ const CR_EVENTS: Row[] = [
   row("709.5", "a Room is unlocked", "unlocked"),
   row("719", "solves a Case", "solved", 1),
   row("701.54a", "chooses a Ring-bearer (part of the Ring tempting)", "ring-tempts"),
+  row("722.3a", "becomes prepared (a designation)", "prepared"),
+  row("722.3b", "becomes unprepared", "unprepared"),
   // --- excluded on legality, never on count.
   excluded("123", "puts a sticker on", "Unfinity sticker sheets, the same footing as Attractions", 9),
   excluded("901", "chaos ensues / planeswalks", "Planechase; no plane is ever in a decklist", 238),
@@ -211,6 +214,8 @@ const VERB_TO_TRIGGER: Record<string, string> = {
   "add-mana": "tapped-for-mana",
   "roll-dice": "dice-rolled",
   monstrosity: "becomes-monstrous",
+  prepare: "prepared",
+  unprepare: "unprepared",
   "extra-turn": "untap-step",
   "extra-combat": "begin-combat",
   "extra-phase": "main-phase",

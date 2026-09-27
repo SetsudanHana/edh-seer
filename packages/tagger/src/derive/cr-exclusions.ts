@@ -24,4 +24,5 @@ export const VERB_ALIASES_701: Record<string, string> = {
   "collect evidence": "collect-evidence",
   "manifest dread": "manifest-dread",
   "face a villainous choice": "face-a-villainous-choice",
+  "empower jace": "empower-jace",
 };

@@ -30,10 +30,20 @@ const headings = (prefix: string): string[] =>
     .map((m) => m[1].trim())
     .filter((t) => !/[.,;:]$/.test(t) && !/^most /i.test(t));
 
+/** CR 205.3g/h/i: "The artifact types are Attraction (see rule 717), Blood, ..., and Vibranium." MTGJSON
+ *  lags these the way it lags keyword abilities -- Heartwood (111.10x, Reality Fracture) and three
+ *  older token types were missing on 2026-09-27 -- so `gen-vocabulary` unions them in. */
+const typeList = (rule: string): string[] => {
+  const line = cr.replace(/\r/g, "").split("\n").find((l) => l.startsWith(`${rule} `)) ?? "";
+  const list = line.match(/ types are (.*?)\.(?:\s|$)/)?.[1] ?? "";
+  return list.replace(/\s*\(see rule[^)]*\)/g, "").split(/,\s*(?:and\s+)?|\s+and\s+/).map((x) => x.trim().replace(/’/g, "'")).filter(Boolean);
+};
+
 const out = {
   version: file.replace(/\D/g, ""),
   actions: headings("701"),
   abilities: headings("702"),
+  subtypes: { artifact: typeList("205.3g"), enchantment: typeList("205.3h"), land: typeList("205.3i") },
   // EVERY CR section, all nine bands — not just the 700s. The 700s are where the per-mechanic rules
   // live (Saga 714, Adventure 715, Omen 720), but 800 is multiplayer and 903 is COMMANDER, and an
   // EDH engine that never swept 903 is exactly the blind spot this list exists to remove.

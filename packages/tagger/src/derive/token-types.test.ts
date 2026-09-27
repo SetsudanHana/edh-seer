@@ -38,3 +38,12 @@ test("the bundled map resolves the tokens defect B was about", () => {
   expect(tokenTypeFor("gold")).toBe("artifact");
   expect(tokenTypeFor("nonsense-not-a-token")).toBeUndefined();
 });
+
+test("a predefined token keeps the rule's type whatever else shares its subtype", () => {
+  // CR 111.10a: a Treasure token is an artifact. The Sculpture Treasure token is an artifact creature.
+  const map = buildTokenTypes(["Token Artifact — Treasure", "Token Artifact Creature — Sculpture Treasure", "Token Artifact Creature — Food Golem", "Token Artifact — Heartwood"]);
+  expect(map.treasure).toEqual(["artifact"]);
+  expect(map.food).toEqual(["artifact"]);
+  expect(map.heartwood).toEqual(["artifact"]);
+  expect(map.sculpture).toEqual(["artifact", "creature"]);
+});

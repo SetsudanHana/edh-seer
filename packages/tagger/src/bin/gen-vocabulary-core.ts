@@ -116,6 +116,17 @@ const SUBTYPE_BEARING_TYPES = [
   "creature", "land", "artifact", "enchantment", "battle", "planeswalker", "instant", "sorcery",
 ] as const;
 
+/** CR 205.3's own artifact, enchantment and land type lists, UNIONED with MTGJSON's for the reason
+ *  `crKeywordAbilities` gives: MTGJSON lags the rules (Heartwood, Lander, Mutagen and Vibranium were
+ *  absent on 2026-09-27, so "create a Heartwood token" lost its subtype). */
+const CR_SUBTYPES: Record<string, readonly string[]> = crKeywords.subtypes;
+export const withCr = (types: CardTypesPayload): CardTypesPayload => ({
+  data: Object.fromEntries([...new Set([...Object.keys(types.data), ...Object.keys(CR_SUBTYPES)])].map((k) => {
+    const had = types.data[k] ?? { subTypes: [], superTypes: [] };
+    return [k, { ...had, subTypes: [...new Set([...had.subTypes, ...(CR_SUBTYPES[k] ?? [])])] }];
+  })),
+});
+
 export function buildVocabulary(types: CardTypesPayload, enums: EnumValuesPayload): Vocabulary {
   const sub = (k: string): string[] => types.data[k]?.subTypes ?? [];
   return {

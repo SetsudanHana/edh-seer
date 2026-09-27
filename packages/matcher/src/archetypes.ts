@@ -106,6 +106,9 @@ export interface CardSignal {
  *  member of the signature, so an untyped token maker still counts. */
 export const RESOURCE_TOKENS: ReadonlySet<string> = new Set([
   "treasure", "clue", "food", "blood", "map", "gold", "powerstone", "incubator", "junk",
+  // CR 111.10u-x, read as subtypes since 2026-09-27 (MTGJSON lagged them): Heartwood and Vibranium
+  // are mana, a Lander fetches a land, a Mutagen is a +1/+1 counter. None is a board.
+  "heartwood", "lander", "mutagen", "vibranium",
   // NOT RESOURCES, AND NOT A GO-WIDE PLAN EITHER (roadmap T2b). A Role is an Aura the token layer
   // attaches to a creature -- "Cursed Role" is a debuff you put on THEIR creature -- and an Aura
   // token is the same shape. Neither is a body, and a deck making them is not a Tokens deck.

@@ -138,6 +138,9 @@ const SIMPLE: Record<string, EffectKind> = {
   // every payoff in the engine actually reads. turn-face-up flips a manifested or morphed permanent
   // -- a state change of an existing permanent, which is what `animate` already names.
   amass: "counter-placement",
+  // CR 701.71 empower Jace, Reality Fracture: loyalty counters on a Jace token, creating it first if
+  // there is none -- amass's shape exactly, so amass's kind.
+  "empower-jace": "counter-placement",
   "turn-face-up": "animate",
   "trigger-again": "trigger-doubling",
   // (The old note here said `copy-spell` could never fire because VERBS has only `copy`. True of the
