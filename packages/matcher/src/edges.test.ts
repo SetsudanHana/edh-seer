@@ -5099,6 +5099,9 @@ test("a trigger that sacrifices its own source links once; Impact Tremors still 
     kind: "activated", cost: "{2}", effect: { kind: "token-generation" },
     emits: [{ verb: "enters", subject: { control: "you", token: true, type: "creature" } }],
   }] as CardTags["abilities"]);
+  // An ARTIFACT maker, so only the token stream reaches a creature-enters trigger: a creature maker's
+  // own entry is a separate, once link (#560).
+  maker.tags.characteristics.types = ["artifact"];
   const rep = (c: ReturnType<typeof base>) => directedReasons(maker, c, H).filter((r) => r.tag === "enters:creature").map((r) => r.repeatability);
   expect(new Set(rep(bombers))).toEqual(new Set(["oneshot"]));
   expect(rep(tremors).length).toBeGreaterThan(0);
@@ -5400,4 +5403,49 @@ test("a recursion link names what actually reaches the graveyard, once per tag (
   expect(new Set(both.map((r) => r.tag)).size).toBe(both.length);
   // And the card's own fill is the one that speaks: it is the more specific fact.
   expect(both.map((r) => r.text)).toContain("When Looter is in the graveyard, Reanimate can bring it back");
+});
+
+/** A CARD'S OWN ENTRY HAPPENS ONCE (issue #560): "When Simic Ascendancy enters, Setessan Champion
+ *  puts a counter" read EVERY TIME. What re-supplies the entry is its own producer and stays
+ *  repeatable, and the same claim reached both ways is one row, repeatable. */
+test("a card's own entry links once; a claim seen once and repeatably is one repeatable row", () => {
+  const constellation = base("Setessan Champion", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { control: "you", token: null, type: "enchantment" } }, effect: { kind: "draw-card" },
+  }] as CardTags["abilities"]);
+  const ench = base("Simic Ascendancy", []);
+  ench.tags.characteristics.types = ["enchantment"];
+  const own = directedReasons(ench, constellation, H).filter((r) => r.tag.startsWith("enters:"));
+  expect(own.map((r) => r.repeatability)).toEqual(["oneshot"]);
+
+  expect(dedupeReasons([
+    { ...own[0]!, repeatability: "oneshot" }, { ...own[0]!, repeatability: "triggered" },
+  ]).map((r) => r.repeatability)).toEqual(["triggered"]);
+  // A merged row still absorbs a later exact duplicate from another ability (review 2026-09-27).
+  expect(dedupeReasons([
+    { ...own[0]!, repeatability: "oneshot" }, { ...own[0]!, repeatability: "triggered", producerAbility: 0 },
+    { ...own[0]!, repeatability: "triggered", producerAbility: 1 },
+  ])).toHaveLength(1);
+  // A TOKEN NODE's entry is every time its maker makes one, not once.
+  const token = base("Goblin", []);
+  token.tags.characteristics.types = ["enchantment"];
+  token.tags.characteristics.token = true;
+  expect(directedReasons(token, constellation, H).filter((r) => r.tag.startsWith("enters:")).map((r) => r.repeatability)).not.toContain("oneshot");
+  // Two repeatable tags were two rows before this split and stay two.
+  expect(dedupeReasons([{ ...own[0]!, repeatability: "triggered" }, { ...own[0]!, repeatability: "activated" }])).toHaveLength(2);
+});
+
+/** COUNTERS ON ITS OWN SOURCE SAY SO (issue #560): Simic Ascendancy's growth counters. */
+test("a counter placer whose counters land on itself names itself and the counter kind", () => {
+  const ascendancy = base("Simic Ascendancy", [{
+    kind: "triggered", trigger: { verbs: ["counter-added"], subject: { control: "you", token: null, type: "creature", counter: "+1/+1" } },
+    effect: { kind: "counter-placement", subject: { control: "any", token: null } }, amount: "that many",
+    emits: [{ verb: "counter-added", subject: { control: "any", token: null, counter: "growth", self: true } }],
+  }] as CardTags["abilities"]);
+  const grower = base("Grower", [{
+    kind: "activated", cost: "{1}", effect: { kind: "counter-placement" },
+    emits: [{ verb: "counter-added", subject: { control: "you", token: null, type: "creature", counter: "+1/+1", self: true } }],
+  }] as CardTags["abilities"]);
+  const texts = directedReasons(grower, ascendancy, H).map((r) => r.text);
+  expect(texts.some((t) => t.includes("puts that many growth counters on itself"))).toBe(true);
+  expect(texts.some((t) => t.includes("on a permanent"))).toBe(false);
 });
