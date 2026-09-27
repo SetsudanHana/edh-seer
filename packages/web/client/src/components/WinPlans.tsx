@@ -3,24 +3,13 @@ import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
 import { fastestRoute, type SpeedRoute } from "../lib/speed.js";
+import type { EngineModel } from "../lib/engine-model.js";
+import { PlanMap } from "./PlanMap.js";
 
 type Wincons = NonNullable<DeckReport["deckMath"]>["wincons"];
 
 /** Names shown on a plan before "Show all": enough to recognise the plan, short enough to scan. */
 const NAMED = 8;
-
-/** WHAT PUT A CARD ON EACH PLAN, in the words of the rule that did (`matcher/src/rules.json` and
- *  `wincon.ts`). A player checks a plan by its cards, and can only catch a wrong card if the page
- *  says what a right one looks like. */
-const WHAT_COUNTS: Record<string, string> = {
-  "go-wide": "cards that make creature tokens; they count only because the deck also has cards that pay a wide board off",
-  voltron: "equipment, and auras that enchant a creature",
-  stompy: "creatures with more power than their mana value",
-  burn: "cards that deal damage or make players lose life outside combat",
-  mill: "cards that make opponents mill",
-  "alt-win": "cards that say you win the game",
-  combo: "pieces of the combos Commander Spellbook knows in this deck; not every one of those combos wins the game on its own",
-};
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const phrase = (cls: string) => WIN_PHRASE[cls] ?? cls;
@@ -34,13 +23,14 @@ const ROUTE_OF: Record<string, SpeedRoute["kind"]> = {
 /** HOW THE DECK WINS, WITH THE CARDS THAT DO IT, AND HOW FAST (owner, 2026-09-26: "we should be able
  *  to determine how the deck can win"; 2026-09-27: "How fast it can win and How you win" were walls
  *  of text "no one is going to read"). Each plan is a tile: its name, the turn it can win by and how
- *  many cards carry it. The picked plan's cards, what put them there and what its turn counts are
- *  read one plan at a time. What every number ignores sits behind one
- *  disclosure at the foot, not under every line.
+ *  many cards carry it. The picked plan's cards are read one plan at a time, drawn as a
+ *  map where the deck's links are known.
  *
  *  `routes` are `speedRoutes`: without them (the build panel's own copy) the tiles have no turn. */
-export function WinPlans({ wincons, routes, pressure }: {
+export function WinPlans({ wincons, routes, pressure, model }: {
   wincons: Wincons; routes?: SpeedRoute[];
+  /** The deck's links: with them, the picked plan is drawn as a map (`PlanMap`) instead of named. */
+  model?: EngineModel | null;
   /** The combat clock's snapshot on the way there: expected power on board by turn 5. */
   pressure?: number;
 }) {
@@ -68,17 +58,7 @@ export function WinPlans({ wincons, routes, pressure }: {
         {classes.map((c) => <Tile key={c.class} plan={c} route={routes ? routeOf(c.class) ?? null : undefined}
           picked={pickable && c.class === plan.class} onPick={pickable ? () => setPicked(c.class) : undefined} />)}
       </div>
-      <Detail plan={plan} route={route} pressure={route?.kind === "combat" ? pressure : undefined} />
-      <details className="max-w-[65ch]">
-        <summary className="eyebrow cursor-pointer text-(--muted)">what the plans and turns count</summary>
-        <ul className="flex flex-col gap-1.5 pt-2 text-xs text-(--muted)">
-          <li>Each plan is read off what the cards say, so one card can sit on two plans, and a card that only looks like one (an aura that removes a creature, say) can land on the wrong one. Tap a card to check it.</li>
-          {routes?.map((r) => <li key={r.kind}>{cap(r.label)}: {r.caveat}.</li>)}
-          {routes?.some((r) => r.kind === "combat") ? (
-            <li>The combat turn is attacking power against ONE opponent&rsquo;s 40 life, not the table: nobody blocks, nothing is removed, and every point of mana goes to creatures. Read it to compare decks, not to plan a game.</li>
-          ) : null}
-        </ul>
-      </details>
+      <Detail plan={plan} route={route} pressure={route?.kind === "combat" ? pressure : undefined} model={model} />
     </div>
   );
 }
@@ -101,7 +81,13 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
 }
 
 /** The one plan picked: when it can win, what put its cards there, and the cards. */
-function Detail({ plan, route, pressure }: { plan: Wincons["classes"][number]; route?: SpeedRoute; pressure?: number }) {
+function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][number]; route?: SpeedRoute; pressure?: number; model?: EngineModel | null }) {
+  // THE PLAN AS A MAP, THE FINISHERS IN THE MIDDLE (report cohesion audit, 2026-09-27); a plan
+  // with no finishers named is drawn round the commander.
+  const middle = plan.payoffs?.length ? plan.payoffs
+    : model ? [...model.cards.values()].filter((c) => c.isCommander && !c.isFace).map((c) => c.name) : [];
+  const map = model && plan.cards?.length && middle.length
+    ? <PlanMap model={model} middle={middle} around={plan.cards} /> : null;
   const spread = route?.turn !== undefined && route.mana !== undefined && (route.early !== route.turn || route.late !== route.turn)
     ? ` (turn ${route.early ?? "?"} in fast games, ${route.late !== undefined ? `turn ${route.late}` : "later than turn 8"} in slow ones)` : "";
   return (
@@ -114,9 +100,12 @@ function Detail({ plan, route, pressure }: { plan: Wincons["classes"][number]; r
           {pressure !== undefined ? <span className="text-(--muted)">; {pressure} power on board by turn 5</span> : null}.
         </p>
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}
-      <p className="text-xs text-(--muted)">{cap(WHAT_COUNTS[plan.class] ?? "")}.</p>
-      {plan.cards?.length ? <Names lead={plan.payoffs ? "Makes the board" : undefined} names={plan.cards} /> : null}
-      {plan.payoffs?.length ? <Names lead="Turns it into a win" names={plan.payoffs} /> : null}
+      {map ?? (
+        <>
+          {plan.cards?.length ? <Names lead={plan.payoffs ? "Makes the board" : undefined} names={plan.cards} /> : null}
+          {plan.payoffs?.length ? <Names lead="Turns it into a win" names={plan.payoffs} /> : null}
+        </>
+      )}
     </div>
   );
 }

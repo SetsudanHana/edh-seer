@@ -303,10 +303,11 @@ test("two cards on the map whose names start the same both show their whole name
   ];
   at("krenko-mob-boss", async () => ({ ...KRENKO, partners: rows }));
   const map = await screen.findByRole("group", { name: /works well with/ });
-  const labels = [...map.querySelectorAll("text.constellation-label")].map((t) => t.textContent);
-  expect(labels).toContain("Krenko, Tin Street Kingpin");
-  expect(labels).toContain("Krenko, Mob Boss");
-  expect(labels).not.toContain("Krenko");
+  // The labels are drawn by the map's own effect after the group mounts, so they are waited for.
+  const labels = () => [...map.querySelectorAll("text.constellation-label")].map((t) => t.textContent);
+  await waitFor(() => expect(labels()).toContain("Krenko, Tin Street Kingpin"), { timeout: 3000 });
+  expect(labels()).toContain("Krenko, Mob Boss");
+  expect(labels()).not.toContain("Krenko");
   // The colours' key is at the map.
   expect(screen.getByRole("list", { name: "What the colours are" })).toBeInTheDocument();
 });
