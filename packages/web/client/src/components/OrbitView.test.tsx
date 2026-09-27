@@ -206,3 +206,22 @@ test("a right click on the map itself offers the view and the motion", async () 
   expect(screen.getByRole("button", { name: "Play the motion" })).toBeInTheDocument();
   try { localStorage.removeItem("orbit-paused"); } catch { /* none */ }
 });
+
+/** A CARD OPENS IN THE DRAWER, AND EMPTY SPACE CLEARS THE PICK (owner, 2026-09-27: the panel's box
+ *  "is not very informative", and a tap on empty space left the pick in place). */
+test("tapping a card opens it in the drawer; tapping empty space clears the pick", async () => {
+  const { report, graph } = engineDeck();
+  const user = userEvent.setup();
+  const { container } = render(<CardDrawerProvider graph={graph}><OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} /></CardDrawerProvider>);
+  const map = container.querySelector<SVGSVGElement>("svg[role=group]")!;
+  const node = () => within(map as unknown as HTMLElement).getByRole("button", { name: "Payoff B" });
+  await user.click(node());
+  expect(await screen.findByTestId("card-inspector")).toBeInTheDocument();
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  expect(node()).toHaveAttribute("aria-pressed", "true");
+  // The pointer leaves the card for empty space, then taps there.
+  await user.unhover(node());
+  fireEvent.click(map);
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  expect(node()).toHaveAttribute("aria-pressed", "false");
+});

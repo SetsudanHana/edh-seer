@@ -92,6 +92,14 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
       if (p) { setAway({ slug: id, page: p }); peek?.push(id); } else leave(id);
     });
   };
+  // A TAP ON EMPTY SPACE CLEARS THE PICK (owner, 2026-09-27), and the panel beside the list goes
+  // back to the card in the middle: the page's own, or the one walked to.
+  const blank = () => {
+    setSel(null);
+    if (!peek) return;
+    if (!away) peek.close();
+    else if (peek.stack.at(-1) !== slug) { peek.close(); peek.push(slug); }
+  };
   const tap = (id: string) => {
     // The middle card: shown beside the list again when the walk has left the page's own card.
     if (id === slug) { setSel(null); if (away && peek && peek.stack.at(-1) !== id) peek.push(id); return; }
@@ -124,7 +132,7 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
       ) : null}
       <div className="max-w-[min(100%,calc((100svh-12rem)*1.2222))]">
         <Constellation model={world.current} orbit={map.orbit} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow}
-          onTap={tap} onHover={setHover} menuFor={menuFor} pick={pickRoundRobin}
+          onTap={tap} onHover={setHover} onBlank={blank} menuFor={menuFor} pick={pickRoundRobin}
           label={`${page.name} and ${shown} of the cards it works well with, coloured by the groups below`} />
       </div>
       {/* THE COLOURS' KEY, WHERE THE MAP IS (persona round, 2026-09-27: "each colour is one of the
