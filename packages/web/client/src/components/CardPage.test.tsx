@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { expect, test } from "vitest";
 import { CardPage } from "./CardPage.js";
@@ -264,4 +264,31 @@ test("a card with too few partners for a picture keeps just the list", async () 
   at("krenko-mob-boss", async () => KRENKO);
   await screen.findByRole("heading", { level: 1, name: /Krenko, Mob Boss/ });
   expect(screen.queryByRole("group", { name: /works well with/ })).toBeNull();
+});
+
+/** THE MAP COMES ALONG (owner, 2026-09-27: walking between pages): the card you left stays on the
+ *  map with a route through it, and Back walks the route backwards. */
+test("going to a partner's page keeps the map: the card you came from stays, with a route and a way back", async () => {
+  const rowsOf = (names: string[], event: string) => names.map((slug) => ({ name: slug, slug, score: 0.1, event, reason: `${slug} does it` }));
+  const pages: Record<string, CardPageData> = {
+    "krenko-mob-boss": { ...KRENKO, partners: rowsOf(["skullclamp", "impact-tremors", "purphoros"], "enters|creature|-|-") },
+    skullclamp: { ...KRENKO, name: "Skullclamp", partners: rowsOf(["krenko-mob-boss", "carrion-feeder", "pitiless-plunderer"], "dies|creature|-|-") },
+  };
+  render(
+    <MemoryRouter initialEntries={["/cards/krenko-mob-boss"]}>
+      <Routes><Route path="/cards/:slug" element={<CardPage load={async (s) => pages[s] ?? null} />} /></Routes>
+    </MemoryRouter>,
+  );
+  const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ });
+  fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
+  fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
+  expect(await screen.findByRole("group", { name: /^Skullclamp and 3 of the cards/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" })).toBeInTheDocument();
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  expect(document.querySelector("[data-testid=constellation-route]")).not.toBeNull();
+  // The card it came from is still on the map, and so is one of its partners that Skullclamp does not name.
+  expect(document.querySelector("[data-id='impact-tremors']")).not.toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "← Back to Krenko, Mob Boss" }));
+  expect(await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /← Back to/ })).toBeNull();
 });
