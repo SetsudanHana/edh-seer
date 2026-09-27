@@ -26,7 +26,7 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 **[edhseer.cards](https://edhseer.cards)**.
 
 <p align="center">
-  <a href="https://edhseer.cards"><img src="docs/images/demo.gif" width="880" alt="A Krenko, Mob Boss decklist is pasted and analysed. The report scrolls to what Krenko works with: a ring of Goblins around him. Goblin Warchief is tapped, its links read, and it is put in the middle. Then the deck's themes, led by their key cards, and the suggestions."></a>
+  <a href="https://edhseer.cards"><img src="docs/images/demo.gif" width="880" alt="A Krenko, Mob Boss decklist is pasted and analysed. The report scrolls to what Krenko works with: a ring of Goblins around him. Goblin Warchief is tapped and opens in a drawer with its text and what it works with. Then the deck's biggest theme is opened on its key cards, and the suggestions."></a>
 </p>
 
 ## What you get
@@ -50,19 +50,36 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 - **Bracket, roles and combos.** Where the deck sits, what each card is doing, and the combos it
   already holds, from [Commander Spellbook](https://commanderspellbook.com/).
 
-| What your commander works with | What your deck does |
-|---|---|
-| ![Krenko, Mob Boss in the middle and the Goblins around him, grouped by what each link is](packages/web/client/how-it-works/shot-orbit.webp) | ![The game plan chapter: the deck's biggest theme, led by its key cards](packages/web/client/how-it-works/shot-pairs.webp) |
-| **What to fix, biggest payoff first** | **Can you cast your cards** |
-| ![The suggestions chapter: short on card draw, with four cards that fit shown as card images](packages/web/client/how-it-works/shot-improve.webp) | ![The manabase chart: mana by turn in a typical game, and how many cards become castable on each turn](packages/web/client/how-it-works/shot-mana.webp) |
+<p align="center"><img src="packages/web/client/how-it-works/shot-orbit.webp" width="880" alt="What Krenko, Mob Boss works with: Krenko in the middle and the Goblins around him, grouped by what each link is, beside a list of the groups"></p>
 
-No deck handy? Every card and every commander has a page of its own that shows what works with it:
+| What your deck does | What to fix, biggest payoff first |
+|---|---|
+| ![The game plan chapter: one row per theme, the biggest opened on its key cards](packages/web/client/how-it-works/shot-pairs.webp) | ![The suggestions chapter: short on card draw, with three cards that fit shown as card images](packages/web/client/how-it-works/shot-improve.webp) |
+
+<p align="center"><img src="packages/web/client/how-it-works/shot-mana.webp" width="880" alt="The manabase chapter's five answers: lands, the weakest colour, opening hands, mana by turn 6, and the hardest card to cast on curve"></p>
+
+### No deck handy?
+
+Every commander, every card and every Commander precon has a page of its own. A precon's page says
+how well its cards work together and which swaps make them work together more; a commander's shows
+what works with it, over every card a deck it leads could legally hold.
+
+<p align="center">
+  <a href="https://edhseer.cards/precons/"><img src="docs/images/browse.gif" width="880" alt="The precons page. Multiverse Reforged is opened: its theme, synergy and bracket, a map of what Jace works with, and four swaps, each card out beside the card in. Then the site search finds Krenko, Mob Boss, and his commander page shows the cards that work with him on a map."></a>
+</p>
+
+| A page per commander | A page per precon |
+|---|---|
+| ![The commander page for Krenko, Mob Boss: the card, how the engine reads it, and a map of the cards that work well with it](packages/web/client/how-it-works/shot-commander.webp) | ![The precon page for Multiverse Reforged: theme, synergy and bracket, a map of what Jace works with, and the swaps that make the deck work together](packages/web/client/how-it-works/shot-precon.webp) |
+
+Start anywhere:
 [Skullclamp](https://edhseer.cards/cards/skullclamp) ·
 [Krenko, Mob Boss](https://edhseer.cards/commanders/krenko-mob-boss) ·
 [Atraxa, Praetors' Voice](https://edhseer.cards/commanders/atraxa-praetors-voice) ·
 [Inalla, Archmage Ritualist](https://edhseer.cards/commanders/inalla-archmage-ritualist) ·
 [Edgar Markov](https://edhseer.cards/commanders/edgar-markov) ·
 [Yuna, Grand Summoner](https://edhseer.cards/commanders/yuna-grand-summoner) ·
+[every precon](https://edhseer.cards/precons/) ·
 or [browse every commander](https://edhseer.cards/commanders).
 
 ## Why you can trust it
@@ -101,23 +118,25 @@ Krenko makes Goblin tokens enter, Impact Tremors cares about creatures entering,
 Farseek puts a land onto the battlefield, Enduring Courage cares about a creature entering, so they
 do not.
 
-```
-Scryfall / MTGJSON  ──►  oracle text
-                            │
-                            ▼  (a model, once per card, offline)
-                         clauses          ──  structured sentences
-                            │
-                            ▼  (pure functions, free)
-                      derived tags        ──  what each card causes, what it cares about
-                            │
-                            ▼  (pure functions, free)
-                        pairings          ──  "X causes the event Y cares about"
-                            │
-                            ▼
-                       deck report
+```mermaid
+flowchart LR
+  subgraph offline ["Once per card, offline"]
+    A["Oracle<br/>text"] --> B["Segment"]
+    B --> C["Normalize<br/>a model<br/>(paid)"]
+    C --> D["Derive<br/>causes and<br/>cares about"]
+  end
+  subgraph browser ["In your browser"]
+    E["Your<br/>deck"] --> F["Match"]
+    F --> G["Report"]
+  end
+  D --> F
+
+  style C fill:#7c2d12,color:#fff
+  style D fill:#14532d,color:#fff
+  style F fill:#1e3a8a,color:#fff
 ```
 
-Only the first arrow costs money, and the project pays it once per card. The rest re-runs for
+Only the red step costs money, and the project pays it once per card. The rest re-runs for
 free, which is why a wrong claim can be fixed and re-measured the same day.
 
 The full story, for players and for engineers, is at

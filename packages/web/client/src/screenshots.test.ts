@@ -7,7 +7,7 @@ const WEB = join(import.meta.dirname, "..", "..");
 
 /** THE PRODUCT SCREENSHOTS ARE REPRODUCIBLE, OR THEY FAIL HERE (docs refresh, 2026-09-25).
  *
- *  The README and /how-it-works show four frames of the real report, and the rule is that a change
+ *  The README and /how-it-works show six frames of the real product, and the rule is that a change
  *  which alters one of them re-runs `npm run screenshots -w @edh-seer/web` in the same PR
  *  (CONTRIBUTING.md, "Screenshots"). No test can see whether a frame is out of date -- that is on
  *  review, and on the PR checklist. What a test CAN hold is everything that makes re-running it a
@@ -68,13 +68,13 @@ test("each screenshot's declared size is its real size", () => {
  *  so it has to exist, come from `demo-gif.mts` like the frames do, and stay under a budget: GitHub
  *  stops rendering images past 10 MB, and a reader on a phone should not wait for most of that.
  *  The first recording was 2.8 MB at 880 px wide. */
-test("the README's demo is the scripted GIF, and under budget", () => {
-  const gif = join(WEB, "..", "..", "docs", "images", "demo.gif");
-  expect(readme).toContain('src="docs/images/demo.gif"');
+test.each(["demo.gif", "browse.gif"])("the README's %s is scripted, and under budget", (name) => {
+  const gif = join(WEB, "..", "..", "docs", "images", name);
+  expect(readme).toContain(`src="docs/images/${name}"`);
   expect(existsSync(gif)).toBe(true);
   const bytes = readFileSync(gif);
   expect(bytes.toString("ascii", 0, 6)).toBe("GIF89a");
   expect(bytes.length).toBeLessThan(5 * 1024 * 1024);
   const demo = readFileSync(join(WEB, "scripts", "demo-gif.mts"), "utf8");
-  expect(demo).toContain('"docs", "images", "demo.gif"');
+  expect(demo).toContain(`"docs", "images", "${name}"`);
 });

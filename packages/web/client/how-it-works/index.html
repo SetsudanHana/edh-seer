@@ -208,28 +208,47 @@
            wide. A change that alters one of these frames regenerates them in the same PR
            (CONTRIBUTING.md, "Screenshots"); `screenshots.test.ts` holds the sizes below to the files.
            Relative `src` so Vite content-hashes them into `/assets/`, where `_headers` already
-           caches for a year; `README.md` shows the same four files, so there is one copy of each.
+           caches for a year; `README.md` shows the same files, so there is one copy of each.
            Width and height are set so the page does not shift as they arrive. -->
       <div class="shots">
-        <figure class="shot shot-hero">
+        <figure class="shot">
           <img src="./shot-orbit.webp" width="1280" height="740" loading="lazy" decoding="async"
                alt="What Krenko, Mob Boss works with: Krenko in the middle and the Goblins around him, grouped by what each link is, beside a list of the groups." />
           <figcaption><strong>What your commander works with.</strong> Every card around it, grouped by what the link is. Tap one to see how, or put any card in the middle.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="./shot-pairs.webp" width="1040" height="640" loading="lazy" decoding="async"
-               alt="The game plan chapter: what the deck does, led by its biggest theme, Lords giving bigger stats, with its seven key cards and the Goblins that set them off." />
-          <figcaption><strong>Your game plan.</strong> What your deck does, each theme led by the cards that make it work.</figcaption>
+          <img src="./shot-pairs.webp" width="1040" height="356" loading="lazy" decoding="async"
+               alt="The game plan chapter: what the deck does, one row per theme. Anthems, 32 cards, is open on its key cards, one example link, and the themes made of the same cards." />
+          <figcaption><strong>Your game plan.</strong> What your deck does, one row per theme, each opening on the cards that make it work.</figcaption>
         </figure>
         <figure class="shot">
           <img src="./shot-improve.webp" width="1040" height="640" loading="lazy" decoding="async"
-               alt="The suggestions chapter: short on card draw, 9 against a target of 13, with four cards that fit shown as card images, each saying what it counts as and how it works with the deck." />
+               alt="The suggestions chapter: you will run out of cards before you run out of turns, 10 against a target of 13, with three cards that fit shown as card images, each saying what it counts as and how it works with the deck." />
           <figcaption><strong>What to fix first.</strong> Gaps stated in cards, biggest payoff at the top, with the cards that fit.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="./shot-mana.webp" width="640" height="394" loading="lazy" decoding="async"
-               alt="The manabase chart: mana by turn in a typical game, and how many cards first become castable on each turn." />
-          <figcaption><strong>Can you cast it.</strong> Mana by turn, and the turn most of your cards become castable.</figcaption>
+          <img src="./shot-mana.webp" width="1296" height="240" loading="lazy" decoding="async"
+               alt="The manabase chapter's five answers: lands, the weakest colour, opening hands, mana by turn 6, and the hardest card to cast on curve." />
+          <figcaption><strong>Can you cast it.</strong> Five answers first: lands, colours, opening hands, mana by turn, and the card you will struggle to cast. The numbers behind them fold away.</figcaption>
+        </figure>
+      </div>
+
+      <h2>Beyond your deck</h2>
+      <p>
+        No deck handy? Every commander and every card has a page that shows what works with it, ranked
+        over every card a deck could legally hold. Every Commander precon has one too: its theme, how
+        well its cards work together, and the swaps that make them work together more.
+      </p>
+      <div class="shots shots-pair">
+        <figure class="shot">
+          <img src="./shot-commander.webp" width="1408" height="1290" loading="lazy" decoding="async"
+               alt="The commander page for Krenko, Mob Boss: the card, how the engine reads it, what it cares about, and a map of the cards that work well with it." />
+          <figcaption><strong>A page per commander.</strong> What it cares about, and the cards that work with it, on a map and in a list. <a href="https://edhseer.cards/commanders/krenko-mob-boss">Krenko's</a>.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="./shot-precon.webp" width="1408" height="900" loading="lazy" decoding="async"
+               alt="The precon page for Multiverse Reforged: its theme, synergy and bracket, a map of what Jace works with, and the swaps that make the deck work together, each card out beside the card in." />
+          <figcaption><strong>A page per precon.</strong> Its theme, synergy and bracket, and the swaps that give its loosest cards a job. <a href="https://edhseer.cards/precons/">Every precon</a>.</figcaption>
         </figure>
       </div>
 
