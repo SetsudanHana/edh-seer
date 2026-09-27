@@ -542,8 +542,11 @@ function DeckMathRows({
                 : a.exiling > 0 ? `${a.exiling} of them exile` : "none of them exile";
             const label = `${a.class}, ${none ? "no answers" : plural(a.count, "card")}${odds ? `, ${odds}` : ""}${said ? `, ${said}` : ""}`;
             return (
-              <li key={a.class} className="flex flex-col gap-0.5" aria-label={label} data-testid="answer-row">
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm sm:gap-x-3">
+              <li key={a.class} className="relative flex flex-col gap-0.5" aria-label={label} data-testid="answer-row">
+                {/* THE WHOLE ROW TAPS ON A PHONE (persona round 2026-09-27: a 28px chevron on rows 33px
+                  *  apart, "I would expect to mis-hit"). The row is 44px tall below `sm` and the
+                  *  chevron's hit area is stretched across it. */}
+                <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-0.5 text-sm sm:min-h-0 sm:items-baseline sm:gap-x-3">
                   {/* THE SAME ALPHABET AS THE WAFFLE LEGEND (AM3). `graveyard` is a zone, not a card
                     *  type, and gets no glyph; the fixed slot keeps every word on one left edge. */}
                   <span className="w-28 shrink-0 capitalize inline-flex items-center gap-1.5 sm:w-32">
@@ -572,7 +575,7 @@ function DeckMathRows({
                     {mode ? <span className={mode.startsWith("none") ? "text-(--warning)" : ""}>{mode}</span> : null}
                   </span>
                   {a.cards?.length ? (
-                    <button type="button" className="sm:hidden -my-1 inline-flex size-7 items-center justify-center self-center rounded-(--radius) text-(--accent) hover:bg-(--surface-secondary)"
+                    <button type="button" className="sm:hidden ml-auto inline-flex size-7 items-center justify-center self-center rounded-(--radius) text-(--accent) after:absolute after:inset-x-0 after:top-0 after:h-11 after:content-['']"
                       aria-expanded={shownOn.has(a.class)} aria-controls={`answer-cards-${a.class}`} onClick={() => toggleShown(a.class)}
                       aria-label={shownOn.has(a.class) ? "Hide the cards" : "Which cards"}>
                       <svg aria-hidden="true" viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5"

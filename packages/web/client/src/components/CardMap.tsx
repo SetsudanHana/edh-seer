@@ -36,6 +36,8 @@ export function CardMap({ model, card, tone = "card" }: { model: EngineModel; ca
   });
   const disc = (c: EngineCard, x: number, y: number, r: number, k: string, ring: string) => (
     <g key={k} className="cursor-pointer" onClick={() => open(c.name)}>
+      {/* A 44px TAP TARGET, invisible, around a 28px disc (persona round 2026-09-27). */}
+      <circle cx={x} cy={y} r={Math.max(r, 22)} fill="transparent" pointerEvents="all" />
       <clipPath id={`${clip}-${k}`}><circle cx={x} cy={y} r={r} /></clipPath>
       <circle cx={x} cy={y} r={r} fill="var(--surface-secondary)" />
       {c.art ? <image href={c.art} x={x - r} y={y - r} width={r * 2} height={r * 2} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clip}-${k})`} /> : null}

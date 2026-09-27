@@ -45,7 +45,7 @@ export function mapPartners(o: OrbitModel, cap = MAP_CAP): { p: OrbitPartner; hu
 interface Tween { from: Look; to: Look; t0: number; dur: number; delay: number }
 interface Look { x: number; y: number; r: number; o: number; lo: number }
 interface Node extends Look {
-  id: string; card: EngineCard; g: SVGGElement; halo: SVGCircleElement; rim: SVGCircleElement; pip: SVGCircleElement; pin: SVGPathElement; label: SVGTextElement;
+  id: string; card: EngineCard; g: SVGGElement; hit: SVGCircleElement; halo: SVGCircleElement; rim: SVGCircleElement; pip: SVGCircleElement; pin: SVGPathElement; label: SVGTextElement;
   tw: Tween | null; glow: number; tglow: number; hue: string; dashed: boolean; homeR: number;
 }
 interface Edge {
@@ -100,6 +100,10 @@ class Sky {
     const card = this.card(id);
     if (!card) return null;
     const g = make("g", { class: "constellation-node", role: "button", tabindex: 0, "aria-label": `${displayName(card)}${card.isToken ? ` ${tokenLabel(card)}` : ""}`, "data-id": id }, this.layers.nodes);
+    // A TAP TARGET NEVER UNDER 44px ON SCREEN (persona round 2026-09-27: 31px discs packed together on
+    // a phone, "I would not risk tapping one one-handed"). Invisible, and sized every frame from the
+    // zoom, so a small disc still takes a thumb.
+    const hit = make("circle", { r: 50, fill: "transparent", "pointer-events": "all" }, g);
     const halo = make("circle", { r: 58, fill: "var(--accent)", opacity: 0, filter: "url(#constellation-glow)" }, g);
     make("circle", { r: 50, fill: "var(--surface-secondary)" }, g);
     if (card.art) make("image", { href: card.art, x: -50, y: -50, width: 100, height: 100, "clip-path": "url(#constellation-disc)", preserveAspectRatio: "xMidYMid slice" }, g);
@@ -147,7 +151,7 @@ class Sky {
     g.addEventListener("pointermove", (e) => { const pe = e as PointerEvent; if (Math.hypot(pe.clientX - this.press.x, pe.clientY - this.press.y) > 10) this.cancelPress(); });
     for (const t of ["pointerup", "pointercancel", "pointerleave"]) g.addEventListener(t, () => this.cancelPress());
     g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); this.tap(id); } });
-    const n: Node = { id, card, g, halo, rim, pip, pin, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0 };
+    const n: Node = { id, card, g, hit, halo, rim, pip, pin, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0 };
     this.nodes.set(id, n);
     return n;
   }
@@ -304,6 +308,9 @@ class Sky {
       n.label.style.display = n.lo > 0.02 ? "" : "none";
       n.g.setAttribute("transform", `translate(${n.x.toFixed(1)} ${n.y.toFixed(1)}) scale(${(Math.max(n.r, 0.1) / 50).toFixed(3)})`);
       n.g.setAttribute("opacity", n.o.toFixed(3));
+      // 22 screen px of radius, in the disc's own units (it is drawn at r 50, then scaled).
+      n.hit.setAttribute("r", Math.max(50, (22 * px) / (Math.max(n.r, 0.1) / 50)).toFixed(1));
+      n.hit.setAttribute("pointer-events", n.o > 0.05 ? "all" : "none");
       n.g.setAttribute("aria-pressed", String(isLit));
       n.rim.setAttribute("stroke", n.hue);
       n.rim.setAttribute("stroke-dasharray", n.dashed && !isF ? "10 8" : "none");
