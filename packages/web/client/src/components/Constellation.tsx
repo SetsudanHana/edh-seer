@@ -28,12 +28,14 @@ const NS = "http://www.w3.org/2000/svg";
 
 /** One geometry per width. A phone's map is taller than wide, as the phone is. `aspect` is width
  *  over height and must match the frame's CSS aspect ratio. */
-interface Geometry { aspect: number; cap: number; rings: number[]; step: number; minW: number; focusR: number; visitedR: number; partnerR: number; otherR: number }
-const WIDE: Geometry = { aspect: 880 / 720, cap: MAP_CAP, rings: [230, 300], step: 300, minW: 900, focusR: 58, visitedR: 34, partnerR: 26, otherR: 18 };
-const NARROW: Geometry = { aspect: 20 / 23, cap: 10, rings: [150, 210], step: 220, minW: 440, focusR: 44, visitedR: 28, partnerR: 24, otherR: 14 };
+/** `inner` and `minorR`: where the cards past `cap` go when the map draws every partner (the
+ *  Glance mockup, 2026-09-27): smaller, unnamed discs on a ring inside the named ones. */
+interface Geometry { aspect: number; cap: number; rings: number[]; inner: number[]; step: number; minW: number; focusR: number; visitedR: number; partnerR: number; minorR: number; otherR: number }
+const WIDE: Geometry = { aspect: 880 / 720, cap: MAP_CAP, rings: [230, 300], inner: [150, 188], step: 300, minW: 900, focusR: 58, visitedR: 34, partnerR: 26, minorR: 13, otherR: 18 };
+const NARROW: Geometry = { aspect: 20 / 23, cap: 10, rings: [150, 210], inner: [98, 124], step: 220, minW: 440, focusR: 44, visitedR: 28, partnerR: 24, minorR: 11, otherR: 14 };
 
 /** The partners the map draws for a card, strongest first, sectors in the report's order. */
-export function mapPartners(o: OrbitModel, cap = MAP_CAP): { p: OrbitPartner; hue: string }[] {
+export function mapPartners(o: OrbitModel, cap = MAP_CAP): MapPartner[] {
   return o.sectors.flatMap((s) => s.partners.map((p) => ({ p, hue: s.hue })))
     .map((x, i) => ({ ...x, i, rank: Math.min(...x.p.links.map((l) => RANK[l.repeat])) }))
     .sort((a, b) => a.rank - b.rank || a.i - b.i)
@@ -42,11 +44,22 @@ export function mapPartners(o: OrbitModel, cap = MAP_CAP): { p: OrbitPartner; hu
     .map(({ p, hue }) => ({ p, hue }));
 }
 
+/** A partner as the map draws it; a `minor` one is a small unnamed disc (see `Geometry.inner`). */
+export interface MapPartner { p: OrbitPartner; hue: string; minor?: boolean }
+
+/** EVERY PARTNER, THE STRONGEST NAMED (Glance mockup, 2026-09-27: all 41 of Inalla's cards around
+ *  her, not 14). The `cap` strongest keep their named disc; the rest are small and unnamed, and a
+ *  tap or a point still reads them. */
+export function allPartners(o: OrbitModel, cap = MAP_CAP): MapPartner[] {
+  const named = new Set(mapPartners(o, cap).map(({ p }) => p.card.id));
+  return mapPartners(o, Infinity).map((x) => ({ ...x, minor: !named.has(x.p.card.id) }));
+}
+
 interface Tween { from: Look; to: Look; t0: number; dur: number; delay: number }
 interface Look { x: number; y: number; r: number; o: number; lo: number }
 interface Node extends Look {
   id: string; card: EngineCard; g: SVGGElement; hit: SVGCircleElement; halo: SVGCircleElement; rim: SVGCircleElement; pip: SVGCircleElement; pin: SVGPathElement; label: SVGTextElement;
-  tw: Tween | null; glow: number; tglow: number; hue: string; dashed: boolean; homeR: number;
+  tw: Tween | null; glow: number; tglow: number; hue: string; dashed: boolean; homeR: number; minor: boolean;
 }
 interface Edge {
   a: string; b: string; line: SVGLineElement; t1: SVGLineElement; t2: SVGLineElement; arrow: SVGPathElement;
@@ -153,7 +166,7 @@ class Sky {
     g.addEventListener("pointermove", (e) => { const pe = e as PointerEvent; if (Math.hypot(pe.clientX - this.press.x, pe.clientY - this.press.y) > 10) this.cancelPress(); });
     for (const t of ["pointerup", "pointercancel", "pointerleave"]) g.addEventListener(t, () => this.cancelPress());
     g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); this.tap(id); } });
-    const n: Node = { id, card, g, hit, halo, rim, pip, pin, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0 };
+    const n: Node = { id, card, g, hit, halo, rim, pip, pin, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0, minor: false };
     this.nodes.set(id, n);
     return n;
   }
@@ -203,11 +216,11 @@ class Sky {
   }
 
   /** Where a new card goes: the free spot around `here` farthest from every card already placed. */
-  freeSpot(here: { x: number; y: number }) {
+  freeSpot(here: { x: number; y: number }, rings = this.geo.rings) {
     let best = here, bestD = -1;
     for (let k = 0; k < 36; k++) {
       const a = (k / 36) * Math.PI * 2;
-      for (const rr of this.geo.rings) {
+      for (const rr of rings) {
         const pt = { x: here.x + Math.cos(a) * rr, y: here.y + Math.sin(a) * rr };
         let d = Infinity;
         for (const q of this.place.values()) d = Math.min(d, Math.hypot(q.x - pt.x, q.y - pt.y));
@@ -218,24 +231,28 @@ class Sky {
   }
 
   /** A new card in the middle. Cards already placed keep their place; the view travels. */
-  walk(focus: string, prev: string | undefined, partners: { p: OrbitPartner; hue: string }[], visited: string[]) {
+  walk(focus: string, prev: string | undefined, partners: MapPartner[], visited: string[]) {
     this.focus = focus;
     this.visited = visited;
     const G = this.geo;
     const from = prev ? this.place.get(prev) : undefined;
     const here = this.place.get(focus) ?? (from ? { x: from.x, y: from.y - G.step } : { x: 0, y: 0 });
     this.place.set(focus, here);
-    for (const { p } of partners) if (!this.place.has(p.card.id)) this.place.set(p.card.id, this.freeSpot(here));
+    // The named cards first, on the outer rings; the small ones after, inside them.
+    for (const { p } of partners.filter((x) => !x.minor)) if (!this.place.has(p.card.id)) this.place.set(p.card.id, this.freeSpot(here));
+    for (const { p } of partners.filter((x) => x.minor)) if (!this.place.has(p.card.id)) this.place.set(p.card.id, this.freeSpot(here, G.inner));
     const seen = new Set(visited), around = new Set(partners.map(({ p }) => p.card.id));
+    const minor = new Set(partners.filter((x) => x.minor).map(({ p }) => p.card.id));
     let fresh = 0;
     for (const [id, pos] of this.place) {
       const n = this.node(id);
       if (!n) continue;
       const isF = id === focus, isV = seen.has(id), isP = around.has(id);
-      n.homeR = isF ? G.focusR : isV ? G.visitedR : isP ? G.partnerR : G.otherR;
+      n.minor = isP && !isF && !isV && minor.has(id);
+      n.homeR = isF ? G.focusR : isV ? G.visitedR : n.minor ? G.minorR : isP ? G.partnerR : G.otherR;
       n.tglow = isF ? 0.5 : isV ? 0.18 : 0;
       const on = isF || isV || isP;
-      const to = { x: pos.x, y: pos.y, r: n.homeR, o: on ? 1 : 0.35, lo: on ? 1 : 0 };
+      const to = { x: pos.x, y: pos.y, r: n.homeR, o: on ? 1 : 0.35, lo: on && !n.minor ? 1 : 0 };
       if (n.o < 0.05) {
         // New to the map: grow out of the card you walked to, one after another.
         n.x = here.x; n.y = here.y; n.r = 4;
@@ -307,7 +324,8 @@ class Sky {
       if (target !== null && !n.tw) n.r += (target - n.r) * Math.max(kf, 0.3);
       else if (!isLit && !n.tw && Math.abs(n.r - n.homeR) > 0.1) n.r += (n.homeR - n.r) * Math.max(kf, 0.3);
       n.glow += ((isLit ? 0.5 : n.tglow) - n.glow) * Math.max(kf, 0.3);
-      n.label.style.display = n.lo > 0.02 ? "" : "none";
+      const named = n.lo > 0.02 || (n.minor && isLit);
+      n.label.style.display = named ? "" : "none";
       n.g.setAttribute("transform", `translate(${n.x.toFixed(1)} ${n.y.toFixed(1)}) scale(${(Math.max(n.r, 0.1) / 50).toFixed(3)})`);
       n.g.setAttribute("opacity", n.o.toFixed(3));
       // 22 screen px of radius, in the disc's own units (it is drawn at r 50, then scaled).
@@ -325,7 +343,7 @@ class Sky {
       n.label.setAttribute("class", `constellation-label${isF ? " constellation-label-focus" : ""}`);
       n.label.setAttribute("x", n.x.toFixed(1));
       n.label.setAttribute("y", (n.y + n.r + (isF ? 24 : 16) * px).toFixed(1));
-      n.label.setAttribute("opacity", (n.lo * n.o).toFixed(3));
+      n.label.setAttribute("opacity", ((n.minor && isLit ? 1 : n.lo) * n.o).toFixed(3));
     }
     this.cull(px);
     for (const e of this.edges.values()) {
@@ -388,10 +406,11 @@ class Sky {
   cull(px: number) {
     const font = 12 * px;
     const rank = (n: Node) => (n.id === this.focus ? 0 : n.id === this.lit ? 1 : this.visited.includes(n.id) ? 2 : 3);
-    const shown = [...this.nodes.values()].filter((n) => n.lo > 0.02).sort((a, b) => rank(a) - rank(b));
+    const shown = [...this.nodes.values()].filter((n) => n.lo > 0.02 || (n.minor && n.id === this.lit)).sort((a, b) => rank(a) - rank(b));
     type Box = { x0: number; x1: number; y0: number; y1: number };
     const hit = (a: Box, b: Box) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
-    const discs = [...this.nodes.values()].filter((n) => n.o > 0.3).map((n) => ({ id: n.id, x0: n.x - n.r, x1: n.x + n.r, y0: n.y - n.r, y1: n.y + n.r }));
+    // The small unnamed discs never cost a named card its name.
+    const discs = [...this.nodes.values()].filter((n) => n.o > 0.3 && !n.minor).map((n) => ({ id: n.id, x0: n.x - n.r, x1: n.x + n.r, y0: n.y - n.r, y1: n.y + n.r }));
     const kept: Box[] = [];
     for (const n of shown) {
       const f = n.id === this.focus ? font * 1.2 : font;
@@ -454,7 +473,7 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   /** Cards this run added, marked "new" across the report and here too. */
   isAdded?: (id: string) => boolean;
   /** Which partners the map draws, at most `cap`: the strongest links by default. */
-  pick?: (o: OrbitModel, cap: number) => { p: OrbitPartner; hue: string }[];
+  pick?: (o: OrbitModel, cap: number) => MapPartner[];
   /** The picture's accessible name, when "X and the N cards it works with" is not it. */
   label?: string;
 }) {
