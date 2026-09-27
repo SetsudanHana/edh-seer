@@ -29,7 +29,6 @@
   "verdict": "synergy",
   "stratum": "shared-tag",
   "note": "Court of Embereth second trigger deals damage to opponent based on amount of creatures you control, so token creation of creatures directl feeds it",
-  "knownDefect": true,
   "judgedAt": "2026-08-05T23:13:58.437Z"
  },
  {

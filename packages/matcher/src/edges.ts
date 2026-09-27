@@ -490,6 +490,10 @@ function combatNarrowsOffType(subject: SubjectFilter): boolean {
 
 /** Is this combat producer/consumer pair satisfied by the game itself rather than by any card?
  *
+ *  **REVERSED FOR `attacks` (owner ruling 2026-09-27, #561)**: every creature attacking now feeds an
+ *  attack payoff -- measured +3,810 reasons on the 71 decks, panel and compass unchanged. What
+ *  follows is the original argument, and it still governs `combat-damage`.
+ *
  *  Attacking and dealing combat damage are normal game actions -- every creature does them, for
  *  free, in any deck that runs creatures. "Whenever a creature you control attacks" therefore
  *  needs no supplier: it is a deck-level state condition, not an event some other card provides.
@@ -509,6 +513,10 @@ function combatNarrowsOffType(subject: SubjectFilter): boolean {
  *  trigger it narrows nothing. */
 export function combatSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
   if (!COMBAT_VERBS.has(consumer.verb)) return false;
+  // A CREATURE ATTACKING FEEDS AN ATTACK PAYOFF (owner ruling 2026-09-27, #561): Hellrider and
+  // Shared Animosity sat under "nothing argues for keeping these" in a go-wide Goblin deck. The
+  // ruling above is reversed for `attacks`; combat damage keeps it.
+  if (consumer.verb === "attacks") return false;
   if (!producer.implied) return false;
   return !combatConsumerNarrows(consumer.subject);
 }
@@ -755,7 +763,11 @@ function returnsWhatItsOwnTriggerSaw(a: CardTags["abilities"][number]): boolean 
 }
 
 export function selfEtbSelfSupplied(producer: GameEvent, consumer: GameEvent): boolean {
-  if (consumer.verb !== "enters" && consumer.verb !== "cast") return false;
+  // AND COMBAT (#561 review): with attacks no longer self-supplied, the self twin of "this creature
+  // or another creature you control attacks" matched every other creature's implied attack -- two
+  // reasons per attacker, one reading "When <payoff> attacks thanks to <bear>". Another creature
+  // attacking is never THIS one attacking; an authored combat emit (goad) still passes.
+  if (consumer.verb !== "enters" && consumer.verb !== "cast" && !COMBAT_VERBS.has(consumer.verb)) return false;
   // Only the GRAVEYARD variant is excluded (it has its own matcher). `normalizeZoneEvent` stamps
   // zone "battlefield" on every enters event, so testing for an unset zone here would exclude
   // everything and make the gate dead code.
@@ -1422,6 +1434,11 @@ export const WHOLE_DECK_TYPES: ReadonlySet<string> = new Set(["creature", "perma
  *  share -- a payoff that GROWS with the count (`scalingSubject`) and one that is GATED on it
  *  (`thresholdSubject`).
  *
+ *  **"CREATURES YOU CONTROL" NOW COUNTS (owner ruling 2026-09-27, #561)**: Massive Raid in a go-wide
+ *  deck. +1,271 scaling and +206 threshold reasons on the 71 decks, panel and compass unchanged,
+ *  one judged-REAL panel pair and one quarantined calibration pair recovered. `permanent` and `land`
+ *  stay the whole board, per the argument below.
+ *
  *  A BARE CARD TYPE IS A MESH, NOT A SYNERGY, and this is the gate that keeps the channel honest.
  *  "Creatures you control" is satisfied by every creature in the deck: forty edges saying the same
  *  nothing, which is the engine's own "playing Magic is not a synergy" rule. MEASURED 2026-09-04:
@@ -1456,8 +1473,11 @@ export function boardCountNarrows(counted: SubjectFilter): boolean {
   const types = Array.isArray(counted.type) ? counted.type : counted.type ? [counted.type] : [];
   // A TOKEN count narrows even a whole-deck type (issue #502): "creature tokens you control" is fed
   // by what MAKES creature tokens, not by every creature in the deck.
+  // AND A CREATURE COUNT OF YOUR OWN (owner ruling 2026-09-27, #561): Massive Raid's "the number of
+  // creatures you control" is fed by every creature, as the go-wide deck means it to be.
+  const creatureCount = types.length === 1 && types[0] === "creature" && counted.control === "you";
   const typedCount = subtype === undefined && types.length > 0
-    && (counted.token === true || types.every((ty) => !WHOLE_DECK_TYPES.has(ty)));
+    && (counted.token === true || creatureCount || types.every((ty) => !WHOLE_DECK_TYPES.has(ty)));
   const keywordCount = subtype === undefined && (counted.keyword?.length ?? 0) > 0;
   if (subtype === undefined && !typedCount && !keywordCount) return false;
   if (subtype !== undefined && BASIC_LAND_TYPE_SET.has(subtype)) return false;

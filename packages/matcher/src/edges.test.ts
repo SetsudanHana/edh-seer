@@ -654,7 +654,8 @@ test("dedup: a producer with BOTH an authored counter-added emit AND a prolifera
 
 // --- combatSelfSupplied gate (Item 2): implied-only, and only when the consumer doesn't narrow ---
 
-test("directedReasons: a bare 'creature attacks' consumer still gets no edge from a plain creature's implied attack", () => {
+// Owner ruling 2026-09-27 (#561): every creature attacking feeds an attack payoff (Hellrider).
+test("directedReasons: a bare 'creature attacks' consumer gets an edge from a plain creature's implied attack (#561)", () => {
   const attacker = base("Attacker", []); // implies a bare attacks event (no supplier needed)
   const genericTrigger = base("Generic Trigger", [{
     kind: "triggered",
@@ -662,7 +663,7 @@ test("directedReasons: a bare 'creature attacks' consumer still gets no edge fro
     effect: { kind: "pump" },
   }]);
   const reasons = directedReasons(attacker, genericTrigger, H);
-  expect(reasons.some((r) => r.tag.startsWith("attacks"))).toBe(false);
+  expect(reasons.some((r) => r.tag.startsWith("attacks"))).toBe(true);
 });
 
 /** Fix 2a: `stats` narrows a combat trigger just as much as `subtype` does -- "power 4 or greater"
@@ -712,9 +713,9 @@ test("directedReasons: an authored attacks emit matches a generic combat consume
   const reasons = directedReasons(goader, genericTrigger, H);
   expect(reasons.some((r) => r.tag.startsWith("attacks"))).toBe(true);
 
-  // Contrast: a plain creature's implied attack does NOT satisfy that same bare consumer.
+  // And since #561 a plain creature's implied attack satisfies it too.
   const plainCreature = base("Plain Creature", []);
-  expect(directedReasons(plainCreature, genericTrigger, H).some((r) => r.tag.startsWith("attacks"))).toBe(false);
+  expect(directedReasons(plainCreature, genericTrigger, H).some((r) => r.tag.startsWith("attacks"))).toBe(true);
 });
 
 test("an event reason records which card consumes it and which supplies it", () => {
@@ -3941,16 +3942,18 @@ test("a card of another subtype is not counted", () => {
  *  "Creatures you control" is satisfied by every creature in the deck, which is 40 edges saying the
  *  same nothing -- the engine's own "playing Magic is not a synergy" rule. 685 battlefield counts
  *  are derived and only the 248 that name a SUBTYPE may form an edge. */
-test("a count of a bare card type forms no edge", () => {
-  const countsCreatures = base("Axebane Guardian", [{
+test("a count of a bare card type forms no edge, except creatures you control (#561)", () => {
+  const counts = (type: string) => base("Axebane Guardian", [{
     kind: "activated", cost: "{T}",
     effect: {
       kind: "add-mana", scaling: "per-creature",
-      scalingSubject: { type: "creature", zone: "battlefield", control: "you", token: null },
+      scalingSubject: { type, zone: "battlefield", control: "you", token: null },
     },
   }] as unknown as CardTags["abilities"]);
-  expect(directedReasons(goblinBody(), countsCreatures, H).some((r) => r.tag.startsWith("scales:")))
-    .toBe(false);
+  // Owner ruling 2026-09-27: "the number of creatures you control" is fed by every creature.
+  expect(directedReasons(goblinBody(), counts("creature"), H).some((r) => r.tag.startsWith("scales:"))).toBe(true);
+  // A permanent count is still the whole board.
+  expect(directedReasons(goblinBody(), counts("permanent"), H).some((r) => r.tag.startsWith("scales:"))).toBe(false);
 });
 
 /** A BASIC LAND TYPE IS THE MANA BASE, NOT A SYNERGY. 20 corpus cards count Swamps and 13 count
@@ -4012,7 +4015,7 @@ test("an empty keyword list does not narrow a whole-deck count", () => {
     kind: "activated", cost: "{T}",
     effect: {
       kind: "add-mana", scaling: "per-creature",
-      scalingSubject: { type: "creature", keyword: [], zone: "battlefield", control: "you", token: null },
+      scalingSubject: { type: "permanent", keyword: [], zone: "battlefield", control: "you", token: null },
     },
   }] as unknown as CardTags["abilities"]);
   expect(directedReasons(goblinBody(), countsCreatures, H).some((r) => r.tag.startsWith("scales:")))
@@ -4557,8 +4560,9 @@ describe("board count over a bare type", () => {
     expect(pairReasons(artist, rock, H).map((r) => r.tag)).toContain("scales:artifact");
     expect(pairReasons(artist, base("Grizzly Bears", []), H)).toEqual([]);
   });
-  test("a CREATURE count is still the whole deck and forms no edge until magnitude can weigh it", () => {
-    expect(pairReasons(creatureCounter, base("Grizzly Bears", []), H)).toEqual([]);
+  // Owner ruling 2026-09-27 (#561): a creature count you control is fed by every creature.
+  test("a CREATURE count you control forms an edge with every creature (#561)", () => {
+    expect(pairReasons(creatureCounter, base("Grizzly Bears", []), H).length).toBeGreaterThan(0);
   });
 });
 
@@ -5448,4 +5452,17 @@ test("a counter placer whose counters land on itself names itself and the counte
   const texts = directedReasons(grower, ascendancy, H).map((r) => r.text);
   expect(texts.some((t) => t.includes("puts that many growth counters on itself"))).toBe(true);
   expect(texts.some((t) => t.includes("on a permanent"))).toBe(false);
+});
+
+/** #561 REVIEW: "this creature or another creature you control attacks" derives a class half and a
+ *  self twin. Another creature's implied attack feeds the class half once, and never the twin. */
+test("a self-or-class attack payoff gets one reason per attacker, not a self-twin too", () => {
+  const trig = (self: boolean) => ({
+    kind: "triggered" as const, trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you" as const, token: null, ...(self ? { self: true as const } : {}) } },
+    effect: { kind: "damage" as const }, clause: 1,
+  });
+  const payoff = base("Self-Class Attacker", [trig(false), trig(true)] as CardTags["abilities"]);
+  const reasons = directedReasons(base("Random Bear", []), payoff, H).filter((r) => r.tag.startsWith("attacks"));
+  expect(reasons).toHaveLength(1);
+  expect(reasons[0]!.text).not.toContain("thanks to");
 });

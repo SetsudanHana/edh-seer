@@ -151,5 +151,9 @@ test("the known-defect quarantine never grows, and cannot rot", () => {
  *  reaches Warehouse Tabby's "an enchantment ... is put into a graveyard", judged neutral.
  *  **Warehouse Tabby / Marrow-Gnawer** is quarantined as the witness. The fix is to map a subtype to
  *  the card type CR 205.3 assigns it (205.3m: creature types belong to creatures and kindreds only),
- *  not to every co-occurring type -- a separate, measured change. Lower this when it lands. */
-const KNOWN_DEFECT_CAP = 3;
+ *  not to every co-occurring type -- a separate, measured change. Lower this when it lands.
+ *
+ *  **2 as of 2026-09-27** (#561): a creature count you control forms an edge (owner ruling), so
+ *  Court of Embereth's "damage equal to the number of creatures you control" is fed by Dion's token
+ *  making, as judged -- banked. */
+const KNOWN_DEFECT_CAP = 2;
