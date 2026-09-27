@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { displayName, tokenLabel, type EngineCard, type EngineModel, type Repeat } from "../lib/engine-model.js";
 import type { OrbitModel, OrbitPartner } from "../lib/orbit-model.js";
 
@@ -44,7 +44,7 @@ export function mapPartners(o: OrbitModel, cap = MAP_CAP): { p: OrbitPartner; hu
 interface Tween { from: Look; to: Look; t0: number; dur: number; delay: number }
 interface Look { x: number; y: number; r: number; o: number; lo: number }
 interface Node extends Look {
-  id: string; card: EngineCard; g: SVGGElement; halo: SVGCircleElement; rim: SVGCircleElement; pip: SVGCircleElement; label: SVGTextElement;
+  id: string; card: EngineCard; g: SVGGElement; halo: SVGCircleElement; rim: SVGCircleElement; pip: SVGCircleElement; pin: SVGPathElement; label: SVGTextElement;
   tw: Tween | null; glow: number; tglow: number; hue: string; dashed: boolean; homeR: number;
 }
 interface Edge {
@@ -84,8 +84,12 @@ class Sky {
   last = 0;
   raf = 0;
   drag = { on: false, moved: false, sx: 0, sy: 0, cx: 0, cy: 0 };
+  /** A long press on a touch screen, which has no right button: it opens the same menu. */
+  press = { timer: 0, x: 0, y: 0, fired: false };
+  pinned: (id: string) => boolean = () => false;
   constructor(public svg: SVGSVGElement, public layers: Record<"edges" | "ticks" | "nodes" | "labels" | "route", SVGGElement>,
-    public card: (id: string) => EngineCard | undefined, public tap: (id: string) => void, public hover: (id: string | null) => void) {}
+    public card: (id: string) => EngineCard | undefined, public tap: (id: string) => void, public hover: (id: string | null) => void,
+    public menu: (id: string | null, x: number, y: number) => void) {}
 
   now() { return typeof performance !== "undefined" ? performance.now() : Date.now(); }
 
@@ -100,15 +104,47 @@ class Sky {
     if (card.art) make("image", { href: card.art, x: -50, y: -50, width: 100, height: 100, "clip-path": "url(#constellation-disc)", preserveAspectRatio: "xMidYMid slice" }, g);
     const rim = make("circle", { class: "constellation-rim", r: 50, fill: "none", stroke: "var(--muted)", "stroke-width": 4 }, g);
     const pip = make("circle", { r: 9, cx: 36, cy: -36, fill: GOLD, stroke: "var(--background)", "stroke-width": 4, opacity: 0 }, g);
+    // Pinned in the report: the same pin lights here, on the disc's other shoulder.
+    const pin = make("path", { d: "M-36,-50 L-24,-38 L-36,-26 L-48,-38 Z", fill: "var(--accent)", stroke: "var(--background)", "stroke-width": 4, opacity: 0 }, g);
     const label = make("text", { class: "constellation-label", "text-anchor": "middle" }, this.layers.labels);
     label.textContent = shortName(card);
     g.addEventListener("pointerenter", (e) => { if ((e as PointerEvent).pointerType === "mouse" && !this.drag.on) this.hover(id); });
     g.addEventListener("pointerleave", (e) => { if ((e as PointerEvent).pointerType === "mouse") this.hover(null); });
-    g.addEventListener("click", (e) => { e.stopPropagation(); if (!this.drag.moved) this.tap(id); });
+    g.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // The lift after a long press is not a tap.
+      if (this.press.fired) { this.press.fired = false; return; }
+      if (!this.drag.moved) this.tap(id);
+    });
+    g.addEventListener("contextmenu", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      // A long press already opened it; the browser's own contextmenu after it would open it twice.
+      if (this.press.fired) return;
+      const at = this.anchor(e as MouseEvent, g);
+      this.hover(null);
+      this.menu(id, at.x, at.y);
+    });
+    g.addEventListener("pointerdown", (e) => {
+      if ((e as PointerEvent).pointerType !== "touch") return;
+      const pe = e as PointerEvent;
+      this.cancelPress();
+      this.press = { timer: window.setTimeout(() => { this.press.fired = true; this.menu(id, pe.clientX, pe.clientY); }, 520), x: pe.clientX, y: pe.clientY, fired: false };
+    });
+    g.addEventListener("pointermove", (e) => { const pe = e as PointerEvent; if (Math.hypot(pe.clientX - this.press.x, pe.clientY - this.press.y) > 10) this.cancelPress(); });
+    for (const t of ["pointerup", "pointercancel", "pointerleave"]) g.addEventListener(t, () => this.cancelPress());
     g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); this.tap(id); } });
-    const n: Node = { id, card, g, halo, rim, pip, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0 };
+    const n: Node = { id, card, g, halo, rim, pip, pin, label, x: 0, y: 0, r: 0, o: 0, lo: 0, tw: null, glow: 0, tglow: 0, hue: "var(--muted)", dashed: false, homeR: 0 };
     this.nodes.set(id, n);
     return n;
+  }
+
+  cancelPress() { window.clearTimeout(this.press.timer); this.press.timer = 0; }
+
+  /** Where a menu opens: at the pointer, or, from the keyboard's menu key, beside the element. */
+  anchor(e: MouseEvent, el: Element) {
+    if (e.clientX || e.clientY) return { x: e.clientX, y: e.clientY };
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width * 0.75, y: r.top + r.height * 0.75 };
   }
 
   edge(a: string, b: string): Edge {
@@ -259,6 +295,7 @@ class Sky {
       n.halo.setAttribute("r", String(isF && !this.still ? 60 + 6 * Math.sin(this.clock * 1.4) : 58));
       n.halo.setAttribute("opacity", n.glow.toFixed(3));
       n.pip.setAttribute("opacity", this.visited.includes(n.id) && !isF ? "1" : "0");
+      n.pin.setAttribute("opacity", this.pinned(n.id) ? "1" : "0");
       n.label.setAttribute("class", `constellation-label${isF ? " constellation-label-focus" : ""}`);
       n.label.setAttribute("x", n.x.toFixed(1));
       n.label.setAttribute("y", (n.y + n.r + (isF ? 24 : 16) * px).toFixed(1));
@@ -357,14 +394,19 @@ class Sky {
       this.camTw = null; this.cam.x = this.drag.cx - dx * k; this.cam.y = this.drag.cy - dy * k;
     };
     const up = () => { if (!this.drag.on) return; this.drag.on = false; svg.classList.remove("cursor-grabbing"); setTimeout(() => { this.drag.moved = false; }, 0); };
+    const menu = (e: MouseEvent) => { e.preventDefault(); const at = this.anchor(e, svg); this.menu(null, at.x, at.y); };
+    svg.addEventListener("contextmenu", menu);
     svg.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
-    return () => { svg.removeEventListener("pointerdown", down); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    return () => { svg.removeEventListener("contextmenu", menu); svg.removeEventListener("pointerdown", down); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
   }
 }
 
-export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover }: {
+/** One line of the map's menu: an action, or a link that opens in a new tab. */
+export interface MenuItem { label: string; run?: () => void; href?: string }
+
+export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, onHover, menuFor, isPinned }: {
   model: EngineModel; orbit: OrbitModel;
   /** The cards put in the middle before this one, oldest first. */
   trail: readonly string[];
@@ -375,16 +417,28 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
   narrow: boolean;
   onTap: (id: string) => void;
   onHover: (id: string | null) => void;
+  /** What the menu offers on a card (right click, a long press, or the menu key), or on the map
+   *  itself when `id` is null. The map adds its own view lines to the latter. */
+  menuFor?: (id: string | null) => MenuItem[];
+  /** Cards pinned in the report, which wear the pin here too. */
+  isPinned?: (id: string) => boolean;
 }) {
   const svg = useRef<SVGSVGElement>(null);
+  const frame = useRef<HTMLDivElement>(null);
   const layers = useRef<Record<string, SVGGElement | null>>({});
   const sky = useRef<Sky | null>(null);
-  const handlers = useRef({ onTap, onHover });
-  handlers.current = { onTap, onHover };
+  const [menu, setMenu] = useState<{ id: string | null; x: number; y: number } | null>(null);
+  const handlers = useRef({ onTap, onHover, isPinned });
+  handlers.current = { onTap, onHover, isPinned };
 
   useEffect(() => {
     const L = layers.current;
-    const s = new Sky(svg.current!, L as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id));
+    const s = new Sky(svg.current!, L as Sky["layers"], (id) => model.cards.get(id), (id) => handlers.current.onTap(id), (id) => handlers.current.onHover(id),
+      (id, x, y) => {
+        const r = frame.current?.getBoundingClientRect();
+        setMenu({ id, x: x - (r?.left ?? 0), y: y - (r?.top ?? 0) });
+      });
+    s.pinned = (id) => handlers.current.isPinned?.(id) ?? false;
     sky.current = s;
     const unbind = s.bindDrag();
     s.start();
@@ -401,11 +455,26 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
     // `orbit` changes with its focus, and `trail` with it; both are read here, once per step.
   }, [orbit, trail, narrow]);
 
+  // A new card in the middle: whatever the menu was about has moved.
+  useEffect(() => { setMenu(null); }, [orbit]);
   useEffect(() => { const s = sky.current; if (s) { s.lit = lit; s.draw(s.now()); } }, [lit]);
 
   const name = displayName(orbit.focus);
+  const items: MenuItem[] = menu === null ? [] : [
+    ...(menuFor?.(menu.id) ?? []),
+    ...(menu.id === null ? [
+      ...(trail.length ? [{ label: "See my path", run: () => sky.current?.fitPath() }] : []),
+      { label: `Frame ${displayName(orbit.focus)} and its cards`, run: () => sky.current?.fit([orbit.focus.id, ...mapPartners(orbit, (narrow ? NARROW : WIDE).cap).map(({ p }) => p.card.id)], 1.15) },
+    ] : []),
+  ];
+  const close = (back = true) => {
+    const id = menu?.id;
+    setMenu(null);
+    // Focus goes back where the menu came from, so the keyboard does not lose its place.
+    if (back && id) (svg.current?.querySelector(`[data-id="${CSS.escape(id)}"]`) as SVGGElement | null)?.focus();
+  };
   return (
-    <div className="relative">
+    <div ref={frame} className="relative">
       <svg ref={svg} role="group" aria-label={`${name} and the ${orbit.direct + orbit.directTokens} cards it works with`}
         viewBox="-450 -368 900 736" className={`block h-auto w-full select-none touch-pan-y ${narrow ? "aspect-[20/23]" : "aspect-[880/720]"}`}>
         <defs>
@@ -419,6 +488,9 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
         <g ref={(el) => { layers.current.nodes = el; }} />
         <g ref={(el) => { layers.current.labels = el; }} />
       </svg>
+      {menu && items.length ? (
+        <MapMenu x={menu.x} y={menu.y} title={menu.id ? displayName(model.cards.get(menu.id) ?? orbit.focus) : "The map"} items={items} onClose={close} />
+      ) : null}
       <div className="absolute bottom-2 right-2 flex gap-1.5">
         {trail.length ? (
           <button type="button" className="min-h-11 rounded-full border border-(--separator) bg-(--surface) px-3 text-sm hover:border-(--foreground)" onClick={() => sky.current?.fitPath()}>
@@ -428,6 +500,52 @@ export function Constellation({ model, orbit, trail, lit, still, narrow, onTap, 
         <button type="button" aria-label="Zoom in" className="min-h-11 min-w-11 rounded-full border border-(--separator) bg-(--surface) text-base hover:border-(--foreground)" onClick={() => sky.current?.zoom(0.75)}>+</button>
         <button type="button" aria-label="Zoom out" className="min-h-11 min-w-11 rounded-full border border-(--separator) bg-(--surface) text-base hover:border-(--foreground)" onClick={() => sky.current?.zoom(1.33)}>−</button>
       </div>
+    </div>
+  );
+}
+
+/** THE MAP'S MENU (owner, 2026-09-27: "leverag[e] that canvas allows us to add right-click"). What
+ *  a player can do with a card without hunting for it elsewhere in the report. A menu in the WAI
+ *  pattern: the first line takes focus, arrows move, Escape or a click outside closes. */
+function MapMenu({ x, y, title, items, onClose }: { x: number; y: number; title: string; items: MenuItem[]; onClose: (back?: boolean) => void }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [at, setAt] = useState({ x, y });
+  // Inside the map: a menu opened near the right or bottom edge flips to the pointer's other side.
+  useLayoutEffect(() => {
+    const el = box.current, parent = el?.parentElement;
+    if (!el || !parent) return;
+    const W = parent.clientWidth, H = parent.clientHeight, w = el.offsetWidth, h = el.offsetHeight;
+    setAt({ x: Math.max(4, x + w > W - 4 ? x - w : x), y: Math.max(4, y + h > H - 4 ? y - h : y) });
+    el.querySelector<HTMLElement>("[role=menuitem]")?.focus();
+  }, [x, y]);
+  useEffect(() => {
+    const away = (e: PointerEvent) => { if (!box.current?.contains(e.target as globalThis.Node)) onClose(false); };
+    document.addEventListener("pointerdown", away, true);
+    return () => document.removeEventListener("pointerdown", away, true);
+  }, [onClose]);
+  const key = (e: React.KeyboardEvent) => {
+    const all = [...(box.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])];
+    const i = all.indexOf(document.activeElement as HTMLElement);
+    const go = (j: number) => { e.preventDefault(); all[(j + all.length) % all.length]?.focus(); };
+    if (e.key === "ArrowDown") go(i + 1);
+    else if (e.key === "ArrowUp") go(i - 1);
+    else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(all.length - 1);
+    else if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); onClose(); }
+  };
+  const cls = "flex min-h-10 w-full items-center rounded-[calc(var(--radius)-2px)] px-3 text-left text-sm hover:bg-(--surface-secondary) focus-visible:bg-(--surface-secondary) outline-none";
+  return (
+    <div ref={box} role="menu" aria-label={title} onKeyDown={key} onContextMenu={(e) => e.preventDefault()}
+      className="map-menu absolute z-10 flex min-w-56 max-w-[calc(100%-8px)] flex-col rounded-(--radius) border border-(--separator) bg-(--surface) p-1 shadow-lg"
+      style={{ left: at.x, top: at.y }}>
+      <p aria-hidden="true" className="truncate px-3 pb-1 pt-1.5 text-xs font-semibold text-(--muted)">{title}</p>
+      {items.map((it) => it.href ? (
+        <a key={it.label} role="menuitem" href={it.href} target="_blank" rel="noopener" className={cls} onClick={() => onClose(false)}>
+          {it.label}<span aria-hidden="true" className="ml-auto pl-3 text-(--muted)">↗</span>
+        </a>
+      ) : (
+        <button key={it.label} type="button" role="menuitem" className={cls} onClick={() => { onClose(); it.run?.(); }}>{it.label}</button>
+      ))}
     </div>
   );
 }

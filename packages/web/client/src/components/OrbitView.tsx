@@ -3,8 +3,9 @@ import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, displayName, tokenLabel, type EngineCard, type EngineModel } from "../lib/engine-model.js";
 import { mainTheme } from "../lib/main-theme.js";
 import { buildOrbit, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
-import { ReasonText } from "./card-drawer.js";
-import { Constellation, mapCap } from "./Constellation.js";
+import { slugOf } from "@edh-seer/matcher/slug";
+import { ReasonText, useCardDrawer } from "./card-drawer.js";
+import { Constellation, mapCap, type MenuItem } from "./Constellation.js";
 import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./engine-parts.js";
 
 /** THE ONE-CARD VIEW AS AN ORBIT (graph evaluation 2026-09-25, design B; replaces `EgoView`).
@@ -49,6 +50,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const still = useReducedMotion();
   const [paused, setPaused] = usePaused();
   const [hover, setHover] = useState<string | null>(null);
+  const drawer = useCardDrawer();
   useEffect(() => { setSel(null); setSector(null); setHover(null); }, [focusId]);
   // ON A PHONE THE PANEL IS UNDER THE RING, a screen down: a tapped card changed a panel nobody
   // could see, and two phone seats tapped again thinking the tap was lost (appeal review
@@ -79,6 +81,31 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     if (sel === id || !o.sectors.some((s) => s.partners.some((p) => p.card.id === id))) centre(id);
     else { setSel(id); setSector(null); }
   };
+  /** WHAT A PLAYER CAN DO WITH A CARD ON THE MAP, in one place (owner, 2026-09-27): read how it
+   *  works with the middle card, walk to it, read its text, pin it across the report, open its
+   *  own page, copy its name. On the map itself: back to where the walk began, and the motion. */
+  const menuFor = (id: string | null): MenuItem[] => {
+    if (id === null) {
+      const start = trail[0] ? m.cards.get(trail[0]) : undefined;
+      return [
+        ...(start ? [{ label: `Back to ${firstPart(start)}, where you started`, run: () => back(0) }] : []),
+        ...(still ? [] : [{ label: paused ? "Play the motion" : "Pause the motion", run: () => setPaused(!paused) }]),
+      ];
+    }
+    const c = m.cards.get(id);
+    if (!c) return [];
+    const first = firstPart(c);
+    const partner = o.sectors.some((s) => s.partners.some((p) => p.card.id === id));
+    const readable = !c.isToken && (drawer.known.has(c.name) || drawer.known.has(c.physical));
+    const items: MenuItem[] = [];
+    if (id !== focusId && partner) items.push({ label: `How it works with ${firstPart(o.focus)}`, run: () => { setSel(id); setSector(null); } });
+    if (id !== focusId) items.push({ label: `Put ${first} in the middle`, run: () => centre(id) });
+    if (readable) items.push({ label: "Read the card", run: () => drawer.open(drawer.known.has(c.name) ? c.name : c.physical) });
+    if (!c.isToken) items.push({ label: drawer.isPinned(c.physical) ? "Unpin it in the report" : "Pin it in the report", run: () => drawer.togglePin(c.physical) });
+    if (!c.isToken) items.push({ label: "Open its card page", href: `/cards/${slugOf(c.physical)}` });
+    items.push({ label: "Copy the name", run: () => { void navigator.clipboard?.writeText(c.isToken ? c.name : c.physical).catch(() => {}); } });
+    return items;
+  };
   const focusName = displayName(o.focus);
   const selected = sel ? o.sectors.flatMap((s) => s.partners).find((p) => p.card.id === sel) : undefined;
   const openSector = sector !== null ? o.sectors.find((s) => sectorKey(s) === sector) : undefined;
@@ -97,7 +124,8 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
         {/* The map's width is capped by the screen's height (the box is 880 by 720), so all of it
           * stays on screen; the map and panel sit together, centred. */}
         <div className="min-w-0 lg:flex-1 lg:max-w-[calc((100svh-17rem)*1.2222)]">
-          <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover} />
+          <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover}
+            menuFor={menuFor} isPinned={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isPinned(c.physical); }} />
         </div>
         <div ref={panel} key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky
           ? "scroll-mt-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)]"
@@ -241,7 +269,7 @@ function Summary({ o, cap, still, paused, onPause, onSector, onCentre }: { o: Or
             {paused ? "Play the motion" : "Pause the motion"}
           </button>
         ) : null}
-        {still ? "Arrows point" : "The ticks on each line run"} from the card that gives to the card that gains{still ? "" : "; point at or tap a card to brighten its lines"}. A solid line keeps working; a dashed line works only once. {o.sectors.reduce((t, s) => t + s.partners.length, 0) > cap ? `The map shows the ${cap} that work with it most; the groups above list them all. ` : ""}Cards you put in the middle stay on the map, joined by a gold line.</p>
+        {still ? "Arrows point" : "The ticks on each line run"} from the card that gives to the card that gains{still ? "" : "; point at or tap a card to brighten its lines"}. A solid line keeps working; a dashed line works only once. {o.sectors.reduce((t, s) => t + s.partners.length, 0) > cap ? `The map shows the ${cap} that work with it most; the groups above list them all. ` : ""}Cards you put in the middle stay on the map, joined by a gold line. Right-click a card, or press and hold it, for more you can do with it.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>

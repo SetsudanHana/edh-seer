@@ -1,9 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import { engineDeck } from "../lib/engine-model.fixture.js";
 import { buildEngineModel } from "../lib/engine-model.js";
 import { buildOrbit } from "../lib/orbit-model.js";
+import { CardDrawerProvider } from "./card-drawer.js";
 import { MAP_CAP, mapPartners } from "./Constellation.js";
 import { OrbitView, countText } from "./OrbitView.js";
 
@@ -157,5 +158,50 @@ test("the motion can be paused, and then arrows carry the direction", async () =
   expect(shown("constellation-tick").length).toBe(0);
   expect(shown("constellation-arrow").length).toBeGreaterThan(0);
   expect(screen.getByRole("button", { name: "Play the motion" })).toHaveAttribute("aria-pressed", "true");
+  try { localStorage.removeItem("orbit-paused"); } catch { /* none */ }
+});
+
+test("a right click on a card opens its menu: read how, walk to it, and Escape closes it", async () => {
+  const onFocus = view();
+  const user = userEvent.setup();
+  fireEvent.contextMenu(screen.getByRole("button", { name: "Payoff B" }), { clientX: 40, clientY: 40 });
+  const menu = screen.getByRole("menu", { name: "Payoff B" });
+  expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual([
+    // No "Read the card" here: outside a report there is no card drawer to open it in.
+    "How it works with Payoff A", "Put Payoff B in the middle", "Pin it in the report", "Open its card page↗", "Copy the name",
+  ]);
+  expect(within(menu).getByRole("menuitem", { name: /Open its card page/ })).toHaveAttribute("href", "/cards/payoff-b");
+  // The first line takes focus, so the keyboard can go straight on.
+  expect(within(menu).getAllByRole("menuitem")[0]).toHaveFocus();
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("menu")).toBeNull();
+  fireEvent.contextMenu(screen.getByRole("button", { name: "Payoff B" }), { clientX: 40, clientY: 40 });
+  await user.click(screen.getByRole("menuitem", { name: "How it works with Payoff A" }));
+  expect(screen.getByText("When Payoff A enters, Payoff B draws")).toBeInTheDocument();
+  fireEvent.contextMenu(screen.getByRole("button", { name: "Payoff B" }), { clientX: 40, clientY: 40 });
+  await user.click(screen.getByRole("menuitem", { name: "Put Payoff B in the middle" }));
+  expect(onFocus).toHaveBeenCalledWith("Payoff B");
+});
+
+test("pinning from the menu pins the card in the report, and the map wears the pin", async () => {
+  const { report, graph } = engineDeck();
+  const user = userEvent.setup();
+  const { container } = render(<CardDrawerProvider graph={graph}><OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} /></CardDrawerProvider>);
+  fireEvent.contextMenu(screen.getByRole("button", { name: "Payoff B" }), { clientX: 40, clientY: 40 });
+  expect(screen.getByRole("menuitem", { name: "Read the card" })).toBeInTheDocument();
+  await user.click(screen.getByRole("menuitem", { name: "Pin it in the report" }));
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  expect(container.querySelector("[data-id='Payoff B'] path")).toHaveAttribute("opacity", "1");
+  fireEvent.contextMenu(screen.getByRole("button", { name: "Payoff B" }), { clientX: 40, clientY: 40 });
+  expect(screen.getByRole("menuitem", { name: "Unpin it in the report" })).toBeInTheDocument();
+});
+
+test("a right click on the map itself offers the view and the motion", async () => {
+  const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
+  fireEvent.contextMenu(container.querySelector("svg[role=group]")!, { clientX: 10, clientY: 10 });
+  const menu = screen.getByRole("menu", { name: "The map" });
+  expect(within(menu).getAllByRole("menuitem").map((b) => b.textContent)).toEqual(["Pause the motion", "Frame Payoff A and its cards"]);
+  await userEvent.setup().click(within(menu).getByRole("menuitem", { name: "Pause the motion" }));
+  expect(screen.getByRole("button", { name: "Play the motion" })).toBeInTheDocument();
   try { localStorage.removeItem("orbit-paused"); } catch { /* none */ }
 });
