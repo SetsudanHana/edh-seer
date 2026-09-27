@@ -1,0 +1,138 @@
+{
+  "deriveVersion": 183,
+  "rulesVersion": 16,
+  "roles": {
+    "ramp": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 526,
+      "heldOutAccuracy": 0.5444853507653331,
+      "baselineAccuracy": 0.5688641020608753,
+      "fallbackAccuracy": 0.5019143656669627,
+      "fallback": true
+    },
+    "draw": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 1240,
+      "heldOutAccuracy": 0.48692130991536203,
+      "baselineAccuracy": 0.5386723479130432,
+      "fallbackAccuracy": 0.543318756569298,
+      "fallback": true
+    },
+    "cardSelection": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 84,
+      "heldOutAccuracy": 0.42258031896412634,
+      "baselineAccuracy": 0.4130945414219203,
+      "fallbackAccuracy": 0.40920141875156313,
+      "fallback": true
+    },
+    "impulseDraw": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 9,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 0,
+      "fallbackAccuracy": 0,
+      "fallback": true
+    },
+    "targetedRemoval": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 264,
+      "heldOutAccuracy": 0.6619214179308197,
+      "baselineAccuracy": 0.6739309741733032,
+      "fallbackAccuracy": 0.7628485728581285,
+      "fallback": true
+    },
+    "stackInteraction": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 18,
+      "heldOutAccuracy": 1,
+      "baselineAccuracy": 1,
+      "fallbackAccuracy": 1,
+      "fallback": true
+    },
+    "boardWipe": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 71,
+      "heldOutAccuracy": 0.5914550046518132,
+      "baselineAccuracy": 0.5914550046518132,
+      "fallbackAccuracy": 0.5914550046518132,
+      "fallback": true
+    },
+    "burn": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 102,
+      "heldOutAccuracy": 0.42610604075495345,
+      "baselineAccuracy": 0.5738939592450466,
+      "fallbackAccuracy": 0.5738939592450466,
+      "fallback": true
+    },
+    "stax": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 1,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 0,
+      "fallbackAccuracy": 0,
+      "fallback": true
+    },
+    "protection": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 50,
+      "heldOutAccuracy": 0.578721536176581,
+      "baselineAccuracy": 0.3536081726815044,
+      "fallbackAccuracy": 0.578721536176581,
+      "fallback": true
+    },
+    "tutor": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 2,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 0,
+      "fallbackAccuracy": 0,
+      "fallback": true
+    },
+    "graveyardHate": {
+      "weights": {
+        "manaValue": -1,
+        "timing": 0.5
+      },
+      "pairs": 4,
+      "heldOutAccuracy": 0,
+      "baselineAccuracy": 0,
+      "fallbackAccuracy": 0,
+      "fallback": true
+    }
+  }
+}

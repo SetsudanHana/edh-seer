@@ -42,7 +42,18 @@ test("a role under 150 pairs falls back to mana value and timing", () => {
 });
 
 test("qualityScore needs manaValue and timing", () => {
-  const w = { weights: { manaValue: -1, timing: 0.5 }, pairs: 200, heldOutAccuracy: 0.8, baselineAccuracy: 0.7, fallback: false };
+  const w = { weights: { manaValue: -1, timing: 0.5 }, pairs: 200, heldOutAccuracy: 0.8, baselineAccuracy: 0.7, fallbackAccuracy: 0.75, fallback: false };
   expect(qualityScore({ manaValue: 1, timing: 2 }, w)!).toBeGreaterThan(qualityScore({ manaValue: 4, timing: 0 }, w)!);
   expect(qualityScore({ timing: 2 }, w)).toBeNull();
+});
+
+test("a tie counts half: a pair the weights cannot separate is a coin flip, not a miss", () => {
+  const tie: Pair = { role: "targetedRemoval", set: "a", cut: { manaValue: 2, timing: 2 }, add: { manaValue: 2, timing: 2 }, weight: 1 };
+  expect(pairAccuracy([tie], { manaValue: -1 })).toBe(0.5);
+});
+
+test("the fallback's own held-out accuracy is recorded beside the fit's", () => {
+  const pairs = Array.from({ length: 200 }, (_, i) => pair(`set${i % 20}`, 4, 2));
+  const w = fitAll(pairs, { deriveVersion: 1, rulesVersion: 1 });
+  expect(w.roles.targetedRemoval.fallbackAccuracy).toBeTypeOf("number");
 });

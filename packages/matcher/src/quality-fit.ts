@@ -12,6 +12,9 @@ export interface RoleWeights {
   pairs: number;
   heldOutAccuracy: number;
   baselineAccuracy: number;
+  /** The fallback's (mana value + timing) held-out accuracy, so the choice between fit and fallback
+   *  is visible, not only the fit's comparison with mana value alone. */
+  fallbackAccuracy: number;
   fallback: boolean;
 }
 export interface QualityWeights { deriveVersion: number; rulesVersion: number; roles: Record<Role, RoleWeights> }
@@ -57,12 +60,16 @@ export function fitRole(train: Pair[], opts: { epochs?: number; lr?: number } = 
   return w;
 }
 
-/** Weighted share of pairs the weights order correctly (the add above the cut). */
+/** Weighted share of pairs the weights order correctly (the add above the cut). A TIE COUNTS HALF:
+ *  a pair the weights cannot separate -- same mana value, or no shared ingredient -- is a coin flip,
+ *  and counting it a miss put every role below 50% before the fit had said anything. */
 export function pairAccuracy(pairs: Pair[], weights: Partial<Record<Ingredient, number>>): number {
   let right = 0, total = 0;
   for (const p of pairs) {
     total += p.weight;
-    if (dot(weights, diff(p)) > 0) right += p.weight;
+    const z = dot(weights, diff(p));
+    if (z > 0) right += p.weight;
+    else if (z === 0) right += p.weight / 2;
   }
   return total > 0 ? right / total : 0;
 }
@@ -87,8 +94,9 @@ export function fitAll(pairs: Pair[], versions: { deriveVersion: number; rulesVe
     const weights = fitRole(train);
     const heldOutAccuracy = pairAccuracy(test, weights);
     const baselineAccuracy = pairAccuracy(test, { manaValue: -1 });
+    const fallbackAccuracy = pairAccuracy(test, FALLBACK_WEIGHTS);
     const fallback = mine.length < MIN_PAIRS || heldOutAccuracy <= baselineAccuracy;
-    roles[role] = { weights: fallback ? FALLBACK_WEIGHTS : weights, pairs: mine.length, heldOutAccuracy, baselineAccuracy, fallback };
+    roles[role] = { weights: fallback ? FALLBACK_WEIGHTS : weights, pairs: mine.length, heldOutAccuracy, baselineAccuracy, fallbackAccuracy, fallback };
   }
   return { ...versions, roles };
 }

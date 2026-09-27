@@ -39,6 +39,7 @@
     "./eval-pairs-core": "./src/eval-pairs-core.ts"
   },
   "scripts": {
+    "gen:quality-weights": "tsx src/bin/gen-quality-weights.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "gen:hierarchy": "tsx src/bin/gen-hierarchy.ts",

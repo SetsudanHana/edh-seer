@@ -6,7 +6,8 @@ import type { Ability, SubjectFilter } from "@edh-seer/tagger";
 import { BUILD_CATEGORIES, detectBuildCategories, type BuildCategory } from "./build.js";
 import { bestPerFamily, ratesOf, spanOf, type RateFamily, type RateSpan } from "./rate.js";
 import { ratePercentile } from "./rate-stats.js";
-import type { RoleWeights } from "./quality-fit.js";
+import type { QualityWeights, RoleWeights } from "./quality-fit.js";
+import weightsJson from "../quality-weights.json" with { type: "json" };
 import type { DeckCard } from "./types.js";
 
 export type Role = Exclude<BuildCategory, "lands">;
@@ -153,3 +154,6 @@ export function qualityScore(ing: Ingredients, w: RoleWeights): number | null {
   const keys = (w.fallback ? ["manaValue", "timing"] : Object.keys(w.weights)) as Ingredient[];
   return keys.reduce((s, k) => s + (ing[k] !== undefined ? (w.weights[k] ?? 0) * ing[k]! : 0), 0);
 }
+
+/** The committed fit (`bin/gen-quality-weights.ts`). */
+export function loadQualityWeights(): QualityWeights { return weightsJson as unknown as QualityWeights; }
