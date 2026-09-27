@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { commanderDecks, preconDecklist, preconOf, type MtgjsonDeckListEntry } from "./precons.js";
+import { cardName, commanderDecks, preconDecklist, preconOf, type MtgjsonDeckListEntry } from "./precons.js";
 
 const list: MtgjsonDeckListEntry[] = [
   { code: "CLB", fileName: "PartyTime_CLB", name: "Party Time", releaseDate: "2022-06-10", type: "Commander Deck" },
@@ -32,4 +32,12 @@ test("a deck file becomes a precon: commanders apart, printings of one card adde
 
 test("a deck with no commander is not a precon page", () => {
   expect(preconOf(list[0]!, { code: "CLB", name: "x", releaseDate: null, type: "Commander Deck", mainBoard: [] }, new Map())).toBeNull();
+});
+
+test("a reversible card listed twice over is one card; a two-faced card keeps its name", () => {
+  expect(cardName("Sol Ring // Sol Ring")).toBe("Sol Ring");
+  expect(cardName("Archangel Avacyn // Avacyn, the Purifier")).toBe("Archangel Avacyn // Avacyn, the Purifier");
+  expect(cardName("Plains")).toBe("Plains");
+  // A meld card is its own face; the melded back is no card's name.
+  expect(cardName("Gisela, the Broken Blade // Brisela, Voice of Nightmares", { layout: "meld", faceName: "Gisela, the Broken Blade" })).toBe("Gisela, the Broken Blade");
 });

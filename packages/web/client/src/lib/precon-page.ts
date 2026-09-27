@@ -56,7 +56,10 @@ export function preconPage(meta: Pick<PreconPage, "slug" | "name" | "setCode" | 
   const report: DeckReport = data.report;
   const graph = data.graph;
   const model = graph ? buildEngineModel(report, graph) : null;
-  const commanderId = graph?.nodes.find((n) => !n.face && !n.isToken && meta.commanders.includes(n.cardName ?? n.label))?.id;
+  // BY THE WHOLE NAME OR ITS FRONT FACE: MTGJSON names a meld card with its partner
+  // ("Gisela, the Broken Blade // Brisela, Voice of Nightmares"), the deck by the card it prints.
+  const wanted = new Set(meta.commanders.flatMap((c) => [c, c.split(" // ")[0]!]));
+  const commanderId = graph?.nodes.find((n) => !n.face && !n.isToken && (wanted.has(n.cardName ?? n.label) || wanted.has(n.label)))?.id;
   const orbit = model && commanderId ? buildOrbit(model, commanderId) : null;
   const theme = mainTheme(report);
   const nodes = new Map((graph?.nodes ?? []).filter((n) => !n.face && !n.isToken).map((n) => [n.cardName ?? n.label, n]));

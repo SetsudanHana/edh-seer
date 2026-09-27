@@ -62,7 +62,9 @@ for (const p of precons) {
     if (payload) page.report = shareUrl("", "/", payload);
     writeFileSync(join(outDir, `${slug}.json`), JSON.stringify(page));
     index.push({ slug, name: p.name, setCode: p.setCode, setName: p.setName, releaseDate: p.releaseDate, commanders: p.commanders, identity: page.identity, theme: page.theme });
-    console.log(`${slug}: ${page.swaps.length} swaps, synergy ${page.synergy?.score.toFixed(1) ?? "-"}`);
+    // A NAME THAT DID NOT RESOLVE IS A CARD THE PAGE SILENTLY LACKS (a meld card listed with its
+    // back did, 2026-09-27): said on every line, so the log shows it.
+    console.log(`${slug}: ${page.swaps.length} swaps, synergy ${page.synergy?.score.toFixed(1) ?? "-"}${data.missing.length ? ` | UNRESOLVED ${data.missing.join("; ")}` : ""}`);
   } catch (err) {
     failed++;
     console.warn(`${slug}: failed`, err);
