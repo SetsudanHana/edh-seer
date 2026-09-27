@@ -50,12 +50,15 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const narrow = useNarrow();
   const [sel, setSel] = useState<string | null>(null);
   const [sector, setSector] = useState<string | null>(null);
+  // THE PAIR BOX OPENS ONLY WHEN ASKED FOR (owner, 2026-09-27): a tap opens the card drawer, and the
+  // box beside it said less; it stays for "How it works with…" and a card picked from a group.
+  const [pair, setPair] = useState<string | null>(null);
   const [trail, setTrail] = useState<string[]>([]);
   const still = useReducedMotion();
   const [paused, setPaused] = usePaused();
   const [hover, setHover] = useState<string | null>(null);
   const drawer = useCardDrawer();
-  useEffect(() => { setSel(null); setSector(null); setHover(null); }, [focusId]);
+  useEffect(() => { setSel(null); setPair(null); setSector(null); setHover(null); }, [focusId]);
   // ON A PHONE THE PANEL IS UNDER THE RING, a screen down: a tapped card changed a panel nobody
   // could see, and two phone seats tapped again thinking the tap was lost (appeal review
   // 2026-09-26). The panel comes up to meet the tap.
@@ -79,12 +82,12 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     onFocus(id);
   };
   const tap = (id: string) => {
-    if (id === focusId) { setSel(null); setSector(null); return; }
+    if (id === focusId) { setSel(null); setPair(null); setSector(null); return; }
     // A card on the map that doesn't work with this one (one you walked through, or a partner of
     // an earlier middle) has nothing to read here: a tap walks to it.
     if (sel === id || !o.sectors.some((s) => s.partners.some((p) => p.card.id === id))) centre(id);
     else {
-      setSel(id); setSector(null);
+      setSel(id); setPair(null); setSector(null);
       // THE CARD OPENS IN THE DRAWER (owner, 2026-09-27: the panel's box "is not very informative").
       // The drawer has its text, its links and "Walk the map from here"; a second tap still walks.
       const c = m.cards.get(id);
@@ -92,7 +95,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     }
   };
   // A TAP ON EMPTY SPACE CLEARS THE PICK (owner, 2026-09-27: "you just stay on what you have chosen").
-  const blank = () => { setSel(null); setSector(null); };
+  const blank = () => { setSel(null); setPair(null); setSector(null); };
   /** WHAT A PLAYER CAN DO WITH A CARD ON THE MAP, in one place (owner, 2026-09-27): read how it
    *  works with the middle card, walk to it, read its text, pin it across the report, open its
    *  own page, copy its name. On the map itself: back to where the walk began, and the motion. */
@@ -110,7 +113,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     const partner = o.sectors.some((s) => s.partners.some((p) => p.card.id === id));
     const readable = !c.isToken && (drawer.known.has(c.name) || drawer.known.has(c.physical));
     const items: MenuItem[] = [];
-    if (id !== focusId && partner) items.push({ label: `How it works with ${firstPart(o.focus)}`, run: () => { setSel(id); setSector(null); } });
+    if (id !== focusId && partner) items.push({ label: `How it works with ${firstPart(o.focus)}`, run: () => { setSel(id); setPair(id); setSector(null); } });
     if (id !== focusId) items.push({ label: `Put ${first} in the middle`, run: () => centre(id) });
     if (readable) items.push({ label: "Read the card", run: () => drawer.open(drawer.known.has(c.name) ? c.name : c.physical) });
     if (!c.isToken) items.push({ label: "Open its card page", href: `/cards/${slugOf(c.physical)}` });
@@ -118,7 +121,7 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
     return items;
   };
   const focusName = displayName(o.focus);
-  const selected = sel ? o.sectors.flatMap((s) => s.partners).find((p) => p.card.id === sel) : undefined;
+  const selected = pair ? o.sectors.flatMap((s) => s.partners).find((p) => p.card.id === pair) : undefined;
   const openSector = sector !== null ? o.sectors.find((s) => sectorKey(s) === sector) : undefined;
   const prev = trail.length ? m.cards.get(trail[trail.length - 1]!) : undefined;
 
@@ -131,19 +134,35 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
       {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
         * word in the trail above the picture, which one seat never found and another called
         * "one word high" (orbit round 1). */}
+      {/* WHERE THE WALK HAS BEEN, AS A PATH (Walk mockup, 2026-09-27): "Inalla › Bloodline
+        * Necromancer › Impact Tremors", each step a way back to it. */}
+      {trail.length && !selected && !openSector ? (
+        <nav aria-label="Your path" className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
+          {trail.map((id, i) => {
+            const c = m.cards.get(id);
+            return c ? (
+              <Fragment key={id}>
+                <button type="button" className="min-h-9 text-[#D4A63A] hover:underline" onClick={() => back(i)}>{firstPart(c)}</button>
+                <span aria-hidden="true" className="text-(--muted)">›</span>
+              </Fragment>
+            ) : null;
+          })}
+          <b aria-current="page">{firstPart(o.focus)}</b>
+        </nav>
+      ) : null}
       {prev && !selected && !openSector ? (
         <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={() => back(trail.length - 1)}>
           ← Back to {displayName(prev)}
         </button>
       ) : null}
       {selected
-        ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => setSel(null)} />
+        ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => { setSel(null); setPair(null); }} />
         : openSector
-          ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => setSel(id)} onClose={() => setSector(null)} />
+          ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => { setSel(id); setPair(id); }} onClose={() => setSector(null)} />
           : <Summary o={o} paused={paused} onPause={still ? undefined : () => setPaused(!paused)} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
     </>
   );
-  const panelKey = `${o.focus.id}|${sel ?? ""}|${sector ?? ""}`;
+  const panelKey = `${o.focus.id}|${pair ?? ""}|${sector ?? ""}`;
 
   if (lead !== undefined) {
     // THE MOCKUP'S FIRST SCREEN: theme and key on the left, the map on the right, both inside one
