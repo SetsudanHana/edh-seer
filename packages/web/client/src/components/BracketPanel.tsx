@@ -3,6 +3,8 @@ import type { DeckReport } from "../types.js";
 import { bracketWhy, infiniteCombos } from "../lib/bracket-why.js";
 import { CardName } from "./card-drawer.js";
 import { ComboLoop } from "./ComboLoop.js";
+import { ComboFeature, comboParts } from "./ComboFeature.js";
+import type { EngineModel } from "../lib/engine-model.js";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -36,20 +38,25 @@ const CELL_LABEL: Record<(typeof BANDS)[number], string> = { "1-2": "1–2", "3"
  *  screen down, and the first few are the cheapest, which are the ones that decide the band. */
 const COMBO_ROWS = 4;
 
-export function BracketPanel({ bracket, combos, manaValueOf, artOf }: {
+export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
   bracket: DeckReport["bracket"];
   /** The report's full combo list: named here, not only counted. */
   combos?: DeckReport["combos"];
   manaValueOf?: (name: string) => number | undefined;
   /** A card's art, for the combo loops; without it the pieces are plain discs. */
   artOf?: (name: string) => string | undefined;
+  /** The deck's links: with them the first combo is drawn large, its sides said (`ComboFeature`). */
+  model?: EngineModel | null;
 }) {
   const [allCombos, setAllCombos] = useState(false);
   // Without the full list (an older saved report), the cheap combos the bracket carries stand in.
   const listed = useMemo(() => !bracket ? [] : combos ? infiniteCombos(combos, manaValueOf ?? (() => undefined)) : bracket.cheapCombos.map((c) => ({ ...c, cheap: true })), [bracket, combos, manaValueOf]);
   if (!bracket) return null;
   const why = bracketWhy(bracket, combos ? listed : []);
-  const shownCombos = allCombos ? listed : listed.slice(0, COMBO_ROWS);
+  // THE FIRST COMBO, DRAWN AS MOCKED UP (Combo mockup, 2026-09-27); the rest stay rows.
+  const lead = listed[0] && model ? comboParts(listed[0].cards, model) : null;
+  const rows = lead ? listed.slice(1) : listed;
+  const shownCombos = allCombos ? rows : rows.slice(0, COMBO_ROWS);
   // ONE PIP PER PIECE OF EVIDENCE THE LIST BELOW NAMES, so the eye goes band -> why without
   // reading. Counted, never summed from `reasons`: that field is a second rendering of these same
   // facts and the panel already prints the more checkable one (named cards, per-combo rows).
@@ -131,12 +138,15 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf }: {
       {listed.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
-          <ul className="grid gap-2 lg:grid-cols-2 max-w-4xl" aria-label="The infinite combos in this deck">
-            {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} />)}
-          </ul>
-          {listed.length > COMBO_ROWS ? (
+          {lead ? <ComboFeature parts={lead} result={listed[0]!.result} manaValue={listed[0]!.manaValue} cheap={listed[0]!.cheap} /> : null}
+          {shownCombos.length ? (
+            <ul className="grid gap-2 lg:grid-cols-2 max-w-4xl" aria-label={lead ? "The deck's other infinite combos" : "The infinite combos in this deck"}>
+              {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} />)}
+            </ul>
+          ) : null}
+          {rows.length > COMBO_ROWS ? (
             <button type="button" className="self-start min-h-9 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAllCombos(!allCombos)}>
-              {allCombos ? "Show fewer" : `Show all ${listed.length}`}
+              {allCombos ? "Show fewer" : `Show all ${rows.length}`}
             </button>
           ) : null}
         </div>
