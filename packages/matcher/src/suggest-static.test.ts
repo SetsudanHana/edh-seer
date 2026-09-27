@@ -6,7 +6,7 @@ import { shardOf } from "./bin/build-static-core.js";
 import { eventShardOf } from "./bin/events-index-core.js";
 import { BUILD_CATEGORIES } from "./build.js";
 import { POOL_CLASSES } from "./answer-pool.js";
-import { suggestForDeck } from "./suggest-static.js";
+import { killsOwnCreatures, suggestForDeck } from "./suggest-static.js";
 
 const VERSION = "v-test";
 
@@ -422,4 +422,32 @@ test("a candidate fed on one ability and feeding on another opens no route", asy
   }
   const s = await quietly(() => suggestForDeck({ report: deck, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(f) }));
   expect(s.routes.map((c) => c.name)).not.toContain("Impact Tremors");
+});
+
+// THE DERIVED SHAPES, read out of `cardTagsDerived` 2026-09-27 (#567, #647).
+test("a drawback that kills your own creatures is refused; a chosen sacrifice or an outlet is not", () => {
+  const tags = (abilities: unknown[]) => ({ abilities }) as unknown as CardTags;
+  const dies = (subject: object) => ({ verb: "dies", subject: { token: null, type: "creature", ...subject } });
+  const sac = (subject: object) => ({ verb: "sacrifice", subject: { token: null, type: "creature", ...subject } });
+  // Desecration Elemental: "Whenever a player casts a spell, sacrifice a creature."
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [sac({ control: "any" }), dies({ control: "any" })] }]))).toBe(true);
+  // Unstable Glyphbridge: "destroy all creatures except creatures chosen this way", once.
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "once", emits: [dies({ control: "any", scope: "all" })] }]))).toBe(true);
+  // A subject listing more than one type ("a creature or planeswalker") still names creatures.
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [dies({ control: "any", type: ["creature", "planeswalker"] })] }]))).toBe(true);
+  // Fleshbag Marauder: once, each player picks their own worst creature.
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "once", emits: [sac({ control: "any" }), dies({ control: "any" })] }]))).toBe(false);
+  // Sephiroth, One-Winged Angel: "you may sacrifice any number of other creatures" -- a choice.
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "per-cycle", emits: [sac({ control: "you", scope: "all" }), dies({ control: "you", scope: "all" })] }]))).toBe(false);
+  // Butcher of Malakir: the opponents' creatures die.
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [sac({ control: "opp" }), dies({ control: "opp" })] }]))).toBe(false);
+  // A sacrifice outlet: the cost is the player's choice.
+  expect(killsOwnCreatures(tags([{ kind: "activated", repeats: "repeatable", emits: [sac({ control: "you" }), dies({ control: "you" })] }]))).toBe(false);
+  // The Sackville-Bagginses: its own ETB derives repeatable, and the printed "you may" is the choice.
+  const sackville = tags([{ kind: "triggered", repeats: "repeatable", emits: [sac({ control: "you", type: ["creature", "artifact"] }), dies({ control: "you", type: ["creature", "artifact"] })] }]);
+  expect(killsOwnCreatures(sackville)).toBe(true);
+  expect(killsOwnCreatures(sackville, "When The Sackville-Bagginses enter, you may sacrifice another creature or artifact.")).toBe(false);
+  // A decayed token sacrificing itself is fodder.
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [sac({ control: "you", token: true })] }]))).toBe(false);
+  expect(killsOwnCreatures(null)).toBe(false);
 });

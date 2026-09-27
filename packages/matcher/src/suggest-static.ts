@@ -114,6 +114,32 @@ const ANY_BAND: readonly [number, number] = [0, Infinity];
 
 const unique = <T>(xs: readonly T[]): T[] => [...new Set(xs)];
 
+/** A DRAWBACK IS NOT A SYNERGY (#567, #647): an ability the player does not choose to use that kills
+ *  their own creatures -- a whole-board wipe, or a trigger that fires on every spell or every creature
+ *  entering. Its `dies` reaches the deck's death payoffs and every edge is rules-true, but on the
+ *  "Strengthen what works" lists it read as a plan (Desecration Elemental "opens a route" to Butcher
+ *  of Malakir; Lethal Vapors "puts cards into the graveyard" in a 45-creature deck). An activated
+ *  cost is the player's choice, and a once-only symmetric edict (Fleshbag Marauder) picks the worst
+ *  creature, so neither counts. A whole-board SACRIFICE is one too ("you may sacrifice any number",
+ *  Sephiroth; "half ... of their choice", Zodiark): only a destroy or a -N/-N wipe kills what the
+ *  player would keep. A token dying is fodder (a decayed Zombie, Curse of the Restless Dead), and a
+ *  printed "you may sacrifice" is a choice the tags cannot carry (The Sackville-Bagginses derives
+ *  its own ETB as a repeatable trigger), read off the text as `fodderEdges` reads its edict cue.
+ *  The build and answer lists keep wipes: there a wipe is what is asked. */
+const YOU_MAY_SACRIFICE = /\byou may sacrifice\b/i;
+export function killsOwnCreatures(tags: CardTags | null | undefined, oracle = ""): boolean {
+  const optional = YOU_MAY_SACRIFICE.test(oracle);
+  return (tags?.abilities ?? []).some((a) => {
+    if (a.kind === "activated") return false;
+    const sacrifices = (a.emits ?? []).some((e) => e.verb === "sacrifice");
+    if (sacrifices && optional) return false;
+    return (a.emits ?? []).some((e) =>
+      (e.verb === "dies" || e.verb === "sacrifice") && [e.subject.type].flat().includes("creature")
+      && e.subject.control !== "opp" && e.subject.self !== true && e.subject.token !== true
+      && (a.repeats === "repeatable" || (e.subject.scope === "all" && !sacrifices)));
+  });
+}
+
 /** The name index, decoded into what `suggest.ts` ranks on. */
 async function decodeIndex(lookup: StaticLookup): Promise<IndexCard[]> {
   const [rows, vocab] = await Promise.all([lookup.nameIndex(), lookup.nameIndexVocabulary()]);
@@ -505,7 +531,10 @@ export async function suggestForDeck(input: {
     }
     out.synergy[key] = cards;
   }
+  // AN UNREADABLE CARD IS LEFT TO `verify`, which drops it and says so.
+  const harmsDeck = (name: string): Promise<boolean> => dc(name).then((d) => killsOwnCreatures(d?.tags, d?.card.oracleText), () => false);
   for (const p of pairsRanked) {
+    if (await harmsDeck(p.add.card.name)) continue;
     const add = await verify(p.add.card, p.add.connections.map((x) => x.deckCard), false);
     if (!add) { console.warn("[suggest] stale pair: the engine draws nothing for", p.add.card.name); continue; }
     const cutConnections = cuts.find((c) => c.name === p.cut)?.connections ?? 0;
@@ -513,7 +542,9 @@ export async function suggestForDeck(input: {
   }
 
   // ONE CARD, ONE PLACE: a card a finding already names leaves the plan list and says so there.
-  const plan = await verified(planRanked, PLAN_LIMIT * 2, verify, nonland, ANY_BAND, 2);
+  const planSafe: Candidate[] = [];
+  for (const c of planRanked) if (!(await harmsDeck(c.card.name))) planSafe.push(c);
+  const plan = await verified(planSafe, PLAN_LIMIT * 2, verify, nonland, ANY_BAND, 2);
   const onFindings = [...Object.values(out.build), ...Object.values(out.answers), ...Object.values(out.synergy)].flat();
   const planNames = new Set(plan.map((c) => c.name));
   for (const c of onFindings) if (planNames.has(c.name)) c.alsoPlan = true;
@@ -622,6 +653,7 @@ export async function suggestForDeck(input: {
     return reachesAlready.get(k)!;
   };
   for (const c of routeRanked) {
+    if (await harmsDeck(c.name)) continue;
     const v = await verify(c, nonland, false);
     if (!v) continue;
     const all = extendRoutes(deckRoutes, v.hops);
