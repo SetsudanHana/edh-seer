@@ -94,9 +94,11 @@ const REFRESH_UNLESS = process.argv.includes("--refresh-unless");
  *  `prepare` existed recorded its lines as near-misses -- `tap:this` on five, `add-counter:prepared`
  *  on four -- and none says `other`, so `--refresh-other` cannot find them. Gated on the TEXT and on
  *  an older prompt, never on a version number alone: the treadmill lesson. */
-const REFRESH_TERM = (() => {
+const REFRESH_TERMS = (() => {
+  // PLAIN WORDS, "|"-separated, matched case-insensitively -- never a RegExp built from argv (CodeQL
+  // js/regex-injection, and a word list is all this selector needs).
   const i = process.argv.indexOf("--refresh-term");
-  return i >= 0 && process.argv[i + 1] ? new RegExp(process.argv[i + 1]!, "i") : null;
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]!.toLowerCase().split("|").map((t) => t.trim()).filter(Boolean) : null;
 })();
 /** Re-ask every doc answered under a prompt older than N. NOT `NORMALIZE_MIN_COMPATIBLE`, which is a
  *  claim that older answers are INVALID and re-buys the whole corpus the moment it moves -- this is
@@ -333,7 +335,8 @@ for await (const doc of scopeDocs()) {
       || carriesOtherTrigger(existing, TRIGGERS, TRIGGER_VOCAB_VERSION));
   const stale = BELOW_VERSION > 0 && existing !== null && existing.normalizeVersion < BELOW_VERSION;
   const unless = REFRESH_UNLESS && worthReasking(existing, NORMALIZE_VERSION) && dropsUnlessPayment(existing, doc.oracleText ?? "");
-  const term = REFRESH_TERM !== null && worthReasking(existing, NORMALIZE_VERSION) && REFRESH_TERM.test(doc.oracleText ?? "");
+  const term = REFRESH_TERMS !== null && worthReasking(existing, NORMALIZE_VERSION)
+    && REFRESH_TERMS.some((t) => (doc.oracleText ?? "").toLowerCase().includes(t));
   if (!needsNormalize(existing, hash, NORMALIZE_MIN_COMPATIBLE) && !refreshable && !stale && !unless && !term) continue;
   // Tested AFTER `needsModel`, never before it: an all-inert card costs nothing, so excluding it
   // would buy no money back and would leave it reading as unread. An UNRANKED card is out — EDHREC
