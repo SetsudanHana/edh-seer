@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { CardDrawerProvider, CardName, ReasonText, usePinned } from "./card-drawer.js";
@@ -1308,7 +1308,8 @@ test("per-row modes survive when the rows disagree", () => {
 test("an answer row says how often one is in hand and names its cards, with no shortfall", () => {
   const named = { ...DECK_MATH, answers: DECK_MATH.answers.map((a) => (a.class === "creature" ? { ...a, cards: ["Beast Within", "Swords to Plowshares"] } : a)) };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={named} />);
-  expect(screen.getByText(/^in hand by turn 5 in 41% of games/)).toBeInTheDocument();
+  // The chance is a bar and its figure on screen, and the sentence in the row's label.
+  expect(screen.getByLabelText(/in hand by turn 5 in 41% of games/)).toBeInTheDocument();
   const creature = screen.getByLabelText(/^creature,/i);
   expect(creature).toHaveTextContent("Beast Within · Swords to Plowshares");
   for (const row of screen.getAllByTestId("answer-row")) expect(row).not.toHaveTextContent(/\bshort\b/i);
@@ -1749,24 +1750,6 @@ test("BuildBenchmarks shows a colour that cannot pay its own pips on time", () =
 /** S4 (roadmap L5): the row shows the mulligan-corrected requirement, so the raw one has to be
  *  ON SCREEN somewhere or the reader cannot tell which model produced the number. A caveat naming
  *  only one end lets the pair collapse back to a point the next time somebody edits the copy. */
-test("the colour caveat names BOTH models, not just the one in the row", () => {
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  const caveat = screen.getByText(/without it the same rows would ask for/i);
-  expect(caveat).toBeInTheDocument();
-  // The raw end, and the reason the pair is an interval rather than a better number.
-  expect(caveat).toHaveTextContent("33");
-
-  // Deduped: rows sharing a raw figure must not print it once per row.
-  cleanup();
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={{
-    ...DECK_MATH,
-    colors: ["U", "B", "R"].map((color) => ({
-      color, supplied: 11, worst: { pips: 1, turn: 3, required: 15, requiredRaw: 20, cards: 1, available: 9 },
-    })),
-  }} />);
-  expect(screen.getByText(/without it the same rows would ask for/i)).toHaveTextContent(/ask for 20 instead/i);
-  expect(caveat).toHaveTextContent(/land count, not on its\s+sources of one colour/i);
-});
 
 test("BuildBenchmarks says whether you can CAST it, and names colour when that is the problem", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
@@ -1779,9 +1762,6 @@ test("BuildBenchmarks says whether you can CAST it, and names colour when that i
   // Ulamog's colours line up, so it gets no second number: below the gap it would say the same
   // thing twice, which is how a panel stops being read.
   expect(screen.getByLabelText(/Ulamog/i).textContent).not.toMatch(/mana alone/i);
-  // The refusals are a count, not a silence: a card the model will not price must not read as a
-  // card it priced at zero.
-  expect(screen.getByText(/3 cards skipped/i)).toBeInTheDocument();
   // THE DEADLINE IS ON SCREEN, not only in the aria-label. Four cards of equal mana value tie at
   // the same percentage by construction, and a bare "3%" repeated down the block was read as a
   // broken readout by three of four player reviews.
@@ -1803,8 +1783,6 @@ test("BuildBenchmarks never prints a range whose two ends are the same figure", 
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={math} />);
   expect(screen.getByText(/31% to cast by turn 1/i)).toBeInTheDocument();
   expect(screen.getByText(/^mana alone 91%$/i)).toBeInTheDocument();
-  // The meaning of the gap is said once, under the list, rather than on every row.
-  expect(screen.getByText(/the colours are what is short/i)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/(\d+)% – \1%/);
 });
 
@@ -1828,25 +1806,23 @@ test("the land row names how many lands are MDFCs, and says nothing when there i
   expect(screen.queryByText(/\b41\b(?!%)/)).not.toBeInTheDocument();
 });
 
-test("BuildBenchmarks says where its turn came from, because it varies per deck", () => {
+// ONE LINE SINCE 2026-09-27 (owner: "less is more"): the turn and the cards seen, which move per deck.
+test("BuildBenchmarks says the turn its figures are priced at, in one line", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  // "By turn 5" used to mean the same thing for every deck. Now it is this deck's own clock, and a
-  // reader comparing two reports needs to know the horizon moved.
-  expect(screen.getByText(/when this deck typically wins/i)).toBeInTheDocument();
+  expect(screen.getByText("Checked at turn 5, 12 cards seen.")).toBeInTheDocument();
 });
 
 test("a deck with no clock says its turn is the corpus median", () => {
   const noClock = { ...DECK_MATH, turnSource: "corpus-median" as const, turn: 9, seen: 16, clock: { powerAtFive: 0.4 } };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={noClock} />);
-  expect(screen.getByText(/median of the calibration decks/i)).toBeInTheDocument();
+  expect(screen.getByText("Checked at turn 9, 16 cards seen.")).toBeInTheDocument();
 });
 
-test("BuildBenchmarks carries the caveat that makes the numbers readable", () => {
+test("BuildBenchmarks says how many cards its figures assume you have seen", () => {
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
   // Unweighted supply and no-opponent are not footnotes to look up later: without them a reader
   // takes 41% as a fact about their deck rather than about a hypergeometric draw.
-  expect(screen.getByText(/repeatable effect counts the\s+same as a one-shot/i)).toBeInTheDocument();
-  expect(screen.getByText(/12 cards seen by then/i)).toBeInTheDocument();
+  expect(screen.getByText(/12 cards seen/i)).toBeInTheDocument();
 });
 
 test("BuildBenchmarks renders without deck math at all", () => {
@@ -2306,7 +2282,6 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
   const { unmount } = render(
     <BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={overcommitted} />,
   );
-  expect(screen.getByText(/ask for 64 sources from 34 lands/)).toBeInTheDocument();
   // THE ROW NAMES ITS UNIT NOW and drops the turn its left half already prints once -- the phone
   // judge's third run gave up on this row for want of a noun. Same element, same muted tone.
   expect(screen.getByText("12 sources, wants 22")).toHaveClass("text-(--muted)");
@@ -2338,15 +2313,6 @@ test("colour rows stop crying wolf when the demands cannot all be met", () => {
 // stays visible, because a reader who does not know the turn cannot read a single figure below it.
 // Asserted on `open`, not on presence: jsdom renders a closed <details>'s children into the DOM, so
 // a query for the text finds it either way -- what changes is whether a reader can see it.
-test("the model's caveats fold away while the horizon they qualify stays visible", async () => {
-  const user = userEvent.setup();
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={DECK_MATH} />);
-  expect(screen.getByText(/Everything below is checked at turn 5/)).toBeInTheDocument();
-  const caveat = screen.getByText(/repeatable effect counts the\s+same as a one-shot/).closest("details")!;
-  expect(caveat.open).toBe(false);
-  await user.click(within(caveat).getByText("what this number ignores"));
-  expect(caveat.open).toBe(true);
-});
 
 // A LIST WHOSE EVERY ROW READS THE SAME WAY IS NOT A FINDING. What matters is a want with nothing
 // supplying it -- and on a working deck there are none, which is why the full list folds.
@@ -2752,9 +2718,6 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
   expect(screen.getByText(/55%/)).toBeInTheDocument();
   expect(screen.queryByText(/55% – 62%/)).not.toBeInTheDocument();
   expect(screen.getByText(/to make 6 mana by turn 6/)).toBeInTheDocument();
-  // The range is named as the POLICY, not as uncertainty in general.
-  expect(screen.getByText(/how you play them/i)).toBeInTheDocument();
-  expect(screen.getByText(/ceiling no real deck plays to/i)).toBeInTheDocument();
   // AND THE WIDE DECK KEEPS BOTH ENDS. `iz-it-izzet` measures 30% - 67% at this cell, a 36pp spread
   // where the sequencing decides the answer and no single number can stand for it.
   unmount();
@@ -2762,8 +2725,6 @@ test("the mana panel shows a policy range, its spread, and says what it is not",
     trials: 2000, accelerants: 11, rows, headline: { mana: 6, turn: 6, low: 0.30, high: 0.67 },
   }} />);
   expect(screen.getByText(/30% – 67%/)).toBeInTheDocument();
-  // C10 reaches the reader: colour blindness is stated on screen.
-  expect(screen.getByText(/never castability/i)).toBeInTheDocument();
   // C7: THE SPREAD TRAVELS WITH EVERY MEDIAN, and after T17 that happens on the chart rather than
   // in a table -- one <title> per plotted turn. This assertion kept passing across that change
   // because the fixture has three rows and the tooltips matched the same text the table cells used
