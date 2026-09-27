@@ -24,6 +24,13 @@ export interface EventQuery {
   produce: string[];
   /** Events the card ASKS FOR. Every one must match. */
   consume: string[];
+  /** THE SENTENCE'S OTHER TWO OPERATORS (owner, 2026-09-27; `event-terms.ts`). At least one of the
+   *  `or` terms must hold, and none of the `not` terms may. Optional, and absent from the URL when
+   *  empty, so every link written before them still reads exactly as it did. */
+  orProduce?: string[];
+  orConsume?: string[];
+  notProduce?: string[];
+  notConsume?: string[];
   colours: string[];
   /** WHAT THE CARD IS, added 2026-09-21. The owner asked for two things this could not answer:
    *  Slivers, and "show me mill instants which are blue and cost less than 3 mana".
@@ -100,6 +107,11 @@ const bound = (raw: string | null): number | undefined => {
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : undefined;
 };
 
+/** The `or` and `not` terms' params, one per field. */
+const OPERATOR_PARAMS = [
+  ["orProduce", "orproduce"], ["orConsume", "orconsume"], ["notProduce", "notproduce"], ["notConsume", "notconsume"],
+] as const;
+
 export function eventsFromParams(p: URLSearchParams): EventQuery {
   const sort = p.get("sort") ?? "";
   const dir = p.get("dir") ?? "";
@@ -115,6 +127,9 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
   return {
     produce: p.getAll("produce").filter((k) => k.length > 0),
     consume: p.getAll("consume").filter((k) => k.length > 0),
+    ...Object.fromEntries(OPERATOR_PARAMS
+      .map(([field, param]) => [field, p.getAll(param).filter((k) => k.length > 0)] as const)
+      .filter(([, v]) => v.length > 0)),
     colours: [...(p.get("colors") ?? "")].filter((c) => "WUBRGC".includes(c)),
     types: p.getAll("type").filter((k) => k.length > 0),
     subtypes: p.getAll("subtype").filter((k) => k.length > 0),
@@ -129,13 +144,14 @@ export function eventsFromParams(p: URLSearchParams): EventQuery {
 export function eventsToParams(q: EventQuery, p: URLSearchParams): URLSearchParams {
   const out = new URLSearchParams(p);
   for (const k of [
-    "produce", "consume", "colors", "type", "subtype", "keyword", "cardcolors", "sort", "dir",
+    "produce", "consume", ...OPERATOR_PARAMS.map(([, param]) => param), "colors", "type", "subtype", "keyword", "cardcolors", "sort", "dir",
     // `mv` IS DELETED AND NEVER WRITTEN. It is read for the links that already carry it and
     // rewritten as `mvmax`, so the legacy spelling does not propagate into new ones.
     "mv", "mvmin", "mvmax", "powmin", "powmax", "toumin", "toumax",
   ]) out.delete(k);
   for (const k of q.produce) out.append("produce", k);
   for (const k of q.consume) out.append("consume", k);
+  for (const [field, param] of OPERATOR_PARAMS) for (const k of q[field] ?? []) out.append(param, k);
   if (q.colours.length > 0) out.set("colors", q.colours.join(""));
   for (const k of q.types) out.append("type", k);
   for (const k of q.subtypes) out.append("subtype", k);
@@ -331,8 +347,9 @@ export function filterKindsOf(q: EventQuery): FilterKind[] {
     mv: q.mvMin !== undefined || q.mvMax !== undefined,
     power: q.powMin !== undefined || q.powMax !== undefined,
     toughness: q.touMin !== undefined || q.touMax !== undefined,
-    produce: q.produce.length > 0,
-    consume: q.consume.length > 0,
+    // ANY TERM ON THE SIDE, whatever its operator: `produce` is the question "what it makes".
+    produce: q.produce.length + (q.orProduce?.length ?? 0) + (q.notProduce?.length ?? 0) > 0,
+    consume: q.consume.length + (q.orConsume?.length ?? 0) + (q.notConsume?.length ?? 0) > 0,
   };
   return FILTER_KINDS.filter((k) => asked[k]);
 }
@@ -354,7 +371,7 @@ export function withoutFilterKind(q: EventQuery, kind: FilterKind): EventQuery {
     case "mv": { const { mvMin: _a, mvMax: _b, ...rest } = q; return rest; }
     case "power": { const { powMin: _a, powMax: _b, ...rest } = q; return rest; }
     case "toughness": { const { touMin: _a, touMax: _b, ...rest } = q; return rest; }
-    case "produce": return { ...q, produce: [] };
-    case "consume": return { ...q, consume: [] };
+    case "produce": { const { orProduce: _a, notProduce: _b, ...rest } = q; return { ...rest, produce: [] }; }
+    case "consume": { const { orConsume: _a, notConsume: _b, ...rest } = q; return { ...rest, consume: [] }; }
   }
 }

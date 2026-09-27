@@ -3,9 +3,9 @@ import { useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
 import { sharedEventFrequency, sharedEventMembers, sharedNameIndex, sharedNameIndexVocabulary, type EventFrequencyFile, type EventMembers, type NameIndexEntry } from "../lib/partners.js";
-import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, intersect, orderOf, withoutFilterKind, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
-import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
-import { EventPicker } from "./EventPicker.js";
+import { compileCharacteristics, coloursFit, eventsFromParams, eventsToParams, filterKindsOf, orderOf, withoutFilterKind, FILTER_KINDS, NATURAL_DIR, type EventQuery, type FilterKind } from "../lib/facets.js";
+import { EventSentence, termWords } from "./EventSentence.js";
+import { answerTerms, termsOf, withTerms } from "../lib/event-terms.js";
 import { CardTile } from "./CardTile.js";
 import { TypeLinePicker } from "./TypeLinePicker.js";
 import { WordPicker } from "./WordPicker.js";
@@ -86,6 +86,9 @@ const FILTER_LABEL: Record<FilterKind, string> = {
   consume: "Cares about",
 };
 
+/** The panel's rows: every kind but the two events, which the sentence asks. */
+const ROW_KINDS = FILTER_KINDS.filter((k) => k !== "produce" && k !== "consume");
+
 export function CardSearch({
   load = sharedNameIndex, frequency = sharedEventFrequency, members = sharedEventMembers,
   vocabulary: loadVocabulary = sharedNameIndexVocabulary,
@@ -158,7 +161,8 @@ export function CardSearch({
   const setEvents = (next: EventQuery) => setParams(eventsToParams(next, params), { replace: true });
   const colours = eventQuery.colours;
   const setColours = (f: (cs: string[]) => string[]) => setEvents({ ...eventQuery, colours: f(colours) });
-  const chosenKeys = useMemo(() => [...eventQuery.produce, ...eventQuery.consume], [eventQuery]);
+  const terms = useMemo(() => termsOf(eventQuery), [eventQuery]);
+  const chosenKeys = useMemo(() => [...new Set(terms.map((t) => t.key))], [terms]);
   // THE ROWS THE URL IS ASKING FOR, plus the ones added and not yet filled. `pending` is the only
   // part that is local state, and it has to be: a row a reader just created has nothing in the URL
   // to be read back out of, and writing an empty param to hold its place would put a question in
@@ -174,8 +178,9 @@ export function CardSearch({
   useEffect(() => {
     setPending((ks) => (askedKinds.every((k) => ks.includes(k)) ? ks : [...new Set([...ks, ...askedKinds])]));
   }, [askedKinds]);
-  const shownKinds = FILTER_KINDS.filter((k) => askedKinds.includes(k) || pending.includes(k));
-  const available = FILTER_KINDS.filter((k) => !shownKinds.includes(k));
+  // THE EVENTS ARE NOT ROWS ANY MORE: the sentence above the panel asks them (owner, 2026-09-27).
+  const shownKinds = ROW_KINDS.filter((k) => askedKinds.includes(k) || pending.includes(k));
+  const available = ROW_KINDS.filter((k) => !shownKinds.includes(k));
   const [menuOpen, setMenuOpen] = useState(false);
   // REMOVING A ROW CLEARS ITS QUESTION AND FORGETS THE ROW. Doing only the first would leave an
   // empty control standing where a reader had just said they were finished with it.
@@ -196,7 +201,8 @@ export function CardSearch({
   // ADDING THE ROW IS THE INTERACTION, which is a tighter rule than the focus handler this
   // replaces: nothing is fetched for a reader who never asks about an event, and the fetch starts
   // the moment one is asked for rather than when the control happens to take focus.
-  const needsFreq = shownKinds.includes("produce") || shownKinds.includes("consume") || chosenKeys.length > 0;
+  const [sentenceOpened, setSentenceOpened] = useState(false);
+  const needsFreq = sentenceOpened || chosenKeys.length > 0;
   useEffect(() => {
     if (!needsFreq || freq !== null) return;
     let live = true;
@@ -246,15 +252,14 @@ export function CardSearch({
   // `undefined` means the answer is not knowable yet -- still reading, or a shard that did not
   // carry the key. A MISSING LIST IS NOT AN EMPTY ONE: rendering an empty set would claim that no
   // card causes the event, which is a claim, and this engine says nothing rather than guessing.
-  const keptIds = useMemo((): Set<number> | null | undefined => {
+  // AND THE OPERATORS (owner, 2026-09-27): every `and` term, at least one `or` term, no `not` term.
+  // `keep` null is the whole index; `drop` is taken away from whatever is kept.
+  const keptIds = useMemo((): { keep: Set<number> | null; drop: Set<number> } | null | undefined => {
     if (chosenKeys.length === 0) return null;
     if (chosenKeys.some((k) => !lists.has(k))) return undefined;
     if (chosenKeys.some((k) => lists.get(k) === null)) return undefined;
-    return intersect([
-      ...eventQuery.produce.map((k) => lists.get(k)!.p),
-      ...eventQuery.consume.map((k) => lists.get(k)!.c),
-    ]);
-  }, [chosenKeys, lists, eventQuery]);
+    return answerTerms(terms, (t) => (t.side === "makes" ? lists.get(t.key)!.p : lists.get(t.key)!.c));
+  }, [chosenKeys, lists, terms]);
   const unanswerable = chosenKeys.length > 0 && chosenKeys.every((k) => lists.has(k))
     && chosenKeys.some((k) => lists.get(k) === null);
 
@@ -263,9 +268,10 @@ export function CardSearch({
   const matches = useMemo((): NameIndexEntry[] | null => {
     if (index === null || !asked) return [];
     if (keptIds === undefined) return null;
-    const base = keptIds === null
-      ? index
-      : [...keptIds].map((id) => index[id]).filter((e): e is NameIndexEntry => e !== undefined);
+    const base = keptIds === null ? index
+      : (keptIds.keep === null ? index : [...keptIds.keep].map((id) => index[id]))
+        .filter((e): e is NameIndexEntry => e !== undefined)
+        .filter((e) => keptIds.drop.size === 0 || !keptIds.drop.has(positionOf.get(e) ?? -1));
     const named = needle.length === 0 ? base : matchNames(base, { query });
     // `identityKeyOf` spells colourless "C" and `coloursFit` spells it "", the same normalisation
     // the facet rows carried. Getting it wrong would make every colourless card answer only the
@@ -350,12 +356,6 @@ export function CardSearch({
   const consumeOptions = useMemo(
     () => (freq === null ? [] : Object.keys(freq.consume).filter((k) => (freq.consume[k] ?? 0) > 0)),
     [freq]);
-
-  // HOW EACH SIDE SAYS AN EVENT (roadmap AK4). A card that CAUSES one is doing something, so it
-  // takes the action a player would name ("sacrifice a creature"); a card WAITING for one takes
-  // the clause ("a creature dies"). Not every event has an action -- nobody makes a creature
-  // attack the way they make one die -- so the clause is the fallback rather than an invented verb.
-  const causeWording = (key: string): string => eventKeyAction(key) ?? eventKeyClause(key);
 
   // THE CAP IS A PAGE (UX review, 2026-09-17). "467 match, showing the first 50" with no way to the
   // rest was a dead end; each press shows another fifty, and a new question starts over.
@@ -508,40 +508,11 @@ export function CardSearch({
             onChange={(r) => setEvents({ ...eventQuery, touMin: r.min, touMax: r.max })}
           />
         );
-      /* THE TWO QUESTIONS THIS ENGINE CAN ACTUALLY ANSWER (spec 2026-09-19, owner: "events are
-       * does and theme basically"). What a card CAUSES and what it ASKS FOR, in the same
-       * vocabulary the card pages print -- so a reader who clicked through from a partner group
-       * meets the sentence they clicked.
-       *
-       * EVERY TERM ANDS, including between the two. The `does` chips ORed within their group;
-       * keeping both vocabularies on one page under one heading, with two different meanings for
-       * choosing two things, is the reason only one of them survived. */
+      /* THE EVENTS ARE ASKED BY THE SENTENCE, not by a row (owner, 2026-09-27); these two kinds
+       * stay kinds so a link's question is still "asked", and are never drawn as rows. */
       case "produce":
-        return (
-          <EventPicker
-            label="Causes"
-            hint={commanderMode ? "events this commander can cause for the rest of the deck" : "events the card can cause"}
-            options={produceOptions}
-            chosen={eventQuery.produce}
-            counts={countOf}
-            demand={consumeCountOf}
-            say={causeWording}
-            onChange={(next) => setEvents({ ...eventQuery, produce: next })}
-          />
-        );
       case "consume":
-        return (
-          <EventPicker
-            label="Cares about"
-            hint={commanderMode ? "events this commander is built to be paid" : "events the card is waiting for"}
-            options={consumeOptions}
-            chosen={eventQuery.consume}
-            counts={consumeCountOf}
-            demand={consumeCountOf}
-            say={eventKeyClause}
-            onChange={(next) => setEvents({ ...eventQuery, consume: next })}
-          />
-        );
+        return <></>;
     }
   };
 
@@ -604,14 +575,27 @@ export function CardSearch({
         *  ONE MODEL AT EVERY WIDTH. This replaces the `<details>` that folded the panel below
         *  `sm`, and with it the `matchMedia` read that decided which width it was -- a branch the
         *  test harness could never take, because a max-width media query is false under jsdom. */}
+      {/* THE QUESTION, AS A SENTENCE (owner, 2026-09-27: mockup B). Always drawn, so "+ add" is where
+        * a reader starts asking what a card does; the rows below are what it IS and what it costs. */}
+      <EventSentence
+        terms={terms}
+        colours={colours}
+        noun={commanderMode ? "commanders" : "cards"}
+        makes={produceOptions}
+        pays={consumeOptions}
+        makesCount={countOf}
+        paysCount={consumeCountOf}
+        demand={consumeCountOf}
+        onChange={(next) => setEvents(withTerms(eventQuery, next))}
+        onRemoveColour={(c) => setColours((cs) => cs.filter((x) => x !== c))}
+        onOpen={() => setSentenceOpened(true)}
+      />
       <div className="facets flex flex-col gap-4">
         {shownKinds.length > 0 && (
           <ul className="flex flex-col gap-4 list-none p-0 m-0">
             {shownKinds.map((kind) => (
               <li key={kind} className="flex flex-wrap items-end gap-x-3 gap-y-2">
-                {/* AN EVENT ROW TAKES THE ROW'S WIDTH (owner, 2026-09-27: the picker sat in under half
-                  * the screen and wrapped every sentence onto two or three lines). */}
-                <div className={kind === "produce" || kind === "consume" ? "min-w-0 flex-1 basis-80 max-w-4xl" : "min-w-0"}>{filterRow(kind)}</div>
+                <div className="min-w-0">{filterRow(kind)}</div>
                 {/* THE ONLY WAY BACK TO "NOT ASKED" for a row, so it is a real control and not a
                   * hover affordance: this page is used on a phone, where hover does not exist. */}
                 <button
@@ -792,16 +776,19 @@ export function CardSearch({
                 // WHY IT IS ON THE LIST, in the sentences that were asked. Every kept row answers
                 // every term (the query ANDs), so the caption is the question rather than a
                 // per-row computation over data this page no longer fetches.
-                const terms = [
-                  ...eventQuery.produce.map(causeWording),
-                  ...eventQuery.consume.map((k) => eventKeyClause(k)),
+                // THE `or` TERMS THAT HOLD FOR THIS CARD, not all of them: at least one does, and the
+                // caption names which. `not` terms are absences and are not a reason.
+                const pos = positionOf.get(e) ?? -1;
+                const caption = [
+                  ...terms.filter((t) => t.op === "and").map(termWords),
+                  ...terms.filter((t) => t.op === "or" && (t.side === "makes" ? lists.get(t.key)?.p : lists.get(t.key)?.c)?.includes(pos)).map(termWords),
                 ];
                 return (
                   <li key={e.slug} className="min-w-0">
                     <CardTile
                       slug={e.slug} name={e.name} art={e.art} identity={e.identity}
                       to={`${commanderMode ? "/commanders" : "/cards"}/${e.slug}`}
-                      caption={terms.length > 0 ? terms.join(" · ") : undefined}
+                      caption={caption.length > 0 ? caption.join(" · ") : undefined}
                       note={!commanderMode && e.commander ? "commander" : undefined}
                     />
                   </li>

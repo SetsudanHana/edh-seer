@@ -563,12 +563,12 @@ test("removing a row clears what it was asking", async () => {
 
 /** AND THE COUNTS FOLLOW THE ROW. Nothing is fetched for a reader who never asks about an event;
  *  the fetch starts when the row is added rather than when a control happens to take focus. */
-test("the event counts are read when an event row is added, not before", async () => {
+test("the event counts are read when the sentence's add list opens, not before", async () => {
   const freq = vi.fn(async () => FREQ);
   atUrl("/cards", { frequency: freq });
   await screen.findByRole("searchbox");
   expect(freq).not.toHaveBeenCalled();
-  await addFilter("Causes");
+  await userEvent.click(screen.getByRole("button", { name: "+ add" }));
   await waitFor(() => expect(freq).toHaveBeenCalled());
 });
 
@@ -690,9 +690,64 @@ test("the menu offers every dimension the corpus can answer", async () => {
   atUrl("/cards");
   await userEvent.click(await screen.findByText("Add a filter"));
   const offered = screen.getAllByRole("button").map((b) => b.textContent?.trim());
-  for (const label of ["Colour identity", "Colour", "Type line", "Keywords", "Mana value", "Power", "Toughness", "Causes", "Cares about"]) {
+  for (const label of ["Colour identity", "Colour", "Type line", "Keywords", "Mana value", "Power", "Toughness"]) {
     expect(offered).toContain(label);
   }
+  // THE EVENTS ARE THE SENTENCE'S, not the menu's (owner, 2026-09-27).
+  expect(offered).not.toContain("Causes");
+  expect(offered).not.toContain("Cares about");
+});
+
+/** THE SENTENCE'S OPERATORS (owner, 2026-09-27: "support logical operators like NOT OR AND").
+ *  Fixture: MILL is made by Inspiring Call and Skullclamp, DIES by Fathom Mage and paid off by
+ *  Fathom Mage and Inspiring Call. */
+
+test("either of two events widens instead of narrowing", async () => {
+  atUrl(`/cards?orproduce=${encodeURIComponent(MILL)}&orproduce=${encodeURIComponent(DIES)}`);
+  await screen.findByRole("link", { name: /Fathom Mage/ });
+  expect(resultNames().join()).toMatch(/Inspiring Call/);
+  expect(resultNames().join()).toMatch(/Skullclamp/);
+  expect(screen.getByTestId("or-group")).toHaveTextContent(/either.*or/);
+});
+
+test("never takes cards away, and asked alone it answers from every card", async () => {
+  atUrl(`/cards?notproduce=${encodeURIComponent(MILL)}`);
+  await screen.findByRole("link", { name: /Fathom Mage/ });
+  expect(resultNames()).toHaveLength(1);
+  expect(screen.getByRole("group", { name: "Your search" })).toHaveTextContent(/never/);
+});
+
+test("a must and a never combine", async () => {
+  atUrl(`/cards?consume=${encodeURIComponent(DIES)}&notproduce=${encodeURIComponent(MILL)}`);
+  await screen.findByRole("link", { name: /Fathom Mage/ });
+  expect(resultNames()).toHaveLength(1);
+  expect(screen.getByRole("group", { name: "Your search" })).toHaveTextContent(/but never/);
+});
+
+test("adding an event from the list puts it in the sentence and the link, and closes the list", async () => {
+  const spy = atUrl("/cards");
+  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Cards that make it happen: .*milled/ }));
+  await waitFor(() => expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]));
+  expect(screen.queryByRole("group", { name: "Events" })).toBeNull();
+  expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
+});
+
+test("tapping a joining word moves the term after it on: and, or, never", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&produce=${encodeURIComponent(DIES)}`);
+  const sentence = await screen.findByRole("group", { name: "Your search" });
+  await userEvent.click(within(sentence).getByRole("button", { name: /^and: change/ }));
+  await waitFor(() => expect(new URLSearchParams(spy.search).getAll("orproduce")).toEqual([DIES]));
+  expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]);
+  await userEvent.click(within(sentence).getByRole("button", { name: /^and either: change/ }));
+  await waitFor(() => expect(new URLSearchParams(spy.search).getAll("notproduce")).toEqual([DIES]));
+});
+
+test("a pay-off term reads as the clause under the triggered mark, a made one as the action", async () => {
+  atUrl(`/cards?produce=${encodeURIComponent(MILL)}&consume=${encodeURIComponent(DIES)}`);
+  const sentence = await screen.findByRole("group", { name: "Your search" });
+  expect(within(sentence).getByRole("button", { name: /^makes: .*mill/ })).toBeInTheDocument();
+  expect(within(sentence).getByRole("button", { name: /^pays off: a creature dies/ }).querySelector(".ms-ability-triggered")).not.toBeNull();
 });
 
 /** A RANGE IS THE POINT: "not everyone looks for just X or less". Both ends, and either alone. */
