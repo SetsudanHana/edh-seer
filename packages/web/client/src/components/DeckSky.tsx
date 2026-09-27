@@ -77,8 +77,14 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
   }, []);
   const font = (sky.box.w / (shown || 480)) * 11;
   const charW = font * 0.76;
-  const x = Math.min(sky.box.x, ...sky.clusters.map((c) => c.lx - (c.name.length * charW) / 2 - 12));
-  const x1 = Math.max(sky.box.x + sky.box.w, ...sky.clusters.map((c) => c.lx + (c.name.length * charW) / 2 + 12));
+  // ON A PHONE THE THEMES ARE NAMED UNDER THE SKY (owner, 2026-09-27: the names crowded on a
+  // phone). At 11px, names as wide as the sky's own themes could not all sit beside them in 358px:
+  // the small themes near the middle stacked their names round the commander. Under the sky, as a
+  // row of coloured chips, each name is whole and each chip still lights its theme.
+  const legend = shown > 0 && shown < 480 && sky.clusters.length > 0;
+  const labelled = legend ? [] : sky.clusters;
+  const x = Math.min(sky.box.x, ...labelled.map((c) => c.lx - (c.name.length * charW) / 2 - 12));
+  const x1 = Math.max(sky.box.x + sky.box.w, ...labelled.map((c) => c.lx + (c.name.length * charW) / 2 + 12));
   const y = sky.box.y - font, h = sky.box.h + 2 * font, w = x1 - x;
   // NO NAME OVER ANOTHER: a name that would overlap one already placed tries the constellation's
   // other side, then steps away from it until it is clear.
@@ -87,7 +93,7 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
     const boxes: { x0: number; x1: number; y0: number; y1: number }[] = sky.stars.filter((s) => s.kind === "commander")
       .map((s) => ({ x0: s.x - R.commander - 6, x1: s.x + R.commander + 6, y0: s.y - R.commander - 6, y1: s.y + R.commander + 6 }));
     const hit = (b: typeof boxes[number]) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
-    const ys = sky.clusters.map((c) => {
+    const ys = labelled.map((c) => {
       const half = (c.name.length * charW) / 2;
       const at = (ly: number) => ({ x0: c.lx - half, x1: c.lx + half, y0: ly - font, y1: ly + font * 0.3 });
       const above = c.ly < c.y;
@@ -99,7 +105,7 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
       return ly;
     });
     return { ys, boxes };
-  }, [sky, font, charW]);
+  }, [sky, font, charW, legend]);
   // CARD NAMES TOO: the picked and pointed-at card first, then a chapter's lit cards, each above
   // its star, else below, else beside it; a lit name with no clear place is left to the tap.
   const nameAt = (() => {
@@ -216,7 +222,7 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
         </g>
         {/* THE THEMES' NAMES, as a star chart names its constellations: each is a button. */}
         <g>
-          {sky.clusters.map((c, i) => (
+          {labelled.map((c, i) => (
             <text key={c.tag} x={c.lx} y={place.ys[i]} textAnchor={c.anchor} role="button" tabIndex={0} aria-pressed={theme === i}
               // LIFTED TOWARD WHITE for the words: the darkest theme colours are drawn for a light
               // chip and read poorly as small letters on the night.
@@ -233,6 +239,20 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
           ))}
         </g>
       </svg>
+      {legend ? (
+        <ul className="flex flex-wrap gap-1.5" aria-label="The themes on the sky">
+          {sky.clusters.map((c, i) => (
+            <li key={c.tag}>
+              <button type="button" aria-pressed={theme === i} onClick={() => { setStar(null); setTheme(theme === i ? null : i); }}
+                className={`flex min-h-9 items-center gap-1.5 rounded-full border px-2.5 text-xs ${theme === i ? "border-(--foreground) text-(--foreground)" : "border-(--separator) text-(--muted)"}`}
+                style={{ opacity: on && theme !== i && !c.ids.some((id) => on.has(id)) ? 0.5 : 1 }}>
+                <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.hue }} />
+                {c.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <figcaption className="text-sm text-(--muted)" aria-live="polite">
         {picked1 ? (
           <>

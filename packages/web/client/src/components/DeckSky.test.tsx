@@ -30,3 +30,27 @@ test("a chapter's light: its cards shine, its lines are drawn in gold, and it sa
   expect(screen.getByText("Two cards")).toBeInTheDocument();
   expect(container.querySelectorAll("[data-testid=sky-lit-lines] line").length).toBe(1);
 });
+
+/** ON A PHONE THE THEMES ARE NAMED UNDER THE SKY (owner, 2026-09-27: they crowded round the
+ *  commander at 358px): a chip per theme, which lights it as the name did. */
+test("drawn narrow, the themes' names become chips under the sky, and a chip lights its theme", async () => {
+  const RO = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class {
+    cb: ResizeObserverCallback;
+    constructor(cb: ResizeObserverCallback) { this.cb = cb; }
+    observe() { this.cb([{ contentRect: { width: 358 } } as ResizeObserverEntry], this as never); }
+    unobserve() {}
+    disconnect() {}
+  } as never;
+  try {
+    const m = model();
+    const { container } = render(<DeckSky model={m} />);
+    const chips = await screen.findByRole("list", { name: "The themes on the sky" });
+    const first = m.groups.find((g) => !g.helper)!;
+    expect(container.querySelector("text.sky-theme")).toBeNull();
+    const chip = screen.getByRole("button", { name: first.name });
+    expect(chips).toContainElement(chip);
+    fireEvent.click(chip);
+    expect(chip).toHaveAttribute("aria-pressed", "true");
+  } finally { globalThis.ResizeObserver = RO; }
+});
