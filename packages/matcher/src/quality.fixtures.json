@@ -2521,5 +2521,129 @@
     ]
    }
   }
+ },
+ "Giant Mana Cake": {
+  "card": {
+   "name": "Giant Mana Cake",
+   "typeLine": "Stickers",
+   "manaValue": 0,
+   "manaCost": "",
+   "oracleText": "{TK}{TK} — When this permanent leaves the battlefield, create two Food tokens. (They're artifacts with \"{2}, {T}, Sacrifice this artifact: You gain 3 life.\")\n{TK}{TK}{TK}{TK} — When this permanent dies, destroy target nonland permanent.\n{TK}{TK} — 3/3\n{TK}{TK}{TK} — 6/2",
+   "keywords": [
+    "Food"
+   ],
+   "colors": [],
+   "colorIdentity": [],
+   "layout": "normal"
+  },
+  "tags": {
+   "oracleId": "26f6170a-34dc-41c8-b3b1-20377f131e6e",
+   "abilities": [
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": "token-generation",
+      "subject": {
+       "control": "you",
+       "token": true,
+       "subtype": "food",
+       "scope": "all"
+      }
+     },
+     "trigger": {
+      "verbs": [
+       "leaves"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "self": true
+      }
+     },
+     "amount": "2",
+     "emits": [
+      {
+       "verb": "create-token",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "subtype": "food",
+        "scope": "all",
+        "type": "artifact"
+       }
+      },
+      {
+       "verb": "enters",
+       "subject": {
+        "control": "you",
+        "token": true,
+        "subtype": "food",
+        "scope": "all",
+        "type": "artifact"
+       }
+      }
+     ],
+     "clause": 1,
+     "repeats": "once"
+    },
+    {
+     "kind": "triggered",
+     "effect": {
+      "kind": ""
+     },
+     "trigger": {
+      "verbs": [
+       "dies"
+      ],
+      "subject": {
+       "control": "you",
+       "token": null,
+       "type": "permanent",
+       "self": true
+      }
+     },
+     "amount": "1",
+     "emits": [
+      {
+       "verb": "dies",
+       "subject": {
+        "control": "opp",
+        "token": null,
+        "type": [
+         "creature",
+         "artifact",
+         "enchantment",
+         "planeswalker",
+         "battle"
+        ],
+        "notType": [
+         "land"
+        ],
+        "scope": "target"
+       }
+      }
+     ],
+     "clause": 2,
+     "repeats": "once"
+    }
+   ],
+   "characteristics": {
+    "types": [
+     "stickers"
+    ],
+    "subtypes": [],
+    "layout": "normal",
+    "colors": [],
+    "identity": [],
+    "cmc": 0,
+    "power": null,
+    "toughness": null,
+    "token": false,
+    "keywords": [
+     "food"
+    ]
+   }
+  }
  }
 }

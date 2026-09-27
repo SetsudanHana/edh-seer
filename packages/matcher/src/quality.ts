@@ -16,7 +16,14 @@ export type Ingredient = "manaValue" | "rateFloor" | "rateCeiling" | "frequency"
   | "permanence" | "oneSided" | "drawback" | "extraValue" | "restriction";
 export type Ingredients = Partial<Record<Ingredient, number>>;
 
+/** NEVER IN A DECK (owner, 2026-09-27: "no one plays stickers"): Unfinity sticker sheets and Attractions.
+ *  Scryfall calls the sheets commander-legal, but they are put stickers from, never cast, and with no
+ *  mana cost they took the top percentiles; the trigger vocabulary excludes them on the same footing. */
+const NOT_A_DECK_CARD = new Set(["stickers", "attraction"]);
+
 export function rolesOfCard(d: DeckCard): Role[] {
+  const types = [...(d.tags?.characteristics.types ?? []), ...(d.tags?.characteristics.subtypes ?? [])].map((t) => t.toLowerCase());
+  if (types.some((t) => NOT_A_DECK_CARD.has(t))) return [];
   const cats = detectBuildCategories([d]);
   return ROLES.filter((r) => cats.get(r)?.has(d.card.name));
 }

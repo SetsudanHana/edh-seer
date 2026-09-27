@@ -106,3 +106,7 @@ test("a wipe whose one-sided or mass mode is not derived is not scored as its ch
   expect(ingredients(dc("Vandalblast"), "boardWipe")).toEqual({});
   expect(ingredients(dc("Wrath of God"), "boardWipe").manaValue).toBe(4);
 });
+
+test("a sticker sheet or an Attraction is never in a deck, so it has no role to be scored in (owner, 2026-09-27)", () => {
+  expect(rolesOfCard(dc("Giant Mana Cake"))).toEqual([]);
+});
