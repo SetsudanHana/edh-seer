@@ -3,7 +3,6 @@ import { CardName, ReasonText } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
 import { CATEGORY_LABELS } from "./CardList.js";
-import { RATE_FAMILY_LABEL, rateLabel, type RateFamily } from "../lib/facets.js";
 
 const ANCHOR_SHARE = 0.75; // tunable: a card is an "anchor" if its authority ≥ this share of the deck max.
 /** What the badge means, said once where it is first used rather than left to be guessed. */
@@ -14,7 +13,7 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
     .filter((c) => (c.synergyRating ?? 0) > 0)
     .slice()
     .sort((a, b) => (b.synergyRating ?? 0) - (a.synergyRating ?? 0) || a.name.localeCompare(b.name))
-    .slice(0, 8);
+    .slice(0, 6);
   if (ranked.length === 0) return null;
   const maxAuthority = cards.reduce((m, c) => Math.max(m, c.authority ?? 0), 0);
   // The same fold the Cards table uses, over the RANKED EIGHT rather than the whole deck: six of
@@ -24,17 +23,11 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
   const anyAnchor = ranked.some((c) => maxAuthority > 0 && (c.authority ?? 0) >= ANCHOR_SHARE * maxAuthority);
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="eyebrow">High synergy cards</h3>
+      <h3 className="text-lg font-semibold">Cards that carry it</h3>
       {/* THE GLOSS IS PRINTED, NOT HOVERED (T1). A `title` does not exist on touch at all, and this
         *  badge is guessable-WRONG unglossed: beside the commander at the top of a synergy list,
         *  "anchor" reads as "this is your commander". Shown only when a row actually carries one. */}
       {anyAnchor ? <p className="text-xs text-(--muted) max-w-[65ch]">{ANCHOR_GLOSS}</p> : null}
-      {shapes.shared.map((sh) => (
-        <p key={sh.template} className="text-xs text-(--muted) max-w-[65ch]">
-          <span className="tabular-nums">{sh.count}</span> of these connect the same way —{" "}
-          <span className="text-(--foreground)">{sh.sample}</span>.
-        </p>
-      ))}
       {/* TWO ACROSS AT xl (roadmap T11). Measured at 1960px: the ink stopped at 567px of a 1782px
         *  row. The rows are short by nature -- a score, a name, one reason -- so the fix is to place
         *  more of them per row rather than to stretch any of them. */}
@@ -100,12 +93,6 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                   *  THE COUNT IS NOT OFFERED AS THE EXPLANATION, because it is not one: those three
                   *  cards have 36, 38 and 38 partners, so the number does not order them either.
                   *  What it does is stop the single sentence from reading as the whole case. */}
-                {(c.partnerCount ?? 0) > 1 ? (
-                  <span className="block text-xs text-(--muted)">
-                    one of <span className="stat-num">{c.partnerCount}</span> pairs behind this
-                    score
-                  </span>
-                ) : null}
                 {/* THE CARD'S BEST RATE (roadmap Y9): what it charges for what it does, and where
                   *  that sits among every card that does the same thing. Per family, so a draw
                   *  rate is compared with draw rates and never with damage. */}
@@ -113,13 +100,6 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
                   *  damage rates" was true of any card and read as praise for a below-median rate.
                   *  A rate whose floor is 0 names no yield, and a percentile outside the top
                   *  quarter is not a standout, so the line is left off rather than printed. */}
-                {c.rate && showsRate(c.rate) ? (
-                  <span className="block text-xs text-(--muted)">
-                    {rateLabel(c.rate.span, c.rate.family as RateFamily, c.rate.size)} · among the top{" "}
-                    <span className="stat-num">{topShare(c.rate.percentile)}%</span> of{" "}
-                    {RATE_FAMILY_LABEL[c.rate.family as RateFamily] ?? c.rate.family} cards for its cost
-                  </span>
-                ) : null}
               </span>
               <CardMenuButton name={c.cardName ?? c.name} />
             </li>
@@ -128,11 +108,4 @@ export function HighSynergyCards({ cards }: { cards: DeckReport["cards"] }) {
       </ul>
     </div>
   );
-}
-
-const topShare = (percentile: number): number => Math.max(1, Math.round((1 - percentile) * 100));
-
-/** A rate line earns its place with a real yield and a top-quarter standing. */
-export function showsRate(rate: { span: readonly unknown[]; percentile: number }): boolean {
-  return Number(rate.span[0]) > 0 && topShare(rate.percentile) <= 25;
 }

@@ -721,13 +721,17 @@ test("a token's maker is the card that creates it, even when another card links 
  *  The count is NOT offered as the explanation, because it is not one: on the example deck those
  *  three cards carry 36, 38 and 38 partners and score 4.1 / 3.8 / 3.5, so the number does not order
  *  them either. It stops one sentence from reading as the whole case. */
-test("the printed sentence says it is one of several pairs", () => {
+// LESS IS MORE (owner, 2026-09-27): "one of N pairs behind this score" under every sentence went; the
+// list is "Cards that carry it", six cards, one sentence each.
+test("Cards that carry it names six cards, one sentence each, and no pair counts", () => {
   render(
     <CardDrawerProvider graph={SAMPLE.graph}>
       <HighSynergyCards cards={SAMPLE.report.cards} />
     </CardDrawerProvider>,
   );
-  expect(screen.getAllByText(/pairs behind this/).length).toBeGreaterThan(0);
+  expect(screen.getByRole("heading", { name: "Cards that carry it" })).toBeInTheDocument();
+  expect(screen.getAllByRole("listitem").length).toBeLessThanOrEqual(6);
+  expect(screen.queryByText(/pairs behind this/)).toBeNull();
 });
 
 test("a card with a single connection claims no plurality", () => {
@@ -2903,7 +2907,7 @@ test("the opening-hand distribution renders without opening anything", () => {
  *  to do, beside the groups that say the same thing in aggregate. */
 test("the high-synergy list sits in the plan chapter, not in the fix chapter", () => {
   const { container } = render(<MemoryRouter><ReportChapters data={SAMPLE} /></MemoryRouter>);
-  const heading = screen.getByRole("heading", { name: /highest synergy|high synergy/i });
+  const heading = screen.getByRole("heading", { name: "Cards that carry it" });
   const plan = container.querySelector("#plan");
   const fix = container.querySelector("#fix");
   expect(plan, "the plan chapter renders").not.toBeNull();
