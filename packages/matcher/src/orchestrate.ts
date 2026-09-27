@@ -179,10 +179,12 @@ export async function buildWireGraph(
   // id if that ever needs separating.
   const tokenArtById = new Map<string, string>();
   if (tokenNodes.length > 0) {
-    const oracleIds = [...new Set(tokenNodes.map((t) => t.tags!.oracleId))];
+    // A ROLE FACE NODE ("Cursed Role", #564) carries `<oracleId>#<face>`; its art is the token's.
+    const artId = (t: (typeof tokenNodes)[number]): string => t.tags!.oracleId.split("#")[0]!;
+    const oracleIds = [...new Set(tokenNodes.map(artId))];
     const artByOracle = await sources.tokenArt(oracleIds);
     for (const t of tokenNodes) {
-      const art = artByOracle.get(t.tags!.oracleId);
+      const art = artByOracle.get(artId(t));
       // An emblem node lives in the `emblem:` id space (spec 2026-09-08); its art is in `tokens` too.
       if (art) tokenArtById.set(nodeId(t.card.name, true, undefined, t.tags?.characteristics.emblem === true), art);
     }

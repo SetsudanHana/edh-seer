@@ -99,6 +99,27 @@ function computeRoles(cards: DeckCard[]): { ramp: number; draw: number; removal:
  *  can walk exactly like a real card, carrying the token's OWN derived characteristics and
  *  abilities. Only the fields `Card` requires are synthesized; the rest (mana cost, produced mana,
  *  ...) genuinely do not apply to a permanent that is never cast. */
+/** A ROLE TOKEN IS THE ROLE THE CARD MAKES (issue #564). Scryfall prints Roles as double-faced token
+ *  objects -- "Wicked // Cursed" -- so Asinine Antics' Cursed Role and Charming Scoundrel's Wicked
+ *  Role were one node read as "Wicked // Cursed", which looks like a card in the deck. When the
+ *  maker's own text names one face ("create a Cursed Role token"), the node is that face: its own
+ *  name ("Cursed Role") and its own id (`<oracleId>#Cursed`), so two makers of two roles get two
+ *  nodes. The faces share one set of tags (every Role is an Aura enchantment token), so only the
+ *  identity moves. Anything else -- a maker naming no face, a non-Role double-faced token -- keeps
+ *  the token object as it is. */
+function roleFace(ref: TokenRef, tags: CardTags, makers: DeckCard[]): { ref: TokenRef; tags: CardTags } {
+  if (!ref.name.includes(" // ") || !/\bRole\b/.test(ref.typeLine)) return { ref, tags };
+  const text = makers.map((f) => f.card.oracleText ?? "").join("\n");
+  const faces = ref.name.split(" // ");
+  const named = faces.filter((f) => new RegExp(`\\b${f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} Role\\b`, "i").test(text));
+  // EXACTLY ONE: a maker naming both roles (a modal grant) keeps the whole token rather than lose one.
+  if (named.length !== 1) return { ref, tags };
+  const face = named[0]!;
+  // The type line is per face too, or the drawer still shows a two-faced line beside a one-role name.
+  const typeLine = ref.typeLine.split(" // ")[faces.indexOf(face)] ?? ref.typeLine;
+  return { ref: { ...ref, name: `${face} Role`, typeLine }, tags: { ...tags, oracleId: `${tags.oracleId}#${face}` } };
+}
+
 function tokenDeckCard(ref: TokenRef, tags: CardTags): DeckCard {
   const c = tags.characteristics;
   return {
@@ -161,9 +182,10 @@ export function collectTokenNodes(
     // The sibling faces, so a face can ask whether ANY face prints the token before falling back.
     // `dc.parent` is set by `faceDeckCards` and absent on a single-face card and on a token.
     const siblings = dc.parent ? faceDeckCards(dc.parent) : [dc];
-    for (const ref of createdTokenRefs(dc.card)) {
-      const tags = tokenTags(ref);
-      if (!tags) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
+    for (const ref0 of createdTokenRefs(dc.card)) {
+      const tags0 = tokenTags(ref0);
+      if (!tags0) continue; // unresolved -- refuse, never fall back to a (name, typeLine) lookup
+      const { ref, tags } = roleFace(ref0, tags0, siblings);
       if (!byOracle.has(tags.oracleId)) {
         // WHO CONTROLS AN EMBLEM is whoever the granting ability names (CR 114.2), and the node is
         // read from OUR seat: an opponent's emblem gets its `you`/`opp` swapped (`flipPerspective`).
