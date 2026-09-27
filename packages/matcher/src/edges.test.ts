@@ -5466,3 +5466,18 @@ test("a self-or-class attack payoff gets one reason per attacker, not a self-twi
   expect(reasons).toHaveLength(1);
   expect(reasons[0]!.text).not.toContain("thanks to");
 });
+
+test("an outlaw's own implied attack names the outlaw, not its type (#647)", () => {
+  // Nalia de'Arnise is a Human Rogue: `selfSubject` stamps `outlaw` on her implied events, and the
+  // producer side had no `outlaw`, so she could not be her own attack -- "When a Human attacks thanks
+  // to Nalia de'Arnise".
+  const rogue = base("Nalia", [], ["human", "rogue"]);
+  const payoff = base("Frontline Medic", [{
+    kind: "triggered",
+    trigger: { verbs: ["attacks"], subject: { type: "creature", control: "you", token: null, scope: "all" } },
+    effect: { kind: "keyword-grant" },
+  }]);
+  const texts = pairReasons(rogue, payoff, { ...H, human: ["creature"], rogue: ["creature"] }).map((r) => r.text);
+  expect(texts).toContain("When Nalia attacks, Frontline Medic grants a keyword");
+  expect(texts.join("\n")).not.toMatch(/thanks to Nalia/);
+});

@@ -5,7 +5,7 @@ import { LAND_SUBTYPES } from "@edh-seer/tagger/subtypes";
  *  must never be keyed as one -- see `impliedEntryThemeTags`. */
 import type { DeckCard, Hierarchy } from "./types.js";
 import { subjectMatches, graveyardFillMatches, counterAddMatches } from "./subject.js";
-import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
+import { enterAsCopyAbilities, impliedEvents, impliedGraveyardEvents, impliedCounterEvents, isHistoric, isOutlaw, keywordAbilities, proliferateAbilities, selfFillTypes, selfLeavesTypes } from "./implied.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
 import { parseStat } from "./stats.js";
 import { hasMediatingToken } from "./tokens.js";
@@ -328,6 +328,9 @@ export function characteristicsSubject(tags: CardTags, name?: string): SubjectFi
     // has never carried the printed name. Only the callers that judge a card's identity pass it.
     ...(name !== undefined ? { named: name } : {}),
     ...(isHistoric(types, subtypes) ? { historic: true as const } : {}),
+    // AND OUTLAW, as `selfSubject` stamps it on the implied events (#647): without it a Rogue could
+    // not be its own implied attack, and the sentence read "When a Human attacks thanks to Nalia".
+    ...(isOutlaw(subtypes) ? { outlaw: true as const } : {}),
     // The supertype is already in `types`, but `type` is an OR list on a consumer subject, so a
     // legendary demand cannot be expressed there. Lifted to its own flag, as historic is.
     ...(types.includes("legendary") ? { legendary: true as const } : {}),
