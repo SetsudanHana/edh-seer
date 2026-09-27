@@ -1140,8 +1140,14 @@ export function deriveAbilities(
     // Ravenous Codex's activated ability came back from the model as `grant-ability` even with
     // `prepare` in the vocabulary, so the one card that prepares a whole board prepared nothing.
     // Read off the clause text, narrowly: only a grant whose clause says the thing becomes prepared.
-    if ((clause.actions ?? []).some((a) => a.verb === "grant-ability") && BECOMES_PREPARED.test(clauseText)) {
-      clause = { ...clause, actions: (clause.actions ?? []).map((a) => a.verb === "grant-ability" ? { ...a, verb: "prepare" } : a) };
+    // ONE GRANT, NEVER EVERY GRANT (review of #669): the grant whose own object says "prepared", or the
+    // clause's ONLY grant -- Codie's object is "each creature you control" -- so "becomes prepared and
+    // gains hexproof" keeps its hexproof.
+    const grants = (clause.actions ?? []).filter((a) => a.verb === "grant-ability");
+    if (grants.length > 0 && BECOMES_PREPARED.test(clauseText)) {
+      const named = grants.filter((a) => /\bprepared\b/i.test(a.object ?? ""));
+      const which = new Set(named.length > 0 ? named : grants.length === 1 ? grants : []);
+      if (which.size > 0) clause = { ...clause, actions: (clause.actions ?? []).map((a) => which.has(a) ? { ...a, verb: "prepare" } : a) };
     }
     const actors = clauseText ? actionRecipients(clauseText) : {};
     const actorFor = (verb?: string): Control | undefined =>

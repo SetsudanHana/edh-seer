@@ -3198,3 +3198,17 @@ test("an enchanted- or equipped-creature trigger is a modified creature", () => 
   expect(trig("an equipped creature you control", "Stone Haven Outfitter")?.modified).toBe(true);
   expect(trig("enchanted creature", "Some Aura")?.modified).toBeUndefined();
 });
+
+// Codie, Ravenous Codex's activated clause came back as `grant-ability` (2026-09-27); the review of the
+// first fix found it rewrote EVERY grant in the clause, losing a sibling hexproof grant.
+test("a grant whose clause 'becomes prepared' is a prepare -- that grant only", () => {
+  const grant = (object: string) => ({ verb: "grant-ability", object, fromZone: null, toZone: null, amount: null, optional: false });
+  const emitVerbs = (r: ReturnType<typeof deriveAbilities>) => r.abilities.flatMap((a) => (a.emits ?? []).map((e) => e.verb));
+  const codie = deriveAbilities([{ id: 2, abilityType: "activated", actions: [grant("each creature you control")] }] as never, "Codie",
+    { 2: "Each creature you control becomes prepared." });
+  expect(emitVerbs(codie)).toContain("prepared");
+  const two = deriveAbilities([{ id: 1, abilityType: "static", actions: [grant("prepared"), grant("hexproof until end of turn")] }] as never, "X",
+    { 1: "Each creature you control becomes prepared and gains hexproof until end of turn." });
+  expect(emitVerbs(two).filter((v) => v === "prepared")).toHaveLength(1);
+  expect(two.abilities.some((a) => a.effect.kind === "keyword-grant")).toBe(true);
+});
