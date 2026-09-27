@@ -7,6 +7,7 @@ import { BuildBenchmarks } from "./BuildBenchmarks.js";
 import { CutList, type Surplus } from "./CutList.js";
 import { BracketPanel } from "./BracketPanel.js";
 import { HowYouWin } from "./HowYouWin.js";
+import { ManaGlance } from "./ManaGlance.js";
 import { TableTalkLine } from "./TableTalk.js";
 import { tableTalk } from "../lib/table-talk.js";
 import { FirstTurns } from "./FirstTurns.js";
@@ -363,48 +364,59 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
 
         <Chapter id="mana" title={title("mana")}>
-          <Movement count="the numbers behind the mana suggestions below">
-          <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
-            {/* `showBenchmarks={false}`: the Roles chapter alone owns the category/parent block
-              *  ("How the roles are spent", its group headers and leaf rows). Without this, that
-              *  block renders identically in both chapters — and in one scroll a reader meets both
-              *  copies, where the sub-tabs at least kept them a click apart. */}
-            <BuildBenchmarks
-              categories={report.buildCategories}
-              parents={report.buildParents}
-              deckMath={report.deckMath}
-              answerCoverage={report.answerCoverage}
-              sections={["cast"]}
-              showBenchmarks={false}
-            />
-            {/* THE INTERSECTION LEADS; the two panels under it are its evidence. Neither is
-              *  redundant on its own terms: `ManaAvailability` carries the policy interval and the
-              *  colour caveat the chart does not draw, and the raw curve is the only place a
-              *  per-COST count survives once two costs share a turn on a ramping deck. Whether all
-              *  three earn a place in ONE column is S15's question, not this item's. */}
-            <ManaTimeline curve={report.manaCurve} manaAvailability={report.manaAvailability} />
-            <ManaAvailability manaAvailability={report.manaAvailability} />
-            <LandMathChart landCount={report.landCount} deckSize={data.resolvedCount} />
-            <UnmetConditions landConditions={report.landConditions} />
-          </div>
-          {/* PER-COST COUNTS, BEHIND A DISCLOSURE (roadmap S15, owner call 2026-09-02). Chapter
-            *  4 ran three pictures of the same mana in one column and no judge mentioned this
-            *  one. It is not deleted, because it is the only place a per-COST count survives once
-            *  two costs share a turn on a ramping deck -- the timeline above is indexed by TURN
-            *  and cannot say that. Reachable, not first.
-            *
-            *  OUTSIDE THE MULTI-COLUMN, AND THAT IS THE WHOLE OF T16. Owner: *"when I click it
-            *  components jump around and they should not"*. A CSS multi-column BALANCES its
-            *  children across the columns, so a disclosure opening inside one changes the total
-            *  height and every other panel is redistributed -- panels the reader was not looking at
-            *  move, in a chapter they had already read. Full width, below the columns, it can only
-            *  push what is under it. */}
-          <details className="mt-8 rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3">
-            <summary className="eyebrow cursor-pointer text-(--muted)">
-              the curve by mana cost, not by turn
-            </summary>
-            <div className="pt-3">
-              <ManaCurveChart curve={report.manaCurve} />
+          <Movement count="five answers, then the numbers behind the mana suggestions below">
+          {/* THE ANSWERS LEAD AND THE PANELS FOLD (owner, 2026-09-27: "manabase is also a section that
+            *  no one is going to read through"). Five tiles answer what a player comes here to ask;
+            *  every panel below is kept, unchanged, for the working. The disclosure is full width and
+            *  wraps the multi-column whole, so opening it moves nothing above it (T16). */}
+          <ManaGlance deckMath={report.deckMath} manaAvailability={report.manaAvailability} landCount={report.landCount} deckSize={data.resolvedCount} />
+          {/* A land whose condition this deck cannot meet is a finding, not working: it stays out. */}
+          <div className="mt-6 empty:hidden"><UnmetConditions landConditions={report.landConditions} /></div>
+          <details className="mt-6 group" data-testid="mana-numbers">
+            <summary className="eyebrow cursor-pointer text-(--muted) py-1">Show the numbers</summary>
+            <div className="pt-4">
+            <div className="columns-1 xl:columns-2 gap-8 [&>*]:break-inside-avoid [&>*]:mb-8">
+              {/* `showBenchmarks={false}`: the Roles chapter alone owns the category/parent block
+                *  ("How the roles are spent", its group headers and leaf rows). Without this, that
+                *  block renders identically in both chapters — and in one scroll a reader meets both
+                *  copies, where the sub-tabs at least kept them a click apart. */}
+              <BuildBenchmarks
+                categories={report.buildCategories}
+                parents={report.buildParents}
+                deckMath={report.deckMath}
+                answerCoverage={report.answerCoverage}
+                sections={["cast"]}
+                showBenchmarks={false}
+              />
+              {/* THE INTERSECTION LEADS; the two panels under it are its evidence. Neither is
+                *  redundant on its own terms: `ManaAvailability` carries the policy interval and the
+                *  colour caveat the chart does not draw, and the raw curve is the only place a
+                *  per-COST count survives once two costs share a turn on a ramping deck. Whether all
+                *  three earn a place in ONE column is S15's question, not this item's. */}
+              <ManaTimeline curve={report.manaCurve} manaAvailability={report.manaAvailability} />
+              <ManaAvailability manaAvailability={report.manaAvailability} />
+              <LandMathChart landCount={report.landCount} deckSize={data.resolvedCount} />
+            </div>
+            {/* PER-COST COUNTS, BEHIND A DISCLOSURE (roadmap S15, owner call 2026-09-02). Chapter
+              *  4 ran three pictures of the same mana in one column and no judge mentioned this
+              *  one. It is not deleted, because it is the only place a per-COST count survives once
+              *  two costs share a turn on a ramping deck -- the timeline above is indexed by TURN
+              *  and cannot say that. Reachable, not first.
+              *
+              *  OUTSIDE THE MULTI-COLUMN, AND THAT IS THE WHOLE OF T16. Owner: *"when I click it
+              *  components jump around and they should not"*. A CSS multi-column BALANCES its
+              *  children across the columns, so a disclosure opening inside one changes the total
+              *  height and every other panel is redistributed -- panels the reader was not looking at
+              *  move, in a chapter they had already read. Full width, below the columns, it can only
+              *  push what is under it. */}
+            <details className="mt-8 rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3">
+              <summary className="eyebrow cursor-pointer text-(--muted)">
+                the curve by mana cost, not by turn
+              </summary>
+              <div className="pt-3">
+                <ManaCurveChart curve={report.manaCurve} />
+              </div>
+            </details>
             </div>
           </details>
           </Movement>
