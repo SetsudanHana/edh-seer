@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { CardName, useCardDrawer, usePinned } from "./card-drawer.js";
+import { CardMenuButton } from "./card-menu.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { Explain } from "./Explain.js";
 import { distinctiveReason, reasonShapes } from "../lib/reason-shape.js";
@@ -103,6 +104,8 @@ function GridCard({
         bg-gradient-to-t from-(--background) to-transparent">
         <span className="block truncate stat-num text-[11px]">{name}</span>
       </figcaption>
+      {/* Top left: the count holds the other corner, the name the foot. */}
+      <CardMenuButton name={name} className="absolute top-1.5 left-1.5 min-h-7 min-w-7 bg-(--background)/80 backdrop-blur-[2px] border border-(--separator)" />
     </figure>
   );
 }
@@ -476,6 +479,7 @@ export function CardList({ cards, artByName, coverage }: {
                           <span className="lg:hidden mt-1"><RoleChips roles={roles} cell="roles-inline" /></span>
                         ) : null}
                       </span>
+                      <CardMenuButton name={c.cardName ?? c.name} className="ml-auto" />
                     </span>
                   </td>
                   <td className="py-2 pr-2 hidden lg:table-cell">

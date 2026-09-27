@@ -36,6 +36,7 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
+import { CardLinksContext } from "./card-menu.js";
 
 /** A movement, not a panel: an `h2` with an optional sentence beside it, then whatever it contains.
  *
@@ -157,6 +158,13 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [themes, report.cards, data.graph]);
   const [centre, setCentre] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<string | null>(null);
+  /** "See how it connects" in any card's ⋯ menu opens that card's orbit over the report. */
+  const links = useMemo(() => {
+    if (!themes) return null;
+    const byName = new Map<string, string>();
+    for (const c of themes.cards.values()) if (!c.isToken && !c.faceOf && !byName.has(c.physical)) byName.set(c.physical, c.id);
+    return { idOf: (name: string) => byName.get(name), show: setOverlay };
+  }, [themes]);
   // WHETHER THE DECK'S DEFINING CARD IS ONE OF THE UNREAD — the single fact all four personas
   // reached independently on 2026-08-27, because the gate's name list is alphabetical and capped at
   // eight. A two-faced commander rates one row per face and both carry the same `derived` flag, so
@@ -209,6 +217,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   return (
     // `lg:pt-6`: the deck bar used to hold the chapters off the summary row; with its actions moved
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
+    <CardLinksContext.Provider value={links}>
     <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
       <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
@@ -448,5 +457,6 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
       </div>
     </div>
+    </CardLinksContext.Provider>
   );
 }

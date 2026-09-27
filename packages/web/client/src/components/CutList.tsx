@@ -4,6 +4,7 @@ import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import type { CutChoice } from "../lib/cut-choice.js";
 import { listNames, type EngineCard } from "../lib/engine-model.js";
 import { CardName, ReasonText } from "./card-drawer.js";
+import { CardMenuButton } from "./card-menu.js";
 import { Badge, CardFace, ReadCards } from "./engine-parts.js";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { SwapLine } from "./SuggestedPairs.js";
@@ -135,7 +136,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
             {roleSwaps.map((p) => (
               <li key={p.cut} className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm" data-testid="role-swap">
-                <p><span className="text-(--muted)">Out: </span><CardName name={p.cut} /></p>
+                <p className="flex items-center gap-2"><span><span className="text-(--muted)">Out: </span><CardName name={p.cut} /></span><CardMenuButton name={p.cut} className="ml-auto" /></p>
                 <SwapLine p={p} />
               </li>
             ))}
@@ -253,10 +254,13 @@ function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
       {c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div>
-          <h4 className="flex items-baseline justify-between gap-3 text-base font-semibold">
-            <CardName name={c.name} />
-            <span className="shrink-0 text-xs font-normal stat-num text-(--muted)">{c.manaValue} mana</span>
-          </h4>
+          <div className="flex items-center gap-1">
+            <h4 className="flex flex-1 items-baseline justify-between gap-3 text-base font-semibold">
+              <CardName name={c.name} />
+              <span className="shrink-0 text-xs font-normal stat-num text-(--muted)">{c.manaValue} mana</span>
+            </h4>
+            <CardMenuButton name={c.name} />
+          </div>
           <p>{r ? r.why : `${capitalFirst(c.reasons.join("; "))}.`}</p>
           {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
         </div>
