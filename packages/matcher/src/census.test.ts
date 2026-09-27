@@ -283,3 +283,22 @@ test("token:false is not a narrowing condition, token:true is", () => {
   // Token-demanding: a real condition, own row, and unsupplied because we don't model tokens attacking.
   expect(row(c.consumers, "attacks:type:creature (narrowed)")).toMatchObject({ selfSupplied: false, counterpart: 0 });
 });
+
+/** ISSUE #562: a fight supplies "a creature is dealt damage". The engine's matcher accepts a damage
+ *  emit for a `damaged` trigger (and for life loss); the census has to ask it across verbs, or the
+ *  demand row reads "0 cause it" beside the edge the engine drew. Mirrored on the producer row. */
+test("a damage emit supplies a creature-is-dealt-damage trigger across verbs", () => {
+  const fighter = card("fighter", [{
+    kind: "activated",
+    effect: { kind: "" },
+    emits: [{ verb: "non-combat-damage", subject: { control: "any", token: null, type: "creature", scope: "target" }, dealer: { control: "you", token: null, type: "creature" } }],
+  }]);
+  const payoff = card("payoff", [{
+    kind: "triggered",
+    trigger: { verbs: ["damaged"], subject: { control: "any", token: null, type: "creature" } },
+    effect: { kind: "draw-card" },
+  }]);
+  const c = buildCensus([fighter, payoff], H);
+  expect(row(c.consumers, "damaged:type:creature")).toMatchObject({ cards: 1, counterpart: 1 });
+  expect(c.producers.find((r) => r.key.startsWith("non-combat-damage"))!.counterpart).toBe(1);
+});

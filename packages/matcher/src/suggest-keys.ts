@@ -13,8 +13,9 @@
  *  `verbSatisfies` (edges.ts) draws: a death is a leave (CR 700.4), damage to a player is life loss
  *  (CR 120.3), and a damage emit can be what a creature is dealt. Their subject conditions are left
  *  to the engine; this only has to not refuse the producer before it is asked. KEEP IN STEP with
- *  `verbSatisfies`: a bridge added there and not here is a supply the suggestions never collect. */
-const ALSO_SUPPLIED_BY: Record<string, readonly string[]> = {
+ *  `verbSatisfies`: a bridge added there and not here is a supply the suggestions never collect,
+ *  and a demand row (`census.ts`) that reads "0 cause it" over a deck that does (issue #562). */
+export const ALSO_SUPPLIED_BY: Record<string, readonly string[]> = {
   leaves: ["dies"],
   "lose-life": ["non-combat-damage"],
   damaged: ["non-combat-damage", "combat-damage"],
