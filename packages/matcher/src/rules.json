@@ -1,5 +1,5 @@
 {
-  "version": 13,
+  "version": 14,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -42,7 +42,8 @@
     "colouredMana": "\\{[WUBRG]\\}|any colou?r|chosen colou?r|any combination of colou?rs|color identity",
     "manaToken": "create\\b[\\s\\S]*?(treasure|gold|eldrazi (?:spawn|scion))( creature)? tokens?",
     "selection": "\\bscry\\b|\\bsurveil\\b|look at the top \\w+ cards?",
-    "impulseDraw": "exile the top \\w+ cards? of your library[\\s\\S]*?you may play",
+    "impulseDraw": "exile the top (?:\\w+ )?cards? of your library[\\s\\S]*?you may play",
+    "neutraliseAura": "(?:^|\\n)enchant (?<class>[^\\n]+)(?=[\\s\\S]*?enchanted (?:creature|permanent)[^.]*?(?:loses all (?:other card types and )?abilities|is a colou?rless land))",
     "stax": "(?:don't|doesn't|can't) untap|spells? cost \\{?\\d+\\}?(?: generic)? (?:more|additional)|players? can't",
     "typedRemoval": "(?:destroy|exile)[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
     "exileRemoval": "exile[^.:]{0,25}?target\\s+(?<class>[^.;:]{0,60})",
@@ -273,6 +274,19 @@
         { "op": "oracle", "pattern": "controllerGetsCopies" }
       ],
       "why": "A wipe takes precedence, so a mass effect is not counted in both. That was an else-if in code and is a `not` clause here. A destroy whose controller gets copies back is not removal (owner ruling 2026-09-27, #513: Saw in Half is played on your own creatures to win or combo)."
+    },
+    {
+      "id": "removal.neutralise",
+      "category": "targetedRemoval",
+      "match": [{ "op": "typeLine", "contains": "aura" }, { "op": "oracle", "pattern": "neutraliseAura" }],
+      "not": [{ "op": "oracle", "pattern": "controllerGetsCopies" }],
+      "why": "AN AURA THAT STRIPS A PERMANENT IS REMOVAL (issue #566): Frogify, Lignify, Kenrith's Transformation, Imprisoned in the Moon -- the creature stays and does nothing, which players count as removal. 'Enchanted creature/permanent loses all abilities' or 'is a colorless land'. 26 commander-legal Auras (2026-09-27)."
+    },
+    {
+      "id": "answers.neutralise",
+      "answerClassFrom": "neutraliseAura",
+      "match": [{ "op": "typeLine", "contains": "aura" }, { "op": "oracle", "pattern": "neutraliseAura" }],
+      "why": "The classes are the Aura's ENCHANT line: Imprisoned in the Moon answers a creature, land or planeswalker; Stop Cold an artifact or creature."
     },
     {
       "id": "protection.text",
