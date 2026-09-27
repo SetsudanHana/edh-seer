@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { engineDeck } from "./engine-model.fixture.js";
 import { buildEngineModel } from "./engine-model.js";
-import { deckSky } from "./deck-sky.js";
+import { NO_THEME, deckSky } from "./deck-sky.js";
 
 test("every card is one star, placed the same way every time, and themes are constellations", () => {
   const { report, graph } = engineDeck();
@@ -15,9 +15,19 @@ test("every card is one star, placed the same way every time, and themes are con
   // Each constellation holds only cards of its theme, and every theme drawn has a star.
   for (const c of a.clusters) {
     expect(c.ids.length).toBeGreaterThan(0);
+    if (c.tag === NO_THEME) {
+      // What no theme claims, and no land: those are the band at the edge.
+      for (const id of c.ids) {
+        expect(m.groups.some((g) => !g.helper && (g.hubs.includes(id) || g.members.includes(id)))).toBe(false);
+        expect(m.cards.get(id)!.isLand).toBe(false);
+      }
+      continue;
+    }
     const g = m.groups.find((x) => x.tag === c.tag)!;
     for (const id of c.ids) expect(g.hubs.includes(id) || g.members.includes(id)).toBe(true);
   }
+  // The band at the edge is the lands, and only the lands.
+  for (const s of a.stars.filter((x) => x.cluster < 0 && x.kind !== "commander")) expect(m.cards.get(s.id)!.isLand).toBe(true);
   // A constellation's lines join cards that work together, never two strangers.
   for (const [x, y] of a.lines) expect(!!m.partners.get(x)?.get(y)).toBe(true);
 });

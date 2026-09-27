@@ -7,7 +7,8 @@ import { useReducedMotion } from "./OrbitView.js";
 
 /** THE DECK'S SKY, DRAWN (see `deck-sky.ts` for the layout). Every card is a star; each theme is a
  *  constellation in its colour with its name beside it; the commander is the bright disc in the
- *  middle; what no theme claims, and the lands, make the faint band at the edge.
+ *  middle; the cards no theme claims gather as "No theme", and the lands make the faint band at
+ *  the edge.
  *
  *  ONE PICTURE, MANY READINGS. A chapter passes `lit`: its cards shine and are named, the rest of
  *  the sky dims, and `lit.lines` are drawn over it in the accent pink. With nothing lit the sky shows the
@@ -183,7 +184,7 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
   return (
     <figure className={`m-0 flex flex-col gap-2 ${className}`}>
       <svg ref={svgRef} viewBox={`${x} ${y} ${w} ${h}`} role="img" className="deck-sky block h-auto w-full select-none rounded-(--radius)"
-        aria-label={`The deck as a sky: ${themes ? `${themes} theme${themes === 1 ? "" : "s"} (${sky.clusters.map((c) => c.name).join(", ")}) around the commander` : "the commander"}, and ${sky.stars.filter((s) => s.cluster < 0 && s.kind !== "commander").length} cards no theme claims at the edge.${lit?.label ? ` Lit: ${lit.label}.` : ""}`}
+        aria-label={`The deck as a sky: ${themes ? `${themes} theme${themes === 1 ? "" : "s"} (${sky.clusters.map((c) => c.name).join(", ")}) around the commander` : "the commander"}, and ${sky.stars.filter((s) => s.kind === "land").length} lands at the edge.${lit?.label ? ` Lit: ${lit.label}.` : ""}`}
         onClick={() => { setStar(null); }}>
         <defs>
           <radialGradient id="sky-ground" cx="50%" cy="50%" r="65%">
