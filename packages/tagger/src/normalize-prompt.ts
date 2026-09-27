@@ -11,7 +11,7 @@ import type { Clause } from "./segment.js";
  *  This version IDENTIFIES the prompt. It no longer decides what is stale — see
  *  NORMALIZE_MIN_COMPATIBLE — so bumping it alone is free, and every persisted doc still records
  *  exactly which prompt produced it. */
-export const NORMALIZE_VERSION = 21;
+export const NORMALIZE_VERSION = 22;
 
 /** The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its
  *  stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an
@@ -35,7 +35,7 @@ export const NORMALIZE_MIN_COMPATIBLE = 3;
  *  prose fix reopen the whole `carriesOther` set — on 2026-08-06 a one-line rule about trigger
  *  subjects selected 158 cards, of which 148 had been bought hours earlier at v8 and would come back
  *  identical. Priced at $0.69 to fix 9 cards. With this the same run selects 10 and costs $0.02. */
-export const VOCAB_VERSION = 20;
+export const VOCAB_VERSION = 21;
 
 /** The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION.
  *
@@ -60,7 +60,7 @@ export const VOCAB_VERSION = 20;
  *  whole trigger list, so a doc answered at v13+ genuinely had every word and is correctly skipped,
  *  while everything below is still selected. No doc is de-selected by the change -- none exists at
  *  13 or above.  */
-export const TRIGGER_VOCAB_VERSION = 20;
+export const TRIGGER_VOCAB_VERSION = 21;
 
 export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "discard", "mill", "search",
   "put", "return", "create", "counter-spell", "copy", "gain-life", "lose-life", "deal-damage",
@@ -158,6 +158,12 @@ export const VERBS = ["destroy", "exile", "sacrifice", "tap", "untap", "draw", "
   // all Equipment attached to it", Batterskull's "Return this to its owner's hand" family) and the
   // model invented the verb because `unattached` had been added on the TRIGGER side only.
   "unattach",
+  // REALITY FRACTURE, 2026-09-27, added BEFORE the set's 266 cards are bought (the one-way ratchet).
+  // CR 701.71 Empower Jace (31 cards): "put N loyalty counters on a Jace planeswalker token you
+  // control, creating one first if you have none" -- amass's shape, and amass's accounting.
+  // CR 722.3a/b Prepared (67 corpus cards, 24 new): a permanent with a prepare spell "enters
+  // prepared" or "becomes prepared" (a designation), and "becomes unprepared" loses it.
+  "empower-jace", "prepare", "unprepare",
   "other", "none"];
 /** Terms whose EXEMPLARS join the normalization scope, so a vocabulary addition is exercised on real
  *  cards instead of sitting untested until someone happens to play one.
@@ -194,6 +200,8 @@ export const EXEMPLAR_TERMS = [
   "mentors a creature", "solve a Case", "ability resolves", "you control no", "there are no",
   "you get {E}",
   "unattach", "creature evolves",
+  // Reality Fracture, 2026-09-27.
+  "empower Jace", "enters prepared", "becomes prepared", "becomes unprepared", "prepared spell",
 ] as const;
 
 export const ZONES = ["battlefield", "graveyard", "hand", "library", "exile", "stack", "command"];
@@ -486,6 +494,10 @@ export const TRIGGERS = ["enters", "dies", "leaves", "attacks", "blocks", "taps"
   // firebend / mentors precedent, missed because the 09-09 probe list did not walk every 702 rule
   // text for "evolves". 2 cards, both refused with unknown-trigger-event.
   "evolve",
+  // REALITY FRACTURE, 2026-09-27: CR 701.71 "empower Jace" (active: a player does it) and CR 722.3
+  // "becomes prepared" / "becomes unprepared" (passive: done TO a permanent). No card triggers on
+  // any of them yet; the words are here by the completeness ruling, not by demand.
+  "empower-jace", "prepared", "unprepared",
   // JUDGED AND NOT ADDED, with the reading, so the next walk does not re-propose them:
   //   - "whenever you add mana" (Caged Sun, Dictate of Karametra): every printed head is a land
   //     being tapped for mana, which `tapped-for-mana` (CR 106.12a) already spells. 0 heads left.

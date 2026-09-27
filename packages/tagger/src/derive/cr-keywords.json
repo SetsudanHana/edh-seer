@@ -1,5 +1,5 @@
 {
-  "version": "20260819",
+  "version": "20260925",
   "actions": [
     "Activate",
     "Attach",
@@ -69,7 +69,8 @@
     "Waterbend",
     "Blight",
     "Heal",
-    "Recruit"
+    "Recruit",
+    "Empower Jace"
   ],
   "abilities": [
     "Deathtouch",
@@ -267,6 +268,67 @@
     "Teamwork",
     "Storied"
   ],
+  "subtypes": {
+    "artifact": [
+      "Attraction",
+      "Blood",
+      "Bobblehead",
+      "Book",
+      "Clue",
+      "Contraption",
+      "Equipment",
+      "Food",
+      "Fortification",
+      "Gold",
+      "Heartwood",
+      "Incubator",
+      "Infinity",
+      "Junk",
+      "Lander",
+      "Map",
+      "Mutagen",
+      "Powerstone",
+      "Spacecraft",
+      "Stone",
+      "Treasure",
+      "Vehicle",
+      "Vibranium"
+    ],
+    "enchantment": [
+      "Aura",
+      "Background",
+      "Cartouche",
+      "Case",
+      "Class",
+      "Curse",
+      "Plan",
+      "Role",
+      "Room",
+      "Rune",
+      "Saga",
+      "Shard",
+      "Shrine"
+    ],
+    "land": [
+      "Cave",
+      "Desert",
+      "Forest",
+      "Gate",
+      "Island",
+      "Lair",
+      "Locus",
+      "Mine",
+      "Mountain",
+      "Plains",
+      "Planet",
+      "Power-Plant",
+      "Sphere",
+      "Swamp",
+      "Tower",
+      "Town",
+      "Urza's"
+    ]
+  },
   "sections": [
     {
       "rule": "100",

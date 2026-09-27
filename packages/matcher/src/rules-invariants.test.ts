@@ -24,6 +24,7 @@ const TESTED: Record<string, string> = {
   "701.17a": "partners-core.test.ts — a mill also supplies the general graveyard put, one way only",
   "400.1": "partners-core.test.ts — a graveyard leave keys apart from a battlefield leave (AK6)",
   "700.12": "implied.test.ts — isOutlaw is the five CR 700.12 creature types",
+  "111.10u": "resource tokens: Lander, Mutagen, Vibranium, Heartwood (archetypes.ts RESOURCE_TOKENS)",
   "111.1": "edges.test.ts — a token is never cast (CR 111.1), so it is never reduced",
   "903.5b": "legality.test.ts — 903.5b flags a repeated nonbasic",
   "903.4b": "legality.test.ts — 903.4b a card that chooses its colour",

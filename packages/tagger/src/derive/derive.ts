@@ -185,7 +185,10 @@ import { emblemRecipient } from "../emblem.js";
 // 26 Backgrounds read their granted text as the Background itself; Haunted One never fired).
 // 180: "whenever an enchanted/equipped creature ..." is a `modified` creature (issue #565: Hateful
 // Eidolon drew for every death). 3 corpus cards.
-export const DERIVE_VERSION = 180;
+// 181: Reality Fracture. `empower-jace` is amass's shape (kind `counter-placement`); `prepare` /
+// `unprepare` are words with no engine verb yet; CR 205.3's artifact types union into SUBTYPES
+// (Heartwood, Lander, Mutagen, Vibranium were unread), and a CR 111.10 token keeps its rule's type.
+export const DERIVE_VERSION = 181;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the

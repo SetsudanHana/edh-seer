@@ -15,8 +15,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildVocabulary, renderSubtypesModule,
-  type CardTypesPayload, type EnumValuesPayload,
-} from "./gen-vocabulary-core.js";
+  type CardTypesPayload, type EnumValuesPayload, withCr } from "./gen-vocabulary-core.js";
 
 const CARD_TYPES_URL = "https://mtgjson.com/api/v5/CardTypes.json";
 const ENUM_VALUES_URL = "https://mtgjson.com/api/v5/EnumValues.json";
@@ -27,7 +26,7 @@ async function main(): Promise<void> {
     fetch(CARD_TYPES_URL).then((r) => r.json() as Promise<CardTypesPayload>),
     fetch(ENUM_VALUES_URL).then((r) => r.json() as Promise<EnumValuesPayload>),
   ]);
-  const vocab = buildVocabulary(types, enums);
+  const vocab = buildVocabulary(withCr(types), enums);
 
   const here = dirname(fileURLToPath(import.meta.url));
   const subtypesPath = join(here, "..", "derive", "subtypes.ts");

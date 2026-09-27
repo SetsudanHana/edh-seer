@@ -150,6 +150,7 @@
   "hamster",
   "harpy",
   "head",
+  "heartwood",
   "hedgehog",
   "hellion",
   "hero",
@@ -190,6 +191,7 @@
   "lair",
   "lamia",
   "lammasu",
+  "lander",
   "lanthanite",
   "leech",
   "lemur",
@@ -220,6 +222,7 @@
   "mount",
   "mountain",
   "mouse",
+  "mutagen",
   "mutant",
   "myr",
   "mystic",
@@ -379,6 +382,7 @@
   "varmint",
   "vedalken",
   "vehicle",
+  "vibranium",
   "villain",
   "volver",
   "vorta",
@@ -1545,6 +1549,9 @@
   "head": [
    "creature"
   ],
+  "heartwood": [
+   "artifact"
+  ],
   "hedgehog": [
    "creature"
   ],
@@ -1701,6 +1708,9 @@
   "lammasu": [
    "creature"
   ],
+  "lander": [
+   "artifact"
+  ],
   "lanthanite": [
    "creature"
   ],
@@ -1818,6 +1828,9 @@
   ],
   "mouse": [
    "creature"
+  ],
+  "mutagen": [
+   "artifact"
   ],
   "mutant": [
    "creature"
@@ -2390,6 +2403,9 @@
   ],
   "venser": [
    "planeswalker"
+  ],
+  "vibranium": [
+   "artifact"
   ],
   "villain": [
    "creature"

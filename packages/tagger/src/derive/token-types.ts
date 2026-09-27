@@ -44,9 +44,22 @@ export function buildTokenTypes(lines: string[]): Record<string, string[]> {
       }
     }
   }
+  // A PREDEFINED TOKEN'S TYPE IS THE RULE'S, NOT THE UNION'S. "Create a Treasure token" makes the CR
+  // 111.10a Treasure, an artifact, and nothing else -- but one printed "Artifact Creature -- Sculpture
+  // Treasure" token (ingested 2026-09-27) put `creature` into the union, and every Treasure maker
+  // would have fed "whenever a creature enters" again: the Big Score defect this file exists to stop.
+  for (const [sub, type] of Object.entries(PREDEFINED)) if (out.has(sub)) out.set(sub, new Set([type]));
   return Object.fromEntries([...out].sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => [k, [...v].sort()]));
 }
+
+/** CR 111.10a-x, the predefined tokens that name a subtype of their own (the Roles share `role`,
+ *  and Walker is a Zombie). Read from the 2026-09-25 rules. */
+const PREDEFINED: Record<string, string> = {
+  treasure: "artifact", food: "artifact", gold: "artifact", shard: "enchantment", clue: "artifact",
+  blood: "artifact", powerstone: "artifact", incubator: "artifact", map: "artifact", junk: "artifact",
+  lander: "artifact", mutagen: "artifact", vibranium: "artifact", heartwood: "artifact",
+};
 
 let cached: Record<string, string[]> | undefined;
 
