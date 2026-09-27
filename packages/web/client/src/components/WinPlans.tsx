@@ -3,8 +3,8 @@ import { WIN_PHRASE } from "@edh-seer/matcher/deck-sentence";
 import type { DeckReport } from "../types.js";
 import { CardName } from "./card-drawer.js";
 import { fastestRoute, type SpeedRoute } from "../lib/speed.js";
-import type { EngineModel } from "../lib/engine-model.js";
-import { PlanMap } from "./PlanMap.js";
+import type { EngineCard, EngineModel } from "../lib/engine-model.js";
+import { Art } from "./engine-parts.js";
 
 type Wincons = NonNullable<DeckReport["deckMath"]>["wincons"];
 
@@ -23,13 +23,13 @@ const ROUTE_OF: Record<string, SpeedRoute["kind"]> = {
 /** HOW THE DECK WINS, WITH THE CARDS THAT DO IT, AND HOW FAST (owner, 2026-09-26: "we should be able
  *  to determine how the deck can win"; 2026-09-27: "How fast it can win and How you win" were walls
  *  of text "no one is going to read"). Each plan is a tile: its name, the turn it can win by and how
- *  many cards carry it. The picked plan's cards are read one plan at a time, drawn as a
- *  map where the deck's links are known.
+ *  many cards carry it. The picked plan's cards are read one plan at a time: the cards that win
+ *  first, then the cards that set them up.
  *
  *  `routes` are `speedRoutes`: without them (the build panel's own copy) the tiles have no turn. */
 export function WinPlans({ wincons, routes, pressure, model }: {
   wincons: Wincons; routes?: SpeedRoute[];
-  /** The deck's links: with them, the picked plan is drawn as a map (`PlanMap`) instead of named. */
+  /** The deck's cards: with them, each named card carries its art. */
   model?: EngineModel | null;
   /** The combat clock's snapshot on the way there: expected power on board by turn 5. */
   pressure?: number;
@@ -87,12 +87,18 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
 
 /** The one plan picked: when it can win, what put its cards there, and the cards. */
 function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][number]; route?: SpeedRoute; pressure?: number; model?: EngineModel | null }) {
-  // THE PLAN AS A MAP, THE FINISHERS IN THE MIDDLE (report cohesion audit, 2026-09-27); a plan
-  // with no finishers named is drawn round the commander.
-  const middle = plan.payoffs?.length ? plan.payoffs
-    : model ? [...model.cards.values()].filter((c) => c.isCommander && !c.isFace).map((c) => c.name) : [];
-  const map = model && plan.cards?.length && middle.length
-    ? <PlanMap model={model} middle={middle} around={plan.cards} /> : null;
+  // THE CARDS, NOT A MAP (owner, 2026-09-27: "I have no idea what the How you win graph should
+  // represent"). The finishers lead, since they are the answer to "how does it win"; the cards that
+  // set them up follow, each once.
+  const art = new Map<string, EngineCard>();
+  // A two-faced card is named whole ("Kuja, Genome Sorcerer // Trance Kuja, Fate Defied"): its art
+  // is on its faces, so the whole name finds its front one.
+  if (model) for (const c of model.cards.values()) {
+    if (c.isToken) continue;
+    for (const n of [c.name, c.physical]) if (n && (!art.has(n) || (!art.get(n)!.art && c.art))) art.set(n, c);
+  }
+  const wins = plan.payoffs ?? [];
+  const setup = (plan.cards ?? []).filter((n) => !wins.includes(n));
   const spread = route?.turn !== undefined && route.mana !== undefined && (route.early !== route.turn || route.late !== route.turn)
     ? ` (turn ${route.early ?? "?"} in fast games, ${route.late !== undefined ? `turn ${route.late}` : "later than turn 8"} in slow ones)` : "";
   return (
@@ -107,26 +113,30 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
           {pressure !== undefined ? <span className="text-(--muted)">; about {Math.round(pressure)} power of creatures in play by turn 5</span> : null}.
         </p>
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}
-      {map ?? (
-        <>
-          {plan.cards?.length ? <Names lead={plan.payoffs ? "Makes the board" : undefined} names={plan.cards} /> : null}
-          {plan.payoffs?.length ? <Names lead="Turns it into a win" names={plan.payoffs} /> : null}
-        </>
-      )}
+      {wins.length ? <Names lead="Turns it into a win" names={wins} art={art} /> : null}
+      {setup.length ? <Names lead={wins.length ? "Makes the board" : undefined} names={setup} art={art} /> : null}
     </div>
   );
 }
 
-function Names({ lead, names }: { lead?: string; names: string[] }) {
+function Names({ lead, names, art }: { lead?: string; names: string[]; art: Map<string, EngineCard> }) {
   const [all, setAll] = useState(false);
   const shown = all ? names : names.slice(0, NAMED);
   return (
     <div className="flex flex-col gap-1" data-testid="win-plan-cards">
       {lead ? <span className="eyebrow text-(--muted)">{lead}</span> : null}
-      <span className="flex flex-wrap gap-1">
-        {shown.map((n) => <span key={n} className="rounded-full border border-(--separator) px-2 py-0.5 text-xs"><CardName name={n} /></span>)}
+      <span className="flex flex-wrap gap-1.5">
+        {shown.map((n) => {
+          const c = art.get(n);
+          return (
+            <span key={n} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border border-(--separator) py-0.5 text-xs ${c ? "pl-0.5 pr-2.5" : "px-2.5"}`}>
+              {c ? <Art card={c} size={24} /> : null}
+              <CardName name={n} />
+            </span>
+          );
+        })}
         {names.length > NAMED ? (
-          <button type="button" className="rounded-full px-2 py-0.5 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAll(!all)}>
+          <button type="button" className="min-h-9 rounded-full px-2 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAll(!all)}>
             {all ? "Show fewer" : `Show all ${names.length}`}
           </button>
         ) : null}
