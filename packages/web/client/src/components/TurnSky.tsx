@@ -29,7 +29,14 @@ export function TurnSky({ model, turns }: { model: EngineModel; turns: FirstTurn
     const commander = turns.commander && (turns.commander.turn ?? Infinity) <= turn ? [turns.commander.name] : [];
     const spells = idsOf(model, names);
     const ids = new Set([...spells, ...idsOf(model, commander)]);
-    const lines = linksWithin(model, ids);
+    // ONLY THE LINKS THIS TURN ADDS (persona round, 2026-09-27: 126 and 281 lines by turns 3 and 5
+    // were a hairball nobody could read). The cards castable by the turn before are the baseline.
+    const before = idsOf(model, [
+      ...turns.steps.filter((s) => s.turn < turn).flatMap((s) => s.jobs.flatMap((j) => j.cards.map((c) => c.name))),
+      ...(turns.commander && (turns.commander.turn ?? Infinity) < turn ? [turns.commander.name] : []),
+    ]);
+    const old = new Set(linksWithin(model, before).map(([a, b]) => (a < b ? `${a}|${b}` : `${b}|${a}`)));
+    const lines = linksWithin(model, ids).filter(([a, b]) => !old.has(a < b ? `${a}|${b}` : `${b}|${a}`));
     const step = turns.steps.find((s) => s.turn === turn);
     const n = step?.castable ?? spells.size;
     // THE TURN LIST'S OWN COUNT, AND ITS OWN CAVEAT (persona round, 2026-09-27: "by turn 5, 56" over
@@ -38,7 +45,7 @@ export function TurnSky({ model, turns }: { model: EngineModel; turns: FirstTurn
     // the sky says what "castable" means here.
     return {
       ids, lines,
-      label: `Turn ${turn}${step ? `, with ${step.mana} mana in a typical game` : ""}: ${n} spell${n === 1 ? "" : "s"} cheap enough to cast by now${commander.length ? ", and your commander" : ""}, lit (by cost, not by what is in your hand), and ${lines.length ? `${lines.length} link${lines.length === 1 ? "" : "s"} between them, in pink` : "no links between them yet"}.`,
+      label: `Turn ${turn}${step ? `, with ${step.mana} mana in a typical game` : ""}: ${n} spell${n === 1 ? "" : "s"} cheap enough to cast by now${commander.length ? ", and your commander" : ""}, lit (by cost, not by what is in your hand), and ${lines.length ? `the ${lines.length} link${lines.length === 1 ? "" : "s"} this turn adds between them, in pink` : turn === 1 ? "no links between them yet" : "no new links between them this turn"}.`,
     };
   }, [model, turns, turn]);
 

@@ -154,6 +154,9 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
     }
     return out;
   })();
+  const unplaced = lit && lit.ids.size <= 16
+    ? [...lit.ids].filter((id) => !nameAt.has(id) && sky.byId.get(id)?.kind !== "commander").map((id) => sky.byId.get(id)?.name.split(" // ")[0]).filter((n): n is string => !!n)
+    : [];
   const themes = sky.clusters.length;
 
   if (compact) {
@@ -286,6 +289,11 @@ export function DeckSky({ model, lit, caption, className = "", compact = false }
         ) : theme !== null ? (
           <><span style={{ color: sky.clusters[theme]!.hue }}>{sky.clusters[theme]!.name}</span>: {sky.clusters[theme]!.ids.length} cards. Tap the name again for the whole sky.</>
         ) : lit?.label ?? caption ?? null}
+        {/* EVERY LIT CARD IS NAMED (persona round, 2026-09-27: Planar Incision and Blur were lit
+          * and never named). A name the sky had no clear place for is said here instead. */}
+        {!picked1 && theme === null && lit && unplaced.length ? (
+          <span className="block">Also lit: {unplaced.join(", ")}.</span>
+        ) : null}
       </figcaption>
     </figure>
   );
