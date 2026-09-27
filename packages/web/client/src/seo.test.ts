@@ -246,7 +246,7 @@ test("the card and commander prerender functions are where Pages looks for them"
  *  changes, because a reader's browser never sends HEAD. */
 test("every prerender route answers HEAD as well as GET", () => {
   const functions = join(CLIENT, "..", "functions");
-  for (const route of ["cards/[slug].ts", "commanders/[slug].ts", "[[path]].ts"]) {
+  for (const route of ["cards/[slug].ts", "commanders/[slug].ts", "precons/[slug].ts", "precons/index.ts", "[[path]].ts"]) {
     expect(readFileSync(join(functions, route), "utf8"), `${route} exports onRequestHead`)
       .toContain("export const onRequestHead");
   }
@@ -257,7 +257,7 @@ test("every prerender route answers HEAD as well as GET", () => {
  *  these call sites is the drift this asserts against. */
 test("every Function builds its HTML response headers from one place", () => {
   const functions = join(CLIENT, "..", "functions");
-  for (const route of ["_shared/render.ts", "[[path]].ts"]) {
+  for (const route of ["_shared/render.ts", "_shared/render-precon.ts", "[[path]].ts"]) {
     const src = readFileSync(join(functions, route), "utf8");
     expect(src, `${route} uses htmlHeaders`).toContain("htmlHeaders(");
     expect(src, `${route} sets no content-type of its own`).not.toContain('"content-type":');

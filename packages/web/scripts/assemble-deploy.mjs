@@ -160,6 +160,12 @@ const browseCommanderLetters = browseRows.filter(([, r]) => r.some((e) => e.comm
 // decides WHERE those ten land, and alphabetical order spent them on `/browse/cards/a` and the
 // cards whose names start with A. `partners` is the symmetric candidate degree the artifact already
 // carries, so the page with the most to say is offered first.
+// THE PRECON PAGES (2026-09-27), when `build-precons` wrote them: every one is indexable, since each
+// is a whole deck read card by card. Absent, the deploy goes on without them and says so -- the rest
+// of the site does not depend on them.
+const preconIndexPath = join(target, version, "precons", "index.json");
+const precons = existsSync(preconIndexPath) ? JSON.parse(readFileSync(preconIndexPath, "utf8")) : [];
+if (precons.length === 0) console.warn("sitemap: no precon pages in the artifact (run packages/web/scripts/build-precons.mts after build-static)");
 const byPartners = (a, b) => (b.partners ?? 0) - (a.partners ?? 0) || a.slug.localeCompare(b.slug);
 const coreUrls = [
   `${origin}/`,
@@ -168,12 +174,16 @@ const coreUrls = [
   `${origin}/commanders`,
   ...browseCardLetters.map((l) => `${origin}/browse/cards/${l}`),
   ...browseCommanderLetters.map((l) => `${origin}/browse/commanders/${l}`),
+  ...(precons.length ? [`${origin}/precons`] : []),
 ];
+// Newest first: a new set's precons are the pages people are looking for.
+const preconUrls = [...precons].sort((a, b) => (b.releaseDate ?? "").localeCompare(a.releaseDate ?? "") || a.slug.localeCompare(b.slug))
+  .map((e) => `${origin}/precons/${e.slug}`);
 const commanderUrls = [...indexableCommanders].sort(byPartners).map((e) => `${origin}/commanders/${e.slug}`);
 const cardUrls = [...indexableCards].sort(byPartners).map((e) => `${origin}/cards/${e.slug}`);
-const sitemapUrls = [...coreUrls, ...commanderUrls, ...cardUrls];
+const sitemapUrls = [...coreUrls, ...preconUrls, ...commanderUrls, ...cardUrls];
 const expectedUrls = 4 + browseCardLetters.length + browseCommanderLetters.length
-  + indexableCards.length + indexableCommanders.length;
+  + indexableCards.length + indexableCommanders.length + (precons.length ? precons.length + 1 : 0);
 // ASSERTED HERE RATHER THAN TRUSTED: a half-built artifact should fail the deploy, not publish a
 // sitemap full of URLs with nothing behind them.
 if (sitemapUrls.length !== expectedUrls) {
@@ -200,6 +210,7 @@ const urlset = (urls) =>
   + `\n</urlset>\n`;
 const children = [
   ["sitemap-core.xml", coreUrls],
+  ...(preconUrls.length ? [["sitemap-precons.xml", preconUrls]] : []),
   ["sitemap-commanders.xml", commanderUrls],
   ["sitemap-cards.xml", cardUrls],
 ];
@@ -211,7 +222,7 @@ writeFileSync(
     `  <sitemap><loc>${origin}/${file}</loc><lastmod>${lastmod}</lastmod></sitemap>`).join("\n")
   + `\n</sitemapindex>\n`,
 );
-console.log(`sitemap: index + ${children.length} children, ${sitemapUrls.length} URLs (${indexableCards.length} cards, `
+console.log(`sitemap: index + ${children.length} children, ${sitemapUrls.length} URLs (${preconUrls.length} precons, ${indexableCards.length} cards, `
   + `${indexableCommanders.length} commanders, `
   + `${browseCardLetters.length + browseCommanderLetters.length} browse; `
   + `${nameIndex.length - indexableCards.length} + `
