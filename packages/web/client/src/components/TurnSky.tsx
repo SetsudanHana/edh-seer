@@ -27,12 +27,18 @@ export function TurnSky({ model, turns }: { model: EngineModel; turns: FirstTurn
   const light = useMemo((): SkyLight => {
     const names = turns.steps.filter((s) => s.turn <= turn).flatMap((s) => s.jobs.flatMap((j) => j.cards.map((c) => c.name)));
     const commander = turns.commander && (turns.commander.turn ?? Infinity) <= turn ? [turns.commander.name] : [];
-    const ids = idsOf(model, [...names, ...commander]);
+    const spells = idsOf(model, names);
+    const ids = new Set([...spells, ...idsOf(model, commander)]);
     const lines = linksWithin(model, ids);
     const step = turns.steps.find((s) => s.turn === turn);
+    const n = step?.castable ?? spells.size;
+    // THE TURN LIST'S OWN COUNT, AND ITS OWN CAVEAT (persona round, 2026-09-27: "by turn 5, 56" over
+    // the list and "57 castable" under the sky, and three quarters of the sky lit read as "the deck
+    // is online"). Spells are counted as the list counts them; the commander is named apart; and
+    // the sky says what "castable" means here.
     return {
       ids, lines,
-      label: `Turn ${turn}${step ? `, with ${step.mana} mana in a typical game` : ""}: ${ids.size} card${ids.size === 1 ? "" : "s"} castable by now, lit, and ${lines.length ? `${lines.length} link${lines.length === 1 ? "" : "s"} between them live, in gold` : "no links between them yet"}.`,
+      label: `Turn ${turn}${step ? `, with ${step.mana} mana in a typical game` : ""}: ${n} spell${n === 1 ? "" : "s"} cheap enough to cast by now${commander.length ? ", and your commander" : ""}, lit (by cost, not by what is in your hand), and ${lines.length ? `${lines.length} link${lines.length === 1 ? "" : "s"} between them, in gold` : "no links between them yet"}.`,
     };
   }, [model, turns, turn]);
 

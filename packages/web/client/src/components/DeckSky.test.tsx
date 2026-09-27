@@ -54,3 +54,14 @@ test("drawn narrow, the themes' names become chips under the sky, and a chip lig
     expect(chip).toHaveAttribute("aria-pressed", "true");
   } finally { globalThis.ResizeObserver = RO; }
 });
+
+/** ONE NAME PER THEME (persona round, 2026-09-27: "Enchantments entering" on the sky, "Enchantress"
+ *  in Game plan, for the same cards). */
+test("a constellation that is the deck's named theme takes that name", async () => {
+  const { SkyThemeContext } = await import("./DeckSky.js");
+  const m = model();
+  const g = m.groups.find((x) => !x.helper)!;
+  render(<SkyThemeContext.Provider value={{ name: "Clerics Matter", tag: g.tag, count: 5, nonland: 10 }}><DeckSky model={m} /></SkyThemeContext.Provider>);
+  expect(screen.getByRole("button", { name: "CLERICS MATTER" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: g.name.toUpperCase() })).toBeNull();
+});

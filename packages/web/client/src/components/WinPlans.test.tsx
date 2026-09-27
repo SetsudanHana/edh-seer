@@ -19,7 +19,8 @@ test("each win plan can be shown on the deck's sky, the first to start with", ()
   render(<SkyContext.Provider value={buildEngineModel(report, graph)}><WinPlans wincons={WINCONS} /></SkyContext.Provider>);
   const plans = screen.getAllByRole("button", { name: /on the sky/ });
   expect(plans[0]).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByText(/: its 3 cards lit/)).toBeInTheDocument();
+  // The plan's cards, then its finisher, counted apart as the plan lists them.
+  expect(screen.getByText(/: its 2 cards and 1 finisher lit/)).toBeInTheDocument();
   fireEvent.click(plans[1]!);
   expect(plans[1]).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByText(/: its 2 cards lit/)).toBeInTheDocument();

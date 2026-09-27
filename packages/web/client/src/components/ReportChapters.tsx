@@ -37,7 +37,7 @@ import { unreadCardNames } from "../lib/unread.js";
 import { primaryType } from "../lib/deck-shape.js";
 import { themeMatrix } from "../lib/theme-matrix.js";
 import { CardLinksContext } from "./card-menu.js";
-import { DeckSky, SkyContext, type SkyLight } from "./DeckSky.js";
+import { DeckSky, SkyContext, SkyThemeContext, type SkyLight } from "./DeckSky.js";
 import { TurnSky } from "./TurnSky.js";
 import { linksFrom } from "../lib/deck-sky.js";
 
@@ -161,6 +161,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
   }, [themes, report.cards, data.graph]);
   const [centre, setCentre] = useState<string | null>(null);
   const [overlay, setOverlay] = useState<string | null>(null);
+  const namedThemes = useMemo(() => mainTheme(report), [report]);
   /** "See how it connects" in any card's ⋯ menu opens that card's orbit over the report. */
   const links = useMemo(() => {
     if (!themes) return null;
@@ -232,6 +233,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     // into that row (2026-09-25) the first heading sat flush against the row's rule.
     <CardLinksContext.Provider value={links}>
     <SkyContext.Provider value={themes}>
+    <SkyThemeContext.Provider value={namedThemes}>
     <div className="flex flex-col lg:flex-row lg:gap-10 lg:items-start lg:pt-6">
       <ChapterRail current={current} comboCount={data.report.combos?.length ?? 0} />
       {/* `min-w-0` so a wide child (the theme matrix, the cards table) shrinks inside the flex row
@@ -490,6 +492,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
       </div>
     </div>
+    </SkyThemeContext.Provider>
     </SkyContext.Provider>
     </CardLinksContext.Provider>
   );
