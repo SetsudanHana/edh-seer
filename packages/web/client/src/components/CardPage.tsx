@@ -5,6 +5,7 @@ import { loadCardPage, type CardPageData } from "../lib/partners.js";
 import { CardShell } from "./CardShell.js";
 import { EngineReading } from "./EngineReading.js";
 import { NotFound } from "./NotFound.js";
+import { PageMap } from "./PageMap.js";
 import { PartnerList } from "./PartnerList.js";
 
 /** ONE CARD: what the engine reads on it, and the cards it is most specifically connected to.
@@ -82,9 +83,10 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
           <p className="text-(--muted) max-w-[65ch]">
             Sorted by how specific the link is, not by how good the cards are: a pairing only a few
             cards can make ranks above one that hundreds can. Each row says why in one sentence. Pick
-            a card to preview it here.
+            a card, on the map or in the list, to preview it here.
           </p>
         </div>
+        <PageMap page={page} slug={slug} base="/cards" />
         <PartnerList
           subject={page.name}
           rows={page.partners}
