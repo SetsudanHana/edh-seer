@@ -2,6 +2,7 @@ import type { CardTags, GameEvent, SubjectFilter, Verb } from "@edh-seer/tagger"
 import type { Hierarchy } from "./types.js";
 import { COMBAT_VERBS, combatNarrowsByType, combatSelfSupplied, eventMatches, producerEvents } from "./edges.js";
 import { normalizeZoneEvent, zoneEventKey } from "./zones.js";
+import { ALSO_SUPPLIED_BY } from "./suggest-keys.js";
 
 const list = (v: string | string[] | undefined): string[] =>
   v === undefined ? [] : Array.isArray(v) ? v : [v];
@@ -168,6 +169,12 @@ function rollUp(rows: RawRow[], members = false): CensusRow[] {
 
 /** Census the whole corpus: for every event key, how many cards are on each side of it and how
  *  much of the other side actually matches under the engine's own matching rules. */
+/** `ALSO_SUPPLIED_BY` turned round: the consumer verbs a producer verb can also satisfy. */
+const SUPPLIES: Record<string, string[]> = {};
+for (const [consumer, producers] of Object.entries(ALSO_SUPPLIED_BY)) {
+  for (const p of producers) (SUPPLIES[p] ??= []).push(consumer);
+}
+
 export function buildCensus(
   cards: Iterable<CardTags>,
   h: Hierarchy,
@@ -196,7 +203,10 @@ export function buildCensus(
 
   const consumerRows = [...consShapes.values()].map((c) => {
     const counterpart = new Set<number>();
-    for (const p of prodByVerb.get(c.event.verb) ?? []) {
+    // THE CROSS-VERB BRIDGES TOO (issue #562): `eventMatches` accepts a damage emit for "a creature is
+    // dealt damage" and for life loss, and a death for a leave, but only if it is ever asked. Same-verb
+    // lookup alone read Brash Taunter's fight as "0 cause it" beside the edge the engine drew from it.
+    for (const p of [c.event.verb, ...(ALSO_SUPPLIED_BY[c.event.verb] ?? [])].flatMap((v) => prodByVerb.get(v) ?? [])) {
       if (eventMatches(p.event, c.event, h)) for (const card of p.cards) counterpart.add(card);
     }
     // A SELF TRIGGER IS SELF-SUPPLIED, for the same reason combat and phases are: there is no card
@@ -220,7 +230,7 @@ export function buildCensus(
 
   const producerRows = [...prodShapes.values()].map((p) => {
     const counterpart = new Set<number>();
-    for (const c of consByVerb.get(p.event.verb) ?? []) {
+    for (const c of [p.event.verb, ...(SUPPLIES[p.event.verb] ?? [])].flatMap((v) => consByVerb.get(v) ?? [])) {
       if (eventMatches(p.event, c.event, h)) for (const card of c.cards) counterpart.add(card);
     }
     return { key: censusKey(p.event), cards: p.cards, counterpart, selfSupplied: false, authored: p.authored };
