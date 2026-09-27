@@ -1,20 +1,17 @@
 import { useMemo, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
-import { buildEngineModel, listNames, tokenLabel, type EngineCard, type EngineGroup, type EngineModel } from "../lib/engine-model.js";
-import { CardName, ReasonText } from "./card-drawer.js";
-import { CardMenuButton } from "./card-menu.js";
-import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey } from "./engine-parts.js";
+import { buildEngineModel, tokenLabel, type EngineCard, type EngineGroup, type EngineModel } from "../lib/engine-model.js";
+import { ReasonText } from "./card-drawer.js";
+import { Art, Badge } from "./engine-parts.js";
 import { whichTheme, type MainTheme } from "../lib/main-theme.js";
 
 /** WHAT THE DECK DOES, IN THE GAME PLAN CHAPTER (owner, 2026-09-26: "it does not make any sense to
- *  have 2 times the same report"). The Graph tab's Overview grew into a second report beside this
- *  one; its themes and best pairs move here, where the report already asks what the plan is.
+ *  have 2 times the same report"): the deck's themes, the Graph tab's Overview brought here.
  *
- *  THE CARDS LEAD (appeal review 2026-09-26). The designer's words for the Overview's groups were
- *  "a wall of chips and text"; each theme now leads with its key cards as card images, and the
- *  rest of its cards sit behind "Show all". "See links" opens the card's orbit over the report,
- *  where its links can be followed; the card's image opens the card itself, as everywhere in the
- *  report. */
+ *  ONE ROW PER THEME (owner, 2026-09-27: "less is more", "rely more on data visualisation than the
+ *  text"): its colour on the map, one bar and count, its key cards as art. Its cards and one
+ *  example link open on a tap. The best pairs that followed are now the lead of "Cards that carry
+ *  it" (`HighSynergyCards`), which named the same cards. */
 export function PlanThemes({ report, graph, model, onOpenCard, main }: {
   report: DeckReport; graph: CardGraph;
   /** The deck's main theme (Glance and Scores name it), so the theme that IS it carries its name. */
@@ -26,202 +23,109 @@ export function PlanThemes({ report, graph, model, onOpenCard, main }: {
 }) {
   const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);
   // The main theme leads, under its own name; after it, a group that mostly repeats another goes
-  // after the ones that do not, so the few shown first are the deck's different things (Overview
-  // round 9: four Inalla groups in a row were the same Wizards).
-  // Only the main theme's own group moves: every other theme keeps its place by size, so "the
-  // biggest" stays true of the rest.
+  // after the ones that do not (Overview round 9: four Inalla groups in a row were the same Wizards).
   const leads = (g: EngineGroup) => { const w = main ? whichTheme(g, main) : null; return w?.theme === "main" && w.match === "same"; };
   const rank = (g: EngineGroup) => (leads(g) ? 0 : 1);
   const themes = m.groups.filter((g) => !g.helper).sort((x, y) => rank(x) - rank(y) || Number(!!x.sameAs) - Number(!!y.sameAs));
   const matched = main ? themes.some((g) => whichTheme(g, main)?.theme === "main") : true;
-  const promoted = themes.length > 0 && leads(themes[0]!);
   const helpers = m.groups.filter((g) => g.helper);
-  const [allThemes, setAllThemes] = useState(false);
   const [showHelpers, setShowHelpers] = useState(false);
-  const shown = allThemes ? themes : themes.slice(0, THEME_CAP);
-  const more = themes.slice(THEME_CAP);
+  // THE BARS SHARE ONE SCALE: the biggest theme's card count.
+  const size = (g: EngineGroup) => new Set([...g.hubs, ...g.members]).size;
+  const top = Math.max(1, ...m.groups.map(size));
   if (!m.totalLinks) return null;
   return (
-    <div className="flex flex-col gap-8">
-      <section aria-labelledby="plan-themes" className="flex flex-col gap-3">
-        <h3 id="plan-themes" className="text-lg font-semibold">What your deck does</h3>
-        {/* NO GROUP IS THE MAIN THEME: said, not left as two unrelated names on two chapters. */}
-        {main && !matched ? (
-          <p className="max-w-[70ch] text-sm">
-            Your main theme, by what your cards&rsquo; own text is about, is <b>{main.name}</b> ({main.count} of {main.nonland} nonland
-            cards). By how your cards work with each other, the deck does these:
-          </p>
-        ) : null}
-        <p className="max-w-[70ch] text-sm text-(--muted)">
-          {/* "6 things, listed below" over three shown read as a miscount (Overview round 12). */}
-          It mostly does <b className="text-(--foreground)">{themes.length} thing{themes.length === 1 ? "" : "s"}</b>
-          {more.length ? <>; {allThemes ? "they" : promoted ? `your main theme and the ${shown.length - 1} biggest others` : `the ${shown.length} biggest`} are below</> : ""}. Each shows the cards
-          that do something extra, then the cards that set them off. Tap a card to see everything it works with.
-        </p>
-        <div className="flex flex-col gap-3">
-          {shown.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} main={main} />)}
-        </div>
-        {more.length ? (
-          <p>
-            <button type="button" className="min-h-11 rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setAllThemes(!allThemes)}>
-              {allThemes ? "Show fewer" : `Show ${more.length} more: ${listNames(more.map((g) => g.name.toLowerCase()), 4)}`}
-            </button>
-          </p>
-        ) : null}
-        {helpers.length ? (
-          <div className="flex flex-col gap-3">
-            {/* Folded: useful, not a plan, and every Overview seat stopped scrolling above them. */}
-            {showHelpers ? helpers.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} />) : null}
-            <p className="text-sm text-(--muted)">
-              <button type="button" className="mr-2 min-h-11 rounded-(--radius) border border-(--separator) px-4 text-(--foreground)" onClick={() => setShowHelpers(!showHelpers)}>
-                {showHelpers ? "Hide the helpers" : `Show the helpers: ${listNames(helpers.map((g) => g.name.toLowerCase()), 4)}`}
-              </button>
-              Cards that make many others cheaper, give them types, or find them: useful, but not a plan on their own.
-            </p>
-          </div>
-        ) : null}
-      </section>
-
-      {m.strongest.length ? (
-        <section aria-labelledby="plan-pairs" className="flex flex-col gap-3">
-          <h3 id="plan-pairs" className="text-lg font-semibold">The pairs that work best together</h3>
-          <p className="max-w-[70ch] text-sm text-(--muted)">Ranked by how many different ways they help each other, whether it goes both ways and keeps happening, and how central both cards are.</p>
-          <RepeatKey />
-          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr))]">
-            {m.strongest.map(({ pair, ways, both, lines }) => {
-              const a = m.cards.get(pair.a)!, b = m.cards.get(pair.b)!;
-              return (
-                <article key={`${pair.a}|${pair.b}`} className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-                  <div className="flex items-start gap-4">
-                    <span className="flex shrink-0 pt-1 pl-1">
-                      <CardFace card={a} className="w-20 -rotate-3 sm:w-28" />
-                      <CardFace card={b} className="-ml-6 mt-3 w-20 rotate-3 sm:-ml-8 sm:w-28" />
-                    </span>
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <h4 className="text-base font-semibold"><CardName name={a.name} /> + <CardName name={b.name} /></h4>
-                      <p className="text-(--muted)">{both ? "Each helps the other" : "One helps the other"}, {ways.length === 1 ? "in one way" : `in ${ways.length} ways`}: {ways.map((w) => w.toLowerCase()).join("; ")}.</p>
-                    </div>
-                  </div>
-                  <Lines links={lines} />
-                  <ReadCards cards={[a, b]} />
-                </article>
-              );
-            })}
-          </div>
-        </section>
+    <section aria-labelledby="plan-themes" className="flex flex-col gap-3 max-w-5xl">
+      <h3 id="plan-themes" className="text-lg font-semibold">What your deck does</h3>
+      {/* NO GROUP IS THE MAIN THEME: said, not left as two unrelated names on two chapters. */}
+      {main && !matched ? (
+        <p className="max-w-[70ch] text-sm">Your main theme is <b>{main.name}</b> ({main.count} of {main.nonland} nonland cards); by how the cards work together, the deck does these:</p>
       ) : null}
-    </div>
+      {/* ONE ROW PER THEME (owner, 2026-09-27: "less is more", "rely more on data visualisation than
+        *  the text"). Each theme was a card of images, chips and sentences, three of them 1,800px
+        *  tall; now a bar and its key cards, and the rest on a tap. */}
+      <ul className="flex flex-col" aria-label="Themes">
+        {themes.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} main={main} top={top} />)}
+      </ul>
+      {helpers.length ? (
+        <div className="flex flex-col gap-1">
+          <button type="button" aria-expanded={showHelpers} className="self-start min-h-11 text-sm text-(--muted) hover:text-(--foreground)" onClick={() => setShowHelpers(!showHelpers)}>
+            {showHelpers ? "Hide the helpers" : `Helpers · ${helpers.length}`}
+          </button>
+          {showHelpers ? (
+            <ul className="flex flex-col" aria-label="Helpers">
+              {helpers.map((g) => <Theme key={g.tag} g={g} m={m} onOpenCard={onOpenCard} top={top} />)}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
-/** How many themes show before "Show N more": the Overview's six ran to ten phone screens. */
-const THEME_CAP = 3;
-/** Key cards shown as images, wrapped so the last one and its "See links" are never clipped; cards that set them off shown as chips. */
-const MEMBER_CAP = 10;
+/** Key cards drawn in the closed row; the rest are counted. */
+const ROW_ART = 5;
+/** Cards named in an open row before "Show all". */
+const MEMBER_CAP = 12;
 
 const byWeight = (a: EngineCard, b: EngineCard) => Number(b.isCommander) - Number(a.isCommander) || b.score - a.score || (a.name < b.name ? -1 : 1);
 
-/** One theme as a hero row: its name and size, the key cards as images, the cards that set them
- *  off as chips behind "Show all", and one example line to check it by. */
-function Theme({ g, m, onOpenCard, main }: { g: EngineGroup; m: EngineModel; onOpenCard?: (id: string) => void; main?: MainTheme | null }) {
+/** One theme as a row: its colour (the map's), name, a bar for how many cards it links, and its key
+ *  cards as art. Open, it lists its cards and one example link. */
+function Theme({ g, m, onOpenCard, main, top }: { g: EngineGroup; m: EngineModel; onOpenCard?: (id: string) => void; main?: MainTheme | null; top: number }) {
   const which = main ? whichTheme(g, main) : null;
-  const match = which?.theme === "main" ? which.match : null;
-  // A named theme's own group takes the name Glance and Scores give it, so the deck is called one
-  // thing on every chapter.
+  // A named theme's own group takes the name Glance gives it, so the deck is called one thing.
   const name = which?.match === "same" ? which.name : g.name;
+  const [open, setOpen] = useState(false);
   const [all, setAll] = useState(false);
   const hubs = g.hubs.map((id) => m.cards.get(id)!).sort(byWeight);
   const hubSet = new Set(g.hubs);
-  // The cards that set them off, without repeating the key cards above (appeal review: "the same
-  // names two or three times").
   const members = g.members.filter((id) => !hubSet.has(id)).map((id) => m.cards.get(id)!)
     .sort((a, b) => Number(g.onceOnly.has(a.id)) - Number(g.onceOnly.has(b.id)) || byWeight(a, b));
-  const shownMembers = all ? members : members.slice(0, MEMBER_CAP);
-  const open = (c: EngineCard) => onOpenCard?.(c.id);
-  const hubWord = g.helper
-    ? (hubs.length === 1 ? "This card helps" : `These ${hubs.length} cards help`)
-    : (hubs.length === 1 ? "This card does something extra" : `These ${hubs.length} cards do something extra`);
-  const memberWord = g.helper ? "the cards they help" : "when one of these is involved";
+  const cards = new Set([...g.hubs, ...g.members]).size;
+  const cardsShown = all ? [...hubs, ...members] : [...hubs, ...members].slice(0, MEMBER_CAP);
+  const tag = which ? (which.match === "same" ? (which.theme === "main" ? "main theme" : "second theme") : null) : null;
   return (
-    <article className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-4" aria-labelledby={`theme-${g.tag}`}>
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span aria-hidden="true" className="h-3 w-3 shrink-0 self-center rounded-full" style={{ background: g.hue }} />
-          <h4 id={`theme-${g.tag}`} className="text-base font-semibold">{name}</h4>
-          {which ? (
-            <span className={`eyebrow rounded-full border px-2 py-0.5 ${which.theme === "main" ? "border-(--accent) text-(--accent)" : "border-(--separator) text-(--muted)"}`}>
-              {which.match === "same"
-                ? (which.theme === "main" ? "Your main theme" : "Your second theme")
-                : `Part of your ${which.theme === "main" ? "main" : "second"} theme, ${which.name}`}
-            </span>
-          ) : null}
-          {/* WHAT THE COUNT COUNTS (appeal review 2026-09-26): "32 cards" here beside "15 of 63 support"
-            *  on Glance read as the page contradicting itself. These are the cards linked in this theme;
-            *  the main theme's own count is how many cards' text is about it, and both are named. */}
-          <span className="text-sm text-(--muted)">
-            {new Set([...g.hubs, ...g.members]).size} cards linked here · {g.repeating} pair{g.repeating === 1 ? "" : "s"} that keep working{g.once ? `, ${g.once} once` : ""}
-            {match === "same" ? ` · ${main!.count} of your ${main!.nonland} nonland cards are built for it` : ""}
+    <li className="border-b border-(--separator)">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="theme-row"
+        className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 py-2.5 text-left hover:bg-(--surface-secondary) sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
+        <span className="flex min-w-0 items-center gap-2">
+          <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ background: g.hue }} />
+          <h4 id={`theme-${g.tag}`} className="truncate text-sm font-semibold">{name}</h4>
+          {tag ? <span className={`eyebrow shrink-0 ${which!.theme === "main" ? "text-(--accent)" : "text-(--muted)"}`}>{tag}</span> : null}
+        </span>
+        <span className="order-3 col-span-2 flex items-center gap-2 sm:order-none sm:col-span-1">
+          <span aria-hidden="true" className="h-1.5 flex-1 rounded-full bg-(--surface-secondary)">
+            <span className="block h-full rounded-full" style={{ width: `${Math.max(4, (cards / top) * 100)}%`, background: g.hue }} />
           </span>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm text-(--muted)">{hubWord}…</span>
-        <ul className="flex flex-wrap gap-2 pb-1" aria-label={`${name}: key cards`}>
-          {hubs.map((c) => (
-            <li key={c.id} className="flex w-[78px] shrink-0 flex-col items-center gap-1 sm:w-[96px]">
-              {/* ON THE CARD'S FOOT, over its frame: beside "See links" it cut the words to "See ..."
-                * at 78px, and at the top it hid the mana cost. */}
-              <span className="relative block w-full">
-                <CardFace card={c} className="w-full" />
-                {c.isToken ? null : <CardMenuButton name={c.physical} className="absolute bottom-0.5 right-0.5 min-h-7 min-w-7 border border-(--separator) bg-(--background)/85 backdrop-blur-[2px]" />}
-              </span>
-              {onOpenCard ? (
-                <button type="button" className="min-h-8 w-full truncate rounded-(--radius) px-1 text-xs text-(--muted) hover:text-(--foreground)" onClick={() => open(c)} aria-label={`See what ${c.name} works with`}>
-                  See links
-                </button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </div>
-      {members.length ? (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm text-(--muted)">…{memberWord}: {members.length} card{members.length === 1 ? "" : "s"}{g.sameAs ? <>, mostly the same as <b className="text-(--foreground)">{shownName(g.sameAs.name, m, main)}</b></> : null}</span>
-          <div className="flex flex-wrap gap-1.5">
-            {shownMembers.map((c) => (
-              <button key={c.id} type="button" onClick={() => open(c)} disabled={!onOpenCard}
-                className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-sm ${g.onceOnly.has(c.id) ? "border-dashed text-(--muted)" : "border-(--separator)"} enabled:hover:border-(--foreground)`}
-                title={g.onceOnly.has(c.id) ? "Works with this theme only once" : undefined}>
+          <span className="stat-num w-16 shrink-0 text-right text-xs text-(--muted)">{cards} cards</span>
+        </span>
+        <span className="flex items-center" aria-hidden="true">
+          {hubs.slice(0, ROW_ART).map((c, i) => <span key={c.id} className={i ? "-ml-2" : ""}><Art card={c} size={28} /></span>)}
+          {hubs.length > ROW_ART ? <span className="ml-1 text-xs text-(--muted)">+{hubs.length - ROW_ART}</span> : null}
+        </span>
+      </button>
+      {open ? (
+        <div className="flex flex-col gap-2 pb-3 pl-5">
+          <div className="flex flex-wrap gap-1.5" aria-label={`${name}: its cards`}>
+            {cardsShown.map((c) => (
+              <button key={c.id} type="button" onClick={() => onOpenCard?.(c.id)} disabled={!onOpenCard}
+                className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border py-0.5 pl-0.5 pr-2.5 text-sm ${hubSet.has(c.id) ? "border-(--foreground)" : g.onceOnly.has(c.id) ? "border-dashed text-(--muted)" : "border-(--separator)"} enabled:hover:border-(--accent)`}>
                 <Art card={c} size={24} />
                 {c.name.split(" // ")[0]}{c.isToken ? <span className="font-normal text-(--muted)"> {tokenLabel(c)}</span> : null}
               </button>
             ))}
-            {members.length > MEMBER_CAP ? (
+            {cards > MEMBER_CAP ? (
               <button type="button" className="min-h-9 rounded-full border border-(--separator) px-3 text-sm" onClick={() => setAll(!all)}>
-                {all ? "Show fewer" : `Show all ${members.length}`}
+                {all ? "Show fewer" : `Show all ${cards}`}
               </button>
             ) : null}
           </div>
-          {g.onceOnly.size ? <span className="text-xs text-(--muted)">A dashed outline works with this theme only once.</span> : null}
+          {g.example ? (
+            <p className="text-sm text-(--muted)"><Badge repeat={g.example.repeat} perTurn={g.example.perTurn} /><ReasonText text={g.example.text} /></p>
+          ) : null}
         </div>
       ) : null}
-      {g.example ? (
-        <details className="text-sm">
-          <summary className="cursor-pointer text-(--muted)">For example: <Badge repeat={g.example.repeat} perTurn={g.example.perTurn} /><ReasonText text={g.example.text} /></summary>
-          <div className="mt-2 flex items-start gap-3">
-            <span className="flex shrink-0">
-              <CardFace card={m.cards.get(g.example.from)!} className="w-16 sm:w-20" />
-              <CardFace card={m.cards.get(g.example.to)!} className="-ml-4 mt-2 w-16 sm:w-20" />
-            </span>
-            <ReadCards cards={[m.cards.get(g.example.from)!, m.cards.get(g.example.to)!]} />
-          </div>
-        </details>
-      ) : null}
-    </article>
+    </li>
   );
-}
-
-/** A group's name as this chapter shows it: a named theme's own group goes by the theme's name. */
-function shownName(groupName: string, m: EngineModel, main?: MainTheme | null): string {
-  const g = m.groups.find((x) => x.name === groupName);
-  const w = g && main ? whichTheme(g, main) : null;
-  return w?.match === "same" ? w.name : groupName;
 }
