@@ -733,14 +733,35 @@ test("adding an event from the list puts it in the sentence and the link, and cl
   expect(await screen.findByRole("link", { name: /Skullclamp/ })).toBeInTheDocument();
 });
 
-test("tapping a joining word moves the term after it on: and, or, never", async () => {
+test("a joining word opens the modes; nothing changes until one is picked", async () => {
   const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}&produce=${encodeURIComponent(DIES)}`);
   const sentence = await screen.findByRole("group", { name: "Your search" });
   await userEvent.click(within(sentence).getByRole("button", { name: /^and: change/ }));
-  await waitFor(() => expect(new URLSearchParams(spy.search).getAll("orproduce")).toEqual([DIES]));
-  expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]);
-  await userEvent.click(within(sentence).getByRole("button", { name: /^and either: change/ }));
+  const menu = screen.getByRole("menu");
+  expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL, DIES]);
+  expect(within(menu).getByRole("menuitemradio", { name: /^and/ })).toHaveAttribute("aria-checked", "true");
+  await userEvent.click(within(menu).getByRole("menuitemradio", { name: /^but not/ }));
   await waitFor(() => expect(new URLSearchParams(spy.search).getAll("notproduce")).toEqual([DIES]));
+  expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]);
+  expect(screen.queryByRole("menu")).toBeNull();
+});
+
+test("the first term opens the same menu, and Escape closes it without a change", async () => {
+  const spy = atUrl(`/cards?produce=${encodeURIComponent(MILL)}`);
+  const sentence = await screen.findByRole("group", { name: "Your search" });
+  await userEvent.click(within(sentence).getByRole("button", { name: /^makes: .*mill/ }));
+  expect(screen.getByRole("menu")).toBeInTheDocument();
+  await userEvent.keyboard("{Escape}");
+  expect(screen.queryByRole("menu")).toBeNull();
+  expect(new URLSearchParams(spy.search).getAll("produce")).toEqual([MILL]);
+});
+
+test("a broad word shows every group, the matched letters in bold", async () => {
+  atUrl("/cards");
+  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.type(screen.getByLabelText("Find an event"), "mill");
+  const list = await screen.findByRole("group", { name: "Events" });
+  expect(within(list).getAllByText("mill", { selector: "b" }).length).toBeGreaterThan(0);
 });
 
 test("a pay-off term reads as the clause under the triggered mark, a made one as the action", async () => {

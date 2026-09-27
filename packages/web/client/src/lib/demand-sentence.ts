@@ -937,30 +937,98 @@ const FILLER = new Set([
  *  is read as the words it stands for. */
 const ALIASES: Record<string, string[]> = { landfall: ["land", "enters"], enchantress: ["enchantment", "cast"] };
 
-/** Does this event answer what the reader typed? Every typed word must hit SOMETHING -- the label,
- *  the clause, the action or a synonym -- so extra words narrow rather than widen. */
-export function eventMatches(key: string, query: string): boolean {
-  const typed = query.toLowerCase().split(/\s+/).flatMap((w) => ALIASES[w] ?? [w])
+/** FUZZY (owner, 2026-09-27: "right now you need to type in exactly what you want" -- "I would do
+ *  contains instead of starts with and bold out the matched substring"). A typed word hits a word
+ *  of the event that CONTAINS it ("grave" finds graveyard, "reanim" reanimate), and the row bolds
+ *  what matched (`matchSpans`), so a looser hit shows why it is there.
+ *
+ *  A HIT AT A WORD'S START RANKS ABOVE ONE INSIDE IT: "tap" puts "a creature becomes tapped" above
+ *  "untap", "elf" puts "an Elf you control" above "self mill". 2 for a whole word or its start, 1
+ *  for inside, 0 for none.
+ *
+ *  SLIPS ARE A FALLBACK (`typos`), asked only when nothing matches without them: one edit from four
+ *  letters, two from ten ("graveyrd", "artifcat"). Allowed always, "treasure" found every
+ *  "creature" event (286 rows for 14) and "mill" found "kill". */
+function wordHit(w: string, raw: readonly string[], typos: boolean): 0 | 1 | 2 {
+  if (/[^a-z]/.test(w)) return 0;
+  if (raw.some((r) => r.startsWith(w))) return 2;
+  if (w.length >= 3 && raw.some((r) => r.includes(w))) return 1;
+  if (!typos || w.length < 4) return 0;
+  const k = w.length >= 10 ? 2 : 1;
+  return raw.some((r) => r.length >= 4 && Math.abs(r.length - w.length) <= k && editDistance(w, r, k) <= k) ? 1 : 0;
+}
+
+/** The typed words, as matching reads them. */
+function typedWords(query: string): string[] {
+  return query.toLowerCase().split(/\s+/).flatMap((w) => ALIASES[w] ?? [w])
     .filter((w) => w.length > 0 && !FILLER.has(w) && !/^\d+$/.test(w));
-  if (typed.length === 0) return true;
+}
+
+/** WHERE TO BOLD: the stretches of `text` that contain a typed word, merged, case-insensitive. */
+export function matchSpans(text: string, query: string): { text: string; hit: boolean }[] {
+  const lower = text.toLowerCase();
+  const on = new Array<boolean>(text.length).fill(false);
+  for (const w of typedWords(query)) {
+    if (w.length < 2) continue;
+    for (let i = lower.indexOf(w); i >= 0; i = lower.indexOf(w, i + 1)) for (let j = i; j < i + w.length; j++) on[j] = true;
+  }
+  const out: { text: string; hit: boolean }[] = [];
+  for (let i = 0; i < text.length; i++) {
+    const last = out.at(-1);
+    if (last && last.hit === on[i]) last.text += text[i];
+    else out.push({ text: text[i]!, hit: on[i]! });
+  }
+  return out;
+}
+
+/** Optimal string alignment distance (a swap of two neighbours is one edit), stopped past `max`. */
+function editDistance(a: string, b: string, max: number): number {
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array<number>(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0]![j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let rowMin = Infinity;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let v = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, d[i - 2]![j - 2]! + 1);
+      d[i]![j] = v;
+      rowMin = Math.min(rowMin, v);
+    }
+    if (rowMin > max) return max + 1;
+  }
+  return d[a.length]![b.length]!;
+}
+
+/** HOW WELL this event answers what the reader typed: null when it does not; otherwise higher is a
+ *  better hit (a word's start over its inside). Every typed word must hit SOMETHING -- the label,
+ *  the clause, the action or a synonym -- so extra words narrow rather than widen. */
+export function eventMatchRank(key: string, query: string, typos = false): number | null {
+  const typed = typedWords(query);
+  if (typed.length === 0) return 0;
   const verb = key.split("|")[0] ?? "";
   const synonyms = Object.entries(PLAYER_TERMS)
     .filter(([, verbs]) => verbs.some((v) => verb === v || verb.startsWith(`${v}:`)))
     .map(([term]) => term);
   const haystack = [eventKeySentence(key), eventKeyClause(key), eventKeyAction(key) ?? "", ...synonyms]
     .join(" ").toLowerCase();
-  const words = new Set(haystack.split(/[^a-z0-9+/]+/).filter(Boolean).map(stem));
-  const whole = haystack;
-  // A typed word counts when it stems onto a WORD of the phrase. The substring fallback exists
-  // only for what cannot be a word -- "+1/+1" -- and for a multi-word synonym typed whole ("sac
-  // outlet"): applying it to every word made "token" match "nontoken", which is the opposite
-  // event, and rank it above the row the reader meant.
-  const odd = (w: string): boolean => /[^a-z]/.test(w);
-  // THE WHOLE PHRASE, AT WORD EDGES: a bare substring made "elf" find "self mill", "tap" find
-  // "untap" and "combat damage" rank "noncombat damage" first (search sweep, 2026-09-27).
+  const raw = haystack.split(/[^a-z0-9+/]+/).filter(Boolean);
+  const words = new Set(raw.map(stem));
+  // THE WHOLE PHRASE, AT WORD EDGES, answers a multi-word synonym typed whole ("sac outlet").
   const phrase = query.toLowerCase().trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return typed.every((w) => words.has(stem(w)) || (odd(w) && whole.includes(w)))
-    || (phrase.length > 0 && new RegExp(`(^|[^a-z])${phrase}($|[^a-z])`).test(whole));
+  if (phrase.length > 0 && new RegExp(`(^|[^a-z])${phrase}($|[^a-z])`).test(haystack)) return 2 * typed.length;
+  let rank = 0;
+  for (const w of typed) {
+    // "+1/+1" cannot be a word; it is matched as written.
+    const hit = words.has(stem(w)) ? 2 : /[^a-z]/.test(w) ? (haystack.includes(w) ? 2 : 0) : wordHit(w, raw, typos);
+    if (hit === 0) return null;
+    rank += hit;
+  }
+  return rank;
+}
+
+/** Does this event answer what the reader typed? */
+export function eventMatches(key: string, query: string, typos = false): boolean {
+  return eventMatchRank(key, query, typos) !== null;
 }
 
 /** "artifact, creature or enchantment" -- the same joining `demandSentence` does inline, kept here
