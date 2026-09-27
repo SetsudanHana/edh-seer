@@ -217,3 +217,16 @@ test("a cost or mana that scales with creatures is not a go-wide payoff; a drain
   expect(wide(scaling("Axebane Guardian", "mana-generation"))).toBeUndefined();
   expect(wide(scaling("Malakir Blood-Priest", ""))?.payoffs).toEqual(["Malakir Blood-Priest"]);
 });
+
+/** #574: "enchant creature" alone put Eaten by Piranhas and Sugar Coat -- removal cast on an
+ *  opponent's creature -- in Rani's voltron plan. An Aura counts when it helps what it enchants. */
+test("an Aura is voltron when it helps the creature it enchants, not when it takes one away", () => {
+  const aura = (name: string, oracleText: string) => mk(name, { typeLine: "Enchantment — Aura", oracleText });
+  const voltron = (c: DeckCard) => detectWincons([c]).get("voltron")?.has(c.card.name) ?? false;
+  expect(voltron(aura("Rancor", "Enchant creature\nEnchanted creature gets +2/+0 and has trample."))).toBe(true);
+  expect(voltron(aura("Aqueous Form", "Enchant creature\nEnchanted creature can't be blocked."))).toBe(true);
+  expect(voltron(aura("Crab Umbra", "Enchant creature\n{2}{U}: Untap enchanted creature.\nUmbra armor"))).toBe(true);
+  expect(voltron(aura("Eaten by Piranhas", "Flash\nEnchant creature\nEnchanted creature loses all abilities and is a black Skeleton creature with base power and toughness 1/1."))).toBe(false);
+  expect(voltron(aura("Utter Insignificance", "Flash\nEnchant creature\nEnchanted creature loses all abilities and has base power and toughness 1/1."))).toBe(false);
+  expect(voltron(aura("Shiny Impetus", "Enchant creature\nEnchanted creature gets +2/+2 and is goaded."))).toBe(false);
+});

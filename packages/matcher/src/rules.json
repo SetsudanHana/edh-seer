@@ -1,5 +1,5 @@
 {
-  "version": 14,
+  "version": 15,
   "_comment": [
     "Build classifiers as data. Global product config, never per-deck (design 13.4): one rule set,",
     "one version, every deck. Hand-editable today; a panel is a later, small addition because the",
@@ -58,6 +58,7 @@
     "millOpponents": "(?:target opponent|each opponent|target player|each player)[^.]{0,40}?mills|mills? \\w+ cards?[^.]{0,40}?(?:target opponent|each opponent)",
     "altWin": "(?<!can['\u2019]t |cannot |would |don['\u2019]t |doesn['\u2019]t )(?:you win the game|wins? the game|loses? the game|lose the game)",
     "enchantCreature": "enchant creature",
+    "voltronAura": "enchant creature(?: or planeswalker)? you control|enchanted creature (?:gets \\+(?![^.]*\\bis goaded)|has (?!base)|gains |can't be blocked)|umbra armor|totem armor|regenerate enchanted creature",
     "commanderDamage": "commander damage|deals combat damage to a player[^.]{0,60}?(?:that player loses the game|wins the game)"
   },
 
@@ -338,10 +339,10 @@
       "match": [
         { "op": "anyOf", "clauses": [
           { "op": "subtype", "in": ["equipment"] },
-          { "op": "oracle", "pattern": "enchantCreature" }
+          { "op": "oracle", "pattern": "voltronAura" }
         ] }
       ],
-      "why": "Equipment and creature-enchanting auras, the same signature the archetype layer already uses. An aura that enchants a LAND is not voltron, which is why the subtype alone is not enough."
+      "why": "Equipment and creature-enchanting auras, the same signature the archetype layer already uses. An aura that enchants a LAND is not voltron, which is why the subtype alone is not enough. An Aura counts only when it HELPS the creature it enchants (#574, measured 2026-09-27): a pump, a keyword or ability it has or gains, evasion, umbra armor, regeneration, or an Aura that can only enchant your own. 'Enchant creature' alone put Eaten by Piranhas, Sugar Coat and Imprisoned in the Moon -- removal cast on an opponent's creature -- in Rani's voltron plan; a goad Aura (Shiny Impetus) is aimed at an opponent's creature too."
     },
     {
       "id": "wincon.stompy",
