@@ -1786,9 +1786,19 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
   }
 }
 
+/** The producer's own graveyard fills before its fills of other cards (#558), order otherwise kept. */
+const selfFillsFirst = (events: GameEvent[]): GameEvent[] =>
+  [...events.filter((e) => e.subject.self === true), ...events.filter((e) => e.subject.self !== true)];
+
 // Reanimator-consumer edge: a producer graveyard fill enables C's graveyard-recursion effect.
 function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
-  for (const e of pEvents) {
+  // ONE REASON PER TAG, as before #558: the sentence used to be the same whichever fill enabled the
+  // recursion, so a producer that fills with ITSELF and with other cards (Summon: Anima) collapsed to
+  // one reason downstream. Now the two read differently; the card's OWN fill speaks for the pair when
+  // it has one -- sorted first, because `producerEvents` lists authored emits before the implied
+  // self deaths -- and the count does not move.
+  const said = new Set<string>();
+  for (const e of selfFillsFirst(pEvents)) {
     if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
     for (const a of c.tags.abilities) {
       if (a.effect.kind !== "graveyard-recursion" || a.effect.subject?.zone !== "graveyard") continue;
@@ -1856,9 +1866,14 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       }
       const repeatability =
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered";
+      const tag = `graveyard-recursion:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`;
+      if (said.has(tag)) continue;
+      said.add(tag);
       reasons.push({
-        tag: `graveyard-recursion:${themeSubjectKey(keyedOn(a.effect.subject, e.subject))}`,
-        text: graveyardEnablesRecursion(p.card.name, c.card.name),
+        tag,
+        text: graveyardEnablesRecursion(p.card.name, c.card.name, {
+          producerItself: e.subject.self === true, returnsItself: a.effect.subject.self === true,
+        }),
         effectKind: a.effect.kind,
         repeatability,
         scaling: a.effect.scaling,
@@ -1905,7 +1920,9 @@ function exileProcessingEdges({ p, c, pEvents, reasons }: PairScope): void {
 // `graveyardFillMatches` exactly as a reanimator demand does. A payoff whose count derived no
 // subject forms nothing rather than everything.
 function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
-  for (const e of pEvents) {
+  // One reason per tag, as `reanimatorEdges` keeps (#558).
+  const said = new Set<string>();
+  for (const e of selfFillsFirst(pEvents)) {
     if (!(e.verb === "enters" && e.subject.zone === "graveyard")) continue;
     for (const a of c.tags.abilities) {
       if (a.effect.scaling !== "per-graveyard" || !a.effect.scalingSubject) continue;
@@ -1949,9 +1966,12 @@ function graveyardScalingEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // subtype. The set is now {tax, win-game, extra-turn, extra-phase}.
       if (ROLE_NOT_SYNERGY.has(a.effect.kind)) continue;
       if (!graveyardFillMatches(e.subject, a.effect.scalingSubject, h)) continue;
+      const tag = `scales:${themeSubjectKey(keyedOn(a.effect.scalingSubject, e.subject))}`;
+      if (said.has(tag)) continue;
+      said.add(tag);
       reasons.push({
-        tag: `scales:${themeSubjectKey(keyedOn(a.effect.scalingSubject, e.subject))}`,
-        text: graveyardFeedsScaling(p.card.name, c.card.name),
+        tag,
+        text: graveyardFeedsScaling(p.card.name, c.card.name, e.subject.self === true),
         effectKind: a.effect.kind,
         // AN ON-CAST COUNT HAPPENS ONCE (overview item 6c): this ternary had no `on-cast` branch, so
         // Thwart the Grave's cost reduction -- a sorcery's, applied as it is cast -- read `triggered`

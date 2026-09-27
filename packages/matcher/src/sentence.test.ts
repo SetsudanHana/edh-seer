@@ -154,19 +154,34 @@ describe("reasonSentence", () => {
 });
 
 describe("graveyardEnablesRecursion — the reanimator-consumer relation", () => {
+  const own = { producerItself: true, returnsItself: false };
+  const others = { producerItself: false, returnsItself: false };
   test("cause first, both cards named, no engine vocabulary", () => {
-    expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha")).toBe(
+    expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha", own)).toBe(
       "When Faithless Looting is in the graveyard, Muldrotha can bring it back",
     );
-    expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha")).not.toContain("recursion");
-    expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha")).not.toContain("enabling");
+    for (const f of [own, others]) {
+      expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha", f)).not.toContain("recursion");
+      expect(graveyardEnablesRecursion("Faithless Looting", "Muldrotha", f)).not.toContain("enabling");
+    }
+  });
+  test("a fill of OTHER cards never says the producer is in the graveyard (#558)", () => {
+    expect(graveyardEnablesRecursion("Chandra's Regulator", "Chandra, Acolyte of Flame", others)).toBe(
+      "Chandra's Regulator puts cards into the graveyard that Chandra, Acolyte of Flame can bring back",
+    );
+    expect(graveyardEnablesRecursion("Chandra, Flame's Catalyst", "Jaya's Phoenix", { producerItself: false, returnsItself: true })).toBe(
+      "Chandra, Flame's Catalyst can put Jaya's Phoenix into the graveyard, and it returns itself",
+    );
   });
 });
 
 describe("graveyardFeedsScaling — the per-graveyard payoff relation", () => {
   test("cause first, both cards named", () => {
-    expect(graveyardFeedsScaling("Ruin Crab", "Bonehoard")).toBe(
-      "When Ruin Crab is in the graveyard, Bonehoard gets bigger",
+    expect(graveyardFeedsScaling("Ruin Crab", "Bonehoard", false)).toBe(
+      "Ruin Crab puts cards into the graveyard, and Bonehoard gets bigger",
+    );
+    expect(graveyardFeedsScaling("Sakura-Tribe Elder", "Bonehoard", true)).toBe(
+      "When Sakura-Tribe Elder is in the graveyard, Bonehoard gets bigger",
     );
   });
 });
@@ -464,4 +479,9 @@ test("a plus-one counter replacement reads as one more counter", () => {
   }
   expect(effectPhrase("counter-placement", "N+2", "it", undefined, "+1/+1")).toBe("puts 2 more +1/+1 counters on it");
   expect(effectPhrase("counter-placement", "that many", "it", undefined, "+1/+1")).toBe("puts that many +1/+1 counters on it");
+});
+
+test("a recursion that returns ITSELF says so (#558)", () => {
+  expect(reasonSentence({ producer: "Chandra, Flame's Catalyst", consumer: "Jaya's Phoenix", eventKey: "cast:planeswalker", effectKind: "graveyard-recursion", effectTarget: "itself" }))
+    .toBe("When Chandra, Flame's Catalyst is cast, Jaya's Phoenix returns itself from the graveyard");
 });
