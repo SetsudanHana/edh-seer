@@ -5,7 +5,6 @@ import type { RunDiff } from "../lib/run-diff.js";
 import { suggestionsFor, takesCards, type SuggestionsState } from "../lib/suggestions.js";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { SuggestedCards } from "./SuggestedCards.js";
-import { SuggestedPairs } from "./SuggestedPairs.js";
 
 /** WHAT IS WRONG WITH THIS DECK — the report's focal element, and the one structural change the
  *  2026-08-26 persona reviews asked for.
@@ -56,10 +55,8 @@ function Figure({ f }: { f: Finding }) {
   );
 }
 
-export function Findings({ report, diff, suggestions, artOf }: {
+export function Findings({ report, diff, suggestions }: {
   report: DeckReport;
-  /** A deck card's art by name, for the card a swap takes out. */
-  artOf?: (name: string) => string | undefined;
   /** THE CARDS EACH FINDING CAN BE FIXED WITH (AO4), computed after the report paints. Absent, or a
    *  failed run, leaves every row exactly as it was. */
   suggestions?: SuggestionsState;
@@ -217,9 +214,8 @@ export function Findings({ report, diff, suggestions, artOf }: {
           </p>
         </div>
       ) : null}
-      {/* THE SWAPS THAT USE THAT ROOM: a card out of the surplus group, a card into the short one, and
-        *  only where the add connects to more of the deck than the cut (spec §3). */}
-      <SuggestedPairs pairs={suggestions?.value?.pairs.filter((p) => p.rule === "cross-job") ?? []} artOf={artOf} />
+      {/* THE SWAPS THAT USE THAT ROOM sit on the cuts they replace, in "What to change" (baseline
+        *  round 2026-09-26: a pair listed here and its cut listed there were one plan in two places). */}
       {/* NOT A LESSER LIST. Colour is its own axis and synergy is `synergyOverall`; neither is a term
         *  in the number above, so neither can be priced in it, and inventing a conversion to
         *  interleave them is the constant `findings.ts` refuses. Rendered in full rather than capped

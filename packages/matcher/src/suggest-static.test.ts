@@ -126,6 +126,16 @@ test("a reason repeated for several deck cards is one sentence naming the others
   expect(tremors.reasons.some((r) => r.text.includes("Goblin Maker"))).toBe(false);
 });
 
+/** THE PAGE'S CUTS, NOT ONLY THE REPORT'S (baseline round 2026-09-26): the report's cut list was
+ *  empty on the Party Time precon while the page proposed three cuts, so no cut had a card to take
+ *  its slot. A caller's list is paired; without one, the report's. */
+test("a cut the caller names is paired even when the report's cut list is empty", async () => {
+  const s = await quietly(() => suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files()), cuts: ["Goblin Maker"] }));
+  expect(s.pairs.map((p) => [p.cut, p.rule])).toEqual([["Goblin Maker", "no-role"]]);
+  const none = await quietly(() => suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files()) }));
+  expect(none.pairs).toEqual([]);
+});
+
 test("lands, off-colour cards and pairs the live engine does not draw are nowhere", async () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   const s = await suggestForDeck({ report, commanderColorIdentity: ["R"], baseUrl: "/static", fetchImpl: fetchOf(files()) });

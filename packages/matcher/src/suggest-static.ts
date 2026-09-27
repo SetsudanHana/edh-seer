@@ -279,6 +279,11 @@ export async function suggestForDeck(input: {
   commanderColorIdentity: string[];
   baseUrl: string;
   fetchImpl?: typeof fetch;
+  /** The cuts to pair adds against, weakest first, by physical name. Absent, the report's own
+   *  `cutList`. The page's cut list is not the report's: it also offers trade-offs (a weak card with
+   *  something arguing for it), and on the Party Time precon the report's list was empty while the
+   *  page proposed three, so no cut had a card to take its slot (baseline round, 2026-09-26). */
+  cuts?: readonly string[];
 }): Promise<DeckSuggestions> {
   const { report } = input;
   const lookup = new StaticLookup(input.baseUrl, input.fetchImpl);
@@ -425,10 +430,13 @@ export async function suggestForDeck(input: {
       .slice(0, SYNERGY_LIMIT);
     synergyRanked.push([d.key, ranked]);
   }
-  const cuts: CutSide[] = (report.cutList ?? []).map((row) => ({
-    name: row.name,
-    roles: report.cards.find((c) => (c.cardName ?? c.name) === row.name)?.roles ?? [],
-    connections: row.partners,
+  // A CUT'S CONNECTIONS come from the ranked trim order, which rows every cuttable card; the
+  // report's `cutList` rows only the ones nothing argues for.
+  const partnersOf = new Map([...(report.trim ?? []), ...(report.cutList ?? [])].map((r) => [r.name, r.partners] as const));
+  const cuts: CutSide[] = (input.cuts ?? (report.cutList ?? []).map((r) => r.name)).map((name) => ({
+    name,
+    roles: report.cards.find((c) => (c.cardName ?? c.name) === name)?.roles ?? [],
+    connections: partnersOf.get(name) ?? 0,
   }));
   const pairsRanked = pairReplacements(cuts, groups, pool, planRanked);
 
