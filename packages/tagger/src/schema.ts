@@ -122,6 +122,14 @@ export interface SubjectFilter {
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */
   chosenType?: boolean;
+  /** "A spell that SHARES A CREATURE TYPE WITH this creature" (issue #559). `self`: the card's own
+   *  creature types, pinned to `subtype` by `deriveCardTags` and never stored. `commander`: the
+   *  ability is granted to commander creatures (Folk Hero), so the class is the COMMANDER'S types --
+   *  a deck fact, resolved by the matcher's `resolveSharedTypes`. Unresolved, it matches nothing. */
+  sharesTypeWith?: "self" | "commander";
+  /** Not a designated commander: the resolved shared-type class above excludes the commander's own
+   *  spell, since the ability sits on the commander on the battlefield (#559). */
+  notCommander?: true;
   /** "Historic" — artifact, legendary, or Saga. A printed fact, not a judgment, and the only way the
    *  engine can hear Jhoira, Basim Ibn Ishaq, Glóin, Rona and The Sixth Doctor narrow their cast
    *  trigger. Without it their subject is the bare umbrella `spell` and every card in the deck

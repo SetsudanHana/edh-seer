@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **20** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **177** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **178** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -128,6 +128,8 @@ Defined in [`SubjectFilter`](../../packages/tagger/src/schema.ts).
 | `control` | `Control` | **required** |  |
 | `token` | `boolean \| null` | **required** | false = nontoken only, true = token only, null = any. |
 | `chosenType` | `boolean` | optional | Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. |
+| `sharesTypeWith` | `"self" \| "commander"` | optional | "A spell that SHARES A CREATURE TYPE WITH this creature" (issue #559). `self`: the card's own creature types, pinned to `subtype` by `deriveCardTags` and never stored. `commander`: the ability is granted to commander creatures (Folk Hero), so the class is the COMMANDER'S types -- a deck fact, resolved by the matcher's `resolveSharedTypes`. Unresolved, it matches nothing. |
+| `notCommander` | `true` | optional | Not a designated commander: the resolved shared-type class above excludes the commander's own spell, since the ability sits on the commander on the battlefield (#559). |
 | `historic` | `true` | optional | "Historic" — artifact, legendary, or Saga. A printed fact, not a judgment, and the only way the engine can hear Jhoira, Basim Ibn Ishaq, Glóin, Rona and The Sixth Doctor narrow their cast trigger. Without it their subject is the bare umbrella `spell` and every card in the deck satisfies it. Set on a CONSUMER by `parseSubject`, and on a PRODUCER by the matcher, which reads it off the printed type line. |
 | `outlaw` | `true` | optional | The subject demands an OUTLAW — CR 700.12, an object with the Assassin, Mercenary, Pirate, Rogue and/or Warlock creature type. A printed fact read off the type line, exactly like `historic`, and set on BOTH sides for the reason 09ce98d records: a consumer demand a producer cannot state is a demand nothing satisfies. |
 | `modified` | `true` | optional | The subject demands a MODIFIED permanent — CR 700.9: it has a counter on it, is equipped, or is enchanted by an Aura its controller controls. |

@@ -57,3 +57,26 @@ export function markCommander(tags: CardTags): CardTags {
 export function commanderMatches(producer: SubjectFilter, consumer: SubjectFilter): boolean {
   return consumer.commander !== true || producer.commander === true;
 }
+
+/** RESOLVE "SHARES A CREATURE TYPE WITH" A COMMANDER-HOSTED ABILITY (#559). Folk Hero grants commander
+ *  creatures "whenever you cast a spell that shares a creature type with this creature, draw a card":
+ *  the class is the commanders' creature types, and never the commander's own spell -- the ability
+ *  sits on the commander on the battlefield. A deck with no commander subtypes leaves the marker,
+ *  which matches nothing. */
+export function resolveSharedTypes(tags: CardTags, commanderSubtypes: readonly string[]): CardTags {
+  if (commanderSubtypes.length === 0) return tags;
+  const resolve = (s: SubjectFilter): SubjectFilter => {
+    if (s.sharesTypeWith !== "commander") return s;
+    const { sharesTypeWith: _s, ...rest } = s;
+    return { ...rest, subtype: [...commanderSubtypes], notCommander: true };
+  };
+  return {
+    ...tags,
+    abilities: tags.abilities.map((a) => (a.trigger ? { ...a, trigger: { ...a.trigger, subject: resolve(a.trigger.subject) } } : a)),
+  };
+}
+
+/** The creature types a deck's commanders carry, lowercased, for `resolveSharedTypes`. */
+export function commanderSubtypes(commanders: readonly (CardTags | null | undefined)[]): string[] {
+  return [...new Set(commanders.flatMap((t) => (t?.characteristics.subtypes ?? []).map((x) => x.toLowerCase())))];
+}
