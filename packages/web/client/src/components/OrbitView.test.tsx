@@ -135,17 +135,34 @@ test("with reduced motion nothing animates, and arrows carry the direction", () 
 
 /** THE LINE MOVES, NOT A DOT ON IT (owner, 2026-09-26): each spoke grows from the card that gives
  *  to the card that gains, and then the ring is still until a card is pointed at. */
-test("lines grow in the way they work on arrival, then run only on the card pointed at", async () => {
+/** THE RING MOVES AT REST (owner, 2026-09-27: without motion "it looks like static image"). Lines
+ *  grow in on arrival, then faint ticks run on every line, and bright ones on the card pointed at. */
+test("lines grow in on arrival, then every line runs, brighter on the card pointed at", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   try {
     const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
     expect(container.querySelectorAll("[data-testid=orbit-grow] animate[attributeName='x2']").length).toBeGreaterThan(0);
-    expect(container.querySelector("animateMotion")).toBeNull();
+    // No ticks on a half-drawn line.
+    expect(container.querySelectorAll("[data-testid=orbit-flow]").length).toBe(0);
     await act(async () => { vi.advanceTimersByTime(3000); });
-    expect(container.querySelectorAll("[data-testid=orbit-grow], [data-testid=orbit-flow]").length).toBe(0);
+    const spokes = container.querySelectorAll("[data-testid=orbit-grow]").length;
+    expect(spokes).toBe(0);
+    const resting = container.querySelectorAll("[data-testid=orbit-flow]");
+    expect(resting.length).toBeGreaterThan(1);
+    for (const l of container.querySelectorAll("[data-testid=orbit-flow] line")) expect(l.getAttribute("stroke-opacity")).toBe("0.45");
     await act(async () => { fireEvent.mouseEnter(screen.getByRole("button", { name: "Payoff B" })); });
-    // Payoff B and Payoff A feed each other: one running line each way.
-    expect(container.querySelectorAll("[data-testid=orbit-flow] animate[attributeName='stroke-dashoffset'][repeatCount='indefinite']").length).toBe(2);
+    // Payoff B and Payoff A feed each other: one bright line each way.
+    expect(container.querySelectorAll("[data-testid=orbit-flow] line[stroke-opacity='0.9']").length).toBe(2);
+  } finally { vi.useRealTimers(); }
+});
+
+test("with a card tapped, only its lines run", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    const { container } = render(<OrbitView report={engineDeck().report} graph={engineDeck().graph} focusId="Payoff A" onFocus={() => {}} />);
+    await act(async () => { vi.advanceTimersByTime(3000); });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Payoff B" })); });
+    expect(container.querySelectorAll("[data-testid=orbit-flow] line").length).toBe(2);
   } finally { vi.useRealTimers(); }
 });
 

@@ -233,8 +233,11 @@ function Orbit({ o, L, narrow, sel, sector, arrival, moveFrom, still, paused, ho
   const dimming = sel !== null || sector !== null;
   // FAST, THEN STILL (appeal review 2026-09-26): the whole ring is out in about 0.6s, a new middle
   // settles in about 0.45s, and cards already on the ring travel rather than reappear. At rest
-  // nothing moves: the line runs on the card being pointed at or tapped, and every line grows in on arrival so
-  // the ring reads as live. The idle stream on every line read as decoration to all five seats.
+  // every line grows in on arrival, then faint ticks run along every line in the way it works, and
+  // brighter on the card pointed at or tapped. RUNNING AT REST AGAIN (owner, 2026-09-27: "right now
+  // it looks like static image not something you can interact with"): the idle stream the appeal
+  // review called decoration was the travelling dots, whose direction read both ways; without any
+  // motion the direction was only on hover, which a phone does not have.
   const step = Math.min(14, 220 / Math.max(1, slots.length));
   const enter = (x: number, y: number, i: number, id?: string) => {
     const mv = id ? moveFrom?.get(id) : undefined;
@@ -245,7 +248,10 @@ function Orbit({ o, L, narrow, sel, sector, arrival, moveFrom, still, paused, ho
   const [wave, setWave] = useState(!still);
   useEffect(() => { const t = setTimeout(() => setWave(false), 2600); return () => clearTimeout(t); }, []);
   const arrows = still || paused;
-  const flowing = (id: string, on: boolean) => !arrows && (sel ? sel === id : hover === id || (sector !== null && on));
+  const pointed = (id: string) => sel === id || hover === id;
+  // At rest every lit line runs; with a card or a group picked, only the lit ones. Not while the
+  // lines are still growing in, where ticks on a half-drawn line read as noise.
+  const flowing = (id: string, on: boolean) => !arrows && (pointed(id) || (!wave && (!dimming || on)));
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`${displayName(o.focus)} and the ${o.direct + o.directTokens} cards it works with`}
       className="block h-auto w-full select-none">
@@ -263,7 +269,7 @@ function Orbit({ o, L, narrow, sel, sector, arrival, moveFrom, still, paused, ho
             {arrows
               ? <Arrows x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} hue={sl.s.hue} faint={dimming && !on} />
               : flowing(sl.p.card.id, on)
-                ? <Flow x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} strong={sel === sl.p.card.id} />
+                ? <Flow x={sl.x} y={sl.y} cx={cx} cy={cy} r={r} fr={fr} dir={dir} strong={pointed(sl.p.card.id)} />
                 : null}
           </g>
         );
@@ -376,8 +382,8 @@ const SPEED: Record<Repeat, number> = { static: 70, triggered: 50, activated: 38
  *  which already means "works only once". */
 const TICK = { on: 4, off: 12 };
 
-/** THE LINE MOVES, NOT A DOT ON IT (owner, 2026-09-26). On the card pointed at or tapped, bright
- *  ticks run along its spoke from the card that gives to the card that gains, as the first board's
+/** THE LINE MOVES, NOT A DOT ON IT (owner, 2026-09-26). Faint ticks on every line at rest, bright
+ *  ones on the card pointed at or tapped, run along its spoke from the card that gives to the card that gains, as the first board's
  *  dashes crawled. The dot that replaced them sometimes read as going in and sometimes out. SMIL,
  *  not a frame loop: the browser runs it, and a ring of twenty spokes costs no script. */
 function Flow({ x, y, cx, cy, r, fr, dir, strong }: {
@@ -392,8 +398,8 @@ function Flow({ x, y, cx, cy, r, fr, dir, strong }: {
     <g pointerEvents="none" data-testid="orbit-flow">
       {segments(outer, inner, dir, 2.5).map(([a, b], k) => (
         // Drawn from giver to gainer, so an offset running down to zero carries the ticks forward.
-        <line key={k} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--foreground)" strokeOpacity={0.85}
-          strokeWidth={strong ? 2.5 : 2} strokeLinecap="round" strokeDasharray={`${TICK.on} ${TICK.off}`}>
+        <line key={k} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--foreground)" strokeOpacity={strong ? 0.9 : 0.45}
+          strokeWidth={strong ? 2.5 : 1.5} strokeLinecap="round" strokeDasharray={`${TICK.on} ${TICK.off}`}>
           <animate attributeName="stroke-dashoffset" from={period} to={0} dur={dur} repeatCount="indefinite" />
         </line>
       ))}
@@ -588,7 +594,7 @@ function Summary({ o, still, paused, onPause, onSector, onCentre }: { o: OrbitMo
             {paused ? "Play the motion" : "Pause the motion"}
           </button>
         ) : null}
-        {still ? "Arrows point" : "Lines grow, and when you point at or tap a card its line runs,"} from the card that gives to the card that gains. A solid line keeps working; a dashed line works only once. A dashed ring is a token. A "+" disc holds the rest of its group: tap it for the list.</p>
+        {still ? "Arrows point" : "The ticks on each line run"} from the card that gives to the card that gains{still ? "" : "; point at or tap a card to brighten its lines"}. A solid line keeps working; a dashed line works only once. A dashed ring is a token. A "+" disc holds the rest of its group: tap it for the list.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>
