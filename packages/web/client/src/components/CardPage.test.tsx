@@ -252,6 +252,8 @@ test("with enough partners the page draws them as a map above the list; a second
   }));
   at("krenko-mob-boss", async () => ({ ...KRENKO, partners: rows }));
   const map = await screen.findByRole("group", { name: /Krenko, Mob Boss and 4 of the cards it works well with/ });
+  // The nodes are drawn by the map's own effect after the group mounts, so they are waited for.
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).not.toBeNull(), { timeout: 3000 });
   const node = map.querySelector("[data-id='skullclamp']")!;
   fireEvent.click(node);
   fireEvent.click(node);
@@ -280,6 +282,8 @@ test("going to a partner's page keeps the map: the card you came from stays, wit
     </MemoryRouter>,
   );
   const map = await screen.findByRole("group", { name: /^Krenko, Mob Boss and 3 of the cards/ });
+  // The nodes are drawn by the map's own effect after the group mounts, so they are waited for.
+  await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).not.toBeNull(), { timeout: 3000 });
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
   await waitFor(() => expect(map.querySelector("[data-id='skullclamp']")).toHaveAttribute("aria-pressed", "true"), { timeout: 3000 });
   fireEvent.click(map.querySelector("[data-id='skullclamp']")!);
