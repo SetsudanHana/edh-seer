@@ -65,14 +65,23 @@ export function commanderMatches(producer: SubjectFilter, consumer: SubjectFilte
  *  which matches nothing. */
 export function resolveSharedTypes(tags: CardTags, commanderSubtypes: readonly string[]): CardTags {
   if (commanderSubtypes.length === 0) return tags;
-  const resolve = (s: SubjectFilter): SubjectFilter => {
+  // `notCommander` on a TRIGGER only: a spell you cast is never the commander already on the
+  // battlefield. An effect's class keeps what it printed -- Haunted One's undying reaches "it and
+  // other creatures", the commander included; its pump says "other" itself.
+  const resolve = (s: SubjectFilter, trigger: boolean): SubjectFilter => {
     if (s.sharesTypeWith !== "commander") return s;
     const { sharesTypeWith: _s, ...rest } = s;
-    return { ...rest, subtype: [...commanderSubtypes], notCommander: true };
+    return { ...rest, subtype: [...commanderSubtypes], ...(trigger ? { notCommander: true as const } : {}) };
   };
+  // Trigger AND effect: Haunted One's pump reaches "other creatures you control that share a creature
+  // type with it" (#625).
   return {
     ...tags,
-    abilities: tags.abilities.map((a) => (a.trigger ? { ...a, trigger: { ...a.trigger, subject: resolve(a.trigger.subject) } } : a)),
+    abilities: tags.abilities.map((a) => ({
+      ...a,
+      ...(a.trigger ? { trigger: { ...a.trigger, subject: resolve(a.trigger.subject, true) } } : {}),
+      ...(a.effect.subject ? { effect: { ...a.effect, subject: resolve(a.effect.subject, false) } } : {}),
+    })),
   };
 }
 
