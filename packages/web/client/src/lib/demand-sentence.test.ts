@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE, eventKeySentence, eventKeyAction, eventKeyClause, eventMatches } from "./demand-sentence.js";
+import { eventLabel, tagLabel, STATIC_KIND, MECHANISM, DEMAND_VERB, DEMAND_SUBJECTLESS, DEMAND_PHASE, eventKeySentence, eventKeyAction, eventKeyClause, eventMatches, eventMatchRank, matchSpans } from "./demand-sentence.js";
 
 /** The graph's trace-event chips label a census key's VERB half. It reuses `DEMAND_VERB` rather
  *  than adding a second vocabulary — this repo has twice shipped an internal identifier rendered as
@@ -326,6 +326,39 @@ test("small words and numbers do not stop a match", () => {
   expect(eventMatches("gain-life|-|-|-", "leaves the graveyard")).toBe(false);
 });
 
+/** FUZZY, BUT ANCHORED (owner, 2026-09-27: "you need to type in exactly what you want"). */
+test("a word still being typed, or with a slip of a letter, still finds its event", () => {
+  expect(eventMatches("leaves-graveyard|-|-|-", "grave")).toBe(true);
+  expect(eventMatches("leaves-graveyard|-|-|-", "leaves grav")).toBe(true);
+  expect(eventMatches("leaves-graveyard|-|-|-", "reanim")).toBe(true);
+  expect(eventMatches("leaves-graveyard|-|-|-", "graveyrd", true)).toBe(true);
+  expect(eventMatches("leaves-graveyard|artifact|-|-", "artifcat leaves", true)).toBe(true);
+  expect(eventMatches("gain-life|-|-|-", "gian life", true)).toBe(true);
+  expect(eventMatches("dies|creature|-|-", "creture dies", true)).toBe(true);
+});
+
+test("a hit at a word's start ranks above one inside a word; slips wait until nothing else matches", () => {
+  const rank = (k: string, q: string) => eventMatchRank(k, q) ?? -1;
+  expect(rank("taps|creature|-|-", "tap")).toBeGreaterThan(rank("untaps|creature|-|-", "tap"));
+  expect(rank("counts|-|elf|-", "elf")).toBeGreaterThan(rank("mill|-|-|-", "elf"));
+  expect(rank("combat-damage|creature|-|-", "combat damage")).toBeGreaterThan(rank("non-combat-damage|-|-|-", "combat damage"));
+  for (const typos of [false, true]) {
+    expect(eventMatches("dies|creature|-|-", "land", typos)).toBe(false);
+    expect(eventMatches("draw|-|-|-", "wheel", typos)).toBe(false);
+  }
+  // Slips are a fallback: without it, "treasure" is not "creature".
+  expect(eventMatches("dies|creature|-|-", "treasure")).toBe(false);
+});
+
+/** AND THE ROW SAYS WHY IT IS THERE: the matched letters are bolded. */
+test("the matched stretches of a row are marked, case-insensitive", () => {
+  expect(matchSpans("An artifact leaves a graveyard", "grave art")).toEqual([
+    { text: "An ", hit: false }, { text: "art", hit: true }, { text: "ifact leaves a ", hit: false },
+    { text: "grave", hit: true }, { text: "yard", hit: false },
+  ]);
+  expect(matchSpans("gain life", "")).toEqual([{ text: "gain life", hit: false }]);
+});
+
 /** THE SEARCH SWEEP (2026-09-27): seventy phrasings a player types, run against the live keys. */
 test("the way a player frames an ask does not block the match", () => {
   expect(eventMatches("counts|artifact|-|-", "cares about artifacts")).toBe(true);
@@ -336,12 +369,6 @@ test("the way a player frames an ask does not block the match", () => {
   expect(eventMatches("lose-life|-|-|-", "life loss")).toBe(true);
 });
 
-test("a word inside another word is not a match", () => {
-  expect(eventMatches("mill|-|-|-", "elf")).toBe(false);
-  expect(eventMatches("untaps|creature|-|-", "tap")).toBe(false);
-  expect(eventMatches("non-combat-damage|-|-|-", "combat damage")).toBe(false);
-  expect(eventMatches("combat-damage|creature|-|-", "combat damage")).toBe(true);
-});
 
 test("strategy words reach the events the strategy is made of, and no wider", () => {
   expect(eventMatches("enters|land|-|-", "landfall")).toBe(true);
