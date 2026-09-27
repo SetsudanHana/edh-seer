@@ -194,7 +194,9 @@ export function EventSentence({ terms, colours, noun, makes, pays, makesCount, p
                 </ul>
               </section>
             ))}
-            {rows.groups.length === 0 && <p className="px-3 py-2 text-(--muted) text-sm m-0">No event matches that.</p>}
+            {/* SOME THEMES ARE NOT EVENTS YET (search sweep, 2026-09-27): ramp, extra turns, goad, energy
+              * have no event the engine reads, and a bare "no match" read as a typo. */}
+            {rows.groups.length === 0 && <p className="px-3 py-2 text-(--muted) text-sm m-0">No event matches that. Some themes, like ramp, extra turns or goad, aren&rsquo;t events the engine reads yet.</p>}
             {rows.more > 0 && <p className="px-3 py-2 text-(--muted) text-sm m-0">{rows.more.toLocaleString("en-US")} more. Type to narrow them.</p>}
           </div>
         </div>

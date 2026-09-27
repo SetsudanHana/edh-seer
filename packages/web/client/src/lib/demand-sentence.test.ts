@@ -326,6 +326,33 @@ test("small words and numbers do not stop a match", () => {
   expect(eventMatches("gain-life|-|-|-", "leaves the graveyard")).toBe(false);
 });
 
+/** THE SEARCH SWEEP (2026-09-27): seventy phrasings a player types, run against the live keys. */
+test("the way a player frames an ask does not block the match", () => {
+  expect(eventMatches("counts|artifact|-|-", "cares about artifacts")).toBe(true);
+  expect(eventMatches("counts|artifact|-|-", "artifacts matter")).toBe(true);
+  expect(eventMatches("enters|artifact|-|-", "whenever an artifact enters")).toBe(true);
+  expect(eventMatches("gain-life|-|-|-", "whenever you gain life")).toBe(true);
+  expect(eventMatches("lose-life|-|-|-", "opponent loses life")).toBe(true);
+  expect(eventMatches("lose-life|-|-|-", "life loss")).toBe(true);
+});
+
+test("a word inside another word is not a match", () => {
+  expect(eventMatches("mill|-|-|-", "elf")).toBe(false);
+  expect(eventMatches("untaps|creature|-|-", "tap")).toBe(false);
+  expect(eventMatches("non-combat-damage|-|-|-", "combat damage")).toBe(false);
+  expect(eventMatches("combat-damage|creature|-|-", "combat damage")).toBe(true);
+});
+
+test("strategy words reach the events the strategy is made of, and no wider", () => {
+  expect(eventMatches("enters|land|-|-", "landfall")).toBe(true);
+  expect(eventMatches("enters|creature|-|-", "landfall")).toBe(false);
+  expect(eventMatches("cast|enchantment|-|-", "enchantress")).toBe(true);
+  expect(eventMatches("cast|spell|-|-", "spellslinger")).toBe(true);
+  expect(eventMatches("discard|-|-|-", "madness")).toBe(true);
+  expect(eventMatches("counter-spell|-|-|-", "counterspell")).toBe(true);
+  expect(eventMatches("create-token|creature|-|t", "go wide")).toBe(true);
+});
+
 test("returning or exiling a card from a graveyard finds it leaving the graveyard", () => {
   expect(eventMatches("leaves-graveyard|creature|-|-", "return creature from graveyard")).toBe(true);
   expect(eventMatches("leaves-graveyard|-|-|-", "reanimate")).toBe(true);
