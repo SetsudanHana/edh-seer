@@ -2,10 +2,11 @@ import { useState } from "react";
 import type { DeckReport } from "../types.js";
 import { BUILD_CATEGORY_LABEL } from "../lib/build-category-labels.js";
 import type { CutChoice } from "../lib/cut-choice.js";
-import { listNames, type EngineCard } from "../lib/engine-model.js";
-import { CardName, ReasonText } from "./card-drawer.js";
+import { listNames, type EngineCard, type EngineModel } from "../lib/engine-model.js";
+import { CardName } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
-import { Badge, CardFace, ReadCards } from "./engine-parts.js";
+import { CardFace } from "./engine-parts.js";
+import { CutMap } from "./CutMap.js";
 import type { SuggestedPair } from "@edh-seer/matcher/suggest-static";
 import { SwapLine } from "./SuggestedPairs.js";
 
@@ -18,7 +19,7 @@ import { SwapLine } from "./SuggestedPairs.js";
 /** A role group over its target, with the cards in it: where the rest of a trim comes from. */
 export interface Surplus { name: string; count: number; target: number; over: number; cards: EngineCard[] }
 
-export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize }:
+export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize, model }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -38,6 +39,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
     pairs?: readonly SuggestedPair[];
     /** Cards in the list, commander included and companion not: over 100, the cuts reach 100. */
     deckSize?: number;
+    /** The deck's links: with them, each cut is drawn in the middle of its own few links. */
+    model?: EngineModel | null;
   }) {
   const [maybeN, setMaybeN] = useState(MAYBE_STEP);
   // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
@@ -68,7 +71,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   const hasOffTheme = !!offTheme && offTheme.length > 0;
   if (!hasCuts && !hasSlack && !hasUnjudged && !hasOffTheme && !over) return null;
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" data-testid="cut-list">
       <h3 className="eyebrow">Possible cuts</h3>
       {over ? (
         <section aria-labelledby="cuts-over" className="flex flex-col gap-2">
@@ -82,7 +85,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           </p>
           {toCut.length ? (
             <ol className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-              {toCut.map((c) => <CutCard key={c.name} c={c} />)}
+              {toCut.map((c) => <CutCard key={c.name} c={c} model={model} />)}
             </ol>
           ) : null}
           {spare.length ? (
@@ -96,16 +99,14 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
       ) : hasCuts && (
         <>
           <p className="text-sm text-(--muted) max-w-[65ch]">
-            The cards doing the least here: they keep working with the fewest others. A card that fills
-            a role, is a theme&apos;s key card or is half of a combo is never listed. Suggestions, not
-            verdicts: a synergy we can&apos;t read looks exactly like one that isn&apos;t there.
-            {pairOf.size ? " Where a card from outside the deck connects to more of it, the cut comes with that card to put in its place." : ""}
+            The cards working with the fewest others. Suggestions, not verdicts: a link we can&apos;t read
+            looks like one that isn&apos;t there.
           </p>
           {clear.length ? (
             <section aria-labelledby="cuts-clear" className="flex flex-col gap-2">
               <h4 id="cuts-clear" className="text-base font-semibold">Nothing argues for keeping these</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-                {clear.map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
+                {clear.map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} model={model} />)}
               </ul>
             </section>
           ) : null}
@@ -113,7 +114,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
             <section aria-labelledby="cuts-maybe" className="flex flex-col gap-2">
               <h4 id="cuts-maybe" className="text-base font-semibold">{clear.length ? "Weak here, but something argues for them" : "The weakest here, though something argues for each"}</h4>
               <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
-                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} />)}
+                {maybe.slice(0, maybeN).map((c) => <CutCard key={c.name} c={c} swap={swapFor(c)} model={model} />)}
               </ul>
               {maybe.length > maybeN ? (
                 <p>
@@ -129,10 +130,6 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
       {roleSwaps.length ? (
         <section aria-labelledby="cuts-role-swaps" className="flex flex-col gap-2 pt-2">
           <h4 id="cuts-role-swaps" className="text-base font-semibold">Better cards for the same job</h4>
-          <p className="text-sm text-(--muted) max-w-[65ch]">
-            These fill a role, so they are not cuts. Each card beside them does the same job, or one the
-            deck is short of, and works with more of your deck.
-          </p>
           <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,25rem),1fr))]">
             {roleSwaps.map((p) => (
               <li key={p.cut} className="flex flex-col gap-2 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm" data-testid="role-swap">
@@ -172,9 +169,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
           {offTheme!.map((n, i) => (
             <span key={n}>{i > 0 && ", "}<CardName name={n} /></span>
           ))}
-          . None of your themes use {offTheme!.length === 1 ? "it" : "these"}. That&apos;s normal for
-          removal and protection, which do their job on their own; otherwise this is the next place to
-          look for a slot.
+          . The next place to look for a slot, unless {offTheme!.length === 1 ? "it is" : "they are"} removal or protection.
         </p>
       )}
       {/* AN EMPTY CUT LIST IS AN ANSWER AND HAS TO SAY SO. It used to render nothing at all, which
@@ -209,10 +204,7 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
             {unjudged!.map((n, i) => (
               <span key={n}>{i > 0 && ", "}<CardName name={n} /></span>
             ))}
-            {" "}— the engine has not read {unjudged!.length === 1 ? "it" : "them"} yet.
-            &ldquo;Nothing connects to it&rdquo; and &ldquo;we could not read it&rdquo; are different
-            sentences, and only the first is a reason to cut.
-            {coverage ? " The rest of the unread fill a role, or are lands, so they were never cut candidates anyway." : ""}
+            {" "}— not read yet, so not a reason to cut.
           </p>
         </div>
       )}
@@ -239,47 +231,34 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
 /** Trade-off rows shown before "Show N more"; the clear cuts always show in full. */
 const MAYBE_STEP = 4;
 
-/** One cut: the card, why it is here, what argues it stays, and its text one tap away. */
-function CutCard({ c, swap }: { c: CutChoice; swap?: SuggestedPair }) {
+/** One cut: its few links drawn, why it is here, and what argues it stays. */
+function CutCard({ c, swap, model }: { c: CutChoice; swap?: SuggestedPair; model?: EngineModel | null }) {
   const r = c.row;
-  const short = c.name.split(" // ")[0]!;
   return (
-    <li className="flex items-start gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
-      {c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div>
-          <div className="flex items-center gap-1">
-            <h4 className="flex flex-1 items-baseline justify-between gap-3 text-base font-semibold">
-              <CardName name={c.name} />
-              <span className="shrink-0 text-xs font-normal stat-num text-(--muted)">{c.manaValue} mana</span>
-            </h4>
-            <CardMenuButton name={c.name} />
+    <li className="flex flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm">
+      <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
+        {c.card && model ? <CutMap model={model} card={c.card} /> : c.card ? <CardFace card={c.card} className="w-20 sm:w-24" /> : null}
+        <div className="flex min-w-0 flex-1 flex-col gap-2 self-stretch">
+          <div>
+            <div className="flex items-center gap-1">
+              <h4 className="flex flex-1 items-baseline justify-between gap-3 text-base font-semibold">
+                <CardName name={c.name} />
+                <span className="shrink-0 text-xs font-normal stat-num text-(--muted)">{c.manaValue} mana</span>
+              </h4>
+              <CardMenuButton name={c.name} />
+            </div>
+            <p>{r ? r.why : `${capitalFirst(c.reasons.join("; "))}.`}</p>
+            {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
           </div>
-          <p>{r ? r.why : `${capitalFirst(c.reasons.join("; "))}.`}</p>
-          {c.unmet.map((u) => <p key={u} className="text-(--muted)">{capitalFirst(u)}.</p>)}
+          {c.keeps.length ? (
+            <p><span className="font-medium text-(--success)">Why you might keep it:</span> {c.keeps.join(" · ")}</p>
+          ) : null}
+          {c.twins.length ? (
+            <p className="text-(--muted)">Stands in for {listNames(c.twins)}: the same cards use {c.twins.length === 1 ? "both" : "all of them"}.</p>
+          ) : null}
         </div>
-        {r?.keep && r.keepActs ? (
-          <p className="text-(--muted)"><span className="eyebrow block">Its strongest link</span><Badge repeat={r.keep.repeat} perTurn={r.keep.perTurn} /><ReasonText text={r.keep.text} /></p>
-        ) : r?.keep && r.fedBy.length ? (
-          // A FEEDER NAMES WHO USES IT: the line other cards get from it is true of any card of its
-          // kind, so it is not this card's strongest link (Overview round 7).
-          <p className="text-(--muted)">
-            <span className="eyebrow block">Who uses it</span>
-            {listNames(r.fedBy, 3)}. None of the links found here use its own abilities.
-          </p>
-        ) : null}
-        {c.keeps.length ? (
-          <p><span className="font-medium text-(--success)">Why you might keep it:</span> {c.keeps.join(" · ")}</p>
-        ) : null}
-        {c.twins.length ? (
-          <p className="text-(--muted)">
-            <span className="eyebrow block">Used by exactly the same cards</span>
-            {listNames(c.twins)} {c.twins.length === 1 ? "is" : "are"} used by the same cards as {short}, so here {c.twins.length === 1 ? "either can" : "any of them can"} stand in for another: cutting one leaves the rest doing the same job.
-          </p>
-        ) : null}
-        {c.card ? <ReadCards cards={[c.card]} /> : null}
-        {swap ? <SwapLine p={swap} /> : null}
       </div>
+      {swap ? <SwapLine p={swap} /> : null}
     </li>
   );
 }
