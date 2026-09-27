@@ -4,8 +4,6 @@ import { DeckWaffle } from "./DeckWaffle.js";
 import { waffleSquares } from "../lib/waffle.js";
 import { identityKey, identityLabel } from "../lib/color-identity.js";
 import { ManaSymbols } from "./ManaSymbols.js";
-import { cardImageUrl } from "./card-node.js";
-import { useCardDrawer } from "./card-drawer.js";
 import { verdict } from "../lib/verdict.js";
 import { findings } from "../lib/findings.js";
 
@@ -20,8 +18,12 @@ import { findings } from "../lib/findings.js";
  *
  *  NO SCORE AND NO TARGET LIVES HERE. A tool that grades a deck before showing it understood it
  *  has not earned the criticism. Everything on this panel is a description. */
-export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
+export function RecognitionPanel({ data, assumptions, assumptionsSet, part }: {
   data: AnalyzeResponse;
+  /** THE FIRST SCREEN IS THE MOCKUP'S (owner, 2026-09-27: "the top of the report is different from
+   *  the screens you mocked up"): the theme sits beside the commander's map ("identity"), and the
+   *  verdict, the assumptions and the card counts follow the map ("rest"). Both when omitted. */
+  part?: "identity" | "rest";
   /** The game-state controls (speed, the monarch…), folded here rather than above everything:
    *  "the initiative" was the first thing a beginner met, before any answer (appeal review
    *  2026-09-26). */
@@ -86,44 +88,11 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
    *  `deckMath` was not computed — a deck this page could not price is still named by its theme and
    *  colours. */
   const commanders = (report.deckMath?.castability.commanders ?? []).map((c) => c.name);
-  const { open, known } = useCardDrawer();
-  // THE COMMANDER'S FACE LEADS (appeal review 2026-09-26: the top of the report was text only, and
-  // the one card every player knows their deck by was a name in a grey line).
-  const commanderNames = new Set(report.cards.filter((c) => c.isCommander).map((c) => c.cardName ?? c.name));
-  const faces = nodes
-    .filter((n) => !n.isToken && !n.face && commanderNames.has(n.cardName ?? n.id))
-    .map((n) => ({ name: n.label, src: cardImageUrl(n.artCrop ?? n.faces?.[0]?.artCrop ?? "") }))
-    .filter((f): f is { name: string; src: string } => !!f.src);
   const said = verdict(report);
   const suggestions = findings(report).length;
   const toSuggestions = () => document.getElementById("fix")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  return (
-    <section className="flex flex-col gap-4">
-      {/* The chapter above is titled "Deck at a glance"; an h2 reading "What this deck is" under
-        *  it was the same heading twice (T1). The theme line below IS the answer. */}
-      {/* THE ANSWER LOOKS LIKE AN ANSWER (owner review, 2026-09-01). The theme shipped as the first
-        *  word of a 14px muted metadata run -- "enchantments entering · The Rani · Grixis · read 100
-        *  of 100 cards" -- so the panel asked "What this deck is" and then answered it at the same
-        *  weight as its own footnotes. It is the one thing this panel exists to say, and the house
-        *  rule is that a display line is a different SIZE, not a bolder body: 30px against the 14px
-        *  beneath it. The metadata that qualifies the theme stays where it was, small, below.
-        *  `recognition-identity` still wraps both, so every guard that reads "the identity" -- theme,
-        *  commander, colours, coverage -- keeps reading one element. */}
-      <div className="flex items-start gap-4 sm:gap-6">
-        {faces.length ? (
-          <span className="flex shrink-0">
-            {faces.map((f, i) => {
-              const img = <img src={f.src} alt={known.has(f.name) ? "" : f.name} width={488} height={680} decoding="async"
-                className="block aspect-[488/680] h-auto w-full rounded-[4.5%/3.3%] shadow-lg shadow-black/40" />;
-              const cls = `block w-28 sm:w-40 ${i > 0 ? "-ml-14 sm:-ml-20 mt-4" : ""}`;
-              return known.has(f.name)
-                ? <button key={f.name} type="button" className={`${cls} transition-transform hover:-translate-y-0.5`} onClick={() => open(f.name)} aria-label={`Open ${f.name}`}>{img}</button>
-                : <span key={f.name} className={cls}>{img}</span>;
-            })}
-          </span>
-        ) : null}
-        <div className="flex min-w-0 flex-col gap-3">
+  const identity = (
       <div data-testid="recognition-identity" className="flex flex-col gap-1">
           {/* NAMED AS WHAT IT IS (review 2026-09-25): "Blink" as a bare display line read as a heading
             *  for a section, not as the report's verdict on the deck. */}
@@ -163,7 +132,22 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
             </span>
           </p>
         </div>
-  
+  );
+  if (part === "identity") return identity;
+  return (
+    <section className="flex flex-col gap-4">
+      {/* The chapter above is titled "Deck at a glance"; an h2 reading "What this deck is" under
+        *  it was the same heading twice (T1). The theme line below IS the answer. */}
+      {/* THE ANSWER LOOKS LIKE AN ANSWER (owner review, 2026-09-01). The theme shipped as the first
+        *  word of a 14px muted metadata run -- "enchantments entering · The Rani · Grixis · read 100
+        *  of 100 cards" -- so the panel asked "What this deck is" and then answered it at the same
+        *  weight as its own footnotes. It is the one thing this panel exists to say, and the house
+        *  rule is that a display line is a different SIZE, not a bolder body: 30px against the 14px
+        *  beneath it. The metadata that qualifies the theme stays where it was, small, below.
+        *  `recognition-identity` still wraps both, so every guard that reads "the identity" -- theme,
+        *  commander, colours, coverage -- keeps reading one element. */}
+        <div className="flex min-w-0 flex-col gap-3">
+      {part !== "rest" ? identity : null}
             {/* THE ANSWER TO "IS MY DECK GOOD?", in words that say which score is which. */}
           {said ? <p data-testid="recognition-verdict" className="max-w-[60ch] text-base sm:text-lg">{said}</p> : null}
           {suggestions > 0 ? (
@@ -175,7 +159,6 @@ export function RecognitionPanel({ data, assumptions, assumptionsSet }: {
             </p>
           ) : null}
         </div>
-      </div>
       {assumptions ? (
         <details className="text-sm" open={!!assumptionsSet}>
           <summary className="cursor-pointer min-h-11 flex items-center text-(--muted)">

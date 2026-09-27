@@ -19,7 +19,7 @@ import { Art, Badge, CardFace, Lines, ReadCards, RepeatKey, useNarrow } from "./
  *  A TAP READS, A SECOND TAP MOVES: the rule `EgoView` settled on, so a mis-aimed tap never throws
  *  the reader somewhere else. Where they have been is the gold route on the map, and the card they
  *  came from is a button at the top of the panel. */
-export function OrbitView({ report, graph, focusId, onFocus, model, sticky = true }: {
+export function OrbitView({ report, graph, focusId, onFocus, model, sticky = true, lead }: {
   report: DeckReport; graph: CardGraph;
   focusId: string;
   onFocus: (id: string) => void;
@@ -28,6 +28,10 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   /** The panel keeps its place beside the ring while the page scrolls. Off inside the overlay,
    *  which is one screen tall and scrolls on its own. */
   sticky?: boolean;
+  /** THE REPORT'S FIRST SCREEN (Glance mockup, 2026-09-27): what leads the column beside the map,
+   *  the deck's theme, over the map's key. With it the key sits left of the map, as drawn, and on a
+   *  phone the order is this, the map, then the key. */
+  lead?: React.ReactNode;
 }) {
   const m = useMemo(() => model ?? buildEngineModel(report, graph), [model, report, graph]);
   const o = useMemo(() => {
@@ -118,6 +122,43 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const openSector = sector !== null ? o.sectors.find((s) => sectorKey(s) === sector) : undefined;
   const prev = trail.length ? m.cards.get(trail[trail.length - 1]!) : undefined;
 
+  const map = (
+    <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover} onBlank={blank}
+      menuFor={menuFor} isAdded={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isAdded(c.physical); }} />
+  );
+  const panelBody = (
+    <>
+      {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
+        * word in the trail above the picture, which one seat never found and another called
+        * "one word high" (orbit round 1). */}
+      {prev && !selected && !openSector ? (
+        <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={() => back(trail.length - 1)}>
+          ← Back to {displayName(prev)}
+        </button>
+      ) : null}
+      {selected
+        ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => setSel(null)} />
+        : openSector
+          ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => setSel(id)} onClose={() => setSector(null)} />
+          : <Summary o={o} paused={paused} onPause={still ? undefined : () => setPaused(!paused)} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
+    </>
+  );
+  const panelKey = `${o.focus.id}|${sel ?? ""}|${sector ?? ""}`;
+
+  if (lead !== undefined) {
+    // THE MOCKUP'S FIRST SCREEN: theme and key on the left, the map on the right, both inside one
+    // screen at 1280 by 860. A grid, so a phone reads theme, map, key in that order.
+    return (
+      <div className="grid gap-4 py-2 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] lg:gap-x-8 lg:items-start">
+        <div className="lg:col-start-1 lg:row-start-1">{lead}</div>
+        <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:max-w-[calc((100svh-15rem)*1.2222)]">{map}</div>
+        <div ref={panel} key={panelKey} className="orbit-panel-in flex min-w-0 flex-col gap-3 text-sm scroll-mt-4 lg:col-start-1 lg:row-start-2" aria-live="polite">
+          {panelBody}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3 py-2">
       <nav aria-label="Cards you have centred" className="flex flex-wrap items-center gap-1 text-sm text-(--muted)">
@@ -130,26 +171,11 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-center lg:gap-8">
         {/* The map's width is capped by the screen's height (the box is 880 by 720), so all of it
           * stays on screen; the map and panel sit together, centred. */}
-        <div className="min-w-0 lg:flex-1 lg:max-w-[calc((100svh-17rem)*1.2222)]">
-          <Constellation model={m} orbit={o} trail={trail} lit={sel ?? hover} still={still || paused} narrow={narrow} onTap={tap} onHover={setHover} onBlank={blank}
-            menuFor={menuFor} isAdded={(id) => { const c = m.cards.get(id); return !!c && !c.isToken && drawer.isAdded(c.physical); }} />
-        </div>
-        <div ref={panel} key={`${o.focus.id}|${sel ?? ""}|${sector ?? ""}`} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky
+        <div className="min-w-0 lg:flex-1 lg:max-w-[calc((100svh-17rem)*1.2222)]">{map}</div>
+        <div ref={panel} key={panelKey} className={`orbit-panel-in flex min-w-0 flex-col gap-3 rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm lg:w-[min(34rem,40%)] lg:shrink-0 lg:overflow-y-auto ${sticky
           ? "scroll-mt-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:sticky lg:top-[calc(var(--site-header-h,0px)+var(--report-header-h,0px)+1rem)] lg:max-h-[calc(100svh-var(--site-header-h,0px)-var(--report-header-h,0px)-2rem)]"
           : "scroll-mt-4 lg:max-h-[calc(100svh-7rem)]"}`} aria-live="polite">
-          {/* THE WAY BACK, WHERE THE EYE ALREADY IS: after centring a card, the only way back was a
-            * word in the trail above the picture, which one seat never found and another called
-            * "one word high" (orbit round 1). */}
-          {prev && !selected && !openSector ? (
-            <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-3 hover:border-(--foreground)" onClick={() => back(trail.length - 1)}>
-              ← Back to {displayName(prev)}
-            </button>
-          ) : null}
-          {selected
-            ? <PartnerPanel focus={o.focus} p={selected} onCentre={() => centre(selected.card.id)} onClose={() => setSel(null)} />
-            : openSector
-              ? <SectorPanel s={openSector} focus={o.focus} onPick={(id) => setSel(id)} onClose={() => setSector(null)} />
-              : <Summary o={o} paused={paused} onPause={still ? undefined : () => setPaused(!paused)} onSector={(s) => setSector(sectorKey(s))} onCentre={centre} />}
+          {panelBody}
         </div>
       </div>
     </div>
@@ -280,7 +306,7 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         ) : null}
         {/* ONE LINE (owner, 2026-09-27: "less is more"): it was a paragraph on dashes, the gold line
           *  and right-click, which the map shows by doing them. */}
-        A solid line keeps working; a dashed line works once.</p>
+        Tap a card to read it, tap it again to put it in the middle. A solid line keeps working; a dashed line works once.</p>
       <ReadCards cards={[o.focus]} />
       {o.through.length ? (
         <details>

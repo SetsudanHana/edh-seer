@@ -465,3 +465,20 @@ test("Game plan opens on the commander's orbit", () => {
   expect(screen.getByRole("heading", { name: "What your commander works with" })).toBeInTheDocument();
   expect(screen.getByRole("group", { name: /^Krenko, Mob Boss and the \d+ cards? it works with$/ })).toBeInTheDocument();
 });
+
+/** THE FIRST SCREEN IS THE MOCKUP'S (owner, 2026-09-27; docs/design/report-first-screen.png): the
+ *  theme leads, the commander's map is next, and the line for the table, the verdict and the card
+ *  counts come after the map, never above it. */
+test("Glance leads with the theme, then the commander's map, then everything else", () => {
+  const edges = [{ a: "Krenko, Mob Boss", b: "Impact Tremors", score: 1, reasons: [
+    { producer: "Krenko, Mob Boss", consumer: "Impact Tremors", tag: "enters:goblin", text: "Whenever Krenko, Mob Boss makes a Goblin, Impact Tremors deals 1 damage" },
+  ] }];
+  const linked = { ...SAMPLE, report: { ...SAMPLE.report, edges } } as unknown as typeof SAMPLE;
+  render(<MemoryRouter><ReportShell data={linked} /></MemoryRouter>);
+  const theme = screen.getByTestId("recognition-identity");
+  const map = screen.getByRole("group", { name: /^Krenko, Mob Boss and the \d+ cards? it works with$/ });
+  const after = [screen.queryByText(/say this at the table/i), screen.queryByTestId("recognition-verdict")].filter((e): e is HTMLElement => !!e);
+  expect(after.length).toBeGreaterThan(0);
+  expect(theme.compareDocumentPosition(map) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  for (const e of after) expect(map.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
