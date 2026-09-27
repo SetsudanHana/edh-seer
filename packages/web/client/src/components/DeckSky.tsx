@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { deckSky, type Sky, type Star } from "../lib/deck-sky.js";
 import { displayName, type EngineModel } from "../lib/engine-model.js";
 import { CardLinksContext } from "./card-menu.js";
@@ -14,6 +14,11 @@ import { useReducedMotion } from "./OrbitView.js";
  *
  *  A TAP ON A STAR NAMES IT, and a second opens how it connects (the orbit over the report). The
  *  stars are not in the tab order -- a hundred stops would bury the page -- the theme names are. */
+/** THE REPORT'S SKY, for a chapter drawn deep inside another component (the win plans sit in the
+ *  build panel): the chapters provide the deck's engine model, and a panel that finds none draws
+ *  no sky. */
+export const SkyContext = createContext<EngineModel | null>(null);
+
 export interface SkyLight {
   ids: ReadonlySet<string>;
   /** Lines to draw between lit cards, in gold: a route, a combo's loop, a swap. */
