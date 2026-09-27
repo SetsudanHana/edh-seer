@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import type { SuggestedCard } from "@edh-seer/matcher/suggest-static";
 import { cardImageUrl } from "./card-node.js";
 import { peekOnPlainClick, usePeek } from "./peek.js";
+import { useCardDrawer } from "./card-drawer.js";
+import { openSuggestedCard } from "./SuggestionPanel.js";
 
 /** "enchantments and artifacts" -- the platform's own list joining, British style. */
 const LIST = new Intl.ListFormat("en-GB", { type: "conjunction" });
@@ -18,6 +20,7 @@ export const CARD_CAP = 3;
  *  decide it. The card itself, its text and every link are one tap away in the peek. */
 function Candidate({ c }: { c: SuggestedCard }) {
   const peek = usePeek();
+  const drawer = useCardDrawer();
   const src = c.art ? cardImageUrl(c.art) : null;
   const counts = c.fills ? `Counts as ${c.fills.toLowerCase()}`
     : c.answers?.length ? `Answers ${LIST.format(c.answers.map((x) => `${x}s`))}` : null;
@@ -28,7 +31,7 @@ function Candidate({ c }: { c: SuggestedCard }) {
     <li className="flex min-w-0 flex-col gap-1.5">
       <Link
         to={`/cards/${c.slug}`}
-        onClick={(ev) => { peekOnPlainClick(peek, c.slug, ev); }}
+        onClick={(ev) => { openSuggestedCard(drawer, (e) => peekOnPlainClick(peek, c.slug, e), c, ev); }}
         aria-label={c.name}
         className="block rounded-[4.5%/3.3%] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)"
       >
