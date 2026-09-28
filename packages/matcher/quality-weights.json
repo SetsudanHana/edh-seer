@@ -4,40 +4,48 @@
   "roles": {
     "ramp": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 432,
-      "heldOutAccuracy": 0.5377391549229829,
+      "heldOutAccuracy": 0.6003649444778861,
       "baselineAccuracy": 0.6046422372184616,
-      "fallbackAccuracy": 0.5357110294997949,
+      "fallbackAccuracy": 0.5214417126718376,
       "fallback": true
     },
     "draw": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 1164,
-      "heldOutAccuracy": 0.5057396978411246,
+      "heldOutAccuracy": 0.45403734384912964,
       "baselineAccuracy": 0.575896431782283,
-      "fallbackAccuracy": 0.6169678435920096,
+      "fallbackAccuracy": 0.6142409319784858,
       "fallback": true
     },
     "cardSelection": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 28,
-      "heldOutAccuracy": 0.23248558874285333,
+      "heldOutAccuracy": 0.06421205439474806,
       "baselineAccuracy": 0.08289710329283756,
-      "fallbackAccuracy": 0.06421205439474806,
+      "fallbackAccuracy": 0.5489549130715925,
       "fallback": true
     },
     "impulseDraw": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 6,
@@ -48,16 +56,16 @@
     },
     "targetedRemoval": {
       "weights": {
-        "manaValue": -0.2248184497944442,
-        "frequency": 0.13877901434576498,
-        "timing": 0.9965826203629025,
-        "breadth": 0.04978711928125533,
-        "permanence": 0.017250725216810134,
-        "drawback": -0.04837525095360154,
-        "extraValue": 0.9437028239445976
+        "manaValue": -0.22433749783207002,
+        "frequency": 0.06624854229633684,
+        "timing": 1.0032816261179842,
+        "breadth": 0.057111065905459495,
+        "permanence": 0.016902864621885297,
+        "drawback": -0.05104899982237907,
+        "extraValue": 0.9670672457784407
       },
       "pairs": 210,
-      "heldOutAccuracy": 0.7627258638199035,
+      "heldOutAccuracy": 0.7390369093340157,
       "baselineAccuracy": 0.6898039812438088,
       "fallbackAccuracy": 0.7970824022178888,
       "fallback": false
@@ -86,7 +94,9 @@
     },
     "burn": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 24,
@@ -97,7 +107,9 @@
     },
     "stax": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 0,
@@ -119,7 +131,9 @@
     },
     "tutor": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 2,
@@ -130,7 +144,9 @@
     },
     "graveyardHate": {
       "weights": {
-        "manaValue": -1,
+        "frequency": 1000000,
+        "rateFloor": 1000,
+        "manaValue": -2,
         "timing": 0.5
       },
       "pairs": 2,

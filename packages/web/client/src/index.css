@@ -1413,6 +1413,25 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 
 .pipeline-note { font-size: 0.75rem; line-height: 1.35; color: var(--muted); }
 
+/* ONE ROW, AND THEN THE ARROWS (2026-09-28). Where all six boxes fit in a single row there is no
+   wrapped row to leave a stray mark at, which was the whole case against chevrons above -- so at
+   that width the flow is drawn as a flow, and the numbers stay for every narrower layout. The
+   chevron sits in the gap, drawn by the box on its right. */
+@media (min-width: 64rem) {
+  .pipeline { grid-template-columns: repeat(6, 1fr); gap: 1.5rem; }
+  .pipeline li + li::before {
+    content: "";
+    position: absolute;
+    left: -1.1rem;
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-top: 1.5px solid var(--muted);
+    border-right: 1.5px solid var(--muted);
+    transform: translateY(-50%) rotate(45deg);
+  }
+}
+
 /* THE MONEY LINE. One step costs and the rest are free, which is the whole reason the engine can be
    corrected without buying the corpus again. */
 .pipeline-paid { border-color: var(--accent); }
@@ -1537,17 +1556,20 @@ a.brand:hover .brand-edh { color: var(--foreground); }
 }
 .hiw-try p:first-child { color: var(--foreground); }
 
-/* REAL SCREENSHOTS OF THE REPORT. The commander orbit leads full width; the three chapters sit under it in a
-   row on a wide screen and stack on a phone, where a 1440 frame at a third of 390px would be a
-   thumbnail nobody can read. */
+/* REAL SCREENSHOTS OF THE PRODUCT, ONE PER ROW. The row is 65rem, which is 1040px, the width the
+   report's chapter frames are captured at: shown whole they are read at their own size, and two to a
+   row halved them into thumbnails whose text nobody could read. `.shots-pair` is the exception --
+   the pages beyond the report, shown side by side as a preview of the look, each linking to the
+   real page. On a phone everything stacks. */
 .shots {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 1.75rem 1rem;
   margin-block: 1.5rem 0.5rem;
 }
+.shots-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .shot { margin: 0; min-width: 0; }
-.shot-hero { grid-column: 1 / -1; }
 .shot img {
   display: block;
   width: 100%;

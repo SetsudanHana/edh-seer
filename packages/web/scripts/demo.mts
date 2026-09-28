@@ -2,8 +2,9 @@
  *  and the way back. Recorded from the product.
  *
  *    npm run build:client -w @edh-seer/web
- *    npx vite preview --config packages/web/client/vite.config.ts --port 5180 &
+ *    (cd packages/web && npx vite preview --config client/vite.config.ts --port 5180) &
  *    npm run demo -w @edh-seer/web                           # writes docs/images/demo.webp
+ *    npm run demo -w @edh-seer/web -- --story browse         # writes docs/images/browse.webp
  *
  *  The same setup as `docs-screenshots.mts`, and the same rule (CONTRIBUTING.md, "Screenshots"): a
  *  change that alters what the demo shows re-records it in the same PR. Card data comes from the
@@ -27,7 +28,9 @@ import { chromium } from "@playwright/test";
 import sharp from "sharp";
 
 const ROOT = join(import.meta.dirname, "..", "..", "..");
-const OUT = join(ROOT, "docs", "images", "demo.webp");
+/** `--story browse` records the second demo: the pages beyond the report. */
+const STORY = process.argv.includes("--story") ? process.argv[process.argv.indexOf("--story") + 1]! : "deck";
+const OUT = STORY === "browse" ? join(ROOT, "docs", "images", "browse.webp") : join(ROOT, "docs", "images", "demo.webp");
 const DECK = join(ROOT, "packages", "cli", "decks", "krenko-mob-boss.txt");
 /** The card walked to from Goblin Warchief's map. */
 const SECOND = "Goblin King";
@@ -137,57 +140,115 @@ async function click(selector: string): Promise<void> {
   await page.mouse.click(cursor.x, cursor.y);
 }
 
-// --- the storyboard ----------------------------------------------------------------------------
-
-await page.goto(base + "/", { waitUntil: "networkidle" });
-await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 1000);
-paused = true;
-await play(1200);
-
-// Paste the list: a few lines at a time, so it reads as a paste landing, then the whole list.
-const deck = readFileSync(DECK, "utf8");
-const lines = deck.split("\n");
-await moveTo("textarea[aria-label='Decklist']");
-for (const n of [6, 18, 40]) {
-  await page.fill("textarea[aria-label='Decklist']", lines.slice(0, n).join("\n"));
-  await play(160);
+/** Scroll the page by `by` pixels over `ms`, eased, so the eye can follow it. */
+async function scroll(by: number, ms = 900): Promise<void> {
+  const n = Math.round(ms / STEP);
+  let done = 0;
+  for (let i = 1; i <= n; i++) {
+    const t = i / n;
+    const to = Math.round(by * (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2));
+    await page.evaluate((dy) => scrollBy(0, dy), to - done);
+    done = to;
+    await advance(STEP);
+    await drawCursor();
+    await shoot(STEP);
+  }
 }
-await page.fill("textarea[aria-label='Decklist']", deck);
-await play(1000);
+const top = (sel: string) => page.locator(sel).first().evaluate((el) => el.getBoundingClientRect().top);
 
-// The analysis runs in real time and is cut; the clock stops again the moment the report is up,
-// so the map's entrance is filmed from its start.
-await click("button:has-text('Analyse deck')");
-paused = false;
-await page.clock.resume();
-await page.waitForSelector("h2:has-text('Deck at a glance')", { timeout: 90_000 });
-await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 50);
-paused = true;
-await page.waitForLoadState("networkidle");
+/** WAITING IS CUT: the page's clock runs freely while `wait` loads what comes next, and stops again
+ *  the moment it is there, so an entrance is filmed from its start. */
+async function offCamera(wait: () => Promise<unknown>): Promise<void> {
+  paused = false;
+  await page.clock.resume();
+  await wait();
+  await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 50);
+  paused = true;
+}
 
-// THE STORY IS THE COMMANDER'S MAP (owner, 2026-09-27: "showcase our constellation properly"). It is
-// the report's first screen: the ring comes in, its links run, the key names what links them.
-cursor = { x: VIEW.width * 0.42, y: VIEW.height * 0.55 };
-await play(4500);
+// --- the storyboards ---------------------------------------------------------------------------
 
-// A card's links light as the pointer rests on it; a tap opens it in the drawer, with its links.
-const disc = (name: string) => `svg[role='group'] g[role='button'][aria-label='${name}'] circle`;
-await moveTo(disc("Goblin Warchief"), 900);
-await play(2200);
-await click(disc("Goblin Warchief"));
-await play(3800);
+async function deckStory(): Promise<void> {
+  await offCamera(() => page.goto(base + "/", { waitUntil: "networkidle" }));
+  await play(1200);
 
-// Walk the map from it: Warchief in the middle, the path back beside it.
-await click("button:has-text('Walk the map from here')");
-await play(4200);
+  // Paste the list: a few lines at a time, so it reads as a paste landing, then the whole list.
+  const deck = readFileSync(DECK, "utf8");
+  const lines = deck.split("\n");
+  await moveTo("textarea[aria-label='Decklist']");
+  for (const n of [6, 18, 40]) {
+    await page.fill("textarea[aria-label='Decklist']", lines.slice(0, n).join("\n"));
+    await play(160);
+  }
+  await page.fill("textarea[aria-label='Decklist']", deck);
+  await play(1000);
 
-// One step further, then back to the start along the path.
-await click(disc(SECOND));
-await play(3200);
-await click("button:has-text('Walk the map from here')");
-await play(4000);
-await click("nav[aria-label='Your path'] button:has-text('Krenko')");
-await play(4000);
+  // The analysis runs in real time and is cut; the clock stops again the moment the report is up,
+  // so the map's entrance is filmed from its start.
+  await click("button:has-text('Analyse deck')");
+  await offCamera(() => page.waitForSelector("h2:has-text('Deck at a glance')", { timeout: 90_000 }));
+  await page.waitForLoadState("networkidle");
+
+  // THE STORY IS THE COMMANDER'S MAP (owner, 2026-09-27: "showcase our constellation properly"). It is
+  // the report's first screen: the ring comes in, its links run, the key names what links them.
+  cursor = { x: VIEW.width * 0.42, y: VIEW.height * 0.55 };
+  await play(4500);
+
+  // A card's links light as the pointer rests on it; a tap opens it in the drawer, with its links.
+  const disc = (name: string) => `svg[role='group'] g[role='button'][aria-label='${name}'] circle`;
+  await moveTo(disc("Goblin Warchief"), 900);
+  await play(2200);
+  await click(disc("Goblin Warchief"));
+  await play(3800);
+
+  // Walk the map from it: Warchief in the middle, the path back beside it.
+  await click("button:has-text('Walk the map from here')");
+  await play(4200);
+
+  // One step further, then back to the start along the path.
+  await click(disc(SECOND));
+  await play(3200);
+  await click("button:has-text('Walk the map from here')");
+  await play(4000);
+  await click("nav[aria-label='Your path'] button:has-text('Krenko')");
+  await play(4000);
+}
+
+/** THE PAGES BEYOND THE REPORT: the precons, one precon's swaps, then the site search to a
+ *  commander's page and the cards that work with it. No deck is pasted. */
+async function browseStory(): Promise<void> {
+  const precon = "a[href='/precons/multiverse-reforged-reality-fracture-commander']";
+  await offCamera(async () => {
+    await page.goto(base + "/precons/", { waitUntil: "networkidle" });
+    await page.waitForSelector(precon, { timeout: 60_000 });
+  });
+  await play(1400);
+  await click(precon);
+  await offCamera(() => page.waitForSelector("h2:has-text('swaps')", { timeout: 60_000 }));
+  // The orbit's entrance plays as the page arrives.
+  await play(3800);
+  await scroll((await top("h2:has-text('swaps')")) - 110, 1200);
+  await play(3000);
+
+  // The site search: a few letters, the suggestions, and the commander picked from them.
+  await click("input[aria-label='Find a card']");
+  for (const ch of "Krenko") {
+    await page.keyboard.type(ch);
+    await play(140);
+  }
+  await offCamera(() => page.waitForSelector("#site-search-list [role='option']", { timeout: 30_000 }));
+  await play(1200);
+  await click("#site-search-list [role='option']:has-text('Krenko, Mob Boss')");
+  await offCamera(() => page.waitForSelector("nav[aria-label='Surface']", { timeout: 60_000 }));
+  await play(1800);
+  await click("nav[aria-label='Surface'] a:has-text('As a commander')");
+  await offCamera(() => page.waitForSelector("h2:text-is('Works well with')", { timeout: 60_000 }));
+  await play(1200);
+  await scroll((await top("h2:text-is('Works well with')")) - 110, 1100);
+  await play(4200);
+}
+
+await (STORY === "browse" ? browseStory() : deckStory());
 
 await ctx.unrouteAll({ behavior: "ignoreErrors" });
 await browser.close();
@@ -201,4 +262,4 @@ const webp = await sharp(scaled, { join: { animated: true } })
 mkdirSync(join(ROOT, "docs", "images"), { recursive: true });
 writeFileSync(OUT, webp);
 const total = frames.reduce((s, f) => s + f.delay, 0);
-console.log(`demo.webp  ${OUT_W}px wide  ${frames.length} frames  ${(total / 1000).toFixed(1)}s  ${(webp.length / 1024 / 1024).toFixed(2)} MB`);
+console.log(`${STORY === "browse" ? "browse.webp" : "demo.webp"}  ${OUT_W}px wide  ${frames.length} frames  ${(total / 1000).toFixed(1)}s  ${(webp.length / 1024 / 1024).toFixed(2)} MB`);

@@ -10,7 +10,9 @@ import type { DeckCard } from "./types.js";
  *  its play rate ABOVE every card that is not, and our ingredient score only orders the long tail below
  *  them. Encoded as one sortable key: staples in [BASE, BASE + 1], ingredient scores far below it. A
  *  staple with no readable ingredients is still ranked -- players' choice is the evidence. */
-const STAPLE_BASE = 1e6;
+// ABOVE EVERY INGREDIENT SCORE, WITH ROOM: the effect ladder (quality-fit.ts `fallbackWeights`) reaches
+// about 4.1e6, and a base of 1e6 put every per-cycle ramp rock above the staples (#691, agreement 59.4%).
+const STAPLE_BASE = 1e12;
 
 export function qualityTable(cards: DeckCard[], staples: StaplesSnapshot = loadStaples()): Map<string, Map<Role, number>> {
   const w = loadQualityWeights();

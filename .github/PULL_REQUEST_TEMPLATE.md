@@ -26,4 +26,4 @@
 - [ ] `npm run lint:bins` passes, if a script was added or moved
 - [ ] `npm run tokens:check` passes, if `tokens/` or UI CSS changed
 - [ ] `docs/reference/SCHEMA.md` regenerated, if the schema or a vocabulary changed
-- [ ] Screenshots and demo regenerated (`npm run screenshots -w @edh-seer/web`, `npm run demo -w @edh-seer/web`), if the paste box, report, graph or mana chart look different
+- [ ] Screenshots and demos regenerated (`npm run screenshots -w @edh-seer/web`, `npm run demo -w @edh-seer/web`, `-- --story browse`), if the paste box, report, map, manabase, commander or precon pages look different

@@ -7,7 +7,7 @@ const WEB = join(import.meta.dirname, "..", "..");
 
 /** THE PRODUCT SCREENSHOTS ARE REPRODUCIBLE, OR THEY FAIL HERE (docs refresh, 2026-09-25).
  *
- *  The README and /how-it-works show four frames of the real report, and the rule is that a change
+ *  The README and /how-it-works show six frames of the real product, and the rule is that a change
  *  which alters one of them re-runs `npm run screenshots -w @edh-seer/web` in the same PR
  *  (CONTRIBUTING.md, "Screenshots"). No test can see whether a frame is out of date -- that is on
  *  review, and on the PR checklist. What a test CAN hold is everything that makes re-running it a
@@ -64,13 +64,13 @@ test("each screenshot's declared size is its real size", () => {
   expect([...page.matchAll(/<img src="\.\/shot-[^"]+" width="\d+" height="\d+"/g)]).toHaveLength(onDisk.length);
 });
 
-/** THE DEMO IS SCRIPTED AND STAYS SMALL ENOUGH TO LOAD. It is the first thing the README shows,
- *  so it has to exist, come from `demo.mts` like the frames do, and stay under a budget: GitHub
+/** THE DEMOS ARE SCRIPTED AND STAY SMALL ENOUGH TO LOAD. They are the README's moving pictures,
+ *  so each has to exist, come from `demo.mts` like the frames do, and stay under a budget: GitHub
  *  stops rendering images past 10 MB, and a reader on a phone should not wait for most of that.
- *  It was a GIF until 2026-09-28; animated WebP plays in the same `<img>` in full colour. */
-test("the README's demo is the scripted animated WebP, and under budget", () => {
-  const file = join(WEB, "..", "..", "docs", "images", "demo.webp");
-  expect(readme).toContain('src="docs/images/demo.webp"');
+ *  They were GIFs until 2026-09-28; animated WebP plays in the same `<img>` in full colour. */
+test.each(["demo.webp", "browse.webp"])("the README's %s is scripted, animated, and under budget", (name) => {
+  const file = join(WEB, "..", "..", "docs", "images", name);
+  expect(readme).toContain(`src="docs/images/${name}"`);
   expect(existsSync(file)).toBe(true);
   const bytes = readFileSync(file);
   expect(bytes.toString("ascii", 0, 4)).toBe("RIFF");
@@ -79,5 +79,5 @@ test("the README's demo is the scripted animated WebP, and under budget", () => 
   expect(bytes.includes(Buffer.from("ANIM"))).toBe(true);
   expect(bytes.length).toBeLessThan(5 * 1024 * 1024);
   const demo = readFileSync(join(WEB, "scripts", "demo.mts"), "utf8");
-  expect(demo).toContain('"docs", "images", "demo.webp"');
+  expect(demo).toContain(`"docs", "images", "${name}"`);
 });
