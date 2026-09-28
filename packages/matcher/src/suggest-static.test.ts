@@ -467,6 +467,8 @@ test("an exile held until the permanent leaves counts as killing your creatures;
   const text = "Whenever a creature enters, if there are two or more other creatures on the battlefield, exile that creature. Return that card to the battlefield under its owner's control when this artifact leaves the battlefield.";
   expect(killsOwnCreatures(portcullis, text)).toBe(true);
   expect(killsOwnCreatures(portcullis, "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.")).toBe(false);
+  // A CHOSEN held exile ("you may exile") is the player's call, like "you may sacrifice".
+  expect(killsOwnCreatures(portcullis, "When this creature enters, you may exile target creature you control. Return it to the battlefield when this creature leaves the battlefield.")).toBe(false);
   // An exile of the OPPONENTS' creatures held the same way (Oblivion Ring on their card) is not yours.
   expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [exiled({ control: "opp" })] }]), text)).toBe(false);
 });

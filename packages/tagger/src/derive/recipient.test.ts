@@ -148,4 +148,7 @@ test("'its controller' is an opponent after a target, anyone after an untargeted
   // (MacCready, Lamplight Mayor), and "if you don't control it" (Auntie Ool, Cursewretch).
   expect(actionRecipients("Whenever a creature with power 4 or greater attacks you, its controller loses 2 life and you gain 2 life.")["lose-life"]).toBe("opp");
   expect(actionRecipients("Whenever one or more -1/-1 counters are put on a creature, draw a card if you control that creature. If you don't control it, its controller loses 1 life.")["lose-life"]).toBe("opp");
+  // AND YOU, WHEN THE TRIGGER SAYS SO (review): a creature YOU control has you as its controller;
+  // `any` would also satisfy an opponent-side payoff.
+  expect(actionRecipients("Whenever a creature you control dies, its controller gains 1 life.")["gain-life"]).toBe("you");
 });
