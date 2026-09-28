@@ -152,6 +152,15 @@
       "source": "#565 fix (compass backfill 2026-09-28)",
       "verified": true,
       "tag": "dies:creature"
+    },
+    {
+      "a": "Ephemerate",
+      "b": "Teleportation Circle",
+      "class": "generic",
+      "why": "Owner ruling 2026-09-28: a flicker plus a flicker is not a synergy. Neither card does anything to the other; they share a theme (EDHREC co-inclusion), not an interaction. Removed with three siblings from the gold set.",
+      "source": "owner ruling 2026-09-28 (compass misses)",
+      "verified": true,
+      "tag": "enters:creature"
     }
   ],
   "knownDefects": [

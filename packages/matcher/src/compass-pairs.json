@@ -27,9 +27,10 @@
     "a": "Animate Dead",
     "b": "Gray Merchant of Asphodel",
     "category": "reanimator",
-    "note": "reanimate a high-devotion drain payoff",
+    "note": "reanimate a high-devotion drain payoff -- reanimating the Merchant fires its ETB; a bare-creature recursion does not narrow (owner ruling 2026-09-28: the category demanded a reason the rulings refuse; keyed on the reason that IS the synergy)",
     "source": "seed",
-    "verified": true
+    "verified": true,
+    "tag": "enters:creature"
   },
   {
     "a": "Zulaport Cutthroat",
@@ -371,73 +372,46 @@
     "a": "Ephemerate",
     "b": "Soulherder",
     "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb -- the flicker exiles a creature, which Soulherder counts (owner ruling 2026-09-28: the category demanded a reason the rulings refuse; keyed on the reason that IS the synergy)",
     "source": "llm-proposed",
-    "verified": true
-  },
-  {
-    "a": "Ephemerate",
-    "b": "Teleportation Circle",
-    "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
-    "source": "llm-proposed",
-    "verified": true
+    "verified": true,
+    "tag": "exiled:creature"
   },
   {
     "a": "Soulherder",
     "b": "Cloudshift",
     "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb -- the flicker exiles a creature, which Soulherder counts (owner ruling 2026-09-28: the category demanded a reason the rulings refuse; keyed on the reason that IS the synergy)",
     "source": "llm-proposed",
-    "verified": true
+    "verified": true,
+    "tag": "exiled:creature"
   },
   {
     "a": "Soulherder",
     "b": "Ghostly Flicker",
     "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb -- the flicker exiles a creature, which Soulherder counts (owner ruling 2026-09-28: the category demanded a reason the rulings refuse; keyed on the reason that IS the synergy)",
     "source": "llm-proposed",
-    "verified": true
+    "verified": true,
+    "tag": "exiled:creature"
   },
   {
     "a": "Soulherder",
     "b": "Teleportation Circle",
     "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb -- the flicker exiles a creature, which Soulherder counts (owner ruling 2026-09-28: the category demanded a reason the rulings refuse; keyed on the reason that IS the synergy)",
     "source": "llm-proposed",
-    "verified": true
+    "verified": true,
+    "tag": "exiled:creature"
   },
   {
     "a": "Soulherder",
     "b": "Eerie Interlude",
     "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
+    "note": "co-high-synergy in EDHREC blink-etb -- the flicker exiles a creature, which Soulherder counts (owner ruling 2026-09-28: the category demanded a reason the rulings refuse; keyed on the reason that IS the synergy)",
     "source": "llm-proposed",
-    "verified": true
-  },
-  {
-    "a": "Cloudshift",
-    "b": "Teleportation Circle",
-    "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
-    "source": "llm-proposed",
-    "verified": true
-  },
-  {
-    "a": "Ghostly Flicker",
-    "b": "Teleportation Circle",
-    "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
-    "source": "llm-proposed",
-    "verified": true
-  },
-  {
-    "a": "Teleportation Circle",
-    "b": "Eerie Interlude",
-    "category": "blink-etb",
-    "note": "co-high-synergy in EDHREC blink-etb",
-    "source": "llm-proposed",
-    "verified": true
+    "verified": true,
+    "tag": "exiled:creature"
   },
   {
     "a": "Goblin Cadets",
