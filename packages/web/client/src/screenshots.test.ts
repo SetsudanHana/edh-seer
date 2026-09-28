@@ -64,17 +64,20 @@ test("each screenshot's declared size is its real size", () => {
   expect([...page.matchAll(/<img src="\.\/shot-[^"]+" width="\d+" height="\d+"/g)]).toHaveLength(onDisk.length);
 });
 
-/** THE DEMO GIF IS SCRIPTED AND STAYS SMALL ENOUGH TO LOAD. It is the first thing the README shows,
- *  so it has to exist, come from `demo-gif.mts` like the frames do, and stay under a budget: GitHub
+/** THE DEMO IS SCRIPTED AND STAYS SMALL ENOUGH TO LOAD. It is the first thing the README shows,
+ *  so it has to exist, come from `demo.mts` like the frames do, and stay under a budget: GitHub
  *  stops rendering images past 10 MB, and a reader on a phone should not wait for most of that.
- *  The first recording was 2.8 MB at 880 px wide. */
-test("the README's demo is the scripted GIF, and under budget", () => {
-  const gif = join(WEB, "..", "..", "docs", "images", "demo.gif");
-  expect(readme).toContain('src="docs/images/demo.gif"');
-  expect(existsSync(gif)).toBe(true);
-  const bytes = readFileSync(gif);
-  expect(bytes.toString("ascii", 0, 6)).toBe("GIF89a");
+ *  It was a GIF until 2026-09-28; animated WebP plays in the same `<img>` in full colour. */
+test("the README's demo is the scripted animated WebP, and under budget", () => {
+  const file = join(WEB, "..", "..", "docs", "images", "demo.webp");
+  expect(readme).toContain('src="docs/images/demo.webp"');
+  expect(existsSync(file)).toBe(true);
+  const bytes = readFileSync(file);
+  expect(bytes.toString("ascii", 0, 4)).toBe("RIFF");
+  expect(bytes.toString("ascii", 8, 12)).toBe("WEBP");
+  // Animated: the extended header carries the ANIM chunk.
+  expect(bytes.includes(Buffer.from("ANIM"))).toBe(true);
   expect(bytes.length).toBeLessThan(5 * 1024 * 1024);
-  const demo = readFileSync(join(WEB, "scripts", "demo-gif.mts"), "utf8");
-  expect(demo).toContain('"docs", "images", "demo.gif"');
+  const demo = readFileSync(join(WEB, "scripts", "demo.mts"), "utf8");
+  expect(demo).toContain('"docs", "images", "demo.webp"');
 });
