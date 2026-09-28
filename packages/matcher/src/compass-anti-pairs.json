@@ -89,6 +89,69 @@
       "source": "#681 fix and its reviews, 2026-09-28 (compass backfill)",
       "verified": true,
       "tag": "fodder:creature"
+    },
+    {
+      "a": "The Eldest Reborn",
+      "b": "The Earth Crystal",
+      "class": "subject-mismatch",
+      "why": "The Eldest Reborn only ever gets lore counters; The Earth Crystal doubles +1/+1 counters on creatures.",
+      "source": "#503 fix (compass backfill 2026-09-28)",
+      "verified": true,
+      "tag": "counter-added:creature"
+    },
+    {
+      "a": "Ghostly Flicker",
+      "b": "Inalla, Archmage Ritualist",
+      "class": "generic",
+      "why": "Owner ruling 2026-09-27: flicker and reanimation spells are not tribal pieces, so there is no spell -> Inalla edge; the reuse scores the Wizards instead (#571).",
+      "source": "#504 fix (compass backfill 2026-09-28)",
+      "verified": true,
+      "tag": "enters:wizard"
+    },
+    {
+      "a": "Grim Hireling",
+      "b": "Zulaport Cutthroat",
+      "class": "subject-mismatch",
+      "why": "A Treasure is a noncreature token: sacrificing it is not a creature dying, which is all Zulaport watches.",
+      "source": "#508 fix (compass backfill 2026-09-28)",
+      "verified": true,
+      "tag": "dies:creature"
+    },
+    {
+      "a": "Gleeful Arsonist",
+      "b": "Grim Haruspex",
+      "class": "generic",
+      "why": "Owner ruling 2026-09-27: undying is fodder (it comes back once), not a death-payoff link of its own.",
+      "source": "#509 fix (compass backfill 2026-09-28)",
+      "verified": true,
+      "tag": "dies:creature"
+    },
+    {
+      "a": "Pirate's Pillage",
+      "b": "Mission Briefing",
+      "class": "subject-mismatch",
+      "why": "Pillage discards cards of unknown type; the fill is keyed `any`, never filed under instants.",
+      "source": "#543 fix (compass backfill 2026-09-28)",
+      "verified": true,
+      "tag": "graveyard-recursion:instant"
+    },
+    {
+      "a": "Nalia de'Arnise",
+      "b": "Folk Hero",
+      "class": "false-care",
+      "why": "Folk Hero's granted draw fires when you cast ANOTHER spell sharing the commander's type, once each turn; casting Nalia herself does not trigger it.",
+      "source": "#559 fix (compass backfill 2026-09-28)",
+      "verified": true,
+      "tag": "cast:creature"
+    },
+    {
+      "a": "Doomwake Giant",
+      "b": "Hateful Eidolon",
+      "class": "consumer-qualifier",
+      "why": "Hateful Eidolon draws only when an ENCHANTED creature dies; Doomwake's -1/-1 killing an unenchanted creature draws nothing.",
+      "source": "#565 fix (compass backfill 2026-09-28)",
+      "verified": true,
+      "tag": "dies:creature"
     }
   ],
   "knownDefects": [

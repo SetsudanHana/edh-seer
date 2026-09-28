@@ -14,6 +14,14 @@ interface Fixture {
   characteristics: Characteristics;
   /** Clause id -> text, so the offline gate derives what production derives. See ClauseFixture. */
   clauseTexts?: Record<number, string>;
+  /** The rest of what `derive-corpus` feeds `deriveCardTags`, from the same `derive-input.ts` helpers
+   *  (owner 2026-09-28: a gate thinner than production passed and failed different pairs). */
+  clauseCosts?: Record<number, string>;
+  clauseRequires?: Record<number, never>;
+  clauseFaces?: Record<number, number>;
+  grantedToken?: number[];
+  oracleText?: string;
+  typeLine?: string;
 }
 
 const FIXTURE = JSON.parse(
@@ -31,8 +39,8 @@ function deckCard(name: string): DeckCard {
   return {
     card: {
       name: f.name,
-      typeLine: [...f.characteristics.types, ...f.characteristics.subtypes].join(" "),
-      oracleText: "",
+      typeLine: f.typeLine ?? [...f.characteristics.types, ...f.characteristics.subtypes].join(" "),
+      oracleText: f.oracleText ?? "",
       keywords: f.characteristics.keywords,
       colors: f.characteristics.colors,
       manaValue: f.characteristics.cmc,
@@ -41,8 +49,10 @@ function deckCard(name: string): DeckCard {
       toughness: f.characteristics.toughness,
     },
     tags: deriveCardTags({
-      oracleId: f.oracleId, clauses: f.clauses, characteristics: f.characteristics,
-      clauseTexts: f.clauseTexts,
+      oracleId: f.oracleId, name: f.name, clauses: f.clauses, characteristics: f.characteristics,
+      clauseTexts: f.clauseTexts, clauseCosts: f.clauseCosts, clauseRequires: f.clauseRequires,
+      clauseFaces: f.clauseFaces, oracleText: f.oracleText,
+      grantedToken: f.grantedToken ? new Set(f.grantedToken) : undefined,
     }),
   };
 }
