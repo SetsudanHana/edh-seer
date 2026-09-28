@@ -53,6 +53,42 @@
       "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Yuna reads '...is put into a graveyard from the battlefield, IF IT HAD ONE OR MORE COUNTERS ON IT'. A sacrificed fetchland carries none, so the intervening-if is not being applied. \u2014 FIXED 2026-09-20 (AL4): the condition is a refusal when the producer IS the dying thing and cannot carry a counter. Banked here so a regression fails the compass.",
       "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
       "tag": "dies:permanent"
+    },
+    {
+      "a": "Threaten",
+      "b": "Zedruu the Greathearted",
+      "class": "false-emit",
+      "why": "Threaten STEALS a creature: you gain control. Only a control change an opponent gains feeds Zedruu's count of permanents you own that they control; the first #681 cut read every gains-control as yours and linked Insurrection and Dominus of Fealty.",
+      "source": "#681 fix and its reviews, 2026-09-28 (compass backfill)",
+      "verified": true,
+      "tag": "scales:donated"
+    },
+    {
+      "a": "Recoup",
+      "b": "Rampant Growth",
+      "class": "subject-mismatch",
+      "why": "Recoup gives flashback to ONE target sorcery card in your graveyard; a one-target grant is not a class of the deck (review of the spell-grant join).",
+      "source": "#681 fix and its reviews, 2026-09-28 (compass backfill)",
+      "verified": true,
+      "tag": "keyword-grant:sorcery"
+    },
+    {
+      "a": "Hoarding Broodlord",
+      "b": "Lightning Bolt",
+      "class": "consumer-qualifier",
+      "why": "Broodlord grants convoke only to spells cast FROM EXILE; a narrowing the subject cannot hold stays refused rather than widened to every spell (audit of the 39 spell grants).",
+      "source": "#681 fix and its reviews, 2026-09-28 (compass backfill)",
+      "verified": true,
+      "tag": "static:keyword-grant"
+    },
+    {
+      "a": "Llanowar Elves",
+      "b": "Anhelo, the Painter",
+      "class": "subject-mismatch",
+      "why": "Casualty 2 needs a creature with power 2 or greater; a 1-power creature cannot pay it.",
+      "source": "#681 fix and its reviews, 2026-09-28 (compass backfill)",
+      "verified": true,
+      "tag": "fodder:creature"
     }
   ],
   "knownDefects": [

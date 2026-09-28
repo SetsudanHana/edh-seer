@@ -68,3 +68,12 @@ test("an anti-pair tolerates a relation through a different mechanism", () => {
   const other: Reason = { tag: "enters:creature", text: "" };
   expect(classifyAntiPair(anti("cast:any"), [other])).toBe("clean");
 });
+
+/** A TAGGED PAIR PASSES ON ITS EXACT TAG (owner 2026-09-28: a fix the compass cannot see is a case
+ *  it lacks). The mechanism categories also drive the report's archetype labels, so a case with no
+ *  category (a donation, a grant to spells) is keyed on the tag the engine writes instead. */
+test("a pair with a tag passes only on a reason carrying exactly that tag", () => {
+  const donate: CompassPair = { a: "Goblin Cadets", b: "Zedruu the Greathearted", category: "donate", tag: "scales:donated", note: "", source: "test", verified: true };
+  expect(classifyPair(donate, [reason({ tag: "scales:donated" })], dc("Goblin Cadets", true), dc("Zedruu", true)).status).toBe("PASS");
+  expect(classifyPair(donate, [reason({ tag: "scales:permanent", effectKind: "drain" })], dc("Goblin Cadets", true), dc("Zedruu", true)).status).toBe("WRONG-REASON");
+});

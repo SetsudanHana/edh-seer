@@ -1,8 +1,12 @@
 /** One-off: normalize the cards the compass gold pairs reference and commit the result as a test
  *  fixture, so the derivation gate runs forever with no API credits and no database.
  *
- *  Usage: set -a && source .env && set +a && tsx src/bin/build-compass-fixture.ts */
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+ *  Usage: set -a && source .env && set +a && tsx src/bin/build-compass-fixture.ts [--from-store]
+ *
+ *  `--from-store` is FREE: it keeps every card already in the fixture and APPENDS only the gold cards
+ *  it lacks, reading their clauses from `cardClauses` (already bought) instead of calling the model.
+ *  Use it when pairs are added; the default re-normalizes every card and spends. */
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { connect, loadConfig } from "@edh-seer/data";
 import { splitTypeLine } from "../characteristics.js";
 import { segment } from "../segment.js";
@@ -17,38 +21,51 @@ const GOLD = JSON.parse(readFileSync(
 )) as { a: string; b: string; verified: boolean }[];
 
 const OUT = new URL("../../../matcher/src/fixtures/compass-clauses.json", import.meta.url);
+interface CardDocLite {
+  _id: string; oracleText?: string; keywords?: string[]; typeLine?: string;
+  colors?: string[]; colorIdentity?: string[]; manaValue?: number; power?: string | null;
+  toughness?: string | null;
+}
 
-const names = [...new Set(GOLD.filter((p) => p.verified).flatMap((p) => [p.a, p.b]))].sort();
+const fromStore = process.argv.includes("--from-store");
+const existing = fromStore && existsSync(OUT) ? JSON.parse(readFileSync(OUT, "utf8")) as { name: string }[] : [];
+const have = new Set(existing.map((f) => f.name));
+const names = [...new Set(GOLD.filter((p) => p.verified).flatMap((p) => [p.a, p.b]))].filter((n) => !have.has(n)).sort();
 const store = await connect(loadConfig());
-const provider = createProvider({ ...loadTaggerConfig(), maxTokens: 3000 });
-const out: unknown[] = [];
+const provider = fromStore ? null : createProvider({ ...loadTaggerConfig(), maxTokens: 3000 });
+const out: unknown[] = [...existing];
 const refusedCards: string[] = [];
 const warnedCards: string[] = [];
-console.log(`building fixture on ${provider.model}, NORMALIZE_VERSION ${NORMALIZE_VERSION}`);
+console.log(fromStore ? `appending ${names.length} card(s) from cardClauses (no model call)` : `building fixture on ${provider!.model}, NORMALIZE_VERSION ${NORMALIZE_VERSION}`);
 
 for (const name of names) {
-  const doc = await store.db.collection("cards").findOne({ name }) as {
-    _id: string; oracleText?: string; keywords?: string[]; typeLine?: string;
-    colors?: string[]; colorIdentity?: string[]; manaValue?: number; power?: string | null;
-    toughness?: string | null;
-  } | null;
+  const doc = await store.db.collection("cards").findOne({ name }) as CardDocLite | null;
   if (!doc) { console.log(`MISSING ${name}`); continue; }
 
   // Gated, and retried once. The previous fixture shipped an INVENTED clause id for Mirkwood Bats
   // (the segmenter emits two clauses, the model answered three) because nothing here checked the
   // answer, and that fixture is what guards the derivation gate. A refusal is usually transient --
   // the observed one was a duplicate clause id -- so one retry, then give up on the card.
-  let res = await normalizeCard(provider, { ...doc, name });
+  if (fromStore) {
+    const stored = await store.db.collection("cardClauses").findOne({ oracleId: doc._id }) as { clauses?: unknown[] } | null;
+    if (!stored?.clauses) { refusedCards.push(`${name}: no stored clauses`); continue; }
+    pushCard(name, doc, stored.clauses);
+    continue;
+  }
+  let res = await normalizeCard(provider!, { ...doc, name });
   if (res.rejected.length) {
     process.stdout.write("r");
-    res = await normalizeCard(provider, { ...doc, name });
+    res = await normalizeCard(provider!, { ...doc, name });
   }
   if (res.rejected.length) {
     refusedCards.push(`${name}: ${res.rejected.map((v) => `${v.kind} — ${v.detail}`).join(" | ")}`);
     continue;
   }
   if (res.violations.length) warnedCards.push(`${name}: ${res.violations.map((v) => v.kind).join(", ")}`);
+  pushCard(name, doc, res.canonical);
+}
 
+function pushCard(name: string, doc: CardDocLite, clauses: unknown): void {
   const [types, subtypes] = splitTypeLine(doc.typeLine ?? "");
   const characteristics: Characteristics = {
     types, subtypes,
@@ -61,7 +78,7 @@ for (const name of names) {
   // ("its controller creates a 3/3 Ape"); a database-free gate has no oracle text to segment.
   const clauseTexts: Record<number, string> = {};
   for (const c of segment(doc.oracleText ?? "", doc.keywords ?? [], doc.typeLine ?? "")) clauseTexts[c.id] = c.text;
-  out.push({ name, oracleId: doc._id, clauses: res.canonical, characteristics, clauseTexts });
+  out.push({ name, oracleId: doc._id, clauses, characteristics, clauseTexts });
   process.stdout.write(".");
 }
 
