@@ -474,5 +474,122 @@
     "note": "a cheap 2-power creature pays Anhelo's casualty 2 (owner: fodder with 2 power)",
     "source": "#681 fix, owner ruling 2026-09-28 (compass backfill: a fix the compass could not see)",
     "verified": true
+  },
+  {
+    "a": "Inalla, Archmage Ritualist",
+    "b": "Dour Port-Mage",
+    "category": "blink-etb",
+    "tag": "leaves:creature",
+    "note": "Inalla's copy is exiled at end step: a creature leaves without dying, which Port-Mage draws on",
+    "source": "#501 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Inalla, Archmage Ritualist",
+    "b": "Redoubled Stormsinger",
+    "category": "tokens-go-wide",
+    "tag": "scales:creature",
+    "note": "Inalla's hasty token copies are the creature tokens Stormsinger copies",
+    "source": "#502 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Setessan Champion",
+    "b": "The Earth Crystal",
+    "category": "counters-plus1",
+    "tag": "counter-added:creature",
+    "note": "+1/+1 counters on a creature you control, which Earth Crystal doubles",
+    "source": "#503 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Summoner's Grimoire",
+    "b": "Summon: Good King Mog XII",
+    "category": "cheat",
+    "tag": "cheat:creature",
+    "note": "the equipment's granted attack trigger puts a creature card (a Summon) onto the battlefield",
+    "source": "#505 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Gleeful Arsonist",
+    "b": "Ruthless Technomancer",
+    "category": "aristocrats",
+    "tag": "fodder:creature",
+    "note": "undying comes back once, so it is fodder twice (owner ruling 2026-09-27)",
+    "source": "#509 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "High Fae Trickster",
+    "b": "Inalla, Archmage Ritualist",
+    "category": "flash",
+    "tag": "flash:wizard",
+    "note": "flash on a Wizard at end step gives Inalla's hasty copy a whole turn",
+    "source": "#510 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Setessan Champion",
+    "b": "O'aka, Traveling Merchant",
+    "category": "counters-plus1",
+    "tag": "counter-removed:-land",
+    "note": "O'aka removes a counter from a nonland permanent as a cost; counter makers feed it",
+    "source": "#511 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Archpriest of Iona",
+    "b": "Multiclass Baldric",
+    "category": "party",
+    "tag": "condition:party",
+    "note": "a Cleric turns on one of Baldric's party modes",
+    "source": "#514 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Chandra's Regulator",
+    "b": "Chandra, Acolyte of Flame",
+    "category": "graveyard-matters",
+    "tag": "graveyard-recursion:instant",
+    "note": "the Regulator's discard puts instants and sorceries where Acolyte's -2 casts them",
+    "source": "#558 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Hellrider",
+    "b": "Goblin Instigator",
+    "category": "attack-matters",
+    "tag": "attacks:creature",
+    "note": "every creature attacking feeds Hellrider (owner ruling 2026-09-27)",
+    "source": "#561 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Massive Raid",
+    "b": "Goblin Instigator",
+    "category": "tokens-go-wide",
+    "tag": "scales:creature",
+    "note": "every creature you control counts for Massive Raid (owner ruling 2026-09-27)",
+    "source": "#561 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Brash Taunter",
+    "b": "Repercussion",
+    "category": "damage",
+    "tag": "damaged:creature",
+    "note": "a fight deals damage to a creature, which Repercussion answers",
+    "source": "#562 fix (compass backfill 2026-09-28)",
+    "verified": true
+  },
+  {
+    "a": "Ghostly Flicker",
+    "b": "Spellseeker",
+    "category": "blink-etb",
+    "tag": "enters:creature",
+    "note": "a flicker re-uses a creature with an enters ability (owner ruling 2026-09-27)",
+    "source": "#571 fix (compass backfill 2026-09-28)",
+    "verified": true
   }
 ]
