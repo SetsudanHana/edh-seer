@@ -1,0 +1,82 @@
+[
+  {
+    "card": "Growth Spiral",
+    "has": [
+      "ramp"
+    ],
+    "issue": 512,
+    "ruling": "putting a land from hand onto the battlefield is ramp (owner 2026-09-27)"
+  },
+  {
+    "card": "Planar Genesis",
+    "has": [
+      "ramp"
+    ],
+    "issue": 512,
+    "ruling": "putting a land from hand onto the battlefield is ramp (owner 2026-09-27)"
+  },
+  {
+    "card": "Saw in Half",
+    "hasNot": [
+      "targetedRemoval"
+    ],
+    "issue": 513,
+    "ruling": "not removal: played on your own creatures to win or combo (owner 2026-09-27)"
+  },
+  {
+    "card": "Grim Hireling",
+    "has": [
+      "ramp",
+      "targetedRemoval"
+    ],
+    "issue": 513,
+    "ruling": "ramp first; keeps a costly removal role (owner 2026-09-27)"
+  },
+  {
+    "card": "Staff of Compleation",
+    "noAnswers": true,
+    "issue": 531,
+    "ruling": "a destroy limited to permanents you own answers nothing: removed from every answer class (owner 2026-09-27). Its removal ROLE is an open question, not banked."
+  },
+  {
+    "card": "Mage's Attendant",
+    "hasNot": [
+      "stackInteraction"
+    ],
+    "issue": 533,
+    "ruling": "the counterspell role is its token's, not the maker's (owner 2026-09-27)"
+  },
+  {
+    "card": "Frontline Medic",
+    "has": [
+      "stackInteraction"
+    ],
+    "issue": 533,
+    "ruling": "a narrow counter is still a counter (owner 2026-09-27)"
+  },
+  {
+    "card": "Arcane Denial",
+    "has": [
+      "draw",
+      "stackInteraction"
+    ],
+    "issue": 533,
+    "ruling": "both Draw and Counterspells (owner 2026-09-27)"
+  },
+  {
+    "card": "Count on Luck",
+    "has": [
+      "impulseDraw"
+    ],
+    "issue": 566,
+    "ruling": "an upkeep impulse draw fills its role (PR #646)"
+  },
+  {
+    "card": "Imprisoned in the Moon",
+    "has": [
+      "targetedRemoval"
+    ],
+    "issue": 566,
+    "ruling": "a neutralising Aura is removal (PR #646)"
+  }
+]

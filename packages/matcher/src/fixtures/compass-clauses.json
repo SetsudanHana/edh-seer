@@ -320,6 +320,75 @@
   "typeLine": "Enchantment — Aura"
  },
  {
+  "name": "Arcane Denial",
+  "oracleId": "ab1cc360-b9de-48d9-9983-4dfe4a7d2a37",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "counter-spell",
+      "object": "target spell",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "draw",
+      "object": "target spell's controller",
+      "amount": "up to two",
+      "optional": true,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "you",
+      "amount": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.",
+   "2": "You draw a card at the beginning of the next turn's upkeep."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Counter target spell. Its controller may draw up to two cards at the beginning of the next turn's upkeep.\nYou draw a card at the beginning of the next turn's upkeep.",
+  "typeLine": "Instant"
+ },
+ {
   "name": "Archmage Emeritus",
   "oracleId": "8305d576-21d8-4ce7-8eda-a7cd9793aca5",
   "clauses": [
@@ -1081,6 +1150,66 @@
   "typeLine": "Creature — Horror"
  },
  {
+  "name": "Count on Luck",
+  "oracleId": "73ad7bcd-4ffc-442c-b6b5-d935b9ccaaaf",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "the top card of your library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "play",
+      "object": "that card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "At the beginning of your upkeep, exile the top card of your library. You may play that card this turn."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "At the beginning of your upkeep, exile the top card of your library. You may play that card this turn.",
+  "typeLine": "Enchantment"
+ },
+ {
   "name": "Cruel Celebrant",
   "oracleId": "3ee78cfc-0e9e-4737-a7e2-b42f94228040",
   "clauses": [
@@ -1810,6 +1939,92 @@
   "typeLine": "Instant"
  },
  {
+  "name": "Frontline Medic",
+  "oracleId": "36a3c910-95b8-45a2-9f84-5681336d868c",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "attacks",
+     "subject": "this creature and at least two other creatures",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "creatures you control gain indestructible until end of turn",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "counter-spell",
+      "object": "target spell with {X} in its mana cost",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{3}",
+       "payer": "controller"
+      }
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "cleric"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": "3",
+   "toughness": "3",
+   "token": false,
+   "keywords": [
+    "battalion"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Whenever this creature and at least two other creatures attack, creatures you control gain indestructible until end of turn.",
+   "2": "Counter target spell with {X} in its mana cost unless its controller pays {3}."
+  },
+  "clauseCosts": {
+   "2": "Sacrifice this creature"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Battalion — Whenever this creature and at least two other creatures attack, creatures you control gain indestructible until end of turn.\nSacrifice this creature: Counter target spell with {X} in its mana cost unless its controller pays {3}.",
+  "typeLine": "Creature — Human Cleric"
+ },
+ {
   "name": "Ghostly Flicker",
   "oracleId": "ad0070db-6454-41cb-861f-8f5b8fc2a3b8",
   "clauses": [
@@ -2285,6 +2500,145 @@
   "typeLine": "Creature — Zombie"
  },
  {
+  "name": "Grim Hireling",
+  "oracleId": "89738595-dafb-400a-bfba-91a53a37e717",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "one or more creatures you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "two Treasure tokens",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "X Treasures",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "modify-pt",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "-X/-X",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "tiefling",
+    "rogue"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 4,
+   "power": "3",
+   "toughness": "2",
+   "token": false,
+   "keywords": [
+    "treasure"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.",
+   "2": "Target creature gets -X/-X until end of turn. Activate only as a sorcery."
+  },
+  "clauseCosts": {
+   "2": "{B}, Sacrifice X Treasures"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Whenever one or more creatures you control deal combat damage to a player, create two Treasure tokens.\n{B}, Sacrifice X Treasures: Target creature gets -X/-X until end of turn. Activate only as a sorcery.",
+  "typeLine": "Creature — Tiefling Rogue"
+ },
+ {
+  "name": "Growth Spiral",
+  "oracleId": "34bcc217-dd91-45a0-90d7-a94d02f1f317",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "a land card from your hand",
+      "fromZone": "hand",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "U"
+   ],
+   "identity": [
+    "G",
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Draw a card. You may put a land card from your hand onto the battlefield."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Draw a card. You may put a land card from your hand onto the battlefield.",
+  "typeLine": "Instant"
+ },
+ {
   "name": "Guttersnipe",
   "oracleId": "c6bdaf76-6a03-4695-9c4b-f040e73435af",
   "clauses": [
@@ -2538,6 +2892,106 @@
   "grantedToken": [],
   "oracleText": "Whenever a creature you control enters, this enchantment deals 1 damage to each opponent.",
   "typeLine": "Enchantment"
+ },
+ {
+  "name": "Imprisoned in the Moon",
+  "oracleId": "339a7418-9a29-4eae-a3c2-ea590d175936",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "attach",
+      "object": "creature, land, or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "animate",
+      "object": "enchanted permanent as a colorless land",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cant",
+      "object": "have other card types and abilities",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "{C}",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [
+    "aura"
+   ],
+   "layout": "normal",
+   "colors": [
+    "U"
+   ],
+   "identity": [
+    "U"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "enchant"
+   ],
+   "enchants": {
+    "control": "any",
+    "token": null,
+    "type": [
+     "creature",
+     "land",
+     "planeswalker"
+    ]
+   }
+  },
+  "clauseTexts": {
+   "1": "Enchant creature, land, or planeswalker",
+   "2": "Enchanted permanent is a colorless land with that ability and loses all other card types and abilities.",
+   "3": "Add {C}"
+  },
+  "clauseCosts": {
+   "3": "{T}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Enchant creature, land, or planeswalker\nEnchanted permanent is a colorless land with \"{T}: Add {C}\" and loses all other card types and abilities.",
+  "typeLine": "Enchantment — Aura"
  },
  {
   "name": "Inalla, Archmage Ritualist",
@@ -3088,6 +3542,92 @@
   "typeLine": "Sorcery"
  },
  {
+  "name": "Mage's Attendant",
+  "oracleId": "94b1e7ed-87f3-44e6-bf34-186dd9a1a0d1",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "create",
+      "object": "a 1/1 blue Wizard creature token with that ability",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this token",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "counter-spell",
+      "object": "target noncreature spell",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false,
+      "unless": {
+       "cost": "{1}",
+       "payer": "controller"
+      }
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "cat",
+    "rogue"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": "3",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "When this creature enters, create a 1/1 blue Wizard creature token with that ability",
+   "2": "Counter target noncreature spell unless its controller pays {1}."
+  },
+  "clauseCosts": {
+   "2": "{1}, Sacrifice this token"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [
+   2
+  ],
+  "oracleText": "When this creature enters, create a 1/1 blue Wizard creature token with \"{1}, Sacrifice this token: Counter target noncreature spell unless its controller pays {1}.\"",
+  "typeLine": "Creature — Cat Rogue"
+ },
+ {
   "name": "Magus of the Wheel",
   "oracleId": "df13dafb-f82e-42ac-b6dc-efe82af5db58",
   "clauses": [
@@ -3568,6 +4108,87 @@
   "grantedToken": [],
   "oracleText": "{T}, Remove a counter from a nonland permanent you control: Draw a card.",
   "typeLine": "Legendary Creature — Human Citizen"
+ },
+ {
+  "name": "Planar Genesis",
+  "oracleId": "b368121b-9984-4a01-8d35-d1e4a8a87539",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "put",
+      "object": "a land card from the top four cards of your library",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     },
+     {
+      "verb": "tap",
+      "object": "that land card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "a card from the top four cards of your library",
+      "fromZone": "library",
+      "toZone": "hand",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the remaining cards from the top four cards of your library",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "U"
+   ],
+   "identity": [
+    "G",
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Look at the top four cards of your library. You may put a land card from among them onto the battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on the bottom of your library in a random order."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Look at the top four cards of your library. You may put a land card from among them onto the battlefield tapped. If you don't, put a card from among them into your hand. Put the rest on the bottom of your library in a random order.",
+  "typeLine": "Instant"
  },
  {
   "name": "Ponder",
@@ -4239,6 +4860,61 @@
   "typeLine": "Enchantment"
  },
  {
+  "name": "Saw in Half",
+  "oracleId": "eea18c55-8695-4ba1-9b38-3e7638692f5f",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "destroy",
+      "object": "target creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "create",
+      "object": "two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.",
+  "typeLine": "Instant"
+ },
+ {
   "name": "Selvala, Explorer Returned",
   "oracleId": "b628a39b-c923-473d-900a-1617f47ecb76",
   "clauses": [
@@ -4585,6 +5261,149 @@
   "grantedToken": [],
   "oracleText": "When this creature enters, you may search your library for an instant or sorcery card with mana value 2 or less, reveal it, put it into your hand, then shuffle.",
   "typeLine": "Creature — Human Wizard"
+ },
+ {
+  "name": "Staff of Compleation",
+  "oracleId": "11c7662f-e688-40a6-98fd-6ae89d231b44",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "destroy",
+      "object": "target permanent you own",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "3",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "proliferate",
+      "object": "",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "lose-life",
+      "object": "4",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 5,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "untap",
+      "object": "this artifact",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "artifact"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [],
+   "identity": [],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": [
+    "proliferate"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Destroy target permanent you own.",
+   "2": "Add one mana of any color.",
+   "3": "Proliferate.",
+   "4": "Draw a card.",
+   "5": "Untap this artifact."
+  },
+  "clauseCosts": {
+   "1": "{T}, Pay 1 life",
+   "2": "{T}, Pay 2 life",
+   "3": "{T}, Pay 3 life",
+   "4": "{T}, Pay 4 life",
+   "5": "{5}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "{T}, Pay 1 life: Destroy target permanent you own.\n{T}, Pay 2 life: Add one mana of any color.\n{T}, Pay 3 life: Proliferate.\n{T}, Pay 4 life: Draw a card.\n{5}: Untap this artifact.",
+  "typeLine": "Artifact"
  },
  {
   "name": "Storm-Kiln Artist",
