@@ -7,7 +7,14 @@ import { categoryMatches, type MechanismCategory } from "./mechanisms.js";
 export interface CompassPair {
   a: string;
   b: string;
-  category: MechanismCategory;
+  /** The mechanism the pair belongs to. With a `tag` it is only a label for the report ("donate",
+   *  "spell-grant"): a case with no mechanism category is keyed on the tag instead. */
+  category: MechanismCategory | string;
+  /** THE EXACT REASON TAG that must join the pair (owner 2026-09-28: a fix the compass cannot see is
+   *  a case it lacks). The categories also drive the report's archetype labels, so a case no category
+   *  names -- a donation (`scales:donated`), a grant to spells -- is keyed here rather than by adding a
+   *  category to the product just to measure it. The anti-pairs have always been keyed this way. */
+  tag?: string;
   note: string;
   source: string;
   verified: boolean;
@@ -33,7 +40,7 @@ function themeTagCount(dc: DeckCard): number {
 
 /** Classify a gold pair from its emitted reasons and the two cards' tag state. */
 export function classifyPair(pair: CompassPair, reasons: Reason[], a: DeckCard, b: DeckCard): Outcome {
-  const matched = reasons.find((r) => categoryMatches(r, pair.category));
+  const matched = reasons.find((r) => (pair.tag !== undefined ? r.tag === pair.tag : categoryMatches(r, pair.category as MechanismCategory)));
   if (matched) return { status: "PASS", matchedReason: matched, reasons };
   if (reasons.length > 0) return { status: "WRONG-REASON", reasons };
   const noEdgeCause: NoEdgeCause =

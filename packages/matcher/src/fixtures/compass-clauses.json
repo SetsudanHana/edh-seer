@@ -3475,5 +3475,411 @@
   "clauseTexts": {
    "1": "Whenever this creature or another creature you control dies, each opponent loses 1 life and you gain 1 life."
   }
+ },
+ {
+  "name": "Anhelo, the Painter",
+  "oracleId": "d3c3f293-6790-4dce-900a-8af0464c2572",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "casualty 2",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "vampire",
+    "assassin"
+   ],
+   "colors": [
+    "B",
+    "R",
+    "U"
+   ],
+   "identity": [
+    "B",
+    "R",
+    "U"
+   ],
+   "cmc": 3,
+   "power": "1",
+   "toughness": "3",
+   "token": false,
+   "keywords": [
+    "Deathtouch"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Deathtouch",
+   "2": "The first instant or sorcery spell you cast each turn has casualty 2."
+  }
+ },
+ {
+  "name": "Blasphemous Act",
+  "oracleId": "7a2484a9-04fd-41a0-8224-610c1c07ed10",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "This spell costs {1} less to cast for each creature on the battlefield",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "each creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "13",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "sorcery"
+   ],
+   "subtypes": [],
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 9,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "This spell costs {1} less to cast for each creature on the battlefield.",
+   "2": "Blasphemous Act deals 13 damage to each creature."
+  }
+ },
+ {
+  "name": "Goblin Cadets",
+  "oracleId": "32dc847a-d8e9-4bc5-aa73-dfe69ff330a2",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "blocks",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "becomes-blocked",
+     "subject": "this creature",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "goblin"
+   ],
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 1,
+   "power": "2",
+   "toughness": "1",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever this creature blocks or becomes blocked, target opponent gains control of it."
+  }
+ },
+ {
+  "name": "Goblin Electromancer",
+  "oracleId": "81f06f84-1580-43c0-89d5-08d34541a519",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "Instant and sorcery spells you cast",
+      "amount": "-1"
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "goblin",
+    "wizard"
+   ],
+   "colors": [
+    "R",
+    "U"
+   ],
+   "identity": [
+    "R",
+    "U"
+   ],
+   "cmc": 2,
+   "power": "2",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Instant and sorcery spells you cast cost {1} less to cast."
+  }
+ },
+ {
+  "name": "Lightning Bolt",
+  "oracleId": "4457ed35-7c10-48c8-9776-456485fdf070",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "deal-damage",
+      "object": "any target",
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "instant"
+   ],
+   "subtypes": [],
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Lightning Bolt deals 3 damage to any target."
+  }
+ },
+ {
+  "name": "Yidris, Maelstrom Wielder",
+  "oracleId": "9efe8aff-9a7d-4397-b5fd-c1a0fad7c15f",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Trample"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "damage-dealt",
+     "subject": "Yidris",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "grant-ability",
+      "object": "spells cast from your hand this turn gain cascade",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "ogre",
+    "wizard"
+   ],
+   "colors": [
+    "B",
+    "G",
+    "R",
+    "U"
+   ],
+   "identity": [
+    "B",
+    "G",
+    "R",
+    "U"
+   ],
+   "cmc": 4,
+   "power": "5",
+   "toughness": "4",
+   "token": false,
+   "keywords": [
+    "Trample"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Trample",
+   "2": "Whenever Yidris deals combat damage to a player, as you cast spells from your hand this turn, they gain cascade."
+  }
+ },
+ {
+  "name": "Zedruu the Greathearted",
+  "oracleId": "514179c0-a50b-4565-8e71-9dad256edd85",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "upkeep",
+     "subject": "you",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "gain-life",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     },
+     {
+      "verb": "draw",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "X",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "gain-control",
+      "object": "target permanent you control",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "minotaur",
+    "monk"
+   ],
+   "colors": [
+    "R",
+    "U",
+    "W"
+   ],
+   "identity": [
+    "R",
+    "U",
+    "W"
+   ],
+   "cmc": 4,
+   "power": "2",
+   "toughness": "4",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "At the beginning of your upkeep, you gain X life and draw X cards, where X is the number of permanents you own that your opponents control.",
+   "2": "Target opponent gains control of target permanent you control."
+  }
  }
 ]

@@ -438,5 +438,41 @@
     "note": "co-high-synergy in EDHREC blink-etb",
     "source": "llm-proposed",
     "verified": true
+  },
+  {
+    "a": "Goblin Cadets",
+    "b": "Zedruu the Greathearted",
+    "category": "donate",
+    "tag": "scales:donated",
+    "note": "Cadets hands itself to an opponent; Zedruu counts permanents you own that opponents control",
+    "source": "#681 fix, owner ruling 2026-09-28 (compass backfill: a fix the compass could not see)",
+    "verified": true
+  },
+  {
+    "a": "Blasphemous Act",
+    "b": "Yidris, Maelstrom Wielder",
+    "category": "spell-grant",
+    "tag": "keyword-grant:spell",
+    "note": "Yidris gives the spells you cast cascade, from a combat-damage trigger",
+    "source": "#681 fix, owner ruling 2026-09-28 (compass backfill: a fix the compass could not see)",
+    "verified": true
+  },
+  {
+    "a": "Lightning Bolt",
+    "b": "Anhelo, the Painter",
+    "category": "spell-grant",
+    "tag": "static:keyword-grant",
+    "note": "Anhelo gives your first instant or sorcery each turn casualty 2",
+    "source": "#681 fix, owner ruling 2026-09-28 (compass backfill: a fix the compass could not see)",
+    "verified": true
+  },
+  {
+    "a": "Goblin Electromancer",
+    "b": "Anhelo, the Painter",
+    "category": "casualty-fodder",
+    "tag": "fodder:creature",
+    "note": "a cheap 2-power creature pays Anhelo's casualty 2 (owner: fodder with 2 power)",
+    "source": "#681 fix, owner ruling 2026-09-28 (compass backfill: a fix the compass could not see)",
+    "verified": true
   }
 ]
