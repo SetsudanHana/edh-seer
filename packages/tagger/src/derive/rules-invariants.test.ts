@@ -17,6 +17,7 @@ import { emblemRecipient } from "../emblem.js";
 
 const ASSERTED = new Set(["104.3", "106.12a", "111.1", "111.2", "114.1", "114.2", "601.2f", "603.8", "603.12", "614", "701.5", "701.17a", "701.22b"]);
 const TESTED: Record<string, string> = {
+  "110.2": "scaling.test.ts — a permanent's owner and controller differ: Zedruu counts permanents you own that your opponents control",
   "110.2a": "derive.test.ts — what you put onto the battlefield enters under your control (Misty Rainforest)",
   "118.12a": "derive.test.ts / clause-store.test.ts — an action's unless-payment rides onto the ability, and a doc that dropped one is re-asked",
   "605.1a": "derive.test.ts — a mana ability's amount is the mana its object adds (Sol Ring 2, Talisman 1, Gilded Lotus 3)",

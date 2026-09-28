@@ -191,7 +191,9 @@ import { emblemRecipient } from "../emblem.js";
 // 182: Prepared forms edges (owner ruling 2026-09-27): `prepare` emits `prepared`, and "enters
 // prepared" is a self-entry trigger.
 // 183: a `grant-ability` whose clause "becomes prepared" is a prepare (Codie, Ravenous Codex).
-export const DERIVE_VERSION = 183;
+// 184: "permanents you own that your opponents control" is a board count with `owner: "you"`, not
+// per-opponent (issue #681: Zedruu the Greathearted linked to none of Political Puppets).
+export const DERIVE_VERSION = 184;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the

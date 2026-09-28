@@ -377,6 +377,9 @@ const NAMES_A_PLAYER = /\b(?:each|target|another|any|that|those|a) player\b|\bpl
  *  opponent" is your clash, "each opponent faces a villainous choice" is your effect. The consumer
  *  watches the actor ("whenever you clash"), so the emit says `you`. */
 const ACTOR_IS_THE_EVENT: ReadonlySet<string> = new Set(["gains-control", "clash", "face-a-villainous-choice"]);
+/** A CONTROL CHANGE HANDED TO ANOTHER PLAYER: "target opponent gains control of", "target player
+ *  gains control of" (Donate prints `player`; giving yourself your own permanent does nothing). */
+const OTHER_GAINS_CONTROL = /\b(?:target|an|each|that) (?:opponent|player) gains control of\b/i;
 
 const RECIPIENT_VERBS: ReadonlySet<string> = new Set([
   "draw", "mill", "discard", "scry", "surveil", "gain-life", "lose-life", "loses-game",
@@ -616,9 +619,12 @@ export function actionEmits(action: Action, clauseText?: string, opts: { self?: 
       // A CONTROL CHANGE IS ABOUT THE GAINER. "Gain control of target creature an opponent
       // controls" names the opponent as the creature's controller BEFORE the event; the consumer
       // ("whenever you gain control of a permanent", Zidane) watches who has it AFTER. So the
-      // emit says `you`. CEILING: "target opponent gains control of ..." (Donate, a handful of
-      // cards) is read as yours too; the object rarely names the gainer.
-      control: ACTOR_IS_THE_EVENT.has(verb) ? "you" as const : control,
+      // emit says `you` -- unless the sentence hands it to someone else: "target opponent gains
+      // control of ..." (Donate, Harmless Offering, Goblin Cadets) is the OPPONENT'S gain (#681).
+      // CEILING: read per clause, so an exchange ("you and that opponent each gain control",
+      // Reins of Power) stays yours on both halves.
+      control: verb === "gains-control" && OTHER_GAINS_CONTROL.test(clauseText ?? "") ? "opp" as const
+        : ACTOR_IS_THE_EVENT.has(verb) ? "you" as const : control,
       ...(createsAToken && subject.token !== true ? { token: true as const } : {}),
       ...(arrivesTapped && verb === "enters" ? { entersTapped: true as const } : {}),
       ...(leftTheGraveyard && verb === "leaves" ? { zone: "graveyard" } : {}),

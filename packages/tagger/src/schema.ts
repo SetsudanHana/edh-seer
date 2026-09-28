@@ -118,6 +118,10 @@ export interface SubjectFilter {
    *  `parseSubject` (2026-09-09, recall v4 sacrifice family). */
   other?: true;
   control: Control;
+  /** WHO OWNS IT, when the text says so and it differs from who controls it (CR 110.2): Zedruu's
+   *  "permanents you OWN that your opponents CONTROL" (#681). Absent means the text named no owner,
+   *  which is every other subject. */
+  owner?: "you";
   /** false = nontoken only, true = token only, null = any. */
   token: boolean | null;
   /** Marks "the chosen type" (Kindred Discovery); resolved deck-aware in Stage 2. */

@@ -603,3 +603,17 @@ test("a tutored put into a graveyard is not a mill", () => {
   expect(actionEmits({ ...entomb, object: "the rest" }, "Reveal the top five cards of your library. Put the rest into your graveyard.").map((e) => e.verb))
     .toEqual(["mill"]);
 });
+
+/** THE GAINER OF A CONTROL CHANGE IS WHOEVER THE SENTENCE SAYS GAINS IT (#681). The emit says who has
+ *  the permanent AFTER (Zidane watches "whenever you gain control"), and pinning that to `you` read
+ *  Donate and Harmless Offering as steals -- the CEILING the emit builder named. */
+test("'target opponent gains control of' is the opponent's gain; 'gain control of' stays yours", () => {
+  const donate = actionEmits({ verb: "gain-control", object: "target permanent you control" }, "Target opponent gains control of target permanent you control.");
+  expect(donate.find((e) => e.verb === "gains-control")?.subject.control).toBe("opp");
+  const player = actionEmits({ verb: "gain-control", object: "target permanent you control" }, "Target player gains control of target permanent you control.");
+  expect(player.find((e) => e.verb === "gains-control")?.subject.control).toBe("opp");
+  const cadets = actionEmits({ verb: "gain-control", object: "it" }, "Whenever Goblin Cadets blocks or becomes blocked, target opponent gains control of it.");
+  expect(cadets.find((e) => e.verb === "gains-control")?.subject.control).toBe("opp");
+  const threaten = actionEmits({ verb: "gain-control", object: "target creature" }, "Untap target creature and gain control of it until end of turn.");
+  expect(threaten.find((e) => e.verb === "gains-control")?.subject.control).toBe("you");
+});

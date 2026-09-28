@@ -508,3 +508,10 @@ test("a blank effect is phrased from its emits, and only where the emit reads on
   // Misleading Signpost: "gains control" of your own creature is a misread.
   expect(emitPhrase([e("gains-control", { control: "you", type: "creature" })])).toBeNull();
 });
+
+/** A DONATION READS AS ONE (#681): derive now says the GAINER of Donate's control change is the
+ *  opponent, and "gains control of a permanent an opponent controls" would say the opposite. */
+test("a control change an opponent gains reads as giving it away", () => {
+  expect(emitPhrase([{ verb: "gains-control", subject: { control: "opp", token: null, type: "permanent" } }])).toBe("gives an opponent control of a permanent");
+  expect(emitPhrase([{ verb: "gains-control", subject: { control: "opp", token: null, self: true } }])).toBe("gives an opponent control of itself");
+});

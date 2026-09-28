@@ -1526,6 +1526,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   exileProcessingEdges(s);
   graveyardScalingEdges(s);
   boardCountEdges(s);
+  donatedCountEdges(s);
   countGateEdges(s);
   staticEdges(s);
   triggerDoublingEdges(s);
@@ -2096,6 +2097,35 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       consumer: c.card.name,
       producer: p.card.name,
     });
+  }
+}
+
+// A DONATION FEEDS A COUNT OF WHAT YOU GAVE AWAY (#681). Zedruu the Greathearted counts "permanents
+// you own that your opponents control" (`scalingSubject.owner`), and `boardCountNarrows` rightly
+// refuses every count of an opponent's board -- so this is the one opponent-board count that IS the
+// deck's theme, and it is fed not by a type line but by the act of handing a permanent over: a
+// `gains-control` emit whose GAINER is an opponent (derive reads "target opponent gains control of",
+// Donate, Harmless Offering, Goblin Cadets). A steal (Threaten: you gain it) grows nothing he counts.
+// AN EXCHANGE OF CONTROL gives one of yours away too (Vedalken Plotter, 32 corpus cards); derive
+// types only the permanent you RECEIVE, so the printed "exchange control" is what says it.
+const EXCHANGES_CONTROL = /\bexchange control\b/i;
+function donatedCountEdges({ p, c, pEvents, reasons }: PairScope): void {
+  const gives = pEvents.some((e) => (e.verb === "gains-control" && e.subject.control === "opp")
+    || (e.verb === "exchange" && EXCHANGES_CONTROL.test(p.card.oracleText ?? "")));
+  if (!gives) return;
+  for (const a of c.tags.abilities) {
+    const counted = a.effect.scalingSubject;
+    if (!counted || counted.owner !== "you" || counted.control !== "opp") continue;
+    reasons.push({
+      tag: "scales:donated",
+      text: `${p.card.name} gives an opponent a permanent you own, and ${c.card.name} counts it`,
+      effectKind: a.effect.kind,
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+      scaling: a.effect.scaling,
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return; // ONE COUNT PER CARD, however many abilities state it (see `countGateEdges`).
   }
 }
 
