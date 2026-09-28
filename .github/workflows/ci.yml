@@ -66,6 +66,10 @@ jobs:
       # Inside this job for the same reason as the token gates below: `test` is the only check
       # branch protection knows about.
       - run: npm run lint:bins
+      # NO EMPTY BAND (#770): a page or section width cap of 36rem+ fails unless it is in
+      # scripts/width-caps-allowlist.json, and an allowlist entry that outlives its cap fails too.
+      # The owner kept finding 2K/4K screens two-thirds empty; the written rule never stopped it.
+      - run: npm run lint:width
       # BUGS, NOT STYLE: oxlint's correctness rules plus unused code (.oxlintrc.json). Its first run
       # found a search state that was computed and never shown, so a stale link sat on "reading what
       # cards do" for good. No formatter and no style rules, on purpose -- see CONTRIBUTING.
