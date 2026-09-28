@@ -422,14 +422,38 @@ to collection management:
 - **Collection management:** neither. A persistent, multi-object space the user returns to,
   with no analysis run in scope.
 
-These are not variants of one another. The layout rules below were written against the
-dashboard reading and are provisional until this is settled.
+These are not variants of one another. The navigation model is open; the width rules below
+are NOT — they bind every surface, whichever model wins.
 
-**The Width-Buys-Columns Rule.** A wide viewport adds columns, never longer lines. Overview
-blocks flow through native CSS multi-column (`columns-1 xl:columns-2`, `break-inside-avoid`)
-rather than a grid, and every run of prose carries `max-w-[65ch]`. Two columns is the
-measured ceiling — at three, the deck-math panel takes a whole column and the third renders
-empty.
+### Width (owner, 2026-09-28 — CI-enforced, #770)
+
+"You constantly waste space … 2k or 4k monitors as a standard and phone which is 390px." The
+rule was written here as "Width-Buys-Columns" and nothing enforced it, so 13 page and section
+containers were capped at 1024px and a 2560 screen showed ~1,500px of nothing.
+
+**Viewports: 390, 1920, 2560, 3840.** Never 1440. A layout is checked at all four, and a
+change that only looks right at 1920 is not done.
+
+**The Width-Buys-Columns Rule.** A wide viewport adds columns, never longer lines. A page or
+section container spans the viewport minus the gutter. Card grids, lists, tables and chapter
+blocks grow their column count with the width (1 → 2 → 3 → 4); CSS multi-column
+(`columns-1 xl:columns-2 2xl:columns-3`, `break-inside-avoid`) or an auto-fill grid
+(`grid-cols-[repeat(auto-fill,minmax(20rem,1fr))]`) both do it. The old "two columns is the
+measured ceiling" was measured against a deck-math panel that no longer exists.
+
+**Only prose is capped.** A paragraph carries `max-w-[65ch]` for its line length. A cap on
+a section, a list or a grid is not a line length — it is an empty band.
+
+**The Empty Band (named violation).** Capped content with blank viewport beside it: a
+`max-w-5xl` column centred on a 2560 screen, a `65ch` wrapper around a whole chapter. A
+capped paragraph belongs BESIDE something (a second column, a side panel, the evidence it
+describes), not alone in the middle.
+
+**How it is enforced.** `npm run lint:width` (`scripts/check_width_caps.mjs`, in the
+required `test` job) fails a PR that adds a width cap of 36rem or wider that is not a `ch`
+line length. `scripts/width-caps-allowlist.json` is today's inventory of offenders, not a
+list of exceptions: it ratchets both ways, so the PR that fixes a page must remove its
+entry. A component-sized cap (a dial, a chart, a popover under 36rem) passes.
 
 ---
 

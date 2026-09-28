@@ -96,6 +96,43 @@ const DESKTOP = { viewport: { width: 1920, height: 1080 } };
  *  ones before it. The pointer is what the surface switch reads; add `isMobile` as its own change,
  *  with its own round, if a layout question ever needs it. */
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true };
+/** WIDE SCREENS ARE THE STANDARD, NOT THE EDGE CASE (owner 2026-09-28, #770): "2k or 4k monitors as a
+ *  standard". Captured for the space pass only -- a primary frame and the used-width numbers, no
+ *  expanded frames and no per-selector metrics, which do not change with width. */
+const WIDE = { viewport: { width: 2560, height: 1440 } };
+const UHD = { viewport: { width: 3840, height: 2160 } };
+/** Below this share of the viewport a section is an EMPTY BAND (DESIGN.md, Width). CEILING: a first
+ *  guess, printed rather than gated until today's pages are measured and a floor is pre-registered. */
+const EMPTY_BAND = 0.6;
+
+/** HOW MUCH OF THE SCREEN EACH SECTION USES: the horizontal extent of everything visible inside it,
+ *  over the viewport width. A lone 65ch paragraph centred on a 2560 screen reads low, and that is
+ *  the point -- DESIGN.md says a capped paragraph belongs beside something. */
+async function usedWidth(page: Page): Promise<{ viewport: number; sections: { name: string; used: number }[]; minUsed: number }> {
+  return page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const roots = [...document.querySelectorAll<HTMLElement>("main section, main [data-chapter], main > *")]
+      .filter((el, i, all) => all.indexOf(el) === i && el.getBoundingClientRect().height > 80);
+    const sections = roots.map((el) => {
+      let lo = Infinity, hi = -Infinity;
+      for (const d of [el, ...el.querySelectorAll<HTMLElement>("*")]) {
+        const r = d.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1 || getComputedStyle(d).visibility === "hidden") continue;
+        // Only elements that paint something: text, media, or a visible box. A full-width wrapper
+        // with nothing in it must not count as used space.
+        const painted = d.children.length === 0 || /^(IMG|SVG|CANVAS|VIDEO|svg)$/.test(d.tagName)
+          || getComputedStyle(d).backgroundColor !== "rgba(0, 0, 0, 0)" || getComputedStyle(d).borderTopWidth !== "0px";
+        if (!painted) continue;
+        lo = Math.min(lo, Math.max(0, r.left));
+        hi = Math.max(hi, Math.min(vw, r.right));
+      }
+      const name = el.id || el.getAttribute("aria-label") || el.dataset.chapter
+        || el.querySelector("h1,h2,h3")?.textContent?.trim().slice(0, 40) || el.tagName.toLowerCase();
+      return { name, used: hi > lo ? Math.round(((hi - lo) / vw) * 100) / 100 : 0 };
+    });
+    return { viewport: vw, sections, minUsed: sections.length ? Math.min(...sections.map((x) => x.used)) : 1 };
+  });
+}
 
 // ---------------------------------------------------------------------------------------------
 // The maths, in Node, where it can be tested
@@ -515,7 +552,7 @@ async function main(runPath: string): Promise<void> {
     mkdirSync(deckDir, { recursive: true });
     const url = (path: string) => `${run.baseUrl}${path}${hash}`;
 
-    for (const [label, device] of [["desktop", DESKTOP], ["phone", PHONE]] as const) {
+    for (const [label, device] of [["desktop", DESKTOP], ["phone", PHONE], ["wide", WIDE], ["uhd", UHD]] as const) {
       const context = await browser.newContext({ ...device, reducedMotion: "reduce" });
       try {
         const page = await openPage(context);
@@ -545,7 +582,16 @@ async function main(runPath: string): Promise<void> {
           // Numbers at desktop only. The phone frame's job is modality, and doubling the JSON to
           // restate the same contrast ratios would bury the one figure that differs by width --
           // which is the overflow check, and that is page-level.
-          if (label === "desktop") {
+          if (label !== "phone") {
+            const w = await usedWidth(page);
+            metrics[`${key}-width-${w.viewport}`] = w;
+            for (const x of w.sections.filter((x) => x.used < EMPTY_BAND)) {
+              console.log(`  EMPTY BAND ${key} @${w.viewport}: "${x.name}" uses ${Math.round(x.used * 100)}% of the width`);
+            }
+          }
+          if (label === "wide" || label === "uhd") {
+            // The space pass needs the frame and the width numbers only; see WIDE.
+          } else if (label === "desktop") {
             metrics[key] = deriveMetrics(await measure(page, run.measure), device.viewport);
           } else {
             const raw = await measure(page, []);
@@ -565,7 +611,7 @@ async function main(runPath: string): Promise<void> {
           await page.evaluate((y: number) => window.scrollTo(0, y), stepScrollY);
 
           // The second frame, only where a disclosure was actually shut -- then put them back.
-          if (await expandDetails(page)) {
+          if (label !== "wide" && label !== "uhd" && await expandDetails(page)) {
             await page.waitForTimeout(200);
             const opened = await shoot(page, deckDir, `${step.id}-${label}-expanded`);
             manifest.push({ deck: stem, step: step.id, goal: step.goal, viewport: label, variant: "details-expanded", files: opened });
