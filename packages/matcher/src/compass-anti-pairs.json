@@ -163,15 +163,6 @@
       "tag": "enters:creature"
     }
   ],
-  "knownDefects": [
-    {
-      "a": "Abstruse Appropriation",
-      "b": "Nulldrifter",
-      "class": "consumer-qualifier",
-      "why": "STILL CLAIMED on the shipped engine as of 2026-09-07. Same pair as the false-care row above, under a different tag: the consumer's qualifier is not being read, so a broader cast tag still joins them.",
-      "source": "panel verdict, owner-judged (debt judged 2026-08-22)",
-      "tag": "cast:spell"
-    }
-  ],
+  "knownDefects": [],
   "context": "MEASURED ON THE SHIPPED ENGINE (derived tags) IN PAIR ISOLATION. `eval-pairs` read the retired FLAT collection until 2026-09-07, which is why the compass reported 55/55 while its own CI gate reported 41/55 for the same set. Isolation remains: `pairReasons(a,b,hierarchy)` has no deck around it, and the product's `analyzeDeckStructured` adds deck-level passes. See roadmap Z4."
 }
