@@ -2329,6 +2329,93 @@
   "typeLine": "Creature — Goblin Rogue"
  },
  {
+  "name": "Gonti, Lord of Luxury",
+  "oracleId": "d5be0ff6-39d9-4f9f-a028-e62dc38463f2",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "Deathtouch",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "Gonti, Lord of Luxury",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "exile",
+      "object": "one card from the top four cards of target opponent's library",
+      "fromZone": "library",
+      "toZone": "exile",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "the rest on the bottom of that library in a random order",
+      "fromZone": "library",
+      "toZone": "library",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "cast",
+      "object": "that card",
+      "fromZone": "exile",
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "aetherborn",
+    "rogue"
+   ],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 4,
+   "power": "2",
+   "toughness": "3",
+   "token": false,
+   "keywords": [
+    "deathtouch"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Deathtouch",
+   "2": "When Gonti enters, look at the top four cards of target opponent's library, exile one of them face down, then put the rest on the bottom of that library in a random order. You may cast that card for as long as it remains exiled, and mana of any type can be spent to cast that spell."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Deathtouch\nWhen Gonti enters, look at the top four cards of target opponent's library, exile one of them face down, then put the rest on the bottom of that library in a random order. You may cast that card for as long as it remains exiled, and mana of any type can be spent to cast that spell.",
+  "typeLine": "Legendary Creature — Aetherborn Rogue"
+ },
+ {
   "name": "Grave Researcher // Reanimate",
   "oracleId": "6cb8b8c4-0674-4f14-9d89-010969fbb80e",
   "clauses": [
@@ -2692,6 +2779,53 @@
   "grantedToken": [],
   "oracleText": "Whenever you cast an instant or sorcery spell, this creature deals 2 damage to each opponent.",
   "typeLine": "Creature — Goblin Shaman"
+ },
+ {
+  "name": "Hardened Scales",
+  "oracleId": "a1f3da21-af6d-450e-bf0b-985d158418e6",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "static",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "amount": "N+1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 1,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.",
+  "typeLine": "Enchantment"
  },
  {
   "name": "Hellrider",
@@ -3893,6 +4027,68 @@
   "typeLine": "Creature — Bat"
  },
  {
+  "name": "Mogg Bombers",
+  "oracleId": "69812cd2-9885-45ed-9d79-658597bfeb8b",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature",
+     "control": "any"
+    },
+    "actions": [
+     {
+      "verb": "sacrifice",
+      "object": "this creature",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "deal-damage",
+      "object": "target player or planeswalker",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "3",
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "goblin"
+   ],
+   "layout": "normal",
+   "colors": [
+    "R"
+   ],
+   "identity": [
+    "R"
+   ],
+   "cmc": 4,
+   "power": "3",
+   "toughness": "4",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "When another creature enters, sacrifice this creature and it deals 3 damage to target player or planeswalker."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "When another creature enters, sacrifice this creature and it deals 3 damage to target player or planeswalker.",
+  "typeLine": "Creature — Goblin"
+ },
+ {
   "name": "Muldrotha, the Gravetide",
   "oracleId": "e4625704-1d52-44e4-804f-2f45644d76ac",
   "clauses": [
@@ -4629,6 +4825,70 @@
   "typeLine": "Creature — Crab"
  },
  {
+  "name": "Rumor Gatherer",
+  "oracleId": "3ceca713-38de-4428-a4f1-2146f6e98393",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "enters",
+     "subject": "another creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "scry",
+      "object": "1",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     },
+     {
+      "verb": "draw",
+      "object": "a card",
+      "optional": false,
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "creature"
+   ],
+   "subtypes": [
+    "elf",
+    "wizard"
+   ],
+   "layout": "normal",
+   "colors": [
+    "W"
+   ],
+   "identity": [
+    "W"
+   ],
+   "cmc": 3,
+   "power": "2",
+   "toughness": "1",
+   "token": false,
+   "keywords": [
+    "alliance",
+    "scry"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Whenever another creature you control enters, scry 1. If this is the second time this ability has resolved this turn, draw a card instead."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Alliance — Whenever another creature you control enters, scry 1. If this is the second time this ability has resolved this turn, draw a card instead.",
+  "typeLine": "Creature — Elf Wizard"
+ },
+ {
   "name": "Ruthless Technomancer",
   "oracleId": "4e58ad76-37c7-4531-b207-6890b39a2679",
   "clauses": [
@@ -5051,6 +5311,97 @@
   "grantedToken": [],
   "oracleText": "Constellation — Whenever an enchantment you control enters, put a +1/+1 counter on this creature and draw a card.",
   "typeLine": "Creature — Human Warrior"
+ },
+ {
+  "name": "Simic Ascendancy",
+  "oracleId": "57c1a98e-c4fb-4144-9e3e-d0fe6789ba26",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "a +1/+1 counter on a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "growth",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that many",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "state",
+     "subject": "this enchantment has twenty or more growth counters on it",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "win-game",
+      "object": "you",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "U"
+   ],
+   "identity": [
+    "G",
+    "U"
+   ],
+   "cmc": 2,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Put a +1/+1 counter on target creature you control.",
+   "2": "Whenever one or more +1/+1 counters are put on a creature you control, put that many growth counters on this enchantment.",
+   "3": "At the beginning of your upkeep, if this enchantment has twenty or more growth counters on it, you win the game."
+  },
+  "clauseCosts": {
+   "1": "{1}{G}{U}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "{1}{G}{U}: Put a +1/+1 counter on target creature you control.\nWhenever one or more +1/+1 counters are put on a creature you control, put that many growth counters on this enchantment.\nAt the beginning of your upkeep, if this enchantment has twenty or more growth counters on it, you win the game.",
+  "typeLine": "Enchantment"
  },
  {
   "name": "Soul Warden",
@@ -5496,6 +5847,139 @@
   "grantedToken": [],
   "oracleText": "This creature gets +1/+0 for each artifact you control.\nMagecraft — Whenever you cast or copy an instant or sorcery spell, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
   "typeLine": "Creature — Dwarf Shaman"
+ },
+ {
+  "name": "Summon: Fenrir",
+  "oracleId": "3509171e-8d7d-4e9e-97a1-58e6c7d225ed",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "none",
+    "actions": [
+     {
+      "verb": "none",
+      "object": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)",
+      "fromZone": null,
+      "toZone": null
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "I",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "search",
+      "object": "your library for a basic land card",
+      "fromZone": "library",
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "put",
+      "object": "it",
+      "fromZone": "library",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "tap",
+      "object": "it",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "shuffle",
+      "object": "your library",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "chapter",
+     "subject": "III",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "a card",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "1",
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment",
+    "creature"
+   ],
+   "subtypes": [
+    "saga",
+    "wolf"
+   ],
+   "layout": "saga",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 3,
+   "power": "3",
+   "toughness": "2",
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)",
+   "2": "Crescent Fang — Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.",
+   "3": "Heavenward Howl — When you next cast a creature spell this turn, that creature enters with an additional +1/+1 counter on it.",
+   "4": "Ecliptic Growl — Draw a card if you control the creature with the greatest power or tied for the greatest power."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "(As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI — Crescent Fang — Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.\nII — Heavenward Howl — When you next cast a creature spell this turn, that creature enters with an additional +1/+1 counter on it.\nIII — Ecliptic Growl — Draw a card if you control the creature with the greatest power or tied for the greatest power.",
+  "typeLine": "Enchantment Creature — Saga Wolf"
  },
  {
   "name": "Summon: Good King Mog XII",
@@ -5963,6 +6447,58 @@
   "typeLine": "Enchantment"
  },
  {
+  "name": "Terrasymbiosis",
+  "oracleId": "4ac94586-3ac7-4ade-af31-ad0d0e3ffc4a",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "counter-added",
+     "subject": "a creature you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "draw",
+      "object": "that many cards",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "enchantment"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "G"
+   ],
+   "identity": [
+    "G"
+   ],
+   "cmc": 3,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "Whenever you put one or more +1/+1 counters on a creature you control, you may draw that many cards. Do this only once each turn."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Whenever you put one or more +1/+1 counters on a creature you control, you may draw that many cards. Do this only once each turn.",
+  "typeLine": "Enchantment"
+ },
+ {
   "name": "The Earth Crystal",
   "oracleId": "5e7ef7fe-968b-4ada-9fe4-6fda0541aafc",
   "clauses": [
@@ -6113,6 +6649,76 @@
   "grantedToken": [],
   "oracleText": "Flying\nWhenever this creature deals combat damage to a player, proliferate. (Choose any number of permanents and/or players, then give each another counter of each kind already there.)",
   "typeLine": "Creature — Phyrexian Bird Horror"
+ },
+ {
+  "name": "Thwart the Grave",
+  "oracleId": "b545e26f-2034-409c-80cc-51b72e75e6e4",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "cost-modify",
+      "object": "this spell costs {1} less to cast for each creature in your party",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "spell",
+    "actions": [
+     {
+      "verb": "return",
+      "object": "target creature card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": false
+     },
+     {
+      "verb": "return",
+      "object": "up to one target Cleric, Rogue, Warrior, or Wizard creature card",
+      "fromZone": "graveyard",
+      "toZone": "battlefield",
+      "amount": null,
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "sorcery"
+   ],
+   "subtypes": [],
+   "layout": "normal",
+   "colors": [
+    "B"
+   ],
+   "identity": [
+    "B"
+   ],
+   "cmc": 6,
+   "power": null,
+   "toughness": null,
+   "token": false,
+   "keywords": []
+  },
+  "clauseTexts": {
+   "1": "This spell costs {1} less to cast for each creature in your party.",
+   "2": "Return target creature card and up to one target Cleric, Rogue, Warrior, or Wizard creature card from your graveyard to the battlefield."
+  },
+  "clauseCosts": {},
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "This spell costs {1} less to cast for each creature in your party. (Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)\nReturn target creature card and up to one target Cleric, Rogue, Warrior, or Wizard creature card from your graveyard to the battlefield.",
+  "typeLine": "Sorcery"
  },
  {
   "name": "Underworld Dreams",
@@ -6733,6 +7339,105 @@
   "grantedToken": [],
   "oracleText": "Trample\nWhenever Yidris deals combat damage to a player, as you cast spells from your hand this turn, they gain cascade. (When you cast the spell, exile cards from the top of your library until you exile a nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on the bottom in a random order.)",
   "typeLine": "Legendary Creature — Ogre Wizard"
+ },
+ {
+  "name": "Yuna, Grand Summoner",
+  "oracleId": "ba72d4a9-6f36-4796-bd71-2342fa9b4a30",
+  "clauses": [
+   {
+    "id": 1,
+    "abilityType": "activated",
+    "actions": [
+     {
+      "verb": "add-mana",
+      "object": "one mana of any color",
+      "fromZone": null,
+      "toZone": null,
+      "amount": null,
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "cast",
+     "subject": "a creature spell",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "2",
+      "optional": false
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "abilityType": "triggered",
+    "trigger": {
+     "event": "dies",
+     "subject": "another permanent you control",
+     "control": "you"
+    },
+    "actions": [
+     {
+      "verb": "add-counter",
+      "object": "+1/+1",
+      "fromZone": null,
+      "toZone": null,
+      "amount": "that number",
+      "optional": true
+     }
+    ]
+   }
+  ],
+  "characteristics": {
+   "types": [
+    "legendary",
+    "creature"
+   ],
+   "subtypes": [
+    "human",
+    "cleric"
+   ],
+   "layout": "normal",
+   "colors": [
+    "G",
+    "U",
+    "W"
+   ],
+   "identity": [
+    "G",
+    "U",
+    "W"
+   ],
+   "cmc": 4,
+   "power": "1",
+   "toughness": "5",
+   "token": false,
+   "keywords": [
+    "grand summon"
+   ]
+  },
+  "clauseTexts": {
+   "1": "Add one mana of any color.",
+   "2": "When you next cast a creature spell this turn, that creature enters with two additional +1/+1 counters on it.",
+   "3": "Whenever another permanent you control is put into a graveyard from the battlefield, if it had one or more counters on it, you may put that number of +1/+1 counters on target creature."
+  },
+  "clauseCosts": {
+   "1": "{T}"
+  },
+  "clauseRequires": {},
+  "clauseFaces": {},
+  "grantedToken": [],
+  "oracleText": "Grand Summon — {T}: Add one mana of any color. When you next cast a creature spell this turn, that creature enters with two additional +1/+1 counters on it.\nWhenever another permanent you control is put into a graveyard from the battlefield, if it had one or more counters on it, you may put that number of +1/+1 counters on target creature.",
+  "typeLine": "Legendary Creature — Human Cleric"
  },
  {
   "name": "Zedruu the Greathearted",
