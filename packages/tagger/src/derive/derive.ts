@@ -737,11 +737,13 @@ function grantedRecipientOf(cardText: string, clauseText: string): string | unde
 function grantRecipient(clauseText: string): string | undefined {
   // "AS YOU CAST <spells> THIS TURN, THEY GAIN …" (Yidris, Maelstrom Wielder): the recipient is the
   // spells, and the pronoun the grant verb follows only points back at them (#681).
-  const asYouCast = AS_YOU_CAST.exec(clauseText.replace(CLAUSE_PREAMBLE, ""))?.[1];
-  if (asYouCast) return `${asYouCast} you cast`;
+  const asYouCast = AS_YOU_CAST.exec(clauseText.replace(CLAUSE_PREAMBLE, ""))?.[1]?.trim();
+  // "this turn" stripped with a string op, not an optional regex tail: a lazy capture beside an
+  // optional `\s+this turn` is the polynomial shape CodeQL fails a PR on.
+  if (asYouCast) return `${asYouCast.endsWith(" this turn") ? asYouCast.slice(0, -" this turn".length) : asYouCast} you cast`;
   return recipientBefore(clauseText, GRANTED_TO);
 }
-const AS_YOU_CAST = /\bas you cast ([^,]+?)(?:\s+this turn)?,\s*(?:they|it)\s+(?:gain|gains|have|has)\b/i;
+const AS_YOU_CAST = /\bas you cast ([^,]{1,80}), ?(?:they|it) (?:gain|gains|have|has)\b/i;
 /** SPELLS YOU CAST ARE A CLASS OF THE DECK (owner ruling 2026-09-28, #681): a grant to them links to
  *  every matching spell, the shape a cost reducer's "instant and sorcery spells you cast" already has
  *  -- Anhelo's casualty, Yidris's cascade. Only a SPELL class you cast; a grant to every creature on
@@ -1447,7 +1449,7 @@ export function deriveAbilities(
     for (const action of clause.actions ?? []) {
       // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
       // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
-      const printedCasualty = action.verb === "none" ? /^\s*casualty (\d+)\s*$/i.exec(action.object ?? "") : null;
+      const printedCasualty = action.verb === "none" ? /^casualty (\d+)$/i.exec((action.object ?? "").trim()) : null;
       if (printedCasualty) {
         abilities.push({ kind: "on-cast", repeats: "once", effect: { kind: "" }, emits: [casualtySacrifice(Number(printedCasualty[1]))] });
         continue;
