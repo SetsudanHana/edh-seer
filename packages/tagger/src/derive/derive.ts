@@ -200,7 +200,9 @@ import { emblemRecipient } from "../emblem.js";
 // 2026-09-28), granted (Anhelo, Silverquill) or printed as a keyword line (Make Disappear).
 // 187: "its controller" after an untargeted trigger subject is anyone, not an opponent (issue #650:
 // Tainted Aether's "whenever a creature enters, its controller sacrifices" hits your own board).
-export const DERIVE_VERSION = 187;
+// 188: an "or" trigger limb the clause layer cannot hold derives a twin trigger (compass misses:
+// Syr Konrad's "or put into a graveyard from anywhere", "or leaves your graveyard").
+export const DERIVE_VERSION = 188;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -744,6 +746,18 @@ function grantRecipient(clauseText: string): string | undefined {
   // optional `\s+this turn` is the polynomial shape CodeQL fails a PR on.
   if (asYouCast) return `${asYouCast.endsWith(" this turn") ? asYouCast.slice(0, -" this turn".length) : asYouCast} you cast`;
   return recipientBefore(clauseText, GRANTED_TO);
+}
+// Bounded captures that end on a fixed word: no lazy group beside an optional whitespace tail
+// (the polynomial shape CodeQL fails a PR on).
+const OR_PUT_INTO_GRAVEYARD = /,\s?or (?:a|an) ([a-z ]{1,40}) (?:is|are) put into (a|your) graveyard from anywhere\b/i;
+const OR_LEAVES_GRAVEYARD = /,\s?or (?:a|an|one or more) ([a-z ]{1,40}) leaves? your graveyard\b/i;
+function orLimbTriggers(text: string): { verbs: Verb[]; subject: SubjectFilter }[] {
+  const out: { verbs: Verb[]; subject: SubjectFilter }[] = [];
+  const put = OR_PUT_INTO_GRAVEYARD.exec(text);
+  if (put) out.push({ verbs: ["enters-graveyard"], subject: { ...parseSubject(put[1]!.replace(/ cards?$/i, "")), control: put[2]!.toLowerCase() === "your" ? "you" : "any" } });
+  const leaves = OR_LEAVES_GRAVEYARD.exec(text);
+  if (leaves) out.push({ verbs: ["leaves"], subject: { ...parseSubject(leaves[1]!.replace(/ cards?$/i, "")), control: "you", zone: "graveyard" } });
+  return out;
 }
 const AS_YOU_CAST = /\bas you cast ([^,]{1,80}), ?(?:they|it) (?:gain|gains|have|has)\b/i;
 /** SPELLS YOU CAST ARE A CLASS OF THE DECK (owner ruling 2026-09-28, #681): a grant to them links to
@@ -1749,6 +1763,13 @@ export function deriveAbilities(
         const zone = trigger!.subject.fromZone !== undefined ? { fromZone: trigger!.subject.fromZone } : {};
         abilities.push({ ...ability, trigger: { ...trigger!, subject: { ...own, control: "you", self: true, ...zone } } });
       }
+      // AN "OR" LIMB THE CLAUSE LAYER CANNOT HOLD IS A TWIN TOO (compass misses, 2026-09-28). A
+      // ClauseRecord trigger holds ONE event, so Syr Konrad's "Whenever another creature dies, OR a
+      // creature card is put into a graveyard from anywhere other than the battlefield, OR a creature
+      // card leaves your graveyard" was stored as its first limb only, and every mill card lost its
+      // link. Each extra limb derives a twin with the same effect, in the shape a single-limb card of
+      // that event derives (Skola Grovedancer, Desecrated Tomb). 2 corpus cards print the shape.
+      if (trigger) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: limb.subject } });
     }
 
     // A RESTRICTION THE ENGINE CANNOT CHECK MAKES THE STATIC LABEL-ONLY TOO, not just the trigger

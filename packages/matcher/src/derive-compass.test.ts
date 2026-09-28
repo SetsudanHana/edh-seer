@@ -32,20 +32,10 @@ const KNOWN_BASELINE_DEFECTS: Record<string, string> = {
   // (`exiled:creature`, `enters:creature`) -- their category demanded a flicker or recursion effect
   // kind the rulings refuse (a bare-creature recursion does not narrow).
 
-  // --- mill-self (2): Syr Konrad triggers on three separate limbs; the mill payoff rides the
-  // second ("a creature card is put into a graveyard from anywhere other than the battlefield").
-  // ClauseRecord.trigger holds a single `event` string, so limbs 2 and 3 are not expressible at the
-  // clause layer at all. Synthesizing them from the `dies` limb would be false — a milled creature
-  // card does not die — and would mesh every death trigger with every mill card.
-  "Ruin Crab / Syr Konrad, the Grim": "Syr Konrad's `enters-graveyard` trigger limb; ClauseRecord.trigger holds one event",
-  "Maddening Cacophony / Syr Konrad, the Grim": "Syr Konrad's `enters-graveyard` trigger limb; ClauseRecord.trigger holds one event",
-  // The third of the same family, and it only LOOKED different. It passed until `castSelfSupplied`
-  // on a reason that was never the synergy: Syr Konrad, being a castable card, satisfied Consuming
-  // Aberration's unconstrained "whenever you cast a spell" — which every nonland card in every deck
-  // does. The real link is Aberration's opponent-mill feeding Konrad, and that rides the same
-  // inexpressible second limb as the two above, so it was never available. A pair passing through a
-  // claim that applies to any ordinary card was banking luck, not a synergy.
-  "Consuming Aberration / Syr Konrad, the Grim": "Syr Konrad's `enters-graveyard` trigger limb; was passing on an ordinary-card cast claim until castSelfSupplied",
+  // --- mill-self (3) USED to sit here: Syr Konrad's second and third trigger limbs ("or a creature
+  // card is put into a graveyard from anywhere other than the battlefield", "or a creature card
+  // leaves your graveyard") did not fit a ClauseRecord's single trigger event. Banked 2026-09-28
+  // (DERIVE 188): derive reads each extra "or" limb from the clause text as a twin trigger.
 
   // --- toughness-matters (1) and counters-plus1 (2): the clause is `verb: "other"`, which
   // normalize-prompt.ts defines as the escape hatch for actions no verb covers and calls "honestly
