@@ -69,7 +69,15 @@ const CUES: [string, RegExp][] = [
  *  and that is where they get pointed, and because being wrong here only ever removes an edge. */
 function controlOf(phrase: string, text: string, at: number): Control | undefined {
   const p = phrase.toLowerCase();
-  if (p === "its controller" || p === "their controller") return "opp";
+  // AFTER AN UNTARGETED TRIGGER SUBJECT IT IS ANYONE (#650): "Whenever a creature enters, its
+  // controller sacrifices ..." (Tainted Aether) points at the creature that entered, which can be
+  // yours. A target or an opponent named first keeps the removal reading, as does a bare fragment.
+  if (p === "its controller" || p === "their controller") {
+    const before = text.slice(0, at);
+    // The opponent in other words: a creature that "attacks you" (MacCready), "if you don't control it"
+    // (Auntie Ool) -- found by checking the flipped cards one by one.
+    return /^\s*(?:when|whenever)\b/i.test(before) && !/\b(?:target|opponents?)\b|\battacks? you\b|\byou don'?t control\b/i.test(before) ? "any" : "opp";
+  }
   if (p === "target opponent" || p === "each opponent" || p === "each other player" || p === "defending player" || p === "attacking player") return "opp";
   // "that player" points back at whoever the clause already named. The antecedent is in the same
   // clause, so this one needs no judgment: Massacre Wurm's "a creature an opponent controls dies,

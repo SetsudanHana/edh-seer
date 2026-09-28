@@ -451,3 +451,22 @@ test("a drawback that kills your own creatures is refused; a chosen sacrifice or
   expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [sac({ control: "you", token: true })] }]))).toBe(false);
   expect(killsOwnCreatures(null)).toBe(false);
 });
+
+/** A HELD EXILE IS A DRAWBACK TOO (#650): Portcullis exiles every creature that enters past the
+ *  second, yours included, and returns it only "when this artifact leaves the battlefield". The same
+ *  exile-then-return shape is a FLICKER when the return is immediate (Brago, Conjurer's Closet), which
+ *  is a benefit -- so the printed return is what tells them apart. */
+test("an exile held until the permanent leaves counts as killing your creatures; a flicker does not", () => {
+  const tags = (abilities: unknown[]) => ({ abilities }) as unknown as CardTags;
+  const exiled = (s: Record<string, unknown>) => ({ verb: "exiled", subject: { token: null, type: "creature", ...s } });
+  const back = { verb: "enters", subject: { control: "any", token: null, type: "creature", fromZone: "exile" } };
+  const portcullis = tags([
+    { kind: "triggered", repeats: "repeatable", emits: [exiled({ control: "any" })] },
+    { kind: "triggered", repeats: "repeatable", effect: { kind: "flicker" }, emits: [back] },
+  ]);
+  const text = "Whenever a creature enters, if there are two or more other creatures on the battlefield, exile that creature. Return that card to the battlefield under its owner's control when this artifact leaves the battlefield.";
+  expect(killsOwnCreatures(portcullis, text)).toBe(true);
+  expect(killsOwnCreatures(portcullis, "At the beginning of your end step, you may exile target creature you control, then return that card to the battlefield under your control.")).toBe(false);
+  // An exile of the OPPONENTS' creatures held the same way (Oblivion Ring on their card) is not yours.
+  expect(killsOwnCreatures(tags([{ kind: "triggered", repeats: "repeatable", emits: [exiled({ control: "opp" })] }]), text)).toBe(false);
+});

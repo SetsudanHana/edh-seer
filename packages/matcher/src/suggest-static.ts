@@ -127,10 +127,16 @@ const unique = <T>(xs: readonly T[]): T[] => [...new Set(xs)];
  *  its own ETB as a repeatable trigger), read off the text as `fodderEdges` reads its edict cue.
  *  The build and answer lists keep wipes: there a wipe is what is asked. */
 const YOU_MAY_SACRIFICE = /\byou may sacrifice\b/i;
+/** A HELD EXILE (#650): the card comes back only when THIS permanent leaves (Portcullis), so until then
+ *  the creature is as gone as a destroyed one. A flicker returns it at once (Brago, Conjurer's Closet). */
+const HELD_EXILE = /\bwhen (?:this|that) [a-z]+ leaves the battlefield\b/i;
 export function killsOwnCreatures(tags: CardTags | null | undefined, oracle = ""): boolean {
   const optional = YOU_MAY_SACRIFICE.test(oracle);
+  const held = HELD_EXILE.test(oracle);
   return (tags?.abilities ?? []).some((a) => {
     if (a.kind === "activated") return false;
+    if (held && a.repeats === "repeatable" && (a.emits ?? []).some((e) => e.verb === "exiled"
+      && [e.subject.type].flat().includes("creature") && e.subject.control !== "opp" && e.subject.self !== true && e.subject.token !== true)) return true;
     const sacrifices = (a.emits ?? []).some((e) => e.verb === "sacrifice");
     if (sacrifices && optional) return false;
     return (a.emits ?? []).some((e) =>

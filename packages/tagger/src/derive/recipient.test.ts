@@ -135,3 +135,17 @@ test("a printed 'you <verb>' is the controller's, whatever player the condition 
   expect(actionRecipients("Each opponent draws a card, then you draw a card.")).toEqual({ draw: "opp" });
   expect(actionRecipients("You draw a card, then each opponent draws a card.")).not.toHaveProperty("draw");
 });
+
+/** "ITS CONTROLLER" POINTS BACK AT WHAT THE SENTENCE NAMED (#650). After "target creature" it is the
+ *  target's controller -- removal, pointed at an opponent -- and stays `opp`. After a trigger's "a
+ *  creature enters" it is whoever controls THAT creature, you included: Tainted Aether made the
+ *  player sacrifice for their own creatures and was suggested as synergy for a 45-creature deck. */
+test("'its controller' is an opponent after a target, anyone after an untargeted trigger subject", () => {
+  expect(actionRecipients("Exile target creature. Its controller gains life equal to its power.")["gain-life"]).toBe("opp");
+  expect(actionRecipients("Whenever a creature enters, its controller sacrifices a creature or land of their choice.").sacrifice).toBe("any");
+  expect(actionRecipients("Whenever a creature an opponent controls dies, its controller loses 2 life.")["lose-life"]).toBe("opp");
+  // THE OPPONENT IN OTHER WORDS (the #650 flip, checked card by card): a creature that attacks YOU
+  // (MacCready, Lamplight Mayor), and "if you don't control it" (Auntie Ool, Cursewretch).
+  expect(actionRecipients("Whenever a creature with power 4 or greater attacks you, its controller loses 2 life and you gain 2 life.")["lose-life"]).toBe("opp");
+  expect(actionRecipients("Whenever one or more -1/-1 counters are put on a creature, draw a card if you control that creature. If you don't control it, its controller loses 1 life.")["lose-life"]).toBe("opp");
+});
