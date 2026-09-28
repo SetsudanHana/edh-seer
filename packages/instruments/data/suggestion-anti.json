@@ -1,0 +1,7 @@
+[
+  {
+    "deck": "packages/cli/decks/precon-party-time.txt",
+    "never": ["Desecration Elemental", "Lethal Vapors", "Grave Peril", "Spreading Plague", "Tainted Aether", "Portcullis"],
+    "why": "Party Time runs 45 creatures. Each of these kills or holds the player's own creatures on a trigger they do not choose (#567, #650); every one was once suggested under Strengthen what works or Opens a route."
+  }
+]

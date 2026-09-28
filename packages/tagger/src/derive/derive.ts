@@ -198,7 +198,9 @@ import { emblemRecipient } from "../emblem.js";
 // from your hand this turn, they gain cascade". A creature anthem stays refused.
 // 186: casualty N is a sacrifice outlet for a creature with power N or greater (CR 702.153a; owner
 // 2026-09-28), granted (Anhelo, Silverquill) or printed as a keyword line (Make Disappear).
-export const DERIVE_VERSION = 186;
+// 187: "its controller" after an untargeted trigger subject is anyone, not an opponent (issue #650:
+// Tainted Aether's "whenever a creature enters, its controller sacrifices" hits your own board).
+export const DERIVE_VERSION = 187;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
