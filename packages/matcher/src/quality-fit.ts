@@ -12,7 +12,7 @@ export interface RoleWeights {
   pairs: number;
   heldOutAccuracy: number;
   baselineAccuracy: number;
-  /** The fallback's (mana value + timing) held-out accuracy, so the choice between fit and fallback
+  /** The fallback's held-out accuracy, so the choice between fit and fallback
    *  is visible, not only the fit's comparison with mana value alone. */
   fallbackAccuracy: number;
   fallback: boolean;
@@ -25,9 +25,21 @@ export const SIGN: Record<Ingredient, 1 | -1> = {
   manaValue: -1, rateFloor: 1, rateCeiling: 1, frequency: 1, timing: 1, breadth: 1,
   permanence: 1, oneSided: 1, drawback: -1, extraValue: 1, restriction: -1,
 };
-/** Below this many pairs a role's fit is noise: it ships on mana value and timing (spec). */
+/** Below this many pairs a role's fit is noise: it ships on the fallback (spec). */
 const MIN_PAIRS = 150;
-const FALLBACK_WEIGHTS: Partial<Record<Ingredient, number>> = { manaValue: -1, timing: 0.5 };
+/** THE FALLBACK, per role (#691). An EFFECT ranks by the owner's 2026-09-23 ladder -- frequency class,
+ *  then amount per mana (the rate percentile, where the role has one), then mana value, then timing --
+ *  written as weights so steep that each rung only breaks ties in the one above: frequency 0-4 x 1e6,
+ *  rateFloor 0-100 (whole percentiles) x 1e3, manaValue x -2 (holds under 500 mana; the corpus tops out
+ *  at 16), timing 0-2 x 0.5. An ANSWER ranks on mana value
+ *  and timing, as before: moving protection, wipes and counters onto the ladder lost agreement on each
+ *  (protection 24 -> 18 of 32 cuts), and the fitted removal weights put timing far above frequency too.
+ *  CEILING: a yield card whose rate cannot be read (1,253 of 3,283 scored draw cards, 660 of 1,576 ramp,
+ *  2026-09-28) adds no rate term, so it sorts below every card with one in its frequency class. Upgrade
+ *  path: read those rates (a conditional draw, an extra-cost activation) rather than impute one. */
+const ANSWER_ROLES: ReadonlySet<Role> = new Set(["targetedRemoval", "stackInteraction", "boardWipe", "protection"]);
+export const fallbackWeights = (role: Role): Partial<Record<Ingredient, number>> =>
+  ANSWER_ROLES.has(role) ? { manaValue: -1, timing: 0.5 } : { frequency: 1e6, rateFloor: 1e3, manaValue: -2, timing: 0.5 };
 const SEED = 20260927;
 
 /** Ingredients present on BOTH sides only: a missing one carries no signal, never a 0. */
@@ -100,9 +112,9 @@ export function fitAll(pairs: Pair[], versions: { deriveVersion: number; rulesVe
     const weights = fitRole(train);
     const heldOutAccuracy = pairAccuracy(test, weights);
     const baselineAccuracy = pairAccuracy(test, { manaValue: -1 });
-    const fallbackAccuracy = pairAccuracy(test, FALLBACK_WEIGHTS);
+    const fallbackAccuracy = pairAccuracy(test, fallbackWeights(role));
     const fallback = mine.length < MIN_PAIRS || heldOutAccuracy <= baselineAccuracy;
-    roles[role] = { weights: fallback ? FALLBACK_WEIGHTS : weights, pairs: mine.length, heldOutAccuracy, baselineAccuracy, fallbackAccuracy, fallback };
+    roles[role] = { weights: fallback ? fallbackWeights(role) : weights, pairs: mine.length, heldOutAccuracy, baselineAccuracy, fallbackAccuracy, fallback };
   }
   return { ...versions, roles };
 }

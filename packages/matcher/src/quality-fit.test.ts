@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { fitAll, fitRole, pairAccuracy, splitBySet, SIGN, type Pair } from "./quality-fit.js";
-import { qualityScore } from "./quality.js";
+import { fallbackWeights, fitAll, fitRole, pairAccuracy, splitBySet, SIGN, type Pair } from "./quality-fit.js";
+import { qualityScore, type Ingredients } from "./quality.js";
 
 const pair = (set: string, cutMv: number, addMv: number, extra: Partial<Pair> = {}): Pair =>
   ({ role: "targetedRemoval", set, cut: { manaValue: cutMv, timing: 2 }, add: { manaValue: addMv, timing: 2 }, weight: 1, ...extra });
@@ -34,11 +34,25 @@ test("split by set keeps every set whole, and is deterministic", () => {
   expect(splitBySet(pairs, 7, 0.2)).toEqual({ train, test: held });
 });
 
-test("a role under 150 pairs falls back to mana value and timing", () => {
+test("a role under 150 pairs falls back: an answer to mana value and timing, an effect to the frequency ladder", () => {
   const w = fitAll(Array.from({ length: 20 }, (_, i) => pair(`s${i % 5}`, 4, 2)), { deriveVersion: 1, rulesVersion: 1 });
   expect(w.roles.targetedRemoval.fallback).toBe(true);
+  expect(w.roles.targetedRemoval.weights).toEqual({ manaValue: -1, timing: 0.5 });
   expect(w.roles.stax.fallback).toBe(true);
-  expect(Object.keys(w.roles.stax.weights).sort()).toEqual(["manaValue", "timing"]);
+  expect(w.roles.stax.weights).toEqual(fallbackWeights("stax"));
+});
+
+test("the effect ladder is lexicographic: frequency, then rate, then mana value, then timing (owner 2026-09-23)", () => {
+  const w = { weights: fallbackWeights("draw"), pairs: 0, heldOutAccuracy: 0, baselineAccuracy: 0, fallbackAccuracy: 0, fallback: true };
+  const s = (ing: Ingredients) => qualityScore(ing, w)!;
+  // a per-turn engine at the worst rate and mana value beats a one-shot at the best
+  expect(s({ frequency: 2, rateFloor: 0, manaValue: 400, timing: 0 })).toBeGreaterThan(s({ frequency: 1, rateFloor: 100, manaValue: 0, timing: 2 }));
+  // within a frequency class, the better rate beats any mana value and timing
+  expect(s({ frequency: 0, rateFloor: 51, manaValue: 400, timing: 0 })).toBeGreaterThan(s({ frequency: 0, rateFloor: 50, manaValue: 0, timing: 2 }));
+  // then the cheaper card, whatever its timing
+  expect(s({ frequency: 0, rateFloor: 50, manaValue: 2, timing: 0 })).toBeGreaterThan(s({ frequency: 0, rateFloor: 50, manaValue: 3, timing: 2 }));
+  // timing breaks the last tie
+  expect(s({ frequency: 0, rateFloor: 50, manaValue: 2, timing: 2 })).toBeGreaterThan(s({ frequency: 0, rateFloor: 50, manaValue: 2, timing: 0 }));
 });
 
 test("qualityScore needs manaValue and timing", () => {

@@ -27,7 +27,7 @@ export function renderQualitySheet(roles: QualitySheetRole[], title: string): st
   const nav = roles.map((r) => `<a href="#role-${esc(r.role)}">${esc(r.role)} <span class="count" data-role-count="${esc(r.role)}">0/${r.cards.length}</span></a>`).join("");
   const sections = roles.map((r) => `
   <section class="role" id="role-${esc(r.role)}">
-    <h2>${esc(r.role)}${r.fallback ? ' <span class="tag">fallback: mana value + timing</span>' : ' <span class="tag fit">fitted</span>'}</h2>
+    <h2>${esc(r.role)}${r.fallback ? ' <span class="tag">fallback</span>' : ' <span class="tag fit">fitted</span>'}</h2>
     <p class="note">${esc(r.note)}</p>
     ${r.cards.map((c, i) => `
     <article class="claim qrow" data-role="${esc(r.role)}" data-card="${esc(c.name)}" data-judged="0">
