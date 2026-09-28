@@ -227,3 +227,11 @@ test("a token names the cards that make it", () => {
   expect(tokenLabel({ isToken: true })).toBe("(token)");
   expect(tokenLabel({ isToken: false })).toBe("");
 });
+
+/** THE #681 TAGS IN A PLAYER'S WORDS: a donation count is a Donate deck, and a grant to the spells
+ *  you cast is not a creature type (the tribe fallback read "Donated tribal"). */
+test("donate and spell-grant tags have players' names", () => {
+  expect(groupName("scales:donated")).toBe("Donate");
+  expect(groupName("keyword-grant:spell")).toBe("Spell keyword granting");
+  expect(groupName("keyword-grant:instant-sorcery")).toBe("Instant and sorcery keyword granting");
+});

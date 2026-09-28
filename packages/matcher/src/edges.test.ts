@@ -5576,3 +5576,28 @@ test("an exchange of control feeds a count of permanents you own that opponents 
   (tree.card as { oracleText: string }).oracleText = "{T}: Exchange your life total with this creature's toughness.";
   expect(directedReasons(tree, countsDonated(), H).some((x) => x.tag === "scales:donated")).toBe(false);
 });
+
+/** A GRANT TO THE SPELLS YOU CAST LINKS EVERY MATCHING SPELL (owner ruling 2026-09-28, #681), the
+ *  shape a cost reducer already has. Anhelo's casualty is static; Yidris's cascade is granted by a
+ *  combat-damage trigger, which the static pass never saw. */
+const spellCard = (name: string, type: string) => {
+  const d = base(name, []);
+  d.tags.characteristics.types = [type];
+  return d;
+};
+test("a grant to spells you cast reaches each matching spell in the deck, and nothing else", () => {
+  const anhelo = base("Anhelo, the Painter", [{
+    kind: "static", repeats: "continuous",
+    effect: { kind: "keyword-grant", subject: { type: ["instant", "sorcery"], control: "you", token: null, scope: "each" } },
+  }] as unknown as CardTags["abilities"]);
+  const yidris = base("Yidris, Maelstrom Wielder", [{
+    kind: "triggered", repeats: "per-cycle",
+    trigger: { verbs: ["combat-damage"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "keyword-grant", subject: { type: "spell", control: "you", token: null, scope: "all" } },
+  }] as unknown as CardTags["abilities"]);
+  const links = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).some((r) => r.producer === p.card.name);
+  expect(links(anhelo, spellCard("Lightning Bolt", "instant"))).toBe(true);
+  expect(links(anhelo, spellCard("Grizzly Bears", "creature"))).toBe(false);
+  expect(links(yidris, spellCard("Grizzly Bears", "creature"))).toBe(true);
+  expect(links(yidris, spellCard("Forest", "land"))).toBe(false);
+});

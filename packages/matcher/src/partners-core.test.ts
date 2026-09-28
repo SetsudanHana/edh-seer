@@ -8,7 +8,7 @@ import type { DeckCard, Hierarchy } from "./types.js";
 import {
   KEEP, PARTNER_SHARD_COUNT, PER_EVENT_CAP, PI_KEEP, buildPartnerArtifact, printingIdOf, demandForms, eventKey, isSubstantive,
   partnerShardOf, partnersFor, resolveSlugs, slugOf, specificity, supplyBuckets, totalOf, browseLetterOf, browseSlices,
-  supplyForms, supplyKeysOf, themesOf, inIdentityOf, identityMask, splitKey, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf, effectOrder,
+  supplyForms, supplyKeysOf, boardCountsOf, themesOf, inIdentityOf, identityMask, splitKey, fillDemandsOf, unmetDemands, boardCountKeysOf, feederKeysOf, emitKeysOf, abilityRowsOf, staticKeysOf, meldKeysOf, identityKeyOf, demandKeysOf, effectOrder,
 } from "./partners-core.js";
 
 /** THE CORPUS COUNT ALONE. `supplyBuckets` splits every key by colour identity (AJ5); the rules
@@ -1989,4 +1989,18 @@ test("partnerIds carries the verified partners the page's per-event cap hides, b
   // A producer's own forward rows: same.
   expect(names("Maker 0")).toEqual(expect.arrayContaining(payoffs.map((p) => p.card.name)));
   expect(partnerIds.get("Maker 0")!.length).toBeLessThanOrEqual(PI_KEEP);
+});
+
+/** THE CARD PAGE ASKS WHAT THE DECK EDGE ASKS (#681 review): Zedruu's page listed no feeders because
+ *  every opponent-board count was dropped here, while `donatedCountEdges` joins donations in a deck. */
+test("a count of permanents you own that opponents control is keyed, and a donation supplies it", () => {
+  const zedruu = base("Zedruu the Greathearted", [{
+    kind: "triggered",
+    effect: { kind: "draw-card", scaling: "per-permanent", scalingSubject: { type: "permanent", zone: "battlefield", control: "opp", owner: "you", token: null } },
+  }] as unknown as CardTags["abilities"]);
+  expect(boardCountsOf(zedruu)).toEqual([{ key: "counts|-|donated|-", tag: "scales:donated" }]);
+  const offering = base("Harmless Offering", [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "gains-control", subject: { control: "opp", token: null, type: "permanent", scope: "target" } }] }] as unknown as CardTags["abilities"]);
+  const threaten = base("Threaten", [{ kind: "on-cast", effect: { kind: "" }, emits: [{ verb: "gains-control", subject: { control: "you", token: null, type: "creature", scope: "target" } }] }] as unknown as CardTags["abilities"]);
+  expect(supplyKeysOf(offering)).toContain("counts|-|donated|-");
+  expect(supplyKeysOf(threaten)).not.toContain("counts|-|donated|-");
 });

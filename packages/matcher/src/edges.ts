@@ -2108,11 +2108,16 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // Donate, Harmless Offering, Goblin Cadets). A steal (Threaten: you gain it) grows nothing he counts.
 // AN EXCHANGE OF CONTROL gives one of yours away too (Vedalken Plotter, 32 corpus cards); derive
 // types only the permanent you RECEIVE, so the printed "exchange control" is what says it.
+// CEILING: the exchange test reads the whole card's text, so a card with an "exchange control"
+// ability AND an unrelated exchange (life totals) would credit both; none in the corpus 2026-09-28.
 const EXCHANGES_CONTROL = /\bexchange control\b/i;
+/** Does this card hand one of your permanents to an opponent? Shared with the card page's supply
+ *  keys (`supplyKeysOf`), so the deck edge and the page ask the same question. */
+export const givesAPermanentAway = (events: readonly GameEvent[], oracleText: string | undefined): boolean =>
+  events.some((e) => (e.verb === "gains-control" && e.subject.control === "opp")
+    || (e.verb === "exchange" && EXCHANGES_CONTROL.test(oracleText ?? "")));
 function donatedCountEdges({ p, c, pEvents, reasons }: PairScope): void {
-  const gives = pEvents.some((e) => (e.verb === "gains-control" && e.subject.control === "opp")
-    || (e.verb === "exchange" && EXCHANGES_CONTROL.test(p.card.oracleText ?? "")));
-  if (!gives) return;
+  if (!givesAPermanentAway(pEvents, p.card.oracleText)) return;
   for (const a of c.tags.abilities) {
     const counted = a.effect.scalingSubject;
     if (!counted || counted.owner !== "you" || counted.control !== "opp") continue;
@@ -2249,12 +2254,22 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // The parameter SHADOWS the pair's own `c` on purpose: every guard below must judge the FACE it
 // is asked about, and a body that reached past it to the pair's consumer would answer the
 // sibling-face question with the original face's answer.
+const SPELL_CLASS: ReadonlySet<string> = new Set(["spell", "instant", "sorcery"]);
+function grantsToSpellsYouCast(s: SubjectFilter | undefined): boolean {
+  const types = Array.isArray(s?.type) ? s.type : s?.type ? [s.type] : [];
+  return s?.control === "you" && types.length > 0 && types.every((t) => SPELL_CLASS.has(t));
+}
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
     if (!c.tags) return undefined;
 
     const appliesTo = a.kind === "static"
-      || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
+      || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined)
+      // A GRANT TO THE SPELLS YOU CAST, however it is switched on (owner ruling 2026-09-28, #681):
+      // Yidris hands cascade to your spells from a combat-damage trigger, and the grant applies to
+      // each spell exactly as Anhelo's static casualty does. Derive admits only a spell class you
+      // cast (`spellsYouCast`), so this is never a whole-board anthem.
+      || (a.effect.kind === "keyword-grant" && grantsToSpellsYouCast(a.effect.subject));
     if (!appliesTo || !a.effect.subject) return undefined;
     // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06) — WITH `cost-reduction`
     // REMOVED FROM THAT SET BY THE OWNER, 2026-08-18: "your cost reducing card is as good as many
