@@ -25,20 +25,12 @@ test("the fixture covers every card the verified gold pairs reference", () => {
  *  Removing an entry is the only way to bank an improvement, and an entry that starts passing
  *  breaks the build until someone removes it. */
 const KNOWN_BASELINE_DEFECTS: Record<string, string> = {
-  // --- blink-etb (9): the flicker ability is timed "at the beginning of your end step". The live
-  // tag records it as trigger ["enters"], and all 9 edges are drawn off that. `blink-etb` accepts
-  // only effectKind flicker/clone, and effectKind comes from the CONSUMER's ability, so a pair can
-  // only pass if a flicker ability consumes an event — which a phase trigger never does. This is
-  // the exact bug the end-step/upkeep/begin-combat verbs were added to VERB_VOCAB to fix.
-  "Ephemerate / Soulherder": "Soulherder's flicker is an end-step trigger; live tags it as `enters`",
-  "Ephemerate / Teleportation Circle": "Teleportation Circle's flicker is an end-step trigger; live tags it as `enters`",
-  "Soulherder / Cloudshift": "Soulherder's flicker is an end-step trigger; live tags it as `enters`",
-  "Soulherder / Ghostly Flicker": "Soulherder's flicker is an end-step trigger; live tags it as `enters`",
-  "Soulherder / Teleportation Circle": "both flickers are end-step triggers; live tags both as `enters`",
-  "Soulherder / Eerie Interlude": "Soulherder's flicker is an end-step trigger; live tags it as `enters`",
-  "Cloudshift / Teleportation Circle": "Teleportation Circle's flicker is an end-step trigger; live tags it as `enters`",
-  "Ghostly Flicker / Teleportation Circle": "Teleportation Circle's flicker is an end-step trigger; live tags it as `enters`",
-  "Teleportation Circle / Eerie Interlude": "Teleportation Circle's flicker is an end-step trigger; live tags it as `enters`",
+  // --- blink-etb (9) and reanimator (1) USED to sit here. Resolved 2026-09-28 by owner ruling, not
+  // by widening the engine: the 4 flicker + flicker pairs left the gold set (two flickers share a
+  // theme, not an interaction; one is banked in compass-anti-pairs.json), and the 5 Soulherder pairs
+  // and Animate Dead / Gray Merchant are keyed on the tag of the reason that IS the synergy
+  // (`exiled:creature`, `enters:creature`) -- their category demanded a flicker or recursion effect
+  // kind the rulings refuse (a bare-creature recursion does not narrow).
 
   // --- mill-self (2): Syr Konrad triggers on three separate limbs; the mill payoff rides the
   // second ("a creature card is put into a graveyard from anywhere other than the battlefield").
@@ -67,16 +59,6 @@ const KNOWN_BASELINE_DEFECTS: Record<string, string> = {
   // consumes the `proliferate` event both pairs supply. The ratchet caught it, which is the whole
   // reason a passing quarantined pair is a FAILURE here.
 
-  // --- reanimator (1): this one passed on a reason that contradicts the card, and stopped when the
-  // reason got MORE correct. Animate Dead's ETB trigger used to normalize with subject "this",
-  // which parsed to no type at all -- `enters:any` -- so the pair matched via "Animate Dead
-  // triggers on Gray Merchant entering". It does not; it triggers on the Aura's own entry. The
-  // fixture regeneration under NORMALIZE_VERSION 2 records "this Aura", and subtype parsing now
-  // resolves that to `subtype: aura`, so the false event edge is gone. The SYNERGY is real -- you
-  // reanimate the Gray Merchant -- but it is a targeting relationship (a graveyard-recursion effect
-  // and a creature card in a graveyard), not an event one, and `pairReasons` has no rule for it.
-  // Deleting this entry needs that rule, not a looser trigger subject.
-  "Animate Dead / Gray Merchant of Asphodel": "passed via a false `enters:any` edge; Animate Dead triggers on its OWN entry",
 };
 
 test("derived tags pass every gold pair except the documented baseline defects", () => {
