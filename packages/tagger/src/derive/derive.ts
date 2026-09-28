@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, exilesOwnGraveyard, extraPhaseName } from "./effect-kind.js";
-import { actionEmits, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
@@ -191,7 +191,14 @@ import { emblemRecipient } from "../emblem.js";
 // 182: Prepared forms edges (owner ruling 2026-09-27): `prepare` emits `prepared`, and "enters
 // prepared" is a self-entry trigger.
 // 183: a `grant-ability` whose clause "becomes prepared" is a prepare (Codie, Ravenous Codex).
-export const DERIVE_VERSION = 183;
+// 184: "permanents you own that your opponents control" is a board count with `owner: "you"`, not
+// per-opponent (issue #681: Zedruu the Greathearted linked to none of Political Puppets).
+// 185: a grant to the spells you cast names that class (owner ruling 2026-09-28, #681): Anhelo's
+// "first instant or sorcery spell you cast each turn has casualty", Yidris's "as you cast spells
+// from your hand this turn, they gain cascade". A creature anthem stays refused.
+// 186: casualty N is a sacrifice outlet for a creature with power N or greater (CR 702.153a; owner
+// 2026-09-28), granted (Anhelo, Silverquill) or printed as a keyword line (Make Disappear).
+export const DERIVE_VERSION = 186;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -728,7 +735,32 @@ function grantedRecipientOf(cardText: string, clauseText: string): string | unde
 }
 
 function grantRecipient(clauseText: string): string | undefined {
+  // "AS YOU CAST <spells> THIS TURN, THEY GAIN …" (Yidris, Maelstrom Wielder): the recipient is the
+  // spells, and the pronoun the grant verb follows only points back at them (#681).
+  const asYouCast = AS_YOU_CAST.exec(clauseText.replace(CLAUSE_PREAMBLE, ""))?.[1]?.trim();
+  // "this turn" stripped with a string op, not an optional regex tail: a lazy capture beside an
+  // optional `\s+this turn` is the polynomial shape CodeQL fails a PR on.
+  if (asYouCast) return `${asYouCast.endsWith(" this turn") ? asYouCast.slice(0, -" this turn".length) : asYouCast} you cast`;
   return recipientBefore(clauseText, GRANTED_TO);
+}
+const AS_YOU_CAST = /\bas you cast ([^,]{1,80}), ?(?:they|it) (?:gain|gains|have|has)\b/i;
+/** SPELLS YOU CAST ARE A CLASS OF THE DECK (owner ruling 2026-09-28, #681): a grant to them links to
+ *  every matching spell, the shape a cost reducer's "instant and sorcery spells you cast" already has
+ *  -- Anhelo's casualty, Yidris's cascade. Only a SPELL class you cast; a grant to every creature on
+ *  the board stays refused. The zone ("from your hand") is dropped: a type line sits in no zone. */
+const YOU_CAST = /\byou cast\b/i;
+const SPELL_TYPES: ReadonlySet<string> = new Set(["spell", "instant", "sorcery"]);
+/** A CLASS THE FILTER CANNOT HOLD (audit of all 39 spell grants, #681): a zone other than the hand
+ *  (Hoarding Broodlord "from exile"), a colour COUNT (Fallaji Wayfarer "multicolored", Threefold
+ *  Signal "exactly three colors"), spent mana (Shadow the Hedgehog, Rain of Riches) or a variable
+ *  mana value (Abaddon). Admitting those would link every spell -- refused, as a grant always was. */
+const SPELL_NARROWING = /\bfrom (?:exile|among|anywhere other than|a graveyard|your graveyard)\b|\bmulticolou?red\b|\bexactly (?:one|two|three|four|five) colou?rs?\b|\bmana from (?:a|an)\b[^.]*\bspent\b|\bmana value x\b/i;
+function spellsYouCast(s: SubjectFilter, who: string, clauseText: string): SubjectFilter | undefined {
+  const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+  if (!YOU_CAST.test(who) || types.length === 0 || !types.every((t) => SPELL_TYPES.has(t))) return undefined;
+  if (SPELL_NARROWING.test(clauseText)) return undefined;
+  const { fromZone: _zone, ...rest } = s;
+  return { ...rest, control: "you" };
 }
 
 /** Creatures that "can't attack you" are, by construction, an OPPONENT's — in a single-deck analysis
@@ -788,6 +820,10 @@ function effectSubject(
       // out particular cards the way a subtype does. Board STATE dressed as a class does not:
       // "attacking", "tapped", "equipped" and "face-down" all parse to a bare creature and stay
       // refused with the whole board, and "nontoken creatures" is the whole board minus tokens.
+      if (action.verb === "grant-ability") {
+        const spells = spellsYouCast(s, who, clauseText);
+        if (spells) return spells as ReturnType<typeof parseSubject>;
+      }
       if (!boundedGrantClass(s)) return parseSubject("");
       return s;
     }
@@ -1411,6 +1447,13 @@ export function deriveAbilities(
 
     const before = abilities.length;
     for (const action of clause.actions ?? []) {
+      // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
+      // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
+      const printedCasualty = action.verb === "none" ? /^casualty (\d+)$/i.exec((action.object ?? "").trim()) : null;
+      if (printedCasualty) {
+        abilities.push({ kind: "on-cast", repeats: "once", effect: { kind: "" }, emits: [casualtySacrifice(Number(printedCasualty[1]))] });
+        continue;
+      }
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.

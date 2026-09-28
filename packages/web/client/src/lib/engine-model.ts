@@ -186,6 +186,9 @@ export function groupName(tag: string): string {
     "copies:activated": "Ability copiers", "creates:treasure": "Treasure makers", "creates:emblem": "Emblems",
     "scales:creature": "Go wide", "scales:land": "Lands matter", "scales:party": "Party",
     "condition:party": "Party synergy",
+    // #681: a count of what you gave away is a Donate deck; a grant to the spells you cast is no tribe.
+    "scales:donated": "Donate", "keyword-grant:spell": "Spell keyword granting",
+    "keyword-grant:instant-sorcery": "Instant and sorcery keyword granting",
   };
   if (exact[tag]) return exact[tag];
   const i = tag.indexOf(":");

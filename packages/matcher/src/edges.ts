@@ -1526,6 +1526,7 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   exileProcessingEdges(s);
   graveyardScalingEdges(s);
   boardCountEdges(s);
+  donatedCountEdges(s);
   countGateEdges(s);
   staticEdges(s);
   triggerDoublingEdges(s);
@@ -2099,6 +2100,40 @@ function boardCountEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   }
 }
 
+// A DONATION FEEDS A COUNT OF WHAT YOU GAVE AWAY (#681). Zedruu the Greathearted counts "permanents
+// you own that your opponents control" (`scalingSubject.owner`), and `boardCountNarrows` rightly
+// refuses every count of an opponent's board -- so this is the one opponent-board count that IS the
+// deck's theme, and it is fed not by a type line but by the act of handing a permanent over: a
+// `gains-control` emit whose GAINER is an opponent (derive reads "target opponent gains control of",
+// Donate, Harmless Offering, Goblin Cadets). A steal (Threaten: you gain it) grows nothing he counts.
+// AN EXCHANGE OF CONTROL gives one of yours away too (Vedalken Plotter, 32 corpus cards); derive
+// types only the permanent you RECEIVE, so the printed "exchange control" is what says it.
+// CEILING: the exchange test reads the whole card's text, so a card with an "exchange control"
+// ability AND an unrelated exchange (life totals) would credit both; none in the corpus 2026-09-28.
+const EXCHANGES_CONTROL = /\bexchange control\b/i;
+/** Does this card hand one of your permanents to an opponent? Shared with the card page's supply
+ *  keys (`supplyKeysOf`), so the deck edge and the page ask the same question. */
+export const givesAPermanentAway = (events: readonly GameEvent[], oracleText: string | undefined): boolean =>
+  events.some((e) => (e.verb === "gains-control" && e.subject.control === "opp")
+    || (e.verb === "exchange" && EXCHANGES_CONTROL.test(oracleText ?? "")));
+function donatedCountEdges({ p, c, pEvents, reasons }: PairScope): void {
+  if (!givesAPermanentAway(pEvents, p.card.oracleText)) return;
+  for (const a of c.tags.abilities) {
+    const counted = a.effect.scalingSubject;
+    if (!counted || counted.owner !== "you" || counted.control !== "opp") continue;
+    reasons.push({
+      tag: "scales:donated",
+      text: `${p.card.name} gives an opponent a permanent you own, and ${c.card.name} counts it`,
+      effectKind: a.effect.kind,
+      repeatability: a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",
+      scaling: a.effect.scaling,
+      consumer: c.card.name,
+      producer: p.card.name,
+    });
+    return; // ONE COUNT PER CARD, however many abilities state it (see `countGateEdges`).
+  }
+}
+
 // A COUNT THE ABILITY IS GATED ON IS THE SAME RELATION, one step before scaling: the producer is
 // one of the things the consumer counts, and below the count the consumer does nothing at all.
 // Started as the win-condition pass -- `win-game` sits in ROLE_NOT_SYNERGY because "this card
@@ -2219,12 +2254,24 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 // The parameter SHADOWS the pair's own `c` on purpose: every guard below must judge the FACE it
 // is asked about, and a body that reached past it to the pair's consumer would answer the
 // sibling-face question with the original face's answer.
+const SPELL_CLASS: ReadonlySet<string> = new Set(["spell", "instant", "sorcery"]);
+function grantsToSpellsYouCast(s: SubjectFilter | undefined): boolean {
+  const types = Array.isArray(s?.type) ? s.type : s?.type ? [s.type] : [];
+  // A GRANT TO ONE TARGET IS NOT A CLASS (review): Recoup's "target sorcery card in your graveyard
+  // gains flashback" is one card, and admitting it linked Recoup to every sorcery in the deck.
+  return s?.control === "you" && s.scope !== "target" && types.length > 0 && types.every((t) => SPELL_CLASS.has(t));
+}
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
     if (!c.tags) return undefined;
 
     const appliesTo = a.kind === "static"
-      || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined);
+      || (a.effect.kind === "clone" && a.effect.subject?.subtype !== undefined)
+      // A GRANT TO THE SPELLS YOU CAST, however it is switched on (owner ruling 2026-09-28, #681):
+      // Yidris hands cascade to your spells from a combat-damage trigger, and the grant applies to
+      // each spell exactly as Anhelo's static casualty does. Derive admits only a spell class you
+      // cast (`spellsYouCast`), so this is never a whole-board anthem.
+      || (a.effect.kind === "keyword-grant" && grantsToSpellsYouCast(a.effect.subject));
     if (!appliesTo || !a.effect.subject) return undefined;
     // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06) — WITH `cost-reduction`
     // REMOVED FROM THAT SET BY THE OWNER, 2026-08-18: "your cost reducing card is as good as many
@@ -2513,7 +2560,10 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     const isToken = p.tags?.characteristics.token === true;
     const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
     const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
-    const narrowType = types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!);
+    // A POWER LINE NARROWS "a creature" THE WAY A SUBTYPE DOES (owner 2026-09-28, casualty): "in
+    // deck like anhelo you need to have fodder with 2 power". `subjectMatches` checks the stat.
+    const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!))
+      || (wanted.stats ?? []).some((st) => st.metric === "power");
     // ON A CARD PAGE NO TOKEN NODE EXISTS (`tokensMediate: false`), so the MAKER stands in for the
     // token it makes: Krenko's Goblins are fodder for Viscera Seer, said on Krenko's row. The deck
     // report keeps the two-hop path through the node, exactly as the entry channel does.

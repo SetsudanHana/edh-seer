@@ -10,7 +10,7 @@ import { segment } from "@edh-seer/tagger/segment";
 import type { Card } from "@edh-seer/engine";
 import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
-import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
+import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
@@ -1105,6 +1105,9 @@ export const boardCountsOf = (d: DeckCard): { key: string; tag: string }[] =>
     const gated = a.thresholdSubject;
     if (gated && a.threshold) counts.push({ counted: gated, tag: `${a.effect?.kind === "win-game" ? "wincon" : "threshold"}:${themeSubjectKey(gated)}` });
     return counts.flatMap(({ counted, tag }) => {
+      // WHAT YOU GAVE AWAY is the one opponent-board count that is this deck's theme (#681, Zedruu);
+      // keyed and tagged exactly as `donatedCountEdges` joins it.
+      if (counted.owner === "you" && counted.control === "opp") return [{ key: DONATED_KEY, tag: "scales:donated" }];
       if (counted.control === "opp") return [];
       const subtypes = (Array.isArray(counted.subtype) ? counted.subtype : counted.subtype === undefined ? [] : [counted.subtype])
         .filter((st) => !BASIC_LAND_TYPE_SET.has(st));
@@ -1141,7 +1144,10 @@ export const supplyKeysOf = (d: DeckCard): string[] => [
   // TOKEN MAKER is fodder by what it makes, creature tokens included -- the engine's maker path
   // under `tokensMediate: false`. A plain creature card never supplies `fodder|-|creature|-`.
   ...fodderSupplyKeysOf(d),
+  // A DONATION supplies Zedruu's count (#681): the same test the deck edge uses.
+  ...(givesAPermanentAway(abilitiesOf(d).flatMap((a) => a.emits ?? []), d.card.oracleText) ? [DONATED_KEY] : []),
 ];
+const DONATED_KEY = "counts|-|donated|-";
 
 const fodderSupplyKeysOf = (d: DeckCard): string[] => {
   const nouns = new Set<string>();

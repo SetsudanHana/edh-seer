@@ -387,6 +387,10 @@ export function emitPhrase(emits: readonly EmitLike[]): string | null {
   }
   const dies = has("dies");
   if (dies && dies.subject.self !== true) return `kills ${noun(dies)}`;
+  // A CONTROL CHANGE AN OPPONENT GAINS IS A GIFT (#681): derive names the GAINER, and for Donate
+  // that is the opponent -- "gains control of a permanent an opponent controls" said the opposite.
+  const given = emits.find((e) => e.verb === "gains-control" && e.subject.control === "opp");
+  if (given) return `gives an opponent control of ${noun(given, false)}`;
   for (const [verb, phrase] of [["taps", "taps"], ["untaps", "untaps"], ["gains-control", "gains control of"]] as const) {
     const e = has(verb);
     // Taking control of what you already control is a misread (Misleading Signpost redirects an attack).

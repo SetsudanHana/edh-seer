@@ -5520,3 +5520,119 @@ describe("Prepared (CR 722.3; owner ruling 2026-09-27)", () => {
     expect(directedReasons(bolt, codie, H)).toEqual([]);
   });
 });
+
+/** A DONATION FEEDS A COUNT OF WHAT YOU GAVE AWAY (#681). Zedruu the Greathearted draws and gains
+ *  life per "permanent you own that your opponents control"; Harmless Offering ("target opponent
+ *  gains control of target permanent you control") is how that number grows. Political Puppets is
+ *  built on exactly this, and Zedruu linked to none of it. */
+const countsDonated = () => base("Zedruu the Greathearted", [{
+  kind: "triggered", repeats: "per-cycle",
+  trigger: { verbs: ["upkeep"], subject: { control: "you", token: null } },
+  effect: {
+    kind: "draw-card", scaling: "per-permanent",
+    scalingSubject: { type: "permanent", zone: "battlefield", control: "opp", owner: "you", token: null, scope: "all" },
+    subject: { control: "you", token: null },
+  },
+  emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+}] as unknown as CardTags["abilities"]);
+const donates = (name = "Harmless Offering") => base(name, [{
+  kind: "on-cast",
+  effect: { kind: "" },
+  // THE GAINER IS THE OPPONENT: derive reads "target opponent gains control of" as theirs.
+  emits: [{ verb: "gains-control", subject: { control: "opp", token: null, type: "permanent", scope: "target" } }],
+}] as unknown as CardTags["abilities"]);
+// A STEAL, AS DERIVE WRITES IT: the gainer is you.
+const steals = () => base("Threaten", [{
+  kind: "on-cast",
+  effect: { kind: "" },
+  emits: [{ verb: "gains-control", subject: { control: "you", token: null, type: "creature", scope: "target" } }],
+}] as unknown as CardTags["abilities"]);
+
+test("a card that gives your permanent to an opponent feeds a count of permanents you own that they control", () => {
+  const r = directedReasons(donates(), countsDonated(), H).find((x) => x.tag === "scales:donated");
+  expect(r?.text).toBe("Harmless Offering gives an opponent a permanent you own, and Zedruu the Greathearted counts it");
+  expect(r?.producer).toBe("Harmless Offering");
+  expect(r?.consumer).toBe("Zedruu the Greathearted");
+});
+
+test("taking an opponent's permanent is not a donation, and the count does not run backwards", () => {
+  expect(directedReasons(steals(), countsDonated(), H).some((x) => x.tag === "scales:donated")).toBe(false);
+  expect(directedReasons(countsDonated(), donates(), H).some((x) => x.tag === "scales:donated")).toBe(false);
+});
+
+/** AN EXCHANGE OF CONTROL GIVES ONE OF YOURS AWAY (#681). Vedalken Plotter "exchange[s] control of
+ *  target land you control and target land an opponent controls"; derive types only the land you
+ *  receive, so the printed "exchange control" is what says a permanent of yours changed hands. */
+test("an exchange of control feeds a count of permanents you own that opponents control", () => {
+  const plotter = base("Vedalken Plotter", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "" },
+    emits: [{ verb: "exchange", subject: { control: "opp", token: null, type: "land", scope: "target" } }],
+  }] as unknown as CardTags["abilities"]);
+  (plotter.card as { oracleText: string }).oracleText = "When this creature enters, exchange control of target land you control and target land an opponent controls.";
+  expect(directedReasons(plotter, countsDonated(), H).some((x) => x.tag === "scales:donated")).toBe(true);
+  // AN EXCHANGE OF LIFE TOTALS IS NOT A GIFT (Tree of Redemption).
+  const tree = base("Tree of Redemption", [{ kind: "activated", effect: { kind: "" }, emits: [{ verb: "exchange", subject: { control: "you", token: null } }] }] as unknown as CardTags["abilities"]);
+  (tree.card as { oracleText: string }).oracleText = "{T}: Exchange your life total with this creature's toughness.";
+  expect(directedReasons(tree, countsDonated(), H).some((x) => x.tag === "scales:donated")).toBe(false);
+});
+
+/** A GRANT TO THE SPELLS YOU CAST LINKS EVERY MATCHING SPELL (owner ruling 2026-09-28, #681), the
+ *  shape a cost reducer already has. Anhelo's casualty is static; Yidris's cascade is granted by a
+ *  combat-damage trigger, which the static pass never saw. */
+const spellCard = (name: string, type: string) => {
+  const d = base(name, []);
+  d.tags.characteristics.types = [type];
+  return d;
+};
+test("a grant to spells you cast reaches each matching spell in the deck, and nothing else", () => {
+  const anhelo = base("Anhelo, the Painter", [{
+    kind: "static", repeats: "continuous",
+    effect: { kind: "keyword-grant", subject: { type: ["instant", "sorcery"], control: "you", token: null, scope: "each" } },
+  }] as unknown as CardTags["abilities"]);
+  const yidris = base("Yidris, Maelstrom Wielder", [{
+    kind: "triggered", repeats: "per-cycle",
+    trigger: { verbs: ["combat-damage"], subject: { self: true, control: "you", token: null } },
+    effect: { kind: "keyword-grant", subject: { type: "spell", control: "you", token: null, scope: "all" } },
+  }] as unknown as CardTags["abilities"]);
+  const links = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).some((r) => r.producer === p.card.name);
+  expect(links(anhelo, spellCard("Lightning Bolt", "instant"))).toBe(true);
+  expect(links(anhelo, spellCard("Grizzly Bears", "creature"))).toBe(false);
+  expect(links(yidris, spellCard("Grizzly Bears", "creature"))).toBe(true);
+  expect(links(yidris, spellCard("Forest", "land"))).toBe(false);
+});
+
+/** CASUALTY'S FODDER IS A CREATURE WITH ENOUGH POWER (owner 2026-09-28): "in deck like anhelo you
+ *  need to have fodder with 2 power". The power line narrows "a creature" the way a subtype does, and
+ *  the expendable rule still holds: a token, or a cheap nonlegendary card. */
+test("casualty 2 eats a cheap creature or a token with power 2 or more, and nothing weaker", () => {
+  const anhelo = base("Anhelo, the Painter", [{
+    kind: "static", repeats: "continuous",
+    effect: { kind: "keyword-grant", subject: { type: ["instant", "sorcery"], control: "you", token: null } },
+    emits: [{ verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 2 }] } }],
+  }] as unknown as CardTags["abilities"]);
+  const body = (name: string, power: string, cmc: number, extra: Partial<CardTags["characteristics"]> = {}) => {
+    const d = base(name, []);
+    Object.assign(d.tags.characteristics, { power, toughness: "2", cmc, ...extra });
+    (d.card as { manaValue: number }).manaValue = cmc;
+    return d;
+  };
+  const fodder = (p: ReturnType<typeof base>) => directedReasons(p, anhelo, H).some((r) => r.tag.startsWith("fodder:"));
+  expect(fodder(body("Bear Cub", "2", 2))).toBe(true);
+  expect(fodder(body("Goblin Token", "2", 0, { token: true }))).toBe(true);
+  expect(fodder(body("Llanowar Elves", "1", 1))).toBe(false);
+  expect(fodder(body("Big Legend", "5", 5, { types: ["legendary", "creature"] }))).toBe(false);
+});
+
+/** A GRANT TO ONE TARGET IS NOT A CLASS (#681 review): Recoup's "target sorcery card in your
+ *  graveyard gains flashback" derives {sorcery, you, scope: target} through the typed-grant gate, and
+ *  admitting every non-static spell grant linked it to every sorcery in the deck. */
+test("a one-target grant to a spell type links to no class of the deck", () => {
+  const recoup = base("Recoup", [{
+    kind: "on-cast",
+    effect: { kind: "keyword-grant", subject: { type: "sorcery", control: "you", token: null, scope: "target" } },
+  }] as unknown as CardTags["abilities"]);
+  const sorcery = base("Rampant Growth", []);
+  sorcery.tags.characteristics.types = ["sorcery"];
+  expect(directedReasons(recoup, sorcery, H).some((r) => r.producer === "Recoup")).toBe(false);
+});

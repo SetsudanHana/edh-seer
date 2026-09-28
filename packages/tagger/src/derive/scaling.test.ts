@@ -136,3 +136,16 @@ test("a board count keeps the subtype qualifier that follows 'you control'", () 
   // Nothing after "you control": unchanged.
   expect(scalingSubject({ verb: "modify-pt", object: "this creature", amount: "+1/+1 for each Goblin you control" })).toMatchObject({ subtype: "goblin", control: "you" });
 });
+
+/** "PERMANENTS YOU OWN THAT YOUR OPPONENTS CONTROL" COUNTS WHAT YOU GAVE AWAY (#681). Zedruu the
+ *  Greathearted: "you gain X life and draw X cards, where X is the number of permanents you own that
+ *  your opponents control". The `opponents?` row claimed it as per-opponent, and no subject was read,
+ *  so the donate cards his precon is built on fed nothing. */
+test("a count of permanents you own under an opponent's control is a board count with an owner", () => {
+  const clause = "At the beginning of your upkeep, you gain X life and draw X cards, where X is the number of permanents you own that your opponents control.";
+  const draw = { verb: "draw", amount: "X", object: "you" };
+  expect(actionScaling(draw, clause)).toBe("per-permanent");
+  expect(scalingSubject(draw, clause)).toMatchObject({ type: "permanent", zone: "battlefield", control: "opp", owner: "you" });
+  // "an opponent controls" without ownership stays what it was: counting opponents' boards is not ours.
+  expect(actionScaling({ verb: "draw", amount: "for each opponent" })).toBe("per-opponent");
+});

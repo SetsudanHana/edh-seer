@@ -30,6 +30,10 @@ const GRAVEYARD_COUNT = /\bin (?:your|a|an|each|their|all|its owner's) [^.,;]{0,
  *  the one thing his deck is built around was invisible to every layer that reads either. */
 const BATTLEFIELD_COUNT = /\b(?:you control|on the battlefield)\b/i;
 
+/** YOURS, UNDER AN OPPONENT'S CONTROL (CR 110.2 owner vs controller): "permanents you own that your
+ *  opponents control". 4 corpus cards print the count or its twin (Zedruu, Coveted Falcon). */
+const DONATED_COUNT = /\byou own that (?:your )?opponents? controls?\b/i;
+
 /** Order matters. A graveyard count is per-graveyard even when the thing counted is a creature --
  *  SCALING_ALIASES maps "per-graveyard-creature" to per-graveyard, so that is the canonical reading
  *  and it must be tested before per-creature can claim Diregraf Colossus. */
@@ -41,6 +45,9 @@ const BASES: [RegExp, ScalingBasis][] = [
   // cards. A false basis is not inert: impact.ts weights by it, buckets.ts and wincon.ts read it.
   // "into" is excluded for free by requiring a space after "in".
   [GRAVEYARD_COUNT, "per-graveyard"],
+  // WHAT YOU OWN UNDER SOMEONE ELSE'S CONTROL IS A BOARD, NOT A HEADCOUNT (#681): Zedruu counts
+  // "permanents you own that your opponents control", and the opponent row below claimed it.
+  [DONATED_COUNT, "per-permanent"],
   [/\bopponents?\b|\bplayers? in the game\b|\beach player\b/i, "per-opponent"],
   [/\bcreatures?\b/i, "per-creature"],
   [/\b(?:permanents?|artifacts?|enchantments?|lands?|devotion)\b/i, "per-permanent"],
@@ -120,6 +127,11 @@ export function scalingSubject(action: Action, clauseText?: string): SubjectFilt
       : /\ball graveyards?\b|\beach graveyard\b/i.test(noun) ? "any"
       : "you";
     return subject;
+  }
+
+  if (DONATED_COUNT.test(noun)) {
+    const subject = parseSubject(noun.split(/\s{1,4}you own\b/i)[0]!);
+    return { ...subject, zone: "battlefield", control: "opp", owner: "you" };
   }
 
   if (PARTY.test(noun)) return { type: "creature", subtype: PARTY_TYPES, zone: "battlefield", control: "you", token: null };

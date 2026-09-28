@@ -3212,3 +3212,58 @@ test("a grant whose clause 'becomes prepared' is a prepare -- that grant only", 
   expect(emitVerbs(two).filter((v) => v === "prepared")).toHaveLength(1);
   expect(two.abilities.some((a) => a.effect.kind === "keyword-grant")).toBe(true);
 });
+
+/** A GRANT TO THE SPELLS YOU CAST NAMES THEM (#681; owner ruling 2026-09-28: it links to every
+ *  matching spell, the shape cost reducers already have). Anhelo, the Painter and Yidris, Maelstrom
+ *  Wielder derived a keyword-grant with no recipient, so their precons read 0 commander links. */
+test("a grant to spells you cast recovers the spell class, like a cost reducer's subject", () => {
+  const anhelo = deriveAbilities([{
+    id: 2, abilityType: "static",
+    actions: [{ verb: "grant-ability", object: "casualty 2" }],
+  }], "Anhelo, the Painter", { 2: "The first instant or sorcery spell you cast each turn has casualty 2." });
+  expect(anhelo.abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject)
+    .toMatchObject({ type: ["instant", "sorcery"], control: "you" });
+
+  const yidris = deriveAbilities([{
+    id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "Yidris", control: "you" },
+    actions: [{ verb: "grant-ability", object: "spells cast from your hand this turn gain cascade" }],
+  }], "Yidris, Maelstrom Wielder", { 2: "Whenever Yidris deals combat damage to a player, as you cast spells from your hand this turn, they gain cascade." });
+  expect(yidris.abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject)
+    .toMatchObject({ type: "spell", control: "you" });
+
+  // A grant to every CREATURE stays refused (the go-wide ruling covers attack payoffs and counts,
+  // not anthem grants): only a class of spells you cast is admitted.
+  const generic = deriveAbilities([{
+    id: 1, abilityType: "static",
+    actions: [{ verb: "grant-ability", object: "haste" }],
+  }], "Fervor", { 1: "Creatures you control have haste." });
+  expect(generic.abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject).toBeUndefined();
+});
+
+/** A SPELL GRANT WHOSE CLASS THE FILTER CANNOT HOLD STAYS REFUSED (#681 audit of all 39). "From your
+ *  hand" is every spell you cast in practice, so Yidris keeps it; "from exile", "multicolored",
+ *  "exactly three colors" and "if mana from an artifact was spent" narrow to cards the subject would
+ *  not name, and linking every spell would be a silent wrong answer. */
+test("a spell grant narrowed by zone, colour count or spent mana is refused, not widened", () => {
+  const grant = (name: string, text: string) => deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "grant-ability", object: "cascade" }] }], name, { 1: text })
+    .abilities.find((a) => a.effect.kind === "keyword-grant")?.effect.subject;
+  expect(grant("Hoarding Broodlord", "Spells you cast from exile have convoke.")).toBeUndefined();
+  expect(grant("The Twelfth Doctor", "The first spell you cast from anywhere other than your hand each turn has demonstrate.")).toBeUndefined();
+  expect(grant("Fallaji Wayfarer", "Multicolored spells you cast have convoke.")).toBeUndefined();
+  expect(grant("Threefold Signal", "Each spell you cast that's exactly three colors has replicate {3}.")).toBeUndefined();
+  expect(grant("Shadow the Hedgehog", "Each spell you cast has split second if mana from an artifact was spent to cast it.")).toBeUndefined();
+  expect(grant("Maelstrom Nexus", "The first spell you cast each turn has cascade.")).toMatchObject({ type: "spell", control: "you" });
+  expect(grant("Quandrix, the Proof", "Instant and sorcery spells you cast from your hand have cascade.")).toMatchObject({ type: ["instant", "sorcery"], control: "you" });
+});
+
+/** A PRINTED "Casualty 2" is the same outlet on the spell itself (Make Disappear; 18 corpus cards).
+ *  Scryfall's keyword list drops the number, so it is read from the keyword line. */
+test("a printed casualty keyword line derives an on-cast sacrifice of a creature with that power", () => {
+  const r = deriveAbilities([
+    { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Casualty 1" }] },
+    { id: 2, abilityType: "spell", actions: [{ verb: "counter", object: "target spell" }] },
+  ], "Make Disappear", { 1: "Casualty 1", 2: "Counter target spell unless its controller pays {2}." });
+  const sac = r.abilities.flatMap((a) => (a.emits ?? []).map((e) => ({ kind: a.kind, e }))).find((x) => x.e.verb === "sacrifice");
+  expect(sac?.kind).toBe("on-cast");
+  expect(sac?.e.subject).toMatchObject({ type: "creature", control: "you", stats: [{ metric: "power", op: "gte", value: 1 }] });
+});
