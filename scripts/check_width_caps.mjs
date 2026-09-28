@@ -20,7 +20,7 @@
  *
  *  Run: node scripts/check_width_caps.mjs [--self-test]
  *  Node built-ins only, no install step. */
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -101,11 +101,21 @@ export function check(found, allow) {
 }
 
 function walk(p, out) {
-  const abs = join(ROOT, p);
-  let st;
-  try { st = statSync(abs); } catch { return; }
-  if (st.isDirectory()) for (const n of readdirSync(abs)) walk(join(p, n), out);
-  else if (/\.(tsx?|css|html)$/.test(p)) out.push([p, readFileSync(abs, "utf8")]);
+  const want = (name) => /\.(tsx?|css|html)$/.test(name);
+  let entries;
+  try {
+    entries = readdirSync(join(ROOT, p), { withFileTypes: true });
+  } catch {
+    // Not a directory: a single file named in SCAN. Read it directly, no stat first (a stat-then-read
+    // is a file-system race, CodeQL js/file-system-race).
+    if (want(p)) { try { out.push([p, readFileSync(join(ROOT, p), "utf8")]); } catch { /* absent */ } }
+    return;
+  }
+  for (const e of entries) {
+    const q = join(p, e.name);
+    if (e.isDirectory()) walk(q, out);
+    else if (e.isFile() && want(e.name)) out.push([q, readFileSync(join(ROOT, q), "utf8")]);
+  }
 }
 
 function selfTest() {
