@@ -77,3 +77,21 @@ test("a pair with a tag passes only on a reason carrying exactly that tag", () =
   expect(classifyPair(donate, [reason({ tag: "scales:donated" })], dc("Goblin Cadets", true), dc("Zedruu", true)).status).toBe("PASS");
   expect(classifyPair(donate, [reason({ tag: "scales:permanent", effectKind: "drain" })], dc("Goblin Cadets", true), dc("Zedruu", true)).status).toBe("WRONG-REASON");
 });
+
+/** A PAIR CAN PIN THE LINK'S DIRECTION, BADGE AND WORDING (the #500/#506/#518/#530/#560 backfill):
+ *  those fixes changed no tag, only whether a link reads EVERY TIME, once, or once a turn, and what its
+ *  sentence says -- so a tag-only pair would still pass if they regressed. */
+test("a pair's producer, repeatability, perTurn and wording must all match the same reason", () => {
+  const p: CompassPair = { a: "Summon: Fenrir", b: "Yuna, Grand Summoner", category: "repeat-label", tag: "cast:creature", producer: "Summon: Fenrir", repeatability: "activated", note: "", source: "test", verified: true };
+  const a = dc("Summon: Fenrir", true), b = dc("Yuna", true);
+  const fenrir = reason({ tag: "cast:creature", producer: "Summon: Fenrir", repeatability: "activated" });
+  const yuna = reason({ tag: "cast:creature", producer: "Yuna, Grand Summoner", repeatability: "oneshot" });
+  expect(classifyPair(p, [yuna, fenrir], a, b).status).toBe("PASS");
+  expect(classifyPair(p, [yuna, { ...fenrir, repeatability: "triggered" }], a, b).status).toBe("WRONG-REASON");
+  const perTurn: CompassPair = { ...p, producer: undefined, repeatability: undefined, perTurn: true };
+  expect(classifyPair(perTurn, [fenrir], a, b).status).toBe("WRONG-REASON");
+  expect(classifyPair(perTurn, [{ ...fenrir, perTurn: true }], a, b).status).toBe("PASS");
+  const says: CompassPair = { ...p, producer: undefined, repeatability: undefined, says: "on itself" };
+  expect(classifyPair(says, [{ ...fenrir, text: "puts that many growth counters on itself" }], a, b).status).toBe("PASS");
+  expect(classifyPair(says, [{ ...fenrir, text: "puts that many counters on a permanent" }], a, b).status).toBe("WRONG-REASON");
+});

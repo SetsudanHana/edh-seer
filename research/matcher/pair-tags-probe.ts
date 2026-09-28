@@ -21,7 +21,7 @@ for (const arg of process.argv.slice(2)) {
   const A = await dc(a!), B = await dc(b!);
   if (!A || !B) { console.log(`${arg}: NOT FOUND ${!A ? a : b}`); continue; }
   const rs = pairReasons(A, B, h);
-  const tags = [...new Map(rs.map((r) => [`${r.tag} [${r.repeatability ?? "-"}] ${r.producer}->${r.consumer}`, r])).keys()];
+  const tags = [...new Map(rs.map((r) => [`${r.tag} [${r.repeatability ?? "-"}${r.perTurn ? ",per-turn" : ""}] ${r.producer}->${r.consumer}`, r])).keys()];
   console.log(`${arg}: ${tags.join(" | ") || "(none)"}`);
 }
 await store.close();

@@ -15,6 +15,13 @@ export interface CompassPair {
    *  names -- a donation (`scales:donated`), a grant to spells -- is keyed here rather than by adding a
    *  category to the product just to measure it. The anti-pairs have always been keyed this way. */
   tag?: string;
+  /** WHICH WAY, WHAT BADGE, WHAT WORDS (the #500/#506/#518/#530/#560 backfill): fixes that changed no
+   *  tag, only whether a link reads EVERY TIME, once or once a turn, and what its sentence says. Each
+   *  must hold on the SAME reason as the tag. */
+  producer?: string;
+  repeatability?: string;
+  perTurn?: boolean;
+  says?: string;
   note: string;
   source: string;
   verified: boolean;
@@ -40,7 +47,11 @@ function themeTagCount(dc: DeckCard): number {
 
 /** Classify a gold pair from its emitted reasons and the two cards' tag state. */
 export function classifyPair(pair: CompassPair, reasons: Reason[], a: DeckCard, b: DeckCard): Outcome {
-  const matched = reasons.find((r) => (pair.tag !== undefined ? r.tag === pair.tag : categoryMatches(r, pair.category as MechanismCategory)));
+  const matched = reasons.find((r) => (pair.tag !== undefined ? r.tag === pair.tag : categoryMatches(r, pair.category as MechanismCategory))
+    && (pair.producer === undefined || r.producer === pair.producer)
+    && (pair.repeatability === undefined || r.repeatability === pair.repeatability)
+    && (pair.perTurn === undefined || (r.perTurn === true) === pair.perTurn)
+    && (pair.says === undefined || r.text.includes(pair.says)));
   if (matched) return { status: "PASS", matchedReason: matched, reasons };
   if (reasons.length > 0) return { status: "WRONG-REASON", reasons };
   const noEdgeCause: NoEdgeCause =

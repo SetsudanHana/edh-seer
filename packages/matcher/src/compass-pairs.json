@@ -591,5 +591,88 @@
     "note": "a flicker re-uses a creature with an enters ability (owner ruling 2026-09-27)",
     "source": "#571 fix (compass backfill 2026-09-28)",
     "verified": true
+  },
+  {
+    "a": "Summon: Fenrir",
+    "b": "Yuna, Grand Summoner",
+    "category": "repeat-label",
+    "tag": "cast:creature",
+    "producer": "Summon: Fenrir",
+    "repeatability": "activated",
+    "note": "a paid mana ability is activated, never EVERY TIME",
+    "source": "#500 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
+  },
+  {
+    "a": "Rumor Gatherer",
+    "b": "Thwart the Grave",
+    "category": "repeat-label",
+    "tag": "scales:party",
+    "repeatability": "oneshot",
+    "says": "When you cast Thwart the Grave",
+    "note": "a spell counts its party as it is cast, once",
+    "source": "#506 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
+  },
+  {
+    "a": "Gonti, Lord of Luxury",
+    "b": "Archpriest of Iona",
+    "category": "repeat-label",
+    "tag": "scales:party",
+    "repeatability": "static",
+    "note": "a permanent's party count is always on",
+    "source": "#506 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
+  },
+  {
+    "a": "Yuna, Grand Summoner",
+    "b": "Hardened Scales",
+    "category": "wording",
+    "tag": "counter-added:creature",
+    "says": "puts one more +1/+1 counter on it",
+    "note": "the replacement adds one more +1/+1 counter, not 'N+1 counters on something'",
+    "source": "#518 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
+  },
+  {
+    "a": "Yuna, Grand Summoner",
+    "b": "Terrasymbiosis",
+    "category": "repeat-label",
+    "tag": "counter-added:creature",
+    "perTurn": true,
+    "note": "Terrasymbiosis does it only once each turn",
+    "source": "#518 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
+  },
+  {
+    "a": "Inalla, Archmage Ritualist",
+    "b": "Mogg Bombers",
+    "category": "repeat-label",
+    "tag": "enters:creature",
+    "repeatability": "oneshot",
+    "note": "Mogg Bombers sacrifices itself in the trigger: once",
+    "source": "#530 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
+  },
+  {
+    "a": "Setessan Champion",
+    "b": "Simic Ascendancy",
+    "category": "wording",
+    "tag": "counter-added:creature",
+    "says": "growth counters on itself",
+    "note": "its growth counters land on itself, not on a permanent that helps the board",
+    "source": "#560 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
+  },
+  {
+    "a": "Simic Ascendancy",
+    "b": "Setessan Champion",
+    "category": "repeat-label",
+    "tag": "enters:enchantment",
+    "producer": "Simic Ascendancy",
+    "repeatability": "oneshot",
+    "note": "a card's own entry links once",
+    "source": "#560 fix (compass backfill 2026-09-28: a badge or wording no tag shows)",
+    "verified": true
   }
 ]
