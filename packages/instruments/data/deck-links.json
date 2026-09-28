@@ -1,0 +1,7 @@
+[
+  { "deck": "packages/cli/decks/calibration/enchanting-rani.txt", "from": "Asinine Antics", "to": "token:Cursed Role", "tag": "creates:role", "issue": 564, "why": "Asinine Antics makes Cursed Role tokens, Auras you control." },
+  { "deck": "packages/cli/decks/calibration/enchanting-rani.txt", "from": "token:Cursed Role", "to": "Doomwake Giant", "tag": "enters:enchantment", "issue": 564, "why": "Each Role entering is an enchantment entering, which Doomwake Giant's constellation watches." },
+  { "deck": "packages/cli/decks/calibration/yuna-grand-summoner.txt", "from": "Summon: Fat Chocobo", "to": "token:Bird", "tag": "creates:bird", "issue": 519, "why": "Fat Chocobo makes the Bird token that carries the landfall trigger." },
+  { "deck": "packages/cli/decks/calibration/yuna-grand-summoner.txt", "from": "Summon: Fenrir", "to": "token:Bird", "tag": "enters:land", "issue": 519, "why": "Fenrir's chapter I puts a land onto the battlefield, feeding the Bird's landfall (owner: tokens stay nodes)." },
+  { "deck": "packages/cli/decks/precon-party-time.txt", "from": "Nalia de'Arnise", "to": "Folk Hero", "tag": "cast:rogue", "issue": 559, "why": "Nalia lets you cast Rogues from the top of your library; each is a spell sharing the commander's type, which Folk Hero's granted draw watches." }
+]
