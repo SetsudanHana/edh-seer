@@ -3267,3 +3267,22 @@ test("a printed casualty keyword line derives an on-cast sacrifice of a creature
   expect(sac?.kind).toBe("on-cast");
   expect(sac?.e.subject).toMatchObject({ type: "creature", control: "you", stats: [{ metric: "power", op: "gte", value: 1 }] });
 });
+
+/** AN "OR" LIMB THE CLAUSE LAYER CANNOT HOLD IS A TWIN TRIGGER (compass misses, 2026-09-28). Syr
+ *  Konrad triggers on three limbs, and a ClauseRecord trigger holds ONE event, so the stored clause
+ *  kept only "another creature dies" and every mill card lost its link. Each extra limb derives a twin
+ *  with the same effect, in the shape a single-limb card of that event already derives. */
+test("Syr Konrad's 'or put into a graveyard from anywhere' and 'or leaves your graveyard' limbs are twin triggers", () => {
+  const konrad = deriveAbilities([{
+    id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "another creature", control: "any" },
+    actions: [{ verb: "deal-damage", object: "each opponent", amount: "1" }],
+  }], "Syr Konrad, the Grim", { 1: "Whenever another creature dies, or a creature card is put into a graveyard from anywhere other than the battlefield, or a creature card leaves your graveyard, Syr Konrad deals 1 damage to each opponent." });
+  const triggers = konrad.abilities.filter((a) => a.effect.kind === "damage").map((a) => a.trigger);
+  expect(triggers.map((t) => t?.verbs[0])).toEqual(["dies", "enters-graveyard", "leaves"]);
+  expect(triggers[1]?.subject).toMatchObject({ type: "creature", control: "any" });
+  expect(triggers[2]?.subject).toMatchObject({ type: "creature", control: "you", zone: "graveyard" });
+  // A single-limb trigger derives no twin.
+  const one = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "another creature", control: "any" }, actions: [{ verb: "draw", object: "you", amount: "1" }] }],
+    "Test", { 1: "Whenever another creature dies, draw a card." });
+  expect(one.abilities.filter((a) => a.trigger).length).toBe(1);
+});
