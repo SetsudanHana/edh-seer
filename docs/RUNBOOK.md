@@ -212,7 +212,7 @@ npm run deploy:indexnow -w @edh-seer/web    # tell search engines which pages ch
 ```
 
 After a UI change, regenerate the README and /how-it-works screenshots and the README demo before
-the PR (`npm run screenshots -w @edh-seer/web`, `npm run demo-gif -w @edh-seer/web`, see
+the PR (`npm run screenshots -w @edh-seer/web`, `npm run demo -w @edh-seer/web`, see
 [CONTRIBUTING](../CONTRIBUTING.md#screenshots)).
 
 The custom domain lags the deployment alias by about a minute, so one stale read straight after

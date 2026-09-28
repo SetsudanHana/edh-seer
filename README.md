@@ -26,7 +26,7 @@ that says why.** Free, no account, nothing stored. Paste a list, or a Moxfield o
 **[edhseer.cards](https://edhseer.cards)**.
 
 <p align="center">
-  <a href="https://edhseer.cards"><img src="docs/images/demo.gif" width="880" alt="A Krenko, Mob Boss decklist is pasted and analysed. The report scrolls to what Krenko works with: a ring of Goblins around him. Goblin Warchief is tapped and opens in a drawer with its text and what it works with. Then the deck's biggest theme is opened on its key cards, and the suggestions."></a>
+  <a href="https://edhseer.cards"><img src="docs/images/demo.webp" width="880" alt="A Krenko, Mob Boss decklist is pasted and analysed. The report opens on Krenko's map: the Goblins he works with around him, their links running, with a key of what links them. Goblin Warchief's links light up, it opens in a side drawer with its card and links, and the map walks to it. One more step to Goblin King, drawn as a gold path, then back to Krenko along it."></a>
 </p>
 
 ## What you get
@@ -65,7 +65,7 @@ how well its cards work together and which swaps make them work together more; a
 what works with it, over every card a deck it leads could legally hold.
 
 <p align="center">
-  <a href="https://edhseer.cards/precons/"><img src="docs/images/browse.gif" width="880" alt="The precons page. Multiverse Reforged is opened: its theme, synergy and bracket, a map of what Jace works with, and four swaps, each card out beside the card in. Then the site search finds Krenko, Mob Boss, and his commander page shows the cards that work with him on a map."></a>
+  <a href="https://edhseer.cards/precons/"><img src="docs/images/browse.webp" width="880" alt="The precons page. Multiverse Reforged is opened: its theme, synergy and bracket, a map of what Jace works with, and four swaps, each card out beside the card in. Then the site search finds Krenko, Mob Boss, and his commander page shows the cards that work with him on a map."></a>
 </p>
 
 | A page per commander | A page per precon |
