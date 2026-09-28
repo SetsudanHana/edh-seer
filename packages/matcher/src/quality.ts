@@ -60,9 +60,12 @@ export function roleAbilities(d: DeckCard, role: Role): Ability[] {
 
 /** Once 0 < per cycle 1 < per turn 2 < unbounded trigger 3 < at will 4 (owner ladder, 2026-09-23). */
 function frequencyOf(a: Ability): number {
-  if (a.kind === "activated") return a.repeats === "once" ? 0 : 4;
+  if (a.repeats === "once") return 0;
+  // A {T} ACTIVATION IS PER CYCLE, NOT AT WILL (#691): derive labels it `per-cycle`, and reading only
+  // `once` put Loreseeker's Stone and Jalum Tome in Ashnod's Altar's class, at the top of draw.
   if (a.repeats === "per-cycle") return 1;
   if (a.repeats === "per-turn") return 2;
+  if (a.kind === "activated") return 4;
   if (a.repeats === "repeatable" || a.repeats === "continuous") return 3;
   return 0;
 }
@@ -172,13 +175,11 @@ export function ingredients(d: DeckCard, role: Role): Ingredients {
   return out;
 }
 
-/** THE RAW SCORE: the fitted weights over the ingredients present. `null` without mana value or
- *  timing -- the two every role reads -- so no card is ranked on a guess. A fallback role reads only
- *  those two. */
+/** THE RAW SCORE: the role's weights -- fitted, or the fallback's -- over the ingredients present.
+ *  `null` without mana value or timing, the two every role reads, so no card is ranked on a guess. */
 export function qualityScore(ing: Ingredients, w: RoleWeights): number | null {
   if (ing.manaValue === undefined || ing.timing === undefined) return null;
-  const keys = (w.fallback ? ["manaValue", "timing"] : Object.keys(w.weights)) as Ingredient[];
-  return keys.reduce((s, k) => s + (ing[k] !== undefined ? (w.weights[k] ?? 0) * ing[k]! : 0), 0);
+  return (Object.keys(w.weights) as Ingredient[]).reduce((s, k) => s + (ing[k] !== undefined ? w.weights[k]! * ing[k]! : 0), 0);
 }
 
 /** The committed fit (`bin/gen-quality-weights.ts`). */

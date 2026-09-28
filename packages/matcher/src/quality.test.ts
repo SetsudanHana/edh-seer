@@ -24,7 +24,8 @@ test("manaValue, timing and frequency", () => {
   expect(swords.frequency).toBe(0);        // once
   expect(ingredients(dc("Wrath of God"), "boardWipe").timing).toBe(0); // sorcery
   expect(ingredients(dc("Crib Swap"), "targetedRemoval").manaValue).toBe(3); // corpus value (the plan said 6, from memory)
-  expect(ingredients(dc("Mind Stone"), "ramp").frequency).toBeGreaterThan(0); // a repeatable mana ability
+  // A {T} MANA ABILITY IS PER CYCLE (1), not at will (4) -- the class of a free sacrifice outlet (#691).
+  expect(ingredients(dc("Mind Stone"), "ramp").frequency).toBe(1);
 });
 
 test("a modal spell // land keeps its mana value and instant timing (its removal ability carries no face index: CEILING)", () => {

@@ -58,7 +58,7 @@ const lines = [
   "",
   "Mark any card whose position in its role is wrong, and why. Nothing reads these scores until this sheet is judged.",
   "",
-  `Weights fitted at DERIVE ${w.deriveVersion}, RULES ${w.rulesVersion}. A FALLBACK role is scored on mana value and timing only.`,
+  `Weights fitted at DERIVE ${w.deriveVersion}, RULES ${w.rulesVersion}. A FALLBACK role is scored on its fallback: mana value then timing for an answer, frequency class then rate then mana value then timing for an effect.`,
 ];
 for (const role of ROLES as readonly Role[]) {
   const rows = used.filter((d) => rolesOfCard(d).includes(role))
@@ -73,7 +73,7 @@ for (const role of ROLES as readonly Role[]) {
   rows.forEach((r, i) => lines.push(`| ${i + 1} | ${r.d.card.name} | ${r.s!.toFixed(2)} | ${Object.entries(r.ing).map(([k, v]) => `${k} ${v}`).join(", ")} | ${r.n} | |`));
   htmlRoles.push({
     role, fallback: rw.fallback,
-    note: `${rw.fallback ? "Scored on mana value and timing only (the fit did not beat mana value alone). " : "Scored on the fitted weights. "}Held-out: fit ${(100 * rw.heldOutAccuracy).toFixed(1)}%, mana value ${(100 * rw.baselineAccuracy).toFixed(1)}%, fallback ${(100 * rw.fallbackAccuracy).toFixed(1)}%, from ${rw.pairs} player swaps.`,
+    note: `${rw.fallback ? `Scored on the fallback ${JSON.stringify(rw.weights)} (the fit did not beat mana value alone). ` : "Scored on the fitted weights. "}Held-out: fit ${(100 * rw.heldOutAccuracy).toFixed(1)}%, mana value ${(100 * rw.baselineAccuracy).toFixed(1)}%, fallback ${(100 * rw.fallbackAccuracy).toFixed(1)}%, from ${rw.pairs} player swaps.`,
     cards: rows.map((r) => {
       const card = r.d.card as { name: string; manaCost?: string; typeLine?: string; oracleText?: string };
       return { name: card.name, cost: card.manaCost ?? "", typeLine: card.typeLine ?? "", oracle: card.oracleText ?? "", percentile: pctOf.get(card.name)?.get(role) ?? -1, ingredients: r.ing as Record<string, number>, preconLists: r.n };

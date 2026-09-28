@@ -34,3 +34,11 @@ test("among staples, play rate orders the role, even against the ingredients", (
   const t = qualityTable(cards, staples);
   expect(t.get("Crib Swap")!.get("targetedRemoval")!).toBeGreaterThan(t.get("Path to Exile")!.get("targetedRemoval")!);
 });
+
+test("a staple outranks the frequency ladder too: its scores run into the millions (#691)", () => {
+  // Mind Stone is a per-cycle mana ability, so the ramp ladder scores it above 1e6; the once-only
+  // Wayfarer's Bauble must still sit above it once it is a staple.
+  const staples = { fetchedAt: "t", source: "s", cards: { [oracle("Wayfarer's Bauble")]: 0.01 } };
+  const t = qualityTable(cards, staples);
+  expect(t.get("Wayfarer's Bauble")!.get("ramp")!).toBeGreaterThan(t.get("Mind Stone")!.get("ramp")!);
+});
