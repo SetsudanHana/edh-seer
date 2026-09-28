@@ -9,7 +9,7 @@ import type { Action, ClauseRecord } from "../canonicalize.js";
 import type { Ability, Requirement, AbilityKind, CardTags, Characteristics, Control, SubjectFilter, Verb } from "../schema.js";
 import { VERB_ALIASES, VERB_VOCAB } from "../schema.js";
 import { ZONE_SCOPED_KINDS, actionEffectKind, exilesOwnGraveyard, extraPhaseName } from "./effect-kind.js";
-import { actionEmits, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
+import { actionEmits, casualtySacrifice, LEAVES_SAME_TURN, TEMPORARY_TOKEN_REF } from "./emits.js";
 import { interveningIfOf, conditionCares as conditionCares_ } from "./intervening-if.js";
 import { requiresOf } from "./markers.js";
 import { actionRecipients, sentenceNamesAPlayer } from "./recipient.js";
@@ -196,7 +196,9 @@ import { emblemRecipient } from "../emblem.js";
 // 185: a grant to the spells you cast names that class (owner ruling 2026-09-28, #681): Anhelo's
 // "first instant or sorcery spell you cast each turn has casualty", Yidris's "as you cast spells
 // from your hand this turn, they gain cascade". A creature anthem stays refused.
-export const DERIVE_VERSION = 185;
+// 186: casualty N is a sacrifice outlet for a creature with power N or greater (CR 702.153a; owner
+// 2026-09-28), granted (Anhelo, Silverquill) or printed as a keyword line (Make Disappear).
+export const DERIVE_VERSION = 186;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1443,6 +1445,13 @@ export function deriveAbilities(
 
     const before = abilities.length;
     for (const action of clause.actions ?? []) {
+      // A PRINTED "Casualty N" keyword line is the spell's own sacrifice outlet (Make Disappear):
+      // Scryfall's keyword list drops the N, so the line itself is read. See `casualtySacrifice`.
+      const printedCasualty = action.verb === "none" ? /^\s*casualty (\d+)\s*$/i.exec(action.object ?? "") : null;
+      if (printedCasualty) {
+        abilities.push({ kind: "on-cast", repeats: "once", effect: { kind: "" }, emits: [casualtySacrifice(Number(printedCasualty[1]))] });
+        continue;
+      }
       if (INERT_VERBS.has(action.verb ?? "")) continue;
       if (keywordActionOnStaticClause(kind, action.verb)) { unclaimed.push(action); continue; }
       // See antecedentFor: a pronoun object inherits the thing named earlier in the same clause.

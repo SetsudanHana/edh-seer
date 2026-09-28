@@ -402,7 +402,17 @@ function soleCounterKind(text: string): string | undefined {
   return kinds.size === 1 ? [...kinds][0] : undefined;
 }
 
+/** CASUALTY N IS A SACRIFICE OUTLET (CR 702.153a: "you may sacrifice a creature with power N or
+ *  greater"). Owner, 2026-09-28: "casualty should link to creatures or tokens which have power X". One
+ *  shape for the granted keyword (Anhelo, the Painter) and the printed one (Make Disappear). */
+export const CASUALTY = /\bcasualty (\d+)\b/i;
+export const casualtySacrifice = (n: number): GameEvent => ({
+  verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: n }] },
+});
+
 export function actionEmits(action: Action, clauseText?: string, opts: { self?: boolean } = {}): GameEvent[] {
+  const casualty = action.verb === "grant-ability" ? CASUALTY.exec(action.object ?? "") : null;
+  if (casualty) return [casualtySacrifice(Number(casualty[1]))];
   // "YOU GET {E}{E}" IS A COUNTER ON A PLAYER (CR 107.14: the energy symbol represents one energy
   // counter). The normalizer wrote 57 of these as `add-mana`; the EFFECT KIND stays refused
   // (effect-kind.ts, 2026-09-04 -- nothing downstream can spend energy) but the EVENT is real, and

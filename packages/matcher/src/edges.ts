@@ -2257,7 +2257,9 @@ function countGateEdges({ p, c, h, pEvents, reasons }: PairScope): void {
 const SPELL_CLASS: ReadonlySet<string> = new Set(["spell", "instant", "sorcery"]);
 function grantsToSpellsYouCast(s: SubjectFilter | undefined): boolean {
   const types = Array.isArray(s?.type) ? s.type : s?.type ? [s.type] : [];
-  return s?.control === "you" && types.length > 0 && types.every((t) => SPELL_CLASS.has(t));
+  // A GRANT TO ONE TARGET IS NOT A CLASS (review): Recoup's "target sorcery card in your graveyard
+  // gains flashback" is one card, and admitting it linked Recoup to every sorcery in the deck.
+  return s?.control === "you" && s.scope !== "target" && types.length > 0 && types.every((t) => SPELL_CLASS.has(t));
 }
 function staticEdges({ p, c, h, reasons }: PairScope): void {
   const staticClaim = (c: DeckCard, a: CardTags["abilities"][number]): Reason | undefined => {
@@ -2558,7 +2560,10 @@ function fodderEdges({ p, c, h, opts, reasons }: PairScope): void {
     const isToken = p.tags?.characteristics.token === true;
     const subtype = Array.isArray(wanted.subtype) ? wanted.subtype[0] : wanted.subtype;
     const types = Array.isArray(wanted.type) ? wanted.type : wanted.type ? [wanted.type] : [];
-    const narrowType = types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!);
+    // A POWER LINE NARROWS "a creature" THE WAY A SUBTYPE DOES (owner 2026-09-28, casualty): "in
+    // deck like anhelo you need to have fodder with 2 power". `subjectMatches` checks the stat.
+    const narrowType = (types.length === 1 && !WHOLE_DECK_TYPES.has(types[0]!))
+      || (wanted.stats ?? []).some((st) => st.metric === "power");
     // ON A CARD PAGE NO TOKEN NODE EXISTS (`tokensMediate: false`), so the MAKER stands in for the
     // token it makes: Krenko's Goblins are fodder for Viscera Seer, said on Krenko's row. The deck
     // report keeps the two-hop path through the node, exactly as the entry channel does.

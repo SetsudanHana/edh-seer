@@ -617,3 +617,11 @@ test("'target opponent gains control of' is the opponent's gain; 'gain control o
   const threaten = actionEmits({ verb: "gain-control", object: "target creature" }, "Untap target creature and gain control of it until end of turn.");
   expect(threaten.find((e) => e.verb === "gains-control")?.subject.control).toBe("you");
 });
+
+/** CASUALTY N IS A SACRIFICE OUTLET FOR A CREATURE WITH POWER N OR GREATER (CR 702.153a; owner
+ *  2026-09-28: "casualty should link to creatures or tokens which have power X"). Anhelo grants it. */
+test("a granted casualty emits the sacrifice of a creature with at least that power", () => {
+  const e = actionEmits({ verb: "grant-ability", object: "casualty 2" });
+  expect(e).toEqual([{ verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 2 }] } }]);
+  expect(actionEmits({ verb: "grant-ability", object: "haste" })).toEqual([]);
+});

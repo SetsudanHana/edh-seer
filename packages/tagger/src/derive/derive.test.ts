@@ -3255,3 +3255,15 @@ test("a spell grant narrowed by zone, colour count or spent mana is refused, not
   expect(grant("Maelstrom Nexus", "The first spell you cast each turn has cascade.")).toMatchObject({ type: "spell", control: "you" });
   expect(grant("Quandrix, the Proof", "Instant and sorcery spells you cast from your hand have cascade.")).toMatchObject({ type: ["instant", "sorcery"], control: "you" });
 });
+
+/** A PRINTED "Casualty 2" is the same outlet on the spell itself (Make Disappear; 18 corpus cards).
+ *  Scryfall's keyword list drops the number, so it is read from the keyword line. */
+test("a printed casualty keyword line derives an on-cast sacrifice of a creature with that power", () => {
+  const r = deriveAbilities([
+    { id: 1, abilityType: "none", actions: [{ verb: "none", object: "Casualty 1" }] },
+    { id: 2, abilityType: "spell", actions: [{ verb: "counter", object: "target spell" }] },
+  ], "Make Disappear", { 1: "Casualty 1", 2: "Counter target spell unless its controller pays {2}." });
+  const sac = r.abilities.flatMap((a) => (a.emits ?? []).map((e) => ({ kind: a.kind, e }))).find((x) => x.e.verb === "sacrifice");
+  expect(sac?.kind).toBe("on-cast");
+  expect(sac?.e.subject).toMatchObject({ type: "creature", control: "you", stats: [{ metric: "power", op: "gte", value: 1 }] });
+});

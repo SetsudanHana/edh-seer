@@ -5601,3 +5601,38 @@ test("a grant to spells you cast reaches each matching spell in the deck, and no
   expect(links(yidris, spellCard("Grizzly Bears", "creature"))).toBe(true);
   expect(links(yidris, spellCard("Forest", "land"))).toBe(false);
 });
+
+/** CASUALTY'S FODDER IS A CREATURE WITH ENOUGH POWER (owner 2026-09-28): "in deck like anhelo you
+ *  need to have fodder with 2 power". The power line narrows "a creature" the way a subtype does, and
+ *  the expendable rule still holds: a token, or a cheap nonlegendary card. */
+test("casualty 2 eats a cheap creature or a token with power 2 or more, and nothing weaker", () => {
+  const anhelo = base("Anhelo, the Painter", [{
+    kind: "static", repeats: "continuous",
+    effect: { kind: "keyword-grant", subject: { type: ["instant", "sorcery"], control: "you", token: null } },
+    emits: [{ verb: "sacrifice", subject: { type: "creature", control: "you", token: null, stats: [{ metric: "power", op: "gte", value: 2 }] } }],
+  }] as unknown as CardTags["abilities"]);
+  const body = (name: string, power: string, cmc: number, extra: Partial<CardTags["characteristics"]> = {}) => {
+    const d = base(name, []);
+    Object.assign(d.tags.characteristics, { power, toughness: "2", cmc, ...extra });
+    (d.card as { manaValue: number }).manaValue = cmc;
+    return d;
+  };
+  const fodder = (p: ReturnType<typeof base>) => directedReasons(p, anhelo, H).some((r) => r.tag.startsWith("fodder:"));
+  expect(fodder(body("Bear Cub", "2", 2))).toBe(true);
+  expect(fodder(body("Goblin Token", "2", 0, { token: true }))).toBe(true);
+  expect(fodder(body("Llanowar Elves", "1", 1))).toBe(false);
+  expect(fodder(body("Big Legend", "5", 5, { types: ["legendary", "creature"] }))).toBe(false);
+});
+
+/** A GRANT TO ONE TARGET IS NOT A CLASS (#681 review): Recoup's "target sorcery card in your
+ *  graveyard gains flashback" derives {sorcery, you, scope: target} through the typed-grant gate, and
+ *  admitting every non-static spell grant linked it to every sorcery in the deck. */
+test("a one-target grant to a spell type links to no class of the deck", () => {
+  const recoup = base("Recoup", [{
+    kind: "on-cast",
+    effect: { kind: "keyword-grant", subject: { type: "sorcery", control: "you", token: null, scope: "target" } },
+  }] as unknown as CardTags["abilities"]);
+  const sorcery = base("Rampant Growth", []);
+  sorcery.tags.characteristics.types = ["sorcery"];
+  expect(directedReasons(recoup, sorcery, H).some((r) => r.producer === "Recoup")).toBe(false);
+});
