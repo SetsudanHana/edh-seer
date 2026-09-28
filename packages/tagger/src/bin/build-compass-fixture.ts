@@ -26,7 +26,12 @@ const OUT = new URL("../../../matcher/src/fixtures/compass-clauses.json", import
 type CardDoc = Parameters<typeof charsFrom>[0] & { _id: string; allParts?: { component?: string; typeLine?: string }[] };
 
 const fromStore = process.argv.includes("--from-store");
-const names = [...new Set(GOLD.filter((p) => p.verified).flatMap((p) => [p.a, p.b]))].sort();
+// THE ROLE EXPECTATIONS' CARDS TOO: `derive-roles.test.ts` checks owner role rulings on the same
+// production-shaped derivation.
+const ROLES = JSON.parse(readFileSync(
+  new URL("../../../matcher/src/role-expectations.json", import.meta.url), "utf8",
+)) as { card: string }[];
+const names = [...new Set([...GOLD.filter((p) => p.verified).flatMap((p) => [p.a, p.b]), ...ROLES.map((r) => r.card)])].sort();
 const store = await connect(loadConfig());
 const provider = fromStore ? null : createProvider({ ...loadTaggerConfig(), maxTokens: 3000 });
 const clausesCol = store.db.collection<CardClausesDoc>(CLAUSES_COLLECTION);

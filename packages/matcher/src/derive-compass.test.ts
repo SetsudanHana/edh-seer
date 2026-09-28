@@ -1,61 +1,14 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
-import { deriveCardTags } from "@edh-seer/tagger";
-import type { Characteristics } from "@edh-seer/tagger";
-import type { ClauseRecord } from "@edh-seer/tagger";
 import { loadHierarchy, pairReasons } from "./index.js";
 import { classifyPair, type CompassPair } from "./eval-pairs-core.js";
-import type { DeckCard } from "./types.js";
+import { fixtureDeckCard, fixtureNames } from "./fixture-cards.js";
 
-interface Fixture {
-  name: string;
-  oracleId: string;
-  clauses: ClauseRecord[];
-  characteristics: Characteristics;
-  /** Clause id -> text, so the offline gate derives what production derives. See ClauseFixture. */
-  clauseTexts?: Record<number, string>;
-  /** The rest of what `derive-corpus` feeds `deriveCardTags`, from the same `derive-input.ts` helpers
-   *  (owner 2026-09-28: a gate thinner than production passed and failed different pairs). */
-  clauseCosts?: Record<number, string>;
-  clauseRequires?: Record<number, never>;
-  clauseFaces?: Record<number, number>;
-  grantedToken?: number[];
-  oracleText?: string;
-  typeLine?: string;
-}
-
-const FIXTURE = JSON.parse(
-  readFileSync(new URL("./fixtures/compass-clauses.json", import.meta.url), "utf8"),
-) as Fixture[];
 const GOLD = JSON.parse(
   readFileSync(new URL("./compass-pairs.json", import.meta.url), "utf8"),
 ) as CompassPair[];
-
-const byName = new Map(FIXTURE.map((f) => [f.name, f]));
-
-function deckCard(name: string): DeckCard {
-  const f = byName.get(name);
-  if (!f) throw new Error(`fixture missing card: ${name} — regenerate with build-compass-fixture.ts`);
-  return {
-    card: {
-      name: f.name,
-      typeLine: f.typeLine ?? [...f.characteristics.types, ...f.characteristics.subtypes].join(" "),
-      oracleText: f.oracleText ?? "",
-      keywords: f.characteristics.keywords,
-      colors: f.characteristics.colors,
-      manaValue: f.characteristics.cmc,
-      colorIdentity: f.characteristics.identity,
-      power: f.characteristics.power,
-      toughness: f.characteristics.toughness,
-    },
-    tags: deriveCardTags({
-      oracleId: f.oracleId, name: f.name, clauses: f.clauses, characteristics: f.characteristics,
-      clauseTexts: f.clauseTexts, clauseCosts: f.clauseCosts, clauseRequires: f.clauseRequires,
-      clauseFaces: f.clauseFaces, oracleText: f.oracleText,
-      grantedToken: f.grantedToken ? new Set(f.grantedToken) : undefined,
-    }),
-  };
-}
+const byName = { has: (n: string) => fixtureNames.has(n) };
+const deckCard = fixtureDeckCard;
 
 test("the fixture covers every card the verified gold pairs reference", () => {
   const needed = [...new Set(GOLD.filter((p) => p.verified).flatMap((p) => [p.a, p.b]))];
