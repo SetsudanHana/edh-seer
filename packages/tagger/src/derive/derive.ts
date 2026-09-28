@@ -202,7 +202,9 @@ import { emblemRecipient } from "../emblem.js";
 // Tainted Aether's "whenever a creature enters, its controller sacrifices" hits your own board).
 // 188: an "or" trigger limb the clause layer cannot hold derives a twin trigger (compass misses:
 // Syr Konrad's "or put into a graveyard from anywhere", "or leaves your graveyard").
-export const DERIVE_VERSION = 188;
+// 189: "each creature assigns combat damage equal to its toughness" is a static damage-multiplier over
+// creatures whose toughness exceeds their power (owner ruling 2026-09-28, Doran).
+export const DERIVE_VERSION = 189;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -747,12 +749,38 @@ function grantRecipient(clauseText: string): string | undefined {
   if (asYouCast) return `${asYouCast.endsWith(" this turn") ? asYouCast.slice(0, -" this turn".length) : asYouCast} you cast`;
   return recipientBefore(clauseText, GRANTED_TO);
 }
+/** "EACH CREATURE ... ASSIGNS COMBAT DAMAGE EQUAL TO ITS TOUGHNESS" (owner ruling 2026-09-28: Doran,
+ *  the Siege Tower relates to creatures whose toughness exceeds their power). Read from the clause
+ *  TEXT, because the 24 corpus cards store it as `other`, `modify-pt` or nothing. A static
+ *  damage-multiplier over that stat line -- the shape the compass's `toughness-matters` asks for.
+ *  Only a whole-board recipient is a class: "this creature", "target creature" and an Aura's or
+ *  Equipment's host are not, and derive nothing here. */
+const TOUGHNESS_DAMAGE = /^(?:during your turn, )?each creature( you control)?(?: with (defender|toughness greater than (?:its|their) power))? assigns? combat damage equal to (?:its|their) toughness rather than (?:its|their) power\b/i;
+function toughnessDamageAbility(text: string): Ability | undefined {
+  for (const sentence of text.split(/\.\s+/)) {
+    const m = TOUGHNESS_DAMAGE.exec(sentence.trim());
+    if (!m) continue;
+    const subject: SubjectFilter = {
+      type: "creature", control: m[1] ? "you" : "any", token: null,
+      stats: [{ metric: "toughness", op: "gt", vs: "power" }],
+      ...(m[2]?.toLowerCase() === "defender" ? { keyword: ["defender"] } : {}),
+    };
+    return { kind: "static", repeats: "continuous", effect: { kind: "damage-multiplier", subject } };
+  }
+  return undefined;
+}
+
 // Bounded captures that end on a fixed word: no lazy group beside an optional whitespace tail
 // (the polynomial shape CodeQL fails a PR on).
 const OR_PUT_INTO_GRAVEYARD = /,\s?or (?:a|an) ([a-z ]{1,40}) (?:is|are) put into (a|your) graveyard from anywhere\b/i;
 const OR_LEAVES_GRAVEYARD = /,\s?or (?:a|an|one or more) ([a-z ]{1,40}) leaves? your graveyard\b/i;
-function orLimbTriggers(text: string): { verbs: Verb[]; subject: SubjectFilter }[] {
+/** THE TRIGGER PREAMBLE ONLY (review of #708): the clause text runs on into the effect, and an "or" in
+ *  the effect is not a trigger limb. The preamble ends at the first comma that does not open another
+ *  "or" limb: "Whenever A, or B, or C, <effect>". */
+const triggerPreamble = (text: string): string => (/^\s*(?:when|whenever)\b/i.test(text) ? text.split(/,(?!\s?or\b)/)[0]! : "");
+function orLimbTriggers(clauseText: string): { verbs: Verb[]; subject: SubjectFilter }[] {
   const out: { verbs: Verb[]; subject: SubjectFilter }[] = [];
+  const text = `${triggerPreamble(clauseText)},`;
   const put = OR_PUT_INTO_GRAVEYARD.exec(text);
   if (put) out.push({ verbs: ["enters-graveyard"], subject: { ...parseSubject(put[1]!.replace(/ cards?$/i, "")), control: put[2]!.toLowerCase() === "your" ? "you" : "any" } });
   const leaves = OR_LEAVES_GRAVEYARD.exec(text);
@@ -1793,6 +1821,8 @@ export function deriveAbilities(
 
     const drain = drainAbility(clause, kind, trigger, cost);
     if (drain) { if (face) drain.face = face; abilities.push(drain); }
+    const toughnessDamage = toughnessDamageAbility(text);
+    if (toughnessDamage) { if (face) toughnessDamage.face = face; abilities.push(toughnessDamage); }
 
     // A TRIGGER is a consumer signal in its own right, independent of what the effect does. Geode
     // Rager's "Landfall — whenever a land you control enters, GOAD each creature target player

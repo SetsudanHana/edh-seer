@@ -3281,8 +3281,31 @@ test("Syr Konrad's 'or put into a graveyard from anywhere' and 'or leaves your g
   expect(triggers.map((t) => t?.verbs[0])).toEqual(["dies", "enters-graveyard", "leaves"]);
   expect(triggers[1]?.subject).toMatchObject({ type: "creature", control: "any" });
   expect(triggers[2]?.subject).toMatchObject({ type: "creature", control: "you", zone: "graveyard" });
+  // AN "OR" IN THE EFFECT IS NOT A TRIGGER LIMB (review): only the preamble before the effect is read.
+  const effectOr = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "another creature", control: "any" }, actions: [{ verb: "draw", object: "you", amount: "1" }] }],
+    "Test", { 1: "Whenever another creature dies, draw a card, or a creature card is put into a graveyard from anywhere if you control a Zombie." });
+  expect(effectOr.abilities.filter((a) => a.trigger).map((a) => a.trigger?.verbs[0])).toEqual(["dies"]);
   // A single-limb trigger derives no twin.
   const one = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "another creature", control: "any" }, actions: [{ verb: "draw", object: "you", amount: "1" }] }],
     "Test", { 1: "Whenever another creature dies, draw a card." });
   expect(one.abilities.filter((a) => a.trigger).length).toBe(1);
+});
+
+/** "ASSIGNS COMBAT DAMAGE EQUAL TO ITS TOUGHNESS" RELATES TO CREATURES WHOSE TOUGHNESS EXCEEDS THEIR
+ *  POWER (owner ruling 2026-09-28: Doran, the Siege Tower links to Wall of Omens). A static
+ *  damage-multiplier over that stat line, from the clause TEXT: the 24 corpus cards store it as
+ *  `other`, `modify-pt` or nothing. Only a whole-board recipient is a class; "this creature",
+ *  "target creature" and an Aura's or Equipment's host are not. */
+test("a toughness-damage rule is a static over creatures whose toughness exceeds their power", () => {
+  const sub = (name: string, text: string) => deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "other", object: text }] }], name, { 1: text })
+    .abilities.find((a) => a.effect.kind === "damage-multiplier")?.effect.subject;
+  expect(sub("Doran, the Siege Tower", "Each creature assigns combat damage equal to its toughness rather than its power."))
+    .toMatchObject({ type: "creature", control: "any", stats: [{ metric: "toughness", op: "gt", vs: "power" }] });
+  expect(sub("Assault Formation", "Each creature you control assigns combat damage equal to its toughness rather than its power."))
+    .toMatchObject({ type: "creature", control: "you", stats: [{ metric: "toughness", op: "gt", vs: "power" }] });
+  expect(sub("Arcades, the Strategist", "Each creature you control with defender assigns combat damage equal to its toughness rather than its power and can attack as though it didn't have defender."))
+    .toMatchObject({ type: "creature", control: "you", keyword: ["defender"] });
+  expect(sub("Streetwise Negotiator", "This creature assigns combat damage equal to its toughness rather than its power.")).toBeUndefined();
+  expect(sub("Gauntlets of Light", "Enchanted creature gets +0/+2 and assigns combat damage equal to its toughness rather than its power.")).toBeUndefined();
+  expect(sub("Plagon, Lord of the Beach", "Target creature you control assigns combat damage equal to its toughness rather than its power this turn.")).toBeUndefined();
 });

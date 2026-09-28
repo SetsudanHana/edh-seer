@@ -37,12 +37,10 @@ const KNOWN_BASELINE_DEFECTS: Record<string, string> = {
   // leaves your graveyard") did not fit a ClauseRecord's single trigger event. Banked 2026-09-28
   // (DERIVE 188): derive reads each extra "or" limb from the clause text as a twin trigger.
 
-  // --- toughness-matters (1) and counters-plus1 (2): the clause is `verb: "other"`, which
-  // normalize-prompt.ts defines as the escape hatch for actions no verb covers and calls "honestly
-  // inert". Reaching these categories means regexing that free text — the flat-engine patterns.ts
-  // approach this layer replaces — and, for Doran, additionally inventing a toughness>=power
-  // StatPredicate the card never states.
-  "Doran, the Siege Tower / Wall of Omens": "Doran's damage rule is `verb: \"other\"`, inert by the normalizer's contract",
+  // --- toughness-matters (1) USED to sit here: Doran's rule was `verb: "other"`, inert by the
+  // normalizer's contract. Banked 2026-09-28 (DERIVE 189, owner ruling): derive reads "each creature
+  // assigns combat damage equal to its toughness" from the clause TEXT as a static damage-multiplier
+  // over creatures whose toughness exceeds their power (Wall of Omens 0/4).
   // The two Tekuthal pairs USED to sit here, quarantined on "Tekuthal's proliferate-doubling is
   // `verb: "other"`, inert by the normalizer's contract". Banked 2026-08-15 by `replacement.ts`:
   // the doubling is read off the clause TEXT rather than waiting for a verb, and Tekuthal now
