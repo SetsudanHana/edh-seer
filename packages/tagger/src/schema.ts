@@ -965,6 +965,11 @@ export interface Ability {
    *  Not an evaluable condition and deliberately not one: see `conditionCares`. It records only the
    *  DEMAND, so `cardCaresTags` can put the card on the right axis. Forms no edge, ever. */
   conditionCares?: string[];
+  /** A CR 614 multiplier ("if you would draw a card ... draw two instead", Hardened Scales, Doubling
+   *  Season): its trigger hears another card's event and makes that event BETTER. Owner, 2026-09-29:
+   *  "replacement effects make the effects better, not the other way around" -- so the matcher
+   *  writes the edge FROM this card TO the card whose effect it improves. */
+  replacement?: true;
   /** A GAME-STATE MARKER THE ABILITY NEEDS, evaluable against a state the owner supplies (roadmap
    *  W18). "Max speed —" abilities need the player's speed at 4 (CR 702.179). Unlike
    *  `conditionCares` this IS evaluated: with no state, or one that falls short, the ability is
