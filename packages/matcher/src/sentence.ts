@@ -810,6 +810,11 @@ export function enterAsCopySentence(producer: string, consumer: string): string 
   return `${producer} makes ${consumer} enter again, and it copies something new as it does`;
 }
 
+/** A clone that enters as a copy of this card (#712). */
+export function entersAsCopyOfSentence(producer: string, consumer: string): string {
+  return `${producer} can enter as a copy of ${consumer}`;
+}
+
 export function meldSentence(a: string, b: string): string {
   return `${a} and ${b} meld together`;
 }
