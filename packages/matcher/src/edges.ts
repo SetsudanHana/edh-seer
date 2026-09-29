@@ -1549,6 +1549,24 @@ export function directedReasons(p: DeckCard, c: DeckCard, h: Hierarchy, opts: Re
   // THE ORDER IS PART OF THE OUTPUT. Each channel appends to one list, and `dedupeReasons` keeps the
   // first of two identical claims, so reordering these calls can change which one survives.
   eventEdges(s);
+  // A REPLACEMENT MAKES THE EFFECT BETTER, NOT THE OTHER WAY AROUND (owner, 2026-09-29): Alhammarret's
+  // Archive doubles Loyal Drake's draw, so the edge is Archive -> Drake. The multiplier's trigger
+  // still HEARS the other card's event, so the match runs with the sides swapped, over P's
+  // replacements only; the reason is then written P -> C (its sentence already says what the
+  // replacement does -- "puts one more +1/+1 counter on it", pinned by the compass), the direction `stampSides`, the
+  // face names and the card-scoring loop in `analyze.ts` all read. (A swap done inside the event
+  // pass, the first cut, was re-stamped from the wrong side by `stampSides`.)
+  if (p.tags.abilities.some((a) => a.replacement === true)) {
+    const heard: PairScope = { p: c as TaggedCard, c: p as TaggedCard, h, opts, pEvents: producerEvents(c.tags), reasons: [], replacementOnly: true };
+    eventEdges(heard);
+    for (const { producerAbility: pa, consumerAbility: ca, impliedProducer: _implied, ...r } of heard.reasons) {
+      s.reasons.push({
+        ...r, producer: p.card.name, consumer: c.card.name,
+        ...(ca !== undefined ? { producerAbility: ca } : {}),
+        ...(pa !== undefined ? { consumerAbility: pa } : {}),
+      });
+    }
+  }
   reanimatorEdges(s);
   exileProcessingEdges(s);
   graveyardScalingEdges(s);
@@ -1592,11 +1610,13 @@ interface PairScope {
   opts: ReasonOptions;
   pEvents: GameEvent[];
   reasons: Reason[];
+  /** The event pass run with the sides SWAPPED, over the consumer's CR 614 replacements only. */
+  replacementOnly?: boolean;
 }
 
 // EVENT EDGES: a producer event against a consumer trigger. The main channel; every other
 // channel below is a relation this one cannot express.
-function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
+function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairScope): void {
   // The producer's own implied events, for `landPutFor`; built only where a deck is known.
   const ownEvents: ReadonlySet<string> = opts.landTypes
     ? new Set(impliedEvents(p.tags.characteristics).map((x) => JSON.stringify(normalizeZoneEvent(x))))
@@ -1648,6 +1668,8 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
   const realAbilities = c.tags.abilities.length;
   for (const e0 of pEvents) {
     for (const [ai, a] of cAbilities.entries()) {
+      // A REPLACEMENT'S TRIGGER IS MATCHED FROM ITS OWN SIDE (owner, 2026-09-29): see `directedReasons`.
+      if ((a.replacement === true) !== (replacementOnly === true)) continue;
       if (!a.trigger) continue;
       if (a.effect.kind === "proliferate" && notAnOrigin.has(JSON.stringify(e0))) continue;
       for (const rawVerb of a.trigger.verbs) {
@@ -1881,19 +1903,6 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
           producer: p.card.name,
           impliedProducer: e.implied || undefined,
         });
-        // A REPLACEMENT MAKES THE EFFECT BETTER, NOT THE OTHER WAY AROUND (owner, 2026-09-29).
-        // Alhammarret's Archive hears Loyal Drake's draw and doubles it: the edge is Archive ->
-        // Drake. Matched the usual way (the multiplier's trigger hears the maker's event), then
-        // written from the replacement to the card it improves; the ability indices follow.
-        // `impliedProducer` described the maker's event and is dropped: the replacement is printed.
-        if (a.replacement === true) {
-          const { producerAbility: pa, consumerAbility: ca, impliedProducer: _implied, ...r } = reasons[reasons.length - 1]!;
-          reasons[reasons.length - 1] = {
-            ...r, producer: c.card.name, consumer: p.card.name,
-            ...(ca !== undefined ? { producerAbility: ca } : {}),
-            ...(pa !== undefined ? { consumerAbility: pa } : {}),
-          };
-        }
       }
     }
   }

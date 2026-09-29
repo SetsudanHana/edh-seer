@@ -5775,4 +5775,8 @@ test("a CR 614 multiplier is the producer of its edge, pointing at the card whos
   const rs = pairReasons(archive, drake, H).filter((r) => r.tag.startsWith("draw"));
   expect(rs.length).toBeGreaterThan(0);
   expect(rs.every((r) => r.producer === "Alhammarret's Archive" && r.consumer === "Loyal Drake")).toBe(true);
+  // Generated FROM the replacement's side, so every reader that takes `directedReasons(p, c)` as
+  // "p feeds c" (stampSides, the card-scoring loop) agrees; the maker's side forms nothing.
+  expect(directedReasons(archive, drake, H).some((r) => r.tag.startsWith("draw"))).toBe(true);
+  expect(directedReasons(drake, archive, H).some((r) => r.tag.startsWith("draw"))).toBe(false);
 });
