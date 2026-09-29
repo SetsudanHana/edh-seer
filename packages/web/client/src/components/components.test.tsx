@@ -1764,8 +1764,8 @@ test("BuildBenchmarks prices the mana base in turns, dearest part first", () => 
     },
   };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={priced} />);
-  expect(screen.getByText(/Your mana base costs about/i)).toHaveTextContent(
-    "Your mana base costs about 1.1 turns in every 10 — colours 0.8 · tapped lands 0.2 · land count 0.0",
+  expect(screen.getByText(/Your mana base loses about/i)).toHaveTextContent(
+    "Your mana base loses about 1.1 of a turn over a game's first 10 turns, against a perfect one for this deck — colours 0.8 · tapped lands 0.2 · land count 0.0",
   );
 });
 

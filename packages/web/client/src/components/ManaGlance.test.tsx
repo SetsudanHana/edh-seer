@@ -23,7 +23,9 @@ test("the manabase opens with one tile per question, flagging what is short", ()
   const [lands, colour, hands, mana, cast] = screen.getAllByTestId("mana-tile");
   expect(lands).toHaveTextContent("Lands34wants 37: 3 under, within the normal ±3");
   expect(colour).toHaveTextContent("Weakest colour");
-  expect(colour).toHaveTextContent("13/17sources by turn 2, for a card wanting");
+  // Which number is which (persona round 2026-09-29): usable by then, in the deck, and needed.
+  expect(colour).toHaveTextContent("13/17can tap by turn 2 (of 13 in the deck); a card wanting");
+  expect(colour).toHaveTextContent("needs 17");
   expect(hands).toHaveTextContent(/Opening hands\d+%have 2 to 4 lands/);
   expect(mana).toHaveTextContent("Mana52%to make 6 mana by turn 6");
   expect(cast).toHaveTextContent("Hardest cast48%Dire Fleet Ravager on turn 5");
