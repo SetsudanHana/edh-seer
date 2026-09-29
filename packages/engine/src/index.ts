@@ -3,7 +3,7 @@ export type { Card, CardFace } from "./card.js";
 export type { Tag } from "./tags.js";
 export { extractTags, tagFamily, describeTag } from "./tags.js";
 export { themeName, THEME_NAMES } from "./theme-names.js";
-export { synergyScore, dedupeReasonsByText, type Reason, type SynergyResult } from "./synergy.js";
+export { synergyScore, dedupeReasonsByText, type EdgeMagnitude, type Reason, type SynergyResult } from "./synergy.js";
 export { ComboIndex, type Combo } from "./combos.js";
 export {
   analyzeDeck,
