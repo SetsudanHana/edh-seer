@@ -29,6 +29,11 @@ export interface SpeedRoute {
   /** The mana the route needs, when that is what is timed. */
   mana?: number;
   cards: string[];
+  /** The card an alternate win is timed by: its cheapest, which is not the one that wins soonest
+   *  (Mari's is Vorpal Sword, one mana to cast and eight to turn on). */
+  card?: string;
+  /** A combo's payoffs: the deck's cards that turn what the loop repeats into a win. */
+  payoffs?: string[];
   /** What the number does and does not count. */
   caveat: string;
 }
@@ -57,6 +62,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
     routes.push({
       kind: "combo", label: `a combo: ${cheapest.cards.join(" + ")}`, mana: cheapest.manaValue,
       ...manaTurn(rows, cheapest.manaValue), cards: cheapest.cards,
+      ...(cheapest.payoffs?.length ? { payoffs: cheapest.payoffs.map((p) => p.name) } : {}),
       caveat: "when the deck has the mana for both pieces; drawing or finding them is not counted, so this is the earliest it can happen, not a typical kill",
     });
   }
@@ -67,7 +73,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
     .sort((a, b) => a.mv - b.mv)[0];
   if (alt) {
     routes.push({
-      kind: "alt-win", label: `an alternate win: ${alt.name}`, mana: alt.mv, ...manaTurn(rows, alt.mv), cards: cardsOf("alt-win"),
+      kind: "alt-win", label: `an alternate win: ${alt.name}`, mana: alt.mv, ...manaTurn(rows, alt.mv), cards: cardsOf("alt-win"), card: alt.name,
       caveat: "when it can be cast; its own win condition still has to be met after that",
     });
   }

@@ -69,12 +69,15 @@ function Tile({ plan, route, picked, onPick }: { plan: Wincons["classes"][number
     <>
       <span className="text-sm leading-snug">{label}</span>
       {route !== undefined ? (
-        // AN ALTERNATE WIN IS TIMED BY WHEN ITS CARD CAN BE CAST, NOT WHEN IT WINS (persona round
-        // 2026-09-27: "An alternate win condition · turn 1" read as a turn-1 win beside "Fastest …
-        // around turn 9"). It says so, small, as an untimed tile does.
-        route?.kind === "alt-win" && route.turn !== undefined
-          ? <span className="text-xs text-(--muted)">cast by turn {route.turn}</span>
-          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">no turn estimate</span>}</span>
+        // AN ALTERNATE WIN HAS NO TURN ON ITS TILE (persona rounds 2026-09-27 and 2026-09-29). "turn 1"
+        // read as a turn-1 win; "cast by turn 1" still did, beside "Fastest … around turn 9", because
+        // the card it timed was Vorpal Sword -- one mana to cast, eight to turn on. When the card can
+        // be cast is in the detail, named; the tile says what kind of plan it is.
+        route?.kind === "alt-win"
+          ? <span className="text-xs text-(--muted)">wins on its own condition</span>
+          // AN UNTIMED ROUTE SAYS WHY ON ITS FACE (persona round 2026-09-29, four seats): "no turn
+          // estimate" read as a hole, where it is a limit the report states.
+          : <span className="stat-num text-lg leading-none">{route?.turn !== undefined ? `turn ${route.turn}` : <span className="text-xs text-(--muted)">speed not modelled</span>}</span>
       ) : null}
       <span className="text-xs stat-num text-(--muted)">{plural(plan.count, "card")}</span>
     </>
@@ -97,7 +100,11 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
     if (c.isToken) continue;
     for (const n of [c.name, c.physical]) if (n && (!art.has(n) || (!art.get(n)!.art && c.art))) art.set(n, c);
   }
-  const wins = plan.payoffs ?? [];
+  // A COMBO'S WIN IS ITS PAYOFF (persona round 2026-09-29, plan-seeker: "what actually kills in the
+  // Dualcaster loop? The page lists only 'Infinite creature ETB…'"). The loop's payoffs are the
+  // cards the Combos page names under "Wins through"; they lead here too.
+  const comboWins = route?.kind === "combo" ? route.payoffs ?? [] : [];
+  const wins = plan.payoffs?.length ? plan.payoffs : comboWins;
   const setup = (plan.cards ?? []).filter((n) => !wins.includes(n));
   const spread = route?.turn !== undefined && route.mana !== undefined && (route.early !== route.turn || route.late !== route.turn)
     ? ` (turn ${route.early ?? "?"} in fast games, ${route.late !== undefined ? `turn ${route.late}` : "later than turn 8"} in slow ones)` : "";
@@ -105,15 +112,19 @@ function Detail({ plan, route, pressure, model }: { plan: Wincons["classes"][num
     <div className="flex flex-col gap-2" data-testid="win-plan-detail">
       <p className="text-sm"><b>{cap(phrase(plan.class))}</b> · {plural(plan.count, "card")}</p>
       {route?.kind === "alt-win" && route.turn !== undefined ? (
-        <p className="text-sm">Its cheapest card can be cast around <b>turn {route.turn}</b>; its own win condition still has to be met after that.</p>
+        <p className="text-sm">Its cheapest card{route.card ? <>, {route.card},</> : null} can be cast around <b>turn {route.turn}</b>; its own win condition still has to be met after that, so this is not when it wins.</p>
       ) : route?.turn !== undefined ? (
         <p className="text-sm">
-          Can win around <b>turn {route.turn}</b>{spread}
+          {/* A LOOP GOES INFINITE; ITS PAYOFF WINS (persona round 2026-09-29). "Can win" beside "no card
+            *  here turns the loop into a win" said both. */}
+          {route.kind === "combo" ? "Can go infinite" : "Can win"} around <b>turn {route.turn}</b>{spread}
           {route.kind === "combo" ? <>, with {route.cards.join(" + ")}</> : null}
           {pressure !== undefined ? <span className="text-(--muted)">; about {Math.round(pressure)} power of creatures in play by turn 5</span> : null}.
         </p>
       ) : route ? <p className="text-xs text-(--muted)">No turn: {route.caveat}.</p> : null}
-      {wins.length ? <Names lead="Turns it into a win" names={wins} art={art} /> : null}
+      {wins.length ? <Names lead="Turns it into a win" names={wins} art={art} /> : route?.kind === "combo" ? (
+        <p className="text-xs text-(--muted)">No card here was found that turns what the loop repeats into a win.</p>
+      ) : null}
       {setup.length ? <Names lead={wins.length ? (plan.class === "combo" ? "The loop" : "Makes the board") : undefined} names={setup} art={art} /> : null}
     </div>
   );
