@@ -367,7 +367,21 @@ function baseEvents(tags: CardTags): GameEvent[] {
 
 /** A producer card's canonical events: authored emits + self-implied cast/enters, all zone-
  *  normalized and deduped, then unioned with the graveyard-fill events those emits imply. */
+// ONE CARD'S EVENTS ARE COMPUTED ONCE (build-static profile 2026-09-29): every pair re-derived both
+// sides' events, 32k cards against their candidates. Keyed by the tags object, which nothing mutates
+// after derivation; every caller only reads the list.
+// STALE-SAFE the same way as `keywordAbilities`: the entry remembers the ability list, the
+// characteristics and their keyword list it was read from. CEILING: an in-place edit of one ability is not seen.
+const producerEventsCache = new WeakMap<CardTags, { from: [unknown, unknown, unknown]; out: GameEvent[] }>();
 export function producerEvents(tags: CardTags): GameEvent[] {
+  const hit = producerEventsCache.get(tags);
+  const from: [unknown, unknown, unknown] = [tags.abilities, tags.characteristics, tags.characteristics.keywords];
+  if (hit && hit.from.every((x, i) => x === from[i])) return hit.out;
+  const out = Object.freeze(producerEventsUncached(tags)) as GameEvent[];
+  producerEventsCache.set(tags, { from, out });
+  return out;
+}
+function producerEventsUncached(tags: CardTags): GameEvent[] {
   const base = selfLeavesTypes(baseEvents(tags), tags.characteristics);
   const derived = [
     ...selfFillTypes(impliedGraveyardEvents(base), tags.characteristics),

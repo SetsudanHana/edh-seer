@@ -11,80 +11,24 @@
  *  the deck IS, which matters far more than a few edges either way.
  *
  *  Usage: npx tsx packages/instruments/src/population-compare.ts [--verbose] */
-import { readFileSync, readdirSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
-import { ComboIndex } from "@edh-seer/engine";
-import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
-import { meshReport, type MeshGroup } from "@edh-seer/matcher/mesh";
+import { readdirSync } from "node:fs";
+import { CALIBRATION_DECKS } from "@edh-seer/data";
+import { mapInWorkers } from "@edh-seer/data/parallel";
+import type { MeshGroup } from "@edh-seer/matcher/mesh";
+import type { DeckResult, Row } from "./population-compare-worker.js";
 
 const DIR = process.argv[2]?.startsWith("--") ? CALIBRATION_DECKS : (process.argv[2] ?? CALIBRATION_DECKS);
 const VERBOSE = process.argv.includes("--verbose");
 
-const store = await connect(loadConfig());
-const lookup = mongoLookup(store);
-const flat: CardTagsLookup = createTagsLookup(store.db, "flat");
-const derived: CardTagsLookup = createTagsLookup(store.db, "derived-first");
-// Task 6 (tokens-as-nodes): both populations get the SAME token lookup -- the 94 rows Task 5 derived
-// live in `cardTagsDerived` regardless of which population (flat/derived) the CARD side reads from.
-const tokenTags = await loadTokenTags(store.db);
-
-interface Row {
-  deck: string; edges: [number, number]; reasons: [number, number]; theme: [string, string];
-  covered: number; total: number;
-  /** Reason counts split by mesh.ts, so the comparison is not decided by whichever population
-   *  produces the widest whole-deck fans. */
-  clean: [number, number]; meshed: [number, number];
-}
-const rows: Row[] = [];
-const meshGroups: [MeshGroup[], MeshGroup[]] = [[], []];
-
-for (const file of readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort()) {
-  const sections = parseDecklistSections(readFileSync(`${DIR}/${file}`, "utf8"));
-  const { cards, combos } = await resolveNames([...sections.commanders, ...sections.deck], lookup);
-  const cmdNorm = new Set(sections.commanders.map(normalizeName));
-  const commanderNames = cards.filter((c) => cmdNorm.has(normalizeName(c.name))).map((c) => c.name);
-
-  const run = async (tags: CardTagsLookup) => {
-    const deckCards = await buildDeckCards(cards, lookup, tags);
-    const report = analyzeDeckStructured(
-      deckCards, commanderNames, undefined, undefined, new ComboIndex(combos), undefined, tokenTags,
-    );
-    return { report, deckCards };
-  };
-  const a = await run(flat);
-  const b = await run(derived);
-
-  // How much of this deck the derived population actually covers, so a null delta can be told apart
-  // from a deck the corpus simply does not reach.
-  const derivedCol = store.db.collection("cardTagsDerived");
-  let covered = 0;
-  for (const dc of b.deckCards) {
-    const t = dc.tags as { oracleId?: string } | null;
-    if (t?.oracleId && await derivedCol.countDocuments({ oracleId: t.oracleId }, { limit: 1 })) covered++;
-  }
-
-  const themeOf = (r: ReturnType<typeof analyzeDeckStructured>): string =>
-    (r.axis ?? []).slice(0, 1).map((x: { tag: string }) => x.tag).join(",") || "(none)";
-  const allReasons = (r: ReturnType<typeof analyzeDeckStructured>) => r.edges.flatMap((e) => e.reasons);
-  const mesh = ([a.report, b.report] as const).map((r, i) => {
-    const m = meshReport(allReasons(r), cards.length);
-    meshGroups[i as 0 | 1].push(...m.groups);
-    return m;
-  });
-
-  rows.push({
-    deck: file.replace(/\.txt$/, ""),
-    edges: [a.report.edges.length, b.report.edges.length],
-    reasons: [allReasons(a.report).length, allReasons(b.report).length],
-    clean: [mesh[0].clean, mesh[1].clean],
-    meshed: [mesh[0].meshed, mesh[1].meshed],
-    theme: [themeOf(a.report), themeOf(b.report)],
-    covered, total: b.deckCards.length,
-  });
-  process.stdout.write(".");
-}
-await store.close();
+// EVERY DECK ON ITS OWN CORE (owner 2026-09-29): 107 s on one core of ten before. The per-deck work
+// lives in the worker; results come back in deck order, so every figure below is what the sequential
+// run printed.
+const files = readdirSync(DIR).filter((f) => f.endsWith(".txt")).sort();
+const results = await mapInWorkers<{ dir: string; file: string }, DeckResult>(
+  files.map((file) => ({ dir: DIR, file })), new URL("./population-compare-worker.ts", import.meta.url));
+const rows: Row[] = results.map((r) => r.row);
+const meshGroups: [MeshGroup[], MeshGroup[]] = [results.flatMap((r) => r.mesh[0]), results.flatMap((r) => r.mesh[1])];
+process.stdout.write(".".repeat(rows.length));
 
 const sum = (f: (r: Row) => number): number => rows.reduce((n, r) => n + f(r), 0);
 const flips = rows.filter((r) => r.theme[0] !== r.theme[1]);

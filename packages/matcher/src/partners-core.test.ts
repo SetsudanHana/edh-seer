@@ -129,7 +129,7 @@ test("a subtype demand is satisfied only by that subtype", () => {
 });
 
 test("a supply form covers the coarser demands it satisfies, a demand form only splits", () => {
-  expect(supplyForms("enters|creature|goblin|-").sort())
+  expect([...supplyForms("enters|creature|goblin|-")].sort())
     .toEqual(["enters|-|-|-", "enters|-|-|n", "enters|-|goblin|-", "enters|-|goblin|n",
       "enters|creature|-|-", "enters|creature|-|n", "enters|creature|goblin|-", "enters|creature|goblin|n"]);
   expect(demandForms("enters|creature,land|-|-").sort())
