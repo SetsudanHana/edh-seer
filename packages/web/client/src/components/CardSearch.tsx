@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { isPattern, narrowingOf, verbOfKey } from "@edh-seer/matcher/event-pattern";
 import { useSearchParams } from "react-router";
 import { identityKeyOf, identityMask, inIdentityOf } from "@edh-seer/matcher/partners-core";
 import { matchNames, needleOf } from "../lib/name-match.js";
@@ -88,6 +89,11 @@ const FILTER_LABEL: Record<FilterKind, string> = {
 
 /** The panel's rows: every kind but the two events, which the sentence asks. */
 const ROW_KINDS = FILTER_KINDS.filter((k) => k !== "produce" && k !== "consume");
+
+/** EVENTS WITH NO TARGET TO NARROW TO. Life is gained or lost by a player; the type slot these keys
+ *  sometimes carry names what CAUSED it (Firesong and Sunspeaker's instant or sorcery), not what
+ *  the event happens to, so "narrow to an instant" would say something the card does not. */
+const NO_TARGET: ReadonlySet<string> = new Set(["gain-life", "lose-life"]);
 
 export function CardSearch({
   load = sharedNameIndex, frequency = sharedEventFrequency, members = sharedEventMembers,
@@ -350,12 +356,25 @@ export function CardSearch({
   }, [freq, colours, mask]);
   const consumeCountOf = useMemo(() => (key: string): number => freq?.consume[key] ?? 0, [freq]);
 
+  // ONE ROW PER EVENT, NARROWED ONLY WHEN ASKED (owner, 2026-09-29: "appending the card type or
+  // subtype to the event in search is redundant"). An index built with patterns (`event-pattern.ts`)
+  // offers each event once -- `dies|*|*|*` -- and the targets it can be narrowed to beside the term;
+  // one built before them keeps offering its keys as it always did, so an old artifact still searches.
+  const patterned = useMemo(() => freq !== null && Object.keys(freq.consume).some(isPattern), [freq]);
+  const offered = (k: string): boolean => !patterned || (isPattern(k) && narrowingOf(k) === null);
   const produceOptions = useMemo(
-    () => (freq === null ? [] : Object.keys(freq.supply).filter((k) => (freq.supply[k] ?? 0) > 0 && k in freq.byIdentity)),
-    [freq]);
+    () => (freq === null ? [] : Object.keys(freq.supply).filter((k) => (freq.supply[k] ?? 0) > 0 && k in freq.byIdentity && offered(k))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [freq, patterned]);
   const consumeOptions = useMemo(
-    () => (freq === null ? [] : Object.keys(freq.consume).filter((k) => (freq.consume[k] ?? 0) > 0)),
-    [freq]);
+    () => (freq === null ? [] : Object.keys(freq.consume).filter((k) => (freq.consume[k] ?? 0) > 0 && offered(k))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [freq, patterned]);
+  // THE TARGETS A TERM CAN BE NARROWED TO: every one-slot pattern the index ships.
+  const narrowOptions = useMemo(
+    () => (freq === null || !patterned ? [] : [...new Set([...Object.keys(freq.supply), ...Object.keys(freq.consume)])]
+      .filter((k) => isPattern(k) && narrowingOf(k) !== null && !NO_TARGET.has(verbOfKey(k)))),
+    [freq, patterned]);
 
   // THE CAP IS A PAGE (UX review, 2026-09-17). "467 match, showing the first 50" with no way to the
   // rest was a dead end; each press shows another fifty, and a new question starts over.
@@ -586,6 +605,7 @@ export function CardSearch({
         noun={commanderMode ? "commanders" : "cards"}
         makes={produceOptions}
         pays={consumeOptions}
+        narrowings={narrowOptions}
         makesCount={countOf}
         paysCount={consumeCountOf}
         demand={consumeCountOf}

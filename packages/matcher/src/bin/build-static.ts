@@ -18,6 +18,7 @@ import { loadTokenTags } from "../index.js";
 import { SHARD_COUNT, comboIndex, shardOf, type StaticCombo } from "./build-static-core.js";
 import { browseSlices, buildPartnerArtifact, type PartnerId } from "../partners-core.js";
 import { eventShards } from "./events-index-core.js";
+import { eventPatterns, patternFrequency } from "../event-pattern.js";
 import { loadHierarchy } from "../hierarchy.js";
 
 const outIdx = process.argv.indexOf("--out");
@@ -190,8 +191,17 @@ for (const [name, shard] of partners.shards) {
 // THE COUNTS EVERY EVENT PICKER PRINTS (roadmap AJ3): how many cards can cause each event, how
 // many ask for it, and the corpus count split into the 32 colour identities so a row's figure
 // narrows with the colour chips instead of repeating AJ5's defect one surface along.
+// AND ONE ROW PER EVENT, NARROWED ONLY WHEN ASKED (owner, 2026-09-29): every pattern -- `dies|*|*|*`,
+// `dies|creature|*|*`, `sacrifice|*|*|t` -- is written into the event index beside the keys it
+// unions, with its counts here, so the search lists an event once and narrows it to a target.
+const patterns = eventPatterns(partners.events);
+const patternFreq = patternFrequency(patterns, (i) => partners.index[i]?.identity ?? []);
+for (const [key, members] of patterns) partners.events.set(key, members);
+console.log(`event patterns: ${patterns.size}`);
 writeFileSync(join(stagingDir, "event-frequency.json"), JSON.stringify({
-  supply: partners.freq, consume: partners.consumers, byIdentity: partners.freqByIdentity,
+  supply: { ...partners.freq, ...patternFreq.supply },
+  consume: { ...partners.consumers, ...patternFreq.consume },
+  byIdentity: { ...partners.freqByIdentity, ...patternFreq.byIdentity },
 }));
 // AN OBJECT, NOT THE BARE ARRAY, SINCE 2026-09-21: the rows now carry `t`/`s` codes and the tables
 // they point into have to ship with them. `loadNameIndex` reads either shape, so an artifact built

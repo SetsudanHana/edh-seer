@@ -4,9 +4,6 @@
     "packages/web/client/src/components/Calibrate.tsx": {
       "max-w-5xl": { "count": 1, "why": "#calibrate is a dev-only judging tool, not shipped; can stay if the owner agrees" }
     },
-    "packages/web/client/src/components/CardList.tsx": {
-      "max-w-[88rem]": { "count": 1, "why": "card list grid capped at 1408px, fix under #770" }
-    },
     "packages/web/client/src/components/EventSentence.tsx": {
       "max-w-4xl": { "count": 1, "why": "event sentence block, fix under #770" }
     },
