@@ -33,6 +33,7 @@ export {
   type Color, type ColorDemand, type ManaAuditRow,
 } from "./mana-audit.js";
 export { landInputs, recommendedLands, type LandRecommendation } from "./land-count.js";
+export { comboPayoffs, loopEvents, type ComboPayoff, type LoopEvent } from "./combo-payoffs.js";
 export {
   colourMiss, colourSources, landTarget, manaBaseScore, tappedLandCount, LAND_FORMULA, MANA_BASE_COST,
   SIMULATED_MAX_LANDS, SIMULATED_MIN_LANDS, type LandFormulaInputs, type ManaBaseScore,

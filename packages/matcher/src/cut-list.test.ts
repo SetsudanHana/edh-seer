@@ -30,6 +30,8 @@ test("lands, commanders and combo pieces are never candidates", () => {
     card({ name: "Wastes", isLand: true }),
     card({ name: "The Boss", isCommander: true }),
     card({ name: "Half A Combo", isComboPiece: true }),
+    // Turns a known loop into a win (owner, 2026-09-29): cutting it leaves the loop winning nothing.
+    card({ name: "The Payoff", isComboPayoff: true }),
   ]);
   expect(rows).toEqual([]);
 });

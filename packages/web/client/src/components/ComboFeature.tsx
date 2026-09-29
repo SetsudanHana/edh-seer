@@ -16,8 +16,11 @@ export interface ComboParts {
 }
 
 /** The loop's pieces as the engine knows them, the sentence on each side, and the cards that work
- *  with two or more of its pieces. Null when a piece is not in the model. */
-export function comboParts(cards: readonly string[], m: EngineModel): ComboParts | null {
+ *  with two or more of its pieces. Null when a piece is not in the model.
+ *
+ *  `winners` are the report's own payoffs for this loop (`combo.payoffs`): the cards that turn what
+ *  it repeats into a win. They lead, and need only one link to a piece; the rest still need two. */
+export function comboParts(cards: readonly string[], m: EngineModel, winners: readonly string[] = []): ComboParts | null {
   const byName = new Map<string, EngineCard>();
   for (const c of m.cards.values()) {
     if (c.isFace || c.isToken) continue;
@@ -32,14 +35,16 @@ export function comboParts(cards: readonly string[], m: EngineModel): ComboParts
   const sides = ps.map((a, i) => (ps.length < 2 ? null : best(linksOf(a, ps[(i + 1) % ps.length]!))));
   const inLoop = new Set(ps.map((p) => p.id));
   const payoffs: ComboParts["payoffs"] = [];
+  const wins = new Set(winners);
   for (const c of byName.values()) {
     if (inLoop.has(c.id) || payoffs.some((p) => p.card.id === c.id)) continue;
-    const touched = ps.filter((p) => linksOf(c, p).length > 0);
-    if (touched.length < 2) continue;
-    const link = best(touched.flatMap((p) => linksOf(c, p)));
+    const touched = ps.filter((p) => linksOf(c, p).length > 0 || linksOf(p, c).length > 0);
+    if (touched.length < (wins.has(c.name) || wins.has(c.physical) ? 1 : 2)) continue;
+    const link = best(touched.flatMap((p) => [...linksOf(c, p), ...linksOf(p, c)]));
     if (link) payoffs.push({ card: c, link, reach: touched.length, with: touched.map((p) => p.id) });
   }
-  payoffs.sort((a, b) => b.reach - a.reach || b.card.score - a.card.score);
+  const isWin = (p: ComboParts["payoffs"][number]) => wins.has(p.card.name) || wins.has(p.card.physical);
+  payoffs.sort((a, b) => Number(isWin(b)) - Number(isWin(a)) || b.reach - a.reach || b.card.score - a.card.score);
   return { pieces: ps, sides, payoffs: payoffs.slice(0, PAYOFFS) };
 }
 

@@ -55,7 +55,7 @@ export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
       ) : (
         <ul className="flex flex-col gap-2">
           {combos.map((c, i) => (
-            <li key={i} className="flex items-center gap-3 py-1.5 border-b border-(--separator)">
+            <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 border-b border-(--separator)">
               <span className="pip shrink-0">{c.cards.length}</span>
               <span className="text-sm flex items-center gap-2 flex-wrap">
                 {/* Each piece opens its own inspector: "these three go infinite" is only
@@ -85,6 +85,19 @@ export function ComboList({ combos }: { combos: DeckReport["combos"] }) {
                   );
                 })()}
               </span>
+              {/* A LOOP'S PAYOFF IS ITS WIN (owner, 2026-09-29): the cards in this deck that eat what the
+                *  loop repeats and reach the opponents, found in the graph rather than the database. */}
+              {c.payoffs?.length ? (
+                <span className="basis-full pl-9 text-xs text-(--muted) flex flex-wrap items-baseline gap-1" data-testid="combo-payoffs">
+                  Wins through
+                  {c.payoffs.map((p, k) => (
+                    <span key={p.name}>
+                      {k > 0 ? ", " : " "}
+                      <CardName name={p.name} />
+                    </span>
+                  ))}
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>

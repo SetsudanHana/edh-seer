@@ -37,6 +37,13 @@ test("each side of the loop is its own sentence, and a card working with two pie
   expect(parts.payoffs.map((p) => [p.card.name, p.reach])).toEqual([["Pay", 2]]);
 });
 
+/** THE REPORT'S OWN PAYOFFS LEAD (owner, 2026-09-29): a card that turns what the loop repeats into a
+ *  win is drawn under it with one link to a piece; the guess by shared links still needs two. */
+test("a measured win payoff leads, and needs only one link", () => {
+  const parts = comboParts(["A", "B", "C"], m, ["Lone"])!;
+  expect(parts.payoffs.map((p) => p.card.name)).toEqual(["Lone", "Pay"]);
+});
+
 test("a piece the engine does not know leaves the combo as a row", () => {
   expect(comboParts(["A", "Missing"], m)).toBeNull();
 });
