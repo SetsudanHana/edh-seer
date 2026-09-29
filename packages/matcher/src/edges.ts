@@ -1190,7 +1190,12 @@ const COPY_OF_TOKEN_CUE = /copy of (?:a |an |another |target |that )*(?:\w+ )?to
  *  Read off the printed cue, not a derived field -- none records it, and adding one is a schema and
  *  re-derive question this fix does not need to answer for three cards. */
 const COPY_EXCLUDES_LEGENDARY_CUE = /\bnonlegendary\b/i;
-/** "…a copy of that creature, except it's 1/1": the stats belong to the copy, not the target. */
+/** A token's own departures: its node implies its entry and never these (#714). Discard and mill
+ *  are absent -- a token is never in a hand or a library (CR 111.7, 704.5d). */
+const TOKEN_DEPARTURES: ReadonlySet<string> = new Set(["leaves", "dies", "sacrificed"]);
+/** "…a copy of that creature, except it's 1/1": the stats belong to the copy, not the target.
+ *  CEILING: stripped card-wide, so a card printing BOTH a target stat narrowing and an N/N exception
+ *  loses the narrowing too; none is known in the corpus (review). */
 const COPY_PT_EXCEPTION_CUE = /\bexcept (?:it|they)(?:'s|'re| is| are) \d+\/\d+\b/i;
 
 /** Board state and provenance a copy claim must not carry into the type test: `token` means opposite
@@ -1687,7 +1692,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
         //    step" was dropped for a Horror-token hop that states no departure, so Nadier's
         //    Nightblade drained off nothing the Forge makes.
         if (
-          e.subject.token === true && t.verb !== "create-token" && t.verb !== "leaves" && t.verb !== "dies"
+          e.subject.token === true && t.verb !== "create-token" && !TOKEN_DEPARTURES.has(t.verb)
           && !p.isToken && !c.isToken
           && (opts.tokensMediate ?? true) && hasMediatingToken(p.card)
         ) continue;
