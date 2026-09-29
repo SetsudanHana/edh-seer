@@ -199,8 +199,12 @@ function groupThrough(m: EngineModel, near: OrbitModel["near"]): OrbitModel["thr
 }
 
 /** "5 cards, 1 of them only once": "5, 1 only once" read as two numbers (orbit round 1). */
-export function countText(n: number, once: number): string {
-  const cards = `${n} card${n === 1 ? "" : "s"}`;
+export function countText(n: number, once: number, withName?: string): string {
+  // SAID AGAINST THE CARD IT COUNTS FOR, where one is named (persona round 2026-09-29, three seats):
+  // "Wizard blink 4 cards" on Glance beside "Wizard blink 39 cards" in Game plan read as one theme
+  // with two sizes, a line of explanation above the list notwithstanding. "4 with Inalla" is not
+  // the theme's size, and says so where the number is.
+  const cards = withName ? `${n} with ${withName}` : `${n} card${n === 1 ? "" : "s"}`;
   if (!once) return cards;
   if (once === n) return n === 1 ? `${cards}, only once` : n === 2 ? `${cards}, both only once` : `${cards}, all only once`;
   return `${cards}, ${once} of them only once`;
