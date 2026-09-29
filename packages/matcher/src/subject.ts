@@ -1,4 +1,4 @@
-import type { SubjectFilter } from "@edh-seer/tagger";
+import type { StatPredicate, SubjectFilter } from "@edh-seer/tagger";
 import type { Hierarchy } from "./types.js";
 import { expandTypes, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { evalStatPredicate } from "./stats.js";
@@ -212,7 +212,11 @@ export function subjectMatches(producer: SubjectFilter, consumer: SubjectFilter,
   // (missing producer stat → 0, per the non-numeric rule).
   if (consumer.stats && consumer.stats.length > 0) {
     const s = { power: producer.power ?? 0, toughness: producer.toughness ?? 0, manaValue: producer.manaValue ?? 0 };
-    if (!consumer.stats.every((p) => evalStatPredicate(p, s))) return false;
+    // PARITY OF AN UNKNOWN MANA VALUE IS UNKNOWN, not the parity of 0: All Is Dust's sacrificed
+    // permanents are a class holding both, and "missing -> 0" failed every odd demand (#713,
+    // Desecrate Reality's adamant return).
+    const unknownParity = (p: StatPredicate) => (p.op === "odd" || p.op === "even") && producer.manaValue === undefined;
+    if (!consumer.stats.every((p) => unknownParity(p) || evalStatPredicate(p, s))) return false;
   }
   return true;
 }

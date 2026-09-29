@@ -333,6 +333,9 @@ function parseStats(t: string): StatPredicate[] {
     const op = /less|fewer|lower/.test(m[3]) ? "lte" : "gte";
     out.push({ metric, op, value: Number(m[2]) });
   }
+  // "a spell with an odd mana value" (Soundwave, Superior Captain, #713): parity, no rhs.
+  const parity = /\b(odd|even) mana value\b/.exec(t);
+  if (parity) out.push({ metric: "mana-value", op: parity[1] as "odd" | "even" });
   return out;
 }
 

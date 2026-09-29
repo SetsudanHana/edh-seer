@@ -224,7 +224,9 @@ import { emblemRecipient } from "../emblem.js";
 // (owner 2026-09-29: Resplendent Angel -> gain-life:any; "cast a noncreature spell" -> cast:-creature).
 // 197: #715 -- a self re-entry "returned to the battlefield transformed" is marked `transformed`, so
 // the matcher types it with the back face (Jill, Shiva's Dominant -> Setessan Champion).
-export const DERIVE_VERSION = 197;
+// 198: #713 -- "a spell with an odd/even mana value" is a parity stat on mana value, so the cast
+// trigger narrows (Soundwave, Superior Captain) instead of reading as every spell.
+export const DERIVE_VERSION = 198;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the

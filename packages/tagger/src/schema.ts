@@ -3,12 +3,13 @@ export const SCHEMA_VERSION = 1;
 export type Control = "you" | "opp" | "any";
 
 export const STAT_METRICS = ["power", "toughness", "mana-value"] as const;
-export const STAT_OPS = ["lte", "gte", "lt", "gt", "eq"] as const;
+/** `odd` / `even` take no rhs: "a spell with an odd mana value" (Soundwave, Superior Captain, #713). */
+export const STAT_OPS = ["lte", "gte", "lt", "gt", "eq", "odd", "even"] as const;
 export type StatMetric = (typeof STAT_METRICS)[number];
 export type StatOp = (typeof STAT_OPS)[number];
 
 /** A numeric condition on a subject's stat. Exactly one of `value` (constant rhs, e.g. power ≤ 2)
- *  or `vs` (another metric rhs, e.g. toughness ≥ power) is set. */
+ *  or `vs` (another metric rhs, e.g. toughness ≥ power) is set -- neither for a parity op. */
 export interface StatPredicate {
   metric: StatMetric;
   op: StatOp;
