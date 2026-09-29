@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DeckReport } from "../types.js";
 import { CardName, useCardDrawer, useAdded } from "./card-drawer.js";
 import { CardMenuButton } from "./card-menu.js";
@@ -41,8 +41,13 @@ const CATEGORY_ORDER: Category[] = [
  *
  *  The crop is `object-position: 50% 22%` because a Magic art crop puts its subject high; centring
  *  it lands on the middle of a torso on most cards. */
+/** THE SLOT IS KEPT WHEN THERE IS NO ART (designer review 2026-09-29): a row whose image was
+ *  missing or failed collapsed the slot, pulled its name into the image column and broke the
+ *  column's edge ("Hateful Eidolon", "Sugar Coat", "Dawn"). An empty box the same size holds it. */
 function Thumb({ art, alt }: { art?: string; alt: string }) {
-  if (!art) return null;
+  const [failed, setFailed] = useState(false);
+  const box = "w-10 h-7 sm:w-14 sm:h-10 shrink-0 rounded-[4px] border border-(--separator) bg-(--surface-secondary)";
+  if (!art || failed) return <span aria-hidden="true" data-testid="thumb-empty" className={box} />;
   return (
     <img
       src={art}
@@ -50,11 +55,30 @@ function Thumb({ art, alt }: { art?: string; alt: string }) {
       loading="lazy"
       width={56}
       height={40}
-      className="w-10 h-7 sm:w-14 sm:h-10 shrink-0 rounded-[4px] border border-(--separator) object-cover bg-(--surface-secondary)"
+      className={`${box} object-cover`}
       style={{ objectPosition: "50% 22%" }}
-      onError={(e) => e.currentTarget.remove()}
+      onError={() => setFailed(true)}
     />
   );
+}
+
+/** HOW MANY TABLES SIDE BY SIDE (designer review 2026-09-29). One table stretched to the viewport
+ *  put 1,500px at 2560 and 2,600px at 3840 between a row's reason and its score -- the eye could not
+ *  track a name to its number. From 160rem the rows split into two tables, from 240rem three, each
+ *  with its own sticky header; the order runs down the first, then the next. A query, not a class:
+ *  the rows have to be dealt out, which CSS cannot do to one table. */
+function useTableColumns(): number {
+  const read = () => typeof window === "undefined" || !window.matchMedia ? 1
+    : window.matchMedia("(min-width: 240rem)").matches ? 3 : window.matchMedia("(min-width: 160rem)").matches ? 2 : 1;
+  const [n, setN] = useState(read);
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const qs = ["(min-width: 160rem)", "(min-width: 240rem)"].map((q) => window.matchMedia(q));
+    const on = () => setN(read());
+    for (const q of qs) q.addEventListener?.("change", on);
+    return () => { for (const q of qs) q.removeEventListener?.("change", on); };
+  }, []);
+  return n;
 }
 
 /** THE GRID — the whole printed card at its own 488:680 ratio, no frame of ours, one hairline so a
@@ -258,6 +282,10 @@ export function CardList({ cards, artByName, coverage }: {
     </button>
   );
 
+  const tableCols = useTableColumns();
+  const perTable = Math.max(1, Math.ceil(visible.length / tableCols));
+  const tables = Array.from({ length: tableCols }, (_, k) => ({ rows: visible.slice(k * perTable, (k + 1) * perTable), offset: k * perTable }))
+    .filter((t) => t.rows.length > 0);
   return (
     // NO CAP: THE PANEL TAKES THE WIDTH IT IS GIVEN (owner's call, 2026-09-03). It was
     // an 88rem cap, and the rule that put it on the PANEL rather than the table still holds --
@@ -392,7 +420,9 @@ export function CardList({ cards, artByName, coverage }: {
           *  A REVERSAL WITH A KNOWN PRICE IS NOT A REGRESSION, but it is worth being able to undo:
           *  the cap was one class on the panel root, and the ink figures it was derived from are
           *  kept above so a future round does not have to re-measure them. */}
-        <table className="w-full table-fixed text-sm border-collapse">
+        <div className={tables.length === 3 ? "grid grid-cols-3 gap-x-8 items-start" : tables.length === 2 ? "grid grid-cols-2 gap-x-8 items-start" : ""}>
+        {tables.map(({ rows, offset }) => (
+        <table key={offset} className="w-full table-fixed text-sm border-collapse">
           {/* STICKY, because scanning a 52-row table BY COLUMN is exactly what a tuner does and the
             *  labels used to scroll away — the brief's own sentence, "the precon player did not know
             *  what the last column was". The background is opaque or the rows show through as it
@@ -444,7 +474,8 @@ export function CardList({ cards, artByName, coverage }: {
             </tr>
           </thead>
           <tbody>
-            {visible.map((c, i) => {
+            {rows.map((c, j) => {
+              const i = offset + j;
               const reason = distinctiveReason(c, shapes.shared, names);
               const roles = (c.roles ?? []) as Category[];
               /* PINNED RINGS THE ROW (roadmap S8). `--accent`, because every other mark on this
@@ -497,6 +528,8 @@ export function CardList({ cards, artByName, coverage }: {
             })}
           </tbody>
         </table>
+        ))}
+        </div>
         </div>
       )}
       {/* NOT READ YET — a grid, because this list has NO DATA TO LOSE. It exists purely to be
