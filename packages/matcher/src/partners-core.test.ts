@@ -2004,3 +2004,24 @@ test("a count of permanents you own that opponents control is keyed, and a donat
   expect(supplyKeysOf(offering)).toContain("counts|-|donated|-");
   expect(supplyKeysOf(threaten)).not.toContain("counts|-|donated|-");
 });
+
+/** AN INTERVENING IF IS A DEMAND (owner, 2026-09-29): Resplendent Angel's "if you gained 5 or more
+ *  life this turn" rides an END-STEP trigger, so without its condition the card was in no
+ *  "cares about lifegain" list. Its demand key is the one a lifegain trigger has. */
+test("a condition's demand is a demand key, the same as a trigger on that event", () => {
+  const card = (abilities: unknown[]) => ({
+    card: { name: "X", typeLine: "Creature", oracleText: "", keywords: [], colors: [], manaValue: 5 },
+    tags: { oracleId: "x", schemaVersion: 1, promptVersion: 1, model: "t", characteristics: { types: ["creature"], subtypes: [], colors: [], identity: [], cmc: 5, power: "3", toughness: "3", token: false, keywords: [] }, abilities },
+  }) as never;
+  const angel = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["gain-life:any"], effect: { kind: "token-generation" } }]);
+  const pridemate = card([{ kind: "triggered", trigger: { verbs: ["gain-life"], subject: { control: "you", token: null } }, effect: { kind: "counter-placement" } }]);
+  const lifegain = demandKeysOf(pridemate).find((k) => k.startsWith("gain-life"));
+  expect(lifegain).toBeDefined();
+  expect(demandKeysOf(angel)).toContain(lifegain);
+  // A noncreature-spell condition is the prowess demand.
+  const spells = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["cast:-creature"], effect: { kind: "draw-card" } }]);
+  expect(demandKeysOf(spells).some((k) => k.startsWith("cast|") && !k.includes("|creature|"))).toBe(true);
+  // The older condition tags stay out of the pools: "if you attacked this turn" (Alesha).
+  const alesha = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:any"], effect: { kind: "graveyard-recursion" } }]);
+  expect(demandKeysOf(alesha).some((k) => k.startsWith("attacks"))).toBe(false);
+});

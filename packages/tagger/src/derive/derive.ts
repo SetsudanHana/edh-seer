@@ -220,7 +220,9 @@ import { emblemRecipient } from "../emblem.js";
 // payoff for draws (Alhammarret's Archive).
 // 195: a CR 614 multiplier's synthesized trigger is marked `replacement` (owner 2026-09-29: the
 // edge runs from the replacement to the card whose effect it improves).
-export const DERIVE_VERSION = 195;
+// 196: an intervening if on the life you gained or the spells you cast this turn is a demand
+// (owner 2026-09-29: Resplendent Angel -> gain-life:any; "cast a noncreature spell" -> cast:-creature).
+export const DERIVE_VERSION = 196;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the

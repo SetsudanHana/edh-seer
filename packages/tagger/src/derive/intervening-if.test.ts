@@ -38,3 +38,17 @@ test("'you descended this turn' cares about permanents hitting your graveyard fr
   expect(conditionCares("you've descended this turn")).toEqual(all);
   expect(conditionCares("you descended four or more times this turn")).toEqual(all);
 });
+
+/** OWNER, 2026-09-29: the life you gained and the spells you cast this turn are demands a deck
+ *  supplies. Resplendent Angel (Hatsune Miku precon) never showed among token makers that care
+ *  about lifegain. "The player with the most life" still names nothing a card supplies. */
+test("a turn's lifegain and spells cast are demands; the most-life comparison is not", () => {
+  expect(conditionCares("you gained 5 or more life this turn")).toEqual(["gain-life:any"]);
+  expect(conditionCares("you gained life this turn")).toEqual(["gain-life:any"]);
+  expect(conditionCares("you have at least 7 life more than your starting life total")).toEqual(["gain-life:any"]);
+  expect(conditionCares("you have 40 or more life")).toEqual(["gain-life:any"]);
+  expect(conditionCares("you've cast a noncreature spell this turn")).toEqual(["cast:-creature"]);
+  expect(conditionCares("you've cast two or more instant and/or sorcery spells this turn")).toEqual(["cast:instant", "cast:sorcery"]);
+  expect(conditionCares("you have the most life or are tied for most life")).toEqual([]);
+  expect(conditionCares("you cast it")).toEqual([]);
+});
