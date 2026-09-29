@@ -89,6 +89,16 @@ const TEMPLATES: {
     re: /\bif\s+([^.]{0,40}?)\s+would mill\b/i,
     verbs: ["mill"], kind: "mill", subject: 0, actor: 1,
   },
+  // "If you would draw a card except the first one you draw in each of your draw steps, draw two
+  // cards instead" (Alhammarret's Archive, #717): a payoff for every draw you make, not a draw of
+  // its own. The subject is the DRAWER. CEILING: the first-draw exception is not modelled.
+  {
+    // THE DOUBLED DRAW IS REQUIRED (42 corpus cards say "if you would draw a card ... instead", and
+    // only ~8 double it): dredge, Laboratory Maniac, Underrealm Lich and Abundance REPLACE a draw
+    // with something else and are no draw payoff.
+    re: /\bif\s+(you)\s+would draw (?:a card|one or more cards)\b[^.]{0,80}?\b(?:draw (?:two|three) cards|draw that many cards plus one|you draw two cards)\b/i,
+    verbs: ["draw"], kind: "draw-card", subject: 1,
+  },
   // Tekuthal, the worked example in the normalize prompt itself.
   {
     re: /\bif you would proliferate\b/i,
