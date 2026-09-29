@@ -44,7 +44,9 @@ import type { DeckCard } from "./types.js";
  *  - 0.57 of a land per ACCELERANT (a rock, a dork, a land-fetch spell), 0.55 adding and 0.60
  *    removing, the same at 4 accelerants as at 12. Karsten's cheap-ramp figure is 0.28.
  *  - 0.25 of a land per card in the DRAW role: the deck's own draw pieces measured 0.22 removed, a
- *    Night's Whisper 0.46 added, and 0.25 is what the fit below settles on between them.
+ *    Night's Whisper 0.46 added, and 0.25 is what the fit below settles on between them. SUPERSEDED
+ *    the same day by a credit per mana value (`DRAW_CREDIT_BY_MANA_VALUE`), and ramp is now weighted
+ *    by how long it survives (`RAMP_RESILIENCE`).
  *  - 3.95 a point of average mana value and 0.54 a point of commander mana value, fitted across the
  *    decks with those two rates held.
  *  Held to each deck's own best count, it misses by 1.4 lands on average; the formula it replaces
@@ -58,8 +60,39 @@ import type { DeckCard } from "./types.js";
  *  of each a deck SHOULD run comes from the role targets (real decks), and `recommendedLands` counts
  *  ramp and draw only up to them. */
 export const LAND_FORMULA = {
-  base: 27.0, perManaValue: 3.95, perCommanderManaValue: 0.54, perAccelerant: 0.57, perDrawPiece: 0.25,
+  base: 27.0, perManaValue: 3.95, perCommanderManaValue: 0.54, perAccelerant: 0.57,
 } as const;
+
+/** HOW MUCH OF A ROCK'S 0.57 EACH KIND OF RAMP KEEPS, by how likely it is to keep producing (owner,
+ *  2026-09-29: "land ramp is the most resilient, where the rituals are the least"). The goldfish
+ *  never destroys anything, so its 0.57 is what a piece is worth if it survives the game. Across the
+ *  71 calibration decks a table's removal reaches lands almost never (no wipes, 1.0 spot removal a
+ *  deck), artifacts rarely (0.07 wipes, 2.0 spot), and creatures often (0.76+ wipes -- a text count
+ *  that misses the -X/-X ones -- and 4.0 spot). The weights are the owner's order read against those
+ *  counts; a JUDGEMENT, not a fit. A ONE-SHOT (a ritual, a Treasure maker, a Lotus Petal) is ramp the
+ *  goldfish does not play at all, and now counts for one turn's worth of it. */
+export const RAMP_RESILIENCE = { "land-fetch": 1, rock: 0.7, dork: 0.5, oneShot: 0.15 } as const;
+
+/** LANDS A DRAW CARD SAVES, BY ITS MANA VALUE (owner, 2026-09-29: "cantrips increase your
+ *  consistency landwise cause they are cheap 1-2 mana spells"). Measured in the goldfish over 268
+ *  decks: three copies of a piece swapped in for blank spells, every land count re-swept, lands saved
+ *  per copy. Opt (1 mana, draw 1, scry 1) 0.30; Night's Whisper (2, draw 2) 0.43; Phyrexian Arena
+ *  (3, a card a turn) 0.34; Harmonize (4, draw 3) 0.23; a 6-mana draw four -0.11 -- it wants lands of
+ *  its own before it finds any. Mana value 5 is interpolated. The flat 0.25 this replaces paid a
+ *  six-drop as much as a cantrip. */
+export const DRAW_CREDIT_BY_MANA_VALUE = [0.3, 0.3, 0.43, 0.34, 0.23, 0.06] as const;
+export const DRAW_CREDIT_SIX_PLUS = -0.11;
+/** HALF, FOR THE MANA THE GAME ALREADY WANTS. The goldfish casts a cantrip on turn two because
+ *  nothing else competes for that mana; a real deck is casting its plan with it. Rani (12 of 14 draw
+ *  cards at 3 or less) read 32 lands at the full rate and 35 at half, inside the normal three of the
+ *  38 it runs; over the 71 decks, 20 are more than three off at half against 30 at the full rate. */
+export const DRAW_REALISM = 0.5;
+
+/** The lands one draw card is worth to the target. */
+export function drawCredit(manaValue: number): number {
+  const mv = Math.max(0, Math.round(manaValue));
+  return DRAW_REALISM * (mv < DRAW_CREDIT_BY_MANA_VALUE.length ? DRAW_CREDIT_BY_MANA_VALUE[mv]! : DRAW_CREDIT_SIX_PLUS);
+}
 
 /** The land counts the goldfish was run at. Outside them the formula is an extrapolation, so the
  *  target is CLAMPED to the nearest measured count rather than swapped for a convention: the old
@@ -72,10 +105,10 @@ export interface LandFormulaInputs {
   avgManaValue: number;
   /** The dearest commander's mana value, 0 for a deck without one. */
   commanderManaValue: number;
-  /** Rocks, dorks and land-fetch spells (`classifyAccelerant`), up to the Ramp role's target. */
+  /** Ramp in rock-equivalents: each piece weighted by `RAMP_RESILIENCE`, up to the Ramp role's target. */
   accelerants: number;
-  /** Cards in the Draw role, up to the Consistency role's target. */
-  drawPieces: number;
+  /** Lands the draw package is worth: `drawCredit` summed, up to the Consistency role's target. */
+  drawCredit: number;
 }
 
 /** The land target, rounded and clamped to the simulated range. */
@@ -84,7 +117,7 @@ export function landTarget(inputs: LandFormulaInputs): number {
     + LAND_FORMULA.perManaValue * inputs.avgManaValue
     + LAND_FORMULA.perCommanderManaValue * inputs.commanderManaValue
     - LAND_FORMULA.perAccelerant * inputs.accelerants
-    - LAND_FORMULA.perDrawPiece * inputs.drawPieces;
+    - inputs.drawCredit;
   return Math.min(SIMULATED_MAX_LANDS, Math.max(SIMULATED_MIN_LANDS, Math.round(raw)));
 }
 

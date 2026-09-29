@@ -87,7 +87,7 @@ test("the recommendation comes back with the count the deck actually runs", () =
   expect(rec.actual).toBe(37);
   // 27.0 + 3.95 * 3 = 38.85, no commander, no ramp and no draw.
   expect(rec.target).toBe(39);
-  expect(rec.target).toBe(landTarget({ avgManaValue: 3, commanderManaValue: 0, accelerants: 0, drawPieces: 0 }));
+  expect(rec.target).toBe(landTarget({ avgManaValue: 3, commanderManaValue: 0, accelerants: 0, drawCredit: 0 }));
 });
 
 test("MDFC counts are zero, and say so rather than being silently absent", () => {
@@ -128,7 +128,7 @@ test("a modal DFC with a land back is counted as a land, and does not discount t
   expect(rec.actual).toBe(32);
   // ...and the target reads no MDFC term at all: it is the formula on the nonland pool alone.
   const inputs = landInputs(deck);
-  expect(rec.target).toBe(landTarget({ avgManaValue: inputs.avgManaValue, commanderManaValue: 0, accelerants: 0, drawPieces: 0 }));
+  expect(rec.target).toBe(landTarget({ avgManaValue: inputs.avgManaValue, commanderManaValue: 0, accelerants: 0, drawCredit: 0 }));
 });
 
 /** THE SAME DOUBLE COUNT IN THE OTHER DIRECTION. `avgManaValue` is the regression's dominant term,
@@ -173,7 +173,7 @@ test("an MDFC is not also counted as cheap ramp", () => {
  *  2026-09-29: "for rani it shows we are above the ramp target, so if fixing that places our target
  *  land count higher"). The goldfish that measured 0.57 of a land per rock never loses one and always
  *  wants more, so twelve rocks against a target of eight only buy eight rocks' worth of lands. */
-test("ramp past its role target does not lower the land target, and the trim raises it", () => {
+test("ramp past its role target does not lower the land target, and a trim cuts the weakest pieces", () => {
   const rampTags = (id: string) => ({
     oracleId: id, schemaVersion: 1, promptVersion: 1, model: "t",
     characteristics: {
@@ -194,11 +194,26 @@ test("ramp past its role target does not lower the land target, and the trim rai
   const free = recommendedLands(deck);
   const capped = recommendedLands(deck, { roleTargets: { ramp: 8 } });
   expect(free.accelerants).toBe(12);
-  // Twelve rocks count as eight: four rocks' worth of lands (2.28) comes back.
-  expect(capped.target - free.target).toBeGreaterThanOrEqual(2);
-  // Ramp runs 4 over its target; cutting four rocks costs another 2.28 lands on top of the cap.
-  expect(capped.ifTrimmed?.ramp?.over).toBe(4);
-  expect(capped.ifTrimmed!.ramp!.target).toBeGreaterThan(capped.target);
-  // At or under target there is nothing to trim.
+  // Twelve rocks count as eight: four rocks' worth of lands (4 x 0.7 x 0.57 = 1.6) comes back.
+  expect(capped.target - free.target).toBeGreaterThanOrEqual(1);
+  // A TRIM CUTS THE WEAKEST PIECES, and past the target those are the ones the cap already left
+  // uncounted, so trimming four of twelve equal rocks moves nothing: no note.
+  expect(capped.ifTrimmed).toBeUndefined();
   expect(recommendedLands(deck, { roleTargets: { ramp: 14 } }).ifTrimmed).toBeUndefined();
+});
+
+test("ramp is weighted by what survives, draw by what it costs", () => {
+  const withTags = (dc: DeckCard, kind: string, types: string[]): DeckCard => ({ ...dc, tags: {
+    oracleId: dc.card.name, schemaVersion: 1, promptVersion: 1, model: "t",
+    characteristics: { types, subtypes: [], colors: [], identity: [], cmc: dc.card.manaValue, power: null, toughness: null, token: false, keywords: [] },
+    abilities: [{ kind: "activated" as const, effect: { kind } }],
+  } as never });
+  const filler = (n: number) => Array.from({ length: n }, (_, i) => mk(`Spell-${i}`, 3));
+  const lands = Array.from({ length: 37 }, (_, i) => land(`Swamp-${i}`));
+  const rocks = Array.from({ length: 12 }, (_, i) => withTags(mk(`Rock-${i}`, 2, "{T}: Add {C}.", "Artifact", { producedMana: ["C"] }), "mana-generation", ["artifact"]));
+  const dorks = Array.from({ length: 12 }, (_, i) => withTags(mk(`Dork-${i}`, 2, "{T}: Add {G}.", "Creature — Elf", { producedMana: ["G"] }), "mana-generation", ["creature"]));
+  // Twelve rocks are worth more lands than twelve dorks: a rock outlives a creature wipe.
+  expect(recommendedLands([...rocks, ...filler(50), ...lands]).target)
+    .toBeLessThan(recommendedLands([...dorks, ...filler(50), ...lands]).target);
+
 });
