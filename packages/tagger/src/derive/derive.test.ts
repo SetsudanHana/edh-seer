@@ -3530,3 +3530,13 @@ test("a token sacrificed AT END OF COMBAT, or decayed, dies attacking; one sacri
   expect(death("Urabrask's Forge", "At the beginning of combat on your turn, put an oil counter on this artifact, then create an X/1 red Phyrexian Horror creature token with trample and haste, where X is the number of oil counters on this artifact. Sacrifice that token at the beginning of the next end step.",
     "an X/1 red Phyrexian Horror creature token with trample and haste", "that token")?.subject.combat).toBeUndefined();
 });
+
+test("the self-or-class twin keeps the combat state its condition set (review of #798)", () => {
+  const out = deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "dies", subject: "this creature or another creature you control", control: "you" },
+    actions: [{ verb: "draw", object: "a card", amount: "1" }] }], "Test Card",
+    { 1: "Whenever this creature or another creature you control dies, draw a card if it was attacking." }).abilities;
+  const draws = out.filter((a) => a.effect.kind === "draw-card");
+  expect(draws.length).toBeGreaterThan(1);
+  for (const d of draws) expect(d.trigger?.subject.combat).toBe("attacking");
+});

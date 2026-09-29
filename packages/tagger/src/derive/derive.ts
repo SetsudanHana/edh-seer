@@ -1892,6 +1892,8 @@ export function deriveAbilities(
       // condition narrows the action its own sentence names to a death IN COMBAT, which is the
       // trigger subject's combat state; the "Otherwise" branch keeps every other death.
       // CEILING: "attacking or blocking alone" (Thijarian Witness) is two states the field cannot hold.
+      // CEILING: the verb id's first part must be the printed word ("draw", "deal"); an id whose word
+      // differs ("gains-control" vs "gain control") never gets the state -- missing, never wrong.
       const verbWord = (action.verb ?? "").split("-")[0];
       for (const sentence of ability.trigger && verbWord ? text.split(".") : []) {
         const cond = COMBAT_IF.exec(sentence);
@@ -1981,7 +1983,9 @@ export function deriveAbilities(
         // without it re-made two panel FALSEs (Phantasmal Image -> Kelpie) on the first derive.
         const own = parseSubject(`this ${selfWord}`);
         const zone = trigger!.subject.fromZone !== undefined ? { fromZone: trigger!.subject.fromZone } : {};
-        abilities.push({ ...ability, trigger: { ...trigger!, subject: { ...own, control: "you", self: true, ...zone } } });
+        // The combat state this action's own condition set (#798) holds for the self half too (review).
+        const combat = ability.trigger?.subject.combat ? { combat: ability.trigger.subject.combat } : {};
+        abilities.push({ ...ability, trigger: { ...trigger!, subject: { ...own, control: "you", self: true, ...zone, ...combat } } });
       }
       // AN "OR" LIMB THE CLAUSE LAYER CANNOT HOLD IS A TWIN TOO (compass misses, 2026-09-28). A
       // ClauseRecord trigger holds ONE event, so Syr Konrad's "Whenever another creature dies, OR a
@@ -1989,7 +1993,8 @@ export function deriveAbilities(
       // card leaves your graveyard" was stored as its first limb only, and every mill card lost its
       // link. Each extra limb derives a twin with the same effect, in the shape a single-limb card of
       // that event derives (Skola Grovedancer, Desecrated Tomb). 2 corpus cards print the shape.
-      if (trigger) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: limb.subject } });
+      const limbCombat = ability.trigger?.subject.combat ? { combat: ability.trigger.subject.combat } : {};
+      if (trigger) for (const limb of orLimbTriggers(text)) abilities.push({ ...ability, trigger: { ...trigger, verbs: limb.verbs, subject: { ...limb.subject, ...limbCombat } } });
     }
 
     // A RESTRICTION THE ENGINE CANNOT CHECK MAKES THE STATIC LABEL-ONLY TOO, not just the trigger
