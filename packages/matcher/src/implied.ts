@@ -290,12 +290,8 @@ const KEYWORD_EMITS: Record<string, EmitSpec[]> = {
  *  87 corpus cards against extort's 17.
  *
  *  REFUSED, with the reason, so the next reader does not add it:
- *  - **evolve** — "whenever a creature you control enters, **if that creature has greater power or
- *    toughness than this creature**". The condition is an intervening if (CR 603.4) comparing the
- *    entering creature against the CONSUMER's own stats, which `SubjectFilter.stats` cannot express.
- *    Recording the trigger without it claims every creature in the deck, which is knowingly adding
- *    the defect `bin/intervening-if-audit.ts` was built to count. Its counter EMIT is already
- *    supplied above; only the demand half is refused.
+ *  - (evolve USED to be here: its intervening if compares against THIS card's stats, which
+ *    `keywordAbilities` holds -- it is built there since #715, as an `anyOf` of two stat gates.)
  *  - **every attack- and block-triggered keyword** (exalted, battle cry, mentor, melee, annihilator,
  *    training, dethrone, bushido, renown, ingest, afflict, flanking) — each watches ITS OWN attack or
  *    block, so no other card supplies it, and `combatSelfSupplied` refuses the unnarrowed combat
@@ -364,6 +360,23 @@ export function keywordAbilities(chars: Characteristics): Ability[] {
     // layers read, not an edge. An edge from a fill to a delve spell is the owner's to rule, as
     // descend's was (2026-08-20 / 2026-09-10). 30 commander-legal cards.
     if (whole === "delve") out.push({ kind: "static", effect: { kind: "" }, conditionCares: ["dies:any", "mill:any", "discard:any", "enters-graveyard:any"] });
+    // EVOLVE, NOW EXPRESSIBLE (owner ruling 2026-09-28, #715: Twenty-Toed Toad, a 3/3, evolves Gyre
+    // Sage, a 1/2). The intervening if (CR 603.4) compares the entering creature with THIS card's own stats,
+    // and this function holds them: "greater power OR toughness" is an `anyOf` of two stat gates
+    // against the printed numbers. A `*` power or toughness names no number and stays refused.
+    if (whole === "evolve") {
+      const power = Number(chars.power), toughness = Number(chars.toughness);
+      if (chars.power !== null && chars.toughness !== null && Number.isFinite(power) && Number.isFinite(toughness)) {
+        out.push({
+          kind: "triggered", repeats: "repeatable", amount: "1",
+          trigger: { verbs: ["enters"], subject: {
+            type: "creature", control: "you", token: null, other: true,
+            anyOf: [{ stats: [{ metric: "power", op: "gt", value: power }] }, { stats: [{ metric: "toughness", op: "gt", value: toughness }] }],
+          } },
+          effect: { kind: "counter-placement", subject: { control: "you", token: null, self: true } },
+        });
+      }
+    }
     const spec = KEYWORD_TRIGGERS[whole] ?? KEYWORD_TRIGGERS[whole.split(/[\s{]/)[0]];
     if (!spec) continue;
     out.push({
