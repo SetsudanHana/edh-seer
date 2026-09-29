@@ -224,7 +224,8 @@ function normVerb(v: unknown): Verb | null {
   return VERB_ALIASES[s] ?? null;
 }
 
-/** Keep a StatPredicate only if metric+op are known and exactly one of value(number)/vs is set.
+/** Keep a StatPredicate only if metric+op are known and exactly one of value(number)/vs is set
+ *  (neither, for a parity op).
  *  vs must be "power"/"toughness". Returns null to drop an ill-formed predicate. */
 function validateStatPredicate(p: unknown): StatPredicate | null {
   if (typeof p !== "object" || p === null) return null;
@@ -234,6 +235,8 @@ function validateStatPredicate(p: unknown): StatPredicate | null {
   if (!METRICS.has(metric) || !OPS.has(op)) return null;
   const hasValue = typeof o.value === "number" && Number.isFinite(o.value);
   const hasVs = o.vs === "power" || o.vs === "toughness";
+  // A PARITY op takes no rhs at all (#713): neither side may be set.
+  if (op === "odd" || op === "even") return hasValue || hasVs ? null : { metric: metric as StatPredicate["metric"], op };
   if (hasValue === hasVs) return null; // need exactly one
   return hasValue
     ? { metric: metric as StatPredicate["metric"], op: op as StatPredicate["op"], value: o.value as number }

@@ -776,4 +776,5 @@ test("a subject that is only a count names no class", () => {
 test("'an odd/even mana value' is a parity stat (Soundwave, Superior Captain, #713)", () => {
   expect(parseSubject("a spell with an odd mana value").stats).toEqual([{ metric: "mana-value", op: "odd" }]);
   expect(parseSubject("a permanent card with an even mana value").stats).toEqual([{ metric: "mana-value", op: "even" }]);
+  expect(parseSubject("spells with even mana values").stats).toEqual([{ metric: "mana-value", op: "even" }]);
 });
