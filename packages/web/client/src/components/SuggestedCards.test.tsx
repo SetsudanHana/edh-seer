@@ -24,12 +24,19 @@ test("a card shows as its face, linked to its page, with its name and its best l
   expect(row.textContent).not.toContain("connects to");
 });
 
+/** THE FOLD IS CSS ON THE CONTAINER (#770): a narrow list folds after three behind "Show all", a
+ *  wide one shows every card. jsdom applies no stylesheet, so what is pinned here is the contract
+ *  the CSS reads: every card is in the list, and the list says it folds at three until opened. */
 test("three cards show, and the rest behind 'Show all'", async () => {
   const cards = Array.from({ length: 6 }, (_, i) => ({ ...chaosWarp, name: `Card ${i + 1}`, slug: `card-${i + 1}` }));
   inRouter(<SuggestedCards cards={cards} empty="none" />);
-  expect(screen.getAllByRole("listitem")).toHaveLength(3);
+  const list = screen.getByRole("list");
+  expect(within(list).getAllByRole("listitem")).toHaveLength(6);
+  expect(list.getAttribute("data-fold")).toBe("3");
+  expect(list.className).toContain("[&>li:nth-child(n+4)]:hidden");
   await userEvent.click(screen.getByRole("button", { name: "Show all 6" }));
-  expect(screen.getAllByRole("listitem")).toHaveLength(6);
+  expect(list.getAttribute("data-fold")).toBeNull();
+  expect(screen.getByRole("button", { name: "Show fewer" })).toBeInTheDocument();
 });
 
 test("an empty list says so in the given words and draws no list", () => {

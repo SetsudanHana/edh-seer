@@ -83,21 +83,24 @@ export function SuggestedCards({ cards, empty, label }: {
 
 function CandidateGrid({ cards, empty, label }: { cards: readonly SuggestedCard[]; empty: string; label?: string }) {
   const [all, setAll] = useState(false);
-  const shown = all ? cards : cards.slice(0, CARD_CAP);
+  // A WIDE CONTAINER SHOWS THEM ALL (#770): three cards and "Show all 8" beside 2,000px of nothing
+  // is the empty band. Every card is rendered and the fold is CSS, keyed on the container (a 40rem
+  // fix cell stays folded on a 4K screen); `n+4` is `CARD_CAP + 1`.
+  const fold = !all && cards.length > CARD_CAP;
   return (
-    <div className="flex flex-col gap-2 min-w-0">
+    <div className="@container flex flex-col gap-2 min-w-0">
       {label ? <p className="eyebrow text-(--muted)">{label}</p> : null}
       {cards.length === 0
         ? <p className="text-sm text-(--muted) max-w-[70ch]">{empty}</p>
         : (
           // THREE ACROSS ON A PHONE (phone pass, 2026-09-27): two full card images a row made each
           // list of four about 700px tall.
-          <ul className="grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-x-3 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,11rem))]" aria-label={label}>
-            {shown.map((c) => <Candidate key={c.name} c={c} />)}
+          <ul className={`grid grid-cols-3 gap-x-2 gap-y-4 sm:gap-x-3 sm:grid-cols-[repeat(auto-fill,minmax(9.5rem,11rem))] ${fold ? "[&>li:nth-child(n+4)]:hidden @min-[64rem]:[&>li:nth-child(n+4)]:flex" : ""}`} aria-label={label} data-fold={fold ? CARD_CAP : undefined}>
+            {cards.map((c) => <Candidate key={c.name} c={c} />)}
           </ul>
         )}
       {cards.length > CARD_CAP ? (
-        <button type="button" className="min-h-11 self-start rounded-(--radius) border border-(--separator) px-4 text-sm" onClick={() => setAll(!all)}>
+        <button type="button" className={`min-h-11 self-start rounded-(--radius) border border-(--separator) px-4 text-sm ${all ? "" : "@min-[64rem]:hidden"}`} onClick={() => setAll(!all)}>
           {all ? "Show fewer" : `Show all ${cards.length}`}
         </button>
       ) : null}

@@ -74,7 +74,7 @@ export function ComboFeature({ parts, result, manaValue, cheap }: {
   };
   const short = (c: EngineCard) => displayName(c).split(" // ")[0]!.split(",")[0]!;
   return (
-    <div data-testid="combo-feature" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-start max-w-5xl">
+    <div data-testid="combo-feature" className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-start">
       <div className="flex flex-col gap-3 text-sm">
         <ol className="flex flex-col gap-2">
           {sides.map((l, i) => l ? (
