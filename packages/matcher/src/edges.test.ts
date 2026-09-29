@@ -5694,3 +5694,42 @@ test("a permanent that enters as a copy links to each card it can copy, and to n
   clone2.tags.characteristics.types = ["creature"];
   expect(claims(clone2, clone2)).toBe(false);
 });
+
+/** A DEPARTURE IS NEVER TRADED TO A TOKEN NODE (#714). A token node implies its own entry, never its
+ *  own death, so Urabrask's Forge's "sacrifice that token at the next end step" dropped for a Horror
+ *  hop that states no departure left Nadier's Nightblade draining off nothing the Forge makes. The
+ *  ENTRY shortcut is still traded, as before. */
+test("token mediation keeps a maker's token departure, and still trades its token entry", () => {
+  const horror = { control: "you", token: true, type: "creature", subtype: ["phyrexian", "horror"] };
+  const forge = base("Urabrask's Forge", [{
+    kind: "triggered", repeats: "per-cycle", temporary: true,
+    trigger: { verbs: ["begin-combat"], subject: { control: "you", token: null } },
+    effect: { kind: "token-generation", subject: horror },
+    emits: [{ verb: "create-token", subject: horror }, { verb: "enters", subject: horror }, { verb: "dies", subject: horror }],
+  }] as unknown as CardTags["abilities"]);
+  (forge.card as unknown as { allParts: unknown }).allParts = [{ component: "token", name: "Phyrexian Horror", typeLine: "Token Creature — Phyrexian Horror" }];
+  const nightblade = base("Nadier's Nightblade", [{
+    kind: "triggered", trigger: { verbs: ["leaves"], subject: { control: "you", token: true } }, effect: { kind: "drain" },
+  }] as unknown as CardTags["abilities"]);
+  const tokenEntry = base("Token ETB Payoff", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: true } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  expect(directedReasons(forge, nightblade, H).some((r) => r.tag.startsWith("leaves:"))).toBe(true);
+  expect(directedReasons(forge, tokenEntry, H).some((r) => r.tag.startsWith("enters:"))).toBe(false);
+});
+
+/** A P/T EXCEPTION DESCRIBES THE COPY, NOT THE TARGET (#714): Echoing Assault's token copy "except
+ *  it's 1/1" re-fires Disciple of Freyalise's own entry trigger. */
+test("a token copy 'except it's 1/1' still copies a creature of any size", () => {
+  const assault = base("Echoing Assault", [{
+    kind: "triggered", repeats: "per-cycle",
+    trigger: { verbs: ["attacks"], subject: { control: "you", token: null } },
+    effect: { kind: "token-generation", subject: { type: "creature", control: "any", token: true, stats: [{ metric: "power", op: "eq", value: 1 }, { metric: "toughness", op: "eq", value: 1 }] } },
+  }] as unknown as CardTags["abilities"]);
+  (assault.card as { oracleText: string }).oracleText = "Whenever you attack a player, choose target nontoken creature that's attacking that player. Create a token that's a copy of that creature, except it's 1/1.";
+  const disciple = base("Disciple of Freyalise", [{
+    kind: "triggered", trigger: { verbs: ["enters"], subject: { type: "creature", control: "you", token: null, self: true } }, effect: { kind: "draw-card" },
+  }] as unknown as CardTags["abilities"]);
+  Object.assign(disciple.tags.characteristics, { power: "3", toughness: "3" });
+  expect(directedReasons(assault, disciple, H).some((r) => r.tag.startsWith("enters:"))).toBe(true);
+});
