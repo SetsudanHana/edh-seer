@@ -230,7 +230,7 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
           {/* 64rem, like the archetype bars above at 48rem: at 1920px the row spread its name and
             *  its figures 1,700px apart (UI review 2026-09-25). Wide enough that the two preview
             *  pairs, the longest line in the row, still fit on one line. */}
-          <div className="grid gap-x-8 [grid-template-columns:repeat(auto-fill,minmax(min(100%,56rem),1fr))]">
+          <div className="grid gap-x-8 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,56rem),1fr))]">
             {archetypes!.map((g) => (
               <GroupRow key={g.category} group={g} size={groupSize.get(g.category)} />
             ))}

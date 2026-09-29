@@ -282,7 +282,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
           ) : <RecognitionPanel data={data} part="identity" />}
           {/* THE LINE FOR THE TABLE BESIDE THE VERDICT (#770): a 48rem card alone under a 2560 map
             *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
-          <div className="grid gap-6 items-start lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]">
+          <div className={`grid gap-6 items-start ${talk ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
             {talk ? <TableTalkLine talk={talk} /> : null}
             <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
           </div>

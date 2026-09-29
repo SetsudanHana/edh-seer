@@ -139,7 +139,7 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
         <div className="flex flex-col gap-1.5">
           <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
           {/* THE LEAD COMBO AND THE REST SIDE BY SIDE on a wide screen (#770); stacked below 1800px. */}
-          <div className="grid gap-4 items-start min-[1800px]:grid-cols-[minmax(0,68rem)_minmax(0,1fr)]">
+          <div className={`grid gap-4 items-start ${lead && shownCombos.length ? "min-[1800px]:grid-cols-[minmax(0,68rem)_minmax(0,1fr)]" : ""}`}>
             {lead ? <ComboFeature parts={lead} result={listed[0]!.result} manaValue={listed[0]!.manaValue} cheap={listed[0]!.cheap} /> : null}
             {shownCombos.length ? (
               <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(100%,23rem),1fr))]" aria-label={lead ? "The deck's other infinite combos" : "The infinite combos in this deck"}>
