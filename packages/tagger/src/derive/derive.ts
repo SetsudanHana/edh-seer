@@ -235,7 +235,11 @@ import { emblemRecipient } from "../emblem.js";
 // five Doctors, no longer an untyped entry; Canoptek Wraith: up to two lands).
 // 201: #798 -- "draw a card if it was attacking. Otherwise, ..." puts the combat state on the
 // conditioned action's trigger only (Garna, Bloodfist of Keld; Zurgo Stormrender).
-export const DERIVE_VERSION = 201;
+// 202: #801 -- a return "at the beginning of the next end step / your next upkeep" is `delayedUntil`
+// on the returning ability (Shirei, Shizo's Caretaker): it cannot close a loop this turn.
+// 203: #803 -- an ability on an instant or sorcery beyond its on-cast effect (a granted "when this
+// creature dies, return it", Undying Malice) repeats once: the spell is gone once it resolves.
+export const DERIVE_VERSION = 203;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1128,6 +1132,20 @@ const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|t
 /** "…return it to the battlefield transformed…": the back face enters (CR 712.14a, #715). Every
  *  corpus phrasing: him/her (Ajani, Tamiyo), "this card", "put … onto", "from your graveyard" and
  *  "tapped and transformed" (Ojer Taq). */
+/** "return ... at the beginning of the next end step" / "at the beginning of your next upkeep, return"
+ *  (#801). Bounded and anchored on literals: no quantifier overlap for CodeQL's ReDoS check. */
+const DELAYED_RETURN = /\b(?:return|put)\b[^.]{0,120}?\bat the beginning of (?:the|your) next (?:end step|upkeep)\b|\bat the beginning of (?:the|your) next (?:end step|upkeep), (?:return|put)\b/i;
+/** The sentence of `text` holding the k-th (0-based) whole-word `verb`; "" when there are fewer. */
+function nthSentenceWith(text: string, verb: string, k: number): string {
+  const word = new RegExp(`\\b${verb}\\b`, "gi");
+  let seen = 0;
+  for (const sentence of text.split(".")) {
+    const n = (sentence.match(word) ?? []).length;
+    if (seen + n > k) return sentence;
+    seen += n;
+  }
+  return "";
+}
 /** "Whenever ONE OR MORE ...": one firing per batch (CR 603.2c; edge magnitude). */
 const BATCHED = /\bone or more\b/i;
 const RETURNS_TRANSFORMED = /\b(?:return|put) (?:it|them|him|her|this card|that card|those cards)(?: from [a-z' ]+?)?(?: (?:to|onto) the battlefield)?(?: tapped and)? transformed\b/i;
@@ -1956,6 +1974,15 @@ export function deriveAbilities(
         : kind === "on-cast" && castAtInstantSpeed === true;
       if (instantSpeed) for (const e of emits) e.instantSpeed = true;
       if (emits.length) ability.emits = emits;
+      // A RETURN THAT LANDS LATER (#801, Shirei): read on THIS action's own sentence, so an immediate
+      // return beside a delayed one stays immediate (Gift of Immortality, Swift Warkite; review). The
+      // k-th return/put action is the k-th "return"/"put" in the text. CEILING: a counter "put" in the
+      // text that derived as `add-counter` would shift a later put's sentence.
+      if ((action.verb === "return" || action.verb === "put") && ability.effect.kind !== "token-generation") {
+        const k = (clause.actions ?? []).slice(0, (clause.actions ?? []).indexOf(action)).filter((x) => x.verb === action.verb).length;
+        const delay = DELAYED_RETURN.exec(nthSentenceWith(text, action.verb, k));
+        if (delay) ability.delayedUntil = /upkeep/i.test(delay[0]) ? "next-upkeep" : "next-end-step";
+      }
       const made = ability.temporary ? emits.find((e) => e.verb === "create-token") : undefined;
       if (made) {
         const rider = LEAVES_SAME_TURN.exec(text)?.[0] ?? "";
@@ -2264,6 +2291,15 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     ...a,
     trigger: { ...a.trigger, subject: (({ sharesTypeWith: _s, ...rest }) => ({ ...rest, subtype: own }))(a.trigger.subject) },
   });
+  // AN INSTANT OR SORCERY IS GONE ONCE IT RESOLVES (#803): what it sets up -- Undying Malice's
+  // granted "when this creature dies, return it" -- happens once, not every time. Its on-cast effect
+  // is already once. CEILING: a spell that comes back (rebound, buyback) repeats and is read once.
+  // ON THE ABILITY'S OWN FACE (review): an adventure or modal DFC unions its faces' types, and
+  // Bonecrusher Giant's creature trigger is no spell's. A face that is not playable (a transform
+  // back) has no entry in `faces` and is never read as a spell.
+  const isSpellFace = (face: number | undefined): boolean =>
+    (chars.faces ? chars.faces[face ?? 0]?.types ?? [] : chars.types).some((t) => /^(?:instant|sorcery)$/i.test(t));
+  const spellOnce = pinned.map((a) => a.kind === "on-cast" || a.repeats === "once" || !isSpellFace(a.face) ? a : { ...a, repeats: "once" as const });
   return {
     oracleId: input.oracleId,
     schemaVersion: 1,
@@ -2274,7 +2310,7 @@ export function deriveCardTags(input: DeriveInput): CardTags {
     promptVersion: 0,
     model: "derived",
     characteristics: input.characteristics,
-    abilities: pinned,
+    abilities: spellOnce,
     // Written only when there is something to surface, so a clean card stays byte-identical.
     ...(unknownTriggers.length ? { unknownTriggers } : {}),
   };
