@@ -1171,6 +1171,16 @@ test("a card this run added has its castability row ringed and says so", () => {
   expect(row.getAttribute("aria-label")).toContain(", new");
 });
 
+/** #680: a mono-black deck whose four-pip turn-4 card only MORE mana could cast on time has no
+ *  worst row, and it must not read "enough" in the success colour either. */
+test("a colour short of mana rather than of colour does not read as enough", () => {
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={{ ...DECK_MATH, colors: [{ color: "B", supplied: 42, countBound: true }] }} />);
+  const row = document.querySelector('li[aria-label^="B, 42 sources"]')!;
+  expect(row.getAttribute("aria-label")).toContain("need more mana, not other colours");
+  expect(row.textContent).not.toMatch(/enough|every cost covered/);
+  expect(row.textContent).toContain("the land count is");
+});
+
 test("deck-math blocks are grouped under the question they answer, worst section first", () => {
   // Scoped to `<section> > h3` -- I3 (whole-branch review, 2026-09-01) promoted these from h4 so
   // they stop skipping a level under the sub-tab's own h2 and stop inverting against the h3 panels

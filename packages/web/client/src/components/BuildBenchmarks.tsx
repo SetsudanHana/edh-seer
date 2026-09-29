@@ -944,7 +944,9 @@ function DeckMathRows({
               // pips on turn 3. That is why this row can name a turn without guessing one.
               const label = c.worst
                 ? `${c.color}, ${c.supplied} sources, ${c.worst.available} of them by turn ${c.worst.turn}, when ${cardsSubject(c.worst.names ?? [], c.worst.cards)} want${c.worst.cards === 1 ? "s" : ""} ${c.worst.pips} pip${c.worst.pips === 1 ? "" : "s"} and that needs ${c.worst.required}`
-                : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
+                : c.countBound
+                  ? `${c.color}, ${c.supplied} sources; its hardest costs need more mana, not other colours`
+                  : `${c.color}, ${c.supplied} sources, enough for every card that costs it`;
               return (
                 <li key={c.color} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" aria-label={label}>
                   {/* A PIP, NOT A LETTER (roadmap T18a). Owner's call: mana pips everywhere. The
@@ -975,7 +977,9 @@ function DeckMathRows({
                           <ManaSymbols cost={`{${c.color}}`.repeat(c.worst.pips)} /> on turn {c.worst.turn}
                         </>
                       )
-                      : "every cost covered"}
+                      // #680: a mono-black deck's four-pip turn-4 card is short of MANA, which the
+                      // lands row judges; "every cost covered" said the opposite.
+                      : c.countBound ? "colour isn't the limit; the land count is" : "every cost covered"}
                   </span>
                   {/* "23 of 36 sources" and "short 13" were the same subtraction printed twice.
                     *  The pair survives as one cell, coloured: the reader can see the gap and its
@@ -983,7 +987,7 @@ function DeckMathRows({
                   <span
                     className={`ml-auto shrink-0 text-right stat-num ${
                       !c.worst
-                        ? "text-(--success)"
+                        ? c.countBound ? "text-(--muted)" : "text-(--success)"
                         : overcommitted || c.worst.required > landRoom
                           ? "text-(--muted)"
                           : "text-(--warning)"
@@ -1011,7 +1015,7 @@ function DeckMathRows({
                       *  model had just called SHORT, and it read as a contradiction because it was
                       *  one. `supplied` counts two-mana rocks and lands that enter tapped on the
                       *  very turn the demand is due. */}
-                    {c.worst ? `${c.worst.available} sources, wants ${c.worst.required}` : `${c.supplied} sources, enough`}
+                    {c.worst ? `${c.worst.available} sources, wants ${c.worst.required}` : c.countBound ? `${c.supplied} sources` : `${c.supplied} sources, enough`}
                   </span>
                 </li>
               );
