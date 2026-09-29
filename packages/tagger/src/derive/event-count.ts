@@ -7,8 +7,11 @@ import { parseSubject } from "./subject.js";
 const WORD: Record<string, number> = {
   a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
 };
-const SCALES = /\b(?:for each|the number of)\s+([^,.;]+)/i;
-const TWICE = /\btwice that many\b|\bdouble that\b/i;
+// No overlap between the space and the capture (review: CodeQL's polynomial-ReDoS check).
+const SCALES = /\b(?:for each|the number of) ([^\s,.;][^,.;]*)/i;
+// CEILING: read on the replacement's whole clause, which is the replacement sentence in every
+// corpus template (replacement.ts); a clause holding a second, unrelated doubling would be misread.
+const TWICE = /\btwice that many\b|\bdouble (?:that|the)\b/i;
 const PLUS_ONE = /\bthat many plus one\b|^n\s*\+\s*1$/i;
 
 export function countOf(

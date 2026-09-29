@@ -47,6 +47,11 @@ test("a replacement's 'twice that many' repeats the improved count", () => {
     .toEqual({ floor: 1, ceiling: 1, sameAsImproved: true });
 });
 
+test("a damage doubler repeats the improved count too ('deals double the damage')", () => {
+  expect(countOf(undefined, none, "it deals double that damage instead", true)).toEqual({ floor: 1, ceiling: 1, sameAsImproved: true });
+  expect(countOf(undefined, none, "it deals double the damage instead", true)).toEqual({ floor: 1, ceiling: 1, sameAsImproved: true });
+});
+
 test("anything else records no count", () => {
   expect(countOf("that many", none, "", false)).toBeUndefined();
   expect(countOf(undefined, none, "", false)).toBeUndefined();

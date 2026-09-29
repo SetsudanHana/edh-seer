@@ -2050,6 +2050,8 @@ export function deriveAbilities(
       }
       // EDGE MAGNITUDE (spec 2026-09-29): how many events one use supplies, and whether the
       // consumer hears a batch once. Read after `replacement` is known, which changes the reading.
+      // CEILING: `batched` reads this clause's own trigger subject, so a continuation clause that
+      // inherits its trigger is never batched, and an or-limb twin shares its clause's reading.
       const count = countOf(abilities[i].amount, abilities[i].emits?.[0], text, abilities[i].replacement === true);
       if (count) abilities[i] = { ...abilities[i], count };
       if (abilities[i].trigger && BATCHED.test(clause.trigger?.subject ?? "")) {
