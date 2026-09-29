@@ -59,6 +59,13 @@ test("a colour row says which end of the fraction the deck is, and prints its tu
 // "this deck is broken" and "five Daleks inside a creature deck".
 
 
+test("ComboList names a piece the combo needs by kind, and counts it", () => {
+  const combos = [{ cards: ["Goblin Bombardment", "Metallic Mimic"], result: "Infinite death triggers", requires: ["Creature with undying"] }];
+  const { container } = render(<ComboList combos={combos} />);
+  expect(container).toHaveTextContent("Goblin Bombardment + Metallic Mimic + any creature with undying");
+  expect(container.querySelector(".pip")).toHaveTextContent("3");
+});
+
 test("ComboList names the cards that turn a loop into a win", () => {
   const combos = [{ cards: ["Gravecrawler", "Phyrexian Altar"], result: "Infinite death triggers",
     payoffs: [{ name: "Blood Artist", on: ["dies"], effect: "player-life-loss" }, { name: "Zulaport Cutthroat", on: ["dies"], effect: "player-life-loss" }] }];

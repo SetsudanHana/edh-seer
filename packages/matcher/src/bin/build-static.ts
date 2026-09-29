@@ -47,7 +47,7 @@ const cards = await store.cards.find({}).toArray();
 const derivedRows = await store.db.collection<CardTags>(DERIVED_COLLECTION).find({}).toArray();
 const tagsByOracle = new Map(derivedRows.map((r) => [r.oracleId, r]));
 const combos = await store.combos.find().toArray();
-const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c.result })));
+const combosByAnchor = comboIndex(combos.map((c) => ({ cards: c.cards, result: c.result, ...(c.requires?.length ? { requires: c.requires } : {}) })));
 
 // `searchNames` keys collide across cards (packages/data/src/docs.ts, ~79 corpus-wide) — one file
 // per name means a colliding name collapses to one winner, so the file count legitimately lands

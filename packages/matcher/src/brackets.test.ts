@@ -37,6 +37,16 @@ test("a single Game Changer leaves 1-2, and up to three is still bracket 3", () 
 });
 
 // BRACKET 3'S OWN LINE: an infinite combo is allowed, a CHEAP TWO-CARD one is not.
+/** #568: Goblin Bombardment + Metallic Mimic led a Krenko deck's bracket reason as a two-card infinite
+ *  combo. The line needs a third, unnamed creature, so it is a three-piece combo and bracket 3 allows it. */
+test("a combo that also needs an unnamed piece is not a two-card combo", () => {
+  const deck = [card("Goblin Bombardment", 2), card("Metallic Mimic", 2)];
+  const b = deckBracket(deck, [{ ...combo(["Goblin Bombardment", "Metallic Mimic"], INFINITE), requires: ["Creature with undying"] }]);
+  expect(b.cheapCombos).toEqual([]);
+  expect(b.infiniteCombos).toBe(1);
+  expect(b.band).toBe("3");
+});
+
 test("a cheap two-card infinite combo is what separates bracket 3 from 4-5", () => {
   const cheap = [card("Isochron Scepter", 2), card("Dramatic Reversal", 2)];
   const b = deckBracket(cheap, [combo(["Isochron Scepter", "Dramatic Reversal"], INFINITE)]);

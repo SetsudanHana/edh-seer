@@ -86,7 +86,10 @@ export async function ingestCombos(
     if (!n) {
       skipped++;
     } else {
-      const doc: ComboDoc = { _id: n.id, cards: n.combo.cards, result: n.combo.result };
+      const doc: ComboDoc = {
+        _id: n.id, cards: n.combo.cards, result: n.combo.result,
+        ...(n.combo.requires ? { requires: n.combo.requires } : {}),
+      };
       ops.push({ replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true } });
       processed++;
     }

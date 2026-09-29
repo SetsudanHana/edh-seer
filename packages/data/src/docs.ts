@@ -38,6 +38,8 @@ export interface ComboDoc {
   _id: string;
   cards: string[];
   result: string;
+  /** Template pieces the combo also needs (#568); see `Combo.requires`. */
+  requires?: string[];
 }
 
 export function toCardDoc(n: NormalizedCard): CardDoc {

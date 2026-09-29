@@ -1,4 +1,4 @@
-export interface StaticCombo { cards: string[]; result: string }
+export interface StaticCombo { cards: string[]; result: string; requires?: string[] }
 
 /** The alphabetically-first card of a combo. A combo is contained in a deck only if EVERY one of
  *  its cards is present, so it can only match when its anchor is present — which makes indexing by
@@ -12,8 +12,9 @@ export function comboIndex(combos: StaticCombo[]): Map<string, StaticCombo[]> {
   for (const c of combos) {
     const a = anchorOf(c.cards);
     const bucket = out.get(a);
-    if (bucket) bucket.push({ cards: c.cards, result: c.result });
-    else out.set(a, [{ cards: c.cards, result: c.result }]);
+    const entry: StaticCombo = { cards: c.cards, result: c.result, ...(c.requires?.length ? { requires: c.requires } : {}) };
+    if (bucket) bucket.push(entry);
+    else out.set(a, [entry]);
   }
   return out;
 }

@@ -5790,3 +5790,33 @@ test("reasons differing only in magnitude stay ONE row, with the larger magnitud
   expect(out).toHaveLength(1);
   expect(out[0]!.magnitude).toEqual({ floor: 0, ceiling: null, scalesWith: "mana" });
 });
+
+// #799: a sac outlet's cost is a death the owner CHOOSES, and the outlet is not what died.
+test("a sac outlet's cost death reads as a sacrifice to the outlet, not as the outlet dying", () => {
+  const feeder = base("Carrion Feeder", [{ kind: "activated", cost: "Sacrifice a creature", effect: { kind: "counter-placement", subject: { control: "you", token: null, self: true } },
+    emits: [{ verb: "sacrifice", subject: { control: "you", token: null, type: "creature" } }, { verb: "dies", subject: { control: "you", token: null, type: "creature" } }] }]);
+  const dictate = base("Dictate of Erebos", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "you", token: null, type: "creature" } },
+    effect: { kind: "edict", subject: { control: "opp", token: null } } }]);
+  const texts = directedReasons(feeder, dictate, H).map((r) => r.text);
+  expect(texts).toHaveLength(1);
+  expect(texts[0]).toMatch(/^When you sacrifice a creature to Carrion Feeder, Dictate of Erebos /);
+  // A death the outlet's EFFECT deals (destroy target creature) is not the cost, and keeps its wording.
+  const executioner = base("Executioner", [{ kind: "activated", cost: "{T}, Sacrifice a creature", effect: { kind: "removal" },
+    emits: [{ verb: "dies", subject: { control: "any", token: null, type: "creature" } }] }]);
+  const anyDeath = base("Blood Artist", [{ kind: "triggered", trigger: { verbs: ["dies"], subject: { control: "any", token: null, type: "creature" } }, effect: { kind: "drain" } }]);
+  expect(directedReasons(executioner, anyDeath, H).map((r) => r.text).join()).not.toContain("sacrifice a creature to");
+});
+
+// #750: a fetch's sentence names the branch the consumer took, or every branch when it took none.
+test("a fetch's entering land is named by the branch that matched, not the first one", () => {
+  const land = (c: DeckCard) => { c.tags!.characteristics.types = ["land"]; return c; };
+  const subject = { control: "you" as const, token: null, anyOf: [{ subtype: "swamp" }, { subtype: "mountain" }] };
+  const mire = land(base("Bloodstained Mire", [{ kind: "activated", cost: "{T}, Pay 1 life, Sacrifice this land", effect: { kind: "search", subject },
+    emits: [{ verb: "enters", subject }] }]));
+  const valakut = land(base("Valakut, the Molten Pinnacle", [{ kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, subtype: "mountain" } }, effect: { kind: "damage" } }]));
+  expect(directedReasons(mire, valakut, H).map((r) => r.text)).toEqual(["When a Mountain enters thanks to Bloodstained Mire, Valakut, the Molten Pinnacle deals damage"]);
+  const swampWatcher = base("Swamp Watcher", [{ kind: "triggered",
+    trigger: { verbs: ["enters"], subject: { control: "you", token: null, subtype: "swamp" } }, effect: { kind: "drain" } }]);
+  expect(directedReasons(mire, swampWatcher, H).map((r) => r.text)[0]).toMatch(/^When a Swamp enters thanks to Bloodstained Mire/);
+});

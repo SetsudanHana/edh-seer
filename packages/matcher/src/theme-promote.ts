@@ -130,3 +130,32 @@ export function demoteUnrankableHeadline(
   if (first === -1) return [...ranked]; // every tag is unrankable -- say the true thing, not nothing
   return [ranked[first], ...ranked.filter((_, i) => i !== first)];
 }
+
+/** THE FEWEST CARDS THAT CAN NAME A DECK (#748): three, or 5% of the deck when that is fewer. TF-IDF
+ *  has no floor, so an idf-rare tag carried by ONE card could headline a hundred: measured
+ *  2026-09-05, 5 of the 71 decks were named by a tag on one or two cards (`enters:octopus` [1],
+ *  `create-token:aura` [1], `static:trigger-doubling` [1]). By 2026-09-29 other fixes had moved
+ *  four of them, and one stood: `codie` read `shuffle:permanent`, carried by its commander alone,
+ *  in a deck that cannot cast a permanent spell. */
+export function headlineFloor(deckSize: number): number {
+  return Math.max(1, Math.min(3, Math.ceil(deckSize * 0.05)));
+}
+
+/** Moves a head carried by fewer than `headlineFloor` cards behind the first tag that is carried
+ *  and rankable. A DEMOTION, NOT A DELETION, the same shape as `demoteUnrankableHeadline`: the tag
+ *  stays among the deck's themes, it just cannot be what the report names the deck. A deck where
+ *  no tag clears the floor keeps its ranking -- say the true thing, not nothing. */
+export function demoteThinHeadline(
+  ranked: readonly string[],
+  carriers: ReadonlyMap<string, number>,
+  deckSize: number,
+  suppliedPhases: ReadonlySet<string> = new Set(),
+): string[] {
+  const floor = headlineFloor(deckSize);
+  const carried = (t: string) => (carriers.get(t) ?? 0) >= floor;
+  const head = ranked[0];
+  if (head === undefined || carried(head)) return [...ranked];
+  const first = ranked.findIndex((t) => carried(t) && !isUnrankableHeadline(t, suppliedPhases));
+  if (first === -1) return [...ranked];
+  return [ranked[first], ...ranked.filter((_, i) => i !== first)];
+}

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { promoteSpecificHeadline, demoteUnrankableHeadline } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor } from "./theme-promote.js";
 import type { ThemeMembership } from "./themes.js";
 
 const m = (tag: string, payoffs: number): ThemeMembership => ({
@@ -86,4 +86,18 @@ test("an unresolved chosen-type placeholder cannot be the headline", () => {
 /** SAY THE TRUE THING RATHER THAN NOTHING: with no rankable tag anywhere, the head stands. */
 test("an all-unrankable list is left alone", () => {
   expect(demoteUnrankableHeadline(["upkeep:any", "cast:__none__"])).toEqual(["upkeep:any", "cast:__none__"]);
+});
+
+// #748: an idf-rare tag one or two cards carry cannot name a deck.
+test("a headline carried by fewer than three cards is demoted behind the first carried one", () => {
+  const freq = new Map([["shuffle:permanent", 1], ["upkeep:any", 9], ["shuffle:any", 21], ["lose-life:any", 19]]);
+  // The timing key is skipped too: the first tag that is both carried and rankable takes the head.
+  expect(demoteThinHeadline(["shuffle:permanent", "upkeep:any", "shuffle:any", "lose-life:any"], freq, 100))
+    .toEqual(["shuffle:any", "shuffle:permanent", "upkeep:any", "lose-life:any"]);
+  expect(demoteThinHeadline(["shuffle:any", "shuffle:permanent"], freq, 100)).toEqual(["shuffle:any", "shuffle:permanent"]);
+  // Nothing carried: the ranking stands.
+  expect(demoteThinHeadline(["a:x", "b:y"], new Map([["a:x", 1], ["b:y", 2]]), 100)).toEqual(["a:x", "b:y"]);
+  // The floor is 5% of a small deck when that is under three.
+  expect(headlineFloor(100)).toBe(3);
+  expect(headlineFloor(40)).toBe(2);
 });

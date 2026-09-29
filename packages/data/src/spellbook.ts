@@ -15,6 +15,8 @@ export interface SpellbookVariant {
   id?: string;
   uses?: Array<{ card?: { name?: string } }>;
   produces?: Array<{ feature?: { name?: string } }>;
+  /** Pieces named by a TEMPLATE rather than a card ("Creature with undying"), with how many. */
+  requires?: Array<{ template?: { name?: string }; quantity?: number }>;
 }
 
 export interface NormalizedCombo {
@@ -35,7 +37,14 @@ export function normalizeVariant(raw: SpellbookVariant): NormalizedCombo | null 
 
   if (cards.length === 0 || results.length === 0) return null;
 
-  return { id: raw.id, combo: { cards, result: results.join(", ") } };
+  // THE UNNAMED PIECES (#568). Dropping them made Goblin Bombardment + Metallic Mimic read as a
+  // two-card combo when the line needs a third creature too, and the bracket counts two-card combos.
+  const requires = (raw.requires ?? []).flatMap((r) => {
+    const name = r.template?.name;
+    return typeof name === "string" && name.length > 0 ? Array.from({ length: Math.max(1, r.quantity ?? 1) }, () => name) : [];
+  });
+
+  return { id: raw.id, combo: { cards, result: results.join(", "), ...(requires.length > 0 ? { requires } : {}) } };
 }
 
 export type FetchFn = typeof fetch;

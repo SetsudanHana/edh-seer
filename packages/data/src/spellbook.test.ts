@@ -15,6 +15,21 @@ test("normalizes a variant into a combo", () => {
   expect(n!.combo.result).toBe("Win the game");
 });
 
+/** #568: the line needs a creature the variant names only by kind. Dropping it made two named cards
+ *  read as a whole two-card combo. */
+test("keeps the pieces a variant names by template, once per copy", () => {
+  const n = normalizeVariant({
+    id: "v3",
+    uses: [{ card: { name: "Goblin Bombardment" } }, { card: { name: "Metallic Mimic" } }],
+    requires: [{ template: { name: "Creature with undying" }, quantity: 1 }, { template: { name: "Token" }, quantity: 2 }],
+    produces: [{ feature: { name: "Infinite death triggers" } }],
+  });
+  expect(n!.combo.requires).toEqual(["Creature with undying", "Token", "Token"]);
+  // A variant with none carries no field at all, so the stored documents stay as they were.
+  expect(normalizeVariant({ id: "v4", uses: [{ card: { name: "A" } }], produces: [{ feature: { name: "Win the game" } }] })!.combo)
+    .not.toHaveProperty("requires");
+});
+
 test("joins multiple produced features into the result", () => {
   const n = normalizeVariant({
     id: "v2",
