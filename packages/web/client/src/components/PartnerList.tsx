@@ -3,7 +3,7 @@ import { eventKeyAction, eventKeyClause } from "../lib/demand-sentence.js";
 import { Link } from "react-router";
 import { groupAnchor } from "../lib/group-anchor.js";
 import { hueOf } from "../lib/page-orbit.js";
-import { causeCountTail, groupDirection, searchHref, withheldFrom } from "../lib/inject.js";
+import { causeCountTail, groupDirection, groupPartnerRows, searchHref, withheldFrom } from "../lib/inject.js";
 import type { PartnerRow } from "../lib/partners.js";
 import { CardTile } from "./CardTile.js";
 
@@ -60,15 +60,8 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
     return <p className="text-(--muted) max-w-[65ch]">{empty}</p>;
   }
 
-  // Grouped BY EVENT in the order each event first arrives, which is specificity order -- the
-  // most precisely matched event leads the page. By key and not by adjacency: two events can share
-  // a score and interleave under the stable sort, and adjacency split one group in two.
-  const groups: { event: string; rows: PartnerRow[] }[] = [];
-  for (const row of rows) {
-    const g = groups.find((x) => x.event === row.event);
-    if (g) g.rows.push(row);
-    else groups.push({ event: row.event, rows: [row] });
-  }
+  // Grouped by event, read rows before unread ones: `groupPartnerRows`, shared with the crawler block.
+  const groups = groupPartnerRows(rows);
 
   // GROUPS PACK BY THEIR TILES, AND A TILE KEEPS ITS SIZE (#770). Groups stacked full width
   // (2026-09-17), because two fixed columns halved a tile to ~105px; but a group of one or two cards

@@ -229,7 +229,7 @@ export interface InjectableCard {
   commander: boolean;
   emits: string[];
   demands: string[];
-  partners: { name: string; slug: string; event: string; reason: string; producer?: true }[];
+  partners: { name: string; slug: string; event: string; reason: string; producer?: true; unread?: true }[];
   /** How many cards can cause each event, keyed the way `partners[].event` is. Optional because
    *  the field is younger than the shard format; an absent map prints no count. */
   rarity?: Record<string, number>;
@@ -261,6 +261,25 @@ export interface InjectableCard {
  *  "ask for it" -- now also decide which COUNTER the withheld figure comes from, because they are
  *  the same fact and reading it from two places is how they came to disagree. */
 export type GroupDirection = "causes" | "feeds" | "asks";
+
+/** A PAGE'S PARTNER ROWS, GROUPED BY EVENT in the order each event first arrives (specificity
+ *  order: the most precisely matched event leads). By key, not adjacency: two events can share a
+ *  score and interleave under the stable sort, and adjacency split one group in two.
+ *
+ *  WITHIN A GROUP, A ROW WHOSE EFFECT THE ENGINE READ COMES FIRST (#761, persona round 2026-09-20:
+ *  the commander page ranked "what it does isn't read yet" suggestions above ones it did read). An
+ *  unread row carries no payoff to show, only the limit; the order among the read rows, and among the
+ *  unread ones, is the artifact's own. The one grouping for the app and the crawler block. */
+export function groupPartnerRows<R extends { event: string; unread?: true }>(rows: readonly R[]): { event: string; rows: R[] }[] {
+  const groups: { event: string; rows: R[] }[] = [];
+  for (const row of rows) {
+    const g = groups.find((x) => x.event === row.event);
+    if (g) g.rows.push(row);
+    else groups.push({ event: row.event, rows: [row] });
+  }
+  for (const g of groups) g.rows = [...g.rows.filter((r) => !r.unread), ...g.rows.filter((r) => r.unread)];
+  return groups;
+}
 
 export const groupDirection = (rows: InjectableCard["partners"]): GroupDirection =>
   rows.every((r) => r.producer === true) ? "causes"
@@ -411,12 +430,7 @@ export function cardPageHtml(
   // and would have silently cut the 60-row pages back to 24 for every crawler.
   // The direction is read off the rows by `groupDirection` where it is needed, so the group no
   // longer carries a `producers` flag that answered only two of the three cases.
-  const groups: { event: string; rows: InjectableCard["partners"] }[] = [];
-  for (const p of card.partners) {
-    const g = groups.find((x) => x.event === p.event);
-    if (g) g.rows.push(p);
-    else groups.push({ event: p.event, rows: [p] });
-  }
+  const groups = groupPartnerRows(card.partners);
   const rows = groups.map((g) => {
     const n = card.rarity?.[g.event];
     const dirHere = groupDirection(g.rows);
