@@ -1,5 +1,6 @@
 import type { KarstenInputs } from "@edh-seer/engine";
-import { detectBuildCategories } from "./build.js";
+import { BUILD_PARENTS, detectBuildCategories } from "./build.js";
+import { classifyAccelerant } from "./goldfish.js";
 import { landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 
@@ -104,37 +105,91 @@ export function landInputs(
   };
 }
 
+/** The land target the deck would have after trimming one role back to its target. */
+export interface TrimmedTarget {
+  /** Cards the role runs over its target. */
+  over: number;
+  /** The land target once that many of the role's counted pieces are cut. */
+  target: number;
+}
+
 export interface LandRecommendation extends Required<KarstenInputs> {
   /** Lands the deck runs, counting copies. */
   actual: number;
   /** The dearest commander's mana value, 0 without one: the land formula's commander term. */
   commanderManaValue: number;
+  /** Rocks, dorks and land-fetch spells in the library (`classifyAccelerant`), counting copies. */
+  accelerants: number;
+  /** Cards in the Draw role. */
+  drawPieces: number;
   /** What the land formula asks for (`mana-base.ts`'s `landTarget`), rounded and clamped to the
-   *  land counts it was simulated at. */
+   *  land counts it was simulated at, with ramp and draw counted only up to their role targets. */
   target: number;
+  /** WHERE THE TARGET GOES IF A ROLE IS TRIMMED TO ITS OWN TARGET, present only when the role runs
+   *  over it and the trim moves the land count. Assumes the cut pieces are the ones the formula
+   *  counts (rocks and dorks for Ramp, draw cards for Consistency): a Ramp role over target on
+   *  one-shot mana (a Treasure maker, a ritual) can be trimmed without touching the lands. */
+  ifTrimmed?: { ramp?: TrimmedTarget; draw?: TrimmedTarget };
 }
+
+/** The Ramp and Consistency targets the build reads (`adjustedParentTargets`), passed in by the
+ *  caller that has them. */
+export interface RoleTargets { ramp?: number; consistency?: number }
 
 /** Target vs actual land count for a deck.
  *
- *  The target is `mana-base.ts`'s `landTarget`, fitted on a spending goldfish over 268 decks
- *  (2026-09-29). It replaced Karsten's regression, whose inputs `landInputs` still reads -- the
- *  MDFC and fast-mana counts stay in this record because the panel names them, not because the
- *  target reads them. How many lands is still a different question from which ones, and
- *  `manaBaseScore` prices both in one unit. */
+ *  The target is `mana-base.ts`'s `landTarget`: the curve and the commander, less 0.57 of a land
+ *  per accelerant and 0.25 per draw card, both counted ONLY UP TO THEIR ROLE TARGETS (owner,
+ *  2026-09-29). The goldfish that measured those rates never loses a rock and always wants more of
+ *  both, so ramp and draw past what real decks run are not allowed to talk the deck out of lands.
+ *  How many lands is still a different question from which ones, and `manaBaseScore` prices both
+ *  in one unit. */
 export function recommendedLands(
   deck: readonly DeckCard[],
-  opts: { commanderNames?: readonly string[] } = {},
+  opts: { commanderNames?: readonly string[]; roleTargets?: RoleTargets } = {},
 ): LandRecommendation {
   const inputs = landInputs(deck, opts);
   const commanders = new Set(opts.commanderNames ?? []);
+  const library = deck.filter((dc) => !commanders.has(dc.card.name));
   const commanderManaValue = Math.max(0, ...deck.filter((dc) => commanders.has(dc.card.name)).map((dc) => dc.card.manaValue));
+  const accelerants = library.filter((dc) => classifyAccelerant(dc) !== null).length;
+  const drawPieces = detectBuildCategories([...library]).get("draw")?.size ?? 0;
+
+  // THE ROLE COUNTS THE BUILD PANEL SHOWS: a parent's count is the union of its leaves over the
+  // whole deck, exactly as `computeBuild` counts it, so "Ramp 16 of 10" here is the panel's 16.
+  const members = detectBuildCategories([...deck]);
+  const roleCount = (key: "ramp" | "consistency"): number => {
+    const union = new Set<string>();
+    for (const leaf of BUILD_PARENTS.find((p) => p.key === key)!.leaves) for (const n of members.get(leaf) ?? []) union.add(n);
+    return union.size;
+  };
+  const { ramp: rampTarget, consistency: consistencyTarget } = opts.roleTargets ?? {};
+  const accel = rampTarget === undefined ? accelerants : Math.min(accelerants, rampTarget);
+  const draw = consistencyTarget === undefined ? drawPieces : Math.min(drawPieces, consistencyTarget);
+  const at = (a: number, d: number) => landTarget({ avgManaValue: inputs.avgManaValue, commanderManaValue, accelerants: a, drawPieces: d });
+  const target = at(accel, draw);
+
+  const trims: NonNullable<LandRecommendation["ifTrimmed"]> = {};
+  if (rampTarget !== undefined) {
+    const over = roleCount("ramp") - rampTarget;
+    const t = over > 0 ? at(accel - Math.min(over, accel), draw) : target;
+    if (t > target) trims.ramp = { over, target: t };
+  }
+  if (consistencyTarget !== undefined) {
+    const over = roleCount("consistency") - consistencyTarget;
+    const t = over > 0 ? at(accel, draw - Math.min(over, draw)) : target;
+    if (t > target) trims.draw = { over, target: t };
+  }
   return {
     ...inputs,
     // MDFCs ARE IN THE LAND COUNT (owner ruling 2026-08-31), the same type-line test `build.ts`
     // uses, so the build row and this one cannot disagree about the count. The goldfish that fitted
     // the target counts them as lands too.
-    actual: deck.filter((dc) => !commanders.has(dc.card.name) && isLand(dc)).length,
+    actual: library.filter(isLand).length,
     commanderManaValue,
-    target: landTarget({ avgManaValue: inputs.avgManaValue, rampPlusDraw: inputs.rampPlusDraw, commanderManaValue }),
+    accelerants,
+    drawPieces,
+    target,
+    ...(trims.ramp || trims.draw ? { ifTrimmed: trims } : {}),
   };
 }

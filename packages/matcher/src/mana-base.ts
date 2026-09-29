@@ -30,17 +30,36 @@ import type { DeckCard } from "./types.js";
  *  counts track what their own curves need at a correlation of 0.36. They sit in 36-40 whatever the
  *  curve, so they supplied deck lists here and never a target. */
 
-/** The land count, from what the curve asks and what cheap acceleration and the commander change.
+/** THE LAND COUNT FOR A MANA PACKAGE, NOT FOR A DECK IN THE ABSTRACT (owner, 2026-09-29: "if we
+ *  are replacing lands with cheap draw it is bumping the consistency of the deck ... sure 34 is the
+ *  target, but in this case your consistency should be this, or your ramp should be that").
  *
- *  - 3.25 a point of average mana value: close to Karsten's slope (3.1 per point of the same average).
- *  - 0.54 a point of the commander's mana value: new. Karsten has no commander-cost term, and a
- *    ten-mana commander is a card the deck casts every game.
- *  - 0.10 a cheap accelerant: a third of Karsten's 0.28. The goldfish does not model colours
- *    fixing through rocks beyond what they tap for, so this is the low end.
- *  - Fast mana has no term: fitted, it came out at +0.17 against zero with a handful of decks
- *    carrying any, which is noise, and a colour term came out at -0.25 and made the fit worse --
- *    how many colours a deck plays decides WHICH lands, not how many. */
-export const LAND_FORMULA = { base: 24.1, perManaValue: 3.25, perCommanderManaValue: 0.54, perAccelerant: 0.1 } as const;
+ *  Lands, ramp and draw are three knobs on the same job, so a land target means something only for
+ *  a given ramp and draw package. The two rates below are MEASURED INSIDE EACH DECK, not across
+ *  decks: the goldfish (now with a draw model read off each card's tags -- cantrips, engines that
+ *  fire on your own casts and land drops, upkeep draw, opponent-driven draw at a stated rate,
+ *  scry and looting, land tutors) swept every land count with 2 rocks added, 2 of the deck's own
+ *  ramp pieces removed, 2 draw spells added and 2 of its own draw pieces removed, trading lands only
+ *  with spells that neither ramp nor draw. Over 268 decks, at 1,500 games per count:
+ *  - 0.57 of a land per ACCELERANT (a rock, a dork, a land-fetch spell), 0.55 adding and 0.60
+ *    removing, the same at 4 accelerants as at 12. Karsten's cheap-ramp figure is 0.28.
+ *  - 0.25 of a land per card in the DRAW role: the deck's own draw pieces measured 0.22 removed, a
+ *    Night's Whisper 0.46 added, and 0.25 is what the fit below settles on between them.
+ *  - 3.95 a point of average mana value and 0.54 a point of commander mana value, fitted across the
+ *    decks with those two rates held.
+ *  Held to each deck's own best count, it misses by 1.4 lands on average; the formula it replaces
+ *  (24.1 + 3.25 avg + 0.54 commander - 0.10 cheap ramp and draw) missed by 2.0 and read 1.6 high. A
+ *  free fit of all five terms misses by 1.2, but its ramp and draw weights come from comparing
+ *  different decks (ramp-heavy decks need more lands for other reasons) and would disagree with the
+ *  trade the report quotes, so the measured rates are the ones used.
+ *
+ *  THE GOLDFISH IS OPTIMISTIC ABOUT RAMP AND DRAW -- nothing is ever destroyed, so every accelerant
+ *  and every draw piece keeps paying -- and left to itself it always wants more of both. So how much
+ *  of each a deck SHOULD run comes from the role targets (real decks), and `recommendedLands` counts
+ *  ramp and draw only up to them. */
+export const LAND_FORMULA = {
+  base: 27.0, perManaValue: 3.95, perCommanderManaValue: 0.54, perAccelerant: 0.57, perDrawPiece: 0.25,
+} as const;
 
 /** The land counts the goldfish was run at. Outside them the formula is an extrapolation, so the
  *  target is CLAMPED to the nearest measured count rather than swapped for a convention: the old
@@ -51,10 +70,12 @@ export const SIMULATED_MAX_LANDS = 48;
 export interface LandFormulaInputs {
   /** Mean mana value of the library's nonlands (`landInputs`). */
   avgManaValue: number;
-  /** Cheap ramp and draw, 2 mana or less (`landInputs`). */
-  rampPlusDraw: number;
   /** The dearest commander's mana value, 0 for a deck without one. */
   commanderManaValue: number;
+  /** Rocks, dorks and land-fetch spells (`classifyAccelerant`), up to the Ramp role's target. */
+  accelerants: number;
+  /** Cards in the Draw role, up to the Consistency role's target. */
+  drawPieces: number;
 }
 
 /** The land target, rounded and clamped to the simulated range. */
@@ -62,7 +83,8 @@ export function landTarget(inputs: LandFormulaInputs): number {
   const raw = LAND_FORMULA.base
     + LAND_FORMULA.perManaValue * inputs.avgManaValue
     + LAND_FORMULA.perCommanderManaValue * inputs.commanderManaValue
-    - LAND_FORMULA.perAccelerant * inputs.rampPlusDraw;
+    - LAND_FORMULA.perAccelerant * inputs.accelerants
+    - LAND_FORMULA.perDrawPiece * inputs.drawPieces;
   return Math.min(SIMULATED_MAX_LANDS, Math.max(SIMULATED_MIN_LANDS, Math.round(raw)));
 }
 

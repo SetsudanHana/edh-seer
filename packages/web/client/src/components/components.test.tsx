@@ -1717,6 +1717,21 @@ test("BuildBenchmarks shows the land count the deck's own curve asks for", () =>
   expect(screen.queryByText(/flat convention/i)).not.toBeInTheDocument();
 });
 
+/** THE TARGET IS FOR A RAMP AND DRAW PACKAGE, AND A ROLE OVER TARGET SAYS WHERE IT GOES (owner,
+ *  2026-09-29). Rani's shape: 16 in the Ramp role against 10, nine of them rocks. */
+test("the land row names the ramp and draw package and where the target goes on a trim", () => {
+  const rani = {
+    ...DECK_MATH,
+    lands: { ...DECK_MATH.lands, target: 32, accelerants: 9, drawPieces: 14, ifTrimmed: { ramp: { over: 6, target: 35 } } },
+  };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={rani} />);
+  expect(screen.getByText(/9 rocks, dorks and land ramp · 14 draw cards/i)).toBeInTheDocument();
+  expect(screen.getByText(/Ramp is 6 over its target/i)).toHaveTextContent(
+    "Ramp is 6 over its target: if you cut rocks or dorks to get there, plan for about 35 lands.",
+  );
+  expect(screen.queryByText(/Consistency is .* over its target/i)).not.toBeInTheDocument();
+});
+
 test("the land row names the commander's cost, which the target reads", () => {
   const withCommander = { ...DECK_MATH, lands: { ...DECK_MATH.lands, commanderManaValue: 6 } };
   render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withCommander} />);

@@ -277,6 +277,14 @@ export interface DeckMath {
     };
     /** The dearest commander's mana value: the land formula's commander term. */
     commanderManaValue?: number;
+    /** Rocks, dorks and land-fetch spells in the library: the land formula's ramp term, counted
+     *  only up to the Ramp role's target. */
+    accelerants?: number;
+    /** Cards in the Draw role: the land formula's draw term, counted only up to Consistency's target. */
+    drawPieces?: number;
+    /** The land target once a role that runs over its own target is trimmed back to it, by cutting
+     *  the pieces the formula counts. Present only when that moves the target. */
+    ifTrimmed?: { ramp?: { over: number; target: number }; draw?: { over: number; target: number } };
     /** What `buildScore` is actually scored against -- the land formula's answer (via
      *  `@edh-seer/matcher`'s `gatedLandsTarget`) PLUS any archetype
      *  delta folded in by `adjustedTargets` (landfall's `+4`, task 9 fix F1). Equal to

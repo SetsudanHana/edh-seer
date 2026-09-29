@@ -14,22 +14,27 @@ const spell = (name: string, manaCost: string, manaValue: number) => mk(name, "S
 const land = (name: string, oracleText: string) => mk(name, "Land", { oracleText });
 const sources = (entries: [Color, number][]) => new Map<Color, number>(entries);
 
-test("the land target reads the curve, the commander and cheap acceleration", () => {
-  // 24.1 + 3.25 * 3 = 33.85
-  expect(landTarget({ avgManaValue: 3, rampPlusDraw: 0, commanderManaValue: 0 })).toBe(34);
-  // A 6-mana commander is 3.24 more lands; ten cheap accelerants are one fewer.
-  expect(landTarget({ avgManaValue: 3, rampPlusDraw: 0, commanderManaValue: 6 })).toBe(37);
-  expect(landTarget({ avgManaValue: 3, rampPlusDraw: 10, commanderManaValue: 0 })).toBe(33);
+const at = (avgManaValue: number, extra: Partial<{ commanderManaValue: number; accelerants: number; drawPieces: number }> = {}) =>
+  landTarget({ avgManaValue, commanderManaValue: 0, accelerants: 0, drawPieces: 0, ...extra });
+
+test("the land target reads the curve, the commander, and the ramp and draw package", () => {
+  // 27.0 + 3.95 * 3 = 38.85
+  expect(at(3)).toBe(39);
+  // A 6-mana commander is 3.24 more lands.
+  expect(at(3, { commanderManaValue: 6 })).toBe(42);
+  // Ten rocks are 5.7 fewer; eight draw cards 2 fewer.
+  expect(at(3, { accelerants: 10 })).toBe(33);
+  expect(at(3, { drawPieces: 8 })).toBe(37);
 });
 
 /** izzet-big-mana: an average of 5.98 asked Karsten for 50 lands, which the old gate answered with
- *  36. The goldfish's own balance point for it is 43.5 (24.1 + 19.4 + 2.7 - 0.8 = 45.4 here), so the
- *  answer is the formula's own, and only past the counts that were ever simulated is it held at the
- *  edge. */
+ *  36. The answer is the formula's own, and only past the counts that were ever simulated is it held
+ *  at the edge. */
 test("a big curve gets a big target, clamped only at the simulated range", () => {
-  expect(landTarget({ avgManaValue: 5.98, rampPlusDraw: 8, commanderManaValue: 5 })).toBe(45);
-  expect(landTarget({ avgManaValue: 9, rampPlusDraw: 0, commanderManaValue: 10 })).toBe(SIMULATED_MAX_LANDS);
-  expect(landTarget({ avgManaValue: 0.5, rampPlusDraw: 30, commanderManaValue: 0 })).toBe(SIMULATED_MIN_LANDS);
+  // 27.0 + 23.6 + 2.7 - 4.6 - 2.0 = 46.8
+  expect(at(5.98, { accelerants: 8, drawPieces: 8, commanderManaValue: 5 })).toBe(47);
+  expect(at(9, { commanderManaValue: 10 })).toBe(SIMULATED_MAX_LANDS);
+  expect(at(0.5, { accelerants: 30 })).toBe(SIMULATED_MIN_LANDS);
 });
 
 test("a colour with plenty of sources misses almost nothing, one with three misses almost everything", () => {

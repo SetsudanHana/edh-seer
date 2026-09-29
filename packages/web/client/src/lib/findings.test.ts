@@ -161,6 +161,16 @@ test("a partial hole is named as a hole, not generalised", () => {
   expect(f.headline).toBe("You have no answer at all for enchantments and planeswalkers.");
 });
 
+test("the land finding names the ramp and draw package and the trim", () => {
+  const deckMath = {
+    lands: { actual: 38, target: 32, avgManaValue: 2.92, targetSource: "derived", rawTarget: 32, archetypeDelta: 0, rampPlusDraw: 17, fastMana: 0, mdfc: 4,
+      accelerants: 9, drawPieces: 14, ifTrimmed: { ramp: { over: 6, target: 35 } } },
+  } as unknown as DeckReport["deckMath"];
+  const f = findings(report({ deckMath }))[0]!;
+  expect(f.detail).toContain("with 9 rocks, dorks and land ramp and 14 draw cards");
+  expect(f.detail).toContain("Trimming ramp to its target with rocks or dorks moves it to 35.");
+});
+
 test("lands are a finding in BOTH directions", () => {
   const lands = (actual: number) => ({
     lands: { actual, target: 36, avgManaValue: 3.29, targetSource: "derived", rawTarget: 36, archetypeDelta: 0, rampPlusDraw: 6, fastMana: 0, mdfc: 0 },

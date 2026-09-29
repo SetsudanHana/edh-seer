@@ -877,9 +877,13 @@ function DeckMathRows({
             <span className="min-w-0 flex-1 basis-64 text-xs text-(--muted) tabular-nums">
               {/* ONE LAND NUMBER, WITH THE OTHER ONE EXPLAINED (baseline round 2026-09-26): "wants 36"
                 *  beside "asks for 41" read as the site disagreeing with itself, and the slow-deck seat
-                *  came for one number it could trust. The ramp here is named by what it counts:
-                *  cheap mana makers (2 mana or less), which is what lowers the land count. */}
-              average mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap mana makers (2 mana or less)
+                *  came for one number it could trust. The working names what the target reads: the
+                *  curve, the commander, and the ramp and draw package (2026-09-29), each named by
+                *  what it counts. An older report without the package falls back to its own words. */}
+              average mana value {lands.avgManaValue}
+              {lands.accelerants !== undefined
+                ? ` · ${lands.accelerants} rocks, dorks and land ramp · ${lands.drawPieces ?? 0} draw cards`
+                : ` · ${lands.rampPlusDraw} cheap mana makers (2 mana or less)`}
               {lands.commanderManaValue ? ` · a ${lands.commanderManaValue}-mana commander` : ""}
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as lands, at full weight and with no discount to the target`
@@ -887,6 +891,21 @@ function DeckMathRows({
               {landsVisibleDelta}
             </span>
           </div>
+          {/* THE TARGET IS FOR THIS RAMP AND DRAW PACKAGE (owner, 2026-09-29: "your consistency should
+            *  be this, or your ramp should be that"). A role over its own target is the one case
+            *  where the land count would move, so the row says where it goes if the deck trims. */}
+          {lands.ifTrimmed?.ramp ? (
+            <p className="text-sm">
+              Ramp is {lands.ifTrimmed.ramp.over} over its target: if you cut rocks or dorks to get there,
+              plan for about <span className="stat-num">{lands.ifTrimmed.ramp.target}</span> lands.
+            </p>
+          ) : null}
+          {lands.ifTrimmed?.draw ? (
+            <p className="text-sm">
+              Consistency is {lands.ifTrimmed.draw.over} over its target: if you cut draw to get there,
+              plan for about <span className="stat-num">{lands.ifTrimmed.draw.target}</span> lands.
+            </p>
+          ) : null}
           {/* WHAT THE MANA BASE COSTS, in the one unit every part of it shares: turns lost in a
             *  game's first ten, against a perfect mana base of this same deck. Measured by playing
             *  268 decks 2,000 times each (`mana-base.ts`), which is also why it is "about". */}
