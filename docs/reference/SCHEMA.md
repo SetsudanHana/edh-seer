@@ -25,7 +25,7 @@ one of these re-buys the corpus and the rest are free.
 | `NORMALIZE_MIN_COMPATIBLE` | **3** | The oldest prompt whose answers are still valid. `needsNormalize` re-queues a card only when its stored version is BELOW this, so a mixed-version corpus is a stated condition rather than an accident. |
 | `VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which the closed VOCABULARIES (VERBS, TRIGGERS, ZONES) last changed. **Bump this ONLY when one of those lists changes** — never for a prose rule. |
 | `TRIGGER_VOCAB_VERSION` | **21** | The NORMALIZE_VERSION at which **TRIGGERS** last changed, tracked apart from VOCAB_VERSION. |
-| `DERIVE_VERSION` | **196** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
+| `DERIVE_VERSION` | **197** | Bump when derivation semantics change — a new effect kind, a changed emit, a new guard. Unlike NORMALIZE_VERSION this is FREE to bump: it only re-runs `derive-corpus`, which reads the stored clauses and calls no model. That asymmetry is the whole point of storing clauses separately. |
 
 See [`docs/RUNBOOK.md`](../RUNBOOK.md) for the procedure behind each bump.
 
@@ -119,6 +119,7 @@ Defined in [`SubjectFilter`](../../packages/tagger/src/schema.ts).
 | `notCast` | `true` | optional | THE OBJECT ARRIVED WITHOUT BEING CAST OR PLAYED — a blink, a token, a reanimation. |
 | `entersTapped` | `true` | optional | THE OBJECT ARRIVED TAPPED. Two cards demand it — Amulet of Vigor and Tiller Engine — and both read "whenever a permanent you control ENTERS TAPPED". Set on both sides from the same printed cue `ARRIVES_TAPPED` already uses to suppress a phantom `taps` event. |
 | `restricted` | `true` | optional | THE SUBJECT IS NARROWED BY A TARGETING RESTRICTION, AND NOTHING HERE MODELS TARGETING. "an instant or sorcery spell THAT TARGETS ONLY A SINGLE CREATURE YOU CONTROL" (Leyline of Resonance), "a spell THAT TARGETS ONLY A SINGLE ARTIFACT OR CREATURE YOU CONTROL" (Vesuvan Duplimancy). A demand only the consumer side can carry, and `eventMatches` refuses it — the `replacement.restricted` rule one layer over: keep the ability and its kind, claim no cards. |
+| `transformed` | `true` | optional | THE CARD COMES BACK AS ITS BACK FACE: "exile Jill, then return it to the battlefield TRANSFORMED" (CR 712.14a). A double-faced card put onto the battlefield is otherwise front face up (CR 712.14), so a self re-entry says which face enters and the matcher -- the one layer that holds each face's type line -- types it with that face (#715). Set on a self `enters` emit only. |
 | `umbrella` | `string` | optional | The umbrella noun a multi-umbrella `type` list was resolved FROM — "permanent" for "permanent spell". |
 | `allTypes` | `string[]` | optional | Card types the subject demands ALL of — a compound noun, "artifact creature". |
 | `subtype` | `string \| string[]` | optional | A subtype, or an array meaning OR (e.g. ["faerie","wizard"]). |

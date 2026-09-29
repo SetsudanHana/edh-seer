@@ -45,6 +45,7 @@ const TESTED: Record<string, string> = {
   "903.5a": "legality.test.ts — 903.5a counts COPIES; Yorion can never be met in a 100-card format",
   "702.73a": "legality.test.ts — 702.73a: Kaheera accepts a changeling as every creature type",
   "712.8a": "legality.test.ts — 712.8a: Umori reads a double-faced card by its FRONT face",
+  "712.14": "faces.test.ts — a card putting itself back onto the battlefield enters FRONT face up unless transformed (#715)",
 };
 const PROSE: Record<string, string> = {
   "106.1b": "mana colours", "107.4c": "hybrid mana", "107.14": "energy symbol is a counter on a player (subject.test asserts the player-counter gate)", "114.2": "emblem recipient (tagger asserts it)", "118.7": "costs paid once",

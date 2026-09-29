@@ -20,7 +20,7 @@ import {
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
-import { faceDeckCards } from "./faces.js";
+import { enteringFaceName, faceDeckCards } from "./faces.js";
 import type { LandTypes } from "./chosen-type.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -1823,7 +1823,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             : proliferateDemand ? proliferateSentence(p.card.name, c.card.name)
             : clonesOnEntry ? enterAsCopySentence(p.card.name, c.card.name)
             : reasonSentence({
-            producer: p.card.name, consumer: c.card.name, eventKey: key,
+            producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
             // Kitten's return is its own ability, and without it the flicker read as an exile.

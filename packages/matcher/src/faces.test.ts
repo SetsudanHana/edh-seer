@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import type { CardTags } from "@edh-seer/tagger";
-import { faceDeckCards, printedFaces } from "./faces.js";
+import { enteringFaceName, faceDeckCards, printedFaces } from "./faces.js";
 import type { DeckCard } from "./types.js";
 
 const tags = (over: Partial<CardTags> = {}): CardTags => ({
@@ -104,4 +104,48 @@ test("a combined type line with no faces still splits", () => {
   expect(printedFaces({
     name: "A // B", typeLine: "Instant // Land", oracleText: "", keywords: [], colors: [], manaValue: 1,
   }).map((f) => f.typeLine)).toEqual(["Instant", "Land"]);
+});
+
+// #715: a card putting ITSELF back onto the battlefield enters as the face the rule says -- the
+// front by default (CR 712.14), the back when "transformed" (712.14a) -- not the face that printed it.
+const jill = (frontText: string, emits: object[]): DeckCard => ({
+  card: {
+    name: "Jill, Shiva's Dominant // Shiva, Warden of Ice", typeLine: "", oracleText: "", keywords: [],
+    colors: ["U"], manaValue: 3, layout: "transform",
+    faces: [
+      { name: "Jill, Shiva's Dominant", typeLine: "Legendary Creature — Human Noble Warrior", oracleText: frontText, colors: ["U"] },
+      { name: "Shiva, Warden of Ice", typeLine: "Legendary Enchantment Creature — Saga Elemental", oracleText: "III — Exile Shiva, then return it to the battlefield (front face up).", colors: ["U"] },
+    ],
+  },
+  tags: tags({
+    characteristics: {
+      types: ["legendary", "creature", "enchantment"], subtypes: [], supertypes: [], keywords: [], colors: ["U"],
+      manaValue: 3, token: false, layout: "transform", faces: [{ types: ["legendary", "creature"], subtypes: [] }],
+    },
+    abilities: [
+      { kind: "activated", effect: { kind: "flicker" }, emits },
+      { face: 1, kind: "triggered", effect: { kind: "flicker" }, emits: [{ verb: "enters", subject: { control: "any", token: null, fromZone: "exile", self: true } }] },
+    ],
+  } as unknown as Partial<CardTags>),
+});
+const reEntry = { verb: "enters", subject: { control: "any", token: null, fromZone: "exile", self: true } };
+
+test("a transformed self re-entry carries the BACK face's types and name", () => {
+  const [front, back] = faceDeckCards(jill("Exile Jill, then return it to the battlefield transformed.",
+    [{ ...reEntry, subject: { ...reEntry.subject, transformed: true } }]));
+  const e = front.tags!.abilities[0]!.emits![0]!;
+  expect(e.subject).toMatchObject({ type: ["legendary", "enchantment", "creature"], subtype: ["saga", "elemental"] });
+  expect(enteringFaceName(front, e)).toBe("Shiva, Warden of Ice");
+  // Shiva's chapter III has no "transformed": Jill comes back front face up.
+  const back0 = back.tags!.abilities[0]!.emits![0]!;
+  expect(back0.subject).toMatchObject({ type: ["legendary", "creature"], subtype: ["human", "noble", "warrior"] });
+  expect(enteringFaceName(back, back0)).toBe("Jill, Shiva's Dominant");
+});
+
+test("a face that says 'transformed' but whose re-entry was not marked stays untyped", () => {
+  // A phrasing derive missed must refuse, not read as the front face.
+  const [front] = faceDeckCards(jill("Exile Jill, then return her to the battlefield transformed.", [reEntry]));
+  const e = front.tags!.abilities[0]!.emits![0]!;
+  expect(e.subject.type).toBeUndefined();
+  expect(enteringFaceName(front, e)).toBeUndefined();
 });
