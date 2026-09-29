@@ -47,7 +47,7 @@ import { commanderIdentity } from "./answer-pool.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
-import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, generalizeWatchlessHeadline, headlineFloor } from "./theme-promote.js";
 import { rankThemesByLoop } from "./theme-loop.js";
 import { deckThing } from "./thing.js";
 import { deckBracket } from "./brackets.js";
@@ -909,7 +909,9 @@ export function analyzeDeckStructured(
   }
   // AND A TAG ONE OR TWO CARDS CARRY CANNOT EITHER (#748), however rare it is.
   const rankableThemes = demoteThinHeadline(demoteUnrankableHeadline(rankedThemes, suppliedPhases), deckFreq, resolved.length, suppliedPhases);
-  const promotedThemes = promoteSpecificHeadline(rankableThemes, deckFreq, promoteMembership);
+  const promotedThemes = generalizeWatchlessHeadline(
+    promoteSpecificHeadline(rankableThemes, deckFreq, promoteMembership), deckFreq, promoteMembership, headlineFloor(resolved.length),
+    new Set(caresFreq.keys()));
   const themes = promotedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 
   const nonlands = resolved.filter((dc) => !isLand(dc));

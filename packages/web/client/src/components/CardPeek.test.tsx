@@ -75,6 +75,6 @@ test("a slug the corpus does not hold says so and still offers Close", async () 
       </PeekContext.Provider>
     </MemoryRouter>,
   );
-  await screen.findByText(/not in the corpus/);
+  await screen.findByText(/have not read this card yet/);
   expect(screen.getByRole("button", { name: "Close" })).toBeTruthy();
 });

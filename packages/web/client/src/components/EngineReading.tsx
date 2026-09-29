@@ -74,7 +74,7 @@ export function EngineReading({ clauses, abilities: allAbilities, rarity, groupe
     <section className="flex flex-col gap-4 max-w-[68ch]">
       {headless !== true && (
         <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h2>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">How we read this card</h2>
           <p className="text-(--muted) text-sm">The card&rsquo;s own lines, and what each one causes or cares about.</p>
         </div>
       )}
@@ -103,7 +103,7 @@ export function EngineReading({ clauses, abilities: allAbilities, rarity, groupe
         * copy under an individual CLAUSE, which is a different statement: there the absence of
         * event rows says it, and a keyword line genuinely produces nothing. */}
       {abilities.length === 0 && (
-        <p className="text-(--muted)">The engine read nothing on this card.</p>
+        <p className="text-(--muted)">We could not read anything on this card yet.</p>
       )}
     </section>
   );

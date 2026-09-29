@@ -457,6 +457,37 @@ entry. A component-sized cap (a dial, a chart, a popover under 36rem) passes.
 
 ---
 
+## Words (owner, 2026-09-29 — #749)
+
+"Rewrite them in plain English, this should be a rule for us anyway." Two reviewers, a phone
+player and a precon player, independently listed the same words they could not read: "engine",
+"puts into the game", "its events point at", "N cards can cause this". Each came from the code
+being described rather than the game being played.
+
+**Every word a player reads is a word a player says at the table.** Labels, headings,
+explanations, empty states and link sentences are written for someone who knows Magic and
+does not know this codebase.
+
+- **Name the game, not the code.** A card "works with" another, never "connects" or "has an
+  edge". An ability "makes something happen", never "emits" or "puts into the game". A score
+  comes from "our test games", never "the simulation" or "the model".
+- **Say what a number counts.** "589 cards in Inalla's colours can cause this", never a bare
+  "589" beside a list of one (#755).
+- **Short sentences, one idea each.** An explanation that needs a semicolon needs two sentences.
+- **Magic's own words are fine**: mana value, ramp, removal, card draw, tokens, EDHREC, bracket.
+  Game jargon a player already knows is plain English here; our own vocabulary is not.
+
+**Words that never reach a player**: engine, edge, node, emit, derive, tag (as a noun for our
+data), mechanism, model/modelled, simulation, archetype (say "plan" or "kind of deck"), corpus,
+tf-idf, cohesion. A term the page has to use anyway (Synergy, Build, Focus) carries an explanation
+one click away, in these same rules.
+
+**How it is checked.** Every copy change is read by a fresh persona seat before it ships (the
+precon upgrader has the lowest vocabulary ceiling, `.claude/agents/`), and its "words I did not
+understand" list is the test.
+
+---
+
 ## Components
 
 ### Pip (signature component)

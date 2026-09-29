@@ -53,7 +53,7 @@ export function floorState(count: number, target: number): GaugeReading {
  *  must not contradict the score beside it; a finding ranks what is worth SAYING and may be more
  *  sensitive. Reconciling the two thresholds changes which findings fire, so it is its own work. */
 export function bandState(count: number, target: number): GaugeReading {
-  if (target <= 0) return { state: "on-band", label: "no model", tone: "neutral", position: 0 };
+  if (target <= 0) return { state: "on-band", label: "no target", tone: "neutral", position: 0 };
   const d = count - target;
   const far = LAND_BAND + LAND_FALLOFF;
   // THE MARGIN IS SAID WHEN IT IS USED (deck-build run, 2026-09-22). 34 against 36 read "on the
@@ -61,7 +61,7 @@ export function bandState(count: number, target: number): GaugeReading {
   // Both are true -- the model's resolution is ±LAND_BAND -- so the label names the distance and
   // the margin it falls inside, and only an exact hit is simply "on" the count.
   if (Math.abs(d) <= LAND_BAND) {
-    const label = d === 0 ? "on the modelled count" : `${Math.abs(d)} ${d > 0 ? "over" : "under"}, within the normal ±${LAND_BAND}`;
+    const label = d === 0 ? "right on target" : `${Math.abs(d)} ${d > 0 ? "over" : "under"}, within the normal ±${LAND_BAND}`;
     return { state: "on-band", label, tone: "success", position: 0 };
   }
   const dir = d > 0 ? "over" : "under";

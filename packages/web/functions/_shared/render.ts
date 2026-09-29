@@ -94,7 +94,7 @@ export async function renderCardPage(
       ? `${record.name} is ${job.noun} in Commander. See what it does in a deck and how it counts toward your ${job.tally} total.`
       : partners.length > 0
       ? `${partners.length} cards that work with ${record.name} in Commander, each with the reason written out.`
-      : `What the engine reads on ${record.name}: the events it produces and the ones it cares about.`;
+      : `What we read on ${record.name}: what it makes happen and what it cares about.`;
 
     // TOO LITTLE TO SAY, NOTHING TO INDEX. A page below the partner floor is real and reachable
     // and has no content a search result could honestly summarise, so it stays out of the index

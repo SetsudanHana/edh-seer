@@ -774,13 +774,13 @@ function DeckMathRows({
           </div>
           {/* A turn number that does not say how it was made reads as a prediction. It is a RATE:
             *  useful for comparing two decks, useless as a date. */}
-          <Caveat label="how the clock is modelled">
-            Expected attacking power against ONE opponent's 40 life — not the table. Three opponents
-            is three boards and three life totals, and nothing here models that. Nobody blocks and
-            nothing is removed. Creatures are deployed cheapest first against the mana the simulation
-            says this deck makes, so ramp does shorten it — but that budget is every point of mana
-            the board produced, and a real deck spends some of it on removal and on draw. Read it to
-            compare decks, not to plan a game.
+          <Caveat label="how the clock is worked out">
+            How hard your creatures hit against ONE opponent at 40 life, not the whole table. Three
+            opponents means three boards and three life totals, and this does not play that out.
+            Nobody blocks and nothing gets removed. Your creatures come down cheapest first, using
+            the mana this deck makes in our test games, so ramp does make it faster. But that counts
+            every point of mana you have, and a real game spends some of it on removal and card
+            draw. Use it to compare decks, not to plan a game.
           </Caveat>
         </div>
   ) : null;

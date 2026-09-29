@@ -168,13 +168,13 @@ export function DeckGauges({ data, diff, bars = true }: {
                 <>
                 <BandScale />
                 <Explain label="what this measures">
-                  Two halves averaged, each out of 5. <span className="text-(--foreground)">Focus</span> is
-                  how much of the deck is on its main theme. Every nonland card counts, so cards that
-                  connect to nothing pull it down.{" "}
-                  <span className="text-(--foreground)">Key card</span> is how well your best-supported
-                  card is backed up
-                  {anchorCard ? <> (here, {anchorCard.name}{anchorCard.isCompanion ? ", your companion" : ""})</> : null}. It caps at 5, so two
-                  very different engines can both max it out.
+                  Two scores out of 5, averaged. <span className="text-(--foreground)">Focus</span> is
+                  how many of your nonland cards play into the deck&rsquo;s main theme. A card that works
+                  with nothing else drags it down.{" "}
+                  <span className="text-(--foreground)">Key card</span> is how many cards back up your
+                  best-supported card
+                  {anchorCard ? <> (here, {anchorCard.name}{anchorCard.isCompanion ? ", your companion" : ""})</> : null}. It stops at 5, so two
+                  very different decks can both score 5 here.
                 </Explain>
                 </>
               }
@@ -238,11 +238,11 @@ export function DeckGauges({ data, diff, bars = true }: {
                 <>
                 <BandScale kind="build" />
                 <Explain label="what this measures">
-                  How close your ramp, draw, removal and other counts are to what similar decks run:
-                  the median of ten EDHREC decks per archetype. That is what they run, not what they
-                  need. It ignores how the cards work together and what your removal can hit;
-                  the suggestions below cover that, so a high Build score can sit beside a &ldquo;thin
-                  answers&rdquo; suggestion.
+                  How your number of ramp, card draw, removal and other cards compares with similar
+                  decks: the middle one of ten EDHREC decks of the same kind. That is what those decks
+                  play, not a minimum you need. It does not look at how your cards work together or
+                  what your removal can hit. The suggestions below do, so a high Build score can sit
+                  next to a &ldquo;thin answers&rdquo; suggestion.
                 </Explain>
                 </>
               }

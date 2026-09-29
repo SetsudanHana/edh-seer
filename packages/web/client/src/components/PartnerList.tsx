@@ -101,14 +101,13 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
                 * found it non-monotonic (2, 263, 1, 3, 1863, 15) and concluded the ranking was
                 * broken; in THIS number the same groups read 72, 264, 2159, 2159, 2879, 2963,
                 * descending exactly as the intro claims. Sound reasoning, missing evidence. */}
+              {/* A SENTENCE, NOT A BADGE (#755): a pill beside the heading read as the size of the
+                * list under it. The line names what it counts -- the commander's colours or the
+                * whole game -- so it cannot be taken for the tiles. */}
               {rarity[group.event] !== undefined && (
                 <p className="text-(--muted) text-sm">
-                  <span className="inline-flex items-baseline gap-1 rounded-full border border-(--separator) px-2 py-0.5">
-                    <span className="font-mono tabular-nums text-(--foreground)">
-                      {rarity[group.event]!.toLocaleString("en-US")}
-                    </span>
-                    {causeCountTail(group.rows, subject)}
-                  </span>
+                  <span className="tabular-nums">{rarity[group.event]!.toLocaleString("en-US")}</span>{" "}
+                  {causeCountTail(group.rows, subject, identity ? subject : undefined)}
                 </p>
               )}
             </div>

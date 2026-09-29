@@ -44,7 +44,7 @@ const at = (slug: string, load: () => Promise<CardPageData | null>) =>
  *  once. `ClausesRead` is shared now and both pages assert it. */
 test("the commander page reads down the card too", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, clauses: [{ id: 1, text: "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control." }] }));
-  expect(await screen.findByRole("heading", { level: 2, name: /How the engine reads this card/ })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 2, name: /How we read this card/ })).toBeInTheDocument();
   // The rail and the page body both render the section; one component, two call sites.
   expect(screen.getAllByText(/Create X 1\/1 red Goblin creature tokens/).length).toBeGreaterThan(0);
 });
@@ -198,7 +198,7 @@ test("a commander with no derived ability says the engine read nothing rather th
   BY_SLUG["faceless-one"] = { ...KRENKO, name: "Faceless One", abilities: [], emits: [], demands: [], commanderPartners: [] };
   atUrl("/commanders/faceless-one");
   // The gap paragraph and the empty partner list both say it; either is the point.
-  expect((await screen.findAllByText(/read nothing on this card/i)).length).toBeGreaterThan(0);
+  expect((await screen.findAllByText(/could not read anything on this card/i)).length).toBeGreaterThan(0);
   expect(screen.queryByText(/answers every event it watches/)).not.toBeInTheDocument();
   expect(screen.queryByText(/refused each one on the merits/)).not.toBeInTheDocument();
 });

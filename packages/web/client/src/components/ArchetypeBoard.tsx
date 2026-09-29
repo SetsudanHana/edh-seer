@@ -142,7 +142,7 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
   // With the groups shown elsewhere, no archetypes is nothing to say rather than "no patterns".
   if (!hasStrategies && !showGroups) return null;
   if (!hasStrategies && !hasGroups) {
-    return <p className="text-(--muted) text-sm">No recognizable archetype patterns — try adding more synergy pieces.</p>;
+    return <p className="text-(--muted) text-sm">No plan stands out yet. More cards that work together would give it one.</p>;
   }
   const unread = coverage ? coverage.resolved - coverage.derived : 0;
   // `themeMatrix` is pure and its column stats are the only definition of "earned" on the page --
@@ -188,13 +188,13 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
       ) : null}
       {hasStrategies ? (
         <div className="flex flex-col gap-2">
-          <h3 className="eyebrow">Archetypes</h3>
+          <h3 className="eyebrow">Plans</h3>
           {/* A PERCENTAGE WITH NO DENOMINATOR IS NOT A FIGURE. "Tokens 22%" was 22% of something the
             *  page never named — the bars are scaled to the whole deck, so a bar's length and its
             *  number say the same thing. */}
           <Explain label="what the percentages count">
-            The share of the deck's nonland cards whose own text signals that plan. A card can
-            signal several, so these do not add to 100% — and each bar is drawn against the
+            The share of your nonland cards whose own text points to that plan. One card can point
+            to several plans, so these do not add up to 100%. Each bar is measured against the
             whole deck, so a full bar would mean every card.
             {/* WHY THE DECK'S OWN HEADLINE IS NOT IN THIS LIST (S16, 2026-09-02). Chapter 1 prints
               *  the theme in the largest type on the page -- "enchantments entering" -- and none of
@@ -203,8 +203,8 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
               *  whatever this deck's own EDGES turned out to be about. Both judges who read both
               *  chapters filed it, the beginner as *"I now feel like I don't know what I own."*
               *  Saying it is the fix; renaming either classifier is not this item's. */}
-            {" "}These are named archetypes from a fixed list, so the deck&rsquo;s own theme will
-            often not be one of these names.
+            {" "}These plans come from a fixed list, so your deck&rsquo;s own theme will often not be
+            one of these names.
           </Explain>
           {/* 40rem cells, so the percentage sits a glance from its label; more across on a wide
             *  screen (#770). */}
@@ -220,12 +220,13 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">The pairs behind each group</h3>
           <Explain label="what a group counts">
-            Pairs of cards whose synergy matches a known mechanism, and the cards those pairs touch.
-            One pair can belong to several groups, and a group saying nothing a bigger one has not
-            already said is dropped. These are not ranked, because a card can join a group just by
-            being played — every nonland counts as cast, every permanent as entering. The card count
-            says how far a group reaches, never how much the deck is about it; the earned figure is
-            the members that do something about it.
+            Pairs of your cards that work together in a known way, such as one making tokens and the
+            other paying off tokens, and the cards in those pairs. One pair can sit in several
+            groups, and a group that only repeats a bigger one is left out. The groups are not
+            ranked, because a card can join one just by being played: every nonland card is cast,
+            and every permanent enters. The card count says how many cards a group touches, not how
+            much the deck is about it. The number that counts is how many of them actually do
+            something with it.
           </Explain>
           {/* 64rem, like the archetype bars above at 48rem: at 1920px the row spread its name and
             *  its figures 1,700px apart (UI review 2026-09-25). Wide enough that the two preview

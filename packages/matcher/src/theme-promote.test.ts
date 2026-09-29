@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline, headlineFloor, generalizeWatchlessHeadline } from "./theme-promote.js";
 import type { ThemeMembership } from "./themes.js";
 
 const m = (tag: string, payoffs: number): ThemeMembership => ({
@@ -100,4 +100,19 @@ test("a headline carried by fewer than three cards is demoted behind the first c
   // The floor is 5% of a small deck when that is under three.
   expect(headlineFloor(100)).toBe(3);
   expect(headlineFloor(40)).toBe(2);
+});
+
+// #748, owner 2026-09-29 ("I would go with Enchantress"): a kind nothing watches gives the head to
+// the card type the payoffs do watch. Measured on the 71 decks, only Yuna moves.
+test("a watchless kind gives the head to its watched card type, but never a tribe or a cared-about kind", () => {
+  const freq = new Map([["enters:saga", 12], ["enters:enchantment", 8], ["enters:wall", 16], ["enters:creature", 13], ["enters:curse", 21]]);
+  const census = [m("enters:saga", 0), m("enters:enchantment", 3), m("enters:wall", 0), m("enters:creature", 5), m("enters:curse", 0)];
+  expect(generalizeWatchlessHeadline(["enters:saga", "enters:enchantment"], freq, census, 3))
+    .toEqual(["enters:enchantment", "enters:saga"]);
+  // A creature type is a tribe: a Wall deck is not renamed "creatures entering".
+  expect(generalizeWatchlessHeadline(["enters:wall", "enters:creature"], freq, census, 3)[0]).toBe("enters:wall");
+  // Cards that care about curses under another event (Lynde's) keep the curse headline.
+  expect(generalizeWatchlessHeadline(["enters:curse", "enters:enchantment"], freq, census, 3, new Set(["attached:curse"]))[0]).toBe("enters:curse");
+  // The general sibling has to clear the carried floor.
+  expect(generalizeWatchlessHeadline(["enters:saga", "enters:enchantment"], freq, census, 9)[0]).toBe("enters:saga");
 });

@@ -116,8 +116,9 @@ test("the static block prints how many cards can cause each event, per group", (
   // event is named as the thing those cards wait for. A producer group says "kill a creature".
   // AND THE COUNT SAYS WHOSE IT IS (2026-09-22): every row here ASKS, so this page's card is one of
   // the cards that cause the event -- the reason those rows are its partners at all.
-  expect(html).toContain("a creature token enters the battlefield — 1,234 cards can cause this, Krenko, Mob Boss among them.");
-  expect(html).toContain("a creature dies — 1,451 cards can cause this, Krenko, Mob Boss among them.");
+  // #755: and it names the population it counts, so it is not read as the size of the list.
+  expect(html).toContain("a creature token enters the battlefield — 1,234 cards in the game can cause this, Krenko, Mob Boss among them.");
+  expect(html).toContain("a creature dies — 1,451 cards in the game can cause this, Krenko, Mob Boss among them.");
   // One list per event, the count directly above its own list.
   expect(html.match(/<ol>/g)).toHaveLength(2);
   expect(html.indexOf("1,234 cards")).toBeLessThan(html.indexOf("purphoros-god-of-the-forge"));
@@ -158,7 +159,7 @@ test("the static block carries the card, its derivation and the engine's sentenc
 
 test("the commander block links back to the card page", () => {
   expect(cardPageHtml(KRENKO, "krenko-mob-boss", "commander"))
-    .toContain('<a href="/cards/krenko-mob-boss">What the engine reads on this card</a>');
+    .toContain('<a href="/cards/krenko-mob-boss">What we read on this card</a>');
 });
 
 /** THE CARD'S NAME IS THE PAGE'S ONE `h1` (owner, 2026-09-17). The shell's thesis heading belongs
@@ -221,7 +222,7 @@ test("the block reads down the card, clause by clause, in printed order", () => 
     { id: 1, text: "When Kogla and Yidaro enters, choose one" },
     { id: 2, text: "{2}{R}{G}, Discard this card: Destroy up to one target artifact or enchantment." },
   ] }, "x", "card");
-  expect(html).toContain("<h2>How the engine reads this card</h2>");
+  expect(html).toContain("<h2>How we read this card</h2>");
   // ONE QUOTE PER CLAUSE, the same shape `EngineReading` renders: the segmentation is the claim,
   // and a run of paragraphs reads as one passage of card text instead of the units the engine read.
   expect(html).toContain("<blockquote>When Kogla and Yidaro enters, choose one</blockquote>");
@@ -230,12 +231,12 @@ test("the block reads down the card, clause by clause, in printed order", () => 
   // Printed order, which is the order a player reads the card in.
   expect(html.indexOf("When Kogla")).toBeLessThan(html.indexOf("{2}{R}{G}"));
   // It is evidence for the derivation, so it sits above the derivation it explains.
-  expect(html.indexOf("How the engine reads this card")).toBeLessThan(html.indexOf("Causes:"));
+  expect(html.indexOf("How we read this card")).toBeLessThan(html.indexOf("Causes:"));
 });
 
 test("a card with no rules text and no abilities gets no section at all", () => {
-  expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("How the engine reads this card");
-  expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("How the engine reads this card");
+  expect(cardPageHtml(KRENKO, "x", "card")).not.toContain("How we read this card");
+  expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("How we read this card");
   expect(cardPageHtml({ ...KRENKO, clauses: [] }, "x", "card")).not.toContain("<blockquote>");
 });
 

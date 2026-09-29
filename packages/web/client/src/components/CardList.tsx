@@ -181,8 +181,8 @@ type SortKey = "synergy" | "name" | "cost";
  *  same data with none of that language.
  *  → `specs/2026-08-20-report-usability-review.md` §3 F5 */
 const SCALE_NOTE =
-  "Scored against this deck's best synergy card, so a low number means \"less connected\", not \"bad\". "
-  + "Lands and pure ramp, removal or protection score low on purpose.";
+  "Scored against the card in this deck that works with the most others, so a low number means \"works with fewer cards here\", not \"bad\". "
+  + "Lands, and cards that only ramp, remove or protect, score low on purpose.";
 
 export function CardList({ cards, artByName, coverage }: {
   cards: DeckReport["cards"];
@@ -276,12 +276,13 @@ export function CardList({ cards, artByName, coverage }: {
       {/* THE COST COLUMN'S OWN SCALE. "49% – 69% by T5" was explained in a footnote on a different
         *  tab, so on this one it was two unlabelled numbers. */}
       <Explain label="what the cost figures mean">
-        The chance you can actually cast it — mana and colours together — simulated over 2,000
-        shuffles. A range, low to high, and the range is how you play: the low end holds up two mana
-        before casting a ramp piece, the high end spends everything on ramp and is a ceiling
-        no real deck plays to. The turn is the card's own mana value — a 5-drop is priced at turn 5 —
-        and a land or an unpriceable cost renders an em dash rather than 0%. No opponent is modelled
-        and no cantrips are cast, so a draw-heavy deck reads low.
+        The chance you have the mana, in the right colours, to cast the card on time. We shuffle
+        and deal your deck 2,000 times to find out. It is a range because it depends on how you
+        play: the low end keeps two mana open before casting ramp, the high end puts everything
+        into ramp, which no real deck does. &ldquo;On time&rdquo; is the turn matching the
+        card&rsquo;s mana value, so a 5-drop is checked on turn 5. Lands, and costs we cannot
+        work out, show a dash instead of 0%. The test plays no opponent and casts no card draw,
+        so a deck that draws a lot scores lower than it plays.
       </Explain>
       {shapes.shared.length > 0 ? (
         <div className="text-xs text-(--muted) max-w-[65ch] flex flex-col gap-0.5">

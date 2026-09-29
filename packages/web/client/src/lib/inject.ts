@@ -294,10 +294,16 @@ export const groupDirection = (rows: InjectableCard["partners"]): GroupDirection
  *  sixteen missing cards. Those tiles are partners only because this page's card causes the event,
  *  so it is one of the 17, and the sentence says so. A mixed group falls back to `asks` in
  *  `groupDirection` without that guarantee, so it keeps the bare count. */
-export const causeCountTail = (rows: InjectableCard["partners"], subject?: string): string =>
-  subject && rows.every((r) => r.producer !== true && !/^While you control /i.test(r.reason))
-    ? `cards can cause this, ${subject} among them`
-    : "cards can cause this";
+export const causeCountTail = (rows: InjectableCard["partners"], subject?: string, commander?: string): string => {
+  // THE SENTENCE NAMES THE POPULATION IT COUNTS (#755, owner 2026-09-29). "589 cards can cause this"
+  // above a list of one read as a count of the list. The figure is every card that could cause the
+  // event -- in the commander's colours on a commander page (AJ5), in the whole game on a card page
+  // -- so it says which, and the list under it is plainly a different thing.
+  const where = commander ? `in ${commander}'s colours` : "in the game";
+  return subject && rows.every((r) => r.producer !== true && !/^While you control /i.test(r.reason))
+    ? `cards ${where} can cause this, ${subject} among them`
+    : `cards ${where} can cause this`;
+};
 
 /** WHERE A GROUP'S WITHHELD COUNT LINKS (roadmap AJ3), and it is built ONCE for both readers.
  *
@@ -441,7 +447,7 @@ export function cardPageHtml(
       ? eventKeyClause(g.event)
       : eventKeyAction(g.event) ?? eventKeyClause(g.event);
     const count = n === undefined ? ""
-      : `    <p>${esc(said)} — ${n.toLocaleString("en-US")} ${esc(causeCountTail(g.rows, card.name))}.</p>\n`;
+      : `    <p>${esc(said)} — ${n.toLocaleString("en-US")} ${esc(causeCountTail(g.rows, card.name, kind === "commander" ? card.name : undefined))}.</p>\n`;
     // THE WITHHELD COUNT, in the HTML too: it is the other number that makes this block this
     // card's, and the app has printed it under every group since the list was grouped.
     const dir = dirHere;
@@ -465,7 +471,7 @@ export function cardPageHtml(
     ? (card.commander
       ? `    <p><a href="/commanders/${esc(slug)}">What a deck led by this card wants</a></p>\n`
       : "")
-    : `    <p><a href="/cards/${esc(slug)}">What the engine reads on this card</a></p>\n`;
+    : `    <p><a href="/cards/${esc(slug)}">What we read on this card</a></p>\n`;
   // A STAPLE'S JOB, where it has too few partners to be about them (review 2026-09-25). Card pages
   // only: a commander page is about the deck it leads.
   const job = kind === "card" && card.partners.length < MIN_INDEXABLE_PARTNERS ? jobOf(card.roles) : null;
@@ -512,7 +518,7 @@ export function cardPageHtml(
     }).join("");
   const implied = (card.abilities ?? []).filter((a) => a.clause === undefined);
   const read = (card.clauses === undefined || card.clauses.length === 0) && implied.length === 0 ? ""
-    : `    <h2>How the engine reads this card</h2>\n`
+    : `    <h2>How we read this card</h2>\n`
       + (card.clauses ?? []).map((c) =>
         `    <blockquote>${esc(c.text)}</blockquote>\n${abilityLines(c.id)}`).join("")
       // AN IMPLIED ABILITY HAS NO PRINTED LINE (spec C4): read off the card's characteristics, so
