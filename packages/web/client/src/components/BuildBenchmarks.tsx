@@ -7,6 +7,7 @@ import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName, useAdded } from "./card-drawer.js";
 import { WinPlans } from "./WinPlans.js";
 import { policyBand } from "@edh-seer/engine/percent";
+import { bandState } from "../lib/deck-gauge.js";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
 // as skipping the barrel's node:fs-touching re-export of `analyze.js`) was itself fatal: that file
@@ -862,7 +863,8 @@ function DeckMathRows({
               *  the wrapped line it is still the right-hand end of "38 in deck ... wants 36". */}
             <span
               className={`ml-auto shrink-0 text-right stat-num ${
-                Math.abs(lands.actual - lands.target) > 2 ? "text-(--warning)" : "text-(--success)"
+                // The Lands dial's reading, the score's own margin, not a second one of its own (#759).
+                bandState(lands.actual, lands.target).tone === "success" ? "text-(--success)" : "text-(--warning)"
               }`}
             >
               wants {lands.target}

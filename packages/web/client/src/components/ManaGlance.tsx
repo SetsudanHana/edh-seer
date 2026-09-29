@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { policyBand } from "@edh-seer/engine/percent";
 import type { DeckReport } from "../types.js";
+import { bandState } from "../lib/deck-gauge.js";
 import { landHandProbabilities } from "../lib/land-math.js";
 import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName } from "./card-drawer.js";
@@ -20,10 +21,12 @@ export function ManaGlance({ deckMath, manaAvailability, landCount, deckSize }: 
   const tiles: ReactNode[] = [];
   const lands = deckMath?.lands;
   if (lands) {
-    const off = lands.actual - lands.target;
+    // ONE READING OF THE LAND COUNT (#759): the Lands dial's, which is the score's own ±LAND_BAND.
+    // This tile had its own ±2, so 34 against 37 was "3 short" here and full marks on the dial.
+    const reading = bandState(lands.actual, lands.target);
     tiles.push(
-      <Tile key="lands" label="Lands" warn={Math.abs(off) > 2} big={String(lands.actual)}
-        sub={Math.abs(off) <= 2 ? `wants ${lands.target}: on target` : `wants ${lands.target}: ${Math.abs(off)} ${off < 0 ? "short" : "over"}`} />,
+      <Tile key="lands" label="Lands" warn={reading.tone !== "success"} big={String(lands.actual)}
+        sub={`wants ${lands.target}: ${reading.label}`} />,
     );
   }
   const colours = deckMath?.colors ?? [];
