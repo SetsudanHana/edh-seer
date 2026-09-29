@@ -100,6 +100,17 @@ function pipOptions(manaCost: string | undefined): Color[][] {
 
 const isLand = (dc: DeckCard): boolean => /\bland\b/i.test(dc.card.typeLine);
 
+/** A `{T}: Add` ability whose cost does not sacrifice the card, read line by line with string
+ *  searches: a regex over the cost ran in polynomial time on hostile text (CodeQL). */
+function tapsForMana(oracleText: string): boolean {
+  return oracleText.split("\n").some((line) => {
+    const colon = line.indexOf(":");
+    if (colon < 0) return false;
+    const cost = line.slice(0, colon).toLowerCase();
+    return cost.includes("{t}") && !cost.includes("sacrifice") && /^\s*add\b/i.test(line.slice(colon + 1));
+  });
+}
+
 /** THE SOURCES OF EACH COLOUR, COUNTED THE WAY THE GOLDFISH COULD USE THEM: a land by what it taps
  *  for, a fetch by what it can find, and a nonland permanent only when it has a `{T}: Add` ability
  *  that does not sacrifice it. The library only: a commander is never drawn.
@@ -124,7 +135,7 @@ export function colourSources(deck: readonly DeckCard[], commanderNames: readonl
       colours = produced.length > 0 || !isLandFetch(text)
         ? produced
         : [...new Set(fetchableLands(text, libraryCards).flatMap((c) => c.producedMana ?? []))];
-    } else if (isManaSource(dc) && /\{T\}[^:\n]*: Add/i.test(text) && !/\{T\}[^:\n]*sacrifice[^:\n]*: Add/i.test(text)) {
+    } else if (isManaSource(dc) && tapsForMana(text)) {
       colours = produced;
     }
     for (const c of new Set(colours)) if (out.has(c as Color)) out.set(c as Color, out.get(c as Color)! + 1);

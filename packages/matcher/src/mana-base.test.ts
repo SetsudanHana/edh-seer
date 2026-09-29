@@ -95,3 +95,14 @@ test("the score is the three parts in one unit, and a short land count costs mor
   const perfect = manaBaseScore([spell("One", "{1}", 1)], { target: 36, actual: 36 });
   expect(perfect.total).toBe(0);
 });
+
+test("a source's {T}: Add is read per line, and a sacrifice in the cost is not a source", () => {
+  const rock = (name: string, oracleText: string) => mk(name, "Artifact", { oracleText, producedMana: ["G"] });
+  const s = colourSources([
+    rock("Rock", "{T}: Add {G}."),
+    rock("Two Lines", "Flying\n{2}, {T}: Add {G}."),
+    rock("Sac", "{T}, Sacrifice this artifact: Add {G}."),
+    rock("Other Line", "{T}: Draw a card.\nWhenever you cast a spell, add {G}."),
+  ]);
+  expect(s.get("G")).toBe(2);
+});
