@@ -17,6 +17,7 @@ import { actionScaling, scalingSubject } from "./scaling.js";
 import { parseSubject, parseCounter } from "./subject.js";
 import { delayedTriggerRepeats, repeatsFor, withoutAbilityWord, type RawTrigger } from "./repeats.js";
 import { replacementOf } from "./replacement.js";
+import { countOf } from "./event-count.js";
 import { doubledVerbs, doublesOf } from "./doubles.js";
 import { thresholdFor, thresholdSubjectFor } from "./threshold.js";
 import { eventAmountFor } from "./event-amount.js";
@@ -226,7 +227,10 @@ import { emblemRecipient } from "../emblem.js";
 // the matcher types it with the back face (Jill, Shiva's Dominant -> Setessan Champion).
 // 198: #713 -- "a spell with an odd/even mana value" is a parity stat on mana value, so the cast
 // trigger narrows (Soundwave, Superior Captain) instead of reading as every spell.
-export const DERIVE_VERSION = 198;
+// 199: edge magnitude -- an ability records how many events one use supplies (`count`: a number,
+// "up to N", X per mana, "for each <class>", a board-wide emit), and a "one or more" trigger is
+// `batched` (CR 603.2c). Display data; no claim changes.
+export const DERIVE_VERSION = 199;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1112,6 +1116,8 @@ const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|t
 /** "…return it to the battlefield transformed…": the back face enters (CR 712.14a, #715). Every
  *  corpus phrasing: him/her (Ajani, Tamiyo), "this card", "put … onto", "from your graveyard" and
  *  "tapped and transformed" (Ojer Taq). */
+/** "Whenever ONE OR MORE ...": one firing per batch (CR 603.2c; edge magnitude). */
+const BATCHED = /\bone or more\b/i;
 const RETURNS_TRANSFORMED = /\b(?:return|put) (?:it|them|him|her|this card|that card|those cards)(?: from [a-z' ]+?)?(?: (?:to|onto) the battlefield)?(?: tapped and)? transformed\b/i;
 /** "…until you reveal a creature card…": the class a reveal-until dig puts somewhere (#715). */
 const REVEAL_UNTIL = /\buntil you reveal (an? [a-z ]{1,40}?) card\b/i;
@@ -2041,6 +2047,13 @@ export function deriveAbilities(
       const heard = abilities[i].trigger?.verbs ?? [];
       if (replacement && !replacement.restricted && replacement.verbs.some((v) => heard.includes(v))) {
         abilities[i] = { ...abilities[i], replacement: true };
+      }
+      // EDGE MAGNITUDE (spec 2026-09-29): how many events one use supplies, and whether the
+      // consumer hears a batch once. Read after `replacement` is known, which changes the reading.
+      const count = countOf(abilities[i].amount, abilities[i].emits?.[0], text, abilities[i].replacement === true);
+      if (count) abilities[i] = { ...abilities[i], count };
+      if (abilities[i].trigger && BATCHED.test(clause.trigger?.subject ?? "")) {
+        abilities[i] = { ...abilities[i], trigger: { ...abilities[i].trigger!, batched: true } };
       }
       // A GAME-STATE REQUIREMENT: from the ability word the segmenter stripped ("Max speed —"),
       // else from a condition that governs the whole clause text (roadmap W18).
