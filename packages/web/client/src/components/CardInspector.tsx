@@ -20,8 +20,11 @@ type Edge = CardGraph["edges"][number];
  *  oracle-text-derived sentence that explains it. That is a real limit, recorded on the ROADMAP,
  *  not papered over with an invented id here. */
 export function CardInspector({
-  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra, closeLabel,
+  node, edges, flow, textOf, nameOf, onClose, phone = "sheet", extra, closeLabel, docked = false,
 }: {
+  /** Covering the report rail: the rail's own shape (flush, full height, its padding), rather than
+   *  a panel inset in its container. See `RAIL_BOX` in `card-drawer.tsx`. */
+  docked?: boolean;
   /** What the close control says; "close" unless the card is covering a rail ("Back to Game plan"). */
   closeLabel?: string;
   /** What the report adds about this card, above its links: in the report's drawer, the card's own
@@ -201,9 +204,9 @@ export function CardInspector({
   return (
     <div
       data-testid="card-inspector"
-      className={`absolute right-2 left-2 ${
+      className={`${docked ? "px-4 py-6" : `absolute right-2 left-2 ${
         phone === "half" ? "bottom-2 top-auto max-h-[50%] sm:top-2 sm:max-h-none" : "inset-y-2"
-      } sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3 text-sm flex flex-col gap-3`}
+      } sm:left-auto sm:w-72 sm:max-w-[85vw] overflow-y-auto rounded-(--radius) border border-(--separator) bg-(--surface) p-3`} text-sm flex flex-col gap-3`}
     >
       <button type="button" onClick={onClose} className={closeLabel ? "self-start inline-flex items-center gap-2 rounded-(--radius) border border-(--separator) px-3 min-h-9 text-sm hover:border-(--accent) hover:text-(--accent)" : "eyebrow self-end text-(--muted)"}>
         {/* A DRAWN ARROW, not a "←" glyph: DESIGN.md keeps Unicode out of the icon set. */}
@@ -251,7 +254,7 @@ export function CardInspector({
           // left the first pair 130px under the sheet's fold behind the close row, the name, the
           // type line, the text disclosure and the pin. The board is already drawing this card's
           // art on its disc, and the pairs are what the tap asked for.
-          className={`w-full ${phone === "half" ? "hidden sm:block" : ""} max-w-[32vh] mx-auto aspect-[488/680] object-contain shrink-0 rounded-(--radius) border border-(--separator)`}
+          className={`w-full ${phone === "half" ? "hidden sm:block" : ""} ${docked ? "max-w-[min(32vh,18rem)]" : "max-w-[32vh]"} mx-auto aspect-[488/680] object-contain shrink-0 rounded-(--radius) border border-(--separator)`}
         />
       ) : null}
 

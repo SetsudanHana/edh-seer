@@ -92,6 +92,12 @@
      and nothing sticky under the header, so nothing there reads this. */
   --site-header-h: 0px;
 
+  /* THE REPORT RAIL'S WIDTH, one value for the rail, the card that covers it and the page's reserve
+     beside it, so the three cannot drift apart. 20rem up to 2560; past that a fixed 20rem was 8% of
+     a 3840 screen and read as a thin strip with the summary in its top sixth (designer review,
+     2026-09-29), so it grows with the screen to a 32rem ceiling. */
+  --rail-w: 20rem;
+
   /* THE PAGE'S SIDE GUTTER, one value for the app, the header, the footer and the prose page
      (UI review 2026-09-25). It was a flat 2rem, which on a 390px phone spent 64px -- 16% of the
      screen -- on margins; DESIGN.md asks for 16px there. 2rem from `sm` up, as before. */
@@ -205,7 +211,7 @@ body {
    the app's own toolbar underneath the panel -- seen in a 1920 screenshot. Everything the drawer can
    cover is inside `body`, so `body` is where the reserve belongs.
 
-   20rem IS THE DRAWER'S OWN BOX: `w-80` on the fixed container in `card-drawer.tsx`. Below 100rem
+   `--rail-w` IS THE RAIL'S OWN BOX, and the card's while it covers the rail. Below 100rem
    the viewport has no width to give and the overlay is the honest shape -- that is what a phone
    drawer IS -- so this rule starts where the room does. IT STARTED AT 80rem until 2026-09-27: at
    1280 the reserve squeezed the report to 960px, wrapped the header and shrank the commander's map
@@ -213,8 +219,15 @@ body {
    capped by the screen's height and loses nothing). The transition keeps the reflow from reading as a
    jump, and the reduced-motion block below turns it off -- that block covered `.reveal` only, so
    the transition had to be added to it rather than assumed into it. */
+@media (min-width: 160rem) {
+  :root { --rail-w: clamp(20rem, 14vw, 32rem); }
+}
 @media (min-width: 100rem) {
-  body.drawer-rail { padding-inline-end: 20rem; }
+  body.drawer-rail { padding-inline-end: var(--rail-w); }
+  /* THE SITE HEADER RUNS OVER THE RAIL, and the rail starts under it (designer review, 2026-09-29).
+     Stopped at the reserve, the header's rule broke off 20rem short of the edge and the rail rose
+     beside it with 70px of nothing at its top -- a column bolted on, not part of the page. */
+  body.drawer-rail .site-header { margin-inline-end: calc(-1 * var(--rail-w)); }
 }
 
 /* THE APP RESERVES ITS OWN SPACE, AND THAT IS THE WHOLE CLS FIX.

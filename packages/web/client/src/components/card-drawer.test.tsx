@@ -134,20 +134,25 @@ test("opening a card never moves the page: the rail holds the space while the re
   expect(document.body.classList.contains("drawer-rail")).toBe(false);
 });
 
-/** AND THE RESERVE IS THE DRAWER'S OWN WIDTH. `sm:w-80` on the fixed container is 20rem (below `sm` it is a full-width sheet); a reserve
- *  that disagrees either leaves a strip of page under the panel or a gap beside it, and neither is
- *  visible in jsdom. Read off the source so the two cannot drift apart silently. */
-test("the reserve matches the drawer's width, at the breakpoint where there is room", () => {
+/** AND THE RESERVE IS THE RAIL'S OWN WIDTH. One variable, `--rail-w`, sizes the page's reserve, the
+ *  rail and the card while it covers the rail; a reserve that disagrees leaves a strip of page under
+ *  the rail or a gap beside it, and neither is visible in jsdom. Read off the source so the three
+ *  cannot drift apart silently. The overlay (below 100rem, or with no rail) is `sm:w-80`, which is
+ *  the variable's base value. */
+test("the reserve, the rail and the card on it are one width, at the breakpoint where there is room", () => {
   const css = readFileSync(join(WEB, "client", "src", "index.css"), "utf8");
-  const rule = /@media \(min-width: 100rem\) \{\s*body\.drawer-rail \{ padding-inline-end: (\d+)rem; \}/.exec(css);
-  expect(rule, "body.drawer-rail rule at min-width: 100rem").not.toBeNull();
+  expect(css).toMatch(/@media \(min-width: 100rem\) \{\s*body\.drawer-rail \{ padding-inline-end: var\(--rail-w\); \}/);
+  const base = /--rail-w: (\d+)rem;/.exec(css);
+  expect(base, "--rail-w's base value").not.toBeNull();
   const source = readFileSync(join(WEB, "client", "src", "components", "card-drawer.tsx"), "utf8");
-  const width = /fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
-  // The rail is the same width as the card that covers it, so a card opening on the rail moves nothing.
-  expect(/fixed inset-y-0 right-0 z-20 hidden w-(\d+)/.exec(source)?.[1]).toBe(width?.[1]);
-  expect(width, "the fixed drawer container's width").not.toBeNull();
-  // Tailwind's spacing scale is 0.25rem per step, so `w-80` is 20rem.
-  expect(Number(rule![1]) * 4).toBe(Number(width![1]));
+  const box = /const RAIL_BOX = "([^"]+)"/.exec(source)?.[1] ?? "";
+  expect(box).toContain("w-(--rail-w)");
+  // The rail and the card that covers it are the same box, so a card opening on the rail moves nothing.
+  expect(source).toContain("${RAIL_BOX} z-20");
+  expect(source).toContain("${RAIL_BOX} z-30");
+  // Tailwind's spacing scale is 0.25rem per step, so the overlay's `sm:w-80` is 20rem.
+  const overlay = /fixed inset-y-0 right-0 z-30 w-full sm:w-(\d+)/.exec(source);
+  expect(Number(overlay?.[1])).toBe(Number(base![1]) * 4);
 });
 
 /** ONE PLACE FOR A CARD (report cohesion audit, 2026-09-27): with the report's extras registered,
