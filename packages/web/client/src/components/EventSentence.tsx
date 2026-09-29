@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { unaskableNote } from "../lib/unaskable.js";
 import { eventKeyAction, eventKeyClause, eventMatchRank, matchSpans } from "../lib/demand-sentence.js";
 import { eventGlyphs, eventGroup, sameTerm, type EventTerm, type TermOp, type TermSide } from "../lib/event-terms.js";
 import { ManaSymbols } from "./ManaSymbols.js";
@@ -129,6 +130,7 @@ export function EventSentence({ terms, colours, noun, makes, pays, makesCount, p
     }
     return { groups: [...groups.values()], typos };
   }, [open, query, makes, pays, demand, makesCount]);
+  const unaskable = open ? unaskableNote(query) : null;
   // THE MATCHED LETTERS IN BOLD (owner, 2026-09-27), so a looser hit shows why it is listed.
   const marked = (text: string) =>
     matchSpans(text, query).map((p, i) => (p.hit ? <b key={i} className="font-semibold text-(--foreground)">{p.text}</b> : <span key={i}>{p.text}</span>));
@@ -228,6 +230,9 @@ export function EventSentence({ terms, colours, noun, makes, pays, makesCount, p
             className="min-h-11 rounded-(--field-radius) border border-(--accent) bg-(--field-background) px-3"
           />
           <div role="group" aria-label="Events" className="max-h-[28rem] overflow-y-auto overscroll-contain rounded-(--field-radius) border border-(--field-border) bg-(--field-background)">
+            {/* SAID EVEN WHEN SOMETHING ELSE MATCHES (#730): "copy" lists copy triggers, and without this
+              * a player asking for spell copiers read those as the answer. */}
+            {unaskable ? <p className="px-3 py-2 text-sm m-0 border-b border-(--separator)" data-testid="unaskable-note">{unaskable}</p> : null}
             {rows.typos && rows.groups.length > 0 && <p className="px-3 pt-2 text-(--muted) text-xs m-0">Nothing matched exactly; these are close spellings.</p>}
             {rows.groups.map((g) => (
               <section key={g.label} className="px-3 pt-2 pb-1 border-t border-(--separator) first:border-t-0">
@@ -262,7 +267,7 @@ export function EventSentence({ terms, colours, noun, makes, pays, makesCount, p
             ))}
             {/* SOME THEMES ARE NOT EVENTS YET (search sweep, 2026-09-27): ramp, extra turns, goad, energy
               * have no event the engine reads, and a bare "no match" read as a typo. */}
-            {rows.groups.length === 0 && <p className="px-3 py-2 text-(--muted) text-sm m-0">No event matches that. Some themes, like ramp, extra turns or goad, aren&rsquo;t events the engine reads yet.</p>}
+            {rows.groups.length === 0 && !unaskable && <p className="px-3 py-2 text-(--muted) text-sm m-0">No event matches that. Some themes, like ramp, extra turns or goad, aren&rsquo;t events the engine reads yet.</p>}
           </div>
         </div>
       )}

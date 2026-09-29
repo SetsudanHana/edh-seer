@@ -18,7 +18,9 @@ export type { RateFamily } from "@edh-seer/matcher/rate";
  *  WHAT NO EVENT CAN ASK, and it is the ruling's measured cost (roadmap AK2): mana-generation
  *  (1,702 cards), drain (270), copy-spell (198), clone (169), trigger-doubling (46), extra-turn
  *  (39). Adding mana triggers nothing, so the trigger vocabulary has no word for it. Ramp is
- *  reachable by name and on the report, and is unaskable here until AK2. */
+ *  reachable by name and on the report, and is unaskable here until AK2. Copy-spell has since
+ *  become an event (`copy|spell`); the picker says which of the rest are unaskable when a player
+ *  types one (`unaskable.ts`, #730). */
 export interface EventQuery {
   /** Events the card can CAUSE. Every one must match. */
   produce: string[];

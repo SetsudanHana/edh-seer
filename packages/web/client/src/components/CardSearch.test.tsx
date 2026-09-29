@@ -772,6 +772,19 @@ test("a broad word shows every group, the matched letters in bold", async () => 
   expect(within(list).getAllByText("mill", { selector: "b" }).length).toBeGreaterThan(0);
 });
 
+/** #730: six things a card does are no event, and typing one says so, even beside other matches. */
+test("typing an effect no event can ask says so in the picker", async () => {
+  atUrl("/cards");
+  await userEvent.click(await screen.findByRole("button", { name: "+ add" }));
+  await userEvent.type(screen.getByLabelText("Find an event"), "ramp");
+  expect(await screen.findByTestId("unaskable-note")).toHaveTextContent(/Making mana \(ramp\) can't be searched here yet/);
+  // The generic "no event matches" line does not repeat it.
+  expect(screen.queryByText(/No event matches that/)).toBeNull();
+  await userEvent.clear(screen.getByLabelText("Find an event"));
+  await userEvent.type(screen.getByLabelText("Find an event"), "mill");
+  expect(screen.queryByTestId("unaskable-note")).toBeNull();
+});
+
 test("a pay-off term reads as the clause under the triggered mark, a made one as the action", async () => {
   atUrl(`/cards?produce=${encodeURIComponent(MILL)}&consume=${encodeURIComponent(DIES)}`);
   const sentence = await screen.findByRole("group", { name: "Your search" });
