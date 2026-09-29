@@ -93,11 +93,15 @@ test("over 100, the list leads with exactly as many cuts as the deck is over, we
 test("over 100 with too few cuts, the list says how many are still to find and where", () => {
   const surplus = [{ name: "Consistency", count: 16, target: 13, over: 3, cards: [] }];
   const { unmount } = render(<CutList cuts={[cut("Only One")]} slack={[]} surplus={surplus} deckSize={108} />);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 1 are doing the least here. The other 7 have to come from a role you run more of than you need, below, or from the cards you like least.");
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one is doing the least here. The other 7 have to come from a role you run more of than you need, below, or the cards you like least.");
   unmount();
   // NO ROLE OVER ITS TARGET, NO POINTER TO ONE (persona round 2026-09-27: a dead end).
-  render(<CutList cuts={[cut("Only One")]} slack={[]} deckSize={108} />);
-  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 1 are doing the least here. The other 7 have to come from the cards you like least.");
+  const { unmount: gone } = render(<CutList cuts={[cut("Only One")]} slack={[]} deckSize={108} />);
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("This one is doing the least here. The other 7 have to come from the cards you like least.");
+  gone();
+  // THE PLACES NAMED (persona round 2026-09-29: the eighth cut was found by hand in "Fits no theme").
+  render(<CutList cuts={[cut("A"), cut("B")]} slack={[]} deckSize={103} fillFrom={["Brightstone Ritual", "Patriar's Seal"]} />);
+  expect(screen.getByTestId("cuts-over")).toHaveTextContent("These 2 are doing the least here. The other 1 has to come from the cards that fit no theme and are neither removal nor protection (Brightstone Ritual, Patriar's Seal), or the cards you like least.");
 });
 
 test("at deck size, a swap for a role card sits under the cuts; over 100 it does not", () => {

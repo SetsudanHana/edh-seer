@@ -250,6 +250,21 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
     return none.filter((n) => !skip.has(n));
   }, [report.archetypes, cuts, report.cards, nonlandNames]);
 
+  // WHERE THE REST OF AN OVERAGE COMES FROM (persona round 2026-09-29, first-cuts: 8 over, 7 cuts,
+  // and the eighth found by hand in "Fits no theme", skipping the removal and protection that line
+  // itself warns about). The cards that fit no theme, are neither removal nor protection, and fill
+  // no role that is at or under its target -- Arcane Signet in a deck with Ramp at exactly 11 of 11
+  // opens the gap the cut was meant to avoid.
+  const offThemeCuttable = useMemo(() => {
+    const keep = new Set(["targetedRemoval", "stackInteraction", "boardWipe", "graveyardHate", "protection"]);
+    const spare = new Set((report.slack ?? []).flatMap((s) => report.buildParents?.find((p) => p.name === s.category)?.leaves ?? [s.category]));
+    const guarded = new Set(report.cards
+      .filter((r) => r.roles?.some((x) => keep.has(x) || (x !== "lands" && !spare.has(x))))
+      .map((r) => r.cardName ?? r.name));
+    return offTheme.filter((n) => !guarded.has(n));
+  }, [offTheme, report.cards, report.slack, report.buildParents]);
+  const over100 = data.totalCount > 100;
+
   const title = (id: ChapterId): string => CHAPTERS.find((c) => c.id === id)!.title;
   useEffect(() => { setRailBack(`Back to ${title(current ?? "read").toLowerCase()}`); return () => setRailBack(null); },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -505,7 +520,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         </Chapter>
 
         <Chapter id="fix" title={title("fix")}>
-          <Findings report={report} diff={diff} suggestions={suggestions} />
+          {/* OVER 100, THE CUTS COME FIRST (persona round 2026-09-29, first-cuts: 8 over, and the chapter
+            *  opened with "Add ~3" twice). A deck that is too big has one job before any other. */}
+          {over100 ? null : <Findings report={report} diff={diff} suggestions={suggestions} />}
           {/* Adds and cuts are ONE decision — "which five come out for the eight that go in" — so
             *  they sit beside each other rather than eight panels apart. */}
           {/* THE GRID HAD ONE CHILD AND STILL RESERVED TWO COLUMNS (roadmap T11). It was built to
@@ -528,9 +545,11 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
               // EACH CUT CARRIES THE CARD THAT TAKES ITS SLOT, whatever the job (spec §3).
               pairs={suggestions.value?.pairs}
               deckSize={data.totalCount}
+              fillFrom={offThemeCuttable}
             />
             </div>
           </Movement>
+          {over100 ? <Findings report={report} diff={diff} suggestions={suggestions} /> : null}
           {/* WHAT GROWS THE PLAN, last in the chapter: nothing is wrong here, so it follows the fixes.
             *  A failed run drops the section rather than claiming the deck has nothing to add. */}
           {suggestions.state !== "error" ? (
