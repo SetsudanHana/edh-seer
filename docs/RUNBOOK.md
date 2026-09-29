@@ -97,6 +97,14 @@ npx tsx packages/instruments/src/population-compare.ts   # edges and reasons, be
 npx tsx packages/instruments/src/eval-pairs.ts           # the compass
 ```
 
+After a re-derive, check that the committed theme counts still match the corpus. A stale count
+passes every test, and it has flipped five decks' top theme before (#720):
+
+```bash
+npx tsx packages/instruments/src/theme-stats-fresh.ts        # exit 1 when a count is stale
+npx tsx packages/matcher/src/bin/gen-theme-stats.ts          # the fix, also free
+```
+
 Three rules about what those numbers mean:
 
 **Never quote precision without retention.** Precision alone is not comparable across any change that

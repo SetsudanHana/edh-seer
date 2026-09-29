@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { expect, test } from "vitest";
 import { groupAnchor } from "./group-anchor.js";
 import {
+  groupPartnerRows,
   BROWSE_LETTERS, browseIndexHtml, browseLetterHtml, browseSegment, cardPageHtml, groupDirection,
   htmlHeaders, injectPage, withheldFrom, type InjectableCard,
 } from "./inject.js";
@@ -670,4 +671,13 @@ test("a card with a job and no partners explains the job instead of an empty lis
   // A role the report does not count names no job.
   expect(cardPageHtml({ ...sol, roles: ["stax"] }, "sol-ring", "card"))
     .toContain("No connections specific enough to list.");
+});
+
+/** #761: within a group, a row whose effect the engine read comes before an unread one; the groups
+ *  keep the order their events first arrive in, and each half keeps the artifact's own order. */
+test("partner rows group by event, read rows first", () => {
+  const row = (name: string, event: string, unread?: true) => ({ name, slug: name, event, reason: "", ...(unread ? { unread } : {}) });
+  const groups = groupPartnerRows([row("A", "e1", true), row("B", "e2"), row("C", "e1"), row("D", "e1", true), row("E", "e1")]);
+  expect(groups.map((g) => g.event)).toEqual(["e1", "e2"]);
+  expect(groups[0]!.rows.map((r) => r.name)).toEqual(["C", "E", "A", "D"]);
 });

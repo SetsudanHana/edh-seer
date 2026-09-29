@@ -39,7 +39,8 @@
     "./wincon": "./src/wincon.ts",
     "./zones": "./src/zones.ts",
     "./eval-pairs-core": "./src/eval-pairs-core.ts",
-    "./event-pattern": "./src/event-pattern.ts"
+    "./event-pattern": "./src/event-pattern.ts",
+    "./theme-stats": "./src/theme-stats.ts"
   },
   "scripts": {
     "gen:quality-weights": "tsx src/bin/gen-quality-weights.ts",
