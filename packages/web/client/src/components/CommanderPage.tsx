@@ -173,9 +173,9 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         ) : null}
         {unread ? (
           <p className="text-(--muted) max-w-[65ch]">
-            We could not read anything on this card yet, so there is nothing it makes happen,
-            nothing missing and no cards to suggest. Either the card only has keywords, or its
-            text is one we cannot read yet. The card page shows which.
+            We could not read anything on this card yet, so we cannot say what it makes happen,
+            what your deck lacks for it, or what to add. Either the card only has keyword abilities
+            like flying, or its text is one we cannot read yet. The card page shows which.
           </p>
         ) : (<>
         <p>

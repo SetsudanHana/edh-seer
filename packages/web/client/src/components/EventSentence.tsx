@@ -322,7 +322,7 @@ export function EventSentence({ terms, colours, noun, makes, pays, narrowings = 
             ))}
             {/* SOME THEMES ARE NOT EVENTS YET (search sweep, 2026-09-27): ramp, extra turns, goad, energy
               * have no event the engine reads, and a bare "no match" read as a typo. */}
-            {rows.groups.length === 0 && !unaskable && <p className="px-3 py-2 text-(--muted) text-sm m-0">No event matches that. Some themes, like ramp, extra turns or goad, aren&rsquo;t events we can search yet.</p>}
+            {rows.groups.length === 0 && !unaskable && <p className="px-3 py-2 text-(--muted) text-sm m-0">Nothing matches that. You can search for things that happen in a game, like &ldquo;a creature dies&rdquo;. Some, like ramp, extra turns or goad, cannot be searched yet.</p>}
           </div>
         </div>
       )}

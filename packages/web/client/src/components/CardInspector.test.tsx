@@ -162,7 +162,7 @@ describe("CardInspector", () => {
     const fold = screen.getByTestId("inspector-links") as HTMLDetailsElement;
     expect(fold.open).toBe(false);
     expect(fold).toContainElement(screen.getByRole("heading", { name: /^What it causes · \d+$/ }));
-    expect(fold.querySelector("summary")!.textContent).toMatch(/^Every link, one by one · \d+$/);
+    expect(fold.querySelector("summary")!.textContent).toMatch(/^Every way it works with your other cards · \d+$/);
   });
 
   // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE -- keying by id alone let the upstream walk's

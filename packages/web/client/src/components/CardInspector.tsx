@@ -344,7 +344,7 @@ export function CardInspector({
         </div>
       ) : (
         <details className="border-t border-(--separator) pt-2" data-testid="inspector-links">
-          <summary className="cursor-pointer min-h-9 flex items-center text-(--muted)">Every link, one by one · {sorted.length}</summary>
+          <summary className="cursor-pointer min-h-9 flex items-center text-(--muted)">Every way it works with your other cards · {sorted.length}</summary>
           <div className="flex flex-col gap-2 pt-1">
       <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
         {sorted.length === 0 ? null : (

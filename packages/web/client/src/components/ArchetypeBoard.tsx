@@ -220,13 +220,11 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
         <div className="flex flex-col gap-2">
           <h3 className="eyebrow">The pairs behind each group</h3>
           <Explain label="what a group counts">
-            Pairs of your cards that work together in a known way, such as one making tokens and the
-            other paying off tokens, and the cards in those pairs. One pair can sit in several
-            groups, and a group that only repeats a bigger one is left out. The groups are not
-            ranked, because a card can join one just by being played: every nonland card is cast,
-            and every permanent enters. The card count says how many cards a group touches, not how
-            much the deck is about it. The number that counts is how many of them actually do
-            something with it.
+            Each group is pairs of your cards that work together the same way, for example one card
+            makes tokens and the other gets stronger when tokens arrive. A pair can be in more than
+            one group. The groups are not ranked: almost any card joins a group like
+            &ldquo;creatures entering&rdquo; just by being played. So the card count only says how
+            many cards a group touches. What matters is how many of them do something with it.
           </Explain>
           {/* 64rem, like the archetype bars above at 48rem: at 1920px the row spread its name and
             *  its figures 1,700px apart (UI review 2026-09-25). Wide enough that the two preview

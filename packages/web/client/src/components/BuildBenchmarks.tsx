@@ -774,7 +774,7 @@ function DeckMathRows({
           </div>
           {/* A turn number that does not say how it was made reads as a prediction. It is a RATE:
             *  useful for comparing two decks, useless as a date. */}
-          <Caveat label="how the clock is worked out">
+          <Caveat label="how this turn is worked out">
             How hard your creatures hit against ONE opponent at 40 life, not the whole table. Three
             opponents means three boards and three life totals, and this does not play that out.
             Nobody blocks and nothing gets removed. Your creatures come down cheapest first, using

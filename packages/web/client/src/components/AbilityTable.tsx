@@ -86,7 +86,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
             <th scope="col" className="eyebrow text-(--muted) py-2 pr-4 align-bottom">kind</th>
             <th scope="col" className="eyebrow text-(--muted) py-2 pr-4 align-bottom">when</th>
             <th scope="col" className="eyebrow text-(--muted) py-2 pr-4 align-bottom">what it does</th>
-            <th scope="col" className="eyebrow text-(--muted) py-2 align-bottom">makes happen</th>
+            <th scope="col" className="eyebrow text-(--muted) py-2 align-bottom">what it makes happen</th>
           </tr>
         </thead>
         <tbody>
@@ -147,7 +147,7 @@ export function AbilityTable({ rows: allRows, stacked }: { rows: AbilityRow[]; s
             </p>
             {a.emits.length > 0 && (
               <p>
-                <span className="eyebrow text-(--muted)">makes happen </span>
+                <span className="eyebrow text-(--muted)">what it makes happen </span>
                 {a.emits.map((w) => emitPhrase(w, a.selfEmits?.includes(w))).join(", ")}
               </p>
             )}

@@ -171,8 +171,8 @@ export function DeckGauges({ data, diff, bars = true }: {
                   Two scores out of 5, averaged. <span className="text-(--foreground)">Focus</span> is
                   how many of your nonland cards play into the deck&rsquo;s main theme. A card that works
                   with nothing else drags it down.{" "}
-                  <span className="text-(--foreground)">Key card</span> is how many cards back up your
-                  best-supported card
+                  <span className="text-(--foreground)">Key card</span> is how many of your cards help
+                  the card that gets the most help
                   {anchorCard ? <> (here, {anchorCard.name}{anchorCard.isCompanion ? ", your companion" : ""})</> : null}. It stops at 5, so two
                   very different decks can both score 5 here.
                 </Explain>
@@ -238,8 +238,9 @@ export function DeckGauges({ data, diff, bars = true }: {
                 <>
                 <BandScale kind="build" />
                 <Explain label="what this measures">
-                  How your number of ramp, card draw, removal and other cards compares with similar
-                  decks: the middle one of ten EDHREC decks of the same kind. That is what those decks
+                  How your number of ramp (cards that give extra mana), card draw, removal (cards that
+                  destroy or exile an opponent&rsquo;s things) and other cards compares with similar
+                  decks: the typical count across ten EDHREC decks with the same plan. That is what those decks
                   play, not a minimum you need. It does not look at how your cards work together or
                   what your removal can hit. The suggestions below do, so a high Build score can sit
                   next to a &ldquo;thin answers&rdquo; suggestion.
