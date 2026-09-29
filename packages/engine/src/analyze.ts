@@ -255,28 +255,39 @@ export interface DeckMath {
     /** The free-cast half, when the card has one. */
     castable?: { types: string[]; share: number };
   }[];
-  /** Karsten's land-count regression against what the deck runs. Tier B -- published and
-   *  independently confirmed. The build benchmark's score reads `target` too now (task 9,
-   *  2026-08-21) -- before that fix it scored a flat 36 regardless of what this block showed, so
-   *  the panel and the score could (and did) disagree about the same deck.
+  /** The land count against what the deck runs, and the whole mana base priced in lost turns
+   *  (`@edh-seer/matcher`'s `mana-base.ts`, fitted on a spending goldfish over 268 decks,
+   *  2026-09-29). The build benchmark's score reads `target` too (task 9, 2026-08-21), so the panel
+   *  and the score cannot disagree about the same deck.
    *
-   *  Reads AVERAGE mana value only, so a bimodal deck and a flat one get the same answer, and it has
-   *  no colour term at all: how many lands is a different question from which ones. */
+   *  The target reads AVERAGE mana value, so a bimodal deck and a flat one get the same answer. */
   lands: {
     actual: number;
-    /** What `buildScore` is actually scored against -- the regression's own rounded answer (via
-     *  `@edh-seer/matcher`'s `gatedLandsTarget`, the flat convention on a fallback) PLUS any archetype
+    /** THE MANA BASE'S ONE QUALITY NUMBER: lost turns per ten turns against a perfect mana base of
+     *  the same deck, split into the land count, the colours and the tapped lands. */
+    manaBase?: {
+      target: number;
+      actual: number;
+      costs: { count: number; colour: number; tapped: number };
+      total: number;
+      /** Expected cards whose colours are missing on their own turn. */
+      colourMiss: number;
+      /** Lands that always enter tapped. */
+      tappedLands: number;
+    };
+    /** The dearest commander's mana value: the land formula's commander term. */
+    commanderManaValue?: number;
+    /** What `buildScore` is actually scored against -- the land formula's answer (via
+     *  `@edh-seer/matcher`'s `gatedLandsTarget`) PLUS any archetype
      *  delta folded in by `adjustedTargets` (landfall's `+4`, task 9 fix F1). Equal to
      *  `rawTarget + archetypeDelta` always -- the same call `computeBuild` makes on the identical
      *  input, so the panel and the score can never again disagree about this number. */
     target: number;
-    /** 'derived' when the GATE landed on this deck's own regression answer; 'flat' when the
-     *  regression extrapolated past where it was tested and the flat convention won instead --
-     *  render the reason on a fallback, never swap silently between two numbers that mean different
-     *  things. Independent of `archetypeDelta`, which can be non-zero under either source. */
+    /** 'derived' for this deck's own formula answer; 'flat' only when none was computed and the
+     *  convention scored instead. The [28, 39] gate that used to produce 'flat' for a real deck is
+     *  gone (2026-09-29). Independent of `archetypeDelta`. */
     targetSource: "derived" | "flat";
-    /** The regression's own rounded answer, always -- even on a fallback, so a reader can see what
-     *  the curve's own math said and why it was refused, rather than have the number vanish. */
+    /** The formula's own answer, before any archetype delta. */
     rawTarget: number;
     /** The archetype adjustment already folded into `target` (landfall's `lands: +4` today, 0 for
      *  every other deck) -- named explicitly so a silent shift from `rawTarget`/the gate's own
@@ -288,14 +299,12 @@ export interface DeckMath {
      *  `archetypeDelta !== 0`. */
     archetypeLabel?: string;
     avgManaValue: number;
-    /** Cheap ramp and draw, worth 0.28 of a land each. */
+    /** Cheap ramp and draw, 0.1 of a land each. */
     rampPlusDraw: number;
-    /** Zero-cost repeatable mana, worth a whole land each. */
+    /** Zero-cost repeatable mana. Named on the panel; the land formula has no term for it. */
     fastMana: number;
-    /** Modal DFCs with a land back, worth 0.74 of a land untapped and 0.38 tapped. They are NOT in
-     *  `actual` — this regression prices them as spells — while the `lands` BUILD category counts
-     *  them by type line, so this is exactly the gap between the two land numbers a reader sees on
-     *  one panel. */
+    /** Modal DFCs with a land back. They ARE in `actual`, at full weight (owner ruling
+     *  2026-08-31); this names how many of the lands are cards a player may cast instead. */
     mdfc: number;
   };
   /** The deck's hardest casts, on TWO axes that are never multiplied together: can you have the

@@ -24,9 +24,8 @@ import { bandState } from "../lib/deck-gauge.js";
  *  measured against. `buildScore` now reads the SAME target (task 9, 2026-08-21) -- `gatedLandsTarget`
  *  plus whatever `ARCHETYPE_TARGET_DELTAS` adds for this deck's primary archetype, both applied via
  *  the identical `adjustedTargets` call the score itself makes -- so this row and the score can no
- *  longer disagree about which number this deck is being held to. Two things can make `target` differ
- *  from `rawTarget` and the row names both: the regression extrapolating and the score falling back
- *  instead (`lands.targetSource`), and an archetype delta folded in (`lands.archetypeDelta`). */
+ *  longer disagree about which number this deck is being held to. One thing can make `target` differ
+ *  from `rawTarget`, and the row names it: an archetype delta folded in (`lands.archetypeDelta`). */
 const REPORTED_ELSEWHERE = new Set(["lands"]);
 
 /** Where the target sits on a benchmark track, as a fraction of its width.
@@ -800,9 +799,17 @@ function DeckMathRows({
   const deltaAmount = lands.archetypeDelta !== 0
     ? `${lands.archetypeDelta > 0 ? "plus" : "minus"} ${Math.abs(lands.archetypeDelta)} because this is a ${lands.archetypeLabel?.toLowerCase()} deck`
     : undefined;
-  const deltaRaw = lands.targetSource === "flat" ? "" : `${lands.rawTarget} from the curve `;
-  const landsAriaDelta = deltaAmount ? `${lands.targetSource === "flat" ? ", plus" : " —"} ${deltaRaw}${deltaAmount}` : "";
+  const deltaRaw = `${lands.rawTarget} from the curve `;
+  const landsAriaDelta = deltaAmount ? ` — ${deltaRaw}${deltaAmount}` : "";
   const landsVisibleDelta = deltaAmount ? ` · ${deltaRaw}${deltaAmount}` : "";
+
+  // THE WHOLE MANA BASE IN ONE UNIT (owner, 2026-09-29), dearest part first: on most decks the
+  // colours cost more than the land count does, and the sentence should lead with what to fix.
+  const manaBase = lands.manaBase;
+  const manaBaseParts = manaBase
+    ? ([["colours", manaBase.costs.colour], ["tapped lands", manaBase.costs.tapped], ["land count", manaBase.costs.count]] as const)
+      .slice().sort((a, b) => b[1] - a[1])
+    : [];
 
   const landsBlock = lands ? (
         <div className="flex flex-col gap-1.5">
@@ -812,16 +819,10 @@ function DeckMathRows({
             *  36 every deck used to be measured against, and the inputs are shown because "34" with
             *  no working is a number to argue with rather than act on.
             *
-            *  The regression behind it is Karsten's, and that name is implementation: the reader is
-            *  asking how many lands to run, not whose formula answered. It lives in the code and in
-            *  `land-count.ts`, not in the label.
+            *  The formula behind it is `mana-base.ts`'s, and that name is implementation: the reader
+            *  is asking how many lands to run, not whose formula answered.
             *
-            *  A FALLBACK MUST SAY SO (task 9, owner's ruling): the regression has no ceiling of its
-            *  own, so a big-mana deck's curve can extrapolate past where it was ever tested --
-            *  `gatedLandsTarget` refuses that and scores the flat convention instead, and a silent
-            *  swap between two numbers that mean different things is the same defect as the silent
-            *  extrapolation it replaces. AND SO MUST AN ARCHETYPE DELTA (fix F1, above) -- see
-            *  `landsAriaDelta`/`landsVisibleDelta`. */}
+            *  AN ARCHETYPE DELTA MUST SAY SO (fix F1, above) -- see `landsAriaDelta`/`landsVisibleDelta`. */}
           {/* IT WRAPS, BECAUSE THE THREE FIXED COLUMNS ASSUMED A WIDTH THIS ROW RARELY GETS.
             *  Measured 2026-09-03 on the example deck: `w-52` (208px) plus `w-16` (64px) plus two
             *  12px gaps is 296px of a row that gets 326px on a 390px phone and **292px on a 1440px
@@ -841,11 +842,7 @@ function DeckMathRows({
             className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm"
             aria-label={`${lands.actual} lands in the deck${
               lands.mdfc > 0 ? `, ${lands.mdfc} of them modal DFCs with a land back` : ""
-            }, this curve wants ${lands.target}${
-              lands.targetSource === "flat"
-                ? ` — the usual Commander count; the formula that fits lands to a curve would ask for ${lands.rawTarget}, outside the range it was tested on`
-                : ""
-            }${landsAriaDelta}`}
+            }, this curve wants ${lands.target}${landsAriaDelta}`}
           >
             {/* THE BRACKET NAMES HOW MANY OF THESE LANDS ARE MDFCs, and it used to reconcile two
               *  numbers instead. Until 2026-08-31 `actual` held an MDFC OUT (Karsten prices it as a
@@ -882,16 +879,25 @@ function DeckMathRows({
                 *  beside "asks for 41" read as the site disagreeing with itself, and the slow-deck seat
                 *  came for one number it could trust. The ramp here is named by what it counts:
                 *  cheap mana makers (2 mana or less), which is what lowers the land count. */}
-              average mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap mana makers (2 mana or less) · {lands.fastMana} fast mana
+              average mana value {lands.avgManaValue} · {lands.rampPlusDraw} cheap mana makers (2 mana or less)
+              {lands.commanderManaValue ? ` · a ${lands.commanderManaValue}-mana commander` : ""}
               {lands.mdfc > 0
                 ? ` · ${lands.mdfc} modal DFC${lands.mdfc === 1 ? "" : "s"} counted as lands, at full weight and with no discount to the target`
-                : ""}
-              {lands.targetSource === "flat"
-                ? ` · ${lands.target} is the usual Commander count, and it is the one checked here: the formula that fits lands to a curve would ask for ${lands.rawTarget} with this one, but it was only tested on lower curves, so it is not trusted this far out`
                 : ""}
               {landsVisibleDelta}
             </span>
           </div>
+          {/* WHAT THE MANA BASE COSTS, in the one unit every part of it shares: turns lost in a
+            *  game's first ten, against a perfect mana base of this same deck. Measured by playing
+            *  268 decks 2,000 times each (`mana-base.ts`), which is also why it is "about". */}
+          {manaBase ? (
+            <p className="text-sm">
+              Your mana base costs about <span className="stat-num">{manaBase.total.toFixed(1)}</span> turns in every 10
+              <span className="text-xs text-(--muted)">
+                {" "}— {manaBaseParts.map(([name, cost]) => `${name} ${cost.toFixed(1)}`).join(" · ")}
+              </span>
+            </p>
+          ) : null}
         </div>
   ) : null;
 

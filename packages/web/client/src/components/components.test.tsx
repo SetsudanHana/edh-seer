@@ -1711,34 +1711,38 @@ test("BuildBenchmarks shows the land count the deck's own curve asks for", () =>
   expect(screen.queryByText(/karsten/i)).not.toBeInTheDocument();
   expect(screen.getByText(/average mana value 2\.7/i)).toBeInTheDocument();
   expect(screen.getByText(/12 cheap mana makers \(2 mana or less\)/i)).toBeInTheDocument();
-  expect(screen.getByText(/2 fast mana/i)).toBeInTheDocument();
-  // A number scored on the derived target says nothing about "flat convention" -- that wording is
-  // reserved for a fallback (next test), and its presence here would be the silent-swap defect.
+  // The working names what the formula reads, and it has no fast-mana term (2026-09-29): fitted,
+  // it came out as noise, so naming it would imply it moved the number.
+  expect(screen.queryByText(/fast mana/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/flat convention/i)).not.toBeInTheDocument();
 });
 
-test("BuildBenchmarks says so when the land target falls back to the flat convention (task 9)", () => {
-  // A big-mana deck's curve can ask the regression for more lands than it was ever tested giving --
-  // `gatedLandsTarget` refuses outside [28, 39] and scores the flat 36 instead. The row must show
-  // THAT number (matching what buildScore used) and say why, not silently swap between two figures
-  // that mean different things.
-  const fallback = {
+test("the land row names the commander's cost, which the target reads", () => {
+  const withCommander = { ...DECK_MATH, lands: { ...DECK_MATH.lands, commanderManaValue: 6 } };
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={withCommander} />);
+  expect(screen.getByText(/a 6-mana commander/i)).toBeInTheDocument();
+});
+
+/** THE WHOLE MANA BASE IN ONE UNIT (owner, 2026-09-29), dearest part first: on most decks the
+ *  colours cost more turns than the land count does, and the line leads with what to fix. */
+test("BuildBenchmarks prices the mana base in turns, dearest part first", () => {
+  const priced = {
     ...DECK_MATH,
-    lands: { ...DECK_MATH.lands, target: 36, targetSource: "flat" as const, rawTarget: 50 },
+    lands: {
+      ...DECK_MATH.lands,
+      manaBase: { target: 34, actual: 37, costs: { count: 0.04, colour: 0.83, tapped: 0.19 }, total: 1.06, colourMiss: 6.2, tappedLands: 8 },
+    },
   };
-  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={fallback} />);
-  expect(
-    screen.getByLabelText(/37 lands in the deck, this curve wants 36 — the usual Commander count; the formula that fits lands to a curve would ask for 50, outside the range it was tested on/i),
-  ).toBeInTheDocument();
-  // Baseline round 2026-09-26: one number checked against, and the other one explained, so the
-  // box no longer reads as the site disagreeing with itself.
-  expect(screen.getByText(/36 is the usual Commander count, and it is the one checked here: the formula that fits lands to a curve would ask for 50 with this one, but it was only tested on lower curves/i)).toBeInTheDocument();
+  render(<BuildBenchmarks categories={SAMPLE.report.buildCategories} deckMath={priced} />);
+  expect(screen.getByText(/Your mana base costs about/i)).toHaveTextContent(
+    "Your mana base costs about 1.1 turns in every 10 — colours 0.8 · tapped lands 0.2 · land count 0.0",
+  );
 });
 
 test("BuildBenchmarks says so when an archetype delta is folded into the land target (fix F1, task 9)", () => {
   // rakdos-landfall's exact shape (controller review 2026-08-21): a derived 39 from the curve, plus
   // landfall's own +4, scored as 43 -- and the panel must say why 43 is not simply the curve's own
-  // answer, the same "never swap silently" rule the flat-fallback test above already covers.
+  // answer: never swap silently between two numbers.
   const landfall = {
     ...DECK_MATH,
     lands: { ...DECK_MATH.lands, target: 43, targetSource: "derived" as const, rawTarget: 39, archetypeDelta: 4, archetypeLabel: "Landfall" },

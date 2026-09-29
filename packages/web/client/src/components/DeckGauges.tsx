@@ -323,8 +323,8 @@ export function RoleBars({ data }: { data: AnalyzeResponse }) {
         *  "3 short" is that nobody measured it. The sentence already existed twice on this
         *  site (`CutList`'s slack section, `BuildBenchmarks`'s hate classes) and in neither
         *  place did it sit beside the mark it qualifies. `Lands` is excepted IN THE WORDS
-        *  because it genuinely is measured: `deckMath.lands.target` comes from a regression
-        *  over real decks, which is also why it is the one two-sided reading here. */}
+        *  because it genuinely is measured: `deckMath.lands.target` comes from simulated games
+        *  of real decks, which is also why it is the one two-sided reading here. */}
       <p className="text-xs text-(--muted)">{tickSource}{lands ? "; the land tick is from your own curve" : ""}.</p>
     </div>
   );

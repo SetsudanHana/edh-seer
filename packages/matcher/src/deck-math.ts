@@ -6,6 +6,7 @@ import { detectAnswerClasses, gatedLandsTarget, adjustedTargets } from "./build.
 import { manaAudit } from "./mana-audit.js";
 import { fetchDemand } from "./fetch-land.js";
 import { recommendedLands, type LandRecommendation } from "./land-count.js";
+import { manaBaseScore } from "./mana-base.js";
 import { winconReport } from "./wincon.js";
 import { pressureCurve, STARTING_LIFE } from "./pressure.js";
 import { cardCastability, deckCastability } from "./castability.js";
@@ -78,9 +79,9 @@ export function computeDeckMath(
   commanderNames: readonly string[] = [],
   turnOverride?: number,
   // `landRecommendation`: task 9 -- `analyze.ts` computes `recommendedLands` once, up front, and
-  // passes it here so this function does not call `karstenLands` a second time for the same deck.
+  // passes it here so this function does not compute the land target a second time for the same deck.
   // Absent for every other caller (this file's own tests, `answer-availability.ts`), which fall
-  // back to computing it themselves; `land-count.ts` is still the only place the regression runs.
+  // back to computing it themselves.
   // `primary`: task 9 fix F1 -- the SAME archetype `computeBuild` scores against, so its
   // `ARCHETYPE_TARGET_DELTAS` (landfall's `lands: +4`) reaches this panel row too. Before this fix
   // `computeBuild` alone applied the delta, so a landfall deck's panel said "wants 39" beside a
@@ -287,6 +288,10 @@ export function computeDeckMath(
   const lands = {
     actual: rec.actual,
     target: finalLandsTarget,
+    // THE WHOLE MANA BASE IN ONE UNIT (owner, 2026-09-29): lost turns per ten from the count, the
+    // colours and the tapped lands, against the SAME target this row prints, archetype delta in.
+    manaBase: manaBaseScore(deck, { target: finalLandsTarget, actual: rec.actual }, commanderNames),
+    commanderManaValue: rec.commanderManaValue,
     targetSource: landsGate.source,
     // The regression's own answer, kept even on a fallback -- "wants 36" with no working when the
     // curve's own math says 50 reads as the report hiding the number it didn't like.

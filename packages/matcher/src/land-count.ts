@@ -1,5 +1,6 @@
-import { karstenLands, type KarstenInputs } from "@edh-seer/engine";
+import type { KarstenInputs } from "@edh-seer/engine";
 import { detectBuildCategories } from "./build.js";
+import { landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 
 /** The mana value at or below which acceleration counts for Karsten's 0.28 bucket. Cheap ramp
@@ -31,7 +32,8 @@ const mdfcLandBack = (dc: DeckCard): "untapped" | "tapped" | null => {
   return /enters tapped/i.test(back) ? "tapped" : "untapped";
 };
 
-/** Karsten's inputs, read off the deck.
+/** Karsten's inputs, read off the deck. `landTarget` reads the average and the cheap acceleration;
+ *  the rest ride along for the panel, which names them.
  *
  *  THE SPLIT THIS EXISTS FOR: `fast-mana` sits inside the ramp category everywhere else in this
  *  repo, and Karsten needs it out. A Mox is worth a WHOLE land; cheap ramp is worth 0.28 of one.
@@ -105,42 +107,34 @@ export function landInputs(
 export interface LandRecommendation extends Required<KarstenInputs> {
   /** Lands the deck runs, counting copies. */
   actual: number;
-  /** What the regression asks for, rounded -- it returns a fractional land otherwise. */
+  /** The dearest commander's mana value, 0 without one: the land formula's commander term. */
+  commanderManaValue: number;
+  /** What the land formula asks for (`mana-base.ts`'s `landTarget`), rounded and clamped to the
+   *  land counts it was simulated at. */
   target: number;
 }
 
 /** Target vs actual land count for a deck.
  *
- *  Tier B: a published regression, not something fitted here, and it reads AVERAGE mana value only.
- *  A bimodal deck and a flat one get the same answer, and there is no colour term at all -- how
- *  many lands is a different question from which ones, which is `manaAudit`'s. */
+ *  The target is `mana-base.ts`'s `landTarget`, fitted on a spending goldfish over 268 decks
+ *  (2026-09-29). It replaced Karsten's regression, whose inputs `landInputs` still reads -- the
+ *  MDFC and fast-mana counts stay in this record because the panel names them, not because the
+ *  target reads them. How many lands is still a different question from which ones, and
+ *  `manaBaseScore` prices both in one unit. */
 export function recommendedLands(
   deck: readonly DeckCard[],
   opts: { commanderNames?: readonly string[] } = {},
 ): LandRecommendation {
   const inputs = landInputs(deck, opts);
   const commanders = new Set(opts.commanderNames ?? []);
+  const commanderManaValue = Math.max(0, ...deck.filter((dc) => commanders.has(dc.card.name)).map((dc) => dc.card.manaValue));
   return {
     ...inputs,
-    // MDFCs ARE IN THE LAND COUNT, which makes this the same type-line test `build.ts` uses --
-    // deliberately, because the two disagreeing is the defect this replaced. Before 2026-08-31
-    // `actual` excluded them while `build.ts`'s count did not, and BOTH were compared against a
-    // target already discounted for them, so the build row read a phantom surplus (enchanting-rani:
-    // 38 against 33, where the honest pair is 38 against 36).
+    // MDFCs ARE IN THE LAND COUNT (owner ruling 2026-08-31), the same type-line test `build.ts`
+    // uses, so the build row and this one cannot disagree about the count. The goldfish that fitted
+    // the target counts them as lands too.
     actual: deck.filter((dc) => !commanders.has(dc.card.name) && isLand(dc)).length,
-    // THE COEFFICIENTS ARE DELIBERATELY OFF, AND THIS IS A DEPARTURE FROM THE PUBLISHED REGRESSION.
-    // Karsten counts a land-back MDFC as a spell and discounts the land requirement by 0.74
-    // (untapped) or 0.38 (tapped). Owner's ruling 2026-08-31: you play these as lands primarily and
-    // cast the front half only once you have enough real lands, so they belong in the count at full
-    // weight. Measured across the 55 calibration decks that run one, mean delta against target:
-    // **+1.56 as it was (discount applied, card still counted) · -1.40 all-Karsten · -0.36 here**,
-    // with 12 decks outside the +-3 band against 17 and 16, and only this arm's misses symmetric
-    // (6 high / 6 low). All-Karsten reads real decks 1.4 lands SHORT, which is the signature of
-    // players already treating these as lands and running fewer real ones.
-    // COST, NAMED: 0.74-vs-0.38 was the model's way of saying a tapped land-back is worth half an
-    // untapped one, and counting both at 1.0 throws that away. `mdfcUntapped`/`mdfcTapped` are still
-    // reported above so a future refinement has its input; inventing a third coefficient to split
-    // the difference would be fitting to 55 decks.
-    target: Math.round(karstenLands({ ...inputs, mdfcUntapped: 0, mdfcTapped: 0 })),
+    commanderManaValue,
+    target: landTarget({ avgManaValue: inputs.avgManaValue, rampPlusDraw: inputs.rampPlusDraw, commanderManaValue }),
   };
 }

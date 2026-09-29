@@ -155,8 +155,8 @@ export function detectAnswerClasses(cards: DeckCard[]): Map<string, AnswerClassM
  *
  *  `lands: 36` IS A FALLBACK NOW, NOT THE SCORED NUMBER (task 9, owner's ruling 2026-08-21) -- it
  *  measures nothing (67 of 71 calibration decks hit it outright, since every EDH deck is built to
- *  this same convention) and only wins when `land-count.ts`'s own regression extrapolates past its
- *  tested range. See `gatedLandsTarget`. */
+ *  this same convention) and only scores for a caller that supplied no `landTarget` of its own. See
+ *  `gatedLandsTarget`. */
 export const BASE_TARGETS: Record<BuildCategory, number> = {
   ramp: 0, draw: 0, cardSelection: 0, impulseDraw: 0, targetedRemoval: 0, stackInteraction: 0, boardWipe: 0,
   burn: 0, stax: 0, protection: 0, tutor: 0, graveyardHate: 0,
@@ -228,7 +228,7 @@ export const BUILD_PARENTS: BuildParentSpec[] = [
  *  two of them had the wrong sign against the population (aristocrats −1 wipes: the median is 4;
  *  tokens −2: the median is 2). `templateBlend` reads the theme's own row instead.
  *
- *  `landfall: { lands: 4 }` stays because Karsten reads castability and has no term for how often a
+ *  `landfall: { lands: 4 }` stays because `landTarget` reads the curve and has no term for how often a
  *  landfall payoff wants a land DROP -- a trigger-density claim, not a curve claim; see
  *  `adjustedTargets`'s doc comment for why that is not a double-count (task 9). A land theme's
  *  extra lands live here, never in the template file (owner ruling 2026-09-06: lands come from the
@@ -316,55 +316,25 @@ export function templateBlend(strategies: readonly ArchetypeRanking[] = []): Tem
 export const LAND_BAND = 3;
 export const LAND_FALLOFF = 9;
 
-/** THE REGRESSION'S OWN TESTED RANGE (task 9, owner's ruling 2026-08-21) --
- *  `packages/engine/src/karsten.test.ts`'s four published arms: avgManaValue 1.8 -> 3.5 yielding
- *  lands 28 -> 39. `karstenLands` carries a floor ("play -2 lands is not advice") but no ceiling of
- *  its own, so a deck whose curve runs past where anyone checked it keeps answering anyway --
- *  izzet-big-mana's avgManaValue 5.98 (71% past the top arm) answers 50 lands in a 99-card deck,
- *  which is not advice either. This is that same argument at the other end: outside the tested
- *  range the derived target is an extrapolation, not a measurement, and `gatedLandsTarget` refuses
- *  it rather than score against a guess.
- *
- *  MEASURED (controller, task 9 brief): the flat 36 gives 67 of 71 calibration decks full land
- *  attainment -- it discriminates for nobody, because every EDH deck is built to the convention it
- *  came from. Gated, the derived target changes attainment on 16 of 71 (15 falling, 1 rising), and
- *  12 of 71 decks fall back (their curve asks for 40-50). This bound is the regression's own tested
- *  range, not fitted to these 71 decks -- the self-comparison trap `BASE_TARGETS`'s median/p25/p75
- *  note already warns about. */
-export const KARSTEN_TESTED_MIN = 28;
-export const KARSTEN_TESTED_MAX = 39;
-
 export interface LandsTarget {
   target: number;
-  /** 'derived' when `land-count.ts`'s regression landed inside the tested range and scored;
-   *  'flat' when it fell outside (an extrapolation) or was never supplied at all. */
+  /** 'derived' when the caller supplied this deck's own `landTarget`; 'flat' only for a caller that
+   *  computed none (tests, and any path without the deck's cards), which scores the convention. */
   source: "derived" | "flat";
 }
 
 /** THE ONE PLACE THIS DECISION IS MADE (task 9) -- `computeBuild` (the score) and
- *  `computeDeckMath`'s `lands` block (the panel row) both call this on the SAME rounded Karsten
- *  target (`land-count.ts`'s `recommendedLands(...).target`, computed once upstream and threaded
- *  in), so they can never again disagree about which number a deck is being measured against. That
- *  disagreement -- the score scoring flat 36 while the panel showed the regression's own answer --
- *  is the defect this task closes.
+ *  `computeDeckMath`'s `lands` block (the panel row) both call this on the SAME target
+ *  (`land-count.ts`'s `recommendedLands(...).target`, computed once upstream and threaded in), so
+ *  they can never disagree about which number a deck is being measured against.
  *
- *  CEILING: THIS GATES THE REGRESSION'S OUTPUT, NOT ITS INPUTS -- and the two are not the same
- *  refusal (fix F2, controller review 2026-08-21). With `commanders=1, rampPlusDraw=0, fastMana=0,
- *  mdfcUntapped=0, mdfcTapped=0`, `karstenLands`'s arithmetic reduces to
- *  `raw = 31.419 + 3.135*avgManaValue`, so avgManaValue alone stays inside [28, 39] only up to
- *  ~2.42 -- but `rampPlusDraw`/`fastMana`/the MDFC terms all SUBTRACT from `raw`, and nothing bounds
- *  how large they can be relative to `avgManaValue`. A deck can walk `avgManaValue` out to roughly
- *  7.76 (e.g. ~20 cheap accelerants and 6 fast-mana rocks alongside a curve near 6) and still land
- *  inside [28, 39], indistinguishable here from a deck whose curve was actually tested. So "refuses
- *  to extrapolate" is only PARTLY true: it refuses an extreme MV with an ordinary ramp package, and
- *  says nothing about an extreme MV propped up by an extreme ramp package. Upgrade path if this ever
- *  matters: gate the INPUTS (bound `avgManaValue`, or ramp/fast directly) rather than `raw`, which
- *  the controller's ruling explicitly declined to do here -- an input gate would refuse decks this
- *  output gate currently scores, and that trade needs its own before/after over the 71 decks. */
-export function gatedLandsTarget(karstenTarget: number | undefined): LandsTarget {
-  if (karstenTarget !== undefined && karstenTarget >= KARSTEN_TESTED_MIN && karstenTarget <= KARSTEN_TESTED_MAX) {
-    return { target: karstenTarget, source: "derived" };
-  }
+ *  NO GATE ANY MORE (2026-09-29). This used to refuse a Karsten answer outside [28, 39], the
+ *  regression's tested range, and score a flat 36 instead -- which answered a curve asking for 45
+ *  with 36, the worst of every option measured (0.104 extra lost turns per ten against 0.065 for
+ *  `landTarget`). `landTarget` is clamped to the range it was simulated over, so there is nothing
+ *  left to refuse. */
+export function gatedLandsTarget(landsTarget: number | undefined): LandsTarget {
+  if (landsTarget !== undefined) return { target: landsTarget, source: "derived" };
   return { target: BASE_TARGETS.lands, source: "flat" };
 }
 
@@ -488,13 +458,13 @@ export function answersImpactOf(
  *  `template-targets.json` rows, 2026-09-06); `landfall`'s `lands` is the only one left.
  *
  *  `landsTarget` is the GATED number (`gatedLandsTarget`'s output, already decided by the caller) --
- *  never a raw Karsten figure, and never recomputed here, so this function has no opinion of its
- *  own about the regression. Defaults to the flat convention so every existing caller (tests, the
- *  CLI path with no Karsten input at hand) keeps its pre-task-9 answer unless it opts in.
+ *  never recomputed here, so this function has no opinion of its own about the land formula.
+ *  Defaults to the flat convention so every existing caller (tests, the CLI path with no target at
+ *  hand) keeps its pre-task-9 answer unless it opts in.
  *
  *  `landfall`'s `{ lands: 4 }` delta still applies here, ON TOP OF whichever target was chosen
- *  (task 9, owner's ruling): it is a different claim from the one the regression answers. Karsten
- *  reads castability -- can this curve be CAST on time -- and has no term for how often a landfall
+ *  (task 9, owner's ruling): it is a different claim from the one the formula answers. `landTarget`
+ *  reads the curve -- can this curve be CAST on time -- and has no term for how often a landfall
  *  payoff wants to see a land drop, which is a question about TRIGGER density, not curve. A cheap,
  *  land-search-heavy landfall deck if anything pulls the derived target DOWN (lower avg mana value),
  *  which is the opposite direction from what the archetype wants, so the delta is not double-counting
@@ -681,8 +651,7 @@ export interface BuildResult {
    *  Interaction parent is scored by. 0 when no class is absent. */
   answersImpact: number;
   /** Which target `buildScore` actually scored the land count against (task 9) -- 'derived' when
-   *  `karstenLandsTarget` landed inside `gatedLandsTarget`'s tested range, 'flat' when it fell
-   *  outside (an extrapolation) or was never supplied. Exists so a caller (the panel, a test) can
+   *  the caller supplied this deck's `landTarget`, 'flat' when it supplied none. Exists so a caller (the panel, a test) can
    *  say WHY the number is what it is rather than print a fallback silently. */
   landsTargetSource: LandsTarget["source"];
   suggestions: string[];
@@ -694,15 +663,14 @@ export interface BuildResult {
   rampResilience: RampResilience;
 }
 
-/** `karstenLandsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- the regression's own
- *  rounded answer for THIS deck, computed once upstream (analyze.ts) and threaded in here rather
- *  than recomputed, so `land-count.ts` stays the one place `karstenLands` is called. Undefined for
+/** `landsTarget` is `land-count.ts`'s `recommendedLands(...).target` -- `landTarget`'s answer for
+ *  THIS deck, computed once upstream (analyze.ts) and threaded in here rather than recomputed. Undefined for
  *  every caller that has not computed it (existing tests, any other path), which falls back to the
  *  flat convention through `gatedLandsTarget`. */
 export function computeBuild(
   cards: DeckCard[],
   primary: Archetype | undefined,
-  karstenLandsTarget?: number,
+  landsTarget?: number,
   /** Union of the COMMANDERS' colour identities (CR 903.4). Undefined for a caller that has not
    *  computed it, which refuses the pool weight rather than guessing one -- see `answerCoverage`. */
   colorIdentity?: string[],
@@ -718,7 +686,7 @@ export function computeBuild(
   const template = templateBlend(
     strategies ?? (primary ? [{ name: primary, label: ARCHETYPE_LABELS[primary], confidence: 1 }] : []),
   );
-  const landsGate = gatedLandsTarget(karstenLandsTarget);
+  const landsGate = gatedLandsTarget(landsTarget);
   const targets = adjustedTargets(primary, landsGate.target);
   // Lands are the one multi-copy category: count land CARDS (copies), not distinct names, so a
   // deck's ~24 basics register as ~24, not 1. Every other category is singleton in Commander, so
@@ -739,7 +707,7 @@ export function computeBuild(
   });
 
   // BREADTH, beside the count. `detectAnswerClasses` already lives in this file, so unlike the
-  // Karsten land target this needs no threading from `computeDeckMath` and no call reordering.
+  // land target this needs no threading from `computeDeckMath` and no call reordering.
   // CEILING: the `.size > 0` filter is UNREACHABLE against `detectAnswerClasses`'s own
   // implementation today (whole-branch review criterion 5, design §10) -- a Map entry for a class
   // is only ever created in the same branch that immediately adds a card to it, so no entry can

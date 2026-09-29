@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import type { Card } from "@edh-seer/engine";
 import { karstenLands } from "@edh-seer/engine";
 import { landInputs, recommendedLands } from "./land-count.js";
+import { landTarget } from "./mana-base.js";
 import type { DeckCard } from "./types.js";
 
 const mk = (
@@ -84,8 +85,9 @@ test("the recommendation comes back with the count the deck actually runs", () =
   ];
   const rec = recommendedLands(deck);
   expect(rec.actual).toBe(37);
-  expect(rec.target).toBe(Math.round(karstenLands(landInputs(deck))));
-  expect(rec.target).toBeGreaterThan(30);
+  // 24.1 + 3.25 * 3 = 33.85, no commander and no acceleration.
+  expect(rec.target).toBe(34);
+  expect(rec.target).toBe(landTarget({ avgManaValue: 3, rampPlusDraw: 0, commanderManaValue: 0 }));
 });
 
 test("MDFC counts are zero, and say so rather than being silently absent", () => {
@@ -124,11 +126,9 @@ test("a modal DFC with a land back is counted as a land, and does not discount t
   expect(rec.mdfcUntapped).toBe(1); // the pay-3-life cycle is the untapped one
   // Both MDFCs are lands, so 30 Swamps + 2.
   expect(rec.actual).toBe(32);
-  // ...and the target is the regression's answer with the coefficients OFF. Asserted against
-  // `karstenLands` directly so this fails if the discount is ever wired back in silently.
-  expect(rec.target).toBe(
-    Math.round(karstenLands({ ...landInputs(deck), mdfcUntapped: 0, mdfcTapped: 0 })),
-  );
+  // ...and the target reads no MDFC term at all: it is the formula on the nonland pool alone.
+  const inputs = landInputs(deck);
+  expect(rec.target).toBe(landTarget({ ...inputs, commanderManaValue: 0 }));
 });
 
 /** THE SAME DOUBLE COUNT IN THE OTHER DIRECTION. `avgManaValue` is the regression's dominant term,
