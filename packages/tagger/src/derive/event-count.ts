@@ -37,6 +37,8 @@ export function countOf(
   const scaled = SCALES.exec(a);
   if (scaled) return { floor: 0, ceiling: null, scalesWith: parseSubject(scaled[1]!.trim()) };
   if (/\bx\b/.test(a)) return { floor: 0, ceiling: null, scalesWith: "mana" };
+  // THE CARD ITSELF (it enters, dies, is cast): one object, one event -- not an unknown.
+  if (a === "" && emit?.subject.self === true) return { floor: 1, ceiling: 1 };
   // A BOARD-WIDE EMIT WITH NO AMOUNT ("destroy all creatures"): as many as the class holds.
   if (a === "" && emit && (emit.subject.scope === "all" || emit.subject.scope === "each")) {
     return { floor: 0, ceiling: null, scalesWith: emit.subject };

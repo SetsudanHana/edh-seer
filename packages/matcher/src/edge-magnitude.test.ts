@@ -79,4 +79,5 @@ test("scalesNoun names the class with its controller", () => {
   expect(scalesNoun("mana")).toBe("mana");
   expect(scalesNoun({ type: "land", control: "you", token: null })).toBe("land you control");
   expect(scalesNoun({ type: "creature", control: "any", token: null })).toBe("creature");
+  expect(scalesNoun({ type: "spell", control: "you", token: null })).toBe("spell");
 });

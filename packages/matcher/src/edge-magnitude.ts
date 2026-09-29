@@ -24,6 +24,8 @@ export function scalesNoun(s: "mana" | SubjectFilter | undefined): string | unde
   if (s === undefined) return undefined;
   if (s === "mana") return "mana";
   const noun = (emitSubjectNoun(s) ?? "a permanent").replace(/^an? /, "");
+  // A spell is not "controlled" the way a permanent is: "copy each spell" counts spells, full stop.
+  if (noun === "spell") return noun;
   return s.control === "you" ? `${noun} you control` : s.control === "opp" ? `${noun} an opponent controls` : noun;
 }
 

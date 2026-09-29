@@ -52,6 +52,10 @@ test("a damage doubler repeats the improved count too ('deals double the damage'
   expect(countOf(undefined, none, "it deals double the damage instead", true)).toEqual({ floor: 1, ceiling: 1, sameAsImproved: true });
 });
 
+test("an emit about the card itself is one event, known", () => {
+  expect(countOf(undefined, { subject: { control: "you", token: null, self: true } }, "you may cast this spell", false)).toEqual({ floor: 1, ceiling: 1 });
+});
+
 test("anything else records no count", () => {
   expect(countOf("that many", none, "", false)).toBeUndefined();
   expect(countOf(undefined, none, "", false)).toBeUndefined();
