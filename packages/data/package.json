@@ -16,7 +16,8 @@
     "./deck-url": "./src/deck-url.ts",
     "./moxfield": "./src/moxfield.ts",
     "./archidekt": "./src/archidekt.ts",
-    "./precons": "./src/precons.ts"
+    "./precons": "./src/precons.ts",
+    "./parallel": "./src/parallel.ts"
   },
   "scripts": {
     "test": "vitest run",

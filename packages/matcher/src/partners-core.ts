@@ -98,7 +98,19 @@ export function eventKey(e: GameEvent): string {
  *  across seven types reaches each of the 28 pairs. Measured over the shipped artifact: 274 of the
  *  1,188 keys fan out at all, and the key count goes 1,188 -> 1,497. The vocabulary grows by a
  *  quarter and every member of it is a thing a card can actually be. */
+// PURE ON A STRING, CALLED MILLIONS OF TIMES (build-static profile 2026-09-29: supplyForms + splitKey
+// were 65 s of self time in a 541 s build, the same few thousand keys re-split for every pair). Cached
+// by key; every caller only reads the array.
+const splitKeyCache = new Map<string, string[]>();
 export function splitKey(key: string): string[] {
+  const hit = splitKeyCache.get(key);
+  if (hit) return hit;
+  // FROZEN: a caller that sorted or spliced a cached list would change it for every later caller.
+  const out = Object.freeze(splitKeyUncached(key)) as string[];
+  splitKeyCache.set(key, out);
+  return out;
+}
+function splitKeyUncached(key: string): string[] {
   const [verb = "", type = "-", subtype = "-", token = "-"] = key.split("|");
   if (!type.includes(",") && !subtype.includes(",")) return [key];
   const out: string[] = [];
@@ -172,7 +184,17 @@ export function specificity(key: string, freq: EventFrequency): number {
 /** THE FORMS AN EMIT CAN SATISFY. A type or subtype LIST is a disjunction, so it splits; then each
  *  split form also stands for its coarser shapes, because a goblin creature entering satisfies a
  *  demand for a creature entering, for a goblin entering, and for anything entering. */
+const supplyFormsCache = new Map<string, string[]>();
+/** Cached by key -- see `splitKey`. Only the first argument counts, so it is safe as a `flatMap` callback. */
 export function supplyForms(key: string): string[] {
+  const hit = supplyFormsCache.get(key);
+  if (hit) return hit;
+  // FROZEN: a caller that sorted or spliced a cached list would change it for every later caller.
+  const out = Object.freeze(supplyFormsUncached(key)) as string[];
+  supplyFormsCache.set(key, out);
+  return out;
+}
+function supplyFormsUncached(key: string): string[] {
   const out = new Set<string>();
   for (const [verb, type, subtype, token] of splitList(key)) {
     const suffixes = token === "t" ? ["t", "-"] : ["n", "-"];

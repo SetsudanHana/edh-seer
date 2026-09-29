@@ -13,16 +13,14 @@
  *  on the debt being small.
  *
  *  Usage: npx tsx packages/instruments/src/panel-score.ts [--worksheet out.jsonl] */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { connect, loadConfig, mongoLookup, normalizeName, parseDecklistSections, resolveNames, CALIBRATION_DECKS } from "@edh-seer/data";
-import { ComboIndex } from "@edh-seer/engine";
-import { createTagsLookup } from "@edh-seer/tagger";
-import { analyzeDeckStructured, buildDeckCards, loadTokenTags, type CardTagsLookup } from "@edh-seer/matcher";
+import { readFileSync, writeFileSync } from "node:fs";
+import { normalizeName } from "@edh-seer/data";
+import { mapInWorkers } from "@edh-seer/data/parallel";
+import type { PanelDeck } from "./panel-score-worker.js";
 import { claimFor } from "./precision-core.js";
 import { ratchetLostPairs, scorePanel, wilsonPanel, type PanelClaim, type PanelVerdict } from "./panel-core.js";
 
 const PANEL = "docs/measurements/panel";
-const DECKS = CALIBRATION_DECKS;
 const arg = (flag: string): string | undefined => {
   const i = process.argv.indexOf(flag);
   return i > 0 ? process.argv[i + 1] : undefined;
@@ -33,14 +31,6 @@ const pairs = (JSON.parse(readFileSync(`${PANEL}/pairs.json`, "utf8")) as {
 }).pairs;
 const cache = readFileSync(`${PANEL}/verdicts.jsonl`, "utf8").split("\n")
   .filter((l) => l.trim() !== "").map((l) => JSON.parse(l) as PanelVerdict);
-
-const store = await connect(loadConfig());
-const lookup = mongoLookup(store);
-const tags: CardTagsLookup = createTagsLookup(store.db, "derived");
-// Task 6 (tokens-as-nodes). A `creates:` reason's consumer is the token's own name, which never
-// appears in `pairs.json` (every panel pair names two real cards), so this cannot introduce judging
-// debt on its own -- the `want.has(...)` filter below drops it before it reaches `current`.
-const tokenTags = await loadTokenTags(store.db);
 
 // Scored DECK BY DECK through `analyzeDeckStructured`, the same entry point the sampling instrument
 // used and the same one the product uses. Calling `pairReasons` directly skips the deck-level passes
@@ -75,37 +65,22 @@ const resolvedByDeck = new Map<string, Set<string>>();
 const deckOfPair = new Map<string, string>();
 for (const p of pairs) deckOfPair.set(`${p.producer}|${p.consumer}`, p.deck);
 let missingDecks = 0;
-for (const [deck, want] of wantedByDeck) {
-  const file = `${DECKS}/${deck}.txt`;
-  if (!existsSync(file)) { missingDecks++; continue; }
-  const sections = parseDecklistSections(readFileSync(file, "utf8"));
-  const { cards, combos } = await resolveNames([...sections.commanders, ...sections.deck], lookup);
-  for (const c of cards) oracle.set(c.name, (c as { oracleText?: string }).oracleText ?? "");
-  const cmd = new Set(sections.commanders.map(normalizeName));
-  resolvedByDeck.set(deck, new Set(cards.map((c) => normalizeName(c.name))));
-  const deckCards = await buildDeckCards(cards, lookup, tags);
-  const report = analyzeDeckStructured(
-    deckCards, cards.filter((c) => cmd.has(normalizeName(c.name))).map((c) => c.name),
-    undefined, undefined, new ComboIndex(combos), undefined, tokenTags,
-  );
-  // EVERY reason, not just the panel's pairs: a claim the panel keys on two CARDS can now be
-  // carried by a TOKEN one of them makes, and that hop is invisible if only wanted pairs are kept.
-  const madeBy = new Map<string, Set<string>>();       // card -> tokens it creates
-  const tokenClaims = new Set<string>();               // `${token}|${consumer}|${tag}`
-  for (const e of report.edges) {
-    for (const r of e.reasons) {
-      if (!r.producer || !r.consumer) continue;
-      if (r.tag.startsWith("creates:")) {
-        if (!madeBy.has(r.producer)) madeBy.set(r.producer, new Set());
-        madeBy.get(r.producer)!.add(r.consumer);
-      }
-      if (r.producerIsToken) tokenClaims.add(`${r.producer}|${r.consumer}|${r.tag}`);
-      if (r.consumerIsToken) tokenDemands.add(`${r.producer}|${r.consumer}|${r.tag}`);
-      if (!want.has(`${r.producer}|${r.consumer}`)) continue;
-      current.push({ producer: r.producer, consumer: r.consumer, tag: r.tag, implied: r.impliedProducer === true });
-    }
-  }
-  for (const [card, toks] of madeBy) {
+// EVERY DECK ON ITS OWN CORE (owner 2026-09-29; 63 s on one core before). The worker returns each
+// deck's raw facts; they are replayed here IN DECK ORDER, because `tokenDemands` accumulates across
+// decks and each deck's re-attribution reads what the earlier ones added -- so every figure below is
+// what the sequential run printed.
+const deckOrder = [...wantedByDeck];
+const perDeck = await mapInWorkers<{ deck: string; want: string[] }, PanelDeck>(
+  deckOrder.map(([deck, want]) => ({ deck, want: [...want] })), new URL("./panel-score-worker.ts", import.meta.url));
+for (const [k, [deck]] of deckOrder.entries()) {
+  const d = perDeck[k]!;
+  if (d.missing) { missingDecks++; continue; }
+  for (const [name, text] of d.oracle) oracle.set(name, text);
+  resolvedByDeck.set(deck, new Set(d.resolved));
+  current.push(...d.claims);
+  for (const key of d.tokenDemands) tokenDemands.add(key);
+  const tokenClaims = new Set(d.tokenClaims);
+  for (const [card, toks] of d.madeBy) {
     for (const t of toks) {
       // SUPPLY moved onto the token the producer makes: `Oath -> Zombie [token] -> Ayara`.
       for (const key of tokenClaims) {
@@ -289,6 +264,5 @@ if (out && s.unjudged.length) {
   })).join("\n")}\n`);
   console.log(`\n  wrote the debt as a worksheet -> ${out}`);
 }
-await store.close();
 // Non-zero when the named ratchet moved in either direction, so a script or a shell `&&` sees it.
 process.exitCode = exitCode;

@@ -339,7 +339,19 @@ const KEYWORD_SEARCHES: Record<string, string> = {
  *  see these. Theme, archetype and mechanism detection read `tags.abilities` directly, so a prowess
  *  creature still does not count toward a spellslinger theme. `keywordEvents` has the identical
  *  ceiling and has since it shipped. */
+// Computed once per card's characteristics (build-static profile 2026-09-29: 35 s re-reading the
+// same keywords for every pair). Keyed by object; callers only read the list.
+// STALE-SAFE: the entry remembers the keyword list it was read from, so a card whose list was
+// REPLACED (a test reusing a fixture) is re-read. CEILING: an in-place push onto the same array is not seen.
+const keywordAbilitiesCache = new WeakMap<Characteristics, { from: Characteristics["keywords"]; out: Ability[] }>();
 export function keywordAbilities(chars: Characteristics): Ability[] {
+  const hit = keywordAbilitiesCache.get(chars);
+  if (hit && hit.from === chars.keywords) return hit.out;
+  const out = Object.freeze(keywordAbilitiesUncached(chars)) as Ability[];
+  keywordAbilitiesCache.set(chars, { from: chars.keywords, out });
+  return out;
+}
+function keywordAbilitiesUncached(chars: Characteristics): Ability[] {
   const out: Ability[] = [];
   for (const raw of chars.keywords ?? []) {
     const whole = String(raw).toLowerCase().trim();
