@@ -1881,6 +1881,19 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
           producer: p.card.name,
           impliedProducer: e.implied || undefined,
         });
+        // A REPLACEMENT MAKES THE EFFECT BETTER, NOT THE OTHER WAY AROUND (owner, 2026-09-29).
+        // Alhammarret's Archive hears Loyal Drake's draw and doubles it: the edge is Archive ->
+        // Drake. Matched the usual way (the multiplier's trigger hears the maker's event), then
+        // written from the replacement to the card it improves; the ability indices follow.
+        // `impliedProducer` described the maker's event and is dropped: the replacement is printed.
+        if (a.replacement === true) {
+          const { producerAbility: pa, consumerAbility: ca, impliedProducer: _implied, ...r } = reasons[reasons.length - 1]!;
+          reasons[reasons.length - 1] = {
+            ...r, producer: c.card.name, consumer: p.card.name,
+            ...(ca !== undefined ? { producerAbility: ca } : {}),
+            ...(pa !== undefined ? { consumerAbility: pa } : {}),
+          };
+        }
       }
     }
   }

@@ -218,7 +218,9 @@ import { emblemRecipient } from "../emblem.js";
 // 194: #717 -- a cost reduction over "spell(s) you cast" is your class, with a stat-vs-stat narrowing
 // read (Doran, Besieged by Time); "if you would draw a card ... instead" is a draw replacement, a
 // payoff for draws (Alhammarret's Archive).
-export const DERIVE_VERSION = 194;
+// 195: a CR 614 multiplier's synthesized trigger is marked `replacement` (owner 2026-09-29: the
+// edge runs from the replacement to the card whose effect it improves).
+export const DERIVE_VERSION = 195;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -2016,6 +2018,12 @@ export function deriveAbilities(
       if (threshold) abilities[i] = { ...abilities[i], threshold, ...(thresholdSubject ? { thresholdSubject } : {}) };
       if (conditionCares.length > 0 && abilities[i].trigger) {
         abilities[i] = { ...abilities[i], conditionCares };
+      }
+      // THE MULTIPLIER'S OWN TRIGGER, the one synthesized from the "would ... instead" frame -- see
+      // `Ability.replacement`. Matched on the verbs so a clause's other trigger is never marked.
+      const heard = abilities[i].trigger?.verbs ?? [];
+      if (replacement && !replacement.restricted && replacement.verbs.some((v) => heard.includes(v))) {
+        abilities[i] = { ...abilities[i], replacement: true };
       }
       // A GAME-STATE REQUIREMENT: from the ability word the segmenter stripped ("Max speed —"),
       // else from a condition that governs the whole clause text (roadmap W18).

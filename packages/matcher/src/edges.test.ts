@@ -5758,3 +5758,21 @@ test("a milled fill does not promise an artifact card, but a discard does and a 
   expect(fires(filler("discard"), watcher("artifact"))).toBe(true);
   expect(fires(filler("mill"), watcher("creature"))).toBe(true);
 });
+
+/** A REPLACEMENT MAKES THE EFFECT BETTER, NOT THE OTHER WAY AROUND (owner, 2026-09-29): Alhammarret's
+ *  Archive doubles Loyal Drake's draw, so the edge runs Archive -> Drake. The multiplier's trigger
+ *  hears the drawer's event as before; only the direction the reason is written in changes. */
+test("a CR 614 multiplier is the producer of its edge, pointing at the card whose effect it improves", () => {
+  const archive = base("Alhammarret's Archive", [{
+    kind: "static", replacement: true, effect: { kind: "draw-card" },
+    trigger: { verbs: ["draw"], subject: { control: "you", token: null } },
+  }] as unknown as CardTags["abilities"]);
+  const drake = base("Loyal Drake", [{
+    kind: "triggered", repeats: "per-cycle", effect: { kind: "draw-card", subject: { control: "you", token: null } },
+    trigger: { verbs: ["begin-combat"], subject: { control: "you", token: null } },
+    emits: [{ verb: "draw", subject: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  const rs = pairReasons(archive, drake, H).filter((r) => r.tag.startsWith("draw"));
+  expect(rs.length).toBeGreaterThan(0);
+  expect(rs.every((r) => r.producer === "Alhammarret's Archive" && r.consumer === "Loyal Drake")).toBe(true);
+});
