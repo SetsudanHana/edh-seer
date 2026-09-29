@@ -9,7 +9,10 @@
  *
  *    set -a && source packages/tagger/.env && set +a
  *    npx tsx packages/matcher/src/bin/build-static.ts [--out <dir>] */
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { totalmem } from "node:os";
+import { getHeapStatistics } from "node:v8";
 import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { connect, docToCard, loadConfig } from "@edh-seer/data";
@@ -20,6 +23,27 @@ import { browseSlices, buildPartnerArtifact, type PartnerId } from "../partners-
 import { eventShards } from "./events-index-core.js";
 import { eventPatterns, patternFrequency } from "../event-pattern.js";
 import { loadHierarchy } from "../hierarchy.js";
+import { buildPartnerArtifactInWorkers } from "../partners-parallel.js";
+import { defaultWorkers } from "@edh-seer/data/parallel";
+
+// A PARALLEL BUILD NEEDS A BIGGER MAIN HEAP: this thread holds its own partner context and every
+// card's result, and at V8's default limit assembly spent ~60 s collecting (2026-09-29). A heap limit
+// can only be set when Node starts, so the build relaunches itself once with one -- half the machine's
+// memory, at most 12 GB -- unless it is building in one thread (`--workers 1`) or already relaunched.
+// `--workers N`, parsed ONCE: a missing or non-numeric value is the default, never NaN -- NaN slipped
+// past every `<=` and `??` and started a pool with no workers, which waited forever (review).
+const workersIdx = process.argv.indexOf("--workers");
+const workersArg = workersIdx >= 0 ? Number(process.argv[workersIdx + 1]) : Number.NaN;
+const workers = Number.isFinite(workersArg) ? Math.max(1, Math.floor(workersArg)) : defaultWorkers();
+{
+  const oneThread = workers <= 1;
+  const wantMb = Math.min(12288, Math.floor(totalmem() / 1024 / 1024 / 2));
+  if (!oneThread && !process.env.EDH_SEER_BUILD_RELAUNCHED && getHeapStatistics().heap_size_limit / 1024 / 1024 < wantMb * 0.9) {
+    const r = spawnSync(process.execPath, [...process.execArgv, `--max-old-space-size=${wantMb}`, ...process.argv.slice(1)],
+      { stdio: "inherit", env: { ...process.env, EDH_SEER_BUILD_RELAUNCHED: "1" } });
+    process.exit(r.status ?? 1);
+  }
+}
 
 const outIdx = process.argv.indexOf("--out");
 const outDir = outIdx >= 0 ? process.argv[outIdx + 1] : "static-out";
@@ -152,7 +176,11 @@ const partnerDeckCards = pageCards.map((card) => ({
   card: { ...card, ...docToCard(card) },
   tags: tagsByOracle.get(card._id) ?? null,
 }));
-const partners = buildPartnerArtifact(partnerDeckCards as never, loadHierarchy());
+// EVERY CORE (owner 2026-09-29): `--workers N` (default: cores - 1); `--workers 1` builds in this
+// thread. Same steps either way, so the same bytes -- the manifest version below is the check.
+const partners = workers <= 1
+  ? buildPartnerArtifact(partnerDeckCards as never, loadHierarchy())
+  : await buildPartnerArtifactInWorkers(partnerDeckCards as never, pageCards.map((c) => c._id), loadHierarchy(), { workers });
 // THE REPORT'S CANDIDATE POOL RIDES IN THE CARD SHARDS (spec 2026-09-24 deck suggestions, §1): the
 // report already prefetches these, so `pi` costs it no request, where reading `partners/` would
 // have cost about 9 MB a report. One entry object serves every alias of a card, so setting it once
