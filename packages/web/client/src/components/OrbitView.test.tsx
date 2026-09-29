@@ -60,6 +60,9 @@ test("a count says how many cards and how many of them work once", () => {
   expect(countText(5, 1)).toBe("5 cards, 1 of them only once");
   expect(countText(2, 2)).toBe("2 cards, both only once");
   expect(countText(1, 1)).toBe("1 card, only once");
+  // Against the card it counts for, so it cannot read as the theme's own size.
+  expect(countText(4, 4, "Inalla")).toBe("4 with Inalla, all only once");
+  expect(countText(16, 0, "Inalla")).toBe("16 with Inalla");
 });
 
 test("the cards one step out are grouped by the card they go through, each with a sentence", async () => {

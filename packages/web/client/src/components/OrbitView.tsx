@@ -346,10 +346,15 @@ function Summary({ o, paused, onPause, onSector, onCentre }: { o: OrbitModel; pa
         <ul className="flex flex-col gap-1">
           {o.sectors.map((s) => (
             <li key={s.name}>
-              <button type="button" className="flex min-h-11 w-full items-center gap-2 rounded-(--radius) px-1 text-left hover:bg-(--surface-secondary)" onClick={() => onSector(s)}>
-                <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full" style={{ background: s.hue }} />
-                <span className="flex-1">{s.name}</span>
-                <span className="text-(--muted) whitespace-nowrap">{countText(s.partners.length, s.partners.filter((p) => p.once).length)}</span>
+              {/* THE COUNT UNDER ITS NAME (designer review 2026-09-29): beside it, a long group name
+                *  wrapped to two lines and "Other links" squeezed the count; said against the
+                *  commander, the count needs the row's width. */}
+              <button type="button" className="flex min-h-11 w-full items-start gap-2 rounded-(--radius) px-1 py-1 text-left hover:bg-(--surface-secondary)" onClick={() => onSector(s)}>
+                <span aria-hidden="true" className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: s.hue }} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span>{s.name}</span>
+                  <span className="text-xs text-(--muted)">{countText(s.partners.length, s.partners.filter((p) => p.once).length, first)}</span>
+                </span>
               </button>
             </li>
           ))}
