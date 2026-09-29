@@ -16,12 +16,15 @@ import { createTagsLookup } from "../../packages/tagger/src/index.js";
 import { ComboIndex } from "../../packages/engine/src/index.js";
 import { analyzeDeckStructured, buildDeckCards, loadTokenTags } from "../../packages/matcher/src/index.js";
 
-/** Keep in step with the README's "The pod-fit seat's seeded claim". */
+/** Keep in step with the README's "The pod-fit seat's seeded claim". A FAMILY, not one link: the
+ *  owner's verdict (Lively Dirge, 2026-09-26) is a subject mismatch any graveyard filler repeats
+ *  against Tinybones, and by 2026-09-29 Lively Dirge's own link was gone while four others were
+ *  live. The check passes while any of them is emitted. */
 const SEED = {
   deck: "packages/cli/decks/calibration/mari-takes-control.txt",
-  producer: "Lively Dirge",
+  producers: ["Lively Dirge", "Meathook Massacre II", "Trading Post", "Spymaster's Vault", "The Sackville-Bagginses"],
   consumer: "Tinybones, the Pickpocket",
-  tag: "graveyard-recursion:-land",
+  tag: /^graveyard-recursion/,
 };
 
 const store = await connect(loadConfig());
@@ -36,13 +39,13 @@ try {
     undefined, undefined, new ComboIndex(combos), undefined, await loadTokenTags(store.db),
   );
   const hit = report.edges.flatMap((e) => e.reasons)
-    .find((r) => r.producer === SEED.producer && r.consumer === SEED.consumer && r.tag === SEED.tag);
+    .find((r) => r.producer !== undefined && SEED.producers.includes(r.producer) && r.consumer === SEED.consumer && SEED.tag.test(r.tag));
   if (!hit) {
-    console.error(`SEED GONE: ${SEED.producer} -> ${SEED.consumer} | ${SEED.tag} is not in ${SEED.deck}.`);
+    console.error(`SEED GONE: no ${SEED.producers.join(" / ")} -> ${SEED.consumer} | ${SEED.tag} in ${SEED.deck}.`);
     console.error("The pod-fit seat calibrates nothing until a new plant is chosen. Do not run the round.");
     process.exitCode = 1;
   } else {
-    console.log(`seed ok: "${hit.text}" (${SEED.tag}) in ${SEED.deck}`);
+    console.log(`seed ok: "${hit.text}" (${hit.tag}) in ${SEED.deck}`);
   }
 } finally {
   await store.close();

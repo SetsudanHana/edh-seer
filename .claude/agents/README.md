@@ -125,12 +125,19 @@ the browser, so that cross-check is what keeps the classification honest.
 | pod-fit | `packages/cli/decks/calibration/mari-takes-control.txt` | one live claim the owner judged FALSE (see below); `research/web/seed-check.ts` fails when it disappears. Moved from Yuna on 2026-09-26, whose plant the engine stopped emitting |
 | phone | `inalla.txt` captured at 390px | same as before, so modality stays the only variable against earlier rounds |
 
-**The pod-fit seat's seeded claim** (**verified 2026-09-26**, issue #515):
-`Lively Dirge -> Tinybones, the Pickpocket`, tag `graveyard-recursion:-land`, in
-`calibration/mari-takes-control`, rendered as "When Lively Dirge is in the graveyard, Tinybones, the
-Pickpocket can bring it back". The owner judged it FALSE (subject mismatch): Lively Dirge fills and
-returns from YOUR graveyard, while Tinybones casts from the graveyard of the OPPONENT it damaged, so
-the defect is catchable from the two cards' oracle text alone.
+**The pod-fit seat's seeded claim** (**re-verified 2026-09-29**, issue #515): the family of
+`X -> Tinybones, the Pickpocket` graveyard-recursion links in `calibration/mari-takes-control`,
+rendered as "X puts cards into the graveyard that Tinybones, the Pickpocket can bring back". The
+owner judged the first of them FALSE on 2026-09-26 (`Lively Dirge -> Tinybones`, subject mismatch):
+X fills YOUR graveyard, while Tinybones casts from the graveyard of the OPPONENT it damaged, so the
+defect is catchable from the two cards' oracle text alone.
+
+The Lively Dirge link itself was gone by 2026-09-29; four of the same defect were live in its place,
+from Meathook Massacre II, Trading Post, Spymaster's Vault and The Sackville-Bagginses. They are the
+same subject mismatch as the owner's verdict but were not judged one by one. `seed-check.ts` passes
+while any of them is emitted. pod-fit missed the plant in both the 09-27 and 09-29 rounds, while
+catching other real defects each time: the sentences live in the cards' "every way it works" lists,
+a click deep.
 
 It replaced `Misty Rainforest -> Yuna, Grand Summoner` (`dies:permanent`), which the engine stopped
 emitting between 2026-09-20 and 2026-09-26, so the seat moved decks with it. On that day only two
