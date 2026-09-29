@@ -1074,6 +1074,7 @@ const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|that card|those cards) to the battlefield\b/i;
 /** "…until you reveal a creature card…": the class a reveal-until dig puts somewhere (#715). */
 const REVEAL_UNTIL = /\buntil you reveal (an? [a-z ]{1,40}?) card\b/i;
+const REVEAL_UNTIL_ALL = /\buntil you reveal\b/gi;
 
 /** The recipient of a counter, when it is the card itself. Anchored at the END of the trigger
  *  subject so "on this creature" is the recipient and not a stray mention. */
@@ -1283,7 +1284,8 @@ export function deriveAbilities(
     // zones, so the flicker read as an exile and nothing more, and the re-entry fed no enter payoff.
     // Filled from the clause's own words, only when an exile precedes it in the same clause.
     const acts = clause.actions ?? [];
-    if (acts.some((a) => a.verb === "exile") && RETURN_TO_BATTLEFIELD.test(clauseText)) {
+    // ONE return only (review): with two, nothing says which one the words describe.
+    if (acts.some((a) => a.verb === "exile") && acts.filter((a) => a.verb === "return").length === 1 && RETURN_TO_BATTLEFIELD.test(clauseText)) {
       clause = { ...clause, actions: acts.map((a) => a.verb === "return" && !a.toZone && !a.fromZone ? { ...a, fromZone: "exile", toZone: "battlefield" } : a) };
     }
     // A QUOTED GRANT THE MODEL LEFT WITHOUT AN ACTION (#711): Enduring Vitality's `Creatures you
@@ -1661,7 +1663,11 @@ export function deriveAbilities(
       // (Descendants' Fury, #715): a class-restricted dig (AF10 ruling 4) whose class is named by the
       // REVEAL, which is no action, so "that card" had no antecedent and every creature's own entry
       // trigger went unfed. Types an untyped emit only; a named class on the put itself stands.
-      const revealed = action.fromZone === "library" && /^that card$/i.test(objectText) ? REVEAL_UNTIL.exec(text)?.[1] : undefined;
+      // ONE reveal, and a put onto the battlefield only (review): two reveals leave "that card"
+      // ambiguous, and a card put into a hand triggers no entry.
+      const oneReveal = (text.match(REVEAL_UNTIL_ALL) ?? []).length === 1;
+      const revealed = oneReveal && action.fromZone === "library" && action.toZone === "battlefield" && /^that card$/i.test(objectText)
+        ? REVEAL_UNTIL.exec(text)?.[1] : undefined;
       const revealedClass = revealed ? parseSubject(revealed) : undefined;
       if (revealedClass && (revealedClass.type !== undefined || revealedClass.subtype !== undefined)) {
         for (const e of emits) {
