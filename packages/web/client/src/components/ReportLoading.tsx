@@ -35,7 +35,7 @@ export function ReportLoading({ commander, lines }: { commander?: string; lines?
               <span className={`${bar} h-40 w-40 rounded-full`} />
               <span className={`${bar} h-40 w-40 rounded-full`} />
             </div>
-            <span className={`${bar} h-4 w-full max-w-xl`} />
+            <span className={`${bar} h-4 w-full max-w-[40ch]`} />
             <span className={`${bar} h-4 w-full max-w-lg`} />
           </div>
         </div>

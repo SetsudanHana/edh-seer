@@ -280,8 +280,12 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
                 lead={<RecognitionPanel data={data} part="identity" />} />
             </section>
           ) : <RecognitionPanel data={data} part="identity" />}
-          {talk ? <TableTalkLine talk={talk} /> : null}
-          <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
+          {/* THE LINE FOR THE TABLE BESIDE THE VERDICT (#770): a 48rem card alone under a 2560 map
+            *  left two-thirds of the row empty. On a phone and a laptop they still stack. */}
+          <div className={`grid gap-6 items-start ${talk ? "lg:grid-cols-[minmax(0,48rem)_minmax(0,1fr)]" : ""}`}>
+            {talk ? <TableTalkLine talk={talk} /> : null}
+            <RecognitionPanel data={data} assumptions={assumptions} assumptionsSet={assumptionsSet} part="rest" />
+          </div>
           {report.legality?.length === 0 ? <LegalityPanel legality={report.legality} companions={report.companions} /> : null}
           {/* THE GATE. It used to sit above the tab strip because it qualifies every tab; in one
             *  scroll there is no "above the tabs" left, so the FIGURE rides the sticky header on
@@ -362,7 +366,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             // No title of its own: its sections are headed "Your first 5 turns", "How you win" and
             // "What your cards are waiting for" already.
             <Movement count={unmetDemand ? "its first turns, how it wins, and what its cards are still waiting for" : "its first turns, and how it wins"}>
-              <div className="max-w-5xl flex flex-col gap-8">
+              {/* SIDE BY SIDE AS THE WIDTH ALLOWS (#770): first turns, how you win and what the cards wait
+                *  for were three blocks stacked in the left 1024px of a 2560 screen. */}
+              <div className="grid gap-8 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,40rem),1fr))]">
                 {/* THE TURNS AS TILES, AND ONE TURN'S CARDS AT A TIME. */}
                 {turns ? <FirstTurns model={turns} /> : null}
                 <HowYouWin report={report} manaValueOf={manaValueOf} model={themes} />
@@ -447,7 +453,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
         <Chapter id="roles" title={title("roles")}>
           {/* THE FIVE ROLES AS BARS, FIRST (owner, 2026-09-27): the Build score's inputs, moved here from
             *  under its dial, where they counted the same cards a chapter before these shelves. */}
-          <div className="max-w-5xl"><RoleBars data={data} /></div>
+          <RoleBars data={data} />
           {/* THE CARDS LEAD, the counts follow (2026-09-26): the Graph tab's "Cards judged by their
             *  job" moved here, so a role's number and the cards it counts sit in one chapter. */}
           <Movement title="Your cards, by the job they do" count="cards that do two jobs sit on both shelves">
@@ -482,9 +488,9 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  half the row was reserved for nothing at every width above 1280px. A defect I
             *  introduced two commits ago and did not look at. */}
           <Movement title="What to change">
-            {/* 64rem, the width of the Fixes list above it: a cut's name and its "5 mana - 0.0"
-              *  sat 1,700px apart at 1920px (UI review 2026-09-25). */}
-            <div className="max-w-5xl min-w-0">
+            {/* NO WIDTH CAP (#770): the cuts are an auto-fit grid of 25rem cards, so a wide screen
+              *  gets more cards across, never a name and its "5 mana" a screen apart. */}
+            <div className="min-w-0">
             <CutList
               cuts={cuts}
               unjudged={report.unjudged}
@@ -502,9 +508,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  A failed run drops the section rather than claiming the deck has nothing to add. */}
           {suggestions.state !== "error" ? (
             <Movement title="Strengthen what works">
-              <div className="max-w-5xl">
-                <StrengthenLists routes={suggestions.value?.routes} plan={suggestions.value?.plan} />
-              </div>
+              <StrengthenLists routes={suggestions.value?.routes} plan={suggestions.value?.plan} />
             </Movement>
           ) : null}
         </Chapter>

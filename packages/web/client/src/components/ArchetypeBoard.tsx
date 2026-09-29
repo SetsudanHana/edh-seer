@@ -206,8 +206,9 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
             {" "}These are named archetypes from a fixed list, so the deck&rsquo;s own theme will
             often not be one of these names.
           </Explain>
-          {/* 48rem, so the percentage sits a glance from its label rather than a screen away. */}
-          <div className="flex flex-col max-w-3xl">{strategies!.map((s) => <StrategyRow key={s.name} s={s} />)}</div>
+          {/* 40rem cells, so the percentage sits a glance from its label; more across on a wide
+            *  screen (#770). */}
+          <div className="grid gap-x-8 [grid-template-columns:repeat(auto-fill,minmax(min(100%,40rem),1fr))]">{strategies!.map((s) => <StrategyRow key={s.name} s={s} />)}</div>
         </div>
       ) : null}
       {/* THE CARD-BY-THEME GRID IS GONE (owner, 2026-09-24: "as a player it is not useful"). Every
@@ -229,7 +230,7 @@ export function ArchetypeBoard({ strategies, archetypes, nonlandNames = [], cove
           {/* 64rem, like the archetype bars above at 48rem: at 1920px the row spread its name and
             *  its figures 1,700px apart (UI review 2026-09-25). Wide enough that the two preview
             *  pairs, the longest line in the row, still fit on one line. */}
-          <div className="flex flex-col max-w-5xl">
+          <div className="grid gap-x-8 items-start [grid-template-columns:repeat(auto-fill,minmax(min(100%,56rem),1fr))]">
             {archetypes!.map((g) => (
               <GroupRow key={g.category} group={g} size={groupSize.get(g.category)} />
             ))}

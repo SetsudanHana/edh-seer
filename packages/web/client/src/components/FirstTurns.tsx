@@ -35,7 +35,7 @@ export function FirstTurns({ model }: { model: Model }) {
           ? <> Your commander, <CardName name={commander.name} /> ({commander.manaValue} mana), comes down on <b>turn {commander.turn}</b> in half your games.</>
           : commander ? <> Your commander, <CardName name={commander.name} />, costs {commander.manaValue}: more than the deck typically has by turn 8.</> : null}
       </p>
-      <div className="flex flex-col gap-2 max-w-2xl">
+      <div className="flex flex-col gap-2">
         <div className="grid grid-cols-5 gap-1.5" role="group" aria-label="Pick a turn">
           {steps.map((s) => (
             <Tile key={s.turn} step={s} on={s.turn === turn} commander={commander?.turn === s.turn}

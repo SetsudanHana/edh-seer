@@ -104,9 +104,10 @@ export function Findings({ report, diff, suggestions }: {
     return <SuggestedCards cards={listed.get(f.id)} empty={EMPTY[f.kind] ?? ""} label="Cards that fit" />;
   };
   return (
-    // 64rem: at 1920px a fix's headline and its figure ("10/13") sat 1,500px apart, and the figure
-    // is what the headline is about (UI review 2026-09-25).
-    <section className="flex flex-col gap-3 max-w-5xl">
+    // A FIX'S HEADLINE STAYS BESIDE ITS FIGURE ("10/13") by the fixes sitting in 40rem cells, more
+    // across as the screen widens (#770), never by capping the section: at 1920px an uncapped row
+    // put the two 1,500px apart (UI review 2026-09-25), and a capped one left 2560 half empty.
+    <section className="flex flex-col gap-3">
       <div className="flex items-baseline gap-3 flex-wrap">
         {/* "What is wrong with this deck" under a chapter titled "Fixes" was the same heading
           *  twice (T1). The count beside it is what this line is actually for. */}
@@ -121,7 +122,7 @@ export function Findings({ report, diff, suggestions }: {
           {all.length + unseen.length === 1 ? "suggestion" : "suggestions"}, biggest payoff first
         </span>
       </div>
-      {all.length > 0 ? <ul className="flex flex-col border-t border-(--separator)">
+      {all.length > 0 ? <ul className="grid gap-x-8 border-t border-(--separator) [grid-template-columns:repeat(auto-fill,minmax(min(100%,40rem),1fr))]">
         {shown.map((f, i) => (
           <li
             key={f.id}
@@ -207,7 +208,7 @@ export function Findings({ report, diff, suggestions }: {
         *  competing for a rank inside it — and it names the CATEGORY, never a member, because
         *  nothing in this engine ranks two ramp cards against each other. */}
       {trade ? (
-        <div className="flex gap-3.5 items-start rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3.5">
+        <div className="self-start flex gap-3.5 items-start rounded-(--radius) border border-(--separator) bg-(--surface) px-4 py-3.5">
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
             strokeWidth="1.5" className="text-(--muted) shrink-0 mt-0.5">
             <path d="M2 5.5h9L8.5 3M14 10.5H5L7.5 13" />
@@ -226,7 +227,7 @@ export function Findings({ report, diff, suggestions }: {
       {unseen.length > 0 ? (
         <section className="flex flex-col gap-3 pt-2">
           <h3 className="text-base font-bold tracking-[-0.01em]">Not counted in your Build score</h3>
-          <ul className="flex flex-col border-t border-(--separator)">
+          <ul className="grid gap-x-8 border-t border-(--separator) [grid-template-columns:repeat(auto-fill,minmax(min(100%,40rem),1fr))]">
             {unseen.map((f, i) => (
               // THE SAME GRID AS THE SCORED ROWS, so the number continues in the same column and,
               // like theirs, hides below `sm` (review: a phone showed "6" under no "1..5").

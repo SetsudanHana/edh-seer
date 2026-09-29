@@ -138,12 +138,15 @@ export function BracketPanel({ bracket, combos, manaValueOf, artOf, model }: {
       {listed.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <span className="eyebrow text-(--muted)">{plural(bracket.infiniteCombos || listed.length, "infinite combo")} · each repeats without limit</span>
-          {lead ? <ComboFeature parts={lead} result={listed[0]!.result} manaValue={listed[0]!.manaValue} cheap={listed[0]!.cheap} /> : null}
-          {shownCombos.length ? (
-            <ul className="grid gap-2 lg:grid-cols-2 max-w-4xl" aria-label={lead ? "The deck's other infinite combos" : "The infinite combos in this deck"}>
-              {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} />)}
-            </ul>
-          ) : null}
+          {/* THE LEAD COMBO AND THE REST SIDE BY SIDE on a wide screen (#770); stacked below 1800px. */}
+          <div className={`grid gap-4 items-start ${lead && shownCombos.length ? "min-[1800px]:grid-cols-[minmax(0,68rem)_minmax(0,1fr)]" : ""}`}>
+            {lead ? <ComboFeature parts={lead} result={listed[0]!.result} manaValue={listed[0]!.manaValue} cheap={listed[0]!.cheap} /> : null}
+            {shownCombos.length ? (
+              <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(100%,23rem),1fr))]" aria-label={lead ? "The deck's other infinite combos" : "The infinite combos in this deck"}>
+                {shownCombos.map((c) => <ComboLoop key={c.cards.join("|")} cards={c.cards} result={c.result} manaValue={c.manaValue} cheap={c.cheap} artOf={artOf} />)}
+              </ul>
+            ) : null}
+          </div>
           {rows.length > COMBO_ROWS ? (
             <button type="button" className="self-start min-h-9 text-xs text-(--accent) underline underline-offset-2" onClick={() => setAllCombos(!allCombos)}>
               {allCombos ? "Show fewer" : `Show all ${rows.length}`}
