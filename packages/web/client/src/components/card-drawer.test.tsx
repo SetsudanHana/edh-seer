@@ -118,6 +118,31 @@ function RailOn() {
   return null;
 }
 
+/** THE WAY BACK IS WHERE THE CARD WAS OPENED FROM (persona round 2026-09-29): the page scrolling
+ *  under an open card changed the surface's chapter, and the button went with it -- a card opened
+ *  from Game plan offered "Back to manabase". */
+function RailBack({ label }: { label: string }) {
+  const { setRailOn, setRailBack } = useCardDrawer();
+  useEffect(() => { setRailOn(true); return () => setRailOn(false); }, [setRailOn]);
+  useEffect(() => { setRailBack(label); }, [label, setRailBack]);
+  return null;
+}
+
+test("the rail's way back keeps the chapter the card was opened from", async () => {
+  vi.stubGlobal("matchMedia", (q: string) => ({ matches: true, media: q, addEventListener() {}, removeEventListener() {} }));
+  try {
+    const { rerender } = render(<CardDrawerProvider graph={graph}><RailBack label="Back to game plan" /><Opener id="Sol Ring" /></CardDrawerProvider>);
+    await userEvent.click(screen.getByText("open it"));
+    expect(screen.getByRole("button", { name: "Back to game plan" })).toBeInTheDocument();
+    // The page scrolls on under the card; the chapter behind it changes.
+    rerender(<CardDrawerProvider graph={graph}><RailBack label="Back to manabase" /><Opener id="Sol Ring" /></CardDrawerProvider>);
+    expect(screen.getByRole("button", { name: "Back to game plan" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back to manabase" })).not.toBeInTheDocument();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
 test("opening a card never moves the page: the rail holds the space while the report is up", async () => {
   const { unmount } = render(<CardDrawerProvider graph={graph}><Opener id="Sol Ring" /></CardDrawerProvider>);
   // No rail (a precon page): the card floats over the page, and nothing is reserved.

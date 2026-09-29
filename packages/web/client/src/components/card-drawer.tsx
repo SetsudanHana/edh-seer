@@ -142,10 +142,22 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
   // Set by `open`, read by the outside-click rule below: a click that opened (or switched to) a card
   // is not a click away from the drawer.
   const opened = useRef(false);
+  // THE WAY BACK NAMES WHERE THE CARD WAS OPENED FROM (persona round 2026-09-29). It read the
+  // surface's label live, so scrolling the page under an open card renamed the button: a card
+  // opened from Game plan offered "Back to manabase", a chapter the reader never left. Taken once,
+  // when a card opens over nothing; a card opened from inside another keeps the first answer.
+  const railBackNow = useRef(railBack);
+  railBackNow.current = railBack;
+  const shownNow = useRef(shown);
+  shownNow.current = shown;
+  const [backTo, setBackTo] = useState<string | null>(null);
   const open = useCallback(
     (name: string) => {
       const id = byName.get(name);
-      if (id) { setOpenId(id); opened.current = true; }
+      if (id) {
+        if (!shownNow.current) setBackTo(railBackNow.current);
+        setOpenId(id); opened.current = true;
+      }
     },
     [byName, setOpenId],
   );
@@ -306,7 +318,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
                 node={node}
                 edges={edges}
                 onClose={() => setOpenId(null)}
-                closeLabel={railShown && railBack ? railBack : undefined}
+                closeLabel={railShown && backTo ? backTo : undefined}
                 nameOf={nameOf}
                 extra={extras?.model.cards.get(node.id) ? (
                   // THE WALK, ONE TAP AWAY (report cohesion audit, 2026-09-27). The small map of the
