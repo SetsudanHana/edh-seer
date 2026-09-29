@@ -40,6 +40,14 @@ test("typing a name lists matching cards as links", async () => {
   expect(screen.getByRole("link", { name: /Krenko's Command/ })).toBeInTheDocument();
 });
 
+test("the empty field's example reads as an example, not as something already typed (#760)", async () => {
+  at();
+  const box = await screen.findByRole("searchbox");
+  expect(box).toHaveValue("");
+  expect(box.getAttribute("placeholder")).toMatch(/^e\.g\. /);
+  expect(box.className).toMatch(/placeholder:italic/);
+});
+
 /** THE QUERY IS MATCHED THE WAY THE URL IS BUILT. `slugOf` folds diacritics and drops apostrophes,
  *  so a reader who types what they can reach on their keyboard finds the card -- and finds it under
  *  exactly the spelling the link will use. A raw substring match would answer "Jötun" and not

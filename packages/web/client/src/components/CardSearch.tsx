@@ -549,12 +549,15 @@ export function CardSearch({
         <span className="eyebrow text-(--muted)">{commanderMode ? "find a commander" : "find a card"}</span>
         <input
           type="search" autoFocus value={text} onChange={(e) => setText(e.target.value)}
-          placeholder={commanderMode ? "Kess, Dissident Mage" : "Krenko, Mob Boss"}
+          // A PLACEHOLDER THAT READS AS AN EXAMPLE, NOT AN ENTRY (#760): a bare real card name at
+          // 5.9:1 on the field ground was taken for something already typed, and two persona seats
+          // concluded the search was broken without typing. "e.g." and italic say it is a sample.
+          placeholder={commanderMode ? "e.g. Kess, Dissident Mage" : "e.g. Krenko, Mob Boss"}
           // A CONTROL'S BOUNDARY IS `--field-border`, which is the 3:1 one (WCAG 1.4.11).
           // `--border` does not exist: it was absorbed into `--separator`, the decorative hairline,
           // and `css-tokens.test.ts` caught this line naming it.
           className="w-full max-w-lg min-h-11 rounded-(--field-radius) border border-(--field-border) bg-(--field-background)
-            text-(--field-foreground) placeholder:text-(--field-placeholder) px-3"
+            text-(--field-foreground) placeholder:text-(--field-placeholder) placeholder:italic px-3"
         />
       </label>
 

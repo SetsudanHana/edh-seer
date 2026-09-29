@@ -7,6 +7,7 @@ import { ManaSymbols } from "./ManaSymbols.js";
 import { CardName, useAdded } from "./card-drawer.js";
 import { WinPlans } from "./WinPlans.js";
 import { policyBand } from "@edh-seer/engine/percent";
+import { bandState } from "../lib/deck-gauge.js";
 // NOTHING IS VALUE-IMPORTED FROM @edh-seer/matcher HERE -- CRITICAL REGRESSION, FIXED (2026-08-21). A
 // prior deep import of `GRAVEYARD_HATE_SHARE` from `@edh-seer/matcher/src/answer-coverage.js` (reasoned
 // as skipping the barrel's node:fs-touching re-export of `analyze.js`) was itself fatal: that file
@@ -296,8 +297,12 @@ export function BuildBenchmarks({
             *  question and are routed to different sub-tabs. Foreground weight is the whole
             *  difference from a child heading; the children keep the muted eyebrow. */}
           <h3 className="eyebrow text-(--foreground)">How the roles are spent</h3>
-          {/* Rows in 28rem cells so the count sits beside its row; more across when wide (#770). */}
-          <ul className="grid gap-x-8 gap-y-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,28rem),1fr))]">
+          {/* Rows in 28rem cells so the count sits beside its row; more across when wide (#770).
+            *  A GROUP OF LISTS, NOT ONE LIST WITH HEADER ROWS (#735): a `<li role="presentation">`
+            *  header among the leaf rows broke the list for a screen reader (axe: a `<ul>` must
+            *  only directly contain `<li>`). Each parent is now a labelled group holding its
+            *  header and its own list, so every `listitem` is still a leaf row. */}
+          <div className="flex flex-col gap-1.5">
             {/* THE FOUR PARENT COUNTS-AGAINST-TARGET MOVED TO `DeckGauges`, one floor dial per
               *  parent, on the Summary sub-tab. That is where a reader now sees Interaction's 19
               *  against its target of 10 as a mark; printing the same ratio here as well would put
@@ -326,14 +331,8 @@ export function BuildBenchmarks({
               // avoided before this task, and a header over nothing would be the same broken-
               // heading shape C1 found.
               return p.leaves.length > 1 ? (
-                <Fragment key={p.name}>
-                  {/* `role="presentation"` so this stays a real `<li>` (a `<ul>`'s only valid
-                    *  child) without being counted as a list ITEM -- it groups the leaves after it,
-                    *  it is not one of them, and every existing test walking this list's
-                    *  `listitem`s should still see only leaf rows. The `h4` inside keeps its own
-                    *  heading semantics regardless. */}
-                  <li
-                    role="presentation"
+                <div key={p.name} role="group" aria-label={p.name} className="flex flex-col gap-1.5">
+                  <div
                     data-testid={`role-group-${p.name}`}
                     className="flex items-baseline gap-3 flex-wrap pt-1"
                   >
@@ -356,13 +355,19 @@ export function BuildBenchmarks({
                         <span className="tabular-nums">{plural(sumOfLeaves, "card")}</span>
                       )}
                     </span>
-                  </li>
-                  {p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves))}
-                </Fragment>
+                  </div>
+                  <ul className="grid gap-x-8 gap-y-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,28rem),1fr))]">
+                    {p.leaves.map((leaf) => leafRow(leaf, p.name, sumOfLeaves))}
+                  </ul>
+                </div>
               ) : null;
             })}
-            {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
-          </ul>
+            {ungrouped.length ? (
+              <ul className="grid gap-x-8 gap-y-1.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,28rem),1fr))]">
+                {ungrouped.map((c) => bar(c.category, LABEL[c.category] ?? c.category, LABEL[c.category] ?? c.category, c.count, c.target))}
+              </ul>
+            ) : null}
+          </div>
         </>
       )}
 
@@ -858,7 +863,8 @@ function DeckMathRows({
               *  the wrapped line it is still the right-hand end of "38 in deck ... wants 36". */}
             <span
               className={`ml-auto shrink-0 text-right stat-num ${
-                Math.abs(lands.actual - lands.target) > 2 ? "text-(--warning)" : "text-(--success)"
+                // The Lands dial's reading, the score's own margin, not a second one of its own (#759).
+                bandState(lands.actual, lands.target).tone === "success" ? "text-(--success)" : "text-(--warning)"
               }`}
             >
               wants {lands.target}

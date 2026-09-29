@@ -70,11 +70,16 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
     else groups.push({ event: row.event, rows: [row] });
   }
 
-  // GROUPS STACK FULL WIDTH (2026-09-17). Two side-by-side columns made sense for rows of text;
-  // for tiles they halved the tile to ~105px. One group per band, five tiles across on a wide
-  // viewport, is the shape EDHREC readers already know.
+  // GROUPS PACK BY THEIR TILES, AND A TILE KEEPS ITS SIZE (#770). Groups stacked full width
+  // (2026-09-17), because two fixed columns halved a tile to ~105px; but a group of one or two cards
+  // then took a whole band, and on a commander page five of ten groups used under a quarter of a
+  // 2560 screen. Now each group is as wide as its tiles (`--n` of them, never less than room for its
+  // heading, never more than the row), and groups flow side by side.
+  // THE TILE IS A SHARE OF THE LIST'S OWN WIDTH, the one the old column counts gave (4, 5, 6, then
+  // 8 across), so a full group of eight still fills the row and nothing is halved; past 3400px two
+  // groups of eight share a row. A phone keeps one group per band, three tiles across.
   return (
-    <div className="flex flex-col gap-8">
+    <div className="@container flex flex-col gap-8 sm:flex-row sm:flex-wrap sm:items-start sm:gap-x-12 [--tile:calc((100cqw_-_3rem_-_1px)/4)] lg:[--tile:calc((100cqw_-_4rem_-_1px)/5)] xl:[--tile:calc((100cqw_-_5rem_-_1px)/6)] 2xl:[--tile:calc((100cqw_-_7rem_-_1px)/8)] min-[3400px]:[--tile:calc((100cqw_-_17rem_-_1px)/16)]">
       {groups.map((group, gi) => {
         // THE SAME DIRECTION DECIDES THE COUNTER AND THE VERB (2026-09-19). This read `pool` for
         // every group and then printed "cause it" under producer rows -- the sentence named one
@@ -85,7 +90,8 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
         return (
           // THE TARGET OF THE CLAUSE'S EVENT ROW (roadmap AJ4, spec C5). A plain anchor, so it
           // works with JavaScript off -- which the prerendered page needs -- and holds no state.
-          <section key={group.event} id={groupAnchor(group.event)} className="flex flex-col gap-3 break-inside-avoid scroll-mt-[calc(var(--site-header-h,0px)+1rem)]">
+          <section key={group.event} id={groupAnchor(group.event)} style={{ "--n": group.rows.length } as React.CSSProperties}
+            className="flex flex-col gap-3 break-inside-avoid scroll-mt-[calc(var(--site-header-h,0px)+1rem)] sm:w-[min(100%,max(20rem,calc(var(--n)*(var(--tile)+1rem)-1rem)))]">
             <div className="flex flex-col gap-0.5">
               {/* THE HEADING RUNS THE GROUP'S OWN DIRECTION (roadmap AK4). Under a producer group
                 * the cards DO this -- "sacrifice a creature" -- and under an asker group they are
@@ -118,7 +124,7 @@ export function PartnerList({ rows, pool, rarity, empty, subject, identity }: {
               * sentence is still in the artifact and still what the deck report prints. A feeder
               * row has no payoff (its sentence describes the subject, not this card) and shows the
               * sentence whole. The click rule lives in `CardTile`. */}
-            <ul className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-x-3 gap-y-5 sm:gap-x-4 list-none p-0 m-0">
+            <ul className="grid grid-cols-3 sm:grid-cols-[repeat(auto-fill,var(--tile))] gap-x-3 gap-y-5 sm:gap-x-4 list-none p-0 m-0">
               {group.rows.map((p, i) => (
                 <li key={p.slug} className={i >= PHONE_ROW && !opened.has(group.event) ? "min-w-0 max-sm:hidden" : "min-w-0"}>
                   <CardTile

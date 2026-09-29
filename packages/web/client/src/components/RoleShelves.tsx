@@ -39,7 +39,7 @@ export function RoleShelves({ report, graph }: { report: DeckReport; graph?: Car
         if (head) headed.add(head.name);
         const target = group ? undefined : p?.target ?? own.get(category);
         return (
-          <li key={category} className="flex flex-col gap-2">
+          <li key={category} id={`shelf-${category}`} className="flex flex-col gap-2 scroll-mt-[calc(var(--report-header-h,0px)+var(--report-rail-h,0px)+1rem)]">
             {head ? (
               <p data-testid={`shelf-group-${head.name}`} className="flex flex-wrap items-baseline gap-x-3 border-t border-(--separator) pt-3">
                 <b className="text-base">{head.name}</b>

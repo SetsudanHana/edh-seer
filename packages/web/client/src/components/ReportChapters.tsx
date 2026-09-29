@@ -234,7 +234,7 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
       const cards = shelves.filter((sh) => leaves.includes(sh.category)).flatMap((sh) => sh.cards)
         // The commander fills roles too, and is never a cut.
         .filter((c) => !c.isCommander && !seen.has(c.id) && !!seen.add(c.id));
-      return { name: s.category, count: s.count, target: s.target, over: s.over, cards };
+      return { name: s.category, count: s.count, target: s.target, over: s.over, cards, shelf: shelves.find((sh) => leaves.includes(sh.category))?.category };
     }).filter((g) => g.cards.length > 0);
   }, [report, data.graph]);
   const offTheme = useMemo(() => {

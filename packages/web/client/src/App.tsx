@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentProps } from "react";
 import { analyzeDeck } from "./api.js";
 import type { AnalyzeResponse } from "./types.js";
-import { DeckActions, DeckInput } from "./components/DeckInput.js";
+import { cardCount, DeckActions, DeckInput } from "./components/DeckInput.js";
 import { DeckActionsProvider } from "./lib/deck-actions.js";
 import { PageFoot } from "./components/PageFoot.js";
 import { InstallButton } from "./components/InstallButton.js";
@@ -249,8 +249,9 @@ export default function App() {
    *  introduce itself. Named once because the lead above the form and the example-deck button below
    *  it are two halves of the same empty state and must appear and vanish together. */
   const firstVisit = !data && !loading && !fromLink && decklist.trim() === "";
-  // What the loading skeleton names: the same summary the collapsed deck bar prints.
-  const loadingLines = decklist.split("\n").filter((l) => l.trim()).length;
+  // What the loading skeleton names: the same summary the collapsed deck bar prints, in cards, not
+  // lines (#759: "88 lines" beside "read 100 of 100 cards" was two numbers for one deck).
+  const loadingCards = cardCount(commanders, decklist) ?? undefined;
   const loadingCommander = commanders.split("\n")[0]?.replace(/^\d+\s+/, "").trim() || undefined;
 
   /** A SHARED LINK IS A DECK THAT ANALYSES ITSELF. Anything else -- filling the boxes and waiting for
@@ -506,12 +507,12 @@ export default function App() {
       {/* THE WAIT HAS A SHAPE (review 2026-09-24): a first analysis, or a shared link opening, used
         *  to show the deck bar over nothing for several seconds. A re-analyse keeps the old report
         *  on screen instead, which is the better thing to look at while the new one is built. */}
-      {loading && !data && <ReportLoading commander={loadingCommander} lines={loadingLines} />}
+      {loading && !data && <ReportLoading commander={loadingCommander} cards={loadingCards} />}
       {data && (
         <div className="reveal">
           {/* ITS OWN BOUNDARY: suspending in the routes' one would blank the deck bar above it too.
             *  The report's code is a lazy chunk, so the skeleton covers that fetch as well. */}
-          <Suspense fallback={<ReportLoading commander={loadingCommander} lines={loadingLines} />}>
+          <Suspense fallback={<ReportLoading commander={loadingCommander} cards={loadingCards} />}>
             {/* Absent while the editor is open: its own buttons are on screen then. */}
             <DeckActionsProvider value={editing ? null : (
               <DeckActions

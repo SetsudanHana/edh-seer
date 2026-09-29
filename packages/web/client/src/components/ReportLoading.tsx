@@ -10,12 +10,12 @@
  *  reader hears that work has started rather than silence.
  *
  *  NO FAKE PROGRESS. The analysis does not report stages, so this does not invent them. */
-export function ReportLoading({ commander, lines }: { commander?: string; lines?: number }) {
+export function ReportLoading({ commander, cards }: { commander?: string; cards?: number }) {
   const bar = "rounded-(--radius) bg-(--surface-tertiary) motion-safe:animate-pulse";
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
       <p role="status" aria-live="polite" className="text-sm text-(--muted)">
-        {lines && lines > 0 ? `Reading ${lines} lines` : "Reading your deck"}
+        {cards && cards > 0 ? `Reading ${cards} card${cards === 1 ? "" : "s"}` : "Reading your deck"}
         {commander ? ` for ${commander}` : ""}. This usually takes a few seconds.
       </p>
       <div aria-hidden="true" className="flex flex-col gap-6">

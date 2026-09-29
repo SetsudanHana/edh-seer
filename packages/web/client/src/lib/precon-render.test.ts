@@ -8,7 +8,7 @@ import type { PreconPage } from "./precon-page.js";
 const shell = readFileSync(join(import.meta.dirname, "..", "..", "index.html"), "utf8");
 const page: PreconPage = {
   slug: "party-time-baldurs-gate", name: "Party Time", setCode: "CLB", setName: "Battle for Baldur's Gate", releaseDate: "2022-06-10",
-  commanders: ["Nalia de'Arnise"], identity: ["W", "B"], theme: "Cleric typal", synergy: { score: 2.9, band: "Developing" },
+  commanders: ["Nalia de'Arnise"], identity: ["W", "B"], theme: "Cleric tribal", synergy: { score: 2.9, band: "Developing" },
   bracket: { band: "1-2", gameChangers: 0, combos: 0 }, commanderLinks: 19,
   swaps: [{ out: { name: "Stick Together", connections: 13 }, in: { name: "Pious Evangel", slug: "pious-evangel", connections: 42, reason: "Pious Evangel <b>gains</b> life" } }],
   route: null, gaps: [{ group: "Ramp", have: 9, target: 11 }],

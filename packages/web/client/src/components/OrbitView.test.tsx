@@ -168,6 +168,19 @@ test("walking to a card keeps the one you came from on the map, joined by the ro
   expect(onFocus).toHaveBeenCalledWith("Payoff A");
 });
 
+test("a walk to a card the middle doesn't reach follows the links there, not a straight line (#769)", async () => {
+  const { report, graph } = engineDeck();
+  // Reducer doesn't work with Payoff A; the shortest way is through Cleric 1, which feeds both.
+  const { container, rerender } = render(<OrbitView report={report} graph={graph} focusId="Payoff A" onFocus={() => {}} />);
+  rerender(<OrbitView report={report} graph={graph} focusId="Reducer" onFocus={() => {}} />);
+  await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+  const route = container.querySelector("[data-testid=constellation-route]")!;
+  expect(route.getAttribute("points")!.trim().split(/\s+/)).toHaveLength(3);
+  // The card on the way is on the map, and the step back goes to it.
+  expect(container.querySelector("[data-id='Cleric 1']")).not.toBeNull();
+  expect(screen.getByRole("button", { name: /Back to Cleric 1/ })).toBeInTheDocument();
+});
+
 test("with reduced motion nothing runs, and arrows carry the direction", async () => {
   const mm = window.matchMedia;
   window.matchMedia = ((q: string) => ({ matches: q.includes("reduced-motion"), media: q, addEventListener() {}, removeEventListener() {} })) as never;

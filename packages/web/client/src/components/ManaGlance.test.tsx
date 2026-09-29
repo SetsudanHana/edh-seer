@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
+import { bandState } from "../lib/deck-gauge.js";
 import { ManaGlance } from "./ManaGlance.js";
 
 const deckMath = {
@@ -20,7 +21,7 @@ const manaAvailability = { headline: { mana: 6, turn: 6, low: 0.52, high: 0.52 }
 test("the manabase opens with one tile per question, flagging what is short", () => {
   render(<ManaGlance deckMath={deckMath} manaAvailability={manaAvailability} landCount={34} deckSize={100} />);
   const [lands, colour, hands, mana, cast] = screen.getAllByTestId("mana-tile");
-  expect(lands).toHaveTextContent("Lands34wants 37: 3 short");
+  expect(lands).toHaveTextContent("Lands34wants 37: 3 under, within the normal ±3");
   expect(colour).toHaveTextContent("Weakest colour");
   expect(colour).toHaveTextContent("13/17sources by turn 2, for a card wanting");
   expect(hands).toHaveTextContent(/Opening hands\d+%have 2 to 4 lands/);
@@ -31,6 +32,22 @@ test("the manabase opens with one tile per question, flagging what is short", ()
 test("a deck short of nothing says so", () => {
   const fine = { lands: { actual: 37, target: 37 }, colors: [{ color: "G", supplied: 30 }], castability: { cards: [] } } as never;
   render(<ManaGlance deckMath={fine} landCount={37} deckSize={100} />);
-  expect(screen.getByText("wants 37: on target")).toBeInTheDocument();
+  expect(screen.getByText("wants 37: on the modelled count")).toBeInTheDocument();
   expect(screen.getByText("enough sources for every card")).toBeInTheDocument();
+});
+
+/** ONE READING OF THE LAND COUNT (#759). The tile had its own ±2, so a deck the Lands dial and the
+ *  score call fine was flagged here; now it says what the dial says, and flags only past the band. */
+test("the lands tile reads the count as the Lands dial does", () => {
+  const at = (actual: number) => ({ lands: { actual, target: 39 }, colors: [], castability: { cards: [] } }) as never;
+  const { unmount } = render(<ManaGlance deckMath={at(37)} landCount={37} deckSize={100} />);
+  const near = screen.getAllByTestId("mana-tile")[0]!;
+  expect(near).toHaveTextContent("wants 39: 2 under, within the normal ±3");
+  expect(near).toHaveTextContent(bandState(37, 39).label);
+  expect(near.className).not.toMatch(/border-\(--warning\)/);
+  unmount();
+  render(<ManaGlance deckMath={at(34)} landCount={34} deckSize={100} />);
+  const far = screen.getAllByTestId("mana-tile")[0]!;
+  expect(far).toHaveTextContent("wants 39: 5 under");
+  expect(far.className).toMatch(/border-\(--warning\)/);
 });
