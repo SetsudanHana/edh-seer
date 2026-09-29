@@ -20,10 +20,14 @@ export function PreconIndex() {
       </div>
       {list === undefined ? <p role="status" className="text-(--muted)">Loading the precons</p>
         : list === null || list.length === 0 ? <p className="text-(--muted)">No precons are here yet.</p>
-        : preconSets(list).map((s) => (
-          <section key={s.setCode} className="flex flex-col gap-2" aria-labelledby={`set-${s.setCode}`}>
+        // SETS FLOW IN COLUMNS, EACH KEPT WHOLE (#770, measured 2026-09-29). One set per full-width
+        // row put a one-precon set in a third of a 2560 screen and ran 50 sets down 9,500px; as
+        // newspaper columns a wide screen shows five or six sets side by side, newest first down
+        // the first column. A phone keeps the one column it had.
+        : <div className="sm:columns-[22rem] sm:gap-8">{preconSets(list).map((s) => (
+          <section key={s.setCode} className="flex flex-col gap-2 break-inside-avoid mb-8" aria-labelledby={`set-${s.setCode}`}>
             <h2 id={`set-${s.setCode}`} className="text-lg font-bold">{s.setName}{s.releaseDate ? <span className="font-normal text-(--muted)"> · {year(s.releaseDate)}</span> : null}</h2>
-            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-2">
               {s.decks.map((d) => (
                 <li key={d.slug}>
                   <Link to={`/precons/${d.slug}`} className="flex min-h-11 flex-col rounded-(--radius) border border-(--separator) bg-(--surface) px-3 py-2 hover:border-(--foreground)">
@@ -35,7 +39,7 @@ export function PreconIndex() {
               ))}
             </ul>
           </section>
-        ))}
+        ))}</div>}
     </div>
   );
 }

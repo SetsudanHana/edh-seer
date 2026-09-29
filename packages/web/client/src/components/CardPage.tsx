@@ -81,9 +81,9 @@ export function CardPage({ load }: { load?: (slug: string) => Promise<CardPageDa
         <div className="flex flex-col gap-2 max-w-[68ch]">
           <h2 className="text-2xl font-bold tracking-[-0.01em]">Works well with</h2>
           <p className="text-(--muted) max-w-[65ch]">
-            Sorted by how specific the link is, not by how good the cards are: a pairing only a few
-            cards can make ranks above one that hundreds can. Each row says why in one sentence. Pick
-            a card, on the map or in the list, to preview it here.
+            Sorted by how specific the link is, not by how good the cards are. A pairing only a few
+            cards can make comes before one that hundreds can. Read left to right: a small group can
+            fill a gap beside a bigger one. Pick a card, on the map or in the list, to preview it here.
           </p>
         </div>
         <PageMap page={page} slug={slug} base="/cards" />

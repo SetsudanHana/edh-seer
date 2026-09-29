@@ -669,18 +669,28 @@ h1.intro-thesis { margin-block-end: 0; }
   .intro { max-width: none; }
 }
 
-/* THE HOME PAGE IS A READING PAGE, SO FROM `xl` IT IS A CENTRED COLUMN (UI review 2026-09-25).
-   At 1920 the pitch, the paste form and this section ran from the left edge and left the right
-   half of the screen empty -- 95% of the ink in the left 43% -- while `how-it-works` already sets
-   the same kind of content in a centred column. 72rem holds the form's buttons on one row and the
-   intro's 65rem devices whole. The REPORT is not a reading page and keeps the full width the owner
-   chose for it (2026-09-03), which is why this keys on no report being up. */
+/* THE HOME PAGE USES THE SCREEN (owner, #770, measured 2026-09-29). It was a centred 72rem column
+   from `xl` (UI review 2026-09-25), which left 57% of a 2560 screen and 72% of a 3840 one empty.
+   Now the pitch sits BESIDE the paste form -- a capped paragraph belongs beside something
+   (DESIGN.md, the Empty Band) -- and the form takes the rest of the row. A returning reader has no
+   pitch, and the form keeps the whole row. The explainer below runs in two columns, each section
+   kept whole. The REPORT keeps the full width the owner chose for it (2026-09-03). */
 @media (min-width: 80rem) {
-  html[data-route="home"]:not([data-report]) #root main,
-  html[data-route="home"]:not([data-report]) .intro {
-    max-width: 72rem;
-    margin-inline: auto;
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-pitch) {
+    display: grid;
+    grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+    column-gap: 4rem;
+    align-items: start;
   }
+  html[data-route="home"]:not([data-report]) #root main:has(> .home-pitch) > :not(.home-pitch) {
+    grid-column: 2;
+  }
+  html[data-route="home"]:not([data-report]) .intro {
+    columns: 2;
+    column-gap: 4rem;
+  }
+  html[data-route="home"]:not([data-report]) .intro > * { break-inside: avoid; }
+  html[data-route="home"]:not([data-report]) .intro > h2 { break-after: avoid; }
 }
 
 /* THE DEVICES USE THE WIDTH; THE PROSE KEEPS ITS MEASURE. `.intro`'s block children are otherwise

@@ -431,7 +431,7 @@ export default function App() {
         *  own button row, where it is an action on the form rather than part of the pitch. Both are gated on the
         *  same `firstVisit`, so a reader who has pasted anything sees neither. */}
       {firstVisit && (
-        <div className="flex flex-col gap-3">
+        <div className="home-pitch flex flex-col gap-3">
           <h2 className="max-w-[22ch] text-3xl sm:text-4xl font-bold tracking-[-0.02em] text-(--foreground)">
             Paste a Commander deck and see which cards work together.
           </h2>

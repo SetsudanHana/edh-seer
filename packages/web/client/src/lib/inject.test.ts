@@ -6,6 +6,7 @@ import {
   groupPartnerRows,
   BROWSE_LETTERS, browseIndexHtml, browseLetterHtml, browseSegment, cardPageHtml, groupDirection,
   htmlHeaders, injectPage, withheldFrom, type InjectableCard,
+  withheldVerb,
 } from "./inject.js";
 
 /** THE REAL SHELL, not a fixture of one. Every replacement here is a regex against tags this repo
@@ -117,8 +118,8 @@ test("the static block prints how many cards can cause each event, per group", (
   // AND THE COUNT SAYS WHOSE IT IS (2026-09-22): every row here ASKS, so this page's card is one of
   // the cards that cause the event -- the reason those rows are its partners at all.
   // #755: and it names the population it counts, so it is not read as the size of the list.
-  expect(html).toContain("a creature token enters the battlefield — 1,234 cards in the game can cause this, Krenko, Mob Boss among them.");
-  expect(html).toContain("a creature dies — 1,451 cards in the game can cause this, Krenko, Mob Boss among them.");
+  expect(html).toContain("a creature token enters the battlefield — 1,234 cards in the game can cause this (Krenko is one).");
+  expect(html).toContain("a creature dies — 1,451 cards in the game can cause this (Krenko is one).");
   // One list per event, the count directly above its own list.
   expect(html.match(/<ol>/g)).toHaveLength(2);
   expect(html.indexOf("1,234 cards")).toBeLessThan(html.indexOf("purphoros-god-of-the-forge"));
@@ -681,4 +682,11 @@ test("partner rows group by event, read rows first", () => {
   const groups = groupPartnerRows([row("A", "e1", true), row("B", "e2"), row("C", "e1"), row("D", "e1", true), row("E", "e1")]);
   expect(groups.map((g) => g.event)).toEqual(["e1", "e2"]);
   expect(groups[0]!.rows.map((r) => r.name)).toEqual(["C", "E", "A", "D"]);
+});
+
+test("the withheld line agrees with its number", () => {
+  expect(withheldVerb("asks", 1)).toBe("other card cares about it too");
+  expect(withheldVerb("asks", 36)).toBe("other cards care about it too");
+  expect(withheldVerb("causes", 1)).toBe("other card causes it too");
+  expect(withheldVerb("feeds", 2)).toBe("other cards use it too");
 });

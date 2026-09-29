@@ -149,7 +149,7 @@ test("an asker group's cause count names this page's card among the causes; a pr
       }]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText(/cards in the game can cause this, Inalla, Archmage Ritualist among them/)).toBeInTheDocument();
+  expect(screen.getByText(/cards in the game can cause this \(Inalla is one\)/)).toBeInTheDocument();
   asker.unmount();
   // #755: on a commander page the figure is scoped to its colours, and the line says so.
   const onCommander = render(
@@ -160,7 +160,7 @@ test("an asker group's cause count names this page's card among the causes; a pr
       }]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText(/cards in Inalla, Archmage Ritualist's colours can cause this/)).toBeInTheDocument();
+  expect(screen.getByText(/cards in Inalla's colours can cause this \(Inalla is one\)/)).toBeInTheDocument();
   onCommander.unmount();
   render(
     <MemoryRouter>
@@ -171,7 +171,7 @@ test("an asker group's cause count names this page's card among the causes; a pr
     </MemoryRouter>,
   );
   expect(screen.getByText(/cards in the game can cause this$/)).toBeInTheDocument();
-  expect(screen.queryByText(/among them/)).toBeNull();
+  expect(screen.queryByText(/is one\)/)).toBeNull();
 });
 
 // ---------------------------------------------------------------------------------------------
