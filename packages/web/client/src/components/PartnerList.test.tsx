@@ -149,8 +149,19 @@ test("an asker group's cause count names this page's card among the causes; a pr
       }]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText(/cards can cause this, Inalla, Archmage Ritualist among them/)).toBeInTheDocument();
+  expect(screen.getByText(/cards in the game can cause this, Inalla, Archmage Ritualist among them/)).toBeInTheDocument();
   asker.unmount();
+  // #755: on a commander page the figure is scoped to its colours, and the line says so.
+  const onCommander = render(
+    <MemoryRouter>
+      <PartnerList subject="Inalla, Archmage Ritualist" identity={["U", "B", "R"]} pool={{}} rarity={{ "enters|creature|wizard|-": 17 }} empty="none" rows={[{
+        name: "Diviner's Wand", slug: "diviners-wand", score: 0.2, event: "enters|creature|wizard|-",
+        reason: "Whenever a Wizard creature enters, Diviner's Wand may attach to it",
+      }]} />
+    </MemoryRouter>,
+  );
+  expect(screen.getByText(/cards in Inalla, Archmage Ritualist's colours can cause this/)).toBeInTheDocument();
+  onCommander.unmount();
   render(
     <MemoryRouter>
       <PartnerList subject="Impact Tremors" pool={{}} rarity={{ "enters|creature|-|-": 4 }} empty="none" rows={[{
@@ -159,7 +170,7 @@ test("an asker group's cause count names this page's card among the causes; a pr
       }]} />
     </MemoryRouter>,
   );
-  expect(screen.getByText(/cards can cause this$/)).toBeInTheDocument();
+  expect(screen.getByText(/cards in the game can cause this$/)).toBeInTheDocument();
   expect(screen.queryByText(/among them/)).toBeNull();
 });
 

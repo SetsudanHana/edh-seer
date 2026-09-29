@@ -78,9 +78,9 @@ export function CardPeek({ load, surface = "card" }: {
         )}
         <button ref={closeButton} type="button" className="btn-secondary ml-auto" onClick={() => peek.close()}>Close</button>
       </div>
-      {page === undefined && <p id="peek-title" className="eyebrow text-(--muted)">reading the corpus</p>}
+      {page === undefined && <p id="peek-title" className="eyebrow text-(--muted)">loading the card</p>}
       {page === null && (
-        <p id="peek-title" className="text-(--muted)">This card is not in the corpus the engine has read.</p>
+        <p id="peek-title" className="text-(--muted)">We have not read this card yet.</p>
       )}
       {page && (
         <div className="peek-body">
@@ -95,7 +95,7 @@ export function CardPeek({ load, surface = "card" }: {
           </h3>
           <p className="text-(--muted) text-sm"><TypeLine line={page.typeLine} /></p>
           <div className="flex flex-col gap-2">
-            <p className="eyebrow text-(--muted)">how the engine reads this card</p>
+            <p className="eyebrow text-(--muted)">how we read this card</p>
             <AbilityTable rows={page.abilities} stacked />
           </div>
           {page.partners.length > 0 && (

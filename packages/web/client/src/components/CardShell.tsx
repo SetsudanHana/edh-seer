@@ -104,7 +104,7 @@ export function CardShell({ page, slug, surface, children, railExtra, peekLoad }
             <div className="hidden lg:flex lg:flex-col gap-3">
               {/* A label, not a heading: the rail is the card's, and a screen reader's heading list
                 *  should carry the page's sections, not the rail's captions (cohesion sweep). */}
-              <p className="eyebrow text-(--muted)">how the engine reads this card</p>
+              <p className="eyebrow text-(--muted)">how we read this card</p>
               {/* THE CLAUSE IS THE SPINE SINCE AJ4: the rail's ability table became the card's own
                 * lines, each carrying what it derived and what that produces or waits for. */}
               <EngineReading clauses={page.clauses} abilities={page.abilities} rarity={page.rarity}

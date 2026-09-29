@@ -39,7 +39,7 @@ describe("CardInspector", () => {
 
   it("says so plainly when a card has no edges at all", () => {
     render(<CardInspector node={node} edges={[]} onClose={() => {}} />);
-    expect(screen.getByText(/no synergy edges/i)).toBeInTheDocument();
+    expect(screen.getByText(/nothing else in the deck works with this card/i)).toBeInTheDocument();
   });
 
   // An edge is directed and this panel shows BOTH directions -- a card is the producer on some of
@@ -162,7 +162,7 @@ describe("CardInspector", () => {
     const fold = screen.getByTestId("inspector-links") as HTMLDetailsElement;
     expect(fold.open).toBe(false);
     expect(fold).toContainElement(screen.getByRole("heading", { name: /^What it causes · \d+$/ }));
-    expect(fold.querySelector("summary")!.textContent).toMatch(/^Every link, in the engine’s words · \d+$/);
+    expect(fold.querySelector("summary")!.textContent).toMatch(/^Every way it works with your other cards · \d+$/);
   });
 
   // THE ROOT CAN BE TRUNCATED ON BOTH WALKS AT ONCE -- keying by id alone let the upstream walk's

@@ -44,7 +44,7 @@ test("the page reads down the card, clause by clause", async () => {
   at("krenko-mob-boss", async () => ({ ...KRENKO, clauses: [
     { id: 1, text: "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control." },
   ] }));
-  expect((await screen.findAllByRole("heading", { level: 2, name: /How the engine reads this card/ })).length).toBeGreaterThan(0);
+  expect((await screen.findAllByRole("heading", { level: 2, name: /How we read this card/ })).length).toBeGreaterThan(0);
   expect(screen.getAllByText(/Create X 1\/1 red Goblin creature tokens/).length).toBeGreaterThan(0);
 });
 
@@ -168,7 +168,7 @@ test("a card with no image renders without one", async () => {
  *  ranking was broken. It was not; the evidence was missing. */
 test("a group states the rarity its ranking is computed from", async () => {
   at("krenko-mob-boss", async () => KRENKO);
-  const line = await screen.findByText(/cards can cause this/);
+  const line = await screen.findByText(/cards in the game can cause this/);
   expect(line.textContent).toMatch(/2,879/);
 });
 
@@ -196,7 +196,7 @@ test("an empty ability table says the engine read nothing on this card", async (
   at("faceless-one", async () => ({ ...KRENKO, name: "Faceless One", abilities: [], emits: [], demands: [], partners: [] }));
   // THE CARD-LEVEL EMPTY STATE (roadmap W10): an empty reading is where a wrong "no ability" can
   // be seen at all. AJ4's C3 bans copy under an individual clause, which is a different statement.
-  expect((await screen.findAllByText(/read nothing on this card/i)).length).toBeGreaterThan(0);
+  expect((await screen.findAllByText(/could not read anything on this card/i)).length).toBeGreaterThan(0);
 });
 
 /** BOTH SIDES OF A TWO-FACED CARD, BECAUSE THE IMAGE IS THE ONLY COPY OF THE RULES TEXT.

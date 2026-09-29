@@ -76,6 +76,49 @@ export function promoteSpecificHeadline(
   return [best.tag, ...ranked.filter((t) => t !== best!.tag)];
 }
 
+/**
+ * THE MIRROR OF THE PROMOTION RULE -- a headline naming a KIND nothing in the deck watches for
+ * gives the head to the card type the deck's payoffs DO watch (owner, 2026-09-29, #748: "I would go
+ * with Enchantress"). `yuna-hope-of-spira` read "sagas entering" [12 cards, 0 payoffs] over
+ * "enchantments entering" [8 cards, 3 cares]: its Sagas are enchantments, and what the deck's
+ * enchantress cards pay off is an enchantment entering, whichever kind it is.
+ *
+ * Same guard as `promoteSpecificHeadline`, read the other way: nothing in the deck watches the
+ * head's kind under any event, the general sibling has payoffs, and it clears the carried floor.
+ * Measured on the 71 decks, it moves Yuna alone. Only the card type the CR
+ * assigns the subtype (`SUBTYPE_TYPES`) is a sibling here, never `any`.
+ */
+export function generalizeWatchlessHeadline(
+  ranked: readonly string[],
+  deckFreq: ReadonlyMap<string, number>,
+  membership: readonly ThemeMembership[],
+  floor: number,
+  /** Every tag some card in the deck CARES about (`cardCaresTags`), payoff or not. */
+  cared: ReadonlySet<string> = new Set(),
+): string[] {
+  const head = ranked[0];
+  const parts = head === undefined ? undefined : split(head);
+  if (!parts) return [...ranked];
+  const [verb, value] = parts;
+  const types = SUBTYPE_TYPES[value];
+  // A CREATURE TYPE IS A TRIBE, and a tribe names its deck even when its lords are static and watch
+  // no event: the first cut renamed four tribal decks (Walls, Constructs, Eldrazi, Shapeshifters)
+  // "creatures entering", measured on the 71 decks.
+  if (GENERAL.has(value) || !types || types.includes("creature")) return [...ranked];
+  const payoffs = new Map(membership.map((m) => [m.tag, m.payoffs.length] as const));
+  // WATCHED BY NOTHING, UNDER ANY EVENT: Lynde's cards pay off a curse she attached, not a curse
+  // entering, and the first cut renamed that deck "enchantments entering".
+  if (membership.some((m) => split(m.tag)?.[1] === value && m.payoffs.length > 0)) return [...ranked];
+  if ([...cared].some((t) => split(t)?.[1] === value)) return [...ranked];
+  const general = ranked.find((t) => {
+    const p = split(t);
+    return p !== undefined && p[0] === verb && types.includes(p[1])
+      && (deckFreq.get(t) ?? 0) >= floor && (payoffs.get(t) ?? 0) > 0;
+  });
+  if (!general) return [...ranked];
+  return [general, ...ranked.filter((t) => t !== general)];
+}
+
 /** A tag that is TRUE of the deck and says nothing a deckbuilder can act on.
  *
  *  Two kinds, both measured on the 71 calibration decks rather than guessed:

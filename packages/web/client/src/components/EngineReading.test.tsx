@@ -66,5 +66,5 @@ test("an event links to its partner group, and only when there is one", () => {
  *  can be seen at all -- 117 derived commanders carried zero abilities. */
 test("a card the engine read nothing on says so", () => {
   render(<EngineReading abilities={[]} />);
-  expect(screen.getByText(/read nothing on this card/i)).toBeInTheDocument();
+  expect(screen.getByText(/could not read anything on this card/i)).toBeInTheDocument();
 });

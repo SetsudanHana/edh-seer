@@ -79,7 +79,7 @@ export function speedRoutes(report: DeckReport, manaValueOf: (name: string) => n
       kind: "combat", label: combat.map((c) => COMBAT[c.class]!).join(" or "), turn: clock, cards: combat.flatMap((c) => c.cards ?? []),
       caveat: clock
         ? "enough attacking power to kill one opponent, if nobody blocks and nothing is removed"
-        : "not timed: the deck does not put enough power on the board in the modelled turns",
+        : "not timed: in our test games the deck never puts enough power on the board",
     });
   }
 

@@ -99,7 +99,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
     return () => { live = false; };
   }, [withSlug, licensed, load]);
 
-  if (page === undefined) return <p className="eyebrow text-(--muted)">reading the corpus</p>;
+  if (page === undefined) return <p className="eyebrow text-(--muted)">loading the card</p>;
   if (page === null) return <NotFound slug={slug} kind="commander" />;
 
   // THE URL IS GUESSABLE, so a reader will arrive here for Sol Ring. Saying what is wrong with the
@@ -173,9 +173,9 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         ) : null}
         {unread ? (
           <p className="text-(--muted) max-w-[65ch]">
-            The engine read nothing on this card: no ability it could derive, so no events, no
-            gaps and no connections to rank. Either the card prints only keywords, or its text is one
-            the engine cannot yet read. The card page shows which.
+            We could not read anything on this card yet, so we cannot say what it makes happen,
+            what your deck lacks for it, or what to add. Either the card only has keyword abilities
+            like flying, or its text is one we cannot read yet. The card page shows which.
           </p>
         ) : (<>
         <p>
@@ -250,7 +250,7 @@ export function CommanderPage({ load }: { load?: (slug: string) => Promise<CardP
         * open, it puts the partners over a thousand pixels down a 390px screen. */}
       <details className="lg:hidden group/reads flex flex-col gap-3">
         <summary className="cursor-pointer list-none flex items-center gap-2 w-fit">
-          <h2 className="text-2xl font-bold tracking-[-0.01em]">How the engine reads this card</h2>
+          <h2 className="text-2xl font-bold tracking-[-0.01em]">How we read this card</h2>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className="transition-transform duration-150 ease-out group-open/reads:rotate-180 motion-reduce:transition-none">
             <path d="m6 9 6 6 6-6" />
           </svg>

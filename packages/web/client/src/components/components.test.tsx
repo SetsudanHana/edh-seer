@@ -301,12 +301,12 @@ test("the pairs behind a group name cards you can open", () => {
 
 test("ArchetypeBoard shows an empty-state message when there are no groups", () => {
   render(<ArchetypeBoard archetypes={[]} />);
-  expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
+  expect(screen.getByText(/No plan stands out yet/)).toBeInTheDocument();
 });
 
 test("ArchetypeBoard shows the empty-state message when archetypes is undefined", () => {
   render(<ArchetypeBoard archetypes={undefined} />);
-  expect(screen.getByText(/No recognizable archetype patterns/)).toBeInTheDocument();
+  expect(screen.getByText(/No plan stands out yet/)).toBeInTheDocument();
 });
 
 /** T15: one panel, one identity claim. The board used to head its two lists "Strategies" and the
@@ -322,7 +322,7 @@ test("the board states that the theme leads and nothing under it competes", () =
   // from behind a disclosure -- which is stronger for T15, not weaker: the line a reader needs is
   // now the one they cannot miss.
   expect(screen.getByText(/neither is a ranking/)).toBeInTheDocument();
-  expect(screen.getByText("Archetypes")).toBeInTheDocument();
+  expect(screen.getByText("Plans")).toBeInTheDocument();
   expect(screen.getByText("Tokens")).toBeInTheDocument();
   expect(screen.getByText("74%")).toBeInTheDocument();
 });
@@ -2218,7 +2218,7 @@ test("the strategy list says why the deck's own theme need not appear in it", as
   const user = userEvent.setup();
   render(<ArchetypeBoard strategies={SAMPLE.report.strategies} archetypes={SAMPLE.report.archetypes} />);
   await user.click(screen.getByText("what the percentages count"));
-  expect(screen.getByText(/named archetypes from a fixed list/)).toBeInTheDocument();
+  expect(screen.getByText(/These plans come from a fixed list/)).toBeInTheDocument();
   expect(screen.getByText(/will often not be one of these names/)).toBeInTheDocument();
 });
 
@@ -2404,7 +2404,7 @@ test("wants vs supplies leads with the unmet ones and folds the rest", () => {
 // sentence, a reader takes Sol Ring at 0.3 as a verdict.
 test("CardList says what the rating is measured against", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
-  expect(screen.getByText(/Scored against this deck's best synergy card/)).toBeInTheDocument();
+  expect(screen.getByText(/Scored against the card in this deck that works with the most others/)).toBeInTheDocument();
   expect(screen.getByText(/score low on purpose/)).toBeInTheDocument();
 });
 
@@ -2439,8 +2439,8 @@ test("CardList filters by name", async () => {
 test("ArchetypeBoard says what its percentages count", () => {
   render(<ArchetypeBoard strategies={SAMPLE.report.strategies} archetypes={SAMPLE.report.archetypes} />);
   expect(screen.getByText("what the percentages count")).toBeInTheDocument();
-  expect(screen.getByText(/share of the deck's nonland cards/)).toBeInTheDocument();
-  expect(screen.getByText(/do not add to 100%/)).toBeInTheDocument();
+  expect(screen.getByText(/share of your nonland cards/)).toBeInTheDocument();
+  expect(screen.getByText(/do not add up to 100%/)).toBeInTheDocument();
 });
 
 // The castability range was explained in a footnote on a DIFFERENT tab, so on this one it was two
@@ -2449,8 +2449,8 @@ test("CardList explains the cost range on the tab that prints it", () => {
   render(<CardList cards={SAMPLE.report.cards} />);
   expect(screen.getByText("what the cost figures mean")).toBeInTheDocument();
   // The figure is CASTABILITY now — mana and colours together — and the range is the play policy.
-  expect(screen.getByText(/mana and colours together/)).toBeInTheDocument();
-  expect(screen.getByText(/holds up two mana/)).toBeInTheDocument();
+  expect(screen.getByText(/in the right colours/)).toBeInTheDocument();
+  expect(screen.getByText(/keeps two mana open/)).toBeInTheDocument();
 });
 
 // --- F10 / F11: saying a thing once. ---

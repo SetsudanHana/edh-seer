@@ -32,7 +32,7 @@ test("the manabase opens with one tile per question, flagging what is short", ()
 test("a deck short of nothing says so", () => {
   const fine = { lands: { actual: 37, target: 37 }, colors: [{ color: "G", supplied: 30 }], castability: { cards: [] } } as never;
   render(<ManaGlance deckMath={fine} landCount={37} deckSize={100} />);
-  expect(screen.getByText("wants 37: on the modelled count")).toBeInTheDocument();
+  expect(screen.getByText("wants 37: right on target")).toBeInTheDocument();
   expect(screen.getByText("enough sources for every card")).toBeInTheDocument();
 });
 

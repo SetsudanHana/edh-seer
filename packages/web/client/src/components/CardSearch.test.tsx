@@ -779,7 +779,7 @@ test("typing an effect no event can ask says so in the picker", async () => {
   await userEvent.type(screen.getByLabelText("Find an event"), "ramp");
   expect(await screen.findByTestId("unaskable-note")).toHaveTextContent(/Making mana \(ramp\) can't be searched here yet/);
   // The generic "no event matches" line does not repeat it.
-  expect(screen.queryByText(/No event matches that/)).toBeNull();
+  expect(screen.queryByText(/Nothing matches that/)).toBeNull();
   await userEvent.clear(screen.getByLabelText("Find an event"));
   await userEvent.type(screen.getByLabelText("Find an event"), "mill");
   expect(screen.queryByTestId("unaskable-note")).toBeNull();

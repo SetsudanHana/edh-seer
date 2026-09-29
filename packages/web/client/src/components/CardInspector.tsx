@@ -339,12 +339,12 @@ export function CardInspector({
         *  summary above says what a player reads; every link is still one tap away. */}
       {sorted.length === 0 ? (
         <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
-          <h4 className="eyebrow text-(--muted)">Synergy edges</h4>
-          <p className="text-(--muted)">No synergy edges — nothing else in the deck connects to this card.</p>
+          <h4 className="eyebrow text-(--muted)">Links</h4>
+          <p className="text-(--muted)">No links: nothing else in the deck works with this card.</p>
         </div>
       ) : (
         <details className="border-t border-(--separator) pt-2" data-testid="inspector-links">
-          <summary className="cursor-pointer min-h-9 flex items-center text-(--muted)">Every link, in the engine&rsquo;s words · {sorted.length}</summary>
+          <summary className="cursor-pointer min-h-9 flex items-center text-(--muted)">Every way it works with your other cards · {sorted.length}</summary>
           <div className="flex flex-col gap-2 pt-1">
       <div className="border-t border-(--separator) pt-2 flex flex-col gap-2">
         {sorted.length === 0 ? null : (
