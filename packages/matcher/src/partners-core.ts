@@ -943,8 +943,10 @@ const clauseTextsOf = (d: DeckCard): { id: number; text: string; face?: number }
 
 /** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
  *  appear on the card -- so the table reads down the card the way a player does. */
-export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
-  abilitiesOf(d).map((a) => {
+export const abilityRowsOf = (d: DeckCard): AbilityRow[] => {
+  const all = abilitiesOf(d);
+  const clauseOf = keywordClauses(d, all);
+  return all.map((a) => ({ ...a, ...(a.clause === undefined && clauseOf.has(a) ? { clause: clauseOf.get(a)! } : {}) })).map((a) => {
     const counted = a.effect?.scalingSubject;
     // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
     const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
@@ -974,6 +976,34 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
       ...(selfEmits.length > 0 ? { selfEmits } : {}),
     };
   });
+};
+
+/** A KEYWORD'S ABILITY SITS UNDER THE LINE THAT PRINTS IT (#756, owner ruling 2026-09-29). An ability
+ *  `keywordAbilities` gives a card carries no clause id -- it was read off the keyword, not the
+ *  sentence -- so it rendered at the bottom under "read off the card itself" while the reader could
+ *  see "Start your engines!" printed on the card. The clause whose text BEGINS with the keyword is
+ *  that line; a keyword no clause begins with (granted, or only in reminder text) stays at the
+ *  bottom. Keyed by the ability object, so it survives the concatenation in `abilitiesOf`. */
+function keywordClauses(d: DeckCard, all: CardTags["abilities"]): Map<CardTags["abilities"][number], number> {
+  const out = new Map<CardTags["abilities"][number], number>();
+  const chars = d.tags?.characteristics;
+  if (!chars?.keywords?.length) return out;
+  const clauses = clauseTextsOf(d);
+  // Re-derived one keyword at a time, to learn which keyword each implied ability came from. The
+  // results are matched to `abilitiesOf`'s own objects by position, which is the same order.
+  const own = all.slice(d.tags!.abilities.length);
+  const counts = chars.keywords.map((k) => keywordAbilities({ ...chars, keywords: [k] }).length);
+  // One keyword at a time must add up to all of them at once, or the positions cannot be trusted.
+  if (counts.reduce((a, b) => a + b, 0) !== own.length) return out;
+  let at = 0;
+  for (const [ki, k] of chars.keywords.entries()) {
+    const n = counts[ki]!;
+    const word = String(k).toLowerCase().trim();
+    const line = clauses.find((c) => c.text.toLowerCase().startsWith(word));
+    for (let i = 0; i < n; i++, at++) if (line && own[at]) out.set(own[at]!, line.id);
+  }
+  return out;
+}
 
 /** EVERY ABILITY THE ENGINE READS ON THE CARD: the derived ones and the ones its printed keywords
  *  give it (`keywordAbilities` -- prowess, extort, Start your engines!). Edge formation has always

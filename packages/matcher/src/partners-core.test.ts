@@ -2049,3 +2049,21 @@ test("a card not legal in Commander has a page but is never suggested, listed or
   const bannedFreq = buildPartnerArtifact([banned, impactTremors], H).freq;
   for (const k of krenkoKeys) expect(bannedFreq[k] ?? 0).toBe(without[k] ?? 0);
 });
+
+// #756 (owner ruling 2026-09-29): a keyword's ability sits under the printed line that starts with
+// the keyword, not at the bottom under "read off the card itself".
+test("a keyword ability takes the clause that prints the keyword", () => {
+  const samut = base("Samut, the Driving Force", [{
+    kind: "static", clause: 2, effect: { kind: "pump", subject: { control: "you", token: null, type: "creature", scope: "all" } },
+  }] as unknown as CardTags["abilities"], ["human"]);
+  samut.tags!.characteristics.keywords = ["Start your engines!"];
+  (samut.card as { oracleText: string; keywords: string[] }).oracleText =
+    "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when an opponent loses life. Max speed is 4.)\nOther creatures you control get +X/+0, where X is your speed.";
+  (samut.card as { keywords: string[] }).keywords = ["Start your engines!"];
+  const rows = abilityRowsOf(samut);
+  const speed = rows.find((r) => r.effect === "speed")!;
+  expect(speed.clause).toBe(1);
+  // A keyword no line begins with stays at the bottom.
+  samut.tags!.characteristics.keywords = ["Start your engines!", "prowess"];
+  expect(abilityRowsOf(samut).filter((r) => r.clause === undefined).map((r) => r.effect)).not.toContain("speed");
+});
