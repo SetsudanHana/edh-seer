@@ -21,6 +21,7 @@ import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-condit
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
 import { BASIC_LAND_TYPE_SET, SUPERTYPES, parseTypeLineAllFaces } from "./typeline.js";
 import { enteringFaceName, faceDeckCards } from "./faces.js";
+import { magnitudeOf, mergeMagnitude } from "./edge-magnitude.js";
 import type { LandTypes } from "./chosen-type.js";
 
 const list = (v: string | string[] | undefined): string[] =>
@@ -1081,14 +1082,18 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
   // wins -- the text re-supplies the entry -- and the claim stays one row, as before the split.
   const byClaim = new Map<string, number>();
   for (const r of reasons) {
-    const claim = JSON.stringify({ ...r, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined });
-    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined });
+    // `magnitude` is display data on a claim, never a claim of its own (edge magnitude, 2026-09-29):
+    // two readings of one claim collapse as before and keep the larger magnitude.
+    const claim = JSON.stringify({ ...r, repeatability: undefined, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined });
+    const k = JSON.stringify({ ...r, impliedProducer: undefined, producerAbility: undefined, consumerAbility: undefined, magnitude: undefined });
     const at = byClaim.get(claim);
     // Only a ONCE against a repeatable tag is this split; two repeatable tags (triggered and
     // activated) were two rows before and stay two. The merged row's key is recorded, so a later
     // exact duplicate of it (another ability index) still collapses.
     if (at !== undefined && (out[at]!.repeatability === "oneshot") !== (r.repeatability === "oneshot")) {
       if (r.repeatability !== "oneshot") out[at] = { ...out[at]!, repeatability: r.repeatability };
+      const m = mergeMagnitude(out[at]!.magnitude, r.magnitude);
+      if (m) out[at] = { ...out[at]!, magnitude: m };
       seen.add(k);
       continue;
     }
@@ -1097,7 +1102,10 @@ export function dedupeReasons(reasons: Reason[]): Reason[] {
     // CEILING: on the CONSUMER side too -- one event firing the consumer's abilities 0 and 2 keeps 0,
     // so a route continuing through ability 2 is not found. Split per ability only with a measured
     // before/after, since it would change the reason list the panel reads.
-    if (!seen.has(k)) { seen.add(k); byClaim.set(claim, out.length); out.push(r); }
+    if (!seen.has(k)) { seen.add(k); byClaim.set(claim, out.length); out.push(r); continue; }
+    const at2 = byClaim.get(claim);
+    const m = at2 !== undefined ? mergeMagnitude(out[at2]!.magnitude, r.magnitude) : undefined;
+    if (m && at2 !== undefined) out[at2] = { ...out[at2]!, magnitude: m };
   }
   return out;
 }
@@ -1155,6 +1163,9 @@ function stampSides(r: Reason, producer: DeckCard, consumer: DeckCard): Reason {
     // keeps a front-face reason byte-identical to what this engine produced before faces were nodes.
     ...(producer.face ? { producerFace: producer.face } : {}),
     ...(consumer.face ? { consumerFace: consumer.face } : {}),
+    // EDGE MAGNITUDE (spec 2026-09-29), read off the nodes the reason was made between, whose
+    // ability lists the reason's indices point into. Absent = the 1–1 default or a relation.
+    ...((m) => (m ? { magnitude: m } : {}))(magnitudeOf(r, producer, consumer)),
   };
 }
 

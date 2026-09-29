@@ -45,6 +45,7 @@ const TESTED: Record<string, string> = {
   "903.5a": "legality.test.ts — 903.5a counts COPIES; Yorion can never be met in a 100-card format",
   "702.73a": "legality.test.ts — 702.73a: Kaheera accepts a changeling as every creature type",
   "712.8a": "legality.test.ts — 712.8a: Umori reads a double-faced card by its FRONT face",
+  "603.2c": "edge-magnitude.test.ts — a batched ('one or more') consumer hears the whole batch once, so the magnitude caps at one",
   "202.3": "stats.test.ts — mana value is a whole number, so a mana-value parity test holds and 0 is even (#713)",
   "712.14": "faces.test.ts — a card putting itself back onto the battlefield enters FRONT face up unless transformed (#715)",
 };

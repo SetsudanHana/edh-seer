@@ -814,6 +814,22 @@ export type Repeats = "once" | "per-cycle" | "per-turn" | "repeatable" | "contin
 export type Marker = "speed" | "monarch" | "initiative" | "blessing" | "dungeon" | "night";
 export interface Requirement { marker: Marker; min: number }
 
+/** HOW MANY EVENTS ONE USE OF THE ABILITY SUPPLIES (edge magnitude spec 2026-09-29). The owner's
+ *  example: Grand Crescendo at X = 6 fires Impact Tremors six times, an 8-mana creature once. An
+ *  interval, never a point: "if you have infinite mana you can create infinite creatures". Absent
+ *  when the amount is not recorded -- the matcher reads that as 1 and flags it. */
+export interface EventCount {
+  /** Events guaranteed per use. */
+  floor: number;
+  /** Events at most per use; null = unbounded. */
+  ceiling: number | null;
+  /** What an open ceiling grows with: X ("mana"), or the class a "for each" / board-wide effect counts. */
+  scalesWith?: "mana" | SubjectFilter;
+  /** A replacement that repeats the improved effect's own count ("twice that many"): the matcher
+   *  reads the IMPROVED ability's count in its place. */
+  sameAsImproved?: true;
+}
+
 export interface Ability {
   kind: AbilityKind;
   /** WHICH FACE PRINTS THIS ABILITY — absent for the front face and for every single-face card,
@@ -837,6 +853,9 @@ export interface Ability {
   trigger?: {
     verbs: Verb[];
     subject: SubjectFilter;
+    /** "Whenever ONE OR MORE ... enter": one firing per batch, however many objects it holds
+     *  (CR 603.2c). Read on the trigger SUBJECT only. */
+    batched?: true;
     /** HOW BIG THE EVENT MUST BE: Ghyrson Starn's "deals exactly 1 damage" (`eq` 1), Dragonborn
      *  Champion's "deals 5 or more damage" (`gte` 5). Damage triggers only, read off the printed
      *  trigger head (`derive/event-amount.ts`). The matcher compares it with a damage producer's
@@ -956,6 +975,8 @@ export interface Ability {
    *  Unset when the action states no amount. Never defaulted to 1 — "draw a card" and "draw 1 card"
    *  are the same fact, but "no amount recorded" and "amount is one" are not. */
   amount?: string;
+  /** The events one use supplies, parsed from `amount` and the emit (edge magnitude, DERIVE 199). */
+  count?: EventCount;
   /** THE PAYMENT THAT STOPS THIS ABILITY'S EFFECT (CR 118.12a), verbatim from the clause: Rhystic
    *  Study draws "unless that player pays {1}", a counterspell counters "unless its controller pays
    *  {3}", an upkeep cost sacrifices "unless you pay {W}{W}". The effect is what happens when the

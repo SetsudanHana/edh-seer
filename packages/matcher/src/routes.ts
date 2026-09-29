@@ -1,9 +1,12 @@
-import type { Reason } from "@edh-seer/engine";
+import type { EdgeMagnitude, Reason } from "@edh-seer/engine";
+import { routeMagnitude } from "./edge-magnitude.js";
 
 /** One step of a route: the engine's own reason, and the abilities it leaves and lands on. */
-export interface RouteHop { from: string; to: string; fromAbility?: number; toAbility?: number; tag: string; text: string }
+export interface RouteHop { from: string; to: string; fromAbility?: number; toAbility?: number; tag: string; text: string; magnitude?: EdgeMagnitude }
 /** A card reaching another, hop by hop. */
-export interface Route { from: string; to: string; hops: RouteHop[] }
+/** `magnitude`: the product of the hops' (edge magnitude, 2026-09-29) -- Krenko's Command -> Goblin
+ *  -> Impact Tremors is 2. */
+export interface Route { from: string; to: string; hops: RouteHop[]; magnitude?: EdgeMagnitude }
 
 /** THE REASONS A ROUTE CAN USE, by producer card: a search scans only the hops leaving the card it is
  *  at. Built once and extended per candidate by the suggestion check, which asks many questions of
@@ -64,9 +67,15 @@ export function findRoutes(reasons: readonly Reason[] | RouteIndex, from: string
           from: r.producer!, to: r.consumer!, tag: r.tag, text: r.text,
           ...(r.producerAbility !== undefined ? { fromAbility: r.producerAbility } : {}),
           ...(r.consumerAbility !== undefined ? { toAbility: r.consumerAbility } : {}),
+          ...(r.magnitude ? { magnitude: r.magnitude } : {}),
         };
         const token = r.consumerIsToken === true;
-        if (!token && r.consumer === to) { found.push({ from, to, hops: [...path, hop] }); continue; }
+        if (!token && r.consumer === to) {
+          const hops = [...path, hop];
+          const m = routeMagnitude(hops.map((h) => h.magnitude));
+          found.push({ from, to, hops, ...(m ? { magnitude: m } : {}) });
+          continue;
+        }
         const stop2: Stop = token
           ? { card: r.consumer!, token: true, face: 0, ability: "made" }
           : { card: r.consumer!, token: false, face: r.consumerFace ?? 0, ability: r.consumerAbility! };

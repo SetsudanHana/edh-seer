@@ -3,6 +3,23 @@ import type { Card } from "./card.js";
 import { extractTags, describeTag, type Tag } from "./tags.js";
 import type { ComboIndex } from "./combos.js";
 
+/** HOW MUCH THE PRODUCER FEEDS THE CONSUMER, per use (edge magnitude spec 2026-09-29): consumer
+ *  firings, an interval. Absent on an event-family reason = the default 1–1, not instant; absent on
+ *  a relation-family reason = not an event count at all (see the matcher's `MAGNITUDE_EVENT_FAMILIES`). */
+export interface EdgeMagnitude {
+  floor: number;
+  /** null = unbounded. */
+  ceiling: number | null;
+  /** Display noun for what an open ceiling grows with: "mana", "land you control". */
+  scalesWith?: string;
+  /** The producer acts at instant speed (an instant, flash, or an activation without a sorcery restriction). */
+  instant?: true;
+  /** The consumer hears a batch once ("one or more"). */
+  batched?: true;
+  /** No amount was recorded: read as 1–1 and flagged. */
+  unknown?: true;
+}
+
 export interface Reason {
   /** The tag that produced this reason, or "combo". */
   tag: string;
@@ -65,6 +82,8 @@ export interface Reason {
   /** WHICH ABILITY of the consuming card this relation's event triggers: an index into THAT FACE's
    *  abilities (read with `consumerFace`). Absent for the synthetic keyword / proliferate / copy abilities. */
   consumerAbility?: number;
+  /** Edge magnitude: see `EdgeMagnitude`. Stamped by the matcher's `stampSides`. */
+  magnitude?: EdgeMagnitude;
   /** True when the producer side of this reason was a SYNTHESISED baseline event — the card
    *  supplying it does so merely by existing (any nonland is cast; any permanent enters), not by
    *  an authored effect. Absent when the supply was authored, i.e. surplus. Theme membership

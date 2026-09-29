@@ -3426,3 +3426,34 @@ test("'if you would draw a card ... instead' is a draw replacement, a payoff for
   // It draws nothing of its own: no draw emit from the replacement.
   expect(archive.some((a) => (a.emits ?? []).some((e) => e.verb === "draw"))).toBe(false);
 });
+
+// Edge magnitude (spec 2026-09-29): the count and the batching, as derive records them.
+test("a token maker records its count: Krenko's Command 2, Grand Crescendo X", () => {
+  const krenko = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "create", object: "two 1/1 red Goblin creature tokens", amount: "2" }] }],
+    "Krenko's Command", { 1: "Create two 1/1 red Goblin creature tokens." }).abilities;
+  expect(krenko.find((a) => a.effect.kind === "token-generation")?.count).toEqual({ floor: 2, ceiling: 2 });
+  const crescendo = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "create", object: "X 1/1 green and white Citizen creature tokens", amount: "X" }] }],
+    "Grand Crescendo", { 1: "Create X 1/1 green and white Citizen creature tokens." }).abilities;
+  expect(crescendo.find((a) => a.effect.kind === "token-generation")?.count).toEqual({ floor: 0, ceiling: null, scalesWith: "mana" });
+});
+
+test("'whenever one or more ... enter' is batched; 'whenever a creature enters' is not (CR 603.2c)", () => {
+  const batched = deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "one or more other creatures you control with power 2 or less", control: "you" },
+    actions: [{ verb: "draw", object: "a card" }] }], "Welcoming Vampire",
+    { 1: "Whenever one or more other creatures you control with power 2 or less enter, draw a card." }).abilities;
+  expect(batched[0]?.trigger?.batched).toBe(true);
+  const single = deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "a creature you control", control: "you" },
+    actions: [{ verb: "deal-damage", object: "each opponent", amount: "1" }] }], "Impact Tremors",
+    { 1: "Whenever a creature you control enters, this enchantment deals 1 damage to each opponent." }).abilities;
+  expect(single[0]?.trigger?.batched).toBeUndefined();
+});
+
+test("'one or more' in the EFFECT does not batch the trigger", () => {
+  const out = deriveAbilities([{ id: 1, abilityType: "triggered",
+    trigger: { event: "enters", subject: "a land you control", control: "you" },
+    actions: [{ verb: "create", object: "one or more 1/1 tokens" }] }], "Test Card",
+    { 1: "Whenever a land you control enters, create one or more 1/1 tokens." }).abilities;
+  expect(out[0]?.trigger?.batched).toBeUndefined();
+});

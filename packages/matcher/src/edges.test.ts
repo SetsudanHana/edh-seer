@@ -5780,3 +5780,13 @@ test("a CR 614 multiplier is the producer of its edge, pointing at the card whos
   expect(directedReasons(archive, drake, H).some((r) => r.tag.startsWith("draw"))).toBe(true);
   expect(directedReasons(drake, archive, H).some((r) => r.tag.startsWith("draw"))).toBe(false);
 });
+
+test("reasons differing only in magnitude stay ONE row, with the larger magnitude (pure annotation)", () => {
+  const base = { tag: "enters:creature", text: "When P enters, C draws", producer: "P", consumer: "C", repeatability: "triggered" };
+  const out = dedupeReasons([
+    { ...base, magnitude: { floor: 2, ceiling: 2 } },
+    { ...base, magnitude: { floor: 0, ceiling: null, scalesWith: "mana" } },
+  ] as never);
+  expect(out).toHaveLength(1);
+  expect(out[0]!.magnitude).toEqual({ floor: 0, ceiling: null, scalesWith: "mana" });
+});

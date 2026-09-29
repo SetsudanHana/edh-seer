@@ -88,3 +88,22 @@ test("a prebuilt index answers exactly what the reason list answers", () => {
   // The base index is untouched by the extension.
   expect(findRoutes(index, "A", "B")).toHaveLength(1);
 });
+
+test("a maker -> token -> payoff route carries the maker's count (Krenko's Command -> Goblin -> Impact Tremors = 2)", () => {
+  const reasons = [
+    { tag: "creates:goblin", text: "", producer: "Krenko's Command", consumer: "Goblin", consumerIsToken: true, producerAbility: 0, magnitude: { floor: 2, ceiling: 2 } },
+    { tag: "enters:creature", text: "", producer: "Goblin", consumer: "Impact Tremors", producerIsToken: true, consumerAbility: 0 },
+  ] as never;
+  const [route] = findRoutes(reasons, "Krenko's Command", "Impact Tremors");
+  expect(route?.magnitude).toEqual({ floor: 2, ceiling: 2 });
+  expect(route?.hops[0]?.magnitude).toEqual({ floor: 2, ceiling: 2 });
+});
+
+test("a route's instant comes from its FIRST hop only", () => {
+  const reasons = [
+    { tag: "creates:citizen", text: "", producer: "Grand Crescendo", consumer: "Citizen", consumerIsToken: true, producerAbility: 0, magnitude: { floor: 0, ceiling: null, scalesWith: "mana", instant: true } },
+    { tag: "enters:creature", text: "", producer: "Citizen", consumer: "Impact Tremors", producerIsToken: true, consumerAbility: 0 },
+  ] as never;
+  expect(findRoutes(reasons, "Grand Crescendo", "Impact Tremors")[0]?.magnitude)
+    .toEqual({ floor: 0, ceiling: null, scalesWith: "mana", instant: true });
+});
