@@ -3540,3 +3540,67 @@ test("the self-or-class twin keeps the combat state its condition set (review of
   expect(draws.length).toBeGreaterThan(1);
   for (const d of draws) expect(d.trigger?.subject.combat).toBe("attacking");
 });
+
+// #801 (#726 loop research): a return "at the beginning of the next end step" cannot close a loop this turn.
+test("a return at the beginning of the next end step is delayed; the exile before it and a token's end-step sacrifice are not", () => {
+  const derive = (name: string, clause: object, text: string) => deriveAbilities([{ id: 1, ...clause } as never], name, { 1: text }).abilities;
+  const shirei = derive("Shirei, Shizo's Caretaker", { abilityType: "triggered",
+    trigger: { event: "dies", subject: "a creature you control with power 1 or less", control: "you" },
+    actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }] },
+    "Whenever a creature you control with power 1 or less dies, return that card to the battlefield under its owner's control at the beginning of the next end step.");
+  expect(shirei.find((a) => a.effect.kind === "graveyard-recursion")?.delayedUntil).toBe("next-end-step");
+  const random = derive("Random Encounter", { abilityType: "spell",
+    actions: [{ verb: "exile", object: "any number of target creatures you control" }, { verb: "return", object: "those creatures", toZone: "hand" }] },
+    "At the beginning of the next end step, return those creatures to their owner's hand.");
+  expect(random.find((a) => (a.emits ?? []).some((e) => e.verb === "exiled"))?.delayedUntil).toBeUndefined();
+  const nahiri = derive("Nahiri's Resolve", { abilityType: "triggered", trigger: { event: "upkeep", subject: "you", control: "you" },
+    actions: [{ verb: "exile", object: "any number of creatures you control" }, { verb: "return", object: "those cards", fromZone: "exile", toZone: "battlefield" }] },
+    "At the beginning of your upkeep, exile any number of creatures you control, then return those cards to the battlefield under their owner's control at the beginning of your next upkeep.");
+  expect(nahiri.find((a) => (a.emits ?? []).some((e) => e.verb === "enters"))?.delayedUntil).toBe("next-upkeep");
+  expect(nahiri.find((a) => (a.emits ?? []).some((e) => e.verb === "exiled"))?.delayedUntil).toBeUndefined();
+  const forge = derive("Urabrask's Forge", { abilityType: "triggered", trigger: { event: "beginning-of-combat", subject: "you", control: "you" },
+    actions: [{ verb: "create", object: "an X/1 red Phyrexian Horror creature token with trample and haste", amount: "1" }, { verb: "sacrifice", object: "that token" }] },
+    "At the beginning of combat on your turn, put an oil counter on this artifact, then create an X/1 red Phyrexian Horror creature token with trample and haste, where X is the number of oil counters on this artifact. Sacrifice that token at the beginning of the next end step.");
+  for (const a of forge) expect(a.delayedUntil).toBeUndefined();
+});
+
+// #803 (#726 loop research): what an instant or sorcery sets up happens once -- the spell is gone.
+test("an instant's granted 'when this creature dies, return it' happens once; a permanent's stays repeatable (Undying Malice)", () => {
+  const text = 'Until end of turn, target creature gains "When this creature dies, return it to the battlefield tapped under its owner\'s control with a +1/+1 counter on it."';
+  const clauses = [
+    { id: 1, abilityType: "spell", actions: [{ verb: "grant-ability", object: "that ability" }] },
+    { id: 2, abilityType: "triggered", trigger: { event: "dies", subject: "this creature", control: "you" },
+      actions: [{ verb: "return", object: "it", fromZone: "graveyard", toZone: "battlefield" }, { verb: "add-counter", object: "+1/+1", amount: "1" }] },
+  ] as never;
+  const recursion = (types: string[]) => deriveCardTags({ oracleId: "o", name: "Undying Malice", clauses,
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types }, clauseTexts: { 1: text, 2: "When this creature dies, return it to the battlefield tapped under its owner's control with a +1/+1 counter on it." }, oracleText: text,
+  }).abilities.find((a) => a.effect.kind === "graveyard-recursion");
+  expect(recursion(["instant"])?.repeats).toBe("once");
+  expect(recursion(["enchantment"])?.repeats).not.toBe("once");
+});
+
+test("only the SPELL face's abilities repeat once: Bonecrusher Giant's creature trigger stays repeatable (review of #803)", () => {
+  const tags = deriveCardTags({ oracleId: "o", name: "Bonecrusher Giant // Stomp",
+    clauses: [
+      { id: 1, abilityType: "triggered", trigger: { event: "becomes-target", subject: "this creature", control: "you" }, actions: [{ verb: "deal-damage", object: "that spell's controller", amount: "2" }] },
+      { id: 2, abilityType: "spell", actions: [{ verb: "deal-damage", object: "any target", amount: "2" }] },
+    ] as never,
+    characteristics: { ...MINIMAL_CHARACTERISTICS, types: ["creature", "instant"], layout: "adventure",
+      faces: [{ types: ["creature"], subtypes: ["giant"] }, { types: ["instant"], subtypes: ["adventure"] }] } as never,
+    clauseTexts: { 1: "Whenever this creature becomes the target of a spell, this creature deals 2 damage to that spell's controller.", 2: "Stomp deals 2 damage to any target." },
+    clauseFaces: { 1: 0, 2: 1 },
+  });
+  expect(tags.abilities.find((a) => a.kind === "triggered")?.repeats).not.toBe("once");
+});
+
+test("only the DELAYED return in a clause is delayed; an immediate return beside it is not (Gift of Immortality, Swift Warkite; review of #801)", () => {
+  const gift = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "dies", subject: "enchanted creature", control: "you" },
+    actions: [{ verb: "return", object: "that card", fromZone: "graveyard", toZone: "battlefield" }, { verb: "return", object: "this card", fromZone: "graveyard", toZone: "battlefield" }] }],
+  "Gift of Immortality", { 1: "When enchanted creature dies, return that card to the battlefield under its owner's control. Return this card to the battlefield attached to that creature at the beginning of the next end step." }).abilities
+    .filter((a) => (a.emits ?? []).some((e) => e.verb === "enters"));
+  expect(gift.map((a) => a.delayedUntil)).toEqual([undefined, "next-end-step"]);
+  const warkite = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "enters", subject: "this creature", control: "you" },
+    actions: [{ verb: "put", object: "a creature card with mana value 3 or less", fromZone: "hand", toZone: "battlefield" }, { verb: "return", object: "it", toZone: "hand" }] }],
+  "Swift Warkite", { 1: "When this creature enters, you may put a creature card with mana value 3 or less from your hand or graveyard onto the battlefield. That creature gains haste. Return it to your hand at the beginning of the next end step." }).abilities;
+  expect(warkite.find((a) => (a.emits ?? []).some((e) => e.verb === "enters"))?.delayedUntil).toBeUndefined();
+});

@@ -1,5 +1,5 @@
 {
-  "deriveVersion": 201,
+  "deriveVersion": 203,
   "rulesVersion": 16,
   "roles": {
     "ramp": {
@@ -28,7 +28,7 @@
       "pairs": 1164,
       "heldOutAccuracy": 0.45403734384912964,
       "baselineAccuracy": 0.575896431782283,
-      "fallbackAccuracy": 0.6142409319784858,
+      "fallbackAccuracy": 0.6112930006428091,
       "fallback": true
     },
     "cardSelection": {

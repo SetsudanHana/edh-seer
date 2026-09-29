@@ -909,6 +909,12 @@ export interface Ability {
    *  for it" for an activation, never "every time". Kept apart from `cost`, whose absence means
    *  "not an activated ability". */
   delayedBy?: string;
+  /** WHEN THE EFFECT LANDS, if not now (#801): "return that card to the battlefield ... at the
+   *  beginning of the next end step" (Shirei, Shizo's Caretaker; 148 corpus cards). A TIMING fact,
+   *  not a repeat count -- Shirei still fires on every death -- which is why it is not `delayedBy`,
+   *  whose value `edges.ts` reads as the ability's repeatability. It is what stops a loop: a return
+   *  that lands at end of turn cannot be sacrificed again this turn. Set on the returning ability only. */
+  delayedUntil?: "next-end-step" | "next-upkeep";
   /** WHICH TRIGGERS THIS ABILITY DOUBLES. Present only on `trigger-doubling`.
    *
    *  Panharmonicon prints "If an artifact or creature ENTERING causes a triggered ability of a
