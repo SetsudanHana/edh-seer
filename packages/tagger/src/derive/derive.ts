@@ -233,7 +233,9 @@ import { emblemRecipient } from "../emblem.js";
 // 200: owner's edge-magnitude sheet -- a pronoun's antecedent skips a zone object ("your
 // library"), and a pronoun put inherits the count its antecedent states (The Five Doctors: up to
 // five Doctors, no longer an untyped entry; Canoptek Wraith: up to two lands).
-export const DERIVE_VERSION = 200;
+// 201: #798 -- "draw a card if it was attacking. Otherwise, ..." puts the combat state on the
+// conditioned action's trigger only (Garna, Bloodfist of Keld; Zurgo Stormrender).
+export const DERIVE_VERSION = 201;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1109,6 +1111,8 @@ const ZONE_OBJECT = /^(?:your|their|its owner's|that player's|each player's) (?:
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
 // Never an open threshold: "two or more creature cards" is no fixed two (review).
 const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b(?! or (?:more|fewer|less|greater))/i;
+/** "<action> if it was attacking": the combat state a sentence's condition names (#798). */
+const COMBAT_IF = /\bif (?:it|that creature) was (attacking|blocking)\b(?! or)/i;
 /** "…spell(s) you cast" as a cost reducer's object (#717, Doran). */
 const SPELLS_YOU_CAST = /\bspells? you cast\b/i;
 /** A reducer narrowing no field holds -- "the FIRST spell you cast each turn" (Baral), "from exile",
@@ -1884,6 +1888,17 @@ export function deriveAbilities(
         effect: countedSubject ? { ...scaled, scalingSubject: countedSubject } : scaled,
       };
       if (trigger) ability.trigger = trigger;
+      // "DRAW A CARD IF IT WAS ATTACKING. OTHERWISE, ..." (#798, Garna; Zurgo Stormrender): the
+      // condition narrows the action its own sentence names to a death IN COMBAT, which is the
+      // trigger subject's combat state; the "Otherwise" branch keeps every other death.
+      // CEILING: "attacking or blocking alone" (Thijarian Witness) is two states the field cannot hold.
+      const verbWord = (action.verb ?? "").split("-")[0];
+      for (const sentence of ability.trigger && verbWord ? text.split(".") : []) {
+        const cond = COMBAT_IF.exec(sentence);
+        if (!cond || !new RegExp(`\\b${verbWord}`, "i").test(sentence.slice(0, cond.index))) continue;
+        ability.trigger = { ...ability.trigger!, subject: { ...ability.trigger!.subject, combat: cond[1]!.toLowerCase() as "attacking" | "blocking" } };
+        break;
+      }
       // The REAL cost, not "". It has been in scope since line 522 and threaded to repeatsFor at
       // line 680 for as long as `repeats` has existed; only this assignment threw it away, which is
       // why `Ability.cost` could sit empty corpus-wide with every test green. Sub-project B needs it
@@ -1941,8 +1956,13 @@ export function deriveAbilities(
       if (emits.length) ability.emits = emits;
       const made = ability.temporary ? emits.find((e) => e.verb === "create-token") : undefined;
       if (made) {
-        const dies = DECAYED.test(text) || /\bsacrifice\b/i.test(LEAVES_SAME_TURN.exec(text)?.[0] ?? "");
-        ability.emits = [...emits, { verb: dies ? "dies" : "leaves", subject: { ...made.subject } }];
+        const rider = LEAVES_SAME_TURN.exec(text)?.[0] ?? "";
+        const dies = DECAYED.test(text) || /\bsacrifice\b/i.test(rider);
+        // A TOKEN SACRIFICED AT END OF COMBAT DIES ATTACKING (#798): it leaves combat only as the
+        // end-of-combat step ends, so Garna's "if it was attacking" draws for Echoing Assault's copy
+        // and a decayed Zombie (sacrificed at end of combat after it attacks). "Next end step" does not.
+        const inCombat = DECAYED.test(text) || /\bat end of combat\b/i.test(rider);
+        ability.emits = [...emits, { verb: dies ? "dies" : "leaves", subject: { ...made.subject, ...(inCombat ? { combat: "attacking" as const } : {}) } }];
       }
       if (face) ability.face = face;
       abilities.push(ability);
