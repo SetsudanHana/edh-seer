@@ -3321,3 +3321,36 @@ test("a toughness-damage rule is a static over creatures whose toughness exceeds
   expect(sub("Gauntlets of Light", "Enchanted creature gets +0/+2 and assigns combat damage equal to its toughness rather than its power.")).toBeUndefined();
   expect(sub("Plagon, Lord of the Beach", "Target creature you control assigns combat damage equal to its toughness rather than its power this turn.")).toBeUndefined();
 });
+
+// #711 PART 2 (owner ruling 2026-09-28): three more shapes of "a grant to every creature you control".
+test("a quoted grant the model left without an action still names its recipient", () => {
+  const ev = deriveAbilities([{ id: 2, abilityType: "static", actions: [] }], "Enduring Vitality",
+    { 2: "Creatures you control have \"{T}: Add one mana of any color.\"" }).abilities;
+  expect(ev[0]?.effect).toMatchObject({ kind: "keyword-grant", subject: { type: "creature", control: "you" } });
+  // What derive actually receives: `segment()` rewrites the quote to "that ability".
+  // ...and what the canonical record holds: a single placeholder action, verb "none".
+  const seg = deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "none" }] }], "Enduring Vitality",
+    { 2: "Creatures you control have that ability" }).abilities;
+  expect(seg[0]?.effect).toMatchObject({ kind: "keyword-grant", subject: { type: "creature", control: "you" } });
+  // A static clause with no action and no quoted grant stays empty.
+  expect(deriveAbilities([{ id: 2, abilityType: "static", actions: [] }], "Nothing", { 2: "This spell can't be countered." }).abilities).toHaveLength(0);
+});
+
+test("casting a class of spells as though they had flash is a static grant to that class", () => {
+  const flash = (text: string) => deriveAbilities([{ id: 2, abilityType: "static", actions: [{ verb: "cast", object: "spells", optional: true }] }], "Shimmer Myr", { 2: text })
+    .abilities.find((a) => a.effect.kind === "speed-increase")?.effect.subject;
+  expect(flash("You may cast artifact spells as though they had flash.")).toMatchObject({ type: "artifact", control: "you" });
+  // Only the unconditional hand cast: a zone or a condition leaves it unread.
+  expect(flash("You may cast artifact spells from your graveyard as though they had flash.")).toBeUndefined();
+  expect(flash("During your turn, you may cast creature spells as though they had flash.")).toBeUndefined();
+  // No class, no claim: every nonland card is not a class (Vedalken Orrery).
+  expect(flash("You may cast spells as though they had flash.")).toBeUndefined();
+});
+
+test("doubling power and toughness is a pump over the class it names", () => {
+  const ug = deriveAbilities([{ id: 1, abilityType: "triggered", trigger: { event: "begin-combat", subject: "you", control: "you" },
+    actions: [{ verb: "double", object: "the power and toughness of each creature you control" }] }], "Unnatural Growth",
+  { 1: "At the beginning of each combat, double the power and toughness of each creature you control until end of turn." }).abilities[0]!;
+  expect(ug.repeats).toBe("per-cycle");
+  expect(ug.effect).toMatchObject({ kind: "pump", subject: { type: "creature", control: "you", scope: "each" } });
+});

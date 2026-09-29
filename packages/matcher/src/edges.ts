@@ -2271,7 +2271,13 @@ function staticEdges({ p, c, h, reasons }: PairScope): void {
       // Yidris hands cascade to your spells from a combat-damage trigger, and the grant applies to
       // each spell exactly as Anhelo's static casualty does. Derive admits only a spell class you
       // cast (`spellsYouCast`), so this is never a whole-board anthem.
-      || (a.effect.kind === "keyword-grant" && grantsToSpellsYouCast(a.effect.subject));
+      || (a.effect.kind === "keyword-grant" && grantsToSpellsYouCast(a.effect.subject))
+      // A PUMP OVER YOUR CREATURES EVERY COMBAT IS AN ANTHEM THAT BLINKS (owner ruling 2026-09-28,
+      // #711): Unnatural Growth doubles each creature you control at the beginning of each combat,
+      // and links to each of them as a static anthem would. Per-cycle only -- a one-shot Overrun is
+      // not -- and over a class, never a target.
+      || (a.kind === "triggered" && a.repeats === "per-cycle" && a.effect.kind === "pump"
+        && a.effect.subject?.control === "you" && (a.effect.subject.scope === "each" || a.effect.subject.scope === "all"));
     if (!appliesTo || !a.effect.subject) return undefined;
     // DECK ROLES ARE NOT PAIRWISE SYNERGIES (user rulings, 2026-08-06) — WITH `cost-reduction`
     // REMOVED FROM THAT SET BY THE OWNER, 2026-08-18: "your cost reducing card is as good as many

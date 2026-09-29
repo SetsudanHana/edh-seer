@@ -5636,3 +5636,19 @@ test("a one-target grant to a spell type links to no class of the deck", () => {
   sorcery.tags.characteristics.types = ["sorcery"];
   expect(directedReasons(recoup, sorcery, H).some((r) => r.producer === "Recoup")).toBe(false);
 });
+
+/** A PUMP OVER YOUR CREATURES EVERY COMBAT LINKS TO EACH OF THEM (owner ruling 2026-09-28, #711):
+ *  Unnatural Growth doubles each creature you control at the beginning of each combat. Per-cycle and
+ *  over a class only -- a one-shot Overrun and a per-combat pump on ONE target stay unlinked. */
+test("a per-combat pump over every creature you control reaches each creature, a one-shot or targeted one does not", () => {
+  const pump = (repeats: string, scope: string) => base("Pump", [{
+    kind: "triggered", repeats,
+    trigger: { verbs: ["begin-combat"], subject: { control: "you", token: null } },
+    effect: { kind: "pump", subject: { type: "creature", control: "you", token: null, scope } },
+  }] as unknown as CardTags["abilities"]);
+  const links = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).some((r) => r.producer === p.card.name);
+  expect(links(pump("per-cycle", "each"), spellCard("Grizzly Bears", "creature"))).toBe(true);
+  expect(links(pump("per-cycle", "each"), spellCard("Forest", "land"))).toBe(false);
+  expect(links(pump("once", "each"), spellCard("Grizzly Bears", "creature"))).toBe(false);
+  expect(links(pump("per-cycle", "target"), spellCard("Grizzly Bears", "creature"))).toBe(false);
+});
