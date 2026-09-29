@@ -68,7 +68,7 @@ const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n =
  *  `@edh-seer/matcher`'s `PHASE_VERBS` — the two engine lists that define what a census key's verb half
  *  can ever be. Not a public API otherwise; read `demandSentence` if you want the rendering. */
 import { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS } from "../lib/demand-sentence.js";
-import { cardsSubject } from "../lib/findings.js";
+import { cardsSubject, lastingRamp } from "../lib/findings.js";
 export { demandSentence, DEMAND_VERB, DEMAND_PHASE, DEMAND_SUBJECTLESS };
 
 /** Stable ids for the four deck-math groups. The sub-tabs route these to three different panels,
@@ -376,6 +376,7 @@ export function BuildBenchmarks({
           answerCoverage={answerCoverage}
           only={sections}
           coverageWeightedName={coverageWeightedName}
+          rampCards={parents?.find((p) => p.key === "ramp")?.count}
         />
       ) : null}
     </div>
@@ -424,8 +425,10 @@ const VULNERABLE = 0.3;
  *
  *  A benchmark says "6 ramp, want 10". These say what that means in a game you actually play. */
 function DeckMathRows({
-  deckMath, answerCoverage, only, coverageWeightedName,
+  deckMath, answerCoverage, only, coverageWeightedName, rampCards,
 }: {
+  /** The Ramp role's count, so the land working can say how much of it the target leans on. */
+  rampCards?: number;
   deckMath: NonNullable<DeckReport["deckMath"]>;
   answerCoverage?: DeckReport["answerCoverage"];
   /** Renamed from the `sections` prop `BuildBenchmarks` receives -- this function already has its
@@ -882,7 +885,7 @@ function DeckMathRows({
                 *  what it counts. An older report without the package falls back to its own words. */}
               average mana value {lands.avgManaValue}
               {lands.accelerants !== undefined
-                ? ` · ${lands.accelerants} rocks, dorks and land ramp · ${lands.drawPieces ?? 0} draw cards`
+                ? ` · ${lands.drawPieces ?? 0} draw cards · ${lastingRamp(lands.accelerants, rampCards)}`
                 : ` · ${lands.rampPlusDraw} cheap mana makers (2 mana or less)`}
               {lands.commanderManaValue ? ` · a ${lands.commanderManaValue}-mana commander` : ""}
               {lands.mdfc > 0

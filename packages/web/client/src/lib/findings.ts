@@ -362,6 +362,18 @@ function synergyFinding(report: DeckReport): Finding | null {
  *  The band wins, and the simulation behind the target is the argument for it: one to three lands
  *  off costs about 0.03 turns in every 10, which is below what the model can resolve. One threshold, imported from the same constant the
  *  dial reads, so the two cannot drift apart again. */
+/** THE RAMP THE LAND TARGET COUNTS, TIED TO THE RAMP THE ROLES SHELF COUNTS (persona round
+ *  2026-09-29): "8 rocks, dorks and land ramp" in the land working beside "Ramp 17 … 4 over: room
+ *  to cut" in Roles read as two answers to one question, in three seats. They are one count seen
+ *  twice: the target weighs each Ramp card by what it keeps producing, and a ritual or a Treasure
+ *  maker produces once. So the phrase names both numbers and the difference. */
+export function lastingRamp(accelerants: number, rampCards: number | undefined): string {
+  if (rampCards === undefined || rampCards <= accelerants) return `${accelerants} rocks, dorks and land ramp`;
+  const rest = rampCards - accelerants;
+  return `${accelerants} of your ${rampCards} ramp cards that keep producing mana (rocks, dorks and land ramp; `
+    + `the other ${rest} ${rest === 1 ? "is a one-shot" : "are one-shots"}, like a ritual or a Treasure, and count for little)`;
+}
+
 function landFinding(report: DeckReport): Finding | null {
   const lands = report.deckMath?.lands;
   if (!lands || lands.target <= 0) return null;
@@ -379,7 +391,7 @@ function landFinding(report: DeckReport): Finding | null {
       // THE TARGET IS FOR A PACKAGE (owner, 2026-09-29), so the finding names it, and where the
       // count goes if an over-target role is trimmed back.
       + (lands.accelerants !== undefined
-        ? ` with ${lands.accelerants} rocks, dorks and land ramp and ${lands.drawPieces ?? 0} draw cards`
+        ? `, with ${lands.drawPieces ?? 0} draw cards and ${lastingRamp(lands.accelerants, report.buildParents?.find((p) => p.key === "ramp")?.count)}`
         : "")
       + ". "
       + (lands.ifTrimmed?.ramp ? `Trimming ramp to its target with rocks or dorks moves it to ${lands.ifTrimmed.ramp.target}. ` : "")

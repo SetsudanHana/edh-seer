@@ -167,7 +167,11 @@ test("the land finding names the ramp and draw package and the trim", () => {
       accelerants: 9, drawPieces: 14, ifTrimmed: { ramp: { over: 6, target: 35 } } },
   } as unknown as DeckReport["deckMath"];
   const f = findings(report({ deckMath }))[0]!;
-  expect(f.detail).toContain("with 9 rocks, dorks and land ramp and 14 draw cards");
+  expect(f.detail).toContain("with 14 draw cards and 9 rocks, dorks and land ramp");
+  // TIED TO THE ROLES SHELF'S RAMP COUNT (persona round 2026-09-29): with 16 in the Ramp role the
+  // nine are named as part of it, and the rest as the one-shots they are.
+  const withRole = findings(report({ deckMath, buildParents: [{ name: "Ramp", key: "ramp", count: 16, target: 10, leaves: ["ramp"] }] } as never))[0]!;
+  expect(withRole.detail).toContain("9 of your 16 ramp cards that keep producing mana (rocks, dorks and land ramp; the other 7 are one-shots, like a ritual or a Treasure, and count for little)");
   expect(f.detail).toContain("Trimming ramp to its target with rocks or dorks moves it to 35.");
 });
 
