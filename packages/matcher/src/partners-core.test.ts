@@ -2025,3 +2025,45 @@ test("a condition's demand is a demand key, the same as a trigger on that event"
   const alesha = card([{ kind: "triggered", trigger: { verbs: ["end-step"], subject: { control: "you", token: null } }, conditionCares: ["attacks:any"], effect: { kind: "graveyard-recursion" } }]);
   expect(demandKeysOf(alesha).some((k) => k.startsWith("attacks"))).toBe(false);
 });
+
+// #682 (owner 2026-09-29): a card no Commander deck can play keeps its page, and is never a
+// candidate: no other page suggests it, and no search lists or counts it.
+test("a card not legal in Commander has a page but is never suggested, listed or counted", () => {
+  const ticket = { ...krenko, card: { ...krenko.card, name: "Ticket Krenko", commanderLegality: "not_legal" } } as DeckCard;
+  const { shards, index, events, freq } = buildPartnerArtifact([ticket, impactTremors], H);
+  const pages = Object.fromEntries([...shards.values()].flatMap((s) => Object.entries(s)));
+  expect(pages["ticket-krenko"]).toBeDefined();
+  // Its own page still finds Impact Tremors; Impact Tremors' page does not find it.
+  expect(pages["ticket-krenko"]!.partners.map((p) => p.name)).toContain("Impact Tremors");
+  expect(pages["impact-tremors"]!.partners.map((p) => p.name)).not.toContain("Ticket Krenko");
+  const at = index.findIndex((e) => e.name === "Ticket Krenko");
+  for (const m of events.values()) expect([...m.p, ...m.c]).not.toContain(at);
+  // Every event Krenko is counted under when playable, it is absent from when it is not.
+  const playable = buildPartnerArtifact([krenko, impactTremors], H).freq;
+  const without = buildPartnerArtifact([impactTremors], H).freq;
+  const krenkoKeys = Object.keys(playable).filter((k) => playable[k]! > (without[k] ?? 0));
+  expect(krenkoKeys.length).toBeGreaterThan(0);
+  for (const k of krenkoKeys) expect(freq[k] ?? 0).toBe(without[k] ?? 0);
+  // Banned is the same answer.
+  const banned = { ...krenko, card: { ...krenko.card, commanderLegality: "banned" } } as DeckCard;
+  const bannedFreq = buildPartnerArtifact([banned, impactTremors], H).freq;
+  for (const k of krenkoKeys) expect(bannedFreq[k] ?? 0).toBe(without[k] ?? 0);
+});
+
+// #756 (owner ruling 2026-09-29): a keyword's ability sits under the printed line that starts with
+// the keyword, not at the bottom under "read off the card itself".
+test("a keyword ability takes the clause that prints the keyword", () => {
+  const samut = base("Samut, the Driving Force", [{
+    kind: "static", clause: 2, effect: { kind: "pump", subject: { control: "you", token: null, type: "creature", scope: "all" } },
+  }] as unknown as CardTags["abilities"], ["human"]);
+  samut.tags!.characteristics.keywords = ["Start your engines!"];
+  (samut.card as { oracleText: string; keywords: string[] }).oracleText =
+    "Start your engines! (If you have no speed, it starts at 1. It increases once on each of your turns when an opponent loses life. Max speed is 4.)\nOther creatures you control get +X/+0, where X is your speed.";
+  (samut.card as { keywords: string[] }).keywords = ["Start your engines!"];
+  const rows = abilityRowsOf(samut);
+  const speed = rows.find((r) => r.effect === "speed")!;
+  expect(speed.clause).toBe(1);
+  // A keyword no line begins with stays at the bottom.
+  samut.tags!.characteristics.keywords = ["Start your engines!", "prowess"];
+  expect(abilityRowsOf(samut).filter((r) => r.clause === undefined).map((r) => r.effect)).not.toContain("speed");
+});

@@ -943,8 +943,10 @@ const clauseTextsOf = (d: DeckCard): { id: number; text: string; face?: number }
 
 /** THE DERIVED ABILITIES AS PAGE ROWS. Order is the derivation's own, which is the order the clauses
  *  appear on the card -- so the table reads down the card the way a player does. */
-export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
-  abilitiesOf(d).map((a) => {
+export const abilityRowsOf = (d: DeckCard): AbilityRow[] => {
+  const all = abilitiesOf(d);
+  const clauseOf = keywordClauses(d, all);
+  return all.map((a) => ({ ...a, ...(a.clause === undefined && clauseOf.has(a) ? { clause: clauseOf.get(a)! } : {}) })).map((a) => {
     const counted = a.effect?.scalingSubject;
     // EVERYTHING IT COUNTS. A party count names four types; the first alone read "counts Clerics".
     const subtype = Array.isArray(counted?.subtype) ? counted?.subtype.join(", ") : counted?.subtype;
@@ -974,6 +976,34 @@ export const abilityRowsOf = (d: DeckCard): AbilityRow[] =>
       ...(selfEmits.length > 0 ? { selfEmits } : {}),
     };
   });
+};
+
+/** A KEYWORD'S ABILITY SITS UNDER THE LINE THAT PRINTS IT (#756, owner ruling 2026-09-29). An ability
+ *  `keywordAbilities` gives a card carries no clause id -- it was read off the keyword, not the
+ *  sentence -- so it rendered at the bottom under "read off the card itself" while the reader could
+ *  see "Start your engines!" printed on the card. The clause whose text BEGINS with the keyword is
+ *  that line; a keyword no clause begins with (granted, or only in reminder text) stays at the
+ *  bottom. Keyed by the ability object, so it survives the concatenation in `abilitiesOf`. */
+function keywordClauses(d: DeckCard, all: CardTags["abilities"]): Map<CardTags["abilities"][number], number> {
+  const out = new Map<CardTags["abilities"][number], number>();
+  const chars = d.tags?.characteristics;
+  if (!chars?.keywords?.length) return out;
+  const clauses = clauseTextsOf(d);
+  // Re-derived one keyword at a time, to learn which keyword each implied ability came from. The
+  // results are matched to `abilitiesOf`'s own objects by position, which is the same order.
+  const own = all.slice(d.tags!.abilities.length);
+  const counts = chars.keywords.map((k) => keywordAbilities({ ...chars, keywords: [k] }).length);
+  // One keyword at a time must add up to all of them at once, or the positions cannot be trusted.
+  if (counts.reduce((a, b) => a + b, 0) !== own.length) return out;
+  let at = 0;
+  for (const [ki, k] of chars.keywords.entries()) {
+    const n = counts[ki]!;
+    const word = String(k).toLowerCase().trim();
+    const line = clauses.find((c) => c.text.toLowerCase().startsWith(word));
+    for (let i = 0; i < n; i++, at++) if (line && own[at]) out.set(own[at]!, line.id);
+  }
+  return out;
+}
 
 /** EVERY ABILITY THE ENGINE READS ON THE CARD: the derived ones and the ones its printed keywords
  *  give it (`keywordAbilities` -- prowess, extort, Start your engines!). Edge formation has always
@@ -1753,6 +1783,14 @@ const isBackground = (d: DeckCard): boolean => isBackgroundCard(d.card as Card);
 
 /** THE WHOLE ARTIFACT, PURELY. Mongo reads and fs writes stay in `build-static.ts`; everything
  *  decidable is here so it can be tested without either. */
+/** CAN IT GO IN A COMMANDER DECK AT ALL (#682, owner 2026-09-29)? Scryfall's `legalities.commander`:
+ *  "not_legal" (Unfinity's ticket cards, the Elemental Time Flamingo search hit) and "banned" both
+ *  say no. Absent is yes -- a card whose document carries no legalities is not evidence of either. */
+export const commanderPlayable = (d: DeckCard): boolean => {
+  const l = (d.card as { commanderLegality?: string }).commanderLegality;
+  return l !== "not_legal" && l !== "banned";
+};
+
 export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArtifact {
   // ONE PAGE PER NAME. Every join below is by card name and `resolveSlugs` keys by it, so two
   // documents with one name (Red Herring: a 2021 playtest card and the 2024 Clue Fish) got ONE
@@ -1763,9 +1801,12 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   const slugs = resolveSlugs(substantive.map((d) => d.card.name));
   // ONE PASS, TWO READINGS: the corpus count every score is taken on, and the same count split by
   // colour identity so a commander page can say how many of the causes its own deck could play.
-  const { buckets, members } = supplyBuckets(substantive.map((d) => ({
+  // A CARD NO COMMANDER DECK CAN PLAY KEEPS ITS PAGE AND IS NEVER A CANDIDATE (#682): it is left
+  // out of every count and member list here and every candidate index below, so no page suggests
+  // it and no search lists or counts it. Emptied rather than dropped, so positions stay aligned.
+  const { buckets, members } = supplyBuckets(substantive.map((d) => commanderPlayable(d) ? {
     emits: supplyKeysOf(d), demands: demandKeysOf(d), identity: d.card.colorIdentity ?? [],
-  })));
+  } : { emits: [], demands: [], identity: d.card.colorIdentity ?? [] }));
   const freq: EventFrequency = {};
   for (const [k, b] of buckets) freq[k] = totalOf(b);
   // A CARD'S POSITION IS ITS ID EVERYWHERE BELOW. `index` is written from `substantive` in this
@@ -1778,6 +1819,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // form finds it and so does one emitting the general form.
   const byDemand = new Map<string, DeckCard[]>();
   for (const d of substantive) {
+    if (!commanderPlayable(d)) continue;
     for (const k of new Set(demandKeysOf(d).flatMap(demandForms))) {
       const b = byDemand.get(k);
       if (b) b.push(d); else byDemand.set(k, [d]);
@@ -1789,6 +1831,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // indexing every card by every event it supplies would be the quadratic build this file avoids.
   const bySubtype = new Map<string, DeckCard[]>();
   for (const d of substantive) {
+    if (!commanderPlayable(d)) continue;
     const supplies = supplyKeysOf(d);
     // A fill is a FORM of an emit (`supplyForms`), never a raw key: a death supplies `fills|creature|-|-`.
     for (const k of new Set([...supplies, ...supplies.flatMap(supplyForms).filter((f) => f.startsWith("fills|"))])) {
@@ -1805,6 +1848,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // it below a rare trigger on the page, exactly as the deck report's own mesh census treats it.
   const byType = new Map<string, DeckCard[]>();
   for (const d of substantive) {
+    if (!commanderPlayable(d)) continue;
     for (const t of reachOf(d).types) {
       const b = byType.get(t);
       if (b) b.push(d); else byType.set(t, [d]);
@@ -1837,7 +1881,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
 
   // THE ONE CANDIDATE A NAME FINDS. A meld card names its other half; nothing else here is keyed
   // on a card name, and one card can cause the relation, so the key is priced as a rarity of one.
-  const byName = new Map(substantive.map((d) => [d.card.name, d] as const));
+  const byName = new Map(substantive.filter(commanderPlayable).map((d) => [d.card.name, d] as const));
   freq["meld|-|-|-"] = 1;
 
   // THE COUNT A PAGE PRINTS BESIDE A GROUP, and the ONLY thing AJ5 scopes. A card page keeps the
@@ -2011,11 +2055,13 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
           const t = tags.get(r.name);
           if (t) rowTags.set(r, code(t.map((tag) => ({ tag }))));
         }
+        // Its own page reads its pairs; the MIRROR puts it on theirs, which an unplayable card (#682) never is.
+        const playable = commanderPlayable(d);
         for (const r of poolPartnersFor(d, rankedByDemand, freq, h, new Set(verified.map((v) => v.name)), code)) {
           poolRow(d.card.name, r);
-          poolRow(r.name, { name: d.card.name, score: r.score, event: r.event, ...(r.tags ? { tags: r.tags } : {}) });
+          if (playable) poolRow(r.name, { name: d.card.name, score: r.score, event: r.event, ...(r.tags ? { tags: r.tags } : {}) });
         }
-        for (const v of verified) {
+        for (const v of playable ? verified : []) {
           const mirrored: PartnerRow = { name: d.card.name, slug, score: v.score, event: v.event, reason: v.reason, producer: true, ...tileOf(d) };
           const t = rowTags.get(v);
           if (t) rowTags.set(mirrored, t);
@@ -2233,6 +2279,7 @@ export function buildPartnerArtifact(all: DeckCard[], h: Hierarchy): PartnerArti
   // supply side (measured 2026-09-19): a card asks for 0.4 events on average and at most 6.
   const consumersOf = new Map<string, number[]>();
   substantive.forEach((d, i) => {
+    if (!commanderPlayable(d)) return;
     for (const k of new Set([...demandKeysOf(d), ...staticKeysOf(d)])) {
       const b = consumersOf.get(k);
       if (b) b.push(i); else consumersOf.set(k, [i]);
