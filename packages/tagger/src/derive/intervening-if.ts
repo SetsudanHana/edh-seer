@@ -77,12 +77,16 @@ export function conditionFamily(condition: string): ConditionFamily {
  *  evaluate anything: it recognises four printed shapes and emits a tag the theme layer already
  *  speaks. Everything else returns nothing, which is the honest answer for "it was kicked".
  *
- *  DELIBERATELY OMITTED: `control` and `life` conditions ("you control a red permanent", "the player
- *  with the most life"). They are real DECK-FIT facts — Oath of Liliana in a deck with no
+ *  DELIBERATELY OMITTED: `control` and most `life` conditions ("you control a red permanent", "the
+ *  player with the most life"). The life YOU GAINED is the exception, since 2026-09-29: lifegain
+ *  cards supply it. They are real DECK-FIT facts — Oath of Liliana in a deck with no
  *  planeswalkers is a bad card, measured at 1 of 33 such slots across the 71 decks — but a colour or
  *  a player's life total is not a theme any card supplies, so a cares tag would be a category error.
  *  That belongs on the cut list, not the axis. Also omitted: `cast-entry` ("if you cast it"), which
  *  narrows the EVENT rather than naming a deck demand. */
+const GAINED_LIFE = /\byou(?:'ve| have)? gained\b[^,.]{0,30}\blife\b|\blife more than your starting life total\b|\byou have \d+ or more life\b/i;
+const CAST_NONCREATURE = /\byou(?:'ve| have)? cast\b[^,.]{0,30}\bnoncreature spells?\b/i;
+const CAST_INSTANT_SORCERY = /\byou(?:'ve| have)? cast\b[^,.]{0,30}\binstant (?:or|and\/or) sorcery spells?\b/i;
 export function conditionCares(condition: string): string[] {
   const out: string[] = [];
   // "if it had one or more counters on it" (Yuna, Iron Apprentice), "if The Ozolith has counters on
@@ -107,5 +111,15 @@ export function conditionCares(condition: string): string[] {
   // "Descend 4" / "descend 8" cards word their condition as "N or more permanent cards in your
   // graveyard" and never say "descended"; they are a count-threshold, not covered here.
   if (/\bdescended\b/i.test(condition)) out.push("dies:any", "mill:any", "discard:any", "enters-graveyard:any");
+  // THE LIFE YOU GAINED IS SUPPLIED (owner, 2026-09-29: Resplendent Angel, in the Hatsune Miku
+  // precon, never appeared among token makers that care about lifegain). "If you gained 5 or more
+  // life this turn", "if you have at least 7 life more than your starting life total", "if you have
+  // 40 or more life" -- every lifegain card feeds these. "The player with the most life" stays out:
+  // no card supplies it.
+  if (GAINED_LIFE.test(condition)) out.push("gain-life:any");
+  // "if you've cast a noncreature spell this turn", "if you cast two or more instant and/or sorcery
+  // spells this turn" -- the spellslinger demand the same ruling names.
+  if (CAST_NONCREATURE.test(condition)) out.push("cast:-creature");
+  if (CAST_INSTANT_SORCERY.test(condition)) out.push("cast:instant", "cast:sorcery");
   return [...new Set(out)];
 }

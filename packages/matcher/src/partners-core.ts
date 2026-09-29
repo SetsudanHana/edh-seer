@@ -12,6 +12,7 @@ import { ARCHETYPE_LABELS, type Archetype } from "./archetypes.js";
 import { MIN_INDEXABLE_PARTNERS, PARTNER_SHARD_COUNT, isIndexableCard, partnerShardOf } from "./partner-shard.js";
 import { ROLE_NOT_SYNERGY, WHOLE_DECK_TYPES, abilityIsKind, directedReasons, eventReasonTag, givesAPermanentAway, meldReason, producerEvents, themeSubjectKey } from "./edges.js";
 import { keywordAbilities } from "./implied.js";
+import { parseSubject } from "@edh-seer/tagger/subject";
 import { ALL_CARD_TYPES, PSEUDO_TYPE_SETS } from "./hierarchy.js";
 import { choosesColour, isBackground as isBackgroundCard, isLegalCommander, pairingLicense } from "./legality.js";
 import { bestRates, compareRates, manaOf, ratesOf, type Rate, type RateFamily } from "./rate.js";
@@ -984,6 +985,18 @@ export const abilitiesOf = (d: DeckCard): CardTags["abilities"] =>
 export const emitKeysOf = (d: DeckCard): string[] =>
   abilitiesOf(d).flatMap((a) => (a.emits ?? []).flatMap((e) => splitKey(eventKey(e))));
 
+/** A `conditionCares` theme tag ("gain-life:any", "cast:-creature", "dies:creature") as event keys.
+ *  A leading "-" is a negated class ("-creature": a noncreature spell), read the way prowess reads
+ *  it; "any" names no class. */
+function conditionDemandKeys(tag: string): string[] {
+  const [verb, cls] = tag.split(":");
+  if (!verb || !cls) return [];
+  const subject: SubjectFilter = cls === "any" ? { control: "you", token: null }
+    : cls.startsWith("-") ? { ...parseSubject(`a non${cls.slice(1)} spell`), control: "you" }
+    : { type: cls, control: "you", token: null };
+  return splitKey(eventKey({ verb, subject } as GameEvent));
+}
+
 export const demandKeysOf = (d: DeckCard): string[] => [
   // A CARD'S OWN TRIGGER IS NOT A DEMAND ON THE OTHER 99. Burakos, Party Leader fires when HE
   // attacks (`self: true`, derived correctly); keyed as `attacks|-|-|-` the page filed it as a gap
@@ -992,6 +1005,11 @@ export const demandKeysOf = (d: DeckCard): string[] => [
   ...abilitiesOf(d).flatMap((a) =>
     a.trigger?.subject?.self === true ? []
       : (a.trigger?.verbs ?? []).flatMap((v) => splitKey(eventKey({ verb: v, subject: a.trigger!.subject } as GameEvent)))),
+  // AN INTERVENING IF IS A DEMAND TOO (owner, 2026-09-29): Resplendent Angel's "if you gained 5 or
+  // more life this turn" fires at the end step, so its TRIGGER names no lifegain, and the card was
+  // missing from every "cares about lifegain" list. The derived `conditionCares` tag says what the
+  // condition wants; it becomes the same event key a trigger on it would have.
+  ...abilitiesOf(d).flatMap((a) => (a.conditionCares ?? []).flatMap(conditionDemandKeys)),
   // ALL THREE FEEDER SHAPES ARE DEMANDS. Listing only board counts here left Strionic Resonator --
   // no trigger, no emit, one copy-ability -- with no demand at all, so `isSubstantive` dropped it
   // from the pool and its page had no rows, feeder pass or not (found on the first rebuild).
