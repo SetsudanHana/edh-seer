@@ -203,6 +203,7 @@ export function computeDeckMath(
   const colors = manaAudit(deck, { commanderNames }).map((r) => ({
     color: r.color,
     supplied: r.supplied,
+    ...(r.countBound ? { countBound: true } : {}),
     ...(r.worst
       ? {
         worst: {

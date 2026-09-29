@@ -19,6 +19,9 @@ const source = (name: string, produces: string[]): DeckCard => ({
 });
 
 const filler = (i: number) => card(`filler-${i}`, "{1}", 1);
+/** Sources that make a DIFFERENT colour: a black shortfall is a colour finding only when trading
+ *  some of these for Swamps could close it (#680). */
+const islands = (n: number) => Array.from({ length: n }, (_, i) => source(`Island-${i}`, ["U"]));
 const fillTo = (n: number, deck: DeckCard[]) =>
   [...deck, ...Array.from({ length: n - deck.length }, (_, i) => filler(i))];
 
@@ -113,6 +116,7 @@ test("the worst unmet demand is the one reported, and it names how many cards wa
     // One under what the CORRECTED requirement asks for, since `met` reads that end -- pinned to
     // the function rather than to a literal so the fixture cannot silently stop testing anything.
     ...Array.from({ length: minSources(2, 3)! - 1 }, (_, i) => source(`Swamp-${i}`, ["B"])),
+    ...islands(10),
   ]);
   const black = manaAudit(deck).find((r) => r.color === "B")!;
 
@@ -136,6 +140,7 @@ test("the worst demand is the biggest shortfall, not the most pips", () => {
     card("Very late double", "{8}{B}{B}", 10), // 2 pips, but ten turns to find them
     // Under BOTH corrected requirements, so both demands are unmet and the ranking has to choose.
     ...Array.from({ length: Math.min(minSources(1, 1)!, minSources(2, 10)!) - 1 }, (_, i) => source(`Swamp-${i}`, ["B"])),
+    ...islands(10),
   ]);
   const black = manaAudit(deck).find((r) => r.color === "B")!;
   expect(black.demands.filter((d) => !d.met).length).toBe(2);
@@ -155,6 +160,30 @@ test("a colour the deck supplies well enough has no worst row", () => {
   const black = manaAudit(deck).find((r) => r.color === "B")!;
   expect(black.demands.every((d) => d.met)).toBe(true);
   expect(black.worst).toBeUndefined();
+});
+
+/** #680, THE FRIEND'S IMOTEKH LIST: "Their Number Is Legion wants four black on turn 4 ... takes 49"
+ *  in a mono-black deck whose 42 sources all make black. No recolouring answers that -- it is how
+ *  much mana the deck runs, the land block's question -- so it is not this colour's worst row.
+ *  The SAME demand in a deck that could trade blue sources for black ones still is. */
+test("a shortfall no recolouring could close is not the colour's worst row", () => {
+  const legion = card("Their Number Is Legion", "{B}{B}{B}{B}", 4);
+  const swamps = (n: number) => Array.from({ length: n }, (_, i) => source(`Swamp-${i}`, ["B"]));
+  const need = minSources(4, 4)!;
+
+  const mono = manaAudit(fillTo(100, [legion, ...swamps(need - 2)])).find((r) => r.color === "B")!;
+  expect(mono.demands[0]!.met).toBe(false); // still true: the deck does miss it
+  expect(mono.worst).toBeUndefined();
+  expect(mono.countBound).toBe(true); // …and not "every cost covered" either
+
+  // Colourless sources recolour too: a Rogue's Passage could have been a Swamp.
+  const passages = Array.from({ length: 5 }, (_, i) => source(`Passage-${i}`, ["C"]));
+  const withUtility = manaAudit(fillTo(100, [legion, ...swamps(need - 2), ...passages])).find((r) => r.color === "B")!;
+  expect(withUtility.worst?.pips).toBe(4);
+
+  const twoColour = manaAudit(fillTo(100, [legion, ...swamps(need - 2), ...islands(5)])).find((r) => r.color === "B")!;
+  expect(twoColour.worst?.pips).toBe(4);
+  expect(twoColour.countBound).toBe(false);
 });
 
 test("a colour nothing in the deck costs is not reported at all", () => {
@@ -276,6 +305,7 @@ test("met and worst read the deadline-aware count, not the deck total", () => {
   const deck = fillTo(100, [
     card("One Drop", "{B}", 1),
     ...Array.from({ length: 30 }, (_, i) => rock(`Rock ${i}`)),
+    ...islands(20),
   ]);
   const row = manaAudit(deck).find((r) => r.color === "B")!;
   expect(row.supplied).toBe(30);

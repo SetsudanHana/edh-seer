@@ -26,7 +26,7 @@ export const SOURCE_CONFIDENCE = 0.9;
 /** The five basic land types, lowercased, as `classifyLand` reports them in `subtypes`. */
 const EMPTY_TYPES: ReadonlySet<string> = new Set<string>();
 
-const produces = (card: { producedMana?: readonly string[] }, color: Color): boolean =>
+const produces = (card: { producedMana?: readonly string[] }, color: Color | "C"): boolean =>
   (card.producedMana ?? []).includes(color);
 
 /** Coloured pips per colour in a mana cost, e.g. `{2}{B}{B}` -> `{ B: 2 }`.
@@ -112,9 +112,14 @@ export interface ManaAuditRow {
    *  which is what `met` reads. */
   supplied: number;
   demands: ColorDemand[];
-  /** The demand that misses by the most sources, absent when every demand is met. This is the row
-   *  worth showing: "your double-black is a turn 5 spell in practice". */
+  /** The demand that misses by the most sources, absent when every demand is met -- or when the
+   *  deck's EVERY mana source, of any colour, could not meet it either (#680): that shortfall is the
+   *  land count's, not this colour's. This is the row worth showing: "your double-black is a turn 5
+   *  spell in practice". */
   worst?: ColorDemand;
+  /** An unmet demand is left that recolouring could not meet (#680): the land count's question.
+   *  Without it a missing `worst` read as "every cost covered", which such a row is not. */
+  countBound: boolean;
 }
 
 /** Per-card colour feasibility: what each card's own pips demand by its own deadline, against what
@@ -167,8 +172,7 @@ export function manaAudit(
     for (const t of BASIC_LAND_TYPES) if (dc.card.typeLine.toLowerCase().includes(t)) deckBasicTypes.add(t);
   }
 
-  const rows: ManaAuditRow[] = [];
-  for (const color of COLORS) {
+  const coloredSources = (color: Color): DeckCard[] => {
     // A FETCHLAND PRODUCES THE COLOUR IT FINDS. `producedMana` is empty on a real fetch and that is
     // correct -- Polluted Delta taps for nothing -- so the printed field alone told a MONO-BLUE deck
     // with six fetchlands that blue was short at the top of its curve. The simulator has counted
@@ -193,25 +197,26 @@ export function manaAudit(
     // that is a land beats one that costs {2}, which is the same order `availableBy` prices.
     const reachable = new Set(fetches.flatMap((f) => fetchableLands(f.card.oracleText ?? "", libraryCards)));
     const targets = [...reachable].filter((c) => produces(c, color)).length;
-    const sources = [
+    return [
       ...direct,
       ...[...fetches].sort((a, b) => a.card.manaValue - b.card.manaValue).slice(0, targets),
     ];
-    const supplied = sources.length;
+  };
 
-    // WHAT COULD BE PRODUCING BY TURN N, asked once per deadline and cached, because a deck's
-    // demands share very few distinct turns.
-    //
-    // THE BOARD IS THE OPTIMISTIC ONE, deliberately: on turn N you have made N-1 earlier land drops,
-    // and this assumes every one of them was the land a conditional wanted. That is the same
-    // under-claiming direction `met` already takes with `required` over `requiredRaw` -- the report
-    // would rather miss a shortfall than invent one.
-    //
-    // CEILING: a nonland source counts from the turn after its own mana value, which assumes it was
-    // cast on curve. Pricing how often that actually happens needs the simulator, and the simulator
-    // is the other half of this pair; a turn number is the cheap half that closes the contradiction.
+  // WHAT COULD BE PRODUCING BY TURN N, for one set of sources, asked once per deadline and cached,
+  // because a deck's demands share very few distinct turns.
+  //
+  // THE BOARD IS THE OPTIMISTIC ONE, deliberately: on turn N you have made N-1 earlier land drops,
+  // and this assumes every one of them was the land a conditional wanted. That is the same
+  // under-claiming direction `met` already takes with `required` over `requiredRaw` -- the report
+  // would rather miss a shortfall than invent one.
+  //
+  // CEILING: a nonland source counts from the turn after its own mana value, which assumes it was
+  // cast on curve. Pricing how often that actually happens needs the simulator, and the simulator
+  // is the other half of this pair; a turn number is the cheap half that closes the contradiction.
+  const availability = (sources: readonly DeckCard[]) => {
     const availableAt = new Map<number, number>();
-    const availableBy = (turn: number): number => {
+    return (turn: number): number => {
       const hit = availableAt.get(turn);
       if (hit !== undefined) return hit;
       // The lands already down when the turn-N drop is made. Empty on turn 1, which is what makes a
@@ -240,7 +245,21 @@ export function manaAudit(
       availableAt.set(turn, n);
       return n;
     };
+  };
 
+  const sourcesByColor = new Map(COLORS.map((color) => [color, coloredSources(color)]));
+  // EVERY SOURCE OF ANY MANA, coloured or not: what the deck could hold of one colour if it
+  // recoloured its whole mana base without adding a single card to it.
+  const anyAvailableBy = availability([...new Set([
+    ...[...sourcesByColor.values()].flat(),
+    ...library.filter((dc) => isManaSource(dc) && produces(dc.card, "C")),
+  ])]);
+
+  const rows: ManaAuditRow[] = [];
+  for (const color of COLORS) {
+    const sources = sourcesByColor.get(color)!;
+    const supplied = sources.length;
+    const availableBy = availability(sources);
     // Group by (pips, deadline): "12 cards want {B}{B} by T3" is one row, not twelve.
     const groups = new Map<string, ColorDemand>();
     for (const dc of library) {
@@ -277,7 +296,13 @@ export function manaAudit(
     const demands = [...groups.values()].sort(
       (a, b) => b.pips - a.pips || a.turn - b.turn || b.cards - a.cards,
     );
-    const unmet = demands.filter((d) => !d.met);
+    // A DEMAND NO RECOLOURING COULD MEET IS THE LAND COUNT'S QUESTION, NOT THE COLOUR'S (#680).
+    // Their Number Is Legion wants four black on turn 4, which "takes 49" sources -- in a MONO-BLACK
+    // deck where every one of its 42 sources already makes black. No composition answers that; it
+    // is how much mana the deck runs, which the land block judges. The same line as the single-pip
+    // gate in `findings.ts`: a row is shown only when trading which colours the sources make could
+    // close it. `met` still says false, because it is.
+    const unmet = demands.filter((d) => !d.met && anyAvailableBy(d.turn) >= d.required);
     rows.push({
       color,
       supplied,
@@ -285,6 +310,7 @@ export function manaAudit(
       // Ranked by the SHORTFALL, not by pip count: a 2-pip demand met with room to spare matters
       // less than a 1-pip demand the deck misses by ten sources. Each demand's shortfall is read
       // against its OWN `available`, since two demands on one colour no longer share a supply.
+      countBound: demands.some((d) => !d.met && !unmet.includes(d)),
       worst: unmet.sort((a, b) => (b.required - b.available) - (a.required - a.available))[0],
     });
   }

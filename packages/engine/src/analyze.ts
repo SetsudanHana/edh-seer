@@ -378,6 +378,9 @@ export interface DeckMath {
        *  is missed by; `supplied` is the deck total and is not comparable to it. */
       available: number;
     };
+    /** A demand the deck misses that no recolouring could meet (#680): only more mana could. It
+     *  is no `worst` row, and it is not "enough" either. */
+    countBound?: boolean;
   }[];
   /** The deck's biggest demand shapes: how many cards want the event, how many supply it, and
    *  whether you will have a supplier. */
