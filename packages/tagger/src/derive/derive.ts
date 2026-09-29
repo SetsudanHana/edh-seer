@@ -222,7 +222,9 @@ import { emblemRecipient } from "../emblem.js";
 // edge runs from the replacement to the card whose effect it improves).
 // 196: an intervening if on the life you gained or the spells you cast this turn is a demand
 // (owner 2026-09-29: Resplendent Angel -> gain-life:any; "cast a noncreature spell" -> cast:-creature).
-export const DERIVE_VERSION = 196;
+// 197: #715 -- a self re-entry "returned to the battlefield transformed" is marked `transformed`, so
+// the matcher types it with the back face (Jill, Shiva's Dominant -> Setessan Champion).
+export const DERIVE_VERSION = 197;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1104,7 +1106,11 @@ const STAT_VS_STAT = /\bwith (power|toughness) greater than (?:its|their) (power
 const ZONE_MOVING_VERBS: ReadonlySet<string> = new Set(["cast", "play", "return", "put", "exile"]);
 const OBJECT_IN_GRAVEYARD = /\b(?:in|from) (?:your|a|an opponent's|target player's|their) graveyard\b/i;
 /** "…, then return it to the battlefield…" after an exile in the same clause (#715, Jill). */
-const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|that card|those cards) to the battlefield\b/i;
+const RETURN_TO_BATTLEFIELD = /\breturn (?:it|them|him|her|this card|that card|those cards) to the battlefield\b/i;
+/** "…return it to the battlefield transformed…": the back face enters (CR 712.14a, #715). Every
+ *  corpus phrasing: him/her (Ajani, Tamiyo), "this card", "put … onto", "from your graveyard" and
+ *  "tapped and transformed" (Ojer Taq). */
+const RETURNS_TRANSFORMED = /\b(?:return|put) (?:it|them|him|her|this card|that card|those cards)(?: from [a-z' ]+?)?(?: (?:to|onto) the battlefield)?(?: tapped and)? transformed\b/i;
 /** "…until you reveal a creature card…": the class a reveal-until dig puts somewhere (#715). */
 const REVEAL_UNTIL = /\buntil you reveal (an? [a-z ]{1,40}?) card\b/i;
 const REVEAL_UNTIL_ALL = /\buntil you reveal\b/gi;
@@ -1718,6 +1724,11 @@ export function deriveAbilities(
           if (revealedClass.type !== undefined) e.subject.type = revealedClass.type;
           if (revealedClass.subtype !== undefined) e.subject.subtype = revealedClass.subtype;
         }
+      }
+      // "RETURN IT TO THE BATTLEFIELD TRANSFORMED" (#715): the card re-enters as its BACK face (CR
+      // 712.14a), and only the matcher knows that face's types -- so the emit says which face it is.
+      if (action.verb === "return" && RETURNS_TRANSFORMED.test(text)) {
+        for (const e of emits) if (e.verb === "enters" && e.subject.self === true) e.subject.transformed = true;
       }
       // "Whenever you activate an ability ... copy THAT ability" (Rings of Brighthearth): the object
       // is a pronoun and the kind lives in the trigger. `activate` itself is refused as a trigger

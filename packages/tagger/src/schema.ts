@@ -84,6 +84,11 @@ export interface SubjectFilter {
    *  but the engine cannot tell it from the instants that target an opponent, and under-claiming is
    *  the direction this repo refuses to trade away. The Hidetsugu top-of-library refusal, again. */
   restricted?: true;
+  /** THE CARD COMES BACK AS ITS BACK FACE: "exile Jill, then return it to the battlefield
+   *  TRANSFORMED" (CR 712.14a). A double-faced card put onto the battlefield is otherwise front face
+   *  up (CR 712.14), so a self re-entry says which face enters and the matcher -- the one layer that
+   *  holds each face's type line -- types it with that face (#715). Set on a self `enters` emit only. */
+  transformed?: true;
   /** The umbrella noun a multi-umbrella `type` list was resolved FROM — "permanent" for
    *  "permanent spell".
    *

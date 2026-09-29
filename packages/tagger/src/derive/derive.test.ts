@@ -3373,6 +3373,18 @@ test("a zone-less return after an exile in the same clause is a flicker", () => 
   expect(flicker("Return it to its owner's hand.", [{ verb: "return", object: "it" }])).toBeUndefined();
 });
 
+test("a self re-entry 'returned transformed' is marked as the back face (CR 712.14a, #715)", () => {
+  const reEntry = (text: string, object = "it") => deriveAbilities([{ id: 2, abilityType: "activated",
+    actions: [{ verb: "exile", object: "Jill" }, { verb: "return", object }] }], "Jill, Shiva's Dominant", { 2: text })
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters");
+  expect(reEntry("Exile Jill, then return it to the battlefield transformed under its owner's control.")?.subject.transformed).toBe(true);
+  // The corpus's other phrasings: a gendered pronoun (Ajani), "tapped and transformed" (Ojer Taq).
+  expect(reEntry("Exile Jill, then return him to the battlefield transformed under his owner's control.", "him")?.subject.transformed).toBe(true);
+  expect(reEntry("Exile Jill, then return it to the battlefield tapped and transformed under its owner's control.")?.subject.transformed).toBe(true);
+  // Front face up by default (CR 712.14): no mark.
+  expect(reEntry("Exile Jill, then return it to the battlefield under its owner's control.")?.subject.transformed).toBeUndefined();
+});
+
 // #716 (owner lost-pair re-judge 2026-09-28).
 test("a destroy whose controller gets copies back kills YOUR creature (Saw in Half, #513)", () => {
   const text = "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.";
