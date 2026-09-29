@@ -29,7 +29,7 @@ export interface Surplus {
   shelf?: string;
 }
 
-export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize }:
+export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pairs, deckSize, fillFrom }:
   {
     /** The one cut list: the report's eligibility, the Overview's reading. See `chooseCuts`. */
     cuts: readonly CutChoice[];
@@ -49,6 +49,9 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
     pairs?: readonly SuggestedPair[];
     /** Cards in the list, commander included and companion not: over 100, the cuts reach 100. */
     deckSize?: number;
+    /** Where the rest of an overage can come from when the cuts run short: cards that fit no theme
+     *  and are neither removal nor protection. */
+    fillFrom?: readonly string[];
   }) {
   const [maybeN, setMaybeN] = useState(MAYBE_STEP);
   // TWO KINDS OF CUT, SAID APART (appeal review 2026-09-26). One list headed "weakest first" whose
@@ -73,6 +76,17 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
   const listed = new Set(cuts.map((c) => c.name));
   const roleSwaps = over ? [] : (pairs ?? []).filter((p) => !listed.has(p.cut));
   const hasSurplus = !!surplus && surplus.length > 0;
+  const rest = over - toCut.length;
+  // NAMED, NOT POINTED AT (persona round 2026-09-29): the first-cuts seat found its eighth card by
+  // hand in "Fits no theme". The places are listed in the order to look.
+  const fill = (fillFrom ?? []).slice(0, Math.max(rest, 3));
+  const elsewhere = (
+    <>
+      {fill.length ? <>the cards that fit no theme and are neither removal nor protection ({fill.map((n, i) => <span key={n}>{i > 0 ? ", " : ""}<CardName name={n} /></span>)}), </> : null}
+      {hasSurplus ? "a role you run more of than you need, below, " : ""}
+      {fill.length || hasSurplus ? "or " : ""}the cards you like least
+    </>
+  );
   const hasCuts = cuts.length > 0;
   const hasUnjudged = !!unjudged && unjudged.length > 0;
   const hasSlack = !!slack && slack.length > 0;
@@ -91,8 +105,8 @@ export function CutList({ cuts, unjudged, coverage, slack, offTheme, surplus, pa
               // first-cuts seat looked below for a role over its target and every role was short or
               // on target, a dead end).
               : toCut.length
-                ? <>These {toCut.length} are doing the least here. The other {over - toCut.length} have to come from {hasSurplus ? "a role you run more of than you need, below, or from " : ""}the cards you like least.</>
-                : <>Every card here fills a role or works with your themes, so the {over} have to come from {hasSurplus ? "a role you run more of than you need, below, or from " : ""}the cards you like least.</>}
+                ? <>{toCut.length === 1 ? "This one is" : `These ${toCut.length} are`} doing the least here. The other {rest} {rest === 1 ? "has" : "have"} to come from {elsewhere}.</>
+                : <>Every card here fills a role or works with your themes, so the {over} have to come from {elsewhere}.</>}
           </p>
           {toCut.length ? (
             <ol className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,max(25rem,calc((100%_-_2.25rem)/4))),1fr))]">
