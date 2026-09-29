@@ -230,7 +230,10 @@ import { emblemRecipient } from "../emblem.js";
 // 199: edge magnitude -- an ability records how many events one use supplies (`count`: a number,
 // "up to N", X per mana, "for each <class>", a board-wide emit), and a "one or more" trigger is
 // `batched` (CR 603.2c). Display data; no claim changes.
-export const DERIVE_VERSION = 199;
+// 200: owner's edge-magnitude sheet -- a pronoun's antecedent skips a zone object ("your
+// library"), and a pronoun put inherits the count its antecedent states (The Five Doctors: up to
+// five Doctors, no longer an untyped entry; Canoptek Wraith: up to two lands).
+export const DERIVE_VERSION = 200;
 
 /** THE MANA A MANA ABILITY ADDS, from the action's object (CR 605.1a), when the clause states no
  *  amount: mana symbols count one each (a hybrid is one), a number word before "mana" is the
@@ -1101,6 +1104,10 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  an opponent controls dies" (owner-judged FALSE). The type stays the pronoun's own; only an
  *  unstated controller is inherited. */
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
+/** A zone named as an object ("shuffle your library"): never what a later pronoun means. */
+const ZONE_OBJECT = /^(?:your|their|its owner's|that player's|each player's) (?:library|graveyard|hand)$/i;
+/** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
+const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b/i;
 /** "…spell(s) you cast" as a cost reducer's object (#717, Doran). */
 const SPELLS_YOU_CAST = /\bspells? you cast\b/i;
 /** A reducer narrowing no field holds -- "the FIRST spell you cast each turn" (Baral), "from exile",
@@ -1388,7 +1395,10 @@ export function deriveAbilities(
     const antecedentFor = (idx: number): string | undefined => {
       for (let i = idx - 1; i >= 0; i--) {
         const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
-        if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o)) continue;
+        // A ZONE IS NO THING A PRONOUN MEANS (owner's edge-magnitude sheet, 2026-09-29): The Five
+        // Doctors' "put those cards onto the battlefield" found the shuffle's "your library" and
+        // entered untyped, which is how it "fed" Gallifrey Stands' own ETB.
+        if (o === "" || PRONOUN_OBJECT.test(o) || SELF_REFERENCE.test(o) || ZONE_OBJECT.test(o)) continue;
         return boundedByEnchantLine(o.replace(PRONOUN_SOURCE, ""), enchantText);
       }
       // Kaya's Ghostform: "When ENCHANTED PERMANENT dies, return THAT CARD to the battlefield." The
@@ -1886,6 +1896,12 @@ export function deriveAbilities(
       } else {
         const unit = unitAmount(action.verb ?? "", action.object ?? "");
         if (unit !== undefined) ability.amount = unit;
+        // A PRONOUN COUNTS WHAT ITS ANTECEDENT COUNTED: "search for up to two basic land cards ...
+        // put them onto the battlefield" puts up to two (edge magnitude; Canoptek Wraith).
+        else if (antecedent) {
+          const n = ANTECEDENT_COUNT.exec(antecedent.trim());
+          if (n) ability.amount = n[0].toLowerCase();
+        }
       }
       // The payment that stops the effect (CR 118.12a), verbatim: the floor the rate axis reads.
       if (action.unless?.cost) ability.unless = { cost: action.unless.cost, payer: action.unless.payer as "you" | "opponent" | "controller" | "any" };

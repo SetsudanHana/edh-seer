@@ -3457,3 +3457,32 @@ test("'one or more' in the EFFECT does not batch the trigger", () => {
     { 1: "Whenever a land you control enters, create one or more 1/1 tokens." }).abilities;
   expect(out[0]?.trigger?.batched).toBeUndefined();
 });
+
+// Owner's edge-magnitude sheet (2026-09-29): a pronoun put inherits WHAT the search found and HOW MANY.
+test("'put those cards onto the battlefield' after a search is the searched class, up to its count (The Five Doctors)", () => {
+  const text = "Search your library and/or graveyard for up to five Doctor cards, reveal them, and put them into your hand. If you search your library this way, shuffle. If this spell was kicked, put those cards onto the battlefield instead of putting them into your hand.";
+  const out = deriveAbilities([{ id: 2, abilityType: "spell", actions: [
+    { verb: "search", object: "up to five Doctor cards", fromZone: "library" },
+    { verb: "search", object: "up to five Doctor cards", fromZone: "graveyard" },
+    { verb: "reveal", object: "them" },
+    { verb: "shuffle", object: "your library" },
+    { verb: "put", object: "those cards", toZone: "hand" },
+    { verb: "put", object: "those cards", toZone: "battlefield" },
+  ] }], "The Five Doctors", { 2: text }).abilities;
+  const enters = out.find((a) => (a.emits ?? []).some((e) => e.verb === "enters"));
+  // Not "your library": the zone the shuffle names is no thing a pronoun can mean.
+  expect(enters?.emits?.find((e) => e.verb === "enters")?.subject.subtype).toBe("doctor");
+  expect(enters?.count).toEqual({ floor: 0, ceiling: 5 });
+});
+
+test("a put of the 'searched cards' inherits the search's count (Canoptek Wraith, up to two lands)", () => {
+  const text = "When this creature deals combat damage to a player, you may pay {3} and sacrifice it. If you do, choose a land you control. Then search your library for up to two basic land cards which have the same name as the chosen land, put them onto the battlefield tapped, then shuffle.";
+  const out = deriveAbilities([{ id: 2, abilityType: "triggered", trigger: { event: "damage-dealt", subject: "this creature", control: "you" }, actions: [
+    { verb: "sacrifice", object: "this" },
+    { verb: "search", object: "up to two basic land cards which have the same name as the chosen land", fromZone: "library" },
+    { verb: "put", object: "searched cards", fromZone: "library", toZone: "battlefield" },
+    { verb: "shuffle", object: "your library" },
+  ] }], "Canoptek Wraith", { 2: text }).abilities;
+  const enters = out.find((a) => (a.emits ?? []).some((e) => e.verb === "enters"));
+  expect(enters?.count).toEqual({ floor: 0, ceiling: 2 });
+});
