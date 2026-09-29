@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { EngineCard } from "../lib/engine-model.js";
 import { useNavigate } from "react-router";
 import { pageMap, pickRoundRobin } from "../lib/page-orbit.js";
+import { stepRoute } from "../lib/walk-route.js";
 import type { CardPageData, PartnerRow } from "../lib/partners.js";
 import type { MenuItem } from "./card-menu.js";
 import { Constellation, mapCap } from "./Constellation.js";
@@ -59,12 +60,22 @@ export function PageMap({ page: ownPage, slug: ownSlug, rows: ownRows, base, pai
   // this object changes, and it must not change mid-walk.
   const world = useRef<{ cards: Map<string, EngineCard> }>({ cards: new Map() });
   for (const [id, c] of map.cards) if (!world.current.cards.has(id) || id === slug) world.current.cards.set(id, c);
+  // EVERY LINK SEEN ON THIS WALK, both ways: each page's card and its partners. The route runs along
+  // these (#769), so a step to a card from an earlier page goes back through the pages that reached it.
+  const links = useRef(new Map<string, Set<string>>());
+  for (const s of map.orbit.sectors) for (const p of s.partners) {
+    for (const [a, b] of [[slug, p.card.id], [p.card.id, slug]] as const) {
+      const had = links.current.get(a);
+      if (had) had.add(b); else links.current.set(a, new Set([b]));
+    }
+  }
   // THE ROUTE, updated in the render that changes the page, so the map is told the new middle and
-  // where it came from in one step. Arriving at the card the route last came from is going back.
+  // where it came from in one step. Arriving at a card on the route is going back to it; any other
+  // card is a step on, hop by hop along the links seen; a card none of them reach (a search) starts
+  // the route again.
   const [walk, setWalk] = useState<{ slug: string; trail: string[] }>({ slug, trail: [] });
   if (walk.slug !== slug) {
-    const back = walk.trail.at(-1) === slug;
-    setWalk({ slug, trail: back ? walk.trail.slice(0, -1) : [...walk.trail.filter((x) => x !== slug && x !== walk.slug), walk.slug].slice(-6) });
+    setWalk({ slug, trail: stepRoute(walk.trail, walk.slug, slug, (id) => links.current.get(id) ?? []) });
   }
   const trail = walk.slug === slug ? walk.trail : [];
   const narrow = useNarrow();

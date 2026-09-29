@@ -235,9 +235,24 @@ class Sky {
     this.focus = focus;
     this.visited = visited;
     const G = this.geo;
-    const from = prev ? this.place.get(prev) : undefined;
+    const from = (prev ? this.place.get(prev) : undefined) ?? [...visited].reverse().map((id) => this.place.get(id)).find((p) => !!p);
     const here = this.place.get(focus) ?? (from ? { x: from.x, y: from.y - G.step } : { x: 0, y: 0 });
     this.place.set(focus, here);
+    // A ROUTE THROUGH CARDS NOT YET ON THE MAP (#769: a step to a card the middle doesn't reach goes
+    // the shortest way there): each goes between the placed cards either side of it on the route, so
+    // the gold line runs through it rather than straight across.
+    const route = [...visited, focus];
+    for (let i = 0; i < route.length; i++) {
+      if (this.place.has(route[i]!)) continue;
+      let j = i;
+      while (!this.place.has(route[j]!)) j++;
+      const b = this.place.get(route[j]!)!, a = (i > 0 ? this.place.get(route[i - 1]!) : undefined) ?? b;
+      for (let k = i; k < j; k++) {
+        const t = (k - i + 1) / (j - i + 1);
+        this.place.set(route[k]!, this.freeSpot({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, G.inner));
+      }
+      i = j;
+    }
     // The named cards first, on the outer rings; the small ones after, inside them.
     for (const { p } of partners.filter((x) => !x.minor)) if (!this.place.has(p.card.id)) this.place.set(p.card.id, this.freeSpot(here));
     for (const { p } of partners.filter((x) => x.minor)) if (!this.place.has(p.card.id)) this.place.set(p.card.id, this.freeSpot(here, G.inner));

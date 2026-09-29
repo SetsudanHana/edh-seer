@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CardGraph, DeckReport } from "../types.js";
 import { buildEngineModel, displayName, tokenLabel, type EngineCard, type EngineModel } from "../lib/engine-model.js";
 import { mainTheme } from "../lib/main-theme.js";
+import { stepRoute } from "../lib/walk-route.js";
 import { buildOrbit, countText, type OrbitModel, type OrbitPartner, type OrbitSector } from "../lib/orbit-model.js";
 export { countText };
 import { slugOf } from "@edh-seer/matcher/slug";
@@ -57,12 +58,11 @@ export function OrbitView({ report, graph, focusId, onFocus, model, sticky = tru
   const [trail, setTrail] = useState<string[]>([]);
   // THE PATH FOLLOWS THE MIDDLE, WHOEVER MOVED IT (demo recording, 2026-09-27): the drawer's "Walk
   // the map from here" sets the middle from outside, and the path stayed empty after it. A card
-  // already on the path is a step back to it; any other is a step on.
+  // already on the path is a step back to it; any other is a step on, along the deck's links (#769).
   const [seen, setSeen] = useState(focusId);
   if (seen !== focusId) {
     setSeen(focusId);
-    const i = trail.indexOf(focusId);
-    setTrail(i >= 0 ? trail.slice(0, i) : [...trail, seen].slice(-6));
+    setTrail(stepRoute(trail, seen, focusId, (id) => m.partners.get(id)?.keys() ?? []));
   }
   const still = useReducedMotion();
   const [paused, setPaused] = usePaused();
