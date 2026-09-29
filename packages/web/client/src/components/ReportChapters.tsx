@@ -61,13 +61,13 @@ function Movement({
 }: { title?: string; count?: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-baseline gap-3 flex-wrap">
+      {title || count ? <div className="flex items-baseline gap-3 flex-wrap">
         {title ? <h3 className="text-lg font-bold tracking-[-0.01em]">{title}</h3> : null}
         {/* A SENTENCE, NOT A FIGURE — it is where a movement says what its panels are FOR, and on
           *  Mana and Roles that is the link back to the findings they are evidence for. Set in the
           *  body face, never mono: `index.css` rules out the costume use. */}
         {count ? <span className="text-xs text-(--muted)">{count}</span> : null}
-      </div>
+      </div> : null}
       {children}
     </section>
   );
@@ -389,8 +389,10 @@ export function ReportChapters({ data, diff, assumptions, assumptionsSet }: {
             *  every seat read them as a grey tail after the card shelves. */}
           {report.deckMath ? (
             // No title of its own: its sections are headed "Your first 5 turns", "How you win" and
-            // "What your cards are waiting for" already.
-            <Movement count={unmetDemand ? "its first turns, how it wins, and what its cards are still waiting for" : "its first turns, and how it wins"}>
+            // "What your cards are waiting for" already. NOR A LINE ABOVE THEM (designer review
+            // 2026-09-29): "its first turns, and how it wins" sat directly over those headings, a
+            // kicker over a heading, saying what they say.
+            <Movement>
               {/* SIDE BY SIDE AS THE WIDTH ALLOWS (#770): first turns, how you win and what the cards wait
                 *  for were three blocks stacked in the left 1024px of a 2560 screen. */}
               <div className="grid gap-8 items-start [grid-template-columns:repeat(auto-fit,minmax(min(100%,40rem),1fr))]">

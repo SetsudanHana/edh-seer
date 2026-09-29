@@ -49,8 +49,9 @@ export function ReportRailSummaries({ current, report, cutCount, readSlot }: {
 
 const Row = ({ label, value }: { label: ReactNode; value: ReactNode }) => (
   <div className="flex items-baseline justify-between gap-3 border-b border-(--separator) pb-2 text-sm">
-    <span>{label}</span>
-    <span className="text-(--muted) tabular-nums text-right">{value}</span>
+    <span className="min-w-0">{label}</span>
+    {/* THE FIGURE STAYS WHOLE; THE LABEL WRAPS (designer review 2026-09-29: "8 / cards"). */}
+    <span className="text-(--muted) tabular-nums text-right whitespace-nowrap">{value}</span>
   </div>
 );
 
