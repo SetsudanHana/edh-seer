@@ -3396,6 +3396,10 @@ test("a cost reduction over 'spell you cast' is your class, with its stat-vs-sta
   const doran = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "cost-modify", object: "creature spell you cast with toughness greater than its power", amount: "-1" }] }],
     "Doran, Besieged by Time", { 1: "Each creature spell you cast with toughness greater than its power costs {1} less to cast." }).abilities[0]!;
   expect(doran.effect).toMatchObject({ kind: "cost-reduction", subject: { type: "creature", control: "you", scope: "all", stats: [{ metric: "toughness", op: "gt", vs: "power" }] } });
+  // A narrowing no field holds stays unread, not widened (Baral's first spell each turn).
+  const baral = deriveAbilities([{ id: 1, abilityType: "static", actions: [{ verb: "cost-modify", object: "the first instant or sorcery spell you cast each turn", amount: "-1" }] }],
+    "Baral", { 1: "The first instant or sorcery spell you cast each turn costs {1} less to cast." }).abilities[0];
+  expect(baral?.effect.subject?.control).not.toBe("you");
 });
 
 test("'if you would draw a card ... instead' is a draw replacement, a payoff for draws", () => {

@@ -971,7 +971,7 @@ function effectSubject(
   // the singular "creature spell you cast ...", parsed to `{creature, any}` with no scope, and the
   // static guard dropped it -- so Bedrock Tortoise, a 0/6, got no discount. The plural ("artifact
   // spells you cast", Foundry Inspector) already worked; the class is the same either way.
-  if (kind === "cost-reduction" && SPELLS_YOU_CAST.test(object)) {
+  if (kind === "cost-reduction" && SPELLS_YOU_CAST.test(object) && !COST_NARROWING_UNHELD.test(object)) {
     subject.control = "you";
     subject.scope ??= "all";
     const cmp = STAT_VS_STAT.exec(object);
@@ -1091,6 +1091,9 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 /** "…spell(s) you cast" as a cost reducer's object (#717, Doran). */
 const SPELLS_YOU_CAST = /\bspells? you cast\b/i;
+/** A reducer narrowing no field holds -- "the FIRST spell you cast each turn" (Baral), "from exile",
+ *  "that targets" -- stays unread rather than widened to every such spell (review). */
+const COST_NARROWING_UNHELD = /\bfirst\b|\bfrom (?:exile|a graveyard|your graveyard|anywhere other than)\b|\bthat targets?\b|\beach turn\b/i;
 /** "with toughness greater than its power" -- one stat against another on the same card (#717). */
 const STAT_VS_STAT = /\bwith (power|toughness) greater than (?:its|their) (power|toughness)\b/i;
 /** "…card in your graveyard" / "…from a graveyard": an object that names its zone (#716, Emry). */

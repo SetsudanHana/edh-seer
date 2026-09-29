@@ -74,3 +74,12 @@ test("no INSTEAD, no replacement", () => {
   expect(replacementOf("If a card would be put into an opponent's graveyard from anywhere, exile "
     + "it instead.")).toBeNull();
 });
+
+/** #717: a draw DOUBLER is a payoff for draws; a draw REPLACED by something else is not. */
+test("a draw doubler is a draw replacement; dredge and Laboratory Maniac are not", () => {
+  expect(replacementOf("If you would draw a card except the first one you draw in each of your draw steps, draw two cards instead.")?.verbs).toEqual(["draw"]);
+  expect(replacementOf("As long as you have one or fewer cards in hand, if you would draw one or more cards, you draw that many cards plus one instead.")?.verbs).toEqual(["draw"]);
+  expect(replacementOf("If you would draw a card, you may mill three cards instead. If you do, return this card from your graveyard to your hand.")).toBeNull();
+  expect(replacementOf("If you would draw a card while your library has no cards in it, you win the game instead.")).toBeNull();
+  expect(replacementOf("If you would draw a card, instead look at the top three cards of your library, then put one into your hand and the rest into your graveyard.")).toBeNull();
+});
