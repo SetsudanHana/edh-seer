@@ -536,6 +536,11 @@ async function deckHash(deckFile: string): Promise<{ hash: string; commander: st
  *  simulation is CPU, not network, and the alpha decay is fixed. */
 async function settle(page: Page): Promise<void> {
   await page.waitForLoadState("networkidle").catch(() => {});
+  // THE REPORT READS ITS DECK AFTER THE NETWORK GOES QUIET (persona round 2026-09-29): the first
+  // frame after every navigation -- land, cards, combos -- caught `ReportLoading`'s skeleton on
+  // most decks, and the seats read the Glance from its expanded frames instead. Wait, bounded, for
+  // the skeleton (`aria-busy`) to leave; a page with none passes at once.
+  await page.waitForFunction(() => !document.querySelector("[aria-busy='true']"), undefined, { timeout: 60_000 }).catch(() => {});
   await page.waitForTimeout(1200);
 }
 
