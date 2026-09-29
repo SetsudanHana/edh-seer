@@ -39,13 +39,20 @@ const castsAtInstantSpeed = (dc: DeckCard): boolean => {
 /** One reason's magnitude. `p` and `c` are the nodes the reason was made between -- a face node
  *  carries its own face's ability list, which is what `producerAbility` indexes. */
 export function magnitudeOf(r: Reason, p: DeckCard, c: DeckCard): EdgeMagnitude | undefined {
-  if (!MAGNITUDE_EVENT_FAMILIES.has(r.tag.split(":")[0]!)) return undefined;
+  const family = r.tag.split(":")[0]!;
+  if (!MAGNITUDE_EVENT_FAMILIES.has(family)) return undefined;
+  // A REASON THAT POINTS AT NO ABILITY ON EITHER SIDE is a board-state relation borrowing an event
+  // prefix (review: `counterPresenceEdges` / `counterCostEdges` tag into `counter-added:`), or a
+  // synthetic keyword consumer -- no event count stands behind it.
+  if (r.producerAbility === undefined && r.consumerAbility === undefined) return undefined;
   const pa = r.producerAbility !== undefined ? p.tags?.abilities[r.producerAbility] : undefined;
   const ca = r.consumerAbility !== undefined ? c.tags?.abilities[r.consumerAbility] : undefined;
   let m: EdgeMagnitude;
   if (!pa) {
-    // The card's own cast, entry or death: one event, as fast as the card is cast.
-    m = { floor: 1, ceiling: 1, ...(castsAtInstantSpeed(p) ? { instant: true as const } : {}) };
+    // The card's own cast, entry or death: one event. Only its CAST or ENTRY happens as fast as the
+    // card is cast; a derived side-event (a graveyard fill, a death) has no timing of its own (review).
+    const ownArrival = family === "cast" || family === "enters";
+    m = { floor: 1, ceiling: 1, ...(ownArrival && castsAtInstantSpeed(p) ? { instant: true as const } : {}) };
   } else {
     // A replacement that repeats the improved count reads the IMPROVED ability's own count.
     const count = pa.count?.sameAsImproved ? ca?.count : pa.count;

@@ -16,10 +16,17 @@ test("a relation family carries no magnitude", () => {
   expect(magnitudeOf(reason("tutor:creature"), card("P", []), card("C", []))).toBeUndefined();
 });
 
-test("an implied event is the 1–1 default and is omitted; a flash card's is instant", () => {
-  expect(magnitudeOf(reason("enters:creature"), card("P", []), card("C", []))).toBeUndefined();
-  expect(magnitudeOf(reason("enters:creature"), card("P", [], { keywords: ["Flash"] }), card("C", [])))
+test("an implied event is the 1–1 default and is omitted; a flash card's own entry is instant", () => {
+  const c = card("C", [{ kind: "triggered", effect: { kind: "damage" } }]);
+  expect(magnitudeOf(reason("enters:creature", { consumerAbility: 0 }), card("P", []), c)).toBeUndefined();
+  expect(magnitudeOf(reason("enters:creature", { consumerAbility: 0 }), card("P", [], { keywords: ["Flash"] }), c))
     .toEqual({ floor: 1, ceiling: 1, instant: true });
+  // A derived side-event of a flash card (its death, a graveyard fill) has no timing of its own.
+  expect(magnitudeOf(reason("dies:creature", { consumerAbility: 0 }), card("P", [], { keywords: ["Flash"] }), c)).toBeUndefined();
+});
+
+test("a counter relation pointing at no ability is not an event count (counter presence / cost channels)", () => {
+  expect(magnitudeOf(reason("counter-added:creature"), card("P", [], { keywords: ["Flash"] }), card("C", []))).toBeUndefined();
 });
 
 test("an authored count is carried, with instant speed from the emit", () => {
