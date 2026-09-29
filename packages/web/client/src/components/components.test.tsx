@@ -3138,3 +3138,20 @@ test("the commander's orbit starts from the commander on a new report, whatever 
   rerender(<MemoryRouter><ReportChapters data={data({ ...report })} /></MemoryRouter>);
   expect(orbit()).toHaveAccessibleName(/^Commander and/);
 });
+
+/** TWO TABLES FROM 160rem (designer review 2026-09-29): one table across 2560 put 1,500px between a
+ *  row's reason and its score. The rows are dealt down the first table, then the second, each with
+ *  its own header, and the numbering runs on. */
+test("the Cards table splits into two side by side from 160rem, numbering running on", () => {
+  vi.stubGlobal("matchMedia", (q: string) => ({ matches: q === "(min-width: 160rem)", media: q, addEventListener() {}, removeEventListener() {} }));
+  try {
+    render(<MemoryRouter><CardList cards={SAMPLE.report.cards} /></MemoryRouter>);
+    const tables = screen.getAllByRole("table");
+    expect(tables).toHaveLength(2);
+    const rows = tables.map((t) => within(t).getAllByRole("row").length - 1);
+    expect(Math.abs(rows[0]! - rows[1]!)).toBeLessThanOrEqual(1);
+    expect(within(tables[1]!).getAllByRole("row")[1]).toHaveTextContent(String(rows[0]! + 1).padStart(2, "0"));
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
