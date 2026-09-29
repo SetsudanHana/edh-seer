@@ -1887,6 +1887,12 @@ function eventEdges({ p, c, h, opts, pEvents, reasons }: PairScope): void {
 const selfFillsFirst = (events: GameEvent[]): GameEvent[] =>
   [...events.filter((e) => e.subject.self === true), ...events.filter((e) => e.subject.self !== true)];
 
+/** A recursion subject whose card TYPE is named and is neither a creature nor a land ("target
+ *  artifact card"). A subtype alone (Elemental) or "permanent"/"card" is not one. */
+function namesNoncreatureClass(s: SubjectFilter): boolean {
+  const types = Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+  return types.length > 0 && !types.some((t) => t === "creature" || t === "land" || t === "permanent" || t === "card");
+}
 // Reanimator-consumer edge: a producer graveyard fill enables C's graveyard-recursion effect.
 function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
   // ONE REASON PER TAG, as before #558: the sentence used to be the same whichever fill enabled the
@@ -1939,6 +1945,15 @@ function reanimatorEdges({ p, c, h, pEvents, reasons }: PairScope): void {
       // `dies:creature` edge carries every one of them. **Check that a deck contains both cards
       // before reading a missing claim as a missing channel.**
       if (returnsWhatItsOwnTriggerSaw(a)) continue;
+      // A MILL IS RANDOM, A DISCARD IS CHOSEN (#716). Owner verdicts: an untyped discard enabling an
+      // instant or artifact recursion is REAL every time (Frantic Search -> Torrential Gearhulk,
+      // Geier Reach -> Trading Post: you pick what you discard); Takenuma's "mill three" enabling
+      // Emry's artifact recursion is FALSE. So an untyped MILL no longer promises a card of a class
+      // other than CREATURE or LAND -- the compass holds Ark of Hunger's mill feeding Life from the
+      // Loam as real, and self-mill into reanimation is unruled.
+      // CEILING: this is class DENSITY dressed as a type list -- lands and creatures fill most of a
+      // Commander deck, so a random card is often one. An owner ruling on density would replace it.
+      if (e.milled === true && namesNoncreatureClass(a.effect.subject)) continue;
       if (!graveyardFillMatches(e.subject, a.effect.subject, h)) continue;
       // A SELF-scoped recursion returns the card ITSELF ("return this card from your graveyard"), so
       // a fill enables it only if that fill could contain THAT card. Reassembling Skeleton is a real

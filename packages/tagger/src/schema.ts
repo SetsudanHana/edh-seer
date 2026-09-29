@@ -585,6 +585,10 @@ export interface GameEvent {
    *  written solely by `packages/matcher/src/implied.ts`. Used to scope `combatSelfSupplied` to
    *  implied combat only, so authored combat emits (goad, Mage Slayer, Saskia) still form edges. */
   implied?: true;
+  /** A graveyard fill that came from a MILL: the card is random, where a discard is chosen (#716).
+   *  Matcher-only, written by `impliedGraveyardEvents`. Read by the recursion pass: a random fill
+   *  does not promise a card of a noncreature class (Takenuma -> Emry, owner FALSE 2026-09-28). */
+  milled?: true;
   /** The producer acts at INSTANT SPEED: an activated ability (loyalty and "activate only as a
    *  sorcery" excepted), an instant, or a spell with flash. The smallest timing model that holds
    *  the owner's ruling (2026-08-22, upheld): Ayara -> Death Tyrant is REAL because a sac outlet

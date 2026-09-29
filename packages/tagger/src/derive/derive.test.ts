@@ -3372,3 +3372,21 @@ test("a zone-less return after an exile in the same clause is a flicker", () => 
   // No exile before it: a bounce-to-hand "return" is not rewritten.
   expect(flicker("Return it to its owner's hand.", [{ verb: "return", object: "it" }])).toBeUndefined();
 });
+
+// #716 (owner lost-pair re-judge 2026-09-28).
+test("a destroy whose controller gets copies back kills YOUR creature (Saw in Half, #513)", () => {
+  const text = "Destroy target creature. If that creature dies this way, its controller creates two tokens that are copies of that creature, except their power is half that creature's power and their toughness is half that creature's toughness. Round up each time.";
+  const dies = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }] }], "Saw in Half", { 1: text }, {}, text)
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
+  expect(dies?.subject.control).toBe("you");
+  // An ordinary targeted destroy stays aimed at an opponent.
+  const bolt = deriveAbilities([{ id: 1, abilityType: "spell", actions: [{ verb: "destroy", object: "target creature" }] }], "Murder", { 1: "Destroy target creature." }, {}, "Destroy target creature.")
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "dies");
+  expect(bolt?.subject.control).toBe("opp");
+});
+
+test("an object naming 'in your graveyard' supplies the zone the model left out", () => {
+  const emry = deriveAbilities([{ id: 3, abilityType: "activated", actions: [{ verb: "cast", object: "target artifact card in your graveyard", optional: true }] }],
+    "Emry, Lurker of the Loch", { 3: "Choose target artifact card in your graveyard. You may cast that card this turn." }).abilities;
+  expect(emry.find((a) => a.effect.kind === "graveyard-recursion")?.effect.subject).toMatchObject({ type: "artifact", zone: "graveyard" });
+});

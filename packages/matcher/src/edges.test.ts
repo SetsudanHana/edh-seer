@@ -5733,3 +5733,20 @@ test("a token copy 'except it's 1/1' still copies a creature of any size", () =>
   Object.assign(disciple.tags.characteristics, { power: "3", toughness: "3" });
   expect(directedReasons(assault, disciple, H).some((r) => r.tag.startsWith("enters:"))).toBe(true);
 });
+
+/** A MILL IS RANDOM, A DISCARD IS CHOSEN (#716). Takenuma's mill does not enable Emry's artifact
+ *  recursion (owner FALSE); a discard does, and a mill still feeds a LAND recursion (compass: Ark
+ *  of Hunger -> Life from the Loam). */
+test("a milled fill does not promise an artifact card, but a discard does and a land recursion still gets it", () => {
+  const filler = (verb: "mill" | "discard") => base(verb === "mill" ? "Takenuma" : "Frantic Search", [{
+    kind: "activated", effect: { kind: verb }, emits: [{ verb, subject: { control: "you", token: null } }],
+  }] as unknown as CardTags["abilities"]);
+  const recursion = (type: string) => base(`${type} recursion`, [{
+    kind: "activated", effect: { kind: "graveyard-recursion", subject: { type, control: "you", token: null, zone: "graveyard", scope: "target" } },
+  }] as unknown as CardTags["abilities"]);
+  const enables = (p: ReturnType<typeof base>, c: ReturnType<typeof base>) => directedReasons(p, c, H).some((r) => r.tag.startsWith("graveyard-recursion:"));
+  expect(enables(filler("mill"), recursion("artifact"))).toBe(false);
+  expect(enables(filler("discard"), recursion("artifact"))).toBe(true);
+  expect(enables(filler("mill"), recursion("land"))).toBe(true);
+  expect(enables(filler("mill"), recursion("creature"))).toBe(true);
+});
