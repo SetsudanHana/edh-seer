@@ -1727,7 +1727,9 @@ export function deriveAbilities(
       }
       // "RETURN IT TO THE BATTLEFIELD TRANSFORMED" (#715): the card re-enters as its BACK face (CR
       // 712.14a), and only the matcher knows that face's types -- so the emit says which face it is.
-      if (action.verb === "return" && RETURNS_TRANSFORMED.test(text)) {
+      // ONE return/put in the clause (review): with two, nothing says which the word describes.
+      if ((action.verb === "return" || action.verb === "put") && RETURNS_TRANSFORMED.test(text)
+        && (clause.actions ?? []).filter((x) => x.verb === "return" || x.verb === "put").length === 1) {
         for (const e of emits) if (e.verb === "enters" && e.subject.self === true) e.subject.transformed = true;
       }
       // "Whenever you activate an ability ... copy THAT ability" (Rings of Brighthearth): the object

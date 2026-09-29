@@ -31,6 +31,8 @@ export function printedFaces(card: Card): CardFace[] {
 function faceTags(tags: CardTags, i: number, faces: CardFace[]): CardTags {
   const chars = tags.characteristics;
   const playable = i < (chars.faces?.length ?? 1);
+  // TWO faces only: "the back face" is faces[1] on a transform or modal DFC, and nothing else.
+  const retype = faces.length === 2;
   const own = chars.faces?.[i];
   const parsed = own ?? { types: [], subtypes: [] };
   return {
@@ -40,7 +42,7 @@ function faceTags(tags: CardTags, i: number, faces: CardFace[]): CardTags {
       ...(own ? { types: own.types, subtypes: own.subtypes } : {}),
       faces: playable ? [parsed] : [],
     },
-    abilities: tags.abilities.filter((a) => (a.face ?? 0) === i).map((a) => a.emits?.some(reEntry)
+    abilities: tags.abilities.filter((a) => (a.face ?? 0) === i).map((a) => retype && a.emits?.some(reEntry)
       ? { ...a, emits: a.emits.map((e) => !reEntry(e) ? e
         // A face that SAYS "transformed" but whose emit was not marked is a phrasing derive missed:
         // left untyped rather than read as the front face (Ajani's "return him" did exactly that).
@@ -65,7 +67,7 @@ const reEntry = (e: GameEvent): boolean => e.verb === "enters" && e.subject.self
  *  enters, Setessan Champion draws" is false -- Shiva is the enchantment that enters (#715). Same
  *  rule, and the same refusal, as the typing in `faceTags`. */
 export function enteringFaceName(p: DeckCard, e: GameEvent): string | undefined {
-  if (!p.parent || p.face === undefined || !reEntry({ ...e, subject: { ...e.subject, transformed: true } })) return undefined;
+  if (!p.parent || p.face === undefined || printedFaces(p.parent.card).length !== 2 || !reEntry({ ...e, subject: { ...e.subject, transformed: true } })) return undefined;
   const faces = printedFaces(p.parent.card);
   if (e.subject.transformed) return faces[1]?.name;
   return /\btransformed\b/i.test(faces[p.face]?.oracleText ?? "") ? undefined : faces[0]?.name;

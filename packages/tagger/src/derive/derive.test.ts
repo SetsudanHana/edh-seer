@@ -3381,6 +3381,10 @@ test("a self re-entry 'returned transformed' is marked as the back face (CR 712.
   // The corpus's other phrasings: a gendered pronoun (Ajani), "tapped and transformed" (Ojer Taq).
   expect(reEntry("Exile Jill, then return him to the battlefield transformed under his owner's control.", "him")?.subject.transformed).toBe(true);
   expect(reEntry("Exile Jill, then return it to the battlefield tapped and transformed under its owner's control.")?.subject.transformed).toBe(true);
+  // "put ... onto the battlefield transformed" (Startled Awake), the other verb the rule names.
+  expect(deriveAbilities([{ id: 2, abilityType: "activated", actions: [{ verb: "put", object: "this card", fromZone: "graveyard", toZone: "battlefield" }] }],
+    "Startled Awake", { 2: "Put this card from your graveyard onto the battlefield transformed under your control." })
+    .abilities.flatMap((a) => a.emits ?? []).find((e) => e.verb === "enters")?.subject.transformed).toBe(true);
   // Front face up by default (CR 712.14): no mark.
   expect(reEntry("Exile Jill, then return it to the battlefield under its owner's control.")?.subject.transformed).toBeUndefined();
 });
