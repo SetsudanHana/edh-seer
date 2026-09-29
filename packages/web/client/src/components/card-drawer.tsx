@@ -76,6 +76,10 @@ const CardDrawerContext = createContext<CardDrawerApi>({
 
 /** From 1600px (`100rem`), where the page has the width to keep a rail beside it; the same
  *  breakpoint `index.css` reserves the rail's space at. */
+/** THE RAIL'S BOX, and the card's while it covers the rail: ONE SHAPE FOR BOTH (designer review,
+ *  2026-09-29). The card used to open as an inset bordered panel over a flush summary, so the text's
+ *  left edge jumped 20px on every open. Both start under the site header, which runs over them. */
+const RAIL_BOX = "fixed top-(--site-header-h) bottom-0 right-0 w-(--rail-w) overflow-y-auto border-l border-(--separator) bg-(--background)";
 const RAIL_QUERY = "(min-width: 100rem)";
 function useRailWidth(): boolean {
   const [wide, setWide] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(RAIL_QUERY).matches);
@@ -281,7 +285,7 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
         // its place. Below 1600px it is not drawn and a card opens as the overlay it always was.
         ? createPortal(
             <aside aria-label="Chapter summary" data-testid="report-rail"
-              className="fixed inset-y-0 right-0 z-20 hidden w-80 flex-col overflow-y-auto border-l border-(--separator) bg-(--background) px-4 pb-6 pt-[calc(var(--site-header-h,0px)+1.5rem)] min-[100rem]:flex">
+              className={`${RAIL_BOX} z-20 hidden flex-col px-4 py-6 min-[100rem]:flex`}>
               <div ref={setRailEl} className="flex flex-col gap-4" />
             </aside>,
             document.body,
@@ -296,8 +300,9 @@ export function CardDrawerProvider({ graph, added: addedNames, children }: {
         // avoid. Nothing in jsdom sees this; only the browser did.
         ? createPortal(
             // The inspector positions itself `absolute inset-y-2 right-2` against this element.
-            <div ref={panel} className={`fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw] ${railShown ? "bg-(--background)" : ""}`}>
+            <div ref={panel} className={railShown ? `${RAIL_BOX} z-30` : "fixed inset-y-0 right-0 z-30 w-full sm:w-80 sm:max-w-[90vw]"}>
               <CardInspector
+                docked={railShown}
                 node={node}
                 edges={edges}
                 onClose={() => setOpenId(null)}
