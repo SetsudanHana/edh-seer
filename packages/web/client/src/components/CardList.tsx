@@ -260,7 +260,7 @@ export function CardList({ cards, artByName, coverage }: {
 
   return (
     // NO CAP: THE PANEL TAKES THE WIDTH IT IS GIVEN (owner's call, 2026-09-03). It was
-    // `max-w-[88rem]`, and the rule that put it on the PANEL rather than the table still holds --
+    // an 88rem cap, and the rule that put it on the PANEL rather than the table still holds --
     // capping the table alone had left the filter chips, the search box and the table/grid toggle
     // pinned to a 1,856px edge while the table they control ended 448px to their left, and controls
     // have to sit inside the thing they control. With no cap at all they share an edge for free.
