@@ -457,6 +457,10 @@ export function reasonSentence(input: {
    *  Absent when the producer's emit is about ITSELF (every implied event, and any authored emit
    *  carrying `subject.self`), which is the case the old wording was written for and still fits. */
   subjectNoun?: string;
+  /** WHAT A SAC OUTLET'S COST TAKES ("a creature"), when the event is the death or sacrifice that
+   *  cost pays (#799). "When Carrion Feeder dies" was about a card that is the OUTLET, not the thing
+   *  dying: the sentence says the owner chose the death, and to which card. */
+  sacrificedTo?: string;
 }): string {
   const verb = eventVerbPhrase(input.eventKey);
   const phrase = effectPhrase(input.effectKind, input.amount, input.effectTarget, input.effectRecipient, input.counterKind)
@@ -476,7 +480,8 @@ export function reasonSentence(input: {
   // thanks to Krenko, Mob Boss": the token doing the making. MEASURED on the partner artifact
   // 2026-09-04, 7,050 of 91,061 rows (7.7%) across 2,671 cards. The producer takes the subject back
   // and the noun becomes what it always was, the token's own name.
-  const cause = input.subjectNoun && input.eventKey.split(":")[0] === "create-token"
+  const cause = input.sacrificedTo ? `When you sacrifice ${input.sacrificedTo} to ${input.producer}`
+    : input.subjectNoun && input.eventKey.split(":")[0] === "create-token"
     // An untyped emit yields "a permanent", and "a permanent token" says nothing "a token" does not.
     ? `When ${input.producer} makes ${input.subjectNoun === "a permanent" ? "a token" : `${input.subjectNoun} token`}`
     : input.subjectNoun
@@ -498,10 +503,26 @@ export function reasonSentence(input: {
  *  reading exactly as it did. A subtype is preferred over a card type because it is what a reader
  *  recognises — "a Treasure dies" says more than "an artifact dies" — and an untyped subject falls
  *  back to "a permanent" rather than to nothing, since the event still happened to SOMETHING. */
-export function emitSubjectNoun(subject: {
-  self?: boolean; subtype?: string | string[]; type?: string | string[];
+type NounSubject = { subtype?: string | string[]; type?: string | string[] };
+export function emitSubjectNoun(subject: NounSubject & {
+  self?: boolean; anyOf?: readonly NounSubject[];
 } | undefined): string | undefined {
   if (!subject || subject.self === true) return undefined;
+  // A LIST NOBODY NARROWED IS NAMED WHOLE (#750). Bloodstained Mire finds "a Swamp or Mountain card";
+  // when the caller cannot say which one the consumer took, "a Swamp" named the first branch as if it
+  // were the one that entered, and an `anyOf` fetch fell through to "a permanent". A caller that CAN
+  // say passes the one branch (`keyedOn`, `matchedBranch` in edges.ts).
+  const words = (s: NounSubject): string[] => {
+    const subs = [s.subtype ?? []].flat();
+    return subs.length > 0 ? subs.map((w) => w.charAt(0).toUpperCase() + w.slice(1)) : [s.type ?? []].flat();
+  };
+  const branches = [...new Set((subject.anyOf ?? []).flatMap(words))];
+  const own = words(subject);
+  const all = branches.length > 0 && [subject.subtype ?? []].flat().length === 0 ? branches : own;
+  if (all.length >= 2) {
+    const joined = all.length === 2 ? all.join(" or ") : `${all.slice(0, -1).join(", ")} or ${all[all.length - 1]}`;
+    return `${/^[aeiou]/i.test(all[0]) ? "an" : "a"} ${joined}`;
+  }
   const first = (v: string | string[] | undefined): string | undefined =>
     Array.isArray(v) ? v[0] : v;
   // A SUBTYPE IS A PROPER NOUN IN MAGIC and a card type is not: a Goblin, an Angel, a Treasure --
@@ -742,8 +763,17 @@ export function fetchSentence(producer: string, consumer: string): string {
   return `${producer} can fetch ${consumer}`;
 }
 
-export function tutorSentence(producer: string, consumer: string): string {
-  return `${producer} can search up ${consumer}`;
+/** A CLASS-RESTRICTED DIG IS NOT A SEARCH (#750): Eclipsed Flamekin looks at the top cards and may
+ *  find an Elemental there, it never searches the library -- and effect kind `search` covers both
+ *  since the 2026-09-16 ruling, so the printed text is what tells them apart. */
+export function digsRatherThanSearches(oracleText: string | undefined): boolean {
+  const t = oracleText ?? "";
+  return !/\bsearch(?:es)? (?:your|their|its owner's|that player's) library\b/i.test(t)
+    && /\b(?:look at|reveal|exile) the top\b|\breveal cards from the top\b/i.test(t);
+}
+
+export function tutorSentence(producer: string, consumer: string, dig = false): string {
+  return dig ? `${producer} can dig for ${consumer}` : `${producer} can search up ${consumer}`;
 }
 
 /** A typed recursion and a card of its class: the recursion is the producer, the card it can

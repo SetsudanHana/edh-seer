@@ -47,7 +47,7 @@ import { commanderIdentity } from "./answer-pool.js";
 import { deckCastability, type CardCastability } from "./castability.js";
 import { loadThemeStats } from "./theme-stats.js";
 import { themeMembership, themeCandidates } from "./themes.js";
-import { promoteSpecificHeadline, demoteUnrankableHeadline } from "./theme-promote.js";
+import { promoteSpecificHeadline, demoteUnrankableHeadline, demoteThinHeadline } from "./theme-promote.js";
 import { rankThemesByLoop } from "./theme-loop.js";
 import { deckThing } from "./thing.js";
 import { deckBracket } from "./brackets.js";
@@ -907,7 +907,8 @@ export function analyzeDeckStructured(
       if (a.effect?.kind === "extra-phase" && a.effect.subject?.phase) suppliedPhases.add(a.effect.subject.phase);
     }
   }
-  const rankableThemes = demoteUnrankableHeadline(rankedThemes, suppliedPhases);
+  // AND A TAG ONE OR TWO CARDS CARRY CANNOT EITHER (#748), however rare it is.
+  const rankableThemes = demoteThinHeadline(demoteUnrankableHeadline(rankedThemes, suppliedPhases), deckFreq, resolved.length, suppliedPhases);
   const promotedThemes = promoteSpecificHeadline(rankableThemes, deckFreq, promoteMembership);
   const themes = promotedThemes.map((tag) => ({ tag, count: deckFreq.get(tag) ?? 0 }));
 

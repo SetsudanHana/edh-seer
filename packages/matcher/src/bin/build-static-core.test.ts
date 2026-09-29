@@ -62,3 +62,12 @@ test("spreads names across shards rather than piling them into a few", () => {
   // 20,000 names into 16,384 shards fills roughly 1 - e^-1.22 = 70% of them under a uniform hash.
   expect(used.size).toBeGreaterThan(SHARD_COUNT * 0.6);
 });
+
+/** #568: the unnamed pieces ride into the shard with the combo, so a static report can tell a
+ *  two-card combo from one that needs a third creature. */
+test("a combo's template pieces are kept in its bucket", () => {
+  const idx = comboIndex([{ cards: ["Metallic Mimic", "Goblin Bombardment"], result: "Infinite death triggers", requires: ["Creature with undying"] }]);
+  expect(idx.get("Goblin Bombardment")).toEqual([
+    { cards: ["Metallic Mimic", "Goblin Bombardment"], result: "Infinite death triggers", requires: ["Creature with undying"] },
+  ]);
+});

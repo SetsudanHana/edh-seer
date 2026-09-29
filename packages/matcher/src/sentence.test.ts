@@ -3,7 +3,7 @@ import { VERB_VOCAB } from "@edh-seer/tagger";
 import {
   costReductionSentence, counterPresenceSentence, createsSentence, effectPhrase, eventVerbPhrase,
   fetchSentence, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, VERB_PHRASES, winconSentence,
+  boardCountFeedsScaling, effectTargetNoun, emitSubjectNoun, staticGrantSentence, tutorSentence, digsRatherThanSearches, VERB_PHRASES, winconSentence,
   thresholdSentence, countedNounPlural, emitPhrase } from "./sentence.js";
 
 describe("effectPhrase — the fallback ladder", () => {
@@ -248,6 +248,12 @@ describe("the five small verbatim sentences", () => {
     expect(tutorSentence("Worldly Tutor", "Craterhoof Behemoth")).toBe(
       "Worldly Tutor can search up Craterhoof Behemoth",
     );
+    // #750: a class-restricted dig looks at the top of the library, it never searches it.
+    expect(tutorSentence("Eclipsed Flamekin", "Omnath", true)).toBe("Eclipsed Flamekin can dig for Omnath");
+    expect(digsRatherThanSearches("When this creature enters, look at the top four cards of your library. You may reveal an Elemental, Island, or Mountain card from among them and put it into your hand.")).toBe(true);
+    expect(digsRatherThanSearches("Search your library for a creature card, reveal it, then shuffle and put that card on top.")).toBe(false);
+    // Typecycling prints no reminder of its search, and is not a dig either.
+    expect(digsRatherThanSearches("Islandcycling {2}")).toBe(false);
   });
 
   test("counterPresenceSentence", () => {
@@ -303,6 +309,10 @@ test("a non-create-token cause still names the subject the event happens to", ()
 test("an emit's subtype noun is capitalised and its type noun is not", () => {
   expect(emitSubjectNoun({ subtype: "goblin", type: "creature" })).toBe("a Goblin");
   expect(emitSubjectNoun({ type: "creature" })).toBe("a creature");
+  // #750: a list nobody narrowed is named whole, never by its first member.
+  expect(emitSubjectNoun({ subtype: ["swamp", "mountain"] })).toBe("a Swamp or Mountain");
+  expect(emitSubjectNoun({ type: "land", anyOf: [{ subtype: "swamp" }, { subtype: "mountain" }] })).toBe("a Swamp or Mountain");
+  expect(emitSubjectNoun({ subtype: ["elemental", "island", "mountain"] })).toBe("an Elemental, Island or Mountain");
   expect(emitSubjectNoun({ type: "artifact" })).toBe("an artifact");
   expect(emitSubjectNoun({})).toBe("a permanent");
   // An emit about the producer ITSELF names no noun -- that is what keeps every correct sentence in
@@ -495,7 +505,7 @@ test("a blank effect is phrased from its emits, and only where the emit reads on
   expect(emitPhrase([e("exiled", { control: "opp", type: "creature" }), e("leaves", { control: "opp", type: "creature" })])).toBe("exiles a creature an opponent controls");
   // Displacer Kitten: the return is a sibling ability of the same clause, and makes it a flicker.
   const kitten = { control: "you", type: ["creature", "artifact"], scope: "target" };
-  expect(emitPhrase([e("exiled", { ...kitten, fromZone: "battlefield" }), e("enters", { ...kitten, fromZone: "exile" })])).toBe("flickers a creature you control");
+  expect(emitPhrase([e("exiled", { ...kitten, fromZone: "battlefield" }), e("enters", { ...kitten, fromZone: "exile" })])).toBe("flickers a creature or artifact you control");
   // Necropotence and Gonti exile from a zone, not from the board.
   expect(emitPhrase([e("exiled", { control: "any", fromZone: "graveyard" })])).toBe("exiles a card from a graveyard");
   expect(emitPhrase([e("exiled", { control: "opp", fromZone: "library" })])).toBe("exiles a card from an opponent's library");

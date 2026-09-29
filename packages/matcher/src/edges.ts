@@ -15,7 +15,7 @@ import {
   boardCountFeedsScaling,
   effectTargetNoun,
   emitSubjectNoun, graveyardEnablesRecursion, graveyardFeedsScaling, meldSentence, reasonSentence,
-  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
+  staticGrantSentence, typeGrantNoun, recursionTargetSentence, tutorSentence, digsRatherThanSearches, winconSentence, thresholdSentence, countedNounPlural, graveyardThresholdSentence, auraHostSentence, processorSentence, doublesClassSentence, doublesSentence, landConditionSentence, delveSentence,
 } from "./sentence.js";
 import { basicTypeDemand, classifyLand, creatureTypeDemand } from "./land-conditions.js";
 import { SHARES_A_LAND_TYPE, hasBasicLandType } from "./fetch-land.js";
@@ -458,6 +458,21 @@ function keyedOn(subject: SubjectFilter, found: SubjectFilter): SubjectFilter {
   if (subs.length > 0 || types.length < 2) return subject;
   const hit = types.find((t) => list(found.type).includes(t));
   return hit === undefined ? subject : { ...subject, type: hit };
+}
+
+/** THE BRANCH OF AN `anyOf` THE CONSUMER ASKED FOR, for the sentence only (#750): Bloodstained Mire's
+ *  "a Swamp or Mountain" reaching Valakut is the Mountain. When the consumer names none of them
+ *  ("a land"), every branch stays and the noun names them all. `keyedOn` is not widened instead: it
+ *  also builds tags, and a tag is the panel's join key. */
+function nounSubject(subject: SubjectFilter, found: SubjectFilter): SubjectFilter {
+  const keyed = keyedOn(subject, found);
+  const { anyOf, ...shared } = keyed;
+  if (!anyOf?.length) return keyed;
+  const wantSubs = [...list(found.subtype), ...(found.anyOf ?? []).flatMap((b) => list(b.subtype))];
+  const wantTypes = [...list(found.type), ...(found.anyOf ?? []).flatMap((b) => list(b.type))];
+  const hits = anyOf.filter((b) => list(b.subtype).some((x) => wantSubs.includes(x))
+    || (list(b.subtype).length === 0 && list(b.type).some((x) => wantTypes.includes(x))));
+  return hits.length === 1 ? { ...shared, ...hits[0] } : hits.length > 1 ? { ...shared, anyOf: hits } : keyed;
 }
 
 /** Does this combat consumer narrow via its type line -- a non-creature type, or any subtype?
@@ -1055,6 +1070,21 @@ function recastsItself(p: DeckCard): boolean {
   const name = p.card.name.toLowerCase().split(" // ")[0];
   return text.includes("cast this card from your graveyard") || text.includes(`cast ${name} from your graveyard`)
     || text.includes(`cast ${name.split(",")[0]} from your graveyard`);
+}
+
+/** WHAT A SAC OUTLET'S COST TAKES, when this event is the one that cost pays (#799): Carrion Feeder's
+ *  "Sacrifice a creature: Put a +1/+1 counter on this creature" emits a death of YOUR creature from
+ *  its cost, and the sentence read "When Carrion Feeder dies" -- about the outlet, which never died.
+ *  Read off the cost text, not the emit's type, so an outlet taking "an artifact or creature" writes
+ *  one sentence for both its emits and `claimCount` still sees one claim. An effect's own death (a
+ *  "destroy target creature" behind the same cost) names any creature, not yours, and is left alone. */
+function sacrificedTo(p: DeckCard, origin: number | undefined, e: { verb: string; subject: SubjectFilter }): string | undefined {
+  if (origin === undefined || e.subject.self === true || e.subject.control !== "you") return undefined;
+  if (e.verb !== "dies" && e.verb !== "sacrifice" && e.verb !== "leaves") return undefined;
+  const a = p.tags?.abilities[origin];
+  if (a?.kind !== "activated") return undefined;
+  const m = /\bsacrifice (an?|another) ([^,:.]+)/i.exec(a.cost ?? "");
+  return m ? `${m[1].toLowerCase()} ${m[2].trim()}` : undefined;
 }
 
 function oneShotProducer(p: DeckCard, ability: number | undefined): boolean {
@@ -1836,6 +1866,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
             : reasonSentence({
             producer: enteringFaceName(p, e0) ?? p.card.name, consumer: c.card.name, eventKey: key,
             effectKind: a.effect.kind, amount: a.amount, self: t.subject.self === true,
+            ...(t.subject.self !== true && sacrificedTo(p, origin, e0) ? { sacrificedTo: sacrificedTo(p, origin, e0) } : {}),
             // A BLANK EFFECT IS READ OFF ITS EMITS (#647 item 5), its clause siblings' too: Displacer
             // Kitten's return is its own ability, and without it the flicker read as an exile.
             ...(a.effect.kind ? {} : { emits: [a, ...c.tags.abilities.filter((x) => x !== a && a.clause !== undefined && x.clause === a.clause && x.face === a.face)].flatMap((x) => x.emits ?? []) }),
@@ -1891,7 +1922,7 @@ function eventEdges({ p, c, h, opts, pEvents, reasons, replacementOnly }: PairSc
               // A COMMANDER IS NEVER WHAT A `notCommander` TRIGGER HEARD (#559): Nalia is a Rogue, but
               // the Rogue Folk Hero's commander ability draws for is one Nalia lets you cast.
               : producerCanBeSubject(p, e.subject, h) && !(t.subject.notCommander === true && p.tags?.characteristics.commander === true)
-                ? undefined : emitSubjectNoun(keyedOn(e.subject, t.subject))),
+                ? undefined : emitSubjectNoun(nounSubject(e.subject, t.subject))),
           }),
           effectKind: a.effect.kind,
           repeatability: a.delayedBy === "chapter" || a.delayedBy === "spell" ? "oneshot"
@@ -2952,7 +2983,7 @@ function tutorEdges({ p, c, h, reasons }: PairScope): void {
     const matched = anyOf?.find((b) => subjectMatches(found, { ...shared, ...b }, h));
     reasons.push({
       tag: `tutor:${themeSubjectKey(matched ?? keyedOn(a.effect.subject, found))}`,
-      text: tutorSentence(p.card.name, c.card.name),
+      text: tutorSentence(p.card.name, c.card.name, digsRatherThanSearches(p.card.oracleText)),
       effectKind: a.effect.kind,
       repeatability:
         a.kind === "static" ? "static" : a.kind === "activated" ? "activated" : a.kind === "on-cast" ? "oneshot" : "triggered",

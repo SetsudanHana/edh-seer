@@ -28,6 +28,10 @@ const INFINITE = /\binfinite\b/i;
  *  and the band can never disagree. */
 export const isInfiniteCombo = (result: string | undefined): boolean => INFINITE.test(result ?? "");
 
+/** Every piece a combo needs: its named cards plus the unnamed ones it requires (#568). */
+export const comboPieces = (c: { cards: readonly string[]; requires?: readonly string[] }): number =>
+  c.cards.length + (c.requires?.length ?? 0);
+
 export interface BracketCombo {
   cards: string[];
   result: string;
@@ -76,8 +80,10 @@ export function deckBracket(cards: Card[], combos: Combo[]): DeckBracket {
   // (`combosContainedIn`), so a missing lookup can only be a resolution failure, and 0 is the
   // lenient answer: it reads the combo as CHEAPER, which keeps the deck in the higher band rather
   // than flattering it into a lower one.
+  // TWO PIECES IN ALL (#568): a combo whose two named cards also need a template piece ("Creature
+  // with undying") is a three-piece combo, and bracket 3 does not forbid those.
   const cheapCombos: BracketCombo[] = infinite
-    .filter((c) => c.cards.length <= 2)
+    .filter((c) => comboPieces(c) <= 2)
     .map((c) => ({
       cards: c.cards,
       result: c.result,

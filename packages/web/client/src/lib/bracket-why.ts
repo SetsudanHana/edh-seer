@@ -1,4 +1,4 @@
-import { BRACKET_3_GAME_CHANGERS, CHEAP_COMBO_MV, isInfiniteCombo } from "@edh-seer/matcher/brackets";
+import { BRACKET_3_GAME_CHANGERS, CHEAP_COMBO_MV, comboPieces, isInfiniteCombo } from "@edh-seer/matcher/brackets";
 import type { DeckReport } from "../types.js";
 
 /** THE BRACKET, WITH ITS WORKING SHOWN (owner, 2026-09-26: "we should be able to assess the
@@ -20,6 +20,8 @@ export interface InfiniteCombo {
   manaValue: number;
   /** Two cards at or under the ceiling: what bracket 3 does not allow. */
   cheap: boolean;
+  /** Pieces the combo needs that are not one named card (#568), carried through. */
+  requires?: string[];
   /** The deck's cards that turn this loop into a win (`combo.payoffs`), carried through. */
   payoffs?: { name: string; on: string[]; effect: string }[];
 }
@@ -27,7 +29,7 @@ export interface InfiniteCombo {
 type Bracket = NonNullable<DeckReport["bracket"]>;
 
 export function infiniteCombos(
-  combos: readonly { cards: string[]; result: string; payoffs?: InfiniteCombo["payoffs"] }[] | undefined,
+  combos: readonly { cards: string[]; result: string; requires?: string[]; payoffs?: InfiniteCombo["payoffs"] }[] | undefined,
   manaValueOf: (name: string) => number | undefined,
 ): InfiniteCombo[] {
   return (combos ?? [])
@@ -35,7 +37,8 @@ export function infiniteCombos(
     .map((c) => {
       const manaValue = c.cards.reduce((t, n) => t + (manaValueOf(n) ?? 0), 0);
       return {
-        cards: c.cards, result: c.result, manaValue, cheap: c.cards.length <= 2 && manaValue <= CHEAP_COMBO_MV,
+        cards: c.cards, result: c.result, manaValue, cheap: comboPieces(c) <= 2 && manaValue <= CHEAP_COMBO_MV,
+        ...(c.requires?.length ? { requires: c.requires } : {}),
         ...(c.payoffs?.length ? { payoffs: c.payoffs } : {}),
       };
     })
