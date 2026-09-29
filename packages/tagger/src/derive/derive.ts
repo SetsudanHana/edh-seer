@@ -1105,9 +1105,10 @@ const ACTOR_DEFAULTS_TO_YOU = new Set(["draw", "cast", "play", "discard", "mill"
  *  unstated controller is inherited. */
 const THAT_TYPED = /^(?:that|those) [a-z][a-z ]*$/i;
 /** A zone named as an object ("shuffle your library"): never what a later pronoun means. */
-const ZONE_OBJECT = /^(?:your|their|its owner's|that player's|each player's) (?:library|graveyard|hand)$/i;
+const ZONE_OBJECT = /^(?:your|their|its owner's|that player's|each player's) (?:library|graveyard|hand)(?: and (?:your |their )?(?:library|graveyard|hand))?(?: into (?:your|their) library)?$/i;
 /** The count an antecedent object states up front: "up to five Doctor cards", "two basic land cards". */
-const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b/i;
+// Never an open threshold: "two or more creature cards" is no fixed two (review).
+const ANTECEDENT_COUNT = /^(?:up to )?(?:a|an|one|two|three|four|five|six|seven|eight|nine|ten|x|\d+)\b(?! or (?:more|fewer|less|greater))/i;
 /** "…spell(s) you cast" as a cost reducer's object (#717, Doran). */
 const SPELLS_YOU_CAST = /\bspells? you cast\b/i;
 /** A reducer narrowing no field holds -- "the FIRST spell you cast each turn" (Baral), "from exile",
@@ -1417,7 +1418,8 @@ export function deriveAbilities(
     const antecedentIsSelf = (idx: number): boolean => {
       for (let i = idx - 1; i >= 0; i--) {
         const o = ((clause.actions ?? [])[i]?.object ?? "").trim();
-        if (o === "" || PRONOUN_OBJECT.test(o)) continue;
+        // A zone names nothing here either -- the same skip `antecedentFor` makes (review).
+        if (o === "" || PRONOUN_OBJECT.test(o) || ZONE_OBJECT.test(o)) continue;
         return SELF_REFERENCE.test(o) || isSelfSubject(o, cardName);
       }
       return false;

@@ -3486,3 +3486,21 @@ test("a put of the 'searched cards' inherits the search's count (Canoptek Wraith
   const enters = out.find((a) => (a.emits ?? []).some((e) => e.verb === "enters"));
   expect(enters?.count).toEqual({ floor: 0, ceiling: 2 });
 });
+
+test("an open threshold is no count, and a compound zone is no antecedent (review of DERIVE 200)", () => {
+  const put = (text: string, actions: { verb: string; object: string; fromZone?: string; toZone?: string }[]) =>
+    deriveAbilities([{ id: 1, abilityType: "spell", actions }], "Test Card", { 1: text }).abilities
+      .find((a) => (a.emits ?? []).some((e) => e.verb === "enters"));
+  // "two or more" states no fixed number: the put stays uncounted rather than 2-2.
+  expect(put("Return two or more creature cards from your graveyard to the battlefield.", [
+    { verb: "search", object: "two or more creature cards", fromZone: "graveyard" },
+    { verb: "put", object: "them", toZone: "battlefield" },
+  ])?.count).toBeUndefined();
+  // "your hand and graveyard" is a zone: the pronoun walks past it to the searched class.
+  const typed = put("Search your library for a creature card, shuffle your hand and graveyard into your library, then put that card onto the battlefield.", [
+    { verb: "search", object: "a creature card", fromZone: "library" },
+    { verb: "shuffle", object: "your hand and graveyard into your library" },
+    { verb: "put", object: "that card", toZone: "battlefield" },
+  ]);
+  expect(typed?.emits?.find((e) => e.verb === "enters")?.subject.type).toBe("creature");
+});
